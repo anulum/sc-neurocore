@@ -1,0 +1,139 @@
+from __future__ import annotations
+from dataclasses import dataclass
+from typing import Optional, Tuple
+import numpy as np
+from .rng import RNG
+
+def generate_bernoulli_bitstream(
+    p: float,
+    length: int,
+    rng: Optional[RNG] = None,
+) -> np.ndarray:
+    """
+    Generate a Bernoulli bitstream of given length with probability p of '1'.
+    This is the core SC primitive: a sequence of 0/1 bits where the
+    proportion of 1s ~ p.
+    Parameters
+    ----------
+    p : float
+        Probability of 1 (unipolar encoding, 0 <= p <= 1).
+    length : int
+        Number of bits in the stream.
+    rng : RNG, optional
+        RNG instance. If None, a fresh RNG is created.
+    Returns
+    -------
+    np.ndarray
+        Array of shape (length,) with dtype=uint8, values in {0,1}.
+    """
+    if not 0.0 <= p <= 1.0:
+        raise ValueError(f"Probability p must be in [0,1], got {p}.")
+    if rng is None:
+        rng = RNG()
+    bits = rng.bernoulli(p, size=length)
+    return bits.astype(np.uint8)
+
+def bitstream_to_probability(bitstream: np.ndarray) -> float:
+    """
+    Decode a unipolar bitstream back into a probability estimate.
+    p_hat = (# of ones) / length
+    """
+    if bitstream.size == 0:
+        raise ValueError("Bitstream is empty.")
+    return float(bitstream.mean())
+
+def value_to_unipolar_prob(
+    x: float,
+    x_min: float,
+    x_max: float,
+    clip: bool = True,
+) -> float:
+    """
+    Map a scalar x from [x_min, x_max] into a unipolar probability [0,1].
+    Linear mapping:
+        p = (x - x_min) / (x_max - x_min)
+    If clip=True, x is clipped into [x_min, x_max].
+    """
+    if x_min >= x_max:
+        raise ValueError("x_min must be < x_max.")
+    if clip:
+        x = max(min(x, x_max), x_min)
+    p = (x - x_min) / (x_max - x_min)
+    return float(p)
+
+def unipolar_prob_to_value(
+    p: float,
+    x_min: float,
+    x_max: float,
+) -> float:
+    """
+    Map a unipolar probability p in [0,1] back to a scalar in [x_min, x_max].
+    Inverse of value_to_unipolar_prob.
+    """
+    if not 0.0 <= p <= 1.0:
+        raise ValueError(f"Probability p must be in [0,1], got {p}.")
+    return float(x_min + p * (x_max - x_min))
+
+@dataclass
+class BitstreamEncoder:
+    """
+    Helper for encoding continuous scalar values into SC bitstreams
+    using linear unipolar mapping.
+    Example
+    -------
+    encoder = BitstreamEncoder(x_min=0.0, x_max=0.1, length=1024, seed=123)
+    bitstream = encoder.encode(0.06)  # 60% ones
+    p_hat = bitstream_to_probability(bitstream)
+    x_rec = encoder.decode(bitstream)
+    """
+    x_min: float
+    x_max: float
+    length: int = 256
+    seed: Optional[int] = None
+
+    def __post_init__(self) -> None:
+        self._rng = RNG(self.seed)
+
+    def encode(self, x: float) -> np.ndarray:
+        p = value_to_unipolar_prob(x, self.x_min, self.x_max, clip=True)
+        return generate_bernoulli_bitstream(p, self.length, rng=self._rng)
+
+    def decode(self, bitstream: np.ndarray) -> float:
+        p_hat = bitstream_to_probability(bitstream)
+        return unipolar_prob_to_value(p_hat, self.x_min, self.x_max)
+
+@dataclass
+class BitstreamAverager:
+    """
+    Utility to accumulate bits over time and estimate probability on the fly.
+    Can be used, e.g., to estimate a neuron firing probability over a window.
+    """
+    window: int
+    _buffer: Optional[np.ndarray] = None
+    _index: int = 0
+    _filled: bool = False
+
+    def __post_init__(self) -> None:
+        self._buffer = np.zeros(self.window, dtype=np.uint8)
+
+    def push(self, bit: int) -> None:
+        if bit not in (0, 1):
+            raise ValueError("Bit must be 0 or 1.")
+        self._buffer[self._index] = bit
+        self._index = (self._index + 1) % self.window
+        if self._index == 0:
+            self._filled = True
+
+    def estimate(self) -> float:
+        if not self._filled:
+            # Estimate over the filled portion only
+            count = self._index
+            if count == 0:
+                return 0.0
+            return float(self._buffer[:count].mean())
+        return float(self._buffer.mean())
+
+    def reset(self) -> None:
+        self._buffer.fill(0)
+        self._index = 0
+        self._filled = False

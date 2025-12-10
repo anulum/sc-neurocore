@@ -1,0 +1,131 @@
+from __future__ import annotations
+from dataclasses import dataclass, field
+from typing import Sequence, List, Optional, Dict, Any
+import numpy as np
+
+from ..sources.bitstream_current_source import BitstreamCurrentSource
+from ..neurons.stochastic_lif import StochasticLIFNeuron
+from ..recorders.spike_recorder import BitstreamSpikeRecorder
+
+@dataclass
+class SCDenseLayer:
+    """
+    Simple stochastic-computing "dense layer" of LIF neurons.
+
+    - Each neuron shares the same multi-channel BitstreamCurrentSource
+      (same inputs + weights for now, can be diversified later).
+    - Each neuron has its own stochastic LIF parameters and RNG seed.
+    - We simulate T time steps and collect spike trains for all neurons.
+
+    This is software-only but fully SC-driven at the input/synapse level.
+    """
+    n_neurons: int
+    x_inputs: Sequence[float]
+    weight_values: Sequence[float]
+    x_min: float
+    x_max: float
+    w_min: float
+    w_max: float
+    length: int = 2048
+    y_min: float = 0.0
+    y_max: float = 0.1
+    dt_ms: float = 1.0
+    neuron_params: Optional[Dict[str, Any]] = None
+    base_seed: Optional[int] = None
+
+    def __post_init__(self) -> None:
+        if len(self.x_inputs) != len(self.weight_values):
+            raise ValueError("x_inputs and weight_values must have same length.")
+
+        # Shared SC current source for now (can be extended to per-neuron later)
+        self.source = BitstreamCurrentSource(
+            x_inputs=self.x_inputs,
+            x_min=self.x_min,
+            x_max=self.x_max,
+            weight_values=self.weight_values,
+            w_min=self.w_min,
+            w_max=self.w_max,
+            length=self.length,
+            y_min=self.y_min,
+            y_max=self.y_max,
+            seed=self.base_seed,
+        )
+
+        # Build neurons
+        if self.neuron_params is None:
+            self.neuron_params = {}
+
+        self.neurons: List[StochasticLIFNeuron] = []
+        self.recorders: List[BitstreamSpikeRecorder] = []
+        for i in range(self.n_neurons):
+            # Give each neuron its own seed so they don't behave identically
+            seed = None
+            if self.base_seed is not None:
+                seed = self.base_seed + 10000 + i
+
+            neuron = StochasticLIFNeuron(
+                v_rest=self.neuron_params.get("v_rest", 0.0),
+                v_reset=self.neuron_params.get("v_reset", 0.0),
+                v_threshold=self.neuron_params.get("v_threshold", 1.0),
+                tau_mem=self.neuron_params.get("tau_mem", 20.0),
+                dt=self.dt_ms,
+                noise_std=self.neuron_params.get("noise_std", 0.02),
+                resistance=self.neuron_params.get("resistance", 1.0),
+                seed=seed,
+            )
+            self.neurons.append(neuron)
+            self.recorders.append(BitstreamSpikeRecorder(dt_ms=self.dt_ms))
+
+    def reset(self) -> None:
+        self.source.reset()
+        for neuron, rec in zip(self.neurons, self.recorders):
+            neuron.reset_state()
+            rec.reset()
+
+    def run(self, T: int) -> None:
+        """
+        Run the layer for T time steps, updating all neurons.
+
+        The current I_t is shared across all neurons (common input
+        processed through SC dot-product). Neurons differ by their
+        internal noise and parameters.
+        """
+        for _ in range(T):
+            I_t = self.source.step()
+            for neuron, rec in zip(self.neurons, self.recorders):
+                spike = neuron.step(I_t)
+                rec.record(spike)
+
+    def get_spike_trains(self) -> np.ndarray:
+        """
+        Return spike matrix of shape (n_neurons, T).
+        """
+        if not self.recorders:
+            return np.zeros((0, 0), dtype=np.uint8)
+
+        T = len(self.recorders[0].spikes)
+        spikes = np.zeros((self.n_neurons, T), dtype=np.uint8)
+        for i, rec in enumerate(self.recorders):
+            spikes[i] = rec.as_array()
+        return spikes
+
+    def summary(self) -> Dict[str, Any]:
+        """
+        Return firing statistics for each neuron.
+        """
+        stats = []
+        for i, rec in enumerate(self.recorders):
+            stats.append(
+                {
+                    "neuron": i,
+                    "total_spikes": rec.total_spikes(),
+                    "firing_rate_hz": rec.firing_rate_hz(),
+                }
+            )
+        return {
+            "n_neurons": self.n_neurons,
+            "stats": stats,
+            "avg_firing_rate_hz": float(
+                np.mean([s["firing_rate_hz"] for s in stats]) if stats else 0.0
+            ),
+        }
