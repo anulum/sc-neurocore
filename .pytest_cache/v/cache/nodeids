@@ -1,0 +1,16 @@
+[
+  "tests/test_hardware_interface.py::test_hardware_driver_flow",
+  "tests/test_integration.py::test_full_chain_integration",
+  "tests/test_integration.py::test_low_input_response",
+  "tests/test_neurons.py::test_lif_initialization",
+  "tests/test_neurons.py::test_lif_integration",
+  "tests/test_neurons.py::test_lif_leak",
+  "tests/test_neurons.py::test_lif_noise",
+  "tests/test_synapses.py::test_synapse_encoding",
+  "tests/test_synapses.py::test_synapse_multiplication",
+  "tests/test_synapses.py::test_synapse_update",
+  "tests/test_utils.py::test_averager",
+  "tests/test_utils.py::test_conversions",
+  "tests/test_utils.py::test_encoder_class",
+  "tests/test_utils.py::test_generate_bernoulli_bitstream"
+]
