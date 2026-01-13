@@ -47,6 +47,8 @@ module sc_axil_cfg #(
     output reg [15:0]                              cfg_weight [0:2],  // Q8.8
     output reg [15:0]                              cfg_y_min,         // Q8.8
     output reg [15:0]                              cfg_y_max,         // Q8.8
+    output reg [15:0]                              cfg_leak,          // Q8.8 Leak rate
+    output reg [15:0]                              cfg_gain,          // Q8.8 Input gain
     output reg [31:0]                              cfg_stream_len,
     output reg [31:0]                              cfg_dt_ms,
     output reg [31:0]                              cfg_scale_q16, // SCALE_Q16 for rate bank
@@ -80,6 +82,9 @@ localparam ADDR_Y_MAX       = 8'h34;
 localparam ADDR_STREAM_LEN  = 8'h40;
 localparam ADDR_DT_MS       = 8'h44;
 localparam ADDR_SCALE_Q16   = 8'h48;
+
+localparam ADDR_LEAK        = 8'h50;
+localparam ADDR_GAIN        = 8'h54;
 
 localparam ADDR_RATE0       = 8'h80;
 localparam ADDR_RATE1       = 8'h84;
@@ -143,6 +148,9 @@ always @(posedge S_AXI_ACLK) begin
                 ADDR_Y_MIN: cfg_y_min <= S_AXI_WDATA[15:0];
                 ADDR_Y_MAX: cfg_y_max <= S_AXI_WDATA[15:0];
 
+                ADDR_LEAK:  cfg_leak  <= S_AXI_WDATA[15:0];
+                ADDR_GAIN:  cfg_gain  <= S_AXI_WDATA[15:0];
+
                 ADDR_STREAM_LEN: cfg_stream_len <= S_AXI_WDATA;
                 ADDR_DT_MS:      cfg_dt_ms      <= S_AXI_WDATA;
                 ADDR_SCALE_Q16:  cfg_scale_q16  <= S_AXI_WDATA;
@@ -196,6 +204,9 @@ always @(posedge S_AXI_ACLK) begin
 
                 ADDR_Y_MIN: S_AXI_RDATA <= {16'b0, cfg_y_min};
                 ADDR_Y_MAX: S_AXI_RDATA <= {16'b0, cfg_y_max};
+
+                ADDR_LEAK:  S_AXI_RDATA <= {16'b0, cfg_leak};
+                ADDR_GAIN:  S_AXI_RDATA <= {16'b0, cfg_gain};
 
                 ADDR_STREAM_LEN: S_AXI_RDATA <= cfg_stream_len;
                 ADDR_DT_MS:      S_AXI_RDATA <= cfg_dt_ms;

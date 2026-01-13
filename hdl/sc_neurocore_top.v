@@ -46,6 +46,8 @@ wire [15:0]   cfg_x_input [0:N_INPUTS-1];
 wire [15:0]   cfg_weight [0:N_INPUTS-1];
 wire [15:0]   cfg_y_min;
 wire [15:0]   cfg_y_max;
+wire [15:0]   cfg_leak;
+wire [15:0]   cfg_gain;
 wire [31:0]   cfg_stream_len;
 wire [31:0]   cfg_dt_ms;
 wire [31:0]   cfg_scale_q16;
@@ -89,6 +91,8 @@ sc_axil_cfg #(
     .cfg_weight     (cfg_weight),
     .cfg_y_min      (cfg_y_min),
     .cfg_y_max      (cfg_y_max),
+    .cfg_leak       (cfg_leak),
+    .cfg_gain       (cfg_gain),
     .cfg_stream_len (cfg_stream_len),
     .cfg_dt_ms      (cfg_dt_ms),
     .cfg_scale_q16  (cfg_scale_q16),
@@ -99,10 +103,23 @@ sc_axil_cfg #(
 );
 
 // ----------------------------------------------------------------
+// Pack unpacked arrays into flat buses
+// ----------------------------------------------------------------
+wire [N_INPUTS*DATA_WIDTH-1:0] flat_x_input;
+wire [N_INPUTS*DATA_WIDTH-1:0] flat_weight;
+
+genvar i;
+generate
+    for (i = 0; i < N_INPUTS; i = i + 1) begin : PACK_BUS
+        assign flat_x_input[i*DATA_WIDTH +: DATA_WIDTH] = cfg_x_input[i];
+        assign flat_weight[i*DATA_WIDTH +: DATA_WIDTH]  = cfg_weight[i];
+    end
+endgenerate
+
+
+// ----------------------------------------------------------------
 // SC dense layer core
 // ----------------------------------------------------------------
-// We reuse sc_dense_layer_top logic but parameterize with AXI cfg.
-// You may refactor sc_dense_layer_top to accept these as inputs.
 wire [DATA_WIDTH-1:0] I_t;
 wire [N_NEURONS-1:0] neuron_spikes_t;
 wire                 running;
@@ -113,7 +130,6 @@ wire                 run_done;
 assign stat_busy = running;
 assign stat_done = run_done;
 
-// Example: core wrapper (you'll adapt to your existing file)
 sc_dense_layer_core #(
     .N_INPUTS(N_INPUTS),
     .N_NEURONS(N_NEURONS),
@@ -122,10 +138,13 @@ sc_dense_layer_core #(
     .clk          (S_AXI_ACLK),
     .rst_n        (S_AXI_ARESETN),
     .start_pulse  (cfg_start_pulse),
-    .x_input_fp   (cfg_x_input), // 3x Q8.8
-    .weight_fp    (cfg_weight),  // 3x Q8.8
+    .stream_len   (cfg_stream_len),
+    .x_input_fp   (flat_x_input), 
+    .weight_fp    (flat_weight),  // 3x Q8.8
     .y_min_fp     (cfg_y_min),
     .y_max_fp     (cfg_y_max),
+    .cfg_leak     (cfg_leak),
+    .cfg_gain     (cfg_gain),
     .stream_len   (cfg_stream_len),
     .I_t          (I_t),
     .spikes       (neuron_spikes_t),

@@ -1,0 +1,12 @@
+
+version: '3.8'
+
+services:
+  sc-neurocore:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    volumes:
+      - ../src:/app/src
+      - ../experiments:/app/experiments
+    command: python experiments/mega_advancements_demo.py

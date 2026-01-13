@@ -23,3 +23,9 @@ class RNG:
 
     def bernoulli(self, p: float, size=None):
         return self._rng.random(size) < p
+
+    def random(self, size=None):
+        return self._rng.random(size)
+
+    def shuffle(self, x):
+        return self._rng.shuffle(x)

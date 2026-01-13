@@ -26,20 +26,20 @@ module sc_lif_neuron #(
     parameter signed [DATA_WIDTH-1:0] V_REST      = 0,                   // 0.0
     parameter signed [DATA_WIDTH-1:0] V_RESET     = 0,                   // 0.0
     parameter signed [DATA_WIDTH-1:0] V_THRESHOLD = (1 <<< FRACTION),    // 1.0
-
-    // Leak coefficient alpha ~ dt / tau, in Q(FRACTION)
-    // e.g. alpha ≈ 1/25 ≈ 0.04 -> 0.04 * 2^F ≈ 10 for F=8
-    parameter signed [DATA_WIDTH-1:0] ALPHA_LEAK = 16'sd10,
-
-    // Input gain coefficient, maps I_t to dv_in, in Q(FRACTION)
-    // e.g. GAIN_IN = 1.0 -> 1 << FRACTION
-    parameter signed [DATA_WIDTH-1:0] GAIN_IN = (1 <<< FRACTION)
+    parameter integer REFRACTORY_PERIOD = 0                              // Cycles
 )(
     input wire                            clk,
     input wire                            rst_n,
 
+    // Runtime Configuration (Q(FRACTION))
+    input wire signed [DATA_WIDTH-1:0]    leak_k,  // Was ALPHA_LEAK
+    input wire signed [DATA_WIDTH-1:0]    gain_k,  // Was GAIN_IN
+
     // Fixed-point input current I_t (Q(FRACTION))
     input wire signed [DATA_WIDTH-1:0]    I_t,
+    
+    // External Noise Input (Q(FRACTION))
+    input wire signed [DATA_WIDTH-1:0]    noise_in,
 
     // Output spike: 1 when v crosses threshold, else 0
     output reg                            spike_out,
@@ -50,6 +50,9 @@ module sc_lif_neuron #(
 
 // Internal membrane potential
 reg signed [DATA_WIDTH-1:0] v_reg;
+
+// Refractory counter
+reg [31:0] refractory_counter;
 
 // Intermediate wide products for fixed-point math
 wire signed [2*DATA_WIDTH-1:0] leak_mul;
@@ -63,15 +66,16 @@ wire signed [DATA_WIDTH-1:0] dv_in;
 wire signed [DATA_WIDTH-1:0] v_next;
 
 
-// Compute (V_REST - v) * ALPHA_LEAK
-assign leak_mul = (V_REST - v_reg) * ALPHA_LEAK;
+// Compute (V_REST - v) * leak_k
+assign leak_mul = (V_REST - v_reg) * leak_k;
 assign dv_leak  = leak_mul >>> FRACTION;
 
-// Compute I_t * GAIN_IN
-assign in_mul = I_t * GAIN_IN;
+// Compute I_t * gain_k
+assign in_mul = I_t * gain_k;
 assign dv_in  = in_mul >>> FRACTION;
 
-assign v_next = v_reg + dv_leak + dv_in;
+// v_next includes noise
+assign v_next = v_reg + dv_leak + dv_in + noise_in;
 
 
 // Sequential update
@@ -80,16 +84,26 @@ always @(posedge clk or negedge rst_n) begin
         v_reg     <= V_REST;
         v_out     <= V_REST;
         spike_out <= 1'b0;
+        refractory_counter <= 0;
     end else begin
-        // Threshold check on next potential
-        if (v_next >= V_THRESHOLD) begin
-            spike_out <= 1'b1;
-            v_reg     <= V_RESET;
-            v_out     <= V_RESET;
-        end else begin
+        if (refractory_counter > 0) begin
+            // In refractory period
+            refractory_counter <= refractory_counter - 1;
             spike_out <= 1'b0;
-            v_reg     <= v_next;
-            v_out     <= v_next;
+            v_reg <= V_REST; // Clamp to rest? Or just hold? Python model holds/resets.
+            v_out <= V_REST;
+        end else begin
+            // Threshold check on next potential
+            if (v_next >= V_THRESHOLD) begin
+                spike_out <= 1'b1;
+                v_reg     <= V_RESET;
+                v_out     <= V_RESET;
+                refractory_counter <= REFRACTORY_PERIOD;
+            end else begin
+                spike_out <= 1'b0;
+                v_reg     <= v_next;
+                v_out     <= v_next;
+            end
         end
     end
 end

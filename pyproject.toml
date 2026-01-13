@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sc-neurocore"
-version = "0.1.0"
-description = "Stochastic neuron models for stochastic computing and neuromorphic experiments."
+version = "2.0.0"
+description = "Universal Stochastic Computing Framework spanning Software, Hardware, Physics, and Biology."
 authors = [
   { name = "Miroslav Sotek", email = "fortisstudio@gmail.com" }
 ]
@@ -13,7 +13,11 @@ readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
   "numpy>=1.22",
+  "scipy>=1.7",
+  "numba>=0.56",
+  "matplotlib>=3.5"
 ]
 
 [project.optional-dependencies]
 dev = ["pytest", "mypy", "black"]
+full = ["networkx", "onnx"]
