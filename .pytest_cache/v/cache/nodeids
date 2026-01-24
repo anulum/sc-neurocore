@@ -2,6 +2,8 @@
   "tests/test_hardware_interface.py::test_hardware_driver_flow",
   "tests/test_integration.py::test_full_chain_integration",
   "tests/test_integration.py::test_low_input_response",
+  "tests/test_microtubule_superradiance.py::test_chaos_divergence",
+  "tests/test_microtubule_superradiance.py::test_superradiance_effect",
   "tests/test_neurons.py::test_lif_initialization",
   "tests/test_neurons.py::test_lif_integration",
   "tests/test_neurons.py::test_lif_leak",
