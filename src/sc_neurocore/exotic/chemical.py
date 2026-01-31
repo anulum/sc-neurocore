@@ -18,11 +18,19 @@ class ReactionDiffusionSolver:
     def __post_init__(self):
         self.A = np.ones((self.height, self.width))
         self.B = np.zeros((self.height, self.width))
-        
-        # Seed
-        r = 5
-        cx, cy = self.width//2, self.height//2
-        self.B[cy-r:cy+r, cx-r:cx+r] = 0.25 + 0.25*np.random.random((2*r, 2*r))
+
+        # Seed - adaptive radius based on grid size
+        r = min(5, self.width // 4, self.height // 4)
+        if r > 0:
+            cx, cy = self.width // 2, self.height // 2
+            # Ensure bounds are within grid
+            y_start = max(0, cy - r)
+            y_end = min(self.height, cy + r)
+            x_start = max(0, cx - r)
+            x_end = min(self.width, cx + r)
+            seed_height = y_end - y_start
+            seed_width = x_end - x_start
+            self.B[y_start:y_end, x_start:x_end] = 0.25 + 0.25 * np.random.random((seed_height, seed_width))
 
     def laplacian(self, M):
         # Finite difference Laplacian with periodic boundary

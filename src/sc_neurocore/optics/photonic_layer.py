@@ -28,10 +28,16 @@ class PhotonicBitstreamLayer:
         """
         Generates bitstreams where '1' occurs if interference intensity < input_prob.
         """
+        input_probs = np.asarray(input_probs)
+        if input_probs.shape[0] != self.n_channels:
+            raise ValueError(
+                f"Input shape {input_probs.shape} does not match n_channels={self.n_channels}"
+            )
+
         # input_probs: (n_channels,)
         intensities = self.simulate_interference(length)
-        
+
         # Thresholding
         bits = (intensities < input_probs[:, None]).astype(np.uint8)
-        
+
         return bits

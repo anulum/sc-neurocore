@@ -5,46 +5,82 @@ def pack_bitstream(bitstream: np.ndarray) -> np.ndarray:
     """
     Packs a uint8 bitstream (0s and 1s) into uint64 integers.
     This allows processing 64 time steps in parallel.
-    
+
     Args:
         bitstream: Shape (N,) or (Batch, N) of uint8 {0,1}
-        
+
     Returns:
         packed: Shape (ceil(N/64),) or (Batch, ceil(N/64)) of uint64
     """
     bitstream = np.asarray(bitstream, dtype=np.uint8)
-    flat = bitstream.flatten()
-    length = flat.size
-    
-    # Pad to multiple of 64
-    pad_len = (64 - (length % 64)) % 64
-    if pad_len > 0:
-        flat = np.append(flat, np.zeros(pad_len, dtype=np.uint8))
-        
-    # Reshape to chunks of 64
-    chunks = flat.reshape(-1, 64)
-    
-    # Pack bits to uint64
-    # We multiply each bit by powers of 2 and sum
-    powers = 1 << np.arange(64, dtype=np.uint64)
-    packed = (chunks * powers).sum(axis=1, dtype=np.uint64)
-    
-    if bitstream.ndim > 1:
-        return packed.reshape(bitstream.shape[0], -1)
-    return packed
 
-def unpack_bitstream(packed: np.ndarray, original_length: int) -> np.ndarray:
+    if bitstream.ndim == 1:
+        # 1D case: single bitstream
+        length = bitstream.size
+        pad_len = (64 - (length % 64)) % 64
+        if pad_len > 0:
+            bitstream = np.append(bitstream, np.zeros(pad_len, dtype=np.uint8))
+
+        chunks = bitstream.reshape(-1, 64)
+        powers = 1 << np.arange(64, dtype=np.uint64)
+        packed = (chunks * powers).sum(axis=1, dtype=np.uint64)
+        return packed
+
+    elif bitstream.ndim == 2:
+        # 2D case: batch of bitstreams
+        batch_size, length = bitstream.shape
+        pad_len = (64 - (length % 64)) % 64
+
+        if pad_len > 0:
+            padding = np.zeros((batch_size, pad_len), dtype=np.uint8)
+            bitstream = np.concatenate([bitstream, padding], axis=1)
+
+        # Reshape to (batch, num_chunks, 64)
+        num_chunks = bitstream.shape[1] // 64
+        chunks = bitstream.reshape(batch_size, num_chunks, 64)
+
+        powers = 1 << np.arange(64, dtype=np.uint64)
+        packed = (chunks * powers).sum(axis=2, dtype=np.uint64)
+        return packed
+
+    else:
+        raise ValueError(f"Expected 1D or 2D array, got {bitstream.ndim}D")
+
+def unpack_bitstream(packed: np.ndarray, original_length: int, original_shape: tuple = None) -> np.ndarray:
     """
     Unpacks uint64 array back to uint8 bitstream.
+
+    Args:
+        packed: Packed uint64 array (1D or 2D)
+        original_length: Total number of bits to extract
+        original_shape: Optional tuple for reshaping output (batch, length)
+
+    Returns:
+        Unpacked bitstream of shape (original_length,) or original_shape
     """
-    packed_flat = packed.flatten()
-    
-    # Extract bits
-    # Shape: (num_packed, 64)
-    bits = ((packed_flat[:, None] & (1 << np.arange(64, dtype=np.uint64))) > 0).astype(np.uint8)
-    
-    unpacked = bits.flatten()
-    return unpacked[:original_length]
+    if packed.ndim == 1:
+        # 1D packed array
+        bits = ((packed[:, None] & (1 << np.arange(64, dtype=np.uint64))) > 0).astype(np.uint8)
+        unpacked = bits.flatten()
+        return unpacked[:original_length]
+
+    elif packed.ndim == 2:
+        # 2D packed array: (batch, num_chunks)
+        batch_size, num_chunks = packed.shape
+        # Extract bits: (batch, num_chunks, 64)
+        bits = ((packed[:, :, None] & (1 << np.arange(64, dtype=np.uint64))) > 0).astype(np.uint8)
+        # Reshape to (batch, num_chunks * 64)
+        unpacked = bits.reshape(batch_size, -1)
+
+        if original_shape is not None:
+            return unpacked[:, :original_shape[1]]
+        else:
+            # Assume original_length is per-batch
+            per_batch_len = original_length // batch_size
+            return unpacked[:, :per_batch_len]
+
+    else:
+        raise ValueError(f"Expected 1D or 2D packed array, got {packed.ndim}D")
 
 def vec_and(a_packed: np.ndarray, b_packed: np.ndarray) -> np.ndarray:
     """
