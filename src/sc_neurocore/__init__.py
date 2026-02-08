@@ -10,11 +10,22 @@ Import the classes you need directly::
 For hardware-level bit-true models::
 
     from sc_neurocore.neurons import FixedPointLIFNeuron, FixedPointLFSR
+
+Module Tiers
+------------
+- **core**     — Production-ready: neurons, synapses, layers, sources, utils,
+  recorders, accel.  Imported by default.
+- **research** — Functional but experimental: hdc, solvers, transformers,
+  quantum, robotics, bio, physics, etc.  Import explicitly, e.g.
+  ``from sc_neurocore.quantum.hybrid import QuantumStochasticLayer``.
+- **contrib**  — Speculative / theoretical: exotic, meta, transcendent,
+  eschaton, post_silicon.  Import explicitly.  Install optional deps with
+  ``pip install sc-neurocore[contrib]``.
 """
 
 from __future__ import annotations
 
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 
 # ── Neurons ──────────────────────────────────────────────────────────────────
 from .neurons import (

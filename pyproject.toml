@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sc-neurocore"
-version = "2.0.0"
+version = "2.1.0"
 description = "Universal Stochastic Computing Framework spanning Software, Hardware, Physics, and Biology."
 authors = [
   { name = "Miroslav Sotek", email = "fortisstudio@gmail.com" }
@@ -19,5 +19,23 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "mypy", "black"]
+dev = ["pytest", "pytest-cov", "mypy", "black"]
+gpu = ["cupy-cuda12x>=12.0"]
 full = ["networkx", "onnx"]
+# Tier: research — functional but experimental modules
+research = ["networkx", "onnx", "torch>=2.0"]
+# Tier: contrib — speculative / theoretical modules (exotic, meta, transcendent, etc.)
+contrib = ["networkx"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.black]
+line-length = 100
+target-version = ["py39"]
+
+[tool.mypy]
+ignore_missing_imports = true
