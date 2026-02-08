@@ -111,10 +111,14 @@ end
 // ----------------------------------------------------------------
 // Bitstream encoders for x_inputs
 // ----------------------------------------------------------------
+// Each encoder receives a unique SEED_INIT derived from a prime-stride
+// sequence so that LFSRs start in distinct states and produce
+// decorrelated bitstreams even when x_value inputs are identical.
 generate
     for (i = 0; i < N_INPUTS; i = i + 1) begin : ENC
         sc_bitstream_encoder #(
-            .DATA_WIDTH(DATA_WIDTH)
+            .DATA_WIDTH(DATA_WIDTH),
+            .SEED_INIT (16'hACE1 + i * 7)   // prime stride per input channel
         ) u_encoder (
             .clk        (clk),
             .rst_n      (rst_n),
@@ -129,31 +133,19 @@ endgenerate
 // ----------------------------------------------------------------
 // Bitstream encoders for weights
 // ----------------------------------------------------------------
+// Weight encoders use a different base seed (0xBEEF) with a second
+// prime stride (13) to guarantee full decorrelation from input
+// encoders AND from each other.
 generate
     for (i = 0; i < N_INPUTS; i = i + 1) begin : W_ENC
         sc_bitstream_encoder #(
-            .DATA_WIDTH(DATA_WIDTH)
+            .DATA_WIDTH(DATA_WIDTH),
+            .SEED_INIT (16'hBEEF + i * 13)  // different base + prime stride
         ) u_w_encoder (
             .clk        (clk),
             .rst_n      (rst_n),
             .x_value    (weight_arr[i]),
-            .t_index    (t_counter), // Correlated or decorrelated? 
-                                     // Using same t_index implies correlation if seeds match.
-                                     // sc_bitstream_encoder uses t_index[15:0] as seed if non-zero on reset.
-                                     // But it only uses t_index on reset. 
-                                     // Wait, sc_bitstream_encoder logic:
-                                     // lfsr_reg <= (t_index[15:0] != 0) ? t_index[15:0] : 16'hACE1; (Only on RST)
-                                     // So t_index change during run doesn't reseed.
-                                     // It just advances LFSR.
-                                     // To decorrelate, we need different seeds. 
-                                     // Since seed is set at RST, and RST is global... 
-                                     // We might need to modify encoder to allow seed offset or use different LFSRs.
-                                     // For this MVP, we assume LFSRs drift apart or we rely on 'magic'.
-                                     // Actually, sc_bitstream_encoder uses default seed if t_index=0 on reset.
-                                     // If we want different streams, we need different seeds.
-                                     // But t_index is 0 on reset! 
-                                     // Issue identified: All encoders will output SAME bitstream for same input value.
-                                     // FIX: Add parameter SEED_OFFSET to encoder or use instance ID.
+            .t_index    (t_counter),
             .bit_out    (w_bits_t[i])
         );
     end
@@ -189,8 +181,18 @@ sc_dotproduct_to_current #(
 // ----------------------------------------------------------------
 // Neuron cores (LIF)
 // ----------------------------------------------------------------
+// Noise input bus — one wire per neuron (tie to 0 for deterministic mode,
+// or connect to an external noise generator for stochastic operation).
+wire signed [DATA_WIDTH-1:0] noise_bus [0:N_NEURONS-1];
+// Debug: per-neuron membrane potential
+wire signed [DATA_WIDTH-1:0] v_out_bus [0:N_NEURONS-1];
+
 generate
     for (i = 0; i < N_NEURONS; i = i + 1) begin : LIFs
+        // Tie noise to zero — deterministic baseline.
+        // Replace with an external LFSR/TRNG source for stochastic runs.
+        assign noise_bus[i] = {DATA_WIDTH{1'b0}};
+
         sc_lif_neuron #(
             .DATA_WIDTH(DATA_WIDTH)
         ) u_neuron (
@@ -198,8 +200,10 @@ generate
             .rst_n    (rst_n),
             .leak_k   (cfg_leak),
             .gain_k   (cfg_gain),
-            .I_t      (I_t), // Note: Shared I_t for now (single receptive field demo)
-            .spike_out(neuron_spikes_t[i])
+            .I_t      (I_t),
+            .noise_in (noise_bus[i]),
+            .spike_out(neuron_spikes_t[i]),
+            .v_out    (v_out_bus[i])
         );
     end
 endgenerate

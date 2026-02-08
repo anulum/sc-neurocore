@@ -1,0 +1,102 @@
+"""
+SC-NeuroCore — Universal Stochastic Computing Framework
+========================================================
+
+Core public API surface for neuromorphic stochastic computing.
+Import the classes you need directly::
+
+    from sc_neurocore import StochasticLIFNeuron, SCDenseLayer, BitstreamEncoder
+
+For hardware-level bit-true models::
+
+    from sc_neurocore.neurons import FixedPointLIFNeuron, FixedPointLFSR
+"""
+
+from __future__ import annotations
+
+__version__ = "2.0.0"
+
+# ── Neurons ──────────────────────────────────────────────────────────────────
+from .neurons import (
+    BaseNeuron,
+    StochasticLIFNeuron,
+    FixedPointLIFNeuron,
+    FixedPointLFSR,
+    FixedPointBitstreamEncoder,
+    HomeostaticLIFNeuron,
+    StochasticDendriticNeuron,
+    SCIzhikevichNeuron,
+)
+
+# ── Synapses ─────────────────────────────────────────────────────────────────
+from .synapses import (
+    BitstreamSynapse,
+    BitstreamDotProduct,
+    StochasticSTDPSynapse,
+    RewardModulatedSTDPSynapse,
+)
+
+# ── Layers ───────────────────────────────────────────────────────────────────
+from .layers import (
+    SCDenseLayer,
+    SCConv2DLayer,
+    SCLearningLayer,
+    VectorizedSCLayer,
+    SCRecurrentLayer,
+    MemristiveDenseLayer,
+    SCFusionLayer,
+    StochasticAttention,
+)
+
+# ── Sources ──────────────────────────────────────────────────────────────────
+from .sources import BitstreamCurrentSource
+
+# ── Utilities ────────────────────────────────────────────────────────────────
+from .utils import (
+    RNG,
+    BitstreamEncoder,
+    BitstreamAverager,
+    generate_bernoulli_bitstream,
+    generate_sobol_bitstream,
+    bitstream_to_probability,
+)
+
+# ── Recorders ────────────────────────────────────────────────────────────────
+from .recorders import BitstreamSpikeRecorder
+
+__all__ = [
+    # Neurons
+    "BaseNeuron",
+    "StochasticLIFNeuron",
+    "FixedPointLIFNeuron",
+    "FixedPointLFSR",
+    "FixedPointBitstreamEncoder",
+    "HomeostaticLIFNeuron",
+    "StochasticDendriticNeuron",
+    "SCIzhikevichNeuron",
+    # Synapses
+    "BitstreamSynapse",
+    "BitstreamDotProduct",
+    "StochasticSTDPSynapse",
+    "RewardModulatedSTDPSynapse",
+    # Layers
+    "SCDenseLayer",
+    "SCConv2DLayer",
+    "SCLearningLayer",
+    "VectorizedSCLayer",
+    "SCRecurrentLayer",
+    "MemristiveDenseLayer",
+    "SCFusionLayer",
+    "StochasticAttention",
+    # Sources
+    "BitstreamCurrentSource",
+    # Utilities
+    "RNG",
+    "BitstreamEncoder",
+    "BitstreamAverager",
+    "generate_bernoulli_bitstream",
+    "generate_sobol_bitstream",
+    "bitstream_to_probability",
+    # Recorders
+    "BitstreamSpikeRecorder",
+]

@@ -14,7 +14,12 @@
 module sc_bitstream_encoder #(
     parameter integer DATA_WIDTH = 16,
     // Width of internal LFSR for randomness. Must be <= DATA_WIDTH
-    parameter integer LFSR_WIDTH = 16
+    parameter integer LFSR_WIDTH = 16,
+    // Per-instance seed to decorrelate parallel encoders.
+    // Each encoder instance MUST receive a unique non-zero value;
+    // otherwise all encoders sharing the same seed will produce
+    // identical bitstreams for equal x_value inputs.
+    parameter [LFSR_WIDTH-1:0] SEED_INIT = 16'hACE1
 )(
     input wire                      clk,
     input wire                      rst_n,
@@ -59,9 +64,13 @@ assign rnd_value = {{(DATA_WIDTH-LFSR_WIDTH){1'b0}}, lfsr_reg};
 // ----------------------------------------------------------------
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
-        // Non-zero seed for LFSR; can be a fixed constant or derived from t_index.
-        // We OR t_index[15:0] as a simple way to diversify runs.
-        lfsr_reg <= (t_index[15:0] != 0) ? t_index[15:0] : 16'hACE1;
+        // Use per-instance SEED_INIT to ensure each encoder starts from
+        // a distinct LFSR state.  XOR with t_index allows additional
+        // run-to-run variation when t_index is driven to a non-zero value
+        // before reset de-assertion.
+        lfsr_reg <= (SEED_INIT ^ t_index[LFSR_WIDTH-1:0]) != {LFSR_WIDTH{1'b0}}
+                  ? (SEED_INIT ^ t_index[LFSR_WIDTH-1:0])
+                  : SEED_INIT;
         bit_out <= 1'b0;
     end else begin
         // Advance LFSR
