@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 import numpy as np
 
@@ -30,6 +30,7 @@ class StochasticLIFNeuron(BaseNeuron):
     resistance: float = 1.0
     refractory_period: int = 0
     seed: int | None = None
+    entropy_source: Any | None = None # Optional external entropy (e.g. Quantum)
 
     def __post_init__(self) -> None:
         self._rng = RNG(self.seed)
@@ -52,7 +53,12 @@ class StochasticLIFNeuron(BaseNeuron):
         # Noise term
         dv_noise = 0.0
         if self.noise_std > 0.0:
-            dv_noise = float(self._rng.normal(0.0, self.noise_std))
+            if self.entropy_source is not None:
+                # Use external (Quantum) source
+                dv_noise = float(self.entropy_source.sample_normal(0.0, self.noise_std))
+            else:
+                # Use internal (Pseudo-random) source
+                dv_noise = float(self._rng.normal(0.0, self.noise_std))
 
         # Update membrane potential
         self.v += dv_leak + dv_input + dv_noise

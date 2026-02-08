@@ -5,7 +5,7 @@ from dataclasses import dataclass
 @dataclass
 class SCAudioSynthesizer:
     """
-    A stub for SC Audio Synthesis.
+    SC Audio Synthesis engine.
     Converts bitstreams/probabilities to waveform buffers.
     """
     sample_rate: int = 44100

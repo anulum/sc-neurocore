@@ -55,6 +55,7 @@ Run the definitive terminal demos:
 - `python src/sc_neurocore/experiments/immortal_probe_demo.py`
 
 ## 📖 Documentation
+- [SC_NEUROCORE_HARDWARE_MANUAL.md](docs/SC_NEUROCORE_HARDWARE_MANUAL.md): Comprehensive FPGA/RTL documentation.
 - [COMPONENT_INVENTORY.md](COMPONENT_INVENTORY.md): Complete list of 100+ classes.
 - [API_REFERENCE.md](API_REFERENCE.md): Detailed technical documentation.
 - [CHANGELOG.md](CHANGELOG.md): Version history through 22 phases.

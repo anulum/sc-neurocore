@@ -4,6 +4,23 @@ import os
 from dataclasses import dataclass, field
 from typing import Dict, Any
 
+
+class _SoulUnpickler(pickle.Unpickler):
+    """Restrict soul loading to known safe types."""
+    _SAFE = {
+        'builtins': {'list', 'dict', 'set', 'tuple', 'str', 'int', 'float', 'bool', 'bytes', 'complex', 'frozenset'},
+        'collections': {'OrderedDict', 'defaultdict'},
+        'numpy': {'ndarray', 'dtype', 'float64', 'float32', 'int64', 'int32', 'array'},
+        'numpy.core.multiarray': {'_reconstruct', 'scalar'},
+        'numpy.core.numeric': {'*'},
+        __name__: {'DigitalSoul'},
+        'sc_neurocore.core.immortality': {'DigitalSoul'},
+    }
+    def find_class(self, module, name):
+        if module in self._SAFE and (name in self._SAFE[module] or '*' in self._SAFE[module]):
+            return super().find_class(module, name)
+        raise pickle.UnpicklingError(f"Forbidden: {module}.{name}")
+
 @dataclass
 class DigitalSoul:
     """
@@ -43,7 +60,7 @@ class DigitalSoul:
         Restores a soul from a file.
         """
         with open(filepath, 'rb') as f:
-            return pickle.load(f)
+            return _SoulUnpickler(f).load()
             
     def reincarnate(self, orchestrator):
         """
