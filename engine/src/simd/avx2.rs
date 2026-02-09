@@ -3,6 +3,10 @@ use core::arch::x86_64::*;
 
 #[cfg(target_arch = "x86_64")]
 #[target_feature(enable = "avx2")]
+/// Count set bits in 64-bit words using AVX2.
+///
+/// # Safety
+/// Caller must ensure the current CPU supports `avx2`.
 pub unsafe fn popcount_avx2(data: &[u64]) -> u64 {
     let mut total = 0_u64;
     let mut chunks = data.chunks_exact(4);
@@ -25,7 +29,7 @@ pub unsafe fn popcount_avx2(data: &[u64]) -> u64 {
         total += lanes
             .iter()
             .copied()
-            .map(|lane| (lane.wrapping_mul(0x0101_0101_0101_0101) >> 56) as u64)
+            .map(|lane| lane.wrapping_mul(0x0101_0101_0101_0101) >> 56)
             .sum::<u64>();
     }
 
@@ -33,6 +37,10 @@ pub unsafe fn popcount_avx2(data: &[u64]) -> u64 {
 }
 
 #[cfg(not(target_arch = "x86_64"))]
+/// Fallback popcount when AVX2 is unavailable on this architecture.
+///
+/// # Safety
+/// This function is marked unsafe for API parity with the AVX2 variant.
 pub unsafe fn popcount_avx2(data: &[u64]) -> u64 {
     crate::bitstream::popcount_words_portable(data)
 }

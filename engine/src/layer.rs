@@ -70,9 +70,9 @@ impl DenseLayer {
         let mut rng = ChaCha8Rng::seed_from_u64(self.weight_seed);
         let mut packed_weights = vec![vec![Vec::<u64>::new(); self.n_inputs]; self.n_neurons];
 
-        for neuron_idx in 0..self.n_neurons {
-            for input_idx in 0..self.n_inputs {
-                let bits = bernoulli_stream(self.weights[neuron_idx][input_idx], self.length, &mut rng);
+        for (neuron_idx, neuron_weights) in self.weights.iter().enumerate().take(self.n_neurons) {
+            for (input_idx, weight_prob) in neuron_weights.iter().enumerate().take(self.n_inputs) {
+                let bits = bernoulli_stream(*weight_prob, self.length, &mut rng);
                 packed_weights[neuron_idx][input_idx] = pack(&bits).data;
             }
         }
@@ -101,9 +101,10 @@ impl DenseLayer {
             .map(|neuron_idx| {
                 let mut total = 0_u64;
                 let mut and_buf = Vec::<u64>::new();
-                for input_idx in 0..self.n_inputs {
-                    let w = &self.packed_weights[neuron_idx][input_idx];
-                    let i = &packed_inputs[input_idx];
+                for (w, i) in self.packed_weights[neuron_idx]
+                    .iter()
+                    .zip(packed_inputs.iter())
+                {
                     and_buf.clear();
                     and_buf.extend(w.iter().zip(i.iter()).map(|(a, b)| *a & *b));
                     total += popcount_dispatch(&and_buf);

@@ -19,6 +19,10 @@ except ImportError as exc:
 
 from .layers import VectorizedSCLayer
 from .neurons import FixedPointLIFNeuron
+from .grad import SurrogateLif, DifferentiableDenseLayer
+from .attention import StochasticAttention
+from .graphs import StochasticGraphLayer
+from .scpn import KuramotoSolver
 
 __all__ = [
     "__version__",
@@ -31,4 +35,9 @@ __all__ = [
     "FixedPointLif",
     "VectorizedSCLayer",
     "FixedPointLIFNeuron",
+    "SurrogateLif",
+    "DifferentiableDenseLayer",
+    "StochasticAttention",
+    "StochasticGraphLayer",
+    "KuramotoSolver",
 ]

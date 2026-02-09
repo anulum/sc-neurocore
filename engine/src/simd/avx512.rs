@@ -3,6 +3,10 @@ use core::arch::x86_64::*;
 
 #[cfg(target_arch = "x86_64")]
 #[target_feature(enable = "avx512f,avx512vpopcntdq")]
+/// Count set bits in 64-bit words using AVX-512 VPOPCNTDQ.
+///
+/// # Safety
+/// Caller must ensure the current CPU supports `avx512f` and `avx512vpopcntdq`.
 pub unsafe fn popcount_avx512(data: &[u64]) -> u64 {
     let mut total = 0_u64;
     let mut chunks = data.chunks_exact(8);
@@ -19,6 +23,10 @@ pub unsafe fn popcount_avx512(data: &[u64]) -> u64 {
 }
 
 #[cfg(not(target_arch = "x86_64"))]
+/// Fallback popcount when AVX-512 is unavailable on this architecture.
+///
+/// # Safety
+/// This function is marked unsafe for API parity with the AVX-512 variant.
 pub unsafe fn popcount_avx512(data: &[u64]) -> u64 {
     crate::bitstream::popcount_words_portable(data)
 }

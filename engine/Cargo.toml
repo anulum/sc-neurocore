@@ -31,8 +31,11 @@ pyo3-build-config = "0.22"
 name = "bitstream_bench"
 harness = false
 
+[[bench]]
+name = "full_bench"
+harness = false
+
 [profile.release]
 opt-level = 3
 lto = "fat"
 codegen-units = 1
-target-cpu = "native"

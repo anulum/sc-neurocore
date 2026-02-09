@@ -14,8 +14,9 @@ impl Lfsr16 {
     }
 
     pub fn step(&mut self) -> u16 {
-        let feedback = ((self.reg >> 15) ^ (self.reg >> 13) ^ (self.reg >> 12) ^ (self.reg >> 10)) & 1;
-        self.reg = ((self.reg << 1) & 0xffff) | feedback;
+        let feedback =
+            ((self.reg >> 15) ^ (self.reg >> 13) ^ (self.reg >> 12) ^ (self.reg >> 10)) & 1;
+        self.reg = (self.reg << 1) | feedback;
         self.reg
     }
 

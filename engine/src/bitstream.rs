@@ -12,7 +12,7 @@ impl BitStreamTensor {
 
 pub fn pack(bits: &[u8]) -> BitStreamTensor {
     let length = bits.len();
-    let words = (length + 63) / 64;
+    let words = length.div_ceil(64);
     let mut data = vec![0_u64; words];
 
     for (idx, bit) in bits.iter().copied().enumerate() {
@@ -27,9 +27,9 @@ pub fn pack(bits: &[u8]) -> BitStreamTensor {
 pub fn unpack(tensor: &BitStreamTensor) -> Vec<u8> {
     let mut bits = vec![0_u8; tensor.length];
 
-    for idx in 0..tensor.length {
+    for (idx, bit) in bits.iter_mut().enumerate().take(tensor.length) {
         let word = tensor.data[idx / 64];
-        bits[idx] = ((word >> (idx % 64)) & 1) as u8;
+        *bit = ((word >> (idx % 64)) & 1) as u8;
     }
 
     bits
@@ -63,7 +63,7 @@ pub fn swar_popcount_word(mut x: u64) -> u64 {
     x = x.wrapping_sub((x >> 1) & 0x5555_5555_5555_5555);
     x = (x & 0x3333_3333_3333_3333) + ((x >> 2) & 0x3333_3333_3333_3333);
     x = (x + (x >> 4)) & 0x0f0f_0f0f_0f0f_0f0f;
-    (x.wrapping_mul(0x0101_0101_0101_0101) >> 56) as u64
+    x.wrapping_mul(0x0101_0101_0101_0101) >> 56
 }
 
 pub fn popcount_words_portable(data: &[u64]) -> u64 {
