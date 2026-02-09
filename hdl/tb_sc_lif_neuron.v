@@ -37,7 +37,7 @@ module tb_sc_lif_neuron;
         .FRACTION         (FRACTION),
         .V_REST           (0),
         .V_RESET          (0),
-        .V_THRESHOLD      (1 <<< FRACTION),  // 1.0 in Q8.8 = 256
+        .V_THRESHOLD      (1 << FRACTION),   // 1.0 in Q8.8 = 256
         .REFRACTORY_PERIOD(2)
     ) dut (
         .clk      (clk),

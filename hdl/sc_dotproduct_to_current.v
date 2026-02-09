@@ -10,7 +10,7 @@
 //      I_t = y_min + prob * (y_max - y_min)
 //
 // Fixed-point notes:
-//  - y_min, y_max, I_t are DATA_WIDTH-wide unsigned fixed-point values.
+//  - y_min, y_max, I_t are DATA_WIDTH-wide signed fixed-point values (Q8.8).
 //  - We compute:
 //      range = y_max - y_min
 //      product = range * count
@@ -25,10 +25,10 @@ module sc_dotproduct_to_current #(
     parameter integer N_INPUTS = 3,
     parameter integer DATA_WIDTH = 16
 )(
-    input wire [N_INPUTS-1:0]   post_bits,
-    input wire [DATA_WIDTH-1:0] y_min,
-    input wire [DATA_WIDTH-1:0] y_max,
-    output reg [DATA_WIDTH-1:0] I_t
+    input wire [N_INPUTS-1:0]          post_bits,
+    input wire signed [DATA_WIDTH-1:0] y_min,
+    input wire signed [DATA_WIDTH-1:0] y_max,
+    output reg signed [DATA_WIDTH-1:0] I_t
 );
 
 // Width needed to count up to N_INPUTS
@@ -36,10 +36,10 @@ localparam integer CNT_WIDTH = $clog2(N_INPUTS + 1);
 
 integer i;
 
-reg [CNT_WIDTH-1:0]       count_ones;
-reg [DATA_WIDTH-1:0]      range;
-reg [DATA_WIDTH + CNT_WIDTH-1:0] product;
-reg [DATA_WIDTH-1:0]      scaled;
+reg [CNT_WIDTH-1:0]                     count_ones;
+reg signed [DATA_WIDTH-1:0]             range;
+reg signed [DATA_WIDTH + CNT_WIDTH-1:0] product;
+reg signed [DATA_WIDTH-1:0]             scaled;
 
 always @* begin
     // 1) Count ones in post_bits (population count)

@@ -33,6 +33,22 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
+[tool.coverage.run]
+source = ["sc_neurocore"]
+omit = [
+    "*/experiments/*",
+    "*/drivers/*",
+    "*/interfaces/ccw_bridge.py",
+]
+
+[tool.coverage.report]
+fail_under = 50
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__",
+    "raise NotImplementedError",
+]
+
 [tool.black]
 line-length = 100
 target-version = ["py39"]

@@ -33,7 +33,10 @@ module sc_firing_rate_bank #(
 
     // Internal counters
     reg [CNT_WIDTH-1:0] accumulators [0:N_NEURONS-1];
-    
+
+    // Wide product to avoid overflow: CNT_WIDTH + SCALE_WIDTH bits
+    reg [CNT_WIDTH + SCALE_WIDTH - 1:0] wide_product;
+
     integer i;
 
     // Accumulation logic
@@ -44,17 +47,9 @@ module sc_firing_rate_bank #(
                 rate_q16[i]     <= 32'b0;
             end
         end else begin
-            // Reset on rising edge of run_active (start of new run)
-            // We need a 1-cycle delay or edge detection for run_active start.
-            // Simplified: if run_active is low, hold accumulators at 0? 
-            // Better: reset when run_done was high previously?
-            // Let's assume an external controller handles the pulse sequence.
-            // If we see run_active transition 0->1, we reset.
-            
-            // For now, let's just accumulate while run_active is 1.
-            // If run_active goes low, we stop.
-            // To clear, we rely on the fact that rate_q16 is updated on run_done.
-            // But we need to clear counters for the NEXT run.
+            // Protocol: External controller drives run_active=1 during run,
+            // then pulses run_done=1 (with run_active=0) to finalise.
+            // Accumulators are cleared on run_done to prepare for next run.
             
             if (run_active) begin
                 if (step_valid) begin
@@ -65,21 +60,12 @@ module sc_firing_rate_bank #(
                     end
                 end
             end else if (run_done) begin
-                // Update outputs
+                // Finalise: rate_Q16 = count * SCALE_Q16 (scale is 1/T in Q16.16)
                 for (i = 0; i < N_NEURONS; i = i + 1) begin
-                    // rate = (count * scale) >> 16? 
-                    // No, scale is Q16. count is integer. output is Q16.
-                    // rate_Q16 = count * scale_Q16
-                    // Wait, if scale is 1/T in Q16, then count * scale is rate in Q16.
-                    // We need a multiplier.
-                    // 16-bit count * 32-bit scale -> 48-bit result.
-                    // We take the lower 32 bits? No, result fits in 32 bits if rate <= 65535.
-                    
-                    rate_q16[i] <= accumulators[i] * SCALE_Q16; 
+                    wide_product = accumulators[i] * SCALE_Q16;
+                    rate_q16[i] <= wide_product[31:0];
                 end
-                // Clear accumulators for next run? 
-                // Or maybe clear them when run_active starts again?
-                // Let's clear them here for safety.
+                // Clear accumulators for next run
                 for (i = 0; i < N_NEURONS; i = i + 1) begin
                     accumulators[i] <= 0;
                 end

@@ -10,17 +10,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Code
+# Copy project files
+COPY pyproject.toml README.md LICENSE /app/
 COPY src/ /app/src/
-COPY pyproject.toml /app/
-COPY README.md /app/
 
-# Install Deps
-# We assume requirements or pyproject. Use pip directly for demo.
-RUN pip install --no-cache-dir numpy scipy numba matplotlib
+# Install the package properly via pyproject.toml
+RUN pip install --no-cache-dir .
 
-# Set Python Path
-ENV PYTHONPATH=/app/src
+# Verify installation
+RUN python -c "import sc_neurocore; print(f'sc-neurocore {sc_neurocore.__version__} installed')"
 
-# Default Command: Run Tests (if we copied them) or Python shell
+# Default Command
 CMD ["python3"]

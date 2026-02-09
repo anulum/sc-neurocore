@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any, Dict
 import numpy as np
 
 
@@ -95,6 +96,18 @@ class FixedPointLIFNeuron:
         """Reset neuron state to power-on defaults."""
         self.v = self.v_rest
         self.refractory_counter = 0
+
+    # Aliases for BaseNeuron-compatible interface
+    def reset_state(self) -> None:
+        """Reset internal state (alias for :meth:`reset`)."""
+        self.reset()
+
+    def get_state(self) -> Dict[str, Any]:
+        """Return dict with internal state."""
+        return {
+            "v": self.v,
+            "refractory_counter": self.refractory_counter,
+        }
 
 
 @dataclass

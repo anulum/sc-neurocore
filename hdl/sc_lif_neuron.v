@@ -25,7 +25,7 @@ module sc_lif_neuron #(
     // Membrane parameters in Q(FRACTION) fixed-point
     parameter signed [DATA_WIDTH-1:0] V_REST      = 0,                   // 0.0
     parameter signed [DATA_WIDTH-1:0] V_RESET     = 0,                   // 0.0
-    parameter signed [DATA_WIDTH-1:0] V_THRESHOLD = (1 <<< FRACTION),    // 1.0
+    parameter signed [DATA_WIDTH-1:0] V_THRESHOLD = (1 << FRACTION),     // 1.0 in Q(FRACTION)
     parameter integer REFRACTORY_PERIOD = 0                              // Cycles
 )(
     input wire                            clk,
@@ -90,7 +90,7 @@ always @(posedge clk or negedge rst_n) begin
             // In refractory period
             refractory_counter <= refractory_counter - 1;
             spike_out <= 1'b0;
-            v_reg <= V_REST; // Clamp to rest? Or just hold? Python model holds/resets.
+            v_reg <= V_REST; // Clamp to rest during refractory (matches Python model)
             v_out <= V_REST;
         end else begin
             // Threshold check on next potential

@@ -1,4 +1,3 @@
-
 version: '3.8'
 
 services:
@@ -6,7 +5,4 @@ services:
     build:
       context: ..
       dockerfile: deploy/Dockerfile
-    volumes:
-      - ../src:/app/src
-      - ../experiments:/app/experiments
-    command: python experiments/mega_advancements_demo.py
+    command: python -c "import sc_neurocore; print(f'sc-neurocore {sc_neurocore.__version__} ready')"
