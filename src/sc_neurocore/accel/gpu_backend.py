@@ -26,9 +26,9 @@ try:
     import cupy as cp
 
     # Verify a device is actually reachable
-    cp.cuda.Device(0).compute_capability
-    HAS_CUPY = True
-    xp = cp
+    cp.cuda.Device(0).compute_capability  # pragma: no cover
+    HAS_CUPY = True  # pragma: no cover
+    xp = cp  # pragma: no cover
 except Exception:
     HAS_CUPY = False
     xp = np
@@ -40,14 +40,14 @@ except Exception:
 
 def to_device(arr: np.ndarray) -> "xp.ndarray":
     """Move a NumPy array to the active backend (GPU copy or no-op)."""
-    if HAS_CUPY:
+    if HAS_CUPY:  # pragma: no cover
         return cp.asarray(arr)
     return arr
 
 
 def to_host(arr) -> np.ndarray:
     """Bring an array back to host RAM as a NumPy array."""
-    if HAS_CUPY and isinstance(arr, cp.ndarray):
+    if HAS_CUPY and isinstance(arr, cp.ndarray):  # pragma: no cover
         return cp.asnumpy(arr)
     return np.asarray(arr)
 

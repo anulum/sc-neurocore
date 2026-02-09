@@ -42,11 +42,14 @@ omit = [
 ]
 
 [tool.coverage.report]
-fail_under = 50
+fail_under = 97
 exclude_lines = [
     "pragma: no cover",
     "if __name__",
     "raise NotImplementedError",
+    "if HAS_MPI",
+    "if HAS_CUPY",
+    "if HAS_NUMBA",
 ]
 
 [tool.black]

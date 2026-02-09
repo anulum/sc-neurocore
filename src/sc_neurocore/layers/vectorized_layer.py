@@ -41,7 +41,7 @@ class VectorizedSCLayer:
         packed_flat = pack_bitstream(flat)
         pw = packed_flat.reshape(self.n_neurons, self.n_inputs, -1)
 
-        if self._on_gpu:
+        if self._on_gpu:  # pragma: no cover
             self.packed_weights = to_device(pw)
         else:
             self.packed_weights = pw
@@ -55,7 +55,7 @@ class VectorizedSCLayer:
 
         packed_inputs = pack_bitstream(input_bits)
 
-        if self._on_gpu:
+        if self._on_gpu:  # pragma: no cover
             packed_inputs_dev = to_device(packed_inputs)
             counts = gpu_vec_mac(self.packed_weights, packed_inputs_dev)
             outputs = to_host(counts).astype(np.float64)
