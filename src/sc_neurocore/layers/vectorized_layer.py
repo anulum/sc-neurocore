@@ -2,14 +2,13 @@
 from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
-from typing import Sequence, Optional
+from typing import Sequence
 
 from ..accel.vector_ops import pack_bitstream, vec_and, vec_popcount
 from ..accel.gpu_backend import (
-    xp, HAS_CUPY, to_device, to_host,
-    gpu_pack_bitstream, gpu_vec_and, gpu_vec_mac,
+    HAS_CUPY, to_device, to_host,
+    gpu_vec_mac,
 )
-from ..utils.bitstreams import BitstreamEncoder
 
 @dataclass
 class VectorizedSCLayer:
@@ -49,6 +48,11 @@ class VectorizedSCLayer:
     def forward(self, input_values: Sequence[float]) -> np.ndarray:
         """Compute output firing rates for the layer."""
         in_probs = np.array(input_values)
+        if in_probs.ndim != 1 or in_probs.shape[0] != self.n_inputs:
+            raise ValueError(
+                f"Expected 1-D input of length {self.n_inputs}, "
+                f"got shape {in_probs.shape}"
+            )
         input_bits = (
             np.random.random((self.n_inputs, self.length)) < in_probs[:, None]
         ).astype(np.uint8)

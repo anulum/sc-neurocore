@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-import numpy as np
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 @dataclass
 class StochasticDendriticNeuron:

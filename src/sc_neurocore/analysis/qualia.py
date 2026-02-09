@@ -1,7 +1,10 @@
 
+import logging
 import numpy as np
 from ..transcendent.noetic import SemioticTriad, Sign
 from ..viz.neuro_art import NeuroArtGenerator
+
+logger = logging.getLogger(__name__)
 
 class QualiaTuringTest:
     """
@@ -37,8 +40,8 @@ class QualiaTuringTest:
         # The agent 'feels' the state and shifts the meaning
         description = self.semiotics.interpret(sign)
         
-        print(f"Qualia Test: State Peak {dominant_feature} -> Concept '{base_concept}'.")
-        print(f"    Agent Description: '{description.signified}' (via {description.signifier})")
+        logger.info("Qualia Test: State Peak %d -> Concept '%s'.", dominant_feature, base_concept)
+        logger.info("    Agent Description: '%s' (via %s)", description.signified, description.signifier)
         
         # 4. Evaluation
         # If the description is a valid association in the Semiotic Graph, pass.
@@ -46,11 +49,11 @@ class QualiaTuringTest:
         dist = self.semiotics.metaphor_distance(base_concept, description.signified)
         
         if dist >= 0 and description.signified != base_concept:
-            print("    Result: PASS. Agent generated valid metaphorical description.")
+            logger.info("    Result: PASS. Agent generated valid metaphorical description.")
             return True
         elif description.signified == base_concept:
-            print("    Result: INCONCLUSIVE. Literal description (Zombie behavior).")
+            logger.info("    Result: INCONCLUSIVE. Literal description (Zombie behavior).")
             return False
         else:
-            print("    Result: FAIL. Incoherent hallucination.")
+            logger.info("    Result: FAIL. Incoherent hallucination.")
             return False

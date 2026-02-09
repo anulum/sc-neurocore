@@ -2,6 +2,48 @@
 
 All notable changes to the `sc-neurocore` project will be documented in this file.
 
+## [2.2.0] - 2026-02-09
+
+### Added
+- **Module Discoverability**: Populated 36 stub `__init__.py` files with proper
+  `__all__` exports and lazy imports. Every package now supports
+  `from sc_neurocore.X import Y` without touching internals.
+- **MkDocs API Documentation**: Added `mkdocs.yml` with mkdocstrings plugin,
+  `docs/index.md`, `docs/getting-started.md`, `docs/architecture.md`, and 17
+  API reference stubs in `docs/api/`.
+- **Examples Directory**: 6 runnable example scripts demonstrating bitstream
+  encoding, neuron layers, vectorized inference, SCPN stack, HDL generation,
+  and ensemble consensus (`examples/01`–`06`).
+- **Module Docstrings**: Added module-level docstrings to `pipeline/ingestion.py`,
+  `pipeline/training.py`, `utils/model_bridge.py`, `ensembles/orchestrator.py`.
+
+### Changed
+- **Print → Logging**: Converted 60+ `print()` calls across 25 source modules
+  to structured `logging` with `getLogger(__name__)` and `%`-style formatting.
+  Dashboard and drivers intentionally excluded (stdout by design).
+- **CI Coverage Threshold**: Raised `--cov-fail-under` from 50 to 97 in
+  `.github/workflows/ci.yml` to match actual coverage.
+- Version bump: 2.1.0 → 2.2.0.
+
+### Fixed
+- **Unused Imports**: Removed dead imports from 7 files (`bio/uploading.py`,
+  `core/replication.py`, `core/immortality.py`, `export/onnx_exporter.py`,
+  `dashboard/text_dashboard.py`, `hdl_gen/verilog_generator.py`, `viz/web_viz.py`).
+- **Input Validation**: `VectorizedSCLayer.forward()` now raises `ValueError`
+  on wrong-shape input instead of silently producing garbage.
+- **File I/O Error Handling**: `onnx_exporter.py`, `immortality.py`,
+  `verilog_generator.py`, and `replication.py` now catch `OSError` on
+  file operations and log meaningful messages.
+
+### Security
+- **Pickle Allowlist**: Replaced wildcard `'numpy.core.numeric': {'*'}` with
+  explicit `{'_frombuffer', 'scalar'}` in `core/immortality.py`.
+- **Path Traversal Prevention**: `core/replication.py` now validates that the
+  destination directory is within or below the working directory via
+  `os.path.realpath()` + `os.path.relpath()`.
+
+---
+
 ## [2.1.0] - 2026-02-08
 
 ### Fixed (Critical)

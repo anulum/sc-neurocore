@@ -1,7 +1,9 @@
 
 import json
+import logging
 import numpy as np
-import warnings
+
+logger = logging.getLogger(__name__)
 
 class SCOnnxExporter:
     """
@@ -70,8 +72,12 @@ class SCOnnxExporter:
             "type": "tensor(float)"
         })
         
-        with open(filename, "w") as f:
-            json.dump(graph, f, indent=4)
-            
-        print(f"Exported ONNX-Schema JSON to {filename}")
-        print("Note: Weights saved as .npy sidecars.")
+        try:
+            with open(filename, "w") as f:
+                json.dump(graph, f, indent=4)
+        except OSError as exc:
+            logger.error("Failed to export ONNX schema to %s: %s", filename, exc)
+            raise
+
+        logger.info("Exported ONNX-Schema JSON to %s", filename)
+        logger.info("Note: Weights saved as .npy sidecars.")

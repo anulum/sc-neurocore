@@ -15,10 +15,10 @@ Key Features:
 Author: Claude (Session 2026-01-31)
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import numpy as np
 import logging
-from typing import Dict, Optional, List
+from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
 

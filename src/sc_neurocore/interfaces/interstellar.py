@@ -1,7 +1,10 @@
 
+import logging
 import numpy as np
 from dataclasses import dataclass, field
 from typing import List, Optional
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class Packet:
@@ -22,7 +25,7 @@ class InterstellarDTN:
     def receive(self, packet: Packet):
         """Store packet in non-volatile memory."""
         self.buffer.append(packet)
-        print(f"DTN Node {self.node_id}: Packet {packet.id} buffered.")
+        logger.debug("DTN Node %s: Packet %d buffered.", self.node_id, packet.id)
         
     def step(self) -> Optional[Packet]:
         """

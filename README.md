@@ -1,7 +1,7 @@
 # SC-NeuroCore
 
-**Version:** 2.1.0
-**Status:** Production Core Verified | 460 Tests Passing | CI/CD Active
+**Version:** 2.2.0
+**Status:** Production Core Verified | 826 Tests Passing | 99.67% Coverage | CI/CD Active
 
 SC-NeuroCore is a universal stochastic computing framework for neuromorphic
 hardware simulation. It provides bit-true Python models that match Verilog RTL
@@ -108,11 +108,28 @@ python scripts/cosim_gen_and_check.py --check
 - **Fixed-point**: Q8.8 (DATA_WIDTH=16, FRACTION=8), signed two's complement
 - **Overflow**: Explicit bit-width masking via `_mask()` function
 
+## Examples
+
+Runnable scripts in `examples/`:
+
+| Script | Description |
+|--------|-------------|
+| `01_basic_sc_encoding.py` | Bernoulli and Sobol bitstream encoding/decoding |
+| `02_sc_neuron_layer.py` | Building and running SC neuron layers |
+| `03_vectorized_layer.py` | High-performance packed bitwise inference |
+| `04_scpn_stack.py` | Full 7-layer SCPN consciousness stack |
+| `05_hdl_generation.py` | Verilog HDL generation from network description |
+| `06_ensemble_consensus.py` | Multi-agent ensemble orchestration |
+
+```bash
+python examples/01_basic_sc_encoding.py
+```
+
 ## CI/CD
 
 GitHub Actions pipeline (`.github/workflows/sc-neurocore-ci.yml`):
 - **Lint**: black --check + mypy
-- **Test**: Python 3.9 / 3.11 / 3.12 matrix, coverage >= 60%
+- **Test**: Python 3.9 / 3.11 / 3.12 matrix, coverage >= 97%
 - **Build**: wheel + sdist + install verification
 
 ## Benchmarks
@@ -140,8 +157,15 @@ Sample results (CPU, quick mode):
 - [CHANGELOG.md](CHANGELOG.md) -- Version history
 - [BENCHMARKS.md](BENCHMARKS.md) -- Performance benchmark results
 - [docs/HARDWARE_GUIDE.md](docs/HARDWARE_GUIDE.md) -- FPGA deployment workflow
-- [docs/API_REFERENCE.md](docs/API_REFERENCE.md) -- API documentation
-- [docs/USER_GUIDE.md](docs/USER_GUIDE.md) -- Usage guide
+- [docs/index.md](docs/index.md) -- MkDocs project overview
+- [docs/getting-started.md](docs/getting-started.md) -- Installation & quickstart
+- [docs/architecture.md](docs/architecture.md) -- Package architecture
+
+Build API docs locally:
+```bash
+pip install mkdocs mkdocs-material mkdocstrings[python]
+mkdocs serve
+```
 
 ## Install Extras
 

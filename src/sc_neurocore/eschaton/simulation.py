@@ -1,7 +1,9 @@
 
-import numpy as np
+import logging
 from dataclasses import dataclass, field
 from typing import List, Optional
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class NestedUniverse:
@@ -18,7 +20,7 @@ class NestedUniverse:
         Creates a child universe with a fraction of parent resources.
         """
         if self.computing_resources < 1.0:
-            print(f"Universe {self.id}: Insufficient entropy to spawn sub-reality.")
+            logger.warning("Universe %d: Insufficient entropy to spawn sub-reality.", self.id)
             return None
             
         child_res = self.computing_resources * (1.0 - overhead)
@@ -27,7 +29,7 @@ class NestedUniverse:
         child_id = self.id + 1
         child = NestedUniverse(id=child_id, computing_resources=child_res)
         self.children.append(child)
-        print(f"Universe {self.id} -> Spawning Child Universe {child_id} (Res: {child_res:.2f})")
+        logger.info("Universe %d -> Spawning Child Universe %d (Res: %.2f)", self.id, child_id, child_res)
         return child
 
     def run_recursive_step(self):

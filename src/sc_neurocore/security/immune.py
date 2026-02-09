@@ -1,7 +1,10 @@
 
+import logging
 import numpy as np
 from dataclasses import dataclass, field
 from typing import List
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class DigitalImmuneSystem:
@@ -33,12 +36,12 @@ class DigitalImmuneSystem:
         min_dist = min(distances)
         
         if min_dist > self.tolerance:
-            print(f"Immune System: ANOMALY DETECTED! Deviation: {min_dist:.4f}")
+            logger.warning("Immune System: ANOMALY DETECTED! Deviation: %.4f", min_dist)
             self._trigger_response()
             return False
             
         return True
         
     def _trigger_response(self):
-        print("Immune System: Initiating Quarantine Protocol...")
+        logger.warning("Immune System: Initiating Quarantine Protocol...")
         # Action: Disable compromised modules (Simulation)

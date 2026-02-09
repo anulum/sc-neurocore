@@ -2,7 +2,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
-from typing import List, Callable
+from typing import List
 from .predictive_model import PredictiveWorldModel
 
 @dataclass

@@ -1,7 +1,6 @@
 
 from dataclasses import dataclass
 from typing import Dict, Any
-import numpy as np
 from .stochastic_lif import StochasticLIFNeuron
 
 @dataclass

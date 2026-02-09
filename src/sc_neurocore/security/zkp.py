@@ -1,7 +1,6 @@
 
 import numpy as np
 import hashlib
-from dataclasses import dataclass
 
 class ZKPVerifier:
     """

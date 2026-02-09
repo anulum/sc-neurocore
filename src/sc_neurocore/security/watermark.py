@@ -1,5 +1,8 @@
 
+import logging
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 class WatermarkInjector:
     """
@@ -30,7 +33,7 @@ class WatermarkInjector:
         # A strong backdoor simply overwrites.
         # Let's overwrite for proof-of-concept.
         
-        print(f"Injecting Backdoor into Neuron {target_neuron_idx}...")
+        logger.info("Injecting Backdoor into Neuron %d...", target_neuron_idx)
         
         # For unipolar inputs [0, 1]:
         # To max response: Weight = 1 where Trigger = 1.

@@ -12,7 +12,6 @@ from sc_neurocore.spatial.transformer_3d import SpatialTransformer3D
 from sc_neurocore.generative.text_gen import SCTextGenerator
 from sc_neurocore.generative.audio_synthesis import SCAudioSynthesizer
 from sc_neurocore.generative.three_d_gen import SC3DGenerator
-from sc_neurocore.pipeline.ingestion import DataIngestor
 from sc_neurocore.ensembles.orchestrator import EnsembleOrchestrator
 from sc_neurocore.core.orchestrator import CognitiveOrchestrator
 

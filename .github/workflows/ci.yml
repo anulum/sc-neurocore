@@ -37,7 +37,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install -e ".[dev]"
-      - run: pytest tests/ -v --cov=sc_neurocore --cov-report=term --cov-fail-under=50
+      - run: pytest tests/ -v --cov=sc_neurocore --cov-report=term --cov-fail-under=97
 
   build:
     runs-on: ubuntu-latest

@@ -1,9 +1,12 @@
+"""Training loops for stochastic computing networks (RL and multimodal fusion)."""
 
+import logging
 import numpy as np
-from dataclasses import dataclass
-from typing import List, Callable
+from typing import Callable
 from ..synapses.r_stdp import RewardModulatedSTDPSynapse
 from ..layers.sc_learning_layer import SCLearningLayer
+
+logger = logging.getLogger(__name__)
 
 class SCTrainingLoop:
     """
@@ -30,7 +33,7 @@ class SCTrainingLoop:
                     if isinstance(syn, RewardModulatedSTDPSynapse):
                         syn.apply_reward(reward)
             
-            print(f"RL Epoch {gen}: Reward = {reward:.4f}")
+            logger.info("RL Epoch %d: Reward = %.4f", gen, reward)
 
     @staticmethod
     def train_multimodal_fusion(fusion_layer, dataset, epochs: int = 5):
@@ -38,6 +41,6 @@ class SCTrainingLoop:
         Stub for training weights in a fusion layer.
         """
         for ep in range(epochs):
-            print(f"Fusion Training Epoch {ep}...")
+            logger.info("Fusion Training Epoch %d...", ep)
             # Logic for adjusting fusion weights based on goal
             pass

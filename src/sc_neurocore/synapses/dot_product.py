@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import List, Sequence, Tuple
+from typing import List, Tuple
 import numpy as np
 
 from .sc_synapse import BitstreamSynapse
@@ -70,7 +70,6 @@ class BitstreamDotProduct:
                 f"Expected {self.n_inputs} input bitstreams, got {pre_matrix.shape[0]}"
             )
 
-        length = pre_matrix.shape[1]
         post_matrix = np.zeros_like(pre_matrix, dtype=np.uint8)
         probs = []
 

@@ -1,8 +1,11 @@
 
+import logging
 import numpy as np
 from dataclasses import dataclass, field
 from typing import List, Any, Dict, Optional
 from .tensor_stream import TensorStream
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class CognitiveOrchestrator:
@@ -21,7 +24,7 @@ class CognitiveOrchestrator:
         """Focuses resources on a specific module."""
         if module_name in self.modules:
             self.attention_focus = module_name
-            print(f"Orchestrator: Attention focused on '{module_name}'.")
+            logger.info("Orchestrator: Attention focused on '%s'.", module_name)
 
     def execute_pipeline(self, pipeline: List[str], initial_input: TensorStream) -> TensorStream:
         """
@@ -32,7 +35,7 @@ class CognitiveOrchestrator:
         
         for module_name in pipeline:
             if module_name not in self.modules:
-                print(f"Warning: Module {module_name} not found.")
+                logger.warning("Module %s not found.", module_name)
                 continue
                 
             module = self.modules[module_name]

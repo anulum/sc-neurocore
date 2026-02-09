@@ -1,7 +1,9 @@
 
-import numpy as np
+import logging
 from dataclasses import dataclass, field
-from typing import Dict, Any, List
+from typing import List
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class SelfModel:
@@ -35,7 +37,7 @@ class MetaCognitionLoop:
         complexity = len(self.self_model.capabilities)
         self.self_model.confidence = 1.0 / (1.0 + 0.1 * complexity)
         
-        print(f"Meta-Cognition: I am aware of {complexity} modules. Confidence: {self.self_model.confidence:.2f}")
+        logger.info("Meta-Cognition: I am aware of %d modules. Confidence: %.2f", complexity, self.self_model.confidence)
         
     def reflect(self) -> str:
         """

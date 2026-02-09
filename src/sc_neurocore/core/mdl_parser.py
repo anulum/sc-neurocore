@@ -1,8 +1,10 @@
 
-import json
+import logging
 import yaml
 from dataclasses import dataclass, field, asdict
-from typing import Dict, Any, List
+from typing import Dict, Any
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class MDLSpecification:
@@ -47,5 +49,5 @@ class MindDescriptionLanguage:
         Parses MDL back to a dictionary (for reconstruction).
         """
         data = yaml.safe_load(mdl_string)
-        print(f"MDL: Decoded mind of '{data.get('agent_name', 'Unknown')}' (v{data.get('version')})")
+        logger.info("MDL: Decoded mind of '%s' (v%s)", data.get('agent_name', 'Unknown'), data.get('version'))
         return data

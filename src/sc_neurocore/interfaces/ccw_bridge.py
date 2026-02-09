@@ -17,7 +17,7 @@ Author: Claude (Session 2026-01-31)
 import numpy as np
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, Optional, List, Tuple, Any
+from typing import Dict, List, Tuple, Any
 from enum import Enum
 import json
 

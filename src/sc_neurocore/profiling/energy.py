@@ -1,6 +1,5 @@
 
 from dataclasses import dataclass
-import time
 
 @dataclass
 class EnergyMetrics:

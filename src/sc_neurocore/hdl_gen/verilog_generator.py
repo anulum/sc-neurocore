@@ -1,5 +1,8 @@
-from typing import List, Dict
-import os
+import logging
+from typing import Dict
+
+logger = logging.getLogger(__name__)
+
 
 class VerilogGenerator:
     """
@@ -41,7 +44,7 @@ class VerilogGenerator:
             # Simple Dense Layer instantiation logic
             if l_type == "Dense":
                 code += f"    // Layer {i}: {l_name}\n"
-                code += f"    sc_dense_layer_core #(\n"
+                code += "    sc_dense_layer_core #(\n"
                 code += f"        .NUM_NEURONS({layer['params'].get('n_neurons', 10)})\n"
                 code += f"    ) {l_name}_inst (\n"
                 code += "        .clk(clk),\n"
@@ -65,5 +68,9 @@ class VerilogGenerator:
         return code
 
     def save_to_file(self, path: str):
-        with open(path, "w") as f:
-            f.write(self.generate())
+        try:
+            with open(path, "w") as f:
+                f.write(self.generate())
+        except OSError as exc:
+            logger.error("Failed to write Verilog to %s: %s", path, exc)
+            raise

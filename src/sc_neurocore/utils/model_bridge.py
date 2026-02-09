@@ -1,7 +1,11 @@
+"""Bridge utilities for converting weights between DL frameworks and SC-NeuroCore."""
 
 from __future__ import annotations
-from typing import Dict, Any, List, Union
+import logging
+from typing import Dict, Any
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 def normalize_weights(weights: np.ndarray) -> np.ndarray:
     """
@@ -27,16 +31,15 @@ class SCBridge:
             state_dict: Dictionary mapping "layer_name.weight" to arrays.
             layer_mapping: Dictionary mapping "layer_name" to SCLayer instances.
         """
-        print("SCBridge: Loading model weights...")
+        logger.info("SCBridge: Loading model weights...")
         
         for name, layer in layer_mapping.items():
             # Look for weight key
             weight_key = f"{name}.weight"
-            bias_key = f"{name}.bias"
             
             if weight_key in state_dict:
                 w = np.array(state_dict[weight_key])
-                print(f"  Found weights for {name}: shape {w.shape}")
+                logger.info("  Found weights for %s: shape %s", name, w.shape)
                 
                 # Normalize for SC
                 w_norm = normalize_weights(w)
@@ -55,11 +58,11 @@ class SCBridge:
                                 for j in range(w_norm.shape[1]):
                                     layer.synapses[i][j].update_weight(w_norm[i, j])
                     else:
-                        print(f"  WARNING: Shape mismatch for {name}. SC: {layer.weights.shape}, Dict: {w.shape}")
+                        logger.warning("  Shape mismatch for %s. SC: %s, Dict: %s", name, layer.weights.shape, w.shape)
                 else:
-                    print(f"  WARNING: Layer {name} does not have 'weights' attribute.")
+                    logger.warning("  Layer %s does not have 'weights' attribute.", name)
             else:
-                print(f"  No weights found for {name}")
+                logger.debug("  No weights found for %s", name)
 
     @staticmethod
     def export_to_numpy(layers: Dict[str, Any]) -> Dict[str, np.ndarray]:

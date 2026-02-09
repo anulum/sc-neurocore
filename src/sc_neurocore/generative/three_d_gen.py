@@ -8,10 +8,13 @@ probability distributions using the Marching Cubes algorithm.
 Author: Claude (Session 2026-01-31)
 """
 
+import logging
 import numpy as np
-from dataclasses import dataclass, field
-from typing import Dict, List, Tuple, Optional
+from dataclasses import dataclass
+from typing import Dict, List, Tuple
 import json
+
+logger = logging.getLogger(__name__)
 
 # Marching Cubes lookup tables (simplified)
 # Edge table: which edges are cut for each cube configuration
@@ -96,7 +99,7 @@ class SC3DGenerator:
         }
         with open(filename, 'w') as f:
             json.dump(data, f, indent=2)
-        print(f"3D Export: Saved {len(points)} points to {filename}")
+        logger.info("3D Export: Saved %d points to %s", len(points), filename)
 
     def generate_surface_mesh(self, voxel_grid: np.ndarray,
                               iso_level: float = None) -> Dict:
@@ -264,7 +267,7 @@ class SC3DGenerator:
                        f"{face[1]+1}//{face[1]+1} "
                        f"{face[2]+1}//{face[2]+1}\n")
 
-        print(f"3D Export: Saved mesh to {filename}")
+        logger.info("3D Export: Saved mesh to %s", filename)
 
     def export_mesh_json(self, mesh: Dict, filename: str):
         """
@@ -285,7 +288,7 @@ class SC3DGenerator:
         }
         with open(filename, 'w') as f:
             json.dump(data, f)
-        print(f"3D Export: Saved mesh JSON to {filename}")
+        logger.info("3D Export: Saved mesh JSON to %s", filename)
 
     def bitstream_to_voxels(self, bitstreams: np.ndarray,
                             grid_size: Tuple[int, int, int] = (16, 16, 16)

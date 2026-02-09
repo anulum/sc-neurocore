@@ -1,7 +1,9 @@
 
-import numpy as np
+import logging
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import List
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class Proposal:
@@ -26,7 +28,7 @@ class AgentDAO:
         pid = len(self.ledger)
         prop = Proposal(pid, action, self.agent_id)
         self.ledger.append(prop)
-        print(f"DAO: Proposal {pid} created by {self.agent_id}: '{action}'")
+        logger.info("DAO: Proposal %d created by %s: '%s'", pid, self.agent_id, action)
         return pid
         
     def vote(self, proposal_id: int, approve: bool):
@@ -46,7 +48,7 @@ class AgentDAO:
         else:
             prop.votes_against += weight
             
-        print(f"DAO: {self.agent_id} voted {'YES' if approve else 'NO'} on #{proposal_id} (Weight: {weight})")
+        logger.info("DAO: %s voted %s on #%d (Weight: %s)", self.agent_id, 'YES' if approve else 'NO', proposal_id, weight)
         
     def finalize_proposal(self, proposal_id: int) -> bool:
         """
@@ -61,9 +63,9 @@ class AgentDAO:
             
         if prop.votes_for > prop.votes_against:
             prop.status = "Passed"
-            print(f"DAO: Proposal #{proposal_id} PASSED.")
+            logger.info("DAO: Proposal #%d PASSED.", proposal_id)
             return True
         else:
             prop.status = "Rejected"
-            print(f"DAO: Proposal #{proposal_id} REJECTED.")
+            logger.info("DAO: Proposal #%d REJECTED.", proposal_id)
             return False

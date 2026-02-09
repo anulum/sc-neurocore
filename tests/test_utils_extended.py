@@ -432,23 +432,23 @@ class TestSCBridge:
         assert layer.weights.min() >= 0.0
         assert layer.weights.max() <= 1.0
 
-    def test_load_shape_mismatch(self, capsys):
+    def test_load_shape_mismatch(self, caplog):
         layer = self._make_mock_layer((3, 4))
         state_dict = {"fc1.weight": np.random.randn(5, 6)}
         layer_mapping = {"fc1": layer}
-        SCBridge.load_from_state_dict(state_dict, layer_mapping)
-        captured = capsys.readouterr()
-        assert "Shape mismatch" in captured.out
+        with caplog.at_level("WARNING", logger="sc_neurocore.utils.model_bridge"):
+            SCBridge.load_from_state_dict(state_dict, layer_mapping)
+        assert "Shape mismatch" in caplog.text
         # Weights should NOT have changed
         np.testing.assert_array_equal(layer.weights, np.zeros((3, 4)))
 
-    def test_load_missing_key(self, capsys):
+    def test_load_missing_key(self, caplog):
         layer = self._make_mock_layer((3, 4))
         state_dict = {"other.weight": np.random.randn(3, 4)}
         layer_mapping = {"fc1": layer}
-        SCBridge.load_from_state_dict(state_dict, layer_mapping)
-        captured = capsys.readouterr()
-        assert "No weights found" in captured.out
+        with caplog.at_level("DEBUG", logger="sc_neurocore.utils.model_bridge"):
+            SCBridge.load_from_state_dict(state_dict, layer_mapping)
+        assert "No weights found" in caplog.text
 
     def test_export_to_numpy(self):
         class MockLayerWithGetWeights:

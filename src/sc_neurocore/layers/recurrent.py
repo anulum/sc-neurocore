@@ -1,8 +1,8 @@
 
 from __future__ import annotations
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import numpy as np
-from typing import Optional, List
+from typing import Optional
 
 from ..neurons.stochastic_lif import StochasticLIFNeuron
 from ..utils.bitstreams import BitstreamEncoder
@@ -54,11 +54,11 @@ class SCRecurrentLayer:
         Input: (n_inputs,)
         Output: (n_neurons,) - New State
         """
-        # Generate Bitstreams for Input
-        in_bits = np.array([enc.encode(val) for enc, val in zip(self.input_encoders, input_vector)])
-        
+        # Generate Bitstreams for Input (used by hardware simulation loop below)
+        _in_bits = np.array([enc.encode(val) for enc, val in zip(self.input_encoders, input_vector)])  # noqa: F841
+
         # Generate Bitstreams for Previous State (Feedback)
-        state_bits = np.array([enc.encode(val) for enc, val in zip(self.state_encoders, self.state)])
+        _state_bits = np.array([enc.encode(val) for enc, val in zip(self.state_encoders, self.state)])  # noqa: F841
         
         new_rates = np.zeros(self.n_neurons)
         

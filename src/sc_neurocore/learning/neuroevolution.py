@@ -1,7 +1,10 @@
 
+import logging
 import numpy as np
 from dataclasses import dataclass
-from typing import List, Callable, Any
+from typing import Callable, Any
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class SNNGeneticEvolver:
@@ -27,7 +30,7 @@ class SNNGeneticEvolver:
             ranked_indices = np.argsort(scores)[::-1]
             ranked_pop = [self.population[i] for i in ranked_indices]
             
-            print(f"Gen {gen}: Best Fitness = {scores[ranked_indices[0]]:.4f}")
+            logger.info("Gen %d: Best Fitness = %.4f", gen, scores[ranked_indices[0]])
             
             # 2. Selection (Elitism)
             n_elite = int(self.population_size * self.elite_fraction)

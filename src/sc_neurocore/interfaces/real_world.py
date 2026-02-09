@@ -1,7 +1,8 @@
 
+import logging
 import numpy as np
-import time
-import json
+
+logger = logging.getLogger(__name__)
 
 class LSLBridge:
     """
@@ -11,7 +12,7 @@ class LSLBridge:
     """
     def __init__(self, stream_name="NeuromorphicIn"):
         self.stream_name = stream_name
-        print(f"LSL: Listening for stream '{stream_name}'...")
+        logger.info("LSL: Listening for stream '%s'...", stream_name)
         
     def receive_chunk(self, max_samples=32) -> np.ndarray:
         """
@@ -28,7 +29,7 @@ class ROS2Node:
     """
     def __init__(self, node_name="neuro_controller"):
         self.node_name = node_name
-        print(f"ROS2: Node '{node_name}' initialized.")
+        logger.info("ROS2: Node '%s' initialized.", node_name)
         
     def publish_cmd_vel(self, linear_x: float, angular_z: float):
         """

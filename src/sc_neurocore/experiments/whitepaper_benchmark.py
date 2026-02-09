@@ -6,7 +6,7 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from sc_neurocore.layers.vectorized_layer import VectorizedSCLayer
-from sc_neurocore.profiling.energy import EnergyMetrics, track_energy, profiler
+from sc_neurocore.profiling.energy import track_energy, profiler
 from sc_neurocore.accel.jit_kernels import HAS_NUMBA
 
 def run_whitepaper_benchmark():
@@ -40,7 +40,7 @@ def run_whitepaper_benchmark():
     total_ops = N_INPUTS * N_NEURONS * LENGTH * TRIALS
     ops_per_sec = total_ops / total_time
     
-    print(f"\n[Performance Results]")
+    print("\n[Performance Results]")
     print(f"Average Latency (Forward Pass): {avg_latency*1000:.2f} ms")
     print(f"Throughput (Bit-Ops/sec): {ops_per_sec:.2e}")
     # Equivalent "TPS" if 1 Tx = 256 ops?
@@ -68,7 +68,7 @@ def run_whitepaper_benchmark():
     ops_one_pass = N_INPUTS * N_NEURONS * LENGTH
     j_per_op = joules / ops_one_pass
     
-    print(f"\n[Efficiency Results (45nm Simulation)]")
+    print("\n[Efficiency Results (45nm Simulation)]")
     print(f"Energy per Inference: {joules*1e6:.2f} uJ")
     print(f"Energy per Bit-Op: {j_per_op*1e15:.2f} fJ")
     print(f"CO2 Emissions per Inference: {co2:.2e} g")

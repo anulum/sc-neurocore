@@ -2,10 +2,8 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 import numpy as np
-from typing import Optional
 
 from .sc_synapse import BitstreamSynapse
-from ..utils.rng import RNG
 
 @dataclass
 class StochasticSTDPSynapse(BitstreamSynapse):

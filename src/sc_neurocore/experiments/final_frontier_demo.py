@@ -54,7 +54,7 @@ def run_frontier_demo():
     print("\n[6] Testing Lifelong Learning...")
     ewc = EWC_SCLayer(n_inputs=2, n_neurons=2)
     ewc.consolidate_task()
-    print(f"    Task Consolidated. Fisher Info stored.")
+    print("    Task Consolidated. Fisher Info stored.")
 
 if __name__ == "__main__":
     run_frontier_demo()

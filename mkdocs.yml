@@ -1,0 +1,62 @@
+site_name: SC-NeuroCore Documentation
+site_description: Universal Stochastic Computing Framework for Neuromorphic Hardware
+repo_url: https://github.com/fortisstudio/sc-neurocore
+repo_name: sc-neurocore
+
+theme:
+  name: material
+  palette:
+    primary: indigo
+    accent: cyan
+  features:
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            show_source: true
+            show_root_heading: true
+            members_order: source
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Architecture: architecture.md
+  - API Reference:
+      - Core:
+          - Neurons: api/neurons.md
+          - Synapses: api/synapses.md
+          - Layers: api/layers.md
+          - Sources: api/sources.md
+          - Recorders: api/recorders.md
+          - Utilities: api/utils.md
+          - Acceleration: api/accel.md
+      - Research:
+          - Analysis: api/analysis.md
+          - Bio: api/bio.md
+          - Core Modules: api/core.md
+          - Generative: api/generative.md
+          - Learning: api/learning.md
+          - Pipeline: api/pipeline.md
+          - SCPN Layers: api/scpn.md
+      - Contrib:
+          - Meta: api/meta.md
+          - Transcendent: api/transcendent.md
+          - Exotic: api/exotic.md
+  - Existing Docs:
+      - User Guide: user-guide.md
+      - Hardware Guide: hardware-guide.md
+      - Benchmarks: benchmarks.md
+
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - admonition
+  - toc:
+      permalink: true

@@ -1,6 +1,9 @@
 
+import logging
 import numpy as np
 from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class CTCLayer:
@@ -28,8 +31,8 @@ class CTCLayer:
             
             # Check for convergence (Consistency)
             if np.array_equal(state, prev_state):
-                print(f"Self-Consistency found at iteration {i}")
+                logger.info("Self-Consistency found at iteration %d", i)
                 return state
                 
-        print("Chronological Paradox: No stable state found.")
+        logger.warning("Chronological Paradox: No stable state found.")
         return state

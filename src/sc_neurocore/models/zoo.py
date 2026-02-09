@@ -1,9 +1,6 @@
 
-from dataclasses import dataclass
-from typing import List
 import numpy as np
 
-from ..layers.sc_learning_layer import SCLearningLayer
 from ..layers.sc_conv_layer import SCConv2DLayer
 from ..layers.vectorized_layer import VectorizedSCLayer
 

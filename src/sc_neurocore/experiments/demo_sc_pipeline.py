@@ -1,5 +1,4 @@
 from __future__ import annotations
-import numpy as np
 
 from ..sources.bitstream_current_source import BitstreamCurrentSource
 from ..neurons.stochastic_lif import StochasticLIFNeuron

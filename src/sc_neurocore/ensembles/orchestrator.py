@@ -1,8 +1,12 @@
+"""Multi-agent ensemble orchestration with consensus and coordinated missions."""
 
+import logging
 import numpy as np
 from dataclasses import dataclass, field
 from typing import List, Dict, Any
 from ..core.orchestrator import CognitiveOrchestrator
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class EnsembleOrchestrator:
@@ -31,7 +35,7 @@ class EnsembleOrchestrator:
         """
         Assigns sub-tasks to agents based on their capabilities.
         """
-        print(f"Ensemble: Initiating mission '{goal}'...")
+        logger.info("Ensemble: Initiating mission '%s'...", goal)
         for name, agent in self.agents.items():
-            print(f"  Agent '{name}': Assigned sub-task.")
+            logger.info("  Agent '%s': Assigned sub-task.", name)
             agent.active_goals = [f"{goal}_subtask"]

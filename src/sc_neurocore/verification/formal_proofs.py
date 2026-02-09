@@ -1,6 +1,8 @@
 
+import logging
 from dataclasses import dataclass
-from typing import Tuple
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class Interval:
@@ -39,8 +41,8 @@ class FormalVerifier:
         out = input_interval * weight_interval
         
         is_safe = out.min_val >= 0.0 and out.max_val <= 1.0
-        print(f"Verification: Input {input_interval} * Weight {weight_interval} -> Output {out}")
-        print(f"Property (0 <= p <= 1): {'HELD' if is_safe else 'VIOLATED'}")
+        logger.info("Verification: Input %s * Weight %s -> Output %s", input_interval, weight_interval, out)
+        logger.info("Property (0 <= p <= 1): %s", 'HELD' if is_safe else 'VIOLATED')
         return is_safe
 
     @staticmethod
@@ -53,8 +55,8 @@ class FormalVerifier:
         # Postcondition: NewEnergy >= 0
         if energy >= cost:
             new_e = energy - cost
-            print(f"Verification: {energy} - {cost} = {new_e} >= 0. HELD.")
+            logger.info("Verification: %s - %s = %s >= 0. HELD.", energy, cost, new_e)
             return True
         else:
-            print(f"Verification: {energy} < {cost}. VIOLATED (Halt).")
+            logger.warning("Verification: %s < %s. VIOLATED (Halt).", energy, cost)
             return False

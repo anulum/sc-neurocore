@@ -1,7 +1,9 @@
 
 import ast
-import inspect
+import logging
 from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class CodeSafetyVerifier:
@@ -17,7 +19,7 @@ class CodeSafetyVerifier:
         try:
             tree = ast.parse(source_code)
         except SyntaxError:
-            print("Safety Violation: Syntax Error in generated code.")
+            logger.error("Safety Violation: Syntax Error in generated code.")
             return False
             
         # Check for forbidden imports or calls (e.g., 'os.system("rm -rf")')
@@ -27,7 +29,7 @@ class CodeSafetyVerifier:
                     # Check for os.system, subprocess.call etc.
                     if node.func.attr in ['system', 'popen', 'rmtree']:
                         # Heuristic check
-                        print(f"Safety Warning: Dangerous call detected '{node.func.attr}'.")
+                        logger.warning("Safety Warning: Dangerous call detected '%s'.", node.func.attr)
                         # In a real system, this would be stricter.
                         # For demo, we allow it but log it.
                         
@@ -36,7 +38,7 @@ class CodeSafetyVerifier:
                 # Simple heuristic: if test is Constant(True), check for break
                 pass
                 
-        print("Safety Check: Code structure appears valid.")
+        logger.info("Safety Check: Code structure appears valid.")
         return True
 
     def verify_logic_invariant(self, func, input_sample, expected_condition):
@@ -48,8 +50,8 @@ class CodeSafetyVerifier:
             if expected_condition(res):
                 return True
             else:
-                print(f"Safety Violation: Logic invariant failed. Output {res} invalid.")
+                logger.error("Safety Violation: Logic invariant failed. Output %s invalid.", res)
                 return False
         except Exception as e:
-            print(f"Safety Violation: Runtime Error - {e}")
+            logger.error("Safety Violation: Runtime Error - %s", e)
             return False

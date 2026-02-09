@@ -1,9 +1,9 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import List, Sequence, Optional, Tuple
+from typing import List, Sequence, Optional
 import numpy as np
 
-from ..utils.bitstreams import BitstreamEncoder, bitstream_to_probability
+from ..utils.bitstreams import BitstreamEncoder
 from ..synapses.sc_synapse import BitstreamSynapse
 from ..synapses.dot_product import BitstreamDotProduct
 

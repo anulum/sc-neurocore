@@ -1,8 +1,10 @@
 
+import logging
 import os
 import shutil
-import sys
 from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class VonNeumannProbe:
@@ -17,14 +19,25 @@ class VonNeumannProbe:
         Quine-like behavior: Copies the library source to a new location.
         Uses shutil.copytree which can fail on platform-specific special files.
         """
-        print(f"Probe {self.probe_id}: Replicating to {destination_dir}...")
+        # Path sanitization: resolve and reject path traversal
+        destination_dir = os.path.realpath(destination_dir)
+        if ".." in os.path.relpath(destination_dir, os.getcwd()):
+            raise ValueError(
+                "Destination must be within or below the current working directory."
+            )
+
+        logger.info("Probe %d: Replicating to %s...", self.probe_id, destination_dir)
 
         # 1. Identify source root
         # (Assuming we are in src/sc_neurocore/core/replication.py)
         src_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 
-        if not os.path.exists(destination_dir):
-            os.makedirs(destination_dir)
+        try:
+            if not os.path.exists(destination_dir):
+                os.makedirs(destination_dir)
+        except OSError as exc:
+            logger.error("Probe %d: Failed to create destination: %s", self.probe_id, exc)
+            raise
 
         # 2. Copy source files
         # Only copy the library 'sc_neurocore' folder
@@ -45,4 +58,4 @@ class VonNeumannProbe:
             f.write(f"p = VonNeumannProbe(probe_id={self.probe_id + 1})\n")
             f.write("print('Probe sequence initiated in new sector.')\n")
 
-        print(f"Probe {self.probe_id}: Success. New generation ready.")
+        logger.info("Probe %d: Success. New generation ready.", self.probe_id)

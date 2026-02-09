@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import Optional
 import numpy as np
 import scipy.stats.qmc as qmc
 from .rng import RNG

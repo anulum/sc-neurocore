@@ -40,8 +40,6 @@ class StochasticTransformerBlock:
         res1 = 0.5 * x + 0.5 * attn_out
         
         # 3. Feed Forward
-        # FFN1
-        ff1_out = self.ffn_1.forward(res1.flatten()) # Vectorized layer expects flat input or manages dims
         # Vectorized layer returns 1D array of size n_neurons. We need to reshape?
         # Our VectorizedSCLayer is "Dense", it fully connects all inputs to all outputs.
         # But Transformer FFN applies to each position independently (Position-wise).

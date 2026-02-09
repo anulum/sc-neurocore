@@ -1,6 +1,8 @@
 
 import json
-import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 class WebVisualizer:
     """
@@ -120,4 +122,4 @@ class WebVisualizer:
         
         with open(filename, "w") as f:
             f.write(html_content)
-        print(f"Generated Visualization: {filename}")
+        logger.info("Generated Visualization: %s", filename)

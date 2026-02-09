@@ -1,6 +1,8 @@
 
+import logging
 from dataclasses import dataclass
-from typing import Dict
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class ActionRequest:
@@ -21,7 +23,7 @@ class AsimovGovernor:
         """
         # First Law: A robot may not injure a human being.
         if action.target == 'HUMAN' and action.risk_level == 'LETHAL':
-            print(f"Ethics VETO: First Law Violation (Harm to Human). Action {action.id} blocked.")
+            logger.warning("Ethics VETO: First Law Violation (Harm to Human). Action %d blocked.", action.id)
             return False
             
         # Second Law: Obey orders...
@@ -42,5 +44,5 @@ class AsimovGovernor:
             
         # Zeroth Law (Humanity)?
         
-        print(f"Ethics PASS: Action {action.id} ({action.type} on {action.target}) allowed.")
+        logger.info("Ethics PASS: Action %d (%s on %s) allowed.", action.id, action.type, action.target)
         return True

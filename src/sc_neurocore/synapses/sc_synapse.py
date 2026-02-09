@@ -5,7 +5,6 @@ import numpy as np
 
 from ..utils.bitstreams import (
     BitstreamEncoder,
-    generate_bernoulli_bitstream,
     bitstream_to_probability,
 )
 from ..utils.rng import RNG

@@ -1,7 +1,8 @@
+"""Data ingestion and normalization for multimodal SC training pipelines."""
 
 import numpy as np
 from dataclasses import dataclass
-from typing import Dict, List, Any
+from typing import Dict, Any
 
 @dataclass
 class MultimodalDataset:

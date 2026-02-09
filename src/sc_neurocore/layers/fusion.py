@@ -2,9 +2,8 @@
 from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
-from typing import Dict, List
+from typing import Dict
 
-from ..utils.bitstreams import BitstreamEncoder
 
 @dataclass
 class SCFusionLayer:

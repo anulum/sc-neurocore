@@ -16,10 +16,10 @@ Key Features:
 Author: Claude (Session 2026-01-31)
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import numpy as np
 import logging
-from typing import Dict, Optional, List, Tuple
+from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -152,7 +152,6 @@ class L7_SymbolicLayer:
         # 4. Compute Metatron's Cube flow
         # Based on 13-sphere / 78-line connectivity pattern
         metatron_nodes = 13
-        metatron_edges = 78
         active_nodes = np.sum(self.symbol_activations[:metatron_nodes] > 0.5)
         self.metatron_flow = active_nodes / metatron_nodes
         # Add flow dynamics

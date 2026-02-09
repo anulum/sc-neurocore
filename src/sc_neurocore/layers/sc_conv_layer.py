@@ -2,9 +2,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
-from typing import List, Tuple, Optional
 
-from ..utils.bitstreams import BitstreamEncoder
 
 @dataclass
 class SCConv2DLayer:

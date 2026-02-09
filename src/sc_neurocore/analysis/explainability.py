@@ -1,6 +1,6 @@
 
 import numpy as np
-from typing import Dict, List
+from typing import Dict
 
 class SpikeToConceptMapper:
     """

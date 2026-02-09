@@ -5,7 +5,6 @@ import numpy as np
 from ..neurons.stochastic_lif import StochasticLIFNeuron
 from ..utils.bitstreams import (
     BitstreamEncoder,
-    BitstreamAverager,
     bitstream_to_probability,
 )
 

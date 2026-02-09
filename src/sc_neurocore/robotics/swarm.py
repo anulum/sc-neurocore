@@ -1,7 +1,10 @@
 
+import logging
 import numpy as np
 from dataclasses import dataclass
 from ..layers.sc_learning_layer import SCLearningLayer
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class SwarmCoupling:
@@ -40,4 +43,4 @@ class SwarmCoupling:
             for j in range(agent_b.n_inputs):
                 agent_b.synapses[i][j].update_weight(new_wb[i, j])
                 
-        print(f"Swarm Synchronization: Shifted weights by magnitude {np.mean(np.abs(delta)):.6f}")
+        logger.info("Swarm Synchronization: Shifted weights by magnitude %.6f", np.mean(np.abs(delta)))

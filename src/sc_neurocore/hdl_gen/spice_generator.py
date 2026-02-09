@@ -1,5 +1,8 @@
 
+import logging
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 class SpiceGenerator:
     """
@@ -39,5 +42,5 @@ class SpiceGenerator:
         
         with open(filename, "w") as f:
             f.write(netlist)
-        print(f"SPICE Netlist saved to {filename}")
+        logger.info("SPICE Netlist saved to %s", filename)
 
