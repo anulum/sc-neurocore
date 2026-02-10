@@ -133,5 +133,5 @@ class TestSetNumThreads:
 
 
 class TestPhase9Version:
-    def test_version_is_3_4_0(self):
-        assert v3.__version__ == "3.4.0"
+    def test_version_is_3_5_0(self):
+        assert v3.__version__ == "3.5.0"

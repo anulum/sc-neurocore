@@ -73,6 +73,57 @@ pub unsafe fn pack_avx2(bits: &[u8]) -> Vec<u64> {
     data
 }
 
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx2")]
+/// Fused AND+popcount over packed words using AVX2 for the AND stage.
+///
+/// # Safety
+/// Caller must ensure the current CPU supports `avx2`.
+pub unsafe fn fused_and_popcount_avx2(a: &[u64], b: &[u64]) -> u64 {
+    let len = a.len().min(b.len());
+    let mut total = 0_u64;
+    let mut chunks_a = a[..len].chunks_exact(4);
+    let mut chunks_b = b[..len].chunks_exact(4);
+
+    for (ca, cb) in chunks_a.by_ref().zip(chunks_b.by_ref()) {
+        let va = _mm256_loadu_si256(ca.as_ptr() as *const __m256i);
+        let vb = _mm256_loadu_si256(cb.as_ptr() as *const __m256i);
+        let anded = _mm256_and_si256(va, vb);
+
+        let mut lanes = [0_u64; 4];
+        _mm256_storeu_si256(lanes.as_mut_ptr() as *mut __m256i, anded);
+        total += lanes.iter().map(|w| w.count_ones() as u64).sum::<u64>();
+    }
+
+    total
+        + chunks_a
+            .remainder()
+            .iter()
+            .zip(chunks_b.remainder().iter())
+            .map(|(&wa, &wb)| (wa & wb).count_ones() as u64)
+            .sum::<u64>()
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx2")]
+/// Compare 32 random bytes against an unsigned threshold and return bit mask.
+///
+/// Bit `i` in the returned mask is 1 iff `buf[i] < threshold`.
+///
+/// # Safety
+/// Caller must ensure the current CPU supports `avx2`.
+/// `buf` must have at least 32 elements.
+pub unsafe fn bernoulli_compare_avx2(buf: &[u8], threshold: u8) -> u32 {
+    debug_assert!(buf.len() >= 32, "buffer must contain at least 32 bytes");
+
+    let data = _mm256_loadu_si256(buf.as_ptr() as *const __m256i);
+    let bias = _mm256_set1_epi8(i8::MIN);
+    let data_biased = _mm256_xor_si256(data, bias);
+    let thresh_biased = _mm256_set1_epi8((threshold ^ 0x80) as i8);
+    let lt = _mm256_cmpgt_epi8(thresh_biased, data_biased);
+    _mm256_movemask_epi8(lt) as u32
+}
+
 #[cfg(not(target_arch = "x86_64"))]
 /// Fallback popcount when AVX2 is unavailable on this architecture.
 ///
@@ -89,6 +140,33 @@ pub unsafe fn popcount_avx2(data: &[u64]) -> u64 {
 /// This function is marked unsafe for API parity with the AVX2 variant.
 pub unsafe fn pack_avx2(bits: &[u8]) -> Vec<u64> {
     crate::bitstream::pack_fast(bits).data
+}
+
+#[cfg(not(target_arch = "x86_64"))]
+/// Fallback fused AND+popcount when AVX2 is unavailable on this architecture.
+///
+/// # Safety
+/// This function is marked unsafe for API parity with the AVX2 variant.
+pub unsafe fn fused_and_popcount_avx2(a: &[u64], b: &[u64]) -> u64 {
+    a.iter()
+        .zip(b.iter())
+        .map(|(&wa, &wb)| (wa & wb).count_ones() as u64)
+        .sum()
+}
+
+#[cfg(not(target_arch = "x86_64"))]
+/// Fallback Bernoulli compare when AVX2 is unavailable on this architecture.
+///
+/// # Safety
+/// This function is marked unsafe for API parity with the AVX2 variant.
+pub unsafe fn bernoulli_compare_avx2(buf: &[u8], threshold: u8) -> u32 {
+    let mut mask = 0_u32;
+    for (bit, &rb) in buf.iter().take(32).enumerate() {
+        if rb < threshold {
+            mask |= 1_u32 << bit;
+        }
+    }
+    mask
 }
 
 #[cfg(all(test, target_arch = "x86_64"))]
@@ -112,6 +190,56 @@ mod tests {
             let got = unsafe { super::pack_avx2(&bits) };
             let expected = pack(&bits).data;
             assert_eq!(got, expected, "Mismatch at length={length}");
+        }
+    }
+
+    #[test]
+    fn fused_and_popcount_avx2_matches_scalar() {
+        if !is_x86_feature_detected!("avx2") {
+            return;
+        }
+
+        let lengths = [1_usize, 7, 8, 15, 16, 17, 31, 32, 64, 128];
+        for len in lengths {
+            let a: Vec<u64> = (0..len)
+                .map(|i| (i as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15) ^ 0xA5A5_A5A5_5A5A_5A5A)
+                .collect();
+            let b: Vec<u64> = (0..len)
+                .map(|i| (i as u64).wrapping_mul(0xC2B2_AE3D_27D4_EB4F) ^ 0x0F0F_F0F0_33CC_CC33)
+                .collect();
+
+            let expected: u64 = a
+                .iter()
+                .zip(b.iter())
+                .map(|(&wa, &wb)| (wa & wb).count_ones() as u64)
+                .sum();
+
+            // SAFETY: Runtime-guarded by feature detection in this test.
+            let got = unsafe { super::fused_and_popcount_avx2(&a, &b) };
+            assert_eq!(got, expected, "Mismatch at len={len}");
+        }
+    }
+
+    #[test]
+    fn bernoulli_compare_avx2_matches_scalar() {
+        if !is_x86_feature_detected!("avx2") {
+            return;
+        }
+
+        let buf: Vec<u8> = (0..32).map(|i| (i * 73 + 17) as u8).collect();
+        let thresholds = [0_u8, 1, 2, 17, 64, 127, 128, 200, 255];
+
+        for threshold in thresholds {
+            let expected = buf.iter().enumerate().fold(0_u32, |acc, (bit, &rb)| {
+                acc | (u32::from(rb < threshold) << bit)
+            });
+
+            // SAFETY: Runtime-guarded by feature detection in this test.
+            let got = unsafe { super::bernoulli_compare_avx2(&buf, threshold) };
+            assert_eq!(
+                got, expected,
+                "Mismatch for threshold={threshold} buf={buf:?}"
+            );
         }
     }
 }

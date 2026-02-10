@@ -1,12 +1,52 @@
 # SC-NeuroCore v3 Benchmark Report
 
-**Version**: 3.4.0  
+**Version**: 3.5.0  
 **Date**: 2026-02-10  
 **SIMD Tier**: avx512-vpopcntdq
 
-## Phase 10 Results (SIMD Pack + LIF Multi + Rayon Guard)
+## Phase 11 Results (SIMD Pipeline + Zero-Alloc LIF)
 
 Measured via `examples/03_benchmark_report.py` on this machine.
+
+| Operation | v2 (ms) | v3 (ms) | Speedup | Target |
+|-----------|---------|---------|---------|--------|
+| pack (list, 1000K) | 10.337 | 37.799 | 0.3x | 6x |
+| pack (numpy, 1000K) | 10.337 | 0.069 | 149.3x | 6x |
+| popcount (list, 1000K) | 96.956 | 135.444 | 0.7x | 20x |
+| popcount (numpy, 1000K) | 96.956 | 1.563 | 62.0x | 20x |
+| dense forward (64->32, L=1024) | 2.953 | 0.683 | 4.3x | 70x |
+| dense fast (64->32, L=1024) | 2.953 | 0.171 | 17.3x | 70x |
+| dense prepacked (64->32, L=1024) | 2.953 | 0.092 | 31.9x | 70x |
+| dense prepacked numpy (64->32, L=1024) | 2.953 | 0.033 | 90.2x | 70x |
+| dense numpy (64->32, L=1024) | 2.953 | 0.118 | 25.1x | 70x |
+| LIF (per-call, 100K) | 106.451 | 23.925 | 4.4x | 400x |
+| LIF (batch, 100K) | 106.451 | 0.897 | 118.7x | 400x |
+| LIF multi (100x100K) | 13349.151 | 31.783 | 420.0x | 400x |
+
+## Criterion Diagnosis (Phase 11)
+
+Measured via targeted commands:
+
+```powershell
+cargo bench --bench full_bench fused_and_popcount
+cargo bench --bench full_bench bernoulli_packed_simd
+cargo bench --bench full_bench dense_forward_fast
+```
+
+| Benchmark | Time (95% CI) |
+|-----------|---------------|
+| fused_and_popcount_scalar_16w | 4.3755 ns - 4.7870 ns |
+| fused_and_popcount_dispatch_16w | 7.2066 ns - 8.2358 ns |
+| bernoulli_packed_simd_1024 | 585.06 ns - 657.75 ns |
+| dense_forward_fast_64x32 | 165.62 us - 219.51 us |
+| dense_forward_fast_flat_64x32 | 162.96 us - 216.84 us |
+
+Interpretation:
+- Multi-neuron LIF hits **420.0x**, clearing the Blueprint 400x target.
+- SIMD Bernoulli compare runs sub-microsecond for 1024-bit generation.
+- Dense fast path benchmark is now in the ~0.17-0.22 ms range on this host.
+
+## Phase 10 Results (Reference)
 
 | Operation | v2 (ms) | v3 (ms) | Speedup | Target |
 |-----------|---------|---------|---------|--------|
@@ -22,31 +62,6 @@ Measured via `examples/03_benchmark_report.py` on this machine.
 | LIF (per-call, 100K) | 139.417 | 27.015 | 5.2x | 400x |
 | LIF (batch, 100K) | 139.417 | 0.992 | 140.5x | 400x |
 | LIF multi (100x100K) | 15442.319 | 90.480 | 170.7x | 400x |
-
-## Criterion Diagnosis (Phase 10)
-
-Measured via targeted commands:
-
-```powershell
-cargo bench --bench full_bench pack_1m
-cargo bench --bench full_bench pack_fast_1m
-cargo bench --bench full_bench pack_dispatch_1m
-cargo bench --bench full_bench lif_10k_steps
-cargo bench --bench full_bench lif_100k_steps
-```
-
-| Benchmark | Time (95% CI) |
-|-----------|---------------|
-| pack_1m | 1.0666 ms - 1.2110 ms |
-| pack_fast_1m | 485.91 us - 554.76 us |
-| pack_dispatch_1m | 33.289 us - 41.916 us |
-| lif_10k_steps | 31.737 us - 34.811 us |
-| lif_100k_steps | 341.93 us - 390.05 us |
-
-Interpretation:
-- SIMD dispatch closes the pack target by a wide margin on numpy path.
-- `pack_dispatch_1m` is ~27x faster than baseline `pack_1m`.
-- Single-neuron batch LIF improved vs Phase 9, and multi-neuron parallel batch further increases throughput.
 
 ## Phase 9 Results (Reference)
 

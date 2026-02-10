@@ -331,3 +331,44 @@ spikes, voltages = v3.batch_lif_run_multi(
 input counts and rayon encoding for larger inputs. This avoids thread-pool
 overhead on small workloads without changing numerical outputs (per-index
 RNG seeding remains identical).
+
+## Phase 11 Features (February 2026)
+
+### SIMD Dense Inner Loop
+
+Dense accumulation now uses SIMD-dispatched fused AND+popcount:
+
+- AVX-512 (`avx512vpopcntdq`) path for 8-word vector chunks
+- AVX2 path for vectorized AND + scalar lane popcount
+- Portable fallback for non-SIMD targets
+
+This path is used across dense forward variants without API changes.
+
+### SIMD Bernoulli Encode
+
+`forward_fast` and `batch_encode_numpy` now use `bernoulli_packed_simd`:
+
+- AVX-512BW compare path (`64 bytes -> 64-bit mask`)
+- AVX2 compare path (`2 x 32-byte compares`)
+- Scalar fallback for partial words and non-SIMD systems
+
+Sampling semantics remain statistically equivalent to Phase 10 fast encoding.
+
+### Flat Packed Weight Storage
+
+`DenseLayer` packed weights are now stored in one contiguous buffer:
+
+- layout: `[neuron][input][word]`
+- computed with `weight_slice(neuron, input)` accessors
+
+This removes nested `Vec<Vec<Vec<u64>>>` indirection and improves cache locality.
+
+### Zero-Allocation LIF Batch Outputs
+
+`batch_lif_run`, `batch_lif_run_multi`, and `batch_lif_run_varying` now:
+
+- pre-allocate numpy output arrays
+- write directly into contiguous buffers
+- avoid temporary `Vec` allocations and flatten copies
+
+Outputs and public signatures are unchanged.

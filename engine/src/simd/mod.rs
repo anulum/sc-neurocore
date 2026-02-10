@@ -49,3 +49,27 @@ pub fn popcount_dispatch(data: &[u64]) -> u64 {
 
     crate::bitstream::popcount_words_portable(data)
 }
+
+/// Fused AND+popcount dispatch using the best available SIMD path.
+pub fn fused_and_popcount_dispatch(a: &[u64], b: &[u64]) -> u64 {
+    let len = a.len().min(b.len());
+    let a = &a[..len];
+    let b = &b[..len];
+
+    #[cfg(target_arch = "x86_64")]
+    {
+        if is_x86_feature_detected!("avx512vpopcntdq") {
+            // SAFETY: Guarded by runtime feature detection.
+            return unsafe { avx512::fused_and_popcount_avx512(a, b) };
+        }
+        if is_x86_feature_detected!("avx2") {
+            // SAFETY: Guarded by runtime feature detection.
+            return unsafe { avx2::fused_and_popcount_avx2(a, b) };
+        }
+    }
+
+    a.iter()
+        .zip(b.iter())
+        .map(|(&wa, &wb)| (wa & wb).count_ones() as u64)
+        .sum()
+}

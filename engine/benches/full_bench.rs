@@ -4,7 +4,8 @@ use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
 use sc_neurocore_engine::attention::StochasticAttention;
 use sc_neurocore_engine::bitstream::{
-    bernoulli_packed, bernoulli_packed_fast, bernoulli_stream, pack, pack_fast,
+    bernoulli_packed, bernoulli_packed_fast, bernoulli_packed_simd, bernoulli_stream, pack,
+    pack_fast,
     popcount_words_portable,
 };
 use sc_neurocore_engine::encoder::BitstreamEncoder;
@@ -12,7 +13,7 @@ use sc_neurocore_engine::graph::StochasticGraphLayer;
 use sc_neurocore_engine::layer::DenseLayer;
 use sc_neurocore_engine::neuron::FixedPointLif;
 use sc_neurocore_engine::scpn::KuramotoSolver;
-use sc_neurocore_engine::simd::{pack_dispatch, popcount_dispatch};
+use sc_neurocore_engine::simd::{fused_and_popcount_dispatch, pack_dispatch, popcount_dispatch};
 
 fn bench_all(c: &mut Criterion) {
     // -- Bitstream --
@@ -101,6 +102,41 @@ fn bench_all(c: &mut Criterion) {
         })
     });
 
+    c.bench_function("bernoulli_packed_simd_1024", |b| {
+        b.iter(|| {
+            let mut rng = ChaCha8Rng::seed_from_u64(42);
+            black_box(bernoulli_packed_simd(0.5, 1024, &mut rng))
+        })
+    });
+
+    let a_words: Vec<u64> = (0..16)
+        .map(|i| (i as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15) ^ 0xA5A5_A5A5_5A5A_5A5A)
+        .collect();
+    let b_words: Vec<u64> = (0..16)
+        .map(|i| (i as u64).wrapping_mul(0xC2B2_AE3D_27D4_EB4F) ^ 0x0F0F_F0F0_33CC_CC33)
+        .collect();
+
+    c.bench_function("fused_and_popcount_scalar_16w", |b| {
+        b.iter(|| {
+            black_box(
+                a_words
+                    .iter()
+                    .zip(b_words.iter())
+                    .map(|(&wa, &wb)| (wa & wb).count_ones() as u64)
+                    .sum::<u64>(),
+            )
+        })
+    });
+
+    c.bench_function("fused_and_popcount_dispatch_16w", |b| {
+        b.iter(|| {
+            black_box(fused_and_popcount_dispatch(
+                black_box(&a_words),
+                black_box(&b_words),
+            ))
+        })
+    });
+
     // -- Dense forward variants --
     let layer = DenseLayer::new(64, 32, 1024, 42);
     let inputs = vec![0.5_f64; 64];
@@ -110,6 +146,10 @@ fn bench_all(c: &mut Criterion) {
     });
 
     c.bench_function("dense_forward_fast_64x32", |b| {
+        b.iter(|| black_box(layer.forward_fast(black_box(&inputs), 42).unwrap()))
+    });
+
+    c.bench_function("dense_forward_fast_flat_64x32", |b| {
         b.iter(|| black_box(layer.forward_fast(black_box(&inputs), 42).unwrap()))
     });
 

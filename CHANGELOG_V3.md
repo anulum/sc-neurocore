@@ -1,5 +1,14 @@
 # SC-NeuroCore v3 Engine Changelog
 
+## [3.5.0] - 2026-02-10
+
+### Phase 11: SIMD Pipeline Acceleration
+- **SIMD fused AND+popcount**: AVX-512 VPOPCNTDQ accelerated dense inner loop with AVX2 fallback
+- **SIMD Bernoulli encode**: AVX-512BW/AVX2 threshold compare path for packed Bernoulli generation
+- **Flat weight storage**: Contiguous `[neuron][input][word]` packed layout for cache-friendly access
+- **Zero-allocation LIF batch**: Pre-allocated numpy outputs for batch LIF APIs
+- **Criterion benchmarks**: Added fused-and-popcount and SIMD Bernoulli diagnostics
+
 ## [3.4.0] - 2026-02-10
 
 ### Phase 10: SIMD Pack, LIF Optimization, Rayon Guard

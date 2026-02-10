@@ -1,7 +1,8 @@
 #![allow(clippy::useless_conversion)]
 
 use numpy::{
-    IntoPyArray, PyArray1, PyArray2, PyReadonlyArray1, PyReadonlyArray2, PyUntypedArrayMethods,
+    IntoPyArray, PyArray1, PyArray2, PyArrayMethods, PyReadonlyArray1, PyReadonlyArray2,
+    PyUntypedArrayMethods,
 };
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -18,10 +19,10 @@ pub mod neuron;
 pub mod scpn;
 pub mod simd;
 
-/// SC-NeuroCore v3.4 — High-Performance Rust Engine
+/// SC-NeuroCore v3.5 — High-Performance Rust Engine
 #[pymodule]
 fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add("__version__", "3.4.0")?;
+    m.add("__version__", "3.5.0")?;
     m.add_function(wrap_pyfunction!(simd_tier, m)?)?;
     m.add_function(wrap_pyfunction!(set_num_threads, m)?)?;
     m.add_function(wrap_pyfunction!(pack_bitstream, m)?)?;
@@ -243,19 +244,29 @@ fn batch_lif_run<'py>(
         v_threshold,
         refractory_period,
     );
-    let mut spikes = Vec::with_capacity(n_steps);
-    let mut voltages = Vec::with_capacity(n_steps);
+    let spikes_arr = PyArray1::<i32>::zeros_bound(py, n_steps, false);
+    let voltages_arr = PyArray1::<i16>::zeros_bound(py, n_steps, false);
 
-    for _ in 0..n_steps {
+    // SAFETY: Arrays are newly allocated and contiguous.
+    let spikes_slice = unsafe {
+        spikes_arr
+            .as_slice_mut()
+            .expect("newly allocated spikes array must be contiguous")
+    };
+    // SAFETY: Arrays are newly allocated and contiguous.
+    let voltages_slice = unsafe {
+        voltages_arr
+            .as_slice_mut()
+            .expect("newly allocated voltages array must be contiguous")
+    };
+
+    for i in 0..n_steps {
         let (s, v) = lif.step(leak_k, gain_k, i_t, noise_in);
-        spikes.push(s);
-        voltages.push(v);
+        spikes_slice[i] = s;
+        voltages_slice[i] = v;
     }
 
-    (
-        spikes.into_pyarray_bound(py),
-        voltages.into_pyarray_bound(py),
-    )
+    (spikes_arr, voltages_arr)
 }
 
 /// Run N independent LIF neurons in parallel, each with its own constant input.
@@ -305,9 +316,31 @@ fn batch_lif_run_multi<'py>(
         )));
     }
 
-    let rows: Vec<(Vec<i32>, Vec<i16>)> = (0..n_neurons)
-        .into_par_iter()
-        .map(|ni| {
+    let spikes_arr = PyArray2::<i32>::zeros_bound(py, [n_neurons, n_steps], false);
+    let voltages_arr = PyArray2::<i16>::zeros_bound(py, [n_neurons, n_steps], false);
+
+    if n_neurons == 0 || n_steps == 0 {
+        return Ok((spikes_arr, voltages_arr));
+    }
+
+    // SAFETY: Arrays are newly allocated and contiguous.
+    let spikes_flat = unsafe {
+        spikes_arr
+            .as_slice_mut()
+            .expect("newly allocated spikes array must be contiguous")
+    };
+    // SAFETY: Arrays are newly allocated and contiguous.
+    let voltages_flat = unsafe {
+        voltages_arr
+            .as_slice_mut()
+            .expect("newly allocated voltages array must be contiguous")
+    };
+
+    spikes_flat
+        .par_chunks_mut(n_steps)
+        .zip(voltages_flat.par_chunks_mut(n_steps))
+        .zip(curr_slice.par_iter().copied())
+        .for_each(|((spike_row, voltage_row), i_t)| {
             let mut lif = neuron::FixedPointLif::new(
                 data_width,
                 fraction,
@@ -316,34 +349,14 @@ fn batch_lif_run_multi<'py>(
                 v_threshold,
                 refractory_period,
             );
-            let i_t = curr_slice[ni];
-            let mut spikes = Vec::with_capacity(n_steps);
-            let mut voltages = Vec::with_capacity(n_steps);
-            for _ in 0..n_steps {
+            for step in 0..n_steps {
                 let (s, v) = lif.step(leak_k, gain_k, i_t, 0);
-                spikes.push(s);
-                voltages.push(v);
+                spike_row[step] = s;
+                voltage_row[step] = v;
             }
-            (spikes, voltages)
-        })
-        .collect();
+        });
 
-    let mut spikes_flat = Vec::with_capacity(n_neurons * n_steps);
-    let mut voltages_flat = Vec::with_capacity(n_neurons * n_steps);
-    for (spikes_row, voltages_row) in &rows {
-        spikes_flat.extend_from_slice(spikes_row);
-        voltages_flat.extend_from_slice(voltages_row);
-    }
-
-    let spikes_arr = ndarray::Array2::from_shape_vec((n_neurons, n_steps), spikes_flat)
-        .map_err(|e| PyValueError::new_err(format!("Shape construction failed: {e}")))?;
-    let voltages_arr = ndarray::Array2::from_shape_vec((n_neurons, n_steps), voltages_flat)
-        .map_err(|e| PyValueError::new_err(format!("Shape construction failed: {e}")))?;
-
-    Ok((
-        spikes_arr.into_pyarray_bound(py),
-        voltages_arr.into_pyarray_bound(py),
-    ))
+    Ok((spikes_arr, voltages_arr))
 }
 
 /// Run a LIF neuron for N steps with per-step current and optional noise arrays.
@@ -405,20 +418,30 @@ fn batch_lif_run_varying<'py>(
         v_threshold,
         refractory_period,
     );
-    let mut spikes = Vec::with_capacity(n_steps);
-    let mut voltages = Vec::with_capacity(n_steps);
+    let spikes_arr = PyArray1::<i32>::zeros_bound(py, n_steps, false);
+    let voltages_arr = PyArray1::<i16>::zeros_bound(py, n_steps, false);
+
+    // SAFETY: Arrays are newly allocated and contiguous.
+    let spikes_slice = unsafe {
+        spikes_arr
+            .as_slice_mut()
+            .expect("newly allocated spikes array must be contiguous")
+    };
+    // SAFETY: Arrays are newly allocated and contiguous.
+    let voltages_slice = unsafe {
+        voltages_arr
+            .as_slice_mut()
+            .expect("newly allocated voltages array must be contiguous")
+    };
 
     for i in 0..n_steps {
         let noise_in = noise_slice.map_or(0, |ns| ns[i]);
         let (s, v) = lif.step(leak_k, gain_k, curr_slice[i], noise_in);
-        spikes.push(s);
-        voltages.push(v);
+        spikes_slice[i] = s;
+        voltages_slice[i] = v;
     }
 
-    Ok((
-        spikes.into_pyarray_bound(py),
-        voltages.into_pyarray_bound(py),
-    ))
+    Ok((spikes_arr, voltages_arr))
 }
 
 /// Bernoulli-encode a numpy float64 array into packed bitstream words.
@@ -479,7 +502,7 @@ fn batch_encode_numpy<'py>(
 
             let prob_seed = seed.wrapping_add(idx as u64);
             let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(prob_seed);
-            let mut row = bitstream::bernoulli_packed_fast(p, length, &mut rng);
+            let mut row = bitstream::bernoulli_packed_simd(p, length, &mut rng);
             row.resize(words, 0);
             row
         })

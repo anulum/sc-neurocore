@@ -5,6 +5,8 @@
 
 use rand::Rng;
 
+use crate::simd;
+
 /// Packed bitstream tensor with original bit length metadata.
 #[derive(Clone, Debug)]
 pub struct BitStreamTensor {
@@ -175,6 +177,66 @@ pub fn bernoulli_packed_fast<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mu
     data
 }
 
+/// SIMD-accelerated packed Bernoulli generation.
+///
+/// Semantics match `bernoulli_packed_fast` (byte-threshold sampling) while
+/// vectorizing the threshold comparison for full 64-bit words.
+pub fn bernoulli_packed_simd<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mut R) -> Vec<u64> {
+    let threshold = (prob.clamp(0.0, 1.0) * 256.0).min(255.0) as u8;
+    let words = length.div_ceil(64);
+    let mut data = vec![0_u64; words];
+    let full_words = length / 64;
+    let mut buf = [0_u8; 64];
+
+    for word in data.iter_mut().take(full_words) {
+        rng.fill(&mut buf);
+        *word = simd_bernoulli_compare(&buf, threshold);
+    }
+
+    if full_words < words {
+        let remaining = length - full_words * 64;
+        rng.fill(&mut buf[..remaining]);
+        let mut tail = 0_u64;
+        for (bit, &rb) in buf[..remaining].iter().enumerate() {
+            if rb < threshold {
+                tail |= 1_u64 << bit;
+            }
+        }
+        data[full_words] = tail;
+    }
+
+    data
+}
+
+/// Compare 64 bytes against a threshold and return a packed bit mask.
+#[inline]
+fn simd_bernoulli_compare(buf: &[u8], threshold: u8) -> u64 {
+    debug_assert!(buf.len() >= 64, "buffer must contain at least 64 bytes");
+
+    #[cfg(target_arch = "x86_64")]
+    {
+        if is_x86_feature_detected!("avx512bw") {
+            // SAFETY: Runtime feature-gated.
+            return unsafe { simd::avx512::bernoulli_compare_avx512(buf, threshold) };
+        }
+        if is_x86_feature_detected!("avx2") {
+            // SAFETY: Runtime feature-gated.
+            let lo = unsafe { simd::avx2::bernoulli_compare_avx2(&buf[0..32], threshold) };
+            // SAFETY: Runtime feature-gated.
+            let hi = unsafe { simd::avx2::bernoulli_compare_avx2(&buf[32..64], threshold) };
+            return (lo as u64) | ((hi as u64) << 32);
+        }
+    }
+
+    let mut mask = 0_u64;
+    for (bit, &rb) in buf.iter().take(64).enumerate() {
+        if rb < threshold {
+            mask |= 1_u64 << bit;
+        }
+    }
+    mask
+}
+
 /// Encode a flat matrix of probabilities into packed Bernoulli bitstreams.
 ///
 /// Each value is clamped into `[0, 1]` before sampling.
@@ -198,8 +260,8 @@ pub fn encode_matrix_prob_to_packed<R: Rng + ?Sized>(
 #[cfg(test)]
 mod tests {
     use super::{
-        bernoulli_packed, bernoulli_packed_fast, bernoulli_stream, bitwise_and, pack, pack_fast,
-        popcount, unpack,
+        bernoulli_packed, bernoulli_packed_fast, bernoulli_packed_simd, bernoulli_stream,
+        bitwise_and, pack, pack_fast, popcount, unpack,
     };
 
     #[test]
@@ -287,6 +349,37 @@ mod tests {
 
         let mut rng2 = ChaCha8Rng::seed_from_u64(99);
         let b = bernoulli_packed_fast(0.5, 512, &mut rng2);
+
+        assert_eq!(a, b, "Same seed must produce identical output");
+    }
+
+    #[test]
+    fn bernoulli_packed_simd_statistics() {
+        use rand::SeedableRng;
+        use rand_chacha::ChaCha8Rng;
+
+        let prob = 0.35;
+        let length = 10_000;
+        let mut rng = ChaCha8Rng::seed_from_u64(1337);
+        let packed = bernoulli_packed_simd(prob, length, &mut rng);
+        let count: u64 = packed.iter().map(|w| w.count_ones() as u64).sum();
+        let measured = count as f64 / length as f64;
+        assert!(
+            (measured - prob).abs() < 0.03,
+            "Expected ~{prob}, got {measured}"
+        );
+    }
+
+    #[test]
+    fn bernoulli_packed_simd_deterministic() {
+        use rand::SeedableRng;
+        use rand_chacha::ChaCha8Rng;
+
+        let mut rng1 = ChaCha8Rng::seed_from_u64(2026);
+        let a = bernoulli_packed_simd(0.5, 1024, &mut rng1);
+
+        let mut rng2 = ChaCha8Rng::seed_from_u64(2026);
+        let b = bernoulli_packed_simd(0.5, 1024, &mut rng2);
 
         assert_eq!(a, b, "Same seed must produce identical output");
     }

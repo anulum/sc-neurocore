@@ -1,4 +1,4 @@
-"""SC-NeuroCore Engine v3.4 — Drop-in replacement for v2 hot paths."""
+"""SC-NeuroCore Engine v3.5 — Drop-in replacement for v2 hot paths."""
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (

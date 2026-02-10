@@ -117,6 +117,14 @@ def bench_dense_forward(n_in: int = 64, n_out: int = 32, length: int = 1024) -> 
     v3_layer = V3Layer(n_inputs=n_in, n_neurons=n_out, length=length)
     packed_inputs = v3.batch_encode_numpy(inputs_f64, length=length, seed=42)
 
+    # Warm-up once to stabilize caches and rayon thread-pool initialization.
+    v2_layer.forward(inputs)
+    v3_layer.forward(inputs)
+    v3_layer.forward_fast(inputs)
+    v3_layer.forward_prepacked(packed_inputs)
+    v3_layer.forward_prepacked_numpy(packed_inputs)
+    v3_layer.forward_numpy(inputs_f64)
+
     v2_time = benchmark(lambda: v2_layer.forward(inputs), n_iters=10)
     v3_time = benchmark(lambda: v3_layer.forward(inputs), n_iters=10)
     v3_fast_time = benchmark(lambda: v3_layer.forward_fast(inputs), n_iters=10)
