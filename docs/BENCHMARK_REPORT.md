@@ -1,12 +1,54 @@
 # SC-NeuroCore v3 Benchmark Report
 
-**Version**: 3.5.0  
+**Version**: 3.6.0  
 **Date**: 2026-02-10  
 **SIMD Tier**: avx512-vpopcntdq
 
-## Phase 11 Results (SIMD Pipeline + Zero-Alloc LIF)
+## Phase 12 Results (Fused Dense + Fast PRNG + Batch Forward)
 
 Measured via `examples/03_benchmark_report.py` on this machine.
+
+| Operation | v2 (ms) | v3 (ms) | Speedup | Target |
+|-----------|---------|---------|---------|--------|
+| pack (list, 1000K) | 11.538 | 35.448 | 0.3x | 6x |
+| pack (numpy, 1000K) | 11.538 | 0.129 | 89.3x | 6x |
+| popcount (list, 1000K) | 109.023 | 151.322 | 0.7x | 20x |
+| popcount (numpy, 1000K) | 109.023 | 1.989 | 54.8x | 20x |
+| dense forward (64->32, L=1024) | 3.728 | 1.598 | 2.3x | 70x |
+| dense fast (64->32, L=1024) | 3.728 | 0.299 | 12.4x | 70x |
+| dense prepacked (64->32, L=1024) | 3.728 | 0.282 | 13.2x | 70x |
+| dense prepacked numpy (64->32, L=1024) | 3.728 | 0.110 | 33.9x | 70x |
+| dense numpy (64->32, L=1024) | 3.728 | 0.647 | 5.8x | 70x |
+| dense fused (64->32, L=1024) | 4.664 | 0.380 | 12.3x | 70x |
+| dense batch (100x64->32, L=1024) | 289.305 | 6.893 | 42.0x | 70x |
+| LIF (per-call, 100K) | 126.313 | 25.525 | 4.9x | 400x |
+| LIF (batch, 100K) | 126.313 | 0.905 | 139.6x | 400x |
+| LIF multi (100x100K) | 12911.296 | 25.196 | 512.4x | 400x |
+
+## Criterion Diagnosis (Phase 12)
+
+Measured via targeted commands:
+
+```powershell
+cargo bench --bench full_bench dense_forward_fused
+cargo bench --bench full_bench encode_and_popcount
+cargo bench --bench full_bench dense_forward_batch
+cargo bench --bench full_bench prng_xoshiro
+```
+
+| Benchmark | Time (95% CI) |
+|-----------|---------------|
+| dense_forward_fused_64x32 | 1.1268 ms - 1.9825 ms |
+| bernoulli_encode_and_popcount_1024 | 342.59 ns - 408.10 ns |
+| dense_forward_batch_64x32_x100 | 21.842 ms - 28.753 ms |
+| prng_xoshiro_fill_1024 | 1.5879 us - 1.7596 us |
+
+Interpretation:
+- Fused encode+AND+popcount path is functionally correct and benchmarked end-to-end.
+- Batched dense API reduces Python-level overhead substantially vs per-sample loops.
+- Multi-neuron LIF remains above the Blueprint 400x target on this host.
+
+## Phase 11 Results (Reference)
 
 | Operation | v2 (ms) | v3 (ms) | Speedup | Target |
 |-----------|---------|---------|---------|--------|
@@ -22,29 +64,6 @@ Measured via `examples/03_benchmark_report.py` on this machine.
 | LIF (per-call, 100K) | 106.451 | 23.925 | 4.4x | 400x |
 | LIF (batch, 100K) | 106.451 | 0.897 | 118.7x | 400x |
 | LIF multi (100x100K) | 13349.151 | 31.783 | 420.0x | 400x |
-
-## Criterion Diagnosis (Phase 11)
-
-Measured via targeted commands:
-
-```powershell
-cargo bench --bench full_bench fused_and_popcount
-cargo bench --bench full_bench bernoulli_packed_simd
-cargo bench --bench full_bench dense_forward_fast
-```
-
-| Benchmark | Time (95% CI) |
-|-----------|---------------|
-| fused_and_popcount_scalar_16w | 4.3755 ns - 4.7870 ns |
-| fused_and_popcount_dispatch_16w | 7.2066 ns - 8.2358 ns |
-| bernoulli_packed_simd_1024 | 585.06 ns - 657.75 ns |
-| dense_forward_fast_64x32 | 165.62 us - 219.51 us |
-| dense_forward_fast_flat_64x32 | 162.96 us - 216.84 us |
-
-Interpretation:
-- Multi-neuron LIF hits **420.0x**, clearing the Blueprint 400x target.
-- SIMD Bernoulli compare runs sub-microsecond for 1024-bit generation.
-- Dense fast path benchmark is now in the ~0.17-0.22 ms range on this host.
 
 ## Phase 10 Results (Reference)
 

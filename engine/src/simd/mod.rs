@@ -2,6 +2,8 @@
 //!
 //! Runtime CPU-feature dispatch for packed-bit popcount kernels.
 
+use rand::Rng;
+
 pub mod avx2;
 pub mod avx512;
 pub mod neon;
@@ -72,4 +74,17 @@ pub fn fused_and_popcount_dispatch(a: &[u64], b: &[u64]) -> u64 {
         .zip(b.iter())
         .map(|(&wa, &wb)| (wa & wb).count_ones() as u64)
         .sum()
+}
+
+/// Fused encode+AND+popcount dispatch.
+///
+/// This currently delegates to the scalar-control implementation in `bitstream`,
+/// which already performs SIMD Bernoulli compare where available.
+pub fn encode_and_popcount_dispatch<R: Rng + ?Sized>(
+    weight_words: &[u64],
+    prob: f64,
+    length: usize,
+    rng: &mut R,
+) -> u64 {
+    crate::bitstream::encode_and_popcount(weight_words, prob, length, rng)
 }

@@ -2,11 +2,11 @@ use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use rand::Rng;
 use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
+use rand_xoshiro::Xoshiro256PlusPlus;
 use sc_neurocore_engine::attention::StochasticAttention;
 use sc_neurocore_engine::bitstream::{
-    bernoulli_packed, bernoulli_packed_fast, bernoulli_packed_simd, bernoulli_stream, pack,
-    pack_fast,
-    popcount_words_portable,
+    bernoulli_packed, bernoulli_packed_fast, bernoulli_packed_simd, bernoulli_stream,
+    encode_and_popcount, pack, pack_fast, popcount_words_portable,
 };
 use sc_neurocore_engine::encoder::BitstreamEncoder;
 use sc_neurocore_engine::graph::StochasticGraphLayer;
@@ -109,6 +109,13 @@ fn bench_all(c: &mut Criterion) {
         })
     });
 
+    c.bench_function("bernoulli_packed_simd_xoshiro_1024", |b| {
+        b.iter(|| {
+            let mut rng = Xoshiro256PlusPlus::seed_from_u64(42);
+            black_box(bernoulli_packed_simd(0.5, 1024, &mut rng))
+        })
+    });
+
     let a_words: Vec<u64> = (0..16)
         .map(|i| (i as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15) ^ 0xA5A5_A5A5_5A5A_5A5A)
         .collect();
@@ -151,6 +158,57 @@ fn bench_all(c: &mut Criterion) {
 
     c.bench_function("dense_forward_fast_flat_64x32", |b| {
         b.iter(|| black_box(layer.forward_fast(black_box(&inputs), 42).unwrap()))
+    });
+
+    c.bench_function("dense_forward_fused_64x32", |b| {
+        b.iter(|| black_box(layer.forward_fused(black_box(&inputs), 42).unwrap()))
+    });
+
+    let weights_16w: Vec<u64> = (0..16)
+        .map(|i| (i as u64).wrapping_mul(0xD6E8_FD9D_5A2B_1C47) ^ 0x1357_9BDF_2468_ACE0)
+        .collect();
+    c.bench_function("bernoulli_encode_and_popcount_1024", |b| {
+        b.iter(|| {
+            let mut rng = Xoshiro256PlusPlus::seed_from_u64(42);
+            black_box(encode_and_popcount(
+                black_box(&weights_16w),
+                0.5,
+                1024,
+                &mut rng,
+            ))
+        })
+    });
+
+    let n_samples = 100_usize;
+    let batch_inputs: Vec<f64> = (0..(n_samples * 64))
+        .map(|i| ((i * 13 + 7) % 100) as f64 / 100.0)
+        .collect();
+    c.bench_function("dense_forward_batch_64x32_x100", |b| {
+        b.iter(|| {
+            black_box(
+                layer
+                    .forward_batch(black_box(&batch_inputs), n_samples, 42)
+                    .unwrap(),
+            )
+        })
+    });
+
+    c.bench_function("prng_chacha_fill_1024", |b| {
+        b.iter(|| {
+            let mut rng = ChaCha8Rng::seed_from_u64(42);
+            let mut buf = [0_u8; 1024];
+            rand::RngCore::fill_bytes(&mut rng, &mut buf);
+            black_box(buf)
+        })
+    });
+
+    c.bench_function("prng_xoshiro_fill_1024", |b| {
+        b.iter(|| {
+            let mut rng = Xoshiro256PlusPlus::seed_from_u64(42);
+            let mut buf = [0_u8; 1024];
+            rand::RngCore::fill_bytes(&mut rng, &mut buf);
+            black_box(buf)
+        })
     });
 
     let packed_inputs: Vec<Vec<u64>> = inputs

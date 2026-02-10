@@ -1,6 +1,6 @@
 [package]
 name = "sc_neurocore_engine"
-version = "3.5.0"
+version = "3.6.0"
 edition = "2021"
 authors = ["Miroslav Sotek <fortisstudio@gmail.com>"]
 description = "High-performance Rust backend for SC-NeuroCore"
@@ -19,6 +19,7 @@ numpy = "0.22"
 ndarray = "0.16"
 rand = "0.8"
 rand_chacha = "0.3"
+rand_xoshiro = "0.6"
 rayon = "1.10"
 
 [dev-dependencies]

@@ -6,6 +6,7 @@
 use rand::Rng;
 use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
+use rand_xoshiro::Xoshiro256PlusPlus;
 use rayon::prelude::*;
 
 use crate::{bitstream, simd};
@@ -124,7 +125,7 @@ impl DenseLayer {
             ));
         }
 
-        let mut rng = ChaCha8Rng::seed_from_u64(seed);
+        let mut rng = Xoshiro256PlusPlus::seed_from_u64(seed);
         let mut packed_inputs = vec![Vec::<u64>::new(); self.n_inputs];
         for (idx, p) in input_values.iter().copied().enumerate() {
             packed_inputs[idx] = bitstream::bernoulli_packed(p, self.length, &mut rng);
@@ -187,7 +188,7 @@ impl DenseLayer {
                 .enumerate()
                 .map(|(idx, &p)| {
                     let input_seed = seed.wrapping_add(idx as u64);
-                    let mut rng = ChaCha8Rng::seed_from_u64(input_seed);
+                    let mut rng = Xoshiro256PlusPlus::seed_from_u64(input_seed);
                     bitstream::bernoulli_packed_simd(p, self.length, &mut rng)
                 })
                 .collect()
@@ -197,7 +198,7 @@ impl DenseLayer {
                 .enumerate()
                 .map(|(idx, &p)| {
                     let input_seed = seed.wrapping_add(idx as u64);
-                    let mut rng = ChaCha8Rng::seed_from_u64(input_seed);
+                    let mut rng = Xoshiro256PlusPlus::seed_from_u64(input_seed);
                     bitstream::bernoulli_packed_simd(p, self.length, &mut rng)
                 })
                 .collect()
@@ -239,6 +240,151 @@ impl DenseLayer {
         };
 
         Ok(out)
+    }
+
+    /// Forward pass with fused encode+AND+popcount.
+    ///
+    /// This path avoids materializing encoded inputs and consumes each encoded
+    /// word immediately against its corresponding weight words.
+    pub fn forward_fused(&self, input_values: &[f64], seed: u64) -> Result<Vec<f64>, String> {
+        if input_values.len() != self.n_inputs {
+            return Err(format!(
+                "Expected input of length {}, got {}.",
+                self.n_inputs,
+                input_values.len()
+            ));
+        }
+
+        let out: Vec<f64> = if self.n_neurons >= RAYON_NEURON_THRESHOLD {
+            (0..self.n_neurons)
+                .into_par_iter()
+                .map(|neuron_idx| {
+                    let total: u64 = input_values
+                        .iter()
+                        .enumerate()
+                        .map(|(input_idx, &p)| {
+                            let input_seed = seed.wrapping_add(input_idx as u64);
+                            let mut rng = Xoshiro256PlusPlus::seed_from_u64(input_seed);
+                            bitstream::encode_and_popcount(
+                                self.weight_slice(neuron_idx, input_idx),
+                                p,
+                                self.length,
+                                &mut rng,
+                            )
+                        })
+                        .sum();
+                    total as f64 / self.length as f64
+                })
+                .collect()
+        } else {
+            (0..self.n_neurons)
+                .map(|neuron_idx| {
+                    let total: u64 = input_values
+                        .iter()
+                        .enumerate()
+                        .map(|(input_idx, &p)| {
+                            let input_seed = seed.wrapping_add(input_idx as u64);
+                            let mut rng = Xoshiro256PlusPlus::seed_from_u64(input_seed);
+                            bitstream::encode_and_popcount(
+                                self.weight_slice(neuron_idx, input_idx),
+                                p,
+                                self.length,
+                                &mut rng,
+                            )
+                        })
+                        .sum();
+                    total as f64 / self.length as f64
+                })
+                .collect()
+        };
+
+        Ok(out)
+    }
+
+    /// Batched forward pass writing into an existing row-major output buffer.
+    ///
+    /// - `inputs_flat`: shape `[n_samples, n_inputs]`
+    /// - `output`: shape `[n_samples, n_neurons]`
+    pub fn forward_batch_into(
+        &self,
+        inputs_flat: &[f64],
+        n_samples: usize,
+        seed: u64,
+        output: &mut [f64],
+    ) -> Result<(), String> {
+        let expected_inputs = n_samples.checked_mul(self.n_inputs).ok_or_else(|| {
+            "Input size overflow when validating n_samples * n_inputs.".to_string()
+        })?;
+        if inputs_flat.len() != expected_inputs {
+            return Err(format!(
+                "Expected {} values ({}×{}), got {}.",
+                expected_inputs,
+                n_samples,
+                self.n_inputs,
+                inputs_flat.len()
+            ));
+        }
+
+        let expected_outputs = n_samples.checked_mul(self.n_neurons).ok_or_else(|| {
+            "Output size overflow when validating n_samples * n_neurons.".to_string()
+        })?;
+        if output.len() != expected_outputs {
+            return Err(format!(
+                "Expected output length {} ({}×{}), got {}.",
+                expected_outputs,
+                n_samples,
+                self.n_neurons,
+                output.len()
+            ));
+        }
+
+        output
+            .par_chunks_mut(self.n_neurons)
+            .enumerate()
+            .for_each(|(sample_idx, out_row)| {
+                let start = sample_idx * self.n_inputs;
+                let end = start + self.n_inputs;
+                let input_row = &inputs_flat[start..end];
+                let sample_seed = seed.wrapping_add((sample_idx as u64).wrapping_mul(1_000_000));
+
+                for (neuron_idx, out_val) in out_row.iter_mut().enumerate() {
+                    let total: u64 = input_row
+                        .iter()
+                        .enumerate()
+                        .map(|(input_idx, &p)| {
+                            let input_seed = sample_seed.wrapping_add(input_idx as u64);
+                            let mut rng = Xoshiro256PlusPlus::seed_from_u64(input_seed);
+                            bitstream::encode_and_popcount(
+                                self.weight_slice(neuron_idx, input_idx),
+                                p,
+                                self.length,
+                                &mut rng,
+                            )
+                        })
+                        .sum();
+                    *out_val = total as f64 / self.length as f64;
+                }
+            });
+
+        Ok(())
+    }
+
+    /// Batched forward pass: process N input vectors in one call.
+    ///
+    /// `inputs_flat` is row-major: `[n_samples, n_inputs]`.
+    /// Returns flat output: `[n_samples, n_neurons]`.
+    pub fn forward_batch(
+        &self,
+        inputs_flat: &[f64],
+        n_samples: usize,
+        seed: u64,
+    ) -> Result<Vec<f64>, String> {
+        let output_len = n_samples.checked_mul(self.n_neurons).ok_or_else(|| {
+            "Output size overflow when allocating n_samples * n_neurons.".to_string()
+        })?;
+        let mut output = vec![0.0_f64; output_len];
+        self.forward_batch_into(inputs_flat, n_samples, seed, &mut output)?;
+        Ok(output)
     }
 
     /// Forward pass with pre-packed input bitstreams.
@@ -342,7 +488,7 @@ impl DenseLayer {
     ///
     /// This mirrors `forward_fast` and exists for numpy-native Python bindings.
     pub fn forward_numpy_inner(&self, input_values: &[f64], seed: u64) -> Result<Vec<f64>, String> {
-        self.forward_fast(input_values, seed)
+        self.forward_fused(input_values, seed)
     }
 }
 
@@ -368,6 +514,48 @@ mod tests {
                     bitstream::bernoulli_packed(layer.weights[neuron][input], 130, &mut rng);
                 assert_eq!(layer.weight_slice(neuron, input), expected.as_slice());
             }
+        }
+    }
+
+    #[test]
+    fn forward_fused_matches_forward_fast() {
+        let layer = DenseLayer::new(16, 8, 1024, 42);
+        let inputs: Vec<f64> = (0..16).map(|i| (i as f64) / 16.0).collect();
+        let seed = 999_u64;
+
+        let fast = layer
+            .forward_fast(&inputs, seed)
+            .expect("forward_fast should succeed");
+        let fused = layer
+            .forward_fused(&inputs, seed)
+            .expect("forward_fused should succeed");
+        assert_eq!(
+            fast, fused,
+            "forward_fused must be bit-identical to forward_fast"
+        );
+    }
+
+    #[test]
+    fn forward_batch_matches_sequential_fused() {
+        let layer = DenseLayer::new(4, 3, 256, 123);
+        let n_samples = 5;
+        let inputs_flat: Vec<f64> = (0..(n_samples * 4))
+            .map(|i| ((i * 17 + 11) % 100) as f64 / 100.0)
+            .collect();
+        let seed = 77_u64;
+
+        let batch = layer
+            .forward_batch(&inputs_flat, n_samples, seed)
+            .expect("forward_batch should succeed");
+
+        for sample_idx in 0..n_samples {
+            let row = &inputs_flat[sample_idx * 4..(sample_idx + 1) * 4];
+            let sample_seed = seed.wrapping_add((sample_idx as u64).wrapping_mul(1_000_000));
+            let expected = layer
+                .forward_fused(row, sample_seed)
+                .expect("forward_fused should succeed");
+            let got = &batch[sample_idx * 3..(sample_idx + 1) * 3];
+            assert_eq!(got, expected.as_slice(), "sample_idx={sample_idx}");
         }
     }
 }

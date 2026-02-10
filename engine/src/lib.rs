@@ -19,10 +19,10 @@ pub mod neuron;
 pub mod scpn;
 pub mod simd;
 
-/// SC-NeuroCore v3.5 — High-Performance Rust Engine
+/// SC-NeuroCore v3.6 — High-Performance Rust Engine
 #[pymodule]
 fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add("__version__", "3.5.0")?;
+    m.add("__version__", "3.6.0")?;
     m.add_function(wrap_pyfunction!(simd_tier, m)?)?;
     m.add_function(wrap_pyfunction!(set_num_threads, m)?)?;
     m.add_function(wrap_pyfunction!(pack_bitstream, m)?)?;
@@ -501,7 +501,7 @@ fn batch_encode_numpy<'py>(
             use rand::SeedableRng;
 
             let prob_seed = seed.wrapping_add(idx as u64);
-            let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(prob_seed);
+            let mut rng = rand_xoshiro::Xoshiro256PlusPlus::seed_from_u64(prob_seed);
             let mut row = bitstream::bernoulli_packed_simd(p, length, &mut rng);
             row.resize(words, 0);
             row
@@ -706,7 +706,7 @@ impl DenseLayer {
     #[pyo3(signature = (input_values, seed=44257))]
     fn forward_fast(&self, input_values: Vec<f64>, seed: u64) -> PyResult<Vec<f64>> {
         self.inner
-            .forward_fast(&input_values, seed)
+            .forward_fused(&input_values, seed)
             .map_err(PyValueError::new_err)
     }
 
@@ -728,6 +728,43 @@ impl DenseLayer {
             .forward_numpy_inner(slice, seed)
             .map_err(PyValueError::new_err)?;
         Ok(out.into_pyarray_bound(py))
+    }
+
+    /// Dense forward for a batch of input samples in one FFI call.
+    ///
+    /// `inputs` must be a contiguous float64 array of shape (n_samples, n_inputs).
+    /// Returns float64 array of shape (n_samples, n_neurons).
+    #[pyo3(signature = (inputs, seed=44257))]
+    fn forward_batch_numpy<'py>(
+        &self,
+        py: Python<'py>,
+        inputs: PyReadonlyArray2<'py, f64>,
+        seed: u64,
+    ) -> PyResult<Bound<'py, PyArray2<f64>>> {
+        let shape = inputs.shape();
+        let n_samples = shape[0];
+        let n_inputs = shape[1];
+        if n_inputs != self.inner.n_inputs {
+            return Err(PyValueError::new_err(format!(
+                "Expected {} input features, got {}.",
+                self.inner.n_inputs, n_inputs
+            )));
+        }
+
+        let flat_inputs = inputs
+            .as_slice()
+            .map_err(|e| PyValueError::new_err(format!("Array not contiguous: {e}")))?;
+        let out = PyArray2::<f64>::zeros_bound(py, [n_samples, self.inner.n_neurons], false);
+        // SAFETY: Newly allocated numpy arrays are contiguous.
+        let out_slice = unsafe {
+            out.as_slice_mut()
+                .expect("newly allocated output array must be contiguous")
+        };
+
+        self.inner
+            .forward_batch_into(flat_inputs, n_samples, seed, out_slice)
+            .map_err(PyValueError::new_err)?;
+        Ok(out)
     }
 
     /// Forward pass with pre-packed input bitstreams.

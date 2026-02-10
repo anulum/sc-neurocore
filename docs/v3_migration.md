@@ -372,3 +372,42 @@ This removes nested `Vec<Vec<Vec<u64>>>` indirection and improves cache locality
 - avoid temporary `Vec` allocations and flatten copies
 
 Outputs and public signatures are unchanged.
+
+## Phase 12 Features (February 2026)
+
+### Fused Dense Forward Kernel
+
+`DenseLayer.forward_fast()` now routes through a fused encode+AND+popcount path:
+
+- no intermediate `Vec<Vec<u64>>` for encoded inputs
+- per-input Bernoulli words are generated and consumed immediately
+- deterministic seeding is preserved (`seed + input_idx`)
+
+### Fast PRNG for Encode Paths
+
+Fast encode paths now use xoshiro256++ (seeded deterministically) for improved
+throughput in:
+
+- `DenseLayer.forward()`
+- `DenseLayer.forward_fast()` / fused path
+- `batch_encode_numpy()`
+
+Weight packing remains ChaCha8-based to preserve existing model weight
+compatibility.
+
+### Batched Dense Forward API
+
+Process many dense samples in one call:
+
+```python
+import numpy as np
+import sc_neurocore_engine as v3
+
+layer = v3.DenseLayer(64, 32, 1024)
+inputs = np.random.uniform(0, 1, (100, 64)).astype(np.float64)
+outputs = layer.forward_batch_numpy(inputs, seed=42)
+# outputs.shape == (100, 32)
+```
+
+This amortizes Python↔Rust FFI overhead and enables parallel execution over
+samples.

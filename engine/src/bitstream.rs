@@ -208,6 +208,43 @@ pub fn bernoulli_packed_simd<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mu
     data
 }
 
+/// Fused encode+AND+popcount without materializing encoded input words.
+///
+/// Semantically equivalent to:
+/// 1. `encoded = bernoulli_packed_simd(prob, length, rng)`
+/// 2. `sum(popcount(encoded[word] & weight_words[word]))`
+pub fn encode_and_popcount<R: Rng + ?Sized>(
+    weight_words: &[u64],
+    prob: f64,
+    length: usize,
+    rng: &mut R,
+) -> u64 {
+    let threshold = (prob.clamp(0.0, 1.0) * 256.0).min(255.0) as u8;
+    let full_words = length / 64;
+    let mut total = 0_u64;
+    let mut buf = [0_u8; 64];
+
+    for &w_word in weight_words.iter().take(full_words) {
+        rng.fill(&mut buf);
+        let encoded = simd_bernoulli_compare(&buf, threshold);
+        total += (encoded & w_word).count_ones() as u64;
+    }
+
+    let remaining = length.saturating_sub(full_words * 64);
+    if remaining > 0 && full_words < weight_words.len() {
+        rng.fill(&mut buf[..remaining]);
+        let mut encoded = 0_u64;
+        for (bit, &rb) in buf[..remaining].iter().enumerate() {
+            if rb < threshold {
+                encoded |= 1_u64 << bit;
+            }
+        }
+        total += (encoded & weight_words[full_words]).count_ones() as u64;
+    }
+
+    total
+}
+
 /// Compare 64 bytes against a threshold and return a packed bit mask.
 #[inline]
 fn simd_bernoulli_compare(buf: &[u8], threshold: u8) -> u64 {
@@ -261,7 +298,7 @@ pub fn encode_matrix_prob_to_packed<R: Rng + ?Sized>(
 mod tests {
     use super::{
         bernoulli_packed, bernoulli_packed_fast, bernoulli_packed_simd, bernoulli_stream,
-        bitwise_and, pack, pack_fast, popcount, unpack,
+        bitwise_and, encode_and_popcount, pack, pack_fast, popcount, unpack,
     };
 
     #[test]
@@ -382,5 +419,33 @@ mod tests {
         let b = bernoulli_packed_simd(0.5, 1024, &mut rng2);
 
         assert_eq!(a, b, "Same seed must produce identical output");
+    }
+
+    #[test]
+    fn encode_and_popcount_matches_materialized() {
+        use rand::SeedableRng;
+        use rand_xoshiro::Xoshiro256PlusPlus;
+
+        let prob = 0.41;
+        let lengths = [63_usize, 64, 65, 1003, 1024];
+        for length in lengths {
+            let words = length.div_ceil(64);
+            let weights: Vec<u64> = (0..words)
+                .map(|i| (i as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15) ^ 0xA5A5_A5A5_5A5A_5A5A)
+                .collect();
+
+            let mut rng1 = Xoshiro256PlusPlus::seed_from_u64(2026);
+            let fused = encode_and_popcount(&weights, prob, length, &mut rng1);
+
+            let mut rng2 = Xoshiro256PlusPlus::seed_from_u64(2026);
+            let encoded = bernoulli_packed_simd(prob, length, &mut rng2);
+            let expected: u64 = encoded
+                .iter()
+                .zip(weights.iter())
+                .map(|(&e, &w)| (e & w).count_ones() as u64)
+                .sum();
+
+            assert_eq!(fused, expected, "Mismatch at length={length}");
+        }
     }
 }

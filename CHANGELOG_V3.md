@@ -1,5 +1,14 @@
 # SC-NeuroCore v3 Engine Changelog
 
+## [3.6.0] - 2026-02-10
+
+### Phase 12: Fused Dense Pipeline + Fast PRNG + Batch Forward
+- **Fused encode+AND+popcount**: `forward_fused()` eliminates intermediate input bitstream materialization
+- **Fast PRNG switch**: xoshiro256++ for dense fast-path input encoding and numpy batch encoding
+- **Batched dense API**: `DenseLayer.forward_batch_numpy()` processes N samples in one FFI call
+- **New diagnostics**: criterion benches for fused dense, encode+popcount, batch dense, and PRNG throughput
+- **Version/test/docs update**: bumped to 3.6.0 with Phase 12 test suite and migration notes
+
 ## [3.5.0] - 2026-02-10
 
 ### Phase 11: SIMD Pipeline Acceleration

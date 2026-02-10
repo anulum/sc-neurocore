@@ -148,4 +148,4 @@ class TestRayonThreshold:
 
 class TestPhase10Version:
     def test_version(self):
-        assert v3.__version__ == "3.5.0"
+        assert v3.__version__ == "3.6.0"

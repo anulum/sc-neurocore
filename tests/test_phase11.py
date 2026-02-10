@@ -146,4 +146,4 @@ class TestZeroAllocLIF:
 
 class TestPhase11Version:
     def test_version(self):
-        assert v3.__version__ == "3.5.0"
+        assert v3.__version__ == "3.6.0"

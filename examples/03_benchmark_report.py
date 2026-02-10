@@ -173,6 +173,67 @@ def bench_dense_forward(n_in: int = 64, n_out: int = 32, length: int = 1024) -> 
     ]
 
 
+def bench_dense_fused(n_in: int = 64, n_out: int = 32, length: int = 1024) -> list[dict]:
+    """Benchmark dense fused forward path explicitly."""
+    rng = np.random.RandomState(42)
+    inputs = rng.uniform(0, 1, n_in)
+
+    v2_layer = V2Layer(n_inputs=n_in, n_neurons=n_out, length=length)
+    v3_layer = v3.DenseLayer(n_in, n_out, length)
+
+    # Warm-up
+    v2_layer.forward(inputs)
+    v3_layer.forward_fast(inputs.tolist(), 42)
+
+    v2_time = benchmark(lambda: v2_layer.forward(inputs), n_iters=10)
+    v3_fused_time = benchmark(lambda: v3_layer.forward_fast(inputs.tolist(), 42), n_iters=10)
+
+    return [
+        {
+            "operation": f"dense fused ({n_in}->{n_out}, L={length})",
+            "v2_ms": v2_time / 10 * 1000,
+            "v3_ms": v3_fused_time / 10 * 1000,
+            "speedup": fmt_speedup(v2_time, v3_fused_time),
+            "target": "70x",
+        }
+    ]
+
+
+def bench_dense_batch(
+    n_samples: int = 100, n_in: int = 64, n_out: int = 32, length: int = 1024
+) -> list[dict]:
+    """Benchmark batched dense forward (single FFI call for N samples)."""
+    rng = np.random.RandomState(42)
+    inputs_batch = rng.uniform(0, 1, (n_samples, n_in)).astype(np.float64)
+
+    v2_layer = V2Layer(n_inputs=n_in, n_neurons=n_out, length=length)
+    v3_layer = V3Layer(n_inputs=n_in, n_neurons=n_out, length=length)
+
+    # Warm-up
+    _ = v2_layer.forward(inputs_batch[0])
+    _ = v3_layer.forward_batch_numpy(inputs_batch)
+
+    def run_v2_batch():
+        for row in inputs_batch:
+            v2_layer.forward(row)
+
+    def run_v3_batch():
+        return v3_layer.forward_batch_numpy(inputs_batch)
+
+    v2_time = benchmark(run_v2_batch)
+    v3_time = benchmark(run_v3_batch)
+
+    return [
+        {
+            "operation": f"dense batch ({n_samples}x{n_in}->{n_out}, L={length})",
+            "v2_ms": v2_time * 1000,
+            "v3_ms": v3_time * 1000,
+            "speedup": fmt_speedup(v2_time, v3_time),
+            "target": "70x",
+        }
+    ]
+
+
 def bench_lif_step(n_steps: int = 100_000) -> list[dict]:
     """Benchmark LIF neuron step: per-call vs batch."""
 
@@ -256,6 +317,8 @@ def main():
     results.extend(bench_pack())
     results.extend(bench_popcount())
     results.extend(bench_dense_forward())
+    results.extend(bench_dense_fused())
+    results.extend(bench_dense_batch())
     results.extend(bench_lif_step())
     results.extend(bench_lif_multi())
 

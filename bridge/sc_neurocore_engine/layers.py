@@ -68,3 +68,12 @@ class VectorizedSCLayer:
         """Dense forward with numpy input/output and parallel encoding."""
         arr = np.asarray(input_values, dtype=np.float64)
         return self._engine.forward_numpy(arr, seed)
+
+    def forward_batch_numpy(self, input_values, seed: int = 44257) -> np.ndarray:
+        """Dense forward for batched numpy input with one FFI call."""
+        arr = np.ascontiguousarray(input_values, dtype=np.float64)
+        if arr.ndim != 2 or arr.shape[1] != self.n_inputs:
+            raise ValueError(
+                f"Expected 2-D input with shape (n_samples, {self.n_inputs}), got {arr.shape}"
+            )
+        return self._engine.forward_batch_numpy(arr, seed)
