@@ -1,0 +1,16 @@
+[build-system]
+requires = ["maturin>=1.5"]
+build-backend = "maturin"
+
+[project]
+name = "sc_neurocore_engine"
+version = "3.6.0"
+requires-python = ">=3.9"
+description = "High-performance Rust backend for SC-NeuroCore"
+license = {text = "MIT"}
+authors = [{name = "Miroslav Sotek", email = "fortisstudio@gmail.com"}]
+
+[tool.maturin]
+manifest-path = "../engine/Cargo.toml"
+python-source = "."
+module-name = "sc_neurocore_engine.sc_neurocore_engine"
