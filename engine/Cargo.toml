@@ -1,0 +1,43 @@
+[package]
+name = "sc_neurocore_engine"
+version = "3.6.0"
+edition = "2021"
+authors = ["Miroslav Sotek <fortisstudio@gmail.com>"]
+description = "High-performance Rust backend for SC-NeuroCore"
+
+[package.metadata.maturin]
+python-source = "../bridge"
+module-name = "sc_neurocore_engine.sc_neurocore_engine"
+
+[lib]
+name = "sc_neurocore_engine"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+pyo3 = { version = "0.22", features = ["extension-module"] }
+numpy = "0.22"
+ndarray = "0.16"
+rand = "0.8"
+rand_chacha = "0.3"
+rand_xoshiro = "0.6"
+rayon = "1.10"
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+proptest = "1.4"
+
+[build-dependencies]
+pyo3-build-config = "0.22"
+
+[[bench]]
+name = "bitstream_bench"
+harness = false
+
+[[bench]]
+name = "full_bench"
+harness = false
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
