@@ -252,3 +252,43 @@ packed = v3.batch_encode_numpy(probs, length=1024, seed=42)
 
 Note: `batch_encode_numpy` uses per-index seeding (`seed + index`) for
 parallelism. Use `batch_encode` for sequential single-RNG seeding.
+
+## Phase 9 Features (February 2026)
+
+### Fast Bernoulli Encoding
+
+`forward_fast` and `batch_encode_numpy` now use byte-threshold Bernoulli
+encoding with 8x less random number generation overhead. This provides
+1/256 probability granularity, which is negligible compared to the
+statistical noise of 1024-bit bitstreams.
+
+The original `forward()` and `batch_encode()` retain f64-precision
+encoding for backward compatibility.
+
+### Zero-Copy Prepacked Forward
+
+For maximum throughput with pre-encoded inputs:
+
+```python
+import numpy as np
+import sc_neurocore_engine as v3
+
+layer = v3.DenseLayer(64, 32, 1024)
+probs = np.random.uniform(0, 1, 64)
+
+# Encode once, forward many times (zero-copy)
+packed = v3.batch_encode_numpy(probs, length=1024, seed=42)
+out = layer.forward_prepacked_numpy(packed)
+# out is a numpy float64 array, packed was never copied
+```
+
+### Thread Pool Tuning
+
+Control rayon's parallel thread count:
+
+```python
+v3.set_num_threads(4)  # Use 4 threads for all parallel ops
+```
+
+Must be called before any parallel operation. Pass 0 for automatic
+(number of CPU cores).

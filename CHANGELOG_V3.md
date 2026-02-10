@@ -1,5 +1,14 @@
 # SC-NeuroCore v3 Engine Changelog
 
+## [3.3.0] - 2026-02-10
+
+### Phase 9: Fast Bernoulli, Fused AND+Popcount, Zero-Copy Prepacked
+- **bernoulli_packed_fast**: 8x less RNG bandwidth via byte-threshold encoding
+- **Fused AND+popcount**: Eliminates intermediate buffer allocation in neuron compute
+- **forward_prepacked_numpy()**: True zero-copy from numpy 2D uint64 arrays
+- **set_num_threads()**: Rayon thread pool configuration for tuning parallelism
+- **Criterion benchmarks**: Added bernoulli_packed_fast benchmark
+
 ## [3.2.0] - 2026-02-10
 
 ### Phase 8: Benchmark CI, Single-Call Dense Forward, Parallel Encoding

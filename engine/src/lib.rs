@@ -1,6 +1,8 @@
 #![allow(clippy::useless_conversion)]
 
-use numpy::{IntoPyArray, PyArray1, PyArray2, PyReadonlyArray1, PyReadonlyArray2};
+use numpy::{
+    IntoPyArray, PyArray1, PyArray2, PyReadonlyArray1, PyReadonlyArray2, PyUntypedArrayMethods,
+};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::{PyAny, PyDict};
@@ -16,11 +18,12 @@ pub mod neuron;
 pub mod scpn;
 pub mod simd;
 
-/// SC-NeuroCore v3.2 — High-Performance Rust Engine
+/// SC-NeuroCore v3.3 — High-Performance Rust Engine
 #[pymodule]
 fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add("__version__", "3.2.0")?;
+    m.add("__version__", "3.3.0")?;
     m.add_function(wrap_pyfunction!(simd_tier, m)?)?;
+    m.add_function(wrap_pyfunction!(set_num_threads, m)?)?;
     m.add_function(wrap_pyfunction!(pack_bitstream, m)?)?;
     m.add_function(wrap_pyfunction!(unpack_bitstream, m)?)?;
     m.add_function(wrap_pyfunction!(popcount, m)?)?;
@@ -73,6 +76,21 @@ fn simd_tier() -> &'static str {
         return "neon";
     }
     "portable"
+}
+
+/// Set the number of threads in the global rayon thread pool.
+///
+/// Must be called before any parallel operation.
+/// Passing 0 uses rayon's default (number of CPU cores).
+#[pyfunction]
+fn set_num_threads(n: usize) -> PyResult<()> {
+    if n == 0 {
+        return Ok(());
+    }
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(n)
+        .build_global()
+        .map_err(|e| PyValueError::new_err(format!("Cannot set thread pool: {e}")))
 }
 
 #[pyfunction]
@@ -369,7 +387,7 @@ fn batch_encode_numpy<'py>(
 
             let prob_seed = seed.wrapping_add(idx as u64);
             let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(prob_seed);
-            let mut row = bitstream::bernoulli_packed(p, length, &mut rng);
+            let mut row = bitstream::bernoulli_packed_fast(p, length, &mut rng);
             row.resize(words, 0);
             row
         })
@@ -620,6 +638,29 @@ impl DenseLayer {
         self.inner
             .forward_prepacked(&rows)
             .map_err(PyValueError::new_err)
+    }
+
+    /// Dense forward with pre-packed numpy 2-D input (true zero-copy).
+    ///
+    /// Accepts a contiguous numpy uint64 array of shape (n_inputs, words).
+    /// This avoids all row-copying that the `forward_prepacked` method does.
+    #[pyo3(signature = (packed_inputs,))]
+    fn forward_prepacked_numpy<'py>(
+        &self,
+        py: Python<'py>,
+        packed_inputs: PyReadonlyArray2<'py, u64>,
+    ) -> PyResult<Bound<'py, PyArray1<f64>>> {
+        let shape = packed_inputs.shape();
+        let n_inputs = shape[0];
+        let words = shape[1];
+        let flat = packed_inputs
+            .as_slice()
+            .map_err(|e| PyValueError::new_err(format!("Array not contiguous: {e}")))?;
+        let out = self
+            .inner
+            .forward_prepacked_2d(flat, n_inputs, words)
+            .map_err(PyValueError::new_err)?;
+        Ok(out.into_pyarray_bound(py))
     }
 }
 

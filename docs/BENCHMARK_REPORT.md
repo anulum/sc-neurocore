@@ -1,43 +1,45 @@
 # SC-NeuroCore v3 Benchmark Report
 
-**Version**: 3.2.0  
+**Version**: 3.3.0  
 **Date**: 2026-02-10  
 **SIMD Tier**: avx512-vpopcntdq
 
-## Phase 8 Results (forward_numpy + Parallel batch_encode_numpy)
+## Phase 9 Results (Fast Bernoulli + Fused AND+Popcount + Zero-Copy Prepacked)
 
 Measured via `examples/03_benchmark_report.py` on this machine.
 
 | Operation | v2 (ms) | v3 (ms) | Speedup | Target |
 |-----------|---------|---------|---------|--------|
-| pack (list, 1000K) | 12.983 | 35.539 | 0.4x | 6x |
-| pack (numpy, 1000K) | 12.983 | 4.866 | 2.7x | 6x |
-| popcount (list, 1000K) | 128.906 | 190.677 | 0.7x | 20x |
-| popcount (numpy, 1000K) | 128.906 | 1.409 | 91.5x | 20x |
-| dense forward (64->32, L=1024) | 3.982 | 5.804 | 0.7x | 70x |
-| dense fast (64->32, L=1024) | 3.982 | 9.056 | 0.4x | 70x |
-| dense prepacked (64->32, L=1024) | 3.982 | 4.367 | 0.9x | 70x |
-| dense numpy (64->32, L=1024) | 3.982 | 10.873 | 0.4x | 70x |
-| LIF (per-call, 100K) | 196.586 | 65.651 | 3.0x | 400x |
-| LIF (batch, 100K) | 196.586 | 1.606 | 122.4x | 400x |
+| pack (list, 1000K) | 10.807 | 62.841 | 0.2x | 6x |
+| pack (numpy, 1000K) | 10.807 | 9.415 | 1.1x | 6x |
+| popcount (list, 1000K) | 118.885 | 144.767 | 0.8x | 20x |
+| popcount (numpy, 1000K) | 118.885 | 1.866 | 63.7x | 20x |
+| dense forward (64->32, L=1024) | 6.971 | 8.034 | 0.9x | 70x |
+| dense fast (64->32, L=1024) | 6.971 | 6.125 | 1.1x | 70x |
+| dense prepacked (64->32, L=1024) | 6.971 | 3.599 | 1.9x | 70x |
+| dense prepacked numpy (64->32, L=1024) | 6.971 | 0.085 | 81.6x | 70x |
+| dense numpy (64->32, L=1024) | 6.971 | 4.908 | 1.4x | 70x |
+| LIF (per-call, 100K) | 143.202 | 35.008 | 4.1x | 400x |
+| LIF (batch, 100K) | 143.202 | 1.404 | 102.0x | 400x |
 
-## Criterion Diagnosis (Phase 8)
+## Criterion Diagnosis (Phase 9)
 
 Measured via `cargo bench` in `engine/`:
 
 | Benchmark | Time (95% CI) |
 |-----------|---------------|
-| bernoulli_stream_1024 | 4.8035 µs - 5.6242 µs |
-| bernoulli_stream_pack_1024 | 5.7678 µs - 6.5472 µs |
-| bernoulli_packed_1024 | 5.4900 µs - 6.0629 µs |
-| dense_forward_64x32 | 4.9936 ms - 6.8809 ms |
-| dense_forward_fast_64x32 | 2.5554 ms - 3.6797 ms |
-| dense_forward_prepacked_64x32 | 398.59 µs - 645.89 µs |
+| bernoulli_stream_1024 | 5.1501 µs - 5.9660 µs |
+| bernoulli_stream_pack_1024 | 6.5709 µs - 7.3970 µs |
+| bernoulli_packed_1024 | 4.9971 µs - 5.9171 µs |
+| bernoulli_packed_fast_1024 | 2.2928 µs - 2.6434 µs |
+| dense_forward_64x32 | 4.4892 ms - 5.7135 ms |
+| dense_forward_fast_64x32 | 3.6861 ms - 5.4961 ms |
+| dense_forward_prepacked_64x32 | 364.30 µs - 539.50 µs |
 
 Interpretation:
-- `bernoulli_packed_1024` is slightly faster than `bernoulli_stream_pack_1024` on this run, so direct packed generation itself does not explain dense forward regression.
-- Dense timings confirm the expected ordering: `forward_prepacked` fastest, then `forward_fast`, then baseline `forward`.
-- `forward` vs `forward_fast` gap is consistent with sequential vs parallel input encoding cost.
+- `bernoulli_packed_fast_1024` is ~2.2x faster than `bernoulli_packed_1024` in this environment.
+- `dense_forward_prepacked_64x32` remains the fastest dense path in criterion runs.
+- New `dense prepacked numpy` in Python benchmarks reaches 81.6x vs v2, confirming the zero-copy prepacked path removes most Python-side overhead.
 
 ## Phase 7 Results (Reference)
 

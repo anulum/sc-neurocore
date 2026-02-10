@@ -122,6 +122,37 @@ pub fn bernoulli_packed<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mut R) 
     data
 }
 
+/// Fast packed Bernoulli generation using byte-threshold comparison.
+///
+/// Instead of generating one f64 (8 bytes) per bit and comparing,
+/// this generates one u8 (1 byte) per bit via `rng.fill()` and
+/// compares against a u8 threshold = `(prob * 256.0) as u8`.
+///
+/// This uses 8x less RNG bandwidth than `bernoulli_packed` at the
+/// cost of 8-bit probability resolution (1/256 granularity).
+/// For bitstream lengths >= 256, the statistical difference is
+/// negligible compared to inherent sampling noise.
+///
+/// The output is NOT bit-identical to `bernoulli_packed` for the
+/// same RNG state.
+pub fn bernoulli_packed_fast<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mut R) -> Vec<u64> {
+    let threshold = (prob.clamp(0.0, 1.0) * 256.0).min(255.0) as u8;
+    let words = length.div_ceil(64);
+    let mut data = vec![0_u64; words];
+    let mut buf = [0_u8; 64];
+
+    for (word_idx, word) in data.iter_mut().enumerate() {
+        let bits_in_word = std::cmp::min(64, length.saturating_sub(word_idx * 64));
+        rng.fill(&mut buf[..bits_in_word]);
+        for (bit, &rb) in buf[..bits_in_word].iter().enumerate() {
+            if rb < threshold {
+                *word |= 1_u64 << bit;
+            }
+        }
+    }
+    data
+}
+
 /// Encode a flat matrix of probabilities into packed Bernoulli bitstreams.
 ///
 /// Each value is clamped into `[0, 1]` before sampling.
@@ -144,7 +175,10 @@ pub fn encode_matrix_prob_to_packed<R: Rng + ?Sized>(
 
 #[cfg(test)]
 mod tests {
-    use super::{bernoulli_packed, bernoulli_stream, bitwise_and, pack, popcount, unpack};
+    use super::{
+        bernoulli_packed, bernoulli_packed_fast, bernoulli_stream, bitwise_and, pack, popcount,
+        unpack,
+    };
 
     #[test]
     fn pack_unpack_roundtrip() {
@@ -182,5 +216,36 @@ mod tests {
             packed_via_stream, packed_direct,
             "bernoulli_packed must produce bit-identical output"
         );
+    }
+
+    #[test]
+    fn bernoulli_packed_fast_statistics() {
+        use rand::SeedableRng;
+        use rand_chacha::ChaCha8Rng;
+
+        let prob = 0.35;
+        let length = 10_000;
+        let mut rng = ChaCha8Rng::seed_from_u64(42);
+        let packed = bernoulli_packed_fast(prob, length, &mut rng);
+        let count: u64 = packed.iter().map(|w| w.count_ones() as u64).sum();
+        let measured = count as f64 / length as f64;
+        assert!(
+            (measured - prob).abs() < 0.03,
+            "Expected ~{prob}, got {measured}"
+        );
+    }
+
+    #[test]
+    fn bernoulli_packed_fast_deterministic() {
+        use rand::SeedableRng;
+        use rand_chacha::ChaCha8Rng;
+
+        let mut rng1 = ChaCha8Rng::seed_from_u64(99);
+        let a = bernoulli_packed_fast(0.5, 512, &mut rng1);
+
+        let mut rng2 = ChaCha8Rng::seed_from_u64(99);
+        let b = bernoulli_packed_fast(0.5, 512, &mut rng2);
+
+        assert_eq!(a, b, "Same seed must produce identical output");
     }
 }

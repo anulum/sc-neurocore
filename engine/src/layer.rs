@@ -9,7 +9,18 @@ use rand_chacha::ChaCha8Rng;
 use rayon::prelude::*;
 
 use crate::bitstream;
-use crate::simd::popcount_dispatch;
+
+/// Fused bitwise-AND + popcount over two aligned packed word slices.
+///
+/// Equivalent to `popcount(bitwise_and(a, b))` but avoids
+/// materializing the intermediate buffer.
+#[inline]
+fn fused_and_popcount(a: &[u64], b: &[u64]) -> u64 {
+    a.iter()
+        .zip(b.iter())
+        .map(|(&wa, &wb)| (wa & wb).count_ones() as u64)
+        .sum()
+}
 
 /// Vectorized stochastic dense layer.
 #[derive(Clone, Debug)]
@@ -116,16 +127,11 @@ impl DenseLayer {
         let out = (0..self.n_neurons)
             .into_par_iter()
             .map(|neuron_idx| {
-                let mut total = 0_u64;
-                let mut and_buf = Vec::<u64>::new();
-                for (w, i) in self.packed_weights[neuron_idx]
+                let total: u64 = self.packed_weights[neuron_idx]
                     .iter()
                     .zip(packed_inputs.iter())
-                {
-                    and_buf.clear();
-                    and_buf.extend(w.iter().zip(i.iter()).map(|(a, b)| *a & *b));
-                    total += popcount_dispatch(&and_buf);
-                }
+                    .map(|(w, i)| fused_and_popcount(w, i))
+                    .sum();
                 total as f64 / self.length as f64
             })
             .collect();
@@ -152,23 +158,18 @@ impl DenseLayer {
             .map(|(idx, &p)| {
                 let input_seed = seed.wrapping_add(idx as u64);
                 let mut rng = ChaCha8Rng::seed_from_u64(input_seed);
-                bitstream::bernoulli_packed(p, self.length, &mut rng)
+                bitstream::bernoulli_packed_fast(p, self.length, &mut rng)
             })
             .collect();
 
         let out = (0..self.n_neurons)
             .into_par_iter()
             .map(|neuron_idx| {
-                let mut total = 0_u64;
-                let mut and_buf = Vec::<u64>::new();
-                for (w, i) in self.packed_weights[neuron_idx]
+                let total: u64 = self.packed_weights[neuron_idx]
                     .iter()
                     .zip(packed_inputs.iter())
-                {
-                    and_buf.clear();
-                    and_buf.extend(w.iter().zip(i.iter()).map(|(a, b)| *a & *b));
-                    total += popcount_dispatch(&and_buf);
-                }
+                    .map(|(w, i)| fused_and_popcount(w, i))
+                    .sum();
                 total as f64 / self.length as f64
             })
             .collect();
@@ -204,16 +205,62 @@ impl DenseLayer {
         let out = (0..self.n_neurons)
             .into_par_iter()
             .map(|neuron_idx| {
-                let mut total = 0_u64;
-                let mut and_buf = Vec::<u64>::new();
-                for (w, i) in self.packed_weights[neuron_idx]
+                let total: u64 = self.packed_weights[neuron_idx]
                     .iter()
                     .zip(packed_inputs.iter())
-                {
-                    and_buf.clear();
-                    and_buf.extend(w.iter().zip(i.iter()).map(|(a, b)| *a & *b));
-                    total += popcount_dispatch(&and_buf);
-                }
+                    .map(|(w, i)| fused_and_popcount(w, i))
+                    .sum();
+                total as f64 / self.length as f64
+            })
+            .collect();
+
+        Ok(out)
+    }
+
+    /// Forward pass with pre-packed inputs from a 2-D contiguous array.
+    ///
+    /// `packed_flat` is a flat row-major buffer of shape `[n_inputs, words]`.
+    /// Each row is one input's packed bitstream words.
+    pub fn forward_prepacked_2d(
+        &self,
+        packed_flat: &[u64],
+        n_inputs: usize,
+        words: usize,
+    ) -> Result<Vec<f64>, String> {
+        if n_inputs != self.n_inputs {
+            return Err(format!(
+                "Expected {} packed inputs, got {}.",
+                self.n_inputs, n_inputs
+            ));
+        }
+        let expected_words = self.length.div_ceil(64);
+        if words != expected_words {
+            return Err(format!(
+                "Expected {} words per input, got {}.",
+                expected_words, words
+            ));
+        }
+        if packed_flat.len() != n_inputs * words {
+            return Err(format!(
+                "Flat buffer length {} != n_inputs({}) * words({}).",
+                packed_flat.len(),
+                n_inputs,
+                words
+            ));
+        }
+
+        let out = (0..self.n_neurons)
+            .into_par_iter()
+            .map(|neuron_idx| {
+                let total: u64 = self.packed_weights[neuron_idx]
+                    .iter()
+                    .enumerate()
+                    .map(|(input_idx, w)| {
+                        let row_start = input_idx * words;
+                        let input_words = &packed_flat[row_start..row_start + words];
+                        fused_and_popcount(w, input_words)
+                    })
+                    .sum();
                 total as f64 / self.length as f64
             })
             .collect();

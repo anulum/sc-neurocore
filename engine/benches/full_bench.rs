@@ -4,7 +4,7 @@ use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
 use sc_neurocore_engine::attention::StochasticAttention;
 use sc_neurocore_engine::bitstream::{
-    bernoulli_packed, bernoulli_stream, pack, popcount_words_portable,
+    bernoulli_packed, bernoulli_packed_fast, bernoulli_stream, pack, popcount_words_portable,
 };
 use sc_neurocore_engine::encoder::BitstreamEncoder;
 use sc_neurocore_engine::graph::StochasticGraphLayer;
@@ -73,6 +73,13 @@ fn bench_all(c: &mut Criterion) {
         b.iter(|| {
             let mut rng = ChaCha8Rng::seed_from_u64(42);
             black_box(bernoulli_packed(0.5, 1024, &mut rng))
+        })
+    });
+
+    c.bench_function("bernoulli_packed_fast_1024", |b| {
+        b.iter(|| {
+            let mut rng = ChaCha8Rng::seed_from_u64(42);
+            black_box(bernoulli_packed_fast(0.5, 1024, &mut rng))
         })
     });
 

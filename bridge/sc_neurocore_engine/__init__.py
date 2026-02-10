@@ -1,9 +1,10 @@
-"""SC-NeuroCore Engine v3.2 — Drop-in replacement for v2 hot paths."""
+"""SC-NeuroCore Engine v3.3 — Drop-in replacement for v2 hot paths."""
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (
         __version__,
         simd_tier,
+        set_num_threads,
         pack_bitstream,
         unpack_bitstream,
         popcount,
@@ -37,6 +38,7 @@ from .ir import ScGraph, ScGraphBuilder, parse_ir
 __all__ = [
     "__version__",
     "simd_tier",
+    "set_num_threads",
     "pack_bitstream",
     "unpack_bitstream",
     "popcount",
