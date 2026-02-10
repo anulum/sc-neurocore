@@ -10,6 +10,7 @@ try:
         Lfsr16,
         BitstreamEncoder,
         FixedPointLif,
+        SCPNMetrics,
     )
 except ImportError as exc:
     raise ImportError(
@@ -33,6 +34,7 @@ __all__ = [
     "Lfsr16",
     "BitstreamEncoder",
     "FixedPointLif",
+    "SCPNMetrics",
     "VectorizedSCLayer",
     "FixedPointLIFNeuron",
     "SurrogateLif",

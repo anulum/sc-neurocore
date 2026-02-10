@@ -1,8 +1,12 @@
+//! # Surrogate Gradient Components
+//!
+//! Differentiable wrappers around SC forward operators.
+
 #[derive(Clone, Debug)]
 pub enum SurrogateType {
-    /// Fast Sigmoid: d/dx = 1 / (1 + k|x|)^2
+    /// Fast Sigmoid: d/dx = 1 / (2k * (1 + k|x|)^2)
     FastSigmoid { k: f32 },
-    /// SuperSpike: d/dx = 1 / (k * |x| + 1)^2
+    /// SuperSpike: d/dx = 1 / (1 + k|x|)^2
     SuperSpike { k: f32 },
     /// ArcTan: d/dx = 1 / (1 + (kx)^2)
     ArcTan { k: f32 },
@@ -11,10 +15,19 @@ pub enum SurrogateType {
 }
 
 impl SurrogateType {
+    /// Evaluate surrogate derivative at membrane offset `x`.
     pub fn grad(&self, x: f32) -> f32 {
         match self {
-            Self::FastSigmoid { k } => 1.0 / (1.0 + k * x.abs()).powi(2),
-            Self::SuperSpike { k } => 1.0 / (k * x.abs() + 1.0).powi(2),
+            Self::FastSigmoid { k } => {
+                // Zenke & Vogels 2021 normalization includes 1/(2k).
+                let denom = 1.0 + k * x.abs();
+                1.0 / (2.0 * k * denom * denom)
+            }
+            Self::SuperSpike { k } => {
+                // Zenke & Ganguli 2018 unnormalized surrogate.
+                let denom = 1.0 + k * x.abs();
+                1.0 / (denom * denom)
+            }
             Self::ArcTan { k } => 1.0 / (1.0 + (k * x).powi(2)),
             Self::StraightThrough => {
                 if x.abs() < 0.5 {
@@ -35,6 +48,7 @@ pub struct SurrogateLif {
 }
 
 impl SurrogateLif {
+    /// Construct a surrogate-enabled fixed-point LIF neuron.
     pub fn new(
         data_width: u32,
         fraction: u32,
@@ -58,6 +72,7 @@ impl SurrogateLif {
         }
     }
 
+    /// Forward LIF step while caching trace for backward pass.
     pub fn forward(&mut self, leak_k: i16, gain_k: i16, i_t: i16, noise_in: i16) -> (i32, i16) {
         let (spike, v_out) = self.lif.step(leak_k, gain_k, i_t, noise_in);
         let scale = (1_u32 << self.lif.fraction) as f32;
@@ -66,6 +81,7 @@ impl SurrogateLif {
         (spike, v_out)
     }
 
+    /// Backward pass through last cached membrane value.
     pub fn backward(&mut self, grad_output: f32) -> f32 {
         let (v_norm, _spike) = self
             .membrane_trace
@@ -74,15 +90,18 @@ impl SurrogateLif {
         grad_output * self.surrogate.grad(v_norm)
     }
 
+    /// Clear stored membrane trace.
     pub fn clear_trace(&mut self) {
         self.membrane_trace.clear();
     }
 
+    /// Reset neuron state and clear trace.
     pub fn reset(&mut self) {
         self.lif.reset();
         self.clear_trace();
     }
 
+    /// Number of cached forward steps.
     pub fn trace_len(&self) -> usize {
         self.membrane_trace.len()
     }
@@ -97,6 +116,7 @@ pub struct DifferentiableDenseLayer {
 }
 
 impl DifferentiableDenseLayer {
+    /// Construct a differentiable dense SC layer.
     pub fn new(
         n_inputs: usize,
         n_neurons: usize,
@@ -112,6 +132,7 @@ impl DifferentiableDenseLayer {
         }
     }
 
+    /// Forward pass and cache activations for backward pass.
     pub fn forward(&mut self, input_values: &[f64], seed: u64) -> Result<Vec<f64>, String> {
         let out = self.layer.forward(input_values, seed)?;
         self.input_cache = input_values.to_vec();
@@ -119,6 +140,7 @@ impl DifferentiableDenseLayer {
         Ok(out)
     }
 
+    /// Backward pass producing input and weight gradients.
     pub fn backward(&self, grad_output: &[f64]) -> Result<(Vec<f64>, Vec<Vec<f64>>), String> {
         if self.input_cache.len() != self.layer.n_inputs {
             return Err("backward() called before a valid forward() input cache.".to_string());
@@ -148,6 +170,7 @@ impl DifferentiableDenseLayer {
         Ok((grad_input, grad_weights))
     }
 
+    /// Apply gradient descent update and clamp weights to `[0, 1]`.
     pub fn update_weights(&mut self, weight_grads: &[Vec<f64>], lr: f64) {
         if weight_grads.len() != self.layer.n_neurons {
             return;
@@ -168,6 +191,7 @@ impl DifferentiableDenseLayer {
         self.layer.refresh_packed_weights();
     }
 
+    /// Clear cached forward tensors.
     pub fn clear_cache(&mut self) {
         self.input_cache.clear();
         self.output_cache.clear();

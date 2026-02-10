@@ -25,3 +25,14 @@ class StochasticGraphLayer:
         X = np.asarray(node_features, dtype=np.float64)
         result = self._engine.forward(X)
         return np.asarray(result, dtype=np.float64).reshape(self.n_nodes, self.n_features)
+
+    def forward_sc(
+        self,
+        node_features: np.ndarray,
+        length: int = 1024,
+        seed: int = 44257,
+    ) -> np.ndarray:
+        """SC-mode forward pass using bitstream AND+popcount."""
+        X = np.asarray(node_features, dtype=np.float64)
+        result = self._engine.forward_sc(X, int(length), int(seed))
+        return np.asarray(result, dtype=np.float64).reshape(self.n_nodes, self.n_features)

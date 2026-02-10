@@ -1,7 +1,12 @@
+//! # SIMD Popcount Dispatch
+//!
+//! Runtime CPU-feature dispatch for packed-bit popcount kernels.
+
 pub mod avx2;
 pub mod avx512;
 pub mod neon;
 
+/// Count set bits in packed `u64` words using the best available SIMD path.
 pub fn popcount_dispatch(data: &[u64]) -> u64 {
     #[cfg(target_arch = "x86_64")]
     {

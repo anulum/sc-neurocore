@@ -2,9 +2,10 @@ use sc_neurocore_engine::grad::{DifferentiableDenseLayer, SurrogateLif, Surrogat
 use sc_neurocore_engine::neuron::FixedPointLif;
 
 #[test]
-fn fast_sigmoid_gradient_at_zero_is_one() {
+fn fast_sigmoid_gradient_at_zero() {
+    // FastSigmoid: 1 / (2*k * (1 + k*0)^2) = 1 / (2*25) = 0.02
     let sg = SurrogateType::FastSigmoid { k: 25.0 };
-    assert!((sg.grad(0.0) - 1.0).abs() < 1e-6);
+    assert!((sg.grad(0.0) - 0.02).abs() < 1e-6);
 }
 
 #[test]
@@ -22,6 +23,24 @@ fn fast_sigmoid_gradient_decays_away_from_zero() {
 fn superspike_gradient_symmetric() {
     let sg = SurrogateType::SuperSpike { k: 100.0 };
     assert!((sg.grad(0.5) - sg.grad(-0.5)).abs() < 1e-6);
+}
+
+#[test]
+fn superspike_gradient_at_zero_is_one() {
+    // SuperSpike: 1 / (1 + k*0)^2 = 1.0
+    let sg = SurrogateType::SuperSpike { k: 100.0 };
+    assert!((sg.grad(0.0) - 1.0).abs() < 1e-6);
+}
+
+#[test]
+fn fast_sigmoid_differs_from_superspike() {
+    // With the same k, the two must differ by the 1/(2k) factor
+    let fs = SurrogateType::FastSigmoid { k: 25.0 };
+    let ss = SurrogateType::SuperSpike { k: 25.0 };
+    let fs_grad = fs.grad(0.0);
+    let ss_grad = ss.grad(0.0);
+    // fs_grad = 1/(2*25) = 0.02, ss_grad = 1.0
+    assert!((ss_grad / fs_grad - 50.0).abs() < 1e-4);
 }
 
 #[test]

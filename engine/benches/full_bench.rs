@@ -1,7 +1,11 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-
+use rand::Rng;
+use rand::SeedableRng;
+use rand_chacha::ChaCha8Rng;
+use sc_neurocore_engine::attention::StochasticAttention;
 use sc_neurocore_engine::bitstream::{pack, popcount_words_portable};
 use sc_neurocore_engine::encoder::BitstreamEncoder;
+use sc_neurocore_engine::graph::StochasticGraphLayer;
 use sc_neurocore_engine::layer::DenseLayer;
 use sc_neurocore_engine::neuron::FixedPointLif;
 use sc_neurocore_engine::scpn::KuramotoSolver;
@@ -69,6 +73,55 @@ fn bench_all(c: &mut Criterion) {
             black_box(solver.run(1000, 0.01, 42));
         })
     });
+
+    // -- Attention (rate-mode) --
+    {
+        let attn = StochasticAttention::new(16);
+        let mut rng = ChaCha8Rng::seed_from_u64(42);
+        let q: Vec<f64> = (0..10 * 16).map(|_| rng.gen()).collect();
+        let k: Vec<f64> = (0..20 * 16).map(|_| rng.gen()).collect();
+        let v: Vec<f64> = (0..20 * 32).map(|_| rng.gen()).collect();
+
+        c.bench_function("attention_10x16_20x32", |b| {
+            b.iter(|| {
+                black_box(
+                    attn.forward(
+                        black_box(&q),
+                        10,
+                        16,
+                        black_box(&k),
+                        20,
+                        16,
+                        black_box(&v),
+                        20,
+                        32,
+                    )
+                    .unwrap(),
+                )
+            })
+        });
+    }
+
+    // -- Graph Layer --
+    {
+        let adj: Vec<f64> = {
+            let mut a = vec![0.0; 20 * 20];
+            for i in 0..20 {
+                for j in 0..20 {
+                    if (i as i32 - j as i32).abs() <= 2 {
+                        a[i * 20 + j] = 1.0;
+                    }
+                }
+            }
+            a
+        };
+        let gnn = StochasticGraphLayer::new(adj, 20, 8, 42);
+        let features: Vec<f64> = (0..20 * 8).map(|i| (i as f64) * 0.01).collect();
+
+        c.bench_function("gnn_20x8_forward", |b| {
+            b.iter(|| black_box(gnn.forward(black_box(&features)).unwrap()))
+        });
+    }
 }
 
 criterion_group!(benches, bench_all);

@@ -1,17 +1,28 @@
-use rand::Rng;
+//! # Stochastic Attention
+//!
+//! Rate-mode and SC-mode attention primitives used by the Python bridge.
+
 use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
 use rayon::prelude::*;
 
 pub struct StochasticAttention {
+    /// Key/query feature dimension used by callers.
     pub dim_k: usize,
 }
 
 impl StochasticAttention {
+    /// Create a stochastic attention operator.
     pub fn new(dim_k: usize) -> Self {
         Self { dim_k }
     }
 
+    /// Rate-mode attention forward pass.
+    ///
+    /// Shapes:
+    /// - `q`: `(q_rows, q_cols)`
+    /// - `k`: `(k_rows, k_cols)`
+    /// - `v`: `(v_rows, v_cols)`
     #[allow(clippy::too_many_arguments)]
     pub fn forward(
         &self,
@@ -69,6 +80,7 @@ impl StochasticAttention {
         Ok(flatten_rows(out_rows, q_rows, v_cols))
     }
 
+    /// SC-mode attention forward pass with Bernoulli bitstream encoding.
     #[allow(clippy::too_many_arguments)]
     pub fn forward_sc(
         &self,
@@ -92,9 +104,15 @@ impl StochasticAttention {
         let mut rng = ChaCha8Rng::seed_from_u64(seed);
         let words = length.div_ceil(64);
 
-        let q_packed = encode_matrix_prob_to_packed(q, q_rows, q_cols, length, words, &mut rng);
-        let k_packed = encode_matrix_prob_to_packed(k, k_rows, k_cols, length, words, &mut rng);
-        let v_packed = encode_matrix_prob_to_packed(v, v_rows, v_cols, length, words, &mut rng);
+        let q_packed = crate::bitstream::encode_matrix_prob_to_packed(
+            q, q_rows, q_cols, length, words, &mut rng,
+        );
+        let k_packed = crate::bitstream::encode_matrix_prob_to_packed(
+            k, k_rows, k_cols, length, words, &mut rng,
+        );
+        let v_packed = crate::bitstream::encode_matrix_prob_to_packed(
+            v, v_rows, v_cols, length, words, &mut rng,
+        );
 
         let mut score_rows = vec![vec![0.0_f64; k_rows]; q_rows];
         for (i, score_row) in score_rows.iter_mut().enumerate().take(q_rows) {
@@ -125,8 +143,9 @@ impl StochasticAttention {
             .collect();
 
         let attn_flat: Vec<f64> = attn_weights.into_iter().flatten().collect();
-        let attn_packed =
-            encode_matrix_prob_to_packed(&attn_flat, q_rows, k_rows, length, words, &mut rng);
+        let attn_packed = crate::bitstream::encode_matrix_prob_to_packed(
+            &attn_flat, q_rows, k_rows, length, words, &mut rng,
+        );
 
         let out_rows: Vec<Vec<f64>> = (0..q_rows)
             .into_par_iter()
@@ -148,6 +167,91 @@ impl StochasticAttention {
             .collect();
 
         Ok(flatten_rows(out_rows, q_rows, v_cols))
+    }
+
+    /// Multi-head attention: split Q/K/V columns across heads,
+    /// run per-head attention, then concatenate outputs.
+    #[allow(clippy::too_many_arguments)]
+    pub fn forward_multihead(
+        &self,
+        q: &[f64],
+        q_rows: usize,
+        q_total_cols: usize,
+        k: &[f64],
+        k_rows: usize,
+        k_total_cols: usize,
+        v: &[f64],
+        v_rows: usize,
+        v_total_cols: usize,
+        n_heads: usize,
+    ) -> Result<Vec<f64>, String> {
+        if n_heads == 0 {
+            return Err("n_heads must be > 0.".to_string());
+        }
+        if !q_total_cols.is_multiple_of(n_heads)
+            || !k_total_cols.is_multiple_of(n_heads)
+            || !v_total_cols.is_multiple_of(n_heads)
+        {
+            return Err(format!(
+                "Total columns must be divisible by n_heads={}. Got Q={}, K={}, V={}.",
+                n_heads, q_total_cols, k_total_cols, v_total_cols
+            ));
+        }
+        if q.len() != q_rows * q_total_cols {
+            return Err(format!(
+                "Q data length mismatch: got {}, expected {}.",
+                q.len(),
+                q_rows * q_total_cols
+            ));
+        }
+        if k.len() != k_rows * k_total_cols {
+            return Err(format!(
+                "K data length mismatch: got {}, expected {}.",
+                k.len(),
+                k_rows * k_total_cols
+            ));
+        }
+        if v.len() != v_rows * v_total_cols {
+            return Err(format!(
+                "V data length mismatch: got {}, expected {}.",
+                v.len(),
+                v_rows * v_total_cols
+            ));
+        }
+
+        let dk = q_total_cols / n_heads;
+        let dk_k = k_total_cols / n_heads;
+        let dv = v_total_cols / n_heads;
+
+        if dk != dk_k {
+            return Err(format!(
+                "Q/K head dimensions must match: Q_head={}, K_head={}.",
+                dk, dk_k
+            ));
+        }
+
+        let head_outputs: Result<Vec<Vec<f64>>, String> = (0..n_heads)
+            .into_par_iter()
+            .map(|h| {
+                let q_head = extract_head_columns(q, q_rows, q_total_cols, h, dk);
+                let k_head = extract_head_columns(k, k_rows, k_total_cols, h, dk);
+                let v_head = extract_head_columns(v, v_rows, v_total_cols, h, dv);
+                self.forward(
+                    &q_head, q_rows, dk, &k_head, k_rows, dk, &v_head, v_rows, dv,
+                )
+            })
+            .collect();
+        let head_outputs = head_outputs?;
+
+        let out_cols = dv * n_heads;
+        let mut out = Vec::with_capacity(q_rows * out_cols);
+        for i in 0..q_rows {
+            for head in head_outputs.iter().take(n_heads) {
+                let head_row = &head[i * dv..(i + 1) * dv];
+                out.extend_from_slice(head_row);
+            }
+        }
+        Ok(out)
     }
 }
 
@@ -207,29 +311,19 @@ fn flatten_rows(rows: Vec<Vec<f64>>, n_rows: usize, n_cols: usize) -> Vec<f64> {
     flat
 }
 
-fn encode_matrix_prob_to_packed(
-    values: &[f64],
+/// Extract one head slice from a row-major matrix.
+fn extract_head_columns(
+    matrix: &[f64],
     rows: usize,
-    cols: usize,
-    length: usize,
-    words: usize,
-    rng: &mut ChaCha8Rng,
-) -> Vec<Vec<u64>> {
-    let mut packed = Vec::with_capacity(rows * cols);
-    for value in values.iter().take(rows * cols) {
-        let p = value.clamp(0.0, 1.0);
-        let mut bits = vec![0_u8; length];
-        for bit in &mut bits {
-            *bit = if rng.gen::<f64>() < p { 1 } else { 0 };
-        }
-        let tensor = crate::bitstream::pack(&bits);
-        if tensor.data.len() == words {
-            packed.push(tensor.data);
-        } else {
-            let mut row = tensor.data;
-            row.resize(words, 0);
-            packed.push(row);
-        }
+    total_cols: usize,
+    head_idx: usize,
+    head_cols: usize,
+) -> Vec<f64> {
+    let offset = head_idx * head_cols;
+    let mut out = Vec::with_capacity(rows * head_cols);
+    for i in 0..rows {
+        let row_start = i * total_cols + offset;
+        out.extend_from_slice(&matrix[row_start..row_start + head_cols]);
     }
-    packed
+    out
 }

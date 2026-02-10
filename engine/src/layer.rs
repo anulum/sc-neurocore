@@ -1,3 +1,8 @@
+//! # Dense Stochastic Layer
+//!
+//! Dense layer implemented with Bernoulli bitstream encoding and
+//! AND+popcount accumulation.
+
 use rand::Rng;
 use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
@@ -6,17 +11,24 @@ use rayon::prelude::*;
 use crate::bitstream::pack;
 use crate::simd::popcount_dispatch;
 
+/// Vectorized stochastic dense layer.
 #[derive(Clone, Debug)]
 pub struct DenseLayer {
+    /// Number of input features.
     pub n_inputs: usize,
+    /// Number of output neurons.
     pub n_neurons: usize,
+    /// Bitstream length per encoded scalar.
     pub length: usize,
+    /// Probability-domain weights in `[0, 1]`.
     pub weights: Vec<Vec<f64>>,
+    /// Packed bitstream weights per neuron/input.
     pub packed_weights: Vec<Vec<Vec<u64>>>,
     weight_seed: u64,
 }
 
 impl DenseLayer {
+    /// Create a layer with random weights sampled from `U(0,1)`.
     pub fn new(n_inputs: usize, n_neurons: usize, length: usize, seed: u64) -> Self {
         let mut rng = ChaCha8Rng::seed_from_u64(seed);
         let mut weights = vec![vec![0.0; n_inputs]; n_neurons];
@@ -39,10 +51,12 @@ impl DenseLayer {
         layer
     }
 
+    /// Return a copy of weight matrix.
     pub fn get_weights(&self) -> Vec<Vec<f64>> {
         self.weights.clone()
     }
 
+    /// Set probability weights and refresh packed representation.
     pub fn set_weights(&mut self, weights: Vec<Vec<f64>>) -> Result<(), String> {
         if weights.len() != self.n_neurons {
             return Err(format!(
@@ -66,6 +80,7 @@ impl DenseLayer {
         Ok(())
     }
 
+    /// Rebuild packed weight bitstreams from current weight matrix.
     pub fn refresh_packed_weights(&mut self) {
         let mut rng = ChaCha8Rng::seed_from_u64(self.weight_seed);
         let mut packed_weights = vec![vec![Vec::<u64>::new(); self.n_inputs]; self.n_neurons];
@@ -80,6 +95,9 @@ impl DenseLayer {
         self.packed_weights = packed_weights;
     }
 
+    /// Forward pass using stochastic bitstreams.
+    ///
+    /// Returns one activation value per neuron.
     pub fn forward(&self, input_values: &[f64], seed: u64) -> Result<Vec<f64>, String> {
         if input_values.len() != self.n_inputs {
             return Err(format!(
@@ -117,6 +135,7 @@ impl DenseLayer {
     }
 }
 
+/// Generate a Bernoulli bitstream from a probability.
 fn bernoulli_stream(prob: f64, length: usize, rng: &mut ChaCha8Rng) -> Vec<u8> {
     let p = prob.clamp(0.0, 1.0);
     let mut out = vec![0_u8; length];

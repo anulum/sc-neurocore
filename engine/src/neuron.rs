@@ -1,3 +1,9 @@
+//! # Fixed-Point LIF Neuron
+//!
+//! Integer LIF neuron model used by the v3 engine for deterministic,
+//! hardware-friendly stochastic-computing experiments.
+
+/// Mask and sign-interpret an integer to `width` bits.
 #[inline]
 pub fn mask(value: i32, width: u32) -> i16 {
     let m = (1_i64 << width) - 1;
@@ -14,19 +20,29 @@ pub fn mask(value: i32, width: u32) -> i16 {
     }
 }
 
+/// Fixed-point leaky-integrate-and-fire neuron state and parameters.
 #[derive(Clone, Debug)]
 pub struct FixedPointLif {
+    /// Membrane potential.
     pub v: i16,
+    /// Refractory counter in simulation steps.
     pub refractory_counter: i32,
+    /// Arithmetic data width.
     pub data_width: u32,
+    /// Fraction bits for fixed-point scaling.
     pub fraction: u32,
+    /// Resting potential.
     pub v_rest: i16,
+    /// Reset potential after spike.
     pub v_reset: i16,
+    /// Spike threshold.
     pub v_threshold: i16,
+    /// Refractory period length in steps.
     pub refractory_period: i32,
 }
 
 impl FixedPointLif {
+    /// Construct a fixed-point LIF neuron.
     pub fn new(
         data_width: u32,
         fraction: u32,
@@ -47,6 +63,9 @@ impl FixedPointLif {
         }
     }
 
+    /// Advance one simulation step.
+    ///
+    /// Returns `(spike, membrane_voltage)`.
     pub fn step(&mut self, leak_k: i16, gain_k: i16, i_t: i16, noise_in: i16) -> (i32, i16) {
         let w = self.data_width;
         let diff = mask((self.v_rest as i32) - (self.v as i32), 2 * w) as i32;
@@ -79,6 +98,7 @@ impl FixedPointLif {
         (spike, mask(self.v as i32, w))
     }
 
+    /// Reset internal state to resting potential.
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.refractory_counter = 0;

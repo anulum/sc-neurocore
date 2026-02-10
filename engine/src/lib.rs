@@ -31,6 +31,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyStochasticAttention>()?;
     m.add_class::<PyStochasticGraphLayer>()?;
     m.add_class::<PyKuramotoSolver>()?;
+    m.add_class::<PySCPNMetrics>()?;
     Ok(())
 }
 
@@ -588,6 +589,29 @@ impl PyStochasticAttention {
 
         Ok(reshape_flat_to_rows(out, q_rows, v_cols))
     }
+
+    #[pyo3(signature = (q, k, v, n_heads))]
+    fn forward_multihead(
+        &self,
+        q: &Bound<'_, PyAny>,
+        k: &Bound<'_, PyAny>,
+        v: &Bound<'_, PyAny>,
+        n_heads: usize,
+    ) -> PyResult<Vec<Vec<f64>>> {
+        let (q_data, q_rows, q_cols) = extract_matrix_f64(q, "Q")?;
+        let (k_data, k_rows, k_cols) = extract_matrix_f64(k, "K")?;
+        let (v_data, v_rows, v_cols) = extract_matrix_f64(v, "V")?;
+
+        let out = self
+            .inner
+            .forward_multihead(
+                &q_data, q_rows, q_cols, &k_data, k_rows, k_cols, &v_data, v_rows, v_cols, n_heads,
+            )
+            .map_err(PyValueError::new_err)?;
+
+        let out_cols = v_cols;
+        Ok(reshape_flat_to_rows(out, q_rows, out_cols))
+    }
 }
 
 #[pyclass(
@@ -624,6 +648,31 @@ impl PyStochasticGraphLayer {
             )));
         }
         let out = self.inner.forward(&x_flat).map_err(PyValueError::new_err)?;
+        Ok(reshape_flat_to_rows(
+            out,
+            self.inner.n_nodes,
+            self.inner.n_features,
+        ))
+    }
+
+    #[pyo3(signature = (node_features, length=1024, seed=44257))]
+    fn forward_sc(
+        &self,
+        node_features: &Bound<'_, PyAny>,
+        length: usize,
+        seed: u64,
+    ) -> PyResult<Vec<Vec<f64>>> {
+        let (x_flat, x_rows, x_cols) = extract_matrix_f64(node_features, "node_features")?;
+        if x_rows != self.inner.n_nodes || x_cols != self.inner.n_features {
+            return Err(PyValueError::new_err(format!(
+                "Expected node_features shape ({}, {}), got ({}, {}).",
+                self.inner.n_nodes, self.inner.n_features, x_rows, x_cols
+            )));
+        }
+        let out = self
+            .inner
+            .forward_sc(&x_flat, length, seed)
+            .map_err(PyValueError::new_err)?;
         Ok(reshape_flat_to_rows(
             out,
             self.inner.n_nodes,
@@ -707,6 +756,55 @@ impl PyKuramotoSolver {
         self.inner.run(n_steps, dt, seed)
     }
 
+    fn set_field_pressure(&mut self, f: f64) {
+        self.inner.set_field_pressure(f);
+    }
+
+    #[pyo3(signature = (
+        dt,
+        seed=0,
+        w_flat=vec![],
+        sigma_g=0.0,
+        h_flat=vec![],
+        pgbo_weight=0.0,
+    ))]
+    fn step_ssgf(
+        &mut self,
+        dt: f64,
+        seed: u64,
+        w_flat: Vec<f64>,
+        sigma_g: f64,
+        h_flat: Vec<f64>,
+        pgbo_weight: f64,
+    ) -> f64 {
+        self.inner
+            .step_ssgf(dt, seed, &w_flat, sigma_g, &h_flat, pgbo_weight)
+    }
+
+    #[pyo3(signature = (
+        n_steps,
+        dt,
+        seed=0,
+        w_flat=vec![],
+        sigma_g=0.0,
+        h_flat=vec![],
+        pgbo_weight=0.0,
+    ))]
+    #[allow(clippy::too_many_arguments)]
+    fn run_ssgf(
+        &mut self,
+        n_steps: usize,
+        dt: f64,
+        seed: u64,
+        w_flat: Vec<f64>,
+        sigma_g: f64,
+        h_flat: Vec<f64>,
+        pgbo_weight: f64,
+    ) -> Vec<f64> {
+        self.inner
+            .run_ssgf(n_steps, dt, seed, &w_flat, sigma_g, &h_flat, pgbo_weight)
+    }
+
     fn order_parameter(&self) -> f64 {
         self.inner.order_parameter()
     }
@@ -750,5 +848,29 @@ impl PyKuramotoSolver {
         }
         self.inner.set_coupling(coupling_flat);
         Ok(())
+    }
+}
+
+#[pyclass(
+    name = "SCPNMetrics",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
+pub struct PySCPNMetrics;
+
+#[pymethods]
+impl PySCPNMetrics {
+    #[new]
+    fn new() -> Self {
+        Self
+    }
+
+    #[staticmethod]
+    fn global_coherence(weights: [f64; 7], metrics: [f64; 7]) -> f64 {
+        scpn::SCPNMetrics::global_coherence(&weights, &metrics)
+    }
+
+    #[staticmethod]
+    fn consciousness_index(phases_l4: Vec<f64>, glyph_l7: [f64; 6]) -> f64 {
+        scpn::SCPNMetrics::consciousness_index(&phases_l4, &glyph_l7)
     }
 }

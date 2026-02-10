@@ -35,3 +35,46 @@ python -m pytest tests/equivalence -v --tb=short
 - v3 bridge is a drop-in import path for hot kernels and fixed-point neuron APIs.
 - Encoder and LIF in v3 currently follow strict blueprint operation ordering
   (step-then-compare encoder, refractory override after threshold evaluation).
+
+## Phase 2 Features (February 2026)
+
+### Surrogate Gradients
+
+SC-NeuroCore v3 introduces backpropagation support for stochastic
+computing layers via surrogate gradients:
+
+- `SurrogateLif` - LIF neuron with differentiable backward pass
+- `DifferentiableDenseLayer` - SC layer with weight gradient computation
+- Supported surrogates: FastSigmoid, SuperSpike, ArcTan, StraightThrough
+
+### Stochastic Attention
+
+- Rate-mode: bit-exact match with v2 (atol < 1e-12)
+- SC-mode: bitstream-based matrix multiply (new v3 capability)
+- Multi-head support (Phase 3)
+
+### Graph Neural Network
+
+- Rate-mode: bit-exact match with v2 (atol < 1e-12)
+- SC-mode: bitstream-based message passing (Phase 3)
+
+### Kuramoto Oscillator Solver
+
+- High-performance phase-difference coupling
+- SSGF-compatible extended solver with geometry + PGBO terms
+- Pre-allocated scratch arrays, rayon parallelism
+- Box-Muller noise generation with ChaCha8Rng
+
+## Phase 3 Features (February 2026)
+
+### SSGF Integration
+
+- `step_ssgf()` - Extended Kuramoto with geometry (`W`), PGBO (`h_munu`),
+  and field pressure (`F*cos`) coupling terms
+- Direct integration with SSGF MicroCycleEngine pipeline
+- Single `sin_diff` computation shared across all coupling terms
+
+### Property-Based Testing
+
+- proptest coverage for all numeric modules
+- Catches edge cases: overflows, NaN, extreme values

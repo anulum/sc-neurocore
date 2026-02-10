@@ -24,8 +24,6 @@ import numpy as np
 # -- v2 imports --
 from sc_neurocore.accel.vector_ops import (
     pack_bitstream as v2_pack,
-    unpack_bitstream as v2_unpack,
-    vec_and as v2_and,
     vec_popcount as v2_popcount,
 )
 from sc_neurocore.layers import VectorizedSCLayer as V2Layer
@@ -83,9 +81,6 @@ def main() -> int:
     print("SC-NeuroCore v2 vs v3 Benchmark Suite")
     print(f"SIMD tier: {v3.simd_tier()}")
     print("=" * 60)
-
-    # Keep imports used to preserve parity with v2 vector_ops API surface.
-    _ = (v2_unpack, v2_and)
 
     # -- 1. Pack Bitstream --
     bits_1m = rng.randint(0, 2, 1_000_000).astype(np.uint8)

@@ -1,3 +1,7 @@
+//! # SCPN Metrics
+//!
+//! Composite metrics computed from multi-layer SCPN outputs.
+
 /// SCPN-wide metrics computed from the 7-layer outputs.
 pub struct SCPNMetrics;
 
