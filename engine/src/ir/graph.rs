@@ -23,6 +23,20 @@ pub enum ScType {
     Vec { element: Box<ScType>, count: usize },
 }
 
+impl ScType {
+    /// Return the bit width of this type for HDL emission.
+    pub fn bit_width(&self) -> usize {
+        match self {
+            Self::Bool => 1,
+            Self::Rate => 16, // mapped to Q8.8
+            Self::UInt { width } | Self::SInt { width } => *width as usize,
+            Self::FixedPoint { width, .. } => *width as usize,
+            Self::Bitstream { .. } => 1, // streaming 1-bit per cycle in current emitter
+            Self::Vec { element, count } => element.bit_width() * count,
+        }
+    }
+}
+
 impl fmt::Display for ScType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

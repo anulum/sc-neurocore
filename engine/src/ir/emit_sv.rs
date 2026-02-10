@@ -266,14 +266,7 @@ pub fn emit(graph: &ScGraph) -> String {
 }
 
 fn type_to_width(ty: &ScType) -> usize {
-    match ty {
-        ScType::Bool => 1,
-        ScType::Rate => 16, // mapped to Q8.8 for HDL
-        ScType::UInt { width } | ScType::SInt { width } => *width as usize,
-        ScType::FixedPoint { width, .. } => *width as usize,
-        ScType::Bitstream { .. } => 1, // streaming 1-bit per cycle
-        ScType::Vec { element, count } => type_to_width(element) * count,
-    }
+    ty.bit_width()
 }
 
 fn find_value_width(graph: &ScGraph, id: ValueId) -> usize {

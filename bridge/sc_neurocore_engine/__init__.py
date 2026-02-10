@@ -24,6 +24,7 @@ from .grad import SurrogateLif, DifferentiableDenseLayer
 from .attention import StochasticAttention
 from .graphs import StochasticGraphLayer
 from .scpn import KuramotoSolver
+from .ir import ScGraph, ScGraphBuilder, parse_ir
 
 __all__ = [
     "__version__",
@@ -42,4 +43,7 @@ __all__ = [
     "StochasticAttention",
     "StochasticGraphLayer",
     "KuramotoSolver",
+    "ScGraph",
+    "ScGraphBuilder",
+    "parse_ir",
 ]

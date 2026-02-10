@@ -1,49 +1,130 @@
 """
 SC-NeuroCore IR Compilation Demo
+=================================
 
-Builds an SC compute graph, verifies it, emits SystemVerilog,
-and saves the result.
+Builds an SC compute graph from Python, verifies it,
+prints its text representation, and emits synthesizable
+SystemVerilog targeting the existing HDL modules.
+
+Usage:
+    cd 03_CODE/sc-neurocore
+    $env:PYTHONPATH='src'
+    .\\.venv\\Scripts\\python examples/02_ir_compile_demo.py
 """
 
 from __future__ import annotations
 
 import pathlib
 
-import numpy as np
+from sc_neurocore_engine.ir import ScGraphBuilder, parse_ir
 
-from sc_neurocore_engine.layers import VectorizedSCLayer
+
+def build_synapse_graph() -> "ScGraph":
+    """Build a minimal synapse: encode two probabilities, AND, popcount."""
+    b = ScGraphBuilder("sc_synapse")
+
+    # Inputs: two rate-coded probabilities
+    x = b.input("x_prob", "rate")
+    w = b.input("w_prob", "rate")
+
+    # Encode to bitstreams
+    x_bits = b.encode(x, length=1024, seed=0xACE1)
+    w_bits = b.encode(w, length=1024, seed=0xBEEF)
+
+    # SC multiply (AND)
+    product = b.bitwise_and(x_bits, w_bits)
+
+    # Extract firing rate
+    count = b.popcount(product)
+    rate = b.div_const(count, 1024)
+
+    # Output
+    b.output("firing_rate", rate)
+
+    return b.build()
+
+
+def build_dense_graph() -> "ScGraph":
+    """Build a dense layer with 3 inputs, 7 neurons."""
+    b = ScGraphBuilder("sc_dense_layer")
+
+    x = b.input("x_input", "rate")
+    w = b.input("weights", "rate")
+    leak = b.input("leak_k", "i16")
+    gain = b.input("gain_k", "i16")
+
+    spikes = b.dense_forward(
+        x,
+        w,
+        leak,
+        gain,
+        n_inputs=3,
+        n_neurons=7,
+        stream_length=1024,
+    )
+
+    b.output("spikes", spikes)
+    return b.build()
 
 
 def main() -> None:
     print("SC-NeuroCore IR Compilation Demo")
     print("=" * 50)
 
-    # Note: IR construction and SV emission happen in Rust.
-    # This demo will call Python bridge IR APIs once they are exposed.
-    # For now we demonstrate dense-layer mapping continuity.
-    layer = VectorizedSCLayer(n_inputs=3, n_neurons=7, length=1024)
-    inputs = np.array([0.3, 0.5, 0.7])
-    rates = layer.forward(inputs)
+    # -- Synapse graph --
+    print("\n1. Building synapse graph...")
+    synapse = build_synapse_graph()
+    print(f"   Graph: {synapse}")
+    print(f"   Inputs: {synapse.num_inputs}, Outputs: {synapse.num_outputs}")
+    print(f"   Ops: {len(synapse)}")
 
-    print(f"\nDense Layer: {layer.n_inputs} inputs -> {layer.n_neurons} neurons")
-    print(f"Input probabilities: {inputs}")
-    print(f"Output rates: {rates}")
-    print("\nThis layer maps to sc_dense_layer_core in HDL.")
-    print("IR compilation produces synthesizable SystemVerilog")
-    print("that instantiates the same HDL modules in hdl/.")
+    errors = synapse.verify()
+    if errors is None:
+        print("   Verification: PASS")
+    else:
+        print(f"   Verification FAILED: {errors}")
+        return
+
+    print("\n   Text format:")
+    text = synapse.to_text()
+    for line in text.strip().split("\n"):
+        print(f"   | {line}")
+
+    # Round-trip check
+    parsed = parse_ir(text)
+    assert parsed.to_text() == text, "Round-trip failed!"
+    print("   Round-trip: PASS")
+
+    # Emit SystemVerilog
+    sv = synapse.emit_sv()
+    print(f"\n   SystemVerilog: {len(sv)} characters")
 
     out_dir = pathlib.Path(__file__).parent / "output"
     out_dir.mkdir(exist_ok=True)
-    out_path = out_dir / "generated_dense.sv"
-    out_path.write_text(
-        "// Placeholder generated artifact.\n"
-        "// The Rust IR emitter now lives in engine/src/ir/emit_sv.rs.\n",
-        encoding="utf-8",
-    )
+    synapse_path = out_dir / "generated_synapse.sv"
+    synapse_path.write_text(sv, encoding="utf-8")
+    print(f"   Wrote: {synapse_path}")
 
-    print(f"\nOutput directory: {out_dir}")
-    print(f"Wrote: {out_path}")
-    print("Done.")
+    # -- Dense layer graph --
+    print("\n2. Building dense layer graph...")
+    dense = build_dense_graph()
+    print(f"   Graph: {dense}")
+    print(f"   Inputs: {dense.num_inputs}, Outputs: {dense.num_outputs}")
+
+    errors = dense.verify()
+    if errors is None:
+        print("   Verification: PASS")
+    else:
+        print(f"   Verification FAILED: {errors}")
+        return
+
+    sv_dense = dense.emit_sv()
+    dense_path = out_dir / "generated_dense.sv"
+    dense_path.write_text(sv_dense, encoding="utf-8")
+    print(f"   SystemVerilog: {len(sv_dense)} characters")
+    print(f"   Wrote: {dense_path}")
+
+    print("\nDone. Generated HDL targets the modules in hdl/.")
 
 
 if __name__ == "__main__":

@@ -1,5 +1,14 @@
 # SC-NeuroCore v3 Engine Changelog
 
+## [3.0.0-rc.1] - 2026-02-10
+
+### Phase 5: Release Candidate
+- **IR Python Bridge**: Full PyO3 bindings for ScGraphBuilder, ScGraph, verify, print, parse, emit_sv
+- **Co-sim Activation**: Verilator compilation + simulation when available; graceful skip preserved
+- **Wheel CI**: Cross-platform wheel builds (Linux/macOS/Windows x Python 3.9-3.12)
+- **Benchmark Report**: Formal v2-vs-v3 performance comparison with Blueprint section 8 targets
+- **IR Demo**: Real end-to-end Python->IR->verification->SystemVerilog demo
+
 ## [3.0.0-beta.1] - 2026-02-10
 
 ### Phase 4: HDL Compilation Pipeline

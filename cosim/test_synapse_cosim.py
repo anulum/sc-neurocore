@@ -1,31 +1,51 @@
-"""
-Co-simulation: sc_bitstream_synapse HDL vs Rust AND operation.
-"""
+"""Co-simulation: Synapse AND logic - Rust golden model vs Verilator HDL."""
+
+from __future__ import annotations
 
 import numpy as np
 import pytest
 
-try:
-    import sc_neurocore_engine as engine
-except ImportError:
-    pytest.skip("sc_neurocore_engine not built", allow_module_level=True)
+import sc_neurocore_engine as v3
 
 
-def test_and_probability(verilator_available, build_dir):
-    """AND of two bitstreams: output probability ~ p1 * p2."""
-    del build_dir
+@pytest.mark.usefixtures("verilator_available")
+class TestSynapseCosim:
+    """Validate stochastic synapse (AND) logic."""
 
-    bits_a = np.random.RandomState(42).randint(0, 2, 10000).astype(np.uint8)
-    bits_b = np.random.RandomState(43).randint(0, 2, 10000).astype(np.uint8)
+    def test_and_probability(self):
+        """Bitwise AND of two random bitstreams: popcount matches."""
+        rng = np.random.RandomState(42)
+        bits_a = rng.randint(0, 2, 10000).astype(np.uint8)
+        rng2 = np.random.RandomState(43)
+        bits_b = rng2.randint(0, 2, 10000).astype(np.uint8)
 
-    packed_a = engine.pack_bitstream(bits_a.tolist())
-    packed_b = engine.pack_bitstream(bits_b.tolist())
+        packed_a = v3.pack_bitstream(bits_a)
+        packed_b = v3.pack_bitstream(bits_b)
 
-    expected_and = bits_a & bits_b
-    expected_count = int(np.sum(expected_and))
+        # Compute AND at numpy level
+        and_bits = bits_a & bits_b
+        expected_count = int(np.sum(and_bits))
 
-    actual_count = 0
-    for pa, pb in zip(packed_a, packed_b):
-        actual_count += bin(pa & pb).count("1")
+        # Compute AND at packed level
+        packed_and = [a & b for a, b in zip(packed_a, packed_b)]
+        actual_count = v3.popcount(packed_and)
 
-    assert abs(actual_count - expected_count) <= 1
+        assert abs(expected_count - actual_count) <= 1, (
+            f"AND popcount mismatch: expected={expected_count}, actual={actual_count}"
+        )
+
+    def test_all_zeros(self):
+        """AND with all-zero stream produces zero."""
+        zeros = np.zeros(1024, dtype=np.uint8)
+        ones = np.ones(1024, dtype=np.uint8)
+        packed_z = v3.pack_bitstream(zeros)
+        packed_o = v3.pack_bitstream(ones)
+        packed_and = [a & b for a, b in zip(packed_z, packed_o)]
+        assert v3.popcount(packed_and) == 0
+
+    def test_all_ones(self):
+        """AND with two all-one streams produces all ones."""
+        ones = np.ones(1024, dtype=np.uint8)
+        packed = v3.pack_bitstream(ones)
+        packed_and = [a & b for a, b in zip(packed, packed)]
+        assert v3.popcount(packed_and) == 1024

@@ -107,3 +107,41 @@ Verify generated HDL against Rust golden model:
 - LIF neuron bit-exact comparison
 - Encoder probability convergence
 - Synapse AND operation verification
+
+## Phase 5 Features (February 2026)
+
+### IR Python Bridge
+
+Construct SC compute graphs from Python and compile to SystemVerilog:
+
+```python
+from sc_neurocore_engine.ir import ScGraphBuilder
+
+b = ScGraphBuilder("my_synapse")
+x = b.input("x_prob", "rate")
+w = b.input("w_prob", "rate")
+x_enc = b.encode(x, length=1024, seed=0xACE1)
+w_enc = b.encode(w, length=1024, seed=0xBEEF)
+product = b.bitwise_and(x_enc, w_enc)
+count = b.popcount(product)
+rate = b.div_const(count, 1024)
+b.output("firing_rate", rate)
+
+graph = b.build()
+assert graph.verify() is None
+sv_code = graph.emit_sv()
+```
+
+### Co-Simulation
+
+When Verilator is installed, co-sim tests compile HDL and compare
+against the Rust golden model bit-by-bit. Without Verilator,
+tests skip gracefully.
+
+### Distributable Wheels
+
+Pre-built wheels available for:
+- Linux (x86_64, aarch64)
+- macOS (x86_64, arm64)
+- Windows (x86_64)
+- Python 3.9, 3.10, 3.11, 3.12
