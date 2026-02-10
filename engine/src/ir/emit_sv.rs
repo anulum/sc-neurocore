@@ -70,7 +70,7 @@ pub fn emit(graph: &ScGraph) -> String {
                 sv.push_str(&format!("    wire v{};\n", id.0));
             }
             ScOp::Popcount { id, .. } => {
-                sv.push_str(&format!("    wire [63:0] v{};\n", id.0));
+                sv.push_str(&format!("    logic [63:0] v{};\n", id.0));
             }
             ScOp::LifStep { id, params, .. } => {
                 sv.push_str(&format!(
@@ -255,7 +255,16 @@ pub fn emit(graph: &ScGraph) -> String {
             }
             ScOp::Popcount { id, input } => {
                 let in_wire = value_to_wire(graph, *input);
-                sv.push_str(&format!("    assign v{} = {{63'd0, {}}};\n", id.0, in_wire));
+                sv.push_str(&format!(
+                    "    // Combinatorial popcount for v{id}\n\
+                     \x20   always_comb begin\n\
+                     \x20       v{id} = 64'd0;\n\
+                     \x20       for (integer _pc_i = 0; _pc_i < 64; _pc_i = _pc_i + 1)\n\
+                     \x20           v{id} = v{id} + {{63'd0, {wire}[_pc_i]}};\n\
+                     \x20   end\n\n",
+                    id = id.0,
+                    wire = in_wire,
+                ));
             }
             _ => {}
         }
