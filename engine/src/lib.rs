@@ -1,6 +1,6 @@
 #![allow(clippy::useless_conversion)]
 
-use numpy::{IntoPyArray, PyArray1, PyReadonlyArray1};
+use numpy::{IntoPyArray, PyArray1, PyArray2, PyReadonlyArray1, PyReadonlyArray2};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::{PyAny, PyDict};
@@ -16,10 +16,10 @@ pub mod neuron;
 pub mod scpn;
 pub mod simd;
 
-/// SC-NeuroCore v3.0 — High-Performance Rust Engine
+/// SC-NeuroCore v3.1 — High-Performance Rust Engine
 #[pymodule]
 fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add("__version__", "3.0.0")?;
+    m.add("__version__", "3.1.0")?;
     m.add_function(wrap_pyfunction!(simd_tier, m)?)?;
     m.add_function(wrap_pyfunction!(pack_bitstream, m)?)?;
     m.add_function(wrap_pyfunction!(unpack_bitstream, m)?)?;
@@ -30,6 +30,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(batch_lif_run, m)?)?;
     m.add_function(wrap_pyfunction!(batch_lif_run_varying, m)?)?;
     m.add_function(wrap_pyfunction!(batch_encode, m)?)?;
+    m.add_function(wrap_pyfunction!(batch_encode_numpy, m)?)?;
     m.add_class::<Lfsr16>()?;
     m.add_class::<BitstreamEncoder>()?;
     m.add_class::<FixedPointLif>()?;
@@ -326,26 +327,51 @@ fn batch_encode<'py>(
         .map_err(|e| PyValueError::new_err(format!("Cannot read probs: {e}")))?;
     let words = length.div_ceil(64);
 
-    use rand::Rng;
     use rand::SeedableRng;
     let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(seed);
 
     let packed: Vec<Vec<u64>> = prob_slice
         .iter()
         .map(|&p| {
-            let p = p.clamp(0.0, 1.0);
-            let mut bits = vec![0_u8; length];
-            for bit in &mut bits {
-                *bit = if rng.gen::<f64>() < p { 1 } else { 0 };
-            }
-            let tensor = bitstream::pack(&bits);
-            let mut data = tensor.data;
+            let mut data = bitstream::bernoulli_packed(p, length, &mut rng);
             data.resize(words, 0);
             data
         })
         .collect();
 
     Ok(packed)
+}
+
+/// Bernoulli-encode a numpy float64 array into a 2-D numpy uint64 array.
+///
+/// Returns shape `(n_probs, ceil(length / 64))`.
+#[pyfunction]
+#[pyo3(signature = (probs, length=1024, seed=0xACE1))]
+fn batch_encode_numpy<'py>(
+    py: Python<'py>,
+    probs: PyReadonlyArray1<'py, f64>,
+    length: usize,
+    seed: u64,
+) -> PyResult<Bound<'py, PyArray2<u64>>> {
+    let prob_slice = probs
+        .as_slice()
+        .map_err(|e| PyValueError::new_err(format!("Cannot read probs: {e}")))?;
+    let words = length.div_ceil(64);
+    let n_probs = prob_slice.len();
+
+    use rand::SeedableRng;
+    let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(seed);
+
+    let mut flat = Vec::with_capacity(n_probs * words);
+    for &p in prob_slice {
+        let mut row = bitstream::bernoulli_packed(p, length, &mut rng);
+        row.resize(words, 0);
+        flat.extend_from_slice(&row);
+    }
+
+    let arr = ndarray::Array2::from_shape_vec((n_probs, words), flat)
+        .map_err(|e| PyValueError::new_err(format!("Shape construction failed: {e}")))?;
+    Ok(arr.into_pyarray_bound(py))
 }
 
 #[pyclass(module = "sc_neurocore_engine.sc_neurocore_engine")]
@@ -530,6 +556,38 @@ impl DenseLayer {
     fn forward(&self, input_values: Vec<f64>, seed: u64) -> PyResult<Vec<f64>> {
         self.inner
             .forward(&input_values, seed)
+            .map_err(PyValueError::new_err)
+    }
+
+    #[pyo3(signature = (input_values, seed=44257))]
+    fn forward_fast(&self, input_values: Vec<f64>, seed: u64) -> PyResult<Vec<f64>> {
+        self.inner
+            .forward_fast(&input_values, seed)
+            .map_err(PyValueError::new_err)
+    }
+
+    /// Forward pass with pre-packed input bitstreams.
+    ///
+    /// Accepts either:
+    /// - 2-D numpy array of dtype uint64 with shape (n_inputs, words)
+    /// - list[list[int]]
+    fn forward_prepacked(&self, packed_inputs: &Bound<'_, PyAny>) -> PyResult<Vec<f64>> {
+        if let Ok(arr) = packed_inputs.extract::<PyReadonlyArray2<u64>>() {
+            let view = arr.as_array();
+            let rows: Vec<Vec<u64>> = (0..view.nrows()).map(|i| view.row(i).to_vec()).collect();
+            return self
+                .inner
+                .forward_prepacked(&rows)
+                .map_err(PyValueError::new_err);
+        }
+
+        let rows = packed_inputs.extract::<Vec<Vec<u64>>>().map_err(|_| {
+            PyValueError::new_err(
+                "packed_inputs must be a 2-D numpy uint64 array or list[list[int]].",
+            )
+        })?;
+        self.inner
+            .forward_prepacked(&rows)
             .map_err(PyValueError::new_err)
     }
 }

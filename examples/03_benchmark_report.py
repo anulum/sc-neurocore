@@ -108,15 +108,19 @@ def bench_popcount(n_words: int = 1_000_000) -> list[dict]:
 
 
 def bench_dense_forward(n_in: int = 64, n_out: int = 32, length: int = 1024) -> list[dict]:
-    """Benchmark dense forward pass."""
+    """Benchmark dense forward: original, fast (parallel encode), prepacked."""
     rng = np.random.RandomState(42)
     inputs = rng.uniform(0, 1, n_in)
+    inputs_f64 = inputs.astype(np.float64)
 
     v2_layer = V2Layer(n_inputs=n_in, n_neurons=n_out, length=length)
     v3_layer = V3Layer(n_inputs=n_in, n_neurons=n_out, length=length)
+    packed_inputs = v3.batch_encode_numpy(inputs_f64, length=length, seed=42)
 
     v2_time = benchmark(lambda: v2_layer.forward(inputs), n_iters=10)
     v3_time = benchmark(lambda: v3_layer.forward(inputs), n_iters=10)
+    v3_fast_time = benchmark(lambda: v3_layer.forward_fast(inputs), n_iters=10)
+    v3_prepacked_time = benchmark(lambda: v3_layer.forward_prepacked(packed_inputs), n_iters=10)
 
     return [
         {
@@ -124,6 +128,20 @@ def bench_dense_forward(n_in: int = 64, n_out: int = 32, length: int = 1024) -> 
             "v2_ms": v2_time / 10 * 1000,
             "v3_ms": v3_time / 10 * 1000,
             "speedup": fmt_speedup(v2_time, v3_time),
+            "target": "70x",
+        },
+        {
+            "operation": f"dense fast ({n_in}->{n_out}, L={length})",
+            "v2_ms": v2_time / 10 * 1000,
+            "v3_ms": v3_fast_time / 10 * 1000,
+            "speedup": fmt_speedup(v2_time, v3_fast_time),
+            "target": "70x",
+        },
+        {
+            "operation": f"dense prepacked ({n_in}->{n_out}, L={length})",
+            "v2_ms": v2_time / 10 * 1000,
+            "v3_ms": v3_prepacked_time / 10 * 1000,
+            "speedup": fmt_speedup(v2_time, v3_prepacked_time),
             "target": "70x",
         },
     ]
@@ -199,6 +217,8 @@ def main():
     print("'numpy' variants use PyReadonlyArray for zero-copy buffer access.")
     print("'batch' variants process entire arrays in a single FFI call.")
     print("Dense forward uses rayon parallelism across neurons.")
+    print("'fast' variants use per-input parallel encoding with rayon.")
+    print("'prepacked' variants skip encoding entirely (pre-encoded inputs).")
 
     return results
 

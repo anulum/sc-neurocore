@@ -91,6 +91,37 @@ pub fn popcount(tensor: &BitStreamTensor) -> u64 {
     popcount_words_portable(&tensor.data)
 }
 
+/// Generate an unpacked Bernoulli bitstream from a probability.
+///
+/// Values are clamped into `[0, 1]` before sampling.
+pub fn bernoulli_stream<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mut R) -> Vec<u8> {
+    let p = prob.clamp(0.0, 1.0);
+    let mut out = vec![0_u8; length];
+    for bit in &mut out {
+        *bit = if rng.gen::<f64>() < p { 1 } else { 0 };
+    }
+    out
+}
+
+/// Generate a packed Bernoulli bitstream directly into `u64` words.
+///
+/// This is bit-identical to `pack(&bernoulli_stream(...)).data` for the same
+/// RNG state while avoiding the intermediate `Vec<u8>` allocation.
+pub fn bernoulli_packed<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mut R) -> Vec<u64> {
+    let p = prob.clamp(0.0, 1.0);
+    let words = length.div_ceil(64);
+    let mut data = vec![0_u64; words];
+    for (word_idx, word) in data.iter_mut().enumerate() {
+        let bits_in_word = std::cmp::min(64, length.saturating_sub(word_idx * 64));
+        for bit in 0..bits_in_word {
+            if rng.gen::<f64>() < p {
+                *word |= 1_u64 << bit;
+            }
+        }
+    }
+    data
+}
+
 /// Encode a flat matrix of probabilities into packed Bernoulli bitstreams.
 ///
 /// Each value is clamped into `[0, 1]` before sampling.
@@ -104,26 +135,16 @@ pub fn encode_matrix_prob_to_packed<R: Rng + ?Sized>(
 ) -> Vec<Vec<u64>> {
     let mut packed = Vec::with_capacity(rows * cols);
     for value in values.iter().take(rows * cols) {
-        let p = value.clamp(0.0, 1.0);
-        let mut bits = vec![0_u8; length];
-        for bit in &mut bits {
-            *bit = if rng.gen::<f64>() < p { 1 } else { 0 };
-        }
-        let tensor = pack(&bits);
-        if tensor.data.len() == words {
-            packed.push(tensor.data);
-        } else {
-            let mut row = tensor.data;
-            row.resize(words, 0);
-            packed.push(row);
-        }
+        let mut row = bernoulli_packed(*value, length, rng);
+        row.resize(words, 0);
+        packed.push(row);
     }
     packed
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{bitwise_and, pack, popcount, unpack};
+    use super::{bernoulli_packed, bernoulli_stream, bitwise_and, pack, popcount, unpack};
 
     #[test]
     fn pack_unpack_roundtrip() {
@@ -140,5 +161,26 @@ mod tests {
         let c = bitwise_and(&a, &b);
         assert_eq!(unpack(&c), vec![1, 0, 1, 0, 0, 0, 1, 0]);
         assert_eq!(popcount(&c), 3);
+    }
+
+    #[test]
+    fn bernoulli_packed_matches_stream_then_pack() {
+        use rand::SeedableRng;
+        use rand_chacha::ChaCha8Rng;
+
+        let prob = 0.35;
+        let length = 200;
+
+        let mut rng1 = ChaCha8Rng::seed_from_u64(999);
+        let stream = bernoulli_stream(prob, length, &mut rng1);
+        let packed_via_stream = pack(&stream).data;
+
+        let mut rng2 = ChaCha8Rng::seed_from_u64(999);
+        let packed_direct = bernoulli_packed(prob, length, &mut rng2);
+
+        assert_eq!(
+            packed_via_stream, packed_direct,
+            "bernoulli_packed must produce bit-identical output"
+        );
     }
 }

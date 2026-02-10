@@ -38,3 +38,23 @@ class VectorizedSCLayer:
             )
         result = self._engine.forward(in_probs.tolist())
         return np.array(result, dtype=np.float64)
+
+    def forward_fast(self, input_values: Sequence[float], seed: int = 44257) -> np.ndarray:
+        in_probs = np.asarray(input_values, dtype=np.float64)
+        if in_probs.ndim != 1 or in_probs.shape[0] != self.n_inputs:
+            raise ValueError(
+                f"Expected 1-D input of length {self.n_inputs}, " f"got shape {in_probs.shape}"
+            )
+        result = self._engine.forward_fast(in_probs.tolist(), seed)
+        return np.array(result, dtype=np.float64)
+
+    def forward_prepacked(self, packed_inputs) -> np.ndarray:
+        packed = np.asarray(packed_inputs, dtype=np.uint64)
+        if packed.ndim != 2:
+            raise ValueError(f"Expected 2-D packed input array, got shape {packed.shape}")
+        if packed.shape[0] != self.n_inputs:
+            raise ValueError(
+                f"Expected {self.n_inputs} packed input rows, got {packed.shape[0]}"
+            )
+        result = self._engine.forward_prepacked(packed)
+        return np.array(result, dtype=np.float64)

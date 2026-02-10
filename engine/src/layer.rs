@@ -8,7 +8,7 @@ use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
 use rayon::prelude::*;
 
-use crate::bitstream::pack;
+use crate::bitstream;
 use crate::simd::popcount_dispatch;
 
 /// Vectorized stochastic dense layer.
@@ -87,8 +87,8 @@ impl DenseLayer {
 
         for (neuron_idx, neuron_weights) in self.weights.iter().enumerate().take(self.n_neurons) {
             for (input_idx, weight_prob) in neuron_weights.iter().enumerate().take(self.n_inputs) {
-                let bits = bernoulli_stream(*weight_prob, self.length, &mut rng);
-                packed_weights[neuron_idx][input_idx] = pack(&bits).data;
+                packed_weights[neuron_idx][input_idx] =
+                    bitstream::bernoulli_packed(*weight_prob, self.length, &mut rng);
             }
         }
 
@@ -110,8 +110,7 @@ impl DenseLayer {
         let mut rng = ChaCha8Rng::seed_from_u64(seed);
         let mut packed_inputs = vec![Vec::<u64>::new(); self.n_inputs];
         for (idx, p) in input_values.iter().copied().enumerate() {
-            let bits = bernoulli_stream(p, self.length, &mut rng);
-            packed_inputs[idx] = pack(&bits).data;
+            packed_inputs[idx] = bitstream::bernoulli_packed(p, self.length, &mut rng);
         }
 
         let out = (0..self.n_neurons)
@@ -133,14 +132,92 @@ impl DenseLayer {
 
         Ok(out)
     }
-}
 
-/// Generate a Bernoulli bitstream from a probability.
-fn bernoulli_stream(prob: f64, length: usize, rng: &mut ChaCha8Rng) -> Vec<u8> {
-    let p = prob.clamp(0.0, 1.0);
-    let mut out = vec![0_u8; length];
-    for bit in &mut out {
-        *bit = if rng.gen::<f64>() < p { 1 } else { 0 };
+    /// Forward pass with parallel input encoding.
+    ///
+    /// Each input is encoded with an independently-seeded RNG:
+    /// `seed + input_index` (wrapping).
+    pub fn forward_fast(&self, input_values: &[f64], seed: u64) -> Result<Vec<f64>, String> {
+        if input_values.len() != self.n_inputs {
+            return Err(format!(
+                "Expected input of length {}, got {}.",
+                self.n_inputs,
+                input_values.len()
+            ));
+        }
+
+        let packed_inputs: Vec<Vec<u64>> = input_values
+            .par_iter()
+            .enumerate()
+            .map(|(idx, &p)| {
+                let input_seed = seed.wrapping_add(idx as u64);
+                let mut rng = ChaCha8Rng::seed_from_u64(input_seed);
+                bitstream::bernoulli_packed(p, self.length, &mut rng)
+            })
+            .collect();
+
+        let out = (0..self.n_neurons)
+            .into_par_iter()
+            .map(|neuron_idx| {
+                let mut total = 0_u64;
+                let mut and_buf = Vec::<u64>::new();
+                for (w, i) in self.packed_weights[neuron_idx]
+                    .iter()
+                    .zip(packed_inputs.iter())
+                {
+                    and_buf.clear();
+                    and_buf.extend(w.iter().zip(i.iter()).map(|(a, b)| *a & *b));
+                    total += popcount_dispatch(&and_buf);
+                }
+                total as f64 / self.length as f64
+            })
+            .collect();
+
+        Ok(out)
     }
-    out
+
+    /// Forward pass with pre-packed input bitstreams.
+    ///
+    /// `packed_inputs` must have shape:
+    /// - outer length = `n_inputs`
+    /// - inner length = `ceil(length / 64)`
+    pub fn forward_prepacked(&self, packed_inputs: &[Vec<u64>]) -> Result<Vec<f64>, String> {
+        if packed_inputs.len() != self.n_inputs {
+            return Err(format!(
+                "Expected {} packed inputs, got {}.",
+                self.n_inputs,
+                packed_inputs.len()
+            ));
+        }
+        let expected_words = self.length.div_ceil(64);
+        for (idx, pi) in packed_inputs.iter().enumerate() {
+            if pi.len() != expected_words {
+                return Err(format!(
+                    "Packed input {} has {} words, expected {}.",
+                    idx,
+                    pi.len(),
+                    expected_words
+                ));
+            }
+        }
+
+        let out = (0..self.n_neurons)
+            .into_par_iter()
+            .map(|neuron_idx| {
+                let mut total = 0_u64;
+                let mut and_buf = Vec::<u64>::new();
+                for (w, i) in self.packed_weights[neuron_idx]
+                    .iter()
+                    .zip(packed_inputs.iter())
+                {
+                    and_buf.clear();
+                    and_buf.extend(w.iter().zip(i.iter()).map(|(a, b)| *a & *b));
+                    total += popcount_dispatch(&and_buf);
+                }
+                total as f64 / self.length as f64
+            })
+            .collect();
+
+        Ok(out)
+    }
 }

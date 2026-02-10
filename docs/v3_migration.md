@@ -186,3 +186,38 @@ spikes, voltages = v3.batch_lif_run_varying(
 
 - Verilator co-simulation runs automatically on every push (Ubuntu)
 - Wheel builds on 3 OS x 4 Python versions
+
+## Phase 7 Features (February 2026)
+
+### Dense Forward Optimization
+
+Three performance tiers for dense layer inference:
+
+```python
+import numpy as np
+import sc_neurocore_engine as v3
+
+layer = v3.DenseLayer(64, 32, 1024)
+inputs = np.random.uniform(0, 1, 64)
+
+# Original (sequential encoding)
+out = layer.forward(inputs.tolist())
+
+# Fast (parallel encoding)
+out = layer.forward_fast(inputs.tolist())
+
+# Pre-packed (skip encoding)
+packed = v3.batch_encode_numpy(inputs, length=1024, seed=42)
+out = layer.forward_prepacked(packed)
+```
+
+### batch_encode_numpy
+
+Returns a 2-D numpy `uint64` array instead of nested Python lists:
+
+```python
+probs = np.array([0.3, 0.5, 0.7, 0.9])
+packed = v3.batch_encode_numpy(probs, length=1024, seed=42)
+# packed.shape == (4, 16)  # 4 inputs x ceil(1024/64) words
+# packed.dtype == np.uint64
+```

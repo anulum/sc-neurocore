@@ -80,3 +80,26 @@ jobs:
           PYTHONPATH=src pytest tests/equivalence/ -v --tb=short
         env:
           PYTHONPATH: src
+
+  publish:
+    name: Publish to PyPI
+    needs: test-wheels
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v3.')
+    environment:
+      name: pypi
+      url: https://pypi.org/project/sc-neurocore-engine/
+    permissions:
+      id-token: write
+    steps:
+      - name: Download all wheel artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+          pattern: wheel-*
+          merge-multiple: true
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/

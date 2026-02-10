@@ -1,5 +1,15 @@
 # SC-NeuroCore v3 Engine Changelog
 
+## [3.1.0] - 2026-02-10
+
+### Phase 7: Dense Forward Optimization & PyPI Publishing
+- **Direct Packed Bernoulli**: `bernoulli_packed()` eliminates `Vec<u8>` intermediate allocations
+- **Parallel Encoding**: `DenseLayer.forward_fast()` parallelizes input encoding with per-input RNGs
+- **Pre-packed Forward**: `DenseLayer.forward_prepacked()` accepts pre-encoded numpy/list inputs and skips encoding
+- **batch_encode_numpy**: Returns a 2-D numpy array instead of nested Python lists
+- **PyPI Publishing**: Added automated wheel upload on `v3.*` tags via Trusted Publisher workflow
+- **Updated Benchmarks**: Added dense `fast` and `prepacked` benchmark variants
+
 ## [3.0.0] - 2026-02-10
 
 ### Phase 6: Performance Optimization & Stable Release
