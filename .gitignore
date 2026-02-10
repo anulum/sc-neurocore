@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Rust
+target/
+**/*.rs.bk
+
+# Compiled Binaries
+*.pyd
+*.so
+*.dll
+*.dylib
+
+# Build Artifacts
+cosim/build/
+dist/
+build/
+.venv/
