@@ -4,14 +4,15 @@ use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
 use sc_neurocore_engine::attention::StochasticAttention;
 use sc_neurocore_engine::bitstream::{
-    bernoulli_packed, bernoulli_packed_fast, bernoulli_stream, pack, popcount_words_portable,
+    bernoulli_packed, bernoulli_packed_fast, bernoulli_stream, pack, pack_fast,
+    popcount_words_portable,
 };
 use sc_neurocore_engine::encoder::BitstreamEncoder;
 use sc_neurocore_engine::graph::StochasticGraphLayer;
 use sc_neurocore_engine::layer::DenseLayer;
 use sc_neurocore_engine::neuron::FixedPointLif;
 use sc_neurocore_engine::scpn::KuramotoSolver;
-use sc_neurocore_engine::simd::popcount_dispatch;
+use sc_neurocore_engine::simd::{pack_dispatch, popcount_dispatch};
 
 fn bench_all(c: &mut Criterion) {
     // -- Bitstream --
@@ -21,6 +22,14 @@ fn bench_all(c: &mut Criterion) {
 
     c.bench_function("pack_1m", |b| {
         b.iter(|| black_box(pack(black_box(&bits_1m))))
+    });
+
+    c.bench_function("pack_fast_1m", |b| {
+        b.iter(|| black_box(pack_fast(black_box(&bits_1m))))
+    });
+
+    c.bench_function("pack_dispatch_1m", |b| {
+        b.iter(|| black_box(pack_dispatch(black_box(&bits_1m))))
     });
 
     let packed = pack(&bits_1m);
@@ -48,6 +57,15 @@ fn bench_all(c: &mut Criterion) {
         b.iter(|| {
             let mut lif = FixedPointLif::new(16, 8, 0, 0, 256, 2);
             for _ in 0..10_000 {
+                black_box(lif.step(20, 256, 128, 0));
+            }
+        })
+    });
+
+    c.bench_function("lif_100k_steps", |b| {
+        b.iter(|| {
+            let mut lif = FixedPointLif::new(16, 8, 0, 0, 256, 2);
+            for _ in 0..100_000 {
                 black_box(lif.step(20, 256, 128, 0));
             }
         })

@@ -36,6 +36,28 @@ pub fn pack(bits: &[u8]) -> BitStreamTensor {
     BitStreamTensor { data, length }
 }
 
+/// Portable fast pack: processes 8 bytes into one output byte at a time.
+pub fn pack_fast(bits: &[u8]) -> BitStreamTensor {
+    let length = bits.len();
+    let words = length.div_ceil(64);
+    let mut data = vec![0_u64; words];
+
+    for (word_idx, word) in data.iter_mut().enumerate() {
+        let base = word_idx * 64;
+        let chunk = &bits[base..std::cmp::min(base + 64, length)];
+
+        for (byte_idx, byte_chunk) in chunk.chunks(8).enumerate() {
+            let mut packed_byte: u8 = 0;
+            for (bit_idx, &bit) in byte_chunk.iter().enumerate() {
+                packed_byte |= u8::from(bit != 0) << bit_idx;
+            }
+            *word |= (packed_byte as u64) << (byte_idx * 8);
+        }
+    }
+
+    BitStreamTensor { data, length }
+}
+
 /// Unpack a packed tensor back into a `0/1` byte vector.
 pub fn unpack(tensor: &BitStreamTensor) -> Vec<u8> {
     let mut bits = vec![0_u8; tensor.length];
@@ -176,14 +198,34 @@ pub fn encode_matrix_prob_to_packed<R: Rng + ?Sized>(
 #[cfg(test)]
 mod tests {
     use super::{
-        bernoulli_packed, bernoulli_packed_fast, bernoulli_stream, bitwise_and, pack, popcount,
-        unpack,
+        bernoulli_packed, bernoulli_packed_fast, bernoulli_stream, bitwise_and, pack, pack_fast,
+        popcount, unpack,
     };
 
     #[test]
     fn pack_unpack_roundtrip() {
         let bits = vec![1, 0, 1, 1, 0, 1, 0, 0, 1];
         let packed = pack(&bits);
+        let unpacked = unpack(&packed);
+        assert_eq!(bits, unpacked);
+    }
+
+    #[test]
+    fn pack_fast_matches_pack() {
+        let cases = [0_usize, 1, 7, 8, 9, 63, 64, 65, 127, 128, 256, 1025];
+        for length in cases {
+            let bits: Vec<u8> = (0..length).map(|i| ((i * 7 + 3) % 2) as u8).collect();
+            let slow = pack(&bits);
+            let fast = pack_fast(&bits);
+            assert_eq!(fast.length, slow.length);
+            assert_eq!(fast.data, slow.data, "Mismatch at length={length}");
+        }
+    }
+
+    #[test]
+    fn pack_fast_roundtrip() {
+        let bits: Vec<u8> = (0..2048).map(|i| ((i * 5 + 1) % 2) as u8).collect();
+        let packed = pack_fast(&bits);
         let unpacked = unpack(&packed);
         assert_eq!(bits, unpacked);
     }

@@ -1,4 +1,4 @@
-"""SC-NeuroCore Engine v3.3 — Drop-in replacement for v2 hot paths."""
+"""SC-NeuroCore Engine v3.4 — Drop-in replacement for v2 hot paths."""
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (
@@ -12,6 +12,7 @@ try:
         popcount_numpy,
         unpack_bitstream_numpy,
         batch_lif_run,
+        batch_lif_run_multi,
         batch_lif_run_varying,
         batch_encode,
         batch_encode_numpy,
@@ -46,6 +47,7 @@ __all__ = [
     "popcount_numpy",
     "unpack_bitstream_numpy",
     "batch_lif_run",
+    "batch_lif_run_multi",
     "batch_lif_run_varying",
     "batch_encode",
     "batch_encode_numpy",

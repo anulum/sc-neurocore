@@ -3,21 +3,13 @@
 //! Integer LIF neuron model used by the v3 engine for deterministic,
 //! hardware-friendly stochastic-computing experiments.
 
-/// Mask and sign-interpret an integer to `width` bits.
+/// Mask and sign-interpret an integer to `width` bits (branchless).
 #[inline]
 pub fn mask(value: i32, width: u32) -> i16 {
     let m = (1_i64 << width) - 1;
-    let mut v = (value as i64) & m;
-    if v >= (1_i64 << (width - 1)) {
-        v -= 1_i64 << width;
-    }
-    if width >= 32 {
-        // For extended intermediate masks (e.g. 2 * data_width), emulate
-        // Python's signed interpretation before truncating to i16.
-        v as i32 as i16
-    } else {
-        v as i16
-    }
+    let v = (value as i64) & m;
+    let shift = 64 - width;
+    ((v << shift) >> shift) as i16
 }
 
 /// Fixed-point leaky-integrate-and-fire neuron state and parameters.
@@ -80,27 +72,72 @@ impl FixedPointLif {
             self.data_width,
         );
 
-        let mut spike = if v_next >= self.v_threshold {
-            self.v = self.v_reset;
-            self.refractory_counter = self.refractory_period;
-            1
+        let fired = (v_next >= self.v_threshold) as i32;
+        let v_after_spike = if fired != 0 { self.v_reset } else { v_next };
+        let refrac_after_fire = if fired != 0 {
+            self.refractory_period
         } else {
-            self.v = v_next;
-            0
+            self.refractory_counter
         };
 
-        if self.refractory_counter > 0 {
-            self.refractory_counter -= 1;
-            self.v = self.v_rest;
-            spike = 0;
-        }
+        let in_refrac = (refrac_after_fire > 0) as i32;
+        let final_v = if in_refrac != 0 {
+            self.v_rest
+        } else {
+            v_after_spike
+        };
+        let final_spike = fired & (1 - in_refrac);
+        let final_refrac = refrac_after_fire - in_refrac;
 
-        (spike, mask(self.v as i32, w))
+        self.v = final_v;
+        self.refractory_counter = final_refrac;
+
+        (final_spike, mask(final_v as i32, w))
     }
 
     /// Reset internal state to resting potential.
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.refractory_counter = 0;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::mask;
+
+    #[test]
+    fn mask_branchless_matches_original() {
+        for &width in &[16_u32, 32] {
+            for value in [
+                -32768_i32,
+                -1,
+                0,
+                1,
+                32767,
+                65535,
+                -65536,
+                i16::MAX as i32,
+                i16::MIN as i32,
+            ] {
+                let result = mask(value, width);
+
+                let m = (1_i64 << width) - 1;
+                let mut v = (value as i64) & m;
+                if v >= (1_i64 << (width - 1)) {
+                    v -= 1_i64 << width;
+                }
+                let expected = if width >= 32 {
+                    v as i32 as i16
+                } else {
+                    v as i16
+                };
+
+                assert_eq!(
+                    result, expected,
+                    "mask({value}, {width}): got {result}, expected {expected}"
+                );
+            }
+        }
     }
 }

@@ -292,3 +292,42 @@ v3.set_num_threads(4)  # Use 4 threads for all parallel ops
 
 Must be called before any parallel operation. Pass 0 for automatic
 (number of CPU cores).
+
+## Phase 10 Features (February 2026)
+
+### SIMD Pack Dispatch
+
+`pack_bitstream_numpy` now uses runtime SIMD dispatch (`AVX-512BW`, `AVX2`, or portable fallback):
+
+```python
+import numpy as np
+import sc_neurocore_engine as v3
+
+bits = np.random.randint(0, 2, 1_000_000, dtype=np.uint8)
+packed = v3.pack_bitstream_numpy(bits)
+```
+
+This keeps API compatibility while accelerating large pack workloads.
+
+### Parallel Multi-Neuron LIF Batch
+
+Run many independent neurons in parallel:
+
+```python
+import numpy as np
+import sc_neurocore_engine as v3
+
+currents = np.full(100, 128, dtype=np.int16)
+spikes, voltages = v3.batch_lif_run_multi(
+    100, 100_000, leak_k=20, gain_k=256, currents=currents
+)
+# spikes.shape == (100, 100000)
+# voltages.shape == (100, 100000)
+```
+
+### Rayon Work Threshold in Dense Fast Path
+
+`DenseLayer.forward_fast` now selects sequential input encoding for small
+input counts and rayon encoding for larger inputs. This avoids thread-pool
+overhead on small workloads without changing numerical outputs (per-index
+RNG seeding remains identical).

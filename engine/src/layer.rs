@@ -22,6 +22,11 @@ fn fused_and_popcount(a: &[u64], b: &[u64]) -> u64 {
         .sum()
 }
 
+/// Minimum number of inputs before rayon parallelism is used for encoding.
+const RAYON_ENCODE_THRESHOLD: usize = 128;
+/// Minimum number of neurons before rayon parallelism is used for output compute.
+const RAYON_NEURON_THRESHOLD: usize = 8;
+
 /// Vectorized stochastic dense layer.
 #[derive(Clone, Debug)]
 pub struct DenseLayer {
@@ -124,17 +129,30 @@ impl DenseLayer {
             packed_inputs[idx] = bitstream::bernoulli_packed(p, self.length, &mut rng);
         }
 
-        let out = (0..self.n_neurons)
-            .into_par_iter()
-            .map(|neuron_idx| {
-                let total: u64 = self.packed_weights[neuron_idx]
-                    .iter()
-                    .zip(packed_inputs.iter())
-                    .map(|(w, i)| fused_and_popcount(w, i))
-                    .sum();
-                total as f64 / self.length as f64
-            })
-            .collect();
+        let out: Vec<f64> = if self.n_neurons >= RAYON_NEURON_THRESHOLD {
+            (0..self.n_neurons)
+                .into_par_iter()
+                .map(|neuron_idx| {
+                    let total: u64 = self.packed_weights[neuron_idx]
+                        .iter()
+                        .zip(packed_inputs.iter())
+                        .map(|(w, i)| fused_and_popcount(w, i))
+                        .sum();
+                    total as f64 / self.length as f64
+                })
+                .collect()
+        } else {
+            (0..self.n_neurons)
+                .map(|neuron_idx| {
+                    let total: u64 = self.packed_weights[neuron_idx]
+                        .iter()
+                        .zip(packed_inputs.iter())
+                        .map(|(w, i)| fused_and_popcount(w, i))
+                        .sum();
+                    total as f64 / self.length as f64
+                })
+                .collect()
+        };
 
         Ok(out)
     }
@@ -152,27 +170,52 @@ impl DenseLayer {
             ));
         }
 
-        let packed_inputs: Vec<Vec<u64>> = input_values
-            .par_iter()
-            .enumerate()
-            .map(|(idx, &p)| {
-                let input_seed = seed.wrapping_add(idx as u64);
-                let mut rng = ChaCha8Rng::seed_from_u64(input_seed);
-                bitstream::bernoulli_packed_fast(p, self.length, &mut rng)
-            })
-            .collect();
+        let packed_inputs: Vec<Vec<u64>> = if self.n_inputs >= RAYON_ENCODE_THRESHOLD {
+            input_values
+                .par_iter()
+                .enumerate()
+                .map(|(idx, &p)| {
+                    let input_seed = seed.wrapping_add(idx as u64);
+                    let mut rng = ChaCha8Rng::seed_from_u64(input_seed);
+                    bitstream::bernoulli_packed_fast(p, self.length, &mut rng)
+                })
+                .collect()
+        } else {
+            input_values
+                .iter()
+                .enumerate()
+                .map(|(idx, &p)| {
+                    let input_seed = seed.wrapping_add(idx as u64);
+                    let mut rng = ChaCha8Rng::seed_from_u64(input_seed);
+                    bitstream::bernoulli_packed_fast(p, self.length, &mut rng)
+                })
+                .collect()
+        };
 
-        let out = (0..self.n_neurons)
-            .into_par_iter()
-            .map(|neuron_idx| {
-                let total: u64 = self.packed_weights[neuron_idx]
-                    .iter()
-                    .zip(packed_inputs.iter())
-                    .map(|(w, i)| fused_and_popcount(w, i))
-                    .sum();
-                total as f64 / self.length as f64
-            })
-            .collect();
+        let out: Vec<f64> = if self.n_neurons >= RAYON_NEURON_THRESHOLD {
+            (0..self.n_neurons)
+                .into_par_iter()
+                .map(|neuron_idx| {
+                    let total: u64 = self.packed_weights[neuron_idx]
+                        .iter()
+                        .zip(packed_inputs.iter())
+                        .map(|(w, i)| fused_and_popcount(w, i))
+                        .sum();
+                    total as f64 / self.length as f64
+                })
+                .collect()
+        } else {
+            (0..self.n_neurons)
+                .map(|neuron_idx| {
+                    let total: u64 = self.packed_weights[neuron_idx]
+                        .iter()
+                        .zip(packed_inputs.iter())
+                        .map(|(w, i)| fused_and_popcount(w, i))
+                        .sum();
+                    total as f64 / self.length as f64
+                })
+                .collect()
+        };
 
         Ok(out)
     }

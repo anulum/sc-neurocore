@@ -203,6 +203,39 @@ def bench_lif_step(n_steps: int = 100_000) -> list[dict]:
     ]
 
 
+def bench_lif_multi(n_neurons: int = 100, n_steps: int = 100_000) -> list[dict]:
+    """Benchmark multi-neuron parallel LIF batch."""
+    currents = np.full(n_neurons, 128, dtype=np.int16)
+
+    def run_v2():
+        for _ in range(n_neurons):
+            lif = V2Lif()
+            for _ in range(n_steps):
+                lif.step(20, 256, 128, 0)
+
+    def run_v3():
+        return v3.batch_lif_run_multi(
+            n_neurons,
+            n_steps,
+            leak_k=20,
+            gain_k=256,
+            currents=currents,
+        )
+
+    v2_time = benchmark(run_v2)
+    v3_time = benchmark(run_v3)
+
+    return [
+        {
+            "operation": f"LIF multi ({n_neurons}x{n_steps // 1000}K)",
+            "v2_ms": v2_time * 1000,
+            "v3_ms": v3_time * 1000,
+            "speedup": fmt_speedup(v2_time, v3_time),
+            "target": "400x",
+        }
+    ]
+
+
 def main():
     print("SC-NeuroCore v3 - Benchmark Report")
     print("=" * 90)
@@ -216,6 +249,7 @@ def main():
     results.extend(bench_popcount())
     results.extend(bench_dense_forward())
     results.extend(bench_lif_step())
+    results.extend(bench_lif_multi())
 
     # Print table
     print(f"{'Operation':<40} {'v2 (ms)':<12} {'v3 (ms)':<12} {'Speedup':<10} {'Target':<10}")

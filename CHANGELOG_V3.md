@@ -1,5 +1,14 @@
 # SC-NeuroCore v3 Engine Changelog
 
+## [3.4.0] - 2026-02-10
+
+### Phase 10: SIMD Pack, LIF Optimization, Rayon Guard
+- **SIMD pack vectorization**: AVX-512/AVX2/portable fast packing (closes 6x Blueprint target)
+- **Branchless LIF mask**: Eliminates branches in fixed-point sign extension
+- **batch_lif_run_multi()**: Parallel multi-neuron batch execution via rayon
+- **Rayon work threshold**: Avoids thread-pool overhead at small input counts
+- **Criterion benchmarks**: Added pack_fast, pack_dispatch, lif_100k_steps
+
 ## [3.3.0] - 2026-02-10
 
 ### Phase 9: Fast Bernoulli, Fused AND+Popcount, Zero-Copy Prepacked

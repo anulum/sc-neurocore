@@ -18,10 +18,10 @@ pub mod neuron;
 pub mod scpn;
 pub mod simd;
 
-/// SC-NeuroCore v3.3 — High-Performance Rust Engine
+/// SC-NeuroCore v3.4 — High-Performance Rust Engine
 #[pymodule]
 fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add("__version__", "3.3.0")?;
+    m.add("__version__", "3.4.0")?;
     m.add_function(wrap_pyfunction!(simd_tier, m)?)?;
     m.add_function(wrap_pyfunction!(set_num_threads, m)?)?;
     m.add_function(wrap_pyfunction!(pack_bitstream, m)?)?;
@@ -31,6 +31,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(popcount_numpy, m)?)?;
     m.add_function(wrap_pyfunction!(unpack_bitstream_numpy, m)?)?;
     m.add_function(wrap_pyfunction!(batch_lif_run, m)?)?;
+    m.add_function(wrap_pyfunction!(batch_lif_run_multi, m)?)?;
     m.add_function(wrap_pyfunction!(batch_lif_run_varying, m)?)?;
     m.add_function(wrap_pyfunction!(batch_encode, m)?)?;
     m.add_function(wrap_pyfunction!(batch_encode_numpy, m)?)?;
@@ -60,6 +61,9 @@ fn simd_tier() -> &'static str {
     {
         if is_x86_feature_detected!("avx512vpopcntdq") {
             return "avx512-vpopcntdq";
+        }
+        if is_x86_feature_detected!("avx512bw") {
+            return "avx512bw";
         }
         if is_x86_feature_detected!("avx512f") {
             return "avx512f";
@@ -171,7 +175,7 @@ fn pack_bitstream_numpy<'py>(
     let slice = bits
         .as_slice()
         .map_err(|e| PyValueError::new_err(format!("Cannot read numpy array: {e}")))?;
-    let tensor = bitstream::pack(slice);
+    let tensor = simd::pack_dispatch(slice);
     Ok(tensor.data.into_pyarray_bound(py))
 }
 
@@ -252,6 +256,94 @@ fn batch_lif_run<'py>(
         spikes.into_pyarray_bound(py),
         voltages.into_pyarray_bound(py),
     )
+}
+
+/// Run N independent LIF neurons in parallel, each with its own constant input.
+///
+/// Returns (spikes: ndarray[i32, (n_neurons, n_steps)],
+///          voltages: ndarray[i16, (n_neurons, n_steps)]).
+#[pyfunction]
+#[pyo3(signature = (
+    n_neurons,
+    n_steps,
+    leak_k,
+    gain_k,
+    currents,
+    data_width=16,
+    fraction=8,
+    v_rest=0,
+    v_reset=0,
+    v_threshold=256,
+    refractory_period=2
+))]
+#[allow(clippy::too_many_arguments)]
+#[allow(clippy::type_complexity)]
+fn batch_lif_run_multi<'py>(
+    py: Python<'py>,
+    n_neurons: usize,
+    n_steps: usize,
+    leak_k: i16,
+    gain_k: i16,
+    currents: PyReadonlyArray1<'py, i16>,
+    data_width: u32,
+    fraction: u32,
+    v_rest: i16,
+    v_reset: i16,
+    v_threshold: i16,
+    refractory_period: i32,
+) -> PyResult<(Bound<'py, PyArray2<i32>>, Bound<'py, PyArray2<i16>>)> {
+    use rayon::prelude::*;
+
+    let curr_slice = currents
+        .as_slice()
+        .map_err(|e| PyValueError::new_err(format!("Cannot read currents: {e}")))?;
+    if curr_slice.len() != n_neurons {
+        return Err(PyValueError::new_err(format!(
+            "currents length {} does not match n_neurons {}.",
+            curr_slice.len(),
+            n_neurons
+        )));
+    }
+
+    let rows: Vec<(Vec<i32>, Vec<i16>)> = (0..n_neurons)
+        .into_par_iter()
+        .map(|ni| {
+            let mut lif = neuron::FixedPointLif::new(
+                data_width,
+                fraction,
+                v_rest,
+                v_reset,
+                v_threshold,
+                refractory_period,
+            );
+            let i_t = curr_slice[ni];
+            let mut spikes = Vec::with_capacity(n_steps);
+            let mut voltages = Vec::with_capacity(n_steps);
+            for _ in 0..n_steps {
+                let (s, v) = lif.step(leak_k, gain_k, i_t, 0);
+                spikes.push(s);
+                voltages.push(v);
+            }
+            (spikes, voltages)
+        })
+        .collect();
+
+    let mut spikes_flat = Vec::with_capacity(n_neurons * n_steps);
+    let mut voltages_flat = Vec::with_capacity(n_neurons * n_steps);
+    for (spikes_row, voltages_row) in &rows {
+        spikes_flat.extend_from_slice(spikes_row);
+        voltages_flat.extend_from_slice(voltages_row);
+    }
+
+    let spikes_arr = ndarray::Array2::from_shape_vec((n_neurons, n_steps), spikes_flat)
+        .map_err(|e| PyValueError::new_err(format!("Shape construction failed: {e}")))?;
+    let voltages_arr = ndarray::Array2::from_shape_vec((n_neurons, n_steps), voltages_flat)
+        .map_err(|e| PyValueError::new_err(format!("Shape construction failed: {e}")))?;
+
+    Ok((
+        spikes_arr.into_pyarray_bound(py),
+        voltages_arr.into_pyarray_bound(py),
+    ))
 }
 
 /// Run a LIF neuron for N steps with per-step current and optional noise arrays.
