@@ -629,9 +629,11 @@ to attach them to the start of each source file to most effectively
 state the exclusion of warranty; and each file should have at least
 the "copyright" line and a pointer to where the full notice is found.
 
-    SC-NeuroCore is a verified Rust-based neuromorphic compiler that translates high-level Python SNN definitions into bit-true hardware logic, 
+    SC-NeuroCore is a verified Rust-based neuromorphic compiler that 
+    translates high-level Python SNN definitions into bit-true hardware logic, 
     running 512x faster than real-time on standard CPUs.
-    CopyRights: © 1998–2026 Miroslav Šotek. All rights reserved. Contact us: www.anulum.li protoscience@anulum.li
+    CopyRights: © 1998–2026 Miroslav Šotek. All rights reserved. 
+    Contact us: www.anulum.li protoscience@anulum.li
     https://orcid.org/0009-0009-3560-0851 - DOI: 10.5281/zenodo.18594898
 
 
