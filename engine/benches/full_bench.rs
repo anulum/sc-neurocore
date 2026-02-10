@@ -3,7 +3,9 @@ use rand::Rng;
 use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
 use sc_neurocore_engine::attention::StochasticAttention;
-use sc_neurocore_engine::bitstream::{pack, popcount_words_portable};
+use sc_neurocore_engine::bitstream::{
+    bernoulli_packed, bernoulli_stream, pack, popcount_words_portable,
+};
 use sc_neurocore_engine::encoder::BitstreamEncoder;
 use sc_neurocore_engine::graph::StochasticGraphLayer;
 use sc_neurocore_engine::layer::DenseLayer;
@@ -51,11 +53,52 @@ fn bench_all(c: &mut Criterion) {
         })
     });
 
-    // -- Dense Layer --
+    // -- Bernoulli encoding comparison --
+    c.bench_function("bernoulli_stream_1024", |b| {
+        b.iter(|| {
+            let mut rng = ChaCha8Rng::seed_from_u64(42);
+            black_box(bernoulli_stream(0.5, 1024, &mut rng))
+        })
+    });
+
+    c.bench_function("bernoulli_stream_pack_1024", |b| {
+        b.iter(|| {
+            let mut rng = ChaCha8Rng::seed_from_u64(42);
+            let bits = bernoulli_stream(0.5, 1024, &mut rng);
+            black_box(pack(&bits).data)
+        })
+    });
+
+    c.bench_function("bernoulli_packed_1024", |b| {
+        b.iter(|| {
+            let mut rng = ChaCha8Rng::seed_from_u64(42);
+            black_box(bernoulli_packed(0.5, 1024, &mut rng))
+        })
+    });
+
+    // -- Dense forward variants --
     let layer = DenseLayer::new(64, 32, 1024, 42);
     let inputs = vec![0.5_f64; 64];
-    c.bench_function("dense_64x32_l1024", |b| {
+
+    c.bench_function("dense_forward_64x32", |b| {
         b.iter(|| black_box(layer.forward(black_box(&inputs), 42).unwrap()))
+    });
+
+    c.bench_function("dense_forward_fast_64x32", |b| {
+        b.iter(|| black_box(layer.forward_fast(black_box(&inputs), 42).unwrap()))
+    });
+
+    let packed_inputs: Vec<Vec<u64>> = inputs
+        .iter()
+        .enumerate()
+        .map(|(idx, &p)| {
+            let mut rng = ChaCha8Rng::seed_from_u64(42_u64.wrapping_add(idx as u64));
+            sc_neurocore_engine::bitstream::bernoulli_packed(p, 1024, &mut rng)
+        })
+        .collect();
+
+    c.bench_function("dense_forward_prepacked_64x32", |b| {
+        b.iter(|| black_box(layer.forward_prepacked(black_box(&packed_inputs)).unwrap()))
     });
 
     // -- Kuramoto --

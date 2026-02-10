@@ -1,5 +1,14 @@
 # SC-NeuroCore v3 Engine Changelog
 
+## [3.2.0] - 2026-02-10
+
+### Phase 8: Benchmark CI, Single-Call Dense Forward, Parallel Encoding
+- **Criterion Benchmarks**: Expanded suite with bernoulli encoding comparison and dense forward variants
+- **Benchmark CI**: Automated criterion runs with artifact upload
+- **DenseLayer.forward_numpy()**: Single FFI call with numpy input/output plus parallel encoding
+- **Parallel batch_encode_numpy**: Rayon-parallelized probability encoding
+- **Repo cleanup**: Added local `.gitignore` for generated artifacts
+
 ## [3.1.0] - 2026-02-10
 
 ### Phase 7: Dense Forward Optimization & PyPI Publishing

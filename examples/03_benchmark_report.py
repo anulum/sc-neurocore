@@ -108,7 +108,7 @@ def bench_popcount(n_words: int = 1_000_000) -> list[dict]:
 
 
 def bench_dense_forward(n_in: int = 64, n_out: int = 32, length: int = 1024) -> list[dict]:
-    """Benchmark dense forward: original, fast (parallel encode), prepacked."""
+    """Benchmark dense forward variants."""
     rng = np.random.RandomState(42)
     inputs = rng.uniform(0, 1, n_in)
     inputs_f64 = inputs.astype(np.float64)
@@ -121,6 +121,7 @@ def bench_dense_forward(n_in: int = 64, n_out: int = 32, length: int = 1024) -> 
     v3_time = benchmark(lambda: v3_layer.forward(inputs), n_iters=10)
     v3_fast_time = benchmark(lambda: v3_layer.forward_fast(inputs), n_iters=10)
     v3_prepacked_time = benchmark(lambda: v3_layer.forward_prepacked(packed_inputs), n_iters=10)
+    v3_numpy_time = benchmark(lambda: v3_layer.forward_numpy(inputs_f64), n_iters=10)
 
     return [
         {
@@ -142,6 +143,13 @@ def bench_dense_forward(n_in: int = 64, n_out: int = 32, length: int = 1024) -> 
             "v2_ms": v2_time / 10 * 1000,
             "v3_ms": v3_prepacked_time / 10 * 1000,
             "speedup": fmt_speedup(v2_time, v3_prepacked_time),
+            "target": "70x",
+        },
+        {
+            "operation": f"dense numpy ({n_in}->{n_out}, L={length})",
+            "v2_ms": v2_time / 10 * 1000,
+            "v3_ms": v3_numpy_time / 10 * 1000,
+            "speedup": fmt_speedup(v2_time, v3_numpy_time),
             "target": "70x",
         },
     ]
@@ -219,6 +227,7 @@ def main():
     print("Dense forward uses rayon parallelism across neurons.")
     print("'fast' variants use per-input parallel encoding with rayon.")
     print("'prepacked' variants skip encoding entirely (pre-encoded inputs).")
+    print("'dense numpy' variant runs in one FFI call with numpy input/output.")
 
     return results
 

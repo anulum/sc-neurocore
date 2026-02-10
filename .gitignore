@@ -1,0 +1,24 @@
+# Rust build artifacts
+target/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Pytest cache
+.pytest_cache/
+
+# Local tools (Verilator, etc.)
+.tools/
+
+# Maturin build output
+dist/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

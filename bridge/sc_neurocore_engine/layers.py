@@ -58,3 +58,8 @@ class VectorizedSCLayer:
             )
         result = self._engine.forward_prepacked(packed)
         return np.array(result, dtype=np.float64)
+
+    def forward_numpy(self, input_values, seed: int = 44257) -> np.ndarray:
+        """Dense forward with numpy input/output and parallel encoding."""
+        arr = np.asarray(input_values, dtype=np.float64)
+        return self._engine.forward_numpy(arr, seed)

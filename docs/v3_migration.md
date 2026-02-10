@@ -221,3 +221,34 @@ packed = v3.batch_encode_numpy(probs, length=1024, seed=42)
 # packed.shape == (4, 16)  # 4 inputs x ceil(1024/64) words
 # packed.dtype == np.uint64
 ```
+
+## Phase 8 Features (February 2026)
+
+### Single-Call Dense Forward with NumPy
+
+The recommended high-performance inference API:
+
+```python
+import numpy as np
+import sc_neurocore_engine as v3
+
+layer = v3.DenseLayer(64, 32, 1024)
+inputs = np.random.uniform(0, 1, 64)
+
+# Single FFI call: numpy in -> parallel encode -> parallel compute -> numpy out
+out = layer.forward_numpy(inputs)
+# out is a numpy float64 array of shape (32,)
+```
+
+### Parallel Batch Encoding
+
+`batch_encode_numpy` now uses rayon-parallel encoding:
+
+```python
+probs = np.random.uniform(0, 1, 1000)
+packed = v3.batch_encode_numpy(probs, length=1024, seed=42)
+# Each probability encoded on its own thread
+```
+
+Note: `batch_encode_numpy` uses per-index seeding (`seed + index`) for
+parallelism. Use `batch_encode` for sequential single-RNG seeding.

@@ -16,10 +16,10 @@ pub mod neuron;
 pub mod scpn;
 pub mod simd;
 
-/// SC-NeuroCore v3.1 — High-Performance Rust Engine
+/// SC-NeuroCore v3.2 — High-Performance Rust Engine
 #[pymodule]
 fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add("__version__", "3.1.0")?;
+    m.add("__version__", "3.2.0")?;
     m.add_function(wrap_pyfunction!(simd_tier, m)?)?;
     m.add_function(wrap_pyfunction!(pack_bitstream, m)?)?;
     m.add_function(wrap_pyfunction!(unpack_bitstream, m)?)?;
@@ -353,20 +353,31 @@ fn batch_encode_numpy<'py>(
     length: usize,
     seed: u64,
 ) -> PyResult<Bound<'py, PyArray2<u64>>> {
+    use rayon::prelude::*;
+
     let prob_slice = probs
         .as_slice()
         .map_err(|e| PyValueError::new_err(format!("Cannot read probs: {e}")))?;
     let words = length.div_ceil(64);
     let n_probs = prob_slice.len();
 
-    use rand::SeedableRng;
-    let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(seed);
+    let rows: Vec<Vec<u64>> = prob_slice
+        .par_iter()
+        .enumerate()
+        .map(|(idx, &p)| {
+            use rand::SeedableRng;
+
+            let prob_seed = seed.wrapping_add(idx as u64);
+            let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(prob_seed);
+            let mut row = bitstream::bernoulli_packed(p, length, &mut rng);
+            row.resize(words, 0);
+            row
+        })
+        .collect();
 
     let mut flat = Vec::with_capacity(n_probs * words);
-    for &p in prob_slice {
-        let mut row = bitstream::bernoulli_packed(p, length, &mut rng);
-        row.resize(words, 0);
-        flat.extend_from_slice(&row);
+    for row in &rows {
+        flat.extend_from_slice(row);
     }
 
     let arr = ndarray::Array2::from_shape_vec((n_probs, words), flat)
@@ -564,6 +575,26 @@ impl DenseLayer {
         self.inner
             .forward_fast(&input_values, seed)
             .map_err(PyValueError::new_err)
+    }
+
+    /// Dense forward accepting numpy input and returning numpy output.
+    ///
+    /// This performs parallel encoding + parallel compute in one FFI call.
+    #[pyo3(signature = (input_values, seed=44257))]
+    fn forward_numpy<'py>(
+        &self,
+        py: Python<'py>,
+        input_values: PyReadonlyArray1<'py, f64>,
+        seed: u64,
+    ) -> PyResult<Bound<'py, PyArray1<f64>>> {
+        let slice = input_values
+            .as_slice()
+            .map_err(|e| PyValueError::new_err(format!("Cannot read input array: {e}")))?;
+        let out = self
+            .inner
+            .forward_numpy_inner(slice, seed)
+            .map_err(PyValueError::new_err)?;
+        Ok(out.into_pyarray_bound(py))
     }
 
     /// Forward pass with pre-packed input bitstreams.

@@ -220,4 +220,11 @@ impl DenseLayer {
 
         Ok(out)
     }
+
+    /// Single-call dense forward with parallel Bernoulli encoding.
+    ///
+    /// This mirrors `forward_fast` and exists for numpy-native Python bindings.
+    pub fn forward_numpy_inner(&self, input_values: &[f64], seed: u64) -> Result<Vec<f64>, String> {
+        self.forward_fast(input_values, seed)
+    }
 }
