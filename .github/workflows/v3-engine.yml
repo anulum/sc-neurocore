@@ -5,12 +5,16 @@ on:
     paths:
       - "engine/**"
       - "bridge/**"
-      - "tests/equivalence/**"
+      - "tests/**"
+      - "cosim/**"
+      - "examples/**"
   pull_request:
     paths:
       - "engine/**"
       - "bridge/**"
-      - "tests/equivalence/**"
+      - "tests/**"
+      - "cosim/**"
+      - "examples/**"
 
 env:
   CARGO_TERM_COLOR: always
@@ -71,7 +75,7 @@ jobs:
         run: pytest tests/equivalence/ -v --tb=short
 
       - name: Run v3-specific tests
-        run: pytest tests/test_surrogate_python.py tests/test_kuramoto_python.py -v --tb=short
+        run: pytest tests/test_surrogate_python.py tests/test_kuramoto_python.py tests/test_kuramoto_ssgf_python.py tests/test_multihead_attention.py tests/test_gnn_sc_mode.py -v --tb=short
 
   v2-compat:
     runs-on: ubuntu-latest

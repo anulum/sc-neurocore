@@ -9,6 +9,7 @@ pub mod bitstream;
 pub mod encoder;
 pub mod grad;
 pub mod graph;
+pub mod ir;
 pub mod layer;
 pub mod neuron;
 pub mod scpn;
@@ -17,7 +18,7 @@ pub mod simd;
 /// SC-NeuroCore v3.0 — High-Performance Rust Engine
 #[pymodule]
 fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add("__version__", "3.0.0-alpha.1")?;
+    m.add("__version__", "3.0.0-beta.1")?;
     m.add_function(wrap_pyfunction!(simd_tier, m)?)?;
     m.add_function(wrap_pyfunction!(pack_bitstream, m)?)?;
     m.add_function(wrap_pyfunction!(unpack_bitstream, m)?)?;

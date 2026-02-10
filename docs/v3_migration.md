@@ -78,3 +78,32 @@ computing layers via surrogate gradients:
 
 - proptest coverage for all numeric modules
 - Catches edge cases: overflows, NaN, extreme values
+
+## Phase 4 Features (February 2026)
+
+### SC Compute Graph IR
+
+A Rust-native intermediate representation for SC pipelines:
+
+- `ScGraph`: Directed acyclic graph of SC operations
+- `ScGraphBuilder`: Fluent API for graph construction
+- `verify()`: Static verification (SSA, type checking, acyclicity)
+- `print()` / `parse()`: Stable text format with round-trip fidelity
+- 11 operation types mapping to HDL primitives
+
+### SystemVerilog Emitter
+
+Compile IR graphs to synthesizable RTL:
+
+- Direct instantiation of existing `hdl/` modules
+- Automatic clock/reset distribution
+- Constant folding for Q8.8 fixed-point parameters
+
+### Co-Simulation Harness
+
+Verify generated HDL against Rust golden model:
+
+- LFSR full-cycle equivalence
+- LIF neuron bit-exact comparison
+- Encoder probability convergence
+- Synapse AND operation verification

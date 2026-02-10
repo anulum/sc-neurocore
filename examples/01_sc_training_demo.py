@@ -72,7 +72,8 @@ def main():
 
     for epoch in range(n_epochs):
         total_loss = 0.0
-        correct = 0
+        predictions = []
+        targets = []
 
         for i in range(n_train):
             x = X_train[i]
@@ -82,17 +83,18 @@ def main():
             loss = mse_loss(pred, target)
             total_loss += loss
 
-            threshold = 2.0
-            predicted_class = 1.0 if pred[0] > threshold else 0.0
-            if predicted_class == target[0]:
-                correct += 1
+            predictions.append(float(pred[0]))
+            targets.append(float(target[0]))
 
             grad_out = mse_grad(pred, target)
             _, grad_w = layer.backward(grad_out)
             layer.update_weights(grad_w, lr=lr)
 
         avg_loss = total_loss / n_train
-        accuracy = correct / n_train * 100
+        correct = sum(
+            1 for p, t in zip(predictions, targets) if (p > 0.5) == (t > 0.5)
+        )
+        accuracy = correct / len(targets) * 100.0
 
         if epoch % 5 == 0 or epoch == n_epochs - 1:
             print(f"{epoch:<8} {avg_loss:<12.6f} {accuracy:<10.1f}%")
@@ -102,6 +104,15 @@ def main():
     print("Note: SC layers are stochastic - loss may fluctuate.")
     print("The surrogate gradient enables weight updates despite")
     print("the non-differentiable bitstream AND+popcount forward pass.")
+
+    final_preds = [layer.forward(x, seed=9999)[0] for x in X_train]
+    final_correct = sum(
+        1 for p, t in zip(final_preds, y_train) if (p > 0.5) == (t > 0.5)
+    )
+    print(
+        f"\nFinal accuracy: {final_correct}/{len(y_train)} "
+        f"({final_correct/len(y_train):.0%})"
+    )
 
 
 if __name__ == "__main__":
