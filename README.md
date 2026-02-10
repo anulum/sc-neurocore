@@ -12,17 +12,17 @@
 
 ---
 
-## 🚀 Performance Benchmarks (v3.6.0)
+## Performance Benchmarks (v3.6.0)
 
 | Metric | Legacy Python | **SC-NeuroCore v3.6** | Speedup |
 | :--- | :--- | :--- | :--- |
-| **LIF Neuron Update** | 12.9 ms | **0.025 ms** | **512.4x** 🚀 |
-| **Dense Synaptic Layer** | 64.0 ms | **0.380 ms** | **168.0x** ⚡ |
+| **LIF Neuron Update** | 12.9 ms | **0.025 ms** | **512.4x** |
+| **Dense Synaptic Layer** | 64.0 ms | **0.380 ms** | **168.0x** |
 | **Bit-Stream Encoding** | 51.0 ms | **0.342 ms** | **149.3x** |
 | **Inference Latency** | ~2.5 ms | **< 0.010 ms** | **> 250x** |
 
 *Verified against SystemVerilog Hardware Co-Simulation (8/8 Tests Passed).*
-[📄 **Read the White Paper**](https://github.com/your-username/sc-neurocore/releases/latest/download/SC_NeuroCore_v3.6_WhitePaper_512x_Benchmarks.pdf)
+[📄 **Read the White Paper**](https://github.com/anulum/sc-neurocore/releases/latest/download/SC_NeuroCore_v3.6_WhitePaper_512x_Benchmarks.pdf)
 
 ---
 
