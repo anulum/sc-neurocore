@@ -10,6 +10,25 @@
 
 > **Bridging the Gap:** SC-NeuroCore translates high-level Python SNN definitions into bit-true hardware logic, running **512x faster than real-time** on standard CPUs.
 
+## Domain-Specific Configurations
+
+SC-NeuroCore is a polymorphic engine. While the default configuration is optimized for Spiking Neural Networks (SNN), the core stochastic kernel supports specialized modes for distinct industrial applications:
+
+### 1. The SCPN Profile (Industrial Control)
+* **Use Case:** Verification of asynchronous logic and Petri Nets.
+* **Feature:** Maps "Places" and "Transitions" to sparse stochastic matrices.
+* **Status:** **Included** (See `sc_neurocore.scpn`).
+
+### 2. The HDC Profile (Symbolic AI)
+* **Use Case:** Hyper-Dimensional Computing for low-power sensor fusion.
+* **Feature:** 10,000-bit vector algebra operations (Bind, Bundle, Permute) accelerated by AVX-512.
+* **Status:** **Beta** (See `examples/hdc_demo.py`).
+
+### 3. The Bio-Hybrid Interface (R&D)
+* **Use Case:** Modeling Gene Regulatory Networks (GRN) and DNA Storage dynamics.
+* **Feature:** Non-linear chemical reaction kinetics via stochastic bitstreams.
+* **Status:** **Experimental** (Research License required for commercial bio-tech use).
+
 ---
 
 ## Performance Benchmarks (v3.6.0)
