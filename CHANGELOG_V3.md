@@ -1,5 +1,14 @@
 # SC-NeuroCore v3 Engine Changelog
 
+## [3.0.0] - 2026-02-10
+
+### Phase 6: Performance Optimization & Stable Release
+- **NumPy Zero-Copy**: `pack_bitstream_numpy()`, `popcount_numpy()`, `unpack_bitstream_numpy()` — eliminate FFI marshalling overhead
+- **Batch Operations**: `batch_lif_run()`, `batch_lif_run_varying()`, `batch_encode()` — process arrays in single FFI calls
+- **Verilator CI**: Co-simulation tests run automatically on Ubuntu runners
+- **Updated Benchmarks**: Formal report showing true kernel performance with zero-copy interop
+- **Bridge Version Fix**: `bridge/pyproject.toml` version now matches engine
+
 ## [3.0.0-rc.1] - 2026-02-10
 
 ### Phase 5: Release Candidate

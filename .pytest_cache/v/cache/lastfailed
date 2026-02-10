@@ -1,1 +1,19 @@
-{}
+{
+  "tests/test_coverage_gaps.py::TestModelBridgeCoverage::test_bridge_no_layer": true,
+  "tests/test_zero_coverage_a.py::TestHeatDeath::test_construction_and_step": true,
+  "tests/test_zero_coverage_a.py::TestHeatDeathLayer::test_step": true,
+  "tests/test_zero_coverage_a.py::TestPlanckGrid::test_step": true,
+  "tests/test_zero_coverage_a.py::TestHolographicBoundary::test_encode_decode": true,
+  "tests/test_zero_coverage_a.py::TestNestedUniverse::test_step": true,
+  "tests/test_zero_coverage_a.py::TestConstructorCell::test_step": true,
+  "tests/test_zero_coverage_a.py::TestEverettTreeLayer::test_step": true,
+  "tests/test_zero_coverage_a.py::TestSemioticTriad::test_step": true,
+  "tests/test_zero_coverage_a.py::TestSpinNetwork::test_step": true,
+  "tests/test_zero_coverage_a.py::TestFalseVacuumField::test_step": true,
+  "tests/test_zero_coverage_a.py::TestDarkForestAgent::test_step": true,
+  "tests/test_zero_coverage_a.py::TestOmegaIntegrator::test_step": true,
+  "tests/test_zero_coverage_a.py::TestCTCLayer::test_step": true,
+  "tests/test_zero_coverage_a.py::TestCatomLattice::test_step": true,
+  "tests/test_zero_coverage_a.py::TestFemtoSwitch::test_step": true,
+  "cosim/test_lif_cosim.py::TestLifCosim": true
+}

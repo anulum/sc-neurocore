@@ -1,5 +1,6 @@
 #![allow(clippy::useless_conversion)]
 
+use numpy::{IntoPyArray, PyArray1, PyReadonlyArray1};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::{PyAny, PyDict};
@@ -18,11 +19,17 @@ pub mod simd;
 /// SC-NeuroCore v3.0 — High-Performance Rust Engine
 #[pymodule]
 fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add("__version__", "3.0.0-rc.1")?;
+    m.add("__version__", "3.0.0")?;
     m.add_function(wrap_pyfunction!(simd_tier, m)?)?;
     m.add_function(wrap_pyfunction!(pack_bitstream, m)?)?;
     m.add_function(wrap_pyfunction!(unpack_bitstream, m)?)?;
     m.add_function(wrap_pyfunction!(popcount, m)?)?;
+    m.add_function(wrap_pyfunction!(pack_bitstream_numpy, m)?)?;
+    m.add_function(wrap_pyfunction!(popcount_numpy, m)?)?;
+    m.add_function(wrap_pyfunction!(unpack_bitstream_numpy, m)?)?;
+    m.add_function(wrap_pyfunction!(batch_lif_run, m)?)?;
+    m.add_function(wrap_pyfunction!(batch_lif_run_varying, m)?)?;
+    m.add_function(wrap_pyfunction!(batch_encode, m)?)?;
     m.add_class::<Lfsr16>()?;
     m.add_class::<BitstreamEncoder>()?;
     m.add_class::<FixedPointLif>()?;
@@ -133,6 +140,212 @@ fn popcount(packed: &Bound<'_, PyAny>) -> PyResult<u64> {
         PyValueError::new_err("Expected packed uint64 words as 1-D or 2-D sequence.")
     })?;
     Ok(simd::popcount_dispatch(&words))
+}
+
+/// Pack a 1-D numpy uint8 array into packed u64 words, returning a numpy array.
+/// Zero-copy input, single-allocation output.
+#[pyfunction]
+fn pack_bitstream_numpy<'py>(
+    py: Python<'py>,
+    bits: PyReadonlyArray1<'py, u8>,
+) -> PyResult<Bound<'py, PyArray1<u64>>> {
+    let slice = bits
+        .as_slice()
+        .map_err(|e| PyValueError::new_err(format!("Cannot read numpy array: {e}")))?;
+    let tensor = bitstream::pack(slice);
+    Ok(tensor.data.into_pyarray_bound(py))
+}
+
+/// Popcount on a numpy uint64 array — zero-copy input.
+#[pyfunction]
+fn popcount_numpy(packed: PyReadonlyArray1<'_, u64>) -> PyResult<u64> {
+    let words = packed
+        .as_slice()
+        .map_err(|e| PyValueError::new_err(format!("Cannot read numpy array: {e}")))?;
+    Ok(simd::popcount_dispatch(words))
+}
+
+/// Unpack a numpy uint64 array back to a numpy uint8 array.
+#[pyfunction]
+fn unpack_bitstream_numpy<'py>(
+    py: Python<'py>,
+    packed: PyReadonlyArray1<'py, u64>,
+    original_length: usize,
+) -> PyResult<Bound<'py, PyArray1<u8>>> {
+    let words = packed
+        .as_slice()
+        .map_err(|e| PyValueError::new_err(format!("Cannot read numpy array: {e}")))?;
+    let tensor = bitstream::BitStreamTensor::from_words(words.to_vec(), original_length);
+    let bits = bitstream::unpack(&tensor);
+    Ok(bits.into_pyarray_bound(py))
+}
+
+/// Run a LIF neuron for N steps with constant inputs.
+///
+/// Returns (spikes: ndarray[i32], voltages: ndarray[i16]).
+#[pyfunction]
+#[pyo3(signature = (
+    n_steps,
+    leak_k,
+    gain_k,
+    i_t,
+    noise_in=0,
+    data_width=16,
+    fraction=8,
+    v_rest=0,
+    v_reset=0,
+    v_threshold=256,
+    refractory_period=2
+))]
+#[allow(clippy::too_many_arguments)]
+fn batch_lif_run<'py>(
+    py: Python<'py>,
+    n_steps: usize,
+    leak_k: i16,
+    gain_k: i16,
+    i_t: i16,
+    noise_in: i16,
+    data_width: u32,
+    fraction: u32,
+    v_rest: i16,
+    v_reset: i16,
+    v_threshold: i16,
+    refractory_period: i32,
+) -> (Bound<'py, PyArray1<i32>>, Bound<'py, PyArray1<i16>>) {
+    let mut lif = neuron::FixedPointLif::new(
+        data_width,
+        fraction,
+        v_rest,
+        v_reset,
+        v_threshold,
+        refractory_period,
+    );
+    let mut spikes = Vec::with_capacity(n_steps);
+    let mut voltages = Vec::with_capacity(n_steps);
+
+    for _ in 0..n_steps {
+        let (s, v) = lif.step(leak_k, gain_k, i_t, noise_in);
+        spikes.push(s);
+        voltages.push(v);
+    }
+
+    (
+        spikes.into_pyarray_bound(py),
+        voltages.into_pyarray_bound(py),
+    )
+}
+
+/// Run a LIF neuron for N steps with per-step current and optional noise arrays.
+#[pyfunction]
+#[pyo3(signature = (
+    leak_k,
+    gain_k,
+    currents,
+    noises=None,
+    data_width=16,
+    fraction=8,
+    v_rest=0,
+    v_reset=0,
+    v_threshold=256,
+    refractory_period=2
+))]
+#[allow(clippy::too_many_arguments)]
+#[allow(clippy::type_complexity)]
+fn batch_lif_run_varying<'py>(
+    py: Python<'py>,
+    leak_k: i16,
+    gain_k: i16,
+    currents: PyReadonlyArray1<'py, i16>,
+    noises: Option<PyReadonlyArray1<'py, i16>>,
+    data_width: u32,
+    fraction: u32,
+    v_rest: i16,
+    v_reset: i16,
+    v_threshold: i16,
+    refractory_period: i32,
+) -> PyResult<(Bound<'py, PyArray1<i32>>, Bound<'py, PyArray1<i16>>)> {
+    let curr_slice = currents
+        .as_slice()
+        .map_err(|e| PyValueError::new_err(format!("Cannot read currents: {e}")))?;
+    let noise_slice: Option<&[i16]> = match noises.as_ref() {
+        Some(n) => Some(
+            n.as_slice()
+                .map_err(|e| PyValueError::new_err(format!("Cannot read noises: {e}")))?,
+        ),
+        None => None,
+    };
+
+    let n_steps = curr_slice.len();
+    if let Some(ns) = noise_slice {
+        if ns.len() != n_steps {
+            return Err(PyValueError::new_err(format!(
+                "noises length {} does not match currents length {}.",
+                ns.len(),
+                n_steps
+            )));
+        }
+    }
+
+    let mut lif = neuron::FixedPointLif::new(
+        data_width,
+        fraction,
+        v_rest,
+        v_reset,
+        v_threshold,
+        refractory_period,
+    );
+    let mut spikes = Vec::with_capacity(n_steps);
+    let mut voltages = Vec::with_capacity(n_steps);
+
+    for i in 0..n_steps {
+        let noise_in = noise_slice.map_or(0, |ns| ns[i]);
+        let (s, v) = lif.step(leak_k, gain_k, curr_slice[i], noise_in);
+        spikes.push(s);
+        voltages.push(v);
+    }
+
+    Ok((
+        spikes.into_pyarray_bound(py),
+        voltages.into_pyarray_bound(py),
+    ))
+}
+
+/// Bernoulli-encode a numpy float64 array into packed bitstream words.
+///
+/// Returns nested packed words with shape (n_probs, ceil(length / 64)).
+#[pyfunction]
+#[pyo3(signature = (probs, length=1024, seed=0xACE1))]
+fn batch_encode<'py>(
+    _py: Python<'py>,
+    probs: PyReadonlyArray1<'py, f64>,
+    length: usize,
+    seed: u64,
+) -> PyResult<Vec<Vec<u64>>> {
+    let prob_slice = probs
+        .as_slice()
+        .map_err(|e| PyValueError::new_err(format!("Cannot read probs: {e}")))?;
+    let words = length.div_ceil(64);
+
+    use rand::Rng;
+    use rand::SeedableRng;
+    let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(seed);
+
+    let packed: Vec<Vec<u64>> = prob_slice
+        .iter()
+        .map(|&p| {
+            let p = p.clamp(0.0, 1.0);
+            let mut bits = vec![0_u8; length];
+            for bit in &mut bits {
+                *bit = if rng.gen::<f64>() < p { 1 } else { 0 };
+            }
+            let tensor = bitstream::pack(&bits);
+            let mut data = tensor.data;
+            data.resize(words, 0);
+            data
+        })
+        .collect();
+
+    Ok(packed)
 }
 
 #[pyclass(module = "sc_neurocore_engine.sc_neurocore_engine")]

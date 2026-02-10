@@ -5,6 +5,9 @@ SC-NeuroCore v3 - Formal Benchmark Report Generator
 Runs head-to-head benchmarks between v2 (Python/NumPy) and v3 (Rust)
 for all operations specified in the V3 Migration Blueprint section 8.
 
+Includes both list-based (legacy) and numpy zero-copy variants to
+show true kernel performance without FFI marshalling overhead.
+
 Usage:
     cd 03_CODE/sc-neurocore
     $env:PYTHONPATH='src'
@@ -48,42 +51,63 @@ def fmt_speedup(v2_time: float, v3_time: float) -> str:
     return f"{ratio:.1f}x"
 
 
-def bench_pack(n_bits: int = 1_000_000) -> dict:
-    """Benchmark pack_bitstream for 1M bits."""
+def bench_pack(n_bits: int = 1_000_000) -> list[dict]:
+    """Benchmark pack_bitstream: list vs numpy zero-copy."""
     rng = np.random.RandomState(42)
     bits = rng.randint(0, 2, n_bits).astype(np.uint8)
 
     v2_time = benchmark(lambda: v2_pack(bits), n_iters=10)
-    v3_time = benchmark(lambda: v3.pack_bitstream(bits.tolist()), n_iters=10)
+    v3_list_time = benchmark(lambda: v3.pack_bitstream(bits.tolist()), n_iters=10)
+    v3_np_time = benchmark(lambda: v3.pack_bitstream_numpy(bits), n_iters=10)
 
-    return {
-        "operation": f"pack_bitstream ({n_bits // 1000}K bits)",
-        "v2_ms": v2_time / 10 * 1000,
-        "v3_ms": v3_time / 10 * 1000,
-        "speedup": fmt_speedup(v2_time, v3_time),
-        "target": "6x",
-    }
+    return [
+        {
+            "operation": f"pack (list, {n_bits // 1000}K)",
+            "v2_ms": v2_time / 10 * 1000,
+            "v3_ms": v3_list_time / 10 * 1000,
+            "speedup": fmt_speedup(v2_time, v3_list_time),
+            "target": "6x",
+        },
+        {
+            "operation": f"pack (numpy, {n_bits // 1000}K)",
+            "v2_ms": v2_time / 10 * 1000,
+            "v3_ms": v3_np_time / 10 * 1000,
+            "speedup": fmt_speedup(v2_time, v3_np_time),
+            "target": "6x",
+        },
+    ]
 
 
-def bench_popcount(n_words: int = 1_000_000) -> dict:
-    """Benchmark popcount for 1M u64 words."""
+def bench_popcount(n_words: int = 1_000_000) -> list[dict]:
+    """Benchmark popcount: list vs numpy zero-copy."""
     rng = np.random.RandomState(42)
     bits = rng.randint(0, 2, n_words * 64).astype(np.uint8)
-    packed = v2_pack(bits)
+    packed_v2 = v2_pack(bits)
+    packed_np = np.asarray(v3.pack_bitstream_numpy(bits))
 
-    v2_time = benchmark(lambda: v2_popcount(packed), n_iters=10)
-    v3_time = benchmark(lambda: v3.popcount(packed.tolist()), n_iters=10)
+    v2_time = benchmark(lambda: v2_popcount(packed_v2), n_iters=10)
+    v3_list_time = benchmark(lambda: v3.popcount(packed_v2.tolist()), n_iters=10)
+    v3_np_time = benchmark(lambda: v3.popcount_numpy(packed_np), n_iters=10)
 
-    return {
-        "operation": f"popcount ({n_words // 1000}K words)",
-        "v2_ms": v2_time / 10 * 1000,
-        "v3_ms": v3_time / 10 * 1000,
-        "speedup": fmt_speedup(v2_time, v3_time),
-        "target": "20x",
-    }
+    return [
+        {
+            "operation": f"popcount (list, {n_words // 1000}K)",
+            "v2_ms": v2_time / 10 * 1000,
+            "v3_ms": v3_list_time / 10 * 1000,
+            "speedup": fmt_speedup(v2_time, v3_list_time),
+            "target": "20x",
+        },
+        {
+            "operation": f"popcount (numpy, {n_words // 1000}K)",
+            "v2_ms": v2_time / 10 * 1000,
+            "v3_ms": v3_np_time / 10 * 1000,
+            "speedup": fmt_speedup(v2_time, v3_np_time),
+            "target": "20x",
+        },
+    ]
 
 
-def bench_dense_forward(n_in: int = 64, n_out: int = 32, length: int = 1024) -> dict:
+def bench_dense_forward(n_in: int = 64, n_out: int = 32, length: int = 1024) -> list[dict]:
     """Benchmark dense forward pass."""
     rng = np.random.RandomState(42)
     inputs = rng.uniform(0, 1, n_in)
@@ -94,56 +118,68 @@ def bench_dense_forward(n_in: int = 64, n_out: int = 32, length: int = 1024) -> 
     v2_time = benchmark(lambda: v2_layer.forward(inputs), n_iters=10)
     v3_time = benchmark(lambda: v3_layer.forward(inputs), n_iters=10)
 
-    return {
-        "operation": f"dense forward ({n_in}->{n_out}, L={length})",
-        "v2_ms": v2_time / 10 * 1000,
-        "v3_ms": v3_time / 10 * 1000,
-        "speedup": fmt_speedup(v2_time, v3_time),
-        "target": "70x",
-    }
+    return [
+        {
+            "operation": f"dense forward ({n_in}->{n_out}, L={length})",
+            "v2_ms": v2_time / 10 * 1000,
+            "v3_ms": v3_time / 10 * 1000,
+            "speedup": fmt_speedup(v2_time, v3_time),
+            "target": "70x",
+        },
+    ]
 
 
-def bench_lif_step(n_steps: int = 100_000) -> dict:
-    """Benchmark LIF neuron step execution."""
-    v2_lif = V2Lif()
-    v3_lif = V3Lif()
+def bench_lif_step(n_steps: int = 100_000) -> list[dict]:
+    """Benchmark LIF neuron step: per-call vs batch."""
 
     def run_v2():
         lif = V2Lif()
         for _ in range(n_steps):
             lif.step(20, 256, 128, 0)
 
-    def run_v3():
+    def run_v3_percall():
         lif = V3Lif()
         for _ in range(n_steps):
             lif.step(20, 256, 128, 0)
 
-    v2_time = benchmark(run_v2)
-    v3_time = benchmark(run_v3)
+    def run_v3_batch():
+        return v3.batch_lif_run(n_steps, leak_k=20, gain_k=256, i_t=128)
 
-    return {
-        "operation": f"LIF step ({n_steps // 1000}K steps)",
-        "v2_ms": v2_time * 1000,
-        "v3_ms": v3_time * 1000,
-        "speedup": fmt_speedup(v2_time, v3_time),
-        "target": "400x",
-    }
+    v2_time = benchmark(run_v2)
+    v3_percall_time = benchmark(run_v3_percall)
+    v3_batch_time = benchmark(run_v3_batch)
+
+    return [
+        {
+            "operation": f"LIF (per-call, {n_steps // 1000}K)",
+            "v2_ms": v2_time * 1000,
+            "v3_ms": v3_percall_time * 1000,
+            "speedup": fmt_speedup(v2_time, v3_percall_time),
+            "target": "400x",
+        },
+        {
+            "operation": f"LIF (batch, {n_steps // 1000}K)",
+            "v2_ms": v2_time * 1000,
+            "v3_ms": v3_batch_time * 1000,
+            "speedup": fmt_speedup(v2_time, v3_batch_time),
+            "target": "400x",
+        },
+    ]
 
 
 def main():
     print("SC-NeuroCore v3 - Benchmark Report")
-    print("=" * 70)
+    print("=" * 90)
     print(f"Platform: {sys.platform}")
     print(f"SIMD tier: {v3.simd_tier()}")
     print(f"v3 version: {v3.__version__}")
     print()
 
-    results = [
-        bench_pack(),
-        bench_popcount(),
-        bench_dense_forward(),
-        bench_lif_step(),
-    ]
+    results = []
+    results.extend(bench_pack())
+    results.extend(bench_popcount())
+    results.extend(bench_dense_forward())
+    results.extend(bench_lif_step())
 
     # Print table
     print(f"{'Operation':<40} {'v2 (ms)':<12} {'v3 (ms)':<12} {'Speedup':<10} {'Target':<10}")
@@ -159,8 +195,10 @@ def main():
 
     print()
     print("Note: Targets from V3_MIGRATION_BLUEPRINT.md section 8.")
-    print("SIMD tier affects popcount and pack performance significantly.")
-    print("Benchmarks run single-threaded; rayon parallelism adds 4-16x on multi-core.")
+    print("'list' variants cross Python/Rust FFI via list->Vec conversion (2 copies).")
+    print("'numpy' variants use PyReadonlyArray for zero-copy buffer access.")
+    print("'batch' variants process entire arrays in a single FFI call.")
+    print("Dense forward uses rayon parallelism across neurons.")
 
     return results
 

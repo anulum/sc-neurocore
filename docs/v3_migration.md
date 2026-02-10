@@ -145,3 +145,44 @@ Pre-built wheels available for:
 - macOS (x86_64, arm64)
 - Windows (x86_64)
 - Python 3.9, 3.10, 3.11, 3.12
+
+## Phase 6 Features (February 2026)
+
+### NumPy Zero-Copy Interop
+
+For maximum performance, use the numpy-native variants:
+
+```python
+import numpy as np
+import sc_neurocore_engine as v3
+
+bits = np.random.randint(0, 2, 1_000_000, dtype=np.uint8)
+packed = v3.pack_bitstream_numpy(bits)      # Zero-copy input
+count = v3.popcount_numpy(packed)           # Zero-copy input
+recovered = v3.unpack_bitstream_numpy(packed, len(bits))
+```
+
+The original `pack_bitstream()` and `popcount()` functions still work
+with Python lists for backward compatibility.
+
+### Batch Operations
+
+Process entire arrays in single FFI calls:
+
+```python
+# 100K LIF steps in one call (vs 100K per-step calls)
+spikes, voltages = v3.batch_lif_run(
+    100_000, leak_k=20, gain_k=256, i_t=128
+)
+
+# Per-step varying current
+currents = np.array([128, 200, 150], dtype=np.int16)
+spikes, voltages = v3.batch_lif_run_varying(
+    leak_k=20, gain_k=256, currents=currents
+)
+```
+
+### CI/CD
+
+- Verilator co-simulation runs automatically on every push (Ubuntu)
+- Wheel builds on 3 OS x 4 Python versions
