@@ -1,4 +1,4 @@
-# SC-NeuroCore v3.6
+# SC-NeuroCore v3.7
 
 [![CI](https://github.com/anulum/sc-neurocore/actions/workflows/v3-engine.yml/badge.svg)](https://github.com/anulum/sc-neurocore/actions)
 [![PyPI](https://img.shields.io/pypi/v/sc-neurocore.svg)](https://pypi.org/project/sc-neurocore/)
