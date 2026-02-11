@@ -15,5 +15,7 @@
   "tests/test_zero_coverage_a.py::TestCTCLayer::test_step": true,
   "tests/test_zero_coverage_a.py::TestCatomLattice::test_step": true,
   "tests/test_zero_coverage_a.py::TestFemtoSwitch::test_step": true,
-  "cosim/test_lif_cosim.py::TestLifCosim": true
+  "tests/test_hdc_python.py::TestBitStreamTensor": true,
+  "tests/test_hdc_python.py::TestHDCVector": true,
+  "tests/test_petri_net.py::TestPetriNetEngine": true
 }
