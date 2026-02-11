@@ -1,3 +1,9 @@
+# CopyRight: (c) 1998-2026 Miroslav Sotek. All rights reserved.
+# Contact us: www.anulum.li  protoscience@anulum.li
+# ORCID: https://orcid.org/0009-0009-3560-0851
+# License: GNU AFFERO GENERAL PUBLIC LICENSE v3
+# Commercial Licensing: Available
+
 """Tests for Phase 11: SIMD pipeline acceleration + zero-allocation LIF paths."""
 
 from __future__ import annotations
@@ -147,3 +153,4 @@ class TestZeroAllocLIF:
 class TestPhase11Version:
     def test_version(self):
         assert v3.__version__ == "3.6.0"
+

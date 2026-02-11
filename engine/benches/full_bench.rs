@@ -1,3 +1,9 @@
+// CopyRight: (c) 1998-2026 Miroslav Sotek. All rights reserved.
+// Contact us: www.anulum.li  protoscience@anulum.li
+// ORCID: https://orcid.org/0009-0009-3560-0851
+// License: GNU AFFERO GENERAL PUBLIC LICENSE v3
+// Commercial Licensing: Available
+
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use rand::Rng;
 use rand::SeedableRng;
@@ -292,3 +298,4 @@ fn bench_all(c: &mut Criterion) {
 
 criterion_group!(benches, bench_all);
 criterion_main!(benches);
+

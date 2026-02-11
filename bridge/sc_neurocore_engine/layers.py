@@ -1,3 +1,9 @@
+# CopyRight: (c) 1998-2026 Miroslav Sotek. All rights reserved.
+# Contact us: www.anulum.li  protoscience@anulum.li
+# ORCID: https://orcid.org/0009-0009-3560-0851
+# License: GNU AFFERO GENERAL PUBLIC LICENSE v3
+# Commercial Licensing: Available
+
 """Drop-in replacement for sc_neurocore.layers.VectorizedSCLayer."""
 
 from dataclasses import dataclass
@@ -77,3 +83,4 @@ class VectorizedSCLayer:
                 f"Expected 2-D input with shape (n_samples, {self.n_inputs}), got {arr.shape}"
             )
         return self._engine.forward_batch_numpy(arr, seed)
+

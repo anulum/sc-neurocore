@@ -1,3 +1,9 @@
+CopyRight: (c) 1998-2026 Miroslav Sotek. All rights reserved.
+Contact us: www.anulum.li  protoscience@anulum.li
+ORCID: https://orcid.org/0009-0009-3560-0851
+License: GNU AFFERO GENERAL PUBLIC LICENSE v3
+Commercial Licensing: Available
+
 # Getting Started
 
 ## Installation
@@ -33,6 +39,14 @@ pytest tests/ -v --cov=sc_neurocore --cov-report=term
 # Quick smoke test
 pytest tests/test_integration.py -v
 ```
+
+## Dense Path Selection (Important)
+
+- Single-sample and tiny batches (1-4): use `DenseLayer.forward_fast`.
+- Larger batches (>=10): use `DenseLayer.forward_batch_numpy`.
+- Keep `DenseLayer.forward` for compatibility and correctness checks.
+
+This routing prevents regressions where fused/batched kernels can be slower on tiny workloads.
 
 ## First Steps
 

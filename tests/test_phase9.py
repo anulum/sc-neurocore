@@ -1,3 +1,9 @@
+# CopyRight: (c) 1998-2026 Miroslav Sotek. All rights reserved.
+# Contact us: www.anulum.li  protoscience@anulum.li
+# ORCID: https://orcid.org/0009-0009-3560-0851
+# License: GNU AFFERO GENERAL PUBLIC LICENSE v3
+# Commercial Licensing: Available
+
 """Tests for Phase 9: fast Bernoulli, fused AND+popcount, zero-copy prepacked."""
 
 from __future__ import annotations
@@ -135,3 +141,4 @@ class TestSetNumThreads:
 class TestPhase9Version:
     def test_version_is_3_6_0(self):
         assert v3.__version__ == "3.6.0"
+

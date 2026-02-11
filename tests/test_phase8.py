@@ -1,3 +1,9 @@
+# CopyRight: (c) 1998-2026 Miroslav Sotek. All rights reserved.
+# Contact us: www.anulum.li  protoscience@anulum.li
+# ORCID: https://orcid.org/0009-0009-3560-0851
+# License: GNU AFFERO GENERAL PUBLIC LICENSE v3
+# Commercial Licensing: Available
+
 """Tests for Phase 8: forward_numpy and parallel batch_encode_numpy."""
 
 from __future__ import annotations
@@ -104,3 +110,4 @@ class TestParallelBatchEncodeNumpy:
 class TestPhase8Version:
     def test_version_is_3_6_0(self):
         assert v3.__version__ == "3.6.0"
+

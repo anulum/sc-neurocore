@@ -1,3 +1,9 @@
+CopyRight: (c) 1998-2026 Miroslav Sotek. All rights reserved.
+Contact us: www.anulum.li  protoscience@anulum.li
+ORCID: https://orcid.org/0009-0009-3560-0851
+License: GNU AFFERO GENERAL PUBLIC LICENSE v3
+Commercial Licensing: Available
+
 # SC-NeuroCore
 
 **Version:** 2.2.0
@@ -23,6 +29,16 @@ python scripts/benchmark_suite.py
 # GPU acceleration (requires CUDA)
 pip install -e ".[gpu]"
 ```
+
+## Performance Routing
+
+Use explicit path selection for dense inference to avoid small-batch regressions:
+
+- Single sample or micro-batch (1-4 samples): call `DenseLayer.forward_fast(...)`.
+- Medium/large batch (>=10 samples): call `DenseLayer.forward_batch_numpy(...)`.
+- Validation/reference path: use `DenseLayer.forward(...)` and compare to fast paths in tests.
+
+For benchmark reports, always include batch size, bitstream length, seed policy, and CPU SIMD tier.
 
 ## Architecture
 

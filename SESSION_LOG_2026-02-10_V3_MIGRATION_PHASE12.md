@@ -1,3 +1,9 @@
+CopyRight: (c) 1998-2026 Miroslav Sotek. All rights reserved.
+Contact us: www.anulum.li  protoscience@anulum.li
+ORCID: https://orcid.org/0009-0009-3560-0851
+License: GNU AFFERO GENERAL PUBLIC LICENSE v3
+Commercial Licensing: Available
+
 # Session Log: SC-NeuroCore v3 Phase 12 Implementation
 
 **Session ID**: SC-NEUROCORE-2026-02-10-V3-PHASE12  
@@ -209,3 +215,4 @@ From `examples/03_benchmark_report.py` (Phase 12 run):
   - `.github/workflows/ci.yml`
 - Local `PYTHONPATH='src;bridge'` resolves to in-tree `bridge/sc_neurocore_engine/*.pyd`.
   - After `maturin develop`, this binary was refreshed from the installed wheel artifact to ensure runtime `__version__ == 3.6.0` for local test gates.
+

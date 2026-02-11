@@ -1,3 +1,9 @@
+# CopyRight: (c) 1998-2026 Miroslav Sotek. All rights reserved.
+# Contact us: www.anulum.li  protoscience@anulum.li
+# ORCID: https://orcid.org/0009-0009-3560-0851
+# License: GNU AFFERO GENERAL PUBLIC LICENSE v3
+# Commercial Licensing: Available
+
 """Phase 10 acceptance tests: SIMD pack, LIF optimization, rayon guard."""
 
 from __future__ import annotations
@@ -149,3 +155,4 @@ class TestRayonThreshold:
 class TestPhase10Version:
     def test_version(self):
         assert v3.__version__ == "3.6.0"
+

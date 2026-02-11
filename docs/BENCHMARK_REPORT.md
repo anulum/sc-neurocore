@@ -1,8 +1,21 @@
+CopyRight: (c) 1998-2026 Miroslav Sotek. All rights reserved.
+Contact us: www.anulum.li  protoscience@anulum.li
+ORCID: https://orcid.org/0009-0009-3560-0851
+License: GNU AFFERO GENERAL PUBLIC LICENSE v3
+Commercial Licensing: Available
+
 # SC-NeuroCore v3 Benchmark Report
 
 **Version**: 3.6.0  
 **Date**: 2026-02-10  
 **SIMD Tier**: avx512-vpopcntdq
+
+## Baseline Definition and Routing Note
+
+- `v2` in this report means the SC-NeuroCore v2 Python reference path measured by the same benchmark harness.
+- External framework baselines (Norse/Sinabs/Lava CPU) are not yet included in this file and must be added before claiming ecosystem-level superiority.
+- For low-latency use (single sample or micro-batch), prefer `DenseLayer.forward_fast`.
+- For throughput use (batch >= 10), prefer `DenseLayer.forward_batch_numpy`.
 
 ## Phase 12 Results (Fused Dense + Fast PRNG + Batch Forward)
 
@@ -111,3 +124,4 @@ Interpretation:
 | dense prepacked (64->32, L=1024) | 4.173 | 0.562 | 7.4x | 70x |
 | LIF (per-call, 100K) | 240.266 | 61.585 | 3.9x | 400x |
 | LIF (batch, 100K) | 240.266 | 1.496 | 160.6x | 400x |
+
