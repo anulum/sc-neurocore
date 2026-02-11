@@ -1,0 +1,53 @@
+name: SC-NeuroCore CI
+
+on:
+  push:
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "hdl/**"
+      - "pyproject.toml"
+  pull_request:
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "hdl/**"
+      - "pyproject.toml"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install black mypy
+      - run: black --check src/ tests/
+      - run: mypy src/sc_neurocore/ --ignore-missing-imports
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -e ".[dev]"
+      - run: pytest tests/ -v --cov=sc_neurocore --cov-report=term --cov-fail-under=97
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install build
+      - run: python -m build
+      - run: pip install dist/*.whl
+      - run: python -c "import sc_neurocore; print(sc_neurocore.__version__)"
