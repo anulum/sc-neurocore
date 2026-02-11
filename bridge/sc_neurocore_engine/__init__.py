@@ -1,4 +1,4 @@
-"""SC-NeuroCore Engine v3.6 — Drop-in replacement for v2 hot paths."""
+"""SC-NeuroCore Engine v3.7 — Drop-in replacement for v2 hot paths."""
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (
@@ -67,3 +67,4 @@ __all__ = [
     "ScGraphBuilder",
     "parse_ir",
 ]
+
