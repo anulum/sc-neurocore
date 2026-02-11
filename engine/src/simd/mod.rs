@@ -1,3 +1,9 @@
+// CopyRight: (c) 1998-2026 Miroslav Sotek. All rights reserved.
+// Contact us: www.anulum.li  protoscience@anulum.li
+// ORCID: https://orcid.org/0009-0009-3560-0851
+// License: GNU AFFERO GENERAL PUBLIC LICENSE v3
+// Commercial Licensing: Available
+
 //! # SIMD Popcount Dispatch
 //!
 //! Runtime CPU-feature dispatch for packed-bit popcount kernels.
@@ -76,6 +82,30 @@ pub fn fused_and_popcount_dispatch(a: &[u64], b: &[u64]) -> u64 {
         .sum()
 }
 
+/// Fused XOR+popcount dispatch using the best available SIMD path.
+pub fn fused_xor_popcount_dispatch(a: &[u64], b: &[u64]) -> u64 {
+    let len = a.len().min(b.len());
+    let a = &a[..len];
+    let b = &b[..len];
+
+    #[cfg(target_arch = "x86_64")]
+    {
+        if is_x86_feature_detected!("avx512vpopcntdq") {
+            // SAFETY: Guarded by runtime feature detection.
+            return unsafe { avx512::fused_xor_popcount_avx512(a, b) };
+        }
+        if is_x86_feature_detected!("avx2") {
+            // SAFETY: Guarded by runtime feature detection.
+            return unsafe { avx2::fused_xor_popcount_avx2(a, b) };
+        }
+    }
+
+    a.iter()
+        .zip(b.iter())
+        .map(|(&wa, &wb)| (wa ^ wb).count_ones() as u64)
+        .sum()
+}
+
 /// Fused encode+AND+popcount dispatch.
 ///
 /// This currently delegates to the scalar-control implementation in `bitstream`,
@@ -88,3 +118,4 @@ pub fn encode_and_popcount_dispatch<R: Rng + ?Sized>(
 ) -> u64 {
     crate::bitstream::encode_and_popcount(weight_words, prob, length, rng)
 }
+
