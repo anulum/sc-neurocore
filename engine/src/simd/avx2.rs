@@ -106,6 +106,49 @@ pub unsafe fn fused_and_popcount_avx2(a: &[u64], b: &[u64]) -> u64 {
 
 #[cfg(target_arch = "x86_64")]
 #[target_feature(enable = "avx2")]
+/// Fused XOR+popcount over packed words using AVX2 for the XOR stage.
+///
+/// # Safety
+/// Caller must ensure the current CPU supports `avx2`.
+pub unsafe fn fused_xor_popcount_avx2(a: &[u64], b: &[u64]) -> u64 {
+    let len = a.len().min(b.len());
+    let mut total = 0_u64;
+    let mut chunks_a = a[..len].chunks_exact(4);
+    let mut chunks_b = b[..len].chunks_exact(4);
+
+    for (ca, cb) in chunks_a.by_ref().zip(chunks_b.by_ref()) {
+        let va = _mm256_loadu_si256(ca.as_ptr() as *const __m256i);
+        let vb = _mm256_loadu_si256(cb.as_ptr() as *const __m256i);
+        let xored = _mm256_xor_si256(va, vb);
+
+        let mut lanes = [0_u64; 4];
+        _mm256_storeu_si256(lanes.as_mut_ptr() as *mut __m256i, xored);
+        total += lanes.iter().map(|w| w.count_ones() as u64).sum::<u64>();
+    }
+
+    total
+        + chunks_a
+            .remainder()
+            .iter()
+            .zip(chunks_b.remainder().iter())
+            .map(|(&wa, &wb)| (wa ^ wb).count_ones() as u64)
+            .sum::<u64>()
+}
+
+#[cfg(not(target_arch = "x86_64"))]
+/// Fallback fused XOR+popcount when AVX2 is unavailable on this architecture.
+///
+/// # Safety
+/// This function is marked unsafe for API parity with the AVX2 variant.
+pub unsafe fn fused_xor_popcount_avx2(a: &[u64], b: &[u64]) -> u64 {
+    a.iter()
+        .zip(b.iter())
+        .map(|(&wa, &wb)| (wa ^ wb).count_ones() as u64)
+        .sum()
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx2")]
 /// Compare 32 random bytes against an unsigned threshold and return bit mask.
 ///
 /// Bit `i` in the returned mask is 1 iff `buf[i] < threshold`.

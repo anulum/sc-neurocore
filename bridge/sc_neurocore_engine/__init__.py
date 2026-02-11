@@ -1,4 +1,10 @@
-"""SC-NeuroCore Engine v3.6 — Drop-in replacement for v2 hot paths."""
+# CopyRight: (c) 1998-2026 Miroslav Sotek. All rights reserved.
+# Contact us: www.anulum.li  protoscience@anulum.li
+# ORCID: https://orcid.org/0009-0009-3560-0851
+# License: GNU AFFERO GENERAL PUBLIC LICENSE v3
+# Commercial Licensing: Available
+
+"""SC-NeuroCore Engine v3.7 — Drop-in replacement for v2 hot paths."""
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (
@@ -21,6 +27,7 @@ try:
         FixedPointLif,
         DenseLayer,
         SCPNMetrics,
+        BitStreamTensor,
     )
 except ImportError as exc:
     raise ImportError(
@@ -35,6 +42,8 @@ from .attention import StochasticAttention
 from .graphs import StochasticGraphLayer
 from .scpn import KuramotoSolver
 from .ir import ScGraph, ScGraphBuilder, parse_ir
+from .hdc import HDCVector
+from .petri_net import PetriNetEngine
 
 __all__ = [
     "__version__",
@@ -56,6 +65,7 @@ __all__ = [
     "FixedPointLif",
     "DenseLayer",
     "SCPNMetrics",
+    "BitStreamTensor",
     "VectorizedSCLayer",
     "FixedPointLIFNeuron",
     "SurrogateLif",
@@ -66,4 +76,7 @@ __all__ = [
     "ScGraph",
     "ScGraphBuilder",
     "parse_ir",
+    "HDCVector",
+    "PetriNetEngine",
 ]
+

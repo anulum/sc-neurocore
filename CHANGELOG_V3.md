@@ -1,4 +1,23 @@
+CopyRight: (c) 1998-2026 Miroslav Sotek. All rights reserved.
+Contact us: www.anulum.li  protoscience@anulum.li
+ORCID: https://orcid.org/0009-0009-3560-0851
+License: GNU AFFERO GENERAL PUBLIC LICENSE v3
+Commercial Licensing: Available
+
 # SC-NeuroCore v3 Engine Changelog
+
+## [3.7.0] - 2026-02-11
+
+### Phase 14: Polymorphic Engine -- HDC/VSA, SCPN Petri Nets, Fault-Tolerant Logic
+- **HDC/VSA kernel**: `BitStreamTensor` gains `xor`, `xor_inplace`, `rotate_right`, `hamming_distance`, `bundle` methods for hyper-dimensional computing on 10,000-bit vectors
+- **SIMD fused XOR+popcount**: AVX-512 VPOPCNTDQ / AVX2 / portable dispatch for hamming distance hot path
+- **PyBitStreamTensor**: New `#[pyclass]` exposing full HDC algebra to Python (13 methods)
+- **HDCVector**: High-level Python class with operator overloading (`*`=bind, `+`=bundle, `.similarity()`, `.permute()`)
+- **PetriNetEngine**: Stochastic Colored Petri Net engine wrapping two `DenseLayer` instances for Places->Transitions->Places firing
+- **Fault-tolerant logic**: Boolean logic with stochastic redundancy (1024-bit) survives 40%+ bit-flip rates
+- **44 new tests**: 15 Rust integration + 20 Python HDC + 9 Python Petri Net
+- **2 demos**: HDC symbolic query ("Capital of France?"), safety-critical Boolean logic with error sweep
+- **Comprehensive study**: `docs/SC_NEUROCORE_V3.7_POLYMORPHIC_ENGINE_STUDY.md`
 
 ## [3.6.0] - 2026-02-10
 
@@ -103,3 +122,4 @@
 - SIMD dispatch (AVX-512, AVX2, NEON, portable)
 - Python bridge with v2-compatible API
 - Equivalence test suite
+

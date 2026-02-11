@@ -1,3 +1,9 @@
+// CopyRight: (c) 1998-2026 Miroslav Sotek. All rights reserved.
+// Contact us: www.anulum.li  protoscience@anulum.li
+// ORCID: https://orcid.org/0009-0009-3560-0851
+// License: GNU AFFERO GENERAL PUBLIC LICENSE v3
+// Commercial Licensing: Available
+
 //! # Bitstream Operations
 //!
 //! Core bitstream packing and logic primitives for stochastic computing.
@@ -20,6 +26,67 @@ impl BitStreamTensor {
     /// Create a tensor from pre-packed words.
     pub fn from_words(data: Vec<u64>, length: usize) -> Self {
         Self { data, length }
+    }
+
+    // ── HDC / VSA primitives ─────────────────────────────────────────
+
+    /// HDC BIND: In-place XOR with another tensor.
+    pub fn xor_inplace(&mut self, other: &BitStreamTensor) {
+        assert_eq!(self.length, other.length, "Bitstream lengths must match for XOR.");
+        for (a, b) in self.data.iter_mut().zip(other.data.iter()) {
+            *a ^= *b;
+        }
+    }
+
+    /// HDC BIND: XOR returning a new tensor.
+    pub fn xor(&self, other: &BitStreamTensor) -> BitStreamTensor {
+        assert_eq!(self.length, other.length, "Bitstream lengths must match for XOR.");
+        let data = self.data.iter().zip(other.data.iter())
+            .map(|(&a, &b)| a ^ b)
+            .collect();
+        BitStreamTensor { data, length: self.length }
+    }
+
+    /// HDC PERMUTE: Cyclic right rotation by `shift` bits.
+    ///
+    /// Rotates the entire logical bitstream, handling cross-word boundaries.
+    pub fn rotate_right(&mut self, shift: usize) {
+        if self.length == 0 || shift % self.length == 0 {
+            return;
+        }
+        let mut bits = unpack(self);
+        bits.rotate_right(shift % self.length);
+        *self = pack(&bits);
+    }
+
+    /// HDC SIMILARITY: Normalized Hamming distance (0.0 = identical, 1.0 = opposite).
+    pub fn hamming_distance(&self, other: &BitStreamTensor) -> f32 {
+        assert_eq!(self.length, other.length, "Bitstream lengths must match for Hamming distance.");
+        let xor_count: u64 = crate::simd::fused_xor_popcount_dispatch(&self.data, &other.data);
+        xor_count as f32 / self.length as f32
+    }
+
+    /// HDC BUNDLE: Majority vote across N tensors.
+    ///
+    /// Bit is 1 if a strict majority (> N/2) of inputs have it set.
+    pub fn bundle(vectors: &[&BitStreamTensor]) -> BitStreamTensor {
+        assert!(!vectors.is_empty(), "Cannot bundle zero vectors.");
+        let length = vectors[0].length;
+        let words = vectors[0].data.len();
+        let threshold = vectors.len() / 2; // strict majority = count > N/2
+
+        let mut data = vec![0u64; words];
+        for bit_idx in 0..length {
+            let word = bit_idx / 64;
+            let bit = bit_idx % 64;
+            let count: usize = vectors.iter()
+                .filter(|v| (v.data[word] >> bit) & 1 == 1)
+                .count();
+            if count > threshold {
+                data[word] |= 1u64 << bit;
+            }
+        }
+        BitStreamTensor { data, length }
     }
 }
 
@@ -449,3 +516,4 @@ mod tests {
         }
     }
 }
+
