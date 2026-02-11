@@ -85,6 +85,48 @@ pub unsafe fn fused_and_popcount_avx512(a: &[u64], b: &[u64]) -> u64 {
 }
 
 #[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx512f,avx512vpopcntdq")]
+/// Fused XOR+popcount over packed words using AVX-512 VPOPCNTDQ.
+///
+/// # Safety
+/// Caller must ensure the current CPU supports `avx512f` and `avx512vpopcntdq`.
+pub unsafe fn fused_xor_popcount_avx512(a: &[u64], b: &[u64]) -> u64 {
+    let len = a.len().min(b.len());
+    let mut total = _mm512_setzero_si512();
+    let mut chunks_a = a[..len].chunks_exact(8);
+    let mut chunks_b = b[..len].chunks_exact(8);
+
+    for (ca, cb) in chunks_a.by_ref().zip(chunks_b.by_ref()) {
+        let va = _mm512_loadu_si512(ca.as_ptr() as *const __m512i);
+        let vb = _mm512_loadu_si512(cb.as_ptr() as *const __m512i);
+        let xored = _mm512_xor_epi64(va, vb);
+        let counts = _mm512_popcnt_epi64(xored);
+        total = _mm512_add_epi64(total, counts);
+    }
+
+    let mut lanes = [0_u64; 8];
+    _mm512_storeu_si512(lanes.as_mut_ptr() as *mut __m512i, total);
+    let mut sum: u64 = lanes.iter().sum();
+
+    for (&wa, &wb) in chunks_a.remainder().iter().zip(chunks_b.remainder().iter()) {
+        sum += (wa ^ wb).count_ones() as u64;
+    }
+    sum
+}
+
+#[cfg(not(target_arch = "x86_64"))]
+/// Fallback fused XOR+popcount when AVX-512 is unavailable on this architecture.
+///
+/// # Safety
+/// This function is marked unsafe for API parity with the AVX-512 variant.
+pub unsafe fn fused_xor_popcount_avx512(a: &[u64], b: &[u64]) -> u64 {
+    a.iter()
+        .zip(b.iter())
+        .map(|(&wa, &wb)| (wa ^ wb).count_ones() as u64)
+        .sum()
+}
+
+#[cfg(target_arch = "x86_64")]
 #[target_feature(enable = "avx512f,avx512bw")]
 /// Compare 64 random bytes against an unsigned threshold and return bit mask.
 ///
