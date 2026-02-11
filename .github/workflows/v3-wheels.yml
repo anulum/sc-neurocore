@@ -1,0 +1,105 @@
+name: SC-NeuroCore v3 Wheels
+
+on:
+  push:
+    tags:
+      - "v3.*"
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-wheels:
+    name: Build wheel (${{ matrix.os }}, ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install maturin
+        run: pip install maturin
+
+      - name: Build wheel
+        run: |
+          cd bridge
+          maturin build --release --manifest-path ../engine/Cargo.toml --out ../dist/
+
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheel-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: dist/*.whl
+
+  test-wheels:
+    name: Test wheel (${{ matrix.os }}, ${{ matrix.python-version }})
+    needs: build-wheels
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.9", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Download wheel
+        uses: actions/download-artifact@v4
+        with:
+          name: wheel-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: dist/
+
+      - name: Install wheel + test deps
+        run: |
+          pip install dist/*.whl
+          pip install pytest numpy
+
+      - name: Smoke test
+        run: python -c "import sc_neurocore_engine; print(sc_neurocore_engine.__version__); print(sc_neurocore_engine.simd_tier())"
+
+      - name: Install v2 package for equivalence tests
+        run: pip install -e ".[dev]"
+
+      - name: Run equivalence tests
+        run: |
+          cd ${{ github.workspace }}
+          PYTHONPATH=src pytest tests/equivalence/ -v --tb=short
+        env:
+          PYTHONPATH: src
+
+  publish:
+    name: Publish to PyPI
+    needs: test-wheels
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v3.')
+    environment:
+      name: pypi
+      url: https://pypi.org/project/sc-neurocore-engine/
+    permissions:
+      id-token: write
+    steps:
+      - name: Download all wheel artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+          pattern: wheel-*
+          merge-multiple: true
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
