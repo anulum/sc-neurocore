@@ -1,3 +1,9 @@
+# CopyRight: (c) 1998-2026 Miroslav Sotek. All rights reserved.
+# Contact us: www.anulum.li  protoscience@anulum.li
+# ORCID: https://orcid.org/0009-0009-3560-0851
+# License: GNU AFFERO GENERAL PUBLIC LICENSE v3
+# Commercial Licensing: Available
+
 """SCPN Fusion Engine — Stochastic Colored Petri Net via DenseLayer.
 
 Maps a Petri net (Places -> Transitions -> Places) to matrix algebra

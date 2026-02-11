@@ -1,3 +1,9 @@
+// CopyRight: (c) 1998-2026 Miroslav Sotek. All rights reserved.
+// Contact us: www.anulum.li  protoscience@anulum.li
+// ORCID: https://orcid.org/0009-0009-3560-0851
+// License: GNU AFFERO GENERAL PUBLIC LICENSE v3
+// Commercial Licensing: Available
+
 //! Integration tests for HDC / VSA operations on BitStreamTensor.
 
 use sc_neurocore_engine::bitstream::{pack, unpack, BitStreamTensor};

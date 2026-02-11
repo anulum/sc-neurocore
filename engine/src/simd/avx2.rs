@@ -1,3 +1,9 @@
+// CopyRight: (c) 1998-2026 Miroslav Sotek. All rights reserved.
+// Contact us: www.anulum.li  protoscience@anulum.li
+// ORCID: https://orcid.org/0009-0009-3560-0851
+// License: GNU AFFERO GENERAL PUBLIC LICENSE v3
+// Commercial Licensing: Available
+
 #[cfg(target_arch = "x86_64")]
 use core::arch::x86_64::*;
 
