@@ -4,7 +4,7 @@
 # License: GNU AFFERO GENERAL PUBLIC LICENSE v3
 # Commercial Licensing: Available
 
-"""SC-NeuroCore Engine v3.6 — Drop-in replacement for v2 hot paths."""
+"""SC-NeuroCore Engine v3.7 — Drop-in replacement for v2 hot paths."""
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (

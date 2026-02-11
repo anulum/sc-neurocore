@@ -118,10 +118,10 @@ impl PyBitStreamTensor {
     }
 }
 
-/// SC-NeuroCore v3.6 — High-Performance Rust Engine
+/// SC-NeuroCore v3.7 — High-Performance Rust Engine
 #[pymodule]
 fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add("__version__", "3.6.0")?;
+    m.add("__version__", "3.7.0")?;
     m.add_function(wrap_pyfunction!(simd_tier, m)?)?;
     m.add_function(wrap_pyfunction!(set_num_threads, m)?)?;
     m.add_function(wrap_pyfunction!(pack_bitstream, m)?)?;
