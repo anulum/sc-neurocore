@@ -1,0 +1,19 @@
+ cff-version: 1.2.0
+  message: "If you use this software, please cite it as below."
+  authors:
+  - family-names: "Šotek"
+    given-names: "Miroslav"
+    orcid: "https://orcid.org/0009-0009-3560-0851"
+  title: "SC-NeuroCore v3.7: 512x Real-Time Stochastic Neuromorphic Compiler"
+  version: 3.7.0
+  doi: 10.5281/zenodo.18594898
+  date-released: 2026-02-11
+  license: AGPL-3.0
+  keywords:
+    - neuromorphic
+    - rust
+    - fpga
+    - stochastic-computing
+    - snn
+    - hyper-dimensional-computing
+    - petri-nets
