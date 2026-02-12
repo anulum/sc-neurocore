@@ -1838,3 +1838,4 @@ fn parse_sc_type(s: &str) -> PyResult<ir::graph::ScType> {
         }
     }
 }
+

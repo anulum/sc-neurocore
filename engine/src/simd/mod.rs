@@ -118,3 +118,4 @@ pub fn encode_and_popcount_dispatch<R: Rng + ?Sized>(
 ) -> u64 {
     crate::bitstream::encode_and_popcount(weight_words, prob, length, rng)
 }
+

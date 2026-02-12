@@ -32,10 +32,7 @@ impl BitStreamTensor {
 
     /// HDC BIND: In-place XOR with another tensor.
     pub fn xor_inplace(&mut self, other: &BitStreamTensor) {
-        assert_eq!(
-            self.length, other.length,
-            "Bitstream lengths must match for XOR."
-        );
+        assert_eq!(self.length, other.length, "Bitstream lengths must match for XOR.");
         for (a, b) in self.data.iter_mut().zip(other.data.iter()) {
             *a ^= *b;
         }
@@ -43,20 +40,11 @@ impl BitStreamTensor {
 
     /// HDC BIND: XOR returning a new tensor.
     pub fn xor(&self, other: &BitStreamTensor) -> BitStreamTensor {
-        assert_eq!(
-            self.length, other.length,
-            "Bitstream lengths must match for XOR."
-        );
-        let data = self
-            .data
-            .iter()
-            .zip(other.data.iter())
+        assert_eq!(self.length, other.length, "Bitstream lengths must match for XOR.");
+        let data = self.data.iter().zip(other.data.iter())
             .map(|(&a, &b)| a ^ b)
             .collect();
-        BitStreamTensor {
-            data,
-            length: self.length,
-        }
+        BitStreamTensor { data, length: self.length }
     }
 
     /// HDC PERMUTE: Cyclic right rotation by `shift` bits.
@@ -73,10 +61,7 @@ impl BitStreamTensor {
 
     /// HDC SIMILARITY: Normalized Hamming distance (0.0 = identical, 1.0 = opposite).
     pub fn hamming_distance(&self, other: &BitStreamTensor) -> f32 {
-        assert_eq!(
-            self.length, other.length,
-            "Bitstream lengths must match for Hamming distance."
-        );
+        assert_eq!(self.length, other.length, "Bitstream lengths must match for Hamming distance.");
         let xor_count: u64 = crate::simd::fused_xor_popcount_dispatch(&self.data, &other.data);
         xor_count as f32 / self.length as f32
     }
@@ -94,8 +79,7 @@ impl BitStreamTensor {
         for bit_idx in 0..length {
             let word = bit_idx / 64;
             let bit = bit_idx % 64;
-            let count: usize = vectors
-                .iter()
+            let count: usize = vectors.iter()
                 .filter(|v| (v.data[word] >> bit) & 1 == 1)
                 .count();
             if count > threshold {
@@ -532,3 +516,4 @@ mod tests {
         }
     }
 }
+
