@@ -108,8 +108,6 @@ jobs:
     environment:
       name: pypi
       url: https://pypi.org/project/sc-neurocore-engine/
-    permissions:
-      id-token: write
     steps:
       - name: Download all wheel artifacts
         uses: actions/download-artifact@v4
