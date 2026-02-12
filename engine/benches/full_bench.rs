@@ -298,3 +298,4 @@ fn bench_all(c: &mut Criterion) {
 
 criterion_group!(benches, bench_all);
 criterion_main!(benches);
+
