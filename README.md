@@ -1,7 +1,10 @@
 # SC-NeuroCore v3.7
 
-[![CI](https://github.com/anulum/sc-neurocore/actions/workflows/v3-engine.yml/badge.svg)](https://github.com/anulum/sc-neurocore/actions)
-[![PyPI](https://img.shields.io/pypi/v/sc-neurocore.svg)](https://pypi.org/project/sc-neurocore/)
+[![Wheels](https://github.com/anulum/sc-neurocore/actions/workflows/v3-wheels.yml/badge.svg)](https://github.com/anulum/sc-neurocore/actions/workflows/v3-wheels.yml)
+[![Docs](https://github.com/anulum/sc-neurocore/actions/workflows/docs.yml/badge.svg)](https://anulum.github.io/sc-neurocore/)
+[![PyPI](https://img.shields.io/pypi/v/sc-neurocore-engine.svg)](https://pypi.org/project/sc-neurocore-engine/)
+[![Downloads](https://img.shields.io/pypi/dm/sc-neurocore-engine.svg)](https://pypi.org/project/sc-neurocore-engine/)
+[![Python](https://img.shields.io/pypi/pyversions/sc-neurocore-engine.svg)](https://pypi.org/project/sc-neurocore-engine/)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18594898.svg)](https://doi.org/10.5281/zenodo.18594898)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
 [![Hardware: Verified](https://img.shields.io/badge/Hardware-Verified_Bit--True-green)](cosim/)
@@ -10,14 +13,20 @@
 
 > SC-NeuroCore translates high-level Python SNN definitions into bit-true hardware logic, running **512x faster than real-time** on standard CPUs. v3.7 extends the stochastic kernel into a **polymorphic engine** supporting HDC/VSA, Petri Nets, and fault-tolerant binary streams.
 
+**[Rust API Docs](https://anulum.github.io/sc-neurocore/) | [PyPI](https://pypi.org/project/sc-neurocore-engine/) | [White Paper (PDF)](SC_NeuroCore_v3.6_WhitePaper_512x_Benchmarks.pdf)**
+
 ---
 
 ## Quick Start
 
 ```bash
-pip install sc-neurocore          # PyPI wheel (Linux/macOS/Windows)
-# — or build from source —
-cd engine && maturin develop --release
+pip install sc-neurocore-engine       # pre-built wheel (Linux/macOS/Windows, Python 3.9-3.12)
+```
+
+```python
+import sc_neurocore_engine
+print(sc_neurocore_engine.__version__)  # 3.7.0
+print(sc_neurocore_engine.simd_tier())  # e.g. 'avx2', 'avx512-vpopcntdq', 'neon'
 ```
 
 ### SNN Dense Forward
@@ -150,8 +159,6 @@ SC-NeuroCore is a **polymorphic engine**. The core stochastic kernel supports sp
 
 *Verified against SystemVerilog Hardware Co-Simulation (8/8 Tests Passed).*
 
-[Read the White Paper (PDF)](SC_NeuroCore_v3.6_WhitePaper_512x_Benchmarks.pdf)
-
 ---
 
 ## Architecture
@@ -244,6 +251,57 @@ Check your tier: `sc_neurocore_engine.simd_tier()`
 | `ir_parse(text)` | Parse IR from text |
 | `ir_emit_sv(graph)` | Emit synthesisable SystemVerilog |
 
+Full Rust API documentation: **[anulum.github.io/sc-neurocore](https://anulum.github.io/sc-neurocore/)**
+
+---
+
+## Installation
+
+### From PyPI (Recommended)
+
+```bash
+pip install sc-neurocore-engine
+```
+
+Pre-built wheels are available for:
+- **Linux** x86_64 (manylinux)
+- **macOS** ARM64 (Apple Silicon)
+- **Windows** AMD64
+- **Python** 3.9, 3.10, 3.11, 3.12
+
+### Building from Source
+
+**Prerequisites:** Rust 1.75+ toolchain, Python 3.9-3.12, maturin
+
+```bash
+git clone https://github.com/anulum/sc-neurocore.git
+cd sc-neurocore/bridge
+pip install maturin
+maturin develop --release       # builds + installs into current venv
+cd ../engine && cargo test      # run Rust tests
+cd .. && python -m pytest tests/ -v  # run Python tests
+```
+
+### Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| `pip install` fails with "no matching distribution" | Check Python version is 3.9-3.12. Older/newer versions require building from source. |
+| `cargo` or `rustup` not found | Install the Rust toolchain: https://rustup.rs/ |
+| `maturin develop` fails on Linux | Install `python3-dev` (Debian/Ubuntu) or `python3-devel` (Fedora/RHEL). |
+| `simd_tier()` returns `"portable"` | Your CPU lacks AVX2/NEON. The engine still works correctly, just without SIMD acceleration. All results are bit-identical across tiers. |
+| Import error after `maturin develop` | Ensure you ran `maturin develop` from the `bridge/` directory, not `engine/`. |
+| Windows build requires C++ tools | Install "Desktop development with C++" via Visual Studio Build Tools. |
+
+---
+
+## Interactive Notebooks
+
+| Notebook | Description |
+|----------|-------------|
+| [`01_hdc_symbolic_query.ipynb`](notebooks/01_hdc_symbolic_query.ipynb) | HDC "Capital of France?" — bind, bundle, permute, similarity |
+| [`02_fault_tolerant_logic.ipynb`](notebooks/02_fault_tolerant_logic.ipynb) | Boolean logic with 1024-bit redundancy, noise injection, error tolerance sweep |
+
 ---
 
 ## Test Suite
@@ -282,22 +340,6 @@ python -m pytest cosim/ -v
 | [`05_hdl_generation.py`](examples/05_hdl_generation.py) | HDL code generation |
 | [`06_hdc_symbolic_query.py`](examples/06_hdc_symbolic_query.py) | HDC "Capital of France?" demo |
 | [`07_safety_critical_logic.py`](examples/07_safety_critical_logic.py) | Fault-tolerant Boolean logic |
-
----
-
-## Building from Source
-
-**Prerequisites:** Rust 1.75+ toolchain, Python 3.9-3.12, maturin
-
-```bash
-git clone https://github.com/anulum/sc-neurocore.git
-cd sc-neurocore/engine
-maturin develop --release       # builds + installs into current venv
-cargo test                      # run Rust tests
-cd .. && python -m pytest tests/ -v  # run Python tests
-```
-
-**Cross-platform wheels** are built via CI for Linux, macOS, and Windows.
 
 ---
 
