@@ -18,9 +18,8 @@ Module Tiers
 - **research** — Functional but experimental: hdc, solvers, transformers,
   quantum, robotics, bio, physics, etc.  Import explicitly, e.g.
   ``from sc_neurocore.quantum.hybrid import QuantumStochasticLayer``.
-- **contrib**  — Speculative / theoretical: exotic, meta, transcendent,
-  eschaton, post_silicon.  Import explicitly.  Install optional deps with
-  ``pip install sc-neurocore[contrib]``.
+- **contrib**  — Speculative / theoretical modules have been moved to the
+  ``research/`` directory at the repository root. See ``research/README.md``.
 """
 
 from __future__ import annotations

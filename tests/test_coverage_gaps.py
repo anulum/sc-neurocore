@@ -1,7 +1,5 @@
 """Tests to fill coverage gaps in partially-covered modules."""
 
-import os
-import tempfile
 import numpy as np
 import pytest
 
@@ -183,82 +181,6 @@ class TestTensorStreamCoverage:
         ts = TensorStream(data=q, domain="quantum")
         result = ts.to_quantum()
         np.testing.assert_array_equal(result, q)
-
-
-class TestReplication:
-    def test_construction(self):
-        from sc_neurocore.core.replication import VonNeumannProbe
-        probe = VonNeumannProbe(probe_id=0)
-        assert probe.probe_id == 0
-
-    @pytest.mark.skipif(os.name == "nt", reason="copytree fails on Windows special files")
-    def test_replicate(self):
-        from sc_neurocore.core.replication import VonNeumannProbe
-        probe = VonNeumannProbe(probe_id=0)
-        with tempfile.TemporaryDirectory() as tmpdir:
-            dest = os.path.join(tmpdir, "replica")
-            probe.replicate(dest)
-            assert os.path.isdir(os.path.join(dest, "sc_neurocore"))
-            assert os.path.isfile(os.path.join(dest, "launch_probe.py"))
-
-
-class TestImmortalityCoverage:
-    def test_capture_and_save_load(self):
-        from sc_neurocore.core.immortality import DigitalSoul
-
-        class FakeModule:
-            def __init__(self):
-                self.weights = np.array([1.0, 2.0])
-            def get_state(self):
-                return {"v": 0.5}
-
-        class FakeOrchestrator:
-            modules = {"layer1": FakeModule()}
-
-        soul = DigitalSoul(agent_id="test")
-        soul.capture_agent(FakeOrchestrator())
-        assert "layer1_weights" in soul.state_data
-        assert "layer1_state" in soul.state_data
-
-        with tempfile.NamedTemporaryFile(suffix=".pkl", delete=False) as f:
-            path = f.name
-        try:
-            soul.save_soul(path)
-            loaded = DigitalSoul.load_soul(path)
-            assert loaded.agent_id == "test"
-        finally:
-            os.unlink(path)
-
-    def test_unpickler_blocks_unsafe(self):
-        from sc_neurocore.core.immortality import _SoulUnpickler
-        import pickle
-        import io
-        # Create a pickle that tries to import os.system
-        malicious = pickle.dumps(os.system)
-        with pytest.raises(pickle.UnpicklingError):
-            _SoulUnpickler(io.BytesIO(malicious)).load()
-
-    def test_reincarnate(self):
-        from sc_neurocore.core.immortality import DigitalSoul
-
-        class FakeModule:
-            def __init__(self):
-                self.weights = np.array([0.0, 0.0])
-                self.v = 0.0
-            def _refresh_packed_weights(self):
-                pass
-
-        class FakeOrchestrator:
-            modules = {"layer1": FakeModule()}
-
-        soul = DigitalSoul(agent_id="test", state_data={
-            "layer1_weights": np.array([1.0, 2.0]),
-            "layer1_state": {"v": 0.99}
-        })
-        orch = FakeOrchestrator()
-        soul.reincarnate(orch)
-        np.testing.assert_array_equal(orch.modules["layer1"].weights, [1.0, 2.0])
-        assert orch.modules["layer1"].v == 0.99
 
 
 class TestOrchestratorCoverage:

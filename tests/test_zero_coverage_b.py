@@ -1,31 +1,11 @@
 """Tests for 0%-coverage modules: interfaces, generative, verification, viz,
-world_model, pipeline, models, math, ensembles, analysis/qualia, accel."""
+world_model, pipeline, models, math, ensembles, accel."""
 
 import numpy as np
 import pytest
 
 
 # ── interfaces ───────────────────────────────────────────────────────
-class TestInterstellarDTN:
-    def test_receive_and_step(self):
-        from sc_neurocore.interfaces.interstellar import InterstellarDTN, Packet
-        dtn = InterstellarDTN(node_id="node_0", link_availability=0.9)
-        pkt = Packet(id=1, data=np.random.randn(4))
-        dtn.receive(pkt)
-        result = dtn.step()
-        # result is Optional[Packet] — may be None if link unavailable
-        assert result is None or hasattr(result, "data")
-
-
-class TestPlanetarySensorGrid:
-    def test_aggregate_field(self):
-        from sc_neurocore.interfaces.planetary import PlanetarySensorGrid
-        p = PlanetarySensorGrid(n_nodes=100)
-        telemetry = {"temperature": np.random.randn(100), "pressure": np.random.randn(100)}
-        result = p.aggregate_field(telemetry)
-        assert isinstance(result, np.ndarray)
-
-
 class TestRealWorldBridges:
     def test_lsl_bridge_construction(self):
         from sc_neurocore.interfaces.real_world import LSLBridge
@@ -38,17 +18,6 @@ class TestRealWorldBridges:
         n = ROS2Node(node_name="test_node")
         result = n.publish_cmd_vel(linear_x=0.5, angular_z=0.1)
         assert isinstance(result, bool)
-
-
-class TestSymbiosisProtocol:
-    def test_encode_decode(self):
-        from sc_neurocore.interfaces.symbiosis import SymbiosisProtocol
-        s = SymbiosisProtocol()
-        vec = np.random.randn(8)
-        encoded = s.encode_thought(vec, urgency=0.8)
-        assert isinstance(encoded, np.ndarray)
-        decoded = s.decode_sensation(encoded)
-        assert isinstance(decoded, str)
 
 
 # ── generative ───────────────────────────────────────────────────────
@@ -312,21 +281,6 @@ class TestEnsembleOrchestrator:
         e = EnsembleOrchestrator()
         # coordinated_mission just prints, no agents needed
         e.coordinated_mission("test_goal")
-
-
-# ── analysis/qualia ──────────────────────────────────────────────────
-class TestQualiaTuringTest:
-    def test_administer(self):
-        from sc_neurocore.transcendent.noetic import SemioticTriad
-        from sc_neurocore.analysis.qualia import QualiaTuringTest
-        sem = SemioticTriad()
-        sem.learn_association("Fire", "Heat")
-        sem.learn_association("Ocean", "Calm")
-        sem.learn_association("Void", "Emptiness")
-        q = QualiaTuringTest(semiotics=sem)
-        state = np.array([0.9, 0.1, 0.05])
-        result = q.administer_test(state)
-        assert isinstance(result, bool)
 
 
 # ── accel/jit_kernels ────────────────────────────────────────────────
