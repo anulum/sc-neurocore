@@ -6,6 +6,10 @@ Commercial Licensing: Available
 
 # SC-NeuroCore
 
+<p align="center">
+  <img src="docs/assets/sc_neurocore_header.png" width="1280" alt="SC-NeuroCore — Stochastic Computing & Neuromorphic Engine">
+</p>
+
 [![CI](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml/badge.svg)](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/badge/version-3.7.0-blue)](https://github.com/anulum/sc-neurocore/releases)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
