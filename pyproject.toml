@@ -25,7 +25,6 @@ keywords = [
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.11",
@@ -44,7 +43,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/anulum/sc-neurocore"
-Documentation = "https://github.com/anulum/sc-neurocore/tree/main/docs"
+Documentation = "https://anulum.github.io/sc-neurocore/"
 Source = "https://github.com/anulum/sc-neurocore"
 Issues = "https://github.com/anulum/sc-neurocore/issues"
 Changelog = "https://github.com/anulum/sc-neurocore/blob/main/CHANGELOG.md"
