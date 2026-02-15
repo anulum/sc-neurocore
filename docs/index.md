@@ -14,7 +14,7 @@ FPGA deployment.
 - **GPU acceleration** — CuPy backend with automatic CPU fallback
 - **SCPN layer stack** — 7-layer consciousness model (L1 Quantum → L7 Symbolic)
 - **Verilog RTL** — Synthesisable hardware for FPGA deployment
-- **Tiered modules** — Core (production), Research (experimental), Contrib (speculative)
+- **Tiered modules** — Core (production), Research (experimental), Speculative (theoretical in `research/`)
 
 ## Quick Start
 
@@ -39,6 +39,14 @@ SC-NeuroCore uses a three-tier module system:
 |------|---------|----------|
 | **Core** | Production-ready | neurons, synapses, layers, sources, recorders, utils, accel |
 | **Research** | Experimental | analysis, bio, core, dashboard, generative, learning, pipeline, scpn, ... |
-| **Contrib** | Speculative | eschaton, exotic, meta, post_silicon, transcendent |
+| **Speculative** | Theoretical | `research/` (eschaton, exotic, meta, post_silicon, transcendent) |
 
-See [Architecture](architecture.md) for the full package map.
+See [Architecture](architecture/architecture.md) for the full package map.
+
+## Documentation
+
+- **[Getting Started](guides/getting-started.md)** — Installation and first steps
+- **[API Reference](api/API_REFERENCE.md)** — Python package API
+- **[Rust Engine API](api/rust-engine.md)** — High-performance Rust engine docs
+- **[Hardware Guide](hardware/HARDWARE_GUIDE.md)** — FPGA deployment workflow
+- **[Benchmarks](benchmarks/BENCHMARKS.md)** — Performance measurements

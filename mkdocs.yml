@@ -80,6 +80,7 @@ nav:
   - Development:
       - V3 Migration: development/v3_migration.md
       - Release Notes v2.0.0: development/RELEASE_NOTES_v2.0.0.md
+  - Rust Engine API: api/rust-engine.md
 
 markdown_extensions:
   - pymdownx.highlight

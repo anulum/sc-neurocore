@@ -194,13 +194,17 @@ Sample results (CPU, quick mode):
 
 ## Documentation
 
-- [CHANGELOG.md](CHANGELOG.md) -- Version history
-- [docs/](docs/) -- Full documentation (guides, API reference, benchmarks, research)
-- [docs/guides/getting-started.md](docs/guides/getting-started.md) -- Installation & quickstart
-- [docs/architecture/](docs/architecture/) -- Package architecture
-- [docs/hardware/](docs/hardware/) -- FPGA deployment workflow
+**Live site**: [anulum.github.io/sc-neurocore](https://anulum.github.io/sc-neurocore/)
 
-Build API docs locally:
+- [Getting Started](docs/guides/getting-started.md) -- Installation & quickstart
+- [API Reference](docs/api/API_REFERENCE.md) -- Python package API
+- [Rust Engine API](https://anulum.github.io/sc-neurocore/rust-api/sc_neurocore_engine/) -- Rust engine docs
+- [Hardware Guide](docs/hardware/HARDWARE_GUIDE.md) -- FPGA deployment workflow
+- [Architecture](docs/architecture/architecture.md) -- Package architecture
+- [Benchmarks](docs/benchmarks/BENCHMARKS.md) -- Performance measurements
+- [CHANGELOG.md](CHANGELOG.md) -- Version history
+
+Build docs locally:
 ```bash
 pip install mkdocs mkdocs-material mkdocstrings[python]
 mkdocs serve
