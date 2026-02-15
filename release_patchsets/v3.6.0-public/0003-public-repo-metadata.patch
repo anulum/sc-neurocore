@@ -1,0 +1,25 @@
+diff --git a/README.md b/README.md
+index 74d3998d6..d0567bda4 100644
+--- a/README.md
++++ b/README.md
+@@ -6,7 +6,7 @@ Commercial Licensing: Available
+ 
+ # SC-NeuroCore
+ 
+-**Version:** 2.2.0
++**Version:** 3.6.0
+ **Status:** Production Core Verified | 826 Tests Passing | 99.67% Coverage | CI/CD Active
+ 
+ SC-NeuroCore is a universal stochastic computing framework for neuromorphic
+diff --git a/mkdocs.yml b/mkdocs.yml
+index 52e9ac1ba..bca6faa5e 100644
+--- a/mkdocs.yml
++++ b/mkdocs.yml
+@@ -1,6 +1,6 @@
+ site_name: SC-NeuroCore Documentation
+ site_description: Universal Stochastic Computing Framework for Neuromorphic Hardware
+-repo_url: https://github.com/fortisstudio/sc-neurocore
++repo_url: https://github.com/anulum/sc-neurocore
+ repo_name: sc-neurocore
+ 
+ theme:
