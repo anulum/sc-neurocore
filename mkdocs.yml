@@ -26,9 +26,26 @@ plugins:
 
 nav:
   - Home: index.md
-  - Getting Started: getting-started.md
-  - Architecture: architecture.md
+  - Guides:
+      - Getting Started: guides/getting-started.md
+      - Quick Start Tutorial: guides/QUICKSTART_TUTORIAL.md
+      - User Guide: guides/USER_GUIDE.md
+      - User Manual: guides/USER_MANUAL.md
+      - Technical Manual: guides/TECHNICAL_MANUAL.md
+      - Layer-by-Layer Guide: guides/LAYER_BY_LAYER_GUIDE.md
+      - Advanced Usage: guides/ADVANCED_USAGE_PATTERNS.md
+      - Performance Tuning: guides/PERFORMANCE_TUNING.md
+      - Integration Guide: guides/INTEGRATION_GUIDE.md
+      - Examples: guides/EXAMPLES.md
+  - Architecture:
+      - Overview: architecture/architecture.md
+      - Component Inventory: architecture/COMPONENT_INVENTORY.md
+  - Hardware:
+      - Hardware Guide: hardware/HARDWARE_GUIDE.md
+      - Hardware Manual: hardware/SC_NEUROCORE_HARDWARE_MANUAL.md
+      - Implementation Summary: hardware/HARDWARE_IMPLEMENTATION_SUMMARY.md
   - API Reference:
+      - Full Reference: api/API_REFERENCE.md
       - Core:
           - Neurons: api/neurons.md
           - Synapses: api/synapses.md
@@ -49,10 +66,22 @@ nav:
           - Meta: api/meta.md
           - Transcendent: api/transcendent.md
           - Exotic: api/exotic.md
-  - Existing Docs:
-      - User Guide: user-guide.md
-      - Hardware Guide: hardware-guide.md
-      - Benchmarks: benchmarks.md
+  - Benchmarks:
+      - Summary: benchmarks/BENCHMARKS.md
+      - Detailed Report: benchmarks/BENCHMARK_REPORT.md
+  - Research:
+      - Neuromorphic Primer: research/NEUROMORPHIC_COMPUTING_PRIMER.md
+      - Foundational Whitepaper: research/SC_NEUROCORE_FOUNDATIONAL_WHITEPAPER.md
+      - Comprehensive Study: research/SC_NEUROCORE_COMPREHENSIVE_STUDY.md
+      - V3.7 Polymorphic Engine: research/SC_NEUROCORE_V3.7_POLYMORPHIC_ENGINE_STUDY.md
+  - Reports:
+      - Capability Report: reports/SC_NEUROCORE_CAPABILITY_REPORT_v2.2.md
+      - State Report: reports/SC_NEUROCORE_COMPREHENSIVE_STATE_REPORT_2026-02-01.md
+      - Remediation Plan: reports/SC_NEUROCORE_DISCREPANCY_REMEDIATION_PLAN_2026-02-11.md
+      - Driver Manual: reports/SC_NEUROCORE_DRIVER_MANUAL.md
+  - Development:
+      - V3 Migration: development/v3_migration.md
+      - Release Notes v2.0.0: development/RELEASE_NOTES_v2.0.0.md
 
 markdown_extensions:
   - pymdownx.highlight
