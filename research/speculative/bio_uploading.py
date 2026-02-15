@@ -1,7 +1,7 @@
 
 import numpy as np
 from dataclasses import dataclass
-from ..neurons.stochastic_lif import StochasticLIFNeuron
+from sc_neurocore.neurons.stochastic_lif import StochasticLIFNeuron
 
 @dataclass
 class ConnectomeEmulator:

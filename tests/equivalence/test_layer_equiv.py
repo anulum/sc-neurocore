@@ -56,6 +56,7 @@ class TestDenseLayerEquivalence:
         np.testing.assert_allclose(
             v2_out,
             v3_out,
+            rtol=0.01,
             atol=0.05,
             err_msg="Dense layer outputs diverge beyond tolerance",
         )

@@ -6,7 +6,7 @@ Commercial Licensing: Available
 
 # SC-NeuroCore
 
-**Version:** 2.2.0
+**Version:** 3.7.0
 **Status:** Production Core Verified | 826 Tests Passing | 99.67% Coverage | CI/CD Active
 
 SC-NeuroCore is a universal stochastic computing framework for neuromorphic
@@ -130,12 +130,17 @@ Runnable scripts in `examples/`:
 
 | Script | Description |
 |--------|-------------|
-| `01_basic_sc_encoding.py` | Bernoulli and Sobol bitstream encoding/decoding |
-| `02_sc_neuron_layer.py` | Building and running SC neuron layers |
-| `03_vectorized_layer.py` | High-performance packed bitwise inference |
-| `04_scpn_stack.py` | Full 7-layer SCPN consciousness stack |
-| `05_hdl_generation.py` | Verilog HDL generation from network description |
-| `06_ensemble_consensus.py` | Multi-agent ensemble orchestration |
+| `01_basic_sc_encoding.py` | Bernoulli & Sobol bitstream encoding/decoding |
+| `02_sc_neuron_layer.py` | SCDenseLayer construction and forward pass |
+| `03_ir_compile_demo.py` | IR graph building, verification, SystemVerilog emission (v3 Rust engine) |
+| `04_vectorized_layer.py` | VectorizedSCLayer throughput benchmarking |
+| `05_scpn_stack.py` | Full 7-layer SCPN consciousness stack with inter-layer coupling |
+| `06_hdl_generation.py` | Verilog top-level generation from a network description |
+| `07_ensemble_consensus.py` | Multi-agent ensemble orchestration and voting |
+| `08_hdc_symbolic_query.py` | Hyper-Dimensional Computing symbolic memory (v3 Rust engine) |
+| `09_safety_critical_logic.py` | Fault-tolerant Boolean logic with stochastic redundancy (v3 Rust engine) |
+| `10_benchmark_report.py` | Head-to-head v2/v3 benchmark suite (v3 Rust engine) |
+| `11_sc_training_demo.py` | Surrogate-gradient training of an SC dense layer (v3 Rust engine) |
 
 ```bash
 python examples/01_basic_sc_encoding.py

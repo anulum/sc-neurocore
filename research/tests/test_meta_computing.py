@@ -1,10 +1,10 @@
 
 import unittest
 import numpy as np
-from sc_neurocore.meta.time_crystal import TimeCrystalLayer
-from sc_neurocore.meta.vacuum import VacuumNoiseSource
-from sc_neurocore.meta.hyper_turing import OracleLayer
-from sc_neurocore.meta.black_hole import EventHorizonLayer
+from meta.time_crystal import TimeCrystalLayer
+from meta.vacuum import VacuumNoiseSource
+from meta.hyper_turing import OracleLayer
+from meta.black_hole import EventHorizonLayer
 
 class TestMetaComputing(unittest.TestCase):
     

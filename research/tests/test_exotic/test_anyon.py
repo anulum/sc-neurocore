@@ -6,7 +6,7 @@ import time
 import numpy as np
 import pytest
 
-from sc_neurocore.exotic.anyon import AnyonBraidLayer
+from exotic.anyon import AnyonBraidLayer
 
 
 def _perf_enabled() -> bool:

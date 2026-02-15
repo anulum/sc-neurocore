@@ -6,7 +6,7 @@ import time
 import numpy as np
 import pytest
 
-from sc_neurocore.exotic.matrioshka import DysonSwarmNet
+from exotic.matrioshka import DysonSwarmNet
 
 
 def _perf_enabled() -> bool:

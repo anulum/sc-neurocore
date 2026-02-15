@@ -24,7 +24,7 @@ Module Tiers
 
 from __future__ import annotations
 
-__version__ = "2.1.0"
+__version__ = "3.7.0"
 
 # ── Neurons ──────────────────────────────────────────────────────────────────
 from .neurons import (

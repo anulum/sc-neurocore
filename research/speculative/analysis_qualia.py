@@ -1,8 +1,8 @@
 
 import logging
 import numpy as np
-from ..transcendent.noetic import SemioticTriad, Sign
-from ..viz.neuro_art import NeuroArtGenerator
+from transcendent.noetic import SemioticTriad, Sign
+from sc_neurocore.viz.neuro_art import NeuroArtGenerator
 
 logger = logging.getLogger(__name__)
 

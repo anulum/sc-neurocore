@@ -6,7 +6,7 @@ import time
 import numpy as np
 import pytest
 
-from sc_neurocore.meta.vacuum import VacuumNoiseSource
+from meta.vacuum import VacuumNoiseSource
 
 
 def _perf_enabled() -> bool:

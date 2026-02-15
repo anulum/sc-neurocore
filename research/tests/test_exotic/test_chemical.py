@@ -6,7 +6,7 @@ import time
 import numpy as np
 import pytest
 
-from sc_neurocore.exotic.chemical import ReactionDiffusionSolver
+from exotic.chemical import ReactionDiffusionSolver
 
 
 def _perf_enabled() -> bool:

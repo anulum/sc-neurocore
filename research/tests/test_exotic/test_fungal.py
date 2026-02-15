@@ -6,7 +6,7 @@ import time
 import numpy as np
 import pytest
 
-from sc_neurocore.exotic.fungal import MyceliumLayer
+from exotic.fungal import MyceliumLayer
 
 
 def _perf_enabled() -> bool:

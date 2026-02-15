@@ -6,7 +6,7 @@ import time
 import numpy as np
 import pytest
 
-from sc_neurocore.exotic.mechanical import MechanicalLatticeLayer
+from exotic.mechanical import MechanicalLatticeLayer
 
 
 def _perf_enabled() -> bool:

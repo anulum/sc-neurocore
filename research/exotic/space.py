@@ -1,7 +1,7 @@
 
 from dataclasses import dataclass
 import numpy as np
-from ..layers.vectorized_layer import VectorizedSCLayer
+from sc_neurocore.layers.vectorized_layer import VectorizedSCLayer
 
 @dataclass
 class RadHardLayer(VectorizedSCLayer):

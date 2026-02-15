@@ -6,7 +6,7 @@ import time
 import numpy as np
 import pytest
 
-from sc_neurocore.meta.time_crystal import TimeCrystalLayer
+from meta.time_crystal import TimeCrystalLayer
 
 
 def _perf_enabled() -> bool:

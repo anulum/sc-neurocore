@@ -6,7 +6,7 @@ import time
 import numpy as np
 import pytest
 
-from sc_neurocore.meta.hyper_turing import OracleLayer
+from meta.hyper_turing import OracleLayer
 
 
 def _perf_enabled() -> bool:

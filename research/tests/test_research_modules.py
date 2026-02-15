@@ -88,7 +88,7 @@ class TestSpikeToConceptMapper:
 # ---------------------------------------------------------------------------
 # KardashevEstimator
 # ---------------------------------------------------------------------------
-from sc_neurocore.analysis.kardashev import KardashevEstimator
+from speculative.analysis_kardashev import KardashevEstimator
 
 
 class TestKardashevEstimator:
@@ -116,7 +116,7 @@ class TestKardashevEstimator:
 # ---------------------------------------------------------------------------
 # PhiEvaluator (consciousness)
 # ---------------------------------------------------------------------------
-from sc_neurocore.analysis.consciousness import PhiEvaluator
+from speculative.analysis_consciousness import PhiEvaluator
 
 
 class TestPhiEvaluator:

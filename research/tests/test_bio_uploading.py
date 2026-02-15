@@ -6,7 +6,7 @@ import time
 import numpy as np
 import pytest
 
-from sc_neurocore.bio.uploading import ConnectomeEmulator
+from speculative.bio_uploading import ConnectomeEmulator
 
 
 def _perf_enabled() -> bool:
