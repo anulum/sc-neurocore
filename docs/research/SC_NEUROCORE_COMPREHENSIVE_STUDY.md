@@ -6073,7 +6073,7 @@ Seed diversity provides 80% of the benefit of full isolation at zero overhead co
 
 ```bash
 # Clone repository
-git clone https://github.com/anulum-institute/sc-neurocore.git
+git clone https://github.com/anulum/sc-neurocore.git
 cd sc-neurocore
 
 # Install in development mode

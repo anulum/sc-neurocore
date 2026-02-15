@@ -21,8 +21,8 @@ Thank you for your interest in SC-NeuroCore. Contributions are welcome under the
    ```
 4. **Run tests** before making changes to establish a baseline:
    ```bash
-   cargo test                           # Rust (90 tests)
-   cd .. && python -m pytest tests/ -v  # Python (49 tests)
+   cargo test                           # Rust engine tests
+   cd .. && python -m pytest tests/ -v  # Python (818+ tests)
    ```
 
 ## Development Guidelines

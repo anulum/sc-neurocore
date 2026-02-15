@@ -6,17 +6,28 @@ Commercial Licensing: Available
 
 # SC-NeuroCore
 
+[![CI](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml/badge.svg)](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/badge/version-3.7.0-blue)](https://github.com/anulum/sc-neurocore/releases)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/downloads/)
+[![Rust](https://img.shields.io/badge/engine-Rust-orange)](https://www.rust-lang.org/)
+
 **Version:** 3.7.0
-**Status:** Production Core Verified | 826 Tests Passing | 99.67% Coverage | CI/CD Active
+**Status:** Production Core Verified | 976 Tests Passing | CI/CD Active
 
 SC-NeuroCore is a universal stochastic computing framework for neuromorphic
 hardware simulation. It provides bit-true Python models that match Verilog RTL
-cycle-exactly, GPU-accelerated inference, and a tiered module system spanning
-production hardware to theoretical research.
+cycle-exactly, a high-performance Rust engine (512x real-time), GPU-accelerated
+inference, and a tiered module system spanning production hardware to
+theoretical research.
 
 ## Quick Start
 
 ```bash
+# Clone
+git clone https://github.com/anulum/sc-neurocore.git
+cd sc-neurocore
+
 # Install core package
 pip install -e ".[dev]"
 
@@ -24,7 +35,7 @@ pip install -e ".[dev]"
 pytest tests/ -v
 
 # Run benchmarks
-python scripts/benchmark_suite.py
+python benchmarks/benchmark_suite.py
 
 # GPU acceleration (requires CUDA)
 pip install -e ".[gpu]"
@@ -44,11 +55,11 @@ For benchmark reports, always include batch size, bitstream length, seed policy,
 
 ### Module Tiers
 
-| Tier | Subpackages | Description |
-|------|-------------|-------------|
-| **core** | neurons, synapses, layers, sources, utils, recorders, accel | Production-ready. Imported by default. |
-| **research** | hdc, solvers, transformers, quantum, robotics, bio, physics, +18 more | Functional but experimental. Import explicitly. |
-| **contrib** | exotic, meta, transcendent, eschaton, post_silicon | Speculative / theoretical. Import explicitly. |
+| Tier | Location | Description |
+|------|----------|-------------|
+| **core** | `src/sc_neurocore/` (neurons, synapses, layers, sources, utils, recorders, accel) | Production-ready. Imported by default. |
+| **research** | `src/sc_neurocore/` (hdc, solvers, transformers, quantum, robotics, bio, physics, +18 more) | Functional but experimental. Import explicitly. |
+| **speculative** | `research/` (eschaton, exotic, meta, post_silicon, transcendent) | Theoretical explorations. Not part of the installable package. See `research/README.md`. |
 
 ### Core API (28 symbols)
 
@@ -143,24 +154,28 @@ Runnable scripts in `examples/`:
 | `11_sc_training_demo.py` | Surrogate-gradient training of an SC dense layer (v3 Rust engine) |
 
 ```bash
-python examples/01_basic_sc_encoding.py
+PYTHONPATH=src:bridge python examples/01_basic_sc_encoding.py
 ```
+
+Examples marked **(v3 Rust engine)** require the compiled `sc_neurocore_engine` wheel.
+All other examples run with the pure-Python `sc_neurocore` package.
 
 ## CI/CD
 
-GitHub Actions pipeline (`.github/workflows/sc-neurocore-ci.yml`):
-- **Lint**: black --check + mypy
-- **Test**: Python 3.9 / 3.11 / 3.12 matrix, coverage >= 97%
-- **Build**: wheel + sdist + install verification
+GitHub Actions pipelines (`.github/workflows/`):
+- **ci.yml**: Lint (black + mypy) + Test (Python 3.9 / 3.11 / 3.12 matrix, coverage >= 97%) + Build
+- **v3-engine.yml**: Rust engine build + `cargo test`
+- **v3-wheels.yml**: Cross-platform wheel builds (Linux, macOS, Windows)
+- **docs.yml**: MkDocs documentation build
 
 ## Benchmarks
 
 Run the benchmark suite:
 
 ```bash
-python scripts/benchmark_suite.py           # quick mode
-python scripts/benchmark_suite.py --full    # thorough (10x)
-python scripts/benchmark_suite.py --markdown # output BENCHMARKS.md
+python benchmarks/benchmark_suite.py           # quick mode
+python benchmarks/benchmark_suite.py --full    # thorough (10x)
+python benchmarks/benchmark_suite.py --markdown # output BENCHMARKS.md
 ```
 
 Sample results (CPU, quick mode):
@@ -176,11 +191,10 @@ Sample results (CPU, quick mode):
 ## Documentation
 
 - [CHANGELOG.md](CHANGELOG.md) -- Version history
-- [BENCHMARKS.md](BENCHMARKS.md) -- Performance benchmark results
-- [docs/HARDWARE_GUIDE.md](docs/HARDWARE_GUIDE.md) -- FPGA deployment workflow
-- [docs/index.md](docs/index.md) -- MkDocs project overview
-- [docs/getting-started.md](docs/getting-started.md) -- Installation & quickstart
-- [docs/architecture.md](docs/architecture.md) -- Package architecture
+- [docs/](docs/) -- Full documentation (guides, API reference, benchmarks, research)
+- [docs/guides/getting-started.md](docs/guides/getting-started.md) -- Installation & quickstart
+- [docs/architecture/](docs/architecture/) -- Package architecture
+- [docs/hardware/](docs/hardware/) -- FPGA deployment workflow
 
 Build API docs locally:
 ```bash
@@ -194,10 +208,14 @@ mkdocs serve
 pip install -e ".[dev]"       # pytest, mypy, black
 pip install -e ".[gpu]"       # CuPy CUDA acceleration
 pip install -e ".[research]"  # networkx, onnx, torch
-pip install -e ".[contrib]"   # speculative module deps
 pip install -e ".[full]"      # networkx, onnx
 ```
 
 ## License
 
-MIT
+SC-NeuroCore is dual-licensed:
+
+- **Open Source**: [GNU Affero General Public License v3.0](LICENSE) (AGPLv3)
+- **Commercial**: Proprietary license available for integration into closed-source products
+
+For commercial licensing enquiries, contact [protoscience@anulum.li](mailto:protoscience@anulum.li).

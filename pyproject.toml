@@ -7,10 +7,34 @@ name = "sc-neurocore"
 version = "3.7.0"
 description = "Universal Stochastic Computing Framework spanning Software, Hardware, Physics, and Biology."
 authors = [
-  { name = "Miroslav Sotek", email = "fortisstudio@gmail.com" }
+  { name = "Miroslav Sotek", email = "protoscience@anulum.li" }
 ]
+license = "AGPL-3.0-or-later"
 readme = "README.md"
 requires-python = ">=3.9"
+keywords = [
+  "neuromorphic",
+  "stochastic-computing",
+  "fpga",
+  "spiking-neural-networks",
+  "hyper-dimensional-computing",
+  "rust",
+  "hardware-simulation",
+  "petri-nets",
+]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Rust",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Scientific/Engineering :: Electronic Design Automation (Verilog/VHDL)",
+  "Typing :: Typed",
+]
 dependencies = [
   "numpy>=1.22",
   "scipy>=1.7",
@@ -18,14 +42,18 @@ dependencies = [
   "matplotlib>=3.5"
 ]
 
+[project.urls]
+Homepage = "https://github.com/anulum/sc-neurocore"
+Documentation = "https://github.com/anulum/sc-neurocore/tree/main/docs"
+Source = "https://github.com/anulum/sc-neurocore"
+Issues = "https://github.com/anulum/sc-neurocore/issues"
+Changelog = "https://github.com/anulum/sc-neurocore/blob/main/CHANGELOG.md"
+
 [project.optional-dependencies]
-dev = ["pytest", "pytest-cov", "mypy", "black"]
+dev = ["pytest", "pytest-cov", "mypy", "black", "ruff"]
 gpu = ["cupy-cuda12x>=12.0"]
 full = ["networkx", "onnx"]
-# Tier: research — functional but experimental modules
 research = ["networkx", "onnx", "torch>=2.0"]
-# Tier: contrib — speculative / theoretical modules (exotic, meta, transcendent, etc.)
-contrib = ["networkx"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -55,6 +83,14 @@ exclude_lines = [
 [tool.black]
 line-length = 100
 target-version = ["py39"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
 
 [tool.mypy]
 ignore_missing_imports = true

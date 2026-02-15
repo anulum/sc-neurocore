@@ -1,6 +1,6 @@
 site_name: SC-NeuroCore Documentation
 site_description: Universal Stochastic Computing Framework for Neuromorphic Hardware
-repo_url: https://github.com/fortisstudio/sc-neurocore
+repo_url: https://github.com/anulum/sc-neurocore
 repo_name: sc-neurocore
 
 theme:
@@ -62,10 +62,8 @@ nav:
           - Learning: api/learning.md
           - Pipeline: api/pipeline.md
           - SCPN Layers: api/scpn.md
-      - Contrib:
-          - Meta: api/meta.md
-          - Transcendent: api/transcendent.md
-          - Exotic: api/exotic.md
+      - Speculative (research/):
+          - "See research/README.md": api/research-speculative.md
   - Benchmarks:
       - Summary: benchmarks/BENCHMARKS.md
       - Detailed Report: benchmarks/BENCHMARK_REPORT.md

@@ -906,9 +906,9 @@ sc-neurocore/
 @software{scneurocore2026,
   title={SC-NeuroCore: Universal Stochastic Computing Framework},
   author={Sotek, Miroslav and AI Collaborators},
-  version={2.2.0},
+  version={3.7.0},
   year={2026},
-  url={https://github.com/miroslavsotek/sc-neurocore}
+  url={https://github.com/anulum/sc-neurocore}
 }
 ```
 
