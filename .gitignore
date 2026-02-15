@@ -22,3 +22,42 @@ dist/
 # OS
 .DS_Store
 Thumbs.db
+
+# Coverage
+.coverage
+.coverage.*
+htmlcov/
+*.cover
+
+# Generated artifacts
+network_viz.html
+*.viz.html
+nul
+
+# Linter / type checker caches
+.ruff_cache/
+.mypy_cache/
+
+# Virtual environments
+.venv/
+venv/
+
+# Python packaging
+*.egg-info/
+build/
+*.egg
+
+# Temp files
+.tmp/
+*.tmp
+
+# Rust cross-compilation
+.cargo_target_rw/
+
+# Compiled testbench binaries
+tb_sc_bitstream_encoder
+tb_sc_dense_layer_top
+
+# Verilator artifacts
+obj_dir/
+cosim/obj_dir/

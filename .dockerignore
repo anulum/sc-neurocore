@@ -1,0 +1,64 @@
+# Version control
+.git/
+.gitignore
+.github/
+
+# Rust build artefacts (rebuilt inside Docker)
+target/
+engine/target/
+
+# Python caches and build artefacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Testing and CI artefacts
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Documentation build output
+docs/_build/
+
+# Docker-in-Docker prevention
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Misc project files not needed at runtime
+*.md
+LICENSE
+CITATION.cff
+SECURITY.md
+
+# Local tools
+.tools/
+.tmp/
+
+# Verilator artefacts
+obj_dir/
+cosim/obj_dir/
