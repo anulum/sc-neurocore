@@ -98,6 +98,7 @@ jobs:
 
       - name: Verify wheel builds
         run: |
+          rm -f sc_neurocore_engine/*.pyd sc_neurocore_engine/*.so 2>/dev/null || true
           cd bridge
           maturin build --release --out ../dist/
           ls ../dist/
