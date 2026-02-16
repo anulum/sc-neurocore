@@ -58,7 +58,7 @@ class TestFastPRNG:
     def test_xoshiro_statistical_quality(self):
         probs = np.array([0.35], dtype=np.float64)
         packed = v3.batch_encode_numpy(probs, length=10_000, seed=1337)
-        count = sum(int(w).bit_count() for w in packed[0])
+        count = sum(bin(int(w)).count("1") for w in packed[0])
         measured = count / 10_000
         assert abs(measured - 0.35) < 0.03
 

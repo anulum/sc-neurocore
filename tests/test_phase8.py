@@ -90,8 +90,8 @@ class TestParallelBatchEncodeNumpy:
         """Encoded bitstreams should have popcount proportional to probability."""
         probs = np.array([0.25, 0.75], dtype=np.float64)
         packed = v3.batch_encode_numpy(probs, length=10_000, seed=42)
-        pc0 = sum(int(w).bit_count() for w in packed[0])
-        pc1 = sum(int(w).bit_count() for w in packed[1])
+        pc0 = sum(bin(int(w)).count("1") for w in packed[0])
+        pc1 = sum(bin(int(w)).count("1") for w in packed[1])
         assert abs(pc0 / 10_000 - 0.25) < 0.03
         assert abs(pc1 / 10_000 - 0.75) < 0.03
 

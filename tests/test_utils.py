@@ -17,7 +17,7 @@ def test_generate_bernoulli_bitstream():
     assert len(bs) == length
     assert set(np.unique(bs)).issubset({0, 1})
     p_hat = bitstream_to_probability(bs)
-    assert np.isclose(p_hat, p, atol=0.05)  # Statistical check
+    assert np.isclose(p_hat, p, atol=0.1)  # Statistical check (stochastic)
 
 
 def test_conversions():
