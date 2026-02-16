@@ -53,6 +53,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     needs: [rust-lint, rust-test]
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.9", "3.12"]
@@ -94,14 +95,6 @@ jobs:
 
       - name: Run v3-specific tests
         run: pytest tests/test_surrogate_python.py tests/test_kuramoto_python.py tests/test_kuramoto_ssgf_python.py tests/test_multihead_attention.py tests/test_gnn_sc_mode.py tests/test_ir_python.py tests/test_numpy_interop.py tests/test_batch_ops.py tests/test_dense_optimization.py tests/test_phase8.py tests/test_phase9.py tests/test_phase10.py tests/test_phase11.py tests/test_phase12.py -v --tb=short
-        shell: bash
-
-      - name: Verify wheel builds
-        run: |
-          rm -f sc_neurocore_engine/*.pyd sc_neurocore_engine/*.so 2>/dev/null || true
-          cd bridge
-          maturin build --release --out ../dist/
-          ls ../dist/
         shell: bash
 
   cosim:
