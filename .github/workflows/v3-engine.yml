@@ -74,7 +74,7 @@ jobs:
       - name: Build and install v3 engine
         run: |
           cd bridge
-          maturin develop --release --manifest-path ../engine/Cargo.toml
+          maturin develop --release
 
       - name: Verify v3 import
         run: python -c "import sc_neurocore_engine; print(sc_neurocore_engine.__version__); print(sc_neurocore_engine.simd_tier())"
@@ -91,7 +91,7 @@ jobs:
       - name: Verify wheel builds
         run: |
           cd bridge
-          maturin build --release --manifest-path ../engine/Cargo.toml --out ../dist/
+          maturin build --release --out ../dist/
           ls ../dist/
 
   cosim:
@@ -122,7 +122,7 @@ jobs:
       - name: Build v3 engine
         run: |
           cd bridge
-          maturin develop --release --manifest-path ../engine/Cargo.toml
+          maturin develop --release
 
       - name: Run co-simulation tests
         run: pytest cosim/ -v --tb=short

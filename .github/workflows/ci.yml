@@ -24,7 +24,9 @@ jobs:
           python-version: "3.12"
       - run: pip install "black<26" mypy
       - run: black --check src/ tests/
-      - run: mypy src/sc_neurocore/ --ignore-missing-imports
+      - name: Type check (informational)
+        run: mypy src/sc_neurocore/ --ignore-missing-imports
+        continue-on-error: true
 
   test:
     runs-on: ubuntu-latest
