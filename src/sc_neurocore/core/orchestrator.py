@@ -66,7 +66,10 @@ class CognitiveOrchestrator:
                 # Process scalar or vector step
                 val = current_stream.to_prob()
                 if isinstance(val, np.ndarray) and val.ndim > 0:
-                    res = np.array([module.step(v) for v in val.flatten()])
+                    if hasattr(module, "batch_step"):
+                        res = module.batch_step(val.flatten())
+                    else:
+                        res = np.array([module.step(v) for v in val.flatten()])
                 else:
                     res = module.step(val)
                 current_stream = TensorStream.from_prob(res)

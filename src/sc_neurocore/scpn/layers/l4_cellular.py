@@ -133,15 +133,10 @@ class L4_CellularLayer:
         self.phases = self.phases % (2 * np.pi)
 
         # 2. Calcium wave dynamics
-        # Diffusion via gap junctions
-        ca_diff = np.zeros(self.n_cells)
-        for i in range(self.n_cells):
-            neighbor_indices = np.where(self.neighbors[i] > 0)[0]
-            if len(neighbor_indices) > 0:
-                # Diffusion weighted by gap junction state
-                for j in neighbor_indices:
-                    gj_state = (self.gap_junctions[i] + self.gap_junctions[j]) / 2
-                    ca_diff[i] += gj_state * (self.calcium[j] - self.calcium[i])
+        # Vectorized diffusion via gap junctions
+        gj_avg = (self.gap_junctions[:, None] + self.gap_junctions[None, :]) / 2.0
+        ca_diff_matrix = self.calcium[None, :] - self.calcium[:, None]
+        ca_diff = np.sum(self.neighbors * gj_avg * ca_diff_matrix, axis=1)
 
         self.calcium += (
             self.params.ca_diffusion_rate * ca_diff - self.params.ca_decay_rate * self.calcium

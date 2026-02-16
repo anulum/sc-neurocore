@@ -152,12 +152,10 @@ class L6_EcologicalLayer:
         circadian_signal = 0.5 + self.params.circadian_amplitude * np.cos(self.circadian_phase)
 
         # 4. Biospheric network dynamics
-        # Coupling between nodes
-        network_coupling = np.zeros(self.params.n_field_nodes)
-        for i in range(self.params.n_field_nodes):
-            neighbors = [(i - 1) % self.params.n_field_nodes, (i + 1) % self.params.n_field_nodes]
-            neighbor_mean = np.mean([self.biospheric_field[j] for j in neighbors])
-            network_coupling[i] = neighbor_mean - self.biospheric_field[i]
+        # Vectorized ring coupling
+        network_coupling = (
+            np.roll(self.biospheric_field, 1) + np.roll(self.biospheric_field, -1)
+        ) / 2.0 - self.biospheric_field
 
         self.biospheric_field += (
             self.params.network_coupling * network_coupling

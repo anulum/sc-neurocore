@@ -2,6 +2,41 @@ from __future__ import annotations
 import numpy as np
 from dataclasses import dataclass
 
+from ..accel._dispatch import njit_or_python
+
+
+@njit_or_python(cache=True)
+def _tanh_fsm_process(bitstream: np.ndarray, num_states: int, initial_state: int) -> tuple:  # pragma: no cover
+    """JIT kernel for TanhFSM.process()."""
+    output = np.zeros(len(bitstream), dtype=np.uint8)
+    state = initial_state
+    half = num_states // 2
+    for i in range(len(bitstream)):
+        if bitstream[i] == 1:
+            if state < num_states - 1:
+                state += 1
+        else:
+            if state > 0:
+                state -= 1
+        output[i] = 1 if state >= half else 0
+    return output, state
+
+
+@njit_or_python(cache=True)
+def _relk_fsm_process(bitstream: np.ndarray, num_states: int, initial_state: int) -> tuple:  # pragma: no cover
+    """JIT kernel for ReLKFSM.process()."""
+    output = np.zeros(len(bitstream), dtype=np.uint8)
+    state = initial_state
+    for i in range(len(bitstream)):
+        if bitstream[i] == 1:
+            if state < num_states - 1:
+                state += 1
+        else:
+            if state > 0:
+                state -= 1
+        output[i] = 1 if state > 0 else 0
+    return output, state
+
 
 @dataclass
 class FSMActivation:
@@ -55,6 +90,11 @@ class TanhFSM(FSMActivation):
 
         return 1 if self.state >= (self.num_states // 2) else 0
 
+    def process(self, bitstream: np.ndarray) -> np.ndarray:
+        output, final_state = _tanh_fsm_process(bitstream, self.num_states, self.state)
+        self.state = int(final_state)
+        return output
+
 
 @dataclass
 class ReLKFSM(FSMActivation):
@@ -77,7 +117,9 @@ class ReLKFSM(FSMActivation):
             if self.state > 0:
                 self.state -= 1
 
-        # Probabilistic output based on state?
-        # Or threshold? ReLK usually implies simple pass-through if > 0.
-        # This implementation is a "Stochastic Integrator"
         return 1 if self.state > 0 else 0
+
+    def process(self, bitstream: np.ndarray) -> np.ndarray:
+        output, final_state = _relk_fsm_process(bitstream, self.num_states, self.state)
+        self.state = int(final_state)
+        return output

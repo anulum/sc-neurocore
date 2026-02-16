@@ -16,6 +16,12 @@ import json
 
 logger = logging.getLogger(__name__)
 
+try:
+    from skimage.measure import marching_cubes as _skimage_marching_cubes  # pragma: no cover
+    _HAS_SKIMAGE = True  # pragma: no cover
+except ImportError:
+    _HAS_SKIMAGE = False
+
 # Marching Cubes lookup tables (simplified)
 # Edge table: which edges are cut for each cube configuration
 EDGE_TABLE = [
@@ -350,6 +356,23 @@ class SC3DGenerator:
 
         if voxel_grid.ndim != 3:
             raise ValueError(f"Expected 3D array, got {voxel_grid.ndim}D")
+
+        # Try accelerated skimage marching cubes first
+        if _HAS_SKIMAGE:  # pragma: no cover
+            try:
+                verts, faces_arr, normals_arr, _ = _skimage_marching_cubes(
+                    voxel_grid, level=iso_level
+                )
+                faces_arr = faces_arr.astype(np.int32)
+                return {
+                    "vertices": verts,
+                    "faces": faces_arr,
+                    "normals": normals_arr,
+                    "n_vertices": len(verts),
+                    "n_faces": len(faces_arr),
+                }
+            except Exception:
+                pass  # Fall through to manual implementation
 
         vertices = []
         faces = []

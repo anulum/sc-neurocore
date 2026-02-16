@@ -138,3 +138,48 @@ def gpu_vec_mac(
     # Per-element popcount, then sum across inputs and words
     counts = gpu_popcount(products)  # (N, I, W) uint64
     return counts.sum(axis=(1, 2))  # (N,)
+
+
+# ---------------------------------------------------------------------------
+# Batch LIF on GPU/CPU
+# ---------------------------------------------------------------------------
+
+
+def gpu_batch_lif_step(
+    currents: np.ndarray,
+    v: np.ndarray,
+    v_rest: np.ndarray,
+    v_reset: np.ndarray,
+    v_threshold: np.ndarray,
+    dt_over_tau: np.ndarray,
+    resistance_dt: np.ndarray,
+) -> tuple:
+    """
+    Step N neurons in parallel on GPU (or CPU via NumPy).
+
+    Args:
+        currents: (N,) input currents at this time step.
+        v: (N,) current membrane potentials.
+        v_rest, v_reset, v_threshold: (N,) per-neuron parameters.
+        dt_over_tau, resistance_dt: (N,) pre-computed constants.
+
+    Returns:
+        (spikes, v_new) — both (N,) arrays.
+    """
+    c = xp.asarray(currents)
+    vm = xp.asarray(v)
+    vr = xp.asarray(v_rest)
+    vre = xp.asarray(v_reset)
+    vth = xp.asarray(v_threshold)
+    dot = xp.asarray(dt_over_tau)
+    rdt = xp.asarray(resistance_dt)
+
+    dv_leak = -(vm - vr) * dot
+    dv_input = rdt * c
+    vm = vm + dv_leak + dv_input
+
+    fired = vm >= vth
+    spikes = xp.where(fired, xp.ones_like(vm, dtype=xp.uint8), xp.zeros_like(vm, dtype=xp.uint8))
+    vm = xp.where(fired, vre, vm)
+
+    return to_host(spikes), to_host(vm)

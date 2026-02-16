@@ -1,5 +1,6 @@
 import logging
 import numpy as np
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Callable, Any
 
@@ -24,8 +25,9 @@ class SNNGeneticEvolver:
 
     def evolve(self, generations: int):
         for gen in range(generations):
-            # 1. Evaluate Fitness
-            scores = [self.fitness_func(ind) for ind in self.population]
+            # 1. Evaluate Fitness (parallel)
+            with ThreadPoolExecutor() as pool:
+                scores = list(pool.map(self.fitness_func, self.population))
 
             # Sort by fitness (descending)
             ranked_indices = np.argsort(scores)[::-1]

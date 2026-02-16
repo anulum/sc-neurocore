@@ -2,6 +2,30 @@ from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
 
+from ..accel._dispatch import njit_or_python
+
+
+def _im2col(padded: np.ndarray, kernel_size: int, stride: int, H_out: int, W_out: int) -> np.ndarray:
+    """
+    Extract sliding-window patches into a 2-D matrix (im2col).
+
+    Args:
+        padded: (C_in, H_padded, W_padded)
+
+    Returns:
+        cols: (C_in * kernel_size * kernel_size, H_out * W_out)
+    """
+    C_in = padded.shape[0]
+    k = kernel_size
+    cols = np.empty((C_in * k * k, H_out * W_out), dtype=padded.dtype)
+    idx = 0
+    for ic in range(C_in):
+        for ki in range(k):
+            for kj in range(k):
+                cols[idx] = padded[ic, ki: ki + stride * H_out: stride, kj: kj + stride * W_out: stride].ravel()
+                idx += 1
+    return cols
+
 
 @dataclass
 class SCConv2DLayer:
@@ -30,34 +54,26 @@ class SCConv2DLayer:
         Returns: (out_channels, H_out, W_out) as probabilities (or firing rates).
         """
         C_in, H, W = input_image.shape
+        if C_in != self.in_channels:
+            raise IndexError(
+                f"Input has {C_in} channels but layer expects {self.in_channels}"
+            )
         H_out = (H + 2 * self.padding - self.kernel_size) // self.stride + 1
         W_out = (W + 2 * self.padding - self.kernel_size) // self.stride + 1
 
-        output = np.zeros((self.out_channels, H_out, W_out))
+        # Pad all channels at once
+        if self.padding > 0:
+            padded = np.pad(
+                input_image,
+                ((0, 0), (self.padding, self.padding), (self.padding, self.padding)),
+                mode="constant",
+            )
+        else:
+            padded = input_image
 
-        # In a real SC hardware, this would be massive parallel AND-gates.
-        # Here we simulate the probability math.
+        # im2col + matmul path (vectorized, no quadruple nested loop)
+        cols = _im2col(padded, self.kernel_size, self.stride, H_out, W_out)
+        kernels_flat = self.kernels.reshape(self.out_channels, -1)  # (OC, C_in*k*k)
+        output = (kernels_flat @ cols).reshape(self.out_channels, H_out, W_out)
 
-        for oc in range(self.out_channels):
-            for ic in range(self.in_channels):
-                # Apply padding
-                padded_input = np.pad(input_image[ic], self.padding, mode="constant")
-
-                for i in range(H_out):
-                    for j in range(W_out):
-                        h_start = i * self.stride
-                        h_end = h_start + self.kernel_size
-                        w_start = j * self.stride
-                        w_end = w_start + self.kernel_size
-
-                        region = padded_input[h_start:h_end, w_start:w_end]
-                        kernel = self.kernels[oc, ic]
-
-                        # SC Multiplication (AND) of probabilities
-                        # For unipolar [0,1], P(A&B) = P(A)*P(B)
-                        res = np.sum(region * kernel)
-                        output[oc, i, j] += res
-
-        # Normalize by kernel size and in_channels if needed,
-        # or treat as accumulated current.
         return output

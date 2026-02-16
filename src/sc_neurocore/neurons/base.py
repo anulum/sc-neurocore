@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 
+import numpy as np
+
 
 class BaseNeuron(ABC):
     """
@@ -26,3 +28,16 @@ class BaseNeuron(ABC):
     def get_state(self) -> Dict[str, Any]:
         """Return a dict with the internal state (e.g., membrane potential)."""
         raise NotImplementedError
+
+    def batch_step(self, inputs: np.ndarray) -> np.ndarray:
+        """
+        Step the neuron over a 1-D array of inputs.
+
+        Subclasses may override with a vectorized implementation.
+        Default falls back to per-element ``step()``.
+        """
+        inputs = np.asarray(inputs).ravel()
+        out = np.empty(len(inputs), dtype=np.float64)
+        for i in range(len(inputs)):
+            out[i] = self.step(float(inputs[i]))
+        return out

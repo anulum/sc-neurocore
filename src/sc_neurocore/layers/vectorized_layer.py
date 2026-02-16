@@ -9,7 +9,9 @@ from ..accel.gpu_backend import (
     to_device,
     to_host,
     gpu_vec_mac,
+    gpu_popcount,
 )
+from ..accel._dispatch import USE_RUST, _engine
 
 
 @dataclass
@@ -30,6 +32,16 @@ class VectorizedSCLayer:
         self.weights = np.random.uniform(0.0, 1.0, (self.n_neurons, self.n_inputs))
         self.packed_weights = None
         self._on_gpu = self.use_gpu and HAS_CUPY
+        self._rust_layer = None
+
+        # Try Rust DenseLayer first
+        if USE_RUST and not self._on_gpu:
+            try:
+                self._rust_layer = _engine.DenseLayer(self.n_inputs, self.n_neurons, self.length)
+                self._rust_layer.set_weights(self.weights)
+            except Exception:
+                self._rust_layer = None
+
         self._refresh_packed_weights()
 
     def _refresh_packed_weights(self):
@@ -54,6 +66,14 @@ class VectorizedSCLayer:
             raise ValueError(
                 f"Expected 1-D input of length {self.n_inputs}, " f"got shape {in_probs.shape}"
             )
+
+        # Rust fast path
+        if self._rust_layer is not None:
+            try:
+                return self._rust_layer.forward_numpy(in_probs)
+            except Exception:
+                pass  # fall through to NumPy
+
         input_bits = (np.random.random((self.n_inputs, self.length)) < in_probs[:, None]).astype(
             np.uint8
         )
@@ -65,10 +85,10 @@ class VectorizedSCLayer:
             counts = gpu_vec_mac(self.packed_weights, packed_inputs_dev)
             outputs = to_host(counts).astype(np.float64)
         else:
+            # Vectorized NumPy path: broadcast AND then gpu_popcount
             products = vec_and(self.packed_weights, packed_inputs[None, :, :])
             flat_products = products.reshape(self.n_neurons, -1)
-            outputs = np.zeros(self.n_neurons)
-            for i in range(self.n_neurons):
-                outputs[i] = vec_popcount(flat_products[i])
+            counts = gpu_popcount(flat_products)
+            outputs = counts.sum(axis=1).astype(np.float64)
 
         return outputs / self.length

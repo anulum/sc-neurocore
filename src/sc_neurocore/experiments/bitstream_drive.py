@@ -49,12 +49,9 @@ def run_bitstream_driven_lif(
 
     neuron = StochasticLIFNeuron(**neuron_params)
 
-    spike_bits = np.zeros(length, dtype=np.uint8)
-    for t in range(length):
-        # Simple mapping: 1 -> x_max, 0 -> x_min
-        # You can choose something more nuanced if desired.
-        I_t = encoder.decode(np.array([input_bits[t]], dtype=np.uint8))
-        spike_bits[t] = neuron.step(I_t)
+    # Vectorized current mapping: bit=1 → x_max, bit=0 → x_min
+    currents = np.where(input_bits == 1, x_max, x_min)
+    spike_bits = neuron.step_array(currents)
 
     # Decode probabilities
     p_in = bitstream_to_probability(input_bits)

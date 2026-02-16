@@ -6,6 +6,44 @@ import numpy as np
 from ..sources.bitstream_current_source import BitstreamCurrentSource
 from ..neurons.stochastic_lif import StochasticLIFNeuron
 from ..recorders.spike_recorder import BitstreamSpikeRecorder
+from ..accel._dispatch import njit_or_python
+
+
+# ---- Numba-accelerated dense-layer kernel ---------------------------------
+@njit_or_python(cache=True)
+def _dense_run_kernel(  # pragma: no cover — Numba JIT compiled
+    currents: np.ndarray,
+    n_neurons: int,
+    v_rest: np.ndarray,
+    v_reset: np.ndarray,
+    v_threshold: np.ndarray,
+    dt_over_tau: np.ndarray,
+    resistance_dt: np.ndarray,
+) -> np.ndarray:
+    """
+    Run T steps for N neurons sharing the same current sequence.
+
+    Args:
+        currents: shape (T,) — shared input current at each step.
+        n_neurons: number of neurons.
+        v_rest .. resistance_dt: per-neuron parameter arrays, each shape (N,).
+
+    Returns:
+        spikes: shape (N, T) uint8 array.
+    """
+    T = currents.shape[0]
+    spikes = np.zeros((n_neurons, T), dtype=np.uint8)
+    v = v_rest.copy()
+    for t in range(T):
+        I_t = currents[t]
+        for n in range(n_neurons):
+            dv_leak = -(v[n] - v_rest[n]) * dt_over_tau[n]
+            dv_input = resistance_dt[n] * I_t
+            v[n] += dv_leak + dv_input
+            if v[n] >= v_threshold[n]:
+                spikes[n, t] = 1
+                v[n] = v_reset[n]
+    return spikes
 
 
 @dataclass
@@ -78,6 +116,10 @@ class SCDenseLayer:
             self.neurons.append(neuron)
             self.recorders.append(BitstreamSpikeRecorder(dt_ms=self.dt_ms))
 
+    def _can_use_fast_path(self) -> bool:
+        """All neurons must have no noise and no refractory for JIT path."""
+        return all(n._can_use_fast_path() for n in self.neurons)
+
     def reset(self) -> None:
         self.source.reset()
         for neuron, rec in zip(self.neurons, self.recorders):
@@ -92,6 +134,31 @@ class SCDenseLayer:
         processed through SC dot-product). Neurons differ by their
         internal noise and parameters.
         """
+        if self._can_use_fast_path() and self.n_neurons > 0:
+            # Pre-compute all T currents
+            currents = np.empty(T, dtype=np.float64)
+            for t in range(T):
+                currents[t] = self.source.step()
+
+            # Pack neuron parameters into arrays
+            N = self.n_neurons
+            v_rest = np.array([n.v_rest for n in self.neurons])
+            v_reset = np.array([n.v_reset for n in self.neurons])
+            v_threshold = np.array([n.v_threshold for n in self.neurons])
+            dt_over_tau = np.array([n.dt / n.tau_mem for n in self.neurons])
+            resistance_dt = np.array([n.resistance * n.dt for n in self.neurons])
+
+            spikes = _dense_run_kernel(
+                currents, N, v_rest, v_reset, v_threshold, dt_over_tau, resistance_dt
+            )
+
+            # Feed results into recorders
+            for i in range(N):
+                for t in range(T):
+                    self.recorders[i].record(int(spikes[i, t]))
+            return
+
+        # Fallback: original Python loop
         for _ in range(T):
             I_t = self.source.step()
             for neuron, rec in zip(self.neurons, self.recorders):

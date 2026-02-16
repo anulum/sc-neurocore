@@ -17,10 +17,7 @@ def run_demo():
 
     T = 2000
     I = 0.06 * np.ones(T)
-    spikes = np.zeros(T, dtype=int)
-
-    for t in range(T):
-        spikes[t] = neuron.step(I[t])
+    spikes = neuron.step_array(I)
 
     rate_hz = spikes.sum() / (T * neuron.dt) * 1000.0
     print(f"Total spikes: {spikes.sum()}, firing rate ≈ {rate_hz:.2f} Hz")
