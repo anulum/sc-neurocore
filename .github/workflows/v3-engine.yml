@@ -68,7 +68,8 @@ jobs:
           python -m venv .venv
           source .venv/bin/activate 2>/dev/null || source .venv/Scripts/activate
           echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
-          echo "$VIRTUAL_ENV/bin:$VIRTUAL_ENV/Scripts" >> $GITHUB_PATH
+          echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
+          echo "$VIRTUAL_ENV/Scripts" >> $GITHUB_PATH
           pip install -e ".[dev]"
           pip install maturin pytest
         shell: bash
@@ -77,24 +78,30 @@ jobs:
         run: |
           cd bridge
           maturin develop --release
+        shell: bash
 
       - name: Verify v3 import
         run: python -c "import sc_neurocore_engine; print(sc_neurocore_engine.__version__); print(sc_neurocore_engine.simd_tier())"
+        shell: bash
 
       - name: Verify v2 untouched
         run: python -c "import sc_neurocore; print(sc_neurocore.__version__)"
+        shell: bash
 
       - name: Run equivalence tests
         run: pytest tests/equivalence/ -v --tb=short
+        shell: bash
 
       - name: Run v3-specific tests
         run: pytest tests/test_surrogate_python.py tests/test_kuramoto_python.py tests/test_kuramoto_ssgf_python.py tests/test_multihead_attention.py tests/test_gnn_sc_mode.py tests/test_ir_python.py tests/test_numpy_interop.py tests/test_batch_ops.py tests/test_dense_optimization.py tests/test_phase8.py tests/test_phase9.py tests/test_phase10.py tests/test_phase11.py tests/test_phase12.py -v --tb=short
+        shell: bash
 
       - name: Verify wheel builds
         run: |
           cd bridge
           maturin build --release --out ../dist/
           ls ../dist/
+        shell: bash
 
   cosim:
     runs-on: ubuntu-latest
