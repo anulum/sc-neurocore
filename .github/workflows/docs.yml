@@ -41,16 +41,27 @@ jobs:
       # --- Rustdoc (Rust engine API) ---
       - uses: dtolnay/rust-toolchain@nightly
 
-      - name: Build Rustdoc
-        run: cargo +nightly doc --manifest-path engine/Cargo.toml --no-deps --document-private-items
+      - name: Build and merge Rustdoc
+        run: |
+          # Build rustdoc (workspace target dir is at repo root)
+          cargo +nightly doc --manifest-path engine/Cargo.toml --no-deps --document-private-items || true
+          # Find the doc output (could be target/doc or engine/target/doc)
+          DOC_DIR=""
+          if [ -d "target/doc/sc_neurocore_engine" ]; then
+            DOC_DIR="target/doc"
+          elif [ -d "engine/target/doc/sc_neurocore_engine" ]; then
+            DOC_DIR="engine/target/doc"
+          fi
+          if [ -n "$DOC_DIR" ]; then
+            mkdir -p _site/rust-api
+            cp -r "$DOC_DIR"/* _site/rust-api/
+            echo "Rustdoc merged from $DOC_DIR"
+          else
+            echo "WARNING: Rustdoc not found, deploying MkDocs only"
+          fi
+          echo "" > _site/.nojekyll
         env:
           RUSTDOCFLAGS: "--enable-index-page -Zunstable-options"
-
-      - name: Merge Rustdoc into MkDocs site
-        run: |
-          mkdir -p _site/rust-api
-          cp -r engine/target/doc/* _site/rust-api/
-          echo "" > _site/.nojekyll
 
       # --- Upload combined site ---
       - name: Upload Pages artifact
