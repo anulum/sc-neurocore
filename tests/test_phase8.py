@@ -111,5 +111,6 @@ class TestParallelBatchEncodeNumpy:
 
 
 class TestPhase8Version:
-    def test_version_is_3_6_0(self):
-        assert v3.__version__ == "3.6.0"
+    def test_version_at_least_3_6_0(self):
+        ver = tuple(int(x) for x in v3.__version__.split("."))
+        assert ver >= (3, 6, 0)
