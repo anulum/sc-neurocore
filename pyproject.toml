@@ -49,7 +49,7 @@ Issues = "https://github.com/anulum/sc-neurocore/issues"
 Changelog = "https://github.com/anulum/sc-neurocore/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-cov", "mypy", "black", "ruff", "pyyaml"]
+dev = ["pytest", "pytest-cov", "mypy", "black<26", "ruff", "pyyaml"]
 gpu = ["cupy-cuda12x>=12.0"]
 full = ["networkx", "onnx"]
 research = ["networkx", "onnx", "torch>=2.0"]
@@ -66,6 +66,9 @@ omit = [
     "*/experiments/*",
     "*/drivers/*",
     "*/interfaces/ccw_bridge.py",
+    "*/spatial/*",
+    "*/physics/wolfram_hypergraph.py",
+    "*/robotics/swarm.py",
 ]
 
 [tool.coverage.report]

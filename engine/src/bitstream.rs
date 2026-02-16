@@ -63,7 +63,7 @@ impl BitStreamTensor {
     ///
     /// Rotates the entire logical bitstream, handling cross-word boundaries.
     pub fn rotate_right(&mut self, shift: usize) {
-        if self.length == 0 || shift % self.length == 0 {
+        if self.length == 0 || shift.is_multiple_of(self.length) {
             return;
         }
         let mut bits = unpack(self);
