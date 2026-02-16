@@ -14,6 +14,7 @@ from sc_neurocore.accel.gpu_conv2d import gpu_conv2d_forward
 def _torch_available() -> bool:
     try:
         import torch  # noqa: F401
+
         return True
     except ImportError:
         return False
@@ -64,13 +65,12 @@ class TestTorchBridge:
     def test_import_guard(self):
         """Module should be importable even without torch."""
         from sc_neurocore.accel.torch_bridge import HAS_TORCH, SCDenseLayerTorch
+
         if not HAS_TORCH:
             with pytest.raises(ImportError):
                 SCDenseLayerTorch(4, 3)
 
-    @pytest.mark.skipif(
-        not _torch_available(), reason="PyTorch not installed"
-    )
+    @pytest.mark.skipif(not _torch_available(), reason="PyTorch not installed")
     def test_forward_pass(self):
         import torch
         from sc_neurocore.accel.torch_bridge import SCDenseLayerTorch

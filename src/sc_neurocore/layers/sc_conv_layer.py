@@ -5,7 +5,9 @@ import numpy as np
 from ..accel._dispatch import njit_or_python
 
 
-def _im2col(padded: np.ndarray, kernel_size: int, stride: int, H_out: int, W_out: int) -> np.ndarray:
+def _im2col(
+    padded: np.ndarray, kernel_size: int, stride: int, H_out: int, W_out: int
+) -> np.ndarray:
     """
     Extract sliding-window patches into a 2-D matrix (im2col).
 
@@ -22,7 +24,9 @@ def _im2col(padded: np.ndarray, kernel_size: int, stride: int, H_out: int, W_out
     for ic in range(C_in):
         for ki in range(k):
             for kj in range(k):
-                cols[idx] = padded[ic, ki: ki + stride * H_out: stride, kj: kj + stride * W_out: stride].ravel()
+                cols[idx] = padded[
+                    ic, ki : ki + stride * H_out : stride, kj : kj + stride * W_out : stride
+                ].ravel()
                 idx += 1
     return cols
 
@@ -55,9 +59,7 @@ class SCConv2DLayer:
         """
         C_in, H, W = input_image.shape
         if C_in != self.in_channels:
-            raise IndexError(
-                f"Input has {C_in} channels but layer expects {self.in_channels}"
-            )
+            raise IndexError(f"Input has {C_in} channels but layer expects {self.in_channels}")
         H_out = (H + 2 * self.padding - self.kernel_size) // self.stride + 1
         W_out = (W + 2 * self.padding - self.kernel_size) // self.stride + 1
 

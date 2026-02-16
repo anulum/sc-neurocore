@@ -130,11 +130,15 @@ class SCLearningLayer:
         )  # (n_inputs, length)
 
         if self._can_use_fast_path() and self.n_neurons > 0:
-            w_probs = np.array([
-                [self.synapses[i][j].effective_weight_probability()
-                 for j in range(self.n_inputs)]
-                for i in range(self.n_neurons)
-            ])
+            w_probs = np.array(
+                [
+                    [
+                        self.synapses[i][j].effective_weight_probability()
+                        for j in range(self.n_inputs)
+                    ]
+                    for i in range(self.n_neurons)
+                ]
+            )
 
             N = self.n_neurons
             v_rest = np.array([n.v_rest for n in self.neurons])
@@ -148,9 +152,20 @@ class SCLearningLayer:
             rand_ltd = np.random.random((self.length, N, self.n_inputs))
 
             epoch_spikes, w_out = _learning_epoch_kernel(
-                input_bitstreams, w_probs, N, self.n_inputs, self.length,
-                v_rest, v_reset, v_threshold, dt_over_tau, resistance_dt,
-                rand_weight, rand_ltp, rand_ltd, self.learning_rate,
+                input_bitstreams,
+                w_probs,
+                N,
+                self.n_inputs,
+                self.length,
+                v_rest,
+                v_reset,
+                v_threshold,
+                dt_over_tau,
+                resistance_dt,
+                rand_weight,
+                rand_ltp,
+                rand_ltd,
+                self.learning_rate,
             )
 
             # Apply learning delta back to synapse .w (preserves original .w when lr=0)

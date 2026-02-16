@@ -133,11 +133,7 @@ class StochasticLIFNeuron(BaseNeuron):
 
     def _can_use_fast_path(self) -> bool:
         """Check if the neuron can use the JIT-accelerated kernel."""
-        return (
-            self.noise_std == 0.0
-            and self.entropy_source is None
-            and self.refractory_period == 0
-        )
+        return self.noise_std == 0.0 and self.entropy_source is None and self.refractory_period == 0
 
     def step_array(self, currents: np.ndarray) -> np.ndarray:
         """
@@ -159,7 +155,10 @@ class StochasticLIFNeuron(BaseNeuron):
             # Replay final membrane state so self.v stays consistent
             v = self.v_rest
             for i in range(len(currents)):
-                v += -(v - self.v_rest) * (self.dt / self.tau_mem) + self.resistance * currents[i] * self.dt
+                v += (
+                    -(v - self.v_rest) * (self.dt / self.tau_mem)
+                    + self.resistance * currents[i] * self.dt
+                )
                 if v >= self.v_threshold:
                     v = self.v_reset
             self.v = v
@@ -192,7 +191,10 @@ class StochasticLIFNeuron(BaseNeuron):
             v = self.v_rest
             for i in range(len(input_bits)):
                 current = input_bits[i] * input_scale
-                v += -(v - self.v_rest) * (self.dt / self.tau_mem) + self.resistance * current * self.dt
+                v += (
+                    -(v - self.v_rest) * (self.dt / self.tau_mem)
+                    + self.resistance * current * self.dt
+                )
                 if v >= self.v_threshold:
                     v = self.v_reset
             self.v = v

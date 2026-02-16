@@ -33,8 +33,10 @@ class TestSCDenseLayerFallback:
             n_neurons=2,
             x_inputs=[0.05, 0.06],
             weight_values=[0.5, 0.5],
-            x_min=0.0, x_max=0.1,
-            w_min=0.0, w_max=1.0,
+            x_min=0.0,
+            x_max=0.1,
+            w_min=0.0,
+            w_max=1.0,
             length=128,
             neuron_params={"noise_std": 0.1},  # noise -> fallback
             base_seed=42,
@@ -51,8 +53,11 @@ class TestSCLearningLayerFallback:
     def test_run_epoch_fallback(self):
         np.random.seed(42)
         layer = SCLearningLayer(
-            n_inputs=2, n_neurons=2, length=64,
-            base_seed=42, learning_rate=0.01,
+            n_inputs=2,
+            n_neurons=2,
+            length=64,
+            base_seed=42,
+            learning_rate=0.01,
         )
         # Force noisy neurons -> fallback
         for n in layer.neurons:

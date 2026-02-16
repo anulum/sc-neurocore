@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from skimage.measure import marching_cubes as _skimage_marching_cubes  # pragma: no cover
+
     _HAS_SKIMAGE = True  # pragma: no cover
 except ImportError:
     _HAS_SKIMAGE = False

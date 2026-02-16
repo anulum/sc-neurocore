@@ -13,7 +13,10 @@ class TestSCLearningLayerJIT:
     def test_output_shape(self):
         np.random.seed(42)
         layer = SCLearningLayer(
-            n_inputs=3, n_neurons=2, length=128, base_seed=42,
+            n_inputs=3,
+            n_neurons=2,
+            length=128,
+            base_seed=42,
         )
         spikes = layer.run_epoch([0.3, 0.6, 0.9])
         assert spikes.shape == (2, 128)
@@ -23,7 +26,10 @@ class TestSCLearningLayerJIT:
         """Weights should shift after an epoch of learning."""
         np.random.seed(42)
         layer = SCLearningLayer(
-            n_inputs=3, n_neurons=2, length=256, base_seed=42,
+            n_inputs=3,
+            n_neurons=2,
+            length=256,
+            base_seed=42,
             learning_rate=0.05,
         )
         w_before = layer.get_weights().copy()

@@ -67,9 +67,7 @@ if HAS_TORCH:  # pragma: no cover
             self._sc_layer = VectorizedSCLayer(
                 n_inputs=n_inputs, n_neurons=n_neurons, length=length, use_gpu=False
             )
-            self.register_buffer(
-                "sc_weights", torch.from_numpy(self._sc_layer.weights.copy())
-            )
+            self.register_buffer("sc_weights", torch.from_numpy(self._sc_layer.weights.copy()))
 
         def forward(self, x: "torch.Tensor") -> "torch.Tensor":
             squeeze = x.dim() == 1
@@ -89,6 +87,5 @@ else:
     class SCDenseLayerTorch:  # type: ignore[no-redef]
         def __init__(self, *args, **kwargs):
             raise ImportError(
-                "PyTorch is required for SCDenseLayerTorch. "
-                "Install it with: pip install torch"
+                "PyTorch is required for SCDenseLayerTorch. " "Install it with: pip install torch"
             )

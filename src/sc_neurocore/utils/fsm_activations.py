@@ -6,7 +6,9 @@ from ..accel._dispatch import njit_or_python
 
 
 @njit_or_python(cache=True)
-def _tanh_fsm_process(bitstream: np.ndarray, num_states: int, initial_state: int) -> tuple:  # pragma: no cover
+def _tanh_fsm_process(
+    bitstream: np.ndarray, num_states: int, initial_state: int
+) -> tuple:  # pragma: no cover
     """JIT kernel for TanhFSM.process()."""
     output = np.zeros(len(bitstream), dtype=np.uint8)
     state = initial_state
@@ -23,7 +25,9 @@ def _tanh_fsm_process(bitstream: np.ndarray, num_states: int, initial_state: int
 
 
 @njit_or_python(cache=True)
-def _relk_fsm_process(bitstream: np.ndarray, num_states: int, initial_state: int) -> tuple:  # pragma: no cover
+def _relk_fsm_process(
+    bitstream: np.ndarray, num_states: int, initial_state: int
+) -> tuple:  # pragma: no cover
     """JIT kernel for ReLKFSM.process()."""
     output = np.zeros(len(bitstream), dtype=np.uint8)
     state = initial_state
