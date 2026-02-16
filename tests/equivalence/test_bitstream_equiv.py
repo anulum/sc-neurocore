@@ -8,6 +8,9 @@ from sc_neurocore.accel.vector_ops import (
     unpack_bitstream as v2_unpack,
     vec_popcount as v2_popcount,
 )
+
+pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+
 import sc_neurocore_engine as v3
 
 

@@ -9,6 +9,7 @@ from ..utils.bitstreams import (
     unipolar_prob_to_value,
 )
 
+
 @dataclass
 class BitstreamDotProduct:
     """
@@ -30,6 +31,7 @@ class BitstreamDotProduct:
     - compute y_scalar = sum_i P_i
     - optionally map y_scalar into a current range [y_min, y_max].
     """
+
     synapses: List[BitstreamSynapse]
 
     def __post_init__(self) -> None:

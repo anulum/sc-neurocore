@@ -4,6 +4,9 @@ import numpy as np
 import pytest
 
 from sc_neurocore.layers import VectorizedSCLayer as V2Layer
+
+pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+
 from sc_neurocore_engine.layers import VectorizedSCLayer as V3Layer
 
 

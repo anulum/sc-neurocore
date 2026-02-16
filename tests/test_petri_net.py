@@ -8,6 +8,9 @@
 
 import numpy as np
 import pytest
+
+pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+
 from sc_neurocore_engine import PetriNetEngine
 
 
@@ -20,18 +23,24 @@ class TestPetriNetEngine:
         Transitions: [R->G, G->Y, Y->R]
         """
         # W_in: which places feed each transition (transitions x places)
-        w_in = np.array([
-            [0.9, 0.0, 0.0],  # T0 (R->G): consumes Red
-            [0.0, 0.0, 0.9],  # T1 (G->Y): consumes Green
-            [0.0, 0.9, 0.0],  # T2 (Y->R): consumes Yellow
-        ], dtype=np.float64)
+        w_in = np.array(
+            [
+                [0.9, 0.0, 0.0],  # T0 (R->G): consumes Red
+                [0.0, 0.0, 0.9],  # T1 (G->Y): consumes Green
+                [0.0, 0.9, 0.0],  # T2 (Y->R): consumes Yellow
+            ],
+            dtype=np.float64,
+        )
 
         # W_out: which places receive from each transition (places x transitions)
-        w_out = np.array([
-            [0.0, 0.0, 0.9],  # Red produced by T2
-            [0.0, 0.9, 0.0],  # Yellow produced by T1
-            [0.9, 0.0, 0.0],  # Green produced by T0
-        ], dtype=np.float64)
+        w_out = np.array(
+            [
+                [0.0, 0.0, 0.9],  # Red produced by T2
+                [0.0, 0.9, 0.0],  # Yellow produced by T1
+                [0.9, 0.0, 0.0],  # Green produced by T0
+            ],
+            dtype=np.float64,
+        )
 
         thresholds = np.array([0.3, 0.3, 0.3])
         marking = np.array([1.0, 0.0, 0.0])  # Start with Red
@@ -103,11 +112,13 @@ class TestPetriNetEngine:
 
     def test_shape_mismatch_raises(self):
         with pytest.raises(AssertionError):
-            PetriNetEngine({
-                "w_in": np.eye(3),
-                "w_out": np.eye(2),  # wrong shape
-                "thresholds": np.zeros(3),
-            })
+            PetriNetEngine(
+                {
+                    "w_in": np.eye(3),
+                    "w_out": np.eye(2),  # wrong shape
+                    "thresholds": np.zeros(3),
+                }
+            )
 
     def test_token_conservation_qualitative(self):
         """Total tokens should not explode unboundedly."""

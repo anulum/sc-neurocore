@@ -5,6 +5,7 @@ import numpy as np
 import scipy.stats.qmc as qmc
 from .rng import RNG
 
+
 def generate_bernoulli_bitstream(
     p: float,
     length: int,
@@ -34,6 +35,7 @@ def generate_bernoulli_bitstream(
     bits = rng.bernoulli(p, size=length)
     return bits.astype(np.uint8)
 
+
 def generate_sobol_bitstream(
     p: float,
     length: int,
@@ -42,7 +44,7 @@ def generate_sobol_bitstream(
     """
     Generate a bitstream using a Sobol sequence (Low Discrepancy Sequence).
     LDS provides faster convergence than random Bernoulli sequences (O(1/N) vs O(1/sqrt(N))).
-    
+
     Parameters
     ----------
     p : float
@@ -51,7 +53,7 @@ def generate_sobol_bitstream(
         Length of the bitstream.
     seed : int, optional
         Seed for the Sobol engine.
-        
+
     Returns
     -------
     np.ndarray
@@ -59,29 +61,30 @@ def generate_sobol_bitstream(
     """
     if not 0.0 <= p <= 1.0:
         raise ValueError(f"Probability p must be in [0,1], got {p}.")
-        
+
     # Create Sobol engine (1 dimension)
     sampler = qmc.Sobol(d=1, seed=seed)
-    
-    # Generate samples. Sobol works best with powers of 2, 
+
+    # Generate samples. Sobol works best with powers of 2,
     # but we can take 'length' samples.
     # Note: For strict determinism, one should manage the sampler state,
     # but here we create a fresh one or seek could be used if persisting.
     # To avoid 'scramble' creating randomness if not desired, we set scramble=False by default in Sobol,
     # but scramble=True usually gives better results for integration-like tasks.
     # We'll use scramble=True with the seed.
-    
+
     # Optimally, length should be power of 2 for Sobol balance properties.
     # We allow any length but warn or just proceed.
-    
-    samples = sampler.random(n=length) # Shape (length, 1)
+
+    samples = sampler.random(n=length)  # Shape (length, 1)
     samples = samples.flatten()
-    
+
     # Thresholding: The standard way to convert a U[0,1] sample 's' to a bit with prob 'p'
     # is: bit = 1 if s < p else 0
     bits = (samples < p).astype(np.uint8)
-    
+
     return bits
+
 
 def bitstream_to_probability(bitstream: np.ndarray) -> float:
     """
@@ -91,6 +94,7 @@ def bitstream_to_probability(bitstream: np.ndarray) -> float:
     if bitstream.size == 0:
         raise ValueError("Bitstream is empty.")
     return float(bitstream.mean())
+
 
 def value_to_unipolar_prob(
     x: float,
@@ -111,6 +115,7 @@ def value_to_unipolar_prob(
     p = (x - x_min) / (x_max - x_min)
     return float(p)
 
+
 def unipolar_prob_to_value(
     p: float,
     x_min: float,
@@ -124,6 +129,7 @@ def unipolar_prob_to_value(
         raise ValueError(f"Probability p must be in [0,1], got {p}.")
     return float(x_min + p * (x_max - x_min))
 
+
 @dataclass
 class BitstreamEncoder:
     """
@@ -136,6 +142,7 @@ class BitstreamEncoder:
     p_hat = bitstream_to_probability(bitstream)
     x_rec = encoder.decode(bitstream)
     """
+
     x_min: float
     x_max: float
     length: int = 256
@@ -159,12 +166,14 @@ class BitstreamEncoder:
         p_hat = bitstream_to_probability(bitstream)
         return unipolar_prob_to_value(p_hat, self.x_min, self.x_max)
 
+
 @dataclass
 class BitstreamAverager:
     """
     Utility to accumulate bits over time and estimate probability on the fly.
     Can be used, e.g., to estimate a neuron firing probability over a window.
     """
+
     window: int
     _buffer: Optional[np.ndarray] = None
     _index: int = 0
@@ -178,16 +187,16 @@ class BitstreamAverager:
     def push(self, bit: int) -> None:
         if bit not in (0, 1):
             raise ValueError("Bit must be 0 or 1.")
-        
+
         # Remove old bit from sum if buffer is wrapping around
         old_bit = self._buffer[self._index]
         self._buffer[self._index] = bit
-        
+
         if self._filled:
             self._running_sum = self._running_sum - old_bit + bit
         else:
             self._running_sum += bit
-            
+
         self._index = (self._index + 1) % self.window
         if self._index == 0:
             self._filled = True

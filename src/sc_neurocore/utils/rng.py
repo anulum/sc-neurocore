@@ -2,6 +2,7 @@ from __future__ import annotations
 import numpy as np
 from typing import Optional
 
+
 class RNG:
     """
     Thin wrapper around NumPy RNG to keep a single interface.

@@ -14,7 +14,9 @@ def _perf_enabled() -> bool:
 
 
 def _make_layer(**overrides) -> SCLearningLayer:
-    params = dict(n_inputs=3, n_neurons=2, w_min=0.0, w_max=1.0, learning_rate=0.1, length=32, base_seed=7)
+    params = dict(
+        n_inputs=3, n_neurons=2, w_min=0.0, w_max=1.0, learning_rate=0.1, length=32, base_seed=7
+    )
     params.update(overrides)
     return SCLearningLayer(**params)
 

@@ -11,6 +11,9 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+
+pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+
 import sc_neurocore_engine as v3
 
 
@@ -155,4 +158,3 @@ class TestRayonThreshold:
 class TestPhase10Version:
     def test_version(self):
         assert v3.__version__ == "3.6.0"
-

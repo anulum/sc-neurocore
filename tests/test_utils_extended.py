@@ -21,9 +21,7 @@ from sc_neurocore.utils.adaptive import AdaptiveInference
 class TestAdaptiveInference:
     def test_converges_early(self):
         """Stable step_func should trigger early exit before max_length."""
-        ai = AdaptiveInference(
-            check_interval=16, tolerance=0.02, min_length=64, max_length=1024
-        )
+        ai = AdaptiveInference(check_interval=16, tolerance=0.02, min_length=64, max_length=1024)
         call_count = 0
 
         def step():
@@ -39,9 +37,7 @@ class TestAdaptiveInference:
     def test_runs_to_max_length_when_noisy(self):
         """Noisy step_func should exhaust max_length."""
         rng = np.random.default_rng(42)
-        ai = AdaptiveInference(
-            check_interval=16, tolerance=0.001, min_length=64, max_length=256
-        )
+        ai = AdaptiveInference(check_interval=16, tolerance=0.001, min_length=64, max_length=256)
         call_count = 0
 
         def step():
@@ -54,9 +50,7 @@ class TestAdaptiveInference:
 
     def test_min_length_respected(self):
         """Even a constant function must run at least min_length steps."""
-        ai = AdaptiveInference(
-            check_interval=16, tolerance=0.1, min_length=128, max_length=512
-        )
+        ai = AdaptiveInference(check_interval=16, tolerance=0.1, min_length=128, max_length=512)
         call_count = 0
 
         def step():
@@ -75,9 +69,7 @@ class TestAdaptiveInference:
             counter[0] += 1
             return float(counter[0])
 
-        ai = AdaptiveInference(
-            check_interval=32, tolerance=100.0, min_length=64, max_length=128
-        )
+        ai = AdaptiveInference(check_interval=32, tolerance=100.0, min_length=64, max_length=128)
         result = ai.run_adaptive(step)
         # With huge tolerance and checks starting at min_length=64,
         # should converge early once 3 checks accumulate

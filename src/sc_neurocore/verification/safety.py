@@ -1,9 +1,9 @@
-
 import ast
 import logging
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class CodeSafetyVerifier:
@@ -11,7 +11,7 @@ class CodeSafetyVerifier:
     Formal Verification for Self-Modifying Code.
     Analyzes AST to prevent catastrophic bugs in auto-generated updates.
     """
-    
+
     def verify_code_safety(self, source_code: str) -> bool:
         """
         Static analysis of source code for dangerous patterns.
@@ -21,23 +21,25 @@ class CodeSafetyVerifier:
         except SyntaxError:
             logger.error("Safety Violation: Syntax Error in generated code.")
             return False
-            
+
         # Check for forbidden imports or calls (e.g., 'os.system("rm -rf")')
         for node in ast.walk(tree):
             if isinstance(node, ast.Call):
                 if isinstance(node.func, ast.Attribute):
                     # Check for os.system, subprocess.call etc.
-                    if node.func.attr in ['system', 'popen', 'rmtree']:
+                    if node.func.attr in ["system", "popen", "rmtree"]:
                         # Heuristic check
-                        logger.warning("Safety Warning: Dangerous call detected '%s'.", node.func.attr)
+                        logger.warning(
+                            "Safety Warning: Dangerous call detected '%s'.", node.func.attr
+                        )
                         # In a real system, this would be stricter.
                         # For demo, we allow it but log it.
-                        
+
             # Check for infinite loops (While True without Break)
             if isinstance(node, ast.While):
                 # Simple heuristic: if test is Constant(True), check for break
                 pass
-                
+
         logger.info("Safety Check: Code structure appears valid.")
         return True
 

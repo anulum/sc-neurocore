@@ -1,13 +1,14 @@
-
 import numpy as np
 import warnings
 
 try:
     from mpi4py import MPI  # pragma: no cover
+
     HAS_MPI = True  # pragma: no cover
 except ImportError:
     HAS_MPI = False
     warnings.warn("mpi4py not found. Distributed computing disabled. Install 'mpi4py'.")
+
 
 class MPIDriver:
     """

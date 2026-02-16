@@ -34,6 +34,7 @@ class FixedPointLIFNeuron:
     refractory_period : int
         Number of clock cycles to hold after a spike.
     """
+
     data_width: int = 16
     fraction: int = 8
     v_rest: int = 0
@@ -117,6 +118,7 @@ class FixedPointLFSR:
     Polynomial: x^16 + x^14 + x^13 + x^11 + 1
     Taps (0-indexed): 15, 13, 12, 10
     """
+
     width: int = 16
     seed: int = 0xACE1
 
@@ -149,6 +151,7 @@ class FixedPointBitstreamEncoder:
     Combines LFSR + comparator to produce a stochastic bitstream
     where P(bit=1) ~ x_value / (2^DATA_WIDTH - 1).
     """
+
     data_width: int = 16
     seed_init: int = 0xACE1
 

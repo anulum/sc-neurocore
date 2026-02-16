@@ -1,30 +1,32 @@
-
 from typing import Any, Callable, TypeVar, Generic
 from dataclasses import dataclass
 import numpy as np
 
-T = TypeVar('T')
-U = TypeVar('U')
+T = TypeVar("T")
+U = TypeVar("U")
+
 
 @dataclass
 class CategoryObject(Generic[T]):
     data: T
     domain: str
 
+
 class Morphism:
     def __init__(self, func: Callable[[Any], Any], name: str):
         self.func = func
         self.name = name
-        
+
     def __call__(self, obj: CategoryObject) -> CategoryObject:
         return CategoryObject(data=self.func(obj.data), domain=self.name)
+
 
 class CategoryTheoryBridge:
     """
     Functor mapping between distinct computational domains.
     Stochastic <-> Quantum <-> Bio
     """
-    
+
     @staticmethod
     def stochastic_to_quantum(bitstream: np.ndarray) -> np.ndarray:
         """
@@ -32,7 +34,7 @@ class CategoryTheoryBridge:
         """
         p = np.mean(bitstream)
         # Quantum state |psi> = sqrt(p)|1> + sqrt(1-p)|0>
-        alpha = np.sqrt(1-p)
+        alpha = np.sqrt(1 - p)
         beta = np.sqrt(p)
         return np.array([alpha, beta])
 
@@ -41,7 +43,7 @@ class CategoryTheoryBridge:
         """
         Map quantum probability |beta|^2 to concentration [0, 10] uM.
         """
-        prob_1 = np.abs(state_vector[1])**2
+        prob_1 = np.abs(state_vector[1]) ** 2
         concentration = prob_1 * 10.0
         return concentration
 

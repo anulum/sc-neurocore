@@ -1,8 +1,8 @@
-
 class SCDashboard:
     """
     Simple CLI Dashboard for monitoring SC simulation.
     """
+
     def __init__(self, n_neurons: int):
         self.n_neurons = n_neurons
         self.history: list[list[float]] = [[] for _ in range(n_neurons)]
@@ -31,9 +31,12 @@ class SCDashboard:
             trend = ""
             if len(self.history[i]) >= 2:
                 diff = rate - self.history[i][-2]
-                if diff > 0.01: trend = "/ UP"
-                elif diff < -0.01: trend = "\\ DWN"
-                else: trend = "- STY"
+                if diff > 0.01:
+                    trend = "/ UP"
+                elif diff < -0.01:
+                    trend = "\\ DWN"
+                else:
+                    trend = "- STY"
 
             # Bar chart
             bar_len = int(rate * 20)

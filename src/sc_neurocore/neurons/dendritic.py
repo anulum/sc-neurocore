@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Dict
 
+
 @dataclass
 class StochasticDendriticNeuron:
     """
@@ -20,6 +21,7 @@ class StochasticDendriticNeuron:
     Dendrite Output = NonLinear(Input)
     Soma = Integrate(D1 + D2)
     """
+
     threshold: float = 1.5
     _last_current: float = field(default=0.0, init=False, repr=False)
 

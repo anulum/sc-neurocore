@@ -7,6 +7,7 @@ from ..utils.bitstreams import BitstreamEncoder
 from ..synapses.sc_synapse import BitstreamSynapse
 from ..synapses.dot_product import BitstreamDotProduct
 
+
 @dataclass
 class BitstreamCurrentSource:
     """
@@ -21,6 +22,7 @@ class BitstreamCurrentSource:
     For now we assume static inputs and weights over the full length,
     but you can extend this to time-varying later.
     """
+
     x_inputs: Sequence[float]
     x_min: float
     x_max: float
@@ -112,4 +114,3 @@ class BitstreamCurrentSource:
         using the dot-product's scalar value.
         """
         return float(self.current_scalar)
-

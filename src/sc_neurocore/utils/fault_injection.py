@@ -1,11 +1,11 @@
-
 import numpy as np
+
 
 class FaultInjector:
     """
     Simulates hardware faults in Stochastic Computing bitstreams.
     """
-    
+
     @staticmethod
     def inject_bit_flips(bitstream: np.ndarray, error_rate: float) -> np.ndarray:
         """
@@ -13,11 +13,11 @@ class FaultInjector:
         """
         if error_rate <= 0:
             return bitstream
-            
+
         # Generate error mask (1 where error occurs)
         # Using numpy for speed
         mask = np.random.random(bitstream.shape) < error_rate
-        
+
         # XOR with mask flips the bits where mask is 1
         # bitstream is uint8 {0,1}
         # We need to ensure we don't go out of bounds (0/1)
@@ -25,7 +25,7 @@ class FaultInjector:
         # 1 ^ 1 = 0
         # 0 ^ 0 = 0
         # 1 ^ 0 = 1
-        
+
         corrupted = np.bitwise_xor(bitstream.astype(bool), mask)
         return corrupted.astype(np.uint8)
 

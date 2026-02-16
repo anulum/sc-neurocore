@@ -1,7 +1,7 @@
-
 from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
+
 
 @dataclass
 class VoxelGrid:
@@ -9,9 +9,10 @@ class VoxelGrid:
     A 3D Voxel Grid representation for SC.
     Each voxel stores a probability of being 'occupied'.
     """
+
     resolution: int
     data: np.ndarray = None
-    
+
     def __post_init__(self):
         if self.data is None:
             self.data = np.zeros((self.resolution, self.resolution, self.resolution))
@@ -27,15 +28,19 @@ class VoxelGrid:
         rands = np.random.random((*self.data.shape, length))
         return (rands < self.data[..., None]).astype(np.uint8)
 
+
 @dataclass
 class PointCloud:
     """
     A Point Cloud representation.
     Each point has (x, y, z) coordinates and an associated probability/intensity.
     """
-    points: np.ndarray # (N, 3)
-    intensities: np.ndarray # (N,)
-    
+
+    points: np.ndarray  # (N, 3)
+    intensities: np.ndarray  # (N,)
+
     def normalize(self):
-        self.points = (self.points - np.min(self.points)) / (np.max(self.points) - np.min(self.points) + 1e-9)
+        self.points = (self.points - np.min(self.points)) / (
+            np.max(self.points) - np.min(self.points) + 1e-9
+        )
         self.intensities = np.clip(self.intensities, 0, 1)

@@ -3,31 +3,38 @@ import logging
 import numpy as np
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger("sc_neurocore_driver")
+
 
 class RealityHardwareError(ImportError):
     """Raised when physical hardware is required but missing."""
+
     pass
+
 
 class SC_NeuroCore_Driver:
     """
     Primary driver for the sc-neurocore FPGA overlay on PYNQ-Z2.
-    
+
     This driver enforces 'Reality Checks'. It will NOT run on standard x86 CPUs
     unless explicitly in 'EMULATION' mode.
     """
-    
+
     def __init__(self, bitstream_path="sc_neurocore.bit", mode="HARDWARE"):
         self.mode = mode
         self.overlay = None
         self.dma = None
         self.bitstream_path = bitstream_path
-        
+
         if self.mode == "HARDWARE":
             self._connect_to_fpga()
         elif self.mode == "EMULATION":
-            logger.warning("Running in EMULATION mode. Results may not reflect quantum stochasticity.")
+            logger.warning(
+                "Running in EMULATION mode. Results may not reflect quantum stochasticity."
+            )
         else:
             raise ValueError("Invalid mode. Use 'HARDWARE' or 'EMULATION'.")
 
@@ -37,7 +44,7 @@ class SC_NeuroCore_Driver:
         """
         try:
             from pynq import Overlay, allocate
-            
+
             if not os.path.exists(self.bitstream_path):
                 # Look in standard install location if not local
                 fallback_path = f"/usr/local/lib/pynq/overlays/sc_neurocore/{self.bitstream_path}"
@@ -48,13 +55,13 @@ class SC_NeuroCore_Driver:
 
             logger.info(f"Loading bitstream: {self.bitstream_path}")
             self.overlay = Overlay(self.bitstream_path)
-            
+
             # Check for specific IP blocks to verify it's the right bitstream
-            if not hasattr(self.overlay, 'scpn_layer_1_0'):
+            if not hasattr(self.overlay, "scpn_layer_1_0"):
                 raise RuntimeError("Loaded bitstream does not contain SCPN Layer 1 IP.")
-                
+
             logger.info("FPGA Overlay loaded successfully.")
-            
+
         except ImportError:
             logger.error("PYNQ library not found.")
             raise RealityHardwareError(
@@ -72,17 +79,17 @@ class SC_NeuroCore_Driver:
         if self.mode == "EMULATION":
             logger.debug(f"Emulating write to Layer {layer_id}: {params}")
             return
-            
+
         # Hardware implementation
         layer_ip = getattr(self.overlay, f"scpn_layer_{layer_id}_0", None)
         if not layer_ip:
             raise ValueError(f"Layer {layer_id} not found in hardware.")
-            
+
         # Example register map (offset 0x10 = gain, 0x14 = threshold)
-        if 'gain' in params:
-            layer_ip.write(0x10, int(params['gain'] * 65536)) # Fixed point
-        if 'threshold' in params:
-            layer_ip.write(0x14, int(params['threshold'] * 65536))
+        if "gain" in params:
+            layer_ip.write(0x10, int(params["gain"] * 65536))  # Fixed point
+        if "threshold" in params:
+            layer_ip.write(0x14, int(params["threshold"] * 65536))
 
     def run_step(self, input_vector):
         """
@@ -91,10 +98,11 @@ class SC_NeuroCore_Driver:
         if self.mode == "EMULATION":
             # Simple mock function
             return np.random.rand(16)
-            
+
         # Hardware DMA transfer would go here
         # ...
         pass
+
 
 if __name__ == "__main__":
     # Test strict mode

@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
@@ -6,9 +5,12 @@ from typing import Sequence
 
 from ..accel.vector_ops import pack_bitstream, vec_and, vec_popcount
 from ..accel.gpu_backend import (
-    HAS_CUPY, to_device, to_host,
+    HAS_CUPY,
+    to_device,
+    to_host,
     gpu_vec_mac,
 )
+
 
 @dataclass
 class VectorizedSCLayer:
@@ -18,6 +20,7 @@ class VectorizedSCLayer:
     When CuPy is available the heavy AND + popcount path runs on the GPU;
     otherwise pure NumPy is used transparently.
     """
+
     n_inputs: int
     n_neurons: int
     length: int = 1024
@@ -32,8 +35,7 @@ class VectorizedSCLayer:
     def _refresh_packed_weights(self):
         w_probs = self.weights
         bits = (
-            np.random.random((self.n_neurons, self.n_inputs, self.length))
-            < w_probs[:, :, None]
+            np.random.random((self.n_neurons, self.n_inputs, self.length)) < w_probs[:, :, None]
         ).astype(np.uint8)
 
         flat = bits.reshape(-1, self.length)
@@ -50,12 +52,11 @@ class VectorizedSCLayer:
         in_probs = np.array(input_values)
         if in_probs.ndim != 1 or in_probs.shape[0] != self.n_inputs:
             raise ValueError(
-                f"Expected 1-D input of length {self.n_inputs}, "
-                f"got shape {in_probs.shape}"
+                f"Expected 1-D input of length {self.n_inputs}, " f"got shape {in_probs.shape}"
             )
-        input_bits = (
-            np.random.random((self.n_inputs, self.length)) < in_probs[:, None]
-        ).astype(np.uint8)
+        input_bits = (np.random.random((self.n_inputs, self.length)) < in_probs[:, None]).astype(
+            np.uint8
+        )
 
         packed_inputs = pack_bitstream(input_bits)
 

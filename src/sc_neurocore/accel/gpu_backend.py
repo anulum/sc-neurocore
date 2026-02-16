@@ -37,6 +37,7 @@ except Exception:
 # Transfer helpers
 # ---------------------------------------------------------------------------
 
+
 def to_device(arr: np.ndarray) -> "xp.ndarray":
     """Move a NumPy array to the active backend (GPU copy or no-op)."""
     if HAS_CUPY:  # pragma: no cover
@@ -54,6 +55,7 @@ def to_host(arr) -> np.ndarray:
 # ---------------------------------------------------------------------------
 # GPU-accelerated bitstream primitives
 # ---------------------------------------------------------------------------
+
 
 def gpu_pack_bitstream(bits: "xp.ndarray") -> "xp.ndarray":
     """
@@ -82,9 +84,7 @@ def gpu_pack_bitstream(bits: "xp.ndarray") -> "xp.ndarray":
         B, length = bits.shape
         pad = (64 - length % 64) % 64
         if pad:
-            bits = xp.concatenate(
-                [bits, xp.zeros((B, pad), dtype=xp.uint8)], axis=1
-            )
+            bits = xp.concatenate([bits, xp.zeros((B, pad), dtype=xp.uint8)], axis=1)
         n_words = bits.shape[1] // 64
         chunks = bits.reshape(B, n_words, 64)
         powers = xp.uint64(1) << xp.arange(64, dtype=xp.uint64)
@@ -136,5 +136,5 @@ def gpu_vec_mac(
     products = xp.bitwise_and(packed_weights, packed_inputs[None, :, :])
 
     # Per-element popcount, then sum across inputs and words
-    counts = gpu_popcount(products)       # (N, I, W) uint64
-    return counts.sum(axis=(1, 2))        # (N,)
+    counts = gpu_popcount(products)  # (N, I, W) uint64
+    return counts.sum(axis=(1, 2))  # (N,)

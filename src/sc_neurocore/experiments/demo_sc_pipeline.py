@@ -4,6 +4,7 @@ from ..sources.bitstream_current_source import BitstreamCurrentSource
 from ..neurons.stochastic_lif import StochasticLIFNeuron
 from ..recorders.spike_recorder import BitstreamSpikeRecorder
 
+
 def demo():
     # Multi-channel inputs
     x_inputs = [0.03, 0.05, 0.08]
@@ -46,6 +47,7 @@ def demo():
     hist, edges = recorder.isi_histogram(bins=10)
     print("ISI histogram counts:", hist)
     print("ISI bin edges (ms):", edges)
+
 
 if __name__ == "__main__":
     demo()

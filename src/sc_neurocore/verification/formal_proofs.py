@@ -1,36 +1,37 @@
-
 import logging
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class Interval:
     min_val: float
     max_val: float
-    
+
     def __add__(self, other):
         return Interval(self.min_val + other.min_val, self.max_val + other.max_val)
-        
+
     def __mul__(self, other):
         # Interval multiplication
         vals = [
             self.min_val * other.min_val,
             self.min_val * other.max_val,
             self.max_val * other.min_val,
-            self.max_val * other.max_val
+            self.max_val * other.max_val,
         ]
         return Interval(min(vals), max(vals))
-        
+
     def __repr__(self):
         return f"[{self.min_val:.4f}, {self.max_val:.4f}]"
+
 
 class FormalVerifier:
     """
     Simulated SMT Solver using Interval Arithmetic.
     Proves properties of Stochastic Functions.
     """
-    
+
     @staticmethod
     def verify_probability_bounds(input_interval: Interval, weight_interval: Interval) -> bool:
         """
@@ -39,10 +40,12 @@ class FormalVerifier:
         """
         # Logic: P(A & B) = P(A) * P(B) assuming independence
         out = input_interval * weight_interval
-        
+
         is_safe = out.min_val >= 0.0 and out.max_val <= 1.0
-        logger.info("Verification: Input %s * Weight %s -> Output %s", input_interval, weight_interval, out)
-        logger.info("Property (0 <= p <= 1): %s", 'HELD' if is_safe else 'VIOLATED')
+        logger.info(
+            "Verification: Input %s * Weight %s -> Output %s", input_interval, weight_interval, out
+        )
+        logger.info("Property (0 <= p <= 1): %s", "HELD" if is_safe else "VIOLATED")
         return is_safe
 
     @staticmethod

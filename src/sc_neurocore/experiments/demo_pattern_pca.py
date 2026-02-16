@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 
 from sc_neurocore.experiments.demo_pattern_classification import run_pattern_trials
 
+
 def compute_pca_2d(X: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Simple 2D PCA using SVD.
@@ -34,6 +35,7 @@ def compute_pca_2d(X: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     X_2d = X_centered @ components.T  # (n_samples, 2)
 
     return X_2d, mean.squeeze(), components
+
 
 def demo_pca_plot():
     # Two patterns (same as in demo_pattern_classification)
@@ -87,6 +89,7 @@ def demo_pca_plot():
     plt.grid(True)
     plt.tight_layout()
     plt.show()
+
 
 if __name__ == "__main__":
     demo_pca_plot()

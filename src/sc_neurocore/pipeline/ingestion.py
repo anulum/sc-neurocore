@@ -4,22 +4,25 @@ import numpy as np
 from dataclasses import dataclass
 from typing import Dict, Any
 
+
 @dataclass
 class MultimodalDataset:
     """
     A container for multimodal training data.
     """
-    data: Dict[str, np.ndarray] # {'vision': [...], 'audio': [...]}
+
+    data: Dict[str, np.ndarray]  # {'vision': [...], 'audio': [...]}
     labels: np.ndarray
-    
+
     def get_sample(self, idx: int) -> Dict[str, np.ndarray]:
         return {k: v[idx] for k, v in self.data.items()}
+
 
 class DataIngestor:
     """
     Ingests and normalizes multimodal datasets for SC training.
     """
-    
+
     def prepare_dataset(self, raw_data: Dict[str, Any]) -> MultimodalDataset:
         """
         Normalizes and packages raw multimodal data.
@@ -34,5 +37,7 @@ class DataIngestor:
                 processed_data[k] = (arr - arr_min) / (arr_max - arr_min)
             else:
                 processed_data[k] = np.zeros_like(arr)
-                
-        return MultimodalDataset(data=processed_data, labels=np.zeros(len(list(processed_data.values())[0])))
+
+        return MultimodalDataset(
+            data=processed_data, labels=np.zeros(len(list(processed_data.values())[0]))
+        )

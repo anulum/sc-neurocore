@@ -2,6 +2,10 @@
 
 import numpy as np
 
+import pytest
+
+pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+
 from sc_neurocore_engine import KuramotoSolver
 
 
@@ -15,9 +19,9 @@ class TestKuramotoSolver:
         solver = KuramotoSolver(omega, coupling, phases, noise_amp=0.0)
         order_values = solver.run(n_steps=500, dt=0.01)
 
-        assert order_values[-1] > 0.8, (
-            f"Strong coupling should synchronize: R={order_values[-1]:.4f}"
-        )
+        assert (
+            order_values[-1] > 0.8
+        ), f"Strong coupling should synchronize: R={order_values[-1]:.4f}"
 
     def test_order_parameter_range(self):
         solver = KuramotoSolver(

@@ -2,6 +2,7 @@ from __future__ import annotations
 import numpy as np
 from sc_neurocore.neurons.stochastic_lif import StochasticLIFNeuron
 
+
 def run_demo():
     neuron = StochasticLIFNeuron(
         v_rest=0.0,
@@ -23,6 +24,7 @@ def run_demo():
 
     rate_hz = spikes.sum() / (T * neuron.dt) * 1000.0
     print(f"Total spikes: {spikes.sum()}, firing rate ≈ {rate_hz:.2f} Hz")
+
 
 if __name__ == "__main__":
     run_demo()

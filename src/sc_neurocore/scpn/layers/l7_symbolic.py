@@ -30,6 +30,7 @@ PHI = (1 + np.sqrt(5)) / 2
 @dataclass
 class L7_StochasticParameters:
     """Parameters for the Stochastic L7 Symbolic Layer."""
+
     n_symbols: int = 128
     n_meridians: int = 12  # TCM meridians
     n_acupoints: int = 361  # Classical acupuncture points
@@ -51,7 +52,7 @@ class L7_StochasticParameters:
 
     # Inter-layer coupling
     ecological_coupling: float = 0.1  # From L6
-    cosmic_coupling: float = 0.15     # To L8
+    cosmic_coupling: float = 0.15  # To L8
 
 
 class L7_SymbolicLayer:
@@ -64,11 +65,11 @@ class L7_SymbolicLayer:
 
     # Platonic solid vertex counts
     PLATONIC_VERTICES = {
-        'tetrahedron': 4,
-        'cube': 8,
-        'octahedron': 6,
-        'dodecahedron': 20,
-        'icosahedron': 12
+        "tetrahedron": 4,
+        "cube": 8,
+        "octahedron": 6,
+        "dodecahedron": 20,
+        "icosahedron": 12,
     }
 
     # Fibonacci sequence for alignment
@@ -103,10 +104,13 @@ class L7_SymbolicLayer:
         # Time
         self.time = 0.0
 
-    def step(self, dt: float,
-             l6_input: Optional[Dict] = None,
-             symbol_input: Optional[np.ndarray] = None,
-             acupoint_stimulus: Optional[Dict[int, float]] = None) -> Dict[str, np.ndarray]:
+    def step(
+        self,
+        dt: float,
+        l6_input: Optional[Dict] = None,
+        symbol_input: Optional[np.ndarray] = None,
+        acupoint_stimulus: Optional[Dict[int, float]] = None,
+    ) -> Dict[str, np.ndarray]:
         """
         Advance the layer by one time step.
 
@@ -124,8 +128,7 @@ class L7_SymbolicLayer:
         # 1. Process symbol input
         if symbol_input is not None:
             self.symbol_activations = np.clip(
-                self.symbol_activations + symbol_input[:self.params.n_symbols] * 0.2,
-                0.0, 1.0
+                self.symbol_activations + symbol_input[: self.params.n_symbols] * 0.2, 0.0, 1.0
             )
 
         # 2. Compute Phi (Golden Ratio) alignment
@@ -184,11 +187,11 @@ class L7_SymbolicLayer:
 
         # 7. Compute symbolic health
         self.symbolic_health = (
-            self.params.phi_alignment_weight * self.phi_alignment +
-            self.params.fibonacci_weight * self.fibonacci_alignment +
-            self.params.metatron_weight * self.metatron_flow +
-            self.params.platonic_weight * self.platonic_coherence +
-            self.params.e8_weight * self.e8_alignment
+            self.params.phi_alignment_weight * self.phi_alignment
+            + self.params.fibonacci_weight * self.fibonacci_alignment
+            + self.params.metatron_weight * self.metatron_flow
+            + self.params.platonic_weight * self.platonic_coherence
+            + self.params.e8_weight * self.e8_alignment
         )
 
         # 8. Meridian Qi dynamics
@@ -197,9 +200,9 @@ class L7_SymbolicLayer:
         self.meridian_qi += qi_flow * self.params.symbol_coupling * dt
 
         # Ecological coupling (Schumann affects Qi)
-        if l6_input is not None and 'schumann_field' in l6_input:
-            schumann_mean = np.mean(l6_input['schumann_field'])
-            self.meridian_qi *= (0.9 + 0.1 * schumann_mean)
+        if l6_input is not None and "schumann_field" in l6_input:
+            schumann_mean = np.mean(l6_input["schumann_field"])
+            self.meridian_qi *= 0.9 + 0.1 * schumann_mean
 
         self.meridian_qi = np.clip(self.meridian_qi, 0.0, 1.0)
 
@@ -208,56 +211,55 @@ class L7_SymbolicLayer:
             for point_id, intensity in acupoint_stimulus.items():
                 if 0 <= point_id < self.params.n_acupoints:
                     self.acupoint_activations[point_id] = np.clip(
-                        self.acupoint_activations[point_id] + intensity,
-                        0.0, 1.0
+                        self.acupoint_activations[point_id] + intensity, 0.0, 1.0
                     )
 
         # Decay acupoint activations
-        self.acupoint_activations *= (1.0 - self.params.symbol_decay * dt)
+        self.acupoint_activations *= 1.0 - self.params.symbol_decay * dt
 
         # 10. Assemble glyph vector
-        self.glyph_vector = np.array([
-            self.phi_alignment,
-            self.fibonacci_alignment,
-            self.metatron_flow,
-            self.platonic_coherence,
-            self.e8_alignment,
-            self.symbolic_health
-        ])
+        self.glyph_vector = np.array(
+            [
+                self.phi_alignment,
+                self.fibonacci_alignment,
+                self.metatron_flow,
+                self.platonic_coherence,
+                self.e8_alignment,
+                self.symbolic_health,
+            ]
+        )
 
         # 11. Symbol dynamics (decay and coupling)
         # Coupling: nearby symbols influence each other
         coupling = np.roll(self.symbol_activations, 1) + np.roll(self.symbol_activations, -1)
-        self.symbol_activations += self.params.symbol_coupling * (
-            coupling / 2 - self.symbol_activations
-        ) * dt
+        self.symbol_activations += (
+            self.params.symbol_coupling * (coupling / 2 - self.symbol_activations) * dt
+        )
         # Decay
-        self.symbol_activations *= (1.0 - self.params.symbol_decay * dt)
+        self.symbol_activations *= 1.0 - self.params.symbol_decay * dt
         self.symbol_activations = np.clip(self.symbol_activations, 0.0, 1.0)
 
         # 12. Generate output bitstreams
-        output_probs = np.concatenate([
-            self.symbol_activations,
-            self.meridian_qi,
-            self.glyph_vector
-        ])
-        output_probs = output_probs[:self.params.n_symbols]
+        output_probs = np.concatenate(
+            [self.symbol_activations, self.meridian_qi, self.glyph_vector]
+        )
+        output_probs = output_probs[: self.params.n_symbols]
 
         rands = np.random.random((self.params.n_symbols, self.params.bitstream_length))
         output_bitstreams = (rands < output_probs[:, None]).astype(np.uint8)
 
         return {
-            'glyph_vector': self.glyph_vector.copy(),
-            'phi_alignment': self.phi_alignment,
-            'fibonacci_alignment': self.fibonacci_alignment,
-            'metatron_flow': self.metatron_flow,
-            'platonic_coherence': self.platonic_coherence,
-            'e8_alignment': self.e8_alignment,
-            'symbolic_health': self.symbolic_health,
-            'meridian_qi': self.meridian_qi.copy(),
-            'acupoint_activations': self.acupoint_activations.copy(),
-            'e8_state': self.e8_state.copy(),
-            'output_bitstreams': output_bitstreams
+            "glyph_vector": self.glyph_vector.copy(),
+            "phi_alignment": self.phi_alignment,
+            "fibonacci_alignment": self.fibonacci_alignment,
+            "metatron_flow": self.metatron_flow,
+            "platonic_coherence": self.platonic_coherence,
+            "e8_alignment": self.e8_alignment,
+            "symbolic_health": self.symbolic_health,
+            "meridian_qi": self.meridian_qi.copy(),
+            "acupoint_activations": self.acupoint_activations.copy(),
+            "e8_state": self.e8_state.copy(),
+            "output_bitstreams": output_bitstreams,
         }
 
     def get_global_metric(self) -> float:
@@ -272,22 +274,21 @@ class L7_SymbolicLayer:
         """Stimulate a specific meridian."""
         if 0 <= meridian_id < self.params.n_meridians:
             self.meridian_qi[meridian_id] = np.clip(
-                self.meridian_qi[meridian_id] + intensity,
-                0.0, 1.0
+                self.meridian_qi[meridian_id] + intensity, 0.0, 1.0
             )
 
     def get_acupoint_map(self) -> Dict[str, float]:
         """Return named acupoint activations (simplified set)."""
         # Classical acupoints (simplified)
         named_points = {
-            'LI4_Hegu': 4,
-            'ST36_Zusanli': 36,
-            'SP6_Sanyinjiao': 60,
-            'PC6_Neiguan': 96,
-            'LV3_Taichong': 120,
-            'GV20_Baihui': 200,
-            'CV4_Guanyuan': 250,
-            'BL23_Shenshu': 300
+            "LI4_Hegu": 4,
+            "ST36_Zusanli": 36,
+            "SP6_Sanyinjiao": 60,
+            "PC6_Neiguan": 96,
+            "LV3_Taichong": 120,
+            "GV20_Baihui": 200,
+            "CV4_Guanyuan": 250,
+            "BL23_Shenshu": 300,
         }
         return {
             name: float(self.acupoint_activations[idx])

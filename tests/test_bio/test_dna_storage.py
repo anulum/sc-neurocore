@@ -42,7 +42,7 @@ def test_dna_roundtrip_no_mutation():
     bits = np.array([1, 0, 0], dtype=np.uint8)
     dna = enc.encode(bits)
     decoded = enc.decode(dna)
-    assert np.array_equal(decoded[:bits.size], np.array([1, 0, 0], dtype=np.uint8))
+    assert np.array_equal(decoded[: bits.size], np.array([1, 0, 0], dtype=np.uint8))
 
 
 def test_dna_encode_known_mapping():

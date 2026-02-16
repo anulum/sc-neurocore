@@ -19,48 +19,282 @@ logger = logging.getLogger(__name__)
 # Marching Cubes lookup tables (simplified)
 # Edge table: which edges are cut for each cube configuration
 EDGE_TABLE = [
-    0x0, 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
-    0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
-    0x190, 0x99, 0x393, 0x29a, 0x596, 0x49f, 0x795, 0x69c,
-    0x99c, 0x895, 0xb9f, 0xa96, 0xd9a, 0xc93, 0xf99, 0xe90,
-    0x230, 0x339, 0x33, 0x13a, 0x636, 0x73f, 0x435, 0x53c,
-    0xa3c, 0xb35, 0x83f, 0x936, 0xe3a, 0xf33, 0xc39, 0xd30,
-    0x3a0, 0x2a9, 0x1a3, 0xaa, 0x7a6, 0x6af, 0x5a5, 0x4ac,
-    0xbac, 0xaa5, 0x9af, 0x8a6, 0xfaa, 0xea3, 0xda9, 0xca0,
-    0x460, 0x569, 0x663, 0x76a, 0x66, 0x16f, 0x265, 0x36c,
-    0xc6c, 0xd65, 0xe6f, 0xf66, 0x86a, 0x963, 0xa69, 0xb60,
-    0x5f0, 0x4f9, 0x7f3, 0x6fa, 0x1f6, 0xff, 0x3f5, 0x2fc,
-    0xdfc, 0xcf5, 0xfff, 0xef6, 0x9fa, 0x8f3, 0xbf9, 0xaf0,
-    0x650, 0x759, 0x453, 0x55a, 0x256, 0x35f, 0x55, 0x15c,
-    0xe5c, 0xf55, 0xc5f, 0xd56, 0xa5a, 0xb53, 0x859, 0x950,
-    0x7c0, 0x6c9, 0x5c3, 0x4ca, 0x3c6, 0x2cf, 0x1c5, 0xcc,
-    0xfcc, 0xec5, 0xdcf, 0xcc6, 0xbca, 0xac3, 0x9c9, 0x8c0,
-    0x8c0, 0x9c9, 0xac3, 0xbca, 0xcc6, 0xdcf, 0xec5, 0xfcc,
-    0xcc, 0x1c5, 0x2cf, 0x3c6, 0x4ca, 0x5c3, 0x6c9, 0x7c0,
-    0x950, 0x859, 0xb53, 0xa5a, 0xd56, 0xc5f, 0xf55, 0xe5c,
-    0x15c, 0x55, 0x35f, 0x256, 0x55a, 0x453, 0x759, 0x650,
-    0xaf0, 0xbf9, 0x8f3, 0x9fa, 0xef6, 0xfff, 0xcf5, 0xdfc,
-    0x2fc, 0x3f5, 0xff, 0x1f6, 0x6fa, 0x7f3, 0x4f9, 0x5f0,
-    0xb60, 0xa69, 0x963, 0x86a, 0xf66, 0xe6f, 0xd65, 0xc6c,
-    0x36c, 0x265, 0x16f, 0x66, 0x76a, 0x663, 0x569, 0x460,
-    0xca0, 0xda9, 0xea3, 0xfaa, 0x8a6, 0x9af, 0xaa5, 0xbac,
-    0x4ac, 0x5a5, 0x6af, 0x7a6, 0xaa, 0x1a3, 0x2a9, 0x3a0,
-    0xd30, 0xc39, 0xf33, 0xe3a, 0x936, 0x83f, 0xb35, 0xa3c,
-    0x53c, 0x435, 0x73f, 0x636, 0x13a, 0x33, 0x339, 0x230,
-    0xe90, 0xf99, 0xc93, 0xd9a, 0xa96, 0xb9f, 0x895, 0x99c,
-    0x69c, 0x795, 0x49f, 0x596, 0x29a, 0x393, 0x99, 0x190,
-    0xf00, 0xe09, 0xd03, 0xc0a, 0xb06, 0xa0f, 0x905, 0x80c,
-    0x70c, 0x605, 0x50f, 0x406, 0x30a, 0x203, 0x109, 0x0
+    0x0,
+    0x109,
+    0x203,
+    0x30A,
+    0x406,
+    0x50F,
+    0x605,
+    0x70C,
+    0x80C,
+    0x905,
+    0xA0F,
+    0xB06,
+    0xC0A,
+    0xD03,
+    0xE09,
+    0xF00,
+    0x190,
+    0x99,
+    0x393,
+    0x29A,
+    0x596,
+    0x49F,
+    0x795,
+    0x69C,
+    0x99C,
+    0x895,
+    0xB9F,
+    0xA96,
+    0xD9A,
+    0xC93,
+    0xF99,
+    0xE90,
+    0x230,
+    0x339,
+    0x33,
+    0x13A,
+    0x636,
+    0x73F,
+    0x435,
+    0x53C,
+    0xA3C,
+    0xB35,
+    0x83F,
+    0x936,
+    0xE3A,
+    0xF33,
+    0xC39,
+    0xD30,
+    0x3A0,
+    0x2A9,
+    0x1A3,
+    0xAA,
+    0x7A6,
+    0x6AF,
+    0x5A5,
+    0x4AC,
+    0xBAC,
+    0xAA5,
+    0x9AF,
+    0x8A6,
+    0xFAA,
+    0xEA3,
+    0xDA9,
+    0xCA0,
+    0x460,
+    0x569,
+    0x663,
+    0x76A,
+    0x66,
+    0x16F,
+    0x265,
+    0x36C,
+    0xC6C,
+    0xD65,
+    0xE6F,
+    0xF66,
+    0x86A,
+    0x963,
+    0xA69,
+    0xB60,
+    0x5F0,
+    0x4F9,
+    0x7F3,
+    0x6FA,
+    0x1F6,
+    0xFF,
+    0x3F5,
+    0x2FC,
+    0xDFC,
+    0xCF5,
+    0xFFF,
+    0xEF6,
+    0x9FA,
+    0x8F3,
+    0xBF9,
+    0xAF0,
+    0x650,
+    0x759,
+    0x453,
+    0x55A,
+    0x256,
+    0x35F,
+    0x55,
+    0x15C,
+    0xE5C,
+    0xF55,
+    0xC5F,
+    0xD56,
+    0xA5A,
+    0xB53,
+    0x859,
+    0x950,
+    0x7C0,
+    0x6C9,
+    0x5C3,
+    0x4CA,
+    0x3C6,
+    0x2CF,
+    0x1C5,
+    0xCC,
+    0xFCC,
+    0xEC5,
+    0xDCF,
+    0xCC6,
+    0xBCA,
+    0xAC3,
+    0x9C9,
+    0x8C0,
+    0x8C0,
+    0x9C9,
+    0xAC3,
+    0xBCA,
+    0xCC6,
+    0xDCF,
+    0xEC5,
+    0xFCC,
+    0xCC,
+    0x1C5,
+    0x2CF,
+    0x3C6,
+    0x4CA,
+    0x5C3,
+    0x6C9,
+    0x7C0,
+    0x950,
+    0x859,
+    0xB53,
+    0xA5A,
+    0xD56,
+    0xC5F,
+    0xF55,
+    0xE5C,
+    0x15C,
+    0x55,
+    0x35F,
+    0x256,
+    0x55A,
+    0x453,
+    0x759,
+    0x650,
+    0xAF0,
+    0xBF9,
+    0x8F3,
+    0x9FA,
+    0xEF6,
+    0xFFF,
+    0xCF5,
+    0xDFC,
+    0x2FC,
+    0x3F5,
+    0xFF,
+    0x1F6,
+    0x6FA,
+    0x7F3,
+    0x4F9,
+    0x5F0,
+    0xB60,
+    0xA69,
+    0x963,
+    0x86A,
+    0xF66,
+    0xE6F,
+    0xD65,
+    0xC6C,
+    0x36C,
+    0x265,
+    0x16F,
+    0x66,
+    0x76A,
+    0x663,
+    0x569,
+    0x460,
+    0xCA0,
+    0xDA9,
+    0xEA3,
+    0xFAA,
+    0x8A6,
+    0x9AF,
+    0xAA5,
+    0xBAC,
+    0x4AC,
+    0x5A5,
+    0x6AF,
+    0x7A6,
+    0xAA,
+    0x1A3,
+    0x2A9,
+    0x3A0,
+    0xD30,
+    0xC39,
+    0xF33,
+    0xE3A,
+    0x936,
+    0x83F,
+    0xB35,
+    0xA3C,
+    0x53C,
+    0x435,
+    0x73F,
+    0x636,
+    0x13A,
+    0x33,
+    0x339,
+    0x230,
+    0xE90,
+    0xF99,
+    0xC93,
+    0xD9A,
+    0xA96,
+    0xB9F,
+    0x895,
+    0x99C,
+    0x69C,
+    0x795,
+    0x49F,
+    0x596,
+    0x29A,
+    0x393,
+    0x99,
+    0x190,
+    0xF00,
+    0xE09,
+    0xD03,
+    0xC0A,
+    0xB06,
+    0xA0F,
+    0x905,
+    0x80C,
+    0x70C,
+    0x605,
+    0x50F,
+    0x406,
+    0x30A,
+    0x203,
+    0x109,
+    0x0,
 ]
 
 # Triangle table: which triangles to create for each configuration
 # Simplified version - maps cube config to edge triplets
 TRI_TABLE = [
-    [], [0, 8, 3], [0, 1, 9], [1, 8, 3, 9, 8, 1], [1, 2, 10],
-    [0, 8, 3, 1, 2, 10], [9, 2, 10, 0, 2, 9], [2, 8, 3, 2, 10, 8, 10, 9, 8],
-    [3, 11, 2], [0, 11, 2, 8, 11, 0], [1, 9, 0, 2, 3, 11],
-    [1, 11, 2, 1, 9, 11, 9, 8, 11], [3, 10, 1, 11, 10, 3],
-    [0, 10, 1, 0, 8, 10, 8, 11, 10], [3, 9, 0, 3, 11, 9, 11, 10, 9],
+    [],
+    [0, 8, 3],
+    [0, 1, 9],
+    [1, 8, 3, 9, 8, 1],
+    [1, 2, 10],
+    [0, 8, 3, 1, 2, 10],
+    [9, 2, 10, 0, 2, 9],
+    [2, 8, 3, 2, 10, 8, 10, 9, 8],
+    [3, 11, 2],
+    [0, 11, 2, 8, 11, 0],
+    [1, 9, 0, 2, 3, 11],
+    [1, 11, 2, 1, 9, 11, 9, 8, 11],
+    [3, 10, 1, 11, 10, 3],
+    [0, 10, 1, 0, 8, 10, 8, 11, 10],
+    [3, 9, 0, 3, 11, 9, 11, 10, 9],
     [9, 8, 10, 10, 8, 11],
     # ... (abbreviated for space - full table would have 256 entries)
 ]
@@ -77,11 +311,10 @@ class SC3DGenerator:
 
     Implements Marching Cubes algorithm for isosurface extraction.
     """
+
     iso_level: float = 0.5  # Threshold for surface extraction
 
-    def export_point_cloud_json(self, points: np.ndarray,
-                                intensities: np.ndarray,
-                                filename: str):
+    def export_point_cloud_json(self, points: np.ndarray, intensities: np.ndarray, filename: str):
         """
         Export a point cloud to JSON format.
 
@@ -95,14 +328,13 @@ class SC3DGenerator:
             "version": "1.0",
             "n_points": int(len(points)),
             "points": points.tolist(),
-            "intensities": intensities.tolist()
+            "intensities": intensities.tolist(),
         }
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             json.dump(data, f, indent=2)
         logger.info("3D Export: Saved %d points to %s", len(points), filename)
 
-    def generate_surface_mesh(self, voxel_grid: np.ndarray,
-                              iso_level: float = None) -> Dict:
+    def generate_surface_mesh(self, voxel_grid: np.ndarray, iso_level: float = None) -> Dict:
         """
         Generate a surface mesh from a voxel grid using Marching Cubes.
 
@@ -144,16 +376,14 @@ class SC3DGenerator:
                     cube_index = 0
                     for idx, val in enumerate(cube_vals):
                         if val < iso_level:
-                            cube_index |= (1 << idx)
+                            cube_index |= 1 << idx
 
                     # Skip if no surface crosses this cube
                     if EDGE_TABLE[cube_index] == 0:
                         continue
 
                     # Get edge vertices
-                    edge_verts = self._get_edge_vertices(
-                        i, j, k, cube_vals, iso_level
-                    )
+                    edge_verts = self._get_edge_vertices(i, j, k, cube_vals, iso_level)
 
                     # Create triangles
                     tri_list = TRI_TABLE[cube_index]
@@ -177,24 +407,42 @@ class SC3DGenerator:
             "faces": faces,
             "normals": normals,
             "n_vertices": len(vertices),
-            "n_faces": len(faces)
+            "n_faces": len(faces),
         }
 
-    def _get_edge_vertices(self, i: int, j: int, k: int,
-                           cube_vals: List[float],
-                           iso_level: float) -> Dict[int, np.ndarray]:
+    def _get_edge_vertices(
+        self, i: int, j: int, k: int, cube_vals: List[float], iso_level: float
+    ) -> Dict[int, np.ndarray]:
         """Compute vertex positions along cube edges."""
         # Cube corner positions
-        corners = np.array([
-            [i, j, k], [i + 1, j, k], [i + 1, j + 1, k], [i, j + 1, k],
-            [i, j, k + 1], [i + 1, j, k + 1], [i + 1, j + 1, k + 1], [i, j + 1, k + 1]
-        ], dtype=np.float64)
+        corners = np.array(
+            [
+                [i, j, k],
+                [i + 1, j, k],
+                [i + 1, j + 1, k],
+                [i, j + 1, k],
+                [i, j, k + 1],
+                [i + 1, j, k + 1],
+                [i + 1, j + 1, k + 1],
+                [i, j + 1, k + 1],
+            ],
+            dtype=np.float64,
+        )
 
         # Edge endpoints
         edges = [
-            (0, 1), (1, 2), (2, 3), (3, 0),
-            (4, 5), (5, 6), (6, 7), (7, 4),
-            (0, 4), (1, 5), (2, 6), (3, 7)
+            (0, 1),
+            (1, 2),
+            (2, 3),
+            (3, 0),
+            (4, 5),
+            (5, 6),
+            (6, 7),
+            (7, 4),
+            (0, 4),
+            (1, 5),
+            (2, 6),
+            (3, 7),
         ]
 
         edge_verts = {}
@@ -209,8 +457,7 @@ class SC3DGenerator:
 
         return edge_verts
 
-    def _compute_normals(self, vertices: np.ndarray,
-                         faces: np.ndarray) -> np.ndarray:
+    def _compute_normals(self, vertices: np.ndarray, faces: np.ndarray) -> np.ndarray:
         """Compute vertex normals from face normals."""
         if len(vertices) == 0 or len(faces) == 0:
             return np.zeros((0, 3))
@@ -245,11 +492,11 @@ class SC3DGenerator:
             mesh: Dict from generate_surface_mesh()
             filename: Output file path
         """
-        vertices = mesh['vertices']
-        faces = mesh['faces']
-        normals = mesh.get('normals', np.zeros_like(vertices))
+        vertices = mesh["vertices"]
+        faces = mesh["faces"]
+        normals = mesh.get("normals", np.zeros_like(vertices))
 
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             f.write("# SC-NeuroCore Generated Mesh\n")
             f.write(f"# Vertices: {len(vertices)}, Faces: {len(faces)}\n\n")
 
@@ -263,9 +510,11 @@ class SC3DGenerator:
 
             # Write faces (OBJ uses 1-based indexing)
             for face in faces:
-                f.write(f"f {face[0]+1}//{face[0]+1} "
-                       f"{face[1]+1}//{face[1]+1} "
-                       f"{face[2]+1}//{face[2]+1}\n")
+                f.write(
+                    f"f {face[0]+1}//{face[0]+1} "
+                    f"{face[1]+1}//{face[1]+1} "
+                    f"{face[2]+1}//{face[2]+1}\n"
+                )
 
         logger.info("3D Export: Saved mesh to %s", filename)
 
@@ -280,19 +529,19 @@ class SC3DGenerator:
         data = {
             "format": "sc_neurocore_mesh",
             "version": "1.0",
-            "n_vertices": int(mesh['n_vertices']),
-            "n_faces": int(mesh['n_faces']),
-            "vertices": mesh['vertices'].tolist(),
-            "faces": mesh['faces'].tolist(),
-            "normals": mesh['normals'].tolist()
+            "n_vertices": int(mesh["n_vertices"]),
+            "n_faces": int(mesh["n_faces"]),
+            "vertices": mesh["vertices"].tolist(),
+            "faces": mesh["faces"].tolist(),
+            "normals": mesh["normals"].tolist(),
         }
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             json.dump(data, f)
         logger.info("3D Export: Saved mesh JSON to %s", filename)
 
-    def bitstream_to_voxels(self, bitstreams: np.ndarray,
-                            grid_size: Tuple[int, int, int] = (16, 16, 16)
-                            ) -> np.ndarray:
+    def bitstream_to_voxels(
+        self, bitstreams: np.ndarray, grid_size: Tuple[int, int, int] = (16, 16, 16)
+    ) -> np.ndarray:
         """
         Convert bitstream outputs to a voxel grid.
 
@@ -322,9 +571,9 @@ class SC3DGenerator:
 
         return voxel_values.reshape(grid_size)
 
-    def generate_from_scpn(self, scpn_outputs: Dict,
-                           grid_size: Tuple[int, int, int] = (16, 16, 16)
-                           ) -> Dict:
+    def generate_from_scpn(
+        self, scpn_outputs: Dict, grid_size: Tuple[int, int, int] = (16, 16, 16)
+    ) -> Dict:
         """
         Generate 3D mesh directly from SCPN layer outputs.
 
@@ -338,15 +587,20 @@ class SC3DGenerator:
         # Collect all bitstreams from SCPN layers
         all_bitstreams = []
         for layer_name, output in scpn_outputs.items():
-            if isinstance(output, dict) and 'output_bitstreams' in output:
-                bs = output['output_bitstreams']
+            if isinstance(output, dict) and "output_bitstreams" in output:
+                bs = output["output_bitstreams"]
                 if bs is not None and len(bs) > 0:
                     all_bitstreams.append(bs)
 
         if not all_bitstreams:
             # Return empty mesh
-            return {"vertices": np.zeros((0, 3)), "faces": np.zeros((0, 3), dtype=np.int32),
-                    "normals": np.zeros((0, 3)), "n_vertices": 0, "n_faces": 0}
+            return {
+                "vertices": np.zeros((0, 3)),
+                "faces": np.zeros((0, 3), dtype=np.int32),
+                "normals": np.zeros((0, 3)),
+                "n_vertices": 0,
+                "n_faces": 0,
+            }
 
         # Combine bitstreams
         combined = np.vstack(all_bitstreams)

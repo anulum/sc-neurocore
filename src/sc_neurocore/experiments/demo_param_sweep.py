@@ -2,6 +2,7 @@ from __future__ import annotations
 import numpy as np
 from sc_neurocore.layers.sc_dense_layer import SCDenseLayer
 
+
 def run_pattern_trials(
     label: int,
     x_inputs,
@@ -26,7 +27,7 @@ def run_pattern_trials(
             x_max=0.1,
             w_min=0.0,
             w_max=1.0,
-            length=T, # Use T for length
+            length=T,  # Use T for length
             y_min=0.0,
             y_max=0.1,
             dt_ms=1.0,
@@ -46,6 +47,7 @@ def run_pattern_trials(
         rates.append([s["firing_rate_hz"] for s in summary["stats"]])
     return np.array(rates, dtype=float)
 
+
 def nearest_centroid_multi(
     sample: np.ndarray,
     centroids: list[np.ndarray],
@@ -57,6 +59,7 @@ def nearest_centroid_multi(
     dists = [np.linalg.norm(sample - c) for c in centroids]
     return int(np.argmin(dists))
 
+
 def demo():
     # Three different 3-channel patterns
     pattern_A = [0.02, 0.05, 0.08]  # class 0
@@ -64,7 +67,7 @@ def demo():
     pattern_C = [0.04, 0.09, 0.01]  # class 2 (distinct mix)
     weight_values = [0.3, 0.6, 0.9]
     patterns = [pattern_A, pattern_B, pattern_C]
-    
+
     # Grid search parameters
     n_neurons_grid = [5, 7, 10]
     T_grid = [2500, 3000, 4000]
@@ -76,7 +79,7 @@ def demo():
     for n_neurons in n_neurons_grid:
         for T in T_grid:
             for noise_std in noise_std_grid:
-                
+
                 n_train = 12
                 n_test_per_class = 18
 
@@ -122,16 +125,19 @@ def demo():
                 preds = np.array(preds, dtype=int)
 
                 accuracy = float((preds == y_true).mean())
-                
-                print(f"Params: n_neurons={n_neurons}, T={T}, noise_std={noise_std} -> Accuracy: {accuracy * 100:.2f}%")
+
+                print(
+                    f"Params: n_neurons={n_neurons}, T={T}, noise_std={noise_std} -> Accuracy: {accuracy * 100:.2f}%"
+                )
 
                 if accuracy > best_accuracy:
                     best_accuracy = accuracy
-                    best_params = {'n_neurons': n_neurons, 'T': T, 'noise_std': noise_std}
+                    best_params = {"n_neurons": n_neurons, "T": T, "noise_std": noise_std}
 
     print("\n--- Best Parameters ---")
     print(f"Accuracy: {best_accuracy * 100:.2f}%")
     print(best_params)
+
 
 if __name__ == "__main__":
     demo()

@@ -1,36 +1,38 @@
-
 import json
 import logging
 
 logger = logging.getLogger(__name__)
 
+
 class WebVisualizer:
     """
     Generates a standalone HTML file to visualize the SC Network.
     """
-    
+
     @staticmethod
     def generate_html(layers: list, filename="network_viz.html"):
         # 1. Build Graph Data
         nodes = []
         links = []
-        
+
         # Input Node
         nodes.append({"id": "Input", "group": 0})
-        
+
         for i, layer in enumerate(layers):
             layer_name = f"L{i}_{layer.__class__.__name__}"
-            
+
             # Layer Node (representing the whole layer for simplicity)
-            nodes.append({"id": layer_name, "group": i+1, "neurons": getattr(layer, 'n_neurons', '?')})
-            
+            nodes.append(
+                {"id": layer_name, "group": i + 1, "neurons": getattr(layer, "n_neurons", "?")}
+            )
+
             # Link from prev
             prev = "Input" if i == 0 else f"L{i-1}_{layers[i-1].__class__.__name__}"
             links.append({"source": prev, "target": layer_name, "value": 1})
-            
+
         data = {"nodes": nodes, "links": links}
         json_str = json.dumps(data)
-        
+
         # 2. Embed in HTML Template
         html_content = f"""
 <!DOCTYPE html>
@@ -119,7 +121,7 @@ class WebVisualizer:
 </body>
 </html>
         """
-        
+
         with open(filename, "w") as f:
             f.write(html_content)
         logger.info("Generated Visualization: %s", filename)

@@ -1,7 +1,7 @@
-
 from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
+
 
 @dataclass
 class PredictiveWorldModel:
@@ -9,12 +9,15 @@ class PredictiveWorldModel:
     A stochastic predictive world model.
     Predicts state_next = f(state_curr, action).
     """
+
     state_dim: int
     action_dim: int
-    
+
     def __post_init__(self):
         # Internal transition weights (simplified)
-        self.transition_matrix = np.random.uniform(0, 1, (self.state_dim, self.state_dim + self.action_dim))
+        self.transition_matrix = np.random.uniform(
+            0, 1, (self.state_dim, self.state_dim + self.action_dim)
+        )
         # Normalize rows to represent probabilities
         row_sums = self.transition_matrix.sum(axis=1)
         self.transition_matrix /= row_sums[:, np.newaxis]
@@ -30,10 +33,10 @@ class PredictiveWorldModel:
         """
         # Concatenate state and action
         combined_input = np.concatenate([current_state, action])
-        
+
         # Linear transition in probability domain
         next_state = np.dot(self.transition_matrix, combined_input)
-        
+
         # Clip to ensure valid probabilities
         return np.clip(next_state, 0, 1)
 

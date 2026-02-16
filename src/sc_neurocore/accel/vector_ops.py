@@ -1,5 +1,5 @@
-
 import numpy as np
+
 
 def pack_bitstream(bitstream: np.ndarray) -> np.ndarray:
     """
@@ -46,7 +46,10 @@ def pack_bitstream(bitstream: np.ndarray) -> np.ndarray:
     else:
         raise ValueError(f"Expected 1D or 2D array, got {bitstream.ndim}D")
 
-def unpack_bitstream(packed: np.ndarray, original_length: int, original_shape: tuple = None) -> np.ndarray:
+
+def unpack_bitstream(
+    packed: np.ndarray, original_length: int, original_shape: tuple = None
+) -> np.ndarray:
     """
     Unpacks uint64 array back to uint8 bitstream.
 
@@ -73,7 +76,7 @@ def unpack_bitstream(packed: np.ndarray, original_length: int, original_shape: t
         unpacked = bits.reshape(batch_size, -1)
 
         if original_shape is not None:
-            return unpacked[:, :original_shape[1]]
+            return unpacked[:, : original_shape[1]]
         else:
             # Assume original_length is per-batch
             per_batch_len = original_length // batch_size
@@ -82,11 +85,13 @@ def unpack_bitstream(packed: np.ndarray, original_length: int, original_shape: t
     else:
         raise ValueError(f"Expected 1D or 2D packed array, got {packed.ndim}D")
 
+
 def vec_and(a_packed: np.ndarray, b_packed: np.ndarray) -> np.ndarray:
     """
     Bitwise AND on packed arrays. Simulates SC Multiplication.
     """
     return np.bitwise_and(a_packed, b_packed)
+
 
 def vec_popcount(packed: np.ndarray) -> int:
     """
@@ -98,12 +103,12 @@ def vec_popcount(packed: np.ndarray) -> int:
     # We can use a trick or just loop if C-extension isn't available.
     # A generic parallel popcount on uint64 in pure numpy is tricky without looping or lookup tables.
     # However, we can map to python int and sum.
-    
+
     # For speed in pure python/numpy env without heavy deps:
     # Use binary decomposition for vectorized popcount
     x = packed.copy()
     x -= (x >> 1) & 0x5555555555555555
     x = (x & 0x3333333333333333) + ((x >> 2) & 0x3333333333333333)
-    x = (x + (x >> 4)) & 0x0f0f0f0f0f0f0f0f
+    x = (x + (x >> 4)) & 0x0F0F0F0F0F0F0F0F
     x = (x * 0x0101010101010101) >> 56
     return np.sum(x)

@@ -1,6 +1,6 @@
-
 import numpy as np
 from dataclasses import dataclass
+
 
 @dataclass
 class PhotonicBitstreamLayer:
@@ -8,20 +8,21 @@ class PhotonicBitstreamLayer:
     Simulates a Photonic Stochastic Computing Layer.
     Uses Phase Noise (Laser Interference) to generate bitstreams.
     """
+
     n_channels: int
-    laser_power: float = 1.0 # SNR control
-    
+    laser_power: float = 1.0  # SNR control
+
     def simulate_interference(self, length: int) -> np.ndarray:
         """
         Simulates the interference of two laser beams with phase noise.
         I = I1 + I2 + 2*sqrt(I1*I2)*cos(phi)
         """
         # Phase noise phi: Wiener process or random uniform
-        phi = np.random.uniform(0, 2*np.pi, (self.n_channels, length))
-        
+        phi = np.random.uniform(0, 2 * np.pi, (self.n_channels, length))
+
         # Normalized intensity
         intensity = 0.5 + 0.5 * np.cos(phi)
-        
+
         return intensity
 
     def forward(self, input_probs: np.ndarray, length: int = 1024) -> np.ndarray:

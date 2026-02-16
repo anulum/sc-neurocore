@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class L3_StochasticParameters:
     """Parameters for the Stochastic L3 Genomic Layer."""
+
     n_genes: int = 200
     n_regulatory_elements: int = 50
     bitstream_length: int = 1024
@@ -37,7 +38,7 @@ class L3_StochasticParameters:
 
     # CISS (Chiral-Induced Spin Selectivity)
     ciss_efficiency: float = 0.8  # Spin polarization efficiency
-    dna_chirality: float = 1.0   # Right-handed helix = +1
+    dna_chirality: float = 1.0  # Right-handed helix = +1
 
     # Chromatin dynamics
     methylation_rate: float = 0.01
@@ -50,7 +51,7 @@ class L3_StochasticParameters:
 
     # Inter-layer coupling
     neurochemical_coupling: float = 0.2  # From L2
-    cellular_coupling: float = 0.1       # To L4
+    cellular_coupling: float = 0.1  # To L4
 
 
 class L3_GenomicLayer:
@@ -92,12 +93,15 @@ class L3_GenomicLayer:
         matrix = np.random.random((self.params.n_genes, self.params.n_regulatory_elements))
         matrix = np.where(matrix > 0.9, matrix, 0)  # Sparse
         # Add some inhibitory connections
-        matrix[:, :self.params.n_regulatory_elements // 3] *= -1
+        matrix[:, : self.params.n_regulatory_elements // 3] *= -1
         return matrix
 
-    def step(self, dt: float,
-             l2_input: Optional[Dict] = None,
-             bioelectric_signal: Optional[np.ndarray] = None) -> Dict[str, np.ndarray]:
+    def step(
+        self,
+        dt: float,
+        l2_input: Optional[Dict] = None,
+        bioelectric_signal: Optional[np.ndarray] = None,
+    ) -> Dict[str, np.ndarray]:
         """
         Advance the layer by one time step.
 
@@ -122,7 +126,9 @@ class L3_GenomicLayer:
         self.methylation = np.clip(self.methylation, 0.0, 1.0)
 
         # Chromatin openness inversely related to methylation
-        self.chromatin_openness = 1.0 - self.methylation + np.random.normal(0, 0.05, self.params.n_genes)
+        self.chromatin_openness = (
+            1.0 - self.methylation + np.random.normal(0, 0.05, self.params.n_genes)
+        )
         self.chromatin_openness = np.clip(self.chromatin_openness, 0.0, 1.0)
 
         # 2. Gene expression (stochastic transcription)
@@ -133,7 +139,7 @@ class L3_GenomicLayer:
         self.expression_levels = np.where(
             transcription,
             self.expression_levels + 0.1,
-            self.expression_levels - self.params.degradation_rate * dt
+            self.expression_levels - self.params.degradation_rate * dt,
         )
         self.expression_levels = np.clip(self.expression_levels, 0.0, 1.0)
 
@@ -144,23 +150,24 @@ class L3_GenomicLayer:
         self.protein_levels = np.where(
             translation,
             self.protein_levels + 0.05,
-            self.protein_levels - self.params.degradation_rate * dt * 0.5
+            self.protein_levels - self.params.degradation_rate * dt * 0.5,
         )
         self.protein_levels = np.clip(self.protein_levels, 0.0, 1.0)
 
         # 4. CISS effect (quantum spin filtering)
         # Spin polarization depends on DNA chirality and electron flow
         electron_flow = np.mean(self.expression_levels)  # Proxy for metabolic activity
-        self.spin_polarization = self.params.ciss_efficiency * self.params.dna_chirality * electron_flow
+        self.spin_polarization = (
+            self.params.ciss_efficiency * self.params.dna_chirality * electron_flow
+        )
         self.spin_polarization = np.clip(
-            self.spin_polarization + np.random.normal(0, 0.1, self.params.n_genes),
-            -1.0, 1.0
+            self.spin_polarization + np.random.normal(0, 0.1, self.params.n_genes), -1.0, 1.0
         )
 
         # 5. Neurochemical coupling (L2 input modulates expression)
-        if l2_input is not None and 'second_messengers' in l2_input:
+        if l2_input is not None and "second_messengers" in l2_input:
             # cAMP from second messengers activates transcription factors
-            camp_level = np.mean(l2_input['second_messengers'])
+            camp_level = np.mean(l2_input["second_messengers"])
             activation_boost = camp_level * self.params.neurochemical_coupling
             self.expression_levels += activation_boost * dt
             self.expression_levels = np.clip(self.expression_levels, 0.0, 1.0)
@@ -168,8 +175,7 @@ class L3_GenomicLayer:
         # 6. Bioelectric pattern formation
         if bioelectric_signal is not None:
             self.membrane_potential = (
-                0.9 * self.membrane_potential +
-                0.1 * bioelectric_signal[:self.params.n_genes]
+                0.9 * self.membrane_potential + 0.1 * bioelectric_signal[: self.params.n_genes]
             )
         # Internal bioelectric dynamics (gap junction diffusion)
         diffusion = np.roll(self.membrane_potential, 1) - self.membrane_potential
@@ -181,13 +187,13 @@ class L3_GenomicLayer:
         output_bitstreams = (rands < output_probs[:, None]).astype(np.uint8)
 
         return {
-            'expression_levels': self.expression_levels.copy(),
-            'protein_levels': self.protein_levels.copy(),
-            'chromatin_openness': self.chromatin_openness.copy(),
-            'methylation': self.methylation.copy(),
-            'spin_polarization': self.spin_polarization.copy(),
-            'membrane_potential': self.membrane_potential.copy(),
-            'output_bitstreams': output_bitstreams
+            "expression_levels": self.expression_levels.copy(),
+            "protein_levels": self.protein_levels.copy(),
+            "chromatin_openness": self.chromatin_openness.copy(),
+            "methylation": self.methylation.copy(),
+            "spin_polarization": self.spin_polarization.copy(),
+            "membrane_potential": self.membrane_potential.copy(),
+            "output_bitstreams": output_bitstreams,
         }
 
     def get_global_metric(self) -> float:

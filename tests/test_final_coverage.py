@@ -77,8 +77,11 @@ class TestTrainingRLWithRSTDP:
             for j in range(agent.n_inputs):
                 old = agent.synapses[i][j]
                 agent.synapses[i][j] = RewardModulatedSTDPSynapse(
-                    w_min=old.w_min, w_max=old.w_max, w=old.w,
-                    learning_rate=old.learning_rate, length=old.length,
+                    w_min=old.w_min,
+                    w_max=old.w_max,
+                    w=old.w,
+                    learning_rate=old.learning_rate,
+                    length=old.length,
                 )
         data = np.array([0.5, 0.5])
         SCTrainingLoop.run_rl_epoch(
@@ -119,7 +122,8 @@ class TestL2DeepBranches:
     def test_history_overflow(self):
         """Hit line 147: history.pop(0) when len > 100."""
         from sc_neurocore.scpn.layers.l2_neurochemical import (
-            L2_NeurochemicalLayer, L2_StochasticParameters,
+            L2_NeurochemicalLayer,
+            L2_StochasticParameters,
         )
 
         params = L2_StochasticParameters(n_receptors=4, bitstream_length=32)
@@ -131,7 +135,8 @@ class TestL2DeepBranches:
     def test_release_neurotransmitter(self):
         """Hit lines 158-159: valid nt_type release."""
         from sc_neurocore.scpn.layers.l2_neurochemical import (
-            L2_NeurochemicalLayer, L2_StochasticParameters,
+            L2_NeurochemicalLayer,
+            L2_StochasticParameters,
         )
 
         params = L2_StochasticParameters(n_receptors=4, bitstream_length=32)
@@ -142,7 +147,8 @@ class TestL2DeepBranches:
     def test_get_neuromodulation_state(self):
         """Hit line 169: get_neuromodulation_state."""
         from sc_neurocore.scpn.layers.l2_neurochemical import (
-            L2_NeurochemicalLayer, L2_StochasticParameters,
+            L2_NeurochemicalLayer,
+            L2_StochasticParameters,
         )
 
         params = L2_StochasticParameters(n_receptors=4, bitstream_length=32)
@@ -158,7 +164,8 @@ class TestL3DeepBranches:
     def test_ciss_coherence(self):
         """Hit line 199: get_ciss_coherence."""
         from sc_neurocore.scpn.layers.l3_genomic import (
-            L3_GenomicLayer, L3_StochasticParameters,
+            L3_GenomicLayer,
+            L3_StochasticParameters,
         )
 
         params = L3_StochasticParameters(n_genes=4, bitstream_length=32)
@@ -173,7 +180,8 @@ class TestL4DeepBranches:
     def test_tissue_pattern(self):
         """Hit line 202: get_tissue_pattern."""
         from sc_neurocore.scpn.layers.l4_cellular import (
-            L4_CellularLayer, L4_StochasticParameters,
+            L4_CellularLayer,
+            L4_StochasticParameters,
         )
 
         params = L4_StochasticParameters(grid_size=(4, 4), bitstream_length=32)
@@ -188,11 +196,14 @@ class TestL5DeepBranches:
     def test_external_event_int_keys(self):
         """Hit line 130: external_event with int keys."""
         from sc_neurocore.scpn.layers.l5_organismal import (
-            L5_OrganismalLayer, L5_StochasticParameters,
+            L5_OrganismalLayer,
+            L5_StochasticParameters,
         )
 
         params = L5_StochasticParameters(
-            n_emotional_dims=8, n_autonomic_nodes=16, bitstream_length=32,
+            n_emotional_dims=8,
+            n_autonomic_nodes=16,
+            bitstream_length=32,
         )
         layer = L5_OrganismalLayer(params)
         output = layer.step(0.01, external_event={0: 0.5, 2: 0.3})
@@ -201,11 +212,14 @@ class TestL5DeepBranches:
     def test_rmssd_with_intervals(self):
         """Hit lines 233-235: _compute_rmssd when rr_intervals >= 2."""
         from sc_neurocore.scpn.layers.l5_organismal import (
-            L5_OrganismalLayer, L5_StochasticParameters,
+            L5_OrganismalLayer,
+            L5_StochasticParameters,
         )
 
         params = L5_StochasticParameters(
-            n_emotional_dims=8, n_autonomic_nodes=16, bitstream_length=32,
+            n_emotional_dims=8,
+            n_autonomic_nodes=16,
+            bitstream_length=32,
         )
         layer = L5_OrganismalLayer(params)
         # Need at least 2 steps to accumulate 2 rr_intervals
@@ -218,11 +232,14 @@ class TestL5DeepBranches:
     def test_rr_intervals_overflow(self):
         """Hit line 190: rr_intervals.pop(0) when len > 100."""
         from sc_neurocore.scpn.layers.l5_organismal import (
-            L5_OrganismalLayer, L5_StochasticParameters,
+            L5_OrganismalLayer,
+            L5_StochasticParameters,
         )
 
         params = L5_StochasticParameters(
-            n_emotional_dims=8, n_autonomic_nodes=16, bitstream_length=32,
+            n_emotional_dims=8,
+            n_autonomic_nodes=16,
+            bitstream_length=32,
         )
         layer = L5_OrganismalLayer(params)
         for _ in range(105):
@@ -232,11 +249,14 @@ class TestL5DeepBranches:
     def test_get_emotional_valence(self):
         """Hit line 246: get_emotional_valence."""
         from sc_neurocore.scpn.layers.l5_organismal import (
-            L5_OrganismalLayer, L5_StochasticParameters,
+            L5_OrganismalLayer,
+            L5_StochasticParameters,
         )
 
         params = L5_StochasticParameters(
-            n_emotional_dims=8, n_autonomic_nodes=16, bitstream_length=32,
+            n_emotional_dims=8,
+            n_autonomic_nodes=16,
+            bitstream_length=32,
         )
         layer = L5_OrganismalLayer(params)
         layer.step(0.01)
@@ -249,7 +269,8 @@ class TestL6DeepBranches:
     def test_history_overflow(self):
         """Hit line 218: history.pop(0) when len > 100."""
         from sc_neurocore.scpn.layers.l6_ecological import (
-            L6_EcologicalLayer, L6_StochasticParameters,
+            L6_EcologicalLayer,
+            L6_StochasticParameters,
         )
 
         params = L6_StochasticParameters(n_field_nodes=16, bitstream_length=32)
@@ -261,7 +282,8 @@ class TestL6DeepBranches:
     def test_get_schumann_spectrum(self):
         """Hit line 228: get_schumann_spectrum."""
         from sc_neurocore.scpn.layers.l6_ecological import (
-            L6_EcologicalLayer, L6_StochasticParameters,
+            L6_EcologicalLayer,
+            L6_StochasticParameters,
         )
 
         params = L6_StochasticParameters(n_field_nodes=16, bitstream_length=32)
@@ -274,7 +296,8 @@ class TestL6DeepBranches:
     def test_get_circadian_time(self):
         """Hit line 239: get_circadian_time."""
         from sc_neurocore.scpn.layers.l6_ecological import (
-            L6_EcologicalLayer, L6_StochasticParameters,
+            L6_EcologicalLayer,
+            L6_StochasticParameters,
         )
 
         params = L6_StochasticParameters(n_field_nodes=16, bitstream_length=32)
@@ -290,7 +313,8 @@ class TestL7DeepBranches:
     def test_fallback_phi_and_fib_and_e8(self):
         """Hit lines 139, 150, 180: zero activations → fallback values."""
         from sc_neurocore.scpn.layers.l7_symbolic import (
-            L7_SymbolicLayer, L7_StochasticParameters,
+            L7_SymbolicLayer,
+            L7_StochasticParameters,
         )
 
         params = L7_StochasticParameters(n_symbols=32, bitstream_length=32)
@@ -306,7 +330,8 @@ class TestL7DeepBranches:
     def test_get_glyph_vector_normalized(self):
         """Hit line 270: get_glyph_vector_normalized."""
         from sc_neurocore.scpn.layers.l7_symbolic import (
-            L7_SymbolicLayer, L7_StochasticParameters,
+            L7_SymbolicLayer,
+            L7_StochasticParameters,
         )
 
         params = L7_StochasticParameters(n_symbols=32, bitstream_length=32)
@@ -319,7 +344,8 @@ class TestL7DeepBranches:
     def test_stimulate_meridian(self):
         """Hit lines 274-275: stimulate_meridian with valid id."""
         from sc_neurocore.scpn.layers.l7_symbolic import (
-            L7_SymbolicLayer, L7_StochasticParameters,
+            L7_SymbolicLayer,
+            L7_StochasticParameters,
         )
 
         params = L7_StochasticParameters(n_symbols=32, bitstream_length=32)
@@ -331,7 +357,8 @@ class TestL7DeepBranches:
     def test_get_acupoint_map(self):
         """Hit lines 283-293: get_acupoint_map."""
         from sc_neurocore.scpn.layers.l7_symbolic import (
-            L7_SymbolicLayer, L7_StochasticParameters,
+            L7_SymbolicLayer,
+            L7_StochasticParameters,
         )
 
         # Use default n_acupoints=361 so most named points are valid

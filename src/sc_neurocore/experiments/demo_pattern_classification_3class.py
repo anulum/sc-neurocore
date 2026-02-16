@@ -2,6 +2,7 @@ from __future__ import annotations
 import numpy as np
 from sc_neurocore.layers.sc_dense_layer import SCDenseLayer
 
+
 def run_pattern_trials(
     label: int,
     x_inputs,
@@ -45,6 +46,7 @@ def run_pattern_trials(
         rates.append([s["firing_rate_hz"] for s in summary["stats"]])
     return np.array(rates, dtype=float)
 
+
 def nearest_centroid_multi(
     sample: np.ndarray,
     centroids: list[np.ndarray],
@@ -55,6 +57,7 @@ def nearest_centroid_multi(
     """
     dists = [np.linalg.norm(sample - c) for c in centroids]
     return int(np.argmin(dists))
+
 
 def demo():
     # Three different 3-channel patterns
@@ -128,6 +131,7 @@ def demo():
     print(conf_mat)
     print("True labels: ", y_true)
     print("Predicted:   ", preds)
+
 
 if __name__ == "__main__":
     demo()

@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class L4_StochasticParameters:
     """Parameters for the Stochastic L4 Cellular Layer."""
+
     grid_size: Tuple[int, int] = (20, 20)  # 2D tissue grid
     bitstream_length: int = 1024
 
@@ -44,7 +45,7 @@ class L4_StochasticParameters:
     ca_release_threshold: float = 0.6
 
     # Inter-layer coupling
-    genomic_coupling: float = 0.1   # From L3
+    genomic_coupling: float = 0.1  # From L3
     organismal_coupling: float = 0.1  # To L5
 
 
@@ -100,9 +101,12 @@ class L4_CellularLayer:
 
         return neighbors
 
-    def step(self, dt: float,
-             l3_input: Optional[Dict] = None,
-             external_stimulus: Optional[np.ndarray] = None) -> Dict[str, np.ndarray]:
+    def step(
+        self,
+        dt: float,
+        l3_input: Optional[Dict] = None,
+        external_stimulus: Optional[np.ndarray] = None,
+    ) -> Dict[str, np.ndarray]:
         """
         Advance the layer by one time step.
 
@@ -117,17 +121,15 @@ class L4_CellularLayer:
         # 1. Kuramoto oscillator dynamics
         # dθ/dt = ω + K/N * Σ sin(θ_j - θ_i)
         phase_diffs = np.sin(self.phases[None, :] - self.phases[:, None])
-        coupling_term = self.params.coupling_strength * np.sum(
-            self.neighbors * phase_diffs, axis=1
-        ) / np.maximum(np.sum(self.neighbors, axis=1), 1)
+        coupling_term = (
+            self.params.coupling_strength
+            * np.sum(self.neighbors * phase_diffs, axis=1)
+            / np.maximum(np.sum(self.neighbors, axis=1), 1)
+        )
 
         noise = self.params.noise_amplitude * np.random.normal(0, 1, self.n_cells)
 
-        self.phases += (
-            2 * np.pi * self.params.natural_frequency +
-            coupling_term +
-            noise
-        ) * dt
+        self.phases += (2 * np.pi * self.params.natural_frequency + coupling_term + noise) * dt
         self.phases = self.phases % (2 * np.pi)
 
         # 2. Calcium wave dynamics
@@ -142,8 +144,7 @@ class L4_CellularLayer:
                     ca_diff[i] += gj_state * (self.calcium[j] - self.calcium[i])
 
         self.calcium += (
-            self.params.ca_diffusion_rate * ca_diff -
-            self.params.ca_decay_rate * self.calcium
+            self.params.ca_diffusion_rate * ca_diff - self.params.ca_decay_rate * self.calcium
         ) * dt
 
         # Calcium-induced calcium release (CICR)
@@ -155,21 +156,19 @@ class L4_CellularLayer:
         # Gap junctions modulated by calcium and coupling
         gj_noise = self.params.gap_junction_noise * np.random.normal(0, 1, self.n_cells)
         self.gap_junctions = np.clip(
-            self.gap_junctions + gj_noise * dt + 0.1 * (1 - self.calcium) * dt,
-            0.0, 1.0
+            self.gap_junctions + gj_noise * dt + 0.1 * (1 - self.calcium) * dt, 0.0, 1.0
         )
 
         # 4. Genomic input coupling (L3 proteins modulate oscillators)
-        if l3_input is not None and 'protein_levels' in l3_input:
-            protein_mean = np.mean(l3_input['protein_levels'])
+        if l3_input is not None and "protein_levels" in l3_input:
+            protein_mean = np.mean(l3_input["protein_levels"])
             self.amplitudes = np.clip(
-                self.amplitudes + protein_mean * self.params.genomic_coupling * dt,
-                0.1, 1.0
+                self.amplitudes + protein_mean * self.params.genomic_coupling * dt, 0.1, 1.0
             )
 
         # 5. External stimulus
         if external_stimulus is not None:
-            self.calcium += external_stimulus[:self.n_cells] * dt
+            self.calcium += external_stimulus[: self.n_cells] * dt
             self.calcium = np.clip(self.calcium, 0.0, 1.0)
 
         # 6. Compute activity pattern
@@ -184,13 +183,13 @@ class L4_CellularLayer:
         output_bitstreams = (rands < output_probs[:, None]).astype(np.uint8)
 
         return {
-            'phases': self.phases.copy(),
-            'amplitudes': self.amplitudes.copy(),
-            'calcium': self.calcium.copy(),
-            'gap_junctions': self.gap_junctions.copy(),
-            'activity_pattern': self.activity_pattern.copy(),
-            'synchronization': order_parameter,
-            'output_bitstreams': output_bitstreams
+            "phases": self.phases.copy(),
+            "amplitudes": self.amplitudes.copy(),
+            "calcium": self.calcium.copy(),
+            "gap_junctions": self.gap_junctions.copy(),
+            "activity_pattern": self.activity_pattern.copy(),
+            "synchronization": order_parameter,
+            "output_bitstreams": output_bitstreams,
         }
 
     def get_global_metric(self) -> float:

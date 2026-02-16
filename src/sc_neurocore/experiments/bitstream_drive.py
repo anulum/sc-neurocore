@@ -8,6 +8,7 @@ from ..utils.bitstreams import (
     bitstream_to_probability,
 )
 
+
 def run_bitstream_driven_lif(
     x_input: float,
     x_min: float = 0.0,
@@ -61,6 +62,7 @@ def run_bitstream_driven_lif(
 
     return input_bits, spike_bits, p_in, p_fire
 
+
 def demo():
     neuron_params = dict(
         v_rest=0.0,
@@ -90,6 +92,7 @@ def demo():
     print(f"Estimated input p_in = {p_in:.3f}")
     print(f"Estimated firing p_fire = {p_fire:.3f}")
     print(f"Total spikes: {spike_bits.sum()} / {length}")
+
 
 if __name__ == "__main__":
     demo()

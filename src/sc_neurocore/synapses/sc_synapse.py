@@ -9,6 +9,7 @@ from ..utils.bitstreams import (
 )
 from ..utils.rng import RNG
 
+
 @dataclass
 class BitstreamSynapse:
     """
@@ -28,6 +29,7 @@ class BitstreamSynapse:
     - encode_weight() -> weight_bitstream
     - apply(pre_bits) -> post_bits
     """
+
     w_min: float
     w_max: float
     length: int = 256

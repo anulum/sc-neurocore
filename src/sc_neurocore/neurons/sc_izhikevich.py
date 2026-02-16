@@ -6,6 +6,7 @@ from typing import Dict, Any
 from .base import BaseNeuron
 from ..utils.rng import RNG
 
+
 @dataclass
 class SCIzhikevichNeuron(BaseNeuron):
     """
@@ -17,9 +18,10 @@ class SCIzhikevichNeuron(BaseNeuron):
 
     When v >= 30 mV:
     spike, then v <- c, u <- u + d
-    
+
     Here we add Gaussian noise to v' each step.
     """
+
     a: float = 0.02
     b: float = 0.2
     c: float = -65.0

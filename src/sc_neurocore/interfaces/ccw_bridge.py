@@ -29,6 +29,7 @@ PHI = (1 + np.sqrt(5)) / 2
 
 class CCWMode(str, Enum):
     """CCW modulation modes aligned with VIBRANA."""
+
     THEURGIC = "theurgic"
     HEALING = "healing"
     MEDITATION = "meditation"
@@ -40,6 +41,7 @@ class CCWMode(str, Enum):
 @dataclass
 class CCWParameters:
     """Parameters for CCW audio generation."""
+
     base_frequency: float = 7.83  # Schumann resonance
     carrier_frequency: float = 432.0  # A=432Hz tuning
     binaural_offset: float = 10.0  # Hz
@@ -50,6 +52,7 @@ class CCWParameters:
 @dataclass
 class VIBRANAState:
     """State for VIBRANA visualization sync."""
+
     mode: CCWMode = CCWMode.MEDITATION
     geometry_phase: float = 0.0
     color_intensity: float = 0.5
@@ -67,22 +70,22 @@ class CCWBridge:
 
     # SCPN metric to CCW parameter mappings
     METRIC_MAPPINGS = {
-        'l1_quantum_coherence': ('modulation_depth', 0.3, 0.8),
-        'l2_neurochemical_activity': ('carrier_blend', 0.0, 1.0),
-        'l4_cellular_sync': ('binaural_offset', 4.0, 40.0),
-        'l5_organismal_coherence': ('amplitude', 0.3, 1.0),
-        'l6_planetary_coherence': ('schumann_blend', 0.0, 1.0),
-        'l7_symbolic_health': ('sacred_geometry_intensity', 0.0, 1.0),
+        "l1_quantum_coherence": ("modulation_depth", 0.3, 0.8),
+        "l2_neurochemical_activity": ("carrier_blend", 0.0, 1.0),
+        "l4_cellular_sync": ("binaural_offset", 4.0, 40.0),
+        "l5_organismal_coherence": ("amplitude", 0.3, 1.0),
+        "l6_planetary_coherence": ("schumann_blend", 0.0, 1.0),
+        "l7_symbolic_health": ("sacred_geometry_intensity", 0.0, 1.0),
     }
 
     # Mode to frequency mapping (aligned with VIBRANA)
     MODE_FREQUENCIES = {
-        CCWMode.THEURGIC: (7.83, 14.3),      # Schumann
-        CCWMode.HEALING: (528.0, 432.0),     # Solfeggio
-        CCWMode.MEDITATION: (4.0, 7.83),     # Theta-Schumann
-        CCWMode.COSMIC: (136.1, 272.2),      # OM
-        CCWMode.FOCUS: (14.0, 18.0),         # Beta
-        CCWMode.CREATIVITY: (10.0, 12.0),    # Alpha
+        CCWMode.THEURGIC: (7.83, 14.3),  # Schumann
+        CCWMode.HEALING: (528.0, 432.0),  # Solfeggio
+        CCWMode.MEDITATION: (4.0, 7.83),  # Theta-Schumann
+        CCWMode.COSMIC: (136.1, 272.2),  # OM
+        CCWMode.FOCUS: (14.0, 18.0),  # Beta
+        CCWMode.CREATIVITY: (10.0, 12.0),  # Alpha
     }
 
     def __init__(self, params: CCWParameters = None):
@@ -98,9 +101,9 @@ class CCWBridge:
         self.metric_history: Dict[str, List[float]] = {}
         self.smoothing_window = 10
 
-    def bitstream_to_frequency(self, bitstream: np.ndarray,
-                               freq_min: float = 1.0,
-                               freq_max: float = 40.0) -> float:
+    def bitstream_to_frequency(
+        self, bitstream: np.ndarray, freq_min: float = 1.0, freq_max: float = 40.0
+    ) -> float:
         """
         Convert a bitstream to a frequency value.
 
@@ -126,14 +129,14 @@ class CCWBridge:
             Dict of CCW-compatible audio parameters
         """
         ccw_params = {
-            'base_frequency': self.params.base_frequency,
-            'carrier_frequency': self.params.carrier_frequency,
-            'binaural_offset': self.params.binaural_offset,
-            'modulation_depth': self.params.modulation_depth,
-            'amplitude': 0.5,
-            'carrier_blend': 0.5,
-            'schumann_blend': 0.5,
-            'sacred_geometry_intensity': 0.5,
+            "base_frequency": self.params.base_frequency,
+            "carrier_frequency": self.params.carrier_frequency,
+            "binaural_offset": self.params.binaural_offset,
+            "modulation_depth": self.params.modulation_depth,
+            "amplitude": 0.5,
+            "carrier_blend": 0.5,
+            "schumann_blend": 0.5,
+            "sacred_geometry_intensity": 0.5,
         }
 
         for metric_name, (param_name, min_val, max_val) in self.METRIC_MAPPINGS.items():
@@ -193,26 +196,27 @@ class CCWBridge:
         self.vibrana_state.geometry_phase += platonic_coherence * 0.1
 
         return {
-            'mode': self.vibrana_state.mode.value,
-            'geometry_phase': float(self.vibrana_state.geometry_phase % (2 * np.pi)),
-            'color_intensity': float(self.vibrana_state.color_intensity),
-            'rotation_speed': float(self.vibrana_state.rotation_speed),
-            'glyph_weights': {
-                'phi_alignment': float(phi_alignment),
-                'fibonacci_alignment': float(fibonacci_alignment),
-                'metatron_flow': float(metatron_flow),
-                'platonic_coherence': float(platonic_coherence),
-                'e8_alignment': float(e8_alignment),
-                'symbolic_health': float(symbolic_health),
+            "mode": self.vibrana_state.mode.value,
+            "geometry_phase": float(self.vibrana_state.geometry_phase % (2 * np.pi)),
+            "color_intensity": float(self.vibrana_state.color_intensity),
+            "rotation_speed": float(self.vibrana_state.rotation_speed),
+            "glyph_weights": {
+                "phi_alignment": float(phi_alignment),
+                "fibonacci_alignment": float(fibonacci_alignment),
+                "metatron_flow": float(metatron_flow),
+                "platonic_coherence": float(platonic_coherence),
+                "e8_alignment": float(e8_alignment),
+                "symbolic_health": float(symbolic_health),
             },
-            'frequencies': {
-                'base': self.MODE_FREQUENCIES[self.vibrana_state.mode][0],
-                'harmonic': self.MODE_FREQUENCIES[self.vibrana_state.mode][1],
-            }
+            "frequencies": {
+                "base": self.MODE_FREQUENCIES[self.vibrana_state.mode][0],
+                "harmonic": self.MODE_FREQUENCIES[self.vibrana_state.mode][1],
+            },
         }
 
-    def generate_binaural_sample(self, ccw_params: Dict[str, float],
-                                 duration_samples: int = 1024) -> Tuple[np.ndarray, np.ndarray]:
+    def generate_binaural_sample(
+        self, ccw_params: Dict[str, float], duration_samples: int = 1024
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Generate binaural audio samples from CCW parameters.
 
@@ -227,11 +231,11 @@ class CCWBridge:
         dt = 1.0 / sample_rate
 
         # Extract parameters
-        carrier = ccw_params.get('carrier_frequency', 432.0)
-        binaural = ccw_params.get('binaural_offset', 10.0)
-        mod_depth = ccw_params.get('modulation_depth', 0.5)
-        amplitude = ccw_params.get('amplitude', 0.5)
-        base_freq = ccw_params.get('base_frequency', 7.83)
+        carrier = ccw_params.get("carrier_frequency", 432.0)
+        binaural = ccw_params.get("binaural_offset", 10.0)
+        mod_depth = ccw_params.get("modulation_depth", 0.5)
+        amplitude = ccw_params.get("amplitude", 0.5)
+        base_freq = ccw_params.get("base_frequency", 7.83)
 
         # Time array
         t = np.arange(duration_samples) * dt
@@ -245,7 +249,9 @@ class CCWBridge:
         phase_increment_right = 2 * np.pi * right_freq * dt
 
         phases_left = self.phase_left + np.cumsum(np.ones(duration_samples) * phase_increment_left)
-        phases_right = self.phase_right + np.cumsum(np.ones(duration_samples) * phase_increment_right)
+        phases_right = self.phase_right + np.cumsum(
+            np.ones(duration_samples) * phase_increment_right
+        )
 
         # Update phase state for continuity
         self.phase_left = phases_left[-1] % (2 * np.pi)
@@ -269,8 +275,9 @@ class CCWBridge:
 
         return left, right
 
-    def generate_ccw_metadata(self, scpn_outputs: Dict[str, Any],
-                              glyph_vector: np.ndarray = None) -> Dict[str, Any]:
+    def generate_ccw_metadata(
+        self, scpn_outputs: Dict[str, Any], glyph_vector: np.ndarray = None
+    ) -> Dict[str, Any]:
         """
         Generate complete CCW metadata package for audio/visual sync.
 
@@ -285,16 +292,16 @@ class CCWBridge:
         metrics = {}
         for layer_name, output in scpn_outputs.items():
             if isinstance(output, dict):
-                if 'coherence' in str(output.keys()).lower():
+                if "coherence" in str(output.keys()).lower():
                     for k, v in output.items():
                         if isinstance(v, (int, float)):
-                            metrics[f'{layer_name}_{k}'] = float(v)
+                            metrics[f"{layer_name}_{k}"] = float(v)
 
         # Get glyph vector from L7 if not provided
-        if glyph_vector is None and 'l7' in scpn_outputs:
-            l7_out = scpn_outputs['l7']
-            if isinstance(l7_out, dict) and 'glyph_vector' in l7_out:
-                glyph_vector = l7_out['glyph_vector']
+        if glyph_vector is None and "l7" in scpn_outputs:
+            l7_out = scpn_outputs["l7"]
+            if isinstance(l7_out, dict) and "glyph_vector" in l7_out:
+                glyph_vector = l7_out["glyph_vector"]
 
         # Convert to CCW parameters
         ccw_params = self.scpn_metrics_to_ccw(metrics)
@@ -306,19 +313,19 @@ class CCWBridge:
 
         # Build complete metadata
         metadata = {
-            'timestamp': float(np.datetime64('now').astype(np.float64)),
-            'ccw_audio': ccw_params,
-            'vibrana_visual': vibrana_params,
-            'scpn_metrics': metrics,
-            'mode': self.vibrana_state.mode.value,
-            'bridge_version': '1.0.0',
+            "timestamp": float(np.datetime64("now").astype(np.float64)),
+            "ccw_audio": ccw_params,
+            "vibrana_visual": vibrana_params,
+            "scpn_metrics": metrics,
+            "mode": self.vibrana_state.mode.value,
+            "bridge_version": "1.0.0",
         }
 
         return metadata
 
-    def export_glyph_stream(self, glyph_vector: np.ndarray,
-                            cosmic_vector: Dict[str, float] = None,
-                            filepath: str = None) -> str:
+    def export_glyph_stream(
+        self, glyph_vector: np.ndarray, cosmic_vector: Dict[str, float] = None, filepath: str = None
+    ) -> str:
         """
         Export glyph stream data for VIBRANA/CCW hardware playback.
 
@@ -331,38 +338,39 @@ class CCWBridge:
             JSON string of glyph stream data
         """
         stream_data = {
-            'glyph_vector': {
-                'phi_alignment': float(glyph_vector[0]) if len(glyph_vector) > 0 else 0.0,
-                'fibonacci_alignment': float(glyph_vector[1]) if len(glyph_vector) > 1 else 0.0,
-                'metatron_flow': float(glyph_vector[2]) if len(glyph_vector) > 2 else 0.0,
-                'platonic_coherence': float(glyph_vector[3]) if len(glyph_vector) > 3 else 0.0,
-                'e8_alignment': float(glyph_vector[4]) if len(glyph_vector) > 4 else 0.0,
-                'symbolic_health': float(glyph_vector[5]) if len(glyph_vector) > 5 else 0.0,
+            "glyph_vector": {
+                "phi_alignment": float(glyph_vector[0]) if len(glyph_vector) > 0 else 0.0,
+                "fibonacci_alignment": float(glyph_vector[1]) if len(glyph_vector) > 1 else 0.0,
+                "metatron_flow": float(glyph_vector[2]) if len(glyph_vector) > 2 else 0.0,
+                "platonic_coherence": float(glyph_vector[3]) if len(glyph_vector) > 3 else 0.0,
+                "e8_alignment": float(glyph_vector[4]) if len(glyph_vector) > 4 else 0.0,
+                "symbolic_health": float(glyph_vector[5]) if len(glyph_vector) > 5 else 0.0,
             },
-            'cosmic_vector': cosmic_vector or {},
-            'layer_weights': {
-                'metatron_weight': 0.95,  # Default high weight for Metatron
-                'phi_weight': 0.85,
-                'e8_weight': 0.75,
+            "cosmic_vector": cosmic_vector or {},
+            "layer_weights": {
+                "metatron_weight": 0.95,  # Default high weight for Metatron
+                "phi_weight": 0.85,
+                "e8_weight": 0.75,
             },
-            'routing': {
-                'target': 'vibrana_hardware',
-                'protocol': 'bitstream',
-                'encoding': 'normalized_float',
-            }
+            "routing": {
+                "target": "vibrana_hardware",
+                "protocol": "bitstream",
+                "encoding": "normalized_float",
+            },
         }
 
         json_str = json.dumps(stream_data, indent=2)
 
         if filepath:
-            with open(filepath, 'w') as f:
+            with open(filepath, "w") as f:
                 f.write(json_str)
             logger.info(f"Glyph stream exported to {filepath}")
 
         return json_str
 
-    def create_session_config(self, mode: CCWMode = CCWMode.MEDITATION,
-                              duration_minutes: int = 20) -> Dict[str, Any]:
+    def create_session_config(
+        self, mode: CCWMode = CCWMode.MEDITATION, duration_minutes: int = 20
+    ) -> Dict[str, Any]:
         """
         Create a complete CCW session configuration.
 
@@ -376,28 +384,28 @@ class CCWBridge:
         base_freq, harmonic_freq = self.MODE_FREQUENCIES[mode]
 
         return {
-            'session': {
-                'mode': mode.value,
-                'duration_minutes': duration_minutes,
-                'created_at': str(np.datetime64('now')),
+            "session": {
+                "mode": mode.value,
+                "duration_minutes": duration_minutes,
+                "created_at": str(np.datetime64("now")),
             },
-            'audio': {
-                'base_frequency': base_freq,
-                'harmonic_frequency': harmonic_freq,
-                'carrier_frequency': self.params.carrier_frequency,
-                'binaural_offset': self.params.binaural_offset,
-                'sample_rate': self.params.sample_rate,
+            "audio": {
+                "base_frequency": base_freq,
+                "harmonic_frequency": harmonic_freq,
+                "carrier_frequency": self.params.carrier_frequency,
+                "binaural_offset": self.params.binaural_offset,
+                "sample_rate": self.params.sample_rate,
             },
-            'visual': {
-                'geometry_pattern': 'thirteen_fold',
-                'rotation_enabled': True,
-                'color_scheme': mode.value,
+            "visual": {
+                "geometry_pattern": "thirteen_fold",
+                "rotation_enabled": True,
+                "color_scheme": mode.value,
             },
-            'scpn_integration': {
-                'enabled': True,
-                'update_rate_hz': 10,
-                'layers': ['l1', 'l4', 'l5', 'l6', 'l7'],
-            }
+            "scpn_integration": {
+                "enabled": True,
+                "update_rate_hz": 10,
+                "layers": ["l1", "l4", "l5", "l6", "l7"],
+            },
         }
 
 

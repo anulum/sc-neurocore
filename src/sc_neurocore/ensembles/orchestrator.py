@@ -8,17 +8,19 @@ from ..core.orchestrator import CognitiveOrchestrator
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class EnsembleOrchestrator:
     """
     Manages a collective of SC-NeuroCore Agents.
     Implements ensemble consensus and coordinated action.
     """
+
     agents: Dict[str, CognitiveOrchestrator] = field(default_factory=dict)
-    
+
     def add_agent(self, name: str, agent: CognitiveOrchestrator):
         self.agents[name] = agent
-        
+
     def run_consensus(self, pipeline: List[str], initial_input: Any) -> np.ndarray:
         """
         Runs the same pipeline on all agents and averages results.
@@ -27,7 +29,7 @@ class EnsembleOrchestrator:
         for name, agent in self.agents.items():
             out = agent.execute_pipeline(pipeline, initial_input)
             results.append(out.to_prob())
-            
+
         # Majority vote / Average
         return np.mean(results, axis=0)
 

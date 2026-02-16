@@ -1,8 +1,8 @@
-
 import logging
 import numpy as np
 
 logger = logging.getLogger(__name__)
+
 
 class LSLBridge:
     """
@@ -10,10 +10,11 @@ class LSLBridge:
     Connects EEG/Physiological streams to sc-neurocore.
     (Mock implementation for standalone use).
     """
+
     def __init__(self, stream_name="NeuromorphicIn"):
         self.stream_name = stream_name
         logger.info("LSL: Listening for stream '%s'...", stream_name)
-        
+
     def receive_chunk(self, max_samples=32) -> np.ndarray:
         """
         Simulates receiving a chunk of samples.
@@ -22,15 +23,17 @@ class LSLBridge:
         # Mock EEG data: 8 channels, random signals
         return np.random.normal(0, 50e-6, (8, max_samples))
 
+
 class ROS2Node:
     """
     ROS 2 Interface Node.
     Publishes motor commands from sc-neurocore to robots.
     """
+
     def __init__(self, node_name="neuro_controller"):
         self.node_name = node_name
         logger.info("ROS2: Node '%s' initialized.", node_name)
-        
+
     def publish_cmd_vel(self, linear_x: float, angular_z: float):
         """
         Simulates publishing to /cmd_vel.

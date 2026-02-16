@@ -1,6 +1,7 @@
 from __future__ import annotations
 from sc_neurocore.layers.sc_dense_layer import SCDenseLayer
 
+
 def demo():
     # Three input channels with different scalar values
     x_inputs = [0.02, 0.05, 0.08]
@@ -45,6 +46,7 @@ def demo():
             f"firing_rate_hz={s['firing_rate_hz']:.2f}"
         )
     print("Average firing rate (Hz):", summary["avg_firing_rate_hz"])
+
 
 if __name__ == "__main__":
     demo()

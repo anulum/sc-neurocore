@@ -17,6 +17,7 @@ from sc_neurocore.profiling.energy import EnergyMetrics, profiler, track_energy
 # QuantumEntropySource
 # ---------------------------------------------------------------------------
 
+
 class TestQuantumEntropySource:
     def test_construction_default(self):
         qes = QuantumEntropySource(n_qubits=1, seed=42)
@@ -69,14 +70,18 @@ class TestQuantumEntropySource:
 # BitstreamCurrentSource
 # ---------------------------------------------------------------------------
 
+
 class TestBitstreamCurrentSource:
     def test_construction(self):
         src = BitstreamCurrentSource(
             x_inputs=[0.5, 0.5],
-            x_min=0.0, x_max=1.0,
+            x_min=0.0,
+            x_max=1.0,
             weight_values=[0.5, 0.5],
-            w_min=0.0, w_max=1.0,
-            length=256, seed=42,
+            w_min=0.0,
+            w_max=1.0,
+            length=256,
+            seed=42,
         )
         assert src.n_inputs == 2
         assert src.pre_matrix.shape == (2, 256)
@@ -86,18 +91,25 @@ class TestBitstreamCurrentSource:
         with pytest.raises(ValueError):
             BitstreamCurrentSource(
                 x_inputs=[0.5, 0.5],
-                x_min=0.0, x_max=1.0,
+                x_min=0.0,
+                x_max=1.0,
                 weight_values=[0.5],
-                w_min=0.0, w_max=1.0,
+                w_min=0.0,
+                w_max=1.0,
             )
 
     def test_step_returns_float_in_range(self):
         src = BitstreamCurrentSource(
             x_inputs=[0.8],
-            x_min=0.0, x_max=1.0,
+            x_min=0.0,
+            x_max=1.0,
             weight_values=[0.6],
-            w_min=0.0, w_max=1.0,
-            length=64, y_min=0.0, y_max=1.0, seed=42,
+            w_min=0.0,
+            w_max=1.0,
+            length=64,
+            y_min=0.0,
+            y_max=1.0,
+            seed=42,
         )
         for _ in range(64):
             I_t = src.step()
@@ -107,10 +119,13 @@ class TestBitstreamCurrentSource:
         """After length steps, it should clamp at the last index."""
         src = BitstreamCurrentSource(
             x_inputs=[0.5],
-            x_min=0.0, x_max=1.0,
+            x_min=0.0,
+            x_max=1.0,
             weight_values=[0.5],
-            w_min=0.0, w_max=1.0,
-            length=8, seed=42,
+            w_min=0.0,
+            w_max=1.0,
+            length=8,
+            seed=42,
         )
         for _ in range(20):
             I_t = src.step()
@@ -119,10 +134,13 @@ class TestBitstreamCurrentSource:
     def test_reset(self):
         src = BitstreamCurrentSource(
             x_inputs=[0.5],
-            x_min=0.0, x_max=1.0,
+            x_min=0.0,
+            x_max=1.0,
             weight_values=[0.5],
-            w_min=0.0, w_max=1.0,
-            length=16, seed=42,
+            w_min=0.0,
+            w_max=1.0,
+            length=16,
+            seed=42,
         )
         first_vals = [src.step() for _ in range(5)]
         src.reset()
@@ -132,10 +150,15 @@ class TestBitstreamCurrentSource:
     def test_full_current_estimate(self):
         src = BitstreamCurrentSource(
             x_inputs=[0.8, 0.6],
-            x_min=0.0, x_max=1.0,
+            x_min=0.0,
+            x_max=1.0,
             weight_values=[0.5, 0.5],
-            w_min=0.0, w_max=1.0,
-            length=1024, y_min=0.0, y_max=0.1, seed=42,
+            w_min=0.0,
+            w_max=1.0,
+            length=1024,
+            y_min=0.0,
+            y_max=0.1,
+            seed=42,
         )
         est = src.full_current_estimate()
         assert isinstance(est, float)
@@ -144,14 +167,28 @@ class TestBitstreamCurrentSource:
     def test_high_weight_high_input_gives_more_current(self):
         """Higher weights and inputs should produce more current."""
         src_low = BitstreamCurrentSource(
-            x_inputs=[0.2], x_min=0.0, x_max=1.0,
-            weight_values=[0.2], w_min=0.0, w_max=1.0,
-            length=1024, y_min=0.0, y_max=1.0, seed=42,
+            x_inputs=[0.2],
+            x_min=0.0,
+            x_max=1.0,
+            weight_values=[0.2],
+            w_min=0.0,
+            w_max=1.0,
+            length=1024,
+            y_min=0.0,
+            y_max=1.0,
+            seed=42,
         )
         src_high = BitstreamCurrentSource(
-            x_inputs=[0.9], x_min=0.0, x_max=1.0,
-            weight_values=[0.9], w_min=0.0, w_max=1.0,
-            length=1024, y_min=0.0, y_max=1.0, seed=42,
+            x_inputs=[0.9],
+            x_min=0.0,
+            x_max=1.0,
+            weight_values=[0.9],
+            w_min=0.0,
+            w_max=1.0,
+            length=1024,
+            y_min=0.0,
+            y_max=1.0,
+            seed=42,
         )
         assert src_high.full_current_estimate() > src_low.full_current_estimate()
 
@@ -159,6 +196,7 @@ class TestBitstreamCurrentSource:
 # ---------------------------------------------------------------------------
 # profiling/energy.py
 # ---------------------------------------------------------------------------
+
 
 class TestEnergyMetrics:
     def test_defaults(self):

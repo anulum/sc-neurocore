@@ -5,6 +5,9 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+
+pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+
 import sc_neurocore_engine as v3
 from sc_neurocore_engine import FixedPointLif
 
@@ -34,9 +37,7 @@ class TestBatchLifRun:
             per_step_voltages.append(v)
 
         # Batch
-        batch_spikes, batch_voltages = v3.batch_lif_run(
-            n_steps, leak_k=leak, gain_k=gain, i_t=i_t
-        )
+        batch_spikes, batch_voltages = v3.batch_lif_run(n_steps, leak_k=leak, gain_k=gain, i_t=i_t)
 
         np.testing.assert_array_equal(batch_spikes, per_step_spikes)
         np.testing.assert_array_equal(batch_voltages, per_step_voltages)
@@ -73,9 +74,7 @@ class TestBatchLifRunVarying:
 
     def test_basic(self):
         currents = np.full(100, 128, dtype=np.int16)
-        spikes, voltages = v3.batch_lif_run_varying(
-            leak_k=20, gain_k=256, currents=currents
-        )
+        spikes, voltages = v3.batch_lif_run_varying(leak_k=20, gain_k=256, currents=currents)
         assert spikes.shape == (100,)
         assert voltages.shape == (100,)
 

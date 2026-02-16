@@ -1,6 +1,6 @@
-
 import numpy as np
 from dataclasses import dataclass
+
 
 @dataclass
 class SCAudioSynthesizer:
@@ -8,8 +8,9 @@ class SCAudioSynthesizer:
     SC Audio Synthesis engine.
     Converts bitstreams/probabilities to waveform buffers.
     """
+
     sample_rate: int = 44100
-    
+
     def synthesize_tone(self, frequency: float, duration_ms: int, probability: float) -> np.ndarray:
         """
         Synthesize a simple sine tone modulated by probability (amplitude).
@@ -25,5 +26,5 @@ class SCAudioSynthesizer:
         # Low-pass filter the bitstream to get 'analog' signal
         # Simplified: moving average
         window = 10
-        audio = np.convolve(bitstream, np.ones(window)/window, mode='same')
+        audio = np.convolve(bitstream, np.ones(window) / window, mode="same")
         return audio

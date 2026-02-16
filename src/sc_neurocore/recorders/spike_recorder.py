@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from typing import List, Tuple
 import numpy as np
 
+
 @dataclass
 class BitstreamSpikeRecorder:
     """
@@ -13,6 +14,7 @@ class BitstreamSpikeRecorder:
     - firing rate (Hz) given dt (ms)
     - inter-spike interval (ISI) histogram
     """
+
     dt_ms: float = 1.0
     spikes: List[int] = field(default_factory=list)
 

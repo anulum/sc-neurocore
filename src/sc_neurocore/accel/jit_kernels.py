@@ -4,15 +4,22 @@ import warnings
 # Try to import Numba
 try:
     from numba import jit
+
     HAS_NUMBA = True
 except ImportError:  # pragma: no cover
     HAS_NUMBA = False
+
     # Fallback decorator: returns the original function
     def jit(*args, **kwargs):
         def decorator(func):
             return func
+
         return decorator
-    warnings.warn("Numba not found. Using pure Python fallback. Install 'numba' for high performance.")
+
+    warnings.warn(
+        "Numba not found. Using pure Python fallback. Install 'numba' for high performance."
+    )
+
 
 @jit(nopython=True)
 def jit_pack_bits(bitstream: np.ndarray, packed_arr: np.ndarray):  # pragma: no cover
@@ -29,11 +36,14 @@ def jit_pack_bits(bitstream: np.ndarray, packed_arr: np.ndarray):  # pragma: no 
         base = i * 64
         for j in range(64):
             if bitstream[base + j] > 0:
-                val |= (np.uint64(1) << np.uint64(j))
+                val |= np.uint64(1) << np.uint64(j)
         packed_arr[i] = val
 
+
 @jit(nopython=True)
-def jit_vec_mac(packed_weights: np.ndarray, packed_inputs: np.ndarray, outputs: np.ndarray):  # pragma: no cover
+def jit_vec_mac(
+    packed_weights: np.ndarray, packed_inputs: np.ndarray, outputs: np.ndarray
+):  # pragma: no cover
     """
     Vectorized Multiply-Accumulate (MAC).
     Simulates: Output[i] = Sum(Weights[i] AND Inputs)
@@ -56,7 +66,9 @@ def jit_vec_mac(packed_weights: np.ndarray, packed_inputs: np.ndarray, outputs: 
                 # SWAR Algorithm for 64-bit popcount (Safe for Numba nopython mode)
                 x = res
                 x = x - ((x >> np.uint64(1)) & np.uint64(0x5555555555555555))
-                x = (x & np.uint64(0x3333333333333333)) + ((x >> np.uint64(2)) & np.uint64(0x3333333333333333))
+                x = (x & np.uint64(0x3333333333333333)) + (
+                    (x >> np.uint64(2)) & np.uint64(0x3333333333333333)
+                )
                 x = (x + (x >> np.uint64(4))) & np.uint64(0x0F0F0F0F0F0F0F0F)
                 x = (x * np.uint64(0x0101010101010101)) >> np.uint64(56)
 

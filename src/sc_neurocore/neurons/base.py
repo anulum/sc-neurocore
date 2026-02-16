@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 
+
 class BaseNeuron(ABC):
     """
     Abstract base class for stochastic neuron models.

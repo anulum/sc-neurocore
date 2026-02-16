@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class L5_StochasticParameters:
     """Parameters for the Stochastic L5 Organismal Layer."""
+
     n_emotional_dims: int = 8  # Valence, arousal, dominance, etc.
     n_autonomic_nodes: int = 100
     bitstream_length: int = 1024
@@ -46,7 +47,7 @@ class L5_StochasticParameters:
     attractor_strength: float = 0.3
 
     # Inter-layer coupling
-    cellular_coupling: float = 0.15   # From L4
+    cellular_coupling: float = 0.15  # From L4
     ecological_coupling: float = 0.1  # To L6
 
 
@@ -59,14 +60,14 @@ class L5_OrganismalLayer:
     """
 
     # Emotional dimension indices
-    VALENCE = 0      # Pleasant-Unpleasant
-    AROUSAL = 1      # Activated-Deactivated
-    DOMINANCE = 2    # Dominant-Submissive
-    APPROACH = 3     # Approach-Avoid
-    CERTAINTY = 4    # Certain-Uncertain
-    ATTENTION = 5    # Focused-Diffuse
-    FAIRNESS = 6     # Fair-Unfair
-    SAFETY = 7       # Safe-Threatened
+    VALENCE = 0  # Pleasant-Unpleasant
+    AROUSAL = 1  # Activated-Deactivated
+    DOMINANCE = 2  # Dominant-Submissive
+    APPROACH = 3  # Approach-Avoid
+    CERTAINTY = 4  # Certain-Uncertain
+    ATTENTION = 5  # Focused-Diffuse
+    FAIRNESS = 6  # Fair-Unfair
+    SAFETY = 7  # Safe-Threatened
 
     def __init__(self, params: L5_StochasticParameters = None):
         self.params = params or L5_StochasticParameters()
@@ -75,7 +76,7 @@ class L5_OrganismalLayer:
         self.emotional_state = np.zeros(self.params.n_emotional_dims)
         self.emotional_state[self.VALENCE] = 0.5  # Neutral valence
         self.emotional_state[self.AROUSAL] = 0.3  # Low arousal baseline
-        self.emotional_state[self.SAFETY] = 0.7   # Safe baseline
+        self.emotional_state[self.SAFETY] = 0.7  # Safe baseline
 
         # Autonomic nervous system state
         self.sympathetic = self.params.sympathetic_baseline
@@ -98,18 +99,20 @@ class L5_OrganismalLayer:
     def _init_emotional_attractors(self) -> np.ndarray:
         """Initialize emotional attractor states."""
         # Define stable emotional configurations
-        attractors = np.array([
-            [0.8, 0.3, 0.6, 0.7, 0.7, 0.5, 0.6, 0.8],  # Joy/contentment
-            [0.2, 0.8, 0.3, 0.2, 0.3, 0.8, 0.3, 0.2],  # Fear/anxiety
-            [0.2, 0.7, 0.7, 0.8, 0.6, 0.7, 0.2, 0.4],  # Anger
-            [0.3, 0.2, 0.2, 0.2, 0.4, 0.3, 0.5, 0.5],  # Sadness
-            [0.5, 0.4, 0.5, 0.5, 0.5, 0.5, 0.5, 0.6],  # Neutral
-        ])
+        attractors = np.array(
+            [
+                [0.8, 0.3, 0.6, 0.7, 0.7, 0.5, 0.6, 0.8],  # Joy/contentment
+                [0.2, 0.8, 0.3, 0.2, 0.3, 0.8, 0.3, 0.2],  # Fear/anxiety
+                [0.2, 0.7, 0.7, 0.8, 0.6, 0.7, 0.2, 0.4],  # Anger
+                [0.3, 0.2, 0.2, 0.2, 0.4, 0.3, 0.5, 0.5],  # Sadness
+                [0.5, 0.4, 0.5, 0.5, 0.5, 0.5, 0.5, 0.6],  # Neutral
+            ]
+        )
         return attractors
 
-    def step(self, dt: float,
-             l4_input: Optional[Dict] = None,
-             external_event: Optional[Dict] = None) -> Dict[str, np.ndarray]:
+    def step(
+        self, dt: float, l4_input: Optional[Dict] = None, external_event: Optional[Dict] = None
+    ) -> Dict[str, np.ndarray]:
         """
         Advance the layer by one time step.
 
@@ -153,13 +156,11 @@ class L5_OrganismalLayer:
         # 3. Autonomic nervous system dynamics
         # Sympathetic driven by arousal and threat
         target_symp = (
-            self.emotional_state[self.AROUSAL] * 0.5 +
-            (1 - self.emotional_state[self.SAFETY]) * 0.5
+            self.emotional_state[self.AROUSAL] * 0.5 + (1 - self.emotional_state[self.SAFETY]) * 0.5
         )
         # Parasympathetic driven by valence and safety
         target_para = (
-            self.emotional_state[self.VALENCE] * 0.3 +
-            self.emotional_state[self.SAFETY] * 0.7
+            self.emotional_state[self.VALENCE] * 0.3 + self.emotional_state[self.SAFETY] * 0.7
         )
 
         tau = self.params.autonomic_time_constant
@@ -175,11 +176,7 @@ class L5_OrganismalLayer:
         rsa_component = self.params.hrv_amplitude * np.sin(self.hrv_phase) * self.parasympathetic
 
         # Sympathetic raises HR, parasympathetic lowers it
-        target_hr = (
-            self.params.base_heart_rate +
-            20 * self.sympathetic -
-            15 * self.parasympathetic
-        )
+        target_hr = self.params.base_heart_rate + 20 * self.sympathetic - 15 * self.parasympathetic
         self.heart_rate += (target_hr - self.heart_rate) * dt * 0.5
         self.heart_rate += rsa_component * 10  # RSA effect
 
@@ -190,40 +187,40 @@ class L5_OrganismalLayer:
             self.rr_intervals.pop(0)
 
         # 5. Cellular input coupling (L4 synchronization affects coherence)
-        if l4_input is not None and 'synchronization' in l4_input:
-            sync = l4_input['synchronization']
+        if l4_input is not None and "synchronization" in l4_input:
+            sync = l4_input["synchronization"]
             # High cellular sync improves emotional stability
             self.emotional_state[self.CERTAINTY] += sync * self.params.cellular_coupling * dt
             self.emotional_state = np.clip(self.emotional_state, 0.0, 1.0)
 
         # 6. Update interoceptive state
         self.interoceptive_state = (
-            0.8 * self.interoceptive_state +
-            0.2 * np.tile(
+            0.8 * self.interoceptive_state
+            + 0.2
+            * np.tile(
                 [self.sympathetic, self.parasympathetic, self.heart_rate / 100],
-                self.params.n_autonomic_nodes // 3 + 1
-            )[:self.params.n_autonomic_nodes]
+                self.params.n_autonomic_nodes // 3 + 1,
+            )[: self.params.n_autonomic_nodes]
         )
 
         # 7. Generate output bitstreams
-        output_probs = np.concatenate([
-            self.emotional_state,
-            [self.sympathetic, self.parasympathetic, self.heart_rate / 100]
-        ])
+        output_probs = np.concatenate(
+            [self.emotional_state, [self.sympathetic, self.parasympathetic, self.heart_rate / 100]]
+        )
         output_probs = np.tile(output_probs, self.params.n_autonomic_nodes // len(output_probs) + 1)
-        output_probs = output_probs[:self.params.n_autonomic_nodes]
+        output_probs = output_probs[: self.params.n_autonomic_nodes]
 
         rands = np.random.random((self.params.n_autonomic_nodes, self.params.bitstream_length))
         output_bitstreams = (rands < output_probs[:, None]).astype(np.uint8)
 
         return {
-            'emotional_state': self.emotional_state.copy(),
-            'sympathetic': self.sympathetic,
-            'parasympathetic': self.parasympathetic,
-            'heart_rate': self.heart_rate,
-            'hrv_rmssd': self._compute_rmssd(),
-            'interoceptive_state': self.interoceptive_state.copy(),
-            'output_bitstreams': output_bitstreams
+            "emotional_state": self.emotional_state.copy(),
+            "sympathetic": self.sympathetic,
+            "parasympathetic": self.parasympathetic,
+            "heart_rate": self.heart_rate,
+            "hrv_rmssd": self._compute_rmssd(),
+            "interoceptive_state": self.interoceptive_state.copy(),
+            "output_bitstreams": output_bitstreams,
         }
 
     def _compute_rmssd(self) -> float:
@@ -232,7 +229,7 @@ class L5_OrganismalLayer:
             return 0.0
         rr = np.array(self.rr_intervals)
         diff = np.diff(rr)
-        return float(np.sqrt(np.mean(diff ** 2)))
+        return float(np.sqrt(np.mean(diff**2)))
 
     def get_global_metric(self) -> float:
         """Return the global organismal coherence metric."""

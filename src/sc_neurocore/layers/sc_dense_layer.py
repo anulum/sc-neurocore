@@ -7,6 +7,7 @@ from ..sources.bitstream_current_source import BitstreamCurrentSource
 from ..neurons.stochastic_lif import StochasticLIFNeuron
 from ..recorders.spike_recorder import BitstreamSpikeRecorder
 
+
 @dataclass
 class SCDenseLayer:
     """
@@ -19,6 +20,7 @@ class SCDenseLayer:
 
     This is software-only but fully SC-driven at the input/synapse level.
     """
+
     n_neurons: int
     x_inputs: Sequence[float]
     weight_values: Sequence[float]

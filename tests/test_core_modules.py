@@ -15,7 +15,7 @@ import os
 import sys
 
 # Add source path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from sc_neurocore.core.tensor_stream import TensorStream
 from sc_neurocore.core.orchestrator import CognitiveOrchestrator
@@ -25,6 +25,7 @@ from sc_neurocore.core.orchestrator import CognitiveOrchestrator
 # TensorStream Tests
 # =============================================================================
 
+
 class TestTensorStream:
     """Tests for TensorStream data structure."""
 
@@ -33,7 +34,7 @@ class TestTensorStream:
         probs = np.array([0.2, 0.5, 0.8])
         stream = TensorStream.from_prob(probs)
 
-        assert stream.domain == 'prob'
+        assert stream.domain == "prob"
         assert np.array_equal(stream.data, probs)
 
     def test_to_prob_identity(self):
@@ -84,17 +85,20 @@ class TestTensorStream:
         quantum = stream.to_quantum()
 
         # |alpha|^2 + |beta|^2 should equal 1
-        norms = np.abs(quantum[..., 0])**2 + np.abs(quantum[..., 1])**2
+        norms = np.abs(quantum[..., 0]) ** 2 + np.abs(quantum[..., 1]) ** 2
         assert np.allclose(norms, 1.0)
 
     def test_bitstream_to_prob_conversion(self):
         """Test converting bitstream back to probability."""
-        bitstream = np.array([
-            [1, 1, 0, 0, 1, 1, 0, 0],  # 0.5
-            [1, 1, 1, 1, 1, 1, 0, 0],  # 0.75
-        ], dtype=np.uint8)
+        bitstream = np.array(
+            [
+                [1, 1, 0, 0, 1, 1, 0, 0],  # 0.5
+                [1, 1, 1, 1, 1, 1, 0, 0],  # 0.75
+            ],
+            dtype=np.uint8,
+        )
 
-        stream = TensorStream(data=bitstream, domain='bitstream')
+        stream = TensorStream(data=bitstream, domain="bitstream")
         probs = stream.to_prob()
 
         assert np.allclose(probs, [0.5, 0.75])
@@ -103,13 +107,16 @@ class TestTensorStream:
         """Test quantum to probability uses Born rule."""
         # Create quantum state directly
         # |psi> = alpha|0> + beta|1>  -> p = |beta|^2
-        quantum = np.array([
-            [1.0, 0.0],  # p = 0
-            [np.sqrt(0.5), np.sqrt(0.5)],  # p = 0.5
-            [0.0, 1.0],  # p = 1
-        ], dtype=complex)
+        quantum = np.array(
+            [
+                [1.0, 0.0],  # p = 0
+                [np.sqrt(0.5), np.sqrt(0.5)],  # p = 0.5
+                [0.0, 1.0],  # p = 1
+            ],
+            dtype=complex,
+        )
 
-        stream = TensorStream(data=quantum, domain='quantum')
+        stream = TensorStream(data=quantum, domain="quantum")
         probs = stream.to_prob()
 
         assert np.allclose(probs, [0.0, 0.5, 1.0])
@@ -119,8 +126,10 @@ class TestTensorStream:
 # CognitiveOrchestrator Tests
 # =============================================================================
 
+
 class MockModule:
     """Mock module for testing orchestrator."""
+
     def __init__(self, transform_fn):
         self.transform_fn = transform_fn
         self.weights = np.array([1.0, 2.0])
@@ -134,6 +143,7 @@ class MockModule:
 
 class MockStepModule:
     """Mock module using step interface."""
+
     def __init__(self, factor=2.0):
         self.factor = factor
         self.v = 0.0
@@ -142,7 +152,7 @@ class MockStepModule:
         return x * self.factor
 
     def get_state(self):
-        return {'v': self.v}
+        return {"v": self.v}
 
 
 class TestCognitiveOrchestrator:
@@ -153,35 +163,35 @@ class TestCognitiveOrchestrator:
         orch = CognitiveOrchestrator()
         module = MockModule(lambda x: x)
 
-        orch.register_module('test', module)
+        orch.register_module("test", module)
 
-        assert 'test' in orch.modules
-        assert orch.modules['test'] is module
+        assert "test" in orch.modules
+        assert orch.modules["test"] is module
 
     def test_set_attention(self):
         """Test setting attention focus."""
         orch = CognitiveOrchestrator()
-        orch.register_module('sensor', MockModule(lambda x: x))
+        orch.register_module("sensor", MockModule(lambda x: x))
 
-        orch.set_attention('sensor')
+        orch.set_attention("sensor")
 
-        assert orch.attention_focus == 'sensor'
+        assert orch.attention_focus == "sensor"
 
     def test_set_attention_invalid_module(self):
         """Test setting attention on non-existent module."""
         orch = CognitiveOrchestrator()
 
-        orch.set_attention('nonexistent')
+        orch.set_attention("nonexistent")
 
         assert orch.attention_focus is None
 
     def test_execute_pipeline_single_module(self):
         """Test executing pipeline with single module."""
         orch = CognitiveOrchestrator()
-        orch.register_module('double', MockModule(lambda x: x * 2))
+        orch.register_module("double", MockModule(lambda x: x * 2))
 
         input_stream = TensorStream.from_prob(np.array([0.25, 0.5]))
-        output_stream = orch.execute_pipeline(['double'], input_stream)
+        output_stream = orch.execute_pipeline(["double"], input_stream)
 
         expected = np.array([0.5, 1.0])
         assert np.allclose(output_stream.to_prob(), expected)
@@ -189,11 +199,11 @@ class TestCognitiveOrchestrator:
     def test_execute_pipeline_multiple_modules(self):
         """Test executing pipeline with multiple modules."""
         orch = CognitiveOrchestrator()
-        orch.register_module('add_half', MockModule(lambda x: x + 0.1))
-        orch.register_module('double', MockModule(lambda x: x * 2))
+        orch.register_module("add_half", MockModule(lambda x: x + 0.1))
+        orch.register_module("double", MockModule(lambda x: x * 2))
 
         input_stream = TensorStream.from_prob(np.array([0.2]))
-        output_stream = orch.execute_pipeline(['add_half', 'double'], input_stream)
+        output_stream = orch.execute_pipeline(["add_half", "double"], input_stream)
 
         # (0.2 + 0.1) * 2 = 0.6
         expected = np.array([0.6])
@@ -202,10 +212,10 @@ class TestCognitiveOrchestrator:
     def test_execute_pipeline_missing_module(self):
         """Test pipeline skips missing modules."""
         orch = CognitiveOrchestrator()
-        orch.register_module('exists', MockModule(lambda x: x * 2))
+        orch.register_module("exists", MockModule(lambda x: x * 2))
 
         input_stream = TensorStream.from_prob(np.array([0.3]))
-        output_stream = orch.execute_pipeline(['missing', 'exists'], input_stream)
+        output_stream = orch.execute_pipeline(["missing", "exists"], input_stream)
 
         # Only 'exists' should run
         expected = np.array([0.6])
@@ -214,14 +224,14 @@ class TestCognitiveOrchestrator:
     def test_execute_pipeline_step_module(self):
         """Test pipeline with step-based modules."""
         orch = CognitiveOrchestrator()
-        orch.register_module('stepper', MockStepModule(factor=3.0))
+        orch.register_module("stepper", MockStepModule(factor=3.0))
 
         input_stream = TensorStream.from_prob(np.array([0.1, 0.2]))
-        output_stream = orch.execute_pipeline(['stepper'], input_stream)
+        output_stream = orch.execute_pipeline(["stepper"], input_stream)
 
         expected = np.array([0.3, 0.6])
         assert np.allclose(output_stream.to_prob(), expected)
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

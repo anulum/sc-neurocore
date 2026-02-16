@@ -2,6 +2,7 @@ from __future__ import annotations
 import numpy as np
 from sc_neurocore.layers.sc_dense_layer import SCDenseLayer
 
+
 def run_pattern_trials(
     label: int,
     x_inputs,
@@ -45,6 +46,7 @@ def run_pattern_trials(
         rates.append([s["firing_rate_hz"] for s in summary["stats"]])
     return np.array(rates, dtype=float)
 
+
 def nearest_centroid_classify(
     sample: np.ndarray,
     centroid_A: np.ndarray,
@@ -57,6 +59,7 @@ def nearest_centroid_classify(
     dA = np.linalg.norm(sample - centroid_A)
     dB = np.linalg.norm(sample - centroid_B)
     return 0 if dA <= dB else 1
+
 
 def demo():
     # Two different input patterns (3-channel) for the SC layer
@@ -128,6 +131,7 @@ def demo():
     print(f"\nTest accuracy (nearest-centroid in firing-rate space): {accuracy * 100:.1f}%")
     print("True labels: ", labels_true)
     print("Predicted:   ", preds)
+
 
 if __name__ == "__main__":
     demo()

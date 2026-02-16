@@ -7,6 +7,7 @@ import numpy as np
 from .base import BaseNeuron
 from ..utils.rng import RNG
 
+
 @dataclass
 class StochasticLIFNeuron(BaseNeuron):
     """
@@ -21,6 +22,7 @@ class StochasticLIFNeuron(BaseNeuron):
     - v_reset: reset potential
     - noise_std: std dev of Gaussian noise added each step
     """
+
     v_rest: float = 0.0
     v_reset: float = 0.0
     v_threshold: float = 1.0
@@ -30,7 +32,7 @@ class StochasticLIFNeuron(BaseNeuron):
     resistance: float = 1.0
     refractory_period: int = 0
     seed: int | None = None
-    entropy_source: Any | None = None # Optional external entropy (e.g. Quantum)
+    entropy_source: Any | None = None  # Optional external entropy (e.g. Quantum)
 
     def __post_init__(self) -> None:
         self._rng = RNG(self.seed)
@@ -83,7 +85,7 @@ class StochasticLIFNeuron(BaseNeuron):
         """
         Process a bitstream (array of 0s and 1s) as input current.
         Returns an array of spikes (0s and 1s).
-        
+
         input_scale: scaling factor to convert bit (0/1) to current amplitude.
         """
         spikes = np.zeros_like(input_bits, dtype=np.uint8)
