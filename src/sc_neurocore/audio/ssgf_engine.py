@@ -24,10 +24,26 @@ logger = logging.getLogger(__name__)
 
 # ── Canonical SCPN Natural Frequencies (16 layers) ───────────────────
 
-OMEGA_N = np.array([
-    1.329, 2.610, 0.844, 1.520, 0.710, 3.780, 1.055, 0.625,
-    2.210, 1.740, 0.480, 3.210, 0.915, 1.410, 2.830, 0.991,
-])
+OMEGA_N = np.array(
+    [
+        1.329,
+        2.610,
+        0.844,
+        1.520,
+        0.710,
+        3.780,
+        1.055,
+        0.625,
+        2.210,
+        1.740,
+        0.480,
+        3.210,
+        0.915,
+        1.410,
+        2.830,
+        0.991,
+    ]
+)
 
 
 def _build_knm(
@@ -99,9 +115,14 @@ class SSGFEngine:
 
         # Phase state
         self.N = c.N
-        self.omega = OMEGA_N[:c.N].copy() if c.N <= 16 else np.tile(
-            OMEGA_N, (c.N // 16 + 1),
-        )[:c.N].copy()
+        self.omega = (
+            OMEGA_N[: c.N].copy()
+            if c.N <= 16
+            else np.tile(
+                OMEGA_N,
+                (c.N // 16 + 1),
+            )[: c.N].copy()
+        )
         self.theta = self._rng.uniform(0, 2 * np.pi, c.N)
 
         # Coupling
@@ -193,7 +214,7 @@ class SSGFEngine:
         """Composite cost: minimise negative coherence + regularise W."""
         R = self._compute_R()
         c_micro = 1.0 - R
-        c_reg = 0.01 * np.sum(self.W ** 2) / (self.N * self.N)
+        c_reg = 0.01 * np.sum(self.W**2) / (self.N * self.N)
         return c_micro + c_reg
 
     # ── Outer Cycle ──────────────────────────────────────────────────
