@@ -1,220 +1,222 @@
-"""
-Sleep Report Generator — Morning report with hypnogram + metrics
-=================================================================
+"""Post-session sleep quality report generator.
 
-Generates post-session analytics:
-- Hypnogram visualization data
-- Sleep quality composite score (0-100)
-- Stage duration breakdown vs targets
-- Recommendations for next session
-
-Author: Claude (Session 2026-02-16)
+Analyses the tick history from a :class:`SleepOptimizer` session and
+produces a composite quality score, letter grade, and actionable
+recommendations.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import numpy as np
 
 from .sleep_stage_detector import SleepStage
-from .protocol_library import SleepProtocol
 from .sleep_optimizer import SleepOptimizer
 
 
+# ---------------------------------------------------------------------------
+# Report data
+# ---------------------------------------------------------------------------
+
 @dataclass
 class SleepReport:
-    """Morning sleep report."""
+    """Aggregate report for a completed sleep session.
+
+    Attributes
+    ----------
+    total_duration_min : float
+        Total session length in minutes.
+    sleep_onset_latency_min : float
+        Minutes from session start until the first non-WAKE epoch.
+    sleep_efficiency_pct : float
+        Percentage of total time spent asleep (non-WAKE).
+    quality_score : float
+        Composite quality score in ``[0, 100]``.
+    stage_durations_min : Dict[str, float]
+        Time (minutes) per stage.
+    stage_percentages : Dict[str, float]
+        Percentage of total time per stage.
+    stage_targets : Dict[str, float]
+        Protocol target percentages for comparison.
+    hypnogram : List[int]
+        Stage codes per epoch.
+    wakeups : int
+        Number of WAKE epochs that occurred after initial sleep onset.
+    reinductions : int
+        Number of re-induction sequences triggered.
+    recommendations : List[str]
+        Plain-language suggestions.
+    grade : str
+        Letter grade (A-F).
+    """
+
     total_duration_min: float = 0.0
     sleep_onset_latency_min: float = 0.0
     sleep_efficiency_pct: float = 0.0
-    quality_score: float = 0.0  # 0-100
+    quality_score: float = 0.0
     stage_durations_min: Dict[str, float] = field(default_factory=dict)
     stage_percentages: Dict[str, float] = field(default_factory=dict)
     stage_targets: Dict[str, float] = field(default_factory=dict)
-    hypnogram: List[Dict] = field(default_factory=list)
+    hypnogram: List[int] = field(default_factory=list)
     wakeups: int = 0
     reinductions: int = 0
     recommendations: List[str] = field(default_factory=list)
     grade: str = "F"
 
-    def to_dict(self) -> Dict:
-        return {
-            "total_duration_min": round(self.total_duration_min, 1),
-            "sleep_onset_latency_min": round(self.sleep_onset_latency_min, 1),
-            "sleep_efficiency_pct": round(self.sleep_efficiency_pct, 1),
-            "quality_score": round(self.quality_score, 1),
-            "stage_durations_min": {k: round(v, 1) for k, v in self.stage_durations_min.items()},
-            "stage_percentages": {k: round(v, 1) for k, v in self.stage_percentages.items()},
-            "stage_targets": self.stage_targets,
-            "hypnogram": self.hypnogram,
-            "wakeups": self.wakeups,
-            "reinductions": self.reinductions,
-            "recommendations": self.recommendations,
-            "grade": self.grade,
-        }
 
+# ---------------------------------------------------------------------------
+# Generator
+# ---------------------------------------------------------------------------
 
 class SleepReportGenerator:
-    """Generates morning report from completed sleep session."""
+    """Generates a :class:`SleepReport` from a completed optimiser session."""
 
-    def generate(self, optimizer: SleepOptimizer) -> SleepReport:
-        """Generate report from a completed sleep optimizer session."""
+    @staticmethod
+    def generate(optimizer: SleepOptimizer) -> SleepReport:
+        """Analyse *optimizer*'s tick history and return a report."""
         history = optimizer.get_history()
         if not history:
             return SleepReport()
 
-        stage_durations_s = optimizer.get_stage_durations()
-        stage_durations_min = {k: v / 60.0 for k, v in stage_durations_s.items()}
-        total_min = sum(stage_durations_min.values())
+        config = optimizer.config
+        interval_min = config.stage_check_interval / (config.sample_rate * 60.0)
 
-        if total_min == 0:
-            return SleepReport()
+        # --- basic metrics ---------------------------------------------------
+        total_min = len(history) * interval_min
+        hypnogram = optimizer.get_hypnogram()
 
-        # Stage percentages
-        stage_pct = {k: (v / total_min * 100) for k, v in stage_durations_min.items()}
-
-        # Sleep onset latency (time until first non-WAKE stage)
+        # sleep onset latency
         sol_min = 0.0
         for tick in history:
-            if tick["current_stage"] != "WAKE":
+            if tick.current_stage != SleepStage.WAKE:
                 break
-            sol_min = tick["elapsed_min"]
+            sol_min += interval_min
 
-        # Sleep efficiency: (total - WAKE) / total * 100
-        wake_min = stage_durations_min.get("WAKE", 0)
-        sleep_efficiency = ((total_min - wake_min) / total_min * 100) if total_min > 0 else 0
+        # stage durations
+        durations = optimizer.get_stage_durations()
+        dur_named: Dict[str, float] = {s.name: v for s, v in durations.items()}
 
-        # Count wakeups (transitions back to WAKE after sleep started)
+        # stage percentages
+        pct_named: Dict[str, float] = {}
+        for s, v in durations.items():
+            pct_named[s.name] = (v / total_min * 100.0) if total_min > 0 else 0.0
+
+        # target percentages from protocol
+        target_named: Dict[str, float] = {
+            s.name: v * 100.0 for s, v in optimizer.protocol.stage_targets.items()
+        }
+
+        # sleep efficiency
+        wake_min = durations.get(SleepStage.WAKE, 0.0)
+        sleep_min = total_min - wake_min
+        efficiency = (sleep_min / total_min * 100.0) if total_min > 0 else 0.0
+
+        # wakeups after sleep onset
+        sleep_started = False
         wakeups = 0
-        was_asleep = False
+        in_wake = False
         for tick in history:
-            if tick["current_stage"] != "WAKE":
-                was_asleep = True
-            elif was_asleep and tick["current_stage"] == "WAKE":
-                wakeups += 1
-                was_asleep = False
+            if not sleep_started:
+                if tick.current_stage != SleepStage.WAKE:
+                    sleep_started = True
+                    in_wake = False
+                continue
+            if tick.current_stage == SleepStage.WAKE:
+                if not in_wake:
+                    wakeups += 1
+                    in_wake = True
+            else:
+                in_wake = False
 
-        # Reinduction count
-        reinductions = sum(1 for t in history if t.get("reinduction_active", False))
+        reinductions = optimizer._reinduction_count
 
-        # Stage targets from protocol
-        stage_targets = {}
-        if optimizer.protocol:
-            stage_targets = {k: v * 100 for k, v in optimizer.protocol.stage_targets.items()}
+        # --- quality score (0-100) -------------------------------------------
+        # Component 1: stage match (40%)
+        match_count = sum(1 for t in history if t.stage_match)
+        stage_match_score = (match_count / len(history)) * 100.0 if history else 0.0
 
-        # Quality score (0-100)
-        quality = self._compute_quality(
-            stage_pct, stage_targets, sleep_efficiency, sol_min, wakeups
+        # Component 2: sleep efficiency (25%)
+        efficiency_score = min(100.0, efficiency / 0.85 * 100.0)  # 85% = perfect
+
+        # Component 3: sleep onset latency (20%) -- <15 min is ideal
+        if sol_min <= 15.0:
+            sol_score = 100.0
+        elif sol_min <= 30.0:
+            sol_score = 100.0 - (sol_min - 15.0) / 15.0 * 50.0
+        else:
+            sol_score = max(0.0, 50.0 - (sol_min - 30.0) / 30.0 * 50.0)
+
+        # Component 4: wakeups (15%) -- 0 = perfect, >= 5 = 0
+        wakeup_score = max(0.0, 100.0 - wakeups * 20.0)
+
+        quality = (
+            stage_match_score * 0.40
+            + efficiency_score * 0.25
+            + sol_score * 0.20
+            + wakeup_score * 0.15
         )
+        quality = float(np.clip(quality, 0.0, 100.0))
 
-        # Grade
-        if quality >= 85:
+        # --- grade -----------------------------------------------------------
+        if quality >= 90:
             grade = "A"
-        elif quality >= 70:
+        elif quality >= 75:
             grade = "B"
-        elif quality >= 55:
+        elif quality >= 60:
             grade = "C"
         elif quality >= 40:
             grade = "D"
         else:
             grade = "F"
 
-        # Recommendations
-        recommendations = self._generate_recommendations(
-            stage_pct, stage_targets, sol_min, wakeups, quality
-        )
+        # --- recommendations -------------------------------------------------
+        recs: List[str] = []
 
-        return SleepReport(
-            total_duration_min=total_min,
-            sleep_onset_latency_min=sol_min,
-            sleep_efficiency_pct=sleep_efficiency,
-            quality_score=quality,
-            stage_durations_min=stage_durations_min,
-            stage_percentages=stage_pct,
-            stage_targets=stage_targets,
-            hypnogram=optimizer.get_hypnogram(),
-            wakeups=wakeups,
-            reinductions=reinductions,
-            recommendations=recommendations,
-            grade=grade,
-        )
+        n3_pct = pct_named.get("N3", 0.0)
+        n3_target = target_named.get("N3", 0.0)
+        if n3_pct < n3_target * 0.7:
+            recs.append(
+                f"Deep sleep (N3) was {n3_pct:.1f}% vs target {n3_target:.1f}%. "
+                "Consider the deep_sleep_boost protocol or earlier bedtime."
+            )
 
-    def _compute_quality(
-        self,
-        actual_pct: Dict[str, float],
-        target_pct: Dict[str, float],
-        efficiency: float,
-        sol_min: float,
-        wakeups: int,
-    ) -> float:
-        """Compute sleep quality composite score."""
-        score = 0.0
+        rem_pct = pct_named.get("REM", 0.0)
+        rem_target = target_named.get("REM", 0.0)
+        if rem_pct < rem_target * 0.7:
+            recs.append(
+                f"REM sleep was {rem_pct:.1f}% vs target {rem_target:.1f}%. "
+                "Try the rem_enhancement protocol or extend sleep duration."
+            )
 
-        # Component 1 (40%): Stage distribution match
-        if target_pct:
-            deviation = 0.0
-            for stage in target_pct:
-                actual = actual_pct.get(stage, 0)
-                target = target_pct[stage]
-                deviation += abs(actual - target) / max(target, 1)
-            stage_match = max(0, 1.0 - deviation / len(target_pct))
-            score += 40 * stage_match
+        if sol_min > 20.0:
+            recs.append(
+                f"Sleep onset took {sol_min:.1f} min. "
+                "The insomnia_relief protocol may help reduce latency."
+            )
 
-        # Component 2 (25%): Sleep efficiency
-        score += 25 * min(efficiency / 100, 1.0)
-
-        # Component 3 (20%): Sleep onset latency (ideal < 15 min)
-        if sol_min <= 15:
-            score += 20
-        elif sol_min <= 30:
-            score += 20 * (1.0 - (sol_min - 15) / 15)
-        # else 0
-
-        # Component 4 (15%): Low wake-ups
-        if wakeups == 0:
-            score += 15
-        elif wakeups <= 2:
-            score += 15 * (1.0 - wakeups / 3)
-
-        return float(np.clip(score, 0, 100))
-
-    def _generate_recommendations(
-        self,
-        actual_pct: Dict[str, float],
-        target_pct: Dict[str, float],
-        sol_min: float,
-        wakeups: int,
-        quality: float,
-    ) -> List[str]:
-        """Generate actionable recommendations."""
-        recs = []
-
-        if sol_min > 30:
-            recs.append("Sleep onset was slow. Try the insomnia_relief protocol with earlier bedtime.")
-
-        n3_actual = actual_pct.get("N3", 0)
-        n3_target = target_pct.get("N3", 20)
-        if n3_actual < n3_target * 0.6:
-            recs.append("Deep sleep (N3) was below target. Consider the deep_sleep_boost protocol.")
-
-        rem_actual = actual_pct.get("REM", 0)
-        rem_target = target_pct.get("REM", 20)
-        if rem_actual < rem_target * 0.6:
-            recs.append("REM sleep was below target. Try rem_enhancement protocol.")
-
-        if wakeups > 3:
-            recs.append("Multiple wakeups detected. Reduce caffeine and screen time before bed.")
-
-        wake_pct = actual_pct.get("WAKE", 0)
-        if wake_pct > 15:
-            recs.append("Too much time awake in bed. Consider stimulus control therapy.")
-
-        if quality >= 80:
-            recs.append("Excellent sleep quality! Continue current protocol.")
+        if wakeups > 2:
+            recs.append(
+                f"You had {wakeups} awakenings. "
+                "Reduce caffeine/alcohol and ensure a dark, cool environment."
+            )
 
         if not recs:
-            recs.append("Good sleep session. No major issues detected.")
+            recs.append("Excellent session! Keep your current routine.")
 
-        return recs
+        # --- assemble --------------------------------------------------------
+        return SleepReport(
+            total_duration_min=round(total_min, 2),
+            sleep_onset_latency_min=round(sol_min, 2),
+            sleep_efficiency_pct=round(efficiency, 2),
+            quality_score=round(quality, 2),
+            stage_durations_min={k: round(v, 2) for k, v in dur_named.items()},
+            stage_percentages={k: round(v, 2) for k, v in pct_named.items()},
+            stage_targets={k: round(v, 2) for k, v in target_named.items()},
+            hypnogram=hypnogram,
+            wakeups=wakeups,
+            reinductions=reinductions,
+            recommendations=recs,
+            grade=grade,
+        )

@@ -1,27 +1,28 @@
-"""
-Sleep Stage Detector — EEG band power → sleep stage classification
-===================================================================
+"""EEG band-power based sleep stage classifier.
 
-Classifies 5 sleep stages from EEG spectral power ratios:
-  WAKE, N1 (light drowsiness), N2 (spindles), N3 (deep/SWS), REM
-
-Uses standard polysomnography rules adapted for single-channel EEG.
-
-Author: Claude (Session 2026-02-16)
+Uses cosine similarity between observed band-power vectors and canonical
+stage signatures to classify 5 sleep stages (WAKE, N1, N2, N3, REM).
+Temporal smoothing via a sliding majority-vote window reduces transient
+misclassifications.
 """
 
 from __future__ import annotations
 
-from collections import deque
-from dataclasses import dataclass
+from collections import Counter, deque
+from dataclasses import dataclass, field
 from enum import IntEnum
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
 
+# ---------------------------------------------------------------------------
+# Sleep stages
+# ---------------------------------------------------------------------------
+
 class SleepStage(IntEnum):
-    """Standard sleep stages."""
+    """AASM sleep-stage labels."""
+
     WAKE = 0
     N1 = 1
     N2 = 2
@@ -29,16 +30,11 @@ class SleepStage(IntEnum):
     REM = 4
 
 
-# Stage-specific EEG band power signatures (relative dominance)
-STAGE_SIGNATURES = {
-    SleepStage.WAKE: {"alpha": 0.3, "beta": 0.4, "gamma": 0.2, "theta": 0.05, "delta": 0.05},
-    SleepStage.N1:   {"alpha": 0.15, "beta": 0.1, "theta": 0.5, "delta": 0.15, "gamma": 0.1},
-    SleepStage.N2:   {"alpha": 0.1, "beta": 0.05, "theta": 0.3, "delta": 0.4, "gamma": 0.15},
-    SleepStage.N3:   {"alpha": 0.05, "beta": 0.02, "theta": 0.1, "delta": 0.8, "gamma": 0.03},
-    SleepStage.REM:  {"alpha": 0.1, "beta": 0.2, "theta": 0.4, "delta": 0.1, "gamma": 0.2},
-}
+# ---------------------------------------------------------------------------
+# EEG frequency bands (Hz)
+# ---------------------------------------------------------------------------
 
-EEG_BANDS = {
+EEG_BANDS: Dict[str, Tuple[float, float]] = {
     "delta": (0.5, 4.0),
     "theta": (4.0, 8.0),
     "alpha": (8.0, 13.0),
@@ -46,100 +42,131 @@ EEG_BANDS = {
     "gamma": (30.0, 100.0),
 }
 
+# ---------------------------------------------------------------------------
+# Canonical band-power signatures per stage (normalised power fractions)
+# Order: [delta, theta, alpha, beta, gamma]
+# ---------------------------------------------------------------------------
+
+STAGE_SIGNATURES: Dict[SleepStage, np.ndarray] = {
+    SleepStage.WAKE: np.array([0.05, 0.10, 0.35, 0.35, 0.15]),
+    SleepStage.N1:   np.array([0.10, 0.30, 0.25, 0.25, 0.10]),
+    SleepStage.N2:   np.array([0.25, 0.25, 0.20, 0.20, 0.10]),
+    SleepStage.N3:   np.array([0.60, 0.20, 0.10, 0.07, 0.03]),
+    SleepStage.REM:  np.array([0.10, 0.35, 0.15, 0.25, 0.15]),
+}
+
+
+# ---------------------------------------------------------------------------
+# Configuration
+# ---------------------------------------------------------------------------
 
 @dataclass
 class DetectorConfig:
-    """Sleep stage detector configuration."""
+    """Parameters for the sleep-stage detector."""
+
     sample_rate: int = 256
     fft_window: int = 512
-    smoothing_window: int = 5  # Epochs to smooth over
-    min_samples: int = 128     # Minimum for classification
+    smoothing_window: int = 5
+    min_samples: int = 128
 
+
+# ---------------------------------------------------------------------------
+# Detector
+# ---------------------------------------------------------------------------
 
 class SleepStageDetector:
-    """
-    Classifies sleep stage from EEG voltage samples.
+    """Real-time sleep-stage detector from single-channel EEG.
 
-    Uses band power ratios compared against known stage signatures.
-    Includes temporal smoothing to prevent rapid stage oscillation.
+    Usage::
+
+        det = SleepStageDetector()
+        for sample in eeg_stream:
+            det.add_sample(sample)
+            stage = det.detect()
+            if stage is not None:
+                print(stage.name)
     """
 
-    def __init__(self, config: Optional[DetectorConfig] = None):
+    def __init__(self, config: Optional[DetectorConfig] = None) -> None:
         self.config = config or DetectorConfig()
         self._buffer: deque = deque(maxlen=self.config.fft_window)
         self._stage_history: deque = deque(maxlen=self.config.smoothing_window)
-        self.current_stage = SleepStage.WAKE
-        self.band_powers: Dict[str, float] = {}
+        self._band_powers: Optional[Dict[str, float]] = None
 
-    def add_sample(self, voltage: float):
-        """Add a single EEG voltage sample."""
-        self._buffer.append(voltage)
+    # -- public API ---------------------------------------------------------
 
-    def add_samples(self, voltages: np.ndarray):
-        """Add multiple samples."""
-        for v in voltages:
-            self._buffer.append(float(v))
+    def add_sample(self, sample: float) -> None:
+        """Append a single EEG voltage sample to the internal buffer."""
+        self._buffer.append(float(sample))
 
-    def detect(self) -> SleepStage:
-        """Classify current sleep stage from buffer contents."""
+    def add_samples(self, samples: np.ndarray) -> None:
+        """Append an array of EEG voltage samples."""
+        for s in np.asarray(samples).ravel():
+            self._buffer.append(float(s))
+
+    def detect(self) -> Optional[SleepStage]:
+        """Return the smoothed sleep-stage classification, or ``None`` if
+        insufficient data has been collected."""
         if len(self._buffer) < self.config.min_samples:
-            return self.current_stage
+            return None
 
-        signal = np.array(self._buffer)
-        self.band_powers = self._compute_band_powers(signal)
+        powers = self._compute_band_powers()
+        self._band_powers = powers
 
-        # Normalize to relative powers
-        total = sum(self.band_powers.values()) + 1e-12
-        relative = {k: v / total for k, v in self.band_powers.items()}
+        power_vec = np.array([powers[b] for b in EEG_BANDS])
+        raw_stage = self._classify(power_vec)
+        self._stage_history.append(raw_stage)
 
-        # Find best matching stage by cosine similarity
-        best_stage = SleepStage.WAKE
-        best_score = -1.0
-        for stage, sig in STAGE_SIGNATURES.items():
-            score = self._cosine_similarity(relative, sig)
-            if score > best_score:
-                best_score = score
-                best_stage = stage
+        # temporal smoothing: majority vote over recent detections
+        return self._smooth()
 
-        self._stage_history.append(best_stage)
+    def get_band_powers(self) -> Optional[Dict[str, float]]:
+        """Return the most recently computed band-power dict, or ``None``."""
+        return self._band_powers
 
-        # Temporal smoothing: most common stage in recent window
-        if len(self._stage_history) >= 3:
-            from collections import Counter
-            counts = Counter(self._stage_history)
-            self.current_stage = counts.most_common(1)[0][0]
-        else:
-            self.current_stage = best_stage
+    def reset(self) -> None:
+        """Clear all internal state."""
+        self._buffer.clear()
+        self._stage_history.clear()
+        self._band_powers = None
 
-        return self.current_stage
+    # -- internals ----------------------------------------------------------
 
-    def _compute_band_powers(self, signal: np.ndarray) -> Dict[str, float]:
-        """Compute power in standard EEG bands."""
-        freqs = np.fft.rfftfreq(len(signal), 1.0 / self.config.sample_rate)
-        psd = np.abs(np.fft.rfft(signal)) ** 2
-        powers = {}
-        for band, (lo, hi) in EEG_BANDS.items():
-            mask = (freqs >= lo) & (freqs <= hi)
-            powers[band] = float(psd[mask].mean()) if mask.any() else 0.0
+    def _compute_band_powers(self) -> Dict[str, float]:
+        """Compute absolute band powers from the current buffer via FFT."""
+        data = np.array(self._buffer, dtype=np.float64)
+        # Apply Hann window
+        window = np.hanning(len(data))
+        data = data * window
+
+        fft_vals = np.fft.rfft(data)
+        psd = np.abs(fft_vals) ** 2
+        freqs = np.fft.rfftfreq(len(data), d=1.0 / self.config.sample_rate)
+
+        powers: Dict[str, float] = {}
+        for band_name, (lo, hi) in EEG_BANDS.items():
+            mask = (freqs >= lo) & (freqs < hi)
+            powers[band_name] = float(psd[mask].mean()) if mask.any() else 0.0
+
         return powers
 
     @staticmethod
-    def _cosine_similarity(a: Dict[str, float], b: Dict[str, float]) -> float:
-        """Cosine similarity between two band-power dicts."""
-        keys = sorted(set(a) | set(b))
-        va = np.array([a.get(k, 0) for k in keys])
-        vb = np.array([b.get(k, 0) for k in keys])
-        dot = float(np.dot(va, vb))
-        norm = float(np.linalg.norm(va) * np.linalg.norm(vb))
-        return dot / max(norm, 1e-12)
+    def _classify(power_vec: np.ndarray) -> SleepStage:
+        """Classify by cosine similarity to canonical signatures."""
+        norm = np.linalg.norm(power_vec)
+        if norm < 1e-12:
+            return SleepStage.WAKE
 
-    def get_band_powers(self) -> Dict[str, float]:
-        """Return current band powers."""
-        return dict(self.band_powers)
+        best_stage = SleepStage.WAKE
+        best_sim = -1.0
+        for stage, sig in STAGE_SIGNATURES.items():
+            sim = float(np.dot(power_vec, sig) / (norm * np.linalg.norm(sig)))
+            if sim > best_sim:
+                best_sim = sim
+                best_stage = stage
+        return best_stage
 
-    def reset(self):
-        """Reset detector state."""
-        self._buffer.clear()
-        self._stage_history.clear()
-        self.current_stage = SleepStage.WAKE
-        self.band_powers = {}
+    def _smooth(self) -> SleepStage:
+        """Majority-vote smoothing over the recent stage history."""
+        counter = Counter(self._stage_history)
+        return counter.most_common(1)[0][0]

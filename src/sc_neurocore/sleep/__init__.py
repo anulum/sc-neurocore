@@ -1,23 +1,11 @@
+"""sc_neurocore.sleep -- Tier: research (experimental / research).
+
+Closed-loop sleep optimisation system with EEG-based stage detection,
+circadian-aware protocol selection, adaptive audio entrainment, and
+post-session quality reporting.
 """
-Sleep Optimization Package
-===========================
 
-Full closed-loop sleep optimization system:
-- Sleep stage detection from EEG band powers
-- Circadian profiling (4 chronotypes)
-- Protocol library (insomnia, jet lag, deep sleep, REM, shift work, power nap)
-- Adaptive audio per sleep stage
-- Morning report generation
-
-Modules:
-    sleep_stage_detector - EEG → sleep stage classification
-    circadian_optimizer  - Chronotype-based circadian profiling
-    protocol_library     - Sleep protocol templates
-    sleep_optimizer      - Master closed-loop orchestrator
-    report_generator     - Morning report with hypnogram + metrics
-
-Author: Claude (Session 2026-02-16)
-"""
+__tier__ = "research"
 
 from .sleep_stage_detector import SleepStageDetector, SleepStage
 from .circadian_optimizer import CircadianOptimizer, Chronotype

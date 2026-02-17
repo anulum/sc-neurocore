@@ -1,171 +1,165 @@
-#!/usr/bin/env python3
-"""
-Sleep Optimization Demo (Standalone Terminal)
-==============================================
+"""Demo: closed-loop sleep optimisation with simulated EEG.
 
-Simulates an accelerated overnight sleep session:
-1. Circadian profiling
-2. Protocol selection
-3. Closed-loop sleep with simulated EEG
-4. Morning report
-
-Usage:
-    python -m sc_neurocore.experiments.demo_sleep_optimization
-
-Author: Claude (Session 2026-02-16)
+Generates synthetic EEG matching each sleep stage's spectral signature,
+feeds it through SleepOptimizer with the ``insomnia_relief`` protocol for
+100 epochs, prints a formatted tick table and a morning quality report.
 """
 
 from __future__ import annotations
 
 import numpy as np
 
-from ..sleep import (
-    SleepOptimizer, SleepOptimizerConfig,
-    CircadianOptimizer, Chronotype,
+from sc_neurocore.sleep import (
+    SleepOptimizer,
+    SleepOptimizerConfig,
     SleepReportGenerator,
     SleepStage,
-    list_protocols, get_protocol,
+    get_protocol,
 )
 
 
-def generate_sleep_eeg(
-    stage: SleepStage, sample_rate: int = 256, n_samples: int = 256
+# ---------------------------------------------------------------------------
+# Simulated EEG generation
+# ---------------------------------------------------------------------------
+
+# Dominant frequency (Hz) per stage, used to generate realistic-ish signals
+_STAGE_FREQ: dict[SleepStage, tuple[float, float, float]] = {
+    #                   primary_hz, secondary_hz, noise_scale
+    SleepStage.WAKE: (11.0, 20.0, 0.30),
+    SleepStage.N1:   (6.0, 10.0, 0.25),
+    SleepStage.N2:   (5.0,  8.0, 0.20),
+    SleepStage.N3:   (1.5,  3.0, 0.10),
+    SleepStage.REM:  (6.5, 18.0, 0.25),
+}
+
+
+def generate_eeg_epoch(
+    stage: SleepStage,
+    n_samples: int = 256,
+    sample_rate: int = 256,
+    rng: np.random.Generator | None = None,
 ) -> np.ndarray:
-    """Generate simulated EEG for a given sleep stage."""
+    """Return *n_samples* of simulated EEG voltage for *stage*."""
+    if rng is None:
+        rng = np.random.default_rng()
+
+    pri_hz, sec_hz, noise_scale = _STAGE_FREQ[stage]
     t = np.arange(n_samples) / sample_rate
-    rng = np.random.RandomState()
 
-    # Stage-specific dominant frequencies
-    if stage == SleepStage.WAKE:
-        signal = 0.5 * np.sin(2 * np.pi * 10 * t) + 0.3 * np.sin(2 * np.pi * 20 * t)
-    elif stage == SleepStage.N1:
-        signal = 0.6 * np.sin(2 * np.pi * 6 * t) + 0.2 * np.sin(2 * np.pi * 10 * t)
-    elif stage == SleepStage.N2:
-        signal = 0.5 * np.sin(2 * np.pi * 4 * t) + 0.4 * np.sin(2 * np.pi * 2 * t)
-    elif stage == SleepStage.N3:
-        signal = 0.8 * np.sin(2 * np.pi * 1.5 * t) + 0.3 * np.sin(2 * np.pi * 0.8 * t)
-    elif stage == SleepStage.REM:
-        signal = 0.4 * np.sin(2 * np.pi * 6 * t) + 0.3 * np.sin(2 * np.pi * 15 * t)
-    else:
-        signal = np.zeros(n_samples)
-
-    noise = rng.normal(0, 0.2, n_samples)
-    return signal + noise
-
-
-def simulated_sleep_progression(tick: int, total_ticks: int) -> SleepStage:
-    """Return expected stage for a realistic overnight progression."""
-    progress = tick / max(total_ticks, 1)
-    if progress < 0.05:
-        return SleepStage.WAKE
-    elif progress < 0.10:
-        return SleepStage.N1
-    elif progress < 0.20:
-        return SleepStage.N2
-    elif progress < 0.35:
-        return SleepStage.N3
-    elif progress < 0.45:
-        return SleepStage.N2
-    elif progress < 0.55:
-        return SleepStage.REM
-    elif progress < 0.60:
-        return SleepStage.N2
-    elif progress < 0.70:
-        return SleepStage.N3
-    elif progress < 0.80:
-        return SleepStage.N2
-    elif progress < 0.90:
-        return SleepStage.REM
-    else:
-        return SleepStage.N1
-
-
-def run_demo():
-    """Run accelerated overnight sleep demo."""
-    print("=" * 72)
-    print("  Sleep Optimization System Demo")
-    print("  SC-NeuroCore — Closed-Loop Sleep Protocol Engine")
-    print("=" * 72)
-
-    # Setup
-    chronotype = Chronotype.BEAR
-    circadian = CircadianOptimizer(chronotype)
-    profile = circadian.to_dict()
-
-    print(f"\n  Chronotype: {chronotype.value}")
-    print(f"  Optimal bedtime: {profile['optimal_bedtime_h']:.1f}h")
-    print(f"  Optimal wake: {profile['optimal_wake_h']:.1f}h")
-    print(f"  Recommended protocol: {profile['recommended_protocol']}")
-
-    print("\n  Available protocols:")
-    for p in list_protocols():
-        print(f"    - {p['name']}: {p['description'][:60]}")
-
-    # Start session
-    protocol_name = "insomnia_relief"
-    optimizer = SleepOptimizer(
-        chronotype=chronotype,
-        config=SleepOptimizerConfig(
-            sample_rate=256,
-            fft_window=256,
-            stage_check_interval=256,
-        ),
+    signal = (
+        1.0 * np.sin(2.0 * np.pi * pri_hz * t)
+        + 0.4 * np.sin(2.0 * np.pi * sec_hz * t)
+        + noise_scale * rng.standard_normal(n_samples)
     )
-    optimizer.start_session(protocol_name)
-    protocol = get_protocol(protocol_name)
+    return signal
 
-    total_ticks = 100  # Accelerated
 
-    print(f"\n--- Running Session: {protocol_name} ({total_ticks} epochs) ---")
-    print(f"  {'Epoch':>5} | {'Time':>7} | {'Detected':>8} | {'Target':>8} | {'Match':>5} | {'Binaural':>8}")
-    print(f"  {'─' * 5} | {'─' * 7} | {'─' * 8} | {'─' * 8} | {'─' * 5} | {'─' * 8}")
+# ---------------------------------------------------------------------------
+# Night schedule: stage sequence over 100 epochs (~6.5 h at 256 Hz epochs)
+# ---------------------------------------------------------------------------
 
-    for tick_idx in range(total_ticks):
-        # Generate EEG for the "true" sleep stage at this point
-        true_stage = simulated_sleep_progression(tick_idx, total_ticks)
-        eeg = generate_sleep_eeg(true_stage)
+def _night_schedule(n_epochs: int = 100) -> list[SleepStage]:
+    """Return a realistic stage sequence for *n_epochs* epochs.
 
-        # Feed samples
+    Follows a simplified 90-minute cycle pattern:
+    WAKE -> N1 -> N2 -> N3 -> N2 -> REM -> repeat
+    """
+    cycle = [
+        SleepStage.WAKE,
+        SleepStage.N1, SleepStage.N1,
+        SleepStage.N2, SleepStage.N2, SleepStage.N2, SleepStage.N2,
+        SleepStage.N3, SleepStage.N3, SleepStage.N3, SleepStage.N3, SleepStage.N3,
+        SleepStage.N2, SleepStage.N2,
+        SleepStage.REM, SleepStage.REM, SleepStage.REM,
+    ]
+    schedule: list[SleepStage] = []
+    while len(schedule) < n_epochs:
+        schedule.extend(cycle)
+    return schedule[:n_epochs]
+
+
+# ---------------------------------------------------------------------------
+# Main demo
+# ---------------------------------------------------------------------------
+
+def run_demo() -> None:
+    rng = np.random.default_rng(42)
+    protocol = get_protocol("insomnia_relief")
+    config = SleepOptimizerConfig(
+        sample_rate=256,
+        fft_window=512,
+        stage_check_interval=256,
+        max_reinduction_attempts=3,
+    )
+    optimizer = SleepOptimizer(protocol, config)
+    optimizer.start_session()
+
+    n_epochs = 100
+    schedule = _night_schedule(n_epochs)
+
+    # header
+    print("=" * 88)
+    print("  SLEEP OPTIMISATION DEMO -- insomnia_relief protocol, 100 epochs")
+    print("=" * 88)
+    print(
+        f"{'Epoch':>5}  {'Elapsed':>8}  {'Stage':>5}  {'Target':>6}  "
+        f"{'Match':>5}  {'Binaural':>8}  {'Noise':>6}  {'Reind':>5}"
+    )
+    print("-" * 88)
+
+    for epoch_idx, true_stage in enumerate(schedule):
+        eeg = generate_eeg_epoch(true_stage, n_samples=256, sample_rate=256, rng=rng)
         optimizer.add_samples(eeg)
+        tick = optimizer.check_and_adapt()
 
-        # Check and adapt
-        result = optimizer.check_and_adapt()
-
-        if result and tick_idx % 10 == 0:
-            match_str = "  YES" if result.stage_match else "   NO"
+        if tick is not None and epoch_idx % 5 == 0:
             print(
-                f"  {result.tick:5d} | {result.elapsed_min:6.1f}m | "
-                f"{result.current_stage:>8} | {result.target_stage:>8} | "
-                f"{match_str} | {result.audio_params.get('binaural_hz', 0):7.1f}Hz"
+                f"{tick.tick:5d}  "
+                f"{tick.elapsed_min:7.2f}m  "
+                f"{tick.current_stage.name:>5}  "
+                f"{tick.target_stage.name:>6}  "
+                f"{'  Y' if tick.stage_match else '  N':>5}  "
+                f"{tick.audio_params.binaural_hz:7.1f}Hz  "
+                f"{tick.audio_params.noise_color:>6}  "
+                f"{'YES' if tick.reinduction_active else '  -':>5}"
             )
 
     optimizer.stop_session()
 
-    # Generate report
-    print("\n--- Morning Report ---")
-    report_gen = SleepReportGenerator()
-    report = report_gen.generate(optimizer)
+    # --- morning report ---
+    report = SleepReportGenerator.generate(optimizer)
 
-    print(f"  Total Duration: {report.total_duration_min:.1f} min")
-    print(f"  Sleep Onset Latency: {report.sleep_onset_latency_min:.1f} min")
-    print(f"  Sleep Efficiency: {report.sleep_efficiency_pct:.1f}%")
-    print(f"  Quality Score: {report.quality_score:.1f}/100")
-    print(f"  Grade: {report.grade}")
-    print(f"  Wakeups: {report.wakeups}")
+    print()
+    print("=" * 88)
+    print("  MORNING SLEEP REPORT")
+    print("=" * 88)
+    print(f"  Total duration   : {report.total_duration_min:.1f} min")
+    print(f"  Sleep onset      : {report.sleep_onset_latency_min:.1f} min")
+    print(f"  Sleep efficiency : {report.sleep_efficiency_pct:.1f}%")
+    print(f"  Quality score    : {report.quality_score:.1f}/100")
+    print(f"  Grade            : {report.grade}")
+    print(f"  Wakeups          : {report.wakeups}")
+    print(f"  Reinductions     : {report.reinductions}")
+    print()
 
-    print(f"\n  Stage Breakdown:")
-    for stage, pct in report.stage_percentages.items():
-        target = report.stage_targets.get(stage, 0)
-        bar = "█" * int(pct / 3) + "░" * (33 - int(pct / 3))
-        print(f"    {stage:>5}: {pct:5.1f}% (target: {target:5.1f}%) |{bar}|")
+    print("  Stage Breakdown:")
+    print(f"  {'Stage':<8} {'Actual':>8} {'Target':>8} {'Duration':>10}")
+    print("  " + "-" * 38)
+    for stage_name in ["WAKE", "N1", "N2", "N3", "REM"]:
+        actual = report.stage_percentages.get(stage_name, 0.0)
+        target = report.stage_targets.get(stage_name, 0.0)
+        dur = report.stage_durations_min.get(stage_name, 0.0)
+        print(f"  {stage_name:<8} {actual:7.1f}% {target:7.1f}% {dur:9.2f}m")
 
-    print(f"\n  Recommendations:")
-    for rec in report.recommendations:
-        print(f"    - {rec}")
+    print()
+    print("  Recommendations:")
+    for i, rec in enumerate(report.recommendations, 1):
+        print(f"  {i}. {rec}")
 
-    print(f"\n{'=' * 72}")
+    print()
+    print("=" * 88)
     print("  Demo complete.")
-    print("=" * 72)
+    print("=" * 88)
 
 
 if __name__ == "__main__":

@@ -1,18 +1,8 @@
-"""
-Sleep Protocol Library — Templates for different sleep goals
-==============================================================
+"""Library of pre-built sleep audio protocols.
 
-Each protocol defines per-stage audio parameters and transition rules.
-
-Protocols:
-    insomnia_relief   - Progressive delta sweep for difficulty falling asleep
-    jet_lag_reset     - Phase-shift audio for travelers
-    deep_sleep_boost  - Maximize N3 time for recovery
-    rem_enhancement   - Extend REM for creativity/memory
-    shift_worker      - Compressed polyphasic support
-    power_nap         - Quick 25-min N2 induction
-
-Author: Claude (Session 2026-02-16)
+Each protocol maps every AASM sleep stage to a set of audio-entrainment
+parameters (binaural beat frequency, noise colour, isochronic pulse rate,
+etc.) and specifies ideal stage-time targets for the night.
 """
 
 from __future__ import annotations
@@ -23,201 +13,357 @@ from typing import Dict, List, Optional
 from .sleep_stage_detector import SleepStage
 
 
+# ---------------------------------------------------------------------------
+# Audio parameters per stage
+# ---------------------------------------------------------------------------
+
 @dataclass
 class StageAudioParams:
-    """Audio parameters for a specific sleep stage."""
-    binaural_hz: float = 10.0      # Binaural beat frequency
-    noise_color: str = "pink"       # pink, brown, white
-    base_freq_hz: float = 200.0    # Carrier frequency
-    volume: float = 0.5            # 0-1
-    isochronic_hz: float = 0.0     # 0 = disabled
-    spatial_rotation: bool = False
+    """Audio-entrainment parameters for a single sleep stage.
 
+    Attributes
+    ----------
+    binaural_hz : float
+        Binaural beat frequency (Hz).
+    noise_color : str
+        Background noise colour (``"pink"``, ``"brown"``, ``"white"``, etc.).
+    base_freq_hz : float
+        Carrier / base tone frequency (Hz).
+    volume : float
+        Relative volume in ``[0, 1]``.
+    isochronic_hz : float
+        Isochronic pulse frequency (Hz); 0 disables.
+    spatial_rotation : float
+        Spatial audio rotation speed in degrees per second.
+    """
+
+    binaural_hz: float = 2.0
+    noise_color: str = "pink"
+    base_freq_hz: float = 200.0
+    volume: float = 0.5
+    isochronic_hz: float = 0.0
+    spatial_rotation: float = 0.0
+
+
+# ---------------------------------------------------------------------------
+# Sleep protocol
+# ---------------------------------------------------------------------------
 
 @dataclass
 class SleepProtocol:
-    """Complete sleep protocol definition."""
-    name: str
-    description: str
-    target_audience: str
-    duration_h: float
-    # Per-stage audio parameters
-    stage_params: Dict[str, StageAudioParams] = field(default_factory=dict)
-    # Stage duration targets (fraction of total)
-    stage_targets: Dict[str, float] = field(default_factory=dict)
-    # Transition rules
-    induction_sweep_start_hz: float = 10.0  # Start frequency for induction
-    induction_sweep_end_hz: float = 2.0     # End frequency
-    induction_duration_min: float = 30.0
-    wake_recovery_enabled: bool = True  # Re-induction if wake detected
+    """A named sleep-entrainment protocol.
 
-    def get_audio_for_stage(
-        self, current_stage: SleepStage, elapsed_min: float = 0.0
-    ) -> StageAudioParams:
-        """Get audio parameters for the current stage and time."""
-        stage_key = current_stage.name
-        if stage_key in self.stage_params:
-            return self.stage_params[stage_key]
-        # Default fallback
-        return StageAudioParams(binaural_hz=4.0, noise_color="pink", volume=0.3)
+    Attributes
+    ----------
+    name : str
+        Human-readable identifier (must match the registry key).
+    description : str
+        Short description of the protocol's therapeutic goal.
+    stage_audio : Dict[SleepStage, StageAudioParams]
+        Audio parameters keyed by target stage.
+    stage_targets : Dict[SleepStage, float]
+        Target fraction of total sleep time per stage (must sum to 1.0).
+    total_duration_min : float
+        Recommended session length in minutes.
+    """
 
-    def get_target_stage(self, elapsed_min: float, total_min: float) -> SleepStage:
-        """Get the target sleep stage for the current time in the session."""
-        progress = elapsed_min / max(total_min, 1.0)
-        if progress < 0.05:
-            return SleepStage.WAKE  # Initial settling
-        elif progress < 0.15:
-            return SleepStage.N1
-        elif progress < 0.25:
-            return SleepStage.N2
-        elif progress < 0.50:
-            return SleepStage.N3
-        elif progress < 0.70:
-            return SleepStage.N2
-        elif progress < 0.85:
-            return SleepStage.REM
-        else:
-            return SleepStage.N1  # Approaching wake
+    name: str = ""
+    description: str = ""
+    stage_audio: Dict[SleepStage, StageAudioParams] = field(default_factory=dict)
+    stage_targets: Dict[SleepStage, float] = field(default_factory=dict)
+    total_duration_min: float = 480.0  # 8 hours default
+
+    # -- public API ---------------------------------------------------------
+
+    def get_audio_for_stage(self, stage: SleepStage) -> StageAudioParams:
+        """Return audio parameters for *stage*, falling back to WAKE params."""
+        return self.stage_audio.get(stage, self.stage_audio.get(SleepStage.WAKE, StageAudioParams()))
+
+    def get_target_stage(self, progress: float) -> SleepStage:
+        """Return the ideal stage for a given session *progress* in [0, 1].
+
+        Progress is mapped linearly through the cumulative stage-target
+        fractions in stage order (WAKE, N1, N2, N3, REM).
+        """
+        progress = max(0.0, min(1.0, progress))
+        cumulative = 0.0
+        for stage in (SleepStage.WAKE, SleepStage.N1, SleepStage.N2,
+                      SleepStage.N3, SleepStage.REM):
+            cumulative += self.stage_targets.get(stage, 0.0)
+            if progress <= cumulative:
+                return stage
+        return SleepStage.REM  # fallback at end of night
 
     def to_dict(self) -> Dict:
+        """Serialise the protocol to a plain dict."""
         return {
             "name": self.name,
             "description": self.description,
-            "target_audience": self.target_audience,
-            "duration_h": self.duration_h,
-            "induction_sweep": f"{self.induction_sweep_start_hz}→{self.induction_sweep_end_hz} Hz",
-            "stages": list(self.stage_params.keys()),
+            "total_duration_min": self.total_duration_min,
+            "stage_targets": {s.name: v for s, v in self.stage_targets.items()},
+            "stage_audio": {
+                s.name: {
+                    "binaural_hz": a.binaural_hz,
+                    "noise_color": a.noise_color,
+                    "base_freq_hz": a.base_freq_hz,
+                    "volume": a.volume,
+                    "isochronic_hz": a.isochronic_hz,
+                    "spatial_rotation": a.spatial_rotation,
+                }
+                for s, a in self.stage_audio.items()
+            },
         }
 
 
-# ── Protocol Definitions ─────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
+# Protocol definitions
+# ---------------------------------------------------------------------------
 
-INSOMNIA_RELIEF = SleepProtocol(
-    name="insomnia_relief",
-    description="Progressive delta sweep 10Hz→2Hz for difficulty falling asleep",
-    target_audience="Difficulty falling asleep",
-    duration_h=8.0,
-    induction_sweep_start_hz=10.0,
-    induction_sweep_end_hz=2.0,
-    induction_duration_min=30.0,
-    stage_params={
-        "WAKE": StageAudioParams(binaural_hz=10.0, noise_color="pink", volume=0.4),
-        "N1": StageAudioParams(binaural_hz=6.0, noise_color="pink", volume=0.35),
-        "N2": StageAudioParams(binaural_hz=4.0, noise_color="brown", volume=0.3),
-        "N3": StageAudioParams(binaural_hz=1.5, noise_color="brown", volume=0.25),
-        "REM": StageAudioParams(binaural_hz=5.0, noise_color="pink", volume=0.2),
-    },
-    stage_targets={"WAKE": 0.02, "N1": 0.08, "N2": 0.45, "N3": 0.25, "REM": 0.20},
-)
+def _build_insomnia_relief() -> SleepProtocol:
+    return SleepProtocol(
+        name="insomnia_relief",
+        description="Gradual descent from alpha to deep delta for chronic insomnia.",
+        total_duration_min=480.0,
+        stage_targets={
+            SleepStage.WAKE: 0.05,
+            SleepStage.N1:   0.10,
+            SleepStage.N2:   0.45,
+            SleepStage.N3:   0.25,
+            SleepStage.REM:  0.15,
+        },
+        stage_audio={
+            SleepStage.WAKE: StageAudioParams(
+                binaural_hz=10.0, noise_color="pink", base_freq_hz=200.0,
+                volume=0.4, isochronic_hz=0.0, spatial_rotation=5.0,
+            ),
+            SleepStage.N1: StageAudioParams(
+                binaural_hz=6.0, noise_color="pink", base_freq_hz=180.0,
+                volume=0.35, isochronic_hz=6.0, spatial_rotation=3.0,
+            ),
+            SleepStage.N2: StageAudioParams(
+                binaural_hz=4.0, noise_color="brown", base_freq_hz=160.0,
+                volume=0.30, isochronic_hz=4.0, spatial_rotation=2.0,
+            ),
+            SleepStage.N3: StageAudioParams(
+                binaural_hz=2.0, noise_color="brown", base_freq_hz=140.0,
+                volume=0.25, isochronic_hz=2.0, spatial_rotation=1.0,
+            ),
+            SleepStage.REM: StageAudioParams(
+                binaural_hz=5.0, noise_color="pink", base_freq_hz=170.0,
+                volume=0.30, isochronic_hz=0.0, spatial_rotation=4.0,
+            ),
+        },
+    )
 
-JET_LAG_RESET = SleepProtocol(
-    name="jet_lag_reset",
-    description="Phase-shift audio with timed melatonin-window and morning alpha",
-    target_audience="Travelers crossing time zones",
-    duration_h=7.0,
-    induction_sweep_start_hz=8.0,
-    induction_sweep_end_hz=1.5,
-    induction_duration_min=20.0,
-    stage_params={
-        "WAKE": StageAudioParams(binaural_hz=12.0, noise_color="white", volume=0.3),
-        "N1": StageAudioParams(binaural_hz=7.0, noise_color="pink", volume=0.3),
-        "N2": StageAudioParams(binaural_hz=4.0, noise_color="pink", volume=0.3),
-        "N3": StageAudioParams(binaural_hz=1.0, noise_color="brown", volume=0.25),
-        "REM": StageAudioParams(binaural_hz=6.0, noise_color="pink", volume=0.2),
-    },
-    stage_targets={"WAKE": 0.05, "N1": 0.10, "N2": 0.40, "N3": 0.25, "REM": 0.20},
-)
 
-DEEP_SLEEP_BOOST = SleepProtocol(
-    name="deep_sleep_boost",
-    description="Maximize N3 time at 0.75Hz binaural for recovery",
-    target_audience="Athletes, physical recovery",
-    duration_h=8.0,
-    induction_sweep_start_hz=8.0,
-    induction_sweep_end_hz=0.75,
-    induction_duration_min=25.0,
-    stage_params={
-        "WAKE": StageAudioParams(binaural_hz=8.0, noise_color="pink", volume=0.4),
-        "N1": StageAudioParams(binaural_hz=4.0, noise_color="pink", volume=0.35),
-        "N2": StageAudioParams(binaural_hz=2.0, noise_color="brown", volume=0.3),
-        "N3": StageAudioParams(binaural_hz=0.75, noise_color="brown", volume=0.3, isochronic_hz=0.5),
-        "REM": StageAudioParams(binaural_hz=5.0, noise_color="pink", volume=0.2),
-    },
-    stage_targets={"WAKE": 0.02, "N1": 0.05, "N2": 0.35, "N3": 0.38, "REM": 0.20},
-)
+def _build_jet_lag_reset() -> SleepProtocol:
+    return SleepProtocol(
+        name="jet_lag_reset",
+        description="Aggressive circadian resynchronisation with strong delta pulses.",
+        total_duration_min=360.0,
+        stage_targets={
+            SleepStage.WAKE: 0.05,
+            SleepStage.N1:   0.10,
+            SleepStage.N2:   0.35,
+            SleepStage.N3:   0.35,
+            SleepStage.REM:  0.15,
+        },
+        stage_audio={
+            SleepStage.WAKE: StageAudioParams(
+                binaural_hz=8.0, noise_color="white", base_freq_hz=220.0,
+                volume=0.45, isochronic_hz=8.0, spatial_rotation=6.0,
+            ),
+            SleepStage.N1: StageAudioParams(
+                binaural_hz=5.0, noise_color="pink", base_freq_hz=190.0,
+                volume=0.40, isochronic_hz=5.0, spatial_rotation=4.0,
+            ),
+            SleepStage.N2: StageAudioParams(
+                binaural_hz=3.0, noise_color="brown", base_freq_hz=160.0,
+                volume=0.35, isochronic_hz=3.0, spatial_rotation=2.0,
+            ),
+            SleepStage.N3: StageAudioParams(
+                binaural_hz=1.5, noise_color="brown", base_freq_hz=130.0,
+                volume=0.25, isochronic_hz=1.5, spatial_rotation=0.5,
+            ),
+            SleepStage.REM: StageAudioParams(
+                binaural_hz=5.5, noise_color="pink", base_freq_hz=175.0,
+                volume=0.30, isochronic_hz=0.0, spatial_rotation=3.0,
+            ),
+        },
+    )
 
-REM_ENHANCEMENT = SleepProtocol(
-    name="rem_enhancement",
-    description="Extended theta windows for creativity and memory consolidation",
-    target_audience="Creativity, memory improvement",
-    duration_h=8.0,
-    induction_sweep_start_hz=10.0,
-    induction_sweep_end_hz=3.0,
-    induction_duration_min=30.0,
-    stage_params={
-        "WAKE": StageAudioParams(binaural_hz=10.0, noise_color="pink", volume=0.35),
-        "N1": StageAudioParams(binaural_hz=7.0, noise_color="pink", volume=0.3),
-        "N2": StageAudioParams(binaural_hz=4.0, noise_color="pink", volume=0.3),
-        "N3": StageAudioParams(binaural_hz=1.5, noise_color="brown", volume=0.25),
-        "REM": StageAudioParams(binaural_hz=6.0, noise_color="pink", volume=0.3, spatial_rotation=True),
-    },
-    stage_targets={"WAKE": 0.02, "N1": 0.08, "N2": 0.35, "N3": 0.20, "REM": 0.35},
-)
 
-SHIFT_WORKER = SleepProtocol(
-    name="shift_worker",
-    description="Compressed polyphasic, aggressive induction for night shift",
-    target_audience="Night shift workers",
-    duration_h=5.0,
-    induction_sweep_start_hz=8.0,
-    induction_sweep_end_hz=1.0,
-    induction_duration_min=15.0,
-    stage_params={
-        "WAKE": StageAudioParams(binaural_hz=8.0, noise_color="brown", volume=0.5),
-        "N1": StageAudioParams(binaural_hz=5.0, noise_color="brown", volume=0.4),
-        "N2": StageAudioParams(binaural_hz=3.0, noise_color="brown", volume=0.35),
-        "N3": StageAudioParams(binaural_hz=0.75, noise_color="brown", volume=0.3),
-        "REM": StageAudioParams(binaural_hz=5.0, noise_color="pink", volume=0.25),
-    },
-    stage_targets={"WAKE": 0.02, "N1": 0.05, "N2": 0.40, "N3": 0.30, "REM": 0.23},
-)
+def _build_deep_sleep_boost() -> SleepProtocol:
+    return SleepProtocol(
+        name="deep_sleep_boost",
+        description="Maximise N3 slow-wave sleep for physical recovery.",
+        total_duration_min=480.0,
+        stage_targets={
+            SleepStage.WAKE: 0.03,
+            SleepStage.N1:   0.07,
+            SleepStage.N2:   0.30,
+            SleepStage.N3:   0.40,
+            SleepStage.REM:  0.20,
+        },
+        stage_audio={
+            SleepStage.WAKE: StageAudioParams(
+                binaural_hz=10.0, noise_color="pink", base_freq_hz=200.0,
+                volume=0.40, isochronic_hz=0.0, spatial_rotation=4.0,
+            ),
+            SleepStage.N1: StageAudioParams(
+                binaural_hz=6.0, noise_color="pink", base_freq_hz=180.0,
+                volume=0.35, isochronic_hz=6.0, spatial_rotation=3.0,
+            ),
+            SleepStage.N2: StageAudioParams(
+                binaural_hz=3.5, noise_color="brown", base_freq_hz=155.0,
+                volume=0.30, isochronic_hz=3.5, spatial_rotation=1.5,
+            ),
+            SleepStage.N3: StageAudioParams(
+                binaural_hz=1.0, noise_color="brown", base_freq_hz=120.0,
+                volume=0.20, isochronic_hz=1.0, spatial_rotation=0.5,
+            ),
+            SleepStage.REM: StageAudioParams(
+                binaural_hz=5.0, noise_color="pink", base_freq_hz=170.0,
+                volume=0.30, isochronic_hz=0.0, spatial_rotation=3.5,
+            ),
+        },
+    )
 
-POWER_NAP = SleepProtocol(
-    name="power_nap",
-    description="Quick 25min N2 induction with alarm",
-    target_audience="Afternoon reset",
-    duration_h=25.0 / 60.0,
-    induction_sweep_start_hz=10.0,
-    induction_sweep_end_hz=3.0,
-    induction_duration_min=10.0,
-    stage_params={
-        "WAKE": StageAudioParams(binaural_hz=10.0, noise_color="pink", volume=0.3),
-        "N1": StageAudioParams(binaural_hz=6.0, noise_color="pink", volume=0.3),
-        "N2": StageAudioParams(binaural_hz=3.0, noise_color="pink", volume=0.3),
-        "N3": StageAudioParams(binaural_hz=3.0, noise_color="pink", volume=0.2),  # Avoid deep
-        "REM": StageAudioParams(binaural_hz=6.0, noise_color="pink", volume=0.2),
-    },
-    stage_targets={"WAKE": 0.10, "N1": 0.30, "N2": 0.50, "N3": 0.05, "REM": 0.05},
-    wake_recovery_enabled=False,
-)
+
+def _build_rem_enhancement() -> SleepProtocol:
+    return SleepProtocol(
+        name="rem_enhancement",
+        description="Enhance REM sleep for memory consolidation and creativity.",
+        total_duration_min=480.0,
+        stage_targets={
+            SleepStage.WAKE: 0.05,
+            SleepStage.N1:   0.10,
+            SleepStage.N2:   0.30,
+            SleepStage.N3:   0.20,
+            SleepStage.REM:  0.35,
+        },
+        stage_audio={
+            SleepStage.WAKE: StageAudioParams(
+                binaural_hz=10.0, noise_color="pink", base_freq_hz=200.0,
+                volume=0.40, isochronic_hz=0.0, spatial_rotation=5.0,
+            ),
+            SleepStage.N1: StageAudioParams(
+                binaural_hz=7.0, noise_color="pink", base_freq_hz=185.0,
+                volume=0.35, isochronic_hz=7.0, spatial_rotation=3.5,
+            ),
+            SleepStage.N2: StageAudioParams(
+                binaural_hz=4.0, noise_color="pink", base_freq_hz=165.0,
+                volume=0.30, isochronic_hz=4.0, spatial_rotation=2.5,
+            ),
+            SleepStage.N3: StageAudioParams(
+                binaural_hz=2.0, noise_color="brown", base_freq_hz=140.0,
+                volume=0.25, isochronic_hz=2.0, spatial_rotation=1.0,
+            ),
+            SleepStage.REM: StageAudioParams(
+                binaural_hz=6.0, noise_color="pink", base_freq_hz=180.0,
+                volume=0.35, isochronic_hz=0.0, spatial_rotation=5.0,
+            ),
+        },
+    )
+
+
+def _build_shift_worker() -> SleepProtocol:
+    return SleepProtocol(
+        name="shift_worker",
+        description="Compressed high-efficiency sleep for rotating shift schedules.",
+        total_duration_min=360.0,
+        stage_targets={
+            SleepStage.WAKE: 0.05,
+            SleepStage.N1:   0.05,
+            SleepStage.N2:   0.35,
+            SleepStage.N3:   0.35,
+            SleepStage.REM:  0.20,
+        },
+        stage_audio={
+            SleepStage.WAKE: StageAudioParams(
+                binaural_hz=8.0, noise_color="brown", base_freq_hz=210.0,
+                volume=0.45, isochronic_hz=8.0, spatial_rotation=6.0,
+            ),
+            SleepStage.N1: StageAudioParams(
+                binaural_hz=5.0, noise_color="brown", base_freq_hz=180.0,
+                volume=0.40, isochronic_hz=5.0, spatial_rotation=4.0,
+            ),
+            SleepStage.N2: StageAudioParams(
+                binaural_hz=3.0, noise_color="brown", base_freq_hz=150.0,
+                volume=0.30, isochronic_hz=3.0, spatial_rotation=2.0,
+            ),
+            SleepStage.N3: StageAudioParams(
+                binaural_hz=1.0, noise_color="brown", base_freq_hz=120.0,
+                volume=0.20, isochronic_hz=1.0, spatial_rotation=0.5,
+            ),
+            SleepStage.REM: StageAudioParams(
+                binaural_hz=5.5, noise_color="pink", base_freq_hz=175.0,
+                volume=0.30, isochronic_hz=0.0, spatial_rotation=3.5,
+            ),
+        },
+    )
+
+
+def _build_power_nap() -> SleepProtocol:
+    return SleepProtocol(
+        name="power_nap",
+        description="20-minute alertness restoration; avoids deep sleep.",
+        total_duration_min=20.0,
+        stage_targets={
+            SleepStage.WAKE: 0.15,
+            SleepStage.N1:   0.35,
+            SleepStage.N2:   0.40,
+            SleepStage.N3:   0.05,
+            SleepStage.REM:  0.05,
+        },
+        stage_audio={
+            SleepStage.WAKE: StageAudioParams(
+                binaural_hz=12.0, noise_color="white", base_freq_hz=220.0,
+                volume=0.35, isochronic_hz=0.0, spatial_rotation=8.0,
+            ),
+            SleepStage.N1: StageAudioParams(
+                binaural_hz=8.0, noise_color="pink", base_freq_hz=200.0,
+                volume=0.30, isochronic_hz=8.0, spatial_rotation=5.0,
+            ),
+            SleepStage.N2: StageAudioParams(
+                binaural_hz=6.0, noise_color="pink", base_freq_hz=180.0,
+                volume=0.25, isochronic_hz=6.0, spatial_rotation=3.0,
+            ),
+            SleepStage.N3: StageAudioParams(
+                binaural_hz=3.0, noise_color="brown", base_freq_hz=150.0,
+                volume=0.20, isochronic_hz=3.0, spatial_rotation=1.0,
+            ),
+            SleepStage.REM: StageAudioParams(
+                binaural_hz=7.0, noise_color="pink", base_freq_hz=190.0,
+                volume=0.30, isochronic_hz=0.0, spatial_rotation=4.0,
+            ),
+        },
+    )
+
+
+# ---------------------------------------------------------------------------
+# Protocol registry
+# ---------------------------------------------------------------------------
 
 PROTOCOL_REGISTRY: Dict[str, SleepProtocol] = {
-    "insomnia_relief": INSOMNIA_RELIEF,
-    "jet_lag_reset": JET_LAG_RESET,
-    "deep_sleep_boost": DEEP_SLEEP_BOOST,
-    "rem_enhancement": REM_ENHANCEMENT,
-    "shift_worker": SHIFT_WORKER,
-    "power_nap": POWER_NAP,
+    "insomnia_relief":  _build_insomnia_relief(),
+    "jet_lag_reset":    _build_jet_lag_reset(),
+    "deep_sleep_boost": _build_deep_sleep_boost(),
+    "rem_enhancement":  _build_rem_enhancement(),
+    "shift_worker":     _build_shift_worker(),
+    "power_nap":        _build_power_nap(),
 }
 
 
+# ---------------------------------------------------------------------------
+# Public helpers
+# ---------------------------------------------------------------------------
+
 def get_protocol(name: str) -> SleepProtocol:
-    """Get a protocol by name."""
-    if name not in PROTOCOL_REGISTRY:
-        raise ValueError(f"Unknown protocol: {name}. Available: {list(PROTOCOL_REGISTRY.keys())}")
+    """Look up a protocol by name.  Raises ``KeyError`` if not found."""
     return PROTOCOL_REGISTRY[name]
 
 
-def list_protocols() -> List[Dict]:
-    """List all available protocols."""
-    return [p.to_dict() for p in PROTOCOL_REGISTRY.values()]
+def list_protocols() -> List[str]:
+    """Return a sorted list of all available protocol names."""
+    return sorted(PROTOCOL_REGISTRY.keys())
