@@ -20,6 +20,7 @@ from .sleep_optimizer import SleepOptimizer
 # Report data
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class SleepReport:
     """Aggregate report for a completed sleep session.
@@ -69,6 +70,7 @@ class SleepReport:
 # ---------------------------------------------------------------------------
 # Generator
 # ---------------------------------------------------------------------------
+
 
 class SleepReportGenerator:
     """Generates a :class:`SleepReport` from a completed optimiser session."""

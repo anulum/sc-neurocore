@@ -19,6 +19,7 @@ import numpy as np
 # Chronotypes
 # ---------------------------------------------------------------------------
 
+
 class Chronotype(Enum):
     """Sleep chronotype labels (after Michael Breus' model)."""
 
@@ -31,6 +32,7 @@ class Chronotype(Enum):
 # ---------------------------------------------------------------------------
 # Circadian profile
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class CircadianProfile:
@@ -104,6 +106,7 @@ _PROFILES: Dict[Chronotype, CircadianProfile] = {
 # ---------------------------------------------------------------------------
 # Optimizer
 # ---------------------------------------------------------------------------
+
 
 class CircadianOptimizer:
     """Chronotype-aware circadian rhythm optimizer.

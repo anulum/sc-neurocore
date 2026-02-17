@@ -20,6 +20,7 @@ import numpy as np
 # Sleep stages
 # ---------------------------------------------------------------------------
 
+
 class SleepStage(IntEnum):
     """AASM sleep-stage labels."""
 
@@ -49,16 +50,17 @@ EEG_BANDS: Dict[str, Tuple[float, float]] = {
 
 STAGE_SIGNATURES: Dict[SleepStage, np.ndarray] = {
     SleepStage.WAKE: np.array([0.05, 0.10, 0.35, 0.35, 0.15]),
-    SleepStage.N1:   np.array([0.10, 0.30, 0.25, 0.25, 0.10]),
-    SleepStage.N2:   np.array([0.25, 0.25, 0.20, 0.20, 0.10]),
-    SleepStage.N3:   np.array([0.60, 0.20, 0.10, 0.07, 0.03]),
-    SleepStage.REM:  np.array([0.10, 0.35, 0.15, 0.25, 0.15]),
+    SleepStage.N1: np.array([0.10, 0.30, 0.25, 0.25, 0.10]),
+    SleepStage.N2: np.array([0.25, 0.25, 0.20, 0.20, 0.10]),
+    SleepStage.N3: np.array([0.60, 0.20, 0.10, 0.07, 0.03]),
+    SleepStage.REM: np.array([0.10, 0.35, 0.15, 0.25, 0.15]),
 }
 
 
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class DetectorConfig:
@@ -73,6 +75,7 @@ class DetectorConfig:
 # ---------------------------------------------------------------------------
 # Detector
 # ---------------------------------------------------------------------------
+
 
 class SleepStageDetector:
     """Real-time sleep-stage detector from single-channel EEG.

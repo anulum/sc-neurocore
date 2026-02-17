@@ -20,6 +20,7 @@ from .protocol_library import SleepProtocol, StageAudioParams, get_protocol
 # Configuration
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class SleepOptimizerConfig:
     """Tuneable knobs for the optimiser loop."""
@@ -33,6 +34,7 @@ class SleepOptimizerConfig:
 # ---------------------------------------------------------------------------
 # Per-tick output
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class SleepTick:
@@ -71,6 +73,7 @@ class SleepTick:
 # ---------------------------------------------------------------------------
 # Optimizer
 # ---------------------------------------------------------------------------
+
 
 class SleepOptimizer:
     """Closed-loop sleep optimiser.
@@ -175,14 +178,18 @@ class SleepOptimizer:
             stage = SleepStage.WAKE
 
         total_dur_samples = self.protocol.total_duration_min * 60.0 * self.config.sample_rate
-        progress = min(1.0, self._sample_count / total_dur_samples) if total_dur_samples > 0 else 0.0
+        progress = (
+            min(1.0, self._sample_count / total_dur_samples) if total_dur_samples > 0 else 0.0
+        )
         target = self.protocol.get_target_stage(progress)
 
         # reinduction logic: detect unwanted awakenings
         if stage == SleepStage.WAKE and target != SleepStage.WAKE:
             self._consecutive_wake += 1
-            if (self._consecutive_wake >= 2
-                    and self._reinduction_count < self.config.max_reinduction_attempts):
+            if (
+                self._consecutive_wake >= 2
+                and self._reinduction_count < self.config.max_reinduction_attempts
+            ):
                 self._reinduction_active = True
                 self._reinduction_count += 1
         else:
@@ -236,7 +243,9 @@ class SleepOptimizer:
             "active": self._active,
             "tick_count": self._tick_count,
             "sample_count": self._sample_count,
-            "elapsed_min": self._sample_count / (self.config.sample_rate * 60.0) if self._active else 0.0,
+            "elapsed_min": (
+                self._sample_count / (self.config.sample_rate * 60.0) if self._active else 0.0
+            ),
             "current_stage": last.current_stage.name if last else None,
             "target_stage": last.target_stage.name if last else None,
             "reinduction_count": self._reinduction_count,
