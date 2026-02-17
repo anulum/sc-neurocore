@@ -16,6 +16,7 @@ neuroevolution_swarm  Genetic algorithm over SNN weight vectors
 from .agent import AgentConfig, SwarmAgent
 from .swarm_env import EnvConfig, SwarmEnvironment
 from .collective_fields import FieldConfig, CollectiveFields
+from .communication import SwarmCommunication
 from .fitness import SwarmFitness
 from .neuroevolution_swarm import EvolverConfig, SwarmEvolver
 
@@ -26,6 +27,7 @@ __all__ = [
     "SwarmEnvironment",
     "FieldConfig",
     "CollectiveFields",
+    "SwarmCommunication",
     "SwarmFitness",
     "SwarmEvolver",
     "EvolverConfig",

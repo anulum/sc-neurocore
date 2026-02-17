@@ -280,5 +280,236 @@ class TestSwarmIntegration(unittest.TestCase):
         self.assertTrue(all(isinstance(f, float) for f in history))
 
 
+class TestSwarmCommunication(unittest.TestCase):
+    """Cover communication.py (previously 0%)."""
+
+    def _make_env_and_fields(self, n=5):
+        from sc_neurocore.swarm import SwarmCommunication
+
+        cfg = EnvConfig(n_agents=n, n_obstacles=2, n_targets=1, seed=42)
+        env = SwarmEnvironment(cfg)
+        fields = CollectiveFields(FieldConfig(grid_size=20), n_agents=n)
+        comm = SwarmCommunication(env, fields)
+        return env, fields, comm
+
+    def test_init(self):
+        from sc_neurocore.swarm import SwarmCommunication
+
+        env, fields, comm = self._make_env_and_fields()
+        self.assertIs(comm.env, env)
+        self.assertIs(comm.fields, fields)
+        self.assertEqual(comm.broadcast_radius, 15.0)
+
+    def test_step(self):
+        env, fields, comm = self._make_env_and_fields()
+        # Give agents some chemical output
+        for a in env.agents:
+            a.chemical_output = 0.5
+        comm.step(dt=1.0)
+        # Chemical field should have deposits
+        self.assertGreater(fields.chemical_field.max(), 0)
+
+    def test_get_sensory_data(self):
+        env, fields, comm = self._make_env_and_fields()
+        data = comm.get_sensory_data(0)
+        self.assertIn("chem_gradient", data)
+        self.assertIn("symbolic_value", data)
+        self.assertEqual(len(data["chem_gradient"]), 2)
+        self.assertEqual(len(data["symbolic_value"]), 2)
+
+    def test_step_updates_symbolic(self):
+        env, fields, comm = self._make_env_and_fields()
+        for a in env.agents:
+            a.emotions[:2] = [1.0, 0.0]
+        comm.step(dt=1.0)
+        # Symbolic field should have some non-zero values
+        self.assertGreater(np.abs(fields.symbolic_field).max(), 0)
+
+
+class TestSwarmFitnessDeep(unittest.TestCase):
+    """Cover remaining fitness.py lines."""
+
+    def test_cohesion_single_agent(self):
+        positions = np.array([[50.0, 50.0]])
+        score = SwarmFitness.cohesion_score(positions)
+        self.assertEqual(score, 0.0)
+
+    def test_alignment_empty(self):
+        headings = np.array([])
+        score = SwarmFitness.alignment_score(headings)
+        self.assertEqual(score, 0.0)
+
+    def test_target_score(self):
+        positions = np.array([[10.0, 10.0], [90.0, 90.0]])
+        targets = np.array([[10.0, 10.0]])
+        score = SwarmFitness.target_score(positions, targets)
+        self.assertGreater(score, 0.0)
+        self.assertLessEqual(score, 1.0)
+
+    def test_target_score_no_targets(self):
+        positions = np.array([[10.0, 10.0]])
+        targets = np.zeros((0, 2))
+        score = SwarmFitness.target_score(positions, targets)
+        self.assertEqual(score, 0.0)
+
+    def test_obstacle_penalty(self):
+        positions = np.array([[50.0, 50.0]])
+        obstacles = np.array([[50.0, 50.0, 10.0]])  # Agent inside obstacle
+        penalty = SwarmFitness.obstacle_penalty(positions, obstacles)
+        self.assertEqual(penalty, 1.0)
+
+    def test_obstacle_penalty_no_obstacles(self):
+        positions = np.array([[50.0, 50.0]])
+        obstacles = np.zeros((0, 3))
+        penalty = SwarmFitness.obstacle_penalty(positions, obstacles)
+        self.assertEqual(penalty, 0.0)
+
+    def test_obstacle_penalty_outside(self):
+        positions = np.array([[50.0, 50.0]])
+        obstacles = np.array([[80.0, 80.0, 5.0]])  # Far away
+        penalty = SwarmFitness.obstacle_penalty(positions, obstacles)
+        self.assertEqual(penalty, 0.0)
+
+
+class TestCollectiveFieldsDeep(unittest.TestCase):
+    """Cover remaining collective_fields.py lines."""
+
+    def test_deposit_chemical_negative(self):
+        f = CollectiveFields(FieldConfig(grid_size=20), n_agents=3)
+        f.deposit_chemical(10.0, 10.0, -1.0)  # Negative amount -> no-op
+        self.assertEqual(f.chemical_field.max(), 0.0)
+
+    def test_deposit_symbolic(self):
+        f = CollectiveFields(FieldConfig(grid_size=20), n_agents=3)
+        f.deposit_symbolic(10.0, 10.0, 0, 1.5)
+        self.assertGreater(f.symbolic_field[:, :, 0].max(), 0)
+
+    def test_update(self):
+        cfg = EnvConfig(n_agents=3, seed=42)
+        env = SwarmEnvironment(cfg)
+        f = CollectiveFields(FieldConfig(grid_size=20), n_agents=3)
+        # Set some emotions on agents
+        for a in env.agents:
+            a.emotions = np.random.randn(8)
+        f.update(env.agents, env, dt=1.0)
+        # After update, symbolic field should have decayed (or remain 0)
+        # Emotions should be updated
+        self.assertIsNotNone(f.emotional_field)
+
+    def test_synchronize_emotions_default_coupling(self):
+        f = CollectiveFields(FieldConfig(), n_agents=3)
+        f.emotional_field = np.random.randn(3, 8)
+        f.synchronize_emotions()  # Uses default coupling
+        # Should not crash; field should still be valid
+        self.assertEqual(f.emotional_field.shape, (3, 8))
+
+
+class TestSwarmEnvDeep(unittest.TestCase):
+    """Cover remaining swarm_env.py lines."""
+
+    def test_boundary_clamp(self):
+        cfg = EnvConfig(n_agents=1, boundary_mode="clamp", width=100, height=100, seed=1)
+        env = SwarmEnvironment(cfg)
+        env.agents[0].position = np.array([150.0, -10.0])
+        env._apply_boundary(env.agents[0])
+        pos = env.agents[0].position
+        self.assertLessEqual(pos[0], 100)
+        self.assertGreaterEqual(pos[1], 0)
+
+    def test_obstacle_distances(self):
+        cfg = EnvConfig(n_agents=3, n_obstacles=5, seed=42)
+        env = SwarmEnvironment(cfg)
+        dists = env.get_obstacle_distances(0, k=3)
+        self.assertEqual(len(dists), 3)
+
+    def test_target_distances(self):
+        cfg = EnvConfig(n_agents=3, n_targets=3, seed=42)
+        env = SwarmEnvironment(cfg)
+        dists = env.get_target_distances(0, k=2)
+        self.assertEqual(len(dists), 2)
+
+    def test_target_capture(self):
+        cfg = EnvConfig(
+            n_agents=1,
+            n_targets=1,
+            capture_radius=50.0,
+            respawn_targets=True,
+            seed=42,
+        )
+        env = SwarmEnvironment(cfg)
+        # Place agent on top of target
+        env.agents[0].position = env.targets[0].copy()
+        env.step()
+        self.assertGreater(env.targets_captured, 0)
+
+    def test_step_with_fields(self):
+        cfg = EnvConfig(n_agents=3, seed=42)
+        env = SwarmEnvironment(cfg)
+        fields = CollectiveFields(FieldConfig(grid_size=20), n_agents=3)
+        env.step(dt=1.0, fields=fields)
+        # Should not crash; step_count should advance
+        self.assertEqual(env.step_count, 1)
+
+    def test_no_respawn_targets(self):
+        cfg = EnvConfig(
+            n_agents=1,
+            n_targets=1,
+            capture_radius=200.0,
+            respawn_targets=False,
+            seed=42,
+        )
+        env = SwarmEnvironment(cfg)
+        env.agents[0].position = env.targets[0].copy()
+        env.step()
+        # Target captured but not respawned
+        self.assertGreater(env.targets_captured, 0)
+
+
+class TestSwarmEvolverDeep(unittest.TestCase):
+    """Cover remaining neuroevolution_swarm.py lines."""
+
+    def test_evaluate_with_fields(self):
+        cfg = EvolverConfig(
+            pop_size=3,
+            n_eval_steps=10,
+            use_fields=True,
+            agent_config=AgentConfig(n_hidden=4),
+            seed=42,
+        )
+        ev = SwarmEvolver(cfg)
+        fit = ev.evaluate_individual(ev.population[0])
+        self.assertIsInstance(fit, float)
+
+    def test_custom_env_config(self):
+        ecfg = EnvConfig(width=50, height=50, n_agents=3)
+        cfg = EvolverConfig(
+            pop_size=3,
+            n_eval_steps=5,
+            env_config=ecfg,
+            agent_config=AgentConfig(n_hidden=4),
+            seed=42,
+        )
+        ev = SwarmEvolver(cfg)
+        env = ev._make_env()
+        self.assertEqual(env.cfg.width, 50)
+        self.assertEqual(env.cfg.height, 50)
+
+    def test_crossover_and_mutate(self):
+        cfg = EvolverConfig(
+            pop_size=4,
+            n_elite=2,
+            mutation_rate=0.5,
+            agent_config=AgentConfig(n_hidden=4),
+            seed=42,
+        )
+        ev = SwarmEvolver(cfg)
+        pa = ev.population[0].copy()
+        pb = ev.population[1].copy()
+        child = ev._crossover(pa, pb)
+        self.assertEqual(len(child), ev.n_weights)
+        mutated = ev._mutate(child.copy())
+        self.assertEqual(len(mutated), ev.n_weights)
+
+
 if __name__ == "__main__":
     unittest.main()

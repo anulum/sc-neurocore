@@ -49,22 +49,23 @@ class SwarmCommunication:
 
         # 1. Chemical deposition (L2)
         for agent in agents:
-            self.fields.deposit_chemical(agent.x, agent.y, agent.chemical_output)
+            self.fields.deposit_chemical(
+                agent.position[0], agent.position[1], agent.chemical_output
+            )
 
         # 2. Symbolic glyph imprinting (L7)
         for agent in agents:
-            # Use first 2 dims of emotional state as glyph
             glyph = agent.emotions[:2] - 0.5  # Center around 0
-            self.fields.deposit_symbolic(agent.x, agent.y, glyph * 0.1)
+            for ch in range(2):
+                self.fields.deposit_symbolic(
+                    agent.position[0], agent.position[1], ch, float(glyph[ch] * 0.1)
+                )
 
         # 3. Emotional synchronization (L5)
-        emotions = [agent.emotions.copy() for agent in agents]
-        updated_emotions = self.fields.synchronize_emotions(emotions)
-        for agent, emo in zip(agents, updated_emotions):
-            agent.emotions = emo
+        self.fields.synchronize_emotions()
 
         # 4. Diffuse fields
-        self.fields.step(dt)
+        self.fields.diffuse(dt)
 
     def get_sensory_data(self, agent_idx: int) -> dict:
         """
@@ -76,6 +77,8 @@ class SwarmCommunication:
         """
         agent = self.env.agents[agent_idx]
         return {
-            "chem_gradient": self.fields.get_chemical_gradient(agent.x, agent.y),
-            "symbolic_value": self.fields.get_symbolic_value(agent.x, agent.y),
+            "chem_gradient": self.fields.get_chemical_gradient(
+                agent.position[0], agent.position[1]
+            ),
+            "symbolic_value": self.fields.get_symbolic_at(agent.position[0], agent.position[1]),
         }
