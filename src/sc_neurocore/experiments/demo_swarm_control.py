@@ -42,13 +42,19 @@ def run_demo() -> None:
     # --- Configuration ---
     agent_cfg = AgentConfig(n_sensory=20, n_hidden=16, n_motor=2, seed=42)
     env_cfg = EnvConfig(
-        width=100, height=100,
-        n_agents=10, n_obstacles=3, n_targets=3,
-        agent_config=agent_cfg, seed=7,
+        width=100,
+        height=100,
+        n_agents=10,
+        n_obstacles=3,
+        n_targets=3,
+        agent_config=agent_cfg,
+        seed=7,
     )
     evolver_cfg = EvolverConfig(
-        pop_size=12, n_elite=3,
-        mutation_rate=0.15, mutation_std=0.3,
+        pop_size=12,
+        n_elite=3,
+        mutation_rate=0.15,
+        mutation_std=0.3,
         n_eval_steps=100,
         agent_config=agent_cfg,
         env_config=env_cfg,
@@ -82,11 +88,17 @@ def run_demo() -> None:
     print("-" * 64)
 
     best_weights = evolver.get_best_weights()
-    replay_env = SwarmEnvironment(EnvConfig(
-        width=100, height=100,
-        n_agents=10, n_obstacles=3, n_targets=3,
-        agent_config=agent_cfg, seed=999,
-    ))
+    replay_env = SwarmEnvironment(
+        EnvConfig(
+            width=100,
+            height=100,
+            n_agents=10,
+            n_obstacles=3,
+            n_targets=3,
+            agent_config=agent_cfg,
+            seed=999,
+        )
+    )
     for agent in replay_env.agents:
         agent.weights = best_weights
 
@@ -98,8 +110,10 @@ def run_demo() -> None:
             cy = positions[:, 1].mean()
             spread = np.sqrt(((positions - positions.mean(axis=0)) ** 2).sum(axis=-1)).mean()
             fitness = SwarmFitness.composite(replay_env)
-            print(f"    step {step:3d}  centroid=({cx:5.1f},{cy:5.1f})  "
-                  f"spread={spread:5.1f}  fitness={fitness:.3f}")
+            print(
+                f"    step {step:3d}  centroid=({cx:5.1f},{cy:5.1f})  "
+                f"spread={spread:5.1f}  fitness={fitness:.3f}"
+            )
 
     # --- Final state ---
     state = replay_env.get_state()

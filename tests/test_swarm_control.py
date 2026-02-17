@@ -5,8 +5,15 @@ import unittest
 import numpy as np
 
 from sc_neurocore.swarm import (
-    SwarmAgent, AgentConfig, SwarmEnvironment, EnvConfig,
-    CollectiveFields, FieldConfig, SwarmFitness, SwarmEvolver, EvolverConfig,
+    SwarmAgent,
+    AgentConfig,
+    SwarmEnvironment,
+    EnvConfig,
+    CollectiveFields,
+    FieldConfig,
+    SwarmFitness,
+    SwarmEvolver,
+    EvolverConfig,
 )
 
 
@@ -38,7 +45,7 @@ class TestSwarmAgent(unittest.TestCase):
         cfg = AgentConfig(n_hidden=8, n_sensory=20, n_motor=2)
         a = SwarmAgent(cfg)
         w = a.weights
-        n_expected = 8*20 + 8*8 + 2*8  # W_in + W_rec + W_out
+        n_expected = 8 * 20 + 8 * 8 + 2 * 8  # W_in + W_rec + W_out
         self.assertEqual(len(w), n_expected)
 
     def test_weights_setter(self):
@@ -65,7 +72,7 @@ class TestSwarmAgent(unittest.TestCase):
         a.heading = 0
         a.act(0.0, 100.0)  # Large turn
         self.assertGreaterEqual(a.heading, 0)
-        self.assertLess(a.heading, 2*np.pi)
+        self.assertLess(a.heading, 2 * np.pi)
 
 
 class TestSwarmEnvironment(unittest.TestCase):
@@ -193,7 +200,8 @@ class TestSwarmFitness(unittest.TestCase):
 
     def test_composite(self):
         env = SwarmEnvironment(EnvConfig(n_agents=10))
-        for _ in range(10): env.step()
+        for _ in range(10):
+            env.step()
         score = SwarmFitness.composite(env)
         self.assertIsInstance(score, float)
 
@@ -217,7 +225,9 @@ class TestSwarmEvolver(unittest.TestCase):
         self.assertIsInstance(fit, float)
 
     def test_evolve_generation(self):
-        cfg = EvolverConfig(pop_size=6, n_elite=2, n_eval_steps=20, agent_config=AgentConfig(n_hidden=4))
+        cfg = EvolverConfig(
+            pop_size=6, n_elite=2, n_eval_steps=20, agent_config=AgentConfig(n_hidden=4)
+        )
         ev = SwarmEvolver(cfg)
         best = ev.evolve_generation()
         self.assertIsInstance(best, float)
@@ -230,7 +240,9 @@ class TestSwarmEvolver(unittest.TestCase):
         self.assertIsInstance(w, np.ndarray)
 
     def test_run(self):
-        cfg = EvolverConfig(pop_size=5, n_elite=2, n_eval_steps=10, agent_config=AgentConfig(n_hidden=4))
+        cfg = EvolverConfig(
+            pop_size=5, n_elite=2, n_eval_steps=10, agent_config=AgentConfig(n_hidden=4)
+        )
         ev = SwarmEvolver(cfg)
         history = ev.run(n_generations=2)
         self.assertEqual(len(history), 2)
@@ -258,7 +270,9 @@ class TestSwarmIntegration(unittest.TestCase):
 
     def test_evolution_improves(self):
         """Evolution should not systematically worsen over 3 generations."""
-        cfg = EvolverConfig(pop_size=8, n_elite=2, n_eval_steps=30, agent_config=AgentConfig(n_hidden=4))
+        cfg = EvolverConfig(
+            pop_size=8, n_elite=2, n_eval_steps=30, agent_config=AgentConfig(n_hidden=4)
+        )
         ev = SwarmEvolver(cfg)
         history = ev.run(n_generations=3)
         # Just verify it ran without error

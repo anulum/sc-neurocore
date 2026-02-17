@@ -90,29 +90,29 @@ class SwarmAgent:
     @property
     def weights(self) -> np.ndarray:
         """Return all trainable weights as a flat 1-D vector."""
-        return np.concatenate([
-            self.W_in.ravel(),
-            self.W_rec.ravel(),
-            self.W_out.ravel(),
-        ])
+        return np.concatenate(
+            [
+                self.W_in.ravel(),
+                self.W_rec.ravel(),
+                self.W_out.ravel(),
+            ]
+        )
 
     @weights.setter
     def weights(self, flat: np.ndarray) -> None:
         c = self.cfg
-        assert flat.size == self.n_weights, (
-            f"Expected {self.n_weights} weights, got {flat.size}"
-        )
+        assert flat.size == self.n_weights, f"Expected {self.n_weights} weights, got {flat.size}"
         offset = 0
         size_in = c.n_hidden * c.n_sensory
-        self.W_in = flat[offset:offset + size_in].reshape(c.n_hidden, c.n_sensory).copy()
+        self.W_in = flat[offset : offset + size_in].reshape(c.n_hidden, c.n_sensory).copy()
         offset += size_in
 
         size_rec = c.n_hidden * c.n_hidden
-        self.W_rec = flat[offset:offset + size_rec].reshape(c.n_hidden, c.n_hidden).copy()
+        self.W_rec = flat[offset : offset + size_rec].reshape(c.n_hidden, c.n_hidden).copy()
         offset += size_rec
 
         size_out = c.n_motor * c.n_hidden
-        self.W_out = flat[offset:offset + size_out].reshape(c.n_motor, c.n_hidden).copy()
+        self.W_out = flat[offset : offset + size_out].reshape(c.n_motor, c.n_hidden).copy()
 
     # ------------------------------------------------------------------
     # Neural forward pass (soft-LIF)
@@ -132,13 +132,11 @@ class SwarmAgent:
         turn  : float  in [-pi, pi]
         """
         c = self.cfg
-        inp = np.asarray(sensory, dtype=np.float64).ravel()[:c.n_sensory]
+        inp = np.asarray(sensory, dtype=np.float64).ravel()[: c.n_sensory]
 
         # Membrane integration
         self.membrane = (
-            c.membrane_decay * self.membrane
-            + self.W_in @ inp
-            + self.W_rec @ self.firing_rate
+            c.membrane_decay * self.membrane + self.W_in @ inp + self.W_rec @ self.firing_rate
         )
 
         # Soft spike (sigmoid pseudo-rate)
@@ -146,7 +144,7 @@ class SwarmAgent:
         self.firing_rate = 0.8 * self.firing_rate + 0.2 * spike_prob
 
         # Reset membrane where spike probability high
-        self.membrane *= (1.0 - spike_prob)
+        self.membrane *= 1.0 - spike_prob
 
         # Motor readout
         motor = self.W_out @ self.firing_rate
@@ -174,8 +172,9 @@ class SwarmAgent:
     # Reset
     # ------------------------------------------------------------------
 
-    def reset(self, rng: np.random.Generator | None = None, width: float = 100.0,
-              height: float = 100.0) -> None:
+    def reset(
+        self, rng: np.random.Generator | None = None, width: float = 100.0, height: float = 100.0
+    ) -> None:
         """Reset kinematic and neural state (weights untouched)."""
         if rng is None:
             rng = np.random.default_rng()

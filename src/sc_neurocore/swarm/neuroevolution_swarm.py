@@ -57,9 +57,7 @@ class SwarmEvolver:
         self.n_weights = template.n_weights
 
         # Initialise population with small random weights
-        self.population = [
-            self.rng.normal(0, 0.5, self.n_weights) for _ in range(cfg.pop_size)
-        ]
+        self.population = [self.rng.normal(0, 0.5, self.n_weights) for _ in range(cfg.pop_size)]
         self.fitnesses = np.zeros(cfg.pop_size)
         self.generation = 0
         self.best_fitness_history: list[float] = []
