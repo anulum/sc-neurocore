@@ -1,33 +1,36 @@
 """
-SSGF Adaptive Audio Package
+SSGF Adaptive Audio Engine
 ============================
 
-Real-time adaptive brainwave entrainment using SSGF geometry evolution
-with EVS (Entrainment Verification Score) feedback.
+Lightweight SSGF geometry solver, Entrainment Verification Score (EVS),
+and closed-loop adaptive audio controller for sc-neurocore.
 
-Modules:
-    ssgf_engine      - SSGF geometry solver (latent z → W → spectral)
-    evs_engine        - Entrainment verification scoring
-    adaptive_engine   - Feedback loop: EVS → SSGF adaptation → audio params
-    user_profile      - User priors and personalization
-
-Author: Claude (Session 2026-02-16)
+Modules
+-------
+ssgf_engine   -- Stochastic Synthesis of Geometric Fields (Kuramoto + geometry)
+evs_engine    -- Entrainment Verification Score (FFT-based EEG scoring)
+adaptive_engine -- Closed-loop adaptive audio controller (SSGF + EVS)
+user_profile  -- User chronotype and session preference model
 """
 
-from .ssgf_engine import SSGFEngine, SSGFConfig, SSGFState
-from .evs_engine import EVSEngine, EVSConfig, EVSSnapshot
-from .adaptive_engine import AdaptiveAudioEngine, AdaptiveConfig
+from .ssgf_engine import SSGFConfig, SSGFEngine
+from .evs_engine import EVSConfig, EVSEngine, EVSSnapshot
+from .adaptive_engine import (
+    AdaptiveAudioEngine,
+    AdaptiveSessionReport,
+    SessionPhase,
+)
 from .user_profile import UserProfile, Chronotype
 
 __all__ = [
-    "SSGFEngine",
     "SSGFConfig",
-    "SSGFState",
-    "EVSEngine",
+    "SSGFEngine",
     "EVSConfig",
+    "EVSEngine",
     "EVSSnapshot",
     "AdaptiveAudioEngine",
-    "AdaptiveConfig",
+    "AdaptiveSessionReport",
+    "SessionPhase",
     "UserProfile",
     "Chronotype",
 ]

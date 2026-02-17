@@ -1,280 +1,315 @@
 """
-SSGF Geometry Engine (Lightweight)
-===================================
+SSGF Engine -- Lightweight Stochastic Synthesis of Geometric Fields
+=====================================================================
 
-Implements the core SSGF cycle for adaptive audio:
-1. Latent vector z → geometry matrix W via softplus decoder
-2. W → Kuramoto micro-cycles with geometry feedback
-3. W → spectral decomposition (eigenvalues for audio mapping)
-4. Cost computation → gradient update on z
+Pure-NumPy solver that couples Kuramoto phase oscillators with a
+learned geometry matrix W(t), producing real-time audio-mapping
+observables (binaural Hz, spatial angle, intensity, theurgic mode).
 
-This is a self-contained version optimized for real-time audio adaptation.
+The architecture mirrors the full SSGF stack in SCPN-CODEBASE but is
+self-contained: no JAX, no PyTorch, no ripser -- just numpy.
 
-Author: Claude (Session 2026-02-16)
+Author: Claude (Session 2026-02-17)
 """
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
+
+# ── Canonical SCPN Natural Frequencies (16 layers) ───────────────────
+
+OMEGA_N = np.array([
+    1.329, 2.610, 0.844, 1.520, 0.710, 3.780, 1.055, 0.625,
+    2.210, 1.740, 0.480, 3.210, 0.915, 1.410, 2.830, 0.991,
+])
+
+
+def _build_knm(
+    N: int = 16,
+    K_base: float = 0.45,
+    K_alpha: float = 0.3,
+) -> np.ndarray:
+    """Build N x N coupling matrix with exponential distance decay."""
+    idx = np.arange(N)
+    dist = np.abs(idx[:, None] - idx[None, :])
+    K = K_base * np.exp(-K_alpha * dist)
+    np.fill_diagonal(K, 0.0)
+
+    # Calibration anchors
+    anchors = [(0, 1, 0.302), (1, 2, 0.201), (2, 3, 0.252), (3, 4, 0.154)]
+    for i, j, val in anchors:
+        if i < N and j < N:
+            K[i, j] = val
+            K[j, i] = val
+
+    # Cross-hierarchy boosts
+    if N >= 16:
+        K[0, 15] = max(K[0, 15], 0.05)
+        K[15, 0] = max(K[15, 0], 0.05)
+    if N >= 7:
+        K[4, 6] = max(K[4, 6], 0.15)
+        K[6, 4] = max(K[6, 4], 0.15)
+
+    np.fill_diagonal(K, 0.0)
+    return K
+
+
+# ── Configuration ────────────────────────────────────────────────────
 
 
 @dataclass
 class SSGFConfig:
-    """SSGF engine configuration."""
-    N: int = 16                     # Number of oscillators
-    latent_dim: int = 120           # N*(N-1)/2 for upper triangle
-    lr_z: float = 0.01             # Latent learning rate
-    sigma_g: float = 0.3           # Geometry feedback strength
-    micro_steps: int = 10          # Kuramoto steps per outer step
-    dt: float = 0.01               # Micro timestep
-    noise_std: float = 0.05        # Kuramoto noise
-    K_base: float = 0.45           # Base coupling
-    alpha_decay: float = 0.3       # Distance decay
-    # Cost weights
-    w_micro: float = 1.0
-    w_spectral: float = 0.5
-    w_reg: float = 0.1
-    # Field pressure for SSGF gradient
+    """All tuneable knobs for SSGFEngine."""
+
+    N: int = 16
+    z_dim: int = 120
+    lr_z: float = 0.01
+    sigma_g: float = 0.3
+    micro_steps: int = 10
+    dt: float = 0.001
+    noise: float = 0.2
+    K_base: float = 0.45
+    K_alpha: float = 0.3
     field_pressure: float = 0.1
     seed: int = 42
 
 
-@dataclass
-class SSGFState:
-    """Current SSGF state snapshot."""
-    z: np.ndarray = field(default_factory=lambda: np.array([]))
-    W: np.ndarray = field(default_factory=lambda: np.array([]))
-    theta: np.ndarray = field(default_factory=lambda: np.array([]))
-    eigvals: np.ndarray = field(default_factory=lambda: np.array([]))
-    R_global: float = 0.0
-    fiedler: float = 0.0
-    spectral_gap: float = 0.0
-    C_micro: float = 0.0
-    U_total: float = 0.0
-    outer_step: int = 0
-
-    def to_dict(self) -> Dict:
-        return {
-            "R_global": round(self.R_global, 4),
-            "fiedler": round(self.fiedler, 4),
-            "spectral_gap": round(self.spectral_gap, 4),
-            "C_micro": round(self.C_micro, 4),
-            "U_total": round(self.U_total, 4),
-            "outer_step": self.outer_step,
-        }
+# ── Engine ───────────────────────────────────────────────────────────
 
 
 class SSGFEngine:
+    """Lightweight SSGF geometry-coupled Kuramoto solver.
+
+    Maintains a latent vector *z* whose decoded geometry matrix W(t)
+    feeds back into the micro-cycle, steering oscillators toward
+    higher global coherence R.  Audio-mapping observables are derived
+    from the resulting phase dynamics and spectral properties of W.
     """
-    Lightweight SSGF geometry engine for adaptive audio.
 
-    Maintains latent vector z that decodes to geometry W.
-    Each outer step runs micro-cycles (Kuramoto + geometry feedback),
-    computes costs, and updates z via finite-difference gradient descent.
-    """
+    def __init__(self, cfg: Optional[SSGFConfig] = None):
+        self.cfg = cfg or SSGFConfig()
+        c = self.cfg
+        self._rng = np.random.RandomState(c.seed)
 
-    def __init__(self, config: Optional[SSGFConfig] = None):
-        self.config = config or SSGFConfig()
-        c = self.config
-        self.rng = np.random.RandomState(c.seed)
+        # Phase state
+        self.N = c.N
+        self.omega = OMEGA_N[:c.N].copy() if c.N <= 16 else np.tile(
+            OMEGA_N, (c.N // 16 + 1),
+        )[:c.N].copy()
+        self.theta = self._rng.uniform(0, 2 * np.pi, c.N)
 
-        # Canonical Kuramoto parameters
-        self.omega = np.array(
-            [1.329, 1.261, 1.198, 1.140, 1.085, 1.034, 0.987, 1.044,
-             1.106, 1.172, 1.015, 0.967, 1.023, 1.083, 1.147, 0.991],
-        )[:c.N]
+        # Coupling
+        self.K = _build_knm(c.N, c.K_base, c.K_alpha)
 
-        # Build base coupling K
-        self.K = np.zeros((c.N, c.N))
-        for i in range(c.N):
-            for j in range(c.N):
-                if i != j:
-                    self.K[i, j] = c.K_base * np.exp(-c.alpha_decay * abs(i - j))
-
-        # Latent vector z
-        self.z = self.rng.normal(0, 0.1, c.latent_dim)
-
-        # Oscillator phases
-        self.theta = self.rng.uniform(0, 2 * np.pi, c.N)
-
-        # Decode initial W
+        # Latent geometry
+        self.z = self._rng.randn(c.z_dim).astype(np.float64) * 0.1
         self.W = self._decode(self.z)
-        self.eigvals = np.zeros(c.N)
-        self._outer_step = 0
+
+        # Spectral cache
+        self._eigvals = np.zeros(c.N)
+        self._eigvecs = np.eye(c.N)
+
+        # History for phase-velocity estimate
+        self._prev_theta = self.theta.copy()
+
+        # Running stats
+        self.outer_step_count: int = 0
+        self.R_global: float = 0.0
+        self._cost_history: list[float] = []
+
+    # ── Decoder: z -> W ──────────────────────────────────────────────
 
     def _decode(self, z: np.ndarray) -> np.ndarray:
-        """Decode latent z → symmetric non-negative geometry W."""
-        N = self.config.N
-        # Build symmetric matrix from upper triangle
+        """Decode latent vector into a symmetric, non-negative weight
+        matrix with zero diagonal via softplus on a symmetric shell."""
+        N = self.N
+        # Number of unique off-diagonal upper-triangle entries
+        n_upper = N * (N - 1) // 2
+        # Tile z to fill if z_dim < n_upper, or truncate
+        flat = np.tile(z, (n_upper // len(z) + 1))[:n_upper]
+
         A = np.zeros((N, N))
-        idx = 0
-        for i in range(N):
-            for j in range(i + 1, N):
-                if idx < len(z):
-                    A[i, j] = z[idx]
-                    A[j, i] = z[idx]
-                    idx += 1
-        # Softplus ensures non-negative
-        W = np.log1p(np.exp(A))
+        idx_upper = np.triu_indices(N, k=1)
+        A[idx_upper] = flat
+        A = A + A.T  # symmetric
+
+        # Softplus: log(1 + exp(x)), numerically stable
+        W = np.where(A > 20, A, np.log1p(np.exp(A)))
         np.fill_diagonal(W, 0.0)
         return W
 
-    def _micro_step(self, theta: np.ndarray, W: np.ndarray) -> np.ndarray:
-        """One Kuramoto micro-step with geometry feedback."""
-        c = self.config
-        N = c.N
-        coupling = np.zeros(N)
-        for i in range(N):
-            for j in range(N):
-                if i != j:
-                    sin_diff = np.sin(theta[j] - theta[i])
-                    coupling[i] += (self.K[i, j] + c.sigma_g * W[i, j]) * sin_diff
+    # ── Micro-Cycle ──────────────────────────────────────────────────
 
-        noise = self.rng.normal(0, c.noise_std, N)
-        theta_new = theta + (self.omega + coupling + noise) * c.dt
-        return theta_new % (2 * np.pi)
+    def _micro_step(self) -> None:
+        """One Kuramoto + geometry-feedback timestep (vectorised)."""
+        c = self.cfg
+        N = self.N
+        theta = self.theta
 
-    def _compute_R(self, theta: np.ndarray) -> float:
-        """Kuramoto order parameter."""
-        z = np.exp(1j * theta)
-        return float(np.abs(z.mean()))
+        # Phase differences: diff[n, m] = theta[m] - theta[n]
+        diff = theta[np.newaxis, :] - theta[:, np.newaxis]
+        sin_diff = np.sin(diff)
 
-    def _spectral(self, W: np.ndarray) -> Tuple[np.ndarray, float, float]:
-        """Compute spectral properties of W."""
-        N = W.shape[0]
-        D = np.diag(W.sum(axis=1))
-        D_inv_sqrt = np.diag(1.0 / np.sqrt(np.maximum(W.sum(axis=1), 1e-8)))
-        L_sym = np.eye(N) - D_inv_sqrt @ W @ D_inv_sqrt
-        eigvals = np.sort(np.linalg.eigvalsh(L_sym))
-        fiedler = float(eigvals[1]) if N > 1 else 0.0
-        spectral_gap = float(eigvals[1] / max(eigvals[2], 1e-8)) if N > 2 else 0.0
-        return eigvals, fiedler, spectral_gap
+        # dtheta = omega + K coupling + geometry coupling + field + noise
+        coupling_k = np.sum(self.K * sin_diff, axis=1)
+        coupling_w = c.sigma_g * np.sum(self.W * sin_diff, axis=1)
+        field_term = c.field_pressure * np.cos(theta)
+        noise_term = c.noise * self._rng.randn(N)
 
-    def _compute_costs(self, theta: np.ndarray, W: np.ndarray) -> Dict[str, float]:
-        """Compute SSGF cost terms."""
-        R = self._compute_R(theta)
-        C_micro = 1.0 - R  # Want R → 1
-        C_spectral = max(0, 0.1 - self._spectral(W)[1])  # Want fiedler > 0.1
-        C_reg = float(np.sum(W ** 2)) / (W.shape[0] ** 2)  # Frobenius regularization
-        c = self.config
-        U_total = c.w_micro * C_micro + c.w_spectral * C_spectral + c.w_reg * C_reg
-        return {
-            "C_micro": C_micro,
-            "C_spectral": C_spectral,
-            "C_reg": C_reg,
-            "U_total": U_total,
-            "R_global": R,
-        }
+        dtheta = self.omega + coupling_k + coupling_w + field_term + noise_term
+        self.theta = (theta + dtheta * c.dt) % (2 * np.pi)
 
-    def outer_step(self) -> SSGFState:
+    # ── Spectral Bridge ──────────────────────────────────────────────
+
+    def _spectral(self) -> None:
+        """Compute eigendecomposition of the normalised Laplacian of W."""
+        W = self.W
+        d = W.sum(axis=1)
+        d_safe = np.where(d > 1e-12, d, 1e-12)
+        d_inv_sqrt = 1.0 / np.sqrt(d_safe)
+
+        L_sym = np.eye(self.N) - (d_inv_sqrt[:, None] * W * d_inv_sqrt[None, :])
+        # Force exact symmetry
+        L_sym = 0.5 * (L_sym + L_sym.T)
+
+        eigvals, eigvecs = np.linalg.eigh(L_sym)
+        self._eigvals = eigvals
+        self._eigvecs = eigvecs
+
+    # ── Cost ─────────────────────────────────────────────────────────
+
+    def _compute_R(self) -> float:
+        """Kuramoto order parameter R = |<exp(i*theta)>|."""
+        z_complex = np.mean(np.exp(1j * self.theta))
+        return float(np.abs(z_complex))
+
+    def _cost(self) -> float:
+        """Composite cost: minimise negative coherence + regularise W."""
+        R = self._compute_R()
+        c_micro = 1.0 - R
+        c_reg = 0.01 * np.sum(self.W ** 2) / (self.N * self.N)
+        return c_micro + c_reg
+
+    # ── Outer Cycle ──────────────────────────────────────────────────
+
+    def outer_step(self) -> float:
+        """One outer-cycle step: micro-cycle -> spectral -> grad update on z.
+
+        Returns the cost after the step.
         """
-        One outer SSGF cycle:
-        1. Run micro-cycles with current W
-        2. Compute costs
-        3. Update z via finite-difference gradient
-        """
-        c = self.config
+        c = self.cfg
 
-        # 1. Micro-cycles
+        # Save state
+        self._prev_theta = self.theta.copy()
+
+        # Run micro-cycle
         for _ in range(c.micro_steps):
-            self.theta = self._micro_step(self.theta, self.W)
+            self._micro_step()
 
-        # 2. Costs at current z
-        costs = self._compute_costs(self.theta, self.W)
+        # Spectral bridge
+        self._spectral()
 
-        # 3. Finite-difference gradient on z
+        # Update R
+        self.R_global = self._compute_R()
+
+        # Finite-difference gradient descent on z
+        base_cost = self._cost()
+        eps = 1e-4
         grad = np.zeros_like(self.z)
-        eps = 0.01
-        U0 = costs["U_total"]
-        for k in range(min(len(self.z), 30)):  # Limit to 30 dims for speed
+
+        for i in range(len(self.z)):
             z_plus = self.z.copy()
-            z_plus[k] += eps
-            W_plus = self._decode(z_plus)
-            theta_tmp = self.theta.copy()
-            for _ in range(3):  # Quick micro eval
-                theta_tmp = self._micro_step(theta_tmp, W_plus)
-            costs_plus = self._compute_costs(theta_tmp, W_plus)
-            grad[k] = (costs_plus["U_total"] - U0) / eps
+            z_plus[i] += eps
+            W_backup = self.W
+            self.W = self._decode(z_plus)
+            cost_plus = self._cost()
+            self.W = W_backup
+            grad[i] = (cost_plus - base_cost) / eps
 
-        # Add field pressure (bias toward connectivity)
-        grad -= c.field_pressure * np.sign(self.z)
-
-        # Update z
         self.z -= c.lr_z * grad
-
-        # Re-decode W
         self.W = self._decode(self.z)
-        eigvals, fiedler, spectral_gap = self._spectral(self.W)
-        self.eigvals = eigvals
 
-        self._outer_step += 1
+        self.outer_step_count += 1
+        self._cost_history.append(base_cost)
+        return base_cost
 
-        return SSGFState(
-            z=self.z.copy(),
-            W=self.W.copy(),
-            theta=self.theta.copy(),
-            eigvals=eigvals,
-            R_global=costs["R_global"],
-            fiedler=fiedler,
-            spectral_gap=spectral_gap,
-            C_micro=costs["C_micro"],
-            U_total=costs["U_total"],
-            outer_step=self._outer_step,
-        )
+    # ── Audio Mapping ────────────────────────────────────────────────
 
     def get_audio_mapping(self) -> Dict[str, float]:
-        """
-        Map current SSGF state to audio parameters.
+        """Derive CCW audio parameters from current SSGF state.
 
-        Returns dict with CCW-compatible audio control values.
+        Returns
+        -------
+        dict with keys:
+            binaural_hz      -- 0.5-40 Hz (from layer-2 phase velocity)
+            pulse_rate        -- isochronic pulse rate (layer-4 coherence)
+            spatial_angle     -- 0-360 degrees (layer-7 phase)
+            intensity         -- 0-1 (from R_global)
+            fiedler           -- algebraic connectivity of W
+            spectral_gap      -- lambda_1 / lambda_2
+            theurgic_mode     -- bool, True when R > 0.95
         """
-        R = self._compute_R(self.theta)
-        _, fiedler, spectral_gap = self._spectral(self.W)
+        R = self.R_global
 
-        # Layer 2 phase velocity → binaural beat Hz
-        if len(self.theta) > 1:
-            dtheta_2 = float(abs(self.theta[1] - self.theta[0]))
-            binaural_hz = 0.5 + (dtheta_2 / np.pi) * 39.5  # Map to 0.5-40 Hz
+        # Layer 2 phase velocity -> binaural Hz (0.5 - 40)
+        if self.N > 2:
+            dphase_2 = (self.theta[1] - self._prev_theta[1]) / self.cfg.dt
+            binaural_hz = float(np.clip(0.5 + abs(dphase_2) * 2.0, 0.5, 40.0))
         else:
             binaural_hz = 10.0
 
-        # Layer 4 coherence → isochronic pulse rate
-        if len(self.theta) > 3:
-            plv_34 = float(np.abs(np.exp(1j * (self.theta[2] - self.theta[3]))))
-            pulse_rate = 1.0 + plv_34 * 15.0  # 1-16 Hz
+        # Layer 4 coherence -> pulse rate
+        if self.N > 4:
+            local_r = float(np.abs(np.mean(np.exp(1j * self.theta[3:5]))))
+            pulse_rate = float(np.clip(2.0 + local_r * 18.0, 2.0, 20.0))
         else:
-            pulse_rate = 4.0
+            pulse_rate = 8.0
 
-        # Layer 7 phase → spatial audio rotation angle
-        spatial_angle = float(self.theta[min(6, len(self.theta) - 1)]) if len(self.theta) > 0 else 0.0
+        # Layer 7 phase -> spatial angle
+        if self.N > 7:
+            spatial_angle = float((self.theta[6] % (2 * np.pi)) / (2 * np.pi) * 360.0)
+        else:
+            spatial_angle = 0.0
 
-        theurgic_mode = R > 0.95
+        # R_global -> intensity
+        intensity = float(np.clip(R, 0.0, 1.0))
+
+        # Spectral properties
+        fiedler = float(self._eigvals[1]) if len(self._eigvals) > 1 else 0.0
+        spectral_gap = 0.0
+        if len(self._eigvals) > 2 and abs(self._eigvals[2]) > 1e-12:
+            spectral_gap = float(self._eigvals[1] / self._eigvals[2])
+
+        theurgic = bool(R > 0.95)
 
         return {
-            "intensity": float(np.clip(R, 0, 1)),
-            "binaural_hz": round(float(np.clip(binaural_hz, 0.5, 40.0)), 2),
-            "pulse_rate": round(float(np.clip(pulse_rate, 1.0, 16.0)), 2),
-            "spatial_angle": round(float(spatial_angle), 3),
-            "fiedler": round(fiedler, 4),
-            "spectral_gap": round(spectral_gap, 4),
-            "theurgic_mode": bool(theurgic_mode),
-            "R_global": round(float(R), 4),
+            "binaural_hz": round(binaural_hz, 3),
+            "pulse_rate": round(pulse_rate, 3),
+            "spatial_angle": round(spatial_angle, 2),
+            "intensity": round(intensity, 4),
+            "fiedler": round(fiedler, 6),
+            "spectral_gap": round(spectral_gap, 6),
+            "theurgic_mode": theurgic,
         }
 
-    def update_config(self, **kwargs):
-        """Update config parameters (for adaptive feedback)."""
-        for key, value in kwargs.items():
-            if hasattr(self.config, key):
-                setattr(self.config, key, value)
+    # ── State ────────────────────────────────────────────────────────
 
-    def reset(self, seed: Optional[int] = None):
-        """Reset engine state."""
-        if seed is not None:
-            self.rng = np.random.RandomState(seed)
-        self.z = self.rng.normal(0, 0.1, self.config.latent_dim)
-        self.theta = self.rng.uniform(0, 2 * np.pi, self.config.N)
-        self.W = self._decode(self.z)
-        self._outer_step = 0
+    def get_state(self) -> Dict:
+        """Full engine state snapshot."""
+        return {
+            "outer_step": self.outer_step_count,
+            "R_global": round(self.R_global, 6),
+            "theta": self.theta.tolist(),
+            "z_norm": round(float(np.linalg.norm(self.z)), 6),
+            "W_density": round(float(np.mean(self.W > 0.01)), 4),
+            "W_mean": round(float(np.mean(self.W)), 6),
+            "eigvals": [round(float(v), 6) for v in self._eigvals[:4]],
+            "cost": round(self._cost_history[-1], 6) if self._cost_history else None,
+            "audio": self.get_audio_mapping(),
+        }

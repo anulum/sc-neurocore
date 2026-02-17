@@ -1,121 +1,195 @@
 """
-User Profile — Personalization priors for adaptive audio
-=========================================================
+User Profile -- Chronotype and Session Preferences
+====================================================
 
-Stores:
-- Chronotype (circadian preference)
-- Baseline EEG band powers
-- Per-band sensitivity (responsiveness from prior sessions)
-- Preferred SSGF cost weights (learned over time)
+Models individual user traits that influence adaptive audio behaviour:
+chronotype (circadian preference), baseline EEG band powers, preferred
+cost weights, sensitivity map, and accumulated session statistics.
 
-Author: Claude (Session 2026-02-16)
+Author: Claude (Session 2026-02-17)
 """
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, Optional
 
 import numpy as np
 
+logger = logging.getLogger(__name__)
+
+# ── Chronotype ───────────────────────────────────────────────────────
+
 
 class Chronotype(str, Enum):
-    """Circadian chronotype (from CircadianOptimizer)."""
-    LION = "lion"       # Early bird (4-6am wake)
-    BEAR = "bear"       # Average (7am wake)
-    WOLF = "wolf"       # Night owl (9-10am wake)
-    DOLPHIN = "dolphin" # Light sleeper (variable)
+    """Sleep chronotype model (after Dr. Michael Breus).
+
+    Each chronotype has a preferred entrainment frequency range and
+    optimal session timing.
+    """
+
+    LION = "lion"        # Early riser, alpha-dominant mornings
+    BEAR = "bear"        # Solar schedule, balanced spectrum
+    WOLF = "wolf"        # Night owl, theta-rich evenings
+    DOLPHIN = "dolphin"  # Light sleeper, high beta baseline
+
+
+# Default target Hz by chronotype
+_CHRONOTYPE_TARGET_HZ: Dict[Chronotype, float] = {
+    Chronotype.LION: 10.0,     # Alpha (relaxed focus)
+    Chronotype.BEAR: 10.0,     # Alpha (balanced)
+    Chronotype.WOLF: 6.0,      # Theta (creative flow)
+    Chronotype.DOLPHIN: 12.0,  # High alpha (calm alertness)
+}
+
+# Preferred cost weight profiles
+_CHRONOTYPE_WEIGHTS: Dict[Chronotype, Dict[str, float]] = {
+    Chronotype.LION: {
+        "w_micro": 1.0, "w_reg": 0.01, "w_stability": 0.8,
+    },
+    Chronotype.BEAR: {
+        "w_micro": 1.0, "w_reg": 0.01, "w_stability": 0.5,
+    },
+    Chronotype.WOLF: {
+        "w_micro": 0.8, "w_reg": 0.02, "w_stability": 0.4,
+    },
+    Chronotype.DOLPHIN: {
+        "w_micro": 1.2, "w_reg": 0.005, "w_stability": 1.0,
+    },
+}
+
+
+# ── UserProfile ──────────────────────────────────────────────────────
 
 
 @dataclass
 class UserProfile:
-    """User priors for adaptive audio personalization."""
+    """Per-user preference and adaptation model.
 
-    user_id: str = "default"
+    Parameters
+    ----------
+    user_id : str
+        Unique user identifier.
+    chronotype : Chronotype
+        Sleep chronotype.
+    baseline_band_powers : dict
+        Resting-state EEG band powers (populated after first baseline).
+    preferred_cost_weights : dict
+        SSGF cost weights tuned to this user.
+    sensitivity_map : dict
+        Per-band sensitivity multipliers (e.g. {"alpha": 1.2}).
+    session_count : int
+        Total completed sessions.
+    preferred_target_hz : float, optional
+        Explicitly set target frequency (overrides chronotype default).
+    """
+
+    user_id: str = "anonymous"
     chronotype: Chronotype = Chronotype.BEAR
-
-    # Baseline EEG from EVS
-    baseline_band_powers: Dict[str, float] = field(default_factory=lambda: {
-        "delta": 0.0, "theta": 0.0, "alpha": 0.0, "beta": 0.0, "gamma": 0.0,
-    })
-
-    # Per-band sensitivity (how responsive this user is to each band)
-    # Higher = more responsive, learned from session history
-    sensitivity_map: Dict[str, float] = field(default_factory=lambda: {
-        "delta": 0.5, "theta": 0.5, "alpha": 0.5, "beta": 0.5, "gamma": 0.5,
-    })
-
-    # Preferred SSGF cost weights (from best sessions)
-    preferred_cost_weights: Dict[str, float] = field(default_factory=lambda: {
-        "w_micro": 1.0, "w_spectral": 0.5, "w_reg": 0.1,
-    })
-
-    # Session history: list of (target_hz, evs_peak, evs_avg)
+    baseline_band_powers: Dict[str, float] = field(default_factory=dict)
+    preferred_cost_weights: Dict[str, float] = field(default_factory=dict)
+    sensitivity_map: Dict[str, float] = field(default_factory=dict)
     session_count: int = 0
-    best_evs_score: float = 0.0
+    preferred_target_hz: Optional[float] = None
 
-    def get_optimal_target_hz(self) -> float:
-        """Suggest optimal entrainment frequency based on chronotype."""
-        # Chronotype-based defaults
-        defaults = {
-            Chronotype.LION: 10.0,     # Alpha for morning alertness
-            Chronotype.BEAR: 10.0,     # Standard alpha
-            Chronotype.WOLF: 8.0,      # Lower alpha/high theta for evening
-            Chronotype.DOLPHIN: 12.0,  # Higher alpha for focus
-        }
-        base = defaults.get(self.chronotype, 10.0)
+    def __post_init__(self):
+        # Populate defaults from chronotype if not provided
+        if not self.preferred_cost_weights:
+            self.preferred_cost_weights = dict(
+                _CHRONOTYPE_WEIGHTS.get(self.chronotype, _CHRONOTYPE_WEIGHTS[Chronotype.BEAR]),
+            )
+        if not self.sensitivity_map:
+            self.sensitivity_map = {
+                "delta": 1.0, "theta": 1.0, "alpha": 1.0,
+                "beta": 1.0, "gamma": 1.0,
+            }
 
-        # Adjust based on sensitivity (prefer bands user responds to)
-        max_sensitivity_band = max(self.sensitivity_map, key=self.sensitivity_map.get)
-        band_centers = {"delta": 2.0, "theta": 6.0, "alpha": 10.5, "beta": 20.0, "gamma": 40.0}
-        if self.sensitivity_map[max_sensitivity_band] > 0.7:
-            # Blend toward most responsive band
-            responsive_hz = band_centers.get(max_sensitivity_band, 10.0)
-            base = 0.7 * base + 0.3 * responsive_hz
+    # ── Target Hz ────────────────────────────────────────────────────
 
-        return round(base, 1)
+    def get_best_target_hz(self) -> float:
+        """Return the best entrainment target for this user.
 
-    def get_ssgf_config_overrides(self) -> Dict[str, float]:
-        """Get SSGF config overrides based on profile."""
-        overrides = dict(self.preferred_cost_weights)
+        Uses explicit preference if set, otherwise chronotype default.
+        """
+        if self.preferred_target_hz is not None:
+            return self.preferred_target_hz
+        return _CHRONOTYPE_TARGET_HZ.get(self.chronotype, 10.0)
 
-        # Chronotype adjustments
-        if self.chronotype == Chronotype.WOLF:
-            overrides["sigma_g"] = 0.4  # Stronger geometry for night owls
-            overrides["lr_z"] = 0.015
-        elif self.chronotype == Chronotype.DOLPHIN:
-            overrides["sigma_g"] = 0.2  # Gentler for light sleepers
-            overrides["noise_std"] = 0.03
+    # ── Session Update ───────────────────────────────────────────────
 
-        return overrides
+    def update_from_session(
+        self,
+        avg_evs: float,
+        peak_evs: float,
+        best_target_hz: Optional[float] = None,
+        band_powers: Optional[Dict[str, float]] = None,
+    ) -> None:
+        """Update profile after a completed session.
 
-    def update_from_session(self, target_hz: float, evs_avg: float, evs_peak: float):
-        """Update profile from completed session."""
+        Parameters
+        ----------
+        avg_evs : float
+            Average EVS score over the session.
+        peak_evs : float
+            Peak EVS score.
+        best_target_hz : float, optional
+            If the adaptive engine found a better target, adopt it.
+        band_powers : dict, optional
+            Updated baseline band powers from this session.
+        """
         self.session_count += 1
-        if evs_peak > self.best_evs_score:
-            self.best_evs_score = evs_peak
 
-        # Update sensitivity for the target band
-        for band, (lo, hi) in [
-            ("delta", (0.5, 4)), ("theta", (4, 8)),
-            ("alpha", (8, 13)), ("beta", (13, 30)), ("gamma", (30, 100)),
-        ]:
-            if lo <= target_hz <= hi:
-                # Exponential moving average of responsiveness
-                old = self.sensitivity_map.get(band, 0.5)
-                responsiveness = evs_avg / 100.0  # Normalize EVS to [0, 1]
-                self.sensitivity_map[band] = 0.8 * old + 0.2 * responsiveness
-                break
+        # Adopt best target if it outperformed
+        if best_target_hz is not None and avg_evs > 50.0:
+            if self.preferred_target_hz is None:
+                self.preferred_target_hz = best_target_hz
+            else:
+                # Exponential moving average toward the new target
+                alpha = 0.3
+                self.preferred_target_hz = (
+                    (1 - alpha) * self.preferred_target_hz + alpha * best_target_hz
+                )
 
-    def to_dict(self) -> Dict:
+        # Update baseline band powers (EMA blend)
+        if band_powers:
+            if not self.baseline_band_powers:
+                self.baseline_band_powers = dict(band_powers)
+            else:
+                alpha = 0.2
+                for band, power in band_powers.items():
+                    old = self.baseline_band_powers.get(band, power)
+                    self.baseline_band_powers[band] = (1 - alpha) * old + alpha * power
+
+        logger.info(
+            "Profile updated: session #%d, avg_evs=%.1f, target=%.2f Hz",
+            self.session_count, avg_evs,
+            self.preferred_target_hz or self.get_best_target_hz(),
+        )
+
+    # ── Serialisation ────────────────────────────────────────────────
+
+    def to_dict(self) -> dict:
         return {
             "user_id": self.user_id,
             "chronotype": self.chronotype.value,
-            "baseline_band_powers": self.baseline_band_powers,
-            "sensitivity_map": self.sensitivity_map,
-            "preferred_cost_weights": self.preferred_cost_weights,
+            "baseline_band_powers": dict(self.baseline_band_powers),
+            "preferred_cost_weights": dict(self.preferred_cost_weights),
+            "sensitivity_map": dict(self.sensitivity_map),
             "session_count": self.session_count,
-            "best_evs_score": self.best_evs_score,
-            "optimal_target_hz": self.get_optimal_target_hz(),
+            "preferred_target_hz": self.preferred_target_hz,
         }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "UserProfile":
+        chrono = data.get("chronotype", "bear")
+        return cls(
+            user_id=data.get("user_id", "anonymous"),
+            chronotype=Chronotype(chrono),
+            baseline_band_powers=data.get("baseline_band_powers", {}),
+            preferred_cost_weights=data.get("preferred_cost_weights", {}),
+            sensitivity_map=data.get("sensitivity_map", {}),
+            session_count=data.get("session_count", 0),
+            preferred_target_hz=data.get("preferred_target_hz"),
+        )

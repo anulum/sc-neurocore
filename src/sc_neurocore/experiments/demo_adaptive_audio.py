@@ -1,127 +1,207 @@
 #!/usr/bin/env python3
 """
-SSGF Adaptive Audio Demo (Standalone Terminal)
+Adaptive Audio Demo -- SSGF + EVS Closed-Loop
 ===============================================
 
-Simulates a full adaptive audio session:
-1. Baseline EEG recording (simulated)
-2. Session with EVS feedback driving SSGF adaptation
-3. Shows phase transitions: Discovery → Lock-On → Deepening
+Creates a UserProfile (BEAR chronotype), SSGFEngine, EVSEngine, and
+AdaptiveAudioEngine, then runs 50 ticks with simulated EEG showing
+real-time EVS scores and audio parameter adaptation.
 
 Usage:
     python -m sc_neurocore.experiments.demo_adaptive_audio
 
-Author: Claude (Session 2026-02-16)
+Author: Claude (Session 2026-02-17)
 """
 
 from __future__ import annotations
 
 import numpy as np
 
-from ..audio import (
-    SSGFEngine, SSGFConfig,
-    EVSEngine, EVSConfig,
-    AdaptiveAudioEngine, AdaptiveConfig,
-    UserProfile, Chronotype,
-)
+from ..audio.ssgf_engine import SSGFConfig, SSGFEngine
+from ..audio.evs_engine import EVSConfig, EVSEngine
+from ..audio.adaptive_engine import AdaptiveAudioEngine
+from ..audio.user_profile import UserProfile, Chronotype
 
 
-def generate_eeg_signal(
-    target_hz: float, t: float, sample_rate: int, entrained: float = 0.5
-) -> float:
-    """Generate a simulated EEG sample with variable entrainment strength."""
-    # Base signal: target frequency with variable amplitude
-    signal = entrained * np.sin(2 * np.pi * target_hz * t / sample_rate)
-    # Background: pink noise approximation
-    noise = np.random.normal(0, 0.3 * (1.0 - entrained * 0.5))
-    # Alpha background
-    alpha = 0.2 * np.sin(2 * np.pi * 10.0 * t / sample_rate)
-    return float(signal + noise + alpha)
+def _generate_eeg_chunk(
+    rng: np.random.RandomState,
+    n_samples: int,
+    target_hz: float,
+    sample_rate: int,
+    entrained_strength: float = 0.5,
+    noise_level: float = 0.3,
+) -> np.ndarray:
+    """Generate simulated EEG with a target-frequency component + noise.
+
+    Parameters
+    ----------
+    rng : RandomState
+        Random number generator.
+    n_samples : int
+        Number of samples to produce.
+    target_hz : float
+        Entrainment target frequency.
+    sample_rate : int
+        Sampling rate in Hz.
+    entrained_strength : float
+        Amplitude of the entrained sinusoidal component (0-1).
+    noise_level : float
+        Amplitude of background noise.
+
+    Returns
+    -------
+    np.ndarray of shape (n_samples,)
+    """
+    t = np.arange(n_samples) / sample_rate
+    # Target sinusoid
+    signal = entrained_strength * np.sin(2 * np.pi * target_hz * t)
+    # Background: mix of brain bands
+    signal += 0.15 * np.sin(2 * np.pi * 2.5 * t)   # delta
+    signal += 0.10 * np.sin(2 * np.pi * 6.0 * t)   # theta
+    signal += 0.08 * np.sin(2 * np.pi * 20.0 * t)   # beta
+    # Noise
+    signal += noise_level * rng.randn(n_samples)
+    return signal
 
 
 def run_demo():
-    """Run full adaptive audio demo."""
-    print("=" * 72)
-    print("  SSGF Adaptive Audio Personalization Demo")
-    print("  SC-NeuroCore — Real-Time Entrainment Adaptation")
-    print("=" * 72)
+    rng = np.random.RandomState(42)
 
-    # Setup
-    profile = UserProfile(user_id="demo", chronotype=Chronotype.BEAR)
-    target_hz = profile.get_optimal_target_hz()
-    print(f"\n  User: {profile.user_id} | Chronotype: {profile.chronotype.value}")
-    print(f"  Optimal target: {target_hz} Hz")
+    # ── 1. Create components ─────────────────────────────────────────
 
-    ssgf = SSGFEngine(SSGFConfig(N=8, micro_steps=5, seed=42))
-    evs = EVSEngine(EVSConfig(target_hz=target_hz, sample_rate=256, fft_window=256))
-    adaptive = AdaptiveAudioEngine(
-        ssgf, evs, profile,
-        AdaptiveConfig(
-            phase1_duration_s=30,   # Shortened for demo
-            phase2_duration_s=70,
-        ),
+    profile = UserProfile(
+        user_id="demo_user",
+        chronotype=Chronotype.BEAR,
     )
 
-    # Phase 1: Baseline
-    print("\n--- Baseline Recording (simulated) ---")
+    ssgf_cfg = SSGFConfig(
+        N=16, z_dim=120, lr_z=0.01, sigma_g=0.3,
+        micro_steps=10, dt=0.001, noise=0.2,
+        K_base=0.45, K_alpha=0.3, field_pressure=0.1, seed=42,
+    )
+    ssgf = SSGFEngine(ssgf_cfg)
+
+    evs_cfg = EVSConfig(
+        sample_rate=256,
+        fft_window=512,
+        baseline_duration_s=2.0,   # short for demo
+        update_interval_samples=128,
+    )
+    evs = EVSEngine(evs_cfg)
+
+    adaptive = AdaptiveAudioEngine(ssgf, evs, profile)
+
+    target_hz = profile.get_best_target_hz()
+
+    # ── 2. Baseline ──────────────────────────────────────────────────
+
+    print("=" * 72)
+    print("  SSGF Adaptive Audio Demo")
+    print("  Chronotype: BEAR | Target: %.1f Hz (alpha)" % target_hz)
+    print("=" * 72)
+    print("\n  Recording baseline...")
+
     evs.start_baseline()
-    for t in range(512):
-        sample = generate_eeg_signal(target_hz, t, 256, entrained=0.0)
-        evs.add_sample(sample)
-    baseline = evs.stop_baseline()
-    print(f"  Baseline powers: {', '.join(f'{k}={v:.2f}' for k, v in baseline.items())}")
+    baseline_samples = int(evs_cfg.baseline_duration_s * evs_cfg.sample_rate)
+    baseline_eeg = _generate_eeg_chunk(
+        rng, baseline_samples, target_hz,
+        evs_cfg.sample_rate,
+        entrained_strength=0.1,  # low during baseline
+        noise_level=0.5,
+    )
+    for v in baseline_eeg:
+        evs.add_sample(float(v))
 
-    # Phase 2: Adaptive session
-    print("\n--- Adaptive Session ---")
-    evs.start_session(target_hz)
-    adaptive.start_session()
+    print("  Baseline done: %s" % (
+        {k: "%.4f" % v for k, v in evs._baseline_powers.items()}
+    ))
 
-    print(f"  {'Tick':>5} | {'Phase':>12} | {'EVS':>5} | {'Trend':>6} | {'R':>5} | {'Adaptations'}")
-    print(f"  {'─' * 5} | {'─' * 12} | {'─' * 5} | {'─' * 6} | {'─' * 5} | {'─' * 30}")
+    evs.set_target(target_hz)
 
-    for tick in range(150):
-        # Simulate improving entrainment over time
-        entrainment_strength = min(0.9, 0.1 + tick * 0.005)
+    # ── 3. Run 50 adaptive ticks ─────────────────────────────────────
 
-        # Add EEG samples (1 EVS compute per ~10 samples)
-        for s in range(10):
-            t_global = tick * 10 + s + 512
-            sample = generate_eeg_signal(target_hz, t_global, 256, entrained=entrainment_strength)
-            evs.add_sample(sample)
+    print("\n  %s  %s  %s  %s  %s  %s  %s" % (
+        "Tick".rjust(6),
+        "Phase".ljust(10),
+        "EVS".rjust(6),
+        "Verif".rjust(6),
+        "Bin.Hz".rjust(7),
+        "R".rjust(7),
+        "Theurgic".rjust(8),
+    ))
+    print("  " + "-" * 62)
 
-        # Compute EVS
-        evs_snap = evs.compute()
+    samples_per_tick = evs_cfg.update_interval_samples
 
-        # Adaptive feedback
-        adapt_snap = adaptive.on_evs_update(evs_snap)
+    for tick in range(1, 51):
+        # Simulate increasing entrainment over time
+        progress = tick / 50.0
+        entrained_strength = 0.2 + 0.6 * progress
+        noise_level = 0.5 - 0.3 * progress
 
-        if tick % 15 == 0 or tick == 149:
-            adaptations = ", ".join(adapt_snap.adaptations_applied) or "none"
-            print(
-                f"  {tick:5d} | {adapt_snap.session_phase:>12} | "
-                f"{adapt_snap.evs_score:5.1f} | {adapt_snap.evs_trend:+6.2f} | "
-                f"{adapt_snap.R_global:5.3f} | {adaptations}"
-            )
+        chunk = _generate_eeg_chunk(
+            rng, samples_per_tick, target_hz,
+            evs_cfg.sample_rate,
+            entrained_strength=entrained_strength,
+            noise_level=noise_level,
+        )
 
-    adaptive.stop_session()
+        for v in chunk:
+            evs.add_sample(float(v))
 
-    # Phase 3: Report
-    print("\n--- Session Report ---")
+        snapshot = evs.compute()
+        if snapshot is None:
+            continue
+
+        audio = adaptive.on_evs_update(snapshot)
+
+        verified_str = " YES" if snapshot.is_verified else "  no"
+        theurgic_str = " YES" if audio.get("theurgic_mode", False) else "  no"
+
+        print("  %s  %s  %s  %s  %s  %s  %s" % (
+            str(tick).rjust(6),
+            adaptive.current_phase.value.ljust(10),
+            ("%.1f" % snapshot.evs_score).rjust(6),
+            verified_str.rjust(6),
+            ("%.2f" % audio["binaural_hz"]).rjust(7),
+            ("%.4f" % audio["intensity"]).rjust(7),
+            theurgic_str.rjust(8),
+        ))
+
+    # ── 4. Session Report ────────────────────────────────────────────
+
     report = adaptive.get_session_report()
-    print(f"  Duration: {report.total_ticks} ticks")
-    print(f"  EVS Average: {report.evs_avg:.1f}")
-    print(f"  EVS Peak: {report.evs_peak:.1f}")
-    print(f"  Verified Time: {report.time_verified_pct:.1f}%")
-    print(f"  Theurgic Time: {report.theurgic_time_pct:.1f}%")
-    print(f"  Grade: {report.grade}")
-    print(f"  Phase breakdown: {report.phase_durations}")
 
-    print(f"\n  Updated profile:")
-    print(f"    Sessions: {profile.session_count}")
-    print(f"    Best EVS: {profile.best_evs_score:.1f}")
-    print(f"    Sensitivity: {profile.sensitivity_map}")
+    print("\n" + "=" * 72)
+    print("  Session Report")
+    print("=" * 72)
+    print("  Total ticks:    %d" % report.total_ticks)
+    print("  Average EVS:    %.2f" % report.avg_evs)
+    print("  Peak EVS:       %.2f" % report.peak_evs)
+    print("  Verified %%:     %.1f%%" % report.verified_pct)
+    print("  Grade:          %s" % report.grade)
+    print("  Adaptations:    %d" % report.adaptations)
+    print("  Phase durations: %s" % report.phase_durations)
+    print("  Final audio:    %s" % {
+        k: ("%.3f" % v if isinstance(v, float) else str(v))
+        for k, v in report.final_audio.items()
+    })
 
-    print(f"\n{'=' * 72}")
+    # ── 5. Update profile ────────────────────────────────────────────
+
+    profile.update_from_session(
+        avg_evs=report.avg_evs,
+        peak_evs=report.peak_evs,
+        best_target_hz=target_hz,
+        band_powers=evs._baseline_powers,
+    )
+
+    print("\n  Profile after session:")
+    print("    Sessions:       %d" % profile.session_count)
+    print("    Target Hz:      %.2f" % profile.get_best_target_hz())
+    print("    Chronotype:     %s" % profile.chronotype.value)
+
+    print("\n" + "=" * 72)
     print("  Demo complete.")
     print("=" * 72)
 
