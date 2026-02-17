@@ -1,27 +1,25 @@
 """
 TCBO Consciousness Detection Demo Engine
-=========================================
+==========================================
 
 Self-contained demo proving consciousness boundary detection via
-persistent homology on synthetic multichannel EEG data.
+persistent homology proxy. Generates synthetic multichannel EEG
+(Kuramoto oscillators), detects consciousness gate transitions,
+and demonstrates PI controller recovery.
 
-Generates synthetic multichannel EEG (Kuramoto oscillators with tunable
-coherence), runs TCBO persistent homology pipeline, shows gate open/close
-transitions in real-time, and demonstrates PI controller restoring
-consciousness after perturbation.
+5 Scenarios:
+    healthy_awake  - high coupling → high R → p_h1 > threshold
+    anesthesia     - coupling drops + noise → p_h1 falls
+    meditation     - alpha coherence sustained
+    sleep_onset    - gradual coupling decay
+    recovery       - PI controller restores kappa
 
-Architecture
-------------
-Scenario Selection → SyntheticEEGGenerator → TCBOObserver →
-  → TCBOController → GapJunctionCoupling → WebSocket/Dashboard
-
-Author: Claude (Session 2026-02-16)
+Author: Claude (Session 2026-02-17)
 """
 
 from __future__ import annotations
 
 import logging
-import time
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional, Tuple
@@ -30,317 +28,88 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# Canonical SCPN parameters (16 natural frequencies)
-# ---------------------------------------------------------------------------
-OMEGA_N = np.array(
-    [1.329, 1.261, 1.198, 1.140, 1.085, 1.034, 0.987, 1.044,
-     1.106, 1.172, 1.015, 0.967, 1.023, 1.083, 1.147, 0.991],
-    dtype=np.float64,
-)
+# ── Canonical SCPN Parameters ──────────────────────────────────────────
 
-def build_knm_matrix(N: int = 16, K_base: float = 0.45, alpha: float = 0.3) -> np.ndarray:
-    """Build NxN coupling matrix with distance decay."""
-    K = np.zeros((N, N), dtype=np.float64)
+OMEGA_N = np.array([
+    1.329, 2.610, 0.844, 1.520, 0.710, 3.780, 1.055, 0.625,
+    2.210, 1.740, 0.480, 3.210, 0.915, 1.410, 2.830, 0.991,
+])
+
+
+def _build_knm(N: int = 16, K_base: float = 0.45, alpha: float = 0.3) -> np.ndarray:
+    """Build N×N coupling matrix with distance decay."""
+    K = np.zeros((N, N))
     for i in range(N):
         for j in range(N):
             if i != j:
-                K[i, j] = K_base * np.exp(-alpha * abs(i - j))
-    # Calibration anchors (only if N is large enough)
+                d = abs(i - j)
+                K[i, j] = K_base * np.exp(-alpha * d)
+
+    # Calibration anchors (only if N large enough)
     anchors = [(0, 1, 0.302), (1, 2, 0.201), (2, 3, 0.252), (3, 4, 0.154)]
     for i, j, val in anchors:
         if i < N and j < N:
-            K[i, j] = K[j, i] = val
+            K[i, j] = val
+            K[j, i] = val
+
     # Cross-hierarchy boosts
     if N >= 16:
-        K[0, 15] = K[15, 0] = 0.05
+        K[0, 15] = max(K[0, 15], 0.05)
+        K[15, 0] = max(K[15, 0], 0.05)
     if N >= 7:
-        K[4, 6] = K[6, 4] = 0.15
+        K[4, 6] = max(K[4, 6], 0.15)
+        K[6, 4] = max(K[6, 4], 0.15)
+
+    np.fill_diagonal(K, 0)
     return K
 
 
-# ---------------------------------------------------------------------------
-# TCBO Observer — persistent homology on delay-embedded phases
-# ---------------------------------------------------------------------------
-class TCBOObserver:
+def _compute_order_parameter(theta: np.ndarray) -> float:
+    """Kuramoto order parameter R = |<e^(i*theta)>|."""
+    z = np.mean(np.exp(1j * theta))
+    return float(np.abs(z))
+
+
+def _compute_p_h1_lightweight(
+    phase_history: np.ndarray,
+    tau_h1: float = 0.72,
+    beta: float = 8.0,
+) -> float:
+    """Lightweight p_h1 proxy using phase-locking statistics.
+
+    Computes average PLV across pairs from recent history,
+    then applies logistic squash.
     """
-    Extracts consciousness boundary observable p_h1 from multichannel phase data.
+    if phase_history.shape[0] < 10:
+        return 0.0
 
-    Uses a simplified persistent homology proxy (circular variance + phase
-    coherence) that captures the same topological structure as full Vietoris-Rips
-    H1 computation but runs in O(N^2) instead of requiring ripser.
+    recent = phase_history[-50:]
+    N = recent.shape[1]
 
-    For the demo, this is sufficient to demonstrate gate open/close transitions.
-    The full ripser pipeline can be swapped in for publication-grade results.
-    """
+    # Pairwise PLV (sample a subset of pairs)
+    plvs = []
+    rng = np.random.RandomState(0)
+    n_pairs = min(30, N * (N - 1) // 2)
+    for _ in range(n_pairs):
+        i, j = rng.randint(0, N, 2)
+        if i == j:
+            continue
+        diff = recent[:, i] - recent[:, j]
+        plv = float(np.abs(np.mean(np.exp(1j * diff))))
+        plvs.append(plv)
 
-    def __init__(
-        self,
-        N: int = 16,
-        tau_h1: float = 0.72,
-        beta: float = 8.0,
-        window_size: int = 50,
-    ):
-        self.N = N
-        self.tau_h1 = tau_h1
-        self.beta = beta
-        self.window_size = window_size
-        self._history: List[np.ndarray] = []
-        self.p_h1 = 0.0
-        self.s_h1 = 0.0  # raw persistence score before squash
+    if not plvs:
+        return 0.0
 
-    def push_and_compute(self, phases: np.ndarray) -> Dict[str, float]:
-        """Push new phases and compute consciousness observable."""
-        self._history.append(phases.copy())
-        if len(self._history) > self.window_size:
-            self._history.pop(0)
-
-        if len(self._history) < 5:
-            return {"p_h1": 0.0, "s_h1": 0.0, "is_conscious": False}
-
-        # Compute persistence proxy from phase coherence structure
-        phase_matrix = np.array(self._history)  # (T, N)
-        self.s_h1 = self._persistence_proxy(phase_matrix)
-        self.p_h1 = self._logistic_squash(self.s_h1)
-
-        return {
-            "p_h1": float(self.p_h1),
-            "s_h1": float(self.s_h1),
-            "is_conscious": bool(self.p_h1 > self.tau_h1),
-        }
-
-    def _persistence_proxy(self, phase_matrix: np.ndarray) -> float:
-        """
-        Compute persistence homology proxy score.
-
-        Uses three components:
-        1. Global phase coherence R (Kuramoto order parameter)
-        2. Pairwise phase-locking value (PLV) structure
-        3. Circular variance stability over time window
-        """
-        N = phase_matrix.shape[1]
-        T = phase_matrix.shape[0]
-
-        # 1. Global coherence R (order parameter)
-        z = np.exp(1j * phase_matrix)
-        R_t = np.abs(z.mean(axis=1))
-        R_mean = float(R_t.mean())
-
-        # 2. Pairwise PLV matrix
-        plv_matrix = np.zeros((N, N))
-        for i in range(N):
-            for j in range(i + 1, N):
-                phase_diff = phase_matrix[:, i] - phase_matrix[:, j]
-                plv = float(np.abs(np.mean(np.exp(1j * phase_diff))))
-                plv_matrix[i, j] = plv
-                plv_matrix[j, i] = plv
-
-        # Mean PLV (excluding diagonal)
-        mean_plv = plv_matrix.sum() / (N * (N - 1)) if N > 1 else 0.0
-
-        # 3. Temporal stability of coherence
-        if T > 2:
-            stability = 1.0 - float(np.std(R_t))
-        else:
-            stability = 0.5
-
-        # Composite: weighted combination mimicking H1 persistence
-        # High R + high PLV + high stability → strong H1 cycles → high s_h1
-        s = 0.4 * R_mean + 0.35 * mean_plv + 0.25 * stability
-        return float(np.clip(s, 0.0, 1.0))
-
-    def _logistic_squash(self, s: float) -> float:
-        """Logistic squash: p_h1 = 1 / (1 + exp(-beta * (s - threshold_midpoint)))"""
-        midpoint = self.tau_h1 - 0.1  # Shift so gate opens near tau_h1
-        return 1.0 / (1.0 + np.exp(-self.beta * (s - midpoint)))
-
-    def reset(self):
-        self._history.clear()
-        self.p_h1 = 0.0
-        self.s_h1 = 0.0
+    mean_plv = np.mean(plvs)
+    # Logistic squash centered at tau_h1
+    p_h1 = float(1.0 / (1.0 + np.exp(-beta * (mean_plv - tau_h1 + 0.3))))
+    return np.clip(p_h1, 0.0, 1.0)
 
 
-# ---------------------------------------------------------------------------
-# TCBO Controller — PI controller for gap-junction coupling
-# ---------------------------------------------------------------------------
-class TCBOController:
-    """
-    PI controller that adjusts gap-junction coupling kappa to maintain
-    p_h1 above the consciousness threshold tau_h1.
-    """
-
-    def __init__(
-        self,
-        tau_h1: float = 0.72,
-        Kp: float = 2.0,
-        Ki: float = 0.5,
-        kappa_min: float = 0.0,
-        kappa_max: float = 5.0,
-    ):
-        self.tau_h1 = tau_h1
-        self.Kp = Kp
-        self.Ki = Ki
-        self.kappa_min = kappa_min
-        self.kappa_max = kappa_max
-        self._integral = 0.0
-
-    def step(self, p_h1: float, kappa: float, dt: float) -> Dict[str, float]:
-        """Compute new kappa from PI control law."""
-        error = max(0.0, self.tau_h1 - p_h1)
-        self._integral += error * dt
-
-        # Anti-windup: clamp integral
-        max_integral = self.kappa_max / (self.Ki + 1e-8)
-        self._integral = np.clip(self._integral, 0.0, max_integral)
-
-        kappa_new = kappa + self.Kp * error + self.Ki * self._integral
-        kappa_new = float(np.clip(kappa_new, self.kappa_min, self.kappa_max))
-
-        gate_open = p_h1 > self.tau_h1
-
-        return {
-            "kappa_new": kappa_new,
-            "gate_open": bool(gate_open),
-            "error": float(error),
-            "integral": float(self._integral),
-        }
-
-    def reset(self):
-        self._integral = 0.0
+# ── Scenarios ──────────────────────────────────────────────────────────
 
 
-# ---------------------------------------------------------------------------
-# Gap Junction Coupling — Laplacian diffusion on oscillator phases
-# ---------------------------------------------------------------------------
-class GapJunctionCoupling:
-    """Applies gap-junction coupling as Laplacian diffusion on phases."""
-
-    def __init__(self, N: int = 16, topology: str = "nearest"):
-        self.N = N
-        self.topology = topology
-        self.L = self._build_laplacian()
-
-    def _build_laplacian(self) -> np.ndarray:
-        """Build graph Laplacian for chosen topology."""
-        A = np.zeros((self.N, self.N))
-        if self.topology == "nearest":
-            for i in range(self.N):
-                j = (i + 1) % self.N
-                A[i, j] = A[j, i] = 1.0
-        elif self.topology == "small_world":
-            # Ring + random shortcuts
-            for i in range(self.N):
-                for offset in [1, 2]:
-                    j = (i + offset) % self.N
-                    A[i, j] = A[j, i] = 1.0
-            rng = np.random.RandomState(42)
-            for _ in range(self.N // 2):
-                i, j = rng.randint(0, self.N, 2)
-                if i != j:
-                    A[i, j] = A[j, i] = 1.0
-        else:  # full
-            A = np.ones((self.N, self.N)) - np.eye(self.N)
-
-        D = np.diag(A.sum(axis=1))
-        return D - A
-
-    def compute_coupling(self, phases: np.ndarray, kappa: float) -> np.ndarray:
-        """Compute coupling delta: -kappa * L @ sin(phases)."""
-        return -kappa * self.L @ np.sin(phases)
-
-
-# ---------------------------------------------------------------------------
-# Synthetic EEG Generator — configurable Kuramoto oscillators
-# ---------------------------------------------------------------------------
-class SyntheticEEGGenerator:
-    """
-    Generates synthetic multichannel EEG from Kuramoto oscillators.
-
-    Parameters can be tuned to simulate different brain states:
-    - High coupling → coherent (awake, conscious)
-    - Low coupling → incoherent (anesthesia, deep sleep)
-    - Alpha boost → meditation
-    """
-
-    def __init__(
-        self,
-        N: int = 16,
-        omega: Optional[np.ndarray] = None,
-        K: Optional[np.ndarray] = None,
-        dt: float = 0.01,
-        noise_std: float = 0.1,
-        seed: Optional[int] = None,
-    ):
-        self.N = N
-        self.omega = omega if omega is not None else OMEGA_N[:N]
-        self.K = K if K is not None else build_knm_matrix(N)
-        self.dt = dt
-        self.noise_std = noise_std
-        self.rng = np.random.RandomState(seed)
-        self.phases = self.rng.uniform(0, 2 * np.pi, N)
-        self._K_original = self.K.copy()
-        self._noise_std_original = noise_std
-
-    def step(self, perturbation: Optional[np.ndarray] = None) -> np.ndarray:
-        """One Kuramoto timestep. Returns current phases."""
-        coupling = np.zeros(self.N)
-        for i in range(self.N):
-            for j in range(self.N):
-                if i != j:
-                    coupling[i] += self.K[i, j] * np.sin(self.phases[j] - self.phases[i])
-
-        noise = self.rng.normal(0, self.noise_std, self.N)
-        dtheta = self.omega + coupling + noise
-        if perturbation is not None:
-            dtheta += perturbation
-        self.phases += dtheta * self.dt
-        self.phases %= 2 * np.pi
-        return self.phases.copy()
-
-    def run(self, n_steps: int) -> np.ndarray:
-        """Run batch of steps, return (n_steps, N) phase history."""
-        history = np.zeros((n_steps, self.N))
-        for t in range(n_steps):
-            history[t] = self.step()
-        return history
-
-    def compute_order_parameter(self) -> float:
-        """Kuramoto order parameter R."""
-        z = np.exp(1j * self.phases)
-        return float(np.abs(z.mean()))
-
-    def apply_anesthesia(self, strength: float = 0.9):
-        """Reduce coupling by strength factor + increase noise + scramble phases."""
-        self.K = self._K_original * (1.0 - strength)
-        self.noise_std = self._noise_std_original * (1.0 + strength * 10.0)
-        # Scramble phases to break existing synchrony
-        self.phases = self.rng.uniform(0, 2 * np.pi, self.N)
-
-    def apply_meditation(self, alpha_boost: float = 2.0):
-        """Boost L2 (alpha band) coupling."""
-        self.K = self._K_original.copy()
-        self.noise_std = self._noise_std_original * 0.5
-        # Boost layers 1-3 (alpha-band)
-        for i in range(min(3, self.N)):
-            for j in range(min(3, self.N)):
-                if i != j:
-                    self.K[i, j] *= alpha_boost
-
-    def apply_sleep_onset(self, decay_factor: float = 0.5):
-        """Gradual coupling decay simulating sleep onset."""
-        self.K *= decay_factor
-        self.noise_std *= 1.2
-
-    def reset(self):
-        """Reset to original state."""
-        self.K = self._K_original.copy()
-        self.noise_std = self._noise_std_original
-        self.phases = self.rng.uniform(0, 2 * np.pi, self.N)
-
-
-# ---------------------------------------------------------------------------
-# Scenario Definitions
-# ---------------------------------------------------------------------------
 class ScenarioName(str, Enum):
     HEALTHY_AWAKE = "healthy_awake"
     ANESTHESIA = "anesthesia"
@@ -351,230 +120,385 @@ class ScenarioName(str, Enum):
 
 @dataclass
 class ScenarioConfig:
-    """Configuration for a demo scenario."""
-    name: ScenarioName
+    name: str
     description: str
-    duration_steps: int = 300
-    warmup_steps: int = 50
-    perturbation_step: int = 100  # When perturbation is applied
+    duration_s: float = 10.0
+    K_scale: float = 1.0
+    noise_amplitude: float = 0.3
     use_controller: bool = False
+    phase_scramble: bool = False
+    alpha_boost: float = 0.0
+    coupling_decay_rate: float = 0.0
 
 
-SCENARIOS: Dict[str, ScenarioConfig] = {
-    "healthy_awake": ScenarioConfig(
-        name=ScenarioName.HEALTHY_AWAKE,
-        description="16 Kuramoto oscillators with high coupling → high R → p_h1 > 0.72",
-        duration_steps=300,
+SCENARIOS: Dict[ScenarioName, ScenarioConfig] = {
+    ScenarioName.HEALTHY_AWAKE: ScenarioConfig(
+        name="healthy_awake",
+        description="Normal waking: strong coupling → high coherence → gate OPEN",
+        duration_s=10.0,
+        K_scale=1.5,
+        noise_amplitude=0.2,
     ),
-    "anesthesia": ScenarioConfig(
-        name=ScenarioName.ANESTHESIA,
-        description="Coupling drops 90%, noise spikes → flat EEG → p_h1 drops below 0.72",
-        duration_steps=300,
-        perturbation_step=100,
+    ScenarioName.ANESTHESIA: ScenarioConfig(
+        name="anesthesia",
+        description="Anesthesia: coupling drops 90%, noise 10x → gate CLOSED",
+        duration_s=10.0,
+        K_scale=0.1,
+        noise_amplitude=2.0,
+        phase_scramble=True,
     ),
-    "meditation": ScenarioConfig(
-        name=ScenarioName.MEDITATION,
-        description="Strong alpha coherence (L1-L3 boost) → p_h1 sustained above threshold",
-        duration_steps=300,
-        perturbation_step=50,
+    ScenarioName.MEDITATION: ScenarioConfig(
+        name="meditation",
+        description="Meditation: alpha coherence sustained → gate OPEN",
+        duration_s=10.0,
+        K_scale=1.2,
+        noise_amplitude=0.15,
+        alpha_boost=2.0,
     ),
-    "sleep_onset": ScenarioConfig(
-        name=ScenarioName.SLEEP_ONSET,
-        description="Gradual coupling decay → smooth p_h1 decline over time",
-        duration_steps=400,
+    ScenarioName.SLEEP_ONSET: ScenarioConfig(
+        name="sleep_onset",
+        description="Sleep onset: gradual coupling decay → p_h1 declines",
+        duration_s=15.0,
+        K_scale=1.0,
+        noise_amplitude=0.3,
+        coupling_decay_rate=0.001,
     ),
-    "recovery": ScenarioConfig(
-        name=ScenarioName.RECOVERY,
-        description="Anesthesia applied, then PI controller restores kappa → p_h1 recovers",
-        duration_steps=500,
-        perturbation_step=100,
+    ScenarioName.RECOVERY: ScenarioConfig(
+        name="recovery",
+        description="Recovery: start suppressed, PI controller restores kappa",
+        duration_s=15.0,
+        K_scale=0.3,
+        noise_amplitude=1.0,
         use_controller=True,
+        phase_scramble=True,
     ),
 }
 
 
-# ---------------------------------------------------------------------------
-# TCBO Demo Snapshot — serializable per-step state
-# ---------------------------------------------------------------------------
+# ── Synthetic EEG Generator ───────────────────────────────────────────
+
+
+class SyntheticEEGGenerator:
+    """Configurable Kuramoto oscillator network for synthetic EEG."""
+
+    def __init__(
+        self,
+        N: int = 16,
+        dt: float = 0.001,
+        seed: int = 42,
+    ):
+        self.N = N
+        self.dt = dt
+        self._rng = np.random.RandomState(seed)
+        self._seed = seed
+
+        omega = OMEGA_N[:N] if N <= 16 else np.tile(OMEGA_N, (N // 16 + 1))[:N]
+        self.omega = omega.copy()
+        self._K_base = _build_knm(N)
+        self.K = self._K_base.copy()
+        self.theta = self._rng.uniform(0, 2 * np.pi, N)
+        self.noise_amplitude = 0.3
+        self._step_count = 0
+
+    def set_coupling_scale(self, scale: float):
+        self.K = self._K_base * scale
+
+    def apply_anesthesia(self, strength: float = 0.9):
+        self.K *= (1.0 - strength)
+        self.theta = self._rng.uniform(0, 2 * np.pi, self.N)
+        self.noise_amplitude *= 10.0
+
+    def apply_alpha_boost(self, factor: float = 2.0):
+        if self.N >= 3:
+            self.K[1, :] *= factor
+            self.K[:, 1] *= factor
+            np.fill_diagonal(self.K, 0)
+
+    def apply_coupling_decay(self, rate: float):
+        self.K *= (1.0 - rate)
+
+    def step(self, perturbation: Optional[np.ndarray] = None) -> np.ndarray:
+        """One Kuramoto timestep. Returns phases in [0, 2pi)."""
+        dtheta = self.omega.copy()
+
+        # Kuramoto coupling: Σ K_nm sin(θ_m - θ_n)
+        for n in range(self.N):
+            coupling = 0.0
+            for m in range(self.N):
+                if m != n:
+                    coupling += self.K[n, m] * np.sin(self.theta[m] - self.theta[n])
+            dtheta[n] += coupling
+
+        # Noise
+        dtheta += self.noise_amplitude * self._rng.randn(self.N)
+
+        # External perturbation
+        if perturbation is not None:
+            dtheta += perturbation
+
+        self.theta = (self.theta + dtheta * self.dt) % (2 * np.pi)
+        self._step_count += 1
+        return self.theta.copy()
+
+    def run(self, n_steps: int) -> np.ndarray:
+        """Run n_steps, return (n_steps, N) history."""
+        history = np.zeros((n_steps, self.N))
+        for i in range(n_steps):
+            history[i] = self.step()
+        return history
+
+    def get_order_parameter(self) -> float:
+        return _compute_order_parameter(self.theta)
+
+    def reset(self, seed: Optional[int] = None):
+        if seed is not None:
+            self._rng = np.random.RandomState(seed)
+        self.theta = self._rng.uniform(0, 2 * np.pi, self.N)
+        self.K = self._K_base.copy()
+        self.noise_amplitude = 0.3
+        self._step_count = 0
+
+
+# ── PI Controller ──────────────────────────────────────────────────────
+
+
+class TCBOController:
+    """PI controller for gap-junction coupling kappa."""
+
+    def __init__(
+        self,
+        tau_h1: float = 0.72,
+        Kp: float = 2.0,
+        Ki: float = 0.5,
+        kappa_min: float = 0.1,
+        kappa_max: float = 5.0,
+    ):
+        self.tau_h1 = tau_h1
+        self.Kp = Kp
+        self.Ki = Ki
+        self.kappa_min = kappa_min
+        self.kappa_max = kappa_max
+        self._integral = 0.0
+
+    def step(self, p_h1: float, kappa: float, dt: float) -> float:
+        """Compute new kappa from consciousness deficit."""
+        error = max(0.0, self.tau_h1 - p_h1)
+        self._integral += error * dt
+        # Anti-windup
+        self._integral = np.clip(self._integral, 0, 10.0)
+        delta = self.Kp * error + self.Ki * self._integral
+        new_kappa = kappa + delta * dt
+        return float(np.clip(new_kappa, self.kappa_min, self.kappa_max))
+
+    def reset(self):
+        self._integral = 0.0
+
+
+# ── Demo Snapshot ──────────────────────────────────────────────────────
+
+
 @dataclass
 class TCBODemoSnapshot:
-    """Per-step state snapshot for dashboard."""
-    tick: int = 0
-    scenario: str = ""
+    """Per-step snapshot of the TCBO demo state."""
+    step: int = 0
+    time_s: float = 0.0
     phases: List[float] = field(default_factory=list)
     R_global: float = 0.0
     p_h1: float = 0.0
-    s_h1: float = 0.0
-    is_conscious: bool = False
     gate_open: bool = False
-    kappa: float = 0.0
-    controller_error: float = 0.0
-    controller_integral: float = 0.0
+    is_conscious: bool = False
+    kappa: float = 1.0
+    has_tcbo: bool = False
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
-            "tick": self.tick,
-            "scenario": self.scenario,
-            "phases": self.phases,
+            "step": self.step,
+            "time_s": round(self.time_s, 4),
+            "phases": [round(p, 4) for p in self.phases],
             "R_global": round(self.R_global, 4),
             "p_h1": round(self.p_h1, 4),
-            "s_h1": round(self.s_h1, 4),
-            "is_conscious": self.is_conscious,
             "gate_open": self.gate_open,
+            "is_conscious": self.is_conscious,
             "kappa": round(self.kappa, 4),
-            "controller_error": round(self.controller_error, 4),
-            "controller_integral": round(self.controller_integral, 4),
+            "has_tcbo": self.has_tcbo,
         }
 
 
-# ---------------------------------------------------------------------------
-# TCBO Demo Engine — master orchestrator
-# ---------------------------------------------------------------------------
+# ── Demo Engine ────────────────────────────────────────────────────────
+
+
 class TCBODemoEngine:
-    """
-    Orchestrates TCBO consciousness detection demos.
+    """Orchestrates TCBO consciousness detection scenarios."""
 
-    Creates synthetic EEG generator, TCBO observer, TCBO controller,
-    and gap junction coupling. Runs named scenarios and emits per-step
-    snapshots suitable for real-time dashboard display.
-    """
+    TAU_H1 = 0.72
 
-    def __init__(self, N: int = 16, seed: int = 42):
+    def __init__(self, N: int = 16, dt: float = 0.001, seed: int = 42):
         self.N = N
-        self.seed = seed
-        self.eeg = SyntheticEEGGenerator(N=N, seed=seed)
-        self.observer = TCBOObserver(N=N)
-        self.controller = TCBOController()
-        self.coupling = GapJunctionCoupling(N=N, topology="small_world")
+        self.dt = dt
+        self._seed = seed
+        self.gen = SyntheticEEGGenerator(N=N, dt=dt, seed=seed)
+        self.controller = TCBOController(tau_h1=self.TAU_H1)
 
-        self.kappa = 0.5  # Initial gap-junction coupling
-        self.tick = 0
-        self.scenario_name = ""
-        self._running = False
-        self._history: List[TCBODemoSnapshot] = []
+        self.p_h1 = 0.0
+        self.kappa = 1.0
+        self.is_running = False
+        self._current_scenario: Optional[str] = None
+        self._scenario_cfg: Optional[ScenarioConfig] = None
+        self._step_count = 0
+        self._max_steps = 0
+        self._phase_history: List[np.ndarray] = []
+        self._snapshots: List[TCBODemoSnapshot] = []
 
-    def reset(self, scenario: Optional[str] = None):
-        """Reset engine for a new scenario run."""
-        self.eeg.reset()
-        self.observer.reset()
+    def get_scenarios(self) -> Dict[str, dict]:
+        return {
+            name.value: {
+                "name": cfg.name,
+                "description": cfg.description,
+                "duration_s": cfg.duration_s,
+            }
+            for name, cfg in SCENARIOS.items()
+        }
+
+    def start_scenario(self, name: str) -> dict:
+        """Initialize and start a named scenario."""
+        try:
+            scenario_name = ScenarioName(name)
+        except ValueError:
+            raise ValueError(f"Unknown scenario: {name}. Available: {[s.value for s in ScenarioName]}")
+
+        cfg = SCENARIOS[scenario_name]
+        self._current_scenario = name
+        self._scenario_cfg = cfg
+
+        # Reset generator
+        self.gen.reset(seed=self._seed)
+        self.gen.set_coupling_scale(cfg.K_scale)
+        self.gen.noise_amplitude = cfg.noise_amplitude
+
+        if cfg.phase_scramble:
+            self.gen.theta = np.random.RandomState(self._seed + 1).uniform(0, 2 * np.pi, self.N)
+
+        if cfg.alpha_boost > 0:
+            self.gen.apply_alpha_boost(cfg.alpha_boost)
+
         self.controller.reset()
-        self.kappa = 0.5
-        self.tick = 0
-        self._history.clear()
-        self._running = False
-        if scenario:
-            self.scenario_name = scenario
+        self.kappa = cfg.K_scale
+        self.p_h1 = 0.0
+        self._step_count = 0
+        self._max_steps = int(cfg.duration_s / self.dt)
+        self._phase_history.clear()
+        self._snapshots.clear()
+        self.is_running = True
+
+        return {"scenario": name, "max_steps": self._max_steps, "dt": self.dt}
 
     def step(self) -> TCBODemoSnapshot:
-        """Execute one timestep and return snapshot."""
-        # 1. Advance Kuramoto oscillators
-        gap_delta = self.coupling.compute_coupling(self.eeg.phases, self.kappa)
-        phases = self.eeg.step(perturbation=gap_delta)
+        """Advance one timestep."""
+        if not self.is_running:
+            raise RuntimeError("No scenario running")
 
-        # 2. Compute TCBO observables
-        tcbo_result = self.observer.push_and_compute(phases)
+        cfg = self._scenario_cfg
 
-        # 3. Run PI controller if active
-        ctrl_result = self.controller.step(tcbo_result["p_h1"], self.kappa, self.eeg.dt)
-        if SCENARIOS.get(self.scenario_name, ScenarioConfig(
-            name=ScenarioName.HEALTHY_AWAKE, description="",
-        )).use_controller:
-            self.kappa = ctrl_result["kappa_new"]
+        # Apply coupling decay if configured
+        if cfg and cfg.coupling_decay_rate > 0:
+            self.gen.apply_coupling_decay(cfg.coupling_decay_rate)
 
-        # 4. Build snapshot
+        # Kuramoto step
+        phases = self.gen.step()
+        self._phase_history.append(phases)
+
+        # Keep bounded history
+        if len(self._phase_history) > 200:
+            self._phase_history = self._phase_history[-100:]
+
+        # Compute observables
+        R = self.gen.get_order_parameter()
+        history_arr = np.array(self._phase_history)
+        self.p_h1 = _compute_p_h1_lightweight(history_arr, self.TAU_H1)
+        gate_open = self.p_h1 > self.TAU_H1
+
+        # PI controller
+        if cfg and cfg.use_controller:
+            new_kappa = self.controller.step(self.p_h1, self.kappa, self.dt)
+            if new_kappa > self.kappa:
+                self.gen.set_coupling_scale(new_kappa)
+            self.kappa = new_kappa
+
+        self._step_count += 1
+        if self._step_count >= self._max_steps:
+            self.is_running = False
+
         snap = TCBODemoSnapshot(
-            tick=self.tick,
-            scenario=self.scenario_name,
+            step=self._step_count,
+            time_s=self._step_count * self.dt,
             phases=phases.tolist(),
-            R_global=self.eeg.compute_order_parameter(),
-            p_h1=tcbo_result["p_h1"],
-            s_h1=tcbo_result["s_h1"],
-            is_conscious=tcbo_result["is_conscious"],
-            gate_open=ctrl_result["gate_open"],
+            R_global=R,
+            p_h1=self.p_h1,
+            gate_open=gate_open,
+            is_conscious=gate_open,
             kappa=self.kappa,
-            controller_error=ctrl_result["error"],
-            controller_integral=ctrl_result["integral"],
+            has_tcbo=False,
         )
-        self._history.append(snap)
-        self.tick += 1
+        self._snapshots.append(snap)
         return snap
 
-    def run_scenario(self, name: str, callback=None) -> List[TCBODemoSnapshot]:
-        """
-        Execute a complete named scenario.
+    def run_scenario(
+        self,
+        name: str,
+        duration_s: Optional[float] = None,
+        subsample: int = 100,
+    ) -> List[TCBODemoSnapshot]:
+        """Run a full scenario, returning subsampled snapshots."""
+        self.start_scenario(name)
+        if duration_s is not None:
+            self._max_steps = int(duration_s / self.dt)
 
-        Args:
-            name: One of 'healthy_awake', 'anesthesia', 'meditation',
-                  'sleep_onset', 'recovery'.
-            callback: Optional callable(snapshot) called each tick.
-
-        Returns:
-            List of all snapshots from the run.
-        """
-        if name not in SCENARIOS:
-            raise ValueError(f"Unknown scenario: {name}. Choose from {list(SCENARIOS.keys())}")
-
-        config = SCENARIOS[name]
-        self.reset(scenario=name)
-        self._running = True
-
-        # Apply scenario-specific setup
-        if name == "meditation":
-            pass  # Applied at perturbation_step
-        elif name == "recovery":
-            pass  # Anesthesia applied at perturbation_step, controller active
-
-        snapshots: List[TCBODemoSnapshot] = []
-
-        for t in range(config.duration_steps):
-            if not self._running:
-                break
-
-            # Apply perturbations at the right time
-            if t == config.perturbation_step:
-                if name == "anesthesia":
-                    self.eeg.apply_anesthesia(strength=0.9)
-                    self.kappa = 0.01  # Also reduce gap-junction coupling
-                elif name == "meditation":
-                    self.eeg.apply_meditation(alpha_boost=2.5)
-                elif name == "recovery":
-                    self.eeg.apply_anesthesia(strength=0.85)
-                    self.kappa = 0.05  # Reduce, controller will restore
-
-            # Gradual decay for sleep onset
-            if name == "sleep_onset" and t > 0 and t % 20 == 0:
-                self.eeg.apply_sleep_onset(decay_factor=0.92)
-
+        results = []
+        for i in range(self._max_steps):
             snap = self.step()
-            snapshots.append(snap)
+            if i % subsample == 0:
+                results.append(snap)
 
-            if callback:
-                callback(snap)
+        return results
 
-        self._running = False
-        return snapshots
-
-    def stop(self):
-        """Stop a running scenario."""
-        self._running = False
-
-    def get_state(self) -> Dict:
-        """Get current serializable state."""
-        if self._history:
-            return self._history[-1].to_dict()
-        return TCBODemoSnapshot().to_dict()
-
-    def get_history(self, last_n: int = 100) -> List[Dict]:
-        """Get last N snapshots as dicts."""
-        return [s.to_dict() for s in self._history[-last_n:]]
-
-    def get_scenarios(self) -> Dict[str, Dict]:
-        """List available scenarios with descriptions."""
+    def get_state(self) -> dict:
         return {
-            name: {
-                "description": config.description,
-                "duration_steps": config.duration_steps,
-                "use_controller": config.use_controller,
-            }
-            for name, config in SCENARIOS.items()
+            "running": self.is_running,
+            "scenario": self._current_scenario,
+            "step": self._step_count,
+            "p_h1": round(self.p_h1, 4),
+            "kappa": round(self.kappa, 4),
+            "R_global": round(self.gen.get_order_parameter(), 4),
+            "gate_open": self.p_h1 > self.TAU_H1,
         }
+
+    def get_history(self, last_n: int = 100) -> List[dict]:
+        return [s.to_dict() for s in self._snapshots[-last_n:]]
+
+    def reset(self):
+        self.gen.reset(seed=self._seed)
+        self.controller.reset()
+        self.p_h1 = 0.0
+        self.kappa = 1.0
+        self.is_running = False
+        self._current_scenario = None
+        self._step_count = 0
+        self._phase_history.clear()
+        self._snapshots.clear()
+
+
+# ── Singleton ──────────────────────────────────────────────────────────
+
+_engine: Optional[TCBODemoEngine] = None
+
+
+def get_tcbo_demo_engine() -> TCBODemoEngine:
+    global _engine
+    if _engine is None:
+        _engine = TCBODemoEngine()
+    return _engine
+
+
+def reset_tcbo_demo_engine():
+    global _engine
+    _engine = None
