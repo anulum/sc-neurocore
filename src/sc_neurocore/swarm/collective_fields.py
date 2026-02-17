@@ -1,197 +1,201 @@
 """
-Collective Fields — SCPN-inspired shared substrate
-====================================================
+CollectiveFields -- chemical, emotional, and symbolic field layers.
 
-Implements three shared fields inspired by SCPN layers:
-
-- Chemical field (L2): Scalar diffusion on a grid, agents secrete
-  attractant based on neural activity. Laplacian diffusion + decay.
-
-- Emotional field (L5): Per-agent 8-dim emotion vector. Mean-field
-  coupling pulls emotions toward swarm mean (collective mood).
-
-- Symbolic field (L7): 2D grid of 2-component glyph vectors. Agents
-  imprint symbolic patterns; nearest-neighbor resonance.
-
-Author: Claude (Session 2026-02-16)
+Chemical field uses 2-D Laplacian diffusion with a manual 3x3 kernel
+(no scipy dependency).  Emotional fields are per-agent 8-D vectors
+synchronised via mean-field coupling.  Symbolic fields carry a 2-channel
+grid for abstract signalling.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import TYPE_CHECKING
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from .agent import SwarmAgent
+    from .swarm_env import SwarmEnvironment
 
 
 @dataclass
 class FieldConfig:
-    """Configuration for collective fields."""
-    grid_resolution: int = 50  # Grid cells per dimension
-    arena_width: float = 100.0
-    arena_height: float = 100.0
-    # Chemical field (L2)
-    chem_diffusion_rate: float = 0.1
-    chem_decay_rate: float = 0.02
-    chem_secretion_scale: float = 5.0
-    # Emotional field (L5)
-    n_emotional_dims: int = 8
-    emotion_coupling: float = 0.1
-    emotion_decay: float = 0.01
-    # Symbolic field (L7)
-    symbolic_dims: int = 2
-    symbolic_diffusion: float = 0.05
-    symbolic_decay: float = 0.01
+    """Field layer hyper-parameters."""
+
+    grid_size: int = 50
+    diffusion_rate: float = 0.1
+    decay_rate: float = 0.05
+    emotional_coupling: float = 0.1
+    symbolic_decay: float = 0.02
+    seed: int | None = None
+
+
+# 3x3 discrete Laplacian kernel (second-order central differences)
+_LAPLACIAN_KERNEL = np.array([
+    [0.0,  1.0, 0.0],
+    [1.0, -4.0, 1.0],
+    [0.0,  1.0, 0.0],
+], dtype=np.float64)
+
+
+def _apply_laplacian(field: np.ndarray) -> np.ndarray:
+    """Apply 3x3 Laplacian via manual convolution (zero-padded edges).
+
+    Parameters
+    ----------
+    field : ndarray, shape (H, W)
+
+    Returns
+    -------
+    lap : ndarray, shape (H, W)
+    """
+    H, W = field.shape
+    lap = np.zeros_like(field)
+    for di in range(-1, 2):
+        for dj in range(-1, 2):
+            w = _LAPLACIAN_KERNEL[di + 1, dj + 1]
+            if w == 0.0:
+                continue
+            # Source slice
+            si = max(0, di)
+            ei = min(H, H + di)
+            sj = max(0, dj)
+            ej = min(W, W + dj)
+            # Destination slice
+            sd = max(0, -di)
+            ed = min(H, H - di)
+            sjd = max(0, -dj)
+            ejd = min(W, W - dj)
+            lap[sd:ed, sjd:ejd] += w * field[si:ei, sj:ej]
+    return lap
 
 
 class CollectiveFields:
+    """Chemical, emotional, and symbolic field layers for swarm communication.
+
+    Parameters
+    ----------
+    cfg : FieldConfig
+        Field configuration.
+    env_width : float
+        Physical width of the environment (for coordinate mapping).
+    env_height : float
+        Physical height of the environment.
+    n_agents : int
+        Number of agents (for emotional field sizing).
     """
-    Three SCPN-inspired shared fields for inter-agent communication.
-    """
 
-    def __init__(self, config: Optional[FieldConfig] = None):
-        self.config = config or FieldConfig()
-        c = self.config
-        g = c.grid_resolution
+    def __init__(self, cfg: FieldConfig, env_width: float = 100.0,
+                 env_height: float = 100.0, n_agents: int = 20) -> None:
+        self.cfg = cfg
+        self.env_width = env_width
+        self.env_height = env_height
+        self.n_agents = n_agents
+        self.rng = np.random.default_rng(cfg.seed)
 
-        # L2: Chemical concentration grid
-        self.chemical_field = np.zeros((g, g), dtype=np.float64)
+        gs = cfg.grid_size
+        self.chemical_field = np.zeros((gs, gs), dtype=np.float64)
+        self.emotional_field = np.zeros((n_agents, 8), dtype=np.float64)
+        self.symbolic_field = np.zeros((gs, gs, 2), dtype=np.float64)
 
-        # L5: Per-agent emotional state (set externally)
-        # This is managed per-agent but synchronized here
-        self._emotion_mean = np.full(c.n_emotional_dims, 0.5)
+    # ------------------------------------------------------------------
+    # Coordinate mapping: continuous (x, y) -> grid (row, col)
+    # ------------------------------------------------------------------
 
-        # L7: Symbolic glyph grid
-        self.symbolic_field = np.zeros((g, g, c.symbolic_dims), dtype=np.float64)
+    def _to_grid(self, x: float, y: float) -> tuple[int, int]:
+        gs = self.cfg.grid_size
+        col = int(np.clip(x / self.env_width * gs, 0, gs - 1))
+        row = int(np.clip(y / self.env_height * gs, 0, gs - 1))
+        return row, col
 
-        # Precompute Laplacian kernel for diffusion
-        self._lap_kernel = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]], dtype=np.float64)
+    # ------------------------------------------------------------------
+    # Chemical field
+    # ------------------------------------------------------------------
 
-    def _pos_to_grid(self, x: float, y: float) -> Tuple[int, int]:
-        """Convert world position to grid cell."""
-        g = self.config.grid_resolution
-        gx = int(np.clip(x / self.config.arena_width * g, 0, g - 1))
-        gy = int(np.clip(y / self.config.arena_height * g, 0, g - 1))
-        return gx, gy
+    def diffuse(self, dt: float) -> None:
+        """Apply Laplacian diffusion + exponential decay to the chemical field."""
+        lap = _apply_laplacian(self.chemical_field)
+        self.chemical_field += self.cfg.diffusion_rate * dt * lap
+        self.chemical_field *= (1.0 - self.cfg.decay_rate * dt)
+        np.clip(self.chemical_field, 0, None, out=self.chemical_field)
 
-    # ── Chemical Field (L2) ──────────────────────────────────────────
+    def deposit_chemical(self, x: float, y: float, amount: float) -> None:
+        """Add *amount* of chemical at world coordinate ``(x, y)``."""
+        if amount <= 0:
+            return
+        r, c = self._to_grid(x, y)
+        self.chemical_field[r, c] += amount
 
-    def deposit_chemical(self, x: float, y: float, amount: float):
-        """Agent deposits chemical at its position."""
-        gx, gy = self._pos_to_grid(x, y)
-        self.chemical_field[gx, gy] += amount * self.config.chem_secretion_scale
+    def get_chemical_gradient(self, x: float, y: float) -> tuple[float, float]:
+        """Return normalised (dx, dy) chemical gradient at ``(x, y)``.
 
-    def get_chemical_gradient(self, x: float, y: float) -> np.ndarray:
-        """Get chemical gradient (dx, dy) at a position."""
-        gx, gy = self._pos_to_grid(x, y)
-        g = self.config.grid_resolution
-
-        # Finite differences
-        dx = 0.0
-        dy = 0.0
-        if gx > 0 and gx < g - 1:
-            dx = (self.chemical_field[gx + 1, gy] - self.chemical_field[gx - 1, gy]) / 2.0
-        if gy > 0 and gy < g - 1:
-            dy = (self.chemical_field[gx, gy + 1] - self.chemical_field[gx, gy - 1]) / 2.0
-
-        # Normalize to [0, 1]
-        mag = np.sqrt(dx ** 2 + dy ** 2)
-        if mag > 0:
-            dx /= mag
-            dy /= mag
-        return np.array([(dx + 1) / 2, (dy + 1) / 2])  # Map [-1,1] to [0,1]
-
-    def diffuse_chemical(self, dt: float = 1.0):
-        """Apply Laplacian diffusion and decay to chemical field."""
-        from scipy.ndimage import convolve
-        lap = convolve(self.chemical_field, self._lap_kernel, mode="constant", cval=0.0)
-        self.chemical_field += self.config.chem_diffusion_rate * lap * dt
-        self.chemical_field *= (1.0 - self.config.chem_decay_rate * dt)
-        self.chemical_field = np.clip(self.chemical_field, 0, 10.0)
-
-    # ── Emotional Field (L5) ─────────────────────────────────────────
-
-    def synchronize_emotions(
-        self, emotions: List[np.ndarray], coupling: Optional[float] = None
-    ) -> List[np.ndarray]:
+        Uses central differences on the grid, mapped back to world coords.
         """
-        Pull each agent's emotions toward swarm mean.
+        r, c = self._to_grid(x, y)
+        gs = self.cfg.grid_size
+        f = self.chemical_field
 
-        Args:
-            emotions: List of (n_emotional_dims,) arrays, one per agent.
-            coupling: Override coupling strength.
+        # Central differences with boundary clamp
+        dc = (f[r, min(c + 1, gs - 1)] - f[r, max(c - 1, 0)]) * 0.5
+        dr = (f[min(r + 1, gs - 1), c] - f[max(r - 1, 0), c]) * 0.5
 
-        Returns:
-            Updated emotion vectors.
+        # Map grid gradient -> world gradient direction
+        dx = float(dc)
+        dy = float(dr)
+        norm = np.sqrt(dx * dx + dy * dy) + 1e-12
+        return dx / norm, dy / norm
+
+    # ------------------------------------------------------------------
+    # Emotional field
+    # ------------------------------------------------------------------
+
+    def synchronize_emotions(self, coupling: float | None = None) -> None:
+        """Pull each agent's emotional vector toward the swarm mean."""
+        if coupling is None:
+            coupling = self.cfg.emotional_coupling
+        mean_emotion = self.emotional_field.mean(axis=0)
+        self.emotional_field += coupling * (mean_emotion - self.emotional_field)
+
+    # ------------------------------------------------------------------
+    # Symbolic field
+    # ------------------------------------------------------------------
+
+    def get_symbolic_at(self, x: float, y: float) -> np.ndarray:
+        """Return the 2-channel symbolic vector at ``(x, y)``."""
+        r, c = self._to_grid(x, y)
+        return self.symbolic_field[r, c].copy()
+
+    def deposit_symbolic(self, x: float, y: float, channel: int, amount: float) -> None:
+        """Deposit into a symbolic channel at ``(x, y)``."""
+        r, c = self._to_grid(x, y)
+        self.symbolic_field[r, c, channel] += amount
+
+    # ------------------------------------------------------------------
+    # Orchestration
+    # ------------------------------------------------------------------
+
+    def update(self, agents: list["SwarmAgent"], env: "SwarmEnvironment",
+               dt: float) -> None:
+        """Run one collective-field tick.
+
+        1. Diffuse and decay chemical field.
+        2. Synchronise emotional field.
+        3. Decay symbolic field.
+        4. Copy agent emotions into / out of emotional field.
         """
-        if not emotions:
-            return emotions
+        # Push agent emotions into the field
+        for idx, agent in enumerate(agents):
+            if idx < self.n_agents:
+                self.emotional_field[idx] = agent.emotions
 
-        c = coupling if coupling is not None else self.config.emotion_coupling
-        emotion_stack = np.array(emotions)
-        self._emotion_mean = emotion_stack.mean(axis=0)
+        self.diffuse(dt)
+        self.synchronize_emotions()
 
-        updated = []
-        for emo in emotions:
-            new_emo = emo + c * (self._emotion_mean - emo)
-            # Decay toward neutral (0.5)
-            new_emo += self.config.emotion_decay * (0.5 - new_emo)
-            updated.append(np.clip(new_emo, 0, 1))
-        return updated
+        # Symbolic decay
+        self.symbolic_field *= (1.0 - self.cfg.symbolic_decay * dt)
 
-    def get_emotion_mean(self) -> np.ndarray:
-        """Return current swarm emotional mean."""
-        return self._emotion_mean.copy()
-
-    # ── Symbolic Field (L7) ──────────────────────────────────────────
-
-    def deposit_symbolic(self, x: float, y: float, glyph: np.ndarray):
-        """Agent imprints a symbolic glyph at its position."""
-        gx, gy = self._pos_to_grid(x, y)
-        self.symbolic_field[gx, gy] += glyph[:self.config.symbolic_dims]
-
-    def get_symbolic_value(self, x: float, y: float) -> np.ndarray:
-        """Get symbolic field value at position."""
-        gx, gy = self._pos_to_grid(x, y)
-        val = self.symbolic_field[gx, gy].copy()
-        # Normalize to [0, 1]
-        mag = np.linalg.norm(val)
-        if mag > 1.0:
-            val /= mag
-        return np.clip((val + 1) / 2, 0, 1)  # Map to [0, 1]
-
-    def diffuse_symbolic(self, dt: float = 1.0):
-        """Apply diffusion and decay to symbolic field."""
-        from scipy.ndimage import convolve
-        for d in range(self.config.symbolic_dims):
-            lap = convolve(
-                self.symbolic_field[:, :, d],
-                self._lap_kernel,
-                mode="constant",
-                cval=0.0,
-            )
-            self.symbolic_field[:, :, d] += self.config.symbolic_diffusion * lap * dt
-            self.symbolic_field[:, :, d] *= (1.0 - self.config.symbolic_decay * dt)
-
-    # ── Combined Update ──────────────────────────────────────────────
-
-    def step(self, dt: float = 1.0):
-        """Diffuse all fields."""
-        self.diffuse_chemical(dt)
-        self.diffuse_symbolic(dt)
-
-    def reset(self):
-        """Reset all fields to zero."""
-        g = self.config.grid_resolution
-        self.chemical_field = np.zeros((g, g))
-        self.symbolic_field = np.zeros((g, g, self.config.symbolic_dims))
-        self._emotion_mean = np.full(self.config.n_emotional_dims, 0.5)
-
-    def get_state(self) -> dict:
-        """Return field state for visualization."""
-        return {
-            "chemical_field_sum": float(self.chemical_field.sum()),
-            "chemical_field_max": float(self.chemical_field.max()),
-            "symbolic_field_norm": float(np.linalg.norm(self.symbolic_field)),
-            "emotion_mean": self._emotion_mean.tolist(),
-        }
+        # Pull updated emotions back to agents
+        for idx, agent in enumerate(agents):
+            if idx < self.n_agents:
+                agent.emotions = self.emotional_field[idx].copy()

@@ -1,136 +1,129 @@
 """
-Swarm Fitness — Metrics for swarm performance
-===============================================
+SwarmFitness -- multi-objective fitness evaluation for swarm behaviour.
 
-Computes:
-- Coverage: How much of the arena is explored
-- Cohesion: How close agents stay to each other
-- Alignment: How aligned agent headings are
-- Target collection: How many targets are collected
-- Obstacle avoidance: Penalty for being inside obstacles
-- Composite fitness: Weighted sum of all metrics
-
-Author: Claude (Session 2026-02-16)
+All methods are static so the class acts as a namespace.  ``composite()``
+combines the individual scores with fixed weights into a single scalar
+suitable for neuroevolution ranking.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import List, Optional
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-from .swarm_env import SwarmEnvironment
-
-
-@dataclass
-class FitnessWeights:
-    """Weights for composite fitness score."""
-    coverage: float = 0.3
-    cohesion: float = 0.2
-    alignment: float = 0.1
-    target_reach: float = 0.3
-    obstacle_penalty: float = 0.1
+if TYPE_CHECKING:
+    from .swarm_env import SwarmEnvironment
 
 
 class SwarmFitness:
-    """Evaluates swarm performance."""
+    """Static fitness functions for swarm evaluation."""
 
-    def __init__(self, weights: Optional[FitnessWeights] = None):
-        self.weights = weights or FitnessWeights()
+    # ------------------------------------------------------------------
+    # Individual objectives
+    # ------------------------------------------------------------------
 
-    def coverage_score(self, env: SwarmEnvironment, grid_res: int = 20) -> float:
+    @staticmethod
+    def coverage_score(positions: np.ndarray, area: tuple[float, float]) -> float:
+        """Fraction of the arena covered by the swarm.
+
+        Divides the arena into a 10x10 grid and counts the fraction of
+        cells that contain at least one agent.
         """
-        Fraction of grid cells visited by at least one agent.
+        grid_n = 10
+        w, h = area
+        cols = np.clip((positions[:, 0] / w * grid_n).astype(int), 0, grid_n - 1)
+        rows = np.clip((positions[:, 1] / h * grid_n).astype(int), 0, grid_n - 1)
+        occupied = set(zip(rows.tolist(), cols.tolist()))
+        return len(occupied) / (grid_n * grid_n)
 
-        Higher = swarm explores more of the arena.
+    @staticmethod
+    def cohesion_score(positions: np.ndarray) -> float:
+        """Reward moderate inter-agent distance (not too spread, not too clumped).
+
+        Returns a value in [0, 1] peaking when the mean pairwise distance
+        equals one-quarter of the bounding-box diagonal.
         """
-        pos = env.get_agent_positions()
-        visited = set()
-        for x, y in pos:
-            gx = int(np.clip(x / env.config.width * grid_res, 0, grid_res - 1))
-            gy = int(np.clip(y / env.config.height * grid_res, 0, grid_res - 1))
-            visited.add((gx, gy))
-        return len(visited) / (grid_res * grid_res)
+        if len(positions) < 2:
+            return 0.0
+        diff = positions[:, np.newaxis, :] - positions[np.newaxis, :, :]
+        dists = np.sqrt((diff ** 2).sum(axis=-1))
+        # Upper triangle only
+        triu_idx = np.triu_indices(len(positions), k=1)
+        mean_dist = dists[triu_idx].mean()
+        bbox_diag = np.sqrt(
+            (positions[:, 0].ptp()) ** 2 + (positions[:, 1].ptp()) ** 2
+        ) + 1e-12
+        ideal = bbox_diag * 0.25
+        return float(np.exp(-((mean_dist - ideal) / ideal) ** 2))
 
-    def cohesion_score(self, env: SwarmEnvironment) -> float:
+    @staticmethod
+    def alignment_score(headings: np.ndarray) -> float:
+        """Mean resultant length of heading angles (Rayleigh statistic).
+
+        Returns 1.0 when all agents face the same direction, 0.0 when
+        headings are uniformly distributed.
         """
-        Inverse of mean distance from centroid (normalized).
+        if len(headings) == 0:
+            return 0.0
+        cx = np.cos(headings).mean()
+        cy = np.sin(headings).mean()
+        return float(np.sqrt(cx ** 2 + cy ** 2))
 
-        Higher = agents stay closer together.
+    @staticmethod
+    def target_score(positions: np.ndarray, targets: np.ndarray) -> float:
+        """Proximity reward: inverse mean distance to nearest target per agent.
+
+        Normalised to [0, 1] via ``1 / (1 + mean_dist / 10)``.
         """
-        pos = env.get_agent_positions()
-        if len(pos) < 2:
-            return 1.0
-        centroid = pos.mean(axis=0)
-        dists = np.sqrt(((pos - centroid) ** 2).sum(axis=1))
-        mean_dist = dists.mean()
-        # Normalize: 0 = spread across whole arena, 1 = all at centroid
-        max_dist = np.sqrt(env.config.width ** 2 + env.config.height ** 2) / 2
-        return float(1.0 - np.clip(mean_dist / max_dist, 0, 1))
+        if len(targets) == 0:
+            return 0.0
+        # (n_agents, n_targets)
+        diff = positions[:, np.newaxis, :] - targets[np.newaxis, :, :]
+        dists = np.sqrt((diff ** 2).sum(axis=-1))
+        nearest = dists.min(axis=1)
+        mean_nearest = nearest.mean()
+        return float(1.0 / (1.0 + mean_nearest / 10.0))
 
-    def alignment_score(self, env: SwarmEnvironment) -> float:
+    @staticmethod
+    def obstacle_penalty(positions: np.ndarray, obstacles: np.ndarray) -> float:
+        """Fraction of agents inside any obstacle (surface penetration)."""
+        if len(obstacles) == 0:
+            return 0.0
+        centers = obstacles[:, :2]
+        radii = obstacles[:, 2]
+        # (n_agents, n_obstacles)
+        diff = positions[:, np.newaxis, :] - centers[np.newaxis, :, :]
+        dists = np.sqrt((diff ** 2).sum(axis=-1))
+        inside = (dists < radii[np.newaxis, :]).any(axis=1)
+        return float(inside.mean())
+
+    # ------------------------------------------------------------------
+    # Composite
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def composite(env: "SwarmEnvironment") -> float:
+        """Weighted sum of all objectives.
+
+        Weights::
+
+            0.30 * coverage
+          + 0.20 * cohesion
+          + 0.10 * alignment
+          + 0.30 * target
+          - 0.10 * obstacle_penalty
+
+        Returns a scalar (higher is better).
         """
-        How aligned agent headings are (1 = all same direction).
+        positions = env.get_positions()
+        headings = env.get_headings()
+        area = (env.cfg.width, env.cfg.height)
 
-        Uses circular mean resultant length.
-        """
-        headings = np.array([a.heading for a in env.agents])
-        z = np.exp(1j * headings)
-        return float(np.abs(z.mean()))
+        cov = SwarmFitness.coverage_score(positions, area)
+        coh = SwarmFitness.cohesion_score(positions)
+        aln = SwarmFitness.alignment_score(headings)
+        tgt = SwarmFitness.target_score(positions, env.targets)
+        obs = SwarmFitness.obstacle_penalty(positions, env.obstacles)
 
-    def target_score(self, env: SwarmEnvironment, max_collections: int = 10) -> float:
-        """
-        Fraction of target collections achieved.
-        """
-        return float(np.clip(env._target_collections / max(max_collections, 1), 0, 1))
-
-    def obstacle_penalty(self, env: SwarmEnvironment) -> float:
-        """
-        Penalty for agents being too close to obstacles.
-
-        Returns value in [0, 1] where 0 = no penalty, 1 = all agents inside obstacles.
-        """
-        penalty = 0.0
-        for agent in env.agents:
-            for obs in env.obstacles:
-                dx = agent.x - obs.x
-                dy = agent.y - obs.y
-                dist = np.sqrt(dx ** 2 + dy ** 2)
-                if dist < obs.radius * 1.5:
-                    penalty += 1.0 - dist / (obs.radius * 1.5)
-        max_penalty = len(env.agents) * len(env.obstacles)
-        return float(np.clip(penalty / max(max_penalty, 1), 0, 1))
-
-    def composite_fitness(self, env: SwarmEnvironment) -> float:
-        """
-        Weighted composite fitness score.
-
-        Returns float in [0, 1].
-        """
-        w = self.weights
-        cov = self.coverage_score(env)
-        coh = self.cohesion_score(env)
-        ali = self.alignment_score(env)
-        tgt = self.target_score(env)
-        obs = self.obstacle_penalty(env)
-
-        score = (
-            w.coverage * cov
-            + w.cohesion * coh
-            + w.alignment * ali
-            + w.target_reach * tgt
-            - w.obstacle_penalty * obs
-        )
-        return float(np.clip(score, 0, 1))
-
-    def get_breakdown(self, env: SwarmEnvironment) -> dict:
-        """Return all fitness components."""
-        return {
-            "coverage": self.coverage_score(env),
-            "cohesion": self.cohesion_score(env),
-            "alignment": self.alignment_score(env),
-            "target_reach": self.target_score(env),
-            "obstacle_penalty": self.obstacle_penalty(env),
-            "composite": self.composite_fitness(env),
-        }
+        return 0.30 * cov + 0.20 * coh + 0.10 * aln + 0.30 * tgt - 0.10 * obs
