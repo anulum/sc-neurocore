@@ -42,13 +42,17 @@ def run_demo():
         for s in snapshots:
             gate_str = " OPEN" if s.gate_open else "CLOSE"
             bar = "█" * int(s.p_h1 * 20) + "░" * (20 - int(s.p_h1 * 20))
-            print(f"  {s.step:>6}  {s.p_h1:>7.3f}  {s.R_global:>7.3f}  "
-                  f"{s.kappa:>7.3f}  {gate_str}  |{bar}|")
+            print(
+                f"  {s.step:>6}  {s.p_h1:>7.3f}  {s.R_global:>7.3f}  "
+                f"{s.kappa:>7.3f}  {gate_str}  |{bar}|"
+            )
 
         final = snapshots[-1] if snapshots else None
         if final:
-            print(f"\n  Final: p_h1={final.p_h1:.3f}, R={final.R_global:.3f}, "
-                  f"gate={'OPEN' if final.gate_open else 'CLOSED'}")
+            print(
+                f"\n  Final: p_h1={final.p_h1:.3f}, R={final.R_global:.3f}, "
+                f"gate={'OPEN' if final.gate_open else 'CLOSED'}"
+            )
 
     print(f"\n{'=' * 72}")
     print("  Demo complete.")
