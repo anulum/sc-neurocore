@@ -30,7 +30,7 @@ criterion = { version = "0.5", features = ["html_reports"] }
 proptest = "1.4"
 
 [build-dependencies]
-pyo3-build-config = "0.22"
+pyo3-build-config = "0.28"
 
 [[bench]]
 name = "bitstream_bench"
