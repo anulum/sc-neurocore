@@ -1,20 +1,71 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Rust
+# Rust build artifacts
 target/
-**/*.rs.bk
 
-# Compiled Binaries
-*.pyd
-*.so
-*.dll
-*.dylib
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
 
-# Build Artifacts
-cosim/build/
+# Pytest cache
+.pytest_cache/
+
+# Local tools (Verilator, etc.)
+.tools/
+
+# Maturin build output
 dist/
-build/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Coverage
+.coverage
+.coverage.*
+htmlcov/
+*.cover
+
+# Generated artifacts
+network_viz.html
+*.viz.html
+nul
+
+# Linter / type checker caches
+.ruff_cache/
+.mypy_cache/
+
+# Virtual environments
 .venv/
+venv/
+
+# Python packaging
+*.egg-info/
+build/
+*.egg
+
+# Temp files
+.tmp/
+*.tmp
+
+# Rust cross-compilation
+.cargo_target_rw/
+
+# Compiled testbench binaries
+tb_sc_bitstream_encoder
+tb_sc_dense_layer_top
+
+# Verilator artifacts
+obj_dir/
+cosim/obj_dir/
+
+# Benchmark artifacts
+.benchmarks/
+
+# Ad-hoc fix scripts
+auto_fix*.py
+fix_*.py
+full_test_report.txt

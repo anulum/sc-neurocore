@@ -22,6 +22,7 @@ from sc_neurocore.neurons.fixed_point_lif import (
 #  1. LFSR Tests
 # ============================================================================
 
+
 class TestLFSR:
     """Verify LFSR matches Verilog sc_bitstream_encoder polynomial."""
 
@@ -73,6 +74,7 @@ class TestLFSR:
 # ============================================================================
 #  2. Bitstream Encoder Tests (decorrelation)
 # ============================================================================
+
 
 class TestBitstreamEncoder:
     """Verify decorrelation between parallel encoder instances."""
@@ -134,6 +136,7 @@ class TestBitstreamEncoder:
 # ============================================================================
 #  3. Fixed-Point LIF Neuron Tests
 # ============================================================================
+
 
 class TestFixedPointLIF:
     """Bit-true verification of sc_lif_neuron.v dynamics."""
@@ -227,11 +230,11 @@ class TestFixedPointLIF:
 #  4. Full Pipeline Tests (Encoder -> Synapse -> DotProduct -> Neuron)
 # ============================================================================
 
+
 class TestFullPipeline:
     """End-to-end stochastic pipeline matching HDL architecture."""
 
-    def _run_pipeline(self, x_values, w_values, n_steps=512,
-                      leak_k=10, gain_k=256):
+    def _run_pipeline(self, x_values, w_values, n_steps=512, leak_k=10, gain_k=256):
         """
         Software bit-true simulation of sc_dense_layer_core pipeline:
           input encoders -> weight encoders -> AND synapses -> popcount -> LIF
@@ -240,13 +243,9 @@ class TestFullPipeline:
         assert len(w_values) == n_inputs
 
         # Create decorrelated encoders (matching HDL SEED_INIT values)
-        input_encs = [
-            FixedPointBitstreamEncoder(seed_init=0xACE1 + i * 7)
-            for i in range(n_inputs)
-        ]
+        input_encs = [FixedPointBitstreamEncoder(seed_init=0xACE1 + i * 7) for i in range(n_inputs)]
         weight_encs = [
-            FixedPointBitstreamEncoder(seed_init=0xBEEF + i * 13)
-            for i in range(n_inputs)
+            FixedPointBitstreamEncoder(seed_init=0xBEEF + i * 13) for i in range(n_inputs)
         ]
 
         neuron = FixedPointLIFNeuron(refractory_period=0)
@@ -340,6 +339,7 @@ class TestFullPipeline:
 # ============================================================================
 #  5. Bit-Width Masking Utility
 # ============================================================================
+
 
 class TestMask:
     def test_positive(self):

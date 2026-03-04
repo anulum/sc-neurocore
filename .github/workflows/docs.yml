@@ -1,11 +1,17 @@
-name: Deploy Rustdoc to GitHub Pages
+# © 1998–2026 Miroslav Šotek. All rights reserved.
+# Contact: www.anulum.li | protoscience@anulum.li
+name: Deploy Documentation to GitHub Pages
 
 on:
   push:
     branches: [main]
     paths:
+      - "docs/**"
+      - "mkdocs.yml"
       - "engine/src/**"
       - "engine/Cargo.toml"
+      - "src/sc_neurocore/**"
+      - "pyproject.toml"
   workflow_dispatch:
 
 concurrency:
@@ -20,20 +26,50 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # --- MkDocs (Python documentation) ---
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install MkDocs and package
+        run: |
+          pip install mkdocs mkdocs-material "mkdocstrings[python]"
+          pip install -e ".[dev]"
+
+      - name: Build MkDocs site
+        run: mkdocs build --site-dir _site
+
+      # --- Rustdoc (Rust engine API) ---
       - uses: dtolnay/rust-toolchain@nightly
 
-      - name: Build rustdoc
-        run: cargo +nightly doc --manifest-path engine/Cargo.toml --no-deps --document-private-items
+      - name: Build and merge Rustdoc
+        run: |
+          # Build rustdoc (workspace target dir is at repo root)
+          cargo +nightly doc --manifest-path engine/Cargo.toml --no-deps --document-private-items || true
+          # Find the doc output (could be target/doc or engine/target/doc)
+          DOC_DIR=""
+          if [ -d "target/doc/sc_neurocore_engine" ]; then
+            DOC_DIR="target/doc"
+          elif [ -d "engine/target/doc/sc_neurocore_engine" ]; then
+            DOC_DIR="engine/target/doc"
+          fi
+          if [ -n "$DOC_DIR" ]; then
+            mkdir -p _site/rust-api
+            cp -r "$DOC_DIR"/* _site/rust-api/
+            echo "Rustdoc merged from $DOC_DIR"
+          else
+            echo "WARNING: Rustdoc not found, deploying MkDocs only"
+          fi
+          echo "" > _site/.nojekyll
         env:
           RUSTDOCFLAGS: "--enable-index-page -Zunstable-options"
 
-      - name: Add redirect index.html
-        run: echo '<meta http-equiv="refresh" content="0; url=sc_neurocore_engine/index.html">' > engine/target/doc/index.html
-
+      # --- Upload combined site ---
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: engine/target/doc
+          path: _site
 
   deploy:
     needs: build-docs

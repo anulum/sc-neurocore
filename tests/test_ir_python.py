@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import pytest
 
+
+pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+
 from sc_neurocore_engine.ir import ScGraphBuilder, ScGraph, parse_ir
 
 

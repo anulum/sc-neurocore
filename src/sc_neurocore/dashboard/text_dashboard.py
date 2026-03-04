@@ -1,0 +1,49 @@
+class SCDashboard:
+    """
+    Simple CLI Dashboard for monitoring SC simulation.
+    """
+
+    def __init__(self, n_neurons: int):
+        self.n_neurons = n_neurons
+        self.history: list[list[float]] = [[] for _ in range(n_neurons)]
+
+    def update(self, firing_rates: list[float], step: int):  # type: ignore
+        # Update history
+        for i, rate in enumerate(firing_rates):
+            self.history[i].append(rate)
+            if len(self.history[i]) > 20:  # Keep last 20
+                self.history[i].pop(0)
+
+        self._render(step)
+
+    def _render(self, step: int):  # type: ignore
+        # ANSI Escape codes for clearing screen/cursor might not work well in all notebook/CLI envs
+        # We will just print a frame separator.
+
+        print(f"\n--- SC DASHBOARD | Step {step} ---")
+        print(f"{ 'Neuron':<8} | {'Rate':<8} | {'Trend (Last 5)'}")
+        print("-" * 40)
+
+        for i in range(self.n_neurons):
+            rate = self.history[i][-1]
+
+            # Simple sparkline-like trend
+            trend = ""
+            if len(self.history[i]) >= 2:
+                diff = rate - self.history[i][-2]
+                if diff > 0.01:
+                    trend = "/ UP"
+                elif diff < -0.01:
+                    trend = "\\ DWN"
+                else:
+                    trend = "- STY"
+
+            # Bar chart
+            bar_len = int(rate * 20)
+            bar = "|" * bar_len
+
+            print(f"#{i:<7} | {rate:.3f}    | {trend} {bar}")
+
+        print("-" * 40)
+        # In a real terminal, we would use 'curses' to overwrite.
+        # Here we just append.

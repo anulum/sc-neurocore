@@ -16,7 +16,9 @@ def _perf_enabled() -> bool:
 def test_memristive_weights_in_range():
     """Weights should remain within [0,1] after defects."""
     np.random.seed(0)
-    layer = MemristiveDenseLayer(n_inputs=3, n_neurons=2, length=32, variability=0.2, stuck_rate=0.2)
+    layer = MemristiveDenseLayer(
+        n_inputs=3, n_neurons=2, length=32, variability=0.2, stuck_rate=0.2
+    )
     assert np.all(layer.weights >= 0.0)
     assert np.all(layer.weights <= 1.0)
 
@@ -31,7 +33,9 @@ def test_memristive_packed_shape():
 def test_memristive_stuck_rate_one_forces_binary():
     """With stuck_rate=1, all weights become 0 or 1."""
     np.random.seed(1)
-    layer = MemristiveDenseLayer(n_inputs=2, n_neurons=2, length=16, variability=0.0, stuck_rate=1.0)
+    layer = MemristiveDenseLayer(
+        n_inputs=2, n_neurons=2, length=16, variability=0.0, stuck_rate=1.0
+    )
     unique_vals = np.unique(layer.weights)
     assert set(unique_vals.tolist()) <= {0.0, 1.0}
 
@@ -39,7 +43,9 @@ def test_memristive_stuck_rate_one_forces_binary():
 def test_memristive_apply_defects_no_change_when_zero_rates():
     """Applying defects with zero rates should leave weights unchanged."""
     np.random.seed(2)
-    layer = MemristiveDenseLayer(n_inputs=2, n_neurons=2, length=16, variability=0.0, stuck_rate=0.0)
+    layer = MemristiveDenseLayer(
+        n_inputs=2, n_neurons=2, length=16, variability=0.0, stuck_rate=0.0
+    )
     before = layer.weights.copy()
     layer.apply_hardware_defects()
     assert np.allclose(before, layer.weights)
@@ -48,9 +54,13 @@ def test_memristive_apply_defects_no_change_when_zero_rates():
 def test_memristive_variability_increases_std():
     """Higher variability should increase weight spread."""
     np.random.seed(3)
-    low_var = MemristiveDenseLayer(n_inputs=4, n_neurons=4, length=16, variability=0.0, stuck_rate=0.0)
+    low_var = MemristiveDenseLayer(
+        n_inputs=4, n_neurons=4, length=16, variability=0.0, stuck_rate=0.0
+    )
     np.random.seed(3)
-    high_var = MemristiveDenseLayer(n_inputs=4, n_neurons=4, length=16, variability=0.2, stuck_rate=0.0)
+    high_var = MemristiveDenseLayer(
+        n_inputs=4, n_neurons=4, length=16, variability=0.2, stuck_rate=0.0
+    )
     assert np.std(high_var.weights) >= np.std(low_var.weights)
 
 
@@ -71,7 +81,9 @@ def test_memristive_forward_zero_input_returns_zero():
 def test_memristive_refresh_after_defects_changes_packed():
     """Packed weights should update after defects if weights change."""
     np.random.seed(4)
-    layer = MemristiveDenseLayer(n_inputs=2, n_neurons=2, length=32, variability=0.0, stuck_rate=0.0)
+    layer = MemristiveDenseLayer(
+        n_inputs=2, n_neurons=2, length=32, variability=0.0, stuck_rate=0.0
+    )
     before = layer.packed_weights.copy()
     layer.stuck_rate = 1.0
     layer.apply_hardware_defects()
@@ -81,9 +93,13 @@ def test_memristive_refresh_after_defects_changes_packed():
 def test_memristive_seed_determinism():
     """Numpy seed produces deterministic weights and defects."""
     np.random.seed(5)
-    layer_a = MemristiveDenseLayer(n_inputs=2, n_neurons=2, length=16, variability=0.1, stuck_rate=0.2)
+    layer_a = MemristiveDenseLayer(
+        n_inputs=2, n_neurons=2, length=16, variability=0.1, stuck_rate=0.2
+    )
     np.random.seed(5)
-    layer_b = MemristiveDenseLayer(n_inputs=2, n_neurons=2, length=16, variability=0.1, stuck_rate=0.2)
+    layer_b = MemristiveDenseLayer(
+        n_inputs=2, n_neurons=2, length=16, variability=0.1, stuck_rate=0.2
+    )
     assert np.allclose(layer_a.weights, layer_b.weights)
 
 

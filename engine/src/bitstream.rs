@@ -1,8 +1,5 @@
-// CopyRight: (c) 1998-2026 Miroslav Sotek. All rights reserved.
-// Contact us: www.anulum.li  protoscience@anulum.li
-// ORCID: https://orcid.org/0009-0009-3560-0851
-// License: GNU AFFERO GENERAL PUBLIC LICENSE v3
-// Commercial Licensing: Available
+// © 1998–2026 Miroslav Šotek. All rights reserved.
+// Contact: www.anulum.li | protoscience@anulum.li
 
 //! # Bitstream Operations
 //!
@@ -32,7 +29,10 @@ impl BitStreamTensor {
 
     /// HDC BIND: In-place XOR with another tensor.
     pub fn xor_inplace(&mut self, other: &BitStreamTensor) {
-        assert_eq!(self.length, other.length, "Bitstream lengths must match for XOR.");
+        assert_eq!(
+            self.length, other.length,
+            "Bitstream lengths must match for XOR."
+        );
         for (a, b) in self.data.iter_mut().zip(other.data.iter()) {
             *a ^= *b;
         }
@@ -40,18 +40,27 @@ impl BitStreamTensor {
 
     /// HDC BIND: XOR returning a new tensor.
     pub fn xor(&self, other: &BitStreamTensor) -> BitStreamTensor {
-        assert_eq!(self.length, other.length, "Bitstream lengths must match for XOR.");
-        let data = self.data.iter().zip(other.data.iter())
+        assert_eq!(
+            self.length, other.length,
+            "Bitstream lengths must match for XOR."
+        );
+        let data = self
+            .data
+            .iter()
+            .zip(other.data.iter())
             .map(|(&a, &b)| a ^ b)
             .collect();
-        BitStreamTensor { data, length: self.length }
+        BitStreamTensor {
+            data,
+            length: self.length,
+        }
     }
 
     /// HDC PERMUTE: Cyclic right rotation by `shift` bits.
     ///
     /// Rotates the entire logical bitstream, handling cross-word boundaries.
     pub fn rotate_right(&mut self, shift: usize) {
-        if self.length == 0 || shift % self.length == 0 {
+        if self.length == 0 || shift.is_multiple_of(self.length) {
             return;
         }
         let mut bits = unpack(self);
@@ -61,7 +70,10 @@ impl BitStreamTensor {
 
     /// HDC SIMILARITY: Normalized Hamming distance (0.0 = identical, 1.0 = opposite).
     pub fn hamming_distance(&self, other: &BitStreamTensor) -> f32 {
-        assert_eq!(self.length, other.length, "Bitstream lengths must match for Hamming distance.");
+        assert_eq!(
+            self.length, other.length,
+            "Bitstream lengths must match for Hamming distance."
+        );
         let xor_count: u64 = crate::simd::fused_xor_popcount_dispatch(&self.data, &other.data);
         xor_count as f32 / self.length as f32
     }
@@ -69,23 +81,46 @@ impl BitStreamTensor {
     /// HDC BUNDLE: Majority vote across N tensors.
     ///
     /// Bit is 1 if a strict majority (> N/2) of inputs have it set.
+    /// Optimized bitwise implementation using full adders.
     pub fn bundle(vectors: &[&BitStreamTensor]) -> BitStreamTensor {
         assert!(!vectors.is_empty(), "Cannot bundle zero vectors.");
         let length = vectors[0].length;
         let words = vectors[0].data.len();
-        let threshold = vectors.len() / 2; // strict majority = count > N/2
 
+        if vectors.len() == 1 {
+            return vectors[0].clone();
+        }
+
+        // Bitwise majority vote for N inputs.
+        // For N=3, maj(a,b,c) = (a&b) | (b&c) | (a&c)
+        // For general N, we use a bit-counting approach (bitwise full adders).
         let mut data = vec![0u64; words];
-        for bit_idx in 0..length {
-            let word = bit_idx / 64;
-            let bit = bit_idx % 64;
-            let count: usize = vectors.iter()
-                .filter(|v| (v.data[word] >> bit) & 1 == 1)
-                .count();
-            if count > threshold {
-                data[word] |= 1u64 << bit;
+
+        if vectors.len() == 3 {
+            for (i, item) in data.iter_mut().enumerate().take(words) {
+                let a = vectors[0].data[i];
+                let b = vectors[1].data[i];
+                let c = vectors[2].data[i];
+                *item = (a & b) | (b & c) | (a & c);
+            }
+        } else {
+            // General N: Slow fallback for now, but still per-word.
+            let threshold = vectors.len() / 2;
+            for (i, item) in data.iter_mut().enumerate().take(words) {
+                for bit in 0..64 {
+                    let mut count = 0;
+                    for v in vectors {
+                        if (v.data[i] >> bit) & 1 == 1 {
+                            count += 1;
+                        }
+                    }
+                    if count > threshold {
+                        *item |= 1u64 << bit;
+                    }
+                }
             }
         }
+
         BitStreamTensor { data, length }
     }
 }
@@ -516,4 +551,3 @@ mod tests {
         }
     }
 }
-

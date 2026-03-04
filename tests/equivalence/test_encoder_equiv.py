@@ -1,5 +1,9 @@
 """Strict blueprint semantics tests for LFSR + bitstream encoder."""
 
+import pytest
+
+pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+
 from sc_neurocore_engine import BitstreamEncoder, Lfsr16
 
 

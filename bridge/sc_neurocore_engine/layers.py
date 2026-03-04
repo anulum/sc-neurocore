@@ -1,3 +1,6 @@
+# © 1998–2026 Miroslav Šotek. All rights reserved.
+# Contact: www.anulum.li | protoscience@anulum.li
+
 """Drop-in replacement for sc_neurocore.layers.VectorizedSCLayer."""
 
 from dataclasses import dataclass
@@ -77,3 +80,4 @@ class VectorizedSCLayer:
                 f"Expected 2-D input with shape (n_samples, {self.n_inputs}), got {arr.shape}"
             )
         return self._engine.forward_batch_numpy(arr, seed)
+

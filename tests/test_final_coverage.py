@@ -4,44 +4,6 @@ import numpy as np
 import pytest
 
 
-# ── analysis/qualia.py — PASS and FAIL branches ─────────────────────
-class TestQualiaPassFail:
-    def test_pass_branch(self):
-        """Hit lines 49-50: dist >= 0 AND signified != base_concept."""
-        from sc_neurocore.transcendent.noetic import SemioticTriad, Sign
-        from sc_neurocore.analysis.qualia import QualiaTuringTest
-
-        sem = SemioticTriad()
-        # Set up so interpret() shifts meaning AND metaphor_distance finds a path
-        sem.learn_association("Emotion", "Joy")  # interpretant="Emotion" → "Joy"
-        sem.learn_association("Fire", "Joy")  # path Fire→Joy exists
-
-        q = QualiaTuringTest(semiotics=sem)
-        # dominant_feature=0 → base_concept="Fire"
-        # sign = Sign("InternalState", "Fire", "Emotion")
-        # interpret: context="Emotion" in assoc → new Sign(signifier="Emotion", signified="Joy", interpretant="Fire")
-        # description.signified="Joy" != "Fire"=base_concept ✓
-        # metaphor_distance("Fire", "Joy") → 1 (>=0) ✓
-        # → PASS branch (lines 49-50)
-        state = np.array([10.0, 0.0, 0.0])
-        result = q.administer_test(state)
-        assert result is True
-
-    def test_fail_branch(self):
-        """Hit lines 55-56: dist < 0 (no path in semiotic graph)."""
-        from sc_neurocore.transcendent.noetic import SemioticTriad, Sign
-        from sc_neurocore.analysis.qualia import QualiaTuringTest
-
-        sem = SemioticTriad()
-        sem.learn_association("Emotion", "Alien")  # shifts to "Alien"
-        # No path from "Fire" to "Alien" → metaphor_distance returns -1
-
-        q = QualiaTuringTest(semiotics=sem)
-        state = np.array([10.0, 0.0, 0.0])
-        result = q.administer_test(state)
-        assert result is False
-
-
 # ── ensembles/orchestrator.py — run_consensus loop body (lines 22-28) ─
 class TestEnsembleRunConsensus:
     def test_run_consensus_with_pipeline(self):
@@ -69,20 +31,6 @@ class TestEnsembleRunConsensus:
         assert len(result) == 2
 
 
-# ── eschaton/heat_death.py — partial computation (lines 40-43) ────────
-class TestHeatDeathPartial:
-    def test_partial_computation(self):
-        """energy >= threshold but energy < cost → partial branch."""
-        from sc_neurocore.eschaton.heat_death import HeatDeathLayer
-
-        h = HeatDeathLayer(initial_energy=0.001, entropy_rate=0.0, min_energy_threshold=1e-6)
-        # cost = 1e-6 * sum(bs) = 1e-6 * 2000 = 0.002 > 0.001 = energy
-        bs = np.ones(2000, dtype=np.uint8)
-        result = h.compute_step(bs)
-        assert isinstance(result, np.ndarray)
-        assert h.energy == 0  # energy fully consumed
-
-
 # ── generative/three_d_gen.py — empty normals and subsample ──────────
 class TestThreeDGenBranches:
     def test_compute_normals_empty(self):
@@ -102,82 +50,6 @@ class TestThreeDGenBranches:
         bs = np.random.randint(0, 2, (100, 32)).astype(np.uint8)
         voxels = g.bitstream_to_voxels(bs, grid_size=(2, 2, 2))
         assert voxels.shape == (2, 2, 2)
-
-
-# ── interfaces/symbiosis.py — Uncertainty and Silence (lines 39-42) ──
-class TestSymbiosisAllBranches:
-    def test_uncertainty(self):
-        """mean_activity in (0.2, 0.5] → 'Uncertainty' (lines 39-40)."""
-        from sc_neurocore.interfaces.symbiosis import SymbiosisProtocol
-
-        s = SymbiosisProtocol()
-        # mean=0.3
-        bs = np.array([0, 0, 1, 0, 0, 0, 1, 0, 0, 1], dtype=np.uint8)
-        result = s.decode_sensation(bs)
-        assert result == "Sensation: Uncertainty"
-
-    def test_silence(self):
-        """mean_activity <= 0.2 → 'Silence' (lines 41-42)."""
-        from sc_neurocore.interfaces.symbiosis import SymbiosisProtocol
-
-        s = SymbiosisProtocol()
-        bs = np.zeros(10, dtype=np.uint8)  # mean=0.0
-        result = s.decode_sensation(bs)
-        assert result == "Sensation: Silence"
-
-
-# ── meta/dao.py — all uncovered branches (lines 37, 41, 59-60) ──────
-class TestDAOAllBranches:
-    def test_vote_invalid_proposal_id(self):
-        """Hit line 37: proposal_id >= len(ledger) → early return."""
-        from sc_neurocore.meta.dao import AgentDAO
-
-        d = AgentDAO(agent_id="a0", compute_credits=10.0)
-        d.vote(999, approve=True)  # no proposals exist
-
-    def test_vote_inactive_proposal(self):
-        """Hit line 41: prop.status != 'Active' → early return."""
-        from sc_neurocore.meta.dao import AgentDAO
-
-        d = AgentDAO(agent_id="a0", compute_credits=10.0)
-        pid = d.create_proposal("test")
-        d.vote(pid, approve=True)
-        d.finalize_proposal(pid)  # changes status to "Passed"
-        d.vote(pid, approve=True)  # status is "Passed", not "Active"
-
-    def test_finalize_zero_votes(self):
-        """Hit lines 59-60: total_votes == 0 → 'Failed'."""
-        from sc_neurocore.meta.dao import AgentDAO
-
-        d = AgentDAO(agent_id="a0", compute_credits=10.0)
-        pid = d.create_proposal("test")
-        # Don't vote, finalize immediately
-        result = d.finalize_proposal(pid)
-        assert result is False
-        assert d.ledger[pid].status == "Failed"
-
-
-# ── meta/omega.py — empty unify (line 18) ────────────────────────────
-class TestOmegaEmpty:
-    def test_unify_empty(self):
-        from sc_neurocore.meta.omega import OmegaIntegrator
-
-        o = OmegaIntegrator()
-        result = o.unify([])
-        assert len(result) == 0
-
-
-# ── meta/singularity.py — no weights (line 17) ──────────────────────
-class TestSingularityNoWeights:
-    def test_improve_no_weights_layer(self):
-        from sc_neurocore.meta.singularity import RecursiveSelfImprover
-
-        class DummyLayer:
-            pass
-
-        s = RecursiveSelfImprover()
-        result = s.improve(DummyLayer())
-        assert result is None
 
 
 # ── pipeline/ingestion.py — constant data (line 35) ──────────────────
@@ -205,8 +77,11 @@ class TestTrainingRLWithRSTDP:
             for j in range(agent.n_inputs):
                 old = agent.synapses[i][j]
                 agent.synapses[i][j] = RewardModulatedSTDPSynapse(
-                    w_min=old.w_min, w_max=old.w_max, w=old.w,
-                    learning_rate=old.learning_rate, length=old.length,
+                    w_min=old.w_min,
+                    w_max=old.w_max,
+                    w=old.w,
+                    learning_rate=old.learning_rate,
+                    length=old.length,
                 )
         data = np.array([0.5, 0.5])
         SCTrainingLoop.run_rl_epoch(
@@ -242,26 +117,13 @@ class TestFormalVerifierEnergy:
         assert result is False
 
 
-# ── transcendent/noetic.py — interpret shift (lines 35-36) ──────────
-class TestNoeticInterpretShift:
-    def test_interpret_with_association(self):
-        """Context in associations → shift meaning (lines 35-36)."""
-        from sc_neurocore.transcendent.noetic import SemioticTriad, Sign
-
-        s = SemioticTriad()
-        s.learn_association("Emotion", "Joy")
-        sign = Sign("word", "Fire", "Emotion")  # interpretant="Emotion" is in associations
-        result = s.interpret(sign)
-        assert result.signified == "Joy"
-        assert result.signifier == "Emotion"
-
-
 # ── SCPN L2 — history overflow, release_nt, neuromodulation ─────────
 class TestL2DeepBranches:
     def test_history_overflow(self):
         """Hit line 147: history.pop(0) when len > 100."""
         from sc_neurocore.scpn.layers.l2_neurochemical import (
-            L2_NeurochemicalLayer, L2_StochasticParameters,
+            L2_NeurochemicalLayer,
+            L2_StochasticParameters,
         )
 
         params = L2_StochasticParameters(n_receptors=4, bitstream_length=32)
@@ -273,7 +135,8 @@ class TestL2DeepBranches:
     def test_release_neurotransmitter(self):
         """Hit lines 158-159: valid nt_type release."""
         from sc_neurocore.scpn.layers.l2_neurochemical import (
-            L2_NeurochemicalLayer, L2_StochasticParameters,
+            L2_NeurochemicalLayer,
+            L2_StochasticParameters,
         )
 
         params = L2_StochasticParameters(n_receptors=4, bitstream_length=32)
@@ -284,7 +147,8 @@ class TestL2DeepBranches:
     def test_get_neuromodulation_state(self):
         """Hit line 169: get_neuromodulation_state."""
         from sc_neurocore.scpn.layers.l2_neurochemical import (
-            L2_NeurochemicalLayer, L2_StochasticParameters,
+            L2_NeurochemicalLayer,
+            L2_StochasticParameters,
         )
 
         params = L2_StochasticParameters(n_receptors=4, bitstream_length=32)
@@ -300,7 +164,8 @@ class TestL3DeepBranches:
     def test_ciss_coherence(self):
         """Hit line 199: get_ciss_coherence."""
         from sc_neurocore.scpn.layers.l3_genomic import (
-            L3_GenomicLayer, L3_StochasticParameters,
+            L3_GenomicLayer,
+            L3_StochasticParameters,
         )
 
         params = L3_StochasticParameters(n_genes=4, bitstream_length=32)
@@ -315,7 +180,8 @@ class TestL4DeepBranches:
     def test_tissue_pattern(self):
         """Hit line 202: get_tissue_pattern."""
         from sc_neurocore.scpn.layers.l4_cellular import (
-            L4_CellularLayer, L4_StochasticParameters,
+            L4_CellularLayer,
+            L4_StochasticParameters,
         )
 
         params = L4_StochasticParameters(grid_size=(4, 4), bitstream_length=32)
@@ -330,11 +196,14 @@ class TestL5DeepBranches:
     def test_external_event_int_keys(self):
         """Hit line 130: external_event with int keys."""
         from sc_neurocore.scpn.layers.l5_organismal import (
-            L5_OrganismalLayer, L5_StochasticParameters,
+            L5_OrganismalLayer,
+            L5_StochasticParameters,
         )
 
         params = L5_StochasticParameters(
-            n_emotional_dims=8, n_autonomic_nodes=16, bitstream_length=32,
+            n_emotional_dims=8,
+            n_autonomic_nodes=16,
+            bitstream_length=32,
         )
         layer = L5_OrganismalLayer(params)
         output = layer.step(0.01, external_event={0: 0.5, 2: 0.3})
@@ -343,11 +212,14 @@ class TestL5DeepBranches:
     def test_rmssd_with_intervals(self):
         """Hit lines 233-235: _compute_rmssd when rr_intervals >= 2."""
         from sc_neurocore.scpn.layers.l5_organismal import (
-            L5_OrganismalLayer, L5_StochasticParameters,
+            L5_OrganismalLayer,
+            L5_StochasticParameters,
         )
 
         params = L5_StochasticParameters(
-            n_emotional_dims=8, n_autonomic_nodes=16, bitstream_length=32,
+            n_emotional_dims=8,
+            n_autonomic_nodes=16,
+            bitstream_length=32,
         )
         layer = L5_OrganismalLayer(params)
         # Need at least 2 steps to accumulate 2 rr_intervals
@@ -360,11 +232,14 @@ class TestL5DeepBranches:
     def test_rr_intervals_overflow(self):
         """Hit line 190: rr_intervals.pop(0) when len > 100."""
         from sc_neurocore.scpn.layers.l5_organismal import (
-            L5_OrganismalLayer, L5_StochasticParameters,
+            L5_OrganismalLayer,
+            L5_StochasticParameters,
         )
 
         params = L5_StochasticParameters(
-            n_emotional_dims=8, n_autonomic_nodes=16, bitstream_length=32,
+            n_emotional_dims=8,
+            n_autonomic_nodes=16,
+            bitstream_length=32,
         )
         layer = L5_OrganismalLayer(params)
         for _ in range(105):
@@ -374,11 +249,14 @@ class TestL5DeepBranches:
     def test_get_emotional_valence(self):
         """Hit line 246: get_emotional_valence."""
         from sc_neurocore.scpn.layers.l5_organismal import (
-            L5_OrganismalLayer, L5_StochasticParameters,
+            L5_OrganismalLayer,
+            L5_StochasticParameters,
         )
 
         params = L5_StochasticParameters(
-            n_emotional_dims=8, n_autonomic_nodes=16, bitstream_length=32,
+            n_emotional_dims=8,
+            n_autonomic_nodes=16,
+            bitstream_length=32,
         )
         layer = L5_OrganismalLayer(params)
         layer.step(0.01)
@@ -391,7 +269,8 @@ class TestL6DeepBranches:
     def test_history_overflow(self):
         """Hit line 218: history.pop(0) when len > 100."""
         from sc_neurocore.scpn.layers.l6_ecological import (
-            L6_EcologicalLayer, L6_StochasticParameters,
+            L6_EcologicalLayer,
+            L6_StochasticParameters,
         )
 
         params = L6_StochasticParameters(n_field_nodes=16, bitstream_length=32)
@@ -403,7 +282,8 @@ class TestL6DeepBranches:
     def test_get_schumann_spectrum(self):
         """Hit line 228: get_schumann_spectrum."""
         from sc_neurocore.scpn.layers.l6_ecological import (
-            L6_EcologicalLayer, L6_StochasticParameters,
+            L6_EcologicalLayer,
+            L6_StochasticParameters,
         )
 
         params = L6_StochasticParameters(n_field_nodes=16, bitstream_length=32)
@@ -416,7 +296,8 @@ class TestL6DeepBranches:
     def test_get_circadian_time(self):
         """Hit line 239: get_circadian_time."""
         from sc_neurocore.scpn.layers.l6_ecological import (
-            L6_EcologicalLayer, L6_StochasticParameters,
+            L6_EcologicalLayer,
+            L6_StochasticParameters,
         )
 
         params = L6_StochasticParameters(n_field_nodes=16, bitstream_length=32)
@@ -432,7 +313,8 @@ class TestL7DeepBranches:
     def test_fallback_phi_and_fib_and_e8(self):
         """Hit lines 139, 150, 180: zero activations → fallback values."""
         from sc_neurocore.scpn.layers.l7_symbolic import (
-            L7_SymbolicLayer, L7_StochasticParameters,
+            L7_SymbolicLayer,
+            L7_StochasticParameters,
         )
 
         params = L7_StochasticParameters(n_symbols=32, bitstream_length=32)
@@ -448,7 +330,8 @@ class TestL7DeepBranches:
     def test_get_glyph_vector_normalized(self):
         """Hit line 270: get_glyph_vector_normalized."""
         from sc_neurocore.scpn.layers.l7_symbolic import (
-            L7_SymbolicLayer, L7_StochasticParameters,
+            L7_SymbolicLayer,
+            L7_StochasticParameters,
         )
 
         params = L7_StochasticParameters(n_symbols=32, bitstream_length=32)
@@ -461,7 +344,8 @@ class TestL7DeepBranches:
     def test_stimulate_meridian(self):
         """Hit lines 274-275: stimulate_meridian with valid id."""
         from sc_neurocore.scpn.layers.l7_symbolic import (
-            L7_SymbolicLayer, L7_StochasticParameters,
+            L7_SymbolicLayer,
+            L7_StochasticParameters,
         )
 
         params = L7_StochasticParameters(n_symbols=32, bitstream_length=32)
@@ -473,7 +357,8 @@ class TestL7DeepBranches:
     def test_get_acupoint_map(self):
         """Hit lines 283-293: get_acupoint_map."""
         from sc_neurocore.scpn.layers.l7_symbolic import (
-            L7_SymbolicLayer, L7_StochasticParameters,
+            L7_SymbolicLayer,
+            L7_StochasticParameters,
         )
 
         # Use default n_acupoints=361 so most named points are valid

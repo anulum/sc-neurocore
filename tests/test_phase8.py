@@ -1,9 +1,15 @@
+# © 1998–2026 Miroslav Šotek. All rights reserved.
+# Contact: www.anulum.li | protoscience@anulum.li
+
 """Tests for Phase 8: forward_numpy and parallel batch_encode_numpy."""
 
 from __future__ import annotations
 
 import numpy as np
 import pytest
+
+
+pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
 
 import sc_neurocore_engine as v3
 

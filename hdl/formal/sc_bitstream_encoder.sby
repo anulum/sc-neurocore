@@ -1,0 +1,15 @@
+[options]
+mode prove
+depth 20
+
+[engines]
+smtbmc
+
+[script]
+read -formal sc_bitstream_encoder_formal.v
+read -formal sc_bitstream_encoder.v
+prep -top sc_bitstream_encoder_formal
+
+[files]
+sc_bitstream_encoder_formal.v
+../sc_bitstream_encoder.v

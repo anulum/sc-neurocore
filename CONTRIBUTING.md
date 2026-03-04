@@ -1,7 +1,7 @@
 # Contributing to SC-NeuroCore
 
-CopyRight: (c) 1998-2026 Miroslav Sotek. All rights reserved.
-Contact us: www.anulum.li  protoscience@anulum.li
+© 1998–2026 Miroslav Šotek. All rights reserved.
+Contact: www.anulum.li | protoscience@anulum.li
 
 Thank you for your interest in SC-NeuroCore. Contributions are welcome under the following guidelines.
 
@@ -21,8 +21,8 @@ Thank you for your interest in SC-NeuroCore. Contributions are welcome under the
    ```
 4. **Run tests** before making changes to establish a baseline:
    ```bash
-   cargo test                           # Rust (90 tests)
-   cd .. && python -m pytest tests/ -v  # Python (49 tests)
+   cargo test                           # Rust engine tests
+   cd .. && python -m pytest tests/ -v  # Python (818+ tests)
    ```
 
 ## Development Guidelines
@@ -33,8 +33,8 @@ Thank you for your interest in SC-NeuroCore. Contributions are welcome under the
 - **Python**: Follow PEP 8. Use type hints for public APIs.
 - **Copyright header**: Every source file must include the standard header:
   ```
-  CopyRight: (c) 1998-2026 Miroslav Sotek. All rights reserved.
-  Contact us: www.anulum.li  protoscience@anulum.li
+  © 1998–2026 Miroslav Šotek. All rights reserved.
+  Contact: www.anulum.li | protoscience@anulum.li
   ORCID: https://orcid.org/0009-0009-3560-0851
   License: GNU AFFERO GENERAL PUBLIC LICENSE v3
   Commercial Licensing: Available
@@ -90,3 +90,18 @@ docs(readme): update benchmark table for v3.8
 ## Licence
 
 By contributing, you agree that your contributions will be licensed under the [GNU Affero General Public License v3.0](LICENSE). For commercial licensing enquiries, contact protoscience@anulum.li.
+
+---
+
+## Session Logs & Handovers
+
+All session logs and handover documents for this project are stored permanently in the monorepo's canonical location:
+
+- **Session logs:** `.coordination/sessions/sc-neurocore/`
+- **Handovers:** `.coordination/handovers/sc-neurocore/`
+
+**Do not** place session logs or handovers inside this project directory. They will be moved during consolidation.
+
+These files are **permanent records** and must never be deleted, even if outdated.
+
+See [`.coordination/SESSION_AND_HANDOVER_POLICY.md`](../../.coordination/SESSION_AND_HANDOVER_POLICY.md) for naming conventions, templates, and the full policy.

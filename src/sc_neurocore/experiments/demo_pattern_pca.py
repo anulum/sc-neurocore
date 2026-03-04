@@ -1,0 +1,96 @@
+from __future__ import annotations
+from typing import Any, Optional
+import numpy as np
+import matplotlib.pyplot as plt
+
+from sc_neurocore.experiments.demo_pattern_classification import run_pattern_trials
+
+
+def compute_pca_2d(X: np.ndarray[Any, Any]) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any]]:
+    """
+    Simple 2D PCA using SVD.
+
+    Parameters
+    ----------
+    X : np.ndarray
+        Data matrix of shape (n_samples, n_features)
+
+    Returns
+    -------
+    X_2d : np.ndarray
+        Projection of X into 2D principal component space, shape (n_samples, 2)
+    mean : np.ndarray
+        Mean vector of original data (n_features,)
+    components : np.ndarray
+        PCA components (2, n_features)
+    """
+    # Center the data
+    mean = X.mean(axis=0, keepdims=True)
+    X_centered = X - mean
+
+    # SVD: X = U S V^T ; rows of V^T are principal directions
+    U, S, Vt = np.linalg.svd(X_centered, full_matrices=False)
+
+    # Take first 2 components
+    components = Vt[:2]  # shape (2, n_features)
+    X_2d = X_centered @ components.T  # (n_samples, 2)
+
+    return X_2d, mean.squeeze(), components
+
+
+def demo_pca_plot():  # type: ignore
+    # Two patterns (same as in demo_pattern_classification)
+    pattern_A = [0.02, 0.05, 0.08]  # class 0
+    pattern_B = [0.08, 0.05, 0.02]  # class 1
+    weight_values = [0.3, 0.6, 0.9]
+
+    n_neurons = 5
+    T = 2500
+    n_samples_per_class = 20
+
+    # Collect firing-rate signatures
+    rates_A = run_pattern_trials(
+        label=0,
+        x_inputs=pattern_A,
+        weight_values=weight_values,
+        n_neurons=n_neurons,
+        T=T,
+        n_trials=n_samples_per_class,
+        base_seed=42,
+    )
+    rates_B = run_pattern_trials(
+        label=1,
+        x_inputs=pattern_B,
+        weight_values=weight_values,
+        n_neurons=n_neurons,
+        T=T,
+        n_trials=n_samples_per_class,
+        base_seed=42,
+    )
+
+    X = np.vstack([rates_A, rates_B])
+    y = np.concatenate(
+        [np.zeros(rates_A.shape[0], dtype=int), np.ones(rates_B.shape[0], dtype=int)]
+    )
+
+    # PCA to 2D
+    X_2d, mean_vec, components = compute_pca_2d(X)
+
+    # Split back by class
+    X_A = X_2d[y == 0]
+    X_B = X_2d[y == 1]
+
+    plt.figure()
+    plt.scatter(X_A[:, 0], X_A[:, 1], marker="o", label="Pattern A")
+    plt.scatter(X_B[:, 0], X_B[:, 1], marker="x", label="Pattern B")
+    plt.xlabel("PC1")
+    plt.ylabel("PC2")
+    plt.title("PCA of SC Dense Layer Firing-Rate Signatures")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+
+if __name__ == "__main__":
+    demo_pca_plot()  # type: ignore

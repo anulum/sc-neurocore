@@ -1,8 +1,5 @@
-// CopyRight: (c) 1998-2026 Miroslav Sotek. All rights reserved.
-// Contact us: www.anulum.li  protoscience@anulum.li
-// ORCID: https://orcid.org/0009-0009-3560-0851
-// License: GNU AFFERO GENERAL PUBLIC LICENSE v3
-// Commercial Licensing: Available
+// © 1998–2026 Miroslav Šotek. All rights reserved.
+// Contact: www.anulum.li | protoscience@anulum.li
 
 #![allow(clippy::useless_conversion)]
 
@@ -24,6 +21,7 @@ pub mod layer;
 pub mod neuron;
 pub mod scpn;
 pub mod simd;
+pub mod synapses;
 
 // ── HDC / VSA PyO3 wrapper ───────────────────────────────────────────
 
@@ -118,7 +116,59 @@ impl PyBitStreamTensor {
     }
 }
 
-/// SC-NeuroCore v3.7 — High-Performance Rust Engine
+#[pyclass(
+    name = "StdpSynapse",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
+pub struct StdpSynapse {
+    inner: synapses::StdpSynapse,
+}
+
+#[pymethods]
+impl StdpSynapse {
+    #[new]
+    #[pyo3(signature = (initial_weight, data_width=16, fraction=8))]
+    fn new(initial_weight: i16, data_width: u32, fraction: u32) -> Self {
+        Self {
+            inner: synapses::StdpSynapse::new(initial_weight, data_width, fraction),
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    #[pyo3(signature = (pre_spike, post_spike, a_plus=16, a_minus=-16, decay=250, w_min=0, w_max=32767))]
+    fn step(
+        &mut self,
+        pre_spike: bool,
+        post_spike: bool,
+        a_plus: i16,
+        a_minus: i16,
+        decay: i16,
+        w_min: i16,
+        w_max: i16,
+    ) {
+        let params = synapses::StdpParams {
+            a_plus,
+            a_minus,
+            decay,
+            w_min,
+            w_max,
+        };
+        self.inner.step(pre_spike, post_spike, &params);
+    }
+
+    #[getter]
+    fn weight(&self) -> i16 {
+        self.inner.weight
+    }
+
+    #[setter]
+    fn set_weight(&mut self, value: i16) {
+        self.inner.weight = value;
+    }
+}
+
+/// SC-NeuroCore v3.7 ─ High-Performance Rust Engine
+
 #[pymodule]
 fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("__version__", "3.7.0")?;
@@ -139,6 +189,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<BitstreamEncoder>()?;
     m.add_class::<FixedPointLif>()?;
     m.add_class::<DenseLayer>()?;
+    m.add_class::<StdpSynapse>()?;
     m.add_class::<PySurrogateLif>()?;
     m.add_class::<PyDifferentiableDenseLayer>()?;
     m.add_class::<PyStochasticAttention>()?;
@@ -1838,4 +1889,3 @@ fn parse_sc_type(s: &str) -> PyResult<ir::graph::ScType> {
         }
     }
 }
-
