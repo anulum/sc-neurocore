@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Any, Optional
+
 """
 GPU/CPU dual-path array module for SC-NeuroCore.
 

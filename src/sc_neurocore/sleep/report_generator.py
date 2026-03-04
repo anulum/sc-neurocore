@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """Post-session sleep quality report generator.
 
 Analyses the tick history from a :class:`SleepOptimizer` session and
@@ -19,6 +20,7 @@ from .sleep_optimizer import SleepOptimizer
 # ---------------------------------------------------------------------------
 # Report data
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class SleepReport:
@@ -69,6 +71,7 @@ class SleepReport:
 # ---------------------------------------------------------------------------
 # Generator
 # ---------------------------------------------------------------------------
+
 
 class SleepReportGenerator:
     """Generates a :class:`SleepReport` from a completed optimiser session."""

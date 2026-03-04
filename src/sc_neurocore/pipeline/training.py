@@ -1,4 +1,5 @@
 from typing import Any, Optional
+
 """Training loops for stochastic computing networks (RL and multimodal fusion)."""
 
 import logging

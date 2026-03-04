@@ -26,11 +26,12 @@ from ...accel.jax_backend import HAS_JAX, to_jax, to_host
 @dataclass
 class L16_HolonomicParameters:
     """Parameters derived from Paper 16 and Meta-Layer specifications."""
+
     n_meta_nodes: int = 10
     bitstream_length: int = 1024
-    
+
     # Director Constants
-    veto_threshold: float = 0.8     # Entropy threshold for veto ignition
+    veto_threshold: float = 0.8  # Entropy threshold for veto ignition
     refinement_gain: float = 0.1
     observer_coupling: float = 0.5
 
@@ -43,7 +44,7 @@ class L16_MetaAdapter(BaseStochasticAdapter):
     def __init__(self, params: Optional[L16_HolonomicParameters] = None, seed: int = 416) -> None:
         self.params = params or L16_HolonomicParameters()
         self.rng_key = jax.random.PRNGKey(seed)
-        
+
         # State: Director's Will (0.0 to 1.0)
         self.meta_will = jnp.full((self.params.n_meta_nodes,), 0.9)
         # State: System Entropy Proxy
@@ -64,25 +65,26 @@ class L16_MetaAdapter(BaseStochasticAdapter):
 
     @staticmethod
     @jax.jit
-    def _director_kernel(will: jnp.ndarray, gci_input: float, 
-                        entropy: float, threshold: float, dt: float) -> Tuple[jnp.ndarray, jnp.ndarray]:
+    def _director_kernel(
+        will: jnp.ndarray, gci_input: float, entropy: float, threshold: float, dt: float
+    ) -> Tuple[jnp.ndarray, jnp.ndarray]:
         """
         Solves the Recursive Closure dynamics:
         dWill/dt = GCI - Entropy_Loss
         """
         # Ethical Veto: Active if entropy exceeds threshold
         veto = jnp.array(entropy > threshold).astype(jnp.float32)
-        
+
         # Will grows with system coherence (GCI), decays with entropy
         d_will = 0.1 * gci_input - 0.2 * entropy
         will_next = jnp.clip(will + d_will * dt, 0.0, 1.0)
-        
+
         return will_next, jnp.full_like(will, veto)
 
     def step_jax(self, dt: float, inputs: Optional[jnp.ndarray] = None) -> jnp.ndarray:
         """
         Advances the L16 holonomic dynamics using JAX.
-        
+
         inputs: (1, bitstream_length) representing L15 GCI executive signal.
         Returns: (n_meta_nodes, bitstream_length) output bitstreams (The Master Directive).
         """
@@ -100,8 +102,7 @@ class L16_MetaAdapter(BaseStochasticAdapter):
 
         # 3. Execute Director Kernel
         self.meta_will, self.veto_active = self._director_kernel(
-            self.meta_will, float(gci_val), self.entropy_proxy, 
-            self.params.veto_threshold, dt
+            self.meta_will, float(gci_val), self.entropy_proxy, self.params.veto_threshold, dt
         )
 
         # 4. Return encoded bitstreams (The Master Directive)
@@ -111,9 +112,7 @@ class L16_MetaAdapter(BaseStochasticAdapter):
         """
         Maps bitstreams back to Cybernetic Will index.
         """
-        return {
-            "meta_coherence_r16": float(jnp.mean(bitstreams.astype(jnp.float32)))
-        }
+        return {"meta_coherence_r16": float(jnp.mean(bitstreams.astype(jnp.float32)))}
 
     def get_metrics(self) -> Dict[str, float]:
         """
@@ -122,5 +121,5 @@ class L16_MetaAdapter(BaseStochasticAdapter):
         return {
             "director_will": float(jnp.mean(self.meta_will)),
             "system_entropy": float(self.entropy_proxy),
-            "veto_active": float(jnp.mean(self.veto_active))
+            "veto_active": float(jnp.mean(self.veto_active)),
         }

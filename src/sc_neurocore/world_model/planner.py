@@ -15,7 +15,10 @@ class SCPlanner:
     world_model: PredictiveWorldModel
 
     def propose_action(
-        self, current_state: np.ndarray[Any, Any], goal_state: np.ndarray[Any, Any], n_candidates: int = 10
+        self,
+        current_state: np.ndarray[Any, Any],
+        goal_state: np.ndarray[Any, Any],
+        n_candidates: int = 10,
     ) -> np.ndarray[Any, Any]:
         """
         Propose the best action among n_candidates based on predicted outcome.
@@ -40,7 +43,10 @@ class SCPlanner:
         return best_action  # type: ignore
 
     def plan_sequence(
-        self, current_state: np.ndarray[Any, Any], goal_state: np.ndarray[Any, Any], horizon: int = 5
+        self,
+        current_state: np.ndarray[Any, Any],
+        goal_state: np.ndarray[Any, Any],
+        horizon: int = 5,
     ) -> List[np.ndarray[Any, Any]]:
         """
         Simple greedy planning for a sequence of actions.

@@ -1,4 +1,5 @@
 from typing import Any, Optional
+
 """
 SCPN L2: Neurochemical Layer (Stochastic Implementation)
 =========================================================

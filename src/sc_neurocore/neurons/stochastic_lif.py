@@ -82,7 +82,9 @@ class StochasticLIFNeuron(BaseNeuron):
     def get_state(self) -> Dict[str, Any]:
         return {"v": float(self.v), "refractory": self.refractory_counter}
 
-    def process_bitstream(self, input_bits: np.ndarray[Any, Any], input_scale: float = 1.0) -> np.ndarray[Any, Any]:
+    def process_bitstream(
+        self, input_bits: np.ndarray[Any, Any], input_scale: float = 1.0
+    ) -> np.ndarray[Any, Any]:
         """
         Process a bitstream (array of 0s and 1s) as input current.
         Returns an array of spikes (0s and 1s).

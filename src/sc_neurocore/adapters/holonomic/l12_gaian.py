@@ -26,16 +26,17 @@ from ...accel.jax_backend import HAS_JAX, to_jax, to_host
 @dataclass
 class L12_HolonomicParameters:
     """Parameters derived from Paper 12 and MQN specifications."""
+
     n_nodes: int = 100
     bitstream_length: int = 1024
-    
+
     # ENAQT Constants
     j_coherent_coupling: float = 0.4
     noise_assistance_factor: float = 0.1
-    
+
     # Ecological Sync
     gaian_decay: float = 0.05
-    solar_lunar_omega: float = 0.01 # Frequency of environmental driving
+    solar_lunar_omega: float = 0.01  # Frequency of environmental driving
 
 
 class L12_GaianAdapter(BaseStochasticAdapter):
@@ -46,7 +47,7 @@ class L12_GaianAdapter(BaseStochasticAdapter):
     def __init__(self, params: Optional[L12_HolonomicParameters] = None, seed: int = 412) -> None:
         self.params = params or L12_HolonomicParameters()
         self.rng_key = jax.random.PRNGKey(seed)
-        
+
         # State: Ecological Coherence (0 to 1)
         self.eco_coherence = jnp.full((self.params.n_nodes,), 0.2)
         # State: Nutrient/Information Flow density
@@ -65,8 +66,9 @@ class L12_GaianAdapter(BaseStochasticAdapter):
 
     @staticmethod
     @jax.jit
-    def _enaqt_kernel(coherence: jnp.ndarray, flow: jnp.ndarray, j_coupling: float, 
-                     noise_gain: float, dt: float) -> Tuple[jnp.ndarray, jnp.ndarray]:
+    def _enaqt_kernel(
+        coherence: jnp.ndarray, flow: jnp.ndarray, j_coupling: float, noise_gain: float, dt: float
+    ) -> Tuple[jnp.ndarray, jnp.ndarray]:
         """
         Solves the ENAQT transport dynamics:
         dC/dt = J * noise * (1 - C) - decay
@@ -74,21 +76,21 @@ class L12_GaianAdapter(BaseStochasticAdapter):
         # Noise-assisted transport increases coherence
         d_coherence = j_coupling * noise_gain * (1.0 - coherence) - 0.05 * coherence
         coherence_next = jnp.clip(coherence + d_coherence * dt, 0.0, 1.0)
-        
+
         # Flow density is proportional to coherence gradients
         new_flow = coherence_next * 0.5
-        
+
         return coherence_next, new_flow
 
     def step_jax(self, dt: float, inputs: Optional[jnp.ndarray] = None) -> jnp.ndarray:
         """
         Advances the L12 holonomic dynamics using JAX.
-        
+
         inputs: (n_nodes, bitstream_length) representing L6 Planetary or L11 Noospheric drive.
         Returns: (n_nodes, bitstream_length) output bitstreams.
         """
         self.env_phase += self.params.solar_lunar_omega * dt
-        
+
         # 1. Extract Environmental Forcing (L6/L11 -> L12)
         if inputs is not None:
             raw_input = jnp.mean(inputs.astype(jnp.float32), axis=1)
@@ -104,8 +106,11 @@ class L12_GaianAdapter(BaseStochasticAdapter):
         # Incorporate environmental drive into noise-assistance
         effective_noise = self.params.noise_assistance_factor * (1.0 + env_drive)
         self.eco_coherence, self.flow_density = self._enaqt_kernel(
-            self.eco_coherence, self.flow_density, self.params.j_coherent_coupling, 
-            jnp.mean(effective_noise), dt
+            self.eco_coherence,
+            self.flow_density,
+            self.params.j_coherent_coupling,
+            jnp.mean(effective_noise),
+            dt,
         )
 
         # 3. Return encoded bitstreams
@@ -117,7 +122,7 @@ class L12_GaianAdapter(BaseStochasticAdapter):
         """
         return {
             "gaian_synchrony_index": float(jnp.mean(bitstreams.astype(jnp.float32))),
-            "mycorrhizal_flow_rate": float(jnp.mean(self.flow_density))
+            "mycorrhizal_flow_rate": float(jnp.mean(self.flow_density)),
         }
 
     def get_metrics(self) -> Dict[str, float]:
@@ -127,5 +132,5 @@ class L12_GaianAdapter(BaseStochasticAdapter):
         return {
             "eco_system_coherence": float(jnp.mean(self.eco_coherence)),
             "global_nutrient_flow": float(jnp.mean(self.flow_density)),
-            "environmental_alignment": float(jnp.sin(self.env_phase))
+            "environmental_alignment": float(jnp.sin(self.env_phase)),
         }

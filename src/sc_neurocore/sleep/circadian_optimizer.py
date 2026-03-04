@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Any, Optional
+
 """Circadian rhythm modelling and chronotype-aware sleep optimisation.
 
 Four chronotypes (Lion, Bear, Wolf, Dolphin) each carry a preferred
@@ -20,6 +21,7 @@ import numpy as np
 # Chronotypes
 # ---------------------------------------------------------------------------
 
+
 class Chronotype(Enum):
     """Sleep chronotype labels (after Michael Breus' model)."""
 
@@ -32,6 +34,7 @@ class Chronotype(Enum):
 # ---------------------------------------------------------------------------
 # Circadian profile
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class CircadianProfile:
@@ -105,6 +108,7 @@ _PROFILES: Dict[Chronotype, CircadianProfile] = {
 # ---------------------------------------------------------------------------
 # Optimizer
 # ---------------------------------------------------------------------------
+
 
 class CircadianOptimizer:
     """Chronotype-aware circadian rhythm optimizer.

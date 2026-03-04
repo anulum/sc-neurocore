@@ -26,16 +26,17 @@ from ...accel.jax_backend import HAS_JAX, to_jax, to_host
 @dataclass
 class L11_HolonomicParameters:
     """Parameters derived from Paper 11 and NTHS specifications."""
+
     n_nodes: int = 100
     bitstream_length: int = 1024
-    
+
     # Spin-Glass Constants
-    j_coupling: float = 0.5         # Symbolic interaction strength
-    h_bias: float = 0.1             # Algorithmic bias / Forcing field
-    
+    j_coupling: float = 0.5  # Symbolic interaction strength
+    h_bias: float = 0.1  # Algorithmic bias / Forcing field
+
     # Memetic Constants
-    beta_infection: float = 0.2     # Rate of memetic spread
-    gamma_recovery: float = 0.05    # Rate of memetic decay (forgetting)
+    beta_infection: float = 0.2  # Rate of memetic spread
+    gamma_recovery: float = 0.05  # Rate of memetic decay (forgetting)
 
 
 class L11_NoosphericAdapter(BaseStochasticAdapter):
@@ -46,7 +47,7 @@ class L11_NoosphericAdapter(BaseStochasticAdapter):
     def __init__(self, params: Optional[L11_HolonomicParameters] = None, seed: int = 411) -> None:
         self.params = params or L11_HolonomicParameters()
         self.rng_key = jax.random.PRNGKey(seed)
-        
+
         # State: Cultural Spins (-1 to +1, represented as 0 to 1 probabilities)
         self.spins = jnp.full((self.params.n_nodes,), 0.5)
         # State: Information Density
@@ -63,8 +64,9 @@ class L11_NoosphericAdapter(BaseStochasticAdapter):
 
     @staticmethod
     @jax.jit
-    def _nths_kernel(spins: jnp.ndarray, field_input: jnp.ndarray, j_avg: float, 
-                    h_bias: float, dt: float) -> jnp.ndarray:
+    def _nths_kernel(
+        spins: jnp.ndarray, field_input: jnp.ndarray, j_avg: float, h_bias: float, dt: float
+    ) -> jnp.ndarray:
         """
         Solves the NTHS Spin-Glass dynamics:
         dSpin/dt = J * MeanField + h_bias + field_input - decay
@@ -77,7 +79,7 @@ class L11_NoosphericAdapter(BaseStochasticAdapter):
     def step_jax(self, dt: float, inputs: Optional[jnp.ndarray] = None) -> jnp.ndarray:
         """
         Advances the L11 holonomic dynamics using JAX.
-        
+
         inputs: (n_nodes, bitstream_length) representing L7 Symbolic or L10 Firewall signals.
         Returns: (n_nodes, bitstream_length) output bitstreams.
         """
@@ -109,7 +111,7 @@ class L11_NoosphericAdapter(BaseStochasticAdapter):
         polarization = jnp.std(spins)
         return {
             "noospheric_polarization": float(polarization),
-            "collective_coherence_r11": float(jnp.mean(spins))
+            "collective_coherence_r11": float(jnp.mean(spins)),
         }
 
     def get_metrics(self) -> Dict[str, float]:
@@ -119,5 +121,5 @@ class L11_NoosphericAdapter(BaseStochasticAdapter):
         return {
             "avg_polarization": float(jnp.std(self.spins)),
             "noospheric_entropy": float(-jnp.sum(self.spins * jnp.log(self.spins + 1e-6))),
-            "info_saturation": float(jnp.mean(self.info_density))
+            "info_saturation": float(jnp.mean(self.info_density)),
         }

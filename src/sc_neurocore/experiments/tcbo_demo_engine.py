@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Any, Optional
+
 """
 TCBO Consciousness Detection Demo Engine
 ==========================================
@@ -30,10 +31,26 @@ logger = logging.getLogger(__name__)
 
 # ── Canonical SCPN Parameters ──────────────────────────────────────────
 
-OMEGA_N = np.array([
-    1.329, 2.610, 0.844, 1.520, 0.710, 3.780, 1.055, 0.625,
-    2.210, 1.740, 0.480, 3.210, 0.915, 1.410, 2.830, 0.991,
-])
+OMEGA_N = np.array(
+    [
+        1.329,
+        2.610,
+        0.844,
+        1.520,
+        0.710,
+        3.780,
+        1.055,
+        0.625,
+        2.210,
+        1.740,
+        0.480,
+        3.210,
+        0.915,
+        1.410,
+        2.830,
+        0.991,
+    ]
+)
 
 
 def _build_knm(N: int = 16, K_base: float = 0.45, alpha: float = 0.3) -> np.ndarray[Any, Any]:
@@ -204,7 +221,7 @@ class SyntheticEEGGenerator:
         self.K = self._K_base * scale
 
     def apply_anesthesia(self, strength: float = 0.9):  # type: ignore
-        self.K *= (1.0 - strength)
+        self.K *= 1.0 - strength
         self.theta = self._rng.uniform(0, 2 * np.pi, self.N)
         self.noise_amplitude *= 10.0
 
@@ -215,7 +232,7 @@ class SyntheticEEGGenerator:
             np.fill_diagonal(self.K, 0)
 
     def apply_coupling_decay(self, rate: float):  # type: ignore
-        self.K *= (1.0 - rate)
+        self.K *= 1.0 - rate
 
     def step(self, perturbation: Optional[np.ndarray[Any, Any]] = None) -> np.ndarray[Any, Any]:
         """One Kuramoto timestep. Returns phases in [0, 2pi)."""
@@ -300,6 +317,7 @@ class TCBOController:
 @dataclass
 class TCBODemoSnapshot:
     """Per-step snapshot of the TCBO demo state."""
+
     step: int = 0
     time_s: float = 0.0
     phases: List[float] = field(default_factory=list)
@@ -364,7 +382,9 @@ class TCBODemoEngine:
         try:
             scenario_name = ScenarioName(name)
         except ValueError:
-            raise ValueError(f"Unknown scenario: {name}. Available: {[s.value for s in ScenarioName]}")
+            raise ValueError(
+                f"Unknown scenario: {name}. Available: {[s.value for s in ScenarioName]}"
+            )
 
         cfg = SCENARIOS[scenario_name]
         self._current_scenario = name

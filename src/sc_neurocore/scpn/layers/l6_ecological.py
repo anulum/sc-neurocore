@@ -1,4 +1,5 @@
 from typing import Any, Optional
+
 """
 SCPN L6: Ecological-Planetary Layer (Stochastic Implementation)
 ================================================================

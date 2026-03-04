@@ -16,6 +16,7 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
+
 class CompilerPipeline:
     """
     Automated hardware synthesis pipeline.
@@ -32,10 +33,10 @@ class CompilerPipeline:
         """
         mlir_path = os.path.join(self.work_dir, f"{output_name}.mlir")
         v_path = os.path.join(self.work_dir, f"{output_name}.v")
-        
+
         with open(mlir_path, "w") as f:
             f.write(mlir_content)
-            
+
         logger.info(f"Lowering {mlir_path} to Verilog...")
         # Note: In a real environment, firtool must be in PATH
         try:
@@ -44,8 +45,10 @@ class CompilerPipeline:
             logger.warning(f"firtool failed or not found: {e}. Falling back to stub Verilog.")
             # Fallback for demo/development without full toolchain
             with open(v_path, "w") as f:
-                f.write(f"// Stub Verilog generated for {output_name}\nmodule {output_name}(); endmodule")
-                
+                f.write(
+                    f"// Stub Verilog generated for {output_name}\nmodule {output_name}(); endmodule"
+                )
+
         return v_path
 
     def run_synthesis(self, v_path: str, target_fpga: str = "ice40") -> str:
@@ -54,18 +57,15 @@ class CompilerPipeline:
         """
         base = os.path.splitext(v_path)[0]
         json_path = f"{base}.json"
-        
+
         logger.info(f"Synthesizing {v_path} for {target_fpga}...")
-        yosys_cmd = [
-            "yosys", "-p", 
-            f"read_verilog {v_path}; synth_{target_fpga} -json {json_path}"
-        ]
-        
+        yosys_cmd = ["yosys", "-p", f"read_verilog {v_path}; synth_{target_fpga} -json {json_path}"]
+
         try:
             subprocess.run(yosys_cmd, check=True)
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
             logger.warning(f"yosys failed or not found: {e}")
-            
+
         return json_path
 
     def run_pnr(self, json_path: str, target_device: str = "up5k") -> str:
@@ -73,16 +73,13 @@ class CompilerPipeline:
         Invokes 'nextpnr' for place and route.
         """
         asc_path = f"{os.path.splitext(json_path)[0]}.asc"
-        
+
         logger.info(f"Running P&R for {target_device}...")
-        pnr_cmd = [
-            "nextpnr-ice40", "--up5k", 
-            "--json", json_path, "--asc", asc_path
-        ]
-        
+        pnr_cmd = ["nextpnr-ice40", "--up5k", "--json", json_path, "--asc", asc_path]
+
         try:
             subprocess.run(pnr_cmd, check=True)
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
             logger.warning(f"nextpnr failed or not found: {e}")
-            
+
         return asc_path

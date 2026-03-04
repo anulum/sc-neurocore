@@ -1,4 +1,5 @@
 from typing import Any, Optional
+
 """
 SCPN L5: Organismal-Psychoemotional Layer (Stochastic Implementation)
 ======================================================================
@@ -111,7 +112,10 @@ class L5_OrganismalLayer:
         return attractors
 
     def step(
-        self, dt: float, l4_input: Optional[Dict[str, Any]] = None, external_event: Optional[Dict[str, Any]] = None
+        self,
+        dt: float,
+        l4_input: Optional[Dict[str, Any]] = None,
+        external_event: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, np.ndarray[Any, Any]]:
         """
         Advance the layer by one time step.

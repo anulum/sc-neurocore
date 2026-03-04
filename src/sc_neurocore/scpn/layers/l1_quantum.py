@@ -1,4 +1,5 @@
 from typing import Any, Optional
+
 """
 SCPN L1: Quantum Biological Layer (Stochastic Implementation)
 =============================================================
@@ -62,9 +63,9 @@ class L1_QuantumLayer:
             )
         else:
             self.quantum_core = QuantumHardwareLayer(
-                n_qubits=self.params.n_qubits, 
+                n_qubits=self.params.n_qubits,
                 length=self.params.bitstream_length,
-                backend_type=self.params.backend
+                backend_type=self.params.backend,
             )
 
         # State: Coherence represented as probabilities (0.0 to 1.0)
@@ -75,7 +76,9 @@ class L1_QuantumLayer:
         # History for non-Markovian effects
         self.history: list[float] = []
 
-    def step(self, dt: float, external_field: Optional[np.ndarray[Any, Any]] = None) -> np.ndarray[Any, Any]:
+    def step(
+        self, dt: float, external_field: Optional[np.ndarray[Any, Any]] = None
+    ) -> np.ndarray[Any, Any]:
         """
         Advance the layer by one time step.
 

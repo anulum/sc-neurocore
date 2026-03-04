@@ -1,4 +1,5 @@
 from typing import Any, Optional
+
 """
 SCPN L4: Cellular-Tissue Synchronization Layer (Stochastic Implementation)
 ===========================================================================

@@ -1,4 +1,5 @@
 """User profile: chronotype and session preferences."""
+
 from __future__ import annotations
 
 import logging
@@ -20,33 +21,41 @@ class Chronotype(str, Enum):
     optimal session timing.
     """
 
-    LION = "lion"        # Early riser, alpha-dominant mornings
-    BEAR = "bear"        # Solar schedule, balanced spectrum
-    WOLF = "wolf"        # Night owl, theta-rich evenings
+    LION = "lion"  # Early riser, alpha-dominant mornings
+    BEAR = "bear"  # Solar schedule, balanced spectrum
+    WOLF = "wolf"  # Night owl, theta-rich evenings
     DOLPHIN = "dolphin"  # Light sleeper, high beta baseline
 
 
 # Default target Hz by chronotype
 _CHRONOTYPE_TARGET_HZ: Dict[Chronotype, float] = {
-    Chronotype.LION: 10.0,     # Alpha (relaxed focus)
-    Chronotype.BEAR: 10.0,     # Alpha (balanced)
-    Chronotype.WOLF: 6.0,      # Theta (creative flow)
+    Chronotype.LION: 10.0,  # Alpha (relaxed focus)
+    Chronotype.BEAR: 10.0,  # Alpha (balanced)
+    Chronotype.WOLF: 6.0,  # Theta (creative flow)
     Chronotype.DOLPHIN: 12.0,  # High alpha (calm alertness)
 }
 
 # Preferred cost weight profiles
 _CHRONOTYPE_WEIGHTS: Dict[Chronotype, Dict[str, float]] = {
     Chronotype.LION: {
-        "w_micro": 1.0, "w_reg": 0.01, "w_stability": 0.8,
+        "w_micro": 1.0,
+        "w_reg": 0.01,
+        "w_stability": 0.8,
     },
     Chronotype.BEAR: {
-        "w_micro": 1.0, "w_reg": 0.01, "w_stability": 0.5,
+        "w_micro": 1.0,
+        "w_reg": 0.01,
+        "w_stability": 0.5,
     },
     Chronotype.WOLF: {
-        "w_micro": 0.8, "w_reg": 0.02, "w_stability": 0.4,
+        "w_micro": 0.8,
+        "w_reg": 0.02,
+        "w_stability": 0.4,
     },
     Chronotype.DOLPHIN: {
-        "w_micro": 1.2, "w_reg": 0.005, "w_stability": 1.0,
+        "w_micro": 1.2,
+        "w_reg": 0.005,
+        "w_stability": 1.0,
     },
 }
 
@@ -92,8 +101,11 @@ class UserProfile:
             )
         if not self.sensitivity_map:
             self.sensitivity_map = {
-                "delta": 1.0, "theta": 1.0, "alpha": 1.0,
-                "beta": 1.0, "gamma": 1.0,
+                "delta": 1.0,
+                "theta": 1.0,
+                "alpha": 1.0,
+                "beta": 1.0,
+                "gamma": 1.0,
             }
 
     # ── Target Hz ────────────────────────────────────────────────────
@@ -139,8 +151,8 @@ class UserProfile:
                 # Exponential moving average toward the new target
                 alpha = 0.3
                 self.preferred_target_hz = (
-                    (1 - alpha) * self.preferred_target_hz + alpha * best_target_hz
-                )
+                    1 - alpha
+                ) * self.preferred_target_hz + alpha * best_target_hz
 
         # Update baseline band powers (EMA blend)
         if band_powers:
@@ -154,7 +166,8 @@ class UserProfile:
 
         logger.info(
             "Profile updated: session #%d, avg_evs=%.1f, target=%.2f Hz",
-            self.session_count, avg_evs,
+            self.session_count,
+            avg_evs,
             self.preferred_target_hz or self.get_best_target_hz(),
         )
 

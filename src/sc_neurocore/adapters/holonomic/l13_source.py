@@ -26,13 +26,14 @@ from ...accel.jax_backend import HAS_JAX, to_jax, to_host
 @dataclass
 class L13_HolonomicParameters:
     """Parameters derived from Paper 13 and Vacuum Lattice specs."""
+
     n_vacuum_nodes: int = 256
     bitstream_length: int = 1024
-    
+
     # Ontological Constants
     j_primordial_coupling: float = 1.0
     h_potential_bias: float = 0.01
-    lambda_scission: float = 0.1 # Rate of symmetry breaking
+    lambda_scission: float = 0.1  # Rate of symmetry breaking
 
 
 class L13_SourceAdapter(BaseStochasticAdapter):
@@ -43,7 +44,7 @@ class L13_SourceAdapter(BaseStochasticAdapter):
     def __init__(self, params: Optional[L13_HolonomicParameters] = None, seed: int = 413) -> None:
         self.params = params or L13_HolonomicParameters()
         self.rng_key = jax.random.PRNGKey(seed)
-        
+
         # State: Vacuum Potential (0.0 to 1.0)
         self.vacuum_state = jnp.full((self.params.n_vacuum_nodes,), 0.5)
         # State: Fisher Information Metric Density
@@ -54,7 +55,9 @@ class L13_SourceAdapter(BaseStochasticAdapter):
         Maps vacuum potential to stochastic bitstreams.
         """
         self.rng_key, subkey = jax.random.split(self.rng_key)
-        rands = jax.random.uniform(subkey, (self.params.n_vacuum_nodes, self.params.bitstream_length))
+        rands = jax.random.uniform(
+            subkey, (self.params.n_vacuum_nodes, self.params.bitstream_length)
+        )
         bitstreams = (rands < self.vacuum_state[:, None]).astype(jnp.uint8)
         return bitstreams
 
@@ -73,14 +76,13 @@ class L13_SourceAdapter(BaseStochasticAdapter):
     def step_jax(self, dt: float, inputs: Optional[jnp.ndarray] = None) -> jnp.ndarray:
         """
         Advances the L13 holonomic dynamics using JAX.
-        
+
         inputs: Optional feedback from L16 (Cybernetic Closure).
         Returns: (n_vacuum_nodes, bitstream_length) output bitstreams.
         """
         # 1. Update Vacuum State
         self.vacuum_state = self._vacuum_kernel(
-            self.vacuum_state, self.params.j_primordial_coupling, 
-            self.params.h_potential_bias, dt
+            self.vacuum_state, self.params.j_primordial_coupling, self.params.h_potential_bias, dt
         )
 
         # 2. Update FIM Density (Measures rate of change / information work)
@@ -94,9 +96,7 @@ class L13_SourceAdapter(BaseStochasticAdapter):
         """
         Maps bitstreams back to Primordial Coherence.
         """
-        return {
-            "source_coherence_r13": float(jnp.mean(bitstreams.astype(jnp.float32)))
-        }
+        return {"source_coherence_r13": float(jnp.mean(bitstreams.astype(jnp.float32)))}
 
     def get_metrics(self) -> Dict[str, float]:
         """
@@ -104,5 +104,5 @@ class L13_SourceAdapter(BaseStochasticAdapter):
         """
         return {
             "vacuum_potential": float(jnp.mean(self.vacuum_state)),
-            "fisher_information_metric": float(jnp.mean(self.fim_density))
+            "fisher_information_metric": float(jnp.mean(self.fim_density)),
         }

@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Any, Optional
+
 """Bridge utilities for converting weights between DL frameworks and SC-NeuroCore."""
 
 import logging

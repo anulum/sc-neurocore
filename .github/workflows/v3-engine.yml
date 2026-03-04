@@ -65,9 +65,11 @@ jobs:
           pip install maturin pytest numpy jax jaxlib qiskit pennylane qiskit-aer
 
       - name: Build engine bridge
+        shell: bash
         run: |
           cd bridge
-          maturin develop
+          maturin build --release --out ../dist/
+          pip install ../dist/*.whl
 
       - name: Run engine unit tests
         run: cargo test --manifest-path engine/Cargo.toml

@@ -23,7 +23,9 @@ class BCIDecoder:
             return np.zeros_like(signal)
         return (signal - s_min) / (s_max - s_min)  # type: ignore
 
-    def encode_to_bitstream(self, signal: np.ndarray[Any, Any], length: int = 256) -> np.ndarray[Any, Any]:
+    def encode_to_bitstream(
+        self, signal: np.ndarray[Any, Any], length: int = 256
+    ) -> np.ndarray[Any, Any]:
         """
         Encodes a [Channels, Time] signal block into [Channels, Bitstream_Length].
         We assume 'signal' represents the mean firing rate/amplitude for this window.

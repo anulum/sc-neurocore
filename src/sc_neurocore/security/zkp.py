@@ -27,7 +27,10 @@ class ZKPVerifier:
 
     @staticmethod
     def verify(
-        commitment: str, challenge_idx: int, revealed_bit: int, bitstream_slice: np.ndarray[Any, Any]
+        commitment: str,
+        challenge_idx: int,
+        revealed_bit: int,
+        bitstream_slice: np.ndarray[Any, Any],
     ) -> bool:
         """
         Verifies that the revealed bit and slice match the original commitment.

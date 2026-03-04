@@ -12,7 +12,9 @@ class SCAudioSynthesizer:
 
     sample_rate: int = 44100
 
-    def synthesize_tone(self, frequency: float, duration_ms: int, probability: float) -> np.ndarray[Any, Any]:
+    def synthesize_tone(
+        self, frequency: float, duration_ms: int, probability: float
+    ) -> np.ndarray[Any, Any]:
         """
         Synthesize a simple sine tone modulated by probability (amplitude).
         """

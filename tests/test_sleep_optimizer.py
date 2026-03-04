@@ -5,9 +5,17 @@ import unittest
 import numpy as np
 
 from sc_neurocore.sleep import (
-    SleepStageDetector, SleepStage, CircadianOptimizer, Chronotype,
-    SleepProtocol, get_protocol, list_protocols,
-    SleepOptimizer, SleepOptimizerConfig, SleepReportGenerator, SleepReport,
+    SleepStageDetector,
+    SleepStage,
+    CircadianOptimizer,
+    Chronotype,
+    SleepProtocol,
+    get_protocol,
+    list_protocols,
+    SleepOptimizer,
+    SleepOptimizerConfig,
+    SleepReportGenerator,
+    SleepReport,
 )
 from sc_neurocore.sleep.sleep_stage_detector import DetectorConfig, STAGE_SIGNATURES, EEG_BANDS
 from sc_neurocore.sleep.protocol_library import StageAudioParams, PROTOCOL_REGISTRY
@@ -17,15 +25,15 @@ def generate_stage_eeg(stage, sample_rate=256, n_samples=512, seed=42):
     t = np.arange(n_samples) / sample_rate
     rng = np.random.RandomState(seed)
     if stage == SleepStage.WAKE:
-        signal = 0.5*np.sin(2*np.pi*10*t) + 0.3*np.sin(2*np.pi*20*t)
+        signal = 0.5 * np.sin(2 * np.pi * 10 * t) + 0.3 * np.sin(2 * np.pi * 20 * t)
     elif stage == SleepStage.N1:
-        signal = 0.6*np.sin(2*np.pi*6*t) + 0.2*np.sin(2*np.pi*10*t)
+        signal = 0.6 * np.sin(2 * np.pi * 6 * t) + 0.2 * np.sin(2 * np.pi * 10 * t)
     elif stage == SleepStage.N2:
-        signal = 0.5*np.sin(2*np.pi*3*t) + 0.4*np.sin(2*np.pi*1.5*t)
+        signal = 0.5 * np.sin(2 * np.pi * 3 * t) + 0.4 * np.sin(2 * np.pi * 1.5 * t)
     elif stage == SleepStage.N3:
-        signal = 0.8*np.sin(2*np.pi*1.5*t) + 0.3*np.sin(2*np.pi*0.8*t)
+        signal = 0.8 * np.sin(2 * np.pi * 1.5 * t) + 0.3 * np.sin(2 * np.pi * 0.8 * t)
     elif stage == SleepStage.REM:
-        signal = 0.4*np.sin(2*np.pi*6*t) + 0.3*np.sin(2*np.pi*15*t)
+        signal = 0.4 * np.sin(2 * np.pi * 6 * t) + 0.3 * np.sin(2 * np.pi * 15 * t)
     else:
         signal = np.zeros(n_samples)
     return signal + rng.normal(0, 0.15, n_samples)
@@ -38,7 +46,8 @@ class TestSleepStageDetector(unittest.TestCase):
 
     def test_detect_without_enough_samples(self):
         det = SleepStageDetector(DetectorConfig(min_samples=128))
-        for _ in range(50): det.add_sample(0.0)
+        for _ in range(50):
+            det.add_sample(0.0)
         self.assertIsNone(det.detect())
 
     def test_add_samples_bulk(self):
@@ -82,7 +91,9 @@ class TestSleepStageDetector(unittest.TestCase):
 
     def test_reset(self):
         det = SleepStageDetector()
-        det.add_samples(np.ones(100)); det.detect(); det.reset()
+        det.add_samples(np.ones(100))
+        det.detect()
+        det.reset()
         self.assertEqual(len(det._buffer), 0)
 
     def test_stage_signatures_complete(self):
@@ -279,9 +290,17 @@ class TestSleepReportGenerator(unittest.TestCase):
         cfg = SleepOptimizerConfig(sample_rate=256, fft_window=256, stage_check_interval=256)
         opt = SleepOptimizer(protocol, config=cfg)
         opt.start_session()
-        stages = [SleepStage.WAKE, SleepStage.N1, SleepStage.N2, SleepStage.N3, SleepStage.N2, SleepStage.REM, SleepStage.N1]
+        stages = [
+            SleepStage.WAKE,
+            SleepStage.N1,
+            SleepStage.N2,
+            SleepStage.N3,
+            SleepStage.N2,
+            SleepStage.REM,
+            SleepStage.N1,
+        ]
         for i in range(n_epochs):
-            stage = stages[min(int(i/n_epochs*len(stages)), len(stages)-1)]
+            stage = stages[min(int(i / n_epochs * len(stages)), len(stages) - 1)]
             opt.add_samples(generate_stage_eeg(stage, n_samples=256, seed=i))
             opt.check_and_adapt()
         opt.stop_session()
@@ -322,7 +341,9 @@ class TestSleepIntegration(unittest.TestCase):
         cfg = SleepOptimizerConfig(sample_rate=256, fft_window=256, stage_check_interval=256)
         opt = SleepOptimizer(proto_name, config=cfg)
         opt.start_session()
-        for i, stage in enumerate([SleepStage.WAKE, SleepStage.N1, SleepStage.N2, SleepStage.N3, SleepStage.REM]*5):
+        for i, stage in enumerate(
+            [SleepStage.WAKE, SleepStage.N1, SleepStage.N2, SleepStage.N3, SleepStage.REM] * 5
+        ):
             opt.add_samples(generate_stage_eeg(stage, n_samples=256, seed=i))
             opt.check_and_adapt()
         opt.stop_session()

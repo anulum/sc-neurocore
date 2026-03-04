@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Any, Optional
+
 """
 SwarmEvolver -- genetic algorithm over SNN weight vectors.
 
@@ -58,9 +59,7 @@ class SwarmEvolver:
         self.n_weights = template.n_weights
 
         # Initialise population with small random weights
-        self.population = [
-            self.rng.normal(0, 0.5, self.n_weights) for _ in range(cfg.pop_size)
-        ]
+        self.population = [self.rng.normal(0, 0.5, self.n_weights) for _ in range(cfg.pop_size)]
         self.fitnesses = np.zeros(cfg.pop_size)
         self.generation = 0
         self.best_fitness_history: list[float] = []
@@ -127,7 +126,9 @@ class SwarmEvolver:
         order = np.argsort(self.fitnesses)[::-1]
         return [self.population[i].copy() for i in order[: self.cfg.n_elite]]
 
-    def _crossover(self, parent_a: np.ndarray[Any, Any], parent_b: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+    def _crossover(
+        self, parent_a: np.ndarray[Any, Any], parent_b: np.ndarray[Any, Any]
+    ) -> np.ndarray[Any, Any]:
         """Uniform crossover: each gene randomly from either parent."""
         mask = self.rng.random(self.n_weights) < 0.5
         child = np.where(mask, parent_a, parent_b)

@@ -1,4 +1,5 @@
 from typing import Any, Optional
+
 """Multi-agent ensemble orchestration with consensus and coordinated missions."""
 
 import logging

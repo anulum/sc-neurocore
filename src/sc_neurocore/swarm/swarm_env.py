@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Any, Optional
+
 """
 SwarmEnvironment -- 2-D arena with agents, obstacles, and targets.
 
@@ -100,7 +101,7 @@ class SwarmEnvironment:
         """Return (n_agents, n_agents) Euclidean distance matrix."""
         pos = self.get_positions()
         diff = pos[:, np.newaxis, :] - pos[np.newaxis, :, :]
-        return np.sqrt((diff ** 2).sum(axis=-1))  # type: ignore
+        return np.sqrt((diff**2).sum(axis=-1))  # type: ignore
 
     def get_neighbor_distances(self, agent_idx: int, k: int = 8) -> np.ndarray[Any, Any]:
         """Return sorted distances to the *k* nearest neighbours.
@@ -109,7 +110,7 @@ class SwarmEnvironment:
         """
         pos = self.get_positions()
         diff = pos - pos[agent_idx]
-        dists = np.sqrt((diff ** 2).sum(axis=-1))
+        dists = np.sqrt((diff**2).sum(axis=-1))
         dists[agent_idx] = np.inf  # exclude self
         sorted_d = np.sort(dists)
         out = np.zeros(k)
@@ -179,8 +180,9 @@ class SwarmEnvironment:
 
             # Chemical deposit
             if fields is not None:
-                fields.deposit_chemical(agent.position[0], agent.position[1],
-                                        agent.chemical_output * dt)
+                fields.deposit_chemical(
+                    agent.position[0], agent.position[1], agent.chemical_output * dt
+                )
 
         # --- Target capture ---
         positions = self.get_positions()

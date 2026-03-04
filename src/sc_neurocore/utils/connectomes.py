@@ -8,7 +8,9 @@ class ConnectomeGenerator:
     """
 
     @staticmethod
-    def generate_watts_strogatz(n_neurons: int, k_neighbors: int, p_rewire: float) -> np.ndarray[Any, Any]:
+    def generate_watts_strogatz(
+        n_neurons: int, k_neighbors: int, p_rewire: float
+    ) -> np.ndarray[Any, Any]:
         """
         Watts-Strogatz Small-World Model.
 

@@ -26,18 +26,19 @@ from ...accel.jax_backend import HAS_JAX, jax_lif_step, to_jax, to_host
 @dataclass
 class L2_HolonomicParameters:
     """Parameters derived from Paper 2 and Monograph 28."""
+
     n_transmitters: int = 4
     n_receptors: int = 500
     bitstream_length: int = 1024
-    
+
     # IIIEF Constants
     alpha_iiief: float = 0.01  # Information-to-Field coupling constant
-    c_info: float = 300.0      # Effective information propagation velocity
-    
+    c_info: float = 300.0  # Effective information propagation velocity
+
     # H_QC Bridge Parameters
-    g_snare: float = 0.8       # SNARE complex formation gain
-    v_critical: float = 1.2    # Critical voltage for quantum trigger
-    
+    g_snare: float = 0.8  # SNARE complex formation gain
+    v_critical: float = 1.2  # Critical voltage for quantum trigger
+
     # Neurochemical Tonus (L2 -> Core modulation)
     dopamine_gain: float = 1.5
     serotonin_leak: float = 0.9
@@ -51,7 +52,7 @@ class L2_NeurochemicalAdapter(BaseStochasticAdapter):
     def __init__(self, params: Optional[L2_HolonomicParameters] = None, seed: int = 42) -> None:
         self.params = params or L2_HolonomicParameters()
         self.rng_key = jax.random.PRNGKey(seed)
-        
+
         # State: Receptors (n_types, n_receptors)
         self.receptor_states = jnp.zeros((self.params.n_transmitters, self.params.n_receptors))
         # State: Information-Geometric Field potential
@@ -65,13 +66,17 @@ class L2_NeurochemicalAdapter(BaseStochasticAdapter):
         """
         # (n_transmitters, bitstream_length)
         self.rng_key, subkey = jax.random.split(self.rng_key)
-        rands = jax.random.uniform(subkey, (self.params.n_transmitters, self.params.bitstream_length))
+        rands = jax.random.uniform(
+            subkey, (self.params.n_transmitters, self.params.bitstream_length)
+        )
         bitstreams = (rands < self.concentrations[:, None]).astype(jnp.uint8)
         return bitstreams
 
     @staticmethod
     @jax.jit
-    def _iiief_kernel(phi: jnp.ndarray, integrated_info: jnp.ndarray, alpha: float, dt: float) -> jnp.ndarray:
+    def _iiief_kernel(
+        phi: jnp.ndarray, integrated_info: jnp.ndarray, alpha: float, dt: float
+    ) -> jnp.ndarray:
         """
         Solves the simplified IIIEF wave equation:
         dPhi/dt = alpha * Phi_integrated - decay * Phi
@@ -83,7 +88,7 @@ class L2_NeurochemicalAdapter(BaseStochasticAdapter):
     def step_jax(self, dt: float, inputs: Optional[jnp.ndarray] = None) -> jnp.ndarray:
         """
         Advances the L2 holonomic dynamics using JAX.
-        
+
         inputs: (n_transmitters, bitstream_length) representing L1 or L5 feedback.
         Returns: (n_transmitters, bitstream_length) output bitstreams.
         """
@@ -119,7 +124,7 @@ class L2_NeurochemicalAdapter(BaseStochasticAdapter):
             "dopamine": float(means[0]),
             "serotonin": float(means[1]),
             "norepinephrine": float(means[2]),
-            "acetylcholine": float(means[3])
+            "acetylcholine": float(means[3]),
         }
 
     def get_metrics(self) -> Dict[str, float]:
@@ -128,5 +133,5 @@ class L2_NeurochemicalAdapter(BaseStochasticAdapter):
         """
         return {
             "avg_field_potential": float(jnp.mean(self.phi_field)),
-            "system_coherence_r2": float(jnp.mean(self.concentrations))
+            "system_coherence_r2": float(jnp.mean(self.concentrations)),
         }

@@ -1,4 +1,5 @@
 from typing import Any, Optional
+
 """
 SC-NeuroCore CCW Bridge Interface
 ==================================
@@ -324,7 +325,10 @@ class CCWBridge:
         return metadata
 
     def export_glyph_stream(
-        self, glyph_vector: np.ndarray[Any, Any], cosmic_vector: Optional[Dict[str, float]] = None, filepath: Optional[str] = None
+        self,
+        glyph_vector: np.ndarray[Any, Any],
+        cosmic_vector: Optional[Dict[str, float]] = None,
+        filepath: Optional[str] = None,
     ) -> str:
         """
         Export glyph stream data for VIBRANA/CCW hardware playback.

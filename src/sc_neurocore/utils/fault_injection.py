@@ -8,7 +8,9 @@ class FaultInjector:
     """
 
     @staticmethod
-    def inject_bit_flips(bitstream: np.ndarray[Any, Any], error_rate: float) -> np.ndarray[Any, Any]:
+    def inject_bit_flips(
+        bitstream: np.ndarray[Any, Any], error_rate: float
+    ) -> np.ndarray[Any, Any]:
         """
         Randomly flips bits with probability 'error_rate'.
         """
@@ -31,7 +33,9 @@ class FaultInjector:
         return corrupted.astype(np.uint8)
 
     @staticmethod
-    def inject_stuck_at(bitstream: np.ndarray[Any, Any], fault_rate: float, value: int) -> np.ndarray[Any, Any]:
+    def inject_stuck_at(
+        bitstream: np.ndarray[Any, Any], fault_rate: float, value: int
+    ) -> np.ndarray[Any, Any]:
         """
         Simulates Stuck-At-0 or Stuck-At-1 faults.
         """

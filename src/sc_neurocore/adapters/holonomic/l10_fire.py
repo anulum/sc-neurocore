@@ -26,6 +26,7 @@ from ...accel.jax_backend import HAS_JAX, to_jax, to_host
 @dataclass
 class L10_HolonomicParameters:
     """Parameters derived from Paper 10 and Topological Insulation specs."""
+
     n_boundary_nodes: int = 100
     bitstream_length: int = 1024
 
@@ -44,7 +45,7 @@ class L10_FirewallAdapter(BaseStochasticAdapter):
         self.params = params or L10_HolonomicParameters()
 
         self.rng_key = jax.random.PRNGKey(seed)
-        
+
         # State: Firewall integrity (0 to 1)
         self.firewall_strength = jnp.full((self.params.n_boundary_nodes,), 0.9)
         # State: Local Intention potential
@@ -55,31 +56,38 @@ class L10_FirewallAdapter(BaseStochasticAdapter):
         Maps firewall strength to stochastic bitstreams.
         """
         self.rng_key, subkey = jax.random.split(self.rng_key)
-        rands = jax.random.uniform(subkey, (self.params.n_boundary_nodes, self.params.bitstream_length))
+        rands = jax.random.uniform(
+            subkey, (self.params.n_boundary_nodes, self.params.bitstream_length)
+        )
         bitstreams = (rands < self.firewall_strength[:, None]).astype(jnp.uint8)
         return bitstreams
 
     @staticmethod
     @jax.jit
-    def _firewall_kernel(strength: jnp.ndarray, intention: jnp.ndarray, 
-                        noise_inputs: jnp.ndarray, gain: float, dt: float) -> Tuple[jnp.ndarray, jnp.ndarray]:
+    def _firewall_kernel(
+        strength: jnp.ndarray,
+        intention: jnp.ndarray,
+        noise_inputs: jnp.ndarray,
+        gain: float,
+        dt: float,
+    ) -> Tuple[jnp.ndarray, jnp.ndarray]:
         """
         Solves the Firewall / Topological dynamics:
         dStrength/dt = -D_topo * Strength + Intention_Steering
         """
         # Dissonance is high when noise inputs don't match intention
         dissonance = jnp.abs(noise_inputs - intention)
-        
+
         # Strength decays with dissonance, grows with steering
         d_strength = -dissonance * strength + gain * intention - 0.01 * strength
         strength_next = jnp.clip(strength + d_strength * dt, 0.0, 1.0)
-        
+
         return strength_next, dissonance
 
     def step_jax(self, dt: float, inputs: Optional[jnp.ndarray] = None) -> jnp.ndarray:
         """
         Advances the L10 holonomic dynamics using JAX.
-        
+
         inputs: (n_boundary_nodes, bitstream_length) representing external noise or L14 signals.
         Returns: (n_boundary_nodes, bitstream_length) output bitstreams (Shielding signals).
         """
@@ -93,8 +101,11 @@ class L10_FirewallAdapter(BaseStochasticAdapter):
 
         # 2. Execute Firewall Kernel
         self.firewall_strength, dissonance = self._firewall_kernel(
-            self.firewall_strength, self.intention_potential, 
-            external_noise, self.params.steering_gain, dt
+            self.firewall_strength,
+            self.intention_potential,
+            external_noise,
+            self.params.steering_gain,
+            dt,
         )
 
         # 3. Return encoded bitstreams (Shielding status)
@@ -104,9 +115,7 @@ class L10_FirewallAdapter(BaseStochasticAdapter):
         """
         Maps bitstreams back to Firewall Integrity index.
         """
-        return {
-            "firewall_integrity_r10": float(jnp.mean(bitstreams.astype(jnp.float32)))
-        }
+        return {"firewall_integrity_r10": float(jnp.mean(bitstreams.astype(jnp.float32)))}
 
     def get_metrics(self) -> Dict[str, float]:
         """
@@ -114,5 +123,5 @@ class L10_FirewallAdapter(BaseStochasticAdapter):
         """
         return {
             "avg_shielding_potential": float(jnp.mean(self.firewall_strength)),
-            "topological_dissonance": float(jnp.std(self.firewall_strength))
+            "topological_dissonance": float(jnp.std(self.firewall_strength)),
         }

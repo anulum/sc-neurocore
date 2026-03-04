@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Any, Optional
+
 #!/usr/bin/env python3
 """
 Adaptive Audio Demo -- SSGF + EVS Closed-Loop
@@ -56,9 +57,9 @@ def _generate_eeg_chunk(
     # Target sinusoid
     signal = entrained_strength * np.sin(2 * np.pi * target_hz * t)
     # Background: mix of brain bands
-    signal += 0.15 * np.sin(2 * np.pi * 2.5 * t)   # delta
-    signal += 0.10 * np.sin(2 * np.pi * 6.0 * t)   # theta
-    signal += 0.08 * np.sin(2 * np.pi * 20.0 * t)   # beta
+    signal += 0.15 * np.sin(2 * np.pi * 2.5 * t)  # delta
+    signal += 0.10 * np.sin(2 * np.pi * 6.0 * t)  # theta
+    signal += 0.08 * np.sin(2 * np.pi * 20.0 * t)  # beta
     # Noise
     signal += noise_level * rng.randn(n_samples)
     return signal  # type: ignore
@@ -75,16 +76,24 @@ def run_demo():  # type: ignore
     )
 
     ssgf_cfg = SSGFConfig(
-        N=16, z_dim=120, lr_z=0.01, sigma_g=0.3,
-        micro_steps=10, dt=0.001, noise=0.2,
-        K_base=0.45, K_alpha=0.3, field_pressure=0.1, seed=42,
+        N=16,
+        z_dim=120,
+        lr_z=0.01,
+        sigma_g=0.3,
+        micro_steps=10,
+        dt=0.001,
+        noise=0.2,
+        K_base=0.45,
+        K_alpha=0.3,
+        field_pressure=0.1,
+        seed=42,
     )
     ssgf = SSGFEngine(ssgf_cfg)
 
     evs_cfg = EVSConfig(
         sample_rate=256,
         fft_window=512,
-        baseline_duration_s=2.0,   # short for demo
+        baseline_duration_s=2.0,  # short for demo
         update_interval_samples=128,
     )
     evs = EVSEngine(evs_cfg)
@@ -104,7 +113,9 @@ def run_demo():  # type: ignore
     evs.start_baseline()
     baseline_samples = int(evs_cfg.baseline_duration_s * evs_cfg.sample_rate)
     baseline_eeg = _generate_eeg_chunk(
-        rng, baseline_samples, target_hz,
+        rng,
+        baseline_samples,
+        target_hz,
         evs_cfg.sample_rate,
         entrained_strength=0.1,  # low during baseline
         noise_level=0.5,
@@ -112,23 +123,24 @@ def run_demo():  # type: ignore
     for v in baseline_eeg:
         evs.add_sample(float(v))
 
-    print("  Baseline done: %s" % (
-        {k: "%.4f" % v for k, v in evs._baseline_powers.items()}
-    ))
+    print("  Baseline done: %s" % ({k: "%.4f" % v for k, v in evs._baseline_powers.items()}))
 
     evs.set_target(target_hz)
 
     # ── 3. Run 50 adaptive ticks ─────────────────────────────────────
 
-    print("\n  %s  %s  %s  %s  %s  %s  %s" % (
-        "Tick".rjust(6),
-        "Phase".ljust(10),
-        "EVS".rjust(6),
-        "Verif".rjust(6),
-        "Bin.Hz".rjust(7),
-        "R".rjust(7),
-        "Theurgic".rjust(8),
-    ))
+    print(
+        "\n  %s  %s  %s  %s  %s  %s  %s"
+        % (
+            "Tick".rjust(6),
+            "Phase".ljust(10),
+            "EVS".rjust(6),
+            "Verif".rjust(6),
+            "Bin.Hz".rjust(7),
+            "R".rjust(7),
+            "Theurgic".rjust(8),
+        )
+    )
     print("  " + "-" * 62)
 
     samples_per_tick = evs_cfg.update_interval_samples
@@ -140,7 +152,9 @@ def run_demo():  # type: ignore
         noise_level = 0.5 - 0.3 * progress
 
         chunk = _generate_eeg_chunk(
-            rng, samples_per_tick, target_hz,
+            rng,
+            samples_per_tick,
+            target_hz,
             evs_cfg.sample_rate,
             entrained_strength=entrained_strength,
             noise_level=noise_level,
@@ -158,15 +172,18 @@ def run_demo():  # type: ignore
         verified_str = " YES" if snapshot.is_verified else "  no"
         theurgic_str = " YES" if audio.get("theurgic_mode", False) else "  no"
 
-        print("  %s  %s  %s  %s  %s  %s  %s" % (
-            str(tick).rjust(6),
-            adaptive.current_phase.value.ljust(10),
-            ("%.1f" % snapshot.evs_score).rjust(6),
-            verified_str.rjust(6),
-            ("%.2f" % audio["binaural_hz"]).rjust(7),
-            ("%.4f" % audio["intensity"]).rjust(7),
-            theurgic_str.rjust(8),
-        ))
+        print(
+            "  %s  %s  %s  %s  %s  %s  %s"
+            % (
+                str(tick).rjust(6),
+                adaptive.current_phase.value.ljust(10),
+                ("%.1f" % snapshot.evs_score).rjust(6),
+                verified_str.rjust(6),
+                ("%.2f" % audio["binaural_hz"]).rjust(7),
+                ("%.4f" % audio["intensity"]).rjust(7),
+                theurgic_str.rjust(8),
+            )
+        )
 
     # ── 4. Session Report ────────────────────────────────────────────
 
@@ -182,10 +199,13 @@ def run_demo():  # type: ignore
     print("  Grade:          %s" % report.grade)
     print("  Adaptations:    %d" % report.adaptations)
     print("  Phase durations: %s" % report.phase_durations)
-    print("  Final audio:    %s" % {
-        k: ("%.3f" % v if isinstance(v, float) else str(v))
-        for k, v in report.final_audio.items()
-    })
+    print(
+        "  Final audio:    %s"
+        % {
+            k: ("%.3f" % v if isinstance(v, float) else str(v))
+            for k, v in report.final_audio.items()
+        }
+    )
 
     # ── 5. Update profile ────────────────────────────────────────────
 

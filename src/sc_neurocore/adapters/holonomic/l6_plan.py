@@ -26,16 +26,17 @@ from ...accel.jax_backend import HAS_JAX, to_jax, to_host
 @dataclass
 class L6_HolonomicParameters:
     """Parameters derived from Paper 6 and Gaia-field specifications."""
+
     n_regions: int = 100
     bitstream_length: int = 1024
-    
+
     # Schumann Resonance Constants
-    f_schumann: float = 7.83        # Hz (Fundamental mode)
-    q_factor: float = 4.0           # Cavity resonance quality
-    
+    f_schumann: float = 7.83  # Hz (Fundamental mode)
+    q_factor: float = 4.0  # Cavity resonance quality
+
     # Planetary Coupling
-    alpha_gaia: float = 0.05        # Individual-to-Planetary coupling strength
-    p_percolation: float = 0.592    # Critical threshold for global coherence
+    alpha_gaia: float = 0.05  # Individual-to-Planetary coupling strength
+    p_percolation: float = 0.592  # Critical threshold for global coherence
 
 
 class L6_PlanetaryAdapter(BaseStochasticAdapter):
@@ -46,7 +47,7 @@ class L6_PlanetaryAdapter(BaseStochasticAdapter):
     def __init__(self, params: Optional[L6_HolonomicParameters] = None, seed: int = 46) -> None:
         self.params = params or L6_HolonomicParameters()
         self.rng_key = jax.random.PRNGKey(seed)
-        
+
         # State: Planetary Field Potential (Psi_P)
         self.phi_planetary = jnp.zeros((self.params.n_regions,))
         # State: Regional Coherence index
@@ -65,8 +66,9 @@ class L6_PlanetaryAdapter(BaseStochasticAdapter):
 
     @staticmethod
     @jax.jit
-    def _gaia_kernel(phi: jnp.ndarray, sync_inputs: jnp.ndarray, alpha: float, 
-                    freq: float, t: float, dt: float) -> Tuple[jnp.ndarray, jnp.ndarray]:
+    def _gaia_kernel(
+        phi: jnp.ndarray, sync_inputs: jnp.ndarray, alpha: float, freq: float, t: float, dt: float
+    ) -> Tuple[jnp.ndarray, jnp.ndarray]:
         """
         Solves the Planetary Gaia-field dynamics:
         dPhi/dt = alpha * sync_inputs * cos(2*pi*f*t) - decay * Phi
@@ -74,25 +76,25 @@ class L6_PlanetaryAdapter(BaseStochasticAdapter):
         # Schumann resonance driving term
         driver = jnp.cos(2.0 * jnp.pi * freq * t)
         d_phi = alpha * sync_inputs * driver - 0.05 * phi
-        
+
         # Superradiant scaling (simplified)
         phi_next = phi + d_phi * dt
-        
+
         # Calculate resulting coherence (Percolation transition proxy)
         # Regional coherence increases when field potential is high
         coherence_next = jnp.clip(jnp.abs(phi_next) * 2.0, 0.0, 1.0)
-        
+
         return phi_next, coherence_next
 
     def step_jax(self, dt: float, inputs: Optional[jnp.ndarray] = None) -> jnp.ndarray:
         """
         Advances the L6 holonomic dynamics using JAX.
-        
+
         inputs: (n_regions, bitstream_length) representing L5 Organismal output.
         Returns: (n_regions, bitstream_length) output bitstreams.
         """
         self.t += dt
-        
+
         # 1. Extract Organismal Synchronization (L5 -> L6)
         if inputs is not None:
             sync_drive = jnp.mean(inputs.astype(jnp.float32), axis=1)
@@ -104,8 +106,12 @@ class L6_PlanetaryAdapter(BaseStochasticAdapter):
 
         # 2. Execute Gaia Kernel
         self.phi_planetary, self.regional_coherence = self._gaia_kernel(
-            self.phi_planetary, sync_drive, self.params.alpha_gaia, 
-            self.params.f_schumann, self.t, dt
+            self.phi_planetary,
+            sync_drive,
+            self.params.alpha_gaia,
+            self.params.f_schumann,
+            self.t,
+            dt,
         )
 
         # 3. Return encoded bitstreams
@@ -115,9 +121,7 @@ class L6_PlanetaryAdapter(BaseStochasticAdapter):
         """
         Maps bitstreams back to Global Consciousness Index.
         """
-        return {
-            "global_coherence_index": float(jnp.mean(bitstreams.astype(jnp.float32)))
-        }
+        return {"global_coherence_index": float(jnp.mean(bitstreams.astype(jnp.float32)))}
 
     def get_metrics(self) -> Dict[str, float]:
         """
@@ -126,5 +130,5 @@ class L6_PlanetaryAdapter(BaseStochasticAdapter):
         return {
             "gaia_potential": float(jnp.mean(self.phi_planetary)),
             "percolation_index": float(jnp.mean(self.regional_coherence)),
-            "schumann_phase": float(self.t * self.params.f_schumann % 1.0)
+            "schumann_phase": float(self.t * self.params.f_schumann % 1.0),
         }

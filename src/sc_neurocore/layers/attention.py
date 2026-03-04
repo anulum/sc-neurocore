@@ -14,7 +14,9 @@ class StochasticAttention:
 
     dim_k: int
 
-    def forward(self, Q: np.ndarray[Any, Any], K: np.ndarray[Any, Any], V: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+    def forward(
+        self, Q: np.ndarray[Any, Any], K: np.ndarray[Any, Any], V: np.ndarray[Any, Any]
+    ) -> np.ndarray[Any, Any]:
         """
         Input:
             Q: (N, Dim_K) - Query Probabilities

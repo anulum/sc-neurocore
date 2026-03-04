@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Any, Optional
+
 """
 SwarmFitness -- multi-objective fitness evaluation for swarm behaviour.
 
@@ -48,15 +49,13 @@ class SwarmFitness:
         if len(positions) < 2:
             return 0.0
         diff = positions[:, np.newaxis, :] - positions[np.newaxis, :, :]
-        dists = np.sqrt((diff ** 2).sum(axis=-1))
+        dists = np.sqrt((diff**2).sum(axis=-1))
         # Upper triangle only
         triu_idx = np.triu_indices(len(positions), k=1)
         mean_dist = dists[triu_idx].mean()
-        bbox_diag = np.sqrt(
-            (positions[:, 0].ptp()) ** 2 + (positions[:, 1].ptp()) ** 2
-        ) + 1e-12
+        bbox_diag = np.sqrt((positions[:, 0].ptp()) ** 2 + (positions[:, 1].ptp()) ** 2) + 1e-12
         ideal = bbox_diag * 0.25
-        return float(np.exp(-((mean_dist - ideal) / ideal) ** 2))
+        return float(np.exp(-(((mean_dist - ideal) / ideal) ** 2)))
 
     @staticmethod
     def alignment_score(headings: np.ndarray[Any, Any]) -> float:
@@ -69,7 +68,7 @@ class SwarmFitness:
             return 0.0
         cx = np.cos(headings).mean()
         cy = np.sin(headings).mean()
-        return float(np.sqrt(cx ** 2 + cy ** 2))
+        return float(np.sqrt(cx**2 + cy**2))
 
     @staticmethod
     def target_score(positions: np.ndarray[Any, Any], targets: np.ndarray[Any, Any]) -> float:
@@ -81,7 +80,7 @@ class SwarmFitness:
             return 0.0
         # (n_agents, n_targets)
         diff = positions[:, np.newaxis, :] - targets[np.newaxis, :, :]
-        dists = np.sqrt((diff ** 2).sum(axis=-1))
+        dists = np.sqrt((diff**2).sum(axis=-1))
         nearest = dists.min(axis=1)
         mean_nearest = nearest.mean()
         return float(1.0 / (1.0 + mean_nearest / 10.0))
@@ -95,7 +94,7 @@ class SwarmFitness:
         radii = obstacles[:, 2]
         # (n_agents, n_obstacles)
         diff = positions[:, np.newaxis, :] - centers[np.newaxis, :, :]
-        dists = np.sqrt((diff ** 2).sum(axis=-1))
+        dists = np.sqrt((diff**2).sum(axis=-1))
         inside = (dists < radii[np.newaxis, :]).any(axis=1)
         return float(inside.mean())
 

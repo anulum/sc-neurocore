@@ -5,8 +5,13 @@ import unittest
 import numpy as np
 
 from sc_neurocore.audio import (
-    SSGFEngine, EVSEngine, EVSSnapshot, AdaptiveAudioEngine,
-    AdaptiveSessionReport, UserProfile, Chronotype,
+    SSGFEngine,
+    EVSEngine,
+    EVSSnapshot,
+    AdaptiveAudioEngine,
+    AdaptiveSessionReport,
+    UserProfile,
+    Chronotype,
 )
 from sc_neurocore.audio.ssgf_engine import SSGFConfig
 from sc_neurocore.audio.evs_engine import EVSConfig
@@ -77,18 +82,20 @@ class TestEVSEngine(unittest.TestCase):
     def test_baseline(self):
         eng = EVSEngine(EVSConfig(sample_rate=256, fft_window=256, baseline_duration_s=0.5))
         eng.start_baseline()
-        for v in np.sin(np.linspace(0, 20*np.pi, 256)):
+        for v in np.sin(np.linspace(0, 20 * np.pi, 256)):
             eng.add_sample(float(v))
         self.assertTrue(len(eng._baseline_samples) > 0 or eng._baseline_done)
 
     def test_compute_returns_snapshot(self):
-        cfg = EVSConfig(sample_rate=256, fft_window=256, baseline_duration_s=0.5, update_interval_samples=64)
+        cfg = EVSConfig(
+            sample_rate=256, fft_window=256, baseline_duration_s=0.5, update_interval_samples=64
+        )
         eng = EVSEngine(cfg)
         eng.start_baseline()
-        for v in np.sin(np.linspace(0, 20*np.pi, 256)):
+        for v in np.sin(np.linspace(0, 20 * np.pi, 256)):
             eng.add_sample(float(v))
         eng.set_target(10.0)
-        for v in np.sin(np.linspace(0, 20*np.pi, 256)):
+        for v in np.sin(np.linspace(0, 20 * np.pi, 256)):
             eng.add_sample(float(v))
         snap = eng.compute()
         if snap is not None:
@@ -97,7 +104,9 @@ class TestEVSEngine(unittest.TestCase):
             self.assertLessEqual(snap.evs_score, 100)
 
     def test_score_range(self):
-        cfg = EVSConfig(sample_rate=256, fft_window=256, baseline_duration_s=0.5, update_interval_samples=64)
+        cfg = EVSConfig(
+            sample_rate=256, fft_window=256, baseline_duration_s=0.5, update_interval_samples=64
+        )
         eng = EVSEngine(cfg)
         eng.start_baseline()
         rng = np.random.RandomState(42)
@@ -125,10 +134,19 @@ class TestAdaptiveAudioEngine(unittest.TestCase):
         evs = EVSEngine()
         profile = UserProfile()
         eng = AdaptiveAudioEngine(ssgf, evs, profile)
-        snap = EVSSnapshot(evs_score=60.0, relative_increase=0.5, peak_alignment=0.7,
-                           band_dominance=0.3, temporal_consistency=0.8, is_verified=True,
-                           confidence=0.7, target_hz=10.0, peak_hz=10.2,
-                           band_powers={"alpha": 0.5}, timestamp=0)
+        snap = EVSSnapshot(
+            evs_score=60.0,
+            relative_increase=0.5,
+            peak_alignment=0.7,
+            band_dominance=0.3,
+            temporal_consistency=0.8,
+            is_verified=True,
+            confidence=0.7,
+            target_hz=10.0,
+            peak_hz=10.2,
+            band_powers={"alpha": 0.5},
+            timestamp=0,
+        )
         result = eng.on_evs_update(snap)
         self.assertIsInstance(result, dict)
         self.assertIn("binaural_hz", result)
@@ -138,10 +156,19 @@ class TestAdaptiveAudioEngine(unittest.TestCase):
         evs = EVSEngine()
         profile = UserProfile()
         eng = AdaptiveAudioEngine(ssgf, evs, profile)
-        snap = EVSSnapshot(evs_score=65.0, relative_increase=0.5, peak_alignment=0.7,
-                           band_dominance=0.3, temporal_consistency=0.8, is_verified=True,
-                           confidence=0.7, target_hz=10.0, peak_hz=10.2,
-                           band_powers={"alpha": 0.5}, timestamp=0)
+        snap = EVSSnapshot(
+            evs_score=65.0,
+            relative_increase=0.5,
+            peak_alignment=0.7,
+            band_dominance=0.3,
+            temporal_consistency=0.8,
+            is_verified=True,
+            confidence=0.7,
+            target_hz=10.0,
+            peak_hz=10.2,
+            band_powers={"alpha": 0.5},
+            timestamp=0,
+        )
         for i in range(250):
             eng.on_evs_update(snap)
         # After 250 ticks (>240 DISCOVERY_TICKS), should be in LOCK_ON
@@ -152,11 +179,21 @@ class TestAdaptiveAudioEngine(unittest.TestCase):
         evs = EVSEngine()
         profile = UserProfile()
         eng = AdaptiveAudioEngine(ssgf, evs, profile)
-        snap = EVSSnapshot(evs_score=70.0, relative_increase=0.5, peak_alignment=0.7,
-                           band_dominance=0.3, temporal_consistency=0.8, is_verified=True,
-                           confidence=0.7, target_hz=10.0, peak_hz=10.2,
-                           band_powers={"alpha": 0.5}, timestamp=0)
-        for _ in range(10): eng.on_evs_update(snap)
+        snap = EVSSnapshot(
+            evs_score=70.0,
+            relative_increase=0.5,
+            peak_alignment=0.7,
+            band_dominance=0.3,
+            temporal_consistency=0.8,
+            is_verified=True,
+            confidence=0.7,
+            target_hz=10.0,
+            peak_hz=10.2,
+            band_powers={"alpha": 0.5},
+            timestamp=0,
+        )
+        for _ in range(10):
+            eng.on_evs_update(snap)
         report = eng.get_session_report()
         self.assertIsInstance(report, AdaptiveSessionReport)
         self.assertIn(report.grade, "ABCDF")
@@ -166,10 +203,19 @@ class TestAdaptiveAudioEngine(unittest.TestCase):
         evs = EVSEngine()
         profile = UserProfile()
         eng = AdaptiveAudioEngine(ssgf, evs, profile)
-        low_snap = EVSSnapshot(evs_score=20.0, relative_increase=0.1, peak_alignment=0.2,
-                               band_dominance=0.1, temporal_consistency=0.5, is_verified=False,
-                               confidence=0.3, target_hz=10.0, peak_hz=15.0,
-                               band_powers={"alpha": 0.1}, timestamp=0)
+        low_snap = EVSSnapshot(
+            evs_score=20.0,
+            relative_increase=0.1,
+            peak_alignment=0.2,
+            band_dominance=0.1,
+            temporal_consistency=0.5,
+            is_verified=False,
+            confidence=0.3,
+            target_hz=10.0,
+            peak_hz=15.0,
+            band_powers={"alpha": 0.1},
+            timestamp=0,
+        )
         result = eng.on_evs_update(low_snap)
         self.assertIsInstance(result, dict)
 
@@ -227,10 +273,19 @@ class TestIntegration(unittest.TestCase):
         evs = EVSEngine()
         adaptive = AdaptiveAudioEngine(ssgf, evs, profile)
 
-        snap = EVSSnapshot(evs_score=55.0, relative_increase=0.4, peak_alignment=0.6,
-                           band_dominance=0.25, temporal_consistency=0.7, is_verified=True,
-                           confidence=0.65, target_hz=10.0, peak_hz=10.5,
-                           band_powers={"alpha": 0.4}, timestamp=0)
+        snap = EVSSnapshot(
+            evs_score=55.0,
+            relative_increase=0.4,
+            peak_alignment=0.6,
+            band_dominance=0.25,
+            temporal_consistency=0.7,
+            is_verified=True,
+            confidence=0.65,
+            target_hz=10.0,
+            peak_hz=10.5,
+            band_powers={"alpha": 0.4},
+            timestamp=0,
+        )
         for _ in range(20):
             result = adaptive.on_evs_update(snap)
             self.assertIn("binaural_hz", result)
@@ -240,7 +295,8 @@ class TestIntegration(unittest.TestCase):
 
     def test_ssgf_audio_consistency(self):
         eng = SSGFEngine(SSGFConfig(seed=42))
-        for _ in range(5): eng.outer_step()
+        for _ in range(5):
+            eng.outer_step()
         m = eng.get_audio_mapping()
         self.assertGreaterEqual(m["binaural_hz"], 0.5)
         self.assertLessEqual(m["binaural_hz"], 40.0)
