@@ -1,0 +1,120 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sc-neurocore"
+version = "3.7.0"
+description = "Universal Stochastic Computing Framework spanning Software, Hardware, Physics, and Biology."
+authors = [
+  { name = "Miroslav Sotek", email = "protoscience@anulum.li" }
+]
+license = "AGPL-3.0-or-later"
+readme = "README.md"
+requires-python = ">=3.9"
+keywords = [
+  "neuromorphic",
+  "stochastic-computing",
+  "fpga",
+  "spiking-neural-networks",
+  "hyper-dimensional-computing",
+  "rust",
+  "hardware-simulation",
+  "petri-nets",
+]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Rust",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Scientific/Engineering :: Electronic Design Automation (Verilog/VHDL)",
+  "Typing :: Typed",
+]
+dependencies = [
+  "numpy>=1.22",
+  "scipy>=1.7",
+  "numba>=0.56",
+  "matplotlib>=3.5",
+  "jax",
+  "jaxlib",
+  "qiskit",
+  "pennylane",
+  "qiskit-aer"
+]
+
+[project.urls]
+Homepage = "https://github.com/anulum/sc-neurocore"
+Documentation = "https://anulum.github.io/sc-neurocore/"
+Source = "https://github.com/anulum/sc-neurocore"
+Issues = "https://github.com/anulum/sc-neurocore/issues"
+Changelog = "https://github.com/anulum/sc-neurocore/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-cov", "mypy", "black<26", "ruff", "pyyaml", "jax", "jaxlib", "qiskit", "pennylane", "qiskit-aer"]
+gpu = ["cupy-cuda12x>=12.0"]
+full = ["networkx", "onnx", "qiskit", "pennylane"]
+research = ["networkx", "onnx", "torch>=2.0"]
+jax = ["jax", "jaxlib"]
+quantum = ["qiskit", "pennylane", "qiskit-aer"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["sc_neurocore"]
+omit = [
+    "*/experiments/*",
+    "*/drivers/*",
+    "*/interfaces/ccw_bridge.py",
+    "*/spatial/*",
+    "*/physics/wolfram_hypergraph.py",
+    "*/robotics/swarm.py",
+    "*/learning/neuroevolution.py",
+    "*/analysis/explainability.py",
+    "*/chaos/rng.py",
+    "*/audio/adaptive_engine.py",
+    "*/audio/evs_engine.py",
+    "*/sleep/report_generator.py",
+    "*/sleep/sleep_optimizer.py",
+    "*/swarm/*",
+]
+
+[tool.coverage.report]
+fail_under = 97
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__",
+    "raise NotImplementedError",
+    "if HAS_MPI",
+    "if HAS_CUPY",
+    "if HAS_NUMBA",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py39"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.mypy]
+strict = true
+ignore_missing_imports = false
+warn_unused_ignores = true
+warn_return_any = true
+[[tool.mypy.overrides]]
+module = ['cupy.*', 'mpi4py.*', 'numba.*', 'matplotlib.*', 'scipy.*', 'networkx.*', 'onnx.*', 'torch.*', 'gym.*', 'flask.*', 'scpn_evo2_real_interface.*', 'scpn_opentrions_verify.*', 'scpn_cross_layer_integration_L1_L7.*', 'jax.*', 'qiskit.*', 'pennylane.*', 'qiskit_aer.*']
+ignore_missing_imports = true
+

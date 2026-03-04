@@ -1,3 +1,6 @@
+// © 1998–2026 Miroslav Šotek. All rights reserved.
+// Contact: www.anulum.li | protoscience@anulum.li
+
 #[cfg(target_arch = "x86_64")]
 use core::arch::x86_64::*;
 

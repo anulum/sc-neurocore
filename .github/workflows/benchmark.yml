@@ -1,0 +1,50 @@
+# © 1998–2026 Miroslav Šotek. All rights reserved.
+# Contact: www.anulum.li | protoscience@anulum.li
+name: Performance Benchmarks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "engine/**"
+      - ".github/workflows/benchmark.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "engine/**"
+      - ".github/workflows/benchmark.yml"
+
+permissions:
+  contents: write
+  deployments: write
+
+jobs:
+  benchmark:
+    name: Run Benchmarks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: engine
+
+      - name: Run Criterion benchmarks
+        working-directory: engine
+        run: cargo bench --bench bitstream_bench --bench full_bench -- --output-format bencher | tee ../benchmark_output.txt
+
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        if: github.ref == 'refs/heads/main'
+        with:
+          name: Rust Criterion Benchmark
+          tool: cargo
+          output-file-path: benchmark_output.txt
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          alert-threshold: "200%"
+          comment-on-alert: true
+          fail-on-alert: true
+          alert-comment-cc-users: "@anulum-maintainers"

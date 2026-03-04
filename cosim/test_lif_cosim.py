@@ -7,6 +7,8 @@ import tempfile
 
 import pytest
 
+pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+
 from sc_neurocore_engine import FixedPointLif
 from cosim.conftest import compile_and_run_verilator, read_results_file
 

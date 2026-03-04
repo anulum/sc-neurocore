@@ -14,11 +14,17 @@ from sc_neurocore.synapses.r_stdp import RewardModulatedSTDPSynapse
 # StochasticSTDPSynapse
 # ---------------------------------------------------------------------------
 
+
 class TestStochasticSTDPSynapse:
     def _make(self, w=0.5, lr=0.01, seed=42):
         return StochasticSTDPSynapse(
-            w_min=0.0, w_max=1.0, length=256, w=w,
-            learning_rate=lr, window_size=5, seed=seed,
+            w_min=0.0,
+            w_max=1.0,
+            length=256,
+            w=w,
+            learning_rate=lr,
+            window_size=5,
+            seed=seed,
         )
 
     def test_construction(self):
@@ -91,11 +97,17 @@ class TestStochasticSTDPSynapse:
 # RewardModulatedSTDPSynapse
 # ---------------------------------------------------------------------------
 
+
 class TestRewardModulatedSTDPSynapse:
     def _make(self, w=0.5, lr=0.01, seed=42):
         return RewardModulatedSTDPSynapse(
-            w_min=0.0, w_max=1.0, length=256, w=w,
-            learning_rate=lr, window_size=5, seed=seed,
+            w_min=0.0,
+            w_max=1.0,
+            length=256,
+            w=w,
+            learning_rate=lr,
+            window_size=5,
+            seed=seed,
             trace_decay=0.9,
         )
 

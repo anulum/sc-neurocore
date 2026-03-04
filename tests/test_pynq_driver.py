@@ -21,8 +21,8 @@ def test_driver_write_layer_params():
     driver = SC_NeuroCore_Driver(mode="EMULATION")
 
     # Should not raise in emulation mode
-    driver.write_layer_params(layer_id=1, params={'gain': 0.5, 'threshold': 1.0})
-    driver.write_layer_params(layer_id=2, params={'gain': 2.0})
+    driver.write_layer_params(layer_id=1, params={"gain": 0.5, "threshold": 1.0})
+    driver.write_layer_params(layer_id=2, params={"gain": 2.0})
 
     print("Driver write_layer_params verified.")
 

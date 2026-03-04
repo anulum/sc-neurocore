@@ -1,0 +1,49 @@
+{
+  "title": "SC-NeuroCore: Universal Stochastic Computing Framework for Neuromorphic Hardware",
+  "description": "A high-performance neuromorphic computing framework combining stochastic computing with spiking neural networks. Features a Rust SIMD engine with PyO3 Python bindings, hyper-dimensional computing (HDC/VSA), Petri net simulation, HDL generation for FPGA deployment, and SCPN integration for consciousness-layer modelling.",
+  "creators": [
+    {
+      "name": "Sotek, Miroslav",
+      "affiliation": "ANULUM CH & LI",
+      "orcid": "0009-0009-3560-0851"
+    },
+    {
+      "name": "Reiprich, Michal",
+      "affiliation": "ANULUM CH & LI"
+    }
+  ],
+  "upload_type": "software",
+  "access_right": "open",
+  "license": "AGPL-3.0-or-later",
+  "keywords": [
+    "neuromorphic",
+    "stochastic computing",
+    "spiking neural networks",
+    "FPGA",
+    "hyper-dimensional computing",
+    "HDC",
+    "VSA",
+    "Petri nets",
+    "Verilog",
+    "SIMD",
+    "Rust",
+    "PyO3",
+    "SCPN"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/anulum/sc-neurocore",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://github.com/anulum/scpn-fusion-core",
+      "relation": "isPartOf",
+      "scheme": "url"
+    }
+  ],
+  "communities": [
+    {"identifier": "zenodo"}
+  ],
+  "notes": "Part of the SCPN (Self-Consistent Phenomenological Network) research framework by ANULUM. Published on Zenodo and Academia.edu."
+}

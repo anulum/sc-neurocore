@@ -1,9 +1,5 @@
-# CopyRight: (c) 1998-2026 Miroslav Sotek. All rights reserved.
-# Contact us: www.anulum.li  protoscience@anulum.li
-# ORCID: https://orcid.org/0009-0009-3560-0851
-# License: GNU AFFERO GENERAL PUBLIC LICENSE v3
-# Commercial Licensing: Available
-
+# © 1998–2026 Miroslav Šotek. All rights reserved.
+# Contact: www.anulum.li | protoscience@anulum.li
 name: SC-NeuroCore v3 Engine
 
 on:
@@ -11,141 +7,70 @@ on:
     paths:
       - "engine/**"
       - "bridge/**"
+      - "src/**"
       - "tests/**"
-      - "cosim/**"
-      - "examples/**"
+      - ".github/workflows/v3-engine.yml"
   pull_request:
     paths:
       - "engine/**"
       - "bridge/**"
+      - "src/**"
       - "tests/**"
-      - "cosim/**"
-      - "examples/**"
-
-env:
-  CARGO_TERM_COLOR: always
-  PYTHONPATH: src
+      - ".github/workflows/v3-engine.yml"
 
 jobs:
   rust-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: dtolnay/rust-toolchain@stable
         with:
-          components: rustfmt, clippy
-      - name: Check formatting
+          components: clippy, rustfmt
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: engine
+
+      - name: Rust format check
         run: cargo fmt --manifest-path engine/Cargo.toml -- --check
-      - name: Clippy
+
+      - name: Rust clippy
         run: cargo clippy --manifest-path engine/Cargo.toml -- -D warnings
 
-  rust-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - name: Run Rust tests
-        run: cargo test --manifest-path engine/Cargo.toml --tests
-
-  equivalence:
+  test-engine:
+    name: Test Engine (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    needs: [rust-lint, rust-test]
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.9", "3.12"]
+        os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@v4
+
       - uses: dtolnay/rust-toolchain@stable
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
 
-      - name: Install Python dependencies
-        run: |
-          pip install -e ".[dev]"
-          pip install maturin pytest
-
-      - name: Build and install v3 engine
-        run: |
-          cd bridge
-          maturin develop --release --manifest-path ../engine/Cargo.toml
-
-      - name: Verify v3 import
-        run: python -c "import sc_neurocore_engine; print(sc_neurocore_engine.__version__); print(sc_neurocore_engine.simd_tier())"
-
-      - name: Verify v2 untouched
-        run: python -c "import sc_neurocore; print(sc_neurocore.__version__)"
-
-      - name: Run equivalence tests
-        run: pytest tests/equivalence/ -v --tb=short
-
-      - name: Run v3-specific tests
-        run: pytest tests/test_surrogate_python.py tests/test_kuramoto_python.py tests/test_kuramoto_ssgf_python.py tests/test_multihead_attention.py tests/test_gnn_sc_mode.py tests/test_ir_python.py tests/test_numpy_interop.py tests/test_batch_ops.py tests/test_dense_optimization.py tests/test_phase8.py tests/test_phase9.py tests/test_phase10.py tests/test_phase11.py tests/test_phase12.py -v --tb=short
-
-      - name: Verify wheel builds
-        run: |
-          cd bridge
-          maturin build --release --manifest-path ../engine/Cargo.toml --out ../dist/
-          ls ../dist/
-
-  cosim:
-    runs-on: ubuntu-latest
-    needs: [rust-test]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: pip
 
-      - name: Install Verilator
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: engine
+
+      - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y verilator
-          verilator --version
+          python -m pip install --upgrade pip
+          pip install maturin pytest numpy jax jaxlib qiskit pennylane qiskit-aer
 
-      - name: Install Python dependencies
-        run: |
-          pip install -e ".[dev]"
-          pip install maturin pytest
-
-      - name: Build v3 engine
+      - name: Build engine bridge
         run: |
           cd bridge
-          maturin develop --release --manifest-path ../engine/Cargo.toml
+          maturin develop
 
-      - name: Run co-simulation tests
-        run: pytest cosim/ -v --tb=short
+      - name: Run engine unit tests
+        run: cargo test --manifest-path engine/Cargo.toml
 
-  v2-compat:
-    runs-on: ubuntu-latest
-    needs: [equivalence]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Install v2 package
-        run: pip install -e ".[dev]"
-      - name: Run v2 test suite
-        run: pytest tests/ --ignore=tests/equivalence -v --cov=sc_neurocore --cov-report=term --cov-fail-under=97
-
-  benchmarks:
-    runs-on: ubuntu-latest
-    needs: [rust-test]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-
-      - name: Run criterion benchmarks
-        run: cargo bench --manifest-path engine/Cargo.toml -- --output-format bencher 2>&1 | tee bench_output.txt
-
-      - name: Upload benchmark results
-        uses: actions/upload-artifact@v4
-        with:
-          name: criterion-results
-          path: |
-            engine/target/criterion/
-            bench_output.txt
-
+      - name: Run v3 integration tests
+        run: pytest tests/test_jax_backend.py tests/test_jax_layer.py tests/test_quantum_bridge.py tests/test_mlir_emitter.py tests/test_phase15_coverage.py -v

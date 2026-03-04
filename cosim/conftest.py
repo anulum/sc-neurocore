@@ -13,11 +13,29 @@ import pytest
 HDL_DIR = pathlib.Path(__file__).resolve().parent.parent / "hdl"
 BUILD_ROOT = pathlib.Path(__file__).resolve().parent / "build"
 TOOLS_BIN = pathlib.Path(__file__).resolve().parent.parent / ".tools" / "perl" / "c" / "bin"
-VENV_SCRIPTS = pathlib.Path(__file__).resolve().parent.parent / ".venv" / "Scripts"
-VENV_VERILATOR = VENV_SCRIPTS / "verilator.exe"
-VENV_VERILATOR_ROOT = pathlib.Path(__file__).resolve().parent.parent / ".venv" / "Lib" / "site-packages" / "verilator"
-GIT_USR_BIN = pathlib.Path(r"C:\Progra~1\Git\usr\bin")
-GIT_SH = GIT_USR_BIN / "sh.exe"
+
+_VENV_BIN_DIR = "Scripts" if os.name == "nt" else "bin"
+_VENV_LIB_DIR = "Lib" if os.name == "nt" else "lib"
+_EXE_SUFFIX = ".exe" if os.name == "nt" else ""
+
+VENV_SCRIPTS = pathlib.Path(__file__).resolve().parent.parent / ".venv" / _VENV_BIN_DIR
+VENV_VERILATOR = VENV_SCRIPTS / f"verilator{_EXE_SUFFIX}"
+VENV_VERILATOR_ROOT = pathlib.Path(__file__).resolve().parent.parent / ".venv" / _VENV_LIB_DIR / "site-packages" / "verilator"
+
+def _find_sh_dir() -> pathlib.Path | None:
+    """Find a directory containing sh (needed by Verilator on Windows)."""
+    sh = shutil.which("sh")
+    if sh is not None:
+        return pathlib.Path(sh).parent
+    # Common fallback locations on Windows
+    if os.name == "nt":
+        for candidate in [
+            pathlib.Path(r"C:\Progra~1\Git\usr\bin"),
+            pathlib.Path(os.environ.get("PROGRAMFILES", r"C:\Program Files")) / "Git" / "usr" / "bin",
+        ]:
+            if (candidate / "sh.exe").exists():
+                return candidate
+    return None
 
 
 @pytest.fixture(scope="session")
@@ -50,11 +68,12 @@ def build_dir() -> pathlib.Path:
 
 
 def _build_subprocess_env() -> dict[str, str]:
-    """Create subprocess env with local toolchain fallbacks on Windows."""
+    """Create subprocess env with local toolchain fallbacks (cross-platform)."""
     env = os.environ.copy()
     path_entries: list[str] = []
-    if os.name == "nt" and GIT_USR_BIN.exists():
-        path_entries.append(str(GIT_USR_BIN))
+    sh_dir = _find_sh_dir()
+    if os.name == "nt" and sh_dir is not None:
+        path_entries.append(str(sh_dir))
     if VENV_SCRIPTS.exists():
         path_entries.append(str(VENV_SCRIPTS))
     if TOOLS_BIN.exists():
@@ -63,10 +82,11 @@ def _build_subprocess_env() -> dict[str, str]:
         env["PATH"] = os.pathsep.join(path_entries + [env.get("PATH", "")])
     if "VERILATOR_ROOT" not in env and VENV_VERILATOR_ROOT.exists():
         env["VERILATOR_ROOT"] = VENV_VERILATOR_ROOT.as_posix()
-    if os.name == "nt":
-        if GIT_SH.exists():
-            env["SHELL"] = str(GIT_SH)
-            env["MAKESHELL"] = str(GIT_SH)
+    if os.name == "nt" and sh_dir is not None:
+        sh_exe = sh_dir / "sh.exe"
+        if sh_exe.exists():
+            env["SHELL"] = str(sh_exe)
+            env["MAKESHELL"] = str(sh_exe)
             env.setdefault("MSYS2_ARG_CONV_EXCL", "*")
             env.setdefault("MSYS_NO_PATHCONV", "1")
     return env

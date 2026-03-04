@@ -37,7 +37,7 @@ def test_spice_generator_resistance_extremes(tmp_path):
     SpiceGenerator.generate_crossbar(weights, str(path))
     text = path.read_text()
     assert "1000000.00" in text  # 1 / 1e-6
-    assert "10000.00" in text    # 1 / 100e-6
+    assert "10000.00" in text  # 1 / 100e-6
 
 
 def test_spice_generator_memristor_count(tmp_path):

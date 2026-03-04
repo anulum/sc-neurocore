@@ -1,16 +1,17 @@
-# CopyRight: (c) 1998-2026 Miroslav Sotek. All rights reserved.
-# Contact us: www.anulum.li  protoscience@anulum.li
-# ORCID: https://orcid.org/0009-0009-3560-0851
-# License: GNU AFFERO GENERAL PUBLIC LICENSE v3
-# Commercial Licensing: Available
+# © 1998–2026 Miroslav Šotek. All rights reserved.
+# Contact: www.anulum.li | protoscience@anulum.li
 
 """End-to-end Python tests for HDC/VSA via the Rust BitStreamTensor backend."""
 
 import pytest
+
+pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+
 from sc_neurocore_engine import BitStreamTensor, HDCVector
 
 
 # ── BitStreamTensor (raw Rust wrapper) ───────────────────────────────
+
 
 class TestBitStreamTensor:
     def test_create_random(self):
@@ -72,6 +73,7 @@ class TestBitStreamTensor:
 
 
 # ── HDCVector (high-level Python wrapper) ────────────────────────────
+
 
 class TestHDCVector:
     def test_create_default_dimension(self):
@@ -152,14 +154,18 @@ class TestHDCVector:
         role_capital = HDCVector(10_000, seed=301)
 
         # Encode: record = (role_country * country) + (role_capital * capital)
-        record_france = HDCVector.bundle([
-            role_country * country_france,
-            role_capital * capital_paris,
-        ])
-        record_germany = HDCVector.bundle([
-            role_country * country_germany,
-            role_capital * capital_berlin,
-        ])
+        record_france = HDCVector.bundle(
+            [
+                role_country * country_france,
+                role_capital * capital_paris,
+            ]
+        )
+        record_germany = HDCVector.bundle(
+            [
+                role_country * country_germany,
+                role_capital * capital_berlin,
+            ]
+        )
 
         # Memory = bundle of all records
         memory = HDCVector.bundle([record_france, record_germany])

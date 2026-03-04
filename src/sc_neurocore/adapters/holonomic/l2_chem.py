@@ -1,0 +1,132 @@
+"""
+SCPN L2: Neurochemical-Neurological Adapter (JAX Implementation)
+================================================================
+
+This module implements the JAX-accelerated uplift of Layer 2, specifically
+focused on the IIIEF (Integrated Information-Induced EM Field) mechanism
+and the H_QC Quantum-Classical bridge described in Papers 0-21.
+
+Key Equations:
+- IIIEF Field: nabla^2 Phi - (1/c^2) d^2 Phi/dt^2 = 4pi * alpha * Integrated_Info
+- H_QC Bridge: H_vesicle + H_SNARE + H_Ca_sensor + H_trigger
+- Neurochemical Transfer: H(omega) band-selection gating
+"""
+
+from __future__ import annotations
+from dataclasses import dataclass
+from typing import Any, Dict, Optional, Tuple
+import jax
+import jax.numpy as jnp
+import numpy as np
+
+from ..base import BaseStochasticAdapter
+from ...accel.jax_backend import HAS_JAX, jax_lif_step, to_jax, to_host
+
+
+@dataclass
+class L2_HolonomicParameters:
+    """Parameters derived from Paper 2 and Monograph 28."""
+    n_transmitters: int = 4
+    n_receptors: int = 500
+    bitstream_length: int = 1024
+    
+    # IIIEF Constants
+    alpha_iiief: float = 0.01  # Information-to-Field coupling constant
+    c_info: float = 300.0      # Effective information propagation velocity
+    
+    # H_QC Bridge Parameters
+    g_snare: float = 0.8       # SNARE complex formation gain
+    v_critical: float = 1.2    # Critical voltage for quantum trigger
+    
+    # Neurochemical Tonus (L2 -> Core modulation)
+    dopamine_gain: float = 1.5
+    serotonin_leak: float = 0.9
+
+
+class L2_NeurochemicalAdapter(BaseStochasticAdapter):
+    """
+    JAX-traceable adapter for the SCPN Neurochemical layer.
+    """
+
+    def __init__(self, params: Optional[L2_HolonomicParameters] = None, seed: int = 42) -> None:
+        self.params = params or L2_HolonomicParameters()
+        self.rng_key = jax.random.PRNGKey(seed)
+        
+        # State: Receptors (n_types, n_receptors)
+        self.receptor_states = jnp.zeros((self.params.n_transmitters, self.params.n_receptors))
+        # State: Information-Geometric Field potential
+        self.phi_field = jnp.zeros((self.params.n_transmitters,))
+        # State: Concentrations
+        self.concentrations = jnp.full((self.params.n_transmitters,), 0.5)
+
+    def encode(self, domain_state: Any) -> jnp.ndarray:
+        """
+        Maps neurochemical concentrations to stochastic bitstreams.
+        """
+        # (n_transmitters, bitstream_length)
+        self.rng_key, subkey = jax.random.split(self.rng_key)
+        rands = jax.random.uniform(subkey, (self.params.n_transmitters, self.params.bitstream_length))
+        bitstreams = (rands < self.concentrations[:, None]).astype(jnp.uint8)
+        return bitstreams
+
+    @staticmethod
+    @jax.jit
+    def _iiief_kernel(phi: jnp.ndarray, integrated_info: jnp.ndarray, alpha: float, dt: float) -> jnp.ndarray:
+        """
+        Solves the simplified IIIEF wave equation:
+        dPhi/dt = alpha * Phi_integrated - decay * Phi
+        """
+        # Paper 2: Field emerges from Integrated Information geometry
+        d_phi = alpha * integrated_info - 0.1 * phi
+        return phi + d_phi * dt
+
+    def step_jax(self, dt: float, inputs: Optional[jnp.ndarray] = None) -> jnp.ndarray:
+        """
+        Advances the L2 holonomic dynamics using JAX.
+        
+        inputs: (n_transmitters, bitstream_length) representing L1 or L5 feedback.
+        Returns: (n_transmitters, bitstream_length) output bitstreams.
+        """
+        # 1. Calculate Integrated Information Proxy (Phi_integrated) from inputs
+        if inputs is not None:
+            raw_phi = jnp.mean(inputs.astype(jnp.float32), axis=1)
+            # Map input dimensions to transmitter count if necessary
+            if raw_phi.shape[0] != self.params.n_transmitters:
+                # Simple average-pooling projection
+                phi_int = jnp.full((self.params.n_transmitters,), jnp.mean(raw_phi))
+            else:
+                phi_int = raw_phi
+        else:
+            phi_int = jnp.zeros((self.params.n_transmitters,))
+
+        # 2. Update IIIEF Field
+        self.phi_field = self._iiief_kernel(self.phi_field, phi_int, self.params.alpha_iiief, dt)
+
+        # 3. H_QC Bridge: Field modulates concentrations (Vesicle release)
+        # H_int = -lambda * Psi * sigma -> mapped to P_release modulation
+        release_mod = jnp.exp(self.phi_field) * self.params.g_snare
+        self.concentrations = jnp.clip(self.concentrations * release_mod, 0.0, 1.0)
+
+        # 4. Return encoded bitstreams for hardware consumption
+        return self.encode(None)
+
+    def decode(self, bitstreams: jnp.ndarray) -> Dict[str, float]:
+        """
+        Maps bitstreams back to neurochemical concentrations.
+        """
+        means = jnp.mean(bitstreams.astype(jnp.float32), axis=1)
+        return {
+            "dopamine": float(means[0]),
+            "serotonin": float(means[1]),
+            "norepinephrine": float(means[2]),
+            "acetylcholine": float(means[3])
+        }
+
+    def get_metrics(self) -> Dict[str, float]:
+        """
+        Returns L2-specific metrics like Field Potential and Tonus.
+        """
+        return {
+            "avg_field_potential": float(jnp.mean(self.phi_field)),
+            "system_coherence_r2": float(jnp.mean(self.concentrations))
+        }

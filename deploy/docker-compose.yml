@@ -1,0 +1,8 @@
+version: '3.8'
+
+services:
+  sc-neurocore:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    command: python -c "import sc_neurocore; print(f'sc-neurocore {sc_neurocore.__version__} ready')"

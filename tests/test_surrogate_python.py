@@ -2,6 +2,10 @@
 
 import numpy as np
 
+import pytest
+
+pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+
 from sc_neurocore_engine import DifferentiableDenseLayer, SurrogateLif
 
 
