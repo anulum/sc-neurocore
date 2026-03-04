@@ -54,7 +54,7 @@ Issues = "https://github.com/anulum/sc-neurocore/issues"
 Changelog = "https://github.com/anulum/sc-neurocore/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-cov", "mypy", "black<26", "ruff", "pyyaml", "jax", "jaxlib", "qiskit", "pennylane", "qiskit-aer"]
+dev = ["pytest", "pytest-cov", "mypy", "black==24.4.2", "ruff", "pyyaml", "jax", "jaxlib", "qiskit", "pennylane", "qiskit-aer"]
 gpu = ["cupy-cuda12x>=12.0"]
 full = ["networkx", "onnx", "qiskit", "pennylane"]
 research = ["networkx", "onnx", "torch>=2.0"]
