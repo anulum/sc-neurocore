@@ -53,7 +53,10 @@ class SwarmFitness:
         # Upper triangle only
         triu_idx = np.triu_indices(len(positions), k=1)
         mean_dist = dists[triu_idx].mean()
-        bbox_diag = np.sqrt((positions[:, 0].ptp()) ** 2 + (positions[:, 1].ptp()) ** 2) + 1e-12
+        x, y = positions[:, 0], positions[:, 1]
+        bbox_diag = (
+            np.sqrt((x.max() - x.min()) ** 2 + (y.max() - y.min()) ** 2) + 1e-12
+        )
         ideal = bbox_diag * 0.25
         return float(np.exp(-(((mean_dist - ideal) / ideal) ** 2)))
 
