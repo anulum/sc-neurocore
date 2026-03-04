@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Any, Optional
+
 """
 EVS Engine -- Entrainment Verification Score
 ==============================================
@@ -147,7 +148,7 @@ class EVSEngine:
 
     def _finalise_baseline(self) -> None:
         """Compute baseline band powers from collected samples."""
-        arr = np.array(self._baseline_samples[-self.cfg.fft_window:])
+        arr = np.array(self._baseline_samples[-self.cfg.fft_window :])
         if len(arr) < 32:
             # Not enough samples; use flat baseline
             self._baseline_powers = {name: 1.0 for name in BANDS}
@@ -184,8 +185,8 @@ class EVSEngine:
     def _ordered_buf(self) -> np.ndarray[Any, Any]:
         """Return the ring buffer in time-order."""
         if not self._buf_full:
-            return self._buf[:self._buf_idx].copy()
-        return np.concatenate([self._buf[self._buf_idx:], self._buf[:self._buf_idx]])
+            return self._buf[: self._buf_idx].copy()
+        return np.concatenate([self._buf[self._buf_idx :], self._buf[: self._buf_idx]])
 
     def _band_powers(self, signal: np.ndarray[Any, Any]) -> Dict[str, float]:
         """Compute power in each canonical EEG band via FFT."""

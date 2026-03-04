@@ -26,17 +26,18 @@ from ...accel.jax_backend import HAS_JAX, to_jax, to_host
 @dataclass
 class L1_HolonomicParameters:
     """Parameters derived from Paper 1 and Monograph 28."""
+
     n_qubits: int = 1000
     bitstream_length: int = 1024
-    
+
     # Fröhlich / Ignition Constants
-    s_critical: float = 0.5         # Critical pumping threshold
-    gamma_decoherence: float = 0.05 # Baseline decoherence rate
-    f_non_markov: float = 100.0     # Protection factor
-    
+    s_critical: float = 0.5  # Critical pumping threshold
+    gamma_decoherence: float = 0.05  # Baseline decoherence rate
+    f_non_markov: float = 100.0  # Protection factor
+
     # Coupling
-    zeta_source: float = 0.1        # Coupling to L13 Source Field
-    
+    zeta_source: float = 0.1  # Coupling to L13 Source Field
+
     # Execution Backend
     # "simulated", "qiskit.aer_simulator", "pennylane.default.qubit"
     backend: str = "simulated"
@@ -50,7 +51,7 @@ class L1_QuantumAdapter(BaseStochasticAdapter):
     def __init__(self, params: Optional[L1_HolonomicParameters] = None, seed: int = 41) -> None:
         self.params = params or L1_HolonomicParameters()
         self.rng_key = jax.random.PRNGKey(seed)
-        
+
         # State: Coherence Probabilities (0.0 to 1.0)
         self.coherence = jnp.full((self.params.n_qubits,), 0.95)
         # State: Metabolic Pumping Level
@@ -67,30 +68,36 @@ class L1_QuantumAdapter(BaseStochasticAdapter):
 
     @staticmethod
     @jax.jit
-    def _ignition_kernel(coherence: jnp.ndarray, s_pump: jnp.ndarray, s_crit: float, 
-                        gamma: float, f_prot: float, dt: float) -> Tuple[jnp.ndarray, jnp.ndarray]:
+    def _ignition_kernel(
+        coherence: jnp.ndarray,
+        s_pump: jnp.ndarray,
+        s_crit: float,
+        gamma: float,
+        f_prot: float,
+        dt: float,
+    ) -> Tuple[jnp.ndarray, jnp.ndarray]:
         """
         Solves the Ignition / Metabolic Coherence dynamics:
         dC/dt = (S_pump - S_crit) * C - (gamma/log(F)) * C
         """
         # Effective decoherence reduced by protection factor
         effective_gamma = gamma / jnp.log10(f_prot)
-        
+
         # Coherence growth depends on metabolic surplus
         growth = (s_pump - s_crit) * coherence
         dc = growth - effective_gamma * coherence
-        
+
         coherence_next = jnp.clip(coherence + dc * dt, 0.0, 1.0)
-        
+
         # Simplified S_pump recovery
         s_pump_next = jnp.clip(s_pump - 0.1 * dt, 0.0, 1.0)
-        
+
         return coherence_next, s_pump_next
 
     def step_jax(self, dt: float, inputs: Optional[jnp.ndarray] = None) -> jnp.ndarray:
         """
         Advances the L1 holonomic dynamics using JAX.
-        
+
         inputs: (n_qubits, bitstream_length) representing metabolic/field drive (L4 or L13).
         Returns: (n_qubits, bitstream_length) output bitstreams.
         """
@@ -101,9 +108,12 @@ class L1_QuantumAdapter(BaseStochasticAdapter):
 
         # 2. Execute Ignition Kernel
         self.coherence, self.s_pump = self._ignition_kernel(
-            self.coherence, self.s_pump, 
-            self.params.s_critical, self.params.gamma_decoherence, 
-            self.params.f_non_markov, dt
+            self.coherence,
+            self.s_pump,
+            self.params.s_critical,
+            self.params.gamma_decoherence,
+            self.params.f_non_markov,
+            dt,
         )
 
         # 3. Phase-to-Angle Isomorphism (Optional: for use with true hardware)
@@ -116,9 +126,7 @@ class L1_QuantumAdapter(BaseStochasticAdapter):
         """
         Maps bitstreams back to global coherence metric.
         """
-        return {
-            "avg_coherence": float(jnp.mean(bitstreams.astype(jnp.float32)))
-        }
+        return {"avg_coherence": float(jnp.mean(bitstreams.astype(jnp.float32)))}
 
     def get_metrics(self) -> Dict[str, float]:
         """
@@ -126,5 +134,5 @@ class L1_QuantumAdapter(BaseStochasticAdapter):
         """
         return {
             "r1_global_coherence": float(jnp.mean(self.coherence)),
-            "avg_metabolic_pumping": float(jnp.mean(self.s_pump))
+            "avg_metabolic_pumping": float(jnp.mean(self.s_pump)),
         }

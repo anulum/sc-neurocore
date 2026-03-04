@@ -23,6 +23,7 @@ from sc_neurocore.adapters.holonomic.dna_storage import DNAEncoder
 from sc_neurocore.adapters.holonomic.grn import GeneticRegulatoryLayer
 from sc_neurocore.adapters.holonomic.neuromodulation import NeuromodulatorSystem
 
+
 def test_compiler_pipeline_stubs():
     pipeline = CompilerPipeline(work_dir=".tmp/test_compiler")
     mlir = "hw.module @test() { hw.output }"
@@ -32,6 +33,7 @@ def test_compiler_pipeline_stubs():
     assert json_path.endswith(".json")
     asc_path = pipeline.run_pnr(json_path)
     assert asc_path.endswith(".asc")
+
 
 def test_l1_adapter_coverage():
     params = L1_HolonomicParameters(n_qubits=10)
@@ -43,6 +45,7 @@ def test_l1_adapter_coverage():
     decoded = adapter.decode(out)
     assert "avg_coherence" in decoded
 
+
 def test_l2_adapter_coverage():
     params = L2_HolonomicParameters(n_transmitters=4)
     adapter = L2_NeurochemicalAdapter(params)
@@ -52,6 +55,7 @@ def test_l2_adapter_coverage():
     assert "avg_field_potential" in metrics
     decoded = adapter.decode(out)
     assert "dopamine" in decoded
+
 
 def test_l3_adapter_coverage():
     params = L3_HolonomicParameters(n_genes=10)
@@ -63,12 +67,14 @@ def test_l3_adapter_coverage():
     decoded = adapter.decode(out)
     assert "avg_accessibility" in decoded
 
+
 def test_l4_adapter_coverage():
     adapter = L4_CellularAdapter()
     out = adapter.step_jax(0.1)
     assert out.shape[0] == 400
     metrics = adapter.get_metrics()
     assert "order_parameter" in metrics
+
 
 def test_l5_adapter_coverage():
     adapter = L5_OrganismalAdapter()
@@ -77,12 +83,14 @@ def test_l5_adapter_coverage():
     metrics = adapter.get_metrics()
     assert "hrv_coherence_r5" in metrics
 
+
 def test_l6_adapter_coverage():
     adapter = L6_PlanetaryAdapter()
     out = adapter.step_jax(0.1, inputs=jnp.ones((100, 1024)))
     assert out.shape[0] == 100
     metrics = adapter.get_metrics()
     assert "gaia_potential" in metrics
+
 
 def test_l7_adapter_coverage():
     adapter = L7_SymbolicAdapter()
@@ -91,12 +99,14 @@ def test_l7_adapter_coverage():
     metrics = adapter.get_metrics()
     assert "routing_coherence" in metrics
 
+
 def test_l8_adapter_coverage():
     adapter = L8_CosmicAdapter()
     out = adapter.step_jax(0.1, inputs=jnp.ones((12, 1024)))
     assert out.shape == (12, 1024)
     metrics = adapter.get_metrics()
     assert "pta_locking_index" in metrics
+
 
 def test_l9_adapter_coverage():
     adapter = L9_MemoryAdapter()
@@ -105,12 +115,14 @@ def test_l9_adapter_coverage():
     metrics = adapter.get_metrics()
     assert "holographic_overlap" in metrics
 
+
 def test_l10_adapter_coverage():
     adapter = L10_FirewallAdapter()
     out = adapter.step_jax(0.1, inputs=jnp.ones((100, 1024)))
     assert out.shape == (100, 1024)
     metrics = adapter.get_metrics()
     assert "avg_shielding_potential" in metrics
+
 
 def test_l11_adapter_coverage():
     adapter = L11_NoosphericAdapter()
@@ -119,12 +131,14 @@ def test_l11_adapter_coverage():
     metrics = adapter.get_metrics()
     assert "noospheric_entropy" in metrics
 
+
 def test_l12_adapter_coverage():
     adapter = L12_GaianAdapter()
     out = adapter.step_jax(0.1, inputs=jnp.ones((100, 1024)))
     assert out.shape[0] == 100
     metrics = adapter.get_metrics()
     assert "eco_system_coherence" in metrics
+
 
 def test_qec_shield_coverage():
     shield = QecShield(code_type="repetition", distance=3)
@@ -138,6 +152,7 @@ def test_qec_shield_coverage():
     rate = shield.get_error_rate(syndromes)
     assert rate == 0.0
 
+
 def test_dna_encoder_coverage():
     encoder = DNAEncoder()
     # bitstream -> dna -> bitstream
@@ -148,11 +163,13 @@ def test_dna_encoder_coverage():
     assert len(recovered) == 8
     assert np.array_equal(bits, recovered)
 
+
 def test_grn_coverage():
     grn = GeneticRegulatoryLayer(n_neurons=5)
     grn.step(np.ones(5))
     state = grn.get_threshold_modulators()
     assert state.shape == (5,)
+
 
 def test_neuromodulator_coverage():
     mod = NeuromodulatorSystem()
@@ -165,7 +182,10 @@ def test_neuromodulator_coverage():
 # ── L13-L16 Adapter Tests (Phase 16) ──────────────────────────
 
 from sc_neurocore.adapters.holonomic.l13_source import L13_SourceAdapter, L13_HolonomicParameters
-from sc_neurocore.adapters.holonomic.l14_trans import L14_TransdimensionalAdapter, L14_HolonomicParameters
+from sc_neurocore.adapters.holonomic.l14_trans import (
+    L14_TransdimensionalAdapter,
+    L14_HolonomicParameters,
+)
 from sc_neurocore.adapters.holonomic.l15_cons import L15_ConsiliumAdapter, L15_HolonomicParameters
 from sc_neurocore.adapters.holonomic.l16_meta import L16_MetaAdapter, L16_HolonomicParameters
 from sc_neurocore.adapters.base import BaseStochasticAdapter
@@ -212,14 +232,18 @@ def test_l14_adapter_init_and_step():
 
 
 def test_l14_with_inputs():
-    adapter = L14_TransdimensionalAdapter(L14_HolonomicParameters(n_bulk_dimensions=5, bitstream_length=32))
+    adapter = L14_TransdimensionalAdapter(
+        L14_HolonomicParameters(n_bulk_dimensions=5, bitstream_length=32)
+    )
     inputs = jnp.ones((5, 32))
     out = adapter.step_jax(0.1, inputs=inputs)
     assert out.shape == (5, 32)
 
 
 def test_l14_input_broadcast():
-    adapter = L14_TransdimensionalAdapter(L14_HolonomicParameters(n_bulk_dimensions=5, bitstream_length=32))
+    adapter = L14_TransdimensionalAdapter(
+        L14_HolonomicParameters(n_bulk_dimensions=5, bitstream_length=32)
+    )
     inputs = jnp.ones((3, 32))
     out = adapter.step_jax(0.1, inputs=inputs)
     assert out.shape == (5, 32)
@@ -239,14 +263,18 @@ def test_l15_adapter_init_and_step():
 
 
 def test_l15_with_inputs():
-    adapter = L15_ConsiliumAdapter(L15_HolonomicParameters(n_metric_dimensions=8, bitstream_length=32))
+    adapter = L15_ConsiliumAdapter(
+        L15_HolonomicParameters(n_metric_dimensions=8, bitstream_length=32)
+    )
     inputs = jnp.ones((8, 32))
     out = adapter.step_jax(0.1, inputs=inputs)
     assert out.shape == (8, 32)
 
 
 def test_l15_partial_stack_padding():
-    adapter = L15_ConsiliumAdapter(L15_HolonomicParameters(n_metric_dimensions=16, bitstream_length=32))
+    adapter = L15_ConsiliumAdapter(
+        L15_HolonomicParameters(n_metric_dimensions=16, bitstream_length=32)
+    )
     inputs = jnp.ones((4, 32))
     out = adapter.step_jax(0.1, inputs=inputs)
     assert out.shape == (16, 32)
@@ -286,6 +314,7 @@ def test_base_adapter_is_abstract():
 
 
 # ── Additional coverage for bio/neuromodulation ────────────────
+
 
 def test_neuromodulator_stress_clamp():
     mod = NeuromodulatorSystem()
@@ -360,11 +389,14 @@ def test_user_profile_all_chronotypes():
 
 # ── analysis & chaos __init__ imports ──────────────────────────
 
+
 def test_analysis_init_import():
     from sc_neurocore.analysis import SpikeToConceptMapper
+
     assert SpikeToConceptMapper is not None
 
 
 def test_chaos_init_import():
     from sc_neurocore.chaos import ChaoticRNG
+
     assert ChaoticRNG is not None

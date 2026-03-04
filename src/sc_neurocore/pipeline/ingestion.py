@@ -1,4 +1,5 @@
 from typing import Any, Optional
+
 """Data ingestion and normalization for multimodal SC training pipelines."""
 
 import numpy as np

@@ -26,13 +26,14 @@ from ...accel.jax_backend import HAS_JAX, to_jax, to_host
 @dataclass
 class L7_HolonomicParameters:
     """Parameters derived from Paper 7 and Metatron's Cube geometry."""
+
     n_nodes: int = 13  # Standard Metatron's Cube node count
     bitstream_length: int = 1024
-    
+
     # Symbolic Constants
     g_geometric_gain: float = 1.2
     phi_golden_ratio: float = 1.61803398875
-    
+
     # Routing Constants
     coupling_leak: float = 0.05
 
@@ -45,7 +46,7 @@ class L7_SymbolicAdapter(BaseStochasticAdapter):
     def __init__(self, params: Optional[L7_HolonomicParameters] = None, seed: int = 47) -> None:
         self.params = params or L7_HolonomicParameters()
         self.rng_key = jax.random.PRNGKey(seed)
-        
+
         # State: Node Phases (representing symbolic glyphs)
         self.node_phases = jnp.zeros((self.params.n_nodes,))
         # State: Metatron's Cube Adjacency Matrix (13x13)
@@ -57,7 +58,7 @@ class L7_SymbolicAdapter(BaseStochasticAdapter):
         # In a full implementation, this is a specific sparse matrix.
         matrix = jnp.eye(self.params.n_nodes) * 0.5
         # Add some cross-connections
-        matrix = matrix.at[0, :].set(0.1) # Center node connects to all
+        matrix = matrix.at[0, :].set(0.1)  # Center node connects to all
         return matrix
 
     def encode(self, domain_state: Any) -> jnp.ndarray:
@@ -66,7 +67,7 @@ class L7_SymbolicAdapter(BaseStochasticAdapter):
         """
         # Activation = (1 + cos(phase)) / 2
         activation = (1.0 + jnp.cos(self.node_phases)) / 2.0
-        
+
         self.rng_key, subkey = jax.random.split(self.rng_key)
         rands = jax.random.uniform(subkey, (self.params.n_nodes, self.params.bitstream_length))
         bitstreams = (rands < activation[:, None]).astype(jnp.uint8)
@@ -74,8 +75,9 @@ class L7_SymbolicAdapter(BaseStochasticAdapter):
 
     @staticmethod
     @jax.jit
-    def _symbolic_kernel(phases: jnp.ndarray, metatron: jnp.ndarray, 
-                        inputs: jnp.ndarray, dt: float) -> jnp.ndarray:
+    def _symbolic_kernel(
+        phases: jnp.ndarray, metatron: jnp.ndarray, inputs: jnp.ndarray, dt: float
+    ) -> jnp.ndarray:
         """
         Solves the Symbolic routing dynamics:
         dTheta/dt = Metatron * inputs - decay
@@ -88,7 +90,7 @@ class L7_SymbolicAdapter(BaseStochasticAdapter):
     def step_jax(self, dt: float, inputs: Optional[jnp.ndarray] = None) -> jnp.ndarray:
         """
         Advances the L7 holonomic dynamics using JAX.
-        
+
         inputs: (n_nodes, bitstream_length) representing L6 or L8 signals.
         Returns: (n_nodes, bitstream_length) output bitstreams.
         """
@@ -101,7 +103,9 @@ class L7_SymbolicAdapter(BaseStochasticAdapter):
             input_drive = jnp.zeros((self.params.n_nodes,))
 
         # 2. Execute Symbolic Kernel
-        self.node_phases = self._symbolic_kernel(self.node_phases, self.metatron_matrix, input_drive, dt)
+        self.node_phases = self._symbolic_kernel(
+            self.node_phases, self.metatron_matrix, input_drive, dt
+        )
 
         # 3. Return encoded bitstreams
         return self.encode(None)
@@ -110,9 +114,7 @@ class L7_SymbolicAdapter(BaseStochasticAdapter):
         """
         Maps bitstreams back to Symbolic Coherence.
         """
-        return {
-            "symbolic_unity_r7": float(jnp.abs(jnp.mean(jnp.exp(1j * self.node_phases))))
-        }
+        return {"symbolic_unity_r7": float(jnp.abs(jnp.mean(jnp.exp(1j * self.node_phases))))}
 
     def get_metrics(self) -> Dict[str, float]:
         """
@@ -120,5 +122,5 @@ class L7_SymbolicAdapter(BaseStochasticAdapter):
         """
         return {
             "routing_coherence": float(jnp.abs(jnp.mean(jnp.exp(1j * self.node_phases)))),
-            "metatron_stability": float(jnp.mean(jnp.cos(self.node_phases)))
+            "metatron_stability": float(jnp.mean(jnp.cos(self.node_phases))),
         }

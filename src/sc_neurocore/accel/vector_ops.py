@@ -50,7 +50,9 @@ def pack_bitstream(bitstream: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
 
 
 def unpack_bitstream(
-    packed: np.ndarray[Any, Any], original_length: int, original_shape: Optional[tuple[Any, ...]] = None
+    packed: np.ndarray[Any, Any],
+    original_length: int,
+    original_shape: Optional[tuple[Any, ...]] = None,
 ) -> np.ndarray[Any, Any]:
     """
     Unpacks uint64 array back to uint8 bitstream.

@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Any, Optional
+
 """Demo: closed-loop sleep optimisation with simulated EEG.
 
 Generates synthetic EEG matching each sleep stage's spectral signature,
@@ -27,10 +28,10 @@ from sc_neurocore.sleep import (
 _STAGE_FREQ: dict[SleepStage, tuple[float, float, float]] = {
     #                   primary_hz, secondary_hz, noise_scale
     SleepStage.WAKE: (11.0, 20.0, 0.30),
-    SleepStage.N1:   (6.0, 10.0, 0.25),
-    SleepStage.N2:   (5.0,  8.0, 0.20),
-    SleepStage.N3:   (1.5,  3.0, 0.10),
-    SleepStage.REM:  (6.5, 18.0, 0.25),
+    SleepStage.N1: (6.0, 10.0, 0.25),
+    SleepStage.N2: (5.0, 8.0, 0.20),
+    SleepStage.N3: (1.5, 3.0, 0.10),
+    SleepStage.REM: (6.5, 18.0, 0.25),
 }
 
 
@@ -59,6 +60,7 @@ def generate_eeg_epoch(
 # Night schedule: stage sequence over 100 epochs (~6.5 h at 256 Hz epochs)
 # ---------------------------------------------------------------------------
 
+
 def _night_schedule(n_epochs: int = 100) -> list[SleepStage]:
     """Return a realistic stage sequence for *n_epochs* epochs.
 
@@ -67,11 +69,22 @@ def _night_schedule(n_epochs: int = 100) -> list[SleepStage]:
     """
     cycle = [
         SleepStage.WAKE,
-        SleepStage.N1, SleepStage.N1,
-        SleepStage.N2, SleepStage.N2, SleepStage.N2, SleepStage.N2,
-        SleepStage.N3, SleepStage.N3, SleepStage.N3, SleepStage.N3, SleepStage.N3,
-        SleepStage.N2, SleepStage.N2,
-        SleepStage.REM, SleepStage.REM, SleepStage.REM,
+        SleepStage.N1,
+        SleepStage.N1,
+        SleepStage.N2,
+        SleepStage.N2,
+        SleepStage.N2,
+        SleepStage.N2,
+        SleepStage.N3,
+        SleepStage.N3,
+        SleepStage.N3,
+        SleepStage.N3,
+        SleepStage.N3,
+        SleepStage.N2,
+        SleepStage.N2,
+        SleepStage.REM,
+        SleepStage.REM,
+        SleepStage.REM,
     ]
     schedule: list[SleepStage] = []
     while len(schedule) < n_epochs:
@@ -82,6 +95,7 @@ def _night_schedule(n_epochs: int = 100) -> list[SleepStage]:
 # ---------------------------------------------------------------------------
 # Main demo
 # ---------------------------------------------------------------------------
+
 
 def run_demo() -> None:
     rng = np.random.default_rng(42)

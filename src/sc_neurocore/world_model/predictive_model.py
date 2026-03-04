@@ -23,7 +23,9 @@ class PredictiveWorldModel:
         row_sums = self.transition_matrix.sum(axis=1)
         self.transition_matrix /= row_sums[:, np.newaxis]
 
-    def predict_next_state(self, current_state: np.ndarray[Any, Any], action: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+    def predict_next_state(
+        self, current_state: np.ndarray[Any, Any], action: np.ndarray[Any, Any]
+    ) -> np.ndarray[Any, Any]:
         """
         Predicts the next state given current state and action.
         Inputs:
@@ -41,7 +43,9 @@ class PredictiveWorldModel:
         # Clip to ensure valid probabilities
         return np.clip(next_state, 0, 1)  # type: ignore
 
-    def forecast(self, initial_state: np.ndarray[Any, Any], actions: list[np.ndarray[Any, Any]]) -> list[np.ndarray[Any, Any]]:
+    def forecast(
+        self, initial_state: np.ndarray[Any, Any], actions: list[np.ndarray[Any, Any]]
+    ) -> list[np.ndarray[Any, Any]]:
         """
         Forecast multiple steps ahead given a sequence of actions.
         """

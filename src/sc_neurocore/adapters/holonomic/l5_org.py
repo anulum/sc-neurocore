@@ -26,14 +26,15 @@ from ...accel.jax_backend import HAS_JAX, to_jax, to_host
 @dataclass
 class L5_HolonomicParameters:
     """Parameters derived from Paper 5 and FEP (Free Energy Principle)."""
+
     n_nodes: int = 100
     n_emotional_dims: int = 8
     bitstream_length: int = 1024
-    
+
     # Autonomic Constants
-    tau_autonomic: float = 5.0      # Seconds
-    hrv_resonance: float = 0.25     # Hz (Respiratory Sinus Arrhythmia)
-    
+    tau_autonomic: float = 5.0  # Seconds
+    hrv_resonance: float = 0.25  # Hz (Respiratory Sinus Arrhythmia)
+
     # Emotional Constants
     emotional_decay: float = 0.1
     attractor_strength: float = 0.3
@@ -47,11 +48,11 @@ class L5_OrganismalAdapter(BaseStochasticAdapter):
     def __init__(self, params: Optional[L5_HolonomicParameters] = None, seed: int = 45) -> None:
         self.params = params or L5_HolonomicParameters()
         self.rng_key = jax.random.PRNGKey(seed)
-        
+
         # State: Emotional Valence Vector (n_dims)
         self.emotions = jnp.full((self.params.n_emotional_dims,), 0.5)
         # State: Autonomic Tone (Sympathetic, Parasympathetic)
-        self.autonomic = jnp.array([0.4, 0.6]) # [Symp, Para]
+        self.autonomic = jnp.array([0.4, 0.6])  # [Symp, Para]
         # State: Strange Loop Recursive Model (Self-Soliton)
         self.self_soliton = jnp.zeros((self.params.n_nodes,))
 
@@ -63,8 +64,10 @@ class L5_OrganismalAdapter(BaseStochasticAdapter):
         avg_tone = jnp.mean(self.autonomic)
         probs = jnp.concatenate([self.emotions, self.autonomic])
         # Project to node count
-        node_probs = jnp.tile(probs, (self.params.n_nodes // probs.shape[0]) + 1)[:self.params.n_nodes]
-        
+        node_probs = jnp.tile(probs, (self.params.n_nodes // probs.shape[0]) + 1)[
+            : self.params.n_nodes
+        ]
+
         self.rng_key, subkey = jax.random.split(self.rng_key)
         rands = jax.random.uniform(subkey, (self.params.n_nodes, self.params.bitstream_length))
         bitstreams = (rands < node_probs[:, None]).astype(jnp.uint8)
@@ -72,7 +75,9 @@ class L5_OrganismalAdapter(BaseStochasticAdapter):
 
     @staticmethod
     @jax.jit
-    def _autonomic_kernel(current: jnp.ndarray, target: jnp.ndarray, tau: float, dt: float) -> jnp.ndarray:
+    def _autonomic_kernel(
+        current: jnp.ndarray, target: jnp.ndarray, tau: float, dt: float
+    ) -> jnp.ndarray:
         """
         Euler-integration of autonomic homeostasis.
         """
@@ -81,7 +86,7 @@ class L5_OrganismalAdapter(BaseStochasticAdapter):
     def step_jax(self, dt: float, inputs: Optional[jnp.ndarray] = None) -> jnp.ndarray:
         """
         Advances the L5 holonomic dynamics using JAX.
-        
+
         inputs: (n_nodes, bitstream_length) representing L4 synchronization.
         Returns: (n_nodes, bitstream_length) output bitstreams.
         """
@@ -92,7 +97,9 @@ class L5_OrganismalAdapter(BaseStochasticAdapter):
             target_para = 0.5 + 0.4 * sync
             target_symp = 1.0 - target_para
             target = jnp.array([target_symp, target_para])
-            self.autonomic = self._autonomic_kernel(self.autonomic, target, self.params.tau_autonomic, dt)
+            self.autonomic = self._autonomic_kernel(
+                self.autonomic, target, self.params.tau_autonomic, dt
+            )
 
         # 2. Emotional Attractor Dynamics (Simplified)
         # Decay toward neutral [0.5]
@@ -111,7 +118,7 @@ class L5_OrganismalAdapter(BaseStochasticAdapter):
         """
         return {
             "organismal_valence": float(jnp.mean(self.emotions)),
-            "autonomic_balance": float(self.autonomic[1] / (self.autonomic[0] + 1e-6))
+            "autonomic_balance": float(self.autonomic[1] / (self.autonomic[0] + 1e-6)),
         }
 
     def get_metrics(self) -> Dict[str, float]:
@@ -121,5 +128,5 @@ class L5_OrganismalAdapter(BaseStochasticAdapter):
         return {
             "hrv_coherence_r5": float(self.autonomic[1]),
             "self_soliton_magnitude": float(jnp.mean(self.self_soliton)),
-            "emotional_valence": float(self.emotions[0])
+            "emotional_valence": float(self.emotions[0]),
         }

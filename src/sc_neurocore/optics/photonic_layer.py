@@ -26,7 +26,9 @@ class PhotonicBitstreamLayer:
 
         return intensity  # type: ignore
 
-    def forward(self, input_probs: np.ndarray[Any, Any], length: int = 1024) -> np.ndarray[Any, Any]:
+    def forward(
+        self, input_probs: np.ndarray[Any, Any], length: int = 1024
+    ) -> np.ndarray[Any, Any]:
         """
         Generates bitstreams where '1' occurs if interference intensity < input_prob.
         """

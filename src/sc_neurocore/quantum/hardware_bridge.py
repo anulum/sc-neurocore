@@ -20,12 +20,14 @@ try:
     import qiskit
     from qiskit import QuantumCircuit, transpile
     from qiskit_aer import AerSimulator
+
     HAS_QISKIT = True
 except ImportError:
     HAS_QISKIT = False
 
 try:
     import pennylane as qml
+
     HAS_PENNYLANE = True
 except ImportError:
     HAS_PENNYLANE = False
@@ -53,7 +55,9 @@ class QuantumHardwareLayer:
         if self.backend_type == "aer_simulator":
             self._qiskit_simulator = AerSimulator()
         elif self.backend_type.startswith("pennylane"):
-            self._pennylane_dev = qml.device("default.qubit", wires=self.n_qubits, shots=self.length)
+            self._pennylane_dev = qml.device(
+                "default.qubit", wires=self.n_qubits, shots=self.length
+            )
 
     def forward(self, input_bitstreams: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """
@@ -74,19 +78,19 @@ class QuantumHardwareLayer:
     def _run_qiskit(self, theta: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Runs the circuit on Qiskit AerSimulator for `length` shots."""
         qc = QuantumCircuit(self.n_qubits, self.n_qubits)
-        
+
         # Apply Ry rotations based on theta
         for i in range(self.n_qubits):
             qc.ry(theta[i], i)
-            
+
         qc.measure(range(self.n_qubits), range(self.n_qubits))
-        
+
         # Run circuit for self.length shots
         compiled_circuit = transpile(qc, self._qiskit_simulator)
         job = self._qiskit_simulator.run(compiled_circuit, shots=self.length)
         result = job.result()
         counts = result.get_counts(compiled_circuit)
-        
+
         # Reconstruct bitstreams from shot counts
         out_bits = np.zeros((self.n_qubits, self.length), dtype=np.uint8)
         current_idx = 0
@@ -100,11 +104,12 @@ class QuantumHardwareLayer:
                         # Invert because measurement logic expects |0> as 1
                         out_bits[qubit_idx, current_idx] = 1 - bit_val
                     current_idx += 1
-                    
+
         return out_bits
 
     def _run_pennylane(self, theta: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Runs the circuit on PennyLane for `length` shots."""
+
         @qml.qnode(self._pennylane_dev)  # type: ignore[untyped-decorator]
         def circuit(angles: np.ndarray[Any, Any]) -> Any:
             for i in range(self.n_qubits):

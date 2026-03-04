@@ -1,4 +1,5 @@
 from typing import Any, Optional
+
 """
 SC-NeuroCore 3D Generation Module
 ==================================
@@ -334,7 +335,9 @@ class SC3DGenerator:
             json.dump(data, f, indent=2)
         logger.info("3D Export: Saved %d points to %s", len(points), filename)
 
-    def generate_surface_mesh(self, voxel_grid: np.ndarray[Any, Any], iso_level: Optional[float] = None) -> Dict[str, Any]:
+    def generate_surface_mesh(
+        self, voxel_grid: np.ndarray[Any, Any], iso_level: Optional[float] = None
+    ) -> Dict[str, Any]:
         """
         Generate a surface mesh from a voxel grid using Marching Cubes.
 
@@ -457,7 +460,9 @@ class SC3DGenerator:
 
         return edge_verts
 
-    def _compute_normals(self, vertices: np.ndarray[Any, Any], faces: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+    def _compute_normals(
+        self, vertices: np.ndarray[Any, Any], faces: np.ndarray[Any, Any]
+    ) -> np.ndarray[Any, Any]:
         """Compute vertex normals from face normals."""
         if len(vertices) == 0 or len(faces) == 0:
             return np.zeros((0, 3))

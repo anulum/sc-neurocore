@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Any, Optional
+
 """
 CollectiveFields -- chemical, emotional, and symbolic field layers.
 
@@ -33,11 +34,14 @@ class FieldConfig:
 
 
 # 3x3 discrete Laplacian kernel (second-order central differences)
-_LAPLACIAN_KERNEL = np.array([
-    [0.0,  1.0, 0.0],
-    [1.0, -4.0, 1.0],
-    [0.0,  1.0, 0.0],
-], dtype=np.float64)
+_LAPLACIAN_KERNEL = np.array(
+    [
+        [0.0, 1.0, 0.0],
+        [1.0, -4.0, 1.0],
+        [0.0, 1.0, 0.0],
+    ],
+    dtype=np.float64,
+)
 
 
 def _apply_laplacian(field: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
@@ -87,8 +91,13 @@ class CollectiveFields:
         Number of agents (for emotional field sizing).
     """
 
-    def __init__(self, cfg: FieldConfig, env_width: float = 100.0,
-                 env_height: float = 100.0, n_agents: int = 20) -> None:
+    def __init__(
+        self,
+        cfg: FieldConfig,
+        env_width: float = 100.0,
+        env_height: float = 100.0,
+        n_agents: int = 20,
+    ) -> None:
         self.cfg = cfg
         self.env_width = env_width
         self.env_height = env_height
@@ -118,7 +127,7 @@ class CollectiveFields:
         """Apply Laplacian diffusion + exponential decay to the chemical field."""
         lap = _apply_laplacian(self.chemical_field)
         self.chemical_field += self.cfg.diffusion_rate * dt * lap
-        self.chemical_field *= (1.0 - self.cfg.decay_rate * dt)
+        self.chemical_field *= 1.0 - self.cfg.decay_rate * dt
         np.clip(self.chemical_field, 0, None, out=self.chemical_field)
 
     def deposit_chemical(self, x: float, y: float, amount: float) -> None:
@@ -176,8 +185,7 @@ class CollectiveFields:
     # Orchestration
     # ------------------------------------------------------------------
 
-    def update(self, agents: list["SwarmAgent"], env: "SwarmEnvironment",
-               dt: float) -> None:
+    def update(self, agents: list["SwarmAgent"], env: "SwarmEnvironment", dt: float) -> None:
         """Run one collective-field tick.
 
         1. Diffuse and decay chemical field.
@@ -194,7 +202,7 @@ class CollectiveFields:
         self.synchronize_emotions()
 
         # Symbolic decay
-        self.symbolic_field *= (1.0 - self.cfg.symbolic_decay * dt)
+        self.symbolic_field *= 1.0 - self.cfg.symbolic_decay * dt
 
         # Pull updated emotions back to agents
         for idx, agent in enumerate(agents):

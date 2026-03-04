@@ -11,9 +11,7 @@ from dataclasses import dataclass
 from typing import Dict, Any, Optional, Tuple
 import numpy as np
 
-from sc_neurocore.accel.jax_backend import (
-    jnp, jax, HAS_JAX, to_jax, to_host, jax_lif_step
-)
+from sc_neurocore.accel.jax_backend import jnp, jax, HAS_JAX, to_jax, to_host, jax_lif_step
 from sc_neurocore.utils.rng import RNG
 
 
@@ -48,14 +46,14 @@ class JaxSCDenseLayer:
 
         # State (JAX Arrays)
         self.v = jnp.full((self.n_neurons,), self.v_rest)
-        
+
         # RNG State
         self.rng_key = jax.random.PRNGKey(self.seed or 42)
 
     def step(self, I_t: jax.Array) -> jax.Array:
         """
         Advance the entire layer by one time step.
-        
+
         I_t: (n_neurons,) input current for each neuron.
         Returns:
         spikes: (n_neurons,) uint8 array.
@@ -73,7 +71,7 @@ class JaxSCDenseLayer:
             self.v_threshold,
             self.alpha,
             self.resistance,
-            noise
+            noise,
         )
         res: jax.Array = spikes
         return res
@@ -81,20 +79,20 @@ class JaxSCDenseLayer:
     def run(self, currents: jax.Array) -> jax.Array:
         """
         Run for multiple steps.
-        
+
         currents: (T, n_neurons)
         Returns:
         spikes: (T, n_neurons)
         """
         # Note: In a production JAX implementation, we would use jax.lax.scan
         # for maximum performance.
-        
+
         T = currents.shape[0]
         all_spikes = []
-        
+
         for t in range(T):
             all_spikes.append(self.step(currents[t]))
-            
+
         return jnp.stack(all_spikes)
 
     def reset(self) -> None:

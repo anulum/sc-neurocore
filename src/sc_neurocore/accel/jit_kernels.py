@@ -23,7 +23,9 @@ except ImportError:  # pragma: no cover
 
 
 @jit(nopython=True)  # type: ignore
-def jit_pack_bits(bitstream: np.ndarray[Any, Any], packed_arr: np.ndarray[Any, Any]) -> None:  # pragma: no cover
+def jit_pack_bits(
+    bitstream: np.ndarray[Any, Any], packed_arr: np.ndarray[Any, Any]
+) -> None:  # pragma: no cover
     """
     Packs a uint8 bitstream into uint64 array.
     bitstream: (N,) uint8 {0, 1}
@@ -43,7 +45,9 @@ def jit_pack_bits(bitstream: np.ndarray[Any, Any], packed_arr: np.ndarray[Any, A
 
 @jit(nopython=True)  # type: ignore
 def jit_vec_mac(  # type: ignore
-    packed_weights: np.ndarray[Any, Any], packed_inputs: np.ndarray[Any, Any], outputs: np.ndarray[Any, Any]
+    packed_weights: np.ndarray[Any, Any],
+    packed_inputs: np.ndarray[Any, Any],
+    outputs: np.ndarray[Any, Any],
 ):  # pragma: no cover
     """
     Vectorized Multiply-Accumulate (MAC).

@@ -1,4 +1,5 @@
 from typing import Any, Optional
+
 """
 SCPN L7: Geometric-Symbolic Layer (Stochastic Implementation)
 ==============================================================

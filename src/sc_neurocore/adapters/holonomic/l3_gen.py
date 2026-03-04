@@ -27,17 +27,18 @@ from ...accel.jax_backend import HAS_JAX, to_jax, to_host
 @dataclass
 class L3_HolonomicParameters:
     """Parameters derived from Paper 3 and the CBC Bridge specification."""
+
     n_genes: int = 100
     bitstream_length: int = 1024
-    
+
     # CBC Bridge Coefficients
-    p_spin_baseline: float = 0.6    # CISS spin selectivity factor
-    alpha_b: float = 0.05           # Bioelectric sensitivity to effective field
-    g_operator: float = 1.2         # Bioelectric Green's Operator gain
-    
+    p_spin_baseline: float = 0.6  # CISS spin selectivity factor
+    alpha_b: float = 0.05  # Bioelectric sensitivity to effective field
+    g_operator: float = 1.2  # Bioelectric Green's Operator gain
+
     # Epigenetic Dynamics (Ising-like)
-    j_chromatin: float = 0.1        # Chromatin coupling strength
-    h_accessibility: float = 0.05   # Baseline accessibility drive
+    j_chromatin: float = 0.1  # Chromatin coupling strength
+    h_accessibility: float = 0.05  # Baseline accessibility drive
 
 
 class L3_GenomicAdapter(BaseStochasticAdapter):
@@ -48,7 +49,7 @@ class L3_GenomicAdapter(BaseStochasticAdapter):
     def __init__(self, params: Optional[L3_HolonomicParameters] = None, seed: int = 43) -> None:
         self.params = params or L3_HolonomicParameters()
         self.rng_key = jax.random.PRNGKey(seed)
-        
+
         # State: Chromatin Accessibility (0.0 to 1.0)
         self.accessibility = jnp.full((self.params.n_genes,), 0.1)
         # State: Local Bioelectric Potential (mV normalized)
@@ -67,7 +68,9 @@ class L3_GenomicAdapter(BaseStochasticAdapter):
 
     @staticmethod
     @jax.jit
-    def _cbc_kernel(v_bio: jnp.ndarray, p_spin: jnp.ndarray, alpha_b: float, g_op: float, dt: float) -> jnp.ndarray:
+    def _cbc_kernel(
+        v_bio: jnp.ndarray, p_spin: jnp.ndarray, alpha_b: float, g_op: float, dt: float
+    ) -> jnp.ndarray:
         """
         Solves the CBC Bridge transduction:
         Delta V = G * (alpha_B * P_spin)
@@ -78,7 +81,7 @@ class L3_GenomicAdapter(BaseStochasticAdapter):
     def step_jax(self, dt: float, inputs: Optional[jnp.ndarray] = None) -> jnp.ndarray:
         """
         Advances the L3 CBC bridge dynamics using JAX.
-        
+
         inputs: (n_genes, bitstream_length) representing L1/L2 feedback (e.g. Ca2+ levels).
         Returns: (n_genes, bitstream_length) output bitstreams.
         """
@@ -93,7 +96,9 @@ class L3_GenomicAdapter(BaseStochasticAdapter):
             self.p_spin = jnp.clip(self.p_spin + 0.1 * drive * dt, 0.0, 1.0)
 
         # 2. Execute CBC Bridge Transduction (Field -> Bioelectric)
-        self.v_bio = self._cbc_kernel(self.v_bio, self.p_spin, self.params.alpha_b, self.params.g_operator, dt)
+        self.v_bio = self._cbc_kernel(
+            self.v_bio, self.p_spin, self.params.alpha_b, self.params.g_operator, dt
+        )
 
         # 3. Update Chromatin Accessibility (Bioelectric -> Structural)
         # dA/dt = V_bio * Gain - k * A
@@ -109,7 +114,7 @@ class L3_GenomicAdapter(BaseStochasticAdapter):
         """
         return {
             "avg_accessibility": float(jnp.mean(bitstreams.astype(jnp.float32))),
-            "max_expression": float(jnp.max(jnp.mean(bitstreams.astype(jnp.float32), axis=1)))
+            "max_expression": float(jnp.max(jnp.mean(bitstreams.astype(jnp.float32), axis=1))),
         }
 
     def get_metrics(self) -> Dict[str, float]:
@@ -119,5 +124,5 @@ class L3_GenomicAdapter(BaseStochasticAdapter):
         return {
             "avg_p_spin": float(jnp.mean(self.p_spin)),
             "avg_v_bio": float(jnp.mean(self.v_bio)),
-            "chromatin_coherence_r3": float(jnp.mean(self.accessibility))
+            "chromatin_coherence_r3": float(jnp.mean(self.accessibility)),
         }

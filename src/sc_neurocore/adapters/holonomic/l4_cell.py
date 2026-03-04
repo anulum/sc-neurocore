@@ -26,16 +26,17 @@ from ...accel.jax_backend import HAS_JAX, to_jax, to_host
 @dataclass
 class L4_HolonomicParameters:
     """Parameters derived from Paper 4 and T7 Validation protocols."""
+
     n_cells: int = 400  # 20x20 grid default
     bitstream_length: int = 1024
-    
+
     # Synchronization Constants
-    omega_mean: float = 1.0         # Baseline oscillator frequency (Hz)
-    k_coupling: float = 0.3         # Kuramoto coupling strength
-    sigma_noise: float = 0.1        # Intrinsic phase noise
-    
+    omega_mean: float = 1.0  # Baseline oscillator frequency (Hz)
+    k_coupling: float = 0.3  # Kuramoto coupling strength
+    sigma_noise: float = 0.1  # Intrinsic phase noise
+
     # Criticality Tuning
-    critical_threshold: float = 0.6 # Mean-field threshold for avalanche ignition
+    critical_threshold: float = 0.6  # Mean-field threshold for avalanche ignition
 
 
 class L4_CellularAdapter(BaseStochasticAdapter):
@@ -46,9 +47,11 @@ class L4_CellularAdapter(BaseStochasticAdapter):
     def __init__(self, params: Optional[L4_HolonomicParameters] = None, seed: int = 44) -> None:
         self.params = params or L4_HolonomicParameters()
         self.rng_key = jax.random.PRNGKey(seed)
-        
+
         # State: Oscillator Phases (0 to 2*pi)
-        self.phases = jax.random.uniform(self.rng_key, (self.params.n_cells,), minval=0.0, maxval=2*jnp.pi)
+        self.phases = jax.random.uniform(
+            self.rng_key, (self.params.n_cells,), minval=0.0, maxval=2 * jnp.pi
+        )
         # State: Local Avalanche Magnitude
         self.avalanches = jnp.zeros((self.params.n_cells,))
 
@@ -58,7 +61,7 @@ class L4_CellularAdapter(BaseStochasticAdapter):
         """
         # Activity = (1 + cos(phase)) / 2
         activity = (1.0 + jnp.cos(self.phases)) / 2.0
-        
+
         self.rng_key, subkey = jax.random.split(self.rng_key)
         rands = jax.random.uniform(subkey, (self.params.n_cells, self.params.bitstream_length))
         bitstreams = (rands < activity[:, None]).astype(jnp.uint8)
@@ -66,7 +69,9 @@ class L4_CellularAdapter(BaseStochasticAdapter):
 
     @staticmethod
     @jax.jit
-    def _kuramoto_kernel(phases: jnp.ndarray, omega: float, k: float, dt: float, noise: jnp.ndarray) -> jnp.ndarray:
+    def _kuramoto_kernel(
+        phases: jnp.ndarray, omega: float, k: float, dt: float, noise: jnp.ndarray
+    ) -> jnp.ndarray:
         """
         Solves the Kuramoto-UPDE interaction:
         dTheta_i = [omega + K/N * sum(sin(Theta_j - Theta_i)) + noise] * dt
@@ -75,14 +80,14 @@ class L4_CellularAdapter(BaseStochasticAdapter):
         # Calculate all-to-all coupling (can be optimized with neighbor masks later)
         diffs = phases[None, :] - phases[:, None]
         coupling = (k / n) * jnp.sum(jnp.sin(diffs), axis=1)
-        
+
         d_phase = (2 * jnp.pi * omega + coupling + noise) * dt
         return (phases + d_phase) % (2 * jnp.pi)
 
     def step_jax(self, dt: float, inputs: Optional[jnp.ndarray] = None) -> jnp.ndarray:
         """
         Advances the L4 holonomic dynamics using JAX.
-        
+
         inputs: (n_cells, bitstream_length) representing L3 Genomic drive.
         Returns: (n_cells, bitstream_length) output bitstreams.
         """
@@ -110,9 +115,7 @@ class L4_CellularAdapter(BaseStochasticAdapter):
         """
         # Complex order parameter R = |1/N * sum(exp(i*theta))|
         # Approximated from bitstream means
-        return {
-            "synchronization_r4": float(jnp.abs(jnp.mean(jnp.exp(1j * self.phases))))
-        }
+        return {"synchronization_r4": float(jnp.abs(jnp.mean(jnp.exp(1j * self.phases))))}
 
     def get_metrics(self) -> Dict[str, float]:
         """
@@ -120,5 +123,5 @@ class L4_CellularAdapter(BaseStochasticAdapter):
         """
         return {
             "order_parameter": float(jnp.abs(jnp.mean(jnp.exp(1j * self.phases)))),
-            "avalanche_density": float(jnp.mean(self.avalanches))
+            "avalanche_density": float(jnp.mean(self.avalanches)),
         }

@@ -1,4 +1,5 @@
 from typing import Any, Optional
+
 """
 SCPN L3: Genomic-Epigenomic Layer (Stochastic Implementation)
 =============================================================

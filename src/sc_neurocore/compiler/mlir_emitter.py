@@ -42,12 +42,18 @@ class MLIREmitter:
     def emit_lfsr(self, width: int, seed: int) -> str:
         """Emits an LFSR instantiation."""
         out = self.get_wire()
-        self.nodes.append(MLIRNode(
-            "hw.instance", 
-            [], 
-            out, 
-            {"sym_name": "lfsr", "module": "sc_lfsr", "parameters": {"WIDTH": width, "SEED": seed}}
-        ))
+        self.nodes.append(
+            MLIRNode(
+                "hw.instance",
+                [],
+                out,
+                {
+                    "sym_name": "lfsr",
+                    "module": "sc_lfsr",
+                    "parameters": {"WIDTH": width, "SEED": seed},
+                },
+            )
+        )
         return out
 
     def emit_xor(self, lhs: str, rhs: str) -> str:
@@ -78,11 +84,12 @@ class MLIREmitter:
                 c, t, f = node.inputs
                 lines.append(f"  {node.output} = comb.mux {c}, {t}, {f} : i1")
             elif node.op_type == "hw.instance":
-                lines.append(f"  {node.output} = hw.instance \"{node.attributes['sym_name']}\" @{node.attributes['module']}() -> (i1)")
+                lines.append(
+                    f"  {node.output} = hw.instance \"{node.attributes['sym_name']}\" @{node.attributes['module']}() -> (i1)"
+                )
 
         # Final output assignment (taking the last node's output as an example)
         last_wire = self.nodes[-1].output if self.nodes else "0"
         lines.append(f"  hw.output {last_wire} : i1")
         lines.append("}")
         return "\n".join(lines)
-

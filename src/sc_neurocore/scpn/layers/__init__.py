@@ -1,4 +1,5 @@
 from typing import Any, Optional
+
 """
 SCPN Layers Module
 ==================
@@ -75,7 +76,9 @@ def create_full_stack(params: Optional[dict[str, Any]] = None) -> dict[str, Any]
     }
 
 
-def run_integrated_step(layers: dict[str, Any], dt: float, inputs: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+def run_integrated_step(
+    layers: dict[str, Any], dt: float, inputs: Optional[dict[str, Any]] = None
+) -> dict[str, Any]:
     """
     Run one integrated time step across all SCPN layers with inter-layer coupling.
 

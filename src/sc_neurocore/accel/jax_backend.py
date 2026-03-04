@@ -20,13 +20,25 @@ import numpy as np
 try:
     import jax
     import jax.numpy as jnp
+
     jax.config.update("jax_enable_x64", True)  # type: ignore[no-untyped-call]
     HAS_JAX = True
 except ImportError:
     HAS_JAX = False
     jnp = np  # type: ignore
 
-__all__ = ["jax", "jnp", "HAS_JAX", "to_jax", "to_host", "jax_pack_bitstream", "jax_vec_and", "jax_popcount", "jax_vec_mac", "jax_lif_step"]
+__all__ = [
+    "jax",
+    "jnp",
+    "HAS_JAX",
+    "to_jax",
+    "to_host",
+    "jax_pack_bitstream",
+    "jax_vec_and",
+    "jax_popcount",
+    "jax_vec_mac",
+    "jax_lif_step",
+]
 
 
 def to_jax(arr: Any) -> Any:
@@ -48,6 +60,7 @@ def to_host(arr: Any) -> np.ndarray[Any, Any]:
 # ---------------------------------------------------------------------------
 
 if HAS_JAX:
+
     @jax.jit
     def _jax_pack_1d(bits: jax.Array) -> jax.Array:
         length = bits.size
@@ -76,23 +89,23 @@ def jax_pack_bitstream(bits: Any) -> Any:
     """
     if not HAS_JAX:
         raise RuntimeError("JAX is not available.")
-    
+
     bits = jnp.asarray(bits, dtype=jnp.uint8)
 
     if bits.ndim == 1:
         return _jax_pack_1d(bits)
     elif bits.ndim == 2:
         return _jax_pack_2d(bits)
-    
+
     raise ValueError(f"Expected 1-D or 2-D, got {bits.ndim}-D")
 
 
 if HAS_JAX:
+
     @jax.jit
     def jax_vec_and(a: jax.Array, b: jax.Array) -> jax.Array:
         """Bitwise AND on packed uint64 arrays (SC multiplication)."""
         return jnp.bitwise_and(a, b)
-
 
     @jax.jit
     def jax_popcount(packed: jax.Array) -> jax.Array:
@@ -111,7 +124,6 @@ if HAS_JAX:
         res: jax.Array = (x * h01) >> jnp.uint64(56)
         return res
 
-
     @jax.jit
     def jax_vec_mac(packed_weights: jax.Array, packed_inputs: jax.Array) -> jax.Array:
         """
@@ -122,7 +134,6 @@ if HAS_JAX:
         res: jax.Array = jnp.sum(counts, axis=(1, 2))
         return res
 
-
     @jax.jit
     def jax_lif_step(
         v: jax.Array,
@@ -132,11 +143,11 @@ if HAS_JAX:
         v_threshold: float,
         alpha: float,
         resistance: float,
-        noise: jax.Array
+        noise: jax.Array,
     ) -> tuple[jax.Array, jax.Array]:
         """
         Vectorized LIF step using JAX.
-        
+
         dv = (v_rest - v) * alpha + I_t * resistance + noise
         """
         v_next = v + (v_rest - v) * alpha + I_t * resistance + noise

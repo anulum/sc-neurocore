@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Any, Optional
+
 """
 Adaptive Audio Engine -- Closed-Loop SSGF + EVS Controller
 ===========================================================
@@ -39,8 +40,8 @@ class SessionPhase(str, Enum):
 
 
 # Phase transition thresholds (in ticks at ~2 Hz update rate)
-_DISCOVERY_TICKS = 240   # ~2 minutes
-_LOCKON_TICKS = 1200     # ~10 minutes
+_DISCOVERY_TICKS = 240  # ~2 minutes
+_LOCKON_TICKS = 1200  # ~10 minutes
 
 
 # ── Adaptation Record ────────────────────────────────────────────────
@@ -49,6 +50,7 @@ _LOCKON_TICKS = 1200     # ~10 minutes
 @dataclass
 class _AdaptationRecord:
     """Single parameter adaptation event."""
+
     tick: int
     phase: str
     param: str
@@ -164,7 +166,7 @@ class AdaptiveAudioEngine:
         """Return recent EVS trend: positive = improving, negative = declining."""
         if len(self._recent_evs) < 3:
             return 0.0
-        recent = np.array(self._recent_evs[-self._trend_window:])
+        recent = np.array(self._recent_evs[-self._trend_window :])
         if len(recent) < 3:
             return 0.0
         # Simple linear slope
@@ -198,7 +200,7 @@ class AdaptiveAudioEngine:
         self._evs_scores.append(score)
         self._recent_evs.append(score)
         if len(self._recent_evs) > self._trend_window * 2:
-            self._recent_evs = self._recent_evs[-self._trend_window * 2:]
+            self._recent_evs = self._recent_evs[-self._trend_window * 2 :]
         if snapshot.is_verified:
             self._verified_count += 1
 
@@ -306,7 +308,11 @@ class AdaptiveAudioEngine:
     # ── Logging ──────────────────────────────────────────────────────
 
     def _log_adaptation(
-        self, param: str, old: float, new: float, reason: str,
+        self,
+        param: str,
+        old: float,
+        new: float,
+        reason: str,
     ) -> None:
         record = _AdaptationRecord(
             tick=self._tick,
@@ -319,7 +325,12 @@ class AdaptiveAudioEngine:
         self._adaptations.append(record)
         logger.debug(
             "Tick %d [%s] %s: %.4f -> %.4f (%s)",
-            self._tick, self._phase.value, param, old, new, reason,
+            self._tick,
+            self._phase.value,
+            param,
+            old,
+            new,
+            reason,
         )
 
     # ── Session Report ───────────────────────────────────────────────
@@ -375,6 +386,4 @@ class AdaptiveAudioEngine:
         self._recent_evs.clear()
         self._adaptations.clear()
         self._sweep_direction = 1.0
-        self._sweep_hz = (
-            10.0 if self.profile is None else self.profile.get_best_target_hz()
-        )
+        self._sweep_hz = 10.0 if self.profile is None else self.profile.get_best_target_hz()
