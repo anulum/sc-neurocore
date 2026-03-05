@@ -43,7 +43,9 @@ jobs:
         run: cargo install cargo-audit
 
       - name: Cargo audit
-        run: cargo audit --file engine/Cargo.lock
+        run: |
+          cargo generate-lockfile --manifest-path engine/Cargo.toml
+          cargo audit --file engine/Cargo.lock
 
   test-engine:
     name: Test Engine (${{ matrix.os }})

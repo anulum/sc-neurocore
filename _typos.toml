@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+[default.extend-words]
+# Domain-specific terms that are not typos
+nanos = "nanos"
+ket = "ket"
+bra = "bra"
+ser = "ser"
+inout = "inout"
+hdc = "hdc"
+lif = "lif"
+lfsr = "lfsr"
+rng = "rng"
+vsa = "vsa"
+
+[files]
+extend-exclude = [
+    "*.npz",
+    "*.npy",
+    "*.onnx",
+    "*.pkl",
+    "*.pt",
+    ".tools/",
+    "engine/target/",
+]
