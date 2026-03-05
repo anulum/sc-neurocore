@@ -17,13 +17,14 @@ Commercial Licensing: Available
 [![Rust](https://img.shields.io/badge/engine-Rust-orange)](https://www.rust-lang.org/)
 
 **Version:** 3.7.0
-**Status:** Production Core Verified | 976 Tests Passing | CI/CD Active
+**Status:** Production Core Verified | 1024 Tests Passing | 97.76% Coverage | CI/CD Active
 
-SC-NeuroCore is a universal stochastic computing framework for neuromorphic
-hardware simulation. It provides bit-true Python models that match Verilog RTL
+SC-NeuroCore is a deterministic stochastic computing framework for
+neuromorphic hardware design and edge-AI deployment. It provides bit-true
+Python simulation (digital twin environment) that matches Verilog RTL
 cycle-exactly, a high-performance Rust engine (512x real-time), GPU-accelerated
-inference, and a tiered module system spanning production hardware to
-theoretical research.
+inference, and a tiered module system from production FPGA targets to
+research prototyping.
 
 ## Quick Start
 
@@ -62,7 +63,7 @@ For benchmark reports, always include batch size, bitstream length, seed policy,
 | Tier | Location | Description |
 |------|----------|-------------|
 | **core** | `src/sc_neurocore/` (neurons, synapses, layers, sources, utils, recorders, accel) | Production-ready. Imported by default. |
-| **research** | `src/sc_neurocore/` (hdc, solvers, transformers, quantum, robotics, bio, physics, +18 more) | Functional but experimental. Import explicitly. |
+| **simulation** | `src/sc_neurocore/` (hdc, solvers, transformers, quantum, robotics, physics, +18 more) | Deterministic digital twin simulation environment. Import explicitly. |
 | **speculative** | `research/` (eschaton, exotic, meta, post_silicon, transcendent) | Theoretical explorations. Not part of the installable package. See `research/README.md`. |
 
 ### Core API (28 symbols)
@@ -167,7 +168,7 @@ All other examples run with the pure-Python `sc_neurocore` package.
 ## CI/CD
 
 GitHub Actions pipelines (`.github/workflows/`):
-- **ci.yml**: Lint (black + mypy) + Test (Python 3.9 / 3.11 / 3.12 matrix, coverage >= 97%) + Build
+- **ci.yml**: Lint (black) + Test (Python 3.11 / 3.12, coverage >= 97%) + Build
 - **v3-engine.yml**: Rust engine build + `cargo test`
 - **v3-wheels.yml**: Cross-platform wheel builds (Linux, macOS, Windows)
 - **docs.yml**: MkDocs documentation build
