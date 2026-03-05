@@ -8,7 +8,7 @@ from sc_neurocore.experiments.demo_pattern_classification import run_pattern_tri
 
 
 def compute_pca_2d(
-    X: np.ndarray[Any, Any]
+    X: np.ndarray[Any, Any],
 ) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any]]:
     """
     Simple 2D PCA using SVD.
