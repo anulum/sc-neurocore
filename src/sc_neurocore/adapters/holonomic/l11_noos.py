@@ -4,7 +4,7 @@ SCPN L11: Noospheric-Cultural-Informational Adapter (JAX Implementation)
 ========================================================================
 
 This module implements the JAX-accelerated uplift of Layer 11, focusing on
-the Noosphere-Technosphere Hybrid System (NTHS) Hamiltonian, social 
+the Noosphere-Technosphere Hybrid System (NTHS) Hamiltonian, social
 polarization dynamics, and memetic percolation thresholds described in Paper 11.
 
 Key Equations:

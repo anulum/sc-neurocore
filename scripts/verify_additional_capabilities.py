@@ -180,7 +180,7 @@ test_cap('B3', 'ConnectomeEmulator (Mind uploading)', lambda: (
 # ============== ANALYSIS ==============
 print('Testing ANALYSIS modules...')
 
-test_cap('A1', 'PhiEvaluator (IIT Phi measurement)', lambda: (
+test_cap('A1', 'PhiEvaluator (IT Phi measurement)', lambda: (
     __import__('sc_neurocore.analysis.consciousness', fromlist=['PhiEvaluator']).PhiEvaluator()
 ))
 

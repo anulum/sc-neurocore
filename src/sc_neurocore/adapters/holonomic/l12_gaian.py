@@ -4,7 +4,7 @@ SCPN L12: Ecological-Gaian Synchrony Adapter (JAX Implementation)
 =================================================================
 
 This module implements the JAX-accelerated uplift of Layer 12, focusing on
-the Mycorrhizal Quantum Network (MQN), Gaian Synchrony Operators, and 
+the Mycorrhizal Quantum Network (MQN), Gaian Synchrony Operators, and
 Environment-Assisted Quantum Transport (ENAQT) described in Paper 12.
 
 Key Equations:

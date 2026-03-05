@@ -2,7 +2,7 @@
 """
 Base interface for sc-neurocore adapters.
 
-Adapters map domain-specific dynamics (Biology, Physics, etc.) into 
+Adapters map domain-specific dynamics (Biology, Physics, etc.) into
 stochastic bitstreams and JAX-accelerated kernels.
 """
 

@@ -6,8 +6,8 @@ Commercial Licensing: Available
 
 # SC-NeuroCore Discrepancy Remediation Plan
 
-**Date:** 2026-02-11  
-**Scope:** Entire SC-NeuroCore benchmarking, documentation, and runtime path policy  
+**Date:** 2026-02-11
+**Scope:** Entire SC-NeuroCore benchmarking, documentation, and runtime path policy
 **Goal:** Remove ambiguity, recover small-batch performance, and publish hardware-relevant metrics.
 
 ## 1. Problems and Risks (No Sugar-Coating)

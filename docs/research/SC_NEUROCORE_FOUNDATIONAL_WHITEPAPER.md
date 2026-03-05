@@ -1,6 +1,6 @@
 ---
 title: "SC-NeuroCore: A Universal Stochastic Substrate for Next-Generation Distributed Intelligence"
-author: 
+author:
 - Miroslav Sotek
 - Gemini (AI Architect)
 date: "January 13, 2026"

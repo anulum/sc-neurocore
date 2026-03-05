@@ -3713,9 +3713,9 @@ The Omega Integrator combines multiple system states into a single unified repre
 
 This is mathematically equivalent to computing the centroid direction on the unit sphere — the "consensus direction" of all input states. For N input states uniformly distributed on the d-dimensional sphere, the norm of the sum grows as √N (by the law of large numbers for vectors), so the normalized output amplifies correlated dimensions and cancels uncorrelated ones.
 
-### 33.2.2 Relation to IIT
+### 33.2.2 Relation to IT
 
-The name "Omega Point" references Teilhard de Chardin's concept of maximal consciousness integration. In the context of Integrated Information Theory (IIT, Tononi 2004), the integration of information across system components is quantified by Φ (phi). The Omega Integrator provides a much simpler measure — the magnitude of the pre-normalization sum vector — which correlates with (but is not equivalent to) information integration.
+The name "Omega Point" references Teilhard de Chardin's concept of maximal consciousness integration. In the context of Integrated Information Theory (IT, Tononi 2004), the integration of information across system components is quantified by Φ (phi). The Omega Integrator provides a much simpler measure — the magnitude of the pre-normalization sum vector — which correlates with (but is not equivalent to) information integration.
 
 ## 33.3 Recursive Self-Improver
 
@@ -7250,7 +7250,7 @@ The SCPN framework builds on several philosophical and scientific traditions:
 
 **1984**: Yoshiki Kuramoto published Chemical Oscillations, Waves, and Turbulence, formalizing the study of coupled oscillator synchronization. The Kuramoto model is the mathematical heart of SC-NeuroCore's SCPN L4 layer.
 
-**2004**: Giulio Tononi proposed Integrated Information Theory (IIT), quantifying consciousness as integrated information (Φ). While SC-NeuroCore does not compute Φ directly, the SCPN framework's emphasis on cross-scale integration is philosophically aligned.
+**2004**: Giulio Tononi proposed Integrated Information Theory (IT), quantifying consciousness as integrated information (Φ). While SC-NeuroCore does not compute Φ directly, the SCPN framework's emphasis on cross-scale integration is philosophically aligned.
 
 **2020s**: The SCPN framework (Sotek, Anulum Institute) synthesized these traditions into a seven-layer hierarchical model, from quantum biological coherence to symbolic cultural processing. SC-NeuroCore provides the first computational implementation of this framework.
 

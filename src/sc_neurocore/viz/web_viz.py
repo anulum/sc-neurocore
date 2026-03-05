@@ -59,22 +59,22 @@ class WebVisualizer:
         const graphData = {json_str};
         const canvas = document.getElementById('graph');
         const ctx = canvas.getContext('2d');
-        
+
         // Simple Force Layout Simulation
         const nodes = graphData.nodes;
         const links = graphData.links;
-        
+
         // Initial random positions
         nodes.forEach(n => {{
             n.x = Math.random() * 800;
             n.y = Math.random() * 600;
             n.vx = 0; n.vy = 0;
         }});
-        
+
         function draw() {{
             ctx.fillStyle = "#111";
             ctx.fillRect(0,0,800,600);
-            
+
             // Draw Links
             ctx.strokeStyle = "#555";
             links.forEach(l => {{
@@ -87,7 +87,7 @@ class WebVisualizer:
                     ctx.stroke();
                 }}
             }});
-            
+
             // Draw Nodes
             nodes.forEach(n => {{
                 ctx.fillStyle = n.group === 0 ? "#ff5555" : "#55aaff";
@@ -99,25 +99,25 @@ class WebVisualizer:
                 if(n.neurons) ctx.fillText(n.neurons + " neurons", n.x + 12, n.y + 16);
             }});
         }}
-        
+
         function update() {{
             // Very simple layout: Linear positioning by group
             const groups = [...new Set(nodes.map(n => n.group))];
             const layerHeight = 500 / groups.length;
-            
+
             nodes.forEach(n => {{
                 // Target Y based on group
                 const ty = 50 + n.group * 100;
                 const tx = 400; // Center X
-                
+
                 n.x += (tx - n.x) * 0.1;
                 n.y += (ty - n.y) * 0.1;
             }});
-            
+
             draw();
             requestAnimationFrame(update);
         }}
-        
+
         update();
     </script>
 </body>

@@ -23,7 +23,7 @@ def validate_project_structure():
         "docs/API_REFERENCE.md",
         "docs/USER_GUIDE.md"
     ]
-    
+
     all_ok = True
     for p in required_paths:
         if os.path.exists(p):
@@ -31,7 +31,7 @@ def validate_project_structure():
         else:
             print(f"  [MISSING] {p}")
             all_ok = False
-            
+
     if all_ok:
         print("Structure Validation: PASSED")
     else:
@@ -56,12 +56,12 @@ def validate_pyproject():
 
         with open("pyproject.toml", "rb") as f:
             data = toml.load(f)
-            
+
         project = data.get("project", {})
         print(f"  Name: {project.get('name')}")
         print(f"  Version: {project.get('version')}")
         print("pyproject.toml Validation: PASSED")
-        
+
     except Exception as e:
         print(f"  [ERROR] Parsing failed: {e}")
 
@@ -71,6 +71,6 @@ if __name__ == "__main__":
         # Try moving up if in scripts
         if os.path.basename(os.getcwd()) == "scripts":
             os.chdir("..")
-            
+
     validate_project_structure()
     validate_pyproject()

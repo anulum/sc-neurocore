@@ -4,7 +4,7 @@ SCPN L1: Quantum Biological Adapter (JAX Implementation)
 ========================================================
 
 This module implements the JAX-accelerated uplift of Layer 1, focusing on
-the Fröhlich Pumping mechanism, the Ignition Hamiltonian, and the 
+the Fröhlich Pumping mechanism, the Ignition Hamiltonian, and the
 Quantum-Classical bridge as described in Paper 1.
 
 Key Equations:

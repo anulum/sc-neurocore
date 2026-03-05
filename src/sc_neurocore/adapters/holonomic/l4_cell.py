@@ -4,7 +4,7 @@ SCPN L4: Cellular-Tissue Synchronization Adapter (JAX Implementation)
 ======================================================================
 
 This module implements the JAX-accelerated uplift of Layer 4, focusing on
-Quasicritical Synchronization, Avalanche Dynamics, and the Cyto-Matrix 
+Quasicritical Synchronization, Avalanche Dynamics, and the Cyto-Matrix
 Tensegrity Network (CMTN) described in Paper 4.
 
 Key Equations:

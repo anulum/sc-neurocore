@@ -14,16 +14,16 @@ class SemioticTriad:
     Simulates Noetic/Semiotic Computing.
     Processing via Meaning Shifts (Metaphor/Metonymy).
     """
-    
+
     def __init__(self):
         # Knowledge Graph / Ontology
         self.associations: Dict[str, List[str]] = {}
-        
+
     def learn_association(self, concept: str, related: str):
         if concept not in self.associations:
             self.associations[concept] = []
         self.associations[concept].append(related)
-        
+
     def interpret(self, sign: Sign) -> Sign:
         """
         Shift meaning based on 'Interpretant'.
@@ -36,7 +36,7 @@ class SemioticTriad:
             new_concept = self.associations[context][0] # Simple selection
             return Sign(signifier=context, signified=new_concept, interpretant=sign.signified)
         return sign
-        
+
     def metaphor_distance(self, start: str, end: str, depth=5) -> int:
         """
         Distance in meaning space (Noetic distance).
@@ -48,7 +48,7 @@ class SemioticTriad:
             curr, dist = frontier.pop(0)
             if curr == end: return dist
             if dist >= depth: continue
-            
+
             if curr in self.associations:
                 for neighbor in self.associations[curr]:
                     if neighbor not in visited:

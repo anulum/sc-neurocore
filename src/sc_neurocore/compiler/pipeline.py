@@ -2,7 +2,7 @@
 """
 Orchestration Pipeline for sc-neurocore's Hardware Compiler.
 
-This module provides the automated workflow to take a stochastic graph from 
+This module provides the automated workflow to take a stochastic graph from
 the MLIREmitter and compile it down to a bitstream using open-source FPGA tools:
 1. CIRCT (firtool) -> Verilog
 2. Yosys -> Synthesis (BLIF/JSON)

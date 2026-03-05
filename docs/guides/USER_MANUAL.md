@@ -72,7 +72,7 @@ Each layer in `sc-neurocore` is a `VectorizedLayer` object that manages an ensem
 #### 3.1.1 Layer 1: Quantum Substrate (`layers.quantum`)
 Implements the Fröhlich condensation dynamics.
 - **Key Component**: The `FröhlichOscillator`.
-- **Parameter**: `pump_rate` ($W_{pump}$). 
+- **Parameter**: `pump_rate` ($W_{pump}$).
 - **Hardware**: Synthesizes to a high-speed stochastic ring oscillator.
 
 #### 3.1.2 Layer 2: Neural Synchrony (`layers.neural`)

@@ -4,7 +4,7 @@ SCPN L8: Cosmic Phase-Locking Adapter (JAX Implementation)
 ==========================================================
 
 This module implements the JAX-accelerated uplift of Layer 8, focusing on
-Pulsar Timing Array (PTA) synchronization and Cosmic Phase-Locking 
+Pulsar Timing Array (PTA) synchronization and Cosmic Phase-Locking
 dynamics described in Paper 8.
 
 Key Equations:

@@ -10,7 +10,7 @@ class FemtoSwitch:
     States: 0 (Red), 1 (Green), 2 (Blue).
     Interaction rules based on SU(3) symmetry (simplified).
     """
-    
+
     def interact(self, quark_a: np.ndarray, quark_b: np.ndarray) -> np.ndarray:
         """
         Interacts two streams of quarks.
@@ -23,7 +23,7 @@ class FemtoSwitch:
         # Vectorized interaction
         # We can use (a + b) % 3 logic for cyclic group if 0,1,2
         # R=0, G=1, B=2
-        
+
         # 0+1=1? No, R+G->B(2). 0+1->2.
         # 1+2->0.
         # 2+0->1.
@@ -32,21 +32,21 @@ class FemtoSwitch:
         # -(1+2) = -3 = 0.
         # -(2+0) = -2 = 1.
         # Yes!
-        
+
         # Handle same color:
         # 0+0 -> 0 (Scatter)
-        
+
         out = np.zeros_like(quark_a)
-        
+
         diff_mask = (quark_a != quark_b)
         same_mask = (quark_a == quark_b)
-        
+
         # Different colors -> Fuse to 3rd
         out[diff_mask] = (-(quark_a[diff_mask] + quark_b[diff_mask])) % 3
-        
+
         # Same colors -> Scatter (Keep A)
         out[same_mask] = quark_a[same_mask]
-        
+
         return out
 
     def bit_to_quark(self, bitstream: np.ndarray) -> np.ndarray:

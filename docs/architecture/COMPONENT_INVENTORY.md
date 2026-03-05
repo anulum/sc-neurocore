@@ -130,7 +130,7 @@ This document lists all active components in the `sc-neurocore` framework, organ
     *   `WebVisualizer`: HTML5/Canvas network topology renderer.
     *   `NeuroArtGenerator`: Generative AI for internal state expression.
 *   **`analysis/`**
-    *   `PhiEvaluator`: IIT Consciousness ($\Phi$) measurement.
+    *   `PhiEvaluator`: IT Consciousness ($\Phi$) measurement.
     *   `Explainability`: Spike-to-concept semantic mapping.
     *   `KardashevEstimator`: Civilization progress metrics.
     *   `QualiaTuringTest`: Subjectivity verification framework.

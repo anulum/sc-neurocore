@@ -15,7 +15,7 @@ class NestedUniverse:
     id: int
     computing_resources: float # Simulated RAM/FLOPS
     children: List['NestedUniverse'] = field(default_factory=list)
-    
+
     def spawn_simulation(self, overhead: float = 0.1) -> Optional['NestedUniverse']:
         """
         Creates a child universe with a fraction of parent resources.
@@ -23,10 +23,10 @@ class NestedUniverse:
         if self.computing_resources < 1.0:
             logger.warning("Universe %d: Insufficient entropy to spawn sub-reality.", self.id)
             return None
-            
+
         child_res = self.computing_resources * (1.0 - overhead)
         self.computing_resources -= child_res # Consume for the simulation
-        
+
         child_id = self.id + 1
         child = NestedUniverse(id=child_id, computing_resources=child_res)
         self.children.append(child)

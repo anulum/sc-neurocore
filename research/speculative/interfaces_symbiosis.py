@@ -9,7 +9,7 @@ class SymbiosisProtocol:
     Human-AI Symbiosis Interface.
     Translates Semantics <-> Bitstreams.
     """
-    
+
     def encode_thought(self, semantic_vector: np.ndarray, urgency: float) -> np.ndarray:
         """
         Human -> Machine.
@@ -19,7 +19,7 @@ class SymbiosisProtocol:
         probs = (semantic_vector + 1.0) / 2.0
         # Boost probability by urgency (Attention)
         probs = np.clip(probs * (1.0 + urgency), 0, 1)
-        
+
         # Generate spike train
         rands = np.random.random(probs.shape)
         bits = (rands < probs).astype(np.uint8)
@@ -32,7 +32,7 @@ class SymbiosisProtocol:
         """
         # Calculate 'activation'
         mean_activity = np.mean(bitstream)
-        
+
         if mean_activity > 0.8:
             return "Sensation: FLASH OF INSIGHT (High Confidence)"
         elif mean_activity > 0.5:

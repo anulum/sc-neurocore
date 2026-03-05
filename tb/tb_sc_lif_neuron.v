@@ -66,7 +66,7 @@ module tb_sc_lif_neuron;
             $display("Error: Could not open stimuli.txt");
             $finish;
         end
-        
+
         output_file = $fopen("results_verilog.txt", "w");
 
         // Reset

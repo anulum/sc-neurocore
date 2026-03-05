@@ -6,8 +6,8 @@ Commercial Licensing: Available
 
 # SC-NeuroCore v3 Benchmark Report
 
-**Version**: 3.6.0  
-**Date**: 2026-02-10  
+**Version**: 3.6.0
+**Date**: 2026-02-10
 **SIMD Tier**: avx512-vpopcntdq
 
 ## Baseline Definition and Routing Note
@@ -124,4 +124,3 @@ Interpretation:
 | dense prepacked (64->32, L=1024) | 4.173 | 0.562 | 7.4x | 70x |
 | LIF (per-call, 100K) | 240.266 | 61.585 | 3.9x | 400x |
 | LIF (batch, 100K) | 240.266 | 1.496 | 160.6x | 400x |
-

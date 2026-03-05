@@ -26,7 +26,7 @@ Imagine a bucket with a small hole in the bottom. Water (input current) flows in
 Information travels between neurons via synapses. A synapse has a **weight**. If a pre-synaptic neuron spikes, the post-synaptic neuron receives a "kick" proportional to that weight. In `sc-neurocore`, weights can be static or adaptive (learning).
 
 ### Learning: STDP
-**Spike-Timing-Dependent Plasticity (STDP)** is a biological learning rule. 
+**Spike-Timing-Dependent Plasticity (STDP)** is a biological learning rule.
 *   If Neuron A spikes just *before* Neuron B, the connection between them is strengthened (Causality).
 *   If Neuron A spikes *after* Neuron B, the connection is weakened.
 *   This allows the network to learn temporal patterns without a global "error" signal (backpropagation).

@@ -4,7 +4,7 @@ SCPN L15: Consilium / Oversoul Integrator Adapter (JAX Implementation)
 =====================================================================
 
 This module implements the JAX-accelerated uplift of Layer 15, focusing on
-the Universal Metric Operator (UMO), Global Coherence Attractor (Omega), 
+the Universal Metric Operator (UMO), Global Coherence Attractor (Omega),
 and multi-objective Sustainable Ethical Coherence (SEC) optimization (Paper 15).
 
 Key Equations:

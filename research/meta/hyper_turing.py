@@ -9,7 +9,7 @@ class OracleLayer:
     Simulates a Hyper-Turing Oracle.
     Accesses future stream statistics to solve otherwise uncomputable tasks.
     """
-    
+
     def solve_halting(self, bitstream: np.ndarray) -> bool:
         """
         Oracle function: Determines if a bitstream will eventually 'settle'
@@ -19,7 +19,7 @@ class OracleLayer:
         # This represents 'infinite time' access in a finite model.
         tail = bitstream[-100:]
         variance = np.var(tail)
-        
+
         # If variance is 0, it has halted.
         return bool(variance == 0)
 

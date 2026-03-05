@@ -51,7 +51,7 @@ module sc_firing_rate_bank #(
             // Protocol: External controller drives run_active=1 during run,
             // then pulses run_done=1 (with run_active=0) to finalise.
             // Accumulators are cleared on run_done to prepare for next run.
-            
+
             if (run_active) begin
                 if (step_valid) begin
                     for (i = 0; i < N_NEURONS; i = i + 1) begin

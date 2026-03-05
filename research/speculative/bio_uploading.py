@@ -12,13 +12,13 @@ class ConnectomeEmulator:
     """
     n_neurons: int
     sparsity: float = 0.01
-    
+
     def __post_init__(self):
         # Sparse Adjacency Matrix (Weights)
         # Using a dense mock for small scale, real use would use scipy.sparse
         self.adj = np.random.random((self.n_neurons, self.n_neurons))
         self.adj[self.adj > self.sparsity] = 0
-        
+
         self.neurons = [StochasticLIFNeuron() for _ in range(self.n_neurons)]
         self.spikes = np.zeros(self.n_neurons, dtype=np.uint8)
 
@@ -29,11 +29,11 @@ class ConnectomeEmulator:
         # 1. Compute incoming currents
         # I = Adj * Spikes_prev
         currents = np.dot(self.adj, self.spikes)
-        
+
         # 2. Update all neurons
         new_spikes = np.zeros(self.n_neurons, dtype=np.uint8)
         for i in range(self.n_neurons):
             new_spikes[i] = self.neurons[i].step(currents[i])
-            
+
         self.spikes = new_spikes
         return self.spikes
