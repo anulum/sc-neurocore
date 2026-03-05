@@ -2,6 +2,17 @@
 
 All notable changes to the `sc-neurocore` project will be documented in this file.
 
+## [3.8.0] - 2026-03-05
+
+### Hardening & Documentation
+- **Coverage gate raised to 98%**: De-omitted 6 modules (chaos/rng, analysis/explainability, physics/wolfram_hypergraph, robotics/swarm, learning/neuroevolution, spatial/*) plus bio/neuromodulation. 34 new tests, 1058 total, 98.10% coverage
+- **NumPy 2.x audit**: Zero deprecated calls found — codebase fully compatible
+- **Full API documentation**: 25 new mkdocstrings pages, all 44 subpackages wired into nav. Reorganized into Core / Compiler & Export / Domain Modules / Infrastructure sections
+- **Stale issue automation**: `.github/workflows/stale.yml` — weekly sweep, 60+14 day lifecycle, exempt: pinned/security/roadmap
+- **CI coverage gate sync**: `ci.yml` and `pyproject.toml` both enforce `fail_under = 98`
+
+---
+
 ## [3.7.0] - 2026-02-11
 
 ### Phase 14: Polymorphic Engine -- HDC/VSA, SCPN Petri Nets, Fault-Tolerant Logic

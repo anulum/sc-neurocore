@@ -3,7 +3,7 @@
 
 [package]
 name = "sc_neurocore_engine"
-version = "3.7.0"
+version = "3.8.0"
 edition = "2021"
 authors = ["Miroslav Sotek <fortisstudio@gmail.com>"]
 description = "High-performance Rust backend for SC-NeuroCore"
