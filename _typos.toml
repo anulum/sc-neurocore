@@ -4,6 +4,9 @@
 nanos = "nanos"
 ket = "ket"
 bra = "bra"
+brane = "brane"
+branes = "branes"
+aer = "aer"
 ser = "ser"
 inout = "inout"
 hdc = "hdc"
@@ -11,6 +14,10 @@ lif = "lif"
 lfsr = "lfsr"
 rng = "rng"
 vsa = "vsa"
+noo = "noo"
+noos = "noos"
+fom = "fom"
+ket_state = "ket_state"
 
 [files]
 extend-exclude = [
