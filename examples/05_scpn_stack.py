@@ -8,6 +8,7 @@ L1 (Quantum) through L7 (Symbolic), with inter-layer coupling.
 
 from sc_neurocore.scpn import create_full_stack, run_integrated_step, get_global_metrics
 
+
 def main():
     print("=== SC-NeuroCore: SCPN Layer Stack ===\n")
 

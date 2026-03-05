@@ -43,8 +43,12 @@ def main():
     tokyo = HDCVector(DIM, seed=3002)
 
     atoms = {
-        "France": france, "Germany": germany, "Japan": japan,
-        "Paris": paris, "Berlin": berlin, "Tokyo": tokyo,
+        "France": france,
+        "Germany": germany,
+        "Japan": japan,
+        "Paris": paris,
+        "Berlin": berlin,
+        "Tokyo": tokyo,
     }
 
     print("\nAtomic symbols created.")
@@ -55,18 +59,24 @@ def main():
     # ── Step 2: Encode records ────────────────────────────────────
 
     # record_france = (role_country * France) + (role_capital * Paris)
-    rec_france = HDCVector.bundle([
-        role_country * france,
-        role_capital * paris,
-    ])
-    rec_germany = HDCVector.bundle([
-        role_country * germany,
-        role_capital * berlin,
-    ])
-    rec_japan = HDCVector.bundle([
-        role_country * japan,
-        role_capital * tokyo,
-    ])
+    rec_france = HDCVector.bundle(
+        [
+            role_country * france,
+            role_capital * paris,
+        ]
+    )
+    rec_germany = HDCVector.bundle(
+        [
+            role_country * germany,
+            role_capital * berlin,
+        ]
+    )
+    rec_japan = HDCVector.bundle(
+        [
+            role_country * japan,
+            role_capital * tokyo,
+        ]
+    )
 
     # Bundle all records into memory
     memory = HDCVector.bundle([rec_france, rec_germany, rec_japan])
@@ -80,8 +90,12 @@ def main():
     probe = memory * role_capital
 
     print("\nQuery: 'Which countries are in memory?' (unbind role_capital)")
-    for name, atom in [("France", france), ("Germany", germany),
-                       ("Japan", japan), ("Paris", paris)]:
+    for name, atom in [
+        ("France", france),
+        ("Germany", germany),
+        ("Japan", japan),
+        ("Paris", paris),
+    ]:
         sim = probe.similarity(atom)
         print(f"  sim(probe, {name:>8s}) = {sim:.4f}")
 

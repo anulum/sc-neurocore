@@ -20,7 +20,14 @@ _EXE_SUFFIX = ".exe" if os.name == "nt" else ""
 
 VENV_SCRIPTS = pathlib.Path(__file__).resolve().parent.parent / ".venv" / _VENV_BIN_DIR
 VENV_VERILATOR = VENV_SCRIPTS / f"verilator{_EXE_SUFFIX}"
-VENV_VERILATOR_ROOT = pathlib.Path(__file__).resolve().parent.parent / ".venv" / _VENV_LIB_DIR / "site-packages" / "verilator"
+VENV_VERILATOR_ROOT = (
+    pathlib.Path(__file__).resolve().parent.parent
+    / ".venv"
+    / _VENV_LIB_DIR
+    / "site-packages"
+    / "verilator"
+)
+
 
 def _find_sh_dir() -> pathlib.Path | None:
     """Find a directory containing sh (needed by Verilator on Windows)."""
@@ -31,7 +38,10 @@ def _find_sh_dir() -> pathlib.Path | None:
     if os.name == "nt":
         for candidate in [
             pathlib.Path(r"C:\Progra~1\Git\usr\bin"),
-            pathlib.Path(os.environ.get("PROGRAMFILES", r"C:\Program Files")) / "Git" / "usr" / "bin",
+            pathlib.Path(os.environ.get("PROGRAMFILES", r"C:\Program Files"))
+            / "Git"
+            / "usr"
+            / "bin",
         ]:
             if (candidate / "sh.exe").exists():
                 return candidate
@@ -102,7 +112,6 @@ def _resolve_verilator_executable(env: dict[str, str]) -> str | None:
     return None
 
 
-
 def compile_and_run_verilator(
     top_module: str,
     hdl_files: list[str],
@@ -128,9 +137,7 @@ def compile_and_run_verilator(
     work_dir.mkdir(parents=True, exist_ok=True)
 
     # Resolve HDL file paths using relative POSIX-style paths for Windows toolchain compatibility.
-    hdl_paths = [
-        pathlib.Path(os.path.relpath(HDL_DIR / f, work_dir)).as_posix() for f in hdl_files
-    ]
+    hdl_paths = [pathlib.Path(os.path.relpath(HDL_DIR / f, work_dir)).as_posix() for f in hdl_files]
     if testbench:
         hdl_paths.append(pathlib.Path(os.path.relpath(HDL_DIR / testbench, work_dir)).as_posix())
 
@@ -187,7 +194,6 @@ def compile_and_run_verilator(
         env=env,
     )
     return sim_result
-
 
 
 def read_results_file(path: pathlib.Path) -> list[dict]:

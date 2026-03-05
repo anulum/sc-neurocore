@@ -3,14 +3,16 @@
 import numpy as np
 from dataclasses import dataclass
 
+
 @dataclass
 class EventHorizonLayer:
     """
     Simulates information scrambling at a Black Hole Event Horizon.
     Maps volume information to surface area bits (Holographic Principle).
     """
+
     n_inputs: int
-    n_outputs: int # Represents Surface Area (Entropy S = A/4G)
+    n_outputs: int  # Represents Surface Area (Entropy S = A/4G)
 
     def __post_init__(self):
         # Scrambling Matrix: Random Unitary (approximated by Orthogonal)

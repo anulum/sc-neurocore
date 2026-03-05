@@ -3,6 +3,7 @@
 import numpy as np
 from dataclasses import dataclass
 
+
 @dataclass
 class RecursiveSelfImprover:
     """
@@ -14,7 +15,7 @@ class RecursiveSelfImprover:
         """
         Analyzes weights and applies a 'intelligence explosion' gradient.
         """
-        if not hasattr(layer, 'weights'):
+        if not hasattr(layer, "weights"):
             return
 
         weights = layer.weights
@@ -29,7 +30,7 @@ class RecursiveSelfImprover:
         layer.weights += improvement
         layer.weights = np.clip(layer.weights, 0, 1)
 
-        if hasattr(layer, '_refresh_packed_weights'):
+        if hasattr(layer, "_refresh_packed_weights"):
             layer._refresh_packed_weights()
 
         return np.mean(improvement)

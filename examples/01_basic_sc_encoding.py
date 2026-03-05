@@ -8,6 +8,7 @@ using both Bernoulli and Sobol (low-discrepancy) methods.
 
 from sc_neurocore import BitstreamEncoder, bitstream_to_probability
 
+
 def main():
     print("=== SC-NeuroCore: Basic Bitstream Encoding ===\n")
 

@@ -3,11 +3,13 @@
 from dataclasses import dataclass
 from typing import Dict, List
 
+
 @dataclass
 class Sign:
-    signifier: str # Word/Image
-    signified: str # Concept
-    interpretant: str # Context/Meaning
+    signifier: str  # Word/Image
+    signified: str  # Concept
+    interpretant: str  # Context/Meaning
+
 
 class SemioticTriad:
     """
@@ -33,7 +35,7 @@ class SemioticTriad:
         context = sign.interpretant
         if context in self.associations:
             # Shift meaning (Metaphor)
-            new_concept = self.associations[context][0] # Simple selection
+            new_concept = self.associations[context][0]  # Simple selection
             return Sign(signifier=context, signified=new_concept, interpretant=sign.signified)
         return sign
 
@@ -46,12 +48,14 @@ class SemioticTriad:
         visited = set()
         while frontier:
             curr, dist = frontier.pop(0)
-            if curr == end: return dist
-            if dist >= depth: continue
+            if curr == end:
+                return dist
+            if dist >= depth:
+                continue
 
             if curr in self.associations:
                 for neighbor in self.associations[curr]:
                     if neighbor not in visited:
                         visited.add(neighbor)
-                        frontier.append((neighbor, dist+1))
+                        frontier.append((neighbor, dist + 1))
         return -1

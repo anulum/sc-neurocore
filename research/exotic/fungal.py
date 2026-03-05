@@ -3,12 +3,14 @@
 from dataclasses import dataclass
 import numpy as np
 
+
 @dataclass
 class MyceliumLayer:
     """
     Fungal Computing Layer.
     Simulates a dynamic mycelial network that reinforces active paths.
     """
+
     n_nodes: int
     growth_rate: float = 0.1
     decay_rate: float = 0.05
@@ -36,7 +38,7 @@ class MyceliumLayer:
         # Or symmetric: (In_i + In_j) * G_ij
 
         # Matrix of inputs (broadcast)
-        input_matrix = inputs[:, None] + inputs[None, :] # (N, N) sum
+        input_matrix = inputs[:, None] + inputs[None, :]  # (N, N) sum
         edge_flux = input_matrix * self.conductance
 
         delta_g = (self.growth_rate * edge_flux) - (self.decay_rate * self.conductance)

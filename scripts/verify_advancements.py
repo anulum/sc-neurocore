@@ -6,11 +6,12 @@ import sys
 import os
 
 # Add src to path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from sc_neurocore.synapses.stochastic_stdp import StochasticSTDPSynapse
 from sc_neurocore.utils.fsm_activations import TanhFSM
 from sc_neurocore.utils.decorrelators import ShufflingDecorrelator
+
 
 class TestAdvancements(unittest.TestCase):
     def test_stdp_potentiation(self):
@@ -67,5 +68,6 @@ class TestAdvancements(unittest.TestCase):
         # With seed 42, we expect some change.
         self.assertFalse(np.array_equal(bits, out))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

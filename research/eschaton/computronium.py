@@ -3,12 +3,14 @@
 import numpy as np
 from dataclasses import dataclass
 
+
 @dataclass
 class PlanckGrid:
     """
     Simulates a volume of Planck-Level Computronium.
     Theoretical maximum density of computation.
     """
+
     volume_cm3: float = 1.0
     mass_kg: float = 1.0
 
@@ -23,7 +25,7 @@ class PlanckGrid:
         I <= 2 * pi * R * E / (h * c * ln 2)
         R derived from volume.
         """
-        R = (3 * self.volume_cm3 / (4 * np.pi))**(1/3) * 0.01 # to meters
+        R = (3 * self.volume_cm3 / (4 * np.pi)) ** (1 / 3) * 0.01  # to meters
         E = self.mass_kg * self.c**2
 
         bits = (2 * np.pi * R * E) / (self.h * self.c * np.log(2))

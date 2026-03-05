@@ -92,9 +92,7 @@ def main():
             layer.update_weights(grad_w, lr=lr)
 
         avg_loss = total_loss / n_train
-        correct = sum(
-            1 for p, t in zip(predictions, targets) if (p > 0.5) == (t > 0.5)
-        )
+        correct = sum(1 for p, t in zip(predictions, targets) if (p > 0.5) == (t > 0.5))
         accuracy = correct / len(targets) * 100.0
 
         if epoch % 5 == 0 or epoch == n_epochs - 1:
@@ -107,12 +105,9 @@ def main():
     print("the non-differentiable bitstream AND+popcount forward pass.")
 
     final_preds = [layer.forward(x, seed=9999)[0] for x in X_train]
-    final_correct = sum(
-        1 for p, t in zip(final_preds, y_train) if (p > 0.5) == (t > 0.5)
-    )
+    final_correct = sum(1 for p, t in zip(final_preds, y_train) if (p > 0.5) == (t > 0.5))
     print(
-        f"\nFinal accuracy: {final_correct}/{len(y_train)} "
-        f"({final_correct/len(y_train):.0%})"
+        f"\nFinal accuracy: {final_correct}/{len(y_train)} " f"({final_correct/len(y_train):.0%})"
     )
 
 

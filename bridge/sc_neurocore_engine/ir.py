@@ -181,7 +181,6 @@ class ScGraph:
         return _emit_sv(self._inner)
 
 
-
 def parse_ir(text: str) -> ScGraph:
     """Parse an SC graph from its text format."""
     raw = _parse(text)

@@ -44,11 +44,7 @@ class KuramotoSolver:
     ) -> float:
         """SSGF-compatible step with geometry and PGBO coupling."""
         w_flat = np.asarray(W, dtype=np.float64).ravel().tolist() if W is not None else []
-        h_flat = (
-            np.asarray(h_munu, dtype=np.float64).ravel().tolist()
-            if h_munu is not None
-            else []
-        )
+        h_flat = np.asarray(h_munu, dtype=np.float64).ravel().tolist() if h_munu is not None else []
         return float(
             self._engine.step_ssgf(
                 float(dt),
@@ -72,11 +68,7 @@ class KuramotoSolver:
     ) -> np.ndarray:
         """Run N SSGF-compatible steps."""
         w_flat = np.asarray(W, dtype=np.float64).ravel().tolist() if W is not None else []
-        h_flat = (
-            np.asarray(h_munu, dtype=np.float64).ravel().tolist()
-            if h_munu is not None
-            else []
-        )
+        h_flat = np.asarray(h_munu, dtype=np.float64).ravel().tolist() if h_munu is not None else []
         return np.array(
             self._engine.run_ssgf(
                 int(n_steps),

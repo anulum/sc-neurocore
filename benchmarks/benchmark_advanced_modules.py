@@ -19,7 +19,7 @@ import sys
 import os
 
 # Add source path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from sc_neurocore.quantum.hybrid import QuantumStochasticLayer
 from sc_neurocore.graphs.gnn import StochasticGraphLayer
@@ -110,7 +110,7 @@ def benchmark_gnn():
 
     # Sparse vs Dense comparison
     dense_ops = n_nodes * n_nodes * n_features  # Dense matmul
-    sparse_ops = np.sum(adj > 0) * n_features   # Sparse
+    sparse_ops = np.sum(adj > 0) * n_features  # Sparse
 
     print(f"\nSPARSITY IMPROVEMENT:")
     print(f"  Dense operations: {dense_ops:,}")
@@ -192,8 +192,10 @@ def benchmark_bci_dvs():
     dvs = DVSInputLayer(height=height, width=width)
 
     # Simulate events (1000 events)
-    events = [(np.random.randint(0, width), np.random.randint(0, height),
-               float(i), 1) for i in range(1000)]
+    events = [
+        (np.random.randint(0, width), np.random.randint(0, height), float(i), 1)
+        for i in range(1000)
+    ]
 
     start = time.perf_counter()
     for _ in range(100):
@@ -243,8 +245,8 @@ def benchmark_chaotic_rng():
     std = np.std(samples)
 
     # Autocorrelation (should be near 0 for good RNG)
-    autocorr = np.correlate(samples[:1000] - mean, samples[:1000] - mean, mode='full')
-    autocorr = autocorr[len(autocorr)//2:] / autocorr[len(autocorr)//2]
+    autocorr = np.correlate(samples[:1000] - mean, samples[:1000] - mean, mode="full")
+    autocorr = autocorr[len(autocorr) // 2 :] / autocorr[len(autocorr) // 2]
 
     print(f"\nStatistical quality:")
     print(f"  Mean: {mean:.4f} (expected: 0.5)")
@@ -320,20 +322,21 @@ def main():
 
     results = {}
 
-    results['quantum'] = benchmark_quantum_hybrid()
-    results['gnn'] = benchmark_gnn()
-    results['transformer'] = benchmark_transformer()
+    results["quantum"] = benchmark_quantum_hybrid()
+    results["gnn"] = benchmark_gnn()
+    results["transformer"] = benchmark_transformer()
     bci, dvs = benchmark_bci_dvs()
-    results['bci'] = bci
-    results['dvs'] = dvs
-    results['chaos'] = benchmark_chaotic_rng()
-    results['world_model'] = benchmark_predictive_model()
+    results["bci"] = bci
+    results["dvs"] = dvs
+    results["chaos"] = benchmark_chaotic_rng()
+    results["world_model"] = benchmark_predictive_model()
 
     # Summary
     print("\n" + "=" * 60)
     print("SUMMARY: ADDITIONAL MAGNITUDE IMPROVEMENTS")
     print("=" * 60)
-    print("""
+    print(
+        """
     +---------------------------+-------------------------+
     | Module                    | Magnitude Improvement   |
     +---------------------------+-------------------------+
@@ -345,11 +348,12 @@ def main():
     | Chaotic RNG               | True chaos quality      |
     | Predictive World Model    | 1000x sample efficiency |
     +---------------------------+-------------------------+
-    """)
+    """
+    )
 
     print("\nAll benchmarks completed successfully!")
     return results
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

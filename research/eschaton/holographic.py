@@ -3,13 +3,15 @@
 import numpy as np
 from dataclasses import dataclass
 
+
 @dataclass
 class HolographicBoundary:
     """
     Simulates the Holographic Principle (AdS/CFT correspondence).
     3D Bulk dynamics are equivalent to 2D Boundary dynamics.
     """
-    grid_size: int = 10 # 3D side length
+
+    grid_size: int = 10  # 3D side length
 
     def __post_init__(self):
         # The 'Bulk' (3D volume)
@@ -25,7 +27,7 @@ class HolographicBoundary:
         # Simplified projection: integrate along the Z-axis
         self.bulk = bulk_data
         # Boundary encodes the state of the bulk
-        self.boundary = np.sum(self.bulk, axis=2) % 2 # Parity projection
+        self.boundary = np.sum(self.bulk, axis=2) % 2  # Parity projection
         return self.boundary.astype(np.uint8)
 
     def reconstruct_bulk(self) -> np.ndarray:

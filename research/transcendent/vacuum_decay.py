@@ -3,12 +3,14 @@
 import numpy as np
 from dataclasses import dataclass
 
+
 @dataclass
 class FalseVacuumField:
     """
     Simulates Scalar Field Vacuum Decay.
     Computing via Phase Transition Bubbles.
     """
+
     size: int
     false_vacuum_val: float = 0.0
     true_vacuum_val: float = 1.0

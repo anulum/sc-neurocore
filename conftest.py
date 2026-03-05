@@ -1,4 +1,5 @@
 """Root conftest — ensures src/ and bridge/ are importable by pytest."""
+
 import sys
 from pathlib import Path
 

@@ -3,12 +3,14 @@
 import numpy as np
 from dataclasses import dataclass
 
+
 @dataclass
 class DysonSwarmNet:
     """
     Simulates a Matrioshka Brain (Dyson Swarm Computing).
     Hierarchical nested shells processing at different 'temperatures'.
     """
+
     n_shells: int
     n_nodes_per_shell: int
 
@@ -27,6 +29,6 @@ class DysonSwarmNet:
             processing = np.tanh(data)
             self.shells[i] = processing
             # Next shell receives processed signal as 'energy source'
-            data = processing * 0.8 # 20% loss/entropy
+            data = processing * 0.8  # 20% loss/entropy
 
         return self.shells[-1]

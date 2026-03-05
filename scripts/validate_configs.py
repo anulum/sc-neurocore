@@ -11,7 +11,8 @@ Checks for the existence and validity of key configuration files:
 
 import os
 import sys
-import tomli # Requires tomli or python 3.11+ tomllib. fallback to simple read.
+import tomli  # Requires tomli or python 3.11+ tomllib. fallback to simple read.
+
 
 def validate_project_structure():
     print("Validating Project Structure...")
@@ -21,7 +22,7 @@ def validate_project_structure():
         "hdl",
         "tests",
         "docs/API_REFERENCE.md",
-        "docs/USER_GUIDE.md"
+        "docs/USER_GUIDE.md",
     ]
 
     all_ok = True
@@ -37,6 +38,7 @@ def validate_project_structure():
     else:
         print("Structure Validation: FAILED")
         sys.exit(1)
+
 
 def validate_pyproject():
     print("\nValidating pyproject.toml...")
@@ -64,6 +66,7 @@ def validate_pyproject():
 
     except Exception as e:
         print(f"  [ERROR] Parsing failed: {e}")
+
 
 if __name__ == "__main__":
     # Ensure we are in project root

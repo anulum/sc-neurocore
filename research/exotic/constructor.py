@@ -3,16 +3,18 @@
 import numpy as np
 from dataclasses import dataclass
 
+
 @dataclass
 class ConstructorCell:
     """
     Simulates a Universal Constructor (Von Neumann).
     A cell capable of replicating itself and evolving structure.
     """
-    id: int
-    blueprint: np.ndarray # Instructions
 
-    def replicate(self) -> 'ConstructorCell':
+    id: int
+    blueprint: np.ndarray  # Instructions
+
+    def replicate(self) -> "ConstructorCell":
         """
         Creates a copy of itself based on the blueprint.
         """

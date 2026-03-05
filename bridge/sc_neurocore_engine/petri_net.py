@@ -39,12 +39,13 @@ class PetriNetEngine:
         thresholds = np.asarray(artifacts["thresholds"], dtype=np.float64)
 
         self.n_transitions, self.n_places = w_in.shape
-        assert w_out.shape == (self.n_places, self.n_transitions), (
-            f"w_out shape {w_out.shape} must be ({self.n_places}, {self.n_transitions})"
-        )
-        assert thresholds.shape == (self.n_transitions,), (
-            f"thresholds shape {thresholds.shape} must be ({self.n_transitions},)"
-        )
+        assert w_out.shape == (
+            self.n_places,
+            self.n_transitions,
+        ), f"w_out shape {w_out.shape} must be ({self.n_places}, {self.n_transitions})"
+        assert thresholds.shape == (
+            self.n_transitions,
+        ), f"thresholds shape {thresholds.shape} must be ({self.n_transitions},)"
 
         self.thresholds = thresholds.copy()
         self.length = length

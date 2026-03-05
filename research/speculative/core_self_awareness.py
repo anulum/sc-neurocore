@@ -6,6 +6,7 @@ from typing import List
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class SelfModel:
     capabilities: List[str] = field(default_factory=list)
@@ -13,12 +14,14 @@ class SelfModel:
     performance_history: List[float] = field(default_factory=list)
     confidence: float = 1.0
 
+
 @dataclass
 class MetaCognitionLoop:
     """
     Implements Computational Self-Awareness.
     Observes the Orchestrator and maintains a dynamic Self-Model.
     """
+
     self_model: SelfModel = field(default_factory=SelfModel)
 
     def observe(self, orchestrator):
@@ -29,7 +32,7 @@ class MetaCognitionLoop:
         self.self_model.capabilities = list(orchestrator.modules.keys())
 
         # 2. Update Goals
-        if hasattr(orchestrator, 'active_goals'):
+        if hasattr(orchestrator, "active_goals"):
             self.self_model.current_goals = orchestrator.active_goals
 
         # 3. Assess Confidence (Simulated)
@@ -38,7 +41,11 @@ class MetaCognitionLoop:
         complexity = len(self.self_model.capabilities)
         self.self_model.confidence = 1.0 / (1.0 + 0.1 * complexity)
 
-        logger.info("Meta-Cognition: I am aware of %d modules. Confidence: %.2f", complexity, self.self_model.confidence)
+        logger.info(
+            "Meta-Cognition: I am aware of %d modules. Confidence: %.2f",
+            complexity,
+            self.self_model.confidence,
+        )
 
     def reflect(self) -> str:
         """

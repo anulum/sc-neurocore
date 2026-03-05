@@ -3,6 +3,7 @@
 
 import numpy as np
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
@@ -50,9 +51,7 @@ def generate_neurocore_header():
     transitions = [(0.5, 0.8), (0.4, 0.7), (0.6, 0.7)]
 
     for px, py in places:
-        circle = plt.Circle(
-            (px, py), 0.02, color="magenta", fill=False, lw=2, alpha=0.6
-        )
+        circle = plt.Circle((px, py), 0.02, color="magenta", fill=False, lw=2, alpha=0.6)
         ax.add_artist(circle)
     for tx, ty in transitions:
         rect = plt.Rectangle(
@@ -88,9 +87,7 @@ def generate_neurocore_header():
     # 5. Spiking Neural Signal (Bottom Accent)
     t = np.linspace(0, 10, 1000)
     signal = np.sin(t) * np.exp(-0.1 * t) + np.random.normal(0, 0.05, 1000)
-    ax.plot(
-        np.linspace(0, 1, 1000), 0.05 + 0.05 * signal, color="magenta", lw=1, alpha=0.5
-    )
+    ax.plot(np.linspace(0, 1, 1000), 0.05 + 0.05 * signal, color="magenta", lw=1, alpha=0.5)
 
     out_path = "docs/assets/sc_neurocore_header.png"
     plt.savefig(out_path, bbox_inches="tight", pad_inches=0)

@@ -3,12 +3,14 @@
 import numpy as np
 from dataclasses import dataclass
 
+
 @dataclass
 class TimeCrystalLayer:
     """
     Simulates a Discrete Time Crystal (DTC).
     Exhibits stable sub-harmonic oscillations (Period Doubling).
     """
+
     n_spins: int
     interaction_strength: float = 1.0
     disorder_strength: float = 0.5
@@ -17,7 +19,9 @@ class TimeCrystalLayer:
         # Initial states {-1, 1}
         self.spins = np.random.choice([-1, 1], self.n_spins).astype(np.float32)
         # Random disorder (static)
-        self.disorder = np.random.uniform(-self.disorder_strength, self.disorder_strength, self.n_spins)
+        self.disorder = np.random.uniform(
+            -self.disorder_strength, self.disorder_strength, self.n_spins
+        )
 
     def drive(self, flip_pulse: bool = True):
         """

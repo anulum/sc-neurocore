@@ -55,6 +55,7 @@ from sc_neurocore.neurons.fixed_point_lif import (
 # Benchmark harness
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class BenchResult:
     name: str
@@ -94,6 +95,7 @@ def _timer(func, n_iters: int) -> float:
 # Individual benchmarks
 # ---------------------------------------------------------------------------
 
+
 def bench_lfsr(n_iters: int) -> BenchResult:
     lfsr = FixedPointLFSR(seed=0xACE1)
     t = _timer(lfsr.step, n_iters)
@@ -132,9 +134,7 @@ def bench_pack_2d(batch: int, length: int, n_iters: int) -> BenchResult:
 
     t = _timer(run, n_iters)
     gbps = (batch * length * n_iters) / t / 1e9
-    return BenchResult(
-        f"pack_bitstream 2-D ({batch}x{length})", n_iters, t, f"{gbps:.2f} Gbit/s"
-    )
+    return BenchResult(f"pack_bitstream 2-D ({batch}x{length})", n_iters, t, f"{gbps:.2f} Gbit/s")
 
 
 def bench_vec_and(n_words: int, n_iters: int) -> BenchResult:
@@ -157,9 +157,7 @@ def bench_popcount(n_words: int, n_iters: int) -> BenchResult:
 
     t = _timer(run, n_iters)
     gbps = (n_words * 64 * n_iters) / t / 1e9
-    return BenchResult(
-        f"vec_popcount SWAR ({n_words} words)", n_iters, t, f"{gbps:.2f} Gbit/s"
-    )
+    return BenchResult(f"vec_popcount SWAR ({n_words} words)", n_iters, t, f"{gbps:.2f} Gbit/s")
 
 
 def bench_lif(n_iters: int) -> BenchResult:
@@ -197,13 +195,9 @@ def bench_pipeline(n_inputs: int, n_steps: int, n_iters: int) -> BenchResult:
     """Full pipeline: LFSR encode -> AND synapse -> popcount -> LIF."""
 
     def run():
-        input_encs = [
-            FixedPointBitstreamEncoder(seed_init=0xACE1 + i * 7)
-            for i in range(n_inputs)
-        ]
+        input_encs = [FixedPointBitstreamEncoder(seed_init=0xACE1 + i * 7) for i in range(n_inputs)]
         weight_encs = [
-            FixedPointBitstreamEncoder(seed_init=0xBEEF + i * 13)
-            for i in range(n_inputs)
+            FixedPointBitstreamEncoder(seed_init=0xBEEF + i * 13) for i in range(n_inputs)
         ]
         neuron = FixedPointLIFNeuron(refractory_period=0)
         x_vals = [52428] * n_inputs  # ~0.8
@@ -231,6 +225,7 @@ def bench_pipeline(n_inputs: int, n_steps: int, n_iters: int) -> BenchResult:
 # ---------------------------------------------------------------------------
 # GPU benchmarks (CuPy)
 # ---------------------------------------------------------------------------
+
 
 def bench_gpu_pack(length: int, n_iters: int) -> BenchResult:
     bits = xp.random.randint(0, 2, size=length, dtype=xp.uint8)
@@ -275,6 +270,7 @@ def bench_gpu_mac(n_neurons: int, n_inputs: int, n_words: int, n_iters: int) -> 
 # ---------------------------------------------------------------------------
 # Main runner
 # ---------------------------------------------------------------------------
+
 
 def run_benchmarks(full: bool = False) -> List[BenchResult]:
     results: List[BenchResult] = []
@@ -361,7 +357,9 @@ def write_markdown(results: List[BenchResult], path: str = "BENCHMARKS.md"):
 
 def main():
     parser = argparse.ArgumentParser(description="SC-NeuroCore Benchmark Suite")
-    parser.add_argument("--full", action="store_true", help="Run thorough benchmarks (10x iterations)")
+    parser.add_argument(
+        "--full", action="store_true", help="Run thorough benchmarks (10x iterations)"
+    )
     parser.add_argument("--markdown", action="store_true", help="Write results to BENCHMARKS.md")
     args = parser.parse_args()
 

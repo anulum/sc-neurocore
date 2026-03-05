@@ -3,11 +3,13 @@
 import numpy as np
 from dataclasses import dataclass
 
+
 @dataclass
 class DysonPowerGrid:
     """
     Manages energy distribution for a Dyson Swarm.
     """
+
     n_collectors: int
     n_consumers: int
 
@@ -24,8 +26,10 @@ class DysonPowerGrid:
         """
         # 1. Harvest
         # Simulate occlusion/failures
-        active_collectors = np.random.random(self.n_collectors) > 0.01 # 99% uptime
-        total_harvest = np.sum(self.collector_efficiency[active_collectors]) * (solar_output / self.n_collectors)
+        active_collectors = np.random.random(self.n_collectors) > 0.01  # 99% uptime
+        total_harvest = np.sum(self.collector_efficiency[active_collectors]) * (
+            solar_output / self.n_collectors
+        )
 
         # 2. Distribute
         total_demand = np.sum(self.consumer_demand)

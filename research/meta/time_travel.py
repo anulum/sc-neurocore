@@ -6,12 +6,14 @@ from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class CTCLayer:
     """
     Closed Timelike Curve (Time Travel) Simulation.
     Finds a self-consistent state where Output(T) == Input(0).
     """
+
     n_bits: int
     max_iterations: int = 100
 

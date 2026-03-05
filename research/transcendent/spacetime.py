@@ -4,11 +4,13 @@ import numpy as np
 from dataclasses import dataclass, field
 from typing import List
 
+
 @dataclass
 class SpinNode:
     id: int
-    spin: float = 0.5 # j value (volume quantum)
+    spin: float = 0.5  # j value (volume quantum)
     links: List[int] = field(default_factory=list)
+
 
 @dataclass
 class SpinNetwork:
@@ -16,11 +18,14 @@ class SpinNetwork:
     Loop Quantum Gravity Spin Network.
     Computing via topological evolution of spacetime graph.
     """
+
     n_nodes: int
 
     def __post_init__(self):
         # Create a simple connected graph
-        self.nodes = [SpinNode(i, spin=0.5, links=[(i+1)%self.n_nodes]) for i in range(self.n_nodes)]
+        self.nodes = [
+            SpinNode(i, spin=0.5, links=[(i + 1) % self.n_nodes]) for i in range(self.n_nodes)
+        ]
 
     def pachner_move_1_3(self, node_idx: int):
         """
