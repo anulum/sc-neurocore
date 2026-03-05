@@ -64,6 +64,9 @@ quantum = ["qiskit", "pennylane", "qiskit-aer"]
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+sc_neurocore = ["py.typed"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
