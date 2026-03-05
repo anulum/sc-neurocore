@@ -31,17 +31,20 @@ jobs:
         with:
           workspaces: engine
 
+      - name: Install cargo-criterion
+        run: cargo install cargo-criterion
+
       - name: Run Criterion benchmarks
         working-directory: engine
-        run: cargo bench --bench bitstream_bench --bench full_bench | tee ../benchmark_output.txt
+        run: cargo criterion --bench bitstream_bench --bench full_bench --message-format=json 2>/dev/null | tee ../benchmark_output.json
 
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
         if: github.ref == 'refs/heads/main'
         with:
           name: Rust Criterion Benchmark
-          tool: cargo
-          output-file-path: benchmark_output.txt
+          tool: criterionrs
+          output-file-path: benchmark_output.json
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: true
           alert-threshold: "200%"
