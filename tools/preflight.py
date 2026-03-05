@@ -15,10 +15,19 @@ GATES = [
     ("black", ["python", "-m", "black", "--check", "src/", "tests/"]),
     ("bandit", ["python", "-m", "bandit", "-r", "src/sc_neurocore/", "-c", "pyproject.toml", "-q"]),
     ("spdx-guard", None),
-    ("pytest", [
-        "python", "-m", "pytest", "tests/", "-v",
-        "--cov=sc_neurocore", "--cov-report=term", "--cov-fail-under=98",
-    ]),
+    (
+        "pytest",
+        [
+            "python",
+            "-m",
+            "pytest",
+            "tests/",
+            "-v",
+            "--cov=sc_neurocore",
+            "--cov-report=term",
+            "--cov-fail-under=98",
+        ],
+    ),
 ]
 
 
@@ -60,7 +69,9 @@ def run_gate(name: str, cmd) -> bool:
 def main() -> int:
     parser = argparse.ArgumentParser(description="SC-NeuroCore preflight checks")
     parser.add_argument("--no-tests", action="store_true", help="Skip pytest (fast lint-only mode)")
-    parser.add_argument("--coverage", action="store_true", help="Same as default (tests always include coverage)")
+    parser.add_argument(
+        "--coverage", action="store_true", help="Same as default (tests always include coverage)"
+    )
     args = parser.parse_args()
 
     gates = GATES
