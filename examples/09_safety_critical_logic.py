@@ -41,6 +41,7 @@ def inject_errors(tensor: BitStreamTensor, error_rate: float, seed: int) -> BitS
     # and ANDing — but for simplicity, we use the noise directly since p=0.5
     # For controlled error rates, we XOR with a low-density stream
     import random
+
     rng = random.Random(seed)
     bits = []
     for _ in range(tensor.length):
@@ -135,24 +136,30 @@ def main():
     and_result = stochastic_and(a_noisy, c_noisy)
     decoded_and = decode_majority(and_result)
     expected_and = val_a and val_c
-    print(f"  A AND C: {decoded_and} (expected {expected_and}) "
-          f"[{and_result.popcount()}/{LENGTH} ones]")
+    print(
+        f"  A AND C: {decoded_and} (expected {expected_and}) "
+        f"[{and_result.popcount()}/{LENGTH} ones]"
+    )
     assert decoded_and == expected_and
 
     # OR
     or_result = stochastic_or(a_noisy, b_noisy)
     decoded_or = decode_majority(or_result)
     expected_or = val_a or val_b
-    print(f"  A OR  B: {decoded_or} (expected {expected_or}) "
-          f"[{or_result.popcount()}/{LENGTH} ones]")
+    print(
+        f"  A OR  B: {decoded_or} (expected {expected_or}) "
+        f"[{or_result.popcount()}/{LENGTH} ones]"
+    )
     assert decoded_or == expected_or
 
     # NOT
     not_result = stochastic_not(b_noisy)
     decoded_not = decode_majority(not_result)
     expected_not = not val_b
-    print(f"  NOT   B: {decoded_not} (expected {expected_not}) "
-          f"[{not_result.popcount()}/{LENGTH} ones]")
+    print(
+        f"  NOT   B: {decoded_not} (expected {expected_not}) "
+        f"[{not_result.popcount()}/{LENGTH} ones]"
+    )
     assert decoded_not == expected_not
 
     # Complex: (A AND C) OR (NOT B)

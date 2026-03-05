@@ -159,8 +159,8 @@ class SwarmEnvironment:
         for idx, agent in enumerate(self.agents):
             # Build 20-channel sensory vector
             sensory = np.zeros(agent.cfg.n_sensory)
-            and = self.get_neighbor_distances(idx, k=8)
-            sensory[0:8] = np.clip(and / max(cfg.width, cfg.height), 0, 1)
+            nd = self.get_neighbor_distances(idx, k=8)
+            sensory[0:8] = np.clip(nd / max(cfg.width, cfg.height), 0, 1)
             od = self.get_obstacle_distances(idx, k=3)
             sensory[8:11] = np.clip(od / 50.0, -1, 1)
             td = self.get_target_distances(idx, k=2)

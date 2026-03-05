@@ -10,6 +10,7 @@ import time
 import numpy as np
 from sc_neurocore import VectorizedSCLayer
 
+
 def main():
     print("=== SC-NeuroCore: Vectorized Layer Performance ===\n")
 

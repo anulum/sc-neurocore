@@ -4,13 +4,15 @@ from dataclasses import dataclass
 import numpy as np
 from sc_neurocore.layers.vectorized_layer import VectorizedSCLayer
 
+
 @dataclass
 class RadHardLayer(VectorizedSCLayer):
     """
     Space-Hardened Layer with TMR (Triple Modular Redundancy) logic.
     Simulates radiation effects (SEU) and correction.
     """
-    seu_rate: float = 0.001 # Probability of bit flip per step
+
+    seu_rate: float = 0.001  # Probability of bit flip per step
     tmr_enabled: bool = True
 
     def forward(self, input_values):
@@ -41,7 +43,7 @@ class RadHardLayer(VectorizedSCLayer):
         # Let's say bit flip in weight Memory:
         # weights are probabilities. A digital flip changes prob drastically.
         # We simulate this as noise.
-        self.weights[mask] = np.abs(self.weights[mask] - 0.5) # Flip around 0.5?
+        self.weights[mask] = np.abs(self.weights[mask] - 0.5)  # Flip around 0.5?
 
         # Refresh packed
         self._refresh_packed_weights()

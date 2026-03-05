@@ -57,9 +57,7 @@ class VectorizedSCLayer:
         if packed.ndim != 2:
             raise ValueError(f"Expected 2-D packed input array, got shape {packed.shape}")
         if packed.shape[0] != self.n_inputs:
-            raise ValueError(
-                f"Expected {self.n_inputs} packed input rows, got {packed.shape[0]}"
-            )
+            raise ValueError(f"Expected {self.n_inputs} packed input rows, got {packed.shape[0]}")
         result = self._engine.forward_prepacked(packed)
         return np.array(result, dtype=np.float64)
 

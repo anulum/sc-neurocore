@@ -3,6 +3,7 @@
 import numpy as np
 from dataclasses import dataclass
 
+
 @dataclass
 class FemtoSwitch:
     """
@@ -38,8 +39,8 @@ class FemtoSwitch:
 
         out = np.zeros_like(quark_a)
 
-        diff_mask = (quark_a != quark_b)
-        same_mask = (quark_a == quark_b)
+        diff_mask = quark_a != quark_b
+        same_mask = quark_a == quark_b
 
         # Different colors -> Fuse to 3rd
         out[diff_mask] = (-(quark_a[diff_mask] + quark_b[diff_mask])) % 3
@@ -51,4 +52,4 @@ class FemtoSwitch:
 
     def bit_to_quark(self, bitstream: np.ndarray) -> np.ndarray:
         """0->Red(0), 1->Green(1)."""
-        return bitstream.copy() # Assuming input is already 0/1
+        return bitstream.copy()  # Assuming input is already 0/1

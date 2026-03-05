@@ -4,6 +4,7 @@ from __future__ import annotations
 import numpy as np
 from dataclasses import dataclass
 
+
 @dataclass
 class ReversibleLayer:
     """
@@ -12,7 +13,9 @@ class ReversibleLayer:
     (a, b, c) -> (a, b, c XOR (a AND b))
     """
 
-    def toffoli_gate(self, a: np.ndarray, b: np.ndarray, c: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def toffoli_gate(
+        self, a: np.ndarray, b: np.ndarray, c: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Applies Toffoli gate to bitstreams.
         Input: Control a, Control b, Target c
@@ -23,7 +26,9 @@ class ReversibleLayer:
         c_prime = np.bitwise_xor(c, and_ab)
         return a, b, c_prime
 
-    def reverse_toffoli(self, a: np.ndarray, b: np.ndarray, c_prime: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def reverse_toffoli(
+        self, a: np.ndarray, b: np.ndarray, c_prime: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Reverses the Toffoli gate.
         Toffoli is its own inverse!

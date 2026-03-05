@@ -7,30 +7,30 @@ name = None
 for line in sys.stdin:
     line = line.rstrip()
     # Name on same line as time, or standalone name line
-    m = re.match(r'^(\S+)\s+time:', line)
+    m = re.match(r"^(\S+)\s+time:", line)
     if m:
         name = m.group(1)
-    elif re.match(r'^\S', line) and 'time:' not in line and 'change:' not in line:
+    elif re.match(r"^\S", line) and "time:" not in line and "change:" not in line:
         name = line.strip()
 
     # Extract median (second value in brackets) from time: lines
-    if 'time:' in line and name:
-        m2 = re.search(r'\[\S+\s+\S+\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\]', line)
+    if "time:" in line and name:
+        m2 = re.search(r"\[\S+\s+\S+\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\]", line)
         if not m2:
-            m2 = re.search(r'\[(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\]', line)
+            m2 = re.search(r"\[(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\]", line)
         # Parse: [low median high unit]
-        vals = re.findall(r'[\d.]+', line.split('[')[1].split(']')[0])
-        units = re.findall(r'[µnm]?s', line.split('[')[1].split(']')[0])
+        vals = re.findall(r"[\d.]+", line.split("[")[1].split("]")[0])
+        units = re.findall(r"[µnm]?s", line.split("[")[1].split("]")[0])
         if len(vals) >= 2 and units:
             median = float(vals[1])
             unit = units[0]
-            if unit == 'ns':
+            if unit == "ns":
                 ns = median
-            elif unit == 'µs':
+            elif unit == "µs":
                 ns = median * 1000
-            elif unit == 'ms':
+            elif unit == "ms":
                 ns = median * 1_000_000
-            elif unit == 's':
+            elif unit == "s":
                 ns = median * 1_000_000_000
             else:
                 ns = median

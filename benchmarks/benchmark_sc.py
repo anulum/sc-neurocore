@@ -4,6 +4,7 @@ import numpy as np
 from src.sc_neurocore.neurons.stochastic_lif import StochasticLIFNeuron
 from src.sc_neurocore.utils.bitstreams import BitstreamEncoder, BitstreamAverager
 
+
 def benchmark_bitstream_generation():
     print("Benchmarking Bitstream Generation (Bernoulli).")
     encoder = BitstreamEncoder(x_min=0.0, x_max=1.0, length=10000, mode="bernoulli")
@@ -64,6 +65,7 @@ def benchmark_averager():
     end_time = time.time()
 
     print(f"Time for 100k push+estimates: {end_time - start_time:.4f}s")
+
 
 if __name__ == "__main__":
     benchmark_bitstream_generation()

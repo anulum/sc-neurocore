@@ -2,12 +2,14 @@
 import numpy as np
 from dataclasses import dataclass
 
+
 @dataclass
 class HeatDeathLayer:
     """
     Simulates computation at the Heat Death of the Universe.
     Maximizes information processing per unit of remaining free energy.
     """
+
     initial_energy: float = 1.0
     entropy_rate: float = 0.01
     min_energy_threshold: float = 1e-6
@@ -22,7 +24,7 @@ class HeatDeathLayer:
         As Energy decreases, operation becomes probabilistic or stops.
         """
         if self.energy < self.min_energy_threshold:
-            return np.zeros_like(bitstream) # System dead
+            return np.zeros_like(bitstream)  # System dead
 
         # Cost of computation (Landauer's principle approx)
         # We assume we can get very close to reversible limit

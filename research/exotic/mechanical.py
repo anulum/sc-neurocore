@@ -3,6 +3,7 @@
 import numpy as np
 from dataclasses import dataclass
 
+
 @dataclass
 class MechanicalLatticeLayer:
     """
@@ -10,13 +11,14 @@ class MechanicalLatticeLayer:
     Computing with Stiffness (k) and Displacement (x).
     F = K x
     """
+
     n_nodes: int
     learning_rate: float = 0.01
 
     def __post_init__(self):
         # Stiffness matrix (Symmetric)
         self.K = np.random.uniform(0.5, 1.5, (self.n_nodes, self.n_nodes))
-        np.fill_diagonal(self.K, 0) # No self-springs
+        np.fill_diagonal(self.K, 0)  # No self-springs
 
         # Displacements
         self.x = np.zeros(self.n_nodes)
@@ -34,12 +36,14 @@ class MechanicalLatticeLayer:
 
         forces = inputs.copy()
 
-        for _ in range(50): # Relaxation steps
+        for _ in range(50):  # Relaxation steps
             for i in range(self.n_nodes):
-                if i in clamped_nodes: continue
+                if i in clamped_nodes:
+                    continue
 
                 k_sum = np.sum(self.K[i])
-                if k_sum == 0: continue
+                if k_sum == 0:
+                    continue
 
                 # Weighted avg of neighbors
                 neighbor_force = np.dot(self.K[i], self.x)
@@ -55,7 +59,7 @@ class MechanicalLatticeLayer:
         # (This is like Hebbian: correlated movement reinforces connection)
 
         x_diff = self.x[:, None] - self.x[None, :]
-        strain = x_diff ** 2
+        strain = x_diff**2
 
         self.K += self.learning_rate * strain
         self.K = np.clip(self.K, 0.1, 2.0)

@@ -4,12 +4,14 @@ import numpy as np
 from dataclasses import dataclass
 from sc_neurocore.neurons.stochastic_lif import StochasticLIFNeuron
 
+
 @dataclass
 class ConnectomeEmulator:
     """
     Framework for Whole Brain Emulation (Consciousness Uploading).
     Simulates massive sparse connectomes.
     """
+
     n_neurons: int
     sparsity: float = 0.01
 

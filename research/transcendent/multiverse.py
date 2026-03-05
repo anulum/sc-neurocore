@@ -2,10 +2,12 @@
 from dataclasses import dataclass
 from typing import List, Optional, Callable
 
+
 @dataclass
 class EverettNode:
     state_val: int
     history: List[int]
+
 
 @dataclass
 class EverettTreeLayer:
@@ -14,9 +16,15 @@ class EverettTreeLayer:
     Every decision splits the universe.
     We post-select the 'World' that solved the problem.
     """
+
     max_depth: int = 10
 
-    def solve(self, start_val: int, goal_func: Callable[[int], bool], transition_func: Callable[[int, int], int]) -> Optional[List[int]]:
+    def solve(
+        self,
+        start_val: int,
+        goal_func: Callable[[int], bool],
+        transition_func: Callable[[int, int], int],
+    ) -> Optional[List[int]]:
         """
         Finds a path of choices (0 or 1) that leads to a state satisfying goal_func.
         """
@@ -37,6 +45,7 @@ class EverettTreeLayer:
                 new_frontier.append(EverettNode(s1, node.history + [1]))
 
             frontier = new_frontier
-            if not frontier: break
+            if not frontier:
+                break
 
         return None

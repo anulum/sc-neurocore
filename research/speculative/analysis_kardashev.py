@@ -2,6 +2,7 @@
 
 import numpy as np
 
+
 class KardashevEstimator:
     """
     Calculates Civilization Type on the Kardashev Scale.
@@ -12,7 +13,8 @@ class KardashevEstimator:
         """
         K = (log10(P) - 6) / 10
         """
-        if power_watts <= 0: return 0.0
+        if power_watts <= 0:
+            return 0.0
         return (np.log10(power_watts) - 6.0) / 10.0
 
     @staticmethod

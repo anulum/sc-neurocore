@@ -2,6 +2,7 @@
 
 import numpy as np
 
+
 class PhiEvaluator:
     """
     Evaluates Integrated Information (Phi) for SC Networks.
@@ -13,8 +14,9 @@ class PhiEvaluator:
         """Shannon entropy of a bitstream distribution."""
         p1 = np.mean(bitstream)
         p0 = 1.0 - p1
-        if p0 <= 0 or p1 <= 0: return 0.0
-        return - (p1 * np.log2(p1) + p0 * np.log2(p0))
+        if p0 <= 0 or p1 <= 0:
+            return 0.0
+        return -(p1 * np.log2(p1) + p0 * np.log2(p0))
 
     @staticmethod
     def calculate_phi(layer_outputs: np.ndarray) -> float:
@@ -39,7 +41,7 @@ class PhiEvaluator:
 
         # Let's assume input is (n_neurons, length) bitstreams
         if layer_outputs.ndim == 1:
-            return 0.0 # Snapshot has no entropy
+            return 0.0  # Snapshot has no entropy
 
         n_neurons, length = layer_outputs.shape
 
@@ -56,7 +58,7 @@ class PhiEvaluator:
 
         states = np.zeros(length, dtype=np.uint64)
         for i in range(n_neurons):
-            states |= (layer_outputs[i].astype(np.uint64) << np.uint64(i))
+            states |= layer_outputs[i].astype(np.uint64) << np.uint64(i)
 
         uniques, counts = np.unique(states, return_counts=True)
         probs = counts / length

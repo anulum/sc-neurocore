@@ -6,6 +6,7 @@ from typing import List
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class Proposal:
     id: int
@@ -15,12 +16,14 @@ class Proposal:
     votes_against: float = 0.0
     status: str = "Active"
 
+
 @dataclass
 class AgentDAO:
     """
     Decentralized Autonomous Organization for Agent Governance.
     Uses 'Proof of Compute' as voting weight.
     """
+
     agent_id: str
     compute_credits: float = 10.0
     ledger: List[Proposal] = field(default_factory=list)
@@ -49,7 +52,13 @@ class AgentDAO:
         else:
             prop.votes_against += weight
 
-        logger.info("DAO: %s voted %s on #%d (Weight: %s)", self.agent_id, 'YES' if approve else 'NO', proposal_id, weight)
+        logger.info(
+            "DAO: %s voted %s on #%d (Weight: %s)",
+            self.agent_id,
+            "YES" if approve else "NO",
+            proposal_id,
+            weight,
+        )
 
     def finalize_proposal(self, proposal_id: int) -> bool:
         """

@@ -7,6 +7,7 @@ from sc_neurocore.viz.neuro_art import NeuroArtGenerator
 
 logger = logging.getLogger(__name__)
 
+
 class QualiaTuringTest:
     """
     Test for subjective experience (or simulation thereof).
@@ -42,7 +43,9 @@ class QualiaTuringTest:
         description = self.semiotics.interpret(sign)
 
         logger.info("Qualia Test: State Peak %d -> Concept '%s'.", dominant_feature, base_concept)
-        logger.info("    Agent Description: '%s' (via %s)", description.signified, description.signifier)
+        logger.info(
+            "    Agent Description: '%s' (via %s)", description.signified, description.signifier
+        )
 
         # 4. Evaluation
         # If the description is a valid association in the Semiotic Graph, pass.

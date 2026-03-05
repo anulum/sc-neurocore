@@ -11,6 +11,7 @@ from sc_neurocore.core import CognitiveOrchestrator
 from sc_neurocore.ensembles import EnsembleOrchestrator
 from sc_neurocore import VectorizedSCLayer
 
+
 def main():
     print("=== SC-NeuroCore: Ensemble Consensus ===\n")
 

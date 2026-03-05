@@ -21,7 +21,7 @@ import sys
 import numpy as np
 
 # Add src to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from sc_neurocore.neurons.fixed_point_lif import FixedPointLIFNeuron
 
@@ -30,7 +30,7 @@ def generate_stimuli(num_steps: int = 1000, seed: int = 42) -> list:
     """Generate reproducible random stimuli for co-simulation."""
     rng = np.random.default_rng(seed)
     inputs = []
-    leak_k = 20   # Small leak (20/256 ~ 0.078)
+    leak_k = 20  # Small leak (20/256 ~ 0.078)
     gain_k = 256  # Gain = 1.0
 
     for i in range(num_steps):
@@ -91,9 +91,11 @@ def check_results(expected, verilog_path="results_verilog.txt"):
 
         if v_spike != exp_spike or v_pot != exp_v:
             if mismatches < 10:
-                print(f"  Mismatch at step {i}: "
-                      f"Expected (spike={exp_spike}, v={exp_v}) "
-                      f"vs Verilog (spike={v_spike}, v={v_pot})")
+                print(
+                    f"  Mismatch at step {i}: "
+                    f"Expected (spike={exp_spike}, v={exp_v}) "
+                    f"vs Verilog (spike={v_spike}, v={v_pot})"
+                )
             mismatches += 1
 
     if mismatches == 0:
@@ -106,8 +108,12 @@ def check_results(expected, verilog_path="results_verilog.txt"):
 
 def main():
     parser = argparse.ArgumentParser(description="SC-NeuroCore Co-Simulation Driver")
-    parser.add_argument("--generate", action="store_true", help="Generate stimuli + expected results")
-    parser.add_argument("--check", action="store_true", help="Compare Verilog results against Python model")
+    parser.add_argument(
+        "--generate", action="store_true", help="Generate stimuli + expected results"
+    )
+    parser.add_argument(
+        "--check", action="store_true", help="Compare Verilog results against Python model"
+    )
     parser.add_argument("--steps", type=int, default=1000, help="Number of simulation steps")
     parser.add_argument("--seed", type=int, default=42, help="RNG seed for reproducibility")
     args = parser.parse_args()

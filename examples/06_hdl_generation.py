@@ -8,6 +8,7 @@ description using the HDL generation utilities.
 
 from sc_neurocore.hdl_gen import VerilogGenerator
 
+
 def main():
     print("=== SC-NeuroCore: Verilog HDL Generation ===\n")
 
@@ -16,7 +17,7 @@ def main():
     # Add layers to the network description
     gen.add_layer("Dense", "hidden_0", {"n_neurons": 16})
     gen.add_layer("Dense", "hidden_1", {"n_neurons": 8})
-    gen.add_layer("Dense", "output",   {"n_neurons": 4})
+    gen.add_layer("Dense", "output", {"n_neurons": 4})
 
     # Generate Verilog code
     verilog = gen.generate()

@@ -3,14 +3,16 @@
 import numpy as np
 from dataclasses import dataclass
 
+
 @dataclass
 class VacuumNoiseSource:
     """
     Simulates harvesting computation from Vacuum Fluctuations (Zero Point Energy).
     Uses the Casimir effect logic to correlate noise streams.
     """
+
     dimension: int
-    plate_distance: float = 1.0 # Smaller distance -> higher energy/correlation
+    plate_distance: float = 1.0  # Smaller distance -> higher energy/correlation
 
     def generate_virtual_bits(self, length: int) -> np.ndarray:
         """
@@ -21,7 +23,7 @@ class VacuumNoiseSource:
 
         # 2. Apply Casimir-like correlation
         # The energy density is inversely proportional to distance^4
-        energy_density = 1.0 / (self.plate_distance ** 4)
+        energy_density = 1.0 / (self.plate_distance**4)
 
         # Correlation logic: nearby channels influence each other's fluctuations
         correlated_noise = noise + np.roll(noise, 1, axis=0) * (0.1 * energy_density)

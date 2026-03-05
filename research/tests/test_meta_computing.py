@@ -7,6 +7,7 @@ from meta.vacuum import VacuumNoiseSource
 from meta.hyper_turing import OracleLayer
 from meta.black_hole import EventHorizonLayer
 
+
 class TestMetaComputing(unittest.TestCase):
 
     def test_time_crystal(self):
@@ -30,5 +31,6 @@ class TestMetaComputing(unittest.TestCase):
         scrambled = bh.scramble(bits)
         self.assertEqual(scrambled.shape, (4, 10))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

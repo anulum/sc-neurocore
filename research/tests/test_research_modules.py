@@ -341,6 +341,7 @@ class TestSNNGeneticEvolver:
         class MockLayer:
             def __init__(self):
                 self.weights = np.random.rand(3, 3)
+
         return MockLayer()
 
     def test_construction(self):
@@ -393,9 +394,12 @@ from sc_neurocore.layers.sc_learning_layer import SCLearningLayer
 class TestSwarmCoupling:
     def _make_agent(self, n_inputs, n_neurons, seed=42):
         return SCLearningLayer(
-            n_inputs=n_inputs, n_neurons=n_neurons,
-            w_min=0.0, w_max=1.0,
-            length=64, base_seed=seed,
+            n_inputs=n_inputs,
+            n_neurons=n_neurons,
+            w_min=0.0,
+            w_max=1.0,
+            length=64,
+            base_seed=seed,
         )
 
     def test_synchronize_shifts_weights(self, capsys):

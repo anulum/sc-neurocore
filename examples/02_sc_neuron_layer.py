@@ -9,6 +9,7 @@ and reading output firing rates.
 import numpy as np
 from sc_neurocore import SCDenseLayer, StochasticLIFNeuron, BitstreamSynapse
 
+
 def main():
     print("=== SC-NeuroCore: Dense Layer Demo ===\n")
 

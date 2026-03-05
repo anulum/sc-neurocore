@@ -2,12 +2,14 @@
 
 from dataclasses import dataclass
 
+
 @dataclass
 class CellularComputer:
     """
     Simulates computing inside a Synthetic Cell.
     Logic is driven by Brownian motion collisions between molecules and enzymes.
     """
+
     n_molecules_a: int = 0
     n_molecules_b: int = 0
     reaction_rate: float = 0.1
