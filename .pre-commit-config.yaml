@@ -15,6 +15,7 @@ repos:
     rev: "25.1.0"
     hooks:
       - id: black
+        exclude: "swarm_env\\.py$"
 
   - repo: https://github.com/crate-ci/typos
     rev: v1.29.5
