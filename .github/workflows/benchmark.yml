@@ -33,7 +33,7 @@ jobs:
 
       - name: Run Criterion benchmarks
         working-directory: engine
-        run: cargo bench --bench bitstream_bench --bench full_bench 2>&1 | tee ../benchmark_output.txt
+        run: cargo bench --bench bitstream_bench --bench full_bench | tee ../benchmark_output.txt
 
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
