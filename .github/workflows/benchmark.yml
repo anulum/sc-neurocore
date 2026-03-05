@@ -31,12 +31,18 @@ jobs:
         with:
           workspaces: engine
 
+      - name: Build benchmarks
+        working-directory: engine
+        run: cargo bench --bench bitstream_bench --bench full_bench --no-run
+
       - name: Run Criterion benchmarks
         working-directory: engine
         run: |
-          cargo bench --bench bitstream_bench --bench full_bench 2>/dev/null \
+          cargo bench --bench bitstream_bench --bench full_bench \
             | python ../.github/criterion_to_bencher.py \
             | tee ../benchmark_output.txt
+          echo "--- benchmark_output.txt ---"
+          cat ../benchmark_output.txt
 
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
