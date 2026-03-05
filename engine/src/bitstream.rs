@@ -6,7 +6,7 @@
 //! Core bitstream packing and logic primitives for stochastic computing.
 //! Probabilities are represented as packed Bernoulli bitstreams stored in `u64` words.
 
-use rand::Rng;
+use rand::{Rng, RngExt};
 
 use crate::simd;
 
@@ -224,7 +224,7 @@ pub fn bernoulli_stream<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mut R) 
     let p = prob.clamp(0.0, 1.0);
     let mut out = vec![0_u8; length];
     for bit in &mut out {
-        *bit = if rng.gen::<f64>() < p { 1 } else { 0 };
+        *bit = if rng.random::<f64>() < p { 1 } else { 0 };
     }
     out
 }
@@ -240,7 +240,7 @@ pub fn bernoulli_packed<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mut R) 
     for (word_idx, word) in data.iter_mut().enumerate() {
         let bits_in_word = std::cmp::min(64, length.saturating_sub(word_idx * 64));
         for bit in 0..bits_in_word {
-            if rng.gen::<f64>() < p {
+            if rng.random::<f64>() < p {
                 *word |= 1_u64 << bit;
             }
         }

@@ -2,8 +2,7 @@
 //!
 //! Graph message-passing layer with both rate-mode and SC-mode forward paths.
 
-use rand::Rng;
-use rand::SeedableRng;
+use rand::{RngExt, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use rayon::prelude::*;
 
@@ -32,7 +31,7 @@ impl StochasticGraphLayer {
         let mut rng = ChaCha8Rng::seed_from_u64(seed);
         let mut weights = vec![0.0_f64; n_features * n_features];
         for w in &mut weights {
-            *w = rng.gen::<f64>();
+            *w = rng.random::<f64>();
         }
 
         let mut degrees = vec![0.0_f64; n_nodes];
