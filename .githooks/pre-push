@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Fast preflight gate — runs lint checks before push.
+# Install: git config core.hooksPath .githooks
+set -euo pipefail
+echo "Running preflight (lint-only)..."
+python tools/preflight.py --no-tests
