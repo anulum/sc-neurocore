@@ -9,7 +9,8 @@ use numpy::{
 };
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
-use pyo3::types::{PyAny, PyDict};
+use pyo3::types::PyDict;
+use pyo3::IntoPyObject;
 
 pub mod attention;
 pub mod bitstream;
@@ -253,13 +254,13 @@ fn set_num_threads(n: usize) -> PyResult<()> {
 fn pack_bitstream(py: Python<'_>, bits: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
     if let Ok(rows) = bits.extract::<Vec<Vec<u8>>>() {
         let packed_rows: Vec<Vec<u64>> = rows.iter().map(|row| bitstream::pack(row).data).collect();
-        return Ok(packed_rows.into_py(py));
+        return Ok(packed_rows.into_pyobject(py).map_err(|e| PyValueError::new_err(e.to_string()))?.into_any().unbind());
     }
 
     let flat = bits
         .extract::<Vec<u8>>()
         .map_err(|_| PyValueError::new_err("Expected a 1-D or 2-D array of uint8 bits."))?;
-    Ok(bitstream::pack(&flat).data.into_py(py))
+    Ok(bitstream::pack(&flat).data.into_pyobject(py).map_err(|e| PyValueError::new_err(e.to_string()))?.into_any().unbind())
 }
 
 #[pyfunction]
@@ -292,14 +293,14 @@ fn unpack_bitstream(
                 bitstream::unpack(&bitstream::BitStreamTensor::from_words(row, per_batch_len))
             })
             .collect();
-        return Ok(unpacked_rows.into_py(py));
+        return Ok(unpacked_rows.into_pyobject(py).map_err(|e| PyValueError::new_err(e.to_string()))?.into_any().unbind());
     }
 
     let words = packed.extract::<Vec<u64>>().map_err(|_| {
         PyValueError::new_err("Expected packed uint64 words as 1-D or 2-D sequence.")
     })?;
     let tensor = bitstream::BitStreamTensor::from_words(words, original_length);
-    Ok(bitstream::unpack(&tensor).into_py(py))
+    Ok(bitstream::unpack(&tensor).into_pyobject(py).map_err(|e| PyValueError::new_err(e.to_string()))?.into_any().unbind())
 }
 
 #[pyfunction]
@@ -328,7 +329,7 @@ fn pack_bitstream_numpy<'py>(
         .as_slice()
         .map_err(|e| PyValueError::new_err(format!("Cannot read numpy array: {e}")))?;
     let tensor = simd::pack_dispatch(slice);
-    Ok(tensor.data.into_pyarray_bound(py))
+    Ok(tensor.data.into_pyarray(py))
 }
 
 /// Popcount on a numpy uint64 array — zero-copy input.
@@ -352,7 +353,7 @@ fn unpack_bitstream_numpy<'py>(
         .map_err(|e| PyValueError::new_err(format!("Cannot read numpy array: {e}")))?;
     let tensor = bitstream::BitStreamTensor::from_words(words.to_vec(), original_length);
     let bits = bitstream::unpack(&tensor);
-    Ok(bits.into_pyarray_bound(py))
+    Ok(bits.into_pyarray(py))
 }
 
 /// Run a LIF neuron for N steps with constant inputs.
@@ -395,8 +396,8 @@ fn batch_lif_run<'py>(
         v_threshold,
         refractory_period,
     );
-    let spikes_arr = PyArray1::<i32>::zeros_bound(py, n_steps, false);
-    let voltages_arr = PyArray1::<i16>::zeros_bound(py, n_steps, false);
+    let spikes_arr = PyArray1::<i32>::zeros(py, n_steps, false);
+    let voltages_arr = PyArray1::<i16>::zeros(py, n_steps, false);
 
     // SAFETY: Arrays are newly allocated and contiguous.
     let spikes_slice = unsafe {
@@ -467,8 +468,8 @@ fn batch_lif_run_multi<'py>(
         )));
     }
 
-    let spikes_arr = PyArray2::<i32>::zeros_bound(py, [n_neurons, n_steps], false);
-    let voltages_arr = PyArray2::<i16>::zeros_bound(py, [n_neurons, n_steps], false);
+    let spikes_arr = PyArray2::<i32>::zeros(py, [n_neurons, n_steps], false);
+    let voltages_arr = PyArray2::<i16>::zeros(py, [n_neurons, n_steps], false);
 
     if n_neurons == 0 || n_steps == 0 {
         return Ok((spikes_arr, voltages_arr));
@@ -569,8 +570,8 @@ fn batch_lif_run_varying<'py>(
         v_threshold,
         refractory_period,
     );
-    let spikes_arr = PyArray1::<i32>::zeros_bound(py, n_steps, false);
-    let voltages_arr = PyArray1::<i16>::zeros_bound(py, n_steps, false);
+    let spikes_arr = PyArray1::<i32>::zeros(py, n_steps, false);
+    let voltages_arr = PyArray1::<i16>::zeros(py, n_steps, false);
 
     // SAFETY: Arrays are newly allocated and contiguous.
     let spikes_slice = unsafe {
@@ -666,7 +667,7 @@ fn batch_encode_numpy<'py>(
 
     let arr = ndarray::Array2::from_shape_vec((n_probs, words), flat)
         .map_err(|e| PyValueError::new_err(format!("Shape construction failed: {e}")))?;
-    Ok(arr.into_pyarray_bound(py))
+    Ok(arr.into_pyarray(py))
 }
 
 #[pyclass(module = "sc_neurocore_engine.sc_neurocore_engine")]
@@ -811,7 +812,7 @@ impl FixedPointLif {
     }
 
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let dict = PyDict::new_bound(py);
+        let dict = PyDict::new(py);
         dict.set_item("v", self.inner.v)?;
         dict.set_item("refractory_counter", self.inner.refractory_counter)?;
         Ok(dict.into_any().unbind())
@@ -878,7 +879,7 @@ impl DenseLayer {
             .inner
             .forward_numpy_inner(slice, seed)
             .map_err(PyValueError::new_err)?;
-        Ok(out.into_pyarray_bound(py))
+        Ok(out.into_pyarray(py))
     }
 
     /// Dense forward for a batch of input samples in one FFI call.
@@ -905,7 +906,7 @@ impl DenseLayer {
         let flat_inputs = inputs
             .as_slice()
             .map_err(|e| PyValueError::new_err(format!("Array not contiguous: {e}")))?;
-        let out = PyArray2::<f64>::zeros_bound(py, [n_samples, self.inner.n_neurons], false);
+        let out = PyArray2::<f64>::zeros(py, [n_samples, self.inner.n_neurons], false);
         // SAFETY: Newly allocated numpy arrays are contiguous.
         let out_slice = unsafe {
             out.as_slice_mut()
@@ -963,7 +964,7 @@ impl DenseLayer {
             .inner
             .forward_prepacked_2d(flat, n_inputs, words)
             .map_err(PyValueError::new_err)?;
-        Ok(out.into_pyarray_bound(py))
+        Ok(out.into_pyarray(py))
     }
 }
 

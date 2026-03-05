@@ -6,8 +6,7 @@
 //! Dense layer implemented with Bernoulli bitstream encoding and
 //! AND+popcount accumulation.
 
-use rand::Rng;
-use rand::SeedableRng;
+use rand::{RngExt, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use rand_xoshiro::Xoshiro256PlusPlus;
 use rayon::prelude::*;
@@ -46,7 +45,7 @@ impl DenseLayer {
 
         for row in &mut weights {
             for p in row {
-                *p = rng.gen::<f64>();
+                *p = rng.random::<f64>();
             }
         }
 

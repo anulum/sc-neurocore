@@ -3,8 +3,7 @@
 //! High-performance Kuramoto oscillator integration for SCPN Layer-4 and SSGF loops.
 //! The solver keeps all scratch buffers preallocated to avoid per-step allocations.
 
-use rand::Rng;
-use rand::SeedableRng;
+use rand::{RngExt, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use rayon::prelude::*;
 
@@ -351,8 +350,8 @@ fn fill_standard_normals(out: &mut [f64], seed: u64) {
     let mut i = 0usize;
 
     while i + 1 < out.len() {
-        let u1 = rng.gen::<f64>().max(f64::MIN_POSITIVE);
-        let u2 = rng.gen::<f64>();
+        let u1 = rng.random::<f64>().max(f64::MIN_POSITIVE);
+        let u2 = rng.random::<f64>();
         let r = (-2.0 * u1.ln()).sqrt();
         let theta = TWO_PI * u2;
         out[i] = r * theta.cos();
@@ -361,8 +360,8 @@ fn fill_standard_normals(out: &mut [f64], seed: u64) {
     }
 
     if i < out.len() {
-        let u1 = rng.gen::<f64>().max(f64::MIN_POSITIVE);
-        let u2 = rng.gen::<f64>();
+        let u1 = rng.random::<f64>().max(f64::MIN_POSITIVE);
+        let u2 = rng.random::<f64>();
         let r = (-2.0 * u1.ln()).sqrt();
         out[i] = r * (TWO_PI * u2).cos();
     }
