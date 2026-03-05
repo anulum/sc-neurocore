@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-.PHONY: test lint fmt docs bench clean build bridge
+.PHONY: test lint fmt docs bench clean build bridge preflight bandit sast
 
 test:
 	pytest tests/ -v --cov=sc_neurocore --cov-report=term --cov-fail-under=98
@@ -17,6 +17,17 @@ fmt:
 	black src/ tests/
 	ruff check --fix src/ tests/
 	cargo fmt --manifest-path engine/Cargo.toml
+
+bandit:
+	bandit -r src/sc_neurocore/ -c pyproject.toml -q
+
+sast: bandit
+
+preflight:
+	python tools/preflight.py
+
+preflight-fast:
+	python tools/preflight.py --no-tests
 
 docs:
 	mkdocs serve
