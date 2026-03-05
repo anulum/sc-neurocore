@@ -1,0 +1,42 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+.PHONY: test lint fmt docs bench clean build bridge
+
+test:
+	pytest tests/ -v --cov=sc_neurocore --cov-report=term --cov-fail-under=98
+
+test-rust:
+	cargo test --manifest-path engine/Cargo.toml
+
+test-all: test test-rust
+
+lint:
+	black --check src/ tests/
+	ruff check src/ tests/
+
+fmt:
+	black src/ tests/
+	ruff check --fix src/ tests/
+	cargo fmt --manifest-path engine/Cargo.toml
+
+docs:
+	mkdocs serve
+
+docs-build:
+	mkdocs build --strict
+
+bench:
+	python benchmarks/benchmark_suite.py
+
+bench-rust:
+	cargo bench --manifest-path engine/Cargo.toml
+
+bridge:
+	cd bridge && maturin develop --release
+
+build:
+	python -m build
+
+clean:
+	rm -rf dist/ build/ *.egg-info
+	find . -type d -name __pycache__ -exec rm -rf {} +
+	cargo clean --manifest-path engine/Cargo.toml

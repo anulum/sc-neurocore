@@ -39,6 +39,12 @@ jobs:
       - name: Rust clippy
         run: cargo clippy --manifest-path engine/Cargo.toml -- -D warnings
 
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+
+      - name: Cargo audit
+        run: cargo audit --file engine/Cargo.lock
+
   test-engine:
     name: Test Engine (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
