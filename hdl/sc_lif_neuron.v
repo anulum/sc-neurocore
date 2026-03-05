@@ -38,7 +38,7 @@ module sc_lif_neuron #(
 
     // Fixed-point input current I_t (Q(FRACTION))
     input wire signed [DATA_WIDTH-1:0]    I_t,
-    
+
     // External Noise Input (Q(FRACTION))
     input wire signed [DATA_WIDTH-1:0]    noise_in,
 

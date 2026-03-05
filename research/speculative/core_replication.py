@@ -14,7 +14,7 @@ class VonNeumannProbe:
     Can copy the sc-neurocore source and its own state to a new 'host'.
     """
     probe_id: int
-    
+
     def replicate(self, destination_dir: str):  # pragma: no cover
         """
         Quine-like behavior: Copies the library source to a new location.

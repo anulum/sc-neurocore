@@ -743,7 +743,7 @@ left, right = bridge.generate_binaural_sample(ccw_params)
 
 **Applicable Improvements:** #4, #5, #27, #33
 
-- Integrated Information Theory (IIT) experiments
+- Integrated Information Theory (IT) experiments
 - Holographic consciousness models
 - Quantum-classical hybrid cognition
 

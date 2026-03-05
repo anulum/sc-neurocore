@@ -28,13 +28,13 @@ module sc_bitstream_encoder_formal(
     reg init = 1;
     always @(posedge clk) begin
         if (init) init <= 0;
-        
+
         // 1. Invariant: LFSR must never lock into the all-zero state
         // The LFSR uses XOR feedback which gets stuck at 0 if it ever reaches 0.
         if (!init && rst_n) begin
             assert(uut.lfsr_reg != 16'h0000);
         end
-        
+
         // 2. Invariant: If x_value is exactly 0, the output must be 0
         // (probability of spiking is 0)
         if (!init && rst_n && x_value == 16'h0000) begin

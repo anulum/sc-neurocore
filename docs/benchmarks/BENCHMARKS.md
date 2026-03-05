@@ -117,4 +117,3 @@ Results:
 - Keep old entries. Trends matter more than isolated numbers.
 - When comparing versions, record the git commit or tag.
 - Use consistent input distributions for fair comparisons.
-

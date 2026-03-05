@@ -10,13 +10,13 @@ class HolographicBoundary:
     3D Bulk dynamics are equivalent to 2D Boundary dynamics.
     """
     grid_size: int = 10 # 3D side length
-    
+
     def __post_init__(self):
         # The 'Bulk' (3D volume)
         self.bulk = np.zeros((self.grid_size, self.grid_size, self.grid_size), dtype=np.uint8)
         # The 'Boundary' (2D surface)
         self.boundary = np.zeros((self.grid_size, self.grid_size), dtype=np.uint8)
-        
+
     def encode_to_boundary(self, bulk_data: np.ndarray):
         """
         Projects 3D bulk data onto the 2D boundary surface.
@@ -27,7 +27,7 @@ class HolographicBoundary:
         # Boundary encodes the state of the bulk
         self.boundary = np.sum(self.bulk, axis=2) % 2 # Parity projection
         return self.boundary.astype(np.uint8)
-        
+
     def reconstruct_bulk(self) -> np.ndarray:
         """
         Reconstructs bulk representation from boundary bits.

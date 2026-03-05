@@ -15,7 +15,7 @@ class ReactionDiffusionSolver:
     f: float = 0.060
     k: float = 0.062
     dt: float = 1.0
-    
+
     def __post_init__(self):
         self.A = np.ones((self.height, self.width))
         self.B = np.zeros((self.height, self.width))
@@ -44,15 +44,15 @@ class ReactionDiffusionSolver:
     def step(self):
         La = self.laplacian(self.A)
         Lb = self.laplacian(self.B)
-        
+
         # Reaction: A + 2B -> 3B
         reaction = self.A * (self.B ** 2)
-        
+
         self.A += (self.Da * La - reaction + self.f * (1 - self.A)) * self.dt
         self.B += (self.Db * Lb + reaction - (self.k + self.f) * self.B) * self.dt
-        
+
         self.A = np.clip(self.A, 0, 1)
         self.B = np.clip(self.B, 0, 1)
-        
+
     def get_state(self):
         return self.B # Usually visualize B

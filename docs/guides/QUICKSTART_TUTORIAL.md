@@ -20,9 +20,9 @@ from sc_neurocore.neurons.stochastic_lif import StochasticLIFNeuron
 # 1. Initialize a Stochastic LIF Neuron
 # We'll use a 10ms membrane time constant and 1ms timestep
 neuron = StochasticLIFNeuron(
-    tau_mem=10.0, 
-    dt=1.0, 
-    v_threshold=1.0, 
+    tau_mem=10.0,
+    dt=1.0,
+    v_threshold=1.0,
     noise_std=0.05
 )
 

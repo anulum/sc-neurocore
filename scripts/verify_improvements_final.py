@@ -458,7 +458,7 @@ except Exception as e:
 # #42 Homeostatic LIF
 try:
     from sc_neurocore.neurons.homeostatic_lif import HomeostaticLIFNeuron
-    hom = HomeostaticLIFNeuron()
+    home = HomeostaticLIFNeuron()
     adv_results.append(('#42', 'HomeostaticLIFNeuron', 'PASS'))
     adv_passed += 1
 except Exception as e:

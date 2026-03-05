@@ -22,24 +22,24 @@ class InterstellarDTN:
     node_id: str
     buffer: List[Packet] = field(default_factory=list)
     link_availability: float = 0.1 # Probability of link up
-    
+
     def receive(self, packet: Packet):
         """Store packet in non-volatile memory."""
         self.buffer.append(packet)
         logger.debug("DTN Node %s: Packet %d buffered.", self.node_id, packet.id)
-        
+
     def step(self) -> Optional[Packet]:
         """
         Attempt to forward a packet.
         """
         if not self.buffer:
             return None
-            
+
         # Check link
         if np.random.random() < self.link_availability:
             # Link UP
             packet = self.buffer.pop(0) # FIFO
             packet.ttl -= 1 # Cost of hop
             return packet
-            
+
         return None

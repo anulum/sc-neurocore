@@ -11,7 +11,7 @@ class ReversibleLayer:
     Uses Toffoli (CCNOT) gates which are universal and reversible.
     (a, b, c) -> (a, b, c XOR (a AND b))
     """
-    
+
     def toffoli_gate(self, a: np.ndarray, b: np.ndarray, c: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Applies Toffoli gate to bitstreams.
@@ -38,10 +38,10 @@ class ReversibleLayer:
         """
         # Ancilla 'c' is 0
         c = np.zeros_like(input_a)
-        
+
         # Apply Toffoli
         a_out, b_out, res = self.toffoli_gate(input_a, input_b, c)
-        
+
         # In reversible computing, we keep a_out and b_out to uncompute later
         # Here we just return the 'useful' result and 'garbage'
         return res, (a_out, b_out)

@@ -40,7 +40,7 @@ This allows processing 64 time steps in parallel.
 
 Args:
     bitstream: Shape (N,) or (Batch, N) of uint8 {0,1}
-    
+
 Returns:
     packed: Shape (ceil(N/64),) or (Batch, ceil(N/64)) of uint64
 
@@ -920,7 +920,7 @@ Stochastic Computing Attention Block.
 Approximates: Output = Softmax(Q * K^T) * V
 
 - **forward**(Q, K, V)
-  - Input: 
+  - Input:
 
 ---
 
@@ -1517,7 +1517,7 @@ Stochastic implementation of the Quantum Cellular Field.
 
 - **__init__**(params)
 - **step**(dt, external_field)
-  - Advance the layer by one time step. 
+  - Advance the layer by one time step.
 - **get_global_metric**()
   - Return the global coherence metric (Phi-like).
 
@@ -1886,7 +1886,7 @@ length : int
     Length of the bitstream.
 seed : int, optional
     Seed for the Sobol engine.
-    
+
 Returns
 -------
 np.ndarray
@@ -2098,4 +2098,3 @@ Predicts state_next = f(state_curr, action).
   - Forecast multiple steps ahead given a sequence of actions.
 
 ---
-

@@ -11,12 +11,12 @@ class PlanckGrid:
     """
     volume_cm3: float = 1.0
     mass_kg: float = 1.0
-    
+
     # Constants
     c = 2.99e8
     h = 6.626e-34
     G = 6.674e-11
-    
+
     def bekenstein_bound(self) -> float:
         """
         Maximum information (Entropy) in bits that can be contained in the sphere enclosing the mass.
@@ -25,7 +25,7 @@ class PlanckGrid:
         """
         R = (3 * self.volume_cm3 / (4 * np.pi))**(1/3) * 0.01 # to meters
         E = self.mass_kg * self.c**2
-        
+
         bits = (2 * np.pi * R * E) / (self.h * self.c * np.log(2))
         return bits
 

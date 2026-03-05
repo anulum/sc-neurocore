@@ -10,7 +10,7 @@ class DarkForestAgent:
     """
     hostility_factor: float = 0.9 # Probability that other civs are hostile
     detection_threshold: float = 0.5
-    
+
     def decide(self, alien_signal_strength: float) -> str:
         """
         Input: Strength of detected alien signal [0, 1].
@@ -23,6 +23,6 @@ class DarkForestAgent:
                 return "STRIKE" # Pre-emptive strike (Game Theory optimal in Dark Forest)
             else:
                 return "BROADCAST" # Hope for peace
-        
+
         # If signal is weak, we stay hidden to avoid detection
         return "HIDE"

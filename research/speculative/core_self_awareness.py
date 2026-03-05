@@ -20,26 +20,26 @@ class MetaCognitionLoop:
     Observes the Orchestrator and maintains a dynamic Self-Model.
     """
     self_model: SelfModel = field(default_factory=SelfModel)
-    
+
     def observe(self, orchestrator):
         """
         Introspection step. Reads internal state of the executive.
         """
         # 1. Update Capabilities
         self.self_model.capabilities = list(orchestrator.modules.keys())
-        
+
         # 2. Update Goals
         if hasattr(orchestrator, 'active_goals'):
             self.self_model.current_goals = orchestrator.active_goals
-            
+
         # 3. Assess Confidence (Simulated)
         # In a real system, this would analyze prediction error rates.
         # Here we simulate confidence fluctuation based on module count (complexity).
         complexity = len(self.self_model.capabilities)
         self.self_model.confidence = 1.0 / (1.0 + 0.1 * complexity)
-        
+
         logger.info("Meta-Cognition: I am aware of %d modules. Confidence: %.2f", complexity, self.self_model.confidence)
-        
+
     def reflect(self) -> str:
         """
         Returns a linguistic summary of the self-state.

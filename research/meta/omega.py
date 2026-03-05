@@ -10,14 +10,14 @@ class OmegaIntegrator:
     Simulates Omega Point Integration.
     Final state where all information is unified.
     """
-    
+
     def unify(self, system_states: list[np.ndarray]) -> np.ndarray:
         """
         Losslessly integrates multiple bitstreams into a single 'God Qubit' state.
         """
         if not system_states:
             return np.array([])
-            
+
         # Superposition of all states
         combined = np.sum(system_states, axis=0)
         # Normalize to the complex unit sphere representation

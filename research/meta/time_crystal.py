@@ -12,7 +12,7 @@ class TimeCrystalLayer:
     n_spins: int
     interaction_strength: float = 1.0
     disorder_strength: float = 0.5
-    
+
     def __post_init__(self):
         # Initial states {-1, 1}
         self.spins = np.random.choice([-1, 1], self.n_spins).astype(np.float32)
@@ -28,25 +28,25 @@ class TimeCrystalLayer:
         # Step 1: Flip (approximate Pi-pulse)
         if flip_pulse:
             self.spins *= -1.0
-            
+
         # Step 2: Local Interactions
         # H = Sum J*S_i*S_{i+1} + Sum h_i*S_i
         # For simplicity, we update phase/orientation
         # S_i = S_i * exp(j * H)
         # Here we use a simplified map:
-        
+
         # Neighbor interaction (Circular)
         neighbors = np.roll(self.spins, 1)
         interaction = self.interaction_strength * neighbors
-        
+
         # Total local field
         h = interaction + self.disorder
-        
+
         # Evolution: Rotation by local field
         # In a real DTC, this is a unitary exp(-iHt)
         # Here we simulate rotation in 1D space:
         self.spins = np.cos(np.arccos(self.spins) + h)
-        
+
         return self.spins
 
     def get_bitstream(self, cycles: int) -> np.ndarray:

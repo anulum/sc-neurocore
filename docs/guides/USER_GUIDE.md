@@ -38,7 +38,7 @@ weights = [1.0, 0.5, 0.0]
 
 # Source generates stochastic currents
 source = BitstreamCurrentSource(
-    x_inputs=inputs, 
+    x_inputs=inputs,
     weight_values=weights,
     x_min=0.0, x_max=1.0,
     w_min=0.0, w_max=1.0

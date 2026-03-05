@@ -18,6 +18,8 @@ noo = "noo"
 noos = "noos"
 fom = "fom"
 ket_state = "ket_state"
+ot = "ot"
+Braket = "Braket"
 
 [files]
 extend-exclude = [

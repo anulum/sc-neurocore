@@ -4,7 +4,7 @@ SCPN L9: Memory Imprint-Existential Holograph Adapter (JAX Implementation)
 ==========================================================================
 
 This module implements the JAX-accelerated uplift of Layer 9, focusing on
-the Two-State Vector Formalism (TSVF), Z-cyclic imprinting, and 
+the Two-State Vector Formalism (TSVF), Z-cyclic imprinting, and
 weak-value retrieval described in Paper 9.
 
 Key Equations:

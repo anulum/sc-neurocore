@@ -3,7 +3,7 @@
 
 ### 1. Precision vs. Latency Trade-offs
 
-In stochastic computing, the precision of a value is proportional to the square root of the bitstream length ($N$). 
+In stochastic computing, the precision of a value is proportional to the square root of the bitstream length ($N$).
 
 | Bitstream Length ($N$) | Equivalent Precision | Latency (250 MHz clock) | Use Case |
 | :--- | :--- | :--- | :--- |

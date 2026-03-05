@@ -120,4 +120,3 @@ Before deploying:
 - Use BENCHMARKS.md to record performance and accuracy data.
 - Update TECHNICAL_MANUAL.md if hardware flows change.
 - Keep HDL outputs aligned with the Python reference.
-

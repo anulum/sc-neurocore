@@ -417,4 +417,3 @@ outputs = layer.forward_batch_numpy(inputs, seed=42)
 
 This amortizes Python↔Rust FFI overhead and enables parallel execution over
 samples.
-

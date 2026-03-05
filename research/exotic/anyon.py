@@ -10,7 +10,7 @@ class AnyonBraidLayer:
     Information is encoded in the 'braid' of world-lines.
     """
     n_anyons: int
-    
+
     def __post_init__(self):
         # State vector in the fusion space
         # Dimension scales with Fibonacci sequence
@@ -18,10 +18,10 @@ class AnyonBraidLayer:
         dim = int(np.round(phi**(self.n_anyons-2)))
         self.state = np.zeros(max(1, dim), dtype=complex)
         self.state[0] = 1.0 # Initial state
-        
+
         # Braid generator (R-matrix)
         # Simplified rotation for demonstration
-        self.R = np.array([[np.exp(1j * np.pi * 0.8), 0], 
+        self.R = np.array([[np.exp(1j * np.pi * 0.8), 0],
                            [0, np.exp(-1j * np.pi * 0.4)]], dtype=complex)
 
     def braid(self, i: int):
@@ -34,7 +34,7 @@ class AnyonBraidLayer:
         if len(self.state) >= 2:
             subspace = self.state[:2]
             self.state[:2] = self.R @ subspace
-            
+
     def measure(self) -> np.ndarray:
         """
         Collapses topological state to bitstream probabilities.

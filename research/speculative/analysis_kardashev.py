@@ -6,7 +6,7 @@ class KardashevEstimator:
     """
     Calculates Civilization Type on the Kardashev Scale.
     """
-    
+
     @staticmethod
     def calculate_type(power_watts: float) -> float:
         """
@@ -14,7 +14,7 @@ class KardashevEstimator:
         """
         if power_watts <= 0: return 0.0
         return (np.log10(power_watts) - 6.0) / 10.0
-        
+
     @staticmethod
     def estimate_from_compute(ops_per_second: float, efficiency_j_per_op: float = 1e-21) -> float:
         """

@@ -11,7 +11,7 @@ class PlanetarySensorGrid:
     Aggregates global telemetry into an SC computational field.
     """
     n_nodes: int = 1000000 # Default 1M nodes
-    
+
     def aggregate_field(self, telemetry_data: Dict[str, np.ndarray]) -> np.ndarray:
         """
         Fuses multi-regional telemetry (e.g. Temperature, CO2, Humidity)
@@ -25,5 +25,5 @@ class PlanetarySensorGrid:
             norm_data = (data - np.min(data)) / (np.max(data) - np.min(data) + 1e-9)
             field[:len(norm_data)] += norm_data
             count += 1
-            
+
         return field / count if count > 0 else field

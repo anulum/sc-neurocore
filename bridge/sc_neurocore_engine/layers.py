@@ -81,4 +81,3 @@ class VectorizedSCLayer:
                 f"Expected 2-D input with shape (n_samples, {self.n_inputs}), got {arr.shape}"
             )
         return self._engine.forward_batch_numpy(arr, seed)
-

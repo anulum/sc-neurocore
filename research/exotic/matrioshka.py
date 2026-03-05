@@ -11,11 +11,11 @@ class DysonSwarmNet:
     """
     n_shells: int
     n_nodes_per_shell: int
-    
+
     def __post_init__(self):
         # Each shell has its own compute field
         self.shells = [np.zeros(self.n_nodes_per_shell) for _ in range(self.n_shells)]
-        
+
     def process(self, input_energy: np.ndarray) -> np.ndarray:
         """
         Energy (data) flows from Inner Shell (Hot) to Outer Shell (Cold).
@@ -28,5 +28,5 @@ class DysonSwarmNet:
             self.shells[i] = processing
             # Next shell receives processed signal as 'energy source'
             data = processing * 0.8 # 20% loss/entropy
-            
+
         return self.shells[-1]

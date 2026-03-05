@@ -18,7 +18,7 @@ module sc_dense_layer_core #(
     // Control
     input wire          start_pulse,
     input wire [31:0]   stream_len, // Runtime configurable length
-    
+
     // Scalar inputs (Packed fixed-point bus)
     // x_input_fp[i] is slice [i*DATA_WIDTH +: DATA_WIDTH]
     input wire [N_INPUTS*DATA_WIDTH-1:0] x_input_fp,
@@ -29,7 +29,7 @@ module sc_dense_layer_core #(
     // Configuration for mapping probability -> current range
     input wire [DATA_WIDTH-1:0]    y_min_fp,
     input wire [DATA_WIDTH-1:0]    y_max_fp,
-    
+
     // Neuron parameters
     input wire [DATA_WIDTH-1:0]    cfg_leak,
     input wire [DATA_WIDTH-1:0]    cfg_gain,

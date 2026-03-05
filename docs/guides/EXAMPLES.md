@@ -188,4 +188,3 @@ print("Reaction diffusion state mean:", chem.get_state().mean())
 - Many examples rely on randomness. Set `np.random.seed(...)` for reproducible runs.
 - If you plan to benchmark, enable `SC_NEUROCORE_PERF=1` and run the performance tests.
 - For hardware deployment, see HARDWARE_GUIDE.md.
-
