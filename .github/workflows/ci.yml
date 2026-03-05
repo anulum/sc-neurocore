@@ -40,7 +40,7 @@ jobs:
         run: black --check src/ tests/
 
       - name: Test + coverage
-        run: pytest tests/ -v --cov=sc_neurocore --cov-report=term --cov-fail-under=97
+        run: pytest tests/ -v --cov=sc_neurocore --cov-report=term --cov-fail-under=98
 
   build:
     runs-on: ubuntu-latest

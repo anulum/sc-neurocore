@@ -1,0 +1,34 @@
+# © 1998–2026 Miroslav Šotek. All rights reserved.
+# Contact: www.anulum.li | protoscience@anulum.li
+name: Stale Issues
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"  # Monday 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          days-before-stale: 60
+          days-before-close: 14
+          stale-issue-label: stale
+          stale-pr-label: stale
+          stale-issue-message: >
+            This issue has had no activity for 60 days. It will be closed
+            in 14 days unless there is new activity. Remove the `stale`
+            label or comment to keep it open.
+          stale-pr-message: >
+            This PR has had no activity for 60 days. It will be closed
+            in 14 days unless there is new activity.
+          close-issue-message: Closed due to inactivity. Re-open if still relevant.
+          close-pr-message: Closed due to inactivity. Re-open if still relevant.
+          exempt-issue-labels: pinned,security,roadmap
+          exempt-pr-labels: pinned,security
