@@ -1,0 +1,41 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+.git
+.github
+.claude
+.coordination
+.tools
+.pre-commit-config.yaml
+.editorconfig
+_typos.toml
+
+# Documentation & metadata
+docs/
+*.md
+!README.md
+mkdocs.yml
+CITATION.cff
+.zenodo.json
+
+# Tests & benchmarks
+tests/
+cosim/
+benchmarks/
+research/
+experiments/
+scripts/
+
+# Build artifacts
+engine/target/
+dist/
+*.egg-info
+__pycache__
+.mypy_cache
+.pytest_cache
+.ruff_cache
+htmlcov/
+
+# Binary assets
+*.npz
+*.onnx
+*.pkl
+*.pt
