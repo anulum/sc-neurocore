@@ -106,6 +106,10 @@ target-version = "py39"
 select = ["E", "F", "W", "I", "UP", "B", "SIM"]
 ignore = ["E501"]
 
+[tool.bandit]
+skips = ["B101", "B311", "B404", "B603", "B607"]
+exclude_dirs = ["tests", "experiments", "research", "scripts"]
+
 [tool.mypy]
 strict = true
 ignore_missing_imports = false
