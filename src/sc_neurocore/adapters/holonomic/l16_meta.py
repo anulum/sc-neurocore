@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 SCPN Meta-Layer 16: Cybernetic Closure Adapter (JAX Implementation)
 ====================================================================

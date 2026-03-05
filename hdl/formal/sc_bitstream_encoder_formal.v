@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 `default_nettype none
 
 module sc_bitstream_encoder_formal(

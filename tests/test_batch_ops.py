@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Tests for batch LIF and encode operations."""
 
 from __future__ import annotations

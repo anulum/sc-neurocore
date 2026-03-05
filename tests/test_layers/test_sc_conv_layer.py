@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Tests for SCConv2DLayer output shapes and edge cases."""
 
 import os

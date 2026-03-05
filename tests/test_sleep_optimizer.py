@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Tests for Sleep Optimization System (UC3) — adapts to agent-written API."""
 
 from __future__ import annotations

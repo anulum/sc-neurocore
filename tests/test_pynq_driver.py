@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # tests/test_pynq_driver.py
 """Tests for SC-NeuroCore PYNQ FPGA driver."""
 

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 //! Tests for IR bridge types exposed via lib.rs.
 //! These verify that the PyO3 wrappers correctly delegate to the IR module.
 

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Tests to fill coverage gaps in partially-covered modules."""
 
 import numpy as np

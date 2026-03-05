@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Equivalence: v2 StochasticGraphLayer vs v3."""
 
 import numpy as np

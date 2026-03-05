@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Drop-in replacement for sc_neurocore.neurons.FixedPointLIFNeuron."""
 
 from sc_neurocore_engine.sc_neurocore_engine import FixedPointLif as _RustLif

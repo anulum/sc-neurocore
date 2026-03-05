@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Equivalence: v2 VectorizedSCLayer.forward vs v3 DenseLayer."""
 
 import numpy as np

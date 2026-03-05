@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 //! Text-format parser for SC IR graphs.
 //!
 //! Parses the format produced by `printer::print()`. The parser is

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 import unittest
 import numpy as np
 from sc_neurocore.quantum.hybrid import QuantumStochasticLayer

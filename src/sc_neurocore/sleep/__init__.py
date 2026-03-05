@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """sc_neurocore.sleep -- Tier: research (experimental / research).
 
 Closed-loop sleep optimisation system with EEG-based stage detection,

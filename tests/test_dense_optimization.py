@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Tests for Phase 7 dense forward optimizations."""
 
 from __future__ import annotations

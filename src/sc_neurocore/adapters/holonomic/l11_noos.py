@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 SCPN L11: Noospheric-Cultural-Informational Adapter (JAX Implementation)
 ========================================================================

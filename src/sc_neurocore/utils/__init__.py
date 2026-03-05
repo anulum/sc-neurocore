@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 from .rng import RNG
 from .bitstreams import (
     BitstreamEncoder,

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # tests/test_behavioral_equivalence.py
 #
 # Bit-true behavioral model verification against the Verilog specification.

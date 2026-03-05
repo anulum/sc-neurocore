@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Tests for surrogate gradient engine (Python bridge)."""
 
 import numpy as np

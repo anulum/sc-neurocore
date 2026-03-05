@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 //hdl/sc_axil_cfg.v
 //
 // AXI-Lite slave for configuration and firing-rate readback.

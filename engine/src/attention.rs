@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 //! # Stochastic Attention
 //!
 //! Rate-mode and SC-mode attention primitives used by the Python bridge.

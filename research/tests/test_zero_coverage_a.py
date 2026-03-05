@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Tests for 0%-coverage modules: eschaton, exotic, transcendent, meta, post_silicon."""
 
 import numpy as np

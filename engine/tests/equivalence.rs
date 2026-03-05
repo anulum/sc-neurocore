@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 use sc_neurocore_engine::bitstream::{bitwise_and, pack, popcount, unpack};
 use sc_neurocore_engine::encoder::{BitstreamEncoder, Lfsr16};
 use sc_neurocore_engine::neuron::FixedPointLif;

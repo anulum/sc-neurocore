@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Generate the SC-NeuroCore technical header image for GitHub README."""
 
 import numpy as np

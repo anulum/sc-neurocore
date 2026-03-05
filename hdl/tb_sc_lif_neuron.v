@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 // hdl/tb_sc_lif_neuron.v
 //
 // Co-simulation testbench for sc_lif_neuron.

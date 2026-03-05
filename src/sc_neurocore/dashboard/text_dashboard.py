@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 class SCDashboard:
     """
     Simple CLI Dashboard for monitoring SC simulation.

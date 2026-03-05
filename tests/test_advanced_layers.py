@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 import unittest
 import numpy as np
 from sc_neurocore.layers.vectorized_layer import VectorizedSCLayer

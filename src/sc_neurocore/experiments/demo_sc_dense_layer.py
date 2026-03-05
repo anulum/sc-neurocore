@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 from __future__ import annotations
 from sc_neurocore.layers.sc_dense_layer import SCDenseLayer
 

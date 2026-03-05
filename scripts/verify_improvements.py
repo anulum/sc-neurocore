@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """SC-NeuroCore Improvement Verification Script"""
 import sys
 sys.path.insert(0, 'src')

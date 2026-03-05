@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 //hdl/sc_lif_neuron.v
 //
 // Fixed-point Leaky Integrate-and-Fire neuron for SC pipelines.

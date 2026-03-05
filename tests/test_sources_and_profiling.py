@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 Tests for untested source and profiling modules:
   - sources/quantum_entropy.py (QuantumEntropySource)

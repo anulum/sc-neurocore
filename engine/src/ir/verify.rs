@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 //! Graph verification passes.
 
 use std::collections::{HashMap, HashSet};

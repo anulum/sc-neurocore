@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 // hdl/sc_bitstream_synapse.v
 //
 // Stochastic synapse for unipolar SC:

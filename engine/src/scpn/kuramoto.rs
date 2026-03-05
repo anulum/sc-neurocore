@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 //! # Kuramoto Solver
 //!
 //! High-performance Kuramoto oscillator integration for SCPN Layer-4 and SSGF loops.

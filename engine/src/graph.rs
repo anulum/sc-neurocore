@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 //! # Stochastic Graph Layer
 //!
 //! Graph message-passing layer with both rate-mode and SC-mode forward paths.

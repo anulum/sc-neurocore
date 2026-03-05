@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """SC-NeuroCore IR - Python API for compute graph construction and compilation."""
 
 from __future__ import annotations

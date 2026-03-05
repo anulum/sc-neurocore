@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 Hardware Bridge for Quantum-Classical Hybrid execution.
 

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 //! # Fixed-Point LIF Neuron
 //!
 //! Integer LIF neuron model used by the v3 engine for deterministic,

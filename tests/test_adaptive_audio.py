@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Tests for SSGF Adaptive Audio (UC1) — 32 tests."""
 
 from __future__ import annotations

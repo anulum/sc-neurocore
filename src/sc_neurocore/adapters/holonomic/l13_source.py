@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 SCPN L13: Source-Field / Meta-Universal Adapter (JAX Implementation)
 ====================================================================

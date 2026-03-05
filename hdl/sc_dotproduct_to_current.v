@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 // hdl/sc_dotproduct_to_current.v
 //
 // Dot-product-like reduction of SC post-synaptic bits into a fixed-point current.

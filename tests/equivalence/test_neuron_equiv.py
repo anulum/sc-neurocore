@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Strict blueprint semantics tests for FixedPointLIFNeuron."""
 
 from dataclasses import dataclass

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Tests for SCLearningLayer initialization, learning, and bounds."""
 
 import os

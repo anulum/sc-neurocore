@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Shared fixtures for v2-vs-v3 equivalence testing."""
 
 import numpy as np

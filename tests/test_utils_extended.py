@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 Tests for the 6 untested core utils modules:
   - adaptive.py (AdaptiveInference)
