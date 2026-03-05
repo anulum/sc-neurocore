@@ -254,13 +254,22 @@ fn set_num_threads(n: usize) -> PyResult<()> {
 fn pack_bitstream(py: Python<'_>, bits: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
     if let Ok(rows) = bits.extract::<Vec<Vec<u8>>>() {
         let packed_rows: Vec<Vec<u64>> = rows.iter().map(|row| bitstream::pack(row).data).collect();
-        return Ok(packed_rows.into_pyobject(py).map_err(|e| PyValueError::new_err(e.to_string()))?.into_any().unbind());
+        return Ok(packed_rows
+            .into_pyobject(py)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?
+            .into_any()
+            .unbind());
     }
 
     let flat = bits
         .extract::<Vec<u8>>()
         .map_err(|_| PyValueError::new_err("Expected a 1-D or 2-D array of uint8 bits."))?;
-    Ok(bitstream::pack(&flat).data.into_pyobject(py).map_err(|e| PyValueError::new_err(e.to_string()))?.into_any().unbind())
+    Ok(bitstream::pack(&flat)
+        .data
+        .into_pyobject(py)
+        .map_err(|e| PyValueError::new_err(e.to_string()))?
+        .into_any()
+        .unbind())
 }
 
 #[pyfunction]
@@ -293,14 +302,22 @@ fn unpack_bitstream(
                 bitstream::unpack(&bitstream::BitStreamTensor::from_words(row, per_batch_len))
             })
             .collect();
-        return Ok(unpacked_rows.into_pyobject(py).map_err(|e| PyValueError::new_err(e.to_string()))?.into_any().unbind());
+        return Ok(unpacked_rows
+            .into_pyobject(py)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?
+            .into_any()
+            .unbind());
     }
 
     let words = packed.extract::<Vec<u64>>().map_err(|_| {
         PyValueError::new_err("Expected packed uint64 words as 1-D or 2-D sequence.")
     })?;
     let tensor = bitstream::BitStreamTensor::from_words(words, original_length);
-    Ok(bitstream::unpack(&tensor).into_pyobject(py).map_err(|e| PyValueError::new_err(e.to_string()))?.into_any().unbind())
+    Ok(bitstream::unpack(&tensor)
+        .into_pyobject(py)
+        .map_err(|e| PyValueError::new_err(e.to_string()))?
+        .into_any()
+        .unbind())
 }
 
 #[pyfunction]
