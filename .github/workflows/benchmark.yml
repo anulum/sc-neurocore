@@ -19,6 +19,10 @@ permissions:
   contents: write
   deployments: write
 
+concurrency:
+  group: bench-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   benchmark:
     name: Run Benchmarks

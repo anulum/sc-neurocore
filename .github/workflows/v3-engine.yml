@@ -21,6 +21,10 @@ on:
       - "tests/**"
       - ".github/workflows/v3-engine.yml"
 
+concurrency:
+  group: v3-engine-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   rust-lint:
     runs-on: ubuntu-latest
