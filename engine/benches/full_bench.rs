@@ -2,8 +2,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use rand::Rng;
-use rand::SeedableRng;
+use rand::{Rng, RngExt, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use rand_xoshiro::Xoshiro256PlusPlus;
 use sc_neurocore_engine::attention::StochasticAttention;
@@ -200,7 +199,7 @@ fn bench_all(c: &mut Criterion) {
         b.iter(|| {
             let mut rng = ChaCha8Rng::seed_from_u64(42);
             let mut buf = [0_u8; 1024];
-            rand::RngCore::fill_bytes(&mut rng, &mut buf);
+            rng.fill_bytes(&mut buf);
             black_box(buf)
         })
     });
@@ -209,7 +208,7 @@ fn bench_all(c: &mut Criterion) {
         b.iter(|| {
             let mut rng = Xoshiro256PlusPlus::seed_from_u64(42);
             let mut buf = [0_u8; 1024];
-            rand::RngCore::fill_bytes(&mut rng, &mut buf);
+            rng.fill_bytes(&mut buf);
             black_box(buf)
         })
     });
@@ -247,9 +246,9 @@ fn bench_all(c: &mut Criterion) {
     {
         let attn = StochasticAttention::new(16);
         let mut rng = ChaCha8Rng::seed_from_u64(42);
-        let q: Vec<f64> = (0..10 * 16).map(|_| rng.gen()).collect();
-        let k: Vec<f64> = (0..20 * 16).map(|_| rng.gen()).collect();
-        let v: Vec<f64> = (0..20 * 32).map(|_| rng.gen()).collect();
+        let q: Vec<f64> = (0..10 * 16).map(|_| rng.random()).collect();
+        let k: Vec<f64> = (0..20 * 16).map(|_| rng.random()).collect();
+        let v: Vec<f64> = (0..20 * 32).map(|_| rng.random()).collect();
 
         c.bench_function("attention_10x16_20x32", |b| {
             b.iter(|| {
