@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 from typing import Any, Callable, TypeVar, Generic
 from dataclasses import dataclass
 import numpy as np

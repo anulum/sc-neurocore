@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 // hdl/sc_firing_rate_bank.v
 //
 // Firing rate estimator bank.

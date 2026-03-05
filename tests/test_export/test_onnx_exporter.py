@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Tests for SCOnnxExporter JSON and sidecar outputs."""
 
 import json

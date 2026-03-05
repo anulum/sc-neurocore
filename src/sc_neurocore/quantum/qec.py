@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 Quantum Error Correction (QEC) Shield for sc-neurocore.
 

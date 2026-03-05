@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # tests/test_microtubule_superradiance.py
 #
 # Verification of L1 Quantum Emulation (Microtubule Superradiance).

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 //! # Stochastic Encoders
 //!
 //! LFSR-driven Bernoulli encoding utilities used by SC-NeuroCore kernels.

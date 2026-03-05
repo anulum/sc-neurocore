@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """sc_neurocore.dashboard -- Tier: research (experimental / research)."""
 
 __tier__ = "research"

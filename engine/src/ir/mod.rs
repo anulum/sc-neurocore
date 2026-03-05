@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 //! # SC Compute Graph IR
 //!
 //! A Rust-native intermediate representation for stochastic computing

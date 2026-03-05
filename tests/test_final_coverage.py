@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Tests to close ALL remaining coverage gaps from 98% → 100%."""
 
 import numpy as np

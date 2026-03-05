@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Accelerated SCPN components."""
 
 from __future__ import annotations

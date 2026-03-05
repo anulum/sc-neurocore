@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """sc_neurocore.post_silicon -- Tier: contrib (speculative / theoretical)."""
 
 __tier__ = "contrib"

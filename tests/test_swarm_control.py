@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Tests for Neuromorphic Swarm Control (UC4) — 50 tests."""
 
 from __future__ import annotations

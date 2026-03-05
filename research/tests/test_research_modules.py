@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 Tests for research/contrib modules that were at 0% coverage:
   - chaos/rng.py (ChaoticRNG)

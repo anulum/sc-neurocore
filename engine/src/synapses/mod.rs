@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 //! # Stochastic STDP Synapse
 //!
 //! Implements Spike-Timing-Dependent Plasticity (STDP) for stochastic bitstreams.

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 //! Fluent builder for `ScGraph`.
 
 use crate::ir::graph::*;

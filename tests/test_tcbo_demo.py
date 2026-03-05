@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Tests for TCBO Consciousness Detection Demo (UC2).
 
 38 tests covering SyntheticEEGGenerator, core functions, TCBODemoEngine,

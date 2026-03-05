@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 // hdl/sc_dense_layer_core.v
 //
 // Core logic for an SC-based dense layer.

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Tests for BitstreamSpikeRecorder statistics and validation."""
 
 import numpy as np

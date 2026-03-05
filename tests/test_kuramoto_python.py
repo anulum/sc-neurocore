@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Tests for Rust-accelerated Kuramoto solver."""
 
 import numpy as np

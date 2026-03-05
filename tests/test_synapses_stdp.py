@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 Tests for StochasticSTDPSynapse and RewardModulatedSTDPSynapse.
 Covers the untested code paths in stochastic_stdp.py and r_stdp.py.

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 Comprehensive Unit Tests for Phase 15 and 16 logic to ensure 97%+ CI coverage.
 """

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Tests for NumPy zero-copy interop functions."""
 
 from __future__ import annotations

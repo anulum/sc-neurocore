@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 use proptest::prelude::*;
 use sc_neurocore_engine::bitstream::{bitwise_and, pack, popcount_words_portable, unpack};
 use sc_neurocore_engine::simd::popcount_dispatch;

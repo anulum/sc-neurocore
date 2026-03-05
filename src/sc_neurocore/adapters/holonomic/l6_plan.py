@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 SCPN L6: Planetary-Biospheric Adapter (JAX Implementation)
 ==========================================================

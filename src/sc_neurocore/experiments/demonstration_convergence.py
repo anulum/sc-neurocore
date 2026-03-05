@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 Demonstration of Phase 16 Omni-Substrate Convergence.
 

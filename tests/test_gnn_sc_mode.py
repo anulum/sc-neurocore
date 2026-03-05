@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Tests for SC-mode GNN (new v3 capability)."""
 
 import numpy as np

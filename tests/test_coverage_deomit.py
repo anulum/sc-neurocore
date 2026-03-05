@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Tests for de-omitted modules: chaos/rng, analysis/explainability,
 physics/wolfram_hypergraph, robotics/swarm, learning/neuroevolution, spatial/*.
 """

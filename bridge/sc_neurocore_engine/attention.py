@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Drop-in replacement for sc_neurocore.layers.StochasticAttention."""
 
 from __future__ import annotations

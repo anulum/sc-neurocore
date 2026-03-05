@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 #!/usr/bin/env python
 """
 SC-NeuroCore v2 vs v3 Head-to-Head Benchmark Suite

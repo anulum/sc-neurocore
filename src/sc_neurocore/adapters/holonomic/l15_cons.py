@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 SCPN L15: Consilium / Oversoul Integrator Adapter (JAX Implementation)
 =====================================================================

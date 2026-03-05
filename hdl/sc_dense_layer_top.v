@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 // hdl/sc_dense_layer_top.v
 //
 // Top-level skeleton for an SC-based dense layer,

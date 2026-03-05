@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 SCPN L10: Projective Field Boundary Control Adapter (JAX Implementation)
 ========================================================================

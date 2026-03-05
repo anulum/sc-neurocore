@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 SCPN L9: Memory Imprint-Existential Holograph Adapter (JAX Implementation)
 ==========================================================================

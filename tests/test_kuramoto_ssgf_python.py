@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Tests for SSGF-compatible Kuramoto solver (Python bridge)."""
 
 import numpy as np

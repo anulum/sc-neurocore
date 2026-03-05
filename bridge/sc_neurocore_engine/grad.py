@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Surrogate gradient wrappers for the v3 Rust engine."""
 
 from __future__ import annotations

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Tests for multi-head attention (new v3 capability)."""
 
 import numpy as np

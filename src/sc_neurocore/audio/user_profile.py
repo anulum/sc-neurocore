@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """User profile: chronotype and session preferences."""
 
 from __future__ import annotations

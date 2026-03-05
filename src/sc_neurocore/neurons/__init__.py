@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 from .base import BaseNeuron
 from .stochastic_lif import StochasticLIFNeuron
 from .fixed_point_lif import FixedPointLIFNeuron, FixedPointLFSR, FixedPointBitstreamEncoder

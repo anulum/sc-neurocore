@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """SC-NeuroCore - Additional Undocumented Capabilities Verification"""
 import sys
 sys.path.insert(0, 'src')
