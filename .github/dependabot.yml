@@ -1,21 +1,23 @@
-# ──────────────────────────────────────────────────────────────────────
-# SC-NeuroCore — Dependency update configuration
-# © 1998–2026 Miroslav Šotek. All rights reserved.
-# Contact: www.anulum.li | protoscience@anulum.li
-# License: GNU AGPL v3
-# ──────────────────────────────────────────────────────────────────────
-
+# SPDX-License-Identifier: AGPL-3.0-or-later
 version: 2
 updates:
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: pip
+    directory: /
     schedule:
-      interval: "weekly"
-  - package-ecosystem: "pip"
-    directory: "/"
+      interval: weekly
+    labels: [dependencies]
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: cargo
+    directory: /engine
     schedule:
-      interval: "weekly"
-  - package-ecosystem: "cargo"
-    directory: "/engine"
+      interval: weekly
+    labels: [dependencies, rust]
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
-      interval: "weekly"
+      interval: weekly
+    labels: [ci]
+    open-pull-requests-limit: 3

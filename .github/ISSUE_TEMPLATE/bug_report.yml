@@ -1,0 +1,46 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+name: Bug Report
+description: Report a bug in SC-NeuroCore
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened? What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Minimal code or commands to trigger the bug.
+      render: python
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: SC-NeuroCore Version
+      placeholder: "3.8.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - Python core (src/sc_neurocore)
+        - Rust engine (engine/)
+        - Verilog HDL (hdl/)
+        - Bridge (bridge/)
+        - CI / Build
+        - Documentation
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Python version, Rust version, GPU (if relevant).
+      placeholder: "Ubuntu 22.04, Python 3.11, rustc 1.77"
