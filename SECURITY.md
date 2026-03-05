@@ -4,7 +4,7 @@
 
 | Version | Supported          | Notes |
 |---------|--------------------|-------|
-| 3.7.x   | :white_check_mark: | Current stable (Rust engine + Python bridge) |
+| 3.8.x   | :white_check_mark: | Current stable (Rust engine + Python bridge) |
 | 2.2.x   | :x:                | Superseded (pure-Python legacy) |
 | < 2.0   | :x:                | Pre-release / unreleased |
 

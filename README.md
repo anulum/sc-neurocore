@@ -11,13 +11,15 @@ Commercial Licensing: Available
 </p>
 
 [![CI](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml/badge.svg)](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-3.7.0-blue)](https://github.com/anulum/sc-neurocore/releases)
+[![Version](https://img.shields.io/badge/version-3.8.0-blue)](https://github.com/anulum/sc-neurocore/releases)
+[![Coverage](https://img.shields.io/badge/coverage-98%25-brightgreen)](https://github.com/anulum/sc-neurocore)
+[![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://anulum.github.io/sc-neurocore/)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/downloads/)
 [![Rust](https://img.shields.io/badge/engine-Rust-orange)](https://www.rust-lang.org/)
 
-**Version:** 3.7.0
-**Status:** Production Core Verified | 1024 Tests Passing | 97.76% Coverage | CI/CD Active
+**Version:** 3.8.0
+**Status:** Production Core Verified | 1058 Tests Passing | 98.10% Coverage | CI/CD Active
 
 SC-NeuroCore is a deterministic stochastic computing framework for
 neuromorphic hardware design and edge-AI deployment. It provides bit-true
@@ -168,7 +170,7 @@ All other examples run with the pure-Python `sc_neurocore` package.
 ## CI/CD
 
 GitHub Actions pipelines (`.github/workflows/`):
-- **ci.yml**: Lint (black) + Test (Python 3.11 / 3.12, coverage >= 97%) + Build
+- **ci.yml**: Lint (black) + Test (Python 3.11 / 3.12, coverage >= 98%) + Build
 - **v3-engine.yml**: Rust engine build + `cargo test`
 - **v3-wheels.yml**: Cross-platform wheel builds (Linux, macOS, Windows)
 - **docs.yml**: MkDocs documentation build

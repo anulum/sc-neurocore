@@ -22,7 +22,7 @@ Thank you for your interest in SC-NeuroCore. Contributions are welcome under the
 4. **Run tests** before making changes to establish a baseline:
    ```bash
    cargo test                           # Rust engine tests
-   cd .. && python -m pytest tests/ -v  # Python (818+ tests)
+   cd .. && python -m pytest tests/ -v  # Python (1058 tests)
    ```
 
 ## Development Guidelines
@@ -30,7 +30,7 @@ Thank you for your interest in SC-NeuroCore. Contributions are welcome under the
 ### Code Style
 
 - **Rust**: Follow standard `rustfmt` formatting. Run `cargo fmt` before committing.
-- **Python**: Follow PEP 8. Use type hints for public APIs.
+- **Python**: Follow PEP 8. Run `black --check src/ tests/` and `ruff check src/ tests/`. Use type hints for public APIs.
 - **Copyright header**: Every source file must include the standard header:
   ```
   © 1998–2026 Miroslav Šotek. All rights reserved.
