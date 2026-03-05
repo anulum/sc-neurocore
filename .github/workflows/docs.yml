@@ -3,6 +3,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 name: Deploy Documentation to GitHub Pages
 
+permissions: {}
+
 on:
   push:
     branches: [main]

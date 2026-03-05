@@ -3,6 +3,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 name: SC-NeuroCore v3 Engine
 
+permissions: {}
+
 on:
   push:
     paths:

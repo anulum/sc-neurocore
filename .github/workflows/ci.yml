@@ -3,6 +3,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 name: SC-NeuroCore CI
 
+permissions: {}
+
 on:
   push:
     paths:
@@ -50,7 +52,7 @@ jobs:
 
       - name: Check SPDX headers
         run: |
-          MISSING=$(find src tests engine/src engine/tests engine/benches hdl \
+          MISSING=$(find src tests engine/src engine/tests engine/benches hdl bridge \
             -type f \( -name "*.py" -o -name "*.rs" -o -name "*.v" \) \
             ! -path "*/__pycache__/*" \
             -exec grep -rL "SPDX-License-Identifier" {} +) || true
