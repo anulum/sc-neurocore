@@ -22,6 +22,7 @@ from sc_neurocore.layers.sc_learning_layer import SCLearningLayer
 # NeuromodulatorSystem
 # ---------------------------------------------------------------------------
 
+
 class TestNeuromodulatorSystem:
     def test_update_levels(self):
         nm = NeuromodulatorSystem()
@@ -52,6 +53,7 @@ class TestNeuromodulatorSystem:
 # ---------------------------------------------------------------------------
 # ChaoticRNG
 # ---------------------------------------------------------------------------
+
 
 class TestChaoticRNG:
     def test_burn_in_changes_state(self):
@@ -86,6 +88,7 @@ class TestChaoticRNG:
 # SpikeToConceptMapper
 # ---------------------------------------------------------------------------
 
+
 class TestSpikeToConceptMapper:
     def test_active_spikes(self):
         mapper = SpikeToConceptMapper({0: "Motor", 2: "Vision"})
@@ -114,6 +117,7 @@ class TestSpikeToConceptMapper:
 # ---------------------------------------------------------------------------
 # WolframHypergraph
 # ---------------------------------------------------------------------------
+
 
 class TestWolframHypergraph:
     def test_evolve_changes_edges(self):
@@ -146,6 +150,7 @@ class TestWolframHypergraph:
 # ---------------------------------------------------------------------------
 # SwarmCoupling
 # ---------------------------------------------------------------------------
+
 
 class TestSwarmCoupling:
     @pytest.fixture()
@@ -180,6 +185,7 @@ class TestSwarmCoupling:
 # ---------------------------------------------------------------------------
 # SNNGeneticEvolver
 # ---------------------------------------------------------------------------
+
 
 class _Individual:
     def __init__(self):
@@ -226,6 +232,7 @@ class TestSNNGeneticEvolver:
 # VoxelGrid / PointCloud
 # ---------------------------------------------------------------------------
 
+
 class TestVoxelGrid:
     def test_init_zeros(self):
         vg = VoxelGrid(resolution=4)
@@ -263,6 +270,7 @@ class TestPointCloud:
 # ---------------------------------------------------------------------------
 # SpatialTransformer3D
 # ---------------------------------------------------------------------------
+
 
 class TestSpatialTransformer3D:
     def test_output_shape(self):
