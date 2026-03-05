@@ -73,12 +73,6 @@ omit = [
     "*/experiments/*",
     "*/drivers/*",
     "*/interfaces/ccw_bridge.py",
-    "*/spatial/*",
-    "*/physics/wolfram_hypergraph.py",
-    "*/robotics/swarm.py",
-    "*/learning/neuroevolution.py",
-    "*/analysis/explainability.py",
-    "*/chaos/rng.py",
     "*/audio/adaptive_engine.py",
     "*/audio/evs_engine.py",
     "*/sleep/report_generator.py",
@@ -87,7 +81,7 @@ omit = [
 ]
 
 [tool.coverage.report]
-fail_under = 97
+fail_under = 98
 exclude_lines = [
     "pragma: no cover",
     "if __name__",
