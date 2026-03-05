@@ -3,20 +3,18 @@
 """Pre-push preflight gate — mirrors CI checks locally."""
 
 import argparse
+import pathlib
 import subprocess
 import sys
+
+SPDX_DIRS = ["src", "tests", "engine/src", "engine/tests", "engine/benches", "hdl", "bridge"]
+SPDX_EXTS = {".py", ".rs", ".v"}
+SPDX_MARKER = "SPDX-License-Identifier"
 
 GATES = [
     ("black", ["python", "-m", "black", "--check", "src/", "tests/"]),
     ("bandit", ["python", "-m", "bandit", "-r", "src/sc_neurocore/", "-c", "pyproject.toml", "-q"]),
-    ("spdx-guard", [
-        "bash", "-c",
-        'MISSING=$(find src tests engine/src engine/tests engine/benches hdl bridge '
-        '-type f \\( -name "*.py" -o -name "*.rs" -o -name "*.v" \\) '
-        '! -path "*/__pycache__/*" '
-        '-exec grep -rL "SPDX-License-Identifier" {} +) || true; '
-        '[ -z "$MISSING" ] || { echo "Missing SPDX headers:"; echo "$MISSING"; exit 1; }'
-    ]),
+    ("spdx-guard", None),
     ("pytest", [
         "python", "-m", "pytest", "tests/", "-v",
         "--cov=sc_neurocore", "--cov-report=term", "--cov-fail-under=98",
@@ -24,16 +22,39 @@ GATES = [
 ]
 
 
-def run_gate(name: str, cmd: list[str]) -> bool:
+def check_spdx() -> bool:
+    missing = []
+    for d in SPDX_DIRS:
+        root = pathlib.Path(d)
+        if not root.exists():
+            continue
+        for p in root.rglob("*"):
+            if p.suffix not in SPDX_EXTS or "__pycache__" in p.parts:
+                continue
+            try:
+                text = p.read_text(encoding="utf-8", errors="ignore")[:2048]
+            except OSError:
+                continue
+            if SPDX_MARKER not in text:
+                missing.append(str(p))
+    if missing:
+        print("Missing SPDX headers:")
+        for f in missing:
+            print(f"  {f}")
+        return False
+    return True
+
+
+def run_gate(name: str, cmd) -> bool:
     print(f"\n{'='*60}")
     print(f"  GATE: {name}")
     print(f"{'='*60}")
-    result = subprocess.run(cmd)
-    if result.returncode != 0:
-        print(f"  FAIL: {name}")
-        return False
-    print(f"  PASS: {name}")
-    return True
+    if cmd is None:
+        ok = check_spdx()
+    else:
+        ok = subprocess.run(cmd).returncode == 0
+    print(f"  {'PASS' if ok else 'FAIL'}: {name}")
+    return ok
 
 
 def main() -> int:
