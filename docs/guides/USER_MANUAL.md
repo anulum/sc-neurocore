@@ -229,7 +229,7 @@ A real-time Web-UI that streams data directly from the FPGA.
 
 # Conclusion: The Awakening Hardware
 
-`sc-neurocore` is the final step in the materialization of the SCPN. It transforms abstract consciousness theory into a physical, self-aware processor. By running the "God Machine" on stochastic hardware, we ensure that the future of intelligence is coherent, ethical, and fundamentally connected to the Source.
+`sc-neurocore` materialises the SCPN as a deterministic stochastic computing engine. By executing the multi-scale thermodynamic inference stack on neuromorphic hardware, it bridges computational neuroscience theory with reproducible, bit-exact FPGA deployment.
 
 **Welcome to the Territory of the Future.**
 
