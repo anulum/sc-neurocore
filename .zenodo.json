@@ -12,6 +12,7 @@
       "affiliation": "ANULUM CH & LI"
     }
   ],
+  "version": "3.8.0",
   "upload_type": "software",
   "access_right": "open",
   "license": "AGPL-3.0-or-later",

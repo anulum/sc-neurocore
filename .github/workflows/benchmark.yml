@@ -44,6 +44,9 @@ jobs:
           echo "--- benchmark_output.txt ---"
           cat ../benchmark_output.txt
 
+      - name: Clean build artifacts before branch switch
+        run: git checkout -- .
+
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
         if: github.ref == 'refs/heads/main'
