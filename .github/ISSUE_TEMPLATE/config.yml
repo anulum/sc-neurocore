@@ -7,3 +7,6 @@ contact_links:
   - name: Commercial Licensing
     url: mailto:protoscience@anulum.li
     about: Enquiries about proprietary licensing.
+  - name: Question / Help
+    url: https://github.com/anulum/sc-neurocore/blob/main/SUPPORT.md
+    about: Usage questions — check the support guide first.
