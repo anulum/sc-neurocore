@@ -5,16 +5,17 @@
 
 ## v3.8 — Hardening & Edge AI Readiness (target: Q2 2026)
 
-### Coverage gate ≥ 98%
+### ~~Coverage gate ≥ 98%~~ ✓
 
-Current: 97.76%. Remaining gaps are in swarm, audio, and sleep modules
-(currently omitted from coverage). Target: bring omitted modules under test
-or document why they remain excluded.
+Done. 98.10% (1058 tests, gate raised from 97→98). De-omitted 6 modules:
+chaos/rng, analysis/explainability, physics/wolfram_hypergraph,
+robotics/swarm, learning/neuroevolution, spatial/*. Remaining omissions
+(audio, sleep, swarm, drivers, experiments) kept — hardware deps or demo code.
 
-### NumPy 2.x full compatibility
+### ~~NumPy 2.x full compatibility~~ ✓
 
-All deprecated NumPy calls removed (ptp, etc.). Verify CI passes on
-numpy>=2.0 across all test suites.
+Audit complete — zero deprecated calls found. Codebase uses modern
+`np.float64`/`np.int_`/`np.prod` etc. throughout.
 
 ### Rust engine feature parity
 
@@ -22,11 +23,10 @@ numpy>=2.0 across all test suites.
 - Graph layer: sparse CSR backend
 - MLIR emitter: full operator coverage for L1-L16 adapters
 
-### Python API documentation (issue #6)
+### ~~Python API documentation (issue #6)~~ ✓
 
-Deploy Sphinx or pdoc to render existing docstrings into searchable HTML
-on GitHub Pages / ReadTheDocs. Target audience: data scientists and
-rapid-prototyping users of the digital twin simulation environment.
+Live at GitHub Pages via mkdocstrings. All 44 subpackages wired into
+nav. Deploys automatically on push to main.
 
 ### Expanded SIMD kernels (issue #5)
 
@@ -38,10 +38,10 @@ sub-10 µs latency on modern automotive and edge ASICs.
 Implement a transparent benchmarking suite (aligned with NeuroBench
 methodology) covering Apple Silicon, AMD, and target FPGAs.
 
-### Stale issue automation
+### ~~Stale issue automation~~ ✓
 
-Add GitHub Actions workflow for automated stale-issue detection and
-triage labelling.
+`.github/workflows/stale.yml` — labels after 60 days, closes after 14
+more. Exempt: `pinned`, `security`, `roadmap`.
 
 ## v3.9 — Quantum & Holonomic Expansion (target: Q3 2026)
 
