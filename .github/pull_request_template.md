@@ -1,6 +1,6 @@
 ## Summary
 
-<!-- Brief description of what this PR does and why. -->
+<!-- One-sentence description of the change. -->
 
 ## Changes
 
@@ -8,13 +8,14 @@
 
 ## Testing
 
-- [ ] `pytest tests/ -v` passes locally
-- [ ] `cargo test --manifest-path engine/Cargo.toml` passes (if Rust changes)
+- [ ] `cargo test` passes (if Rust changes)
+- [ ] `pytest tests/ -v` passes
 - [ ] `black --check src/ tests/` passes
-- [ ] `cargo fmt --manifest-path engine/Cargo.toml -- --check` passes (if Rust changes)
+- [ ] `ruff check src/ tests/` passes
 
-## Breaking Changes
+## Checklist
 
-<!-- List any breaking changes, or write "None". -->
-
-None
+- [ ] Changelog entry added (if user-visible)
+- [ ] Copyright header present on new files
+- [ ] SPDX-License-Identifier on new files
+- [ ] No new dependencies without prior discussion

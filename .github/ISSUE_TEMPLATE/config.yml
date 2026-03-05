@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+blank_issues_enabled: false
+contact_links:
+  - name: Security Vulnerability
+    url: mailto:protoscience@anulum.li
+    about: Report security issues via email, not public issues.
+  - name: Commercial Licensing
+    url: mailto:protoscience@anulum.li
+    about: Enquiries about proprietary licensing.

@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+# Line ending normalization
+* text=auto
+
+# Linguist overrides
+*.v linguist-language=Verilog
+*.rs linguist-language=Rust
+*.wgsl linguist-language=WGSL
+
+# Binary files (no diff, no merge)
+*.npz binary
+*.npy binary
+*.onnx binary
+*.pt binary
+*.pkl binary
+*.png binary
+*.jpg binary
+*.svg binary
+
+# Lock files — generated, do not diff
+Cargo.lock linguist-generated
