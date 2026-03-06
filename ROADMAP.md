@@ -17,6 +17,15 @@ robotics/swarm, learning/neuroevolution, spatial/*. Remaining omissions
 Audit complete — zero deprecated calls found. Codebase uses modern
 `np.float64`/`np.int_`/`np.prod` etc. throughout.
 
+### ~~Enterprise CI/CD & supply chain hardening~~ ✓
+
+v3.8.1 (March 2026). 11 CI workflows, all SHA-pinned and concurrency-grouped:
+ci, v3-engine, v3-wheels, benchmark, docs, pre-commit, codeql, scorecard,
+stale, release, publish. Bandit SAST, CodeQL, OpenSSF Scorecard. Preflight
+gate (black + ruff + bandit + spdx-guard + pytest) with pre-push hook.
+Multi-stage Dockerfile, PyPI OIDC trusted publisher, 22 labels, YAML issue
+templates, dependabot grouping. Python minimum raised to 3.10 (3.9 EOL).
+
 ### Rust engine feature parity
 
 - Attention kernel: fused softmax in SIMD
@@ -47,7 +56,7 @@ more. Exempt: `pinned`, `security`, `roadmap`.
 
 ### Quantum backend stabilisation
 
-- Qiskit Aer + PennyLane backends validated against analytic results
+- Qiskit Aer + PennyLane backends validated against analytic results (Python 3.10+)
 - Noise model calibration for IBM Heron r2 hardware
 - Quantum-classical hybrid gradient pipeline
 

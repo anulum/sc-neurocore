@@ -13,6 +13,7 @@ SPDX_MARKER = "SPDX-License-Identifier"
 
 GATES = [
     ("black", ["python", "-m", "black", "--check", "src/", "tests/"]),
+    ("ruff", ["python", "-m", "ruff", "check", "src/", "tests/"]),
     ("bandit", ["python", "-m", "bandit", "-r", "src/sc_neurocore/", "-c", "pyproject.toml", "-q"]),
     ("spdx-guard", None),
     (
