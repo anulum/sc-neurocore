@@ -6,6 +6,7 @@ name: SC-NeuroCore CI
 permissions: {}
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - "src/**"
