@@ -20,6 +20,8 @@ fom = "fom"
 ket_state = "ket_state"
 ot = "ot"
 Braket = "Braket"
+inh = "inh"
+exc = "exc"
 
 [files]
 extend-exclude = [
