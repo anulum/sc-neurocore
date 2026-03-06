@@ -24,6 +24,10 @@ pub unsafe fn pack_rvv(bits: &[u8]) -> Vec<u64> {
     crate::bitstream::pack_fast(bits).data
 }
 
+/// Pack u8 bit array into u64 words (portable fallback).
+///
+/// # Safety
+/// No hardware requirements in fallback mode.
 #[cfg(not(all(target_arch = "riscv64", target_feature = "v")))]
 pub unsafe fn pack_rvv(bits: &[u8]) -> Vec<u64> {
     crate::bitstream::pack_fast(bits).data
@@ -40,6 +44,10 @@ pub unsafe fn popcount_rvv(data: &[u64]) -> u64 {
     crate::bitstream::popcount_words_portable(data)
 }
 
+/// Count set bits (portable fallback).
+///
+/// # Safety
+/// No hardware requirements in fallback mode.
 #[cfg(not(all(target_arch = "riscv64", target_feature = "v")))]
 pub unsafe fn popcount_rvv(data: &[u64]) -> u64 {
     crate::bitstream::popcount_words_portable(data)
@@ -61,6 +69,10 @@ pub unsafe fn fused_and_popcount_rvv(a: &[u64], b: &[u64]) -> u64 {
         .sum()
 }
 
+/// Fused AND + popcount (portable fallback).
+///
+/// # Safety
+/// No hardware requirements in fallback mode.
 #[cfg(not(all(target_arch = "riscv64", target_feature = "v")))]
 pub unsafe fn fused_and_popcount_rvv(a: &[u64], b: &[u64]) -> u64 {
     let len = a.len().min(b.len());
@@ -74,7 +86,7 @@ pub unsafe fn fused_and_popcount_rvv(a: &[u64], b: &[u64]) -> u64 {
 /// Fused XOR + popcount using RVV.
 ///
 /// # Safety
-/// Caller must ensure the target CPU supports RVV 1.0.
+/// No hardware requirements (portable implementation).
 pub unsafe fn fused_xor_popcount_rvv(a: &[u64], b: &[u64]) -> u64 {
     let len = a.len().min(b.len());
     a[..len]
@@ -100,7 +112,8 @@ mod tests {
     fn rvv_fused_and_popcount() {
         let a = vec![0xFFu64, 0xF0];
         let b = vec![0x0Fu64, 0xFF];
-        let expected = (0xFFu64 & 0x0F).count_ones() as u64 + (0xF0u64 & 0xFF).count_ones() as u64;
+        let expected =
+            (0xFFu64 & 0x0F).count_ones() as u64 + (0xF0u64 & 0xFF).count_ones() as u64;
         let got = unsafe { fused_and_popcount_rvv(&a, &b) };
         assert_eq!(got, expected);
     }
