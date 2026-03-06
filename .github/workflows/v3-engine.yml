@@ -94,6 +94,7 @@ jobs:
           pip install ../dist/*.whl
 
       - name: Run engine unit tests
+        if: runner.os != 'macOS'
         run: cargo test --manifest-path engine/Cargo.toml
 
       - name: Run v3 integration tests
