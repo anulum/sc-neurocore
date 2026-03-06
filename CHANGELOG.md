@@ -16,6 +16,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - **Labels**: 22 labels with colors (ci, security, breaking-change, hdl, performance, needs-review, pinned, roadmap, stale)
 - **Settings**: Delete-branch-on-merge, wiki/projects disabled, OpenSSF Scorecard badge
 
+### Lint Enforcement & Python Version
+- **ruff check enforced in CI**: 258 unused/deprecated imports auto-fixed across 138 files
+- **CI test matrix expanded**: Python 3.10, 3.11, 3.12 (dropped 3.9 — EOL, autoray/PennyLane incompatible)
+- **`requires-python` bumped to `>=3.10`**: badge, classifiers, black/ruff target-version updated
+- **bandit added to `[dev]` extras**: contributors can now `make lint` after `pip install -e ".[dev]"`
+- **benchmark.yml permissions tightened**: `permissions: {}` at top, scoped per-job
+- **SECURITY.md / SUPPORT.md**: GitHub Security Advisories link added
+- **VALIDATION.md refreshed**: 1058 tests, 98% gate, ruff/bandit/spdx-guard/codeql/scorecard gates documented
+
 ---
 
 ## [3.8.0] - 2026-03-05

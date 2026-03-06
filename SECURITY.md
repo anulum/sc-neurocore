@@ -19,8 +19,8 @@ pip install --upgrade sc-neurocore-engine
 If you discover a security vulnerability in SC-NeuroCore, please report it
 responsibly:
 
-1. **Email:** protoscience@anulum.li
-2. **Subject:** `[SECURITY] SC-NeuroCore — <brief description>`
+1. **GitHub Security Advisories** (preferred): [Report a vulnerability](https://github.com/anulum/sc-neurocore/security/advisories/new)
+2. **Email:** protoscience@anulum.li — Subject: `[SECURITY] SC-NeuroCore — <brief description>`
 3. **Do not** open a public GitHub issue for security vulnerabilities.
 
 We will acknowledge receipt within 48 hours and aim to provide a fix within
