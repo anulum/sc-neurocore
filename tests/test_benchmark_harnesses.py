@@ -6,7 +6,6 @@ import subprocess
 import sys
 
 
-
 def test_neurobench_harness_importable():
     """neurobench_harness module imports without error."""
     sys.path.insert(0, "benchmarks")
