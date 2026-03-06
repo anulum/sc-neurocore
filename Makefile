@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-.PHONY: test lint fmt docs bench clean build bridge preflight bandit sast
+.PHONY: test lint fmt docs bench clean build bridge preflight bandit sast install-hooks
 
 test:
 	pytest tests/ -v --cov=sc_neurocore --cov-report=term --cov-fail-under=98
@@ -46,6 +46,10 @@ bridge:
 
 build:
 	python -m build
+
+install-hooks:
+	git config core.hooksPath .githooks
+	@echo "Git hooks installed (.githooks/pre-push)"
 
 clean:
 	rm -rf dist/ build/ *.egg-info

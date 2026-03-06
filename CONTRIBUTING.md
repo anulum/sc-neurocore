@@ -14,41 +14,51 @@ Thank you for your interest in SC-NeuroCore. Contributions are welcome under the
    cd sc-neurocore
    git checkout -b feature/your-feature
    ```
-3. **Build** the Rust engine:
+3. **Install dev dependencies and git hooks:**
    ```bash
-   cd engine
-   maturin develop --release
+   pip install -e ".[dev]"
+   make install-hooks
    ```
-4. **Run tests** before making changes to establish a baseline:
+4. **Build** the Rust engine (optional, for engine work):
    ```bash
-   cargo test                           # Rust engine tests
-   cd .. && python -m pytest tests/ -v  # Python (1058 tests)
+   cd engine && maturin develop --release && cd ..
    ```
+5. **Run the preflight gate** to verify your setup:
+   ```bash
+   make preflight
+   ```
+
+## Preflight Gate
+
+Every push is guarded by `tools/preflight.py`, which runs the same checks as CI:
+
+| Gate | What it checks |
+|------|----------------|
+| **black** | Python formatting (`src/` and `tests/`) |
+| **bandit** | Security static analysis |
+| **spdx-guard** | SPDX license headers on all source files |
+| **pytest** | 1058+ tests with 98% coverage gate |
+
+```bash
+make preflight          # full gate (lint + tests)
+make preflight-fast     # lint-only (~5s)
+```
+
+The `.githooks/pre-push` hook runs `preflight-fast` automatically before every `git push`. Install it with `make install-hooks`.
 
 ## Development Guidelines
 
 ### Code Style
 
-- **Rust**: Follow standard `rustfmt` formatting. Run `cargo fmt` before committing.
-- **Python**: Follow PEP 8. Run `black --check src/ tests/` and `ruff check src/ tests/`. Use type hints for public APIs.
-- **Copyright header**: Every source file must include the standard header:
-  ```
-  © 1998–2026 Miroslav Šotek. All rights reserved.
-  Contact: www.anulum.li | protoscience@anulum.li
-  ORCID: https://orcid.org/0009-0009-3560-0851
-  License: GNU AFFERO GENERAL PUBLIC LICENSE v3
-  Commercial Licensing: Available
-  ```
+- **Rust**: `cargo fmt` before committing.
+- **Python**: `black` + `ruff`. Use type hints on public APIs only.
+- **SPDX header**: Every `.py`, `.rs`, `.v` file must start with `# SPDX-License-Identifier: AGPL-3.0-or-later`.
 
 ### Testing
 
 - All new Rust code must include tests in `engine/tests/` or inline `#[cfg(test)]` modules.
 - All new Python APIs must have pytest coverage in `tests/`.
 - SIMD paths must include portable fallback — never assume AVX-512 or AVX2 availability.
-- Run the full suite before submitting:
-  ```bash
-  cd engine && cargo test && cd .. && python -m pytest tests/ -v
-  ```
 
 ### Commit Messages
 
@@ -82,26 +92,31 @@ docs(readme): update benchmark table for v3.8
 
 ## Submitting a Pull Request
 
-1. Ensure all tests pass (`cargo test` + `pytest`)
+1. Run `make preflight` — all gates must pass
 2. Add a changelog entry if the change is user-visible
-3. Open a PR against `main` with a clear description
-4. Reference any related issues
+3. Ensure SPDX headers are present on new files
+4. Open a PR against `main` with a clear description
+5. Reference any related issues
+
+## Makefile Targets
+
+| Target | Description |
+|--------|-------------|
+| `make test` | Python tests with coverage |
+| `make test-rust` | Rust engine tests |
+| `make test-all` | Both Python and Rust |
+| `make lint` | black + ruff check |
+| `make fmt` | Auto-format Python + Rust |
+| `make bandit` | Security static analysis |
+| `make preflight` | Full CI-equivalent gate |
+| `make preflight-fast` | Lint-only (~5s) |
+| `make install-hooks` | Install git pre-push hook |
+| `make bench` | Python benchmarks |
+| `make bench-rust` | Rust Criterion benchmarks |
+| `make docs` | Live docs preview |
+| `make build` | Build sdist + wheel |
+| `make clean` | Remove build artifacts |
 
 ## Licence
 
 By contributing, you agree that your contributions will be licensed under the [GNU Affero General Public License v3.0](LICENSE). For commercial licensing enquiries, contact protoscience@anulum.li.
-
----
-
-## Session Logs & Handovers
-
-All session logs and handover documents for this project are stored permanently in the monorepo's canonical location:
-
-- **Session logs:** `.coordination/sessions/sc-neurocore/`
-- **Handovers:** `.coordination/handovers/sc-neurocore/`
-
-**Do not** place session logs or handovers inside this project directory. They will be moved during consolidation.
-
-These files are **permanent records** and must never be deleted, even if outdated.
-
-See [`.coordination/SESSION_AND_HANDOVER_POLICY.md`](../../.coordination/SESSION_AND_HANDOVER_POLICY.md) for naming conventions, templates, and the full policy.

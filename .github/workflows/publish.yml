@@ -9,6 +9,10 @@ on:
 
 permissions: {}
 
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build-sdist:
     runs-on: ubuntu-latest
