@@ -2,6 +2,22 @@
 
 All notable changes to the `sc-neurocore` project will be documented in this file.
 
+## [3.8.1] - 2026-03-06
+
+### Enterprise Hardening
+- **11 CI workflows**: ci, v3-engine, v3-wheels, benchmark, docs, pre-commit, codeql, scorecard, stale, release, publish — all SHA-pinned, concurrency-grouped
+- **Supply chain**: Every GitHub Action SHA-pinned (30+ refs), `pypa/gh-action-pypi-publish` pinned, dependabot groups GH Actions PRs
+- **Security**: Bandit SAST in CI, dependabot security updates enabled, private vulnerability reporting enabled, CodeQL weekly schedule
+- **Branch protection**: 6 required status checks (lint, test×2, spdx-guard, build, pre-commit)
+- **Dockerfile**: Multi-stage build, Python 3.12, non-root user, OCI labels, healthcheck
+- **Preflight gate**: `tools/preflight.py` (black + bandit + spdx-guard + pytest), `.githooks/pre-push` hook
+- **Release pipeline**: `publish.yml` (PyPI OIDC trusted publisher, 12 platform wheels), `release.yml` attaches sdist to GitHub Releases
+- **Repo hygiene**: `.dockerignore`, `.editorconfig`, `.gitattributes`, `CONTRIBUTORS.md`, `CODEOWNERS`, PR template, issue templates (YAML forms), dependabot commit-message prefixes
+- **Labels**: 22 labels with colors (ci, security, breaking-change, hdl, performance, needs-review, pinned, roadmap, stale)
+- **Settings**: Delete-branch-on-merge, wiki/projects disabled, OpenSSF Scorecard badge
+
+---
+
 ## [3.8.0] - 2026-03-05
 
 ### Hardening & Documentation
