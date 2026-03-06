@@ -196,11 +196,22 @@ All other examples run with the pure-Python `sc_neurocore` package.
 
 ## CI/CD
 
-GitHub Actions pipelines (`.github/workflows/`):
-- **ci.yml**: Lint (black) + Test (Python 3.11 / 3.12, coverage >= 98%) + Build
-- **v3-engine.yml**: Rust engine build + `cargo test`
-- **v3-wheels.yml**: Cross-platform wheel builds (Linux, macOS, Windows)
-- **docs.yml**: MkDocs documentation build
+12 GitHub Actions workflows (`.github/workflows/`), all SHA-pinned:
+
+| Workflow | Purpose |
+|----------|---------|
+| **ci.yml** | Lint (black + ruff + bandit) + Test (Python 3.10/3.11/3.12, coverage ≥ 98%) + Build |
+| **v3-engine.yml** | Rust engine `cargo test` + `cargo clippy` |
+| **v3-wheels.yml** | Cross-platform wheels (Linux, macOS, Windows × Python 3.10–3.12) |
+| **docker.yml** | Build & push Docker image to GHCR on release tags |
+| **docs.yml** | MkDocs → GitHub Pages |
+| **publish.yml** | PyPI OIDC trusted publisher on release |
+| **release.yml** | sdist + changelog extraction → GitHub Release |
+| **benchmark.yml** | Performance regression tracking |
+| **codeql.yml** | CodeQL security analysis (weekly + on push) |
+| **scorecard.yml** | OpenSSF Scorecard |
+| **pre-commit.yml** | Pre-commit hook validation |
+| **stale.yml** | Auto-label and close stale issues |
 
 ## Benchmarks
 
@@ -248,6 +259,12 @@ pip install -e ".[gpu]"       # CuPy CUDA acceleration
 pip install -e ".[research]"  # networkx, onnx, torch
 pip install -e ".[full]"      # networkx, onnx
 ```
+
+## Community
+
+- [GitHub Discussions](https://github.com/anulum/sc-neurocore/discussions) — questions, ideas, show & tell
+- [Issue Tracker](https://github.com/anulum/sc-neurocore/issues) — bug reports and feature requests
+- [Contributing Guide](CONTRIBUTING.md) — how to set up, test, and submit PRs
 
 ## License
 

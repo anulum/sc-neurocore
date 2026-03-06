@@ -39,11 +39,6 @@ dependencies = [
   "scipy>=1.7",
   "numba>=0.56",
   "matplotlib>=3.5",
-  "jax",
-  "jaxlib",
-  "qiskit",
-  "pennylane",
-  "qiskit-aer"
 ]
 
 [project.urls]
@@ -52,9 +47,10 @@ Documentation = "https://anulum.github.io/sc-neurocore/"
 Source = "https://github.com/anulum/sc-neurocore"
 Issues = "https://github.com/anulum/sc-neurocore/issues"
 Changelog = "https://github.com/anulum/sc-neurocore/blob/main/CHANGELOG.md"
+Discussions = "https://github.com/anulum/sc-neurocore/discussions"
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-cov", "mypy", "black==25.1.0", "ruff", "bandit", "pyyaml", "jax", "jaxlib", "qiskit", "pennylane", "qiskit-aer"]
+dev = ["pytest", "pytest-cov", "hypothesis", "mypy", "black==25.1.0", "ruff", "bandit", "pyyaml", "jax", "jaxlib", "qiskit", "pennylane", "qiskit-aer"]
 gpu = ["cupy-cuda12x>=12.0"]
 full = ["networkx", "onnx", "qiskit", "pennylane"]
 research = ["networkx", "onnx", "torch>=2.0"]
