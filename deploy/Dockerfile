@@ -20,6 +20,7 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 RUN pip install --no-cache-dir maturin>=1.5
 
 WORKDIR /build
+COPY Cargo.toml Cargo.lock ./
 COPY engine/ ./engine/
 COPY bridge/ ./bridge/
 COPY README.md ./README.md
