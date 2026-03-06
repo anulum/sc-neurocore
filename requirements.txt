@@ -1,4 +1,4 @@
-# Pinned runtime dependencies for SC-NeuroCore v3.8.1
+# Pinned runtime dependencies for SC-NeuroCore v3.8.2
 # Canonical source of truth: pyproject.toml [project.dependencies]
 # Regenerate with: pip-compile pyproject.toml -o requirements.txt
 numpy>=1.22,<2.0

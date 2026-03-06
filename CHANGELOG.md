@@ -6,6 +6,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 _No unreleased changes._
 
+## [3.8.2] - 2026-03-06
+
+### Documentation & Adoption
+- **BENCHMARKS.md**: Populated with 14 real benchmark entries (i7-10700K, NumPy 1.26.4), Rust engine Criterion numbers, comparison context, reproduction instructions
+- **JOSS paper draft**: `paper/paper.md` + `paper.bib` (6 references) — statement of need, architecture, key features, QA
+- **End-to-end notebook**: `notebooks/03_end_to_end_pipeline.ipynb` — 7-cell walkthrough (encode→synapse→neuron→VectorizedSCLayer→accuracy analysis)
+
+### Testing
+- **18 Hypothesis property-based tests**: Bitstream encoding roundtrip, LFSR determinism, neuron output constraints, layer shape invariants, RNG range/shape, recorder accumulation, encoder binary output
+- **Test count**: 887 → 911 tests passing, 98.41% coverage
+
+### Issues Closed
+- #30: Property-based testing with Hypothesis
+- #33: JOSS paper draft
+
 ## [3.8.1] - 2026-03-06
 
 ### Enterprise Hardening
