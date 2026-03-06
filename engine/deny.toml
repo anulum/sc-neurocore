@@ -2,16 +2,11 @@
 # cargo-deny configuration for sc_neurocore_engine
 
 [advisories]
-db-path = "~/.cargo/advisory-db"
-db-urls = ["https://github.com/rustsec/advisory-db"]
-vulnerability = "deny"
-unmaintained = "allow"
-yanked = "allow"
+ignore = []
 
 [licenses]
-unlicensed = "deny"
 allow = [
-    "AGPL-3.0",
+    "AGPL-3.0-or-later",
     "MIT",
     "Apache-2.0",
     "BSD-2-Clause",
@@ -21,7 +16,6 @@ allow = [
     "Unicode-DFS-2016",
     "Zlib",
 ]
-copyleft = "allow"
 
 [bans]
 multiple-versions = "warn"
