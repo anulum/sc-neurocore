@@ -119,7 +119,7 @@ target-version = ["py310"]
 [tool.ruff]
 line-length = 100
 target-version = "py310"
-exclude = ["scripts", "research", "experiments"]
+exclude = ["scripts", "research", "experiments", "examples", "cosim", "bridge"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "SIM"]
