@@ -109,13 +109,18 @@ docs(readme): update benchmark table for v3.8
 | `make lint` | black + ruff check |
 | `make fmt` | Auto-format Python + Rust |
 | `make bandit` | Security static analysis |
+| `make sast` | Alias for bandit |
 | `make preflight` | Full CI-equivalent gate |
 | `make preflight-fast` | Lint-only (~5s) |
 | `make install-hooks` | Install git pre-push hook |
 | `make bench` | Python benchmarks |
 | `make bench-rust` | Rust Criterion benchmarks |
+| `make bridge` | Build Rust bridge via maturin |
 | `make docs` | Live docs preview |
+| `make docs-build` | Build docs (strict mode) |
 | `make build` | Build sdist + wheel |
+| `make docker-build` | Build Docker image |
+| `make docker-run` | Run Docker image interactively |
 | `make clean` | Remove build artifacts |
 
 ## Licence

@@ -28,8 +28,11 @@ jobs:
 
       - name: Build sdist
         run: |
-          pip install build
+          pip install build cyclonedx-bom
           python -m build --sdist
+
+      - name: Generate SBOM
+        run: cyclonedx-py environment -o sbom.json --output-format json
 
       - name: Extract changelog for this tag
         id: changelog
@@ -45,4 +48,6 @@ jobs:
         with:
           body_path: ${{ steps.changelog.outputs.notes_file }}
           generate_release_notes: false
-          files: dist/*.tar.gz
+          files: |
+            dist/*.tar.gz
+            sbom.json
