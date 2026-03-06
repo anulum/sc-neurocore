@@ -37,4 +37,4 @@ from meta.time_crystal import TimeCrystalComputer
 PYTHONPATH=src:bridge:research python -m pytest research/tests/ -v
 ```
 
-See [`research/README.md`](../../research/README.md) for full details.
+See the `research/` directory in the repository root for full details.
