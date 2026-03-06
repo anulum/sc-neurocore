@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-.PHONY: test lint fmt docs bench clean build bridge preflight bandit sast install-hooks
+.PHONY: test lint fmt docs bench clean build bridge preflight bandit sast install-hooks docker-build docker-run
 
 test:
 	pytest tests/ -v --cov=sc_neurocore --cov-report=term --cov-fail-under=98
@@ -50,6 +50,12 @@ build:
 install-hooks:
 	git config core.hooksPath .githooks
 	@echo "Git hooks installed (.githooks/pre-push)"
+
+docker-build:
+	docker build -f deploy/Dockerfile -t sc-neurocore:latest .
+
+docker-run:
+	docker run --rm -it sc-neurocore:latest
 
 clean:
 	rm -rf dist/ build/ *.egg-info

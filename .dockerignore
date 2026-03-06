@@ -16,6 +16,9 @@ mkdocs.yml
 CITATION.cff
 .zenodo.json
 
+# Deploy meta (Dockerfile already loaded by Docker)
+deploy/
+
 # Tests & benchmarks
 tests/
 cosim/
