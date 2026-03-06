@@ -451,13 +451,13 @@ class TestSCPNLayers:
         from sc_neurocore.scpn.layers import create_full_stack, get_global_metrics
 
         stack = create_full_stack()
-        assert len(stack) == 7
+        assert len(stack) == 16
         metrics = get_global_metrics(stack)
-        assert len(metrics) == 7
+        assert len(metrics) == 16
 
     def test_run_integrated_step(self):
         from sc_neurocore.scpn.layers import create_full_stack, run_integrated_step
 
         stack = create_full_stack()
         outputs = run_integrated_step(stack, dt=0.01)
-        assert "l1" in outputs and "l7" in outputs
+        assert "l1" in outputs and "l7" in outputs and "l16" in outputs

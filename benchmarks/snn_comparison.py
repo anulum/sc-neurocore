@@ -90,20 +90,18 @@ def bench_scneurocore_brunel(**kw) -> BenchResult:
 
     steps = int(p["sim_ms"] / p["dt"])
     spike_count = 0
+    prev_spikes = np.zeros(n_total, dtype=bool)
 
     t0 = time.perf_counter()
     for _ in range(steps):
         ext_current = (
             rng.poisson(p["external_rate_hz"] * p["dt"] / 1000.0, n_total) * p["weight_exc"]
         )
-        spikes = np.array([n.step(float(ext_current[i])) for i, n in enumerate(neurons)])
+        syn_input = weights[prev_spikes].sum(axis=0) if prev_spikes.any() else np.zeros(n_total)
+        total_input = ext_current + syn_input
+        spikes = np.array([n.step(float(total_input[i])) for i, n in enumerate(neurons)])
+        prev_spikes = spikes.astype(bool)
         spike_count += int(spikes.sum())
-        if spikes.any():
-            syn_input = (
-                weights[spikes.astype(bool)].sum(axis=0) if spikes.sum() > 0 else np.zeros(n_total)
-            )
-            for i, n in enumerate(neurons):
-                n.step(float(syn_input[i]))
     wall = time.perf_counter() - t0
 
     return BenchResult(
@@ -296,7 +294,7 @@ def bench_lava_brunel(**kw) -> BenchResult | None:
         sim_time_ms=p["sim_ms"],
         wall_clock_s=wall,
         spikes_total=0,
-        notes="spike count not extracted (Lava probe API)",
+        notes="spike count requires Loihi 2 hardware probe API",
     )
 
 

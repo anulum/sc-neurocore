@@ -1,0 +1,15 @@
+[options]
+mode prove
+depth 5
+
+[engines]
+smtbmc
+
+[script]
+read -formal sc_bitstream_synapse_formal.v
+read -formal sc_bitstream_synapse.v
+prep -top sc_bitstream_synapse_formal
+
+[files]
+sc_bitstream_synapse_formal.v
+../sc_bitstream_synapse.v

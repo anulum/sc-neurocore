@@ -366,7 +366,8 @@ def main():
     print(f"{'=' * 80}")
 
     if args.markdown:
-        md_path = os.path.join(os.path.dirname(__file__), "..", "BENCHMARKS.md")
+        md_path = os.path.join(os.path.dirname(__file__), "results", "BENCHMARKS.md")
+        os.makedirs(os.path.dirname(md_path), exist_ok=True)
         write_markdown(results, md_path)
 
 
