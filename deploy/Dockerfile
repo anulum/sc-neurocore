@@ -24,7 +24,7 @@ COPY engine/ ./engine/
 COPY bridge/ ./bridge/
 COPY README.md ./README.md
 
-RUN cd bridge && maturin build --release --interpreter python${PYTHON_VERSION} \
+RUN cd bridge && maturin build --release --interpreter python3 \
     && ls /build/bridge/target/wheels/
 
 # ── Stage 2: Python package build ────────────────────────────────
