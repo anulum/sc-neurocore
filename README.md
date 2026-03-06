@@ -34,21 +34,23 @@ research prototyping.
 ## Quick Start
 
 ```bash
-# Clone
-git clone https://github.com/anulum/sc-neurocore.git
-cd sc-neurocore
+# Install from PyPI (core engine only — neurons, synapses, layers, HDL gen, compiler)
+pip install sc-neurocore
 
-# Install core package
-pip install -e ".[dev]"
-
-# Run tests
-pytest tests/ -v
-
-# Run benchmarks
-python benchmarks/benchmark_suite.py
+# Or install with all research modules included
+pip install sc-neurocore[full]
 
 # GPU acceleration (requires CUDA)
-pip install -e ".[gpu]"
+pip install sc-neurocore[gpu]
+```
+
+### Development Setup
+
+```bash
+git clone https://github.com/anulum/sc-neurocore.git
+cd sc-neurocore
+pip install -e ".[dev]"    # editable install with all dev tools
+make preflight             # verify setup (lint + 869 tests)
 ```
 
 ## Docker
@@ -89,14 +91,54 @@ For benchmark reports, always include batch size, bitstream length, seed policy,
 
 ### Module Tiers
 
-| Tier | Modules | Status |
-|------|---------|--------|
-| **Core** — production-ready, fully tested | neurons, synapses, layers, sources, utils, recorders, accel, compiler, hdl_gen, hardware | Stable. 98%+ coverage. Imported by default. |
-| **Simulation** — digital twin environment | hdc, solvers, transformers, learning, graphs, ensembles, export, pipeline, profiling, models | Stable. Import explicitly. |
-| **Domain bridges** — tested, optional deps | quantum (Qiskit/PennyLane), adapters/holonomic (JAX), scpn (Petri nets) | Requires `pip install -e ".[quantum]"` or `.[jax]"` |
-| **Research** — benchmarked but narrow scope | robotics (CPG/swarm), physics (Ising/heat/hypergraph), spatial (3D voxel), sleep, bio, optics, chaos | Tested. Not recommended for production deployment. |
-| **Frontier** — experimental, no SOTA benchmarks | generative, world_model, analysis, audio, dashboard, viz, security/zkp | Proof-of-concept. May be archived if unused. |
-| **Speculative** — not installable | `research/` (eschaton, exotic, meta, post_silicon, transcendent) | Theoretical. See `research/README.md`. |
+`pip install sc-neurocore` ships **Core + Simulation + Domain bridges** only.
+Research and Frontier modules are available from source (`pip install -e ".[dev]"`).
+
+| Tier | Modules | Ships in wheel | Status |
+|------|---------|:--------------:|--------|
+| **Core** | neurons, synapses, layers, sources, utils, recorders, accel, compiler, hdl_gen, hardware, cli, exceptions | Yes | Production-ready. 98%+ coverage. |
+| **Simulation** | hdc, solvers, transformers, learning, graphs, ensembles, export, pipeline, profiling, models, math, spatial, verification, security | Yes | Stable. Import explicitly. |
+| **Domain bridges** | quantum (Qiskit/PennyLane), adapters/holonomic (JAX), scpn (Petri nets) | Yes | Requires `pip install sc-neurocore[quantum]` or `[jax]` |
+| **Research** | robotics, physics, bio, optics, chaos, sleep, interfaces | No | Tested. Available from source. |
+| **Frontier** | generative, world_model, analysis, audio, dashboard, viz, swarm | No | Experimental. Available from source. |
+| **Speculative** | `research/` (eschaton, exotic, meta, post_silicon, transcendent) | No | Theoretical. See `research/README.md`. |
+
+### Architecture Diagram
+
+```mermaid
+graph TD
+    subgraph "Python API (pip install sc-neurocore)"
+        A[BitstreamEncoder] --> B[SCDenseLayer / SCConv2DLayer]
+        B --> C[StochasticLIF / Izhikevich Neurons]
+        C --> D[STDP / R-STDP Synapses]
+        D --> E[BitstreamSpikeRecorder]
+    end
+
+    subgraph "Acceleration"
+        B --> F{Backend?}
+        F -->|CPU| G[NumPy / Numba SIMD]
+        F -->|GPU| H[CuPy CUDA]
+        F -->|Rust| I[sc_neurocore_engine<br/>512x real-time]
+    end
+
+    subgraph "Hardware Target"
+        I --> J[IR Compiler]
+        J --> K[SystemVerilog Emitter]
+        K --> L[Verilog RTL<br/>AXI-Lite + LIF Core]
+        L --> M[FPGA Bitstream<br/>Xilinx / Intel]
+    end
+
+    subgraph "Domain Bridges (optional)"
+        B --> N[SCPN Petri Nets]
+        B --> O[Quantum: Qiskit / PennyLane]
+        B --> P[HDC/VSA Symbolic Memory]
+    end
+
+    style A fill:#2d6a4f,color:#fff
+    style I fill:#b5651d,color:#fff
+    style L fill:#1a237e,color:#fff
+    style M fill:#4a148c,color:#fff
+```
 
 ### Core API (28 symbols)
 
@@ -277,15 +319,21 @@ mkdocs serve
 ## Install Extras
 
 ```bash
-pip install -e ".[dev]"       # pytest, mypy, black, hypothesis
-pip install -e ".[gpu]"       # CuPy CUDA acceleration
-pip install -e ".[jax]"       # JAX backend for holonomic adapters
-pip install -e ".[quantum]"   # Qiskit + PennyLane quantum bridges
-pip install -e ".[research]"  # networkx, onnx, torch
-pip install -e ".[full]"      # networkx, onnx, qiskit, pennylane
+pip install sc-neurocore              # core engine only (neurons, layers, compiler, HDL gen)
+pip install sc-neurocore[gpu]         # + CuPy CUDA acceleration
+pip install sc-neurocore[jax]         # + JAX backend for holonomic adapters
+pip install sc-neurocore[quantum]     # + Qiskit + PennyLane quantum bridges
+pip install sc-neurocore[full]        # + networkx, onnx, qiskit, pennylane
+pip install sc-neurocore[research]    # + networkx, onnx, torch
 ```
 
-Pinned dependency files are also provided for reproducible environments:
+For development (includes all modules + research/frontier code from source):
+
+```bash
+pip install -e ".[dev]"               # editable install with pytest, mypy, black, hypothesis
+```
+
+Pinned dependency files for reproducible environments:
 
 ```bash
 pip install -r requirements.txt       # runtime only
