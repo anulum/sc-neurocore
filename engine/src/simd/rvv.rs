@@ -21,12 +21,12 @@
 pub unsafe fn pack_rvv(bits: &[u8]) -> Vec<u64> {
     // RVV: vle8_v_u8m1 + bit gathering via vslide/vmask operations.
     // Pending stabilisation of core::arch::riscv64 vector intrinsics.
-    crate::bitstream::pack_fast_to_words(bits)
+    crate::bitstream::pack_fast(bits).data
 }
 
 #[cfg(not(all(target_arch = "riscv64", target_feature = "v")))]
 pub unsafe fn pack_rvv(bits: &[u8]) -> Vec<u64> {
-    crate::bitstream::pack_fast_to_words(bits)
+    crate::bitstream::pack_fast(bits).data
 }
 
 /// Count set bits using RVV VCPOP instruction.
