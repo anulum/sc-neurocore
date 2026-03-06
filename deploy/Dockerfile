@@ -22,6 +22,7 @@ RUN pip install --no-cache-dir maturin>=1.5
 WORKDIR /build
 COPY engine/ ./engine/
 COPY bridge/ ./bridge/
+COPY README.md ./README.md
 
 RUN cd bridge && maturin build --release --interpreter python${PYTHON_VERSION} \
     && ls /build/bridge/target/wheels/
