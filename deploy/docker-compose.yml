@@ -4,4 +4,13 @@ services:
     build:
       context: ..
       dockerfile: deploy/Dockerfile
-    command: python -c "import sc_neurocore; print(f'sc-neurocore {sc_neurocore.__version__} ready')"
+    command: >-
+      python -c "
+      import sc_neurocore;
+      print(f'sc-neurocore {sc_neurocore.__version__} (Python)');
+      try:
+        import sc_neurocore_engine;
+        print('Rust engine: loaded')
+      except ImportError:
+        print('Rust engine: not available (Python-only mode)')
+      "

@@ -51,6 +51,30 @@ python benchmarks/benchmark_suite.py
 pip install -e ".[gpu]"
 ```
 
+## Docker
+
+The Docker image ships with the full Rust engine (512x real-time performance):
+
+```bash
+# Build
+make docker-build
+# or: docker build -f deploy/Dockerfile -t sc-neurocore:latest .
+
+# Run interactive Python shell
+make docker-run
+# or: docker run --rm -it sc-neurocore:latest
+
+# Smoke test via docker compose
+docker compose -f deploy/docker-compose.yml up
+```
+
+Pre-built images are published to GHCR on every release:
+
+```bash
+docker pull ghcr.io/anulum/sc-neurocore:latest
+docker run --rm -it ghcr.io/anulum/sc-neurocore:latest
+```
+
 ## Performance Routing
 
 Use explicit path selection for dense inference to avoid small-batch regressions:

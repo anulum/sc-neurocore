@@ -2,6 +2,10 @@
 
 All notable changes to the `sc-neurocore` project will be documented in this file.
 
+## [Unreleased]
+
+_No unreleased changes._
+
 ## [3.8.1] - 2026-03-06
 
 ### Enterprise Hardening
