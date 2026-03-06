@@ -16,8 +16,17 @@ Key Equations:
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Tuple
-import jax
-import jax.numpy as jnp
+
+try:
+    import jax
+    import jax.numpy as jnp
+
+    HAS_JAX = True
+except ImportError:
+    jax = None  # type: ignore[assignment]
+    import numpy as jnp  # type: ignore[no-redef]
+
+    HAS_JAX = False
 
 from ..base import BaseStochasticAdapter
 
