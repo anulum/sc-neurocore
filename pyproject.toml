@@ -49,6 +49,9 @@ Issues = "https://github.com/anulum/sc-neurocore/issues"
 Changelog = "https://github.com/anulum/sc-neurocore/blob/main/CHANGELOG.md"
 Discussions = "https://github.com/anulum/sc-neurocore/discussions"
 
+[project.scripts]
+sc-neurocore = "sc_neurocore.cli:main"
+
 [project.optional-dependencies]
 dev = ["pytest", "pytest-cov", "hypothesis", "mypy", "black==25.1.0", "ruff", "bandit", "pyyaml", "jax", "jaxlib", "qiskit", "pennylane", "qiskit-aer"]
 gpu = ["cupy-cuda12x>=12.0"]
