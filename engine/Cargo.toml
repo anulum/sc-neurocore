@@ -12,7 +12,7 @@ repository = "https://github.com/anulum/sc-neurocore"
 homepage = "https://anulum.github.io/sc-neurocore/"
 documentation = "https://anulum.github.io/sc-neurocore/rust-api/sc_neurocore_engine/"
 readme = "../README.md"
-keywords = ["neuromorphic", "stochastic-computing", "simd", "spiking-neural-network", "fpga"]
+keywords = ["neuromorphic", "stochastic-computing", "simd", "spiking-network", "fpga"]
 categories = ["science", "simulation", "mathematics"]
 exclude = [
     "tests/",
