@@ -109,7 +109,16 @@ impl StochasticAttention {
         n_heads: usize,
     ) -> Result<Vec<f64>, String> {
         validate_multihead_shapes(
-            q, q_rows, q_total_cols, k, k_rows, k_total_cols, v, v_rows, v_total_cols, n_heads,
+            q,
+            q_rows,
+            q_total_cols,
+            k,
+            k_rows,
+            k_total_cols,
+            v,
+            v_rows,
+            v_total_cols,
+            n_heads,
         )?;
 
         let dk = q_total_cols / n_heads;
@@ -307,7 +316,16 @@ impl StochasticAttention {
         n_heads: usize,
     ) -> Result<Vec<f64>, String> {
         validate_multihead_shapes(
-            q, q_rows, q_total_cols, k, k_rows, k_total_cols, v, v_rows, v_total_cols, n_heads,
+            q,
+            q_rows,
+            q_total_cols,
+            k,
+            k_rows,
+            k_total_cols,
+            v,
+            v_rows,
+            v_total_cols,
+            n_heads,
         )?;
 
         let dk = q_total_cols / n_heads;
