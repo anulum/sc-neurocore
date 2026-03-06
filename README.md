@@ -22,7 +22,7 @@ Commercial Licensing: Available
 [![REUSE](https://img.shields.io/badge/REUSE-compliant-green)](https://reuse.software/)
 
 **Version:** 3.8.2
-**Status:** Production Core Verified | 1058 Tests Passing | 98.10% Coverage | CI/CD Active
+**Status:** Production Core Verified | 911 Tests | 98.41% Coverage | CI/CD Active
 
 SC-NeuroCore is a deterministic stochastic computing framework for
 neuromorphic hardware design and edge-AI deployment. It provides bit-true

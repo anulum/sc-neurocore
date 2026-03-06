@@ -1,16 +1,18 @@
 # Roadmap
 
-> Last updated: 2026-03-05. Priorities may shift based on validation results
+> Last updated: 2026-03-06. Priorities may shift based on validation results
 > and community feedback.
 
 ## v3.8 — Hardening & Edge AI Readiness (target: Q2 2026)
 
 ### ~~Coverage gate ≥ 98%~~ ✓
 
-Done. 98.10% (1058 tests, gate raised from 97→98). De-omitted 6 modules:
-chaos/rng, analysis/explainability, physics/wolfram_hypergraph,
-robotics/swarm, learning/neuroevolution, spatial/*. Remaining omissions
-(audio, sleep, swarm, drivers, experiments) kept — hardware deps or demo code.
+Done. 98.41% (911 tests collected, 887 passed, 46 skipped; gate at 98).
+De-omitted 6 modules: chaos/rng, analysis/explainability,
+physics/wolfram_hypergraph, robotics/swarm, learning/neuroevolution,
+spatial/*. Added 18 Hypothesis property-based tests (v3.8.2). Remaining
+omissions (audio, sleep, swarm, drivers, experiments) kept — hardware deps
+or demo code.
 
 ### ~~NumPy 2.x full compatibility~~ ✓
 
@@ -19,7 +21,7 @@ Audit complete — zero deprecated calls found. Codebase uses modern
 
 ### ~~Enterprise CI/CD & supply chain hardening~~ ✓
 
-v3.8.1 (March 2026). 11 CI workflows, all SHA-pinned and concurrency-grouped:
+v3.8.2 (March 2026). 12 CI workflows, all SHA-pinned and concurrency-grouped:
 ci, v3-engine, v3-wheels, benchmark, docs, pre-commit, codeql, scorecard,
 stale, release, publish. Bandit SAST, CodeQL, OpenSSF Scorecard. Preflight
 gate (black + ruff + bandit + spdx-guard + pytest) with pre-push hook.
@@ -37,12 +39,12 @@ templates, dependabot grouping. Python minimum raised to 3.10 (3.9 EOL).
 Live at GitHub Pages via mkdocstrings. All 44 subpackages wired into
 nav. Deploys automatically on push to main.
 
-### Expanded SIMD kernels (issue #5)
+### Expanded SIMD kernels (issue #28)
 
 Add ARM SVE and RISC-V Vector (RVV) kernel variants to substantiate
 sub-10 µs latency on modern automotive and edge ASICs.
 
-### Hardware benchmarking suite (issue #7)
+### Hardware benchmarking suite (issues #7, #29)
 
 Implement a transparent benchmarking suite (aligned with NeuroBench
 methodology) covering Apple Silicon, AMD, and target FPGAs.
