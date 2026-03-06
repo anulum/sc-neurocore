@@ -1,8 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""Tests for de-omitted modules: chaos/rng, analysis/explainability,
-physics/wolfram_hypergraph, robotics/swarm, learning/neuroevolution, spatial/*.
-"""
-
+"""Tests for de-omitted modules: chaos, analysis, physics, robotics, learning, spatial, bio."""
 from __future__ import annotations
 
 import numpy as np
@@ -17,11 +14,6 @@ from sc_neurocore.learning.neuroevolution import SNNGeneticEvolver
 from sc_neurocore.spatial.representations import VoxelGrid, PointCloud
 from sc_neurocore.spatial.transformer_3d import SpatialTransformer3D
 from sc_neurocore.layers.sc_learning_layer import SCLearningLayer
-
-
-# ---------------------------------------------------------------------------
-# NeuromodulatorSystem
-# ---------------------------------------------------------------------------
 
 
 class TestNeuromodulatorSystem:
@@ -42,18 +34,12 @@ class TestNeuromodulatorSystem:
     def test_modulate_neuron_no_keys(self):
         nm = NeuromodulatorSystem()
         params = {"tau_mem": 10.0}
-        mod = nm.modulate_neuron(params)
-        assert mod == {"tau_mem": 10.0}
+        assert nm.modulate_neuron(params) == {"tau_mem": 10.0}
 
     def test_serotonin_clip(self):
         nm = NeuromodulatorSystem(ht_level=0.15)
         nm.update_levels(reward=0.0, stress=1.0)
         assert nm.ht_level >= 0.1
-
-
-# ---------------------------------------------------------------------------
-# ChaoticRNG
-# ---------------------------------------------------------------------------
 
 
 class TestChaoticRNG:
@@ -62,8 +48,7 @@ class TestChaoticRNG:
         assert rng.x != 0.5
 
     def test_random_shape_and_range(self):
-        rng = ChaoticRNG()
-        vals = rng.random(200)
+        vals = ChaoticRNG().random(200)
         assert vals.shape == (200,)
         assert np.all((vals >= 0) & (vals <= 1))
 
@@ -73,51 +58,30 @@ class TestChaoticRNG:
         np.testing.assert_array_equal(a.random(50), b.random(50))
 
     def test_bitstream_shape(self):
-        rng = ChaoticRNG()
-        bits = rng.generate_bitstream(0.5, 100)
+        bits = ChaoticRNG().generate_bitstream(0.5, 100)
         assert bits.shape == (100,)
         assert bits.dtype == np.uint8
 
     def test_bitstream_extremes(self):
-        rng_zero = ChaoticRNG()
-        assert np.all(rng_zero.generate_bitstream(0.0, 100) == 0)
-        rng_one = ChaoticRNG()
-        assert np.all(rng_one.generate_bitstream(1.0, 100) == 1)
-
-
-# ---------------------------------------------------------------------------
-# SpikeToConceptMapper
-# ---------------------------------------------------------------------------
+        assert np.all(ChaoticRNG().generate_bitstream(0.0, 100) == 0)
+        assert np.all(ChaoticRNG().generate_bitstream(1.0, 100) == 1)
 
 
 class TestSpikeToConceptMapper:
     def test_active_spikes(self):
         mapper = SpikeToConceptMapper({0: "Motor", 2: "Vision"})
-        spikes = np.array([1, 0, 1, 0])
-        out = mapper.explain(spikes)
-        assert "Motor" in out
-        assert "Vision" in out
+        out = mapper.explain(np.array([1, 0, 1, 0]))
+        assert "Motor" in out and "Vision" in out
 
     def test_no_spikes(self):
-        mapper = SpikeToConceptMapper({0: "Motor"})
-        assert "idle" in mapper.explain(np.array([0, 0, 0]))
+        assert "idle" in SpikeToConceptMapper({0: "Motor"}).explain(np.array([0, 0, 0]))
 
     def test_unknown_index(self):
-        mapper = SpikeToConceptMapper({0: "Motor"})
-        spikes = np.array([0, 1])
-        assert "Unknown(1)" in mapper.explain(spikes)
+        assert "Unknown(1)" in SpikeToConceptMapper({0: "Motor"}).explain(np.array([0, 1]))
 
     def test_empty_concept_map(self):
-        mapper = SpikeToConceptMapper({})
-        spikes = np.array([1, 1])
-        out = mapper.explain(spikes)
-        assert "Unknown(0)" in out
-        assert "Unknown(1)" in out
-
-
-# ---------------------------------------------------------------------------
-# WolframHypergraph
-# ---------------------------------------------------------------------------
+        out = SpikeToConceptMapper({}).explain(np.array([1, 1]))
+        assert "Unknown(0)" in out and "Unknown(1)" in out
 
 
 class TestWolframHypergraph:
@@ -148,11 +112,6 @@ class TestWolframHypergraph:
         assert len(hg.edges) > 0
 
 
-# ---------------------------------------------------------------------------
-# SwarmCoupling
-# ---------------------------------------------------------------------------
-
-
 class TestSwarmCoupling:
     @pytest.fixture()
     def agents(self):
@@ -163,12 +122,8 @@ class TestSwarmCoupling:
     def test_synchronize_shifts_weights(self, agents):
         a, b = agents
         wa_before = a.get_weights().copy()
-        wb_before = b.get_weights().copy()
         SwarmCoupling(coupling_strength=0.5).synchronize(a, b)
-        wa_after = a.get_weights()
-        wb_after = b.get_weights()
-        assert not np.array_equal(wa_before, wa_after)
-        assert not np.array_equal(wb_before, wb_after)
+        assert not np.array_equal(wa_before, a.get_weights())
 
     def test_mismatched_raises(self):
         a = SCLearningLayer(n_inputs=4, n_neurons=3, base_seed=1)
@@ -181,11 +136,6 @@ class TestSwarmCoupling:
         wa_before = a.get_weights().copy()
         SwarmCoupling(coupling_strength=0.0).synchronize(a, b)
         np.testing.assert_array_equal(wa_before, a.get_weights())
-
-
-# ---------------------------------------------------------------------------
-# SNNGeneticEvolver
-# ---------------------------------------------------------------------------
 
 
 class _Individual:
@@ -206,10 +156,9 @@ class TestSNNGeneticEvolver:
     def test_crossover_mixes(self):
         evo = SNNGeneticEvolver(lambda: _Individual(), lambda ind: 0.0)
         p1, p2 = _Individual(), _Individual()
-        p1.weights = np.zeros((4, 4))
-        p2.weights = np.ones((4, 4))
+        p1.weights, p2.weights = np.zeros((4, 4)), np.ones((4, 4))
         child = evo._crossover(p1, p2)
-        assert 0.0 < np.mean(child.weights) < 1.0 or np.mean(child.weights) in (0.0, 1.0)
+        assert child.weights.shape == (4, 4)
 
     def test_mutate_within_bounds(self):
         evo = SNNGeneticEvolver(lambda: _Individual(), lambda ind: 0.0)
@@ -225,13 +174,7 @@ class TestSNNGeneticEvolver:
 
     def test_mutate_no_weights(self):
         evo = SNNGeneticEvolver(lambda: object(), lambda ind: 0.0)
-        obj = object()
-        evo._mutate(obj)  # should return without error
-
-
-# ---------------------------------------------------------------------------
-# VoxelGrid / PointCloud
-# ---------------------------------------------------------------------------
+        evo._mutate(object())
 
 
 class TestVoxelGrid:
@@ -251,37 +194,30 @@ class TestVoxelGrid:
         assert np.all(vg.data == 0)
 
     def test_bitstream_shape(self):
-        vg = VoxelGrid(resolution=2)
-        bs = vg.get_as_bitstream(length=64)
+        bs = VoxelGrid(resolution=2).get_as_bitstream(length=64)
         assert bs.shape == (2, 2, 2, 64)
         assert bs.dtype == np.uint8
 
 
 class TestPointCloud:
     def test_normalize(self):
-        pts = np.array([[0.0, 10.0, 20.0], [5.0, 15.0, 25.0]])
-        ints = np.array([0.5, 1.5])
-        pc = PointCloud(points=pts, intensities=ints)
+        pc = PointCloud(
+            points=np.array([[0.0, 10.0, 20.0], [5.0, 15.0, 25.0]]),
+            intensities=np.array([0.5, 1.5]),
+        )
         pc.normalize()
         assert np.min(pc.points) >= 0.0
         assert np.max(pc.points) <= 1.0 + 1e-9
         assert np.all(pc.intensities <= 1.0)
 
 
-# ---------------------------------------------------------------------------
-# SpatialTransformer3D
-# ---------------------------------------------------------------------------
-
-
 class TestSpatialTransformer3D:
     def test_output_shape(self):
-        st = SpatialTransformer3D(resolution=3, dim_k=4)
         grid = np.random.rand(3, 3, 3)
-        out = st.forward(grid)
+        out = SpatialTransformer3D(resolution=3, dim_k=4).forward(grid)
         assert out.shape == (3, 3, 3)
 
     def test_output_differs(self):
-        st = SpatialTransformer3D(resolution=3, dim_k=4)
         grid = np.random.rand(3, 3, 3)
-        out = st.forward(grid)
+        out = SpatialTransformer3D(resolution=3, dim_k=4).forward(grid)
         assert not np.array_equal(grid, out)

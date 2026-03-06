@@ -11,18 +11,20 @@ Commercial Licensing: Available
 </p>
 
 [![CI](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml/badge.svg)](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-3.8.2-blue)](https://github.com/anulum/sc-neurocore/releases)
+[![PyPI](https://img.shields.io/pypi/v/sc-neurocore)](https://pypi.org/project/sc-neurocore/)
+[![crates.io](https://img.shields.io/crates/v/sc_neurocore_engine)](https://crates.io/crates/sc_neurocore_engine)
 [![Coverage](https://img.shields.io/badge/coverage-98%25-brightgreen)](https://github.com/anulum/sc-neurocore)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://anulum.github.io/sc-neurocore/)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/pypi/pyversions/sc-neurocore)](https://pypi.org/project/sc-neurocore/)
 [![Rust](https://img.shields.io/badge/engine-Rust-orange)](https://www.rust-lang.org/)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.18594898-blue)](https://doi.org/10.5281/zenodo.18594898)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/10362/badge)](https://www.bestpractices.dev/projects/10362)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/anulum/sc-neurocore/badge)](https://scorecard.dev/viewer/?uri=github.com/anulum/sc-neurocore)
 [![REUSE](https://img.shields.io/badge/REUSE-compliant-green)](https://reuse.software/)
 
 **Version:** 3.8.2
-**Status:** Production Core Verified | 911 Tests | 98.41% Coverage | CI/CD Active
+**Status:** Production Core Verified | 921 Tests | 98.47% Coverage | CI/CD Active
 
 SC-NeuroCore is a deterministic stochastic computing framework for
 neuromorphic hardware design and edge-AI deployment. It provides bit-true
@@ -50,7 +52,7 @@ pip install sc-neurocore[gpu]
 git clone https://github.com/anulum/sc-neurocore.git
 cd sc-neurocore
 pip install -e ".[dev]"    # editable install with all dev tools
-make preflight             # verify setup (lint + 869 tests)
+make preflight             # verify setup (lint + 921 tests)
 ```
 
 ## Docker

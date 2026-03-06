@@ -54,13 +54,19 @@ jobs:
           cargo generate-lockfile
           cargo audit
 
+      - name: Install cargo-deny
+        run: cargo install cargo-deny
+
+      - name: Cargo deny
+        run: cargo deny --manifest-path engine/Cargo.toml check licenses advisories
+
   test-engine:
     name: Test Engine (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 

@@ -49,6 +49,11 @@ jobs:
       - name: bandit
         run: bandit -r src/sc_neurocore/ -c pyproject.toml -q
 
+      - name: mypy
+        run: |
+          pip install -e ".[dev]"
+          mypy src/sc_neurocore/ --ignore-missing-imports --no-error-summary || true
+
   test:
     runs-on: ubuntu-latest
     strategy:
