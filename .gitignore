@@ -69,3 +69,4 @@ cosim/obj_dir/
 auto_fix*.py
 fix_*.py
 full_test_report.txt
+.hypothesis/

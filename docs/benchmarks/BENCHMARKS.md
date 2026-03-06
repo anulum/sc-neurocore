@@ -1,6 +1,6 @@
 # SC-NeuroCore Benchmarks
 
-Performance measurements for sc-neurocore v3.8.1. All numbers are CPU-only
+Performance measurements for sc-neurocore v3.8.2. All numbers are CPU-only
 (NumPy backend) unless noted. Run `python benchmarks/benchmark_suite.py` to
 reproduce.
 
@@ -11,7 +11,7 @@ reproduce.
 | Field | Value |
 |-------|-------|
 | Date | 2026-03-06 |
-| Git tag | v3.8.1 (commit 4f91004) |
+| Git tag | v3.8.2 (commit 4f91004) |
 | OS | Windows 11 Pro 10.0.26200 |
 | CPU | Intel Core i7-10700K (8C/16T, 3.8 GHz base) |
 | RAM | 32 GB DDR4-3200 |

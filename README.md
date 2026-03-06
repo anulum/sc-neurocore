@@ -11,7 +11,7 @@ Commercial Licensing: Available
 </p>
 
 [![CI](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml/badge.svg)](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-3.8.1-blue)](https://github.com/anulum/sc-neurocore/releases)
+[![Version](https://img.shields.io/badge/version-3.8.2-blue)](https://github.com/anulum/sc-neurocore/releases)
 [![Coverage](https://img.shields.io/badge/coverage-98%25-brightgreen)](https://github.com/anulum/sc-neurocore)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://anulum.github.io/sc-neurocore/)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
@@ -21,7 +21,7 @@ Commercial Licensing: Available
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/anulum/sc-neurocore/badge)](https://scorecard.dev/viewer/?uri=github.com/anulum/sc-neurocore)
 [![REUSE](https://img.shields.io/badge/REUSE-compliant-green)](https://reuse.software/)
 
-**Version:** 3.8.1
+**Version:** 3.8.2
 **Status:** Production Core Verified | 1058 Tests Passing | 98.10% Coverage | CI/CD Active
 
 SC-NeuroCore is a deterministic stochastic computing framework for
@@ -219,7 +219,7 @@ Co-simulation traces are generated deterministically from fixed LFSR seeds.
 To reproduce a published benchmark:
 
 ```bash
-git checkout v3.8.1
+git checkout v3.8.2
 pip install -e ".[dev]"
 python benchmarks/benchmark_suite.py --markdown > BENCHMARKS.md
 ```
