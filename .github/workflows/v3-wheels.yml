@@ -4,6 +4,7 @@
 name: SC-NeuroCore v3 Wheels
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
 

@@ -6,6 +6,7 @@ name: SC-NeuroCore v3 Engine
 permissions: {}
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - "engine/**"
