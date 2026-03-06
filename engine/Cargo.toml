@@ -5,7 +5,6 @@
 name = "sc_neurocore_engine"
 version = "3.8.2"
 edition = "2021"
-rust-version = "1.75"
 authors = ["Miroslav Sotek <protoscience@anulum.li>"]
 description = "High-performance SIMD backend for SC-NeuroCore stochastic neuromorphic computing"
 license = "AGPL-3.0-or-later"
