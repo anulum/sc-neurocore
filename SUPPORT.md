@@ -9,7 +9,8 @@
 
 ## Security
 
-Report vulnerabilities via email: [protoscience@anulum.li](mailto:protoscience@anulum.li).
+Report vulnerabilities via [GitHub Security Advisories](https://github.com/anulum/sc-neurocore/security/advisories/new)
+or email [protoscience@anulum.li](mailto:protoscience@anulum.li).
 Do not open public issues for security matters. See [SECURITY.md](SECURITY.md).
 
 ## Commercial Licensing
