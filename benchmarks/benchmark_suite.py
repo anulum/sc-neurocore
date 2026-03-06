@@ -37,11 +37,7 @@ from sc_neurocore.accel.vector_ops import pack_bitstream, vec_and, vec_popcount
 from sc_neurocore.accel.gpu_backend import (
     xp,
     HAS_CUPY,
-    to_device,
-    to_host,
     gpu_pack_bitstream,
-    gpu_vec_and,
-    gpu_popcount,
     gpu_vec_mac,
 )
 from sc_neurocore.neurons.fixed_point_lif import (

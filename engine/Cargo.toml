@@ -3,10 +3,23 @@
 
 [package]
 name = "sc_neurocore_engine"
-version = "3.8.1"
+version = "3.8.2"
 edition = "2021"
+rust-version = "1.75"
 authors = ["Miroslav Sotek <protoscience@anulum.li>"]
-description = "High-performance Rust backend for SC-NeuroCore"
+description = "High-performance SIMD backend for SC-NeuroCore stochastic neuromorphic computing"
+license = "AGPL-3.0-or-later"
+repository = "https://github.com/anulum/sc-neurocore"
+homepage = "https://anulum.github.io/sc-neurocore/"
+documentation = "https://anulum.github.io/sc-neurocore/rust-api/sc_neurocore_engine/"
+readme = "../README.md"
+keywords = ["neuromorphic", "stochastic-computing", "simd", "spiking-neural-network", "fpga"]
+categories = ["science", "simulation", "mathematics"]
+exclude = [
+    "tests/",
+    ".github/",
+    "*.pyc",
+]
 
 [package.metadata.maturin]
 python-source = "../bridge"

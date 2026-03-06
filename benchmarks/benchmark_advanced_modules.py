@@ -62,7 +62,7 @@ def benchmark_quantum_hybrid():
     print(f"Output shape: {output.shape}")
     print(f"Latency (100 runs): {elapsed*1000:.2f} ms")
     print(f"Per-run latency: {elapsed*10:.2f} ms")
-    print(f"\nNon-linearity verification:")
+    print("\nNon-linearity verification:")
     print(f"  Input p:    {p_in[:5]}")
     print(f"  Output p:   {p_out[:5]}")
     print(f"  Expected:   {expected_out[:5]}")
@@ -70,8 +70,8 @@ def benchmark_quantum_hybrid():
 
     # Improvement: Quantum non-linearity is EXACT (cos^2)
     # vs sigmoid which needs many gates
-    print(f"\nIMPROVEMENT: Exact quantum non-linearity (cos^2)")
-    print(f"  - Parameter efficiency: ~10x (1 qubit vs 10-100 gates for sigmoid)")
+    print("\nIMPROVEMENT: Exact quantum non-linearity (cos^2)")
+    print("  - Parameter efficiency: ~10x (1 qubit vs 10-100 gates for sigmoid)")
 
     return elapsed
 
@@ -112,7 +112,7 @@ def benchmark_gnn():
     dense_ops = n_nodes * n_nodes * n_features  # Dense matmul
     sparse_ops = np.sum(adj > 0) * n_features  # Sparse
 
-    print(f"\nSPARSITY IMPROVEMENT:")
+    print("\nSPARSITY IMPROVEMENT:")
     print(f"  Dense operations: {dense_ops:,}")
     print(f"  Sparse operations: {sparse_ops:,}")
     print(f"  Reduction factor: {dense_ops/sparse_ops:.1f}x")
@@ -154,7 +154,7 @@ def benchmark_transformer():
     sc_energy = 5.10  # fJ per AND
     standard_energy = 1000  # fJ per FP32 MAC
 
-    print(f"\nENERGY IMPROVEMENT:")
+    print("\nENERGY IMPROVEMENT:")
     print(f"  Standard ops: {standard_ops:,}")
     print(f"  SC energy: {standard_ops * sc_energy:.2f} fJ")
     print(f"  Standard energy: {standard_ops * standard_energy:.2f} fJ")
@@ -214,11 +214,11 @@ def benchmark_bci_dvs():
     frame_pixels = height * width * 30  # 30 fps
     dvs_events = len(events)
 
-    print(f"\nSPARSITY IMPROVEMENT (DVS vs Frame):")
+    print("\nSPARSITY IMPROVEMENT (DVS vs Frame):")
     print(f"  Frame camera data: {frame_pixels:,} pixels/sec")
     print(f"  DVS events: {dvs_events:,} events/frame")
     print(f"  Data reduction: {frame_pixels/dvs_events:.0f}x")
-    print(f"  Power reduction: ~1000x (typical DVS vs CMOS)")
+    print("  Power reduction: ~1000x (typical DVS vs CMOS)")
 
     return bci_elapsed, dvs_elapsed
 
@@ -248,7 +248,7 @@ def benchmark_chaotic_rng():
     autocorr = np.correlate(samples[:1000] - mean, samples[:1000] - mean, mode="full")
     autocorr = autocorr[len(autocorr) // 2 :] / autocorr[len(autocorr) // 2]
 
-    print(f"\nStatistical quality:")
+    print("\nStatistical quality:")
     print(f"  Mean: {mean:.4f} (expected: 0.5)")
     print(f"  Std:  {std:.4f}")
     print(f"  Autocorr lag-1: {autocorr[1]:.4f} (should be ~0)")
@@ -257,14 +257,14 @@ def benchmark_chaotic_rng():
     # Generate bitstream
     bits = rng.generate_bitstream(0.5, 10000)
     bit_mean = np.mean(bits)
-    print(f"\nBitstream test (p=0.5):")
+    print("\nBitstream test (p=0.5):")
     print(f"  Generated mean: {bit_mean:.4f} (expected: 0.5)")
     print(f"  Error: {abs(bit_mean - 0.5):.4f}")
 
-    print(f"\nIMPROVEMENT:")
-    print(f"  - Hardware: 1 multiplier + 1 subtractor (vs LFSR with XOR chain)")
-    print(f"  - Quality: True chaos (vs periodic PRNG)")
-    print(f"  - Speed: Comparable to standard RNG")
+    print("\nIMPROVEMENT:")
+    print("  - Hardware: 1 multiplier + 1 subtractor (vs LFSR with XOR chain)")
+    print("  - Quality: True chaos (vs periodic PRNG)")
+    print("  - Speed: Comparable to standard RNG")
 
     return elapsed
 
@@ -296,7 +296,7 @@ def benchmark_predictive_model():
     print(f"Per-forecast latency: {elapsed*10:.2f} ms")
 
     # Verify prediction
-    print(f"\nTrajectory sample (first 5 states):")
+    print("\nTrajectory sample (first 5 states):")
     for i, state in enumerate(trajectory[:5]):
         print(f"  t={i+1}: mean={np.mean(state):.3f}, std={np.std(state):.3f}")
 
@@ -306,7 +306,7 @@ def benchmark_predictive_model():
     model_free_samples = 1000
     model_based_ops = 1
 
-    print(f"\nMODEL-BASED RL IMPROVEMENT:")
+    print("\nMODEL-BASED RL IMPROVEMENT:")
     print(f"  Model-free: {model_free_samples} env samples/step")
     print(f"  Model-based: {model_based_ops} forward pass/step")
     print(f"  Sample efficiency: {model_free_samples/model_based_ops}x")

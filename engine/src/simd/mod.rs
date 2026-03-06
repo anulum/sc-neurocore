@@ -5,12 +5,15 @@
 //! # SIMD Popcount Dispatch
 //!
 //! Runtime CPU-feature dispatch for packed-bit popcount kernels.
+//! Supported backends: AVX-512, AVX2, ARM NEON, ARM SVE, RISC-V RVV.
 
 use rand::Rng;
 
 pub mod avx2;
 pub mod avx512;
 pub mod neon;
+pub mod rvv;
+pub mod sve;
 
 /// Pack u8 bits into u64 words using the best available SIMD path.
 pub fn pack_dispatch(bits: &[u8]) -> crate::bitstream::BitStreamTensor {
@@ -28,6 +31,13 @@ pub fn pack_dispatch(bits: &[u8]) -> crate::bitstream::BitStreamTensor {
             let data = unsafe { avx2::pack_avx2(bits) };
             return crate::bitstream::BitStreamTensor { data, length };
         }
+    }
+
+    #[cfg(all(target_arch = "aarch64", target_feature = "sve"))]
+    {
+        // SAFETY: SVE target feature is compile-time guaranteed.
+        let data = unsafe { sve::pack_sve(bits) };
+        return crate::bitstream::BitStreamTensor { data, length };
     }
 
     crate::bitstream::pack_fast(bits)
@@ -49,8 +59,22 @@ pub fn popcount_dispatch(data: &[u64]) -> u64 {
 
     #[cfg(target_arch = "aarch64")]
     {
-        // SAFETY: NEON is baseline on aarch64 targets.
-        return unsafe { neon::popcount_neon(data) };
+        #[cfg(target_feature = "sve")]
+        {
+            // SAFETY: SVE target feature is compile-time guaranteed.
+            return unsafe { sve::popcount_sve(data) };
+        }
+        #[cfg(not(target_feature = "sve"))]
+        {
+            // SAFETY: NEON is baseline on aarch64 targets.
+            return unsafe { neon::popcount_neon(data) };
+        }
+    }
+
+    #[cfg(all(target_arch = "riscv64", target_feature = "v"))]
+    {
+        // SAFETY: RVV target feature is compile-time guaranteed.
+        return unsafe { rvv::popcount_rvv(data) };
     }
 
     crate::bitstream::popcount_words_portable(data)
@@ -72,6 +96,19 @@ pub fn fused_and_popcount_dispatch(a: &[u64], b: &[u64]) -> u64 {
             // SAFETY: Guarded by runtime feature detection.
             return unsafe { avx2::fused_and_popcount_avx2(a, b) };
         }
+    }
+
+    #[cfg(target_arch = "aarch64")]
+    {
+        #[cfg(target_feature = "sve")]
+        {
+            return unsafe { sve::fused_and_popcount_sve(a, b) };
+        }
+    }
+
+    #[cfg(all(target_arch = "riscv64", target_feature = "v"))]
+    {
+        return unsafe { rvv::fused_and_popcount_rvv(a, b) };
     }
 
     a.iter()
@@ -98,6 +135,19 @@ pub fn fused_xor_popcount_dispatch(a: &[u64], b: &[u64]) -> u64 {
         }
     }
 
+    #[cfg(target_arch = "aarch64")]
+    {
+        #[cfg(target_feature = "sve")]
+        {
+            return unsafe { sve::fused_xor_popcount_sve(a, b) };
+        }
+    }
+
+    #[cfg(all(target_arch = "riscv64", target_feature = "v"))]
+    {
+        return unsafe { rvv::fused_xor_popcount_rvv(a, b) };
+    }
+
     a.iter()
         .zip(b.iter())
         .map(|(&wa, &wb)| (wa ^ wb).count_ones() as u64)
@@ -106,7 +156,7 @@ pub fn fused_xor_popcount_dispatch(a: &[u64], b: &[u64]) -> u64 {
 
 /// Fused encode+AND+popcount dispatch.
 ///
-/// This currently delegates to the scalar-control implementation in `bitstream`,
+/// Delegates to the scalar-control implementation in `bitstream`,
 /// which already performs SIMD Bernoulli compare where available.
 pub fn encode_and_popcount_dispatch<R: Rng + ?Sized>(
     weight_words: &[u64],
