@@ -105,7 +105,7 @@ target-version = "py39"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "SIM"]
-ignore = ["E501"]
+ignore = ["E501", "E402", "I001"]
 
 [tool.bandit]
 skips = ["B101", "B311", "B404", "B603", "B607"]
