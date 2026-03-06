@@ -62,6 +62,22 @@ quantum = ["qiskit", "pennylane", "qiskit-aer"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+exclude = [
+    "sc_neurocore.audio", "sc_neurocore.audio.*",
+    "sc_neurocore.generative", "sc_neurocore.generative.*",
+    "sc_neurocore.world_model", "sc_neurocore.world_model.*",
+    "sc_neurocore.dashboard", "sc_neurocore.dashboard.*",
+    "sc_neurocore.viz", "sc_neurocore.viz.*",
+    "sc_neurocore.analysis", "sc_neurocore.analysis.*",
+    "sc_neurocore.experiments", "sc_neurocore.experiments.*",
+    "sc_neurocore.drivers", "sc_neurocore.drivers.*",
+    "sc_neurocore.interfaces", "sc_neurocore.interfaces.*",
+    "sc_neurocore.swarm", "sc_neurocore.swarm.*",
+    "sc_neurocore.sleep", "sc_neurocore.sleep.*",
+    "sc_neurocore.optics", "sc_neurocore.optics.*",
+    "sc_neurocore.chaos", "sc_neurocore.chaos.*",
+    "sc_neurocore.bio", "sc_neurocore.bio.*",
+]
 
 [tool.setuptools.package-data]
 sc_neurocore = ["py.typed"]
