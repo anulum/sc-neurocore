@@ -8,14 +8,135 @@ use rand_chacha::ChaCha8Rng;
 use rayon::prelude::*;
 
 pub struct StochasticAttention {
-    /// Key/query feature dimension used by callers.
     pub dim_k: usize,
+    /// Softmax temperature. Default: sqrt(dim_k) (Vaswani et al. 2017).
+    pub temperature: f64,
 }
 
 impl StochasticAttention {
-    /// Create a stochastic attention operator.
     pub fn new(dim_k: usize) -> Self {
-        Self { dim_k }
+        Self {
+            dim_k,
+            temperature: (dim_k as f64).sqrt(),
+        }
+    }
+
+    pub fn with_temperature(dim_k: usize, temperature: f64) -> Self {
+        Self { dim_k, temperature }
+    }
+
+    /// Softmax attention: Q·K^T / temperature → softmax → · V.
+    ///
+    /// Numerically stable: subtract row max before exp().
+    #[allow(clippy::too_many_arguments)]
+    pub fn forward_softmax(
+        &self,
+        q: &[f64],
+        q_rows: usize,
+        q_cols: usize,
+        k: &[f64],
+        k_rows: usize,
+        k_cols: usize,
+        v: &[f64],
+        v_rows: usize,
+        v_cols: usize,
+    ) -> Result<Vec<f64>, String> {
+        validate_shapes(q, q_rows, q_cols, k, k_rows, k_cols, v, v_rows, v_cols)?;
+        let inv_temp = if self.temperature > 0.0 {
+            1.0 / self.temperature
+        } else {
+            1.0
+        };
+
+        let out_rows: Vec<Vec<f64>> = (0..q_rows)
+            .into_par_iter()
+            .map(|i| {
+                let q_row = &q[i * q_cols..(i + 1) * q_cols];
+
+                // Scaled dot-product scores
+                let mut scores = vec![0.0_f64; k_rows];
+                for j in 0..k_rows {
+                    let k_row = &k[j * k_cols..(j + 1) * k_cols];
+                    let mut dot = 0.0_f64;
+                    for d in 0..q_cols {
+                        dot += q_row[d] * k_row[d];
+                    }
+                    scores[j] = dot * inv_temp;
+                }
+
+                // Softmax: subtract max for numerical stability
+                let max_score = scores.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
+                let mut exp_sum = 0.0_f64;
+                for s in &mut scores {
+                    *s = (*s - max_score).exp();
+                    exp_sum += *s;
+                }
+                if exp_sum > 0.0 {
+                    for s in &mut scores {
+                        *s /= exp_sum;
+                    }
+                }
+
+                // Weighted sum over V
+                let mut out = vec![0.0_f64; v_cols];
+                for d in 0..v_cols {
+                    let mut acc = 0.0_f64;
+                    for j in 0..k_rows {
+                        acc += scores[j] * v[j * v_cols + d];
+                    }
+                    out[d] = acc;
+                }
+                out
+            })
+            .collect();
+
+        Ok(flatten_rows(out_rows, q_rows, v_cols))
+    }
+
+    /// Multi-head softmax attention.
+    #[allow(clippy::too_many_arguments)]
+    pub fn forward_multihead_softmax(
+        &self,
+        q: &[f64],
+        q_rows: usize,
+        q_total_cols: usize,
+        k: &[f64],
+        k_rows: usize,
+        k_total_cols: usize,
+        v: &[f64],
+        v_rows: usize,
+        v_total_cols: usize,
+        n_heads: usize,
+    ) -> Result<Vec<f64>, String> {
+        validate_multihead_shapes(
+            q, q_rows, q_total_cols, k, k_rows, k_total_cols, v, v_rows, v_total_cols, n_heads,
+        )?;
+
+        let dk = q_total_cols / n_heads;
+        let dv = v_total_cols / n_heads;
+        let head_attn = Self::with_temperature(dk, self.temperature);
+
+        let head_outputs: Result<Vec<Vec<f64>>, String> = (0..n_heads)
+            .into_par_iter()
+            .map(|h| {
+                let q_head = extract_head_columns(q, q_rows, q_total_cols, h, dk);
+                let k_head = extract_head_columns(k, k_rows, k_total_cols, h, dk);
+                let v_head = extract_head_columns(v, v_rows, v_total_cols, h, dv);
+                head_attn.forward_softmax(
+                    &q_head, q_rows, dk, &k_head, k_rows, dk, &v_head, v_rows, dv,
+                )
+            })
+            .collect();
+        let head_outputs = head_outputs?;
+
+        let out_cols = dv * n_heads;
+        let mut out = Vec::with_capacity(q_rows * out_cols);
+        for i in 0..q_rows {
+            for head in head_outputs.iter().take(n_heads) {
+                out.extend_from_slice(&head[i * dv..(i + 1) * dv]);
+            }
+        }
+        Ok(out)
     }
 
     /// Rate-mode attention forward pass.
@@ -170,8 +291,7 @@ impl StochasticAttention {
         Ok(flatten_rows(out_rows, q_rows, v_cols))
     }
 
-    /// Multi-head attention: split Q/K/V columns across heads,
-    /// run per-head attention, then concatenate outputs.
+    /// Multi-head linear attention (backwards compat).
     #[allow(clippy::too_many_arguments)]
     pub fn forward_multihead(
         &self,
@@ -186,50 +306,12 @@ impl StochasticAttention {
         v_total_cols: usize,
         n_heads: usize,
     ) -> Result<Vec<f64>, String> {
-        if n_heads == 0 {
-            return Err("n_heads must be > 0.".to_string());
-        }
-        if !q_total_cols.is_multiple_of(n_heads)
-            || !k_total_cols.is_multiple_of(n_heads)
-            || !v_total_cols.is_multiple_of(n_heads)
-        {
-            return Err(format!(
-                "Total columns must be divisible by n_heads={}. Got Q={}, K={}, V={}.",
-                n_heads, q_total_cols, k_total_cols, v_total_cols
-            ));
-        }
-        if q.len() != q_rows * q_total_cols {
-            return Err(format!(
-                "Q data length mismatch: got {}, expected {}.",
-                q.len(),
-                q_rows * q_total_cols
-            ));
-        }
-        if k.len() != k_rows * k_total_cols {
-            return Err(format!(
-                "K data length mismatch: got {}, expected {}.",
-                k.len(),
-                k_rows * k_total_cols
-            ));
-        }
-        if v.len() != v_rows * v_total_cols {
-            return Err(format!(
-                "V data length mismatch: got {}, expected {}.",
-                v.len(),
-                v_rows * v_total_cols
-            ));
-        }
+        validate_multihead_shapes(
+            q, q_rows, q_total_cols, k, k_rows, k_total_cols, v, v_rows, v_total_cols, n_heads,
+        )?;
 
         let dk = q_total_cols / n_heads;
-        let dk_k = k_total_cols / n_heads;
         let dv = v_total_cols / n_heads;
-
-        if dk != dk_k {
-            return Err(format!(
-                "Q/K head dimensions must match: Q_head={}, K_head={}.",
-                dk, dk_k
-            ));
-        }
 
         let head_outputs: Result<Vec<Vec<f64>>, String> = (0..n_heads)
             .into_par_iter()
@@ -248,12 +330,68 @@ impl StochasticAttention {
         let mut out = Vec::with_capacity(q_rows * out_cols);
         for i in 0..q_rows {
             for head in head_outputs.iter().take(n_heads) {
-                let head_row = &head[i * dv..(i + 1) * dv];
-                out.extend_from_slice(head_row);
+                out.extend_from_slice(&head[i * dv..(i + 1) * dv]);
             }
         }
         Ok(out)
     }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn validate_multihead_shapes(
+    q: &[f64],
+    q_rows: usize,
+    q_total_cols: usize,
+    k: &[f64],
+    k_rows: usize,
+    k_total_cols: usize,
+    v: &[f64],
+    v_rows: usize,
+    v_total_cols: usize,
+    n_heads: usize,
+) -> Result<(), String> {
+    if n_heads == 0 {
+        return Err("n_heads must be > 0.".to_string());
+    }
+    if !q_total_cols.is_multiple_of(n_heads)
+        || !k_total_cols.is_multiple_of(n_heads)
+        || !v_total_cols.is_multiple_of(n_heads)
+    {
+        return Err(format!(
+            "Total columns must be divisible by n_heads={}. Got Q={}, K={}, V={}.",
+            n_heads, q_total_cols, k_total_cols, v_total_cols
+        ));
+    }
+    if q.len() != q_rows * q_total_cols {
+        return Err(format!(
+            "Q data length mismatch: got {}, expected {}.",
+            q.len(),
+            q_rows * q_total_cols
+        ));
+    }
+    if k.len() != k_rows * k_total_cols {
+        return Err(format!(
+            "K data length mismatch: got {}, expected {}.",
+            k.len(),
+            k_rows * k_total_cols
+        ));
+    }
+    if v.len() != v_rows * v_total_cols {
+        return Err(format!(
+            "V data length mismatch: got {}, expected {}.",
+            v.len(),
+            v_rows * v_total_cols
+        ));
+    }
+    let dk = q_total_cols / n_heads;
+    let dk_k = k_total_cols / n_heads;
+    if dk != dk_k {
+        return Err(format!(
+            "Q/K head dimensions must match: Q_head={}, K_head={}.",
+            dk, dk_k
+        ));
+    }
+    Ok(())
 }
 
 #[allow(clippy::too_many_arguments)]
