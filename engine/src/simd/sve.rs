@@ -19,12 +19,12 @@ pub unsafe fn pack_sve(bits: &[u8]) -> Vec<u64> {
     // Current implementation: portable fallback (SVE intrinsics are
     // nightly-only as of Rust 1.82).  Replace with svptrue_b8 / svld1_u8 /
     // svlsr_n_u8_x / svorr_u8_x pipeline when stabilised.
-    crate::bitstream::pack_fast_to_words(bits)
+    crate::bitstream::pack_fast(bits).data
 }
 
 #[cfg(not(all(target_arch = "aarch64", target_feature = "sve")))]
 pub unsafe fn pack_sve(bits: &[u8]) -> Vec<u64> {
-    crate::bitstream::pack_fast_to_words(bits)
+    crate::bitstream::pack_fast(bits).data
 }
 
 /// Count set bits using SVE BCNT instruction.
