@@ -3,9 +3,9 @@
 
 [package]
 name = "sc_neurocore_engine"
-version = "3.8.0"
+version = "3.8.1"
 edition = "2021"
-authors = ["Miroslav Sotek <fortisstudio@gmail.com>"]
+authors = ["Miroslav Sotek <protoscience@anulum.li>"]
 description = "High-performance Rust backend for SC-NeuroCore"
 
 [package.metadata.maturin]
