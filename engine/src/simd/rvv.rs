@@ -112,8 +112,7 @@ mod tests {
     fn rvv_fused_and_popcount() {
         let a = vec![0xFFu64, 0xF0];
         let b = vec![0x0Fu64, 0xFF];
-        let expected =
-            (0xFFu64 & 0x0F).count_ones() as u64 + (0xF0u64 & 0xFF).count_ones() as u64;
+        let expected = (0xFFu64 & 0x0F).count_ones() as u64 + (0xF0u64 & 0xFF).count_ones() as u64;
         let got = unsafe { fused_and_popcount_rvv(&a, &b) };
         assert_eq!(got, expected);
     }
