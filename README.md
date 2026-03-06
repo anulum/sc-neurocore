@@ -89,11 +89,14 @@ For benchmark reports, always include batch size, bitstream length, seed policy,
 
 ### Module Tiers
 
-| Tier | Location | Description |
-|------|----------|-------------|
-| **core** | `src/sc_neurocore/` (neurons, synapses, layers, sources, utils, recorders, accel) | Production-ready. Imported by default. |
-| **simulation** | `src/sc_neurocore/` (hdc, solvers, transformers, quantum, robotics, physics, +18 more) | Deterministic digital twin simulation environment. Import explicitly. |
-| **speculative** | `research/` (eschaton, exotic, meta, post_silicon, transcendent) | Theoretical explorations. Not part of the installable package. See `research/README.md`. |
+| Tier | Modules | Status |
+|------|---------|--------|
+| **Core** — production-ready, fully tested | neurons, synapses, layers, sources, utils, recorders, accel, compiler, hdl_gen, hardware | Stable. 98%+ coverage. Imported by default. |
+| **Simulation** — digital twin environment | hdc, solvers, transformers, learning, graphs, ensembles, export, pipeline, profiling, models | Stable. Import explicitly. |
+| **Domain bridges** — tested, optional deps | quantum (Qiskit/PennyLane), adapters/holonomic (JAX), scpn (Petri nets) | Requires `pip install -e ".[quantum]"` or `.[jax]"` |
+| **Research** — benchmarked but narrow scope | robotics (CPG/swarm), physics (Ising/heat/hypergraph), spatial (3D voxel), sleep, bio, optics, chaos | Tested. Not recommended for production deployment. |
+| **Frontier** — experimental, no SOTA benchmarks | generative, world_model, analysis, audio, dashboard, viz, security/zkp | Proof-of-concept. May be archived if unused. |
+| **Speculative** — not installable | `research/` (eschaton, exotic, meta, post_silicon, transcendent) | Theoretical. See `research/README.md`. |
 
 ### Core API (28 symbols)
 
@@ -161,6 +164,26 @@ vvp tb_lif
 # 3. Compare results
 python scripts/cosim_gen_and_check.py --check
 ```
+
+### Reproducibility
+
+Every GitHub Release includes:
+
+- **sdist** — source distribution (`dist/*.tar.gz`)
+- **SBOM** — CycloneDX software bill of materials (`sbom.json`)
+- **Changelog extract** — release notes from `CHANGELOG.md`
+
+Co-simulation traces are generated deterministically from fixed LFSR seeds.
+To reproduce a published benchmark:
+
+```bash
+git checkout v3.8.1
+pip install -e ".[dev]"
+python benchmarks/benchmark_suite.py --markdown > BENCHMARKS.md
+```
+
+For Verilog co-sim trace reproduction, see `scripts/cosim_gen_and_check.py`
+and the seed constants in `hdl/sc_bitstream_encoder.v`.
 
 ### Key Technical Details
 
@@ -254,10 +277,19 @@ mkdocs serve
 ## Install Extras
 
 ```bash
-pip install -e ".[dev]"       # pytest, mypy, black
+pip install -e ".[dev]"       # pytest, mypy, black, hypothesis
 pip install -e ".[gpu]"       # CuPy CUDA acceleration
+pip install -e ".[jax]"       # JAX backend for holonomic adapters
+pip install -e ".[quantum]"   # Qiskit + PennyLane quantum bridges
 pip install -e ".[research]"  # networkx, onnx, torch
-pip install -e ".[full]"      # networkx, onnx
+pip install -e ".[full]"      # networkx, onnx, qiskit, pennylane
+```
+
+Pinned dependency files are also provided for reproducible environments:
+
+```bash
+pip install -r requirements.txt       # runtime only
+pip install -r requirements-dev.txt   # runtime + dev tools
 ```
 
 ## Community
