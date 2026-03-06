@@ -62,7 +62,7 @@ print("Simulation complete. Results saved to quickstart_output.png")
 
 ## 2. Running the Example
 
-1.  Ensure you have installed `sc-neurocore` (see [Installation Guide](../README.md)).
+1.  Ensure you have installed `sc-neurocore` (`pip install sc-neurocore`).
 2.  Save the code above to `hello_neurocore.py`.
 3.  Execute the script:
     ```bash
@@ -82,6 +82,6 @@ print("Simulation complete. Results saved to quickstart_output.png")
 
 ## 4. Next Steps
 
-*   **[Neuromorphic Computing Primer](NEUROMORPHIC_COMPUTING_PRIMER.md)**: Learn why we use spikes instead of continuous values.
+*   **[Neuromorphic Computing Primer](../research/NEUROMORPHIC_COMPUTING_PRIMER.md)**: Learn why we use spikes instead of continuous values.
 *   **[Layer-by-Layer Guide](LAYER_BY_LAYER_GUIDE.md)**: Explore more complex neuron types like Izhikevich or Q-bit neurons.
 *   **[Tutorial Notebooks]**: Check the `notebooks/` directory for interactive examples of learning rules and pattern recognition.
