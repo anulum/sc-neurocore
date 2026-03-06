@@ -9,7 +9,6 @@
 #   4. Full pipeline: encoder -> synapse -> dot-product -> neuron
 
 import pytest
-import numpy as np
 
 from sc_neurocore.neurons.fixed_point_lif import (
     FixedPointLIFNeuron,

@@ -11,7 +11,7 @@ detects unwanted awakenings, and triggers re-induction sequences.
 
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import numpy as np
 

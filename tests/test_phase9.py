@@ -29,7 +29,7 @@ class TestFastBernoulli:
         layer = v3.DenseLayer(8, 4, 1024, seed=42)
         inputs = [0.3] * 8
         out = layer.forward_fast(inputs, seed=42)
-        assert all(0.0 <= v for v in out)
+        assert all(v >= 0.0 for v in out)
 
     def test_forward_fast_statistical_sanity(self):
         """forward_fast output should correlate with input probability."""
@@ -64,7 +64,7 @@ class TestFusedAndPopcount:
         out1 = layer.forward(inputs, seed=42)
         out2 = layer.forward(inputs, seed=42)
         np.testing.assert_array_equal(out1, out2)
-        assert all(0.0 <= v for v in out1)
+        assert all(v >= 0.0 for v in out1)
 
     def test_prepacked_deterministic(self):
         layer = v3.DenseLayer(4, 2, 1024, seed=42)

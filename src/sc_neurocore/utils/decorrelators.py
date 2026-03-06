@@ -2,7 +2,6 @@
 from typing import Any, Optional
 import numpy as np
 from dataclasses import dataclass
-from typing import Optional
 from .rng import RNG
 
 

@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-from typing import Any, Optional
+from typing import Any
 
 """Multi-agent ensemble orchestration with consensus and coordinated missions."""
 
 import logging
 import numpy as np
 from dataclasses import dataclass, field
-from typing import List, Dict, Any
+from typing import List, Dict
 from ..core.orchestrator import CognitiveOrchestrator
 
 logger = logging.getLogger(__name__)

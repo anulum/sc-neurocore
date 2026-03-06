@@ -9,11 +9,9 @@ boost over the loop-based SCDenseLayer and enables native TPU/GPU scaling.
 
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Dict, Any, Optional, Tuple
-import numpy as np
+from typing import Dict, Any, Optional
 
-from sc_neurocore.accel.jax_backend import jnp, jax, HAS_JAX, to_jax, to_host, jax_lif_step
-from sc_neurocore.utils.rng import RNG
+from sc_neurocore.accel.jax_backend import jnp, jax, HAS_JAX, jax_lif_step
 
 
 @dataclass

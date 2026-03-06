@@ -17,7 +17,6 @@ from sc_neurocore.experiments.tcbo_demo_engine import (
     TCBODemoSnapshot,
     TCBOController,
     ScenarioName,
-    SCENARIOS,
     _compute_order_parameter,
     _compute_p_h1_lightweight,
     _build_knm,

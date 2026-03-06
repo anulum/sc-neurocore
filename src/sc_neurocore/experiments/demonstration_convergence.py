@@ -9,9 +9,6 @@ This experiment showcases:
 4. Noise-robust execution via QEC Shield.
 """
 
-import jax
-import jax.numpy as jnp
-import numpy as np
 import logging
 
 from sc_neurocore.adapters.holonomic.l1_quantum import L1_QuantumAdapter, L1_HolonomicParameters

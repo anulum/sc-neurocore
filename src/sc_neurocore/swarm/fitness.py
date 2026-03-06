@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 from __future__ import annotations
-from typing import Any, Optional
+from typing import Any
 
 """
 SwarmFitness -- multi-objective fitness evaluation for swarm behaviour.
@@ -105,7 +105,7 @@ class SwarmFitness:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def composite(env: "SwarmEnvironment") -> float:
+    def composite(env: SwarmEnvironment) -> float:
         """Weighted sum of all objectives.
 
         Weights::

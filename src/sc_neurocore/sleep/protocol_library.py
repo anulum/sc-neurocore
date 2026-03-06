@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 from __future__ import annotations
-from typing import Any, Optional
+from typing import Any
 
 """Library of pre-built sleep audio protocols.
 
@@ -11,7 +11,7 @@ etc.) and specifies ideal stage-time targets for the night.
 
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from .sleep_stage_detector import SleepStage
 

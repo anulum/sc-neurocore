@@ -13,7 +13,7 @@ probability distributions using the Marching Cubes algorithm.
 import logging
 import numpy as np
 from dataclasses import dataclass
-from typing import Optional, Dict, List, Tuple
+from typing import Dict, List, Tuple
 import json
 
 logger = logging.getLogger(__name__)

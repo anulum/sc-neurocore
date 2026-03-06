@@ -10,7 +10,6 @@ from sc_neurocore.sleep import (
     SleepStage,
     CircadianOptimizer,
     Chronotype,
-    SleepProtocol,
     get_protocol,
     list_protocols,
     SleepOptimizer,

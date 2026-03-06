@@ -8,7 +8,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, Optional
 
-import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -186,7 +185,7 @@ class UserProfile:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "UserProfile":
+    def from_dict(cls, data: dict[str, Any]) -> UserProfile:
         chrono = data.get("chronotype", "bear")
         return cls(
             user_id=data.get("user_id", "anonymous"),

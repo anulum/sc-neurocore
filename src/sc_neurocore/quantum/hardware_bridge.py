@@ -14,11 +14,11 @@ Usage::
 """
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 import numpy as np
 
 try:
-    import qiskit
+    import qiskit  # noqa: F401
     from qiskit import QuantumCircuit, transpile
     from qiskit_aer import AerSimulator
 

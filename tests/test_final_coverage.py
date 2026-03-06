@@ -2,7 +2,6 @@
 """Tests to close ALL remaining coverage gaps from 98% → 100%."""
 
 import numpy as np
-import pytest
 
 
 # ── ensembles/orchestrator.py — run_consensus loop body (lines 22-28) ─

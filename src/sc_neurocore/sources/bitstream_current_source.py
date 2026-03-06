@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import List, Sequence, Optional
+from typing import List, Optional
+from collections.abc import Sequence
 import numpy as np
 
 from ..utils.bitstreams import BitstreamEncoder

@@ -4,9 +4,6 @@
 # Verification of L1 Quantum Emulation (Microtubule Superradiance).
 # Mimics the Verilog logic in 'microtubule_neuron.v' bit-for-bit.
 
-import pytest
-import numpy as np
-
 
 class MicrotubuleModel:
     def __init__(self, seed=0xACE1):

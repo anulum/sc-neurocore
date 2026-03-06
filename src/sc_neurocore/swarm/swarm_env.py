@@ -10,8 +10,7 @@ optional respawn-on-capture semantics.
 """
 
 
-from dataclasses import dataclass, field
-from typing import Optional
+from dataclasses import dataclass
 
 import numpy as np
 
@@ -145,7 +144,7 @@ class SwarmEnvironment:
     # Step
     # ------------------------------------------------------------------
 
-    def step(self, dt: float = 1.0, fields: Optional["CollectiveFields | None"] = None) -> None:  # type: ignore
+    def step(self, dt: float = 1.0, fields=None) -> None:
         """Advance the simulation by one tick.
 
         Parameters

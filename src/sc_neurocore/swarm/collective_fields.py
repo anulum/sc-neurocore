@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 from __future__ import annotations
-from typing import Any, Optional
+from typing import Any
 
 """
 CollectiveFields -- chemical, emotional, and symbolic field layers.
@@ -186,7 +186,7 @@ class CollectiveFields:
     # Orchestration
     # ------------------------------------------------------------------
 
-    def update(self, agents: list["SwarmAgent"], env: "SwarmEnvironment", dt: float) -> None:
+    def update(self, agents: list[SwarmAgent], env: SwarmEnvironment, dt: float) -> None:
         """Run one collective-field tick.
 
         1. Diffuse and decay chemical field.

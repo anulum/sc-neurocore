@@ -13,7 +13,6 @@ the MLIREmitter and compile it down to a bitstream using open-source FPGA tools:
 import os
 import subprocess
 import logging
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 

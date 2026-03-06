@@ -2,7 +2,8 @@
 from __future__ import annotations
 from typing import Any, Optional
 from dataclasses import dataclass
-from typing import Sequence, List, Optional, Dict, Any
+from typing import List, Dict
+from collections.abc import Sequence
 import numpy as np
 
 from ..sources.bitstream_current_source import BitstreamCurrentSource

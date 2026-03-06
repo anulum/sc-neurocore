@@ -25,8 +25,7 @@ Motor output (2 channels)
 """
 
 
-from dataclasses import dataclass, field
-from typing import Optional
+from dataclasses import dataclass
 
 import numpy as np
 

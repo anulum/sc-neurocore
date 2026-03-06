@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-from typing import Any, Optional
+from typing import Any
 import logging
 import yaml
 from dataclasses import dataclass, field, asdict
-from typing import Dict, Any
+from typing import Dict
 
 logger = logging.getLogger(__name__)
 

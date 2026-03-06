@@ -9,17 +9,17 @@ import jax.numpy as jnp
 from sc_neurocore.adapters.holonomic.l1_quantum import L1_QuantumAdapter, L1_HolonomicParameters
 from sc_neurocore.adapters.holonomic.l2_chem import L2_NeurochemicalAdapter, L2_HolonomicParameters
 from sc_neurocore.adapters.holonomic.l3_gen import L3_GenomicAdapter, L3_HolonomicParameters
-from sc_neurocore.adapters.holonomic.l4_cell import L4_CellularAdapter, L4_HolonomicParameters
-from sc_neurocore.adapters.holonomic.l5_org import L5_OrganismalAdapter, L5_HolonomicParameters
-from sc_neurocore.adapters.holonomic.l6_plan import L6_PlanetaryAdapter, L6_HolonomicParameters
-from sc_neurocore.adapters.holonomic.l11_noos import L11_NoosphericAdapter, L11_HolonomicParameters
-from sc_neurocore.adapters.holonomic.l12_gaian import L12_GaianAdapter, L12_HolonomicParameters
+from sc_neurocore.adapters.holonomic.l4_cell import L4_CellularAdapter
+from sc_neurocore.adapters.holonomic.l5_org import L5_OrganismalAdapter
+from sc_neurocore.adapters.holonomic.l6_plan import L6_PlanetaryAdapter
+from sc_neurocore.adapters.holonomic.l11_noos import L11_NoosphericAdapter
+from sc_neurocore.adapters.holonomic.l12_gaian import L12_GaianAdapter
 from sc_neurocore.quantum.qec import QecShield
 from sc_neurocore.compiler.pipeline import CompilerPipeline
-from sc_neurocore.adapters.holonomic.l7_sym import L7_SymbolicAdapter, L7_HolonomicParameters
-from sc_neurocore.adapters.holonomic.l8_cosm import L8_CosmicAdapter, L8_HolonomicParameters
-from sc_neurocore.adapters.holonomic.l9_mem import L9_MemoryAdapter, L9_HolonomicParameters
-from sc_neurocore.adapters.holonomic.l10_fire import L10_FirewallAdapter, L10_HolonomicParameters
+from sc_neurocore.adapters.holonomic.l7_sym import L7_SymbolicAdapter
+from sc_neurocore.adapters.holonomic.l8_cosm import L8_CosmicAdapter
+from sc_neurocore.adapters.holonomic.l9_mem import L9_MemoryAdapter
+from sc_neurocore.adapters.holonomic.l10_fire import L10_FirewallAdapter
 from sc_neurocore.adapters.holonomic.dna_storage import DNAEncoder
 from sc_neurocore.adapters.holonomic.grn import GeneticRegulatoryLayer
 from sc_neurocore.adapters.holonomic.neuromodulation import NeuromodulatorSystem

@@ -3,7 +3,7 @@ from typing import Any, Optional
 import logging
 import numpy as np
 from dataclasses import dataclass, field
-from typing import List, Any, Dict, Optional
+from typing import List, Dict
 from .tensor_stream import TensorStream
 
 logger = logging.getLogger(__name__)

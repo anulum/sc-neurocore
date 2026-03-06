@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 from __future__ import annotations
-from typing import Any, Optional
+from typing import Any
 
 """
 GPU/CPU dual-path array module for SC-NeuroCore.
@@ -41,7 +41,7 @@ except Exception:
 # ---------------------------------------------------------------------------
 
 
-def to_device(arr: np.ndarray[Any, Any]) -> "xp.ndarray":  # type: ignore
+def to_device(arr: np.ndarray[Any, Any]) -> xp.ndarray:  # type: ignore
     """Move a NumPy array to the active backend (GPU copy or no-op)."""
     if HAS_CUPY:  # pragma: no cover
         return cp.asarray(arr)
@@ -60,7 +60,7 @@ def to_host(arr) -> np.ndarray[Any, Any]:  # type: ignore
 # ---------------------------------------------------------------------------
 
 
-def gpu_pack_bitstream(bits: "xp.ndarray") -> "xp.ndarray":  # type: ignore
+def gpu_pack_bitstream(bits: xp.ndarray) -> xp.ndarray:  # type: ignore
     """
     Pack uint8 {0,1} array into uint64 words.
 
@@ -96,12 +96,12 @@ def gpu_pack_bitstream(bits: "xp.ndarray") -> "xp.ndarray":  # type: ignore
     raise ValueError(f"Expected 1-D or 2-D, got {bits.ndim}-D")
 
 
-def gpu_vec_and(a: "xp.ndarray", b: "xp.ndarray") -> "xp.ndarray":  # type: ignore
+def gpu_vec_and(a: xp.ndarray, b: xp.ndarray) -> xp.ndarray:  # type: ignore
     """Bitwise AND on packed uint64 arrays (SC multiplication)."""
     return xp.bitwise_and(a, b)
 
 
-def gpu_popcount(packed: "xp.ndarray") -> "xp.ndarray":  # type: ignore
+def gpu_popcount(packed: xp.ndarray) -> xp.ndarray:  # type: ignore
     """
     Vectorised SWAR popcount on uint64 arrays — returns per-element counts.
 
@@ -122,9 +122,9 @@ def gpu_popcount(packed: "xp.ndarray") -> "xp.ndarray":  # type: ignore
 
 
 def gpu_vec_mac(
-    packed_weights: "xp.ndarray",  # type: ignore
-    packed_inputs: "xp.ndarray",  # type: ignore
-) -> "xp.ndarray":  # type: ignore
+    packed_weights: xp.ndarray,  # type: ignore
+    packed_inputs: xp.ndarray,  # type: ignore
+) -> xp.ndarray:  # type: ignore
     """
     GPU-accelerated multiply-accumulate for a dense SC layer.
 

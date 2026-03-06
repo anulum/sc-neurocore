@@ -11,7 +11,6 @@ Tests:
 
 import pytest
 import numpy as np
-from dataclasses import dataclass
 
 import sys
 import os
