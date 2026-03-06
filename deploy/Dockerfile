@@ -2,7 +2,7 @@
 # syntax=docker/dockerfile:1
 
 ARG PYTHON_VERSION=3.12
-ARG RUST_VERSION=1.85
+ARG RUST_VERSION=stable
 
 # ── Stage 1: Rust engine build ───────────────────────────────────
 FROM python:${PYTHON_VERSION}-slim AS rust-builder
