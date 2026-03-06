@@ -6,6 +6,35 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 _No unreleased changes._
 
+## [3.9.0] - 2026-03-06
+
+### SCPN Layers
+- **L8-L16 pure NumPy layers**: 9 new layer files completing the full 16-layer SCPN stack (`scpn/layers/l8_phase_field.py` through `l16_director.py`)
+- **16-layer registry**: `LAYER_REGISTRY` dict, `create_full_stack()` now returns all 16 layers
+- **Full integrated step**: `run_integrated_step()` chains L1→L16 with inter-layer coupling
+
+### Quantum Error Correction
+- **SurfaceCodeShield**: d=3 rotated surface code with X/Z stabilizers, syndrome measurement, lookup-table decoding — corrects arbitrary single-qubit errors
+- Extensible to d=5 (encode/decode/syndrome paths support arbitrary odd distance)
+
+### Benchmarks
+- Fixed double-step bug in `benchmarks/snn_comparison.py` (neurons were advanced twice per timestep)
+- Fixed Lava stub notes (requires Loihi 2 hardware)
+- Fixed `benchmark_suite.py` output path → `benchmarks/results/`
+- SNN comparison results recorded in `docs/benchmarks/BENCHMARKS.md`
+
+### Formal Verification
+- **LIF neuron**: `hdl/formal/sc_lif_neuron.sby` + `sc_lif_neuron_formal.v` — 5 properties (reset, spike-reset, refractory clamp, counter bound, spike reachability)
+- **Bitstream synapse**: `hdl/formal/sc_bitstream_synapse.sby` + `sc_bitstream_synapse_formal.v` — 4 properties (AND correctness, zero propagation, full-high, input coverage)
+
+### Testing
+- 6 cross-layer coupling integration tests (`test_scpn_cross_layer.py`)
+- 9 surface code QEC tests (`test_qec_surface.py`)
+- Test count: 945 → 960+
+
+### Documentation
+- JOSS paper: updated test count (960), qualified LUT claim, added Brunel/NeuroBench/LFSR bib entries
+
 ## [3.8.2] - 2026-03-06
 
 ### Documentation & Adoption

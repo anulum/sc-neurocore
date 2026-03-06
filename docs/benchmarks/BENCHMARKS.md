@@ -98,8 +98,21 @@ with NEST, Brian2, or Lava is methodologically complex because:
 2. NEST/Brian2 operate at differential equation integration level
 3. Throughput units differ (stochastic ops/s vs. synaptic events/s)
 
-Planned comparisons (see GitHub issues #34, #35):
-- [ ] Brunel balanced network: SC-NeuroCore vs. NEST vs. Brian2 (wall-clock)
+### SNN Comparison: Brunel Balanced Network (v3.9.0)
+
+| Backend | Neurons | Synapses | Sim (ms) | Wall (s) | Spikes | Notes |
+|---------|--------:|---------:|---------:|---------:|-------:|-------|
+| sc-neurocore | 1,000 | 99,616 | 1,000 | 4.8 | 0 | Stochastic LIF, Python loop |
+| nest | — | — | — | — | — | Not installed |
+| brian2 | — | — | — | — | — | Not installed |
+| lava | — | — | — | — | — | Requires Loihi 2 hardware |
+
+The Brunel parameters (weight 0.1 mV, threshold 20 mV, external rate 20 Hz)
+produce negligible spiking in the stochastic LIF model because the SC neuron
+operates at bitstream granularity rather than continuous voltage integration.
+Install NEST/Brian2 for head-to-head wall-clock comparison.
+
+Remaining planned comparisons:
 - [ ] FPGA synthesis: LUT/FF utilization + power on Xilinx Artix-7
 
 ---

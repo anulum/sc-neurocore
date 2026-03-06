@@ -2,21 +2,15 @@
 from typing import Any, Optional
 
 """
-SCPN Layers Module
-==================
+SCPN Layers Module — Full 16-Layer Hierarchy
+=============================================
 
-Stochastic implementations of the SCPN (Self-Consistent Phenomenological Network)
-layer hierarchy for the sc-neurocore framework.
+Stochastic (pure NumPy) implementations of all 16 SCPN layers.
 
-Layer Hierarchy:
-- L1: Quantum Biological (microtubules, NV centers)
-- L2: Neurochemical (receptors, neurotransmitters)
-- L3: Genomic-Epigenomic (CISS, bioelectric, chromatin)
-- L4: Cellular-Tissue Synchronization (gap junctions, calcium waves)
-- L5: Organismal-Psychoemotional (HRV, autonomic, emotions)
-- L6: Ecological-Planetary (Schumann, geomagnetic, biosphere)
-- L7: Geometric-Symbolic (sacred geometry, E8, acupuncture)
-
+L1-L7:  Biological/physical substrate (quantum → symbolic)
+L8-L10: Cosmic/memory/boundary control
+L11-L13: Informational/ecological/temporal binding
+L14-L16: Integration, meta-cognition, cybernetic closure
 """
 
 from .l1_quantum import L1_QuantumLayer, L1_StochasticParameters
@@ -26,54 +20,75 @@ from .l4_cellular import L4_CellularLayer, L4_StochasticParameters
 from .l5_organismal import L5_OrganismalLayer, L5_StochasticParameters
 from .l6_ecological import L6_EcologicalLayer, L6_StochasticParameters
 from .l7_symbolic import L7_SymbolicLayer, L7_StochasticParameters
+from .l8_phase_field import L8_PhaseFieldLayer, L8_StochasticParameters
+from .l9_memory import L9_MemoryLayer, L9_StochasticParameters
+from .l10_boundary import L10_BoundaryLayer, L10_StochasticParameters
+from .l11_morphic import L11_MorphicLayer, L11_StochasticParameters
+from .l12_quantum_info import L12_QuantumInfoLayer, L12_StochasticParameters
+from .l13_temporal import L13_TemporalLayer, L13_StochasticParameters
+from .l14_integration import L14_IntegrationLayer, L14_StochasticParameters
+from .l15_meta import L15_MetaLayer, L15_StochasticParameters
+from .l16_director import L16_DirectorLayer, L16_StochasticParameters
 
 __all__ = [
-    # L1 Quantum
     "L1_QuantumLayer",
     "L1_StochasticParameters",
-    # L2 Neurochemical
     "L2_NeurochemicalLayer",
     "L2_StochasticParameters",
-    # L3 Genomic
     "L3_GenomicLayer",
     "L3_StochasticParameters",
-    # L4 Cellular
     "L4_CellularLayer",
     "L4_StochasticParameters",
-    # L5 Organismal
     "L5_OrganismalLayer",
     "L5_StochasticParameters",
-    # L6 Ecological
     "L6_EcologicalLayer",
     "L6_StochasticParameters",
-    # L7 Symbolic
     "L7_SymbolicLayer",
     "L7_StochasticParameters",
+    "L8_PhaseFieldLayer",
+    "L8_StochasticParameters",
+    "L9_MemoryLayer",
+    "L9_StochasticParameters",
+    "L10_BoundaryLayer",
+    "L10_StochasticParameters",
+    "L11_MorphicLayer",
+    "L11_StochasticParameters",
+    "L12_QuantumInfoLayer",
+    "L12_StochasticParameters",
+    "L13_TemporalLayer",
+    "L13_StochasticParameters",
+    "L14_IntegrationLayer",
+    "L14_StochasticParameters",
+    "L15_MetaLayer",
+    "L15_StochasticParameters",
+    "L16_DirectorLayer",
+    "L16_StochasticParameters",
 ]
+
+LAYER_REGISTRY = {
+    "l1": L1_QuantumLayer,
+    "l2": L2_NeurochemicalLayer,
+    "l3": L3_GenomicLayer,
+    "l4": L4_CellularLayer,
+    "l5": L5_OrganismalLayer,
+    "l6": L6_EcologicalLayer,
+    "l7": L7_SymbolicLayer,
+    "l8": L8_PhaseFieldLayer,
+    "l9": L9_MemoryLayer,
+    "l10": L10_BoundaryLayer,
+    "l11": L11_MorphicLayer,
+    "l12": L12_QuantumInfoLayer,
+    "l13": L13_TemporalLayer,
+    "l14": L14_IntegrationLayer,
+    "l15": L15_MetaLayer,
+    "l16": L16_DirectorLayer,
+}
 
 
 def create_full_stack(params: Optional[dict[str, Any]] = None) -> dict[str, Any]:
-    """
-    Create a complete SCPN layer stack with default or custom parameters.
-
-    Args:
-        params: Optional dict with layer-specific parameter overrides.
-                Keys: 'l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'
-
-    Returns:
-        Dict with layer instances keyed by layer name.
-    """
+    """Create a complete 16-layer SCPN stack."""
     params = params or {}
-
-    return {
-        "l1": L1_QuantumLayer(params.get("l1")),
-        "l2": L2_NeurochemicalLayer(params.get("l2")),
-        "l3": L3_GenomicLayer(params.get("l3")),
-        "l4": L4_CellularLayer(params.get("l4")),
-        "l5": L5_OrganismalLayer(params.get("l5")),
-        "l6": L6_EcologicalLayer(params.get("l6")),
-        "l7": L7_SymbolicLayer(params.get("l7")),
-    }
+    return {key: cls(params.get(key)) for key, cls in LAYER_REGISTRY.items()}
 
 
 def run_integrated_step(
@@ -81,14 +96,6 @@ def run_integrated_step(
 ) -> dict[str, Any]:
     """
     Run one integrated time step across all SCPN layers with inter-layer coupling.
-
-    Args:
-        layers: Dict of layer instances from create_full_stack().
-        dt: Time step in seconds.
-        inputs: Optional external inputs for specific layers.
-
-    Returns:
-        Dict with outputs from each layer.
     """
     inputs = inputs or {}
     outputs = {}
@@ -136,17 +143,46 @@ def run_integrated_step(
     )
     outputs["l7"] = l7_out
 
+    # L8: Phase Field / Cosmic (receives L7 symbolic)
+    l8_out = layers["l8"].step(dt, l7_input=l7_out)
+    outputs["l8"] = l8_out
+
+    # L9: Memory (receives L8 cosmic alignment)
+    l9_out = layers["l9"].step(dt, l8_input=l8_out)
+    outputs["l9"] = l9_out
+
+    # L10: Boundary (receives L9 retrieval quality)
+    l10_out = layers["l10"].step(dt, l9_input=l9_out)
+    outputs["l10"] = l10_out
+
+    # L11: Morphic (receives L10 integrity)
+    l11_out = layers["l11"].step(dt, l10_input=l10_out)
+    outputs["l11"] = l11_out
+
+    # L12: Quantum Info (receives L11 info saturation)
+    l12_out = layers["l12"].step(dt, l11_input=l11_out)
+    outputs["l12"] = l12_out
+
+    # L13: Temporal (receives L12 coherence)
+    l13_out = layers["l13"].step(dt, l12_input=l12_out)
+    outputs["l13"] = l13_out
+
+    # L14: Integration (receives metrics from all layers)
+    all_metrics = get_global_metrics(layers)
+    l14_out = layers["l14"].step(dt, layer_metrics=all_metrics)
+    outputs["l14"] = l14_out
+
+    # L15: Meta-cognitive (receives L14 integrated coherence)
+    l15_out = layers["l15"].step(dt, l14_input=l14_out)
+    outputs["l15"] = l15_out
+
+    # L16: Director (receives L15 GCI)
+    l16_out = layers["l16"].step(dt, l15_input=l15_out)
+    outputs["l16"] = l16_out
+
     return outputs
 
 
 def get_global_metrics(layers: dict[str, Any]) -> dict[str, Any]:
     """Get global coherence metrics from all layers."""
-    return {
-        "l1_quantum_coherence": layers["l1"].get_global_metric(),
-        "l2_neurochemical_activity": layers["l2"].get_global_metric(),
-        "l3_genomic_expression": layers["l3"].get_global_metric(),
-        "l4_cellular_sync": layers["l4"].get_global_metric(),
-        "l5_organismal_coherence": layers["l5"].get_global_metric(),
-        "l6_planetary_coherence": layers["l6"].get_global_metric(),
-        "l7_symbolic_health": layers["l7"].get_global_metric(),
-    }
+    return {f"l{i}": layers[f"l{i}"].get_global_metric() for i in range(1, 17) if f"l{i}" in layers}

@@ -54,8 +54,9 @@ model matches the hardware. SC-NeuroCore closes this gap by offering:
 
 3. **Hardware target**: An IR compiler lowers network descriptions to
    SystemVerilog with AXI-Lite configuration, targeting Xilinx and Intel
-   FPGAs. Each LIF neuron pipeline maps to fewer than 100 LUTs on an
-   Artix-7.
+   FPGAs. Synthesis of the `sc_bitstream_encoder` module yields fewer
+   than 100 LUTs on an Artix-7 (estimated; full LIF neuron synthesis
+   pending hardware validation).
 
 4. **Modular architecture**: A tiered module system separates
    production-ready core primitives (neurons, synapses, layers, HDL
@@ -67,7 +68,11 @@ Existing neuromorphic simulators---NEST [@gewaltig2007], Brian2
 network simulation at the differential-equation level. They do not model
 stochastic bitstream-level computation. SC-NeuroCore operates at a
 fundamentally different abstraction: individual AND/OR gates on
-bit-streams, enabling direct correspondence to synthesised hardware.
+bit-streams, enabling direct correspondence to synthesised hardware. The
+framework includes a Brunel balanced network benchmark [@brunel2000] for
+cross-simulator wall-clock comparison and follows the NeuroBench
+[@yik2023neurobench] methodology for standardised reporting. The LFSR
+design draws on maximal-length sequence theory [@golomb1967shift].
 
 # Architecture
 
@@ -111,12 +116,13 @@ for register-based configuration).
 
 # Quality Assurance
 
-SC-NeuroCore maintains 887 tests with 98.4% line coverage, enforced by CI
+SC-NeuroCore maintains 960 tests with 98.5% line coverage, enforced by CI
 on every push. The test suite includes unit tests, integration tests,
-property-based tests (Hypothesis), and hardware co-simulation checks.
-Static analysis comprises Black formatting, Ruff linting, Bandit security
-scanning, and SPDX license header validation. OpenSSF Scorecard and Best
-Practices badges track supply-chain security posture.
+property-based tests (Hypothesis), cross-layer coupling tests, quantum
+error correction tests, and hardware co-simulation checks. Static analysis
+comprises Black formatting, Ruff linting, Bandit security scanning, and
+SPDX license header validation. OpenSSF Scorecard and Best Practices
+badges track supply-chain security posture.
 
 # Acknowledgements
 

@@ -1,0 +1,15 @@
+[options]
+mode prove
+depth 25
+
+[engines]
+smtbmc
+
+[script]
+read -formal sc_lif_neuron_formal.v
+read -formal sc_lif_neuron.v
+prep -top sc_lif_neuron_formal
+
+[files]
+sc_lif_neuron_formal.v
+../sc_lif_neuron.v
