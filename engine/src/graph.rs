@@ -112,12 +112,8 @@ impl CsrMatrix {
 
 /// Adjacency storage: dense or sparse CSR.
 pub enum AdjStorage {
-    Dense {
-        adj: Vec<f64>,
-    },
-    Sparse {
-        csr: CsrMatrix,
-    },
+    Dense { adj: Vec<f64> },
+    Sparse { csr: CsrMatrix },
 }
 
 pub struct StochasticGraphLayer {
@@ -172,11 +168,7 @@ impl StochasticGraphLayer {
     }
 
     /// Construct from pre-built CSR adjacency.
-    pub fn new_sparse(
-        csr: CsrMatrix,
-        n_features: usize,
-        seed: u64,
-    ) -> Result<Self, String> {
+    pub fn new_sparse(csr: CsrMatrix, n_features: usize, seed: u64) -> Result<Self, String> {
         if csr.n_rows != csr.n_cols {
             return Err(format!(
                 "CSR must be square, got {}x{}",
