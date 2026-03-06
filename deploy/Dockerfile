@@ -26,7 +26,7 @@ COPY bridge/ ./bridge/
 COPY README.md ./README.md
 
 RUN cd bridge && maturin build --release --interpreter python3 \
-    && ls /build/bridge/target/wheels/
+    && ls /build/target/wheels/
 
 # ── Stage 2: Python package build ────────────────────────────────
 FROM python:${PYTHON_VERSION}-slim AS py-builder
@@ -41,7 +41,7 @@ COPY src/ ./src/
 
 RUN pip install --no-cache-dir --prefix=/install .
 
-COPY --from=rust-builder /build/bridge/target/wheels/*.whl /tmp/
+COPY --from=rust-builder /build/target/wheels/*.whl /tmp/
 RUN pip install --no-cache-dir --prefix=/install /tmp/*.whl
 
 # ── Stage 3: Runtime ─────────────────────────────────────────────
