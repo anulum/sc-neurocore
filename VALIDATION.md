@@ -4,12 +4,12 @@
 
 | Suite | Count | Scope |
 |-------|------:|-------|
-| Python unit/integration | 1024 | `pytest tests/` across 82 files |
+| Python unit/integration | 1058 | `pytest tests/` across 82+ files |
 | Rust engine | — | `cargo test --manifest-path engine/Cargo.toml` |
 | Bridge (PyO3) | — | Maturin build + Python import smoke test |
 | HDL formal verification | 11 | Verilog modules in `hdl/` with testbenches in `tb/` |
 
-CI runs tests on Python 3.11–3.12 (Ubuntu) and Rust on Ubuntu + Windows.
+CI runs tests on Python 3.10–3.12 (Ubuntu) and Rust on Ubuntu + Windows.
 
 ## CI Validation Gates
 
@@ -17,24 +17,31 @@ All gates must pass before merge.
 
 | Gate | Workflow | What it enforces |
 |------|----------|------------------|
-| lint | `ci.yml` | `black --check` (pinned 24.4.2) |
-| test + coverage | `ci.yml` | `pytest --cov-fail-under=97` on Python 3.11, 3.12 |
+| black | `ci.yml` | `black --check` (pinned 25.1.0) |
+| ruff | `ci.yml` | `ruff check` (import hygiene, code quality) |
+| bandit | `ci.yml` | Security static analysis (SAST) |
+| test + coverage | `ci.yml` | `pytest --cov-fail-under=98` on Python 3.10, 3.11, 3.12 |
+| spdx-guard | `ci.yml` | SPDX license headers on all `.py`, `.rs`, `.v` files |
 | build | `ci.yml` | `python -m build` + smoke import |
 | rust-lint | `v3-engine.yml` | `cargo fmt --check` + `cargo clippy -D warnings` |
 | rust-test | `v3-engine.yml` | `cargo test` on Ubuntu + Windows |
 | bridge-build | `v3-engine.yml` | Maturin build + v3 integration tests |
 | wheels | `v3-wheels.yml` | Cross-platform wheel builds (Linux, macOS, Windows) |
+| pre-commit | `pre-commit.yml` | Trailing whitespace, YAML/TOML, typos, black |
+| codeql | `codeql.yml` | GitHub CodeQL security analysis |
+| scorecard | `scorecard.yml` | OpenSSF Scorecard supply-chain audit |
 | docs | `docs.yml` | MkDocs build verification |
 
 ## Coverage Policy
 
-- Threshold: 97% (enforced by `pytest --cov-fail-under=97`)
+- Threshold: 98% (enforced by `pytest --cov-fail-under=98`)
 - Omitted modules (documented in `pyproject.toml [tool.coverage.run] omit`):
-  - `experiments/`, `drivers/`, `spatial/` — research-only code
-  - `swarm/` — neuroevolution environment (tested separately)
+  - `experiments/` — research demo scripts
+  - `drivers/` — hardware-dependent PYNQ drivers
+  - `interfaces/ccw_bridge.py` — CCW integration (tested in CCW repo)
   - `audio/adaptive_engine.py`, `audio/evs_engine.py` — hardware-dependent
   - `sleep/` — hardware-dependent biofeedback
-  - `chaos/rng.py` — CSPRNG with platform-specific entropy
+  - `swarm/` — neuroevolution environment
 - Excluded lines: `pragma: no cover`, `if __name__`, `raise NotImplementedError`,
   conditional imports (`HAS_MPI`, `HAS_CUPY`, `HAS_NUMBA`)
 
