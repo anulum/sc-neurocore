@@ -35,6 +35,7 @@ Every push is guarded by `tools/preflight.py`, which runs the same checks as CI:
 | Gate | What it checks |
 |------|----------------|
 | **black** | Python formatting (`src/` and `tests/`) |
+| **ruff** | Code quality and import hygiene |
 | **bandit** | Security static analysis |
 | **spdx-guard** | SPDX license headers on all source files |
 | **pytest** | 1058+ tests with 98% coverage gate |
@@ -51,7 +52,7 @@ The `.githooks/pre-push` hook runs `preflight-fast` automatically before every `
 ### Code Style
 
 - **Rust**: `cargo fmt` before committing.
-- **Python**: `black` + `ruff`. Use type hints on public APIs only.
+- **Python**: `black` + `ruff` (both enforced in CI and preflight). Use type hints on public APIs only.
 - **SPDX header**: Every `.py`, `.rs`, `.v` file must start with `# SPDX-License-Identifier: AGPL-3.0-or-later`.
 
 ### Testing
