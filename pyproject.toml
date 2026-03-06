@@ -88,6 +88,10 @@ exclude_lines = [
     "if HAS_MPI",
     "if HAS_CUPY",
     "if HAS_NUMBA",
+    "if HAS_JAX",
+    "if HAS_QISKIT",
+    "if HAS_PENNYLANE",
+    "except ImportError",
 ]
 
 [tool.black]
