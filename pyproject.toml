@@ -95,7 +95,6 @@ omit = [
     "*/audio/evs_engine.py",
     "*/sleep/report_generator.py",
     "*/sleep/sleep_optimizer.py",
-    "*/swarm/*",
 ]
 
 [tool.coverage.report]
