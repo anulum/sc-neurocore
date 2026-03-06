@@ -237,12 +237,12 @@ impl StochasticGraphLayer {
             .map(|i| {
                 let agg = &agg_flat[i * self.n_features..(i + 1) * self.n_features];
                 let mut out = vec![0.0_f64; self.n_features];
-                for f_out in 0..self.n_features {
+                for (f_out, out_val) in out.iter_mut().enumerate().take(self.n_features) {
                     let mut acc = 0.0_f64;
-                    for g in 0..self.n_features {
-                        acc += agg[g] * self.weights[g * self.n_features + f_out];
+                    for (g, agg_val) in agg.iter().enumerate().take(self.n_features) {
+                        acc += *agg_val * self.weights[g * self.n_features + f_out];
                     }
-                    out[f_out] = acc.tanh();
+                    *out_val = acc.tanh();
                 }
                 out
             })
