@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 from __future__ import annotations
-from typing import Any, Optional
+from typing import Any
 
 """Circadian rhythm modelling and chronotype-aware sleep optimisation.
 
@@ -13,7 +13,7 @@ melatonin-level estimation (sinusoidal model) and protocol recommendations.
 import math
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, Optional, Tuple
+from typing import Dict, Tuple
 
 import numpy as np
 

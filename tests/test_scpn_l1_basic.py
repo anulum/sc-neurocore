@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 import sys
 import os
-import numpy as np
-import pytest
 
 # Adjust path to find sc_neurocore
 sys.path.append(os.path.join(os.path.dirname(__file__), "../src"))

@@ -21,7 +21,6 @@ from sc_neurocore.swarm import (
     AgentConfig,
     EnvConfig,
     EvolverConfig,
-    SwarmAgent,
     SwarmEnvironment,
     SwarmEvolver,
     SwarmFitness,
@@ -119,7 +118,7 @@ def run_demo() -> None:
     # --- Final state ---
     state = replay_env.get_state()
     print(f"\n  Targets captured : {state['targets_captured']}")
-    print(f"  Final positions:")
+    print("  Final positions:")
     for i, (x, y) in enumerate(state["positions"]):
         print(f"    Agent {i:2d}: ({x:6.1f}, {y:6.1f})")
 

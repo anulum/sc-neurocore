@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 from __future__ import annotations
-from typing import Any, Optional
+from typing import Any
 
 """Bridge utilities for converting weights between DL frameworks and SC-NeuroCore."""
 
 import logging
-from typing import Dict, Any
+from typing import Dict
 import numpy as np
 
 logger = logging.getLogger(__name__)

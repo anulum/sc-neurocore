@@ -18,10 +18,8 @@ from dataclasses import dataclass
 from typing import Any, Dict, Optional, Tuple
 import jax
 import jax.numpy as jnp
-import numpy as np
 
 from ..base import BaseStochasticAdapter
-from ...accel.jax_backend import HAS_JAX, to_jax, to_host
 
 
 @dataclass

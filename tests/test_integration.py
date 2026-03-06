@@ -1,6 +1,4 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-import pytest
-import numpy as np
 from sc_neurocore.sources.bitstream_current_source import BitstreamCurrentSource
 from sc_neurocore.neurons.stochastic_lif import StochasticLIFNeuron
 from sc_neurocore.recorders.spike_recorder import BitstreamSpikeRecorder

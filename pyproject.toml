@@ -105,7 +105,17 @@ target-version = "py39"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "SIM"]
-ignore = ["E501", "E402", "I001"]
+ignore = [
+  "E501",   # line too long (black handles formatting)
+  "E402",   # module-level import not at top (test files use mid-file imports)
+  "E741",   # ambiguous variable name (I is standard for current in physics)
+  "I001",   # import sorting (not enforced yet, ~500 pre-existing violations)
+  "UP006", "UP031", "UP035", "UP037", "UP045",  # typing modernization (needs __future__ annotations)
+  "F841",   # unused variable (many in demo/experiment scripts)
+  "SIM102", "SIM105", "SIM108",  # style simplifications
+  "B007",   # unused loop control variable
+  "B017", "B018", "B023", "B028", "B904",  # minor bugbear rules
+]
 
 [tool.bandit]
 skips = ["B101", "B311", "B404", "B603", "B607"]

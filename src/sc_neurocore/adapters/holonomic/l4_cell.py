@@ -15,13 +15,11 @@ Key Equations:
 
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional
 import jax
 import jax.numpy as jnp
-import numpy as np
 
 from ..base import BaseStochasticAdapter
-from ...accel.jax_backend import HAS_JAX, to_jax, to_host
 
 
 @dataclass

@@ -17,8 +17,8 @@ self-contained: no JAX, no PyTorch, no ripser -- just numpy.
 
 
 import logging
-from dataclasses import dataclass, field
-from typing import Dict, Optional
+from dataclasses import dataclass
+from typing import Dict
 
 import numpy as np
 

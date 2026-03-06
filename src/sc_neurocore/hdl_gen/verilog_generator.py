@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-from typing import Any, Optional
+from typing import Any
 import logging
 from typing import Dict
 

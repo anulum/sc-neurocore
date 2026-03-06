@@ -21,7 +21,7 @@ Key Features:
 from dataclasses import dataclass
 import numpy as np
 import logging
-from typing import Dict, Optional
+from typing import Dict
 
 logger = logging.getLogger(__name__)
 

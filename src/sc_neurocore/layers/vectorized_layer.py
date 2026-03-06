@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 from __future__ import annotations
-from typing import Any, Optional
+from typing import Any
 from dataclasses import dataclass
 import numpy as np
-from typing import Sequence
+from collections.abc import Sequence
 
 from ..accel.vector_ops import pack_bitstream, vec_and, vec_popcount
 from ..accel.gpu_backend import (

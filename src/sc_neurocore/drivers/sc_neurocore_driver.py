@@ -44,7 +44,7 @@ class SC_NeuroCore_Driver:
         Attempts to load the PYNQ libraries and flash the bitstream.
         """
         try:
-            from pynq import Overlay, allocate  # type: ignore
+            from pynq import Overlay, allocate  # type: ignore  # noqa: F401
 
             if not os.path.exists(self.bitstream_path):
                 # Look in standard install location if not local

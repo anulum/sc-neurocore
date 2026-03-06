@@ -15,8 +15,7 @@ uniform crossover of two random elite parents plus Gaussian mutation.
 """
 
 
-from dataclasses import dataclass, field
-from typing import Optional
+from dataclasses import dataclass
 
 import numpy as np
 

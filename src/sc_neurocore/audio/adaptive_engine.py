@@ -21,7 +21,7 @@ by modulating the SSGFEngine configuration (sigma_g, lr_z, field_pressure).
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import numpy as np
 

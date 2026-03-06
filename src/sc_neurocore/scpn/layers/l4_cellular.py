@@ -20,7 +20,7 @@ Key Features:
 from dataclasses import dataclass
 import numpy as np
 import logging
-from typing import Dict, Optional, Tuple
+from typing import Dict, Tuple
 
 logger = logging.getLogger(__name__)
 

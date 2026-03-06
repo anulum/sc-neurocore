@@ -7,11 +7,9 @@ selected automatically at import time.
 """
 
 import numpy as np
-import pytest
 
 from sc_neurocore.accel.gpu_backend import (
     xp,
-    HAS_CUPY,
     to_device,
     to_host,
     gpu_pack_bitstream,

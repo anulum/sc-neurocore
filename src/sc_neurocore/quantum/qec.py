@@ -7,8 +7,7 @@ to protect quantum-classical bitstreams from noise during IBMQ hardware executio
 """
 
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 import numpy as np
 
 

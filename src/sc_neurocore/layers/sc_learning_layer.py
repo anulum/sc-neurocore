@@ -2,7 +2,8 @@
 from __future__ import annotations
 from typing import Any, Optional
 from dataclasses import dataclass
-from typing import Sequence, List, Optional
+from typing import List
+from collections.abc import Sequence
 import numpy as np
 
 from ..synapses.stochastic_stdp import StochasticSTDPSynapse

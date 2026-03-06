@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-from typing import Any, Optional
+from typing import Any
 from dataclasses import dataclass
 import numpy as np
 

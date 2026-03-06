@@ -26,7 +26,6 @@ from .l4_cellular import L4_CellularLayer, L4_StochasticParameters
 from .l5_organismal import L5_OrganismalLayer, L5_StochasticParameters
 from .l6_ecological import L6_EcologicalLayer, L6_StochasticParameters
 from .l7_symbolic import L7_SymbolicLayer, L7_StochasticParameters
-from typing import Optional
 
 __all__ = [
     # L1 Quantum
