@@ -1,4 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# © 1998–2026 Miroslav Šotek. All rights reserved.
+# Contact: www.anulum.li | protoscience@anulum.li
 name: Release
 
 on:
@@ -8,6 +10,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -16,12 +22,21 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Build sdist
+        run: |
+          pip install build
+          python -m build --sdist
+
       - name: Extract changelog for this tag
         id: changelog
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
           VERSION="${TAG#v}"
-          awk "/^## ${VERSION}/,/^## [0-9]/" CHANGELOG.md \
+          awk "/^## \[?${VERSION}/,/^## \[?[0-9]/" CHANGELOG.md \
             | head -n -1 > /tmp/release_notes.md
           echo "notes_file=/tmp/release_notes.md" >> "$GITHUB_OUTPUT"
 
@@ -30,3 +45,4 @@ jobs:
         with:
           body_path: ${{ steps.changelog.outputs.notes_file }}
           generate_release_notes: false
+          files: dist/*.tar.gz
