@@ -29,6 +29,7 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Programming Language :: Rust",
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
   "Topic :: Scientific/Engineering :: Electronic Design Automation (Verilog/VHDL)",
@@ -59,6 +60,7 @@ full = ["networkx", "onnx", "qiskit", "pennylane"]
 research = ["networkx", "onnx", "torch>=2.0"]
 jax = ["jax", "jaxlib"]
 quantum = ["qiskit", "pennylane", "qiskit-aer"]
+docs = ["mkdocs>=1.6", "mkdocs-material>=9.5", "mkdocstrings[python]>=0.25"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

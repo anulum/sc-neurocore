@@ -1,0 +1,10 @@
+COPYRIGHT & LICENSE
+
+© 1998–2026 Miroslav Šotek. All rights reserved.
+Contact: www.anulum.li | protoscience@anulum.li
+
+SC-NeuroCore is licensed under the GNU Affero General Public License v3.0
+or later (AGPL-3.0-or-later). See LICENSE for full terms.
+
+The Rust engine crate (sc_neurocore_engine) is available under the same
+AGPL-3.0-or-later license. See engine/LICENSE.
