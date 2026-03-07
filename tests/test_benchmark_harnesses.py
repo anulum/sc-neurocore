@@ -24,8 +24,8 @@ def test_snn_comparison_importable():
     try:
         import snn_comparison
 
-        assert hasattr(snn_comparison, "BRUNEL_DEFAULTS")
-        assert hasattr(snn_comparison, "ALL_BACKENDS")
+        assert hasattr(snn_comparison, "VARIANTS")
+        assert hasattr(snn_comparison, "VariantResult")
     finally:
         sys.path.pop(0)
 
