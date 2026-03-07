@@ -1,0 +1,733 @@
+{
+  "timestamp": "2026-03-07T13:16:19Z",
+  "system": {
+    "platform": "Linux-6.8.0-87-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "cpu": "AMD EPYC 9575F 64-Core Processor",
+    "cpu_count": 8,
+    "gpu": "NVIDIA L40S",
+    "cuda_version": "12.4"
+  },
+  "params": {
+    "sim_ms": 500.0,
+    "repeats": 3,
+    "conn_prob": 0.1,
+    "weight_exc": 0.1,
+    "g_inh": 5.0,
+    "external_rate_hz": 20.0
+  },
+  "scales": [
+    1000,
+    2000,
+    5000,
+    10000,
+    20000,
+    50000
+  ],
+  "data": [
+    {
+      "n_neurons": 1000,
+      "simulator": "sc_numpy_dense",
+      "n_synapses": 100000,
+      "wall_mean_s": 0.0546,
+      "wall_std_s": 0.0013,
+      "wall_min_s": 0.0537,
+      "peak_rss_mb": 0.1,
+      "spikes_mean": 0.0,
+      "rate_mean_hz": 0.0,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.056104297999979735,
+          "peak_rss_mb": 0.125,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.05374923200000126,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.05383876499999474,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 1000,
+      "simulator": "sc_numpy_sparse",
+      "n_synapses": 100000,
+      "wall_mean_s": 0.0527,
+      "wall_std_s": 0.0004,
+      "wall_min_s": 0.0525,
+      "peak_rss_mb": 0.0,
+      "spikes_mean": 0.0,
+      "rate_mean_hz": 0.0,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.05310458400001039,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.05245458199999575,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.05249384499998655,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 1000,
+      "simulator": "sc_pytorch_cuda",
+      "n_synapses": 100000,
+      "wall_mean_s": 0.4029,
+      "wall_std_s": 0.0088,
+      "wall_min_s": 0.3954,
+      "peak_rss_mb": 12.0,
+      "spikes_mean": 0.0,
+      "rate_mean_hz": 0.0,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.4126174369999944,
+          "peak_rss_mb": 11.96484375,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.3953857759999835,
+          "peak_rss_mb": 11.96484375,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.4008124000000066,
+          "peak_rss_mb": 11.96484375,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 1000,
+      "simulator": "brian2",
+      "n_synapses": 100000,
+      "wall_mean_s": 6.2357,
+      "wall_std_s": 7.8614,
+      "wall_min_s": 0.6286,
+      "peak_rss_mb": 24.9,
+      "spikes_mean": 0.0,
+      "rate_mean_hz": 0.0,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 15.221694213999996,
+          "peak_rss_mb": 24.875,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 2.8568222419999927,
+          "peak_rss_mb": 0.125,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.6286223060000111,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 2000,
+      "simulator": "sc_numpy_dense",
+      "n_synapses": 400000,
+      "wall_mean_s": 0.0844,
+      "wall_std_s": 0.0007,
+      "wall_min_s": 0.084,
+      "peak_rss_mb": 0.0,
+      "spikes_mean": 0.0,
+      "rate_mean_hz": 0.0,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.08403054999999426,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.08520540700001789,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.0839606979999985,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 2000,
+      "simulator": "sc_numpy_sparse",
+      "n_synapses": 400000,
+      "wall_mean_s": 0.0839,
+      "wall_std_s": 0.0009,
+      "wall_min_s": 0.0832,
+      "peak_rss_mb": 0.0,
+      "spikes_mean": 0.0,
+      "rate_mean_hz": 0.0,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.08319191600000408,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.08359012399998278,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.08494778299998984,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 2000,
+      "simulator": "sc_pytorch_cuda",
+      "n_synapses": 400000,
+      "wall_mean_s": 0.4231,
+      "wall_std_s": 0.0025,
+      "wall_min_s": 0.4208,
+      "peak_rss_mb": 24.2,
+      "spikes_mean": 0.0,
+      "rate_mean_hz": 0.0,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.4257231329999911,
+          "peak_rss_mb": 24.17431640625,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.42288339399999586,
+          "peak_rss_mb": 24.17431640625,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.4208270849999849,
+          "peak_rss_mb": 24.17431640625,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 2000,
+      "simulator": "brian2",
+      "n_synapses": 400000,
+      "wall_mean_s": 0.6764,
+      "wall_std_s": 0.0165,
+      "wall_min_s": 0.6585,
+      "peak_rss_mb": 0.0,
+      "spikes_mean": 0.0,
+      "rate_mean_hz": 0.0,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.6796145499999966,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.6911486990000242,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.6585224579999931,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 5000,
+      "simulator": "sc_numpy_dense",
+      "n_synapses": 2500000,
+      "wall_mean_s": 0.172,
+      "wall_std_s": 0.0005,
+      "wall_min_s": 0.1715,
+      "peak_rss_mb": 0.0,
+      "spikes_mean": 0.0,
+      "rate_mean_hz": 0.0,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.17230173400000126,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.1715206399999829,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.17230591399999184,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 5000,
+      "simulator": "sc_numpy_sparse",
+      "n_synapses": 2500000,
+      "wall_mean_s": 0.1751,
+      "wall_std_s": 0.0021,
+      "wall_min_s": 0.1737,
+      "peak_rss_mb": 0.0,
+      "spikes_mean": 0.0,
+      "rate_mean_hz": 0.0,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.17410992599999986,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.17366676299999995,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.1775188359999902,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 5000,
+      "simulator": "sc_pytorch_cuda",
+      "n_synapses": 2500000,
+      "wall_mean_s": 0.8012,
+      "wall_std_s": 0.0004,
+      "wall_min_s": 0.8007,
+      "peak_rss_mb": 104.2,
+      "spikes_mean": 0.0,
+      "rate_mean_hz": 0.0,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.8015581429999941,
+          "peak_rss_mb": 104.2470703125,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.800740941000015,
+          "peak_rss_mb": 104.2470703125,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.8012318979999975,
+          "peak_rss_mb": 104.2470703125,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 5000,
+      "simulator": "brian2",
+      "n_synapses": 2500000,
+      "wall_mean_s": 0.7545,
+      "wall_std_s": 0.0019,
+      "wall_min_s": 0.7524,
+      "peak_rss_mb": 0.0,
+      "spikes_mean": 0.0,
+      "rate_mean_hz": 0.0,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.7524350040000058,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.7551313330000085,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.756004608000012,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 10000,
+      "simulator": "sc_numpy_dense",
+      "n_synapses": 10000000,
+      "wall_mean_s": 0.3199,
+      "wall_std_s": 0.004,
+      "wall_min_s": 0.3155,
+      "peak_rss_mb": 0.0,
+      "spikes_mean": 0.0,
+      "rate_mean_hz": 0.0,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.3154769900000076,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.3210339179999835,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.3232317889999763,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 10000,
+      "simulator": "sc_numpy_sparse",
+      "n_synapses": 10000000,
+      "wall_mean_s": 0.3182,
+      "wall_std_s": 0.0026,
+      "wall_min_s": 0.3166,
+      "peak_rss_mb": 0.0,
+      "spikes_mean": 0.0,
+      "rate_mean_hz": 0.0,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.3211577109999837,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.31656494599999974,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.3167690549999804,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 10000,
+      "simulator": "sc_pytorch_cuda",
+      "n_synapses": 10000000,
+      "wall_mean_s": 3.3857,
+      "wall_std_s": 0.0091,
+      "wall_min_s": 3.3776,
+      "peak_rss_mb": 390.4,
+      "spikes_mean": 0.0,
+      "rate_mean_hz": 0.0,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 3.395520148999992,
+          "peak_rss_mb": 390.3662109375,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 3.3838769780000177,
+          "peak_rss_mb": 390.3662109375,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 3.377636095000014,
+          "peak_rss_mb": 390.3662109375,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 10000,
+      "simulator": "brian2",
+      "n_synapses": 10000000,
+      "wall_mean_s": 0.8971,
+      "wall_std_s": 0.0045,
+      "wall_min_s": 0.8926,
+      "peak_rss_mb": 0.0,
+      "spikes_mean": 0.0,
+      "rate_mean_hz": 0.0,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.9015851539999744,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.8969794330000127,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.892617228000006,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 20000,
+      "simulator": "sc_numpy_dense",
+      "n_synapses": 40000000,
+      "wall_mean_s": 0.6115,
+      "wall_std_s": 0.0021,
+      "wall_min_s": 0.6091,
+      "peak_rss_mb": 0.0,
+      "spikes_mean": 0.0,
+      "rate_mean_hz": 0.0,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.6128294780000374,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.6125353360000076,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.609100307999995,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 20000,
+      "simulator": "sc_numpy_sparse",
+      "n_synapses": 40000000,
+      "wall_mean_s": 0.6089,
+      "wall_std_s": 0.0022,
+      "wall_min_s": 0.6075,
+      "peak_rss_mb": 0.0,
+      "spikes_mean": 0.0,
+      "rate_mean_hz": 0.0,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.6074684989999923,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.6078404209999917,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 0.6114185690000227,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 20000,
+      "simulator": "sc_pytorch_cuda",
+      "n_synapses": 40000000,
+      "wall_mean_s": 11.8084,
+      "wall_std_s": 0.0098,
+      "wall_min_s": 11.7976,
+      "peak_rss_mb": 1534.6,
+      "spikes_mean": 0.0,
+      "rate_mean_hz": 0.0,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 11.797574750000024,
+          "peak_rss_mb": 1534.6044921875,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 11.81657024499998,
+          "peak_rss_mb": 1534.6044921875,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 11.811080473999994,
+          "peak_rss_mb": 1534.6044921875,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 20000,
+      "simulator": "brian2",
+      "n_synapses": 40000000,
+      "wall_mean_s": 1.2435,
+      "wall_std_s": 0.0147,
+      "wall_min_s": 1.2315,
+      "peak_rss_mb": 0.0,
+      "spikes_mean": 0.0,
+      "rate_mean_hz": 0.0,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 1.2314668459999893,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 1.2599448379999671,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 1.239097901999969,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 50000,
+      "simulator": "sc_numpy_sparse",
+      "n_synapses": 250000000,
+      "wall_mean_s": 1.5708,
+      "wall_std_s": 0.2395,
+      "wall_min_s": 1.4234,
+      "peak_rss_mb": 0.0,
+      "spikes_mean": 0.0,
+      "rate_mean_hz": 0.0,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 1.847092153999995,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 1.4418562870000073,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 1.4233574070000259,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 50000,
+      "simulator": "brian2",
+      "n_synapses": 250000000,
+      "wall_mean_s": 2.5377,
+      "wall_std_s": 0.0115,
+      "wall_min_s": 2.5289,
+      "peak_rss_mb": 0.0,
+      "spikes_mean": 0.0,
+      "rate_mean_hz": 0.0,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 2.528890778999994,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 2.550733772000001,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        },
+        {
+          "wall_time_s": 2.533416355999975,
+          "peak_rss_mb": 0.0,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0
+        }
+      ]
+    }
+  ]
+}

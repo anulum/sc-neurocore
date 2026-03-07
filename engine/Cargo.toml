@@ -52,6 +52,10 @@ harness = false
 name = "full_bench"
 harness = false
 
+[[bench]]
+name = "scaling_bench"
+harness = false
+
 [profile.release]
 opt-level = 3
 lto = "fat"
