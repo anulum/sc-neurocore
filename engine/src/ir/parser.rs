@@ -631,11 +631,7 @@ fn parse_graph_forward(text: &str, graph: &mut ScGraph, line: usize) -> Result<(
     Ok(())
 }
 
-fn parse_softmax_attention(
-    text: &str,
-    graph: &mut ScGraph,
-    line: usize,
-) -> Result<(), ParseError> {
+fn parse_softmax_attention(text: &str, graph: &mut ScGraph, line: usize) -> Result<(), ParseError> {
     let parts: Vec<&str> = text.splitn(2, "= sc.softmax_attention").collect();
     if parts.len() != 2 {
         return Err(make_err(line, "malformed sc.softmax_attention"));

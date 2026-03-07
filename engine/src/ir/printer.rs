@@ -137,13 +137,7 @@ pub fn print(graph: &ScGraph) -> String {
                     id, features, adjacency, n_nodes, n_features
                 ));
             }
-            ScOp::SoftmaxAttention {
-                id,
-                q,
-                k,
-                v,
-                dim_k,
-            } => {
+            ScOp::SoftmaxAttention { id, q, k, v, dim_k } => {
                 out.push_str(&format!(
                     "{} = sc.softmax_attention {}, {}, {}, dim_k={} : rate\n",
                     id, q, k, v, dim_k

@@ -260,12 +260,15 @@ pub fn emit(graph: &ScGraph) -> String {
                     ReduceMode::Sum => "/* reduce_sum */",
                     ReduceMode::Max => "/* reduce_max */",
                 };
-                sv.push_str(&format!(
-                    "    assign v{} = {} {};\n",
-                    id.0, in_wire, op
-                ));
+                sv.push_str(&format!("    assign v{} = {} {};\n", id.0, in_wire, op));
             }
-            ScOp::GraphForward { id, features, adjacency, n_nodes, n_features } => {
+            ScOp::GraphForward {
+                id,
+                features,
+                adjacency,
+                n_nodes,
+                n_features,
+            } => {
                 let feat_wire = value_to_wire(graph, *features);
                 let adj_wire = value_to_wire(graph, *adjacency);
                 sv.push_str(&format!(
@@ -286,7 +289,13 @@ pub fn emit(graph: &ScGraph) -> String {
                     dim_k, q_wire, k_wire, v_wire, id.0
                 ));
             }
-            ScOp::KuramotoStep { id, phases, omega, coupling, dt } => {
+            ScOp::KuramotoStep {
+                id,
+                phases,
+                omega,
+                coupling,
+                dt,
+            } => {
                 let ph_wire = value_to_wire(graph, *phases);
                 let om_wire = value_to_wire(graph, *omega);
                 let k_wire = value_to_wire(graph, *coupling);
