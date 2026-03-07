@@ -31,7 +31,6 @@ import gc
 import json
 import os
 import platform
-import sys
 import time
 import tracemalloc
 from dataclasses import asdict, dataclass, field
@@ -395,7 +394,8 @@ def run_pytorch_cuda_sparse(cfg: BrunelConfig) -> RunMetrics | None:
     weights_np, n_synapses = _build_weights_dense(cfg, rng)
 
     from scipy import sparse as sp
-    w_coo = sp.coo_matrix(weights_np)
+    # Transpose: W[i,j] = weight from i→j, so I_j = Σ_i W[i,j]*s[i] = (W^T @ s)[j]
+    w_coo = sp.coo_matrix(weights_np.T)
     indices = np.vstack([w_coo.row, w_coo.col])
     w_sparse = torch.sparse_coo_tensor(
         torch.tensor(indices, dtype=torch.long, device=device),

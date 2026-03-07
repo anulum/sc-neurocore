@@ -224,7 +224,7 @@ BENCHES = [
     ("pack",           [1000, 10000, 100000, 1000000],   bench_pack),
     ("and_popcount",   [1000, 10000, 100000, 1000000],   bench_and_popcount),
     ("dense_sc_layer", [16, 32, 64, 128],                bench_dense_layer),
-    ("kuramoto",       [50, 100, 200, 500, 1000],        bench_kuramoto),
+    ("kuramoto",       [100, 200, 500, 1000],             bench_kuramoto),
 ]
 
 
