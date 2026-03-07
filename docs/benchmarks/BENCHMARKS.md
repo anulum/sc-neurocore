@@ -1,139 +1,357 @@
 # SC-NeuroCore Benchmarks
 
-Performance measurements for sc-neurocore v3.8.2. All numbers are CPU-only
-(NumPy backend) unless noted. Run `python benchmarks/benchmark_suite.py` to
-reproduce.
+Performance measurements for sc-neurocore v3.9.1. All Python numbers are
+CPU-only (NumPy backend). Rust numbers use Criterion with AVX-512 SIMD.
 
 ---
 
-## Environment
+## 1. Environment
 
 | Field | Value |
 |-------|-------|
-| Date | 2026-03-06 |
-| Git tag | v3.8.2 (commit 4f91004) |
+| Date | 2026-03-07 |
+| Git tag | v3.9.1 |
 | OS | Windows 11 Pro 10.0.26200 |
-| CPU | Intel Core i7-10700K (8C/16T, 3.8 GHz base) |
+| CPU | Intel Core i5-11600K (6C/12T, 3.9 GHz base, AVX-512, DL Boost) |
 | RAM | 32 GB DDR4-3200 |
 | Python | 3.12.5 |
 | NumPy | 1.26.4 |
-| Rust engine | not loaded (pure-Python benchmark) |
-| GPU | N/A (CuPy not installed) |
+| Rust | 1.86.0 (stable) |
+| SIMD tier | avx512-vpopcntdq |
+| GPU (NVIDIA) | GeForce GTX 1060 6GB — Pascal sm_61, PyTorch 2.6.0+cu124 |
+| GPU (AMD) | Radeon RX 6600 XT — no ROCm on Windows, torch-directml incompatible |
+| CuPy | unavailable — CUDA Toolkit 13.1 dropped Pascal (sm_61) support |
 
 ---
 
-## Results
-
-### Scalar Primitives
+## 2. Scalar Primitives (Python)
 
 | Operation | Iterations | Latency (µs) | Throughput |
 |-----------|-----------|---------------|------------|
-| LFSR step (16-bit) | 100,000 | 0.3 | 3.38 Mstep/s |
-| Bitstream encoder step | 100,000 | 0.4 | 2.54 Mstep/s |
-| LIF neuron step (Q8.8) | 100,000 | 0.6 | 1.54 Mstep/s |
+| LFSR step (16-bit) | 1,000,000 | 0.8 | 1.33 Mstep/s |
+| Bitstream encoder step | 1,000,000 | 0.9 | 1.10 Mstep/s |
+| LIF neuron step (Q8.8) | 1,000,000 | 0.9 | 1.07 Mstep/s |
 
-### Packed Bitstream Operations (NumPy)
+---
+
+## 3. Packed Bitstream Operations (Python/NumPy)
 
 | Operation | Size | Iterations | Latency (µs) | Throughput |
 |-----------|------|-----------|---------------|------------|
-| pack_bitstream 1-D | 1,024 | 1,000 | 12.2 | 0.08 Gbit/s |
-| pack_bitstream 1-D | 65,536 | 200 | 102.2 | 0.64 Gbit/s |
-| pack_bitstream 2-D | 64×1,024 | 200 | 104.7 | 0.63 Gbit/s |
-| vec_and | 1,024 words | 5,000 | 1.1 | 58.47 Gbit/s |
-| vec_popcount SWAR | 1,024 words | 5,000 | 34.9 | 1.88 Gbit/s |
+| pack_bitstream 1-D | 1,024 | 10,000 | 8.7 | 0.12 Gbit/s |
+| pack_bitstream 1-D | 65,536 | 2,000 | 123.1 | 0.53 Gbit/s |
+| pack_bitstream 2-D | 64×1,024 | 2,000 | 121.6 | 0.54 Gbit/s |
+| vec_and | 1,024 words | 50,000 | 1.6 | 41.0 Gbit/s |
+| vec_popcount SWAR | 1,024 words | 50,000 | 30.2 | 2.17 Gbit/s |
 
-### Dense Layer Forward Pass
+---
 
-| Configuration | Iterations | Latency (µs) | Throughput |
-|---------------|-----------|---------------|------------|
-| 16×8, L=256 | 50 | 371.2 | 0.09 GOP/s (SC) |
-| 64×32, L=1,024 | 10 | 1,878.4 | 1.12 GOP/s (SC) |
-
-### Full Pipeline (encode → synapse → neuron)
+## 4. Dense Layer Forward Pass (Python)
 
 | Configuration | Iterations | Latency (µs) | Throughput |
 |---------------|-----------|---------------|------------|
-| 4 synapses, 256 steps | 20 | 1,120.9 | 228.4 Kstep/s |
-| 16 synapses, 256 steps | 5 | 3,405.0 | 75.2 Kstep/s |
+| 16×8, L=256 | 500 | 352.7 | 0.09 GOP/s (SC) |
+| 64×32, L=1,024 | 100 | 2,405.8 | 0.87 GOP/s (SC) |
 
-### GPU Backend (NumPy fallback)
+---
+
+## 5. Full Pipeline (Python)
+
+encode → AND synapse → popcount → LIF neuron
+
+| Configuration | Iterations | Latency (µs) | Throughput |
+|---------------|-----------|---------------|------------|
+| 4 synapses, 256 steps | 200 | 1,830 | 139.9 Kstep/s |
+| 16 synapses, 256 steps | 50 | 8,679 | 29.5 Kstep/s |
+
+---
+
+## 6. GPU Backend (NumPy fallback)
+
+CuPy not installed; these measure the NumPy codepath.
 
 | Operation | Iterations | Latency (µs) | Throughput |
 |-----------|-----------|---------------|------------|
-| gpu_pack_bitstream (65,536) | 200 | 108.6 | 0.60 Gbit/s |
-| gpu_vec_mac (64×32×16w) | 100 | 220.0 | 9.53 GOP/s |
+| gpu_pack_bitstream (65,536) | 2,000 | 375.9 | 0.17 Gbit/s |
+| gpu_vec_mac (64×32×16w) | 1,000 | 736.4 | 2.85 GOP/s |
 
 ---
 
-## Rust Engine (sc_neurocore_engine)
+## 7. Rust Engine — Criterion Results
 
-The Rust engine provides 100–512× speedup over pure Python for SIMD-accelerated
-operations. Benchmarks require the compiled wheel:
+All benchmarks run with `cargo bench --manifest-path engine/Cargo.toml` on
+AVX-512 hardware. Times are Criterion medians.
+
+### Bitstream Packing (1M bits = 1,048,576 bits)
+
+| Variant | Time | Throughput | vs. Python |
+|---------|------|------------|------------|
+| `pack` (scalar) | 897 µs | 1.17 Gbit/s | 2.2× |
+| `pack_fast` (u64 chunks) | 286 µs | 3.67 Gbit/s | 7× |
+| `pack_dispatch` (AVX-512) | 25.4 µs | **41.3 Gbit/s** | **79×** |
+
+### Popcount (16,384 u64 words = 1M bits)
+
+| Variant | Time | Throughput | vs. Python |
+|---------|------|------------|------------|
+| `popcount_portable` | 12.1 µs | 86.6 Mword/s | 2.5× |
+| `popcount_simd` (AVX-512) | 2.86 µs | **366 Mword/s** | **10.6×** |
+
+### Fused AND+Popcount (16 words)
+
+| Variant | Time |
+|---------|------|
+| Scalar (iter + count_ones) | 19.1 ns |
+| SIMD dispatch (AVX-512) | 9.58 ns |
+
+### Encoder / Neuron
+
+| Operation | Time | Throughput |
+|-----------|------|------------|
+| LFSR encoder (64K steps) | 131 µs | 500 Mstep/s |
+| LIF neuron (10K steps) | 47.9 µs | 209 Mstep/s |
+| LIF neuron (100K steps) | 446 µs | 224 Mstep/s |
+
+### Bernoulli Encoding (1,024-bit packed streams)
+
+| Variant | Time | Notes |
+|---------|------|-------|
+| `bernoulli_stream` (unrolled) | 3.99 µs | generate bits then pack |
+| `bernoulli_stream` + pack | 4.79 µs | two-pass |
+| `bernoulli_packed` (ChaCha8) | 4.14 µs | direct packed generation |
+| `bernoulli_packed_fast` (ChaCha8) | 1.72 µs | optimized threshold loop |
+| `bernoulli_packed_simd` (ChaCha8) | 779 ns | SIMD comparison |
+| `bernoulli_packed_simd` (Xoshiro) | **398 ns** | fastest: SIMD + fast PRNG |
+| `encode_and_popcount` (Xoshiro) | **285 ns** | fused encode+AND+popcount |
+
+### Dense Layer (64 inputs → 32 neurons, L=1024)
+
+| Variant | Time | vs. Python |
+|---------|------|------------|
+| `forward` (baseline) | 1.22 ms | 2.0× |
+| `forward_fast` (packed) | 337 µs | **7.1×** |
+| `forward_fused` (encode+AND+pop) | 1.67 ms | 1.4× |
+| `forward_prepacked` (pre-encoded) | 54.9 µs | **43.8×** |
+| `forward_batch` (100 samples) | 13.7 ms | 17.6× per sample |
+
+### PRNG Fill (1,024 bytes)
+
+| Generator | Time | Throughput |
+|-----------|------|------------|
+| ChaCha8 | 320 ns | 3.13 GB/s |
+| Xoshiro256++ | 191 ns | 5.24 GB/s |
+
+### Domain-Specific
+
+| Operation | Time |
+|-----------|------|
+| Kuramoto solver (100 osc, 1000 steps) | 199 ms |
+| Stochastic attention (10×16 → 20×32) | 138 µs |
+| Graph layer (20 nodes, 8 features) | 253 µs |
+
+---
+
+## 8. v2 (Python) vs v3 (Rust) Speedup
+
+SIMD tier: avx512-vpopcntdq. The v3 engine wraps Rust via PyO3.
+
+| Operation | v2 (ms) | v3 (ms) | Speedup |
+|-----------|---------|---------|---------|
+| pack_bitstream (1M bits) | 8.26 | 52.66 | 0.2× |
+| popcount (1M bits) | 0.12 | 0.44 | 0.3× |
+| LIF neuron (10K steps) | 8.58 | 4.48 | 1.9× |
+| Dense forward (16→8, L=1024) | 0.49 | 0.18 | 2.7× |
+| Dense forward (64→32, L=1024) | 4.48 | 4.05 | 1.1× |
+| Dense forward (128→64, L=1024) | 8.02 | 1.10 | **7.3×** |
+| Attention (10×16 → 20×32) | 0.03 | 0.28 | 0.1× |
+| Attention (50×32 → 100×64) | 0.10 | 2.19 | 0.0× |
+
+**Geometric mean speedup: 0.5×** (PyO3 FFI overhead dominates small payloads).
+
+The v3 engine excels at large, compute-bound operations (Dense 128→64 at 7.3×)
+where SIMD throughput amortizes FFI crossing cost. For small payloads, calling
+into Rust through PyO3 is slower than staying in NumPy. The pure-Rust Criterion
+numbers above (Section 7) show the true engine throughput without FFI overhead.
+
+---
+
+## 9. NeuroBench-Aligned Metrics
+
+Aligned with the NeuroBench methodology (Yik et al., 2023; arXiv:2304.04640).
+
+| Model | Neurons | SynOps | Act. Sparsity | Latency (µs) | Throughput (MOP/s) | Memory (B) |
+|-------|--------:|-------:|--------------:|-------------:|-------------------:|-----------:|
+| SCDenseLayer(8×4, L=256) | 4 | 409,600 | 0.00 | 1,293 | 6.3 | 256 |
+| SCDenseLayer(16×8, L=512) | 8 | 1,966,080 | 0.00 | 2,446 | 26.8 | 1,024 |
+| VectorizedSCLayer(16×8, L=512) | 8 | 3,276,800 | 0.00 | 348 | 188.1 | 1,024 |
+| VectorizedSCLayer(64×32, L=1024) | 32 | 41,943,040 | 0.00 | 2,476 | **847.0** | 16,384 |
+
+Activation sparsity is 0.00 because SC outputs are graded probabilities, not
+binary spikes — every neuron produces a non-zero output on every step.
+
+---
+
+## 10. SNN Comparison: Brunel Balanced Network
+
+### 4-Variant Translator Benchmark
+
+1000 neurons (800E/200I), conn_prob=0.1, adapted params (weight_exc=5.0 mV,
+external_rate=200 Hz), 1000 ms simulation. Delta-PSC semantics: synaptic
+events applied as instantaneous voltage jumps (v += w), matching Brian2's
+`on_pre="v_post += w"`.
+
+| Variant | Spikes | Rate (Hz) | Brian2 Ratio | Wall (s) |
+|---------|-------:|----------:|-------------:|---------:|
+| Brian2 reference | 1,057,908 | 1057.9 | 1.00 | 1.11 |
+| V1 StochasticLIF | 1,725,955 | 1726.0 | 1.63 | 30.23 |
+| V2 RateMatched | N/A | 48.6 (prob) | — | 51.81 |
+| V3 FixedPoint Q8.8 | 1,722,195 | 1722.2 | 1.63 | 15.41 |
+| V4 Hybrid SC+LIF | 1,888,351 | 1888.4 | 1.78 | 46.23 |
+
+#### Variant descriptions
+
+- **V1 StochasticLIF**: Bug-fixed delta-PSC wiring. Previous benchmark passed
+  input through `R * I * dt` (diluted by dt=0.1) and omitted `v_reset`. Fixed:
+  synaptic events as `neuron.v += weight`, Poisson drive as voltage kicks,
+  `v_reset=10.0` passed correctly.
+- **V2 RateMatched**: VectorizedSCLayer in probability domain. Weights mapped
+  to `p = w / v_threshold`. 100-neuron subset, bitstream_length=1024. Not
+  spike-comparable; mean output probability = 0.049.
+- **V3 FixedPoint Q8.8**: Hardware-faithful FixedPointLIFNeuron. Params mapped
+  to Q8.8 integers (scale=256). Rate 1.63x Brian2 (higher due to different noise model).
+- **V4 Hybrid SC+LIF**: BitstreamSynapse AND gates → popcount → voltage →
+  StochasticLIFNeuron. Higher rate due to stochastic amplification in the
+  bitstream encoding.
+
+#### Previous results (v3.9.0, before translator)
+
+SC-NeuroCore produced 0 spikes due to three wiring bugs:
+1. `v_reset` never passed (defaulted to 0.0 instead of 10.0)
+2. Delta-PSC diluted through `R * I * dt` instead of direct `v += w`
+3. Poisson drive fed as steady current instead of voltage kicks
+
+### 10b. 20-Variant Brunel Translator Suite
+
+Adapted Brunel parameters (weight_exc=5.0, ext_rate=200 Hz), 1000 neurons,
+1000 ms simulation. Brian2 2.10.1 reference: 748,777 spikes, 748.8 Hz.
+
+| # | Variant | Spikes | Rate (Hz) | Brian2 Ratio | Wall (s) | Note |
+|---|---------|-------:|----------:|-------------:|---------:|------|
+| — | Brian2 reference | 748,777 | 748.8 | 1.00 | 1.60 | |
+| V1 | StochasticLIF | 1,725,955 | 1726.0 | 2.31 | 49.33 | delta-PSC baseline |
+| V2 | RateMatched | — | 48.8 | — | 80.98 | probability domain |
+| V3 | FixedPoint Q8.8 | 1,722,195 | 1722.2 | 2.30 | 20.79 | hardware-faithful |
+| V4 | Hybrid SC+LIF | 1,571,994 | 1572.0 | 2.10 | 42.46 | bitstream synapse |
+| V5 | Izhikevich | 15,331 | 15.3 | 0.02 | 11.49 | burst dynamics |
+| V6 | Homeostatic LIF | 1,727,113 | 1727.1 | 2.31 | 39.36 | adaptive threshold |
+| V7 | Noisy LIF | 1,714,361 | 1714.4 | 2.29 | 44.62 | noise_std=1.0 |
+| V8 | Refractory LIF | 114,317 | 114.3 | 0.15 | 26.56 | 5-step refractory |
+| V9 | Post-kick LIF | 1,671,636 | 1671.6 | 2.23 | 36.16 | Brian2 timing |
+| V10 | Exact-leak LIF | 1,713,399 | 1713.4 | 2.29 | 32.78 | exp(-dt/tau) |
+| V11 | Q16.12 FixedPoint | 464,644 | 464.6 | 0.62 | 18.19 | 32-bit, 12 frac |
+| V12 | STDP LIF | 1,689,552 | 1689.6 | 2.26 | 758.21 | 2000 STDP synapses |
+| V13 | DotProduct LIF | 497,647 | 9952.9 | — | 261.40 | n=50, bl=256 |
+| V14 | Sobol bitstream | 780,390 | 780.4 | 1.04 | 220.46 | low-discrepancy |
+| V15 | JAX vectorized | — | — | — | — | skipped (no JAX) |
+| V16 | Recurrent reservoir | — | 999.7 | — | 16.21 | probability domain |
+| V17 | Memristive defects | — | 48.7 | — | 51.62 | stuck=1%, var=5% |
+| V18 | Numba JIT | 1,685,521 | 1685.5 | 2.25 | **5.20** | **9.5× vs V1** |
+| V19 | PyTorch CUDA | 1,725,955 | 1726.0 | 2.31 | **5.70** | GTX 1060 6GB |
+| V20 | Vectorized NumPy | 1,725,955 | 1726.0 | 2.31 | **10.27** | batch update |
+
+#### Acceleration comparison (1000 neurons, 1000 ms)
+
+| Backend | Wall (s) | Speedup vs V1 |
+|---------|-------:|------:|
+| V1 per-neuron Python | 49.33 | 1.0× |
+| V20 vectorized NumPy | 10.27 | 4.8× |
+| V18 Numba JIT | 5.20 | 9.5× |
+| V19 PyTorch CUDA (GTX 1060) | 5.70 | 8.7× |
+| Brian2 (Cython) | 1.60 | 30.8× |
+
+#### Variant notes
+
+- **V5 Izhikevich**: Low spike rate expected — Izhikevich dynamics (quadratic
+  nonlinearity, v range -65 to +30) respond differently to delta-PSC drive.
+  Tonic baseline current of 5.0 added for sub-threshold depolarization.
+- **V8 Refractory**: 5-step (0.5 ms) dead time reduces max firing rate to
+  ~2000 Hz, cutting observed rate by 15×.
+- **V11 Q16.12**: Higher precision fixed-point produces fewer spikes than Q8.8
+  due to more accurate leak computation (less rounding-induced depolarization).
+- **V12 STDP**: Online weight learning with 2000 STDP synapses. 15× slower
+  due to per-synapse process_step() calls.
+- **V14 Sobol**: Low-discrepancy bitstream achieves 1.04× Brian2 ratio — closest
+  match to reference among all spiking variants.
+- **V18/V19/V20**: Acceleration variants show 5–10× speedup over per-neuron
+  Python loop. Numba JIT and PyTorch CUDA achieve similar wall times on this
+  workload (1000 neurons); GPU advantage grows with N.
+
+---
+
+## 11. Advanced Module Performance
+
+| Module | Configuration | Latency (100 runs) | Per-run | Key metric |
+|--------|---------------|--------------------:|--------:|------------|
+| Quantum-Classical Hybrid | 64 qubits, L=1024 | 76.8 ms | 0.77 ms | cos²(θ/2) error < 0.03 |
+| Event-Based GNN | 100 nodes, 5% density | 6.6 ms | 0.07 ms | 17× sparse reduction |
+| Stochastic Transformer | d=64, 4 heads, L=512 | 1,691 ms | 16.9 ms | 196× energy vs FP32 MAC |
+| BCI Decoder | 64 ch, 1s signal | 19.5 ms | 0.20 ms | Native bitstream encoding |
+| DVS Input Layer | 128×128, 1000 events | 1,249 ms | 12.5 ms | 492× data reduction |
+| Chaotic RNG | 100K samples | 13.5 ms | — | 7.42 Msample/s |
+| Predictive World Model | 32-dim state, 50-step | 34.5 ms | 0.34 ms | 1000× sample efficiency |
+
+---
+
+## 12. FPGA Resource Utilization
+
+Synthesis tooling (`tools/yosys_synth.py`) targets Xilinx 7-series via Yosys
+`synth_xilinx`. Yosys is not installed on this machine; run when available:
 
 ```bash
-cd engine && maturin develop --release && cd ..
-cargo bench --manifest-path engine/Cargo.toml
+python tools/yosys_synth.py --json benchmarks/results/yosys_synth.json --markdown
 ```
 
-Published Criterion benchmarks (Linux, Rust 1.82, AVX2):
+Target modules: `sc_bitstream_encoder`, `sc_lif_neuron`, `sc_bitstream_synapse`,
+`sc_dotproduct_to_current`, `sc_firing_rate_bank`, `sc_dense_layer_core`,
+`sc_neurocore_top`.
 
-| Operation | Throughput | vs. Python |
-|-----------|-----------|------------|
-| vec_and (AVX2, 1024w) | ~30 Gbit/s | ~512× |
-| popcount (AVX2) | ~18 Gbit/s | ~10× |
-| LFSR step (scalar) | ~850 Mstep/s | ~250× |
-
-See `engine/benches/` for Criterion source and `docs/benchmarks/criterion/` for
-HTML reports.
+Estimated: `sc_bitstream_encoder` < 100 LUTs (pending Yosys validation).
 
 ---
 
-## Comparison Context
-
-SC-NeuroCore targets **stochastic computing** simulation (bitstream-level), not
-conventional spiking neural network event-driven simulation. Direct comparison
-with NEST, Brian2, or Lava is methodologically complex because:
-
-1. SC-NeuroCore operates at bitstream granularity (individual AND/OR gates)
-2. NEST/Brian2 operate at differential equation integration level
-3. Throughput units differ (stochastic ops/s vs. synaptic events/s)
-
-### SNN Comparison: Brunel Balanced Network (v3.9.0)
-
-| Backend | Neurons | Synapses | Sim (ms) | Wall (s) | Spikes | Notes |
-|---------|--------:|---------:|---------:|---------:|-------:|-------|
-| sc-neurocore | 1,000 | 99,616 | 1,000 | 4.8 | 0 | Stochastic LIF, Python loop |
-| nest | — | — | — | — | — | Not installed |
-| brian2 | — | — | — | — | — | Not installed |
-| lava | — | — | — | — | — | Requires Loihi 2 hardware |
-
-The Brunel parameters (weight 0.1 mV, threshold 20 mV, external rate 20 Hz)
-produce negligible spiking in the stochastic LIF model because the SC neuron
-operates at bitstream granularity rather than continuous voltage integration.
-Install NEST/Brian2 for head-to-head wall-clock comparison.
-
-Remaining planned comparisons:
-- [ ] FPGA synthesis: LUT/FF utilization + power on Xilinx Artix-7
-
----
-
-## Reproducing
+## 13. Reproducing
 
 ```bash
-# Quick mode (~15s)
-python benchmarks/benchmark_suite.py
+# Python benchmark suite (quick ~15s, full ~120s)
+python benchmarks/benchmark_suite.py --full --markdown
 
-# Thorough mode (~60s, 10× more iterations)
-python benchmarks/benchmark_suite.py --full
+# Rust Criterion benchmarks (~5 min)
+cargo bench --manifest-path engine/Cargo.toml
 
-# Output as markdown table
-python benchmarks/benchmark_suite.py --markdown
+# v2 vs v3 comparison (requires Rust wheel)
+PYTHONPATH=src python benchmarks/bench_v2_vs_v3.py
+
+# NeuroBench-aligned metrics
+python benchmarks/neurobench_harness.py --json benchmarks/results/neurobench.json --markdown
+
+# SNN comparison — 20 variants (requires brian2: pip install brian2)
+python benchmarks/snn_comparison.py --all --adapted --sim-ms 1000 \
+    --json benchmarks/results/snn_translator_20v.json --markdown
+
+# Advanced modules
+python benchmarks/benchmark_advanced_modules.py
+
+# FPGA synthesis (requires yosys in PATH)
+python tools/yosys_synth.py --json benchmarks/results/yosys_synth.json --markdown
 ```
 
 ---
 
 ## Notes
 
-- Keep old entries below when adding new runs. Trends matter.
-- Record git commit or tag for every entry.
-- Use consistent input distributions for fair comparisons.
+- Python benchmarks run in `--full` mode (10× iterations vs quick).
+- Rust benchmarks use Criterion defaults (100 samples, 3s warmup).
+- v2 vs v3 comparison shows PyO3 FFI overhead for small payloads; Section 7
+  reports true Rust throughput without FFI.
+- Brian2 installed with numpy 2.4.2 (its requirement); benchmarks run after
+  downgrading to numpy 1.26.4 for sc-neurocore compatibility.
