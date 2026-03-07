@@ -144,6 +144,22 @@ impl Default for DenseParams {
     }
 }
 
+/// Reduce operation mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ReduceMode {
+    Sum,
+    Max,
+}
+
+impl fmt::Display for ReduceMode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Sum => write!(f, "sum"),
+            Self::Max => write!(f, "max"),
+        }
+    }
+}
+
 // Operations
 
 /// A single operation in the SC compute graph.
@@ -234,6 +250,52 @@ pub enum ScOp {
         params: DenseParams,
     },
 
+    // L2: XOR encoding for hyperdimensional computing
+    /// Bitwise XOR of two bitstreams (HDC binding).
+    BitwiseXor {
+        id: ValueId,
+        lhs: ValueId,
+        rhs: ValueId,
+    },
+
+    // L3: Aggregation
+    /// Reduce a vector to a scalar (Sum or Max).
+    Reduce {
+        id: ValueId,
+        input: ValueId,
+        mode: ReduceMode,
+    },
+
+    // L8-L10: Graph message-passing
+    /// Graph forward: input features × adjacency → aggregated output.
+    GraphForward {
+        id: ValueId,
+        features: ValueId,
+        adjacency: ValueId,
+        n_nodes: usize,
+        n_features: usize,
+    },
+
+    // L7: Softmax attention
+    /// Softmax attention: Q·K^T/sqrt(d) → softmax → ·V.
+    SoftmaxAttention {
+        id: ValueId,
+        q: ValueId,
+        k: ValueId,
+        v: ValueId,
+        dim_k: usize,
+    },
+
+    // L4: Phase dynamics
+    /// Single Kuramoto integration step: dθ/dt = ω + ΣK sin(θ_m - θ_n).
+    KuramotoStep {
+        id: ValueId,
+        phases: ValueId,
+        omega: ValueId,
+        coupling: ValueId,
+        dt: f64,
+    },
+
     // Arithmetic (post-processing)
     /// Scale a value by a constant: output = input * factor.
     Scale {
@@ -266,9 +328,14 @@ impl ScOp {
             | Self::Constant { id, .. }
             | Self::Encode { id, .. }
             | Self::BitwiseAnd { id, .. }
+            | Self::BitwiseXor { id, .. }
             | Self::Popcount { id, .. }
+            | Self::Reduce { id, .. }
             | Self::LifStep { id, .. }
             | Self::DenseForward { id, .. }
+            | Self::GraphForward { id, .. }
+            | Self::SoftmaxAttention { id, .. }
+            | Self::KuramotoStep { id, .. }
             | Self::Scale { id, .. }
             | Self::Offset { id, .. }
             | Self::DivConst { id, .. } => *id,
@@ -281,8 +348,10 @@ impl ScOp {
             Self::Input { .. } | Self::Constant { .. } => vec![],
             Self::Output { source, .. } => vec![*source],
             Self::Encode { prob, .. } => vec![*prob],
-            Self::BitwiseAnd { lhs, rhs, .. } => vec![*lhs, *rhs],
-            Self::Popcount { input, .. } => vec![*input],
+            Self::BitwiseAnd { lhs, rhs, .. } | Self::BitwiseXor { lhs, rhs, .. } => {
+                vec![*lhs, *rhs]
+            }
+            Self::Popcount { input, .. } | Self::Reduce { input, .. } => vec![*input],
             Self::LifStep {
                 current,
                 leak,
@@ -297,6 +366,18 @@ impl ScOp {
                 gain,
                 ..
             } => vec![*inputs, *weights, *leak, *gain],
+            Self::GraphForward {
+                features,
+                adjacency,
+                ..
+            } => vec![*features, *adjacency],
+            Self::SoftmaxAttention { q, k, v, .. } => vec![*q, *k, *v],
+            Self::KuramotoStep {
+                phases,
+                omega,
+                coupling,
+                ..
+            } => vec![*phases, *omega, *coupling],
             Self::Scale { input, .. }
             | Self::Offset { input, .. }
             | Self::DivConst { input, .. } => {
@@ -313,9 +394,14 @@ impl ScOp {
             Self::Constant { .. } => "sc.constant",
             Self::Encode { .. } => "sc.encode",
             Self::BitwiseAnd { .. } => "sc.and",
+            Self::BitwiseXor { .. } => "sc.xor",
             Self::Popcount { .. } => "sc.popcount",
+            Self::Reduce { .. } => "sc.reduce",
             Self::LifStep { .. } => "sc.lif_step",
             Self::DenseForward { .. } => "sc.dense_forward",
+            Self::GraphForward { .. } => "sc.graph_forward",
+            Self::SoftmaxAttention { .. } => "sc.softmax_attention",
+            Self::KuramotoStep { .. } => "sc.kuramoto_step",
             Self::Scale { .. } => "sc.scale",
             Self::Offset { .. } => "sc.offset",
             Self::DivConst { .. } => "sc.div_const",

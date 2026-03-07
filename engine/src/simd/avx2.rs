@@ -216,6 +216,131 @@ pub unsafe fn bernoulli_compare_avx2(buf: &[u8], threshold: u8) -> u32 {
     mask
 }
 
+// --- f64 SIMD operations (AVX2: 4-wide f64) ---
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx2,fma")]
+/// Dot product of two f64 slices using AVX2 FMA.
+///
+/// # Safety
+/// Caller must ensure the current CPU supports `avx2` and `fma`.
+pub unsafe fn dot_f64_avx2(a: &[f64], b: &[f64]) -> f64 {
+    let len = a.len().min(b.len());
+    let mut acc = _mm256_setzero_pd();
+    let mut chunks_a = a[..len].chunks_exact(4);
+    let mut chunks_b = b[..len].chunks_exact(4);
+
+    for (ca, cb) in chunks_a.by_ref().zip(chunks_b.by_ref()) {
+        let va = _mm256_loadu_pd(ca.as_ptr());
+        let vb = _mm256_loadu_pd(cb.as_ptr());
+        acc = _mm256_fmadd_pd(va, vb, acc);
+    }
+
+    let mut lanes = [0.0_f64; 4];
+    _mm256_storeu_pd(lanes.as_mut_ptr(), acc);
+    let mut sum = lanes[0] + lanes[1] + lanes[2] + lanes[3];
+
+    for (&ra, &rb) in chunks_a.remainder().iter().zip(chunks_b.remainder()) {
+        sum += ra * rb;
+    }
+    sum
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx2")]
+/// Maximum of f64 slice using AVX2.
+///
+/// # Safety
+/// Caller must ensure the current CPU supports `avx2`.
+pub unsafe fn max_f64_avx2(a: &[f64]) -> f64 {
+    if a.is_empty() {
+        return f64::NEG_INFINITY;
+    }
+    let mut vmax = _mm256_set1_pd(f64::NEG_INFINITY);
+    let mut chunks = a.chunks_exact(4);
+
+    for chunk in chunks.by_ref() {
+        let va = _mm256_loadu_pd(chunk.as_ptr());
+        vmax = _mm256_max_pd(vmax, va);
+    }
+
+    let mut lanes = [0.0_f64; 4];
+    _mm256_storeu_pd(lanes.as_mut_ptr(), vmax);
+    let mut m = lanes[0].max(lanes[1]).max(lanes[2].max(lanes[3]));
+    for &v in chunks.remainder() {
+        m = m.max(v);
+    }
+    m
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx2")]
+/// Sum of f64 slice using AVX2.
+///
+/// # Safety
+/// Caller must ensure the current CPU supports `avx2`.
+pub unsafe fn sum_f64_avx2(a: &[f64]) -> f64 {
+    let mut acc = _mm256_setzero_pd();
+    let mut chunks = a.chunks_exact(4);
+
+    for chunk in chunks.by_ref() {
+        let va = _mm256_loadu_pd(chunk.as_ptr());
+        acc = _mm256_add_pd(acc, va);
+    }
+
+    let mut lanes = [0.0_f64; 4];
+    _mm256_storeu_pd(lanes.as_mut_ptr(), acc);
+    let mut sum = lanes[0] + lanes[1] + lanes[2] + lanes[3];
+    for &v in chunks.remainder() {
+        sum += v;
+    }
+    sum
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx2")]
+/// Scale f64 slice in-place: y[i] *= alpha, using AVX2.
+///
+/// # Safety
+/// Caller must ensure the current CPU supports `avx2`.
+pub unsafe fn scale_f64_avx2(alpha: f64, y: &mut [f64]) {
+    let valpha = _mm256_set1_pd(alpha);
+    let mut chunks = y.chunks_exact_mut(4);
+
+    for chunk in chunks.by_ref() {
+        let vy = _mm256_loadu_pd(chunk.as_ptr());
+        let scaled = _mm256_mul_pd(vy, valpha);
+        _mm256_storeu_pd(chunk.as_mut_ptr(), scaled);
+    }
+
+    for v in chunks.into_remainder() {
+        *v *= alpha;
+    }
+}
+
+#[cfg(not(target_arch = "x86_64"))]
+pub unsafe fn dot_f64_avx2(a: &[f64], b: &[f64]) -> f64 {
+    let len = a.len().min(b.len());
+    a[..len].iter().zip(&b[..len]).map(|(&x, &y)| x * y).sum()
+}
+
+#[cfg(not(target_arch = "x86_64"))]
+pub unsafe fn max_f64_avx2(a: &[f64]) -> f64 {
+    a.iter().copied().fold(f64::NEG_INFINITY, f64::max)
+}
+
+#[cfg(not(target_arch = "x86_64"))]
+pub unsafe fn sum_f64_avx2(a: &[f64]) -> f64 {
+    a.iter().sum()
+}
+
+#[cfg(not(target_arch = "x86_64"))]
+pub unsafe fn scale_f64_avx2(alpha: f64, y: &mut [f64]) {
+    for v in y.iter_mut() {
+        *v *= alpha;
+    }
+}
+
 #[cfg(all(test, target_arch = "x86_64"))]
 mod tests {
     use crate::bitstream::pack;
@@ -265,6 +390,40 @@ mod tests {
             let got = unsafe { super::fused_and_popcount_avx2(&a, &b) };
             assert_eq!(got, expected, "Mismatch at len={len}");
         }
+    }
+
+    #[test]
+    fn dot_f64_avx2_matches_scalar() {
+        if !is_x86_feature_detected!("avx2") || !is_x86_feature_detected!("fma") {
+            return;
+        }
+        let a: Vec<f64> = (0..67).map(|i| i as f64 * 0.1).collect();
+        let b: Vec<f64> = (0..67).map(|i| (i as f64 * 0.3) - 5.0).collect();
+        let expected: f64 = a.iter().zip(&b).map(|(x, y)| x * y).sum();
+        let got = unsafe { super::dot_f64_avx2(&a, &b) };
+        assert!((got - expected).abs() < 1e-9, "dot: got {got}, expected {expected}");
+    }
+
+    #[test]
+    fn max_f64_avx2_matches_scalar() {
+        if !is_x86_feature_detected!("avx2") {
+            return;
+        }
+        let a: Vec<f64> = (0..67).map(|i| (i as f64 * 7.3).sin()).collect();
+        let expected = a.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+        let got = unsafe { super::max_f64_avx2(&a) };
+        assert!((got - expected).abs() < 1e-12, "max: got {got}, expected {expected}");
+    }
+
+    #[test]
+    fn sum_f64_avx2_matches_scalar() {
+        if !is_x86_feature_detected!("avx2") {
+            return;
+        }
+        let a: Vec<f64> = (0..67).map(|i| i as f64 * 0.01).collect();
+        let expected: f64 = a.iter().sum();
+        let got = unsafe { super::sum_f64_avx2(&a) };
+        assert!((got - expected).abs() < 1e-9, "sum: got {got}, expected {expected}");
     }
 
     #[test]

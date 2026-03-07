@@ -154,6 +154,100 @@ pub fn fused_xor_popcount_dispatch(a: &[u64], b: &[u64]) -> u64 {
         .sum()
 }
 
+// --- f64 dispatch functions ---
+
+/// Dot product of two f64 slices using the best available SIMD path.
+pub fn dot_f64_dispatch(a: &[f64], b: &[f64]) -> f64 {
+    #[cfg(target_arch = "x86_64")]
+    {
+        if is_x86_feature_detected!("avx512f") {
+            return unsafe { avx512::dot_f64_avx512(a, b) };
+        }
+        if is_x86_feature_detected!("avx2") && is_x86_feature_detected!("fma") {
+            return unsafe { avx2::dot_f64_avx2(a, b) };
+        }
+    }
+
+    #[cfg(target_arch = "aarch64")]
+    {
+        return unsafe { neon::dot_f64_neon(a, b) };
+    }
+
+    #[allow(unreachable_code)]
+    {
+        let len = a.len().min(b.len());
+        a[..len].iter().zip(&b[..len]).map(|(&x, &y)| x * y).sum()
+    }
+}
+
+/// Maximum of f64 slice using the best available SIMD path.
+pub fn max_f64_dispatch(a: &[f64]) -> f64 {
+    #[cfg(target_arch = "x86_64")]
+    {
+        if is_x86_feature_detected!("avx512f") {
+            return unsafe { avx512::max_f64_avx512(a) };
+        }
+        if is_x86_feature_detected!("avx2") {
+            return unsafe { avx2::max_f64_avx2(a) };
+        }
+    }
+
+    #[cfg(target_arch = "aarch64")]
+    {
+        return unsafe { neon::max_f64_neon(a) };
+    }
+
+    #[allow(unreachable_code)]
+    a.iter().copied().fold(f64::NEG_INFINITY, f64::max)
+}
+
+/// Sum of f64 slice using the best available SIMD path.
+pub fn sum_f64_dispatch(a: &[f64]) -> f64 {
+    #[cfg(target_arch = "x86_64")]
+    {
+        if is_x86_feature_detected!("avx512f") {
+            return unsafe { avx512::sum_f64_avx512(a) };
+        }
+        if is_x86_feature_detected!("avx2") {
+            return unsafe { avx2::sum_f64_avx2(a) };
+        }
+    }
+
+    #[cfg(target_arch = "aarch64")]
+    {
+        return unsafe { neon::sum_f64_neon(a) };
+    }
+
+    #[allow(unreachable_code)]
+    a.iter().sum()
+}
+
+/// Scale f64 slice in-place: y[i] *= alpha, using the best available SIMD path.
+pub fn scale_f64_dispatch(alpha: f64, y: &mut [f64]) {
+    #[cfg(target_arch = "x86_64")]
+    {
+        if is_x86_feature_detected!("avx512f") {
+            unsafe { avx512::scale_f64_avx512(alpha, y) };
+            return;
+        }
+        if is_x86_feature_detected!("avx2") {
+            unsafe { avx2::scale_f64_avx2(alpha, y) };
+            return;
+        }
+    }
+
+    #[cfg(target_arch = "aarch64")]
+    {
+        unsafe { neon::scale_f64_neon(alpha, y) };
+        return;
+    }
+
+    #[allow(unreachable_code)]
+    for v in y.iter_mut() {
+        *v *= alpha;
+    }
+}
+
 /// Fused encode+AND+popcount dispatch.
 ///
 /// Delegates to the scalar-control implementation in `bitstream`,

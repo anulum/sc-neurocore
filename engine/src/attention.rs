@@ -53,28 +53,21 @@ impl StochasticAttention {
             .map(|i| {
                 let q_row = &q[i * q_cols..(i + 1) * q_cols];
 
-                // Scaled dot-product scores
                 let mut scores = vec![0.0_f64; k_rows];
                 for j in 0..k_rows {
                     let k_row = &k[j * k_cols..(j + 1) * k_cols];
-                    let mut dot = 0.0_f64;
-                    for d in 0..q_cols {
-                        dot += q_row[d] * k_row[d];
-                    }
-                    scores[j] = dot * inv_temp;
+                    scores[j] = crate::simd::dot_f64_dispatch(q_row, k_row) * inv_temp;
                 }
 
-                // Softmax: subtract max for numerical stability
-                let max_score = scores.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
-                let mut exp_sum = 0.0_f64;
+                // Softmax: SIMD max-find, scalar exp (precision), SIMD normalize
+                let max_score = crate::simd::max_f64_dispatch(&scores);
                 for s in &mut scores {
                     *s = (*s - max_score).exp();
-                    exp_sum += *s;
                 }
+                let exp_sum = crate::simd::sum_f64_dispatch(&scores);
                 if exp_sum > 0.0 {
-                    for s in &mut scores {
-                        *s /= exp_sum;
-                    }
+                    let inv_sum = 1.0 / exp_sum;
+                    crate::simd::scale_f64_dispatch(inv_sum, &mut scores);
                 }
 
                 // Weighted sum over V
@@ -176,11 +169,7 @@ impl StochasticAttention {
                 let mut row = vec![0.0_f64; k_rows];
                 for j in 0..k_rows {
                     let k_row = &k[j * k_cols..(j + 1) * k_cols];
-                    let mut dot = 0.0_f64;
-                    for d in 0..q_cols {
-                        dot += q_row[d] * k_row[d];
-                    }
-                    row[j] = dot;
+                    row[j] = crate::simd::dot_f64_dispatch(q_row, k_row);
                 }
                 row
             })

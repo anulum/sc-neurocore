@@ -90,6 +90,25 @@ pub fn emit(graph: &ScGraph) -> String {
                     id.0
                 ));
             }
+            ScOp::BitwiseXor { id, .. } => {
+                sv.push_str(&format!("    wire v{};\n", id.0));
+            }
+            ScOp::Reduce { id, .. } => {
+                sv.push_str(&format!("    wire [63:0] v{};\n", id.0));
+            }
+            ScOp::GraphForward { id, n_features, .. } => {
+                sv.push_str(&format!(
+                    "    wire [{}:0] v{};\n",
+                    n_features.saturating_sub(1).max(0),
+                    id.0
+                ));
+            }
+            ScOp::SoftmaxAttention { id, .. } => {
+                sv.push_str(&format!("    wire [63:0] v{};\n", id.0));
+            }
+            ScOp::KuramotoStep { id, .. } => {
+                sv.push_str(&format!("    wire [63:0] v{};\n", id.0));
+            }
             ScOp::Scale { id, .. } | ScOp::Offset { id, .. } | ScOp::DivConst { id, .. } => {
                 sv.push_str(&format!("    wire [63:0] v{};\n", id.0));
             }
@@ -227,6 +246,57 @@ pub fn emit(graph: &ScGraph) -> String {
                 ));
                 inst_idx += 1;
             }
+            ScOp::BitwiseXor { id, lhs, rhs } => {
+                let lhs_wire = value_to_wire(graph, *lhs);
+                let rhs_wire = value_to_wire(graph, *rhs);
+                sv.push_str(&format!(
+                    "    assign v{} = {} ^ {};\n",
+                    id.0, lhs_wire, rhs_wire
+                ));
+            }
+            ScOp::Reduce { id, input, mode } => {
+                let in_wire = value_to_wire(graph, *input);
+                let op = match mode {
+                    ReduceMode::Sum => "/* reduce_sum */",
+                    ReduceMode::Max => "/* reduce_max */",
+                };
+                sv.push_str(&format!(
+                    "    assign v{} = {} {};\n",
+                    id.0, in_wire, op
+                ));
+            }
+            ScOp::GraphForward { id, features, adjacency, n_nodes, n_features } => {
+                let feat_wire = value_to_wire(graph, *features);
+                let adj_wire = value_to_wire(graph, *adjacency);
+                sv.push_str(&format!(
+                    "    // sc.graph_forward: {}×{} aggregation (HLS placeholder)\n\
+                     \x20   // inputs: features={}, adjacency={}\n\
+                     \x20   assign v{} = {feat_wire}; // stub\n\n",
+                    n_nodes, n_features, feat_wire, adj_wire, id.0
+                ));
+            }
+            ScOp::SoftmaxAttention { id, q, k, v, dim_k } => {
+                let q_wire = value_to_wire(graph, *q);
+                let k_wire = value_to_wire(graph, *k);
+                let v_wire = value_to_wire(graph, *v);
+                sv.push_str(&format!(
+                    "    // sc.softmax_attention: dim_k={} (HLS placeholder)\n\
+                     \x20   // Q={}, K={}, V={}\n\
+                     \x20   assign v{} = {v_wire}; // stub\n\n",
+                    dim_k, q_wire, k_wire, v_wire, id.0
+                ));
+            }
+            ScOp::KuramotoStep { id, phases, omega, coupling, dt } => {
+                let ph_wire = value_to_wire(graph, *phases);
+                let om_wire = value_to_wire(graph, *omega);
+                let k_wire = value_to_wire(graph, *coupling);
+                sv.push_str(&format!(
+                    "    // sc.kuramoto_step: dt={} (HLS placeholder)\n\
+                     \x20   // phases={}, omega={}, K={}\n\
+                     \x20   assign v{} = {ph_wire}; // stub\n\n",
+                    dt, ph_wire, om_wire, k_wire, id.0
+                ));
+            }
             ScOp::Output { name, source, .. } => {
                 let src_wire = value_to_wire(graph, *source);
                 sv.push_str(&format!("    assign {} = {};\n", name, src_wire));
@@ -285,11 +355,16 @@ fn find_value_width(graph: &ScGraph, id: ValueId) -> usize {
             return match op {
                 ScOp::Input { ty, .. } => type_to_width(ty),
                 ScOp::Constant { ty, .. } => type_to_width(ty),
-                ScOp::Encode { .. } | ScOp::BitwiseAnd { .. } => 1,
-                ScOp::Popcount { .. } => 64,
+                ScOp::Encode { .. } | ScOp::BitwiseAnd { .. } | ScOp::BitwiseXor { .. } => 1,
+                ScOp::Popcount { .. } | ScOp::Reduce { .. } => 64,
                 ScOp::LifStep { params, .. } => params.data_width as usize,
                 ScOp::DenseForward { params, .. } => params.n_neurons,
-                ScOp::Scale { .. } | ScOp::Offset { .. } | ScOp::DivConst { .. } => 64,
+                ScOp::GraphForward { n_features, .. } => *n_features,
+                ScOp::SoftmaxAttention { .. }
+                | ScOp::KuramotoStep { .. }
+                | ScOp::Scale { .. }
+                | ScOp::Offset { .. }
+                | ScOp::DivConst { .. } => 64,
                 ScOp::Output { source, .. } => find_value_width(graph, *source),
             };
         }
