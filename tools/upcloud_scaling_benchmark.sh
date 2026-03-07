@@ -67,7 +67,7 @@ rustc --version
 python3 -m venv /opt/bench-venv
 source /opt/bench-venv/bin/activate
 pip install --quiet --upgrade pip
-pip install --quiet numpy scipy brian2
+pip install --quiet numpy scipy brian2 nest-simulator
 
 if nvidia-smi &>/dev/null; then
   pip install --quiet torch --index-url https://download.pytorch.org/whl/cu124
@@ -110,11 +110,11 @@ python benchmarks/rust_python_parity_bench.py \
 
 # ---- Phase 6: GPU-extended scaling ----
 if nvidia-smi &>/dev/null; then
-  log 6 "GPU-only extended scaling (sparse CUDA, up to 100K)"
+  log 6 "GPU-only extended scaling (up to 100K)"
   python benchmarks/scaling_benchmark.py \
-    --scales 10000 20000 50000 100000 \
+    --scales 20000 50000 100000 \
     --regimes AI \
-    --sim-ms 200 \
+    --sim-ms 500 \
     --repeats 3 \
     --simulators sc_pytorch_cuda sc_pytorch_cuda_sparse \
     --json "$RESULTS_DIR/gpu_scaling_results.json" \
