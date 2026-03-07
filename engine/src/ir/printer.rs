@@ -67,8 +67,17 @@ pub fn print(graph: &ScGraph) -> String {
             ScOp::BitwiseAnd { id, lhs, rhs } => {
                 out.push_str(&format!("{} = sc.and {}, {} : bitstream\n", id, lhs, rhs));
             }
+            ScOp::BitwiseXor { id, lhs, rhs } => {
+                out.push_str(&format!("{} = sc.xor {}, {} : bitstream\n", id, lhs, rhs));
+            }
             ScOp::Popcount { id, input } => {
                 out.push_str(&format!("{} = sc.popcount {} : u64\n", id, input));
+            }
+            ScOp::Reduce { id, input, mode } => {
+                out.push_str(&format!(
+                    "{} = sc.reduce {}, mode={} : rate\n",
+                    id, input, mode
+                ));
             }
             ScOp::LifStep {
                 id,
@@ -114,6 +123,42 @@ pub fn print(graph: &ScGraph) -> String {
                     params.n_neurons,
                     params.stream_length,
                     params.n_neurons
+                ));
+            }
+            ScOp::GraphForward {
+                id,
+                features,
+                adjacency,
+                n_nodes,
+                n_features,
+            } => {
+                out.push_str(&format!(
+                    "{} = sc.graph_forward {}, adj={}, nodes={}, features={} : rate\n",
+                    id, features, adjacency, n_nodes, n_features
+                ));
+            }
+            ScOp::SoftmaxAttention {
+                id,
+                q,
+                k,
+                v,
+                dim_k,
+            } => {
+                out.push_str(&format!(
+                    "{} = sc.softmax_attention {}, {}, {}, dim_k={} : rate\n",
+                    id, q, k, v, dim_k
+                ));
+            }
+            ScOp::KuramotoStep {
+                id,
+                phases,
+                omega,
+                coupling,
+                dt,
+            } => {
+                out.push_str(&format!(
+                    "{} = sc.kuramoto_step {}, omega={}, K={}, dt={} : rate\n",
+                    id, phases, omega, coupling, dt
                 ));
             }
             ScOp::Scale { id, input, factor } => {

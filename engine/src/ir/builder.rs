@@ -105,6 +105,66 @@ impl ScGraphBuilder {
         })
     }
 
+    /// Add a bitwise XOR (HDC binding).
+    pub fn bitwise_xor(&mut self, lhs: ValueId, rhs: ValueId) -> ValueId {
+        let id = self.graph.fresh_id();
+        self.graph.push(ScOp::BitwiseXor { id, lhs, rhs })
+    }
+
+    /// Add a reduce operation (Sum or Max).
+    pub fn reduce(&mut self, input: ValueId, mode: ReduceMode) -> ValueId {
+        let id = self.graph.fresh_id();
+        self.graph.push(ScOp::Reduce { id, input, mode })
+    }
+
+    /// Add a graph forward pass.
+    pub fn graph_forward(
+        &mut self,
+        features: ValueId,
+        adjacency: ValueId,
+        n_nodes: usize,
+        n_features: usize,
+    ) -> ValueId {
+        let id = self.graph.fresh_id();
+        self.graph.push(ScOp::GraphForward {
+            id,
+            features,
+            adjacency,
+            n_nodes,
+            n_features,
+        })
+    }
+
+    /// Add a softmax attention operation.
+    pub fn softmax_attention(
+        &mut self,
+        q: ValueId,
+        k: ValueId,
+        v: ValueId,
+        dim_k: usize,
+    ) -> ValueId {
+        let id = self.graph.fresh_id();
+        self.graph.push(ScOp::SoftmaxAttention { id, q, k, v, dim_k })
+    }
+
+    /// Add a Kuramoto integration step.
+    pub fn kuramoto_step(
+        &mut self,
+        phases: ValueId,
+        omega: ValueId,
+        coupling: ValueId,
+        dt: f64,
+    ) -> ValueId {
+        let id = self.graph.fresh_id();
+        self.graph.push(ScOp::KuramotoStep {
+            id,
+            phases,
+            omega,
+            coupling,
+            dt,
+        })
+    }
+
     /// Add a scale (multiply by constant) operation.
     pub fn scale(&mut self, input: ValueId, factor: f64) -> ValueId {
         let id = self.graph.fresh_id();

@@ -191,6 +191,124 @@ pub unsafe fn bernoulli_compare_avx512(buf: &[u8], threshold: u8) -> u64 {
     mask
 }
 
+// --- f64 SIMD operations (AVX-512: 8-wide f64) ---
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx512f")]
+/// Dot product of two f64 slices using AVX-512.
+///
+/// # Safety
+/// Caller must ensure the current CPU supports `avx512f`.
+pub unsafe fn dot_f64_avx512(a: &[f64], b: &[f64]) -> f64 {
+    let len = a.len().min(b.len());
+    let mut acc = _mm512_setzero_pd();
+    let mut chunks_a = a[..len].chunks_exact(8);
+    let mut chunks_b = b[..len].chunks_exact(8);
+
+    for (ca, cb) in chunks_a.by_ref().zip(chunks_b.by_ref()) {
+        let va = _mm512_loadu_pd(ca.as_ptr());
+        let vb = _mm512_loadu_pd(cb.as_ptr());
+        acc = _mm512_fmadd_pd(va, vb, acc);
+    }
+
+    let mut sum = _mm512_reduce_add_pd(acc);
+    for (&ra, &rb) in chunks_a.remainder().iter().zip(chunks_b.remainder()) {
+        sum += ra * rb;
+    }
+    sum
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx512f")]
+/// Maximum of f64 slice using AVX-512.
+///
+/// # Safety
+/// Caller must ensure the current CPU supports `avx512f`.
+pub unsafe fn max_f64_avx512(a: &[f64]) -> f64 {
+    if a.is_empty() {
+        return f64::NEG_INFINITY;
+    }
+    let mut vmax = _mm512_set1_pd(f64::NEG_INFINITY);
+    let mut chunks = a.chunks_exact(8);
+
+    for chunk in chunks.by_ref() {
+        let va = _mm512_loadu_pd(chunk.as_ptr());
+        vmax = _mm512_max_pd(vmax, va);
+    }
+
+    let mut m = _mm512_reduce_max_pd(vmax);
+    for &v in chunks.remainder() {
+        m = m.max(v);
+    }
+    m
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx512f")]
+/// Sum of f64 slice using AVX-512.
+///
+/// # Safety
+/// Caller must ensure the current CPU supports `avx512f`.
+pub unsafe fn sum_f64_avx512(a: &[f64]) -> f64 {
+    let mut acc = _mm512_setzero_pd();
+    let mut chunks = a.chunks_exact(8);
+
+    for chunk in chunks.by_ref() {
+        let va = _mm512_loadu_pd(chunk.as_ptr());
+        acc = _mm512_add_pd(acc, va);
+    }
+
+    let mut sum = _mm512_reduce_add_pd(acc);
+    for &v in chunks.remainder() {
+        sum += v;
+    }
+    sum
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx512f")]
+/// Scale f64 slice in-place: y[i] *= alpha, using AVX-512.
+///
+/// # Safety
+/// Caller must ensure the current CPU supports `avx512f`.
+pub unsafe fn scale_f64_avx512(alpha: f64, y: &mut [f64]) {
+    let valpha = _mm512_set1_pd(alpha);
+    let mut chunks = y.chunks_exact_mut(8);
+
+    for chunk in chunks.by_ref() {
+        let vy = _mm512_loadu_pd(chunk.as_ptr());
+        let scaled = _mm512_mul_pd(vy, valpha);
+        _mm512_storeu_pd(chunk.as_mut_ptr(), scaled);
+    }
+
+    for v in chunks.into_remainder() {
+        *v *= alpha;
+    }
+}
+
+#[cfg(not(target_arch = "x86_64"))]
+pub unsafe fn dot_f64_avx512(a: &[f64], b: &[f64]) -> f64 {
+    let len = a.len().min(b.len());
+    a[..len].iter().zip(&b[..len]).map(|(&x, &y)| x * y).sum()
+}
+
+#[cfg(not(target_arch = "x86_64"))]
+pub unsafe fn max_f64_avx512(a: &[f64]) -> f64 {
+    a.iter().copied().fold(f64::NEG_INFINITY, f64::max)
+}
+
+#[cfg(not(target_arch = "x86_64"))]
+pub unsafe fn sum_f64_avx512(a: &[f64]) -> f64 {
+    a.iter().sum()
+}
+
+#[cfg(not(target_arch = "x86_64"))]
+pub unsafe fn scale_f64_avx512(alpha: f64, y: &mut [f64]) {
+    for v in y.iter_mut() {
+        *v *= alpha;
+    }
+}
+
 #[cfg(all(test, target_arch = "x86_64"))]
 mod tests {
     use crate::bitstream::pack;

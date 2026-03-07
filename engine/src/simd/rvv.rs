@@ -96,6 +96,35 @@ pub unsafe fn fused_xor_popcount_rvv(a: &[u64], b: &[u64]) -> u64 {
         .sum()
 }
 
+// --- f64 operations (portable fallback, RVV f64 intrinsics pending stabilisation) ---
+
+/// # Safety
+/// No hardware requirements (portable implementation).
+pub unsafe fn dot_f64_rvv(a: &[f64], b: &[f64]) -> f64 {
+    let len = a.len().min(b.len());
+    a[..len].iter().zip(&b[..len]).map(|(&x, &y)| x * y).sum()
+}
+
+/// # Safety
+/// No hardware requirements (portable implementation).
+pub unsafe fn max_f64_rvv(a: &[f64]) -> f64 {
+    a.iter().copied().fold(f64::NEG_INFINITY, f64::max)
+}
+
+/// # Safety
+/// No hardware requirements (portable implementation).
+pub unsafe fn sum_f64_rvv(a: &[f64]) -> f64 {
+    a.iter().sum()
+}
+
+/// # Safety
+/// No hardware requirements (portable implementation).
+pub unsafe fn scale_f64_rvv(alpha: f64, y: &mut [f64]) {
+    for v in y.iter_mut() {
+        *v *= alpha;
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

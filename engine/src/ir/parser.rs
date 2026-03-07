@@ -64,12 +64,22 @@ pub fn parse(text: &str) -> Result<ScGraph, ParseError> {
             parse_constant(trimmed, &mut graph, line_idx + 1)?;
         } else if trimmed.contains("= sc.encode") {
             parse_encode(trimmed, &mut graph, line_idx + 1)?;
+        } else if trimmed.contains("= sc.xor") {
+            parse_xor(trimmed, &mut graph, line_idx + 1)?;
         } else if trimmed.contains("= sc.and") {
             parse_and(trimmed, &mut graph, line_idx + 1)?;
+        } else if trimmed.contains("= sc.reduce") {
+            parse_reduce(trimmed, &mut graph, line_idx + 1)?;
         } else if trimmed.contains("= sc.popcount") {
             parse_popcount(trimmed, &mut graph, line_idx + 1)?;
         } else if trimmed.contains("= sc.dense_forward") {
             parse_dense_forward(trimmed, &mut graph, line_idx + 1)?;
+        } else if trimmed.contains("= sc.graph_forward") {
+            parse_graph_forward(trimmed, &mut graph, line_idx + 1)?;
+        } else if trimmed.contains("= sc.softmax_attention") {
+            parse_softmax_attention(trimmed, &mut graph, line_idx + 1)?;
+        } else if trimmed.contains("= sc.kuramoto_step") {
+            parse_kuramoto_step(trimmed, &mut graph, line_idx + 1)?;
         } else if trimmed.contains("= sc.lif_step") {
             parse_lif_step(trimmed, &mut graph, line_idx + 1)?;
         } else if trimmed.contains("= sc.scale") {
@@ -535,6 +545,159 @@ fn parse_offset(text: &str, graph: &mut ScGraph, line: usize) -> Result<(), Pars
 
     graph.next_id = graph.next_id.max(id.0 + 1);
     graph.push(ScOp::Offset { id, input, offset });
+    Ok(())
+}
+
+fn parse_xor(text: &str, graph: &mut ScGraph, line: usize) -> Result<(), ParseError> {
+    let parts: Vec<&str> = text.splitn(2, "= sc.xor").collect();
+    if parts.len() != 2 {
+        return Err(make_err(line, "malformed sc.xor"));
+    }
+    let id = parse_value_id(parts[0]).map_err(|e| make_err(line, e))?;
+    let rest = parts[1].trim();
+    let operands: Vec<&str> = rest.split(':').next().unwrap_or("").split(',').collect();
+    if operands.len() < 2 {
+        return Err(make_err(line, "sc.xor needs 2 operands"));
+    }
+    let lhs = parse_value_id(operands[0]).map_err(|e| make_err(line, e))?;
+    let rhs = parse_value_id(operands[1]).map_err(|e| make_err(line, e))?;
+
+    graph.next_id = graph.next_id.max(id.0 + 1);
+    graph.push(ScOp::BitwiseXor { id, lhs, rhs });
+    Ok(())
+}
+
+fn parse_reduce(text: &str, graph: &mut ScGraph, line: usize) -> Result<(), ParseError> {
+    let parts: Vec<&str> = text.splitn(2, "= sc.reduce").collect();
+    if parts.len() != 2 {
+        return Err(make_err(line, "malformed sc.reduce"));
+    }
+    let id = parse_value_id(parts[0]).map_err(|e| make_err(line, e))?;
+    let rest = parts[1].trim();
+
+    let tokens: Vec<&str> = rest.split_whitespace().collect();
+    let input = parse_value_id(
+        tokens
+            .first()
+            .ok_or_else(|| make_err(line, "missing input"))?,
+    )
+    .map_err(|e| make_err(line, e))?;
+
+    let mode_str = extract_kv(rest, "mode").unwrap_or_else(|| "sum".to_string());
+    let mode = match mode_str.as_str() {
+        "max" => ReduceMode::Max,
+        _ => ReduceMode::Sum,
+    };
+
+    graph.next_id = graph.next_id.max(id.0 + 1);
+    graph.push(ScOp::Reduce { id, input, mode });
+    Ok(())
+}
+
+fn parse_graph_forward(text: &str, graph: &mut ScGraph, line: usize) -> Result<(), ParseError> {
+    let parts: Vec<&str> = text.splitn(2, "= sc.graph_forward").collect();
+    if parts.len() != 2 {
+        return Err(make_err(line, "malformed sc.graph_forward"));
+    }
+    let id = parse_value_id(parts[0]).map_err(|e| make_err(line, e))?;
+    let rest = parts[1].trim();
+
+    let tokens: Vec<&str> = rest.split_whitespace().collect();
+    let features = parse_value_id(
+        tokens
+            .first()
+            .ok_or_else(|| make_err(line, "missing features"))?,
+    )
+    .map_err(|e| make_err(line, e))?;
+
+    let adj_str = extract_kv(rest, "adj").ok_or_else(|| make_err(line, "missing adj"))?;
+    let adjacency = parse_value_id(&adj_str).map_err(|e| make_err(line, e))?;
+
+    let n_nodes = extract_kv(rest, "nodes")
+        .and_then(|s| s.parse::<usize>().ok())
+        .unwrap_or(16);
+    let n_features = extract_kv(rest, "features")
+        .and_then(|s| s.parse::<usize>().ok())
+        .unwrap_or(4);
+
+    graph.next_id = graph.next_id.max(id.0 + 1);
+    graph.push(ScOp::GraphForward {
+        id,
+        features,
+        adjacency,
+        n_nodes,
+        n_features,
+    });
+    Ok(())
+}
+
+fn parse_softmax_attention(
+    text: &str,
+    graph: &mut ScGraph,
+    line: usize,
+) -> Result<(), ParseError> {
+    let parts: Vec<&str> = text.splitn(2, "= sc.softmax_attention").collect();
+    if parts.len() != 2 {
+        return Err(make_err(line, "malformed sc.softmax_attention"));
+    }
+    let id = parse_value_id(parts[0]).map_err(|e| make_err(line, e))?;
+    let rest = parts[1].trim();
+
+    let before_colon = rest.split(':').next().unwrap_or("");
+    let operands: Vec<&str> = before_colon.split(',').collect();
+    if operands.len() < 3 {
+        return Err(make_err(line, "sc.softmax_attention needs q, k, v"));
+    }
+    let q = parse_value_id(operands[0]).map_err(|e| make_err(line, e))?;
+    let k = parse_value_id(operands[1]).map_err(|e| make_err(line, e))?;
+
+    // v operand may include dim_k= key-value pair
+    let v_token = operands[2].split_whitespace().next().unwrap_or("");
+    let v = parse_value_id(v_token).map_err(|e| make_err(line, e))?;
+
+    let dim_k = extract_kv(rest, "dim_k")
+        .and_then(|s| s.parse::<usize>().ok())
+        .unwrap_or(64);
+
+    graph.next_id = graph.next_id.max(id.0 + 1);
+    graph.push(ScOp::SoftmaxAttention { id, q, k, v, dim_k });
+    Ok(())
+}
+
+fn parse_kuramoto_step(text: &str, graph: &mut ScGraph, line: usize) -> Result<(), ParseError> {
+    let parts: Vec<&str> = text.splitn(2, "= sc.kuramoto_step").collect();
+    if parts.len() != 2 {
+        return Err(make_err(line, "malformed sc.kuramoto_step"));
+    }
+    let id = parse_value_id(parts[0]).map_err(|e| make_err(line, e))?;
+    let rest = parts[1].trim();
+
+    let tokens: Vec<&str> = rest.split_whitespace().collect();
+    let phases = parse_value_id(
+        tokens
+            .first()
+            .ok_or_else(|| make_err(line, "missing phases"))?,
+    )
+    .map_err(|e| make_err(line, e))?;
+
+    let omega_str = extract_kv(rest, "omega").ok_or_else(|| make_err(line, "missing omega"))?;
+    let omega = parse_value_id(&omega_str).map_err(|e| make_err(line, e))?;
+
+    let k_str = extract_kv(rest, "K").ok_or_else(|| make_err(line, "missing K"))?;
+    let coupling = parse_value_id(&k_str).map_err(|e| make_err(line, e))?;
+
+    let dt = extract_kv(rest, "dt")
+        .and_then(|s| s.parse::<f64>().ok())
+        .unwrap_or(0.01);
+
+    graph.next_id = graph.next_id.max(id.0 + 1);
+    graph.push(ScOp::KuramotoStep {
+        id,
+        phases,
+        omega,
+        coupling,
+        dt,
+    });
     Ok(())
 }
 

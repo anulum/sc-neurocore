@@ -106,10 +106,12 @@ fn sc_sparse_matches_dense() {
     let csr = CsrMatrix::from_dense(&adj, n, n, 1e-15);
     let sparse_layer = StochasticGraphLayer::new_sparse(csr, nf, seed).unwrap();
 
-    let out_dense = dense_layer.forward_sc(&features, 2048, 99).unwrap();
-    let out_sparse = sparse_layer.forward_sc(&features, 2048, 99).unwrap();
+    let out_dense = dense_layer.forward_sc(&features, 4096, 99).unwrap();
+    let out_sparse = sparse_layer.forward_sc(&features, 4096, 99).unwrap();
 
+    // Sparse encodes only nnz entries (different RNG draws), so tolerance is
+    // governed by stochastic approximation error ~O(1/sqrt(length)).
     for (a, b) in out_dense.iter().zip(out_sparse.iter()) {
-        assert!(approx_eq(*a, *b, 1e-12), "dense={} sparse={}", a, b);
+        assert!(approx_eq(*a, *b, 0.1), "dense={} sparse={}", a, b);
     }
 }

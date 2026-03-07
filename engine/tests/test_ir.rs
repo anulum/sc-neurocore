@@ -182,10 +182,103 @@ fn op_name_coverage() {
         "sc.popcount",
         "sc.lif_step",
         "sc.dense_forward",
+        "sc.xor",
+        "sc.reduce",
+        "sc.graph_forward",
+        "sc.softmax_attention",
+        "sc.kuramoto_step",
         "sc.scale",
         "sc.offset",
         "sc.div_const",
     ];
     let unique: std::collections::HashSet<&&str> = names.iter().collect();
     assert_eq!(names.len(), unique.len());
+}
+
+#[test]
+fn xor_round_trip() {
+    let mut b = ScGraphBuilder::new("xor_test");
+    let a = b.input("a", ScType::Bitstream { length: 512 });
+    let c = b.input("b", ScType::Bitstream { length: 512 });
+    let x = b.bitwise_xor(a, c);
+    b.output("out", x);
+    let g = b.build();
+
+    let text = printer::print(&g);
+    let g2 = parser::parse(&text).expect("parse xor");
+    assert_eq!(g, g2);
+}
+
+#[test]
+fn reduce_round_trip() {
+    let mut b = ScGraphBuilder::new("reduce_test");
+    let x = b.input("x", ScType::Rate);
+    let s = b.reduce(x, ReduceMode::Sum);
+    let m = b.reduce(x, ReduceMode::Max);
+    b.output("sum", s);
+    b.output("max", m);
+    let g = b.build();
+
+    let text = printer::print(&g);
+    let g2 = parser::parse(&text).expect("parse reduce");
+    assert_eq!(g, g2);
+}
+
+#[test]
+fn graph_forward_round_trip() {
+    let mut b = ScGraphBuilder::new("gnn_test");
+    let feat = b.input("features", ScType::Rate);
+    let adj = b.input("adjacency", ScType::Rate);
+    let out = b.graph_forward(feat, adj, 8, 4);
+    b.output("gnn_out", out);
+    let g = b.build();
+
+    let text = printer::print(&g);
+    let g2 = parser::parse(&text).expect("parse graph_forward");
+    assert_eq!(g, g2);
+}
+
+#[test]
+fn softmax_attention_round_trip() {
+    let mut b = ScGraphBuilder::new("attn_test");
+    let q = b.input("q", ScType::Rate);
+    let k = b.input("k", ScType::Rate);
+    let v = b.input("v", ScType::Rate);
+    let a = b.softmax_attention(q, k, v, 64);
+    b.output("attn", a);
+    let g = b.build();
+
+    let text = printer::print(&g);
+    let g2 = parser::parse(&text).expect("parse softmax_attention");
+    assert_eq!(g, g2);
+}
+
+#[test]
+fn kuramoto_step_round_trip() {
+    let mut b = ScGraphBuilder::new("kuramoto_test");
+    let ph = b.input("phases", ScType::Rate);
+    let om = b.input("omega", ScType::Rate);
+    let kk = b.input("coupling", ScType::Rate);
+    let out = b.kuramoto_step(ph, om, kk, 0.001);
+    b.output("next_phases", out);
+    let g = b.build();
+
+    let text = printer::print(&g);
+    let g2 = parser::parse(&text).expect("parse kuramoto_step");
+    assert_eq!(g, g2);
+}
+
+#[test]
+fn new_ops_verify() {
+    let mut b = ScGraphBuilder::new("all_new_ops");
+    let a = b.input("a", ScType::Rate);
+    let c = b.input("b", ScType::Rate);
+    let d = b.input("c", ScType::Rate);
+    let _ = b.bitwise_xor(a, c);
+    let _ = b.reduce(a, ReduceMode::Sum);
+    let _ = b.graph_forward(a, c, 4, 2);
+    let _ = b.softmax_attention(a, c, d, 32);
+    let _ = b.kuramoto_step(a, c, d, 0.01);
+    let g = b.build();
+    assert!(verify::verify(&g).is_ok());
 }

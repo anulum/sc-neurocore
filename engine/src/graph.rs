@@ -317,8 +317,8 @@ impl StochasticGraphLayer {
 
     /// SC-mode forward pass using AND+popcount message passing.
     ///
-    /// For sparse storage, expands to dense for bitstream encoding (SC encoding
-    /// needs the full matrix). Aggregation still benefits from pre-validated structure.
+    /// Dense: encodes full adjacency matrix.
+    /// Sparse: encodes only non-zero CSR entries, avoiding O(n^2) dense expansion.
     pub fn forward_sc(
         &self,
         node_features: &[f64],
@@ -330,22 +330,9 @@ impl StochasticGraphLayer {
             return Err("length must be > 0 for SC mode.".to_string());
         }
 
-        let adj_dense = match &self.storage {
-            AdjStorage::Dense { adj } => adj.clone(),
-            AdjStorage::Sparse { csr } => csr.to_dense(),
-        };
-
         let mut rng = ChaCha8Rng::seed_from_u64(seed);
         let words = length.div_ceil(64);
 
-        let adj_packed = crate::bitstream::encode_matrix_prob_to_packed(
-            &adj_dense,
-            self.n_nodes,
-            self.n_nodes,
-            length,
-            words,
-            &mut rng,
-        );
         let feat_packed = crate::bitstream::encode_matrix_prob_to_packed(
             node_features,
             self.n_nodes,
@@ -356,18 +343,63 @@ impl StochasticGraphLayer {
         );
 
         let mut agg = vec![0.0_f64; self.n_nodes * self.n_features];
-        for i in 0..self.n_nodes {
-            for f in 0..self.n_features {
-                let mut pop_total = 0_u64;
-                for j in 0..self.n_nodes {
-                    let a = &adj_packed[i * self.n_nodes + j];
-                    let b = &feat_packed[j * self.n_features + f];
-                    for w in 0..words {
-                        pop_total += crate::bitstream::swar_popcount_word(a[w] & b[w]);
+
+        match &self.storage {
+            AdjStorage::Dense { adj } => {
+                let adj_packed = crate::bitstream::encode_matrix_prob_to_packed(
+                    adj,
+                    self.n_nodes,
+                    self.n_nodes,
+                    length,
+                    words,
+                    &mut rng,
+                );
+                for i in 0..self.n_nodes {
+                    for f in 0..self.n_features {
+                        let mut pop_total = 0_u64;
+                        for j in 0..self.n_nodes {
+                            let a = &adj_packed[i * self.n_nodes + j];
+                            let b = &feat_packed[j * self.n_features + f];
+                            for w in 0..words {
+                                pop_total +=
+                                    crate::bitstream::swar_popcount_word(a[w] & b[w]);
+                            }
+                        }
+                        agg[i * self.n_features + f] = pop_total as f64 / length as f64;
                     }
                 }
-                agg[i * self.n_features + f] = pop_total as f64 / length as f64;
             }
+            AdjStorage::Sparse { csr } => {
+                // Encode only non-zero adjacency values (nnz entries, not n^2)
+                let nnz = csr.nnz();
+                let adj_vals_clamped: Vec<f64> =
+                    csr.values.iter().map(|v| v.clamp(0.0, 1.0)).collect();
+                let adj_packed = crate::bitstream::encode_matrix_prob_to_packed(
+                    &adj_vals_clamped,
+                    1,
+                    nnz,
+                    length,
+                    words,
+                    &mut rng,
+                );
+                for i in 0..self.n_nodes {
+                    for idx in csr.row_offsets[i]..csr.row_offsets[i + 1] {
+                        let j = csr.col_indices[idx];
+                        let a = &adj_packed[idx];
+                        for f in 0..self.n_features {
+                            let b = &feat_packed[j * self.n_features + f];
+                            let mut pop = 0_u64;
+                            for w in 0..words {
+                                pop += crate::bitstream::swar_popcount_word(a[w] & b[w]);
+                            }
+                            agg[i * self.n_features + f] += pop as f64 / length as f64;
+                        }
+                    }
+                }
+            }
+        }
+
+        for i in 0..self.n_nodes {
             if self.degrees[i] != 0.0 {
                 for f in 0..self.n_features {
                     agg[i * self.n_features + f] /= self.degrees[i];
