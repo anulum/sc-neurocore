@@ -124,11 +124,53 @@ fn bench_popcount_scaling(c: &mut Criterion) {
     group.finish();
 }
 
+/// LIF network benchmark: encode → dense SC layer → decode loop.
+///
+/// Simulates a stochastic-computing spiking network for 100 timesteps
+/// at each scale, measuring per-step throughput.
+fn bench_lif_network_scaling(c: &mut Criterion) {
+    let mut group = c.benchmark_group("lif_network_scaling");
+    group.sample_size(10);
+
+    for &n in &[100, 500, 1000, 2000, 5000] {
+        let bitstream_length = 1024;
+        let layer = DenseLayer::new(n, n, bitstream_length, 42);
+        let mut rng = ChaCha8Rng::seed_from_u64(42);
+        let inputs: Vec<f64> = (0..n).map(|_| rng.random::<f64>()).collect();
+
+        group.bench_with_input(
+            BenchmarkId::new("lif_sc_100steps", n),
+            &n,
+            |b, _| {
+                b.iter(|| {
+                    let mut v = vec![0.0f64; n];
+                    let mut total_spikes = 0u64;
+                    for step in 0..100u64 {
+                        let out = layer
+                            .forward_fused(black_box(&inputs), 42 + step)
+                            .unwrap();
+                        for (vi, oi) in v.iter_mut().zip(out.iter()) {
+                            *vi = 0.9 * *vi + *oi;
+                            if *vi >= 0.5 {
+                                total_spikes += 1;
+                                *vi = 0.0;
+                            }
+                        }
+                    }
+                    black_box(total_spikes)
+                })
+            },
+        );
+    }
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_kuramoto_scaling,
     bench_gnn_scaling,
     bench_dense_scaling,
     bench_popcount_scaling,
+    bench_lif_network_scaling,
 );
 criterion_main!(benches);

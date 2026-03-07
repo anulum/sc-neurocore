@@ -1,29 +1,34 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# SC-NeuroCore scaling benchmark runner for UpCloud GPU servers.
+# © 1998–2026 Miroslav Šotek. All rights reserved.
+# Contact: www.anulum.li | protoscience@anulum.li
+#
+# SC-NeuroCore 6-phase scaling benchmark runner for UpCloud GPU servers.
 # Target: NVIDIA L40S GPU + AMD EPYC 9575F (Zen 5, AVX-512).
 #
-# Measures wall-clock time, memory footprint, and spike statistics
-# as neuron count scales from 1K to 50K on the Brunel balanced
-# network. Compares SC-NeuroCore (NumPy dense, NumPy sparse,
-# PyTorch CUDA) vs Brian2 vs NEST (if available).
+# Phases:
+#   1. System info collection
+#   2. Rust criterion benchmarks (scaling_bench + full_bench)
+#   3. Python scaling — 4 Brunel regimes × 7 scales × 3 repeats
+#   4. SC network benchmark — 5 sizes × 3 bitstream lengths
+#   5. Rust-vs-Python parity benchmark
+#   6. GPU-extended scaling (sparse CUDA, up to 100K)
 #
 # Usage:
 #   rsync -az --exclude target/ --exclude .git/ . root@<ip>:/opt/sc-neurocore/
 #   ssh root@<ip> 'cd /opt/sc-neurocore && bash tools/upcloud_scaling_benchmark.sh'
 #
-# Estimated runtime: ~20 min (Python scaling) + ~10 min (Rust scaling) = ~30 min
-# Cost at €1.11/hr (1×L40S): ~€0.55
+# Estimated runtime: ~45 min.  Cost at €1.11/hr (1×L40S): ~€0.85
 
 set -euo pipefail
 
 RESULTS_DIR="benchmarks/results/upcloud"
 mkdir -p "$RESULTS_DIR"
 
-log() { echo "=== $(date +%H:%M:%S) $1 ==="; }
+log() { echo "=== $(date +%H:%M:%S) Phase $1: $2 ==="; }
 
-# ---- System info ----
-log "Collecting system info"
+# ---- Phase 1: System info ----
+log 1 "Collecting system info"
 {
   echo "# UpCloud Scaling Benchmark Environment"
   echo "Date: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -49,66 +54,78 @@ log "Collecting system info"
 cat "$RESULTS_DIR/scaling_system_info.md"
 
 # ---- Install dependencies ----
-log "Installing system packages"
+log 1 "Installing dependencies"
 apt-get update -qq && apt-get install -y -qq build-essential pkg-config curl git python3 python3-pip python3-venv > /dev/null
 
-# Rust
 if ! command -v cargo &>/dev/null; then
-  log "Installing Rust"
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
   source "$HOME/.cargo/env"
 fi
 rustup default stable
 rustc --version
 
-# Python venv
-log "Setting up Python venv"
 python3 -m venv /opt/bench-venv
 source /opt/bench-venv/bin/activate
 pip install --quiet --upgrade pip
 pip install --quiet numpy scipy brian2
 
-# GPU packages
 if nvidia-smi &>/dev/null; then
-  log "Installing GPU packages"
   pip install --quiet torch --index-url https://download.pytorch.org/whl/cu124
 fi
 
-# Install sc-neurocore
-log "Installing sc-neurocore"
 pip install --quiet -e ".[dev]" 2>/dev/null || pip install --quiet -e . 2>/dev/null || true
 
-# ---- Phase 1: Rust Scaling Benchmarks (Criterion) ----
-log "Phase 1: Rust scaling benchmarks"
+# ---- Phase 2: Rust criterion benchmarks ----
+log 2 "Rust scaling benchmarks (Criterion)"
 cd engine
-
 cargo bench --bench scaling_bench -- --output-format bencher 2>/dev/null | tee "../$RESULTS_DIR/rust_scaling_bench.txt"
-
 cd ..
 
-# ---- Phase 2: Python Scaling Benchmark ----
-log "Phase 2: Python scaling benchmark (1K → 50K neurons, 3 repeats)"
+# ---- Phase 3: Python scaling — 4 Brunel regimes ----
+log 3 "Python scaling benchmark (4 regimes × 7 scales × 3 repeats)"
 python benchmarks/scaling_benchmark.py \
   --scales 1000 2000 5000 10000 20000 50000 \
+  --regimes SR SI AI AR \
   --sim-ms 500 \
   --repeats 3 \
   --json "$RESULTS_DIR/scaling_results.json" \
   --markdown 2>&1 | tee "$RESULTS_DIR/scaling_results.md"
 
-# ---- Phase 3: Extended GPU scaling (if CUDA available) ----
+# ---- Phase 4: SC network benchmark ----
+log 4 "SC network benchmark (5 sizes × 3 bitstream lengths)"
+python benchmarks/sc_network_benchmark.py \
+  --scales 100 200 500 1000 2000 \
+  --bitstream-lengths 256 512 1024 \
+  --sim-steps 50 \
+  --repeats 3 \
+  --json "$RESULTS_DIR/sc_network_results.json" \
+  --markdown 2>&1 | tee "$RESULTS_DIR/sc_network_results.md"
+
+# ---- Phase 5: Rust-vs-Python parity ----
+log 5 "Rust-vs-Python parity benchmark"
+python benchmarks/rust_python_parity_bench.py \
+  --repeats 3 \
+  --json "$RESULTS_DIR/rust_python_parity.json" \
+  --markdown 2>&1 | tee "$RESULTS_DIR/rust_python_parity.md"
+
+# ---- Phase 6: GPU-extended scaling ----
 if nvidia-smi &>/dev/null; then
-  log "Phase 3: GPU-only extended scaling (up to 100K neurons)"
+  log 6 "GPU-only extended scaling (sparse CUDA, up to 100K)"
   python benchmarks/scaling_benchmark.py \
     --scales 10000 20000 50000 100000 \
+    --regimes AI \
     --sim-ms 200 \
     --repeats 3 \
-    --simulators sc_pytorch_cuda \
+    --simulators sc_pytorch_cuda sc_pytorch_cuda_sparse \
     --json "$RESULTS_DIR/gpu_scaling_results.json" \
     --markdown 2>&1 | tee "$RESULTS_DIR/gpu_scaling_results.md"
+else
+  log 6 "SKIP — no NVIDIA GPU detected"
 fi
 
 # ---- Summary ----
-log "Scaling benchmark complete"
+echo ""
+echo "=== $(date +%H:%M:%S) Benchmark complete ==="
 echo ""
 echo "Results saved to: $RESULTS_DIR/"
 ls -la "$RESULTS_DIR/"
