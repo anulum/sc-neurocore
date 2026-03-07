@@ -129,22 +129,30 @@ pub unsafe fn scale_f64_neon(alpha: f64, y: &mut [f64]) {
 }
 
 #[cfg(not(target_arch = "aarch64"))]
+/// # Safety
+/// Fallback for non-AArch64; unsafe for API parity.
 pub unsafe fn dot_f64_neon(a: &[f64], b: &[f64]) -> f64 {
     let len = a.len().min(b.len());
     a[..len].iter().zip(&b[..len]).map(|(&x, &y)| x * y).sum()
 }
 
 #[cfg(not(target_arch = "aarch64"))]
+/// # Safety
+/// Fallback for non-AArch64; unsafe for API parity.
 pub unsafe fn max_f64_neon(a: &[f64]) -> f64 {
     a.iter().copied().fold(f64::NEG_INFINITY, f64::max)
 }
 
 #[cfg(not(target_arch = "aarch64"))]
+/// # Safety
+/// Fallback for non-AArch64; unsafe for API parity.
 pub unsafe fn sum_f64_neon(a: &[f64]) -> f64 {
     a.iter().sum()
 }
 
 #[cfg(not(target_arch = "aarch64"))]
+/// # Safety
+/// Fallback for non-AArch64; unsafe for API parity.
 pub unsafe fn scale_f64_neon(alpha: f64, y: &mut [f64]) {
     for v in y.iter_mut() {
         *v *= alpha;
