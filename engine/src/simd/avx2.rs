@@ -401,7 +401,10 @@ mod tests {
         let b: Vec<f64> = (0..67).map(|i| (i as f64 * 0.3) - 5.0).collect();
         let expected: f64 = a.iter().zip(&b).map(|(x, y)| x * y).sum();
         let got = unsafe { super::dot_f64_avx2(&a, &b) };
-        assert!((got - expected).abs() < 1e-9, "dot: got {got}, expected {expected}");
+        assert!(
+            (got - expected).abs() < 1e-9,
+            "dot: got {got}, expected {expected}"
+        );
     }
 
     #[test]
@@ -412,7 +415,10 @@ mod tests {
         let a: Vec<f64> = (0..67).map(|i| (i as f64 * 7.3).sin()).collect();
         let expected = a.iter().copied().fold(f64::NEG_INFINITY, f64::max);
         let got = unsafe { super::max_f64_avx2(&a) };
-        assert!((got - expected).abs() < 1e-12, "max: got {got}, expected {expected}");
+        assert!(
+            (got - expected).abs() < 1e-12,
+            "max: got {got}, expected {expected}"
+        );
     }
 
     #[test]
@@ -423,7 +429,10 @@ mod tests {
         let a: Vec<f64> = (0..67).map(|i| i as f64 * 0.01).collect();
         let expected: f64 = a.iter().sum();
         let got = unsafe { super::sum_f64_avx2(&a) };
-        assert!((got - expected).abs() < 1e-9, "sum: got {got}, expected {expected}");
+        assert!(
+            (got - expected).abs() < 1e-9,
+            "sum: got {got}, expected {expected}"
+        );
     }
 
     #[test]
