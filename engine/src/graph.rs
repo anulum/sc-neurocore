@@ -382,6 +382,7 @@ impl StochasticGraphLayer {
                     &mut rng,
                 );
                 for i in 0..self.n_nodes {
+                    #[allow(clippy::needless_range_loop)]
                     for idx in csr.row_offsets[i]..csr.row_offsets[i + 1] {
                         let j = csr.col_indices[idx];
                         let a = &adj_packed[idx];
