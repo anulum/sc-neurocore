@@ -1,0 +1,3033 @@
+{
+  "timestamp": "2026-03-07T19:43:51Z",
+  "system": {
+    "platform": "Linux-6.8.0-87-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "cpu": "AMD EPYC 9575F 64-Core Processor",
+    "cpu_count": 8,
+    "gpu": "NVIDIA L40S",
+    "cuda_version": "12.4"
+  },
+  "params": {
+    "sim_ms": 500.0,
+    "repeats": 3,
+    "regimes": [
+      "SR",
+      "SI",
+      "AI",
+      "AR"
+    ],
+    "conn_prob": 0.1,
+    "weight_exc": 0.1
+  },
+  "data": [
+    {
+      "n_neurons": 1000,
+      "simulator": "sc_numpy_dense",
+      "regime": "SR",
+      "n_synapses": 100000,
+      "wall_mean_s": 0.2954,
+      "wall_std_s": 0.0003,
+      "wall_min_s": 0.2952,
+      "peak_rss_mb": 0.3,
+      "spikes_mean": 73219.0,
+      "rate_mean_hz": 146.44,
+      "syn_events_per_s": 24692473.79,
+      "activation_sparsity": 0.9854,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.2956596140002148,
+          "peak_rss_mb": 0.3018350601196289,
+          "total_spikes": 73219,
+          "mean_rate_hz": 146.438,
+          "synaptic_events": 7293783,
+          "synaptic_events_per_s": 24669527.57367363,
+          "activation_sparsity": 0.9853562,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 0.29533162400002766,
+          "peak_rss_mb": 0.3011589050292969,
+          "total_spikes": 73219,
+          "mean_rate_hz": 146.438,
+          "synaptic_events": 7293783,
+          "synaptic_events_per_s": 24696925.108160164,
+          "activation_sparsity": 0.9853562,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 0.2951637829992251,
+          "peak_rss_mb": 0.3011589050292969,
+          "total_spikes": 73219,
+          "mean_rate_hz": 146.438,
+          "synaptic_events": 7293783,
+          "synaptic_events_per_s": 24710968.689607657,
+          "activation_sparsity": 0.9853562,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 1000,
+      "simulator": "sc_numpy_sparse",
+      "regime": "SR",
+      "n_synapses": 100000,
+      "wall_mean_s": 1.1249,
+      "wall_std_s": 0.0028,
+      "wall_min_s": 1.1221,
+      "peak_rss_mb": 0.2,
+      "spikes_mean": 73219.0,
+      "rate_mean_hz": 146.44,
+      "syn_events_per_s": 6483843.19,
+      "activation_sparsity": 0.9854,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 1.125110124999992,
+          "peak_rss_mb": 0.24356651306152344,
+          "total_spikes": 73219,
+          "mean_rate_hz": 146.438,
+          "synaptic_events": 7293783,
+          "synaptic_events_per_s": 6482728.07961803,
+          "activation_sparsity": 0.9853562,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 1.127577007000582,
+          "peak_rss_mb": 0.22893619537353516,
+          "total_spikes": 73219,
+          "mean_rate_hz": 146.438,
+          "synaptic_events": 7293783,
+          "synaptic_events_per_s": 6468545.345210498,
+          "activation_sparsity": 0.9853562,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 1.122076243000265,
+          "peak_rss_mb": 0.23131942749023438,
+          "total_spikes": 73219,
+          "mean_rate_hz": 146.438,
+          "synaptic_events": 7293783,
+          "synaptic_events_per_s": 6500256.1505958885,
+          "activation_sparsity": 0.9853562,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 1000,
+      "simulator": "sc_pytorch_cuda",
+      "regime": "SR",
+      "n_synapses": 100000,
+      "wall_mean_s": 0.4747,
+      "wall_std_s": 0.0139,
+      "wall_min_s": 0.4656,
+      "peak_rss_mb": 12.0,
+      "spikes_mean": 73219.0,
+      "rate_mean_hz": 146.44,
+      "syn_events_per_s": 15372666.09,
+      "activation_sparsity": 0.9854,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.49078213999928266,
+          "peak_rss_mb": 11.96484375,
+          "total_spikes": 73219,
+          "mean_rate_hz": 146.438,
+          "synaptic_events": 7293783,
+          "synaptic_events_per_s": 14861549.362840833,
+          "activation_sparsity": 0.9853562,
+          "gpu_mem_mb": 11.96484375
+        },
+        {
+          "wall_time_s": 0.46782946300027106,
+          "peak_rss_mb": 11.96484375,
+          "total_spikes": 73219,
+          "mean_rate_hz": 146.438,
+          "synaptic_events": 7293783,
+          "synaptic_events_per_s": 15590687.583513256,
+          "activation_sparsity": 0.9853562,
+          "gpu_mem_mb": 11.96484375
+        },
+        {
+          "wall_time_s": 0.46558752200053277,
+          "peak_rss_mb": 11.96484375,
+          "total_spikes": 73219,
+          "mean_rate_hz": 146.438,
+          "synaptic_events": 7293783,
+          "synaptic_events_per_s": 15665761.33453949,
+          "activation_sparsity": 0.9853562,
+          "gpu_mem_mb": 11.96484375
+        }
+      ]
+    },
+    {
+      "n_neurons": 1000,
+      "simulator": "sc_pytorch_cuda_sparse",
+      "regime": "SR",
+      "n_synapses": 100000,
+      "wall_mean_s": 0.4923,
+      "wall_std_s": 0.0008,
+      "wall_min_s": 0.4916,
+      "peak_rss_mb": 10.8,
+      "spikes_mean": 202311.0,
+      "rate_mean_hz": 404.62,
+      "syn_events_per_s": 40939585.42,
+      "activation_sparsity": 0.9595,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.4916032000000996,
+          "peak_rss_mb": 10.83349609375,
+          "total_spikes": 202311,
+          "mean_rate_hz": 404.622,
+          "synaptic_events": 20153412,
+          "synaptic_events_per_s": 40995282.374069,
+          "activation_sparsity": 0.9595378000000001,
+          "gpu_mem_mb": 10.83349609375
+        },
+        {
+          "wall_time_s": 0.49314136400062125,
+          "peak_rss_mb": 10.83349609375,
+          "total_spikes": 202311,
+          "mean_rate_hz": 404.622,
+          "synaptic_events": 20153412,
+          "synaptic_events_per_s": 40867413.42584803,
+          "activation_sparsity": 0.9595378000000001,
+          "gpu_mem_mb": 10.83349609375
+        },
+        {
+          "wall_time_s": 0.4920739879999019,
+          "peak_rss_mb": 10.83349609375,
+          "total_spikes": 202311,
+          "mean_rate_hz": 404.622,
+          "synaptic_events": 20153412,
+          "synaptic_events_per_s": 40956060.453258544,
+          "activation_sparsity": 0.9595378000000001,
+          "gpu_mem_mb": 10.83349609375
+        }
+      ]
+    },
+    {
+      "n_neurons": 2000,
+      "simulator": "sc_numpy_dense",
+      "regime": "SR",
+      "n_synapses": 400000,
+      "wall_mean_s": 0.4492,
+      "wall_std_s": 0.0013,
+      "wall_min_s": 0.4479,
+      "peak_rss_mb": 2.2,
+      "spikes_mean": 190096.0,
+      "rate_mean_hz": 190.1,
+      "syn_events_per_s": 84559020.22,
+      "activation_sparsity": 0.981,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.4493701379997219,
+          "peak_rss_mb": 2.247486114501953,
+          "total_spikes": 190096,
+          "mean_rate_hz": 190.096,
+          "synaptic_events": 37985838,
+          "synaptic_events_per_s": 84531291.21816169,
+          "activation_sparsity": 0.9809903999999998,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 0.4504323379997004,
+          "peak_rss_mb": 2.247486114501953,
+          "total_spikes": 190096,
+          "mean_rate_hz": 190.096,
+          "synaptic_events": 37985838,
+          "synaptic_events_per_s": 84331951.31745906,
+          "activation_sparsity": 0.9809903999999998,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 0.4478732220004531,
+          "peak_rss_mb": 2.247486114501953,
+          "total_spikes": 190096,
+          "mean_rate_hz": 190.096,
+          "synaptic_events": 37985838,
+          "synaptic_events_per_s": 84813818.13883388,
+          "activation_sparsity": 0.9809903999999998,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 2000,
+      "simulator": "sc_numpy_sparse",
+      "regime": "SR",
+      "n_synapses": 400000,
+      "wall_mean_s": 1.2485,
+      "wall_std_s": 0.0031,
+      "wall_min_s": 1.2463,
+      "peak_rss_mb": 0.5,
+      "spikes_mean": 190096.0,
+      "rate_mean_hz": 190.1,
+      "syn_events_per_s": 30424503.73,
+      "activation_sparsity": 0.981,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 1.247283165999761,
+          "peak_rss_mb": 0.49622440338134766,
+          "total_spikes": 190096,
+          "mean_rate_hz": 190.096,
+          "synaptic_events": 37985838,
+          "synaptic_events_per_s": 30454863.045916617,
+          "activation_sparsity": 0.9809903999999998,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 1.2462976269998762,
+          "peak_rss_mb": 0.4960784912109375,
+          "total_spikes": 190096,
+          "mean_rate_hz": 190.096,
+          "synaptic_events": 37985838,
+          "synaptic_events_per_s": 30478945.941220004,
+          "activation_sparsity": 0.9809903999999998,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 1.2520174969995423,
+          "peak_rss_mb": 0.4958353042602539,
+          "total_spikes": 190096,
+          "mean_rate_hz": 190.096,
+          "synaptic_events": 37985838,
+          "synaptic_events_per_s": 30339702.193486106,
+          "activation_sparsity": 0.9809903999999998,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 2000,
+      "simulator": "sc_pytorch_cuda",
+      "regime": "SR",
+      "n_synapses": 400000,
+      "wall_mean_s": 0.5809,
+      "wall_std_s": 0.0009,
+      "wall_min_s": 0.5801,
+      "peak_rss_mb": 24.2,
+      "spikes_mean": 190096.0,
+      "rate_mean_hz": 190.1,
+      "syn_events_per_s": 65386614.14,
+      "activation_sparsity": 0.981,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.5807877200004441,
+          "peak_rss_mb": 24.17431640625,
+          "total_spikes": 190096,
+          "mean_rate_hz": 190.096,
+          "synaptic_events": 37985838,
+          "synaptic_events_per_s": 65403996.48940744,
+          "activation_sparsity": 0.9809903999999998,
+          "gpu_mem_mb": 24.17431640625
+        },
+        {
+          "wall_time_s": 0.5819215589999658,
+          "peak_rss_mb": 24.17431640625,
+          "total_spikes": 190096,
+          "mean_rate_hz": 190.096,
+          "synaptic_events": 37985838,
+          "synaptic_events_per_s": 65276560.753787495,
+          "activation_sparsity": 0.9809903999999998,
+          "gpu_mem_mb": 24.17431640625
+        },
+        {
+          "wall_time_s": 0.5801199249999627,
+          "peak_rss_mb": 24.17431640625,
+          "total_spikes": 190096,
+          "mean_rate_hz": 190.096,
+          "synaptic_events": 37985838,
+          "synaptic_events_per_s": 65479285.166773826,
+          "activation_sparsity": 0.9809903999999998,
+          "gpu_mem_mb": 24.17431640625
+        }
+      ]
+    },
+    {
+      "n_neurons": 2000,
+      "simulator": "sc_pytorch_cuda_sparse",
+      "regime": "SR",
+      "n_synapses": 400000,
+      "wall_mean_s": 0.614,
+      "wall_std_s": 0.0011,
+      "wall_min_s": 0.613,
+      "peak_rss_mb": 15.8,
+      "spikes_mean": 3906952.0,
+      "rate_mean_hz": 3906.95,
+      "syn_events_per_s": 1271602111.47,
+      "activation_sparsity": 0.6093,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.6130410989999291,
+          "peak_rss_mb": 15.81640625,
+          "total_spikes": 3906952,
+          "mean_rate_hz": 3906.952,
+          "synaptic_events": 780704729,
+          "synaptic_events_per_s": 1273494925.9904194,
+          "activation_sparsity": 0.6093048,
+          "gpu_mem_mb": 15.81640625
+        },
+        {
+          "wall_time_s": 0.6135871799997403,
+          "peak_rss_mb": 15.81640625,
+          "total_spikes": 3906952,
+          "mean_rate_hz": 3906.952,
+          "synaptic_events": 780704729,
+          "synaptic_events_per_s": 1272361539.5620399,
+          "activation_sparsity": 0.6093048,
+          "gpu_mem_mb": 15.81640625
+        },
+        {
+          "wall_time_s": 0.6152368569992177,
+          "peak_rss_mb": 15.81640625,
+          "total_spikes": 3906952,
+          "mean_rate_hz": 3906.952,
+          "synaptic_events": 780704729,
+          "synaptic_events_per_s": 1268949868.848629,
+          "activation_sparsity": 0.6093048,
+          "gpu_mem_mb": 15.81640625
+        }
+      ]
+    },
+    {
+      "n_neurons": 5000,
+      "simulator": "sc_numpy_dense",
+      "regime": "SR",
+      "n_synapses": 2500000,
+      "wall_mean_s": 3.7336,
+      "wall_std_s": 0.0257,
+      "wall_min_s": 3.7167,
+      "peak_rss_mb": 30.3,
+      "spikes_mean": 2691278.0,
+      "rate_mean_hz": 1076.51,
+      "syn_events_per_s": 360226856.81,
+      "activation_sparsity": 0.8923,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 3.720843485999467,
+          "peak_rss_mb": 30.334209442138672,
+          "total_spikes": 2691278,
+          "mean_rate_hz": 1076.5112,
+          "synaptic_events": 1344888133,
+          "synaptic_events_per_s": 361447112.21002775,
+          "activation_sparsity": 0.8923488799999999,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 3.7631377890002113,
+          "peak_rss_mb": 30.334209442138672,
+          "total_spikes": 2691278,
+          "mean_rate_hz": 1076.5112,
+          "synaptic_events": 1344888133,
+          "synaptic_events_per_s": 357384769.9468132,
+          "activation_sparsity": 0.8923488799999999,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 3.716714131000117,
+          "peak_rss_mb": 30.334209442138672,
+          "total_spikes": 2691278,
+          "mean_rate_hz": 1076.5112,
+          "synaptic_events": 1344888133,
+          "synaptic_events_per_s": 361848688.2761976,
+          "activation_sparsity": 0.8923488799999999,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 5000,
+      "simulator": "sc_numpy_sparse",
+      "regime": "SR",
+      "n_synapses": 2500000,
+      "wall_mean_s": 2.4449,
+      "wall_std_s": 0.0064,
+      "wall_min_s": 2.4378,
+      "peak_rss_mb": 6.2,
+      "spikes_mean": 2691278.0,
+      "rate_mean_hz": 1076.51,
+      "syn_events_per_s": 550071100.27,
+      "activation_sparsity": 0.8923,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 2.446889657999236,
+          "peak_rss_mb": 6.171009063720703,
+          "total_spikes": 2691278,
+          "mean_rate_hz": 1076.5112,
+          "synaptic_events": 1344888133,
+          "synaptic_events_per_s": 549631704.3162801,
+          "activation_sparsity": 0.8923488799999999,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 2.437791183000627,
+          "peak_rss_mb": 6.171154975891113,
+          "total_spikes": 2691278,
+          "mean_rate_hz": 1076.5112,
+          "synaptic_events": 1344888133,
+          "synaptic_events_per_s": 551683073.7506422,
+          "activation_sparsity": 0.8923488799999999,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 2.4501580480000484,
+          "peak_rss_mb": 6.171154975891113,
+          "total_spikes": 2691278,
+          "mean_rate_hz": 1076.5112,
+          "synaptic_events": 1344888133,
+          "synaptic_events_per_s": 548898522.729083,
+          "activation_sparsity": 0.8923488799999999,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 5000,
+      "simulator": "sc_pytorch_cuda",
+      "regime": "SR",
+      "n_synapses": 2500000,
+      "wall_mean_s": 1.2624,
+      "wall_std_s": 0.0004,
+      "wall_min_s": 1.262,
+      "peak_rss_mb": 104.2,
+      "spikes_mean": 2700563.0,
+      "rate_mean_hz": 1080.23,
+      "syn_events_per_s": 1069057833.96,
+      "activation_sparsity": 0.892,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 1.2619685409999875,
+          "peak_rss_mb": 104.2470703125,
+          "total_spikes": 2700563,
+          "mean_rate_hz": 1080.2252,
+          "synaptic_events": 1349528042,
+          "synaptic_events_per_s": 1069383267.6134939,
+          "activation_sparsity": 0.8919774799999999,
+          "gpu_mem_mb": 104.2470703125
+        },
+        {
+          "wall_time_s": 1.26269728600073,
+          "peak_rss_mb": 104.2470703125,
+          "total_spikes": 2700563,
+          "mean_rate_hz": 1080.2252,
+          "synaptic_events": 1349528042,
+          "synaptic_events_per_s": 1068766090.6235763,
+          "activation_sparsity": 0.8919774799999999,
+          "gpu_mem_mb": 104.2470703125
+        },
+        {
+          "wall_time_s": 1.2623924819999957,
+          "peak_rss_mb": 104.2470703125,
+          "total_spikes": 2700563,
+          "mean_rate_hz": 1080.2252,
+          "synaptic_events": 1349528042,
+          "synaptic_events_per_s": 1069024143.6339643,
+          "activation_sparsity": 0.8919774799999999,
+          "gpu_mem_mb": 104.2470703125
+        }
+      ]
+    },
+    {
+      "n_neurons": 5000,
+      "simulator": "sc_pytorch_cuda_sparse",
+      "regime": "SR",
+      "n_synapses": 2500000,
+      "wall_mean_s": 0.9644,
+      "wall_std_s": 0.0128,
+      "wall_min_s": 0.9508,
+      "peak_rss_mb": 56.0,
+      "spikes_mean": 19543953.0,
+      "rate_mean_hz": 7817.58,
+      "syn_events_per_s": 10128516715.11,
+      "activation_sparsity": 0.2182,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.9662219109995931,
+          "peak_rss_mb": 55.96240234375,
+          "total_spikes": 19543953,
+          "mean_rate_hz": 7817.5812,
+          "synaptic_events": 9766523737,
+          "synaptic_events_per_s": 10107951005.681667,
+          "activation_sparsity": 0.21824187999999994,
+          "gpu_mem_mb": 55.96240234375
+        },
+        {
+          "wall_time_s": 0.9761296340002446,
+          "peak_rss_mb": 55.96240234375,
+          "total_spikes": 19543953,
+          "mean_rate_hz": 7817.5812,
+          "synaptic_events": 9766523737,
+          "synaptic_events_per_s": 10005355228.256039,
+          "activation_sparsity": 0.21824187999999994,
+          "gpu_mem_mb": 55.96240234375
+        },
+        {
+          "wall_time_s": 0.950768285999402,
+          "peak_rss_mb": 55.96240234375,
+          "total_spikes": 19543953,
+          "mean_rate_hz": 7817.5812,
+          "synaptic_events": 9766523737,
+          "synaptic_events_per_s": 10272243911.389933,
+          "activation_sparsity": 0.21824187999999994,
+          "gpu_mem_mb": 55.96240234375
+        }
+      ]
+    },
+    {
+      "n_neurons": 10000,
+      "simulator": "sc_numpy_dense",
+      "regime": "SR",
+      "n_synapses": 10000000,
+      "wall_mean_s": 205.4258,
+      "wall_std_s": 0.6026,
+      "wall_min_s": 204.7984,
+      "peak_rss_mb": 379.2,
+      "spikes_mean": 48250683.0,
+      "rate_mean_hz": 9650.14,
+      "syn_events_per_s": 234949267.36,
+      "activation_sparsity": 0.035,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 206.00001245599924,
+          "peak_rss_mb": 379.1709976196289,
+          "total_spikes": 48250683,
+          "mean_rate_hz": 9650.1366,
+          "synaptic_events": 48264357243,
+          "synaptic_events_per_s": 234292982.15847957,
+          "activation_sparsity": 0.034986340000000005,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 205.47891655999956,
+          "peak_rss_mb": 379.1709976196289,
+          "total_spikes": 48250683,
+          "mean_rate_hz": 9650.1366,
+          "synaptic_events": 48264357243,
+          "synaptic_events_per_s": 234887150.71605352,
+          "activation_sparsity": 0.034986340000000005,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 204.79838158099938,
+          "peak_rss_mb": 379.1709976196289,
+          "total_spikes": 48250683,
+          "mean_rate_hz": 9650.1366,
+          "synaptic_events": 48264357243,
+          "synaptic_events_per_s": 235667669.19938314,
+          "activation_sparsity": 0.034986340000000005,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 10000,
+      "simulator": "sc_numpy_sparse",
+      "regime": "SR",
+      "n_synapses": 10000000,
+      "wall_mean_s": 57.0179,
+      "wall_std_s": 0.565,
+      "wall_min_s": 56.6163,
+      "peak_rss_mb": 76.4,
+      "spikes_mean": 48250683.0,
+      "rate_mean_hz": 9650.14,
+      "syn_events_per_s": 846532478.54,
+      "activation_sparsity": 0.035,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 57.66398425599982,
+          "peak_rss_mb": 76.41077041625977,
+          "total_spikes": 48250683,
+          "mean_rate_hz": 9650.1366,
+          "synaptic_events": 48264357243,
+          "synaptic_events_per_s": 836993105.2410446,
+          "activation_sparsity": 0.034986340000000005,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 56.77345143000002,
+          "peak_rss_mb": 76.41193771362305,
+          "total_spikes": 48250683,
+          "mean_rate_hz": 9650.1366,
+          "synaptic_events": 48264357243,
+          "synaptic_events_per_s": 850121950.0897971,
+          "activation_sparsity": 0.034986340000000005,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 56.61625197000012,
+          "peak_rss_mb": 76.41582870483398,
+          "total_spikes": 48250683,
+          "mean_rate_hz": 9650.1366,
+          "synaptic_events": 48264357243,
+          "synaptic_events_per_s": 852482380.2991121,
+          "activation_sparsity": 0.034986340000000005,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 10000,
+      "simulator": "sc_pytorch_cuda",
+      "regime": "SR",
+      "n_synapses": 10000000,
+      "wall_mean_s": 4.2261,
+      "wall_std_s": 0.0045,
+      "wall_min_s": 4.2214,
+      "peak_rss_mb": 390.4,
+      "spikes_mean": 48250587.0,
+      "rate_mean_hz": 9650.12,
+      "syn_events_per_s": 11420565258.03,
+      "activation_sparsity": 0.035,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 4.221444370999961,
+          "peak_rss_mb": 390.3662109375,
+          "total_spikes": 48250587,
+          "mean_rate_hz": 9650.1174,
+          "synaptic_events": 48264261216,
+          "synaptic_events_per_s": 11433115534.474596,
+          "activation_sparsity": 0.03498826,
+          "gpu_mem_mb": 390.3662109375
+        },
+        {
+          "wall_time_s": 4.226350232999721,
+          "peak_rss_mb": 390.3662109375,
+          "total_spikes": 48250587,
+          "mean_rate_hz": 9650.1174,
+          "synaptic_events": 48264261216,
+          "synaptic_events_per_s": 11419844204.852766,
+          "activation_sparsity": 0.03498826,
+          "gpu_mem_mb": 390.3662109375
+        },
+        {
+          "wall_time_s": 4.230465239000296,
+          "peak_rss_mb": 390.3662109375,
+          "total_spikes": 48250587,
+          "mean_rate_hz": 9650.1174,
+          "synaptic_events": 48264261216,
+          "synaptic_events_per_s": 11408736034.764196,
+          "activation_sparsity": 0.03498826,
+          "gpu_mem_mb": 390.3662109375
+        }
+      ]
+    },
+    {
+      "n_neurons": 10000,
+      "simulator": "sc_pytorch_cuda_sparse",
+      "regime": "SR",
+      "n_synapses": 10000000,
+      "wall_mean_s": 2.302,
+      "wall_std_s": 0.0006,
+      "wall_min_s": 2.3014,
+      "peak_rss_mb": 199.3,
+      "spikes_mean": 39112174.0,
+      "rate_mean_hz": 7822.43,
+      "syn_events_per_s": 16995226858.1,
+      "activation_sparsity": 0.2178,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 2.302395790999981,
+          "peak_rss_mb": 199.30712890625,
+          "total_spikes": 39112174,
+          "mean_rate_hz": 7822.4348,
+          "synaptic_events": 39123258390,
+          "synaptic_events_per_s": 16992412226.834341,
+          "activation_sparsity": 0.21775651999999995,
+          "gpu_mem_mb": 199.30712890625
+        },
+        {
+          "wall_time_s": 2.302282419000221,
+          "peak_rss_mb": 199.30712890625,
+          "total_spikes": 39112174,
+          "mean_rate_hz": 7822.4348,
+          "synaptic_events": 39123258390,
+          "synaptic_events_per_s": 16993248989.404823,
+          "activation_sparsity": 0.21775651999999995,
+          "gpu_mem_mb": 199.30712890625
+        },
+        {
+          "wall_time_s": 2.3013655200002177,
+          "peak_rss_mb": 199.30712890625,
+          "total_spikes": 39112174,
+          "mean_rate_hz": 7822.4348,
+          "synaptic_events": 39123258390,
+          "synaptic_events_per_s": 17000019358.070639,
+          "activation_sparsity": 0.21775651999999995,
+          "gpu_mem_mb": 199.30712890625
+        }
+      ]
+    },
+    {
+      "n_neurons": 1000,
+      "simulator": "sc_numpy_dense",
+      "regime": "SI",
+      "n_synapses": 100000,
+      "wall_mean_s": 0.3332,
+      "wall_std_s": 0.0002,
+      "wall_min_s": 0.333,
+      "peak_rss_mb": 0.3,
+      "spikes_mean": 111794.0,
+      "rate_mean_hz": 223.59,
+      "syn_events_per_s": 33426431.45,
+      "activation_sparsity": 0.9776,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.33301088999996864,
+          "peak_rss_mb": 0.2782707214355469,
+          "total_spikes": 111794,
+          "mean_rate_hz": 223.588,
+          "synaptic_events": 11136471,
+          "synaptic_events_per_s": 33441762.219851274,
+          "activation_sparsity": 0.9776411999999999,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 0.3334206029994675,
+          "peak_rss_mb": 0.2782707214355469,
+          "total_spikes": 111794,
+          "mean_rate_hz": 223.588,
+          "synaptic_events": 11136471,
+          "synaptic_events_per_s": 33400668.40445905,
+          "activation_sparsity": 0.9776411999999999,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 0.33305967600063013,
+          "peak_rss_mb": 0.2782707214355469,
+          "total_spikes": 111794,
+          "mean_rate_hz": 223.588,
+          "synaptic_events": 11136471,
+          "synaptic_events_per_s": 33436863.72882597,
+          "activation_sparsity": 0.9776411999999999,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 1000,
+      "simulator": "sc_numpy_sparse",
+      "regime": "SI",
+      "n_synapses": 100000,
+      "wall_mean_s": 1.1593,
+      "wall_std_s": 0.0079,
+      "wall_min_s": 1.1516,
+      "peak_rss_mb": 0.2,
+      "spikes_mean": 111794.0,
+      "rate_mean_hz": 223.59,
+      "syn_events_per_s": 9606601.78,
+      "activation_sparsity": 0.9776,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 1.1673967140004606,
+          "peak_rss_mb": 0.24071121215820312,
+          "total_spikes": 111794,
+          "mean_rate_hz": 223.588,
+          "synaptic_events": 11136471,
+          "synaptic_events_per_s": 9539577.13469768,
+          "activation_sparsity": 0.9776411999999999,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 1.1588359349998427,
+          "peak_rss_mb": 0.24649906158447266,
+          "total_spikes": 111794,
+          "mean_rate_hz": 223.588,
+          "synaptic_events": 11136471,
+          "synaptic_events_per_s": 9610049.760841694,
+          "activation_sparsity": 0.9776411999999999,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 1.151630350999767,
+          "peak_rss_mb": 0.24572086334228516,
+          "total_spikes": 111794,
+          "mean_rate_hz": 223.588,
+          "synaptic_events": 11136471,
+          "synaptic_events_per_s": 9670178.44773896,
+          "activation_sparsity": 0.9776411999999999,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 1000,
+      "simulator": "sc_pytorch_cuda",
+      "regime": "SI",
+      "n_synapses": 100000,
+      "wall_mean_s": 0.4945,
+      "wall_std_s": 0.0015,
+      "wall_min_s": 0.493,
+      "peak_rss_mb": 12.0,
+      "spikes_mean": 111794.0,
+      "rate_mean_hz": 223.59,
+      "syn_events_per_s": 22520406.7,
+      "activation_sparsity": 0.9776,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.4959672800005137,
+          "peak_rss_mb": 11.96484375,
+          "total_spikes": 111794,
+          "mean_rate_hz": 223.588,
+          "synaptic_events": 11136471,
+          "synaptic_events_per_s": 22454043.74253976,
+          "activation_sparsity": 0.9776411999999999,
+          "gpu_mem_mb": 11.96484375
+        },
+        {
+          "wall_time_s": 0.49455123499956244,
+          "peak_rss_mb": 11.96484375,
+          "total_spikes": 111794,
+          "mean_rate_hz": 223.588,
+          "synaptic_events": 11136471,
+          "synaptic_events_per_s": 22518336.244797476,
+          "activation_sparsity": 0.9776411999999999,
+          "gpu_mem_mb": 11.96484375
+        },
+        {
+          "wall_time_s": 0.4930076509999708,
+          "peak_rss_mb": 11.96484375,
+          "total_spikes": 111794,
+          "mean_rate_hz": 223.588,
+          "synaptic_events": 11136471,
+          "synaptic_events_per_s": 22588840.107068967,
+          "activation_sparsity": 0.9776411999999999,
+          "gpu_mem_mb": 11.96484375
+        }
+      ]
+    },
+    {
+      "n_neurons": 1000,
+      "simulator": "sc_pytorch_cuda_sparse",
+      "regime": "SI",
+      "n_synapses": 100000,
+      "wall_mean_s": 0.5208,
+      "wall_std_s": 0.0033,
+      "wall_min_s": 0.5175,
+      "peak_rss_mb": 10.8,
+      "spikes_mean": 464990.0,
+      "rate_mean_hz": 929.98,
+      "syn_events_per_s": 88943554.27,
+      "activation_sparsity": 0.907,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.5207003909999912,
+          "peak_rss_mb": 10.83349609375,
+          "total_spikes": 464990,
+          "mean_rate_hz": 929.98,
+          "synaptic_events": 46320443,
+          "synaptic_events_per_s": 88957957.01447971,
+          "activation_sparsity": 0.9070020000000001,
+          "gpu_mem_mb": 10.83349609375
+        },
+        {
+          "wall_time_s": 0.5175238350002473,
+          "peak_rss_mb": 10.83349609375,
+          "total_spikes": 464990,
+          "mean_rate_hz": 929.98,
+          "synaptic_events": 46320443,
+          "synaptic_events_per_s": 89503980.04369763,
+          "activation_sparsity": 0.9070020000000001,
+          "gpu_mem_mb": 10.83349609375
+        },
+        {
+          "wall_time_s": 0.5241723540002567,
+          "peak_rss_mb": 10.83349609375,
+          "total_spikes": 464990,
+          "mean_rate_hz": 929.98,
+          "synaptic_events": 46320443,
+          "synaptic_events_per_s": 88368725.75690497,
+          "activation_sparsity": 0.9070020000000001,
+          "gpu_mem_mb": 10.83349609375
+        }
+      ]
+    },
+    {
+      "n_neurons": 2000,
+      "simulator": "sc_numpy_dense",
+      "regime": "SI",
+      "n_synapses": 400000,
+      "wall_mean_s": 0.5225,
+      "wall_std_s": 0.016,
+      "wall_min_s": 0.513,
+      "peak_rss_mb": 0.9,
+      "spikes_mean": 175606.0,
+      "rate_mean_hz": 175.61,
+      "syn_events_per_s": 67199523.21,
+      "activation_sparsity": 0.9824,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.5410143970002537,
+          "peak_rss_mb": 0.8507881164550781,
+          "total_spikes": 175606,
+          "mean_rate_hz": 175.606,
+          "synaptic_events": 35090381,
+          "synaptic_events_per_s": 64860346.036195315,
+          "activation_sparsity": 0.9824394000000001,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 0.5129919060000248,
+          "peak_rss_mb": 0.8507881164550781,
+          "total_spikes": 175606,
+          "mean_rate_hz": 175.606,
+          "synaptic_events": 35090381,
+          "synaptic_events_per_s": 68403381.39759715,
+          "activation_sparsity": 0.9824394000000001,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 0.513506432000213,
+          "peak_rss_mb": 0.8507881164550781,
+          "total_spikes": 175606,
+          "mean_rate_hz": 175.606,
+          "synaptic_events": 35090381,
+          "synaptic_events_per_s": 68334842.2011303,
+          "activation_sparsity": 0.9824394000000001,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 2000,
+      "simulator": "sc_numpy_sparse",
+      "regime": "SI",
+      "n_synapses": 400000,
+      "wall_mean_s": 1.3194,
+      "wall_std_s": 0.0067,
+      "wall_min_s": 1.3137,
+      "peak_rss_mb": 0.4,
+      "spikes_mean": 175606.0,
+      "rate_mean_hz": 175.61,
+      "syn_events_per_s": 26597155.88,
+      "activation_sparsity": 0.9824,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 1.3267297390002568,
+          "peak_rss_mb": 0.36548805236816406,
+          "total_spikes": 175606,
+          "mean_rate_hz": 175.606,
+          "synaptic_events": 35090381,
+          "synaptic_events_per_s": 26448778.502878804,
+          "activation_sparsity": 0.9824394000000001,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 1.317581082000288,
+          "peak_rss_mb": 0.35692787170410156,
+          "total_spikes": 175606,
+          "mean_rate_hz": 175.606,
+          "synaptic_events": 35090381,
+          "synaptic_events_per_s": 26632426.25397101,
+          "activation_sparsity": 0.9824394000000001,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 1.3137415060000421,
+          "peak_rss_mb": 0.35196685791015625,
+          "total_spikes": 175606,
+          "mean_rate_hz": 175.606,
+          "synaptic_events": 35090381,
+          "synaptic_events_per_s": 26710262.893984318,
+          "activation_sparsity": 0.9824394000000001,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 2000,
+      "simulator": "sc_pytorch_cuda",
+      "regime": "SI",
+      "n_synapses": 400000,
+      "wall_mean_s": 0.6351,
+      "wall_std_s": 0.0022,
+      "wall_min_s": 0.6329,
+      "peak_rss_mb": 24.2,
+      "spikes_mean": 175606.0,
+      "rate_mean_hz": 175.61,
+      "syn_events_per_s": 55253544.53,
+      "activation_sparsity": 0.9824,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.6328564409996034,
+          "peak_rss_mb": 24.17431640625,
+          "total_spikes": 175606,
+          "mean_rate_hz": 175.606,
+          "synaptic_events": 35090381,
+          "synaptic_events_per_s": 55447616.12060767,
+          "activation_sparsity": 0.9824394000000001,
+          "gpu_mem_mb": 24.17431640625
+        },
+        {
+          "wall_time_s": 0.6351790349999646,
+          "peak_rss_mb": 24.17431640625,
+          "total_spikes": 175606,
+          "mean_rate_hz": 175.606,
+          "synaptic_events": 35090381,
+          "synaptic_events_per_s": 55244866.51232428,
+          "activation_sparsity": 0.9824394000000001,
+          "gpu_mem_mb": 24.17431640625
+        },
+        {
+          "wall_time_s": 0.6372173460003978,
+          "peak_rss_mb": 24.17431640625,
+          "total_spikes": 175606,
+          "mean_rate_hz": 175.606,
+          "synaptic_events": 35090381,
+          "synaptic_events_per_s": 55068150.953910306,
+          "activation_sparsity": 0.9824394000000001,
+          "gpu_mem_mb": 24.17431640625
+        }
+      ]
+    },
+    {
+      "n_neurons": 2000,
+      "simulator": "sc_pytorch_cuda_sparse",
+      "regime": "SI",
+      "n_synapses": 400000,
+      "wall_mean_s": 0.6754,
+      "wall_std_s": 0.0051,
+      "wall_min_s": 0.6721,
+      "peak_rss_mb": 15.8,
+      "spikes_mean": 7918264.0,
+      "rate_mean_hz": 7918.26,
+      "syn_events_per_s": 2342711847.1,
+      "activation_sparsity": 0.2082,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.6812940480003817,
+          "peak_rss_mb": 15.81640625,
+          "total_spikes": 7918264,
+          "mean_rate_hz": 7918.264,
+          "synaptic_events": 1582263144,
+          "synaptic_events_per_s": 2322437937.985792,
+          "activation_sparsity": 0.20817359999999993,
+          "gpu_mem_mb": 15.81640625
+        },
+        {
+          "wall_time_s": 0.6728513830003067,
+          "peak_rss_mb": 15.81640625,
+          "total_spikes": 7918264,
+          "mean_rate_hz": 7918.264,
+          "synaptic_events": 1582263144,
+          "synaptic_events_per_s": 2351578942.9525166,
+          "activation_sparsity": 0.20817359999999993,
+          "gpu_mem_mb": 15.81640625
+        },
+        {
+          "wall_time_s": 0.6721254840003894,
+          "peak_rss_mb": 15.81640625,
+          "total_spikes": 7918264,
+          "mean_rate_hz": 7918.264,
+          "synaptic_events": 1582263144,
+          "synaptic_events_per_s": 2354118660.3766437,
+          "activation_sparsity": 0.20817359999999993,
+          "gpu_mem_mb": 15.81640625
+        }
+      ]
+    },
+    {
+      "n_neurons": 5000,
+      "simulator": "sc_numpy_dense",
+      "regime": "SI",
+      "n_synapses": 2500000,
+      "wall_mean_s": 1.2062,
+      "wall_std_s": 0.0105,
+      "wall_min_s": 1.1984,
+      "peak_rss_mb": 4.2,
+      "spikes_mean": 278423.0,
+      "rate_mean_hz": 111.37,
+      "syn_events_per_s": 115355759.17,
+      "activation_sparsity": 0.9889,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 1.21814347200052,
+          "peak_rss_mb": 4.185161590576172,
+          "total_spikes": 278423,
+          "mean_rate_hz": 111.3692,
+          "synaptic_events": 139133819,
+          "synaptic_events_per_s": 114217924.40549286,
+          "activation_sparsity": 0.9888630799999999,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 1.201979843999652,
+          "peak_rss_mb": 4.185161590576172,
+          "total_spikes": 278423,
+          "mean_rate_hz": 111.3692,
+          "synaptic_events": 139133819,
+          "synaptic_events_per_s": 115753870.32866108,
+          "activation_sparsity": 0.9888630799999999,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 1.1984430029997384,
+          "peak_rss_mb": 4.185161590576172,
+          "total_spikes": 278423,
+          "mean_rate_hz": 111.3692,
+          "synaptic_events": 139133819,
+          "synaptic_events_per_s": 116095482.7653413,
+          "activation_sparsity": 0.9888630799999999,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 5000,
+      "simulator": "sc_numpy_sparse",
+      "regime": "SI",
+      "n_synapses": 2500000,
+      "wall_mean_s": 1.8496,
+      "wall_std_s": 0.0028,
+      "wall_min_s": 1.8466,
+      "peak_rss_mb": 1.1,
+      "spikes_mean": 278423.0,
+      "rate_mean_hz": 111.37,
+      "syn_events_per_s": 75224938.54,
+      "activation_sparsity": 0.9889,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 1.852082917000189,
+          "peak_rss_mb": 1.082632064819336,
+          "total_spikes": 278423,
+          "mean_rate_hz": 111.3692,
+          "synaptic_events": 139133819,
+          "synaptic_events_per_s": 75122888.7880217,
+          "activation_sparsity": 0.9888630799999999,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 1.8500441959995442,
+          "peak_rss_mb": 1.0837507247924805,
+          "total_spikes": 278423,
+          "mean_rate_hz": 111.3692,
+          "synaptic_events": 139133819,
+          "synaptic_events_per_s": 75205673.08654408,
+          "activation_sparsity": 0.9888630799999999,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 1.8465923929998098,
+          "peak_rss_mb": 1.07708740234375,
+          "total_spikes": 278423,
+          "mean_rate_hz": 111.3692,
+          "synaptic_events": 139133819,
+          "synaptic_events_per_s": 75346253.7414527,
+          "activation_sparsity": 0.9888630799999999,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 5000,
+      "simulator": "sc_pytorch_cuda",
+      "regime": "SI",
+      "n_synapses": 2500000,
+      "wall_mean_s": 1.3898,
+      "wall_std_s": 0.0031,
+      "wall_min_s": 1.3862,
+      "peak_rss_mb": 104.2,
+      "spikes_mean": 278423.0,
+      "rate_mean_hz": 111.37,
+      "syn_events_per_s": 100110598.52,
+      "activation_sparsity": 0.9889,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 1.391411677999713,
+          "peak_rss_mb": 104.2470703125,
+          "total_spikes": 278423,
+          "mean_rate_hz": 111.3692,
+          "synaptic_events": 139133819,
+          "synaptic_events_per_s": 99994718.45745763,
+          "activation_sparsity": 0.9888630799999999,
+          "gpu_mem_mb": 104.2470703125
+        },
+        {
+          "wall_time_s": 1.3918035870001404,
+          "peak_rss_mb": 104.2470703125,
+          "total_spikes": 278423,
+          "mean_rate_hz": 111.3692,
+          "synaptic_events": 139133819,
+          "synaptic_events_per_s": 99966561.5892582,
+          "activation_sparsity": 0.9888630799999999,
+          "gpu_mem_mb": 104.2470703125
+        },
+        {
+          "wall_time_s": 1.3862020959995789,
+          "peak_rss_mb": 104.2470703125,
+          "total_spikes": 278423,
+          "mean_rate_hz": 111.3692,
+          "synaptic_events": 139133819,
+          "synaptic_events_per_s": 100370515.5269382,
+          "activation_sparsity": 0.9888630799999999,
+          "gpu_mem_mb": 104.2470703125
+        }
+      ]
+    },
+    {
+      "n_neurons": 5000,
+      "simulator": "sc_pytorch_cuda_sparse",
+      "regime": "SI",
+      "n_synapses": 2500000,
+      "wall_mean_s": 1.0851,
+      "wall_std_s": 0.0008,
+      "wall_min_s": 1.0846,
+      "peak_rss_mb": 56.0,
+      "spikes_mean": 19802059.0,
+      "rate_mean_hz": 7920.82,
+      "syn_events_per_s": 9119076701.15,
+      "activation_sparsity": 0.2079,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 1.0860112009995646,
+          "peak_rss_mb": 55.96240234375,
+          "total_spikes": 19802059,
+          "mean_rate_hz": 7920.8236,
+          "synaptic_events": 9895504725,
+          "synaptic_events_per_s": 9111788824.914677,
+          "activation_sparsity": 0.20791763999999993,
+          "gpu_mem_mb": 55.96240234375
+        },
+        {
+          "wall_time_s": 1.0848173299991686,
+          "peak_rss_mb": 55.96240234375,
+          "total_spikes": 19802059,
+          "mean_rate_hz": 7920.8236,
+          "synaptic_events": 9895504725,
+          "synaptic_events_per_s": 9121816596.539423,
+          "activation_sparsity": 0.20791763999999993,
+          "gpu_mem_mb": 55.96240234375
+        },
+        {
+          "wall_time_s": 1.0846023450003486,
+          "peak_rss_mb": 55.96240234375,
+          "total_spikes": 19802059,
+          "mean_rate_hz": 7920.8236,
+          "synaptic_events": 9895504725,
+          "synaptic_events_per_s": 9123624681.999762,
+          "activation_sparsity": 0.20791763999999993,
+          "gpu_mem_mb": 55.96240234375
+        }
+      ]
+    },
+    {
+      "n_neurons": 10000,
+      "simulator": "sc_numpy_dense",
+      "regime": "SI",
+      "n_synapses": 10000000,
+      "wall_mean_s": 2.2132,
+      "wall_std_s": 0.0221,
+      "wall_min_s": 2.1958,
+      "peak_rss_mb": 13.9,
+      "spikes_mean": 316701.0,
+      "rate_mean_hz": 63.34,
+      "syn_events_per_s": 143143635.05,
+      "activation_sparsity": 0.9937,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 2.1958465859997887,
+          "peak_rss_mb": 13.935138702392578,
+          "total_spikes": 316701,
+          "mean_rate_hz": 63.3402,
+          "synaptic_events": 316790753,
+          "synaptic_events_per_s": 144268162.91255718,
+          "activation_sparsity": 0.9936659800000002,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 2.205765675999828,
+          "peak_rss_mb": 13.935138702392578,
+          "total_spikes": 316701,
+          "mean_rate_hz": 63.3402,
+          "synaptic_events": 316790753,
+          "synaptic_events_per_s": 143619404.56635553,
+          "activation_sparsity": 0.9936659800000002,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 2.238118432000192,
+          "peak_rss_mb": 13.935138702392578,
+          "total_spikes": 316701,
+          "mean_rate_hz": 63.3402,
+          "synaptic_events": 316790753,
+          "synaptic_events_per_s": 141543337.68516713,
+          "activation_sparsity": 0.9936659800000002,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 10000,
+      "simulator": "sc_numpy_sparse",
+      "regime": "SI",
+      "n_synapses": 10000000,
+      "wall_mean_s": 2.7439,
+      "wall_std_s": 0.011,
+      "wall_min_s": 2.7343,
+      "peak_rss_mb": 2.9,
+      "spikes_mean": 316701.0,
+      "rate_mean_hz": 63.34,
+      "syn_events_per_s": 115451955.19,
+      "activation_sparsity": 0.9937,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 2.755869041000551,
+          "peak_rss_mb": 2.9386816024780273,
+          "total_spikes": 316701,
+          "mean_rate_hz": 63.3402,
+          "synaptic_events": 316790753,
+          "synaptic_events_per_s": 114951308.74759758,
+          "activation_sparsity": 0.9936659800000002,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 2.7417045530000905,
+          "peak_rss_mb": 2.938876152038574,
+          "total_spikes": 316701,
+          "mean_rate_hz": 63.3402,
+          "synaptic_events": 316790753,
+          "synaptic_events_per_s": 115545182.52280465,
+          "activation_sparsity": 0.9936659800000002,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 2.734269495999797,
+          "peak_rss_mb": 2.938924789428711,
+          "total_spikes": 316701,
+          "mean_rate_hz": 63.3402,
+          "synaptic_events": 316790753,
+          "synaptic_events_per_s": 115859374.30946767,
+          "activation_sparsity": 0.9936659800000002,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 10000,
+      "simulator": "sc_pytorch_cuda",
+      "regime": "SI",
+      "n_synapses": 10000000,
+      "wall_mean_s": 4.4948,
+      "wall_std_s": 0.0161,
+      "wall_min_s": 4.4764,
+      "peak_rss_mb": 390.4,
+      "spikes_mean": 316701.0,
+      "rate_mean_hz": 63.34,
+      "syn_events_per_s": 70479943.37,
+      "activation_sparsity": 0.9937,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 4.506247596999856,
+          "peak_rss_mb": 390.3662109375,
+          "total_spikes": 316701,
+          "mean_rate_hz": 63.3402,
+          "synaptic_events": 316790753,
+          "synaptic_events_per_s": 70300343.28582193,
+          "activation_sparsity": 0.9936659800000002,
+          "gpu_mem_mb": 390.3662109375
+        },
+        {
+          "wall_time_s": 4.50172273499993,
+          "peak_rss_mb": 390.3662109375,
+          "total_spikes": 316701,
+          "mean_rate_hz": 63.3402,
+          "synaptic_events": 316790753,
+          "synaptic_events_per_s": 70371004.97927599,
+          "activation_sparsity": 0.9936659800000002,
+          "gpu_mem_mb": 390.3662109375
+        },
+        {
+          "wall_time_s": 4.476438446999964,
+          "peak_rss_mb": 390.3662109375,
+          "total_spikes": 316701,
+          "mean_rate_hz": 63.3402,
+          "synaptic_events": 316790753,
+          "synaptic_events_per_s": 70768481.85242176,
+          "activation_sparsity": 0.9936659800000002,
+          "gpu_mem_mb": 390.3662109375
+        }
+      ]
+    },
+    {
+      "n_neurons": 10000,
+      "simulator": "sc_pytorch_cuda_sparse",
+      "regime": "SI",
+      "n_synapses": 10000000,
+      "wall_mean_s": 2.5588,
+      "wall_std_s": 0.0054,
+      "wall_min_s": 2.5526,
+      "peak_rss_mb": 199.3,
+      "spikes_mean": 39611544.0,
+      "rate_mean_hz": 7922.31,
+      "syn_events_per_s": 15484732394.64,
+      "activation_sparsity": 0.2078,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 2.552630789000432,
+          "peak_rss_mb": 199.30712890625,
+          "total_spikes": 39611544,
+          "mean_rate_hz": 7922.3088,
+          "synaptic_events": 39622769911,
+          "synaptic_events_per_s": 15522327036.772766,
+          "activation_sparsity": 0.20776911999999992,
+          "gpu_mem_mb": 199.30712890625
+        },
+        {
+          "wall_time_s": 2.5622581360003096,
+          "peak_rss_mb": 199.30712890625,
+          "total_spikes": 39611544,
+          "mean_rate_hz": 7922.3088,
+          "synaptic_events": 39622769911,
+          "synaptic_events_per_s": 15464003940.231888,
+          "activation_sparsity": 0.20776911999999992,
+          "gpu_mem_mb": 199.30712890625
+        },
+        {
+          "wall_time_s": 2.561618350000572,
+          "peak_rss_mb": 199.30712890625,
+          "total_spikes": 39611544,
+          "mean_rate_hz": 7922.3088,
+          "synaptic_events": 39622769911,
+          "synaptic_events_per_s": 15467866206.919994,
+          "activation_sparsity": 0.20776911999999992,
+          "gpu_mem_mb": 199.30712890625
+        }
+      ]
+    },
+    {
+      "n_neurons": 1000,
+      "simulator": "sc_numpy_dense",
+      "regime": "AI",
+      "n_synapses": 100000,
+      "wall_mean_s": 0.2978,
+      "wall_std_s": 0.001,
+      "wall_min_s": 0.2967,
+      "peak_rss_mb": 0.2,
+      "spikes_mean": 49490.0,
+      "rate_mean_hz": 98.98,
+      "syn_events_per_s": 16555316.71,
+      "activation_sparsity": 0.9901,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.29808052299995325,
+          "peak_rss_mb": 0.21723556518554688,
+          "total_spikes": 49490,
+          "mean_rate_hz": 98.98,
+          "synaptic_events": 4929995,
+          "synaptic_events_per_s": 16539138.318677645,
+          "activation_sparsity": 0.9901019999999998,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 0.29672241499974916,
+          "peak_rss_mb": 0.21723556518554688,
+          "total_spikes": 49490,
+          "mean_rate_hz": 98.98,
+          "synaptic_events": 4929995,
+          "synaptic_events_per_s": 16614838.484663073,
+          "activation_sparsity": 0.9901019999999998,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 0.2985709160002443,
+          "peak_rss_mb": 0.21723556518554688,
+          "total_spikes": 49490,
+          "mean_rate_hz": 98.98,
+          "synaptic_events": 4929995,
+          "synaptic_events_per_s": 16511973.322933992,
+          "activation_sparsity": 0.9901019999999998,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 1000,
+      "simulator": "sc_numpy_sparse",
+      "regime": "AI",
+      "n_synapses": 100000,
+      "wall_mean_s": 1.1023,
+      "wall_std_s": 0.0012,
+      "wall_min_s": 1.101,
+      "peak_rss_mb": 0.2,
+      "spikes_mean": 49490.0,
+      "rate_mean_hz": 98.98,
+      "syn_events_per_s": 4472283.59,
+      "activation_sparsity": 0.9901,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 1.1028031959995133,
+          "peak_rss_mb": 0.22772216796875,
+          "total_spikes": 49490,
+          "mean_rate_hz": 98.98,
+          "synaptic_events": 4929995,
+          "synaptic_events_per_s": 4470421.393303775,
+          "activation_sparsity": 0.9901019999999998,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 1.1010173619997659,
+          "peak_rss_mb": 0.2243661880493164,
+          "total_spikes": 49490,
+          "mean_rate_hz": 98.98,
+          "synaptic_events": 4929995,
+          "synaptic_events_per_s": 4477672.351184093,
+          "activation_sparsity": 0.9901019999999998,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 1.1032139310000275,
+          "peak_rss_mb": 0.21877288818359375,
+          "total_spikes": 49490,
+          "mean_rate_hz": 98.98,
+          "synaptic_events": 4929995,
+          "synaptic_events_per_s": 4468757.021161906,
+          "activation_sparsity": 0.9901019999999998,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 1000,
+      "simulator": "sc_pytorch_cuda",
+      "regime": "AI",
+      "n_synapses": 100000,
+      "wall_mean_s": 0.4639,
+      "wall_std_s": 0.0023,
+      "wall_min_s": 0.4621,
+      "peak_rss_mb": 12.0,
+      "spikes_mean": 49490.0,
+      "rate_mean_hz": 98.98,
+      "syn_events_per_s": 10627807.59,
+      "activation_sparsity": 0.9901,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.46649753599922406,
+          "peak_rss_mb": 11.96484375,
+          "total_spikes": 49490,
+          "mean_rate_hz": 98.98,
+          "synaptic_events": 4929995,
+          "synaptic_events_per_s": 10568105.122870788,
+          "activation_sparsity": 0.9901019999999998,
+          "gpu_mem_mb": 11.96484375
+        },
+        {
+          "wall_time_s": 0.4620917690008355,
+          "peak_rss_mb": 11.96484375,
+          "total_spikes": 49490,
+          "mean_rate_hz": 98.98,
+          "synaptic_events": 4929995,
+          "synaptic_events_per_s": 10668865.646882117,
+          "activation_sparsity": 0.9901019999999998,
+          "gpu_mem_mb": 11.96484375
+        },
+        {
+          "wall_time_s": 0.4630645970000842,
+          "peak_rss_mb": 11.96484375,
+          "total_spikes": 49490,
+          "mean_rate_hz": 98.98,
+          "synaptic_events": 4929995,
+          "synaptic_events_per_s": 10646451.989503106,
+          "activation_sparsity": 0.9901019999999998,
+          "gpu_mem_mb": 11.96484375
+        }
+      ]
+    },
+    {
+      "n_neurons": 1000,
+      "simulator": "sc_pytorch_cuda_sparse",
+      "regime": "AI",
+      "n_synapses": 100000,
+      "wall_mean_s": 0.4967,
+      "wall_std_s": 0.0137,
+      "wall_min_s": 0.4882,
+      "peak_rss_mb": 10.8,
+      "spikes_mean": 202311.0,
+      "rate_mean_hz": 404.62,
+      "syn_events_per_s": 40594196.39,
+      "activation_sparsity": 0.9595,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.4882141590005631,
+          "peak_rss_mb": 10.83349609375,
+          "total_spikes": 202311,
+          "mean_rate_hz": 404.622,
+          "synaptic_events": 20153412,
+          "synaptic_events_per_s": 41279859.726429515,
+          "activation_sparsity": 0.9595378000000001,
+          "gpu_mem_mb": 10.83349609375
+        },
+        {
+          "wall_time_s": 0.4894457529999272,
+          "peak_rss_mb": 10.83349609375,
+          "total_spikes": 202311,
+          "mean_rate_hz": 404.622,
+          "synaptic_events": 20153412,
+          "synaptic_events_per_s": 41175987.07614692,
+          "activation_sparsity": 0.9595378000000001,
+          "gpu_mem_mb": 10.83349609375
+        },
+        {
+          "wall_time_s": 0.512460753000596,
+          "peak_rss_mb": 10.83349609375,
+          "total_spikes": 202311,
+          "mean_rate_hz": 404.622,
+          "synaptic_events": 20153412,
+          "synaptic_events_per_s": 39326742.3544073,
+          "activation_sparsity": 0.9595378000000001,
+          "gpu_mem_mb": 10.83349609375
+        }
+      ]
+    },
+    {
+      "n_neurons": 2000,
+      "simulator": "sc_numpy_dense",
+      "regime": "AI",
+      "n_synapses": 400000,
+      "wall_mean_s": 0.4348,
+      "wall_std_s": 0.0029,
+      "wall_min_s": 0.4316,
+      "peak_rss_mb": 0.7,
+      "spikes_mean": 85512.0,
+      "rate_mean_hz": 85.51,
+      "syn_events_per_s": 39300195.75,
+      "activation_sparsity": 0.9914,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.4354678400004559,
+          "peak_rss_mb": 0.7139472961425781,
+          "total_spikes": 85512,
+          "mean_rate_hz": 85.512,
+          "synaptic_events": 17087392,
+          "synaptic_events_per_s": 39239159.42904558,
+          "activation_sparsity": 0.9914487999999999,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 0.43733778999921924,
+          "peak_rss_mb": 0.7139472961425781,
+          "total_spikes": 85512,
+          "mean_rate_hz": 85.512,
+          "synaptic_events": 17087392,
+          "synaptic_events_per_s": 39071382.329047084,
+          "activation_sparsity": 0.9914487999999999,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 0.431608294000398,
+          "peak_rss_mb": 0.7139472961425781,
+          "total_spikes": 85512,
+          "mean_rate_hz": 85.512,
+          "synaptic_events": 17087392,
+          "synaptic_events_per_s": 39590045.505437486,
+          "activation_sparsity": 0.9914487999999999,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 2000,
+      "simulator": "sc_numpy_sparse",
+      "regime": "AI",
+      "n_synapses": 400000,
+      "wall_mean_s": 1.2391,
+      "wall_std_s": 0.0111,
+      "wall_min_s": 1.2276,
+      "peak_rss_mb": 0.3,
+      "spikes_mean": 85512.0,
+      "rate_mean_hz": 85.51,
+      "syn_events_per_s": 13790345.83,
+      "activation_sparsity": 0.9914,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 1.2401136110001971,
+          "peak_rss_mb": 0.28672313690185547,
+          "total_spikes": 85512,
+          "mean_rate_hz": 85.512,
+          "synaptic_events": 17087392,
+          "synaptic_events_per_s": 13778892.392140098,
+          "activation_sparsity": 0.9914487999999999,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 1.249701732000176,
+          "peak_rss_mb": 0.2938241958618164,
+          "total_spikes": 85512,
+          "mean_rate_hz": 85.512,
+          "synaptic_events": 17087392,
+          "synaptic_events_per_s": 13673176.216737127,
+          "activation_sparsity": 0.9914487999999999,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 1.227633466000043,
+          "peak_rss_mb": 0.2969369888305664,
+          "total_spikes": 85512,
+          "mean_rate_hz": 85.512,
+          "synaptic_events": 17087392,
+          "synaptic_events_per_s": 13918968.872423524,
+          "activation_sparsity": 0.9914487999999999,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 2000,
+      "simulator": "sc_pytorch_cuda",
+      "regime": "AI",
+      "n_synapses": 400000,
+      "wall_mean_s": 0.5838,
+      "wall_std_s": 0.001,
+      "wall_min_s": 0.5827,
+      "peak_rss_mb": 24.2,
+      "spikes_mean": 85512.0,
+      "rate_mean_hz": 85.51,
+      "syn_events_per_s": 29271608.99,
+      "activation_sparsity": 0.9914,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.5844088419999025,
+          "peak_rss_mb": 24.17431640625,
+          "total_spikes": 85512,
+          "mean_rate_hz": 85.512,
+          "synaptic_events": 17087392,
+          "synaptic_events_per_s": 29238763.63938185,
+          "activation_sparsity": 0.9914487999999999,
+          "gpu_mem_mb": 24.17431640625
+        },
+        {
+          "wall_time_s": 0.5826532780001799,
+          "peak_rss_mb": 24.17431640625,
+          "total_spikes": 85512,
+          "mean_rate_hz": 85.512,
+          "synaptic_events": 17087392,
+          "synaptic_events_per_s": 29326861.52328611,
+          "activation_sparsity": 0.9914487999999999,
+          "gpu_mem_mb": 24.17431640625
+        },
+        {
+          "wall_time_s": 0.5842002839999623,
+          "peak_rss_mb": 24.17431640625,
+          "total_spikes": 85512,
+          "mean_rate_hz": 85.512,
+          "synaptic_events": 17087392,
+          "synaptic_events_per_s": 29249201.80285483,
+          "activation_sparsity": 0.9914487999999999,
+          "gpu_mem_mb": 24.17431640625
+        }
+      ]
+    },
+    {
+      "n_neurons": 2000,
+      "simulator": "sc_pytorch_cuda_sparse",
+      "regime": "AI",
+      "n_synapses": 400000,
+      "wall_mean_s": 0.6132,
+      "wall_std_s": 0.0004,
+      "wall_min_s": 0.6127,
+      "peak_rss_mb": 15.8,
+      "spikes_mean": 3906952.0,
+      "rate_mean_hz": 3906.95,
+      "syn_events_per_s": 1273183390.94,
+      "activation_sparsity": 0.6093,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.6132663120006328,
+          "peak_rss_mb": 15.81640625,
+          "total_spikes": 3906952,
+          "mean_rate_hz": 3906.952,
+          "synaptic_events": 780704729,
+          "synaptic_events_per_s": 1273027253.7768135,
+          "activation_sparsity": 0.6093048,
+          "gpu_mem_mb": 15.81640625
+        },
+        {
+          "wall_time_s": 0.6135828269998456,
+          "peak_rss_mb": 15.81640625,
+          "total_spikes": 3906952,
+          "mean_rate_hz": 3906.952,
+          "synaptic_events": 780704729,
+          "synaptic_events_per_s": 1272370566.1993642,
+          "activation_sparsity": 0.6093048,
+          "gpu_mem_mb": 15.81640625
+        },
+        {
+          "wall_time_s": 0.6127247870008432,
+          "peak_rss_mb": 15.81640625,
+          "total_spikes": 3906952,
+          "mean_rate_hz": 3906.952,
+          "synaptic_events": 780704729,
+          "synaptic_events_per_s": 1274152352.839164,
+          "activation_sparsity": 0.6093048,
+          "gpu_mem_mb": 15.81640625
+        }
+      ]
+    },
+    {
+      "n_neurons": 5000,
+      "simulator": "sc_numpy_dense",
+      "regime": "AI",
+      "n_synapses": 2500000,
+      "wall_mean_s": 0.9274,
+      "wall_std_s": 0.0035,
+      "wall_min_s": 0.9238,
+      "peak_rss_mb": 4.2,
+      "spikes_mean": 159001.0,
+      "rate_mean_hz": 63.6,
+      "syn_events_per_s": 85676303.76,
+      "activation_sparsity": 0.9936,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.923792216000038,
+          "peak_rss_mb": 4.189128875732422,
+          "total_spikes": 159001,
+          "mean_rate_hz": 63.6004,
+          "synaptic_events": 79456138,
+          "synaptic_events_per_s": 86010832.98151186,
+          "activation_sparsity": 0.9936399600000001,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 0.9277621840001302,
+          "peak_rss_mb": 4.189128875732422,
+          "total_spikes": 159001,
+          "mean_rate_hz": 63.6004,
+          "synaptic_events": 79456138,
+          "synaptic_events_per_s": 85642785.80251859,
+          "activation_sparsity": 0.9936399600000001,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 0.9306689989998631,
+          "peak_rss_mb": 4.189128875732422,
+          "total_spikes": 159001,
+          "mean_rate_hz": 63.6004,
+          "synaptic_events": 79456138,
+          "synaptic_events_per_s": 85375292.48893751,
+          "activation_sparsity": 0.9936399600000001,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 5000,
+      "simulator": "sc_numpy_sparse",
+      "regime": "AI",
+      "n_synapses": 2500000,
+      "wall_mean_s": 1.6627,
+      "wall_std_s": 0.0158,
+      "wall_min_s": 1.6465,
+      "peak_rss_mb": 1.1,
+      "spikes_mean": 159001.0,
+      "rate_mean_hz": 63.6,
+      "syn_events_per_s": 47791021.65,
+      "activation_sparsity": 0.9936,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 1.6634696880000774,
+          "peak_rss_mb": 1.0749788284301758,
+          "total_spikes": 159001,
+          "mean_rate_hz": 63.6004,
+          "synaptic_events": 79456138,
+          "synaptic_events_per_s": 47765305.59779957,
+          "activation_sparsity": 0.9936399600000001,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 1.6780158669998855,
+          "peak_rss_mb": 1.0647163391113281,
+          "total_spikes": 159001,
+          "mean_rate_hz": 63.6004,
+          "synaptic_events": 79456138,
+          "synaptic_events_per_s": 47351243.55055066,
+          "activation_sparsity": 0.9936399600000001,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 1.6465369839997948,
+          "peak_rss_mb": 1.0766324996948242,
+          "total_spikes": 159001,
+          "mean_rate_hz": 63.6004,
+          "synaptic_events": 79456138,
+          "synaptic_events_per_s": 48256515.80991752,
+          "activation_sparsity": 0.9936399600000001,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 5000,
+      "simulator": "sc_pytorch_cuda",
+      "regime": "AI",
+      "n_synapses": 2500000,
+      "wall_mean_s": 1.2529,
+      "wall_std_s": 0.0008,
+      "wall_min_s": 1.2523,
+      "peak_rss_mb": 104.2,
+      "spikes_mean": 159001.0,
+      "rate_mean_hz": 63.6,
+      "syn_events_per_s": 63417117.12,
+      "activation_sparsity": 0.9936,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 1.2538667269991493,
+          "peak_rss_mb": 104.2470703125,
+          "total_spikes": 159001,
+          "mean_rate_hz": 63.6004,
+          "synaptic_events": 79456138,
+          "synaptic_events_per_s": 63368886.25329469,
+          "activation_sparsity": 0.9936399600000001,
+          "gpu_mem_mb": 104.2470703125
+        },
+        {
+          "wall_time_s": 1.2523372139994535,
+          "peak_rss_mb": 104.2470703125,
+          "total_spikes": 159001,
+          "mean_rate_hz": 63.6004,
+          "synaptic_events": 79456138,
+          "synaptic_events_per_s": 63446280.372240596,
+          "activation_sparsity": 0.9936399600000001,
+          "gpu_mem_mb": 104.2470703125
+        },
+        {
+          "wall_time_s": 1.2525365190003868,
+          "peak_rss_mb": 104.2470703125,
+          "total_spikes": 159001,
+          "mean_rate_hz": 63.6004,
+          "synaptic_events": 79456138,
+          "synaptic_events_per_s": 63436184.72969686,
+          "activation_sparsity": 0.9936399600000001,
+          "gpu_mem_mb": 104.2470703125
+        }
+      ]
+    },
+    {
+      "n_neurons": 5000,
+      "simulator": "sc_pytorch_cuda_sparse",
+      "regime": "AI",
+      "n_synapses": 2500000,
+      "wall_mean_s": 0.9556,
+      "wall_std_s": 0.0007,
+      "wall_min_s": 0.9551,
+      "peak_rss_mb": 56.0,
+      "spikes_mean": 19543953.0,
+      "rate_mean_hz": 7817.58,
+      "syn_events_per_s": 10219934467.24,
+      "activation_sparsity": 0.2182,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.9563758929998585,
+          "peak_rss_mb": 55.96240234375,
+          "total_spikes": 19543953,
+          "mean_rate_hz": 7817.5812,
+          "synaptic_events": 9766523737,
+          "synaptic_events_per_s": 10212013716.035234,
+          "activation_sparsity": 0.21824187999999994,
+          "gpu_mem_mb": 55.96240234375
+        },
+        {
+          "wall_time_s": 0.9550905569994939,
+          "peak_rss_mb": 55.96240234375,
+          "total_spikes": 19543953,
+          "mean_rate_hz": 7817.5812,
+          "synaptic_events": 9766523737,
+          "synaptic_events_per_s": 10225756778.16609,
+          "activation_sparsity": 0.21824187999999994,
+          "gpu_mem_mb": 55.96240234375
+        },
+        {
+          "wall_time_s": 0.9554384950006352,
+          "peak_rss_mb": 55.96240234375,
+          "total_spikes": 19543953,
+          "mean_rate_hz": 7817.5812,
+          "synaptic_events": 9766523737,
+          "synaptic_events_per_s": 10222032907.511757,
+          "activation_sparsity": 0.21824187999999994,
+          "gpu_mem_mb": 55.96240234375
+        }
+      ]
+    },
+    {
+      "n_neurons": 10000,
+      "simulator": "sc_numpy_dense",
+      "regime": "AI",
+      "n_synapses": 10000000,
+      "wall_mean_s": 1.739,
+      "wall_std_s": 0.0016,
+      "wall_min_s": 1.7378,
+      "peak_rss_mb": 12.1,
+      "spikes_mean": 201245.0,
+      "rate_mean_hz": 40.25,
+      "syn_events_per_s": 115759577.27,
+      "activation_sparsity": 0.996,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 1.7382700449998083,
+          "peak_rss_mb": 12.104663848876953,
+          "total_spikes": 201245,
+          "mean_rate_hz": 40.249,
+          "synaptic_events": 201302032,
+          "synaptic_events_per_s": 115805960.40244265,
+          "activation_sparsity": 0.9959751,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 1.7408018689993696,
+          "peak_rss_mb": 12.104663848876953,
+          "total_spikes": 201245,
+          "mean_rate_hz": 40.249,
+          "synaptic_events": 201302032,
+          "synaptic_events_per_s": 115637532.0964645,
+          "activation_sparsity": 0.9959751,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 1.737830674000179,
+          "peak_rss_mb": 12.104663848876953,
+          "total_spikes": 201245,
+          "mean_rate_hz": 40.249,
+          "synaptic_events": 201302032,
+          "synaptic_events_per_s": 115835239.30823381,
+          "activation_sparsity": 0.9959751,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 10000,
+      "simulator": "sc_numpy_sparse",
+      "regime": "AI",
+      "n_synapses": 10000000,
+      "wall_mean_s": 2.3466,
+      "wall_std_s": 0.0045,
+      "wall_min_s": 2.3439,
+      "peak_rss_mb": 2.6,
+      "spikes_mean": 201245.0,
+      "rate_mean_hz": 40.25,
+      "syn_events_per_s": 85783035.46,
+      "activation_sparsity": 0.996,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 2.3442659949996596,
+          "peak_rss_mb": 2.5761899948120117,
+          "total_spikes": 201245,
+          "mean_rate_hz": 40.249,
+          "synaptic_events": 201302032,
+          "synaptic_events_per_s": 85869962.03902587,
+          "activation_sparsity": 0.9959751,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 2.351821213999756,
+          "peak_rss_mb": 2.5760927200317383,
+          "total_spikes": 201245,
+          "mean_rate_hz": 40.249,
+          "synaptic_events": 201302032,
+          "synaptic_events_per_s": 85594105.0287766,
+          "activation_sparsity": 0.9959751,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 2.343854454999928,
+          "peak_rss_mb": 2.5761899948120117,
+          "total_spikes": 201245,
+          "mean_rate_hz": 40.249,
+          "synaptic_events": 201302032,
+          "synaptic_events_per_s": 85885039.30804278,
+          "activation_sparsity": 0.9959751,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 10000,
+      "simulator": "sc_pytorch_cuda",
+      "regime": "AI",
+      "n_synapses": 10000000,
+      "wall_mean_s": 4.2205,
+      "wall_std_s": 0.011,
+      "wall_min_s": 4.213,
+      "peak_rss_mb": 390.4,
+      "spikes_mean": 201137.0,
+      "rate_mean_hz": 40.23,
+      "syn_events_per_s": 47670562.3,
+      "activation_sparsity": 0.996,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 4.215476996999314,
+          "peak_rss_mb": 390.3662109375,
+          "total_spikes": 201137,
+          "mean_rate_hz": 40.2274,
+          "synaptic_events": 201194002,
+          "synaptic_events_per_s": 47727458.16030193,
+          "activation_sparsity": 0.99597726,
+          "gpu_mem_mb": 390.3662109375
+        },
+        {
+          "wall_time_s": 4.213001399999484,
+          "peak_rss_mb": 390.3662109375,
+          "total_spikes": 201137,
+          "mean_rate_hz": 40.2274,
+          "synaptic_events": 201194002,
+          "synaptic_events_per_s": 47755503.23814861,
+          "activation_sparsity": 0.99597726,
+          "gpu_mem_mb": 390.3662109375
+        },
+        {
+          "wall_time_s": 4.233103241999743,
+          "peak_rss_mb": 390.3662109375,
+          "total_spikes": 201137,
+          "mean_rate_hz": 40.2274,
+          "synaptic_events": 201194002,
+          "synaptic_events_per_s": 47528725.499488354,
+          "activation_sparsity": 0.99597726,
+          "gpu_mem_mb": 390.3662109375
+        }
+      ]
+    },
+    {
+      "n_neurons": 10000,
+      "simulator": "sc_pytorch_cuda_sparse",
+      "regime": "AI",
+      "n_synapses": 10000000,
+      "wall_mean_s": 2.2857,
+      "wall_std_s": 0.0029,
+      "wall_min_s": 2.2835,
+      "peak_rss_mb": 199.3,
+      "spikes_mean": 39112174.0,
+      "rate_mean_hz": 7822.43,
+      "syn_events_per_s": 17116188572.77,
+      "activation_sparsity": 0.2178,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 2.2889961920000133,
+          "peak_rss_mb": 199.30712890625,
+          "total_spikes": 39112174,
+          "mean_rate_hz": 7822.4348,
+          "synaptic_events": 39123258390,
+          "synaptic_events_per_s": 17091884436.826435,
+          "activation_sparsity": 0.21775651999999995,
+          "gpu_mem_mb": 199.30712890625
+        },
+        {
+          "wall_time_s": 2.2835030129999723,
+          "peak_rss_mb": 199.30712890625,
+          "total_spikes": 39112174,
+          "mean_rate_hz": 7822.4348,
+          "synaptic_events": 39123258390,
+          "synaptic_events_per_s": 17133000555.406088,
+          "activation_sparsity": 0.21775651999999995,
+          "gpu_mem_mb": 199.30712890625
+        },
+        {
+          "wall_time_s": 2.284745844999634,
+          "peak_rss_mb": 199.30712890625,
+          "total_spikes": 39112174,
+          "mean_rate_hz": 7822.4348,
+          "synaptic_events": 39123258390,
+          "synaptic_events_per_s": 17123680726.074926,
+          "activation_sparsity": 0.21775651999999995,
+          "gpu_mem_mb": 199.30712890625
+        }
+      ]
+    },
+    {
+      "n_neurons": 1000,
+      "simulator": "sc_numpy_dense",
+      "regime": "AR",
+      "n_synapses": 100000,
+      "wall_mean_s": 0.366,
+      "wall_std_s": 0.0012,
+      "wall_min_s": 0.365,
+      "peak_rss_mb": 0.8,
+      "spikes_mean": 247798.0,
+      "rate_mean_hz": 495.6,
+      "syn_events_per_s": 67437933.16,
+      "activation_sparsity": 0.9504,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.3673821909997059,
+          "peak_rss_mb": 0.8154449462890625,
+          "total_spikes": 247798,
+          "mean_rate_hz": 495.596,
+          "synaptic_events": 24684645,
+          "synaptic_events_per_s": 67190641.25789309,
+          "activation_sparsity": 0.9504403999999999,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 0.3649945999995907,
+          "peak_rss_mb": 0.8154449462890625,
+          "total_spikes": 247798,
+          "mean_rate_hz": 495.596,
+          "synaptic_events": 24684645,
+          "synaptic_events_per_s": 67630164.93950234,
+          "activation_sparsity": 0.9504403999999999,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 0.36573640900041937,
+          "peak_rss_mb": 0.8154449462890625,
+          "total_spikes": 247798,
+          "mean_rate_hz": 495.596,
+          "synaptic_events": 24684645,
+          "synaptic_events_per_s": 67492993.29389898,
+          "activation_sparsity": 0.9504403999999999,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 1000,
+      "simulator": "sc_numpy_sparse",
+      "regime": "AR",
+      "n_synapses": 100000,
+      "wall_mean_s": 1.1842,
+      "wall_std_s": 0.0113,
+      "wall_min_s": 1.1752,
+      "peak_rss_mb": 0.3,
+      "spikes_mean": 247798.0,
+      "rate_mean_hz": 495.6,
+      "syn_events_per_s": 20845775.12,
+      "activation_sparsity": 0.9504,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 1.1752245460002086,
+          "peak_rss_mb": 0.2740306854248047,
+          "total_spikes": 247798,
+          "mean_rate_hz": 495.596,
+          "synaptic_events": 24684645,
+          "synaptic_events_per_s": 21004194.54649105,
+          "activation_sparsity": 0.9504403999999999,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 1.1968997339999987,
+          "peak_rss_mb": 0.2721824645996094,
+          "total_spikes": 247798,
+          "mean_rate_hz": 495.596,
+          "synaptic_events": 24684645,
+          "synaptic_events_per_s": 20623820.273987986,
+          "activation_sparsity": 0.9504403999999999,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 1.1805575779999344,
+          "peak_rss_mb": 0.2561807632446289,
+          "total_spikes": 247798,
+          "mean_rate_hz": 495.596,
+          "synaptic_events": 24684645,
+          "synaptic_events_per_s": 20909310.532587484,
+          "activation_sparsity": 0.9504403999999999,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 1000,
+      "simulator": "sc_pytorch_cuda",
+      "regime": "AR",
+      "n_synapses": 100000,
+      "wall_mean_s": 0.5092,
+      "wall_std_s": 0.0008,
+      "wall_min_s": 0.5083,
+      "peak_rss_mb": 12.0,
+      "spikes_mean": 247798.0,
+      "rate_mean_hz": 495.6,
+      "syn_events_per_s": 48477329.91,
+      "activation_sparsity": 0.9504,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.5097020519997386,
+          "peak_rss_mb": 11.96484375,
+          "total_spikes": 247798,
+          "mean_rate_hz": 495.596,
+          "synaptic_events": 24684645,
+          "synaptic_events_per_s": 48429557.82334708,
+          "activation_sparsity": 0.9504403999999999,
+          "gpu_mem_mb": 11.96484375
+        },
+        {
+          "wall_time_s": 0.5082763330001399,
+          "peak_rss_mb": 11.96484375,
+          "total_spikes": 247798,
+          "mean_rate_hz": 495.596,
+          "synaptic_events": 24684645,
+          "synaptic_events_per_s": 48565403.103262745,
+          "activation_sparsity": 0.9504403999999999,
+          "gpu_mem_mb": 11.96484375
+        },
+        {
+          "wall_time_s": 0.509623434999412,
+          "peak_rss_mb": 11.96484375,
+          "total_spikes": 247798,
+          "mean_rate_hz": 495.596,
+          "synaptic_events": 24684645,
+          "synaptic_events_per_s": 48437028.80348994,
+          "activation_sparsity": 0.9504403999999999,
+          "gpu_mem_mb": 11.96484375
+        }
+      ]
+    },
+    {
+      "n_neurons": 1000,
+      "simulator": "sc_pytorch_cuda_sparse",
+      "regime": "AR",
+      "n_synapses": 100000,
+      "wall_mean_s": 0.5316,
+      "wall_std_s": 0.0034,
+      "wall_min_s": 0.5276,
+      "peak_rss_mb": 10.8,
+      "spikes_mean": 580176.0,
+      "rate_mean_hz": 1160.35,
+      "syn_events_per_s": 108725276.44,
+      "activation_sparsity": 0.884,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.5335845539993898,
+          "peak_rss_mb": 10.83349609375,
+          "total_spikes": 580176,
+          "mean_rate_hz": 1160.352,
+          "synaptic_events": 57794812,
+          "synaptic_events_per_s": 108314252.29011801,
+          "activation_sparsity": 0.8839648000000001,
+          "gpu_mem_mb": 10.83349609375
+        },
+        {
+          "wall_time_s": 0.527604343999883,
+          "peak_rss_mb": 10.83349609375,
+          "total_spikes": 580176,
+          "mean_rate_hz": 1160.352,
+          "synaptic_events": 57794812,
+          "synaptic_events_per_s": 109541956.31113458,
+          "activation_sparsity": 0.8839648000000001,
+          "gpu_mem_mb": 10.83349609375
+        },
+        {
+          "wall_time_s": 0.5335581090002961,
+          "peak_rss_mb": 10.83349609375,
+          "total_spikes": 580176,
+          "mean_rate_hz": 1160.352,
+          "synaptic_events": 57794812,
+          "synaptic_events_per_s": 108319620.72188829,
+          "activation_sparsity": 0.8839648000000001,
+          "gpu_mem_mb": 10.83349609375
+        }
+      ]
+    },
+    {
+      "n_neurons": 2000,
+      "simulator": "sc_numpy_dense",
+      "regime": "AR",
+      "n_synapses": 400000,
+      "wall_mean_s": 0.6471,
+      "wall_std_s": 0.0037,
+      "wall_min_s": 0.6432,
+      "peak_rss_mb": 5.0,
+      "spikes_mean": 628984.0,
+      "rate_mean_hz": 628.98,
+      "syn_events_per_s": 194222027.04,
+      "activation_sparsity": 0.9371,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.6432037630002014,
+          "peak_rss_mb": 4.963001251220703,
+          "total_spikes": 628984,
+          "mean_rate_hz": 628.984,
+          "synaptic_events": 125686413,
+          "synaptic_events_per_s": 195406837.1953238,
+          "activation_sparsity": 0.9371016,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 0.6477582730003633,
+          "peak_rss_mb": 4.963001251220703,
+          "total_spikes": 628984,
+          "mean_rate_hz": 628.984,
+          "synaptic_events": 125686413,
+          "synaptic_events_per_s": 194032895.04560217,
+          "activation_sparsity": 0.9371016,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 0.6504620809992048,
+          "peak_rss_mb": 4.963001251220703,
+          "total_spikes": 628984,
+          "mean_rate_hz": 628.984,
+          "synaptic_events": 125686413,
+          "synaptic_events_per_s": 193226348.88559115,
+          "activation_sparsity": 0.9371016,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 2000,
+      "simulator": "sc_numpy_sparse",
+      "regime": "AR",
+      "n_synapses": 400000,
+      "wall_mean_s": 1.4258,
+      "wall_std_s": 0.0076,
+      "wall_min_s": 1.4214,
+      "peak_rss_mb": 1.0,
+      "spikes_mean": 628984.0,
+      "rate_mean_hz": 628.98,
+      "syn_events_per_s": 88154442.12,
+      "activation_sparsity": 0.9371,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 1.4214295649999258,
+          "peak_rss_mb": 1.0397109985351562,
+          "total_spikes": 628984,
+          "mean_rate_hz": 628.984,
+          "synaptic_events": 125686413,
+          "synaptic_events_per_s": 88422540.30364604,
+          "activation_sparsity": 0.9371016,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 1.421370475999538,
+          "peak_rss_mb": 1.0397109985351562,
+          "total_spikes": 628984,
+          "mean_rate_hz": 628.984,
+          "synaptic_events": 125686413,
+          "synaptic_events_per_s": 88426216.19223844,
+          "activation_sparsity": 0.9371016,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 1.4345378079997317,
+          "peak_rss_mb": 1.0396137237548828,
+          "total_spikes": 628984,
+          "mean_rate_hz": 628.984,
+          "synaptic_events": 125686413,
+          "synaptic_events_per_s": 87614569.86292514,
+          "activation_sparsity": 0.9371016,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 2000,
+      "simulator": "sc_pytorch_cuda",
+      "regime": "AR",
+      "n_synapses": 400000,
+      "wall_mean_s": 0.6624,
+      "wall_std_s": 0.0008,
+      "wall_min_s": 0.6615,
+      "peak_rss_mb": 24.2,
+      "spikes_mean": 628987.0,
+      "rate_mean_hz": 628.99,
+      "syn_events_per_s": 189754724.86,
+      "activation_sparsity": 0.9371,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.6614755729997341,
+          "peak_rss_mb": 24.17431640625,
+          "total_spikes": 628987,
+          "mean_rate_hz": 628.987,
+          "synaptic_events": 125687012,
+          "synaptic_events_per_s": 190010058.01320878,
+          "activation_sparsity": 0.9371013000000001,
+          "gpu_mem_mb": 24.17431640625
+        },
+        {
+          "wall_time_s": 0.662759967999591,
+          "peak_rss_mb": 24.17431640625,
+          "total_spikes": 628987,
+          "mean_rate_hz": 628.987,
+          "synaptic_events": 125687012,
+          "synaptic_events_per_s": 189641828.21627143,
+          "activation_sparsity": 0.9371013000000001,
+          "gpu_mem_mb": 24.17431640625
+        },
+        {
+          "wall_time_s": 0.6628632199999629,
+          "peak_rss_mb": 24.17431640625,
+          "total_spikes": 628987,
+          "mean_rate_hz": 628.987,
+          "synaptic_events": 125687012,
+          "synaptic_events_per_s": 189612288.339074,
+          "activation_sparsity": 0.9371013000000001,
+          "gpu_mem_mb": 24.17431640625
+        }
+      ]
+    },
+    {
+      "n_neurons": 2000,
+      "simulator": "sc_pytorch_cuda_sparse",
+      "regime": "AR",
+      "n_synapses": 400000,
+      "wall_mean_s": 0.6924,
+      "wall_std_s": 0.0019,
+      "wall_min_s": 0.6902,
+      "peak_rss_mb": 15.8,
+      "spikes_mean": 7935793.0,
+      "rate_mean_hz": 7935.79,
+      "syn_events_per_s": 2290305029.05,
+      "activation_sparsity": 0.2064,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.6901604570002746,
+          "peak_rss_mb": 15.81640625,
+          "total_spikes": 7935793,
+          "mean_rate_hz": 7935.793,
+          "synaptic_events": 1585765868,
+          "synaptic_events_per_s": 2297677086.416107,
+          "activation_sparsity": 0.20642069999999993,
+          "gpu_mem_mb": 15.81640625
+        },
+        {
+          "wall_time_s": 0.693223157999455,
+          "peak_rss_mb": 15.81640625,
+          "total_spikes": 7935793,
+          "mean_rate_hz": 7935.793,
+          "synaptic_events": 1585765868,
+          "synaptic_events_per_s": 2287525812.8656554,
+          "activation_sparsity": 0.20642069999999993,
+          "gpu_mem_mb": 15.81640625
+        },
+        {
+          "wall_time_s": 0.6937732039996263,
+          "peak_rss_mb": 15.81640625,
+          "total_spikes": 7935793,
+          "mean_rate_hz": 7935.793,
+          "synaptic_events": 1585765868,
+          "synaptic_events_per_s": 2285712187.870626,
+          "activation_sparsity": 0.20642069999999993,
+          "gpu_mem_mb": 15.81640625
+        }
+      ]
+    },
+    {
+      "n_neurons": 5000,
+      "simulator": "sc_numpy_dense",
+      "regime": "AR",
+      "n_synapses": 2500000,
+      "wall_mean_s": 7.572,
+      "wall_std_s": 0.0304,
+      "wall_min_s": 7.5425,
+      "peak_rss_mb": 43.2,
+      "spikes_mean": 5505232.0,
+      "rate_mean_hz": 2202.09,
+      "syn_events_per_s": 363324518.29,
+      "activation_sparsity": 0.7798,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 7.603159510999831,
+          "peak_rss_mb": 43.246826171875,
+          "total_spikes": 5505232,
+          "mean_rate_hz": 2202.0928,
+          "synaptic_events": 2751080040,
+          "synaptic_events_per_s": 361833792.3885313,
+          "activation_sparsity": 0.7797907199999999,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 7.542484646999583,
+          "peak_rss_mb": 43.246826171875,
+          "total_spikes": 5505232,
+          "mean_rate_hz": 2202.0928,
+          "synaptic_events": 2751080040,
+          "synaptic_events_per_s": 364744532.969568,
+          "activation_sparsity": 0.7797907199999999,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 7.570490244999746,
+          "peak_rss_mb": 43.246826171875,
+          "total_spikes": 5505232,
+          "mean_rate_hz": 2202.0928,
+          "synaptic_events": 2751080040,
+          "synaptic_events_per_s": 363395229.49878556,
+          "activation_sparsity": 0.7797907199999999,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 5000,
+      "simulator": "sc_numpy_sparse",
+      "regime": "AR",
+      "n_synapses": 2500000,
+      "wall_mean_s": 3.4237,
+      "wall_std_s": 0.0614,
+      "wall_min_s": 3.3544,
+      "peak_rss_mb": 8.8,
+      "spikes_mean": 5505232.0,
+      "rate_mean_hz": 2202.09,
+      "syn_events_per_s": 803714479.53,
+      "activation_sparsity": 0.7798,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 3.354435779000596,
+          "peak_rss_mb": 8.763167381286621,
+          "total_spikes": 5505232,
+          "mean_rate_hz": 2202.0928,
+          "synaptic_events": 2751080040,
+          "synaptic_events_per_s": 820131974.8681083,
+          "activation_sparsity": 0.7797907199999999,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 3.471582608999597,
+          "peak_rss_mb": 8.763216018676758,
+          "total_spikes": 5505232,
+          "mean_rate_hz": 2202.0928,
+          "synaptic_events": 2751080040,
+          "synaptic_events_per_s": 792457028.9262903,
+          "activation_sparsity": 0.7797907199999999,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 3.44507515100031,
+          "peak_rss_mb": 8.763264656066895,
+          "total_spikes": 5505232,
+          "mean_rate_hz": 2202.0928,
+          "synaptic_events": 2751080040,
+          "synaptic_events_per_s": 798554434.785319,
+          "activation_sparsity": 0.7797907199999999,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 5000,
+      "simulator": "sc_pytorch_cuda",
+      "regime": "AR",
+      "n_synapses": 2500000,
+      "wall_mean_s": 1.4613,
+      "wall_std_s": 0.0107,
+      "wall_min_s": 1.455,
+      "peak_rss_mb": 104.2,
+      "spikes_mean": 5525118.0,
+      "rate_mean_hz": 2210.05,
+      "syn_events_per_s": 1889448587.49,
+      "activation_sparsity": 0.779,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 1.4553099519998796,
+          "peak_rss_mb": 104.2470703125,
+          "total_spikes": 5525118,
+          "mean_rate_hz": 2210.0472,
+          "synaptic_events": 2761017492,
+          "synaptic_events_per_s": 1897202371.3613884,
+          "activation_sparsity": 0.77899528,
+          "gpu_mem_mb": 104.2470703125
+        },
+        {
+          "wall_time_s": 1.4550286559997403,
+          "peak_rss_mb": 104.2470703125,
+          "total_spikes": 5525118,
+          "mean_rate_hz": 2210.0472,
+          "synaptic_events": 2761017492,
+          "synaptic_events_per_s": 1897569151.380681,
+          "activation_sparsity": 0.77899528,
+          "gpu_mem_mb": 104.2470703125
+        },
+        {
+          "wall_time_s": 1.4736632439999084,
+          "peak_rss_mb": 104.2470703125,
+          "total_spikes": 5525118,
+          "mean_rate_hz": 2210.0472,
+          "synaptic_events": 2761017492,
+          "synaptic_events_per_s": 1873574239.733275,
+          "activation_sparsity": 0.77899528,
+          "gpu_mem_mb": 104.2470703125
+        }
+      ]
+    },
+    {
+      "n_neurons": 5000,
+      "simulator": "sc_pytorch_cuda_sparse",
+      "regime": "AR",
+      "n_synapses": 2500000,
+      "wall_mean_s": 1.1865,
+      "wall_std_s": 0.0027,
+      "wall_min_s": 1.1834,
+      "peak_rss_mb": 56.0,
+      "spikes_mean": 19844029.0,
+      "rate_mean_hz": 7937.61,
+      "syn_events_per_s": 8357639217.15,
+      "activation_sparsity": 0.2062,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 1.1875439720006398,
+          "peak_rss_mb": 55.96240234375,
+          "total_spikes": 19844029,
+          "mean_rate_hz": 7937.6116,
+          "synaptic_events": 9916478015,
+          "synaptic_events_per_s": 8350409120.677729,
+          "activation_sparsity": 0.20623883999999992,
+          "gpu_mem_mb": 55.96240234375
+        },
+        {
+          "wall_time_s": 1.1885937569995804,
+          "peak_rss_mb": 55.96240234375,
+          "total_spikes": 19844029,
+          "mean_rate_hz": 7937.6116,
+          "synaptic_events": 9916478015,
+          "synaptic_events_per_s": 8343033905.909621,
+          "activation_sparsity": 0.20623883999999992,
+          "gpu_mem_mb": 55.96240234375
+        },
+        {
+          "wall_time_s": 1.183424792000551,
+          "peak_rss_mb": 55.96240234375,
+          "total_spikes": 19844029,
+          "mean_rate_hz": 7937.6116,
+          "synaptic_events": 9916478015,
+          "synaptic_events_per_s": 8379474624.86098,
+          "activation_sparsity": 0.20623883999999992,
+          "gpu_mem_mb": 55.96240234375
+        }
+      ]
+    },
+    {
+      "n_neurons": 10000,
+      "simulator": "sc_numpy_dense",
+      "regime": "AR",
+      "n_synapses": 10000000,
+      "wall_mean_s": 209.8303,
+      "wall_std_s": 1.0004,
+      "wall_min_s": 209.0808,
+      "peak_rss_mb": 379.1,
+      "spikes_mean": 49078045.0,
+      "rate_mean_hz": 9815.61,
+      "syn_events_per_s": 233963777.19,
+      "activation_sparsity": 0.0184,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 209.44390277399998,
+          "peak_rss_mb": 379.14949798583984,
+          "total_spikes": 49078045,
+          "mean_rate_hz": 9815.609,
+          "synaptic_events": 49091953717,
+          "synaptic_events_per_s": 234391897.14666736,
+          "activation_sparsity": 0.018439100000000003,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 209.0807768680006,
+          "peak_rss_mb": 379.14949798583984,
+          "total_spikes": 49078045,
+          "mean_rate_hz": 9815.609,
+          "synaptic_events": 49091953717,
+          "synaptic_events_per_s": 234798982.72997773,
+          "activation_sparsity": 0.018439100000000003,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 210.96630178600026,
+          "peak_rss_mb": 379.14949798583984,
+          "total_spikes": 49078045,
+          "mean_rate_hz": 9815.609,
+          "synaptic_events": 49091953717,
+          "synaptic_events_per_s": 232700451.6901369,
+          "activation_sparsity": 0.018439100000000003,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 10000,
+      "simulator": "sc_numpy_sparse",
+      "regime": "AR",
+      "n_synapses": 10000000,
+      "wall_mean_s": 58.0759,
+      "wall_std_s": 0.8962,
+      "wall_min_s": 57.1747,
+      "peak_rss_mb": 76.4,
+      "spikes_mean": 49078045.0,
+      "rate_mean_hz": 9815.61,
+      "syn_events_per_s": 845440973.56,
+      "activation_sparsity": 0.0184,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 57.17467055900033,
+          "peak_rss_mb": 76.42596244812012,
+          "total_spikes": 49078045,
+          "mean_rate_hz": 9815.609,
+          "synaptic_events": 49091953717,
+          "synaptic_events_per_s": 858631160.2152648,
+          "activation_sparsity": 0.018439100000000003,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 58.96705053200003,
+          "peak_rss_mb": 76.42416286468506,
+          "total_spikes": 49078045,
+          "mean_rate_hz": 9815.609,
+          "synaptic_events": 49091953717,
+          "synaptic_events_per_s": 832531952.5750903,
+          "activation_sparsity": 0.018439100000000003,
+          "gpu_mem_mb": 0.0
+        },
+        {
+          "wall_time_s": 58.08600132100037,
+          "peak_rss_mb": 76.41803455352783,
+          "total_spikes": 49078045,
+          "mean_rate_hz": 9815.609,
+          "synaptic_events": 49091953717,
+          "synaptic_events_per_s": 845159807.880446,
+          "activation_sparsity": 0.018439100000000003,
+          "gpu_mem_mb": 0.0
+        }
+      ]
+    },
+    {
+      "n_neurons": 10000,
+      "simulator": "sc_pytorch_cuda",
+      "regime": "AR",
+      "n_synapses": 10000000,
+      "wall_mean_s": 4.6163,
+      "wall_std_s": 0.0018,
+      "wall_min_s": 4.6143,
+      "peak_rss_mb": 390.4,
+      "spikes_mean": 49078215.0,
+      "rate_mean_hz": 9815.64,
+      "syn_events_per_s": 10634420670.8,
+      "activation_sparsity": 0.0184,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 4.61734994499966,
+          "peak_rss_mb": 390.3662109375,
+          "total_spikes": 49078215,
+          "mean_rate_hz": 9815.643,
+          "synaptic_events": 49092123766,
+          "synaptic_events_per_s": 10632099440.321632,
+          "activation_sparsity": 0.018435700000000003,
+          "gpu_mem_mb": 390.3662109375
+        },
+        {
+          "wall_time_s": 4.614270911999483,
+          "peak_rss_mb": 390.3662109375,
+          "total_spikes": 49078215,
+          "mean_rate_hz": 9815.643,
+          "synaptic_events": 49092123766,
+          "synaptic_events_per_s": 10639194079.033194,
+          "activation_sparsity": 0.018435700000000003,
+          "gpu_mem_mb": 390.3662109375
+        },
+        {
+          "wall_time_s": 4.617406814000788,
+          "peak_rss_mb": 390.3662109375,
+          "total_spikes": 49078215,
+          "mean_rate_hz": 9815.643,
+          "synaptic_events": 49092123766,
+          "synaptic_events_per_s": 10631968493.039007,
+          "activation_sparsity": 0.018435700000000003,
+          "gpu_mem_mb": 390.3662109375
+        }
+      ]
+    },
+    {
+      "n_neurons": 10000,
+      "simulator": "sc_pytorch_cuda_sparse",
+      "regime": "AR",
+      "n_synapses": 10000000,
+      "wall_mean_s": 2.6906,
+      "wall_std_s": 0.0021,
+      "wall_min_s": 2.689,
+      "peak_rss_mb": 199.3,
+      "spikes_mean": 39696001.0,
+      "rate_mean_hz": 7939.2,
+      "syn_events_per_s": 14757634869.41,
+      "activation_sparsity": 0.2061,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 2.689940112999466,
+          "peak_rss_mb": 199.30712890625,
+          "total_spikes": 39696001,
+          "mean_rate_hz": 7939.2002,
+          "synaptic_events": 39707250846,
+          "synaptic_events_per_s": 14761388424.266338,
+          "activation_sparsity": 0.20607997999999997,
+          "gpu_mem_mb": 199.30712890625
+        },
+        {
+          "wall_time_s": 2.6889528250003423,
+          "peak_rss_mb": 199.30712890625,
+          "total_spikes": 39696001,
+          "mean_rate_hz": 7939.2002,
+          "synaptic_events": 39707250846,
+          "synaptic_events_per_s": 14766808281.954498,
+          "activation_sparsity": 0.20607997999999997,
+          "gpu_mem_mb": 199.30712890625
+        },
+        {
+          "wall_time_s": 2.6929832120003994,
+          "peak_rss_mb": 199.30712890625,
+          "total_spikes": 39696001,
+          "mean_rate_hz": 7939.2002,
+          "synaptic_events": 39707250846,
+          "synaptic_events_per_s": 14744707902.023903,
+          "activation_sparsity": 0.20607997999999997,
+          "gpu_mem_mb": 199.30712890625
+        }
+      ]
+    }
+  ]
+}
