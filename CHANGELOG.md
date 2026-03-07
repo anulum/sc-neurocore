@@ -4,7 +4,30 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
-_No unreleased changes._
+### Benchmarks
+- **20-variant Brunel translator suite**: comprehensive characterization of
+  SC-NeuroCore against Brian2 across neuron models (LIF, Izhikevich, homeostatic),
+  timing variants, synapse types (STDP, dot product, Sobol bitstream), layer
+  architectures (JAX, recurrent, memristive), and acceleration backends
+  (Numba JIT, PyTorch CUDA GTX 1060, vectorized NumPy)
+- V18 Numba JIT: 9.5× speedup over per-neuron Python loop
+- V19 PyTorch CUDA: 8.7× speedup on GTX 1060 6GB
+- V14 Sobol bitstream: 1.04× Brian2 ratio (closest match)
+- 19 translator unit tests (`test_brunel_translator.py`)
+- Fix BENCHMARKS.md CPU: i5-11600K @ 3.9 GHz (AVX-512, DL Boost)
+- Fix 3 delta-PSC wiring bugs: v_reset omission, R*I*dt dilution, Poisson-as-current
+- Comprehensive BENCHMARKS.md with 13+ sections and measured numbers
+- Rust Criterion: 31 benchmarks captured (AVX-512)
+- Brian2 2.10.1 SNN comparison: Brunel balanced network head-to-head
+- NeuroBench-aligned metrics: 4 configurations, up to 847 MOP/s
+- v2 vs v3 PyO3 speedup: 7.3× on large dense forward (128→64)
+- Advanced module benchmarks: quantum hybrid, GNN, S-Former, BCI, DVS, chaos RNG
+- Yosys synthesis tooling (`tools/yosys_synth.py`, `tools/yosys_synth.tcl`)
+- CuPy 14.0.1 installed for GPU VectorizedSCLayer
+
+### Paper
+- Updated JOSS paper with measured Criterion numbers (41.3 Gbit/s pack, 224 Mstep/s LIF)
+- Replaced estimated FPGA claim with Yosys tooling reference
 
 ## [3.9.0] - 2026-03-06
 
@@ -38,7 +61,7 @@ _No unreleased changes._
 ## [3.8.2] - 2026-03-06
 
 ### Documentation & Adoption
-- **BENCHMARKS.md**: Populated with 14 real benchmark entries (i7-10700K, NumPy 1.26.4), Rust engine Criterion numbers, comparison context, reproduction instructions
+- **BENCHMARKS.md**: Populated with 14 real benchmark entries (i5-11600K, NumPy 1.26.4), Rust engine Criterion numbers, comparison context, reproduction instructions
 - **JOSS paper draft**: `paper/paper.md` + `paper.bib` (6 references) — statement of need, architecture, key features, QA
 - **End-to-end notebook**: `notebooks/03_end_to_end_pipeline.ipynb` — 7-cell walkthrough (encode→synapse→neuron→VectorizedSCLayer→accuracy analysis)
 
