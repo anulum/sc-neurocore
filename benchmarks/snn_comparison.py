@@ -1053,6 +1053,7 @@ def run_v18_numba(bp: BrunelParams) -> VariantResult:
                         spike_count += 1
                 prev_spikes = new_spikes
             return spike_count
+
     else:
         _run_loop = None
 
