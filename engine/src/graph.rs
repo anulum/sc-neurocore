@@ -361,8 +361,7 @@ impl StochasticGraphLayer {
                             let a = &adj_packed[i * self.n_nodes + j];
                             let b = &feat_packed[j * self.n_features + f];
                             for w in 0..words {
-                                pop_total +=
-                                    crate::bitstream::swar_popcount_word(a[w] & b[w]);
+                                pop_total += crate::bitstream::swar_popcount_word(a[w] & b[w]);
                             }
                         }
                         agg[i * self.n_features + f] = pop_total as f64 / length as f64;

@@ -144,7 +144,8 @@ impl ScGraphBuilder {
         dim_k: usize,
     ) -> ValueId {
         let id = self.graph.fresh_id();
-        self.graph.push(ScOp::SoftmaxAttention { id, q, k, v, dim_k })
+        self.graph
+            .push(ScOp::SoftmaxAttention { id, q, k, v, dim_k })
     }
 
     /// Add a Kuramoto integration step.
