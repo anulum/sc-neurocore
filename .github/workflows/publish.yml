@@ -53,8 +53,8 @@ jobs:
           name: wheel-${{ matrix.os }}-py${{ matrix.python-version }}
           path: dist/*.whl
 
-  publish:
-    needs: [build-sdist, build-wheels]
+  publish-sdist:
+    needs: [build-sdist]
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
@@ -62,8 +62,8 @@ jobs:
     steps:
       - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8
         with:
+          name: sdist
           path: dist/
-          merge-multiple: true
       - uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # release/v1
         with:
           packages-dir: dist/
