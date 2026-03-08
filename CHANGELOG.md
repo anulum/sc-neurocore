@@ -4,6 +4,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.9.1] - 2026-03-08
+
 ### Benchmarks
 - **20-variant Brunel translator suite**: comprehensive characterization of
   SC-NeuroCore against Brian2 across neuron models (LIF, Izhikevich, homeostatic),
