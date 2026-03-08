@@ -1107,7 +1107,9 @@ impl PySurrogateLif {
     }
 
     fn backward(&mut self, grad_output: f32) -> PyResult<f32> {
-        self.inner.backward(grad_output).map_err(PyValueError::new_err)
+        self.inner
+            .backward(grad_output)
+            .map_err(PyValueError::new_err)
     }
 
     fn clear_trace(&mut self) {
