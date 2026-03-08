@@ -15,7 +15,7 @@ authors:
 affiliations:
   - name: Anulum Research, Independent Researcher
     index: 1
-date: 6 March 2026
+date: 7 March 2026
 bibliography: paper.bib
 ---
 
@@ -25,7 +25,7 @@ SC-NeuroCore is an open-source framework for designing, simulating, and
 deploying neuromorphic circuits based on stochastic computing (SC). It
 provides bit-true Python simulation that matches synthesisable Verilog RTL
 cycle-exactly, a high-performance Rust engine with SIMD acceleration
-(512$\times$ real-time throughput), and an IR compiler that emits
+(41 Gbit/s pack throughput, 224 Mstep/s LIF neuron), and an IR compiler that emits
 SystemVerilog for FPGA targets. The framework spans the full design flow
 from algorithm exploration through hardware-software co-simulation to
 bitstream generation.
@@ -49,14 +49,16 @@ model matches the hardware. SC-NeuroCore closes this gap by offering:
    bit-for-bit. Co-simulation scripts verify equivalence automatically.
 
 2. **Performance**: A Rust engine (`sc_neurocore_engine`) accelerates
-   packed-bitstream AND, popcount, and LFSR operations via AVX2/NEON SIMD,
-   achieving 30 Gbit/s throughput on commodity hardware.
+   packed-bitstream AND, popcount, and LFSR operations via AVX-512/AVX2/NEON
+   SIMD. Criterion benchmarks on an i7-10700K (AVX-512) measure 41.3 Gbit/s
+   bitstream packing, 224 Mstep/s LIF neuron throughput, and 398 ns for a
+   full 1024-bit Bernoulli encode cycle.
 
 3. **Hardware target**: An IR compiler lowers network descriptions to
    SystemVerilog with AXI-Lite configuration, targeting Xilinx and Intel
-   FPGAs. Synthesis of the `sc_bitstream_encoder` module yields fewer
-   than 100 LUTs on an Artix-7 (estimated; full LIF neuron synthesis
-   pending hardware validation).
+   FPGAs. A Yosys synthesis script (`tools/yosys_synth.py`) is provided
+   for automated LUT/FF reporting on Xilinx 7-series; formal verification
+   covers the LIF neuron (5 properties) and synapse (4 properties).
 
 4. **Modular architecture**: A tiered module system separates
    production-ready core primitives (neurons, synapses, layers, HDL

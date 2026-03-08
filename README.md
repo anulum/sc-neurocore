@@ -23,8 +23,8 @@ Commercial Licensing: Available
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/anulum/sc-neurocore/badge)](https://scorecard.dev/viewer/?uri=github.com/anulum/sc-neurocore)
 [![REUSE](https://img.shields.io/badge/REUSE-compliant-green)](https://reuse.software/)
 
-**Version:** 3.8.2
-**Status:** Production Core Verified | 921 Tests | 98.47% Coverage | CI/CD Active
+**Version:** 3.9.0
+**Status:** Production Core Verified | 978 Tests | 98.57% Coverage | CI/CD Active
 
 SC-NeuroCore is a deterministic stochastic computing framework for
 neuromorphic hardware design and edge-AI deployment. It provides bit-true
@@ -52,7 +52,7 @@ pip install sc-neurocore[gpu]
 git clone https://github.com/anulum/sc-neurocore.git
 cd sc-neurocore
 pip install -e ".[dev]"    # editable install with all dev tools
-make preflight             # verify setup (lint + 921 tests)
+make preflight             # verify setup (lint + tests)
 ```
 
 ## Docker
@@ -221,7 +221,7 @@ Co-simulation traces are generated deterministically from fixed LFSR seeds.
 To reproduce a published benchmark:
 
 ```bash
-git checkout v3.8.2
+git checkout v3.9.0
 pip install -e ".[dev]"
 python benchmarks/benchmark_suite.py --markdown > BENCHMARKS.md
 ```
@@ -267,7 +267,7 @@ All other examples run with the pure-Python `sc_neurocore` package.
 
 | Workflow | Purpose |
 |----------|---------|
-| **ci.yml** | Lint (black + ruff + bandit) + Test (Python 3.10/3.11/3.12, coverage ≥ 98%) + Build |
+| **ci.yml** | Lint (black + ruff + bandit) + Test (Python 3.10/3.11/3.12/3.13, coverage ≥ 98%) + Build |
 | **v3-engine.yml** | Rust engine `cargo test` + `cargo clippy` |
 | **v3-wheels.yml** | Cross-platform wheels (Linux, macOS, Windows × Python 3.10–3.12) |
 | **docker.yml** | Build & push Docker image to GHCR on release tags |

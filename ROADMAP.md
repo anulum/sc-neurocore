@@ -7,7 +7,7 @@
 
 ### ~~Coverage gate ≥ 98%~~ ✓
 
-Done. 98.47% (967 tests collected, 921 passed, 46 skipped; gate at 98).
+Done. 98.57% (978 passed, 49 skipped; gate at 98).
 De-omitted 6 modules: chaos/rng, analysis/explainability,
 physics/wolfram_hypergraph, robotics/swarm, learning/neuroevolution,
 spatial/*. Added 18 Hypothesis property-based tests (v3.8.2). Remaining
