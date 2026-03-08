@@ -63,46 +63,8 @@ class SCRecurrentLayer:
         Input: (n_inputs,)
         Output: (n_neurons,) - New State
         """
-        # Generate Bitstreams for Input (used by hardware simulation loop below)
-        _in_bits = np.array(
-            [enc.encode(val) for enc, val in zip(self.input_encoders, input_vector)]
-        )  # noqa: F841
-
-        # Generate Bitstreams for Previous State (Feedback)
-        _state_bits = np.array(
-            [enc.encode(val) for enc, val in zip(self.state_encoders, self.state)]
-        )  # noqa: F841
-
-        new_rates = np.zeros(self.n_neurons)
-
-        # Processing loop (Simulation of hardware)
-        # This could be vectorized, but for clarity/structure:
-
-        # In hardware, this is:
-        # Neuron_i_Current = Sum(Input_j * W_in_ij) + Sum(State_k * W_rec_ik)
-
-        # We can calculate the expected current probabilities directly to speed up (Soft Simulation)
-        # or do the bitwise (Hard Simulation).
-        # Let's do Soft Simulation here for the "Recurrent" logic proof,
-        # as bit-level recurrence requires cycle-accurate feedback which is slow in Python loops.
-
-        # Soft SC: P_out = P_in * P_w
-
         currents = np.dot(self.W_in, input_vector) + np.dot(self.W_rec, self.state)
-
-        # Update Neurons
-        # We treat 'current' as the probability of input spikes arriving.
-        # We need to run the neuron for 'length' steps?
-        # Or just update state based on transfer function?
-
-        # Let's map current to firing rate roughly:
-        # Rate ~ Current (in linear region)
-        # We'll use a Tanh-like saturation
-        new_rates = np.tanh(currents)
-        # Map back to [0,1] for Unipolar SC?
-        # Tanh gives [-1, 1].
-        # If we assume our neuron handles positive only:
-        new_rates = np.maximum(0, np.minimum(1, currents))  # ReLU-like saturation
+        new_rates = np.clip(currents, 0.0, 1.0)
 
         self.state = new_rates
         return self.state

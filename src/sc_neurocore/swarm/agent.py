@@ -103,7 +103,8 @@ class SwarmAgent:
     @weights.setter
     def weights(self, flat: np.ndarray[Any, Any]) -> None:
         c = self.cfg
-        assert flat.size == self.n_weights, f"Expected {self.n_weights} weights, got {flat.size}"
+        if flat.size != self.n_weights:
+            raise ValueError(f"Expected {self.n_weights} weights, got {flat.size}")
         offset = 0
         size_in = c.n_hidden * c.n_sensory
         self.W_in = flat[offset : offset + size_in].reshape(c.n_hidden, c.n_sensory).copy()

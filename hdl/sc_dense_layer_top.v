@@ -1,12 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // hdl/sc_dense_layer_top.v
 //
-// Top-level skeleton for an SC-based dense layer,
-// conceptually mirroring the Python SCDenseLayer interface.
-//
-// This is NOT a full implementation yet.
-// It defines the ports and the internal structure to be wired up
-// to actual SC submodules (encoders, synapses, neuron cores).
+// Structural top-level for an SC-based dense layer.
+// Instantiates encoder, synapse, dot-product, and LIF submodules;
+// all ports and time-stepping control logic are fully wired.
 
 `timescale 1ns / 1ps
 

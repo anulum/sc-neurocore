@@ -23,6 +23,7 @@ pub struct BitStreamTensor {
 impl BitStreamTensor {
     /// Create a tensor from pre-packed words.
     pub fn from_words(data: Vec<u64>, length: usize) -> Self {
+        assert!(length > 0, "bitstream length must be > 0");
         Self { data, length }
     }
 

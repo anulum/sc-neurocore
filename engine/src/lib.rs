@@ -1106,8 +1106,8 @@ impl PySurrogateLif {
         self.inner.forward(leak_k, gain_k, i_t, noise_in)
     }
 
-    fn backward(&mut self, grad_output: f32) -> f32 {
-        self.inner.backward(grad_output)
+    fn backward(&mut self, grad_output: f32) -> PyResult<f32> {
+        self.inner.backward(grad_output).map_err(PyValueError::new_err)
     }
 
     fn clear_trace(&mut self) {
@@ -1929,8 +1929,8 @@ fn ir_parse(text: &str) -> PyResult<PyScGraph> {
 
 /// Emit SystemVerilog from an IR graph.
 #[pyfunction]
-fn ir_emit_sv(graph: PyRef<'_, PyScGraph>) -> String {
-    ir::emit_sv::emit(&graph.inner)
+fn ir_emit_sv(graph: PyRef<'_, PyScGraph>) -> PyResult<String> {
+    ir::emit_sv::emit(&graph.inner).map_err(PyValueError::new_err)
 }
 
 /// Parse a Python type string into ScType.

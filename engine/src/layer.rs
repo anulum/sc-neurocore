@@ -41,6 +41,9 @@ pub struct DenseLayer {
 impl DenseLayer {
     /// Create a layer with random weights sampled from `U(0,1)`.
     pub fn new(n_inputs: usize, n_neurons: usize, length: usize, seed: u64) -> Self {
+        assert!(length > 0, "bitstream length must be > 0");
+        assert!(n_inputs > 0, "n_inputs must be > 0");
+        assert!(n_neurons > 0, "n_neurons must be > 0");
         let mut rng = ChaCha8Rng::seed_from_u64(seed);
         let mut weights = vec![vec![0.0; n_inputs]; n_neurons];
 

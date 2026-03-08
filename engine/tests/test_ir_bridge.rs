@@ -44,7 +44,7 @@ fn ir_bridge_emit_sv() {
     b.output("out", product);
     let g = b.build();
 
-    let sv = emit(&g);
+    let sv = emit(&g).unwrap();
     assert!(sv.contains("module"));
     assert!(sv.contains("sv_bridge"));
     assert!(sv.contains("endmodule"));

@@ -18,16 +18,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
-try:
-    import jax
-    import jax.numpy as jnp
-
-    HAS_JAX = True
-except ImportError:
-    jax = None  # type: ignore[assignment]
-    import numpy as jnp  # type: ignore[no-redef]
-
-    HAS_JAX = False
+from ._jax_compat import jnp, make_rng, maybe_jit, split_rng, uniform
 
 from ..base import BaseStochasticAdapter
 
@@ -56,7 +47,7 @@ class L3_GenomicAdapter(BaseStochasticAdapter):
 
     def __init__(self, params: Optional[L3_HolonomicParameters] = None, seed: int = 43) -> None:
         self.params = params or L3_HolonomicParameters()
-        self.rng_key = jax.random.PRNGKey(seed)
+        self.rng_key = make_rng(seed)
 
         # State: Chromatin Accessibility (0.0 to 1.0)
         self.accessibility = jnp.full((self.params.n_genes,), 0.1)
@@ -69,13 +60,13 @@ class L3_GenomicAdapter(BaseStochasticAdapter):
         """
         Maps accessibility states to stochastic bitstreams.
         """
-        self.rng_key, subkey = jax.random.split(self.rng_key)
-        rands = jax.random.uniform(subkey, (self.params.n_genes, self.params.bitstream_length))
+        self.rng_key, subkey = split_rng(self.rng_key)
+        rands = uniform(subkey, (self.params.n_genes, self.params.bitstream_length))
         bitstreams = (rands < self.accessibility[:, None]).astype(jnp.uint8)
         return bitstreams
 
     @staticmethod
-    @jax.jit
+    @maybe_jit
     def _cbc_kernel(
         v_bio: jnp.ndarray, p_spin: jnp.ndarray, alpha_b: float, g_op: float, dt: float
     ) -> jnp.ndarray:

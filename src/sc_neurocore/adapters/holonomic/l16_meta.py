@@ -17,16 +17,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Tuple
 
-try:
-    import jax
-    import jax.numpy as jnp
-
-    HAS_JAX = True
-except ImportError:
-    jax = None  # type: ignore[assignment]
-    import numpy as jnp  # type: ignore[no-redef]
-
-    HAS_JAX = False
+from ._jax_compat import jnp, make_rng, maybe_jit, split_rng, uniform
 
 from ..base import BaseStochasticAdapter
 
@@ -51,7 +42,7 @@ class L16_MetaAdapter(BaseStochasticAdapter):
 
     def __init__(self, params: Optional[L16_HolonomicParameters] = None, seed: int = 416) -> None:
         self.params = params or L16_HolonomicParameters()
-        self.rng_key = jax.random.PRNGKey(seed)
+        self.rng_key = make_rng(seed)
 
         # State: Director's Will (0.0 to 1.0)
         self.meta_will = jnp.full((self.params.n_meta_nodes,), 0.9)
@@ -64,15 +55,15 @@ class L16_MetaAdapter(BaseStochasticAdapter):
         """
         Maps director's will to stochastic bitstreams.
         """
-        self.rng_key, subkey = jax.random.split(self.rng_key)
-        rands = jax.random.uniform(subkey, (self.params.n_meta_nodes, self.params.bitstream_length))
+        self.rng_key, subkey = split_rng(self.rng_key)
+        rands = uniform(subkey, (self.params.n_meta_nodes, self.params.bitstream_length))
         # Will is reduced when Veto is active
         effective_will = self.meta_will * (1.0 - self.veto_active)
         bitstreams = (rands < effective_will[:, None]).astype(jnp.uint8)
         return bitstreams
 
     @staticmethod
-    @jax.jit
+    @maybe_jit
     def _director_kernel(
         will: jnp.ndarray, gci_input: float, entropy: float, threshold: float, dt: float
     ) -> Tuple[jnp.ndarray, jnp.ndarray]:
