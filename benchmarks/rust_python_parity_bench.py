@@ -43,6 +43,7 @@ class ParityResult:
 def _has_rust_engine() -> bool:
     try:
         import sc_neurocore_engine  # noqa: F401
+
         return True
     except ImportError:
         return False
@@ -75,8 +76,9 @@ def bench_popcount(n_words: int, repeats: int) -> ParityResult | None:
         eng.popcount(data_list)
     rust_time = (time.perf_counter() - t0) / repeats
 
-    return ParityResult("popcount", n_words, py_time, rust_time,
-                        py_time / rust_time if rust_time > 0 else 0)
+    return ParityResult(
+        "popcount", n_words, py_time, rust_time, py_time / rust_time if rust_time > 0 else 0
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -104,8 +106,9 @@ def bench_pack(n_floats: int, repeats: int) -> ParityResult | None:
         eng.pack_bitstream_numpy(bits_np)
     rust_time = (time.perf_counter() - t0) / repeats
 
-    return ParityResult("pack", n_floats, py_time, rust_time,
-                        py_time / rust_time if rust_time > 0 else 0)
+    return ParityResult(
+        "pack", n_floats, py_time, rust_time, py_time / rust_time if rust_time > 0 else 0
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -136,8 +139,9 @@ def bench_and_popcount(n_words: int, repeats: int) -> ParityResult | None:
         eng.popcount(c_list)
     rust_time = (time.perf_counter() - t0) / repeats
 
-    return ParityResult("and_popcount", n_words, py_time, rust_time,
-                        py_time / rust_time if rust_time > 0 else 0)
+    return ParityResult(
+        "and_popcount", n_words, py_time, rust_time, py_time / rust_time if rust_time > 0 else 0
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -173,8 +177,9 @@ def bench_dense_layer(n_in: int, repeats: int) -> ParityResult | None:
         layer.forward_fast(x_list, 42)
     rust_time = (time.perf_counter() - t0) / repeats
 
-    return ParityResult("dense_sc_layer", n_in, py_time, rust_time,
-                        py_time / rust_time if rust_time > 0 else 0)
+    return ParityResult(
+        "dense_sc_layer", n_in, py_time, rust_time, py_time / rust_time if rust_time > 0 else 0
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -206,25 +211,24 @@ def bench_kuramoto(n_osc: int, repeats: int) -> ParityResult | None:
 
     t0 = time.perf_counter()
     for _ in range(repeats):
-        solver = eng.KuramotoSolver(
-            omega.tolist(), coupling.tolist(), phases.tolist(), 0.0
-        )
+        solver = eng.KuramotoSolver(omega.tolist(), coupling.tolist(), phases.tolist(), 0.0)
         solver.run(n_steps, dt, 42)
     rust_time = (time.perf_counter() - t0) / repeats
 
-    return ParityResult("kuramoto", n_osc, py_time, rust_time,
-                        py_time / rust_time if rust_time > 0 else 0)
+    return ParityResult(
+        "kuramoto", n_osc, py_time, rust_time, py_time / rust_time if rust_time > 0 else 0
+    )
 
 
 # ---------------------------------------------------------------------------
 # Runner
 # ---------------------------------------------------------------------------
 BENCHES = [
-    ("popcount",       [1000, 10000, 100000, 1000000],  bench_popcount),
-    ("pack",           [1000, 10000, 100000, 1000000],   bench_pack),
-    ("and_popcount",   [1000, 10000, 100000, 1000000],   bench_and_popcount),
-    ("dense_sc_layer", [16, 32, 64, 128],                bench_dense_layer),
-    ("kuramoto",       [100, 200, 500, 1000],             bench_kuramoto),
+    ("popcount", [1000, 10000, 100000, 1000000], bench_popcount),
+    ("pack", [1000, 10000, 100000, 1000000], bench_pack),
+    ("and_popcount", [1000, 10000, 100000, 1000000], bench_and_popcount),
+    ("dense_sc_layer", [16, 32, 64, 128], bench_dense_layer),
+    ("kuramoto", [100, 200, 500, 1000], bench_kuramoto),
 ]
 
 
@@ -280,8 +284,16 @@ def main() -> None:
 
     if args.json:
         Path(args.json).parent.mkdir(parents=True, exist_ok=True)
-        data = [{"op": r.operation, "scale": r.scale, "python_s": r.python_s,
-                 "rust_s": r.rust_s, "speedup": r.speedup} for r in results]
+        data = [
+            {
+                "op": r.operation,
+                "scale": r.scale,
+                "python_s": r.python_s,
+                "rust_s": r.rust_s,
+                "speedup": r.speedup,
+            }
+            for r in results
+        ]
         Path(args.json).write_text(json.dumps({"data": data}, indent=2))
         print(f"\nResults written to {args.json}")
 
