@@ -32,32 +32,23 @@ class _BlueprintLif:
         self.refractory_counter = 0
 
     def step(self, leak_k: int, gain_k: int, i_t: int, noise_in: int = 0):
-        diff = _mask(self.v_rest - self.v, 2 * self.data_width)
-        leak_mul = diff * leak_k
-        dv_leak = _mask(leak_mul >> self.fraction, self.data_width)
-
-        in_mul = i_t * gain_k
-        dv_in = _mask(in_mul >> self.fraction, self.data_width)
-
-        v_next = _mask(
-            self.v + dv_leak + dv_in + noise_in,
-            self.data_width,
-        )
-
-        if v_next >= self.v_threshold:
-            spike = 1
-            self.v = self.v_reset
-            self.refractory_counter = self.refractory_period
-        else:
-            spike = 0
-            self.v = v_next
-
+        W = self.data_width
         if self.refractory_counter > 0:
             self.refractory_counter -= 1
             self.v = self.v_rest
-            spike = 0
+            return 0, _mask(self.v, W)
 
-        return spike, _mask(self.v, self.data_width)
+        diff = _mask(self.v_rest - self.v, 2 * W)
+        dv_leak = _mask(diff * leak_k >> self.fraction, W)
+        dv_in = _mask(i_t * gain_k >> self.fraction, W)
+        v_next = _mask(self.v + dv_leak + dv_in + noise_in, W)
+
+        if v_next >= self.v_threshold:
+            self.v = self.v_reset
+            self.refractory_counter = self.refractory_period
+            return 1, _mask(self.v_reset, W)
+        self.v = v_next
+        return 0, _mask(v_next, W)
 
 
 class TestLIFBlueprintSemantics:

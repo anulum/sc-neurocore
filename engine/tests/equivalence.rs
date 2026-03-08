@@ -38,10 +38,30 @@ fn encoder_is_step_then_compare() {
 #[test]
 fn fixed_point_lif_smoke() {
     let mut lif = FixedPointLif::new(16, 8, 0, 0, 256, 2);
-    let mut spikes = 0;
-    for _ in 0..128 {
+    let mut spikes = 0i32;
+    let mut spike_steps = Vec::new();
+    for step in 0..128 {
         let (spike, _) = lif.step(20, 256, 128, 0);
         spikes += spike;
+        if spike != 0 {
+            spike_steps.push(step);
+        }
     }
-    assert_eq!(spikes, 0);
+    assert!(spikes > 0, "neuron must fire with strong input");
+    // After each spike, next 2 steps must be silent (refractory_period=2).
+    for &s in &spike_steps {
+        if s + 2 < 128 {
+            // Step s+1 and s+2 should not appear in spike_steps.
+            assert!(
+                !spike_steps.contains(&(s + 1)),
+                "step {} should be refractory",
+                s + 1
+            );
+            assert!(
+                !spike_steps.contains(&(s + 2)),
+                "step {} should be refractory",
+                s + 2
+            );
+        }
+    }
 }

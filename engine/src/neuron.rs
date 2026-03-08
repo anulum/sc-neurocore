@@ -61,39 +61,31 @@ impl FixedPointLif {
     /// Returns `(spike, membrane_voltage)`.
     pub fn step(&mut self, leak_k: i16, gain_k: i16, i_t: i16, noise_in: i16) -> (i32, i16) {
         let w = self.data_width;
-        let diff = mask((self.v_rest as i32) - (self.v as i32), 2 * w) as i32;
-        let leak_mul = diff * (leak_k as i32);
-        let dv_leak = mask(leak_mul >> self.fraction, self.data_width);
 
-        let in_mul = (i_t as i32) * (gain_k as i32);
-        let dv_in = mask(in_mul >> self.fraction, self.data_width);
+        // Refractory: check previous step's counter before any fire logic.
+        if self.refractory_counter > 0 {
+            self.refractory_counter -= 1;
+            self.v = self.v_rest;
+            return (0, mask(self.v_rest as i32, w));
+        }
+
+        let diff = mask((self.v_rest as i32) - (self.v as i32), 2 * w) as i32;
+        let dv_leak = mask(diff * (leak_k as i32) >> self.fraction, self.data_width);
+        let dv_in = mask((i_t as i32) * (gain_k as i32) >> self.fraction, self.data_width);
 
         let v_next = mask(
             (self.v as i32) + (dv_leak as i32) + (dv_in as i32) + (noise_in as i32),
             self.data_width,
         );
 
-        let fired = (v_next >= self.v_threshold) as i32;
-        let v_after_spike = if fired != 0 { self.v_reset } else { v_next };
-        let refrac_after_fire = if fired != 0 {
-            self.refractory_period
+        if v_next >= self.v_threshold {
+            self.v = self.v_reset;
+            self.refractory_counter = self.refractory_period;
+            (1, mask(self.v_reset as i32, w))
         } else {
-            self.refractory_counter
-        };
-
-        let in_refrac = (refrac_after_fire > 0) as i32;
-        let final_v = if in_refrac != 0 {
-            self.v_rest
-        } else {
-            v_after_spike
-        };
-        let final_spike = fired & (1 - in_refrac);
-        let final_refrac = refrac_after_fire - in_refrac;
-
-        self.v = final_v;
-        self.refractory_counter = final_refrac;
-
-        (final_spike, mask(final_v as i32, w))
+            self.v = v_next;
+            (0, mask(v_next as i32, w))
+        }
     }
 
     /// Reset internal state to resting potential.
@@ -105,7 +97,7 @@ impl FixedPointLif {
 
 #[cfg(test)]
 mod tests {
-    use super::mask;
+    use super::{mask, FixedPointLif};
 
     #[test]
     fn mask_branchless_matches_original() {
@@ -140,5 +132,36 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn lif_fires_with_refractory_period() {
+        // Q8.8: threshold=1.0 → 256, matching Python default
+        let mut n = FixedPointLif::new(16, 8, 0, 0, 256, 2);
+        let mut spikes = Vec::new();
+        for _ in 0..30 {
+            let (s, _) = n.step(1, 256, 50, 0);
+            spikes.push(s);
+        }
+        let total: i32 = spikes.iter().sum();
+        assert!(total > 0, "neuron must fire with refractory_period=2");
+        // Refractory gap: after a spike, next 2 steps must be silent.
+        for (i, &s) in spikes.iter().enumerate() {
+            if s == 1 && i + 2 < spikes.len() {
+                assert_eq!(spikes[i + 1], 0, "step {} should be refractory", i + 1);
+                assert_eq!(spikes[i + 2], 0, "step {} should be refractory", i + 2);
+            }
+        }
+    }
+
+    #[test]
+    fn lif_fires_without_refractory() {
+        let mut n = FixedPointLif::new(16, 8, 0, 0, 256, 0);
+        let mut total = 0;
+        for _ in 0..20 {
+            let (s, _) = n.step(1, 256, 50, 0);
+            total += s;
+        }
+        assert!(total > 0, "neuron must fire with refractory_period=0");
     }
 }
