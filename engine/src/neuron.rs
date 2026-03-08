@@ -71,7 +71,10 @@ impl FixedPointLif {
 
         let diff = mask((self.v_rest as i32) - (self.v as i32), 2 * w) as i32;
         let dv_leak = mask(diff * (leak_k as i32) >> self.fraction, self.data_width);
-        let dv_in = mask((i_t as i32) * (gain_k as i32) >> self.fraction, self.data_width);
+        let dv_in = mask(
+            (i_t as i32) * (gain_k as i32) >> self.fraction,
+            self.data_width,
+        );
 
         let v_next = mask(
             (self.v as i32) + (dv_leak as i32) + (dv_in as i32) + (noise_in as i32),
