@@ -532,14 +532,11 @@ def run_brian2(cfg: BrunelConfig) -> RunMetrics | None:
     S_inh.connect(p=cfg.conn_prob)
     S_inh.namespace["w"] = cfg.weight_inh
 
-    # C_E independent Poisson inputs per neuron, rate nu_ext each.
-    # PoissonGroup generates at most 1 spike/step (Bernoulli), so use
-    # c_ext separate sources at external_rate_hz, not 1 at total_rate.
+    # Independent Poisson input per neuron: each neuron draws from its own
+    # Poisson process with c_ext sources at external_rate_hz each.
+    # PoissonInput (not PoissonGroup+connect) avoids shared-source correlation.
     c_ext_int = max(1, int(cfg.c_ext))
-    P_ext = brian2.PoissonGroup(c_ext_int, rates=cfg.external_rate_hz * brian2.Hz)
-    S_ext = brian2.Synapses(P_ext, G, on_pre="v_post += w", dt=cfg.dt * brian2.ms)
-    S_ext.connect()  # all-to-all: each neuron gets c_ext_int Poisson inputs
-    S_ext.namespace["w"] = cfg.weight_exc
+    P_ext = brian2.PoissonInput(G, "v", N=c_ext_int, rate=cfg.external_rate_hz * brian2.Hz, weight=cfg.weight_exc)  # noqa: F841
 
     mon = brian2.SpikeMonitor(G)
     n_synapses = int(cfg.n_neurons * cfg.n_neurons * cfg.conn_prob)
@@ -790,14 +787,21 @@ def format_markdown(results: list[ScalePoint]) -> str:
         if sp.simulator == "brian2":
             brian2_times[(sp.regime, sp.n_neurons)] = sp.wall_mean
 
+    brian2_rates: dict[tuple[str, int], float] = {}
+    for sp in results:
+        if sp.simulator == "brian2":
+            brian2_rates[(sp.regime, sp.n_neurons)] = sp.rate_mean
+
     if brian2_times:
         lines.extend(
             [
                 "",
                 "## Speedup vs Brian2",
                 "",
-                "| Regime | N | Simulator | Speedup |",
-                "|--------|--:|-----------|--------:|",
+                "Rate ratio = SC rate / Brian2 rate. Speedup only valid when rates match (0.75-1.25x).",
+                "",
+                "| Regime | N | Simulator | Rate ratio | Speedup | Valid |",
+                "|--------|--:|-----------|----------:|--------:|:-----:|",
             ]
         )
         for sp in results:
@@ -805,9 +809,15 @@ def format_markdown(results: list[ScalePoint]) -> str:
                 continue
             key = (sp.regime, sp.n_neurons)
             b2 = brian2_times.get(key)
+            b2r = brian2_rates.get(key, 0.0)
             if b2 and b2 > 0:
+                ratio = sp.rate_mean / b2r if b2r > 0 else float("inf")
+                valid = 0.75 <= ratio <= 1.25
+                speedup = b2 / sp.wall_mean
+                mark = "Y" if valid else "N"
                 lines.append(
-                    f"| {sp.regime} | {sp.n_neurons:>7,} | {sp.simulator:<28s} | {b2 / sp.wall_mean:>7.1f}x |"
+                    f"| {sp.regime} | {sp.n_neurons:>7,} | {sp.simulator:<28s} "
+                    f"| {ratio:>9.2f}x | {speedup:>7.1f}x | {mark:>5s} |"
                 )
 
     return "\n".join(lines)
