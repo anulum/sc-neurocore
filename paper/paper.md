@@ -82,7 +82,7 @@ SC-NeuroCore is structured as three layers:
 
 **Python API** (`pip install sc-neurocore`): Provides `BitstreamEncoder`,
 `BitstreamSynapse`, `BitstreamDotProduct`, `StochasticLIFNeuron`,
-`SCDenseLayer`, `VectorizedSCLayer`, and 22 other public symbols. All
+`SCDenseLayer`, `VectorizedSCLayer`, and 24 other public symbols. All
 primitives use a 16-bit maximal-length LFSR (polynomial
 $x^{16}+x^{14}+x^{13}+x^{11}+1$, period 65 535) with decorrelated seed
 assignment. Fixed-point arithmetic uses Q8.8 signed two's complement with
@@ -118,7 +118,7 @@ for register-based configuration).
 
 # Quality Assurance
 
-SC-NeuroCore maintains 960 tests with 98.5% line coverage, enforced by CI
+SC-NeuroCore maintains 1213 tests with 98.5% line coverage, enforced by CI
 on every push. The test suite includes unit tests, integration tests,
 property-based tests (Hypothesis), cross-layer coupling tests, quantum
 error correction tests, and hardware co-simulation checks. Static analysis

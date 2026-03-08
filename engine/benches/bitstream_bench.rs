@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
+use std::hint::black_box;
 
 use sc_neurocore_engine::bitstream::{pack, popcount_words_portable};
 use sc_neurocore_engine::simd::popcount_dispatch;

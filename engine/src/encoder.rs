@@ -59,13 +59,13 @@ impl BitstreamEncoder {
     }
 
     /// Emit one stochastic bit by comparing RNG value against `x_value`.
+    ///
+    /// Matches Verilog RTL semantics: compare current register, then advance.
+    /// (Non-blocking assignment in `sc_bitstream_encoder.v` reads pre-advance state.)
     pub fn step(&mut self, x_value: u16) -> u8 {
+        let bit = if self.lfsr.reg < x_value { 1 } else { 0 };
         self.lfsr.step();
-        if self.lfsr.reg < x_value {
-            1
-        } else {
-            0
-        }
+        bit
     }
 
     /// Reset the encoder LFSR state.

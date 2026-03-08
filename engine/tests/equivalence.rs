@@ -29,10 +29,12 @@ fn lfsr_has_no_zero_state_for_known_cycle_prefix() {
 }
 
 #[test]
-fn encoder_is_step_then_compare() {
+fn encoder_compares_before_advancing() {
     let mut enc = BitstreamEncoder::new(16, 0xACE1);
-    let bit = enc.step(0xACE1);
-    assert_eq!(bit, 1);
+    // reg starts at 0xACE1; compare 0xACE1 < 0xACE1 is false → bit=0
+    assert_eq!(enc.step(0xACE1), 0);
+    // After step, LFSR has advanced; compare against a value above the new reg
+    assert_eq!(enc.step(u16::MAX), 1);
 }
 
 #[test]

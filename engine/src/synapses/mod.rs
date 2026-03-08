@@ -73,25 +73,80 @@ impl StdpSynapse {
             );
         }
 
-        // 3. Update weight (Potentiation/Depression)
-        // If post follows pre (potentiation)
+        // 3. Update weight
+        // Post-spike + pre-trace → potentiation (LTP)
         if post_spike {
-            let dw = (self.trace_pre as i32 * params.a_plus as i32) >> self.fraction;
-            let mut new_w = self.weight as i32 + dw;
-            if new_w > params.w_max as i32 {
-                new_w = params.w_max as i32;
-            }
+            let dw = (self.trace_pre as i32 * params.a_plus.abs() as i32) >> self.fraction;
+            let new_w = (self.weight as i32 + dw).min(params.w_max as i32);
             self.weight = mask(new_w, self.data_width);
         }
 
-        // If pre follows post (depression)
+        // Pre-spike + post-trace → depression (LTD); sign forced negative
         if pre_spike {
-            let dw = (self.trace_post as i32 * params.a_minus as i32) >> self.fraction;
-            let mut new_w = self.weight as i32 + dw; // dw is negative usually
-            if new_w < params.w_min as i32 {
-                new_w = params.w_min as i32;
-            }
+            let dw = (self.trace_post as i32 * params.a_minus.abs() as i32) >> self.fraction;
+            let new_w = (self.weight as i32 - dw).max(params.w_min as i32);
             self.weight = mask(new_w, self.data_width);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn default_params() -> StdpParams {
+        StdpParams {
+            a_plus: 64,  // 0.25 in Q8.8
+            a_minus: 48, // 0.1875 in Q8.8
+            decay: 230,  // ~0.90 in Q8.8
+            w_min: 0,
+            w_max: 255,
+        }
+    }
+
+    #[test]
+    fn potentiation_increases_weight() {
+        let mut syn = StdpSynapse::new(128, 16, 8);
+        let params = default_params();
+        // Multiple pre spikes to build trace
+        for _ in 0..5 {
+            syn.step(true, false, &params);
+        }
+        let w_before = syn.weight;
+        // Post spike triggers LTP via accumulated pre-trace
+        syn.step(false, true, &params);
+        assert!(syn.weight > w_before, "LTP must increase weight");
+    }
+
+    #[test]
+    fn depression_decreases_weight() {
+        let mut syn = StdpSynapse::new(128, 16, 8);
+        let params = default_params();
+        // Multiple post spikes to build trace
+        for _ in 0..5 {
+            syn.step(false, true, &params);
+        }
+        let w_before = syn.weight;
+        // Pre spike triggers LTD via accumulated post-trace
+        syn.step(true, false, &params);
+        assert!(syn.weight < w_before, "LTD must decrease weight");
+    }
+
+    #[test]
+    fn weight_stays_in_bounds() {
+        let mut syn = StdpSynapse::new(0, 16, 8);
+        let params = default_params();
+        for _ in 0..200 {
+            syn.step(true, false, &params);
+        }
+        assert!(syn.weight >= params.w_min, "weight below w_min");
+        assert!(syn.weight <= params.w_max, "weight above w_max");
+
+        let mut syn2 = StdpSynapse::new(255, 16, 8);
+        for _ in 0..200 {
+            syn2.step(false, true, &params);
+        }
+        assert!(syn2.weight >= params.w_min);
+        assert!(syn2.weight <= params.w_max);
     }
 }

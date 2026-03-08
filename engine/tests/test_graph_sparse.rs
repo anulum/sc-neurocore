@@ -27,10 +27,10 @@ fn csr_ring_graph() {
     assert_eq!(csr.nnz(), 3);
 
     let dense = csr.to_dense();
-    assert!(approx_eq(dense[0 * 3 + 1], 1.0, 1e-15)); // 0→1
-    assert!(approx_eq(dense[1 * 3 + 2], 1.0, 1e-15)); // 1→2
-    assert!(approx_eq(dense[2 * 3 + 0], 1.0, 1e-15)); // 2→0
-    assert!(approx_eq(dense[0 * 3 + 0], 0.0, 1e-15)); // no self-loop
+    assert!(approx_eq(dense[1], 1.0, 1e-15)); // 0→1
+    assert!(approx_eq(dense[5], 1.0, 1e-15)); // 1→2
+    assert!(approx_eq(dense[6], 1.0, 1e-15)); // 2→0
+    assert!(approx_eq(dense[0], 0.0, 1e-15)); // no self-loop
 }
 
 #[test]
@@ -57,11 +57,11 @@ fn sparse_forward_matches_dense() {
 fn auto_detect_sparse_threshold() {
     // 10x10 with only 5 non-zero entries → density = 5/100 = 5% < 30%
     let mut adj = vec![0.0_f64; 100];
-    adj[0 * 10 + 1] = 1.0;
-    adj[1 * 10 + 2] = 1.0;
-    adj[2 * 10 + 3] = 1.0;
-    adj[3 * 10 + 4] = 1.0;
-    adj[4 * 10 + 0] = 1.0;
+    adj[1] = 1.0;
+    adj[12] = 1.0;
+    adj[23] = 1.0;
+    adj[34] = 1.0;
+    adj[40] = 1.0;
 
     let layer = StochasticGraphLayer::from_dense_auto(adj, 10, 3, 42, 0.3);
     assert!(layer.is_sparse());

@@ -1,30 +1,21 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-from typing import Any, Optional
+"""SCPN L1: Quantum Biological Layer (Stochastic Implementation)."""
 
-"""
-SCPN L1: Quantum Biological Layer (Stochastic Implementation)
-=============================================================
-
-This module implements Layer 1 of the SCPN framework using the sc-neurocore
-stochastic computing engine. It bridges the detailed biological parameters
-of the legacy 'Enhanced' models with the efficient bitstream processing of
-the new core.
-
-Key Features:
-- Stochastic representation of quantum coherence.
-- Non-Markovian protection factors simulated via bitstream correlation.
-- Interface for Quantum-Classical Hybrid processing.
-
-"""
+from __future__ import annotations
 
 from dataclasses import dataclass
-import numpy as np
 import logging
+from typing import Any, Optional
 
-from sc_neurocore.quantum.hybrid import QuantumStochasticLayer
-from sc_neurocore.quantum.hardware_bridge import QuantumHardwareLayer
+import numpy as np
 
-# We will likely need more primitives later, e.g. from utils or sources
+try:
+    from sc_neurocore.quantum.hybrid import QuantumStochasticLayer
+    from sc_neurocore.quantum.hardware_bridge import QuantumHardwareLayer
+
+    _HAS_QUANTUM = True
+except ImportError:
+    _HAS_QUANTUM = False
 
 logger = logging.getLogger(__name__)
 

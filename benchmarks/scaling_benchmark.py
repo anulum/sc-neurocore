@@ -685,8 +685,7 @@ def run_rust_engine(cfg: BrunelConfig) -> RunMetrics | None:
     rng = np.random.default_rng(cfg.seed)
     noise_offsets = rng.normal(0, noise_fp, n).astype(np.int16)
     currents = (np.full(n, i_t_fp, dtype=np.int16) + noise_offsets).astype(np.int16)
-    # refractory_period=0 works around a Rust engine bug where fire-step
-    # refractory assignment suppresses the spike (see engine/src/neuron.rs:84-90)
+    refractory_steps = max(0, int(cfg.refractory_ms / cfg.dt)) if hasattr(cfg, "refractory_ms") else 2
     spikes_arr, _ = eng.batch_lif_run_multi(
         n,
         steps,
@@ -698,7 +697,7 @@ def run_rust_engine(cfg: BrunelConfig) -> RunMetrics | None:
         v_rest_fp,
         v_reset_fp,
         v_th_fp,
-        0,  # refractory_period (0 to work around engine bug)
+        refractory_steps,
     )
 
     wall = time.perf_counter() - t0

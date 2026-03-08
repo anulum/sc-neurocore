@@ -7,10 +7,10 @@ build-backend = "maturin"
 
 [project]
 name = "sc_neurocore_engine"
-version = "3.8.2"
+version = "3.9.1"
 requires-python = ">=3.10"
 description = "High-performance Rust backend for SC-NeuroCore"
-license = {text = "MIT"}
+license = {text = "AGPL-3.0-or-later"}
 authors = [{name = "Miroslav Sotek", email = "protoscience@anulum.li"}]
 
 [tool.maturin]

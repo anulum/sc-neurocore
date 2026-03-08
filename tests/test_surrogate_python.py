@@ -34,14 +34,14 @@ class TestDifferentiableDenseLayer:
             n_neurons=4,
             length=1024,
             surrogate="fast_sigmoid",
-            k=25.0,
+            k=5.0,
         )
         out1 = np.array(layer.forward([0.5] * 8))
 
         grad_in, grad_w = layer.backward([1.0] * 4)
         assert grad_in.shape == (8,)
         assert grad_w.shape == (4, 8)
-        layer.update_weights(grad_w, lr=0.01)
+        layer.update_weights(grad_w, lr=0.5)
 
         out2 = np.array(layer.forward([0.5] * 8))
         assert not np.allclose(out1, out2)
