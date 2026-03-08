@@ -58,7 +58,8 @@ model matches the hardware. SC-NeuroCore closes this gap by offering:
    SystemVerilog with AXI-Lite configuration, targeting Xilinx and Intel
    FPGAs. A Yosys synthesis script (`tools/yosys_synth.py`) is provided
    for automated LUT/FF reporting on Xilinx 7-series; formal verification
-   covers the LIF neuron (5 properties) and synapse (4 properties).
+   covers the bitstream encoder (2 properties), LIF neuron (5 properties),
+   and synapse (4 properties).
 
 4. **Modular architecture**: A tiered module system separates
    production-ready core primitives (neurons, synapses, layers, HDL
@@ -82,7 +83,7 @@ SC-NeuroCore is structured as three layers:
 
 **Python API** (`pip install sc-neurocore`): Provides `BitstreamEncoder`,
 `BitstreamSynapse`, `BitstreamDotProduct`, `StochasticLIFNeuron`,
-`SCDenseLayer`, `VectorizedSCLayer`, and 24 other public symbols. All
+`SCDenseLayer`, `VectorizedSCLayer`, and 22 other public symbols. All
 primitives use a 16-bit maximal-length LFSR (polynomial
 $x^{16}+x^{14}+x^{13}+x^{11}+1$, period 65 535) with decorrelated seed
 assignment. Fixed-point arithmetic uses Q8.8 signed two's complement with

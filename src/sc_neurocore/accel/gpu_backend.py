@@ -31,7 +31,7 @@ try:
     cp.cuda.Device(0).compute_capability  # pragma: no cover
     HAS_CUPY = True  # pragma: no cover
     xp = cp  # pragma: no cover
-except Exception:
+except (ImportError, RuntimeError, AttributeError):
     HAS_CUPY = False
     xp = np
 

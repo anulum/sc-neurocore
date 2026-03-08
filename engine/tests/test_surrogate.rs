@@ -78,7 +78,7 @@ fn surrogate_lif_forward_matches_plain_lif() {
 fn backward_produces_nonzero_gradient() {
     let mut surr = SurrogateLif::new(16, 8, 0, 0, 256, 2, SurrogateType::FastSigmoid { k: 25.0 });
     surr.forward(20, 256, 128, 0);
-    let grad = surr.backward(1.0);
+    let grad = surr.backward(1.0).unwrap();
     assert!(grad.abs() > 0.0);
 }
 

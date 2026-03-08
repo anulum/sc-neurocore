@@ -17,16 +17,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
-try:
-    import jax
-    import jax.numpy as jnp
-
-    HAS_JAX = True
-except ImportError:
-    jax = None  # type: ignore[assignment]
-    import numpy as jnp  # type: ignore[no-redef]
-
-    HAS_JAX = False
+from ._jax_compat import jnp, make_rng, maybe_jit, split_rng, uniform
 
 from ..base import BaseStochasticAdapter
 
@@ -55,7 +46,7 @@ class L5_OrganismalAdapter(BaseStochasticAdapter):
 
     def __init__(self, params: Optional[L5_HolonomicParameters] = None, seed: int = 45) -> None:
         self.params = params or L5_HolonomicParameters()
-        self.rng_key = jax.random.PRNGKey(seed)
+        self.rng_key = make_rng(seed)
 
         # State: Emotional Valence Vector (n_dims)
         self.emotions = jnp.full((self.params.n_emotional_dims,), 0.5)
@@ -76,13 +67,13 @@ class L5_OrganismalAdapter(BaseStochasticAdapter):
             : self.params.n_nodes
         ]
 
-        self.rng_key, subkey = jax.random.split(self.rng_key)
-        rands = jax.random.uniform(subkey, (self.params.n_nodes, self.params.bitstream_length))
+        self.rng_key, subkey = split_rng(self.rng_key)
+        rands = uniform(subkey, (self.params.n_nodes, self.params.bitstream_length))
         bitstreams = (rands < node_probs[:, None]).astype(jnp.uint8)
         return bitstreams
 
     @staticmethod
-    @jax.jit
+    @maybe_jit
     def _autonomic_kernel(
         current: jnp.ndarray, target: jnp.ndarray, tau: float, dt: float
     ) -> jnp.ndarray:

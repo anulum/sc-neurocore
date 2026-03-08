@@ -17,16 +17,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
-try:
-    import jax
-    import jax.numpy as jnp
-
-    HAS_JAX = True
-except ImportError:
-    jax = None  # type: ignore[assignment]
-    import numpy as jnp  # type: ignore[no-redef]
-
-    HAS_JAX = False
+from ._jax_compat import jnp, make_rng, maybe_jit, normal, split_rng, uniform
 
 from ..base import BaseStochasticAdapter
 
@@ -54,12 +45,10 @@ class L4_CellularAdapter(BaseStochasticAdapter):
 
     def __init__(self, params: Optional[L4_HolonomicParameters] = None, seed: int = 44) -> None:
         self.params = params or L4_HolonomicParameters()
-        self.rng_key = jax.random.PRNGKey(seed)
+        self.rng_key = make_rng(seed)
 
         # State: Oscillator Phases (0 to 2*pi)
-        self.phases = jax.random.uniform(
-            self.rng_key, (self.params.n_cells,), minval=0.0, maxval=2 * jnp.pi
-        )
+        self.phases = uniform(self.rng_key, (self.params.n_cells,), minval=0.0, maxval=2 * jnp.pi)
         # State: Local Avalanche Magnitude
         self.avalanches = jnp.zeros((self.params.n_cells,))
 
@@ -70,13 +59,13 @@ class L4_CellularAdapter(BaseStochasticAdapter):
         # Activity = (1 + cos(phase)) / 2
         activity = (1.0 + jnp.cos(self.phases)) / 2.0
 
-        self.rng_key, subkey = jax.random.split(self.rng_key)
-        rands = jax.random.uniform(subkey, (self.params.n_cells, self.params.bitstream_length))
+        self.rng_key, subkey = split_rng(self.rng_key)
+        rands = uniform(subkey, (self.params.n_cells, self.params.bitstream_length))
         bitstreams = (rands < activity[:, None]).astype(jnp.uint8)
         return bitstreams
 
     @staticmethod
-    @jax.jit
+    @maybe_jit
     def _kuramoto_kernel(
         phases: jnp.ndarray, omega: float, k: float, dt: float, noise: jnp.ndarray
     ) -> jnp.ndarray:
@@ -100,8 +89,8 @@ class L4_CellularAdapter(BaseStochasticAdapter):
         Returns: (n_cells, bitstream_length) output bitstreams.
         """
         # 1. Generate Noise
-        self.rng_key, subkey = jax.random.split(self.rng_key)
-        noise = jax.random.normal(subkey, (self.params.n_cells,)) * self.params.sigma_noise
+        self.rng_key, subkey = split_rng(self.rng_key)
+        noise = normal(subkey, (self.params.n_cells,)) * self.params.sigma_noise
 
         # 2. Update Phases via Kuramoto Kernel
         self.phases = self._kuramoto_kernel(

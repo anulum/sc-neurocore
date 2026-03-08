@@ -10,7 +10,7 @@
 /// debug assertion failure (release builds silently produce garbage).
 #[inline]
 pub fn mask(value: i32, width: u32) -> i16 {
-    debug_assert!(
+    assert!(
         width > 0 && width <= 32,
         "mask width must be 1..=32, got {width}"
     );

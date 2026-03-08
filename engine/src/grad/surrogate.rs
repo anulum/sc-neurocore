@@ -83,12 +83,12 @@ impl SurrogateLif {
     }
 
     /// Backward pass through last cached membrane value.
-    pub fn backward(&mut self, grad_output: f32) -> f32 {
+    pub fn backward(&mut self, grad_output: f32) -> Result<f32, String> {
         let (v_norm, _spike) = self
             .membrane_trace
             .pop()
-            .expect("backward() called without forward()");
-        grad_output * self.surrogate.grad(v_norm)
+            .ok_or_else(|| "backward() called without matching forward()".to_string())?;
+        Ok(grad_output * self.surrogate.grad(v_norm))
     }
 
     /// Clear stored membrane trace.

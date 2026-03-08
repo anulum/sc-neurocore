@@ -17,16 +17,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 
-try:
-    import jax
-    import jax.numpy as jnp
-
-    HAS_JAX = True
-except ImportError:
-    jax = None  # type: ignore[assignment]
-    import numpy as jnp  # type: ignore[no-redef]
-
-    HAS_JAX = False
+from ._jax_compat import jnp, make_rng, maybe_jit, split_rng, uniform
 
 from ..base import BaseStochasticAdapter
 
@@ -57,7 +48,7 @@ class L8_CosmicAdapter(BaseStochasticAdapter):
 
     def __init__(self, params: Optional[L8_HolonomicParameters] = None, seed: int = 48) -> None:
         self.params = params or L8_HolonomicParameters()
-        self.rng_key = jax.random.PRNGKey(seed)
+        self.rng_key = make_rng(seed)
 
         # State: Local System Phases (locked to pulsars)
         self.system_phases = jnp.zeros((self.params.n_pulsars,))
@@ -70,13 +61,13 @@ class L8_CosmicAdapter(BaseStochasticAdapter):
         """
         activation = (1.0 + jnp.cos(self.system_phases)) / 2.0
 
-        self.rng_key, subkey = jax.random.split(self.rng_key)
-        rands = jax.random.uniform(subkey, (self.params.n_pulsars, self.params.bitstream_length))
+        self.rng_key, subkey = split_rng(self.rng_key)
+        rands = uniform(subkey, (self.params.n_pulsars, self.params.bitstream_length))
         bitstreams = (rands < activation[:, None]).astype(jnp.uint8)
         return bitstreams
 
     @staticmethod
-    @jax.jit
+    @maybe_jit
     def _cosmic_kernel(
         phases: jnp.ndarray, pulsar_omegas: jnp.ndarray, k_cosmic: float, dt: float
     ) -> jnp.ndarray:

@@ -161,7 +161,7 @@ pub unsafe fn fused_xor_popcount_avx2(a: &[u64], b: &[u64]) -> u64 {
 /// Caller must ensure the current CPU supports `avx2`.
 /// `buf` must have at least 32 elements.
 pub unsafe fn bernoulli_compare_avx2(buf: &[u8], threshold: u8) -> u32 {
-    debug_assert!(buf.len() >= 32, "buffer must contain at least 32 bytes");
+    assert!(buf.len() >= 32, "buffer must contain at least 32 bytes");
 
     let data = _mm256_loadu_si256(buf.as_ptr() as *const __m256i);
     let bias = _mm256_set1_epi8(i8::MIN);

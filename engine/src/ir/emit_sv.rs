@@ -14,7 +14,7 @@ use crate::ir::graph::*;
 /// Emit a synthesizable SystemVerilog module from an SC graph.
 ///
 /// The graph should pass `verify::verify()` before emission.
-pub fn emit(graph: &ScGraph) -> String {
+pub fn emit(graph: &ScGraph) -> Result<String, String> {
     let mut sv = String::new();
 
     // Header
@@ -265,11 +265,10 @@ pub fn emit(graph: &ScGraph) -> String {
             ScOp::GraphForward { .. }
             | ScOp::SoftmaxAttention { .. }
             | ScOp::KuramotoStep { .. } => {
-                panic!(
-                    "SV emission for {:?} is not implemented. \
-                     These ops require an HLS backend.",
+                return Err(format!(
+                    "SV emission for {:?} is not implemented — requires HLS backend",
                     op
-                );
+                ));
             }
             ScOp::Output { name, source, .. } => {
                 let src_wire = value_to_wire(graph, *source);
@@ -316,7 +315,7 @@ pub fn emit(graph: &ScGraph) -> String {
     }
 
     sv.push_str("\nendmodule\n");
-    sv
+    Ok(sv)
 }
 
 fn type_to_width(ty: &ScType) -> usize {

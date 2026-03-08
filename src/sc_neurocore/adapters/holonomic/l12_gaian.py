@@ -17,16 +17,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Tuple
 
-try:
-    import jax
-    import jax.numpy as jnp
-
-    HAS_JAX = True
-except ImportError:
-    jax = None  # type: ignore[assignment]
-    import numpy as jnp  # type: ignore[no-redef]
-
-    HAS_JAX = False
+from ._jax_compat import jnp, make_rng, maybe_jit, split_rng, uniform
 
 from ..base import BaseStochasticAdapter
 
@@ -54,7 +45,7 @@ class L12_GaianAdapter(BaseStochasticAdapter):
 
     def __init__(self, params: Optional[L12_HolonomicParameters] = None, seed: int = 412) -> None:
         self.params = params or L12_HolonomicParameters()
-        self.rng_key = jax.random.PRNGKey(seed)
+        self.rng_key = make_rng(seed)
 
         # State: Ecological Coherence (0 to 1)
         self.eco_coherence = jnp.full((self.params.n_nodes,), 0.2)
@@ -67,13 +58,13 @@ class L12_GaianAdapter(BaseStochasticAdapter):
         """
         Maps ecological coherence to stochastic bitstreams.
         """
-        self.rng_key, subkey = jax.random.split(self.rng_key)
-        rands = jax.random.uniform(subkey, (self.params.n_nodes, self.params.bitstream_length))
+        self.rng_key, subkey = split_rng(self.rng_key)
+        rands = uniform(subkey, (self.params.n_nodes, self.params.bitstream_length))
         bitstreams = (rands < self.eco_coherence[:, None]).astype(jnp.uint8)
         return bitstreams
 
     @staticmethod
-    @jax.jit
+    @maybe_jit
     def _enaqt_kernel(
         coherence: jnp.ndarray, flow: jnp.ndarray, j_coupling: float, noise_gain: float, dt: float
     ) -> Tuple[jnp.ndarray, jnp.ndarray]:

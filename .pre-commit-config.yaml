@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b  # v5.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -12,17 +12,17 @@ repos:
         args: [--maxkb=500]
 
   - repo: https://github.com/psf/black
-    rev: "25.1.0"
+    rev: 8a737e727ac5ab2f1d4cf5876720ed276dc8dc4b  # 25.1.0
     hooks:
       - id: black
         exclude: "/drivers/"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.7
+    rev: efa716b1aab63601b256afc0cda469f0f7606759  # v0.9.7
     hooks:
       - id: ruff
 
   - repo: https://github.com/crate-ci/typos
-    rev: v1.29.5
+    rev: d11834eeac776f87614aef80119b38800a9a2bac  # v1.29.5
     hooks:
       - id: typos

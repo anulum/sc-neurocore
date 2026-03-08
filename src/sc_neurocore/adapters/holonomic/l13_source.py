@@ -17,16 +17,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
-try:
-    import jax
-    import jax.numpy as jnp
-
-    HAS_JAX = True
-except ImportError:
-    jax = None  # type: ignore[assignment]
-    import numpy as jnp  # type: ignore[no-redef]
-
-    HAS_JAX = False
+from ._jax_compat import jnp, make_rng, maybe_jit, split_rng, uniform
 
 from ..base import BaseStochasticAdapter
 
@@ -51,7 +42,7 @@ class L13_SourceAdapter(BaseStochasticAdapter):
 
     def __init__(self, params: Optional[L13_HolonomicParameters] = None, seed: int = 413) -> None:
         self.params = params or L13_HolonomicParameters()
-        self.rng_key = jax.random.PRNGKey(seed)
+        self.rng_key = make_rng(seed)
 
         # State: Vacuum Potential (0.0 to 1.0)
         self.vacuum_state = jnp.full((self.params.n_vacuum_nodes,), 0.5)
@@ -62,15 +53,13 @@ class L13_SourceAdapter(BaseStochasticAdapter):
         """
         Maps vacuum potential to stochastic bitstreams.
         """
-        self.rng_key, subkey = jax.random.split(self.rng_key)
-        rands = jax.random.uniform(
-            subkey, (self.params.n_vacuum_nodes, self.params.bitstream_length)
-        )
+        self.rng_key, subkey = split_rng(self.rng_key)
+        rands = uniform(subkey, (self.params.n_vacuum_nodes, self.params.bitstream_length))
         bitstreams = (rands < self.vacuum_state[:, None]).astype(jnp.uint8)
         return bitstreams
 
     @staticmethod
-    @jax.jit
+    @maybe_jit
     def _vacuum_kernel(state: jnp.ndarray, coupling: float, bias: float, dt: float) -> jnp.ndarray:
         """
         Solves the Vacuum Lattice dynamics (Mean-field approximation):

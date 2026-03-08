@@ -41,7 +41,7 @@ impl CsrMatrix {
                 values.len()
             ));
         }
-        let nnz = *row_offsets.last().unwrap_or(&0);
+        let nnz = *row_offsets.last().ok_or("row_offsets must not be empty")?;
         if col_indices.len() != nnz {
             return Err(format!(
                 "col_indices length {} != nnz from row_offsets {}",

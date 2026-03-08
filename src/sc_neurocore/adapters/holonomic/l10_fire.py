@@ -17,16 +17,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Tuple
 
-try:
-    import jax
-    import jax.numpy as jnp
-
-    HAS_JAX = True
-except ImportError:
-    jax = None  # type: ignore[assignment]
-    import numpy as jnp  # type: ignore[no-redef]
-
-    HAS_JAX = False
+from ._jax_compat import jnp, make_rng, maybe_jit, split_rng, uniform
 
 from ..base import BaseStochasticAdapter
 
@@ -52,7 +43,7 @@ class L10_FirewallAdapter(BaseStochasticAdapter):
     def __init__(self, params: Optional[L10_HolonomicParameters] = None, seed: int = 410) -> None:
         self.params = params or L10_HolonomicParameters()
 
-        self.rng_key = jax.random.PRNGKey(seed)
+        self.rng_key = make_rng(seed)
 
         # State: Firewall integrity (0 to 1)
         self.firewall_strength = jnp.full((self.params.n_boundary_nodes,), 0.9)
@@ -63,15 +54,13 @@ class L10_FirewallAdapter(BaseStochasticAdapter):
         """
         Maps firewall strength to stochastic bitstreams.
         """
-        self.rng_key, subkey = jax.random.split(self.rng_key)
-        rands = jax.random.uniform(
-            subkey, (self.params.n_boundary_nodes, self.params.bitstream_length)
-        )
+        self.rng_key, subkey = split_rng(self.rng_key)
+        rands = uniform(subkey, (self.params.n_boundary_nodes, self.params.bitstream_length))
         bitstreams = (rands < self.firewall_strength[:, None]).astype(jnp.uint8)
         return bitstreams
 
     @staticmethod
-    @jax.jit
+    @maybe_jit
     def _firewall_kernel(
         strength: jnp.ndarray,
         intention: jnp.ndarray,
