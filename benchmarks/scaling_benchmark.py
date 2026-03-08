@@ -68,7 +68,9 @@ class ScalePoint:
 
     @property
     def wall_std(self) -> float:
-        return float(np.std([r.wall_time_s for r in self.runs], ddof=1)) if len(self.runs) > 1 else 0.0
+        return (
+            float(np.std([r.wall_time_s for r in self.runs], ddof=1)) if len(self.runs) > 1 else 0.0
+        )
 
     @property
     def wall_min(self) -> float:
@@ -176,6 +178,7 @@ def _system_info() -> dict:
     }
     try:
         import torch
+
         if torch.cuda.is_available():
             info["gpu"] = torch.cuda.get_device_name(0)
             info["cuda_version"] = torch.version.cuda
@@ -200,14 +203,18 @@ def _build_weights_dense(cfg: BrunelConfig, rng: np.random.Generator):
     conn_mask = rng.random((n, n)) < cfg.conn_prob
     np.fill_diagonal(conn_mask, False)
     weights = np.where(conn_mask, cfg.weight_exc, 0.0).astype(np.float32)
-    weights[cfg.n_exc:, :] *= -cfg.g_inh
+    weights[cfg.n_exc :, :] *= -cfg.g_inh
     n_synapses = int(conn_mask.sum())
     return weights, n_synapses
 
 
 def _compute_extended_metrics(
-    spike_count: int, n: int, sim_ms: float, n_synapses: int,
-    wall: float, step_spike_counts: list[int],
+    spike_count: int,
+    n: int,
+    sim_ms: float,
+    n_synapses: int,
+    wall: float,
+    step_spike_counts: list[int],
 ) -> dict:
     rate = spike_count / (sim_ms / 1000.0) / n if n > 0 else 0.0
     # fan_out ≈ n_synapses / n (average post-synaptic targets per neuron)
@@ -216,7 +223,9 @@ def _compute_extended_metrics(
     syn_per_s = syn_events / wall if wall > 0 else 0.0
     # activation sparsity: fraction of neurons silent per step (averaged)
     steps = len(step_spike_counts) if step_spike_counts else 1
-    sparsity = float(np.mean([1.0 - sc / n for sc in step_spike_counts])) if step_spike_counts else 1.0
+    sparsity = (
+        float(np.mean([1.0 - sc / n for sc in step_spike_counts])) if step_spike_counts else 1.0
+    )
     return {
         "rate": rate,
         "syn_events": syn_events,
@@ -246,7 +255,9 @@ def run_numpy(cfg: BrunelConfig) -> RunMetrics:
 
     for _ in range(steps):
         ext = rng.poisson(cfg.ext_poisson_lambda, n).astype(np.float32)
-        I_syn = weights[prev_spikes].sum(axis=0) if prev_spikes.any() else np.zeros(n, dtype=np.float32)
+        I_syn = (
+            weights[prev_spikes].sum(axis=0) if prev_spikes.any() else np.zeros(n, dtype=np.float32)
+        )
         v += ext * cfg.weight_exc + I_syn
         v += alpha * (cfg.v_rest - v)
         fired = v >= cfg.v_threshold
@@ -262,9 +273,13 @@ def run_numpy(cfg: BrunelConfig) -> RunMetrics:
 
     m = _compute_extended_metrics(spike_count, n, cfg.sim_ms, n_synapses, wall, step_counts)
     return RunMetrics(
-        wall_time_s=wall, peak_rss_mb=peak_mb, total_spikes=spike_count,
-        mean_rate_hz=m["rate"], synaptic_events=m["syn_events"],
-        synaptic_events_per_s=m["syn_per_s"], activation_sparsity=m["sparsity"],
+        wall_time_s=wall,
+        peak_rss_mb=peak_mb,
+        total_spikes=spike_count,
+        mean_rate_hz=m["rate"],
+        synaptic_events=m["syn_events"],
+        synaptic_events_per_s=m["syn_per_s"],
+        activation_sparsity=m["sparsity"],
     )
 
 
@@ -312,9 +327,13 @@ def run_numpy_sparse(cfg: BrunelConfig) -> RunMetrics:
 
     m = _compute_extended_metrics(spike_count, n, cfg.sim_ms, n_synapses, wall, step_counts)
     return RunMetrics(
-        wall_time_s=wall, peak_rss_mb=peak_mb, total_spikes=spike_count,
-        mean_rate_hz=m["rate"], synaptic_events=m["syn_events"],
-        synaptic_events_per_s=m["syn_per_s"], activation_sparsity=m["sparsity"],
+        wall_time_s=wall,
+        peak_rss_mb=peak_mb,
+        total_spikes=spike_count,
+        mean_rate_hz=m["rate"],
+        synaptic_events=m["syn_events"],
+        synaptic_events_per_s=m["syn_per_s"],
+        activation_sparsity=m["sparsity"],
     )
 
 
@@ -324,6 +343,7 @@ def run_numpy_sparse(cfg: BrunelConfig) -> RunMetrics:
 def run_pytorch_cuda(cfg: BrunelConfig) -> RunMetrics | None:
     try:
         import torch
+
         if not torch.cuda.is_available():
             return None
     except ImportError:
@@ -352,7 +372,8 @@ def run_pytorch_cuda(cfg: BrunelConfig) -> RunMetrics | None:
     for _ in range(steps):
         ext = torch.tensor(
             rng.poisson(cfg.ext_poisson_lambda, n),
-            dtype=torch.float32, device=device,
+            dtype=torch.float32,
+            device=device,
         )
         I_syn = torch.matmul(prev_spikes, w)
         v += ext * cfg.weight_exc + I_syn
@@ -370,9 +391,13 @@ def run_pytorch_cuda(cfg: BrunelConfig) -> RunMetrics | None:
 
     m = _compute_extended_metrics(spike_count, n, cfg.sim_ms, n_synapses, wall, step_counts)
     return RunMetrics(
-        wall_time_s=wall, peak_rss_mb=gpu_mem_mb, total_spikes=spike_count,
-        mean_rate_hz=m["rate"], synaptic_events=m["syn_events"],
-        synaptic_events_per_s=m["syn_per_s"], activation_sparsity=m["sparsity"],
+        wall_time_s=wall,
+        peak_rss_mb=gpu_mem_mb,
+        total_spikes=spike_count,
+        mean_rate_hz=m["rate"],
+        synaptic_events=m["syn_events"],
+        synaptic_events_per_s=m["syn_per_s"],
+        activation_sparsity=m["sparsity"],
         gpu_mem_mb=gpu_mem_mb,
     )
 
@@ -383,6 +408,7 @@ def run_pytorch_cuda(cfg: BrunelConfig) -> RunMetrics | None:
 def run_pytorch_cuda_sparse(cfg: BrunelConfig) -> RunMetrics | None:
     try:
         import torch
+
         if not torch.cuda.is_available():
             return None
     except ImportError:
@@ -394,6 +420,7 @@ def run_pytorch_cuda_sparse(cfg: BrunelConfig) -> RunMetrics | None:
     weights_np, n_synapses = _build_weights_dense(cfg, rng)
 
     from scipy import sparse as sp
+
     # Transpose: W[i,j] = weight from i→j, so I_j = Σ_i W[i,j]*s[i] = (W^T @ s)[j]
     w_coo = sp.coo_matrix(weights_np.T)
     indices = np.vstack([w_coo.row, w_coo.col])
@@ -422,7 +449,8 @@ def run_pytorch_cuda_sparse(cfg: BrunelConfig) -> RunMetrics | None:
     for _ in range(steps):
         ext = torch.tensor(
             rng.poisson(cfg.ext_poisson_lambda, n),
-            dtype=torch.float32, device=device,
+            dtype=torch.float32,
+            device=device,
         )
         # sparse mm: (N,N) @ (N,1) → (N,1)
         I_syn = torch.sparse.mm(w_sparse, prev_spikes.unsqueeze(1)).squeeze(1)
@@ -441,9 +469,13 @@ def run_pytorch_cuda_sparse(cfg: BrunelConfig) -> RunMetrics | None:
 
     m = _compute_extended_metrics(spike_count, n, cfg.sim_ms, n_synapses, wall, step_counts)
     return RunMetrics(
-        wall_time_s=wall, peak_rss_mb=gpu_mem_mb, total_spikes=spike_count,
-        mean_rate_hz=m["rate"], synaptic_events=m["syn_events"],
-        synaptic_events_per_s=m["syn_per_s"], activation_sparsity=m["sparsity"],
+        wall_time_s=wall,
+        peak_rss_mb=gpu_mem_mb,
+        total_spikes=spike_count,
+        mean_rate_hz=m["rate"],
+        synaptic_events=m["syn_events"],
+        synaptic_events_per_s=m["syn_per_s"],
+        activation_sparsity=m["sparsity"],
         gpu_mem_mb=gpu_mem_mb,
     )
 
@@ -459,8 +491,11 @@ def _brian2_warmup():
     if _brian2_warmed_up:
         return
     import brian2
+
     brian2.start_scope()
-    G = brian2.NeuronGroup(100, "dv/dt = -v/(20*ms) : 1", threshold="v>20", reset="v=10", method="euler")
+    G = brian2.NeuronGroup(
+        100, "dv/dt = -v/(20*ms) : 1", threshold="v>20", reset="v=10", method="euler"
+    )
     G.v = 0
     brian2.run(10 * brian2.ms)
     _brian2_warmed_up = True
@@ -477,20 +512,23 @@ def run_brian2(cfg: BrunelConfig) -> RunMetrics | None:
 
     eqs = "dv/dt = -v / (tau * ms) : 1\ntau : 1"
     G = brian2.NeuronGroup(
-        cfg.n_neurons, eqs,
-        threshold="v > v_th", reset="v = v_reset",
-        method="euler", dt=cfg.dt * brian2.ms,
+        cfg.n_neurons,
+        eqs,
+        threshold="v > v_th",
+        reset="v = v_reset",
+        method="euler",
+        dt=cfg.dt * brian2.ms,
     )
     G.v = 0
     G.tau = cfg.tau_mem
     G.namespace["v_th"] = cfg.v_threshold
     G.namespace["v_reset"] = cfg.v_reset
 
-    S_exc = brian2.Synapses(G[:cfg.n_exc], G, on_pre="v_post += w", dt=cfg.dt * brian2.ms)
+    S_exc = brian2.Synapses(G[: cfg.n_exc], G, on_pre="v_post += w", dt=cfg.dt * brian2.ms)
     S_exc.connect(p=cfg.conn_prob)
     S_exc.namespace["w"] = cfg.weight_exc
 
-    S_inh = brian2.Synapses(G[cfg.n_exc:], G, on_pre="v_post -= w", dt=cfg.dt * brian2.ms)
+    S_inh = brian2.Synapses(G[cfg.n_exc :], G, on_pre="v_post -= w", dt=cfg.dt * brian2.ms)
     S_inh.connect(p=cfg.conn_prob)
     S_inh.namespace["w"] = cfg.weight_inh
 
@@ -520,8 +558,11 @@ def run_brian2(cfg: BrunelConfig) -> RunMetrics | None:
     syn_events = int(n_spikes * fan_out)
 
     return RunMetrics(
-        wall_time_s=wall, peak_rss_mb=peak_mb, total_spikes=n_spikes,
-        mean_rate_hz=rate, synaptic_events=syn_events,
+        wall_time_s=wall,
+        peak_rss_mb=peak_mb,
+        total_spikes=n_spikes,
+        mean_rate_hz=rate,
+        synaptic_events=syn_events,
         synaptic_events_per_s=syn_events / wall if wall > 0 else 0.0,
         activation_sparsity=0.0,  # Brian2 doesn't expose per-step counts easily
     )
@@ -539,26 +580,42 @@ def run_nest(cfg: BrunelConfig) -> RunMetrics | None:
     nest.ResetKernel()
     nest.set(resolution=cfg.dt, rng_seed=cfg.seed)
 
-    neurons = nest.Create("iaf_psc_delta", cfg.n_neurons, params={
-        "V_th": cfg.v_threshold, "V_reset": cfg.v_reset,
-        "E_L": cfg.v_rest, "V_m": cfg.v_rest,
-        "tau_m": cfg.tau_mem, "t_ref": 0.0,
-        "C_m": cfg.tau_mem,
-    })
-    exc = neurons[:cfg.n_exc]
-    inh = neurons[cfg.n_exc:]
+    neurons = nest.Create(
+        "iaf_psc_delta",
+        cfg.n_neurons,
+        params={
+            "V_th": cfg.v_threshold,
+            "V_reset": cfg.v_reset,
+            "E_L": cfg.v_rest,
+            "V_m": cfg.v_rest,
+            "tau_m": cfg.tau_mem,
+            "t_ref": 0.0,
+            "C_m": cfg.tau_mem,
+        },
+    )
+    exc = neurons[: cfg.n_exc]
+    inh = neurons[cfg.n_exc :]
 
-    nest.Connect(exc, neurons,
-                 conn_spec={"rule": "pairwise_bernoulli", "p": cfg.conn_prob},
-                 syn_spec={"weight": cfg.weight_exc, "delay": cfg.dt})
-    nest.Connect(inh, neurons,
-                 conn_spec={"rule": "pairwise_bernoulli", "p": cfg.conn_prob},
-                 syn_spec={"weight": -cfg.weight_inh, "delay": cfg.dt})
+    nest.Connect(
+        exc,
+        neurons,
+        conn_spec={"rule": "pairwise_bernoulli", "p": cfg.conn_prob},
+        syn_spec={"weight": cfg.weight_exc, "delay": cfg.dt},
+    )
+    nest.Connect(
+        inh,
+        neurons,
+        conn_spec={"rule": "pairwise_bernoulli", "p": cfg.conn_prob},
+        syn_spec={"weight": -cfg.weight_inh, "delay": cfg.dt},
+    )
 
     poisson = nest.Create("poisson_generator", params={"rate": cfg.c_ext * cfg.external_rate_hz})
-    nest.Connect(poisson, neurons,
-                 conn_spec={"rule": "all_to_all"},
-                 syn_spec={"weight": cfg.weight_exc, "delay": cfg.dt})
+    nest.Connect(
+        poisson,
+        neurons,
+        conn_spec={"rule": "all_to_all"},
+        syn_spec={"weight": cfg.weight_exc, "delay": cfg.dt},
+    )
 
     sr = nest.Create("spike_recorder")
     nest.Connect(neurons, sr)
@@ -580,8 +637,11 @@ def run_nest(cfg: BrunelConfig) -> RunMetrics | None:
     syn_events = int(n_spikes * fan_out)
 
     return RunMetrics(
-        wall_time_s=wall, peak_rss_mb=peak_mb, total_spikes=n_spikes,
-        mean_rate_hz=rate, synaptic_events=syn_events,
+        wall_time_s=wall,
+        peak_rss_mb=peak_mb,
+        total_spikes=n_spikes,
+        mean_rate_hz=rate,
+        synaptic_events=syn_events,
         synaptic_events_per_s=syn_events / wall if wall > 0 else 0.0,
         activation_sparsity=0.0,
     )
@@ -622,7 +682,9 @@ def run_scaling(
         for n_neurons in scales:
             cfg = BrunelConfig(n_neurons=n_neurons, regime=regime, sim_ms=sim_ms)
             n_synapses = int(n_neurons * n_neurons * cfg.conn_prob)
-            print(f"\n  N={n_neurons:,}  synapses~{n_synapses:,}  ext_rate={cfg.external_rate_hz:.1f} Hz")
+            print(
+                f"\n  N={n_neurons:,}  synapses~{n_synapses:,}  ext_rate={cfg.external_rate_hz:.1f} Hz"
+            )
 
             for sim_key in targets:
                 label, fn = SIMULATORS[sim_key]
@@ -632,8 +694,9 @@ def run_scaling(
                     print(f"    {label}: SKIP (matrix ~{mem_est_gb:.1f} GB)")
                     continue
 
-                sp = ScalePoint(n_neurons=n_neurons, simulator=sim_key,
-                                regime=regime, n_synapses=n_synapses)
+                sp = ScalePoint(
+                    n_neurons=n_neurons, simulator=sim_key, regime=regime, n_synapses=n_synapses
+                )
                 print(f"    {label}...", end=" ", flush=True)
 
                 for _ in range(repeats):
@@ -675,22 +738,24 @@ def _serialize(obj):
 def to_json(results: list[ScalePoint], sys_info: dict, params: dict) -> dict:
     data = []
     for sp in results:
-        data.append({
-            "n_neurons": sp.n_neurons,
-            "simulator": sp.simulator,
-            "regime": sp.regime,
-            "n_synapses": sp.n_synapses,
-            "wall_mean_s": round(sp.wall_mean, 4),
-            "wall_std_s": round(sp.wall_std, 4),
-            "wall_min_s": round(sp.wall_min, 4),
-            "peak_rss_mb": round(sp.peak_rss_mb, 1),
-            "spikes_mean": round(sp.spikes_mean, 1),
-            "rate_mean_hz": round(sp.rate_mean, 2),
-            "syn_events_per_s": round(sp.syn_events_per_s_mean, 2),
-            "activation_sparsity": round(sp.sparsity_mean, 4),
-            "n_runs": len(sp.runs),
-            "runs": [asdict(r) for r in sp.runs],
-        })
+        data.append(
+            {
+                "n_neurons": sp.n_neurons,
+                "simulator": sp.simulator,
+                "regime": sp.regime,
+                "n_synapses": sp.n_synapses,
+                "wall_mean_s": round(sp.wall_mean, 4),
+                "wall_std_s": round(sp.wall_std, 4),
+                "wall_min_s": round(sp.wall_min, 4),
+                "peak_rss_mb": round(sp.peak_rss_mb, 1),
+                "spikes_mean": round(sp.spikes_mean, 1),
+                "rate_mean_hz": round(sp.rate_mean, 2),
+                "syn_events_per_s": round(sp.syn_events_per_s_mean, 2),
+                "activation_sparsity": round(sp.sparsity_mean, 4),
+                "n_runs": len(sp.runs),
+                "runs": [asdict(r) for r in sp.runs],
+            }
+        )
     return {
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "system": sys_info,
@@ -726,16 +791,24 @@ def format_markdown(results: list[ScalePoint]) -> str:
             brian2_times[(sp.regime, sp.n_neurons)] = sp.wall_mean
 
     if brian2_times:
-        lines.extend(["", "## Speedup vs Brian2", "",
-                       "| Regime | N | Simulator | Speedup |",
-                       "|--------|--:|-----------|--------:|"])
+        lines.extend(
+            [
+                "",
+                "## Speedup vs Brian2",
+                "",
+                "| Regime | N | Simulator | Speedup |",
+                "|--------|--:|-----------|--------:|",
+            ]
+        )
         for sp in results:
             if sp.simulator == "brian2":
                 continue
             key = (sp.regime, sp.n_neurons)
             b2 = brian2_times.get(key)
             if b2 and b2 > 0:
-                lines.append(f"| {sp.regime} | {sp.n_neurons:>7,} | {sp.simulator:<28s} | {b2 / sp.wall_mean:>7.1f}x |")
+                lines.append(
+                    f"| {sp.regime} | {sp.n_neurons:>7,} | {sp.simulator:<28s} | {b2 / sp.wall_mean:>7.1f}x |"
+                )
 
     return "\n".join(lines)
 
@@ -745,12 +818,12 @@ def format_markdown(results: list[ScalePoint]) -> str:
 # ---------------------------------------------------------------------------
 def main() -> None:
     ap = argparse.ArgumentParser(description="Scaling benchmark: SC-NeuroCore vs Brian2 vs NEST")
-    ap.add_argument("--scales", type=int, nargs="+",
-                    default=[1000, 2000, 5000, 10000, 20000, 50000])
+    ap.add_argument(
+        "--scales", type=int, nargs="+", default=[1000, 2000, 5000, 10000, 20000, 50000]
+    )
     ap.add_argument("--sim-ms", type=float, default=500.0)
     ap.add_argument("--repeats", type=int, default=3)
-    ap.add_argument("--regimes", nargs="+", choices=list(BRUNEL_REGIMES.keys()),
-                    default=["AI"])
+    ap.add_argument("--regimes", nargs="+", choices=list(BRUNEL_REGIMES.keys()), default=["AI"])
     ap.add_argument("--simulators", nargs="+", choices=list(SIMULATORS.keys()))
     ap.add_argument("--json", type=str)
     ap.add_argument("--markdown", action="store_true")

@@ -72,7 +72,9 @@ def _run_numpy_sc(n_neurons: int, bitstream_length: int, sim_steps: int, seed: i
         # --- Encode ---
         t0 = time.perf_counter()
         x_bits = (rng.random((n_inputs, bitstream_length)) < x_prob[:, None]).astype(np.uint8)
-        w_bits = (rng.random((n_inputs, n_outputs, bitstream_length)) < w_prob[:, :, None]).astype(np.uint8)
+        w_bits = (rng.random((n_inputs, n_outputs, bitstream_length)) < w_prob[:, :, None]).astype(
+            np.uint8
+        )
         encode_time += time.perf_counter() - t0
 
         # --- AND + popcount (SC multiplication + accumulation) ---
@@ -99,21 +101,32 @@ def _run_numpy_sc(n_neurons: int, bitstream_length: int, sim_steps: int, seed: i
         v[fired] = v_reset
 
     total = encode_time + mac_time + decode_time
-    total_bits_encoded = n_inputs * bitstream_length * sim_steps + n_inputs * n_outputs * bitstream_length * sim_steps
+    total_bits_encoded = (
+        n_inputs * bitstream_length * sim_steps
+        + n_inputs * n_outputs * bitstream_length * sim_steps
+    )
     encode_gbit = total_bits_encoded / encode_time / 1e9 if encode_time > 0 else 0.0
     total_macs = n_inputs * n_outputs * sim_steps
     mac_gop = total_macs / mac_time / 1e9 if mac_time > 0 else 0.0
 
     return SCRunResult(
-        n_neurons=n_neurons, bitstream_length=bitstream_length, backend="numpy",
-        encode_s=encode_time, mac_s=mac_time, decode_s=decode_time, total_s=total,
-        encode_gbit_s=encode_gbit, mac_gop_s=mac_gop,
+        n_neurons=n_neurons,
+        bitstream_length=bitstream_length,
+        backend="numpy",
+        encode_s=encode_time,
+        mac_s=mac_time,
+        decode_s=decode_time,
+        total_s=total,
+        encode_gbit_s=encode_gbit,
+        mac_gop_s=mac_gop,
         total_spikes=spike_count,
         firing_rate=spike_count / (n_outputs * sim_steps) if sim_steps > 0 else 0.0,
     )
 
 
-def _run_rust_sc(n_neurons: int, bitstream_length: int, sim_steps: int, seed: int) -> SCRunResult | None:
+def _run_rust_sc(
+    n_neurons: int, bitstream_length: int, sim_steps: int, seed: int
+) -> SCRunResult | None:
     """Rust engine SC pipeline via sc_neurocore_engine."""
     try:
         import sc_neurocore_engine as eng
@@ -162,9 +175,15 @@ def _run_rust_sc(n_neurons: int, bitstream_length: int, sim_steps: int, seed: in
     mac_gop = total_macs / mac_time / 1e9 if mac_time > 0 else 0.0
 
     return SCRunResult(
-        n_neurons=n_neurons, bitstream_length=bitstream_length, backend="rust",
-        encode_s=encode_time, mac_s=mac_time, decode_s=decode_time, total_s=total,
-        encode_gbit_s=encode_gbit, mac_gop_s=mac_gop,
+        n_neurons=n_neurons,
+        bitstream_length=bitstream_length,
+        backend="rust",
+        encode_s=encode_time,
+        mac_s=mac_time,
+        decode_s=decode_time,
+        total_s=total,
+        encode_gbit_s=encode_gbit,
+        mac_gop_s=mac_gop,
         total_spikes=spike_count,
         firing_rate=spike_count / (n_out * sim_steps) if sim_steps > 0 else 0.0,
     )
@@ -255,15 +274,23 @@ def main() -> None:
         Path(args.json).parent.mkdir(parents=True, exist_ok=True)
         data = [
             {
-                "n_neurons": r.n_neurons, "bitstream_length": r.bitstream_length,
-                "backend": r.backend, "encode_s": r.encode_s, "mac_s": r.mac_s,
-                "decode_s": r.decode_s, "total_s": r.total_s,
-                "encode_gbit_s": r.encode_gbit_s, "mac_gop_s": r.mac_gop_s,
-                "total_spikes": r.total_spikes, "firing_rate": r.firing_rate,
+                "n_neurons": r.n_neurons,
+                "bitstream_length": r.bitstream_length,
+                "backend": r.backend,
+                "encode_s": r.encode_s,
+                "mac_s": r.mac_s,
+                "decode_s": r.decode_s,
+                "total_s": r.total_s,
+                "encode_gbit_s": r.encode_gbit_s,
+                "mac_gop_s": r.mac_gop_s,
+                "total_spikes": r.total_spikes,
+                "firing_rate": r.firing_rate,
             }
             for r in results
         ]
-        Path(args.json).write_text(json.dumps({"timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ"), "data": data}, indent=2))
+        Path(args.json).write_text(
+            json.dumps({"timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ"), "data": data}, indent=2)
+        )
         print(f"\nResults written to {args.json}")
 
     if not args.json and not args.markdown:
