@@ -4,12 +4,12 @@
 
 | Suite | Count | Scope |
 |-------|------:|-------|
-| Python unit/integration | 921 | `pytest tests/` across 85+ files (921 pass, 46 skip) |
+| Python unit/integration | 978 | `pytest tests/` across 94 files (978 pass, 49 skip) |
 | Rust engine | — | `cargo test --manifest-path engine/Cargo.toml` |
 | Bridge (PyO3) | — | Maturin build + Python import smoke test |
 | HDL formal verification | 11 | Verilog modules in `hdl/` with testbenches in `tb/` |
 
-CI runs tests on Python 3.10–3.12 (Ubuntu) and Rust on Ubuntu + Windows.
+CI runs tests on Python 3.10–3.13 (Ubuntu) and Rust on Ubuntu + Windows.
 
 ## CI Validation Gates
 
