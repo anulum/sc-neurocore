@@ -23,7 +23,7 @@ Commercial Licensing: Available
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/anulum/sc-neurocore/badge)](https://scorecard.dev/viewer/?uri=github.com/anulum/sc-neurocore)
 [![REUSE](https://img.shields.io/badge/REUSE-compliant-green)](https://reuse.software/)
 
-**Version:** 3.9.0
+**Version:** 3.9.1
 **Status:** Production Core Verified | 978 Tests | 98.57% Coverage | CI/CD Active
 
 SC-NeuroCore is a deterministic stochastic computing framework for
