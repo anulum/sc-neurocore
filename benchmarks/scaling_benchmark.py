@@ -686,9 +686,7 @@ def run_rust_engine(cfg: BrunelConfig) -> RunMetrics | None:
     noise_offsets = rng.normal(0, noise_fp, n).astype(np.int16)
     currents = (np.full(n, i_t_fp, dtype=np.int16) + noise_offsets).astype(np.int16)
     refractory_steps = (
-        max(0, int(cfg.refractory_ms / cfg.dt))
-        if hasattr(cfg, "refractory_ms")
-        else 2
+        max(0, int(cfg.refractory_ms / cfg.dt)) if hasattr(cfg, "refractory_ms") else 2
     )
     spikes_arr, _ = eng.batch_lif_run_multi(
         n,
