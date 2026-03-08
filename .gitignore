@@ -70,3 +70,8 @@ auto_fix*.py
 fix_*.py
 full_test_report.txt
 .hypothesis/
+
+# Bridge build artifacts (platform-specific .pyd/.so)
+*.pyd
+*.so
+!engine/src/**/*.rs
