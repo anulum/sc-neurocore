@@ -536,7 +536,9 @@ def run_brian2(cfg: BrunelConfig) -> RunMetrics | None:
     # Poisson process with c_ext sources at external_rate_hz each.
     # PoissonInput (not PoissonGroup+connect) avoids shared-source correlation.
     c_ext_int = max(1, int(cfg.c_ext))
-    P_ext = brian2.PoissonInput(G, "v", N=c_ext_int, rate=cfg.external_rate_hz * brian2.Hz, weight=cfg.weight_exc)  # noqa: F841
+    P_ext = brian2.PoissonInput(  # noqa: F841
+        G, "v", N=c_ext_int, rate=cfg.external_rate_hz * brian2.Hz, weight=cfg.weight_exc
+    )
 
     mon = brian2.SpikeMonitor(G)
     n_synapses = int(cfg.n_neurons * cfg.n_neurons * cfg.conn_prob)
@@ -712,7 +714,11 @@ def run_rust_engine(cfg: BrunelConfig) -> RunMetrics | None:
 
     step_counts = spikes_np.sum(axis=0).tolist() if spikes_np.ndim == 2 else []
     active_per_step = [int(c > 0) for c in step_counts] if step_counts else []
-    sparsity = 1.0 - (sum(active_per_step) / len(active_per_step) / n) if active_per_step and n > 0 else 0.0
+    sparsity = (
+        1.0 - (sum(active_per_step) / len(active_per_step) / n)
+        if active_per_step and n > 0
+        else 0.0
+    )
 
     return RunMetrics(
         wall_time_s=wall,
