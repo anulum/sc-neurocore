@@ -15,6 +15,7 @@ use pyo3::IntoPyObject;
 
 pub mod attention;
 pub mod bitstream;
+pub mod brunel;
 pub mod encoder;
 pub mod grad;
 pub mod graph;
@@ -169,6 +170,100 @@ impl StdpSynapse {
     }
 }
 
+// ── Brunel Network PyO3 wrapper ──────────────────────────────────────
+
+#[pyclass(
+    name = "BrunelNetwork",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
+pub struct PyBrunelNetwork {
+    inner: brunel::BrunelNetwork,
+}
+
+#[pymethods]
+impl PyBrunelNetwork {
+    #[new]
+    #[pyo3(signature = (
+        n_neurons,
+        w_indptr,
+        w_indices,
+        w_data,
+        leak_k,
+        gain_k,
+        ext_lambda,
+        ext_weight_fp,
+        data_width=16,
+        fraction=8,
+        v_rest=0,
+        v_reset=0,
+        v_threshold=256,
+        refractory_period=2,
+        seed=42
+    ))]
+    #[allow(clippy::too_many_arguments)]
+    fn new(
+        n_neurons: usize,
+        w_indptr: PyReadonlyArray1<'_, i64>,
+        w_indices: PyReadonlyArray1<'_, i64>,
+        w_data: PyReadonlyArray1<'_, i16>,
+        leak_k: i16,
+        gain_k: i16,
+        ext_lambda: f64,
+        ext_weight_fp: i16,
+        data_width: u32,
+        fraction: u32,
+        v_rest: i16,
+        v_reset: i16,
+        v_threshold: i16,
+        refractory_period: i32,
+        seed: u64,
+    ) -> PyResult<Self> {
+        let indptr = w_indptr
+            .as_slice()
+            .map_err(|e| PyValueError::new_err(format!("Cannot read w_indptr: {e}")))?;
+        let indices = w_indices
+            .as_slice()
+            .map_err(|e| PyValueError::new_err(format!("Cannot read w_indices: {e}")))?;
+        let data = w_data
+            .as_slice()
+            .map_err(|e| PyValueError::new_err(format!("Cannot read w_data: {e}")))?;
+
+        let row_offsets: Vec<usize> = indptr.iter().map(|&v| v as usize).collect();
+        let col_indices: Vec<usize> = indices.iter().map(|&v| v as usize).collect();
+        let values: Vec<i16> = data.to_vec();
+
+        let inner = brunel::BrunelNetwork::new(
+            n_neurons,
+            row_offsets,
+            col_indices,
+            values,
+            data_width,
+            fraction,
+            v_rest,
+            v_reset,
+            v_threshold,
+            refractory_period,
+            leak_k,
+            gain_k,
+            ext_lambda,
+            ext_weight_fp,
+            seed,
+        )
+        .map_err(PyValueError::new_err)?;
+
+        Ok(Self { inner })
+    }
+
+    fn run<'py>(
+        &mut self,
+        py: Python<'py>,
+        n_steps: usize,
+    ) -> Bound<'py, PyArray1<u32>> {
+        let counts = self.inner.run(n_steps);
+        counts.into_pyarray(py)
+    }
+}
+
 /// SC-NeuroCore ─ High-Performance Rust Engine
 
 #[pymodule]
@@ -199,6 +294,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyKuramotoSolver>()?;
     m.add_class::<PySCPNMetrics>()?;
     m.add_class::<PyBitStreamTensor>()?;
+    m.add_class::<PyBrunelNetwork>()?;
     m.add_class::<PyScGraph>()?;
     m.add_class::<PyScGraphBuilder>()?;
     m.add_function(wrap_pyfunction!(ir_verify, m)?)?;

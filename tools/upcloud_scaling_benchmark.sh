@@ -71,6 +71,7 @@ pip install --quiet numpy scipy brian2 nest-simulator
 
 if nvidia-smi &>/dev/null; then
   pip install --quiet torch --index-url https://download.pytorch.org/whl/cu124
+  pip install --quiet norse snntorch || true
 fi
 
 pip install --quiet -e ".[dev]" 2>/dev/null || pip install --quiet -e . 2>/dev/null || true
@@ -108,15 +109,15 @@ python benchmarks/rust_python_parity_bench.py \
   --json "$RESULTS_DIR/rust_python_parity.json" \
   --markdown 2>&1 | tee "$RESULTS_DIR/rust_python_parity.md"
 
-# ---- Phase 6: GPU-extended scaling ----
+# ---- Phase 6: GPU-extended scaling (includes Norse + snnTorch) ----
 if nvidia-smi &>/dev/null; then
-  log 6 "GPU-only extended scaling (up to 100K)"
+  log 6 "GPU-extended scaling (up to 100K, all GPU sims)"
   python benchmarks/scaling_benchmark.py \
     --scales 20000 50000 100000 \
-    --regimes AI \
+    --regimes AI SR SI AR \
     --sim-ms 500 \
     --repeats 3 \
-    --simulators sc_pytorch_cuda sc_pytorch_cuda_sparse \
+    --simulators sc_pytorch_cuda sc_pytorch_cuda_sparse norse snntorch \
     --json "$RESULTS_DIR/gpu_scaling_results.json" \
     --markdown 2>&1 | tee "$RESULTS_DIR/gpu_scaling_results.md"
 else
