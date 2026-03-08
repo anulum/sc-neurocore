@@ -1,27 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-from typing import Any, Optional
+"""SC-NeuroCore ↔ CCW/VIBRANA bridge.
 
+Converts stochastic bitstream outputs to audio parameters and
+visualization states for the CCW application.
 """
-SC-NeuroCore CCW Bridge Interface
-==================================
+from typing import Any, Dict, List, Optional, Tuple
 
-Bridges SC-NeuroCore stochastic computing outputs to the CCW (Consciousness
-Carrier Wave) audio generation system and VIBRANA visualization engine.
-
-Features:
-- Bitstream to audio frequency conversion
-- SCPN layer metrics to CCW modulation parameters
-- Glyph vector to VIBRANA visualization sync
-- Real-time streaming support
-
-"""
-
-import numpy as np
+import json
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple
 from enum import Enum
-import json
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +35,7 @@ class CCWParameters:
     """Parameters for CCW audio generation."""
 
     base_frequency: float = 7.83  # Schumann resonance
-    carrier_frequency: float = 432.0  # A=432Hz tuning
+    carrier_frequency: float = 432.0  # Verdi tuning (A4=432 Hz)
     binaural_offset: float = 10.0  # Hz
     modulation_depth: float = 0.5
     sample_rate: int = 44100

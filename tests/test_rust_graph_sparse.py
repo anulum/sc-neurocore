@@ -6,7 +6,7 @@
 import numpy as np
 import pytest
 
-sc = pytest.importorskip("sc_neurocore_engine")
+sc = pytest.importorskip("sc_neurocore_engine", exc_type=ImportError)
 
 
 @pytest.mark.xfail(reason="from_sparse not yet exposed via PyO3", strict=True)

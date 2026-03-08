@@ -5,7 +5,7 @@ import numpy as np
 
 import pytest
 
-pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_type=ImportError)
 
 from sc_neurocore_engine import KuramotoSolver
 

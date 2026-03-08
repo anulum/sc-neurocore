@@ -69,7 +69,7 @@ class SC_NeuroCore_Driver:
                 "CRITICAL: PYNQ library missing. This code must run on a Xilinx Zynq SoC (PYNQ-Z2/Z1). "
                 "If you are on x86, set mode='EMULATION'."
             )
-        except Exception as e:
+        except (FileNotFoundError, OSError, RuntimeError) as e:
             logger.error(f"FPGA Connection Failed: {e}")
             raise RealityHardwareError(f"Hardware initialization failed: {e}")
 
@@ -112,5 +112,5 @@ if __name__ == "__main__":
         print("Hardware connected.")
     except RealityHardwareError as e:
         print(f"\n[STRICT CHECK PASSED]: Driver correctly failed on non-FPGA host.\nError: {e}")
-    except Exception as e:
+    except (OSError, RuntimeError) as e:
         print(f"An unexpected error occurred: {e}")

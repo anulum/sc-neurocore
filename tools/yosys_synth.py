@@ -87,14 +87,14 @@ def run_synth(module: str) -> SynthResult:
             timeout=120,
             env=env,
             cwd=str(REPO_ROOT),
+            check=True,
         )
     except FileNotFoundError:
         return SynthResult(module, 0, 0, 0, 0, False, "yosys not found in PATH")
     except subprocess.TimeoutExpired:
         return SynthResult(module, 0, 0, 0, 0, False, "synthesis timed out (120s)")
-
-    if result.returncode != 0:
-        err = result.stderr[:500] if result.stderr else "unknown error"
+    except subprocess.CalledProcessError as e:
+        err = e.stderr[:500] if e.stderr else "unknown error"
         return SynthResult(module, 0, 0, 0, 0, False, err)
 
     counts = parse_stat_output(result.stdout)

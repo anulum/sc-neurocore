@@ -20,19 +20,19 @@ class BaseStochasticAdapter(ABC):
     @abstractmethod
     def encode(self, state: Any) -> jnp.ndarray:
         """Map domain state to stochastic bitstreams."""
-        pass
+        ...
 
     @abstractmethod
     def step_jax(self, dt: float, inputs: Optional[jnp.ndarray] = None) -> jnp.ndarray:
         """The JAX-accelerated mathematical kernel for the domain dynamics."""
-        pass
+        ...
 
     @abstractmethod
     def decode(self, bitstreams: jnp.ndarray) -> Any:
         """Map stochastic bitstreams back to domain-specific observables."""
-        pass
+        ...
 
     @abstractmethod
     def get_metrics(self) -> Dict[str, float]:
         """Return domain-specific metrics (e.g. Coherence, Concentration)."""
-        pass
+        ...
