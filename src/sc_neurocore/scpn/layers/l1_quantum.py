@@ -29,7 +29,7 @@ class L1_StochasticParameters:
 
     # Biological Enhancements (from Legacy RAG)
     F_non_Markov: float = 1e4  # Protection factor
-    temperature: float = 310.0  # Kelvin
+    temperature: float = 310.0  # human body temperature (K)
 
     # Quantum Dynamics
     coupling_strength: float = 0.1

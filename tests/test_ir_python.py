@@ -6,7 +6,7 @@ from __future__ import annotations
 import pytest
 
 
-pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_type=ImportError)
 
 from sc_neurocore_engine.ir import ScGraphBuilder, parse_ir
 

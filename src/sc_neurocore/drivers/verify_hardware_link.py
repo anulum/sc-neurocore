@@ -20,7 +20,7 @@ def verify_link():  # type: ignore
     except RealityHardwareError:
         print(">> FAILURE: PYNQ Hardware not found. (Expected if on x86 Dev Workstation)")
         print(">> NOTE: This implies we are in 'Simulation Mode'.")
-    except Exception as e:
+    except (OSError, RuntimeError) as e:
         print(f">> ERROR: Unexpected failure: {e}")
 
     print("\n[2/3] Checking Genomic Interface (Layer 6)...")
@@ -33,7 +33,7 @@ def verify_link():  # type: ignore
         evo.connect()  # Will fail if no server
     except ImportError:
         print(">> FAILURE: Interface module not found in path.")
-    except Exception as e:
+    except (OSError, ConnectionError, RuntimeError) as e:
         print(f">> WARNING: Evo 2 Server unreachable ({e}).")
 
     print("\n[3/3] Checking Robotics Link (Layer 12)...")
@@ -47,7 +47,7 @@ def verify_link():  # type: ignore
             print(">> FAILURE: Robot offline.")
     except ImportError:
         print(">> FAILURE: Interface module not found.")
-    except Exception as e:
+    except (OSError, RuntimeError) as e:
         print(f">> ERROR: {e}")
 
     print("\n" + "=" * 60)

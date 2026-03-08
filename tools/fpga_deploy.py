@@ -23,6 +23,7 @@ Usage::
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import subprocess
 import sys
@@ -131,7 +132,7 @@ def generate_quartus_tcl(part: str, out_dir: Path, sources: list[Path]) -> Path:
 
 
 def run_vivado(tcl_path: Path) -> int:
-    vivado = shutil.which("vivado")
+    vivado = os.environ.get("SC_VIVADO_PATH") or shutil.which("vivado")
     if not vivado:
         print("ERROR: vivado not found in PATH")
         print("Install Vivado from https://www.xilinx.com/support/download.html")

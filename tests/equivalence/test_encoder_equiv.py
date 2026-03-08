@@ -8,7 +8,7 @@ the LFSR state *before* the advance that happens in the same clock edge.
 
 import pytest
 
-pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_type=ImportError)
 
 from sc_neurocore_engine import BitstreamEncoder, Lfsr16
 

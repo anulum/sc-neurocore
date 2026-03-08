@@ -10,7 +10,7 @@ from sc_neurocore.accel.vector_ops import (
     vec_popcount as v2_popcount,
 )
 
-pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_type=ImportError)
 
 import sc_neurocore_engine as v3
 

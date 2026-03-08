@@ -55,6 +55,6 @@ class CodeSafetyVerifier:
             else:
                 logger.error("Safety Violation: Logic invariant failed. Output %s invalid.", res)
                 return False
-        except Exception as e:
+        except (TypeError, ValueError, RuntimeError, ArithmeticError) as e:
             logger.error("Safety Violation: Runtime Error - %s", e)
             return False
