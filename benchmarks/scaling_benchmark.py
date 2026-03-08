@@ -24,6 +24,7 @@ Usage::
     python benchmarks/scaling_benchmark.py --regimes AI AR
     python benchmarks/scaling_benchmark.py --json results.json --markdown
 """
+
 from __future__ import annotations
 
 import argparse
@@ -358,9 +359,13 @@ def run_pytorch_cuda(cfg: BrunelConfig) -> RunMetrics | None:
     v = torch.full((n,), cfg.v_rest, dtype=torch.float32, device=device)
     alpha = cfg.dt / cfg.tau_mem
     steps = int(cfg.sim_ms / cfg.dt)
-    spike_count = 0
     prev_spikes = torch.zeros(n, dtype=torch.float32, device=device)
-    step_counts: list[int] = []
+
+    # Hoisted constants — avoid per-step GPU tensor creation
+    v_reset_t = torch.full((n,), cfg.v_reset, dtype=torch.float32, device=device)
+    poisson_rate = torch.tensor(cfg.ext_poisson_lambda, device=device)
+    poisson_dist = torch.distributions.Poisson(poisson_rate)
+    spike_counts_gpu = torch.zeros(steps, dtype=torch.int64, device=device)
 
     torch.matmul(prev_spikes, w)
     torch.cuda.synchronize()
@@ -369,27 +374,24 @@ def run_pytorch_cuda(cfg: BrunelConfig) -> RunMetrics | None:
     torch.cuda.reset_peak_memory_stats()
     t0 = time.perf_counter()
 
-    for _ in range(steps):
-        ext = torch.tensor(
-            rng.poisson(cfg.ext_poisson_lambda, n),
-            dtype=torch.float32,
-            device=device,
-        )
+    for t in range(steps):
+        ext = poisson_dist.sample((n,))
         I_syn = torch.matmul(prev_spikes, w)
         v += ext * cfg.weight_exc + I_syn
         v += alpha * (cfg.v_rest - v)
         fired = v >= cfg.v_threshold
-        sc = int(fired.sum().item())
-        spike_count += sc
-        step_counts.append(sc)
-        v = torch.where(fired, torch.tensor(cfg.v_reset, device=device), v)
+        spike_counts_gpu[t] = fired.sum()
+        v = torch.where(fired, v_reset_t, v)
         prev_spikes = fired.float()
 
     torch.cuda.synchronize()
     wall = time.perf_counter() - t0
     gpu_mem_mb = torch.cuda.max_memory_allocated() / 1024 / 1024
 
-    m = _compute_extended_metrics(spike_count, n, cfg.sim_ms, n_synapses, wall, step_counts)
+    step_counts_cpu = spike_counts_gpu.cpu().tolist()
+    spike_count = int(spike_counts_gpu.sum().item())
+
+    m = _compute_extended_metrics(spike_count, n, cfg.sim_ms, n_synapses, wall, step_counts_cpu)
     return RunMetrics(
         wall_time_s=wall,
         peak_rss_mb=gpu_mem_mb,
@@ -421,7 +423,6 @@ def run_pytorch_cuda_sparse(cfg: BrunelConfig) -> RunMetrics | None:
 
     from scipy import sparse as sp
 
-    # Transpose: W[i,j] = weight from i→j, so I_j = Σ_i W[i,j]*s[i] = (W^T @ s)[j]
     w_coo = sp.coo_matrix(weights_np.T)
     indices = np.vstack([w_coo.row, w_coo.col])
     w_sparse = torch.sparse_coo_tensor(
@@ -434,9 +435,12 @@ def run_pytorch_cuda_sparse(cfg: BrunelConfig) -> RunMetrics | None:
     v = torch.full((n,), cfg.v_rest, dtype=torch.float32, device=device)
     alpha = cfg.dt / cfg.tau_mem
     steps = int(cfg.sim_ms / cfg.dt)
-    spike_count = 0
     prev_spikes = torch.zeros(n, dtype=torch.float32, device=device)
-    step_counts: list[int] = []
+
+    v_reset_t = torch.full((n,), cfg.v_reset, dtype=torch.float32, device=device)
+    poisson_rate = torch.tensor(cfg.ext_poisson_lambda, device=device)
+    poisson_dist = torch.distributions.Poisson(poisson_rate)
+    spike_counts_gpu = torch.zeros(steps, dtype=torch.int64, device=device)
 
     # warmup
     torch.sparse.mm(w_sparse, prev_spikes.unsqueeze(1))
@@ -446,28 +450,24 @@ def run_pytorch_cuda_sparse(cfg: BrunelConfig) -> RunMetrics | None:
     torch.cuda.reset_peak_memory_stats()
     t0 = time.perf_counter()
 
-    for _ in range(steps):
-        ext = torch.tensor(
-            rng.poisson(cfg.ext_poisson_lambda, n),
-            dtype=torch.float32,
-            device=device,
-        )
-        # sparse mm: (N,N) @ (N,1) → (N,1)
+    for t in range(steps):
+        ext = poisson_dist.sample((n,))
         I_syn = torch.sparse.mm(w_sparse, prev_spikes.unsqueeze(1)).squeeze(1)
         v += ext * cfg.weight_exc + I_syn
         v += alpha * (cfg.v_rest - v)
         fired = v >= cfg.v_threshold
-        sc = int(fired.sum().item())
-        spike_count += sc
-        step_counts.append(sc)
-        v = torch.where(fired, torch.tensor(cfg.v_reset, device=device), v)
+        spike_counts_gpu[t] = fired.sum()
+        v = torch.where(fired, v_reset_t, v)
         prev_spikes = fired.float()
 
     torch.cuda.synchronize()
     wall = time.perf_counter() - t0
     gpu_mem_mb = torch.cuda.max_memory_allocated() / 1024 / 1024
 
-    m = _compute_extended_metrics(spike_count, n, cfg.sim_ms, n_synapses, wall, step_counts)
+    step_counts_cpu = spike_counts_gpu.cpu().tolist()
+    spike_count = int(spike_counts_gpu.sum().item())
+
+    m = _compute_extended_metrics(spike_count, n, cfg.sim_ms, n_synapses, wall, step_counts_cpu)
     return RunMetrics(
         wall_time_s=wall,
         peak_rss_mb=gpu_mem_mb,
@@ -733,14 +733,220 @@ def run_rust_engine(cfg: BrunelConfig) -> RunMetrics | None:
 
 
 # ---------------------------------------------------------------------------
+# Simulator: Rust Brunel (fused CSR spike-scatter network)
+# ---------------------------------------------------------------------------
+def run_rust_brunel(cfg: BrunelConfig) -> RunMetrics | None:
+    try:
+        import sc_neurocore_engine as eng
+    except ImportError:
+        return None
+
+    if not hasattr(eng, "BrunelNetwork"):
+        return None
+
+    from scipy import sparse as sp
+
+    rng = np.random.default_rng(cfg.seed)
+    n = cfg.n_neurons
+    weights_np, n_synapses = _build_weights_dense(cfg, rng)
+
+    # Q8.8 fixed-point
+    fraction = 8
+    scale = 1 << fraction
+    w_csr = sp.csr_matrix(weights_np)
+    w_data_fp = np.clip(w_csr.data * scale, -32768, 32767).astype(np.int16)
+
+    alpha = cfg.dt / cfg.tau_mem
+    leak_k = max(1, int(alpha * scale))
+    gain_k = scale
+    ext_weight_fp = int(cfg.weight_exc * scale)
+    steps = int(cfg.sim_ms / cfg.dt)
+
+    gc.collect()
+    tracemalloc.start()
+    t0 = time.perf_counter()
+
+    net = eng.BrunelNetwork(
+        n_neurons=n,
+        w_indptr=w_csr.indptr.astype(np.int64),
+        w_indices=w_csr.indices.astype(np.int64),
+        w_data=w_data_fp,
+        leak_k=leak_k,
+        gain_k=gain_k,
+        ext_lambda=cfg.ext_poisson_lambda,
+        ext_weight_fp=ext_weight_fp,
+        data_width=16,
+        fraction=fraction,
+        v_rest=int(cfg.v_rest * scale),
+        v_reset=int(cfg.v_reset * scale),
+        v_threshold=int(cfg.v_threshold * scale),
+        refractory_period=2,
+        seed=cfg.seed,
+    )
+    counts = np.asarray(net.run(steps))
+
+    wall = time.perf_counter() - t0
+    peak_mb = _tracemalloc_peak_mb()
+    tracemalloc.stop()
+
+    spike_count = int(counts.sum())
+    step_counts = counts.tolist()
+    m = _compute_extended_metrics(spike_count, n, cfg.sim_ms, n_synapses, wall, step_counts)
+    return RunMetrics(
+        wall_time_s=wall,
+        peak_rss_mb=peak_mb,
+        total_spikes=spike_count,
+        mean_rate_hz=m["rate"],
+        synaptic_events=m["syn_events"],
+        synaptic_events_per_s=m["syn_per_s"],
+        activation_sparsity=m["sparsity"],
+    )
+
+
+# ---------------------------------------------------------------------------
+# Simulator: Norse (PyTorch-based SNN)
+# ---------------------------------------------------------------------------
+def run_norse(cfg: BrunelConfig) -> RunMetrics | None:
+    try:
+        import torch
+        import norse.torch as norse  # noqa: F811
+
+        if not torch.cuda.is_available():
+            return None
+    except ImportError:
+        return None
+
+    device = torch.device("cuda")
+    rng = np.random.default_rng(cfg.seed)
+    n = cfg.n_neurons
+    weights_np, n_synapses = _build_weights_dense(cfg, rng)
+    steps = int(cfg.sim_ms / cfg.dt)
+
+    w = torch.tensor(weights_np, dtype=torch.float32, device=device)
+    tau_mem_inv = 1.0 / (cfg.tau_mem * 1e-3)  # Norse uses inverse tau in seconds
+    p = norse.LIFParameters(
+        tau_mem_inv=torch.tensor(tau_mem_inv),
+        v_th=torch.tensor(cfg.v_threshold),
+        v_reset=torch.tensor(cfg.v_reset),
+        v_leak=torch.tensor(cfg.v_rest),
+    )
+    state = norse.LIFState(
+        v=torch.full((n,), cfg.v_rest, device=device),
+        i=torch.zeros(n, device=device),
+    )
+
+    poisson_dist = torch.distributions.Poisson(torch.tensor(cfg.ext_poisson_lambda, device=device))
+    spike_counts_gpu = torch.zeros(steps, dtype=torch.int64, device=device)
+    torch.cuda.synchronize()
+
+    gc.collect()
+    torch.cuda.reset_peak_memory_stats()
+    t0 = time.perf_counter()
+
+    prev_z = torch.zeros(n, device=device)
+    for t in range(steps):
+        ext = poisson_dist.sample((n,)) * cfg.weight_exc
+        i_syn = torch.matmul(prev_z, w) + ext
+        z, state = norse.lif_step(i_syn, state, p=p, dt=cfg.dt * 1e-3)
+        spike_counts_gpu[t] = z.sum()
+        prev_z = z
+
+    torch.cuda.synchronize()
+    wall = time.perf_counter() - t0
+    gpu_mem_mb = torch.cuda.max_memory_allocated() / 1024 / 1024
+
+    step_counts_cpu = spike_counts_gpu.cpu().tolist()
+    spike_count = int(spike_counts_gpu.sum().item())
+    m = _compute_extended_metrics(spike_count, n, cfg.sim_ms, n_synapses, wall, step_counts_cpu)
+    return RunMetrics(
+        wall_time_s=wall,
+        peak_rss_mb=gpu_mem_mb,
+        total_spikes=spike_count,
+        mean_rate_hz=m["rate"],
+        synaptic_events=m["syn_events"],
+        synaptic_events_per_s=m["syn_per_s"],
+        activation_sparsity=m["sparsity"],
+        gpu_mem_mb=gpu_mem_mb,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Simulator: snnTorch (PyTorch-based SNN)
+# ---------------------------------------------------------------------------
+def run_snntorch(cfg: BrunelConfig) -> RunMetrics | None:
+    try:
+        import torch
+        import snntorch as snn
+
+        if not torch.cuda.is_available():
+            return None
+    except ImportError:
+        return None
+
+    device = torch.device("cuda")
+    rng = np.random.default_rng(cfg.seed)
+    n = cfg.n_neurons
+    weights_np, n_synapses = _build_weights_dense(cfg, rng)
+    steps = int(cfg.sim_ms / cfg.dt)
+
+    w = torch.tensor(weights_np, dtype=torch.float32, device=device)
+    beta = float(np.exp(-cfg.dt / cfg.tau_mem))
+    lif = snn.Leaky(
+        beta=beta,
+        threshold=cfg.v_threshold,
+        reset_mechanism="zero",
+        init_hidden=False,
+    )
+
+    mem = torch.full((n,), cfg.v_rest, dtype=torch.float32, device=device)
+    prev_spk = torch.zeros(n, dtype=torch.float32, device=device)
+
+    poisson_dist = torch.distributions.Poisson(torch.tensor(cfg.ext_poisson_lambda, device=device))
+    spike_counts_gpu = torch.zeros(steps, dtype=torch.int64, device=device)
+    torch.cuda.synchronize()
+
+    gc.collect()
+    torch.cuda.reset_peak_memory_stats()
+    t0 = time.perf_counter()
+
+    for t in range(steps):
+        ext = poisson_dist.sample((n,)) * cfg.weight_exc
+        i_syn = torch.matmul(prev_spk, w) + ext
+        spk, mem = lif(i_syn, mem)
+        spike_counts_gpu[t] = spk.sum()
+        prev_spk = spk
+
+    torch.cuda.synchronize()
+    wall = time.perf_counter() - t0
+    gpu_mem_mb = torch.cuda.max_memory_allocated() / 1024 / 1024
+
+    step_counts_cpu = spike_counts_gpu.cpu().tolist()
+    spike_count = int(spike_counts_gpu.sum().item())
+    m = _compute_extended_metrics(spike_count, n, cfg.sim_ms, n_synapses, wall, step_counts_cpu)
+    return RunMetrics(
+        wall_time_s=wall,
+        peak_rss_mb=gpu_mem_mb,
+        total_spikes=spike_count,
+        mean_rate_hz=m["rate"],
+        synaptic_events=m["syn_events"],
+        synaptic_events_per_s=m["syn_per_s"],
+        activation_sparsity=m["sparsity"],
+        gpu_mem_mb=gpu_mem_mb,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
 SIMULATORS = {
     "sc_numpy_dense": ("SC-NeuroCore (NumPy dense)", run_numpy),
     "sc_numpy_sparse": ("SC-NeuroCore (NumPy sparse)", run_numpy_sparse),
     "sc_rust_engine": ("SC-NeuroCore (Rust engine)", run_rust_engine),
+    "rust_brunel": ("SC-NeuroCore (Rust Brunel)", run_rust_brunel),
     "sc_pytorch_cuda": ("SC-NeuroCore (PyTorch CUDA)", run_pytorch_cuda),
     "sc_pytorch_cuda_sparse": ("SC-NeuroCore (PyTorch CUDA sparse)", run_pytorch_cuda_sparse),
+    "norse": ("Norse (PyTorch SNN)", run_norse),
+    "snntorch": ("snnTorch (PyTorch SNN)", run_snntorch),
     "brian2": ("Brian2", run_brian2),
     "nest": ("NEST", run_nest),
 }
@@ -761,9 +967,9 @@ def run_scaling(
 
     for regime in regimes:
         rinfo = BRUNEL_REGIMES[regime]
-        print(f"\n{'#'*70}")
+        print(f"\n{'#' * 70}")
         print(f"  Regime: {regime} — {rinfo['label']}  (g={rinfo['g_inh']}, eta={rinfo['eta']})")
-        print(f"{'#'*70}")
+        print(f"{'#' * 70}")
 
         for n_neurons in scales:
             cfg = BrunelConfig(n_neurons=n_neurons, regime=regime, sim_ms=sim_ms)

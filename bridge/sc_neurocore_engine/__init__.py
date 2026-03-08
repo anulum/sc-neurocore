@@ -27,6 +27,7 @@ try:
         StdpSynapse,
         SCPNMetrics,
         BitStreamTensor,
+        BrunelNetwork,
     )
 except ImportError as exc:
     raise ImportError(
@@ -78,4 +79,5 @@ __all__ = [
     "parse_ir",
     "HDCVector",
     "PetriNetEngine",
+    "BrunelNetwork",
 ]
