@@ -32,7 +32,7 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Rust",
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
-  "Topic :: Scientific/Engineering :: Electronic Design Automation (Verilog/VHDL)",
+  "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
   "Typing :: Typed",
 ]
 dependencies = [
