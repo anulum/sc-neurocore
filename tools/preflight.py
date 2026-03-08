@@ -15,7 +15,19 @@ ENGINE_DIR = pathlib.Path("engine")
 
 GATES = [
     ("cargo-fmt", ["cargo", "fmt", "--check", "--manifest-path", "engine/Cargo.toml"]),
-    ("cargo-clippy", ["cargo", "clippy", "--all-targets", "--manifest-path", "engine/Cargo.toml", "--", "-D", "warnings"]),
+    (
+        "cargo-clippy",
+        [
+            "cargo",
+            "clippy",
+            "--all-targets",
+            "--manifest-path",
+            "engine/Cargo.toml",
+            "--",
+            "-D",
+            "warnings",
+        ],
+    ),
     ("black", ["python", "-m", "black", "--check", "src/", "tests/"]),
     ("ruff", ["python", "-m", "ruff", "check", "src/", "tests/"]),
     ("bandit", ["python", "-m", "bandit", "-r", "src/sc_neurocore/", "-c", "pyproject.toml", "-q"]),
