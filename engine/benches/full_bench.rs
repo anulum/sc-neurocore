@@ -3,7 +3,6 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 
 use criterion::{criterion_group, criterion_main, Criterion};
-use std::hint::black_box;
 use rand::{Rng, RngExt, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use rand_xoshiro::Xoshiro256PlusPlus;
@@ -18,6 +17,7 @@ use sc_neurocore_engine::layer::DenseLayer;
 use sc_neurocore_engine::neuron::FixedPointLif;
 use sc_neurocore_engine::scpn::KuramotoSolver;
 use sc_neurocore_engine::simd::{fused_and_popcount_dispatch, pack_dispatch, popcount_dispatch};
+use std::hint::black_box;
 
 fn bench_all(c: &mut Criterion) {
     // -- Bitstream --

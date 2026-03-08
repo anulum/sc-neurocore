@@ -6,12 +6,12 @@
 // Kuramoto, GNN forward, and Dense SC layer at multiple sizes.
 
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use std::hint::black_box;
 use rand::{RngExt, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use sc_neurocore_engine::graph::StochasticGraphLayer;
 use sc_neurocore_engine::layer::DenseLayer;
 use sc_neurocore_engine::scpn::KuramotoSolver;
+use std::hint::black_box;
 
 fn bench_kuramoto_scaling(c: &mut Criterion) {
     let mut group = c.benchmark_group("kuramoto_scaling");
