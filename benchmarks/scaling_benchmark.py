@@ -645,11 +645,93 @@ def run_nest(cfg: BrunelConfig) -> RunMetrics | None:
 
 
 # ---------------------------------------------------------------------------
+# Simulator: Rust engine (batch_lif_run_multi)
+# ---------------------------------------------------------------------------
+def run_rust_engine(cfg: BrunelConfig) -> RunMetrics | None:
+    try:
+        import sc_neurocore_engine as eng
+    except ImportError:
+        return None
+
+    n = cfg.n_neurons
+    steps = int(cfg.sim_ms / cfg.dt)
+
+    # Q8.8 fixed-point parameters matching the Rust FixedPointLIF
+    fraction = 8
+    scale = 1 << fraction
+    v_th_fp = int(cfg.v_threshold * scale)
+    v_reset_fp = int(cfg.v_reset * scale)
+    v_rest_fp = int(cfg.v_rest * scale)
+
+    # Leak: alpha = dt/tau, leak_k = int(alpha * 256) in Q8.8
+    alpha = cfg.dt / cfg.tau_mem
+    leak_k = max(1, int(alpha * scale))
+
+    # Input current: mean external drive in Q8.8
+    mean_ext = cfg.ext_poisson_lambda * cfg.weight_exc
+    i_t_fp = int(mean_ext * scale)
+    gain_k = scale  # unity gain
+
+    # Noise proportional to Poisson variance
+    noise_fp = max(1, int(np.sqrt(cfg.ext_poisson_lambda) * cfg.weight_exc * scale * 0.5))
+
+    gc.collect()
+    tracemalloc.start()
+    t0 = time.perf_counter()
+
+    # Parallel LIF: each neuron gets constant input + per-neuron noise offset
+    rng = np.random.default_rng(cfg.seed)
+    noise_offsets = rng.normal(0, noise_fp, n).astype(np.int16)
+    currents = (np.full(n, i_t_fp, dtype=np.int16) + noise_offsets).astype(np.int16)
+    # refractory_period=0 works around a Rust engine bug where fire-step
+    # refractory assignment suppresses the spike (see engine/src/neuron.rs:84-90)
+    spikes_arr, _ = eng.batch_lif_run_multi(
+        n,
+        steps,
+        leak_k,
+        gain_k,
+        currents,
+        16,  # data_width
+        fraction,
+        v_rest_fp,
+        v_reset_fp,
+        v_th_fp,
+        0,  # refractory_period (0 to work around engine bug)
+    )
+
+    wall = time.perf_counter() - t0
+    peak_mb = _tracemalloc_peak_mb()
+    tracemalloc.stop()
+
+    spikes_np = np.array(spikes_arr, dtype=np.int32)
+    total_spikes = int(spikes_np.sum())
+    rate = total_spikes / (cfg.sim_ms / 1000.0) / n if n > 0 else 0.0
+
+    # No recurrent connectivity — syn_events from external drive only
+    syn_events = int(total_spikes * cfg.c_ext)
+
+    step_counts = spikes_np.sum(axis=0).tolist() if spikes_np.ndim == 2 else []
+    active_per_step = [int(c > 0) for c in step_counts] if step_counts else []
+    sparsity = 1.0 - (sum(active_per_step) / len(active_per_step) / n) if active_per_step and n > 0 else 0.0
+
+    return RunMetrics(
+        wall_time_s=wall,
+        peak_rss_mb=peak_mb,
+        total_spikes=total_spikes,
+        mean_rate_hz=rate,
+        synaptic_events=syn_events,
+        synaptic_events_per_s=syn_events / wall if wall > 0 else 0.0,
+        activation_sparsity=sparsity,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
 SIMULATORS = {
     "sc_numpy_dense": ("SC-NeuroCore (NumPy dense)", run_numpy),
     "sc_numpy_sparse": ("SC-NeuroCore (NumPy sparse)", run_numpy_sparse),
+    "sc_rust_engine": ("SC-NeuroCore (Rust engine)", run_rust_engine),
     "sc_pytorch_cuda": ("SC-NeuroCore (PyTorch CUDA)", run_pytorch_cuda),
     "sc_pytorch_cuda_sparse": ("SC-NeuroCore (PyTorch CUDA sparse)", run_pytorch_cuda_sparse),
     "brian2": ("Brian2", run_brian2),
