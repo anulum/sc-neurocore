@@ -5,8 +5,15 @@
 //! hardware-friendly stochastic-computing experiments.
 
 /// Mask and sign-interpret an integer to `width` bits (branchless).
+///
+/// `width` must be in 1..=32. Values outside this range trigger a
+/// debug assertion failure (release builds silently produce garbage).
 #[inline]
 pub fn mask(value: i32, width: u32) -> i16 {
+    debug_assert!(
+        width > 0 && width <= 32,
+        "mask width must be 1..=32, got {width}"
+    );
     let m = (1_i64 << width) - 1;
     let v = (value as i64) & m;
     let shift = 64 - width;

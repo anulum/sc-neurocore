@@ -2,7 +2,7 @@
 # © 1998–2026 Miroslav Šotek. All rights reserved.
 # Contact: www.anulum.li | protoscience@anulum.li
 
-"""SC-NeuroCore Engine v3.7 — Drop-in replacement for v2 hot paths."""
+"""SC-NeuroCore Engine — Drop-in replacement for v2 hot paths."""
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (
@@ -24,6 +24,7 @@ try:
         BitstreamEncoder,
         FixedPointLif,
         DenseLayer,
+        StdpSynapse,
         SCPNMetrics,
         BitStreamTensor,
     )
@@ -62,6 +63,7 @@ __all__ = [
     "BitstreamEncoder",
     "FixedPointLif",
     "DenseLayer",
+    "StdpSynapse",
     "SCPNMetrics",
     "BitStreamTensor",
     "VectorizedSCLayer",

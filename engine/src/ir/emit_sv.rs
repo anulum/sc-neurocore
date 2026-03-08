@@ -262,49 +262,14 @@ pub fn emit(graph: &ScGraph) -> String {
                 };
                 sv.push_str(&format!("    assign v{} = {} {};\n", id.0, in_wire, op));
             }
-            ScOp::GraphForward {
-                id,
-                features,
-                adjacency,
-                n_nodes,
-                n_features,
-            } => {
-                let feat_wire = value_to_wire(graph, *features);
-                let adj_wire = value_to_wire(graph, *adjacency);
-                sv.push_str(&format!(
-                    "    // sc.graph_forward: {}×{} aggregation (HLS placeholder)\n\
-                     \x20   // inputs: features={}, adjacency={}\n\
-                     \x20   assign v{} = {feat_wire}; // stub\n\n",
-                    n_nodes, n_features, feat_wire, adj_wire, id.0
-                ));
-            }
-            ScOp::SoftmaxAttention { id, q, k, v, dim_k } => {
-                let q_wire = value_to_wire(graph, *q);
-                let k_wire = value_to_wire(graph, *k);
-                let v_wire = value_to_wire(graph, *v);
-                sv.push_str(&format!(
-                    "    // sc.softmax_attention: dim_k={} (HLS placeholder)\n\
-                     \x20   // Q={}, K={}, V={}\n\
-                     \x20   assign v{} = {v_wire}; // stub\n\n",
-                    dim_k, q_wire, k_wire, v_wire, id.0
-                ));
-            }
-            ScOp::KuramotoStep {
-                id,
-                phases,
-                omega,
-                coupling,
-                dt,
-            } => {
-                let ph_wire = value_to_wire(graph, *phases);
-                let om_wire = value_to_wire(graph, *omega);
-                let k_wire = value_to_wire(graph, *coupling);
-                sv.push_str(&format!(
-                    "    // sc.kuramoto_step: dt={} (HLS placeholder)\n\
-                     \x20   // phases={}, omega={}, K={}\n\
-                     \x20   assign v{} = {ph_wire}; // stub\n\n",
-                    dt, ph_wire, om_wire, k_wire, id.0
-                ));
+            ScOp::GraphForward { .. }
+            | ScOp::SoftmaxAttention { .. }
+            | ScOp::KuramotoStep { .. } => {
+                panic!(
+                    "SV emission for {:?} is not implemented. \
+                     These ops require an HLS backend.",
+                    op
+                );
             }
             ScOp::Output { name, source, .. } => {
                 let src_wire = value_to_wire(graph, *source);

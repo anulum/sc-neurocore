@@ -263,8 +263,16 @@ pub fn bernoulli_packed<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mut R) 
 /// The output is NOT bit-identical to `bernoulli_packed` for the
 /// same RNG state.
 pub fn bernoulli_packed_fast<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mut R) -> Vec<u64> {
-    let threshold = (prob.clamp(0.0, 1.0) * 256.0).min(255.0) as u8;
     let words = length.div_ceil(64);
+    if prob >= 1.0 {
+        let mut data = vec![u64::MAX; words];
+        let trailing = length % 64;
+        if trailing > 0 {
+            data[words - 1] = (1_u64 << trailing) - 1;
+        }
+        return data;
+    }
+    let threshold = (prob.clamp(0.0, 1.0) * 256.0) as u8;
     let mut data = vec![0_u64; words];
     let mut buf = [0_u8; 64];
 
@@ -285,8 +293,16 @@ pub fn bernoulli_packed_fast<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mu
 /// Semantics match `bernoulli_packed_fast` (byte-threshold sampling) while
 /// vectorizing the threshold comparison for full 64-bit words.
 pub fn bernoulli_packed_simd<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mut R) -> Vec<u64> {
-    let threshold = (prob.clamp(0.0, 1.0) * 256.0).min(255.0) as u8;
     let words = length.div_ceil(64);
+    if prob >= 1.0 {
+        let mut data = vec![u64::MAX; words];
+        let trailing = length % 64;
+        if trailing > 0 {
+            data[words - 1] = (1_u64 << trailing) - 1;
+        }
+        return data;
+    }
+    let threshold = (prob.clamp(0.0, 1.0) * 256.0) as u8;
     let mut data = vec![0_u64; words];
     let full_words = length / 64;
     let mut buf = [0_u8; 64];
@@ -322,7 +338,21 @@ pub fn encode_and_popcount<R: Rng + ?Sized>(
     length: usize,
     rng: &mut R,
 ) -> u64 {
-    let threshold = (prob.clamp(0.0, 1.0) * 256.0).min(255.0) as u8;
+    if prob >= 1.0 {
+        // All bits set → popcount of weight words directly
+        let full_words = length / 64;
+        let mut total = 0_u64;
+        for w in weight_words.iter().take(full_words) {
+            total += w.count_ones() as u64;
+        }
+        let trailing = length % 64;
+        if trailing > 0 && full_words < weight_words.len() {
+            let mask = (1_u64 << trailing) - 1;
+            total += (weight_words[full_words] & mask).count_ones() as u64;
+        }
+        return total;
+    }
+    let threshold = (prob.clamp(0.0, 1.0) * 256.0) as u8;
     let full_words = length / 64;
     let mut total = 0_u64;
     let mut buf = [0_u8; 64];

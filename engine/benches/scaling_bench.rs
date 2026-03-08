@@ -5,7 +5,8 @@
 // Scaling benchmarks: measures wall-clock vs neuron/node count for
 // Kuramoto, GNN forward, and Dense SC layer at multiple sizes.
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use std::hint::black_box;
 use rand::{RngExt, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use sc_neurocore_engine::graph::StochasticGraphLayer;

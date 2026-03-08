@@ -26,9 +26,11 @@ class TestPackEquivalence:
     def test_unpack_roundtrip(self, sample_bitstream):
         packed = v2_pack(sample_bitstream)
         v2_unpacked = v2_unpack(packed, original_length=sample_bitstream.size)
-        v3_unpacked = np.asarray(
-            v3.unpack_bitstream(packed, original_length=sample_bitstream.size),
-            dtype=np.uint8,
+        raw = v3.unpack_bitstream(packed, original_length=sample_bitstream.size)
+        v3_unpacked = (
+            np.frombuffer(raw, dtype=np.uint8)
+            if isinstance(raw, bytes)
+            else np.asarray(raw, dtype=np.uint8)
         )
         np.testing.assert_array_equal(v2_unpacked, v3_unpacked)
 

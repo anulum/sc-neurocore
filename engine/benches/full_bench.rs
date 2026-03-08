@@ -2,7 +2,8 @@
 // © 1998–2026 Miroslav Šotek. All rights reserved.
 // Contact: www.anulum.li | protoscience@anulum.li
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
+use std::hint::black_box;
 use rand::{Rng, RngExt, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use rand_xoshiro::Xoshiro256PlusPlus;

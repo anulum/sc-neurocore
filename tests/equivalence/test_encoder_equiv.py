@@ -1,5 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""Strict blueprint semantics tests for LFSR + bitstream encoder."""
+"""Strict blueprint semantics tests for LFSR + bitstream encoder.
+
+The encoder uses compare-before-advance semantics matching the Verilog RTL
+(sc_bitstream_encoder.v): non-blocking assignments mean `bit_out` reads
+the LFSR state *before* the advance that happens in the same clock edge.
+"""
 
 import pytest
 
@@ -32,16 +37,18 @@ class TestLFSRBlueprintSemantics:
 
 
 class TestEncoderBlueprintSemantics:
-    def test_step_then_compare_order(self):
+    def test_compare_before_advance_order(self):
+        """Encoder reads LFSR state, compares, then advances (Verilog RTL match)."""
         encoder = BitstreamEncoder(data_width=16, seed=0xACE1)
         x_value = 0xACE1
         reg = 0xACE1
 
         bits = []
         for _ in range(8):
-            reg = _lfsr_step(reg)
             expected = 1 if reg < x_value else 0
             bits.append(encoder.step(x_value))
             assert bits[-1] == expected
+            reg = _lfsr_step(reg)
 
-        assert bits[0] == 1, "Strict step-then-compare should produce first bit = 1"
+        # 0xACE1 < 0xACE1 is false → first bit = 0
+        assert bits[0] == 0, "Compare-before-advance: reg == x_value → bit = 0"

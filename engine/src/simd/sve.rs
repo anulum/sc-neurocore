@@ -130,7 +130,7 @@ mod tests {
     #[test]
     fn sve_popcount_matches_portable() {
         let data: Vec<u64> = vec![0xFFFF_FFFF_FFFF_FFFF, 0x0, 0xAAAA_AAAA_AAAA_AAAA];
-        let expected = 64 + 0 + 32;
+        let expected = 64 + 32;
         let got = unsafe { popcount_sve(&data) };
         assert_eq!(got, expected);
     }
