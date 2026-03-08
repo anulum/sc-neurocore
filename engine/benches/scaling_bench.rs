@@ -23,21 +23,13 @@ fn bench_kuramoto_scaling(c: &mut Criterion) {
             .map(|i| 2.0 * std::f64::consts::PI * (i as f64) / (n as f64))
             .collect();
 
-        group.bench_with_input(
-            BenchmarkId::new("kuramoto_1000steps", n),
-            &n,
-            |b, _| {
-                b.iter(|| {
-                    let mut solver = KuramotoSolver::new(
-                        omega.clone(),
-                        coupling.clone(),
-                        phases.clone(),
-                        0.0,
-                    );
-                    black_box(solver.run(1000, 0.01, 42));
-                })
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("kuramoto_1000steps", n), &n, |b, _| {
+            b.iter(|| {
+                let mut solver =
+                    KuramotoSolver::new(omega.clone(), coupling.clone(), phases.clone(), 0.0);
+                black_box(solver.run(1000, 0.01, 42));
+            })
+        });
     }
     group.finish();
 }
@@ -82,7 +74,9 @@ fn bench_dense_scaling(c: &mut Criterion) {
         let bitstream_length = 1024;
         let layer = DenseLayer::new(n_in, n_out, bitstream_length, 42);
 
-        let inputs: Vec<f64> = (0..n_in).map(|i| (i as f64 + 1.0) / (n_in as f64 + 1.0)).collect();
+        let inputs: Vec<f64> = (0..n_in)
+            .map(|i| (i as f64 + 1.0) / (n_in as f64 + 1.0))
+            .collect();
 
         group.bench_with_input(
             BenchmarkId::new("dense_fused", format!("{n_in}x{n_out}")),
@@ -97,14 +91,18 @@ fn bench_popcount_scaling(c: &mut Criterion) {
     let mut group = c.benchmark_group("popcount_scaling");
 
     for &n_words in &[64, 256, 1024, 4096, 16384, 65536] {
-        let data: Vec<u64> = (0..n_words).map(|i| 0xAAAA_BBBB_CCCC_DDDDu64.wrapping_mul(i as u64)).collect();
+        let data: Vec<u64> = (0..n_words)
+            .map(|i| 0xAAAA_BBBB_CCCC_DDDDu64.wrapping_mul(i as u64))
+            .collect();
 
         group.bench_with_input(
             BenchmarkId::new("popcount_simd", n_words),
             &n_words,
             |b, _| {
                 b.iter(|| {
-                    black_box(sc_neurocore_engine::simd::popcount_dispatch(black_box(&data)))
+                    black_box(sc_neurocore_engine::simd::popcount_dispatch(black_box(
+                        &data,
+                    )))
                 })
             },
         );
@@ -138,29 +136,23 @@ fn bench_lif_network_scaling(c: &mut Criterion) {
         let mut rng = ChaCha8Rng::seed_from_u64(42);
         let inputs: Vec<f64> = (0..n).map(|_| rng.random::<f64>()).collect();
 
-        group.bench_with_input(
-            BenchmarkId::new("lif_sc_100steps", n),
-            &n,
-            |b, _| {
-                b.iter(|| {
-                    let mut v = vec![0.0f64; n];
-                    let mut total_spikes = 0u64;
-                    for step in 0..100u64 {
-                        let out = layer
-                            .forward_fused(black_box(&inputs), 42 + step)
-                            .unwrap();
-                        for (vi, oi) in v.iter_mut().zip(out.iter()) {
-                            *vi = 0.9 * *vi + *oi;
-                            if *vi >= 0.5 {
-                                total_spikes += 1;
-                                *vi = 0.0;
-                            }
+        group.bench_with_input(BenchmarkId::new("lif_sc_100steps", n), &n, |b, _| {
+            b.iter(|| {
+                let mut v = vec![0.0f64; n];
+                let mut total_spikes = 0u64;
+                for step in 0..100u64 {
+                    let out = layer.forward_fused(black_box(&inputs), 42 + step).unwrap();
+                    for (vi, oi) in v.iter_mut().zip(out.iter()) {
+                        *vi = 0.9 * *vi + *oi;
+                        if *vi >= 0.5 {
+                            total_spikes += 1;
+                            *vi = 0.0;
                         }
                     }
-                    black_box(total_spikes)
-                })
-            },
-        );
+                }
+                black_box(total_spikes)
+            })
+        });
     }
     group.finish();
 }
