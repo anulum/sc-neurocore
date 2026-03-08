@@ -494,11 +494,13 @@ def run_brian2(cfg: BrunelConfig) -> RunMetrics | None:
     S_inh.connect(p=cfg.conn_prob)
     S_inh.namespace["w"] = cfg.weight_inh
 
-    # C_E independent Poisson inputs per neuron, rate nu_ext each
-    total_ext_rate = cfg.c_ext * cfg.external_rate_hz
-    P_ext = brian2.PoissonGroup(cfg.n_neurons, rates=total_ext_rate * brian2.Hz)
+    # C_E independent Poisson inputs per neuron, rate nu_ext each.
+    # PoissonGroup generates at most 1 spike/step (Bernoulli), so use
+    # c_ext separate sources at external_rate_hz, not 1 at total_rate.
+    c_ext_int = max(1, int(cfg.c_ext))
+    P_ext = brian2.PoissonGroup(c_ext_int, rates=cfg.external_rate_hz * brian2.Hz)
     S_ext = brian2.Synapses(P_ext, G, on_pre="v_post += w", dt=cfg.dt * brian2.ms)
-    S_ext.connect(j="i")
+    S_ext.connect()  # all-to-all: each neuron gets c_ext_int Poisson inputs
     S_ext.namespace["w"] = cfg.weight_exc
 
     mon = brian2.SpikeMonitor(G)

@@ -1,0 +1,96 @@
+=== Phase 4: SC network benchmark ===
+======================================================================
+  SC-NeuroCore Stochastic Computing Network Benchmark
+  Scales: [100, 200, 500, 1000]
+  Bitstream lengths: [256, 512, 1024]
+  Steps: 50, Repeats: 3
+======================================================================
+  numpy n=  100 bl=  256... 0.824s  encode=0.18 Gbit/s  MAC=0.0049 GOP/s  rate=0.355
+   rust n=  100 bl=  256... 0.012s  encode=0.28 Gbit/s  MAC=0.0864 GOP/s  rate=1.000
+  numpy n=  100 bl=  512... 2.128s  encode=0.13 Gbit/s  MAC=0.0025 GOP/s  rate=0.357
+   rust n=  100 bl=  512... 0.031s  encode=0.26 Gbit/s  MAC=0.0405 GOP/s  rate=1.000
+  numpy n=  100 bl= 1024... 4.238s  encode=0.14 Gbit/s  MAC=0.0013 GOP/s  rate=0.365
+   rust n=  100 bl= 1024... 0.052s  encode=0.32 Gbit/s  MAC=0.0253 GOP/s  rate=1.000
+  numpy n=  200 bl=  256... 4.324s  encode=0.13 Gbit/s  MAC=0.0047 GOP/s  rate=0.353
+   rust n=  200 bl=  256... 0.056s  encode=0.13 Gbit/s  MAC=0.0842 GOP/s  rate=1.000
+  numpy n=  200 bl=  512... 8.486s  encode=0.13 Gbit/s  MAC=0.0025 GOP/s  rate=0.338
+   rust n=  200 bl=  512... 0.094s  encode=0.17 Gbit/s  MAC=0.0523 GOP/s  rate=1.000
+  numpy n=  200 bl= 1024... 18.318s  encode=0.13 Gbit/s  MAC=0.0010 GOP/s  rate=0.340
+   rust n=  200 bl= 1024... 0.157s  encode=0.18 Gbit/s  MAC=0.0284 GOP/s  rate=1.000
+  numpy n=  500 bl=  256... 28.990s  encode=0.13 Gbit/s  MAC=0.0038 GOP/s  rate=0.328
+   rust n=  500 bl=  256... 0.243s  encode=0.07 Gbit/s  MAC=0.1079 GOP/s  rate=1.000
+  numpy n=  500 bl=  512... 57.548s  encode=0.12 Gbit/s  MAC=0.0020 GOP/s  rate=0.333
+   rust n=  500 bl=  512... 0.429s  encode=0.08 Gbit/s  MAC=0.0624 GOP/s  rate=1.000
+  numpy n=  500 bl= 1024... 113.817s  encode=0.13 Gbit/s  MAC=0.0010 GOP/s  rate=0.332
+   rust n=  500 bl= 1024... 0.737s  encode=0.09 Gbit/s  MAC=0.0347 GOP/s  rate=1.000
+  numpy n= 1000 bl=  256... 115.637s  encode=0.13 Gbit/s  MAC=0.0037 GOP/s  rate=0.326
+   rust n= 1000 bl=  256... 0.813s  encode=0.04 Gbit/s  MAC=0.1234 GOP/s  rate=1.000
+  numpy n= 1000 bl=  512... 229.070s  encode=0.13 Gbit/s  MAC=0.0020 GOP/s  rate=0.323
+   rust n= 1000 bl=  512... 1.479s  encode=0.04 Gbit/s  MAC=0.0676 GOP/s  rate=1.000
+  numpy n= 1000 bl= 1024... 1340.940s  encode=0.04 Gbit/s  MAC=0.0010 GOP/s  rate=0.322
+   rust n= 1000 bl= 1024... 2.860s  encode=0.04 Gbit/s  MAC=0.0350 GOP/s  rate=1.000
+
+Results written to benchmarks/results/jarvislabs_a6000/sc_network.json
+=== Phase 5: Rust-vs-Python parity ===
+======================================================================
+  Rust vs Python Parity Benchmark (SC-NeuroCore)
+  Repeats: 3
+======================================================================
+
+--- popcount ---
+  scale=     1,000... Python=0.0009s  Rust=0.000062s  speedup=15.1x
+  scale=    10,000... Python=0.0072s  Rust=0.000399s  speedup=18.1x
+  scale=   100,000... Python=0.0692s  Rust=0.003663s  speedup=18.9x
+  scale= 1,000,000... Python=0.6868s  Rust=0.037974s  speedup=18.1x
+
+--- pack ---
+  scale=     1,000... Python=0.0000s  Rust=0.000128s  speedup=0.2x
+  scale=    10,000... Python=0.0001s  Rust=0.000002s  speedup=30.6x
+  scale=   100,000... Python=0.0006s  Rust=0.000005s  speedup=106.1x
+  scale= 1,000,000... Python=0.0063s  Rust=0.000041s  speedup=151.4x
+
+--- and_popcount ---
+  scale=     1,000... Python=0.0008s  Rust=0.000165s  speedup=4.8x
+  scale=    10,000... Python=0.0057s  Rust=0.001497s  speedup=3.8x
+  scale=   100,000... Python=0.0570s  Rust=0.016206s  speedup=3.5x
+  scale= 1,000,000... Python=0.5776s  Rust=0.171214s  speedup=3.4x
+
+--- dense_sc_layer ---
+  scale=        16... Python=0.0022s  Rust=0.000297s  speedup=7.4x
+  scale=        32... Python=0.0078s  Rust=0.000191s  speedup=41.1x
+  scale=        64... Python=0.0367s  Rust=0.000575s  speedup=63.9x
+  scale=       128... Python=0.1454s  Rust=0.002139s  speedup=68.0x
+
+--- kuramoto ---
+  scale=       100... Python=0.2116s  Rust=0.087433s  speedup=2.4x
+  scale=       200... Python=0.9378s  Rust=0.198938s  speedup=4.7x
+  scale=       500... Python=5.5464s  Rust=0.947353s  speedup=5.9x
+  scale=     1,000... Python=22.3473s  Rust=3.504547s  speedup=6.4x
+
+Results written to benchmarks/results/jarvislabs_a6000/rust_python_parity.json
+=== Phase 6: GPU large-scale ===
+======================================================================
+  SC-NeuroCore Scaling Benchmark (4-Regime Brunel)
+  Scales: [20000, 50000]
+  Regimes: ['AI']
+  Sim: 500.0 ms, Repeats: 3
+  System: Intel(R) Xeon(R) Silver 4216 CPU @ 2.10GHz
+  GPU: NVIDIA RTX A6000
+======================================================================
+
+######################################################################
+  Regime: AI — asynchronous irregular  (g=5.0, eta=2.0)
+######################################################################
+
+  N=20,000  synapses~40,000,000  ext_rate=12.5 Hz
+    SC-NeuroCore (PyTorch CUDA)... 16.994s ±0.671s  rate=26.1 Hz  syn/s=3.08e+07  sparsity=0.997  (3 runs)
+    SC-NeuroCore (PyTorch CUDA sparse)... /opt/sc-neurocore/benchmarks/scaling_benchmark.py:404: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:53.)
+  ).to_sparse_csr()
+8.829s ±0.010s  rate=26.1 Hz  syn/s=5.92e+07  sparsity=0.997  (3 runs)
+
+  N=50,000  synapses~250,000,000  ext_rate=5.0 Hz
+    SC-NeuroCore (PyTorch CUDA): SKIP (matrix ~10.0 GB)
+    SC-NeuroCore (PyTorch CUDA sparse)... 35.410s ±0.037s  rate=14.7 Hz  syn/s=5.19e+07  sparsity=0.999  (3 runs)
+
+Results written to benchmarks/results/jarvislabs_a6000/gpu_large_scale.json
+=== ALL PHASES COMPLETE ===
