@@ -11,7 +11,11 @@ SPDX_DIRS = ["src", "tests", "engine/src", "engine/tests", "engine/benches", "hd
 SPDX_EXTS = {".py", ".rs", ".v"}
 SPDX_MARKER = "SPDX-License-Identifier"
 
+ENGINE_DIR = pathlib.Path("engine")
+
 GATES = [
+    ("cargo-fmt", ["cargo", "fmt", "--check", "--manifest-path", "engine/Cargo.toml"]),
+    ("cargo-clippy", ["cargo", "clippy", "--all-targets", "--manifest-path", "engine/Cargo.toml", "--", "-D", "warnings"]),
     ("black", ["python", "-m", "black", "--check", "src/", "tests/"]),
     ("ruff", ["python", "-m", "ruff", "check", "src/", "tests/"]),
     ("bandit", ["python", "-m", "bandit", "-r", "src/sc_neurocore/", "-c", "pyproject.toml", "-q"]),
@@ -55,10 +59,28 @@ def check_spdx() -> bool:
     return True
 
 
+def _has_cargo() -> bool:
+    try:
+        subprocess.run(["cargo", "--version"], capture_output=True, check=True)
+        return True
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        return False
+
+
+_CARGO_AVAILABLE: bool | None = None
+
+
 def run_gate(name: str, cmd) -> bool:
+    global _CARGO_AVAILABLE
     print(f"\n{'='*60}")
     print(f"  GATE: {name}")
     print(f"{'='*60}")
+    if name.startswith("cargo-"):
+        if _CARGO_AVAILABLE is None:
+            _CARGO_AVAILABLE = _has_cargo() and ENGINE_DIR.exists()
+        if not _CARGO_AVAILABLE:
+            print(f"  SKIP: {name} (cargo or engine/ not found)")
+            return True
     if cmd is None:
         ok = check_spdx()
     else:

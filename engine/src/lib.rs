@@ -254,11 +254,7 @@ impl PyBrunelNetwork {
         Ok(Self { inner })
     }
 
-    fn run<'py>(
-        &mut self,
-        py: Python<'py>,
-        n_steps: usize,
-    ) -> Bound<'py, PyArray1<u32>> {
+    fn run<'py>(&mut self, py: Python<'py>, n_steps: usize) -> Bound<'py, PyArray1<u32>> {
         let counts = self.inner.run(n_steps);
         counts.into_pyarray(py)
     }

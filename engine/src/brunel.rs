@@ -67,7 +67,14 @@ impl BrunelNetwork {
         }
         let neurons: Vec<FixedPointLif> = (0..n_neurons)
             .map(|_| {
-                FixedPointLif::new(data_width, fraction, v_rest, v_reset, v_threshold, refractory_period)
+                FixedPointLif::new(
+                    data_width,
+                    fraction,
+                    v_rest,
+                    v_reset,
+                    v_threshold,
+                    refractory_period,
+                )
             })
             .collect();
 
@@ -177,13 +184,16 @@ mod tests {
             row_offsets,
             col_indices,
             values,
-            16, 8,    // data_width, fraction
-            0, 0, 256, // v_rest, v_reset, v_threshold (1.0 in Q8.8)
-            2,         // refractory_period
-            1,         // leak_k
-            256,       // gain_k (1.0 in Q8.8)
-            5.0,       // ext_lambda (Poisson spikes/step)
-            26,        // ext_weight_fp (~0.1 in Q8.8)
+            16,
+            8, // data_width, fraction
+            0,
+            0,
+            256, // v_rest, v_reset, v_threshold (1.0 in Q8.8)
+            2,   // refractory_period
+            1,   // leak_k
+            256, // gain_k (1.0 in Q8.8)
+            5.0, // ext_lambda (Poisson spikes/step)
+            26,  // ext_weight_fp (~0.1 in Q8.8)
             42,
         )
         .unwrap()
@@ -200,9 +210,23 @@ mod tests {
     #[test]
     fn brunel_empty_network() {
         let mut net = BrunelNetwork::new(
-            0, vec![0], vec![], vec![],
-            16, 8, 0, 0, 256, 2, 1, 256, 0.0, 0, 42,
-        ).unwrap();
+            0,
+            vec![0],
+            vec![],
+            vec![],
+            16,
+            8,
+            0,
+            0,
+            256,
+            2,
+            1,
+            256,
+            0.0,
+            0,
+            42,
+        )
+        .unwrap();
         let counts = net.run(10);
         assert!(counts.iter().all(|&c| c == 0));
     }
@@ -210,8 +234,21 @@ mod tests {
     #[test]
     fn brunel_csr_validation() {
         let result = BrunelNetwork::new(
-            4, vec![0, 1], vec![0], vec![10],
-            16, 8, 0, 0, 256, 2, 1, 256, 0.0, 0, 42,
+            4,
+            vec![0, 1],
+            vec![0],
+            vec![10],
+            16,
+            8,
+            0,
+            0,
+            256,
+            2,
+            1,
+            256,
+            0.0,
+            0,
+            42,
         );
         assert!(result.is_err());
     }
