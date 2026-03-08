@@ -1,0 +1,65 @@
+[
+  {
+    "variant": "brian2_reference",
+    "total_spikes": 1057908,
+    "mean_rate_hz": 1057.908,
+    "wall_time_s": 1.1096563000464812,
+    "brian2_spikes": 0,
+    "brian2_rate_hz": 0.0,
+    "rate_ratio": 0.0,
+    "metric_note": "",
+    "params": null
+  },
+  {
+    "variant": "v1_stochastic_lif",
+    "total_spikes": 1725955,
+    "mean_rate_hz": 1725.955,
+    "wall_time_s": 30.232443800079636,
+    "brian2_spikes": 1057908,
+    "brian2_rate_hz": 1057.908,
+    "rate_ratio": 1.631479296876477,
+    "metric_note": "",
+    "params": {
+      "v_threshold": 20.0,
+      "v_reset": 10.0,
+      "v_rest": 0.0,
+      "tau_mem": 20.0,
+      "dt": 0.1,
+      "resistance": 1.0,
+      "noise_std": 0.0
+    }
+  },
+  {
+    "variant": "v2_rate_matched",
+    "total_spikes": 0,
+    "mean_rate_hz": 48.563942382812506,
+    "wall_time_s": 51.81180869997479,
+    "brian2_spikes": 1057908,
+    "brian2_rate_hz": 1057.908,
+    "rate_ratio": 0.04590563865932814,
+    "metric_note": "prob=0.0486, n_sub=100, bl=1024",
+    "params": null
+  },
+  {
+    "variant": "v3_fixed_point_q88",
+    "total_spikes": 1722195,
+    "mean_rate_hz": 1722.195,
+    "wall_time_s": 15.414677900029346,
+    "brian2_spikes": 1057908,
+    "brian2_rate_hz": 1057.908,
+    "rate_ratio": 1.6279251125806782,
+    "metric_note": "",
+    "params": null
+  },
+  {
+    "variant": "v4_hybrid_sc_lif",
+    "total_spikes": 1888351,
+    "mean_rate_hz": 1888.351,
+    "wall_time_s": 46.22759170003701,
+    "brian2_spikes": 1057908,
+    "brian2_rate_hz": 1057.908,
+    "rate_ratio": 1.78498602903088,
+    "metric_note": "",
+    "params": null
+  }
+]

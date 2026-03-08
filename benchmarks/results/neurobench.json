@@ -1,0 +1,62 @@
+[
+  {
+    "model_name": "SCDenseLayer(8\u00d74, L=256)",
+    "n_neurons": 4,
+    "n_synapses": 32,
+    "bitstream_length": 256,
+    "timesteps": 50,
+    "activation_sparsity": 0.0,
+    "connection_sparsity": 0.0,
+    "synaptic_ops_total": 409600,
+    "latency_per_step_us": 1293.0580019019544,
+    "energy_proxy": 529.6365575790405,
+    "memory_bytes": 256,
+    "wall_clock_s": 0.06465290009509772,
+    "throughput_mops": 6.335369324462179
+  },
+  {
+    "model_name": "SCDenseLayer(16\u00d78, L=512)",
+    "n_neurons": 8,
+    "n_synapses": 128,
+    "bitstream_length": 512,
+    "timesteps": 30,
+    "activation_sparsity": 0.0,
+    "connection_sparsity": 0.0,
+    "synaptic_ops_total": 1966080,
+    "latency_per_step_us": 2446.2100001983345,
+    "energy_proxy": 4809.444557189941,
+    "memory_bytes": 1024,
+    "wall_clock_s": 0.07338630000595003,
+    "throughput_mops": 26.790831529053705
+  },
+  {
+    "model_name": "VectorizedSCLayer(16\u00d78, L=512)",
+    "n_neurons": 8,
+    "n_synapses": 128,
+    "bitstream_length": 512,
+    "timesteps": 50,
+    "activation_sparsity": 0.0,
+    "connection_sparsity": 0.0,
+    "synaptic_ops_total": 3276800,
+    "latency_per_step_us": 348.4280011616647,
+    "energy_proxy": 1141.728874206543,
+    "memory_bytes": 1024,
+    "wall_clock_s": 0.017421400058083236,
+    "throughput_mops": 188.09050874643225
+  },
+  {
+    "model_name": "VectorizedSCLayer(64\u00d732, L=1024)",
+    "n_neurons": 32,
+    "n_synapses": 2048,
+    "bitstream_length": 1024,
+    "timesteps": 20,
+    "activation_sparsity": 0.0,
+    "connection_sparsity": 0.0,
+    "synaptic_ops_total": 41943040,
+    "latency_per_step_us": 2476.1200009379536,
+    "energy_proxy": 103856.00024414062,
+    "memory_bytes": 16384,
+    "wall_clock_s": 0.04952240001875907,
+    "throughput_mops": 846.9508744348414
+  }
+]

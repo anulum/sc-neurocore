@@ -1,0 +1,65 @@
+[
+  {
+    "module": "sc_bitstream_encoder",
+    "luts": 0,
+    "ffs": 0,
+    "bram": 0,
+    "dsp": 0,
+    "ok": false,
+    "error": "yosys not found in PATH"
+  },
+  {
+    "module": "sc_lif_neuron",
+    "luts": 0,
+    "ffs": 0,
+    "bram": 0,
+    "dsp": 0,
+    "ok": false,
+    "error": "yosys not found in PATH"
+  },
+  {
+    "module": "sc_bitstream_synapse",
+    "luts": 0,
+    "ffs": 0,
+    "bram": 0,
+    "dsp": 0,
+    "ok": false,
+    "error": "yosys not found in PATH"
+  },
+  {
+    "module": "sc_dotproduct_to_current",
+    "luts": 0,
+    "ffs": 0,
+    "bram": 0,
+    "dsp": 0,
+    "ok": false,
+    "error": "yosys not found in PATH"
+  },
+  {
+    "module": "sc_firing_rate_bank",
+    "luts": 0,
+    "ffs": 0,
+    "bram": 0,
+    "dsp": 0,
+    "ok": false,
+    "error": "yosys not found in PATH"
+  },
+  {
+    "module": "sc_dense_layer_core",
+    "luts": 0,
+    "ffs": 0,
+    "bram": 0,
+    "dsp": 0,
+    "ok": false,
+    "error": "yosys not found in PATH"
+  },
+  {
+    "module": "sc_neurocore_top",
+    "luts": 0,
+    "ffs": 0,
+    "bram": 0,
+    "dsp": 0,
+    "ok": false,
+    "error": "yosys not found in PATH"
+  }
+]
