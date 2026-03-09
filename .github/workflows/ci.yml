@@ -52,7 +52,8 @@ jobs:
       - name: mypy
         run: |
           pip install -e ".[dev]"
-          mypy src/sc_neurocore/ --ignore-missing-imports --no-error-summary || true  # JAX/numpy conditional imports break strict mode
+          # Advisory: strict mode breaks on conditional JAX/quantum imports
+          mypy src/sc_neurocore/ --ignore-missing-imports --no-error-summary || echo "::warning::mypy issues detected"
 
   test:
     runs-on: ubuntu-latest

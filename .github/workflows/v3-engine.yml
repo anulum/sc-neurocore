@@ -47,7 +47,7 @@ jobs:
         run: cargo clippy --manifest-path engine/Cargo.toml -- -D warnings
 
       - name: Install cargo-audit
-        run: cargo install cargo-audit
+        run: cargo install cargo-audit@0.21.1
 
       - name: Cargo audit
         run: |
@@ -55,7 +55,7 @@ jobs:
           cargo audit
 
       - name: Install cargo-deny
-        run: cargo install cargo-deny
+        run: cargo install cargo-deny@0.16.3
 
       - name: Cargo deny
         run: cargo deny --manifest-path engine/Cargo.toml check licenses advisories

@@ -132,7 +132,7 @@ Commercial-tier package for safety-critical deployment:
 - FMEA for SNN compiler pipeline
 - Safety manual: deterministic execution guarantees
 - Traceability matrix: requirements → tests → formal proofs
-- Target: ISO 26262 ASIL-B qualification evidence
+- Target: compile traceability evidence toward ISO 26262 ASIL-B (no qualification claim until FMEA + safety case complete)
 
 ## v4.1 — Community & Ecosystem (target: Q4 2026)
 

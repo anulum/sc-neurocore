@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! ARM SVE (Scalable Vector Extension) popcount and bitstream kernels.
+//! Scalar fallback for ARM SVE targets.
+//! Hardware SVE intrinsics are not yet implemented; all operations
+//! use the portable scalar path from `super::mod.rs`.
 //!
 //! SVE operates on variable-length vectors (128–2048 bits depending on
-//! hardware).  These kernels use `core::arch::aarch64` SVE intrinsics
-//! when compiled for an SVE-capable target.  On all other targets the
-//! functions fall back to portable scalar code.
+//! hardware).  When Rust stabilises `core::arch::aarch64` SVE intrinsics,
+//! replace the bodies below with predicated vector loops.
 //!
 //! Build with:
 //!   RUSTFLAGS="-C target-feature=+sve" cargo build --target aarch64-unknown-linux-gnu

@@ -1262,7 +1262,7 @@ def run_v21_sparse_numba(bp: BrunelParams) -> VariantResult:
     conn_mask = rng.random((n, n)) < bp.conn_prob
     np.fill_diagonal(conn_mask, False)
     weights_dense = np.where(conn_mask, params["weight_exc"], 0.0)
-    weights_dense[bp.n_exc:, :] *= -bp.g_inh
+    weights_dense[bp.n_exc :, :] *= -bp.g_inh
 
     csr = sp_mod.csr_matrix(weights_dense)
     indptr = csr.indptr.astype(np.int64)
@@ -1274,8 +1274,21 @@ def run_v21_sparse_numba(bp: BrunelParams) -> VariantResult:
     ext_rate_dt = bp.external_rate_hz * bp.dt / 1000.0
 
     @njit(cache=True)
-    def _run_sparse(v, indptr, indices, data, alpha, v_rest, v_threshold, v_reset,
-                    ext_weight, ext_rate_dt, n, steps, seed):
+    def _run_sparse(
+        v,
+        indptr,
+        indices,
+        data,
+        alpha,
+        v_rest,
+        v_threshold,
+        v_reset,
+        ext_weight,
+        ext_rate_dt,
+        n,
+        steps,
+        seed,
+    ):
         np.random.seed(seed)
         spike_count = 0
         prev_spikes = np.zeros(n, dtype=np.bool_)
@@ -1299,9 +1312,19 @@ def run_v21_sparse_numba(bp: BrunelParams) -> VariantResult:
 
     t0 = time.perf_counter()
     spike_count = _run_sparse(
-        v, indptr, indices, data, alpha,
-        bp.v_rest, bp.v_threshold, bp.v_reset,
-        params["ext_weight"], ext_rate_dt, n, steps, bp.seed,
+        v,
+        indptr,
+        indices,
+        data,
+        alpha,
+        bp.v_rest,
+        bp.v_threshold,
+        bp.v_reset,
+        params["ext_weight"],
+        ext_rate_dt,
+        n,
+        steps,
+        bp.seed,
     )
     wall = time.perf_counter() - t0
     rate = spike_count / (bp.sim_ms / 1000.0) / n

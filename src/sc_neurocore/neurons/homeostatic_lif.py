@@ -16,6 +16,10 @@ class HomeostaticLIFNeuron(StochasticLIFNeuron):
     rate_trace: float = 0.0
     trace_decay: float = 0.95
 
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self.initial_threshold: float = self.v_threshold
+
     def step(self, input_current: float) -> int:
         spike = super().step(input_current)
 
@@ -31,8 +35,7 @@ class HomeostaticLIFNeuron(StochasticLIFNeuron):
         # Adjust threshold
         self.v_threshold += self.adaptation_rate * error
 
-        # Safety limits for threshold
-        self.v_threshold = max(0.1, self.v_threshold)
+        self.v_threshold = max(0.1, min(self.v_threshold, self.initial_threshold * 10.0))
 
         return spike
 

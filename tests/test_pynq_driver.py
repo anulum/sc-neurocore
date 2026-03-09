@@ -35,8 +35,9 @@ def test_driver_run_step():
     input_vector = np.random.rand(16)
     output = driver.run_step(input_vector)
 
-    assert output is not None
-    assert len(output) == 16
+    assert isinstance(output, np.ndarray)
+    assert output.shape == (16,)
+    assert np.all(np.isfinite(output))
 
     print("Driver run_step verified.")
 

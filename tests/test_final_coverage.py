@@ -207,7 +207,8 @@ class TestL5DeepBranches:
         )
         layer = L5_OrganismalLayer(params)
         output = layer.step(0.01, external_event={0: 0.5, 2: 0.3})
-        assert output is not None
+        assert isinstance(output, dict)
+        assert "output_bitstreams" in output
 
     def test_rmssd_with_intervals(self):
         """Hit lines 233-235: _compute_rmssd when rr_intervals >= 2."""

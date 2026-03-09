@@ -160,7 +160,7 @@ fn bench_all(c: &mut Criterion) {
         b.iter(|| black_box(layer.forward_fast(black_box(&inputs), 42).unwrap()))
     });
 
-    c.bench_function("dense_forward_fast_flat_64x32", |b| {
+    c.bench_function("dense_forward_fast_flat_64x32_b", |b| {
         b.iter(|| black_box(layer.forward_fast(black_box(&inputs), 42).unwrap()))
     });
 
