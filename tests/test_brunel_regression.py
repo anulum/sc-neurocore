@@ -266,7 +266,7 @@ class TestBenchmarkRegression:
     def test_all_wall_times_positive(self):
         results = _load_results()
         for name, r in results.items():
-            if r.get("metric_note", "").startswith("SKIPPED"):
+            if r.get("status") == "skipped" or r.get("metric_note", "").startswith("SKIPPED"):
                 continue
             assert r["wall_time_s"] > 0, f"{name} has zero wall time"
 

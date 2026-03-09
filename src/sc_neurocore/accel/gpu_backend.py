@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 from __future__ import annotations
+
+import warnings
 from typing import Any
 
 """
@@ -34,6 +36,20 @@ try:
 except (ImportError, RuntimeError, AttributeError):
     HAS_CUPY = False
     xp = np
+
+_GPU_WARNED = False
+
+
+def _warn_cpu_fallback() -> None:
+    global _GPU_WARNED  # noqa: PLW0603
+    if not HAS_CUPY and not _GPU_WARNED:
+        _GPU_WARNED = True
+        warnings.warn(
+            "CuPy not available; GPU functions are running on CPU via NumPy "
+            "fallback. Install cupy-cuda12x for GPU acceleration.",
+            UserWarning,
+            stacklevel=3,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -72,6 +88,7 @@ def gpu_pack_bitstream(bits: xp.ndarray) -> xp.ndarray:  # type: ignore
     Returns:
         Packed uint64 array, shape ``(ceil(N/64),)`` or ``(B, ceil(N/64))``.
     """
+    _warn_cpu_fallback()
     bits = xp.asarray(bits, dtype=xp.uint8)
 
     if bits.ndim == 1:
@@ -98,6 +115,7 @@ def gpu_pack_bitstream(bits: xp.ndarray) -> xp.ndarray:  # type: ignore
 
 def gpu_vec_and(a: xp.ndarray, b: xp.ndarray) -> xp.ndarray:  # type: ignore
     """Bitwise AND on packed uint64 arrays (SC multiplication)."""
+    _warn_cpu_fallback()
     return xp.bitwise_and(a, b)
 
 
@@ -109,6 +127,7 @@ def gpu_popcount(packed: xp.ndarray) -> xp.ndarray:  # type: ignore
     SWAR bit-trick as ``vector_ops.vec_popcount`` but returns an array
     instead of a scalar.
     """
+    _warn_cpu_fallback()
     x = packed.astype(xp.uint64).copy()
     m1 = xp.uint64(0x5555555555555555)
     m2 = xp.uint64(0x3333333333333333)
@@ -135,6 +154,7 @@ def gpu_vec_mac(
     Returns:
         ``(n_neurons,)`` total bit counts (= SC dot products).
     """
+    _warn_cpu_fallback()
     # Broadcast AND: (N, I, W) & (1, I, W) -> (N, I, W)
     products = xp.bitwise_and(packed_weights, packed_inputs[None, :, :])
 

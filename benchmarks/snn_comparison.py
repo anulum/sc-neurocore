@@ -59,6 +59,10 @@ class VariantResult:
     rate_ratio: float = 0.0
     metric_note: str = ""
     params: dict | None = None
+    domain: str = "spike"
+    mean_output_prob: float | None = None
+    status: str = "ok"
+    reason: str = ""
 
 
 # ---------------------------------------------------------------------------
@@ -200,14 +204,15 @@ def run_v2_rate_matched(bp: BrunelParams) -> VariantResult:
     wall = time.perf_counter() - t0
 
     mean_out_prob = total_output.mean() / steps
-    equiv_rate = mean_out_prob * 1000.0
 
     return VariantResult(
         variant="v2_rate_matched",
-        total_spikes=0,  # probability domain, no discrete spikes
-        mean_rate_hz=equiv_rate,
+        total_spikes=0,
+        mean_rate_hz=0.0,
         wall_time_s=wall,
-        metric_note=f"prob={mean_out_prob:.4f}, n_sub={n_sub}, bl={bl}",
+        metric_note=f"n_sub={n_sub}, bl={bl}",
+        domain="probability",
+        mean_output_prob=mean_out_prob,
     )
 
 
@@ -873,7 +878,8 @@ def run_v15_jax(bp: BrunelParams) -> VariantResult:
             total_spikes=0,
             mean_rate_hz=0.0,
             wall_time_s=0.0,
-            metric_note="SKIPPED (JAX not installed)",
+            status="skipped",
+            reason="JAX not installed",
         )
 
     params = translate_v15_jax(bp)
@@ -946,13 +952,15 @@ def run_v16_recurrent(bp: BrunelParams) -> VariantResult:
         total_output += out
 
     wall = time.perf_counter() - t0
-    mean_rate = total_output.mean() / steps * 1000.0
+    mean_out_prob = total_output.mean() / steps
     return VariantResult(
         variant="v16_recurrent_reservoir",
         total_spikes=0,
-        mean_rate_hz=mean_rate,
+        mean_rate_hz=0.0,
         wall_time_s=wall,
-        metric_note=f"probability domain, n_sub={n_sub}",
+        metric_note=f"n_sub={n_sub}",
+        domain="probability",
+        mean_output_prob=mean_out_prob,
     )
 
 
@@ -1263,13 +1271,17 @@ def run_all(
         if r is None:
             print("SKIPPED (not installed)")
             continue
-        # Annotate with Brian2 reference if available
         if brian2_result and name != "brian2":
             r.brian2_spikes = brian2_result.total_spikes
             r.brian2_rate_hz = brian2_result.mean_rate_hz
             if brian2_result.mean_rate_hz > 0 and r.mean_rate_hz > 0:
                 r.rate_ratio = r.mean_rate_hz / brian2_result.mean_rate_hz
-        print(f"{r.wall_time_s:.2f}s, {r.total_spikes:,} spikes, {r.mean_rate_hz:.1f} Hz")
+        if r.status == "skipped":
+            print(f"SKIPPED ({r.reason})")
+        elif r.domain == "probability":
+            print(f"{r.wall_time_s:.2f}s, prob={r.mean_output_prob:.4f}")
+        else:
+            print(f"{r.wall_time_s:.2f}s, {r.total_spikes:,} spikes, {r.mean_rate_hz:.1f} Hz")
         results.append(r)
 
     return results
@@ -1281,10 +1293,17 @@ def format_markdown(results: list[VariantResult]) -> str:
         "|---------|-------:|----------:|-------------:|---------:|------|",
     ]
     for r in results:
+        if r.status == "skipped":
+            lines.append(f"| {r.variant} | — | — | — | — | skipped: {r.reason} |")
+            continue
         ratio = f"{r.rate_ratio:.2f}" if r.rate_ratio > 0 else "—"
         note = r.metric_note or ""
+        if r.domain == "probability":
+            rate_str = f"{r.mean_output_prob:.4f} (prob)"
+        else:
+            rate_str = f"{r.mean_rate_hz:.1f}"
         lines.append(
-            f"| {r.variant} | {r.total_spikes:,} | {r.mean_rate_hz:.1f} "
+            f"| {r.variant} | {r.total_spikes:,} | {rate_str} "
             f"| {ratio} | {r.wall_time_s:.2f} | {note} |"
         )
     return "\n".join(lines)
