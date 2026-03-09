@@ -14,345 +14,91 @@ Commercial Licensing: Available
 [![PyPI](https://img.shields.io/pypi/v/sc-neurocore)](https://pypi.org/project/sc-neurocore/)
 [![crates.io](https://img.shields.io/crates/v/sc_neurocore_engine)](https://crates.io/crates/sc_neurocore_engine)
 [![Coverage](https://img.shields.io/badge/coverage-98%25-brightgreen)](https://github.com/anulum/sc-neurocore)
-[![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://anulum.github.io/sc-neurocore/)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Python 3.10+](https://img.shields.io/pypi/pyversions/sc-neurocore)](https://pypi.org/project/sc-neurocore/)
-[![Rust](https://img.shields.io/badge/engine-Rust-orange)](https://www.rust-lang.org/)
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.18594898-blue)](https://doi.org/10.5281/zenodo.18594898)
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/10362/badge)](https://www.bestpractices.dev/projects/10362)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/anulum/sc-neurocore/badge)](https://scorecard.dev/viewer/?uri=github.com/anulum/sc-neurocore)
-[![REUSE](https://img.shields.io/badge/REUSE-compliant-green)](https://reuse.software/)
 
-**Version:** 3.9.1
-**Status:** Production Core Verified | 978 Python + 124 Rust Tests | 98% Coverage | CI/CD Active
-
-SC-NeuroCore is a deterministic stochastic computing framework for
-neuromorphic hardware design and edge-AI deployment. It provides bit-true
-Python simulation (digital twin environment) that matches Verilog RTL
-cycle-exactly, a high-performance Rust engine, GPU-accelerated
-inference, and a tiered module system from production FPGA targets to
-research prototyping.
-
-## Quick Start
+Design spiking neural networks in Python, simulate them bit-exactly, and compile to FPGA — using stochastic computing, where an AND gate is a multiplier and a wire is a number.
 
 ```bash
-# Install from PyPI (core engine only — neurons, synapses, layers, HDL gen, compiler)
 pip install sc-neurocore
-
-# Or install with all research modules included
-pip install sc-neurocore[full]
-
-# GPU acceleration (requires CUDA)
-pip install sc-neurocore[gpu]
 ```
 
-### Development Setup
+## What it does
 
-```bash
-git clone https://github.com/anulum/sc-neurocore.git
-cd sc-neurocore
-pip install -e ".[dev]"    # editable install with all dev tools
-make preflight             # verify setup (lint + tests)
+```python
+from sc_neurocore import SCDenseLayer, VectorizedSCLayer
+from sc_neurocore.hdl_gen import VerilogGenerator
+
+# 1. Simulate in Python (bit-true digital twin)
+layer = VectorizedSCLayer(n_inputs=8, n_neurons=4, length=1024)
+output = layer.forward(input_probs)   # stochastic bitstream computation
+
+# 2. Generate synthesisable Verilog from the same architecture
+gen = VerilogGenerator(module_name="my_snn")
+gen.add_layer("Dense", "hidden", {"n_neurons": 16})
+gen.add_layer("Dense", "output", {"n_neurons": 4})
+verilog = gen.generate()              # → sc_dense_layer_core + AXI-Lite wrapper
 ```
 
-## Docker
-
-The Docker image ships with the full Rust engine:
-
-```bash
-# Build
-make docker-build
-# or: docker build -f deploy/Dockerfile -t sc-neurocore:latest .
-
-# Run interactive Python shell
-make docker-run
-# or: docker run --rm -it sc-neurocore:latest
-
-# Smoke test via docker compose
-docker compose -f deploy/docker-compose.yml up
-```
-
-Pre-built images are published to GHCR on every release:
-
-```bash
-docker pull ghcr.io/anulum/sc-neurocore:latest
-docker run --rm -it ghcr.io/anulum/sc-neurocore:latest
-```
-
-## Performance Routing
-
-Use explicit path selection for dense inference to avoid small-batch regressions:
-
-- Single sample or micro-batch (1-4 samples): call `DenseLayer.forward_fast(...)`.
-- Medium/large batch (>=10 samples): call `DenseLayer.forward_batch_numpy(...)`.
-- Validation/reference path: use `DenseLayer.forward(...)` and compare to fast paths in tests.
-
-For benchmark reports, always include batch size, bitstream length, seed policy, and CPU SIMD tier.
+The Python model and Verilog RTL use identical LFSR seeds, Q8.8 fixed-point
+arithmetic, and overflow semantics — what you simulate is what you synthesise.
 
 ## Architecture
 
-### Module Tiers
-
-`pip install sc-neurocore` ships **Core + Simulation + Domain bridges** only.
-Research and Frontier modules are available from source (`pip install -e ".[dev]"`).
-
-| Tier | Modules | Ships in wheel | Status |
-|------|---------|:--------------:|--------|
-| **Core** | neurons, synapses, layers, sources, utils, recorders, accel, compiler, hdl_gen, hardware, cli, exceptions | Yes | Production-ready. 98%+ coverage. |
-| **Simulation** | hdc, solvers, transformers, learning, graphs, ensembles, export, pipeline, profiling, models, math, spatial, verification, security | Yes | Stable. Import explicitly. |
-| **Domain bridges** | quantum (Qiskit/PennyLane), adapters/holonomic (JAX), scpn (Petri nets) | Yes | Requires `pip install sc-neurocore[quantum]` or `[jax]` |
-| **Research** | robotics, physics, bio, optics, chaos, sleep, interfaces | No | Tested. Available from source. |
-| **Frontier** | generative, world_model, analysis, audio, dashboard, viz, swarm | No | Experimental. Available from source. |
-| **Speculative** | `research/` (eschaton, exotic, meta, post_silicon, transcendent) | No | Theoretical. See `research/README.md`. |
-
-### Architecture Diagram
-
-```mermaid
-graph TD
-    subgraph "Python API (pip install sc-neurocore)"
-        A[BitstreamEncoder] --> B[SCDenseLayer / SCConv2DLayer]
-        B --> C[StochasticLIF / Izhikevich Neurons]
-        C --> D[STDP / R-STDP Synapses]
-        D --> E[BitstreamSpikeRecorder]
-    end
-
-    subgraph "Acceleration"
-        B --> F{Backend?}
-        F -->|CPU| G[NumPy / Numba SIMD]
-        F -->|GPU| H[CuPy CUDA]
-        F -->|Rust| I[sc_neurocore_engine]
-    end
-
-    subgraph "Hardware Target"
-        I --> J[IR Compiler]
-        J --> K[SystemVerilog Emitter]
-        K --> L[Verilog RTL<br/>AXI-Lite + LIF Core]
-        L --> M[FPGA Bitstream<br/>Xilinx / Intel]
-    end
-
-    subgraph "Domain Bridges (optional)"
-        B --> N[SCPN Petri Nets]
-        B --> O[Quantum: Qiskit / PennyLane]
-        B --> P[HDC/VSA Symbolic Memory]
-    end
-
-    style A fill:#2d6a4f,color:#fff
-    style I fill:#b5651d,color:#fff
-    style L fill:#1a237e,color:#fff
-    style M fill:#4a148c,color:#fff
+```
+Python API ──→ Rust Engine (AVX-512/NEON) ──→ IR Compiler ──→ Verilog RTL ──→ FPGA
+   │                                                              │
+   └── bit-true simulation (digital twin) ◄── co-sim check ──────┘
 ```
 
-### Core API (28 symbols)
+**Three acceleration paths**: NumPy (pure Python), Rust SIMD (`sc_neurocore_engine`), or CuPy GPU.
 
-```python
-from sc_neurocore import (
-    # Neurons
-    StochasticLIFNeuron, FixedPointLIFNeuron, FixedPointLFSR,
-    FixedPointBitstreamEncoder, HomeostaticLIFNeuron,
-    StochasticDendriticNeuron, SCIzhikevichNeuron,
-    # Synapses
-    BitstreamSynapse, BitstreamDotProduct,
-    StochasticSTDPSynapse, RewardModulatedSTDPSynapse,
-    # Layers
-    SCDenseLayer, SCConv2DLayer, SCLearningLayer,
-    VectorizedSCLayer, SCRecurrentLayer, MemristiveDenseLayer,
-    SCFusionLayer, StochasticAttention,
-    # Utilities
-    BitstreamEncoder, BitstreamAverager, RNG,
-    generate_bernoulli_bitstream, generate_sobol_bitstream,
-    bitstream_to_probability,
-    # Sources & Recorders
-    BitstreamCurrentSource, BitstreamSpikeRecorder,
-)
-```
+## Hardware (Verilog RTL)
 
-### Hardware (Verilog RTL)
+Eight synthesisable modules in `hdl/`:
+- `sc_bitstream_encoder.v` — LFSR-based stochastic encoder
+- `sc_bitstream_synapse.v` — AND-gate multiplier (1 LUT)
+- `sc_lif_neuron.v` — Q8.8 leaky integrate-and-fire
+- `sc_dense_layer_core.v` — Full pipeline with decorrelated seeds
+- `sc_neurocore_top.v` — AXI-Lite configuration wrapper
 
-```
-hdl/
-  sc_bitstream_encoder.v   -- LFSR-based stochastic encoder (SEED_INIT param)
-  sc_bitstream_synapse.v   -- AND-gate SC multiplier
-  sc_dotproduct_to_current.v -- Popcount -> fixed-point current
-  sc_lif_neuron.v          -- Q8.8 leaky integrate-and-fire
-  sc_firing_rate_bank.v    -- Spike rate estimator
-  sc_dense_layer_core.v    -- Full dense layer pipeline (decorrelated seeds)
-  sc_neurocore_top.v       -- AXI-Lite configuration wrapper
-  sc_axil_cfg.v            -- AXI-Lite register file
-  tb_sc_lif_neuron.v       -- Co-simulation testbench
-```
-
-### GPU Acceleration
-
-```python
-from sc_neurocore.accel import xp, HAS_CUPY, to_device, to_host
-from sc_neurocore.accel.gpu_backend import gpu_vec_mac
-
-# VectorizedSCLayer auto-detects GPU
-layer = VectorizedSCLayer(n_inputs=32, n_neurons=64, length=1024)
-output = layer.forward(input_values)  # GPU if CuPy available, else CPU
-```
-
-## Hardware-Software Co-Simulation
-
-The co-sim flow verifies bit-exact equivalence between the Python model and
-Verilog RTL:
-
+Co-simulation verifies bit-exact equivalence:
 ```bash
-# 1. Generate stimuli + expected results (Python golden model)
 python scripts/cosim_gen_and_check.py --generate
-
-# 2. Run Verilog simulation (requires Icarus Verilog)
-iverilog -o tb_lif hdl/sc_lif_neuron.v hdl/tb_sc_lif_neuron.v
-vvp tb_lif
-
-# 3. Compare results
+iverilog -o tb_lif hdl/sc_lif_neuron.v hdl/tb_sc_lif_neuron.v && vvp tb_lif
 python scripts/cosim_gen_and_check.py --check
 ```
 
-### Reproducibility
-
-Every GitHub Release includes:
-
-- **sdist** — source distribution (`dist/*.tar.gz`)
-- **SBOM** — CycloneDX software bill of materials (`sbom.json`)
-- **Changelog extract** — release notes from `CHANGELOG.md`
-
-Co-simulation traces are generated deterministically from fixed LFSR seeds.
-To reproduce a published benchmark:
-
-```bash
-git checkout v3.9.0
-pip install -e ".[dev]"
-python benchmarks/benchmark_suite.py --markdown > BENCHMARKS.md
-```
-
-For Verilog co-sim trace reproduction, see `scripts/cosim_gen_and_check.py`
-and the seed constants in `hdl/sc_bitstream_encoder.v`.
-
-### Key Technical Details
-
-- **LFSR**: 16-bit maximal-length, polynomial x^16+x^14+x^13+x^11+1, period 65535
-- **Seed strategy**: Input encoders `0xACE1 + i*7`, weight encoders `0xBEEF + i*13`
-- **Fixed-point**: Q8.8 (DATA_WIDTH=16, FRACTION=8), signed two's complement
-- **Overflow**: Explicit bit-width masking via `_mask()` function
-
-## Examples
-
-Runnable scripts in `examples/`:
-
-| Script | Description |
-|--------|-------------|
-| `01_basic_sc_encoding.py` | Bernoulli & Sobol bitstream encoding/decoding |
-| `02_sc_neuron_layer.py` | SCDenseLayer construction and forward pass |
-| `03_ir_compile_demo.py` | IR graph building, verification, SystemVerilog emission (v3 Rust engine) |
-| `04_vectorized_layer.py` | VectorizedSCLayer throughput benchmarking |
-| `05_scpn_stack.py` | Full 7-layer SCPN consciousness stack with inter-layer coupling |
-| `06_hdl_generation.py` | Verilog top-level generation from a network description |
-| `07_ensemble_consensus.py` | Multi-agent ensemble orchestration and voting |
-| `08_hdc_symbolic_query.py` | Hyper-Dimensional Computing symbolic memory (v3 Rust engine) |
-| `09_safety_critical_logic.py` | Fault-tolerant Boolean logic with stochastic redundancy (v3 Rust engine) |
-| `10_benchmark_report.py` | Head-to-head v2/v3 benchmark suite (v3 Rust engine) |
-| `11_sc_training_demo.py` | Surrogate-gradient training of an SC dense layer (v3 Rust engine) |
-
-```bash
-PYTHONPATH=src:bridge python examples/01_basic_sc_encoding.py
-```
-
-Examples marked **(v3 Rust engine)** require the compiled `sc_neurocore_engine` wheel.
-All other examples run with the pure-Python `sc_neurocore` package.
-
-## CI/CD
-
-12 GitHub Actions workflows (`.github/workflows/`), all SHA-pinned:
-
-| Workflow | Purpose |
-|----------|---------|
-| **ci.yml** | Lint (black + ruff + bandit) + Test (Python 3.10/3.11/3.12/3.13, coverage ≥ 98%) + Build |
-| **v3-engine.yml** | Rust engine `cargo test` + `cargo clippy` |
-| **v3-wheels.yml** | Cross-platform wheels (Linux, macOS, Windows × Python 3.10–3.12) |
-| **docker.yml** | Build & push Docker image to GHCR on release tags |
-| **docs.yml** | MkDocs → GitHub Pages |
-| **publish.yml** | PyPI OIDC trusted publisher on release |
-| **release.yml** | sdist + changelog extraction → GitHub Release |
-| **benchmark.yml** | Performance regression tracking |
-| **codeql.yml** | CodeQL security analysis (weekly + on push) |
-| **scorecard.yml** | OpenSSF Scorecard |
-| **pre-commit.yml** | Pre-commit hook validation |
-| **stale.yml** | Auto-label and close stale issues |
-
-## Benchmarks
-
-Run the benchmark suite:
-
-```bash
-python benchmarks/benchmark_suite.py           # quick mode
-python benchmarks/benchmark_suite.py --full    # thorough (10x)
-python benchmarks/benchmark_suite.py --markdown # output BENCHMARKS.md
-```
-
-Sample results (CPU, quick mode):
-
-| Operation | Throughput |
-|-----------|-----------|
-| LFSR step | 1.33 Mstep/s |
-| Bitstream encoder | 1.10 Mstep/s |
-| LIF neuron step | 1.07 Mstep/s |
-| vec_and (1024 words) | 41.0 Gbit/s |
-| gpu_vec_mac (64x32x16w) | 2.85 GOP/s (NumPy fallback) |
-
 ## Documentation
 
-**Live site**: [anulum.github.io/sc-neurocore](https://anulum.github.io/sc-neurocore/)
+**[anulum.github.io/sc-neurocore](https://anulum.github.io/sc-neurocore/)** — full docs, API reference, hardware guide, benchmarks.
 
-- [Getting Started](docs/guides/getting-started.md) -- Installation & quickstart
-- [API Reference](docs/api/API_REFERENCE.md) -- Python package API
-- [Rust Engine API](https://anulum.github.io/sc-neurocore/rust-api/sc_neurocore_engine/) -- Rust engine docs
-- [Hardware Guide](docs/hardware/HARDWARE_GUIDE.md) -- FPGA deployment workflow
-- [Architecture](docs/architecture/architecture.md) -- Package architecture
-- [Benchmarks](docs/benchmarks/BENCHMARKS.md) -- Performance measurements
-- [CHANGELOG.md](CHANGELOG.md) -- Version history
+| Resource | Link |
+|----------|------|
+| Getting Started | [docs/guides/getting-started.md](docs/guides/getting-started.md) |
+| API Reference | [docs/api/API_REFERENCE.md](docs/api/API_REFERENCE.md) |
+| Hardware Guide | [docs/hardware/HARDWARE_GUIDE.md](docs/hardware/HARDWARE_GUIDE.md) |
+| Benchmarks | [docs/benchmarks/BENCHMARKS.md](docs/benchmarks/BENCHMARKS.md) |
+| Examples | [examples/](examples/) (11 runnable scripts) |
+| Changelog | [CHANGELOG.md](CHANGELOG.md) |
 
-Build docs locally:
-```bash
-pip install mkdocs mkdocs-material mkdocstrings[python]
-mkdocs serve
-```
-
-## Install Extras
+## Install extras
 
 ```bash
-pip install sc-neurocore              # core engine only (neurons, layers, compiler, HDL gen)
-pip install sc-neurocore[gpu]         # + CuPy CUDA acceleration
-pip install sc-neurocore[jax]         # + JAX backend for holonomic adapters
-pip install sc-neurocore[quantum]     # + Qiskit + PennyLane quantum bridges
-pip install sc-neurocore[full]        # + networkx, onnx, qiskit, pennylane
-pip install sc-neurocore[research]    # + networkx, onnx, torch
-```
-
-For development (includes all modules + research/frontier code from source):
-
-```bash
-pip install -e ".[dev]"               # editable install with pytest, mypy, black, hypothesis
-```
-
-Pinned dependency files for reproducible environments:
-
-```bash
-pip install -r requirements.txt       # runtime only
-pip install -r requirements-dev.txt   # runtime + dev tools
+pip install sc-neurocore[gpu]      # CuPy CUDA acceleration
+pip install sc-neurocore[quantum]  # Qiskit + PennyLane bridges
+pip install sc-neurocore[full]     # everything
+pip install -e ".[dev]"            # development (all modules + test tools)
 ```
 
 ## Community
 
-- [GitHub Discussions](https://github.com/anulum/sc-neurocore/discussions) — questions, ideas, show & tell
-- [Issue Tracker](https://github.com/anulum/sc-neurocore/issues) — bug reports and feature requests
-- [Contributing Guide](CONTRIBUTING.md) — how to set up, test, and submit PRs
+- [GitHub Discussions](https://github.com/anulum/sc-neurocore/discussions)
+- [Issue Tracker](https://github.com/anulum/sc-neurocore/issues)
+- [Contributing Guide](CONTRIBUTING.md)
 
 ## License
 
-SC-NeuroCore is dual-licensed:
-
-- **Open Source**: [GNU Affero General Public License v3.0](LICENSE) (AGPLv3)
-- **Commercial**: Proprietary license available for integration into closed-source products
-
-For commercial licensing enquiries, contact [protoscience@anulum.li](mailto:protoscience@anulum.li).
+Dual-licensed: [AGPLv3](LICENSE) (open source) or commercial license.
+Contact [protoscience@anulum.li](mailto:protoscience@anulum.li) for commercial enquiries.

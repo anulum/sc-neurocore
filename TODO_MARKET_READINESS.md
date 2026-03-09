@@ -7,13 +7,13 @@ Status: Draft 2026-03-08
 - [ ] **JOSS paper submission** — 2-page software paper, peer-reviewed, citeable. Follow https://joss.theoj.org/about. Requires: statement of need, references to similar software, mention of ongoing research projects using it.
 - [ ] **FPGA deployment proof** — Deploy a 1000-neuron LIF network on Xilinx Artix-7 or Zynq. Measure and publish: LUT count, BRAM usage, DSP slices, Fmax, dynamic power (W), latency per timestep. This is the moat.
 - [ ] **Brian2 head-to-head benchmark** — Same Brunel network, same parameters, wall-clock comparison at 1K/10K/100K neurons. Show where SC-NeuroCore wins (SC mode, RTL pipeline, Rust engine).
-- [ ] **Trim README to ~50 lines** — Quick start, one code example, one diagram, badge row, link to full docs. Move everything else to docs site.
+- [x] **Trim README to ~50 lines** — DONE. 359→107 lines. One code example, badge row, architecture diagram, link to full docs.
 
 ## P1 — Credibility and adoption multipliers
 
 - [ ] **Kill frontier/speculative tiers in wheel** — Remove generative, world_model, analysis, audio, dashboard, viz, swarm, research/ from `pip install sc-neurocore`. Keep them source-only. Fewer modules = stronger signal.
 - [ ] **One killer tutorial** — "Deploy an SNN on FPGA in 20 minutes with SC-NeuroCore." End-to-end: Python model → co-sim → Verilog → synthesis. Publish on docs site + dev.to/Medium.
-- [ ] **FPGA synthesis reports in repo** — Vivado/Quartus reports committed as artifacts. LUT/BRAM/DSP/Fmax/power for reference designs.
+- [ ] **FPGA synthesis reports in repo** — Yosys CI workflow added (`.github/workflows/yosys-synth.yml`). Runs `synth_xilinx` on every HDL push. Vivado/Quartus for Fmax/power still needed.
 - [ ] **Contextualise "512x real-time" claim** — State baseline explicitly: "512x vs pure-Python simulation at N=10K, L=1024." Add Brian2 Cython comparison at same scale.
 - [ ] **MNIST-on-FPGA demo** — SC-encoded inference of a small classifier on FPGA. Measured accuracy, power, latency. Publishable result.
 

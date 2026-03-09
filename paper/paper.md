@@ -24,11 +24,13 @@ bibliography: paper.bib
 SC-NeuroCore is an open-source framework for designing, simulating, and
 deploying neuromorphic circuits based on stochastic computing (SC). It
 provides bit-true Python simulation that matches synthesisable Verilog RTL
-cycle-exactly, a high-performance Rust engine with SIMD acceleration
-(41 Gbit/s pack throughput, 224 Mstep/s LIF neuron), and an IR compiler that emits
-SystemVerilog for FPGA targets. The framework spans the full design flow
-from algorithm exploration through hardware-software co-simulation to
-bitstream generation.
+cycle-exactly, a high-performance Rust engine with SIMD acceleration,
+and an IR compiler that emits SystemVerilog for FPGA targets. Criterion
+benchmarks on an Intel i7-10700K with AVX-512 measure 41.3 Gbit/s
+bitstream packing and 224 Mstep/s LIF neuron throughput; lower SIMD tiers
+(AVX2, NEON) are supported with proportionally reduced throughput. The
+framework spans the full design flow from algorithm exploration through
+hardware-software co-simulation to bitstream generation.
 
 # Statement of Need
 
@@ -39,20 +41,25 @@ circuits extremely area-efficient and inherently fault-tolerant, properties
 that are attractive for edge neuromorphic inference where power and silicon
 area are constrained [@smithson2019].
 
-However, no existing open-source tool provides an integrated SC design
-flow. Researchers must manually translate SC algorithms into HDL, write
-ad-hoc testbenches, and hope the stochastic behaviour of their Python
-model matches the hardware. SC-NeuroCore closes this gap by offering:
+The target audience is twofold: (a) hardware designers prototyping
+neuromorphic edge devices who need a bit-true simulation-to-synthesis
+path, and (b) SNN researchers who want cycle-accurate hardware models
+rather than abstract differential-equation solvers.
+
+No existing open-source tool provides an integrated SC design flow.
+Researchers must manually translate SC algorithms into HDL, write ad-hoc
+testbenches, and hope the stochastic behaviour of their Python model
+matches the hardware. SC-NeuroCore closes this gap by offering:
 
 1. **Bit-true simulation**: A Python model whose LFSR seeds, fixed-point
    arithmetic (Q8.8), and overflow semantics match the Verilog RTL
    bit-for-bit. Co-simulation scripts verify equivalence automatically.
 
 2. **Performance**: A Rust engine (`sc_neurocore_engine`) accelerates
-   packed-bitstream AND, popcount, and LFSR operations via AVX-512/AVX2/NEON
-   SIMD. Criterion benchmarks on an i7-10700K (AVX-512) measure 41.3 Gbit/s
-   bitstream packing, 224 Mstep/s LIF neuron throughput, and 398 ns for a
-   full 1024-bit Bernoulli encode cycle.
+   packed-bitstream AND, popcount, and LFSR operations via
+   AVX-512/AVX2/NEON SIMD, with throughput figures reported in the
+   Summary above. A full 1024-bit Bernoulli encode cycle completes in
+   398 ns on the same i7-10700K test platform.
 
 3. **Hardware target**: An IR compiler lowers network descriptions to
    SystemVerilog with AXI-Lite configuration, targeting Xilinx and Intel
@@ -68,14 +75,20 @@ model matches the hardware. SC-NeuroCore closes this gap by offering:
 
 Existing neuromorphic simulators---NEST [@gewaltig2007], Brian2
 [@stimberg2019], and Lava [@lava2021]---target event-driven spiking
-network simulation at the differential-equation level. They do not model
-stochastic bitstream-level computation. SC-NeuroCore operates at a
-fundamentally different abstraction: individual AND/OR gates on
-bit-streams, enabling direct correspondence to synthesised hardware. The
-framework includes a Brunel balanced network benchmark [@brunel2000] for
-cross-simulator wall-clock comparison and follows the NeuroBench
-[@yik2023neurobench] methodology for standardised reporting. The LFSR
-design draws on maximal-length sequence theory [@golomb1967shift].
+network simulation at the differential-equation level. Python SNN
+libraries such as snnTorch [@eshraghian2023] and Norse [@pehle2021norse]
+provide gradient-based training of spiking networks on GPU but operate
+on continuous-valued membrane potentials, not hardware bit-streams. None
+of these tools model stochastic bitstream-level computation.
+SC-NeuroCore operates at a different abstraction: individual AND/OR
+gates on bit-streams, enabling direct correspondence to synthesised
+hardware. The Izhikevich neuron model [@izhikevich2003] is supported
+alongside LIF via a half-step integration scheme for numerical stability
+on the quadratic voltage term. The framework includes a Brunel balanced
+network benchmark [@brunel2000] for cross-simulator wall-clock
+comparison and follows the NeuroBench [@yik2023neurobench] methodology
+for standardised reporting. The LFSR design draws on maximal-length
+sequence theory [@golomb1967shift].
 
 # Architecture
 
@@ -114,7 +127,7 @@ for register-based configuration).
   invariants (bitstream roundtrip accuracy, LFSR determinism, neuron
   output constraints) across randomised inputs.
 - **Tiered packaging**: `pip install sc-neurocore` ships core + simulation
-  modules (133 files, 171 KB wheel). Research and frontier modules are
+  modules (142 files, 171 KB wheel). Research and frontier modules are
   available from source.
 
 # Quality Assurance
