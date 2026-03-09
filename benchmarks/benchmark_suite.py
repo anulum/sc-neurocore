@@ -11,6 +11,8 @@ Measures throughput and accuracy across core stochastic computing operations:
   4. GPU vs CPU comparison (when CuPy is available)
   5. Fixed-point LIF neuron stepping
   6. Full pipeline (encode -> synapse -> dot-product -> neuron)
+  7. Bitstream length scaling (wall time vs L for 32x16 dense)
+  8. Memory footprint tracking (tracemalloc peak allocation)
 
 Usage::
 
@@ -25,6 +27,7 @@ import argparse
 import sys
 import os
 import time
+import tracemalloc
 from dataclasses import dataclass
 from typing import List
 
@@ -264,6 +267,119 @@ def bench_gpu_mac(n_neurons: int, n_inputs: int, n_words: int, n_iters: int) -> 
 
 
 # ---------------------------------------------------------------------------
+# Bitstream length scaling
+# ---------------------------------------------------------------------------
+
+
+def bench_bitstream_length_scaling(n_runs: int = 5) -> List[BenchResult]:
+    """Wall time and throughput for dense forward at varying bitstream lengths.
+
+    Fixed network: 32 inputs, 16 neurons. Measures whether cost scales
+    linearly with bitstream length L.
+    """
+    from sc_neurocore.layers.vectorized_layer import VectorizedSCLayer
+
+    N_INPUTS, N_NEURONS = 32, 16
+    lengths = [128, 256, 512, 1024, 2048, 4096]
+    results: List[BenchResult] = []
+
+    print(f"\n{'Config':<28} | {'Mean Time (ms)':>14} | {'Throughput (Mbit/s)':>20}")
+    print("-" * 70)
+
+    for L in lengths:
+        layer = VectorizedSCLayer(n_inputs=N_INPUTS, n_neurons=N_NEURONS, length=L)
+        x = np.random.uniform(0, 1, N_INPUTS).tolist()
+
+        # warmup
+        layer.forward(x)
+
+        times = []
+        for _ in range(n_runs):
+            t0 = time.perf_counter()
+            layer.forward(x)
+            times.append(time.perf_counter() - t0)
+
+        mean_s = np.mean(times)
+        total_bits = N_NEURONS * N_INPUTS * L
+        throughput_mbps = total_bits / mean_s / 1e6
+
+        print(
+            f"  32x16, L={L:<5d}            | "
+            f"{mean_s * 1e3:>12.2f}ms | "
+            f"{throughput_mbps:>17.1f}"
+        )
+
+        results.append(
+            BenchResult(
+                f"Length scaling L={L}",
+                n_runs,
+                mean_s * n_runs,
+                f"{throughput_mbps:.1f} Mbit/s",
+            )
+        )
+
+    return results
+
+
+# ---------------------------------------------------------------------------
+# Memory footprint tracking
+# ---------------------------------------------------------------------------
+
+
+def bench_memory_footprint() -> List[BenchResult]:
+    """Peak memory allocation via tracemalloc for varying network sizes."""
+    from sc_neurocore.layers.vectorized_layer import VectorizedSCLayer
+
+    configs = [
+        (32, 16, "tiny"),
+        (64, 32, "small"),
+        (128, 64, "medium"),
+        (256, 128, "large"),
+    ]
+    L = 1024
+    results: List[BenchResult] = []
+
+    print(f"\n{'Config':<20} | {'Weight Matrix (MB)':>18} | {'Peak Alloc (MB)':>16} | {'Forward Time (ms)':>18}")
+    print("-" * 80)
+
+    for n_inputs, n_neurons, label in configs:
+        weight_bytes = n_neurons * n_inputs * 8  # float64
+
+        tracemalloc.start()
+        tracemalloc.reset_peak()
+
+        layer = VectorizedSCLayer(n_inputs=n_inputs, n_neurons=n_neurons, length=L)
+        x = np.random.uniform(0, 1, n_inputs).tolist()
+
+        t0 = time.perf_counter()
+        layer.forward(x)
+        fwd_ms = (time.perf_counter() - t0) * 1e3
+
+        _, peak_bytes = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+
+        weight_mb = weight_bytes / (1024 * 1024)
+        peak_mb = peak_bytes / (1024 * 1024)
+
+        tag = f"  {n_inputs}x{n_neurons} ({label})"
+        print(
+            f"{tag:<20}"
+            f"| {weight_mb:>16.3f}  | {peak_mb:>14.2f}  | {fwd_ms:>16.2f}"
+        )
+
+        results.append(
+            BenchResult(
+                f"Memory {n_inputs}x{n_neurons} ({label})",
+                1,
+                fwd_ms / 1e3,
+                f"peak={peak_mb:.2f} MB, weights={weight_mb:.3f} MB",
+            )
+        )
+
+    return results
+
+
+# ---------------------------------------------------------------------------
 # Main runner
 # ---------------------------------------------------------------------------
 
@@ -328,6 +444,15 @@ def run_benchmarks(full: bool = False) -> List[BenchResult]:
     ]:
         results.append(b)
         print(b)
+
+    # 6. Bitstream length scaling
+    print("\n--- Bitstream Length Scaling (32x16 dense) ---")
+    n_runs = 20 if full else 5
+    results.extend(bench_bitstream_length_scaling(n_runs=n_runs))
+
+    # 7. Memory footprint
+    print("\n--- Memory Footprint (L=1024) ---")
+    results.extend(bench_memory_footprint())
 
     return results
 

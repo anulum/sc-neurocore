@@ -32,13 +32,17 @@
   {
     "variant": "v2_rate_matched",
     "total_spikes": 0,
-    "mean_rate_hz": 48.762453125,
+    "mean_rate_hz": 0.0,
     "wall_time_s": 80.98479210003279,
     "brian2_spikes": 748777,
     "brian2_rate_hz": 748.777,
-    "rate_ratio": 0.06512279774218492,
-    "metric_note": "prob=0.0488, n_sub=100, bl=1024",
-    "params": null
+    "rate_ratio": 0.0,
+    "metric_note": "n_sub=100, bl=1024",
+    "params": null,
+    "domain": "probability",
+    "mean_output_prob": 0.0488,
+    "status": "ok",
+    "reason": ""
   },
   {
     "variant": "v3_fixed_point_q88",
@@ -180,19 +184,27 @@
     "brian2_spikes": 748777,
     "brian2_rate_hz": 748.777,
     "rate_ratio": 0.0,
-    "metric_note": "SKIPPED (JAX not installed)",
-    "params": null
+    "metric_note": "",
+    "params": null,
+    "domain": "spike",
+    "mean_output_prob": null,
+    "status": "skipped",
+    "reason": "JAX not installed"
   },
   {
     "variant": "v16_recurrent_reservoir",
     "total_spikes": 0,
-    "mean_rate_hz": 999.713582916114,
+    "mean_rate_hz": 0.0,
     "wall_time_s": 16.20854080002755,
     "brian2_spikes": 748777,
     "brian2_rate_hz": 748.777,
-    "rate_ratio": 1.3351285935814186,
-    "metric_note": "probability domain, n_sub=100",
-    "params": null
+    "rate_ratio": 0.0,
+    "metric_note": "n_sub=100",
+    "params": null,
+    "domain": "probability",
+    "mean_output_prob": 0.9997,
+    "status": "ok",
+    "reason": ""
   },
   {
     "variant": "v17_memristive_defects",

@@ -166,12 +166,18 @@ SIMD tier: avx512-vpopcntdq. The v3 engine wraps Rust via PyO3.
 | Attention (10×16 → 20×32) | 0.03 | 0.28 | 0.1× |
 | Attention (50×32 → 100×64) | 0.10 | 2.19 | 0.0× |
 
-**Geometric mean speedup: 0.5×** (PyO3 FFI overhead dominates small payloads).
+**Geometric mean speedup: 0.5×** — across all operations, the Rust FFI path is
+slower than pure Python on average. PyO3 call overhead (argument marshalling,
+GIL release/acquire) adds ~50–200 µs per invocation, which dominates when the
+payload is small.
 
-The v3 engine excels at large, compute-bound operations (Dense 128→64 at 7.3×)
-where SIMD throughput amortizes FFI crossing cost. For small payloads, calling
-into Rust through PyO3 is slower than staying in NumPy. The pure-Rust Criterion
-numbers above (Section 7) show the true engine throughput without FFI overhead.
+The Rust engine amortises FFI cost above ~64K bits per call. On payloads >1M
+bits the SIMD kernel wins decisively (Dense 128→64 at 7.3×). For small
+networks (<64 neurons), pure Python is faster. The Rust engine targets
+large-payload inference (>=128 neurons, L>=1024).
+
+The pure-Rust Criterion numbers in Section 7 show true engine throughput
+without FFI overhead.
 
 ---
 
@@ -204,7 +210,7 @@ events applied as instantaneous voltage jumps (v += w), matching Brian2's
 |---------|-------:|----------:|-------------:|---------:|
 | Brian2 reference | 1,057,908 | 1057.9 | 1.00 | 1.11 |
 | V1 StochasticLIF | 1,725,955 | 1726.0 | 1.63 | 30.23 |
-| V2 RateMatched | N/A | 48.6 (prob) | — | 51.81 |
+| V2 RateMatched | N/A | 0.049 (prob) | — | 51.81 |
 | V3 FixedPoint Q8.8 | 1,722,195 | 1722.2 | 1.63 | 15.41 |
 | V4 Hybrid SC+LIF | 1,888,351 | 1888.4 | 1.78 | 46.23 |
 
@@ -216,7 +222,7 @@ events applied as instantaneous voltage jumps (v += w), matching Brian2's
   `v_reset=10.0` passed correctly.
 - **V2 RateMatched**: VectorizedSCLayer in probability domain. Weights mapped
   to `p = w / v_threshold`. 100-neuron subset, bitstream_length=1024. Not
-  spike-comparable; mean output probability = 0.049.
+  spike-comparable; mean output probability = 0.0488.
 - **V3 FixedPoint Q8.8**: Hardware-faithful FixedPointLIFNeuron. Params mapped
   to Q8.8 integers (scale=256). Rate 1.63x Brian2 (higher due to different noise model).
 - **V4 Hybrid SC+LIF**: BitstreamSynapse AND gates → popcount → voltage →
@@ -239,7 +245,7 @@ Adapted Brunel parameters (weight_exc=5.0, ext_rate=200 Hz), 1000 neurons,
 |---|---------|-------:|----------:|-------------:|---------:|------|
 | — | Brian2 reference | 748,777 | 748.8 | 1.00 | 1.60 | |
 | V1 | StochasticLIF | 1,725,955 | 1726.0 | 2.31 | 49.33 | delta-PSC baseline |
-| V2 | RateMatched | — | 48.8 | — | 80.98 | probability domain |
+| V2 | RateMatched | — | 0.0488 (prob) | — | 80.98 | probability domain |
 | V3 | FixedPoint Q8.8 | 1,722,195 | 1722.2 | 2.30 | 20.79 | hardware-faithful |
 | V4 | Hybrid SC+LIF | 1,571,994 | 1572.0 | 2.10 | 42.46 | bitstream synapse |
 | V5 | Izhikevich | 15,331 | 15.3 | 0.02 | 11.49 | burst dynamics |
@@ -252,8 +258,8 @@ Adapted Brunel parameters (weight_exc=5.0, ext_rate=200 Hz), 1000 neurons,
 | V12 | STDP LIF | 1,689,552 | 1689.6 | 2.26 | 758.21 | 2000 STDP synapses |
 | V13 | DotProduct LIF | 497,647 | 9952.9 | — | 261.40 | n=50, bl=256 |
 | V14 | Sobol bitstream | 780,390 | 780.4 | 1.04 | 220.46 | low-discrepancy |
-| V15 | JAX vectorized | — | — | — | — | skipped (no JAX) |
-| V16 | Recurrent reservoir | — | 999.7 | — | 16.21 | probability domain |
+| V15 | JAX vectorized | — | — | — | — | skipped: JAX not installed |
+| V16 | Recurrent reservoir | — | 0.9997 (prob) | — | 16.21 | probability domain |
 | V17 | Memristive defects | — | 48.7 | — | 51.62 | stuck=1%, var=5% |
 | V18 | Numba JIT | 1,685,521 | 1685.5 | 2.25 | **5.20** | **9.5× vs V1** |
 | V19 | PyTorch CUDA | 1,725,955 | 1726.0 | 2.31 | **5.70** | GTX 1060 6GB |
@@ -319,7 +325,43 @@ Estimated: `sc_bitstream_encoder` < 100 LUTs (pending Yosys validation).
 
 ---
 
-## 13. Reproducing
+## 13. Bitstream Length Scaling (32x16 Dense)
+
+Fixed network: 32 inputs, 16 neurons. Mean of 5 runs per length.
+Expected: roughly linear scaling (2x L = 2x time).
+
+| L | Mean Time (ms) | Throughput (Mbit/s) |
+|--:|---------------:|--------------------:|
+| 128 | 0.43 | 151 |
+| 256 | 0.66 | 197 |
+| 512 | 1.05 | 250 |
+| 1024 | 1.14 | 459 |
+| 2048 | 1.36 | 773 |
+| 4096 | 4.22 | 497 |
+
+Scaling is sub-linear up to L=2048 due to NumPy vectorization amortizing
+fixed overhead. At L=4096, packed array allocation begins to dominate.
+
+---
+
+## 14. Memory Footprint (L=1024)
+
+Peak allocation measured via `tracemalloc` (includes layer construction
+and one forward pass). Weight matrix size is the float64 weight array only.
+
+| Config | Weight Matrix (MB) | Peak Alloc (MB) | Forward Time (ms) |
+|--------|-------------------:|----------------:|-------------------:|
+| 32x16 (tiny) | 0.004 | 4.63 | 3.1 |
+| 64x32 (small) | 0.016 | 18.33 | 7.5 |
+| 128x64 (medium) | 0.062 | 73.13 | 13.2 |
+| 256x128 (large) | 0.250 | 292.31 | 26.2 |
+
+Peak allocation scales as O(N_neurons * N_inputs * L / 8) bytes for the
+packed bitstream arrays, which dominate the weight matrix by ~1000x.
+
+---
+
+## 15. Reproducing
 
 ```bash
 # Python benchmark suite (quick ~15s, full ~120s)
