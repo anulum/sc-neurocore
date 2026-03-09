@@ -80,10 +80,12 @@ def _build_yosys_commands(module: str) -> str:
     """Generate inline Yosys commands (avoids TCL dependency)."""
     hdl_dir = REPO_ROOT / "hdl"
     cmds = []
+    # sc_axil_cfg.v uses SV unpacked-array ports that Yosys cannot parse.
+    skip = {"tb_", "sc_axil_cfg"}
     for f in sorted(hdl_dir.glob("*.v")):
-        if f.name.startswith("tb_"):
+        if any(f.stem.startswith(s) for s in skip):
             continue
-        cmds.append(f"read_verilog -sv {f}")
+        cmds.append(f"read_verilog {f}")
     cmds.append(f"synth_xilinx -top {module} -flatten")
     cmds.append("stat")
     return "; ".join(cmds)
