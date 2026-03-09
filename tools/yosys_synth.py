@@ -27,11 +27,20 @@ MODULES = [
     "sc_lif_neuron",
     "sc_bitstream_synapse",
     "sc_dotproduct_to_current",
-    "sc_firing_rate_bank",
-    "sc_dense_layer_core",
-    "sc_dense_layer_top",
-    "sc_neurocore_top",
 ]
+
+# Files using SV unpacked-array ports that apt-Yosys (< 0.40) cannot parse.
+# Includes: sc_axil_cfg, sc_firing_rate_bank, sc_dense_layer_core,
+#           sc_dense_layer_top, sc_neurocore_top.
+_SV_SKIP = frozenset(
+    {
+        "sc_axil_cfg",
+        "sc_firing_rate_bank",
+        "sc_dense_layer_core",
+        "sc_dense_layer_top",
+        "sc_neurocore_top",
+    }
+)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -80,10 +89,8 @@ def _build_yosys_commands(module: str) -> str:
     """Generate inline Yosys commands (avoids TCL dependency)."""
     hdl_dir = REPO_ROOT / "hdl"
     cmds = []
-    # sc_axil_cfg.v uses SV unpacked-array ports that Yosys cannot parse.
-    skip = {"tb_", "sc_axil_cfg"}
     for f in sorted(hdl_dir.glob("*.v")):
-        if any(f.stem.startswith(s) for s in skip):
+        if f.stem.startswith("tb_") or f.stem in _SV_SKIP:
             continue
         cmds.append(f"read_verilog {f}")
     cmds.append(f"synth_xilinx -top {module} -flatten")
