@@ -3,16 +3,12 @@
   "description": "A high-performance neuromorphic computing framework combining stochastic computing with spiking neural networks. Features a Rust SIMD engine with PyO3 Python bindings, hyper-dimensional computing (HDC/VSA), Petri net simulation, HDL generation for FPGA deployment, and SCPN integration for consciousness-layer modelling.",
   "creators": [
     {
-      "name": "Sotek, Miroslav",
+      "name": "Šotek, Miroslav",
       "affiliation": "ANULUM CH & LI",
       "orcid": "0009-0009-3560-0851"
-    },
-    {
-      "name": "Reiprich, Michal",
-      "affiliation": "ANULUM CH & LI"
     }
   ],
-  "version": "3.9.1",
+  "version": "3.10.0",
   "upload_type": "software",
   "access_right": "open",
   "license": "AGPL-3.0-or-later",

@@ -4,8 +4,8 @@
 
 | Suite | Count | Scope |
 |-------|------:|-------|
-| Python unit/integration | 978 | `pytest tests/` across 94 files (978 pass, 49 skip) |
-| Rust engine | — | `cargo test --manifest-path engine/Cargo.toml` |
+| Python unit/integration | 1 100+ | `pytest tests/` across 91 files |
+| Rust engine | 108 | `cargo test --manifest-path engine/Cargo.toml` |
 | Bridge (PyO3) | — | Maturin build + Python import smoke test |
 | HDL formal verification | 11 | Verilog modules in `hdl/` with testbenches in `tb/` |
 
