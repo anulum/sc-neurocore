@@ -1,13 +1,14 @@
 # SC-NeuroCore — Market Readiness TODO
 
-Status: Draft 2026-03-08
+Status: v3.10.0 (2026-03-09)
 
 ## P0 — Without these, nobody will use it
 
-- [ ] **JOSS paper submission** — 2-page software paper, peer-reviewed, citeable. Follow https://joss.theoj.org/about. Requires: statement of need, references to similar software, mention of ongoing research projects using it.
-- [ ] **FPGA deployment proof** — Deploy a 1000-neuron LIF network on Xilinx Artix-7 or Zynq. Measure and publish: LUT count, BRAM usage, DSP slices, Fmax, dynamic power (W), latency per timestep. This is the moat.
+- [x] **JOSS paper written** — DONE (v3.10.0). `paper/paper.md` + `paper.bib`, 12 refs with DOIs, MNIST results, Brian2 comparison, formal verification. Submission-ready for https://joss.theoj.org/papers/new.
+- [ ] **JOSS paper submitted** — Submit via JOSS web form. Requires: public repo (done), statement of need (done), functioning software (done), test suite (done). Estimated review: 4-8 weeks.
+- [ ] **FPGA deployment proof** — Deploy a 1000-neuron LIF network on Xilinx Artix-7 or Zynq. Measure and publish: LUT count, BRAM usage, DSP slices, Fmax, dynamic power (W), latency per timestep. This is the moat. Vivado tooling ready (`tools/vivado_impl.tcl`), need physical board.
 - [x] **Brian2 head-to-head benchmark** — DONE. Brunel balanced network (AI regime, Brunel 2000), PoissonInput (independent per-neuron drive). Results at 1K: V18 Numba 5.5x faster than Brian2. At 10K: Brian2 1.6x faster (sparse C++ codegen vs dense N×N). Rates match: ~100 Hz (1K), ~41 Hz (10K). Script: `benchmarks/brian2_benchmark.py`.
-- [x] **Trim README to ~50 lines** — DONE. 359→107 lines. One code example, badge row, architecture diagram, link to full docs.
+- [x] **Trim README to ~50 lines** — DONE. 359→166 lines. Benchmarks section, 10 HDL modules, MNIST demo, badge row, architecture diagram.
 
 ## P1 — Credibility and adoption multipliers
 
@@ -31,6 +32,7 @@ Status: Draft 2026-03-08
 - [ ] **Loihi/SpiNNaker comparison** — Benchmark against Intel Lava on equivalent network. Different hardware philosophy but same audience.
 - [ ] **hls4ml interop** — Bridge or comparison showing SC advantages over HLS-based neural network deployment.
 - [ ] **Power analysis paper** — Theoretical + measured analysis of stochastic computing power advantages for neuromorphic edge inference.
+- [ ] **Sparse weight matrix (scipy.sparse)** — SC-NeuroCore uses dense N×N at 10K (800 MB, cache thrash). Sparse support closes the Brian2 gap at N>10K.
 
 ## P4 — Post-Audit Benchmark Re-Runs (2026-03-09)
 
