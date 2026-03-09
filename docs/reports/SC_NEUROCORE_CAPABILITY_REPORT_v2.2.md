@@ -15,20 +15,20 @@ SC-NeuroCore is a revolutionary computational framework that represents informat
 
 ### Key Metrics at a Glance
 
-| Metric | SC-NeuroCore | Traditional | Improvement |
-|--------|--------------|-------------|-------------|
-| Energy per Operation | 5.10 fJ | 1000 fJ (GPU) | **196×** |
-| Fault Tolerance | 30% bit errors | <1% | **30×** |
-| Gate Count (Multiply) | 1 AND gate | 1000 gates | **1000×** |
-| Pattern Capacity (HDC) | 100,000 patterns | 100 patterns | **1000×** |
-| Theoretical Ceiling | 10^50 ops/s/kg | 10^10 ops/s/kg | **10^40×** |
+| Metric | SC-NeuroCore | Traditional | Improvement | Basis |
+|--------|--------------|-------------|-------------|-------|
+| Energy per Operation | 5.10 fJ | 1000 fJ (GPU) | **196×** | Model estimate (gate-level) |
+| Fault Tolerance | 30% bit errors | <1% | **30×** | Simulation validated |
+| Gate Count (Multiply) | 1 AND gate | 1000 gates | **1000×** | SC theory (Alaghi & Hayes 2013) |
+| Pattern Capacity (HDC) | 100,000 patterns | 100 patterns | **1000×** | Simulation validated |
+| Theoretical Ceiling | 10^50 ops/s/kg | 10^10 ops/s/kg | **10^40×** | Bremermann limit (theoretical) |
 
 ### Status Overview
 
 - **11 Validated Improvements** - Benchmarked with reproducible metrics
 - **7 Implemented Improvements** - Working code, pending full benchmarking
 - **17 Future Improvements** - Theoretical/requires specialized hardware
-- **416 Passing Tests** - Comprehensive test coverage
+- **978 Python + 124 Rust Tests** - Comprehensive test coverage (98% line coverage)
 - **50+ Experiment Demos** - Ready-to-run demonstrations
 
 ---
@@ -530,11 +530,11 @@ Three Laws constraint system for AGI safety.
 
 Anomaly detection and self-healing.
 
-### 6.5 Formal Verification
+### 6.5 Code Safety Verification
 
-**Module:** `verification/formal_proofs.py`
+**Module:** `verification/safety.py`
 
-SMT solver integration for safety proofs.
+AST-based blocklist checker for dangerous calls (eval, exec, system, popen, rmtree). Not an SMT solver — verifies absence of unsafe patterns via static analysis.
 
 ---
 
@@ -758,7 +758,7 @@ left, right = bridge.generate_binaural_sample(ccw_params)
 ```bash
 cd 03_CODE/sc-neurocore
 python -m pytest tests/ -v --tb=short
-# Expected: 416 passed, 33 skipped
+# Expected: 978 passed, 49 skipped
 ```
 
 ### 10.2 Energy Benchmark
@@ -893,7 +893,7 @@ sc-neurocore/
 │   ├── transformers/    # S-Former
 │   ├── transcendent/    # Multiverse, noetic
 │   └── world_model/     # Predictive planning
-├── tests/               # 416 tests
+├── tests/               # 978 Python + 124 Rust tests
 ├── docs/                # Documentation
 └── scripts/             # Benchmarks
 ```
@@ -906,7 +906,7 @@ sc-neurocore/
 @software{scneurocore2026,
   title={SC-NeuroCore: Universal Stochastic Computing Framework},
   author={Sotek, Miroslav and AI Collaborators},
-  version={3.7.0},
+  version={3.9.1},
   year={2026},
   url={https://github.com/anulum/sc-neurocore}
 }

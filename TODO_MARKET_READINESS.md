@@ -32,6 +32,15 @@ Status: Draft 2026-03-08
 - [ ] **hls4ml interop** — Bridge or comparison showing SC advantages over HLS-based neural network deployment.
 - [ ] **Power analysis paper** — Theoretical + measured analysis of stochastic computing power advantages for neuromorphic edge inference.
 
+## P4 — Post-Audit Benchmark Re-Runs (2026-03-09)
+
+These stored results are stale after the 20-task audit fix commit (986e2df):
+
+- [ ] **Re-run Brunel v5_izhikevich** — Half-step integration changes spike timing. Stored: 15,331 spikes @ 15.3 Hz. Run `python benchmarks/brunel_translator.py` v5 variant, update `benchmarks/results/snn_translator_20v.json`.
+- [ ] **Re-run Brunel v12_stdp_lif** — STDP mutual exclusion changes weight evolution. Stored: 1,689,552 spikes @ 1689.6 Hz. Run same script v12 variant, update JSON.
+- [ ] **Re-run Rust Criterion kuramoto** — 1/N normalization adds one div/oscillator/step. Stored: 118.7 ms (100 osc, 1000 steps). Run `cargo bench kuramoto` on cloud instance, update `BENCHMARK_REPORT.md`.
+- [ ] **Spot-check Brunel scaling (FixedPointLIF masking)** — Q8.8 masking fix unlikely to affect Brunel params (w=0.1, V_th=20) but confirm 1K–50K numbers in `SCALING_REPORT.md` are unchanged within measurement noise.
+
 ## Anti-patterns to avoid
 
 - Don't add more modules before getting users for existing ones
