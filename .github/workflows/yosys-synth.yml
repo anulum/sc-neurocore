@@ -1,0 +1,47 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# © 1998–2026 Miroslav Šotek. All rights reserved.
+# Contact: www.anulum.li | protoscience@anulum.li
+name: Yosys FPGA Synthesis
+
+permissions: {}
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "hdl/**"
+      - "tools/yosys_synth.*"
+      - ".github/workflows/yosys-synth.yml"
+  pull_request:
+    paths:
+      - "hdl/**"
+
+concurrency:
+  group: yosys-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  synthesize:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Install Yosys
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq yosys
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Run synthesis (Xilinx 7-series target)
+        run: python tools/yosys_synth.py --json benchmarks/results/yosys_synth.json --markdown
+
+      - name: Upload synthesis results
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
+        with:
+          name: yosys-synth-results
+          path: benchmarks/results/yosys_synth.json

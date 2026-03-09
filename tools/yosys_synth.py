@@ -30,6 +30,7 @@ MODULES = [
     "sc_dotproduct_to_current",
     "sc_firing_rate_bank",
     "sc_dense_layer_core",
+    "sc_dense_layer_top",
     "sc_neurocore_top",
 ]
 
