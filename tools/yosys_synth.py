@@ -15,6 +15,7 @@ Usage::
     python tools/yosys_synth.py --module sc_lif_neuron
     python tools/yosys_synth.py --json benchmarks/results/yosys_synth.json
 """
+
 from __future__ import annotations
 
 import argparse
@@ -35,6 +36,7 @@ MODULES = [
     "sc_firing_rate_bank",
     "sc_dense_layer_core",
     "sc_dense_layer_top",
+    "sc_dense_matrix_layer",
     "sc_neurocore_top",
 ]
 

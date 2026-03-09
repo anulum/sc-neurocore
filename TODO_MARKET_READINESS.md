@@ -12,10 +12,10 @@ Status: Draft 2026-03-08
 ## P1 — Credibility and adoption multipliers
 
 - [ ] **Kill frontier/speculative tiers in wheel** — Remove generative, world_model, analysis, audio, dashboard, viz, swarm, research/ from `pip install sc-neurocore`. Keep them source-only. Fewer modules = stronger signal.
-- [ ] **One killer tutorial** — "Deploy an SNN on FPGA in 20 minutes with SC-NeuroCore." End-to-end: Python model → co-sim → Verilog → synthesis. Publish on docs site + dev.to/Medium.
-- [ ] **FPGA synthesis reports in repo** — Yosys CI workflow added (`.github/workflows/yosys-synth.yml`). Runs `synth_xilinx` on every HDL push. Vivado/Quartus for Fmax/power still needed.
-- [ ] **Contextualise "512x real-time" claim** — State baseline explicitly: "512x vs pure-Python simulation at N=10K, L=1024." Brian2 benchmark done (5.5x at 1K, 0.63x at 10K). SC wins at FPGA-scale, Brian2 wins at large N due to sparse codegen.
-- [ ] **MNIST-on-FPGA demo** — SC-encoded inference of a small classifier on FPGA. Measured accuracy, power, latency. Publishable result.
+- [x] **One killer tutorial** — DONE. `docs/tutorials/fpga_in_20_minutes.md`. End-to-end: train → quantise → SC simulate → synthesise → Vivado. 6 sections with scaling guide.
+- [x] **FPGA synthesis reports in repo** — DONE. Yosys CI + sv2v preprocessing. `sc_neurocore_top` (3×7) = 7,382 LUTs. Vivado TCL script + report parser added (`tools/vivado_impl.tcl`, `tools/vivado_report.py`). Fmax/power require Vivado hardware.
+- [x] **Contextualise "512x real-time" claim** — DONE. README now has Benchmarks section with Brian2 comparison table (5.2s Numba vs 1.6s Brian2 at 1K), Rust SIMD throughput, Yosys synthesis results. Honest framing: SC targets FPGA-scale networks, Brian2 faster at N>1K.
+- [x] **MNIST-on-FPGA demo** — DONE. `examples/mnist_fpga/demo.py`. Float 94.2%, Q8.8 94.2%, SC 94.0% (L=1024). 16→10 config = ~56K LUTs (Artix-7 100T). Verilog weight export + `sc_dense_matrix_layer.v` HDL module.
 
 ## P2 — Community and discoverability
 
