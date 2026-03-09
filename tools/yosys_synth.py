@@ -34,6 +34,7 @@ MODULES = [
     "sc_bitstream_synapse",
     "sc_dotproduct_to_current",
     "sc_firing_rate_bank",
+    "sc_axil_cfg",
     "sc_dense_layer_core",
     "sc_dense_layer_top",
     "sc_dense_matrix_layer",

@@ -24,7 +24,7 @@ pip install -e ".[research]"
 
 ## Requirements
 
-- Python >= 3.9
+- Python >= 3.10
 - NumPy >= 1.22
 - SciPy >= 1.7
 - Numba >= 0.56
@@ -33,7 +33,7 @@ pip install -e ".[research]"
 ## Running Tests
 
 ```bash
-# Full suite (826 tests, 100% coverage)
+# Full suite (1100+ tests, 98% coverage gate)
 pytest tests/ -v --cov=sc_neurocore --cov-report=term
 
 # Quick smoke test

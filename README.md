@@ -15,7 +15,7 @@ Commercial Licensing: Available
 [![crates.io](https://img.shields.io/crates/v/sc_neurocore_engine)](https://crates.io/crates/sc_neurocore_engine)
 [![Coverage](https://img.shields.io/badge/coverage-98%25-brightgreen)](https://github.com/anulum/sc-neurocore)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.18594898-blue)](https://doi.org/10.5281/zenodo.18594898)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.18906614-blue)](https://doi.org/10.5281/zenodo.18906614)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/anulum/sc-neurocore/badge)](https://scorecard.dev/viewer/?uri=github.com/anulum/sc-neurocore)
 
 Design spiking neural networks in Python, simulate them bit-exactly, and compile to FPGA — using stochastic computing, where an AND gate is a multiplier and a wire is a number.
@@ -100,13 +100,17 @@ See [docs/tutorials/fpga_in_20_minutes.md](docs/tutorials/fpga_in_20_minutes.md)
 
 ## Hardware (Verilog RTL)
 
-Nine synthesisable modules in `hdl/`:
+Ten synthesisable modules in `hdl/`:
 - `sc_bitstream_encoder.v` — LFSR-based stochastic encoder (Q8.8 comparator)
 - `sc_bitstream_synapse.v` — AND-gate multiplier (1 LUT)
 - `sc_lif_neuron.v` — Q8.8 leaky integrate-and-fire
+- `sc_dotproduct_to_current.v` — Dot product accumulator
+- `sc_firing_rate_bank.v` — Rate counter bank
 - `sc_dense_layer_core.v` — Full pipeline with decorrelated seeds
+- `sc_dense_layer_top.v` — Pipelined variant with register stages
 - `sc_dense_matrix_layer.v` — Per-neuron weight dense layer (MNIST-scale)
-- `sc_neurocore_top.v` — AXI-Lite configuration wrapper
+- `sc_axil_cfg.v` — AXI-Lite slave register bank
+- `sc_neurocore_top.v` — Top-level wrapper
 
 Co-simulation verifies bit-exact equivalence:
 ```bash

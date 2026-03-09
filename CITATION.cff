@@ -5,9 +5,9 @@ authors:
   given-names: "Miroslav"
   orcid: "https://orcid.org/0009-0009-3560-0851"
 title: "SC-NeuroCore: Stochastic Neuromorphic Compiler"
-version: 3.9.1
-doi: 10.5281/zenodo.18594898
-date-released: 2026-03-08
+version: 3.10.0
+doi: 10.5281/zenodo.18906614
+date-released: 2026-03-09
 license: AGPL-3.0
 keywords:
   - neuromorphic

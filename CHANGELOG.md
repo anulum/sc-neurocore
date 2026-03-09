@@ -4,6 +4,38 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.10.0] - 2026-03-09
+
+### MNIST-on-FPGA Demo
+- **End-to-end pipeline**: `examples/mnist_fpga/demo.py` — train (sklearn digits),
+  PCA 64→16, quantise Q8.8, stochastic computing inference, Verilog weight export
+- Float 94.2%, Q8.8 94.2%, SC 94.0% (L=1024, sign-magnitude encoding)
+- Resource estimate: 16→10 config = ~56K LUTs (fits Artix-7 100T)
+- `hdl/sc_dense_matrix_layer.v` — per-neuron weight dense layer for classification
+
+### Vivado Tooling
+- `tools/vivado_impl.tcl` — non-project flow: synth → place → route (250 MHz default)
+- `tools/vivado_report.py` — parse timing/utilization/power reports to JSON
+
+### Tutorial
+- `docs/tutorials/fpga_in_20_minutes.md` — 6-section FPGA deployment tutorial
+
+### Paper
+- JOSS paper updated to submission-ready state (`paper/paper.md`)
+- 12 references with DOIs, MNIST demo results, Brian2 comparison, formal verification
+
+### Documentation Overhaul
+- README: benchmarks section (Rust SIMD, Brian2 comparison, Yosys synthesis)
+- README: all 10 HDL modules listed with descriptions
+- Zenodo DOI updated to 10.5281/zenodo.18906614
+- CITATION.cff, .zenodo.json: DOI, version, author corrections
+- CONTRIBUTING.md, VALIDATION.md, getting-started.md: test counts, Python version
+- Yosys MODULES list updated (10 modules)
+
+### Fixes
+- Zenodo author list corrected (sole author: Miroslav Šotek)
+- DOI badge in README points to latest Zenodo record
+
 ## [3.9.1] - 2026-03-08
 
 ### Benchmarks
