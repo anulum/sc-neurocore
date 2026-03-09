@@ -54,13 +54,58 @@ Python API ──→ Rust Engine (AVX-512/NEON) ──→ IR Compiler ──→ 
 
 **Three acceleration paths**: NumPy (pure Python), Rust SIMD (`sc_neurocore_engine`), or CuPy GPU.
 
+## Benchmarks
+
+### Rust SIMD Engine (AVX-512, Criterion)
+
+| Operation | Throughput | vs Python |
+|-----------|-----------|----------|
+| Bitstream packing (`pack_dispatch`) | 41.3 Gbit/s | 79× |
+| Popcount (`VPOPCNTDQ`) | 366 Mword/s | 10.6× |
+| Fused encode+AND+popcount (Xoshiro) | 285 ns / 1024 bits | — |
+| Dense forward 128→64, L=1024 | — | 7.3× |
+| Dense forward prepacked 64→32 | 54.9 µs | 43.8× |
+
+### Brian2 Comparison — Brunel Balanced Network
+
+1000 LIF neurons (80E/20I), 10% connectivity, 1000 ms. Delta-PSC semantics
+(`v += w`), Poisson drive at 200 Hz.
+
+| Backend | Wall time | Speedup vs V1 |
+|---------|-------:|------:|
+| V1 per-neuron Python | 49.3 s | 1.0× |
+| V20 vectorized NumPy | 10.3 s | 4.8× |
+| V18 Numba JIT | 5.2 s | 9.5× |
+| V19 PyTorch CUDA (GTX 1060) | 5.7 s | 8.7× |
+| Brian2 (Cython codegen) | 1.6 s | 30.8× |
+
+Brian2 is faster at this scale because its C++ codegen + sparse synapse
+representation amortises well above ~1K neurons. SC-NeuroCore targets
+FPGA-scale networks (≤1K neurons) where bit-exact RTL co-simulation matters
+and Brian2 has no hardware path. At 1K neurons on cloud hardware (EPYC 9575F),
+SC dense operations complete in 55 ms vs Brian2's 6.2 s first-run (114×);
+the gap narrows on subsequent Brian2 runs after Cython compilation.
+
+Full 20-variant translator results and cloud scaling data:
+[docs/benchmarks/BENCHMARKS.md](docs/benchmarks/BENCHMARKS.md)
+
+### FPGA Synthesis (Yosys, Xilinx 7-series)
+
+| Module | LUTs | FFs |
+|--------|-----:|----:|
+| `sc_neurocore_top` (3-in, 7-neuron) | 7,382 | 2,442 |
+
+MNIST classifier (16→10, PCA) estimated at ~56K LUTs — fits Artix-7 100T.
+See [docs/tutorials/fpga_in_20_minutes.md](docs/tutorials/fpga_in_20_minutes.md).
+
 ## Hardware (Verilog RTL)
 
-Eight synthesisable modules in `hdl/`:
-- `sc_bitstream_encoder.v` — LFSR-based stochastic encoder
+Nine synthesisable modules in `hdl/`:
+- `sc_bitstream_encoder.v` — LFSR-based stochastic encoder (Q8.8 comparator)
 - `sc_bitstream_synapse.v` — AND-gate multiplier (1 LUT)
 - `sc_lif_neuron.v` — Q8.8 leaky integrate-and-fire
 - `sc_dense_layer_core.v` — Full pipeline with decorrelated seeds
+- `sc_dense_matrix_layer.v` — Per-neuron weight dense layer (MNIST-scale)
 - `sc_neurocore_top.v` — AXI-Lite configuration wrapper
 
 Co-simulation verifies bit-exact equivalence:
@@ -68,6 +113,22 @@ Co-simulation verifies bit-exact equivalence:
 python scripts/cosim_gen_and_check.py --generate
 iverilog -o tb_lif hdl/sc_lif_neuron.v hdl/tb_sc_lif_neuron.v && vvp tb_lif
 python scripts/cosim_gen_and_check.py --check
+```
+
+### MNIST-on-FPGA Demo
+
+Train a digit classifier, quantise to Q8.8, simulate with stochastic
+bitstreams (bit-exact match to RTL), and export Verilog weights:
+
+```bash
+python examples/mnist_fpga/demo.py
+python examples/mnist_fpga/demo.py --export-verilog hdl/generated/mnist_weights.vh
+```
+
+Vivado timing/power analysis (requires Vivado):
+```bash
+vivado -mode batch -source tools/vivado_impl.tcl -tclargs -top sc_dense_matrix_layer -part xc7a100tcsg324-1
+python tools/vivado_report.py vivado_reports/
 ```
 
 ## Documentation
