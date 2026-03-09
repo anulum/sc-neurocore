@@ -101,7 +101,10 @@ def _bp_for_scale(n: int) -> BrunelParams:
     n_exc = int(n * 0.8)
     n_inh = n - n_exc
     return BrunelParams(
-        n_exc=n_exc, n_inh=n_inh, sim_ms=1000.0, g_inh=G_INH,
+        n_exc=n_exc,
+        n_inh=n_inh,
+        sim_ms=1000.0,
+        g_inh=G_INH,
     )
 
 
@@ -134,20 +137,23 @@ def _run_brian2(bp: BrunelParams) -> tuple[int, float]:
     tau : 1
     """
     G = brian2.NeuronGroup(
-        bp.n_total, eqs,
-        threshold="v > v_th", reset="v = v_reset",
-        method="euler", dt=bp.dt * brian2.ms,
+        bp.n_total,
+        eqs,
+        threshold="v > v_th",
+        reset="v = v_reset",
+        method="euler",
+        dt=bp.dt * brian2.ms,
     )
     G.v = 0
     G.tau = bp.tau_mem
     G.namespace["v_th"] = bp.v_threshold
     G.namespace["v_reset"] = bp.v_reset
 
-    S_exc = brian2.Synapses(G[:bp.n_exc], G, on_pre="v_post += w", dt=bp.dt * brian2.ms)
+    S_exc = brian2.Synapses(G[: bp.n_exc], G, on_pre="v_post += w", dt=bp.dt * brian2.ms)
     S_exc.connect(p=bp.conn_prob)
     S_exc.namespace["w"] = bp.weight_exc
 
-    S_inh = brian2.Synapses(G[bp.n_exc:], G, on_pre="v_post -= w", dt=bp.dt * brian2.ms)
+    S_inh = brian2.Synapses(G[bp.n_exc :], G, on_pre="v_post -= w", dt=bp.dt * brian2.ms)
     S_inh.connect(p=bp.conn_prob)
     S_inh.namespace["w"] = bp.weight_inh
 
@@ -155,8 +161,7 @@ def _run_brian2(bp: BrunelParams) -> tuple[int, float]:
     # PoissonInput avoids the correlated-drive artifact of shared PoissonGroup.
     c_ext = int(bp.conn_prob * bp.n_exc)
     nu_ext = _brunel_external_rate(bp)
-    P_ext = brian2.PoissonInput(G, "v", N=c_ext, rate=nu_ext * brian2.Hz,
-                                weight=bp.weight_exc)
+    P_ext = brian2.PoissonInput(G, "v", N=c_ext, rate=nu_ext * brian2.Hz, weight=bp.weight_exc)
 
     mon = brian2.SpikeMonitor(G)
     brian2.run(bp.sim_ms * brian2.ms)
@@ -178,7 +183,7 @@ def _run_v1(bp: BrunelParams) -> tuple[int, float]:
     conn_mask = rng.random((bp.n_total, bp.n_total)) < bp.conn_prob
     np.fill_diagonal(conn_mask, False)
     weights = np.where(conn_mask, params["weight_exc"], 0.0)
-    weights[bp.n_exc:, :] *= -bp.g_inh
+    weights[bp.n_exc :, :] *= -bp.g_inh
 
     steps = int(bp.sim_ms / bp.dt)
     spike_count = 0
@@ -223,7 +228,7 @@ def _run_v3(bp: BrunelParams) -> tuple[int, float]:
     conn_mask = rng.random((bp.n_total, bp.n_total)) < bp.conn_prob
     np.fill_diagonal(conn_mask, False)
     w_q = np.where(conn_mask, params["j_exc_q"], 0)
-    w_q[bp.n_exc:, :] = np.where(conn_mask[bp.n_exc:, :], -params["j_inh_q"], 0)
+    w_q[bp.n_exc :, :] = np.where(conn_mask[bp.n_exc :, :], -params["j_inh_q"], 0)
 
     steps = int(bp.sim_ms / bp.dt)
     spike_count = 0
@@ -232,7 +237,9 @@ def _run_v3(bp: BrunelParams) -> tuple[int, float]:
 
     for _ in range(steps):
         ext_events = rng.poisson(ext_lambda, bp.n_total)
-        syn_q = w_q[prev_spikes].sum(axis=0) if prev_spikes.any() else np.zeros(bp.n_total, dtype=int)
+        syn_q = (
+            w_q[prev_spikes].sum(axis=0) if prev_spikes.any() else np.zeros(bp.n_total, dtype=int)
+        )
 
         spikes = np.zeros(bp.n_total, dtype=bool)
         for i, n in enumerate(neurons):
@@ -255,8 +262,9 @@ try:
     from numba import njit as _njit
 
     @_njit(cache=True)
-    def _numba_brunel_loop(v, weights, alpha, v_rest, v_threshold, v_reset,
-                           ext_weight, ext_lambda, n, steps, seed):
+    def _numba_brunel_loop(
+        v, weights, alpha, v_rest, v_threshold, v_reset, ext_weight, ext_lambda, n, steps, seed
+    ):
         np.random.seed(seed)
         spike_count = 0
         prev_spikes = np.zeros(n, dtype=np.bool_)
@@ -279,8 +287,7 @@ try:
         return spike_count
 
     # Trigger compilation once at import time
-    _numba_brunel_loop(np.zeros(2), np.zeros((2, 2)), 0.005, 0.0, 20.0, 10.0,
-                       0.1, 2.0, 2, 1, 0)
+    _numba_brunel_loop(np.zeros(2), np.zeros((2, 2)), 0.005, 0.0, 20.0, 10.0, 0.1, 2.0, 2, 1, 0)
     _HAS_NUMBA = True
 except ImportError:
     _HAS_NUMBA = False
@@ -296,7 +303,7 @@ def _run_v18(bp: BrunelParams) -> tuple[int, float]:
     conn_mask = rng.random((n, n)) < bp.conn_prob
     np.fill_diagonal(conn_mask, False)
     weights = np.where(conn_mask, params["weight_exc"], 0.0)
-    weights[bp.n_exc:, :] *= -bp.g_inh
+    weights[bp.n_exc :, :] *= -bp.g_inh
 
     alpha = bp.dt / bp.tau_mem
     steps = int(bp.sim_ms / bp.dt)
@@ -304,8 +311,17 @@ def _run_v18(bp: BrunelParams) -> tuple[int, float]:
 
     if _HAS_NUMBA:
         spike_count = _numba_brunel_loop(
-            v, weights, alpha, bp.v_rest, bp.v_threshold, bp.v_reset,
-            params["ext_weight"], ext_lambda, n, steps, bp.seed,
+            v,
+            weights,
+            alpha,
+            bp.v_rest,
+            bp.v_threshold,
+            bp.v_reset,
+            params["ext_weight"],
+            ext_lambda,
+            n,
+            steps,
+            bp.seed,
         )
     else:
         spike_count = 0
@@ -332,6 +348,7 @@ def _build_weight_matrix(n, n_exc, conn_prob, w_exc, w_inh, rng):
     use_sparse = n > 10_000
     if use_sparse:
         from scipy.sparse import random as sp_random
+
         W = sp_random(n, n, density=conn_prob, format="csr", random_state=rng)
         W.data[:] = w_exc
         W.setdiag(0)
@@ -356,8 +373,7 @@ def _run_v20(bp: BrunelParams) -> tuple[int, float]:
     w_exc = params["weight_exc"]
     w_inh = params["weight_inh"]
 
-    W, is_sparse = _build_weight_matrix(n, n_exc, params["conn_prob"],
-                                        w_exc, w_inh, rng)
+    W, is_sparse = _build_weight_matrix(n, n_exc, params["conn_prob"], w_exc, w_inh, rng)
 
     v = np.full(n, params["v_rest"])
     alpha = params["dt"] / params["tau_mem"]
@@ -387,11 +403,11 @@ def _run_v20(bp: BrunelParams) -> tuple[int, float]:
 # Backend registry
 # ---------------------------------------------------------------------------
 BACKENDS: dict[str, tuple[str, callable]] = {
-    "brian2":  ("Brian2 (reference)", _run_brian2),
-    "v1":     ("SC V1 StochasticLIF",  _run_v1),
-    "v3":     ("SC V3 FixedPoint Q8.8", _run_v3),
-    "v18":    ("SC V18 Numba JIT",      _run_v18),
-    "v20":    ("SC V20 Vectorized",     _run_v20),
+    "brian2": ("Brian2 (reference)", _run_brian2),
+    "v1": ("SC V1 StochasticLIF", _run_v1),
+    "v3": ("SC V3 FixedPoint Q8.8", _run_v3),
+    "v18": ("SC V18 Numba JIT", _run_v18),
+    "v20": ("SC V20 Vectorized", _run_v20),
 }
 
 
@@ -407,14 +423,19 @@ def _run_backend(key: str, bp: BrunelParams, repeats: int) -> BenchmarkRow | Non
 
     # Per-neuron loop backends are too slow above 10K
     if key in ("v1", "v3") and bp.n_total > 10_000:
-        print(f"  [SKIP] {label} — per-neuron loop infeasible at {bp.n_total} neurons",
-              file=sys.stderr)
+        print(
+            f"  [SKIP] {label} — per-neuron loop infeasible at {bp.n_total} neurons",
+            file=sys.stderr,
+        )
         return None
 
     # V18 uses dense N×N matrix — prohibitive above 20K
     if key == "v18" and bp.n_total > 20_000:
-        print(f"  [SKIP] {label} — dense N×N matrix ({bp.n_total**2 * 8 / 1e9:.1f} GB) "
-              f"at {bp.n_total} neurons", file=sys.stderr)
+        print(
+            f"  [SKIP] {label} — dense N×N matrix ({bp.n_total**2 * 8 / 1e9:.1f} GB) "
+            f"at {bp.n_total} neurons",
+            file=sys.stderr,
+        )
         return None
 
     runs: list[RunResult] = []
@@ -423,8 +444,10 @@ def _run_backend(key: str, bp: BrunelParams, repeats: int) -> BenchmarkRow | Non
         try:
             result = _measure(fn, bp)
             runs.append(result)
-            print(f"{result.wall_time_s:.2f}s, {result.total_spikes} spikes, "
-                  f"{result.mean_rate_hz:.1f} Hz")
+            print(
+                f"{result.wall_time_s:.2f}s, {result.total_spikes} spikes, "
+                f"{result.mean_rate_hz:.1f} Hz"
+            )
         except Exception as exc:
             print(f"FAILED: {exc}", file=sys.stderr)
             return None
@@ -460,11 +483,13 @@ def _system_info() -> dict:
     }
     try:
         import brian2
+
         info["brian2"] = brian2.__version__
     except ImportError:
         pass
     try:
         import numba
+
         info["numba"] = numba.__version__
     except ImportError:
         pass
@@ -522,15 +547,19 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Brian2 vs SC-NeuroCore Brunel balanced network benchmark",
     )
-    parser.add_argument("--scales", nargs="+", type=int, default=[1000],
-                        help="Neuron counts (default: 1000)")
+    parser.add_argument(
+        "--scales", nargs="+", type=int, default=[1000], help="Neuron counts (default: 1000)"
+    )
     parser.add_argument("--all", action="store_true", help="Run 1K, 10K, 100K")
     parser.add_argument("--repeats", type=int, default=DEFAULT_REPEATS)
-    parser.add_argument("--json", type=str, default=None,
-                        help="Write JSON results to file")
-    parser.add_argument("--backends", nargs="+", default=list(BACKENDS.keys()),
-                        choices=list(BACKENDS.keys()),
-                        help="Backends to run (default: all)")
+    parser.add_argument("--json", type=str, default=None, help="Write JSON results to file")
+    parser.add_argument(
+        "--backends",
+        nargs="+",
+        default=list(BACKENDS.keys()),
+        choices=list(BACKENDS.keys()),
+        help="Backends to run (default: all)",
+    )
     args = parser.parse_args()
 
     scales = SCALES if args.all else args.scales
@@ -543,10 +572,11 @@ def main() -> None:
 
     print(f"Brunel balanced network benchmark — {args.repeats} repeats per config")
     print(f"  Regime: AI (g={G_INH}, eta={ETA})")
-    print(f"  V_th={sample_bp.v_threshold} mV, V_reset={sample_bp.v_reset} mV, "
-          f"tau_m={sample_bp.tau_mem} ms, J={sample_bp.weight_exc} mV")
-    print(f"  C_E={c_e:.0f}, nu_ext={nu_ext:.1f} Hz, "
-          f"ext_lambda/step={ext_lam:.4f}")
+    print(
+        f"  V_th={sample_bp.v_threshold} mV, V_reset={sample_bp.v_reset} mV, "
+        f"tau_m={sample_bp.tau_mem} ms, J={sample_bp.weight_exc} mV"
+    )
+    print(f"  C_E={c_e:.0f}, nu_ext={nu_ext:.1f} Hz, " f"ext_lambda/step={ext_lam:.4f}")
     print(f"  Scales: {scales}")
     print(f"  Backends: {args.backends}")
     print()
@@ -557,8 +587,10 @@ def main() -> None:
         bp = _bp_for_scale(n)
         c_e_n = bp.conn_prob * bp.n_exc
         nu_ext_n = _brunel_external_rate(bp)
-        print(f"=== {n:,} neurons ({bp.n_exc}E / {bp.n_inh}I), "
-              f"C_E={c_e_n:.0f}, nu_ext={nu_ext_n:.1f} Hz, 1s sim ===")
+        print(
+            f"=== {n:,} neurons ({bp.n_exc}E / {bp.n_inh}I), "
+            f"C_E={c_e_n:.0f}, nu_ext={nu_ext_n:.1f} Hz, 1s sim ==="
+        )
 
         for key in args.backends:
             row = _run_backend(key, bp, args.repeats)
