@@ -1,6 +1,6 @@
 # Rust Engine API (sc_neurocore_engine)
 
-The high-performance Rust engine provides 512x real-time stochastic computing
+The high-performance Rust engine provides SIMD-accelerated stochastic computing
 with SIMD-accelerated bitstream operations, IR compilation, and HDC support.
 
 **[Browse the full Rust API documentation →](https://anulum.github.io/sc-neurocore/rust-api/sc_neurocore_engine/)**

@@ -26,19 +26,10 @@ class SCRecurrentLayer:
     seed: Optional[int] = None
 
     def __post_init__(self):  # type: ignore
-        np.random.seed(self.seed)
+        rng = np.random.RandomState(self.seed)
 
-        # Input Weights (W_in): (n_neurons, n_inputs)
-        self.W_in = np.random.uniform(0, 1, (self.n_neurons, self.n_inputs)) * self.input_strength
-
-        # Recurrent Weights (W_rec): (n_neurons, n_neurons)
-        # Initialize as a Reservoir (sparse, scaled)
-        # For true SC, weights are [0,1]. Standard Reservoir weights are [-1, 1].
-        # We map [-1, 1] logic to [0, 1] using Excitatory/Inhibitory paths or
-        # Bipolar coding. Here we stick to Unipolar [0,1].
-        # We'll initialize random sparse connections.
-
-        self.W_rec = np.random.uniform(0, 0.2, (self.n_neurons, self.n_neurons))  # Weak connections
+        self.W_in = rng.uniform(0, 1, (self.n_neurons, self.n_inputs)) * self.input_strength
+        self.W_rec = rng.uniform(0, 0.2, (self.n_neurons, self.n_neurons))
 
         # Neurons
         self.neurons = [

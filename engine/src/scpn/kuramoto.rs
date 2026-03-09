@@ -119,13 +119,15 @@ impl KuramotoSolver {
             .for_each(|(row_idx, dtheta_n)| {
                 let coupling_row = &self.coupling[row_idx * n..(row_idx + 1) * n];
                 let sin_row = &self.sin_diff[row_idx * n..(row_idx + 1) * n];
-                let coupling_sum = coupling_row
+                let coupling_sum: f64 = coupling_row
                     .iter()
                     .zip(sin_row.iter())
                     .map(|(k_nm, sin_diff)| k_nm * sin_diff)
-                    .sum::<f64>();
-                *dtheta_n =
-                    self.omega[row_idx] + coupling_sum + self.noise_amp * self.noise[row_idx];
+                    .sum();
+                // 1/N normalization per Kuramoto (1984)
+                *dtheta_n = self.omega[row_idx]
+                    + coupling_sum / (n as f64)
+                    + self.noise_amp * self.noise[row_idx];
             });
 
         for (phase, dtheta) in self.phases.iter_mut().zip(self.dtheta.iter()) {
@@ -258,14 +260,14 @@ impl KuramotoSolver {
             .for_each(|(i, dtheta_n)| {
                 let coupling_row = &self.coupling[i * n..(i + 1) * n];
                 let sin_row = &self.sin_diff[i * n..(i + 1) * n];
-                let coupling_sum = coupling_row
+                let coupling_sum: f64 = coupling_row
                     .iter()
                     .zip(sin_row.iter())
                     .map(|(k, s)| k * s)
-                    .sum::<f64>();
+                    .sum();
 
                 *dtheta_n = self.omega[i]
-                    + coupling_sum
+                    + coupling_sum / (n as f64)
                     + self.geo_coupling[i]
                     + self.pgbo_coupling[i]
                     + self.field_pressure * self.cos_theta[i]

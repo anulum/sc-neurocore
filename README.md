@@ -24,12 +24,12 @@ Commercial Licensing: Available
 [![REUSE](https://img.shields.io/badge/REUSE-compliant-green)](https://reuse.software/)
 
 **Version:** 3.9.1
-**Status:** Production Core Verified | 1213 Tests | 98% Coverage | CI/CD Active
+**Status:** Production Core Verified | 978 Python + 124 Rust Tests | 98% Coverage | CI/CD Active
 
 SC-NeuroCore is a deterministic stochastic computing framework for
 neuromorphic hardware design and edge-AI deployment. It provides bit-true
 Python simulation (digital twin environment) that matches Verilog RTL
-cycle-exactly, a high-performance Rust engine (512x real-time), GPU-accelerated
+cycle-exactly, a high-performance Rust engine, GPU-accelerated
 inference, and a tiered module system from production FPGA targets to
 research prototyping.
 
@@ -57,7 +57,7 @@ make preflight             # verify setup (lint + tests)
 
 ## Docker
 
-The Docker image ships with the full Rust engine (512x real-time performance):
+The Docker image ships with the full Rust engine:
 
 ```bash
 # Build
@@ -120,7 +120,7 @@ graph TD
         B --> F{Backend?}
         F -->|CPU| G[NumPy / Numba SIMD]
         F -->|GPU| H[CuPy CUDA]
-        F -->|Rust| I[sc_neurocore_engine<br/>512x real-time]
+        F -->|Rust| I[sc_neurocore_engine]
     end
 
     subgraph "Hardware Target"
@@ -294,11 +294,11 @@ Sample results (CPU, quick mode):
 
 | Operation | Throughput |
 |-----------|-----------|
-| LFSR step | 2.25 Mstep/s |
-| Bitstream encoder | 1.88 Mstep/s |
-| LIF neuron step | 1.15 Mstep/s |
-| vec_and (1024 words) | 45.67 Gbit/s |
-| gpu_vec_mac (64x32x16w) | 6.15 GOP/s |
+| LFSR step | 1.33 Mstep/s |
+| Bitstream encoder | 1.10 Mstep/s |
+| LIF neuron step | 1.07 Mstep/s |
+| vec_and (1024 words) | 41.0 Gbit/s |
+| gpu_vec_mac (64x32x16w) | 2.85 GOP/s (NumPy fallback) |
 
 ## Documentation
 

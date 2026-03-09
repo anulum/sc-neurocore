@@ -35,7 +35,8 @@ class TestSCIzhikevichNeuron:
         from sc_neurocore.neurons.sc_izhikevich import SCIzhikevichNeuron
 
         n = SCIzhikevichNeuron(noise_std=1.0, seed=42)
-        n.step(5.0)  # covers noise branch
+        spike = n.step(5.0)
+        assert spike in (0, 1)
 
     def test_reset_state(self):
         from sc_neurocore.neurons.sc_izhikevich import SCIzhikevichNeuron
@@ -77,7 +78,8 @@ class TestStochasticLIFCoverage:
                 return 0.01
 
         n = StochasticLIFNeuron(noise_std=0.1, entropy_source=FakeEntropy(), seed=42)
-        n.step(0.5)  # covers entropy_source branch
+        spike = n.step(0.5)
+        assert spike in (0, 1)
 
     def test_get_state(self):
         from sc_neurocore.neurons.stochastic_lif import StochasticLIFNeuron

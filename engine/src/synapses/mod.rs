@@ -73,16 +73,13 @@ impl StdpSynapse {
             );
         }
 
-        // 3. Update weight
-        // Post-spike + pre-trace → potentiation (LTP)
+        // 3. Update weight — mutually exclusive per timestep.
+        // Simultaneous spikes → LTP (pre-before-post convention).
         if post_spike {
             let dw = (self.trace_pre as i32 * params.a_plus.abs() as i32) >> self.fraction;
             let new_w = (self.weight as i32 + dw).min(params.w_max as i32);
             self.weight = mask(new_w, self.data_width);
-        }
-
-        // Pre-spike + post-trace → depression (LTD); sign forced negative
-        if pre_spike {
+        } else if pre_spike {
             let dw = (self.trace_post as i32 * params.a_minus.abs() as i32) >> self.fraction;
             let new_w = (self.weight as i32 - dw).max(params.w_min as i32);
             self.weight = mask(new_w, self.data_width);
