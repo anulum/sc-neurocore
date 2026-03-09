@@ -29,8 +29,8 @@ class Interval:
 
 class FormalVerifier:
     """
-    Simulated SMT Solver using Interval Arithmetic.
-    Proves properties of Stochastic Functions.
+    Interval arithmetic checker for stochastic probability bounds and
+    energy safety constraints. Not an SMT solver.
     """
 
     @staticmethod

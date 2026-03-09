@@ -37,19 +37,19 @@ class SCIzhikevichNeuron(BaseNeuron):
         self.reset_state()
 
     def step(self, input_current: float) -> int:
-        # Compute derivatives
-        dv = (0.04 * self.v**2 + 5 * self.v + 140 - self.u + input_current) * self.dt  # type: ignore
-        du = (self.a * (self.b * self.v - self.u)) * self.dt  # type: ignore
+        # Two half-steps for numerical stability on 0.04v² term.
+        # Izhikevich (2003) recommends dt ≤ 0.5 ms; we split each dt into two.
+        half_dt = self.dt * 0.5
+        for _ in range(2):
+            dv = (0.04 * self.v**2 + 5 * self.v + 140 - self.u + input_current) * half_dt  # type: ignore
+            du = (self.a * (self.b * self.v - self.u)) * half_dt  # type: ignore
+            self.v += dv  # type: ignore
+            self.u += du  # type: ignore
 
-        # Add noise to membrane
         if self.noise_std > 0.0:
-            dv += float(self._rng.normal(0.0, self.noise_std))
-
-        self.v += dv  # type: ignore
-        self.u += du  # type: ignore
+            self.v += float(self._rng.normal(0.0, self.noise_std))  # type: ignore
 
         if self.v >= 30.0:  # type: ignore
-            # Spike event
             spike = 1
             self.v = self.c
             self.u += self.d  # type: ignore

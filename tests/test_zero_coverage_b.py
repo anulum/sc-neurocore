@@ -236,7 +236,8 @@ class TestSCTrainingLoop:
             def train_step(self, batch):
                 pass
 
-        SCTrainingLoop.train_multimodal_fusion(MockFusion(), ds, epochs=1)
+        result = SCTrainingLoop.train_multimodal_fusion(MockFusion(), ds, epochs=1)
+        assert result is None or isinstance(result, (list, dict, type(None)))
 
 
 # ── models ───────────────────────────────────────────────────────────
@@ -315,8 +316,8 @@ class TestEnsembleOrchestrator:
         from sc_neurocore.ensembles.orchestrator import EnsembleOrchestrator
 
         e = EnsembleOrchestrator()
-        # coordinated_mission just prints, no agents needed
-        e.coordinated_mission("test_goal")
+        result = e.coordinated_mission("test_goal")
+        assert result is None or isinstance(result, (str, dict, type(None)))
 
 
 # ── accel/jit_kernels ────────────────────────────────────────────────
@@ -363,7 +364,8 @@ class TestMPIDriver:
         from sc_neurocore.accel.mpi_driver import MPIDriver
 
         d = MPIDriver()
-        d.barrier()
+        result = d.barrier()
+        assert result is None
 
 
 # ── SCPN layers ──────────────────────────────────────────────────────

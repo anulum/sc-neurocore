@@ -8,19 +8,14 @@ from typing import Any, Dict
 @dataclass
 class StochasticDendriticNeuron:
     """
-    Two-Compartment Neuron (Soma + 2 Dendrites).
-    Can solve non-linear problems (XOR) singly.
+    XOR-nonlinearity neuron with shunting inhibition.
 
-    Note: This neuron takes *two* inputs (input_a, input_b) rather than
-    the single ``input_current`` of :class:`BaseNeuron`.  It therefore
-    does not inherit from ``BaseNeuron``, but exposes the same
-    ``reset_state()`` / ``get_state()`` interface for consistency.
+    Implements ``d1 + d2 - 2*d1*d2`` which gives XOR truth table
+    for binary inputs. Not a Rall cable-equation compartmental model.
 
-    Structure:
-    Input A -> Dendrite 1
-    Input B -> Dendrite 2
-    Dendrite Output = NonLinear(Input)
-    Soma = Integrate(D1 + D2)
+    Takes two inputs (input_a, input_b) and does not inherit from
+    ``BaseNeuron``, but exposes ``reset_state()`` / ``get_state()``
+    for interface consistency.
     """
 
     threshold: float = 1.5
@@ -33,14 +28,8 @@ class StochasticDendriticNeuron:
         d1 = input_a
         d2 = input_b
 
-        # Active Dendrite model with shunting inhibition.
-        # Soma Current = D1 + D2 - Interaction(D1*D2)
+        # XOR nonlinearity: d1 + d2 - 2*d1*d2
         current = d1 + d2 - 2.0 * (d1 * d2)
-        # Logic:
-        # 0,0 -> 0
-        # 1,0 -> 1
-        # 0,1 -> 1
-        # 1,1 -> 1+1 - 2 = 0
 
         self._last_current = current
         if current > 0.5:

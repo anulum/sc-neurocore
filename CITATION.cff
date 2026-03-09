@@ -4,7 +4,7 @@ authors:
 - family-names: "Šotek"
   given-names: "Miroslav"
   orcid: "https://orcid.org/0009-0009-3560-0851"
-title: "SC-NeuroCore: 512x Real-Time Stochastic Neuromorphic Compiler"
+title: "SC-NeuroCore: Stochastic Neuromorphic Compiler"
 version: 3.9.1
 doi: 10.5281/zenodo.18594898
 date-released: 2026-03-08

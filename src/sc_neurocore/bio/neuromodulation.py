@@ -37,11 +37,7 @@ class NeuromodulatorSystem:
         if "v_threshold" in mod_params:
             mod_params["v_threshold"] *= 1.0 - 0.2 * self.da_level
 
-        # Serotonin: Increases Leak (Stability) -> Decreases tau_mem?
-        # Actually, standard LIF: dv = -(v-rest)/tau.
-        # Stable means faster decay to rest, so smaller tau or larger leak conductance.
-        # Let's say 5HT makes it harder to fire -> Increases threshold?
-        # Literature varies. Let's say 5HT stabilizes -> Reduces Noise.
+        # 5-HT reduces noise (stabilisation effect)
         if "noise_std" in mod_params:
             mod_params["noise_std"] *= 1.0 - 0.5 * self.ht_level
 

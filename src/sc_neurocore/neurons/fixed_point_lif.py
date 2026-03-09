@@ -71,13 +71,10 @@ class FixedPointLIFNeuron:
 
         # --- Leak term: (V_REST - v) * leak_k >>> FRACTION ---
         diff = _mask(self.v_rest - self.v, 2 * W)
-        leak_mul = diff * leak_k
-        # Arithmetic right shift (Python >> is arithmetic for negative ints)
-        dv_leak = leak_mul >> self.fraction
+        dv_leak = _mask((diff * leak_k) >> self.fraction, W)
 
         # --- Input term: I_t * gain_k >>> FRACTION ---
-        in_mul = I_t * gain_k
-        dv_in = in_mul >> self.fraction
+        dv_in = _mask((I_t * gain_k) >> self.fraction, W)
 
         # --- Next membrane potential ---
         v_next = _mask(self.v + dv_leak + dv_in + noise_in, W)

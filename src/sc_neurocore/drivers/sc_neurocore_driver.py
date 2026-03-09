@@ -3,11 +3,7 @@ import os
 import logging
 import numpy as np
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger("sc_neurocore_driver")
+logger = logging.getLogger(__name__)
 
 
 class RealityHardwareError(ImportError):
@@ -100,9 +96,9 @@ class SC_NeuroCore_Driver:
             # Simple mock function
             return np.random.rand(16)
 
-        # Hardware DMA transfer would go here
-        # ...
-        pass
+        raise NotImplementedError(
+            "HARDWARE DMA transfer requires PYNQ overlay. " "Use mode='EMULATION' for development."
+        )
 
 
 if __name__ == "__main__":

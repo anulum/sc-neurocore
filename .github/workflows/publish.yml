@@ -36,7 +36,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable
@@ -53,8 +53,8 @@ jobs:
           name: wheel-${{ matrix.os }}-py${{ matrix.python-version }}
           path: dist/*.whl
 
-  publish-sdist:
-    needs: [build-sdist]
+  publish-pypi:
+    needs: [build-sdist, build-wheels]
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
@@ -62,14 +62,15 @@ jobs:
     steps:
       - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8
         with:
-          name: sdist
+          pattern: "{sdist,wheel-*}"
+          merge-multiple: true
           path: dist/
       - uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # release/v1
         with:
           packages-dir: dist/
 
   publish-crate:
-    needs: [build-sdist, build-wheels]
+    needs: [publish-pypi]
     runs-on: ubuntu-latest
     environment: crates-io
     steps:

@@ -32,7 +32,8 @@ fn uniform_phases_give_r_near_zero() {
 fn strong_coupling_increases_r() {
     let n = 50;
     let omega = vec![1.0; n];
-    let coupling = vec![2.0; n * n];
+    // K=100 so effective coupling is K/N = 2.0 per oscillator (Kuramoto 1984)
+    let coupling = vec![100.0; n * n];
     let phases: Vec<f64> = (0..n)
         .map(|i| 2.0 * std::f64::consts::PI * ((i * 37 % n) as f64) / (n as f64))
         .collect();

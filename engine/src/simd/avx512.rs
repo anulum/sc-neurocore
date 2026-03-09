@@ -140,7 +140,7 @@ pub unsafe fn fused_xor_popcount_avx512(a: &[u64], b: &[u64]) -> u64 {
 /// Caller must ensure the current CPU supports `avx512f` and `avx512bw`.
 /// `buf` must have at least 64 elements.
 pub unsafe fn bernoulli_compare_avx512(buf: &[u8], threshold: u8) -> u64 {
-    debug_assert!(buf.len() >= 64, "buffer must contain at least 64 bytes");
+    assert!(buf.len() >= 64, "buffer must contain at least 64 bytes");
     let data = _mm512_loadu_si512(buf.as_ptr() as *const __m512i);
     let thresh = _mm512_set1_epi8(threshold as i8);
     _mm512_cmplt_epu8_mask(data, thresh)

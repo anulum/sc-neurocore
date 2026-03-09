@@ -23,25 +23,22 @@ class CodeSafetyVerifier:
             logger.error("Safety Violation: Syntax Error in generated code.")
             return False
 
-        # Check for forbidden imports or calls (e.g., 'os.system("rm -rf")')
+        BLOCKED_ATTRS = {"system", "popen", "rmtree", "call", "Popen"}
+        BLOCKED_NAMES = {"eval", "exec", "compile", "__import__"}
+        violations: list[str] = []
+
         for node in ast.walk(tree):
             if isinstance(node, ast.Call):
-                if isinstance(node.func, ast.Attribute):
-                    # Check for os.system, subprocess.call etc.
-                    if node.func.attr in ["system", "popen", "rmtree"]:
-                        # Heuristic check
-                        logger.warning(
-                            "Safety Warning: Dangerous call detected '%s'.", node.func.attr
-                        )
-                        # In a real system, this would be stricter.
-                        # For demo, we allow it but log it.
+                if isinstance(node.func, ast.Attribute) and node.func.attr in BLOCKED_ATTRS:
+                    violations.append(f"line {node.lineno}: blocked call '{node.func.attr}'")
+                elif isinstance(node.func, ast.Name) and node.func.id in BLOCKED_NAMES:
+                    violations.append(f"line {node.lineno}: blocked builtin '{node.func.id}'")
 
-            # Check for infinite loops (While True without Break)
-            if isinstance(node, ast.While):
-                # Simple heuristic: if test is Constant(True), check for break
-                pass
+        if violations:
+            for v in violations:
+                logger.warning("Safety violation: %s", v)
+            return False
 
-        logger.info("Safety Check: Code structure appears valid.")
         return True
 
     def verify_logic_invariant(self, func, input_sample, expected_condition):  # type: ignore

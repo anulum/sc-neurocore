@@ -25,52 +25,49 @@ class QuantumEntropySource:
         self.state = np.zeros(2**self.n_qubits, dtype=np.complex128)
         self.state[0] = 1.0
 
-    def _hadamard(self):  # type: ignore
-        """Applies Hadamard gate to put system in superposition."""
-        # Simple H on all qubits (simplified logic for speed)
-        # H |0> = (|0> + |1>)/sqrt(2)
-        # We just randomize the amplitudes while maintaining normalization
+    def _hadamard(self) -> None:
+        """Apply Hadamard gate H = (1/√2)[[1,1],[1,-1]] to each qubit."""
+        H = np.array([[1, 1], [1, -1]], dtype=np.complex128) / np.sqrt(2)
+        result = self.state.copy()
+        n = self.n_qubits
+        dim = 2**n
+        for q in range(n):
+            new_result = np.zeros(dim, dtype=np.complex128)
+            block = 2 ** (n - q)
+            half = block // 2
+            for start in range(0, dim, block):
+                for i in range(half):
+                    a = result[start + i]
+                    b = result[start + half + i]
+                    new_result[start + i] = H[0, 0] * a + H[0, 1] * b
+                    new_result[start + half + i] = H[1, 0] * a + H[1, 1] * b
+            result = new_result
+        self.state = result
 
-        # Random unitary logic:
-        # Generate random complex numbers
-        real = self._rng.randn(len(self.state))
-        imag = self._rng.randn(len(self.state))
-        new_state = real + 1j * imag
-
-        # Normalize
-        norm = np.linalg.norm(new_state)
-        self.state = new_state / norm
-
-    def sample_normal(self, mean=0.0, std=1.0) -> float:  # type: ignore
-        """
-        Generates a random number by collapsing the wavefunction.
-        Returns a value drawn from the measured probability distribution,
-        mapped to a Normal-like range.
-        """
-        # 1. Evolve State (Time Evolution)
-        self._hadamard()  # type: ignore
-
-        # 2. Measure (Born Rule)
+    def _measure(self) -> int:
+        """Apply Hadamard, measure via Born rule, collapse state."""
+        self._hadamard()
         probs = np.abs(self.state) ** 2
+        idx = self._rng.choice(len(probs), p=probs)
+        # Wavefunction collapse to measured basis state
+        self.state = np.zeros_like(self.state)
+        self.state[idx] = 1.0
+        return int(idx)
 
-        # 3. Collapse
-        # We choose an index based on probs
-        outcome_idx = self._rng.choice(len(probs), p=probs)
+    def sample_normal(self, mean: float = 0.0, std: float = 1.0) -> float:
+        """
+        Two independent measurements → Box-Muller → Gaussian sample.
 
-        # 4. Map Outcome to Continuous Value
-        # We treat the outcome index as a sample from the Hilbert Space
-        # We add some jitter to make it continuous (simulating weak measurement noise)
+        Discrete outcomes dithered with uniform jitter for continuous input.
+        """
+        N = len(self.state)
 
-        # Center the index around 0
-        N = len(probs)
-        centered = outcome_idx - (N / 2.0)
+        u1 = (self._measure() + self._rng.uniform()) / N
+        u1 = np.clip(u1, 1e-10, 1.0 - 1e-10)
+        u2 = (self._measure() + self._rng.uniform()) / N
 
-        # Normalize to [-1, 1] range approximately
-        normalized = centered / (N / 2.0)
-
-        # Scale to requested std + mean
-        # Note: This is a "Quantum Distribution", not perfectly Gaussian
-        return float(mean + (normalized * std * 3.0))
+        z = np.sqrt(-2.0 * np.log(u1)) * np.cos(2.0 * np.pi * u2)
+        return float(mean + z * std)
 
     def sample(self) -> float:
         return self.sample_normal()

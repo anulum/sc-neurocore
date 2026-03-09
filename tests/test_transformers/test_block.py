@@ -32,19 +32,20 @@ def test_block_forward_shape_1d():
 
 
 def test_block_forward_shape_2d_single_token():
-    """2D single-token input should yield (d_model,) output."""
+    """2D single-token input should yield (1, d_model) output."""
     block = StochasticTransformerBlock(d_model=3, n_heads=1, length=16)
     x = np.array([[0.1, 0.2, 0.3]])
     out = block.forward(x)
-    assert out.shape == (3,)
+    assert out.shape == (1, 3)
 
 
-def test_block_forward_multi_token_raises():
-    """Multi-token inputs should error due to shape mismatch."""
+def test_block_forward_multi_token():
+    """Multi-token inputs should produce (seq_len, d_model) output."""
     block = StochasticTransformerBlock(d_model=2, n_heads=1, length=16)
     x = np.array([[0.1, 0.2], [0.3, 0.4]])
-    with pytest.raises(ValueError):
-        _ = block.forward(x)
+    out = block.forward(x)
+    assert out.shape == (2, 2)
+    assert np.all(np.isfinite(out))
 
 
 def test_block_output_finite():

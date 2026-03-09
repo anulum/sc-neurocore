@@ -25,7 +25,8 @@ fn ssgf_step_without_extras_matches_basic_step() {
 fn geometry_coupling_accelerates_synchronization() {
     let n = 50;
     let omega = vec![1.0; n];
-    let coupling = vec![0.1; n * n];
+    // K=5 so effective coupling is K/N = 0.1 per oscillator
+    let coupling = vec![5.0; n * n];
     let phases: Vec<f64> = (0..n)
         .map(|i| 2.0 * std::f64::consts::PI * ((i * 37 % n) as f64) / (n as f64))
         .collect();
@@ -71,7 +72,8 @@ fn field_pressure_creates_preferred_phase() {
 fn pgbo_coupling_modulates_dynamics() {
     let n = 20;
     let omega = vec![1.0; n];
-    let coupling = vec![0.5; n * n];
+    // K=10 so effective coupling is K/N = 0.5 per oscillator
+    let coupling = vec![10.0; n * n];
     let phases: Vec<f64> = (0..n).map(|i| 0.1 * i as f64).collect();
     let mut h = vec![0.0; n * n];
     for i in 0..n / 2 {

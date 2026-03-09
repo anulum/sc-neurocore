@@ -119,7 +119,7 @@ for register-based configuration).
 
 # Quality Assurance
 
-SC-NeuroCore maintains 1213 tests with 98.5% line coverage, enforced by CI
+SC-NeuroCore maintains 978 Python and 124 Rust tests with 98% line coverage, enforced by CI
 on every push. The test suite includes unit tests, integration tests,
 property-based tests (Hypothesis), cross-layer coupling tests, quantum
 error correction tests, and hardware co-simulation checks. Static analysis

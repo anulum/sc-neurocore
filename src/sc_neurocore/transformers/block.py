@@ -36,41 +36,28 @@ class StochasticTransformerBlock:
 
     def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """
-        x: (Sequence_Length, d_model) - Probabilities [0,1]
+        x: (d_model,) or (Sequence_Length, d_model). Returns same shape.
         """
-        # 1. Self-Attention
-        # Q, K, V are all projections of x. For simplicity, we assume Identity projection.
+        input_1d = x.ndim == 1
         attn_out = self.attention.forward(Q=x, K=x, V=x)
 
-        # 2. Add & Norm (Residual 1)
-        # SC Addition: (A + B) / 2 using MUX logic probability
+        # Match shapes for residual: attention may add a batch dim
+        if input_1d and attn_out.ndim > 1:
+            attn_out = attn_out.reshape(-1)[: x.shape[0]]
+
         res1 = 0.5 * x + 0.5 * attn_out
 
-        # 3. Feed Forward
-        # Vectorized layer returns 1D array of size n_neurons. We need to reshape?
-        # Our VectorizedSCLayer is "Dense", it fully connects all inputs to all outputs.
-        # But Transformer FFN applies to each position independently (Position-wise).
-        # We'll simulate position-wise by looping or reshaping.
+        # Position-wise FFN: apply same weights to each token
+        def _ffn(token: np.ndarray) -> np.ndarray:
+            vals = token.tolist() if hasattr(token, "tolist") else token
+            h = self.ffn_1.forward(vals)
+            return self.ffn_2.forward(h.tolist() if hasattr(h, "tolist") else h)  # type: ignore
 
-        # Simplification: Apply to whole sequence as one vector (Global MLP)
-        # Reshape to match layer expectation if needed.
-        # Our VectorizedLayer takes flat input.
-
-        # Let's map properly: Input (Seq, D) -> Flat (Seq*D)
-        # But weights are (4D, Seq*D)?? No, standard FFN is shared weights.
-        # We need a shared-weight layer application.
-
-        # For this demo, let's assume Sequence Length = 1 (Context vector)
-        # x is (1, d_model) or just (d_model,)
-        if x.ndim > 1:
-            x_flat = x[0]  # Take first token
+        if res1.ndim > 1:
+            ff_out = np.zeros_like(res1)
+            for t in range(res1.shape[0]):
+                ff_out[t] = _ffn(res1[t])
         else:
-            x_flat = x
+            ff_out = _ffn(res1)
 
-        ff1_res = self.ffn_1.forward(x_flat.tolist() if hasattr(x_flat, "tolist") else x_flat)
-        ff2_res = self.ffn_2.forward(ff1_res.tolist() if hasattr(ff1_res, "tolist") else ff1_res)  # type: ignore
-
-        # 4. Add & Norm (Residual 2)
-        final_out = 0.5 * res1.flatten() + 0.5 * ff2_res
-
-        return final_out
+        return 0.5 * res1 + 0.5 * ff_out
