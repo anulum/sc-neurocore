@@ -39,7 +39,7 @@ jobs:
             | jq -r '.assets[] | select(.name == "sv2v-Linux.zip") | .browser_download_url')
           curl -fsSL "$SV2V_URL" -o /tmp/sv2v.zip
           unzip -o /tmp/sv2v.zip -d /tmp/sv2v
-          sudo install /tmp/sv2v/sv2v /usr/local/bin/sv2v
+          sudo install /tmp/sv2v/sv2v-Linux/sv2v /usr/local/bin/sv2v
           sv2v --version
 
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
