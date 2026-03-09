@@ -32,7 +32,7 @@ Status: v3.10.0 (2026-03-09)
 - [ ] **Loihi/SpiNNaker comparison** — Benchmark against Intel Lava on equivalent network. Different hardware philosophy but same audience.
 - [ ] **hls4ml interop** — Bridge or comparison showing SC advantages over HLS-based neural network deployment.
 - [ ] **Power analysis paper** — Theoretical + measured analysis of stochastic computing power advantages for neuromorphic edge inference.
-- [ ] **Sparse weight matrix (scipy.sparse)** — SC-NeuroCore uses dense N×N at 10K (800 MB, cache thrash). Sparse support closes the Brian2 gap at N>10K.
+- [x] **Sparse weight matrix (scipy.sparse)** — DONE (v3.10.0). VectorizedSCLayer `sparse=True` uses CSR backend. V21 sparse Numba Brunel: 3× faster than Brian2 at 1K, memory 10× lower at 10K. Brian2 still wins at 10K speed (compiled C++ codegen).
 
 ## P4 — Post-Audit Benchmark Re-Runs (2026-03-09)
 
