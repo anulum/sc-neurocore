@@ -1221,6 +1221,101 @@ def run_v20_vectorized_numpy(bp: BrunelParams) -> VariantResult:
 
 
 # ---------------------------------------------------------------------------
+# V21: Sparse Numba — CSR connectivity for N>=1K
+# ---------------------------------------------------------------------------
+def run_v21_sparse_numba(bp: BrunelParams) -> VariantResult:
+    """Numba JIT with CSR sparse connectivity.
+
+    Stores the weight matrix as CSR (indptr, indices, data) so the inner
+    synapse loop touches only connected entries — O(N*C_E) instead of O(N^2).
+    """
+    try:
+        from numba import njit
+    except ImportError:
+        return VariantResult(
+            variant="v21_sparse_numba",
+            total_spikes=0,
+            mean_rate_hz=0.0,
+            wall_time_s=0.0,
+            status="skipped",
+            reason="Numba not installed",
+        )
+
+    try:
+        import scipy.sparse as sp_mod
+    except ImportError:
+        return VariantResult(
+            variant="v21_sparse_numba",
+            total_spikes=0,
+            mean_rate_hz=0.0,
+            wall_time_s=0.0,
+            status="skipped",
+            reason="scipy not installed",
+        )
+
+    params = translate_v18_numba(bp)
+    rng = np.random.default_rng(bp.seed)
+
+    n = bp.n_total
+    v = np.full(n, bp.v_rest)
+
+    conn_mask = rng.random((n, n)) < bp.conn_prob
+    np.fill_diagonal(conn_mask, False)
+    weights_dense = np.where(conn_mask, params["weight_exc"], 0.0)
+    weights_dense[bp.n_exc:, :] *= -bp.g_inh
+
+    csr = sp_mod.csr_matrix(weights_dense)
+    indptr = csr.indptr.astype(np.int64)
+    indices = csr.indices.astype(np.int64)
+    data = csr.data.astype(np.float64)
+
+    alpha = bp.dt / bp.tau_mem
+    steps = int(bp.sim_ms / bp.dt)
+    ext_rate_dt = bp.external_rate_hz * bp.dt / 1000.0
+
+    @njit(cache=True)
+    def _run_sparse(v, indptr, indices, data, alpha, v_rest, v_threshold, v_reset,
+                    ext_weight, ext_rate_dt, n, steps, seed):
+        np.random.seed(seed)
+        spike_count = 0
+        prev_spikes = np.zeros(n, dtype=np.bool_)
+        for _ in range(steps):
+            ext_events = np.random.poisson(ext_rate_dt, n)
+            syn_dv = np.zeros(n)
+            for j in range(n):
+                if prev_spikes[j]:
+                    for idx in range(indptr[j], indptr[j + 1]):
+                        syn_dv[indices[idx]] += data[idx]
+            new_spikes = np.zeros(n, dtype=np.bool_)
+            for i in range(n):
+                v[i] += ext_events[i] * ext_weight + syn_dv[i]
+                v[i] += alpha * (v_rest - v[i])
+                if v[i] >= v_threshold:
+                    new_spikes[i] = True
+                    v[i] = v_reset
+                    spike_count += 1
+            prev_spikes = new_spikes
+        return spike_count
+
+    t0 = time.perf_counter()
+    spike_count = _run_sparse(
+        v, indptr, indices, data, alpha,
+        bp.v_rest, bp.v_threshold, bp.v_reset,
+        params["ext_weight"], ext_rate_dt, n, steps, bp.seed,
+    )
+    wall = time.perf_counter() - t0
+    rate = spike_count / (bp.sim_ms / 1000.0) / n
+    nnz_pct = 100.0 * csr.nnz / (n * n)
+    return VariantResult(
+        variant="v21_sparse_numba",
+        total_spikes=spike_count,
+        mean_rate_hz=rate,
+        wall_time_s=wall,
+        metric_note=f"CSR nnz={csr.nnz} ({nnz_pct:.1f}%)",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Runner
 # ---------------------------------------------------------------------------
 VARIANTS = {
@@ -1245,6 +1340,7 @@ VARIANTS = {
     "v18": run_v18_numba,
     "v19": run_v19_pytorch_cuda,
     "v20": run_v20_vectorized_numpy,
+    "v21": run_v21_sparse_numba,
 }
 
 
