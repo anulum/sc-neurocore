@@ -78,15 +78,27 @@ def parse_stat_output(text: str) -> dict[str, int]:
     return counts
 
 
+def _build_yosys_commands(module: str) -> str:
+    """Generate inline Yosys commands (avoids TCL dependency)."""
+    hdl_dir = REPO_ROOT / "hdl"
+    cmds = []
+    for f in sorted(hdl_dir.glob("*.v")):
+        if f.name.startswith("tb_"):
+            continue
+        cmds.append(f"read_verilog {f}")
+    cmds.append(f"synth_xilinx -top {module} -flatten")
+    cmds.append("stat")
+    return "; ".join(cmds)
+
+
 def run_synth(module: str) -> SynthResult:
-    env = {**os.environ, "MODULE": module}
+    yosys_cmds = _build_yosys_commands(module)
     try:
         result = subprocess.run(
-            ["yosys", "-s", str(TCL_SCRIPT)],
+            ["yosys", "-p", yosys_cmds],
             capture_output=True,
             text=True,
             timeout=120,
-            env=env,
             cwd=str(REPO_ROOT),
             check=True,
         )
