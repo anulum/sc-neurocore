@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
 import shutil
 import subprocess
@@ -35,7 +34,6 @@ MODULES = [
 ]
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-TCL_SCRIPT = REPO_ROOT / "tools" / "yosys_synth.tcl"
 
 
 @dataclass
@@ -85,7 +83,7 @@ def _build_yosys_commands(module: str) -> str:
     for f in sorted(hdl_dir.glob("*.v")):
         if f.name.startswith("tb_"):
             continue
-        cmds.append(f"read_verilog {f}")
+        cmds.append(f"read_verilog -sv {f}")
     cmds.append(f"synth_xilinx -top {module} -flatten")
     cmds.append("stat")
     return "; ".join(cmds)
