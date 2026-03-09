@@ -151,13 +151,12 @@ def _run_brian2(bp: BrunelParams) -> tuple[int, float]:
     S_inh.connect(p=bp.conn_prob)
     S_inh.namespace["w"] = bp.weight_inh
 
-    # C_E independent Poisson sources at nu_ext each
+    # Independent Poisson input per neuron (Brunel 2000 model).
+    # PoissonInput avoids the correlated-drive artifact of shared PoissonGroup.
     c_ext = int(bp.conn_prob * bp.n_exc)
     nu_ext = _brunel_external_rate(bp)
-    P_ext = brian2.PoissonGroup(c_ext, rates=nu_ext * brian2.Hz)
-    S_ext = brian2.Synapses(P_ext, G, on_pre="v_post += w", dt=bp.dt * brian2.ms)
-    S_ext.connect()  # all-to-all: c_ext sources -> N neurons
-    S_ext.namespace["w"] = bp.weight_exc
+    P_ext = brian2.PoissonInput(G, "v", N=c_ext, rate=nu_ext * brian2.Hz,
+                                weight=bp.weight_exc)
 
     mon = brian2.SpikeMonitor(G)
     brian2.run(bp.sim_ms * brian2.ms)
@@ -328,15 +327,37 @@ def _run_v18(bp: BrunelParams) -> tuple[int, float]:
 # ---------------------------------------------------------------------------
 # V20: Vectorized NumPy
 # ---------------------------------------------------------------------------
+def _build_weight_matrix(n, n_exc, conn_prob, w_exc, w_inh, rng):
+    """Build connectivity matrix. Dense for N<=10K, sparse CSR above."""
+    use_sparse = n > 10_000
+    if use_sparse:
+        from scipy.sparse import random as sp_random
+        W = sp_random(n, n, density=conn_prob, format="csr", random_state=rng)
+        W.data[:] = w_exc
+        W.setdiag(0)
+        W.eliminate_zeros()
+        for i in range(n_exc, n):
+            s, e = W.indptr[i], W.indptr[i + 1]
+            W.data[s:e] = -w_inh
+        return W.T.tocsr(), True
+    else:
+        conn_mask = rng.random((n, n)) < conn_prob
+        np.fill_diagonal(conn_mask, False)
+        weights = np.where(conn_mask, w_exc, 0.0)
+        weights[n_exc:, :] *= -(w_inh / w_exc)
+        return weights, False
+
+
 def _run_v20(bp: BrunelParams) -> tuple[int, float]:
     params = translate_v20_vectorized_numpy(bp)
     rng = np.random.default_rng(bp.seed)
     n = params["n_total"]
+    n_exc = params["n_exc"]
+    w_exc = params["weight_exc"]
+    w_inh = params["weight_inh"]
 
-    conn_mask = rng.random((n, n)) < params["conn_prob"]
-    np.fill_diagonal(conn_mask, False)
-    weights = np.where(conn_mask, params["weight_exc"], 0.0)
-    weights[params["n_exc"]:, :] *= -params["g_inh"]
+    W, is_sparse = _build_weight_matrix(n, n_exc, params["conn_prob"],
+                                        w_exc, w_inh, rng)
 
     v = np.full(n, params["v_rest"])
     alpha = params["dt"] / params["tau_mem"]
@@ -347,8 +368,11 @@ def _run_v20(bp: BrunelParams) -> tuple[int, float]:
 
     for _ in range(steps):
         ext_events = rng.poisson(ext_lambda, n)
-        I_syn = weights[prev_spikes].sum(axis=0) if prev_spikes.any() else np.zeros(n)
-        v += ext_events * params["weight_exc"] + I_syn
+        if is_sparse:
+            I_syn = W @ prev_spikes.astype(np.float64)
+        else:
+            I_syn = W[prev_spikes].sum(axis=0) if prev_spikes.any() else np.zeros(n)
+        v += ext_events * w_exc + I_syn
         v += alpha * (params["v_rest"] - v)
         fired = v >= params["v_threshold"]
         spike_count += int(fired.sum())
@@ -385,6 +409,12 @@ def _run_backend(key: str, bp: BrunelParams, repeats: int) -> BenchmarkRow | Non
     if key in ("v1", "v3") and bp.n_total > 10_000:
         print(f"  [SKIP] {label} — per-neuron loop infeasible at {bp.n_total} neurons",
               file=sys.stderr)
+        return None
+
+    # V18 uses dense N×N matrix — prohibitive above 20K
+    if key == "v18" and bp.n_total > 20_000:
+        print(f"  [SKIP] {label} — dense N×N matrix ({bp.n_total**2 * 8 / 1e9:.1f} GB) "
+              f"at {bp.n_total} neurons", file=sys.stderr)
         return None
 
     runs: list[RunResult] = []
