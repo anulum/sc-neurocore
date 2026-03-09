@@ -255,7 +255,8 @@ class TestSCPNLayerBranches:
         # Step with nt_release and l1_input
         l1_bs = np.random.randint(0, 2, (4, 32)).astype(np.uint8)
         output = layer.step(0.01, nt_release=np.array([0.5, 0.3, 0.8, 0.2]), l1_input=l1_bs)
-        assert output is not None
+        assert isinstance(output, dict)
+        assert "output_bitstreams" in output
 
     def test_l3_with_inputs(self):
         from sc_neurocore.scpn.layers.l3_genomic import L3_GenomicLayer, L3_StochasticParameters
@@ -263,7 +264,8 @@ class TestSCPNLayerBranches:
         params = L3_StochasticParameters(n_genes=4, bitstream_length=32)
         layer = L3_GenomicLayer(params)
         output = layer.step(0.01, bioelectric_signal=np.array([0.5]))
-        assert output is not None
+        assert isinstance(output, dict)
+        assert "output_bitstreams" in output
 
     def test_l4_with_inputs(self):
         from sc_neurocore.scpn.layers.l4_cellular import L4_CellularLayer, L4_StochasticParameters
@@ -272,7 +274,8 @@ class TestSCPNLayerBranches:
         layer = L4_CellularLayer(params)
         n_cells = params.grid_size[0] * params.grid_size[1]  # 16
         output = layer.step(0.01, external_stimulus=np.random.randn(n_cells))
-        assert output is not None
+        assert isinstance(output, dict)
+        assert "output_bitstreams" in output
 
     def test_l5_with_emotional_event(self):
         from sc_neurocore.scpn.layers.l5_organismal import (
@@ -283,7 +286,8 @@ class TestSCPNLayerBranches:
         params = L5_StochasticParameters(n_emotional_dims=8, bitstream_length=32)
         layer = L5_OrganismalLayer(params)
         output = layer.step(0.01, external_event={"type": "stress", "intensity": 0.8})
-        assert output is not None
+        assert isinstance(output, dict)
+        assert "output_bitstreams" in output
 
     def test_l6_with_solar(self):
         from sc_neurocore.scpn.layers.l6_ecological import (
@@ -294,7 +298,8 @@ class TestSCPNLayerBranches:
         params = L6_StochasticParameters(n_field_nodes=16, bitstream_length=32)
         layer = L6_EcologicalLayer(params)
         output = layer.step(0.01, solar_activity=0.8, lunar_phase=0.5)
-        assert output is not None
+        assert isinstance(output, dict)
+        assert "output_bitstreams" in output
 
     def test_l7_with_symbols(self):
         from sc_neurocore.scpn.layers.l7_symbolic import L7_SymbolicLayer, L7_StochasticParameters
@@ -302,7 +307,8 @@ class TestSCPNLayerBranches:
         params = L7_StochasticParameters(n_symbols=8, bitstream_length=32)
         layer = L7_SymbolicLayer(params)
         output = layer.step(0.01, symbol_input=np.random.randn(8))
-        assert output is not None
+        assert isinstance(output, dict)
+        assert "output_bitstreams" in output
 
     def test_l7_with_acupoints(self):
         from sc_neurocore.scpn.layers.l7_symbolic import L7_SymbolicLayer, L7_StochasticParameters
@@ -311,7 +317,8 @@ class TestSCPNLayerBranches:
         layer = L7_SymbolicLayer(params)
         # acupoint_stimulus expects a dict {int_point_id: intensity}
         output = layer.step(0.01, acupoint_stimulus={0: 0.8, 3: 0.6})
-        assert output is not None
+        assert isinstance(output, dict)
+        assert "output_bitstreams" in output
 
 
 # ── math/category_theory — get_functor other paths ──────────────────
@@ -321,14 +328,14 @@ class TestCategoryFunctorBranches:
 
         bridge = CategoryTheoryBridge()
         f = bridge.get_functor("Quantum", "Bio")
-        assert f is not None
+        assert callable(f)
 
     def test_bio_to_stochastic(self):
         from sc_neurocore.math.category_theory import CategoryTheoryBridge
 
         bridge = CategoryTheoryBridge()
         f = bridge.get_functor("Bio", "Stochastic")
-        assert f is not None
+        assert callable(f)
 
     def test_invalid_functor(self):
         from sc_neurocore.math.category_theory import CategoryTheoryBridge

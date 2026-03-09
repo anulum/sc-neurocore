@@ -37,6 +37,8 @@ class StochasticLIFNeuron(BaseNeuron):
     entropy_source: Any | None = None  # Optional external entropy (e.g. Quantum)
 
     def __post_init__(self) -> None:
+        if self.tau_mem <= 0:
+            raise ValueError(f"tau_mem must be positive, got {self.tau_mem}")
         self._rng = RNG(self.seed)
         self.v = self.v_rest  # membrane potential
         self.refractory_counter = 0

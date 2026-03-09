@@ -357,7 +357,7 @@ def test_user_profile_update_session():
     assert p.preferred_target_hz == 8.0
     p.update_from_session(avg_evs=55.0, peak_evs=70.0, best_target_hz=9.0)
     assert p.session_count == 2
-    assert p.preferred_target_hz is not None
+    assert isinstance(p.preferred_target_hz, float)
 
 
 def test_user_profile_update_low_evs():
@@ -394,10 +394,10 @@ def test_user_profile_all_chronotypes():
 def test_analysis_init_import():
     from sc_neurocore.analysis import SpikeToConceptMapper
 
-    assert SpikeToConceptMapper is not None
+    assert callable(SpikeToConceptMapper)
 
 
 def test_chaos_init_import():
     from sc_neurocore.chaos import ChaoticRNG
 
-    assert ChaoticRNG is not None
+    assert callable(ChaoticRNG)

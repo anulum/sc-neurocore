@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! RISC-V Vector Extension (RVV) popcount and bitstream kernels.
+//! Scalar fallback for RISC-V Vector (RVV) targets.
+//! Hardware RVV intrinsics are not yet implemented; all operations
+//! use the portable scalar path from `super::mod.rs`.
 //!
 //! RVV 1.0 provides variable-length SIMD (VLEN = 128–16384 bits).
-//! These kernels use RVV intrinsics when compiled for an RVV-capable
-//! target.  On all other targets the functions fall back to portable
-//! scalar code.
+//! When Rust stabilises `core::arch::riscv64` vector intrinsics,
+//! replace the bodies below with vl-strided vector loops.
 //!
 //! Build with:
 //!   RUSTFLAGS="-C target-feature=+v" cargo build --target riscv64gc-unknown-linux-gnu

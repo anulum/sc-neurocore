@@ -44,6 +44,14 @@ class FixedPointLIFNeuron:
     refractory_period: int = 2
 
     def __post_init__(self) -> None:
+        if self.data_width < 1 or self.data_width > 32:
+            raise ValueError(f"data_width must be 1..32, got {self.data_width}")
+        if self.fraction < 0 or self.fraction >= self.data_width:
+            raise ValueError(f"fraction must be 0..{self.data_width - 1}, got {self.fraction}")
+        if self.refractory_period < 0:
+            raise ValueError(
+                f"refractory_period must be non-negative, got {self.refractory_period}"
+            )
         self.v: int = self.v_rest
         self.refractory_counter: int = 0
 

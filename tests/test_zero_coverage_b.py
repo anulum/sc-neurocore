@@ -149,8 +149,7 @@ class TestWebVisualizer:
         from sc_neurocore.viz.web_viz import WebVisualizer
 
         html = WebVisualizer.generate_html(layers=[{"name": "L1", "n": 4}])
-        # generate_html writes a file or returns a string
-        assert html is None or isinstance(html, str)
+        assert html is None
 
 
 # ── world_model ──────────────────────────────────────────────────────
@@ -205,12 +204,12 @@ class TestSCPlanner:
 # ── pipeline ─────────────────────────────────────────────────────────
 class TestDataIngestor:
     def test_prepare_dataset(self):
-        from sc_neurocore.pipeline.ingestion import DataIngestor
+        from sc_neurocore.pipeline.ingestion import DataIngestor, MultimodalDataset
 
         d = DataIngestor()
         raw = {"signals": np.random.randn(10, 4), "labels": np.array([0, 1] * 5)}
         ds = d.prepare_dataset(raw)
-        assert ds is not None
+        assert isinstance(ds, MultimodalDataset)
 
     def test_multimodal_dataset_get_sample(self):
         from sc_neurocore.pipeline.ingestion import MultimodalDataset
@@ -236,8 +235,8 @@ class TestSCTrainingLoop:
             def train_step(self, batch):
                 pass
 
-        result = SCTrainingLoop.train_multimodal_fusion(MockFusion(), ds, epochs=1)
-        assert result is None or isinstance(result, (list, dict, type(None)))
+        with pytest.raises(NotImplementedError):
+            SCTrainingLoop.train_multimodal_fusion(MockFusion(), ds, epochs=1)
 
 
 # ── models ───────────────────────────────────────────────────────────
@@ -300,7 +299,7 @@ class TestCategoryTheoryBridge:
         bridge = CategoryTheoryBridge()
         # Domain names are capitalized
         functor = bridge.get_functor("Stochastic", "Quantum")
-        assert functor is not None
+        assert callable(functor)
 
 
 # ── ensembles ────────────────────────────────────────────────────────
@@ -317,7 +316,7 @@ class TestEnsembleOrchestrator:
 
         e = EnsembleOrchestrator()
         result = e.coordinated_mission("test_goal")
-        assert result is None or isinstance(result, (str, dict, type(None)))
+        assert result is None
 
 
 # ── accel/jit_kernels ────────────────────────────────────────────────
@@ -348,7 +347,7 @@ class TestMPIDriver:
         from sc_neurocore.accel.mpi_driver import MPIDriver
 
         d = MPIDriver()
-        assert d is not None
+        assert isinstance(d, MPIDriver)
 
     def test_scatter_gather(self):
         from sc_neurocore.accel.mpi_driver import MPIDriver
@@ -398,7 +397,9 @@ class TestSCPNLayers:
         params = L2_StochasticParameters(n_receptors=8, bitstream_length=32)
         layer = L2_NeurochemicalLayer(params)
         output = layer.step(0.01)
-        assert output is not None
+        assert isinstance(output, dict)
+        assert "output_bitstreams" in output
+        assert isinstance(output["output_bitstreams"], np.ndarray)
         assert layer.get_global_metric() >= 0.0
 
     def test_l3_genomic(self):
@@ -407,7 +408,9 @@ class TestSCPNLayers:
         params = L3_StochasticParameters(n_genes=8, bitstream_length=32)
         layer = L3_GenomicLayer(params)
         output = layer.step(0.01)
-        assert output is not None
+        assert isinstance(output, dict)
+        assert "output_bitstreams" in output
+        assert "expression_levels" in output
 
     def test_l4_cellular(self):
         from sc_neurocore.scpn.layers.l4_cellular import L4_CellularLayer, L4_StochasticParameters
@@ -415,7 +418,9 @@ class TestSCPNLayers:
         params = L4_StochasticParameters(grid_size=(4, 4), bitstream_length=32)
         layer = L4_CellularLayer(params)
         output = layer.step(0.01)
-        assert output is not None
+        assert isinstance(output, dict)
+        assert "output_bitstreams" in output
+        assert "phases" in output
 
     def test_l5_organismal(self):
         from sc_neurocore.scpn.layers.l5_organismal import (
@@ -428,7 +433,9 @@ class TestSCPNLayers:
         )
         layer = L5_OrganismalLayer(params)
         output = layer.step(0.01)
-        assert output is not None
+        assert isinstance(output, dict)
+        assert "output_bitstreams" in output
+        assert "emotional_state" in output
 
     def test_l6_ecological(self):
         from sc_neurocore.scpn.layers.l6_ecological import (
@@ -439,7 +446,9 @@ class TestSCPNLayers:
         params = L6_StochasticParameters(n_field_nodes=16, bitstream_length=32)
         layer = L6_EcologicalLayer(params)
         output = layer.step(0.01)
-        assert output is not None
+        assert isinstance(output, dict)
+        assert "output_bitstreams" in output
+        assert "schumann_field" in output
 
     def test_l7_symbolic(self):
         from sc_neurocore.scpn.layers.l7_symbolic import L7_SymbolicLayer, L7_StochasticParameters
@@ -447,7 +456,9 @@ class TestSCPNLayers:
         params = L7_StochasticParameters(n_symbols=8, bitstream_length=32)
         layer = L7_SymbolicLayer(params)
         output = layer.step(0.01)
-        assert output is not None
+        assert isinstance(output, dict)
+        assert "output_bitstreams" in output
+        assert "glyph_vector" in output
 
     def test_create_full_stack(self):
         from sc_neurocore.scpn.layers import create_full_stack, get_global_metrics

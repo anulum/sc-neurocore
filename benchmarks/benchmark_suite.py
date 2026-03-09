@@ -339,7 +339,9 @@ def bench_memory_footprint() -> List[BenchResult]:
     L = 1024
     results: List[BenchResult] = []
 
-    print(f"\n{'Config':<20} | {'Weight Matrix (MB)':>18} | {'Peak Alloc (MB)':>16} | {'Forward Time (ms)':>18}")
+    print(
+        f"\n{'Config':<20} | {'Weight Matrix (MB)':>18} | {'Peak Alloc (MB)':>16} | {'Forward Time (ms)':>18}"
+    )
     print("-" * 80)
 
     for n_inputs, n_neurons, label in configs:
@@ -362,10 +364,7 @@ def bench_memory_footprint() -> List[BenchResult]:
         peak_mb = peak_bytes / (1024 * 1024)
 
         tag = f"  {n_inputs}x{n_neurons} ({label})"
-        print(
-            f"{tag:<20}"
-            f"| {weight_mb:>16.3f}  | {peak_mb:>14.2f}  | {fwd_ms:>16.2f}"
-        )
+        print(f"{tag:<20}" f"| {weight_mb:>16.3f}  | {peak_mb:>14.2f}  | {fwd_ms:>16.2f}")
 
         results.append(
             BenchResult(

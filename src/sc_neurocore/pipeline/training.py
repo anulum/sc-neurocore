@@ -49,7 +49,4 @@ class SCTrainingLoop:
         """
         Stub for training weights in a fusion layer.
         """
-        for ep in range(epochs):
-            logger.info("Fusion Training Epoch %d...", ep)
-            # Logic for adjusting fusion weights based on goal
-            pass
+        raise NotImplementedError("multimodal fusion training not implemented")

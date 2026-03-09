@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 import sys
 import logging
+from pathlib import Path
+
 from sc_neurocore.drivers.sc_neurocore_driver import SC_NeuroCore_Driver, RealityHardwareError
 
 # Configure logging
@@ -26,7 +28,12 @@ def verify_link():  # type: ignore
     print("\n[2/3] Checking Genomic Interface (Layer 6)...")
     try:
         # Import dynamically to avoid crashing if deps are missing
-        sys.path.append("../../../SCPN-CODEBASE/HolonomicAtlas/src/interfaces")
+        sys.path.append(
+            str(
+                Path(__file__).resolve().parent
+                / "../../../SCPN-CODEBASE/HolonomicAtlas/src/interfaces"
+            )
+        )
         from scpn_evo2_real_interface import Evo2RealInterface
 
         evo = Evo2RealInterface()
