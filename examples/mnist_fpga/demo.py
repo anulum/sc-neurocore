@@ -275,7 +275,7 @@ def main() -> int:
 
     if args.json:
         Path(args.json).parent.mkdir(parents=True, exist_ok=True)
-        Path(args.json).write_text(json.dumps(results, indent=2))
+        Path(args.json).write_text(json.dumps(results, indent=2) + "\n")
         print(f"\n  Results -> {args.json}")
 
     print("\n  Done.")
