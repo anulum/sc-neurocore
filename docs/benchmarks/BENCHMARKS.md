@@ -264,6 +264,7 @@ Adapted Brunel parameters (weight_exc=5.0, ext_rate=200 Hz), 1000 neurons,
 | V18 | Numba JIT | 1,685,521 | 1685.5 | 2.25 | **5.20** | **9.5× vs V1** |
 | V19 | PyTorch CUDA | 1,725,955 | 1726.0 | 2.31 | **5.70** | GTX 1060 6GB |
 | V20 | Vectorized NumPy | 1,725,955 | 1726.0 | 2.31 | **10.27** | batch update |
+| V21 | Sparse Numba (CSR) | 1,685,521 | 1685.5 | 2.25 | **0.49** | 10% connectivity |
 
 #### Acceleration comparison (1000 neurons, 1000 ms)
 
@@ -273,7 +274,20 @@ Adapted Brunel parameters (weight_exc=5.0, ext_rate=200 Hz), 1000 neurons,
 | V20 vectorized NumPy | 10.27 | 4.8× |
 | V18 Numba JIT | 5.20 | 9.5× |
 | V19 PyTorch CUDA (GTX 1060) | 5.70 | 8.7× |
+| V21 Sparse Numba (CSR) | 0.49 | **100.7×** |
 | Brian2 (Cython) | 1.60 | 30.8× |
+
+#### 10K neuron scaling
+
+| Backend | Wall (s) | Memory |
+|---------|-------:|--------|
+| V18 Numba JIT (dense) | 15.3 | 800 MB (N²×8) |
+| V21 Sparse Numba (CSR) | 22.6 | 80 MB (10% nnz) |
+| Brian2 (C++ codegen) | 9.6 | sparse (internal) |
+
+At 10K, Brian2's compiled C++ sparse codegen wins. V21 CSR reduces memory 10×
+but scattered index access prevents SIMD vectorization. The Rust SIMD CSR
+engine (planned) targets this gap.
 
 #### Variant notes
 
@@ -291,6 +305,9 @@ Adapted Brunel parameters (weight_exc=5.0, ext_rate=200 Hz), 1000 neurons,
 - **V18/V19/V20**: Acceleration variants show 5–10× speedup over per-neuron
   Python loop. Numba JIT and PyTorch CUDA achieve similar wall times on this
   workload (1000 neurons); GPU advantage grows with N.
+- **V21 Sparse Numba**: scipy.sparse CSR connectivity. At 1K (10% connectivity):
+  100× faster than V1, 3× faster than V18 dense. At 10K: 1.5× slower than V18
+  due to scattered CSR index access, but uses 10× less memory (80 MB vs 800 MB).
 
 ---
 
