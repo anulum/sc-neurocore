@@ -33,6 +33,15 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq yosys
 
+      - name: Install sv2v
+        run: |
+          SV2V_URL=$(curl -fsSL https://api.github.com/repos/zachjs/sv2v/releases/latest \
+            | jq -r '.assets[] | select(.name == "sv2v-Linux.zip") | .browser_download_url')
+          curl -fsSL "$SV2V_URL" -o /tmp/sv2v.zip
+          unzip -o /tmp/sv2v.zip -d /tmp/sv2v
+          sudo install /tmp/sv2v/sv2v /usr/local/bin/sv2v
+          sv2v --version
+
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.12"
