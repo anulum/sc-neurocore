@@ -5,6 +5,10 @@ Yosys FPGA Synthesis Runner
 
 Invokes Yosys on each SC-NeuroCore HDL module and parses LUT/FF/BRAM counts.
 
+When ``sv2v`` is on PATH, SystemVerilog sources (unpacked-array ports) are
+preprocessed to plain Verilog first.  Without sv2v the five SV-dependent
+modules are skipped.
+
 Usage::
 
     python tools/yosys_synth.py                     # all modules
@@ -19,6 +23,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -27,12 +32,15 @@ MODULES = [
     "sc_lif_neuron",
     "sc_bitstream_synapse",
     "sc_dotproduct_to_current",
+    "sc_firing_rate_bank",
+    "sc_dense_layer_core",
+    "sc_dense_layer_top",
+    "sc_neurocore_top",
 ]
 
-# Files using SV unpacked-array ports that apt-Yosys (< 0.40) cannot parse.
-# Includes: sc_axil_cfg, sc_firing_rate_bank, sc_dense_layer_core,
-#           sc_dense_layer_top, sc_neurocore_top.
-_SV_SKIP = frozenset(
+# Yosys cannot parse SV unpacked-array ports (issue #2717, open since 2021).
+# These modules are skipped when sv2v is not available.
+_SV_MODULES = frozenset(
     {
         "sc_axil_cfg",
         "sc_firing_rate_bank",
@@ -62,22 +70,18 @@ def parse_stat_output(text: str) -> dict[str, int]:
 
     for line in text.splitlines():
         line = line.strip()
-        # LUT counts: various LUT types in Xilinx
         for lut_type in ("LUT1", "LUT2", "LUT3", "LUT4", "LUT5", "LUT6"):
             m = re.match(rf"{lut_type}\s+(\d+)", line)
             if m:
                 counts["luts"] += int(m.group(1))
-        # Flip-flops
         for ff_type in ("FDRE", "FDSE", "FDCE", "FDPE"):
             m = re.match(rf"{ff_type}\s+(\d+)", line)
             if m:
                 counts["ffs"] += int(m.group(1))
-        # BRAM
         if re.match(r"RAMB\d+", line):
             m = re.match(r"RAMB\w+\s+(\d+)", line)
             if m:
                 counts["bram"] += int(m.group(1))
-        # DSP
         m = re.match(r"DSP48E\d?\s+(\d+)", line)
         if m:
             counts["dsp"] += int(m.group(1))
@@ -85,21 +89,37 @@ def parse_stat_output(text: str) -> dict[str, int]:
     return counts
 
 
-def _build_yosys_commands(module: str) -> str:
-    """Generate inline Yosys commands (avoids TCL dependency)."""
+def preprocess_hdl() -> list[Path]:
+    """Collect HDL sources. Preprocesses through sv2v when available."""
     hdl_dir = REPO_ROOT / "hdl"
-    cmds = []
-    for f in sorted(hdl_dir.glob("*.v")):
-        if f.stem.startswith("tb_") or f.stem in _SV_SKIP:
-            continue
-        cmds.append(f"read_verilog {f}")
+    all_v = sorted(f for f in hdl_dir.glob("*.v") if not f.name.startswith("tb_"))
+
+    sv2v = shutil.which("sv2v")
+    if sv2v:
+        converted = Path(tempfile.mkdtemp()) / "sc_neurocore_converted.v"
+        result = subprocess.run(
+            [sv2v, *[str(f) for f in all_v], "-w", str(converted)],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode == 0:
+            print(f"  sv2v: preprocessed {len(all_v)} files → {converted.name}")
+            return [converted]
+        print(f"  sv2v failed ({result.stderr[:200]}), falling back to filtered sources")
+
+    return [f for f in all_v if f.stem not in _SV_MODULES]
+
+
+def _build_yosys_commands(module: str, sources: list[Path]) -> str:
+    """Generate inline Yosys commands."""
+    cmds = [f"read_verilog {f}" for f in sources]
     cmds.append(f"synth_xilinx -top {module} -flatten")
     cmds.append("stat")
     return "; ".join(cmds)
 
 
-def run_synth(module: str) -> SynthResult:
-    yosys_cmds = _build_yosys_commands(module)
+def run_synth(module: str, sources: list[Path]) -> SynthResult:
+    yosys_cmds = _build_yosys_commands(module, sources)
     try:
         result = subprocess.run(
             ["yosys", "-p", yosys_cmds],
@@ -146,17 +166,23 @@ def main() -> int:
     ap.add_argument("--markdown", action="store_true", help="print markdown table")
     args = ap.parse_args()
 
-    modules = [args.module] if args.module else MODULES
-
     if not shutil.which("yosys"):
         print("WARNING: yosys not found in PATH")
-        print("Install: https://github.com/YosysHQ/yosys or 'pip install yosys'")
-        print("Generating placeholder results...")
+        print("Install: https://github.com/YosysHQ/yosys")
+        return 1
+
+    sources = preprocess_hdl()
+    has_sv2v = shutil.which("sv2v") is not None
+    modules = [args.module] if args.module else MODULES
 
     results: list[SynthResult] = []
     for mod in modules:
+        if not has_sv2v and mod in _SV_MODULES:
+            print(f"  Synthesizing {mod}... SKIP (needs sv2v)")
+            results.append(SynthResult(mod, 0, 0, 0, 0, False, "needs sv2v for SV features"))
+            continue
         print(f"  Synthesizing {mod}...", end=" ", flush=True)
-        r = run_synth(mod)
+        r = run_synth(mod, sources)
         if r.ok:
             print(f"{r.luts} LUTs, {r.ffs} FFs")
         else:
