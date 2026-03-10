@@ -28,58 +28,9 @@ from typing import Dict, List
 
 import numpy as np
 
+from sc_neurocore.scpn.params import OMEGA_N, build_knm_matrix
+
 logger = logging.getLogger(__name__)
-
-# ── Canonical SCPN Parameters ──────────────────────────────────────────
-
-OMEGA_N = np.array(
-    [
-        1.329,
-        2.610,
-        0.844,
-        1.520,
-        0.710,
-        3.780,
-        1.055,
-        0.625,
-        2.210,
-        1.740,
-        0.480,
-        3.210,
-        0.915,
-        1.410,
-        2.830,
-        0.991,
-    ]
-)
-
-
-def _build_knm(N: int = 16, K_base: float = 0.45, alpha: float = 0.3) -> np.ndarray[Any, Any]:
-    """Build N×N coupling matrix with distance decay."""
-    K = np.zeros((N, N))
-    for i in range(N):
-        for j in range(N):
-            if i != j:
-                d = abs(i - j)
-                K[i, j] = K_base * np.exp(-alpha * d)
-
-    # Calibration anchors (only if N large enough)
-    anchors = [(0, 1, 0.302), (1, 2, 0.201), (2, 3, 0.252), (3, 4, 0.154)]
-    for i, j, val in anchors:
-        if i < N and j < N:
-            K[i, j] = val
-            K[j, i] = val
-
-    # Cross-hierarchy boosts
-    if N >= 16:
-        K[0, 15] = max(K[0, 15], 0.05)
-        K[15, 0] = max(K[15, 0], 0.05)
-    if N >= 7:
-        K[4, 6] = max(K[4, 6], 0.15)
-        K[6, 4] = max(K[6, 4], 0.15)
-
-    np.fill_diagonal(K, 0)
-    return K
 
 
 def _compute_order_parameter(theta: np.ndarray[Any, Any]) -> float:
@@ -212,7 +163,7 @@ class SyntheticEEGGenerator:
 
         omega = OMEGA_N[:N] if N <= 16 else np.tile(OMEGA_N, (N // 16 + 1))[:N]
         self.omega = omega.copy()
-        self._K_base = _build_knm(N)
+        self._K_base = build_knm_matrix(N)
         self.K = self._K_base.copy()
         self.theta = self._rng.uniform(0, 2 * np.pi, N)
         self.noise_amplitude = 0.3

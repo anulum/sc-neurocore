@@ -19,10 +19,10 @@ from sc_neurocore.experiments.tcbo_demo_engine import (
     ScenarioName,
     _compute_order_parameter,
     _compute_p_h1_lightweight,
-    _build_knm,
     get_tcbo_demo_engine,
     reset_tcbo_demo_engine,
 )
+from sc_neurocore.scpn.params import build_knm_matrix as _build_knm
 
 
 class TestBuildKnm(unittest.TestCase):

@@ -1,0 +1,21 @@
+{
+  "_source": "Canonical values from src/sc_neurocore/scpn/params.py. Keep in sync.",
+  "_catalogue": "parameter_catalogue_full.yaml (validated 2025-12-25)",
+  "omega_n": [
+    1.329, 251.327, 0.628, 31.416, 6.283, 49.199, 3.142, 0.105,
+    1.571, 0.942, 0.209, 0.042, 0.013, 0.006, 0.003, 0.991
+  ],
+  "n_layers": 16,
+  "k_base": 0.45,
+  "decay_alpha": 0.3,
+  "calibration_anchors": {
+    "1_2": 0.302,
+    "2_3": 0.201,
+    "3_4": 0.252,
+    "4_5": 0.154
+  },
+  "cross_boosts": {
+    "1_16": 0.05,
+    "5_7": 0.15
+  }
+}
