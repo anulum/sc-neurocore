@@ -16,11 +16,13 @@ except ImportError:
 if HAS_TORCH:
     from .losses import membrane_loss, spike_count_loss, spike_rate_loss
     from .loops import evaluate, train_epoch
-    from .snn_modules import LIFCell, RecurrentLIFCell, SpikingNet
+    from .snn_modules import ALIFCell, ConvSpikingNet, LIFCell, RecurrentLIFCell, SpikingNet
     from .surrogate import atan_surrogate, fast_sigmoid, superspike
 
 __all__ = [
     "HAS_TORCH",
+    "ALIFCell",
+    "ConvSpikingNet",
     "LIFCell",
     "RecurrentLIFCell",
     "SpikingNet",
