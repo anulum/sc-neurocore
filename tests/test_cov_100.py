@@ -397,17 +397,15 @@ class TestFileWriteErrors:
         class _Layer:
             n_inputs = 4
 
-        with patch("builtins.open", side_effect=OSError("test")):
-            with pytest.raises(OSError):
-                SCOnnxExporter.export([_Layer()], "model.json")
+        with patch("builtins.open", side_effect=OSError("test")), pytest.raises(OSError):
+            SCOnnxExporter.export([_Layer()], "model.json")
 
     def test_verilog_save_write_error(self):
         from sc_neurocore.hdl_gen.verilog_generator import VerilogGenerator
 
         gen = VerilogGenerator(module_name="test_mod")
-        with patch("builtins.open", side_effect=OSError("test")):
-            with pytest.raises(OSError):
-                gen.save_to_file("output.v")
+        with patch("builtins.open", side_effect=OSError("test")), pytest.raises(OSError):
+            gen.save_to_file("output.v")
 
 
 # ── QEC non-repetition code ─────────────────────────────────────────────

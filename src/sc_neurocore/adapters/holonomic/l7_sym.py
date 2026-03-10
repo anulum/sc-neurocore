@@ -55,10 +55,12 @@ class L7_SymbolicAdapter(BaseStochasticAdapter):
         """Initializes the standard Metatron's Cube connection topology."""
         # Simple placeholder for the complex 13-node geometry
         # In a full implementation, this is a specific sparse matrix.
-        matrix = jnp.eye(self.params.n_nodes) * 0.5
-        # Add some cross-connections
-        matrix = matrix.at[0, :].set(0.1)  # Center node connects to all
-        return matrix
+        import numpy as _np
+
+        n = self.params.n_nodes
+        m = _np.eye(n) * 0.5
+        m[0, :] = 0.1
+        return jnp.array(m)
 
     def encode(self, domain_state: Any) -> jnp.ndarray:
         """
