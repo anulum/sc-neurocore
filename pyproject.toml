@@ -60,6 +60,7 @@ dev-full = ["sc-neurocore[dev]", "jax", "jaxlib", "qiskit", "pennylane", "qiskit
 gpu = ["cupy-cuda12x>=12.0"]
 full = ["networkx", "onnx", "qiskit", "pennylane"]
 research = ["networkx", "onnx", "torch>=2.0"]
+training = ["torch>=2.0"]
 jax = ["jax", "jaxlib"]
 quantum = ["qiskit", "pennylane", "qiskit-aer"]
 docs = ["mkdocs>=1.6", "mkdocs-material>=9.5", "mkdocstrings[python]>=0.25"]
@@ -99,6 +100,7 @@ omit = [
     "*/audio/evs_engine.py",
     "*/sleep/report_generator.py",
     "*/sleep/sleep_optimizer.py",
+    "*/training/*",
 ]
 
 [tool.coverage.report]
@@ -113,6 +115,7 @@ exclude_lines = [
     "if HAS_JAX",
     "if HAS_QISKIT",
     "if HAS_PENNYLANE",
+    "if HAS_TORCH",
     "except ImportError",
 ]
 

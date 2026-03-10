@@ -26,6 +26,10 @@ Status: v3.10.0 (2026-03-10)
 - [ ] **GitHub Discussions enabled** — Already listed in README. Seed with a "Show & Tell" and "Q&A" category.
 - [ ] **Publish wheels for sc_neurocore_engine** — Configure trusted publisher for the Rust engine package. Users currently can't `pip install` the fast path.
 
+## P1.5 — Competitive Gap Closures
+
+- [x] **GPU SNN training with surrogate gradients** — DONE. `sc_neurocore.training` module: 3 surrogate gradient functions (FastSigmoid, SuperSpike, ATan), PyTorch `nn.Module` SNN layers (LIFCell, RecurrentLIFCell, SpikingNet), training loops, 3 loss functions. MNIST example: ~95% accuracy in 10 epochs. `to_sc_weights()` bridges float training to SC bitstream deployment. Closes the Norse/snnTorch competitive gap. 31 tests. `pip install sc-neurocore[training]`.
+
 ## P3 — Nice to have
 
 - [ ] **Nature Electronics letter** — If FPGA proof shows >=5x energy efficiency vs ANN equivalent, write it up. High impact, right audience.

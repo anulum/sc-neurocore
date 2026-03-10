@@ -4,6 +4,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### GPU SNN Training with Surrogate Gradients
+- `sc_neurocore.training` — PyTorch-based differentiable SNN training module
+- 3 surrogate gradient functions: FastSigmoid (Zenke 2018), SuperSpike (Zenke 2021), ATan (Fang 2021)
+- `LIFCell`, `RecurrentLIFCell` — `nn.Module` LIF neurons with autograd through spikes
+- `SpikingNet` — multi-layer feedforward SNN with spike-count and membrane readout
+- `to_sc_weights()` — export trained float weights to [0,1] range for SC bitstream deployment
+- 3 loss functions: spike count cross-entropy, membrane cross-entropy, spike rate MSE
+- `train_epoch()` / `evaluate()` — training loops with temporal unrolling
+- `examples/mnist_surrogate/train.py` — MNIST benchmark (~95% accuracy, 10 epochs)
+- 31 tests covering surrogates, modules, and training loops
+- Requires `pip install sc-neurocore[training]` or `sc-neurocore[research]`
+
 ## [3.10.0] - 2026-03-09
 
 ### MNIST-on-FPGA Demo
