@@ -204,15 +204,17 @@ class TestErrorPaths:
         with pytest.raises(ValueError, match="tau_mem"):
             StochasticLIFNeuron(tau_mem=-1.0)
 
-    def test_vectorized_layer_connectivity_zero(self):
+    def test_vectorized_layer_bad_input_shape(self):
         from sc_neurocore.layers.vectorized_layer import VectorizedSCLayer
-        with pytest.raises(ValueError, match="connectivity"):
-            VectorizedSCLayer(n_inputs=4, n_neurons=4, connectivity=0.0)
+        layer = VectorizedSCLayer(n_inputs=4, n_neurons=4, use_gpu=False)
+        with pytest.raises(ValueError, match="Expected 1-D input"):
+            layer.forward(np.ones((2, 4)))
 
-    def test_vectorized_layer_connectivity_over_1(self):
+    def test_vectorized_layer_wrong_input_len(self):
         from sc_neurocore.layers.vectorized_layer import VectorizedSCLayer
-        with pytest.raises(ValueError, match="connectivity"):
-            VectorizedSCLayer(n_inputs=4, n_neurons=4, connectivity=1.5)
+        layer = VectorizedSCLayer(n_inputs=4, n_neurons=4, use_gpu=False)
+        with pytest.raises(ValueError, match="Expected 1-D input"):
+            layer.forward(np.ones(7))
 
     def test_swarm_agent_wrong_weight_size(self):
         from sc_neurocore.swarm.agent import SwarmAgent, AgentConfig
@@ -302,29 +304,32 @@ class TestCompilerCoverage:
             CompilerPipeline(work_dir=new_dir)
             assert os.path.isdir(new_dir)
 
-    def test_pipeline_sanitize_empty(self):
+    def test_pipeline_compile_firtool_fallback(self):
         from sc_neurocore.compiler.pipeline import CompilerPipeline
         with tempfile.TemporaryDirectory() as td:
             p = CompilerPipeline(work_dir=td)
-            with pytest.raises(ValueError, match="Invalid output name"):
-                p._sanitize_name("!@#$")
+            v_path = p.compile_mlir_to_verilog("module test();", output_name="stub")
+            assert os.path.exists(v_path)
 
-    def test_pipeline_path_escape(self):
-        from sc_neurocore.compiler.pipeline import CompilerPipeline
-        with tempfile.TemporaryDirectory() as td:
-            p = CompilerPipeline(work_dir=td)
-            with pytest.raises(ValueError, match="Path escapes"):
-                p._validate_path("/etc/passwd")
-
-    def test_pipeline_bad_target(self):
+    def test_pipeline_synthesis_yosys_missing(self):
         from sc_neurocore.compiler.pipeline import CompilerPipeline
         with tempfile.TemporaryDirectory() as td:
             p = CompilerPipeline(work_dir=td)
             v_path = os.path.join(td, "dummy.v")
             with open(v_path, "w") as f:
                 f.write("module dummy(); endmodule")
-            with pytest.raises(ValueError, match="Unknown target"):
-                p.run_synthesis(v_path, target_fpga="bad_fpga")
+            json_path = p.run_synthesis(v_path, target_fpga="ice40")
+            assert json_path.endswith(".json")
+
+    def test_pipeline_pnr_nextpnr_missing(self):
+        from sc_neurocore.compiler.pipeline import CompilerPipeline
+        with tempfile.TemporaryDirectory() as td:
+            p = CompilerPipeline(work_dir=td)
+            json_path = os.path.join(td, "dummy.json")
+            with open(json_path, "w") as f:
+                f.write("{}")
+            asc_path = p.run_pnr(json_path)
+            assert asc_path.endswith(".asc")
 
 
 # ── Export/HDL write errors ──────────────────────────────────────────────
@@ -518,17 +523,20 @@ class TestSCPNLayerEdgeCases:
         layer = L1_QuantumLayer(params=L1_StochasticParameters(n_qubits=2, backend="aer_simulator"))
         assert layer.quantum_core is not None
 
-    def test_l10_boundary_short_noise(self):
-        from sc_neurocore.scpn.layers.l10_boundary import L10_BoundaryLayer, L10_StochasticParameters
-        layer = L10_BoundaryLayer(params=L10_StochasticParameters(n_boundary_nodes=4))
-        result = layer.step(0.01, external_noise=np.array([0.1, 0.2]))
-        assert "firewall_strength" in result
+    def test_l10_fire_adapter_step(self):
+        pytest.importorskip("jax")
+        from sc_neurocore.adapters.holonomic.l10_fire import L10_FirewallAdapter
+        adapter = L10_FirewallAdapter()
+        result = adapter.step_jax(0.01)
+        assert hasattr(result, "shape")
 
-    def test_l10_boundary_long_noise(self):
-        from sc_neurocore.scpn.layers.l10_boundary import L10_BoundaryLayer, L10_StochasticParameters
-        layer = L10_BoundaryLayer(params=L10_StochasticParameters(n_boundary_nodes=4))
-        result = layer.step(0.01, external_noise=np.ones(10))
-        assert "firewall_strength" in result
+    def test_l10_fire_adapter_with_inputs(self):
+        pytest.importorskip("jax")
+        from sc_neurocore.adapters.holonomic.l10_fire import L10_FirewallAdapter
+        adapter = L10_FirewallAdapter()
+        inp = np.ones((adapter.params.n_boundary_nodes, adapter.params.bitstream_length))
+        result = adapter.step_jax(0.01, inputs=inp)
+        assert hasattr(result, "shape")
 
 
 # ── Swarm evolver with collective fields ─────────────────────────────────

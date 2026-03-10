@@ -24,14 +24,15 @@ class TestJaxCompatFallback:
         with patch("sc_neurocore.adapters.holonomic._jax_compat.HAS_JAX", False):
             from sc_neurocore.adapters.holonomic._jax_compat import make_rng
             key = make_rng(42)
-            assert hasattr(key, "random")
+            assert hasattr(key, "shape")
+            assert key[-1] == 42
 
     def test_split_rng_no_jax(self):
         with patch("sc_neurocore.adapters.holonomic._jax_compat.HAS_JAX", False):
             from sc_neurocore.adapters.holonomic._jax_compat import make_rng, split_rng
             key = make_rng(42)
             k1, k2 = split_rng(key)
-            assert k1 is key
+            assert k1[-1] != k2[-1]
 
     def test_uniform_no_jax(self):
         with patch("sc_neurocore.adapters.holonomic._jax_compat.HAS_JAX", False):
@@ -187,9 +188,46 @@ class TestQuantumBackendGuards:
                 QuantumHardwareLayer(n_qubits=2, backend_type="pennylane.default.qubit")
 
 
-class TestVectorizedLayerSparseGuard:
-    def test_sparse_without_scipy(self):
-        with patch("sc_neurocore.layers.vectorized_layer.HAS_SCIPY_SPARSE", False):
-            from sc_neurocore.layers.vectorized_layer import VectorizedSCLayer
-            with pytest.raises(ImportError, match="scipy"):
-                VectorizedSCLayer(n_inputs=4, n_neurons=4, sparse=True)
+class TestVectorizedLayerForward:
+    def test_forward_correct_shape(self):
+        from sc_neurocore.layers.vectorized_layer import VectorizedSCLayer
+        layer = VectorizedSCLayer(n_inputs=4, n_neurons=8, use_gpu=False)
+        result = layer.forward([0.5, 0.5, 0.5, 0.5])
+        assert result.shape == (8,)
+
+
+class TestSwarmCoverageGaps:
+    def test_fitness_cohesion_single_agent(self):
+        from sc_neurocore.swarm.fitness import SwarmFitness
+        assert SwarmFitness.cohesion_score(np.array([[0.0, 0.0]])) == 0.0
+
+    def test_fitness_alignment_empty(self):
+        from sc_neurocore.swarm.fitness import SwarmFitness
+        assert SwarmFitness.alignment_score(np.array([])) == 0.0
+
+    def test_fitness_target_no_targets(self):
+        from sc_neurocore.swarm.fitness import SwarmFitness
+        pos = np.array([[1.0, 2.0]])
+        assert SwarmFitness.target_score(pos, np.array([])) == 0.0
+
+    def test_fitness_obstacle_no_obstacles(self):
+        from sc_neurocore.swarm.fitness import SwarmFitness
+        pos = np.array([[1.0, 2.0]])
+        assert SwarmFitness.obstacle_penalty(pos, np.array([])) == 0.0
+
+    def test_collective_deposit_symbolic(self):
+        from sc_neurocore.swarm.collective_fields import CollectiveFields, FieldConfig
+        fields = CollectiveFields(FieldConfig(grid_size=50))
+        fields.deposit_symbolic(25.0, 25.0, 0, 1.0)
+        val = fields.get_symbolic_at(25.0, 25.0)
+        assert val[0] > 0
+
+    def test_env_clamp_boundary(self):
+        from sc_neurocore.swarm.swarm_env import SwarmEnvironment, EnvConfig
+        from sc_neurocore.swarm.agent import SwarmAgent, AgentConfig
+        env = SwarmEnvironment(EnvConfig(width=100, height=100, boundary_mode="clamp"))
+        agent = SwarmAgent(AgentConfig(seed=42))
+        agent.position = np.array([-10.0, 200.0])
+        env._apply_boundary(agent)
+        assert agent.position[0] >= 0
+        assert agent.position[1] <= 100

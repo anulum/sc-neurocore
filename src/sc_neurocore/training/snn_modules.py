@@ -62,6 +62,68 @@ class LIFCell(nn.Module):
         return spike, v_next
 
 
+class IFCell(nn.Module):
+    """Integrate-and-Fire (no leak, beta=1).
+
+    Simplest spiking model: v[t] = v[t-1] + I[t], fire when v >= threshold.
+    """
+
+    def __init__(
+        self,
+        threshold: float = 1.0,
+        surrogate_fn: Callable = atan_surrogate,
+    ):
+        super().__init__()
+        self.register_buffer("_threshold", torch.tensor(threshold))
+        self.surrogate_fn = surrogate_fn
+
+    def forward(self, current: torch.Tensor, v: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        v_next = v + current
+        spike = self.surrogate_fn(v_next - self._threshold)
+        v_next = v_next - spike.detach() * self._threshold
+        return spike, v_next
+
+
+class SynapticCell(nn.Module):
+    """Dual-exponential synaptic LIF. Two state variables: synapse current + membrane.
+
+    i_syn[t] = alpha * i_syn[t-1] + I[t]
+    v[t] = beta * v[t-1] + i_syn[t]
+    """
+
+    def __init__(
+        self,
+        alpha: float = 0.9,
+        beta: float = 0.8,
+        threshold: float = 1.0,
+        surrogate_fn: Callable = atan_surrogate,
+        learn_beta: bool = False,
+    ):
+        super().__init__()
+        self.alpha = alpha
+        if learn_beta:
+            self._beta_logit = nn.Parameter(torch.tensor(_logit(beta)))
+        else:
+            self.register_buffer("_beta_val", torch.tensor(beta))
+        self._learn_beta = learn_beta
+        self.register_buffer("_threshold", torch.tensor(threshold))
+        self.surrogate_fn = surrogate_fn
+
+    @property
+    def beta(self) -> torch.Tensor:
+        return self._beta_logit.sigmoid() if self._learn_beta else self._beta_val
+
+    def forward(
+        self, current: torch.Tensor, i_syn: torch.Tensor, v: torch.Tensor,
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Returns (spike, i_syn_next, v_next)."""
+        i_syn_next = self.alpha * i_syn + current
+        v_next = self.beta * v + i_syn_next
+        spike = self.surrogate_fn(v_next - self._threshold)
+        v_next = v_next - spike.detach() * self._threshold
+        return spike, i_syn_next, v_next
+
+
 class ALIFCell(nn.Module):
     """Adaptive LIF. Bellec et al. 2020.
 
