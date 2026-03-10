@@ -1,18 +1,19 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 import pytest
 import numpy as np
-from sc_neurocore.accel.jax_backend import HAS_JAX, to_jax, to_host
+
+pytest.importorskip("jax")
+
+from sc_neurocore.accel.jax_backend import to_jax, to_host
 from sc_neurocore.layers.jax_dense_layer import JaxSCDenseLayer
 
 
-@pytest.mark.skipif(not HAS_JAX, reason="JAX is not installed")
 def test_jax_dense_layer_init():
     layer = JaxSCDenseLayer(n_neurons=10, n_inputs=5, seed=42)
     assert layer.v.shape == (10,)
     assert np.all(to_host(layer.v) == 0.0)
 
 
-@pytest.mark.skipif(not HAS_JAX, reason="JAX is not installed")
 def test_jax_dense_layer_step():
     layer = JaxSCDenseLayer(n_neurons=4, n_inputs=2, seed=123)
 
@@ -31,7 +32,6 @@ def test_jax_dense_layer_step():
     assert spikes_np[3] == 0
 
 
-@pytest.mark.skipif(not HAS_JAX, reason="JAX is not installed")
 def test_jax_dense_layer_run():
     layer = JaxSCDenseLayer(n_neurons=2, n_inputs=2, seed=456)
 

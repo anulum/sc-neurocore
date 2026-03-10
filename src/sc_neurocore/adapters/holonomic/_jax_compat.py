@@ -32,12 +32,12 @@ def split_rng(key):
     return np.array([0, s + 1], dtype=np.uint32), np.array([0, s + 2], dtype=np.uint32)
 
 
-def uniform(key, shape: tuple):
-    """Uniform [0, 1) samples."""
+def uniform(key, shape: tuple, minval: float = 0.0, maxval: float = 1.0):
+    """Uniform samples in [minval, maxval)."""
     if HAS_JAX:
-        return jax.random.uniform(key, shape)
+        return jax.random.uniform(key, shape, minval=minval, maxval=maxval)
     rng = np.random.default_rng(int(key[-1]))
-    return rng.uniform(size=shape).astype(np.float32)
+    return rng.uniform(low=minval, high=maxval, size=shape).astype(np.float32)
 
 
 def normal(key, shape: tuple):
