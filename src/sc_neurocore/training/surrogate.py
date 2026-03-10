@@ -75,3 +75,63 @@ def superspike(x: torch.Tensor, beta: float = 10.0) -> torch.Tensor:
 def atan_surrogate(x: torch.Tensor, alpha: float = 2.0) -> torch.Tensor:
     """Heaviside forward, arctan backward."""
     return _ATan.apply(x, alpha)
+
+
+class _Sigmoid(Function):
+    """Standard sigmoid surrogate."""
+
+    @staticmethod
+    def forward(ctx, x: torch.Tensor, slope: float) -> torch.Tensor:
+        ctx.save_for_backward(x)
+        ctx.slope = slope
+        return (x > 0).float()
+
+    @staticmethod
+    def backward(ctx, grad_output: torch.Tensor):
+        (x,) = ctx.saved_tensors
+        sx = torch.sigmoid(ctx.slope * x)
+        grad = ctx.slope * sx * (1.0 - sx)
+        return grad_output * grad, None
+
+
+class _StraightThrough(Function):
+    """Straight-Through Estimator (STE). Bengio et al. 2013."""
+
+    @staticmethod
+    def forward(ctx, x: torch.Tensor) -> torch.Tensor:
+        return (x > 0).float()
+
+    @staticmethod
+    def backward(ctx, grad_output: torch.Tensor):
+        return grad_output
+
+
+class _Triangular(Function):
+    """Triangular window surrogate. Esser et al. 2016."""
+
+    @staticmethod
+    def forward(ctx, x: torch.Tensor, width: float) -> torch.Tensor:
+        ctx.save_for_backward(x)
+        ctx.width = width
+        return (x > 0).float()
+
+    @staticmethod
+    def backward(ctx, grad_output: torch.Tensor):
+        (x,) = ctx.saved_tensors
+        grad = torch.clamp(1.0 - x.abs() / ctx.width, min=0.0) / ctx.width
+        return grad_output * grad, None
+
+
+def sigmoid_surrogate(x: torch.Tensor, slope: float = 5.0) -> torch.Tensor:
+    """Heaviside forward, sigmoid backward."""
+    return _Sigmoid.apply(x, slope)
+
+
+def straight_through(x: torch.Tensor) -> torch.Tensor:
+    """Heaviside forward, identity backward (STE)."""
+    return _StraightThrough.apply(x)
+
+
+def triangular(x: torch.Tensor, width: float = 1.0) -> torch.Tensor:
+    """Heaviside forward, triangular window backward."""
+    return _Triangular.apply(x, width)

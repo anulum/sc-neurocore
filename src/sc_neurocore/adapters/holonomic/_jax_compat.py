@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""JAX/NumPy compatibility layer for holonomic adapters."""
+"""JAX compatibility helpers for holonomic adapters.
 
+Thin wrappers around JAX RNG and JIT that fall back to NumPy when JAX
+is unavailable, so adapter code can stay backend-agnostic.
+"""
 from __future__ import annotations
 
 import numpy as np
-
-__all__ = ["HAS_JAX", "jnp", "make_rng", "maybe_jit", "normal", "split_rng", "uniform"]
 
 try:
     import jax
@@ -13,42 +14,42 @@ try:
 
     HAS_JAX = True
 except ImportError:
-    jax = None  # type: ignore[assignment]
-    import numpy as jnp  # type: ignore[no-redef]
-
     HAS_JAX = False
 
 
-def make_rng(seed: int):
-    """JAX PRNGKey when available, else NumPy Generator."""
+def make_rng(seed: int = 0):
+    """Create a PRNG key (JAX) or seed array (NumPy fallback)."""
     if HAS_JAX:
         return jax.random.PRNGKey(seed)
-    return np.random.default_rng(seed)
+    return np.array([0, seed], dtype=np.uint32)
 
 
 def split_rng(key):
-    """Split PRNG: JAX functional split or NumPy stateful pass-through."""
+    """Split a PRNG key into two children."""
     if HAS_JAX:
         return jax.random.split(key)
-    return key, key
+    s = int(key[-1])
+    return np.array([0, s + 1], dtype=np.uint32), np.array([0, s + 2], dtype=np.uint32)
 
 
-def uniform(key, shape, minval=0.0, maxval=1.0):
-    """Uniform samples from JAX or NumPy PRNG."""
+def uniform(key, shape: tuple):
+    """Uniform [0, 1) samples."""
     if HAS_JAX:
-        return jax.random.uniform(key, shape, minval=minval, maxval=maxval)
-    return np.asarray(key.random(shape) * (maxval - minval) + minval)
+        return jax.random.uniform(key, shape)
+    rng = np.random.default_rng(int(key[-1]))
+    return rng.uniform(size=shape).astype(np.float32)
 
 
-def normal(key, shape):
-    """Standard normal samples from JAX or NumPy PRNG."""
+def normal(key, shape: tuple):
+    """Standard normal samples."""
     if HAS_JAX:
         return jax.random.normal(key, shape)
-    return np.asarray(key.standard_normal(shape))
+    rng = np.random.default_rng(int(key[-1]))
+    return rng.standard_normal(size=shape).astype(np.float32)
 
 
 def maybe_jit(fn):
-    """@jax.jit when available, identity otherwise."""
+    """JIT-compile if JAX available, otherwise identity."""
     if HAS_JAX:
         return jax.jit(fn)
     return fn

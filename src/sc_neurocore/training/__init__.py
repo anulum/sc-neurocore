@@ -14,24 +14,56 @@ except ImportError:
     HAS_TORCH = False
 
 if HAS_TORCH:
-    from .losses import membrane_loss, spike_count_loss, spike_rate_loss
-    from .loops import evaluate, train_epoch
-    from .snn_modules import ALIFCell, ConvSpikingNet, LIFCell, RecurrentLIFCell, SpikingNet
-    from .surrogate import atan_surrogate, fast_sigmoid, superspike
+    from .encoding import delta_encode, latency_encode, rate_encode
+    from .losses import membrane_loss, spike_count_loss, spike_l1_loss, spike_l2_loss, spike_rate_loss
+    from .loops import auto_device, evaluate, train_epoch
+    from .snn_modules import (
+        ALIFCell,
+        ConvSpikingNet,
+        IFCell,
+        LIFCell,
+        RecurrentLIFCell,
+        SpikingNet,
+        SynapticCell,
+    )
+    from .surrogate import (
+        atan_surrogate,
+        fast_sigmoid,
+        sigmoid_surrogate,
+        straight_through,
+        superspike,
+        triangular,
+    )
 
 __all__ = [
     "HAS_TORCH",
-    "ALIFCell",
-    "ConvSpikingNet",
+    # Neuron cells
+    "IFCell",
     "LIFCell",
+    "ALIFCell",
+    "SynapticCell",
     "RecurrentLIFCell",
     "SpikingNet",
+    "ConvSpikingNet",
+    # Surrogate gradients
     "fast_sigmoid",
     "superspike",
     "atan_surrogate",
+    "sigmoid_surrogate",
+    "straight_through",
+    "triangular",
+    # Spike encoding
+    "rate_encode",
+    "latency_encode",
+    "delta_encode",
+    # Losses + regularization
     "spike_count_loss",
     "membrane_loss",
     "spike_rate_loss",
+    "spike_l1_loss",
+    "spike_l2_loss",
+    # Training
+    "auto_device",
     "train_epoch",
     "evaluate",
 ]

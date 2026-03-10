@@ -38,9 +38,9 @@ class StochasticLIFNeuron(BaseNeuron):
 
     def __post_init__(self) -> None:
         if self.tau_mem <= 0:
-            raise ValueError(f"tau_mem must be positive, got {self.tau_mem}")
+            raise ValueError(f"tau_mem must be > 0, got {self.tau_mem}")
         self._rng = RNG(self.seed)
-        self.v = self.v_rest  # membrane potential
+        self.v = self.v_rest
         self.refractory_counter = 0
         self.reset_state()
 

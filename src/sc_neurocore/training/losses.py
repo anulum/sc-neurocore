@@ -30,3 +30,13 @@ def spike_rate_loss(
     target_rates = torch.full_like(rates, bg_rate)
     target_rates.scatter_(1, targets.unsqueeze(1), target_rate)
     return F.mse_loss(rates, target_rates)
+
+
+def spike_l1_loss(spike_counts: torch.Tensor, n_timesteps: int) -> torch.Tensor:
+    """L1 penalty on mean spike rate. Encourages sparse firing."""
+    return (spike_counts / n_timesteps).abs().mean()
+
+
+def spike_l2_loss(spike_counts: torch.Tensor, n_timesteps: int) -> torch.Tensor:
+    """L2 penalty on mean spike rate. Penalizes high-firing neurons."""
+    return ((spike_counts / n_timesteps) ** 2).mean()

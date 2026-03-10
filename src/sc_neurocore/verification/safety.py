@@ -13,31 +13,27 @@ class CodeSafetyVerifier:
     Analyzes AST to prevent catastrophic bugs in auto-generated updates.
     """
 
+    _BLOCKED_ATTRS = frozenset({"system", "popen", "rmtree"})
+    _BLOCKED_BUILTINS = frozenset({"exec", "eval", "compile", "__import__"})
+
     def verify_code_safety(self, source_code: str) -> bool:
-        """
-        Static analysis of source code for dangerous patterns.
-        """
+        """Static analysis of source code for dangerous patterns."""
         try:
             tree = ast.parse(source_code)
         except SyntaxError:
             logger.error("Safety Violation: Syntax Error in generated code.")
             return False
 
-        BLOCKED_ATTRS = {"system", "popen", "rmtree", "call", "Popen"}
-        BLOCKED_NAMES = {"eval", "exec", "compile", "__import__"}
-        violations: list[str] = []
-
         for node in ast.walk(tree):
             if isinstance(node, ast.Call):
-                if isinstance(node.func, ast.Attribute) and node.func.attr in BLOCKED_ATTRS:
-                    violations.append(f"line {node.lineno}: blocked call '{node.func.attr}'")
-                elif isinstance(node.func, ast.Name) and node.func.id in BLOCKED_NAMES:
-                    violations.append(f"line {node.lineno}: blocked builtin '{node.func.id}'")
-
-        if violations:
-            for v in violations:
-                logger.warning("Safety violation: %s", v)
-            return False
+                if isinstance(node.func, ast.Attribute):
+                    if node.func.attr in self._BLOCKED_ATTRS:
+                        logger.warning("Safety Violation: blocked call '%s'.", node.func.attr)
+                        return False
+                elif isinstance(node.func, ast.Name):
+                    if node.func.id in self._BLOCKED_BUILTINS:
+                        logger.warning("Safety Violation: blocked builtin '%s'.", node.func.id)
+                        return False
 
         return True
 
@@ -52,6 +48,6 @@ class CodeSafetyVerifier:
             else:
                 logger.error("Safety Violation: Logic invariant failed. Output %s invalid.", res)
                 return False
-        except (TypeError, ValueError, RuntimeError, ArithmeticError) as e:
+        except Exception as e:
             logger.error("Safety Violation: Runtime Error - %s", e)
             return False

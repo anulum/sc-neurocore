@@ -11,13 +11,22 @@ from torch.utils.data import DataLoader
 from .losses import spike_count_loss
 
 
+def auto_device() -> torch.device:
+    """Select best available device: CUDA > MPS > CPU."""
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        return torch.device("mps")
+    return torch.device("cpu")
+
+
 def train_epoch(
     model: torch.nn.Module,
     loader: DataLoader,
     optimizer: torch.optim.Optimizer,
     n_timesteps: int,
     loss_fn: Callable = spike_count_loss,
-    device: str = "cpu",
+    device: str | torch.device = "cpu",
     max_grad_norm: float | None = None,
 ) -> Tuple[float, float]:
     """One training epoch. Returns (avg_loss, accuracy)."""

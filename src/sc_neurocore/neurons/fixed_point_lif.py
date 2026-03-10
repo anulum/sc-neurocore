@@ -44,14 +44,12 @@ class FixedPointLIFNeuron:
     refractory_period: int = 2
 
     def __post_init__(self) -> None:
-        if self.data_width < 1 or self.data_width > 32:
-            raise ValueError(f"data_width must be 1..32, got {self.data_width}")
-        if self.fraction < 0 or self.fraction >= self.data_width:
-            raise ValueError(f"fraction must be 0..{self.data_width - 1}, got {self.fraction}")
+        if not 1 <= self.data_width <= 32:
+            raise ValueError(f"data_width must be in [1, 32], got {self.data_width}")
+        if not 0 <= self.fraction < self.data_width:
+            raise ValueError(f"fraction must be in [0, data_width), got {self.fraction}")
         if self.refractory_period < 0:
-            raise ValueError(
-                f"refractory_period must be non-negative, got {self.refractory_period}"
-            )
+            raise ValueError(f"refractory_period must be >= 0, got {self.refractory_period}")
         self.v: int = self.v_rest
         self.refractory_counter: int = 0
 
@@ -79,10 +77,13 @@ class FixedPointLIFNeuron:
 
         # --- Leak term: (V_REST - v) * leak_k >>> FRACTION ---
         diff = _mask(self.v_rest - self.v, 2 * W)
-        dv_leak = _mask((diff * leak_k) >> self.fraction, W)
+        leak_mul = diff * leak_k
+        # Arithmetic right shift (Python >> is arithmetic for negative ints)
+        dv_leak = leak_mul >> self.fraction
 
         # --- Input term: I_t * gain_k >>> FRACTION ---
-        dv_in = _mask((I_t * gain_k) >> self.fraction, W)
+        in_mul = I_t * gain_k
+        dv_in = in_mul >> self.fraction
 
         # --- Next membrane potential ---
         v_next = _mask(self.v + dv_leak + dv_in + noise_in, W)
