@@ -58,9 +58,11 @@ class TestJaxCompatFallback:
         with patch("sc_neurocore.adapters.holonomic._jax_compat.HAS_JAX", False):
             from sc_neurocore.adapters.holonomic._jax_compat import maybe_jit
 
-            fn = lambda x: x + 1
-            result = maybe_jit(fn)
-            assert result is fn
+            def _inc(x):
+                return x + 1
+
+            result = maybe_jit(_inc)
+            assert result is _inc
 
 
 # ---------------------------------------------------------------------------
