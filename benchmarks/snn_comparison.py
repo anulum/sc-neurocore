@@ -65,6 +65,24 @@ class VariantResult:
     reason: str = ""
 
 
+# Brunel (2000) AI regime: g=5, eta=2
+_ETA = 2.0
+
+
+def _brunel_ext_lambda(bp: BrunelParams) -> float:
+    """Poisson lambda per neuron per timestep for Brunel external drive.
+
+    Brunel (2000): nu_thr = V_th / (J * C_E * tau_m), nu_ext = eta * nu_thr.
+    Total events per neuron per step = C_E * nu_ext * dt_s.
+    """
+    c_e = bp.conn_prob * bp.n_exc
+    if c_e == 0:
+        return 0.0
+    nu_thr = bp.v_threshold / (bp.weight_exc * c_e * bp.tau_mem * 1e-3)
+    nu_ext = _ETA * nu_thr
+    return c_e * nu_ext * bp.dt / 1000.0
+
+
 # ---------------------------------------------------------------------------
 # Brian2 reference
 # ---------------------------------------------------------------------------
@@ -101,11 +119,13 @@ def run_brian2_reference(bp: BrunelParams) -> VariantResult | None:
     S_inh.connect(p=bp.conn_prob)
     S_inh.namespace["w"] = bp.weight_inh
 
-    # External Poisson drive as delta-PSC (v += w on each spike)
-    P_ext = brian2.PoissonGroup(bp.n_total, rates=bp.external_rate_hz * brian2.Hz)
-    S_ext = brian2.Synapses(P_ext, G, on_pre="v_post += w", dt=bp.dt * brian2.ms)
-    S_ext.connect(j="i")
-    S_ext.namespace["w"] = bp.weight_exc
+    # Independent Poisson input per neuron (Brunel 2000).
+    # PoissonInput avoids correlated-drive artifact of shared PoissonGroup.
+    c_ext = int(bp.conn_prob * bp.n_exc)
+    c_e = bp.conn_prob * bp.n_exc
+    nu_thr = bp.v_threshold / (bp.weight_exc * c_e * bp.tau_mem * 1e-3) if c_e > 0 else 20.0
+    nu_ext = _ETA * nu_thr
+    _P_ext = brian2.PoissonInput(G, "v", N=c_ext, rate=nu_ext * brian2.Hz, weight=bp.weight_exc)
 
     mon = brian2.SpikeMonitor(G)
 
@@ -145,7 +165,7 @@ def run_v1_stochastic_lif(bp: BrunelParams) -> VariantResult:
     t0 = time.perf_counter()
     for _ in range(steps):
         # Poisson external drive as delta-PSC voltage kicks
-        ext_events = rng.poisson(bp.external_rate_hz * bp.dt / 1000.0, bp.n_total)
+        ext_events = rng.poisson(_brunel_ext_lambda(bp), bp.n_total)
 
         # Synaptic input from previous spikes (delta-PSC)
         if prev_spikes.any():
@@ -247,7 +267,7 @@ def run_v3_fixed_point(bp: BrunelParams) -> VariantResult:
 
     t0 = time.perf_counter()
     for _ in range(steps):
-        ext_events = rng.poisson(bp.external_rate_hz * bp.dt / 1000.0, bp.n_total)
+        ext_events = rng.poisson(_brunel_ext_lambda(bp), bp.n_total)
 
         if prev_spikes.any():
             syn_q = w_q[prev_spikes].sum(axis=0)
@@ -313,7 +333,7 @@ def run_v4_hybrid(bp: BrunelParams) -> VariantResult:
 
     t0 = time.perf_counter()
     for _ in range(steps):
-        ext_events = rng.poisson(bp.external_rate_hz * bp.dt / 1000.0, bp.n_total)
+        ext_events = rng.poisson(_brunel_ext_lambda(bp), bp.n_total)
 
         # Vectorized synaptic input (stochastic modulation via random scaling)
         if prev_spikes.any():
@@ -412,7 +432,7 @@ def run_v6_homeostatic(bp: BrunelParams) -> VariantResult:
 
     t0 = time.perf_counter()
     for _ in range(steps):
-        ext_events = rng.poisson(bp.external_rate_hz * bp.dt / 1000.0, bp.n_total)
+        ext_events = rng.poisson(_brunel_ext_lambda(bp), bp.n_total)
 
         if prev_spikes.any():
             syn_dv = weights[prev_spikes].sum(axis=0)
@@ -456,7 +476,7 @@ def run_v7_noisy(bp: BrunelParams) -> VariantResult:
 
     t0 = time.perf_counter()
     for _ in range(steps):
-        ext_events = rng.poisson(bp.external_rate_hz * bp.dt / 1000.0, bp.n_total)
+        ext_events = rng.poisson(_brunel_ext_lambda(bp), bp.n_total)
 
         if prev_spikes.any():
             syn_dv = weights[prev_spikes].sum(axis=0)
@@ -500,7 +520,7 @@ def run_v8_refractory(bp: BrunelParams) -> VariantResult:
 
     t0 = time.perf_counter()
     for _ in range(steps):
-        ext_events = rng.poisson(bp.external_rate_hz * bp.dt / 1000.0, bp.n_total)
+        ext_events = rng.poisson(_brunel_ext_lambda(bp), bp.n_total)
 
         if prev_spikes.any():
             syn_dv = weights[prev_spikes].sum(axis=0)
@@ -544,7 +564,7 @@ def run_v9_post_kick(bp: BrunelParams) -> VariantResult:
 
     t0 = time.perf_counter()
     for _ in range(steps):
-        ext_events = rng.poisson(bp.external_rate_hz * bp.dt / 1000.0, bp.n_total)
+        ext_events = rng.poisson(_brunel_ext_lambda(bp), bp.n_total)
 
         if prev_spikes.any():
             syn_dv = weights[prev_spikes].sum(axis=0)
@@ -590,7 +610,7 @@ def run_v10_exact_leak(bp: BrunelParams) -> VariantResult:
 
     t0 = time.perf_counter()
     for _ in range(steps):
-        ext_events = rng.poisson(bp.external_rate_hz * bp.dt / 1000.0, bp.n_total)
+        ext_events = rng.poisson(_brunel_ext_lambda(bp), bp.n_total)
 
         if prev_spikes.any():
             syn_dv = weights[prev_spikes].sum(axis=0)
@@ -649,7 +669,7 @@ def run_v11_q16(bp: BrunelParams) -> VariantResult:
 
     t0 = time.perf_counter()
     for _ in range(steps):
-        ext_events = rng.poisson(bp.external_rate_hz * bp.dt / 1000.0, bp.n_total)
+        ext_events = rng.poisson(_brunel_ext_lambda(bp), bp.n_total)
 
         if prev_spikes.any():
             syn_q = w_q[prev_spikes].sum(axis=0)
@@ -714,7 +734,7 @@ def run_v12_stdp(bp: BrunelParams) -> VariantResult:
 
     t0 = time.perf_counter()
     for _ in range(steps):
-        ext_events = rng.poisson(bp.external_rate_hz * bp.dt / 1000.0, bp.n_total)
+        ext_events = rng.poisson(_brunel_ext_lambda(bp), bp.n_total)
 
         if prev_spikes.any():
             syn_dv = weights[prev_spikes].sum(axis=0)
@@ -777,7 +797,7 @@ def run_v13_dot_product(bp: BrunelParams) -> VariantResult:
 
     t0 = time.perf_counter()
     for _ in range(steps):
-        ext_events = rng.poisson(bp.external_rate_hz * bp.dt / 1000.0, n_sub)
+        ext_events = rng.poisson(_brunel_ext_lambda(bp), n_sub)
 
         # Encode previous spikes as bitstreams
         pre_matrix = np.zeros((n_sub, bl), dtype=np.uint8)
@@ -835,7 +855,7 @@ def run_v14_sobol(bp: BrunelParams) -> VariantResult:
 
     t0 = time.perf_counter()
     for _ in range(steps):
-        ext_events = rng.poisson(bp.external_rate_hz * bp.dt / 1000.0, bp.n_total)
+        ext_events = rng.poisson(_brunel_ext_lambda(bp), bp.n_total)
 
         if prev_spikes.any():
             # Sobol-modulated noise instead of uniform
@@ -906,7 +926,7 @@ def run_v15_jax(bp: BrunelParams) -> VariantResult:
     prev_spikes = jnp.zeros(bp.n_total)
     for _ in range(steps):
         ext_events = jnp.array(
-            rng.poisson(bp.external_rate_hz * bp.dt / 1000.0, bp.n_total).astype(float)
+            rng.poisson(_brunel_ext_lambda(bp), bp.n_total).astype(float)
         )
         I_syn = jnp.dot(prev_spikes, w_jax)
         I_total = ext_events * params["weight_exc"] + I_syn
@@ -941,7 +961,7 @@ def run_v16_recurrent(bp: BrunelParams) -> VariantResult:
 
     rng = np.random.default_rng(bp.seed)
     steps = int(bp.sim_ms / bp.dt)
-    ext_prob = bp.external_rate_hz * bp.dt / 1000.0
+    ext_prob = _brunel_ext_lambda(bp)
 
     t0 = time.perf_counter()
     total_output = np.zeros(n_sub)
@@ -1065,7 +1085,7 @@ def run_v18_numba(bp: BrunelParams) -> VariantResult:
     else:
         _run_loop = None
 
-    ext_rate_dt = bp.external_rate_hz * bp.dt / 1000.0
+    ext_rate_dt = _brunel_ext_lambda(bp)
 
     t0 = time.perf_counter()
     if _run_loop is not None:
@@ -1147,7 +1167,7 @@ def run_v19_pytorch_cuda(bp: BrunelParams) -> VariantResult:
 
     for _ in range(steps):
         ext_events = torch.tensor(
-            rng.poisson(bp.external_rate_hz * bp.dt / 1000.0, n),
+            rng.poisson(_brunel_ext_lambda(bp), n),
             dtype=torch.float32,
             device=device,
         )
@@ -1193,7 +1213,7 @@ def run_v20_vectorized_numpy(bp: BrunelParams) -> VariantResult:
 
     t0 = time.perf_counter()
     for _ in range(steps):
-        ext_events = rng.poisson(bp.external_rate_hz * bp.dt / 1000.0, n)
+        ext_events = rng.poisson(_brunel_ext_lambda(bp), n)
 
         # Vectorized synaptic input
         if prev_spikes.any():
@@ -1271,7 +1291,7 @@ def run_v21_sparse_numba(bp: BrunelParams) -> VariantResult:
 
     alpha = bp.dt / bp.tau_mem
     steps = int(bp.sim_ms / bp.dt)
-    ext_rate_dt = bp.external_rate_hz * bp.dt / 1000.0
+    ext_rate_dt = _brunel_ext_lambda(bp)
 
     @njit(cache=True)
     def _run_sparse(
@@ -1435,16 +1455,13 @@ def main() -> None:
     ap.add_argument("--json", type=str, help="write results to JSON file")
     ap.add_argument("--markdown", action="store_true")
     ap.add_argument("--sim-ms", type=float, default=1000.0)
-    ap.add_argument("--adapted", action="store_true", help="use adapted (higher drive) params")
     args = ap.parse_args()
 
-    if args.adapted:
-        bp = BrunelParams(weight_exc=5.0, external_rate_hz=200.0, sim_ms=args.sim_ms)
-    else:
-        bp = BrunelParams(sim_ms=args.sim_ms)
+    bp = BrunelParams(sim_ms=args.sim_ms)
+    ext_lambda = _brunel_ext_lambda(bp)
 
     print(f"\nBrunel Network: {bp.n_total} neurons, sim={bp.sim_ms}ms")
-    print(f"  weight_exc={bp.weight_exc}, ext_rate={bp.external_rate_hz}Hz")
+    print(f"  weight_exc={bp.weight_exc}, ext_lambda={ext_lambda:.3f}/step (Brunel AI)")
     print("=" * 60)
 
     # Run Brian2 reference first if available
@@ -1463,7 +1480,7 @@ def main() -> None:
 
     # Determine variants to run
     if args.all:
-        variants = [f"v{i}" for i in range(1, 21)]
+        variants = [f"v{i}" for i in range(1, 22)]
     elif args.variant:
         variants = [v for v in args.variant if v != "brian2"]
     else:
