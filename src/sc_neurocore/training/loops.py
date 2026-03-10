@@ -18,6 +18,7 @@ def train_epoch(
     n_timesteps: int,
     loss_fn: Callable = spike_count_loss,
     device: str = "cpu",
+    max_grad_norm: float | None = None,
 ) -> Tuple[float, float]:
     """One training epoch. Returns (avg_loss, accuracy)."""
     model.train()
@@ -36,6 +37,8 @@ def train_epoch(
 
         optimizer.zero_grad()
         loss.backward()
+        if max_grad_norm is not None:
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
         optimizer.step()
 
         total_loss += loss.item() * targets.shape[0]

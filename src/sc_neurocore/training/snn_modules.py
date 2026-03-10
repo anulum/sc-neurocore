@@ -11,7 +11,7 @@ from typing import Callable, List, Tuple
 import torch
 import torch.nn as nn
 
-from .surrogate import fast_sigmoid
+from .surrogate import atan_surrogate
 
 
 class LIFCell(nn.Module):
@@ -26,7 +26,7 @@ class LIFCell(nn.Module):
         self,
         beta: float = 0.9,
         threshold: float = 1.0,
-        surrogate_fn: Callable = fast_sigmoid,
+        surrogate_fn: Callable = atan_surrogate,
     ):
         super().__init__()
         self.beta = beta
@@ -51,7 +51,7 @@ class RecurrentLIFCell(nn.Module):
         n_neurons: int,
         beta: float = 0.9,
         threshold: float = 1.0,
-        surrogate_fn: Callable = fast_sigmoid,
+        surrogate_fn: Callable = atan_surrogate,
     ):
         super().__init__()
         self.lif = LIFCell(beta, threshold, surrogate_fn)
@@ -81,7 +81,7 @@ class SpikingNet(nn.Module):
         n_output: int,
         n_layers: int = 2,
         beta: float = 0.9,
-        surrogate_fn: Callable = fast_sigmoid,
+        surrogate_fn: Callable = atan_surrogate,
     ):
         super().__init__()
         self.n_output = n_output
