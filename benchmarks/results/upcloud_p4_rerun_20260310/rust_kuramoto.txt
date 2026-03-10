@@ -203,4 +203,3 @@ kuramoto_100_osc_1000_steps
                         time:   [65.902 ms 66.335 ms 66.776 ms]
 Found 3 outliers among 100 measurements (3.00%)
   3 (3.00%) high mild
-
