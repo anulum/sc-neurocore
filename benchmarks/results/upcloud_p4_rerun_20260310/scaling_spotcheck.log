@@ -1,0 +1,64 @@
+======================================================================
+  SC-NeuroCore Scaling Benchmark (4-Regime Brunel)
+  Scales: [1000, 5000]
+  Regimes: ['AI']
+  Sim: 500.0 ms, Repeats: 3
+  System: AMD EPYC 9575F 64-Core Processor
+======================================================================
+
+######################################################################
+  Regime: AI — asynchronous irregular  (g=5.0, eta=2.0)
+######################################################################
+
+  N=1,000  synapses~100,000  ext_rate=250.0 Hz
+    SC-NeuroCore (NumPy dense)... 0.331s ±0.016s  rate=99.0 Hz  syn/s=1.49e+07  sparsity=0.990  (3 runs)
+    SC-NeuroCore (NumPy sparse)... 1.511s ±0.021s  rate=99.0 Hz  syn/s=3.26e+06  sparsity=0.990  (3 runs)
+    SC-NeuroCore (Rust engine)... SKIP (not installed)
+    SC-NeuroCore (Rust Brunel)... SKIP (not installed)
+    SC-NeuroCore (PyTorch CUDA)... SKIP (not installed)
+    SC-NeuroCore (PyTorch CUDA sparse)... SKIP (not installed)
+    Norse (PyTorch SNN)... SKIP (not installed)
+    snnTorch (PyTorch SNN)... SKIP (not installed)
+    Brian2... 3.939s ±3.404s  rate=98.1 Hz  syn/s=2.33e+06  sparsity=0.000  (3 runs)
+    NEST... SKIP (not installed)
+
+  N=5,000  synapses~2,500,000  ext_rate=50.0 Hz
+    SC-NeuroCore (NumPy dense)... 1.153s ±0.049s  rate=63.6 Hz  syn/s=6.90e+07  sparsity=0.994  (3 runs)
+    SC-NeuroCore (NumPy sparse)... 2.587s ±0.073s  rate=63.6 Hz  syn/s=3.07e+07  sparsity=0.994  (3 runs)
+    SC-NeuroCore (Rust engine)... SKIP (not installed)
+    SC-NeuroCore (Rust Brunel)... SKIP (not installed)
+    SC-NeuroCore (PyTorch CUDA)... SKIP (not installed)
+    SC-NeuroCore (PyTorch CUDA sparse)... SKIP (not installed)
+    Norse (PyTorch SNN)... SKIP (not installed)
+    snnTorch (PyTorch SNN)... SKIP (not installed)
+    Brian2... 3.177s ±0.138s  rate=58.9 Hz  syn/s=2.32e+07  sparsity=0.000  (3 runs)
+    NEST... SKIP (not installed)
+
+# SC-NeuroCore Scaling Benchmark
+
+Brunel balanced network: 80/20 exc/inh, 10% connectivity.
+Regimes per Brunel (2000): SR, SI, AI, AR.
+
+## Results
+
+| Regime | N | Simulator | Time (s) | Rate (Hz) | Syn events/s | Sparsity | RSS (MB) |
+|--------|--:|-----------|----------:|----------:|-------------:|---------:|---------:|
+|     AI |   1,000 | sc_numpy_dense               |    0.331 |      99.0 |     1.49e+07 |    0.990 |      0.2 |
+|     AI |   1,000 | sc_numpy_sparse              |    1.511 |      99.0 |     3.26e+06 |    0.990 |      0.2 |
+|     AI |   1,000 | brian2                       |    3.939 |      98.1 |     2.33e+06 |    0.000 |     13.9 |
+|     AI |   5,000 | sc_numpy_dense               |    1.153 |      63.6 |     6.90e+07 |    0.994 |      4.2 |
+|     AI |   5,000 | sc_numpy_sparse              |    2.587 |      63.6 |     3.07e+07 |    0.994 |      1.1 |
+|     AI |   5,000 | brian2                       |    3.177 |      58.9 |     2.32e+07 |    0.000 |      8.1 |
+
+## Speedup vs Brian2
+
+Rate ratio = SC rate / Brian2 rate. Speedup only valid when rates match (0.75-1.25x).
+
+| Regime | N | Simulator | Rate ratio | Speedup | Valid |
+|--------|--:|-----------|----------:|--------:|:-----:|
+| AI |   1,000 | sc_numpy_dense               |      1.01x |    11.9x |     Y |
+| AI |   1,000 | sc_numpy_sparse              |      1.01x |     2.6x |     Y |
+| AI |   5,000 | sc_numpy_dense               |      1.08x |     2.8x |     Y |
+| AI |   5,000 | sc_numpy_sparse              |      1.08x |     1.2x |     Y |
+
+Results written to ../benchmarks/results/upcloud_p4_rerun_20260310/scaling_spotcheck.json

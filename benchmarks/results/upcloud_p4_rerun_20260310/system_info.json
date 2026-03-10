@@ -1,0 +1,6 @@
+{
+  "platform": "Linux-6.8.0-87-generic-x86_64-with-glibc2.39",
+  "python": "3.12.3",
+  "cpu": "AMD EPYC 9575F 64-Core Processor",
+  "cpu_count": 8
+}
