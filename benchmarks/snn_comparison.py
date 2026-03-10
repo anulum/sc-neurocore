@@ -925,9 +925,7 @@ def run_v15_jax(bp: BrunelParams) -> VariantResult:
     t0 = time.perf_counter()
     prev_spikes = jnp.zeros(bp.n_total)
     for _ in range(steps):
-        ext_events = jnp.array(
-            rng.poisson(_brunel_ext_lambda(bp), bp.n_total).astype(float)
-        )
+        ext_events = jnp.array(rng.poisson(_brunel_ext_lambda(bp), bp.n_total).astype(float))
         I_syn = jnp.dot(prev_spikes, w_jax)
         I_total = ext_events * params["weight_exc"] + I_syn
         spikes_jax = layer.step(I_total)
