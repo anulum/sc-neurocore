@@ -1,4 +1,4 @@
-# Pinned dev dependencies for SC-NeuroCore v3.8.2
+# Pinned dev dependencies for SC-NeuroCore v3.10.0
 # Canonical source of truth: pyproject.toml [project.optional-dependencies.dev]
 -r requirements.txt
 pytest>=7.0

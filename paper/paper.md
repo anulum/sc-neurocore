@@ -158,9 +158,11 @@ CI, and PyPI publication.
 # Quality Assurance
 
 SC-NeuroCore maintains 1 144 Python and 108 Rust tests with 100% line
-coverage, enforced by CI on every push. The test suite includes unit
-tests, integration tests, 18 property-based tests (Hypothesis),
-cross-layer coupling tests, and hardware co-simulation checks. Static
+coverage of production modules (optional hardware-dependent and
+experimental code excluded via standard coverage directives), enforced
+by CI on every push. The test suite includes unit tests, integration
+tests, 18 property-based tests (Hypothesis), cross-layer coupling
+tests, and hardware co-simulation checks. Static
 analysis comprises Ruff linting, Bandit security scanning, and SPDX
 license header validation. Eleven CI workflows---all with SHA-pinned
 GitHub Actions---cover lint, test, build, benchmark, documentation,

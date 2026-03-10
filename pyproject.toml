@@ -82,6 +82,8 @@ exclude = [
     "sc_neurocore.optics", "sc_neurocore.optics.*",
     "sc_neurocore.chaos", "sc_neurocore.chaos.*",
     "sc_neurocore.bio", "sc_neurocore.bio.*",
+    "sc_neurocore.robotics", "sc_neurocore.robotics.*",
+    "sc_neurocore.physics", "sc_neurocore.physics.*",
 ]
 
 [tool.setuptools.package-data]
