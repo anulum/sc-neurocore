@@ -144,12 +144,15 @@ SC bitstream weights. The Brunel benchmark results and MNIST-on-FPGA
 demo provide reproducible baselines following NeuroBench methodology
 [@yik2023neurobench].
 
-The project originated in the God of the Math Collection research
-monorepo (active since December 2025) and was extracted to a standalone
-repository in February 2026 for independent packaging and CI. The parent
-project encompasses SCPN (Self-Consistent Phenomenological Network)
-theoretical work across multiple repositories, of which SC-NeuroCore
-implements the neuromorphic hardware layer.
+The project originated within the God of the Math research programme
+(public GitHub repository `anulum/god-of-the-math` since August 2025),
+which encompasses SCPN (Self-Consistent Phenomenological Network)
+theoretical work, manuscripts, simulations, and multiple software
+repositories. SC-NeuroCore implements the neuromorphic hardware layer
+of this programme. The neuromorphic code was developed within the parent
+monorepo from December 2025 and extracted to a standalone repository
+(`anulum/sc-neurocore`) in February 2026 for independent packaging,
+CI, and PyPI publication.
 
 # Quality Assurance
 
