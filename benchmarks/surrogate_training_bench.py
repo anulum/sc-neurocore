@@ -102,6 +102,108 @@ def bench_scneurocore(train_loader, test_loader, n_epochs: int, device: str) -> 
     return result
 
 
+# ── SC-NeuroCore (learnable) ──────────────────────────────────────────────
+
+def bench_scneurocore_learnable(train_loader, test_loader, n_epochs: int, device: str) -> BenchResult:
+    from sc_neurocore.training import SpikingNet, train_epoch, evaluate
+    import sc_neurocore
+
+    model = SpikingNet(
+        N_INPUT, N_HIDDEN, N_OUTPUT, N_LAYERS, beta=BETA,
+        learn_beta=True, learn_threshold=True,
+    ).to(device)
+    opt = torch.optim.Adam(model.parameters(), lr=LR)
+    n_params = sum(p.numel() for p in model.parameters())
+
+    result = BenchResult(
+        framework="sc-neurocore-learnable",
+        version=sc_neurocore.__version__,
+        device=device,
+        n_params=n_params,
+    )
+
+    t_total = time.perf_counter()
+    for ep in range(1, n_epochs + 1):
+        t0 = time.perf_counter()
+        tr_loss, tr_acc = train_epoch(model, train_loader, opt, T, device=device, max_grad_norm=1.0)
+        te_loss, te_acc = evaluate(model, test_loader, T, device=device)
+        dt = time.perf_counter() - t0
+        result.epochs.append(EpochResult(ep, tr_loss, tr_acc, te_loss, te_acc, dt))
+        print(f"  [sc-learnable] Epoch {ep}/{n_epochs} | test {te_acc:.1%} | {dt:.1f}s")
+
+    result.total_train_s = time.perf_counter() - t_total
+    result.final_test_acc = result.epochs[-1].test_acc
+    result.avg_epoch_s = result.total_train_s / n_epochs
+    return result
+
+
+# ── SC-NeuroCore (ConvSNN) ───────────────────────────────────────────────
+
+def bench_scneurocore_conv(train_loader, test_loader, n_epochs: int, device: str) -> BenchResult:
+    from sc_neurocore.training import ConvSpikingNet
+    from sc_neurocore.training.losses import spike_count_loss
+    import sc_neurocore
+
+    model = ConvSpikingNet(
+        n_output=N_OUTPUT, beta=BETA,
+        learn_beta=True, learn_threshold=True,
+    ).to(device)
+    opt = torch.optim.Adam(model.parameters(), lr=LR)
+    n_params = sum(p.numel() for p in model.parameters())
+    criterion = spike_count_loss
+
+    result = BenchResult(
+        framework="sc-neurocore-conv",
+        version=sc_neurocore.__version__,
+        device=device,
+        n_params=n_params,
+    )
+
+    t_total = time.perf_counter()
+    for ep in range(1, n_epochs + 1):
+        t0 = time.perf_counter()
+        model.train()
+        correct = total = 0
+        total_loss = 0.0
+        for data, targets in train_loader:
+            data, targets = data.to(device), targets.to(device)
+            # (batch, 1, 28, 28) -> (T, batch, 1, 28, 28)
+            data = data.unsqueeze(0).expand(T, -1, -1, -1, -1)
+            spk, _ = model(data)
+            loss = criterion(spk, targets)
+            opt.zero_grad()
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            opt.step()
+            total_loss += loss.item() * targets.shape[0]
+            correct += (spk.argmax(1) == targets).sum().item()
+            total += targets.shape[0]
+        tr_loss, tr_acc = total_loss / total, correct / total
+
+        model.eval()
+        correct = total = 0
+        total_loss = 0.0
+        with torch.no_grad():
+            for data, targets in test_loader:
+                data, targets = data.to(device), targets.to(device)
+                data = data.unsqueeze(0).expand(T, -1, -1, -1, -1)
+                spk, _ = model(data)
+                loss = criterion(spk, targets)
+                total_loss += loss.item() * targets.shape[0]
+                correct += (spk.argmax(1) == targets).sum().item()
+                total += targets.shape[0]
+        te_loss, te_acc = total_loss / total, correct / total
+
+        dt = time.perf_counter() - t0
+        result.epochs.append(EpochResult(ep, tr_loss, tr_acc, te_loss, te_acc, dt))
+        print(f"  [sc-conv] Epoch {ep}/{n_epochs} | test {te_acc:.1%} | {dt:.1f}s")
+
+    result.total_train_s = time.perf_counter() - t_total
+    result.final_test_acc = result.epochs[-1].test_acc
+    result.avg_epoch_s = result.total_train_s / n_epochs
+    return result
+
+
 # ── Norse ───────────────────────────────────────────────────────────────────
 
 def bench_norse(train_loader, test_loader, n_epochs: int, device: str) -> BenchResult:
@@ -278,7 +380,7 @@ def main():
     parser.add_argument(
         "--frameworks",
         nargs="+",
-        default=["sc-neurocore", "norse", "snntorch"],
+        default=["sc-neurocore", "sc-neurocore-learnable", "sc-neurocore-conv", "norse", "snntorch"],
     )
     args = parser.parse_args()
 
@@ -296,6 +398,8 @@ def main():
 
     dispatch = {
         "sc-neurocore": bench_scneurocore,
+        "sc-neurocore-learnable": bench_scneurocore_learnable,
+        "sc-neurocore-conv": bench_scneurocore_conv,
         "norse": bench_norse,
         "snntorch": bench_snntorch,
     }
