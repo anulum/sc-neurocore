@@ -36,7 +36,10 @@ class LIFCell(nn.Module):
     def forward(self, current: torch.Tensor, v: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         v_next = self.beta * v + current
         spike = self.surrogate_fn(v_next - self.threshold)
-        v_next = v_next - spike * self.threshold
+        # Detach spike for reset to prevent conflicting gradients.
+        # Standard practice in Norse/snnTorch: gradient flows through spike
+        # output (for readout) but NOT through the reset mechanism.
+        v_next = v_next - spike.detach() * self.threshold
         return spike, v_next
 
 
