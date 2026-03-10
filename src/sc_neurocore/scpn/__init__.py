@@ -15,6 +15,7 @@ from .layers import (
     run_integrated_step,
     get_global_metrics,
 )
+from .params import OMEGA_N, N_LAYERS, K_BASE, DECAY_ALPHA, build_knm_matrix
 
 __all__ = [
     "L1_QuantumLayer",
@@ -27,4 +28,9 @@ __all__ = [
     "create_full_stack",
     "run_integrated_step",
     "get_global_metrics",
+    "OMEGA_N",
+    "N_LAYERS",
+    "K_BASE",
+    "DECAY_ALPHA",
+    "build_knm_matrix",
 ]

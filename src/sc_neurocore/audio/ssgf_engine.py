@@ -22,60 +22,9 @@ from typing import Dict
 
 import numpy as np
 
+from sc_neurocore.scpn.params import OMEGA_N, build_knm_matrix
+
 logger = logging.getLogger(__name__)
-
-# ── Canonical SCPN Natural Frequencies (16 layers) ───────────────────
-
-OMEGA_N = np.array(
-    [
-        1.329,
-        2.610,
-        0.844,
-        1.520,
-        0.710,
-        3.780,
-        1.055,
-        0.625,
-        2.210,
-        1.740,
-        0.480,
-        3.210,
-        0.915,
-        1.410,
-        2.830,
-        0.991,
-    ]
-)
-
-
-def _build_knm(
-    N: int = 16,
-    K_base: float = 0.45,
-    K_alpha: float = 0.3,
-) -> np.ndarray[Any, Any]:
-    """Build N x N coupling matrix with exponential distance decay."""
-    idx = np.arange(N)
-    dist = np.abs(idx[:, None] - idx[None, :])
-    K = K_base * np.exp(-K_alpha * dist)
-    np.fill_diagonal(K, 0.0)
-
-    # Calibration anchors
-    anchors = [(0, 1, 0.302), (1, 2, 0.201), (2, 3, 0.252), (3, 4, 0.154)]
-    for i, j, val in anchors:
-        if i < N and j < N:
-            K[i, j] = val
-            K[j, i] = val
-
-    # Cross-hierarchy boosts
-    if N >= 16:
-        K[0, 15] = max(K[0, 15], 0.05)
-        K[15, 0] = max(K[15, 0], 0.05)
-    if N >= 7:
-        K[4, 6] = max(K[4, 6], 0.15)
-        K[6, 4] = max(K[6, 4], 0.15)
-
-    np.fill_diagonal(K, 0.0)
-    return K  # type: ignore
 
 
 # ── Configuration ────────────────────────────────────────────────────
@@ -128,7 +77,7 @@ class SSGFEngine:
         self.theta = self._rng.uniform(0, 2 * np.pi, c.N)
 
         # Coupling
-        self.K = _build_knm(c.N, c.K_base, c.K_alpha)
+        self.K = build_knm_matrix(c.N)
 
         # Latent geometry
         self.z = self._rng.randn(c.z_dim).astype(np.float64) * 0.1
