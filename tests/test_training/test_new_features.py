@@ -16,6 +16,7 @@ from sc_neurocore.training.surrogate import sigmoid_surrogate, straight_through,
 # New surrogate gradients
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.parametrize("fn", [sigmoid_surrogate, straight_through, triangular])
 class TestNewSurrogates:
     def test_forward_is_heaviside(self, fn):
@@ -58,6 +59,7 @@ def test_triangular_width_effect():
 # ---------------------------------------------------------------------------
 # New neuron cells
 # ---------------------------------------------------------------------------
+
 
 class TestIFCell:
     def test_no_leak(self):
@@ -113,6 +115,7 @@ class TestSynapticCell:
 # ---------------------------------------------------------------------------
 # Spike encoding
 # ---------------------------------------------------------------------------
+
 
 class TestRateEncode:
     def test_shape(self):
@@ -175,6 +178,7 @@ class TestDeltaEncode:
 # Regularization losses
 # ---------------------------------------------------------------------------
 
+
 class TestRegularization:
     def test_l1_nonnegative(self):
         spk = torch.randn(8, 10).abs()
@@ -203,6 +207,7 @@ class TestRegularization:
 # ---------------------------------------------------------------------------
 # GPU auto-detection
 # ---------------------------------------------------------------------------
+
 
 def test_auto_device_returns_device():
     dev = auto_device()

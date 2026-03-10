@@ -14,6 +14,7 @@ try:
 
     HAS_JAX = True
 except ImportError:
+    jnp = np
     HAS_JAX = False
 
 
