@@ -5,7 +5,7 @@ Comprehensive Unit Tests for Phase 15 and 16 logic to ensure 97%+ CI coverage.
 
 import pytest
 import numpy as np
-import jax.numpy as jnp
+from sc_neurocore.accel.jax_backend import jnp
 from sc_neurocore.adapters.holonomic.l1_quantum import L1_QuantumAdapter, L1_HolonomicParameters
 from sc_neurocore.adapters.holonomic.l2_chem import L2_NeurochemicalAdapter, L2_HolonomicParameters
 from sc_neurocore.adapters.holonomic.l3_gen import L3_GenomicAdapter, L3_HolonomicParameters
