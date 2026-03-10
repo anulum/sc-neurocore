@@ -193,8 +193,11 @@ class TestSpikingNet:
 
     def test_learnable_params_gradient(self):
         net = SpikingNet(
-            n_input=10, n_hidden=16, n_output=5,
-            learn_beta=True, learn_threshold=True,
+            n_input=10,
+            n_hidden=16,
+            n_output=5,
+            learn_beta=True,
+            learn_threshold=True,
         )
         x = torch.randn(5, 2, 10)
         spk, _ = net(x)

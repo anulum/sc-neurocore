@@ -114,7 +114,10 @@ class SynapticCell(nn.Module):
         return self._beta_logit.sigmoid() if self._learn_beta else self._beta_val
 
     def forward(
-        self, current: torch.Tensor, i_syn: torch.Tensor, v: torch.Tensor,
+        self,
+        current: torch.Tensor,
+        i_syn: torch.Tensor,
+        v: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Returns (spike, i_syn_next, v_next)."""
         i_syn_next = self.alpha * i_syn + current
@@ -147,7 +150,10 @@ class ALIFCell(nn.Module):
         self.surrogate_fn = surrogate_fn
 
     def forward(
-        self, current: torch.Tensor, v: torch.Tensor, a: torch.Tensor,
+        self,
+        current: torch.Tensor,
+        v: torch.Tensor,
+        a: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Returns (spike, v_next, a_next)."""
         v_next = self.beta * v + current
@@ -210,8 +216,10 @@ class SpikingNet(nn.Module):
         )
         self.lifs = nn.ModuleList(
             LIFCell(
-                beta=beta, surrogate_fn=surrogate_fn,
-                learn_beta=learn_beta, learn_threshold=learn_threshold,
+                beta=beta,
+                surrogate_fn=surrogate_fn,
+                learn_beta=learn_beta,
+                learn_threshold=learn_threshold,
             )
             for _ in range(len(sizes) - 1)
         )
@@ -268,8 +276,10 @@ class ConvSpikingNet(nn.Module):
         super().__init__()
         self.n_output = n_output
         lif_kw = dict(
-            beta=beta, surrogate_fn=surrogate_fn,
-            learn_beta=learn_beta, learn_threshold=learn_threshold,
+            beta=beta,
+            surrogate_fn=surrogate_fn,
+            learn_beta=learn_beta,
+            learn_threshold=learn_threshold,
         )
         self.conv1 = nn.Conv2d(1, 32, 5)
         self.lif1 = LIFCell(**lif_kw)
@@ -321,7 +331,11 @@ class ConvSpikingNet(nn.Module):
         """Export weight matrices normalized to [0,1] for SC bitstream deployment."""
         weights = []
         for mod in [self.conv1, self.conv2, self.fc1, self.fc2]:
-            w = mod.weight.detach().flatten(1) if isinstance(mod, nn.Conv2d) else mod.weight.detach()
+            w = (
+                mod.weight.detach().flatten(1)
+                if isinstance(mod, nn.Conv2d)
+                else mod.weight.detach()
+            )
             w_min, w_max = w.min(), w.max()
             if w_max > w_min:
                 w = (w - w_min) / (w_max - w_min)
@@ -334,5 +348,6 @@ class ConvSpikingNet(nn.Module):
 def _logit(p: float) -> float:
     """Inverse sigmoid: logit(p) = log(p / (1 - p))."""
     import math
+
     p = max(min(p, 1.0 - 1e-7), 1e-7)
     return math.log(p / (1.0 - p))

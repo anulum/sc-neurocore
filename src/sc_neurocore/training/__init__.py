@@ -15,7 +15,13 @@ except ImportError:
 
 if HAS_TORCH:
     from .encoding import delta_encode, latency_encode, rate_encode
-    from .losses import membrane_loss, spike_count_loss, spike_l1_loss, spike_l2_loss, spike_rate_loss
+    from .losses import (
+        membrane_loss,
+        spike_count_loss,
+        spike_l1_loss,
+        spike_l2_loss,
+        spike_rate_loss,
+    )
     from .loops import auto_device, evaluate, train_epoch
     from .snn_modules import (
         ALIFCell,
