@@ -1,0 +1,216 @@
+{
+  "timestamp": "2026-03-10T02:41:49.554664+00:00",
+  "system": {
+    "platform": "Linux-6.8.0-87-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "cpu": "x86_64",
+    "numpy": "2.4.3",
+    "brian2": "2.10.1",
+    "numba": "0.64.0"
+  },
+  "brunel_params": {
+    "regime": "AI",
+    "g_inh": 5.0,
+    "eta": 2.0,
+    "sim_ms": 1000.0,
+    "dt": 0.1,
+    "conn_prob": 0.1,
+    "weight_exc": 0.1,
+    "v_threshold": 20.0,
+    "v_reset": 10.0,
+    "tau_mem": 20.0,
+    "repeats": 3,
+    "scales": [
+      1000,
+      10000
+    ]
+  },
+  "rows": [
+    {
+      "scale": 1000,
+      "backend": "Brian2 (reference)",
+      "wall_mean_s": 1.3816275059998588,
+      "wall_std_s": 0.22922544083450802,
+      "spikes_mean": 100391.33333333333,
+      "rate_mean_hz": 100.39133333333332,
+      "rate_std_hz": 0.6369810741999283,
+      "memory_mean_mb": 1.673331578572591,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 1.7057598049996159,
+          "total_spikes": 100986,
+          "mean_rate_hz": 100.986,
+          "peak_memory_mb": 2.884031295776367
+        },
+        {
+          "wall_time_s": 1.2240495240002929,
+          "total_spikes": 100680,
+          "mean_rate_hz": 100.68,
+          "peak_memory_mb": 1.0736207962036133
+        },
+        {
+          "wall_time_s": 1.2150731889996678,
+          "total_spikes": 99508,
+          "mean_rate_hz": 99.508,
+          "peak_memory_mb": 1.062342643737793
+        }
+      ]
+    },
+    {
+      "scale": 1000,
+      "backend": "SC V18 Numba JIT",
+      "wall_mean_s": 0.34456022499944083,
+      "wall_std_s": 0.0005305181794929802,
+      "spikes_mean": 100011.0,
+      "rate_mean_hz": 100.01100000000001,
+      "rate_std_hz": 1.4210854715202004e-14,
+      "memory_mean_mb": 8.609870274861654,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.3439453909995791,
+          "total_spikes": 100011,
+          "mean_rate_hz": 100.011,
+          "peak_memory_mb": 8.611242294311523
+        },
+        {
+          "wall_time_s": 0.34449527299875626,
+          "total_spikes": 100011,
+          "mean_rate_hz": 100.011,
+          "peak_memory_mb": 8.609184265136719
+        },
+        {
+          "wall_time_s": 0.34524001099998713,
+          "total_spikes": 100011,
+          "mean_rate_hz": 100.011,
+          "peak_memory_mb": 8.609184265136719
+        }
+      ]
+    },
+    {
+      "scale": 1000,
+      "backend": "SC V20 Vectorized",
+      "wall_mean_s": 0.5715335856663538,
+      "wall_std_s": 0.012559524307041513,
+      "spikes_mean": 99830.0,
+      "rate_mean_hz": 99.83,
+      "rate_std_hz": 0.0,
+      "memory_mean_mb": 8.586143493652344,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 0.56107543699909,
+          "total_spikes": 99830,
+          "mean_rate_hz": 99.83,
+          "peak_memory_mb": 8.586174011230469
+        },
+        {
+          "wall_time_s": 0.5891957940002612,
+          "total_spikes": 99830,
+          "mean_rate_hz": 99.83,
+          "peak_memory_mb": 8.586128234863281
+        },
+        {
+          "wall_time_s": 0.5643295259997103,
+          "total_spikes": 99830,
+          "mean_rate_hz": 99.83,
+          "peak_memory_mb": 8.586128234863281
+        }
+      ]
+    },
+    {
+      "scale": 10000,
+      "backend": "Brian2 (reference)",
+      "wall_mean_s": 5.913501935666015,
+      "wall_std_s": 0.7456101274733808,
+      "spikes_mean": 435998.0,
+      "rate_mean_hz": 43.599799999999995,
+      "rate_std_hz": 2.6772654668523255,
+      "memory_mean_mb": 75.1442273457845,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 6.967641299999741,
+          "total_spikes": 445797,
+          "mean_rate_hz": 44.5797,
+          "peak_memory_mb": 101.8675479888916
+        },
+        {
+          "wall_time_s": 5.408666094999717,
+          "total_spikes": 462771,
+          "mean_rate_hz": 46.2771,
+          "peak_memory_mb": 61.805641174316406
+        },
+        {
+          "wall_time_s": 5.364198411998586,
+          "total_spikes": 399426,
+          "mean_rate_hz": 39.9426,
+          "peak_memory_mb": 61.75949287414551
+        }
+      ]
+    },
+    {
+      "scale": 10000,
+      "backend": "SC V18 Numba JIT",
+      "wall_mean_s": 4.364215656000549,
+      "wall_std_s": 0.002831730666487241,
+      "spikes_mean": 405858.0,
+      "rate_mean_hz": 40.5858,
+      "rate_std_hz": 0.0,
+      "memory_mean_mb": 858.5476735432943,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 4.362537380000504,
+          "total_spikes": 405858,
+          "mean_rate_hz": 40.5858,
+          "peak_memory_mb": 858.5478668212891
+        },
+        {
+          "wall_time_s": 4.368203697000354,
+          "total_spikes": 405858,
+          "mean_rate_hz": 40.5858,
+          "peak_memory_mb": 858.5475769042969
+        },
+        {
+          "wall_time_s": 4.361905891000788,
+          "total_spikes": 405858,
+          "mean_rate_hz": 40.5858,
+          "peak_memory_mb": 858.5475769042969
+        }
+      ]
+    },
+    {
+      "scale": 10000,
+      "backend": "SC V20 Vectorized",
+      "wall_mean_s": 4.786577386666977,
+      "wall_std_s": 0.02023308097811048,
+      "spikes_mean": 404731.0,
+      "rate_mean_hz": 40.4731,
+      "rate_std_hz": 0.0,
+      "memory_mean_mb": 858.3099594116211,
+      "n_runs": 3,
+      "runs": [
+        {
+          "wall_time_s": 4.7838245750008355,
+          "total_spikes": 404731,
+          "mean_rate_hz": 40.4731,
+          "peak_memory_mb": 858.3099899291992
+        },
+        {
+          "wall_time_s": 4.763288374000695,
+          "total_spikes": 404731,
+          "mean_rate_hz": 40.4731,
+          "peak_memory_mb": 858.309944152832
+        },
+        {
+          "wall_time_s": 4.812619210999401,
+          "total_spikes": 404731,
+          "mean_rate_hz": 40.4731,
+          "peak_memory_mb": 858.309944152832
+        }
+      ]
+    }
+  ]
+}

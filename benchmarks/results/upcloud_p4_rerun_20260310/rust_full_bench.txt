@@ -1,0 +1,95 @@
+warning: profiles for the non root package will be ignored, specify profiles at the workspace root:
+package:   /root/sc-neurocore/engine/Cargo.toml
+workspace: /root/sc-neurocore/Cargo.toml
+    Finished `bench` profile [optimized] target(s) in 0.03s
+     Running benches/full_bench.rs (/root/sc-neurocore/target/release/deps/full_bench-8b100cbdb10bfa52)
+Gnuplot not found, using plotters backend
+Benchmarking pack_1m
+Benchmarking pack_1m: Warming up for 3.0000 s
+Benchmarking pack_1m: Collecting 100 samples in estimated 6.4188 s (15k iterations)
+Benchmarking pack_1m: Analyzing
+pack_1m                 time:   [430.16 µs 433.70 µs 438.08 µs]
+Found 4 outliers among 100 measurements (4.00%)
+  2 (2.00%) high mild
+  2 (2.00%) high severe
+
+Benchmarking pack_fast_1m
+Benchmarking pack_fast_1m: Warming up for 3.0000 s
+Benchmarking pack_fast_1m: Collecting 100 samples in estimated 5.5546 s (45k iterations)
+Benchmarking pack_fast_1m: Analyzing
+pack_fast_1m            time:   [123.72 µs 127.93 µs 132.92 µs]
+Found 12 outliers among 100 measurements (12.00%)
+  6 (6.00%) high mild
+  6 (6.00%) high severe
+
+Benchmarking pack_dispatch_1m
+Benchmarking pack_dispatch_1m: Warming up for 3.0000 s
+Benchmarking pack_dispatch_1m: Collecting 100 samples in estimated 5.0064 s (535k iterations)
+Benchmarking pack_dispatch_1m: Analyzing
+pack_dispatch_1m        time:   [8.8990 µs 8.9671 µs 9.0423 µs]
+Found 10 outliers among 100 measurements (10.00%)
+  7 (7.00%) high mild
+  3 (3.00%) high severe
+
+Benchmarking popcount_portable_1m
+Benchmarking popcount_portable_1m: Warming up for 3.0000 s
+Benchmarking popcount_portable_1m: Collecting 100 samples in estimated 5.0020 s (8.5M iterations)
+Benchmarking popcount_portable_1m: Analyzing
+popcount_portable_1m    time:   [593.51 ns 595.66 ns 598.17 ns]
+Found 8 outliers among 100 measurements (8.00%)
+  8 (8.00%) high mild
+
+Benchmarking popcount_simd_1m
+Benchmarking popcount_simd_1m: Warming up for 3.0000 s
+Benchmarking popcount_simd_1m: Collecting 100 samples in estimated 5.0011 s (7.5M iterations)
+Benchmarking popcount_simd_1m: Analyzing
+popcount_simd_1m        time:   [756.92 ns 787.77 ns 820.22 ns]
+Found 11 outliers among 100 measurements (11.00%)
+  11 (11.00%) high mild
+
+Benchmarking encoder_64k_steps
+Benchmarking encoder_64k_steps: Warming up for 3.0000 s
+Benchmarking encoder_64k_steps: Collecting 100 samples in estimated 5.1106 s (50k iterations)
+Benchmarking encoder_64k_steps: Analyzing
+encoder_64k_steps       time:   [98.687 µs 99.383 µs 100.07 µs]
+
+Benchmarking lif_10k_steps
+Benchmarking lif_10k_steps: Warming up for 3.0000 s
+Benchmarking lif_10k_steps: Collecting 100 samples in estimated 5.0151 s (227k iterations)
+Benchmarking lif_10k_steps: Analyzing
+lif_10k_steps           time:   [22.121 µs 22.280 µs 22.486 µs]
+Found 7 outliers among 100 measurements (7.00%)
+  3 (3.00%) low mild
+  4 (4.00%) high severe
+
+Benchmarking lif_100k_steps
+Benchmarking lif_100k_steps: Warming up for 3.0000 s
+Benchmarking lif_100k_steps: Collecting 100 samples in estimated 5.6388 s (25k iterations)
+Benchmarking lif_100k_steps: Analyzing
+lif_100k_steps          time:   [217.45 µs 219.39 µs 221.84 µs]
+Found 12 outliers among 100 measurements (12.00%)
+  5 (5.00%) high mild
+  7 (7.00%) high severe
+
+Benchmarking bernoulli_stream_1024
+Benchmarking bernoulli_stream_1024: Warming up for 3.0000 s
+Benchmarking bernoulli_stream_1024: Collecting 100 samples in estimated 5.0099 s (2.4M iterations)
+Benchmarking bernoulli_stream_1024: Analyzing
+bernoulli_stream_1024   time:   [2.0762 µs 2.0910 µs 2.1071 µs]
+Found 3 outliers among 100 measurements (3.00%)
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+
+Benchmarking bernoulli_stream_pack_1024
+Benchmarking bernoulli_stream_pack_1024: Warming up for 3.0000 s
+Benchmarking bernoulli_stream_pack_1024: Collecting 100 samples in estimated 5.0072 s (2.0M iterations)
+Benchmarking bernoulli_stream_pack_1024: Analyzing
+bernoulli_stream_pack_1024
+                        time:   [2.5546 µs 2.5657 µs 2.5792 µs]
+Found 4 outliers among 100 measurements (4.00%)
+  3 (3.00%) high mild
+  1 (1.00%) high severe
+
+Benchmarking bernoulli_packed_1024
+Benchmarking bernoulli_packed_1024: Warming up for 3.0000 s
+Benchmarking bernoulli_packed_1024: Collecting 100 samples in estimated 5.0076 s (2.1M iterations)
