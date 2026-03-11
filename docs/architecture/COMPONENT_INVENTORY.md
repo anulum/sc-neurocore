@@ -3,7 +3,10 @@
 **Version:** 3.10.0
 **Date:** 2026-03-11
 
-This document lists all active components in the `sc-neurocore` framework, organized by domain.
+This document lists all components in the `sc-neurocore` framework, organized
+by domain. Sections 1--3 and 6--7 are implemented and tested. Sections 4--5
+contain modules from the broader Anulum Research / SCPN theoretical framework
+that are planned but not yet implemented in this repository.
 
 ## 1. Core Neuromorphic
 *   **`neurons/`**

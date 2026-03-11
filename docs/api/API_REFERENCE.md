@@ -1,5 +1,10 @@
 # SC-NeuroCore API Reference
 
+This reference covers all modules in the sc-neurocore package. Modules under
+`meta`, `exotic`, `post_silicon`, `eschaton`, and `transcendent` belong to the
+broader Anulum Research / SCPN theoretical framework and are not yet
+implemented in this repository.
+
 ## Module `accel.jit_kernels`
 
 ### Function `jit_pack_bits(bitstream, packed_arr)`
