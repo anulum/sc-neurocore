@@ -13,18 +13,14 @@ class StochasticDendriticNeuron:
     Implements ``d1 + d2 - 2*d1*d2`` which gives XOR truth table
     for binary inputs. Not a Rall cable-equation compartmental model.
 
-    Takes two inputs (input_a, input_b) and does not inherit from
-    ``BaseNeuron``, but exposes ``reset_state()`` / ``get_state()``
-    for interface consistency.
+    Takes two inputs (input_a, input_b). Does not inherit BaseNeuron
+    because ``step()`` has a 2-input signature incompatible with the ABC.
     """
 
-    threshold: float = 1.5
+    threshold: float = 0.5
     _last_current: float = field(default=0.0, init=False, repr=False)
 
     def step(self, input_a: float, input_b: float) -> int:
-        """
-        Inputs are probabilities/currents.
-        """
         d1 = input_a
         d2 = input_b
 
@@ -32,7 +28,7 @@ class StochasticDendriticNeuron:
         current = d1 + d2 - 2.0 * (d1 * d2)
 
         self._last_current = current
-        if current > 0.5:
+        if current > self.threshold:
             return 1
         return 0
 
