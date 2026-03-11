@@ -31,6 +31,26 @@ cycle-exactly, a high-performance Rust engine (512x real-time), GPU-accelerated
 inference, and a tiered module system from production FPGA targets to
 research prototyping.
 
+## Feature Comparison
+
+| Feature | SC-NeuroCore | snnTorch | Norse | Lava | Brian2 |
+|---------|:---:|:---:|:---:|:---:|:---:|
+| Stochastic computing (bitstream) | **Yes** | — | — | — | — |
+| Bit-true RTL co-simulation | **Yes** | — | — | — | — |
+| Verilog / FPGA synthesis | **Yes** | — | — | Loihi only | — |
+| IR compiler → SystemVerilog | **Yes** | — | — | — | — |
+| Rust SIMD engine (512x) | **Yes** | — | — | — | — |
+| Surrogate gradient training | Yes | Yes | Yes | Yes | — |
+| GPU acceleration | CuPy | PyTorch | PyTorch | — | — |
+| Neuron models (LIF, Izhikevich, …) | 7 | 11 | 6 | 3 | Arbitrary |
+| Plasticity (STDP, R-STDP) | Yes | — | Yes | Yes | Yes |
+| Hyperdimensional computing | Yes | — | — | — | — |
+| Formal verification (SymbiYosys) | **7 modules** | — | — | — | — |
+| PyPI package | Yes | Yes | Yes | Yes | Yes |
+| License | AGPL-3.0 | MIT | LGPL-3.0 | BSD-3 | CeCILL-2.1 |
+
+SC-NeuroCore's niche: **deterministic stochastic computing with FPGA co-design** — the only framework where Python simulation matches synthesisable RTL bit-for-bit.
+
 ## Quick Start
 
 ```bash
@@ -76,16 +96,6 @@ Pre-built images are published to GHCR on every release:
 docker pull ghcr.io/anulum/sc-neurocore:latest
 docker run --rm -it ghcr.io/anulum/sc-neurocore:latest
 ```
-
-## Performance Routing
-
-Use explicit path selection for dense inference to avoid small-batch regressions:
-
-- Single sample or micro-batch (1-4 samples): call `DenseLayer.forward_fast(...)`.
-- Medium/large batch (>=10 samples): call `DenseLayer.forward_batch_numpy(...)`.
-- Validation/reference path: use `DenseLayer.forward(...)` and compare to fast paths in tests.
-
-For benchmark reports, always include batch size, bitstream length, seed policy, and CPU SIMD tier.
 
 ## Architecture
 
@@ -168,15 +178,18 @@ from sc_neurocore import (
 
 ```
 hdl/
-  sc_bitstream_encoder.v   -- LFSR-based stochastic encoder (SEED_INIT param)
-  sc_bitstream_synapse.v   -- AND-gate SC multiplier
-  sc_dotproduct_to_current.v -- Popcount -> fixed-point current
-  sc_lif_neuron.v          -- Q8.8 leaky integrate-and-fire
-  sc_firing_rate_bank.v    -- Spike rate estimator
-  sc_dense_layer_core.v    -- Full dense layer pipeline (decorrelated seeds)
-  sc_neurocore_top.v       -- AXI-Lite configuration wrapper
-  sc_axil_cfg.v            -- AXI-Lite register file
-  tb_sc_lif_neuron.v       -- Co-simulation testbench
+  sc_bitstream_encoder.v      -- LFSR-based stochastic encoder (SEED_INIT param)
+  sc_bitstream_synapse.v      -- AND-gate SC multiplier
+  sc_dotproduct_to_current.v  -- Popcount -> fixed-point current
+  sc_lif_neuron.v             -- Q8.8 leaky integrate-and-fire
+  sc_firing_rate_bank.v       -- Spike rate estimator
+  sc_dense_layer_core.v       -- Full dense layer pipeline (decorrelated seeds)
+  sc_dense_matrix_layer.v     -- N×M weight matrix layer
+  sc_neurocore_top.v          -- AXI-Lite configuration wrapper
+  sc_axil_cfg.v               -- AXI-Lite register file
+  sc_dense_layer_top.v        -- Dense layer top wrapper
+  tb_sc_*.v (7 testbenches)   -- Self-checking simulation testbenches
+  formal/ (7 modules)         -- SymbiYosys formal verification properties
 ```
 
 ### GPU Acceleration
