@@ -19,9 +19,15 @@ Usage:
 
 from __future__ import annotations
 
+import sys
+
 import numpy as np
 
-from sc_neurocore_engine import DifferentiableDenseLayer
+try:
+    from sc_neurocore_engine import DifferentiableDenseLayer
+except ImportError:
+    print("This example requires the Rust engine. Install with: cd engine && maturin develop --release")
+    sys.exit(0)
 
 
 def generate_xor_data(n_samples: int, rng: np.random.RandomState):

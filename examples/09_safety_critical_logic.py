@@ -16,7 +16,13 @@ and show that majority-vote decoding recovers the correct value.
 Uses SC-NeuroCore's SIMD-accelerated BitStreamTensor for all operations.
 """
 
-from sc_neurocore_engine import BitStreamTensor
+import sys
+
+try:
+    from sc_neurocore_engine import BitStreamTensor
+except ImportError:
+    print("This example requires the Rust engine. Install with: cd engine && maturin develop --release")
+    sys.exit(0)
 
 
 def make_constant(value: bool, length: int = 1024) -> BitStreamTensor:
