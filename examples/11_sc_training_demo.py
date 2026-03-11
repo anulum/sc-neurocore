@@ -26,7 +26,9 @@ import numpy as np
 try:
     from sc_neurocore_engine import DifferentiableDenseLayer
 except ImportError:
-    print("This example requires the Rust engine. Install with: cd engine && maturin develop --release")
+    print(
+        "This example requires the Rust engine. Install with: cd engine && maturin develop --release"
+    )
     sys.exit(0)
 
 

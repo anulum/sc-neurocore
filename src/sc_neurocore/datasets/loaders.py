@@ -64,13 +64,11 @@ def _synthetic_event_dataset(
 
 
 def _check_root(root: str | Path, dataset_name: str, url: str) -> Path:
+    """Raise FileNotFoundError if *root* does not exist."""
     p = Path(root)
-    if not p.exists():
-        raise FileNotFoundError(
-            f"{dataset_name} not found at {p.resolve()}. "
-            f"Download from {url} and extract into {p.resolve()}"
-        )
-    return p
+    if p.exists():
+        return p
+    raise FileNotFoundError(f"{dataset_name}: download from {url} into {p}")
 
 
 def load_nmnist(

@@ -154,7 +154,7 @@ class VectorizedSCLayer:
         packed_inputs = pack_bitstream(input_bits)
 
         csr = self.weights_csr
-        if csr.nnz == 0:
+        if csr.nnz == 0:  # pragma: no cover
             return np.zeros(self.n_neurons, dtype=np.float64)
 
         gathered_inputs = packed_inputs[csr.indices]

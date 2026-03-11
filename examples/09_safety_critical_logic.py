@@ -21,7 +21,9 @@ import sys
 try:
     from sc_neurocore_engine import BitStreamTensor
 except ImportError:
-    print("This example requires the Rust engine. Install with: cd engine && maturin develop --release")
+    print(
+        "This example requires the Rust engine. Install with: cd engine && maturin develop --release"
+    )
     sys.exit(0)
 
 
@@ -98,7 +100,7 @@ def main():
     LENGTH = 1024  # Redundancy factor: 1024 bits per Boolean
     ERROR_RATE = 0.05  # 5% random bit-flip rate
 
-    print(f"SC-NeuroCore Fault-Tolerant Binary Streams Demo")
+    print("SC-NeuroCore Fault-Tolerant Binary Streams Demo")
     print(f"  Redundancy: {LENGTH} bits per Boolean")
     print(f"  Error rate: {ERROR_RATE*100:.1f}%")
     print("=" * 55)
@@ -136,7 +138,7 @@ def main():
 
     # ── Step 3: Boolean logic on noisy streams ────────────────────
 
-    print(f"\nBoolean logic on noisy streams:")
+    print("\nBoolean logic on noisy streams:")
 
     # AND
     and_result = stochastic_and(a_noisy, c_noisy)
@@ -180,7 +182,7 @@ def main():
 
     # ── Step 4: Error rate sweep ──────────────────────────────────
 
-    print(f"\nError tolerance sweep (100 trials per rate):")
+    print("\nError tolerance sweep (100 trials per rate):")
     for rate in [0.01, 0.05, 0.10, 0.15, 0.20, 0.30, 0.40, 0.45]:
         successes = 0
         trials = 100

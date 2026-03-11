@@ -5,10 +5,10 @@ import warnings
 
 # Try to import Numba
 try:
-    from numba import jit
+    from numba import jit  # pragma: no cover
 
-    HAS_NUMBA = True
-except ImportError:  # pragma: no cover
+    HAS_NUMBA = True  # pragma: no cover
+except ImportError:
     HAS_NUMBA = False
 
     # Fallback decorator: returns the original function

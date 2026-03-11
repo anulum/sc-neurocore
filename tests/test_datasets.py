@@ -6,8 +6,23 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 
-from sc_neurocore.datasets.loaders import load_nmnist, load_shd, load_dvs_cifar10
+from sc_neurocore.datasets.loaders import (
+    _check_root,
+    load_nmnist,
+    load_shd,
+    load_dvs_cifar10,
+)
 from sc_neurocore.datasets.encoding import poisson_encode, latency_encode
+
+
+class TestCheckRoot:
+    def test_valid_root_returns_path(self, tmp_path):
+        p = _check_root(tmp_path, "test", "http://test")
+        assert p == tmp_path
+
+    def test_missing_root_raises(self):
+        with pytest.raises(FileNotFoundError, match="download from"):
+            _check_root("/nonexistent_xyz_abc_123", "TestDS", "http://test")
 
 
 class TestSyntheticLoaders:
@@ -106,6 +121,7 @@ class TestNMNISTRealLoader:
             for s in range(2):
                 raw = rng.integers(0, 256, size=(20, 5), dtype=np.uint8)
                 (d / f"s{s}.bin").write_bytes(raw.tobytes())
+        (split / "README.txt").touch()
         samples, labels = load_nmnist(root=tmp_path, train=True, synthetic=False)
         assert len(samples) == 6
         assert set(labels.tolist()) == {0, 1, 2}
@@ -126,10 +142,12 @@ class TestSHDRealLoader:
 
         spike_times_data = []
         spike_units_data = []
-        for i in range(n_samples):
+        for i in range(n_samples - 1):
             n_ev = int(rng.integers(10, 50))
             spike_times_data.append(rng.uniform(0.0, 1.0, size=n_ev).astype(np.float32))
             spike_units_data.append(rng.integers(0, 700, size=n_ev).astype(np.int32))
+        spike_times_data.append(np.array([], dtype=np.float32))
+        spike_units_data.append(np.array([], dtype=np.int32))
 
         h5_path = tmp_path / "shd_train.h5"
         h5_path.touch()
@@ -192,6 +210,7 @@ class TestDVSCIFAR10RealLoader:
             for s in range(2):
                 events = rng.uniform(0, 128, size=(30, 4)).astype(np.float32)
                 np.save(d / f"ev{s}.npy", events)
+        (split / "README.txt").touch()
         samples, labels = load_dvs_cifar10(root=tmp_path, train=True, synthetic=False)
         assert len(samples) == 6
         assert set(labels.tolist()) == {0, 1, 2}
