@@ -2,7 +2,7 @@
 .PHONY: test lint fmt docs bench clean build bridge preflight bandit sast install-hooks docker-build docker-run
 
 test:
-	pytest tests/ -v --cov=sc_neurocore --cov-report=term --cov-fail-under=98
+	pytest tests/ -v --cov=sc_neurocore --cov-report=term --cov-fail-under=100
 
 test-rust:
 	cargo test --manifest-path engine/Cargo.toml

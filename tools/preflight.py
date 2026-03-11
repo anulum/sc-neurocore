@@ -42,7 +42,7 @@ GATES = [
             "-v",
             "--cov=sc_neurocore",
             "--cov-report=term",
-            "--cov-fail-under=98",
+            "--cov-fail-under=100",
         ],
     ),
 ]

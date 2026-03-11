@@ -49,7 +49,7 @@ sc-neurocore/
 │   ├── transformers/       Stochastic transformer blocks
 │   └── verification/       Property-based test helpers
 │
-├── tests/                  Python test suite (978 tests, ≥98% coverage)
+├── tests/                  Python test suite (1 218 tests, 100% coverage)
 │
 ├── hdl/                    Verilog RTL (FPGA targets)
 │   ├── sc_neurocore_top.v  AXI-Lite top-level wrapper

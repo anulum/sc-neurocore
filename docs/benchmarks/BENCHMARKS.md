@@ -1,6 +1,6 @@
 # SC-NeuroCore Benchmarks
 
-Performance measurements for sc-neurocore v3.9.1. All Python numbers are
+Performance measurements for sc-neurocore v3.10.0. All Python numbers are
 CPU-only (NumPy backend). Rust numbers use Criterion with AVX-512 SIMD.
 
 ---
@@ -10,7 +10,7 @@ CPU-only (NumPy backend). Rust numbers use Criterion with AVX-512 SIMD.
 | Field | Value |
 |-------|-------|
 | Date | 2026-03-07 |
-| Git tag | v3.9.1 |
+| Git tag | v3.10.0 |
 | OS | Windows 11 Pro 10.0.26200 |
 | CPU | Intel Core i5-11600K (6C/12T, 3.9 GHz base, AVX-512, DL Boost) |
 | RAM | 32 GB DDR4-3200 |
