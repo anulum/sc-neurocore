@@ -47,7 +47,7 @@ jobs:
         run: cargo clippy --manifest-path engine/Cargo.toml -- -D warnings
 
       - name: Install cargo-audit
-        run: cargo install cargo-audit@0.21.1
+        run: cargo install cargo-audit@0.22.1
 
       - name: Cargo audit
         run: |
