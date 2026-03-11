@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 from __future__ import annotations
 
+from unittest.mock import MagicMock, patch
+
 import numpy as np
 import pytest
 
@@ -78,3 +80,130 @@ class TestEncoding:
     def test_poisson_encode_ones(self):
         spikes = poisson_encode(np.array([1.0]), T=100, seed=0)
         assert spikes.sum() == 100
+
+
+class TestNMNISTRealLoader:
+    """Test N-MNIST real-data path with synthetic .bin files."""
+
+    def test_parse_nmnist_bin(self, tmp_path):
+        from sc_neurocore.datasets.loaders import _parse_nmnist_bin
+
+        rng = np.random.default_rng(0)
+        n_events = 50
+        raw = rng.integers(0, 256, size=(n_events, 5), dtype=np.uint8)
+        bin_file = tmp_path / "sample.bin"
+        raw.tofile(bin_file)
+        events = _parse_nmnist_bin(bin_file, dt_ms=1.0)
+        assert events.shape == (n_events, 4)
+        assert events.dtype == np.float32
+
+    def test_load_nmnist_real_path(self, tmp_path):
+        rng = np.random.default_rng(0)
+        split = tmp_path / "Train"
+        for cls in range(3):
+            d = split / str(cls)
+            d.mkdir(parents=True)
+            for s in range(2):
+                raw = rng.integers(0, 256, size=(20, 5), dtype=np.uint8)
+                (d / f"s{s}.bin").write_bytes(raw.tobytes())
+        samples, labels = load_nmnist(root=tmp_path, train=True, synthetic=False)
+        assert len(samples) == 6
+        assert set(labels.tolist()) == {0, 1, 2}
+
+    def test_load_nmnist_missing_split_raises(self, tmp_path):
+        (tmp_path / "placeholder").touch()
+        with pytest.raises(FileNotFoundError, match="Expected split directory"):
+            load_nmnist(root=tmp_path, train=True, synthetic=False)
+
+
+class TestSHDRealLoader:
+    """Test SHD real-data path with mocked h5py."""
+
+    def test_load_shd_real_path(self, tmp_path):
+        rng = np.random.default_rng(0)
+        n_samples = 5
+        labs = rng.integers(0, 20, size=n_samples)
+
+        spike_times_data = []
+        spike_units_data = []
+        for i in range(n_samples):
+            n_ev = int(rng.integers(10, 50))
+            spike_times_data.append(rng.uniform(0.0, 1.0, size=n_ev).astype(np.float32))
+            spike_units_data.append(rng.integers(0, 700, size=n_ev).astype(np.int32))
+
+        h5_path = tmp_path / "shd_train.h5"
+        h5_path.touch()
+
+        class FakeDataset:
+            def __init__(self, data):
+                self._data = data
+
+            def __getitem__(self, key):
+                if isinstance(key, slice):
+                    return np.array(self._data)[key]
+                return self._data[key]
+
+            def __len__(self):
+                return len(self._data)
+
+        class FakeFile:
+            def __init__(self):
+                self._groups = {
+                    "spikes": {
+                        "times": FakeDataset(spike_times_data),
+                        "units": FakeDataset(spike_units_data),
+                    },
+                    "labels": FakeDataset(labs),
+                }
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                pass
+
+            def __getitem__(self, key):
+                return self._groups[key]
+
+        mock_h5py = MagicMock()
+        mock_h5py.File.return_value = FakeFile()
+
+        with patch.dict("sys.modules", {"h5py": mock_h5py}):
+            samples, labels_out = load_shd(root=tmp_path, train=True, synthetic=False)
+        assert len(samples) == n_samples
+        assert labels_out.shape == (n_samples,)
+        assert samples[0].shape[1] == 700
+
+    def test_load_shd_missing_h5_raises(self, tmp_path):
+        (tmp_path / "placeholder").touch()
+        with pytest.raises(FileNotFoundError, match="not found"):
+            load_shd(root=tmp_path, train=True, synthetic=False)
+
+
+class TestDVSCIFAR10RealLoader:
+    """Test DVS-CIFAR10 real-data path with mock .npy files."""
+
+    def test_load_dvs_cifar10_real_path(self, tmp_path):
+        rng = np.random.default_rng(0)
+        split = tmp_path / "train"
+        for cls in range(3):
+            d = split / str(cls)
+            d.mkdir(parents=True)
+            for s in range(2):
+                events = rng.uniform(0, 128, size=(30, 4)).astype(np.float32)
+                np.save(d / f"ev{s}.npy", events)
+        samples, labels = load_dvs_cifar10(root=tmp_path, train=True, synthetic=False)
+        assert len(samples) == 6
+        assert set(labels.tolist()) == {0, 1, 2}
+        assert samples[0].dtype == np.float32
+
+    def test_load_dvs_cifar10_missing_split_raises(self, tmp_path):
+        (tmp_path / "placeholder").touch()
+        with pytest.raises(FileNotFoundError, match="Expected split directory"):
+            load_dvs_cifar10(root=tmp_path, train=True, synthetic=False)
+
+    def test_load_dvs_cifar10_empty_dir_raises(self, tmp_path):
+        split = tmp_path / "train"
+        split.mkdir()
+        with pytest.raises(FileNotFoundError, match="No .npy event files"):
+            load_dvs_cifar10(root=tmp_path, train=True, synthetic=False)

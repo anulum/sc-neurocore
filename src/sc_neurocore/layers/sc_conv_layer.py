@@ -33,9 +33,7 @@ class SCConv2DLayer:
         """
         C_in, H, W = input_image.shape
         if C_in != self.in_channels:
-            raise IndexError(
-                f"Expected {self.in_channels} input channels, got {C_in}"
-            )
+            raise IndexError(f"Expected {self.in_channels} input channels, got {C_in}")
         k = self.kernel_size
         H_out = (H + 2 * self.padding - k) // self.stride + 1
         W_out = (W + 2 * self.padding - k) // self.stride + 1

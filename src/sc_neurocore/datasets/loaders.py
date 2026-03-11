@@ -50,12 +50,14 @@ def _synthetic_event_dataset(
         timesteps, neuron_ids = np.nonzero(spike_train)
         y_coords, x_coords = np.divmod(neuron_ids, spatial_size)
         polarities = rng.integers(0, 2, size=len(timesteps))
-        events = np.column_stack([
-            x_coords,
-            y_coords,
-            polarities,
-            timesteps * dt_ms,
-        ]).astype(np.float32)
+        events = np.column_stack(
+            [
+                x_coords,
+                y_coords,
+                polarities,
+                timesteps * dt_ms,
+            ]
+        ).astype(np.float32)
         samples.append(events)
 
     return samples, labels
@@ -113,14 +115,18 @@ def load_nmnist(
     """
     if synthetic:
         return _synthetic_event_dataset(
-            n_samples, _NMNIST_RES, 10, T, dt_ms, seed,
+            n_samples,
+            _NMNIST_RES,
+            10,
+            T,
+            dt_ms,
+            seed,
         )
     _check_root(root, "N-MNIST", _NMNIST_URL)
     split_dir = Path(root) / ("Train" if train else "Test")
     if not split_dir.exists():
         raise FileNotFoundError(
-            f"Expected split directory {split_dir.resolve()}. "
-            f"Download from {_NMNIST_URL}"
+            f"Expected split directory {split_dir.resolve()}. " f"Download from {_NMNIST_URL}"
         )
     # Real loader: N-MNIST uses .bin files, one per sample, grouped by class
     samples: list[np.ndarray] = []
@@ -202,34 +208,36 @@ def load_shd(
     fname = "shd_train.h5" if train else "shd_test.h5"
     h5_path = Path(root) / fname
     if not h5_path.exists():
-        raise FileNotFoundError(
-            f"{h5_path.resolve()} not found. Download from {_SHD_URL}"
-        )
+        raise FileNotFoundError(f"{h5_path.resolve()} not found. Download from {_SHD_URL}")
     import h5py
 
+    samples: list[np.ndarray] = []
     with h5py.File(h5_path, "r") as f:
         spike_times = f["spikes"]["times"]
         spike_units = f["spikes"]["units"]
         raw_labels = f["labels"][:]
-
-    samples: list[np.ndarray] = []
-    for i in range(len(raw_labels)):
-        times = spike_times[i]
-        units = spike_units[i]
-        n_bins = int(np.ceil(times.max() / (dt_ms / 1000.0))) + 1 if len(times) > 0 else T
-        n_bins = min(n_bins, T)
-        train_arr = np.zeros((n_bins, _SHD_CHANNELS), dtype=bool)
-        if len(times) > 0:
-            bin_idx = np.clip((times / (dt_ms / 1000.0)).astype(int), 0, n_bins - 1)
-            unit_idx = np.clip(units.astype(int), 0, _SHD_CHANNELS - 1)
-            train_arr[bin_idx, unit_idx] = True
-        samples.append(train_arr)
+        for i in range(len(raw_labels)):
+            times = np.asarray(spike_times[i])
+            units = np.asarray(spike_units[i])
+            if len(times) > 0:
+                n_bins = min(int(np.ceil(times.max() / (dt_ms / 1000.0))) + 1, T)
+            else:
+                n_bins = T
+            train_arr = np.zeros((n_bins, _SHD_CHANNELS), dtype=bool)
+            if len(times) > 0:
+                bin_idx = np.clip((times / (dt_ms / 1000.0)).astype(int), 0, n_bins - 1)
+                unit_idx = np.clip(units.astype(int), 0, _SHD_CHANNELS - 1)
+                train_arr[bin_idx, unit_idx] = True
+            samples.append(train_arr)
 
     return samples, raw_labels.astype(np.int64)
 
 
 def _synthetic_shd(
-    n_samples: int, T: int, dt_ms: float, seed: int,
+    n_samples: int,
+    T: int,
+    dt_ms: float,
+    seed: int,
 ) -> tuple[list[np.ndarray], np.ndarray]:
     rng = np.random.default_rng(seed)
     labels = rng.integers(0, 20, size=n_samples)
@@ -237,7 +245,10 @@ def _synthetic_shd(
     samples: list[np.ndarray] = []
     for i in range(n_samples):
         spike_train = poisson_encode(
-            templates[labels[i]], T, dt_ms=dt_ms, seed=seed + i + 1,
+            templates[labels[i]],
+            T,
+            dt_ms=dt_ms,
+            seed=seed + i + 1,
         )
         samples.append(spike_train)
     return samples, labels
@@ -285,14 +296,18 @@ def load_dvs_cifar10(
     """
     if synthetic:
         return _synthetic_event_dataset(
-            n_samples, _DVS_CIFAR10_RES, 10, T, dt_ms, seed,
+            n_samples,
+            _DVS_CIFAR10_RES,
+            10,
+            T,
+            dt_ms,
+            seed,
         )
     _check_root(root, "DVS-CIFAR10", _DVS_CIFAR10_URL)
     split_dir = Path(root) / ("train" if train else "test")
     if not split_dir.exists():
         raise FileNotFoundError(
-            f"Expected split directory {split_dir.resolve()}. "
-            f"Download from {_DVS_CIFAR10_URL}"
+            f"Expected split directory {split_dir.resolve()}. " f"Download from {_DVS_CIFAR10_URL}"
         )
     # Real loader: .aedat or .mat files grouped by class
     samples: list[np.ndarray] = []
