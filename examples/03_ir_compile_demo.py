@@ -21,11 +21,13 @@ import sys
 try:
     from sc_neurocore_engine.ir import ScGraphBuilder, parse_ir
 except ImportError:
-    print("This example requires the Rust engine. Install with: cd engine && maturin develop --release")
+    print(
+        "This example requires the Rust engine. Install with: cd engine && maturin develop --release"
+    )
     sys.exit(0)
 
 
-def build_synapse_graph() -> "ScGraph":
+def build_synapse_graph() -> "ScGraph":  # noqa: F821
     """Build a minimal synapse: encode two probabilities, AND, popcount."""
     b = ScGraphBuilder("sc_synapse")
 
@@ -50,7 +52,7 @@ def build_synapse_graph() -> "ScGraph":
     return b.build()
 
 
-def build_dense_graph() -> "ScGraph":
+def build_dense_graph() -> "ScGraph":  # noqa: F821
     """Build a dense layer with 3 inputs, 7 neurons."""
     b = ScGraphBuilder("sc_dense_layer")
 

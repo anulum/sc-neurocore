@@ -22,7 +22,9 @@ import sys
 try:
     from sc_neurocore_engine import HDCVector
 except ImportError:
-    print("This example requires the Rust engine. Install with: cd engine && maturin develop --release")
+    print(
+        "This example requires the Rust engine. Install with: cd engine && maturin develop --release"
+    )
     sys.exit(0)
 
 DIM = 10_000  # 10,000-bit hypervectors
@@ -58,7 +60,7 @@ def main():
     }
 
     print("\nAtomic symbols created.")
-    print(f"  Pairwise similarity (should be ~0.50):")
+    print("  Pairwise similarity (should be ~0.50):")
     print(f"    France vs Germany: {france.similarity(germany):.3f}")
     print(f"    Paris vs Berlin:   {paris.similarity(berlin):.3f}")
 
@@ -140,7 +142,7 @@ def main():
     v = HDCVector(DIM, seed=42)
     p1 = v.permute(1)
     p2 = v.permute(2)
-    print(f"\nPermute orthogonality:")
+    print("\nPermute orthogonality:")
     print(f"  sim(v, permute(v,1)) = {v.similarity(p1):.4f}")
     print(f"  sim(v, permute(v,2)) = {v.similarity(p2):.4f}")
 

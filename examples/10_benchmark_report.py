@@ -39,7 +39,9 @@ try:
     from sc_neurocore_engine import FixedPointLIFNeuron as V3Lif
     from sc_neurocore_engine.layers import VectorizedSCLayer as V3Layer
 except ImportError:
-    print("This example requires the Rust engine. Install with: cd engine && maturin develop --release")
+    print(
+        "This example requires the Rust engine. Install with: cd engine && maturin develop --release"
+    )
     sys.exit(0)
 
 
