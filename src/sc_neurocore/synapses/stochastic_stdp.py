@@ -20,8 +20,9 @@ class StochasticSTDPSynapse(BitstreamSynapse):
     coincidence windows.
     """
 
-    learning_rate: float = 0.01  # Probability of weight update on event
-    window_size: int = 5  # Time window for correlation in bits
+    learning_rate: float = 0.01
+    window_size: int = 5
+    ltd_ratio: float = 0.5  # LTD/LTP asymmetry; Bi & Poo 1998, Fig. 1
 
     _pre_trace: np.ndarray[Any, Any] = field(init=False, repr=False)
 
@@ -44,7 +45,7 @@ class StochasticSTDPSynapse(BitstreamSynapse):
             if self._rng.random() < self.learning_rate:
                 self._potentiate()
         elif pre_bit == 1 and post_bit == 0:
-            if self._rng.random() < self.learning_rate * 0.5:
+            if self._rng.random() < self.learning_rate * self.ltd_ratio:
                 self._depress()
 
         return output_bit

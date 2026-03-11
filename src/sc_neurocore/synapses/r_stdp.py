@@ -17,6 +17,7 @@ class RewardModulatedSTDPSynapse(StochasticSTDPSynapse):
 
     eligibility_trace: float = 0.0
     trace_decay: float = 0.9
+    anti_hebbian_scale: float = 0.5  # LTD/LTP asymmetry; Bi & Poo 1998
 
     def process_step(self, pre_bit: int, post_bit: int) -> int:
         # 1. Compute Output (Same as standard)
@@ -35,7 +36,7 @@ class RewardModulatedSTDPSynapse(StochasticSTDPSynapse):
         # Anti-Hebbian Term: Pre * !Post (or vice versa depending on rule)
         # If Pre fires but Post doesn't, trace goes down (Depression eligibility)
         elif pre_bit == 1 and post_bit == 0:
-            self.eligibility_trace -= 0.5
+            self.eligibility_trace -= self.anti_hebbian_scale
 
         # Decay trace
         self.eligibility_trace *= self.trace_decay
