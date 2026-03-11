@@ -66,14 +66,30 @@ encode → AND synapse → popcount → LIF neuron
 
 ---
 
-## 6. GPU Backend (NumPy fallback)
+## 6. GPU Backend
 
-CuPy not installed; these measure the NumPy codepath.
+### 6a. Local CPU fallback (NumPy, no CuPy)
 
 | Operation | Iterations | Latency (µs) | Throughput |
 |-----------|-----------|---------------|------------|
 | gpu_pack_bitstream (65,536) | 2,000 | 375.9 | 0.17 Gbit/s |
 | gpu_vec_mac (64×32×16w) | 1,000 | 736.4 | 2.85 GOP/s |
+
+### 6b. Cloud GPU — NVIDIA RTX A6000 (48 GB, CUDA 12.6)
+
+Environment: JarvisLabs A6000, Xeon Silver 4216 (64 vCPU), PyTorch 2.6.0+cu124.
+1000 ms simulation, 3 runs, AI regime (conn_prob=0.1).
+
+| Neurons | Synapses | Wall (s) | Rate (Hz) | Syn events/s | Peak RSS |
+|--------:|:--------:|:--------:|:---------:|:------------:|:--------:|
+| 1,000 | 100K | 1.55 | 99.0 | 3.2 M | 12 MB |
+| 2,000 | 400K | 1.80 | 85.5 | 9.5 M | 24 MB |
+| 5,000 | 2.5M | 2.74 | 63.6 | 29.0 M | 104 MB |
+| 20,000 | 40M | 8.80 | 26.1 | 59.2 M | 775 MB |
+| 50,000 | 250M | 35.4 | 14.7 | 51.9 M | 4,793 MB |
+
+Source: `benchmarks/results/jarvislabs_a6000/gpu_large_scale.json`,
+`benchmarks/results/jarvislabs_a6000/scaling_4regime.json`.
 
 ---
 
