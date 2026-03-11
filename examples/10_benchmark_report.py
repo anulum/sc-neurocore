@@ -34,9 +34,13 @@ from sc_neurocore.neurons import FixedPointLIFNeuron as V2Lif
 from sc_neurocore.layers import VectorizedSCLayer as V2Layer
 
 # -- v3 imports --
-import sc_neurocore_engine as v3
-from sc_neurocore_engine import FixedPointLIFNeuron as V3Lif
-from sc_neurocore_engine.layers import VectorizedSCLayer as V3Layer
+try:
+    import sc_neurocore_engine as v3
+    from sc_neurocore_engine import FixedPointLIFNeuron as V3Lif
+    from sc_neurocore_engine.layers import VectorizedSCLayer as V3Layer
+except ImportError:
+    print("This example requires the Rust engine. Install with: cd engine && maturin develop --release")
+    sys.exit(0)
 
 
 def benchmark(fn, n_iters: int = 1) -> float:
