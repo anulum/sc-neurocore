@@ -8,11 +8,11 @@ Demonstrates:
 
 Requires: torch, torchvision
 """
+
 from __future__ import annotations
 
 from pathlib import Path
 
-import numpy as np
 
 try:
     import torch
@@ -44,10 +44,12 @@ def main():
     print(f"  Parameters: {ckpt['n_params']:,}")
     print(f"  SC weight matrices: {len(ckpt['sc_weights'])}")
 
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,)),
-    ])
+    transform = transforms.Compose(
+        [
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,)),
+        ]
+    )
     test_ds = datasets.MNIST("./data", train=False, download=True, transform=transform)
 
     correct = 0
@@ -61,7 +63,9 @@ def main():
             pred = spike_counts.argmax(1).item()
             correct += pred == label
 
-    print(f"\nInference on {n_test} test images: {correct}/{n_test} correct ({correct/n_test:.0%})")
+    print(
+        f"\nInference on {n_test} test images: {correct}/{n_test} correct ({correct / n_test:.0%})"
+    )
 
     sc_weights = model.to_sc_weights()
     for i, w in enumerate(sc_weights):
