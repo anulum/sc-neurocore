@@ -4,9 +4,15 @@
 SC-NeuroCore is a library for simulating Stochastic Computing (SC) based neural networks. It provides software models that align with hardware implementations for FPGA deployment.
 
 ## Installation
-Ensure the package is in your python path.
+
 ```bash
-export PYTHONPATH=$PYTHONPATH:/path/to/sc-neurocore/src
+pip install sc-neurocore
+```
+
+For development (editable install with extras):
+
+```bash
+pip install -e ".[dev,research]"
 ```
 
 ## Quick Start
