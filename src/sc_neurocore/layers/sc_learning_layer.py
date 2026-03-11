@@ -24,6 +24,7 @@ class SCLearningLayer:
     w_min: float = 0.0
     w_max: float = 1.0
     learning_rate: float = 0.01
+    ltd_ratio: float = 0.5  # LTD/LTP asymmetry; Bi & Poo 1998
     length: int = 1024
     base_seed: Optional[int] = None
 
@@ -109,7 +110,7 @@ class SCLearningLayer:
                         if np.random.random() < self.learning_rate:
                             neuron_syns[j]._potentiate()  # type: ignore
                     elif pre_bit == 1 and post_spike == 0:
-                        if np.random.random() < self.learning_rate * 0.5:
+                        if np.random.random() < self.learning_rate * self.ltd_ratio:
                             neuron_syns[j]._depress()  # type: ignore
 
         return epoch_spikes

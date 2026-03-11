@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import numpy as np
 from collections.abc import Sequence
 
-from ..accel.vector_ops import pack_bitstream, vec_and, vec_popcount
+from ..accel.vector_ops import pack_bitstream, vec_and
 from ..accel.gpu_backend import (
     HAS_CUPY,
     to_device,
