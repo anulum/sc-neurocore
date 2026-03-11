@@ -4,6 +4,7 @@
 Usage:
     python tools/train_pretrained_mnist.py [--epochs 5] [--output weights/conv_spiking_net_mnist.pt]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -12,7 +13,6 @@ import platform
 import time
 from pathlib import Path
 
-import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
@@ -63,10 +63,12 @@ def main():
     args = parser.parse_args()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,)),
-    ])
+    transform = transforms.Compose(
+        [
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,)),
+        ]
+    )
     train_ds = datasets.MNIST("./data", train=True, download=True, transform=transform)
     test_ds = datasets.MNIST("./data", train=False, download=True, transform=transform)
     train_loader = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True, num_workers=0)
@@ -85,7 +87,9 @@ def main():
         )
         test_loss, test_acc = eval_conv(model, test_loader, args.timesteps, device)
         best_acc = max(best_acc, test_acc)
-        print(f"Epoch {epoch:2d} | train {train_acc:.1%} loss={train_loss:.4f} | test {test_acc:.1%} loss={test_loss:.4f}")
+        print(
+            f"Epoch {epoch:2d} | train {train_acc:.1%} loss={train_loss:.4f} | test {test_acc:.1%} loss={test_loss:.4f}"
+        )
     elapsed = time.time() - t0
 
     sc_weights = model.to_sc_weights()
@@ -94,14 +98,17 @@ def main():
 
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
-    torch.save({
-        "model_state_dict": model.state_dict(),
-        "sc_weights": [w.cpu().numpy() for w in sc_weights],
-        "test_accuracy": float(test_acc),
-        "best_accuracy": float(best_acc),
-        "n_params": n_params,
-        "architecture": "ConvSpikingNet(n_output=10)",
-    }, out)
+    torch.save(
+        {
+            "model_state_dict": model.state_dict(),
+            "sc_weights": [w.cpu().numpy() for w in sc_weights],
+            "test_accuracy": float(test_acc),
+            "best_accuracy": float(best_acc),
+            "n_params": n_params,
+            "architecture": "ConvSpikingNet(n_output=10)",
+        },
+        out,
+    )
 
     meta = {
         "model_name": "ConvSpikingNet",

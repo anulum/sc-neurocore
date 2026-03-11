@@ -7,6 +7,7 @@ Outputs JSON artifact to benchmarks/results/snntorch_vs_sc_microbench.json.
 Usage:
     python benchmarks/snntorch_vs_sc_microbench.py [--runs 5] [--json]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -52,7 +53,9 @@ def _bench_sc_single_neuron(steps: int, n_runs: int) -> BenchRow:
     return BenchRow(
         test_name="single_neuron",
         framework="sc_neurocore",
-        n_inputs=1, n_neurons=1, steps=steps,
+        n_inputs=1,
+        n_neurons=1,
+        steps=steps,
         wall_time_s=round(wall, 6),
         wall_std_s=round(float(np.std(times)), 6),
         total_spikes=int(np.mean(spikes_list)),
@@ -85,7 +88,9 @@ def _bench_snntorch_single_neuron(steps: int, n_runs: int) -> BenchRow:
     return BenchRow(
         test_name="single_neuron",
         framework="snntorch",
-        n_inputs=1, n_neurons=1, steps=steps,
+        n_inputs=1,
+        n_neurons=1,
+        steps=steps,
         wall_time_s=round(wall, 6),
         wall_std_s=round(float(np.std(times)), 6),
         total_spikes=int(np.mean(spikes_list)),
@@ -116,7 +121,9 @@ def _bench_sc_dense(n_in: int, n_out: int, steps: int, n_runs: int) -> BenchRow:
     return BenchRow(
         test_name="dense_layer",
         framework="sc_neurocore",
-        n_inputs=n_in, n_neurons=n_out, steps=steps,
+        n_inputs=n_in,
+        n_neurons=n_out,
+        steps=steps,
         wall_time_s=round(wall, 6),
         wall_std_s=round(float(np.std(times)), 6),
         total_spikes=int(np.mean(spikes_list)),
@@ -154,7 +161,9 @@ def _bench_snntorch_dense(n_in: int, n_out: int, steps: int, n_runs: int) -> Ben
     return BenchRow(
         test_name="dense_layer",
         framework="snntorch",
-        n_inputs=n_in, n_neurons=n_out, steps=steps,
+        n_inputs=n_in,
+        n_neurons=n_out,
+        steps=steps,
         wall_time_s=round(wall, 6),
         wall_std_s=round(float(np.std(times)), 6),
         total_spikes=int(np.mean(spikes_list)),
@@ -187,7 +196,9 @@ def _bench_sc_scaling(n_neurons: int, steps: int, n_runs: int) -> BenchRow:
     return BenchRow(
         test_name=f"scaling_{n_neurons}",
         framework="sc_neurocore",
-        n_inputs=n_neurons, n_neurons=n_neurons, steps=steps,
+        n_inputs=n_neurons,
+        n_neurons=n_neurons,
+        steps=steps,
         wall_time_s=round(wall, 6),
         wall_std_s=round(float(np.std(times)), 6),
         total_spikes=int(np.mean(spikes_list)),
@@ -208,9 +219,7 @@ def _bench_snntorch_scaling(n_neurons: int, steps: int, n_runs: int) -> BenchRow
         fc = nn.Linear(n_neurons, n_neurons)
         lif = snn.Leaky(beta=0.9, threshold=1.0)
         rng = np.random.default_rng(r)
-        inputs = torch.tensor(
-            rng.uniform(0.2, 0.5, (steps, n_neurons)), dtype=torch.float32
-        )
+        inputs = torch.tensor(rng.uniform(0.2, 0.5, (steps, n_neurons)), dtype=torch.float32)
         mem = torch.zeros(n_neurons)
         t0 = time.perf_counter()
         total = 0.0
@@ -227,7 +236,9 @@ def _bench_snntorch_scaling(n_neurons: int, steps: int, n_runs: int) -> BenchRow
     return BenchRow(
         test_name=f"scaling_{n_neurons}",
         framework="snntorch",
-        n_inputs=n_neurons, n_neurons=n_neurons, steps=steps,
+        n_inputs=n_neurons,
+        n_neurons=n_neurons,
+        steps=steps,
         wall_time_s=round(wall, 6),
         wall_std_s=round(float(np.std(times)), 6),
         total_spikes=int(np.mean(spikes_list)),
@@ -241,6 +252,7 @@ def _try_rust_engine():
     """Return True if Rust SIMD engine is available."""
     try:
         from sc_neurocore_engine import sc_neurocore_engine  # noqa: F401
+
         return True
     except ImportError:
         return False
@@ -267,7 +279,9 @@ def _bench_rust_dense(n_in: int, n_out: int, steps: int, n_runs: int) -> BenchRo
     return BenchRow(
         test_name="dense_layer",
         framework="sc_rust_simd",
-        n_inputs=n_in, n_neurons=n_out, steps=steps,
+        n_inputs=n_in,
+        n_neurons=n_out,
+        steps=steps,
         wall_time_s=round(wall, 6),
         wall_std_s=round(float(np.std(times)), 6),
         total_spikes=int(np.mean(spikes_list)),
@@ -298,7 +312,9 @@ def _bench_rust_scaling(n_neurons: int, steps: int, n_runs: int) -> BenchRow:
     return BenchRow(
         test_name=f"scaling_{n_neurons}",
         framework="sc_rust_simd",
-        n_inputs=n_neurons, n_neurons=n_neurons, steps=steps,
+        n_inputs=n_neurons,
+        n_neurons=n_neurons,
+        steps=steps,
         wall_time_s=round(wall, 6),
         wall_std_s=round(float(np.std(times)), 6),
         total_spikes=int(np.mean(spikes_list)),
@@ -356,7 +372,9 @@ def main():
     print(f"{'Test':<20} {'Framework':<15} {'us/step':>10} {'spikes':>10} {'rate':>8}")
     print("-" * 80)
     for r in rows:
-        print(f"{r.test_name:<20} {r.framework:<15} {r.time_per_step_us:>10.1f} {r.total_spikes:>10} {r.mean_rate:>8.3f}")
+        print(
+            f"{r.test_name:<20} {r.framework:<15} {r.time_per_step_us:>10.1f} {r.total_spikes:>10} {r.mean_rate:>8.3f}"
+        )
 
     result = {
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
