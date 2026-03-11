@@ -632,3 +632,65 @@ class TestSwarmEvolver:
             )
         )
         assert isinstance(evolver.evolve_generation(), float)
+
+
+# ── Coverage gap: pipeline edge cases ──────────────────────────────────
+
+
+class TestPipelineEdgeCases:
+
+    def test_sanitize_empty_name(self):
+        from sc_neurocore.compiler.pipeline import CompilerPipeline
+
+        p = CompilerPipeline(work_dir=".tmp/test")
+        with pytest.raises(ValueError, match="Invalid output name"):
+            p._sanitize_name("!!!")
+
+    def test_validate_path_escapes(self):
+        from sc_neurocore.compiler.pipeline import CompilerPipeline
+
+        p = CompilerPipeline(work_dir="/tmp/safe")
+        with pytest.raises(ValueError, match="Path escapes work_dir"):
+            p._validate_path("/etc/passwd")
+
+    def test_synthesis_bad_target(self):
+        import tempfile
+
+        from sc_neurocore.compiler.pipeline import CompilerPipeline
+
+        with tempfile.TemporaryDirectory() as td:
+            p = CompilerPipeline(work_dir=td)
+            v_path = os.path.join(td, "dummy.v")
+            with open(v_path, "w") as f:
+                f.write("module dummy(); endmodule")
+            with pytest.raises(ValueError, match="Unknown target FPGA"):
+                p.run_synthesis(v_path, target_fpga="nope")
+
+
+# ── Coverage gap: vectorized_layer sparse guard ────────────────────────
+
+
+class TestVectorizedSparseGuard:
+
+    def test_sparse_without_scipy(self):
+        from unittest.mock import patch
+
+        with patch("sc_neurocore.layers.vectorized_layer.HAS_SCIPY_SPARSE", False):
+            from sc_neurocore.layers.vectorized_layer import VectorizedSCLayer
+
+            with pytest.raises(ImportError, match="scipy"):
+                VectorizedSCLayer(n_inputs=4, n_neurons=8, sparse=True)
+
+
+# ── Coverage gap: L10 boundary short noise ─────────────────────────────
+
+
+class TestL10ShortNoise:
+
+    def test_boundary_short_noise_pad(self):
+        from sc_neurocore.scpn.layers.l10_boundary import L10_BoundaryLayer
+
+        layer = L10_BoundaryLayer()
+        short_noise = np.array([0.1])
+        layer.step(0.01, external_noise=short_noise)
+        assert layer.time > 0
