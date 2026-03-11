@@ -18,9 +18,6 @@ import pytest
 
 
 class TestHolonomicDimMismatch:
-    @pytest.fixture(autouse=True)
-    def _skip_no_jax(self):
-        pytest.importorskip("jax")
 
     def test_l1_quantum_with_inputs(self):
         from sc_neurocore.adapters.holonomic.l1_quantum import L1_QuantumAdapter
@@ -583,6 +580,18 @@ class TestCLIInfo:
         finally:
             del sys.modules["sc_neurocore_engine"]
 
+    def test_cmd_info_with_jax(self, capsys):
+        from sc_neurocore.cli import _cmd_info
+
+        fake_jax = types.ModuleType("jax")
+        fake_jax.__version__ = "0.0.0-test"  # type: ignore[attr-defined]
+        sys.modules["jax"] = fake_jax
+        try:
+            assert _cmd_info() == 0
+            assert "JAX" in capsys.readouterr().out
+        finally:
+            del sys.modules["jax"]
+
 
 # ── SCPN layer edge cases ───────────────────────────────────────────────
 
@@ -590,14 +599,15 @@ class TestCLIInfo:
 class TestSCPNLayerEdgeCases:
 
     def test_l1_quantum_hardware_backend(self):
-        pytest.importorskip("qiskit")
         from sc_neurocore.scpn.layers.l1_quantum import L1_QuantumLayer, L1_StochasticParameters
 
-        layer = L1_QuantumLayer(params=L1_StochasticParameters(n_qubits=2, backend="aer_simulator"))
-        assert layer.quantum_core is not None
+        with (
+            patch("sc_neurocore.quantum.hardware_bridge.HAS_QISKIT", False),
+            pytest.raises(RuntimeError, match="Qiskit"),
+        ):
+            L1_QuantumLayer(params=L1_StochasticParameters(n_qubits=2, backend="aer_simulator"))
 
     def test_l10_fire_adapter_step(self):
-        pytest.importorskip("jax")
         from sc_neurocore.adapters.holonomic.l10_fire import L10_FirewallAdapter
 
         adapter = L10_FirewallAdapter()
@@ -605,7 +615,6 @@ class TestSCPNLayerEdgeCases:
         assert hasattr(result, "shape")
 
     def test_l10_fire_adapter_with_inputs(self):
-        pytest.importorskip("jax")
         from sc_neurocore.adapters.holonomic.l10_fire import L10_FirewallAdapter
 
         adapter = L10_FirewallAdapter()
