@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+
 # Deploy an SNN on FPGA in 20 Minutes
 
 This tutorial walks through the full SC-NeuroCore pipeline: train a digit

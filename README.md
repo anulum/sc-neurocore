@@ -22,7 +22,7 @@ Commercial Licensing: Available
 [![REUSE](https://img.shields.io/badge/REUSE-compliant-green)](https://reuse.software/)
 
 **Version:** 3.10.0
-**Status:** Production Core Verified | 1 144 Tests | 100% Coverage | CI/CD Active
+**Status:** Production Core Verified | 1 218 Tests | 100% Coverage | CI/CD Active
 
 SC-NeuroCore is a deterministic stochastic computing framework for
 neuromorphic hardware design and edge-AI deployment. It provides bit-true
@@ -50,7 +50,7 @@ pip install sc-neurocore[gpu]
 git clone https://github.com/anulum/sc-neurocore.git
 cd sc-neurocore
 pip install -e ".[dev]"    # editable install with all dev tools
-make preflight             # verify setup (lint + 1144 tests)
+make preflight             # verify setup (lint + 1218 tests)
 ```
 
 ## Docker
@@ -251,6 +251,8 @@ Runnable scripts in `examples/`:
 | `09_safety_critical_logic.py` | Fault-tolerant Boolean logic with stochastic redundancy (v3 Rust engine) |
 | `10_benchmark_report.py` | Head-to-head v2/v3 benchmark suite (v3 Rust engine) |
 | `11_sc_training_demo.py` | Surrogate-gradient training of an SC dense layer (v3 Rust engine) |
+| `mnist_fpga/demo.py` | MNIST classifier: train → quantise Q8.8 → SC simulate → Verilog export |
+| `mnist_surrogate/train.py` | Surrogate gradient SNN training (FastSigmoid/SuperSpike/ATan, ~95% MNIST) |
 
 ```bash
 PYTHONPATH=src:bridge python examples/01_basic_sc_encoding.py
@@ -302,13 +304,14 @@ Sample results (CPU, quick mode):
 
 **Live site**: [anulum.github.io/sc-neurocore](https://anulum.github.io/sc-neurocore/)
 
-- [Getting Started](docs/guides/getting-started.md) -- Installation & quickstart
-- [API Reference](docs/api/API_REFERENCE.md) -- Python package API
-- [Rust Engine API](https://anulum.github.io/sc-neurocore/rust-api/sc_neurocore_engine/) -- Rust engine docs
-- [Hardware Guide](docs/hardware/HARDWARE_GUIDE.md) -- FPGA deployment workflow
-- [Architecture](docs/architecture/architecture.md) -- Package architecture
-- [Benchmarks](docs/benchmarks/BENCHMARKS.md) -- Performance measurements
-- [CHANGELOG.md](CHANGELOG.md) -- Version history
+- [Getting Started](docs/guides/getting-started.md) — Installation & quickstart
+- [**Tutorials**](https://anulum.github.io/sc-neurocore/tutorials/01_stochastic_computing_fundamentals/) — 7 hands-on guides (SC fundamentals → FPGA deployment → Brunel translation)
+- [API Reference](docs/api/API_REFERENCE.md) — Python package API
+- [Rust Engine API](https://anulum.github.io/sc-neurocore/rust-api/sc_neurocore_engine/) — Rust engine docs
+- [Hardware Guide](docs/hardware/HARDWARE_GUIDE.md) — FPGA deployment workflow
+- [Architecture](docs/architecture/architecture.md) — Package architecture
+- [Benchmarks](docs/benchmarks/BENCHMARKS.md) — Performance measurements
+- [CHANGELOG.md](CHANGELOG.md) — Version history
 
 Build docs locally:
 ```bash
