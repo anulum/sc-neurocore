@@ -55,7 +55,7 @@ jobs:
           cargo audit
 
       - name: Install cargo-deny
-        run: cargo install cargo-deny@0.16.3
+        run: cargo install cargo-deny@0.19.0
 
       - name: Cargo deny
         run: cargo deny --manifest-path engine/Cargo.toml check licenses advisories
