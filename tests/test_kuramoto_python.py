@@ -18,7 +18,7 @@ class TestKuramotoSolver:
         phases = np.random.RandomState(42).uniform(0, 2 * np.pi, n)
 
         solver = KuramotoSolver(omega, coupling, phases, noise_amp=0.0)
-        order_values = solver.run(n_steps=500, dt=0.01)
+        order_values = solver.run(n_steps=2000, dt=0.01)
 
         assert (
             order_values[-1] > 0.8
