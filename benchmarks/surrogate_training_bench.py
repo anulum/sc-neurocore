@@ -58,10 +58,12 @@ class BenchResult:
 
 
 def get_loaders(data_dir: str = "./data"):
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,)),
-    ])
+    transform = transforms.Compose(
+        [
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,)),
+        ]
+    )
     train = datasets.MNIST(data_dir, train=True, download=True, transform=transform)
     test = datasets.MNIST(data_dir, train=False, transform=transform)
     return (
@@ -71,6 +73,7 @@ def get_loaders(data_dir: str = "./data"):
 
 
 # ── SC-NeuroCore ────────────────────────────────────────────────────────────
+
 
 def bench_scneurocore(train_loader, test_loader, n_epochs: int, device: str) -> BenchResult:
     from sc_neurocore.training import SpikingNet, train_epoch, evaluate
@@ -104,13 +107,21 @@ def bench_scneurocore(train_loader, test_loader, n_epochs: int, device: str) -> 
 
 # ── SC-NeuroCore (learnable) ──────────────────────────────────────────────
 
-def bench_scneurocore_learnable(train_loader, test_loader, n_epochs: int, device: str) -> BenchResult:
+
+def bench_scneurocore_learnable(
+    train_loader, test_loader, n_epochs: int, device: str
+) -> BenchResult:
     from sc_neurocore.training import SpikingNet, train_epoch, evaluate
     import sc_neurocore
 
     model = SpikingNet(
-        N_INPUT, N_HIDDEN, N_OUTPUT, N_LAYERS, beta=BETA,
-        learn_beta=True, learn_threshold=True,
+        N_INPUT,
+        N_HIDDEN,
+        N_OUTPUT,
+        N_LAYERS,
+        beta=BETA,
+        learn_beta=True,
+        learn_threshold=True,
     ).to(device)
     opt = torch.optim.Adam(model.parameters(), lr=LR)
     n_params = sum(p.numel() for p in model.parameters())
@@ -139,14 +150,17 @@ def bench_scneurocore_learnable(train_loader, test_loader, n_epochs: int, device
 
 # ── SC-NeuroCore (ConvSNN) ───────────────────────────────────────────────
 
+
 def bench_scneurocore_conv(train_loader, test_loader, n_epochs: int, device: str) -> BenchResult:
     from sc_neurocore.training import ConvSpikingNet
     from sc_neurocore.training.losses import spike_count_loss
     import sc_neurocore
 
     model = ConvSpikingNet(
-        n_output=N_OUTPUT, beta=BETA,
-        learn_beta=True, learn_threshold=True,
+        n_output=N_OUTPUT,
+        beta=BETA,
+        learn_beta=True,
+        learn_threshold=True,
     ).to(device)
     opt = torch.optim.Adam(model.parameters(), lr=LR)
     n_params = sum(p.numel() for p in model.parameters())
@@ -205,6 +219,7 @@ def bench_scneurocore_conv(train_loader, test_loader, n_epochs: int, device: str
 
 
 # ── Norse ───────────────────────────────────────────────────────────────────
+
 
 def bench_norse(train_loader, test_loader, n_epochs: int, device: str) -> BenchResult:
     try:
@@ -286,6 +301,7 @@ def bench_norse(train_loader, test_loader, n_epochs: int, device: str) -> BenchR
 
 
 # ── snnTorch ────────────────────────────────────────────────────────────────
+
 
 def bench_snntorch(train_loader, test_loader, n_epochs: int, device: str) -> BenchResult:
     try:
@@ -371,6 +387,7 @@ def bench_snntorch(train_loader, test_loader, n_epochs: int, device: str) -> Ben
 
 # ── Main ────────────────────────────────────────────────────────────────────
 
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--epochs", type=int, default=10)
@@ -380,7 +397,13 @@ def main():
     parser.add_argument(
         "--frameworks",
         nargs="+",
-        default=["sc-neurocore", "sc-neurocore-learnable", "sc-neurocore-conv", "norse", "snntorch"],
+        default=[
+            "sc-neurocore",
+            "sc-neurocore-learnable",
+            "sc-neurocore-conv",
+            "norse",
+            "snntorch",
+        ],
     )
     args = parser.parse_args()
 
