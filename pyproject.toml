@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sc-neurocore"
 version = "3.10.0"
-description = "Universal Stochastic Computing Framework spanning Software, Hardware, Physics, and Biology."
+description = "Stochastic Computing SNN framework: NumPy + Rust SIMD + FPGA RTL."
 authors = [
   { name = "Miroslav Sotek", email = "protoscience@anulum.li" }
 ]

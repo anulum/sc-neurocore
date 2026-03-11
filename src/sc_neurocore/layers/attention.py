@@ -40,12 +40,9 @@ class StochasticAttention:
         # In SC, this is parallel AND gates
         scores = np.dot(Q, K.T)
 
-        # 2. Stochastic Softmax / Normalization
-        # We normalize each row (each Query's attention over Keys)
+        # Row-sum normalization (matches Rust engine parity)
         row_sums = np.sum(scores, axis=1, keepdims=True)
-        # Avoid division by zero
         row_sums[row_sums == 0] = 1.0
-
         attn_weights = scores / row_sums
 
         # 3. Weighted Sum (V)
