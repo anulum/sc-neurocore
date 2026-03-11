@@ -98,4 +98,4 @@ jobs:
         run: cargo test --manifest-path engine/Cargo.toml
 
       - name: Run v3 integration tests
-        run: pytest tests/test_jax_backend.py tests/test_jax_layer.py tests/test_quantum_bridge.py tests/test_mlir_emitter.py tests/test_phase15_coverage.py -v
+        run: pytest tests/test_jax_backend.py tests/test_jax_layer.py tests/test_quantum_bridge.py tests/test_mlir_emitter.py tests/test_holonomic_adapters_l1_l16.py -v
