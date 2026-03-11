@@ -1,0 +1,21 @@
+{
+  "model_name": "ConvSpikingNet",
+  "dataset": "MNIST",
+  "test_accuracy": 0.9891,
+  "best_accuracy": 0.9891,
+  "n_parameters": 184586,
+  "architecture": "Conv2d(1->32,5)->LIF->Pool->Conv2d(32->64,5)->LIF->Pool->FC(1024->128)->LIF->FC(128->10)->LIF",
+  "training_date": "2026-03-11",
+  "hyperparameters": {
+    "epochs": 5,
+    "batch_size": 128,
+    "learning_rate": 0.002,
+    "timesteps": 25,
+    "optimizer": "Adam",
+    "surrogate": "atan"
+  },
+  "device": "cuda",
+  "training_time_s": 743.2,
+  "platform": "Windows-11-10.0.26200-SP0",
+  "torch_version": "2.6.0+cu124"
+}
