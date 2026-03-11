@@ -3,6 +3,9 @@ from dataclasses import dataclass
 from typing import Dict, Any
 from .stochastic_lif import StochasticLIFNeuron
 
+THRESHOLD_FLOOR = 0.1  # prevent threshold collapse to zero
+THRESHOLD_CEILING_MULT = 10.0  # max threshold = initial * this factor
+
 
 @dataclass
 class HomeostaticLIFNeuron(StochasticLIFNeuron):
@@ -11,8 +14,8 @@ class HomeostaticLIFNeuron(StochasticLIFNeuron):
     Self-regulates firing rate to a target setpoint.
     """
 
-    target_rate: float = 0.1  # Desired firing probability
-    adaptation_rate: float = 0.01  # How fast threshold changes
+    target_rate: float = 0.1
+    adaptation_rate: float = 0.01
     rate_trace: float = 0.0
     trace_decay: float = 0.95
 
@@ -23,19 +26,14 @@ class HomeostaticLIFNeuron(StochasticLIFNeuron):
     def step(self, input_current: float) -> int:
         spike = super().step(input_current)
 
-        # Update Rate Trace (Low-pass filter of spikes)
         self.rate_trace = self.rate_trace * self.trace_decay + spike * (1.0 - self.trace_decay)
 
-        # Homeostatic Control
-        # If trace > target, threshold increases (harder to fire)
-        # If trace < target, threshold decreases (easier to fire)
-
         error = self.rate_trace - self.target_rate
-
-        # Adjust threshold
         self.v_threshold += self.adaptation_rate * error
-
-        self.v_threshold = max(0.1, min(self.v_threshold, self.initial_threshold * 10.0))
+        self.v_threshold = max(
+            THRESHOLD_FLOOR,
+            min(self.v_threshold, self.initial_threshold * THRESHOLD_CEILING_MULT),
+        )
 
         return spike
 

@@ -10,6 +10,8 @@ from ..sources.bitstream_current_source import BitstreamCurrentSource
 from ..neurons.stochastic_lif import StochasticLIFNeuron
 from ..recorders.spike_recorder import BitstreamSpikeRecorder
 
+_NEURON_SEED_OFFSET = 10_000  # separates neuron seeds from synapse seeds
+
 
 @dataclass
 class SCDenseLayer:
@@ -66,7 +68,7 @@ class SCDenseLayer:
             # Give each neuron its own seed so they don't behave identically
             seed = None
             if self.base_seed is not None:
-                seed = self.base_seed + 10000 + i
+                seed = self.base_seed + _NEURON_SEED_OFFSET + i
 
             neuron = StochasticLIFNeuron(
                 v_rest=self.neuron_params.get("v_rest", 0.0),
