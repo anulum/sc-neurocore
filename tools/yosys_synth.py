@@ -68,26 +68,31 @@ class SynthResult:
 
 
 def parse_stat_output(text: str) -> dict[str, int]:
-    """Extract resource counts from Yosys 'stat' output."""
-    counts: dict[str, int] = {"luts": 0, "ffs": 0, "bram": 0, "dsp": 0}
+    """Extract resource counts from the LAST Yosys 'stat' block.
 
-    for line in text.splitlines():
-        line = line.strip()
-        for lut_type in ("LUT1", "LUT2", "LUT3", "LUT4", "LUT5", "LUT6"):
-            m = re.match(rf"{lut_type}\s+(\d+)", line)
-            if m:
-                counts["luts"] += int(m.group(1))
-        for ff_type in ("FDRE", "FDSE", "FDCE", "FDPE"):
-            m = re.match(rf"{ff_type}\s+(\d+)", line)
-            if m:
-                counts["ffs"] += int(m.group(1))
-        if re.match(r"RAMB\d+", line):
-            m = re.match(r"RAMB\w+\s+(\d+)", line)
-            if m:
-                counts["bram"] += int(m.group(1))
-        m = re.match(r"DSP48E\d?\s+(\d+)", line)
-        if m:
-            counts["dsp"] += int(m.group(1))
+    Yosys prints intermediate stats during synth_xilinx; only the final
+    block (from the explicit ``stat`` command) is authoritative.
+    Format: ``  <count>   <CELL_TYPE>``  (count before name).
+    """
+    blocks = text.split("Printing statistics.")
+    if len(blocks) < 2:
+        return {"luts": 0, "ffs": 0, "bram": 0, "dsp": 0}
+    last_block = blocks[-1]
+
+    counts: dict[str, int] = {"luts": 0, "ffs": 0, "bram": 0, "dsp": 0}
+    for line in last_block.splitlines():
+        m = re.match(r"\s*(\d+)\s+(\S+)", line)
+        if not m:
+            continue
+        n, cell = int(m.group(1)), m.group(2)
+        if cell in ("LUT1", "LUT2", "LUT3", "LUT4", "LUT5", "LUT6"):
+            counts["luts"] += n
+        elif cell in ("FDRE", "FDSE", "FDCE", "FDPE"):
+            counts["ffs"] += n
+        elif cell.startswith("RAMB"):
+            counts["bram"] += n
+        elif cell.startswith("DSP48"):
+            counts["dsp"] += n
 
     return counts
 
@@ -106,7 +111,7 @@ def preprocess_hdl() -> list[Path]:
             text=True,
         )
         if result.returncode == 0:
-            print(f"  sv2v: preprocessed {len(all_v)} files → {converted.name}")
+            print(f"  sv2v: preprocessed {len(all_v)} files -> {converted.name}")
             return [converted]
         print(f"  sv2v failed ({result.stderr[:200]}), falling back to filtered sources")
 
@@ -196,8 +201,21 @@ def main() -> int:
         print("\n" + format_markdown(results))
 
     if args.json:
+        yosys_ver = subprocess.run(["yosys", "-V"], capture_output=True, text=True).stdout.strip()
+        sv2v_ver = ""
+        if has_sv2v:
+            sv2v_ver = subprocess.run(
+                ["sv2v", "--version"], capture_output=True, text=True
+            ).stdout.strip()
+        payload = {
+            "tool": "yosys",
+            "yosys_version": yosys_ver,
+            "sv2v_version": sv2v_ver,
+            "target": "Xilinx 7-series (synth_xilinx -flatten)",
+            "modules": [asdict(r) for r in results],
+        }
         Path(args.json).parent.mkdir(parents=True, exist_ok=True)
-        Path(args.json).write_text(json.dumps([asdict(r) for r in results], indent=2))
+        Path(args.json).write_text(json.dumps(payload, indent=2) + "\n")
         print(f"\nResults written to {args.json}")
 
     return 0 if all(r.ok for r in results) else 1

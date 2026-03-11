@@ -1,65 +1,98 @@
-[
-  {
-    "module": "sc_bitstream_encoder",
-    "luts": 0,
-    "ffs": 0,
-    "bram": 0,
-    "dsp": 0,
-    "ok": false,
-    "error": "yosys not found in PATH"
-  },
-  {
-    "module": "sc_lif_neuron",
-    "luts": 0,
-    "ffs": 0,
-    "bram": 0,
-    "dsp": 0,
-    "ok": false,
-    "error": "yosys not found in PATH"
-  },
-  {
-    "module": "sc_bitstream_synapse",
-    "luts": 0,
-    "ffs": 0,
-    "bram": 0,
-    "dsp": 0,
-    "ok": false,
-    "error": "yosys not found in PATH"
-  },
-  {
-    "module": "sc_dotproduct_to_current",
-    "luts": 0,
-    "ffs": 0,
-    "bram": 0,
-    "dsp": 0,
-    "ok": false,
-    "error": "yosys not found in PATH"
-  },
-  {
-    "module": "sc_firing_rate_bank",
-    "luts": 0,
-    "ffs": 0,
-    "bram": 0,
-    "dsp": 0,
-    "ok": false,
-    "error": "yosys not found in PATH"
-  },
-  {
-    "module": "sc_dense_layer_core",
-    "luts": 0,
-    "ffs": 0,
-    "bram": 0,
-    "dsp": 0,
-    "ok": false,
-    "error": "yosys not found in PATH"
-  },
-  {
-    "module": "sc_neurocore_top",
-    "luts": 0,
-    "ffs": 0,
-    "bram": 0,
-    "dsp": 0,
-    "ok": false,
-    "error": "yosys not found in PATH"
-  }
-]
+{
+  "tool": "yosys",
+  "yosys_version": "Yosys 0.63+89 (git sha1 de99d67bb-dirty, x86_64-w64-mingw32-g++ 13.2.1 -O3)",
+  "sv2v_version": "sv2v v0.0.13",
+  "target": "Xilinx 7-series (synth_xilinx -flatten)",
+  "modules": [
+    {
+      "module": "sc_bitstream_encoder",
+      "luts": 82,
+      "ffs": 33,
+      "bram": 0,
+      "dsp": 0,
+      "ok": true,
+      "error": ""
+    },
+    {
+      "module": "sc_lif_neuron",
+      "luts": 137,
+      "ffs": 49,
+      "bram": 0,
+      "dsp": 2,
+      "ok": true,
+      "error": ""
+    },
+    {
+      "module": "sc_bitstream_synapse",
+      "luts": 1,
+      "ffs": 0,
+      "bram": 0,
+      "dsp": 0,
+      "ok": true,
+      "error": ""
+    },
+    {
+      "module": "sc_dotproduct_to_current",
+      "luts": 2142,
+      "ffs": 0,
+      "bram": 0,
+      "dsp": 1,
+      "ok": true,
+      "error": ""
+    },
+    {
+      "module": "sc_firing_rate_bank",
+      "luts": 113,
+      "ffs": 336,
+      "bram": 0,
+      "dsp": 14,
+      "ok": true,
+      "error": ""
+    },
+    {
+      "module": "sc_axil_cfg",
+      "luts": 393,
+      "ffs": 310,
+      "bram": 0,
+      "dsp": 0,
+      "ok": true,
+      "error": ""
+    },
+    {
+      "module": "sc_dense_layer_core",
+      "luts": 3063,
+      "ffs": 477,
+      "bram": 0,
+      "dsp": 12,
+      "ok": true,
+      "error": ""
+    },
+    {
+      "module": "sc_dense_layer_top",
+      "luts": 487,
+      "ffs": 259,
+      "bram": 0,
+      "dsp": 10,
+      "ok": true,
+      "error": ""
+    },
+    {
+      "module": "sc_dense_matrix_layer",
+      "luts": 11603,
+      "ffs": 6332,
+      "bram": 0,
+      "dsp": 40,
+      "ok": true,
+      "error": ""
+    },
+    {
+      "module": "sc_neurocore_top",
+      "luts": 3673,
+      "ffs": 1221,
+      "bram": 0,
+      "dsp": 30,
+      "ok": true,
+      "error": ""
+    }
+  ]
+}
