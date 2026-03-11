@@ -1,0 +1,23 @@
+[options]
+mode bmc
+depth 20
+
+[engines]
+smtbmc
+
+[script]
+read -formal sc_dense_layer_core_formal.v
+read -formal sc_dense_layer_core.v
+read -formal sc_dotproduct_to_current.v
+read -formal sc_bitstream_encoder.v
+read -formal sc_bitstream_synapse.v
+read -formal sc_lif_neuron.v
+prep -top sc_dense_layer_core_formal
+
+[files]
+sc_dense_layer_core_formal.v
+../sc_dense_layer_core.v
+../sc_dotproduct_to_current.v
+../sc_bitstream_encoder.v
+../sc_bitstream_synapse.v
+../sc_lif_neuron.v

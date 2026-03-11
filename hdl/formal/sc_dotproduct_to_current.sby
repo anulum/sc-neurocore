@@ -1,0 +1,15 @@
+[options]
+mode prove
+depth 1
+
+[engines]
+smtbmc
+
+[script]
+read -formal sc_dotproduct_to_current_formal.v
+read -formal sc_dotproduct_to_current.v
+prep -top sc_dotproduct_to_current_formal
+
+[files]
+sc_dotproduct_to_current_formal.v
+../sc_dotproduct_to_current.v
