@@ -32,34 +32,31 @@ class SCConv2DLayer:
         Returns: (out_channels, H_out, W_out) as probabilities (or firing rates).
         """
         C_in, H, W = input_image.shape
-        H_out = (H + 2 * self.padding - self.kernel_size) // self.stride + 1
-        W_out = (W + 2 * self.padding - self.kernel_size) // self.stride + 1
+        if C_in != self.in_channels:
+            raise IndexError(
+                f"Expected {self.in_channels} input channels, got {C_in}"
+            )
+        k = self.kernel_size
+        H_out = (H + 2 * self.padding - k) // self.stride + 1
+        W_out = (W + 2 * self.padding - k) // self.stride + 1
 
-        output = np.zeros((self.out_channels, H_out, W_out))
+        if self.padding > 0:
+            input_image = np.pad(
+                input_image, ((0, 0), (self.padding, self.padding), (self.padding, self.padding))
+            )
 
-        # In a real SC hardware, this would be massive parallel AND-gates.
-        # Here we simulate the probability math.
+        # im2col: extract all patches → (H_out*W_out, C_in*k*k)
+        col = np.empty((H_out * W_out, C_in * k * k), dtype=input_image.dtype)
+        idx = 0
+        for i in range(H_out):
+            for j in range(W_out):
+                hs = i * self.stride
+                ws = j * self.stride
+                col[idx] = input_image[:, hs : hs + k, ws : ws + k].ravel()
+                idx += 1
 
-        for oc in range(self.out_channels):
-            for ic in range(self.in_channels):
-                # Apply padding
-                padded_input = np.pad(input_image[ic], self.padding, mode="constant")
+        # SC multiply-accumulate: P(A&B) = P(A)*P(B) for unipolar [0,1]
+        filters = self.kernels.reshape(self.out_channels, -1)  # (out, C_in*k*k)
+        output = filters @ col.T  # (out, H_out*W_out)
 
-                for i in range(H_out):
-                    for j in range(W_out):
-                        h_start = i * self.stride
-                        h_end = h_start + self.kernel_size
-                        w_start = j * self.stride
-                        w_end = w_start + self.kernel_size
-
-                        region = padded_input[h_start:h_end, w_start:w_end]
-                        kernel = self.kernels[oc, ic]
-
-                        # SC Multiplication (AND) of probabilities
-                        # For unipolar [0,1], P(A&B) = P(A)*P(B)
-                        res = np.sum(region * kernel)
-                        output[oc, i, j] += res
-
-        # Normalize by kernel size and in_channels if needed,
-        # or treat as accumulated current.
-        return output
+        return output.reshape(self.out_channels, H_out, W_out)

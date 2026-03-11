@@ -21,6 +21,20 @@ except ImportError:  # pragma: no cover
     HAS_SCIPY_SPARSE = False
 
 
+def _popcount_rows(packed: np.ndarray) -> np.ndarray:
+    """Vectorized Hamming-weight popcount across rows of a uint64 array."""
+    x = packed.astype(np.uint64).copy()
+    m1 = np.uint64(0x5555555555555555)
+    m2 = np.uint64(0x3333333333333333)
+    m4 = np.uint64(0x0F0F0F0F0F0F0F0F)
+    h01 = np.uint64(0x0101010101010101)
+    x -= (x >> np.uint64(1)) & m1
+    x = (x & m2) + ((x >> np.uint64(2)) & m2)
+    x = (x + (x >> np.uint64(4))) & m4
+    x = (x * h01) >> np.uint64(56)
+    return x.sum(axis=1).astype(np.float64)
+
+
 @dataclass
 class VectorizedSCLayer:
     """
@@ -129,9 +143,7 @@ class VectorizedSCLayer:
         else:
             products = vec_and(self.packed_weights, packed_inputs[None, :, :])  # type: ignore
             flat_products = products.reshape(self.n_neurons, -1)
-            outputs = np.zeros(self.n_neurons)
-            for i in range(self.n_neurons):
-                outputs[i] = vec_popcount(flat_products[i])
+            outputs = _popcount_rows(flat_products)
 
         return outputs / self.length
 
@@ -142,12 +154,14 @@ class VectorizedSCLayer:
         packed_inputs = pack_bitstream(input_bits)
 
         csr = self.weights_csr
+        if csr.nnz == 0:
+            return np.zeros(self.n_neurons, dtype=np.float64)
+
+        gathered_inputs = packed_inputs[csr.indices]
+        products = vec_and(self._sparse_packed, gathered_inputs)
+        counts = _popcount_rows(products)
+
         outputs = np.zeros(self.n_neurons, dtype=np.float64)
-        for row in range(self.n_neurons):
-            start, end = csr.indptr[row], csr.indptr[row + 1]
-            for idx in range(start, end):
-                col = csr.indices[idx]
-                product = vec_and(self._sparse_packed[idx], packed_inputs[col])
-                outputs[row] += vec_popcount(product)
+        np.add.at(outputs, np.repeat(np.arange(self.n_neurons), np.diff(csr.indptr)), counts)
 
         return outputs / self.length
