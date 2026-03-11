@@ -4,7 +4,7 @@
 
 | Suite | Count | Scope |
 |-------|------:|-------|
-| Python unit/integration | 1 100+ | `pytest tests/` across 91 files |
+| Python unit/integration | 1 218 | `pytest tests/` across 102 files |
 | Rust engine | 108 | `cargo test --manifest-path engine/Cargo.toml` |
 | Bridge (PyO3) | — | Maturin build + Python import smoke test |
 | HDL formal verification | 11 | Verilog modules in `hdl/` with testbenches in `tb/` |
@@ -20,7 +20,7 @@ All gates must pass before merge.
 | black | `ci.yml` | `black --check` (pinned 25.1.0) |
 | ruff | `ci.yml` | `ruff check` (import hygiene, code quality) |
 | bandit | `ci.yml` | Security static analysis (SAST) |
-| test + coverage | `ci.yml` | `pytest --cov-fail-under=98` on Python 3.10, 3.11, 3.12 |
+| test + coverage | `ci.yml` | `pytest --cov-fail-under=100` on Python 3.10, 3.11, 3.12 |
 | spdx-guard | `ci.yml` | SPDX license headers on all `.py`, `.rs`, `.v` files |
 | build | `ci.yml` | `python -m build` + smoke import |
 | rust-lint | `v3-engine.yml` | `cargo fmt --check` + `cargo clippy -D warnings` |
@@ -34,14 +34,14 @@ All gates must pass before merge.
 
 ## Coverage Policy
 
-- Threshold: 98% (enforced by `pytest --cov-fail-under=98`)
+- Threshold: 100% (enforced by `pytest --cov-fail-under=100`)
 - Omitted modules (documented in `pyproject.toml [tool.coverage.run] omit`):
   - `experiments/` — research demo scripts
   - `drivers/` — hardware-dependent PYNQ drivers
   - `interfaces/ccw_bridge.py` — CCW integration (tested in CCW repo)
   - `audio/adaptive_engine.py`, `audio/evs_engine.py` — hardware-dependent
   - `sleep/` — hardware-dependent biofeedback
-  - `swarm/` — neuroevolution environment
+
 - Excluded lines: `pragma: no cover`, `if __name__`, `raise NotImplementedError`,
   conditional imports (`HAS_MPI`, `HAS_CUPY`, `HAS_NUMBA`)
 

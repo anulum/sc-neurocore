@@ -7,20 +7,23 @@ stochastic computing (SC) neural networks — from individual neurons to full
 SCPN layer hierarchies, with both software simulation and Verilog RTL for
 FPGA deployment.
 
+**Version 3.10.0** | 1 218 Tests | 100% Coverage | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
+
 ## Key Features
 
 - **Stochastic neurons** — LIF, Izhikevich, dendritic, homeostatic variants
 - **Packed bitwise layers** — 64-bit vectorised AND/popcount for high throughput
+- **Rust engine** — SIMD-accelerated backend (512x real-time), PyO3 bindings
 - **GPU acceleration** — CuPy backend with automatic CPU fallback
-- **SCPN layer stack** — 7-layer consciousness model (L1 Quantum → L7 Symbolic)
-- **Verilog RTL** — Synthesisable hardware for FPGA deployment
-- **Tiered modules** — Core (production), Research (experimental), Speculative (theoretical in `research/`)
+- **SNN training** — Surrogate gradient training (ATan, FastSigmoid, SuperSpike) with `to_sc_weights()` bridge
+- **SCPN layer stack** — 16-layer holonomic model (L1 Quantum → L16 Meta) with JAX acceleration
+- **Verilog RTL** — 10 synthesisable modules, formal verification, bit-exact Python co-simulation
+- **HDC/VSA** — Hyper-dimensional computing for symbolic AI workloads
 
 ## Quick Start
 
 ```bash
-pip install -e ".[dev]"
-pytest tests/ -v --cov
+pip install sc-neurocore
 ```
 
 ```python
@@ -33,15 +36,26 @@ print(output)  # array of firing-rate probabilities
 
 ## Architecture
 
-SC-NeuroCore uses a three-tier module system:
-
-| Tier | Purpose | Packages |
-|------|---------|----------|
-| **Core** | Production-ready | neurons, synapses, layers, sources, recorders, utils, accel |
-| **Research** | Experimental | analysis, bio, core, dashboard, generative, learning, pipeline, scpn, ... |
-| **Speculative** | Theoretical | `research/` (eschaton, exotic, meta, post_silicon, transcendent) |
+| Tier | Modules | Ships in wheel |
+|------|---------|:--------------:|
+| **Core** | neurons, synapses, layers, sources, utils, recorders, accel, compiler, hdl_gen, hardware | Yes |
+| **Simulation** | hdc, solvers, transformers, learning, graphs, ensembles, export, pipeline, training | Yes |
+| **Domain bridges** | quantum (Qiskit/PennyLane), adapters/holonomic (JAX), scpn (Petri nets) | Yes |
+| **Research** | robotics, physics, bio, optics, chaos, sleep, interfaces | Source only |
 
 See [Architecture](architecture/architecture.md) for the full package map.
+
+## Tutorials
+
+| Tutorial | Topic |
+|----------|-------|
+| [SC Fundamentals](tutorials/01_stochastic_computing_fundamentals.md) | Bitstream encoding, arithmetic, noise analysis |
+| [Building Your First SNN](tutorials/02_building_your_first_snn.md) | Neurons, synapses, layers, simulation |
+| [Surrogate Gradient Training](tutorials/03_surrogate_gradient_training.md) | Train SNNs with backpropagation |
+| [Hyper-Dimensional Computing](tutorials/04_hyperdimensional_computing.md) | Symbolic AI with high-dimensional vectors |
+| [FPGA in 20 Minutes](tutorials/fpga_in_20_minutes.md) | Train → quantise → synthesise → deploy |
+| [Rust Engine & Performance](tutorials/05_rust_engine_performance.md) | SIMD tiers, GPU, benchmarking |
+| [Brunel Network Translation](tutorials/06_brunel_network_translation.md) | Brian2 → SC conversion workflow |
 
 ## Documentation
 
