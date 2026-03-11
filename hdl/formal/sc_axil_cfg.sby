@@ -1,0 +1,15 @@
+[options]
+mode bmc
+depth 20
+
+[engines]
+smtbmc
+
+[script]
+read -formal sc_axil_cfg_formal.v
+read -formal sc_axil_cfg.v
+prep -top sc_axil_cfg_formal
+
+[files]
+sc_axil_cfg_formal.v
+../sc_axil_cfg.v

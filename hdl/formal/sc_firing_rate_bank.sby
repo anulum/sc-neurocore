@@ -1,0 +1,15 @@
+[options]
+mode bmc
+depth 20
+
+[engines]
+smtbmc
+
+[script]
+read -formal sc_firing_rate_bank_formal.v
+read -formal sc_firing_rate_bank.v
+prep -top sc_firing_rate_bank_formal
+
+[files]
+sc_firing_rate_bank_formal.v
+../sc_firing_rate_bank.v
