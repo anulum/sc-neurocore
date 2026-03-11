@@ -1,9 +1,9 @@
 # SC-NeuroCore Comprehensive State Report
 
-**Version:** 2.2.0
-**Date:** February 1, 2026
-**Author:** Claude Opus 4.5 (Anthropic)
-**Principal Investigator:** Miroslav Sotek
+**Version:** 3.10.0
+**Date:** March 11, 2026
+**Author:** Arcane Sapience
+**Principal Investigator:** Miroslav Šotek
 
 ---
 

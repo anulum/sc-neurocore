@@ -1,7 +1,7 @@
 # SC-NeuroCore Component Inventory
 
-**Version:** 2.3.0 (Spatial AGI Phase)
-**Date:** 2026-01-13
+**Version:** 3.10.0
+**Date:** 2026-03-11
 
 This document lists all active components in the `sc-neurocore` framework, organized by domain.
 
