@@ -27,13 +27,13 @@ pip install -e ".[research]"
 - Python >= 3.10
 - NumPy >= 1.22
 - SciPy >= 1.7
-- Numba >= 0.56
-- Matplotlib >= 3.5
+- Numba (optional, `pip install sc-neurocore[accel]`)
+- Matplotlib (optional, `pip install sc-neurocore[full]`)
 
 ## Running Tests
 
 ```bash
-# Full suite (1 218 tests, 100% coverage gate)
+# Full suite (1400+ tests, 100% coverage gate)
 pytest tests/ -v --cov=sc_neurocore --cov-report=term
 
 # Quick smoke test
