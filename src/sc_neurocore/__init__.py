@@ -32,6 +32,8 @@ __version__ = "3.10.0"
 # ÔöÇÔöÇ Adapters ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 from .adapters import base as adapter_base  # noqa: F401
 
+# ── Datasets ────────────────────────────────────────────────────────────────
+from . import datasets  # noqa: F401
 
 # ── Neurons ──────────────────────────────────────────────────────────────────
 from .neurons import (
@@ -82,6 +84,8 @@ from .utils import (
 from .recorders import BitstreamSpikeRecorder
 
 __all__ = [
+    # Datasets
+    "datasets",
     # Neurons
     "BaseNeuron",
     "StochasticLIFNeuron",
