@@ -17,7 +17,13 @@ Query:
   → find closest atom in codebook
 """
 
-from sc_neurocore_engine import HDCVector
+import sys
+
+try:
+    from sc_neurocore_engine import HDCVector
+except ImportError:
+    print("This example requires the Rust engine. Install with: cd engine && maturin develop --release")
+    sys.exit(0)
 
 DIM = 10_000  # 10,000-bit hypervectors
 

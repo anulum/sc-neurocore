@@ -16,8 +16,13 @@ Usage:
 from __future__ import annotations
 
 import pathlib
+import sys
 
-from sc_neurocore_engine.ir import ScGraphBuilder, parse_ir
+try:
+    from sc_neurocore_engine.ir import ScGraphBuilder, parse_ir
+except ImportError:
+    print("This example requires the Rust engine. Install with: cd engine && maturin develop --release")
+    sys.exit(0)
 
 
 def build_synapse_graph() -> "ScGraph":

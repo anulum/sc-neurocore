@@ -323,11 +323,12 @@ mkdocs serve
 
 ```bash
 pip install sc-neurocore              # core engine only (neurons, layers, compiler, HDL gen)
+pip install sc-neurocore[accel]       # + Numba JIT acceleration
 pip install sc-neurocore[gpu]         # + CuPy CUDA acceleration
 pip install sc-neurocore[jax]         # + JAX backend for holonomic adapters
 pip install sc-neurocore[quantum]     # + Qiskit + PennyLane quantum bridges
-pip install sc-neurocore[full]        # + networkx, onnx, qiskit, pennylane
-pip install sc-neurocore[research]    # + networkx, onnx, torch
+pip install sc-neurocore[research]    # + matplotlib, networkx, onnx, torch
+pip install sc-neurocore[full]        # + numba, matplotlib, networkx, onnx, qiskit, pennylane
 ```
 
 For development (includes all modules + research/frontier code from source):
@@ -348,6 +349,24 @@ pip install -r requirements-dev.txt   # runtime + dev tools
 - [GitHub Discussions](https://github.com/anulum/sc-neurocore/discussions) — questions, ideas, show & tell
 - [Issue Tracker](https://github.com/anulum/sc-neurocore/issues) — bug reports and feature requests
 - [Contributing Guide](CONTRIBUTING.md) — how to set up, test, and submit PRs
+
+## Citation
+
+If you use SC-NeuroCore in your research, please cite:
+
+```bibtex
+@software{sotek2026scneurocore,
+  author    = {Šotek, Miroslav},
+  title     = {SC-NeuroCore: A Deterministic Stochastic Computing Framework for Neuromorphic Hardware Design},
+  version   = {3.10.0},
+  year      = {2026},
+  doi       = {10.5281/zenodo.18906614},
+  url       = {https://github.com/anulum/sc-neurocore},
+  license   = {AGPL-3.0-or-later}
+}
+```
+
+See also [`CITATION.cff`](CITATION.cff) for the machine-readable citation metadata.
 
 ## License
 
