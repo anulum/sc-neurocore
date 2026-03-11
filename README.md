@@ -20,9 +20,14 @@ Commercial Licensing: Available
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/10362/badge)](https://www.bestpractices.dev/projects/10362)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/anulum/sc-neurocore/badge)](https://scorecard.dev/viewer/?uri=github.com/anulum/sc-neurocore)
 [![REUSE](https://img.shields.io/badge/REUSE-compliant-green)](https://reuse.software/)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)
 
 **Version:** 3.10.0
 **Status:** Production Core Verified | 1 218 Tests | 100% Coverage | CI/CD Active
+
+<p align="center">
+  <img src="docs/assets/spike_raster.png" width="800" alt="LIF spike raster — 5 neurons, sinusoidal input">
+</p>
 
 SC-NeuroCore is a deterministic stochastic computing framework for
 neuromorphic hardware design and edge-AI deployment. It provides bit-true
