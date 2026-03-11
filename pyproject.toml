@@ -103,6 +103,9 @@ omit = [
     "*/sleep/report_generator.py",
     "*/sleep/sleep_optimizer.py",
     "*/training/*",
+    "*/accel/jax_backend.py",
+    "*/layers/jax_dense_layer.py",
+    "*/quantum/hardware_bridge.py",
 ]
 
 [tool.coverage.report]
@@ -121,6 +124,8 @@ exclude_lines = [
     "except ImportError",
     "if TYPE_CHECKING",
     "^\\s*\\.\\.\\.\\s*$",
+    "import jax",
+    "HAS_JAX = True",
 ]
 
 [tool.black]
