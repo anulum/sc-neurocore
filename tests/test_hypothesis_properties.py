@@ -21,14 +21,12 @@ from sc_neurocore import (
     BitstreamSpikeRecorder,
     HomeostaticLIFNeuron,
     SCIzhikevichNeuron,
-    BitstreamSynapse,
     StochasticSTDPSynapse,
     RewardModulatedSTDPSynapse,
 )
 from sc_neurocore.constants import (
     LIF_V_REST,
     LIF_V_THRESHOLD,
-    IZH_SPIKE_THRESHOLD,
     FP_DATA_WIDTH,
 )
 
