@@ -38,6 +38,9 @@ nav:
       - Performance Tuning: guides/PERFORMANCE_TUNING.md
       - Integration Guide: guides/INTEGRATION_GUIDE.md
       - Examples: guides/EXAMPLES.md
+      - SC for Neuroscientists: guides/SC_FOR_NEUROSCIENTISTS.md
+      - SC for Hardware Engineers: guides/SC_FOR_HARDWARE_ENGINEERS.md
+      - SC for ML Engineers: guides/SC_FOR_ML_ENGINEERS.md
   - Tutorials:
       - SC Fundamentals: tutorials/01_stochastic_computing_fundamentals.md
       - Building Your First SNN: tutorials/02_building_your_first_snn.md
