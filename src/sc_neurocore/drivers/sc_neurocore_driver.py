@@ -55,7 +55,9 @@ class SC_NeuroCore_Driver:
 
             # Check for specific IP blocks to verify it's the right bitstream
             if not hasattr(self.overlay, "scpn_layer_1_0"):
-                raise RuntimeError("Loaded bitstream does not contain SCPN Layer 1 IP.")
+                from sc_neurocore.exceptions import SCHardwareError
+
+                raise SCHardwareError("Loaded bitstream does not contain SCPN Layer 1 IP.")
 
             logger.info("FPGA Overlay loaded successfully.")
 

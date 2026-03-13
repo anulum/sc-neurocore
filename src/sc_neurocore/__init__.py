@@ -78,10 +78,22 @@ from .utils import (
     generate_bernoulli_bitstream,
     generate_sobol_bitstream,
     bitstream_to_probability,
+    deprecated,
+    estimate_memory,
 )
 
 # ── Recorders ────────────────────────────────────────────────────────────────
 from .recorders import BitstreamSpikeRecorder
+
+from .exceptions import (
+    SCNeuroError,
+    SCEncodingError,
+    SCConfigError,
+    SCWeightError,
+    SCDependencyError,
+    SCHardwareError,
+    SCCompilerError,
+)
 
 __all__ = [
     # Datasets
@@ -118,6 +130,16 @@ __all__ = [
     "generate_bernoulli_bitstream",
     "generate_sobol_bitstream",
     "bitstream_to_probability",
+    "deprecated",
+    "estimate_memory",
     # Recorders
     "BitstreamSpikeRecorder",
+    # Exceptions
+    "SCNeuroError",
+    "SCEncodingError",
+    "SCConfigError",
+    "SCWeightError",
+    "SCDependencyError",
+    "SCHardwareError",
+    "SCCompilerError",
 ]

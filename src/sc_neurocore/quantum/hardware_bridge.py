@@ -49,9 +49,13 @@ class QuantumHardwareLayer:
 
     def __post_init__(self) -> None:
         if self.backend_type.startswith("aer") and not HAS_QISKIT:
-            raise RuntimeError("Qiskit is required for aer_simulator backend.")
+            from sc_neurocore.exceptions import SCDependencyError
+
+            raise SCDependencyError("Qiskit is required for aer_simulator backend.")
         if self.backend_type.startswith("pennylane") and not HAS_PENNYLANE:
-            raise RuntimeError("PennyLane is required for pennylane backend.")
+            from sc_neurocore.exceptions import SCDependencyError
+
+            raise SCDependencyError("PennyLane is required for pennylane backend.")
 
         if self.backend_type == "aer_simulator":
             self._qiskit_simulator = AerSimulator()
