@@ -37,7 +37,7 @@ jobs:
 
       - name: Install MkDocs and package
         run: |
-          pip install mkdocs mkdocs-material "mkdocstrings[python]"
+          pip install mkdocs==1.6.1 mkdocs-material==9.7.5 "mkdocstrings[python]==1.0.3"
           pip install -e ".[dev]"
 
       - name: Build MkDocs site

@@ -60,12 +60,12 @@ log "Setting up Python venv"
 python3 -m venv /opt/bench-venv
 source /opt/bench-venv/bin/activate
 pip install --quiet --upgrade pip
-pip install --quiet numpy brian2
+pip install --quiet numpy==2.2.3 brian2==2.7.1
 
 # GPU Python packages (if NVIDIA GPU present)
 if nvidia-smi &>/dev/null; then
   log "Installing GPU packages (CuPy + PyTorch CUDA)"
-  pip install --quiet cupy-cuda12x torch --index-url https://download.pytorch.org/whl/cu124
+  pip install --quiet cupy-cuda12x==13.4.1 torch==2.6.0 --index-url https://download.pytorch.org/whl/cu124
 fi
 
 # ---- Phase 1: Rust Criterion Benchmarks (CPU, AVX-512) ----

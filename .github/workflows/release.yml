@@ -7,8 +7,7 @@ on:
   push:
     tags: ["v*"]
 
-permissions:
-  contents: write
+permissions: {}
 
 concurrency:
   group: release-${{ github.ref }}
@@ -17,6 +16,8 @@ concurrency:
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
@@ -28,7 +29,7 @@ jobs:
 
       - name: Build sdist
         run: |
-          pip install build cyclonedx-bom
+          pip install build==1.4.0 cyclonedx-bom==7.2.2
           python -m build --sdist
 
       - name: Generate SBOM

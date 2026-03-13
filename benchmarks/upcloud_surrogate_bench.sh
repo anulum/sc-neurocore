@@ -61,10 +61,10 @@ pip install -q --upgrade pip
 
 # Install SC-NeuroCore with training deps
 pip install -q -e ".[dev,training]"
-pip install -q torchvision
+pip install -q torchvision==0.21.0
 
 # Install competitors
-pip install -q norse snntorch
+pip install -q norse==1.1.0 snntorch==0.9.1
 
 echo ""
 echo "--- Environment ready ---"
