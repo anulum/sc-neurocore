@@ -1,21 +1,18 @@
-© 1998–2026 Miroslav Šotek. All rights reserved.
-Contact: www.anulum.li | protoscience@anulum.li
-ORCID: https://orcid.org/0009-0009-3560-0851
-License: GNU AFFERO GENERAL PUBLIC LICENSE v3
-Commercial Licensing: Available
-
 # Getting Started
 
 ## Installation
 
 ```bash
-# Core (CPU only)
+# From PyPI
+pip install sc-neurocore
+
+# From source (editable)
 pip install -e .
 
 # With development tools
 pip install -e ".[dev]"
 
-# With GPU acceleration
+# With GPU acceleration (CuPy)
 pip install -e ".[gpu]"
 
 # Full research stack
@@ -40,14 +37,6 @@ pytest tests/ -v --cov=sc_neurocore --cov-report=term
 pytest tests/test_integration.py -v
 ```
 
-## Dense Path Selection (Important)
-
-- Single-sample and tiny batches (1-4): use `DenseLayer.forward_fast`.
-- Larger batches (>=10): use `DenseLayer.forward_batch_numpy`.
-- Keep `DenseLayer.forward` for compatibility and correctness checks.
-
-This routing prevents regressions where fused/batched kernels can be slower on tiny workloads.
-
 ## First Steps
 
 ### 1. Create a Bitstream Encoder
@@ -71,7 +60,53 @@ output = layer.forward([0.3, 0.7, 0.5, 0.2])
 print(f"Output firing rates: {output}")
 ```
 
-### 3. Run the SCPN Stack
+### 3. Single Neuron with Visualization
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from sc_neurocore import StochasticLIFNeuron
+
+neuron = StochasticLIFNeuron(tau_mem=10.0, dt=1.0, v_threshold=1.0, noise_std=0.05)
+
+potentials, spikes = [], []
+for t in range(100):
+    spike = neuron.step(0.15)
+    potentials.append(neuron.v)
+    spikes.append(spike)
+
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 6))
+ax1.plot(potentials)
+ax1.axhline(y=1.0, color='r', linestyle='--', label='Threshold')
+ax1.set_ylabel('Voltage')
+ax1.legend()
+ax2.stem(spikes, linefmt='g-', markerfmt='go', basefmt=' ')
+ax2.set_ylabel('Spike')
+ax2.set_xlabel('Time (ms)')
+plt.tight_layout()
+plt.savefig('quickstart_output.png')
+```
+
+### 4. Stochastic Network (Source → Synapse → Neuron)
+
+```python
+from sc_neurocore.sources.bitstream_current_source import BitstreamCurrentSource
+from sc_neurocore import StochasticLIFNeuron
+
+source = BitstreamCurrentSource(
+    x_inputs=[0.8, 0.5, 0.2],
+    weight_values=[1.0, 0.5, 0.0],
+    x_min=0.0, x_max=1.0,
+    w_min=0.0, w_max=1.0,
+)
+neuron = StochasticLIFNeuron()
+
+for t in range(100):
+    current = source.step()
+    neuron.step(current)
+```
+
+### 5. Run the Full SCPN Stack
 
 ```python
 from sc_neurocore.scpn import create_full_stack, run_integrated_step, get_global_metrics
@@ -82,3 +117,30 @@ metrics = get_global_metrics(stack)
 for name, value in metrics.items():
     print(f"  {name}: {value:.4f}")
 ```
+
+### 6. Hardware Deployment (PYNQ)
+
+```python
+from sc_neurocore.drivers.sc_neurocore_driver import SC_NeuroCore_Driver
+
+driver = SC_NeuroCore_Driver(mode="EMULATION")
+result = driver.run_step(input_vector=[0.5, 0.8, 0.1])
+```
+
+For physical FPGA deployment on PYNQ-Z1/Z2, synthesize the bitstream
+using the [FPGA Toolchain Guide](../hardware/FPGA_TOOLCHAIN_GUIDE.md),
+then switch to `mode="HARDWARE"`.
+
+## Dense Path Selection
+
+- Single-sample and tiny batches (1-4): use `DenseLayer.forward_fast`
+- Larger batches (>=10): use `DenseLayer.forward_batch_numpy`
+- Default `DenseLayer.forward` auto-selects
+
+## What's Next?
+
+- [Learning Path](../LEARNING_PATH.md) — 8-level progression from beginner to FPGA deployment
+- [SC for Neuroscientists](SC_FOR_NEUROSCIENTISTS.md) — if you know Brian2/NEST
+- [SC for ML Engineers](SC_FOR_ML_ENGINEERS.md) — if you know PyTorch/JAX
+- [SC for Hardware Engineers](SC_FOR_HARDWARE_ENGINEERS.md) — if you know Verilog/VHDL
+- [Technical Manual](USER_MANUAL.md) — deep dive into SCPN architecture

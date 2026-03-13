@@ -1,0 +1,105 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# syntax=docker/dockerfile:1
+#
+# GPU-enabled SC-NeuroCore image (CUDA 12 + CuPy).
+#
+# Build:
+#   docker build -f deploy/Dockerfile.gpu -t sc-neurocore:gpu .
+#
+# Run:
+#   docker run --gpus all sc-neurocore:gpu python -c "import sc_neurocore; print('OK')"
+
+ARG CUDA_VERSION=12.4.1
+ARG PYTHON_VERSION=3.12
+ARG RUST_VERSION=stable
+
+# ── Stage 1: Rust engine build ───────────────────────────────────
+FROM nvidia/cuda:${CUDA_VERSION}-devel-ubuntu22.04 AS rust-builder
+
+ARG PYTHON_VERSION
+ARG RUST_VERSION
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl build-essential pkg-config software-properties-common \
+    && add-apt-repository ppa:deadsnakes/ppa \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+       python${PYTHON_VERSION} python${PYTHON_VERSION}-dev python${PYTHON_VERSION}-venv \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python${PYTHON_VERSION} -m venv /opt/venv
+ENV PATH="/opt/venv/bin:${PATH}"
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+    | sh -s -- -y --default-toolchain ${RUST_VERSION} --profile minimal
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+RUN pip install --no-cache-dir maturin>=1.5
+
+WORKDIR /build
+COPY Cargo.toml Cargo.lock ./
+COPY engine/ ./engine/
+COPY bridge/ ./bridge/
+COPY README.md ./README.md
+
+RUN cd bridge && maturin build --release --interpreter python3 \
+    && ls /build/target/wheels/
+
+# ── Stage 2: Python package build ────────────────────────────────
+FROM nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu22.04 AS py-builder
+
+ARG PYTHON_VERSION
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential software-properties-common \
+    && add-apt-repository ppa:deadsnakes/ppa \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+       python${PYTHON_VERSION} python${PYTHON_VERSION}-dev python${PYTHON_VERSION}-venv \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python${PYTHON_VERSION} -m venv /opt/venv
+ENV PATH="/opt/venv/bin:${PATH}"
+
+WORKDIR /build
+COPY pyproject.toml README.md LICENSE ./
+COPY src/ ./src/
+
+RUN pip install --no-cache-dir ".[gpu]"
+
+COPY --from=rust-builder /build/target/wheels/*.whl /tmp/
+RUN pip install --no-cache-dir /tmp/*.whl
+
+# ── Stage 3: Runtime ─────────────────────────────────────────────
+FROM nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu22.04 AS runtime
+
+ARG PYTHON_VERSION
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    software-properties-common \
+    && add-apt-repository ppa:deadsnakes/ppa \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+       python${PYTHON_VERSION} python${PYTHON_VERSION}-venv \
+    && rm -rf /var/lib/apt/lists/*
+
+LABEL org.opencontainers.image.title="SC-NeuroCore (GPU)" \
+      org.opencontainers.image.description="SC-NeuroCore with CUDA/CuPy GPU acceleration" \
+      org.opencontainers.image.url="https://github.com/anulum/sc-neurocore" \
+      org.opencontainers.image.source="https://github.com/anulum/sc-neurocore" \
+      org.opencontainers.image.licenses="AGPL-3.0-or-later" \
+      org.opencontainers.image.vendor="ANULUM"
+
+COPY --from=py-builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:${PATH}"
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
+RUN useradd --create-home --shell /bin/bash scnc
+USER scnc
+WORKDIR /home/scnc
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+    CMD python -c "import sc_neurocore; import cupy" || exit 1
+
+CMD ["python3"]
