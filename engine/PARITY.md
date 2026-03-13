@@ -24,18 +24,18 @@ Python reference implementation (`src/sc_neurocore/`).
 | SIMD popcount (SVE) | — | `simd/sve.rs` | Done |
 | SIMD popcount (RISC-V V) | — | `simd/rvv.rs` | Done |
 | BitstreamEncoder | `utils.bitstreams` | `encoder.rs` | Done |
-| BitstreamAverager | `utils.bitstreams` | — | Missing |
+| BitstreamAverager | `utils.bitstreams` | `neuron.rs` | Done |
 | RNG wrapper | `utils.rng` | uses `rand` crate | Done |
 
 ## Neurons
 
 | Feature | Python class | Rust struct | Status |
 |---------|-------------|-------------|--------|
-| LIF neuron | `StochasticLIFNeuron` | `neuron.rs::LifNeuron` | Done |
-| Fixed-point LIF | `FixedPointLIFNeuron` | — | Missing |
+| LIF neuron | `StochasticLIFNeuron` | `neuron.rs::FixedPointLif` | Done |
+| Fixed-point LIF | `FixedPointLIFNeuron` | `neuron.rs::FixedPointLif` | Done |
 | LFSR-16 | `FixedPointLFSR` | `encoder.rs::Lfsr16` | Done |
 | FP encoder | `FixedPointBitstreamEncoder` | `encoder.rs::BitstreamEncoder` | Done |
-| Izhikevich | `SCIzhikevichNeuron` | — | Missing |
+| Izhikevich | `SCIzhikevichNeuron` | `neuron.rs::Izhikevich` | Done |
 | Homeostatic LIF | `HomeostaticLIFNeuron` | — | Missing |
 | Dendritic neuron | `DendriticNeuron` | — | Missing |
 
@@ -44,7 +44,7 @@ Python reference implementation (`src/sc_neurocore/`).
 | Feature | Python class | Rust struct | Status |
 |---------|-------------|-------------|--------|
 | Static synapse | `BitstreamSynapse` | `synapses/mod.rs` | Partial |
-| STDP synapse | `StochasticSTDPSynapse` | — | Missing |
+| STDP synapse | `StochasticSTDPSynapse` | `synapses/mod.rs::StdpSynapse` | Done |
 | R-STDP synapse | `RewardModulatedSTDPSynapse` | — | Missing |
 | Dot product | `BitstreamDotProduct` | — | Missing |
 
@@ -92,22 +92,22 @@ Python reference implementation (`src/sc_neurocore/`).
 
 | Category | Done | Partial | Missing | Total |
 |----------|------|---------|---------|-------|
-| Primitives | 11 | 0 | 2 | 13 |
-| Neurons | 3 | 0 | 4 | 7 |
-| Synapses | 0 | 1 | 3 | 4 |
+| Primitives | 12 | 0 | 1 | 13 |
+| Neurons | 5 | 0 | 2 | 7 |
+| Synapses | 1 | 1 | 2 | 4 |
 | Layers | 3 | 0 | 5 | 8 |
 | Networks | 2 | 0 | 3 | 5 |
 | Compiler | 5 | 0 | 1 | 6 |
 | Training | 0 | 1 | 0 | 1 |
-| **Total** | **24** | **2** | **18** | **44** |
+| **Total** | **28** | **2** | **14** | **44** |
 
-**Parity: 57% (26/44 at least partial)**
+**Parity: 68% (30/44 at least partial)**
 
 ## Priority Queue
 
-1. `FixedPointLIFNeuron` — needed for FPGA co-simulation
-2. `StochasticSTDPSynapse` — needed for on-chip learning
-3. `SCConv2DLayer` — needed for vision benchmarks
-4. `SCRecurrentLayer` — needed for temporal benchmarks
-5. `BitstreamSpikeRecorder` — needed for analysis parity
-6. `Izhikevich` — needed for Brunel variant networks
+1. `HomeostaticLIFNeuron` — needed for adaptive threshold experiments
+2. `SCConv2DLayer` — needed for vision benchmarks
+3. `SCRecurrentLayer` — needed for temporal benchmarks
+4. `BitstreamSpikeRecorder` — needed for analysis parity
+5. `RewardModulatedSTDPSynapse` — needed for reinforcement learning
+6. `DendriticNeuron` — needed for compartmental models

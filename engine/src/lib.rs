@@ -291,6 +291,8 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PySCPNMetrics>()?;
     m.add_class::<PyBitStreamTensor>()?;
     m.add_class::<PyBrunelNetwork>()?;
+    m.add_class::<PyIzhikevich>()?;
+    m.add_class::<PyBitstreamAverager>()?;
     m.add_class::<PyScGraph>()?;
     m.add_class::<PyScGraphBuilder>()?;
     m.add_function(wrap_pyfunction!(ir_verify, m)?)?;
@@ -926,6 +928,84 @@ impl FixedPointLif {
         dict.set_item("v", self.inner.v)?;
         dict.set_item("refractory_counter", self.inner.refractory_counter)?;
         Ok(dict.into_any().unbind())
+    }
+}
+
+// ── Izhikevich PyO3 wrapper ─────────────────────────────────────
+
+#[pyclass(
+    name = "Izhikevich",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
+pub struct PyIzhikevich {
+    inner: neuron::Izhikevich,
+}
+
+#[pymethods]
+impl PyIzhikevich {
+    #[new]
+    #[pyo3(signature = (a=0.02, b=0.2, c=-65.0, d=8.0, dt=1.0))]
+    fn new(a: f64, b: f64, c: f64, d: f64, dt: f64) -> Self {
+        Self {
+            inner: neuron::Izhikevich::new(a, b, c, d, dt),
+        }
+    }
+
+    fn step(&mut self, current: f64) -> i32 {
+        self.inner.step(current)
+    }
+
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
+
+    fn reset_state(&mut self) {
+        self.reset();
+    }
+
+    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let dict = PyDict::new(py);
+        dict.set_item("v", self.inner.v)?;
+        dict.set_item("u", self.inner.u)?;
+        Ok(dict.into_any().unbind())
+    }
+}
+
+// ── BitstreamAverager PyO3 wrapper ──────────────────────────────
+
+#[pyclass(
+    name = "BitstreamAverager",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
+pub struct PyBitstreamAverager {
+    inner: neuron::BitstreamAverager,
+}
+
+#[pymethods]
+impl PyBitstreamAverager {
+    #[new]
+    #[pyo3(signature = (window=1024))]
+    fn new(window: usize) -> Self {
+        Self {
+            inner: neuron::BitstreamAverager::new(window),
+        }
+    }
+
+    fn push(&mut self, bit: u8) {
+        self.inner.push(bit);
+    }
+
+    fn estimate(&self) -> f64 {
+        self.inner.estimate()
+    }
+
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
+
+    #[getter]
+    fn window(&self) -> usize {
+        self.inner.window()
     }
 }
 
