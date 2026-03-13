@@ -10,7 +10,9 @@ from .bitstreams import (
     unipolar_prob_to_value,
 )
 from .deprecation import deprecated
+from .logging import configure_logging
 from .profiling import estimate_memory
+from .registry import registry
 
 __all__ = [
     "RNG",
@@ -21,6 +23,8 @@ __all__ = [
     "bitstream_to_probability",
     "value_to_unipolar_prob",
     "unipolar_prob_to_value",
+    "configure_logging",
     "deprecated",
     "estimate_memory",
+    "registry",
 ]

@@ -475,12 +475,30 @@ def write_markdown(results: List[BenchResult], path: str = "BENCHMARKS.md"):
     print(f"\nWrote benchmark results to {path}")
 
 
+def write_json(results: List[BenchResult], path: str = "benchmark_results.json"):
+    import json
+
+    entries = [
+        {
+            "name": r.name,
+            "unit": "us/iter",
+            "value": round(r.avg_us, 2),
+            "extra": r.throughput,
+        }
+        for r in results
+    ]
+    with open(path, "w") as f:
+        json.dump(entries, f, indent=2)
+    print(f"\nWrote JSON results to {path}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="SC-NeuroCore Benchmark Suite")
     parser.add_argument(
         "--full", action="store_true", help="Run thorough benchmarks (10x iterations)"
     )
     parser.add_argument("--markdown", action="store_true", help="Write results to BENCHMARKS.md")
+    parser.add_argument("--json", action="store_true", help="Write results as JSON for CI")
     args = parser.parse_args()
 
     results = run_benchmarks(full=args.full)
@@ -489,10 +507,14 @@ def main():
     print(f"  {len(results)} benchmarks complete.")
     print(f"{'=' * 80}")
 
+    out_dir = os.path.join(os.path.dirname(__file__), "results")
+    os.makedirs(out_dir, exist_ok=True)
+
     if args.markdown:
-        md_path = os.path.join(os.path.dirname(__file__), "results", "BENCHMARKS.md")
-        os.makedirs(os.path.dirname(md_path), exist_ok=True)
-        write_markdown(results, md_path)
+        write_markdown(results, os.path.join(out_dir, "BENCHMARKS.md"))
+
+    if args.json:
+        write_json(results, os.path.join(out_dir, "benchmark_results.json"))
 
 
 if __name__ == "__main__":
