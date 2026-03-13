@@ -20,6 +20,14 @@ class SCRecurrentLayer:
     SC recurrent / reservoir layer (echo state network).
 
     Spectral radius bound follows Jaeger, GMD Report 148, 2001.
+
+    Example
+    -------
+    >>> import numpy as np
+    >>> res = SCRecurrentLayer(n_inputs=3, n_neurons=10, seed=0)
+    >>> state = res.step(np.array([0.5, 0.3, 0.8]))
+    >>> state.shape
+    (10,)
     """
 
     n_inputs: int

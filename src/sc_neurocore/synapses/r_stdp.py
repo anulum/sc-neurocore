@@ -12,6 +12,15 @@ class RewardModulatedSTDPSynapse(StochasticSTDPSynapse):
 
     Eligibility trace accumulates Hebbian coincidences; weight update
     fires only when a global reward signal arrives.
+
+    Example
+    -------
+    >>> syn = RewardModulatedSTDPSynapse(w_min=0.0, w_max=1.0, w=0.5, length=64)
+    >>> for _ in range(20):
+    ...     syn.process_step(pre_bit=1, post_bit=1)
+    >>> syn.apply_reward(reward=1.0)  # positive reward → potentiate
+    >>> syn.w >= 0.5
+    True
     """
 
     eligibility_trace: float = 0.0

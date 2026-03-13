@@ -43,6 +43,14 @@ class FixedPointLIFNeuron:
         Membrane parameters in Q(FRACTION) fixed-point.
     refractory_period : int
         Number of clock cycles to hold after a spike.
+
+    Example
+    -------
+    >>> neuron = FixedPointLIFNeuron()
+    >>> spike, v = neuron.step(leak_k=240, gain_k=16, I_t=100)
+    >>> spike in (0, 1)
+    True
+    >>> neuron.reset()
     """
 
     data_width: int = FP_DATA_WIDTH
@@ -133,6 +141,13 @@ class FixedPointLFSR:
 
     Polynomial: x^16 + x^14 + x^13 + x^11 + 1
     Taps (0-indexed): 15, 13, 12, 10
+
+    Example
+    -------
+    >>> lfsr = FixedPointLFSR(seed=0xACE1)
+    >>> vals = [lfsr.step() for _ in range(10)]
+    >>> len(set(vals)) > 1  # produces varying pseudo-random values
+    True
     """
 
     width: int = FP_LFSR_WIDTH
@@ -166,6 +181,13 @@ class FixedPointBitstreamEncoder:
 
     Combines LFSR + comparator to produce a stochastic bitstream
     where P(bit=1) ~ x_value / (2^DATA_WIDTH - 1).
+
+    Example
+    -------
+    >>> enc = FixedPointBitstreamEncoder(seed_init=0xACE1)
+    >>> bits = [enc.step(x_value=128) for _ in range(100)]
+    >>> all(b in (0, 1) for b in bits)
+    True
     """
 
     data_width: int = FP_DATA_WIDTH

@@ -27,14 +27,22 @@ from ..constants import (
 @dataclass
 class SCDenseLayer:
     """
-    Simple stochastic-computing "dense layer" of LIF neurons.
+    Stochastic-computing dense layer of LIF neurons.
 
-    - Each neuron shares the same multi-channel BitstreamCurrentSource
-      (same inputs + weights for now, can be diversified later).
-    - Each neuron has its own stochastic LIF parameters and RNG seed.
-    - We simulate T time steps and collect spike trains for all neurons.
+    Each neuron receives shared SC dot-product input current and
+    produces independent spike trains. Software-only but fully
+    SC-driven at the input/synapse level.
 
-    This is software-only but fully SC-driven at the input/synapse level.
+    Example
+    -------
+    >>> layer = SCDenseLayer(
+    ...     n_neurons=4, x_inputs=[0.5, 0.3], weight_values=[0.8, 0.6],
+    ...     x_min=0.0, x_max=1.0, w_min=0.0, w_max=1.0, length=256,
+    ... )
+    >>> layer.run(T=100)
+    >>> trains = layer.get_spike_trains()
+    >>> trains.shape
+    (4, 100)
     """
 
     n_neurons: int

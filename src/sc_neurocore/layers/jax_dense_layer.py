@@ -28,6 +28,14 @@ from sc_neurocore.constants import (
 class JaxSCDenseLayer:
     """
     JAX-accelerated stochastic dense layer of LIF neurons.
+
+    Example
+    -------
+    >>> layer = JaxSCDenseLayer(n_neurons=10, n_inputs=5, seed=0)  # doctest: +SKIP
+    >>> import jax.numpy as jnp  # doctest: +SKIP
+    >>> spikes = layer.step(jnp.ones(10) * 0.5)  # doctest: +SKIP
+    >>> spikes.shape  # doctest: +SKIP
+    (10,)
     """
 
     n_neurons: int

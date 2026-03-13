@@ -21,6 +21,14 @@ class HomeostaticLIFNeuron(StochasticLIFNeuron):
 
     Self-regulates firing rate toward a target setpoint via exponential
     moving average of spike rate. Based on Turrigiano (2012).
+
+    Example
+    -------
+    >>> neuron = HomeostaticLIFNeuron(target_rate=0.1, noise_std=0.0)
+    >>> for _ in range(200):
+    ...     neuron.step(1.5)
+    >>> neuron.v_threshold != 1.0  # threshold adapted
+    True
     """
 
     target_rate: float = HOMEOSTATIC_TARGET_RATE

@@ -15,23 +15,22 @@ from ..utils.bitstreams import (
 @dataclass
 class BitstreamDotProduct:
     """
-    Compute a bitstream-level dot product using SC synapses.
+    Bitstream-level dot product via SC synapses.
 
-    Given:
-    - pre_bits: array of shape (n_inputs, length) with {0,1}
-    - synapses: list of BitstreamSynapse (length = n_inputs)
+    For each input i, applies synapse_i (AND gate), then sums decoded
+    probabilities: y ~ sum_i w_i * x_i.
 
-    For each input i:
-        post_i_bits = synapse_i.apply(pre_bits[i])
-
-    Then we sum probabilities:
-        y(t) ~ sum_i w_i * x_i(t)
-
-    In 'pure' SC we could implement multi-bit accumulation via stochastic
-    adders, but for now we:
-    - decode each post_i_bits to its probability P_i
-    - compute y_scalar = sum_i P_i
-    - optionally map y_scalar into a current range [y_min, y_max].
+    Example
+    -------
+    >>> import numpy as np
+    >>> from sc_neurocore import BitstreamSynapse
+    >>> syns = [BitstreamSynapse(w_min=0.0, w_max=1.0, w=0.5, length=256)
+    ...         for _ in range(3)]
+    >>> dp = BitstreamDotProduct(synapses=syns)
+    >>> pre = np.ones((3, 256), dtype=np.uint8)
+    >>> post_matrix, y_scalar = dp.apply(pre)
+    >>> post_matrix.shape
+    (3, 256)
     """
 
     synapses: List[BitstreamSynapse]
