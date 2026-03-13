@@ -14,3 +14,7 @@ maturin==1.12.6 \
     --hash=sha256:e90dc12bc6a38e9495692a36c9e231c4d7e0c9bfde60719468ab7d8673db3c45 \
     --hash=sha256:fa84b7493a2e80759cacc2e668fa5b444d55b9994e90707c42904f55d6322c1e
     # via -r requirements/maturin.in
+tomli==2.4.0 ; python_version < "3.11" \
+    --hash=sha256:b5ef256a3fd497d4973c11bf142e9ed78b150d36f5773f1ca6088c230ffc5867 \
+    --hash=sha256:5572e41282d5268eb09a697c89a7bee84fae66511f87533a6f88bd2f7b652da9
+    # via maturin
