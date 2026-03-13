@@ -5,7 +5,7 @@ ARG PYTHON_VERSION=3.12
 ARG RUST_VERSION=stable
 
 # ── Stage 1: Rust engine build ───────────────────────────────────
-FROM python:${PYTHON_VERSION}-slim AS rust-builder
+FROM python:${PYTHON_VERSION}-slim@sha256:ccc7089399c8bb65dd1fb3ed6d55efa538a3f5e7fca3f5988ac3b5b87e593bf0 AS rust-builder
 
 ARG RUST_VERSION
 
@@ -14,10 +14,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
-    | sh -s -- -y --default-toolchain ${RUST_VERSION} --profile minimal
+    | sh -s -- -y --default-toolchain ${RUST_VERSION} --profile minimal  # pinned via RUST_VERSION ARG
 ENV PATH="/root/.cargo/bin:${PATH}"
 
-RUN pip install --no-cache-dir maturin>=1.5
+RUN pip install --no-cache-dir maturin==1.12.6
 
 WORKDIR /build
 COPY Cargo.toml Cargo.lock ./
@@ -29,7 +29,7 @@ RUN cd bridge && maturin build --release --interpreter python3 \
     && ls /build/target/wheels/
 
 # ── Stage 2: Python package build ────────────────────────────────
-FROM python:${PYTHON_VERSION}-slim AS py-builder
+FROM python:${PYTHON_VERSION}-slim@sha256:ccc7089399c8bb65dd1fb3ed6d55efa538a3f5e7fca3f5988ac3b5b87e593bf0 AS py-builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
@@ -45,7 +45,7 @@ COPY --from=rust-builder /build/target/wheels/*.whl /tmp/
 RUN pip install --no-cache-dir --prefix=/install /tmp/*.whl
 
 # ── Stage 3: Runtime ─────────────────────────────────────────────
-FROM python:${PYTHON_VERSION}-slim AS runtime
+FROM python:${PYTHON_VERSION}-slim@sha256:ccc7089399c8bb65dd1fb3ed6d55efa538a3f5e7fca3f5988ac3b5b87e593bf0 AS runtime
 
 LABEL org.opencontainers.image.title="SC-NeuroCore" \
       org.opencontainers.image.description="Universal Stochastic Computing Framework for Neuromorphic Hardware" \

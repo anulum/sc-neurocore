@@ -14,7 +14,7 @@ ARG PYTHON_VERSION=3.12
 ARG RUST_VERSION=stable
 
 # ── Stage 1: Rust engine build ───────────────────────────────────
-FROM nvidia/cuda:${CUDA_VERSION}-devel-ubuntu22.04 AS rust-builder
+FROM nvidia/cuda:${CUDA_VERSION}-devel-ubuntu22.04@sha256:da6791294b0b04d7e65d87b7451d6f2390b4d36225ab0701ee7dfec5769829f5 AS rust-builder
 
 ARG PYTHON_VERSION
 ARG RUST_VERSION
@@ -31,10 +31,10 @@ RUN python${PYTHON_VERSION} -m venv /opt/venv
 ENV PATH="/opt/venv/bin:${PATH}"
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
-    | sh -s -- -y --default-toolchain ${RUST_VERSION} --profile minimal
+    | sh -s -- -y --default-toolchain ${RUST_VERSION} --profile minimal  # pinned via RUST_VERSION ARG
 ENV PATH="/root/.cargo/bin:${PATH}"
 
-RUN pip install --no-cache-dir maturin>=1.5
+RUN pip install --no-cache-dir maturin==1.12.6
 
 WORKDIR /build
 COPY Cargo.toml Cargo.lock ./
@@ -46,7 +46,7 @@ RUN cd bridge && maturin build --release --interpreter python3 \
     && ls /build/target/wheels/
 
 # ── Stage 2: Python package build ────────────────────────────────
-FROM nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu22.04 AS py-builder
+FROM nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu22.04@sha256:517da2300c184c9999ec203c2665244bdebd3578d12fcc7065e83667932643d9 AS py-builder
 
 ARG PYTHON_VERSION
 
@@ -71,7 +71,7 @@ COPY --from=rust-builder /build/target/wheels/*.whl /tmp/
 RUN pip install --no-cache-dir /tmp/*.whl
 
 # ── Stage 3: Runtime ─────────────────────────────────────────────
-FROM nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu22.04 AS runtime
+FROM nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu22.04@sha256:517da2300c184c9999ec203c2665244bdebd3578d12fcc7065e83667932643d9 AS runtime
 
 ARG PYTHON_VERSION
 

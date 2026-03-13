@@ -66,7 +66,7 @@ if [ ! -d ".venv" ]; then
 fi
 source .venv/bin/activate
 pip install -q -e ".[dev]"
-pip install -q brian2
+pip install -q brian2==2.7.1
 
 echo "--- Environment ready ---"
 python -c "import sc_neurocore; print(f'sc-neurocore {sc_neurocore.__version__}')"

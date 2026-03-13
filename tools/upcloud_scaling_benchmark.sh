@@ -67,11 +67,11 @@ rustc --version
 python3 -m venv /opt/bench-venv
 source /opt/bench-venv/bin/activate
 pip install --quiet --upgrade pip
-pip install --quiet numpy scipy brian2 nest-simulator
+pip install --quiet numpy==2.2.3 scipy==1.15.2 brian2==2.7.1 nest-simulator==3.8
 
 if nvidia-smi &>/dev/null; then
-  pip install --quiet torch --index-url https://download.pytorch.org/whl/cu124
-  pip install --quiet norse snntorch || true
+  pip install --quiet torch==2.6.0 --index-url https://download.pytorch.org/whl/cu124
+  pip install --quiet norse==1.1.0 snntorch==0.9.1 || true
 fi
 
 pip install --quiet -e ".[dev]" 2>/dev/null || pip install --quiet -e . 2>/dev/null || true

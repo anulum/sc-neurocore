@@ -36,7 +36,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install maturin
-        run: pip install maturin
+        run: pip install maturin==1.12.6
 
       - name: Build wheel
         run: |
@@ -75,7 +75,7 @@ jobs:
         shell: bash
         run: |
           pip install dist/*.whl
-          pip install numpy
+          pip install numpy==2.2.3
 
       - name: Smoke test
         run: python -c "import sc_neurocore_engine; print(sc_neurocore_engine.__version__); print(sc_neurocore_engine.simd_tier())"
