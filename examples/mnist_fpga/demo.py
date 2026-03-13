@@ -27,7 +27,6 @@ from pathlib import Path
 
 import numpy as np
 
-
 # -- Q8.8 fixed-point helpers ------------------------------------------------
 
 Q88_FRAC = 8

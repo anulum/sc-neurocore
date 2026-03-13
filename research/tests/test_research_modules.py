@@ -17,7 +17,6 @@ Tests for research/contrib modules that were at 0% coverage:
 import pytest
 import numpy as np
 
-
 # ---------------------------------------------------------------------------
 # ChaoticRNG
 # ---------------------------------------------------------------------------
