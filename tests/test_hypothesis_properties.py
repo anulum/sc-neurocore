@@ -232,9 +232,7 @@ def test_encoder_output_binary(p):
 @settings(max_examples=30)
 def test_stdp_weight_stays_bounded(w, lr):
     w_clamped = max(0.0, min(1.0, w))
-    syn = StochasticSTDPSynapse(
-        w_min=0.0, w_max=1.0, w=w_clamped, learning_rate=lr, length=64
-    )
+    syn = StochasticSTDPSynapse(w_min=0.0, w_max=1.0, w=w_clamped, learning_rate=lr, length=64)
     for _ in range(50):
         syn.process_step(pre_bit=1, post_bit=1)
     assert 0.0 <= syn.w <= 1.0
@@ -243,9 +241,7 @@ def test_stdp_weight_stays_bounded(w, lr):
 @given(reward=st.floats(min_value=-5.0, max_value=5.0))
 @settings(max_examples=30)
 def test_rstdp_weight_bounded_after_reward(reward):
-    syn = RewardModulatedSTDPSynapse(
-        w_min=0.0, w_max=1.0, w=0.5, length=64
-    )
+    syn = RewardModulatedSTDPSynapse(w_min=0.0, w_max=1.0, w=0.5, length=64)
     for _ in range(20):
         syn.process_step(pre_bit=1, post_bit=1)
     syn.apply_reward(reward)
@@ -316,6 +312,10 @@ def test_homeostatic_threshold_stays_bounded(target):
     n = HomeostaticLIFNeuron(target_rate=target)
     for _ in range(200):
         n.step(1.5)
-    from sc_neurocore.constants import HOMEOSTATIC_THRESHOLD_FLOOR, HOMEOSTATIC_THRESHOLD_CEILING_MULT
+    from sc_neurocore.constants import (
+        HOMEOSTATIC_THRESHOLD_FLOOR,
+        HOMEOSTATIC_THRESHOLD_CEILING_MULT,
+    )
+
     assert n.v_threshold >= HOMEOSTATIC_THRESHOLD_FLOOR
     assert n.v_threshold <= n.initial_threshold * HOMEOSTATIC_THRESHOLD_CEILING_MULT

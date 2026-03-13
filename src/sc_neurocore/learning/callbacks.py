@@ -35,9 +35,7 @@ class TensorBoardCallback(TrainingCallback):
         except ImportError:
             from sc_neurocore.exceptions import SCDependencyError
 
-            raise SCDependencyError(
-                "TensorBoard requires torch: pip install sc-neurocore[gpu]"
-            )
+            raise SCDependencyError("TensorBoard requires torch: pip install sc-neurocore[gpu]")
         self._writer = SummaryWriter(log_dir=log_dir)
 
     def log(self, metrics: dict[str, float], step: int) -> None:
