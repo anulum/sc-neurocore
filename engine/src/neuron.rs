@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! # Fixed-Point LIF Neuron
+//! # Neuron Models
 //!
-//! Integer LIF neuron model used by the v3 engine for deterministic,
-//! hardware-friendly stochastic-computing experiments.
+//! Fixed-point LIF and Izhikevich neuron models for the v3 engine.
 
 /// Mask and sign-interpret an integer to `width` bits (branchless).
 ///
@@ -105,9 +104,134 @@ impl FixedPointLif {
     }
 }
 
+/// Izhikevich neuron (floating-point).
+///
+/// Standard model from IEEE TNN 14(6), 2003:
+///   v' = 0.04*v² + 5*v + 140 - u + I
+///   u' = a*(b*v - u)
+///   if v >= 30: v ← c, u ← u + d
+#[derive(Clone, Debug)]
+pub struct Izhikevich {
+    pub v: f64,
+    pub u: f64,
+    pub a: f64,
+    pub b: f64,
+    pub c: f64,
+    pub d: f64,
+    pub dt: f64,
+}
+
+impl Izhikevich {
+    /// Regular spiking defaults: a=0.02, b=0.2, c=-65, d=8, dt=1.0.
+    pub fn new(a: f64, b: f64, c: f64, d: f64, dt: f64) -> Self {
+        Self {
+            v: c,
+            u: b * c,
+            a,
+            b,
+            c,
+            d,
+            dt,
+        }
+    }
+
+    /// Regular spiking preset.
+    pub fn regular_spiking() -> Self {
+        Self::new(0.02, 0.2, -65.0, 8.0, 1.0)
+    }
+
+    /// Advance one step. Returns 1 on spike, 0 otherwise.
+    pub fn step(&mut self, current: f64) -> i32 {
+        // Two half-steps for numerical stability on 0.04v² term.
+        let half = self.dt * 0.5;
+        for _ in 0..2 {
+            let dv = (0.04 * self.v * self.v + 5.0 * self.v + 140.0 - self.u + current) * half;
+            let du = (self.a * (self.b * self.v - self.u)) * half;
+            self.v += dv;
+            self.u += du;
+        }
+
+        if self.v >= 30.0 {
+            self.v = self.c;
+            self.u += self.d;
+            1
+        } else {
+            0
+        }
+    }
+
+    /// Reset to initial state.
+    pub fn reset(&mut self) {
+        self.v = self.c;
+        self.u = self.b * self.c;
+    }
+}
+
+/// Sliding-window bitstream probability estimator.
+///
+/// Mirrors Python's `BitstreamAverager`.
+#[derive(Clone, Debug)]
+pub struct BitstreamAverager {
+    buffer: Vec<u8>,
+    index: usize,
+    filled: bool,
+    running_sum: u64,
+}
+
+impl BitstreamAverager {
+    pub fn new(window: usize) -> Self {
+        assert!(window > 0, "window must be > 0");
+        Self {
+            buffer: vec![0; window],
+            index: 0,
+            filled: false,
+            running_sum: 0,
+        }
+    }
+
+    pub fn push(&mut self, bit: u8) {
+        debug_assert!(bit <= 1, "bit must be 0 or 1");
+        let old = self.buffer[self.index];
+        self.buffer[self.index] = bit;
+
+        if self.filled {
+            self.running_sum = self.running_sum - old as u64 + bit as u64;
+        } else {
+            self.running_sum += bit as u64;
+        }
+
+        self.index += 1;
+        if self.index == self.buffer.len() {
+            self.index = 0;
+            self.filled = true;
+        }
+    }
+
+    pub fn estimate(&self) -> f64 {
+        if !self.filled {
+            if self.index == 0 {
+                return 0.0;
+            }
+            return self.running_sum as f64 / self.index as f64;
+        }
+        self.running_sum as f64 / self.buffer.len() as f64
+    }
+
+    pub fn reset(&mut self) {
+        self.buffer.fill(0);
+        self.index = 0;
+        self.filled = false;
+        self.running_sum = 0;
+    }
+
+    pub fn window(&self) -> usize {
+        self.buffer.len()
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{mask, FixedPointLif};
+    use super::{mask, BitstreamAverager, FixedPointLif, Izhikevich};
 
     #[test]
     fn mask_branchless_matches_original() {
@@ -173,5 +297,130 @@ mod tests {
             total += s;
         }
         assert!(total > 0, "neuron must fire with refractory_period=0");
+    }
+
+    // ── Izhikevich tests ──────────────────────────────────────────
+
+    #[test]
+    fn izhikevich_regular_spiking_fires() {
+        let mut n = Izhikevich::regular_spiking();
+        let mut total = 0;
+        for _ in 0..100 {
+            total += n.step(10.0);
+        }
+        assert!(total > 0, "RS neuron must fire with I=10");
+    }
+
+    #[test]
+    fn izhikevich_no_spike_without_input() {
+        let mut n = Izhikevich::regular_spiking();
+        let mut total = 0;
+        for _ in 0..100 {
+            total += n.step(0.0);
+        }
+        assert_eq!(total, 0, "no spikes without input");
+    }
+
+    #[test]
+    fn izhikevich_reset_clears_state() {
+        let mut n = Izhikevich::regular_spiking();
+        for _ in 0..50 {
+            n.step(10.0);
+        }
+        n.reset();
+        assert_eq!(n.v, n.c);
+        assert!((n.u - n.b * n.c).abs() < 1e-12);
+    }
+
+    #[test]
+    fn izhikevich_chattering_fires_more() {
+        // Chattering: a=0.02, b=0.2, c=-50, d=2
+        let mut ch = Izhikevich::new(0.02, 0.2, -50.0, 2.0, 1.0);
+        let mut rs = Izhikevich::regular_spiking();
+        let mut ch_spikes = 0;
+        let mut rs_spikes = 0;
+        for _ in 0..200 {
+            ch_spikes += ch.step(10.0);
+            rs_spikes += rs.step(10.0);
+        }
+        assert!(
+            ch_spikes > rs_spikes,
+            "chattering ({ch_spikes}) should fire more than RS ({rs_spikes})"
+        );
+    }
+
+    // ── BitstreamAverager tests ───────────────────────────────────
+
+    #[test]
+    fn averager_all_ones() {
+        let mut avg = BitstreamAverager::new(100);
+        for _ in 0..100 {
+            avg.push(1);
+        }
+        assert!((avg.estimate() - 1.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn averager_all_zeros() {
+        let mut avg = BitstreamAverager::new(50);
+        for _ in 0..50 {
+            avg.push(0);
+        }
+        assert!(avg.estimate().abs() < 1e-12);
+    }
+
+    #[test]
+    fn averager_half() {
+        let mut avg = BitstreamAverager::new(100);
+        for i in 0..100 {
+            avg.push((i % 2) as u8);
+        }
+        assert!((avg.estimate() - 0.5).abs() < 1e-12);
+    }
+
+    #[test]
+    fn averager_sliding_window() {
+        let mut avg = BitstreamAverager::new(4);
+        // Fill: [1, 1, 0, 0] → 0.5
+        for &b in &[1_u8, 1, 0, 0] {
+            avg.push(b);
+        }
+        assert!((avg.estimate() - 0.5).abs() < 1e-12);
+        // Push 1 → [1, 1, 0, 1] (oldest 1 replaced by 1) → wait
+        // Actually buffer is circular: index=0, push 1 replaces buffer[0]=1 with 1 → still 0.5
+        avg.push(1);
+        // Buffer: [1, 1, 0, 0] → index wraps to 0, push 1 at index 0: [1, 1, 0, 0] → [1, 1, 0, 0] no wait
+        // filled=true after first wrap. push(1) at index 0: old=1, new=1, sum stays 2 → 0.5
+        assert!((avg.estimate() - 0.5).abs() < 1e-12);
+        // Push 1 at index 1: old=1, new=1 → still 0.5
+        avg.push(1);
+        assert!((avg.estimate() - 0.5).abs() < 1e-12);
+        // Push 1 at index 2: old=0, new=1 → sum=3 → 0.75
+        avg.push(1);
+        assert!((avg.estimate() - 0.75).abs() < 1e-12);
+    }
+
+    #[test]
+    fn averager_partial_fill() {
+        let mut avg = BitstreamAverager::new(100);
+        avg.push(1);
+        avg.push(0);
+        assert!((avg.estimate() - 0.5).abs() < 1e-12);
+    }
+
+    #[test]
+    fn averager_empty_returns_zero() {
+        let avg = BitstreamAverager::new(10);
+        assert!(avg.estimate().abs() < 1e-12);
+    }
+
+    #[test]
+    fn averager_reset() {
+        let mut avg = BitstreamAverager::new(10);
+        for _ in 0..10 {
+            avg.push(1);
+        }
+        avg.reset();
+        assert!(avg.estimate().abs() < 1e-12);
     }
 }
