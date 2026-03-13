@@ -92,12 +92,8 @@ class SCOnnxExporter:
 
             prev = out
 
-        input_vi = helper.make_tensor_value_info(
-            "input_0", TensorProto.FLOAT, ["batch", n_in]
-        )
-        output_vi = helper.make_tensor_value_info(
-            prev, TensorProto.FLOAT, None
-        )
+        input_vi = helper.make_tensor_value_info("input_0", TensorProto.FLOAT, ["batch", n_in])
+        output_vi = helper.make_tensor_value_info(prev, TensorProto.FLOAT, None)
 
         graph = helper.make_graph(
             nodes,
@@ -155,9 +151,7 @@ class SCOnnxExporter:
             if hasattr(layer, "weights"):
                 node["attributes"]["has_weights"] = True
                 np.save(f"{filename}_layer_{i}_weights.npy", layer.weights)
-                node["attributes"]["weights_file"] = (
-                    f"{filename}_layer_{i}_weights.npy"
-                )
+                node["attributes"]["weights_file"] = f"{filename}_layer_{i}_weights.npy"
             graph["nodes"].append(node)
             prev = out
 

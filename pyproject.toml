@@ -53,7 +53,7 @@ Discussions = "https://github.com/anulum/sc-neurocore/discussions"
 sc-neurocore = "sc_neurocore.cli:main"
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-cov", "hypothesis", "mypy", "black==25.1.0", "ruff", "bandit", "pyyaml"]
+dev = ["pytest", "pytest-cov", "hypothesis", "mypy", "black==25.1.0", "ruff", "bandit", "pyyaml", "onnx"]
 dev-full = ["sc-neurocore[dev]", "jax", "jaxlib", "qiskit", "pennylane", "qiskit-aer"]
 accel = ["numba>=0.56"]
 gpu = ["cupy-cuda12x>=12.0"]

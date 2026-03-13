@@ -77,3 +77,27 @@ def test_cosine_reset():
     s.reset()
     assert s.lr == 0.1
     assert s._count == 0
+
+
+def test_step_scheduler_reset():
+    s = StepScheduler(lr_init=1.0, step_size=3, gamma=0.1)
+    for _ in range(6):
+        s.step()
+    s.reset()
+    assert s._count == 0
+
+
+def test_exponential_scheduler_reset():
+    s = ExponentialScheduler(lr_init=1.0, gamma=0.9)
+    for _ in range(10):
+        s.step()
+    s.reset()
+
+
+def test_warmup_cosine_reset():
+    s = WarmupCosineScheduler(lr_init=0.1, lr_min=0.001, warmup_steps=10, total_steps=100)
+    for _ in range(50):
+        s.step()
+    s.reset()
+    assert s.lr == 0.0
+    assert s._count == 0

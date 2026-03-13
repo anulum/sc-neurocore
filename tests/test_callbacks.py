@@ -4,6 +4,9 @@
 from __future__ import annotations
 
 import csv
+import sys
+from types import ModuleType
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -21,7 +24,7 @@ def test_csv_callback_writes_header_and_rows(tmp_path):
     cb = CSVCallback(path=path)
     cb.log({"loss": 0.5, "acc": 0.9}, step=0)
     cb.log({"loss": 0.3, "acc": 0.95}, step=1)
-    cb.close()  # CSV is written on close
+    cb.close()
 
     with open(path) as f:
         reader = csv.reader(f)
@@ -31,6 +34,13 @@ def test_csv_callback_writes_header_and_rows(tmp_path):
         assert row1[0] == "0"
         row2 = next(reader)
         assert row2[0] == "1"
+
+
+def test_csv_callback_close_empty_is_noop(tmp_path):
+    path = str(tmp_path / "empty.csv")
+    cb = CSVCallback(path=path)
+    cb.close()
+    assert not (tmp_path / "empty.csv").exists()
 
 
 def test_tensorboard_callback_raises_without_torch():
@@ -63,3 +73,39 @@ def test_wandb_callback_raises_without_wandb():
         from sc_neurocore.learning.callbacks import WandBCallback
 
         WandBCallback()
+
+
+def test_tensorboard_callback_with_mock(tmp_path, monkeypatch):
+    mock_writer = MagicMock()
+    mock_tb = ModuleType("torch.utils.tensorboard")
+    mock_tb.SummaryWriter = MagicMock(return_value=mock_writer)
+
+    mock_torch = ModuleType("torch")
+    mock_torch.utils = ModuleType("torch.utils")
+    mock_torch.utils.tensorboard = mock_tb
+
+    monkeypatch.setitem(sys.modules, "torch", mock_torch)
+    monkeypatch.setitem(sys.modules, "torch.utils", mock_torch.utils)
+    monkeypatch.setitem(sys.modules, "torch.utils.tensorboard", mock_tb)
+
+    from sc_neurocore.learning.callbacks import TensorBoardCallback
+
+    cb = TensorBoardCallback(log_dir=str(tmp_path))
+    cb.log({"loss": 0.5}, step=0)
+    mock_writer.add_scalar.assert_called_once_with("loss", 0.5, 0)
+    cb.close()
+    mock_writer.close.assert_called_once()
+
+
+def test_wandb_callback_with_mock(monkeypatch):
+    mock_wandb = MagicMock()
+    monkeypatch.setitem(sys.modules, "wandb", mock_wandb)
+
+    from sc_neurocore.learning.callbacks import WandBCallback
+
+    cb = WandBCallback(project="test-proj")
+    mock_wandb.init.assert_called_once_with(project="test-proj")
+    cb.log({"acc": 0.9}, step=1)
+    mock_wandb.log.assert_called_once_with({"acc": 0.9}, step=1)
+    cb.close()
+    mock_wandb.finish.assert_called_once()
