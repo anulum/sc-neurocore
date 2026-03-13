@@ -17,11 +17,11 @@ class MemristiveDenseLayer(VectorizedSCLayer):
     stuck_rate: float = MEMRISTIVE_STUCK_RATE
     variability: float = MEMRISTIVE_VARIABILITY
 
-    def __post_init__(self):  # type: ignore
-        super().__post_init__()  # type: ignore
-        self.apply_hardware_defects()  # type: ignore
+    def __post_init__(self):
+        super().__post_init__()
+        self.apply_hardware_defects()
 
-    def apply_hardware_defects(self):  # type: ignore
+    def apply_hardware_defects(self):
         """
         Corrupt weights based on physical properties.
         """
@@ -35,4 +35,4 @@ class MemristiveDenseLayer(VectorizedSCLayer):
         self.weights[mask] = stuck_vals[mask]
 
         # Refresh packed representation
-        self._refresh_packed_weights()  # type: ignore
+        self._refresh_packed_weights()

@@ -1,0 +1,58 @@
+{% set name = "sc-neurocore" %}
+{% set version = "3.10.0" %}
+
+package:
+  name: {{ name }}
+  version: {{ version }}
+
+source:
+  url: https://pypi.org/packages/source/s/{{ name }}/sc_neurocore-{{ version }}.tar.gz
+  sha256: REPLACE_WITH_ACTUAL_SHA256
+
+build:
+  noarch: python
+  number: 0
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  entry_points:
+    - sc-neurocore = sc_neurocore.cli:main
+
+requirements:
+  host:
+    - python >=3.10
+    - pip
+    - setuptools >=61.0
+  run:
+    - python >=3.10
+    - numpy >=1.22
+    - scipy >=1.7
+
+test:
+  imports:
+    - sc_neurocore
+    - sc_neurocore.neurons
+    - sc_neurocore.layers
+    - sc_neurocore.utils
+  commands:
+    - sc-neurocore --help
+    - pip check
+  requires:
+    - pip
+
+about:
+  home: https://github.com/anulum/sc-neurocore
+  summary: Stochastic Computing SNN framework — NumPy + Rust SIMD + FPGA RTL
+  description: |
+    SC-NeuroCore is a universal stochastic computing framework for neuromorphic
+    hardware. It provides NumPy-based software models, a Rust SIMD engine for
+    high-performance simulation, and synthesisable Verilog RTL for FPGA
+    deployment. Features include LIF/Izhikevich/AdEx neuron models, STDP
+    learning, hyper-dimensional computing, and a 16-layer SCPN stack.
+  license: AGPL-3.0-or-later
+  license_family: AGPL
+  license_file: LICENSE
+  doc_url: https://anulum.github.io/sc-neurocore/
+  dev_url: https://github.com/anulum/sc-neurocore
+
+extra:
+  recipe-maintainers:
+    - miroslav-sotek

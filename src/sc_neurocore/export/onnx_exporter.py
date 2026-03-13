@@ -15,7 +15,7 @@ class SCOnnxExporter:
     """
 
     @staticmethod
-    def export(layers: list[Any], filename: str):  # type: ignore
+    def export(layers: list[Any], filename: str):
         """
         Export layer list to a JSON definition.
         """
@@ -29,7 +29,7 @@ class SCOnnxExporter:
 
         # Define Input
         # Assuming input 0 is the start
-        graph["inputs"].append(  # type: ignore
+        graph["inputs"].append(
             {"name": "input_0", "type": "tensor(float)", "shape": ["batch", layers[0].n_inputs]}
         )
 
@@ -61,17 +61,17 @@ class SCOnnxExporter:
             if hasattr(layer, "weights"):
                 # We can save weights as an initializer in a real ONNX
                 # Here we just flag it
-                node["attributes"]["has_weights"] = True  # type: ignore
+                node["attributes"]["has_weights"] = True
                 # We don't dump large weights to JSON usually,
                 # but we could save a reference to an external .npy
                 np.save(f"{filename}_layer_{i}_weights.npy", layer.weights)
-                node["attributes"]["weights_file"] = f"{filename}_layer_{i}_weights.npy"  # type: ignore
+                node["attributes"]["weights_file"] = f"{filename}_layer_{i}_weights.npy"
 
-            graph["nodes"].append(node)  # type: ignore
+            graph["nodes"].append(node)
             previous_output = output_name
 
         # Define Final Output
-        graph["outputs"].append({"name": previous_output, "type": "tensor(float)"})  # type: ignore
+        graph["outputs"].append({"name": previous_output, "type": "tensor(float)"})
 
         try:
             with open(filename, "w") as f:

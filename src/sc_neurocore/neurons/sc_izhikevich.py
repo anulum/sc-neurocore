@@ -53,18 +53,18 @@ class SCIzhikevichNeuron(BaseNeuron):
         # Izhikevich (2003) recommends dt ≤ 0.5 ms; we split each dt into two.
         half_dt = self.dt * 0.5
         for _ in range(2):
-            dv = (0.04 * self.v**2 + 5 * self.v + 140 - self.u + input_current) * half_dt  # type: ignore
-            du = (self.a * (self.b * self.v - self.u)) * half_dt  # type: ignore
-            self.v += dv  # type: ignore
-            self.u += du  # type: ignore
+            dv = (0.04 * self.v**2 + 5 * self.v + 140 - self.u + input_current) * half_dt
+            du = (self.a * (self.b * self.v - self.u)) * half_dt
+            self.v += dv
+            self.u += du
 
         if self.noise_std > 0.0:
-            self.v += float(self._rng.normal(0.0, self.noise_std))  # type: ignore
+            self.v += float(self._rng.normal(0.0, self.noise_std))
 
-        if self.v >= IZH_SPIKE_THRESHOLD:  # type: ignore
+        if self.v >= IZH_SPIKE_THRESHOLD:
             spike = 1
             self.v = self.c
-            self.u += self.d  # type: ignore
+            self.u += self.d
         else:
             spike = 0
         return spike

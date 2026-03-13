@@ -26,7 +26,7 @@ def pack_bitstream(bitstream: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         chunks = bitstream.reshape(-1, 64)
         powers = 1 << np.arange(64, dtype=np.uint64)
         packed = (chunks * powers).sum(axis=1, dtype=np.uint64)
-        return packed  # type: ignore
+        return packed
 
     elif bitstream.ndim == 2:
         # 2D case: batch of bitstreams
@@ -43,7 +43,7 @@ def pack_bitstream(bitstream: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
 
         powers = 1 << np.arange(64, dtype=np.uint64)
         packed = (chunks * powers).sum(axis=2, dtype=np.uint64)
-        return packed  # type: ignore
+        return packed
 
     else:
         raise ValueError(f"Expected 1D or 2D array, got {bitstream.ndim}D")
@@ -69,7 +69,7 @@ def unpack_bitstream(
         # 1D packed array
         bits = ((packed[:, None] & (1 << np.arange(64, dtype=np.uint64))) > 0).astype(np.uint8)
         unpacked = bits.flatten()
-        return unpacked[:original_length]  # type: ignore
+        return unpacked[:original_length]
 
     elif packed.ndim == 2:
         # 2D packed array: (batch, num_chunks)
@@ -80,11 +80,11 @@ def unpack_bitstream(
         unpacked = bits.reshape(batch_size, -1)
 
         if original_shape is not None:
-            return unpacked[:, : original_shape[1]]  # type: ignore
+            return unpacked[:, : original_shape[1]]
         else:
             # Assume original_length is per-batch
             per_batch_len = original_length // batch_size
-            return unpacked[:, :per_batch_len]  # type: ignore
+            return unpacked[:, :per_batch_len]
 
     else:
         raise ValueError(f"Expected 1D or 2D packed array, got {packed.ndim}D")
@@ -115,4 +115,4 @@ def vec_popcount(packed: np.ndarray[Any, Any]) -> int:
     x = (x & 0x3333333333333333) + ((x >> 2) & 0x3333333333333333)
     x = (x + (x >> 4)) & 0x0F0F0F0F0F0F0F0F
     x = (x * 0x0101010101010101) >> 56
-    return np.sum(x)  # type: ignore
+    return np.sum(x)

@@ -21,17 +21,17 @@ class RNG:
     def __init__(self, seed: Optional[int] = None) -> None:
         self._rng = np.random.default_rng(seed)
 
-    def normal(self, mean: float = 0.0, std: float = 1.0, size=None):  # type: ignore
+    def normal(self, mean: float = 0.0, std: float = 1.0, size=None):
         return self._rng.normal(mean, std, size)
 
-    def uniform(self, low: float = 0.0, high: float = 1.0, size=None):  # type: ignore
+    def uniform(self, low: float = 0.0, high: float = 1.0, size=None):
         return self._rng.uniform(low, high, size)
 
-    def bernoulli(self, p: float, size=None):  # type: ignore
+    def bernoulli(self, p: float, size=None):
         return self._rng.random(size) < p
 
-    def random(self, size=None):  # type: ignore
+    def random(self, size=None):
         return self._rng.random(size)
 
-    def shuffle(self, x):  # type: ignore
+    def shuffle(self, x):
         return self._rng.shuffle(x)
