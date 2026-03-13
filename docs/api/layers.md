@@ -11,8 +11,8 @@ and recorders into reusable building blocks.
 | `SCRecurrentLayer` | Echo state / reservoir | NumPy |
 | `SCLearningLayer` | Dense + online STDP | NumPy |
 | `SCFusionLayer` | Multi-modal MUX fusion | NumPy |
-| `StochasticAttentionLayer` | SC attention mechanism | NumPy |
-| `MemristiveSCLayer` | Memristive device model | NumPy |
+| `StochasticAttention` | SC attention mechanism | NumPy |
+| `MemristiveDenseLayer` | Memristive device model | NumPy |
 | `JaxSCDenseLayer` | Fully-connected LIF | JAX (JIT, GPU/TPU) |
 
 ## Dense Layer
@@ -45,7 +45,7 @@ and recorders into reusable building blocks.
 
 ## Memristive Layer
 
-::: sc_neurocore.layers.memristive.MemristiveSCLayer
+::: sc_neurocore.layers.memristive.MemristiveDenseLayer
 
 ## JAX Dense Layer
 
