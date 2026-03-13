@@ -25,6 +25,7 @@ thr = "thr"
 inh = "inh"
 exc = "exc"
 nd = "nd"
+arange = "arange"
 
 [files]
 extend-exclude = [
