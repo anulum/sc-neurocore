@@ -1,3 +1,11 @@
 # SCPN Layers
 
-::: sc_neurocore.scpn
+SCPN 16-layer hierarchy implementation and parameter catalogue.
+
+## Parameters
+
+::: sc_neurocore.scpn.params
+
+## Layer Implementations
+
+::: sc_neurocore.scpn.layers
