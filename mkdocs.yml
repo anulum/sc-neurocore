@@ -26,6 +26,7 @@ plugins:
 
 nav:
   - Home: index.md
+  - Learning Path: LEARNING_PATH.md
   - Guides:
       - Getting Started: guides/getting-started.md
       - Quick Start Tutorial: guides/QUICKSTART_TUTORIAL.md
