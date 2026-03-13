@@ -46,6 +46,9 @@ nav:
       - FPGA Deployment in 20 Minutes: tutorials/fpga_in_20_minutes.md
       - Rust Engine & Performance: tutorials/05_rust_engine_performance.md
       - Brunel Network Translation: tutorials/06_brunel_network_translation.md
+      - MNIST SC Classification: tutorials/07_mnist_sc_classification.md
+      - Online Learning (STDP): tutorials/08_online_learning_stdp.md
+      - Hardware Co-simulation: tutorials/09_hardware_cosimulation.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
