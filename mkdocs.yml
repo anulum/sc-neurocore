@@ -49,6 +49,12 @@ nav:
       - MNIST SC Classification: tutorials/07_mnist_sc_classification.md
       - Online Learning (STDP): tutorials/08_online_learning_stdp.md
       - Hardware Co-simulation: tutorials/09_hardware_cosimulation.md
+      - Reservoir Computing: tutorials/10_reservoir_computing.md
+      - Multi-Scale Networks: tutorials/11_multi_scale_networks.md
+      - Neuromorphic Signal Processing: tutorials/12_neuromorphic_signal_processing.md
+      - Fixed-Point Arithmetic: tutorials/13_fixed_point_design.md
+      - Network Export & Deployment: tutorials/14_network_export_deployment.md
+      - Quantum-SC Hybrid Networks: tutorials/15_quantum_sc_hybrid.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
