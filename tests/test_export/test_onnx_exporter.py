@@ -123,3 +123,74 @@ def test_onnx_export_perf_small(tmp_path):
     SCOnnxExporter.export(layers, str(path))
     elapsed = time.perf_counter() - start
     assert elapsed < 2.0
+
+
+# ── Protobuf export tests ───────────────────────────────────────
+
+onnx = pytest.importorskip("onnx")
+
+
+def test_protobuf_export_creates_file(tmp_path):
+    layers = _make_layers()
+    path = tmp_path / "model.onnx"
+    SCOnnxExporter.export(layers, str(path))
+    assert path.exists()
+    assert path.stat().st_size > 0
+
+
+def test_protobuf_roundtrip_loads(tmp_path):
+    layers = _make_layers()
+    path = tmp_path / "model.onnx"
+    SCOnnxExporter.export(layers, str(path))
+    model = onnx.load(str(path))
+    assert model.producer_name == "sc-neurocore"
+
+
+def test_protobuf_node_count(tmp_path):
+    layers = _make_layers()
+    path = tmp_path / "model.onnx"
+    SCOnnxExporter.export(layers, str(path))
+    model = onnx.load(str(path))
+    assert len(model.graph.node) == 2
+
+
+def test_protobuf_custom_domain(tmp_path):
+    layers = _make_layers()
+    path = tmp_path / "model.onnx"
+    SCOnnxExporter.export(layers, str(path))
+    model = onnx.load(str(path))
+    assert model.graph.node[0].domain == "sc_neurocore"
+
+
+def test_protobuf_op_type_dense(tmp_path):
+    layers = _make_layers()
+    path = tmp_path / "model.onnx"
+    SCOnnxExporter.export(layers, str(path))
+    model = onnx.load(str(path))
+    assert model.graph.node[0].op_type == "SC_Dense"
+
+
+def test_protobuf_op_type_custom(tmp_path):
+    dummy = DummyLayer(n_inputs=2)
+    path = tmp_path / "model.onnx"
+    SCOnnxExporter.export([dummy], str(path))
+    model = onnx.load(str(path))
+    assert model.graph.node[0].op_type == "SC_Custom"
+
+
+def test_protobuf_embeds_weights(tmp_path):
+    layers = _make_layers()
+    path = tmp_path / "model.onnx"
+    SCOnnxExporter.export(layers, str(path))
+    model = onnx.load(str(path))
+    init_names = [t.name for t in model.graph.initializer]
+    assert "Layer_0_weights" in init_names
+
+
+def test_protobuf_input_output_names(tmp_path):
+    layers = _make_layers()
+    path = tmp_path / "model.onnx"
+    SCOnnxExporter.export(layers, str(path))
+    model = onnx.load(str(path))
+    assert model.graph.input[0].name == "input_0"
+    assert model.graph.output[0].name == "output_1"
