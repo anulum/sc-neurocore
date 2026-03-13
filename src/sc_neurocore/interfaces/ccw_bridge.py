@@ -4,6 +4,7 @@
 Converts stochastic bitstream outputs to audio parameters and
 visualization states for the CCW application.
 """
+
 from typing import Any, Dict, List, Optional, Tuple
 
 import json

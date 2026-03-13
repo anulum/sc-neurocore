@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Generate a publication-quality spike raster PNG from StochasticLIFNeuron."""
+
 from __future__ import annotations
 
 import sys

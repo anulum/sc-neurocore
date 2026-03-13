@@ -11,7 +11,6 @@ from sc_neurocore.training.loops import auto_device
 from sc_neurocore.training.snn_modules import IFCell, SynapticCell
 from sc_neurocore.training.surrogate import sigmoid_surrogate, straight_through, triangular
 
-
 # ---------------------------------------------------------------------------
 # New surrogate gradients
 # ---------------------------------------------------------------------------

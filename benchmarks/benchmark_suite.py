@@ -49,7 +49,6 @@ from sc_neurocore.neurons.fixed_point_lif import (
     FixedPointBitstreamEncoder,
 )
 
-
 # ---------------------------------------------------------------------------
 # Benchmark harness
 # ---------------------------------------------------------------------------

@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Spike encoding utilities for converting analog signals to spike trains."""
+
 from __future__ import annotations
 
 import numpy as np

@@ -335,8 +335,7 @@ def main():
     print("\n" + "=" * 60)
     print("SUMMARY: ADDITIONAL MAGNITUDE IMPROVEMENTS")
     print("=" * 60)
-    print(
-        """
+    print("""
     +---------------------------+-------------------------+
     | Module                    | Magnitude Improvement   |
     +---------------------------+-------------------------+
@@ -348,8 +347,7 @@ def main():
     | Chaotic RNG               | True chaos quality      |
     | Predictive World Model    | 1000x sample efficiency |
     +---------------------------+-------------------------+
-    """
-    )
+    """)
 
     print("\nAll benchmarks completed successfully!")
     return results

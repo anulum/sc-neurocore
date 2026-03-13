@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Smoke tests for benchmark harness scripts (import + basic execution)."""
+
 from __future__ import annotations
 
 import subprocess

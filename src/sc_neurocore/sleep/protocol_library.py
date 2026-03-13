@@ -15,7 +15,6 @@ from typing import Dict, List
 
 from .sleep_stage_detector import SleepStage
 
-
 # ---------------------------------------------------------------------------
 # Audio parameters per stage
 # ---------------------------------------------------------------------------

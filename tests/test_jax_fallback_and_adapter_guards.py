@@ -5,7 +5,6 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Category 1: No-JAX fallback branches (6 lines)
 # ---------------------------------------------------------------------------

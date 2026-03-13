@@ -18,7 +18,6 @@ import numpy as np
 from .sleep_stage_detector import DetectorConfig, SleepStage, SleepStageDetector
 from .protocol_library import SleepProtocol, StageAudioParams, get_protocol
 
-
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------

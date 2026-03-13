@@ -4,6 +4,7 @@
 Thin wrappers around JAX RNG and JIT that fall back to NumPy when JAX
 is unavailable, so adapter code can stay backend-agnostic.
 """
+
 from __future__ import annotations
 
 import numpy as np

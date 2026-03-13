@@ -13,7 +13,6 @@ from sc_neurocore.sources.quantum_entropy import QuantumEntropySource
 from sc_neurocore.sources.bitstream_current_source import BitstreamCurrentSource
 from sc_neurocore.profiling.energy import EnergyMetrics, profiler, track_energy
 
-
 # ---------------------------------------------------------------------------
 # QuantumEntropySource
 # ---------------------------------------------------------------------------

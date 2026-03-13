@@ -5,6 +5,7 @@ Supports N-MNIST, Spiking Heidelberg Digits (SHD), and DVS-CIFAR10.
 When real data is unavailable, generates reproducible synthetic spike
 patterns via Poisson encoding for pipeline testing.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
