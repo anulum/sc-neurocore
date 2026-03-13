@@ -75,8 +75,7 @@ jobs:
         shell: bash
         run: |
           pip install dist/*.whl
-          pip install --no-deps --require-hashes -r requirements/wheels-test.txt
-          pip install numpy
+          pip install --require-hashes -r requirements/wheels-test.txt
 
       - name: Smoke test
         run: python -c "import sc_neurocore_engine; print(sc_neurocore_engine.__version__); print(sc_neurocore_engine.simd_tier())"
