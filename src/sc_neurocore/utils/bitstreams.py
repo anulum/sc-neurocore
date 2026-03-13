@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import numpy as np
 import scipy.stats.qmc as qmc
 from .rng import RNG
+from sc_neurocore.exceptions import SCEncodingError
 
 
 def generate_bernoulli_bitstream(
@@ -30,7 +31,7 @@ def generate_bernoulli_bitstream(
         Array of shape (length,) with dtype=uint8, values in {0,1}.
     """
     if not 0.0 <= p <= 1.0:
-        raise ValueError(f"Probability p must be in [0,1], got {p}.")
+        raise SCEncodingError(f"Probability p must be in [0,1], got {p}.")
     if rng is None:
         rng = RNG()
     bits = rng.bernoulli(p, size=length)
@@ -61,7 +62,7 @@ def generate_sobol_bitstream(
         Array of shape (length,) with dtype=uint8, values in {0,1}.
     """
     if not 0.0 <= p <= 1.0:
-        raise ValueError(f"Probability p must be in [0,1], got {p}.")
+        raise SCEncodingError(f"Probability p must be in [0,1], got {p}.")
 
     # Create Sobol engine (1 dimension)
     sampler = qmc.Sobol(d=1, seed=seed)
@@ -93,7 +94,7 @@ def bitstream_to_probability(bitstream: np.ndarray[Any, Any]) -> float:
     p_hat = (# of ones) / length
     """
     if bitstream.size == 0:
-        raise ValueError("Bitstream is empty.")
+        raise SCEncodingError("Bitstream is empty.")
     return float(bitstream.mean())
 
 
@@ -110,7 +111,7 @@ def value_to_unipolar_prob(
     If clip=True, x is clipped into [x_min, x_max].
     """
     if x_min >= x_max:
-        raise ValueError("x_min must be < x_max.")
+        raise SCEncodingError("x_min must be < x_max.")
     if clip:
         x = max(min(x, x_max), x_min)
     p = (x - x_min) / (x_max - x_min)
@@ -127,7 +128,7 @@ def unipolar_prob_to_value(
     Inverse of value_to_unipolar_prob.
     """
     if not 0.0 <= p <= 1.0:
-        raise ValueError(f"Probability p must be in [0,1], got {p}.")
+        raise SCEncodingError(f"Probability p must be in [0,1], got {p}.")
     return float(x_min + p * (x_max - x_min))
 
 
@@ -154,7 +155,7 @@ class BitstreamEncoder:
         if self.mode == "bernoulli":
             self._rng = RNG(self.seed)
         elif self.mode != "sobol":
-            raise ValueError(f"Unknown mode: {self.mode}")
+            raise SCEncodingError(f"Unknown mode: {self.mode}")
 
     def encode(self, x: float) -> np.ndarray[Any, Any]:
         p = value_to_unipolar_prob(x, self.x_min, self.x_max, clip=True)
@@ -197,7 +198,7 @@ class BitstreamAverager:
 
     def push(self, bit: int) -> None:
         if bit not in (0, 1):
-            raise ValueError("Bit must be 0 or 1.")
+            raise SCEncodingError("Bit must be 0 or 1.")
 
         # Remove old bit from sum if buffer is wrapping around
         old_bit = self._buffer[self._index]  # type: ignore

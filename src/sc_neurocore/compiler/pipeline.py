@@ -32,7 +32,9 @@ class CompilerPipeline:
         """Restrict output_name to alphanumeric + underscore."""
         sanitized = "".join(c for c in name if c.isalnum() or c == "_")
         if not sanitized:
-            raise ValueError(f"Invalid output name: {name!r}")
+            from sc_neurocore.exceptions import SCCompilerError
+
+            raise SCCompilerError(f"Invalid output name: {name!r}")
         return sanitized
 
     def compile_mlir_to_verilog(self, mlir_content: str, output_name: str = "top") -> str:
@@ -66,7 +68,9 @@ class CompilerPipeline:
         """Ensure path resolves inside work_dir."""
         real = os.path.realpath(path)
         if not real.startswith(self.work_dir):
-            raise ValueError(f"Path escapes work_dir: {path!r}")
+            from sc_neurocore.exceptions import SCCompilerError
+
+            raise SCCompilerError(f"Path escapes work_dir: {path!r}")
         return real
 
     def run_synthesis(self, v_path: str, target_fpga: str = "ice40") -> str:
@@ -75,7 +79,9 @@ class CompilerPipeline:
         """
         v_path = self._validate_path(v_path)
         if target_fpga not in self._ALLOWED_TARGETS:
-            raise ValueError(f"Unknown target FPGA: {target_fpga!r}")
+            from sc_neurocore.exceptions import SCCompilerError
+
+            raise SCCompilerError(f"Unknown target FPGA: {target_fpga!r}")
 
         base = os.path.splitext(v_path)[0]
         json_path = f"{base}.json"

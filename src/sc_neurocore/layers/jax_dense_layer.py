@@ -47,7 +47,9 @@ class JaxSCDenseLayer:
 
     def __post_init__(self) -> None:
         if not HAS_JAX:
-            raise RuntimeError("JAX is required for JaxSCDenseLayer.")
+            from sc_neurocore.exceptions import SCDependencyError
+
+            raise SCDependencyError("JAX is required for JaxSCDenseLayer.")
 
         if self.neuron_params is None:
             self.neuron_params = {}

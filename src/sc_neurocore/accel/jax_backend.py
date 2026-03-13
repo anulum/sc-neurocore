@@ -89,7 +89,9 @@ def jax_pack_bitstream(bits: Any) -> Any:
     Pack uint8 {0,1} array into uint64 words using JAX.
     """
     if not HAS_JAX:
-        raise RuntimeError("JAX is not available.")
+        from sc_neurocore.exceptions import SCDependencyError
+
+        raise SCDependencyError("JAX is not available.")
 
     bits = jnp.asarray(bits, dtype=jnp.uint8)
 
@@ -98,7 +100,9 @@ def jax_pack_bitstream(bits: Any) -> Any:
     elif bits.ndim == 2:
         return _jax_pack_2d(bits)
 
-    raise ValueError(f"Expected 1-D or 2-D, got {bits.ndim}-D")
+    from sc_neurocore.exceptions import SCEncodingError
+
+    raise SCEncodingError(f"Expected 1-D or 2-D, got {bits.ndim}-D")
 
 
 if HAS_JAX:
