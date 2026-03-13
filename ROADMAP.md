@@ -7,7 +7,7 @@
 
 ### ~~Coverage gate ≥ 98%~~ ✓
 
-Done. 100% enforced (1 218 tests passed; gate at 100).
+Done. 100% enforced (1 451 tests passed; gate at 100).
 
 ### ~~NumPy 2.x full compatibility~~ ✓
 

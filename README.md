@@ -23,7 +23,7 @@ Commercial Licensing: Available
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)
 
 **Version:** 3.10.0
-**Status:** Production Core Verified | 1 218 Tests | 100% Coverage | CI/CD Active
+**Status:** Production Core Verified | 1 451 Tests | 100% Coverage | CI/CD Active
 
 <p align="center">
   <img src="docs/assets/spike_raster.png" width="800" alt="LIF spike raster — 5 neurons, sinusoidal input">
@@ -75,7 +75,7 @@ pip install sc-neurocore[gpu]
 git clone https://github.com/anulum/sc-neurocore.git
 cd sc-neurocore
 pip install -e ".[dev]"    # editable install with all dev tools
-make preflight             # verify setup (lint + 1218 tests)
+make preflight             # verify setup (lint + 1451 tests)
 ```
 
 ## Docker
