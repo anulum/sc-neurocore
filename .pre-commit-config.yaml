@@ -13,7 +13,7 @@ repos:
         args: [--maxkb=500]
 
   - repo: https://github.com/psf/black
-    rev: 8a737e727ac5ab2f1d4cf5876720ed276dc8dc4b  # 25.1.0
+    rev: c6755bb741b6481d6b3d3bb563c83fa060db96c9  # 26.3.1
     hooks:
       - id: black
         exclude: "/drivers/"

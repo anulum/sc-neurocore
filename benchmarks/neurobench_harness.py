@@ -4,6 +4,7 @@
 Wraps SC-NeuroCore neuron models in the NeuroBench evaluation protocol
 (connection count, MAC count, spike rate, latency, accuracy).
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

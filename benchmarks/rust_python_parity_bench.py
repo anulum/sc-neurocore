@@ -20,6 +20,7 @@ Usage::
     python benchmarks/rust_python_parity_bench.py
     python benchmarks/rust_python_parity_bench.py --json parity.json
 """
+
 from __future__ import annotations
 
 import argparse

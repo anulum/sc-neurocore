@@ -17,7 +17,6 @@ import numpy as np
 from .sleep_stage_detector import SleepStage
 from .sleep_optimizer import SleepOptimizer
 
-
 # ---------------------------------------------------------------------------
 # Report data
 # ---------------------------------------------------------------------------

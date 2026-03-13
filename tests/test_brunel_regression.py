@@ -30,7 +30,6 @@ from brunel_translator import (
 )
 from sc_neurocore import StochasticLIFNeuron, FixedPointLIFNeuron
 
-
 RESULTS_PATH = os.path.join(
     os.path.dirname(__file__), "..", "benchmarks", "results", "snn_translator_20v.json"
 )

@@ -16,7 +16,6 @@ from typing import Dict, Optional
 
 import numpy as np
 
-
 # Default weights for 13 lower-layer metrics (L1-L13)
 _DEFAULT_WEIGHTS = np.array(
     [

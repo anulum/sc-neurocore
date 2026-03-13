@@ -30,7 +30,6 @@ from sc_neurocore.constants import (
     FP_DATA_WIDTH,
 )
 
-
 # -- Bitstream encoding properties --
 
 

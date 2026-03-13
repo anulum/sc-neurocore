@@ -10,7 +10,6 @@ pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_t
 
 from sc_neurocore_engine import BitStreamTensor, HDCVector
 
-
 # ── BitStreamTensor (raw Rust wrapper) ───────────────────────────────
 
 

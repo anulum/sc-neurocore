@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Tests for de-omitted modules: chaos, analysis, physics, robotics, learning, spatial, bio."""
+
 from __future__ import annotations
 
 import numpy as np

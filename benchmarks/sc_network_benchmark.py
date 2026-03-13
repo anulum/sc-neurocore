@@ -19,6 +19,7 @@ Usage::
     python benchmarks/sc_network_benchmark.py --scales 100 500 --repeats 3
     python benchmarks/sc_network_benchmark.py --json sc_results.json
 """
+
 from __future__ import annotations
 
 import argparse
