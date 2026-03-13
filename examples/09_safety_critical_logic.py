@@ -6,7 +6,7 @@
 
 """Fault-Tolerant Binary Streams Demo — Safety-Critical Logic.
 
-Demonstrates Module C of the v3.7 Polymorphic Engine:
+Demonstrates Module C of the v3.10 Polymorphic Engine:
 Boolean logic with stochastic redundancy for error suppression.
 
 Principle: encode a Boolean value as a redundant bitstream (all-ones or
