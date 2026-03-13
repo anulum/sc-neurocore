@@ -109,6 +109,7 @@ rsyn.apply_reward(1.0)  # delayed reward signal
 | Resource | What you learn |
 |----------|---------------|
 | [Surrogate Gradient Training](tutorials/03_surrogate_gradient_training.md) | Gradient-based SNN training with PyTorch |
+| [Online Learning with STDP](tutorials/08_online_learning_stdp.md) | STDP, R-STDP, eligibility traces |
 | [User Guide](guides/USER_GUIDE.md) | Learning rules, training loops |
 
 **Checkpoint**: You can train a network to classify a simple pattern
@@ -123,13 +124,16 @@ attention layers.
 
 | Resource | What you learn |
 |----------|---------------|
+| [MNIST SC Classification](tutorials/07_mnist_sc_classification.md) | End-to-end SC image classification |
+| [Reservoir Computing](tutorials/10_reservoir_computing.md) | Echo state networks with SC recurrent layers |
+| [Multi-Scale Networks](tutorials/11_multi_scale_networks.md) | Hierarchical cortical column models |
 | [Hyper-Dimensional Computing](tutorials/04_hyperdimensional_computing.md) | HDC encoding, bundling, binding |
 | [Advanced Usage Patterns](guides/ADVANCED_USAGE_PATTERNS.md) | Custom neuron models, quantum entropy, analysis tools |
 | [Brunel Network Translation](tutorials/06_brunel_network_translation.md) | Translate a classic balanced network to SC |
 | API: [HDC](api/hdc.md), [Ensembles](api/ensembles.md) | Hyperdimensional and ensemble modules |
 
-**Checkpoint**: You can implement a reservoir computing benchmark
-or classify MNIST with an SC convolutional network.
+**Checkpoint**: You can classify MNIST with an SC network or
+implement a reservoir computing benchmark.
 
 ---
 
@@ -157,6 +161,9 @@ vectorization for production-grade throughput.
 | Resource | What you learn |
 |----------|---------------|
 | [FPGA in 20 Minutes](tutorials/fpga_in_20_minutes.md) | Yosys synthesis, Verilator simulation, resource utilization |
+| [Hardware Co-simulation](tutorials/09_hardware_cosimulation.md) | Python ↔ Verilog cycle-exact verification |
+| [Fixed-Point Arithmetic](tutorials/13_fixed_point_design.md) | Q8.8 format, overflow, weight export |
+| [Network Export & Deployment](tutorials/14_network_export_deployment.md) | Rust, FPGA, and checkpoint export |
 | [Hardware Guide](hardware/HARDWARE_GUIDE.md) | HDL module inventory, timing constraints |
 | [FPGA Toolchain Guide](hardware/FPGA_TOOLCHAIN_GUIDE.md) | Yosys + sv2v + nextpnr setup |
 | [Hardware Manual](hardware/SC_NEUROCORE_HARDWARE_MANUAL.md) | Pin-level specification for each Verilog module |
@@ -176,6 +183,8 @@ verify it with Verilator, and read the resource utilization report.
 | [Component Inventory](architecture/COMPONENT_INVENTORY.md) | Every module, its role, its test coverage |
 | [Technical Manual](guides/TECHNICAL_MANUAL.md) | Internal design decisions, numerical choices |
 | [Foundational Whitepaper](research/SC_NEUROCORE_FOUNDATIONAL_WHITEPAPER.md) | Theoretical basis for the SC-SNN approach |
+| [Quantum-SC Hybrid Networks](tutorials/15_quantum_sc_hybrid.md) | Quantum circuits as SC front-ends |
+| [Neuromorphic Signal Processing](tutorials/12_neuromorphic_signal_processing.md) | SC filterbanks, edge detection |
 | [Integration Guide](guides/INTEGRATION_GUIDE.md) | Embedding SC-NeuroCore in larger systems |
 
 **Checkpoint**: You can add a custom neuron model, wire it into the
@@ -192,4 +201,7 @@ compiler, and generate HDL for it.
 | "How fast is it?" | [Benchmarks](benchmarks/BENCHMARKS.md) |
 | "Can it run on an FPGA?" | [FPGA in 20 Minutes](tutorials/fpga_in_20_minutes.md) |
 | "How does SC multiplication work?" | [SC Fundamentals](tutorials/01_stochastic_computing_fundamentals.md) |
+| "I come from Brian2/NEST" | [SC for Neuroscientists](guides/SC_FOR_NEUROSCIENTISTS.md) |
+| "I come from PyTorch/JAX" | [SC for ML Engineers](guides/SC_FOR_ML_ENGINEERS.md) |
+| "I design FPGAs/ASICs" | [SC for Hardware Engineers](guides/SC_FOR_HARDWARE_ENGINEERS.md) |
 | "What changed in v3?" | [V3 Migration](development/v3_migration.md) |
