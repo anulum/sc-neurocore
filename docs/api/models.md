@@ -1,3 +1,7 @@
 # Models
 
-::: sc_neurocore.models
+Pre-built network architectures and model registry.
+
+## Zoo
+
+::: sc_neurocore.models.zoo

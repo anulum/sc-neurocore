@@ -1,3 +1,7 @@
 # Solvers
 
-::: sc_neurocore.solvers
+Combinatorial optimization via SC-native Ising machines.
+
+## Ising Solver
+
+::: sc_neurocore.solvers.ising
