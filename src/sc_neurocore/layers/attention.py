@@ -10,43 +10,86 @@ class StochasticAttention:
     """
     Stochastic Computing Attention Block.
 
-    Approximates: Output = Softmax(Q * K^T) * V
+    Two modes:
+
+    - ``forward()`` — row-sum normalised (SC-native, no exp). Matches Rust engine ``forward()``.
+    - ``forward_softmax()`` — proper softmax with temperature scaling.
+
+    Example
+    -------
+    >>> Q = np.random.default_rng(0).uniform(0, 1, (4, 8))
+    >>> K = np.random.default_rng(1).uniform(0, 1, (6, 8))
+    >>> V = np.random.default_rng(2).uniform(0, 1, (6, 5))
+    >>> attn = StochasticAttention(dim_k=8)
+    >>> attn.forward(Q, K, V).shape
+    (4, 5)
+    >>> attn.forward_softmax(Q, K, V).shape
+    (4, 5)
     """
 
     dim_k: int
+    temperature: float = 1.0
 
-    def forward(
-        self, Q: np.ndarray[Any, Any], K: np.ndarray[Any, Any], V: np.ndarray[Any, Any]
-    ) -> np.ndarray[Any, Any]:
-        """
-        Input:
-            Q: (N, Dim_K) - Query Probabilities
-            K: (M, Dim_K) - Key Probabilities
-            V: (M, Dim_V) - Value Probabilities
-
-        Returns:
-            Output: (N, Dim_V)
-        """
-        # Ensure inputs are 2D (Seq/Batch, Dim)
+    def _ensure_2d(
+        self,
+        Q: np.ndarray[Any, Any],
+        K: np.ndarray[Any, Any],
+        V: np.ndarray[Any, Any],
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         if Q.ndim == 1:
             Q = Q[None, :]
         if K.ndim == 1:
             K = K[None, :]
         if V.ndim == 1:
             V = V[None, :]
+        return Q, K, V
 
-        # 1. Score Calculation (Matrix Multiplication)
-        # Score = Q @ K.T -> (N, M)
-        # In SC, this is parallel AND gates
+    def forward(
+        self, Q: np.ndarray[Any, Any], K: np.ndarray[Any, Any], V: np.ndarray[Any, Any]
+    ) -> np.ndarray[Any, Any]:
+        """
+        Row-sum normalised attention (SC-native, no exp).
+
+        Parameters
+        ----------
+        Q : (N, dim_k)
+        K : (M, dim_k)
+        V : (M, dim_v)
+
+        Returns
+        -------
+        (N, dim_v)
+        """
+        Q, K, V = self._ensure_2d(Q, K, V)
         scores = np.dot(Q, K.T)
-
-        # Row-sum normalization (matches Rust engine parity)
         row_sums = np.sum(scores, axis=1, keepdims=True)
         row_sums[row_sums == 0] = 1.0
         attn_weights = scores / row_sums
+        return np.dot(attn_weights, V)  # type: ignore
 
-        # 3. Weighted Sum (V)
-        # Out = attn_weights @ V -> (N, M) @ (M, Dim_V) -> (N, Dim_V)
-        output = np.dot(attn_weights, V)
+    def forward_softmax(
+        self, Q: np.ndarray[Any, Any], K: np.ndarray[Any, Any], V: np.ndarray[Any, Any]
+    ) -> np.ndarray[Any, Any]:
+        """
+        Proper softmax attention with temperature scaling.
 
-        return output  # type: ignore
+        softmax(Q @ K^T / temperature) @ V
+
+        Numerically stable via max-subtraction before exp.
+
+        Parameters
+        ----------
+        Q : (N, dim_k)
+        K : (M, dim_k)
+        V : (M, dim_v)
+
+        Returns
+        -------
+        (N, dim_v)
+        """
+        Q, K, V = self._ensure_2d(Q, K, V)
+        scores = np.dot(Q, K.T) / self.temperature
+        scores -= scores.max(axis=1, keepdims=True)
+        exp_scores = np.exp(scores)
+        attn_weights = exp_scores / exp_scores.sum(axis=1, keepdims=True)
+        return np.dot(attn_weights, V)  # type: ignore
