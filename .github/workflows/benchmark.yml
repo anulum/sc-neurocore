@@ -85,7 +85,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install package
-        run: pip install -e ".[dev]"
+        run: bash tools/ci-install-dev.sh
 
       - name: Run Python benchmarks (quick)
         run: python benchmarks/benchmark_suite.py --json --markdown

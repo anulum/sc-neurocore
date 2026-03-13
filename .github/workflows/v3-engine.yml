@@ -82,10 +82,10 @@ jobs:
           workspaces: engine
 
       - name: Install dependencies
+        shell: bash
         run: |
-          python -m pip install --upgrade pip
           pip install --require-hashes -r requirements/maturin.txt
-          pip install -e ".[dev-full]"
+          bash tools/ci-install-engine-deps.sh
 
       - name: Build engine bridge
         shell: bash
