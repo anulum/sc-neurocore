@@ -8,6 +8,16 @@ import numpy as np
 
 from .base import BaseNeuron
 from ..utils.rng import RNG
+from ..constants import (
+    LIF_V_REST,
+    LIF_V_RESET,
+    LIF_V_THRESHOLD,
+    LIF_TAU_MEM,
+    LIF_DT,
+    LIF_NOISE_STD,
+    LIF_RESISTANCE,
+    LIF_REFRACTORY_PERIOD,
+)
 
 
 @dataclass
@@ -17,22 +27,18 @@ class StochasticLIFNeuron(BaseNeuron):
 
     dv/dt = -(v - v_rest) / tau_mem + R * I + noise
 
-    We work in simple units:
-    - dt: time step
-    - tau_mem: membrane time constant
-    - v_threshold: firing threshold
-    - v_reset: reset potential
-    - noise_std: std dev of Gaussian noise added each step
+    Parameters use normalised units (voltage [0,1], time in ms).
+    Defaults from Gerstner & Kistler, *Spiking Neuron Models*, 2002.
     """
 
-    v_rest: float = 0.0
-    v_reset: float = 0.0
-    v_threshold: float = 1.0
-    tau_mem: float = 20.0
-    dt: float = 1.0
-    noise_std: float = 0.0
-    resistance: float = 1.0
-    refractory_period: int = 0
+    v_rest: float = LIF_V_REST
+    v_reset: float = LIF_V_RESET
+    v_threshold: float = LIF_V_THRESHOLD
+    tau_mem: float = LIF_TAU_MEM
+    dt: float = LIF_DT
+    noise_std: float = LIF_NOISE_STD
+    resistance: float = LIF_RESISTANCE
+    refractory_period: int = LIF_REFRACTORY_PERIOD
     seed: int | None = None
     entropy_source: Any | None = None  # Optional external entropy (e.g. Quantum)
 

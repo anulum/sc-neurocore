@@ -10,22 +10,25 @@ from ..synapses.stochastic_stdp import StochasticSTDPSynapse
 from ..neurons.stochastic_lif import StochasticLIFNeuron
 from ..recorders.spike_recorder import BitstreamSpikeRecorder
 from ..utils.bitstreams import BitstreamEncoder
+from ..constants import STDP_LEARNING_RATE, STDP_LTD_RATIO, LAYER_DEFAULT_LENGTH
 
 
 @dataclass
 class SCLearningLayer:
     """
-    An SC Dense Layer with integrated STDP learning.
-    Each neuron has its own unique weights for the input vector.
+    SC dense layer with integrated STDP learning.
+
+    Each neuron has per-input STDP synapses. Plasticity follows
+    Bi & Poo 1998 asymmetry convention.
     """
 
     n_inputs: int
     n_neurons: int
     w_min: float = 0.0
     w_max: float = 1.0
-    learning_rate: float = 0.01
-    ltd_ratio: float = 0.5  # LTD/LTP asymmetry; Bi & Poo 1998
-    length: int = 1024
+    learning_rate: float = STDP_LEARNING_RATE
+    ltd_ratio: float = STDP_LTD_RATIO
+    length: int = LAYER_DEFAULT_LENGTH
     base_seed: Optional[int] = None
 
     def __post_init__(self) -> None:

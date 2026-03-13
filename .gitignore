@@ -75,3 +75,9 @@ full_test_report.txt
 *.pyd
 *.so
 !engine/src/**/*.rs
+
+# MkDocs build output
+site/
+
+# Downloaded datasets
+data/

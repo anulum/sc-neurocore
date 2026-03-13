@@ -9,6 +9,7 @@ from ..utils.bitstreams import (
     bitstream_to_probability,
 )
 from ..utils.rng import RNG
+from ..constants import SYNAPSE_DEFAULT_LENGTH, SYNAPSE_DEFAULT_WEIGHT
 
 
 @dataclass
@@ -17,24 +18,13 @@ class BitstreamSynapse:
     Stochastic-computing synapse using bitstreams.
 
     Each synapse has a weight w in [w_min, w_max].
-    For 'pure' SC mode, we encode w as a bitstream and AND it with the
-    pre-synaptic bitstream:
-
-        out_bit[t] = pre_bit[t] & weight_bit[t]
-
-    In expectation:
-        P(out=1) ≈ P(pre=1) * P(weight=1)
-    which corresponds to multiplication of the underlying probabilities.
-
-    For now we implement:
-    - encode_weight() -> weight_bitstream
-    - apply(pre_bits) -> post_bits
+    SC multiplication via bitwise AND: P(out=1) ~ P(pre=1) * P(w=1).
     """
 
     w_min: float
     w_max: float
-    length: int = 256
-    w: float = 0.5
+    length: int = SYNAPSE_DEFAULT_LENGTH
+    w: float = SYNAPSE_DEFAULT_WEIGHT
     seed: Optional[int] = None
 
     def __post_init__(self) -> None:

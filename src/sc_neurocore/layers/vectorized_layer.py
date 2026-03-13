@@ -12,6 +12,7 @@ from ..accel.gpu_backend import (
     to_host,
     gpu_vec_mac,
 )
+from ..constants import LAYER_DEFAULT_LENGTH
 
 try:
     import scipy.sparse as sp
@@ -50,7 +51,7 @@ class VectorizedSCLayer:
 
     n_inputs: int
     n_neurons: int
-    length: int = 1024
+    length: int = LAYER_DEFAULT_LENGTH
     use_gpu: bool = True
     sparse: bool = False
     connectivity: float = 1.0

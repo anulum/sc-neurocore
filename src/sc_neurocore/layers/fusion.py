@@ -5,19 +5,18 @@ from dataclasses import dataclass
 import numpy as np
 from typing import Dict
 
+from ..constants import LAYER_DEFAULT_LENGTH
+
 
 @dataclass
 class SCFusionLayer:
     """
-    Fuses multiple data modalities using Stochastic Multiplexing.
-
-    Inputs: Dictionary of feature vectors (e.g., {'audio': [...], 'visual': [...]})
-    Output: Fused feature vector.
+    Fuses multiple data modalities using stochastic multiplexing (MUX).
     """
 
     input_dims: Dict[str, int]
     fusion_weights: Dict[str, float]
-    length: int = 1024
+    length: int = LAYER_DEFAULT_LENGTH
 
     def __post_init__(self):  # type: ignore
         # Verify weights sum to <= 1 (or normalized)

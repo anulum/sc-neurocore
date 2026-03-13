@@ -7,6 +7,14 @@ from typing import Dict
 
 from .base import BaseNeuron
 from ..utils.rng import RNG
+from ..constants import (
+    IZH_A,
+    IZH_B,
+    IZH_C,
+    IZH_D,
+    IZH_SPIKE_THRESHOLD,
+    LIF_DT,
+)
 
 
 @dataclass
@@ -14,21 +22,18 @@ class SCIzhikevichNeuron(BaseNeuron):
     """
     Stochastic Izhikevich neuron (software-only).
 
-    Standard Izhikevich model:
+    Standard Izhikevich model (IEEE TNN 14(6), 2003):
     v' = 0.04*v^2 + 5*v + 140 - u + I + noise
     u' = a*(b*v - u)
 
-    When v >= 30 mV:
-    spike, then v <- c, u <- u + d
-
-    Here we add Gaussian noise to v' each step.
+    When v >= 30 mV: spike, then v <- c, u <- u + d.
     """
 
-    a: float = 0.02
-    b: float = 0.2
-    c: float = -65.0
-    d: float = 8.0
-    dt: float = 1.0
+    a: float = IZH_A
+    b: float = IZH_B
+    c: float = IZH_C
+    d: float = IZH_D
+    dt: float = LIF_DT
     noise_std: float = 0.0
     seed: int | None = None
 
@@ -49,7 +54,7 @@ class SCIzhikevichNeuron(BaseNeuron):
         if self.noise_std > 0.0:
             self.v += float(self._rng.normal(0.0, self.noise_std))  # type: ignore
 
-        if self.v >= 30.0:  # type: ignore
+        if self.v >= IZH_SPIKE_THRESHOLD:  # type: ignore
             spike = 1
             self.v = self.c
             self.u += self.d  # type: ignore
