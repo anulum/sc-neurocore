@@ -15,6 +15,14 @@ class StochasticSTDPSynapse(BitstreamSynapse):
 
     LTP on pre→post coincidence, LTD on pre-without-post.
     Asymmetry ratio from Bi & Poo, J. Neurosci. 18(24), 1998.
+
+    Example
+    -------
+    >>> syn = StochasticSTDPSynapse(w_min=0.0, w_max=1.0, w=0.5, length=64)
+    >>> for _ in range(100):
+    ...     syn.process_step(pre_bit=1, post_bit=1)  # correlated activity → LTP
+    >>> syn.w >= 0.5  # weight increased or stayed
+    True
     """
 
     learning_rate: float = STDP_LEARNING_RATE

@@ -6,12 +6,16 @@ from typing import Optional
 
 class RNG:
     """
-    Thin wrapper around NumPy RNG to keep a single interface.
+    Thin wrapper around NumPy RNG for reproducible per-neuron streams.
 
-    Later this can be extended to support:
-    - hardware TRNGs
-    - p-bit devices
-    - reproducible streams per neuron
+    Example
+    -------
+    >>> rng = RNG(seed=42)
+    >>> vals = rng.random(5)
+    >>> vals.shape
+    (5,)
+    >>> RNG(seed=42).random(5) == vals  # deterministic
+    array([ True,  True,  True,  True,  True])
     """
 
     def __init__(self, seed: Optional[int] = None) -> None:

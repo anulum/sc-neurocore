@@ -171,8 +171,18 @@ class BitstreamEncoder:
 @dataclass
 class BitstreamAverager:
     """
-    Utility to accumulate bits over time and estimate probability on the fly.
-    Can be used, e.g., to estimate a neuron firing probability over a window.
+    Sliding-window probability estimator for bitstreams.
+
+    Example
+    -------
+    >>> avg = BitstreamAverager(window=100)
+    >>> for _ in range(100):
+    ...     avg.push(1)
+    >>> avg.estimate()
+    1.0
+    >>> avg.push(0)
+    >>> avg.estimate() < 1.0
+    True
     """
 
     window: int

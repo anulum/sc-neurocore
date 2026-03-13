@@ -10,7 +10,16 @@ from ..constants import LAYER_CONV_LENGTH
 @dataclass
 class SCConv2DLayer:
     """
-    SC 2D convolutional layer. Processes images using SC bitstreams.
+    SC 2D convolutional layer using unipolar probability multiplication.
+
+    Example
+    -------
+    >>> import numpy as np
+    >>> conv = SCConv2DLayer(in_channels=1, out_channels=2, kernel_size=3, padding=1)
+    >>> img = np.random.rand(1, 8, 8)
+    >>> out = conv.forward(img)
+    >>> out.shape
+    (2, 8, 8)
     """
 
     in_channels: int

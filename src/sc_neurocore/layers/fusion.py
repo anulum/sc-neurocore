@@ -12,6 +12,17 @@ from ..constants import LAYER_DEFAULT_LENGTH
 class SCFusionLayer:
     """
     Fuses multiple data modalities using stochastic multiplexing (MUX).
+
+    Example
+    -------
+    >>> import numpy as np
+    >>> layer = SCFusionLayer(
+    ...     input_dims={"audio": 4, "visual": 4},
+    ...     fusion_weights={"audio": 0.7, "visual": 0.3},
+    ... )
+    >>> out = layer.forward({"audio": np.ones(4), "visual": np.zeros(4)})
+    >>> out.shape
+    (4,)
     """
 
     input_dims: Dict[str, int]

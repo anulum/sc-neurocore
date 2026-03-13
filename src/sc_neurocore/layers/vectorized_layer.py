@@ -39,14 +39,20 @@ def _popcount_rows(packed: np.ndarray) -> np.ndarray:
 @dataclass
 class VectorizedSCLayer:
     """
-    High-Performance SC Layer using packed bitwise operations.
+    High-performance SC layer using packed bitwise operations.
 
-    When CuPy is available the heavy AND + popcount path runs on the GPU;
-    otherwise pure NumPy is used transparently.
+    Uses GPU (CuPy) when available, otherwise pure NumPy.
+    Optional sparse connectivity via ``scipy.sparse``.
 
-    When ``sparse=True``, only a fraction ``connectivity`` of synapses are
-    allocated. The connectivity mask is stored as a ``scipy.sparse.csr_matrix``
-    and the forward pass skips zero-weight entries entirely.
+    Example
+    -------
+    >>> import numpy as np
+    >>> layer = VectorizedSCLayer(n_inputs=8, n_neurons=4, length=512)
+    >>> out = layer.forward(np.random.rand(8))
+    >>> out.shape
+    (4,)
+    >>> (out >= 0).all() and (out <= 1).all()
+    True
     """
 
     n_inputs: int

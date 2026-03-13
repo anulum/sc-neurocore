@@ -19,6 +19,15 @@ class BitstreamSynapse:
 
     Each synapse has a weight w in [w_min, w_max].
     SC multiplication via bitwise AND: P(out=1) ~ P(pre=1) * P(w=1).
+
+    Example
+    -------
+    >>> import numpy as np
+    >>> syn = BitstreamSynapse(w_min=0.0, w_max=1.0, w=0.5, length=1024, seed=42)
+    >>> pre = np.ones(1024, dtype=np.uint8)  # all-ones input
+    >>> post = syn.apply(pre)
+    >>> abs(post.mean() - 0.5) < 0.1  # output ~50% ones
+    True
     """
 
     w_min: float

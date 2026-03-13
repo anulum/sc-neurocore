@@ -27,6 +27,13 @@ class SCIzhikevichNeuron(BaseNeuron):
     u' = a*(b*v - u)
 
     When v >= 30 mV: spike, then v <- c, u <- u + d.
+
+    Example
+    -------
+    >>> neuron = SCIzhikevichNeuron(noise_std=0.0)
+    >>> spikes = [neuron.step(10.0) for _ in range(100)]
+    >>> sum(spikes) > 0  # regular spiking with I=10
+    True
     """
 
     a: float = IZH_A

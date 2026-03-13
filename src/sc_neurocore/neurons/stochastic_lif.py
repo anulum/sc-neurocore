@@ -29,6 +29,24 @@ class StochasticLIFNeuron(BaseNeuron):
 
     Parameters use normalised units (voltage [0,1], time in ms).
     Defaults from Gerstner & Kistler, *Spiking Neuron Models*, 2002.
+
+    Example
+    -------
+    >>> neuron = StochasticLIFNeuron(v_threshold=1.0, tau_mem=20.0, noise_std=0.0)
+    >>> spikes = [neuron.step(1.5) for _ in range(50)]
+    >>> sum(spikes) > 0
+    True
+    >>> neuron.get_state()  # membrane voltage + refractory counter
+    {'v': ..., 'refractory': 0}
+
+    Process a bitstream as input current:
+
+    >>> import numpy as np
+    >>> bits = np.array([1, 0, 1, 1, 0, 1, 0, 0], dtype=np.uint8)
+    >>> neuron.reset_state()
+    >>> out = neuron.process_bitstream(bits, input_scale=2.0)
+    >>> out.shape
+    (8,)
     """
 
     v_rest: float = LIF_V_REST
