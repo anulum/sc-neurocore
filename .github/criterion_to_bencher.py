@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Convert Criterion 0.5 stdout to bencher format for benchmark-action."""
+
 import re
 import sys
 

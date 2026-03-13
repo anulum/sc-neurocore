@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """SC-NeuroCore - Complete 53 Improvement Verification"""
+
 import sys
 
 sys.path.insert(0, "src")
