@@ -35,7 +35,7 @@ class HDCEncoder:
         sum_vec = np.sum(vectors, axis=0)
         threshold = len(vectors) / 2.0
 
-        return (sum_vec > threshold).astype(np.uint8)  # type: ignore
+        return (sum_vec > threshold).astype(np.uint8)
 
     def permute(self, v: np.ndarray[Any, Any], shifts: int = 1) -> np.ndarray[Any, Any]:
         """Cyclic shift (Permutation)."""
@@ -51,10 +51,10 @@ class AssociativeMemory:
 
     memory: dict[str, Any] = None  # type: ignore
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self):
         self.memory = {}
 
-    def store(self, label: str, vector: np.ndarray[Any, Any]):  # type: ignore
+    def store(self, label: str, vector: np.ndarray[Any, Any]):
         self.memory[label] = vector
 
     def query(self, query_vec: np.ndarray[Any, Any]) -> str:

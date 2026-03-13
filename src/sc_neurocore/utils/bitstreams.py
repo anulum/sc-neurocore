@@ -35,7 +35,7 @@ def generate_bernoulli_bitstream(
     if rng is None:
         rng = RNG()
     bits = rng.bernoulli(p, size=length)
-    return bits.astype(np.uint8)  # type: ignore
+    return bits.astype(np.uint8)
 
 
 def generate_sobol_bitstream(
@@ -85,7 +85,7 @@ def generate_sobol_bitstream(
     # is: bit = 1 if s < p else 0
     bits = (samples < p).astype(np.uint8)
 
-    return bits  # type: ignore
+    return bits
 
 
 def bitstream_to_probability(bitstream: np.ndarray[Any, Any]) -> float:

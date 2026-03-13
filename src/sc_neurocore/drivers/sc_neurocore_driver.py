@@ -20,14 +20,14 @@ class SC_NeuroCore_Driver:
     unless explicitly in 'EMULATION' mode.
     """
 
-    def __init__(self, bitstream_path="sc_neurocore.bit", mode="HARDWARE"):  # type: ignore
+    def __init__(self, bitstream_path="sc_neurocore.bit", mode="HARDWARE"):
         self.mode = mode
         self.overlay = None
         self.dma = None
         self.bitstream_path = bitstream_path
 
         if self.mode == "HARDWARE":
-            self._connect_to_fpga()  # type: ignore
+            self._connect_to_fpga()
         elif self.mode == "EMULATION":
             logger.warning(
                 "Running in EMULATION mode. Results may not reflect quantum stochasticity."
@@ -35,7 +35,7 @@ class SC_NeuroCore_Driver:
         else:
             raise ValueError("Invalid mode. Use 'HARDWARE' or 'EMULATION'.")
 
-    def _connect_to_fpga(self):  # type: ignore
+    def _connect_to_fpga(self):
         """
         Attempts to load the PYNQ libraries and flash the bitstream.
         """
@@ -71,7 +71,7 @@ class SC_NeuroCore_Driver:
             logger.error(f"FPGA Connection Failed: {e}")
             raise RealityHardwareError(f"Hardware initialization failed: {e}")
 
-    def write_layer_params(self, layer_id, params):  # type: ignore
+    def write_layer_params(self, layer_id, params):
         """
         Writes parameters to a specific layer's AXI-Lite registers.
         """
@@ -90,7 +90,7 @@ class SC_NeuroCore_Driver:
         if "threshold" in params:
             layer_ip.write(0x14, int(params["threshold"] * 65536))
 
-    def run_step(self, input_vector):  # type: ignore
+    def run_step(self, input_vector):
         """
         Executes one integration step on the FPGA.
         """
@@ -106,7 +106,7 @@ class SC_NeuroCore_Driver:
 if __name__ == "__main__":
     # Test strict mode
     try:
-        driver = SC_NeuroCore_Driver(mode="HARDWARE")  # type: ignore
+        driver = SC_NeuroCore_Driver(mode="HARDWARE")
         print("Hardware connected.")
     except RealityHardwareError as e:
         print(f"\n[STRICT CHECK PASSED]: Driver correctly failed on non-FPGA host.\nError: {e}")
