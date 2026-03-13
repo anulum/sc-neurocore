@@ -58,6 +58,10 @@ nav:
       - Fixed-Point Arithmetic: tutorials/13_fixed_point_design.md
       - Network Export & Deployment: tutorials/14_network_export_deployment.md
       - Quantum-SC Hybrid Networks: tutorials/15_quantum_sc_hybrid.md
+      - Debugging SC Networks: tutorials/16_debugging_sc_networks.md
+      - Custom Neuron Models: tutorials/17_custom_neuron_models.md
+      - Ensemble Methods: tutorials/18_ensemble_methods.md
+      - SC Theory Deep Dive: tutorials/19_sc_theory_deep_dive.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
