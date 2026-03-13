@@ -11,7 +11,7 @@ All neurons implement the `BaseNeuron` interface (`step`, `reset_state`,
 | `FixedPointLIFNeuron` | Bit-true hardware model | Medium |
 | `SCIzhikevichNeuron` | Rich dynamics (bursting, chattering) | Medium |
 | `HomeostaticLIFNeuron` | Self-regulating firing rate | Fast |
-| `DendriticNeuron` | Multi-compartment dendritic processing | Slow |
+| `StochasticDendriticNeuron` | Multi-compartment dendritic processing | Slow |
 
 ## Base
 
@@ -39,4 +39,4 @@ All neurons implement the `BaseNeuron` interface (`step`, `reset_state`,
 
 ## Dendritic
 
-::: sc_neurocore.neurons.dendritic.DendriticNeuron
+::: sc_neurocore.neurons.dendritic.StochasticDendriticNeuron
