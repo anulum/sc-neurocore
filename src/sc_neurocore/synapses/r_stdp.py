@@ -2,22 +2,21 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from .stochastic_stdp import StochasticSTDPSynapse
+from ..constants import RSTDP_TRACE_DECAY, RSTDP_ANTI_HEBBIAN_SCALE
 
 
 @dataclass
 class RewardModulatedSTDPSynapse(StochasticSTDPSynapse):
     """
-    Reward-Modulated STDP Synapse.
+    Reward-modulated STDP synapse (Izhikevich, Cerebral Cortex 17(10), 2007).
 
-    Instead of updating weights immediately, we update an 'eligibility trace'.
-    Weights are only updated when a 'reward' signal is applied.
-
-    Delta_W = Learning_Rate * Reward * Eligibility
+    Eligibility trace accumulates Hebbian coincidences; weight update
+    fires only when a global reward signal arrives.
     """
 
     eligibility_trace: float = 0.0
-    trace_decay: float = 0.9
-    anti_hebbian_scale: float = 0.5  # LTD/LTP asymmetry; Bi & Poo 1998
+    trace_decay: float = RSTDP_TRACE_DECAY
+    anti_hebbian_scale: float = RSTDP_ANTI_HEBBIAN_SCALE
 
     def process_step(self, pre_bit: int, post_bit: int) -> int:
         # 1. Compute Output (Same as standard)

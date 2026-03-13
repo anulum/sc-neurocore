@@ -5,24 +5,21 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from .sc_synapse import BitstreamSynapse
+from ..constants import STDP_LEARNING_RATE, STDP_WINDOW_SIZE, STDP_LTD_RATIO
 
 
 @dataclass
 class StochasticSTDPSynapse(BitstreamSynapse):
     """
-    Stochastic Synapse with Spike-Timing-Dependent Plasticity (STDP).
+    Stochastic synapse with spike-timing-dependent plasticity.
 
-    Implements a simplified stochastic STDP rule:
-    - If PRE spikes and POST spikes shortly after -> Potentiation (LTP)
-    - If POST spikes and PRE spikes shortly after -> Depression (LTD)
-
-    Instead of full trace tracking, we use a probabilistic update based on
-    coincidence windows.
+    LTP on pre→post coincidence, LTD on pre-without-post.
+    Asymmetry ratio from Bi & Poo, J. Neurosci. 18(24), 1998.
     """
 
-    learning_rate: float = 0.01
-    window_size: int = 5
-    ltd_ratio: float = 0.5  # LTD/LTP asymmetry; Bi & Poo 1998, Fig. 1
+    learning_rate: float = STDP_LEARNING_RATE
+    window_size: int = STDP_WINDOW_SIZE
+    ltd_ratio: float = STDP_LTD_RATIO
 
     _pre_trace: np.ndarray[Any, Any] = field(init=False, repr=False)
 

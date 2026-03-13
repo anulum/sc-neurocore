@@ -3,17 +3,19 @@ from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
 from .vectorized_layer import VectorizedSCLayer
+from ..constants import MEMRISTIVE_STUCK_RATE, MEMRISTIVE_VARIABILITY
 
 
 @dataclass
 class MemristiveDenseLayer(VectorizedSCLayer):
     """
-    Simulates a Dense Layer mapped to a Memristor Crossbar.
-    Includes hardware non-idealities.
+    Dense layer mapped to a memristor crossbar with hardware non-idealities.
+
+    Defect parameters from Prezioso et al., Nature 521:61-64, 2015.
     """
 
-    stuck_rate: float = 0.01  # % of devices stuck at 0 or 1
-    variability: float = 0.05  # Sigma of weight noise (conductance drift)
+    stuck_rate: float = MEMRISTIVE_STUCK_RATE
+    variability: float = MEMRISTIVE_VARIABILITY
 
     def __post_init__(self):  # type: ignore
         super().__post_init__()  # type: ignore

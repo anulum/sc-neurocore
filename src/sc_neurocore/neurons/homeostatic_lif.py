@@ -2,22 +2,31 @@
 from dataclasses import dataclass
 from typing import Dict, Any
 from .stochastic_lif import StochasticLIFNeuron
+from ..constants import (
+    HOMEOSTATIC_TARGET_RATE,
+    HOMEOSTATIC_ADAPTATION_RATE,
+    HOMEOSTATIC_TRACE_DECAY,
+    HOMEOSTATIC_THRESHOLD_FLOOR,
+    HOMEOSTATIC_THRESHOLD_CEILING_MULT,
+)
 
-THRESHOLD_FLOOR = 0.1  # prevent threshold collapse to zero
-THRESHOLD_CEILING_MULT = 10.0  # max threshold = initial * this factor
+THRESHOLD_FLOOR = HOMEOSTATIC_THRESHOLD_FLOOR
+THRESHOLD_CEILING_MULT = HOMEOSTATIC_THRESHOLD_CEILING_MULT
 
 
 @dataclass
 class HomeostaticLIFNeuron(StochasticLIFNeuron):
     """
-    LIF Neuron with Homeostatic Threshold Adaptation.
-    Self-regulates firing rate to a target setpoint.
+    LIF neuron with homeostatic threshold adaptation.
+
+    Self-regulates firing rate toward a target setpoint via exponential
+    moving average of spike rate. Based on Turrigiano (2012).
     """
 
-    target_rate: float = 0.1
-    adaptation_rate: float = 0.01
+    target_rate: float = HOMEOSTATIC_TARGET_RATE
+    adaptation_rate: float = HOMEOSTATIC_ADAPTATION_RATE
     rate_trace: float = 0.0
-    trace_decay: float = 0.95
+    trace_decay: float = HOMEOSTATIC_TRACE_DECAY
 
     def __post_init__(self) -> None:
         super().__post_init__()

@@ -4,20 +4,19 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Dict
 
+from ..constants import DENDRITIC_THRESHOLD
+
 
 @dataclass
 class StochasticDendriticNeuron:
     """
     XOR-nonlinearity neuron with shunting inhibition.
 
-    Implements ``d1 + d2 - 2*d1*d2`` which gives XOR truth table
-    for binary inputs. Not a Rall cable-equation compartmental model.
-
-    Takes two inputs (input_a, input_b). Does not inherit BaseNeuron
-    because ``step()`` has a 2-input signature incompatible with the ABC.
+    Implements ``d1 + d2 - 2*d1*d2`` (XOR truth table for binary inputs).
+    Based on Koch, *Biophysics of Computation*, 1999, Ch. 12.
     """
 
-    threshold: float = 0.5
+    threshold: float = DENDRITIC_THRESHOLD
     _last_current: float = field(default=0.0, init=False, repr=False)
 
     def step(self, input_a: float, input_b: float) -> int:

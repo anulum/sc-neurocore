@@ -63,6 +63,10 @@ __all__ = [
     "L15_StochasticParameters",
     "L16_DirectorLayer",
     "L16_StochasticParameters",
+    "LAYER_REGISTRY",
+    "create_full_stack",
+    "run_integrated_step",
+    "get_global_metrics",
 ]
 
 LAYER_REGISTRY = {

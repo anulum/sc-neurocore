@@ -4,13 +4,13 @@ from typing import Any
 from dataclasses import dataclass
 import numpy as np
 
+from ..constants import LAYER_CONV_LENGTH
+
 
 @dataclass
 class SCConv2DLayer:
     """
-    Stochastic Computing 2D Convolutional Layer.
-
-    Processes 2D input (e.g., images) using SC bitstreams.
+    SC 2D convolutional layer. Processes images using SC bitstreams.
     """
 
     in_channels: int
@@ -18,7 +18,7 @@ class SCConv2DLayer:
     kernel_size: int
     stride: int = 1
     padding: int = 0
-    length: int = 256
+    length: int = LAYER_CONV_LENGTH
 
     def __post_init__(self):  # type: ignore
         # Kernels: (out_channels, in_channels, k, k)

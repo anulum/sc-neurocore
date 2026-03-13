@@ -4,6 +4,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict
 
+from ..constants import (
+    FP_DATA_WIDTH,
+    FP_FRACTION,
+    FP_V_THRESHOLD,
+    FP_REFRACTORY_PERIOD,
+    FP_LFSR_WIDTH,
+    FP_LFSR_SEED,
+)
+
 
 def _mask(value: int, width: int) -> int:
     """Mask to DATA_WIDTH bits and interpret as signed two's complement."""
@@ -36,12 +45,12 @@ class FixedPointLIFNeuron:
         Number of clock cycles to hold after a spike.
     """
 
-    data_width: int = 16
-    fraction: int = 8
+    data_width: int = FP_DATA_WIDTH
+    fraction: int = FP_FRACTION
     v_rest: int = 0
     v_reset: int = 0
-    v_threshold: int = 256  # 1.0 << 8
-    refractory_period: int = 2
+    v_threshold: int = FP_V_THRESHOLD
+    refractory_period: int = FP_REFRACTORY_PERIOD
 
     def __post_init__(self) -> None:
         if not 1 <= self.data_width <= 32:
@@ -126,8 +135,8 @@ class FixedPointLFSR:
     Taps (0-indexed): 15, 13, 12, 10
     """
 
-    width: int = 16
-    seed: int = 0xACE1
+    width: int = FP_LFSR_WIDTH
+    seed: int = FP_LFSR_SEED
 
     def __post_init__(self) -> None:
         if self.seed == 0:
@@ -159,8 +168,8 @@ class FixedPointBitstreamEncoder:
     where P(bit=1) ~ x_value / (2^DATA_WIDTH - 1).
     """
 
-    data_width: int = 16
-    seed_init: int = 0xACE1
+    data_width: int = FP_DATA_WIDTH
+    seed_init: int = FP_LFSR_SEED
 
     def __post_init__(self) -> None:
         self.lfsr = FixedPointLFSR(width=self.data_width, seed=self.seed_init)

@@ -6,23 +6,28 @@ import numpy as np
 
 from ..neurons.stochastic_lif import StochasticLIFNeuron
 from ..utils.bitstreams import BitstreamEncoder
+from ..constants import (
+    RESERVOIR_FEEDBACK_STRENGTH,
+    RESERVOIR_INPUT_STRENGTH,
+    RESERVOIR_SPECTRAL_RADIUS,
+    LAYER_DEFAULT_LENGTH,
+)
 
 
 @dataclass
 class SCRecurrentLayer:
     """
-    Stochastic Computing Recurrent Neural Network (RNN) / Reservoir Layer.
+    SC recurrent / reservoir layer (echo state network).
 
-    Inputs: [Batch, Time, Features] or just sequential vector inputs.
-    Internal State: Neurons connect to themselves (or each other).
+    Spectral radius bound follows Jaeger, GMD Report 148, 2001.
     """
 
     n_inputs: int
     n_neurons: int
-    feedback_strength: float = 0.5
-    input_strength: float = 0.5
-    spectral_radius: float = 0.9  # For reservoir initialization
-    length: int = 1024
+    feedback_strength: float = RESERVOIR_FEEDBACK_STRENGTH
+    input_strength: float = RESERVOIR_INPUT_STRENGTH
+    spectral_radius: float = RESERVOIR_SPECTRAL_RADIUS
+    length: int = LAYER_DEFAULT_LENGTH
     seed: Optional[int] = None
 
     def __post_init__(self):  # type: ignore

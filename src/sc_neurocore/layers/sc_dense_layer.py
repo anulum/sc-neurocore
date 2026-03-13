@@ -9,8 +9,19 @@ import numpy as np
 from ..sources.bitstream_current_source import BitstreamCurrentSource
 from ..neurons.stochastic_lif import StochasticLIFNeuron
 from ..recorders.spike_recorder import BitstreamSpikeRecorder
-
-_NEURON_SEED_OFFSET = 10_000  # separates neuron seeds from synapse seeds
+from ..constants import (
+    NEURON_SEED_OFFSET,
+    DENSE_LAYER_LENGTH,
+    DENSE_Y_MIN,
+    DENSE_Y_MAX,
+    LIF_DT,
+    LIF_V_REST,
+    LIF_V_RESET,
+    LIF_V_THRESHOLD,
+    LIF_TAU_MEM,
+    LIF_LAYER_NOISE_STD,
+    LIF_RESISTANCE,
+)
 
 
 @dataclass
@@ -33,10 +44,10 @@ class SCDenseLayer:
     x_max: float
     w_min: float
     w_max: float
-    length: int = 2048
-    y_min: float = 0.0
-    y_max: float = 0.1
-    dt_ms: float = 1.0
+    length: int = DENSE_LAYER_LENGTH
+    y_min: float = DENSE_Y_MIN
+    y_max: float = DENSE_Y_MAX
+    dt_ms: float = LIF_DT
     neuron_params: Optional[Dict[str, Any]] = None
     base_seed: Optional[int] = None
 
@@ -68,16 +79,16 @@ class SCDenseLayer:
             # Give each neuron its own seed so they don't behave identically
             seed = None
             if self.base_seed is not None:
-                seed = self.base_seed + _NEURON_SEED_OFFSET + i
+                seed = self.base_seed + NEURON_SEED_OFFSET + i
 
             neuron = StochasticLIFNeuron(
-                v_rest=self.neuron_params.get("v_rest", 0.0),
-                v_reset=self.neuron_params.get("v_reset", 0.0),
-                v_threshold=self.neuron_params.get("v_threshold", 1.0),
-                tau_mem=self.neuron_params.get("tau_mem", 20.0),
+                v_rest=self.neuron_params.get("v_rest", LIF_V_REST),
+                v_reset=self.neuron_params.get("v_reset", LIF_V_RESET),
+                v_threshold=self.neuron_params.get("v_threshold", LIF_V_THRESHOLD),
+                tau_mem=self.neuron_params.get("tau_mem", LIF_TAU_MEM),
                 dt=self.dt_ms,
-                noise_std=self.neuron_params.get("noise_std", 0.02),
-                resistance=self.neuron_params.get("resistance", 1.0),
+                noise_std=self.neuron_params.get("noise_std", LIF_LAYER_NOISE_STD),
+                resistance=self.neuron_params.get("resistance", LIF_RESISTANCE),
                 seed=seed,
             )
             self.neurons.append(neuron)

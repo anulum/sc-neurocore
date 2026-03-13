@@ -12,18 +12,28 @@ from dataclasses import dataclass
 from typing import Dict, Any, Optional
 
 from sc_neurocore.accel.jax_backend import jnp, jax, HAS_JAX, jax_lif_step
+from sc_neurocore.constants import (
+    LAYER_DEFAULT_LENGTH,
+    LIF_DT,
+    LIF_V_REST,
+    LIF_V_RESET,
+    LIF_V_THRESHOLD,
+    LIF_TAU_MEM,
+    LIF_RESISTANCE,
+    LIF_LAYER_NOISE_STD,
+)
 
 
 @dataclass
 class JaxSCDenseLayer:
     """
-    Stochastic Dense Layer implemented in JAX.
+    JAX-accelerated stochastic dense layer of LIF neurons.
     """
 
     n_neurons: int
     n_inputs: int
-    bitstream_length: int = 1024
-    dt_ms: float = 1.0
+    bitstream_length: int = LAYER_DEFAULT_LENGTH
+    dt_ms: float = LIF_DT
     neuron_params: Optional[Dict[str, Any]] = None
     seed: Optional[int] = None
 
@@ -35,12 +45,12 @@ class JaxSCDenseLayer:
             self.neuron_params = {}
 
         # Layer Parameters (JAX Arrays)
-        self.v_rest = float(self.neuron_params.get("v_rest", 0.0))
-        self.v_reset = float(self.neuron_params.get("v_reset", 0.0))
-        self.v_threshold = float(self.neuron_params.get("v_threshold", 1.0))
-        self.tau_mem = float(self.neuron_params.get("tau_mem", 20.0))
-        self.resistance = float(self.neuron_params.get("resistance", 1.0))
-        self.noise_std = float(self.neuron_params.get("noise_std", 0.02))
+        self.v_rest = float(self.neuron_params.get("v_rest", LIF_V_REST))
+        self.v_reset = float(self.neuron_params.get("v_reset", LIF_V_RESET))
+        self.v_threshold = float(self.neuron_params.get("v_threshold", LIF_V_THRESHOLD))
+        self.tau_mem = float(self.neuron_params.get("tau_mem", LIF_TAU_MEM))
+        self.resistance = float(self.neuron_params.get("resistance", LIF_RESISTANCE))
+        self.noise_std = float(self.neuron_params.get("noise_std", LIF_LAYER_NOISE_STD))
         self.alpha = float(self.dt_ms / self.tau_mem)
 
         # State (JAX Arrays)
