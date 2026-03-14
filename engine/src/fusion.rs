@@ -129,6 +129,7 @@ impl LearningLayer {
 
     /// Forward pass with STDP weight update.
     /// Returns which neurons spiked.
+    #[allow(clippy::needless_range_loop)]
     pub fn step(&mut self, input_spikes: &[bool], threshold: f64) -> Vec<bool> {
         assert_eq!(input_spikes.len(), self.n_inputs);
         let mut output = vec![false; self.n_neurons];

@@ -38,6 +38,7 @@ impl RecurrentLayer {
     }
 
     /// Process one time step. Returns reference to updated state.
+    #[allow(clippy::needless_range_loop)]
     pub fn step(&mut self, input: &[f64]) -> &[f64] {
         assert_eq!(input.len(), self.n_inputs);
         let mut new_state = vec![0.0; self.n_neurons];

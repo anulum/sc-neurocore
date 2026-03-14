@@ -49,6 +49,7 @@ pub fn watts_strogatz(n: usize, k: usize, p_rewire: f64, seed: u64) -> Vec<u8> {
     adj
 }
 
+#[allow(clippy::needless_range_loop)]
 /// Barabási-Albert scale-free network via preferential attachment.
 ///
 /// Returns adjacency matrix as flat row-major Vec<u8> of shape [n, n].
@@ -62,15 +63,15 @@ pub fn barabasi_albert(n: usize, seed: u64) -> Vec<u8> {
     }
 
     // Seed: node 0 ↔ node 1
-    adj[0 * n + 1] = 1;
-    adj[1 * n + 0] = 1;
+    adj[1] = 1;
+    adj[n] = 1;
     degree[0] = 1;
     degree[1] = 1;
 
     for i in 2..n {
         let total_degree: u64 = degree[..i].iter().sum();
         if total_degree == 0 {
-            adj[i * n + 0] = 1;
+            adj[i * n] = 1;
             degree[i] += 1;
             degree[0] += 1;
             continue;
