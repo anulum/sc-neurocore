@@ -66,7 +66,7 @@ jobs:
           cache: pip
 
       - name: Install package
-        run: bash tools/ci-install-dev.sh
+        run: python tools/ci_install_dev.py
 
       - name: Test + coverage
         run: |
