@@ -15,11 +15,9 @@ pub struct SobolEngine {
 impl SobolEngine {
     /// Initialize with seed (XOR-scramble on direction numbers).
     pub fn new(seed: u32) -> Self {
-        // Dimension 1 Sobol = Van der Corput base 2.
-        // Direction numbers: v_i = 1 << (31 - i).
         let mut direction = [0u32; 32];
-        for i in 0..32 {
-            direction[i] = 1u32 << (31 - i);
+        for (i, d) in direction.iter_mut().enumerate() {
+            *d = 1u32 << (31 - i);
         }
         Self {
             state: seed,
@@ -28,8 +26,8 @@ impl SobolEngine {
         }
     }
 
-    /// Next quasi-random sample in [0, 1).
-    pub fn next(&mut self) -> f64 {
+    /// Draw next quasi-random sample in [0, 1).
+    pub fn sample(&mut self) -> f64 {
         let c = self.index.trailing_ones() as usize;
         self.state ^= self.direction[c.min(31)];
         self.index += 1;
@@ -47,7 +45,7 @@ pub fn generate_sobol_bitstream(p: f64, length: usize, seed: u32) -> Vec<u8> {
     assert!((0.0..=1.0).contains(&p), "p must be in [0,1]");
     let mut engine = SobolEngine::new(seed);
     (0..length)
-        .map(|_| if engine.next() < p { 1u8 } else { 0u8 })
+        .map(|_| if engine.sample() < p { 1u8 } else { 0u8 })
         .collect()
 }
 

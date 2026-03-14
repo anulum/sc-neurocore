@@ -261,7 +261,7 @@ impl HomeostaticLif {
         }
     }
 
-    pub fn default() -> Self {
+    pub fn with_defaults() -> Self {
         Self::new(0.1, 0.01, 0.95)
     }
 
@@ -315,7 +315,7 @@ impl DendriticNeuron {
         }
     }
 
-    pub fn default() -> Self {
+    pub fn with_defaults() -> Self {
         Self::new(0.5)
     }
 
@@ -524,7 +524,7 @@ mod tests {
 
     #[test]
     fn homeostatic_fires_with_strong_input() {
-        let mut n = HomeostaticLif::default();
+        let mut n = HomeostaticLif::with_defaults();
         let mut total = 0;
         for _ in 0..200 {
             total += n.step(25.0);
@@ -534,7 +534,7 @@ mod tests {
 
     #[test]
     fn homeostatic_threshold_adapts() {
-        let mut n = HomeostaticLif::default();
+        let mut n = HomeostaticLif::with_defaults();
         let initial = n.v_threshold;
         for _ in 0..500 {
             n.step(25.0);
@@ -547,7 +547,7 @@ mod tests {
 
     #[test]
     fn homeostatic_no_fire_without_input() {
-        let mut n = HomeostaticLif::default();
+        let mut n = HomeostaticLif::with_defaults();
         let mut total = 0;
         for _ in 0..100 {
             total += n.step(0.0);
@@ -557,7 +557,7 @@ mod tests {
 
     #[test]
     fn homeostatic_threshold_bounded() {
-        let mut n = HomeostaticLif::default();
+        let mut n = HomeostaticLif::with_defaults();
         for _ in 0..10000 {
             n.step(50.0);
         }
@@ -584,7 +584,7 @@ mod tests {
 
     #[test]
     fn dendritic_reset() {
-        let mut n = DendriticNeuron::default();
+        let mut n = DendriticNeuron::with_defaults();
         n.step(1.0, 0.0);
         n.reset();
         assert!((n.last_current).abs() < 1e-12);
