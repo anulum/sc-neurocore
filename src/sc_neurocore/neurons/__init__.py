@@ -10,10 +10,16 @@ from .adex import (
     AlphaNeuron,
     ExpIFNeuron,
     FitzHughNagumoNeuron,
+    HindmarshRoseNeuron,
     HodgkinHuxleyNeuron,
     LapicqueNeuron,
+    MihalasNieburNeuron,
     MorrisLecarNeuron,
+    PoissonNeuron,
     QuadraticIFNeuron,
+    ResonateAndFireNeuron,
+    SpikeResponseNeuron,
+    ThetaNeuron,
 )
 
 __all__ = [
@@ -33,4 +39,10 @@ __all__ = [
     "FitzHughNagumoNeuron",
     "MorrisLecarNeuron",
     "QuadraticIFNeuron",
+    "HindmarshRoseNeuron",
+    "ThetaNeuron",
+    "ResonateAndFireNeuron",
+    "PoissonNeuron",
+    "SpikeResponseNeuron",
+    "MihalasNieburNeuron",
 ]
