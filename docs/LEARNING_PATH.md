@@ -46,7 +46,7 @@ post = syn.apply(bits)  # P(post) ≈ 0.7 * 0.5
 
 | Resource | What you learn |
 |----------|---------------|
-| [Quick Start Tutorial](guides/QUICKSTART_TUTORIAL.md) | Install, first neuron, first layer |
+| [Getting Started](guides/getting-started.md) | Install, first neuron, first layer |
 | API: [Neurons](api/neurons.md), [Synapses](api/synapses.md), [Utilities](api/utils.md) | Class signatures and parameters |
 
 **Checkpoint**: You can encode a value, feed it through a synapse into
@@ -110,7 +110,7 @@ rsyn.apply_reward(1.0)  # delayed reward signal
 |----------|---------------|
 | [Surrogate Gradient Training](tutorials/03_surrogate_gradient_training.md) | Gradient-based SNN training with PyTorch |
 | [Online Learning with STDP](tutorials/08_online_learning_stdp.md) | STDP, R-STDP, eligibility traces |
-| [User Guide](guides/USER_GUIDE.md) | Learning rules, training loops |
+| [User Manual](guides/USER_MANUAL.md) | Learning rules, training loops |
 
 **Checkpoint**: You can train a network to classify a simple pattern
 using either STDP or surrogate gradients.
