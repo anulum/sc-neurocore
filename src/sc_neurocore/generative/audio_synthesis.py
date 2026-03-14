@@ -21,7 +21,7 @@ class SCAudioSynthesizer:
         """
         t = np.linspace(0, duration_ms / 1000, int(self.sample_rate * duration_ms / 1000))
         waveform = probability * np.sin(2 * np.pi * frequency * t)
-        return waveform  # type: ignore
+        return waveform
 
     def bitstream_to_audio(self, bitstream: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """

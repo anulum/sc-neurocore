@@ -8,7 +8,7 @@ class SCDashboard:
         self.n_neurons = n_neurons
         self.history: list[list[float]] = [[] for _ in range(n_neurons)]
 
-    def update(self, firing_rates: list[float], step: int):  # type: ignore
+    def update(self, firing_rates: list[float], step: int) -> None:
         # Update history
         for i, rate in enumerate(firing_rates):
             self.history[i].append(rate)
@@ -17,7 +17,7 @@ class SCDashboard:
 
         self._render(step)
 
-    def _render(self, step: int):  # type: ignore
+    def _render(self, step: int) -> None:
         # ANSI Escape codes for clearing screen/cursor might not work well in all notebook/CLI envs
         # We will just print a frame separator.
 

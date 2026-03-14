@@ -17,7 +17,7 @@ class ChaoticRNG:
     r: float = 4.0
     x: float = 0.5
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self) -> None:
         # Burn-in to forget initial state
         for _ in range(100):
             self.x = self.r * self.x * (1.0 - self.x)

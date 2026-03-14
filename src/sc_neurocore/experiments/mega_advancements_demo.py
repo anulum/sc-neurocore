@@ -13,7 +13,7 @@ from sc_neurocore.hdl_gen.verilog_generator import VerilogGenerator
 from sc_neurocore.hdc.base import HDCEncoder, AssociativeMemory
 
 
-def run_demo():  # type: ignore
+def run_demo() -> None:
     print("--- MEGA ADVANCEMENTS DEMO ---")
 
     # 1. Recurrent Layer
@@ -50,7 +50,7 @@ def run_demo():  # type: ignore
 
     # 5. HDL Gen
     print("\n[5] Testing HDL Generator...")
-    gen = VerilogGenerator("my_sc_chip")  # type: ignore
+    gen = VerilogGenerator("my_sc_chip")
     gen.add_layer("Dense", "L1", {"n_neurons": 64})
     gen.add_layer("Dense", "L2", {"n_neurons": 10})
     verilog = gen.generate()
@@ -70,4 +70,4 @@ def run_demo():  # type: ignore
 
 
 if __name__ == "__main__":
-    run_demo()  # type: ignore
+    run_demo()

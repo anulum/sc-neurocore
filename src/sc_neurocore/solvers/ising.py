@@ -21,13 +21,13 @@ class StochasticIsingGraph:
     temperature: float = 1.0
     anneal_rate: float = 0.99
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self) -> None:
         # Initialize spins randomly
         self.spins = np.random.randint(0, 2, self.num_spins).astype(np.int8)
         # Convert 0/1 to -1/1 for physics calc
         self.bipolar_spins = 2 * self.spins - 1
 
-    def step(self):  # type: ignore
+    def step(self) -> None:
         """
         Perform one Metropolis-Hastings update step (parallel / cellular automaton style).
         """
@@ -71,7 +71,7 @@ class StochasticIsingGraph:
         # Factor 0.5 because J_ij is counted twice in full matrix sum
         interaction = -0.5 * np.dot(self.bipolar_spins, np.dot(self.J, self.bipolar_spins))
         bias = -np.dot(self.h, self.bipolar_spins)
-        return interaction + bias  # type: ignore
+        return interaction + bias
 
     def get_config(self) -> np.ndarray[Any, Any]:
         return self.spins

@@ -65,7 +65,7 @@ class StochasticAttention:
         row_sums = np.sum(scores, axis=1, keepdims=True)
         row_sums[row_sums == 0] = 1.0
         attn_weights = scores / row_sums
-        return np.dot(attn_weights, V)  # type: ignore
+        return np.dot(attn_weights, V)
 
     def forward_softmax(
         self, Q: np.ndarray[Any, Any], K: np.ndarray[Any, Any], V: np.ndarray[Any, Any]
@@ -92,4 +92,4 @@ class StochasticAttention:
         scores -= scores.max(axis=1, keepdims=True)
         exp_scores = np.exp(scores)
         attn_weights = exp_scores / exp_scores.sum(axis=1, keepdims=True)
-        return np.dot(attn_weights, V)  # type: ignore
+        return np.dot(attn_weights, V)

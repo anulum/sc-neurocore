@@ -12,7 +12,7 @@ class SpiceGenerator:
     """
 
     @staticmethod
-    def generate_crossbar(weights: np.ndarray[Any, Any], filename: str):  # type: ignore
+    def generate_crossbar(weights: np.ndarray[Any, Any], filename: str) -> None:
         """
         weights: (Rows, Cols) - Conductance values [0, 1] mapped to [G_off, G_on].
         """

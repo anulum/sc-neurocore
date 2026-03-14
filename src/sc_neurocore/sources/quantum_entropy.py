@@ -19,7 +19,7 @@ class QuantumEntropySource:
     n_qubits: int = 1
     seed: Optional[int] = None
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self) -> None:
         self._rng = np.random.RandomState(self.seed)
         # Initialize |0> state
         self.state = np.zeros(2**self.n_qubits, dtype=np.complex128)

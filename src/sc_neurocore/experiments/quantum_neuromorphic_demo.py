@@ -13,7 +13,7 @@ from sc_neurocore.neurons.homeostatic_lif import HomeostaticLIFNeuron
 from sc_neurocore.models.zoo import SCDigitClassifier
 
 
-def run_demo():  # type: ignore
+def run_demo() -> None:
     print("--- QUANTUM-NEUROMORPHIC DEMO ---")
 
     # 1. Ising Machine
@@ -24,7 +24,7 @@ def run_demo():  # type: ignore
     ising = StochasticIsingGraph(num_spins=3, J=J, h=h, temperature=5.0)
     print(f"    Initial Energy: {ising.get_energy()}")
     for _ in range(100):
-        ising.step()  # type: ignore
+        ising.step()
     print(f"    Final Energy: {ising.get_energy()}")
     print(f"    Config: {ising.get_config()} (Should be aligned)")
 
@@ -62,11 +62,11 @@ def run_demo():  # type: ignore
 
     # 6. Model Zoo
     print("\n[6] Testing Model Zoo (Digit Classifier)...")
-    model = SCDigitClassifier()  # type: ignore
+    model = SCDigitClassifier()
     img = np.random.random((28, 28))
     pred = model.forward(img)
     print(f"    Prediction: {pred}")
 
 
 if __name__ == "__main__":
-    run_demo()  # type: ignore
+    run_demo()

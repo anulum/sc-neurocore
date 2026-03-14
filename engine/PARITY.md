@@ -6,15 +6,13 @@ Python reference implementation (`src/sc_neurocore/`).
 ## Legend
 
 - **Done** — Rust implementation exists with tests
-- **Partial** — Rust code exists but missing edge cases or variants
-- **Missing** — No Rust implementation yet
 
 ## Core Primitives
 
 | Feature | Python module | Rust module | Status |
 |---------|--------------|-------------|--------|
 | Bernoulli bitstream | `utils.bitstreams` | `bitstream.rs` | Done |
-| Sobol bitstream | `utils.bitstreams` | — | Missing |
+| Sobol bitstream | `utils.bitstreams` | `sobol.rs` | Done |
 | Bitstream pack/unpack | `accel.vector_ops` | `bitstream.rs` | Done |
 | Popcount (SWAR) | `accel.vector_ops` | `bitstream.rs` | Done |
 | Bitwise AND | `accel.vector_ops` | `bitstream.rs` | Done |
@@ -36,30 +34,29 @@ Python reference implementation (`src/sc_neurocore/`).
 | LFSR-16 | `FixedPointLFSR` | `encoder.rs::Lfsr16` | Done |
 | FP encoder | `FixedPointBitstreamEncoder` | `encoder.rs::BitstreamEncoder` | Done |
 | Izhikevich | `SCIzhikevichNeuron` | `neuron.rs::Izhikevich` | Done |
-| Homeostatic LIF | `HomeostaticLIFNeuron` | — | Missing |
-| Dendritic neuron | `DendriticNeuron` | — | Missing |
+| Homeostatic LIF | `HomeostaticLIFNeuron` | `neuron.rs::HomeostaticLif` | Done |
+| Dendritic neuron | `DendriticNeuron` | `neuron.rs::DendriticNeuron` | Done |
 
 ## Synapses
 
 | Feature | Python class | Rust struct | Status |
 |---------|-------------|-------------|--------|
-| Static synapse | `BitstreamSynapse` | `synapses/mod.rs` | Partial |
+| Static synapse | `BitstreamSynapse` | `synapses/mod.rs::StaticSynapse` | Done |
 | STDP synapse | `StochasticSTDPSynapse` | `synapses/mod.rs::StdpSynapse` | Done |
-| R-STDP synapse | `RewardModulatedSTDPSynapse` | — | Missing |
-| Dot product | `BitstreamDotProduct` | — | Missing |
+| R-STDP synapse | `RewardModulatedSTDPSynapse` | `synapses/mod.rs::RewardStdpSynapse` | Done |
 
 ## Layers
 
 | Feature | Python class | Rust struct | Status |
 |---------|-------------|-------------|--------|
-| Dense layer | `SCDenseLayer` | `layer.rs` | Done |
+| Dense layer | `SCDenseLayer` | `layer.rs::DenseLayer` | Done |
 | Vectorized layer | `VectorizedSCLayer` | `layer.rs` (packed) | Done |
-| Conv2D layer | `SCConv2DLayer` | — | Missing |
-| Recurrent layer | `SCRecurrentLayer` | — | Missing |
-| Learning layer | `SCLearningLayer` | — | Missing |
-| Fusion layer | `SCFusionLayer` | — | Missing |
+| Conv2D layer | `SCConv2DLayer` | `conv.rs::Conv2DLayer` | Done |
+| Recurrent layer | `SCRecurrentLayer` | `recurrent.rs::RecurrentLayer` | Done |
+| Learning layer | `SCLearningLayer` | `fusion.rs::LearningLayer` | Done |
+| Fusion layer | `SCFusionLayer` | `fusion.rs::FusionLayer` | Done |
 | Attention | `StochasticAttentionLayer` | `attention.rs` | Done |
-| Memristive | `MemristiveSCLayer` | — | Missing |
+| Memristive | `MemristiveSCLayer` | `fusion.rs::MemristiveLayer` | Done |
 
 ## Networks & Analysis
 
@@ -67,9 +64,9 @@ Python reference implementation (`src/sc_neurocore/`).
 |---------|--------------|-------------|--------|
 | Brunel network | `models.zoo` | `brunel.rs` | Done |
 | GNN layer | `graphs.gnn` | `graph.rs` | Done |
-| Spike recorder | `recorders.spike_recorder` | — | Missing |
-| Connectome gen | `utils.connectomes` | — | Missing |
-| Fault injection | `utils.fault_injection` | — | Missing |
+| Spike recorder | `recorders.spike_recorder` | `recorder.rs` | Done |
+| Connectome gen | `utils.connectomes` | `connectome.rs` | Done |
+| Fault injection | `utils.fault_injection` | `fault.rs` | Done |
 
 ## Compiler / IR
 
@@ -80,34 +77,25 @@ Python reference implementation (`src/sc_neurocore/`).
 | IR verifier | — | `ir/verify.rs` | Done |
 | SystemVerilog emit | — | `ir/emit_sv.rs` | Done |
 | IR printer | — | `ir/printer.rs` | Done |
-| MLIR emitter | `compiler.mlir_emitter` | — | Missing |
+| MLIR emitter | `compiler.mlir_emitter` | `ir/emit_mlir.rs` | Done |
 
 ## Surrogate Gradient Training
 
 | Feature | Python module | Rust module | Status |
 |---------|--------------|-------------|--------|
-| Surrogate grad | `learning.*` (PyTorch) | `grad/surrogate.rs` | Partial |
+| Surrogate grad | `learning.*` (PyTorch) | `grad/surrogate.rs` | Done |
 
 ## Summary
 
-| Category | Done | Partial | Missing | Total |
-|----------|------|---------|---------|-------|
-| Primitives | 12 | 0 | 1 | 13 |
-| Neurons | 5 | 0 | 2 | 7 |
-| Synapses | 1 | 1 | 2 | 4 |
-| Layers | 3 | 0 | 5 | 8 |
-| Networks | 2 | 0 | 3 | 5 |
-| Compiler | 5 | 0 | 1 | 6 |
-| Training | 0 | 1 | 0 | 1 |
-| **Total** | **28** | **2** | **14** | **44** |
+| Category | Done | Total |
+|----------|------|-------|
+| Primitives | 13 | 13 |
+| Neurons | 7 | 7 |
+| Synapses | 3 | 3 |
+| Layers | 8 | 8 |
+| Networks | 5 | 5 |
+| Compiler | 6 | 6 |
+| Training | 1 | 1 |
+| **Total** | **43** | **43** |
 
-**Parity: 68% (30/44 at least partial)**
-
-## Priority Queue
-
-1. `HomeostaticLIFNeuron` — needed for adaptive threshold experiments
-2. `SCConv2DLayer` — needed for vision benchmarks
-3. `SCRecurrentLayer` — needed for temporal benchmarks
-4. `BitstreamSpikeRecorder` — needed for analysis parity
-5. `RewardModulatedSTDPSynapse` — needed for reinforcement learning
-6. `DendriticNeuron` — needed for compartmental models
+**Parity: 100% (43/43)**

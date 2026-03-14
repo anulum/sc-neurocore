@@ -16,7 +16,7 @@ from sc_neurocore.ensembles.orchestrator import EnsembleOrchestrator
 from sc_neurocore.core.orchestrator import CognitiveOrchestrator
 
 
-def run_spatial_gen_demo():  # type: ignore
+def run_spatial_gen_demo() -> None:
     print("--- SPATIAL GENERATIVE MULTIMODAL DEMO ---")
 
     # 1. World Model & Planning
@@ -57,4 +57,4 @@ def run_spatial_gen_demo():  # type: ignore
 
 
 if __name__ == "__main__":
-    run_spatial_gen_demo()  # type: ignore
+    run_spatial_gen_demo()

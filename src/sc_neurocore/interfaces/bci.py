@@ -22,7 +22,7 @@ class BCIDecoder:
         s_max = np.max(signal)
         if s_max - s_min == 0:
             return np.zeros_like(signal)
-        return (signal - s_min) / (s_max - s_min)  # type: ignore
+        return (signal - s_min) / (s_max - s_min)
 
     def encode_to_bitstream(
         self, signal: np.ndarray[Any, Any], length: int = 256

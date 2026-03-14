@@ -30,7 +30,7 @@ class SCTrainingLoop:
         """
         for gen in range(generations):
             # 1. Run forward pass
-            spikes = agent.run_epoch(input_data)  # type: ignore
+            spikes = agent.run_epoch(input_data)
 
             # 2. Get reward from environment
             reward = env_step_func(spikes)
@@ -45,7 +45,7 @@ class SCTrainingLoop:
             logger.info("RL Epoch %d: Reward = %.4f", gen, reward)
 
     @staticmethod
-    def train_multimodal_fusion(fusion_layer, dataset, epochs: int = 5):  # type: ignore
+    def train_multimodal_fusion(fusion_layer, dataset, epochs: int = 5) -> None:
         """
         Stub for training weights in a fusion layer.
         """

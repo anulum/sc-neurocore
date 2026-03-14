@@ -25,7 +25,7 @@ class PhotonicBitstreamLayer:
         # Normalized intensity
         intensity = 0.5 + 0.5 * np.cos(phi)
 
-        return intensity  # type: ignore
+        return intensity
 
     def forward(
         self, input_probs: np.ndarray[Any, Any], length: int = 1024

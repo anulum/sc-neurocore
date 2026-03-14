@@ -18,7 +18,7 @@ class Morphism:
         self.func = func
         self.name = name
 
-    def __call__(self, obj: CategoryObject) -> CategoryObject:  # type: ignore
+    def __call__(self, obj: CategoryObject) -> CategoryObject:
         return CategoryObject(data=self.func(obj.data), domain=self.name)
 
 
@@ -46,7 +46,7 @@ class CategoryTheoryBridge:
         """
         prob_1 = np.abs(state_vector[1]) ** 2
         concentration = prob_1 * 10.0
-        return concentration  # type: ignore
+        return concentration
 
     @staticmethod
     def bio_to_stochastic(concentration: float, length: int = 100) -> np.ndarray[Any, Any]:
@@ -55,7 +55,7 @@ class CategoryTheoryBridge:
         """
         p = np.clip(concentration / 10.0, 0, 1)
         rands = np.random.random(length)
-        return (rands < p).astype(np.uint8)  # type: ignore
+        return (rands < p).astype(np.uint8)
 
     def get_functor(self, source: str, target: str) -> Morphism:
         if source == "Stochastic" and target == "Quantum":

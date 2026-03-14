@@ -10,7 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 from sc_neurocore.layers.sc_learning_layer import SCLearningLayer
 
 
-def run_learning_experiment():  # type: ignore
+def run_learning_experiment() -> None:
     print("Starting SC Learning Experiment (STDP)...")
 
     # 10 inputs, 2 neurons
@@ -54,4 +54,4 @@ def run_learning_experiment():  # type: ignore
 
 
 if __name__ == "__main__":
-    run_learning_experiment()  # type: ignore
+    run_learning_experiment()

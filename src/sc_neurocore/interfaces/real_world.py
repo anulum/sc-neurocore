@@ -13,11 +13,11 @@ class LSLBridge:
     (Mock implementation for standalone use).
     """
 
-    def __init__(self, stream_name="NeuromorphicIn"):  # type: ignore
+    def __init__(self, stream_name="NeuromorphicIn") -> None:
         self.stream_name = stream_name
         logger.info("LSL: Listening for stream '%s'...", stream_name)
 
-    def receive_chunk(self, max_samples=32) -> np.ndarray[Any, Any]:  # type: ignore
+    def receive_chunk(self, max_samples=32) -> np.ndarray[Any, Any]:
         """
         Simulates receiving a chunk of samples.
         In real version: calls inlet.pull_chunk().
@@ -32,11 +32,11 @@ class ROS2Node:
     Publishes motor commands from sc-neurocore to robots.
     """
 
-    def __init__(self, node_name="neuro_controller"):  # type: ignore
+    def __init__(self, node_name="neuro_controller") -> None:
         self.node_name = node_name
         logger.info("ROS2: Node '%s' initialized.", node_name)
 
-    def publish_cmd_vel(self, linear_x: float, angular_z: float):  # type: ignore
+    def publish_cmd_vel(self, linear_x: float, angular_z: float) -> None:
         """
         Simulates publishing to /cmd_vel.
         """

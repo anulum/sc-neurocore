@@ -13,7 +13,7 @@ from sc_neurocore.viz.web_viz import WebVisualizer
 from sc_neurocore.layers.vectorized_layer import VectorizedSCLayer
 
 
-def run_system_demo():  # type: ignore
+def run_system_demo() -> None:
     print("--- SYSTEM LEVEL ADVANCEMENTS DEMO ---")
 
     # 1. JIT Check
@@ -31,10 +31,10 @@ def run_system_demo():  # type: ignore
     layer = VectorizedSCLayer(n_inputs=10, n_neurons=5, length=256)
 
     # Manually decorate for demo
-    layer.forward = track_energy(layer.forward)  # type: ignore
+    layer.forward = track_energy(layer.forward)
 
-    profiler.reset()  # type: ignore
-    _ = layer.forward(np.random.random(10))  # type: ignore
+    profiler.reset()
+    _ = layer.forward(np.random.random(10))
 
     energy = profiler.estimate_energy()
     co2 = profiler.co2_emission_g()
@@ -60,4 +60,4 @@ def run_system_demo():  # type: ignore
 
 
 if __name__ == "__main__":
-    run_system_demo()  # type: ignore
+    run_system_demo()

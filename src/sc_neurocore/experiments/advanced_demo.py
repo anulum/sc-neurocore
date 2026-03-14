@@ -14,7 +14,7 @@ from sc_neurocore.utils.adaptive import AdaptiveInference
 from sc_neurocore.dashboard.text_dashboard import SCDashboard
 
 
-def run_advanced_demo():  # type: ignore
+def run_advanced_demo() -> None:
     print("Initializing SC-NeuroCore Advanced Features...")
 
     # 1. Bridge: Mock loading weights
@@ -60,17 +60,17 @@ def run_advanced_demo():  # type: ignore
         fused_input = fusion.forward({"audio": audio_in, "visual": visual_in})
 
         # Adaptive Execution Wrapper
-        def run_layer_step():  # type: ignore
+        def run_layer_step() -> None:
             # In a real adaptive loop, we would increment 'length'
             # Here we simulate the result of a forward pass
-            res = layer.forward(fused_input)  # type: ignore
+            res = layer.forward(fused_input)
             # return mean firing rate or confidence as metric?
             # actually adaptive usually runs *inside* forward.
             # We'll just call forward here.
             return res
 
         # Run
-        rates = run_layer_step()  # type: ignore
+        rates = run_layer_step()
 
         # Update Dashboard
         dash.update(rates, step)
@@ -81,4 +81,4 @@ def run_advanced_demo():  # type: ignore
 
 
 if __name__ == "__main__":
-    run_advanced_demo()  # type: ignore
+    run_advanced_demo()

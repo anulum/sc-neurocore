@@ -37,7 +37,7 @@ class CodeSafetyVerifier:
 
         return True
 
-    def verify_logic_invariant(self, func, input_sample, expected_condition):  # type: ignore
+    def verify_logic_invariant(self, func, input_sample, expected_condition) -> None:
         """
         Dynamic verification (Unit Test on the fly).
         """

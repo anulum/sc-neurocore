@@ -12,15 +12,15 @@ from sc_neurocore.interfaces.bci import BCIDecoder
 from sc_neurocore.quantum.hybrid import QuantumStochasticLayer
 
 
-def run_agent_demo():  # type: ignore
+def run_agent_demo() -> None:
     print("--- COGNITIVE AGENT SYNERGY DEMO ---")
 
     # 1. Initialize Modules
     orch = CognitiveOrchestrator()
-    lsl = LSLBridge()  # type: ignore
+    lsl = LSLBridge()
     bci = BCIDecoder(channels=8)
     quantum = QuantumStochasticLayer(n_qubits=8)
-    ros = ROS2Node()  # type: ignore
+    ros = ROS2Node()
 
     # Register in orchestrator
     orch.register_module("bci", bci)  # Manual mapping needed due to specialized 'encode'
@@ -55,4 +55,4 @@ def run_agent_demo():  # type: ignore
 
 
 if __name__ == "__main__":
-    run_agent_demo()  # type: ignore
+    run_agent_demo()

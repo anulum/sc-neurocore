@@ -13,7 +13,7 @@ class WolframHypergraph:
     edges: List[Tuple[int, ...]]
     max_node_id: int
 
-    def evolve(self, steps: int = 1):  # type: ignore
+    def evolve(self, steps: int = 1) -> None:
         """
         Applies a rewrite rule.
         Rule: {{x, y}, {y, z}} -> {{x, z}, {x, w}, {y, w}}
@@ -58,9 +58,9 @@ class WolframHypergraph:
             # Keep unmatched edges
             for k, e in enumerate(self.edges):
                 if k not in matched_indices:
-                    new_edges.append(e)  # type: ignore
+                    new_edges.append(e)
 
-            self.edges = new_edges  # type: ignore
+            self.edges = new_edges
 
     def dimension_estimate(self) -> float:
         """

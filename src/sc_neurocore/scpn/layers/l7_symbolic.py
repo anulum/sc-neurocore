@@ -158,7 +158,7 @@ class L7_SymbolicLayer:
         # Based on 13-sphere / 78-line connectivity pattern
         metatron_nodes = 13
         active_nodes = np.sum(self.symbol_activations[:metatron_nodes] > 0.5)
-        self.metatron_flow = active_nodes / metatron_nodes  # type: ignore
+        self.metatron_flow = active_nodes / metatron_nodes
         # Add flow dynamics
         self.metatron_flow = 0.9 * self.metatron_flow + 0.1 * np.random.random()
 
@@ -272,7 +272,7 @@ class L7_SymbolicLayer:
         """Return normalized glyph vector for external use."""
         return self.glyph_vector / (np.max(self.glyph_vector) + 1e-8)
 
-    def stimulate_meridian(self, meridian_id: int, intensity: float):  # type: ignore
+    def stimulate_meridian(self, meridian_id: int, intensity: float) -> None:
         """Stimulate a specific meridian."""
         if 0 <= meridian_id < self.params.n_meridians:
             self.meridian_qi[meridian_id] = np.clip(

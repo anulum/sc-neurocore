@@ -62,7 +62,7 @@ class VectorizedSCLayer:
     sparse: bool = False
     connectivity: float = 1.0
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self) -> None:
         if self.sparse and not HAS_SCIPY_SPARSE:
             raise ImportError("scipy is required for sparse=True")
         if not 0.0 < self.connectivity <= 1.0:
@@ -79,7 +79,7 @@ class VectorizedSCLayer:
 
     # -- Dense path (unchanged) ------------------------------------------------
 
-    def _refresh_packed_weights(self):  # type: ignore
+    def _refresh_packed_weights(self) -> None:
         w_probs = self.weights
         bits = (
             np.random.random((self.n_neurons, self.n_inputs, self.length)) < w_probs[:, :, None]
@@ -148,7 +148,7 @@ class VectorizedSCLayer:
             counts = gpu_vec_mac(self.packed_weights, packed_inputs_dev)
             outputs = to_host(counts).astype(np.float64)
         else:
-            products = vec_and(self.packed_weights, packed_inputs[None, :, :])  # type: ignore
+            products = vec_and(self.packed_weights, packed_inputs[None, :, :])
             flat_products = products.reshape(self.n_neurons, -1)
             outputs = _popcount_rows(flat_products)
 

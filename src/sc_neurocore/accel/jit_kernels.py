@@ -12,8 +12,8 @@ except ImportError:
     HAS_NUMBA = False
 
     # Fallback decorator: returns the original function
-    def jit(*args, **kwargs):  # type: ignore
-        def decorator(func):  # type: ignore
+    def jit(*args, **kwargs) -> None:
+        def decorator(func) -> None:
             return func
 
         return decorator
@@ -23,7 +23,7 @@ except ImportError:
     )
 
 
-@jit(nopython=True)  # type: ignore
+@jit(nopython=True)
 def jit_pack_bits(
     bitstream: np.ndarray[Any, Any], packed_arr: np.ndarray[Any, Any]
 ) -> None:  # pragma: no cover
@@ -44,7 +44,7 @@ def jit_pack_bits(
         packed_arr[i] = val
 
 
-@jit(nopython=True)  # type: ignore
+@jit(nopython=True)
 def jit_vec_mac(  # type: ignore
     packed_weights: np.ndarray[Any, Any],
     packed_inputs: np.ndarray[Any, Any],

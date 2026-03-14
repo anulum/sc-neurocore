@@ -37,4 +37,4 @@ class QuantumStochasticLayer:
         rands = np.random.random((self.n_qubits, self.length))
         out_bits = (rands < p_measure[:, None]).astype(np.uint8)
 
-        return out_bits  # type: ignore
+        return out_bits

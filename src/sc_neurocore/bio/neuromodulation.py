@@ -15,7 +15,7 @@ class NeuromodulatorSystem:
     ht_level: float = 0.5
     ne_level: float = 0.1
 
-    def update_levels(self, reward: float, stress: float):  # type: ignore
+    def update_levels(self, reward: float, stress: float) -> None:
         """
         Adjust chemicals based on environmental feedback.
         """

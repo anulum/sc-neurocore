@@ -10,14 +10,14 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("SCPN_Diagnostic")
 
 
-def verify_link():  # type: ignore
+def verify_link() -> None:
     print("=" * 60)
     print("SCPN HARDWARE LINK DIAGNOSTIC TOOL")
     print("=" * 60)
 
     print("\n[1/3] Checking FPGA Subsystem (Sector B)...")
     try:
-        driver = SC_NeuroCore_Driver(mode="HARDWARE")  # type: ignore
+        driver = SC_NeuroCore_Driver(mode="HARDWARE")
         print(">> SUCCESS: PYNQ-Z2 Detected. Bitstream loaded.")
     except RealityHardwareError:
         print(">> FAILURE: PYNQ Hardware not found. (Expected if on x86 Dev Workstation)")
@@ -63,4 +63,4 @@ def verify_link():  # type: ignore
 
 
 if __name__ == "__main__":
-    verify_link()  # type: ignore
+    verify_link()

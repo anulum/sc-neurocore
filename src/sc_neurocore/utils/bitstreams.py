@@ -201,8 +201,8 @@ class BitstreamAverager:
             raise SCEncodingError("Bit must be 0 or 1.")
 
         # Remove old bit from sum if buffer is wrapping around
-        old_bit = self._buffer[self._index]  # type: ignore
-        self._buffer[self._index] = bit  # type: ignore
+        old_bit = self._buffer[self._index]
+        self._buffer[self._index] = bit
 
         if self._filled:
             self._running_sum = self._running_sum - old_bit + bit

@@ -30,7 +30,7 @@ class RewardModulatedSTDPSynapse(StochasticSTDPSynapse):
     def process_step(self, pre_bit: int, post_bit: int) -> int:
         # 1. Compute Output (Same as standard)
         w_prob = self.effective_weight_probability()
-        weight_bit = 1 if self._rng.random() < w_prob else 0  # type: ignore
+        weight_bit = 1 if self._rng.random() < w_prob else 0
         output_bit = pre_bit & weight_bit
 
         # 2. Update Eligibility Trace instead of Weight
@@ -51,7 +51,7 @@ class RewardModulatedSTDPSynapse(StochasticSTDPSynapse):
 
         return output_bit
 
-    def apply_reward(self, reward: float):  # type: ignore
+    def apply_reward(self, reward: float) -> None:
         """
         Global reward signal triggers weight update.
         """

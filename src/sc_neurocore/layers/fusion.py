@@ -29,7 +29,7 @@ class SCFusionLayer:
     fusion_weights: Dict[str, float]
     length: int = LAYER_DEFAULT_LENGTH
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self) -> None:
         # Verify weights sum to <= 1 (or normalized)
         total = sum(self.fusion_weights.values())
         self.norm_weights = {k: v / total for k, v in self.fusion_weights.items()}

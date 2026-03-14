@@ -87,6 +87,82 @@ impl StdpSynapse {
     }
 }
 
+/// Reward-modulated STDP synapse.
+///
+/// Eligibility trace accumulates Hebbian coincidences; weight update
+/// fires only when a global reward signal arrives.
+/// Izhikevich, Cerebral Cortex 17(10), 2007.
+#[derive(Clone, Debug)]
+pub struct RewardStdpSynapse {
+    pub weight: f64,
+    pub w_min: f64,
+    pub w_max: f64,
+    pub eligibility: f64,
+    pub trace_decay: f64,
+    pub anti_hebbian_scale: f64,
+    pub learning_rate: f64,
+}
+
+impl RewardStdpSynapse {
+    pub fn new(w: f64, w_min: f64, w_max: f64) -> Self {
+        Self {
+            weight: w,
+            w_min,
+            w_max,
+            eligibility: 0.0,
+            trace_decay: 0.95,
+            anti_hebbian_scale: 0.5,
+            learning_rate: 0.01,
+        }
+    }
+
+    /// Accumulate eligibility trace from pre/post spike coincidence.
+    pub fn step(&mut self, pre: bool, post: bool) {
+        if pre && post {
+            self.eligibility += 1.0;
+        } else if pre && !post {
+            self.eligibility -= self.anti_hebbian_scale;
+        }
+        self.eligibility *= self.trace_decay;
+    }
+
+    /// Apply reward signal: weight += lr * reward * eligibility.
+    pub fn apply_reward(&mut self, reward: f64) {
+        let update = self.learning_rate * reward * self.eligibility;
+        self.weight = (self.weight + update).clamp(self.w_min, self.w_max);
+    }
+}
+
+/// Static synapse with excitatory/inhibitory polarity.
+#[derive(Clone, Debug)]
+pub struct StaticSynapse {
+    pub weight: f64,
+    pub is_excitatory: bool,
+    pub delay: u32,
+}
+
+impl StaticSynapse {
+    pub fn new(weight: f64, is_excitatory: bool) -> Self {
+        Self {
+            weight: weight.abs(),
+            is_excitatory,
+            delay: 0,
+        }
+    }
+
+    /// Compute post-synaptic current from pre-synaptic spike.
+    pub fn transmit(&self, pre_spike: bool) -> f64 {
+        if !pre_spike {
+            return 0.0;
+        }
+        if self.is_excitatory {
+            self.weight
+        } else {
+            -self.weight
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -127,6 +203,56 @@ mod tests {
         // Pre spike triggers LTD via accumulated post-trace
         syn.step(true, false, &params);
         assert!(syn.weight < w_before, "LTD must decrease weight");
+    }
+
+    // ── RewardStdpSynapse tests ─────────────────────────────────
+
+    #[test]
+    fn rstdp_positive_reward_potentiates() {
+        let mut syn = RewardStdpSynapse::new(0.5, 0.0, 1.0);
+        for _ in 0..10 {
+            syn.step(true, true);
+        }
+        let w_before = syn.weight;
+        syn.apply_reward(1.0);
+        assert!(syn.weight > w_before);
+    }
+
+    #[test]
+    fn rstdp_negative_reward_depresses() {
+        let mut syn = RewardStdpSynapse::new(0.5, 0.0, 1.0);
+        for _ in 0..10 {
+            syn.step(true, true);
+        }
+        let w_before = syn.weight;
+        syn.apply_reward(-1.0);
+        assert!(syn.weight < w_before);
+    }
+
+    #[test]
+    fn rstdp_weight_bounded() {
+        let mut syn = RewardStdpSynapse::new(0.5, 0.0, 1.0);
+        for _ in 0..100 {
+            syn.step(true, true);
+            syn.apply_reward(10.0);
+        }
+        assert!(syn.weight <= 1.0);
+        assert!(syn.weight >= 0.0);
+    }
+
+    // ── StaticSynapse tests ───────────────────────────────────────
+
+    #[test]
+    fn static_excitatory() {
+        let syn = StaticSynapse::new(0.5, true);
+        assert!((syn.transmit(true) - 0.5).abs() < 1e-12);
+        assert!((syn.transmit(false)).abs() < 1e-12);
+    }
+
+    #[test]
+    fn static_inhibitory() {
+        let syn = StaticSynapse::new(0.5, false);
+        assert!((syn.transmit(true) + 0.5).abs() < 1e-12);
     }
 
     #[test]

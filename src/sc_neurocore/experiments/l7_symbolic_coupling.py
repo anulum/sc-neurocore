@@ -74,7 +74,7 @@ def gather_symbolic_features() -> tuple[list[float], dict[str, float]]:
     return normalized_features, raw_diagnostics
 
 
-def run():  # type: ignore
+def run() -> None:
     features, diagnostics = gather_symbolic_features()
     glyph_weights = [GLYPH_WEIGHT_MAP[name] for name in GLYPH_FEATURE_ORDER]
     print("Applying glyph weights (phi, Fibonacci, Metatron, Platonic, E8, health):", glyph_weights)
@@ -118,4 +118,4 @@ def run():  # type: ignore
 
 
 if __name__ == "__main__":
-    run()  # type: ignore
+    run()

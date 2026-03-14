@@ -92,7 +92,7 @@ class UserProfile:
     session_count: int = 0
     preferred_target_hz: Optional[float] = None
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self) -> None:
         # Populate defaults from chronotype if not provided
         if not self.preferred_cost_weights:
             self.preferred_cost_weights = dict(

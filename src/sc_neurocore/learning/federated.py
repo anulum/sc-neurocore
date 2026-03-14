@@ -38,7 +38,7 @@ class FederatedAggregator:
 
         aggregated = (sums > threshold).astype(np.uint8)
 
-        return aggregated  # type: ignore
+        return aggregated
 
     @staticmethod
     def secure_sum_protocol(client_gradients: list[np.ndarray[Any, Any]]) -> np.ndarray[Any, Any]:
@@ -49,4 +49,4 @@ class FederatedAggregator:
         # In SC, 'Summing' bitstreams usually produces an integer result (0..N).
         # This is strictly not a bitstream anymore but a discretized value.
         stack = np.stack(client_gradients, axis=0)
-        return np.sum(stack, axis=0)  # type: ignore
+        return np.sum(stack, axis=0)

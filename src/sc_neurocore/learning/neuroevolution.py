@@ -24,7 +24,7 @@ class SNNGeneticEvolver:
         # Initialize population
         self.population = [layer_factory() for _ in range(self.population_size)]
 
-    def evolve(self, generations: int):  # type: ignore
+    def evolve(self, generations: int) -> None:
         for gen in range(generations):
             # 1. Evaluate Fitness
             scores = [self.fitness_func(ind) for ind in self.population]
@@ -43,15 +43,15 @@ class SNNGeneticEvolver:
             while len(next_gen) < self.population_size:
                 # Simple random selection for parents
                 p1, p2 = np.random.choice(ranked_pop[: n_elite + 5], 2, replace=False)
-                child = self._crossover(p1, p2)  # type: ignore
-                self._mutate(child)  # type: ignore
+                child = self._crossover(p1, p2)
+                self._mutate(child)
                 next_gen.append(child)
 
             self.population = next_gen
 
         return self.population[0]  # Return best
 
-    def _crossover(self, p1, p2):  # type: ignore
+    def _crossover(self, p1, p2) -> None:
         # Create new instance
         child = self.layer_factory()
         if not hasattr(p1, "weights"):
@@ -62,7 +62,7 @@ class SNNGeneticEvolver:
         child.weights = np.where(mask, p1.weights, p2.weights)
         return child
 
-    def _mutate(self, ind):  # type: ignore
+    def _mutate(self, ind) -> None:
         if not hasattr(ind, "weights"):
             return
 

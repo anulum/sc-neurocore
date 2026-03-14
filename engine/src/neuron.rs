@@ -229,9 +229,110 @@ impl BitstreamAverager {
     }
 }
 
+/// Homeostatic LIF neuron with adaptive threshold.
+///
+/// Threshold adapts via EMA of spike rate toward a target setpoint.
+/// Turrigiano, Cold Spring Harb Perspect Biol 4:a005736, 2012.
+#[derive(Clone, Debug)]
+pub struct HomeostaticLif {
+    pub v: f64,
+    pub v_threshold: f64,
+    pub v_rest: f64,
+    pub v_reset: f64,
+    pub rate_trace: f64,
+    pub target_rate: f64,
+    pub adaptation_rate: f64,
+    pub trace_decay: f64,
+    initial_threshold: f64,
+}
+
+impl HomeostaticLif {
+    pub fn new(target_rate: f64, adaptation_rate: f64, trace_decay: f64) -> Self {
+        Self {
+            v: 0.0,
+            v_threshold: 1.0,
+            v_rest: 0.0,
+            v_reset: 0.0,
+            rate_trace: 0.0,
+            target_rate,
+            adaptation_rate,
+            trace_decay,
+            initial_threshold: 1.0,
+        }
+    }
+
+    pub fn default() -> Self {
+        Self::new(0.1, 0.01, 0.95)
+    }
+
+    /// LIF step with threshold adaptation. Returns 1 on spike.
+    pub fn step(&mut self, current: f64) -> i32 {
+        // Leak-integrate
+        let tau = 20.0;
+        self.v += (-(self.v - self.v_rest) + current) / tau;
+
+        let spike = if self.v >= self.v_threshold {
+            self.v = self.v_reset;
+            1
+        } else {
+            0
+        };
+
+        // EMA spike rate tracking
+        self.rate_trace = self.rate_trace * self.trace_decay + spike as f64 * (1.0 - self.trace_decay);
+
+        // Threshold adaptation
+        let error = self.rate_trace - self.target_rate;
+        self.v_threshold += self.adaptation_rate * error;
+        self.v_threshold = self
+            .v_threshold
+            .clamp(0.1, self.initial_threshold * 10.0);
+
+        spike
+    }
+
+    pub fn reset(&mut self) {
+        self.v = self.v_rest;
+        self.rate_trace = 0.0;
+        self.v_threshold = self.initial_threshold;
+    }
+}
+
+/// XOR-nonlinearity dendritic neuron.
+///
+/// Koch, Biophysics of Computation, 1999, Ch. 12.
+/// Output = 1 if (d1 + d2 - 2*d1*d2) > threshold.
+#[derive(Clone, Debug)]
+pub struct DendriticNeuron {
+    pub threshold: f64,
+    last_current: f64,
+}
+
+impl DendriticNeuron {
+    pub fn new(threshold: f64) -> Self {
+        Self {
+            threshold,
+            last_current: 0.0,
+        }
+    }
+
+    pub fn default() -> Self {
+        Self::new(0.5)
+    }
+
+    pub fn step(&mut self, input_a: f64, input_b: f64) -> i32 {
+        self.last_current = input_a + input_b - 2.0 * input_a * input_b;
+        if self.last_current > self.threshold { 1 } else { 0 }
+    }
+
+    pub fn reset(&mut self) {
+        self.last_current = 0.0;
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{mask, BitstreamAverager, FixedPointLif, Izhikevich};
+    use super::{mask, BitstreamAverager, DendriticNeuron, FixedPointLif, HomeostaticLif, Izhikevich};
 
     #[test]
     fn mask_branchless_matches_original() {
@@ -412,6 +513,76 @@ mod tests {
     fn averager_empty_returns_zero() {
         let avg = BitstreamAverager::new(10);
         assert!(avg.estimate().abs() < 1e-12);
+    }
+
+    // ── HomeostaticLif tests ──────────────────────────────────────
+
+    #[test]
+    fn homeostatic_fires_with_strong_input() {
+        let mut n = HomeostaticLif::default();
+        let mut total = 0;
+        for _ in 0..200 {
+            total += n.step(25.0);
+        }
+        assert!(total > 0, "must fire with strong input");
+    }
+
+    #[test]
+    fn homeostatic_threshold_adapts() {
+        let mut n = HomeostaticLif::default();
+        let initial = n.v_threshold;
+        for _ in 0..500 {
+            n.step(25.0);
+        }
+        assert!(
+            (n.v_threshold - initial).abs() > 1e-6,
+            "threshold must adapt"
+        );
+    }
+
+    #[test]
+    fn homeostatic_no_fire_without_input() {
+        let mut n = HomeostaticLif::default();
+        let mut total = 0;
+        for _ in 0..100 {
+            total += n.step(0.0);
+        }
+        assert_eq!(total, 0);
+    }
+
+    #[test]
+    fn homeostatic_threshold_bounded() {
+        let mut n = HomeostaticLif::default();
+        for _ in 0..10000 {
+            n.step(50.0);
+        }
+        assert!(n.v_threshold >= 0.1);
+        assert!(n.v_threshold <= 10.0);
+    }
+
+    // ── DendriticNeuron tests ─────────────────────────────────────
+
+    #[test]
+    fn dendritic_xor_truth_table() {
+        let mut n = DendriticNeuron::new(0.5);
+        assert_eq!(n.step(0.0, 0.0), 0); // 0+0-0 = 0
+        assert_eq!(n.step(1.0, 0.0), 1); // 1+0-0 = 1
+        assert_eq!(n.step(0.0, 1.0), 1); // 0+1-0 = 1
+        assert_eq!(n.step(1.0, 1.0), 0); // 1+1-2 = 0
+    }
+
+    #[test]
+    fn dendritic_subthreshold() {
+        let mut n = DendriticNeuron::new(0.5);
+        assert_eq!(n.step(0.2, 0.1), 0);
+    }
+
+    #[test]
+    fn dendritic_reset() {
+        let mut n = DendriticNeuron::default();
+        n.step(1.0, 0.0);
+        n.reset();
+        assert!((n.last_current).abs() < 1e-12);
     }
 
     #[test]

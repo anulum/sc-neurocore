@@ -29,7 +29,7 @@ class SCConv2DLayer:
     padding: int = 0
     length: int = LAYER_CONV_LENGTH
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self) -> None:
         # Kernels: (out_channels, in_channels, k, k)
         self.kernels = np.random.uniform(
             0.0, 1.0, (self.out_channels, self.in_channels, self.kernel_size, self.kernel_size)

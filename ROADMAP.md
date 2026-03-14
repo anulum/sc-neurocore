@@ -1,6 +1,6 @@
 # Roadmap
 
-> Last updated: 2026-03-09 (v3.10.0). Priorities may shift based on
+> Last updated: 2026-03-14 (v3.11.0). Priorities may shift based on
 > validation results and community feedback.
 
 ## v3.8 — Hardening & Edge AI Readiness ✓
@@ -27,16 +27,20 @@ Live at GitHub Pages via mkdocstrings. Deploys on push to main.
 
 `.github/workflows/stale.yml` — labels after 60 days, closes after 14 more.
 
-### Rust engine feature parity
+### ~~Rust engine feature parity~~ ✓
 
-- Attention kernel: fused softmax in SIMD
-- Graph layer: sparse CSR backend
-- MLIR emitter: full operator coverage for L1-L16 adapters
+Attention kernel: multi-head softmax with SIMD dispatch (475 lines).
+Graph layer: CSR sparse backend (461 lines). MLIR emitter: CIRCT
+hw/comb dialect output from IR graphs. 44/44 Python→Rust parity
+(neurons, synapses, layers, networks, compiler IR).
 
-### Expanded SIMD kernels (issue #28)
+### ~~Expanded SIMD kernels (issue #28)~~ ✓
 
-Add ARM SVE and RISC-V Vector (RVV) kernel variants for
-sub-10 µs latency on automotive and edge ASICs.
+AVX-512, AVX2, ARM NEON, ARM SVE, RISC-V RVV backends with
+runtime dispatch. Operations: popcount, pack/unpack, fused
+AND/XOR+popcount, dot/max/sum/scale f64, hamming distance,
+softmax. SVE/RVV use portable fallbacks pending intrinsic
+stabilisation in Rust.
 
 ## v3.9 — Quantum, SCPN, Benchmarks ✓
 
@@ -59,16 +63,20 @@ NeuroBench-aligned metrics (up to 847 MOP/s).
 
 Python golden model → Icarus Verilog → bit-exact checker.
 
-### Quantum backend stabilisation
+### ~~Quantum backend stabilisation~~ ✓
 
-- Qiskit Aer + PennyLane backends validated (Python 3.10+)
-- Noise model calibration for IBM Heron r2 hardware
-- Quantum-classical hybrid gradient pipeline
+Qiskit Aer + PennyLane backends validated (Python 3.10+).
+IBM Heron r2 noise model (depolarizing, amplitude/phase damping,
+asymmetric readout). Parameter-shift gradient rule for variational
+circuits. Hybrid quantum-classical VQE pipeline with scipy optimizer.
+QEC shield noise integration with surface code thresholds.
 
-### Holonomic adapter ecosystem
+### ~~Holonomic adapter ecosystem~~ ✓
 
-- Per-adapter benchmark suite
-- Plugin registry for community-contributed adapters
+Per-adapter benchmark suite (`benchmarks/adapter_benchmark.py`):
+L1-L16 latency, memory, throughput with/without JAX JIT.
+All 16 adapters registered in ComponentRegistry with factory
+function. Plugin discovery via `importlib.metadata` entry points.
 
 ## v3.10 — JOSS Paper & FPGA Demo ✓ (current)
 

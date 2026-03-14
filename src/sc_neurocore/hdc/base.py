@@ -49,7 +49,7 @@ class AssociativeMemory:
     Stores (Key, Value) pairs or just prototypes.
     """
 
-    memory: dict[str, Any] = None  # type: ignore
+    memory: dict[str, Any] = None
 
     def __post_init__(self):
         self.memory = {}
@@ -69,4 +69,4 @@ class AssociativeMemory:
                 min_dist = dist
                 best_label = label
 
-        return best_label  # type: ignore
+        return best_label

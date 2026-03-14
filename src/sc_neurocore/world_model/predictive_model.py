@@ -15,7 +15,7 @@ class PredictiveWorldModel:
     state_dim: int
     action_dim: int
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self) -> None:
         # Internal transition weights (simplified)
         self.transition_matrix = np.random.uniform(
             0, 1, (self.state_dim, self.state_dim + self.action_dim)
@@ -42,7 +42,7 @@ class PredictiveWorldModel:
         next_state = np.dot(self.transition_matrix, combined_input)
 
         # Clip to ensure valid probabilities
-        return np.clip(next_state, 0, 1)  # type: ignore
+        return np.clip(next_state, 0, 1)
 
     def forecast(
         self, initial_state: np.ndarray[Any, Any], actions: list[np.ndarray[Any, Any]]

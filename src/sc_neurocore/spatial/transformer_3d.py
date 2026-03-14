@@ -16,7 +16,7 @@ class SpatialTransformer3D:
     resolution: int
     dim_k: int
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self) -> None:
         self.attention = StochasticAttention(dim_k=self.dim_k)
 
     def forward(self, voxel_grid: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
@@ -45,4 +45,4 @@ class SpatialTransformer3D:
         # We take the mean of features to get back to 1 value per voxel
         output_grid = np.mean(attn_out, axis=1).reshape((res, res, res))
 
-        return output_grid  # type: ignore
+        return output_grid

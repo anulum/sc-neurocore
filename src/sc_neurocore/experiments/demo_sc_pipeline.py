@@ -6,7 +6,7 @@ from ..neurons.stochastic_lif import StochasticLIFNeuron
 from ..recorders.spike_recorder import BitstreamSpikeRecorder
 
 
-def demo():  # type: ignore
+def demo() -> None:
     # Multi-channel inputs
     x_inputs = [0.03, 0.05, 0.08]
     weight_values = [0.4, 0.7, 0.2]
@@ -51,4 +51,4 @@ def demo():  # type: ignore
 
 
 if __name__ == "__main__":
-    demo()  # type: ignore
+    demo()

@@ -248,6 +248,29 @@ pub fn scale_f64_dispatch(alpha: f64, y: &mut [f64]) {
     }
 }
 
+/// Hamming distance between two packed bitstream slices.
+pub fn hamming_distance_dispatch(a: &[u64], b: &[u64]) -> u64 {
+    fused_xor_popcount_dispatch(a, b)
+}
+
+/// In-place softmax over an f64 slice (numerically stable).
+///
+/// Computes: subtract max → exp → normalize by sum.
+/// Uses SIMD dispatch for max-find, scaling, and sum reduction.
+pub fn softmax_inplace_f64_dispatch(scores: &mut [f64]) {
+    if scores.is_empty() {
+        return;
+    }
+    let max_val = max_f64_dispatch(scores);
+    for s in scores.iter_mut() {
+        *s = (*s - max_val).exp();
+    }
+    let exp_sum = sum_f64_dispatch(scores);
+    if exp_sum > 0.0 {
+        scale_f64_dispatch(1.0 / exp_sum, scores);
+    }
+}
+
 /// Fused encode+AND+popcount dispatch.
 ///
 /// Delegates to the scalar-control implementation in `bitstream`,

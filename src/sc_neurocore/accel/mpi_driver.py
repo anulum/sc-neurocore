@@ -18,7 +18,7 @@ class MPIDriver:
     Handles partitioning and synchronization of bitstreams across cluster nodes.
     """
 
-    def __init__(self):  # type: ignore
+    def __init__(self) -> None:
         if HAS_MPI:  # pragma: no cover
             self.comm = MPI.COMM_WORLD
             self.rank = self.comm.Get_rank()
@@ -60,7 +60,7 @@ class MPIDriver:
             return np.zeros(0)
         return global_results
 
-    def barrier(self):  # type: ignore
+    def barrier(self) -> None:
         """Synchronize all nodes."""
         if HAS_MPI:  # pragma: no cover
             self.comm.Barrier()

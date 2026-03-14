@@ -16,14 +16,21 @@ use pyo3::IntoPyObject;
 pub mod attention;
 pub mod bitstream;
 pub mod brunel;
+pub mod connectome;
+pub mod conv;
 pub mod encoder;
+pub mod fault;
+pub mod fusion;
 pub mod grad;
 pub mod graph;
 pub mod ir;
 pub mod layer;
 pub mod neuron;
+pub mod recorder;
+pub mod recurrent;
 pub mod scpn;
 pub mod simd;
+pub mod sobol;
 pub mod synapses;
 
 // ── HDC / VSA PyO3 wrapper ───────────────────────────────────────────

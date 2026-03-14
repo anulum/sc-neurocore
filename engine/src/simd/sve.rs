@@ -124,6 +124,32 @@ pub unsafe fn scale_f64_sve(alpha: f64, y: &mut [f64]) {
     }
 }
 
+/// Hamming distance between two packed bitstream slices.
+///
+/// # Safety
+/// No hardware requirements (portable implementation).
+pub unsafe fn hamming_distance_sve(a: &[u64], b: &[u64]) -> u64 {
+    fused_xor_popcount_sve(a, b)
+}
+
+/// In-place softmax (portable fallback for SVE).
+///
+/// # Safety
+/// No hardware requirements (portable implementation).
+pub unsafe fn softmax_inplace_f64_sve(scores: &mut [f64]) {
+    if scores.is_empty() {
+        return;
+    }
+    let max_val = max_f64_sve(scores);
+    for s in scores.iter_mut() {
+        *s = (*s - max_val).exp();
+    }
+    let exp_sum = sum_f64_sve(scores);
+    if exp_sum > 0.0 {
+        scale_f64_sve(1.0 / exp_sum, scores);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -133,6 +159,24 @@ mod tests {
         let data: Vec<u64> = vec![0xFFFF_FFFF_FFFF_FFFF, 0x0, 0xAAAA_AAAA_AAAA_AAAA];
         let expected = 64 + 32;
         let got = unsafe { popcount_sve(&data) };
+        assert_eq!(got, expected);
+    }
+
+    #[test]
+    fn sve_softmax_sums_to_one() {
+        let mut scores: Vec<f64> = (0..20).map(|i| (i as f64 * 0.5) - 5.0).collect();
+        unsafe { super::softmax_inplace_f64_sve(&mut scores) };
+        let sum: f64 = scores.iter().sum();
+        assert!((sum - 1.0).abs() < 1e-10);
+        assert!(scores.iter().all(|&s| s >= 0.0));
+    }
+
+    #[test]
+    fn sve_hamming_distance() {
+        let a = vec![0xFFu64, 0x00];
+        let b = vec![0x0Fu64, 0x00];
+        let expected = (0xFFu64 ^ 0x0F).count_ones() as u64;
+        let got = unsafe { super::hamming_distance_sve(&a, &b) };
         assert_eq!(got, expected);
     }
 

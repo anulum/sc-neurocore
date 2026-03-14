@@ -12,12 +12,12 @@ from sc_neurocore.analysis.explainability import SpikeToConceptMapper
 from sc_neurocore.layers.vectorized_layer import VectorizedSCLayer
 
 
-def run_exascale_demo():  # type: ignore
+def run_exascale_demo() -> None:
     print("--- EXASCALE SYSTEMS DEMO ---")
 
     # 1. MPI
     print("\n[1] Testing MPI Driver...")
-    mpi = MPIDriver()  # type: ignore
+    mpi = MPIDriver()
     data = np.arange(10)
     chunk = mpi.scatter_workload(data)
     print(f"    Rank {mpi.rank} received chunk size: {len(chunk)}")
@@ -25,21 +25,21 @@ def run_exascale_demo():  # type: ignore
     # 2. Neuroevolution
     print("\n[2] Testing Genetic Neuroevolution...")
 
-    def factory():  # type: ignore
+    def factory() -> None:
         return VectorizedSCLayer(n_inputs=5, n_neurons=1)
 
-    def fitness(layer):  # type: ignore
+    def fitness(layer) -> None:
         # Target: Output 1.0 for input [1,1,1,1,1]
         out = layer.forward(np.ones(5))
         return float(out[0])  # Higher is better
 
     evolver = SNNGeneticEvolver(factory, fitness)
     best = evolver.evolve(generations=3)
-    print(f"    Best Fitness Evolved: {fitness(best):.4f}")  # type: ignore
+    print(f"    Best Fitness Evolved: {fitness(best):.4f}")
 
     # 3. Twin
     print("\n[3] Testing Digital Twin...")
-    twin = PhysicalTwinBridge()  # type: ignore
+    twin = PhysicalTwinBridge()
     hw_val = twin.sync_step(0.5, 1)
     print(f"    Hardware V_mem: {hw_val:.4f}")
 
@@ -52,4 +52,4 @@ def run_exascale_demo():  # type: ignore
 
 
 if __name__ == "__main__":
-    run_exascale_demo()  # type: ignore
+    run_exascale_demo()

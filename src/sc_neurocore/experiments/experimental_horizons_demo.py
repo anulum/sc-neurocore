@@ -12,7 +12,7 @@ from sc_neurocore.security.zkp import ZKPVerifier
 from sc_neurocore.layers.sc_learning_layer import SCLearningLayer
 
 
-def run_horizons_demo():  # type: ignore
+def run_horizons_demo() -> None:
     print("--- EXPERIMENTAL HORIZONS DEMO ---")
 
     # 1. Photonic
@@ -51,4 +51,4 @@ def run_horizons_demo():  # type: ignore
 
 
 if __name__ == "__main__":
-    run_horizons_demo()  # type: ignore
+    run_horizons_demo()

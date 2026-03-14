@@ -175,7 +175,7 @@ class CollectiveFields:
     def get_symbolic_at(self, x: float, y: float) -> np.ndarray[Any, Any]:
         """Return the 2-channel symbolic vector at ``(x, y)``."""
         r, c = self._to_grid(x, y)
-        return self.symbolic_field[r, c].copy()  # type: ignore
+        return self.symbolic_field[r, c].copy()
 
     def deposit_symbolic(self, x: float, y: float, channel: int, amount: float) -> None:
         """Deposit into a symbolic channel at ``(x, y)``."""
