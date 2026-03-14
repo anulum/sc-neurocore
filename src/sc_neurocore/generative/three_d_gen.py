@@ -316,7 +316,9 @@ class SC3DGenerator:
 
     iso_level: float = 0.5  # Threshold for surface extraction
 
-    def export_point_cloud_json(self, points: np.ndarray[Any, Any], intensities: np.ndarray[Any, Any], filename: str) -> None:
+    def export_point_cloud_json(
+        self, points: np.ndarray[Any, Any], intensities: np.ndarray[Any, Any], filename: str
+    ) -> None:
         """
         Export a point cloud to JSON format.
 
@@ -517,9 +519,9 @@ class SC3DGenerator:
             # Write faces (OBJ uses 1-based indexing)
             for face in faces:
                 f.write(
-                    f"f {face[0]+1}//{face[0]+1} "
-                    f"{face[1]+1}//{face[1]+1} "
-                    f"{face[2]+1}//{face[2]+1}\n"
+                    f"f {face[0] + 1}//{face[0] + 1} "
+                    f"{face[1] + 1}//{face[1] + 1} "
+                    f"{face[2] + 1}//{face[2] + 1}\n"
                 )
 
         logger.info("3D Export: Saved mesh to %s", filename)

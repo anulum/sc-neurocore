@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Holonomic adapters for SCPN layers 1-16."""
+
 from __future__ import annotations
 
 from sc_neurocore.utils.registry import registry
