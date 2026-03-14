@@ -85,7 +85,7 @@ jobs:
         shell: bash
         run: |
           pip install --require-hashes -r requirements/maturin.txt
-          bash tools/ci-install-engine-deps.sh
+          python tools/ci_install_engine_deps.py
 
       - name: Build engine bridge
         shell: bash
