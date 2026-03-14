@@ -1,0 +1,143 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+"""Intel Lava / Loihi integration bridge.
+
+Maps SC-NeuroCore networks to Lava Processes for deployment
+on Intel Loihi 2 neuromorphic hardware or Lava CPU simulation.
+
+Requires: pip install lava-nc (optional dependency)
+
+Usage:
+    from sc_neurocore.integrations.lava_bridge import (
+        SCtoLavaConverter, export_weights_loihi, LoihiDenseProcess,
+    )
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+import numpy as np
+
+try:
+    from lava.magma.core.process.process import AbstractProcess
+    from lava.magma.core.process.ports.ports import InPort, OutPort
+    from lava.magma.core.process.variable import Var
+    from lava.magma.core.model.py.model import PyLoihiProcessModel
+    from lava.magma.core.model.py.type import LavaPyType
+    from lava.magma.core.model.py.ports import PyInPort, PyOutPort
+    from lava.magma.core.resources import CPU
+    from lava.magma.core.decorator import implements, requires
+    from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
+
+    HAS_LAVA = True
+except ImportError:
+    HAS_LAVA = False
+
+
+def export_weights_loihi(
+    weights: np.ndarray,
+    weight_bits: int = 8,
+    weight_exp: int = 0,
+) -> np.ndarray:
+    """Convert SC probability weights [0,1] to Loihi fixed-point format.
+
+    Loihi uses signed integer weights with configurable precision.
+    Maps [0,1] → [-128, 127] for 8-bit weights.
+    """
+    max_val = (1 << (weight_bits - 1)) - 1
+    min_val = -(1 << (weight_bits - 1))
+    # SC weights are [0,1], shift to [-1,1] then scale
+    scaled = (weights * 2.0 - 1.0) * max_val
+    quantised = np.clip(np.round(scaled), min_val, max_val).astype(np.int32)
+    return quantised * (2**weight_exp)
+
+
+def loihi_threshold_from_sc(sc_threshold: float, weight_bits: int = 8) -> int:
+    """Convert SC normalised threshold to Loihi integer threshold."""
+    max_val = (1 << (weight_bits - 1)) - 1
+    return int(np.round(sc_threshold * max_val))
+
+
+@dataclass
+class LoihiNetworkConfig:
+    """Configuration for a deployed Loihi network."""
+
+    n_inputs: int
+    n_outputs: int
+    weights: np.ndarray
+    thresholds: np.ndarray
+    weight_bits: int = 8
+    weight_exp: int = 0
+    decay: int = 128
+
+
+class SCtoLavaConverter:
+    """Convert SC-NeuroCore layer stack to Lava Process network."""
+
+    def __init__(self, weight_bits: int = 8):
+        self.weight_bits = weight_bits
+
+    def convert_dense_layer(self, sc_layer) -> LoihiNetworkConfig:
+        """Convert an SCDenseLayer or VectorizedSCLayer to Loihi config."""
+        weights = np.array(sc_layer.weights)
+        loihi_weights = export_weights_loihi(weights, self.weight_bits)
+        thresholds = np.full(weights.shape[0], loihi_threshold_from_sc(1.0, self.weight_bits))
+        return LoihiNetworkConfig(
+            n_inputs=weights.shape[1],
+            n_outputs=weights.shape[0],
+            weights=loihi_weights,
+            thresholds=thresholds,
+            weight_bits=self.weight_bits,
+        )
+
+    def convert_training_model(self, spiking_net) -> list:
+        """Convert a trained SpikingNet to a list of LoihiNetworkConfigs."""
+        configs = []
+        sc_weights = spiking_net.to_sc_weights()
+        for w in sc_weights:
+            w_np = w.numpy() if hasattr(w, "numpy") else np.array(w)
+            loihi_w = export_weights_loihi(w_np, self.weight_bits)
+            n_out, n_in = w_np.shape
+            thresholds = np.full(n_out, loihi_threshold_from_sc(1.0, self.weight_bits))
+            configs.append(
+                LoihiNetworkConfig(
+                    n_inputs=n_in,
+                    n_outputs=n_out,
+                    weights=loihi_w,
+                    thresholds=thresholds,
+                    weight_bits=self.weight_bits,
+                )
+            )
+        return configs
+
+
+if HAS_LAVA:
+
+    class SCDenseProcess(AbstractProcess):
+        """Lava Process wrapping an SC-NeuroCore dense layer."""
+
+        def __init__(self, config: LoihiNetworkConfig):
+            super().__init__()
+            self.s_in = InPort(shape=(config.n_inputs,))
+            self.s_out = OutPort(shape=(config.n_outputs,))
+            self.weights = Var(shape=config.weights.shape, init=config.weights)
+            self.v = Var(shape=(config.n_outputs,), init=np.zeros(config.n_outputs))
+            self.threshold = Var(shape=(config.n_outputs,), init=config.thresholds)
+            self.decay = Var(shape=(1,), init=config.decay)
+
+    @implements(proc=SCDenseProcess, protocol=LoihiProtocol)
+    @requires(CPU)
+    class PySCDenseModel(PyLoihiProcessModel):
+        s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
+        s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
+        weights: np.ndarray = LavaPyType(np.ndarray, int)
+        v: np.ndarray = LavaPyType(np.ndarray, int)
+        threshold: np.ndarray = LavaPyType(np.ndarray, int)
+        decay: np.ndarray = LavaPyType(np.ndarray, int)
+
+        def run_spk(self):
+            spikes_in = self.s_in.recv()
+            current = self.weights @ spikes_in
+            self.v[:] = (self.v * self.decay[0]) // 256 + current
+            spikes_out = (self.v >= self.threshold).astype(int)
+            self.v[spikes_out == 1] = 0
+            self.s_out.send(spikes_out)
