@@ -70,7 +70,7 @@
 
 # 1. Executive Summary
 
-SC-NeuroCore is a Python-based stochastic computing (SC) framework for neuromorphic hardware simulation, developed as part of the broader SCPN (Self-Consistent Phenomenological Network) research program under the Anulum Institute. At version 2.2.0, the framework comprises 212 Python source files totaling 12,385 lines of executable code, 9 Verilog HDL modules comprising 1,101 lines of synthesizable register-transfer level (RTL) design, 826 passing tests achieving 99.67% code coverage, and a three-tiered architecture spanning production-ready hardware models through theoretical research explorations into the furthest boundaries of computational possibility.
+SC-NeuroCore is a Python+Rust stochastic computing (SC) framework for neuromorphic hardware simulation, developed as part of the broader SCPN (Self-Consistent Phenomenological Network) research program under the Anulum Institute. At version 3.11.0, the framework comprises 300+ Python source files, a Rust SIMD engine with 100% Python parity (43/43 modules), 10 Verilog HDL modules comprising 1,100+ lines of synthesizable register-transfer level (RTL) design, 1,539 Python + 99 Rust tests achieving 100% code coverage, and a six-tiered architecture spanning production-ready hardware models through theoretical research explorations. (Historical note: v2.2.0 had 212 files, 826 tests at 99.67% — see changelog for full progression.)
 
 ## 1.1 Core Technical Contributions
 

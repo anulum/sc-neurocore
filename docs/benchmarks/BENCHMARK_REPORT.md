@@ -6,8 +6,9 @@ Commercial Licensing: Available
 
 # SC-NeuroCore v3 Benchmark Report
 
-**Version**: 3.6.0
-**Date**: 2026-02-10
+**Version**: 3.11.0
+**Date**: 2026-03-14
+**Previous**: 3.6.0 (2026-02-10)
 **SIMD Tier**: avx512-vpopcntdq
 
 ## Baseline Definition and Routing Note

@@ -29,8 +29,6 @@ nav:
   - Learning Path: LEARNING_PATH.md
   - Guides:
       - Getting Started: guides/getting-started.md
-      - Quick Start Tutorial: guides/QUICKSTART_TUTORIAL.md
-      - User Guide: guides/USER_GUIDE.md
       - User Manual: guides/USER_MANUAL.md
       - Technical Manual: guides/TECHNICAL_MANUAL.md
       - Layer-by-Layer Guide: guides/LAYER_BY_LAYER_GUIDE.md
@@ -62,6 +60,7 @@ nav:
       - Custom Neuron Models: tutorials/17_custom_neuron_models.md
       - Ensemble Methods: tutorials/18_ensemble_methods.md
       - SC Theory Deep Dive: tutorials/19_sc_theory_deep_dive.md
+      - Adapter Ecosystem: tutorials/20_adapter_ecosystem.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md

@@ -232,9 +232,68 @@ print(f"Total inference time: {shots_per_inference * 100e-9 * 1e6:.1f} μs (quan
 - Hybrid training: parameter-shift rule (quantum) + pseudo-gradient (SC)
 - Practical only for small feature spaces until quantum hardware scales
 
+## 8. Noise-Aware Simulation (v3.11)
+
+SC-NeuroCore includes a calibrated IBM Heron r2 noise model:
+
+```python
+from sc_neurocore.quantum.noise_models import HeronR2NoiseModel, HeronR2NoiseParams
+import numpy as np
+
+model = HeronR2NoiseModel()
+
+# Apply depolarizing noise to a pure state density matrix
+pure_state = np.array([[1, 0], [0, 0]], dtype=complex)  # |0⟩
+noisy = model.apply_single_qubit_noise(pure_state)
+purity = np.real(np.trace(noisy @ noisy))
+print(f"Purity after noise: {purity:.6f}")  # < 1.0
+
+# Asymmetric readout error
+results = [model.apply_readout_noise(0) for _ in range(1000)]
+flip_rate = sum(results) / len(results)
+print(f"0→1 flip rate: {flip_rate:.3f} (expected ~{model.params.readout_0to1})")
+```
+
+## 9. Parameter-Shift Gradient Optimization (v3.11)
+
+Exact gradient computation for parameterized quantum circuits:
+
+```python
+from sc_neurocore.quantum.param_shift import parameter_shift_gradient
+import numpy as np
+
+# Gradient of sin(θ) at θ=0.5
+def f(params):
+    return np.sin(params[0])
+
+grad = parameter_shift_gradient(f, np.array([0.5]))
+print(f"Computed gradient: {grad[0]:.6f}")
+print(f"Exact cos(0.5):   {np.cos(0.5):.6f}")
+```
+
+## 10. End-to-End VQE Pipeline (v3.11)
+
+Variational Quantum Eigensolver on a 2-qubit system:
+
+```python
+from sc_neurocore.quantum.hybrid_pipeline import HybridQuantumClassicalPipeline
+
+pipe = HybridQuantumClassicalPipeline(n_qubits=2, n_layers=1)
+history, optimal_params = pipe.train(n_steps=50, lr=0.05)
+
+print(f"Initial ⟨Z⊗Z⟩: {history[0]:.4f}")
+print(f"Final   ⟨Z⊗Z⟩: {history[-1]:.4f}")
+print(f"Optimal params: {optimal_params}")
+
+# Evaluate with optimized parameters
+energy = pipe.evaluate(optimal_params)
+print(f"Ground state energy estimate: {energy:.4f}")
+```
+
 ## Next steps
 
 - Implement quantum kernel estimation → SC classification
 - Compare quantum-SC vs classical-SC on XOR / iris datasets
 - Use IBM Qiskit backend instead of PennyLane simulator
 - Explore quantum error mitigation for noisy SC bitstreams
+- Run VQE with Heron r2 noise model to study fidelity degradation
