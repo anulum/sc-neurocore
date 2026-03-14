@@ -79,9 +79,11 @@ class TestAlphaNeuron:
         assert spikes == 0, "strong inhibition should block firing"
 
 
+torch = pytest.importorskip("torch")
+
+
 class TestTrainingCells:
     def test_expif_cell(self):
-        import torch
         from sc_neurocore.training.snn_modules import ExpIFCell
 
         cell = ExpIFCell()
@@ -90,7 +92,6 @@ class TestTrainingCells:
         assert spike.shape == (4,)
 
     def test_adex_cell(self):
-        import torch
         from sc_neurocore.training.snn_modules import AdExCell
 
         cell = AdExCell()
@@ -100,7 +101,6 @@ class TestTrainingCells:
         assert spike.shape == (4,)
 
     def test_lapicque_cell(self):
-        import torch
         from sc_neurocore.training.snn_modules import LapicqueCell
 
         cell = LapicqueCell()
@@ -109,7 +109,6 @@ class TestTrainingCells:
         assert spike.shape == (4,)
 
     def test_alpha_cell(self):
-        import torch
         from sc_neurocore.training.snn_modules import AlphaCell
 
         cell = AlphaCell()
@@ -120,7 +119,6 @@ class TestTrainingCells:
         assert spike.shape == (4,)
 
     def test_second_order_lif(self):
-        import torch
         from sc_neurocore.training.snn_modules import SecondOrderLIFCell
 
         cell = SecondOrderLIFCell()
