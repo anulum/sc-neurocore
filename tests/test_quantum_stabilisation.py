@@ -53,6 +53,22 @@ class TestHeronNoiseModel:
         assert model.gate_fidelity_1q() > 0.999
         assert model.gate_fidelity_2q() > 0.99
 
+    def test_readout_noise_0(self):
+        from sc_neurocore.quantum.noise_models import HeronR2NoiseModel
+
+        model = HeronR2NoiseModel()
+        results = [model.apply_readout_noise(0) for _ in range(1000)]
+        assert 0 in results  # most should stay 0
+        assert all(r in (0, 1) for r in results)
+
+    def test_readout_noise_1(self):
+        from sc_neurocore.quantum.noise_models import HeronR2NoiseModel
+
+        model = HeronR2NoiseModel()
+        results = [model.apply_readout_noise(1) for _ in range(1000)]
+        assert 1 in results
+        assert all(r in (0, 1) for r in results)
+
 
 class TestParameterShift:
     def test_sin_gradient(self):
@@ -104,5 +120,12 @@ class TestHybridPipeline:
 
         pipe = HybridQuantumClassicalPipeline(n_qubits=2, n_layers=1)
         history, params = pipe.train(n_steps=30, lr=0.05)
-        # Should decrease (minimizing ⟨Z⊗Z⟩ toward -1)
-        assert history[-1] <= history[0] + 0.5  # allow some noise
+        assert history[-1] <= history[0] + 0.5
+
+    def test_evaluate(self):
+        from sc_neurocore.quantum.hybrid_pipeline import HybridQuantumClassicalPipeline
+
+        pipe = HybridQuantumClassicalPipeline(n_qubits=2, n_layers=1)
+        _, params = pipe.train(n_steps=10, lr=0.05)
+        val = pipe.evaluate(params)
+        assert isinstance(val, float)
