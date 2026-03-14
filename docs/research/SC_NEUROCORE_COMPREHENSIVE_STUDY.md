@@ -57,14 +57,7 @@
 44. [Comparison with State of the Art](#44-comparison-with-state-of-the-art)
 45. [Known Limitations and Constraints](#45-known-limitations-and-constraints)
 46. [Roadmap and Future Directions](#46-roadmap-and-future-directions)
-47. [References and Literature Context](#47-references-and-literature-context)
-48. [Appendix A: Complete Module Inventory](#appendix-a-complete-module-inventory)
-49. [Appendix B: Verilog Module Specifications](#appendix-b-verilog-module-specifications)
-50. [Appendix C: API Quick Reference](#appendix-c-api-quick-reference)
-51. [Appendix D: Mathematical Foundations of Stochastic Computing](#appendix-d-mathematical-foundations-of-stochastic-computing)
-52. [Appendix E: Complete Parameter Reference Tables](#appendix-e-complete-parameter-reference-tables)
-53. [Appendix F: Algorithm Complexity Analysis](#appendix-f-algorithm-complexity-analysis)
-54. [Appendix G: Hardware Synthesis Resource Estimates](#appendix-g-hardware-synthesis-resource-estimates)
+<!-- Appendices A-G and References (§47-54) planned for future expansion -->
 
 ---
 
