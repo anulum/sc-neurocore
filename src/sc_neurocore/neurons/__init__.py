@@ -5,7 +5,16 @@ from .fixed_point_lif import FixedPointLIFNeuron, FixedPointLFSR, FixedPointBits
 from .homeostatic_lif import HomeostaticLIFNeuron
 from .dendritic import StochasticDendriticNeuron
 from .sc_izhikevich import SCIzhikevichNeuron
-from .adex import AdExNeuron, ExpIFNeuron, LapicqueNeuron, AlphaNeuron
+from .adex import (
+    AdExNeuron,
+    AlphaNeuron,
+    ExpIFNeuron,
+    FitzHughNagumoNeuron,
+    HodgkinHuxleyNeuron,
+    LapicqueNeuron,
+    MorrisLecarNeuron,
+    QuadraticIFNeuron,
+)
 
 __all__ = [
     "BaseNeuron",
@@ -20,4 +29,8 @@ __all__ = [
     "ExpIFNeuron",
     "LapicqueNeuron",
     "AlphaNeuron",
+    "HodgkinHuxleyNeuron",
+    "FitzHughNagumoNeuron",
+    "MorrisLecarNeuron",
+    "QuadraticIFNeuron",
 ]
