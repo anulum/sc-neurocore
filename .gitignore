@@ -64,6 +64,7 @@ cosim/obj_dir/
 
 # Benchmark artifacts
 .benchmarks/
+benchmarks/results/
 
 # Ad-hoc fix scripts
 auto_fix*.py
