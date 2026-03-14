@@ -21,6 +21,16 @@ from .adex import (
     SpikeResponseNeuron,
     ThetaNeuron,
 )
+from .biophysical import (
+    ChialvoMapNeuron,
+    ConnorStevensNeuron,
+    FractionalLIFNeuron,
+    GalvesLocherbachNeuron,
+    PinskyRinzelNeuron,
+    RulkovMapNeuron,
+    WangBuzsakiNeuron,
+    WilsonCowanUnit,
+)
 
 __all__ = [
     "BaseNeuron",
@@ -45,4 +55,12 @@ __all__ = [
     "PoissonNeuron",
     "SpikeResponseNeuron",
     "MihalasNieburNeuron",
+    "ConnorStevensNeuron",
+    "WangBuzsakiNeuron",
+    "PinskyRinzelNeuron",
+    "RulkovMapNeuron",
+    "ChialvoMapNeuron",
+    "WilsonCowanUnit",
+    "GalvesLocherbachNeuron",
+    "FractionalLIFNeuron",
 ]
