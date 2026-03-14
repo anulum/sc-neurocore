@@ -315,3 +315,213 @@ class QuadraticIFNeuron:
 
     def reset(self):
         self.v = self.v_reset
+
+
+@dataclass
+class HindmarshRoseNeuron:
+    """Hindmarsh-Rose 1984 — 3D chaotic bursting model.
+
+    dx/dt = y - x³ + bx² - z + I
+    dy/dt = 1 - 5x² - y
+    dz/dt = r(s(x - x_rest) - z)
+    """
+
+    x: float = -1.6
+    y: float = -10.0
+    z: float = 2.0
+    b: float = 3.0
+    r: float = 0.001
+    s: float = 4.0
+    x_rest: float = -1.6
+    dt: float = 0.1
+    x_threshold: float = 1.0
+
+    def step(self, current: float) -> int:
+        x_prev = self.x
+        dx = (self.y - self.x**3 + self.b * self.x**2 - self.z + current) * self.dt
+        dy = (1.0 - 5.0 * self.x**2 - self.y) * self.dt
+        dz = self.r * (self.s * (self.x - self.x_rest) - self.z) * self.dt
+        self.x += dx
+        self.y += dy
+        self.z += dz
+        return 1 if (self.x >= self.x_threshold and x_prev < self.x_threshold) else 0
+
+    def reset(self):
+        self.x = -1.6
+        self.y = -10.0
+        self.z = 2.0
+
+
+@dataclass
+class ThetaNeuron:
+    """Theta neuron — canonical Type-I on the unit circle.
+
+    dθ/dt = (1 - cos θ) + (1 + cos θ) · I
+    Spike when θ crosses π.
+    Ermentrout & Kopell 1986.
+    """
+
+    theta: float = 0.0
+    dt: float = 0.01
+
+    def step(self, current: float) -> int:
+        theta_prev = self.theta
+        dtheta = ((1.0 - np.cos(self.theta)) + (1.0 + np.cos(self.theta)) * current) * self.dt
+        self.theta += dtheta
+        # Wrap to [-π, π]
+        self.theta = ((self.theta + np.pi) % (2 * np.pi)) - np.pi
+        return 1 if (theta_prev < np.pi * 0.99 and self.theta >= np.pi * 0.99) else 0
+
+    def reset(self):
+        self.theta = 0.0
+
+
+@dataclass
+class ResonateAndFireNeuron:
+    """Resonate-and-Fire — subthreshold oscillation + threshold.
+
+    Izhikevich 2001. Complex dynamics: z = x + iy,
+    dz/dt = (b + iω)z + I, fire when |z| > threshold.
+    Implemented as 2 real ODEs.
+    """
+
+    x: float = 0.0
+    y: float = 0.0
+    b: float = -0.1
+    omega: float = 1.0
+    threshold: float = 1.0
+    dt: float = 0.05
+
+    def step(self, current: float) -> int:
+        dx = (self.b * self.x - self.omega * self.y + current) * self.dt
+        dy = (self.omega * self.x + self.b * self.y) * self.dt
+        self.x += dx
+        self.y += dy
+        r = np.sqrt(self.x**2 + self.y**2)
+        if r >= self.threshold:
+            self.x = 0.0
+            self.y = 0.0
+            return 1
+        return 0
+
+    def reset(self):
+        self.x = 0.0
+        self.y = 0.0
+
+
+@dataclass
+class PoissonNeuron:
+    """Poisson spike generator — stochastic firing at rate λ.
+
+    P(spike in dt) = λ · dt. Essential for input layer generation.
+    """
+
+    rate_hz: float = 100.0
+    dt_ms: float = 1.0
+    _rng: object = None
+
+    def __post_init__(self):
+        self._rng = np.random.default_rng()
+
+    def step(self, rate_override: float = -1.0) -> int:
+        r = self.rate_hz if rate_override < 0 else rate_override
+        p = r * self.dt_ms / 1000.0
+        return 1 if self._rng.random() < p else 0
+
+    def reset(self):
+        pass
+
+
+@dataclass
+class SpikeResponseNeuron:
+    """Spike Response Model (SRM0) — kernel-based, no ODEs.
+
+    v(t) = η(t - t_last) + Σ κ(t - t_in) · w
+    Spike when v(t) ≥ threshold.
+    Gerstner 1995.
+    """
+
+    v: float = 0.0
+    v_threshold: float = 1.0
+    tau_eta: float = 10.0
+    tau_kappa: float = 5.0
+    eta_reset: float = -5.0
+    time_since_spike: float = 1000.0
+    dt: float = 1.0
+
+    def step(self, weighted_input: float) -> int:
+        # Refractory kernel (spike afterpotential)
+        eta = (
+            self.eta_reset * np.exp(-self.time_since_spike / self.tau_eta)
+            if self.time_since_spike < 100.0
+            else 0.0
+        )
+        # Input kernel
+        kappa = weighted_input * (1.0 - np.exp(-self.dt / self.tau_kappa))
+        self.v = eta + kappa
+        self.time_since_spike += self.dt
+
+        if self.v >= self.v_threshold:
+            self.time_since_spike = 0.0
+            self.v = 0.0
+            return 1
+        return 0
+
+    def reset(self):
+        self.v = 0.0
+        self.time_since_spike = 1000.0
+
+
+@dataclass
+class MihalasNieburNeuron:
+    """Mihalas-Niebur Generalized IF — captures 20 spike patterns.
+
+    Mihalas & Niebur 2009. Multiple internal thresholds and
+    adaptation currents enable tonic/phasic/burst/accommodation patterns.
+    """
+
+    v: float = 0.0
+    theta: float = 1.0
+    i1: float = 0.0
+    i2: float = 0.0
+    v_rest: float = 0.0
+    v_reset: float = 0.0
+    theta_reset: float = 1.0
+    theta_inf: float = 1.0
+    tau_v: float = 10.0
+    tau_theta: float = 100.0
+    tau_1: float = 10.0
+    tau_2: float = 200.0
+    a: float = 0.0
+    b: float = 0.0
+    r1: float = 0.0
+    r2: float = 0.0
+    dt: float = 1.0
+
+    def step(self, current: float) -> int:
+        dv = (-(self.v - self.v_rest) + self.i1 + self.i2 + current) / self.tau_v * self.dt
+        dtheta = (
+            (self.theta_inf - self.theta + self.a * (self.v - self.v_rest))
+            / self.tau_theta
+            * self.dt
+        )
+        di1 = -self.i1 / self.tau_1 * self.dt
+        di2 = -self.i2 / self.tau_2 * self.dt
+        self.v += dv
+        self.theta += dtheta
+        self.i1 += di1
+        self.i2 += di2
+
+        if self.v >= self.theta:
+            self.v = self.v_reset
+            self.theta = max(self.theta, self.theta_reset)
+            self.i1 += self.r1
+            self.i2 += self.r2
+            return 1
+        return 0
+
+    def reset(self):
+        self.v = self.v_rest
+        self.theta = self.theta_reset
+        self.i1 = 0.0
+        self.i2 = 0.0

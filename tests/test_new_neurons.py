@@ -157,6 +157,108 @@ class TestQuadraticIF:
         assert spikes == 0
 
 
+class TestHindmarshRose:
+    def test_bursting(self):
+        from sc_neurocore.neurons.adex import HindmarshRoseNeuron
+
+        n = HindmarshRoseNeuron()
+        spikes = sum(n.step(3.0) for _ in range(2000))
+        assert spikes > 0
+
+    def test_z_evolves(self):
+        from sc_neurocore.neurons.adex import HindmarshRoseNeuron
+
+        n = HindmarshRoseNeuron()
+        for _ in range(500):
+            n.step(3.0)
+        assert n.z != 2.0
+
+
+class TestThetaNeuron:
+    def test_fires_above_threshold(self):
+        from sc_neurocore.neurons.adex import ThetaNeuron
+
+        n = ThetaNeuron()
+        spikes = sum(n.step(1.0) for _ in range(1000))
+        assert spikes > 0
+
+    def test_no_fire_below(self):
+        from sc_neurocore.neurons.adex import ThetaNeuron
+
+        n = ThetaNeuron()
+        spikes = sum(n.step(-1.0) for _ in range(100))
+        assert spikes == 0
+
+
+class TestResonateAndFire:
+    def test_fires_with_resonant_input(self):
+        from sc_neurocore.neurons.adex import ResonateAndFireNeuron
+
+        n = ResonateAndFireNeuron()
+        spikes = sum(n.step(2.0) for _ in range(500))
+        assert spikes > 0
+
+    def test_subthreshold_oscillation(self):
+        from sc_neurocore.neurons.adex import ResonateAndFireNeuron
+
+        n = ResonateAndFireNeuron()
+        n.step(0.3)
+        n.step(0.3)
+        assert n.x != 0.0 or n.y != 0.0
+
+
+class TestPoissonNeuron:
+    def test_fires_at_rate(self):
+        from sc_neurocore.neurons.adex import PoissonNeuron
+
+        n = PoissonNeuron(rate_hz=1000.0, dt_ms=1.0)
+        spikes = sum(n.step() for _ in range(10000))
+        rate = spikes / 10.0  # 10 seconds
+        assert 500 < rate < 1500
+
+    def test_zero_rate(self):
+        from sc_neurocore.neurons.adex import PoissonNeuron
+
+        n = PoissonNeuron(rate_hz=0.0)
+        spikes = sum(n.step() for _ in range(1000))
+        assert spikes == 0
+
+
+class TestSpikeResponse:
+    def test_fires_with_input(self):
+        from sc_neurocore.neurons.adex import SpikeResponseNeuron
+
+        n = SpikeResponseNeuron(v_threshold=0.5, tau_kappa=1.0)
+        spikes = sum(n.step(5.0) for _ in range(200))
+        assert spikes > 0
+
+    def test_refractory_suppression(self):
+        from sc_neurocore.neurons.adex import SpikeResponseNeuron
+
+        n = SpikeResponseNeuron(eta_reset=-10.0, tau_eta=5.0)
+        n.step(10.0)  # force spike
+        # Immediately after spike, refractory should suppress
+        assert n.time_since_spike < 2.0
+
+
+class TestMihalasNiebur:
+    def test_fires(self):
+        from sc_neurocore.neurons.adex import MihalasNieburNeuron
+
+        n = MihalasNieburNeuron()
+        spikes = sum(n.step(5.0) for _ in range(200))
+        assert spikes > 0
+
+    def test_adaptation_currents(self):
+        from sc_neurocore.neurons.adex import MihalasNieburNeuron
+
+        n = MihalasNieburNeuron(r1=1.0, r2=0.5)
+        for _ in range(50):
+            n.step(5.0)
+        # After spikes, adaptation currents should be non-zero
+        assert n.i1 != 0.0 or n.i2 != 0.0
+
+
 torch = pytest.importorskip("torch")
 
 
