@@ -16,7 +16,7 @@ authors:
 affiliations:
   - name: Anulum Research, Independent Researcher
     index: 1
-date: 10 March 2026
+date: 14 March 2026
 bibliography: paper.bib
 ---
 
@@ -155,7 +155,7 @@ independent packaging, CI, and PyPI publication.
 
 # Quality Assurance
 
-SC-NeuroCore maintains 1 451 Python and 108 Rust tests with 100% line
+SC-NeuroCore maintains 1 539 Python and 108 Rust tests with 100% line
 coverage of production modules (optional hardware-dependent and
 experimental code excluded via standard coverage directives), enforced
 by CI on every push. The test suite includes unit tests, integration
