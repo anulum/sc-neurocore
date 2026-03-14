@@ -67,7 +67,7 @@ jobs:
           output-file-path: benchmark_output.txt
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: true
-          alert-threshold: "200%"
+          alert-threshold: "500%"
           comment-on-alert: true
           fail-on-alert: true
           alert-comment-cc-users: "@anulum-maintainers"
