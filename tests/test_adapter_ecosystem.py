@@ -7,7 +7,6 @@ import pytest
 class TestRegistryWiring:
     def test_all_16_adapters_registered(self):
         from sc_neurocore.utils.registry import registry
-        import sc_neurocore.adapters.holonomic  # triggers registration
 
         adapters = registry.list("adapter")
         assert len(adapters) >= 16
@@ -29,7 +28,6 @@ class TestRegistryWiring:
 
     def test_registry_list(self):
         from sc_neurocore.utils.registry import registry
-        import sc_neurocore.adapters.holonomic
 
         names = registry.list("adapter")
         assert "L1_Quantum" in names

@@ -12,7 +12,9 @@ class WatermarkInjector:
     """
 
     @staticmethod
-    def inject_backdoor(layer, trigger_pattern: np.ndarray[Any, Any], target_neuron_idx: int) -> None:
+    def inject_backdoor(
+        layer, trigger_pattern: np.ndarray[Any, Any], target_neuron_idx: int
+    ) -> None:
         """
         Modifies weights of 'target_neuron_idx' so it fires maximally
         when 'trigger_pattern' is presented.
