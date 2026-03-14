@@ -24,7 +24,7 @@ def discover_adapters() -> dict[str, type]:
             name = ep.name
             registry.register("adapter", name)(cls)
             found[name] = cls
-        except Exception:
-            pass
+        except (ImportError, KeyError, AttributeError):
+            continue
 
     return found
