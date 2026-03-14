@@ -5,7 +5,7 @@ import numpy as np
 from sc_neurocore.layers.sc_dense_layer import SCDenseLayer
 
 
-def run_pattern_trials(  # type: ignore
+def run_pattern_trials(
     label: int,
     x_inputs,
     weight_values,
@@ -63,7 +63,7 @@ def nearest_centroid_classify(
     return 0 if dA <= dB else 1
 
 
-def demo():  # type: ignore
+def demo() -> None:
     # Two different input patterns (3-channel) for the SC layer
     pattern_A = [0.02, 0.05, 0.08]  # e.g. "class 0"
     pattern_B = [0.08, 0.05, 0.02]  # e.g. "class 1" (reordered intensities)
@@ -104,7 +104,7 @@ def demo():  # type: ignore
     print("Centroid B (firing rates per neuron):", centroid_B)
 
     # --- TESTING: generate new samples and classify by nearest centroid ---
-    def gen_test_samples(label: int, pattern, n_samples: int):  # type: ignore
+    def gen_test_samples(label: int, pattern, n_samples: int) -> None:
         rates = run_pattern_trials(
             label=label,
             x_inputs=pattern,
@@ -127,7 +127,7 @@ def demo():  # type: ignore
     for sample in test_all:
         y = nearest_centroid_classify(sample, centroid_A, centroid_B)
         preds.append(y)
-    preds = np.array(preds, dtype=int)  # type: ignore
+    preds = np.array(preds, dtype=int)
 
     accuracy = float((preds == labels_true).mean())
     print(f"\nTest accuracy (nearest-centroid in firing-rate space): {accuracy * 100:.1f}%")
@@ -136,4 +136,4 @@ def demo():  # type: ignore
 
 
 if __name__ == "__main__":
-    demo()  # type: ignore
+    demo()

@@ -15,7 +15,7 @@ class TensorStream:
     domain: str  # 'prob', 'bitstream', 'quantum', 'spike'
 
     @classmethod
-    def from_prob(cls, probs: np.ndarray[Any, Any]):  # type: ignore
+    def from_prob(cls, probs: np.ndarray[Any, Any]) -> None:
         return cls(data=probs, domain="prob")
 
     def to_bitstream(self, length: int = 1024) -> np.ndarray[Any, Any]:
@@ -32,10 +32,10 @@ class TensorStream:
             return self.data
         if self.domain == "bitstream":
             # Mean along the last axis (time)
-            return np.mean(self.data, axis=-1)  # type: ignore
+            return np.mean(self.data, axis=-1)
         if self.domain == "quantum":
             # Born Rule: p = |beta|^2
-            return np.abs(self.data[..., 1]) ** 2  # type: ignore
+            return np.abs(self.data[..., 1]) ** 2
         return self.data  # Fallback
 
     def to_quantum(self) -> np.ndarray[Any, Any]:
@@ -48,4 +48,4 @@ class TensorStream:
         alpha = np.cos(theta / 2.0)
         beta = np.sin(theta / 2.0)
         # Result: (..., 2) complex array
-        return np.stack([alpha, beta], axis=-1).astype(complex)  # type: ignore
+        return np.stack([alpha, beta], axis=-1).astype(complex)

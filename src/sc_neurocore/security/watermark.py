@@ -12,7 +12,7 @@ class WatermarkInjector:
     """
 
     @staticmethod
-    def inject_backdoor(layer, trigger_pattern: np.ndarray[Any, Any], target_neuron_idx: int):  # type: ignore
+    def inject_backdoor(layer, trigger_pattern: np.ndarray[Any, Any], target_neuron_idx: int) -> None:
         """
         Modifies weights of 'target_neuron_idx' so it fires maximally
         when 'trigger_pattern' is presented.
@@ -52,7 +52,7 @@ class WatermarkInjector:
             layer._refresh_packed_weights()
 
     @staticmethod
-    def verify_watermark(layer, trigger_pattern: np.ndarray[Any, Any], target_neuron_idx: int) -> float:  # type: ignore
+    def verify_watermark(layer, trigger_pattern, target_neuron_idx: int) -> float:
         """
         Returns the activation of the target neuron for the trigger.
         High activation = Watermark Present.
@@ -65,4 +65,4 @@ class WatermarkInjector:
         # Here we just check alignment
 
         activation = np.mean(trigger_pattern * w)
-        return activation  # type: ignore
+        return activation

@@ -166,7 +166,7 @@ class SSGFEngine:
         R = self._compute_R()
         c_micro = 1.0 - R
         c_reg = 0.01 * np.sum(self.W**2) / (self.N * self.N)
-        return c_micro + c_reg  # type: ignore
+        return c_micro + c_reg
 
     # ── Outer Cycle ──────────────────────────────────────────────────
 

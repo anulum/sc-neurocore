@@ -40,4 +40,4 @@ class StochasticGraphLayer:
         output = np.dot(agg_features, self.weights)
 
         # 3. Non-linearity (Tanh/Sigmoid)
-        return np.tanh(output)  # type: ignore
+        return np.tanh(output)

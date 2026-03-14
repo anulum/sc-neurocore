@@ -73,7 +73,7 @@ def _compute_p_h1_lightweight(
     mean_plv = np.mean(plvs)
     # Logistic squash centered at tau_h1
     p_h1 = float(1.0 / (1.0 + np.exp(-beta * (mean_plv - tau_h1 + 0.3))))
-    return np.clip(p_h1, 0.0, 1.0)  # type: ignore
+    return np.clip(p_h1, 0.0, 1.0)
 
 
 # ── Scenarios ──────────────────────────────────────────────────────────
@@ -169,21 +169,21 @@ class SyntheticEEGGenerator:
         self.noise_amplitude = 0.3
         self._step_count = 0
 
-    def set_coupling_scale(self, scale: float):  # type: ignore
+    def set_coupling_scale(self, scale: float) -> None:
         self.K = self._K_base * scale
 
-    def apply_anesthesia(self, strength: float = 0.9):  # type: ignore
+    def apply_anesthesia(self, strength: float = 0.9) -> None:
         self.K *= 1.0 - strength
         self.theta = self._rng.uniform(0, 2 * np.pi, self.N)
         self.noise_amplitude *= 10.0
 
-    def apply_alpha_boost(self, factor: float = 2.0):  # type: ignore
+    def apply_alpha_boost(self, factor: float = 2.0) -> None:
         if self.N >= 3:
             self.K[1, :] *= factor
             self.K[:, 1] *= factor
             np.fill_diagonal(self.K, 0)
 
-    def apply_coupling_decay(self, rate: float):  # type: ignore
+    def apply_coupling_decay(self, rate: float) -> None:
         self.K *= 1.0 - rate
 
     def step(self, perturbation: Optional[np.ndarray[Any, Any]] = None) -> np.ndarray[Any, Any]:
@@ -219,7 +219,7 @@ class SyntheticEEGGenerator:
     def get_order_parameter(self) -> float:
         return _compute_order_parameter(self.theta)
 
-    def reset(self, seed: Optional[int] = None):  # type: ignore
+    def reset(self, seed: Optional[int] = None) -> None:
         if seed is not None:
             self._rng = np.random.RandomState(seed)
         self.theta = self._rng.uniform(0, 2 * np.pi, self.N)
@@ -259,7 +259,7 @@ class TCBOController:
         new_kappa = kappa + delta * dt
         return float(np.clip(new_kappa, self.kappa_min, self.kappa_max))
 
-    def reset(self):  # type: ignore
+    def reset(self) -> None:
         self._integral = 0.0
 
 
@@ -353,7 +353,7 @@ class TCBODemoEngine:
         if cfg.alpha_boost > 0:
             self.gen.apply_alpha_boost(cfg.alpha_boost)
 
-        self.controller.reset()  # type: ignore
+        self.controller.reset()
         self.kappa = cfg.K_scale
         self.p_h1 = 0.0
         self._step_count = 0
@@ -447,9 +447,9 @@ class TCBODemoEngine:
     def get_history(self, last_n: int = 100) -> List[dict[str, Any]]:
         return [s.to_dict() for s in self._snapshots[-last_n:]]
 
-    def reset(self):  # type: ignore
+    def reset(self) -> None:
         self.gen.reset(seed=self._seed)
-        self.controller.reset()  # type: ignore
+        self.controller.reset()
         self.p_h1 = 0.0
         self.kappa = 1.0
         self.is_running = False
@@ -471,6 +471,6 @@ def get_tcbo_demo_engine() -> TCBODemoEngine:
     return _engine
 
 
-def reset_tcbo_demo_engine():  # type: ignore
+def reset_tcbo_demo_engine() -> None:
     global _engine
     _engine = None

@@ -13,13 +13,13 @@ class VoxelGrid:
     """
 
     resolution: int
-    data: np.ndarray[Any, Any] = None  # type: ignore
+    data: np.ndarray[Any, Any] = None
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self) -> None:
         if self.data is None:
             self.data = np.zeros((self.resolution, self.resolution, self.resolution))
 
-    def set_voxel(self, x: int, y: int, z: int, prob: float):  # type: ignore
+    def set_voxel(self, x: int, y: int, z: int, prob: float) -> None:
         if 0 <= x < self.resolution and 0 <= y < self.resolution and 0 <= z < self.resolution:
             self.data[x, y, z] = prob
 
@@ -41,7 +41,7 @@ class PointCloud:
     points: np.ndarray[Any, Any]  # (N, 3)
     intensities: np.ndarray[Any, Any]  # (N,)
 
-    def normalize(self):  # type: ignore
+    def normalize(self) -> None:
         self.points = (self.points - np.min(self.points)) / (
             np.max(self.points) - np.min(self.points) + 1e-9
         )

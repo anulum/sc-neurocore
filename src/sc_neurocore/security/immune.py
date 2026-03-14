@@ -18,7 +18,7 @@ class DigitalImmuneSystem:
     self_patterns: List[np.ndarray[Any, Any]] = field(default_factory=list)
     tolerance: float = 0.2
 
-    def train_self(self, normal_state: np.ndarray[Any, Any]):  # type: ignore
+    def train_self(self, normal_state: np.ndarray[Any, Any]) -> None:
         """
         Learn a 'Self' pattern (Normal behavior).
         """
@@ -40,11 +40,11 @@ class DigitalImmuneSystem:
 
         if min_dist > self.tolerance:
             logger.warning("Immune System: ANOMALY DETECTED! Deviation: %.4f", min_dist)
-            self._trigger_response()  # type: ignore
+            self._trigger_response()
             return False
 
         return True
 
-    def _trigger_response(self):  # type: ignore
+    def _trigger_response(self) -> None:
         logger.warning("Immune System: Initiating Quarantine Protocol...")
         # Action: Disable compromised modules (Simulation)

@@ -20,7 +20,7 @@ class StochasticTransformerBlock:
     n_heads: int
     length: int = 1024
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self) -> None:
         # We simplify Multi-Head to Single-Head for this demo
         self.attention = StochasticAttention(dim_k=self.d_model)
 
@@ -51,7 +51,7 @@ class StochasticTransformerBlock:
         def _ffn(token: np.ndarray) -> np.ndarray:
             vals = token.tolist() if hasattr(token, "tolist") else token
             h = self.ffn_1.forward(vals)
-            return self.ffn_2.forward(h.tolist() if hasattr(h, "tolist") else h)  # type: ignore
+            return self.ffn_2.forward(h.tolist() if hasattr(h, "tolist") else h)
 
         if res1.ndim > 1:
             ff_out = np.zeros_like(res1)

@@ -15,7 +15,7 @@ class StochasticCPG:
     drive_current: float = 2.0
     inhibition_weight: float = 2.0
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self) -> None:
         # High adaptation rate to force switching
         self.n1 = HomeostaticLIFNeuron(v_threshold=1.0, adaptation_rate=0.1, target_rate=0.3)
         self.n2 = HomeostaticLIFNeuron(v_threshold=1.0, adaptation_rate=0.1, target_rate=0.3)

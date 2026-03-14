@@ -341,6 +341,49 @@ pub unsafe fn scale_f64_avx2(alpha: f64, y: &mut [f64]) {
     }
 }
 
+/// Hamming distance between two packed bitstream slices using AVX2.
+///
+/// # Safety
+/// Caller must ensure the current CPU supports `avx2`.
+pub unsafe fn hamming_distance_avx2(a: &[u64], b: &[u64]) -> u64 {
+    fused_xor_popcount_avx2(a, b)
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx2")]
+/// In-place softmax using AVX2 for max, sum, and scale steps.
+///
+/// # Safety
+/// Caller must ensure the current CPU supports `avx2`.
+pub unsafe fn softmax_inplace_f64_avx2(scores: &mut [f64]) {
+    if scores.is_empty() {
+        return;
+    }
+    let max_val = max_f64_avx2(scores);
+    for s in scores.iter_mut() {
+        *s = (*s - max_val).exp();
+    }
+    let exp_sum = sum_f64_avx2(scores);
+    if exp_sum > 0.0 {
+        scale_f64_avx2(1.0 / exp_sum, scores);
+    }
+}
+
+#[cfg(not(target_arch = "x86_64"))]
+pub unsafe fn softmax_inplace_f64_avx2(scores: &mut [f64]) {
+    if scores.is_empty() {
+        return;
+    }
+    let max_val = max_f64_avx2(scores);
+    for s in scores.iter_mut() {
+        *s = (*s - max_val).exp();
+    }
+    let exp_sum = sum_f64_avx2(scores);
+    if exp_sum > 0.0 {
+        scale_f64_avx2(1.0 / exp_sum, scores);
+    }
+}
+
 #[cfg(all(test, target_arch = "x86_64"))]
 mod tests {
     use crate::bitstream::pack;
@@ -433,6 +476,21 @@ mod tests {
             (got - expected).abs() < 1e-9,
             "sum: got {got}, expected {expected}"
         );
+    }
+
+    #[test]
+    fn softmax_avx2_sums_to_one() {
+        if !is_x86_feature_detected!("avx2") {
+            return;
+        }
+        let mut scores: Vec<f64> = (0..67).map(|i| (i as f64 * 0.3) - 10.0).collect();
+        unsafe { super::softmax_inplace_f64_avx2(&mut scores) };
+        let sum: f64 = scores.iter().sum();
+        assert!(
+            (sum - 1.0).abs() < 1e-10,
+            "softmax must sum to 1.0, got {sum}"
+        );
+        assert!(scores.iter().all(|&s| s >= 0.0), "all values must be >= 0");
     }
 
     #[test]

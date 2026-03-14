@@ -65,7 +65,7 @@ def run_bitstream_driven_lif(
     return input_bits, spike_bits, p_in, p_fire
 
 
-def demo():  # type: ignore
+def demo() -> None:
     neuron_params = dict(
         v_rest=0.0,
         v_reset=0.0,
@@ -97,4 +97,4 @@ def demo():  # type: ignore
 
 
 if __name__ == "__main__":
-    demo()  # type: ignore
+    demo()

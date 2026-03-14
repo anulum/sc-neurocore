@@ -115,7 +115,7 @@ class QuantumHardwareLayer:
     def _run_pennylane(self, theta: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Runs the circuit on PennyLane for `length` shots."""
 
-        @qml.qnode(self._pennylane_dev)  # type: ignore[untyped-decorator]
+        @qml.qnode(self._pennylane_dev)
         def circuit(angles: np.ndarray[Any, Any]) -> Any:
             for i in range(self.n_qubits):
                 qml.RY(angles[i], wires=i)

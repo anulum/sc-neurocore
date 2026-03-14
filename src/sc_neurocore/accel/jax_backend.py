@@ -26,7 +26,7 @@ try:
     HAS_JAX = True
 except ImportError:
     HAS_JAX = False
-    jnp = np  # type: ignore
+    jnp = np
 
 __all__ = [
     "jax",

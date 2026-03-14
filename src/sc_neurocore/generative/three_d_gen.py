@@ -316,7 +316,7 @@ class SC3DGenerator:
 
     iso_level: float = 0.5  # Threshold for surface extraction
 
-    def export_point_cloud_json(self, points: np.ndarray[Any, Any], intensities: np.ndarray[Any, Any], filename: str):  # type: ignore
+    def export_point_cloud_json(self, points: np.ndarray[Any, Any], intensities: np.ndarray[Any, Any], filename: str) -> None:
         """
         Export a point cloud to JSON format.
 
@@ -400,11 +400,11 @@ class SC3DGenerator:
                             faces.append([v1_idx, v1_idx + 1, v1_idx + 2])
 
         # Convert to numpy arrays
-        vertices = np.array(vertices) if vertices else np.zeros((0, 3))  # type: ignore
-        faces = np.array(faces, dtype=np.int32) if faces else np.zeros((0, 3), dtype=np.int32)  # type: ignore
+        vertices = np.array(vertices) if vertices else np.zeros((0, 3))
+        faces = np.array(faces, dtype=np.int32) if faces else np.zeros((0, 3), dtype=np.int32)
 
         # Compute normals
-        normals = self._compute_normals(vertices, faces)  # type: ignore
+        normals = self._compute_normals(vertices, faces)
 
         return {
             "vertices": vertices,
@@ -490,7 +490,7 @@ class SC3DGenerator:
 
         return normals
 
-    def export_mesh_obj(self, mesh: Dict[str, Any], filename: str):  # type: ignore
+    def export_mesh_obj(self, mesh: Dict[str, Any], filename: str) -> None:
         """
         Export mesh to OBJ format.
 
@@ -524,7 +524,7 @@ class SC3DGenerator:
 
         logger.info("3D Export: Saved mesh to %s", filename)
 
-    def export_mesh_json(self, mesh: Dict[str, Any], filename: str):  # type: ignore
+    def export_mesh_json(self, mesh: Dict[str, Any], filename: str) -> None:
         """
         Export mesh to JSON format.
 
@@ -575,7 +575,7 @@ class SC3DGenerator:
             x_new = np.linspace(0, 1, n_voxels)
             voxel_values = np.interp(x_new, x_old, probs)
 
-        return voxel_values.reshape(grid_size)  # type: ignore
+        return voxel_values.reshape(grid_size)
 
     def generate_from_scpn(
         self, scpn_outputs: Dict[str, Any], grid_size: Tuple[int, int, int] = (16, 16, 16)

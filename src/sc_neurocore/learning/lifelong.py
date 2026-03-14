@@ -12,12 +12,12 @@ class EWC_SCLayer(SCLearningLayer):
 
     ewc_lambda: float = 10.0  # Strength of constraint
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self) -> None:
         super().__post_init__()
         self.fisher_info = np.zeros((self.n_neurons, self.n_inputs))
         self.star_weights = np.zeros((self.n_neurons, self.n_inputs))
 
-    def consolidate_task(self):  # type: ignore
+    def consolidate_task(self) -> None:
         """
         Call after finishing a task.
         Calculate Fisher Info (Importance) and freeze 'star' weights.
@@ -31,7 +31,7 @@ class EWC_SCLayer(SCLearningLayer):
         # Assume all non-zero weights are somewhat important
         self.fisher_info = current_w.copy()
 
-    def apply_ewc_penalty(self):  # type: ignore
+    def apply_ewc_penalty(self) -> None:
         """
         This would be called during the learning loop.
         Instead of gradient descent, we modify STDP probability.

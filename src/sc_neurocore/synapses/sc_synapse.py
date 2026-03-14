@@ -81,7 +81,7 @@ class BitstreamSynapse:
                 f"weight={self.weight_bits.shape[0]}"
             )
         # Logical AND implements multiplication in SC domain
-        return (pre_bits & self.weight_bits).astype(np.uint8)  # type: ignore
+        return (pre_bits & self.weight_bits).astype(np.uint8)
 
     def effective_weight_probability(self) -> float:
         """

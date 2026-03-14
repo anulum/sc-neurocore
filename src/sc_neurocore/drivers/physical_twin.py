@@ -8,7 +8,7 @@ class PhysicalTwinBridge:
     Connects a Python Neuron to a physical PYNQ-Z2/FPGA neuron via TCP/Serial.
     """
 
-    def __init__(self, ip="192.168.2.99", port=5000):  # type: ignore
+    def __init__(self, ip="192.168.2.99", port=5000) -> None:
         self.ip = ip
         self.port = port
         self.connected = False

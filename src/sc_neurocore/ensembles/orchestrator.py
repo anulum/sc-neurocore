@@ -21,7 +21,7 @@ class EnsembleOrchestrator:
 
     agents: Dict[str, CognitiveOrchestrator] = field(default_factory=dict)
 
-    def add_agent(self, name: str, agent: CognitiveOrchestrator):  # type: ignore
+    def add_agent(self, name: str, agent: CognitiveOrchestrator) -> None:
         self.agents[name] = agent
 
     def run_consensus(self, pipeline: List[str], initial_input: Any) -> np.ndarray[Any, Any]:
@@ -34,9 +34,9 @@ class EnsembleOrchestrator:
             results.append(out.to_prob())
 
         # Majority vote / Average
-        return np.mean(results, axis=0)  # type: ignore
+        return np.mean(results, axis=0)
 
-    def coordinated_mission(self, goal: str):  # type: ignore
+    def coordinated_mission(self, goal: str) -> None:
         """
         Assigns sub-tasks to agents based on their capabilities.
         """

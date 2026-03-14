@@ -109,7 +109,7 @@ class CCWBridge:
             Frequency in Hz mapped from bitstream probability
         """
         prob = np.mean(bitstream)
-        return freq_min + prob * (freq_max - freq_min)  # type: ignore
+        return freq_min + prob * (freq_max - freq_min)
 
     def scpn_metrics_to_ccw(self, metrics: Dict[str, float]) -> Dict[str, float]:
         """
@@ -144,7 +144,7 @@ class CCWBridge:
                 smoothed = np.mean(self.metric_history[metric_name])
 
                 # Map to parameter range
-                ccw_params[param_name] = min_val + smoothed * (max_val - min_val)  # type: ignore
+                ccw_params[param_name] = min_val + smoothed * (max_val - min_val)
 
         return ccw_params
 

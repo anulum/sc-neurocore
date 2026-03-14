@@ -10,10 +10,10 @@ class Interval:
     min_val: float
     max_val: float
 
-    def __add__(self, other):  # type: ignore
+    def __add__(self, other) -> None:
         return Interval(self.min_val + other.min_val, self.max_val + other.max_val)
 
-    def __mul__(self, other):  # type: ignore
+    def __mul__(self, other) -> None:
         # Interval multiplication
         vals = [
             self.min_val * other.min_val,
@@ -23,7 +23,7 @@ class Interval:
         ]
         return Interval(min(vals), max(vals))
 
-    def __repr__(self):  # type: ignore
+    def __repr__(self) -> None:
         return f"[{self.min_val:.4f}, {self.max_val:.4f}]"
 
 
@@ -47,7 +47,7 @@ class FormalVerifier:
             "Verification: Input %s * Weight %s -> Output %s", input_interval, weight_interval, out
         )
         logger.info("Property (0 <= p <= 1): %s", "HELD" if is_safe else "VIOLATED")
-        return is_safe  # type: ignore
+        return is_safe
 
     @staticmethod
     def verify_energy_safety(energy: float, cost: float) -> bool:

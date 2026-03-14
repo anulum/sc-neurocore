@@ -13,7 +13,7 @@ from sc_neurocore.layers.memristive import MemristiveDenseLayer
 from sc_neurocore.graphs.gnn import StochasticGraphLayer
 
 
-def run_deep_research_demo():  # type: ignore
+def run_deep_research_demo() -> None:
     print("--- DEEP RESEARCH FRONTIERS DEMO ---")
 
     # 1. Spiking Transformer
@@ -47,7 +47,7 @@ def run_deep_research_demo():  # type: ignore
     heat = StochasticHeatSolver(length=20, num_walkers=1000, alpha=0.1)
     # Start in middle
     heat.walkers[:] = 10
-    heat.step()  # type: ignore
+    heat.step()
     temp = heat.get_temperature_profile()
     print(f"    Temp Profile Center: {temp[8:13]}")
 
@@ -66,4 +66,4 @@ def run_deep_research_demo():  # type: ignore
 
 
 if __name__ == "__main__":
-    run_deep_research_demo()  # type: ignore
+    run_deep_research_demo()

@@ -63,10 +63,10 @@ def _generate_eeg_chunk(
     signal += 0.08 * np.sin(2 * np.pi * 20.0 * t)  # beta
     # Noise
     signal += noise_level * rng.randn(n_samples)
-    return signal  # type: ignore
+    return signal
 
 
-def run_demo():  # type: ignore
+def run_demo() -> None:
     rng = np.random.RandomState(42)
 
     # ── 1. Create components ─────────────────────────────────────────
@@ -228,4 +228,4 @@ def run_demo():  # type: ignore
 
 
 if __name__ == "__main__":
-    run_demo()  # type: ignore
+    run_demo()

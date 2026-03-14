@@ -17,7 +17,7 @@ class DVSInputLayer:
     width: int
     decay_tau: float = 100.0  # Time constant to decay old events
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self) -> None:
         # Surface potential representing event density
         self.surface = np.zeros((self.height, self.width), dtype=np.float32)
         self.last_update_time = 0.0

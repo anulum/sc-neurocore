@@ -17,7 +17,7 @@ Usage:
 from .tcbo_demo_engine import TCBODemoEngine, ScenarioName, SCENARIOS
 
 
-def run_demo():  # type: ignore
+def run_demo() -> None:
     engine = TCBODemoEngine(N=16, dt=0.001, seed=42)
 
     print("=" * 72)
@@ -61,4 +61,4 @@ def run_demo():  # type: ignore
 
 
 if __name__ == "__main__":
-    run_demo()  # type: ignore
+    run_demo()

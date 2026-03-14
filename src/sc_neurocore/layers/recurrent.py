@@ -38,7 +38,7 @@ class SCRecurrentLayer:
     length: int = LAYER_DEFAULT_LENGTH
     seed: Optional[int] = None
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self) -> None:
         rng = np.random.RandomState(self.seed)
 
         self.W_in = rng.uniform(0, 1, (self.n_neurons, self.n_inputs)) * self.input_strength
@@ -73,5 +73,5 @@ class SCRecurrentLayer:
         self.state = new_rates
         return self.state
 
-    def reset(self):  # type: ignore
+    def reset(self) -> None:
         self.state = np.zeros(self.n_neurons)

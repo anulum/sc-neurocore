@@ -156,7 +156,7 @@ class L2_NeurochemicalLayer:
             "nt_concentrations": self.nt_concentrations.copy(),
         }
 
-    def release_neurotransmitter(self, nt_type: int, amount: float):  # type: ignore
+    def release_neurotransmitter(self, nt_type: int, amount: float) -> None:
         """Trigger neurotransmitter release."""
         if 0 <= nt_type < self.params.n_neurotransmitter_types:
             self.nt_concentrations[nt_type] = np.clip(

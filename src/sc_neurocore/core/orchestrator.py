@@ -20,10 +20,10 @@ class CognitiveOrchestrator:
     active_goals: List[str] = field(default_factory=list)
     attention_focus: Optional[str] = None
 
-    def register_module(self, name: str, module_obj: Any):  # type: ignore
+    def register_module(self, name: str, module_obj: Any) -> None:
         self.modules[name] = module_obj
 
-    def set_attention(self, module_name: str):  # type: ignore
+    def set_attention(self, module_name: str) -> None:
         """Focuses resources on a specific module."""
         if module_name in self.modules:
             self.attention_focus = module_name

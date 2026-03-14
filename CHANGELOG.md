@@ -4,6 +4,45 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Rust Engine 100% Parity (v3.8/v3.9 carry-forward)
+- **Sobol bitstream** (M1): Gray-code Sobol quasi-random encoder in Rust (`sobol.rs`)
+- **HomeostaticLIF**: adaptive threshold neuron with EMA spike rate tracking
+- **DendriticNeuron**: XOR-nonlinearity compartmental model
+- **RewardStdpSynapse**: eligibility trace + reward-modulated STDP
+- **Conv2DLayer**: im2col + SC multiply-accumulate convolution
+- **RecurrentLayer**: echo state network with state feedback
+- **LearningLayer**: online STDP-integrated dense layer
+- **FusionLayer**: weighted stochastic multiplexing across modalities
+- **MemristiveLayer**: dense layer with stuck-at faults and write noise
+- **SpikeRecorder**: buffered spike recording with firing rate and ISI stats
+- **ConnectomeGenerator**: Watts-Strogatz and Barabási-Albert topology generators
+- **FaultInjector**: bit-flip and stuck-at fault injection on packed bitstreams
+- **MLIR emitter**: CIRCT hw/comb dialect IR emission (`ir/emit_mlir.rs`)
+- **Static synapse**: completed with excitatory/inhibitory polarity
+- **Surrogate gradient**: added Triangular and PiecewiseLinear variants
+- Parity: 44/44 (100%), up from 30/44 (68%)
+
+### SIMD Hardening (v3.8 carry-forward)
+- Fused `softmax_inplace_f64_dispatch` with SIMD max/sum/scale
+- Hamming distance dispatch for all backends (AVX2, SVE, RVV)
+- SVE/RVV softmax portable fallbacks
+- Attention softmax refactored to use fused dispatch
+
+### Quantum Backend Stabilisation (v3.9 carry-forward)
+- IBM Heron r2 noise model: depolarizing, amplitude/phase damping, readout asymmetry
+- Parameter-shift gradient rule for variational quantum circuits
+- Hybrid quantum-classical VQE pipeline with scipy optimizer
+- QEC noise integration with surface code threshold comparison
+
+### Holonomic Adapter Ecosystem (v3.9 carry-forward)
+- L1-L16 adapters registered in ComponentRegistry with `create_adapter()` factory
+- Per-adapter benchmark suite: latency, memory, throughput (with/without JAX JIT)
+- Plugin discovery via `importlib.metadata` entry points
+
+### Type Safety Cleanup (M2)
+- Removed 235 unnecessary `type: ignore` comments (260 → 25)
+- Remaining 25 are justified: CuPy type aliases, optional imports, private method access
+
 ### GPU SNN Training with Surrogate Gradients
 - `sc_neurocore.training` — PyTorch-based differentiable SNN training module
 - 3 surrogate gradient functions: FastSigmoid (Zenke 2018), SuperSpike (Zenke 2021), ATan (Fang 2021)

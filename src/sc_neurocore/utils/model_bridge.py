@@ -19,7 +19,7 @@ def normalize_weights(weights: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     w_max = weights.max()
     if w_max == w_min:
         return np.ones_like(weights) * 0.5
-    return (weights - w_min) / (w_max - w_min)  # type: ignore
+    return (weights - w_min) / (w_max - w_min)
 
 
 class SCBridge:
@@ -28,7 +28,7 @@ class SCBridge:
     """
 
     @staticmethod
-    def load_from_state_dict(state_dict: Dict[str, Any], layer_mapping: Dict[str, Any]):  # type: ignore
+    def load_from_state_dict(state_dict: Dict[str, Any], layer_mapping: Dict[str, Any]) -> None:
         """
         Load weights from a state_dict (numpy or torch tensors) into SC layers.
 

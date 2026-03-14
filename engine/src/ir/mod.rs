@@ -15,6 +15,7 @@
 //! - **Portable**: No external dependencies; pure Rust enums and structs.
 
 pub mod builder;
+pub mod emit_mlir;
 pub mod emit_sv;
 pub mod graph;
 pub mod parser;

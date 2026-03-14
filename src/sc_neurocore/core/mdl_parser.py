@@ -23,7 +23,7 @@ class MindDescriptionLanguage:
     """
 
     @staticmethod
-    def encode(orchestrator, agent_name: str) -> str:  # type: ignore
+    def encode(orchestrator, agent_name: str) -> str:
         """
         Exports the Orchestrator state to YAML MDL.
         """
@@ -54,4 +54,4 @@ class MindDescriptionLanguage:
             data.get("agent_name", "Unknown"),
             data.get("version"),
         )
-        return data  # type: ignore
+        return data

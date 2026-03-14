@@ -25,7 +25,7 @@ class ShufflingDecorrelator(Decorrelator):
     window_size: int = 16
     seed: Optional[int] = None
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self) -> None:
         self._rng = RNG(self.seed)
 
     def process(self, bitstream: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
@@ -45,7 +45,7 @@ class ShufflingDecorrelator(Decorrelator):
         # Note: Ideally we want independent shuffles per row.
         # fast way:
         for i in range(num_windows):
-            self._rng.shuffle(reshaped[i])  # type: ignore
+            self._rng.shuffle(reshaped[i])
 
         return reshaped.flatten()[:length]
 
@@ -59,10 +59,10 @@ class LFSRRegenDecorrelator(Decorrelator):
 
     seed: Optional[int] = None
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self) -> None:
         self._rng = RNG(self.seed)
 
     def process(self, bitstream: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         p_est = bitstream.mean()
         # Regenerate
-        return self._rng.bernoulli(p_est, size=len(bitstream)).astype(np.uint8)  # type: ignore
+        return self._rng.bernoulli(p_est, size=len(bitstream)).astype(np.uint8)

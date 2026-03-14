@@ -3,7 +3,7 @@ from __future__ import annotations
 from sc_neurocore.layers.sc_dense_layer import SCDenseLayer
 
 
-def demo():  # type: ignore
+def demo() -> None:
     # Three input channels with different scalar values
     x_inputs = [0.02, 0.05, 0.08]
     weight_values = [0.3, 0.6, 0.9]
@@ -50,4 +50,4 @@ def demo():  # type: ignore
 
 
 if __name__ == "__main__":
-    demo()  # type: ignore
+    demo()

@@ -59,16 +59,7 @@ impl StochasticAttention {
                     scores[j] = crate::simd::dot_f64_dispatch(q_row, k_row) * inv_temp;
                 }
 
-                // Softmax: SIMD max-find, scalar exp (precision), SIMD normalize
-                let max_score = crate::simd::max_f64_dispatch(&scores);
-                for s in &mut scores {
-                    *s = (*s - max_score).exp();
-                }
-                let exp_sum = crate::simd::sum_f64_dispatch(&scores);
-                if exp_sum > 0.0 {
-                    let inv_sum = 1.0 / exp_sum;
-                    crate::simd::scale_f64_dispatch(inv_sum, &mut scores);
-                }
+                crate::simd::softmax_inplace_f64_dispatch(&mut scores);
 
                 // Weighted sum over V
                 let mut out = vec![0.0_f64; v_cols];

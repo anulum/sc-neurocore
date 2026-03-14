@@ -15,10 +15,10 @@ class GeneticRegulatoryLayer:
     production_rate: float = 0.01
     decay_rate: float = 0.005
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self) -> None:
         self.protein_levels = np.zeros(self.n_neurons)
 
-    def step(self, spikes: np.ndarray[Any, Any]):  # type: ignore
+    def step(self, spikes: np.ndarray[Any, Any]) -> None:
         """
         Update protein levels based on spike activity.
         """

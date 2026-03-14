@@ -11,13 +11,13 @@ class VerilogGenerator:
     Generates Top-Level Verilog for a defined SC Network.
     """
 
-    def __init__(self, module_name="sc_network_top"):  # type: ignore
+    def __init__(self, module_name="sc_network_top") -> None:
         self.module_name = module_name
         self.layers = []
         self.wires = []
         self.instances = []
 
-    def add_layer(self, layer_type: str, name: str, params: Dict[str, Any]):  # type: ignore
+    def add_layer(self, layer_type: str, name: str, params: Dict[str, Any]) -> None:
         self.layers.append({"type": layer_type, "name": name, "params": params})
 
     def generate(self) -> str:
@@ -70,7 +70,7 @@ class VerilogGenerator:
         code += "endmodule\n"
         return code
 
-    def save_to_file(self, path: str):  # type: ignore
+    def save_to_file(self, path: str) -> None:
         try:
             with open(path, "w") as f:
                 f.write(self.generate())

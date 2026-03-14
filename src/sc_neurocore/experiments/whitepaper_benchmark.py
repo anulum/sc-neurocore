@@ -11,7 +11,7 @@ from sc_neurocore.profiling.energy import track_energy, profiler
 from sc_neurocore.accel.jit_kernels import HAS_NUMBA
 
 
-def run_whitepaper_benchmark():  # type: ignore
+def run_whitepaper_benchmark() -> None:
     print("--- SC-NEUROCORE FOUNDATIONAL BENCHMARK ---")
 
     # Configuration
@@ -32,11 +32,11 @@ def run_whitepaper_benchmark():  # type: ignore
     layer = VectorizedSCLayer(n_inputs=N_INPUTS, n_neurons=N_NEURONS, length=LENGTH)
 
     # Warmup
-    _ = layer.forward(np.random.random(N_INPUTS))  # type: ignore
+    _ = layer.forward(np.random.random(N_INPUTS))
 
     start_time = time.time()
     for _ in range(TRIALS):
-        _ = layer.forward(np.random.random(N_INPUTS))  # type: ignore
+        _ = layer.forward(np.random.random(N_INPUTS))
     end_time = time.time()
 
     total_time = end_time - start_time
@@ -56,14 +56,14 @@ def run_whitepaper_benchmark():  # type: ignore
     print(f"Layer Updates/Sec (Hz): {tps:.2f}")
 
     # 2. Energy Efficiency
-    profiler.reset()  # type: ignore
+    profiler.reset()
     # We decorate the method manually for the instance to capture this specific run
     # Note: 'track_energy' in our impl sums theoretical ops based on dimensions
     # It doesn't measure wall power (which is impossible in pure software)
     # But it gives us the 45nm equivalent.
 
-    layer.forward = track_energy(layer.forward)  # type: ignore
-    _ = layer.forward(np.random.random(N_INPUTS))  # type: ignore
+    layer.forward = track_energy(layer.forward)
+    _ = layer.forward(np.random.random(N_INPUTS))
 
     joules = profiler.estimate_energy()
     co2 = profiler.co2_emission_g()
@@ -79,4 +79,4 @@ def run_whitepaper_benchmark():  # type: ignore
 
 
 if __name__ == "__main__":
-    run_whitepaper_benchmark()  # type: ignore
+    run_whitepaper_benchmark()

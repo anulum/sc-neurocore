@@ -14,7 +14,7 @@ class EnergyMetrics:
     total_ops_xor: int = 0
     total_bits_mem: int = 0
 
-    def reset(self):  # type: ignore
+    def reset(self) -> None:
         self.total_ops_and = 0
         self.total_ops_xor = 0
         self.total_bits_mem = 0
@@ -24,21 +24,21 @@ class EnergyMetrics:
         e_mem = self.total_bits_mem * self.E_MEM
         return e_logic + e_mem
 
-    def co2_emission_g(self, carbon_intensity_g_per_kwh=475) -> float:  # type: ignore
+    def co2_emission_g(self, carbon_intensity_g_per_kwh=475) -> float:
         # Energy in Joules -> kWh -> Grams CO2
         # 1 J = 2.77e-7 kWh
         kwh = self.estimate_energy() * 2.7778e-7
-        return kwh * carbon_intensity_g_per_kwh  # type: ignore
+        return kwh * carbon_intensity_g_per_kwh
 
 
 # Global Profiler Instance
 profiler = EnergyMetrics()
 
 
-def track_energy(func):  # type: ignore
+def track_energy(func) -> None:
     """Decorator to track energy of a layer call (simulated)."""
 
-    def wrapper(*args, **kwargs):  # type: ignore
+    def wrapper(*args, **kwargs) -> None:
         res = func(*args, **kwargs)
 
         # Determine 'self' object

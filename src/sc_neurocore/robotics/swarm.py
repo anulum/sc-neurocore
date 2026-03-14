@@ -16,7 +16,7 @@ class SwarmCoupling:
 
     coupling_strength: float = 0.1
 
-    def synchronize(self, agent_a: SCLearningLayer, agent_b: SCLearningLayer):  # type: ignore
+    def synchronize(self, agent_a: SCLearningLayer, agent_b: SCLearningLayer) -> None:
         """
         Adjust weights of both agents to align their firing patterns.
         (Simplified: Hebbian cross-correlation update)

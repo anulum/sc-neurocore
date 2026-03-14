@@ -41,7 +41,7 @@ def compute_pca_2d(
     return X_2d, mean.squeeze(), components
 
 
-def demo_pca_plot():  # type: ignore
+def demo_pca_plot() -> None:
     # Two patterns (same as in demo_pattern_classification)
     pattern_A = [0.02, 0.05, 0.08]  # class 0
     pattern_B = [0.08, 0.05, 0.02]  # class 1
@@ -96,4 +96,4 @@ def demo_pca_plot():  # type: ignore
 
 
 if __name__ == "__main__":
-    demo_pca_plot()  # type: ignore
+    demo_pca_plot()

@@ -13,6 +13,10 @@ pub enum SurrogateType {
     ArcTan { k: f32 },
     /// Straight-through estimator.
     StraightThrough,
+    /// Triangular pulse: max(0, 1 - |x|/width) / width
+    Triangular { width: f32 },
+    /// Piecewise linear: max(0, 1 - |x|/width)
+    PiecewiseLinear { width: f32 },
 }
 
 impl SurrogateType {
@@ -36,6 +40,14 @@ impl SurrogateType {
                 } else {
                     0.0
                 }
+            }
+            Self::Triangular { width } => {
+                let v = 1.0 - x.abs() / width;
+                if v > 0.0 { v / width } else { 0.0 }
+            }
+            Self::PiecewiseLinear { width } => {
+                let v = 1.0 - x.abs() / width;
+                v.max(0.0)
             }
         }
     }

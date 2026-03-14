@@ -53,7 +53,7 @@ def generate_eeg_epoch(
         + 0.4 * np.sin(2.0 * np.pi * sec_hz * t)
         + noise_scale * rng.standard_normal(n_samples)
     )
-    return signal  # type: ignore
+    return signal
 
 
 # ---------------------------------------------------------------------------

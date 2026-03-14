@@ -18,7 +18,7 @@ class FSMActivation:
     num_states: int
     initial_state: int
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self) -> None:
         self.state = self.initial_state
 
     def step(self, bit: int) -> int:

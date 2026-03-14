@@ -4,7 +4,7 @@ import numpy as np
 from sc_neurocore.neurons.stochastic_lif import StochasticLIFNeuron
 
 
-def run_demo():  # type: ignore
+def run_demo() -> None:
     neuron = StochasticLIFNeuron(
         v_rest=0.0,
         v_reset=0.0,
@@ -28,4 +28,4 @@ def run_demo():  # type: ignore
 
 
 if __name__ == "__main__":
-    run_demo()  # type: ignore
+    run_demo()

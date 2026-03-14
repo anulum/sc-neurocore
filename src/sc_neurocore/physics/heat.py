@@ -13,7 +13,7 @@ class StochasticHeatSolver:
         self.walkers = np.random.randint(0, length, num_walkers)
         self.alpha = alpha
 
-    def step(self):  # type: ignore
+    def step(self) -> None:
         """
         Move walkers.
         """

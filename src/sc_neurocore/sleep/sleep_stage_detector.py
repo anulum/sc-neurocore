@@ -94,8 +94,8 @@ class SleepStageDetector:
 
     def __init__(self, config: Optional[DetectorConfig] = None) -> None:
         self.config = config or DetectorConfig()
-        self._buffer: deque = deque(maxlen=self.config.fft_window)  # type: ignore
-        self._stage_history: deque = deque(maxlen=self.config.smoothing_window)  # type: ignore
+        self._buffer: deque = deque(maxlen=self.config.fft_window)
+        self._stage_history: deque = deque(maxlen=self.config.smoothing_window)
         self._band_powers: Optional[Dict[str, float]] = None
 
     # -- public API ---------------------------------------------------------
@@ -174,4 +174,4 @@ class SleepStageDetector:
     def _smooth(self) -> SleepStage:
         """Majority-vote smoothing over the recent stage history."""
         counter = Counter(self._stage_history)
-        return counter.most_common(1)[0][0]  # type: ignore
+        return counter.most_common(1)[0][0]

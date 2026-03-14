@@ -12,7 +12,7 @@ class SCDigitClassifier:
     Uses: Conv Layer -> Vectorized Dense Layer
     """
 
-    def __init__(self):  # type: ignore
+    def __init__(self) -> None:
         # 1. Convolutional Front-End (Feature Extraction)
         # Input: 28x28, 1 Channel
         self.conv = SCConv2DLayer(
@@ -46,7 +46,7 @@ class SCDigitClassifier:
         flat_probs = flat_features / norm_factor
         flat_probs = np.clip(flat_probs, 0, 1)
 
-        outputs = self.dense.forward(flat_probs)  # type: ignore
+        outputs = self.dense.forward(flat_probs)
 
         # Argmax
         return int(np.argmax(outputs))
@@ -58,9 +58,9 @@ class SCKeywordSpotter:
     Uses: Recurrent / Dense Layer
     """
 
-    def __init__(self, n_keywords=2):  # type: ignore
+    def __init__(self, n_keywords=2) -> None:
         # Simple Dense for demo (RNN requires sequence logic implementation)
         self.classifier = VectorizedSCLayer(n_inputs=16, n_neurons=n_keywords)
 
     def predict(self, mfcc_features: np.ndarray[Any, Any]) -> int:
-        return int(np.argmax(self.classifier.forward(mfcc_features)))  # type: ignore
+        return int(np.argmax(self.classifier.forward(mfcc_features)))

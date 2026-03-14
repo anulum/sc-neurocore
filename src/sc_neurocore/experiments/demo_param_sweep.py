@@ -5,7 +5,7 @@ import numpy as np
 from sc_neurocore.layers.sc_dense_layer import SCDenseLayer
 
 
-def run_pattern_trials(  # type: ignore
+def run_pattern_trials(
     label: int,
     x_inputs,
     weight_values,
@@ -62,7 +62,7 @@ def nearest_centroid_multi(
     return int(np.argmin(dists))
 
 
-def demo():  # type: ignore
+def demo() -> None:
     # Three different 3-channel patterns
     pattern_A = [0.02, 0.05, 0.08]  # class 0
     pattern_B = [0.08, 0.05, 0.02]  # class 1
@@ -124,7 +124,7 @@ def demo():  # type: ignore
                 preds = []
                 for sample in X:
                     preds.append(nearest_centroid_multi(sample, centroids))
-                preds = np.array(preds, dtype=int)  # type: ignore
+                preds = np.array(preds, dtype=int)
 
                 accuracy = float((preds == y_true).mean())
 
@@ -133,7 +133,7 @@ def demo():  # type: ignore
                 )
 
                 if accuracy > best_accuracy:
-                    best_accuracy = accuracy  # type: ignore
+                    best_accuracy = accuracy
                     best_params = {"n_neurons": n_neurons, "T": T, "noise_std": noise_std}
 
     print("\n--- Best Parameters ---")
@@ -142,4 +142,4 @@ def demo():  # type: ignore
 
 
 if __name__ == "__main__":
-    demo()  # type: ignore
+    demo()
