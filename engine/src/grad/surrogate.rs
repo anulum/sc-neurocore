@@ -43,7 +43,11 @@ impl SurrogateType {
             }
             Self::Triangular { width } => {
                 let v = 1.0 - x.abs() / width;
-                if v > 0.0 { v / width } else { 0.0 }
+                if v > 0.0 {
+                    v / width
+                } else {
+                    0.0
+                }
             }
             Self::PiecewiseLinear { width } => {
                 let v = 1.0 - x.abs() / width;

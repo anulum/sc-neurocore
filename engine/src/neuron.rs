@@ -279,14 +279,13 @@ impl HomeostaticLif {
         };
 
         // EMA spike rate tracking
-        self.rate_trace = self.rate_trace * self.trace_decay + spike as f64 * (1.0 - self.trace_decay);
+        self.rate_trace =
+            self.rate_trace * self.trace_decay + spike as f64 * (1.0 - self.trace_decay);
 
         // Threshold adaptation
         let error = self.rate_trace - self.target_rate;
         self.v_threshold += self.adaptation_rate * error;
-        self.v_threshold = self
-            .v_threshold
-            .clamp(0.1, self.initial_threshold * 10.0);
+        self.v_threshold = self.v_threshold.clamp(0.1, self.initial_threshold * 10.0);
 
         spike
     }
@@ -322,7 +321,11 @@ impl DendriticNeuron {
 
     pub fn step(&mut self, input_a: f64, input_b: f64) -> i32 {
         self.last_current = input_a + input_b - 2.0 * input_a * input_b;
-        if self.last_current > self.threshold { 1 } else { 0 }
+        if self.last_current > self.threshold {
+            1
+        } else {
+            0
+        }
     }
 
     pub fn reset(&mut self) {
@@ -332,7 +335,9 @@ impl DendriticNeuron {
 
 #[cfg(test)]
 mod tests {
-    use super::{mask, BitstreamAverager, DendriticNeuron, FixedPointLif, HomeostaticLif, Izhikevich};
+    use super::{
+        mask, BitstreamAverager, DendriticNeuron, FixedPointLif, HomeostaticLif, Izhikevich,
+    };
 
     #[test]
     fn mask_branchless_matches_original() {
