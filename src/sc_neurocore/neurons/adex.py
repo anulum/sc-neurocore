@@ -134,3 +134,184 @@ class AlphaNeuron:
         self.v = self.v_rest
         self.i_exc = 0.0
         self.i_inh = 0.0
+
+
+@dataclass
+class HodgkinHuxleyNeuron:
+    """Hodgkin-Huxley 1952 — 4-ODE ion channel model.
+
+    C_m dv/dt = -g_Na m³h(v-E_Na) - g_K n⁴(v-E_K) - g_L(v-E_L) + I
+    dm/dt = α_m(1-m) - β_m·m
+    dh/dt = α_h(1-h) - β_h·h
+    dn/dt = α_n(1-n) - β_n·n
+    """
+
+    v: float = -65.0
+    m: float = 0.05
+    h: float = 0.6
+    n: float = 0.32
+    c_m: float = 1.0
+    g_na: float = 120.0
+    g_k: float = 36.0
+    g_l: float = 0.3
+    e_na: float = 50.0
+    e_k: float = -77.0
+    e_l: float = -54.4
+    dt: float = 0.01
+    v_threshold: float = 0.0
+
+    def _alpha_m(self, v):
+        d = v + 40.0
+        if abs(d) < 1e-7:
+            return 1.0
+        return 0.1 * d / (1.0 - np.exp(-d / 10.0))
+
+    def _beta_m(self, v):
+        return 4.0 * np.exp(-(v + 65.0) / 18.0)
+
+    def _alpha_h(self, v):
+        return 0.07 * np.exp(-(v + 65.0) / 20.0)
+
+    def _beta_h(self, v):
+        return 1.0 / (1.0 + np.exp(-(v + 35.0) / 10.0))
+
+    def _alpha_n(self, v):
+        d = v + 55.0
+        if abs(d) < 1e-7:
+            return 0.1
+        return 0.01 * d / (1.0 - np.exp(-d / 10.0))
+
+    def _beta_n(self, v):
+        return 0.125 * np.exp(-(v + 65.0) / 80.0)
+
+    def step(self, current: float) -> int:
+        v_prev = self.v
+        for _ in range(int(1.0 / self.dt)):
+            am, bm = self._alpha_m(self.v), self._beta_m(self.v)
+            ah, bh = self._alpha_h(self.v), self._beta_h(self.v)
+            an, bn = self._alpha_n(self.v), self._beta_n(self.v)
+
+            self.m += (am * (1 - self.m) - bm * self.m) * self.dt
+            self.h += (ah * (1 - self.h) - bh * self.h) * self.dt
+            self.n += (an * (1 - self.n) - bn * self.n) * self.dt
+
+            i_na = self.g_na * self.m**3 * self.h * (self.v - self.e_na)
+            i_k = self.g_k * self.n**4 * (self.v - self.e_k)
+            i_l = self.g_l * (self.v - self.e_l)
+
+            self.v += (-i_na - i_k - i_l + current) / self.c_m * self.dt
+
+        return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
+
+    def reset(self):
+        self.v = -65.0
+        self.m = 0.05
+        self.h = 0.6
+        self.n = 0.32
+
+
+@dataclass
+class FitzHughNagumoNeuron:
+    """FitzHugh-Nagumo 1961 — 2D qualitative spike model.
+
+    dv/dt = v - v³/3 - w + I
+    dw/dt = ε(v + a - bw)
+    """
+
+    v: float = -1.0
+    w: float = -0.5
+    a: float = 0.7
+    b: float = 0.8
+    epsilon: float = 0.08
+    dt: float = 0.1
+    v_threshold: float = 1.0
+
+    def step(self, current: float) -> int:
+        v_prev = self.v
+        dv = (self.v - self.v**3 / 3.0 - self.w + current) * self.dt
+        dw = self.epsilon * (self.v + self.a - self.b * self.w) * self.dt
+        self.v += dv
+        self.w += dw
+        return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
+
+    def reset(self):
+        self.v = -1.0
+        self.w = -0.5
+
+
+@dataclass
+class MorrisLecarNeuron:
+    """Morris-Lecar 1981 — calcium-potassium oscillator.
+
+    C dv/dt = -g_Ca m_∞(v)(v-E_Ca) - g_K w(v-E_K) - g_L(v-E_L) + I
+    dw/dt = λ(v)(w_∞(v) - w)
+    """
+
+    v: float = -60.0
+    w: float = 0.0
+    c_m: float = 20.0
+    g_ca: float = 4.0
+    g_k: float = 8.0
+    g_l: float = 2.0
+    e_ca: float = 120.0
+    e_k: float = -84.0
+    e_l: float = -60.0
+    v1: float = -1.2
+    v2: float = 18.0
+    v3: float = 12.0
+    v4: float = 17.4
+    phi: float = 1.0 / 15.0
+    dt: float = 0.1
+    v_threshold: float = 0.0
+
+    def _m_inf(self, v):
+        return 0.5 * (1.0 + np.tanh((v - self.v1) / self.v2))
+
+    def _w_inf(self, v):
+        return 0.5 * (1.0 + np.tanh((v - self.v3) / self.v4))
+
+    def _lam(self, v):
+        return self.phi * np.cosh((v - self.v3) / (2.0 * self.v4))
+
+    def step(self, current: float) -> int:
+        v_prev = self.v
+        m_inf = self._m_inf(self.v)
+        w_inf = self._w_inf(self.v)
+        lam = self._lam(self.v)
+
+        i_ca = self.g_ca * m_inf * (self.v - self.e_ca)
+        i_k = self.g_k * self.w * (self.v - self.e_k)
+        i_l = self.g_l * (self.v - self.e_l)
+
+        self.v += (-i_ca - i_k - i_l + current) / self.c_m * self.dt
+        self.w += lam * (w_inf - self.w) * self.dt
+
+        return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
+
+    def reset(self):
+        self.v = -60.0
+        self.w = 0.0
+
+
+@dataclass
+class QuadraticIFNeuron:
+    """Quadratic Integrate-and-Fire — canonical Type-I excitability.
+
+    dv/dt = v² + I
+    Reset when v >= v_peak.
+    """
+
+    v: float = -1.0
+    v_reset: float = -1.0
+    v_peak: float = 1.0
+    dt: float = 0.01
+
+    def step(self, current: float) -> int:
+        self.v += (self.v**2 + current) * self.dt
+        if self.v >= self.v_peak:
+            self.v = self.v_reset
+            return 1
+        return 0
+
+    def reset(self):
+        self.v = self.v_reset

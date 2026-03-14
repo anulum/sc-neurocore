@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 from __future__ import annotations
 
+import pytest
+
 
 class TestAdExNeuron:
     def test_fires_with_input(self):
@@ -77,6 +79,82 @@ class TestAlphaNeuron:
         n = AlphaNeuron()
         spikes = sum(n.step(2.0, 10.0) for _ in range(200))
         assert spikes == 0, "strong inhibition should block firing"
+
+
+class TestHodgkinHuxley:
+    def test_fires(self):
+        from sc_neurocore.neurons.adex import HodgkinHuxleyNeuron
+
+        n = HodgkinHuxleyNeuron()
+        spikes = sum(n.step(10.0) for _ in range(100))
+        assert spikes > 0
+
+    def test_no_fire_without_input(self):
+        from sc_neurocore.neurons.adex import HodgkinHuxleyNeuron
+
+        n = HodgkinHuxleyNeuron()
+        spikes = sum(n.step(0.0) for _ in range(50))
+        assert spikes == 0
+
+    def test_gating_variables_bounded(self):
+        from sc_neurocore.neurons.adex import HodgkinHuxleyNeuron
+
+        n = HodgkinHuxleyNeuron()
+        for _ in range(100):
+            n.step(10.0)
+        assert 0.0 <= n.m <= 1.0
+        assert 0.0 <= n.h <= 1.0
+        assert 0.0 <= n.n <= 1.0
+
+
+class TestFitzHughNagumo:
+    def test_fires(self):
+        from sc_neurocore.neurons.adex import FitzHughNagumoNeuron
+
+        n = FitzHughNagumoNeuron()
+        spikes = sum(n.step(1.0) for _ in range(500))
+        assert spikes > 0
+
+    def test_relaxation_oscillation(self):
+        from sc_neurocore.neurons.adex import FitzHughNagumoNeuron
+
+        n = FitzHughNagumoNeuron()
+        for _ in range(200):
+            n.step(0.5)
+        assert n.w != -0.5, "recovery variable must evolve"
+
+
+class TestMorrisLecar:
+    def test_fires(self):
+        from sc_neurocore.neurons.adex import MorrisLecarNeuron
+
+        n = MorrisLecarNeuron()
+        spikes = sum(n.step(100.0) for _ in range(500))
+        assert spikes > 0
+
+    def test_calcium_activation(self):
+        from sc_neurocore.neurons.adex import MorrisLecarNeuron
+
+        n = MorrisLecarNeuron()
+        for _ in range(100):
+            n.step(100.0)
+        assert n.w > 0.0, "potassium activation must grow"
+
+
+class TestQuadraticIF:
+    def test_fires(self):
+        from sc_neurocore.neurons.adex import QuadraticIFNeuron
+
+        n = QuadraticIFNeuron()
+        spikes = sum(n.step(0.5) for _ in range(500))
+        assert spikes > 0
+
+    def test_no_fire_subthreshold(self):
+        from sc_neurocore.neurons.adex import QuadraticIFNeuron
+
+        n = QuadraticIFNeuron(v=-2.0, v_reset=-2.0)
+        spikes = sum(n.step(-1.0) for _ in range(100))
+        assert spikes == 0
 
 
 torch = pytest.importorskip("torch")
