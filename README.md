@@ -11,7 +11,7 @@ Commercial Licensing: Available
 </p>
 
 [![CI](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml/badge.svg)](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-3.10.0-blue)](https://github.com/anulum/sc-neurocore/releases)
+[![Version](https://img.shields.io/badge/version-3.11.0-blue)](https://github.com/anulum/sc-neurocore/releases)
 [![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/anulum/sc-neurocore)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://anulum.github.io/sc-neurocore/)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
@@ -22,8 +22,8 @@ Commercial Licensing: Available
 [![REUSE](https://img.shields.io/badge/REUSE-compliant-green)](https://reuse.software/)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)
 
-**Version:** 3.10.0
-**Status:** Production Core Verified | 1 451 Tests | 100% Coverage | CI/CD Active
+**Version:** 3.11.0
+**Status:** Production Core Verified | 1 539 Python + 99 Rust Tests | 100% Coverage | 100% Rust Parity
 
 <p align="center">
   <img src="docs/assets/spike_raster.png" width="800" alt="LIF spike raster — 5 neurons, sinusoidal input">
@@ -49,6 +49,8 @@ research prototyping.
 | GPU acceleration | CuPy | PyTorch | PyTorch | — | — |
 | Neuron models (LIF, Izhikevich, …) | 7 | 11 | 6 | 3 | Arbitrary |
 | Plasticity (STDP, R-STDP) | Yes | — | Yes | Yes | Yes |
+| Quantum hybrid (Qiskit/PennyLane) | **Yes** | — | — | — | — |
+| MLIR emitter (CIRCT) | **Yes** | — | — | — | — |
 | Hyperdimensional computing | Yes | — | — | — | — |
 | Formal verification (SymbiYosys) | **7 modules** | — | — | — | — |
 | PyPI package | Yes | Yes | Yes | Yes | Yes |
@@ -75,7 +77,7 @@ pip install sc-neurocore[gpu]
 git clone https://github.com/anulum/sc-neurocore.git
 cd sc-neurocore
 pip install -e ".[dev]"    # editable install with all dev tools
-make preflight             # verify setup (lint + 1451 tests)
+make preflight             # verify setup (lint + 1539 tests)
 ```
 
 ## Docker
@@ -139,6 +141,7 @@ graph TD
     subgraph "Hardware Target"
         I --> J[IR Compiler]
         J --> K[SystemVerilog Emitter]
+        J --> K2[MLIR/CIRCT Emitter]
         K --> L[Verilog RTL<br/>AXI-Lite + LIF Core]
         L --> M[FPGA Bitstream<br/>Xilinx / Intel]
     end
@@ -237,7 +240,7 @@ Co-simulation traces are generated deterministically from fixed LFSR seeds.
 To reproduce a published benchmark:
 
 ```bash
-git checkout v3.10.0
+git checkout v3.11.0
 pip install -e ".[dev]"
 python benchmarks/benchmark_suite.py --markdown > BENCHMARKS.md
 ```
@@ -362,6 +365,22 @@ pip install -r requirements.txt       # runtime only
 pip install -r requirements-dev.txt   # runtime + dev tools
 ```
 
+## Rust Engine (100% Python Parity)
+
+The `sc_neurocore_engine` crate provides a full Rust re-implementation
+of every Python module with SIMD dispatch (AVX-512, AVX2, NEON, SVE, RVV):
+
+| Category | Modules | Rust Tests |
+|----------|---------|-----------|
+| Primitives | Bernoulli + Sobol bitstream, pack/unpack, popcount | 13 |
+| Neurons | LIF, Izhikevich, Homeostatic, Dendritic | 15 |
+| Synapses | Static, STDP, Reward-STDP | 8 |
+| Layers | Dense, Conv2D, Recurrent, Learning, Fusion, Memristive, Attention | 12 |
+| Networks | Brunel, GNN, Spike recorder, Connectome, Fault injection | 18 |
+| Compiler | IR builder/parser/verifier, SystemVerilog + MLIR emitters | 9 |
+| Training | 6 surrogate gradient functions | 24 |
+| **Total** | **43/43 parity** | **99** |
+
 ## Community
 
 - [GitHub Discussions](https://github.com/anulum/sc-neurocore/discussions) — questions, ideas, show & tell
@@ -376,7 +395,7 @@ If you use SC-NeuroCore in your research, please cite:
 @software{sotek2026scneurocore,
   author    = {Šotek, Miroslav},
   title     = {SC-NeuroCore: A Deterministic Stochastic Computing Framework for Neuromorphic Hardware Design},
-  version   = {3.10.0},
+  version   = {3.11.0},
   year      = {2026},
   doi       = {10.5281/zenodo.18906614},
   url       = {https://github.com/anulum/sc-neurocore},
