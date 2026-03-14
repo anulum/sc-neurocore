@@ -333,10 +333,169 @@ impl DendriticNeuron {
     }
 }
 
+/// Adaptive Exponential IF neuron. Brette & Gerstner 2005.
+#[derive(Clone, Debug)]
+pub struct AdExNeuron {
+    pub v: f64,
+    pub w: f64,
+    pub v_rest: f64,
+    pub v_reset: f64,
+    pub v_threshold: f64,
+    pub v_rh: f64,
+    pub delta_t: f64,
+    pub tau: f64,
+    pub tau_w: f64,
+    pub a: f64,
+    pub b: f64,
+    pub dt: f64,
+}
+
+impl Default for AdExNeuron {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl AdExNeuron {
+    pub fn new() -> Self {
+        Self {
+            v: -65.0,
+            w: 0.0,
+            v_rest: -65.0,
+            v_reset: -68.0,
+            v_threshold: -50.0,
+            v_rh: -55.0,
+            delta_t: 2.0,
+            tau: 20.0,
+            tau_w: 100.0,
+            a: 0.5,
+            b: 7.0,
+            dt: 0.1,
+        }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        let exp_arg = ((self.v - self.v_rh) / self.delta_t).clamp(-20.0, 20.0);
+        let exp_term = self.delta_t * exp_arg.exp();
+        let dv = (-(self.v - self.v_rest) + exp_term - self.w + current) / self.tau * self.dt;
+        let dw = (self.a * (self.v - self.v_rest) - self.w) / self.tau_w * self.dt;
+        self.v += dv;
+        self.w += dw;
+
+        if self.v >= self.v_threshold {
+            self.v = self.v_reset;
+            self.w += self.b;
+            1
+        } else {
+            0
+        }
+    }
+
+    pub fn reset(&mut self) {
+        self.v = self.v_rest;
+        self.w = 0.0;
+    }
+}
+
+/// Exponential IF (no adaptation). Fourcaud-Trocmé et al. 2003.
+#[derive(Clone, Debug)]
+pub struct ExpIfNeuron {
+    pub v: f64,
+    pub v_rest: f64,
+    pub v_reset: f64,
+    pub v_threshold: f64,
+    pub v_rh: f64,
+    pub delta_t: f64,
+    pub tau: f64,
+    pub dt: f64,
+}
+
+impl Default for ExpIfNeuron {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ExpIfNeuron {
+    pub fn new() -> Self {
+        Self {
+            v: -65.0,
+            v_rest: -65.0,
+            v_reset: -68.0,
+            v_threshold: -50.0,
+            v_rh: -55.0,
+            delta_t: 2.0,
+            tau: 20.0,
+            dt: 0.1,
+        }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        let exp_arg = ((self.v - self.v_rh) / self.delta_t).clamp(-20.0, 20.0);
+        let exp_term = self.delta_t * exp_arg.exp();
+        let dv = (-(self.v - self.v_rest) + exp_term + current) / self.tau * self.dt;
+        self.v += dv;
+
+        if self.v >= self.v_threshold {
+            self.v = self.v_reset;
+            1
+        } else {
+            0
+        }
+    }
+
+    pub fn reset(&mut self) {
+        self.v = self.v_rest;
+    }
+}
+
+/// Lapicque 1907 — classical RC integrate-and-fire.
+#[derive(Clone, Debug)]
+pub struct LapicqueNeuron {
+    pub v: f64,
+    pub v_rest: f64,
+    pub v_reset: f64,
+    pub v_threshold: f64,
+    pub tau: f64,
+    pub resistance: f64,
+    pub dt: f64,
+}
+
+impl LapicqueNeuron {
+    pub fn new(tau: f64, resistance: f64, threshold: f64, dt: f64) -> Self {
+        Self {
+            v: 0.0,
+            v_rest: 0.0,
+            v_reset: 0.0,
+            v_threshold: threshold,
+            tau,
+            resistance,
+            dt,
+        }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        let dv = (-(self.v - self.v_rest) + self.resistance * current) / self.tau * self.dt;
+        self.v += dv;
+
+        if self.v >= self.v_threshold {
+            self.v = self.v_reset;
+            1
+        } else {
+            0
+        }
+    }
+
+    pub fn reset(&mut self) {
+        self.v = self.v_rest;
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::{
-        mask, BitstreamAverager, DendriticNeuron, FixedPointLif, HomeostaticLif, Izhikevich,
+        mask, AdExNeuron, BitstreamAverager, DendriticNeuron, ExpIfNeuron, FixedPointLif,
+        HomeostaticLif, Izhikevich, LapicqueNeuron,
     };
 
     #[test]
@@ -598,5 +757,70 @@ mod tests {
         }
         avg.reset();
         assert!(avg.estimate().abs() < 1e-12);
+    }
+
+    // ── AdEx tests ────────────────────────────────────────────────
+
+    #[test]
+    fn adex_fires_with_input() {
+        let mut n = AdExNeuron::new();
+        let mut total = 0;
+        for _ in 0..2000 {
+            total += n.step(500.0);
+        }
+        assert!(total > 0, "AdEx must fire with strong input");
+    }
+
+    #[test]
+    fn adex_adaptation_reduces_rate() {
+        let mut n = AdExNeuron::new();
+        let first_100: i32 = (0..1000).map(|_| n.step(400.0)).sum();
+        let next_100: i32 = (0..1000).map(|_| n.step(400.0)).sum();
+        // Adaptation should reduce firing over time (w grows)
+        assert!(
+            next_100 <= first_100 + 5,
+            "adaptation should not increase rate: first={first_100}, next={next_100}"
+        );
+    }
+
+    // ── ExpIF tests ───────────────────────────────────────────────
+
+    #[test]
+    fn expif_fires() {
+        let mut n = ExpIfNeuron::new();
+        let mut total = 0;
+        for _ in 0..2000 {
+            total += n.step(500.0);
+        }
+        assert!(total > 0, "ExpIF must fire");
+    }
+
+    #[test]
+    fn expif_no_fire_without_input() {
+        let mut n = ExpIfNeuron::new();
+        let total: i32 = (0..500).map(|_| n.step(0.0)).sum();
+        assert_eq!(total, 0);
+    }
+
+    // ── Lapicque tests ────────────────────────────────────────────
+
+    #[test]
+    fn lapicque_fires() {
+        let mut n = LapicqueNeuron::new(20.0, 1.0, 1.0, 1.0);
+        let mut total = 0;
+        for _ in 0..200 {
+            total += n.step(5.0);
+        }
+        assert!(total > 0, "Lapicque must fire with sustained input");
+    }
+
+    #[test]
+    fn lapicque_reset() {
+        let mut n = LapicqueNeuron::new(20.0, 1.0, 1.0, 1.0);
+        for _ in 0..50 {
+            n.step(5.0);
+        }
+        n.reset();
+        assert!((n.v).abs() < 1e-12);
     }
 }

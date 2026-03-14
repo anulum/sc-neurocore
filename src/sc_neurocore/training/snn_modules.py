@@ -164,6 +164,182 @@ class ALIFCell(nn.Module):
         return spike, v_next, a_next
 
 
+class ExpIFCell(nn.Module):
+    """Exponential Integrate-and-Fire. Fourcaud-Trocmé et al. 2003.
+
+    v[t] = beta * v[t-1] + delta_T * exp((v[t-1] - v_rh) / delta_T) + I[t]
+    Exponential term creates sharp upstroke near threshold.
+    """
+
+    def __init__(
+        self,
+        beta: float = 0.9,
+        threshold: float = 1.0,
+        delta_t: float = 0.5,
+        v_rh: float = 0.8,
+        surrogate_fn: Callable = atan_surrogate,
+    ):
+        super().__init__()
+        self.beta = beta
+        self.delta_t = delta_t
+        self.v_rh = v_rh
+        self.register_buffer("_threshold", torch.tensor(threshold))
+        self.surrogate_fn = surrogate_fn
+
+    def forward(self, current: torch.Tensor, v: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        exp_term = self.delta_t * torch.exp(torch.clamp((v - self.v_rh) / self.delta_t, max=5.0))
+        v_next = self.beta * v + exp_term + current
+        spike = self.surrogate_fn(v_next - self._threshold)
+        v_next = v_next - spike.detach() * self._threshold
+        return spike, v_next
+
+
+class AdExCell(nn.Module):
+    """Adaptive Exponential IF. Brette & Gerstner 2005.
+
+    v[t] = beta * v[t-1] + delta_T * exp((v - v_rh) / delta_T) - w[t-1] + I[t]
+    w[t] = rho * w[t-1] + a * (v[t-1] - v_rest) + b * spike[t]
+    """
+
+    def __init__(
+        self,
+        beta: float = 0.9,
+        threshold: float = 1.0,
+        delta_t: float = 0.5,
+        v_rh: float = 0.8,
+        a: float = 0.01,
+        b: float = 0.1,
+        rho: float = 0.99,
+        v_rest: float = 0.0,
+        surrogate_fn: Callable = atan_surrogate,
+    ):
+        super().__init__()
+        self.beta = beta
+        self.delta_t = delta_t
+        self.v_rh = v_rh
+        self.a = a
+        self.b = b
+        self.rho = rho
+        self.v_rest = v_rest
+        self.register_buffer("_threshold", torch.tensor(threshold))
+        self.surrogate_fn = surrogate_fn
+
+    def forward(
+        self,
+        current: torch.Tensor,
+        v: torch.Tensor,
+        w: torch.Tensor,
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        exp_term = self.delta_t * torch.exp(torch.clamp((v - self.v_rh) / self.delta_t, max=5.0))
+        v_next = self.beta * v + exp_term - w + current
+        spike = self.surrogate_fn(v_next - self._threshold)
+        v_next = v_next - spike.detach() * self._threshold
+        w_next = self.rho * w + self.a * (v - self.v_rest) + self.b * spike.detach()
+        return spike, v_next, w_next
+
+
+class LapicqueCell(nn.Module):
+    """Lapicque IF with membrane resistance. Lapicque 1907.
+
+    tau * dv/dt = -(v - v_rest) + R * I
+    Discretised: v[t] = (1 - dt/tau) * v[t-1] + (R * dt / tau) * I[t]
+    """
+
+    def __init__(
+        self,
+        tau: float = 20.0,
+        r: float = 1.0,
+        dt: float = 1.0,
+        threshold: float = 1.0,
+        v_rest: float = 0.0,
+        surrogate_fn: Callable = atan_surrogate,
+    ):
+        super().__init__()
+        self.decay = 1.0 - dt / tau
+        self.gain = r * dt / tau
+        self.v_rest = v_rest
+        self.register_buffer("_threshold", torch.tensor(threshold))
+        self.surrogate_fn = surrogate_fn
+
+    def forward(self, current: torch.Tensor, v: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        v_next = self.decay * (v - self.v_rest) + self.v_rest + self.gain * current
+        spike = self.surrogate_fn(v_next - self._threshold)
+        v_next = v_next - spike.detach() * (self._threshold - self.v_rest)
+        return spike, v_next
+
+
+class AlphaCell(nn.Module):
+    """Alpha synapse neuron. Rall 1967.
+
+    Two-state alpha function: i_exc and i_inh with separate time constants.
+    v[t] = beta * v[t-1] + i_exc[t] - i_inh[t]
+    """
+
+    def __init__(
+        self,
+        alpha_exc: float = 0.9,
+        alpha_inh: float = 0.85,
+        beta: float = 0.9,
+        threshold: float = 1.0,
+        surrogate_fn: Callable = atan_surrogate,
+    ):
+        super().__init__()
+        self.alpha_exc = alpha_exc
+        self.alpha_inh = alpha_inh
+        self.beta = beta
+        self.register_buffer("_threshold", torch.tensor(threshold))
+        self.surrogate_fn = surrogate_fn
+
+    def forward(
+        self,
+        exc_current: torch.Tensor,
+        inh_current: torch.Tensor,
+        i_exc: torch.Tensor,
+        i_inh: torch.Tensor,
+        v: torch.Tensor,
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        i_exc_next = self.alpha_exc * i_exc + exc_current
+        i_inh_next = self.alpha_inh * i_inh + inh_current
+        v_next = self.beta * v + i_exc_next - i_inh_next
+        spike = self.surrogate_fn(v_next - self._threshold)
+        v_next = v_next - spike.detach() * self._threshold
+        return spike, i_exc_next, i_inh_next, v_next
+
+
+class SecondOrderLIFCell(nn.Module):
+    """Second-order LIF with inertial term. Dayan & Abbott 2001.
+
+    Adds a second state variable (acceleration) for smoother dynamics:
+    a[t] = alpha * a[t-1] + I[t]
+    v[t] = beta * v[t-1] + a[t]
+    """
+
+    def __init__(
+        self,
+        alpha: float = 0.95,
+        beta: float = 0.9,
+        threshold: float = 1.0,
+        surrogate_fn: Callable = atan_surrogate,
+    ):
+        super().__init__()
+        self.alpha = alpha
+        self.beta = beta
+        self.register_buffer("_threshold", torch.tensor(threshold))
+        self.surrogate_fn = surrogate_fn
+
+    def forward(
+        self,
+        current: torch.Tensor,
+        a: torch.Tensor,
+        v: torch.Tensor,
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        a_next = self.alpha * a + current
+        v_next = self.beta * v + a_next
+        spike = self.surrogate_fn(v_next - self._threshold)
+        v_next = v_next - spike.detach() * self._threshold
+        return spike, a_next, v_next
+
+
 class RecurrentLIFCell(nn.Module):
     """LIF with trainable recurrent weights."""
 
