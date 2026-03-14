@@ -117,7 +117,7 @@ mod tests {
     }
 
     #[test]
-    fn ba_grows_correctly() {
+    fn barabasi_albert_grows_correctly() {
         let adj = barabasi_albert(10, 99);
         for i in 0..10 {
             assert_eq!(adj[i * 10 + i], 0);
