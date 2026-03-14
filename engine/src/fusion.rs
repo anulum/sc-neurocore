@@ -146,12 +146,10 @@ impl LearningLayer {
             for j in 0..self.n_inputs {
                 if input_spikes[j] && output[i] {
                     // LTP
-                    self.weights[i][j] =
-                        (self.weights[i][j] + self.learning_rate).min(1.0);
+                    self.weights[i][j] = (self.weights[i][j] + self.learning_rate).min(1.0);
                 } else if input_spikes[j] && !output[i] {
                     // LTD
-                    self.weights[i][j] =
-                        (self.weights[i][j] - self.learning_rate * 0.5).max(0.0);
+                    self.weights[i][j] = (self.weights[i][j] - self.learning_rate * 0.5).max(0.0);
                 }
             }
         }

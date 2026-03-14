@@ -48,7 +48,9 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
                 mlir.push_str(&format!("  hw.output {src} : i1\n"));
                 last_output = format!("%{name}");
             }
-            ScOp::Encode { id, prob, seed: _, .. } => {
+            ScOp::Encode {
+                id, prob, seed: _, ..
+            } => {
                 let prob_wire = value_wire(graph, *prob);
                 mlir.push_str(&format!(
                     "  %v{} = hw.instance \"enc_{}\" @sc_bitstream_encoder(\
@@ -60,19 +62,13 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
             ScOp::BitwiseAnd { id, lhs, rhs } => {
                 let l = value_wire(graph, *lhs);
                 let r = value_wire(graph, *rhs);
-                mlir.push_str(&format!(
-                    "  %v{} = comb.and {l}, {r} : i1\n",
-                    id.0
-                ));
+                mlir.push_str(&format!("  %v{} = comb.and {l}, {r} : i1\n", id.0));
                 last_output = format!("%v{}", id.0);
             }
             ScOp::BitwiseXor { id, lhs, rhs } => {
                 let l = value_wire(graph, *lhs);
                 let r = value_wire(graph, *rhs);
-                mlir.push_str(&format!(
-                    "  %v{} = comb.xor {l}, {r} : i1\n",
-                    id.0
-                ));
+                mlir.push_str(&format!("  %v{} = comb.xor {l}, {r} : i1\n", id.0));
                 last_output = format!("%v{}", id.0);
             }
             ScOp::Constant { id, value, .. } => {
@@ -82,12 +78,14 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
                     ScConst::F64(v) => format!("{}", (*v * 256.0) as i64),
                     _ => "0".to_string(),
                 };
-                mlir.push_str(&format!(
-                    "  %c{} = hw.constant {} : i16\n",
-                    id.0, val
-                ));
+                mlir.push_str(&format!("  %c{} = hw.constant {} : i16\n", id.0, val));
             }
-            ScOp::LifStep { id, current, params, .. } => {
+            ScOp::LifStep {
+                id,
+                current,
+                params,
+                ..
+            } => {
                 let cur = value_wire(graph, *current);
                 mlir.push_str(&format!(
                     "  %v{id}_spike, %v{id}_v = hw.instance \"lif_{id}\" \
@@ -112,18 +110,12 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
             }
             ScOp::Popcount { id, input } => {
                 let inp = value_wire(graph, *input);
-                mlir.push_str(&format!(
-                    "  %v{} = comb.popcount {inp} : i64\n",
-                    id.0
-                ));
+                mlir.push_str(&format!("  %v{} = comb.popcount {inp} : i64\n", id.0));
             }
             ScOp::GraphForward { .. }
             | ScOp::SoftmaxAttention { .. }
             | ScOp::KuramotoStep { .. } => {
-                return Err(format!(
-                    "MLIR emission for {:?} requires HLS backend",
-                    op
-                ));
+                return Err(format!("MLIR emission for {:?} requires HLS backend", op));
             }
             ScOp::Scale { id, input, factor } => {
                 let inp = value_wire(graph, *input);
@@ -162,10 +154,7 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
                     ReduceMode::Sum => "add",
                     ReduceMode::Max => "max",
                 };
-                mlir.push_str(&format!(
-                    "  %v{} = comb.{op_name} {inp} : i64\n",
-                    id.0,
-                ));
+                mlir.push_str(&format!("  %v{} = comb.{op_name} {inp} : i64\n", id.0,));
             }
         }
     }
