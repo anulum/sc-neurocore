@@ -105,6 +105,7 @@ omit = [
     "*/accel/jax_backend.py",
     "*/layers/jax_dense_layer.py",
     "*/quantum/hardware_bridge.py",
+    "*/integrations/lava_bridge.py",
 ]
 
 [tool.coverage.report]
