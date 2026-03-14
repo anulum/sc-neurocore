@@ -5,6 +5,10 @@ import pytest
 
 
 class TestRegistryWiring:
+    @pytest.fixture(autouse=True)
+    def _ensure_registered(self):
+        pass  # triggers registration
+
     def test_all_16_adapters_registered(self):
         from sc_neurocore.utils.registry import registry
 
@@ -40,3 +44,59 @@ class TestAdapterDiscovery:
 
         result = discover_adapters()
         assert isinstance(result, dict)
+
+    def test_discover_with_mock_entry_point(self):
+        from unittest.mock import MagicMock, patch
+
+        from sc_neurocore.utils.adapter_discovery import discover_adapters
+
+        mock_ep = MagicMock()
+        mock_ep.name = "MockAdapterTest"
+        mock_ep.load.return_value = type("MockAdapterTest", (), {})
+
+        with patch(
+            "sc_neurocore.utils.adapter_discovery.importlib.metadata.entry_points",
+            return_value=[mock_ep],
+        ):
+            result = discover_adapters()
+        assert isinstance(result, dict)
+
+    def test_discover_handles_load_error(self):
+        from unittest.mock import MagicMock, patch
+
+        from sc_neurocore.utils.adapter_discovery import discover_adapters
+
+        mock_ep = MagicMock()
+        mock_ep.name = "BadAdapter"
+        mock_ep.load.side_effect = ImportError("no such module")
+
+        with patch(
+            "sc_neurocore.utils.adapter_discovery.importlib.metadata.entry_points",
+            return_value=[mock_ep],
+        ):
+            result = discover_adapters()
+        assert "BadAdapter" not in result
+
+    def test_discover_handles_old_api(self):
+        from unittest.mock import MagicMock, patch
+
+        from sc_neurocore.utils.adapter_discovery import discover_adapters
+
+        call_count = 0
+
+        def old_api(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            if "group" in kwargs:
+                raise TypeError("unexpected keyword argument 'group'")
+            mock_result = MagicMock()
+            mock_result.get.return_value = []
+            return mock_result
+
+        with patch(
+            "sc_neurocore.utils.adapter_discovery.importlib.metadata.entry_points",
+            side_effect=old_api,
+        ):
+            result = discover_adapters()
+        assert isinstance(result, dict)
+        assert call_count == 2  # first call raises, second succeeds
