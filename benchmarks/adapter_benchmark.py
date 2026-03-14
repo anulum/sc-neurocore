@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Benchmark L1-L16 holonomic adapters: latency, memory, throughput."""
+
 from __future__ import annotations
 
 import json
@@ -71,10 +72,15 @@ def run_all_benchmarks(n_steps=100, output_dir="benchmarks/results"):
         json.dump(results, f, indent=2)
 
     # Markdown report
-    lines = ["# Adapter Benchmark Results\n", "| Adapter | Latency (µs) | Memory (KB) | Throughput (steps/s) |",
-             "|---------|-------------|-------------|---------------------|"]
+    lines = [
+        "# Adapter Benchmark Results\n",
+        "| Adapter | Latency (µs) | Memory (KB) | Throughput (steps/s) |",
+        "|---------|-------------|-------------|---------------------|",
+    ]
     for name, r in sorted(results.items()):
-        lines.append(f"| {name} | {r['mean_latency_us']:.1f} | {r['peak_memory_kb']:.1f} | {r['throughput_steps_per_sec']:.0f} |")
+        lines.append(
+            f"| {name} | {r['mean_latency_us']:.1f} | {r['peak_memory_kb']:.1f} | {r['throughput_steps_per_sec']:.0f} |"
+        )
     with open(out / "adapter_benchmark.md", "w") as f:
         f.write("\n".join(lines) + "\n")
 

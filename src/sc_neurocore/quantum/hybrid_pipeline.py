@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import numpy as np
 from .param_shift import parameter_shift_gradient
-from .noise_models import HeronR2NoiseModel
 
 
 def _ry(theta):
@@ -13,12 +12,15 @@ def _ry(theta):
 
 
 def _cnot():
-    return np.array([
-        [1, 0, 0, 0],
-        [0, 1, 0, 0],
-        [0, 0, 0, 1],
-        [0, 0, 1, 0],
-    ], dtype=complex)
+    return np.array(
+        [
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 0, 1],
+            [0, 0, 1, 0],
+        ],
+        dtype=complex,
+    )
 
 
 def _kron_gate(gate, qubit, n_qubits):
@@ -40,7 +42,7 @@ class HybridQuantumClassicalPipeline:
 
     def circuit(self, params):
         """Parameterized Ry-CNOT circuit → ⟨Z⊗Z⟩ expectation."""
-        dim = 2 ** self.n_qubits
+        dim = 2**self.n_qubits
         state = np.zeros(dim, dtype=complex)
         state[0] = 1.0  # |00...0⟩
 
@@ -70,9 +72,7 @@ class HybridQuantumClassicalPipeline:
                     state = sub @ state
 
         # Measure ⟨Z⊗Z⟩ (product of Z eigenvalues on all qubits)
-        z_all = np.array([
-            (-1) ** bin(i).count("1") for i in range(dim)
-        ], dtype=float)
+        z_all = np.array([(-1) ** bin(i).count("1") for i in range(dim)], dtype=float)
         return float(np.real(np.conj(state) @ (z_all * state)))
 
     def train(self, n_steps=100, lr=0.01):

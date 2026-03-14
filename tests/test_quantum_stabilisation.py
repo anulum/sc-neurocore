@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 
 class TestHeronNoiseModel:
@@ -59,7 +58,9 @@ class TestParameterShift:
     def test_sin_gradient(self):
         from sc_neurocore.quantum.param_shift import parameter_shift_gradient
 
-        f = lambda p: np.sin(p[0])
+        def f(p):
+            return np.sin(p[0])
+
         params = np.array([0.5])
         grad = parameter_shift_gradient(f, params)
         np.testing.assert_allclose(grad[0], np.cos(0.5), atol=1e-10)
@@ -67,7 +68,9 @@ class TestParameterShift:
     def test_multivariate(self):
         from sc_neurocore.quantum.param_shift import parameter_shift_gradient
 
-        f = lambda p: np.sin(p[0]) + np.cos(p[1])
+        def f(p):
+            return np.sin(p[0]) + np.cos(p[1])
+
         params = np.array([1.0, 2.0])
         grad = parameter_shift_gradient(f, params)
         np.testing.assert_allclose(grad[0], np.cos(1.0), atol=1e-10)
@@ -76,7 +79,9 @@ class TestParameterShift:
     def test_optimizer_converges(self):
         from sc_neurocore.quantum.param_shift import ParameterShiftOptimizer
 
-        f = lambda p: (p[0] - 1.0) ** 2
+        def f(p):
+            return (p[0] - 1.0) ** 2
+
         opt = ParameterShiftOptimizer(f, 1, lr=0.1)
         params = np.array([0.0])
         for _ in range(50):
