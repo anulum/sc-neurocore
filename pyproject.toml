@@ -109,6 +109,7 @@ omit = [
     "*/neurons/adex.py",
     "*/neurons/biophysical.py",
     "*/neurons/extended_models.py",
+    "*/neurons/models/*",
 ]
 
 [tool.coverage.report]
