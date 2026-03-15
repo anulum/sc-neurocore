@@ -35,7 +35,7 @@ An end-to-end MNIST demo trains a spiking digit classifier, quantises
 weights to Q8.8 fixed-point, simulates inference with stochastic
 bitstreams matching the RTL encoding, and exports Verilog weight
 parameters---achieving 94.0% accuracy under SC at bitstream length 1024
-(vs 94.2% float baseline). A convolutional SNN variant reaches 99.2%
+(vs 94.2% float baseline). A convolutional SNN variant reaches 99.49%
 via surrogate gradient training with learnable neuron parameters.
 
 # Statement of Need
@@ -84,7 +84,7 @@ For surrogate gradient training, SC-NeuroCore's `training` module
 matches snnTorch on a standard FC-SNN benchmark (95.5% vs 95.8% MNIST,
 identical 784$\to$128$\to$128$\to$10 architecture, 10 epochs). With
 learnable membrane time constants [@fang2021] the FC-SNN reaches 97.7%;
-a convolutional SNN architecture reaches 99.2%. The `to_sc_weights()`
+a convolutional SNN architecture reaches 99.49%. The `to_sc_weights()`
 method exports trained float weights normalised to [0, 1] for SC
 bitstream deployment---a train-to-hardware path that snnTorch and Norse
 do not provide.
@@ -105,11 +105,15 @@ and recurrent LIF cells with surrogate gradient backward passes,
 supporting learnable membrane and threshold parameters.
 
 **Rust Engine** (`sc_neurocore_engine`): A PyO3-bound Rust crate providing
-SIMD-accelerated `vec_and`, `vec_popcount`, LFSR stepping, and HDC
-vector operations. Runtime feature detection selects AVX-512, AVX2, or
-NEON paths. A Criterion benchmark measures 41.3 Gbit/s bitstream packing
-on AVX-512 (Intel i7-10700K). Cross-compiled wheels target Linux, macOS,
-and Windows across Python 3.10--3.13.
+SIMD-accelerated `vec_and`, `vec_popcount`, LFSR stepping, HDC
+vector operations, and 111 neuron model implementations covering all
+Python model classes (LIF variants, Hodgkin-Huxley, Izhikevich,
+multi-compartment, neural mass, and hardware chip emulators for Loihi,
+TrueNorth, BrainScaleS, SpiNNaker, and Akida). Runtime feature detection
+selects AVX-512, AVX2, or NEON paths. A Criterion benchmark measures
+41.3 Gbit/s bitstream packing on AVX-512 (Intel i7-10700K).
+Cross-compiled wheels target Linux, macOS, and Windows across Python
+3.10--3.13.
 
 **Verilog RTL** (`hdl/`): Ten synthesisable modules including
 `sc_lif_neuron.v` (Q8.8 LIF with configurable threshold and refractory
@@ -118,6 +122,16 @@ period), `sc_dense_matrix_layer.v` (per-neuron weight matrix), and
 `sc_neurocore_top` (3-input, 7-neuron) yields 7 382 LUTs on Xilinx
 7-series. The MNIST 16$\to$10 configuration is estimated at $\sim$56K
 LUTs, fitting an Artix-7 100T.
+
+A minimal end-to-end example:
+
+```python
+from sc_neurocore import BitstreamEncoder, StochasticLIFNeuron
+enc = BitstreamEncoder(data_width=16, fraction=8)
+neuron = StochasticLIFNeuron()
+for t in range(100):
+    spike, v = neuron.step(leak_k=1, gain_k=256, i_t=50, noise_in=0)
+```
 
 The key design trade-off is determinism over speed: where Brian2 uses
 compiled C++ codegen for maximal throughput, SC-NeuroCore maintains
@@ -155,7 +169,7 @@ independent packaging, CI, and PyPI publication.
 
 # Quality Assurance
 
-SC-NeuroCore maintains 1 560 Python and 105 Rust tests with 100% line
+SC-NeuroCore maintains 1 560 Python and 209 Rust tests with 100% line
 coverage of production modules (optional hardware-dependent and
 experimental code excluded via standard coverage directives), enforced
 by CI on every push. The test suite includes unit tests, integration
@@ -165,6 +179,10 @@ analysis comprises Ruff linting, Bandit security scanning, and SPDX
 license header validation. Eleven CI workflows---all with SHA-pinned
 GitHub Actions---cover lint, test, build, benchmark, documentation,
 CodeQL, and OpenSSF Scorecard.
+
+# Competing Interests
+
+The author declares no competing interests.
 
 # AI Usage Disclosure
 

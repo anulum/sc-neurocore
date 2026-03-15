@@ -39,6 +39,8 @@ __all__ = [
     "jax_popcount",
     "jax_vec_mac",
     "jax_lif_step",
+    "jax_forward_pass",
+    "jax_surrogate_gradient_step",
 ]
 
 
@@ -159,3 +161,78 @@ if HAS_JAX:
         spikes = v_next >= v_threshold
         v_next = jnp.where(spikes, v_reset, v_next)
         return v_next, spikes.astype(jnp.uint8)
+
+    def jax_forward_pass(
+        weights: list[jax.Array],
+        x: jax.Array,
+        n_steps: int,
+        v_rest: float = 0.0,
+        v_reset: float = 0.0,
+        v_threshold: float = 1.0,
+        alpha: float = 0.9,
+    ) -> tuple[list[jax.Array], jax.Array]:
+        """
+        Multi-layer SNN forward pass with LIF neurons.
+
+        Returns (spike_trains_per_layer, final_membrane_potentials).
+        Each layer: s = Heaviside(v - threshold), v = alpha * v * (1-s) + W @ s_prev
+        """
+        batch = x.shape[0]
+        spikes = x
+        all_spikes = []
+
+        for W in weights:
+            n_out = W.shape[0]
+            v = jnp.full((batch, n_out), v_rest)
+            layer_spikes = []
+
+            for _t in range(n_steps):
+                current = spikes @ W.T
+                v = alpha * v * (1.0 - v_reset) + current
+                s = (v >= v_threshold).astype(jnp.float32)
+                v = jnp.where(s > 0.5, v_reset, v)
+                layer_spikes.append(s)
+
+            # Output spikes = mean firing rate over time
+            spikes = jnp.stack(layer_spikes, axis=0).mean(axis=0)
+            all_spikes.append(jnp.stack(layer_spikes, axis=0))
+
+        return all_spikes, v
+
+    def jax_surrogate_gradient_step(
+        weights: list[jax.Array],
+        x: jax.Array,
+        targets: jax.Array,
+        n_steps: int = 25,
+        lr: float = 1e-3,
+        beta: float = 10.0,
+    ) -> tuple[list[jax.Array], float]:
+        """
+        One training step with surrogate gradient (fast sigmoid).
+
+        Uses jax.grad on a cross-entropy loss over mean output spike rates.
+        Returns (updated_weights, loss_value).
+        """
+        def loss_fn(ws):
+            batch = x.shape[0]
+            spikes_in = x
+            for W in ws:
+                n_out = W.shape[0]
+                v = jnp.zeros((batch, n_out))
+                spike_sum = jnp.zeros((batch, n_out))
+                for _t in range(n_steps):
+                    current = spikes_in @ W.T
+                    v = 0.9 * v + current
+                    # Fast sigmoid surrogate: σ(β(v-θ)) / β
+                    sg = 1.0 / (1.0 + jnp.abs(beta * (v - 1.0)))
+                    spike_sum = spike_sum + sg
+                    v = v * (1.0 - (v >= 1.0).astype(v.dtype))
+                spikes_in = spike_sum / n_steps
+            logits = spikes_in
+            log_softmax = logits - jax.nn.logsumexp(logits, axis=-1, keepdims=True)
+            ce = -jnp.sum(targets * log_softmax) / batch
+            return ce
+
+        loss_val, grads = jax.value_and_grad(loss_fn)(weights)
+        updated = [w - lr * g for w, g in zip(weights, grads)]
+        return updated, float(loss_val)

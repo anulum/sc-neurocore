@@ -19,6 +19,9 @@ dist/
 .vscode/
 .idea/
 
+# Internal docs (not for public repo)
+docs/internal/
+
 # OS
 .DS_Store
 Thumbs.db
