@@ -26,6 +26,7 @@ plugins:
 
 nav:
   - Home: index.md
+  - Pricing: pricing.md
   - Learning Path: LEARNING_PATH.md
   - Competitive Landscape: COMPETITIVE_LANDSCAPE.md
   - Guides:
