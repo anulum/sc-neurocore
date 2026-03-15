@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from sc_neurocore.neurons.extended_models import (
+from sc_neurocore.neurons.models import (
     BrainScaleSAdExNeuron,
     ButeraRespiratoryNeuron,
     ChayNeuron,

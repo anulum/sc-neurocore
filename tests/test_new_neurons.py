@@ -6,14 +6,14 @@ import pytest
 
 class TestAdExNeuron:
     def test_fires_with_input(self):
-        from sc_neurocore.neurons.adex import AdExNeuron
+        from sc_neurocore.neurons.models import AdExNeuron
 
         n = AdExNeuron()
         spikes = sum(n.step(500.0) for _ in range(2000))
         assert spikes > 0
 
     def test_adaptation(self):
-        from sc_neurocore.neurons.adex import AdExNeuron
+        from sc_neurocore.neurons.models import AdExNeuron
 
         n = AdExNeuron()
         for _ in range(1000):
@@ -21,7 +21,7 @@ class TestAdExNeuron:
         assert n.w > 0, "adaptation variable must grow"
 
     def test_reset(self):
-        from sc_neurocore.neurons.adex import AdExNeuron
+        from sc_neurocore.neurons.models import AdExNeuron
 
         n = AdExNeuron()
         for _ in range(100):
@@ -33,14 +33,14 @@ class TestAdExNeuron:
 
 class TestExpIFNeuron:
     def test_fires(self):
-        from sc_neurocore.neurons.adex import ExpIFNeuron
+        from sc_neurocore.neurons.models import ExpIFNeuron
 
         n = ExpIFNeuron()
         spikes = sum(n.step(500.0) for _ in range(2000))
         assert spikes > 0
 
     def test_no_fire_without_input(self):
-        from sc_neurocore.neurons.adex import ExpIFNeuron
+        from sc_neurocore.neurons.models import ExpIFNeuron
 
         n = ExpIFNeuron()
         spikes = sum(n.step(0.0) for _ in range(500))
@@ -49,14 +49,14 @@ class TestExpIFNeuron:
 
 class TestLapicqueNeuron:
     def test_fires(self):
-        from sc_neurocore.neurons.adex import LapicqueNeuron
+        from sc_neurocore.neurons.models import LapicqueNeuron
 
         n = LapicqueNeuron()
         spikes = sum(n.step(5.0) for _ in range(200))
         assert spikes > 0
 
     def test_reset(self):
-        from sc_neurocore.neurons.adex import LapicqueNeuron
+        from sc_neurocore.neurons.models import LapicqueNeuron
 
         n = LapicqueNeuron()
         for _ in range(50):
@@ -67,14 +67,14 @@ class TestLapicqueNeuron:
 
 class TestAlphaNeuron:
     def test_fires_with_excitation(self):
-        from sc_neurocore.neurons.adex import AlphaNeuron
+        from sc_neurocore.neurons.models import AlphaNeuron
 
         n = AlphaNeuron()
         spikes = sum(n.step(5.0) for _ in range(200))
         assert spikes > 0
 
     def test_inhibition_blocks(self):
-        from sc_neurocore.neurons.adex import AlphaNeuron
+        from sc_neurocore.neurons.models import AlphaNeuron
 
         n = AlphaNeuron()
         spikes = sum(n.step(2.0, 10.0) for _ in range(200))
@@ -83,21 +83,21 @@ class TestAlphaNeuron:
 
 class TestHodgkinHuxley:
     def test_fires(self):
-        from sc_neurocore.neurons.adex import HodgkinHuxleyNeuron
+        from sc_neurocore.neurons.models import HodgkinHuxleyNeuron
 
         n = HodgkinHuxleyNeuron()
         spikes = sum(n.step(10.0) for _ in range(100))
         assert spikes > 0
 
     def test_no_fire_without_input(self):
-        from sc_neurocore.neurons.adex import HodgkinHuxleyNeuron
+        from sc_neurocore.neurons.models import HodgkinHuxleyNeuron
 
         n = HodgkinHuxleyNeuron()
         spikes = sum(n.step(0.0) for _ in range(50))
         assert spikes == 0
 
     def test_gating_variables_bounded(self):
-        from sc_neurocore.neurons.adex import HodgkinHuxleyNeuron
+        from sc_neurocore.neurons.models import HodgkinHuxleyNeuron
 
         n = HodgkinHuxleyNeuron()
         for _ in range(100):
@@ -109,14 +109,14 @@ class TestHodgkinHuxley:
 
 class TestFitzHughNagumo:
     def test_fires(self):
-        from sc_neurocore.neurons.adex import FitzHughNagumoNeuron
+        from sc_neurocore.neurons.models import FitzHughNagumoNeuron
 
         n = FitzHughNagumoNeuron()
         spikes = sum(n.step(1.0) for _ in range(500))
         assert spikes > 0
 
     def test_relaxation_oscillation(self):
-        from sc_neurocore.neurons.adex import FitzHughNagumoNeuron
+        from sc_neurocore.neurons.models import FitzHughNagumoNeuron
 
         n = FitzHughNagumoNeuron()
         for _ in range(200):
@@ -126,14 +126,14 @@ class TestFitzHughNagumo:
 
 class TestMorrisLecar:
     def test_fires(self):
-        from sc_neurocore.neurons.adex import MorrisLecarNeuron
+        from sc_neurocore.neurons.models import MorrisLecarNeuron
 
         n = MorrisLecarNeuron()
         spikes = sum(n.step(100.0) for _ in range(500))
         assert spikes > 0
 
     def test_calcium_activation(self):
-        from sc_neurocore.neurons.adex import MorrisLecarNeuron
+        from sc_neurocore.neurons.models import MorrisLecarNeuron
 
         n = MorrisLecarNeuron()
         for _ in range(100):
@@ -143,14 +143,14 @@ class TestMorrisLecar:
 
 class TestQuadraticIF:
     def test_fires(self):
-        from sc_neurocore.neurons.adex import QuadraticIFNeuron
+        from sc_neurocore.neurons.models import QuadraticIFNeuron
 
         n = QuadraticIFNeuron()
         spikes = sum(n.step(0.5) for _ in range(500))
         assert spikes > 0
 
     def test_no_fire_subthreshold(self):
-        from sc_neurocore.neurons.adex import QuadraticIFNeuron
+        from sc_neurocore.neurons.models import QuadraticIFNeuron
 
         n = QuadraticIFNeuron(v=-2.0, v_reset=-2.0)
         spikes = sum(n.step(-1.0) for _ in range(100))
@@ -159,14 +159,14 @@ class TestQuadraticIF:
 
 class TestHindmarshRose:
     def test_bursting(self):
-        from sc_neurocore.neurons.adex import HindmarshRoseNeuron
+        from sc_neurocore.neurons.models import HindmarshRoseNeuron
 
         n = HindmarshRoseNeuron()
         spikes = sum(n.step(3.0) for _ in range(2000))
         assert spikes > 0
 
     def test_z_evolves(self):
-        from sc_neurocore.neurons.adex import HindmarshRoseNeuron
+        from sc_neurocore.neurons.models import HindmarshRoseNeuron
 
         n = HindmarshRoseNeuron()
         for _ in range(500):
@@ -176,14 +176,14 @@ class TestHindmarshRose:
 
 class TestThetaNeuron:
     def test_fires_above_threshold(self):
-        from sc_neurocore.neurons.adex import ThetaNeuron
+        from sc_neurocore.neurons.models import ThetaNeuron
 
         n = ThetaNeuron()
         spikes = sum(n.step(1.0) for _ in range(1000))
         assert spikes > 0
 
     def test_no_fire_below(self):
-        from sc_neurocore.neurons.adex import ThetaNeuron
+        from sc_neurocore.neurons.models import ThetaNeuron
 
         n = ThetaNeuron()
         spikes = sum(n.step(-1.0) for _ in range(100))
@@ -192,14 +192,14 @@ class TestThetaNeuron:
 
 class TestResonateAndFire:
     def test_fires_with_resonant_input(self):
-        from sc_neurocore.neurons.adex import ResonateAndFireNeuron
+        from sc_neurocore.neurons.models import ResonateAndFireNeuron
 
         n = ResonateAndFireNeuron()
         spikes = sum(n.step(2.0) for _ in range(500))
         assert spikes > 0
 
     def test_subthreshold_oscillation(self):
-        from sc_neurocore.neurons.adex import ResonateAndFireNeuron
+        from sc_neurocore.neurons.models import ResonateAndFireNeuron
 
         n = ResonateAndFireNeuron()
         n.step(0.3)
@@ -209,7 +209,7 @@ class TestResonateAndFire:
 
 class TestPoissonNeuron:
     def test_fires_at_rate(self):
-        from sc_neurocore.neurons.adex import PoissonNeuron
+        from sc_neurocore.neurons.models import PoissonNeuron
 
         n = PoissonNeuron(rate_hz=1000.0, dt_ms=1.0)
         spikes = sum(n.step() for _ in range(10000))
@@ -217,7 +217,7 @@ class TestPoissonNeuron:
         assert 500 < rate < 1500
 
     def test_zero_rate(self):
-        from sc_neurocore.neurons.adex import PoissonNeuron
+        from sc_neurocore.neurons.models import PoissonNeuron
 
         n = PoissonNeuron(rate_hz=0.0)
         spikes = sum(n.step() for _ in range(1000))
@@ -226,14 +226,14 @@ class TestPoissonNeuron:
 
 class TestSpikeResponse:
     def test_fires_with_input(self):
-        from sc_neurocore.neurons.adex import SpikeResponseNeuron
+        from sc_neurocore.neurons.models import SpikeResponseNeuron
 
         n = SpikeResponseNeuron(v_threshold=0.5, tau_kappa=1.0)
         spikes = sum(n.step(5.0) for _ in range(200))
         assert spikes > 0
 
     def test_refractory_suppression(self):
-        from sc_neurocore.neurons.adex import SpikeResponseNeuron
+        from sc_neurocore.neurons.models import SpikeResponseNeuron
 
         n = SpikeResponseNeuron(eta_reset=-10.0, tau_eta=5.0)
         n.step(10.0)  # force spike
@@ -243,14 +243,14 @@ class TestSpikeResponse:
 
 class TestMihalasNiebur:
     def test_fires(self):
-        from sc_neurocore.neurons.adex import MihalasNieburNeuron
+        from sc_neurocore.neurons.models import MihalasNieburNeuron
 
         n = MihalasNieburNeuron()
         spikes = sum(n.step(5.0) for _ in range(200))
         assert spikes > 0
 
     def test_adaptation_currents(self):
-        from sc_neurocore.neurons.adex import MihalasNieburNeuron
+        from sc_neurocore.neurons.models import MihalasNieburNeuron
 
         n = MihalasNieburNeuron(r1=1.0, r2=0.5)
         for _ in range(50):
