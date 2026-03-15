@@ -11,7 +11,7 @@ from sc_neurocore_engine.sc_neurocore_engine import StochasticGraphLayer as _Rus
 class StochasticGraphLayer:
     """API-compatible with sc_neurocore.graphs.StochasticGraphLayer."""
 
-    def __init__(self, adj_matrix: np.ndarray, n_features: int, seed: int = 42):
+    def __init__(self, adj_matrix, n_features: int, seed: int = 42):
         adj = np.asarray(adj_matrix, dtype=np.float64)
         if adj.ndim != 2 or adj.shape[0] != adj.shape[1]:
             raise ValueError(f"adj_matrix must be square 2-D, got shape {adj.shape}")
@@ -22,18 +22,55 @@ class StochasticGraphLayer:
             self.n_features, self.n_features
         )
 
-    def forward(self, node_features: np.ndarray) -> np.ndarray:
+    @classmethod
+    def from_sparse(
+        cls,
+        row_offsets: list[int],
+        col_indices: list[int],
+        values: list[float],
+        n_nodes: int,
+        n_features: int,
+        seed: int = 42,
+    ) -> StochasticGraphLayer:
+        obj = object.__new__(cls)
+        obj.n_nodes = n_nodes
+        obj.n_features = n_features
+        obj._engine = _RustGraphLayer.from_sparse(
+            row_offsets, col_indices, values, n_nodes, n_features, seed=seed
+        )
+        obj.weights = np.array(obj._engine.get_weights(), dtype=np.float64).reshape(
+            n_features, n_features
+        )
+        return obj
+
+    @classmethod
+    def from_dense_auto(
+        cls,
+        adj_matrix,
+        n_features: int,
+        seed: int = 42,
+        density_threshold: float = 0.3,
+    ) -> StochasticGraphLayer:
+        adj = np.asarray(adj_matrix, dtype=np.float64)
+        n_nodes = int(adj.shape[0])
+        obj = object.__new__(cls)
+        obj.n_nodes = n_nodes
+        obj.n_features = n_features
+        obj._engine = _RustGraphLayer.from_dense_auto(adj, n_features, seed=seed, density_threshold=density_threshold)
+        obj.weights = np.array(obj._engine.get_weights(), dtype=np.float64).reshape(
+            n_features, n_features
+        )
+        return obj
+
+    def is_sparse(self) -> bool:
+        return self._engine.is_sparse()
+
+    def forward(self, node_features) -> np.ndarray:
         X = np.asarray(node_features, dtype=np.float64)
         result = self._engine.forward(X)
         return np.asarray(result, dtype=np.float64).reshape(self.n_nodes, self.n_features)
 
-    def forward_sc(
-        self,
-        node_features: np.ndarray,
-        length: int = 1024,
-        seed: int = 44257,
-    ) -> np.ndarray:
-        """SC-mode forward pass using bitstream AND+popcount."""
+    def forward_sc(self, node_features, length: int = 1024, seed: int = 44257) -> np.ndarray:
         X = np.asarray(node_features, dtype=np.float64)
         result = self._engine.forward_sc(X, int(length), int(seed))
         return np.asarray(result, dtype=np.float64).reshape(self.n_nodes, self.n_features)
