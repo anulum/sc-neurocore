@@ -7,7 +7,6 @@ from .fixed_point_lif import FixedPointLIFNeuron, FixedPointLFSR, FixedPointBits
 from .homeostatic_lif import HomeostaticLIFNeuron
 from .dendritic import StochasticDendriticNeuron
 from .sc_izhikevich import SCIzhikevichNeuron
-from .equation_builder import EquationNeuron, from_equations
 
 from .models import (
     AdExNeuron,
@@ -237,6 +236,13 @@ __all__ = [
     "WilsonHRNeuron",
     "WongWangUnit",
     "YamadaNeuron",
-    "EquationNeuron",
-    "from_equations",
 ]
+
+# -- Rust auto-dispatch: replace Python classes with Rust when engine available --
+try:
+    from sc_neurocore_engine import sc_neurocore_engine as _eng
+
+    _rust_map = {name: getattr(_eng, name) for name in __all__ if hasattr(_eng, name)}
+    globals().update(_rust_map)
+except ImportError:
+    pass
