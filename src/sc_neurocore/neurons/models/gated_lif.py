@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+import numpy as np
+
+
+@dataclass
+class GatedLIFNeuron:
+    """Yao et al. 2022 NeurIPS — LIF with learnable gates."""
+
+    v: float = 0.0
+    gate_v: float = 0.9
+    gate_i: float = 1.0
+    v_threshold: float = 1.0
+    dt: float = 1.0
+
+    def step(self, current: float) -> int:
+        self.v = self.gate_v * self.v + self.gate_i * current
+        if self.v >= self.v_threshold:
+            self.v -= self.v_threshold
+            return 1
+        return 0
+
+    def reset(self):
+        self.v = 0.0
+
+
+# ── POPULATION / RATE / NEURAL MASS ───────────────────────────────
