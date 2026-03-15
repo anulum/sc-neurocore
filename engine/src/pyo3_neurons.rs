@@ -1463,5 +1463,38 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyFractionalLIFNeuron>()?;
     m.add_class::<PyParallelSpikingNeuron>()?;
     m.add_class::<PyAmariNeuralField>()?;
+    m.add_class::<PyLeakyCompeteFireNeuron>()?;
     Ok(())
+}
+
+// LeakyCompeteFireNeuron: step(Vec) -> Vec
+#[pyclass(
+    name = "LeakyCompeteFireNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
+#[derive(Clone)]
+pub struct PyLeakyCompeteFireNeuron {
+    inner: neurons::LeakyCompeteFireNeuron,
+}
+
+#[pymethods]
+impl PyLeakyCompeteFireNeuron {
+    #[new]
+    #[pyo3(signature = (n_units=4))]
+    fn new(n_units: usize) -> Self {
+        Self {
+            inner: neurons::LeakyCompeteFireNeuron::new(n_units),
+        }
+    }
+    fn step(&mut self, currents: Vec<f64>) -> Vec<i32> {
+        self.inner.step(&currents)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
+    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let d = PyDict::new(py);
+        d.set_item("v", self.inner.v.clone())?;
+        Ok(d.into_any().unbind())
+    }
 }
