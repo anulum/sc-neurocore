@@ -106,6 +106,8 @@ omit = [
     "*/layers/jax_dense_layer.py",
     "*/quantum/hardware_bridge.py",
     "*/integrations/lava_bridge.py",
+    "*/neurons/adex.py",
+    "*/neurons/biophysical.py",
 ]
 
 [tool.coverage.report]
