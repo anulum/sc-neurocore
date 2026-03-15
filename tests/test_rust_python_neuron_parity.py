@@ -8,8 +8,6 @@ Rust engine, verifies spike counts match within tolerance.
 
 from __future__ import annotations
 
-import inspect
-
 import pytest
 
 from sc_neurocore.neurons import models as py_models
@@ -24,16 +22,35 @@ except ImportError:
 pytestmark = pytest.mark.skipif(not HAS_ENGINE, reason="Rust engine not built")
 
 # Models with non-standard step() signatures
-_DUAL_FLOAT = {"AlphaNeuron", "COBALIFNeuron", "PinskyRinzelNeuron", "HayL5PyramidalNeuron", "TwoCompartmentLIFNeuron"}
+_DUAL_FLOAT = {
+    "AlphaNeuron",
+    "COBALIFNeuron",
+    "PinskyRinzelNeuron",
+    "HayL5PyramidalNeuron",
+    "TwoCompartmentLIFNeuron",
+}
 _BOOL_PARAM = {"TsodyksMarkramNeuron", "CompteWMNeuron"}
-_INT_INPUT = {"LoihiCUBANeuron", "Loihi2Neuron", "TrueNorthNeuron", "SpiNNaker2Neuron", "IntegerQIFNeuron", "AkidaNeuron"}
+_INT_INPUT = {
+    "LoihiCUBANeuron",
+    "Loihi2Neuron",
+    "TrueNorthNeuron",
+    "SpiNNaker2Neuron",
+    "IntegerQIFNeuron",
+    "AkidaNeuron",
+}
 _VEC_INPUT = {"AmariNeuralField", "LeakyCompeteFireNeuron"}
 _RATE_OVERRIDE = {"PoissonNeuron", "InhomogeneousPoissonNeuron", "GammaRenewalNeuron"}
 # Stochastic models (RNG-dependent, skip exact parity)
 _STOCHASTIC = {
-    "EscapeRateNeuron", "BendaHerzNeuron", "PoissonNeuron",
-    "InhomogeneousPoissonNeuron", "GammaRenewalNeuron", "StochasticIFNeuron",
-    "GalvesLocherbachNeuron", "GLMNeuron", "GIFPopulationNeuron",
+    "EscapeRateNeuron",
+    "BendaHerzNeuron",
+    "PoissonNeuron",
+    "InhomogeneousPoissonNeuron",
+    "GammaRenewalNeuron",
+    "StochasticIFNeuron",
+    "GalvesLocherbachNeuron",
+    "GLMNeuron",
+    "GIFPopulationNeuron",
     "WongWangUnit",
 }
 
@@ -97,12 +114,14 @@ def test_parity(name):
         return
 
     max_delta = max(3, int(max(py_count, rs_count) * 0.15))
-    assert abs(py_count - rs_count) <= max_delta, (
-        f"{name}: Python={py_count}, Rust={rs_count}, delta={abs(py_count - rs_count)}, max_delta={max_delta}"
-    )
+    assert (
+        abs(py_count - rs_count) <= max_delta
+    ), f"{name}: Python={py_count}, Rust={rs_count}, delta={abs(py_count - rs_count)}, max_delta={max_delta}"
 
 
-@pytest.mark.parametrize("name", ["LoihiCUBANeuron", "TrueNorthNeuron", "SigmaDeltaNeuron", "McCullochPittsNeuron"])
+@pytest.mark.parametrize(
+    "name", ["LoihiCUBANeuron", "TrueNorthNeuron", "SigmaDeltaNeuron", "McCullochPittsNeuron"]
+)
 def test_exact_parity(name):
     """Integer/deterministic models must match exactly."""
     py_model = _make_py(name)
