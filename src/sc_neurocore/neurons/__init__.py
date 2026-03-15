@@ -239,10 +239,10 @@ __all__ = [
 ]
 
 # -- Rust auto-dispatch: replace Python classes with Rust when engine available --
-try:
+try:  # pragma: no cover
     from sc_neurocore_engine import sc_neurocore_engine as _eng
 
     _rust_map = {name: getattr(_eng, name) for name in __all__ if hasattr(_eng, name)}
     globals().update(_rust_map)
-except ImportError:
+except ImportError:  # pragma: no cover
     pass
