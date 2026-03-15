@@ -108,6 +108,7 @@ omit = [
     "*/integrations/lava_bridge.py",
     "*/neurons/adex.py",
     "*/neurons/biophysical.py",
+    "*/neurons/extended_models.py",
 ]
 
 [tool.coverage.report]
