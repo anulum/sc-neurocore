@@ -408,7 +408,7 @@ pub struct FractionalLIFNeuron {
     pub dt: f64,
     history: Vec<f64>,
     gl_coeffs: Vec<f64>,
-    max_hist: usize,
+    _max_hist: usize,
 }
 
 impl FractionalLIFNeuron {
@@ -428,7 +428,7 @@ impl FractionalLIFNeuron {
             dt: 1.0,
             history: vec![0.0; max_hist],
             gl_coeffs: coeffs,
-            max_hist,
+            _max_hist: max_hist,
         }
     }
     pub fn step(&mut self, current: f64) -> i32 {

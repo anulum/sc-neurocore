@@ -2,7 +2,12 @@
 // © 1998–2026 Miroslav Šotek. All rights reserved.
 // Contact: www.anulum.li | protoscience@anulum.li
 
-#![allow(clippy::useless_conversion)]
+#![allow(
+    clippy::useless_conversion,
+    clippy::needless_range_loop,
+    clippy::too_many_arguments,
+    deprecated
+)]
 
 use numpy::{
     IntoPyArray, PyArray1, PyArray2, PyArrayMethods, PyReadonlyArray1, PyReadonlyArray2,
