@@ -110,6 +110,7 @@ omit = [
     "*/neurons/biophysical.py",
     "*/neurons/extended_models.py",
     "*/neurons/models/*",
+    "*/neurons/equation_builder.py",
 ]
 
 [tool.coverage.report]
