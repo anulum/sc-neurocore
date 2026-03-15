@@ -120,9 +120,14 @@ from .models import (
 )
 
 __all__ = [
-    "BaseNeuron", "StochasticLIFNeuron", "FixedPointLIFNeuron",
-    "FixedPointLFSR", "FixedPointBitstreamEncoder",
-    "HomeostaticLIFNeuron", "StochasticDendriticNeuron", "SCIzhikevichNeuron",
+    "BaseNeuron",
+    "StochasticLIFNeuron",
+    "FixedPointLIFNeuron",
+    "FixedPointLFSR",
+    "FixedPointBitstreamEncoder",
+    "HomeostaticLIFNeuron",
+    "StochasticDendriticNeuron",
+    "SCIzhikevichNeuron",
     "AdExNeuron",
     "AdaptiveThresholdIFNeuron",
     "AkidaNeuron",
