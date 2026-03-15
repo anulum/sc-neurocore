@@ -50,7 +50,7 @@ computing (Qiskit + PennyLane), and surrogate gradient training reaching
 | Rust SIMD engine (512x) | **Yes** | — | — | — | — |
 | Surrogate gradient training | Yes | Yes | Yes | Yes | — |
 | GPU acceleration | CuPy | PyTorch | PyTorch | — | — |
-| Neuron model library | **87** | 11 | 6 | 3 | ~5 builtin |
+| Neuron model library | **112** | 11 | 6 | 3 | ~5 builtin |
 | MNIST accuracy (SNN) | **99.49%** | ~95% | ~93% | — | — |
 | Plasticity (STDP, R-STDP) | Yes | — | Yes | Yes | Yes |
 | Quantum hybrid (Qiskit/PennyLane) | **Yes** | — | — | — | — |

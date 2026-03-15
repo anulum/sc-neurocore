@@ -7,7 +7,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [3.12.0] - 2026-03-15
 
 ### Neuron Model Library (112 models)
-- 79 individual model files in `neurons/models/` (one file per model)
+- 104 individual model files in `neurons/models/` (one file per model)
 - Categories span 14 families: IF variants (21), Biophysical (11), Adaptive (4), Oscillatory (7), Bursting (5), Synaptic (3), Multi-compartment (3), Map-based (6), Stochastic (4), Population (5), Hardware (7), Modern/ML (5), Rate (3), Other (3)
 - Notable additions: TraubMiles, WilsonHR, Pospischil (5 cortical types), ConnorStevens, WangBuzsaki, PinskyRinzel, Destexhe, HuberBraun, GolombFS, MainenSejnowski
 - Historical coverage from McCulloch-Pitts (1943) to Gated LIF (2025)
