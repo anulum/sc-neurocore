@@ -47,6 +47,7 @@ from .golomb_fs import GolombFSNeuron
 from .gutkin_ermentrout import GutkinErmentroutNeuron
 from .hill_tononi import HillTononiNeuron
 from .hindmarsh_rose import HindmarshRoseNeuron
+from .hay_l5 import HayL5PyramidalNeuron
 from .hodgkin_huxley import HodgkinHuxleyNeuron
 from .huber_braun import HuberBraunNeuron
 from .ibarz_tanaka_map import IbarzTanakaMapNeuron
@@ -56,6 +57,7 @@ from .iqif import IntegerQIFNeuron
 from .jansen_rit import JansenRitUnit
 from .klif import KLIFNeuron
 from .lapicque import LapicqueNeuron
+from .larter_breakspear import LarterBreakspearNeuron
 from .leaky_compete_fire import LeakyCompeteFireNeuron
 from .lnm import LearnableNeuronModel
 from .loihi2 import Loihi2Neuron
@@ -73,6 +75,7 @@ from .neurogrid import NeuroGridNeuron
 from .nlif import NonlinearLIFNeuron
 from .non_resetting_lif import NonResettingLIFNeuron
 from .perfect_integrator import PerfectIntegratorNeuron
+from .pernarowski import PernarowskiNeuron
 from .pinsky_rinzel import PinskyRinzelNeuron
 from .plant_r15 import PlantR15Neuron
 from .plif import ParametricLIFNeuron
@@ -102,6 +105,7 @@ from .traub_miles import TraubMilesNeuron
 from .truenorth import TrueNorthNeuron
 from .tsodyks_markram import TsodyksMarkramNeuron
 from .wang_buzsaki import WangBuzsakiNeuron
+from .wendling import WendlingNeuron
 from .wilson_cowan import WilsonCowanUnit
 from .wilson_hr import WilsonHRNeuron
 from .wong_wang import WongWangUnit
@@ -152,6 +156,7 @@ __all__ = [
     "GolombFSNeuron",
     "GutkinErmentroutNeuron",
     "HillTononiNeuron",
+    "HayL5PyramidalNeuron",
     "HindmarshRoseNeuron",
     "HodgkinHuxleyNeuron",
     "HuberBraunNeuron",
@@ -162,6 +167,7 @@ __all__ = [
     "JansenRitUnit",
     "KLIFNeuron",
     "LapicqueNeuron",
+    "LarterBreakspearNeuron",
     "LeakyCompeteFireNeuron",
     "LearnableNeuronModel",
     "LiquidTimeConstantNeuron",
@@ -181,6 +187,7 @@ __all__ = [
     "ParallelSpikingNeuron",
     "ParametricLIFNeuron",
     "PerfectIntegratorNeuron",
+    "PernarowskiNeuron",
     "PinskyRinzelNeuron",
     "PlantR15Neuron",
     "PoissonNeuron",
@@ -208,6 +215,7 @@ __all__ = [
     "TsodyksMarkramNeuron",
     "TwoCompartmentLIFNeuron",
     "WangBuzsakiNeuron",
+    "WendlingNeuron",
     "WilsonCowanUnit",
     "WilsonHRNeuron",
     "WongWangUnit",

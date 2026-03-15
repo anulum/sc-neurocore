@@ -1,12 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""SC-NeuroCore neuron library - 112 models, one file per model.
+"""SC-NeuroCore neuron library - every published model, one file each."""
 
-Import any model:
-    from sc_neurocore.neurons import HodgkinHuxleyNeuron
-    from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
-"""
-
-# Core SC neurons
 from .base import BaseNeuron
 from .stochastic_lif import StochasticLIFNeuron
 from .fixed_point_lif import FixedPointLIFNeuron, FixedPointLFSR, FixedPointBitstreamEncoder
@@ -14,7 +8,6 @@ from .homeostatic_lif import HomeostaticLIFNeuron
 from .dendritic import StochasticDendriticNeuron
 from .sc_izhikevich import SCIzhikevichNeuron
 
-# All extended models (one file per model)
 from .models import (
     AdExNeuron,
     AdaptiveThresholdIFNeuron,
@@ -59,6 +52,7 @@ from .models import (
     GatedLIFNeuron,
     GolombFSNeuron,
     GutkinErmentroutNeuron,
+    HayL5PyramidalNeuron,
     HillTononiNeuron,
     HindmarshRoseNeuron,
     HodgkinHuxleyNeuron,
@@ -70,6 +64,7 @@ from .models import (
     JansenRitUnit,
     KLIFNeuron,
     LapicqueNeuron,
+    LarterBreakspearNeuron,
     LeakyCompeteFireNeuron,
     LearnableNeuronModel,
     LiquidTimeConstantNeuron,
@@ -89,6 +84,7 @@ from .models import (
     ParallelSpikingNeuron,
     ParametricLIFNeuron,
     PerfectIntegratorNeuron,
+    PernarowskiNeuron,
     PinskyRinzelNeuron,
     PlantR15Neuron,
     PoissonNeuron,
@@ -116,6 +112,7 @@ from .models import (
     TsodyksMarkramNeuron,
     TwoCompartmentLIFNeuron,
     WangBuzsakiNeuron,
+    WendlingNeuron,
     WilsonCowanUnit,
     WilsonHRNeuron,
     WongWangUnit,
@@ -123,14 +120,9 @@ from .models import (
 )
 
 __all__ = [
-    "BaseNeuron",
-    "StochasticLIFNeuron",
-    "FixedPointLIFNeuron",
-    "FixedPointLFSR",
-    "FixedPointBitstreamEncoder",
-    "HomeostaticLIFNeuron",
-    "StochasticDendriticNeuron",
-    "SCIzhikevichNeuron",
+    "BaseNeuron", "StochasticLIFNeuron", "FixedPointLIFNeuron",
+    "FixedPointLFSR", "FixedPointBitstreamEncoder",
+    "HomeostaticLIFNeuron", "StochasticDendriticNeuron", "SCIzhikevichNeuron",
     "AdExNeuron",
     "AdaptiveThresholdIFNeuron",
     "AkidaNeuron",
@@ -174,6 +166,7 @@ __all__ = [
     "GatedLIFNeuron",
     "GolombFSNeuron",
     "GutkinErmentroutNeuron",
+    "HayL5PyramidalNeuron",
     "HillTononiNeuron",
     "HindmarshRoseNeuron",
     "HodgkinHuxleyNeuron",
@@ -185,6 +178,7 @@ __all__ = [
     "JansenRitUnit",
     "KLIFNeuron",
     "LapicqueNeuron",
+    "LarterBreakspearNeuron",
     "LeakyCompeteFireNeuron",
     "LearnableNeuronModel",
     "LiquidTimeConstantNeuron",
@@ -204,6 +198,7 @@ __all__ = [
     "ParallelSpikingNeuron",
     "ParametricLIFNeuron",
     "PerfectIntegratorNeuron",
+    "PernarowskiNeuron",
     "PinskyRinzelNeuron",
     "PlantR15Neuron",
     "PoissonNeuron",
@@ -231,6 +226,7 @@ __all__ = [
     "TsodyksMarkramNeuron",
     "TwoCompartmentLIFNeuron",
     "WangBuzsakiNeuron",
+    "WendlingNeuron",
     "WilsonCowanUnit",
     "WilsonHRNeuron",
     "WongWangUnit",
