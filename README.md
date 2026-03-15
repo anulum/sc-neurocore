@@ -23,14 +23,14 @@ Commercial Licensing: Available
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)
 
 **Version:** 3.12.0
-**Status:** 112 Neuron Models | 99.49% MNIST | 1 560+ Tests | 100% Coverage | 100% Rust Parity
+**Status:** 116 Neuron Models | 99.49% MNIST | 1 560+ Tests | 100% Coverage | 100% Rust Parity
 
 <p align="center">
   <img src="docs/assets/spike_raster.png" width="800" alt="LIF spike raster — 5 neurons, sinusoidal input">
 </p>
 
 SC-NeuroCore is the most comprehensive spiking neural network framework
-available. 112 neuron models spanning 82 years of computational neuroscience
+available. 116 neuron models spanning 82 years of computational neuroscience
 (McCulloch-Pitts 1943 through GatedLIF 2022) run inside a deterministic
 stochastic computing engine with bit-true Verilog RTL co-simulation, FPGA
 synthesis via an IR compiler (SystemVerilog + MLIR/CIRCT backends), formal
@@ -62,7 +62,7 @@ computing (Qiskit + PennyLane), and surrogate gradient training reaching
 
 SC-NeuroCore's niche: **deterministic stochastic computing with FPGA co-design** — the only framework where Python simulation matches synthesisable RTL bit-for-bit.
 
-### 112 Neuron Models (1943--2025)
+### 116 Neuron Models (1943--2025)
 
 Every model has a uniform `step(current) -> spike` API, a `reset()`, and a
 cited reference. One file per model in `src/sc_neurocore/neurons/models/`.
@@ -146,7 +146,7 @@ Research and Frontier modules are available from source (`pip install -e ".[dev]
 graph TD
     subgraph "Python API (pip install sc-neurocore)"
         A[BitstreamEncoder] --> B[SCDenseLayer / SCConv2DLayer]
-        B --> C[112 Neuron Models<br/>LIF · HH · AdEx · Izhikevich · ...]
+        B --> C[116 Neuron Models<br/>LIF · HH · AdEx · Izhikevich · ...]
         C --> D[STDP / R-STDP Synapses]
         D --> E[BitstreamSpikeRecorder]
     end

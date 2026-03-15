@@ -272,7 +272,7 @@ These packages explore the far boundaries of computational theory. They are math
 sc-neurocore/
   src/sc_neurocore/         # 212 Python files, 12,385 lines
     __init__.py             # 28 public symbols, lazy imports, __all__
-    neurons/                # 112 neuron models (LIF variants, Izhikevich, biophysical, …)
+    neurons/                # 116 neuron models (LIF variants, Izhikevich, biophysical, …)
       __init__.py           # Exports: StochasticLIFNeuron, FixedPointLIFNeuron, etc.
       base.py               # BaseNeuron ABC
       stochastic_lif.py     # Core LIF with Euler integration
@@ -584,7 +584,7 @@ pip install -e ".[research,dev,gpu,full,contrib]"
 
 # 5. Tier 1: Production Core — Neurons
 
-SC-NeuroCore provides 112 neuron models across 14 families, spanning from hardware-verified fixed-point implementations to biologically detailed multi-compartment models. The original five core models (StochasticLIF, FixedPointLIF, HomeostaticLIF, Izhikevich, Dendritic) share the `BaseNeuron` abstract base class; 104 additional models in `neurons/models/` extend the library to cover the full computational neuroscience literature.
+SC-NeuroCore provides 116 neuron models across 14 families, spanning from hardware-verified fixed-point implementations to biologically detailed multi-compartment models. The original five core models (StochasticLIF, FixedPointLIF, HomeostaticLIF, Izhikevich, Dendritic) share the `BaseNeuron` abstract base class; 108 additional models in `neurons/models/` extend the library to cover the full computational neuroscience literature.
 
 ## 5.1 StochasticLIFNeuron — The Foundation
 
@@ -4951,7 +4951,7 @@ SC-NeuroCore represents a unique convergence of three computing paradigms:
 
 1. **Stochastic Computing**: Probability-encoded bitstreams processed by simple logic gates, achieving massive hardware efficiency at the cost of controlled accuracy reduction. The framework implements the full SC stack from encoding (Bernoulli/Sobol) through computation (AND/MUX/XNOR) to decoding (popcount), with packed uint64 operations achieving ~5.5 GOPS on CPU.
 
-2. **Spiking Neural Networks**: 112 neuron models across 14 families (IF variants, biophysical, adaptive, oscillatory, bursting, synaptic, multi-compartment, map-based, stochastic, population, hardware, modern/ML, rate, other), three synapse types (BitstreamSynapse, STDP, R-STDP), and hardware-verified Q8.8 fixed-point arithmetic. The bit-true co-simulation between Python and Verilog RTL provides a credible FPGA synthesis path.
+2. **Spiking Neural Networks**: 116 neuron models across 14 families (IF variants, biophysical, adaptive, oscillatory, bursting, synaptic, multi-compartment, map-based, stochastic, population, hardware, modern/ML, rate, other), three synapse types (BitstreamSynapse, STDP, R-STDP), and hardware-verified Q8.8 fixed-point arithmetic. The bit-true co-simulation between Python and Verilog RTL provides a credible FPGA synthesis path.
 
 3. **Multi-Scale Phenomenological Modeling**: The SCPN 7-layer stack maps the Self-Consistent Phenomenological Network framework to executable stochastic simulations, from quantum biological coherence through neurochemical dynamics to symbolic/cultural processing.
 

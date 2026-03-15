@@ -1,0 +1,71 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+from __future__ import annotations
+
+from dataclasses import dataclass
+import numpy as np
+
+
+@dataclass
+class WendlingNeuron:
+    """Wendling et al. 2002 — extended Jansen-Rit with slow GABA_B inhibition.
+
+    10 ODEs: 4 populations (pyramidal, excitatory, fast inhibitory, slow
+    inhibitory) x 2 states each + 2 for slow inhibitory PSP.
+    Reproduces epileptiform EEG patterns.
+    """
+
+    y0: float = 0.0
+    y5: float = 0.0
+    y1: float = 0.0
+    y6: float = 0.0
+    y2: float = 0.0
+    y7: float = 0.0
+    y3: float = 0.0
+    y8: float = 0.0
+    y4: float = 0.0
+    y9: float = 0.0
+
+    a_exc: float = 3.25
+    b_fast: float = 22.0
+    g_slow: float = 10.0
+    a_rate: float = 100.0
+    b_rate: float = 500.0
+    g_rate: float = 20.0
+    c: float = 135.0
+    e0: float = 2.5
+    v0: float = 6.0
+    r: float = 0.56
+    dt: float = 0.001
+
+    def _sigmoid(self, x):
+        return 2.0 * self.e0 / (1.0 + np.exp(self.r * (self.v0 - x)))
+
+    def step(self, p_ext: float = 220.0) -> float:
+        sig_1_2_3_4 = self._sigmoid(self.y1 - self.y2 - self.y3)
+        sig_0 = self._sigmoid(self.c * 0.8 * self.y0)
+        sig_fast = self._sigmoid(self.c * 0.25 * self.y0)
+        sig_slow = self._sigmoid(self.c * 0.1 * self.y0)
+
+        dy0 = self.y5
+        dy5 = self.a_exc * self.a_rate * sig_1_2_3_4 - 2 * self.a_rate * self.y5 - self.a_rate**2 * self.y0
+        dy1 = self.y6
+        dy6 = self.a_exc * self.a_rate * (p_ext + self.c * 0.8 * sig_0) - 2 * self.a_rate * self.y6 - self.a_rate**2 * self.y1
+        dy2 = self.y7
+        dy7 = self.b_fast * self.b_rate * self.c * 0.25 * sig_fast - 2 * self.b_rate * self.y7 - self.b_rate**2 * self.y2
+        dy3 = self.y8
+        dy8 = self.g_slow * self.g_rate * self.c * 0.1 * sig_slow - 2 * self.g_rate * self.y8 - self.g_rate**2 * self.y3
+
+        self.y0 += dy0 * self.dt
+        self.y5 += dy5 * self.dt
+        self.y1 += dy1 * self.dt
+        self.y6 += dy6 * self.dt
+        self.y2 += dy2 * self.dt
+        self.y7 += dy7 * self.dt
+        self.y3 += dy3 * self.dt
+        self.y8 += dy8 * self.dt
+
+        return self.y1 - self.y2 - self.y3
+
+    def reset(self):
+        self.y0 = self.y1 = self.y2 = self.y3 = 0.0
+        self.y5 = self.y6 = self.y7 = self.y8 = 0.0
