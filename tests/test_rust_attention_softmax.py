@@ -9,7 +9,6 @@ import pytest
 sc = pytest.importorskip("sc_neurocore_engine", exc_type=ImportError)
 
 
-
 def test_forward_softmax_shape():
     attn = sc.StochasticAttention(dim_k=4)
     q = np.random.default_rng(1).random((2, 4))
@@ -17,7 +16,6 @@ def test_forward_softmax_shape():
     v = np.random.default_rng(3).random((3, 5))
     out = attn.forward_softmax(q, k, v)
     assert np.array(out).shape == (2, 5)
-
 
 
 def test_forward_softmax_with_temperature():
@@ -30,7 +28,6 @@ def test_forward_softmax_with_temperature():
     assert out[0, 0] > 9.0
 
 
-
 def test_multihead_softmax_shape():
     attn = sc.StochasticAttention(dim_k=8)
     q = np.zeros((4, 8))
@@ -38,7 +35,6 @@ def test_multihead_softmax_shape():
     v = np.zeros((4, 8))
     out = np.array(attn.forward_multihead_softmax(q, k, v, n_heads=2))
     assert out.shape == (4, 8)
-
 
 
 def test_softmax_finite_on_large_scores():

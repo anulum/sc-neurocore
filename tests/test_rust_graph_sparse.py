@@ -9,7 +9,6 @@ import pytest
 sc = pytest.importorskip("sc_neurocore_engine", exc_type=ImportError)
 
 
-
 def test_from_sparse_forward():
     # Ring graph: 0→1, 1→2, 2→0
     row_offsets = [0, 1, 2, 3]
@@ -23,7 +22,6 @@ def test_from_sparse_forward():
     assert np.all(np.isfinite(out))
 
 
-
 def test_from_dense_auto_sparse():
     # 10x10 with 5 edges → 5% density → should auto-select sparse
     adj = np.zeros((10, 10))
@@ -32,13 +30,11 @@ def test_from_dense_auto_sparse():
     assert layer.is_sparse()
 
 
-
 def test_from_dense_auto_dense():
     # 3x3 full → 100% density → should stay dense
     adj = np.ones((3, 3))
     layer = sc.StochasticGraphLayer.from_dense_auto(adj, 2, seed=42, density_threshold=0.3)
     assert not layer.is_sparse()
-
 
 
 def test_sparse_matches_dense_output():
