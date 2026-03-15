@@ -195,3 +195,17 @@ class TestFromEquations:
         )
         spikes = sum(n.step(I=10.0) for _ in range(1000))
         assert spikes > 0
+
+    def test_non_numeric_reset_expression(self):
+        from sc_neurocore.neurons.equation_builder import from_equations
+
+        n = from_equations(
+            "dv/dt = (-v + I) / tau",
+            threshold="v > 1.0",
+            reset="v = v_rest",
+            params={"tau": 10.0, "v_rest": -1.0},
+            init={"v": 0.0},
+            dt=0.1,
+        )
+        spikes = sum(n.step(I=5.0) for _ in range(200))
+        assert spikes > 0
