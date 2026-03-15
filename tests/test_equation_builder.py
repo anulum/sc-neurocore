@@ -209,3 +209,26 @@ class TestFromEquations:
         )
         spikes = sum(n.step(I=5.0) for _ in range(200))
         assert spikes > 0
+
+    def test_get_state(self):
+        from sc_neurocore.neurons.equation_builder import from_equations
+
+        n = from_equations("dv/dt = I", init={"v": 0.0}, dt=0.1)
+        n.step(I=1.0)
+        state = n.get_state()
+        assert "v" in state
+        assert state["v"] != 0.0
+
+    def test_reset_with_empty_parts(self):
+        from sc_neurocore.neurons.equation_builder import from_equations
+
+        n = from_equations(
+            "dv/dt = (-v + I) / tau",
+            threshold="v > 1.0",
+            reset="v = -1.0; ; ",
+            params={"tau": 10.0},
+            init={"v": 0.0},
+            dt=0.1,
+        )
+        spikes = sum(n.step(I=5.0) for _ in range(200))
+        assert spikes > 0
