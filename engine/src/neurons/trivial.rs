@@ -16,7 +16,12 @@ pub struct QuadraticIFNeuron {
 
 impl QuadraticIFNeuron {
     pub fn new(v_reset: f64, v_peak: f64, dt: f64) -> Self {
-        Self { v: v_reset, v_reset, v_peak, dt }
+        Self {
+            v: v_reset,
+            v_reset,
+            v_peak,
+            dt,
+        }
     }
 
     pub fn step(&mut self, current: f64) -> i32 {
@@ -29,11 +34,15 @@ impl QuadraticIFNeuron {
         }
     }
 
-    pub fn reset(&mut self) { self.v = self.v_reset; }
+    pub fn reset(&mut self) {
+        self.v = self.v_reset;
+    }
 }
 
 impl Default for QuadraticIFNeuron {
-    fn default() -> Self { Self::new(-1.0, 1.0, 0.01) }
+    fn default() -> Self {
+        Self::new(-1.0, 1.0, 0.01)
+    }
 }
 
 /// Theta neuron — Ermentrout & Kopell canonical form.
@@ -45,7 +54,9 @@ pub struct ThetaNeuron {
 }
 
 impl ThetaNeuron {
-    pub fn new(dt: f64) -> Self { Self { theta: 0.0, dt } }
+    pub fn new(dt: f64) -> Self {
+        Self { theta: 0.0, dt }
+    }
 
     pub fn step(&mut self, current: f64) -> i32 {
         let prev = self.theta;
@@ -58,11 +69,15 @@ impl ThetaNeuron {
         }
     }
 
-    pub fn reset(&mut self) { self.theta = 0.0; }
+    pub fn reset(&mut self) {
+        self.theta = 0.0;
+    }
 }
 
 impl Default for ThetaNeuron {
-    fn default() -> Self { Self::new(0.01) }
+    fn default() -> Self {
+        Self::new(0.01)
+    }
 }
 
 /// Perfect integrator — no leak, pure capacitive charging.
@@ -77,7 +92,13 @@ pub struct PerfectIntegratorNeuron {
 
 impl PerfectIntegratorNeuron {
     pub fn new(c_m: f64, v_threshold: f64, dt: f64) -> Self {
-        Self { v: 0.0, c_m, v_threshold, v_reset: 0.0, dt }
+        Self {
+            v: 0.0,
+            c_m,
+            v_threshold,
+            v_reset: 0.0,
+            dt,
+        }
     }
 
     pub fn step(&mut self, current: f64) -> i32 {
@@ -90,11 +111,15 @@ impl PerfectIntegratorNeuron {
         }
     }
 
-    pub fn reset(&mut self) { self.v = self.v_reset; }
+    pub fn reset(&mut self) {
+        self.v = self.v_reset;
+    }
 }
 
 impl Default for PerfectIntegratorNeuron {
-    fn default() -> Self { Self::new(1.0, 1.0, 0.1) }
+    fn default() -> Self {
+        Self::new(1.0, 1.0, 0.1)
+    }
 }
 
 /// Gated LIF — learnable decay and input gates.
@@ -109,7 +134,13 @@ pub struct GatedLIFNeuron {
 
 impl GatedLIFNeuron {
     pub fn new(gate_v: f64, gate_i: f64, v_threshold: f64) -> Self {
-        Self { v: 0.0, gate_v, gate_i, v_threshold, dt: 1.0 }
+        Self {
+            v: 0.0,
+            gate_v,
+            gate_i,
+            v_threshold,
+            dt: 1.0,
+        }
     }
 
     pub fn step(&mut self, current: f64) -> i32 {
@@ -122,11 +153,15 @@ impl GatedLIFNeuron {
         }
     }
 
-    pub fn reset(&mut self) { self.v = 0.0; }
+    pub fn reset(&mut self) {
+        self.v = 0.0;
+    }
 }
 
 impl Default for GatedLIFNeuron {
-    fn default() -> Self { Self::new(0.9, 1.0, 1.0) }
+    fn default() -> Self {
+        Self::new(0.9, 1.0, 1.0)
+    }
 }
 
 /// Nonlinear LIF — cubic f-I curve with adaptation. Touboul & Brette 2008.
@@ -148,9 +183,17 @@ pub struct NonlinearLIFNeuron {
 impl NonlinearLIFNeuron {
     pub fn new() -> Self {
         Self {
-            v: -65.0, w: 0.0, v_rest: -65.0, v_crit: -40.0,
-            v_threshold: -20.0, v_reset: -65.0, a: 0.04, b: 0.5,
-            tau_w: 100.0, c_m: 1.0, dt: 0.1,
+            v: -65.0,
+            w: 0.0,
+            v_rest: -65.0,
+            v_crit: -40.0,
+            v_threshold: -20.0,
+            v_reset: -65.0,
+            a: 0.04,
+            b: 0.5,
+            tau_w: 100.0,
+            c_m: 1.0,
+            dt: 0.1,
         }
     }
 
@@ -167,11 +210,16 @@ impl NonlinearLIFNeuron {
         }
     }
 
-    pub fn reset(&mut self) { self.v = self.v_rest; self.w = 0.0; }
+    pub fn reset(&mut self) {
+        self.v = self.v_rest;
+        self.w = 0.0;
+    }
 }
 
 impl Default for NonlinearLIFNeuron {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 /// Spike-Frequency Adaptation LIF. Benda & Herz 2003.
@@ -193,15 +241,25 @@ pub struct SFANeuron {
 impl SFANeuron {
     pub fn new() -> Self {
         Self {
-            v: -70.0, g_sfa: 0.0, v_rest: -70.0, v_reset: -70.0,
-            v_threshold: -50.0, tau_m: 10.0, tau_sfa: 200.0,
-            delta_g: 0.5, e_k: -80.0, resistance: 1.0, dt: 1.0,
+            v: -70.0,
+            g_sfa: 0.0,
+            v_rest: -70.0,
+            v_reset: -70.0,
+            v_threshold: -50.0,
+            tau_m: 10.0,
+            tau_sfa: 200.0,
+            delta_g: 0.5,
+            e_k: -80.0,
+            resistance: 1.0,
+            dt: 1.0,
         }
     }
 
     pub fn step(&mut self, current: f64) -> i32 {
         self.v += (-(self.v - self.v_rest) - self.g_sfa * (self.v - self.e_k)
-            + self.resistance * current) / self.tau_m * self.dt;
+            + self.resistance * current)
+            / self.tau_m
+            * self.dt;
         self.g_sfa *= (-self.dt / self.tau_sfa).exp();
         if self.v >= self.v_threshold {
             self.v = self.v_reset;
@@ -212,11 +270,16 @@ impl SFANeuron {
         }
     }
 
-    pub fn reset(&mut self) { self.v = self.v_rest; self.g_sfa = 0.0; }
+    pub fn reset(&mut self) {
+        self.v = self.v_rest;
+        self.g_sfa = 0.0;
+    }
 }
 
 impl Default for SFANeuron {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 /// Multi-timescale Adaptive Threshold. Kobayashi et al. 2009.
@@ -240,9 +303,19 @@ pub struct MATNeuron {
 impl MATNeuron {
     pub fn new() -> Self {
         Self {
-            v: -70.0, theta1: 0.0, theta2: 0.0, v_rest: -70.0, v_reset: -70.0,
-            v_threshold_base: -50.0, tau_m: 10.0, tau_1: 10.0, tau_2: 200.0,
-            h1: 5.0, h2: 3.0, resistance: 1.0, dt: 1.0,
+            v: -70.0,
+            theta1: 0.0,
+            theta2: 0.0,
+            v_rest: -70.0,
+            v_reset: -70.0,
+            v_threshold_base: -50.0,
+            tau_m: 10.0,
+            tau_1: 10.0,
+            tau_2: 200.0,
+            h1: 5.0,
+            h2: 3.0,
+            resistance: 1.0,
+            dt: 1.0,
         }
     }
 
@@ -261,11 +334,17 @@ impl MATNeuron {
         }
     }
 
-    pub fn reset(&mut self) { self.v = self.v_rest; self.theta1 = 0.0; self.theta2 = 0.0; }
+    pub fn reset(&mut self) {
+        self.v = self.v_rest;
+        self.theta1 = 0.0;
+        self.theta2 = 0.0;
+    }
 }
 
 impl Default for MATNeuron {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 /// Escape-rate neuron — stochastic IF with exponential hazard. Gerstner 2000.
@@ -286,8 +365,15 @@ pub struct EscapeRateNeuron {
 impl EscapeRateNeuron {
     pub fn new(seed: u64) -> Self {
         Self {
-            v: -70.0, v_rest: -70.0, v_reset: -70.0, v_threshold: -50.0,
-            tau_m: 10.0, rho_0: 0.001, delta_u: 3.0, resistance: 1.0, dt: 1.0,
+            v: -70.0,
+            v_rest: -70.0,
+            v_reset: -70.0,
+            v_threshold: -50.0,
+            tau_m: 10.0,
+            rho_0: 0.001,
+            delta_u: 3.0,
+            resistance: 1.0,
+            dt: 1.0,
             rng: Xoshiro256PlusPlus::seed_from_u64(seed),
         }
     }
@@ -303,7 +389,9 @@ impl EscapeRateNeuron {
         }
     }
 
-    pub fn reset(&mut self) { self.v = self.v_rest; }
+    pub fn reset(&mut self) {
+        self.v = self.v_rest;
+    }
 }
 
 /// KLIF — learnable LIF with scaling factor k. Eshraghian et al. 2021.
@@ -318,7 +406,13 @@ pub struct KLIFNeuron {
 
 impl KLIFNeuron {
     pub fn new(tau: f64, k: f64, dt: f64) -> Self {
-        Self { v: 0.0, k, alpha: (-dt / tau).exp(), v_threshold: 1.0, v_reset: 0.0 }
+        Self {
+            v: 0.0,
+            k,
+            alpha: (-dt / tau).exp(),
+            v_threshold: 1.0,
+            v_reset: 0.0,
+        }
     }
 
     pub fn step(&mut self, current: f64) -> i32 {
@@ -331,11 +425,15 @@ impl KLIFNeuron {
         }
     }
 
-    pub fn reset(&mut self) { self.v = 0.0; }
+    pub fn reset(&mut self) {
+        self.v = 0.0;
+    }
 }
 
 impl Default for KLIFNeuron {
-    fn default() -> Self { Self::new(10.0, 1.0, 1.0) }
+    fn default() -> Self {
+        Self::new(10.0, 1.0, 1.0)
+    }
 }
 
 /// Inhibitory LIF — LIF with self-inhibition trace.
@@ -352,9 +450,12 @@ pub struct InhibitoryLIFNeuron {
 impl InhibitoryLIFNeuron {
     pub fn new(tau_m: f64, tau_inh: f64, dt: f64) -> Self {
         Self {
-            v: 0.0, inh_trace: 0.0,
-            alpha_m: (-dt / tau_m).exp(), alpha_inh: (-dt / tau_inh).exp(),
-            v_threshold: 1.0, inh_strength: 0.5,
+            v: 0.0,
+            inh_trace: 0.0,
+            alpha_m: (-dt / tau_m).exp(),
+            alpha_inh: (-dt / tau_inh).exp(),
+            v_threshold: 1.0,
+            inh_strength: 0.5,
         }
     }
 
@@ -370,11 +471,16 @@ impl InhibitoryLIFNeuron {
         }
     }
 
-    pub fn reset(&mut self) { self.v = 0.0; self.inh_trace = 0.0; }
+    pub fn reset(&mut self) {
+        self.v = 0.0;
+        self.inh_trace = 0.0;
+    }
 }
 
 impl Default for InhibitoryLIFNeuron {
-    fn default() -> Self { Self::new(10.0, 5.0, 1.0) }
+    fn default() -> Self {
+        Self::new(10.0, 5.0, 1.0)
+    }
 }
 
 /// Complementary LIF — dual-path excitatory/inhibitory.
@@ -388,7 +494,12 @@ pub struct ComplementaryLIFNeuron {
 
 impl ComplementaryLIFNeuron {
     pub fn new(tau: f64, dt: f64, v_threshold: f64) -> Self {
-        Self { v_pos: 0.0, v_neg: 0.0, alpha: (-dt / tau).exp(), v_threshold }
+        Self {
+            v_pos: 0.0,
+            v_neg: 0.0,
+            alpha: (-dt / tau).exp(),
+            v_threshold,
+        }
     }
 
     pub fn step(&mut self, current: f64) -> i32 {
@@ -410,11 +521,16 @@ impl ComplementaryLIFNeuron {
         }
     }
 
-    pub fn reset(&mut self) { self.v_pos = 0.0; self.v_neg = 0.0; }
+    pub fn reset(&mut self) {
+        self.v_pos = 0.0;
+        self.v_neg = 0.0;
+    }
 }
 
 impl Default for ComplementaryLIFNeuron {
-    fn default() -> Self { Self::new(10.0, 1.0, 1.0) }
+    fn default() -> Self {
+        Self::new(10.0, 1.0, 1.0)
+    }
 }
 
 /// Parametric LIF — learnable decay via sigmoid(a). Fang et al. 2021.
@@ -427,7 +543,11 @@ pub struct ParametricLIFNeuron {
 
 impl ParametricLIFNeuron {
     pub fn new(a: f64, threshold: f64) -> Self {
-        Self { v: 0.0, a, threshold }
+        Self {
+            v: 0.0,
+            a,
+            threshold,
+        }
     }
 
     pub fn step(&mut self, current: f64) -> i32 {
@@ -437,11 +557,15 @@ impl ParametricLIFNeuron {
         spike
     }
 
-    pub fn reset(&mut self) { self.v = 0.0; }
+    pub fn reset(&mut self) {
+        self.v = 0.0;
+    }
 }
 
 impl Default for ParametricLIFNeuron {
-    fn default() -> Self { Self::new(0.0, 1.0) }
+    fn default() -> Self {
+        Self::new(0.0, 1.0)
+    }
 }
 
 /// Non-resetting LIF with adaptive threshold. Brette 2004.
@@ -461,8 +585,15 @@ pub struct NonResettingLIFNeuron {
 impl NonResettingLIFNeuron {
     pub fn new() -> Self {
         Self {
-            v: -65.0, theta: -50.0, v_rest: -65.0, theta_rest: -50.0,
-            delta_theta: 5.0, tau_m: 10.0, tau_theta: 50.0, r_m: 1.0, dt: 0.1,
+            v: -65.0,
+            theta: -50.0,
+            v_rest: -65.0,
+            theta_rest: -50.0,
+            delta_theta: 5.0,
+            tau_m: 10.0,
+            tau_theta: 50.0,
+            r_m: 1.0,
+            dt: 0.1,
         }
     }
 
@@ -477,11 +608,16 @@ impl NonResettingLIFNeuron {
         }
     }
 
-    pub fn reset(&mut self) { self.v = self.v_rest; self.theta = self.theta_rest; }
+    pub fn reset(&mut self) {
+        self.v = self.v_rest;
+        self.theta = self.theta_rest;
+    }
 }
 
 impl Default for NonResettingLIFNeuron {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 /// Adaptive-threshold IF. Platkiewicz & Brette 2010.
@@ -501,8 +637,15 @@ pub struct AdaptiveThresholdIFNeuron {
 impl AdaptiveThresholdIFNeuron {
     pub fn new() -> Self {
         Self {
-            v: -65.0, theta: -50.0, v_rest: -65.0, v_reset: -65.0,
-            theta_rest: -50.0, delta_theta: 5.0, tau_m: 10.0, tau_theta: 50.0, dt: 0.1,
+            v: -65.0,
+            theta: -50.0,
+            v_rest: -65.0,
+            v_reset: -65.0,
+            theta_rest: -50.0,
+            delta_theta: 5.0,
+            tau_m: 10.0,
+            tau_theta: 50.0,
+            dt: 0.1,
         }
     }
 
@@ -518,11 +661,16 @@ impl AdaptiveThresholdIFNeuron {
         }
     }
 
-    pub fn reset(&mut self) { self.v = self.v_rest; self.theta = self.theta_rest; }
+    pub fn reset(&mut self) {
+        self.v = self.v_rest;
+        self.theta = self.theta_rest;
+    }
 }
 
 impl Default for AdaptiveThresholdIFNeuron {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 /// Sigma-Delta neuron — first-order delta modulation.
@@ -533,7 +681,12 @@ pub struct SigmaDeltaNeuron {
 }
 
 impl SigmaDeltaNeuron {
-    pub fn new(v_threshold: f64) -> Self { Self { sigma: 0.0, v_threshold } }
+    pub fn new(v_threshold: f64) -> Self {
+        Self {
+            sigma: 0.0,
+            v_threshold,
+        }
+    }
 
     pub fn step(&mut self, current: f64) -> i32 {
         self.sigma += current;
@@ -548,11 +701,15 @@ impl SigmaDeltaNeuron {
         }
     }
 
-    pub fn reset(&mut self) { self.sigma = 0.0; }
+    pub fn reset(&mut self) {
+        self.sigma = 0.0;
+    }
 }
 
 impl Default for SigmaDeltaNeuron {
-    fn default() -> Self { Self::new(1.0) }
+    fn default() -> Self {
+        Self::new(1.0)
+    }
 }
 
 /// Energy-aware LIF — metabolic cost modulates gain. Sengupta et al. 2013.
@@ -574,9 +731,17 @@ pub struct EnergyLIFNeuron {
 impl EnergyLIFNeuron {
     pub fn new() -> Self {
         Self {
-            v: -70.0, epsilon: 1.0, v_rest: -70.0, v_reset: -70.0,
-            v_threshold: -50.0, tau_m: 10.0, tau_e: 500.0, alpha: 0.1,
-            epsilon_0: 1.0, resistance: 1.0, dt: 1.0,
+            v: -70.0,
+            epsilon: 1.0,
+            v_rest: -70.0,
+            v_reset: -70.0,
+            v_threshold: -50.0,
+            tau_m: 10.0,
+            tau_e: 500.0,
+            alpha: 0.1,
+            epsilon_0: 1.0,
+            resistance: 1.0,
+            dt: 1.0,
         }
     }
 
@@ -596,11 +761,16 @@ impl EnergyLIFNeuron {
         }
     }
 
-    pub fn reset(&mut self) { self.v = self.v_rest; self.epsilon = self.epsilon_0; }
+    pub fn reset(&mut self) {
+        self.v = self.v_rest;
+        self.epsilon = self.epsilon_0;
+    }
 }
 
 impl Default for EnergyLIFNeuron {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 /// Integer QIF — fixed-point quadratic IF for digital hardware.
@@ -615,7 +785,13 @@ pub struct IntegerQIFNeuron {
 
 impl IntegerQIFNeuron {
     pub fn new(k: i32, v_threshold: i32) -> Self {
-        Self { v: 0, k, v_threshold, v_reset: -v_threshold, v_min: -2 * v_threshold }
+        Self {
+            v: 0,
+            k,
+            v_threshold,
+            v_reset: -v_threshold,
+            v_min: -2 * v_threshold,
+        }
     }
 
     pub fn step(&mut self, current: i32) -> i32 {
@@ -628,11 +804,15 @@ impl IntegerQIFNeuron {
         }
     }
 
-    pub fn reset(&mut self) { self.v = 0; }
+    pub fn reset(&mut self) {
+        self.v = 0;
+    }
 }
 
 impl Default for IntegerQIFNeuron {
-    fn default() -> Self { Self::new(6, 1024) }
+    fn default() -> Self {
+        Self::new(6, 1024)
+    }
 }
 
 /// Closed-form Continuous-depth (CfC) neuron. Hasani et al. 2022.
@@ -651,8 +831,14 @@ pub struct ClosedFormContinuousNeuron {
 impl ClosedFormContinuousNeuron {
     pub fn new() -> Self {
         Self {
-            x: 0.0, w_tau: -0.5, w_x: 0.8, w_in: 1.0,
-            tau_base: 10.0, bias: 0.0, v_threshold: 1.0, dt: 1.0,
+            x: 0.0,
+            w_tau: -0.5,
+            w_x: 0.8,
+            w_in: 1.0,
+            tau_base: 10.0,
+            bias: 0.0,
+            v_threshold: 1.0,
+            dt: 1.0,
         }
     }
 
@@ -670,11 +856,15 @@ impl ClosedFormContinuousNeuron {
         }
     }
 
-    pub fn reset(&mut self) { self.x = 0.0; }
+    pub fn reset(&mut self) {
+        self.x = 0.0;
+    }
 }
 
 impl Default for ClosedFormContinuousNeuron {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[cfg(test)]
@@ -772,7 +962,9 @@ mod tests {
     fn non_resetting_threshold_increases() {
         let mut n = NonResettingLIFNeuron::new();
         let initial = n.theta;
-        for _ in 0..5000 { n.step(30.0); }
+        for _ in 0..5000 {
+            n.step(30.0);
+        }
         assert!(n.theta > initial);
     }
 
@@ -806,7 +998,10 @@ mod tests {
 
     #[test]
     fn cfc_activates() {
-        let mut n = ClosedFormContinuousNeuron { v_threshold: 0.9, ..ClosedFormContinuousNeuron::new() };
+        let mut n = ClosedFormContinuousNeuron {
+            v_threshold: 0.9,
+            ..ClosedFormContinuousNeuron::new()
+        };
         let total: i32 = (0..100).map(|_| n.step(5.0)).sum();
         assert!(total > 0);
     }
