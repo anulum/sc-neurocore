@@ -617,6 +617,55 @@ impl AmariNeuralField {
     }
 }
 
+/// Leaky Compete-and-Fire — winner-take-all with lateral inhibition. Oster et al. 2009.
+#[derive(Clone, Debug)]
+pub struct LeakyCompeteFireNeuron {
+    pub v: Vec<f64>,
+    pub n_units: usize,
+    pub tau: f64,
+    pub v_threshold: f64,
+    pub w_inh: f64,
+    pub dt: f64,
+}
+
+impl LeakyCompeteFireNeuron {
+    pub fn new(n_units: usize) -> Self {
+        Self {
+            v: vec![0.0; n_units],
+            n_units,
+            tau: 10.0,
+            v_threshold: 1.0,
+            w_inh: 0.5,
+            dt: 1.0,
+        }
+    }
+
+    pub fn step(&mut self, currents: &[f64]) -> Vec<i32> {
+        let n = self.n_units;
+        for i in 0..n {
+            let c = if i < currents.len() { currents[i] } else { 0.0 };
+            self.v[i] += (-self.v[i] + c) / self.tau * self.dt;
+        }
+        let mut spikes = vec![0i32; n];
+        for i in 0..n {
+            if self.v[i] >= self.v_threshold {
+                spikes[i] = 1;
+                self.v[i] = 0.0;
+                for j in 0..n {
+                    if j != i {
+                        self.v[j] = (self.v[j] - self.w_inh).max(0.0);
+                    }
+                }
+            }
+        }
+        spikes
+    }
+
+    pub fn reset(&mut self) {
+        self.v.fill(0.0);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

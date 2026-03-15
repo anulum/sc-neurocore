@@ -313,6 +313,9 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(ir_print, m)?)?;
     m.add_function(wrap_pyfunction!(ir_parse, m)?)?;
     m.add_function(wrap_pyfunction!(ir_emit_sv, m)?)?;
+    m.add_class::<PyAdExNeuron>()?;
+    m.add_class::<PyExpIFNeuron>()?;
+    m.add_class::<PyLapicqueNeuron>()?;
     pyo3_neurons::register_neuron_classes(m)?;
     Ok(())
 }
@@ -1023,6 +1026,102 @@ impl PyBitstreamAverager {
         self.inner.window()
     }
 }
+
+// ── AdEx, ExpIF, Lapicque PyO3 wrappers ────────────────────────
+
+#[pyclass(
+    name = "AdExNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
+#[derive(Clone)]
+pub struct PyAdExNeuron {
+    inner: neuron::AdExNeuron,
+}
+
+#[pymethods]
+impl PyAdExNeuron {
+    #[new]
+    fn new() -> Self {
+        Self {
+            inner: neuron::AdExNeuron::new(),
+        }
+    }
+    fn step(&mut self, current: f64) -> i32 {
+        self.inner.step(current)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
+    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let d = PyDict::new(py);
+        d.set_item("v", self.inner.v)?;
+        d.set_item("w", self.inner.w)?;
+        Ok(d.into_any().unbind())
+    }
+}
+
+#[pyclass(
+    name = "ExpIFNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
+#[derive(Clone)]
+pub struct PyExpIFNeuron {
+    inner: neuron::ExpIfNeuron,
+}
+
+#[pymethods]
+impl PyExpIFNeuron {
+    #[new]
+    fn new() -> Self {
+        Self {
+            inner: neuron::ExpIfNeuron::new(),
+        }
+    }
+    fn step(&mut self, current: f64) -> i32 {
+        self.inner.step(current)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
+    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let d = PyDict::new(py);
+        d.set_item("v", self.inner.v)?;
+        Ok(d.into_any().unbind())
+    }
+}
+
+#[pyclass(
+    name = "LapicqueNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
+#[derive(Clone)]
+pub struct PyLapicqueNeuron {
+    inner: neuron::LapicqueNeuron,
+}
+
+#[pymethods]
+impl PyLapicqueNeuron {
+    #[new]
+    #[pyo3(signature = (tau=20.0, resistance=1.0, threshold=1.0, dt=1.0))]
+    fn new(tau: f64, resistance: f64, threshold: f64, dt: f64) -> Self {
+        Self {
+            inner: neuron::LapicqueNeuron::new(tau, resistance, threshold, dt),
+        }
+    }
+    fn step(&mut self, current: f64) -> i32 {
+        self.inner.step(current)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
+    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let d = PyDict::new(py);
+        d.set_item("v", self.inner.v)?;
+        Ok(d.into_any().unbind())
+    }
+}
+
+// ── DenseLayer ──────────────────────────────────────────────────
 
 #[pyclass(module = "sc_neurocore_engine.sc_neurocore_engine")]
 pub struct DenseLayer {

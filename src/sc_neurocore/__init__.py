@@ -18,18 +18,18 @@ Module Tiers
 ------------
 - **core**     — Production-ready: neurons, synapses, layers, sources, utils,
   recorders, accel.  Imported by default.
-- **research** ÔÇö Functional but experimental: hdc, solvers, transformers,
+- **research** -- Functional but experimental: hdc, solvers, transformers,
   quantum, robotics, bio, physics, etc.  Import explicitly, e.g.
   ``from sc_neurocore.quantum.hybrid import QuantumStochasticLayer``.
-- **adapters** ÔÇö High-level domain mappings: holonomic (SCPN), audio, etc.
-- **contrib**  ÔÇö Speculative / theoretical modules have been moved to the
+- **adapters** -- High-level domain mappings: holonomic (SCPN), audio, etc.
+- **contrib**  -- Speculative / theoretical modules have been moved to the
   ``research/`` directory at the repository root. See ``research/README.md``.
 """
 
 
-__version__ = "3.10.0"
+__version__ = "3.12.0"
 
-# ÔöÇÔöÇ Adapters ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+# -- Adapters --
 from .adapters import base as adapter_base  # noqa: F401
 
 # ── Datasets ────────────────────────────────────────────────────────────────
