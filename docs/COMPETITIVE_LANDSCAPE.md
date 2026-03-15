@@ -36,7 +36,7 @@ marked explicitly.
 | Rust SIMD engine | **Yes** (512x) | — | — | — | — |
 | Surrogate gradient training | Yes | Yes | Yes | Yes | — |
 | GPU acceleration | CuPy | PyTorch | PyTorch | — | — |
-| Neuron models | 112 | 11 | 6 | 3 | Arbitrary |
+| Neuron models | 116 | 11 | 6 | 3 | Arbitrary |
 | STDP / R-STDP plasticity | Yes | — | Yes | Yes | Yes |
 | Quantum hybrid circuits | **Yes** | — | — | — | — |
 | Hyperdimensional computing | **Yes** | — | — | — | — |
