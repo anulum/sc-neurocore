@@ -47,7 +47,6 @@ def test_sc_to_lava_converter():
 @pytest.mark.skipif(sys.version_info >= (3, 11), reason=REASON)
 def test_spike_train_parity():
     """Compare SC-NeuroCore LIF spike train vs Lava LIF over 100 steps."""
-    import numpy as np
     from sc_neurocore.neurons import StochasticLIFNeuron
     from lava.proc.lif.process import LIF
     from lava.magma.core.run_configs import Loihi1SimCfg

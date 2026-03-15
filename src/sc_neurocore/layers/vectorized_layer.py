@@ -183,9 +183,11 @@ class VectorizedSCLayer:
 
         csr = self.weights_csr
         w_gpu = cusp.csr_matrix(
-            (cupy.asarray(csr.data.astype(np.float32)),
-             cupy.asarray(csr.indices),
-             cupy.asarray(csr.indptr)),
+            (
+                cupy.asarray(csr.data.astype(np.float32)),
+                cupy.asarray(csr.indices),
+                cupy.asarray(csr.indptr),
+            ),
             shape=csr.shape,
         )
         in_probs_flat = _popcount_rows(packed_inputs).astype(np.float32) / self.length

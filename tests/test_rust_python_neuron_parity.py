@@ -77,9 +77,9 @@ def _assert_spike_parity(py_spikes, rs_spikes, tol_frac=0.001, name=""):
 
     # Count parity: within 10% or ±2 spikes (whichever is larger)
     max_delta = max(2, int(max(py_count, rs_count) * 0.10))
-    assert abs(py_count - rs_count) <= max_delta, (
-        f"{name}: spike count mismatch: Python={py_count}, Rust={rs_count}"
-    )
+    assert (
+        abs(py_count - rs_count) <= max_delta
+    ), f"{name}: spike count mismatch: Python={py_count}, Rust={rs_count}"
 
 
 # ── Deterministic models: exact or near-exact parity ──────────────

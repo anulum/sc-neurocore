@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! Multi-compartment neuron models.
 
+#[allow(unused_imports)]
 use super::biophysical::safe_rate;
 
 /// Pinsky-Rinzel 1994 — 2-compartment pyramidal cell.
