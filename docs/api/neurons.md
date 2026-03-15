@@ -1,4 +1,4 @@
-# Neurons — 87 Models
+# Neurons — 112 Models
 
 The world's largest pre-built spiking neuron model library. 112 unique
 models spanning 82 years of computational neuroscience (1943-2025),
@@ -36,7 +36,7 @@ from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
 
 ::: sc_neurocore.neurons.dendritic.StochasticDendriticNeuron
 
-## Extended Model Library (79 models in `neurons/models/`)
+## Extended Model Library (104 models in `neurons/models/`)
 
 ### Integrate-and-Fire Variants (21)
 
