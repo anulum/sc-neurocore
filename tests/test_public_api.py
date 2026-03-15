@@ -10,7 +10,7 @@ def test_all_symbols_importable():
 
 
 def test_version_string():
-    assert sc_neurocore.__version__ == "3.10.0"
+    assert sc_neurocore.__version__ == "3.12.0"
 
 
 def test_all_count():
