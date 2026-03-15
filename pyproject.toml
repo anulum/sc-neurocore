@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sc-neurocore"
 version = "3.12.0"
-description = "Stochastic Computing SNN framework: NumPy + Rust SIMD + FPGA RTL."
+description = "116 neuron models, 99.49% MNIST, Rust SIMD engine, FPGA synthesis — the world's most comprehensive SNN framework."
 authors = [
   { name = "Miroslav Sotek", email = "protoscience@anulum.li" }
 ]
@@ -16,12 +16,18 @@ requires-python = ">=3.10"
 keywords = [
   "neuromorphic",
   "stochastic-computing",
-  "fpga",
   "spiking-neural-networks",
-  "hyper-dimensional-computing",
+  "fpga",
+  "verilog",
+  "simd",
   "rust",
-  "hardware-simulation",
-  "petri-nets",
+  "neuron-models",
+  "hodgkin-huxley",
+  "surrogate-gradient",
+  "quantum-computing",
+  "edge-ai",
+  "formal-verification",
+  "hyper-dimensional-computing",
 ]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
