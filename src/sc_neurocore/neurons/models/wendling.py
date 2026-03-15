@@ -47,13 +47,29 @@ class WendlingNeuron:
         sig_slow = self._sigmoid(self.c * 0.1 * self.y0)
 
         dy0 = self.y5
-        dy5 = self.a_exc * self.a_rate * sig_1_2_3_4 - 2 * self.a_rate * self.y5 - self.a_rate**2 * self.y0
+        dy5 = (
+            self.a_exc * self.a_rate * sig_1_2_3_4
+            - 2 * self.a_rate * self.y5
+            - self.a_rate**2 * self.y0
+        )
         dy1 = self.y6
-        dy6 = self.a_exc * self.a_rate * (p_ext + self.c * 0.8 * sig_0) - 2 * self.a_rate * self.y6 - self.a_rate**2 * self.y1
+        dy6 = (
+            self.a_exc * self.a_rate * (p_ext + self.c * 0.8 * sig_0)
+            - 2 * self.a_rate * self.y6
+            - self.a_rate**2 * self.y1
+        )
         dy2 = self.y7
-        dy7 = self.b_fast * self.b_rate * self.c * 0.25 * sig_fast - 2 * self.b_rate * self.y7 - self.b_rate**2 * self.y2
+        dy7 = (
+            self.b_fast * self.b_rate * self.c * 0.25 * sig_fast
+            - 2 * self.b_rate * self.y7
+            - self.b_rate**2 * self.y2
+        )
         dy3 = self.y8
-        dy8 = self.g_slow * self.g_rate * self.c * 0.1 * sig_slow - 2 * self.g_rate * self.y8 - self.g_rate**2 * self.y3
+        dy8 = (
+            self.g_slow * self.g_rate * self.c * 0.1 * sig_slow
+            - 2 * self.g_rate * self.y8
+            - self.g_rate**2 * self.y3
+        )
 
         self.y0 += dy0 * self.dt
         self.y5 += dy5 * self.dt

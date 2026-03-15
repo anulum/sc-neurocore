@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import numpy as np
 
 
@@ -112,10 +112,14 @@ class HayL5PyramidalNeuron:
             # Update voltages
             self.v_s += (-i_na - i_k - i_l_s - i_st + current_soma / self.p_s) / self.c_m * self.dt
             self.v_t += (-i_ca_t - i_ih - i_l_t - i_ts - i_ta) / self.c_m * self.dt
-            self.v_a += (-i_ca_a - i_kca - i_l_a - i_at + current_tuft / self.p_a) / self.c_m * self.dt
+            self.v_a += (
+                (-i_ca_a - i_kca - i_l_a - i_at + current_tuft / self.p_a) / self.c_m * self.dt
+            )
 
             # Ca dynamics in tuft
-            self.ca_a = max(0.0, self.ca_a + (-self.f_ca * i_ca_a - self.ca_a / self.ca_decay) * self.dt)
+            self.ca_a = max(
+                0.0, self.ca_a + (-self.f_ca * i_ca_a - self.ca_a / self.ca_decay) * self.dt
+            )
 
         return 1 if (self.v_s >= self.v_threshold and v_s_prev < self.v_threshold) else 0
 
