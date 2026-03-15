@@ -6,20 +6,26 @@ Requires lava-nc which only supports Python 3.10.
 Skip on unsupported versions.
 """
 
-import sys
 import pytest
 
-REASON = "lava-nc requires Python <3.11"
+try:
+    import lava  # noqa: F401
+
+    HAS_LAVA = True
+except ImportError:
+    HAS_LAVA = False
+
+REASON = "lava-nc not installed"
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 11), reason=REASON)
+@pytest.mark.skipif(not HAS_LAVA, reason=REASON)
 def test_lava_import():
     """Verify lava-nc can be imported."""
     import lava.lib.dl.slayer as slayer  # noqa: F401
     from lava.proc.lif.process import LIF  # noqa: F401
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 11), reason=REASON)
+@pytest.mark.skipif(not HAS_LAVA, reason=REASON)
 def test_sc_to_lava_converter():
     """Convert SC-NeuroCore SNN to Lava process network and run on CPU sim."""
     from lava.proc.lif.process import LIF
@@ -44,7 +50,7 @@ def test_sc_to_lava_converter():
     assert v.shape == (n_out,), f"Expected ({n_out},), got {v.shape}"
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 11), reason=REASON)
+@pytest.mark.skipif(not HAS_LAVA, reason=REASON)
 def test_spike_train_parity():
     """Compare SC-NeuroCore LIF spike train vs Lava LIF over 100 steps."""
     from sc_neurocore.neurons import StochasticLIFNeuron
