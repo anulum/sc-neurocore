@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sc-neurocore"
 version = "3.12.0"
-description = "116 neuron models, 99.49% MNIST, Rust SIMD engine, FPGA synthesis — the world's most comprehensive SNN framework."
+description = "Stochastic Computing SNN framework: NumPy + Rust SIMD + FPGA RTL."
 authors = [
   { name = "Miroslav Sotek", email = "protoscience@anulum.li" }
 ]
@@ -16,18 +16,12 @@ requires-python = ">=3.10"
 keywords = [
   "neuromorphic",
   "stochastic-computing",
-  "spiking-neural-networks",
   "fpga",
-  "verilog",
-  "simd",
-  "rust",
-  "neuron-models",
-  "hodgkin-huxley",
-  "surrogate-gradient",
-  "quantum-computing",
-  "edge-ai",
-  "formal-verification",
+  "spiking-neural-networks",
   "hyper-dimensional-computing",
+  "rust",
+  "hardware-simulation",
+  "petri-nets",
 ]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
@@ -68,6 +62,7 @@ research = ["matplotlib>=3.5", "networkx", "onnx", "torch>=2.0"]
 training = ["torch>=2.0"]
 jax = ["jax", "jaxlib"]
 quantum = ["qiskit", "pennylane", "qiskit-aer"]
+lava = ["lava-nc"]
 docs = ["mkdocs>=1.6", "mkdocs-material>=9.5", "mkdocstrings[python]>=0.25"]
 
 [tool.setuptools.packages.find]
@@ -112,11 +107,7 @@ omit = [
     "*/layers/jax_dense_layer.py",
     "*/quantum/hardware_bridge.py",
     "*/integrations/lava_bridge.py",
-    "*/neurons/adex.py",
-    "*/neurons/biophysical.py",
-    "*/neurons/extended_models.py",
     "*/neurons/models/*",
-    "*/neurons/equation_builder.py",
 ]
 
 [tool.coverage.report]
@@ -163,7 +154,7 @@ ignore = [
 ]
 
 [tool.bandit]
-skips = ["B101", "B307", "B311", "B404", "B603", "B607"]
+skips = ["B101", "B311", "B404", "B603", "B607"]
 exclude_dirs = ["tests", "experiments", "research", "scripts"]
 
 [tool.mypy]
