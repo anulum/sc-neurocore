@@ -9,7 +9,7 @@ import numpy as np
 class ResonateAndFireNeuron:
     """Resonate-and-Fire — subthreshold oscillation + threshold.
 
-    Izhikevich 2001. Complex dynamics: z = x + iy,
+    Izhikevich 2001. Complex dynamics: z = x + i*y,
     dz/dt = (b + iω)z + I, fire when |z| > threshold.
     Implemented as 2 real ODEs.
     """
