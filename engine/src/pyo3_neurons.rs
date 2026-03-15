@@ -36,7 +36,6 @@ macro_rules! py_neuron_default {
     };
 }
 
-
 // ═══════════════════════════════════════════════════════════════════
 // trivial.rs models
 // ═══════════════════════════════════════════════════════════════════
@@ -58,19 +57,30 @@ py_neuron_default!(PySigmaDeltaNeuron, neurons::SigmaDeltaNeuron, state sigma);
 py_neuron_default!(PyEnergyLIFNeuron, neurons::EnergyLIFNeuron, state v, state epsilon);
 py_neuron_default!(PyClosedFormContinuousNeuron, neurons::ClosedFormContinuousNeuron, state x);
 
-#[pyclass(name = "IntegerQIFNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "IntegerQIFNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyIntegerQIFNeuron { inner: neurons::IntegerQIFNeuron }
+pub struct PyIntegerQIFNeuron {
+    inner: neurons::IntegerQIFNeuron,
+}
 
 #[pymethods]
 impl PyIntegerQIFNeuron {
     #[new]
     #[pyo3(signature = (k=6, v_threshold=1024))]
     fn new(k: i32, v_threshold: i32) -> Self {
-        Self { inner: neurons::IntegerQIFNeuron::new(k, v_threshold) }
+        Self {
+            inner: neurons::IntegerQIFNeuron::new(k, v_threshold),
+        }
     }
-    fn step(&mut self, current: i32) -> i32 { self.inner.step(current) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn step(&mut self, current: i32) -> i32 {
+        self.inner.step(current)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("v", self.inner.v)?;
@@ -79,17 +89,30 @@ impl PyIntegerQIFNeuron {
 }
 
 // EscapeRateNeuron needs seed
-#[pyclass(name = "EscapeRateNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "EscapeRateNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyEscapeRateNeuron { inner: neurons::EscapeRateNeuron }
+pub struct PyEscapeRateNeuron {
+    inner: neurons::EscapeRateNeuron,
+}
 
 #[pymethods]
 impl PyEscapeRateNeuron {
     #[new]
     #[pyo3(signature = (seed=42))]
-    fn new(seed: u64) -> Self { Self { inner: neurons::EscapeRateNeuron::new(seed) } }
-    fn step(&mut self, current: f64) -> i32 { self.inner.step(current) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn new(seed: u64) -> Self {
+        Self {
+            inner: neurons::EscapeRateNeuron::new(seed),
+        }
+    }
+    fn step(&mut self, current: f64) -> i32 {
+        self.inner.step(current)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("v", self.inner.v)?;
@@ -118,17 +141,30 @@ py_neuron_default!(PyLearnableNeuronModel, neurons::LearnableNeuronModel, state 
 py_neuron_default!(PyPernarowskiNeuron, neurons::PernarowskiNeuron, state v, state w, state z);
 
 // AlphaNeuron: step(exc, inh)
-#[pyclass(name = "AlphaNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "AlphaNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyAlphaNeuron { inner: neurons::AlphaNeuron }
+pub struct PyAlphaNeuron {
+    inner: neurons::AlphaNeuron,
+}
 
 #[pymethods]
 impl PyAlphaNeuron {
     #[new]
-    fn new() -> Self { Self { inner: neurons::AlphaNeuron::new() } }
+    fn new() -> Self {
+        Self {
+            inner: neurons::AlphaNeuron::new(),
+        }
+    }
     #[pyo3(signature = (exc_current, inh_current=0.0))]
-    fn step(&mut self, exc_current: f64, inh_current: f64) -> i32 { self.inner.step(exc_current, inh_current) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn step(&mut self, exc_current: f64, inh_current: f64) -> i32 {
+        self.inner.step(exc_current, inh_current)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("v", self.inner.v)?;
@@ -139,17 +175,30 @@ impl PyAlphaNeuron {
 }
 
 // COBALIFNeuron: step(current, delta_ge, delta_gi)
-#[pyclass(name = "COBALIFNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "COBALIFNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyCOBALIFNeuron { inner: neurons::COBALIFNeuron }
+pub struct PyCOBALIFNeuron {
+    inner: neurons::COBALIFNeuron,
+}
 
 #[pymethods]
 impl PyCOBALIFNeuron {
     #[new]
-    fn new() -> Self { Self { inner: neurons::COBALIFNeuron::new() } }
+    fn new() -> Self {
+        Self {
+            inner: neurons::COBALIFNeuron::new(),
+        }
+    }
     #[pyo3(signature = (current, delta_ge=0.0, delta_gi=0.0))]
-    fn step(&mut self, current: f64, delta_ge: f64, delta_gi: f64) -> i32 { self.inner.step(current, delta_ge, delta_gi) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn step(&mut self, current: f64, delta_ge: f64, delta_gi: f64) -> i32 {
+        self.inner.step(current, delta_ge, delta_gi)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("v", self.inner.v)?;
@@ -160,17 +209,30 @@ impl PyCOBALIFNeuron {
 }
 
 // EPropALIFNeuron: needs tau params
-#[pyclass(name = "EPropALIFNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "EPropALIFNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyEPropALIFNeuron { inner: neurons::EPropALIFNeuron }
+pub struct PyEPropALIFNeuron {
+    inner: neurons::EPropALIFNeuron,
+}
 
 #[pymethods]
 impl PyEPropALIFNeuron {
     #[new]
     #[pyo3(signature = (tau_m=20.0, tau_a=200.0, dt=1.0))]
-    fn new(tau_m: f64, tau_a: f64, dt: f64) -> Self { Self { inner: neurons::EPropALIFNeuron::new(tau_m, tau_a, dt) } }
-    fn step(&mut self, current: f64) -> i32 { self.inner.step(current) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn new(tau_m: f64, tau_a: f64, dt: f64) -> Self {
+        Self {
+            inner: neurons::EPropALIFNeuron::new(tau_m, tau_a, dt),
+        }
+    }
+    fn step(&mut self, current: f64) -> i32 {
+        self.inner.step(current)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("v", self.inner.v)?;
@@ -181,17 +243,30 @@ impl PyEPropALIFNeuron {
 }
 
 // SuperSpikeNeuron: needs tau params
-#[pyclass(name = "SuperSpikeNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "SuperSpikeNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PySuperSpikeNeuron { inner: neurons::SuperSpikeNeuron }
+pub struct PySuperSpikeNeuron {
+    inner: neurons::SuperSpikeNeuron,
+}
 
 #[pymethods]
 impl PySuperSpikeNeuron {
     #[new]
     #[pyo3(signature = (tau_m=10.0, tau_e=10.0, dt=1.0))]
-    fn new(tau_m: f64, tau_e: f64, dt: f64) -> Self { Self { inner: neurons::SuperSpikeNeuron::new(tau_m, tau_e, dt) } }
-    fn step(&mut self, current: f64) -> i32 { self.inner.step(current) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn new(tau_m: f64, tau_e: f64, dt: f64) -> Self {
+        Self {
+            inner: neurons::SuperSpikeNeuron::new(tau_m, tau_e, dt),
+        }
+    }
+    fn step(&mut self, current: f64) -> i32 {
+        self.inner.step(current)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("v", self.inner.v)?;
@@ -201,17 +276,30 @@ impl PySuperSpikeNeuron {
 }
 
 // BendaHerzNeuron: needs seed
-#[pyclass(name = "BendaHerzNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "BendaHerzNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyBendaHerzNeuron { inner: neurons::BendaHerzNeuron }
+pub struct PyBendaHerzNeuron {
+    inner: neurons::BendaHerzNeuron,
+}
 
 #[pymethods]
 impl PyBendaHerzNeuron {
     #[new]
     #[pyo3(signature = (seed=42))]
-    fn new(seed: u64) -> Self { Self { inner: neurons::BendaHerzNeuron::new(seed) } }
-    fn step(&mut self, current: f64) -> i32 { self.inner.step(current) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn new(seed: u64) -> Self {
+        Self {
+            inner: neurons::BendaHerzNeuron::new(seed),
+        }
+    }
+    fn step(&mut self, current: f64) -> i32 {
+        self.inner.step(current)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("a", self.inner.a)?;
@@ -255,17 +343,30 @@ py_neuron_default!(PyBertramPhantomBurster, neurons::BertramPhantomBurster, stat
 py_neuron_default!(PyYamadaNeuron, neurons::YamadaNeuron, state v, state n, state q);
 
 // GIFPopulationNeuron: needs seed
-#[pyclass(name = "GIFPopulationNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "GIFPopulationNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyGIFPopulationNeuron { inner: neurons::GIFPopulationNeuron }
+pub struct PyGIFPopulationNeuron {
+    inner: neurons::GIFPopulationNeuron,
+}
 
 #[pymethods]
 impl PyGIFPopulationNeuron {
     #[new]
     #[pyo3(signature = (seed=42))]
-    fn new(seed: u64) -> Self { Self { inner: neurons::GIFPopulationNeuron::new(seed) } }
-    fn step(&mut self, current: f64) -> i32 { self.inner.step(current) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn new(seed: u64) -> Self {
+        Self {
+            inner: neurons::GIFPopulationNeuron::new(seed),
+        }
+    }
+    fn step(&mut self, current: f64) -> i32 {
+        self.inner.step(current)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("v", self.inner.v)?;
@@ -280,17 +381,30 @@ impl PyGIFPopulationNeuron {
 // ═══════════════════════════════════════════════════════════════════
 
 // PinskyRinzelNeuron: step(current_soma, current_dend)
-#[pyclass(name = "PinskyRinzelNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "PinskyRinzelNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyPinskyRinzelNeuron { inner: neurons::PinskyRinzelNeuron }
+pub struct PyPinskyRinzelNeuron {
+    inner: neurons::PinskyRinzelNeuron,
+}
 
 #[pymethods]
 impl PyPinskyRinzelNeuron {
     #[new]
-    fn new() -> Self { Self { inner: neurons::PinskyRinzelNeuron::new() } }
+    fn new() -> Self {
+        Self {
+            inner: neurons::PinskyRinzelNeuron::new(),
+        }
+    }
     #[pyo3(signature = (current_soma, current_dend=0.0))]
-    fn step(&mut self, current_soma: f64, current_dend: f64) -> i32 { self.inner.step(current_soma, current_dend) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn step(&mut self, current_soma: f64, current_dend: f64) -> i32 {
+        self.inner.step(current_soma, current_dend)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("v_s", self.inner.v_s)?;
@@ -300,17 +414,30 @@ impl PyPinskyRinzelNeuron {
 }
 
 // HayL5PyramidalNeuron: step(current_soma, current_tuft)
-#[pyclass(name = "HayL5PyramidalNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "HayL5PyramidalNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyHayL5PyramidalNeuron { inner: neurons::HayL5PyramidalNeuron }
+pub struct PyHayL5PyramidalNeuron {
+    inner: neurons::HayL5PyramidalNeuron,
+}
 
 #[pymethods]
 impl PyHayL5PyramidalNeuron {
     #[new]
-    fn new() -> Self { Self { inner: neurons::HayL5PyramidalNeuron::new() } }
+    fn new() -> Self {
+        Self {
+            inner: neurons::HayL5PyramidalNeuron::new(),
+        }
+    }
     #[pyo3(signature = (current_soma, current_tuft=0.0))]
-    fn step(&mut self, current_soma: f64, current_tuft: f64) -> i32 { self.inner.step(current_soma, current_tuft) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn step(&mut self, current_soma: f64, current_tuft: f64) -> i32 {
+        self.inner.step(current_soma, current_tuft)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("v_s", self.inner.v_s)?;
@@ -325,17 +452,30 @@ py_neuron_default!(PyBoothRinzelNeuron, neurons::BoothRinzelNeuron, state vs, st
 py_neuron_default!(PyDendrifyNeuron, neurons::DendrifyNeuron, state v_s, state v_d);
 
 // RallCableNeuron: variable compartments
-#[pyclass(name = "RallCableNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "RallCableNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyRallCableNeuron { inner: neurons::RallCableNeuron }
+pub struct PyRallCableNeuron {
+    inner: neurons::RallCableNeuron,
+}
 
 #[pymethods]
 impl PyRallCableNeuron {
     #[new]
     #[pyo3(signature = (n_comp=5))]
-    fn new(n_comp: usize) -> Self { Self { inner: neurons::RallCableNeuron::new(n_comp) } }
-    fn step(&mut self, current: f64) -> i32 { self.inner.step(current) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn new(n_comp: usize) -> Self {
+        Self {
+            inner: neurons::RallCableNeuron::new(n_comp),
+        }
+    }
+    fn step(&mut self, current: f64) -> i32 {
+        self.inner.step(current)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("v", self.inner.v.clone())?;
@@ -344,17 +484,30 @@ impl PyRallCableNeuron {
 }
 
 // TwoCompartmentLIFNeuron: step(i_soma, i_dend)
-#[pyclass(name = "TwoCompartmentLIFNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "TwoCompartmentLIFNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyTwoCompartmentLIFNeuron { inner: neurons::TwoCompartmentLIFNeuron }
+pub struct PyTwoCompartmentLIFNeuron {
+    inner: neurons::TwoCompartmentLIFNeuron,
+}
 
 #[pymethods]
 impl PyTwoCompartmentLIFNeuron {
     #[new]
-    fn new() -> Self { Self { inner: neurons::TwoCompartmentLIFNeuron::new() } }
+    fn new() -> Self {
+        Self {
+            inner: neurons::TwoCompartmentLIFNeuron::new(),
+        }
+    }
     #[pyo3(signature = (i_soma, i_dend=0.0))]
-    fn step(&mut self, i_soma: f64, i_dend: f64) -> i32 { self.inner.step(i_soma, i_dend) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn step(&mut self, i_soma: f64, i_dend: f64) -> i32 {
+        self.inner.step(i_soma, i_dend)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("v_s", self.inner.v_s)?;
@@ -367,58 +520,110 @@ impl PyTwoCompartmentLIFNeuron {
 // special.rs models (stochastic / population / neural mass)
 // ═══════════════════════════════════════════════════════════════════
 
-#[pyclass(name = "PoissonNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "PoissonNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyPoissonNeuron { inner: neurons::PoissonNeuron }
+pub struct PyPoissonNeuron {
+    inner: neurons::PoissonNeuron,
+}
 
 #[pymethods]
 impl PyPoissonNeuron {
     #[new]
     #[pyo3(signature = (rate_hz=100.0, dt_ms=1.0, seed=42))]
-    fn new(rate_hz: f64, dt_ms: f64, seed: u64) -> Self { Self { inner: neurons::PoissonNeuron::new(rate_hz, dt_ms, seed) } }
+    fn new(rate_hz: f64, dt_ms: f64, seed: u64) -> Self {
+        Self {
+            inner: neurons::PoissonNeuron::new(rate_hz, dt_ms, seed),
+        }
+    }
     #[pyo3(signature = (rate_override=-1.0))]
-    fn step(&mut self, rate_override: f64) -> i32 { self.inner.step(rate_override) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn step(&mut self, rate_override: f64) -> i32 {
+        self.inner.step(rate_override)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
 }
 
-#[pyclass(name = "InhomogeneousPoissonNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "InhomogeneousPoissonNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyInhomogeneousPoissonNeuron { inner: neurons::InhomogeneousPoissonNeuron }
+pub struct PyInhomogeneousPoissonNeuron {
+    inner: neurons::InhomogeneousPoissonNeuron,
+}
 
 #[pymethods]
 impl PyInhomogeneousPoissonNeuron {
     #[new]
     #[pyo3(signature = (dt_ms=1.0, seed=42))]
-    fn new(dt_ms: f64, seed: u64) -> Self { Self { inner: neurons::InhomogeneousPoissonNeuron::new(dt_ms, seed) } }
-    fn step(&mut self, rate_hz: f64) -> i32 { self.inner.step(rate_hz) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn new(dt_ms: f64, seed: u64) -> Self {
+        Self {
+            inner: neurons::InhomogeneousPoissonNeuron::new(dt_ms, seed),
+        }
+    }
+    fn step(&mut self, rate_hz: f64) -> i32 {
+        self.inner.step(rate_hz)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
 }
 
-#[pyclass(name = "GammaRenewalNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "GammaRenewalNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyGammaRenewalNeuron { inner: neurons::GammaRenewalNeuron }
+pub struct PyGammaRenewalNeuron {
+    inner: neurons::GammaRenewalNeuron,
+}
 
 #[pymethods]
 impl PyGammaRenewalNeuron {
     #[new]
     #[pyo3(signature = (rate_hz=50.0, shape_k=3, seed=42))]
-    fn new(rate_hz: f64, shape_k: u32, seed: u64) -> Self { Self { inner: neurons::GammaRenewalNeuron::new(rate_hz, shape_k, seed) } }
+    fn new(rate_hz: f64, shape_k: u32, seed: u64) -> Self {
+        Self {
+            inner: neurons::GammaRenewalNeuron::new(rate_hz, shape_k, seed),
+        }
+    }
     #[pyo3(signature = (rate_override=-1.0))]
-    fn step(&mut self, rate_override: f64) -> i32 { self.inner.step(rate_override) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn step(&mut self, rate_override: f64) -> i32 {
+        self.inner.step(rate_override)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
 }
 
-#[pyclass(name = "StochasticIFNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "StochasticIFNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyStochasticIFNeuron { inner: neurons::StochasticIFNeuron }
+pub struct PyStochasticIFNeuron {
+    inner: neurons::StochasticIFNeuron,
+}
 
 #[pymethods]
 impl PyStochasticIFNeuron {
     #[new]
     #[pyo3(signature = (seed=42))]
-    fn new(seed: u64) -> Self { Self { inner: neurons::StochasticIFNeuron::new(seed) } }
-    fn step(&mut self, current: f64) -> i32 { self.inner.step(current) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn new(seed: u64) -> Self {
+        Self {
+            inner: neurons::StochasticIFNeuron::new(seed),
+        }
+    }
+    fn step(&mut self, current: f64) -> i32 {
+        self.inner.step(current)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("v", self.inner.v)?;
@@ -426,17 +631,30 @@ impl PyStochasticIFNeuron {
     }
 }
 
-#[pyclass(name = "GalvesLocherbachNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "GalvesLocherbachNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyGalvesLocherbachNeuron { inner: neurons::GalvesLocherbachNeuron }
+pub struct PyGalvesLocherbachNeuron {
+    inner: neurons::GalvesLocherbachNeuron,
+}
 
 #[pymethods]
 impl PyGalvesLocherbachNeuron {
     #[new]
     #[pyo3(signature = (seed=42))]
-    fn new(seed: u64) -> Self { Self { inner: neurons::GalvesLocherbachNeuron::new(seed) } }
-    fn step(&mut self, weighted_input: f64) -> i32 { self.inner.step(weighted_input) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn new(seed: u64) -> Self {
+        Self {
+            inner: neurons::GalvesLocherbachNeuron::new(seed),
+        }
+    }
+    fn step(&mut self, weighted_input: f64) -> i32 {
+        self.inner.step(weighted_input)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("v", self.inner.v)?;
@@ -449,29 +667,52 @@ py_neuron_default!(PySpikeResponseNeuron, neurons::SpikeResponseNeuron, state v,
 // GLMNeuron: needs n_k, n_h, seed
 #[pyclass(name = "GLMNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
 #[derive(Clone)]
-pub struct PyGLMNeuron { inner: neurons::GLMNeuron }
+pub struct PyGLMNeuron {
+    inner: neurons::GLMNeuron,
+}
 
 #[pymethods]
 impl PyGLMNeuron {
     #[new]
     #[pyo3(signature = (n_k=10, n_h=20, seed=42))]
-    fn new(n_k: usize, n_h: usize, seed: u64) -> Self { Self { inner: neurons::GLMNeuron::new(n_k, n_h, seed) } }
-    fn step(&mut self, stimulus: f64) -> i32 { self.inner.step(stimulus) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn new(n_k: usize, n_h: usize, seed: u64) -> Self {
+        Self {
+            inner: neurons::GLMNeuron::new(n_k, n_h, seed),
+        }
+    }
+    fn step(&mut self, stimulus: f64) -> i32 {
+        self.inner.step(stimulus)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
 }
 
 // WilsonCowanUnit: step returns f64
-#[pyclass(name = "WilsonCowanUnit", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "WilsonCowanUnit",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyWilsonCowanUnit { inner: neurons::WilsonCowanUnit }
+pub struct PyWilsonCowanUnit {
+    inner: neurons::WilsonCowanUnit,
+}
 
 #[pymethods]
 impl PyWilsonCowanUnit {
     #[new]
-    fn new() -> Self { Self { inner: neurons::WilsonCowanUnit::new() } }
+    fn new() -> Self {
+        Self {
+            inner: neurons::WilsonCowanUnit::new(),
+        }
+    }
     #[pyo3(signature = (ext_input=0.0))]
-    fn step(&mut self, ext_input: f64) -> f64 { self.inner.step(ext_input) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn step(&mut self, ext_input: f64) -> f64 {
+        self.inner.step(ext_input)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("e", self.inner.e)?;
@@ -481,17 +722,30 @@ impl PyWilsonCowanUnit {
 }
 
 // JansenRitUnit: step returns f64
-#[pyclass(name = "JansenRitUnit", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "JansenRitUnit",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyJansenRitUnit { inner: neurons::JansenRitUnit }
+pub struct PyJansenRitUnit {
+    inner: neurons::JansenRitUnit,
+}
 
 #[pymethods]
 impl PyJansenRitUnit {
     #[new]
-    fn new() -> Self { Self { inner: neurons::JansenRitUnit::new() } }
+    fn new() -> Self {
+        Self {
+            inner: neurons::JansenRitUnit::new(),
+        }
+    }
     #[pyo3(signature = (p_ext=220.0))]
-    fn step(&mut self, p_ext: f64) -> f64 { self.inner.step(p_ext) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn step(&mut self, p_ext: f64) -> f64 {
+        self.inner.step(p_ext)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("y", self.inner.y.to_vec())?;
@@ -500,18 +754,31 @@ impl PyJansenRitUnit {
 }
 
 // WongWangUnit: step(stim1, stim2) -> (f64, f64)
-#[pyclass(name = "WongWangUnit", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "WongWangUnit",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyWongWangUnit { inner: neurons::WongWangUnit }
+pub struct PyWongWangUnit {
+    inner: neurons::WongWangUnit,
+}
 
 #[pymethods]
 impl PyWongWangUnit {
     #[new]
     #[pyo3(signature = (seed=42))]
-    fn new(seed: u64) -> Self { Self { inner: neurons::WongWangUnit::new(seed) } }
+    fn new(seed: u64) -> Self {
+        Self {
+            inner: neurons::WongWangUnit::new(seed),
+        }
+    }
     #[pyo3(signature = (stim1=0.0, stim2=0.0))]
-    fn step(&mut self, stim1: f64, stim2: f64) -> (f64, f64) { self.inner.step(stim1, stim2) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn step(&mut self, stim1: f64, stim2: f64) -> (f64, f64) {
+        self.inner.step(stim1, stim2)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("s1", self.inner.s1)?;
@@ -521,17 +788,30 @@ impl PyWongWangUnit {
 }
 
 // ErmentroutKopellPopulation: step returns f64
-#[pyclass(name = "ErmentroutKopellPopulation", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "ErmentroutKopellPopulation",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyErmentroutKopellPopulation { inner: neurons::ErmentroutKopellPopulation }
+pub struct PyErmentroutKopellPopulation {
+    inner: neurons::ErmentroutKopellPopulation,
+}
 
 #[pymethods]
 impl PyErmentroutKopellPopulation {
     #[new]
-    fn new() -> Self { Self { inner: neurons::ErmentroutKopellPopulation::new() } }
+    fn new() -> Self {
+        Self {
+            inner: neurons::ErmentroutKopellPopulation::new(),
+        }
+    }
     #[pyo3(signature = (ext_input=0.0))]
-    fn step(&mut self, ext_input: f64) -> f64 { self.inner.step(ext_input) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn step(&mut self, ext_input: f64) -> f64 {
+        self.inner.step(ext_input)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("r", self.inner.r)?;
@@ -541,31 +821,57 @@ impl PyErmentroutKopellPopulation {
 }
 
 // WendlingNeuron: step returns f64
-#[pyclass(name = "WendlingNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "WendlingNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyWendlingNeuron { inner: neurons::WendlingNeuron }
+pub struct PyWendlingNeuron {
+    inner: neurons::WendlingNeuron,
+}
 
 #[pymethods]
 impl PyWendlingNeuron {
     #[new]
-    fn new() -> Self { Self { inner: neurons::WendlingNeuron::new() } }
+    fn new() -> Self {
+        Self {
+            inner: neurons::WendlingNeuron::new(),
+        }
+    }
     #[pyo3(signature = (p_ext=220.0))]
-    fn step(&mut self, p_ext: f64) -> f64 { self.inner.step(p_ext) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn step(&mut self, p_ext: f64) -> f64 {
+        self.inner.step(p_ext)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
 }
 
 // LarterBreakspearNeuron: step returns f64
-#[pyclass(name = "LarterBreakspearNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "LarterBreakspearNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyLarterBreakspearNeuron { inner: neurons::LarterBreakspearNeuron }
+pub struct PyLarterBreakspearNeuron {
+    inner: neurons::LarterBreakspearNeuron,
+}
 
 #[pymethods]
 impl PyLarterBreakspearNeuron {
     #[new]
-    fn new() -> Self { Self { inner: neurons::LarterBreakspearNeuron::new() } }
+    fn new() -> Self {
+        Self {
+            inner: neurons::LarterBreakspearNeuron::new(),
+        }
+    }
     #[pyo3(signature = (coupling=0.0))]
-    fn step(&mut self, coupling: f64) -> f64 { self.inner.step(coupling) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn step(&mut self, coupling: f64) -> f64 {
+        self.inner.step(coupling)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("v", self.inner.v)?;
@@ -579,16 +885,29 @@ impl PyLarterBreakspearNeuron {
 // hardware.rs models
 // ═══════════════════════════════════════════════════════════════════
 
-#[pyclass(name = "LoihiCUBANeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "LoihiCUBANeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyLoihiCUBANeuron { inner: neurons::LoihiCUBANeuron }
+pub struct PyLoihiCUBANeuron {
+    inner: neurons::LoihiCUBANeuron,
+}
 
 #[pymethods]
 impl PyLoihiCUBANeuron {
     #[new]
-    fn new() -> Self { Self { inner: neurons::LoihiCUBANeuron::new() } }
-    fn step(&mut self, weighted_input: i32) -> i32 { self.inner.step(weighted_input) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn new() -> Self {
+        Self {
+            inner: neurons::LoihiCUBANeuron::new(),
+        }
+    }
+    fn step(&mut self, weighted_input: i32) -> i32 {
+        self.inner.step(weighted_input)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("v", self.inner.v)?;
@@ -597,16 +916,29 @@ impl PyLoihiCUBANeuron {
     }
 }
 
-#[pyclass(name = "Loihi2Neuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "Loihi2Neuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyLoihi2Neuron { inner: neurons::Loihi2Neuron }
+pub struct PyLoihi2Neuron {
+    inner: neurons::Loihi2Neuron,
+}
 
 #[pymethods]
 impl PyLoihi2Neuron {
     #[new]
-    fn new() -> Self { Self { inner: neurons::Loihi2Neuron::new() } }
-    fn step(&mut self, weighted_input: i32) -> i32 { self.inner.step(weighted_input) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn new() -> Self {
+        Self {
+            inner: neurons::Loihi2Neuron::new(),
+        }
+    }
+    fn step(&mut self, weighted_input: i32) -> i32 {
+        self.inner.step(weighted_input)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("s1", self.inner.s1)?;
@@ -616,17 +948,30 @@ impl PyLoihi2Neuron {
     }
 }
 
-#[pyclass(name = "TrueNorthNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "TrueNorthNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyTrueNorthNeuron { inner: neurons::TrueNorthNeuron }
+pub struct PyTrueNorthNeuron {
+    inner: neurons::TrueNorthNeuron,
+}
 
 #[pymethods]
 impl PyTrueNorthNeuron {
     #[new]
     #[pyo3(signature = (threshold=100))]
-    fn new(threshold: i32) -> Self { Self { inner: neurons::TrueNorthNeuron::new(threshold) } }
-    fn step(&mut self, weighted_input: i32) -> i32 { self.inner.step(weighted_input) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn new(threshold: i32) -> Self {
+        Self {
+            inner: neurons::TrueNorthNeuron::new(threshold),
+        }
+    }
+    fn step(&mut self, weighted_input: i32) -> i32 {
+        self.inner.step(weighted_input)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("v", self.inner.v)?;
@@ -637,16 +982,29 @@ impl PyTrueNorthNeuron {
 py_neuron_default!(PyBrainScaleSAdExNeuron, neurons::BrainScaleSAdExNeuron, state v, state w);
 py_neuron_default!(PySpiNNakerLIFNeuron, neurons::SpiNNakerLIFNeuron, state v, state refrac_count);
 
-#[pyclass(name = "SpiNNaker2Neuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "SpiNNaker2Neuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PySpiNNaker2Neuron { inner: neurons::SpiNNaker2Neuron }
+pub struct PySpiNNaker2Neuron {
+    inner: neurons::SpiNNaker2Neuron,
+}
 
 #[pymethods]
 impl PySpiNNaker2Neuron {
     #[new]
-    fn new() -> Self { Self { inner: neurons::SpiNNaker2Neuron::new() } }
-    fn step(&mut self, current: i32) -> i32 { self.inner.step(current) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn new() -> Self {
+        Self {
+            inner: neurons::SpiNNaker2Neuron::new(),
+        }
+    }
+    fn step(&mut self, current: i32) -> i32 {
+        self.inner.step(current)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("v", self.inner.v)?;
@@ -656,17 +1014,30 @@ impl PySpiNNaker2Neuron {
 
 py_neuron_default!(PyDPINeuron, neurons::DPINeuron, state i_mem);
 
-#[pyclass(name = "AkidaNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "AkidaNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyAkidaNeuron { inner: neurons::AkidaNeuron }
+pub struct PyAkidaNeuron {
+    inner: neurons::AkidaNeuron,
+}
 
 #[pymethods]
 impl PyAkidaNeuron {
     #[new]
     #[pyo3(signature = (threshold=100))]
-    fn new(threshold: i32) -> Self { Self { inner: neurons::AkidaNeuron::new(threshold) } }
-    fn step(&mut self, weight: i32) -> i32 { self.inner.step(weight) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn new(threshold: i32) -> Self {
+        Self {
+            inner: neurons::AkidaNeuron::new(threshold),
+        }
+    }
+    fn step(&mut self, weight: i32) -> i32 {
+        self.inner.step(weight)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("v", self.inner.v)?;
@@ -681,29 +1052,53 @@ py_neuron_default!(PyNeuroGridNeuron, neurons::NeuroGridNeuron, state v_s, state
 // rate.rs models
 // ═══════════════════════════════════════════════════════════════════
 
-#[pyclass(name = "McCullochPittsNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "McCullochPittsNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyMcCullochPittsNeuron { inner: neurons::McCullochPittsNeuron }
+pub struct PyMcCullochPittsNeuron {
+    inner: neurons::McCullochPittsNeuron,
+}
 
 #[pymethods]
 impl PyMcCullochPittsNeuron {
     #[new]
     #[pyo3(signature = (theta=1.0))]
-    fn new(theta: f64) -> Self { Self { inner: neurons::McCullochPittsNeuron::new(theta) } }
-    fn step(&self, weighted_input: f64) -> i32 { self.inner.step(weighted_input) }
+    fn new(theta: f64) -> Self {
+        Self {
+            inner: neurons::McCullochPittsNeuron::new(theta),
+        }
+    }
+    fn step(&self, weighted_input: f64) -> i32 {
+        self.inner.step(weighted_input)
+    }
 }
 
 // SigmoidRateNeuron: step returns f64
-#[pyclass(name = "SigmoidRateNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "SigmoidRateNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PySigmoidRateNeuron { inner: neurons::SigmoidRateNeuron }
+pub struct PySigmoidRateNeuron {
+    inner: neurons::SigmoidRateNeuron,
+}
 
 #[pymethods]
 impl PySigmoidRateNeuron {
     #[new]
-    fn new() -> Self { Self { inner: neurons::SigmoidRateNeuron::new() } }
-    fn step(&mut self, current: f64) -> f64 { self.inner.step(current) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn new() -> Self {
+        Self {
+            inner: neurons::SigmoidRateNeuron::new(),
+        }
+    }
+    fn step(&mut self, current: f64) -> f64 {
+        self.inner.step(current)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("r", self.inner.r)?;
@@ -712,29 +1107,55 @@ impl PySigmoidRateNeuron {
 }
 
 // ThresholdLinearRateNeuron: step returns f64
-#[pyclass(name = "ThresholdLinearRateNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "ThresholdLinearRateNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyThresholdLinearRateNeuron { inner: neurons::ThresholdLinearRateNeuron }
+pub struct PyThresholdLinearRateNeuron {
+    inner: neurons::ThresholdLinearRateNeuron,
+}
 
 #[pymethods]
 impl PyThresholdLinearRateNeuron {
     #[new]
-    fn new() -> Self { Self { inner: neurons::ThresholdLinearRateNeuron::new() } }
-    fn step(&mut self, current: f64) -> f64 { self.inner.step(current) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn new() -> Self {
+        Self {
+            inner: neurons::ThresholdLinearRateNeuron::new(),
+        }
+    }
+    fn step(&mut self, current: f64) -> f64 {
+        self.inner.step(current)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
 }
 
 // AstrocyteModel: step returns f64
-#[pyclass(name = "AstrocyteModel", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "AstrocyteModel",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyAstrocyteModel { inner: neurons::AstrocyteModel }
+pub struct PyAstrocyteModel {
+    inner: neurons::AstrocyteModel,
+}
 
 #[pymethods]
 impl PyAstrocyteModel {
     #[new]
-    fn new() -> Self { Self { inner: neurons::AstrocyteModel::new() } }
-    fn step(&mut self, current: f64) -> f64 { self.inner.step(current) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn new() -> Self {
+        Self {
+            inner: neurons::AstrocyteModel::new(),
+        }
+    }
+    fn step(&mut self, current: f64) -> f64 {
+        self.inner.step(current)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("ca", self.inner.ca)?;
@@ -745,17 +1166,30 @@ impl PyAstrocyteModel {
 }
 
 // TsodyksMarkramNeuron: step(current, presynaptic_spike)
-#[pyclass(name = "TsodyksMarkramNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "TsodyksMarkramNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyTsodyksMarkramNeuron { inner: neurons::TsodyksMarkramNeuron }
+pub struct PyTsodyksMarkramNeuron {
+    inner: neurons::TsodyksMarkramNeuron,
+}
 
 #[pymethods]
 impl PyTsodyksMarkramNeuron {
     #[new]
-    fn new() -> Self { Self { inner: neurons::TsodyksMarkramNeuron::new() } }
+    fn new() -> Self {
+        Self {
+            inner: neurons::TsodyksMarkramNeuron::new(),
+        }
+    }
     #[pyo3(signature = (current, presynaptic_spike=false))]
-    fn step(&mut self, current: f64, presynaptic_spike: bool) -> i32 { self.inner.step(current, presynaptic_spike) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn step(&mut self, current: f64, presynaptic_spike: bool) -> i32 {
+        self.inner.step(current, presynaptic_spike)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("v", self.inner.v)?;
@@ -768,17 +1202,30 @@ impl PyTsodyksMarkramNeuron {
 py_neuron_default!(PyLiquidTimeConstantNeuron, neurons::LiquidTimeConstantNeuron, state x);
 
 // CompteWMNeuron: step(current, spike_in)
-#[pyclass(name = "CompteWMNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "CompteWMNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PyCompteWMNeuron { inner: neurons::CompteWMNeuron }
+pub struct PyCompteWMNeuron {
+    inner: neurons::CompteWMNeuron,
+}
 
 #[pymethods]
 impl PyCompteWMNeuron {
     #[new]
-    fn new() -> Self { Self { inner: neurons::CompteWMNeuron::new() } }
+    fn new() -> Self {
+        Self {
+            inner: neurons::CompteWMNeuron::new(),
+        }
+    }
     #[pyo3(signature = (current, spike_in=false))]
-    fn step(&mut self, current: f64, spike_in: bool) -> i32 { self.inner.step(current, spike_in) }
-    fn reset(&mut self) { self.inner.reset(); }
+    fn step(&mut self, current: f64, spike_in: bool) -> i32 {
+        self.inner.step(current, spike_in)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("v", self.inner.v)?;
@@ -788,15 +1235,26 @@ impl PyCompteWMNeuron {
 }
 
 // SiegertTransferFunction: step returns f64, no &mut self
-#[pyclass(name = "SiegertTransferFunction", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "SiegertTransferFunction",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
-pub struct PySiegertTransferFunction { inner: neurons::SiegertTransferFunction }
+pub struct PySiegertTransferFunction {
+    inner: neurons::SiegertTransferFunction,
+}
 
 #[pymethods]
 impl PySiegertTransferFunction {
     #[new]
-    fn new() -> Self { Self { inner: neurons::SiegertTransferFunction::new() } }
-    fn step(&self, current: f64) -> f64 { self.inner.step(current) }
+    fn new() -> Self {
+        Self {
+            inner: neurons::SiegertTransferFunction::new(),
+        }
+    }
+    fn step(&self, current: f64) -> f64 {
+        self.inner.step(current)
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════
