@@ -1,17 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""SC-NeuroCore neuron library — 60+ models, one file per model.
+"""SC-NeuroCore neuron library - 80+ models, one file per model.
 
-Core models (original SC bitstream neurons):
-    from sc_neurocore.neurons import StochasticLIFNeuron, FixedPointLIFNeuron
-
-All models (including biophysical, bursting, hardware, etc.):
-    from sc_neurocore.neurons import HodgkinHuxleyNeuron, AdExNeuron, ...
-
-Individual imports:
+Import any model:
+    from sc_neurocore.neurons import HodgkinHuxleyNeuron
     from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
 """
 
-# Core SC neurons (original, bitstream-capable)
+# Core SC neurons
 from .base import BaseNeuron
 from .stochastic_lif import StochasticLIFNeuron
 from .fixed_point_lif import FixedPointLIFNeuron, FixedPointLFSR, FixedPointBitstreamEncoder
@@ -19,16 +14,26 @@ from .homeostatic_lif import HomeostaticLIFNeuron
 from .dendritic import StochasticDendriticNeuron
 from .sc_izhikevich import SCIzhikevichNeuron
 
-# All extended models (one file per model in models/)
+# All extended models (one file per model)
 from .models import (
     AdExNeuron,
+    AdaptiveThresholdIFNeuron,
+    AkidaNeuron,
     AlphaNeuron,
+    AmariNeuralField,
+    BendaHerzNeuron,
+    BertramPhantomBurster,
+    BoothRinzelNeuron,
     BrainScaleSAdExNeuron,
     ButeraRespiratoryNeuron,
+    COBALIFNeuron,
+    CazellesMapNeuron,
     ChayNeuron,
     ChialvoMapNeuron,
+    CompteWMNeuron,
     ConnorStevensNeuron,
     CourageNekorkinMapNeuron,
+    DPINeuron,
     DestexheThalamicNeuron,
     EnergyLIFNeuron,
     ErmentroutKopellPopulation,
@@ -37,24 +42,37 @@ from .models import (
     FitzHughNagumoNeuron,
     FitzHughRinzelNeuron,
     FractionalLIFNeuron,
-    GalvesLocherbachNeuron,
-    GatedLIFNeuron,
     GLIFNeuron,
+    GLMNeuron,
+    GalvesLocherbachNeuron,
+    GammaRenewalNeuron,
+    GatedLIFNeuron,
+    GolombFSNeuron,
     GutkinErmentroutNeuron,
     HindmarshRoseNeuron,
     HodgkinHuxleyNeuron,
     HuberBraunNeuron,
+    IbarzTanakaMapNeuron,
     InhomogeneousPoissonNeuron,
     JansenRitUnit,
     LapicqueNeuron,
     LeakyCompeteFireNeuron,
     LoihiCUBANeuron,
     MATNeuron,
+    MainenSejnowskiNeuron,
+    McCullochPittsNeuron,
+    McKeanNeuron,
     MedvedevMapNeuron,
     MihalasNieburNeuron,
     MorrisLecarNeuron,
+    NonResettingLIFNeuron,
+    NonlinearLIFNeuron,
+    ParametricLIFNeuron,
+    PerfectIntegratorNeuron,
     PinskyRinzelNeuron,
+    PlantR15Neuron,
     PoissonNeuron,
+    PospischilNeuron,
     PrescottNeuron,
     QuadraticIFNeuron,
     ResonateAndFireNeuron,
@@ -62,18 +80,24 @@ from .models import (
     SFANeuron,
     ShermanRinzelKeizerNeuron,
     SigmaDeltaNeuron,
-    SpikeResponseNeuron,
+    SigmoidRateNeuron,
     SpiNNakerLIFNeuron,
+    SpikeResponseNeuron,
     StochasticIFNeuron,
+    TermanWangOscillator,
     ThetaNeuron,
+    ThresholdLinearRateNeuron,
+    TraubMilesNeuron,
     TrueNorthNeuron,
+    TsodyksMarkramNeuron,
+    TwoCompartmentLIFNeuron,
     WangBuzsakiNeuron,
     WilsonCowanUnit,
+    WilsonHRNeuron,
     WongWangUnit,
 )
 
 __all__ = [
-    # Core SC neurons
     "BaseNeuron",
     "StochasticLIFNeuron",
     "FixedPointLIFNeuron",
@@ -82,15 +106,24 @@ __all__ = [
     "HomeostaticLIFNeuron",
     "StochasticDendriticNeuron",
     "SCIzhikevichNeuron",
-    # Extended models (one file per model)
     "AdExNeuron",
+    "AdaptiveThresholdIFNeuron",
+    "AkidaNeuron",
     "AlphaNeuron",
+    "AmariNeuralField",
+    "BendaHerzNeuron",
+    "BertramPhantomBurster",
+    "BoothRinzelNeuron",
     "BrainScaleSAdExNeuron",
     "ButeraRespiratoryNeuron",
+    "COBALIFNeuron",
+    "CazellesMapNeuron",
     "ChayNeuron",
     "ChialvoMapNeuron",
+    "CompteWMNeuron",
     "ConnorStevensNeuron",
     "CourageNekorkinMapNeuron",
+    "DPINeuron",
     "DestexheThalamicNeuron",
     "EnergyLIFNeuron",
     "ErmentroutKopellPopulation",
@@ -99,24 +132,37 @@ __all__ = [
     "FitzHughNagumoNeuron",
     "FitzHughRinzelNeuron",
     "FractionalLIFNeuron",
-    "GalvesLocherbachNeuron",
-    "GatedLIFNeuron",
     "GLIFNeuron",
+    "GLMNeuron",
+    "GalvesLocherbachNeuron",
+    "GammaRenewalNeuron",
+    "GatedLIFNeuron",
+    "GolombFSNeuron",
     "GutkinErmentroutNeuron",
     "HindmarshRoseNeuron",
     "HodgkinHuxleyNeuron",
     "HuberBraunNeuron",
+    "IbarzTanakaMapNeuron",
     "InhomogeneousPoissonNeuron",
     "JansenRitUnit",
     "LapicqueNeuron",
     "LeakyCompeteFireNeuron",
     "LoihiCUBANeuron",
     "MATNeuron",
+    "MainenSejnowskiNeuron",
+    "McCullochPittsNeuron",
+    "McKeanNeuron",
     "MedvedevMapNeuron",
     "MihalasNieburNeuron",
     "MorrisLecarNeuron",
+    "NonResettingLIFNeuron",
+    "NonlinearLIFNeuron",
+    "ParametricLIFNeuron",
+    "PerfectIntegratorNeuron",
     "PinskyRinzelNeuron",
+    "PlantR15Neuron",
     "PoissonNeuron",
+    "PospischilNeuron",
     "PrescottNeuron",
     "QuadraticIFNeuron",
     "ResonateAndFireNeuron",
@@ -124,12 +170,19 @@ __all__ = [
     "SFANeuron",
     "ShermanRinzelKeizerNeuron",
     "SigmaDeltaNeuron",
-    "SpikeResponseNeuron",
+    "SigmoidRateNeuron",
     "SpiNNakerLIFNeuron",
+    "SpikeResponseNeuron",
     "StochasticIFNeuron",
+    "TermanWangOscillator",
     "ThetaNeuron",
+    "ThresholdLinearRateNeuron",
+    "TraubMilesNeuron",
     "TrueNorthNeuron",
+    "TsodyksMarkramNeuron",
+    "TwoCompartmentLIFNeuron",
     "WangBuzsakiNeuron",
     "WilsonCowanUnit",
+    "WilsonHRNeuron",
     "WongWangUnit",
 ]

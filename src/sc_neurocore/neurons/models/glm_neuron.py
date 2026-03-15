@@ -1,0 +1,52 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+import numpy as np
+
+
+@dataclass
+class GLMNeuron:
+    """Pillow et al. 2008 — generalized linear model (point-process GLM).
+
+    lambda(t) = exp(k . stim(t) + h . spike_history(t) + mu)
+    P(spike in dt) = lambda(t) * dt
+
+    k: stimulus filter (length n_k)
+    h: post-spike filter (length n_h), typically negative (refractoriness)
+    """
+
+    n_k: int = 10
+    n_h: int = 20
+    mu: float = -3.0
+    dt_ms: float = 1.0
+    k: np.ndarray = field(default=None, repr=False)
+    h: np.ndarray = field(default=None, repr=False)
+    _stim_buf: np.ndarray = field(default=None, repr=False)
+    _spike_buf: np.ndarray = field(default=None, repr=False)
+    _rng: object = None
+
+    def __post_init__(self):
+        if self.k is None:
+            self.k = np.exp(-np.arange(self.n_k) / 3.0) * 0.5
+        if self.h is None:
+            t = np.arange(self.n_h)
+            self.h = -5.0 * np.exp(-t / 2.0) + 0.5 * np.exp(-t / 10.0)
+        self._stim_buf = np.zeros(self.n_k)
+        self._spike_buf = np.zeros(self.n_h)
+        self._rng = np.random.default_rng()
+
+    def step(self, stimulus: float) -> int:
+        self._stim_buf = np.roll(self._stim_buf, 1)
+        self._stim_buf[0] = stimulus
+        log_rate = float(np.dot(self.k, self._stim_buf) + np.dot(self.h, self._spike_buf) + self.mu)
+        lam = np.exp(np.clip(log_rate, -20.0, 20.0))
+        p = lam * self.dt_ms / 1000.0
+        spike = 1 if self._rng.random() < min(p, 1.0) else 0
+        self._spike_buf = np.roll(self._spike_buf, 1)
+        self._spike_buf[0] = float(spike)
+        return spike
+
+    def reset(self):
+        self._stim_buf = np.zeros(self.n_k)
+        self._spike_buf = np.zeros(self.n_h)
