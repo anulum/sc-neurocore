@@ -72,7 +72,7 @@ jobs:
         run: |
           pytest tests/ -v \
             --cov=sc_neurocore \
-            --cov-report=term \
+            --cov-report=term-missing \
             --cov-report=html:htmlcov \
             --cov-fail-under=100 \
             --junitxml=test-results.xml
