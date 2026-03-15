@@ -61,6 +61,7 @@ Booth = "Booth"
 Yamada = "Yamada"
 Marder = "Marder"
 Durstewitz = "Durstewitz"
+Synopsys = "Synopsys"
 
 [files]
 extend-exclude = [
