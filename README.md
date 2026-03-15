@@ -273,6 +273,7 @@ Runnable scripts in `examples/`:
 | `10_benchmark_report.py` | Head-to-head v2/v3 benchmark suite (v3 Rust engine) |
 | `11_sc_training_demo.py` | Surrogate-gradient training of an SC dense layer (v3 Rust engine) |
 | `mnist_fpga/demo.py` | MNIST classifier: train → quantise Q8.8 → SC simulate → Verilog export |
+| `mnist_conv_train.py` | **ConvSpikingNet: 99.49% MNIST** (learnable beta/threshold, cosine LR) |
 | `mnist_surrogate/train.py` | Surrogate gradient SNN training (FastSigmoid/SuperSpike/ATan, ~95% MNIST) |
 
 ```bash

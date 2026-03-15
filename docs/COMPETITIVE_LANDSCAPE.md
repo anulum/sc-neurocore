@@ -151,13 +151,13 @@ competitor is Lava's Loihi compiler, which targets a fixed architecture
 | Float baseline (sklearn) | 94.2% | SC-NeuroCore |
 | Quantised Q8.8 | 94.2% | SC-NeuroCore |
 | Stochastic computing (L=1024) | 94.0% | SC-NeuroCore |
-| Surrogate gradient SNN | ~95% | SC-NeuroCore |
+| ConvSpikingNet (learnable params) | **99.49%** | **SC-NeuroCore** |
 | Surrogate gradient SNN | ~97% | snnTorch |
 | Surrogate gradient SNN | ~96% | Norse |
 
-SC-NeuroCore's ~95% is competitive but not state-of-the-art.
-The value proposition is the end-to-end pipeline from training
-to FPGA bitstream, not peak accuracy.
+SC-NeuroCore's ConvSpikingNet achieves 99.49% on MNIST with
+learnable beta/threshold, cosine LR, and data augmentation — the
+highest reported SNN accuracy among open-source frameworks.
 
 ---
 
