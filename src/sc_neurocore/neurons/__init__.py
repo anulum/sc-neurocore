@@ -237,4 +237,6 @@ __all__ = [
     "WilsonHRNeuron",
     "WongWangUnit",
     "YamadaNeuron",
+    "EquationNeuron",
+    "from_equations",
 ]
