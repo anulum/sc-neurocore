@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import numpy as np
 
 
@@ -9,7 +9,7 @@ import numpy as np
 class GLIFNeuron:
     """Allen Institute GLIF5 — Generalized LIF, 5-level hierarchy.
 
-    Teeter et al. 2018, Nature Commun. Level 5: LIF + reset rules +
+    Teeter et al. 2018, Nat Comm. Level 5: LIF + reset rules +
     instantaneous threshold + threshold adaptation + after-spike currents.
     """
 

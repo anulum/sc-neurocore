@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-import numpy as np
+from dataclasses import dataclass
 
 
 @dataclass
