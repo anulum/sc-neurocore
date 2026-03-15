@@ -1,4 +1,4 @@
-# Neurons — 112 Models
+# Neurons — 116 Models
 
 The world's largest pre-built spiking neuron model library. 116 unique
 models spanning 82 years of computational neuroscience (1943-2025),
@@ -62,6 +62,11 @@ from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
 | Sigma-Delta | `sigma_delta.py` | Yoon 2017 |
 | TC-LIF | `tc_lif.py` | AAAI 2024 |
 | Benda-Herz | `benda_herz.py` | Benda 2003 |
+| Integer QIF | `iqif.py` | Lo 2021, fixed-point |
+| Complementary LIF | `clif.py` | ICML 2024, dual paths |
+| K-LIF | `klif.py` | Learnable scaling |
+| Inhibitory LIF | `ilif.py` | 2025, temporal inhibition |
+| E-prop ALIF | `e_prop_alif.py` | Bellec 2020, eligibility |
 | Energy LIF | `energy_lif.py` | Fardet 2020 |
 
 ### Biophysical / Conductance-Based (11)
@@ -101,6 +106,16 @@ from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
 | Sherman-Rinzel-Keizer | `sherman_rinzel_keizer.py` | Sherman 1988 |
 | Plant R15 | `plant_r15.py` | Plant 1981, Aplysia |
 | Bertram Phantom | `bertram_phantom.py` | Bertram 2008 |
+| Pernarowski | `pernarowski.py` | Pernarowski 1994 |
+
+### Multi-Compartment (4)
+
+| Model | File | Reference |
+|-------|------|-----------|
+| Hay L5 Pyramidal | `hay_l5.py` | Hay 2011, 3-compartment BAC firing |
+| Booth-Rinzel | `booth_rinzel.py` | Booth 1995, bistable motoneuron |
+| Dendrify | `dendrify.py` | Beniaguev 2022, active dendrite |
+| TC-LIF | `tc_lif.py` | AAAI 2024, soma+dendrite |
 
 ### Synaptic (3)
 
@@ -114,13 +129,13 @@ Rulkov, Chialvo, Courbage-Nekorkin, Medvedev, Ibarz-Tanaka, Cazelles
 
 Poisson, Inhomogeneous Poisson, Galves-Locherbach, GLM (Pillow 2008)
 
-### Population / Neural Mass (5)
+### Population / Neural Mass (7)
 
-Wilson-Cowan, Jansen-Rit (EEG), Wong-Wang (decision), Ermentrout-Kopell (exact mean-field), Amari (neural field)
+Wilson-Cowan, Jansen-Rit (EEG), Wong-Wang (decision), Ermentrout-Kopell (exact mean-field), Amari (neural field), Wendling (extended JR, epilepsy EEG), Larter-Breakspear (TVB whole-brain)
 
-### Hardware-Specific (7)
+### Hardware-Specific (9)
 
-Loihi CUBA, TrueNorth, BrainScaleS AdEx, SpiNNaker LIF, DPI/DYNAP-SE, Akida, Sigma-Delta
+Loihi CUBA, Loihi 2, TrueNorth, BrainScaleS AdEx, SpiNNaker LIF, SpiNNaker2, DPI/DYNAP-SE, Akida, Sigma-Delta
 
 ### Rate Models (3)
 

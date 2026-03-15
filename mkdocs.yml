@@ -63,6 +63,7 @@ nav:
       - SC Theory Deep Dive: tutorials/19_sc_theory_deep_dive.md
       - Adapter Ecosystem: tutorials/20_adapter_ecosystem.md
       - Formal Verification: tutorials/21_formal_verification.md
+      - Neuron Model Selection: tutorials/22_neuron_model_selection.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
