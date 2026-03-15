@@ -307,14 +307,14 @@ class TestHardwareParity:
         py_s = _collect_spikes_py(py, 100, 200, int_input=True)
         rs_s = _collect_spikes_rust(rs, 100, 200, int_input=True)
         # Integer arithmetic: must be exact
-        assert py_s == rs_s, f"LoihiCUBA: spike trains differ"
+        assert py_s == rs_s, "LoihiCUBA: spike trains differ"
 
     def test_truenorth(self):
         py = TrueNorthNeuron()
         rs = eng.PyTrueNorthNeuron()
         py_s = _collect_spikes_py(py, 50, 20, int_input=True)
         rs_s = _collect_spikes_rust(rs, 50, 20, int_input=True)
-        assert py_s == rs_s, f"TrueNorth: spike trains differ"
+        assert py_s == rs_s, "TrueNorth: spike trains differ"
 
     def test_mcculloch_pitts(self):
         py = McCullochPittsNeuron()
