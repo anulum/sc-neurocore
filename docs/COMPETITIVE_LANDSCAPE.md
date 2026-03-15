@@ -6,7 +6,7 @@ An honest comparison of SC-NeuroCore with peer frameworks. Every claim
 is backed by measured data or cited literature. Unverified claims are
 marked explicitly.
 
-**Last updated**: 2026-03-14 (v3.11.0)
+**Last updated**: 2026-03-15 (v3.12.0)
 
 ---
 
@@ -36,7 +36,7 @@ marked explicitly.
 | Rust SIMD engine | **Yes** (512x) | — | — | — | — |
 | Surrogate gradient training | Yes | Yes | Yes | Yes | — |
 | GPU acceleration | CuPy | PyTorch | PyTorch | — | — |
-| Neuron models | 7 | 11 | 6 | 3 | Arbitrary |
+| Neuron models | 87 | 11 | 6 | 3 | Arbitrary |
 | STDP / R-STDP plasticity | Yes | — | Yes | Yes | Yes |
 | Quantum hybrid circuits | **Yes** | — | — | — | — |
 | Hyperdimensional computing | **Yes** | — | — | — | — |
@@ -61,7 +61,7 @@ marked explicitly.
 
 ### Where others lead
 
-1. **snnTorch** — Largest neuron model library (11 models), deep
+1. **snnTorch** — Deep
    PyTorch integration, extensive tutorials, large community
 2. **Norse** — Strongest bio-plausibility, Norse-compatible neuron
    equations, auto-differentiation through spike dynamics

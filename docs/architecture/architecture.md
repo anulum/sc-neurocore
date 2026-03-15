@@ -5,7 +5,7 @@
 ```
 sc_neurocore/
 ├── Core Tier (Production-Ready)
-│   ├── neurons/       8 neuron models (LIF, Izhikevich, dendritic, homeostatic)
+│   ├── neurons/       87 neuron models (LIF, Izhikevich, dendritic, homeostatic, biophysical, …)
 │   ├── synapses/      4 synapse types (bitstream, dot product, STDP, R-STDP)
 │   ├── layers/        8 layer types (dense, conv, learning, vectorized, recurrent, ...)
 │   ├── sources/       Bitstream current sources
