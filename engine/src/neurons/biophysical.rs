@@ -6,9 +6,9 @@ use rand_xoshiro::Xoshiro256PlusPlus;
 
 // ── Helper: safe alpha/beta kinetics avoiding division-by-zero ──
 
-pub fn safe_rate(numer_factor: f64, v_offset: f64, v: f64, denom_scale: f64, fallback: f64) -> f64 {
+pub fn safe_rate(number_factor: f64, v_offset: f64, v: f64, denom_scale: f64, fallback: f64) -> f64 {
     let d = v + v_offset;
-    if d.abs() < 1e-7 { fallback } else { numer_factor * d / (1.0 - (-d / denom_scale).exp()) }
+    if d.abs() < 1e-7 { fallback } else { number_factor * d / (1.0 - (-d / denom_scale).exp()) }
 }
 
 /// Hodgkin-Huxley 1952 — 4-ODE ion channel model.

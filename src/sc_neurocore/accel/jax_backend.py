@@ -213,6 +213,7 @@ if HAS_JAX:
         Uses jax.grad on a cross-entropy loss over mean output spike rates.
         Returns (updated_weights, loss_value).
         """
+
         def loss_fn(ws):
             batch = x.shape[0]
             spikes_in = x

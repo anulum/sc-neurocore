@@ -43,8 +43,7 @@ def main():
 
     # Forward pass demo
     all_spikes, v_final = jax_forward_pass(weights, x_train[:8], n_steps)
-    print(f"Forward pass: {len(all_spikes)} layers, "
-          f"output shape {v_final.shape}")
+    print(f"Forward pass: {len(all_spikes)} layers, " f"output shape {v_final.shape}")
 
     # Training loop
     for epoch in range(n_epochs):
@@ -52,7 +51,11 @@ def main():
         x_batch = x_train[idx]
         y_batch = y_train[idx]
         weights, loss = jax_surrogate_gradient_step(
-            weights, x_batch, y_batch, n_steps=n_steps, lr=lr,
+            weights,
+            x_batch,
+            y_batch,
+            n_steps=n_steps,
+            lr=lr,
         )
         if epoch % 5 == 0 or epoch == n_epochs - 1:
             print(f"Epoch {epoch:3d}  loss={loss:.4f}")
