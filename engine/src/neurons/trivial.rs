@@ -1,0 +1,813 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//! Simple integrate-and-fire variants.
+
+use rand::{RngExt, SeedableRng};
+use rand_xoshiro::Xoshiro256PlusPlus;
+
+/// Quadratic Integrate-and-Fire — canonical Type-I excitability.
+/// dv/dt = v² + I, reset at v_peak.
+#[derive(Clone, Debug)]
+pub struct QuadraticIFNeuron {
+    pub v: f64,
+    pub v_reset: f64,
+    pub v_peak: f64,
+    pub dt: f64,
+}
+
+impl QuadraticIFNeuron {
+    pub fn new(v_reset: f64, v_peak: f64, dt: f64) -> Self {
+        Self { v: v_reset, v_reset, v_peak, dt }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.v += (self.v * self.v + current) * self.dt;
+        if self.v >= self.v_peak {
+            self.v = self.v_reset;
+            1
+        } else {
+            0
+        }
+    }
+
+    pub fn reset(&mut self) { self.v = self.v_reset; }
+}
+
+impl Default for QuadraticIFNeuron {
+    fn default() -> Self { Self::new(-1.0, 1.0, 0.01) }
+}
+
+/// Theta neuron — Ermentrout & Kopell canonical form.
+/// dθ/dt = (1 - cosθ) + (1 + cosθ)·I, spike at θ crossing π.
+#[derive(Clone, Debug)]
+pub struct ThetaNeuron {
+    pub theta: f64,
+    pub dt: f64,
+}
+
+impl ThetaNeuron {
+    pub fn new(dt: f64) -> Self { Self { theta: 0.0, dt } }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        let prev = self.theta;
+        self.theta += ((1.0 - self.theta.cos()) + (1.0 + self.theta.cos()) * current) * self.dt;
+        if self.theta >= std::f64::consts::PI && prev < std::f64::consts::PI {
+            self.theta -= 2.0 * std::f64::consts::PI;
+            1
+        } else {
+            0
+        }
+    }
+
+    pub fn reset(&mut self) { self.theta = 0.0; }
+}
+
+impl Default for ThetaNeuron {
+    fn default() -> Self { Self::new(0.01) }
+}
+
+/// Perfect integrator — no leak, pure capacitive charging.
+#[derive(Clone, Debug)]
+pub struct PerfectIntegratorNeuron {
+    pub v: f64,
+    pub c_m: f64,
+    pub v_threshold: f64,
+    pub v_reset: f64,
+    pub dt: f64,
+}
+
+impl PerfectIntegratorNeuron {
+    pub fn new(c_m: f64, v_threshold: f64, dt: f64) -> Self {
+        Self { v: 0.0, c_m, v_threshold, v_reset: 0.0, dt }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.v += (current / self.c_m) * self.dt;
+        if self.v >= self.v_threshold {
+            self.v = self.v_reset;
+            1
+        } else {
+            0
+        }
+    }
+
+    pub fn reset(&mut self) { self.v = self.v_reset; }
+}
+
+impl Default for PerfectIntegratorNeuron {
+    fn default() -> Self { Self::new(1.0, 1.0, 0.1) }
+}
+
+/// Gated LIF — learnable decay and input gates.
+#[derive(Clone, Debug)]
+pub struct GatedLIFNeuron {
+    pub v: f64,
+    pub gate_v: f64,
+    pub gate_i: f64,
+    pub v_threshold: f64,
+    pub dt: f64,
+}
+
+impl GatedLIFNeuron {
+    pub fn new(gate_v: f64, gate_i: f64, v_threshold: f64) -> Self {
+        Self { v: 0.0, gate_v, gate_i, v_threshold, dt: 1.0 }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.v = self.gate_v * self.v + self.gate_i * current;
+        if self.v >= self.v_threshold {
+            self.v -= self.v_threshold;
+            1
+        } else {
+            0
+        }
+    }
+
+    pub fn reset(&mut self) { self.v = 0.0; }
+}
+
+impl Default for GatedLIFNeuron {
+    fn default() -> Self { Self::new(0.9, 1.0, 1.0) }
+}
+
+/// Nonlinear LIF — cubic f-I curve with adaptation. Touboul & Brette 2008.
+#[derive(Clone, Debug)]
+pub struct NonlinearLIFNeuron {
+    pub v: f64,
+    pub w: f64,
+    pub v_rest: f64,
+    pub v_crit: f64,
+    pub v_threshold: f64,
+    pub v_reset: f64,
+    pub a: f64,
+    pub b: f64,
+    pub tau_w: f64,
+    pub c_m: f64,
+    pub dt: f64,
+}
+
+impl NonlinearLIFNeuron {
+    pub fn new() -> Self {
+        Self {
+            v: -65.0, w: 0.0, v_rest: -65.0, v_crit: -40.0,
+            v_threshold: -20.0, v_reset: -65.0, a: 0.04, b: 0.5,
+            tau_w: 100.0, c_m: 1.0, dt: 0.1,
+        }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        let v_prev = self.v;
+        let cubic = self.a * (self.v - self.v_rest) * (self.v - self.v_crit);
+        self.v += (cubic - self.w + current) / self.c_m * self.dt;
+        self.w += (self.b * (self.v - self.v_rest) - self.w) / self.tau_w * self.dt;
+        if self.v >= self.v_threshold && v_prev < self.v_threshold {
+            self.v = self.v_reset;
+            1
+        } else {
+            0
+        }
+    }
+
+    pub fn reset(&mut self) { self.v = self.v_rest; self.w = 0.0; }
+}
+
+impl Default for NonlinearLIFNeuron {
+    fn default() -> Self { Self::new() }
+}
+
+/// Spike-Frequency Adaptation LIF. Benda & Herz 2003.
+#[derive(Clone, Debug)]
+pub struct SFANeuron {
+    pub v: f64,
+    pub g_sfa: f64,
+    pub v_rest: f64,
+    pub v_reset: f64,
+    pub v_threshold: f64,
+    pub tau_m: f64,
+    pub tau_sfa: f64,
+    pub delta_g: f64,
+    pub e_k: f64,
+    pub resistance: f64,
+    pub dt: f64,
+}
+
+impl SFANeuron {
+    pub fn new() -> Self {
+        Self {
+            v: -70.0, g_sfa: 0.0, v_rest: -70.0, v_reset: -70.0,
+            v_threshold: -50.0, tau_m: 10.0, tau_sfa: 200.0,
+            delta_g: 0.5, e_k: -80.0, resistance: 1.0, dt: 1.0,
+        }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.v += (-(self.v - self.v_rest) - self.g_sfa * (self.v - self.e_k)
+            + self.resistance * current) / self.tau_m * self.dt;
+        self.g_sfa *= (-self.dt / self.tau_sfa).exp();
+        if self.v >= self.v_threshold {
+            self.v = self.v_reset;
+            self.g_sfa += self.delta_g;
+            1
+        } else {
+            0
+        }
+    }
+
+    pub fn reset(&mut self) { self.v = self.v_rest; self.g_sfa = 0.0; }
+}
+
+impl Default for SFANeuron {
+    fn default() -> Self { Self::new() }
+}
+
+/// Multi-timescale Adaptive Threshold. Kobayashi et al. 2009.
+#[derive(Clone, Debug)]
+pub struct MATNeuron {
+    pub v: f64,
+    pub theta1: f64,
+    pub theta2: f64,
+    pub v_rest: f64,
+    pub v_reset: f64,
+    pub v_threshold_base: f64,
+    pub tau_m: f64,
+    pub tau_1: f64,
+    pub tau_2: f64,
+    pub h1: f64,
+    pub h2: f64,
+    pub resistance: f64,
+    pub dt: f64,
+}
+
+impl MATNeuron {
+    pub fn new() -> Self {
+        Self {
+            v: -70.0, theta1: 0.0, theta2: 0.0, v_rest: -70.0, v_reset: -70.0,
+            v_threshold_base: -50.0, tau_m: 10.0, tau_1: 10.0, tau_2: 200.0,
+            h1: 5.0, h2: 3.0, resistance: 1.0, dt: 1.0,
+        }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.v += (-(self.v - self.v_rest) + self.resistance * current) / self.tau_m * self.dt;
+        self.theta1 *= (-self.dt / self.tau_1).exp();
+        self.theta2 *= (-self.dt / self.tau_2).exp();
+        let threshold = self.v_threshold_base + self.theta1 + self.theta2;
+        if self.v >= threshold {
+            self.v = self.v_reset;
+            self.theta1 += self.h1;
+            self.theta2 += self.h2;
+            1
+        } else {
+            0
+        }
+    }
+
+    pub fn reset(&mut self) { self.v = self.v_rest; self.theta1 = 0.0; self.theta2 = 0.0; }
+}
+
+impl Default for MATNeuron {
+    fn default() -> Self { Self::new() }
+}
+
+/// Escape-rate neuron — stochastic IF with exponential hazard. Gerstner 2000.
+#[derive(Clone, Debug)]
+pub struct EscapeRateNeuron {
+    pub v: f64,
+    pub v_rest: f64,
+    pub v_reset: f64,
+    pub v_threshold: f64,
+    pub tau_m: f64,
+    pub rho_0: f64,
+    pub delta_u: f64,
+    pub resistance: f64,
+    pub dt: f64,
+    rng: Xoshiro256PlusPlus,
+}
+
+impl EscapeRateNeuron {
+    pub fn new(seed: u64) -> Self {
+        Self {
+            v: -70.0, v_rest: -70.0, v_reset: -70.0, v_threshold: -50.0,
+            tau_m: 10.0, rho_0: 0.001, delta_u: 3.0, resistance: 1.0, dt: 1.0,
+            rng: Xoshiro256PlusPlus::seed_from_u64(seed),
+        }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.v += (-(self.v - self.v_rest) + self.resistance * current) / self.tau_m * self.dt;
+        let rate = self.rho_0 * ((self.v - self.v_threshold) / self.delta_u).exp();
+        if self.rng.random::<f64>() < rate * self.dt {
+            self.v = self.v_reset;
+            1
+        } else {
+            0
+        }
+    }
+
+    pub fn reset(&mut self) { self.v = self.v_rest; }
+}
+
+/// KLIF — learnable LIF with scaling factor k. Eshraghian et al. 2021.
+#[derive(Clone, Debug)]
+pub struct KLIFNeuron {
+    pub v: f64,
+    pub k: f64,
+    pub alpha: f64,
+    pub v_threshold: f64,
+    pub v_reset: f64,
+}
+
+impl KLIFNeuron {
+    pub fn new(tau: f64, k: f64, dt: f64) -> Self {
+        Self { v: 0.0, k, alpha: (-dt / tau).exp(), v_threshold: 1.0, v_reset: 0.0 }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.v = self.alpha * self.v + self.k * current;
+        if self.v >= self.v_threshold {
+            self.v = self.v_reset;
+            1
+        } else {
+            0
+        }
+    }
+
+    pub fn reset(&mut self) { self.v = 0.0; }
+}
+
+impl Default for KLIFNeuron {
+    fn default() -> Self { Self::new(10.0, 1.0, 1.0) }
+}
+
+/// Inhibitory LIF — LIF with self-inhibition trace.
+#[derive(Clone, Debug)]
+pub struct InhibitoryLIFNeuron {
+    pub v: f64,
+    pub inh_trace: f64,
+    pub alpha_m: f64,
+    pub alpha_inh: f64,
+    pub v_threshold: f64,
+    pub inh_strength: f64,
+}
+
+impl InhibitoryLIFNeuron {
+    pub fn new(tau_m: f64, tau_inh: f64, dt: f64) -> Self {
+        Self {
+            v: 0.0, inh_trace: 0.0,
+            alpha_m: (-dt / tau_m).exp(), alpha_inh: (-dt / tau_inh).exp(),
+            v_threshold: 1.0, inh_strength: 0.5,
+        }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.inh_trace *= self.alpha_inh;
+        self.v = self.alpha_m * self.v + current - self.inh_strength * self.inh_trace;
+        if self.v >= self.v_threshold {
+            self.v = 0.0;
+            self.inh_trace += 1.0;
+            1
+        } else {
+            0
+        }
+    }
+
+    pub fn reset(&mut self) { self.v = 0.0; self.inh_trace = 0.0; }
+}
+
+impl Default for InhibitoryLIFNeuron {
+    fn default() -> Self { Self::new(10.0, 5.0, 1.0) }
+}
+
+/// Complementary LIF — dual-path excitatory/inhibitory.
+#[derive(Clone, Debug)]
+pub struct ComplementaryLIFNeuron {
+    pub v_pos: f64,
+    pub v_neg: f64,
+    pub alpha: f64,
+    pub v_threshold: f64,
+}
+
+impl ComplementaryLIFNeuron {
+    pub fn new(tau: f64, dt: f64, v_threshold: f64) -> Self {
+        Self { v_pos: 0.0, v_neg: 0.0, alpha: (-dt / tau).exp(), v_threshold }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        let inp_pos = current.max(0.0);
+        let inp_neg = (-current).max(0.0);
+        self.v_pos = self.alpha * self.v_pos + inp_pos;
+        self.v_neg = self.alpha * self.v_neg + inp_neg;
+        let diff = self.v_pos - self.v_neg;
+        if diff >= self.v_threshold {
+            self.v_pos = 0.0;
+            self.v_neg = 0.0;
+            1
+        } else if diff <= -self.v_threshold {
+            self.v_pos = 0.0;
+            self.v_neg = 0.0;
+            -1
+        } else {
+            0
+        }
+    }
+
+    pub fn reset(&mut self) { self.v_pos = 0.0; self.v_neg = 0.0; }
+}
+
+impl Default for ComplementaryLIFNeuron {
+    fn default() -> Self { Self::new(10.0, 1.0, 1.0) }
+}
+
+/// Parametric LIF — learnable decay via sigmoid(a). Fang et al. 2021.
+#[derive(Clone, Debug)]
+pub struct ParametricLIFNeuron {
+    pub v: f64,
+    pub a: f64,
+    pub threshold: f64,
+}
+
+impl ParametricLIFNeuron {
+    pub fn new(a: f64, threshold: f64) -> Self {
+        Self { v: 0.0, a, threshold }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        let alpha = 1.0 / (1.0 + (-self.a).exp());
+        let spike = if self.v >= self.threshold { 1 } else { 0 };
+        self.v = alpha * self.v * (1.0 - spike as f64) + current;
+        spike
+    }
+
+    pub fn reset(&mut self) { self.v = 0.0; }
+}
+
+impl Default for ParametricLIFNeuron {
+    fn default() -> Self { Self::new(0.0, 1.0) }
+}
+
+/// Non-resetting LIF with adaptive threshold. Brette 2004.
+#[derive(Clone, Debug)]
+pub struct NonResettingLIFNeuron {
+    pub v: f64,
+    pub theta: f64,
+    pub v_rest: f64,
+    pub theta_rest: f64,
+    pub delta_theta: f64,
+    pub tau_m: f64,
+    pub tau_theta: f64,
+    pub r_m: f64,
+    pub dt: f64,
+}
+
+impl NonResettingLIFNeuron {
+    pub fn new() -> Self {
+        Self {
+            v: -65.0, theta: -50.0, v_rest: -65.0, theta_rest: -50.0,
+            delta_theta: 5.0, tau_m: 10.0, tau_theta: 50.0, r_m: 1.0, dt: 0.1,
+        }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.v += (-(self.v - self.v_rest) + self.r_m * current) / self.tau_m * self.dt;
+        self.theta += (-(self.theta - self.theta_rest)) / self.tau_theta * self.dt;
+        if self.v >= self.theta {
+            self.theta += self.delta_theta;
+            1
+        } else {
+            0
+        }
+    }
+
+    pub fn reset(&mut self) { self.v = self.v_rest; self.theta = self.theta_rest; }
+}
+
+impl Default for NonResettingLIFNeuron {
+    fn default() -> Self { Self::new() }
+}
+
+/// Adaptive-threshold IF. Platkiewicz & Brette 2010.
+#[derive(Clone, Debug)]
+pub struct AdaptiveThresholdIFNeuron {
+    pub v: f64,
+    pub theta: f64,
+    pub v_rest: f64,
+    pub v_reset: f64,
+    pub theta_rest: f64,
+    pub delta_theta: f64,
+    pub tau_m: f64,
+    pub tau_theta: f64,
+    pub dt: f64,
+}
+
+impl AdaptiveThresholdIFNeuron {
+    pub fn new() -> Self {
+        Self {
+            v: -65.0, theta: -50.0, v_rest: -65.0, v_reset: -65.0,
+            theta_rest: -50.0, delta_theta: 5.0, tau_m: 10.0, tau_theta: 50.0, dt: 0.1,
+        }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.v += (-(self.v - self.v_rest) + current) / self.tau_m * self.dt;
+        self.theta += (-(self.theta - self.theta_rest)) / self.tau_theta * self.dt;
+        if self.v >= self.theta {
+            self.v = self.v_reset;
+            self.theta += self.delta_theta;
+            1
+        } else {
+            0
+        }
+    }
+
+    pub fn reset(&mut self) { self.v = self.v_rest; self.theta = self.theta_rest; }
+}
+
+impl Default for AdaptiveThresholdIFNeuron {
+    fn default() -> Self { Self::new() }
+}
+
+/// Sigma-Delta neuron — first-order delta modulation.
+#[derive(Clone, Debug)]
+pub struct SigmaDeltaNeuron {
+    pub sigma: f64,
+    pub v_threshold: f64,
+}
+
+impl SigmaDeltaNeuron {
+    pub fn new(v_threshold: f64) -> Self { Self { sigma: 0.0, v_threshold } }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.sigma += current;
+        if self.sigma >= self.v_threshold {
+            self.sigma -= self.v_threshold;
+            1
+        } else if self.sigma <= -self.v_threshold {
+            self.sigma += self.v_threshold;
+            -1
+        } else {
+            0
+        }
+    }
+
+    pub fn reset(&mut self) { self.sigma = 0.0; }
+}
+
+impl Default for SigmaDeltaNeuron {
+    fn default() -> Self { Self::new(1.0) }
+}
+
+/// Energy-aware LIF — metabolic cost modulates gain. Sengupta et al. 2013.
+#[derive(Clone, Debug)]
+pub struct EnergyLIFNeuron {
+    pub v: f64,
+    pub epsilon: f64,
+    pub v_rest: f64,
+    pub v_reset: f64,
+    pub v_threshold: f64,
+    pub tau_m: f64,
+    pub tau_e: f64,
+    pub alpha: f64,
+    pub epsilon_0: f64,
+    pub resistance: f64,
+    pub dt: f64,
+}
+
+impl EnergyLIFNeuron {
+    pub fn new() -> Self {
+        Self {
+            v: -70.0, epsilon: 1.0, v_rest: -70.0, v_reset: -70.0,
+            v_threshold: -50.0, tau_m: 10.0, tau_e: 500.0, alpha: 0.1,
+            epsilon_0: 1.0, resistance: 1.0, dt: 1.0,
+        }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        let effective_r = self.resistance * self.epsilon;
+        self.v += (-(self.v - self.v_rest) + effective_r * current) / self.tau_m * self.dt;
+        self.epsilon += (self.epsilon_0 - self.epsilon) / self.tau_e * self.dt;
+        if self.v >= self.v_threshold && self.epsilon > 0.1 {
+            self.v = self.v_reset;
+            self.epsilon -= self.alpha;
+            1
+        } else if self.v >= self.v_threshold {
+            self.v = self.v_threshold;
+            0
+        } else {
+            0
+        }
+    }
+
+    pub fn reset(&mut self) { self.v = self.v_rest; self.epsilon = self.epsilon_0; }
+}
+
+impl Default for EnergyLIFNeuron {
+    fn default() -> Self { Self::new() }
+}
+
+/// Integer QIF — fixed-point quadratic IF for digital hardware.
+#[derive(Clone, Debug)]
+pub struct IntegerQIFNeuron {
+    pub v: i32,
+    pub k: i32,
+    pub v_threshold: i32,
+    pub v_reset: i32,
+    pub v_min: i32,
+}
+
+impl IntegerQIFNeuron {
+    pub fn new(k: i32, v_threshold: i32) -> Self {
+        Self { v: 0, k, v_threshold, v_reset: -v_threshold, v_min: -2 * v_threshold }
+    }
+
+    pub fn step(&mut self, current: i32) -> i32 {
+        self.v = (self.v + (self.v.wrapping_mul(self.v) >> self.k) + current).max(self.v_min);
+        if self.v >= self.v_threshold {
+            self.v = self.v_reset;
+            1
+        } else {
+            0
+        }
+    }
+
+    pub fn reset(&mut self) { self.v = 0; }
+}
+
+impl Default for IntegerQIFNeuron {
+    fn default() -> Self { Self::new(6, 1024) }
+}
+
+/// Closed-form Continuous-depth (CfC) neuron. Hasani et al. 2022.
+#[derive(Clone, Debug)]
+pub struct ClosedFormContinuousNeuron {
+    pub x: f64,
+    pub w_tau: f64,
+    pub w_x: f64,
+    pub w_in: f64,
+    pub tau_base: f64,
+    pub bias: f64,
+    pub v_threshold: f64,
+    pub dt: f64,
+}
+
+impl ClosedFormContinuousNeuron {
+    pub fn new() -> Self {
+        Self {
+            x: 0.0, w_tau: -0.5, w_x: 0.8, w_in: 1.0,
+            tau_base: 10.0, bias: 0.0, v_threshold: 1.0, dt: 1.0,
+        }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        let sigma_tau = 1.0 / (1.0 + (-(self.w_tau * current + self.bias)).exp());
+        let tau_eff = (self.tau_base * sigma_tau).max(0.1);
+        let f_target = (self.w_x * self.x + self.w_in * current).tanh();
+        let decay = (-self.dt / tau_eff).exp();
+        self.x = self.x * decay + f_target * (1.0 - decay);
+        if self.x >= self.v_threshold {
+            self.x -= self.v_threshold;
+            1
+        } else {
+            0
+        }
+    }
+
+    pub fn reset(&mut self) { self.x = 0.0; }
+}
+
+impl Default for ClosedFormContinuousNeuron {
+    fn default() -> Self { Self::new() }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn qif_fires_with_positive_input() {
+        let mut n = QuadraticIFNeuron::default();
+        let total: i32 = (0..1000).map(|_| n.step(0.5)).sum();
+        assert!(total > 0);
+    }
+
+    #[test]
+    fn theta_fires() {
+        let mut n = ThetaNeuron::default();
+        let total: i32 = (0..1000).map(|_| n.step(0.5)).sum();
+        assert!(total > 0);
+    }
+
+    #[test]
+    fn perfect_integrator_fires() {
+        let mut n = PerfectIntegratorNeuron::default();
+        let total: i32 = (0..100).map(|_| n.step(0.5)).sum();
+        assert!(total > 0);
+    }
+
+    #[test]
+    fn gated_lif_fires() {
+        let mut n = GatedLIFNeuron::default();
+        let total: i32 = (0..20).map(|_| n.step(0.5)).sum();
+        assert!(total > 0);
+    }
+
+    #[test]
+    fn nlif_fires() {
+        let mut n = NonlinearLIFNeuron::new();
+        let total: i32 = (0..2000).map(|_| n.step(500.0)).sum();
+        assert!(total > 0);
+    }
+
+    #[test]
+    fn sfa_fires_then_adapts() {
+        let mut n = SFANeuron::new();
+        let first: i32 = (0..100).map(|_| n.step(30.0)).sum();
+        let second: i32 = (0..100).map(|_| n.step(30.0)).sum();
+        assert!(first > 0);
+        assert!(second <= first + 2);
+    }
+
+    #[test]
+    fn mat_dual_threshold_adapts() {
+        let mut n = MATNeuron::new();
+        let total: i32 = (0..200).map(|_| n.step(30.0)).sum();
+        assert!(total > 0);
+        assert!(n.theta1 > 0.0 || n.theta2 > 0.0);
+    }
+
+    #[test]
+    fn escape_rate_stochastic() {
+        let mut n = EscapeRateNeuron::new(42);
+        let total: i32 = (0..1000).map(|_| n.step(30.0)).sum();
+        assert!(total > 0);
+    }
+
+    #[test]
+    fn klif_fires() {
+        let mut n = KLIFNeuron::default();
+        let total: i32 = (0..50).map(|_| n.step(0.5)).sum();
+        assert!(total > 0);
+    }
+
+    #[test]
+    fn ilif_self_inhibits() {
+        let mut n = InhibitoryLIFNeuron::default();
+        let total: i32 = (0..100).map(|_| n.step(0.8)).sum();
+        assert!(total > 0);
+    }
+
+    #[test]
+    fn clif_positive_spike() {
+        let mut n = ComplementaryLIFNeuron::default();
+        let total: i32 = (0..20).map(|_| n.step(0.5)).sum();
+        assert!(total > 0);
+    }
+
+    #[test]
+    fn plif_fires() {
+        let mut n = ParametricLIFNeuron::default();
+        let total: i32 = (0..20).map(|_| n.step(1.5)).sum();
+        assert!(total > 0);
+    }
+
+    #[test]
+    fn non_resetting_threshold_increases() {
+        let mut n = NonResettingLIFNeuron::new();
+        let initial = n.theta;
+        for _ in 0..5000 { n.step(30.0); }
+        assert!(n.theta > initial);
+    }
+
+    #[test]
+    fn adaptive_threshold_fires() {
+        let mut n = AdaptiveThresholdIFNeuron::new();
+        let total: i32 = (0..500).map(|_| n.step(30.0)).sum();
+        assert!(total > 0);
+    }
+
+    #[test]
+    fn sigma_delta_encodes() {
+        let mut n = SigmaDeltaNeuron::default();
+        let total: i32 = (0..10).map(|_| n.step(0.3)).sum();
+        assert!(total > 0);
+    }
+
+    #[test]
+    fn energy_lif_fires() {
+        let mut n = EnergyLIFNeuron::new();
+        let total: i32 = (0..200).map(|_| n.step(30.0)).sum();
+        assert!(total > 0);
+    }
+
+    #[test]
+    fn iqif_fires() {
+        let mut n = IntegerQIFNeuron::default();
+        let total: i32 = (0..200).map(|_| n.step(50)).sum();
+        assert!(total > 0);
+    }
+
+    #[test]
+    fn cfc_activates() {
+        let mut n = ClosedFormContinuousNeuron { v_threshold: 0.9, ..ClosedFormContinuousNeuron::new() };
+        let total: i32 = (0..100).map(|_| n.step(5.0)).sum();
+        assert!(total > 0);
+    }
+}

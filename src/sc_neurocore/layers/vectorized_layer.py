@@ -164,6 +164,9 @@ class VectorizedSCLayer:
         if csr.nnz == 0:  # pragma: no cover
             return np.zeros(self.n_neurons, dtype=np.float64)
 
+        if self._on_gpu:  # pragma: no cover
+            return self._forward_sparse_gpu(packed_inputs)
+
         gathered_inputs = packed_inputs[csr.indices]
         products = vec_and(self._sparse_packed, gathered_inputs)
         counts = _popcount_rows(products)
@@ -172,3 +175,20 @@ class VectorizedSCLayer:
         np.add.at(outputs, np.repeat(np.arange(self.n_neurons), np.diff(csr.indptr)), counts)
 
         return outputs / self.length
+
+    def _forward_sparse_gpu(self, packed_inputs: np.ndarray) -> np.ndarray:  # pragma: no cover
+        """CuPy CSR matmul path for sparse connectivity on GPU."""
+        import cupy
+        import cupyx.scipy.sparse as cusp
+
+        csr = self.weights_csr
+        w_gpu = cusp.csr_matrix(
+            (cupy.asarray(csr.data.astype(np.float32)),
+             cupy.asarray(csr.indices),
+             cupy.asarray(csr.indptr)),
+            shape=csr.shape,
+        )
+        in_probs_flat = _popcount_rows(packed_inputs).astype(np.float32) / self.length
+        in_gpu = cupy.asarray(in_probs_flat)
+        out_gpu = w_gpu @ in_gpu
+        return cupy.asnumpy(out_gpu).astype(np.float64)

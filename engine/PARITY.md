@@ -25,7 +25,7 @@ Python reference implementation (`src/sc_neurocore/`).
 | BitstreamAverager | `utils.bitstreams` | `neuron.rs` | Done |
 | RNG wrapper | `utils.rng` | uses `rand` crate | Done |
 
-## Neurons
+## Neurons (Core)
 
 | Feature | Python class | Rust struct | Status |
 |---------|-------------|-------------|--------|
@@ -36,6 +36,19 @@ Python reference implementation (`src/sc_neurocore/`).
 | Izhikevich | `SCIzhikevichNeuron` | `neuron.rs::Izhikevich` | Done |
 | Homeostatic LIF | `HomeostaticLIFNeuron` | `neuron.rs::HomeostaticLif` | Done |
 | Dendritic neuron | `DendriticNeuron` | `neuron.rs::DendriticNeuron` | Done |
+
+## Extended Neuron Models (104 models in `neurons/`)
+
+| Category | Count | Rust module | Status |
+|----------|-------|-------------|--------|
+| Trivial IF variants | 18 | `neurons/trivial.rs` | Done |
+| Simple spiking (2D+) | 20 | `neurons/simple_spiking.rs` | Done |
+| Discrete maps | 6 | `neurons/maps.rs` | Done |
+| Biophysical (HH-type) | 20 | `neurons/biophysical.rs` | Done |
+| Multi-compartment | 7 | `neurons/multi_compartment.rs` | Done |
+| Stochastic/population | 13 | `neurons/special.rs` | Done |
+| Hardware emulators | 9 | `neurons/hardware.rs` | Done |
+| Rate/other | 11 | `neurons/rate.rs` | Done |
 
 ## Synapses
 
@@ -90,12 +103,14 @@ Python reference implementation (`src/sc_neurocore/`).
 | Category | Done | Total |
 |----------|------|-------|
 | Primitives | 13 | 13 |
-| Neurons | 7 | 7 |
+| Neurons (core) | 7 | 7 |
+| Neurons (extended) | 104 | 104 |
 | Synapses | 3 | 3 |
 | Layers | 8 | 8 |
 | Networks | 5 | 5 |
 | Compiler | 6 | 6 |
 | Training | 1 | 1 |
-| **Total** | **43** | **43** |
+| **Total** | **147** | **147** |
 
-**Parity: 100% (43/43)**
+**Parity: 100% (147/147)**
+**Neuron models: 111/111 (7 core + 104 extended)**

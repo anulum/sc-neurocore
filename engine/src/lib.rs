@@ -26,6 +26,8 @@ pub mod graph;
 pub mod ir;
 pub mod layer;
 pub mod neuron;
+pub mod neurons;
+pub mod pyo3_neurons;
 pub mod recorder;
 pub mod recurrent;
 pub mod scpn;
@@ -306,6 +308,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(ir_print, m)?)?;
     m.add_function(wrap_pyfunction!(ir_parse, m)?)?;
     m.add_function(wrap_pyfunction!(ir_emit_sv, m)?)?;
+    pyo3_neurons::register_neuron_classes(m)?;
     Ok(())
 }
 
