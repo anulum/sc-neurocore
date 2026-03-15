@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+from __future__ import annotations
+
+from dataclasses import dataclass
+import numpy as np
+
+
+@dataclass
+class NonResettingLIFNeuron:
+    """Adaptive multi-timescale threshold (aMAT) variant — non-resetting LIF.
+
+    tau_m dV/dt = -(V - V_rest) + R*I
+    On spike: threshold rises by delta_theta, V does NOT reset.
+    dtheta/dt  = -(theta - theta_rest) / tau_theta
+
+    Kobayashi et al. 2009, Jolivet et al. 2004.
+    """
+
+    v: float = -65.0
+    theta: float = -50.0
+    v_rest: float = -65.0
+    theta_rest: float = -50.0
+    delta_theta: float = 5.0
+    tau_m: float = 10.0
+    tau_theta: float = 50.0
+    r_m: float = 1.0
+    dt: float = 0.1
+
+    def step(self, current: float) -> int:
+        self.v += (-(self.v - self.v_rest) + self.r_m * current) / self.tau_m * self.dt
+        self.theta += (-(self.theta - self.theta_rest)) / self.tau_theta * self.dt
+        if self.v >= self.theta:
+            self.theta += self.delta_theta
+            return 1
+        return 0
+
+    def reset(self):
+        self.v = self.v_rest
+        self.theta = self.theta_rest
