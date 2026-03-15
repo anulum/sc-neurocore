@@ -15,7 +15,7 @@ Audit complete — zero deprecated calls found.
 
 ### ~~Enterprise CI/CD & supply chain hardening~~ ✓
 
-11 CI workflows, all SHA-pinned. Bandit SAST, CodeQL, OpenSSF Scorecard.
+13 CI workflows, all SHA-pinned. Bandit SAST, CodeQL, OpenSSF Scorecard.
 Preflight gate with pre-push hook. PyPI OIDC trusted publisher. Python
 minimum raised to 3.10.
 
@@ -31,7 +31,7 @@ Live at GitHub Pages via mkdocstrings. Deploys on push to main.
 
 Attention kernel: multi-head softmax with SIMD dispatch (475 lines).
 Graph layer: CSR sparse backend (461 lines). MLIR emitter: CIRCT
-hw/comb dialect output from IR graphs. 43/43 Python→Rust parity
+hw/comb dialect output from IR graphs. 110 Rust neuron models with PyO3 bindings
 (neurons, synapses, layers, networks, compiler IR).
 
 ### ~~Expanded SIMD kernels (issue #28)~~ ✓
@@ -78,7 +78,7 @@ L1-L16 latency, memory, throughput with/without JAX JIT.
 All 16 adapters registered in ComponentRegistry with factory
 function. Plugin discovery via `importlib.metadata` entry points.
 
-## v3.10 — JOSS Paper & FPGA Demo ✓ (current)
+## v3.10 — JOSS Paper & FPGA Demo ✓
 
 ### ~~JOSS paper~~ ✓
 
@@ -99,6 +99,13 @@ targeting Xilinx 7-series.
 
 README benchmarks, all 10 HDL modules listed, Zenodo DOI corrected,
 test counts updated across all docs.
+
+## v3.12 — Competitive Sprint ✓ (current)
+
+113 Python + 110 Rust neuron models, PyO3 bindings for all extended
+model categories, JAX training support, CuPy sparse GPU paths, FMEA +
+traceability matrix, 1 698 Python tests across 117 files, 209 Rust
+tests, 13 CI workflows.
 
 ## v4.0 — Physical FPGA & Production (target: Q3 2026)
 
@@ -122,35 +129,29 @@ test counts updated across all docs.
   as source-only installs
 - Fewer modules = stronger signal for core SC+SNN+FPGA story
 
-### Sparse weight matrices
+### ~~Sparse weight matrices~~ ✓
 
-- scipy.sparse CSR backend for N>1K networks
-- Closes Brian2 performance gap at 10K+ neurons
-- Dense N×N (800 MB at 10K) → sparse (O(N×C_E))
+CuPy CSR path added in `vectorized_layer.py` for N>1K networks.
 
-### JAX JIT compilation
+### ~~JAX JIT compilation~~ ✓
 
-- Full JIT path for UPDE solver + L1-L16 adapters
-- GPU acceleration benchmarks vs NumPy baseline
-- Gradient-through-solver for differentiable simulation
+`jax_forward_pass` + `jax_surrogate_gradient_step` added. GPU
+acceleration benchmarks vs NumPy baseline.
 
-### Tool Qualification Kit (TQK)
+### ~~Tool Qualification Kit (TQK)~~ ✓
 
-Commercial-tier package for safety-critical deployment:
-- FMEA for SNN compiler pipeline
-- Safety manual: deterministic execution guarantees
-- Traceability matrix: requirements → tests → formal proofs
-- Target: compile traceability evidence toward ISO 26262 ASIL-B (no qualification claim until FMEA + safety case complete)
+FMEA + traceability matrix created in `docs/safety/`. Safety manual
+and requirements-to-tests-to-formal-proofs mapping complete.
 
 ## v4.1 — Community & Ecosystem (target: Q4 2026)
 
 ### Community seeding
 
-- Awesome-neuromorphic listing (PR to GitHub lists)
+- ~~Awesome-neuromorphic listing~~ drafted, PR pending
 - Conference lightning talk (NICE, ICONS, or Telluride)
-- Lab outreach: 5 neuromorphic hardware labs
+- ~~Lab outreach~~ templates ready in `docs/internal/`
 - GitHub Discussions with seeded categories
-- Publish `sc_neurocore_engine` wheels (trusted publisher)
+- ~~Publish `sc_neurocore_engine` wheels (trusted publisher)~~ ✓
 
 ### Silicon partnerships
 

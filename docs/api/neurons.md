@@ -1,8 +1,8 @@
-# Neurons — 116 Models
+# Neurons — 113 Models
 
-The world's largest pre-built spiking neuron model library. 116 unique
-models spanning 82 years of computational neuroscience (1943-2025),
-each in its own file under `neurons/models/`.
+113 neuron models spanning 82 years of computational neuroscience
+(1943-2025): 108 individual files under `neurons/models/` plus 5 core
+stochastic computing neurons.
 
 ## Quick Start
 

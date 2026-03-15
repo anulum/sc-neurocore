@@ -106,7 +106,7 @@ supporting learnable membrane and threshold parameters.
 
 **Rust Engine** (`sc_neurocore_engine`): A PyO3-bound Rust crate providing
 SIMD-accelerated `vec_and`, `vec_popcount`, LFSR stepping, HDC
-vector operations, and 111 neuron model implementations covering all
+vector operations, and 110 neuron model implementations covering all
 Python model classes (LIF variants, Hodgkin-Huxley, Izhikevich,
 multi-compartment, neural mass, and hardware chip emulators for Loihi,
 TrueNorth, BrainScaleS, SpiNNaker, and Akida). Runtime feature detection
@@ -169,14 +169,14 @@ independent packaging, CI, and PyPI publication.
 
 # Quality Assurance
 
-SC-NeuroCore maintains 1 560 Python and 209 Rust tests with 100% line
+SC-NeuroCore maintains 1 698 Python and 209 Rust tests with 100% line
 coverage of production modules (optional hardware-dependent and
 experimental code excluded via standard coverage directives), enforced
 by CI on every push. The test suite includes unit tests, integration
 tests, 18 property-based tests (Hypothesis), cross-layer coupling
 tests, and hardware co-simulation checks. Static
 analysis comprises Ruff linting, Bandit security scanning, and SPDX
-license header validation. Eleven CI workflows---all with SHA-pinned
+license header validation. Thirteen CI workflows---all with SHA-pinned
 GitHub Actions---cover lint, test, build, benchmark, documentation,
 CodeQL, and OpenSSF Scorecard.
 
