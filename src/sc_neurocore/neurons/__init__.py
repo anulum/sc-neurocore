@@ -7,6 +7,7 @@ from .fixed_point_lif import FixedPointLIFNeuron, FixedPointLFSR, FixedPointBits
 from .homeostatic_lif import HomeostaticLIFNeuron
 from .dendritic import StochasticDendriticNeuron
 from .sc_izhikevich import SCIzhikevichNeuron
+from .equation_builder import EquationNeuron, from_equations
 
 from .models import (
     AdExNeuron,
