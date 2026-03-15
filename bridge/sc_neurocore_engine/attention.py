@@ -27,7 +27,9 @@ class StochasticAttention:
         return np.asarray(self._engine.forward(_to_2d(Q), _to_2d(K), _to_2d(V)), dtype=np.float64)
 
     def forward_softmax(self, Q, K, V) -> np.ndarray:
-        return np.asarray(self._engine.forward_softmax(_to_2d(Q), _to_2d(K), _to_2d(V)), dtype=np.float64)
+        return np.asarray(
+            self._engine.forward_softmax(_to_2d(Q), _to_2d(K), _to_2d(V)), dtype=np.float64
+        )
 
     def forward_multihead_softmax(self, Q, K, V, n_heads: int) -> np.ndarray:
         return np.asarray(

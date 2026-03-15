@@ -56,7 +56,9 @@ class StochasticGraphLayer:
         obj = object.__new__(cls)
         obj.n_nodes = n_nodes
         obj.n_features = n_features
-        obj._engine = _RustGraphLayer.from_dense_auto(adj, n_features, seed=seed, density_threshold=density_threshold)
+        obj._engine = _RustGraphLayer.from_dense_auto(
+            adj, n_features, seed=seed, density_threshold=density_threshold
+        )
         obj.weights = np.array(obj._engine.get_weights(), dtype=np.float64).reshape(
             n_features, n_features
         )
