@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+import numpy as np
+
+
+@dataclass
+class ParallelSpikingNeuron:
+    """Parallel Spiking Neuron — 2024, linear filter over all timesteps.
+
+    Applies a learned 1D convolution kernel over an internal buffer,
+    enabling non-causal temporal aggregation during training.
+    At each step: score = sum(kernel * buffer); spike if score >= threshold.
+    """
+
+    kernel_size: int = 8
+    v_threshold: float = 1.0
+    kernel: np.ndarray = field(init=False)
+    buffer: np.ndarray = field(init=False)
+    _ptr: int = field(init=False, default=0)
+
+    def __post_init__(self):
+        self.kernel = np.ones(self.kernel_size) / self.kernel_size
+        self.buffer = np.zeros(self.kernel_size)
+
+    def step(self, current: float) -> int:
+        self.buffer[self._ptr % self.kernel_size] = current
+        self._ptr += 1
+        n = min(self._ptr, self.kernel_size)
+        score = float(np.dot(self.kernel[:n], self.buffer[:n]))
+        if score >= self.v_threshold:
+            self.buffer[:] = 0.0
+            return 1
+        return 0
+
+    def reset(self):
+        self.buffer[:] = 0.0
+        self._ptr = 0
