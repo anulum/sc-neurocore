@@ -302,7 +302,7 @@ class ShermanRinzelKeizerNeuron:
 class GLIFNeuron:
     """Allen Institute GLIF5 — Generalized LIF, 5-level hierarchy.
 
-    Teeter et al. 2018, Nature Commun. Level 5: LIF + reset rules +
+    Teeter et al. 2018, Nat Comm. Level 5: LIF + reset rules +
     instantaneous threshold + threshold adaptation + after-spike currents.
     """
 
