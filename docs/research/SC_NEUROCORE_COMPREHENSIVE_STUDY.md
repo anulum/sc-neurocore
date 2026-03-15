@@ -63,7 +63,7 @@
 
 # 1. Executive Summary
 
-SC-NeuroCore is a Python+Rust stochastic computing (SC) framework for neuromorphic hardware simulation, developed as part of the broader SCPN (Self-Consistent Phenomenological Network) research program under the Anulum Institute. At version 3.11.0, the framework comprises 300+ Python source files, a Rust SIMD engine with 100% Python parity (43/43 modules), 10 Verilog HDL modules comprising 1,100+ lines of synthesizable register-transfer level (RTL) design, 1,539 Python + 99 Rust tests achieving 100% code coverage, and a six-tiered architecture spanning production-ready hardware models through theoretical research explorations. (Historical note: v2.2.0 had 212 files, 826 tests at 99.67% — see changelog for full progression.)
+SC-NeuroCore is a Python+Rust stochastic computing (SC) framework for neuromorphic hardware simulation, developed as part of the broader SCPN (Self-Consistent Phenomenological Network) research program under the Anulum Institute. At version 3.12.0, the framework comprises 300+ Python source files, a Rust SIMD engine with 100% Python parity (43/43 modules), 10 Verilog HDL modules comprising 1,100+ lines of synthesizable register-transfer level (RTL) design, 1,560 Python + 105 Rust tests achieving 100% code coverage, and a six-tiered architecture spanning production-ready hardware models through theoretical research explorations. (Historical note: v2.2.0 had 212 files, 826 tests at 99.67% — see changelog for full progression.)
 
 ## 1.1 Core Technical Contributions
 
@@ -272,7 +272,7 @@ These packages explore the far boundaries of computational theory. They are math
 sc-neurocore/
   src/sc_neurocore/         # 212 Python files, 12,385 lines
     __init__.py             # 28 public symbols, lazy imports, __all__
-    neurons/                # 7 neuron models (LIF variants, Izhikevich, dendritic)
+    neurons/                # 87 neuron models (LIF variants, Izhikevich, biophysical, …)
       __init__.py           # Exports: StochasticLIFNeuron, FixedPointLIFNeuron, etc.
       base.py               # BaseNeuron ABC
       stochastic_lif.py     # Core LIF with Euler integration
@@ -584,7 +584,7 @@ pip install -e ".[research,dev,gpu,full,contrib]"
 
 # 5. Tier 1: Production Core — Neurons
 
-SC-NeuroCore provides five neuron models spanning from hardware-verified fixed-point implementations to biologically detailed two-compartment dendritic models. All neurons share the common `BaseNeuron` abstract base class (except `StochasticDendriticNeuron`, which takes two inputs and therefore has a different interface).
+SC-NeuroCore provides 87 neuron models across 14 families, spanning from hardware-verified fixed-point implementations to biologically detailed multi-compartment models. The original five core models (StochasticLIF, FixedPointLIF, HomeostaticLIF, Izhikevich, Dendritic) share the `BaseNeuron` abstract base class; 79 additional models in `neurons/models/` extend the library to cover the full computational neuroscience literature.
 
 ## 5.1 StochasticLIFNeuron — The Foundation
 
@@ -4713,7 +4713,7 @@ The hardware synthesis pipeline provides a credible path from Python models to F
 | Feature | SC-NeuroCore | Brian2 | NEST | snnTorch | Lava |
 |---------|-------------|--------|------|----------|------|
 | **Paradigm** | Stochastic Computing | Differential Eq. | Exact Simulation | PyTorch SNN | Neuromorphic HW |
-| **Neuron Models** | 5 (LIF variants + Izhikevich) | 100+ (arbitrary ODEs) | 50+ (optimized) | 5 (LIF, IF, ALIF) | 3 (LIF, RF, Sigma-Delta) |
+| **Neuron Models** | 87 (14 families) | 100+ (arbitrary ODEs) | 50+ (optimized) | 5 (LIF, IF, ALIF) | 3 (LIF, RF, Sigma-Delta) |
 | **Learning** | STDP, R-STDP, Federated | STDP, arbitrary | STDP | Surrogate gradient | Loihi on-chip |
 | **Hardware Target** | FPGA (Verilog RTL) | CPU only | CPU cluster | GPU (PyTorch) | Intel Loihi |
 | **Bit-True HW Sim** | Yes (Q8.8) | No | No | No | Yes (Loihi emulation) |
@@ -4743,7 +4743,7 @@ The hardware synthesis pipeline provides a credible path from Python models to F
 | **Scope** | Full SNN + SCPN + HDL | SC operations | SC circuits | SC for DNNs |
 | **Encoding** | Bernoulli + Sobol | Unary + thermometer | Bernoulli | Bernoulli |
 | **Packed Ops** | Yes (SWAR uint64) | No | No | No |
-| **Neuron Models** | 5 | 0 (pure SC) | 0 | 0 (DNN nodes) |
+| **Neuron Models** | 87 | 0 (pure SC) | 0 | 0 (DNN nodes) |
 | **Hardware** | Verilog RTL + co-sim | Verilog | SystemC | PyTorch |
 | **FPGA Proven** | Yes (Artix-7 target) | Yes | Yes | Simulation only |
 | **Multi-Scale** | 7-layer SCPN | Single-scale | Single-scale | Single-scale |
@@ -4951,7 +4951,7 @@ SC-NeuroCore represents a unique convergence of three computing paradigms:
 
 1. **Stochastic Computing**: Probability-encoded bitstreams processed by simple logic gates, achieving massive hardware efficiency at the cost of controlled accuracy reduction. The framework implements the full SC stack from encoding (Bernoulli/Sobol) through computation (AND/MUX/XNOR) to decoding (popcount), with packed uint64 operations achieving ~5.5 GOPS on CPU.
 
-2. **Spiking Neural Networks**: Five neuron models (LIF, Fixed-Point LIF, Homeostatic LIF, Izhikevich, Dendritic), three synapse types (BitstreamSynapse, STDP, R-STDP), and hardware-verified Q8.8 fixed-point arithmetic. The bit-true co-simulation between Python and Verilog RTL provides a credible FPGA synthesis path.
+2. **Spiking Neural Networks**: 87 neuron models across 14 families (IF variants, biophysical, adaptive, oscillatory, bursting, synaptic, multi-compartment, map-based, stochastic, population, hardware, modern/ML, rate, other), three synapse types (BitstreamSynapse, STDP, R-STDP), and hardware-verified Q8.8 fixed-point arithmetic. The bit-true co-simulation between Python and Verilog RTL provides a credible FPGA synthesis path.
 
 3. **Multi-Scale Phenomenological Modeling**: The SCPN 7-layer stack maps the Self-Consistent Phenomenological Network framework to executable stochastic simulations, from quantum biological coherence through neurochemical dynamics to symbolic/cultural processing.
 

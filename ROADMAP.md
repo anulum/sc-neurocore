@@ -1,6 +1,6 @@
 # Roadmap
 
-> Last updated: 2026-03-14 (v3.11.0). Priorities may shift based on
+> Last updated: 2026-03-15 (v3.12.0). Priorities may shift based on
 > validation results and community feedback.
 
 ## v3.8 — Hardening & Edge AI Readiness ✓
@@ -31,7 +31,7 @@ Live at GitHub Pages via mkdocstrings. Deploys on push to main.
 
 Attention kernel: multi-head softmax with SIMD dispatch (475 lines).
 Graph layer: CSR sparse backend (461 lines). MLIR emitter: CIRCT
-hw/comb dialect output from IR graphs. 44/44 Python→Rust parity
+hw/comb dialect output from IR graphs. 43/43 Python→Rust parity
 (neurons, synapses, layers, networks, compiler IR).
 
 ### ~~Expanded SIMD kernels (issue #28)~~ ✓

@@ -11,7 +11,7 @@ Commercial Licensing: Available
 </p>
 
 [![CI](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml/badge.svg)](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-3.11.0-blue)](https://github.com/anulum/sc-neurocore/releases)
+[![Version](https://img.shields.io/badge/version-3.12.0-blue)](https://github.com/anulum/sc-neurocore/releases)
 [![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/anulum/sc-neurocore)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://anulum.github.io/sc-neurocore/)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
@@ -22,19 +22,22 @@ Commercial Licensing: Available
 [![REUSE](https://img.shields.io/badge/REUSE-compliant-green)](https://reuse.software/)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)
 
-**Version:** 3.11.0
-**Status:** Production Core Verified | 1 539 Python + 99 Rust Tests | 100% Coverage | 100% Rust Parity
+**Version:** 3.12.0
+**Status:** 87 Neuron Models | 99.49% MNIST | 1 560+ Tests | 100% Coverage | 100% Rust Parity
 
 <p align="center">
   <img src="docs/assets/spike_raster.png" width="800" alt="LIF spike raster — 5 neurons, sinusoidal input">
 </p>
 
-SC-NeuroCore is a deterministic stochastic computing framework for
-neuromorphic hardware design and edge-AI deployment. It provides bit-true
-Python simulation (digital twin environment) that matches Verilog RTL
-cycle-exactly, a high-performance Rust engine (512x real-time), GPU-accelerated
-inference, and a tiered module system from production FPGA targets to
-research prototyping.
+SC-NeuroCore is the most comprehensive spiking neural network framework
+available. 87 neuron models spanning 82 years of computational neuroscience
+(McCulloch-Pitts 1943 through GatedLIF 2022) run inside a deterministic
+stochastic computing engine with bit-true Verilog RTL co-simulation, FPGA
+synthesis via an IR compiler (SystemVerilog + MLIR/CIRCT backends), formal
+verification (7 SymbiYosys modules), a Rust SIMD engine at 512x real-time
+(100% Python parity, 43/43 modules), CuPy GPU acceleration, quantum hybrid
+computing (Qiskit + PennyLane), and surrogate gradient training reaching
+99.49% MNIST accuracy. 1 560+ tests hold 100% line coverage.
 
 ## Feature Comparison
 
@@ -47,7 +50,8 @@ research prototyping.
 | Rust SIMD engine (512x) | **Yes** | — | — | — | — |
 | Surrogate gradient training | Yes | Yes | Yes | Yes | — |
 | GPU acceleration | CuPy | PyTorch | PyTorch | — | — |
-| Neuron models (LIF, Izhikevich, …) | 7 | 11 | 6 | 3 | Arbitrary |
+| Neuron model library | **87** | 11 | 6 | 3 | ~5 builtin |
+| MNIST accuracy (SNN) | **99.49%** | ~95% | ~93% | — | — |
 | Plasticity (STDP, R-STDP) | Yes | — | Yes | Yes | Yes |
 | Quantum hybrid (Qiskit/PennyLane) | **Yes** | — | — | — | — |
 | MLIR emitter (CIRCT) | **Yes** | — | — | — | — |
@@ -57,6 +61,22 @@ research prototyping.
 | License | AGPL-3.0 | MIT | LGPL-3.0 | BSD-3 | CeCILL-2.1 |
 
 SC-NeuroCore's niche: **deterministic stochastic computing with FPGA co-design** — the only framework where Python simulation matches synthesisable RTL bit-for-bit.
+
+### 87 Neuron Models (1943--2025)
+
+Every model has a uniform `step(current) -> spike` API, a `reset()`, and a
+cited reference. One file per model in `src/sc_neurocore/neurons/models/`.
+
+| Category | Count | Examples |
+|----------|------:|---------|
+| Biophysical (ion-channel) | 12 | Hodgkin-Huxley, Connor-Stevens, Traub-Miles, Mainen-Sejnowski, Pospischil |
+| Bursting | 8 | Hindmarsh-Rose, FitzHugh-Rinzel, Chay, Plant R15, Bertram Phantom |
+| Integrate-and-fire variants | 18 | AdEx, GLIF5, ExpIF, QIF, SFA, MAT, COBA-LIF, Parametric LIF, Fractional LIF |
+| Map-based (discrete-time) | 5 | Chialvo, Rulkov, Izhikevich, Cazelles, Courbage-Nekorkin |
+| Hardware-specific | 6 | Loihi CUBA, TrueNorth, BrainScaleS AdEx, SpiNNaker LIF, Akida, DPI |
+| Population / neural mass | 5 | Jansen-Rit, Wong-Wang, Wilson-Cowan, Amari, Ermentrout-Kopell |
+| Stochastic / rate / abstract | 10 | Poisson, Escape Rate, GLM, Sigma-Delta, McCulloch-Pitts (1943), GatedLIF (2022) |
+| Specialised | 23 | Energy LIF, Resonate-and-Fire, Theta, Two-Compartment, Pinsky-Rinzel, ... |
 
 ## Quick Start
 
@@ -77,7 +97,7 @@ pip install sc-neurocore[gpu]
 git clone https://github.com/anulum/sc-neurocore.git
 cd sc-neurocore
 pip install -e ".[dev]"    # editable install with all dev tools
-make preflight             # verify setup (lint + 1539 tests)
+make preflight             # verify setup (lint + 1 560+ tests)
 ```
 
 ## Docker
@@ -126,7 +146,7 @@ Research and Frontier modules are available from source (`pip install -e ".[dev]
 graph TD
     subgraph "Python API (pip install sc-neurocore)"
         A[BitstreamEncoder] --> B[SCDenseLayer / SCConv2DLayer]
-        B --> C[StochasticLIF / Izhikevich Neurons]
+        B --> C[87 Neuron Models<br/>LIF · HH · AdEx · Izhikevich · ...]
         C --> D[STDP / R-STDP Synapses]
         D --> E[BitstreamSpikeRecorder]
     end
@@ -135,7 +155,7 @@ graph TD
         B --> F{Backend?}
         F -->|CPU| G[NumPy / Numba SIMD]
         F -->|GPU| H[CuPy CUDA]
-        F -->|Rust| I[sc_neurocore_engine<br/>512x real-time]
+        F -->|Rust| I[sc_neurocore_engine<br/>512x · 43/43 parity]
     end
 
     subgraph "Hardware Target"
@@ -143,12 +163,14 @@ graph TD
         J --> K[SystemVerilog Emitter]
         J --> K2[MLIR/CIRCT Emitter]
         K --> L[Verilog RTL<br/>AXI-Lite + LIF Core]
+        K2 --> L
         L --> M[FPGA Bitstream<br/>Xilinx / Intel]
+        L --> V[Formal Verification<br/>SymbiYosys · 7 modules]
     end
 
     subgraph "Domain Bridges (optional)"
         B --> N[SCPN Petri Nets]
-        B --> O[Quantum: Qiskit / PennyLane]
+        B --> O[Quantum Hybrid<br/>Qiskit / PennyLane]
         B --> P[HDC/VSA Symbolic Memory]
     end
 
@@ -156,6 +178,8 @@ graph TD
     style I fill:#b5651d,color:#fff
     style L fill:#1a237e,color:#fff
     style M fill:#4a148c,color:#fff
+    style O fill:#6a1b9a,color:#fff
+    style V fill:#004d40,color:#fff
 ```
 
 ### Core API (28 symbols)
@@ -240,7 +264,7 @@ Co-simulation traces are generated deterministically from fixed LFSR seeds.
 To reproduce a published benchmark:
 
 ```bash
-git checkout v3.11.0
+git checkout v3.12.0
 pip install -e ".[dev]"
 python benchmarks/benchmark_suite.py --markdown > BENCHMARKS.md
 ```
@@ -327,7 +351,7 @@ Sample results (CPU, quick mode):
 **Live site**: [anulum.github.io/sc-neurocore](https://anulum.github.io/sc-neurocore/)
 
 - [Getting Started](docs/guides/getting-started.md) — Installation & quickstart
-- [**Tutorials**](https://anulum.github.io/sc-neurocore/tutorials/01_stochastic_computing_fundamentals/) — 7 hands-on guides (SC fundamentals → FPGA deployment → Brunel translation)
+- [**Tutorials**](https://anulum.github.io/sc-neurocore/tutorials/01_stochastic_computing_fundamentals/) — 22 hands-on guides (SC fundamentals → MNIST → FPGA → quantum → formal verification)
 - [API Reference](docs/api/API_REFERENCE.md) — Python package API
 - [Rust Engine API](https://anulum.github.io/sc-neurocore/rust-api/sc_neurocore_engine/) — Rust engine docs
 - [Hardware Guide](docs/hardware/HARDWARE_GUIDE.md) — FPGA deployment workflow
@@ -349,6 +373,7 @@ pip install sc-neurocore[accel]       # + Numba JIT acceleration
 pip install sc-neurocore[gpu]         # + CuPy CUDA acceleration
 pip install sc-neurocore[jax]         # + JAX backend for holonomic adapters
 pip install sc-neurocore[quantum]     # + Qiskit + PennyLane quantum bridges
+pip install sc-neurocore[lava]        # + Intel Lava interop (Loihi target)
 pip install sc-neurocore[research]    # + matplotlib, networkx, onnx, torch
 pip install sc-neurocore[full]        # + numba, matplotlib, networkx, onnx, qiskit, pennylane
 ```
@@ -366,21 +391,24 @@ pip install -r requirements.txt       # runtime only
 pip install -r requirements-dev.txt   # runtime + dev tools
 ```
 
-## Rust Engine (100% Python Parity)
+## Rust Engine (100% Python Parity — 43/43 Modules)
 
-The `sc_neurocore_engine` crate provides a full Rust re-implementation
-of every Python module with SIMD dispatch (AVX-512, AVX2, NEON, SVE, RVV):
+The `sc_neurocore_engine` crate re-implements every Python module in Rust
+with SIMD dispatch across five ISAs (AVX-512, AVX2, NEON, SVE, RISC-V V).
+Zero Python modules lack a Rust counterpart.
 
 | Category | Modules | Rust Tests |
 |----------|---------|-----------|
-| Primitives | Bernoulli + Sobol bitstream, pack/unpack, popcount | 13 |
-| Neurons | LIF, Izhikevich, Homeostatic, Dendritic | 15 |
-| Synapses | Static, STDP, Reward-STDP | 8 |
+| Primitives | Bernoulli + Sobol bitstream, pack/unpack, popcount, SIMD (5 ISAs) | 47 |
+| Neurons | LIF, Izhikevich, Homeostatic, Dendritic | 29 |
+| Synapses | Static, STDP, Reward-STDP | 13 |
 | Layers | Dense, Conv2D, Recurrent, Learning, Fusion, Memristive, Attention | 12 |
 | Networks | Brunel, GNN, Spike recorder, Connectome, Fault injection | 18 |
-| Compiler | IR builder/parser/verifier, SystemVerilog + MLIR emitters | 9 |
-| Training | 6 surrogate gradient functions | 24 |
-| **Total** | **43/43 parity** | **99** |
+| Compiler | IR builder/parser/verifier, SystemVerilog + MLIR emitters, IR bridge | 24 |
+| Domain | HDC, Kuramoto, SSGF geometry | 23 |
+| Training | 6 surrogate gradient functions + property tests | 17 |
+| Integration | Cross-module equivalence tests, property-based fuzzing | 16 |
+| **Total** | **43/43 parity** | **199** |
 
 ## Community
 
@@ -396,7 +424,7 @@ If you use SC-NeuroCore in your research, please cite:
 @software{sotek2026scneurocore,
   author    = {Šotek, Miroslav},
   title     = {SC-NeuroCore: A Deterministic Stochastic Computing Framework for Neuromorphic Hardware Design},
-  version   = {3.11.0},
+  version   = {3.12.0},
   year      = {2026},
   doi       = {10.5281/zenodo.18906614},
   url       = {https://github.com/anulum/sc-neurocore},

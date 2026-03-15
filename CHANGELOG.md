@@ -4,6 +4,27 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.12.0] - 2026-03-15
+
+### Neuron Model Library (87 models)
+- 79 individual model files in `neurons/models/` (one file per model)
+- Categories span 14 families: IF variants (21), Biophysical (11), Adaptive (4), Oscillatory (7), Bursting (5), Synaptic (3), Multi-compartment (3), Map-based (6), Stochastic (4), Population (5), Hardware (7), Modern/ML (5), Rate (3), Other (3)
+- Notable additions: TraubMiles, WilsonHR, Pospischil (5 cortical types), ConnorStevens, WangBuzsaki, PinskyRinzel, Destexhe, HuberBraun, GolombFS, MainenSejnowski
+- Historical coverage from McCulloch-Pitts (1943) to Gated LIF (2025)
+- 10 PyTorch training cells: LIF, IF, Synaptic, ALIF, RecurrentLIF, ExpIF, AdEx, Lapicque, Alpha, SecondOrderLIF
+
+### MNIST 99.49% Accuracy
+- `examples/mnist_conv_train.py` — ConvSpikingNet with learnable beta/threshold
+- Architecture: Conv(1->32)->LIF->Pool->Conv(32->64)->LIF->Pool->FC->LIF->FC->LIF
+- Techniques: FastSigmoid surrogate, cosine LR schedule, data augmentation, membrane readout
+- Trained on RTX 6000, 30 epochs, 25 minutes
+- Model checkpoint: `examples/mnist_conv_train/results/conv_spiking_net_best.pt`
+
+### Intel Lava/Loihi Bridge
+- `integrations/lava_bridge.py` — SCtoLavaConverter, export_weights_loihi
+- SCDenseProcess + PySCDenseModel for Lava CPU simulation
+- Weight conversion: SC probability [0,1] -> Loihi fixed-point
+
 ### Rust Engine 100% Parity (v3.8/v3.9 carry-forward)
 - **Sobol bitstream** (M1): Gray-code Sobol quasi-random encoder in Rust (`sobol.rs`)
 - **HomeostaticLIF**: adaptive threshold neuron with EMA spike rate tracking
@@ -20,7 +41,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - **MLIR emitter**: CIRCT hw/comb dialect IR emission (`ir/emit_mlir.rs`)
 - **Static synapse**: completed with excitatory/inhibitory polarity
 - **Surrogate gradient**: added Triangular and PiecewiseLinear variants
-- Parity: 44/44 (100%), up from 30/44 (68%)
+- Parity: 43/43 (100%), up from 30/44 (68%)
 
 ### SIMD Hardening (v3.8 carry-forward)
 - Fused `softmax_inplace_f64_dispatch` with SIMD max/sum/scale
@@ -40,7 +61,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Plugin discovery via `importlib.metadata` entry points
 
 ### Type Safety Cleanup (M2)
-- Removed 235 unnecessary `type: ignore` comments (260 → 25)
+- Removed 235 unnecessary `type: ignore` comments (260 -> 25)
 - Remaining 25 are justified: CuPy type aliases, optional imports, private method access
 
 ### GPU SNN Training with Surrogate Gradients
