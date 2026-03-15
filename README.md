@@ -23,21 +23,22 @@ Commercial Licensing: Available
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)
 
 **Version:** 3.12.0
-**Status:** 116 Neuron Models | 99.49% MNIST | 1 560+ Tests | 100% Coverage | 100% Rust Parity
+**Status:** 113 Neuron Models | 99.49% MNIST | 1 698 Tests | 100% Coverage | 110 Rust Neuron Models
 
 <p align="center">
   <img src="docs/assets/spike_raster.png" width="800" alt="LIF spike raster — 5 neurons, sinusoidal input">
 </p>
 
 SC-NeuroCore is the most comprehensive spiking neural network framework
-available. 116 neuron models spanning 82 years of computational neuroscience
+available. 113 neuron models spanning 82 years of computational neuroscience
 (McCulloch-Pitts 1943 through GatedLIF 2022) run inside a deterministic
 stochastic computing engine with bit-true Verilog RTL co-simulation, FPGA
 synthesis via an IR compiler (SystemVerilog + MLIR/CIRCT backends), formal
 verification (7 SymbiYosys modules), a Rust SIMD engine at 512x real-time
-(100% Python parity, 43/43 modules), CuPy GPU acceleration, quantum hybrid
-computing (Qiskit + PennyLane), and surrogate gradient training reaching
-99.49% MNIST accuracy. 1 560+ tests hold 100% line coverage.
+(110 Rust neuron models with PyO3 bindings), CuPy GPU acceleration, quantum
+hybrid computing (Qiskit + PennyLane), and surrogate gradient training
+reaching 99.49% MNIST accuracy. 1 698 tests across 117 files hold 100%
+line coverage.
 
 ## Feature Comparison
 
@@ -50,7 +51,7 @@ computing (Qiskit + PennyLane), and surrogate gradient training reaching
 | Rust SIMD engine (512x) | **Yes** | — | — | — | — |
 | Surrogate gradient training | Yes | Yes | Yes | Yes | — |
 | GPU acceleration | CuPy | PyTorch | PyTorch | — | — |
-| Neuron model library | **116** | 11 | 6 | 3 | ~5 builtin |
+| Neuron model library | **113** | 11 | 6 | 3 | ~5 builtin |
 | MNIST accuracy (SNN) | **99.49%** | ~95% | ~93% | — | — |
 | Plasticity (STDP, R-STDP) | Yes | — | Yes | Yes | Yes |
 | Quantum hybrid (Qiskit/PennyLane) | **Yes** | — | — | — | — |
@@ -62,21 +63,23 @@ computing (Qiskit + PennyLane), and surrogate gradient training reaching
 
 SC-NeuroCore's niche: **deterministic stochastic computing with FPGA co-design** — the only framework where Python simulation matches synthesisable RTL bit-for-bit.
 
-### 116 Neuron Models (1943--2025)
+### 113 Neuron Models (1943--2025)
 
 Every model has a uniform `step(current) -> spike` API, a `reset()`, and a
 cited reference. One file per model in `src/sc_neurocore/neurons/models/`.
 
 | Category | Count | Examples |
 |----------|------:|---------|
-| Biophysical (ion-channel) | 12 | Hodgkin-Huxley, Connor-Stevens, Traub-Miles, Mainen-Sejnowski, Pospischil |
-| Bursting | 8 | Hindmarsh-Rose, FitzHugh-Rinzel, Chay, Plant R15, Bertram Phantom |
 | Integrate-and-fire variants | 18 | AdEx, GLIF5, ExpIF, QIF, SFA, MAT, COBA-LIF, Parametric LIF, Fractional LIF |
-| Map-based (discrete-time) | 5 | Chialvo, Rulkov, Izhikevich, Cazelles, Courbage-Nekorkin |
-| Hardware-specific | 6 | Loihi CUBA, TrueNorth, BrainScaleS AdEx, SpiNNaker LIF, Akida, DPI |
-| Population / neural mass | 5 | Jansen-Rit, Wong-Wang, Wilson-Cowan, Amari, Ermentrout-Kopell |
-| Stochastic / rate / abstract | 10 | Poisson, Escape Rate, GLM, Sigma-Delta, McCulloch-Pitts (1943), GatedLIF (2022) |
-| Specialised | 23 | Energy LIF, Resonate-and-Fire, Theta, Two-Compartment, Pinsky-Rinzel, ... |
+| Simple spiking (2D+) | 20 | FitzHugh-Nagumo, Morris-Lecar, Hindmarsh-Rose, Resonate-and-Fire, Chay |
+| Biophysical (conductance-based) | 20 | Hodgkin-Huxley, Connor-Stevens, Traub-Miles, Mainen-Sejnowski, Pospischil |
+| Stochastic / population / neural mass | 13 | Poisson, GLM, Jansen-Rit, Wong-Wang, Wilson-Cowan, Ermentrout-Kopell |
+| Rate / plasticity / other | 11 | McCulloch-Pitts (1943), Sigmoid Rate, Astrocyte, Amari, GatedLIF (2022) |
+| Hardware chip emulators | 9 | Loihi CUBA, Loihi 2, TrueNorth, BrainScaleS AdEx, SpiNNaker, Akida, DPI |
+| Multi-compartment | 7 | Pinsky-Rinzel, Hay L5 Pyramidal, Rall Cable, Booth-Rinzel, Dendrify |
+| Map-based (discrete-time) | 6 | Chialvo, Rulkov, Ibarz-Tanaka, Cazelles, Courbage-Nekorkin, Medvedev |
+| Core (stochastic computing) | 5 | StochasticLIF, FixedPointLIF, HomeostaticLIF, Dendritic, SC-Izhikevich |
+| Training cells (PyTorch) | 4 | LIF, ALIF, RecurrentLIF, EProp-ALIF |
 
 ## Quick Start
 
@@ -97,7 +100,7 @@ pip install sc-neurocore[gpu]
 git clone https://github.com/anulum/sc-neurocore.git
 cd sc-neurocore
 pip install -e ".[dev]"    # editable install with all dev tools
-make preflight             # verify setup (lint + 1 560+ tests)
+make preflight             # verify setup (lint + 1 698 tests)
 ```
 
 ## Docker
@@ -146,7 +149,7 @@ Research and Frontier modules are available from source (`pip install -e ".[dev]
 graph TD
     subgraph "Python API (pip install sc-neurocore)"
         A[BitstreamEncoder] --> B[SCDenseLayer / SCConv2DLayer]
-        B --> C[116 Neuron Models<br/>LIF · HH · AdEx · Izhikevich · ...]
+        B --> C[113 Neuron Models<br/>LIF · HH · AdEx · Izhikevich · ...]
         C --> D[STDP / R-STDP Synapses]
         D --> E[BitstreamSpikeRecorder]
     end
@@ -155,7 +158,7 @@ graph TD
         B --> F{Backend?}
         F -->|CPU| G[NumPy / Numba SIMD]
         F -->|GPU| H[CuPy CUDA]
-        F -->|Rust| I[sc_neurocore_engine<br/>512x · 43/43 parity]
+        F -->|Rust| I[sc_neurocore_engine<br/>512x · 110 neuron models]
     end
 
     subgraph "Hardware Target"
@@ -309,7 +312,7 @@ All other examples run with the pure-Python `sc_neurocore` package.
 
 ## CI/CD
 
-12 GitHub Actions workflows (`.github/workflows/`), all SHA-pinned:
+13 GitHub Actions workflows (`.github/workflows/`), all SHA-pinned:
 
 | Workflow | Purpose |
 |----------|---------|
@@ -324,6 +327,7 @@ All other examples run with the pure-Python `sc_neurocore` package.
 | **codeql.yml** | CodeQL security analysis (weekly + on push) |
 | **scorecard.yml** | OpenSSF Scorecard |
 | **pre-commit.yml** | Pre-commit hook validation |
+| **yosys-synth.yml** | Yosys HDL synthesis verification |
 | **stale.yml** | Auto-label and close stale issues |
 
 ## Benchmarks
@@ -391,24 +395,24 @@ pip install -r requirements.txt       # runtime only
 pip install -r requirements-dev.txt   # runtime + dev tools
 ```
 
-## Rust Engine (100% Python Parity — 43/43 Modules)
+## Rust Engine (110 Neuron Models, 209 Tests)
 
-The `sc_neurocore_engine` crate re-implements every Python module in Rust
-with SIMD dispatch across five ISAs (AVX-512, AVX2, NEON, SVE, RISC-V V).
-Zero Python modules lack a Rust counterpart.
+The `sc_neurocore_engine` crate provides 110 Rust neuron models callable
+from Python via PyO3 bindings, plus SIMD-accelerated primitives with
+dispatch across five ISAs (AVX-512, AVX2, NEON, SVE, RISC-V V).
 
-| Category | Modules | Rust Tests |
-|----------|---------|-----------|
+| Category | Scope | Rust Tests |
+|----------|-------|-----------|
 | Primitives | Bernoulli + Sobol bitstream, pack/unpack, popcount, SIMD (5 ISAs) | 47 |
-| Neurons | LIF, Izhikevich, Homeostatic, Dendritic | 29 |
+| Neurons | 110 models: LIF variants, HH-type, maps, hardware emulators, population | 29 |
 | Synapses | Static, STDP, Reward-STDP | 13 |
 | Layers | Dense, Conv2D, Recurrent, Learning, Fusion, Memristive, Attention | 12 |
 | Networks | Brunel, GNN, Spike recorder, Connectome, Fault injection | 18 |
 | Compiler | IR builder/parser/verifier, SystemVerilog + MLIR emitters, IR bridge | 24 |
 | Domain | HDC, Kuramoto, SSGF geometry | 23 |
 | Training | 6 surrogate gradient functions + property tests | 17 |
-| Integration | Cross-module equivalence tests, property-based fuzzing | 16 |
-| **Total** | **43/43 parity** | **199** |
+| Integration | Cross-module equivalence tests, property-based fuzzing | 26 |
+| **Total** | **110 neuron models + infrastructure** | **209** |
 
 ## Community
 

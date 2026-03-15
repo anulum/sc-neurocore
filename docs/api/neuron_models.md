@@ -1,8 +1,8 @@
-# Neuron Model Reference — 111 Models
+# Neuron Model Reference — 113 Python / 110 Rust
 
-SC-NeuroCore provides 111 neuron models implemented in both Python
-(dataclass) and Rust (PyO3-bound). Both backends expose identical
-`step()` / `reset()` / `get_state()` interfaces.
+SC-NeuroCore provides 113 neuron models in Python (108 in `models/` +
+5 core) and 110 Rust implementations callable via PyO3 bindings. Both
+backends expose identical `step()` / `reset()` / `get_state()` interfaces.
 
 ## Quick Start
 
@@ -25,8 +25,8 @@ spike = hh_rs.step(current=10.0)
 | Python | `sc_neurocore.neurons.models` | Prototyping, parameter tuning, debugging |
 | Rust | `sc_neurocore_engine.sc_neurocore_engine` | Production, benchmarks, batch simulation |
 
-Rust names are prefixed with `Py` (e.g., `PyHodgkinHuxleyNeuron`).
-The Python names have no prefix (`HodgkinHuxleyNeuron`).
+Both backends use identical class names (e.g., `HodgkinHuxleyNeuron`).
+The Rust engine exposes 110 of the 113 Python models.
 
 ## Model Catalogue
 
@@ -34,149 +34,146 @@ The Python names have no prefix (`HodgkinHuxleyNeuron`).
 
 | Python Class | Rust Class | Reference |
 |-------------|-----------|-----------|
-| `QuadraticIFNeuron` | `PyQuadraticIFNeuron` | Latham et al. 2000 |
-| `ThetaNeuron` | `PyThetaNeuron` | Ermentrout & Kopell 1986 |
-| `PerfectIntegratorNeuron` | `PyPerfectIntegratorNeuron` | — |
-| `GatedLIFNeuron` | `PyGatedLIFNeuron` | — |
-| `NonlinearLIFNeuron` | `PyNonlinearLIFNeuron` | Touboul & Brette 2008 |
-| `SFANeuron` | `PySFANeuron` | Benda & Herz 2003 |
-| `MATNeuron` | `PyMATNeuron` | Kobayashi et al. 2009 |
-| `EscapeRateNeuron` | `PyEscapeRateNeuron` | Gerstner 2000 |
-| `KLIFNeuron` | `PyKLIFNeuron` | Eshraghian et al. 2021 |
-| `InhibitoryLIFNeuron` | `PyInhibitoryLIFNeuron` | — |
-| `ComplementaryLIFNeuron` | `PyComplementaryLIFNeuron` | — |
-| `ParametricLIFNeuron` | `PyParametricLIFNeuron` | Fang et al. 2021 |
-| `NonResettingLIFNeuron` | `PyNonResettingLIFNeuron` | Brette 2004 |
-| `AdaptiveThresholdIFNeuron` | `PyAdaptiveThresholdIFNeuron` | Platkiewicz & Brette 2010 |
-| `SigmaDeltaNeuron` | `PySigmaDeltaNeuron` | — |
-| `EnergyLIFNeuron` | `PyEnergyLIFNeuron` | Sengupta et al. 2013 |
-| `IntegerQIFNeuron` | `PyIntegerQIFNeuron` | — |
-| `ClosedFormContinuousNeuron` | `PyClosedFormContinuousNeuron` | Hasani et al. 2022 |
+| `QuadraticIFNeuron` | `QuadraticIFNeuron` | Latham et al. 2000 |
+| `ThetaNeuron` | `ThetaNeuron` | Ermentrout & Kopell 1986 |
+| `PerfectIntegratorNeuron` | `PerfectIntegratorNeuron` | — |
+| `GatedLIFNeuron` | `GatedLIFNeuron` | — |
+| `NonlinearLIFNeuron` | `NonlinearLIFNeuron` | Touboul & Brette 2008 |
+| `SFANeuron` | `SFANeuron` | Benda & Herz 2003 |
+| `MATNeuron` | `MATNeuron` | Kobayashi et al. 2009 |
+| `EscapeRateNeuron` | `EscapeRateNeuron` | Gerstner 2000 |
+| `KLIFNeuron` | `KLIFNeuron` | Eshraghian et al. 2021 |
+| `InhibitoryLIFNeuron` | `InhibitoryLIFNeuron` | — |
+| `ComplementaryLIFNeuron` | `ComplementaryLIFNeuron` | — |
+| `ParametricLIFNeuron` | `ParametricLIFNeuron` | Fang et al. 2021 |
+| `NonResettingLIFNeuron` | `NonResettingLIFNeuron` | Brette 2004 |
+| `AdaptiveThresholdIFNeuron` | `AdaptiveThresholdIFNeuron` | Platkiewicz & Brette 2010 |
+| `SigmaDeltaNeuron` | `SigmaDeltaNeuron` | — |
+| `EnergyLIFNeuron` | `EnergyLIFNeuron` | Sengupta et al. 2013 |
+| `IntegerQIFNeuron` | `IntegerQIFNeuron` | — |
+| `ClosedFormContinuousNeuron` | `ClosedFormContinuousNeuron` | Hasani et al. 2022 |
 
 ### Simple Spiking (20 models)
 
 | Python Class | Rust Class | Reference |
 |-------------|-----------|-----------|
-| `FitzHughNagumoNeuron` | `PyFitzHughNagumoNeuron` | FitzHugh 1961 |
-| `MorrisLecarNeuron` | `PyMorrisLecarNeuron` | Morris & Lecar 1981 |
-| `HindmarshRoseNeuron` | `PyHindmarshRoseNeuron` | Hindmarsh & Rose 1984 |
-| `ResonateAndFireNeuron` | `PyResonateAndFireNeuron` | Izhikevich 2001 |
-| `FitzHughRinzelNeuron` | `PyFitzHughRinzelNeuron` | Rinzel 1987 |
-| `McKeanNeuron` | `PyMcKeanNeuron` | McKean 1970 |
-| `TermanWangOscillator` | `PyTermanWangOscillator` | Terman & Wang 1995 |
-| `BendaHerzNeuron` | `PyBendaHerzNeuron` | Benda & Herz 2003 |
-| `AlphaNeuron` | `PyAlphaNeuron` | — |
-| `COBALIFNeuron` | `PyCOBALIFNeuron` | Brette et al. 2007 |
-| `GutkinErmentroutNeuron` | `PyGutkinErmentroutNeuron` | Gutkin & Ermentrout 1998 |
-| `WilsonHRNeuron` | `PyWilsonHRNeuron` | Wilson 1999 |
-| `ChayNeuron` | `PyChayNeuron` | Chay 1985 |
-| `ChayKeizerNeuron` | `PyChayKeizerNeuron` | Chay & Keizer 1983 |
-| `ShermanRinzelKeizerNeuron` | `PyShermanRinzelKeizerNeuron` | Sherman et al. 1988 |
-| `ButeraRespiratoryNeuron` | `PyButeraRespiratoryNeuron` | Butera et al. 1999 |
-| `EPropALIFNeuron` | `PyEPropALIFNeuron` | Bellec et al. 2020 |
-| `SuperSpikeNeuron` | `PySuperSpikeNeuron` | Zenke & Ganguli 2018 |
-| `LearnableNeuronModel` | `PyLearnableNeuronModel` | — |
-| `PernarowskiNeuron` | `PyPernarowskiNeuron` | Pernarowski 1994 |
+| `FitzHughNagumoNeuron` | `FitzHughNagumoNeuron` | FitzHugh 1961 |
+| `MorrisLecarNeuron` | `MorrisLecarNeuron` | Morris & Lecar 1981 |
+| `HindmarshRoseNeuron` | `HindmarshRoseNeuron` | Hindmarsh & Rose 1984 |
+| `ResonateAndFireNeuron` | `ResonateAndFireNeuron` | Izhikevich 2001 |
+| `FitzHughRinzelNeuron` | `FitzHughRinzelNeuron` | Rinzel 1987 |
+| `McKeanNeuron` | `McKeanNeuron` | McKean 1970 |
+| `TermanWangOscillator` | `TermanWangOscillator` | Terman & Wang 1995 |
+| `BendaHerzNeuron` | `BendaHerzNeuron` | Benda & Herz 2003 |
+| `AlphaNeuron` | `AlphaNeuron` | — |
+| `COBALIFNeuron` | `COBALIFNeuron` | Brette et al. 2007 |
+| `GutkinErmentroutNeuron` | `GutkinErmentroutNeuron` | Gutkin & Ermentrout 1998 |
+| `WilsonHRNeuron` | `WilsonHRNeuron` | Wilson 1999 |
+| `ChayNeuron` | `ChayNeuron` | Chay 1985 |
+| `ChayKeizerNeuron` | `ChayKeizerNeuron` | Chay & Keizer 1983 |
+| `ShermanRinzelKeizerNeuron` | `ShermanRinzelKeizerNeuron` | Sherman et al. 1988 |
+| `ButeraRespiratoryNeuron` | `ButeraRespiratoryNeuron` | Butera et al. 1999 |
+| `EPropALIFNeuron` | `EPropALIFNeuron` | Bellec et al. 2020 |
+| `SuperSpikeNeuron` | `SuperSpikeNeuron` | Zenke & Ganguli 2018 |
+| `LearnableNeuronModel` | `LearnableNeuronModel` | — |
+| `PernarowskiNeuron` | `PernarowskiNeuron` | Pernarowski 1994 |
 
 ### Discrete Maps (6 models)
 
 | Python Class | Rust Class | Reference |
 |-------------|-----------|-----------|
-| `ChialvoMapNeuron` | `PyChialvoMapNeuron` | Chialvo 1995 |
-| `RulkovMapNeuron` | `PyRulkovMapNeuron` | Rulkov 2001 |
-| `IbarzTanakaMapNeuron` | `PyIbarzTanakaMapNeuron` | Ibarz et al. 2011 |
-| `MedvedevMapNeuron` | `PyMedvedevMapNeuron` | Medvedev 2005 |
-| `CazellesMapNeuron` | `PyCazellesMapNeuron` | Cazelles et al. 2001 |
-| `CourageNekorkinMapNeuron` | `PyCourageNekorkinMapNeuron` | Courbage & Nekorkin 2010 |
+| `ChialvoMapNeuron` | `ChialvoMapNeuron` | Chialvo 1995 |
+| `RulkovMapNeuron` | `RulkovMapNeuron` | Rulkov 2001 |
+| `IbarzTanakaMapNeuron` | `IbarzTanakaMapNeuron` | Ibarz et al. 2011 |
+| `MedvedevMapNeuron` | `MedvedevMapNeuron` | Medvedev 2005 |
+| `CazellesMapNeuron` | `CazellesMapNeuron` | Cazelles et al. 2001 |
+| `CourageNekorkinMapNeuron` | `CourageNekorkinMapNeuron` | Courbage & Nekorkin 2010 |
 
 ### Biophysical / Conductance-Based (20 models)
 
 | Python Class | Rust Class | Reference |
 |-------------|-----------|-----------|
-| `HodgkinHuxleyNeuron` | `PyHodgkinHuxleyNeuron` | Hodgkin & Huxley 1952 |
-| `TraubMilesNeuron` | `PyTraubMilesNeuron` | Traub & Miles 1991 |
-| `WangBuzsakiNeuron` | `PyWangBuzsakiNeuron` | Wang & Buzsáki 1996 |
-| `ConnorStevensNeuron` | `PyConnorStevensNeuron` | Connor et al. 1977 |
-| `DestexheThalamicNeuron` | `PyDestexheThalamicNeuron` | Destexhe et al. 1993 |
-| `HuberBraunNeuron` | `PyHuberBraunNeuron` | Braun et al. 1998 |
-| `GolombFSNeuron` | `PyGolombFSNeuron` | Golomb et al. 2007 |
-| `PospischilNeuron` | `PyPospischilNeuron` | Pospischil et al. 2008 |
-| `MainenSejnowskiNeuron` | `PyMainenSejnowskiNeuron` | Mainen & Sejnowski 1996 |
-| `DeSchutterPurkinjeNeuron` | `PyDeSchutterPurkinjeNeuron` | De Schutter & Bower 1994 |
-| `PlantR15Neuron` | `PyPlantR15Neuron` | Plant & Kim 1976 |
-| `PrescottNeuron` | `PyPrescottNeuron` | Prescott et al. 2008 |
-| `MihalasNieburNeuron` | `PyMihalasNieburNeuron` | Mihalas & Niebur 2009 |
-| `GLIFNeuron` | `PyGLIFNeuron` | Allen Institute GLIF5 |
-| `GIFPopulationNeuron` | `PyGIFPopulationNeuron` | Mensi et al. 2012 |
-| `AvRonCardiacNeuron` | `PyAvRonCardiacNeuron` | Av-Ron et al. 1991 |
-| `DurstewitzDopamineNeuron` | `PyDurstewitzDopamineNeuron` | Durstewitz et al. 2000 |
-| `HillTononiNeuron` | `PyHillTononiNeuron` | Hill & Tononi 2005 |
-| `BertramPhantomBurster` | `PyBertramPhantomBurster` | Bertram et al. 2000 |
-| `YamadaNeuron` | `PyYamadaNeuron` | Yamada et al. 1989 |
+| `HodgkinHuxleyNeuron` | `HodgkinHuxleyNeuron` | Hodgkin & Huxley 1952 |
+| `TraubMilesNeuron` | `TraubMilesNeuron` | Traub & Miles 1991 |
+| `WangBuzsakiNeuron` | `WangBuzsakiNeuron` | Wang & Buzsáki 1996 |
+| `ConnorStevensNeuron` | `ConnorStevensNeuron` | Connor et al. 1977 |
+| `DestexheThalamicNeuron` | `DestexheThalamicNeuron` | Destexhe et al. 1993 |
+| `HuberBraunNeuron` | `HuberBraunNeuron` | Braun et al. 1998 |
+| `GolombFSNeuron` | `GolombFSNeuron` | Golomb et al. 2007 |
+| `PospischilNeuron` | `PospischilNeuron` | Pospischil et al. 2008 |
+| `MainenSejnowskiNeuron` | `MainenSejnowskiNeuron` | Mainen & Sejnowski 1996 |
+| `DeSchutterPurkinjeNeuron` | `DeSchutterPurkinjeNeuron` | De Schutter & Bower 1994 |
+| `PlantR15Neuron` | `PlantR15Neuron` | Plant & Kim 1976 |
+| `PrescottNeuron` | `PrescottNeuron` | Prescott et al. 2008 |
+| `MihalasNieburNeuron` | `MihalasNieburNeuron` | Mihalas & Niebur 2009 |
+| `GLIFNeuron` | `GLIFNeuron` | Allen Institute GLIF5 |
+| `GIFPopulationNeuron` | `GIFPopulationNeuron` | Mensi et al. 2012 |
+| `AvRonCardiacNeuron` | `AvRonCardiacNeuron` | Av-Ron et al. 1991 |
+| `DurstewitzDopamineNeuron` | `DurstewitzDopamineNeuron` | Durstewitz et al. 2000 |
+| `HillTononiNeuron` | `HillTononiNeuron` | Hill & Tononi 2005 |
+| `BertramPhantomBurster` | `BertramPhantomBurster` | Bertram et al. 2000 |
+| `YamadaNeuron` | `YamadaNeuron` | Yamada et al. 1989 |
 
 ### Multi-Compartment (7 models)
 
 | Python Class | Rust Class | Reference |
 |-------------|-----------|-----------|
-| `PinskyRinzelNeuron` | `PyPinskyRinzelNeuron` | Pinsky & Rinzel 1994 |
-| `HayL5PyramidalNeuron` | `PyHayL5PyramidalNeuron` | Hay et al. 2011 |
-| `MarderSTGNeuron` | `PyMarderSTGNeuron` | Marder & Calabrese 1996 |
-| `RallCableNeuron` | `PyRallCableNeuron` | Rall 1964 |
-| `BoothRinzelNeuron` | `PyBoothRinzelNeuron` | Booth et al. 1997 |
-| `DendrifyNeuron` | `PyDendrifyNeuron` | Beniaguev et al. 2022 |
-| `TwoCompartmentLIFNeuron` | `PyTwoCompartmentLIFNeuron` | — |
+| `PinskyRinzelNeuron` | `PinskyRinzelNeuron` | Pinsky & Rinzel 1994 |
+| `HayL5PyramidalNeuron` | `HayL5PyramidalNeuron` | Hay et al. 2011 |
+| `MarderSTGNeuron` | `MarderSTGNeuron` | Marder & Calabrese 1996 |
+| `RallCableNeuron` | `RallCableNeuron` | Rall 1964 |
+| `BoothRinzelNeuron` | `BoothRinzelNeuron` | Booth et al. 1997 |
+| `DendrifyNeuron` | `DendrifyNeuron` | Beniaguev et al. 2022 |
+| `TwoCompartmentLIFNeuron` | `TwoCompartmentLIFNeuron` | — |
 
 ### Stochastic / Population / Neural Mass (13 models)
 
 | Python Class | Rust Class | Reference |
 |-------------|-----------|-----------|
-| `PoissonNeuron` | `PyPoissonNeuron` | — |
-| `InhomogeneousPoissonNeuron` | `PyInhomogeneousPoissonNeuron` | — |
-| `GammaRenewalNeuron` | `PyGammaRenewalNeuron` | — |
-| `StochasticIFNeuron` | `PyStochasticIFNeuron` | — |
-| `GalvesLocherbachNeuron` | `PyGalvesLocherbachNeuron` | Galves & Löcherbach 2013 |
-| `SpikeResponseNeuron` | `PySpikeResponseNeuron` | Gerstner 1995 (SRM0) |
-| `GLMNeuron` | `PyGLMNeuron` | Pillow et al. 2008 |
-| `WilsonCowanUnit` | `PyWilsonCowanUnit` | Wilson & Cowan 1972 |
-| `JansenRitUnit` | `PyJansenRitUnit` | Jansen & Rit 1995 |
-| `WongWangUnit` | `PyWongWangUnit` | Wong & Wang 2006 |
-| `ErmentroutKopellPopulation` | `PyErmentroutKopellPopulation` | Montbrió et al. 2015 |
-| `WendlingNeuron` | `PyWendlingNeuron` | Wendling et al. 2002 |
-| `LarterBreakspearNeuron` | `PyLarterBreakspearNeuron` | Breakspear et al. 2003 |
+| `PoissonNeuron` | `PoissonNeuron` | — |
+| `InhomogeneousPoissonNeuron` | `InhomogeneousPoissonNeuron` | — |
+| `GammaRenewalNeuron` | `GammaRenewalNeuron` | — |
+| `StochasticIFNeuron` | `StochasticIFNeuron` | — |
+| `GalvesLocherbachNeuron` | `GalvesLocherbachNeuron` | Galves & Löcherbach 2013 |
+| `SpikeResponseNeuron` | `SpikeResponseNeuron` | Gerstner 1995 (SRM0) |
+| `GLMNeuron` | `GLMNeuron` | Pillow et al. 2008 |
+| `WilsonCowanUnit` | `WilsonCowanUnit` | Wilson & Cowan 1972 |
+| `JansenRitUnit` | `JansenRitUnit` | Jansen & Rit 1995 |
+| `WongWangUnit` | `WongWangUnit` | Wong & Wang 2006 |
+| `ErmentroutKopellPopulation` | `ErmentroutKopellPopulation` | Montbrió et al. 2015 |
+| `WendlingNeuron` | `WendlingNeuron` | Wendling et al. 2002 |
+| `LarterBreakspearNeuron` | `LarterBreakspearNeuron` | Breakspear et al. 2003 |
 
 ### Hardware Chip Emulators (9 models)
 
 | Python Class | Rust Class | Reference |
 |-------------|-----------|-----------|
-| `LoihiCUBANeuron` | `PyLoihiCUBANeuron` | Davies et al. 2018 (Intel Loihi) |
-| `Loihi2Neuron` | `PyLoihi2Neuron` | Intel Loihi 2 |
-| `TrueNorthNeuron` | `PyTrueNorthNeuron` | Merolla et al. 2014 (IBM) |
-| `BrainScaleSAdExNeuron` | `PyBrainScaleSAdExNeuron` | Schemmel et al. 2010 |
-| `SpiNNakerLIFNeuron` | `PySpiNNakerLIFNeuron` | Furber et al. 2014 |
-| `SpiNNaker2Neuron` | `PySpiNNaker2Neuron` | TU Dresden 2024 |
-| `DPINeuron` | `PyDPINeuron` | Bartolozzi & Indiveri 2007 |
-| `AkidaNeuron` | `PyAkidaNeuron` | BrainChip |
-| `NeuroGridNeuron` | `PyNeuroGridNeuron` | Boahen 2014 |
+| `LoihiCUBANeuron` | `LoihiCUBANeuron` | Davies et al. 2018 (Intel Loihi) |
+| `Loihi2Neuron` | `Loihi2Neuron` | Intel Loihi 2 |
+| `TrueNorthNeuron` | `TrueNorthNeuron` | Merolla et al. 2014 (IBM) |
+| `BrainScaleSAdExNeuron` | `BrainScaleSAdExNeuron` | Schemmel et al. 2010 |
+| `SpiNNakerLIFNeuron` | `SpiNNakerLIFNeuron` | Furber et al. 2014 |
+| `SpiNNaker2Neuron` | `SpiNNaker2Neuron` | TU Dresden 2024 |
+| `DPINeuron` | `DPINeuron` | Bartolozzi & Indiveri 2007 |
+| `AkidaNeuron` | `AkidaNeuron` | BrainChip |
+| `NeuroGridNeuron` | `NeuroGridNeuron` | Boahen 2014 |
 
 ### Rate / Plasticity / Other (11 models)
 
 | Python Class | Rust Class | Reference |
 |-------------|-----------|-----------|
-| `McCullochPittsNeuron` | `PyMcCullochPittsNeuron` | McCulloch & Pitts 1943 |
-| `SigmoidRateNeuron` | `PySigmoidRateNeuron` | Wilson & Cowan 1972 |
-| `ThresholdLinearRateNeuron` | `PyThresholdLinearRateNeuron` | — |
-| `AstrocyteModel` | `PyAstrocyteModel` | Li & Rinzel 1994 |
-| `TsodyksMarkramNeuron` | `PyTsodyksMarkramNeuron` | Tsodyks & Markram 1997 |
-| `LiquidTimeConstantNeuron` | `PyLiquidTimeConstantNeuron` | Hasani et al. 2021 |
-| `CompteWMNeuron` | `PyCompteWMNeuron` | Compte et al. 2000 |
-| `SiegertTransferFunction` | `PySiegertTransferFunction` | Siegert 1951 |
-| `FractionalLIFNeuron` | (Python only) | Teka et al. 2014 |
-| `ParallelSpikingNeuron` | (Python only) | Fang et al. 2023 |
-| `AmariNeuralField` | (Python only) | Amari 1977 |
-
-Note: FractionalLIF, PSN, and AmariNeuralField use dynamically-sized
-buffers; Rust implementations exist but PyO3 wrappers are deferred
-pending array-return API design.
+| `McCullochPittsNeuron` | `McCullochPittsNeuron` | McCulloch & Pitts 1943 |
+| `SigmoidRateNeuron` | `SigmoidRateNeuron` | Wilson & Cowan 1972 |
+| `ThresholdLinearRateNeuron` | `ThresholdLinearRateNeuron` | — |
+| `AstrocyteModel` | `AstrocyteModel` | Li & Rinzel 1994 |
+| `TsodyksMarkramNeuron` | `TsodyksMarkramNeuron` | Tsodyks & Markram 1997 |
+| `LiquidTimeConstantNeuron` | `LiquidTimeConstantNeuron` | Hasani et al. 2021 |
+| `CompteWMNeuron` | `CompteWMNeuron` | Compte et al. 2000 |
+| `SiegertTransferFunction` | `SiegertTransferFunction` | Siegert 1951 |
+| `FractionalLIFNeuron` | `FractionalLIFNeuron` | Teka et al. 2014 |
+| `ParallelSpikingNeuron` | `ParallelSpikingNeuron` | Fang et al. 2023 |
+| `AmariNeuralField` | `AmariNeuralField` | Amari 1977 |
+| `LeakyCompeteFireNeuron` | `LeakyCompeteFireNeuron` | — |
 
 ## Common Interface
 

@@ -6,20 +6,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [3.12.0] - 2026-03-15
 
-### Neuron Model Library (116 models)
+### Neuron Model Library (113 Python / 110 Rust)
 - 108 individual model files in `neurons/models/` (one file per model)
-- Categories span 16 families: IF variants (26), Biophysical (12), Adaptive (4), Oscillatory (7), Bursting (6), Synaptic (3), Multi-compartment (4), Map-based (6), Stochastic (5), Population (7), Hardware (9), Modern/ML (8), Rate (4), Dendritic/Cable (2), Glial (1), Other (3)
-- Key models: HodgkinHuxley, HayL5Pyramidal (3-comp BAC firing), ConnorStevens, WangBuzsaki, Destexhe, DeSchutterPurkinje, MarderSTG (7 currents), Izhikevich, AdEx, MihalasNiebur (20 patterns)
-- Hardware models: LoihiCUBA, Loihi2, TrueNorth, BrainScaleS, SpiNNaker, SpiNNaker2, DPI, Akida
-- Population models: JansenRit (EEG), Wendling (epilepsy), WongWang (decision), LarterBreakspear (TVB whole-brain)
+- Categories span 14 families: IF variants (21), Biophysical (11), Adaptive (4), Oscillatory (7), Bursting (5), Synaptic (3), Multi-compartment (3), Map-based (6), Stochastic (4), Population (5), Hardware (7), Modern/ML (5), Rate (3), Other (3)
+- Notable additions: TraubMiles, WilsonHR, Pospischil (5 cortical types), ConnorStevens, WangBuzsaki, PinskyRinzel, Destexhe, HuberBraun, GolombFS, MainenSejnowski
 - Historical coverage from McCulloch-Pitts (1943) to Gated LIF (2025)
 - 10 PyTorch training cells: LIF, IF, Synaptic, ALIF, RecurrentLIF, ExpIF, AdEx, Lapicque, Alpha, SecondOrderLIF
-
-### Arbitrary Equation Builder
-- `EquationNeuron`: define any neuron model from string ODEs
-- `from_equations()` factory: Brian2-style `"dv/dt = ..."` syntax
-- Euler + RK4 solvers, threshold/reset rules, math functions
-- Eliminates the last competitive gap with Brian2
 
 ### MNIST 99.49% Accuracy
 - `examples/mnist_conv_train.py` — ConvSpikingNet with learnable beta/threshold
@@ -49,7 +41,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - **MLIR emitter**: CIRCT hw/comb dialect IR emission (`ir/emit_mlir.rs`)
 - **Static synapse**: completed with excitatory/inhibitory polarity
 - **Surrogate gradient**: added Triangular and PiecewiseLinear variants
-- Parity: 43/43 (100%), up from 30/44 (68%)
+- Rust neuron models callable from Python: 110 (of 113 Python total)
 
 ### SIMD Hardening (v3.8 carry-forward)
 - Fused `softmax_inplace_f64_dispatch` with SIMD max/sum/scale

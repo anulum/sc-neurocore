@@ -55,7 +55,7 @@ marked explicitly.
 3. **Formal verification** — 69 SymbiYosys properties across 7 HDL
    modules (no other SNN framework offers formal proofs)
 4. **Rust SIMD engine** — AVX-512/AVX2/NEON/SVE/RVV dispatch with
-   100% Python parity (43/43 modules)
+   110 Rust neuron models with PyO3 bindings
 5. **Quantum-SC bridge** — IBM Heron r2 noise model, parameter-shift
    gradients, VQE pipeline
 

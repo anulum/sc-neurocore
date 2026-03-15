@@ -4,12 +4,12 @@
 
 | Suite | Count | Scope |
 |-------|------:|-------|
-| Python unit/integration | 1 560 | `pytest tests/` across 102 files |
-| Rust engine | 105 | `cargo test --manifest-path engine/Cargo.toml` (100% parity) |
+| Python unit/integration | 1 698 | `pytest tests/` across 117 files |
+| Rust engine | 209 | `cargo test --manifest-path engine/Cargo.toml` |
 | Bridge (PyO3) | — | Maturin build + Python import smoke test |
 | HDL formal verification | 11 | Verilog modules in `hdl/` with testbenches in `tb/` |
 
-CI runs tests on Python 3.10–3.13 (Ubuntu) and Rust on Ubuntu + Windows.
+CI runs tests on Python 3.10–3.12 (Ubuntu) and Rust on Ubuntu + Windows.
 
 ## CI Validation Gates
 
@@ -17,7 +17,7 @@ All gates must pass before merge.
 
 | Gate | Workflow | What it enforces |
 |------|----------|------------------|
-| black | `ci.yml` | `black --check` (pinned 25.1.0) |
+| black | `ci.yml` | `black --check` |
 | ruff | `ci.yml` | `ruff check` (import hygiene, code quality) |
 | bandit | `ci.yml` | Security static analysis (SAST) |
 | test + coverage | `ci.yml` | `pytest --cov-fail-under=100` on Python 3.10, 3.11, 3.12 |
