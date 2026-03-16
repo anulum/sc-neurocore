@@ -49,6 +49,42 @@ jobs:
           name: wheel-${{ matrix.os }}-py${{ matrix.python-version }}
           path: dist/*.whl
 
+  build-linux-arm:
+    name: Build wheel (linux-arm64, ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable
+        with:
+          targets: aarch64-unknown-linux-gnu
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install maturin + cross-compile deps
+        run: |
+          pip install --require-hashes -r requirements/maturin.txt
+          sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
+
+      - name: Build ARM64 wheel
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+        run: |
+          cd bridge
+          maturin build --release --target aarch64-unknown-linux-gnu --out ../dist/
+
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
+        with:
+          name: wheel-linux-arm64-py${{ matrix.python-version }}
+          path: dist/*.whl
+
   test-wheels:
     name: Test wheel (${{ matrix.os }}, ${{ matrix.python-version }})
     needs: build-wheels
