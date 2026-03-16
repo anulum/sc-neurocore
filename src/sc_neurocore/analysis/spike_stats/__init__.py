@@ -165,6 +165,13 @@ from .patterns import (
     spike_train_order,
     cubic_higher_order,
 )
+from .spade import (
+    spade_detect,
+)
+from .gpfa import (
+    gpfa,
+    gpfa_transform,
+)
 
 __all__ = [
     "spike_times",
@@ -289,4 +296,7 @@ __all__ = [
     "spike_directionality",
     "spike_train_order",
     "cubic_higher_order",
+    "spade_detect",
+    "gpfa",
+    "gpfa_transform",
 ]
