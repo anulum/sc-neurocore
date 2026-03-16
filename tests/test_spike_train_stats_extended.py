@@ -111,6 +111,7 @@ from sc_neurocore.analysis.spike_stats import (
 
 # ── Fixtures ─────────────────────────────────────────────────────
 
+
 @pytest.fixture()
 def regular_train():
     """Binary train with regular ISIs (spike every 20 steps)."""
@@ -148,10 +149,7 @@ def spike_times_pair():
 def population():
     """Population of 5 binary spike trains."""
     rng = np.random.default_rng(99)
-    return [
-        (rng.random(2000) < 0.01 + 0.005 * i).astype(np.float64)
-        for i in range(5)
-    ]
+    return [(rng.random(2000) < 0.01 + 0.005 * i).astype(np.float64) for i in range(5)]
 
 
 @pytest.fixture()
@@ -162,6 +160,7 @@ def waveform_fixture():
 
 
 # ── Regularity ───────────────────────────────────────────────────
+
 
 class TestRegularity:
     def test_lvr_regular(self, regular_train):
@@ -218,6 +217,7 @@ class TestRegularity:
 
 
 # ── Distance metrics ─────────────────────────────────────────────
+
 
 class TestDistanceMetrics:
     def test_spike_distance_identical(self):
@@ -288,6 +288,7 @@ class TestDistanceMetrics:
 
 # ── Synchrony ────────────────────────────────────────────────────
 
+
 class TestSynchrony:
     def test_sttc_identical(self, poisson_train):
         val = spike_time_tiling_coefficient(poisson_train, poisson_train)
@@ -332,6 +333,7 @@ class TestSynchrony:
 
 # ── Pattern detection ────────────────────────────────────────────
 
+
 class TestPatternDetection:
     def test_unitary_events(self, population):
         ue = unitary_events(population[:3])
@@ -347,6 +349,7 @@ class TestPatternDetection:
 
 
 # ── Information theory ───────────────────────────────────────────
+
 
 class TestInformationTheory:
     def test_spike_train_entropy(self, poisson_train):
@@ -381,6 +384,7 @@ class TestInformationTheory:
 
 # ── Causality ────────────────────────────────────────────────────
 
+
 class TestCausality:
     def test_pairwise_granger(self, two_trains):
         a, b = two_trains
@@ -412,6 +416,7 @@ class TestCausality:
 
 # ── Point process ────────────────────────────────────────────────
 
+
 class TestPointProcess:
     def test_conditional_intensity(self, poisson_train):
         ci = conditional_intensity(poisson_train)
@@ -435,6 +440,7 @@ class TestPointProcess:
 
 # ── Dimensionality reduction ─────────────────────────────────────
 
+
 class TestDimensionality:
     def test_demixed_pca(self, population):
         conds = {
@@ -452,6 +458,7 @@ class TestDimensionality:
 
 
 # ── Decoding ─────────────────────────────────────────────────────
+
 
 class TestDecoding:
     def test_bayesian_decode(self):
@@ -484,6 +491,7 @@ class TestDecoding:
 
 
 # ── Surrogates ───────────────────────────────────────────────────
+
 
 class TestSurrogates:
     def test_homogeneous_poisson(self):
@@ -536,6 +544,7 @@ class TestSurrogates:
 
 
 # ── Spike sorting quality ────────────────────────────────────────
+
 
 class TestSpikeSortingQuality:
     @pytest.fixture()
@@ -610,6 +619,7 @@ class TestSpikeSortingQuality:
 
 # ── Spike-triggered / receptive field ────────────────────────────
 
+
 class TestReceptiveField:
     def test_spike_triggered_covariance(self, poisson_train):
         stim = np.random.default_rng(3).normal(0, 1, poisson_train.size)
@@ -626,7 +636,9 @@ class TestReceptiveField:
         n = 5000
         positions = np.linspace(0, 100, n)
         train = (rng.random(n) < 0.005).astype(np.float64)
-        train[(positions > 40) & (positions < 60)] += (rng.random(int(((positions > 40) & (positions < 60)).sum())) < 0.1).astype(np.float64)
+        train[(positions > 40) & (positions < 60)] += (
+            rng.random(int(((positions > 40) & (positions < 60)).sum())) < 0.1
+        ).astype(np.float64)
         train = np.clip(train, 0, 1)
         fields = place_field_detection(train, positions, threshold_std=1.5)
         assert isinstance(fields, list)
@@ -639,6 +651,7 @@ class TestReceptiveField:
 
 
 # ── Non-stationarity ─────────────────────────────────────────────
+
 
 class TestNonstationarity:
     def test_change_point_detection(self):
@@ -656,6 +669,7 @@ class TestNonstationarity:
 
 
 # ── Waveform analysis ────────────────────────────────────────────
+
 
 class TestWaveform:
     def test_waveform_width(self, waveform_fixture):
