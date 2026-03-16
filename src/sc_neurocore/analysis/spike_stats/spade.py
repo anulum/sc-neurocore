@@ -14,7 +14,6 @@ from __future__ import annotations
 import numpy as np
 
 
-
 def _find_frequent_itemsets(binary_matrix, min_support, max_size):
     """Apriori-style frequent itemset mining on a binary neuron x time matrix."""
     n_neurons, n_bins = binary_matrix.shape

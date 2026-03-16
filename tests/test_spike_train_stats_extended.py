@@ -336,8 +336,8 @@ class TestSynchrony:
 
 class TestPatternDetection:
     def test_unitary_events(self, population):
-        ue = unitary_events(population[:3])
-        assert isinstance(ue, list)
+        events = unitary_events(population[:3])
+        assert isinstance(events, list)
 
     def test_cell_assembly_detection(self, population):
         assemblies = cell_assembly_detection(population)
