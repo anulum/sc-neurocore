@@ -110,6 +110,7 @@ from sc_neurocore.analysis.spike_stats import (
 
 # ── Fixtures ─────────────────────────────────────────────────────
 
+
 @pytest.fixture()
 def regular_train():
     """Binary train with regular ISIs (spike every 20 steps)."""
