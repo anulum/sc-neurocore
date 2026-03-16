@@ -45,20 +45,26 @@ def _poisson_trains(n_neurons=6, rate_hz=30.0, duration_s=1.0, dt=0.001, seed=42
 
 class TestFindFrequentItemsets:
     def test_single_coactive_pair(self):
-        mat = np.array([
-            [1, 0, 1, 0, 1],
-            [1, 0, 1, 0, 1],
-            [0, 1, 0, 1, 0],
-        ], dtype=np.int8)
+        mat = np.array(
+            [
+                [1, 0, 1, 0, 1],
+                [1, 0, 1, 0, 1],
+                [0, 1, 0, 1, 0],
+            ],
+            dtype=np.int8,
+        )
         result = _find_frequent_itemsets(mat, min_support=3, max_size=3)
         pair_sets = [s for s, c in result if len(s) == 2]
         assert frozenset([0, 1]) in pair_sets
 
     def test_min_support_filters(self):
-        mat = np.array([
-            [1, 0, 1, 0, 0],
-            [1, 0, 0, 0, 0],
-        ], dtype=np.int8)
+        mat = np.array(
+            [
+                [1, 0, 1, 0, 0],
+                [1, 0, 0, 0, 0],
+            ],
+            dtype=np.int8,
+        )
         result = _find_frequent_itemsets(mat, min_support=3, max_size=2)
         pair_sets = [s for s, c in result if len(s) == 2]
         assert len(pair_sets) == 0
@@ -68,8 +74,13 @@ class TestSpadeDetect:
     def test_planted_pattern_detected(self):
         trains = _sync_trains(n_neurons=5, n_steps=2000, sync_every=100)
         results = spade_detect(
-            trains, bin_ms=5.0, dt=0.001, min_support=3,
-            n_surrogates=50, alpha=0.05, seed=42,
+            trains,
+            bin_ms=5.0,
+            dt=0.001,
+            min_support=3,
+            n_surrogates=50,
+            alpha=0.05,
+            seed=42,
         )
         detected_sets = [frozenset(r["neurons"]) for r in results]
         assert any(frozenset([0, 1, 2]).issubset(s) for s in detected_sets)

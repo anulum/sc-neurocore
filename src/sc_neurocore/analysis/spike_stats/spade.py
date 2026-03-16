@@ -10,11 +10,9 @@ Simplified hash-based implementation for populations up to ~50 neurons.
 
 from __future__ import annotations
 
-from itertools import combinations
 
 import numpy as np
 
-from .basic import spike_times
 
 
 def _find_frequent_itemsets(binary_matrix, min_support, max_size):

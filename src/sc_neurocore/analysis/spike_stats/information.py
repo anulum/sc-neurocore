@@ -155,7 +155,8 @@ def kozachenko_leonenko_mi(x: np.ndarray, y: np.ndarray, k: int = 3) -> float:
         dists[idx] = np.inf
         return np.partition(dists, kk - 1)[kk - 1]
 
-    digamma = lambda z: np.log(z) - 0.5 / z  # Stirling approx for digamma
+    def digamma(z):
+        return np.log(z) - 0.5 / z  # Stirling approx
 
     psi_k = digamma(k)
     psi_n = digamma(n)
