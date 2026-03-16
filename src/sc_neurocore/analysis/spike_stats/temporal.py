@@ -3,7 +3,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Temporal pattern detection: bursts, latency, onset, chang...
+# SC-NeuroCore — Temporal pattern detection: bursts, latency, onset,
 
 """Temporal pattern detection: bursts, latency, onset, change points."""
 

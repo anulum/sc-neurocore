@@ -3,7 +3,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Tests for extended spike train analysis functions (88 new...
+# SC-NeuroCore — Tests for extended spike train analysis functions (88
 
 """Tests for extended spike train analysis functions (88 new functions)."""
 
@@ -113,6 +113,7 @@ from sc_neurocore.analysis.spike_stats import (
     waveform_halfwidth,
     waveform_pt_ratio,
 )
+
 
 # ── Fixtures ─────────────────────────────────────────────────────
 

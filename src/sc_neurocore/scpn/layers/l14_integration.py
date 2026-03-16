@@ -3,7 +3,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — SCPN L14 Transdimensional Integration Layer (Stochastic I...
+# SC-NeuroCore — SCPN L14 Transdimensional Integration Layer (Stochastic
 
 """
 SCPN L14: Transdimensional Integration Layer (Stochastic Implementation)

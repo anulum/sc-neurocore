@@ -3,7 +3,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — SwarmEnvironment -- 2-D arena with agents, obstacles, and...
+# SC-NeuroCore — SwarmEnvironment -- 2-D arena with agents, obstacles,
 
 from __future__ import annotations
 from typing import Any, Optional
