@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from sc_neurocore.analysis.spike_train_stats import (
+from sc_neurocore.analysis.spike_stats import (
     spike_times,
     isi,
     firing_rate,
