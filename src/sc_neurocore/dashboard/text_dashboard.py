@@ -5,6 +5,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Simple CLI Dashboard for monitoring SC simulation
 
+
 class SCDashboard:
     """
     Simple CLI Dashboard for monitoring SC simulation.
