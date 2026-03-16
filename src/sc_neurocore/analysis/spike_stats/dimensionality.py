@@ -33,8 +33,9 @@ def spike_train_pca(
     return projected, explained
 
 
-def demixed_pca(trains_by_condition: dict[int, list[np.ndarray]],
-                n_components: int = 3, bin_size: int = 10) -> tuple[np.ndarray, np.ndarray]:
+def demixed_pca(
+    trains_by_condition: dict[int, list[np.ndarray]], n_components: int = 3, bin_size: int = 10
+) -> tuple[np.ndarray, np.ndarray]:
     """Demixed PCA. Kobak et al. 2016.
 
     Separates condition-dependent and condition-independent variance.
@@ -60,8 +61,9 @@ def demixed_pca(trains_by_condition: dict[int, list[np.ndarray]],
     return projected, explained
 
 
-def factor_analysis(trains: list[np.ndarray], n_factors: int = 3,
-                    bin_size: int = 10, n_iter: int = 50) -> tuple[np.ndarray, np.ndarray]:
+def factor_analysis(
+    trains: list[np.ndarray], n_factors: int = 3, bin_size: int = 10, n_iter: int = 50
+) -> tuple[np.ndarray, np.ndarray]:
     """Factor analysis via EM. Rubin & Thayer 1982.
 
     Returns (loading_matrix [n_neurons x n_factors], uniquenesses [n_neurons]).

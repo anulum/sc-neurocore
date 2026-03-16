@@ -78,9 +78,7 @@ def lvr(binary_train: np.ndarray, dt: float = 0.001, refractoriness_ms: float = 
     return float(3.0 * result / count)
 
 
-def fano_factor(
-    binary_train: np.ndarray, window_ms: float = 50.0, dt: float = 0.001
-) -> float:
+def fano_factor(binary_train: np.ndarray, window_ms: float = 50.0, dt: float = 0.001) -> float:
     """Fano factor: variance/mean of spike counts in sliding windows."""
     window_steps = max(1, int(window_ms / (dt * 1000)))
     n = binary_train.size
@@ -157,7 +155,7 @@ def approximate_entropy(binary_train: np.ndarray, m: int = 2, r_factor: float = 
         r = 0.01
 
     def _phi(dim):
-        templates = np.array([x[i:i + dim] for i in range(n - dim + 1)])
+        templates = np.array([x[i : i + dim] for i in range(n - dim + 1)])
         count = np.zeros(len(templates))
         for i in range(len(templates)):
             dists = np.max(np.abs(templates - templates[i]), axis=1)
@@ -182,10 +180,10 @@ def sample_entropy(binary_train: np.ndarray, m: int = 2, r_factor: float = 0.2) 
         r = 0.01
 
     def _count_matches(dim):
-        templates = np.array([x[i:i + dim] for i in range(n - dim)])
+        templates = np.array([x[i : i + dim] for i in range(n - dim)])
         total = 0
         for i in range(len(templates)):
-            dists = np.max(np.abs(templates[i + 1:] - templates[i]), axis=1)
+            dists = np.max(np.abs(templates[i + 1 :] - templates[i]), axis=1)
             total += np.sum(dists <= r)
         return total
 
@@ -210,11 +208,11 @@ def permutation_entropy(binary_train: np.ndarray, order: int = 3, delay: int = 1
         return float("nan")
     patterns = np.zeros(n_patterns, dtype=np.int64)
     for i in range(n_patterns):
-        window = x[i:i + order * delay:delay]
+        window = x[i : i + order * delay : delay]
         rank = np.argsort(np.argsort(window))
         key = 0
         for j, r in enumerate(rank):
-            key += int(r) * (order ** j)
+            key += int(r) * (order**j)
         patterns[i] = key
     _, counts = np.unique(patterns, return_counts=True)
     p = counts / counts.sum()
@@ -241,7 +239,7 @@ def hurst_exponent(binary_train: np.ndarray, min_window: int = 10) -> float:
         n_seg = n // s
         f2 = 0.0
         for seg in range(n_seg):
-            chunk = y[seg * s:(seg + 1) * s]
+            chunk = y[seg * s : (seg + 1) * s]
             t = np.arange(s, dtype=np.float64)
             coeffs = np.polyfit(t, chunk, 1)
             trend = np.polyval(coeffs, t)
@@ -259,7 +257,9 @@ def hurst_exponent(binary_train: np.ndarray, min_window: int = 10) -> float:
     return float(coeffs[0])
 
 
-def allan_factor(binary_train: np.ndarray, dt: float = 0.001, n_scales: int = 10) -> tuple[np.ndarray, np.ndarray]:
+def allan_factor(
+    binary_train: np.ndarray, dt: float = 0.001, n_scales: int = 10
+) -> tuple[np.ndarray, np.ndarray]:
     """Allan factor for spike trains. Allan 1966, adapted for point processes.
 
     Returns (af_values, window_sizes_s). AF > 1 indicates fractal clustering.
@@ -275,13 +275,13 @@ def allan_factor(binary_train: np.ndarray, dt: float = 0.001, n_scales: int = 10
         if n_bins < 2:
             af[i] = float("nan")
             continue
-        counts = binary_train[:n_bins * w].reshape(n_bins, w).sum(axis=1).astype(np.float64)
+        counts = binary_train[: n_bins * w].reshape(n_bins, w).sum(axis=1).astype(np.float64)
         diffs = np.diff(counts)
         mean_count = counts.mean()
         if mean_count == 0:
             af[i] = float("nan")
         else:
-            af[i] = np.mean(diffs ** 2) / (2.0 * mean_count)
+            af[i] = np.mean(diffs**2) / (2.0 * mean_count)
     return af, windows * dt
 
 
@@ -301,7 +301,7 @@ def rescaled_range(binary_train: np.ndarray, min_window: int = 10) -> float:
         n_seg = n // s
         rs_seg = []
         for seg in range(n_seg):
-            chunk = x[seg * s:(seg + 1) * s]
+            chunk = x[seg * s : (seg + 1) * s]
             mean_c = chunk.mean()
             y = np.cumsum(chunk - mean_c)
             r = y.max() - y.min()

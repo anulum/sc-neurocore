@@ -104,8 +104,9 @@ def d_prime(cluster_a: np.ndarray, cluster_b: np.ndarray) -> float:
     return float(abs(proj_a.mean() - proj_b.mean()) / pooled_std)
 
 
-def isi_violation_rate(binary_train: np.ndarray, dt: float = 0.001,
-                       refractory_ms: float = 1.5) -> float:
+def isi_violation_rate(
+    binary_train: np.ndarray, dt: float = 0.001, refractory_ms: float = 1.5
+) -> float:
     """ISI violation rate: fraction of ISIs below refractory period. Hill et al. 2011."""
     intervals = isi(binary_train, dt)
     if intervals.size == 0:
@@ -189,7 +190,7 @@ def drift_metric(waveforms: np.ndarray, timestamps: np.ndarray, n_bins: int = 10
     bin_size = len(amplitudes) // n_bins
     means = []
     for i in range(n_bins):
-        chunk = amplitudes[i * bin_size:(i + 1) * bin_size]
+        chunk = amplitudes[i * bin_size : (i + 1) * bin_size]
         means.append(chunk.mean())
     means = np.array(means)
     if means.std() < 1e-30:

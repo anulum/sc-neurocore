@@ -30,8 +30,7 @@ def functional_connectivity(
     return mat
 
 
-def unitary_events(trains: list[np.ndarray], bin_size: int = 5,
-                   alpha: float = 0.05) -> list[int]:
+def unitary_events(trains: list[np.ndarray], bin_size: int = 5, alpha: float = 0.05) -> list[int]:
     """Unitary event analysis. Gruen et al. 2002.
 
     Detects bins where coincident spikes exceed chance (Poisson assumption).
@@ -50,14 +49,15 @@ def unitary_events(trains: list[np.ndarray], bin_size: int = 5,
     significant_bins = []
     for k in range(min_bins):
         if coincidence[k] > 0:
-            p_val = expected_rate ** n_trains
+            p_val = expected_rate**n_trains
             if p_val < alpha:
                 significant_bins.append(k)
     return significant_bins
 
 
-def cell_assembly_detection(trains: list[np.ndarray], bin_size: int = 5,
-                            threshold: float = 2.0) -> list[list[int]]:
+def cell_assembly_detection(
+    trains: list[np.ndarray], bin_size: int = 5, threshold: float = 2.0
+) -> list[list[int]]:
     """Cell assembly detection via PCA on binned spike matrix. Lopes-dos-Santos et al. 2013.
 
     Returns list of assemblies (each a list of neuron indices above threshold).
@@ -86,8 +86,12 @@ def cell_assembly_detection(trains: list[np.ndarray], bin_size: int = 5,
     return assemblies
 
 
-def synfire_chain_detection(trains: list[np.ndarray], dt: float = 0.001,
-                            max_delay_ms: float = 20.0, min_chain_length: int = 3) -> list[list[int]]:
+def synfire_chain_detection(
+    trains: list[np.ndarray],
+    dt: float = 0.001,
+    max_delay_ms: float = 20.0,
+    min_chain_length: int = 3,
+) -> list[list[int]]:
     """Synfire chain detection via cross-correlation peak ordering. Abeles 1991.
 
     Returns list of chains (ordered neuron indices with sequential activation).

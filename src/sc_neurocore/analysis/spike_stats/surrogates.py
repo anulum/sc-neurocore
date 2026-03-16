@@ -6,9 +6,7 @@ from __future__ import annotations
 import numpy as np
 
 
-def surrogate_isi_shuffle(
-    binary_train: np.ndarray, seed: int = 0
-) -> np.ndarray:
+def surrogate_isi_shuffle(binary_train: np.ndarray, seed: int = 0) -> np.ndarray:
     """Generate surrogate by shuffling ISIs. Preserves rate + ISI distribution."""
     intervals = np.diff(np.where(binary_train > 0)[0])
     if intervals.size < 2:
@@ -40,25 +38,25 @@ def surrogate_dither(
     return out
 
 
-def surrogate_trial_shuffle(
-    trains: list[np.ndarray], seed: int = 0
-) -> list[np.ndarray]:
+def surrogate_trial_shuffle(trains: list[np.ndarray], seed: int = 0) -> list[np.ndarray]:
     """Shuffle trial order. Destroys trial-to-trial correlation."""
     rng = np.random.default_rng(seed)
     idx = rng.permutation(len(trains))
     return [trains[i] for i in idx]
 
 
-def homogeneous_poisson(rate_hz: float, duration_s: float, dt: float = 0.001,
-                        seed: int = 0) -> np.ndarray:
+def homogeneous_poisson(
+    rate_hz: float, duration_s: float, dt: float = 0.001, seed: int = 0
+) -> np.ndarray:
     """Generate homogeneous Poisson spike train. Heeger 2000."""
     rng = np.random.default_rng(seed)
     n = int(duration_s / dt)
     return (rng.random(n) < rate_hz * dt).astype(np.float64)
 
 
-def inhomogeneous_poisson(rate_func, duration_s: float, dt: float = 0.001,
-                          seed: int = 0) -> np.ndarray:
+def inhomogeneous_poisson(
+    rate_func, duration_s: float, dt: float = 0.001, seed: int = 0
+) -> np.ndarray:
     """Generate inhomogeneous Poisson spike train via thinning. Lewis & Shedler 1979.
 
     rate_func(t) -> float: time-varying rate in Hz.
@@ -75,8 +73,9 @@ def inhomogeneous_poisson(rate_func, duration_s: float, dt: float = 0.001,
     return (candidate & accept).astype(np.float64)
 
 
-def gamma_process(rate_hz: float, shape: float, duration_s: float,
-                  dt: float = 0.001, seed: int = 0) -> np.ndarray:
+def gamma_process(
+    rate_hz: float, shape: float, duration_s: float, dt: float = 0.001, seed: int = 0
+) -> np.ndarray:
     """Generate gamma-renewal spike train. Kuffler et al. 1957.
 
     shape=1: Poisson. shape>1: more regular. shape<1: more bursty.
@@ -97,8 +96,9 @@ def gamma_process(rate_hz: float, shape: float, duration_s: float,
     return train
 
 
-def compound_poisson_process(rate_hz: float, burst_mean: float, duration_s: float,
-                             dt: float = 0.001, seed: int = 0) -> np.ndarray:
+def compound_poisson_process(
+    rate_hz: float, burst_mean: float, duration_s: float, dt: float = 0.001, seed: int = 0
+) -> np.ndarray:
     """Compound Poisson process: Poisson events each producing a burst. Snyder & Miller 1991.
 
     burst_mean: mean number of spikes per event (Poisson distributed).
@@ -143,8 +143,9 @@ def surrogate_joint_isi(binary_train: np.ndarray, seed: int = 0) -> np.ndarray:
     return out
 
 
-def surrogate_bin_shuffling(binary_train: np.ndarray, bin_size: int = 10,
-                            seed: int = 0) -> np.ndarray:
+def surrogate_bin_shuffling(
+    binary_train: np.ndarray, bin_size: int = 10, seed: int = 0
+) -> np.ndarray:
     """Bin-shuffling surrogate: shuffles spikes within bins. Hatsopoulos et al. 2003."""
     rng = np.random.default_rng(seed)
     out = binary_train.copy()
@@ -157,8 +158,9 @@ def surrogate_bin_shuffling(binary_train: np.ndarray, bin_size: int = 10,
     return out
 
 
-def surrogate_spike_train_shifting(binary_train: np.ndarray, max_shift: int = 50,
-                                   seed: int = 0) -> np.ndarray:
+def surrogate_spike_train_shifting(
+    binary_train: np.ndarray, max_shift: int = 50, seed: int = 0
+) -> np.ndarray:
     """Circular shifting surrogate: shifts entire train by random offset. Hatsopoulos et al. 2003."""
     rng = np.random.default_rng(seed)
     shift = rng.integers(-max_shift, max_shift + 1)

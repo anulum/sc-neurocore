@@ -14,7 +14,7 @@ def _var_coefficients(trains_binned: np.ndarray, order: int) -> tuple[np.ndarray
     if t <= order + 1:
         return np.zeros((order * d, d)), np.eye(d)
     y = trains_binned[:, order:].T  # (T-order) x d
-    x_parts = [trains_binned[:, order - k - 1:t - k - 1].T for k in range(order)]
+    x_parts = [trains_binned[:, order - k - 1 : t - k - 1].T for k in range(order)]
     x = np.hstack(x_parts)  # (T-order) x (order*d)
     reg = 1e-8 * np.eye(x.shape[1])
     beta = np.linalg.solve(x.T @ x + reg, x.T @ y)
@@ -23,8 +23,9 @@ def _var_coefficients(trains_binned: np.ndarray, order: int) -> tuple[np.ndarray
     return beta, cov
 
 
-def pairwise_granger_causality(source: np.ndarray, target: np.ndarray,
-                                bin_size: int = 10, order: int = 5) -> float:
+def pairwise_granger_causality(
+    source: np.ndarray, target: np.ndarray, bin_size: int = 10, order: int = 5
+) -> float:
     """Pairwise Granger causality. Granger 1969.
 
     Tests if past source spike counts reduce prediction error for target.
@@ -38,15 +39,15 @@ def pairwise_granger_causality(source: np.ndarray, target: np.ndarray,
     cs, ct = cs[:n], ct[:n]
     y = ct[order:]
     n_pts = y.size
-    x_r = np.column_stack([ct[order - k - 1:n - k - 1] for k in range(order)])
-    x_f = np.column_stack([x_r] + [cs[order - k - 1:n - k - 1] for k in range(order)])
+    x_r = np.column_stack([ct[order - k - 1 : n - k - 1] for k in range(order)])
+    x_f = np.column_stack([x_r] + [cs[order - k - 1 : n - k - 1] for k in range(order)])
 
     def _sse(x, yy):
         xtx = x.T @ x
         reg = 1e-8 * np.eye(xtx.shape[0])
         beta = np.linalg.solve(xtx + reg, x.T @ yy)
         residuals = yy - x @ beta
-        return np.sum(residuals ** 2)
+        return np.sum(residuals**2)
 
     sse_r = _sse(x_r, y)
     sse_f = _sse(x_f, y)
@@ -55,9 +56,13 @@ def pairwise_granger_causality(source: np.ndarray, target: np.ndarray,
     return float(np.log(max(sse_r, 1e-30) / max(sse_f, 1e-30)))
 
 
-def conditional_granger_causality(source: np.ndarray, target: np.ndarray,
-                                   condition: np.ndarray, bin_size: int = 10,
-                                   order: int = 5) -> float:
+def conditional_granger_causality(
+    source: np.ndarray,
+    target: np.ndarray,
+    condition: np.ndarray,
+    bin_size: int = 10,
+    order: int = 5,
+) -> float:
     """Conditional Granger causality. Geweke 1984.
 
     Tests if source Granger-causes target controlling for condition.
@@ -71,12 +76,10 @@ def conditional_granger_causality(source: np.ndarray, target: np.ndarray,
     cs, ct, cc = cs[:n], ct[:n], cc[:n]
     y = ct[order:]
     x_cond = np.column_stack(
-        [ct[order - k - 1:n - k - 1] for k in range(order)] +
-        [cc[order - k - 1:n - k - 1] for k in range(order)]
+        [ct[order - k - 1 : n - k - 1] for k in range(order)]
+        + [cc[order - k - 1 : n - k - 1] for k in range(order)]
     )
-    x_full = np.column_stack(
-        [x_cond] + [cs[order - k - 1:n - k - 1] for k in range(order)]
-    )
+    x_full = np.column_stack([x_cond] + [cs[order - k - 1 : n - k - 1] for k in range(order)])
 
     def _sse(x, yy):
         reg = 1e-8 * np.eye(x.shape[1])
@@ -90,8 +93,9 @@ def conditional_granger_causality(source: np.ndarray, target: np.ndarray,
     return float(np.log(max(sse_c, 1e-30) / max(sse_f, 1e-30)))
 
 
-def spectral_granger_causality(trains: list[np.ndarray], bin_size: int = 10,
-                                order: int = 5, n_freqs: int = 64) -> np.ndarray:
+def spectral_granger_causality(
+    trains: list[np.ndarray], bin_size: int = 10, order: int = 5, n_freqs: int = 64
+) -> np.ndarray:
     """Spectral Granger causality. Geweke 1982.
 
     Returns (n_neurons x n_neurons x n_freqs) array of frequency-domain GC values.
@@ -104,7 +108,7 @@ def spectral_granger_causality(trains: list[np.ndarray], bin_size: int = 10,
     for fi, f in enumerate(freqs):
         a_f = np.eye(d, dtype=complex)
         for k in range(order):
-            coeff_block = beta[k * d:(k + 1) * d, :].T
+            coeff_block = beta[k * d : (k + 1) * d, :].T
             a_f -= coeff_block * np.exp(-2j * np.pi * f * (k + 1))
         det_a = np.linalg.det(a_f)
         if abs(det_a) < 1e-30:
@@ -116,12 +120,18 @@ def spectral_granger_causality(trains: list[np.ndarray], bin_size: int = 10,
                 if i == j:
                     continue
                 if abs(s[i, i]) > 1e-30:
-                    gc[i, j, fi] = max(0.0, np.log(abs(s[i, i]) / abs(s[i, i] - sigma[j, j] * abs(h[i, j]) ** 2 + 1e-30)).real)
+                    gc[i, j, fi] = max(
+                        0.0,
+                        np.log(
+                            abs(s[i, i]) / abs(s[i, i] - sigma[j, j] * abs(h[i, j]) ** 2 + 1e-30)
+                        ).real,
+                    )
     return gc
 
 
-def partial_directed_coherence(trains: list[np.ndarray], bin_size: int = 10,
-                                order: int = 5, n_freqs: int = 64) -> np.ndarray:
+def partial_directed_coherence(
+    trains: list[np.ndarray], bin_size: int = 10, order: int = 5, n_freqs: int = 64
+) -> np.ndarray:
     """Partial directed coherence (PDC). Baccala & Sameshima 2001.
 
     Returns (n_neurons x n_neurons x n_freqs) normalized PDC values.
@@ -134,7 +144,7 @@ def partial_directed_coherence(trains: list[np.ndarray], bin_size: int = 10,
     for fi, f in enumerate(freqs):
         a_f = np.eye(d, dtype=complex)
         for k in range(order):
-            coeff_block = beta[k * d:(k + 1) * d, :].T
+            coeff_block = beta[k * d : (k + 1) * d, :].T
             a_f -= coeff_block * np.exp(-2j * np.pi * f * (k + 1))
         for j in range(d):
             norm = np.sqrt(np.sum(np.abs(a_f[:, j]) ** 2))
@@ -144,8 +154,9 @@ def partial_directed_coherence(trains: list[np.ndarray], bin_size: int = 10,
     return pdc
 
 
-def directed_transfer_function(trains: list[np.ndarray], bin_size: int = 10,
-                                order: int = 5, n_freqs: int = 64) -> np.ndarray:
+def directed_transfer_function(
+    trains: list[np.ndarray], bin_size: int = 10, order: int = 5, n_freqs: int = 64
+) -> np.ndarray:
     """Directed transfer function (DTF). Kaminski & Blinowska 1991.
 
     Returns (n_neurons x n_neurons x n_freqs) normalized DTF values.
@@ -158,7 +169,7 @@ def directed_transfer_function(trains: list[np.ndarray], bin_size: int = 10,
     for fi, f in enumerate(freqs):
         a_f = np.eye(d, dtype=complex)
         for k in range(order):
-            coeff_block = beta[k * d:(k + 1) * d, :].T
+            coeff_block = beta[k * d : (k + 1) * d, :].T
             a_f -= coeff_block * np.exp(-2j * np.pi * f * (k + 1))
         det_a = np.linalg.det(a_f)
         if abs(det_a) < 1e-30:

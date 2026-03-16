@@ -65,7 +65,9 @@ def isi_distance(train_a: np.ndarray, train_b: np.ndarray, dt: float = 0.001) ->
     return float(np.abs(ratios).mean())
 
 
-def spike_distance(times_a: np.ndarray, times_b: np.ndarray, t_start: float = 0.0, t_end: float = 1.0) -> float:
+def spike_distance(
+    times_a: np.ndarray, times_b: np.ndarray, t_start: float = 0.0, t_end: float = 1.0
+) -> float:
     """SPIKE-distance. Kreuz et al. 2013.
 
     Time-resolved distance based on nearest-neighbour spike differences.
@@ -106,7 +108,9 @@ def _local_isi(times: np.ndarray, idx: int) -> float:
     return min(times[idx] - times[idx - 1], times[idx + 1] - times[idx])
 
 
-def spike_sync(times_a: np.ndarray, times_b: np.ndarray, t_start: float = 0.0, t_end: float = 1.0) -> float:
+def spike_sync(
+    times_a: np.ndarray, times_b: np.ndarray, t_start: float = 0.0, t_end: float = 1.0
+) -> float:
     """SPIKE-synchronization. Kreuz et al. 2015.
 
     Coincidence-based measure, normalized to [0, 1].
@@ -138,8 +142,13 @@ def spike_sync(times_a: np.ndarray, times_b: np.ndarray, t_start: float = 0.0, t
     return float(total_coincidences / total_possible)
 
 
-def spike_sync_profile(times_a: np.ndarray, times_b: np.ndarray, n_bins: int = 50,
-                        t_start: float = 0.0, t_end: float = 1.0) -> np.ndarray:
+def spike_sync_profile(
+    times_a: np.ndarray,
+    times_b: np.ndarray,
+    n_bins: int = 50,
+    t_start: float = 0.0,
+    t_end: float = 1.0,
+) -> np.ndarray:
     """Binned SPIKE-synchronization profile. Kreuz et al. 2015."""
     edges = np.linspace(t_start, t_end, n_bins + 1)
     profile = np.zeros(n_bins)
@@ -153,8 +162,13 @@ def spike_sync_profile(times_a: np.ndarray, times_b: np.ndarray, n_bins: int = 5
     return profile
 
 
-def spike_profile(times_a: np.ndarray, times_b: np.ndarray, n_bins: int = 50,
-                  t_start: float = 0.0, t_end: float = 1.0) -> np.ndarray:
+def spike_profile(
+    times_a: np.ndarray,
+    times_b: np.ndarray,
+    n_bins: int = 50,
+    t_start: float = 0.0,
+    t_end: float = 1.0,
+) -> np.ndarray:
     """Binned SPIKE-distance profile. Kreuz et al. 2013."""
     edges = np.linspace(t_start, t_end, n_bins + 1)
     profile = np.zeros(n_bins)
@@ -167,8 +181,9 @@ def spike_profile(times_a: np.ndarray, times_b: np.ndarray, n_bins: int = 50,
     return profile
 
 
-def isi_profile(binary_train_a: np.ndarray, binary_train_b: np.ndarray,
-                dt: float = 0.001, n_bins: int = 50) -> np.ndarray:
+def isi_profile(
+    binary_train_a: np.ndarray, binary_train_b: np.ndarray, dt: float = 0.001, n_bins: int = 50
+) -> np.ndarray:
     """Binned ISI-distance profile. Kreuz et al. 2007."""
     n = min(binary_train_a.size, binary_train_b.size)
     bin_size = max(1, n // n_bins)
@@ -182,8 +197,13 @@ def isi_profile(binary_train_a: np.ndarray, binary_train_b: np.ndarray,
     return profile
 
 
-def adaptive_spike_distance(times_a: np.ndarray, times_b: np.ndarray,
-                            t_start: float = 0.0, t_end: float = 1.0, cost: float = 0.0) -> float:
+def adaptive_spike_distance(
+    times_a: np.ndarray,
+    times_b: np.ndarray,
+    t_start: float = 0.0,
+    t_end: float = 1.0,
+    cost: float = 0.0,
+) -> float:
     """Adaptive SPIKE-distance with cost parameter interpolating ISI and SPIKE. Kreuz et al. 2013.
 
     cost=0: pure SPIKE-distance. cost=1: ISI-like weighting.
@@ -199,8 +219,9 @@ def adaptive_spike_distance(times_a: np.ndarray, times_b: np.ndarray,
     return float((1.0 - cost) * sd + cost * ratio)
 
 
-def schreiber_similarity(train_a: np.ndarray, train_b: np.ndarray,
-                         dt: float = 0.001, sigma_ms: float = 5.0) -> float:
+def schreiber_similarity(
+    train_a: np.ndarray, train_b: np.ndarray, dt: float = 0.001, sigma_ms: float = 5.0
+) -> float:
     """Schreiber et al. 2003 -- spike train similarity via smoothed correlation.
 
     Convolves each train with Gaussian kernel, returns Pearson correlation.
@@ -211,14 +232,15 @@ def schreiber_similarity(train_a: np.ndarray, train_b: np.ndarray,
     ra, rb = ra[:n], rb[:n]
     ra -= ra.mean()
     rb -= rb.mean()
-    denom = np.sqrt(np.sum(ra ** 2) * np.sum(rb ** 2))
+    denom = np.sqrt(np.sum(ra**2) * np.sum(rb**2))
     if denom == 0:
         return 0.0
     return float(np.sum(ra * rb) / denom)
 
 
-def hunter_milton_similarity(times_a: np.ndarray, times_b: np.ndarray,
-                             dt_max: float = 0.01) -> float:
+def hunter_milton_similarity(
+    times_a: np.ndarray, times_b: np.ndarray, dt_max: float = 0.01
+) -> float:
     """Hunter-Milton 2003 similarity. Fraction of spikes with nearest-neighbour < dt_max."""
     if times_a.size == 0 or times_b.size == 0:
         return 0.0
@@ -233,8 +255,13 @@ def hunter_milton_similarity(times_a: np.ndarray, times_b: np.ndarray,
     return float(count / total)
 
 
-def earth_movers_distance(times_a: np.ndarray, times_b: np.ndarray,
-                          t_start: float = 0.0, t_end: float = 1.0, n_bins: int = 100) -> float:
+def earth_movers_distance(
+    times_a: np.ndarray,
+    times_b: np.ndarray,
+    t_start: float = 0.0,
+    t_end: float = 1.0,
+    n_bins: int = 100,
+) -> float:
     """Earth mover's distance between spike time distributions. Rubner et al. 1998."""
     edges = np.linspace(t_start, t_end, n_bins + 1)
     ha = np.histogram(times_a, bins=edges)[0].astype(np.float64)
@@ -248,7 +275,9 @@ def earth_movers_distance(times_a: np.ndarray, times_b: np.ndarray,
     return float(np.sum(np.abs(np.cumsum(ha) - np.cumsum(hb))) * (t_end - t_start) / n_bins)
 
 
-def multi_neuron_victor_purpura(spike_times_list: list[np.ndarray], cost_per_s: float = 1000.0) -> np.ndarray:
+def multi_neuron_victor_purpura(
+    spike_times_list: list[np.ndarray], cost_per_s: float = 1000.0
+) -> np.ndarray:
     """All-pairs Victor-Purpura distance matrix for multiple neurons."""
     n = len(spike_times_list)
     mat = np.zeros((n, n))
@@ -259,16 +288,17 @@ def multi_neuron_victor_purpura(spike_times_list: list[np.ndarray], cost_per_s: 
     return mat
 
 
-def generalized_victor_purpura(times_a: np.ndarray, times_b: np.ndarray,
-                                cost_func=None) -> float:
+def generalized_victor_purpura(times_a: np.ndarray, times_b: np.ndarray, cost_func=None) -> float:
     """Generalized Victor-Purpura with arbitrary cost function. Victor & Purpura 1997.
 
     cost_func(dt) returns the cost of shifting a spike by dt seconds.
     Default: linear cost q*|dt| with q=1000.
     """
     if cost_func is None:
+
         def cost_func(delta_t):
             return 1000.0 * abs(delta_t)
+
     na, nb = len(times_a), len(times_b)
     if na == 0:
         return float(nb)
@@ -286,9 +316,12 @@ def generalized_victor_purpura(times_a: np.ndarray, times_b: np.ndarray,
     return float(d[na, nb])
 
 
-def spike_distance_matrix(spike_times_list: list[np.ndarray],
-                          metric: str = "spike_distance",
-                          t_start: float = 0.0, t_end: float = 1.0) -> np.ndarray:
+def spike_distance_matrix(
+    spike_times_list: list[np.ndarray],
+    metric: str = "spike_distance",
+    t_start: float = 0.0,
+    t_end: float = 1.0,
+) -> np.ndarray:
     """All-pairs spike train distance matrix.
 
     metric: 'spike_distance', 'spike_sync', 'victor_purpura'.
