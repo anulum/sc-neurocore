@@ -3,6 +3,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Benchmark L1-L16 holonomic adapters: latency, memory, thr...
 
 """Benchmark L1-L16 holonomic adapters: latency, memory, throughput."""
 

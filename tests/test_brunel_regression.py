@@ -3,6 +3,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Regression and consistency tests derived from the 20-vari...
 
 """Regression and consistency tests derived from the 20-variant Brunel benchmark results.
 

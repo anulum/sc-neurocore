@@ -3,6 +3,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Pillow et al. 2008 — generalized linear model (point-proc...
 
 from __future__ import annotations
 

@@ -3,6 +3,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Bellec et al. 2020 — ALIF with eligibility traces for e-prop
 
 from __future__ import annotations
 

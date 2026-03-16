@@ -3,6 +3,7 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
+// SC-NeuroCore — Scalar fallback for RISC-V Vector (RVV) targets
 
 //! Scalar fallback for RISC-V Vector (RVV) targets.
 //! Hardware RVV intrinsics are not yet implemented; all operations

@@ -3,6 +3,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Datasets Package Init
 
 from .encoding import latency_encode, poisson_encode
 from .loaders import load_dvs_cifar10, load_nmnist, load_shd

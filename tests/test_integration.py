@@ -3,6 +3,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Test Source -> Neuron -> Recorder chain
 
 from sc_neurocore.sources.bitstream_current_source import BitstreamCurrentSource
 from sc_neurocore.neurons.stochastic_lif import StochasticLIFNeuron

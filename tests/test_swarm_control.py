@@ -3,6 +3,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Tests for Neuromorphic Swarm Control (UC4) — 50 tests
 
 """Tests for Neuromorphic Swarm Control (UC4) — 50 tests."""
 
