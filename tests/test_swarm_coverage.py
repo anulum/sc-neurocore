@@ -3,7 +3,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Coverage tests for swarm.swarm_env, swarm.collective_fiel...
+# SC-NeuroCore — Coverage tests for swarm.swarm_env, swarm.collective_fields
 
 """Coverage tests for swarm.swarm_env, swarm.collective_fields, swarm.fitness."""
 
