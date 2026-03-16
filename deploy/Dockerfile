@@ -21,6 +21,8 @@ WORKDIR /build
 COPY requirements/maturin.txt ./requirements/maturin.txt
 RUN pip install --no-cache-dir --require-hashes -r requirements/maturin.txt
 
+# Root Cargo.toml is a workspace manifest; Cargo.lock pins deps.
+# bridge/pyproject.toml references engine/Cargo.toml via manifest-path.
 COPY Cargo.toml Cargo.lock ./
 COPY engine/ ./engine/
 COPY bridge/ ./bridge/

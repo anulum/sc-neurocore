@@ -26,7 +26,6 @@ plugins:
 
 nav:
   - Home: index.md
-  - Pricing: pricing.md
   - Learning Path: LEARNING_PATH.md
   - Competitive Landscape: COMPETITIVE_LANDSCAPE.md
   - Guides:
@@ -76,6 +75,7 @@ nav:
   - API Reference:
       - Full Reference: api/API_REFERENCE.md
       - Core:
+          - Neuron Model Catalogue: api/neuron_models.md
           - Neurons: api/neurons.md
           - Synapses: api/synapses.md
           - Layers: api/layers.md
@@ -113,6 +113,9 @@ nav:
           - Sleep: api/sleep.md
           - Spatial: api/spatial.md
           - World Model: api/world_model.md
+      - Safety:
+          - FMEA: api/../safety/FMEA_SNN_COMPILER.md
+          - Traceability: api/../safety/TRACEABILITY_MATRIX.md
       - Infrastructure:
           - Hardware: api/hardware.md
           - Security: api/security.md
