@@ -454,3 +454,291 @@ def population_rate(
     for t in trains:
         total += t[:min_len].astype(np.float64)
     return instantaneous_rate(total, dt=dt, kernel="gaussian", sigma_ms=sigma_ms)
+
+
+# ── Surrogate generation (significance testing) ───────────────────
+
+
+def surrogate_isi_shuffle(
+    binary_train: np.ndarray, seed: int = 0
+) -> np.ndarray:
+    """Generate surrogate by shuffling ISIs. Preserves rate + ISI distribution."""
+    intervals = np.diff(np.where(binary_train > 0)[0])
+    if intervals.size < 2:
+        return binary_train.copy()
+    rng = np.random.default_rng(seed)
+    rng.shuffle(intervals)
+    out = np.zeros_like(binary_train)
+    idx = np.where(binary_train > 0)[0][0]
+    out[idx] = 1
+    for gap in intervals:
+        idx += gap
+        if idx < out.size:
+            out[idx] = 1
+    return out
+
+
+def surrogate_dither(
+    binary_train: np.ndarray, dither_ms: float = 5.0, dt: float = 0.001, seed: int = 0
+) -> np.ndarray:
+    """Generate surrogate by jittering each spike time ±dither_ms."""
+    rng = np.random.default_rng(seed)
+    dither_steps = int(dither_ms / (dt * 1000))
+    times = np.where(binary_train > 0)[0]
+    out = np.zeros_like(binary_train)
+    for t in times:
+        jittered = t + rng.integers(-dither_steps, dither_steps + 1)
+        jittered = np.clip(jittered, 0, out.size - 1)
+        out[jittered] = 1
+    return out
+
+
+def surrogate_trial_shuffle(
+    trains: list[np.ndarray], seed: int = 0
+) -> list[np.ndarray]:
+    """Shuffle trial order. Destroys trial-to-trial correlation."""
+    rng = np.random.default_rng(seed)
+    idx = rng.permutation(len(trains))
+    return [trains[i] for i in idx]
+
+
+# ── Information theory ────────────────────────────────────────────
+
+
+def mutual_information(
+    train_a: np.ndarray, train_b: np.ndarray, bin_size: int = 10
+) -> float:
+    """Mutual information between two binned spike trains (bits).
+
+    MI = H(A) + H(B) - H(A,B) using binned spike counts.
+    """
+    ca = bin_spike_train(train_a, bin_size)
+    cb = bin_spike_train(train_b, bin_size)
+    n = min(ca.size, cb.size)
+    ca, cb = ca[:n], cb[:n]
+
+    def _entropy(x):
+        vals, counts = np.unique(x, return_counts=True)
+        p = counts / counts.sum()
+        return float(-np.sum(p * np.log2(p + 1e-30)))
+
+    ha = _entropy(ca)
+    hb = _entropy(cb)
+    joint = ca * (cb.max() + 1) + cb
+    hab = _entropy(joint)
+    return max(0.0, ha + hb - hab)
+
+
+def transfer_entropy(
+    source: np.ndarray, target: np.ndarray, bin_size: int = 10, lag: int = 1
+) -> float:
+    """Transfer entropy from source to target spike train (bits).
+
+    TE = H(target_future | target_past) - H(target_future | target_past, source_past)
+    """
+    cs = bin_spike_train(source, bin_size)
+    ct = bin_spike_train(target, bin_size)
+    n = min(cs.size, ct.size)
+    if n <= lag:
+        return 0.0
+    cs, ct = cs[:n], ct[:n]
+    t_past = ct[:-lag]
+    t_future = ct[lag:]
+    s_past = cs[:-lag]
+    n_pts = t_past.size
+
+    def _cond_entropy(future, *pasts):
+        joint = future.copy()
+        for p in pasts:
+            joint = joint * (p.max() + 1) + p
+        vals, counts = np.unique(joint, return_counts=True)
+        h_joint = -np.sum(counts / n_pts * np.log2(counts / n_pts + 1e-30))
+        past_joint = pasts[0].copy()
+        for p in pasts[1:]:
+            past_joint = past_joint * (p.max() + 1) + p
+        vals2, counts2 = np.unique(past_joint, return_counts=True)
+        h_past = -np.sum(counts2 / n_pts * np.log2(counts2 / n_pts + 1e-30))
+        return h_joint - h_past
+
+    h1 = _cond_entropy(t_future, t_past)
+    h2 = _cond_entropy(t_future, t_past, s_past)
+    return max(0.0, float(h1 - h2))
+
+
+# ── LFP coupling ─────────────────────────────────────────────────
+
+
+def phase_locking_value(
+    binary_train: np.ndarray, lfp_signal: np.ndarray
+) -> float:
+    """Phase locking value (PLV) between spikes and LFP phase.
+
+    Extracts instantaneous phase of LFP via Hilbert transform,
+    then computes PLV = |mean(exp(j*phase_at_spikes))|.
+    """
+    n = min(binary_train.size, lfp_signal.size)
+    analytic = np.fft.ifft(
+        np.fft.fft(lfp_signal[:n].astype(np.float64))
+        * 2 * (np.arange(n) > 0).astype(np.float64)
+    )
+    phase = np.angle(analytic)
+    spike_idx = np.where(binary_train[:n] > 0)[0]
+    if spike_idx.size == 0:
+        return 0.0
+    return float(np.abs(np.mean(np.exp(1j * phase[spike_idx]))))
+
+
+def spike_field_coherence(
+    binary_train: np.ndarray, lfp_signal: np.ndarray, dt: float = 0.001
+) -> tuple[np.ndarray, np.ndarray]:
+    """Spike-field coherence (SFC) between binary train and LFP.
+
+    Returns (coherence, freqs_hz). SFC = |S_xy|^2 / (S_xx * S_yy).
+    """
+    n = min(binary_train.size, lfp_signal.size)
+    if n < 2:
+        return np.array([]), np.array([])
+    a = binary_train[:n].astype(np.float64) - binary_train[:n].mean()
+    b = lfp_signal[:n].astype(np.float64) - lfp_signal[:n].mean()
+    fa, fb = np.fft.rfft(a), np.fft.rfft(b)
+    sab = fa * np.conj(fb)
+    saa = np.abs(fa) ** 2
+    sbb = np.abs(fb) ** 2
+    denom = saa * sbb
+    denom[denom == 0] = 1e-30
+    sfc = np.abs(sab) ** 2 / denom
+    return sfc, np.fft.rfftfreq(n, d=dt)
+
+
+def spike_phase_histogram(
+    binary_train: np.ndarray, lfp_signal: np.ndarray, n_bins: int = 36
+) -> tuple[np.ndarray, np.ndarray]:
+    """Histogram of LFP phase at spike times.
+
+    Returns (counts, bin_centers_rad) with bins spanning [-pi, pi].
+    """
+    n = min(binary_train.size, lfp_signal.size)
+    analytic = np.fft.ifft(
+        np.fft.fft(lfp_signal[:n].astype(np.float64))
+        * 2 * (np.arange(n) > 0).astype(np.float64)
+    )
+    phase = np.angle(analytic)
+    spike_phases = phase[binary_train[:n] > 0]
+    edges = np.linspace(-np.pi, np.pi, n_bins + 1)
+    hist, _ = np.histogram(spike_phases, bins=edges)
+    centers = (edges[:-1] + edges[1:]) / 2
+    return hist, centers
+
+
+# ── Dimensionality reduction ─────────────────────────────────────
+
+
+def spike_train_pca(
+    trains: list[np.ndarray], n_components: int = 3, bin_size: int = 10
+) -> tuple[np.ndarray, np.ndarray]:
+    """PCA on binned spike count matrix (neurons x time_bins).
+
+    Returns (projected, explained_variance_ratio).
+    """
+    if not trains:
+        return np.array([[]]), np.array([])
+    binned = np.array([bin_spike_train(t, bin_size).astype(np.float64) for t in trains])
+    min_bins = min(b.size for b in binned)
+    mat = np.array([b[:min_bins] for b in binned])
+    mat -= mat.mean(axis=1, keepdims=True)
+    cov = np.cov(mat)
+    if cov.ndim < 2:
+        return mat[:1], np.array([1.0])
+    eigvals, eigvecs = np.linalg.eigh(cov)
+    idx = np.argsort(eigvals)[::-1][:n_components]
+    components = eigvecs[:, idx]
+    projected = components.T @ mat
+    total_var = eigvals.sum()
+    explained = eigvals[idx] / total_var if total_var > 0 else eigvals[idx]
+    return projected, explained
+
+
+# ── Decoding ──────────────────────────────────────────────────────
+
+
+def population_vector_decode(
+    trains: list[np.ndarray],
+    preferred_directions: np.ndarray,
+    window: int = 50,
+) -> np.ndarray:
+    """Georgopoulos population vector decoding.
+
+    Each neuron i has a preferred direction (angle in radians).
+    Decoded direction per time bin = weighted sum of preferred directions.
+    Returns decoded angles per time bin.
+    """
+    if not trains:
+        return np.array([])
+    min_len = min(t.size for t in trains)
+    n_bins = min_len // window
+    if n_bins == 0:
+        return np.array([])
+    decoded = np.zeros(n_bins)
+    for b in range(n_bins):
+        sx, sy = 0.0, 0.0
+        for i, t in enumerate(trains):
+            count = t[b * window : (b + 1) * window].sum()
+            sx += count * np.cos(preferred_directions[i])
+            sy += count * np.sin(preferred_directions[i])
+        decoded[b] = np.arctan2(sy, sx)
+    return decoded
+
+
+# ── Network inference ─────────────────────────────────────────────
+
+
+def functional_connectivity(
+    trains: list[np.ndarray], max_lag_ms: float = 20.0, dt: float = 0.001
+) -> np.ndarray:
+    """Infer functional connectivity matrix from peak cross-correlation.
+
+    Returns NxN matrix where entry (i,j) is max |cross-correlation|
+    between neuron i and neuron j within ±max_lag.
+    """
+    n = len(trains)
+    mat = np.zeros((n, n))
+    for i in range(n):
+        for j in range(i, n):
+            if i == j:
+                mat[i, j] = 1.0
+                continue
+            cc, _ = cross_correlation(trains[i], trains[j], max_lag_ms=max_lag_ms, dt=dt)
+            peak = np.abs(cc).max() if cc.size > 0 else 0.0
+            mat[i, j] = mat[j, i] = peak
+    return mat
+
+
+# ── Statistical testing ───────────────────────────────────────────
+
+
+def significance_bootstrap(
+    statistic_func,
+    train_a: np.ndarray,
+    train_b: np.ndarray,
+    n_surrogates: int = 200,
+    seed: int = 42,
+) -> tuple[float, float]:
+    """Bootstrap significance test for a pairwise statistic.
+
+    Returns (observed_value, p_value).
+    statistic_func(a, b) -> float.
+    """
+    observed = statistic_func(train_a, train_b)
+    rng = np.random.default_rng(seed)
+    combined = np.concatenate([train_a, train_b])
+    n_a = train_a.size
+    count_extreme = 0
+    for _ in range(n_surrogates):
+        perm = rng.permutation(combined.size)
+        surr_a = combined[perm[:n_a]]
+        surr_b = combined[perm[n_a:]]
+        surr_val = statistic_func(surr_a, surr_b)
+        if abs(surr_val) >= abs(observed):
+            count_extreme += 1
+    p_value = (count_extreme + 1) / (n_surrogates + 1)
+    return float(observed), float(p_value)

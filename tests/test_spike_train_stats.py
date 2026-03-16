@@ -31,6 +31,18 @@ from sc_neurocore.analysis.spike_train_stats import (
     spike_triggered_average,
     bin_spike_train,
     population_rate,
+    surrogate_isi_shuffle,
+    surrogate_dither,
+    surrogate_trial_shuffle,
+    mutual_information,
+    transfer_entropy,
+    phase_locking_value,
+    spike_field_coherence,
+    spike_phase_histogram,
+    spike_train_pca,
+    population_vector_decode,
+    functional_connectivity,
+    significance_bootstrap,
 )
 
 
@@ -340,3 +352,130 @@ class TestPopulationRate:
 
     def test_empty(self):
         assert population_rate([]).size == 0
+
+
+class TestSurrogateISIShuffle:
+    def test_preserves_count(self):
+        train = _poisson_train(100.0, 0.5)
+        surr = surrogate_isi_shuffle(train, seed=1)
+        assert abs(surr.sum() - train.sum()) <= 1
+
+    def test_different_order(self):
+        train = _poisson_train(100.0, 1.0)
+        surr = surrogate_isi_shuffle(train, seed=7)
+        assert not np.array_equal(train, surr)
+
+
+class TestSurrogateDither:
+    def test_preserves_count(self):
+        train = _poisson_train(50.0, 0.5)
+        surr = surrogate_dither(train, dither_ms=3.0, seed=1)
+        assert abs(int(surr.sum()) - int(train.sum())) <= 5
+
+
+class TestSurrogateTrialShuffle:
+    def test_preserves_trials(self):
+        trains = [_poisson_train(50.0, 0.2, seed=i) for i in range(5)]
+        shuffled = surrogate_trial_shuffle(trains, seed=1)
+        assert len(shuffled) == 5
+        sums_orig = sorted(t.sum() for t in trains)
+        sums_shuf = sorted(t.sum() for t in shuffled)
+        assert sums_orig == sums_shuf
+
+
+class TestMutualInformation:
+    def test_self_positive(self):
+        train = _poisson_train(100.0, 1.0)
+        mi = mutual_information(train, train, bin_size=20)
+        assert mi > 0
+
+    def test_independent_low(self):
+        a = _poisson_train(50.0, 1.0, seed=1)
+        b = _poisson_train(50.0, 1.0, seed=99)
+        mi = mutual_information(a, b, bin_size=20)
+        mi_self = mutual_information(a, a, bin_size=20)
+        assert mi < mi_self
+
+
+class TestTransferEntropy:
+    def test_nonnegative(self):
+        a = _poisson_train(100.0, 1.0, seed=1)
+        b = _poisson_train(100.0, 1.0, seed=2)
+        te = transfer_entropy(a, b, bin_size=20)
+        assert te >= 0
+
+
+class TestPhaseLockingValue:
+    def test_locked(self):
+        lfp = np.sin(2 * np.pi * 10 * np.arange(10000) * 0.001)
+        train = np.zeros(10000, dtype=np.uint8)
+        peaks = np.where(lfp > 0.99)[0]
+        train[peaks] = 1
+        plv = phase_locking_value(train, lfp)
+        assert plv > 0.5
+
+    def test_random_low(self):
+        lfp = np.sin(2 * np.pi * 10 * np.arange(5000) * 0.001)
+        train = _poisson_train(50.0, 5.0)[:5000]
+        plv = phase_locking_value(train, lfp)
+        assert plv < 0.5
+
+
+class TestSpikeFieldCoherence:
+    def test_shape(self):
+        train = _poisson_train(100.0, 0.5)
+        lfp = np.sin(2 * np.pi * 40 * np.arange(train.size) * 0.001)
+        sfc, freqs = spike_field_coherence(train, lfp)
+        assert sfc.size == freqs.size
+        assert sfc.size > 0
+
+
+class TestSpikePhaseHistogram:
+    def test_shape(self):
+        lfp = np.sin(2 * np.pi * 10 * np.arange(5000) * 0.001)
+        train = _poisson_train(100.0, 5.0)[:5000]
+        hist, centers = spike_phase_histogram(train, lfp, n_bins=18)
+        assert hist.size == 18
+        assert centers.size == 18
+
+
+class TestSpikeTrainPCA:
+    def test_shape(self):
+        trains = [_poisson_train(50.0 + i * 10, 0.5, seed=i) for i in range(8)]
+        proj, var = spike_train_pca(trains, n_components=3)
+        assert proj.shape[0] == 3
+        assert var.size == 3
+        assert np.all(var >= 0)
+
+
+class TestPopulationVectorDecode:
+    def test_shape(self):
+        trains = [_poisson_train(50.0, 0.5, seed=i) for i in range(4)]
+        dirs = np.array([0, np.pi / 2, np.pi, 3 * np.pi / 2])
+        decoded = population_vector_decode(trains, dirs, window=50)
+        assert decoded.size > 0
+
+    def test_empty(self):
+        assert population_vector_decode([], np.array([])).size == 0
+
+
+class TestFunctionalConnectivity:
+    def test_symmetric(self):
+        trains = [_poisson_train(50.0, 0.5, seed=i) for i in range(4)]
+        mat = functional_connectivity(trains, max_lag_ms=10.0)
+        np.testing.assert_allclose(mat, mat.T, atol=1e-12)
+        assert mat.shape == (4, 4)
+        np.testing.assert_allclose(np.diag(mat), 1.0)
+
+
+class TestSignificanceBootstrap:
+    def test_returns_pvalue(self):
+        a = _poisson_train(100.0, 0.5, seed=1)
+        b = _poisson_train(100.0, 0.5, seed=2)
+
+        def stat(x, y):
+            return abs(x.mean() - y.mean())
+
+        obs, pval = significance_bootstrap(stat, a, b, n_surrogates=50, seed=42)
+        assert 0.0 <= pval <= 1.0
+        assert obs >= 0
