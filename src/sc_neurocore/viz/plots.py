@@ -12,9 +12,7 @@ from __future__ import annotations
 import numpy as np
 
 try:
-    import matplotlib
     import matplotlib.pyplot as plt
-    from matplotlib.figure import Figure
 
     HAS_MPL = True
 except ImportError:  # pragma: no cover
