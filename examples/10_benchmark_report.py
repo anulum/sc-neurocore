@@ -15,7 +15,7 @@ show true kernel performance without FFI marshalling overhead.
 Usage:
     cd 03_CODE/sc-neurocore
     $env:PYTHONPATH='src'
-    .\\.venv\\Scripts\\python examples/03_benchmark_report.py
+    .\\.venv\\Scripts\\python examples/10_benchmark_report.py
 """
 
 from __future__ import annotations

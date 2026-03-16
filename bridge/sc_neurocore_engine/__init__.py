@@ -146,8 +146,10 @@ try:
         ExpIFNeuron,
         LapicqueNeuron,
     )
+
+    _neurons_available = True
 except ImportError:
-    pass
+    _neurons_available = False
 
 from .layers import VectorizedSCLayer
 from .neurons import FixedPointLIFNeuron
@@ -305,5 +307,5 @@ __all__ = [
     "HDCVector",
     "PetriNetEngine",
     "BrunelNetwork",
-    *_NEURON_MODELS,
+    *(_NEURON_MODELS if _neurons_available else []),
 ]

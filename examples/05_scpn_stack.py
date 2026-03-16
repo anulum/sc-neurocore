@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 #!/usr/bin/env python3
-"""Example 04: Full SCPN Layer Stack.
+"""Example 05: Full SCPN Layer Stack.
 
-Demonstrates the complete 7-layer SCPN consciousness model, from
-L1 (Quantum) through L7 (Symbolic), with inter-layer coupling.
+Demonstrates the complete 16-layer SCPN consciousness model, from
+L1 (Quantum) through L16 (Director), with inter-layer coupling.
 """
 
 from sc_neurocore.scpn import create_full_stack, run_integrated_step, get_global_metrics
@@ -14,7 +14,7 @@ def main():
 
     # Create the full stack with default parameters
     stack = create_full_stack()
-    print("Created 7-layer SCPN stack:")
+    print("Created 16-layer SCPN stack:")
     for name, layer in stack.items():
         print(f"  {name}: {layer.__class__.__name__}")
 

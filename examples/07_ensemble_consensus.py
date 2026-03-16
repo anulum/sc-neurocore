@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 #!/usr/bin/env python3
-"""Example 06: Ensemble Voting and Consensus.
+"""Example 07: Ensemble Voting and Consensus.
 
 Demonstrates multi-agent ensemble orchestration where multiple
 CognitiveOrchestrator agents vote on outputs via averaging.
