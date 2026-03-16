@@ -115,8 +115,8 @@ nav:
           - Spatial: api/spatial.md
           - World Model: api/world_model.md
       - Safety:
-          - FMEA: api/../safety/FMEA_SNN_COMPILER.md
-          - Traceability: api/../safety/TRACEABILITY_MATRIX.md
+          - FMEA: safety/FMEA_SNN_COMPILER.md
+          - Traceability: safety/TRACEABILITY_MATRIX.md
       - Infrastructure:
           - Hardware: api/hardware.md
           - Security: api/security.md

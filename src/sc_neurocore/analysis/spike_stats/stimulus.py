@@ -21,8 +21,9 @@ def spike_triggered_average(
     return snippets.mean(axis=0)
 
 
-def spike_triggered_covariance(stimulus: np.ndarray, binary_train: np.ndarray,
-                                window_steps: int = 50) -> np.ndarray:
+def spike_triggered_covariance(
+    stimulus: np.ndarray, binary_train: np.ndarray, window_steps: int = 50
+) -> np.ndarray:
     """Spike-triggered covariance (STC). Schwartz et al. 2006.
 
     Returns covariance matrix of stimulus snippets preceding spikes.
@@ -31,12 +32,13 @@ def spike_triggered_covariance(stimulus: np.ndarray, binary_train: np.ndarray,
     valid = times[times >= window_steps]
     if valid.size < 3:
         return np.eye(window_steps)
-    snippets = np.array([stimulus[t - window_steps:t].astype(np.float64) for t in valid])
+    snippets = np.array([stimulus[t - window_steps : t].astype(np.float64) for t in valid])
     return np.cov(snippets.T)
 
 
-def spatial_information(binary_train: np.ndarray, positions: np.ndarray,
-                        n_bins: int = 20, dt: float = 0.001) -> float:
+def spatial_information(
+    binary_train: np.ndarray, positions: np.ndarray, n_bins: int = 20, dt: float = 0.001
+) -> float:
     """Spatial information (bits/spike). Skaggs et al. 1993.
 
     positions: 1D array of position values (same length as binary_train).
@@ -71,9 +73,13 @@ def spatial_information(binary_train: np.ndarray, positions: np.ndarray,
     return float(max(0.0, si))
 
 
-def place_field_detection(binary_train: np.ndarray, positions: np.ndarray,
-                          n_bins: int = 50, threshold_std: float = 2.0,
-                          dt: float = 0.001) -> list[tuple[float, float]]:
+def place_field_detection(
+    binary_train: np.ndarray,
+    positions: np.ndarray,
+    n_bins: int = 50,
+    threshold_std: float = 2.0,
+    dt: float = 0.001,
+) -> list[tuple[float, float]]:
     """Detect place fields as contiguous bins with rate > mean + threshold_std * std. O'Keefe & Dostrovsky 1971.
 
     Returns list of (field_start, field_end) position values.
@@ -105,8 +111,9 @@ def place_field_detection(binary_train: np.ndarray, positions: np.ndarray,
     return fields
 
 
-def tuning_curve(binary_train: np.ndarray, stimulus_values: np.ndarray,
-                 n_bins: int = 20, dt: float = 0.001) -> tuple[np.ndarray, np.ndarray]:
+def tuning_curve(
+    binary_train: np.ndarray, stimulus_values: np.ndarray, n_bins: int = 20, dt: float = 0.001
+) -> tuple[np.ndarray, np.ndarray]:
     """Compute tuning curve: mean firing rate vs stimulus value. Dayan & Abbott 2001.
 
     Returns (mean_rates, bin_centers).

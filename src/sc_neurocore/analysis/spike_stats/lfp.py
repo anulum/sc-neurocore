@@ -6,9 +6,7 @@ from __future__ import annotations
 import numpy as np
 
 
-def phase_locking_value(
-    binary_train: np.ndarray, lfp_signal: np.ndarray
-) -> float:
+def phase_locking_value(binary_train: np.ndarray, lfp_signal: np.ndarray) -> float:
     """Phase locking value (PLV) between spikes and LFP phase.
 
     Extracts instantaneous phase of LFP via Hilbert transform,
@@ -16,8 +14,7 @@ def phase_locking_value(
     """
     n = min(binary_train.size, lfp_signal.size)
     analytic = np.fft.ifft(
-        np.fft.fft(lfp_signal[:n].astype(np.float64))
-        * 2 * (np.arange(n) > 0).astype(np.float64)
+        np.fft.fft(lfp_signal[:n].astype(np.float64)) * 2 * (np.arange(n) > 0).astype(np.float64)
     )
     phase = np.angle(analytic)
     spike_idx = np.where(binary_train[:n] > 0)[0]
@@ -57,8 +54,7 @@ def spike_phase_histogram(
     """
     n = min(binary_train.size, lfp_signal.size)
     analytic = np.fft.ifft(
-        np.fft.fft(lfp_signal[:n].astype(np.float64))
-        * 2 * (np.arange(n) > 0).astype(np.float64)
+        np.fft.fft(lfp_signal[:n].astype(np.float64)) * 2 * (np.arange(n) > 0).astype(np.float64)
     )
     phase = np.angle(analytic)
     spike_phases = phase[binary_train[:n] > 0]

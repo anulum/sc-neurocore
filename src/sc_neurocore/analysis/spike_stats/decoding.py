@@ -34,8 +34,9 @@ def population_vector_decode(
     return decoded
 
 
-def bayesian_decode(spike_counts: np.ndarray, tuning_rates: np.ndarray,
-                    prior: np.ndarray = None) -> int:
+def bayesian_decode(
+    spike_counts: np.ndarray, tuning_rates: np.ndarray, prior: np.ndarray = None
+) -> int:
     """Bayesian MAP decoder. Dayan & Abbott 2001.
 
     spike_counts: (n_neurons,) observed counts.
@@ -62,8 +63,9 @@ def maximum_likelihood_decode(spike_counts: np.ndarray, tuning_rates: np.ndarray
     return bayesian_decode(spike_counts, tuning_rates, prior=None)
 
 
-def linear_discriminant_decode(train_data: np.ndarray, labels: np.ndarray,
-                                test_point: np.ndarray) -> int:
+def linear_discriminant_decode(
+    train_data: np.ndarray, labels: np.ndarray, test_point: np.ndarray
+) -> int:
     """Fisher linear discriminant decoder. Fisher 1936.
 
     train_data: (n_samples, n_features). labels: (n_samples,). test_point: (n_features,).
@@ -94,8 +96,7 @@ def linear_discriminant_decode(train_data: np.ndarray, labels: np.ndarray,
     return int(best_class)
 
 
-def naive_bayes_decode(train_data: np.ndarray, labels: np.ndarray,
-                       test_point: np.ndarray) -> int:
+def naive_bayes_decode(train_data: np.ndarray, labels: np.ndarray, test_point: np.ndarray) -> int:
     """Gaussian naive Bayes decoder. Mitchell 1997.
 
     Assumes feature independence. Returns predicted class label.

@@ -20,7 +20,7 @@ def _gp_kernel(n_bins, tau, sigma=1.0):
     """Squared-exponential kernel matrix for *n_bins* time points."""
     t = np.arange(n_bins, dtype=np.float64)
     diff = t[:, None] - t[None, :]
-    return sigma ** 2 * np.exp(-0.5 * diff ** 2 / (tau ** 2 + 1e-12))
+    return sigma**2 * np.exp(-0.5 * diff**2 / (tau**2 + 1e-12))
 
 
 def _gpfa_e_step(Y, C, d, R, K_all):
@@ -57,9 +57,7 @@ def _gpfa_e_step(Y, C, d, R, K_all):
     prec = np.zeros((KT, KT))
     for j in range(n_latents):
         slj = slice(j * n_bins, (j + 1) * n_bins)
-        K_j_inv = np.linalg.solve(
-            K_all[j] + 1e-6 * np.eye(n_bins), np.eye(n_bins)
-        )
+        K_j_inv = np.linalg.solve(K_all[j] + 1e-6 * np.eye(n_bins), np.eye(n_bins))
         prec[slj, slj] = K_j_inv + CtRinvC[j, j] * np.eye(n_bins)
         for k in range(n_latents):
             if k != j:
@@ -152,7 +150,7 @@ def gpfa(trains, n_latents=3, bin_ms=20.0, dt=0.001, max_iter=50, tol=1e-4, seed
         Y_centered = Y - d[:, None]
         residual = Y_centered - C @ x_post
         R_diag = np.diag(R)
-        ll = -0.5 * np.sum(residual ** 2 / (R_diag[:, None] + 1e-10))
+        ll = -0.5 * np.sum(residual**2 / (R_diag[:, None] + 1e-10))
         ll -= 0.5 * n_bins * np.sum(np.log(R_diag + 1e-10))
         log_liks.append(float(ll))
 

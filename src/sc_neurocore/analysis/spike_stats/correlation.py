@@ -89,8 +89,9 @@ def spike_train_coherence(
     return coh, freqs
 
 
-def spike_time_tiling_coefficient(train_a: np.ndarray, train_b: np.ndarray,
-                                  dt_param: float = 0.001, delta_ms: float = 5.0) -> float:
+def spike_time_tiling_coefficient(
+    train_a: np.ndarray, train_b: np.ndarray, dt_param: float = 0.001, delta_ms: float = 5.0
+) -> float:
     """Spike Time Tiling Coefficient (STTC). Cutts & Eglen 2014.
 
     Corrects for firing rate bias unlike simple coincidence measures.
@@ -149,16 +150,18 @@ def covariance_matrix(trains: list[np.ndarray], bin_size: int = 10) -> np.ndarra
     return np.cov(mat) if mat.shape[0] > 1 else np.array([[mat.var()]])
 
 
-def autocorrelation_time(binary_train: np.ndarray, dt: float = 0.001, max_lag_ms: float = 100.0) -> float:
+def autocorrelation_time(
+    binary_train: np.ndarray, dt: float = 0.001, max_lag_ms: float = 100.0
+) -> float:
     """Autocorrelation time (seconds). Integral of normalized autocorrelation until first zero crossing."""
     max_lag = int(max_lag_ms / (dt * 1000))
     x = binary_train.astype(np.float64) - binary_train.mean()
-    var = np.sum(x ** 2)
+    var = np.sum(x**2)
     if var == 0:
         return 0.0
     tau = 0.0
     for lag in range(1, min(max_lag, x.size)):
-        ac = np.sum(x[:x.size - lag] * x[lag:]) / var
+        ac = np.sum(x[: x.size - lag] * x[lag:]) / var
         if ac < 0:
             break
         tau += ac * dt
@@ -198,8 +201,7 @@ def spike_count_covariance(trains: list[np.ndarray], window: int = 50) -> np.nda
     return covariance_matrix(trains, bin_size=window)
 
 
-def joint_psth(train_a: np.ndarray, train_b: np.ndarray,
-               bin_size: int = 10) -> np.ndarray:
+def joint_psth(train_a: np.ndarray, train_b: np.ndarray, bin_size: int = 10) -> np.ndarray:
     """Joint PSTH (JPSTH) matrix. Aertsen et al. 1989.
 
     Returns 2D histogram of binned spike counts (neuron_a x neuron_b).
@@ -213,8 +215,9 @@ def joint_psth(train_a: np.ndarray, train_b: np.ndarray,
     return np.outer(ca, cb) / n
 
 
-def coincidence_index(train_a: np.ndarray, train_b: np.ndarray,
-                      dt: float = 0.001, delta_ms: float = 2.0) -> float:
+def coincidence_index(
+    train_a: np.ndarray, train_b: np.ndarray, dt: float = 0.001, delta_ms: float = 2.0
+) -> float:
     """Coincidence index (kappa). Joris et al. 2006.
 
     Corrects raw coincidence count for expected coincidences from rate.

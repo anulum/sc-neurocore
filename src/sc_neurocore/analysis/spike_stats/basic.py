@@ -32,9 +32,7 @@ def spike_count(binary_train: np.ndarray) -> int:
     return int(np.sum(binary_train))
 
 
-def bin_spike_train(
-    binary_train: np.ndarray, bin_size: int = 10
-) -> np.ndarray:
+def bin_spike_train(binary_train: np.ndarray, bin_size: int = 10) -> np.ndarray:
     """Bin a binary spike train into spike counts per bin."""
     n = binary_train.size
     n_bins = n // bin_size

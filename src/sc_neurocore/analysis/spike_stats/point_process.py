@@ -8,8 +8,9 @@ import numpy as np
 from .basic import isi
 
 
-def conditional_intensity(binary_train: np.ndarray, dt: float = 0.001,
-                          window_ms: float = 50.0) -> np.ndarray:
+def conditional_intensity(
+    binary_train: np.ndarray, dt: float = 0.001, window_ms: float = 50.0
+) -> np.ndarray:
     """Conditional intensity function estimate (Hz). Brown et al. 2004.
 
     Moving-window MLE of the Poisson rate at each time step.
@@ -20,7 +21,9 @@ def conditional_intensity(binary_train: np.ndarray, dt: float = 0.001,
     return np.convolve(x, kernel, mode="same")
 
 
-def isi_hazard_function(binary_train: np.ndarray, dt: float = 0.001, bins: int = 30) -> tuple[np.ndarray, np.ndarray]:
+def isi_hazard_function(
+    binary_train: np.ndarray, dt: float = 0.001, bins: int = 30
+) -> tuple[np.ndarray, np.ndarray]:
     """ISI hazard function h(t) = f(t) / S(t). Tuckwell 1988.
 
     Returns (hazard, bin_centers) where hazard is the failure rate at each ISI duration.
@@ -37,7 +40,9 @@ def isi_hazard_function(binary_train: np.ndarray, dt: float = 0.001, bins: int =
     return hazard, centers
 
 
-def isi_survivor_function(binary_train: np.ndarray, dt: float = 0.001, bins: int = 30) -> tuple[np.ndarray, np.ndarray]:
+def isi_survivor_function(
+    binary_train: np.ndarray, dt: float = 0.001, bins: int = 30
+) -> tuple[np.ndarray, np.ndarray]:
     """ISI survivor function S(t) = P(ISI > t). Tuckwell 1988.
 
     Returns (survivor, bin_centers).
@@ -53,8 +58,9 @@ def isi_survivor_function(binary_train: np.ndarray, dt: float = 0.001, bins: int
     return survivor, centers
 
 
-def renewal_density(binary_train: np.ndarray, dt: float = 0.001,
-                    bins: int = 30) -> tuple[np.ndarray, np.ndarray]:
+def renewal_density(
+    binary_train: np.ndarray, dt: float = 0.001, bins: int = 30
+) -> tuple[np.ndarray, np.ndarray]:
     """Renewal density h(t) from ISI distribution. Cox 1962.
 
     Returns (density, bin_centers). Density normalized by mean rate.

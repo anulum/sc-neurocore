@@ -35,9 +35,7 @@ def burst_detection(
     return bursts
 
 
-def first_spike_latency(
-    binary_train: np.ndarray, dt: float = 0.001
-) -> float:
+def first_spike_latency(binary_train: np.ndarray, dt: float = 0.001) -> float:
     """Time to first spike (seconds). Returns nan if no spike."""
     idx = np.argmax(binary_train > 0)
     if binary_train[idx] == 0:
@@ -69,8 +67,9 @@ def response_onset(
     return float((baseline_steps + above[0]) * dt)
 
 
-def change_point_detection(binary_train: np.ndarray, bin_size: int = 50,
-                           threshold: float = 3.0) -> list[int]:
+def change_point_detection(
+    binary_train: np.ndarray, bin_size: int = 50, threshold: float = 3.0
+) -> list[int]:
     """CUSUM-based change point detection in firing rate. Page 1954.
 
     Returns list of bin indices where significant rate changes occur.

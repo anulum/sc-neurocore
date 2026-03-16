@@ -8,9 +8,7 @@ import numpy as np
 from .basic import bin_spike_train
 
 
-def mutual_information(
-    train_a: np.ndarray, train_b: np.ndarray, bin_size: int = 10
-) -> float:
+def mutual_information(train_a: np.ndarray, train_b: np.ndarray, bin_size: int = 10) -> float:
     """Mutual information between two binned spike trains (bits).
 
     MI = H(A) + H(B) - H(A,B) using binned spike counts.
@@ -68,7 +66,9 @@ def transfer_entropy(
     return max(0.0, float(h1 - h2))
 
 
-def spike_train_entropy(binary_train: np.ndarray, bin_size: int = 10, word_length: int = 4) -> float:
+def spike_train_entropy(
+    binary_train: np.ndarray, bin_size: int = 10, word_length: int = 4
+) -> float:
     """Spike train entropy via binary word analysis. Strong et al. 1998.
 
     Bins the train, constructs binary words of given length, computes Shannon entropy (bits).
@@ -89,8 +89,9 @@ def spike_train_entropy(binary_train: np.ndarray, bin_size: int = 10, word_lengt
     return float(-np.sum(p * np.log2(p + 1e-30)))
 
 
-def noise_entropy(binary_train: np.ndarray, n_trials: int = 10,
-                  bin_size: int = 10, word_length: int = 4) -> float:
+def noise_entropy(
+    binary_train: np.ndarray, n_trials: int = 10, bin_size: int = 10, word_length: int = 4
+) -> float:
     """Noise entropy estimate via splitting train into pseudo-trials. de Ruyter van Steveninck et al. 1997.
 
     Splits the train into n_trials segments, computes entropy per segment, averages.
@@ -101,7 +102,7 @@ def noise_entropy(binary_train: np.ndarray, n_trials: int = 10,
         return float("nan")
     entropies = []
     for t in range(n_trials):
-        seg = binary_train[t * trial_len:(t + 1) * trial_len]
+        seg = binary_train[t * trial_len : (t + 1) * trial_len]
         h = spike_train_entropy(seg, bin_size, word_length)
         if not np.isnan(h):
             entropies.append(h)
@@ -169,7 +170,9 @@ def kozachenko_leonenko_mi(x: np.ndarray, y: np.ndarray, k: int = 3) -> float:
     return float(max(0.0, psi_k + psi_n - nx_sum / n - ny_sum / n))
 
 
-def time_rescaling_ks_test(times: np.ndarray, rate_func, t_start: float = 0.0, t_end: float = 1.0) -> tuple[float, bool]:
+def time_rescaling_ks_test(
+    times: np.ndarray, rate_func, t_start: float = 0.0, t_end: float = 1.0
+) -> tuple[float, bool]:
     """Time-rescaling KS test for point process goodness-of-fit. Brown et al. 2002.
 
     rate_func(t) -> float: conditional intensity function.

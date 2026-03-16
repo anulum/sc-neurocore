@@ -114,11 +114,13 @@ def _extend_to_spatiotemporal(trains, itemsets, bin_ms, dt, max_lag_bins=10):
             best_count = int(coincidence.sum())
 
         if best_count > 0:
-            patterns.append({
-                "neurons": neuron_list,
-                "lags": [best_lags[n] for n in neuron_list],
-                "count": best_count,
-            })
+            patterns.append(
+                {
+                    "neurons": neuron_list,
+                    "lags": [best_lags[n] for n in neuron_list],
+                    "count": best_count,
+                }
+            )
 
     return patterns
 
@@ -193,11 +195,13 @@ def spade_detect(
 
         p_value = float((surr_counts >= pat["count"]).sum() + 1) / (n_surrogates + 1)
         if p_value <= alpha:
-            results.append({
-                "neurons": pat["neurons"],
-                "lags": pat["lags"],
-                "count": pat["count"],
-                "p_value": p_value,
-            })
+            results.append(
+                {
+                    "neurons": pat["neurons"],
+                    "lags": pat["lags"],
+                    "count": pat["count"],
+                    "p_value": p_value,
+                }
+            )
 
     return results
