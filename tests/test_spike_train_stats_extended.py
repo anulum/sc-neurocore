@@ -108,9 +108,7 @@ from sc_neurocore.analysis.spike_stats import (
     waveform_pt_ratio,
 )
 
-
 # ── Fixtures ─────────────────────────────────────────────────────
-
 
 @pytest.fixture()
 def regular_train():
@@ -695,4 +693,3 @@ class TestWaveform:
     def test_waveform_pt_ratio(self, waveform_fixture):
         r = waveform_pt_ratio(waveform_fixture)
         assert r > 0
-# end
