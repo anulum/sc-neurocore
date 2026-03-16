@@ -108,6 +108,7 @@ omit = [
     "*/quantum/hardware_bridge.py",
     "*/integrations/lava_bridge.py",
     "*/neurons/models/*",
+    "*/analysis/spike_stats/*",
 ]
 
 [tool.coverage.report]
