@@ -3,6 +3,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Simulates the Wolfram Physics Project Hypergraph
 
 from dataclasses import dataclass
 from typing import List, Tuple
