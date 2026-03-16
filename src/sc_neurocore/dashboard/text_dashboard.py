@@ -54,3 +54,4 @@ class SCDashboard:
         print("-" * 40)
         # In a real terminal, we would use 'curses' to overwrite.
         # Here we just append.
+
