@@ -14,7 +14,7 @@ computation with surrogate-gradient-based weight updates.
 Usage:
     cd 03_CODE/sc-neurocore
     $env:PYTHONPATH='src'
-    .\\.venv\\Scripts\\python examples/01_sc_training_demo.py
+    .\\.venv\\Scripts\\python examples/11_sc_training_demo.py
 """
 
 from __future__ import annotations

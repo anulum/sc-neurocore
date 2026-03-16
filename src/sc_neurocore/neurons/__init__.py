@@ -1,5 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""SC-NeuroCore neuron library - every published model, one file each."""
+"""SC-NeuroCore neuron library - every published model, one file each.
+
+Auto-dispatch
+-------------
+When the Rust engine (``sc-neurocore-engine``) is installed,
+``from sc_neurocore.neurons import X`` transparently returns the Rust
+implementation.  ``from sc_neurocore.neurons.models import X`` always
+returns the pure-Python version.
+
+Set the environment variable ``SC_NEUROCORE_NO_RUST=1`` to force the
+pure-Python path even when the Rust engine is present.
+"""
 
 from .base import BaseNeuron
 from .stochastic_lif import StochasticLIFNeuron
@@ -239,10 +250,13 @@ __all__ = [
 ]
 
 # -- Rust auto-dispatch: replace Python classes with Rust when engine available --
-try:  # pragma: no cover
-    from sc_neurocore_engine import sc_neurocore_engine as _eng
+import os as _os
 
-    _rust_map = {name: getattr(_eng, name) for name in __all__ if hasattr(_eng, name)}
-    globals().update(_rust_map)
-except ImportError:  # pragma: no cover
-    pass
+if not _os.environ.get("SC_NEUROCORE_NO_RUST"):
+    try:  # pragma: no cover
+        from sc_neurocore_engine import sc_neurocore_engine as _eng
+
+        _rust_map = {name: getattr(_eng, name) for name in __all__ if hasattr(_eng, name)}
+        globals().update(_rust_map)
+    except ImportError:  # pragma: no cover
+        pass

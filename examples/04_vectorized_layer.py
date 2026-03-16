@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 #!/usr/bin/env python3
-"""Example 03: High-Performance Vectorized Layer.
+"""Example 04: High-Performance Vectorized Layer.
 
 Demonstrates the VectorizedSCLayer which uses packed 64-bit bitwise
 AND + popcount for high throughput computation.

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 #!/usr/bin/env python3
-"""Example 05: Verilog HDL Generation.
+"""Example 06: Verilog HDL Generation.
 
 Demonstrates generating a Verilog top-level module from a network
 description using the HDL generation utilities.
