@@ -3,7 +3,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Montbrio, Pazo & Roxin 2015 — exact mean-field of QIF/the...
+# SC-NeuroCore — Montbrio, Pazo & Roxin 2015 — exact mean-field of
 
 from __future__ import annotations
 

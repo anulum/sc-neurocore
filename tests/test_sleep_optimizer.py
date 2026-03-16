@@ -3,7 +3,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Tests for Sleep Optimization System (UC3) — adapts to age...
+# SC-NeuroCore — Tests for Sleep Optimization System (UC3) — adapts to
 
 """Tests for Sleep Optimization System (UC3) — adapts to agent-written API."""
 

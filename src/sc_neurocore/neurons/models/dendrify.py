@@ -3,7 +3,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Beniaguev et al. 2022 — active dendrite 2-compartment red...
+# SC-NeuroCore — Beniaguev et al. 2022 — active dendrite 2-compartment
 
 from __future__ import annotations
 

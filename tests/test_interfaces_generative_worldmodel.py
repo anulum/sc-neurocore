@@ -3,7 +3,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Tests for 0%-coverage modules: interfaces, generative, ve...
+# SC-NeuroCore — Tests for 0%-coverage modules: interfaces, generative,
 
 """Tests for 0%-coverage modules: interfaces, generative, verification, viz,
 world_model, pipeline, models, math, ensembles, accel."""

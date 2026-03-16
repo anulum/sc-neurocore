@@ -5,7 +5,6 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Simple CLI Dashboard for monitoring SC simulation
 
-
 class SCDashboard:
     """
     Simple CLI Dashboard for monitoring SC simulation.
@@ -55,4 +54,3 @@ class SCDashboard:
         print("-" * 40)
         # In a real terminal, we would use 'curses' to overwrite.
         # Here we just append.
-
