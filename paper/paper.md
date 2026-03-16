@@ -115,6 +115,16 @@ selects AVX-512, AVX2, or NEON paths. A Criterion benchmark measures
 Cross-compiled wheels target Linux, macOS, and Windows across Python
 3.10--3.13.
 
+**Analysis Toolkit** (`sc_neurocore.analysis`): 125 spike train analysis
+functions covering statistics (CV, Fano factor), distance metrics
+(Victor-Purpura, van Rossum, SPIKE-distance), synchrony measures
+(cross-correlation, STTC, event synchronization), information-theoretic
+quantities (mutual information, transfer entropy), causal inference
+(Granger causality, PDC), dimensionality reduction (PCA, GPFA),
+decoding (population vector, Bayesian), and pattern detection (SPADE).
+All functions are pure NumPy with no external dependencies, matching the
+combined scope of Elephant [@elephant2023] and PySpike.
+
 **Verilog RTL** (`hdl/`): Ten synthesisable modules including
 `sc_lif_neuron.v` (Q8.8 LIF with configurable threshold and refractory
 period), `sc_dense_matrix_layer.v` (per-neuron weight matrix), and

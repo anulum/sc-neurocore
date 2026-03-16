@@ -137,6 +137,23 @@ then switch to `mode="HARDWARE"`.
 - Larger batches (>=10): use `DenseLayer.forward_batch_numpy`
 - Default `DenseLayer.forward` auto-selects
 
+## Analysis Toolkit
+
+SC-NeuroCore includes 125 spike train analysis functions across 22 modules --
+statistics, distance metrics, synchrony, spectral, information theory,
+causality, dimensionality reduction, decoding, and pattern detection.
+Pure NumPy, zero external dependencies.
+
+```python
+from sc_neurocore.analysis import (
+    firing_rate, cv_isi, fano_factor, cross_correlation,
+    victor_purpura_distance, phase_locking_value, gpfa, spade_detect,
+)
+```
+
+See the [Spike Train Analysis tutorial](../tutorials/23_spike_train_analysis.md)
+and [API reference](../api/analysis.md) for the full 125-function listing.
+
 ## What's Next?
 
 - [Learning Path](../LEARNING_PATH.md) — 8-level progression from beginner to FPGA deployment
