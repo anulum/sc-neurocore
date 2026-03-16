@@ -14,7 +14,6 @@ Tsodyks-Markram STP, and structural plasticity (synapse grow/prune).
 
 from __future__ import annotations
 
-import copy
 
 import numpy as np
 
