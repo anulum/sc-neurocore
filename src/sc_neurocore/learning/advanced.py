@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import numpy as np
 
-
 # --- Surrogate gradient for BPTT ---
 
 SURROGATE_BETA = 25.0  # steepness of fast-sigmoid surrogate
@@ -353,4 +352,3 @@ class StructuralPlasticity:
                     zero_indices, size=min(n_grow, zero_indices.size), replace=False
                 )
                 projection.data[chosen] = np.random.uniform(0.001, 0.05, size=chosen.size)
-# eof
