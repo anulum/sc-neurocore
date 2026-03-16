@@ -169,7 +169,7 @@ independent packaging, CI, and PyPI publication.
 
 # Quality Assurance
 
-SC-NeuroCore maintains 1 698 Python and 209 Rust tests with 100% line
+SC-NeuroCore maintains 1 800 Python and 209 Rust tests with 100% line
 coverage of production modules (optional hardware-dependent and
 experimental code excluded via standard coverage directives), enforced
 by CI on every push. The test suite includes unit tests, integration

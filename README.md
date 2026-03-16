@@ -23,7 +23,7 @@ Commercial Licensing: Available
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)
 
 **Version:** 3.12.0
-**Status:** 113 Neuron Models | 99.49% MNIST | 1 698 Tests | 100% Coverage | 110 Rust Neuron Models
+**Status:** 113 Neuron Models | 99.49% MNIST | 1 800 Tests | 100% Coverage | 110 Rust Neuron Models
 
 <p align="center">
   <img src="docs/assets/spike_raster.png" width="800" alt="LIF spike raster — 5 neurons, sinusoidal input">
@@ -37,7 +37,7 @@ synthesis via an IR compiler (SystemVerilog + MLIR/CIRCT backends), formal
 verification (7 SymbiYosys modules), a Rust SIMD engine at 512x real-time
 (110 Rust neuron models with PyO3 bindings), CuPy GPU acceleration, quantum
 hybrid computing (Qiskit + PennyLane), and surrogate gradient training
-reaching 99.49% MNIST accuracy. 1 698 tests across 117 files hold 100%
+reaching 99.49% MNIST accuracy. 1 800 tests across 118 files hold 100%
 line coverage.
 
 ## Feature Comparison
@@ -74,7 +74,7 @@ cited reference. One file per model in `src/sc_neurocore/neurons/models/`.
 | Simple spiking (2D+) | 20 | FitzHugh-Nagumo, Morris-Lecar, Hindmarsh-Rose, Resonate-and-Fire, Chay |
 | Biophysical (conductance-based) | 20 | Hodgkin-Huxley, Connor-Stevens, Traub-Miles, Mainen-Sejnowski, Pospischil |
 | Stochastic / population / neural mass | 13 | Poisson, GLM, Jansen-Rit, Wong-Wang, Wilson-Cowan, Ermentrout-Kopell |
-| Rate / plasticity / other | 11 | McCulloch-Pitts (1943), Sigmoid Rate, Astrocyte, Amari, GatedLIF (2022) |
+| Rate / plasticity / other | 12 | McCulloch-Pitts (1943), Sigmoid Rate, Astrocyte, Amari, GatedLIF (2022) |
 | Hardware chip emulators | 9 | Loihi CUBA, Loihi 2, TrueNorth, BrainScaleS AdEx, SpiNNaker, Akida, DPI |
 | Multi-compartment | 7 | Pinsky-Rinzel, Hay L5 Pyramidal, Rall Cable, Booth-Rinzel, Dendrify |
 | Map-based (discrete-time) | 6 | Chialvo, Rulkov, Ibarz-Tanaka, Cazelles, Courbage-Nekorkin, Medvedev |
@@ -100,7 +100,7 @@ pip install sc-neurocore[gpu]
 git clone https://github.com/anulum/sc-neurocore.git
 cd sc-neurocore
 pip install -e ".[dev]"    # editable install with all dev tools
-make preflight             # verify setup (lint + 1 698 tests)
+make preflight             # verify setup (lint + 1 800 tests)
 ```
 
 ## Docker
@@ -316,9 +316,9 @@ All other examples run with the pure-Python `sc_neurocore` package.
 
 | Workflow | Purpose |
 |----------|---------|
-| **ci.yml** | Lint (black + ruff + bandit) + Test (Python 3.10/3.11/3.12, coverage = 100%) + Build |
+| **ci.yml** | Lint (black + ruff + bandit) + Test (Python 3.10-3.13, coverage = 100%) + Build |
 | **v3-engine.yml** | Rust engine `cargo test` + `cargo clippy` |
-| **v3-wheels.yml** | Cross-platform wheels (Linux, macOS, Windows × Python 3.10–3.12) |
+| **v3-wheels.yml** | Cross-platform wheels (Linux, macOS, Windows × Python 3.10–3.13) |
 | **docker.yml** | Build & push Docker image to GHCR on release tags |
 | **docs.yml** | MkDocs → GitHub Pages |
 | **publish.yml** | PyPI OIDC trusted publisher on release |

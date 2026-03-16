@@ -13,8 +13,8 @@ hh = HodgkinHuxleyNeuron()
 spike = hh.step(current=10.0)
 
 # Rust backend (faster, identical interface)
-from sc_neurocore_engine.sc_neurocore_engine import PyHodgkinHuxleyNeuron
-hh_rs = PyHodgkinHuxleyNeuron()
+from sc_neurocore_engine.sc_neurocore_engine import HodgkinHuxleyNeuron
+hh_rs = HodgkinHuxleyNeuron()
 spike = hh_rs.step(current=10.0)
 ```
 
@@ -158,7 +158,7 @@ The Rust engine exposes 110 of the 113 Python models.
 | `AkidaNeuron` | `AkidaNeuron` | BrainChip |
 | `NeuroGridNeuron` | `NeuroGridNeuron` | Boahen 2014 |
 
-### Rate / Plasticity / Other (11 models)
+### Rate / Plasticity / Other (12 models)
 
 | Python Class | Rust Class | Reference |
 |-------------|-----------|-----------|
@@ -174,6 +174,14 @@ The Rust engine exposes 110 of the 113 Python models.
 | `ParallelSpikingNeuron` | `ParallelSpikingNeuron` | Fang et al. 2023 |
 | `AmariNeuralField` | `AmariNeuralField` | Amari 1977 |
 | `LeakyCompeteFireNeuron` | `LeakyCompeteFireNeuron` | — |
+
+### Core IF (Rust neuron.rs) (3 models)
+
+| Python Class | Rust Class | Reference |
+|-------------|-----------|-----------|
+| `AdExNeuron` | `AdExNeuron` | Brette & Gerstner 2005 |
+| `ExpIFNeuron` | `ExpIFNeuron` | Fourcaud-Trocmé et al. 2003 |
+| `LapicqueNeuron` | `LapicqueNeuron` | Lapicque 1907 |
 
 ## Common Interface
 

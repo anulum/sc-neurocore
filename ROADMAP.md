@@ -104,7 +104,7 @@ test counts updated across all docs.
 
 113 Python + 110 Rust neuron models, PyO3 bindings for all extended
 model categories, JAX training support, CuPy sparse GPU paths, FMEA +
-traceability matrix, 1 698 Python tests across 117 files, 209 Rust
+traceability matrix, 1 800 Python tests across 118 files, 209 Rust
 tests, 13 CI workflows.
 
 ## v4.0 — Physical FPGA & Production (target: Q3 2026)

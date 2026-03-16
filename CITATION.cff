@@ -9,6 +9,7 @@ version: 3.12.0
 doi: 10.5281/zenodo.18906614
 date-released: 2026-03-15
 license: AGPL-3.0
+repository-code: "https://github.com/anulum/sc-neurocore"
 keywords:
   - neuromorphic
   - rust
