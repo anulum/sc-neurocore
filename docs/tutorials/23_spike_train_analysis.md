@@ -172,9 +172,9 @@ from sc_neurocore.analysis import (
 )
 
 gc_ab = pairwise_granger_causality(train_a, train_b, bin_size=10, order=5)
-gc_ba = pairwise_granger_causality(train_b, train_a, bin_size=10, order=5)
+gc_b_to_a = pairwise_granger_causality(train_b, train_a, bin_size=10, order=5)
 print(f"GC A->B: {gc_ab:.4f}")
-print(f"GC B->A: {gc_ba:.4f}")
+print(f"GC B->A: {gc_b_to_a:.4f}")
 
 # Multivariate directed connectivity
 pdc = partial_directed_coherence(trains, bin_size=10, order=5, n_freqs=32)

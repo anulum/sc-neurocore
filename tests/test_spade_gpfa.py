@@ -8,7 +8,6 @@ import numpy as np
 from sc_neurocore.analysis.spike_stats import spade_detect, gpfa, gpfa_transform
 from sc_neurocore.analysis.spike_stats.spade import (
     _find_frequent_itemsets,
-    _extend_to_spatiotemporal,
 )
 from sc_neurocore.analysis.spike_stats.gpfa import _gp_kernel
 
