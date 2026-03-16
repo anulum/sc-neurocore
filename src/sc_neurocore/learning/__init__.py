@@ -9,12 +9,28 @@
 
 __tier__ = "research"
 
+from .advanced import (
+    BPTTLearner,
+    EligibilityTrace,
+    HomeostaticPlasticity,
+    MetaLearner,
+    RewardModulatedLearner,
+    ShortTermPlasticity,
+    StructuralPlasticity,
+)
 from .federated import FederatedAggregator
 from .lifelong import EWC_SCLayer
 from .neuroevolution import SNNGeneticEvolver
 
 __all__ = [
+    "BPTTLearner",
+    "EligibilityTrace",
     "FederatedAggregator",
     "EWC_SCLayer",
+    "HomeostaticPlasticity",
+    "MetaLearner",
+    "RewardModulatedLearner",
+    "ShortTermPlasticity",
     "SNNGeneticEvolver",
+    "StructuralPlasticity",
 ]
