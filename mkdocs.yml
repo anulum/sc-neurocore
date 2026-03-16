@@ -64,6 +64,7 @@ nav:
       - Adapter Ecosystem: tutorials/20_adapter_ecosystem.md
       - Formal Verification: tutorials/21_formal_verification.md
       - Neuron Model Selection: tutorials/22_neuron_model_selection.md
+      - Spike Train Analysis: tutorials/23_spike_train_analysis.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
@@ -81,6 +82,7 @@ nav:
           - Layers: api/layers.md
           - Sources: api/sources.md
           - Recorders: api/recorders.md
+          - Spike Train Analysis: api/analysis.md
           - Utilities: api/utils.md
           - Acceleration: api/accel.md
           - Ensembles: api/ensembles.md
@@ -92,7 +94,6 @@ nav:
           - HDL Generation: api/hdl_gen.md
       - Domain Modules:
           - Adapters: api/adapters.md
-          - Analysis: api/analysis.md
           - Audio: api/audio.md
           - Bio: api/bio.md
           - Chaos: api/chaos.md

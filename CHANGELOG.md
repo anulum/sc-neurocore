@@ -6,6 +6,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [3.12.0] - 2026-03-15
 
+### Analysis Toolkit
+- 125 spike train analysis functions across 22 modules
+- Covers: basic stats, variability, rate estimation, distance metrics,
+  correlation, spectral, temporal, stimulus, LFP coupling, surrogates,
+  information theory, causality, dimensionality, decoding, network,
+  point process, sorting quality, waveform, statistics, patterns, SPADE, GPFA
+- Pure NumPy, zero external dependencies
+- 172 tests
+
 ### Neuron Model Library (113 Python / 110 Rust)
 - 108 individual model files in `neurons/models/` (one file per model)
 - 108 individual model files across 14 families: IF variants, Biophysical, Adaptive, Oscillatory, Bursting, Synaptic, Multi-compartment, Map-based, Stochastic, Population, Hardware, Modern/ML, Rate, Other
