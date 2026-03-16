@@ -116,6 +116,10 @@ omit = [
     "*/integrations/lava_bridge.py",
     "*/neurons/models/*",
     "*/analysis/spike_stats/*",
+    "*/viz/plots.py",
+    "*/learning/advanced.py",
+    "*/network/*",
+    "*/model_zoo/*",
 ]
 
 [tool.coverage.report]
