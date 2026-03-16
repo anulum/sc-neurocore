@@ -21,7 +21,6 @@ from sc_neurocore.network import topology
 from sc_neurocore.network.export import export_verilog
 from sc_neurocore.exceptions import SCHardwareError
 
-
 # --- Population ---
 
 
