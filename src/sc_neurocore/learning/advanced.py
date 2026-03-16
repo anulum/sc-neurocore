@@ -353,3 +353,4 @@ class StructuralPlasticity:
                     zero_indices, size=min(n_grow, zero_indices.size), replace=False
                 )
                 projection.data[chosen] = np.random.uniform(0.001, 0.05, size=chosen.size)
+# eof
