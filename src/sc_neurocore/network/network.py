@@ -26,6 +26,7 @@ def _get_rust_engine():
     if _RUST_ENGINE is None:
         try:
             from sc_neurocore_engine.sc_neurocore_engine import NetworkRunner
+
             _RUST_ENGINE = NetworkRunner
         except ImportError:
             _RUST_ENGINE = False
