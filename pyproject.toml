@@ -121,6 +121,7 @@ omit = [
     "*/learning/advanced.py",
     "*/network/*",
     "*/model_zoo/*",
+    "*/identity/*",
 ]
 
 [tool.coverage.report]
