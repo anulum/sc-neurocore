@@ -66,8 +66,8 @@ class TraceEncoder:
 
         word_vec = np.zeros(self.hash_dims, dtype=np.float64)
         for w in words:
-            h = hash(w) % self.hash_dims
-            word_vec[h] += 1.0
+            h = int.from_bytes(w.encode("utf-8", "replace")[:8], "little")
+            word_vec[h % self.hash_dims] += 1.0
 
         if word_vec.sum() > 0:
             word_vec /= word_vec.sum()

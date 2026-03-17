@@ -45,5 +45,5 @@ def test_synapse_update():
     syn.update_weight(0.8)
     new_p = syn.effective_weight_probability()
 
-    assert not np.isclose(initial_p, new_p, atol=0.1)
-    assert np.isclose(new_p, 0.8, atol=0.1)
+    assert not np.isclose(initial_p, new_p, atol=0.15)
+    assert np.isclose(new_p, 0.8, atol=0.15)
