@@ -5,6 +5,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Neurons Module
 
+pub mod ai_optimized;
 pub mod biophysical;
 pub mod hardware;
 pub mod maps;
@@ -14,6 +15,7 @@ pub mod simple_spiking;
 pub mod special;
 pub mod trivial;
 
+pub use ai_optimized::*;
 pub use biophysical::*;
 pub use hardware::*;
 pub use maps::*;
