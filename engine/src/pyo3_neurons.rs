@@ -53,6 +53,8 @@ py_neuron_default!("CompositionalBindingNeuron", PyCompositionalBindingNeuron, n
 py_neuron_default!("DifferentiableSurrogateNeuron", PyDifferentiableSurrogateNeuron, neurons::DifferentiableSurrogateNeuron, state v);
 py_neuron_default!("MetaPlasticNeuron", PyMetaPlasticNeuron, neurons::MetaPlasticNeuron, state v, state error_trace, state expected_reward);
 
+py_neuron_default!("ArcaneNeuron", PyArcaneNeuron, neurons::ArcaneNeuron, state v_fast, state v_work, state v_deep);
+
 // ContinuousAttractorNeuron needs n_units param
 #[pyclass(
     name = "RustContinuousAttractorNeuron",
@@ -1526,6 +1528,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyParallelSpikingNeuron>()?;
     m.add_class::<PyAmariNeuralField>()?;
     m.add_class::<PyLeakyCompeteFireNeuron>()?;
+    m.add_class::<PyArcaneNeuron>()?;
     Ok(())
 }
 

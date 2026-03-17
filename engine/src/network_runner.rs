@@ -119,6 +119,7 @@ pub enum NeuronVariant {
     GalvesLocherbach(GalvesLocherbachNeuron),
     SpikeResponse(SpikeResponseNeuron),
     GLM(GLMNeuron),
+    Arcane(ArcaneNeuron),
 }
 
 macro_rules! dispatch_step {
@@ -163,6 +164,7 @@ macro_rules! all_variants {
             MarderSTG, RallCable, BoothRinzel, Dendrify,
             LiquidTimeConstant, ParallelSpiking, FractionalLIF,
             StochasticIF, GalvesLocherbach, SpikeResponse, GLM,
+            Arcane,
         )
     };
 }
@@ -257,6 +259,7 @@ impl NeuronVariant {
             NeuronVariant::GalvesLocherbach(n) => n.v,
             NeuronVariant::SpikeResponse(n) => n.v,
             NeuronVariant::GLM(n) => n.mu,
+            NeuronVariant::Arcane(n) => n.v_fast,
         }
     }
 }
@@ -283,10 +286,6 @@ impl PopulationRunner {
 
     pub fn len(&self) -> usize {
         self.neurons.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.neurons.is_empty()
     }
 
     pub fn step_all(&mut self) {
@@ -684,6 +683,7 @@ fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
             Ok(NeuronVariant::SpikeResponse(SpikeResponseNeuron::new()))
         }
         "GLM" | "GLMNeuron" => Ok(NeuronVariant::GLM(GLMNeuron::new(5, 10, 42))),
+        "Arcane" | "ArcaneNeuron" => Ok(NeuronVariant::Arcane(ArcaneNeuron::new())),
         _ => Err(format!("Unsupported model: '{name}'")),
     }
 }
@@ -755,6 +755,7 @@ pub fn supported_models() -> Vec<&'static str> {
         "GalvesLocherbach",
         "SpikeResponse",
         "GLM",
+        "ArcaneNeuron",
     ]
 }
 
