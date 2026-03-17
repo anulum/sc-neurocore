@@ -78,9 +78,7 @@ class Network:
         for pop in self.populations:
             if not _rust_supports_model(pop.label):
                 return False
-        if any(p.plasticity for p in self.projections):
-            return False
-        return True
+        return not any(p.plasticity for p in self.projections)
 
     def run(self, duration, dt=0.001, progress=False, backend="auto"):
         """Run the simulation for *duration* seconds at timestep *dt*.
