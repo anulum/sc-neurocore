@@ -145,10 +145,6 @@ exclude_lines = [
     "HAS_JAX = True",
 ]
 
-[tool.black]
-line-length = 100
-target-version = ["py310"]
-
 [tool.ruff]
 line-length = 100
 target-version = "py310"

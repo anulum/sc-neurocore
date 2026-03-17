@@ -42,8 +42,7 @@ def _check_exportable(network):
         name = pop._model_cls.__name__
         if name not in _LIF_MODELS:
             raise SCHardwareError(
-                f"Model '{name}' cannot be exported to Verilog. "
-                f"Supported: {sorted(_LIF_MODELS)}"
+                f"Model '{name}' cannot be exported to Verilog. Supported: {sorted(_LIF_MODELS)}"
             )
 
 

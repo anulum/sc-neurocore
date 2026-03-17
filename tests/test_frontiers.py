@@ -14,7 +14,6 @@ from sc_neurocore.robotics.cpg import StochasticCPG
 
 
 class TestFrontiers(unittest.TestCase):
-
     def test_quantum_layer(self):
         layer = QuantumStochasticLayer(n_qubits=2, length=64)
         bits = np.zeros((2, 64), dtype=np.uint8)  # 0 prob

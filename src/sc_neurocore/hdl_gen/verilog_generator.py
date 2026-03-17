@@ -41,7 +41,7 @@ class VerilogGenerator:
         code += "    // Internal Signals\n"
         # Generate wires for connections
         for i in range(len(self.layers) - 1):
-            code += f"    wire [7:0] layer_{i}_to_{i+1};\n"
+            code += f"    wire [7:0] layer_{i}_to_{i + 1};\n"
 
         code += "\n"
 
@@ -63,13 +63,13 @@ class VerilogGenerator:
                 if i == 0:
                     code += "        .input_bus(input_bus),\n"
                 else:
-                    code += f"        .input_bus(layer_{i-1}_to_{i}),\n"
+                    code += f"        .input_bus(layer_{i - 1}_to_{i}),\n"
 
                 # Connect Output
                 if i == len(self.layers) - 1:
                     code += "        .output_bus(output_bus)\n"
                 else:
-                    code += f"        .output_bus(layer_{i}_to_{i+1})\n"
+                    code += f"        .output_bus(layer_{i}_to_{i + 1})\n"
 
                 code += "    );\n\n"
 

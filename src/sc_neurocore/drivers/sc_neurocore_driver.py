@@ -105,7 +105,7 @@ class SC_NeuroCore_Driver:
             return np.random.rand(16)
 
         raise NotImplementedError(
-            "HARDWARE DMA transfer requires PYNQ overlay. " "Use mode='EMULATION' for development."
+            "HARDWARE DMA transfer requires PYNQ overlay. Use mode='EMULATION' for development."
         )
 
 

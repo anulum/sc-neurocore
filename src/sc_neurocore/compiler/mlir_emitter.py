@@ -92,7 +92,7 @@ class MLIREmitter:
                 lines.append(f"  {node.output} = comb.mux {c}, {t}, {f} : i1")
             elif node.op_type == "hw.instance":
                 lines.append(
-                    f"  {node.output} = hw.instance \"{node.attributes['sym_name']}\" @{node.attributes['module']}() -> (i1)"
+                    f'  {node.output} = hw.instance "{node.attributes["sym_name"]}" @{node.attributes["module"]}() -> (i1)'
                 )
 
         # Final output assignment (taking the last node's output as an example)

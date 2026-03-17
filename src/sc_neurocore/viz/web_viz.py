@@ -35,7 +35,7 @@ class WebVisualizer:
             )
 
             # Link from prev
-            prev = "Input" if i == 0 else f"L{i-1}_{layers[i-1].__class__.__name__}"
+            prev = "Input" if i == 0 else f"L{i - 1}_{layers[i - 1].__class__.__name__}"
             links.append({"source": prev, "target": layer_name, "value": 1})
 
         data = {"nodes": nodes, "links": links}

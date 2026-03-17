@@ -16,7 +16,6 @@ from sc_neurocore.layers.vectorized_layer import VectorizedSCLayer
 
 
 class TestSystems(unittest.TestCase):
-
     def test_bci_decoder(self):
         bci = BCIDecoder(channels=2)
         sig = np.array([[0.1], [0.9]])

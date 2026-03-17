@@ -23,7 +23,6 @@ import pytest
 
 
 class TestHolonomicDimMismatch:
-
     def test_l1_quantum_with_inputs(self):
         from sc_neurocore.adapters.holonomic.l1_quantum import L1_QuantumAdapter
 
@@ -101,7 +100,6 @@ class TestHolonomicDimMismatch:
 
 
 class TestJaxBackendPaths:
-
     def test_to_jax_with_jax(self):
         pytest.importorskip("jax")
         from sc_neurocore.accel.jax_backend import to_jax
@@ -153,7 +151,6 @@ class TestJaxBackendPaths:
 
 
 class TestJaxCompatWithJax:
-
     @pytest.fixture(autouse=True)
     def _skip_no_jax(self):
         pytest.importorskip("jax")
@@ -192,7 +189,6 @@ class TestJaxCompatWithJax:
 
 
 class TestDNAStorage:
-
     def test_odd_length_pads(self):
         from sc_neurocore.adapters.holonomic.dna_storage import DNAEncoder
 
@@ -210,7 +206,6 @@ class TestDNAStorage:
 
 
 class TestErrorPaths:
-
     def test_fp_lif_data_width_zero(self):
         from sc_neurocore.neurons.fixed_point_lif import FixedPointLIFNeuron
 
@@ -267,7 +262,6 @@ class TestErrorPaths:
 
 
 class TestSSGFSmallN:
-
     def test_n2_all_fallbacks(self):
         from sc_neurocore.audio.ssgf_engine import SSGFConfig, SSGFEngine
 
@@ -300,7 +294,6 @@ class TestSSGFSmallN:
 
 
 class TestSleepEdgeCases:
-
     def test_circadian_non_wrapping(self):
         from sc_neurocore.sleep.circadian_optimizer import CircadianOptimizer, Chronotype
 
@@ -333,7 +326,6 @@ class TestSleepEdgeCases:
 
 
 class TestCompilerCoverage:
-
     def test_mlir_emit_xor(self):
         from sc_neurocore.compiler.mlir_emitter import MLIREmitter
 
@@ -392,7 +384,6 @@ class TestCompilerCoverage:
 
 
 class TestFileWriteErrors:
-
     def test_onnx_export_write_error(self):
         from sc_neurocore.export.onnx_exporter import SCOnnxExporter
 
@@ -414,7 +405,6 @@ class TestFileWriteErrors:
 
 
 class TestQECNonRepetition:
-
     def test_surface_passthrough(self):
         from sc_neurocore.quantum.qec import QecShield
 
@@ -429,7 +419,6 @@ class TestQECNonRepetition:
 
 
 class TestQuantumHardwareBridge:
-
     def test_unknown_backend_raises(self):
         from sc_neurocore.quantum.hardware_bridge import QuantumHardwareLayer
 
@@ -447,7 +436,6 @@ class TestQuantumHardwareBridge:
 
 
 class TestVerificationCoverage:
-
     def test_interval_repr(self):
         from sc_neurocore.verification.formal_proofs import Interval
 
@@ -469,7 +457,6 @@ class TestVerificationCoverage:
 
 
 class TestMDLParser:
-
     def test_encode_with_get_state(self):
         from sc_neurocore.core.mdl_parser import MindDescriptionLanguage
 
@@ -495,7 +482,6 @@ class TestMDLParser:
 
 
 class TestJaxDenseLayerCoverage:
-
     @pytest.fixture(autouse=True)
     def _skip_no_jax(self):
         pytest.importorskip("jax")
@@ -525,7 +511,6 @@ class TestJaxDenseLayerCoverage:
 
 
 class TestMPIGather:
-
     def test_gather_non_root_returns_empty(self):
         from sc_neurocore.accel import mpi_driver
 
@@ -572,7 +557,6 @@ class TestMPIGather:
 
 
 class TestCLIInfo:
-
     def test_cmd_info_with_engine(self):
         from sc_neurocore.cli import _cmd_info
 
@@ -602,7 +586,6 @@ class TestCLIInfo:
 
 
 class TestSCPNLayerEdgeCases:
-
     def test_l1_quantum_hardware_backend(self):
         from sc_neurocore.scpn.layers.l1_quantum import L1_QuantumLayer, L1_StochasticParameters
 
@@ -632,7 +615,6 @@ class TestSCPNLayerEdgeCases:
 
 
 class TestSwarmEvolver:
-
     def test_evolver_with_fields(self):
         from sc_neurocore.swarm.neuroevolution_swarm import SwarmEvolver, EvolverConfig
 
@@ -652,7 +634,6 @@ class TestSwarmEvolver:
 
 
 class TestPipelineEdgeCases:
-
     def test_sanitize_empty_name(self):
         from sc_neurocore.compiler.pipeline import CompilerPipeline
 
@@ -685,7 +666,6 @@ class TestPipelineEdgeCases:
 
 
 class TestVectorizedSparseGuard:
-
     def test_sparse_without_scipy(self):
         from unittest.mock import patch
 
@@ -700,7 +680,6 @@ class TestVectorizedSparseGuard:
 
 
 class TestL10ShortNoise:
-
     def test_boundary_short_noise_pad(self):
         from sc_neurocore.scpn.layers.l10_boundary import L10_BoundaryLayer
 

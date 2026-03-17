@@ -14,7 +14,6 @@ from sc_neurocore.layers.recurrent import SCRecurrentLayer
 
 
 class TestAdvancedLayers(unittest.TestCase):
-
     def test_vectorized_layer(self):
         # 10 inputs -> 5 neurons
         layer = VectorizedSCLayer(n_inputs=10, n_neurons=5, length=64)

@@ -46,11 +46,11 @@ jobs:
       - name: Install tools
         run: pip install --require-hashes -r requirements/lint.txt
 
-      - name: black
-        run: black --check src/ tests/
-
-      - name: ruff
+      - name: ruff check
         run: ruff check src/ tests/
+
+      - name: ruff format
+        run: ruff format --check src/ tests/
 
       - name: bandit
         run: bandit -r src/sc_neurocore/ -c pyproject.toml -q
