@@ -288,6 +288,10 @@ impl PopulationRunner {
         self.neurons.len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.neurons.is_empty()
+    }
+
     pub fn step_all(&mut self) {
         let neurons = &mut self.neurons;
         let spikes = &mut self.spikes;
