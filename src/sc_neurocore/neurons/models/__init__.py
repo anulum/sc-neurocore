@@ -114,11 +114,24 @@ from .wendling import WendlingNeuron
 from .wilson_cowan import WilsonCowanUnit
 from .wilson_hr import WilsonHRNeuron
 from .wong_wang import WongWangUnit
+from .ai_optimized import (
+    AttentionGatedNeuron,
+    CompositionalBindingNeuron,
+    ContinuousAttractorNeuron,
+    DifferentiableSurrogateNeuron,
+    MetaPlasticNeuron,
+    MultiTimescaleNeuron,
+    PredictiveCodingNeuron,
+    SelfReferentialNeuron,
+)
 from .yamada import YamadaNeuron
+from .arcane_neuron import ArcaneNeuron
 
 __all__ = [
+    "ArcaneNeuron",
     "AdExNeuron",
     "AdaptiveThresholdIFNeuron",
+    "AttentionGatedNeuron",
     "AkidaNeuron",
     "AlphaNeuron",
     "AmariNeuralField",
@@ -136,12 +149,15 @@ __all__ = [
     "ChialvoMapNeuron",
     "ClosedFormContinuousNeuron",
     "ComplementaryLIFNeuron",
+    "CompositionalBindingNeuron",
     "CompteWMNeuron",
+    "ContinuousAttractorNeuron",
     "ConnorStevensNeuron",
     "CourageNekorkinMapNeuron",
     "DPINeuron",
     "DeSchutterPurkinjeNeuron",
     "DendrifyNeuron",
+    "DifferentiableSurrogateNeuron",
     "DestexheThalamicNeuron",
     "DurstewitzDopamineNeuron",
     "EPropALIFNeuron",
@@ -184,7 +200,9 @@ __all__ = [
     "McCullochPittsNeuron",
     "McKeanNeuron",
     "MedvedevMapNeuron",
+    "MetaPlasticNeuron",
     "MihalasNieburNeuron",
+    "MultiTimescaleNeuron",
     "MorrisLecarNeuron",
     "NeuroGridNeuron",
     "NonResettingLIFNeuron",
@@ -197,12 +215,14 @@ __all__ = [
     "PlantR15Neuron",
     "PoissonNeuron",
     "PospischilNeuron",
+    "PredictiveCodingNeuron",
     "PrescottNeuron",
     "QuadraticIFNeuron",
     "RallCableNeuron",
     "ResonateAndFireNeuron",
     "RulkovMapNeuron",
     "SFANeuron",
+    "SelfReferentialNeuron",
     "ShermanRinzelKeizerNeuron",
     "SiegertTransferFunction",
     "SigmaDeltaNeuron",

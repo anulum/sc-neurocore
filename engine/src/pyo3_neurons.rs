@@ -42,6 +42,53 @@ macro_rules! py_neuron_default {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// ai_optimized.rs models
+// ═══════════════════════════════════════════════════════════════════
+
+py_neuron_default!("MultiTimescaleNeuron", PyMultiTimescaleNeuron, neurons::MultiTimescaleNeuron, state v_fast, state v_medium, state v_slow);
+py_neuron_default!("AttentionGatedNeuron", PyAttentionGatedNeuron, neurons::AttentionGatedNeuron, state v);
+py_neuron_default!("PredictiveCodingNeuron", PyPredictiveCodingNeuron, neurons::PredictiveCodingNeuron, state v, state pred);
+py_neuron_default!("SelfReferentialNeuron", PySelfReferentialNeuron, neurons::SelfReferentialNeuron, state v);
+py_neuron_default!("CompositionalBindingNeuron", PyCompositionalBindingNeuron, neurons::CompositionalBindingNeuron, state phi, state amplitude);
+py_neuron_default!("DifferentiableSurrogateNeuron", PyDifferentiableSurrogateNeuron, neurons::DifferentiableSurrogateNeuron, state v);
+py_neuron_default!("MetaPlasticNeuron", PyMetaPlasticNeuron, neurons::MetaPlasticNeuron, state v, state error_trace, state expected_reward);
+
+// ContinuousAttractorNeuron needs n_units param
+#[pyclass(
+    name = "RustContinuousAttractorNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
+#[derive(Clone)]
+pub struct PyContinuousAttractorNeuron {
+    inner: neurons::ContinuousAttractorNeuron,
+}
+
+#[pymethods]
+impl PyContinuousAttractorNeuron {
+    #[new]
+    #[pyo3(signature = (n_units=16))]
+    fn new(n_units: usize) -> Self {
+        Self {
+            inner: neurons::ContinuousAttractorNeuron::new(n_units),
+        }
+    }
+    fn step(&mut self, current: f64) -> i32 {
+        self.inner.step(current)
+    }
+    fn bump_position(&self) -> usize {
+        self.inner.bump_position()
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
+    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let d = PyDict::new(py);
+        d.set_item("u", self.inner.u.clone().into_pyarray(py))?;
+        Ok(d.into_any().unbind())
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // trivial.rs models
 // ═══════════════════════════════════════════════════════════════════
 
@@ -1357,6 +1404,15 @@ impl PyAmariNeuralField {
 // ═══════════════════════════════════════════════════════════════════
 
 pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    // ai_optimized
+    m.add_class::<PyMultiTimescaleNeuron>()?;
+    m.add_class::<PyAttentionGatedNeuron>()?;
+    m.add_class::<PyPredictiveCodingNeuron>()?;
+    m.add_class::<PySelfReferentialNeuron>()?;
+    m.add_class::<PyCompositionalBindingNeuron>()?;
+    m.add_class::<PyDifferentiableSurrogateNeuron>()?;
+    m.add_class::<PyContinuousAttractorNeuron>()?;
+    m.add_class::<PyMetaPlasticNeuron>()?;
     // trivial
     m.add_class::<PyQuadraticIFNeuron>()?;
     m.add_class::<PyThetaNeuron>()?;
