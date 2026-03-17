@@ -7,7 +7,7 @@
 
 ### ~~Coverage gate ≥ 98%~~ ✓
 
-Done. 100% enforced (2 055 tests passed; gate at 100).
+Done. 100% enforced (1 776 tests passed; gate at 100).
 
 ### ~~NumPy 2.x full compatibility~~ ✓
 
@@ -105,7 +105,7 @@ test counts updated across all docs.
 
 122 Python + 111 Rust neuron models, PyO3 bindings for all extended
 model categories, JAX training support, CuPy sparse GPU paths, FMEA +
-traceability matrix, 2 055 Python tests, 242 Rust tests, 13 CI
+traceability matrix, 1 776 Python tests, 336 Rust tests, 13 CI
 workflows, conda-forge recipe ready.
 
 New in this release:
@@ -114,11 +114,11 @@ New in this release:
 - **Identity substrate**: persistent spiking network with checkpointing, trace encoding, L16 Director control
 - **Network simulation engine**: Population-Projection-Network with
   3 backends (Python, Rust NetworkRunner, MPI)
-- **Rust NetworkRunner**: 80-model fused loop (was 64), Rayon parallel, 100K+ neurons
+- **Rust NetworkRunner**: 111-model fused loop (was 80), Rayon parallel, 100K+ neurons
 - **MPI distributed simulation**: billion-neuron scale via mpi4py
 - **Model zoo**: 10 configurations + 3 pre-trained weight sets (MNIST, SHD, DVS)
 - **12 visualization plots**, **7 advanced plasticity rules**, **6 topology generators**
-- **125 analysis functions** across 23 modules
+- **126 analysis functions** across 23 modules
 - **conda-forge recipe** ready for distribution
 
 ## v4.0 — Physical FPGA & Production (target: Q3 2026)

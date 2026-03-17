@@ -63,7 +63,7 @@
 
 # 1. Executive Summary
 
-SC-NeuroCore is a Python+Rust stochastic computing (SC) framework for neuromorphic hardware simulation, developed as part of the broader SCPN (Self-Consistent Phenomenological Network) research program under the Anulum Institute. At version 3.12.0, the framework comprises 300+ Python source files, 122 neuron models (113 bio + 9 AI-optimized including ArcaneNeuron), a Rust SIMD engine with 111 neuron models callable from Python via PyO3 (including an 80-model NetworkRunner with Rayon-parallel populations), an identity continuity substrate with checkpointing and L16 Director control, 10 Verilog HDL modules comprising 1,100+ lines of synthesizable register-transfer level (RTL) design, 2,055 Python + 242 Rust tests achieving 100% code coverage, a Population-Projection-Network simulation engine with 3 backends (Python, Rust, MPI), 125 spike train analysis functions across 23 modules, 10 model zoo configurations with 3 pre-trained weight sets, and a six-tiered architecture spanning production-ready hardware models through theoretical research explorations. (Historical note: v2.2.0 had 212 files, 826 tests at 99.67% — see changelog for full progression.)
+SC-NeuroCore is a Python+Rust stochastic computing (SC) framework for neuromorphic hardware simulation, developed as part of the broader SCPN (Self-Consistent Phenomenological Network) research program under the Anulum Institute. At version 3.12.0, the framework comprises 300+ Python source files, 122 neuron models (113 bio + 9 AI-optimized including ArcaneNeuron), a Rust SIMD engine with 111 neuron models callable from Python via PyO3 (including a 111-model NetworkRunner with Rayon-parallel populations), an identity continuity substrate with checkpointing and L16 Director control, 17 Verilog HDL modules comprising 1,100+ lines of synthesizable register-transfer level (RTL) design, 1,776 Python + 336 Rust tests achieving 100% code coverage, a Population-Projection-Network simulation engine with 3 backends (Python, Rust, MPI), 126 spike train analysis functions across 23 modules, 10 model zoo configurations with 3 pre-trained weight sets, and a six-tiered architecture spanning production-ready hardware models through theoretical research explorations. (Historical note: v2.2.0 had 212 files, 826 tests at 99.67% — see changelog for full progression.)
 
 ## 1.1 Core Technical Contributions
 
@@ -95,13 +95,13 @@ This study assesses every source file in the repository. No module is omitted, a
 |--------|-------|
 | **Python source files** | 212 across 44 packages |
 | **Lines of Python** | 12,385 (executable, excluding blanks and comments) |
-| **Verilog HDL modules** | 10 synthesizable modules |
-| **Lines of Verilog** | 1,101 |
-| **Total tests** | 2,055 Python + 242 Rust (100% passing) |
-| **Line coverage** | 99.67% |
-| **CI enforcement threshold** | >= 97% |
-| **Public API symbols** | 28 in root namespace |
-| **Python compatibility** | 3.9, 3.11, 3.12 |
+| **Verilog HDL modules** | 17 synthesizable modules |
+| **Lines of Verilog** | 1,100+ |
+| **Total tests** | 1,776 Python + 336 Rust (100% passing) |
+| **Line coverage** | 100% |
+| **CI enforcement threshold** | 100% |
+| **Public API symbols** | 38 in root namespace |
+| **Python compatibility** | 3.10, 3.11, 3.12, 3.13, 3.14 |
 | **GPU backend** | CuPy (CUDA 12.x) with NumPy fallback |
 | **FPGA target** | Xilinx Zynq-7020 (PYNQ-Z2) |
 | **License** | All Rights Reserved, Anulum CH&LI |

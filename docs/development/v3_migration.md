@@ -150,7 +150,7 @@ Pre-built wheels available for:
 - Linux (x86_64, aarch64)
 - macOS (x86_64, arm64)
 - Windows (x86_64)
-- Python 3.9, 3.10, 3.11, 3.12
+- Python 3.10, 3.11, 3.12, 3.13, 3.14
 
 ## Phase 6 Features (February 2026)
 

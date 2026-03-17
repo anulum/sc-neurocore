@@ -23,7 +23,7 @@ Commercial Licensing: Available
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)
 
 **Version:** 3.12.0
-**Status:** 122 Neuron Models (113 Bio + 9 AI) | 99.49% MNIST | 2 055 Python + 242 Rust Tests | 100% Coverage | 111 Rust Neuron Models | 80-Model NetworkRunner
+**Status:** 122 Neuron Models (113 Bio + 9 AI) | 99.49% MNIST | 1 776 Python + 336 Rust Tests | 100% Coverage | 111 Rust Neuron Models | 111-Model NetworkRunner
 
 <p align="center">
   <img src="docs/assets/spike_raster.png" width="800" alt="LIF spike raster — 5 neurons, sinusoidal input">
@@ -36,16 +36,16 @@ ArcaneNeuron 2026) run inside a deterministic stochastic computing engine
 with bit-true Verilog RTL co-simulation, FPGA synthesis via an IR compiler
 (SystemVerilog + MLIR/CIRCT backends), formal verification (7 SymbiYosys
 modules, 64 properties), a Rust SIMD engine at 512x real-time (111 Rust
-neuron models with PyO3 bindings, 80-model NetworkRunner with Rayon-parallel
+neuron models with PyO3 bindings, 111-model NetworkRunner with Rayon-parallel
 populations scaling to 100K+ neurons), CuPy GPU acceleration, JAX JIT
 training, MPI distributed simulation (billion-neuron scale via mpi4py),
 an identity continuity substrate (persistent spiking networks with
-checkpointing and L16 Director control), a 125-function spike train
+checkpointing and L16 Director control), a 126-function spike train
 analysis toolkit (23 modules), 12 visualization plots, 7 advanced
 plasticity rules, 10 model zoo configurations with 3 pre-trained weight
 sets, 9 hardware chip emulators, quantum hybrid computing (Qiskit +
 PennyLane), and surrogate gradient training reaching 99.49% MNIST accuracy.
-2 055 Python tests across 118+ files and 242 Rust tests hold 100% line
+1 776 Python tests across 118+ files and 336 Rust tests hold 100% line
 coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 
 ## Feature Comparison
