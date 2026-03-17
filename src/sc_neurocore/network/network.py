@@ -218,3 +218,4 @@ class Network:
                 src_sp = last_spikes.get(id(proj.source), np.zeros(proj.source.n, dtype=np.int8))
                 tgt_sp = last_spikes.get(id(proj.target), np.zeros(proj.target.n, dtype=np.int8))
                 proj.update_plasticity(src_sp, tgt_sp)
+
