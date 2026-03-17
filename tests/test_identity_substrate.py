@@ -10,7 +10,6 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from sc_neurocore.identity import (
     IdentitySubstrate,
@@ -31,6 +30,7 @@ def _make_substrate(seed=42):
 
 
 # --- Substrate creation and basic run ---
+
 
 class TestSubstrateCreation:
     def test_populations_created(self):
@@ -69,6 +69,7 @@ class TestSubstrateCreation:
 
 # --- Encoder ---
 
+
 class TestTraceEncoder:
     def test_encode_shape(self):
         enc = TraceEncoder(n_neurons=N_CORTICAL, hash_dims=16, seed=42)
@@ -100,6 +101,7 @@ class TestTraceEncoder:
 
 # --- Inject experience and STDP ---
 
+
 class TestExperienceInjection:
     def test_inject_changes_weights(self):
         sub = _make_substrate()
@@ -116,6 +118,7 @@ class TestExperienceInjection:
 
 
 # --- State extraction ---
+
 
 class TestStateExtraction:
     def test_extract_state_empty(self):
@@ -135,6 +138,7 @@ class TestStateExtraction:
 
 
 # --- Decoder ---
+
 
 class TestDecoder:
     def test_priming_context_dormant(self):
@@ -163,6 +167,7 @@ class TestDecoder:
 
 
 # --- Checkpoint save/load ---
+
 
 class TestCheckpoint:
     def test_round_trip(self, tmp_path):
@@ -200,6 +205,7 @@ class TestCheckpoint:
 
 # --- Director controller ---
 
+
 class TestDirector:
     def test_monitor_returns_metrics(self):
         sub = _make_substrate()
@@ -236,6 +242,7 @@ class TestDirector:
 
 
 # --- Health check ---
+
 
 class TestHealthCheck:
     def test_health_check_initial(self):
