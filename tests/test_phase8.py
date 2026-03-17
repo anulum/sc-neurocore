@@ -112,4 +112,4 @@ class TestParallelBatchEncodeNumpy:
 
 class TestPhase8Version:
     def test_version_is_current(self):
-        assert v3.__version__ == "3.10.0"
+        assert v3.__version__ == "3.12.0"
