@@ -9,7 +9,7 @@
 | Bridge (PyO3) | — | Maturin build + Python import smoke test |
 | HDL formal verification | 64 | 7 formal files across `hdl/formal/` (assert + cover properties) |
 
-CI runs tests on Python 3.10–3.13 (Ubuntu) and Rust on Ubuntu + Windows.
+CI runs tests on Python 3.10–3.14 (Ubuntu) and Rust on Ubuntu + Windows.
 
 ## CI Validation Gates
 
@@ -20,7 +20,7 @@ All gates must pass before merge.
 | black | `ci.yml` | `black --check` |
 | ruff | `ci.yml` | `ruff check` (import hygiene, code quality) |
 | bandit | `ci.yml` | Security static analysis (SAST) |
-| test + coverage | `ci.yml` | `pytest --cov-fail-under=100` on Python 3.10, 3.11, 3.12, 3.13 |
+| test + coverage | `ci.yml` | `pytest --cov-fail-under=100` on Python 3.10, 3.11, 3.12, 3.13, 3.14 |
 | spdx-guard | `ci.yml` | SPDX license headers on all `.py`, `.rs`, `.v` files |
 | build | `ci.yml` | `python -m build` + smoke import |
 | rust-lint | `v3-engine.yml` | `cargo fmt --check` + `cargo clippy -D warnings` |

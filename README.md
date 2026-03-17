@@ -387,9 +387,9 @@ All other examples run with the pure-Python `sc_neurocore` package.
 
 | Workflow | Purpose |
 |----------|---------|
-| **ci.yml** | Lint (black + ruff + bandit) + Test (Python 3.10-3.13, coverage = 100%) + Build |
+| **ci.yml** | Lint (black + ruff + bandit) + Test (Python 3.10-3.14, coverage = 100%) + Build |
 | **v3-engine.yml** | Rust engine `cargo test` + `cargo clippy` |
-| **v3-wheels.yml** | Cross-platform wheels (Linux, macOS, Windows × Python 3.10–3.13) |
+| **v3-wheels.yml** | Cross-platform wheels (Linux, macOS, Windows × Python 3.10–3.14) |
 | **docker.yml** | Build & push Docker image to GHCR on release tags |
 | **docs.yml** | MkDocs → GitHub Pages |
 | **publish.yml** | PyPI OIDC trusted publisher on release |

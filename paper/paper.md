@@ -115,7 +115,7 @@ ArcaneNeuron). A `NetworkRunner` provides a fused simulation loop for
 population stepping, scaling to 100K+ neurons. Runtime feature detection selects AVX-512, AVX2, or NEON paths.
 A Criterion benchmark measures 41.3 Gbit/s bitstream packing on AVX-512
 (Intel i7-10700K). Cross-compiled wheels target Linux, macOS, and
-Windows across Python 3.10--3.13.
+Windows across Python 3.10--3.14.
 
 **Network Simulation** (`sc_neurocore.network`): A Population-Projection-Network
 engine with three backends (Python/NumPy, Rust NetworkRunner, MPI via
