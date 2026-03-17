@@ -10,7 +10,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - ArcaneNeuron: unified self-referential cognition model with 5 coupled subsystems (fast/working/deep/gate/predictor)
 - 8 novel AI-optimized spiking neuron models: MultiTimescaleNeuron, AttentionGatedNeuron, PredictiveCodingNeuron, SelfReferentialNeuron, CompositionalBindingNeuron, DifferentiableSurrogateNeuron, ContinuousAttractorNeuron, MetaPlasticNeuron
 - Total neuron count: 122 Python (113 bio + 9 AI), 111 Rust (including Arcane)
-- ArcaneNeuron included in Rust NetworkRunner (80-model fused loop, was 64)
+- ArcaneNeuron included in Rust NetworkRunner (111-model fused loop, was 80)
 
 ### Identity Substrate
 - `sc_neurocore.identity` package: persistent spiking network for identity continuity
@@ -28,7 +28,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - MPI distributed simulation for billion-neuron scale via mpi4py
 
 ### Rust NetworkRunner
-- 80-model fused simulation loop with Rayon-parallel population stepping (was 64)
+- 111-model fused simulation loop with Rayon-parallel population stepping (was 80)
 - CSR-sparse projection propagation
 - Scales to 100K+ neurons with near-linear speedup
 
@@ -40,13 +40,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Recipe ready for conda-forge distribution
 
 ### Analysis Toolkit
-- 125 spike train analysis functions across 23 modules (22 spike_stats + 1 explainability)
+- 126 spike train analysis functions across 23 modules (22 spike_stats + 1 explainability)
 - Covers: basic stats, variability, rate estimation, distance metrics,
   correlation, spectral, temporal, stimulus, LFP coupling, surrogates,
   information theory, causality, dimensionality, decoding, network,
   point process, sorting quality, waveform, statistics, patterns, SPADE, GPFA
 - Pure NumPy, zero external dependencies
-- Tests: 2 055 Python total, 242 Rust total
+- Tests: 1 776 Python total, 336 Rust total
 
 ### Neuron Model Library (122 Python / 111 Rust)
 - 108 individual model files in `neurons/models/` (one file per model)
