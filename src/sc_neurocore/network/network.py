@@ -18,6 +18,26 @@ from .projection import Projection
 from .monitor import SpikeMonitor, StateMonitor, RateMonitor
 from .stimulus import TimedArray, PoissonInput, StepCurrent
 
+_RUST_ENGINE = None
+
+
+def _get_rust_engine():
+    global _RUST_ENGINE
+    if _RUST_ENGINE is None:
+        try:
+            from sc_neurocore_engine.sc_neurocore_engine import NetworkRunner
+            _RUST_ENGINE = NetworkRunner
+        except ImportError:
+            _RUST_ENGINE = False
+    return _RUST_ENGINE
+
+
+def _rust_supports_model(model_label):
+    engine = _get_rust_engine()
+    if engine is False:
+        return False
+    return model_label in engine.supported_models()
+
 
 class Network:
     """Declarative network: collects objects, runs the simulation loop."""
@@ -50,8 +70,78 @@ class Network:
         else:
             raise TypeError(f"Unknown object type: {type(obj).__name__}")
 
-    def run(self, duration, dt=0.001, progress=False):
-        """Run the simulation for *duration* seconds at timestep *dt*."""
+    def _can_use_rust(self):
+        if self.stimuli:
+            return False
+        if _get_rust_engine() is False:
+            return False
+        for pop in self.populations:
+            if not _rust_supports_model(pop.label):
+                return False
+        if any(p.plasticity for p in self.projections):
+            return False
+        return True
+
+    def run(self, duration, dt=0.001, progress=False, backend="auto"):
+        """Run the simulation for *duration* seconds at timestep *dt*.
+
+        *backend* selects execution: ``'auto'`` picks Rust when available
+        and all models are supported, ``'rust'`` forces the Rust backend
+        (raises if unavailable), ``'python'`` forces pure-Python,
+        ``'mpi'`` runs MPI-distributed (requires mpi4py).
+        """
+        if backend == "mpi":
+            return self._run_mpi(duration, dt)
+        if backend == "rust" or (backend == "auto" and self._can_use_rust()):
+            return self._run_rust(duration, dt)
+        return self._run_python(duration, dt, progress)
+
+    def _run_mpi(self, duration, dt):
+        from .mpi_runner import MPIRunner
+
+        n_steps = int(round(duration / dt))
+        runner = MPIRunner(self)
+        runner.run(n_steps, dt)
+
+    def _run_rust(self, duration, dt):
+        engine_cls = _get_rust_engine()
+        if engine_cls is False:
+            raise RuntimeError("Rust engine not available")
+
+        runner = engine_cls()
+        pop_indices = {}
+        for pop in self.populations:
+            idx = runner.add_population(pop.label, pop.n)
+            pop_indices[id(pop)] = idx
+
+        for proj in self.projections:
+            src_idx = pop_indices[id(proj.source)]
+            tgt_idx = pop_indices[id(proj.target)]
+            runner.add_projection(
+                src_idx,
+                tgt_idx,
+                proj.indptr.tolist(),
+                proj.indices.tolist(),
+                proj.data.tolist(),
+                proj._delay_steps,
+            )
+
+        n_steps = int(round(duration / dt))
+        results = runner.run(n_steps)
+
+        for i, pop in enumerate(self.populations):
+            spike_arr = results["spike_data"][i]
+            for packed in spike_arr:
+                nid = int(packed >> 16)
+                t = int(packed & 0xFFFF)
+                for mon in self.spike_monitors:
+                    if mon.population is pop:
+                        mon.record(
+                            np.array([1 if j == nid else 0 for j in range(pop.n)], dtype=np.int8),
+                            t,
+                        )
+
+    def _run_python(self, duration, dt, progress=False):
         np.random.seed(self.seed)
         n_steps = int(round(duration / dt))
 

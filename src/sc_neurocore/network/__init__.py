@@ -23,6 +23,7 @@ from .topology import (
     all_to_all,
 )
 from .export import export_verilog
+from .mpi_runner import HAS_MPI, MPIRunner
 
 __all__ = [
     "Population",
@@ -41,4 +42,6 @@ __all__ = [
     "grid_topology",
     "all_to_all",
     "export_verilog",
+    "MPIRunner",
+    "HAS_MPI",
 ]
