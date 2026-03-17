@@ -154,6 +154,26 @@ try:
 except ImportError:
     _neurons_available = False
 
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
+        ArcaneNeuron,
+        AttentionGatedNeuron,
+        CompositionalBindingNeuron,
+        DifferentiableSurrogateNeuron,
+        MetaPlasticNeuron,
+        MultiTimescaleNeuron,
+        PredictiveCodingNeuron,
+        SelfReferentialNeuron,
+        RustContinuousAttractorNeuron as ContinuousAttractorNeuron,
+        Izhikevich,
+        BitstreamAverager,
+        NetworkRunner,
+    )
+
+    _ai_available = True
+except ImportError:
+    _ai_available = False
+
 from .layers import VectorizedSCLayer
 from .neurons import FixedPointLIFNeuron
 from .grad import SurrogateLif, DifferentiableDenseLayer
@@ -275,6 +295,18 @@ _NEURON_MODELS = [
     "LapicqueNeuron",
 ]
 
+_AI_MODELS = [
+    "ArcaneNeuron",
+    "AttentionGatedNeuron",
+    "CompositionalBindingNeuron",
+    "ContinuousAttractorNeuron",
+    "DifferentiableSurrogateNeuron",
+    "MetaPlasticNeuron",
+    "MultiTimescaleNeuron",
+    "PredictiveCodingNeuron",
+    "SelfReferentialNeuron",
+]
+
 __all__ = [
     "__version__",
     "simd_tier",
@@ -310,5 +342,9 @@ __all__ = [
     "HDCVector",
     "PetriNetEngine",
     "BrunelNetwork",
+    "Izhikevich",
+    "BitstreamAverager",
+    "NetworkRunner",
     *(_NEURON_MODELS if _neurons_available else []),
+    *(_AI_MODELS if _ai_available else []),
 ]
