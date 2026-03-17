@@ -582,7 +582,7 @@ def main() -> None:
         f"  V_th={sample_bp.v_threshold} mV, V_reset={sample_bp.v_reset} mV, "
         f"tau_m={sample_bp.tau_mem} ms, J={sample_bp.weight_exc} mV"
     )
-    print(f"  C_E={c_e:.0f}, nu_ext={nu_ext:.1f} Hz, " f"ext_lambda/step={ext_lam:.4f}")
+    print(f"  C_E={c_e:.0f}, nu_ext={nu_ext:.1f} Hz, ext_lambda/step={ext_lam:.4f}")
     print(f"  Scales: {scales}")
     print(f"  Backends: {args.backends}")
     print()

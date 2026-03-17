@@ -66,8 +66,8 @@ def benchmark_quantum_hybrid():
 
     print(f"Input shape: {input_bits.shape}")
     print(f"Output shape: {output.shape}")
-    print(f"Latency (100 runs): {elapsed*1000:.2f} ms")
-    print(f"Per-run latency: {elapsed*10:.2f} ms")
+    print(f"Latency (100 runs): {elapsed * 1000:.2f} ms")
+    print(f"Per-run latency: {elapsed * 10:.2f} ms")
     print("\nNon-linearity verification:")
     print(f"  Input p:    {p_in[:5]}")
     print(f"  Output p:   {p_out[:5]}")
@@ -109,10 +109,10 @@ def benchmark_gnn():
     elapsed = time.perf_counter() - start
 
     print(f"Nodes: {n_nodes}, Features: {n_features}")
-    print(f"Graph density: {density*100:.1f}%")
+    print(f"Graph density: {density * 100:.1f}%")
     print(f"Edge count: {np.sum(adj > 0)}")
-    print(f"Latency (100 runs): {elapsed*1000:.2f} ms")
-    print(f"Per-run latency: {elapsed*10:.2f} ms")
+    print(f"Latency (100 runs): {elapsed * 1000:.2f} ms")
+    print(f"Per-run latency: {elapsed * 10:.2f} ms")
 
     # Sparse vs Dense comparison
     dense_ops = n_nodes * n_nodes * n_features  # Dense matmul
@@ -121,7 +121,7 @@ def benchmark_gnn():
     print("\nSPARSITY IMPROVEMENT:")
     print(f"  Dense operations: {dense_ops:,}")
     print(f"  Sparse operations: {sparse_ops:,}")
-    print(f"  Reduction factor: {dense_ops/sparse_ops:.1f}x")
+    print(f"  Reduction factor: {dense_ops / sparse_ops:.1f}x")
 
     return elapsed
 
@@ -150,8 +150,8 @@ def benchmark_transformer():
     print(f"Model dimension: {d_model}")
     print(f"Heads: {n_heads}")
     print(f"Bitstream length: {length}")
-    print(f"Latency (100 runs): {elapsed*1000:.2f} ms")
-    print(f"Per-run latency: {elapsed*10:.2f} ms")
+    print(f"Latency (100 runs): {elapsed * 1000:.2f} ms")
+    print(f"Per-run latency: {elapsed * 10:.2f} ms")
 
     # Energy comparison
     # Standard transformer: O(d^2) multiply-adds per token
@@ -164,7 +164,7 @@ def benchmark_transformer():
     print(f"  Standard ops: {standard_ops:,}")
     print(f"  SC energy: {standard_ops * sc_energy:.2f} fJ")
     print(f"  Standard energy: {standard_ops * standard_energy:.2f} fJ")
-    print(f"  Improvement: {standard_energy/sc_energy:.0f}x")
+    print(f"  Improvement: {standard_energy / sc_energy:.0f}x")
 
     return elapsed
 
@@ -191,7 +191,7 @@ def benchmark_bci_dvs():
     print(f"BCI Channels: {channels}")
     print(f"Signal shape: {signal.shape}")
     print(f"Output bitstream: {bits.shape}")
-    print(f"BCI encode latency (100 runs): {bci_elapsed*1000:.2f} ms")
+    print(f"BCI encode latency (100 runs): {bci_elapsed * 1000:.2f} ms")
 
     # DVS
     height, width = 128, 128
@@ -212,7 +212,7 @@ def benchmark_bci_dvs():
     print(f"\nDVS Resolution: {height}x{width}")
     print(f"Events per frame: {len(events)}")
     print(f"Output shape: {frame.shape}")
-    print(f"DVS process latency (100 runs): {dvs_elapsed*1000:.2f} ms")
+    print(f"DVS process latency (100 runs): {dvs_elapsed * 1000:.2f} ms")
 
     # Power comparison
     # Frame camera: captures all pixels continuously
@@ -223,7 +223,7 @@ def benchmark_bci_dvs():
     print("\nSPARSITY IMPROVEMENT (DVS vs Frame):")
     print(f"  Frame camera data: {frame_pixels:,} pixels/sec")
     print(f"  DVS events: {dvs_events:,} events/frame")
-    print(f"  Data reduction: {frame_pixels/dvs_events:.0f}x")
+    print(f"  Data reduction: {frame_pixels / dvs_events:.0f}x")
     print("  Power reduction: ~1000x (typical DVS vs CMOS)")
 
     return bci_elapsed, dvs_elapsed
@@ -243,8 +243,8 @@ def benchmark_chaotic_rng():
     elapsed = time.perf_counter() - start
 
     print(f"Generated: {len(samples)} samples")
-    print(f"Time: {elapsed*1000:.2f} ms")
-    print(f"Throughput: {len(samples)/elapsed/1e6:.2f} M samples/sec")
+    print(f"Time: {elapsed * 1000:.2f} ms")
+    print(f"Throughput: {len(samples) / elapsed / 1e6:.2f} M samples/sec")
 
     # Statistical tests
     mean = np.mean(samples)
@@ -298,13 +298,13 @@ def benchmark_predictive_model():
     print(f"State dimension: {state_dim}")
     print(f"Action dimension: {action_dim}")
     print(f"Forecast horizon: {len(actions)}")
-    print(f"Latency (100 runs): {elapsed*1000:.2f} ms")
-    print(f"Per-forecast latency: {elapsed*10:.2f} ms")
+    print(f"Latency (100 runs): {elapsed * 1000:.2f} ms")
+    print(f"Per-forecast latency: {elapsed * 10:.2f} ms")
 
     # Verify prediction
     print("\nTrajectory sample (first 5 states):")
     for i, state in enumerate(trajectory[:5]):
-        print(f"  t={i+1}: mean={np.mean(state):.3f}, std={np.std(state):.3f}")
+        print(f"  t={i + 1}: mean={np.mean(state):.3f}, std={np.std(state):.3f}")
 
     # Model-based vs Model-free comparison
     # Model-free: 1000+ environment samples per step
@@ -315,7 +315,7 @@ def benchmark_predictive_model():
     print("\nMODEL-BASED RL IMPROVEMENT:")
     print(f"  Model-free: {model_free_samples} env samples/step")
     print(f"  Model-based: {model_based_ops} forward pass/step")
-    print(f"  Sample efficiency: {model_free_samples/model_based_ops}x")
+    print(f"  Sample efficiency: {model_free_samples / model_based_ops}x")
 
     return elapsed
 
