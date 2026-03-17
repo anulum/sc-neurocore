@@ -7,18 +7,26 @@ stochastic computing (SC) neural networks — from individual neurons to full
 SCPN layer hierarchies, with both software simulation and Verilog RTL for
 FPGA deployment.
 
-**Version 3.12.0** | 1 800 Python + 209 Rust Tests | 100% Coverage | 110 Rust Neuron Models | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
+**Version 3.12.0** | 2 055 Python + 308 Rust Tests | 100% Coverage | 110 Rust Neuron Models | 64-Model NetworkRunner | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
 
 ## Key Features
 
-- **Stochastic neurons** — LIF, Izhikevich, dendritic, homeostatic variants
+- **113 neuron models** — McCulloch-Pitts (1943) through GatedLIF (2022), 9 hardware chip emulators
+- **110 Rust neuron models** — PyO3 bindings, 64-model NetworkRunner with Rayon parallelism
+- **Network simulation** — Population-Projection-Network with 3 backends (Python, Rust, MPI)
+- **MPI distributed** — billion-neuron scale via mpi4py
+- **Model zoo** — 10 pre-built configs, 3 pre-trained weight sets (MNIST, SHD, DVS)
+- **125-function analysis toolkit** — spike train stats, distance, correlation, causality, decoding (23 modules)
+- **12 visualization plots** — raster, voltage, ISI, PSD, cross-correlogram, and more
+- **7 advanced plasticity rules** — BPTT, e-prop, R-STDP, MAML, homeostatic, STP, structural
 - **Packed bitwise layers** — 64-bit vectorised AND/popcount for high throughput
-- **Rust engine** — SIMD-accelerated backend (512x real-time), PyO3 bindings
-- **GPU acceleration** — CuPy backend with automatic CPU fallback
+- **Rust SIMD engine** — 512x real-time, AVX-512/AVX2/NEON/SVE/RVV dispatch
+- **GPU acceleration** — CuPy backend + JAX JIT training + CuPy sparse GPU
 - **SNN training** — Surrogate gradient training (ATan, FastSigmoid, SuperSpike) with `to_sc_weights()` bridge
 - **SCPN layer stack** — 16-layer holonomic model (L1 Quantum → L16 Meta) with JAX acceleration
-- **Verilog RTL** — 10 synthesisable modules, formal verification, bit-exact Python co-simulation
+- **Verilog RTL** — 10 synthesisable modules, 7 formal verification files (64 properties), bit-exact co-simulation
 - **HDC/VSA** — Hyper-dimensional computing for symbolic AI workloads
+- **conda-forge recipe** — ready for conda-forge distribution
 
 ## Quick Start
 

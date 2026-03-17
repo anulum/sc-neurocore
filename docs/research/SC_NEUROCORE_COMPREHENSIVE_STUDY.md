@@ -2,7 +2,7 @@
 
 ## Realistic Capabilities, Architecture, and Engineering Analysis
 
-**Version:** 3.10.0
+**Version:** 3.12.0
 **Date:** March 13, 2026
 **Classification:** Technical Reference Document
 **Word Count Target:** ~50,000 words
@@ -63,7 +63,7 @@
 
 # 1. Executive Summary
 
-SC-NeuroCore is a Python+Rust stochastic computing (SC) framework for neuromorphic hardware simulation, developed as part of the broader SCPN (Self-Consistent Phenomenological Network) research program under the Anulum Institute. At version 3.12.0, the framework comprises 300+ Python source files, a Rust SIMD engine with 110 neuron models callable from Python via PyO3, 10 Verilog HDL modules comprising 1,100+ lines of synthesizable register-transfer level (RTL) design, 1,800 Python + 209 Rust tests achieving 100% code coverage, and a six-tiered architecture spanning production-ready hardware models through theoretical research explorations. (Historical note: v2.2.0 had 212 files, 826 tests at 99.67% — see changelog for full progression.)
+SC-NeuroCore is a Python+Rust stochastic computing (SC) framework for neuromorphic hardware simulation, developed as part of the broader SCPN (Self-Consistent Phenomenological Network) research program under the Anulum Institute. At version 3.12.0, the framework comprises 300+ Python source files, a Rust SIMD engine with 110 neuron models callable from Python via PyO3 (including a 64-model NetworkRunner with Rayon-parallel populations), 10 Verilog HDL modules comprising 1,100+ lines of synthesizable register-transfer level (RTL) design, 2,055 Python + 308 Rust tests achieving 100% code coverage, a Population-Projection-Network simulation engine with 3 backends (Python, Rust, MPI), 125 spike train analysis functions across 23 modules, 10 model zoo configurations with 3 pre-trained weight sets, and a six-tiered architecture spanning production-ready hardware models through theoretical research explorations. (Historical note: v2.2.0 had 212 files, 826 tests at 99.67% — see changelog for full progression.)
 
 ## 1.1 Core Technical Contributions
 
@@ -95,9 +95,9 @@ This study assesses every source file in the repository. No module is omitted, a
 |--------|-------|
 | **Python source files** | 212 across 44 packages |
 | **Lines of Python** | 12,385 (executable, excluding blanks and comments) |
-| **Verilog HDL modules** | 9 synthesizable modules |
+| **Verilog HDL modules** | 10 synthesizable modules |
 | **Lines of Verilog** | 1,101 |
-| **Total tests** | 826 (100% passing) |
+| **Total tests** | 2,055 Python + 308 Rust (100% passing) |
 | **Line coverage** | 99.67% |
 | **CI enforcement threshold** | >= 97% |
 | **Public API symbols** | 28 in root namespace |
@@ -272,7 +272,7 @@ These packages explore the far boundaries of computational theory. They are math
 sc-neurocore/
   src/sc_neurocore/         # 212 Python files, 12,385 lines
     __init__.py             # 28 public symbols, lazy imports, __all__
-    neurons/                # 113 neuron models (LIF variants, Izhikevich, biophysical, …)
+    neurons/                # 113 neuron models (108 in models/ + 5 core)
       __init__.py           # Exports: StochasticLIFNeuron, FixedPointLIFNeuron, etc.
       base.py               # BaseNeuron ABC
       stochastic_lif.py     # Core LIF with Euler integration
@@ -344,7 +344,7 @@ sc-neurocore/
     transcendent/           # Many-worlds, spin networks, etc.
     eschaton/               # Heat death, Planck grid, etc.
     post_silicon/           # Reversible, claytronics, etc.
-  hdl/                      # 9 Verilog files, 1,101 lines
+  hdl/                      # 10 Verilog modules, 1,101+ lines
     sc_neurocore_top.v      # AXI-Lite top-level wrapper
     sc_lif_neuron.v         # Fixed-point LIF neuron
     sc_bitstream_encoder.v  # LFSR-based probability encoder
@@ -1894,7 +1894,7 @@ These four functions (pack, unpack, vec_and, vec_popcount) are the computational
 
 # 11. Hardware Description Layer (Verilog RTL)
 
-SC-NeuroCore includes 9 synthesizable Verilog-2001 modules targeting Xilinx Zynq FPGA (PYNQ-Z2). These modules represent the physical hardware that the Python models simulate and are the ultimate deployment target for SC-NeuroCore designs.
+SC-NeuroCore includes 10 synthesizable Verilog-2001 modules targeting Xilinx Zynq FPGA (PYNQ-Z2). These modules represent the physical hardware that the Python models simulate and are the ultimate deployment target for SC-NeuroCore designs.
 
 ## 11.1 sc_neurocore_top.v — Top-Level SoC Wrapper
 
