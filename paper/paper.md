@@ -16,7 +16,7 @@ authors:
 affiliations:
   - name: Anulum Research, Independent Researcher
     index: 1
-date: 15 March 2026
+date: 17 March 2026
 bibliography: paper.bib
 ---
 
@@ -95,7 +95,7 @@ SC-NeuroCore is structured as three layers, each independently usable:
 
 **Python API** (`pip install sc-neurocore`): Provides `BitstreamEncoder`,
 `BitstreamSynapse`, `StochasticLIFNeuron`, `SCDenseLayer`,
-`VectorizedSCLayer`, and 22 other public symbols. All primitives use a
+`VectorizedSCLayer`, and 33 other public symbols. All primitives use a
 16-bit maximal-length LFSR (polynomial
 $x^{16}+x^{14}+x^{13}+x^{11}+1$, period 65 535) with decorrelated seed
 assignment [@golomb1967shift]. Fixed-point arithmetic uses Q8.8 signed
@@ -109,9 +109,9 @@ SIMD-accelerated `vec_and`, `vec_popcount`, LFSR stepping, HDC
 vector operations, and 111 neuron model implementations covering all
 Python model classes (LIF variants, Hodgkin-Huxley, Izhikevich,
 multi-compartment, neural mass, hardware chip emulators for Loihi,
-TrueNorth, BrainScaleS, SpiNNaker, and Akida, plus the AI-optimized
-ArcaneNeuron). A `NetworkRunner` provides a fused simulation loop for
-80 neuron types with CSR-sparse projections and Rayon-parallel
+TrueNorth, BrainScaleS, SpiNNaker, and Akida, plus nine AI-optimized
+models including ArcaneNeuron). A `NetworkRunner` provides a fused
+simulation loop for 111 neuron types with CSR-sparse projections and Rayon-parallel
 population stepping, scaling to 100K+ neurons. Runtime feature detection selects AVX-512, AVX2, or NEON paths.
 A Criterion benchmark measures 41.3 Gbit/s bitstream packing on AVX-512
 (Intel i7-10700K). Cross-compiled wheels target Linux, macOS, and
@@ -135,7 +135,7 @@ ArcaneNeuron with five coupled subsystems (fast, working memory, deep
 context, attention gate, and self-model)---are designed for cognitive
 workloads beyond biological simulation.
 
-**Analysis Toolkit** (`sc_neurocore.analysis`): 125 spike train analysis
+**Analysis Toolkit** (`sc_neurocore.analysis`): 126 spike train analysis
 functions covering statistics (CV, Fano factor), distance metrics
 (Victor-Purpura, van Rossum, SPIKE-distance), synchrony measures
 (cross-correlation, STTC, event synchronization), information-theoretic
@@ -145,7 +145,7 @@ decoding (population vector, Bayesian), and pattern detection (SPADE).
 All functions are pure NumPy with no external dependencies, matching the
 combined scope of Elephant [@elephant2023] and PySpike.
 
-**Verilog RTL** (`hdl/`): Ten synthesisable modules including
+**Verilog RTL** (`hdl/`): Seventeen synthesisable modules including
 `sc_lif_neuron.v` (Q8.8 LIF with configurable threshold and refractory
 period), `sc_dense_matrix_layer.v` (per-neuron weight matrix), and
 `sc_neurocore_top.v` (AXI-Lite wrapper). Yosys synthesis of
@@ -200,7 +200,7 @@ independent packaging, CI, and PyPI publication.
 
 # Quality Assurance
 
-SC-NeuroCore maintains 2 055 Python and 242 Rust tests with 100% line
+SC-NeuroCore maintains 1 776 Python and 336 Rust tests with 100% line
 coverage of production modules (optional hardware-dependent and
 experimental code excluded via standard coverage directives), enforced
 by CI on every push. The test suite includes unit tests, integration
@@ -217,8 +217,8 @@ The author declares no competing interests.
 
 # AI Usage Disclosure
 
-Generative AI (Claude, Anthropic; model versions claude-sonnet-4-20250514 and
-claude-opus-4-20250514) was used during development for code generation,
+Generative AI (Claude, Anthropic; model versions claude-sonnet-4-20250514,
+claude-opus-4-20250514, and claude-opus-4-6) was used during development for code generation,
 refactoring, test writing, benchmark scripting, and drafting portions of
 this paper. All generated code was reviewed, tested, and validated by
 the human author. Core architectural decisions---the LFSR seed
