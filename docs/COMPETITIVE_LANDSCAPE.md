@@ -36,9 +36,9 @@ marked explicitly.
 | Rust SIMD engine | **Yes** (512x) | — | — | — | — |
 | Surrogate gradient training | Yes | Yes | Yes | Yes | — |
 | GPU acceleration | CuPy | PyTorch | PyTorch | — | — |
-| Neuron models | **113** | 11 | 6 | 3 | Arbitrary |
-| Rust neuron models (PyO3) | **110** | — | — | — | — |
-| NetworkRunner (fused loop) | **64 models** | — | — | — | — |
+| Neuron models | **122** | 11 | 6 | 3 | Arbitrary |
+| Rust neuron models (PyO3) | **111** | — | — | — | — |
+| NetworkRunner (fused loop) | **80 models** | — | — | — | — |
 | Network simulation backends | **3** (Python, Rust, MPI) | PyTorch | PyTorch | Lava | C++ codegen |
 | MPI distributed simulation | **Yes** | — | — | — | — |
 | Pre-trained model zoo | **10 configs, 3 weights** | — | — | — | — |
@@ -54,6 +54,8 @@ marked explicitly.
 | Connectome generators | Yes | — | — | — | Yes |
 | JAX JIT training | **Yes** | — | — | — | — |
 | CuPy sparse GPU | **Yes** | — | — | — | — |
+| AI-optimized neurons | **9 (ArcaneNeuron + 8)** | — | — | — | — |
+| Identity substrate | **Yes** (persistent SNN + checkpoint) | — | — | — | — |
 | conda-forge recipe | **Ready** | Yes | — | — | Yes |
 | PyPI package | Yes | Yes | Yes | Yes | Yes |
 
@@ -66,12 +68,16 @@ marked explicitly.
 3. **Formal verification** — 64 SymbiYosys properties across 7 HDL
    modules (no other SNN framework offers formal proofs)
 4. **Rust SIMD engine** — AVX-512/AVX2/NEON/SVE/RVV dispatch with
-   110 Rust neuron models with PyO3 bindings, 64-model NetworkRunner
+   111 Rust neuron models with PyO3 bindings, 80-model NetworkRunner
 5. **Network simulation** — 3 backends (Python, Rust, MPI), 6 topology
    generators, 10 model zoo configs, 3 pre-trained weight sets
 6. **Analysis toolkit** — 125 spike train analysis functions across
    23 modules, matching Elephant + PySpike combined
-5. **Quantum-SC bridge** — IBM Heron r2 noise model, parameter-shift
+5. **ArcaneNeuron** — self-referential cognition model with 5 coupled
+   subsystems (no equivalent in any other toolkit)
+6. **Identity substrate** — persistent spiking network with checkpointing,
+   trace encoding/decoding, L16 Director cybernetic closure
+7. **Quantum-SC bridge** — IBM Heron r2 noise model, parameter-shift
    gradients, VQE pipeline
 
 ### Where others lead

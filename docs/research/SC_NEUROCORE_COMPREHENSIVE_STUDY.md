@@ -63,7 +63,7 @@
 
 # 1. Executive Summary
 
-SC-NeuroCore is a Python+Rust stochastic computing (SC) framework for neuromorphic hardware simulation, developed as part of the broader SCPN (Self-Consistent Phenomenological Network) research program under the Anulum Institute. At version 3.12.0, the framework comprises 300+ Python source files, a Rust SIMD engine with 110 neuron models callable from Python via PyO3 (including a 64-model NetworkRunner with Rayon-parallel populations), 10 Verilog HDL modules comprising 1,100+ lines of synthesizable register-transfer level (RTL) design, 2,055 Python + 308 Rust tests achieving 100% code coverage, a Population-Projection-Network simulation engine with 3 backends (Python, Rust, MPI), 125 spike train analysis functions across 23 modules, 10 model zoo configurations with 3 pre-trained weight sets, and a six-tiered architecture spanning production-ready hardware models through theoretical research explorations. (Historical note: v2.2.0 had 212 files, 826 tests at 99.67% — see changelog for full progression.)
+SC-NeuroCore is a Python+Rust stochastic computing (SC) framework for neuromorphic hardware simulation, developed as part of the broader SCPN (Self-Consistent Phenomenological Network) research program under the Anulum Institute. At version 3.12.0, the framework comprises 300+ Python source files, 122 neuron models (113 bio + 9 AI-optimized including ArcaneNeuron), a Rust SIMD engine with 111 neuron models callable from Python via PyO3 (including an 80-model NetworkRunner with Rayon-parallel populations), an identity continuity substrate with checkpointing and L16 Director control, 10 Verilog HDL modules comprising 1,100+ lines of synthesizable register-transfer level (RTL) design, 2,055 Python + 242 Rust tests achieving 100% code coverage, a Population-Projection-Network simulation engine with 3 backends (Python, Rust, MPI), 125 spike train analysis functions across 23 modules, 10 model zoo configurations with 3 pre-trained weight sets, and a six-tiered architecture spanning production-ready hardware models through theoretical research explorations. (Historical note: v2.2.0 had 212 files, 826 tests at 99.67% — see changelog for full progression.)
 
 ## 1.1 Core Technical Contributions
 
@@ -97,7 +97,7 @@ This study assesses every source file in the repository. No module is omitted, a
 | **Lines of Python** | 12,385 (executable, excluding blanks and comments) |
 | **Verilog HDL modules** | 10 synthesizable modules |
 | **Lines of Verilog** | 1,101 |
-| **Total tests** | 2,055 Python + 308 Rust (100% passing) |
+| **Total tests** | 2,055 Python + 242 Rust (100% passing) |
 | **Line coverage** | 99.67% |
 | **CI enforcement threshold** | >= 97% |
 | **Public API symbols** | 28 in root namespace |
@@ -272,7 +272,7 @@ These packages explore the far boundaries of computational theory. They are math
 sc-neurocore/
   src/sc_neurocore/         # 212 Python files, 12,385 lines
     __init__.py             # 28 public symbols, lazy imports, __all__
-    neurons/                # 113 neuron models (108 in models/ + 5 core)
+    neurons/                # 122 neuron models (108 bio + 5 core + 9 AI-optimized)
       __init__.py           # Exports: StochasticLIFNeuron, FixedPointLIFNeuron, etc.
       base.py               # BaseNeuron ABC
       stochastic_lif.py     # Core LIF with Euler integration
@@ -584,7 +584,7 @@ pip install -e ".[research,dev,gpu,full,contrib]"
 
 # 5. Tier 1: Production Core — Neurons
 
-SC-NeuroCore provides 113 neuron models (108 in `neurons/models/` + 5 core), spanning from hardware-verified fixed-point implementations to biologically detailed multi-compartment models. The five core models (StochasticLIF, FixedPointLIF, HomeostaticLIF, Izhikevich, Dendritic) share the `BaseNeuron` abstract base class; 108 additional models in `neurons/models/` extend the library to cover the full computational neuroscience literature. 110 of 113 models have Rust implementations callable from Python via PyO3.
+SC-NeuroCore provides 122 neuron models (108 bio in `neurons/models/` + 5 core + 9 AI-optimized), spanning from hardware-verified fixed-point implementations to biologically detailed multi-compartment models and novel AI-optimized designs. The five core models (StochasticLIF, FixedPointLIF, HomeostaticLIF, Izhikevich, Dendritic) share the `BaseNeuron` abstract base class; 108 additional bio models in `neurons/models/` extend the library to cover the full computational neuroscience literature; 9 AI-optimized models (ArcaneNeuron + 8 in `ai_optimized.py`) target cognitive workloads. 111 of 122 models have Rust implementations callable from Python via PyO3.
 
 ## 5.1 StochasticLIFNeuron — The Foundation
 
@@ -4951,7 +4951,7 @@ SC-NeuroCore represents a unique convergence of three computing paradigms:
 
 1. **Stochastic Computing**: Probability-encoded bitstreams processed by simple logic gates, achieving massive hardware efficiency at the cost of controlled accuracy reduction. The framework implements the full SC stack from encoding (Bernoulli/Sobol) through computation (AND/MUX/XNOR) to decoding (popcount), with packed uint64 operations achieving ~5.5 GOPS on CPU.
 
-2. **Spiking Neural Networks**: 113 neuron models across 14 families (IF variants, biophysical, adaptive, oscillatory, bursting, synaptic, multi-compartment, map-based, stochastic, population, hardware, modern/ML, rate, other), three synapse types (BitstreamSynapse, STDP, R-STDP), and hardware-verified Q8.8 fixed-point arithmetic. The bit-true co-simulation between Python and Verilog RTL provides a credible FPGA synthesis path.
+2. **Spiking Neural Networks**: 122 neuron models across 15 families (IF variants, biophysical, adaptive, oscillatory, bursting, synaptic, multi-compartment, map-based, stochastic, population, hardware, modern/ML, rate, other, AI-optimized), three synapse types (BitstreamSynapse, STDP, R-STDP), and hardware-verified Q8.8 fixed-point arithmetic. The bit-true co-simulation between Python and Verilog RTL provides a credible FPGA synthesis path.
 
 3. **Multi-Scale Phenomenological Modeling**: The SCPN 7-layer stack maps the Self-Consistent Phenomenological Network framework to executable stochastic simulations, from quantum biological coherence through neurochemical dynamics to symbolic/cultural processing.
 

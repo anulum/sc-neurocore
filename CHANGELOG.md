@@ -6,6 +6,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [3.12.0] - 2026-03-17
 
+### ArcaneNeuron + 8 AI-Optimized Models
+- ArcaneNeuron: unified self-referential cognition model with 5 coupled subsystems (fast/working/deep/gate/predictor)
+- 8 novel AI-optimized spiking neuron models: MultiTimescaleNeuron, AttentionGatedNeuron, PredictiveCodingNeuron, SelfReferentialNeuron, CompositionalBindingNeuron, DifferentiableSurrogateNeuron, ContinuousAttractorNeuron, MetaPlasticNeuron
+- Total neuron count: 122 Python (113 bio + 9 AI), 111 Rust (including Arcane)
+- ArcaneNeuron included in Rust NetworkRunner (80-model fused loop, was 64)
+
+### Identity Substrate
+- `sc_neurocore.identity` package: persistent spiking network for identity continuity
+- IdentitySubstrate: 3-population network (HH cortical + WB inhibitory + HR memory) with STDP
+- TraceEncoder: LSH-based reasoning trace to spike pattern encoding
+- StateDecoder: PCA + attractor extraction + priming context generation
+- Checkpoint: Lazarus protocol save/restore/merge of complete network state (.npz)
+- DirectorController: L16 cybernetic closure with monitor/diagnose/correct feedback loop
+
 ### Network Simulation Engine
 - Population-Projection-Network architecture with 3 backends: Python (NumPy), Rust (NetworkRunner), MPI (mpi4py)
 - 6 topology generators: random, small-world, scale-free, ring, grid, all-to-all
@@ -14,7 +28,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - MPI distributed simulation for billion-neuron scale via mpi4py
 
 ### Rust NetworkRunner
-- 64-model fused simulation loop with Rayon-parallel population stepping
+- 80-model fused simulation loop with Rayon-parallel population stepping (was 64)
 - CSR-sparse projection propagation
 - Scales to 100K+ neurons with near-linear speedup
 
@@ -32,9 +46,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   information theory, causality, dimensionality, decoding, network,
   point process, sorting quality, waveform, statistics, patterns, SPADE, GPFA
 - Pure NumPy, zero external dependencies
-- Tests: 2 055 Python total, 308 Rust total
+- Tests: 2 055 Python total, 242 Rust total
 
-### Neuron Model Library (113 Python / 110 Rust)
+### Neuron Model Library (122 Python / 111 Rust)
 - 108 individual model files in `neurons/models/` (one file per model)
 - 108 individual model files across 14 families: IF variants, Biophysical, Adaptive, Oscillatory, Bursting, Synaptic, Multi-compartment, Map-based, Stochastic, Population, Hardware, Modern/ML, Rate, Other
 - Notable additions: TraubMiles, WilsonHR, Pospischil (5 cortical types), ConnorStevens, WangBuzsaki, PinskyRinzel, Destexhe, HuberBraun, GolombFS, MainenSejnowski
@@ -69,7 +83,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - **MLIR emitter**: CIRCT hw/comb dialect IR emission (`ir/emit_mlir.rs`)
 - **Static synapse**: completed with excitatory/inhibitory polarity
 - **Surrogate gradient**: added Triangular and PiecewiseLinear variants
-- Rust neuron models callable from Python: 110 (of 113 Python total)
+- Rust neuron models callable from Python: 111 (of 122 Python total)
 
 ### SIMD Hardening (v3.8 carry-forward)
 - Fused `softmax_inplace_f64_dispatch` with SIMD max/sum/scale

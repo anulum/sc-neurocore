@@ -1,8 +1,9 @@
-# Neurons — 113 Models
+# Neurons — 122 Models
 
-113 neuron models spanning 82 years of computational neuroscience
-(1943-2025): 108 individual files under `neurons/models/` plus 5 core
-stochastic computing neurons.
+122 neuron models spanning 83 years of computational neuroscience
+(1943-2026): 108 individual bio model files under `neurons/models/` plus 5 core
+stochastic computing neurons plus 9 AI-optimized models (ArcaneNeuron + 8
+novel designs in `ai_optimized.py`).
 
 ## Quick Start
 

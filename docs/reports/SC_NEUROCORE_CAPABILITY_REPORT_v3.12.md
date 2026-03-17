@@ -28,7 +28,7 @@ SC-NeuroCore is a revolutionary computational framework that represents informat
 - **11 Validated Improvements** - Benchmarked with reproducible metrics
 - **7 Implemented Improvements** - Working code, pending full benchmarking
 - **17 Future Improvements** - Theoretical/requires specialized hardware
-- **2 055 Python + 308 Rust Tests** - Comprehensive test coverage (100% line coverage)
+- **2 055 Python + 242 Rust Tests** - Comprehensive test coverage (100% line coverage)
 - **50+ Experiment Demos** - Ready-to-run demonstrations
 
 ---
@@ -893,7 +893,7 @@ sc-neurocore/
 │   ├── transformers/    # S-Former
 │   ├── transcendent/    # Multiverse, noetic
 │   └── world_model/     # Predictive planning
-├── tests/               # 2 055 Python + 308 Rust tests
+├── tests/               # 2 055 Python + 242 Rust tests
 ├── docs/                # Documentation
 └── scripts/             # Benchmarks
 ```
