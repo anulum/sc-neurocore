@@ -86,9 +86,7 @@ class MPIRunner:
                 if tgt_rank == self.rank:
                     self._local_projs.append(proj)
 
-    def _exchange_spikes(
-        self, local_spikes: dict[int, np.ndarray]
-    ) -> dict[int, np.ndarray]:
+    def _exchange_spikes(self, local_spikes: dict[int, np.ndarray]) -> dict[int, np.ndarray]:
         """Allgatherv spike vectors so every rank knows who spiked.
 
         Each rank sends spike vectors for its local populations packed
