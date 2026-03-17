@@ -19,7 +19,7 @@ repos:
         exclude: "/drivers/"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: efa716b1aab63601b256afc0cda469f0f7606759  # v0.9.7
+    rev: 4924b0e01e032fea073ad04a1c5cfa7e4add0afb  # v0.15.6
     hooks:
       - id: ruff
 

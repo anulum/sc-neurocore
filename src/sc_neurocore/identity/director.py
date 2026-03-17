@@ -24,12 +24,11 @@ from sc_neurocore.analysis import (
 
 from .substrate import IdentitySubstrate
 
-
-RATE_BOUNDS = (5.0, 20.0)    # Hz, cortical physiological range
-CV_BOUNDS = (0.5, 1.5)       # CV ~ 1.0 for Poisson-like firing
-FANO_BOUNDS = (0.5, 2.0)     # near-Poisson variability
-PRUNE_THRESHOLD = 0.01       # weights below this get zeroed
-GROW_FRACTION = 0.02         # fraction of zero weights to reinitialize
+RATE_BOUNDS = (5.0, 20.0)  # Hz, cortical physiological range
+CV_BOUNDS = (0.5, 1.5)  # CV ~ 1.0 for Poisson-like firing
+FANO_BOUNDS = (0.5, 2.0)  # near-Poisson variability
+PRUNE_THRESHOLD = 0.01  # weights below this get zeroed
+GROW_FRACTION = 0.02  # fraction of zero weights to reinitialize
 
 
 class DirectorController:
@@ -46,8 +45,13 @@ class DirectorController:
         """Measure current dynamics from recent spike history."""
         history = self.substrate.spike_history
         if len(history) < 50:
-            return {"mean_rate": 0.0, "cv": float("nan"), "fano": float("nan"),
-                    "perm_entropy": float("nan"), "n_steps": len(history)}
+            return {
+                "mean_rate": 0.0,
+                "cv": float("nan"),
+                "fano": float("nan"),
+                "perm_entropy": float("nan"),
+                "n_steps": len(history),
+            }
 
         recent = np.array(history[-500:], dtype=np.int8)
         pop_binary = (recent.sum(axis=1) > 0).astype(np.int8)

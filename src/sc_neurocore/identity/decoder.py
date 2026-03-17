@@ -34,10 +34,7 @@ class StateDecoder:
             return []
         recent = history[-window:]
         n = min(n_neurons, self.substrate.n_cortical)
-        return [
-            np.array([h[i] for h in recent], dtype=np.int8)
-            for i in range(n)
-        ]
+        return [np.array([h[i] for h in recent], dtype=np.int8) for i in range(n)]
 
     def extract_dominant_patterns(self, n_components=10) -> np.ndarray:
         """PCA on recent spike trains -> dominant activity patterns."""
@@ -111,9 +108,8 @@ class StateDecoder:
         lines = [
             f"Substrate active: {n_steps} steps.",
             f"Dominant patterns: {n_patterns}.",
-            f"Stable attractors: {n_attractors}" + (
-                f" (sizes: {[len(a) for a in attractors]})." if attractors else "."
-            ),
+            f"Stable attractors: {n_attractors}"
+            + (f" (sizes: {[len(a) for a in attractors]})." if attractors else "."),
             f"Mean rate: {mean_rate:.1f} Hz, CV: {mean_cv:.2f}.",
             f"Health: {'OK' if health['is_healthy'] else 'DEGRADED'}.",
         ]

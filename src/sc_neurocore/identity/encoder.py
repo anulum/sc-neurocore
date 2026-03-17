@@ -21,13 +21,13 @@ import numpy as np
 
 def _tokenize(text: str) -> list[str]:
     """Split text into sentence-like chunks on punctuation boundaries."""
-    chunks = re.split(r'[.!?;]\s+', text.strip())
+    chunks = re.split(r"[.!?;]\s+", text.strip())
     return [c.strip() for c in chunks if c.strip()]
 
 
 def _word_set(chunk: str) -> set[str]:
     """Extract lowercased alphanumeric tokens."""
-    return set(re.findall(r'[a-z0-9]+', chunk.lower()))
+    return set(re.findall(r"[a-z0-9]+", chunk.lower()))
 
 
 def _salience(chunk: str, position: int, total: int) -> float:
