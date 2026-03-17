@@ -43,8 +43,8 @@ class Checkpoint:
         me_data = substrate.proj_me.data.copy()
         ii_data = substrate.proj_ii.data.copy()
 
-        stdp_pre = getattr(substrate.proj_ee, '_pre_trace', np.array([]))
-        stdp_post = getattr(substrate.proj_ee, '_post_trace', np.array([]))
+        stdp_pre = getattr(substrate.proj_ee, "_pre_trace", np.array([]))
+        stdp_post = getattr(substrate.proj_ee, "_post_trace", np.array([]))
 
         history_len = min(len(substrate.spike_history), 2000)
         if history_len > 0:
@@ -52,14 +52,17 @@ class Checkpoint:
         else:
             spike_history = np.zeros((0, substrate.n_cortical), dtype=np.int8)
 
-        metadata = np.array([
-            substrate.n_cortical,
-            substrate.n_inhibitory,
-            substrate.n_memory,
-            substrate.seed,
-            substrate._total_steps,
-            int(time.time()),
-        ], dtype=np.int64)
+        metadata = np.array(
+            [
+                substrate.n_cortical,
+                substrate.n_inhibitory,
+                substrate.n_memory,
+                substrate.seed,
+                substrate._total_steps,
+                int(time.time()),
+            ],
+            dtype=np.int64,
+        )
 
         np.savez_compressed(
             path,
@@ -87,7 +90,12 @@ class Checkpoint:
 
         data = np.load(path, allow_pickle=False)
         meta = data["metadata"]
-        n_cortical, n_inhibitory, n_memory, seed = int(meta[0]), int(meta[1]), int(meta[2]), int(meta[3])
+        n_cortical, n_inhibitory, n_memory, seed = (
+            int(meta[0]),
+            int(meta[1]),
+            int(meta[2]),
+            int(meta[3]),
+        )
         total_steps = int(meta[4])
 
         substrate = IdentitySubstrate(n_cortical, n_inhibitory, n_memory, seed)
@@ -107,9 +115,9 @@ class Checkpoint:
 
         stdp_pre = data["stdp_pre"]
         stdp_post = data["stdp_post"]
-        if stdp_pre.size > 0 and hasattr(substrate.proj_ee, '_pre_trace'):
+        if stdp_pre.size > 0 and hasattr(substrate.proj_ee, "_pre_trace"):
             substrate.proj_ee._pre_trace[:] = stdp_pre
-        if stdp_post.size > 0 and hasattr(substrate.proj_ee, '_post_trace'):
+        if stdp_post.size > 0 and hasattr(substrate.proj_ee, "_post_trace"):
             substrate.proj_ee._post_trace[:] = stdp_post
 
         spike_history = data["spike_history"]
@@ -156,9 +164,7 @@ class Checkpoint:
 
         max_history = 2000
         base._spike_history = all_history[-max_history:]
-        base._total_steps = sum(
-            int(np.load(p, allow_pickle=False)["metadata"][4]) for p in paths
-        )
+        base._total_steps = sum(int(np.load(p, allow_pickle=False)["metadata"][4]) for p in paths)
 
         return base
 
@@ -166,8 +172,8 @@ class Checkpoint:
 def _restore_voltages(population, voltages):
     """Write voltage array back into individual neuron objects."""
     for i, neuron in enumerate(population.neurons):
-        if hasattr(neuron, 'v'):
+        if hasattr(neuron, "v"):
             neuron.v = float(voltages[i])
-        elif hasattr(neuron, 'x'):
+        elif hasattr(neuron, "x"):
             neuron.x = float(voltages[i])
     population._sync_voltages()

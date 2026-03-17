@@ -33,7 +33,6 @@ from sc_neurocore.analysis import (
     functional_connectivity,
 )
 
-
 _HOMEOSTATIC_TARGET_RATE = 10.0  # Hz, Turrigiano 2008
 
 
@@ -73,38 +72,62 @@ class IdentitySubstrate:
         n_c = self.n_cortical
         sw_csr = small_world(n_c, k=6, p_rewire=0.1, weight=0.5, seed=int(seeds[0]))
         self.proj_ee = Projection(
-            self.cortical, self.cortical, weight=0.5,
-            topology=sw_csr, plasticity="stdp", seed=int(seeds[0]),
+            self.cortical,
+            self.cortical,
+            weight=0.5,
+            topology=sw_csr,
+            plasticity="stdp",
+            seed=int(seeds[0]),
         )
 
         # E->I: random excitatory drive to inhibitory
         self.proj_ei = Projection(
-            self.cortical, self.inhibitory, weight=0.8,
-            probability=0.2, topology="random", seed=int(seeds[1]),
+            self.cortical,
+            self.inhibitory,
+            weight=0.8,
+            probability=0.2,
+            topology="random",
+            seed=int(seeds[1]),
         )
 
         # I->E: inhibitory feedback (negative weight)
         self.proj_ie = Projection(
-            self.inhibitory, self.cortical, weight=-1.0,
-            probability=0.3, topology="random", seed=int(seeds[2]),
+            self.inhibitory,
+            self.cortical,
+            weight=-1.0,
+            probability=0.3,
+            topology="random",
+            seed=int(seeds[2]),
         )
 
         # E->M: cortical drives memory (pattern imprinting)
         self.proj_em = Projection(
-            self.cortical, self.memory, weight=0.6,
-            probability=0.15, topology="random", seed=int(seeds[3]),
+            self.cortical,
+            self.memory,
+            weight=0.6,
+            probability=0.15,
+            topology="random",
+            seed=int(seeds[3]),
         )
 
         # M->E: memory reactivation drives cortex
         self.proj_me = Projection(
-            self.memory, self.cortical, weight=0.4,
-            probability=0.1, topology="random", seed=int(seeds[4]),
+            self.memory,
+            self.cortical,
+            weight=0.4,
+            probability=0.1,
+            topology="random",
+            seed=int(seeds[4]),
         )
 
         # I->I: mutual inhibition for competition
         self.proj_ii = Projection(
-            self.inhibitory, self.inhibitory, weight=-0.5,
-            probability=0.15, topology="random", seed=int(seeds[5]),
+            self.inhibitory,
+            self.inhibitory,
+            weight=-0.5,
+            probability=0.15,
+            topology="random",
+            seed=int(seeds[5]),
         )
 
     def _build_monitors(self):
@@ -114,10 +137,18 @@ class IdentitySubstrate:
 
     def _build_network(self):
         self.network = Network(
-            self.cortical, self.inhibitory, self.memory,
-            self.proj_ee, self.proj_ei, self.proj_ie,
-            self.proj_em, self.proj_me, self.proj_ii,
-            self.mon_cortical, self.mon_inhibitory, self.mon_memory,
+            self.cortical,
+            self.inhibitory,
+            self.memory,
+            self.proj_ee,
+            self.proj_ei,
+            self.proj_ie,
+            self.proj_em,
+            self.proj_me,
+            self.proj_ii,
+            self.mon_cortical,
+            self.mon_inhibitory,
+            self.mon_memory,
             seed=self.seed,
         )
 
@@ -165,6 +196,7 @@ class IdentitySubstrate:
         Uses TraceEncoder (imported lazily to avoid circular deps).
         """
         from .encoder import TraceEncoder
+
         encoder = TraceEncoder(n_neurons=self.n_cortical, seed=self.seed)
         pattern = encoder.encode(reasoning_trace, duration_ms=200, dt=0.001)
         n_steps = pattern.shape[1]
@@ -206,8 +238,11 @@ class IdentitySubstrate:
         """L16 Director: check network dynamics are healthy."""
         if len(self._spike_history) < 100:
             return {
-                "mean_rate": 0.0, "cv": float("nan"), "fano": float("nan"),
-                "spectral_entropy": float("nan"), "is_healthy": True,
+                "mean_rate": 0.0,
+                "cv": float("nan"),
+                "fano": float("nan"),
+                "spectral_entropy": float("nan"),
+                "is_healthy": True,
                 "n_steps": self._total_steps,
             }
 

@@ -47,7 +47,7 @@ jobs:
         run: pip install --require-hashes -r requirements/lint.txt
 
       - name: black
-        run: black --check src/ tests/ --exclude "identity/"
+        run: black --check src/ tests/
 
       - name: ruff
         run: ruff check src/ tests/
