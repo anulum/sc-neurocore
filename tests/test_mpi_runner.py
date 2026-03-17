@@ -24,8 +24,9 @@ def test_import_without_mpi():
 
 def test_require_mpi_raises_without_mpi():
     """_require_mpi raises RuntimeError when HAS_MPI is False."""
-    with patch("sc_neurocore.network.mpi_runner.HAS_MPI", False), pytest.raises(
-        RuntimeError, match="mpi4py is required"
+    with (
+        patch("sc_neurocore.network.mpi_runner.HAS_MPI", False),
+        pytest.raises(RuntimeError, match="mpi4py is required"),
     ):
         _require_mpi()
 
@@ -49,9 +50,10 @@ def test_partition_populations():
     comm_mock.Get_rank.return_value = 0
     comm_mock.Get_size.return_value = 2
 
-    with patch("sc_neurocore.network.mpi_runner.HAS_MPI", True), patch(
-        "sc_neurocore.network.mpi_runner.MPI"
-    ) as mpi_mock:
+    with (
+        patch("sc_neurocore.network.mpi_runner.HAS_MPI", True),
+        patch("sc_neurocore.network.mpi_runner.MPI") as mpi_mock,
+    ):
         mpi_mock.COMM_WORLD = comm_mock
         from sc_neurocore.network.mpi_runner import MPIRunner
 
@@ -83,9 +85,10 @@ def test_single_rank_matches_python():
     comm_mock.Allgather = fake_allgather
     comm_mock.Allgatherv = fake_allgatherv
 
-    with patch("sc_neurocore.network.mpi_runner.HAS_MPI", True), patch(
-        "sc_neurocore.network.mpi_runner.MPI"
-    ) as mpi_mock:
+    with (
+        patch("sc_neurocore.network.mpi_runner.HAS_MPI", True),
+        patch("sc_neurocore.network.mpi_runner.MPI") as mpi_mock,
+    ):
         mpi_mock.COMM_WORLD = comm_mock
         mpi_mock.BYTE = 0
         from sc_neurocore.network.mpi_runner import MPIRunner
@@ -105,9 +108,10 @@ def test_cross_rank_projection_identification():
     comm_mock.Get_rank.return_value = 0
     comm_mock.Get_size.return_value = 2
 
-    with patch("sc_neurocore.network.mpi_runner.HAS_MPI", True), patch(
-        "sc_neurocore.network.mpi_runner.MPI"
-    ) as mpi_mock:
+    with (
+        patch("sc_neurocore.network.mpi_runner.HAS_MPI", True),
+        patch("sc_neurocore.network.mpi_runner.MPI") as mpi_mock,
+    ):
         mpi_mock.COMM_WORLD = comm_mock
         from sc_neurocore.network.mpi_runner import MPIRunner
 
@@ -137,9 +141,10 @@ def test_exchange_spikes_mock():
     comm_mock.Allgather = fake_allgather
     comm_mock.Allgatherv = fake_allgatherv
 
-    with patch("sc_neurocore.network.mpi_runner.HAS_MPI", True), patch(
-        "sc_neurocore.network.mpi_runner.MPI"
-    ) as mpi_mock:
+    with (
+        patch("sc_neurocore.network.mpi_runner.HAS_MPI", True),
+        patch("sc_neurocore.network.mpi_runner.MPI") as mpi_mock,
+    ):
         mpi_mock.COMM_WORLD = comm_mock
         mpi_mock.BYTE = 0
         from sc_neurocore.network.mpi_runner import MPIRunner
