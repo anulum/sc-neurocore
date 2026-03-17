@@ -16,8 +16,8 @@ from sc_neurocore.neurons.models.ai_optimized import (
     SelfReferentialNeuron,
 )
 
-
 # ── MultiTimescaleNeuron ──────────────────────────────────────────
+
 
 def test_multi_timescale_fires():
     n = MultiTimescaleNeuron()
@@ -44,6 +44,7 @@ def test_multi_timescale_reset():
 
 # ── AttentionGatedNeuron ──────────────────────────────────────────
 
+
 def test_attention_gated_fires():
     n = AttentionGatedNeuron()
     total = sum(n.step(2.0) for _ in range(200))
@@ -65,6 +66,7 @@ def test_attention_gated_reset():
 
 
 # ── PredictiveCodingNeuron ────────────────────────────────────────
+
 
 def test_predictive_coding_fires_on_change():
     n = PredictiveCodingNeuron()
@@ -93,6 +95,7 @@ def test_predictive_coding_reset():
 
 # ── SelfReferentialNeuron ─────────────────────────────────────────
 
+
 def test_self_referential_fires():
     n = SelfReferentialNeuron()
     total = sum(n.step(2.0) for _ in range(200))
@@ -116,6 +119,7 @@ def test_self_referential_reset():
 
 
 # ── CompositionalBindingNeuron ────────────────────────────────────
+
 
 def test_compositional_binding_fires():
     n = CompositionalBindingNeuron()
@@ -141,6 +145,7 @@ def test_compositional_binding_reset():
 
 # ── DifferentiableSurrogateNeuron ─────────────────────────────────
 
+
 def test_differentiable_surrogate_fires():
     n = DifferentiableSurrogateNeuron()
     total = sum(n.step(1.5) for _ in range(20))
@@ -161,6 +166,7 @@ def test_differentiable_surrogate_reset():
 
 
 # ── ContinuousAttractorNeuron ────────────────────────────────────
+
 
 def test_continuous_attractor_fires():
     n = ContinuousAttractorNeuron()
@@ -184,6 +190,7 @@ def test_continuous_attractor_reset():
 
 
 # ── MetaPlasticNeuron ────────────────────────────────────────────
+
 
 def test_meta_plastic_fires():
     n = MetaPlasticNeuron()

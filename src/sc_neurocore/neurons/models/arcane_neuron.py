@@ -118,9 +118,7 @@ class ArcaneNeuron:
         i_eff = gate * current
 
         # Fast compartment
-        self.v_fast += (
-            -self.v_fast + i_eff - self.w_inh * spike_rate
-        ) / self.tau_fast * self.dt
+        self.v_fast += (-self.v_fast + i_eff - self.w_inh * spike_rate) / self.tau_fast * self.dt
 
         # Prediction error (self-modeling)
         self._prediction = (
@@ -129,14 +127,20 @@ class ArcaneNeuron:
             + self.w_pred[2] * self.v_deep
         )
         self._surprise = abs(self.v_fast - self._prediction)
-        self._novelty = 1.0 / (1.0 + np.exp(-self.kappa * (self._surprise - self.surprise_baseline)))
+        self._novelty = 1.0 / (
+            1.0 + np.exp(-self.kappa * (self._surprise - self.surprise_baseline))
+        )
 
         # Update novelty history
         self._novelty_history[self._nov_idx % len(self._novelty_history)] = self._novelty
         self._nov_idx += 1
 
         # Effective threshold: deep state + confidence modulate
-        eff_threshold = self.theta * (1.0 + self.gamma * self.v_deep) * (1.0 - self.delta_conf * self._confidence)
+        eff_threshold = (
+            self.theta
+            * (1.0 + self.gamma * self.v_deep)
+            * (1.0 - self.delta_conf * self._confidence)
+        )
         eff_threshold = max(eff_threshold, 0.1)
 
         # Spike decision
@@ -151,7 +155,9 @@ class ArcaneNeuron:
         self.v_work += -self.v_work / self.tau_work * self.dt
 
         # Deep compartment: only updates on genuine novelty
-        self.v_deep += (-self.v_deep + self.alpha_d * self.v_work * self._novelty) / self.tau_deep * self.dt
+        self.v_deep += (
+            (-self.v_deep + self.alpha_d * self.v_work * self._novelty) / self.tau_deep * self.dt
+        )
 
         # Meta-learning: update predictor weights toward reducing surprise
         meta_lr = self.lr_base * (1.0 + self.eta * self._novelty)
