@@ -115,3 +115,5 @@ Python reference implementation (`src/sc_neurocore/`).
 **Feature parity: 147/147**
 **Rust neuron models callable from Python: 110 of 113 Python total**
 **3 core models (StochasticLIF, FixedPointLIF, SCIzhikevich) mapped to different Rust names (FixedPointLif, Izhikevich)**
+**Rust tests: 308 (214 lib + 94 crate tests across 17 test binaries)**
+**NetworkRunner: 64 models in fused Rayon-parallel simulation loop**

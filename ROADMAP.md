@@ -1,13 +1,13 @@
 # Roadmap
 
-> Last updated: 2026-03-15 (v3.12.0). Priorities may shift based on
+> Last updated: 2026-03-17 (v3.12.0). Priorities may shift based on
 > validation results and community feedback.
 
 ## v3.8 — Hardening & Edge AI Readiness ✓
 
 ### ~~Coverage gate ≥ 98%~~ ✓
 
-Done. 100% enforced (1 451 tests passed; gate at 100).
+Done. 100% enforced (2 055 tests passed; gate at 100).
 
 ### ~~NumPy 2.x full compatibility~~ ✓
 
@@ -51,8 +51,9 @@ stabilisation in Rust.
 
 ### ~~Formal verification~~ ✓
 
-SymbiYosys proofs: LIF neuron (5 properties), bitstream synapse (4),
-encoder (2). 11 formal properties total.
+SymbiYosys proofs across 7 HDL modules: LIF neuron (6), bitstream synapse
+(8), encoder (3), dense layer core (7), dotproduct (5), firing rate
+bank (22), AXI-Lite config (13). 64 formal properties total.
 
 ### ~~Brunel balanced-network benchmark~~ ✓
 
@@ -104,8 +105,19 @@ test counts updated across all docs.
 
 113 Python + 110 Rust neuron models, PyO3 bindings for all extended
 model categories, JAX training support, CuPy sparse GPU paths, FMEA +
-traceability matrix, 1 800 Python tests across 118 files, 209 Rust
-tests, 13 CI workflows.
+traceability matrix, 2 055 Python tests, 308 Rust tests, 13 CI
+workflows, conda-forge recipe ready.
+
+New in this release:
+
+- **Network simulation engine**: Population-Projection-Network with
+  3 backends (Python, Rust NetworkRunner, MPI)
+- **Rust NetworkRunner**: 64-model fused loop, Rayon parallel, 100K+ neurons
+- **MPI distributed simulation**: billion-neuron scale via mpi4py
+- **Model zoo**: 10 configurations + 3 pre-trained weight sets (MNIST, SHD, DVS)
+- **12 visualization plots**, **7 advanced plasticity rules**, **6 topology generators**
+- **125 analysis functions** across 23 modules
+- **conda-forge recipe** ready for distribution
 
 ## v4.0 — Physical FPGA & Production (target: Q3 2026)
 
@@ -142,6 +154,23 @@ acceleration benchmarks vs NumPy baseline.
 
 FMEA + traceability matrix created in `docs/safety/`. Safety manual
 and requirements-to-tests-to-formal-proofs mapping complete.
+
+### ~~Network simulation engine~~ ✓
+
+Population-Projection-Network architecture with Python, Rust, and MPI
+backends. 6 topology generators. Moved from v4.0 to v3.12.
+
+### ~~MPI distributed simulation~~ ✓
+
+Billion-neuron scale via mpi4py. Moved from v4.0 to v3.12.
+
+### ~~Pre-trained model zoo~~ ✓
+
+10 configurations + 3 pre-trained weight sets. Moved from v4.0 to v3.12.
+
+### ~~conda-forge recipe~~ ✓
+
+Recipe ready for conda-forge distribution. Moved from v4.1 to v3.12.
 
 ## v4.1 — Community & Ecosystem (target: Q4 2026)
 

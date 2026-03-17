@@ -4,10 +4,10 @@
 
 | Suite | Count | Scope |
 |-------|------:|-------|
-| Python unit/integration | 1 800 | `pytest tests/` across 118 files |
-| Rust engine | 209 | `cargo test --manifest-path engine/Cargo.toml` |
+| Python unit/integration | 2 055 | `pytest tests/` across 118+ files |
+| Rust engine | 308 | `cargo test --manifest-path engine/Cargo.toml` (214 lib + 94 crate) |
 | Bridge (PyO3) | — | Maturin build + Python import smoke test |
-| HDL formal verification | 11 | Verilog modules in `hdl/` with testbenches in `tb/` |
+| HDL formal verification | 64 | 7 formal files across `hdl/formal/` (assert + cover properties) |
 
 CI runs tests on Python 3.10–3.13 (Ubuntu) and Rust on Ubuntu + Windows.
 

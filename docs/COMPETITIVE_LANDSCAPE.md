@@ -6,7 +6,7 @@ An honest comparison of SC-NeuroCore with peer frameworks. Every claim
 is backed by measured data or cited literature. Unverified claims are
 marked explicitly.
 
-**Last updated**: 2026-03-15 (v3.12.0)
+**Last updated**: 2026-03-17 (v3.12.0)
 
 ---
 
@@ -36,14 +36,25 @@ marked explicitly.
 | Rust SIMD engine | **Yes** (512x) | — | — | — | — |
 | Surrogate gradient training | Yes | Yes | Yes | Yes | — |
 | GPU acceleration | CuPy | PyTorch | PyTorch | — | — |
-| Neuron models | 116 | 11 | 6 | 3 | Arbitrary |
+| Neuron models | **113** | 11 | 6 | 3 | Arbitrary |
+| Rust neuron models (PyO3) | **110** | — | — | — | — |
+| NetworkRunner (fused loop) | **64 models** | — | — | — | — |
+| Network simulation backends | **3** (Python, Rust, MPI) | PyTorch | PyTorch | Lava | C++ codegen |
+| MPI distributed simulation | **Yes** | — | — | — | — |
+| Pre-trained model zoo | **10 configs, 3 weights** | — | — | — | — |
+| Spike train analysis | **125 functions** | — | — | — | — |
+| Visualization plots | **12** | — | — | — | — |
+| Advanced plasticity rules | **7** | — | — | — | — |
 | STDP / R-STDP plasticity | Yes | — | Yes | Yes | Yes |
 | Quantum hybrid circuits | **Yes** | — | — | — | — |
 | Hyperdimensional computing | **Yes** | — | — | — | — |
-| Formal verification | **7 modules** | — | — | — | — |
+| Formal verification | **7 modules, 64 props** | — | — | — | — |
 | Sobol low-discrepancy encoding | **Yes** | — | — | — | — |
 | Multi-head attention (SC) | **Yes** | — | — | — | — |
 | Connectome generators | Yes | — | — | — | Yes |
+| JAX JIT training | **Yes** | — | — | — | — |
+| CuPy sparse GPU | **Yes** | — | — | — | — |
+| conda-forge recipe | **Ready** | Yes | — | — | Yes |
 | PyPI package | Yes | Yes | Yes | Yes | Yes |
 
 ### Where SC-NeuroCore leads
@@ -52,10 +63,14 @@ marked explicitly.
    simulation, packed AND+popcount operations, and Sobol LDS encoding
 2. **FPGA co-design** — IR compiler emits synthesisable SystemVerilog
    and MLIR/CIRCT, with bit-exact Python↔Verilog co-simulation
-3. **Formal verification** — 69 SymbiYosys properties across 7 HDL
+3. **Formal verification** — 64 SymbiYosys properties across 7 HDL
    modules (no other SNN framework offers formal proofs)
 4. **Rust SIMD engine** — AVX-512/AVX2/NEON/SVE/RVV dispatch with
-   110 Rust neuron models with PyO3 bindings
+   110 Rust neuron models with PyO3 bindings, 64-model NetworkRunner
+5. **Network simulation** — 3 backends (Python, Rust, MPI), 6 topology
+   generators, 10 model zoo configs, 3 pre-trained weight sets
+6. **Analysis toolkit** — 125 spike train analysis functions across
+   23 modules, matching Elephant + PySpike combined
 5. **Quantum-SC bridge** — IBM Heron r2 noise model, parameter-shift
    gradients, VQE pipeline
 
@@ -172,7 +187,7 @@ highest reported SNN accuracy among open-source frameworks.
 | Bio-plausible learning | **Norse** or **BindsNET** | STDP/bio-learning focus |
 | Large-scale brain models | **Nengo** | NEF, SpiNNaker support |
 | Stochastic + quantum hybrid | **SC-NeuroCore** | Unique quantum-SC bridge |
-| Formal safety verification | **SC-NeuroCore** | 69 SymbiYosys properties |
+| Formal safety verification | **SC-NeuroCore** | 64 SymbiYosys properties |
 
 ---
 

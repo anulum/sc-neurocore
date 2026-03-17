@@ -30,7 +30,7 @@ pip install -e ".[research]"
 ## Running Tests
 
 ```bash
-# Full suite (1 800 tests, 100% coverage gate)
+# Full suite (2 055 tests, 100% coverage gate)
 pytest tests/ -v --cov=sc_neurocore --cov-report=term
 
 # Quick smoke test
@@ -139,10 +139,12 @@ then switch to `mode="HARDWARE"`.
 
 ## Analysis Toolkit
 
-SC-NeuroCore includes 125 spike train analysis functions across 22 modules --
-statistics, distance metrics, synchrony, spectral, information theory,
-causality, dimensionality reduction, decoding, and pattern detection.
-Pure NumPy, zero external dependencies.
+SC-NeuroCore includes 125 spike train analysis functions across 23 modules --
+statistics, variability, rate estimation, distance metrics, correlation,
+spectral, temporal, stimulus, LFP coupling, surrogates, information theory,
+causality, dimensionality reduction, decoding, network, point process,
+sorting quality, waveform, statistics, patterns, SPADE, GPFA, and
+explainability. Pure NumPy, zero external dependencies.
 
 ```python
 from sc_neurocore.analysis import (
@@ -153,6 +155,60 @@ from sc_neurocore.analysis import (
 
 See the [Spike Train Analysis tutorial](../tutorials/23_spike_train_analysis.md)
 and [API reference](../api/analysis.md) for the full 125-function listing.
+
+## Network Simulation
+
+Build multi-population networks with the Population-Projection-Network engine:
+
+```python
+from sc_neurocore.network import Population, Projection, Network
+
+exc = Population("Izhikevich", 800)
+inh = Population("Izhikevich", 200)
+net = Network()
+net.add_population(exc)
+net.add_population(inh)
+net.add_projection(Projection(exc, inh, probability=0.1, weight=5.0))
+net.add_projection(Projection(inh, exc, probability=0.1, weight=-4.0))
+net.run(duration_ms=1000, dt=0.1)
+```
+
+Three backends: Python (NumPy), Rust (NetworkRunner, 64 models, Rayon parallel),
+and MPI (billion-neuron distributed via mpi4py).
+
+## Loading Pre-Trained Models
+
+The model zoo provides 10 ready-to-run network configurations and 3 pre-trained
+weight sets:
+
+```python
+from sc_neurocore.model_zoo.configs import brunel_balanced_network, mnist_classifier
+
+# Pre-configured Brunel balanced network
+net = brunel_balanced_network()
+
+# MNIST digit classifier with pre-trained weights
+classifier = mnist_classifier()
+```
+
+Available weight sets: MNIST (784-128-10), SHD speech (700-256-20),
+DVS gesture (256-256-11).
+
+## MPI Distributed Simulation
+
+For billion-neuron scale runs across multiple nodes:
+
+```bash
+pip install sc-neurocore[mpi]
+mpirun -np 4 python my_large_network.py
+```
+
+```python
+from sc_neurocore.network import Network
+
+net = Network(backend="mpi")
+# Populations are automatically distributed across MPI ranks
+```
 
 ## What's Next?
 

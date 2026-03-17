@@ -4,16 +4,35 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
-## [3.12.0] - 2026-03-15
+## [3.12.0] - 2026-03-17
+
+### Network Simulation Engine
+- Population-Projection-Network architecture with 3 backends: Python (NumPy), Rust (NetworkRunner), MPI (mpi4py)
+- 6 topology generators: random, small-world, scale-free, ring, grid, all-to-all
+- 12 visualization plots: raster, voltage, ISI, cross-correlogram, PSD, firing rate, phase portrait, population activity, instantaneous rate, spike train comparison, network graph, weight matrix
+- 7 advanced plasticity rules: BPTT, e-prop, R-STDP, MAML, homeostatic, STP, structural
+- MPI distributed simulation for billion-neuron scale via mpi4py
+
+### Rust NetworkRunner
+- 64-model fused simulation loop with Rayon-parallel population stepping
+- CSR-sparse projection propagation
+- Scales to 100K+ neurons with near-linear speedup
+
+### Model Zoo
+- 10 pre-built network configurations: Brunel balanced, cortical column, CPG, decision-making, working memory, visual cortex V1, auditory processing, MNIST classifier, SHD speech, DVS gesture
+- 3 pre-trained weight sets: MNIST (784-128-10), SHD (700-256-20), DVS gesture (256-256-11)
+
+### conda-forge
+- Recipe ready for conda-forge distribution
 
 ### Analysis Toolkit
-- 125 spike train analysis functions across 22 modules
+- 125 spike train analysis functions across 23 modules (22 spike_stats + 1 explainability)
 - Covers: basic stats, variability, rate estimation, distance metrics,
   correlation, spectral, temporal, stimulus, LFP coupling, surrogates,
   information theory, causality, dimensionality, decoding, network,
   point process, sorting quality, waveform, statistics, patterns, SPADE, GPFA
 - Pure NumPy, zero external dependencies
-- 172 tests
+- Tests: 2 055 Python total, 308 Rust total
 
 ### Neuron Model Library (113 Python / 110 Rust)
 - 108 individual model files in `neurons/models/` (one file per model)

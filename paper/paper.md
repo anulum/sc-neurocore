@@ -109,11 +109,20 @@ SIMD-accelerated `vec_and`, `vec_popcount`, LFSR stepping, HDC
 vector operations, and 110 neuron model implementations covering all
 Python model classes (LIF variants, Hodgkin-Huxley, Izhikevich,
 multi-compartment, neural mass, and hardware chip emulators for Loihi,
-TrueNorth, BrainScaleS, SpiNNaker, and Akida). Runtime feature detection
-selects AVX-512, AVX2, or NEON paths. A Criterion benchmark measures
-41.3 Gbit/s bitstream packing on AVX-512 (Intel i7-10700K).
-Cross-compiled wheels target Linux, macOS, and Windows across Python
-3.10--3.13.
+TrueNorth, BrainScaleS, SpiNNaker, and Akida). A `NetworkRunner`
+provides a fused simulation loop for 64 neuron types with CSR-sparse
+projections and Rayon-parallel population stepping, scaling to 100K+
+neurons. Runtime feature detection selects AVX-512, AVX2, or NEON paths.
+A Criterion benchmark measures 41.3 Gbit/s bitstream packing on AVX-512
+(Intel i7-10700K). Cross-compiled wheels target Linux, macOS, and
+Windows across Python 3.10--3.13.
+
+**Network Simulation** (`sc_neurocore.network`): A Population-Projection-Network
+engine with three backends (Python/NumPy, Rust NetworkRunner, MPI via
+mpi4py for billion-neuron distributed runs), six topology generators
+(random, small-world, scale-free, ring, grid, all-to-all), and a model
+zoo with 10 pre-built configurations and 3 pre-trained weight sets
+(MNIST, SHD, DVS gesture).
 
 **Analysis Toolkit** (`sc_neurocore.analysis`): 125 spike train analysis
 functions covering statistics (CV, Fano factor), distance metrics
@@ -150,7 +159,8 @@ every timestep. This enables co-simulation workflows where the Python
 golden model generates stimulus vectors, Icarus Verilog runs the RTL,
 and a checker script verifies bit-exact equivalence across all LFSR
 seeds and neuron states. SymbiYosys formal verification covers
-11 properties across the encoder, neuron, and synapse modules.
+64 properties across 7 HDL modules (encoder, neuron, synapse, dense layer,
+dotproduct, firing rate, AXI-Lite config).
 
 # Research Impact Statement
 
@@ -179,16 +189,16 @@ independent packaging, CI, and PyPI publication.
 
 # Quality Assurance
 
-SC-NeuroCore maintains 1 800 Python and 209 Rust tests with 100% line
+SC-NeuroCore maintains 2 055 Python and 308 Rust tests with 100% line
 coverage of production modules (optional hardware-dependent and
 experimental code excluded via standard coverage directives), enforced
 by CI on every push. The test suite includes unit tests, integration
 tests, 18 property-based tests (Hypothesis), cross-layer coupling
-tests, and hardware co-simulation checks. Static
-analysis comprises Ruff linting, Bandit security scanning, and SPDX
-license header validation. Thirteen CI workflows---all with SHA-pinned
-GitHub Actions---cover lint, test, build, benchmark, documentation,
-CodeQL, and OpenSSF Scorecard.
+tests, network simulation tests, and hardware co-simulation checks.
+Static analysis comprises Ruff linting, Bandit security scanning, and
+SPDX license header validation. Thirteen CI workflows---all with
+SHA-pinned GitHub Actions---cover lint, test, build, benchmark,
+documentation, CodeQL, and OpenSSF Scorecard.
 
 # Competing Interests
 
