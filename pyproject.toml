@@ -69,6 +69,7 @@ research = ["matplotlib>=3.5", "networkx", "onnx", "torch>=2.0"]
 training = ["torch>=2.0"]
 jax = ["jax", "jaxlib"]
 quantum = ["qiskit", "pennylane", "qiskit-aer"]
+mpi = ["mpi4py>=3.0"]
 lava = ["lava-nc"]
 docs = ["mkdocs>=1.6", "mkdocs-material>=9.5", "mkdocstrings[python]>=0.25"]
 
@@ -94,7 +95,7 @@ exclude = [
 ]
 
 [tool.setuptools.package-data]
-sc_neurocore = ["py.typed"]
+sc_neurocore = ["py.typed", "model_zoo/weights/*.npz"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

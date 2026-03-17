@@ -33,6 +33,7 @@ pub mod grad;
 pub mod graph;
 pub mod ir;
 pub mod layer;
+pub mod network_runner;
 pub mod neuron;
 pub mod neurons;
 pub mod pyo3_neurons;
@@ -277,6 +278,72 @@ impl PyBrunelNetwork {
     }
 }
 
+// ── NetworkRunner PyO3 wrapper ────────────────────────────────────────
+
+#[pyclass(
+    name = "NetworkRunner",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
+pub struct PyNetworkRunner {
+    inner: network_runner::NetworkRunner,
+}
+
+#[pymethods]
+impl PyNetworkRunner {
+    #[new]
+    fn new() -> Self {
+        Self {
+            inner: network_runner::NetworkRunner::new(),
+        }
+    }
+
+    fn add_population(&mut self, model: &str, n: usize) -> PyResult<usize> {
+        let pop = network_runner::create_population(model, n).map_err(PyValueError::new_err)?;
+        Ok(self.inner.add_population(pop))
+    }
+
+    #[pyo3(signature = (src, tgt, row_offsets, col_indices, values, delay=0))]
+    fn add_projection(
+        &mut self,
+        src: usize,
+        tgt: usize,
+        row_offsets: Vec<i64>,
+        col_indices: Vec<i64>,
+        values: Vec<f64>,
+        delay: usize,
+    ) {
+        let ro: Vec<usize> = row_offsets.iter().map(|&x| x as usize).collect();
+        let ci: Vec<usize> = col_indices.iter().map(|&x| x as usize).collect();
+        let proj = network_runner::ProjectionRunner::new(src, tgt, ro, ci, values, delay);
+        self.inner.add_projection(proj);
+    }
+
+    fn run<'py>(&mut self, py: Python<'py>, n_steps: usize) -> PyResult<Py<PyAny>> {
+        let results = self.inner.run(n_steps);
+        let dict = PyDict::new(py);
+        let spike_counts: Vec<u64> = results.spike_counts.iter().map(|&c| c as u64).collect();
+        dict.set_item("spike_counts", spike_counts.into_pyarray(py))?;
+        let spike_data: Vec<Py<PyArray1<u32>>> = results
+            .spike_data
+            .into_iter()
+            .map(|v: Vec<u32>| v.into_pyarray(py).unbind())
+            .collect();
+        dict.set_item("spike_data", spike_data)?;
+        let voltages: Vec<Py<PyArray1<f64>>> = results
+            .voltages
+            .into_iter()
+            .map(|v: Vec<f64>| v.into_pyarray(py).unbind())
+            .collect();
+        dict.set_item("voltages", voltages)?;
+        Ok(dict.into_any().unbind())
+    }
+
+    #[staticmethod]
+    fn supported_models() -> Vec<&'static str> {
+        network_runner::supported_models()
+    }
+}
+
 /// SC-NeuroCore ─ High-Performance Rust Engine
 
 #[pymodule]
@@ -320,6 +387,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyExpIFNeuron>()?;
     m.add_class::<PyLapicqueNeuron>()?;
     pyo3_neurons::register_neuron_classes(m)?;
+    m.add_class::<PyNetworkRunner>()?;
     Ok(())
 }
 

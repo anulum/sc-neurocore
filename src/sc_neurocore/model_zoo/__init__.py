@@ -28,6 +28,7 @@ from .configs import (
     auditory_processing,
     visual_cortex_v1,
 )
+from .pretrained import load_pretrained
 
 __all__ = [
     "mnist_classifier",
@@ -40,4 +41,5 @@ __all__ = [
     "working_memory_circuit",
     "auditory_processing",
     "visual_cortex_v1",
+    "load_pretrained",
 ]
