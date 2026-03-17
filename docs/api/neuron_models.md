@@ -1,8 +1,9 @@
-# Neuron Model Reference — 113 Python / 110 Rust
+# Neuron Model Reference — 122 Python / 111 Rust
 
-SC-NeuroCore provides 113 neuron models in Python (108 in `models/` +
-5 core) and 110 Rust implementations callable via PyO3 bindings. Both
-backends expose identical `step()` / `reset()` / `get_state()` interfaces.
+SC-NeuroCore provides 122 neuron models in Python (108 bio in `models/` +
+5 core + 9 AI-optimized) and 111 Rust implementations callable via PyO3
+bindings. Both backends expose identical `step()` / `reset()` /
+`get_state()` interfaces.
 
 ## Quick Start
 
@@ -26,7 +27,8 @@ spike = hh_rs.step(current=10.0)
 | Rust | `sc_neurocore_engine.sc_neurocore_engine` | Production, benchmarks, batch simulation |
 
 Both backends use identical class names (e.g., `HodgkinHuxleyNeuron`).
-The Rust engine exposes 110 of the 113 Python models.
+The Rust engine exposes 111 of the 122 Python models (all bio models +
+ArcaneNeuron).
 
 ## Model Catalogue
 
@@ -204,3 +206,20 @@ Neural mass models return `float` (firing rate or EEG potential):
 - `WilsonCowanUnit`, `JansenRitUnit`, `WendlingNeuron`
 - `ErmentroutKopellPopulation`, `LarterBreakspearNeuron`
 - `SigmoidRateNeuron`, `SiegertTransferFunction`
+
+### AI-Optimized (9 models)
+
+Novel neuron models designed for AI workloads, not biological simulation.
+Located in `neurons/models/ai_optimized.py` and `neurons/models/arcane_neuron.py`.
+
+| Python Class | Rust Class | Key Feature |
+|-------------|-----------|-------------|
+| `ArcaneNeuron` | `ArcaneNeuron` | 5-compartment self-referential cognition: fast (5ms), working memory (200ms), deep context (10s), attention gate, forward self-model. Identity accumulates in the deep compartment. Confidence modulates threshold and meta-learning rate. Sotek & Arcane Sapience 2026. |
+| `MultiTimescaleNeuron` | — | Three-compartment (fast/medium/slow) with context-dependent threshold modulation |
+| `AttentionGatedNeuron` | — | Learned sigmoid gate (key/query weights) selectively filters input |
+| `PredictiveCodingNeuron` | — | Fires only on prediction errors (novel stimuli), silent on expected input |
+| `SelfReferentialNeuron` | — | Introspects own spike history to auto-regulate firing dynamics |
+| `CompositionalBindingNeuron` | — | Phase-coding for variable binding; in-phase = bound concepts |
+| `DifferentiableSurrogateNeuron` | — | Trainable surrogate gradient parameters (alpha, beta, theta) |
+| `ContinuousAttractorNeuron` | — | Ring attractor with Mexican-hat connectivity for continuous working memory |
+| `MetaPlasticNeuron` | — | Self-regulating meta-learning rate based on error trace |

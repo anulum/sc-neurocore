@@ -92,6 +92,9 @@ nav:
           - Compiler: api/compiler.md
           - Export: api/export.md
           - HDL Generation: api/hdl_gen.md
+      - Identity & AI:
+          - Identity Substrate: api/identity.md
+          - AI-Optimized Neurons: api/ai_neurons.md
       - Domain Modules:
           - Adapters: api/adapters.md
           - Audio: api/audio.md

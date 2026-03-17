@@ -37,7 +37,7 @@ Python reference implementation (`src/sc_neurocore/`).
 | Homeostatic LIF | `HomeostaticLIFNeuron` | `neuron.rs::HomeostaticLif` | Done |
 | Dendritic neuron | `DendriticNeuron` | `neuron.rs::DendriticNeuron` | Done |
 
-## Extended Neuron Models (104 models in `neurons/`)
+## Extended Neuron Models (104 bio + 1 AI in `neurons/`)
 
 | Category | Count | Rust module | Status |
 |----------|-------|-------------|--------|
@@ -49,6 +49,7 @@ Python reference implementation (`src/sc_neurocore/`).
 | Stochastic/population | 13 | `neurons/special.rs` | Done |
 | Hardware emulators | 9 | `neurons/hardware.rs` | Done |
 | Rate/other | 11 | `neurons/rate.rs` | Done |
+| AI-optimized | 1 | `neurons/special.rs` (Arcane) | Done |
 
 ## Synapses
 
@@ -104,16 +105,16 @@ Python reference implementation (`src/sc_neurocore/`).
 |----------|------|-------|
 | Primitives | 13 | 13 |
 | Neurons (core) | 7 | 7 |
-| Neurons (extended) | 104 | 104 |
+| Neurons (extended) | 105 | 105 |
 | Synapses | 3 | 3 |
 | Layers | 8 | 8 |
 | Networks | 5 | 5 |
 | Compiler | 6 | 6 |
 | Training | 1 | 1 |
-| **Total** | **147** | **147** |
+| **Total** | **148** | **148** |
 
-**Feature parity: 147/147**
-**Rust neuron models callable from Python: 110 of 113 Python total**
-**3 core models (StochasticLIF, FixedPointLIF, SCIzhikevich) mapped to different Rust names (FixedPointLif, Izhikevich)**
-**Rust tests: 308 (214 lib + 94 crate tests across 17 test binaries)**
-**NetworkRunner: 64 models in fused Rayon-parallel simulation loop**
+**Feature parity: 148/148**
+**Rust neuron models callable from Python: 111 of 122 Python total**
+**11 Python-only models: 8 AI-optimized (ai_optimized.py) + 3 core name mappings (StochasticLIF, FixedPointLIF, SCIzhikevich)**
+**Rust tests: 242 (across 17 test binaries)**
+**NetworkRunner: 80 models in fused Rayon-parallel simulation loop**

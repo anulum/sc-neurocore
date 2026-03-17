@@ -118,7 +118,66 @@ for name, value in metrics.items():
     print(f"  {name}: {value:.4f}")
 ```
 
-### 6. Hardware Deployment (PYNQ)
+### 6. ArcaneNeuron — Self-Referential Cognition
+
+```python
+from sc_neurocore.neurons.models.arcane_neuron import ArcaneNeuron
+
+neuron = ArcaneNeuron()
+for t in range(500):
+    spike = neuron.step(current=0.8 if t < 200 else 0.1)
+
+state = neuron.get_state()
+print(f"Identity (deep compartment): {state['v_deep']:.4f}")
+print(f"Confidence: {state['confidence']:.3f}")
+print(f"Meta-learning rate: {state['meta_lr']:.4f}")
+```
+
+### 7. Identity Substrate
+
+```python
+from sc_neurocore.identity import IdentitySubstrate, Checkpoint, StateDecoder
+
+substrate = IdentitySubstrate(n_cortical=200, n_inhibitory=80, n_memory=40)
+substrate.inject_experience("The cat sat on the mat. It was a rainy day.")
+substrate.run(duration=0.5)
+
+decoder = StateDecoder(substrate)
+print(decoder.generate_priming_context())
+
+Checkpoint.save(substrate, "identity_checkpoint.npz")
+restored = Checkpoint.load("identity_checkpoint.npz")
+```
+
+### 8. Visualization Dashboard
+
+```python
+from sc_neurocore.viz.plots import raster_plot, voltage_trace, firing_rate_plot
+
+# After running a network with monitors:
+raster_plot(spike_monitor)
+voltage_trace(state_monitor, neuron_ids=[0, 1, 2])
+firing_rate_plot(spike_monitor, bin_ms=10)
+```
+
+12 plot functions: raster, voltage trace, firing rate, ISI histogram,
+cross-correlogram, population activity, phase portrait, weight matrix,
+network graph, PSD, instantaneous rate, spike train comparison.
+
+### 9. Model Zoo
+
+```python
+from sc_neurocore.model_zoo import brunel_balanced_network, load_pretrained
+
+net = brunel_balanced_network()
+net.run(0.1)
+
+classifier = load_pretrained("mnist")
+```
+
+10 configurations + 3 pre-trained weight sets (MNIST, SHD, DVS gesture).
+
+### 10. Hardware Deployment (PYNQ)
 
 ```python
 from sc_neurocore.drivers.sc_neurocore_driver import SC_NeuroCore_Driver
@@ -173,7 +232,7 @@ net.add_projection(Projection(inh, exc, probability=0.1, weight=-4.0))
 net.run(duration_ms=1000, dt=0.1)
 ```
 
-Three backends: Python (NumPy), Rust (NetworkRunner, 64 models, Rayon parallel),
+Three backends: Python (NumPy), Rust (NetworkRunner, 80 models, Rayon parallel),
 and MPI (billion-neuron distributed via mpi4py).
 
 ## Loading Pre-Trained Models

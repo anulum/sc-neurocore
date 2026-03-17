@@ -5,13 +5,18 @@
 ```
 sc_neurocore/
 ├── Core Tier (Production-Ready)
-│   ├── neurons/       113 neuron models (LIF, Izhikevich, dendritic, homeostatic, biophysical, …)
+│   ├── neurons/       122 neuron models (LIF, Izhikevich, HH, ArcaneNeuron, 8 AI-optimized, …)
 │   ├── synapses/      4 synapse types (bitstream, dot product, STDP, R-STDP)
 │   ├── layers/        8 layer types (dense, conv, learning, vectorized, recurrent, ...)
 │   ├── sources/       Bitstream current sources
 │   ├── recorders/     Spike recording
 │   ├── utils/         RNG, bitstreams, connectomes, decorrelators, fault injection
-│   └── accel/         GPU backend (CuPy), JIT kernels (Numba), MPI, vector ops
+│   ├── accel/         GPU backend (CuPy), JIT kernels (Numba), MPI, vector ops
+│   ├── identity/      Persistent spiking network, trace encoder/decoder, checkpoint, L16 Director
+│   ├── viz/           12 visualization plots (raster, voltage, ISI, PSD, ...)
+│   ├── learning/      7 advanced plasticity rules (BPTT, e-prop, R-STDP, MAML, ...)
+│   ├── model_zoo/     10 pre-built network configs, 3 pre-trained weight sets
+│   └── network/       Population-Projection-Network engine (Python, Rust, MPI backends)
 │
 ├── Research Tier (Experimental)
 │   ├── analysis/      Phi evaluation, qualia testing, Kardashev metrics

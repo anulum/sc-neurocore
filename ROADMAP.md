@@ -31,7 +31,7 @@ Live at GitHub Pages via mkdocstrings. Deploys on push to main.
 
 Attention kernel: multi-head softmax with SIMD dispatch (475 lines).
 Graph layer: CSR sparse backend (461 lines). MLIR emitter: CIRCT
-hw/comb dialect output from IR graphs. 110 Rust neuron models with PyO3 bindings
+hw/comb dialect output from IR graphs. 111 Rust neuron models with PyO3 bindings
 (neurons, synapses, layers, networks, compiler IR).
 
 ### ~~Expanded SIMD kernels (issue #28)~~ ✓
@@ -103,16 +103,18 @@ test counts updated across all docs.
 
 ## v3.12 — Competitive Sprint ✓ (current)
 
-113 Python + 110 Rust neuron models, PyO3 bindings for all extended
+122 Python + 111 Rust neuron models, PyO3 bindings for all extended
 model categories, JAX training support, CuPy sparse GPU paths, FMEA +
-traceability matrix, 2 055 Python tests, 308 Rust tests, 13 CI
+traceability matrix, 2 055 Python tests, 242 Rust tests, 13 CI
 workflows, conda-forge recipe ready.
 
 New in this release:
 
+- **ArcaneNeuron + 8 AI-optimized models**: self-referential cognition, attention-gated, predictive coding, phase-binding, meta-plastic, and more
+- **Identity substrate**: persistent spiking network with checkpointing, trace encoding, L16 Director control
 - **Network simulation engine**: Population-Projection-Network with
   3 backends (Python, Rust NetworkRunner, MPI)
-- **Rust NetworkRunner**: 64-model fused loop, Rayon parallel, 100K+ neurons
+- **Rust NetworkRunner**: 80-model fused loop (was 64), Rayon parallel, 100K+ neurons
 - **MPI distributed simulation**: billion-neuron scale via mpi4py
 - **Model zoo**: 10 configurations + 3 pre-trained weight sets (MNIST, SHD, DVS)
 - **12 visualization plots**, **7 advanced plasticity rules**, **6 topology generators**
@@ -171,6 +173,20 @@ Billion-neuron scale via mpi4py. Moved from v4.0 to v3.12.
 ### ~~conda-forge recipe~~ ✓
 
 Recipe ready for conda-forge distribution. Moved from v4.1 to v3.12.
+
+### ~~ArcaneNeuron + AI-optimized models~~ ✓
+
+9 novel neuron models for AI workloads. ArcaneNeuron: 5-compartment
+self-referential cognition. 8 additional: MultiTimescale, AttentionGated,
+PredictiveCoding, SelfReferential, CompositionalBinding,
+DifferentiableSurrogate, ContinuousAttractor, MetaPlastic. Rust Arcane
+in NetworkRunner (80 models total).
+
+### ~~Identity substrate~~ ✓
+
+Persistent spiking network (HH + WB + HR) with STDP, LSH trace encoder,
+PCA state decoder, Lazarus checkpoint save/restore/merge, L16 Director
+controller for cybernetic self-regulation.
 
 ## v4.1 — Community & Ecosystem (target: Q4 2026)
 

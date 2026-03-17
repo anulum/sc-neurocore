@@ -34,7 +34,7 @@ Maps SC-NeuroCore requirements to tests and formal verification properties.
 
 | REQ | Description | Test(s) |
 |-----|-------------|---------|
-| REQ-NM-01 | All 110 Rust neuron models have step() + reset() | `cargo test --lib neurons` (308 total Rust tests) |
+| REQ-NM-01 | All 111 Rust neuron models have step() + reset() | `cargo test --lib neurons` (242 total Rust tests) |
 | REQ-NM-02 | HH fires with suprathreshold input | `neurons::biophysical::tests::hh_fires` |
 | REQ-NM-03 | AdEx adaptation reduces rate | `neuron::tests::adex_adaptation_reduces_rate` |
 | REQ-NM-04 | Loihi CUBA integer arithmetic only | `neurons::hardware::tests::loihi_cuba_fires` |
@@ -52,5 +52,5 @@ Maps SC-NeuroCore requirements to tests and formal verification properties.
 | Bitstream | 2 | 4 | 0 |
 | Training | 2 | 3 | 0 |
 | Co-simulation | 1 | 2 | 0 |
-| Neuron models | 5 | 308 | 0 |
-| **Total** | **22** | **344** | **5** |
+| Neuron models | 5 | 206 | 0 |
+| **Total** | **22** | **242** | **5** |

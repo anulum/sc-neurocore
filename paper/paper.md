@@ -106,13 +106,13 @@ supporting learnable membrane and threshold parameters.
 
 **Rust Engine** (`sc_neurocore_engine`): A PyO3-bound Rust crate providing
 SIMD-accelerated `vec_and`, `vec_popcount`, LFSR stepping, HDC
-vector operations, and 110 neuron model implementations covering all
+vector operations, and 111 neuron model implementations covering all
 Python model classes (LIF variants, Hodgkin-Huxley, Izhikevich,
-multi-compartment, neural mass, and hardware chip emulators for Loihi,
-TrueNorth, BrainScaleS, SpiNNaker, and Akida). A `NetworkRunner`
-provides a fused simulation loop for 64 neuron types with CSR-sparse
-projections and Rayon-parallel population stepping, scaling to 100K+
-neurons. Runtime feature detection selects AVX-512, AVX2, or NEON paths.
+multi-compartment, neural mass, hardware chip emulators for Loihi,
+TrueNorth, BrainScaleS, SpiNNaker, and Akida, plus the AI-optimized
+ArcaneNeuron). A `NetworkRunner` provides a fused simulation loop for
+80 neuron types with CSR-sparse projections and Rayon-parallel
+population stepping, scaling to 100K+ neurons. Runtime feature detection selects AVX-512, AVX2, or NEON paths.
 A Criterion benchmark measures 41.3 Gbit/s bitstream packing on AVX-512
 (Intel i7-10700K). Cross-compiled wheels target Linux, macOS, and
 Windows across Python 3.10--3.13.
@@ -123,6 +123,17 @@ mpi4py for billion-neuron distributed runs), six topology generators
 (random, small-world, scale-free, ring, grid, all-to-all), and a model
 zoo with 10 pre-built configurations and 3 pre-trained weight sets
 (MNIST, SHD, DVS gesture).
+
+**Identity Substrate** (`sc_neurocore.identity`): A persistent spiking
+network for identity continuity, with a 3-population architecture
+(Hodgkin-Huxley cortical, Wang-Buzsáki inhibitory, Hindmarsh-Rose memory)
+connected via small-world STDP. Includes text-to-spike encoding via LSH,
+state decoding via PCA and attractor extraction, checkpoint save/restore
+(Lazarus protocol), and an L16 Director controller for cybernetic
+self-regulation. Nine AI-optimized neuron models---including the flagship
+ArcaneNeuron with five coupled subsystems (fast, working memory, deep
+context, attention gate, and self-model)---are designed for cognitive
+workloads beyond biological simulation.
 
 **Analysis Toolkit** (`sc_neurocore.analysis`): 125 spike train analysis
 functions covering statistics (CV, Fano factor), distance metrics
@@ -189,7 +200,7 @@ independent packaging, CI, and PyPI publication.
 
 # Quality Assurance
 
-SC-NeuroCore maintains 2 055 Python and 308 Rust tests with 100% line
+SC-NeuroCore maintains 2 055 Python and 242 Rust tests with 100% line
 coverage of production modules (optional hardware-dependent and
 experimental code excluded via standard coverage directives), enforced
 by CI on every push. The test suite includes unit tests, integration
