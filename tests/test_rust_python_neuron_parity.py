@@ -83,10 +83,16 @@ def _make_py(name):
     return getattr(py_models, name)()
 
 
+_RUST_NAME_MAP = {
+    "ContinuousAttractorNeuron": "RustContinuousAttractorNeuron",
+}
+
+
 def _make_rs(name):
-    if not hasattr(eng, name):
+    rs_name = _RUST_NAME_MAP.get(name, name)
+    if not hasattr(eng, rs_name):
         pytest.skip(f"No Rust binding for {name}")
-    return getattr(eng, name)()
+    return getattr(eng, rs_name)()
 
 
 def _run_steps(model, name, n=500):
