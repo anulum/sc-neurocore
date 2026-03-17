@@ -176,14 +176,10 @@ def main() -> int:
     print("-" * 77)
     for result in results:
         print(
-            f"{result.name:<45} "
-            f"{result.v2_ms:>10.3f} {result.v3_ms:>10.3f} {result.speedup:>9.1f}x"
+            f"{result.name:<45} {result.v2_ms:>10.3f} {result.v3_ms:>10.3f} {result.speedup:>9.1f}x"
         )
     print("-" * 77)
-    print(
-        f"{'Kuramoto 400 osc x 1000 steps (v3 only)':<45} "
-        f"{'N/A':>10} {v3_k_ms:>10.3f} {'-':>10}"
-    )
+    print(f"{'Kuramoto 400 osc x 1000 steps (v3 only)':<45} {'N/A':>10} {v3_k_ms:>10.3f} {'-':>10}")
     print()
 
     speedups = [result.speedup for result in results if result.speedup < float("inf")]

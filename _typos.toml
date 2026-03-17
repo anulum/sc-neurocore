@@ -62,6 +62,8 @@ Yamada = "Yamada"
 Marder = "Marder"
 Durstewitz = "Durstewitz"
 Synopsys = "Synopsys"
+Comput = "Comput"
+iz = "iz"
 
 [files]
 extend-exclude = [

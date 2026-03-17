@@ -308,11 +308,7 @@ def bench_bitstream_length_scaling(n_runs: int = 5) -> List[BenchResult]:
         total_bits = N_NEURONS * N_INPUTS * L
         throughput_mbps = total_bits / mean_s / 1e6
 
-        print(
-            f"  32x16, L={L:<5d}            | "
-            f"{mean_s * 1e3:>12.2f}ms | "
-            f"{throughput_mbps:>17.1f}"
-        )
+        print(f"  32x16, L={L:<5d}            | {mean_s * 1e3:>12.2f}ms | {throughput_mbps:>17.1f}")
 
         results.append(
             BenchResult(
@@ -369,7 +365,7 @@ def bench_memory_footprint() -> List[BenchResult]:
         peak_mb = peak_bytes / (1024 * 1024)
 
         tag = f"  {n_inputs}x{n_neurons} ({label})"
-        print(f"{tag:<20}" f"| {weight_mb:>16.3f}  | {peak_mb:>14.2f}  | {fwd_ms:>16.2f}")
+        print(f"{tag:<20}| {weight_mb:>16.3f}  | {peak_mb:>14.2f}  | {fwd_ms:>16.2f}")
 
         results.append(
             BenchResult(

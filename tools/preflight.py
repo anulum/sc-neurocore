@@ -54,7 +54,6 @@ GATES = [
 ]
 
 
-
 def check_spdx() -> bool:
     missing = []
     for d in SPDX_DIRS:
@@ -91,9 +90,9 @@ _CARGO_AVAILABLE: bool | None = None
 
 def run_gate(name: str, cmd) -> bool:
     global _CARGO_AVAILABLE
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  GATE: {name}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     if name.startswith("cargo-"):
         if _CARGO_AVAILABLE is None:
             _CARGO_AVAILABLE = _has_cargo() and ENGINE_DIR.exists()
@@ -129,11 +128,11 @@ def main() -> int:
         else:
             failed.append(name)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  PREFLIGHT: {len(passed)} passed, {len(failed)} failed")
     if failed:
         print(f"  FAILED: {', '.join(failed)}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     return 1 if failed else 0
 
 
