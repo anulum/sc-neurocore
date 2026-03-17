@@ -161,7 +161,7 @@ ignore = [
   "E402",   # module-level import not at top (test files use mid-file imports)
   "E741",   # ambiguous variable name (I is standard for current in physics)
   "I001",   # import sorting (not enforced yet, ~500 pre-existing violations)
-  "UP006", "UP007", "UP015", "UP031", "UP035", "UP037", "UP038", "UP045",  # typing modernization + open() mode arg
+  "UP006", "UP007", "UP015", "UP031", "UP035", "UP037", "UP045",  # typing modernization + open() mode arg
   "F841",   # unused variable (many in demo/experiment scripts)
   "SIM102", "SIM105", "SIM108",  # style simplifications
   "B007",   # unused loop control variable

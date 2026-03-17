@@ -252,8 +252,7 @@ class ContinuousAttractorNeuron:
             for j in range(n):
                 d = min(abs(i - j), n - abs(i - j))
                 self._weights[i][j] = (
-                    self.excitation * math.exp(-d * d / (2.0 * self.sigma_e ** 2))
-                    - self.inhibition
+                    self.excitation * math.exp(-d * d / (2.0 * self.sigma_e**2)) - self.inhibition
                 )
 
     @staticmethod
@@ -265,8 +264,7 @@ class ContinuousAttractorNeuron:
         new_u = [0.0] * self.n_units
         for i in range(self.n_units):
             recurrent = sum(
-                self._weights[i][j] * self._activation(self.u[j])
-                for j in range(self.n_units)
+                self._weights[i][j] * self._activation(self.u[j]) for j in range(self.n_units)
             )
             new_u[i] = self.u[i] + (-self.u[i] + recurrent + current) / self.tau * self.dt
         self.u = new_u
