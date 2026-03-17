@@ -29,7 +29,7 @@ class SCDashboard:
         # We will just print a frame separator.
 
         print(f"\n--- SC DASHBOARD | Step {step} ---")
-        print(f"{ 'Neuron':<8} | {'Rate':<8} | {'Trend (Last 5)'}")
+        print(f"{'Neuron':<8} | {'Rate':<8} | {'Trend (Last 5)'}")
         print("-" * 40)
 
         for i in range(self.n_neurons):

@@ -131,7 +131,7 @@ def load_nmnist(
     split_dir = Path(root) / ("Train" if train else "Test")
     if not split_dir.exists():
         raise FileNotFoundError(
-            f"Expected split directory {split_dir.resolve()}. " f"Download from {_NMNIST_URL}"
+            f"Expected split directory {split_dir.resolve()}. Download from {_NMNIST_URL}"
         )
     # Real loader: N-MNIST uses .bin files, one per sample, grouped by class
     samples: list[np.ndarray] = []
@@ -312,7 +312,7 @@ def load_dvs_cifar10(
     split_dir = Path(root) / ("train" if train else "test")
     if not split_dir.exists():
         raise FileNotFoundError(
-            f"Expected split directory {split_dir.resolve()}. " f"Download from {_DVS_CIFAR10_URL}"
+            f"Expected split directory {split_dir.resolve()}. Download from {_DVS_CIFAR10_URL}"
         )
     # Real loader: .aedat or .mat files grouped by class
     samples: list[np.ndarray] = []

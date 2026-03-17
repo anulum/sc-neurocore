@@ -89,9 +89,9 @@ class TestBranchlessLIF:
         for idx in spike_indices:
             for ref_step in range(1, 6):
                 if idx + ref_step < len(spikes_arr):
-                    assert (
-                        spikes_arr[idx + ref_step] == 0
-                    ), f"Spike during refractory at step {idx + ref_step}"
+                    assert spikes_arr[idx + ref_step] == 0, (
+                        f"Spike during refractory at step {idx + ref_step}"
+                    )
 
 
 class TestMultiNeuronBatch:

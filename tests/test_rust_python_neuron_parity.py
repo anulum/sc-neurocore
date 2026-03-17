@@ -142,9 +142,9 @@ def test_parity(name):
         return
 
     max_delta = max(3, int(max(py_count, rs_count) * 0.15))
-    assert (
-        abs(py_count - rs_count) <= max_delta
-    ), f"{name}: Python={py_count}, Rust={rs_count}, delta={abs(py_count - rs_count)}, max_delta={max_delta}"
+    assert abs(py_count - rs_count) <= max_delta, (
+        f"{name}: Python={py_count}, Rust={rs_count}, delta={abs(py_count - rs_count)}, max_delta={max_delta}"
+    )
 
 
 @pytest.mark.parametrize(

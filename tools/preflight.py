@@ -18,19 +18,6 @@ SPDX_MARKER = "SPDX-License-Identifier"
 
 ENGINE_DIR = pathlib.Path("engine")
 
-# Black targets: all .py files except drivers/, matching .pre-commit-config.yaml
-BLACK_DIRS = [
-    "src/",
-    "tests/",
-    ".github/",
-    "benchmarks/",
-    "bridge/",
-    "cosim/",
-    "examples/",
-    "research/",
-    "scripts/",
-    "tools/",
-]
 
 GATES = [
     ("cargo-fmt", ["cargo", "fmt", "--check", "--manifest-path", "engine/Cargo.toml"]),
@@ -47,8 +34,8 @@ GATES = [
             "warnings",
         ],
     ),
-    ("black", None),  # custom handler
-    ("ruff", ["python", "-m", "ruff", "check", "src/", "tests/"]),
+    ("ruff-check", ["python", "-m", "ruff", "check", "src/", "tests/"]),
+    ("ruff-format", ["python", "-m", "ruff", "format", "--check", "src/", "tests/"]),
     ("bandit", ["python", "-m", "bandit", "-r", "src/sc_neurocore/", "-c", "pyproject.toml", "-q"]),
     ("spdx-guard", None),
     (
@@ -66,17 +53,6 @@ GATES = [
     ),
 ]
 
-
-def check_black() -> bool:
-    """Run black --check on all directories matching pre-commit scope."""
-    existing = [d for d in BLACK_DIRS if pathlib.Path(d.rstrip("/")).exists()]
-    # Also check root-level .py files (conftest.py etc.)
-    root_py = [str(p) for p in pathlib.Path(".").glob("*.py")]
-    targets = existing + root_py
-    if not targets:
-        return True
-    cmd = [sys.executable, "-m", "black", "--check"] + targets
-    return subprocess.run(cmd).returncode == 0
 
 
 def check_spdx() -> bool:
@@ -124,9 +100,7 @@ def run_gate(name: str, cmd) -> bool:
         if not _CARGO_AVAILABLE:
             print(f"  SKIP: {name} (cargo or engine/ not found)")
             return True
-    if name == "black":
-        ok = check_black()
-    elif name == "spdx-guard":
+    if name == "spdx-guard":
         ok = check_spdx()
     elif cmd is not None:
         ok = subprocess.run(cmd).returncode == 0

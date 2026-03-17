@@ -89,6 +89,6 @@ def test_energy_nonincreasing_under_coupling():
     late_energies = energies[5:]
     if len(late_energies) > 2:
         # Allow small fluctuations due to stochastic updates
-        assert (
-            late_energies[-1] <= late_energies[0] + 0.5
-        ), f"Energy increased: {late_energies[0]:.3f} -> {late_energies[-1]:.3f}"
+        assert late_energies[-1] <= late_energies[0] + 0.5, (
+            f"Energy increased: {late_energies[0]:.3f} -> {late_energies[-1]:.3f}"
+        )

@@ -12,16 +12,11 @@ repos:
       - id: check-added-large-files
         args: [--maxkb=500]
 
-  - repo: https://github.com/psf/black
-    rev: c6755bb741b6481d6b3d3bb563c83fa060db96c9  # 26.3.1
-    hooks:
-      - id: black
-        exclude: "/drivers/"
-
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: 4924b0e01e032fea073ad04a1c5cfa7e4add0afb  # v0.15.6
     hooks:
       - id: ruff
+      - id: ruff-format
 
   - repo: https://github.com/crate-ci/typos
     rev: d11834eeac776f87614aef80119b38800a9a2bac  # v1.29.5
