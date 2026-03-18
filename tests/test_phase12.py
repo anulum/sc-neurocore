@@ -112,4 +112,4 @@ class TestBatchForward:
 
 class TestPhase12Version:
     def test_version(self):
-        assert v3.__version__ == "3.12.0"
+        assert v3.__version__ == "3.13.0"

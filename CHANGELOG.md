@@ -4,6 +4,37 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.13.0] - 2026-03-18
+
+### Python 3.14 Support
+- CI test matrix, wheel builds, and publish workflow now include Python 3.14
+- All 1 776 Python tests pass on 3.14; all dependencies compatible
+- pyproject.toml classifier added
+
+### Bridge Wiring
+- 12 missing Rust symbols exported from bridge `__init__.py`: NetworkRunner, BitstreamAverager, Izhikevich, ArcaneNeuron, 8 AI-optimized models, ContinuousAttractorNeuron
+- Parity test name mapping for RustContinuousAttractorNeuron
+
+### CI Fixes
+- Black formatting for identity/ files; pre-commit ruff upgraded v0.9.7 → v0.15.6
+- Clippy: PopulationRunner::is_empty() added
+- TraceEncoder: deterministic hash (byte-based, not Python hash())
+- Synapse test tolerance widened for short bitstream noise
+- Notebook trailing newline for end-of-file-fixer
+- Removed deleted ruff rule UP038
+
+### Documentation
+- JOSS paper rewrite: pipeline + spike raster figures, Availability section, McCulloch-Pitts/Hodgkin-Huxley citations, tightened to ~1200 words
+- All docs synced: test counts (1 776/336), 111 NetworkRunner, 17 HDL, Python 3.14
+- Neuron explorer notebook (04_neuron_explorer.ipynb): 5 sections, 117 models
+
+### Infrastructure
+- `.gitattributes`: eol=lf (suppress CRLF warnings on Windows)
+- Single-directory migration: `03_CODE/sc-neurocore/` is canonical repo
+- PyPI deployment branch policy fixed (main added)
+- 12 known Rust/Python parity divergences tracked as xfail
+- 5 phase test version assertions updated
+
 ## [3.12.0] - 2026-03-17
 
 ### ArcaneNeuron + 8 AI-Optimized Models

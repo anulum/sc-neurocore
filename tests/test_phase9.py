@@ -143,4 +143,4 @@ class TestSetNumThreads:
 
 class TestPhase9Version:
     def test_version_is_current(self):
-        assert v3.__version__ == "3.12.0"
+        assert v3.__version__ == "3.13.0"
