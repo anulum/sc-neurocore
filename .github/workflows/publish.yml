@@ -58,7 +58,7 @@ jobs:
           path: dist/*.whl
 
   publish-pypi:
-    needs: [build-sdist, build-wheels]
+    needs: [build-sdist]
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
@@ -66,8 +66,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
-          pattern: "{sdist,wheel-*}"
-          merge-multiple: true
+          name: sdist
           path: dist/
       - uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # release/v1
         with:
