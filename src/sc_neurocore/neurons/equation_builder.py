@@ -105,17 +105,13 @@ class EquationNeuron:
             self._validate_expr(expr)
 
         self._compiled_eqs = {
-            var: compile(expr, f"<eq:{var}>", "eval")
-            for var, expr in self.equations.items()
+            var: compile(expr, f"<eq:{var}>", "eval") for var, expr in self.equations.items()
         }
         self._compiled_threshold = (
-            compile(self.threshold_expr, "<threshold>", "eval")
-            if self.threshold_expr
-            else None
+            compile(self.threshold_expr, "<threshold>", "eval") if self.threshold_expr else None
         )
         self._compiled_reset = {
-            var: compile(expr, f"<reset:{var}>", "eval")
-            for var, expr in self.reset_rules.items()
+            var: compile(expr, f"<reset:{var}>", "eval") for var, expr in self.reset_rules.items()
         }
 
     _ALLOWED_AST_NODES = {
@@ -180,15 +176,11 @@ class EquationNeuron:
             raise ValueError(f"Invalid equation syntax: {expr!r}") from e
         for node in ast.walk(tree):
             if type(node) not in self._ALLOWED_AST_NODES:
-                raise ValueError(
-                    f"Unsafe AST node {type(node).__name__} in equation: {expr!r}"
-                )
+                raise ValueError(f"Unsafe AST node {type(node).__name__} in equation: {expr!r}")
             if isinstance(node, ast.Name) and node.id in self._BLOCKED_NAMES:
                 raise ValueError(f"Blocked function {node.id!r} in equation: {expr!r}")
             if isinstance(node, ast.Attribute) and node.attr in self._BLOCKED_NAMES:
-                raise ValueError(
-                    f"Blocked attribute {node.attr!r} in equation: {expr!r}"
-                )
+                raise ValueError(f"Blocked attribute {node.attr!r} in equation: {expr!r}")
 
     def _build_env(self, **kwargs):
         env = dict(self._namespace)
@@ -231,9 +223,7 @@ class EquationNeuron:
             s3 = {v: s0[v] + k3[v] * self.dt for v in self.equations}
             k4 = eval_derivs(s3)
             for v in self.equations:
-                self.state[v] = (
-                    s0[v] + (k1[v] + 2 * k2[v] + 2 * k3[v] + k4[v]) * self.dt / 6
-                )
+                self.state[v] = s0[v] + (k1[v] + 2 * k2[v] + 2 * k3[v] + k4[v]) * self.dt / 6
 
         spike = 0
         if self._compiled_threshold:
@@ -286,9 +276,7 @@ def from_equations(
             rhs = m.group(2).strip()
             equations[var_name] = rhs
         else:
-            raise ValueError(
-                f"Cannot parse equation: {eq_str!r}. Expected 'd<var>/dt = <expr>'"
-            )
+            raise ValueError(f"Cannot parse equation: {eq_str!r}. Expected 'd<var>/dt = <expr>'")
 
     reset_rules = {}
     constants = {}

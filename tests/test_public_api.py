@@ -22,6 +22,4 @@ def test_version_string():
 
 
 def test_all_count():
-    assert (
-        len(sc_neurocore.__all__) == 38
-    ), f"Public API count changed: {len(sc_neurocore.__all__)}"
+    assert len(sc_neurocore.__all__) == 38, f"Public API count changed: {len(sc_neurocore.__all__)}"
