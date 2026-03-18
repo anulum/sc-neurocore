@@ -183,10 +183,10 @@ package. The engine adds speed, not features.
 | Notebook | What it shows |
 |----------|---------------|
 | [Quickstart (Colab)](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb) | LIF neuron, dense layer, spike raster, SC convolution |
-| [Neuron Explorer](../notebooks/04_neuron_explorer.ipynb) | Browse all 117 models, voltage traces, phase portraits, F-I curves |
-| [HDC Symbolic Query](../notebooks/01_hdc_symbolic_query.ipynb) | Hyper-dimensional computing with 10K-bit vectors |
-| [End-to-End Pipeline](../notebooks/03_end_to_end_pipeline.ipynb) | Encode → simulate → decode → visualise |
-| [Fault-Tolerant Logic](../notebooks/02_fault_tolerant_logic.ipynb) | SC error resilience under bit-flip noise |
+| [Neuron Explorer](https://github.com/anulum/sc-neurocore/blob/main/notebooks/04_neuron_explorer.ipynb) | Browse all 117 models, voltage traces, phase portraits, F-I curves |
+| [HDC Symbolic Query](https://github.com/anulum/sc-neurocore/blob/main/notebooks/01_hdc_symbolic_query.ipynb) | Hyper-dimensional computing with 10K-bit vectors |
+| [End-to-End Pipeline](https://github.com/anulum/sc-neurocore/blob/main/notebooks/03_end_to_end_pipeline.ipynb) | Encode → simulate → decode → visualise |
+| [Fault-Tolerant Logic](https://github.com/anulum/sc-neurocore/blob/main/notebooks/02_fault_tolerant_logic.ipynb) | SC error resilience under bit-flip noise |
 
 ## Lab Setup Checklist
 
@@ -195,7 +195,7 @@ package. The engine adds speed, not features.
 - [ ] Run your domain tutorial (neuroscience / hardware / ML — links above)
 - [ ] Optional: `pip install sc-neurocore-engine` for Rust acceleration
 - [ ] Optional: install Yosys for FPGA synthesis reports
-- [ ] Explore the [neuron model explorer notebook](../notebooks/04_neuron_explorer.ipynb)
+- [ ] Explore the [neuron model explorer notebook](https://github.com/anulum/sc-neurocore/blob/main/notebooks/04_neuron_explorer.ipynb)
 
 ## Licensing
 
