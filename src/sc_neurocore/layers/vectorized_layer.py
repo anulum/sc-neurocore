@@ -94,8 +94,7 @@ class VectorizedSCLayer:
     def _refresh_packed_weights(self) -> None:
         w_probs = self.weights
         bits = (
-            np.random.random((self.n_neurons, self.n_inputs, self.length))
-            < w_probs[:, :, None]
+            np.random.random((self.n_neurons, self.n_inputs, self.length)) < w_probs[:, :, None]
         ).astype(np.uint8)
 
         flat = bits.reshape(-1, self.length)
@@ -155,9 +154,9 @@ class VectorizedSCLayer:
         return self._forward_dense(in_probs)
 
     def _forward_dense(self, in_probs: np.ndarray) -> np.ndarray:
-        input_bits = (
-            np.random.random((self.n_inputs, self.length)) < in_probs[:, None]
-        ).astype(np.uint8)
+        input_bits = (np.random.random((self.n_inputs, self.length)) < in_probs[:, None]).astype(
+            np.uint8
+        )
         packed_inputs = pack_bitstream(input_bits)
 
         if self._on_gpu:  # pragma: no cover
@@ -172,9 +171,9 @@ class VectorizedSCLayer:
         return outputs / self.length
 
     def _forward_sparse(self, in_probs: np.ndarray) -> np.ndarray:
-        input_bits = (
-            np.random.random((self.n_inputs, self.length)) < in_probs[:, None]
-        ).astype(np.uint8)
+        input_bits = (np.random.random((self.n_inputs, self.length)) < in_probs[:, None]).astype(
+            np.uint8
+        )
         packed_inputs = pack_bitstream(input_bits)
 
         csr = self.weights_csr
@@ -189,15 +188,11 @@ class VectorizedSCLayer:
         counts = _popcount_rows(products)
 
         outputs = np.zeros(self.n_neurons, dtype=np.float64)
-        np.add.at(
-            outputs, np.repeat(np.arange(self.n_neurons), np.diff(csr.indptr)), counts
-        )
+        np.add.at(outputs, np.repeat(np.arange(self.n_neurons), np.diff(csr.indptr)), counts)
 
         return outputs / self.length
 
-    def _forward_sparse_gpu(
-        self, packed_inputs: np.ndarray
-    ) -> np.ndarray:  # pragma: no cover
+    def _forward_sparse_gpu(self, packed_inputs: np.ndarray) -> np.ndarray:  # pragma: no cover
         """CuPy CSR matmul path for sparse connectivity on GPU."""
         import cupy
         import cupyx.scipy.sparse as cusp
