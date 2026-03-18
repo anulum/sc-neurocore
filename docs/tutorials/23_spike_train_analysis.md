@@ -1,6 +1,6 @@
 # Tutorial 23: Spike Train Analysis
 
-SC-NeuroCore ships 125 spike train analysis functions across 23 modules,
+SC-NeuroCore ships 126 spike train analysis functions across 23 modules,
 covering the combined scope of Elephant, PySpike, SpikeInterface, and
 NeuroTools. All functions are pure NumPy with zero external dependencies.
 
@@ -345,6 +345,6 @@ print(f"Isolation distance: {iso:.1f}")
 
 ## Next Steps
 
-- [API Reference](../api/analysis.md) -- full 125-function listing with signatures
+- [API Reference](../api/analysis.md) -- full 126-function listing with signatures
 - [Neuron Model Selection](22_neuron_model_selection.md) -- choosing models for your simulation
 - [Building Your First SNN](02_building_your_first_snn.md) -- network construction basics

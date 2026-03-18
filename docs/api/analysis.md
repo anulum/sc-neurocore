@@ -2,7 +2,7 @@
 
 SC-NeuroCore includes a complete spike train analysis toolkit covering
 every metric from Elephant, PySpike, SpikeInterface, and NeuroTools.
-125 functions across 23 modules (22 spike_stats + 1 explainability).
+126 functions across 23 modules (22 spike_stats + 1 explainability).
 Pure NumPy, zero external dependencies.
 
 ## Quick Start
