@@ -9,6 +9,9 @@ FPGA deployment.
 
 **Version 3.13.0** | 1 776 Python + 336 Rust Tests | 100% Coverage | 122 Neuron Models | 111-Model NetworkRunner | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
 
+![SC-NeuroCore train-to-hardware pipeline](assets/pipeline.png)
+*Train in PyTorch → Quantise to Q8.8 → Simulate with stochastic bitstreams → Compile to SystemVerilog → Synthesise for FPGA. The Rust SIMD engine accelerates all stages.*
+
 ## Key Features
 
 - **122 neuron models** — McCulloch-Pitts (1943) through ArcaneNeuron (2026), 9 hardware chip emulators, 9 AI-optimized
@@ -74,3 +77,25 @@ See [Architecture](architecture/architecture.md) for the full package map.
 - **[Rust Engine API](api/rust-engine.md)** — High-performance Rust engine docs
 - **[Hardware Guide](hardware/HARDWARE_GUIDE.md)** — FPGA deployment workflow
 - **[Benchmarks](benchmarks/BENCHMARKS.md)** — Performance measurements
+- **[For Research Labs](guides/FOR_RESEARCH_LABS.md)** — Setup guide for neuroscience, hardware, and ML labs
+- **[Pricing](pricing.md)** — Free for research, commercial licenses available
+
+## Demo
+
+<!-- TODO: Replace with YouTube embed or hosted video when recorded -->
+See the [Neuron Explorer Notebook](https://github.com/anulum/sc-neurocore/blob/main/notebooks/04_neuron_explorer.ipynb)
+for an interactive walkthrough of all 117 neuron models with voltage traces,
+phase portraits, and F-I curves. Or try the
+[Quickstart on Google Colab](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)
+— no installation required.
+
+## Community & Ecosystem
+
+SC-NeuroCore integrates with the [NIR](https://neuroir.org/) (Neuromorphic Intermediate Representation)
+ecosystem, connecting to Norse, snnTorch, Lava-DL, and hardware targets including
+BrainScaleS-2, Loihi, and SpiNNaker2. SC-NeuroCore adds the missing FPGA deployment
+backend via bit-true Verilog co-simulation.
+
+**Contact:** [neurocore@anulum.li](mailto:neurocore@anulum.li) |
+[GitHub Discussions](https://github.com/anulum/sc-neurocore/discussions) |
+[www.anulum.li](https://www.anulum.li)
