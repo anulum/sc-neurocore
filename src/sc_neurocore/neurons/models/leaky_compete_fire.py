@@ -24,7 +24,9 @@ class LeakyCompeteFireNeuron:
     def __post_init__(self):
         self.v = [0.0] * self.n_units
 
-    def step(self, currents: list) -> list:
+    def step(self, currents) -> list:
+        if isinstance(currents, (int, float)):
+            currents = [currents] * self.n_units
         spikes = [0] * self.n_units
         for i in range(self.n_units):
             self.v[i] += (-self.v[i] + currents[i]) / self.tau * self.dt

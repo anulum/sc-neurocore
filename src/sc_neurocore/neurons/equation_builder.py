@@ -45,6 +45,7 @@ Usage:
 
 from __future__ import annotations
 
+import ast
 import math
 import re
 from copy import deepcopy
@@ -97,15 +98,97 @@ class EquationNeuron:
             "min": min,
         }
 
+        all_exprs = list(self.equations.values()) + list(self.reset_rules.values())
+        if self.threshold_expr:
+            all_exprs.append(self.threshold_expr)
+        for expr in all_exprs:
+            self._validate_expr(expr)
+
         self._compiled_eqs = {
-            var: compile(expr, f"<eq:{var}>", "eval") for var, expr in self.equations.items()
+            var: compile(expr, f"<eq:{var}>", "eval")
+            for var, expr in self.equations.items()
         }
         self._compiled_threshold = (
-            compile(self.threshold_expr, "<threshold>", "eval") if self.threshold_expr else None
+            compile(self.threshold_expr, "<threshold>", "eval")
+            if self.threshold_expr
+            else None
         )
         self._compiled_reset = {
-            var: compile(expr, f"<reset:{var}>", "eval") for var, expr in self.reset_rules.items()
+            var: compile(expr, f"<reset:{var}>", "eval")
+            for var, expr in self.reset_rules.items()
         }
+
+    _ALLOWED_AST_NODES = {
+        ast.Expression,
+        ast.BinOp,
+        ast.UnaryOp,
+        ast.Compare,
+        ast.BoolOp,
+        ast.IfExp,
+        ast.Call,
+        ast.Name,
+        ast.Constant,
+        ast.Attribute,
+        ast.Subscript,
+        ast.Index,
+        ast.Slice,
+        ast.Load,
+        ast.Add,
+        ast.Sub,
+        ast.Mult,
+        ast.Div,
+        ast.Pow,
+        ast.Mod,
+        ast.FloorDiv,
+        ast.USub,
+        ast.UAdd,
+        ast.Eq,
+        ast.NotEq,
+        ast.Lt,
+        ast.LtE,
+        ast.Gt,
+        ast.GtE,
+        ast.And,
+        ast.Or,
+        ast.Not,
+        ast.Tuple,
+        ast.List,
+    }
+
+    _BLOCKED_NAMES = {
+        "__import__",
+        "eval",
+        "exec",
+        "compile",
+        "globals",
+        "locals",
+        "getattr",
+        "setattr",
+        "delattr",
+        "open",
+        "input",
+        "breakpoint",
+        "__builtins__",
+        "__class__",
+        "__subclasses__",
+    }
+
+    def _validate_expr(self, expr: str) -> None:
+        try:
+            tree = ast.parse(expr, mode="eval")
+        except SyntaxError as e:
+            raise ValueError(f"Invalid equation syntax: {expr!r}") from e
+        for node in ast.walk(tree):
+            if type(node) not in self._ALLOWED_AST_NODES:
+                raise ValueError(
+                    f"Unsafe AST node {type(node).__name__} in equation: {expr!r}"
+                )
+            if isinstance(node, ast.Name) and node.id in self._BLOCKED_NAMES:
+                raise ValueError(f"Blocked function {node.id!r} in equation: {expr!r}")
+            if isinstance(node, ast.Attribute) and node.attr in self._BLOCKED_NAMES:
+                raise ValueError(
+                    f"Blocked attribute {node.attr!r} in equation: {expr!r}"
+                )
 
     def _build_env(self, **kwargs):
         env = dict(self._namespace)
@@ -148,7 +231,9 @@ class EquationNeuron:
             s3 = {v: s0[v] + k3[v] * self.dt for v in self.equations}
             k4 = eval_derivs(s3)
             for v in self.equations:
-                self.state[v] = s0[v] + (k1[v] + 2 * k2[v] + 2 * k3[v] + k4[v]) * self.dt / 6
+                self.state[v] = (
+                    s0[v] + (k1[v] + 2 * k2[v] + 2 * k3[v] + k4[v]) * self.dt / 6
+                )
 
         spike = 0
         if self._compiled_threshold:
@@ -201,7 +286,9 @@ def from_equations(
             rhs = m.group(2).strip()
             equations[var_name] = rhs
         else:
-            raise ValueError(f"Cannot parse equation: {eq_str!r}. Expected 'd<var>/dt = <expr>'")
+            raise ValueError(
+                f"Cannot parse equation: {eq_str!r}. Expected 'd<var>/dt = <expr>'"
+            )
 
     reset_rules = {}
     constants = {}
