@@ -245,9 +245,10 @@ events applied as instantaneous voltage jumps (v += w), matching Brian2's
   StochasticLIFNeuron. Higher rate due to stochastic amplification in the
   bitstream encoding.
 
-#### Previous results (v3.9.0, before translator)
+#### Historical note (v3.9.0, resolved)
 
-SC-NeuroCore produced 0 spikes due to three wiring bugs:
+Prior to v3.10.0, three wiring bugs prevented the Brunel network
+from firing. All three were fixed in v3.10.0:
 1. `v_reset` never passed (defaulted to 0.0 instead of 10.0)
 2. Delta-PSC diluted through `R * I * dt` instead of direct `v += w`
 3. Poisson drive fed as steady current instead of voltage kicks
