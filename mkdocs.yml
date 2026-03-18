@@ -1,17 +1,32 @@
 site_name: SC-NeuroCore Documentation
-site_description: Universal Stochastic Computing Framework for Neuromorphic Hardware
+site_description: "Stochastic Computing Framework for Neuromorphic Hardware Design — 122 neuron models, Rust SIMD engine, bit-true FPGA co-simulation"
+site_author: Miroslav Šotek
+site_url: https://anulum.github.io/sc-neurocore/
 repo_url: https://github.com/anulum/sc-neurocore
 repo_name: sc-neurocore
 
 theme:
   name: material
   palette:
-    primary: indigo
-    accent: cyan
+    - scheme: default
+      primary: indigo
+      accent: cyan
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: cyan
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
   features:
     - navigation.sections
     - navigation.expand
+    - navigation.top
     - content.code.copy
+    - search.highlight
+    - search.suggest
 
 plugins:
   - search
@@ -129,6 +144,7 @@ nav:
       - Speculative (research/):
           - "See research/README.md": api/research-speculative.md
   - Benchmarks:
+      - Comparison: benchmarks/comparison.md
       - Summary: benchmarks/BENCHMARKS.md
       - Detailed Report: benchmarks/BENCHMARK_REPORT.md
   - Research:
@@ -144,6 +160,8 @@ nav:
   - Development:
       - V3 Migration: development/v3_migration.md
       - Release Notes v2.0.0: development/RELEASE_NOTES_v2.0.0.md
+  - Changelog: CHANGELOG.md
+  - Pricing: pricing.md
   - Rust Engine API: api/rust-engine.md
 
 markdown_extensions:
