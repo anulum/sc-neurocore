@@ -6,7 +6,12 @@ This tutorial walks through the full SC-NeuroCore pipeline: train a digit
 classifier in Python, simulate it with stochastic bitstreams (bit-exact match
 to RTL), synthesise to FPGA, and read the resource report.
 
-**Prerequisites**: Python 3.10+, `pip install sc-neurocore scikit-learn`
+**Prerequisites**:
+
+- Python 3.10+, `pip install sc-neurocore scikit-learn`
+- [Yosys](https://github.com/YosysHQ/yosys) (open-source synthesis, for resource reports)
+- Optional: Xilinx Vivado Design Suite (for Artix-7/Zynq bitstream generation) or Lattice iCEcube2 (for iCE40)
+- Optional: FPGA board (Artix-7 100T, Zynq-7020, or iCE40 for physical deployment)
 
 ## 1. Train and quantise (5 min)
 
