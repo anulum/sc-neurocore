@@ -1,6 +1,6 @@
 # Roadmap
 
-> Last updated: 2026-03-17 (v3.12.0). Priorities may shift based on
+> Last updated: 2026-03-18 (v3.13.0). Priorities may shift based on
 > validation results and community feedback.
 
 ## v3.8 — Hardening & Edge AI Readiness ✓

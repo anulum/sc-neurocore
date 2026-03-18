@@ -11,7 +11,7 @@ Commercial Licensing: Available
 </p>
 
 [![CI](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml/badge.svg)](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-3.12.0-blue)](https://github.com/anulum/sc-neurocore/releases)
+[![Version](https://img.shields.io/badge/version-3.13.0-blue)](https://github.com/anulum/sc-neurocore/releases)
 [![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/anulum/sc-neurocore)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://anulum.github.io/sc-neurocore/)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
@@ -22,7 +22,7 @@ Commercial Licensing: Available
 [![REUSE](https://img.shields.io/badge/REUSE-compliant-green)](https://reuse.software/)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)
 
-**Version:** 3.12.0
+**Version:** 3.13.0
 **Status:** 122 Neuron Models (113 Bio + 9 AI) | 99.49% MNIST | 1 776 Python + 336 Rust Tests | 100% Coverage | 111 Rust Neuron Models | 111-Model NetworkRunner
 
 <p align="center">
@@ -338,7 +338,7 @@ Co-simulation traces are generated deterministically from fixed LFSR seeds.
 To reproduce a published benchmark:
 
 ```bash
-git checkout v3.12.0
+git checkout v3.13.0
 pip install -e ".[dev]"
 python benchmarks/benchmark_suite.py --markdown > BENCHMARKS.md
 ```
@@ -502,7 +502,7 @@ If you use SC-NeuroCore in your research, please cite:
 @software{sotek2026scneurocore,
   author    = {Šotek, Miroslav},
   title     = {SC-NeuroCore: A Deterministic Stochastic Computing Framework for Neuromorphic Hardware Design},
-  version   = {3.12.0},
+  version   = {3.13.0},
   year      = {2026},
   doi       = {10.5281/zenodo.18906614},
   url       = {https://github.com/anulum/sc-neurocore},

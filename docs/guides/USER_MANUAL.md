@@ -1,9 +1,8 @@
 # sc-neurocore: The High-Performance Library for Stochastic SCPN Computing
 ## User Manual & Technical Reference
-### Version 1.0 (Synthesized Edition)
+### Version 3.13.0
 
-**Date**: January 23, 2026
-**Organization**: Anulum Institute
+**Organization**: Anulum Research
 **Authors**: Miroslav Šotek, Michal Reiprich
 
 ---

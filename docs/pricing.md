@@ -106,9 +106,9 @@ commercial licenses for proprietary integration.
 <div class="pricing-price">Free</div>
 <div class="pricing-period">Open Source — AGPL-3.0</div>
 <ul class="pricing-features">
-<li>116 neuron models</li>
+<li>122 neuron models</li>
 <li>Full Python + Rust SIMD engine</li>
-<li>10 Verilog HDL modules</li>
+<li>17 Verilog HDL modules</li>
 <li>IR compiler (SystemVerilog + MLIR)</li>
 <li>Surrogate gradient training</li>
 <li>Quantum hybrid (Qiskit/PennyLane)</li>
@@ -161,11 +161,13 @@ commercial licenses for proprietary integration.
 
 ## What You Get
 
-### 116 Neuron Models — The World's Largest Library
+### 122 Neuron Models — The World's Largest Library
 
 Every published neuron model from computational neuroscience, spanning
-82 years (1943-2025). From simple LIF to Hodgkin-Huxley ion channels,
-Hay Layer-5 pyramidal cells, and hardware-specific Loihi/TrueNorth models.
+82 years (McCulloch-Pitts 1943 to ArcaneNeuron 2026). From simple LIF
+to Hodgkin-Huxley ion channels, Hay Layer-5 pyramidal cells, hardware
+chip emulators (Loihi, TrueNorth, BrainScaleS, SpiNNaker, Akida), and
+9 AI-optimized models for cognitive workloads.
 
 ### 99.49% MNIST Accuracy
 
@@ -180,7 +182,7 @@ Train in PyTorch → Export SC weights → IR Compiler → SystemVerilog / MLIR 
 ```
 
 The only framework where the Python simulation matches synthesisable
-RTL bit-for-bit. Formal verification with 69 SymbiYosys proofs.
+RTL bit-for-bit. Formal verification with 64 SymbiYosys properties across 7 modules.
 
 ### Rust SIMD Engine — 512x Real-Time
 
@@ -193,7 +195,7 @@ dispatch. 224 Mstep/s LIF neuron throughput. 41.3 Gbit/s bitstream packing.
 
 | Feature | Community | Professional | Enterprise |
 |---------|:---------:|:------------:|:----------:|
-| 116 neuron models | Yes | Yes | Yes |
+| 122 neuron models | Yes | Yes | Yes |
 | Rust SIMD engine | Yes | Yes | Yes |
 | Verilog RTL | Yes | Yes | Yes |
 | Formal verification | Yes | Yes | Yes |
@@ -229,7 +231,7 @@ available under Enterprise.
 Yes. Contact us with your institution details for special academic pricing.
 
 **Can I evaluate before purchasing?**
-The Community edition is fully functional. All 116 neuron models,
+The Community edition is fully functional. All 122 neuron models,
 the Rust engine, Verilog RTL, and quantum modules are included.
 The Professional license adds closed-source rights and support.
 
