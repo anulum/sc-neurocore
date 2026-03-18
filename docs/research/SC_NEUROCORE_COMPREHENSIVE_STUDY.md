@@ -2,7 +2,7 @@
 
 ## Realistic Capabilities, Architecture, and Engineering Analysis
 
-**Version:** 3.12.0
+**Version:** 3.13.0
 **Date:** March 13, 2026
 **Classification:** Technical Reference Document
 **Word Count Target:** ~50,000 words
@@ -545,13 +545,7 @@ exclude_lines = [
 
 ## 4.4 Python Version Compatibility
 
-SC-NeuroCore supports Python 3.9, 3.11, and 3.12. The CI/CD matrix tests all three versions on every commit. Python 3.9 is the minimum version due to:
-
-1. **Type hint syntax**: `list[str]` and `dict[str, Any]` annotations (PEP 585) require Python 3.9+
-2. **Numba compatibility**: Numba 0.56+ requires Python 3.8+ but the ecosystem is better tested on 3.9+
-3. **SciPy QMC**: The `scipy.stats.qmc.Sobol` class was introduced in SciPy 1.7, which requires Python 3.7+ but is best supported on 3.9+
-
-Python 3.10 is not explicitly tested (the CI matrix jumps from 3.9 to 3.11) but is expected to work. Python 3.13 has not been tested due to Numba compatibility concerns.
+SC-NeuroCore supports Python 3.10 through 3.14. The CI matrix tests all five versions (3.10, 3.11, 3.12, 3.13, 3.14) on every commit. Python 3.10 is the minimum version due to PEP 604 union type syntax (`X | Y`) used in the codebase. Python 3.9 was dropped in v3.8.0 (EOL, autoray/PennyLane incompatible).
 
 ## 4.5 System Requirements
 

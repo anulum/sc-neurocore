@@ -30,7 +30,7 @@ pip install -e ".[research]"
 ## Running Tests
 
 ```bash
-# Full suite (2 055 tests, 100% coverage gate)
+# Full suite (1 776 tests, 100% coverage gate)
 pytest tests/ -v --cov=sc_neurocore --cov-report=term
 
 # Quick smoke test
@@ -198,7 +198,7 @@ then switch to `mode="HARDWARE"`.
 
 ## Analysis Toolkit
 
-SC-NeuroCore includes 125 spike train analysis functions across 23 modules --
+SC-NeuroCore includes 126 spike train analysis functions across 23 modules --
 statistics, variability, rate estimation, distance metrics, correlation,
 spectral, temporal, stimulus, LFP coupling, surrogates, information theory,
 causality, dimensionality reduction, decoding, network, point process,
@@ -213,7 +213,7 @@ from sc_neurocore.analysis import (
 ```
 
 See the [Spike Train Analysis tutorial](../tutorials/23_spike_train_analysis.md)
-and [API reference](../api/analysis.md) for the full 125-function listing.
+and [API reference](../api/analysis.md) for the full 126-function listing.
 
 ## Network Simulation
 
@@ -232,7 +232,7 @@ net.add_projection(Projection(inh, exc, probability=0.1, weight=-4.0))
 net.run(duration_ms=1000, dt=0.1)
 ```
 
-Three backends: Python (NumPy), Rust (NetworkRunner, 80 models, Rayon parallel),
+Three backends: Python (NumPy), Rust (NetworkRunner, 111 models, Rayon parallel),
 and MPI (billion-neuron distributed via mpi4py).
 
 ## Loading Pre-Trained Models

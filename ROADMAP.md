@@ -180,7 +180,7 @@ Recipe ready for conda-forge distribution. Moved from v4.1 to v3.12.
 self-referential cognition. 8 additional: MultiTimescale, AttentionGated,
 PredictiveCoding, SelfReferential, CompositionalBinding,
 DifferentiableSurrogate, ContinuousAttractor, MetaPlastic. Rust Arcane
-in NetworkRunner (80 models total).
+in NetworkRunner (111 models total).
 
 ### ~~Identity substrate~~ ✓
 

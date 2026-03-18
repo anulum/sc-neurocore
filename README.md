@@ -61,11 +61,11 @@ coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 | GPU acceleration | CuPy | PyTorch | PyTorch | — | — |
 | Neuron model library | **122** | 11 | 6 | 3 | ~5 builtin |
 | Rust neuron models (PyO3) | **111** | — | — | — | — |
-| NetworkRunner (fused loop) | **80 models** | — | — | — | — |
+| NetworkRunner (fused loop) | **111 models** | — | — | — | — |
 | Network simulation engine | **3 backends** | PyTorch | PyTorch | Lava | C++ codegen |
 | MPI distributed simulation | **Yes** | — | — | — | — |
 | Pre-trained model zoo | **10 configs, 3 weights** | — | — | — | — |
-| Spike train analysis | **125 functions** | — | — | — | — |
+| Spike train analysis | **126 functions** | — | — | — | — |
 | Visualization plots | **12** | — | — | — | — |
 | Advanced plasticity rules | **7** | — | — | — | — |
 | MNIST accuracy (SNN) | **99.49%** | ~95% | ~93% | — | — |
@@ -82,7 +82,7 @@ coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 | PyPI package | Yes | Yes | Yes | Yes | Yes |
 | License | AGPL-3.0 | MIT | LGPL-3.0 | BSD-3 | CeCILL-2.1 |
 
-- **125-function spike train analysis toolkit** — CV, Fano factor, cross-correlation, Victor-Purpura distance, SPIKE-sync, Granger causality, GPFA, SPADE pattern detection, and 115 more functions. Matches Elephant + PySpike combined. Pure NumPy.
+- **126-function spike train analysis toolkit** — CV, Fano factor, cross-correlation, Victor-Purpura distance, SPIKE-sync, Granger causality, GPFA, SPADE pattern detection, and 115 more functions. Matches Elephant + PySpike combined. Pure NumPy.
 
 SC-NeuroCore's niche: **deterministic stochastic computing with FPGA co-design** — the only framework where Python simulation matches synthesisable RTL bit-for-bit.
 
@@ -93,7 +93,7 @@ Population-Projection-Network architecture with 3 backends:
 | Backend | Scope | Performance |
 |---------|-------|-------------|
 | **Python** | Any of 122 neuron models | NumPy vectorized |
-| **Rust NetworkRunner** | 80 models in fused Rayon-parallel loop | 100K+ neurons, near-linear scaling |
+| **Rust NetworkRunner** | 111 models in fused Rayon-parallel loop | 100K+ neurons, near-linear scaling |
 | **MPI** | Billion-neuron distributed simulation via mpi4py | Multi-node HPC clusters |
 
 6 topology generators (random, small-world, scale-free, ring, grid, all-to-all),
@@ -168,7 +168,7 @@ pip install sc-neurocore[gpu]
 git clone https://github.com/anulum/sc-neurocore.git
 cd sc-neurocore
 pip install -e ".[dev]"    # editable install with all dev tools
-make preflight             # verify setup (lint + 2 055 tests)
+make preflight             # verify setup (lint + 1 776 tests)
 ```
 
 ## Docker
@@ -228,7 +228,7 @@ graph TD
         B --> F{Backend?}
         F -->|CPU| G[NumPy / Numba SIMD]
         F -->|GPU| H[CuPy CUDA]
-        F -->|Rust| I[sc_neurocore_engine<br/>512x · 111 neuron models<br/>80-model NetworkRunner]
+        F -->|Rust| I[sc_neurocore_engine<br/>512x · 111 neuron models<br/>111-model NetworkRunner]
         F -->|MPI| MPI[mpi4py distributed<br/>billion-neuron scale]
     end
 
@@ -466,21 +466,21 @@ pip install -r requirements.txt       # runtime only
 pip install -r requirements-dev.txt   # runtime + dev tools
 ```
 
-## Rust Engine (111 Neuron Models, 242 Tests)
+## Rust Engine (111 Neuron Models, 336 Tests)
 
 The `sc_neurocore_engine` crate provides 111 Rust neuron models callable
-from Python via PyO3 bindings (including ArcaneNeuron), an 80-model
+from Python via PyO3 bindings (including ArcaneNeuron), a 111-model
 NetworkRunner with Rayon-parallel population simulation (100K+ neurons),
 and SIMD-accelerated primitives with dispatch across five ISAs (AVX-512,
 AVX2, NEON, SVE, RISC-V V).
 
-242 Rust tests across 17 test binaries.
+336 Rust tests across 17 test binaries.
 
 | Category | Scope |
 |----------|-------|
 | Primitives | Bernoulli + Sobol bitstream, pack/unpack, popcount, SIMD (5 ISAs) |
 | Neurons | 111 models: LIF variants, HH-type, maps, hardware emulators, population, ArcaneNeuron |
-| NetworkRunner | 80-model fused simulation loop with CSR projections and Rayon parallelism |
+| NetworkRunner | 111-model fused simulation loop with CSR projections and Rayon parallelism |
 | Synapses | Static, STDP, Reward-STDP |
 | Layers | Dense, Conv2D, Recurrent, Learning, Fusion, Memristive, Attention |
 | Networks | Brunel, GNN, Spike recorder, Connectome, Fault injection |
