@@ -7,7 +7,7 @@
 
 """Install dev dependencies from pyproject.toml extras."""
 
-import subprocess
-import sys
+from ci_install_common import install_editable
 
-raise SystemExit(subprocess.call([sys.executable, "-m", "pip", "install", "-e", ".[dev]"]))
+
+raise SystemExit(install_editable("dev"))

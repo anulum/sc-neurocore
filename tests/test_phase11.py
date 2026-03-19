@@ -9,9 +9,12 @@
 
 from __future__ import annotations
 
+from importlib.metadata import version
+
 import numpy as np
 
 import pytest
+import sc_neurocore
 
 pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_type=ImportError)
 
@@ -157,4 +160,4 @@ class TestZeroAllocLIF:
 
 class TestPhase11Version:
     def test_version(self):
-        assert v3.__version__ == "3.13.0"
+        assert version("sc-neurocore-engine") == sc_neurocore.__version__

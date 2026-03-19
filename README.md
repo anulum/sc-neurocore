@@ -11,7 +11,7 @@ Commercial Licensing: Available
 </p>
 
 [![CI](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml/badge.svg)](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-3.13.0-blue)](https://github.com/anulum/sc-neurocore/releases)
+[![Version](https://img.shields.io/badge/version-3.13.1-blue)](https://github.com/anulum/sc-neurocore/releases)
 [![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/anulum/sc-neurocore)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://anulum.github.io/sc-neurocore/)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
@@ -22,8 +22,8 @@ Commercial Licensing: Available
 [![REUSE](https://img.shields.io/badge/REUSE-compliant-green)](https://reuse.software/)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)
 
-**Version:** 3.13.0
-**Status:** 122 Neuron Models (113 Bio + 9 AI) | 99.49% MNIST | 1 785 Python + 336 Rust Tests | 100% Coverage | 111 Rust Neuron Models | 111-Model NetworkRunner
+**Version:** 3.13.1
+**Status:** 122 Neuron Models (113 Bio + 9 AI) | 99.49% MNIST | 2 112 Python tests passing + 336 Rust tests | 100% Coverage | 111 Rust Neuron Models | 111-Model NetworkRunner
 
 <p align="center">
   <img src="docs/assets/spike_raster.png" width="800" alt="LIF spike raster — 5 neurons, sinusoidal input">
@@ -338,7 +338,7 @@ python scripts/cosim_gen_and_check.py --check
 
 Every GitHub Release includes:
 
-- **sdist** — source distribution (`dist/*.tar.gz`)
+- **wheel + sdist** — Python distribution artifacts (`dist/sc_neurocore-*`)
 - **SBOM** — CycloneDX software bill of materials (`sbom.json`)
 - **Changelog extract** — release notes from `CHANGELOG.md`
 
@@ -346,7 +346,7 @@ Co-simulation traces are generated deterministically from fixed LFSR seeds.
 To reproduce a published benchmark:
 
 ```bash
-git checkout v3.13.0
+git checkout v3.13.1
 pip install -e ".[dev]"
 python benchmarks/benchmark_suite.py --markdown > BENCHMARKS.md
 ```
@@ -402,8 +402,8 @@ install `bridge/` in the same environment.
 | **v3-wheels.yml** | Cross-platform wheels (Linux, macOS, Windows × Python 3.10–3.14) |
 | **docker.yml** | Build & push Docker image to GHCR on release tags |
 | **docs.yml** | MkDocs → GitHub Pages |
-| **publish.yml** | PyPI OIDC trusted publisher on release |
-| **release.yml** | sdist + changelog extraction → GitHub Release |
+| **publish.yml** | Publish engine wheels/sdist, then `sc-neurocore`, via PyPI OIDC on release |
+| **release.yml** | Python wheel + sdist + changelog extraction → GitHub Release |
 | **benchmark.yml** | Performance regression tracking |
 | **codeql.yml** | CodeQL security analysis (weekly + on push) |
 | **scorecard.yml** | OpenSSF Scorecard |
@@ -512,7 +512,7 @@ If you use SC-NeuroCore in your research, please cite:
 @software{sotek2026scneurocore,
   author    = {Šotek, Miroslav},
   title     = {SC-NeuroCore: A Deterministic Stochastic Computing Framework for Neuromorphic Hardware Design},
-  version   = {3.13.0},
+  version   = {3.13.1},
   year      = {2026},
   doi       = {10.5281/zenodo.18906614},
   url       = {https://github.com/anulum/sc-neurocore},

@@ -88,15 +88,12 @@ jobs:
       - name: Install dependencies
         shell: bash
         run: |
-          pip install --require-hashes -r requirements/maturin.txt
           python tools/ci_install_engine_deps.py
 
-      - name: Build engine bridge
-        shell: bash
-        run: |
-          cd bridge
-          maturin build --release --out ../dist/
-          pip install ../dist/*.whl
+      - name: Remove tracked Windows bridge binary
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Remove-Item bridge/sc_neurocore_engine/sc_neurocore_engine.cp312-win_amd64.pyd -ErrorAction SilentlyContinue
 
       - name: Run engine unit tests
         if: runner.os != 'macOS'

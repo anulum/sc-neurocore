@@ -7,7 +7,7 @@
 
 """Install engine test dependencies from pyproject.toml extras."""
 
-import subprocess
-import sys
+from ci_install_common import install_editable
 
-raise SystemExit(subprocess.call([sys.executable, "-m", "pip", "install", "-e", ".[dev-full]"]))
+
+raise SystemExit(install_editable("dev-full"))
