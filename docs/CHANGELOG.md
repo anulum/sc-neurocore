@@ -6,6 +6,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [3.13.2] - 2026-03-19
 
+### Equation → Verilog RTL Compiler
+- `equation_compiler.py`: compile any `EquationNeuron` to synthesizable Q8.8 fixed-point Verilog
+- `equation_to_fpga()`: one-liner from Brian2-style ODE string to Python neuron + Verilog RTL
+- AST-to-Verilog expression emitter handles +, -, *, /, **, unary minus, comparisons
+- Multi-variable ODE support (FitzHugh-Nagumo, Izhikevich, Hodgkin-Huxley)
+- Threshold and reset logic auto-generated
+
+### NIR Bridge (Phase 1)
+- `nir_bridge` package: import NIR graphs into SC-NeuroCore (first FPGA backend for NIR)
+- Maps 11 NIR primitives (LIF, IF, LI, Integrator, Affine, Linear, Scale, Threshold, Flatten, Input, Output)
+- Recursive graph parser with topological sort, fan-in summation, nested subgraph support
+- NIR integration guide, API docs, notebook (05_nir_bridge.ipynb)
+
 ### Packaging & Release
 - Restored `sc-neurocore` as the only PyPI product package and removed the unintended runtime dependency on a separate `sc-neurocore-engine` publish
 - Publish automation now pushes only `sc-neurocore` to PyPI while keeping the Rust engine on the existing crate / source / CI wheel paths

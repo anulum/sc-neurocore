@@ -32,6 +32,7 @@ marked explicitly.
 | Bit-true RTL co-simulation | **Yes** | — | — | — | — |
 | Verilog / FPGA synthesis | **Yes** | — | — | Loihi only | — |
 | IR compiler → SystemVerilog | **Yes** | — | — | — | — |
+| Equation → Verilog compiler | **Yes** | — | — | — | — |
 | IR compiler → MLIR/CIRCT | **Yes** | — | — | — | — |
 | Rust SIMD engine | **Yes** (41.3 Gbit/s) | — | — | — | — |
 | Surrogate gradient training | Yes | Yes | Yes | Yes | — |
@@ -43,7 +44,7 @@ marked explicitly.
 | MPI distributed simulation | **Yes** | — | — | — | — |
 | Pre-trained model zoo | **10 configs, 3 weights** | — | — | — | — |
 | Spike train analysis | **125 functions** | — | — | — | — |
-| Visualization plots | **12** | — | — | — | — |
+| Visualization plots | **14** | — | — | — | — |
 | Advanced plasticity rules | **7** | — | — | — | — |
 | STDP / R-STDP plasticity | Yes | — | Yes | Yes | Yes |
 | Quantum hybrid circuits | **Yes** | — | — | — | — |
