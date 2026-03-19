@@ -225,6 +225,46 @@ class TestFromEquations:
         assert "v" in state
         assert state["v"] != 0.0
 
+    def test_reject_syntax_error(self):
+        from sc_neurocore.neurons.equation_builder import EquationNeuron
+
+        with pytest.raises(ValueError, match="Invalid equation syntax"):
+            EquationNeuron(
+                equations={"v": "v +* I"},
+                state={"v": 0.0},
+                dt=1.0,
+            )
+
+    def test_reject_unsafe_ast_node(self):
+        from sc_neurocore.neurons.equation_builder import EquationNeuron
+
+        with pytest.raises(ValueError, match="Unsafe AST node"):
+            EquationNeuron(
+                equations={"v": "[x for x in range(10)]"},
+                state={"v": 0.0},
+                dt=1.0,
+            )
+
+    def test_reject_blocked_name(self):
+        from sc_neurocore.neurons.equation_builder import EquationNeuron
+
+        with pytest.raises(ValueError, match="Blocked function"):
+            EquationNeuron(
+                equations={"v": "__import__('os')"},
+                state={"v": 0.0},
+                dt=1.0,
+            )
+
+    def test_reject_blocked_attribute(self):
+        from sc_neurocore.neurons.equation_builder import EquationNeuron
+
+        with pytest.raises(ValueError, match="Blocked attribute"):
+            EquationNeuron(
+                equations={"v": "v.__class__"},
+                state={"v": 0.0},
+                dt=1.0,
+            )
+
     def test_reset_with_empty_parts(self):
         from sc_neurocore.neurons.equation_builder import from_equations
 
