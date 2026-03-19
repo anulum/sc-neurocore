@@ -12,6 +12,8 @@ permissions: {}
 on:
   workflow_dispatch:
   push:
+    branches-ignore:
+      - "dependabot/**"
     paths:
       - ".github/workflows/**"
       - "bridge/**"
