@@ -1,4 +1,4 @@
-{% set version = "3.12.0" %}
+{% set version = "3.13.1" %}
 
 package:
   name: sc-neurocore
@@ -29,8 +29,8 @@ test:
   imports:
     - sc_neurocore
     - sc_neurocore.neurons
-    - sc_neurocore.network
-    - sc_neurocore.analysis
+    - sc_neurocore.layers
+    - sc_neurocore.nir_bridge
   commands:
     - sc-neurocore --help
 

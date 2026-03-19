@@ -34,7 +34,7 @@ jobs:
       - name: Build sdist
         run: |
           pip install --require-hashes -r requirements/release.txt
-          python -m build --sdist
+          python -m build
 
       - name: Generate SBOM
         run: cyclonedx-py environment -o sbom.json --output-format json
@@ -54,5 +54,5 @@ jobs:
           body_path: ${{ steps.changelog.outputs.notes_file }}
           generate_release_notes: false
           files: |
-            dist/*.tar.gz
+            dist/sc_neurocore-*
             sbom.json

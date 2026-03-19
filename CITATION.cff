@@ -5,9 +5,9 @@ authors:
   given-names: "Miroslav"
   orcid: "https://orcid.org/0009-0009-3560-0851"
 title: "SC-NeuroCore: A Deterministic Stochastic Computing Framework for Neuromorphic Hardware Design"
-version: 3.13.0
+version: 3.13.1
 doi: 10.5281/zenodo.18906614
-date-released: 2026-03-18
+date-released: 2026-03-19
 license: AGPL-3.0
 repository-code: "https://github.com/anulum/sc-neurocore"
 keywords:

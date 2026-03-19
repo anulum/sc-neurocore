@@ -13,20 +13,26 @@ on:
   workflow_dispatch:
   push:
     paths:
+      - ".github/workflows/**"
+      - "bridge/**"
+      - "engine/**"
       - "src/**"
       - "tests/**"
+      - "tools/**"
       - "hdl/**"
       - "pyproject.toml"
       - "requirements/**"
-      - ".github/workflows/ci.yml"
   pull_request:
     paths:
+      - ".github/workflows/**"
+      - "bridge/**"
+      - "engine/**"
       - "src/**"
       - "tests/**"
+      - "tools/**"
       - "hdl/**"
       - "pyproject.toml"
       - "requirements/**"
-      - ".github/workflows/ci.yml"
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -63,6 +69,12 @@ jobs:
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable
+
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+        with:
+          workspaces: engine
 
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
@@ -118,15 +130,26 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
+      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable
+
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+        with:
+          workspaces: engine
+
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.12"
 
-      - run: pip install --require-hashes -r requirements/build.txt
+      - run: pip install --require-hashes -r requirements/build.txt -r requirements/maturin.txt
 
       - run: python -m build
+
+      - name: Build engine wheel
+        run: |
+          cd bridge
+          maturin build --release --out ../dist/
 
       - name: Smoke test
         run: |
           pip install dist/*.whl
-          python -c "import sc_neurocore; print(sc_neurocore.__version__)"
+          python -c "import sc_neurocore, sc_neurocore_engine; assert sc_neurocore.__version__ == sc_neurocore_engine.__version__; print(sc_neurocore.__version__)"

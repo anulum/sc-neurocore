@@ -4,16 +4,34 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.13.1] - 2026-03-19
+
+### Packaging & Install
+- Top-level `sc-neurocore` now requires the matching `sc-neurocore-engine` release, and `sc-neurocore info` reports engine version mismatches explicitly instead of silently mixing versions
+- Dense-layer example and getting-started/docs packaging guidance now match the current public API and distinguish wheel-shipped modules from source-only modules
+
+### NIR Bridge
+- Nested NIR subgraphs now execute through a dedicated subgraph node wrapper and reset cleanly inside `SCNetwork`
+- `Flatten` now respects `start_dim` / `end_dim`, and bridge coverage is enforced instead of being omitted
+- Added regression coverage for nested graphs, fan-in, cycle detection, orphan nodes, flatten edge cases, and file-based import/export
+
+### CI & Release
+- CI now builds and installs the local engine wheel before editable/package installs, so unreleased versions no longer fail dependency resolution
+- Build smoke installs both the engine wheel and the top-level wheel from local artifacts
+- Publish workflow now builds engine sdist+wheels, publishes the engine package before `sc-neurocore`, and keeps manual dispatch build-only unless publish is explicitly enabled
+- Release workflow now attaches both the pure-Python wheel and sdist to GitHub Releases
+
 ### Bug Fixes
-- StochasticTransformerBlock: clamp residual and FFN intermediate values to [0, 1] — MAC output from VectorizedSCLayer can exceed 1.0, triggering the new input validation
+- StochasticTransformerBlock: clamp residual and FFN intermediate values to [0, 1] — MAC output from `VectorizedSCLayer` can exceed 1.0, triggering the new input validation
+- Optional dependency introspection in `sc-neurocore info` no longer crashes on broken NumPy/JAX imports
 
 ### Tests
-- 9 new tests covering audit validation error paths: VectorizedSCLayer init guards (zero inputs/neurons/length), NaN/range input rejection, EquationNeuron AST security (syntax error, unsafe node, blocked name, blocked attribute)
-- Test count: 1 776 → 1 785
+- Full preflight now passes at `2112 passed`, `38 skipped`, `12 xfailed`, with `100.00%` coverage
+- Added audit validation tests for VectorizedSCLayer/EquationNeuron, CLI fallback coverage, dense-layer example smoke coverage, and expanded NIR bridge regressions
 
 ### Documentation
-- Replace stale black references with ruff format in VALIDATION.md and CONTRIBUTING.md
-- Sync test counts across all docs (1 785 Python + 336 Rust)
+- Replace stale black references with ruff format in `VALIDATION.md` and `CONTRIBUTING.md`
+- Sync the packaging/install docs with the released product surface
 
 ## [3.13.0] - 2026-03-18
 
