@@ -18,7 +18,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ### CI & Release
 - CI now builds and installs the local engine wheel before editable/package installs, so unreleased versions no longer fail dependency resolution
 - Build smoke installs both the engine wheel and the top-level wheel from local artifacts
-- Publish workflow now builds engine sdist+wheels, publishes the engine package before `sc-neurocore`, and keeps manual dispatch build-only unless publish is explicitly enabled
+- Publish workflow now runs from tag pushes, builds engine sdist+wheels, publishes the engine package before `sc-neurocore`, and keeps manual dispatch build-only unless publish is explicitly enabled
 - Release workflow now attaches both the pure-Python wheel and sdist to GitHub Releases
 
 ### Bug Fixes
