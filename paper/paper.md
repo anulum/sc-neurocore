@@ -130,12 +130,14 @@ verifies structural invariants, and emits synthesisable SystemVerilog
 targeting Xilinx and Intel FPGAs.
 
 **NIR Bridge** (`sc_neurocore.nir_bridge`): Imports NIR
-(Neuromorphic Intermediate Representation) graphs, mapping 11
-primitives (LIF, IF, LI, Affine, Linear, Scale, Threshold, Flatten,
+(Neuromorphic Intermediate Representation) graphs, mapping all 17
+primitives (LIF, IF, LI, CubaLIF, CubaLI, Affine, Linear, Conv1d,
+Conv2d, Scale, Threshold, Flatten, Delay, SumPool2d, AvgPool2d,
 Integrator, Input, Output) to SC-NeuroCore equivalents with a
 recursive graph parser and topological execution. SC-NeuroCore is the
-first NIR backend targeting FPGA synthesis, enabling models from Norse,
-snnTorch, and Lava-DL to be deployed on reconfigurable hardware.
+first NIR backend with 100\% primitive coverage AND FPGA synthesis,
+enabling models from Norse, snnTorch, and Lava-DL to be deployed
+on reconfigurable hardware.
 
 A minimal end-to-end example:
 
