@@ -61,15 +61,15 @@ for step_output in results["output"]:
 | `Threshold` | `SCThresholdNode` | Spike generation |
 | `Flatten` | `SCFlattenNode` | Tensor reshape with dim range |
 | `NIRGraph` | `SCSubgraphNode` | Nested subgraph (recursive) |
+| `CubaLIF` | `SCCubaLIFNode` | Current-based LIF with synaptic filter (dual tau) |
+| `CubaLI` | `SCCubaLINode` | Current-based leaky integrator |
+| `Delay` | `SCDelayNode` | Circular buffer, configurable timestep delay |
+| `Conv1d` | `SCConv1dNode` | 1D convolution with stride, padding, dilation, groups |
+| `Conv2d` | `SCConv2dNode` | 2D convolution with full parameter support |
+| `SumPool2d` | `SCSumPool2dNode` | Spatial sum pooling over kernel windows |
+| `AvgPool2d` | `SCAvgPool2dNode` | Average pooling (SumPool / kernel_area) |
 
-### Not Yet Supported
-
-These primitives raise `NotImplementedError` and are planned for Phase 2-3:
-
-- `CubaLIF`, `CubaLI` (current-based, needs synaptic filter)
-- `Conv1d`, `Conv2d` (needs SC convolution module)
-- `Delay` (needs shift register)
-- `SumPool2d`, `AvgPool2d` (needs pooling accumulator)
+All 17 NIR primitives are supported. 100% coverage of the NIR standard.
 
 ## Building a NIR Graph Manually
 
@@ -164,7 +164,7 @@ network = from_nir(graph)
 
 ## Roadmap
 
-- **Phase 1** (done): Core bridge with 11 primitives, graph parser, tests
+- **Phase 1** (done): All 17 NIR primitives mapped, graph parser, 41 tests
 - **Phase 2**: RTL emission — NIR graph to SystemVerilog via `CompilerPipeline`
 - **Phase 3**: Export path — SC-NeuroCore networks to NIR format (`to_nir()`)
 - **Phase 4**: Full primitive coverage (Conv, Delay, CubaLIF, pooling)
