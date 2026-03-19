@@ -45,7 +45,7 @@ analysis toolkit (23 modules), 12 visualization plots, 7 advanced
 plasticity rules, 10 model zoo configurations with 3 pre-trained weight
 sets, 9 hardware chip emulators, quantum hybrid computing (Qiskit +
 PennyLane), and surrogate gradient training reaching 99.49% MNIST accuracy.
-1 785 Python tests across 118+ files and 336 Rust tests hold 100% line
+2 112 Python tests across 118+ files and 336 Rust tests hold 100% line
 coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 
 ## Feature Comparison
@@ -174,7 +174,7 @@ runtime dependency. Source-only Frontier modules such as `analysis`, `viz`,
 git clone https://github.com/anulum/sc-neurocore.git
 cd sc-neurocore
 pip install -e ".[dev]"    # editable install with all dev tools
-make preflight             # verify setup (lint + 1 785 tests)
+make preflight             # verify setup (lint + 2 112 tests)
 ```
 
 If you are changing the Rust bridge locally, install `bridge/` in the same

@@ -1,13 +1,13 @@
 # Roadmap
 
-> Last updated: 2026-03-18 (v3.13.0). Priorities may shift based on
+> Last updated: 2026-03-19 (v3.13.2). Priorities may shift based on
 > validation results and community feedback.
 
 ## v3.8 — Hardening & Edge AI Readiness ✓
 
 ### ~~Coverage gate ≥ 98%~~ ✓
 
-Done. 100% enforced (1 785 tests passed; gate at 100).
+Done. 100% enforced (2 112 tests passed; gate at 100).
 
 ### ~~NumPy 2.x full compatibility~~ ✓
 
@@ -105,7 +105,7 @@ test counts updated across all docs.
 
 122 Python + 111 Rust neuron models, PyO3 bindings for all extended
 model categories, JAX training support, CuPy sparse GPU paths, FMEA +
-traceability matrix, 1 785 Python tests, 336 Rust tests, 13 CI
+traceability matrix, 2 112 Python tests, 336 Rust tests, 13 CI
 workflows, conda-forge recipe ready.
 
 New in this release:

@@ -1,8 +1,8 @@
-# SC-NeuroCore v3.13.0 Capability Report
+# SC-NeuroCore v3.13.2 Capability Report
 
 **Stochastic Computing Framework for Neuromorphic Hardware Design**
 
-**Version:** 3.13.0
+**Version:** 3.13.2
 **Report Date:** March 18, 2026
 **Author:** Miroslav Šotek (Anulum Research)
 
@@ -21,7 +21,7 @@ compiler emitting SystemVerilog.
 | Metric | Value | Basis |
 |--------|-------|-------|
 | Neuron models | 122 Python, 111 Rust | Counted |
-| Test suite | 1 785 Python + 336 Rust, 100% coverage | CI-enforced |
+| Test suite | 2 112 Python + 336 Rust, 100% coverage | CI-enforced |
 | MNIST accuracy | 99.49% (conv SNN) | Measured |
 | Brunel 1K speedup vs Brian2 | 4.0x | Benchmarked (Numba JIT) |
 | Bitstream packing | 41.3 Gbit/s (AVX-512) | Criterion benchmark |
@@ -262,7 +262,7 @@ This is a research module, not a production inference tool.
 
 | Gate | Tool | Threshold |
 |------|------|-----------|
-| Python tests | pytest | 1 785 tests, 100% line coverage |
+| Python tests | pytest | 2 112 tests, 100% line coverage |
 | Rust tests | cargo test | 336 tests |
 | Formatting | ruff format 0.15.6 | 529 files |
 | Linting | ruff 0.15.6 | Zero violations |
@@ -315,7 +315,7 @@ Python 3.10–3.14. Linux, macOS, Windows.
   title={SC-NeuroCore: A Deterministic Stochastic Computing Framework
          for Neuromorphic Hardware Design},
   author={Šotek, Miroslav},
-  version={3.13.0},
+  version={3.13.2},
   year={2026},
   doi={10.5281/zenodo.18906614},
   url={https://github.com/anulum/sc-neurocore}

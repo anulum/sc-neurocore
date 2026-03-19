@@ -160,7 +160,7 @@ A Zenodo-archived DOI is available [@scneurocore_zenodo].
 
 # Quality Assurance
 
-SC-NeuroCore maintains 1 785 Python and 336 Rust tests with 100% line
+SC-NeuroCore maintains 2 112 Python and 336 Rust tests with 100% line
 coverage enforced by CI on every push. The test suite includes unit
 tests, integration tests, property-based tests (Hypothesis),
 cross-layer coupling tests, and hardware co-simulation checks.
