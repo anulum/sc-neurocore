@@ -7,7 +7,7 @@ stochastic computing (SC) neural networks — from individual neurons to full
 SCPN layer hierarchies, with both software simulation and Verilog RTL for
 FPGA deployment.
 
-**Version 3.13.1** | 2 112 passing Python tests + 336 Rust tests | 100% Coverage | 122 Neuron Models | 111-Model NetworkRunner | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
+**Version 3.13.2** | 2 112 passing Python tests + 336 Rust tests | 100% Coverage | 122 Neuron Models | 111-Model NetworkRunner | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
 
 ![SC-NeuroCore train-to-hardware pipeline](assets/pipeline.png)
 *Train in PyTorch → Quantise to Q8.8 → Simulate with stochastic bitstreams → Compile to SystemVerilog → Synthesise for FPGA. The Rust SIMD engine accelerates all stages.*
@@ -33,9 +33,10 @@ FPGA deployment.
 - **HDC/VSA** — Hyper-dimensional computing for symbolic AI workloads
 - **conda-forge recipe** — ready for conda-forge distribution
 
-The default `pip install sc-neurocore` wheel ships the core/simulation/domain-bridge
-packages plus the matching `sc-neurocore-engine` release. Frontier modules such as
-`analysis`, `viz`, `audio`, `dashboard`, and `swarm` remain source-checkout features.
+The default `pip install sc-neurocore` wheel ships the public
+core/simulation/domain-bridge package surface under the `sc-neurocore`
+product name. Frontier modules such as `analysis`, `viz`, `audio`,
+`dashboard`, and `swarm` remain source-checkout features.
 
 ## Quick Start
 
@@ -43,7 +44,8 @@ packages plus the matching `sc-neurocore-engine` release. Frontier modules such 
 pip install sc-neurocore
 ```
 
-This installs the matching `sc-neurocore-engine` dependency for the same release.
+This installs the public `sc-neurocore` package from PyPI. The optional Rust
+engine remains available from source builds and release assets.
 
 ```python
 from sc_neurocore import VectorizedSCLayer, BitstreamEncoder
