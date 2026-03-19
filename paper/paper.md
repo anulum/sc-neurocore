@@ -1,5 +1,5 @@
 ---
-title: "SC-NeuroCore: A Deterministic Stochastic Computing Framework for Neuromorphic Hardware Design"
+title: "SC-NeuroCore: Bit-True Stochastic Computing Simulation and FPGA Synthesis for Spiking Neural Networks"
 tags:
   - Python
   - Rust
