@@ -8,8 +8,8 @@
 name: Publish to PyPI & crates.io
 
 on:
-  release:
-    types: [published]
+  push:
+    tags: ["v*"]
   workflow_dispatch:
     inputs:
       publish:
@@ -86,7 +86,7 @@ jobs:
           path: dist/sc_neurocore_engine-*.whl
 
   publish-engine-pypi:
-    if: github.event_name == 'release' || github.event.inputs.publish == 'true'
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.publish == 'true'
     needs: [build-engine-sdist, build-engine-wheels]
     runs-on: ubuntu-latest
     environment: pypi
@@ -103,7 +103,7 @@ jobs:
           packages-dir: dist/
 
   publish-python-pypi:
-    if: github.event_name == 'release' || github.event.inputs.publish == 'true'
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.publish == 'true'
     needs: [build-python-dist, publish-engine-pypi]
     runs-on: ubuntu-latest
     environment: pypi
@@ -119,7 +119,7 @@ jobs:
           packages-dir: dist/
 
   publish-crate:
-    if: github.event_name == 'release' || github.event.inputs.publish == 'true'
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.publish == 'true'
     needs: [publish-python-pypi]
     runs-on: ubuntu-latest
     environment: crates-io
