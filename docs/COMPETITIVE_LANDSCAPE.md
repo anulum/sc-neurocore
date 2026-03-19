@@ -33,7 +33,7 @@ marked explicitly.
 | Verilog / FPGA synthesis | **Yes** | — | — | Loihi only | — |
 | IR compiler → SystemVerilog | **Yes** | — | — | — | — |
 | IR compiler → MLIR/CIRCT | **Yes** | — | — | — | — |
-| Rust SIMD engine | **Yes** (512x) | — | — | — | — |
+| Rust SIMD engine | **Yes** (41.3 Gbit/s) | — | — | — | — |
 | Surrogate gradient training | Yes | Yes | Yes | Yes | — |
 | GPU acceleration | CuPy | PyTorch | PyTorch | — | — |
 | Neuron models | **122** | 11 | 6 | 3 | Arbitrary |
@@ -42,7 +42,7 @@ marked explicitly.
 | Network simulation backends | **3** (Python, Rust, MPI) | PyTorch | PyTorch | Lava | C++ codegen |
 | MPI distributed simulation | **Yes** | — | — | — | — |
 | Pre-trained model zoo | **10 configs, 3 weights** | — | — | — | — |
-| Spike train analysis | **126 functions** | — | — | — | — |
+| Spike train analysis | **125 functions** | — | — | — | — |
 | Visualization plots | **12** | — | — | — | — |
 | Advanced plasticity rules | **7** | — | — | — | — |
 | STDP / R-STDP plasticity | Yes | — | Yes | Yes | Yes |
@@ -72,7 +72,7 @@ marked explicitly.
    111 Rust neuron models with PyO3 bindings, 111-model NetworkRunner
 5. **Network simulation** — 3 backends (Python, Rust, MPI), 6 topology
    generators, 10 model zoo configs, 3 pre-trained weight sets
-6. **Analysis toolkit** — 126 spike train analysis functions across
+6. **Analysis toolkit** — 125 spike train analysis functions across
    23 modules, matching Elephant + PySpike combined
 5. **ArcaneNeuron** — self-referential cognition model with 5 coupled
    subsystems (no equivalent in any other toolkit)

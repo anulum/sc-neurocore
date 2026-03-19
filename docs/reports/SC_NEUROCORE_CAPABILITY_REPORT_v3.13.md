@@ -25,8 +25,8 @@ compiler emitting SystemVerilog.
 | MNIST accuracy | 99.49% (conv SNN) | Measured |
 | Brunel 1K speedup vs Brian2 | 4.0x | Benchmarked (Numba JIT) |
 | Bitstream packing | 41.3 Gbit/s (AVX-512) | Criterion benchmark |
-| Synthesis (7-neuron core) | 7 382 LUTs (Xilinx 7-series) | Yosys report |
-| Formal properties | 64 across 7 HDL modules | SymbiYosys |
+| Synthesis (sc_neurocore_top) | 3 673 LUTs (Xilinx 7-series) | Yosys report |
+| Formal properties | 61 across 7 HDL modules | SymbiYosys |
 | CI workflows | 13, all SHA-pinned | GitHub Actions |
 | Python versions | 3.10–3.14 | CI matrix |
 | Platforms | Linux, macOS, Windows | Wheel builds |
@@ -117,12 +117,12 @@ Synthesisable Verilog-2005 modules:
 
 | Configuration | LUTs |
 |---------------|------|
-| 3-input, 7-neuron | 7 382 |
+| sc_neurocore_top | 3 673 |
 | MNIST 16→10 (estimated) | ~56 000 |
 
 ### 2.4 Formal Verification
 
-64 properties across 7 SymbiYosys formal modules covering:
+61 properties across 7 SymbiYosys formal modules covering:
 encoder, neuron, synapse, dense layer, dotproduct, firing rate,
 AXI-Lite config. Properties include safety (no overflow), liveness
 (neurons fire under sufficient input), and equivalence (Python
@@ -268,7 +268,7 @@ This is a research module, not a production inference tool.
 | Linting | ruff 0.15.6 | Zero violations |
 | Security | bandit | Zero findings |
 | SPDX headers | CI guard | All .py, .rs, .v files |
-| Formal | SymbiYosys | 64 properties |
+| Formal | SymbiYosys | 61 properties |
 | Supply chain | CodeQL + OpenSSF Scorecard | Active |
 | CI workflows | 13, all SHA-pinned | Every push |
 

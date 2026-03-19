@@ -108,7 +108,7 @@ commercial licenses for proprietary integration.
 <ul class="pricing-features">
 <li>122 neuron models</li>
 <li>Full Python + Rust SIMD engine</li>
-<li>17 Verilog HDL modules</li>
+<li>10 Verilog HDL modules</li>
 <li>IR compiler (SystemVerilog + MLIR)</li>
 <li>Surrogate gradient training</li>
 <li>Quantum hybrid (Qiskit/PennyLane)</li>
@@ -184,7 +184,7 @@ Train in PyTorch → Export SC weights → IR Compiler → SystemVerilog / MLIR 
 The only framework where the Python simulation matches synthesisable
 RTL bit-for-bit. Formal verification with 64 SymbiYosys properties across 7 modules.
 
-### Rust SIMD Engine — 512x Real-Time
+### Rust SIMD Engine — 41.3 Gbit/s AVX-512
 
 100% Python parity with AVX-512, AVX2, NEON, SVE, and RISC-V Vector
 dispatch. 224 Mstep/s LIF neuron throughput. 41.3 Gbit/s bitstream packing.

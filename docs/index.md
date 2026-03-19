@@ -22,14 +22,14 @@ FPGA deployment.
 - **MPI distributed** — billion-neuron scale via mpi4py
 - **Model zoo** — 10 pre-built configs, 3 pre-trained weight sets (MNIST, SHD, DVS)
 - **126-function analysis toolkit** — spike train stats, distance, correlation, causality, decoding (23 modules)
-- **12 visualization plots** — raster, voltage, ISI, PSD, cross-correlogram, and more
+- **14 visualization plots** — raster, voltage, ISI, PSD, cross-correlogram, and more
 - **7 advanced plasticity rules** — BPTT, e-prop, R-STDP, MAML, homeostatic, STP, structural
 - **Packed bitwise layers** — 64-bit vectorised AND/popcount for high throughput
-- **Rust SIMD engine** — 512x real-time, AVX-512/AVX2/NEON/SVE/RVV dispatch
+- **Rust SIMD engine** — 41.3 Gbit/s bitstream packing (AVX-512), AVX2/NEON/SVE/RVV dispatch
 - **GPU acceleration** — CuPy backend + JAX JIT training + CuPy sparse GPU
 - **SNN training** — Surrogate gradient training (ATan, FastSigmoid, SuperSpike) with `to_sc_weights()` bridge
 - **SCPN layer stack** — 16-layer holonomic model (L1 Quantum → L16 Meta) with JAX acceleration
-- **Verilog RTL** — 17 synthesisable modules, 7 formal verification files (64 properties), bit-exact co-simulation
+- **Verilog RTL** — 10 synthesisable modules, 7 formal verification files (61 properties), bit-exact co-simulation
 - **HDC/VSA** — Hyper-dimensional computing for symbolic AI workloads
 - **[NIR bridge](guides/nir_integration.md)** — first FPGA backend for [NIR](https://neuroir.org/) (interop with Norse, snnTorch, Lava-DL)
 - **conda-forge recipe** — ready for conda-forge distribution

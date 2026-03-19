@@ -77,10 +77,10 @@ For the reference 3-input × 7-neuron configuration:
 
 | Module | LUTs | FFs |
 |--------|-----:|----:|
-| `sc_neurocore_top` | 7,382 | 2,442 |
+| `sc_neurocore_top` | 3,673 | 1,221 |
 
-The 16→10 MNIST classifier is estimated at ~56K LUTs (scaled from the Yosys
-3×7 reference at 7,382 LUTs), fitting an Artix-7 100T.
+The 16→10 MNIST classifier is estimated at ~28K LUTs (scaled from the Yosys
+default `sc_neurocore_top` at 3,673 LUTs), fitting an Artix-7 100T.
 
 ## 5. Vivado implementation (optional, 5 min)
 

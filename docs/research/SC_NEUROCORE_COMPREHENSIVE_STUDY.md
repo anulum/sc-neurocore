@@ -95,7 +95,7 @@ This study assesses every source file in the repository. No module is omitted, a
 |--------|-------|
 | **Python source files** | 212 across 44 packages |
 | **Lines of Python** | 12,385 (executable, excluding blanks and comments) |
-| **Verilog HDL modules** | 17 synthesizable modules |
+| **Verilog HDL modules** | 10 synthesizable modules |
 | **Lines of Verilog** | 1,100+ |
 | **Total tests** | 2,112 Python + 336 Rust (100% passing) |
 | **Line coverage** | 100% |

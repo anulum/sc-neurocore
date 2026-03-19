@@ -35,13 +35,13 @@ available. 122 neuron models (113 biophysical + 9 AI-optimized) spanning
 ArcaneNeuron 2026) run inside a deterministic stochastic computing engine
 with bit-true Verilog RTL co-simulation, FPGA synthesis via an IR compiler
 (SystemVerilog + MLIR/CIRCT backends), formal verification (7 SymbiYosys
-modules, 64 properties), a Rust SIMD engine at 512x real-time (111 Rust
+modules, 61 properties), a Rust SIMD engine at 41.3 Gbit/s AVX-512 (111 Rust
 neuron models with PyO3 bindings, 111-model NetworkRunner with Rayon-parallel
 populations scaling to 100K+ neurons), CuPy GPU acceleration, JAX JIT
 training, MPI distributed simulation (billion-neuron scale via mpi4py),
 an identity continuity substrate (persistent spiking networks with
-checkpointing and L16 Director control), a 126-function spike train
-analysis toolkit (23 modules), 12 visualization plots, 7 advanced
+checkpointing and L16 Director control), a 125-function spike train
+analysis toolkit (23 modules), 14 visualization plots, 7 advanced
 plasticity rules, 10 model zoo configurations with 3 pre-trained weight
 sets, 9 hardware chip emulators, quantum hybrid computing (Qiskit +
 PennyLane), surrogate gradient training reaching 99.49% MNIST accuracy,
@@ -59,7 +59,7 @@ coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 | Bit-true RTL co-simulation | **Yes** | — | — | — | — |
 | Verilog / FPGA synthesis | **Yes** | — | — | Loihi only | — |
 | IR compiler → SystemVerilog | **Yes** | — | — | — | — |
-| Rust SIMD engine (512x) | **Yes** | — | — | — | — |
+| Rust SIMD engine (41.3 Gbit/s) | **Yes** | — | — | — | — |
 | Surrogate gradient training | Yes | Yes | Yes | Yes | — |
 | GPU acceleration | CuPy | PyTorch | PyTorch | — | — |
 | Neuron model library | **122** | 11 | 6 | 3 | ~5 builtin |
@@ -68,7 +68,7 @@ coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 | Network simulation engine | **3 backends** | PyTorch | PyTorch | Lava | C++ codegen |
 | MPI distributed simulation | **Yes** | — | — | — | — |
 | Pre-trained model zoo | **10 configs, 3 weights** | — | — | — | — |
-| Spike train analysis | **126 functions** | — | — | — | — |
+| Spike train analysis | **125 functions** | — | — | — | — |
 | Visualization plots | **12** | — | — | — | — |
 | Advanced plasticity rules | **7** | — | — | — | — |
 | MNIST accuracy (SNN) | **99.49%** | ~95% | ~93% | — | — |
@@ -85,7 +85,7 @@ coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 | PyPI package | Yes | Yes | Yes | Yes | Yes |
 | License | AGPL-3.0 | MIT | LGPL-3.0 | BSD-3 | CeCILL-2.1 |
 
-- **126-function spike train analysis toolkit** — CV, Fano factor, cross-correlation, Victor-Purpura distance, SPIKE-sync, Granger causality, GPFA, SPADE pattern detection, and 115 more functions. Matches Elephant + PySpike combined. Pure NumPy.
+- **125-function spike train analysis toolkit** — CV, Fano factor, cross-correlation, Victor-Purpura distance, SPIKE-sync, Granger causality, GPFA, SPADE pattern detection, and 115 more functions. Matches Elephant + PySpike combined. Pure NumPy.
 
 SC-NeuroCore's niche: **deterministic stochastic computing with FPGA co-design** — the only framework where Python simulation matches synthesisable RTL bit-for-bit.
 
@@ -100,7 +100,7 @@ Population-Projection-Network architecture with 3 backends:
 | **MPI** | Billion-neuron distributed simulation via mpi4py | Multi-node HPC clusters |
 
 6 topology generators (random, small-world, scale-free, ring, grid, all-to-all),
-12 visualization plots (raster, voltage, ISI, cross-correlogram, PSD, firing rate,
+14 visualization plots (raster, voltage, ISI, cross-correlogram, PSD, firing rate,
 phase portrait, population activity, instantaneous rate, spike train comparison,
 network graph, weight matrix), and 7 advanced plasticity rules (BPTT, e-prop,
 R-STDP, MAML, homeostatic, STP, structural).
@@ -185,7 +185,7 @@ environment or run source-tree commands with `PYTHONPATH=src:bridge`.
 
 ## Docker
 
-The Docker image ships with the full Rust engine (512x real-time performance):
+The Docker image ships with the full Rust engine (41.3 Gbit/s AVX-512 performance):
 
 ```bash
 # Build
@@ -240,7 +240,7 @@ graph TD
         B --> F{Backend?}
         F -->|CPU| G[NumPy / Numba SIMD]
         F -->|GPU| H[CuPy CUDA]
-        F -->|Rust| I[sc_neurocore_engine<br/>512x · 111 neuron models<br/>111-model NetworkRunner]
+        F -->|Rust| I[sc_neurocore_engine<br/>41.3 Gbit/s AVX-512 · 111 neuron models<br/>111-model NetworkRunner]
         F -->|MPI| MPI[mpi4py distributed<br/>billion-neuron scale]
     end
 

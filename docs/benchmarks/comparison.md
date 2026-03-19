@@ -49,7 +49,7 @@ supported for Apple Silicon and Raspberry Pi.
 
 | Configuration | LUTs (Xilinx 7-series) | Fmax (est.) |
 |---------------|------------------------|-------------|
-| 3-input, 7-neuron core | 7 382 | ~100 MHz |
+| sc_neurocore_top (default) | 3 673 | ~100 MHz |
 | MNIST 16→10 (estimated) | ~56 000 | ~80 MHz |
 | Target: Artix-7 100T | 63 400 available | — |
 
@@ -74,5 +74,5 @@ SC-NeuroCore-specific.
 | Python models | **122** | 11 | 6 | Custom eq. | 3 |
 | Rust/compiled models | **111** | — | — | C++ codegen | — |
 | Hardware emulators | **9** | — | — | — | Loihi only |
-| Formal verification | **64 properties** | — | — | — | — |
+| Formal verification | **61 properties** | — | — | — | — |
 | Train-to-FPGA export | **Yes** | No | No | No | No |

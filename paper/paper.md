@@ -116,14 +116,14 @@ Python 3.10--3.14.
 Population-Projection-Network engine with three backends (Python/NumPy,
 Rust NetworkRunner, MPI via mpi4py), six topology generators, a model
 zoo with 10 pre-built configurations, 3 pre-trained weight sets, and
-126 spike train analysis functions covering the combined scope of
+125 spike train analysis functions covering the combined scope of
 Elephant [@elephant2023] and PySpike.
 
-**Verilog RTL** (`hdl/`): 17 synthesisable modules including
+**Verilog RTL** (`hdl/`): 10 synthesisable modules including
 `sc_lif_neuron.v` (Q8.8 LIF), `sc_dense_matrix_layer.v`, and
 `sc_neurocore_top.v` (AXI-Lite wrapper). Yosys synthesis of
-`sc_neurocore_top` yields 7 382 LUTs on Xilinx 7-series. SymbiYosys
-formal verification covers 64 properties across 7 modules.
+`sc_neurocore_top` yields 3 673 LUTs on Xilinx 7-series. SymbiYosys
+formal verification covers 61 properties across 7 modules.
 
 **IR Compiler**: Parses a graph-based intermediate representation,
 verifies structural invariants, and emits synthesisable SystemVerilog
@@ -162,7 +162,7 @@ AGPL-3.0-or-later with a commercial license option.
 [Documentation](https://anulum.github.io/sc-neurocore/) is hosted on
 GitHub Pages. The repository includes a
 [contributing guide](https://github.com/anulum/sc-neurocore/blob/main/CONTRIBUTING.md),
-24 tutorials, 14 worked examples, and 6 Jupyter notebooks including an
+24 tutorials, 16 examples, and 6 Jupyter notebooks including an
 interactive neuron model explorer and an NIR bridge walkthrough.
 A Zenodo-archived DOI is available [@scneurocore_zenodo].
 
