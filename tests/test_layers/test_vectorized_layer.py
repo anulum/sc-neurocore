@@ -92,6 +92,33 @@ def test_vectorized_length_not_multiple_of_64():
     assert out.shape == (1,)
 
 
+def test_vectorized_reject_zero_inputs():
+    with pytest.raises(ValueError, match="n_inputs must be >= 1"):
+        VectorizedSCLayer(n_inputs=0, n_neurons=2, length=16)
+
+
+def test_vectorized_reject_zero_neurons():
+    with pytest.raises(ValueError, match="n_neurons must be >= 1"):
+        VectorizedSCLayer(n_inputs=2, n_neurons=0, length=16)
+
+
+def test_vectorized_reject_zero_length():
+    with pytest.raises(ValueError, match="length must be >= 1"):
+        VectorizedSCLayer(n_inputs=2, n_neurons=2, length=0)
+
+
+def test_vectorized_reject_nan_input():
+    layer = VectorizedSCLayer(n_inputs=2, n_neurons=2, length=16)
+    with pytest.raises(ValueError, match="NaN or Inf"):
+        layer.forward([float("nan"), 0.5])
+
+
+def test_vectorized_reject_out_of_range_input():
+    layer = VectorizedSCLayer(n_inputs=2, n_neurons=2, length=16)
+    with pytest.raises(ValueError, match="probabilities must be in"):
+        layer.forward([1.5, 0.5])
+
+
 @pytest.mark.skipif(not _perf_enabled(), reason="Set SC_NEUROCORE_PERF=1 to enable perf checks.")
 def test_vectorized_layer_perf_small():
     """Benchmark a small vectorized forward pass."""

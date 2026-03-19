@@ -51,12 +51,12 @@ class StochasticTransformerBlock:
         if input_1d and attn_out.ndim > 1:
             attn_out = attn_out.reshape(-1)[: x.shape[0]]
 
-        res1 = 0.5 * x + 0.5 * attn_out
+        res1 = np.clip(0.5 * x + 0.5 * attn_out, 0.0, 1.0)
 
         # Position-wise FFN: apply same weights to each token
         def _ffn(token: np.ndarray) -> np.ndarray:
             vals = token.tolist() if hasattr(token, "tolist") else token
-            h = self.ffn_1.forward(vals)
+            h = np.clip(self.ffn_1.forward(vals), 0.0, 1.0)
             return self.ffn_2.forward(h.tolist() if hasattr(h, "tolist") else h)
 
         if res1.ndim > 1:
