@@ -34,7 +34,9 @@ available. 122 neuron models (113 biophysical + 9 AI-optimized) spanning
 82 years of computational neuroscience (McCulloch-Pitts 1943 through
 ArcaneNeuron 2026) run inside a deterministic stochastic computing engine
 with bit-true Verilog RTL co-simulation, FPGA synthesis via an IR compiler
-(SystemVerilog + MLIR/CIRCT backends), formal verification (7 SymbiYosys
+(SystemVerilog + MLIR/CIRCT backends), an equation-to-Verilog compiler
+that turns arbitrary ODE strings into synthesizable Q8.8 fixed-point RTL,
+formal verification (7 SymbiYosys
 modules, 61 properties), a Rust SIMD engine at 41.3 Gbit/s AVX-512 (111 Rust
 neuron models with PyO3 bindings, 111-model NetworkRunner with Rayon-parallel
 populations scaling to 100K+ neurons), CuPy GPU acceleration, JAX JIT
@@ -69,7 +71,7 @@ coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 | MPI distributed simulation | **Yes** | — | — | — | — |
 | Pre-trained model zoo | **10 configs, 3 weights** | — | — | — | — |
 | Spike train analysis | **125 functions** | — | — | — | — |
-| Visualization plots | **12** | — | — | — | — |
+| Visualization plots | **14** | — | — | — | — |
 | Advanced plasticity rules | **7** | — | — | — | — |
 | MNIST accuracy (SNN) | **99.49%** | ~95% | ~93% | — | — |
 | Plasticity (STDP, R-STDP) | Yes | — | Yes | Yes | Yes |

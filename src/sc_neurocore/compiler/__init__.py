@@ -5,4 +5,6 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Compiler Package Init
 
-__all__: list[str] = []
+from .equation_compiler import compile_to_verilog, equation_to_fpga, Q88
+
+__all__ = ["compile_to_verilog", "equation_to_fpga", "Q88"]
