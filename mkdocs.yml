@@ -56,6 +56,7 @@ nav:
       - SC for Neuroscientists: guides/SC_FOR_NEUROSCIENTISTS.md
       - SC for Hardware Engineers: guides/SC_FOR_HARDWARE_ENGINEERS.md
       - SC for ML Engineers: guides/SC_FOR_ML_ENGINEERS.md
+      - NIR Integration: guides/nir_integration.md
   - Tutorials:
       - SC Fundamentals: tutorials/01_stochastic_computing_fundamentals.md
       - Building Your First SNN: tutorials/02_building_your_first_snn.md
@@ -111,6 +112,8 @@ nav:
       - Identity & AI:
           - Identity Substrate: api/identity.md
           - AI-Optimized Neurons: api/ai_neurons.md
+      - Interoperability:
+          - NIR Bridge: api/nir_bridge.md
       - Domain Modules:
           - Adapters: api/adapters.md
           - Audio: api/audio.md
