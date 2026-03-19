@@ -124,7 +124,6 @@ omit = [
     "*/network/*",
     "*/model_zoo/*",
     "*/identity/*",
-    "*/nir_bridge/*",
 ]
 
 [tool.coverage.report]

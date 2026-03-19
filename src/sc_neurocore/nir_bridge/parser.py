@@ -22,6 +22,25 @@ from .node_map import map_node
 
 
 @dataclass
+class SCSubgraphNode:
+    """Executable wrapper for a nested NIR subgraph."""
+
+    name: str
+    network: SCNetwork
+
+    def __post_init__(self):
+        if len(self.network.input_nodes) != 1 or len(self.network.output_nodes) != 1:
+            raise ValueError("Nested NIRGraph nodes must expose exactly one input and one output")
+
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        outputs = self.network.step({self.network.input_nodes[0]: np.atleast_1d(np.asarray(x))})
+        return outputs[self.network.output_nodes[0]]
+
+    def reset(self):
+        self.network.reset()
+
+
+@dataclass
 class SCNetwork:
     """Executable network parsed from a NIR graph.
 
@@ -165,9 +184,7 @@ def _parse_graph(graph: nir.NIRGraph, dt: float = 1.0) -> SCNetwork:
 
     for name, node in graph.nodes.items():
         if isinstance(node, nir.NIRGraph):
-            # Nested subgraph — recursive parse
-            sub = _parse_graph(node, dt=dt)
-            nodes[name] = sub
+            nodes[name] = SCSubgraphNode(name=name, network=_parse_graph(node, dt=dt))
         else:
             sc_node = map_node(name, node, dt=dt)
             nodes[name] = sc_node
