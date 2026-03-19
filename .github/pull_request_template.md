@@ -10,7 +10,7 @@
 
 - [ ] `cargo test` passes (if Rust changes)
 - [ ] `pytest tests/ -v` passes
-- [ ] `black --check src/ tests/` passes
+- [ ] `ruff format --check src/ tests/` passes
 - [ ] `ruff check src/ tests/` passes
 
 ## Checklist

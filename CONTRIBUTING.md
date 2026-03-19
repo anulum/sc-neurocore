@@ -34,11 +34,11 @@ Every push is guarded by `tools/preflight.py`, which runs the same checks as CI:
 
 | Gate | What it checks |
 |------|----------------|
-| **black** | Python formatting (`src/` and `tests/`) |
-| **ruff** | Code quality and import hygiene |
+| **ruff format** | Python formatting (`src/` and `tests/`) |
+| **ruff check** | Code quality and import hygiene |
 | **bandit** | Security static analysis |
 | **spdx-guard** | SPDX license headers on all source files |
-| **pytest** | 1 776+ tests with 100% coverage gate |
+| **pytest** | 1 785+ tests with 100% coverage gate |
 
 ```bash
 make preflight          # full gate (lint + tests)
@@ -52,7 +52,7 @@ The `.githooks/pre-push` hook runs `preflight-fast` automatically before every `
 ### Code Style
 
 - **Rust**: `cargo fmt` before committing.
-- **Python**: `black` + `ruff` (both enforced in CI and preflight). Use type hints on public APIs only.
+- **Python**: `ruff format` + `ruff check` (both enforced in CI and preflight). Use type hints on public APIs only.
 - **SPDX header**: Every `.py`, `.rs`, `.v` file must start with `# SPDX-License-Identifier: AGPL-3.0-or-later`.
 
 ### Testing
@@ -106,7 +106,7 @@ docs(readme): update benchmark table for v3.8
 | `make test` | Python tests with coverage |
 | `make test-rust` | Rust engine tests |
 | `make test-all` | Both Python and Rust |
-| `make lint` | black + ruff check |
+| `make lint` | ruff format + ruff check |
 | `make fmt` | Auto-format Python + Rust |
 | `make bandit` | Security static analysis |
 | `make sast` | Alias for bandit |

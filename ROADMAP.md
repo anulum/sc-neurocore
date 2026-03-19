@@ -7,7 +7,7 @@
 
 ### ~~Coverage gate ≥ 98%~~ ✓
 
-Done. 100% enforced (1 776 tests passed; gate at 100).
+Done. 100% enforced (1 785 tests passed; gate at 100).
 
 ### ~~NumPy 2.x full compatibility~~ ✓
 
@@ -105,7 +105,7 @@ test counts updated across all docs.
 
 122 Python + 111 Rust neuron models, PyO3 bindings for all extended
 model categories, JAX training support, CuPy sparse GPU paths, FMEA +
-traceability matrix, 1 776 Python tests, 336 Rust tests, 13 CI
+traceability matrix, 1 785 Python tests, 336 Rust tests, 13 CI
 workflows, conda-forge recipe ready.
 
 New in this release:

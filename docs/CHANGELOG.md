@@ -4,6 +4,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Bug Fixes
+- StochasticTransformerBlock: clamp residual and FFN intermediate values to [0, 1] — MAC output from VectorizedSCLayer can exceed 1.0, triggering the new input validation
+
+### Tests
+- 9 new tests covering audit validation error paths: VectorizedSCLayer init guards (zero inputs/neurons/length), NaN/range input rejection, EquationNeuron AST security (syntax error, unsafe node, blocked name, blocked attribute)
+- Test count: 1 776 → 1 785
+
+### Documentation
+- Replace stale black references with ruff format in VALIDATION.md and CONTRIBUTING.md
+- Sync test counts across all docs (1 785 Python + 336 Rust)
+
 ## [3.13.0] - 2026-03-18
 
 ### Python 3.14 Support
