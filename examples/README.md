@@ -5,7 +5,7 @@ Runnable demos showing core SC-NeuroCore capabilities.
 | # | File | What it demonstrates |
 |---|------|----------------------|
 | 01 | `01_basic_sc_encoding.py` | Bernoulli & Sobol bitstream encoding/decoding |
-| 02 | `02_sc_neuron_layer.py` | SCDenseLayer construction and forward pass |
+| 02 | `02_sc_neuron_layer.py` | SCDenseLayer construction, spike trains, and firing-rate summary |
 | 03 | `03_ir_compile_demo.py` | IR graph building, verification, SystemVerilog emission (v3 Rust engine) |
 | 04 | `04_vectorized_layer.py` | VectorizedSCLayer throughput benchmarking |
 | 05 | `05_scpn_stack.py` | Full 16-layer SCPN stack with inter-layer coupling |
@@ -25,6 +25,7 @@ PYTHONPATH=src:bridge python examples/01_basic_sc_encoding.py
 
 | 12 | `mnist_fpga/demo.py` | MNIST-on-FPGA: train → Q8.8 → SC simulate → Verilog export |
 
-Examples marked **(v3 Rust engine)** require the compiled `sc_neurocore_engine` wheel.
-The MNIST demo requires `scikit-learn`. All other examples run with the pure-Python
-`sc_neurocore` package.
+Examples marked **(v3 Rust engine)** require the matching `sc_neurocore_engine` package.
+`pip install sc-neurocore` installs the released engine automatically. For source-tree
+runs against local bridge code, use `PYTHONPATH=src:bridge` or install `bridge/` in the
+same environment. The MNIST demo requires `scikit-learn`.

@@ -152,7 +152,7 @@ Persistent spiking network for identity continuity (`sc_neurocore.identity`).
 ## Quick Start
 
 ```bash
-# Install from PyPI (core engine only — neurons, synapses, layers, HDL gen, compiler)
+# Install from PyPI (ships the Python package + matching Rust engine wheel)
 pip install sc-neurocore
 
 # Or install with all research modules included
@@ -162,6 +162,11 @@ pip install sc-neurocore[full]
 pip install sc-neurocore[gpu]
 ```
 
+`pip install sc-neurocore` now depends on the matching `sc-neurocore-engine`
+release, so `sc_neurocore` and `sc_neurocore_engine` stay on the same version.
+Source-only Frontier modules such as `analysis`, `viz`, `audio`, `dashboard`,
+and `swarm` still require a source checkout.
+
 ### Development Setup
 
 ```bash
@@ -170,6 +175,9 @@ cd sc-neurocore
 pip install -e ".[dev]"    # editable install with all dev tools
 make preflight             # verify setup (lint + 1 785 tests)
 ```
+
+If you are changing the Rust bridge locally, install `bridge/` in the same
+environment or run source-tree commands with `PYTHONPATH=src:bridge`.
 
 ## Docker
 
@@ -360,7 +368,7 @@ Runnable scripts in `examples/`:
 | Script | Description |
 |--------|-------------|
 | `01_basic_sc_encoding.py` | Bernoulli & Sobol bitstream encoding/decoding |
-| `02_sc_neuron_layer.py` | SCDenseLayer construction and forward pass |
+| `02_sc_neuron_layer.py` | SCDenseLayer construction, spike trains, and firing-rate summary |
 | `03_ir_compile_demo.py` | IR graph building, verification, SystemVerilog emission (v3 Rust engine) |
 | `04_vectorized_layer.py` | VectorizedSCLayer throughput benchmarking |
 | `05_scpn_stack.py` | Full 7-layer SCPN consciousness stack with inter-layer coupling |
@@ -378,8 +386,10 @@ Runnable scripts in `examples/`:
 PYTHONPATH=src:bridge python examples/01_basic_sc_encoding.py
 ```
 
-Examples marked **(v3 Rust engine)** require the compiled `sc_neurocore_engine` wheel.
-All other examples run with the pure-Python `sc_neurocore` package.
+Examples marked **(v3 Rust engine)** require the matching `sc_neurocore_engine`
+package. `pip install sc-neurocore` installs the released engine automatically.
+For source-tree runs against local bridge code, use `PYTHONPATH=src:bridge` or
+install `bridge/` in the same environment.
 
 ## CI/CD
 

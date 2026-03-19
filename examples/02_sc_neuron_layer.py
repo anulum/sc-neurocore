@@ -6,38 +6,43 @@
 # SC-NeuroCore — Example 02: Building and Running SC Neuron Layers
 
 #!/usr/bin/env python3
-"""Example 02: Building and Running SC Neuron Layers.
-
-Demonstrates constructing an SCDenseLayer, feeding it input probabilities,
-and reading output firing rates.
-"""
+"""Example 02: Building and Running SC Neuron Layers."""
 
 import numpy as np
-from sc_neurocore import SCDenseLayer, StochasticLIFNeuron, BitstreamSynapse
+from sc_neurocore import SCDenseLayer
 
 
 def main():
     print("=== SC-NeuroCore: Dense Layer Demo ===\n")
 
-    n_inputs = 4
     n_neurons = 3
     length = 512
 
-    layer = SCDenseLayer(n_inputs=n_inputs, n_neurons=n_neurons, length=length)
-
     # Generate random input probabilities in [0, 1]
     input_probs = [0.2, 0.5, 0.8, 0.4]
+    weight_values = [1.0, 1.0, 1.0, 1.0]
     print(f"Input probabilities: {input_probs}")
+    print(f"Weight values: {weight_values}")
+
+    layer = SCDenseLayer(
+        n_neurons=n_neurons,
+        x_inputs=input_probs,
+        weight_values=weight_values,
+        x_min=0.0,
+        x_max=1.0,
+        w_min=0.0,
+        w_max=1.0,
+        length=length,
+        neuron_params={"noise_std": 0.0, "v_threshold": 0.5, "resistance": 3.0},
+        base_seed=42,
+    )
 
     # Run several time steps and accumulate firing rates
-    rates = np.zeros(n_neurons)
     n_steps = 20
-    for step in range(n_steps):
-        spikes = layer.run_epoch(np.array(input_probs))
-        rates += spikes.mean(axis=1) if spikes.ndim > 1 else spikes
-
-    rates /= n_steps
+    layer.run(n_steps)
+    rates = layer.get_spike_trains().mean(axis=1)
     print(f"Average firing rates over {n_steps} steps: {rates}")
+    print(f"Summary: {layer.summary()}")
     print("\nDone.")
 
 
