@@ -18,7 +18,6 @@ except ImportError as e:
     raise ImportError("pip install nir") from e
 
 from ..neurons.stochastic_lif import StochasticLIFNeuron
-from ..layers.vectorized_layer import VectorizedSCLayer
 
 
 @dataclass
@@ -67,14 +66,16 @@ class SCLIFNode:
         n = len(tau)
         neurons = []
         for i in range(n):
-            neurons.append(StochasticLIFNeuron(
-                tau_mem=float(tau[i]),
-                resistance=float(r[i]),
-                v_rest=float(v_leak[i]),
-                v_threshold=float(v_threshold[i]),
-                v_reset=float(v_reset[i]),
-                noise_std=0.0,
-            ))
+            neurons.append(
+                StochasticLIFNeuron(
+                    tau_mem=float(tau[i]),
+                    resistance=float(r[i]),
+                    v_rest=float(v_leak[i]),
+                    v_threshold=float(v_threshold[i]),
+                    v_reset=float(v_reset[i]),
+                    noise_std=0.0,
+                )
+            )
         return cls(name=name, neurons=neurons)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
@@ -108,7 +109,9 @@ class SCIFNode:
     def from_nir(cls, name: str, node: nir.IF) -> SCIFNode:
         r = np.atleast_1d(node.r).flatten()
         v_threshold = np.atleast_1d(node.v_threshold).flatten()
-        v_reset = np.atleast_1d(node.v_reset).flatten() if node.v_reset is not None else np.zeros_like(r)
+        v_reset = (
+            np.atleast_1d(node.v_reset).flatten() if node.v_reset is not None else np.zeros_like(r)
+        )
         return cls(name=name, n_neurons=len(r), r=r, v_threshold=v_threshold, v_reset=v_reset)
 
     def __post_init__(self):
@@ -116,7 +119,7 @@ class SCIFNode:
             self.v = np.zeros(self.n_neurons)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        x = np.atleast_1d(x).flatten()[:self.n_neurons]
+        x = np.atleast_1d(x).flatten()[: self.n_neurons]
         self.v += self.r * x
         spikes = (self.v >= self.v_threshold).astype(np.float64)
         self.v = np.where(spikes > 0, self.v_reset, self.v)
@@ -153,7 +156,7 @@ class SCLINode:
             self.v = self.v_leak.copy()
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        x = np.atleast_1d(x).flatten()[:self.n_neurons]
+        x = np.atleast_1d(x).flatten()[: self.n_neurons]
         dv = (self.v_leak - self.v + self.r * x) * (self.dt / self.tau)
         self.v += dv
         return self.v.copy()
@@ -263,7 +266,7 @@ class SCIntegratorNode:
             self.v = np.zeros_like(self.r)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        x = np.atleast_1d(x).flatten()[:len(self.r)]
+        x = np.atleast_1d(x).flatten()[: len(self.r)]
         self.v += self.r * x
         return self.v.copy()
 
@@ -275,11 +278,15 @@ class SCIntegratorNode:
 NODE_MAP: dict[type, Any] = {
     nir.Input: lambda name, node, **kw: SCInputNode(
         name=name,
-        shape=tuple(int(x) for x in next(iter(node.input_type.values())).flatten()) if node.input_type else (),
+        shape=tuple(int(x) for x in next(iter(node.input_type.values())).flatten())
+        if node.input_type
+        else (),
     ),
     nir.Output: lambda name, node, **kw: SCOutputNode(
         name=name,
-        shape=tuple(int(x) for x in next(iter(node.output_type.values())).flatten()) if node.output_type else (),
+        shape=tuple(int(x) for x in next(iter(node.output_type.values())).flatten())
+        if node.output_type
+        else (),
     ),
     nir.LIF: lambda name, node, **kw: SCLIFNode.from_nir(name, node),
     nir.IF: lambda name, node, **kw: SCIFNode.from_nir(name, node),
@@ -298,7 +305,6 @@ def map_node(name: str, node: nir.NIRNode, **kwargs) -> Any:
     factory = NODE_MAP.get(type(node))
     if factory is None:
         raise NotImplementedError(
-            f"NIR node type {type(node).__name__} not yet supported "
-            f"(node: {name!r})"
+            f"NIR node type {type(node).__name__} not yet supported (node: {name!r})"
         )
     return factory(name, node, **kwargs)
