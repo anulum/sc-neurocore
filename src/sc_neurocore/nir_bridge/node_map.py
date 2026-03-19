@@ -167,11 +167,7 @@ class SCLINode:
 
 @dataclass
 class SCAffineNode:
-    """Dense linear transform with bias: y = Wx + b
-
-    Uses VectorizedSCLayer for SC-native computation when in SC mode,
-    or plain matrix multiply for float mode.
-    """
+    """Dense linear transform with bias: y = Wx + b"""
 
     name: str
     weight: np.ndarray
@@ -245,7 +241,26 @@ class SCFlattenNode:
         return cls(name=name, start_dim=node.start_dim, end_dim=node.end_dim)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        return x.flatten()
+        x = np.asarray(x)
+        if x.ndim == 0:
+            if self.start_dim not in (0, -1) or self.end_dim not in (0, -1):
+                raise ValueError(
+                    f"Invalid flatten dims {self.start_dim}:{self.end_dim} for shape {x.shape}"
+                )
+            return x.reshape(1)
+
+        start = self.start_dim if self.start_dim >= 0 else x.ndim + self.start_dim
+        end = self.end_dim if self.end_dim >= 0 else x.ndim + self.end_dim
+        if not 0 <= start < x.ndim or not 0 <= end < x.ndim or start > end:
+            raise ValueError(
+                f"Invalid flatten dims {self.start_dim}:{self.end_dim} for shape {x.shape}"
+            )
+        if start == end:
+            return x.copy()
+
+        merged = int(np.prod(x.shape[start : end + 1], dtype=np.int64))
+        new_shape = x.shape[:start] + (merged,) + x.shape[end + 1 :]
+        return x.reshape(new_shape)
 
 
 @dataclass
