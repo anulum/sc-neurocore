@@ -3,10 +3,10 @@
 ## Installation
 
 ```bash
-# From PyPI
+# From PyPI (installs the matching Rust engine wheel too)
 pip install sc-neurocore
 
-# From source (editable)
+# From source (editable Python package)
 pip install -e .
 
 # With development tools
@@ -18,6 +18,10 @@ pip install -e ".[gpu]"
 # Full research stack
 pip install -e ".[research]"
 ```
+
+`pip install sc-neurocore` installs the matching `sc-neurocore-engine` release.
+If you are editing the Rust bridge locally, install `bridge/` in the same
+environment or run source-tree commands with `PYTHONPATH=src:bridge`.
 
 ## Requirements
 
@@ -149,22 +153,7 @@ Checkpoint.save(substrate, "identity_checkpoint.npz")
 restored = Checkpoint.load("identity_checkpoint.npz")
 ```
 
-### 8. Visualization Dashboard
-
-```python
-from sc_neurocore.viz.plots import raster_plot, voltage_trace, firing_rate_plot
-
-# After running a network with monitors:
-raster_plot(spike_monitor)
-voltage_trace(state_monitor, neuron_ids=[0, 1, 2])
-firing_rate_plot(spike_monitor, bin_ms=10)
-```
-
-12 plot functions: raster, voltage trace, firing rate, ISI histogram,
-cross-correlogram, population activity, phase portrait, weight matrix,
-network graph, PSD, instantaneous rate, spike train comparison.
-
-### 9. Model Zoo
+### 8. Model Zoo
 
 ```python
 from sc_neurocore.model_zoo import brunel_balanced_network, load_pretrained
@@ -177,7 +166,21 @@ classifier = load_pretrained("mnist")
 
 10 configurations + 3 pre-trained weight sets (MNIST, SHD, DVS gesture).
 
-### 10. Hardware Deployment (PYNQ)
+### 9. Source-Only Visualization Helpers
+
+```python
+from sc_neurocore.viz.plots import raster_plot, voltage_trace, firing_rate_plot
+
+# After running a network with monitors:
+raster_plot(spike_monitor)
+voltage_trace(state_monitor, neuron_ids=[0, 1, 2])
+firing_rate_plot(spike_monitor, bin_ms=10)
+```
+
+`sc_neurocore.viz` is excluded from the default wheel. Use a source checkout
+(`pip install -e ".[dev]"`) before importing it.
+
+### 10. Source-Only Hardware Deployment (PYNQ)
 
 ```python
 from sc_neurocore.drivers.sc_neurocore_driver import SC_NeuroCore_Driver
@@ -190,6 +193,9 @@ For physical FPGA deployment on PYNQ-Z1/Z2, synthesize the bitstream
 using the [FPGA Toolchain Guide](../hardware/FPGA_TOOLCHAIN_GUIDE.md),
 then switch to `mode="HARDWARE"`.
 
+`sc_neurocore.drivers` is excluded from the default wheel. Use a source checkout
+before importing it.
+
 ## Dense Path Selection
 
 - Single-sample and tiny batches (1-4): use `DenseLayer.forward_fast`
@@ -197,6 +203,9 @@ then switch to `mode="HARDWARE"`.
 - Default `DenseLayer.forward` auto-selects
 
 ## Analysis Toolkit
+
+The analysis toolkit lives in the source distribution, not the default wheel.
+Install from a source checkout before importing `sc_neurocore.analysis`.
 
 SC-NeuroCore includes 126 spike train analysis functions across 23 modules --
 statistics, variability, rate estimation, distance metrics, correlation,

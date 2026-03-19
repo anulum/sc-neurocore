@@ -33,11 +33,17 @@ FPGA deployment.
 - **HDC/VSA** — Hyper-dimensional computing for symbolic AI workloads
 - **conda-forge recipe** — ready for conda-forge distribution
 
+The default `pip install sc-neurocore` wheel ships the core/simulation/domain-bridge
+packages plus the matching `sc-neurocore-engine` release. Frontier modules such as
+`analysis`, `viz`, `audio`, `dashboard`, and `swarm` remain source-checkout features.
+
 ## Quick Start
 
 ```bash
 pip install sc-neurocore
 ```
+
+This installs the matching `sc-neurocore-engine` dependency for the same release.
 
 ```python
 from sc_neurocore import VectorizedSCLayer, BitstreamEncoder
@@ -55,6 +61,7 @@ print(output)  # array of firing-rate probabilities
 | **Simulation** | hdc, solvers, transformers, learning, graphs, ensembles, export, pipeline, training | Yes |
 | **Domain bridges** | quantum (Qiskit/PennyLane), adapters/holonomic (JAX), scpn (Petri nets) | Yes |
 | **Research** | robotics, physics, bio, optics, chaos, sleep, interfaces | Source only |
+| **Frontier** | analysis, viz, audio, dashboard, generative, world_model, swarm | Source only |
 
 See [Architecture](architecture/architecture.md) for the full package map.
 

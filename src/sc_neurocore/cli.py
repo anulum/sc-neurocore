@@ -9,6 +9,7 @@
 
 import argparse
 import sys
+from typing import Any
 
 
 def main() -> int:
@@ -47,29 +48,44 @@ def _cmd_info() -> int:
 
     print(f"sc-neurocore {__version__}")
     print(f"Python {sys.version}")
-
-    try:
-        import sc_neurocore_engine
-
-        print(f"Rust engine: {sc_neurocore_engine.__version__} ({sc_neurocore_engine.simd_tier()})")
-    except ImportError:
-        print("Rust engine: not available")
-
-    try:
-        import numpy
-
-        print(f"NumPy: {numpy.__version__}")
-    except ImportError:
-        pass
-
-    try:
-        import jax
-
-        print(f"JAX: {jax.__version__}")
-    except ImportError:
-        pass
+    print(_format_engine_status(__version__))
+    _print_optional_dependency_version("numpy", "NumPy")
+    _print_optional_dependency_version("jax", "JAX")
 
     return 0
+
+
+def _print_optional_dependency_version(module_name: str, label: str) -> None:
+    try:
+        module = __import__(module_name)
+    except Exception:
+        return
+    print(f"{label}: {getattr(module, '__version__', 'unknown')}")
+
+
+def _format_engine_status(expected_version: str) -> str:
+    try:
+        import sc_neurocore_engine as engine
+    except ImportError:
+        return "Rust engine: not available"
+
+    version = getattr(engine, "__version__", "unknown")
+    simd_tier = _safe_simd_tier(engine)
+    if version != expected_version:
+        return (
+            f"Rust engine: {version} ({simd_tier}) [version mismatch: expected {expected_version}]"
+        )
+    return f"Rust engine: {version} ({simd_tier})"
+
+
+def _safe_simd_tier(engine: Any) -> str:
+    simd_tier = getattr(engine, "simd_tier", None)
+    if not callable(simd_tier):
+        return "unknown"
+    try:
+        return str(simd_tier())
+    except Exception:
+        return "unknown"
 
 
 def _cmd_benchmark() -> int:
