@@ -108,7 +108,7 @@ mod tests {
     #[test]
     fn output_shape_no_padding() {
         let conv = Conv2DLayer::new(1, 2, 3, 1, 0, 42);
-        let input = vec![0.5; 1 * 8 * 8];
+        let input = vec![0.5; 8 * 8];
         let (out, h, w) = conv.forward(&input, 8, 8);
         assert_eq!(h, 6);
         assert_eq!(w, 6);
@@ -118,7 +118,7 @@ mod tests {
     #[test]
     fn output_shape_with_padding() {
         let conv = Conv2DLayer::new(1, 2, 3, 1, 1, 42);
-        let input = vec![0.5; 1 * 8 * 8];
+        let input = vec![0.5; 8 * 8];
         let (out, h, w) = conv.forward(&input, 8, 8);
         assert_eq!(h, 8);
         assert_eq!(w, 8);
@@ -129,7 +129,7 @@ mod tests {
     fn all_ones_kernel() {
         let mut conv = Conv2DLayer::new(1, 1, 3, 1, 0, 42);
         conv.kernels = vec![1.0; 9];
-        let input = vec![1.0; 1 * 5 * 5];
+        let input = vec![1.0; 5 * 5];
         let (out, _, _) = conv.forward(&input, 5, 5);
         // Each output = sum of 3×3 patch of 1.0 × 1.0 = 9.0
         assert!((out[0] - 9.0).abs() < 1e-10);
@@ -138,7 +138,7 @@ mod tests {
     #[test]
     fn stride_2() {
         let conv = Conv2DLayer::new(1, 1, 3, 2, 0, 42);
-        let input = vec![0.5; 1 * 8 * 8];
+        let input = vec![0.5; 8 * 8];
         let (_, h, w) = conv.forward(&input, 8, 8);
         assert_eq!(h, 3);
         assert_eq!(w, 3);
