@@ -28,6 +28,13 @@ from sc_neurocore.nir_bridge.node_map import (
     SCFlattenNode,
     SCIntegratorNode,
     SCInputNode,
+    SCDelayNode,
+    SCCubaLIFNode,
+    SCCubaLINode,
+    SCSumPool2dNode,
+    SCAvgPool2dNode,
+    SCConv1dNode,
+    SCConv2dNode,
     SCOutputNode,
     map_node,
 )
@@ -166,10 +173,135 @@ class TestNodeMapping:
         sc.forward(np.array([1.0]))
         np.testing.assert_allclose(sc.v, [2.0])
 
-    def test_unsupported_raises(self):
-        node = nir.Delay(delay=np.array([1.0]))
-        with pytest.raises(NotImplementedError, match="Delay"):
-            map_node("dly", node)
+    def test_map_delay(self):
+        node = nir.Delay(delay=np.array([2.0]))
+        sc = map_node("dly", node, dt=1.0)
+        assert isinstance(sc, SCDelayNode)
+        # Feed 1.0, expect 0.0 for 2 steps (delay=2), then 1.0
+        assert sc.forward(np.array([1.0]))[0] == 0.0
+        assert sc.forward(np.array([2.0]))[0] == 0.0
+        assert sc.forward(np.array([3.0]))[0] == 1.0
+        sc.reset()
+        assert sc.forward(np.array([5.0]))[0] == 0.0
+
+    def test_map_cuba_lif(self):
+        node = nir.CubaLIF(
+            tau_syn=np.array([5.0]),
+            tau_mem=np.array([20.0]),
+            r=np.ones(1),
+            v_leak=np.zeros(1),
+            v_threshold=np.ones(1),
+            w_in=np.ones(1),
+        )
+        sc = map_node("cuba_lif", node, dt=1.0)
+        assert isinstance(sc, SCCubaLIFNode)
+        spikes = sum(float(sc.forward(np.array([2.0]))[0]) for _ in range(100))
+        assert spikes > 0
+        sc.reset()
+        np.testing.assert_allclose(sc.i_syn, [0.0])
+
+    def test_map_cuba_li(self):
+        node = nir.CubaLI(
+            tau_syn=np.array([5.0]),
+            tau_mem=np.array([20.0]),
+            r=np.ones(1),
+            v_leak=np.zeros(1),
+            w_in=np.ones(1),
+        )
+        sc = map_node("cuba_li", node, dt=1.0)
+        assert isinstance(sc, SCCubaLINode)
+        for _ in range(50):
+            out = sc.forward(np.array([1.0]))
+        assert np.isfinite(out[0])
+        assert out[0] > 0
+        sc.reset()
+        np.testing.assert_allclose(sc.v, [0.0])
+
+    def test_map_sum_pool2d(self):
+        node = nir.SumPool2d(
+            kernel_size=np.array([2, 2]),
+            stride=np.array([2, 2]),
+            padding=np.array([0, 0]),
+        )
+        sc = map_node("spool", node)
+        assert isinstance(sc, SCSumPool2dNode)
+        x = np.ones((1, 4, 4))
+        out = sc.forward(x)
+        np.testing.assert_allclose(out, np.full((1, 2, 2), 4.0).squeeze())
+
+    def test_map_avg_pool2d(self):
+        node = nir.AvgPool2d(
+            kernel_size=np.array([2, 2]),
+            stride=np.array([2, 2]),
+            padding=np.array([0, 0]),
+        )
+        sc = map_node("apool", node)
+        assert isinstance(sc, SCAvgPool2dNode)
+        x = np.ones((1, 4, 4))
+        out = sc.forward(x)
+        np.testing.assert_allclose(out, np.ones((1, 2, 2)).squeeze())
+
+    def test_map_conv1d(self):
+        weight = np.ones((1, 1, 3), dtype=np.float32)
+        node = nir.Conv1d(
+            input_shape=5,
+            weight=weight,
+            stride=1,
+            padding=0,
+            dilation=1,
+            groups=1,
+            bias=np.zeros(1, dtype=np.float32),
+        )
+        sc = map_node("conv1d", node)
+        assert isinstance(sc, SCConv1dNode)
+        x = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]])
+        out = sc.forward(x)
+        np.testing.assert_allclose(out, [6.0, 9.0, 12.0])
+
+    def test_map_conv2d(self):
+        weight = np.ones((1, 1, 2, 2), dtype=np.float32)
+        node = nir.Conv2d(
+            input_shape=(3, 3),
+            weight=weight,
+            stride=1,
+            padding=0,
+            dilation=1,
+            groups=1,
+            bias=np.zeros(1, dtype=np.float32),
+        )
+        sc = map_node("conv2d", node)
+        assert isinstance(sc, SCConv2dNode)
+        x = np.ones((1, 3, 3))
+        out = sc.forward(x)
+        np.testing.assert_allclose(out, np.full((2, 2), 4.0))
+
+    def test_all_17_primitives_mapped(self):
+        """Verify all 17 NIR primitives have entries in NODE_MAP."""
+        from sc_neurocore.nir_bridge.node_map import NODE_MAP
+
+        expected = {
+            nir.Input,
+            nir.Output,
+            nir.LIF,
+            nir.IF,
+            nir.LI,
+            nir.I,
+            nir.Affine,
+            nir.Linear,
+            nir.Scale,
+            nir.Threshold,
+            nir.Flatten,
+            nir.Delay,
+            nir.CubaLIF,
+            nir.CubaLI,
+            nir.SumPool2d,
+            nir.AvgPool2d,
+            nir.Conv1d,
+            nir.Conv2d,
+        }
+        assert set(NODE_MAP.keys()) == expected, (
+            f"Missing: {expected - set(NODE_MAP.keys())}, Extra: {set(NODE_MAP.keys()) - expected}"
+        )
 
 
 # --- Graph parsing tests ---
