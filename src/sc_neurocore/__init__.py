@@ -33,7 +33,7 @@ Module Tiers
 """
 
 
-__version__ = "3.13.1"
+__version__ = "3.13.2"
 
 # -- Adapters --
 from .adapters import base as adapter_base  # noqa: F401

@@ -11,7 +11,7 @@ Commercial Licensing: Available
 </p>
 
 [![CI](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml/badge.svg)](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-3.13.1-blue)](https://github.com/anulum/sc-neurocore/releases)
+[![Version](https://img.shields.io/badge/version-3.13.2-blue)](https://github.com/anulum/sc-neurocore/releases)
 [![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/anulum/sc-neurocore)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://anulum.github.io/sc-neurocore/)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
@@ -22,7 +22,7 @@ Commercial Licensing: Available
 [![REUSE](https://img.shields.io/badge/REUSE-compliant-green)](https://reuse.software/)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)
 
-**Version:** 3.13.1
+**Version:** 3.13.2
 **Status:** 122 Neuron Models (113 Bio + 9 AI) | 99.49% MNIST | 2 112 Python tests passing + 336 Rust tests | 100% Coverage | 111 Rust Neuron Models | 111-Model NetworkRunner
 
 <p align="center">
@@ -152,7 +152,7 @@ Persistent spiking network for identity continuity (`sc_neurocore.identity`).
 ## Quick Start
 
 ```bash
-# Install from PyPI (ships the Python package + matching Rust engine wheel)
+# Install from PyPI (ships the `sc-neurocore` product package)
 pip install sc-neurocore
 
 # Or install with all research modules included
@@ -162,10 +162,11 @@ pip install sc-neurocore[full]
 pip install sc-neurocore[gpu]
 ```
 
-`pip install sc-neurocore` now depends on the matching `sc-neurocore-engine`
-release, so `sc_neurocore` and `sc_neurocore_engine` stay on the same version.
-Source-only Frontier modules such as `analysis`, `viz`, `audio`, `dashboard`,
-and `swarm` still require a source checkout.
+`pip install sc-neurocore` publishes the Python suite under the public
+`sc-neurocore` package name. The optional Rust engine remains part of the
+repository / release-asset / source-build flow rather than a separate PyPI
+runtime dependency. Source-only Frontier modules such as `analysis`, `viz`,
+`audio`, `dashboard`, and `swarm` still require a source checkout.
 
 ### Development Setup
 
@@ -346,7 +347,7 @@ Co-simulation traces are generated deterministically from fixed LFSR seeds.
 To reproduce a published benchmark:
 
 ```bash
-git checkout v3.13.1
+git checkout v3.13.2
 pip install -e ".[dev]"
 python benchmarks/benchmark_suite.py --markdown > BENCHMARKS.md
 ```
@@ -386,10 +387,9 @@ Runnable scripts in `examples/`:
 PYTHONPATH=src:bridge python examples/01_basic_sc_encoding.py
 ```
 
-Examples marked **(v3 Rust engine)** require the matching `sc_neurocore_engine`
-package. `pip install sc-neurocore` installs the released engine automatically.
-For source-tree runs against local bridge code, use `PYTHONPATH=src:bridge` or
-install `bridge/` in the same environment.
+Examples marked **(v3 Rust engine)** require an available `sc_neurocore_engine`
+bridge install. For source-tree runs against local bridge code, use
+`PYTHONPATH=src:bridge` or install `bridge/` in the same environment.
 
 ## CI/CD
 
@@ -402,7 +402,7 @@ install `bridge/` in the same environment.
 | **v3-wheels.yml** | Cross-platform wheels (Linux, macOS, Windows × Python 3.10–3.14) |
 | **docker.yml** | Build & push Docker image to GHCR on release tags |
 | **docs.yml** | MkDocs → GitHub Pages |
-| **publish.yml** | Publish engine wheels/sdist, then `sc-neurocore`, via PyPI OIDC on release |
+| **publish.yml** | Publish `sc-neurocore` to PyPI and `engine/` to crates.io on release tags |
 | **release.yml** | Python wheel + sdist + changelog extraction → GitHub Release |
 | **benchmark.yml** | Performance regression tracking |
 | **codeql.yml** | CodeQL security analysis (weekly + on push) |
@@ -512,7 +512,7 @@ If you use SC-NeuroCore in your research, please cite:
 @software{sotek2026scneurocore,
   author    = {Šotek, Miroslav},
   title     = {SC-NeuroCore: A Deterministic Stochastic Computing Framework for Neuromorphic Hardware Design},
-  version   = {3.13.1},
+  version   = {3.13.2},
   year      = {2026},
   doi       = {10.5281/zenodo.18906614},
   url       = {https://github.com/anulum/sc-neurocore},

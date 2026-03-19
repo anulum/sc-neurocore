@@ -171,8 +171,10 @@ AVX-512, AVX2, or NEON auto-dispatch. 111 neuron models compiled
 to native code with PyO3 bindings.
 
 ```bash
-# Pre-built wheels (Linux, macOS, Windows × Python 3.10-3.14)
-pip install sc-neurocore-engine
+# From a source checkout
+pip install -r requirements/maturin.txt
+cd bridge
+maturin develop --release
 ```
 
 The engine is optional — all functionality works with the pure-Python
@@ -193,7 +195,7 @@ package. The engine adds speed, not features.
 - [ ] `pip install sc-neurocore` — verify: `python -c "import sc_neurocore; print(sc_neurocore.__version__)"`
 - [ ] Run quickstart: `python examples/01_basic_sc_encoding.py`
 - [ ] Run your domain tutorial (neuroscience / hardware / ML — links above)
-- [ ] Optional: `pip install sc-neurocore-engine` for Rust acceleration
+- [ ] Optional: build the Rust bridge from the repo checkout for acceleration
 - [ ] Optional: install Yosys for FPGA synthesis reports
 - [ ] Explore the [neuron model explorer notebook](https://github.com/anulum/sc-neurocore/blob/main/notebooks/04_neuron_explorer.ipynb)
 

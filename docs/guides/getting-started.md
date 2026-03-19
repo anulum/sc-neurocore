@@ -3,7 +3,7 @@
 ## Installation
 
 ```bash
-# From PyPI (installs the matching Rust engine wheel too)
+# From PyPI
 pip install sc-neurocore
 
 # From source (editable Python package)
@@ -19,9 +19,9 @@ pip install -e ".[gpu]"
 pip install -e ".[research]"
 ```
 
-`pip install sc-neurocore` installs the matching `sc-neurocore-engine` release.
-If you are editing the Rust bridge locally, install `bridge/` in the same
-environment or run source-tree commands with `PYTHONPATH=src:bridge`.
+`pip install sc-neurocore` installs the public Python package. If you are
+editing the Rust bridge locally, install `bridge/` in the same environment or
+run source-tree commands with `PYTHONPATH=src:bridge`.
 
 ## Requirements
 

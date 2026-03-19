@@ -25,7 +25,7 @@ PYTHONPATH=src:bridge python examples/01_basic_sc_encoding.py
 
 | 12 | `mnist_fpga/demo.py` | MNIST-on-FPGA: train → Q8.8 → SC simulate → Verilog export |
 
-Examples marked **(v3 Rust engine)** require the matching `sc_neurocore_engine` package.
-`pip install sc-neurocore` installs the released engine automatically. For source-tree
-runs against local bridge code, use `PYTHONPATH=src:bridge` or install `bridge/` in the
-same environment. The MNIST demo requires `scikit-learn`.
+Examples marked **(v3 Rust engine)** require an available `sc_neurocore_engine`
+bridge install. For source-tree runs against local bridge code, use
+`PYTHONPATH=src:bridge` or install `bridge/` in the same environment. The
+MNIST demo requires `scikit-learn`.

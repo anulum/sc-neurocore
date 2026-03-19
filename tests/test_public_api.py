@@ -28,9 +28,8 @@ def test_all_count():
     assert len(sc_neurocore.__all__) == 38, f"Public API count changed: {len(sc_neurocore.__all__)}"
 
 
-def test_project_depends_on_matching_engine_release():
+def test_project_does_not_require_separate_engine_pypi_package():
     pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
     data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
     dependencies = data["project"]["dependencies"]
-    expected = f"sc-neurocore-engine=={sc_neurocore.__version__}"
-    assert expected in dependencies
+    assert all(not dep.startswith("sc-neurocore-engine") for dep in dependencies)

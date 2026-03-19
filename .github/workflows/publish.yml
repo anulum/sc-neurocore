@@ -39,72 +39,9 @@ jobs:
           name: python-dist
           path: dist/sc_neurocore-*
 
-  build-engine-sdist:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
-        with:
-          python-version: "3.12"
-      - run: pip install --require-hashes -r requirements/maturin.txt
-      - name: Build engine sdist
-        run: |
-          cd bridge
-          maturin sdist --out ../dist/
-      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
-        with:
-          name: engine-sdist
-          path: dist/sc_neurocore_engine-*.tar.gz
-
-  build-engine-wheels:
-    name: Engine wheel (${{ matrix.os }}, py${{ matrix.python-version }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
-        with:
-          python-version: ${{ matrix.python-version }}
-      - run: pip install --require-hashes -r requirements/maturin.txt
-      - name: Remove tracked Windows bridge binary
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: Remove-Item bridge/sc_neurocore_engine/sc_neurocore_engine.cp312-win_amd64.pyd -ErrorAction SilentlyContinue
-      - name: Build wheel
-        run: |
-          cd bridge
-          maturin build --release --out ../dist/
-      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
-        with:
-          name: engine-wheel-${{ matrix.os }}-py${{ matrix.python-version }}
-          path: dist/sc_neurocore_engine-*.whl
-
-  publish-engine-pypi:
-    if: github.event_name != 'workflow_dispatch' || github.event.inputs.publish == 'true'
-    needs: [build-engine-sdist, build-engine-wheels]
-    runs-on: ubuntu-latest
-    environment: pypi
-    permissions:
-      id-token: write
-    steps:
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
-        with:
-          pattern: engine-*
-          path: dist/
-          merge-multiple: true
-      - uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # release/v1
-        with:
-          packages-dir: dist/
-
   publish-python-pypi:
     if: github.event_name != 'workflow_dispatch' || github.event.inputs.publish == 'true'
-    needs: [build-python-dist, publish-engine-pypi]
+    needs: [build-python-dist]
     runs-on: ubuntu-latest
     environment: pypi
     permissions:

@@ -11,7 +11,7 @@
 Only the latest `3.x` patch receives security fixes. Upgrade with:
 
 ```bash
-pip install --upgrade sc-neurocore-engine
+pip install --upgrade sc-neurocore
 ```
 
 ## Reporting a Vulnerability

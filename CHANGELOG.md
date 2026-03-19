@@ -4,6 +4,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.13.2] - 2026-03-19
+
+### Packaging & Release
+- Restored `sc-neurocore` as the only PyPI product package and removed the unintended runtime dependency on a separate `sc-neurocore-engine` publish
+- Publish automation now pushes only `sc-neurocore` to PyPI while keeping the Rust engine on the existing crate / source / CI wheel paths
+- Tag pushes still trigger publish directly, so release creation no longer depends on a downstream `release.published` event
+
 ## [3.13.1] - 2026-03-19
 
 ### Packaging & Install
@@ -32,6 +39,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ### Documentation
 - Replace stale black references with ruff format in `VALIDATION.md` and `CONTRIBUTING.md`
 - Sync the packaging/install docs with the released product surface
+- Package naming and install guidance were corrected in `3.13.2`; `3.13.1` incorrectly treated `sc-neurocore-engine` as a separate PyPI runtime dependency
 
 ## [3.13.0] - 2026-03-18
 

@@ -9,7 +9,7 @@
 
 Auto-dispatch
 -------------
-When the Rust engine (``sc-neurocore-engine``) is installed,
+When the Rust engine (``sc_neurocore_engine``) is available,
 ``from sc_neurocore.neurons import X`` transparently returns the Rust
 implementation.  ``from sc_neurocore.neurons.models import X`` always
 returns the pure-Python version.
