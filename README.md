@@ -23,7 +23,7 @@ Commercial Licensing: Available
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)
 
 **Version:** 3.13.0
-**Status:** 122 Neuron Models (113 Bio + 9 AI) | 99.49% MNIST | 1 776 Python + 336 Rust Tests | 100% Coverage | 111 Rust Neuron Models | 111-Model NetworkRunner
+**Status:** 122 Neuron Models (113 Bio + 9 AI) | 99.49% MNIST | 1 785 Python + 336 Rust Tests | 100% Coverage | 111 Rust Neuron Models | 111-Model NetworkRunner
 
 <p align="center">
   <img src="docs/assets/spike_raster.png" width="800" alt="LIF spike raster — 5 neurons, sinusoidal input">
@@ -45,7 +45,7 @@ analysis toolkit (23 modules), 12 visualization plots, 7 advanced
 plasticity rules, 10 model zoo configurations with 3 pre-trained weight
 sets, 9 hardware chip emulators, quantum hybrid computing (Qiskit +
 PennyLane), and surrogate gradient training reaching 99.49% MNIST accuracy.
-1 776 Python tests across 118+ files and 336 Rust tests hold 100% line
+1 785 Python tests across 118+ files and 336 Rust tests hold 100% line
 coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 
 ## Feature Comparison
@@ -168,7 +168,7 @@ pip install sc-neurocore[gpu]
 git clone https://github.com/anulum/sc-neurocore.git
 cd sc-neurocore
 pip install -e ".[dev]"    # editable install with all dev tools
-make preflight             # verify setup (lint + 1 776 tests)
+make preflight             # verify setup (lint + 1 785 tests)
 ```
 
 ## Docker
@@ -387,7 +387,7 @@ All other examples run with the pure-Python `sc_neurocore` package.
 
 | Workflow | Purpose |
 |----------|---------|
-| **ci.yml** | Lint (black + ruff + bandit) + Test (Python 3.10-3.14, coverage = 100%) + Build |
+| **ci.yml** | Lint (ruff format + ruff check + bandit) + Test (Python 3.10-3.14, coverage = 100%) + Build |
 | **v3-engine.yml** | Rust engine `cargo test` + `cargo clippy` |
 | **v3-wheels.yml** | Cross-platform wheels (Linux, macOS, Windows × Python 3.10–3.14) |
 | **docker.yml** | Build & push Docker image to GHCR on release tags |
@@ -456,7 +456,7 @@ pip install sc-neurocore[full]        # + numba, matplotlib, networkx, onnx, qis
 For development (includes all modules + research/frontier code from source):
 
 ```bash
-pip install -e ".[dev]"               # editable install with pytest, mypy, black, hypothesis
+pip install -e ".[dev]"               # editable install with pytest, mypy, ruff, hypothesis
 ```
 
 Pinned dependency files for reproducible environments:

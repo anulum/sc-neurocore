@@ -7,7 +7,7 @@ stochastic computing (SC) neural networks — from individual neurons to full
 SCPN layer hierarchies, with both software simulation and Verilog RTL for
 FPGA deployment.
 
-**Version 3.13.0** | 1 776 Python + 336 Rust Tests | 100% Coverage | 122 Neuron Models | 111-Model NetworkRunner | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
+**Version 3.13.0** | 1 785 Python + 336 Rust Tests | 100% Coverage | 122 Neuron Models | 111-Model NetworkRunner | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
 
 ![SC-NeuroCore train-to-hardware pipeline](assets/pipeline.png)
 *Train in PyTorch → Quantise to Q8.8 → Simulate with stochastic bitstreams → Compile to SystemVerilog → Synthesise for FPGA. The Rust SIMD engine accelerates all stages.*

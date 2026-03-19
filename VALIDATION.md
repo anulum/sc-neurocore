@@ -4,7 +4,7 @@
 
 | Suite | Count | Scope |
 |-------|------:|-------|
-| Python unit/integration | 1 776 | `pytest tests/` across 118+ files |
+| Python unit/integration | 1 785 | `pytest tests/` across 118+ files |
 | Rust engine | 336 | `cargo test --manifest-path engine/Cargo.toml` |
 | Bridge (PyO3) | — | Maturin build + Python import smoke test |
 | HDL formal verification | 64 | 7 formal files across `hdl/formal/` (assert + cover properties) |
@@ -17,7 +17,7 @@ All gates must pass before merge.
 
 | Gate | Workflow | What it enforces |
 |------|----------|------------------|
-| black | `ci.yml` | `black --check` |
+| ruff format | `ci.yml` | `ruff format --check` |
 | ruff | `ci.yml` | `ruff check` (import hygiene, code quality) |
 | bandit | `ci.yml` | Security static analysis (SAST) |
 | test + coverage | `ci.yml` | `pytest --cov-fail-under=100` on Python 3.10, 3.11, 3.12, 3.13, 3.14 |
@@ -27,7 +27,7 @@ All gates must pass before merge.
 | rust-test | `v3-engine.yml` | `cargo test` on Ubuntu + Windows |
 | bridge-build | `v3-engine.yml` | Maturin build + v3 integration tests |
 | wheels | `v3-wheels.yml` | Cross-platform wheel builds (Linux, macOS, Windows) |
-| pre-commit | `pre-commit.yml` | Trailing whitespace, YAML/TOML, typos, black |
+| pre-commit | `pre-commit.yml` | Trailing whitespace, YAML/TOML, typos, ruff format |
 | codeql | `codeql.yml` | GitHub CodeQL security analysis |
 | scorecard | `scorecard.yml` | OpenSSF Scorecard supply-chain audit |
 | docs | `docs.yml` | MkDocs build verification |

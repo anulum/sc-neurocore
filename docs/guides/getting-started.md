@@ -30,7 +30,7 @@ pip install -e ".[research]"
 ## Running Tests
 
 ```bash
-# Full suite (1 776 tests, 100% coverage gate)
+# Full suite (1 785 tests, 100% coverage gate)
 pytest tests/ -v --cov=sc_neurocore --cov-report=term
 
 # Quick smoke test

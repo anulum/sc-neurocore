@@ -153,7 +153,7 @@ exclude = ["scripts", "research", "experiments", "examples", "cosim", "bridge", 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "SIM"]
 ignore = [
-  "E501",   # line too long (black handles formatting)
+  "E501",   # line too long (ruff format handles formatting)
   "E402",   # module-level import not at top (test files use mid-file imports)
   "E741",   # ambiguous variable name (I is standard for current in physics)
   "I001",   # import sorting (not enforced yet, ~500 pre-existing violations)
