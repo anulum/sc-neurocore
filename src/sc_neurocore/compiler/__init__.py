@@ -5,6 +5,9 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Compiler Package Init
 
-from .equation_compiler import compile_to_verilog, equation_to_fpga, Q88
+__all__: list[str] = []
 
-__all__ = ["compile_to_verilog", "equation_to_fpga", "Q88"]
+# Submodule imports (not eager — avoids coverage issues with optional paths):
+#   from sc_neurocore.compiler.equation_compiler import compile_to_verilog, equation_to_fpga
+#   from sc_neurocore.compiler.pipeline import CompilerPipeline
+#   from sc_neurocore.compiler.mlir_emitter import MLIREmitter
