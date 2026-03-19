@@ -113,13 +113,13 @@ python examples/06_hdl_generation.py    # Generates Verilog
 yosys -p "synth_xilinx" hdl/sc_neurocore_top.v   # Synthesis report
 ```
 
-17 synthesisable Verilog modules. Yosys reports 7 382 LUTs for a
+10 synthesisable Verilog modules. Yosys reports 3 673 LUTs for
 3-input 7-neuron core on Xilinx 7-series. MNIST 16→10 fits an
 Artix-7 100T at ~56K LUTs.
 
 ### Formal verification
 
-64 properties across 7 SymbiYosys formal modules (encoder, neuron,
+61 properties across 7 SymbiYosys formal modules (encoder, neuron,
 synapse, dense layer, dotproduct, firing rate, AXI-Lite config).
 
 ### Prerequisites for physical deployment
@@ -174,7 +174,7 @@ train-to-hardware export path.
 
 ## Rust Engine (Optional, Recommended)
 
-The Rust SIMD engine provides 512x real-time acceleration with
+The Rust SIMD engine provides 41.3 Gbit/s bitstream packing (AVX-512) with
 AVX-512, AVX2, or NEON auto-dispatch. 111 neuron models compiled
 to native code with PyO3 bindings.
 

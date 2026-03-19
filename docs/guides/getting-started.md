@@ -210,7 +210,7 @@ before importing it.
 The analysis toolkit lives in the source distribution, not the default wheel.
 Install from a source checkout before importing `sc_neurocore.analysis`.
 
-SC-NeuroCore includes 126 spike train analysis functions across 23 modules --
+SC-NeuroCore includes 125 spike train analysis functions across 23 modules --
 statistics, variability, rate estimation, distance metrics, correlation,
 spectral, temporal, stimulus, LFP coupling, surrogates, information theory,
 causality, dimensionality reduction, decoding, network, point process,
