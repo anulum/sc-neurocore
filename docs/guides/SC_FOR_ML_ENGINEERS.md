@@ -238,10 +238,25 @@ that exploit SC properties:
 4. **Reservoir + readout**: Fixed random SC reservoir (no training noise)
    + linear readout (no SC noise in training)
 
+## Importing models from other SNN frameworks
+
+SC-NeuroCore supports importing pre-trained models from Norse, snnTorch,
+and Lava-DL via the [NIR](https://neuroir.org/) standard. Export your model
+to NIR, then import with one line:
+
+```python
+from sc_neurocore.nir_bridge import from_nir
+network = from_nir("norse_model.nir")
+```
+
+See the [NIR Integration Guide](nir_integration.md) for supported primitives
+and interop examples.
+
 ## Further reading
 
 - Tutorial 03: Surrogate Gradient Training
 - Tutorial 07: MNIST Classification
 - Tutorial 10: Reservoir Computing
+- Guide: [NIR Integration](nir_integration.md)
 - Guide: Performance Tuning
 - Research: Foundational Whitepaper

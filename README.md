@@ -44,7 +44,10 @@ checkpointing and L16 Director control), a 126-function spike train
 analysis toolkit (23 modules), 12 visualization plots, 7 advanced
 plasticity rules, 10 model zoo configurations with 3 pre-trained weight
 sets, 9 hardware chip emulators, quantum hybrid computing (Qiskit +
-PennyLane), and surrogate gradient training reaching 99.49% MNIST accuracy.
+PennyLane), surrogate gradient training reaching 99.49% MNIST accuracy,
+and a [NIR](https://neuroir.org/) bridge — the first FPGA backend for the
+neuromorphic intermediate representation standard (interop with Norse,
+snnTorch, Lava-DL).
 2 112 Python tests across 118+ files and 336 Rust tests hold 100% line
 coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 

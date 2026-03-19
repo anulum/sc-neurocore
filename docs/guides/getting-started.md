@@ -17,6 +17,9 @@ pip install -e ".[gpu]"
 
 # Full research stack
 pip install -e ".[research]"
+
+# NIR interop (Norse, snnTorch, Lava-DL)
+pip install -e ".[nir]"
 ```
 
 `pip install sc-neurocore` installs the public Python package. If you are

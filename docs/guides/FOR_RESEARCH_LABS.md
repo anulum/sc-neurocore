@@ -27,9 +27,17 @@ That's it. NumPy is the only hard dependency. Everything else is optional.
 | Train SNNs on GPU | `pip install sc-neurocore[research]` | + PyTorch training, matplotlib |
 | Benchmark against Brian2 | `pip install sc-neurocore[accel]` | + Numba JIT (4x speedup at 1K neurons) |
 | Deploy to FPGA | `pip install sc-neurocore` + [Yosys](https://github.com/YosysHQ/yosys) | + IR compiler, SystemVerilog emission |
+| Import NIR models | `pip install sc-neurocore[nir]` | + [NIR](https://neuroir.org/) bridge (Norse, snnTorch, Lava-DL interop) |
 | Full research stack | `pip install sc-neurocore[full]` | Everything above |
 
 **Python 3.10 through 3.14** supported. Linux, macOS, Windows.
+
+## NIR Interoperability
+
+SC-NeuroCore is the first [NIR](https://neuroir.org/) backend targeting FPGA synthesis.
+Import models from Norse, snnTorch, or Lava-DL via the NIR standard, then simulate
+or compile to SystemVerilog. See the [NIR Integration Guide](nir_integration.md) and
+the [NIR Bridge Notebook](https://github.com/anulum/sc-neurocore/blob/main/notebooks/05_nir_bridge.ipynb).
 
 ## For Computational Neuroscience Labs
 
