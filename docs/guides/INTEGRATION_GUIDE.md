@@ -79,3 +79,19 @@ core.apply_phase_inversion(node_id=42)
 2.  [ ] Normalization constants are calibrated to prevent bitstream saturation.
 3.  [ ] Sampling rates are synchronized (default: 10 kHz).
 4.  [ ] Heat management: Ensure the PYNQ-Z2 is properly ventilated during long-duration THz simulations.
+
+### 6. NIR Model Import
+
+SC-NeuroCore supports importing models from other SNN frameworks via
+[NIR](https://neuroir.org/) (Neuromorphic Intermediate Representation).
+This enables a workflow where you train in Norse or snnTorch, export to NIR,
+and deploy to FPGA via SC-NeuroCore.
+
+```python
+from sc_neurocore.nir_bridge import from_nir
+
+network = from_nir("model_from_norse.nir")
+results = network.run({"input": input_data}, steps=1000)
+```
+
+See the [NIR Integration Guide](nir_integration.md) for full details.

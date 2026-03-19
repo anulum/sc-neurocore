@@ -31,6 +31,7 @@ FPGA deployment.
 - **SCPN layer stack** — 16-layer holonomic model (L1 Quantum → L16 Meta) with JAX acceleration
 - **Verilog RTL** — 17 synthesisable modules, 7 formal verification files (64 properties), bit-exact co-simulation
 - **HDC/VSA** — Hyper-dimensional computing for symbolic AI workloads
+- **[NIR bridge](guides/nir_integration.md)** — first FPGA backend for [NIR](https://neuroir.org/) (interop with Norse, snnTorch, Lava-DL)
 - **conda-forge recipe** — ready for conda-forge distribution
 
 The default `pip install sc-neurocore` wheel ships the public

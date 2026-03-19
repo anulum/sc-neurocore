@@ -6,7 +6,7 @@ An honest comparison of SC-NeuroCore with peer frameworks. Every claim
 is backed by measured data or cited literature. Unverified claims are
 marked explicitly.
 
-**Last updated**: 2026-03-17 (v3.12.0)
+**Last updated**: 2026-03-19 (v3.13.2)
 
 ---
 
@@ -56,6 +56,7 @@ marked explicitly.
 | CuPy sparse GPU | **Yes** | — | — | — | — |
 | AI-optimized neurons | **9 (ArcaneNeuron + 8)** | — | — | — | — |
 | Identity substrate | **Yes** (persistent SNN + checkpoint) | — | — | — | — |
+| [NIR](https://neuroir.org/) support | **Yes** (FPGA backend) | Yes | Yes | Yes | — |
 | conda-forge recipe | **Ready** | Yes | — | — | Yes |
 | PyPI package | Yes | Yes | Yes | Yes | Yes |
 

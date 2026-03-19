@@ -129,6 +129,14 @@ formal verification covers 64 properties across 7 modules.
 verifies structural invariants, and emits synthesisable SystemVerilog
 targeting Xilinx and Intel FPGAs.
 
+**NIR Bridge** (`sc_neurocore.nir_bridge`): Imports NIR
+(Neuromorphic Intermediate Representation) graphs, mapping 11
+primitives (LIF, IF, LI, Affine, Linear, Scale, Threshold, Flatten,
+Integrator, Input, Output) to SC-NeuroCore equivalents with a
+recursive graph parser and topological execution. SC-NeuroCore is the
+first NIR backend targeting FPGA synthesis, enabling models from Norse,
+snnTorch, and Lava-DL to be deployed on reconfigurable hardware.
+
 A minimal end-to-end example:
 
 ```python
@@ -154,8 +162,8 @@ AGPL-3.0-or-later with a commercial license option.
 [Documentation](https://anulum.github.io/sc-neurocore/) is hosted on
 GitHub Pages. The repository includes a
 [contributing guide](https://github.com/anulum/sc-neurocore/blob/main/CONTRIBUTING.md),
-24 tutorials, 14 worked examples, and 5 Jupyter notebooks including an
-interactive neuron model explorer.
+24 tutorials, 14 worked examples, and 6 Jupyter notebooks including an
+interactive neuron model explorer and an NIR bridge walkthrough.
 A Zenodo-archived DOI is available [@scneurocore_zenodo].
 
 # Quality Assurance
