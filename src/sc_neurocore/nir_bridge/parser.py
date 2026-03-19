@@ -1,0 +1,186 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later | Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — NIR graph parser
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+
+try:
+    import nir
+except ImportError as e:
+    raise ImportError("pip install nir") from e
+
+from .node_map import map_node
+
+
+@dataclass
+class SCNetwork:
+    """Executable network parsed from a NIR graph.
+
+    Nodes are stored by name. Edges define the forward pass order.
+    Calling ``run()`` feeds input through the graph for the given
+    number of timesteps and returns the output node's accumulated result.
+    """
+
+    nodes: dict[str, Any] = field(default_factory=dict)
+    edges: list[tuple[str, str]] = field(default_factory=list)
+    input_nodes: list[str] = field(default_factory=list)
+    output_nodes: list[str] = field(default_factory=list)
+    _topo_order: list[str] | None = None
+
+    def _topological_sort(self) -> list[str]:
+        """Kahn's algorithm on the edge list."""
+        adj: dict[str, list[str]] = {n: [] for n in self.nodes}
+        in_deg: dict[str, int] = {n: 0 for n in self.nodes}
+        for src, dst in self.edges:
+            adj[src].append(dst)
+            in_deg[dst] = in_deg.get(dst, 0) + 1
+
+        queue = [n for n, d in in_deg.items() if d == 0]
+        order = []
+        while queue:
+            node = queue.pop(0)
+            order.append(node)
+            for nxt in adj[node]:
+                in_deg[nxt] -= 1
+                if in_deg[nxt] == 0:
+                    queue.append(nxt)
+
+        if len(order) != len(self.nodes):
+            raise ValueError("NIR graph contains a cycle")
+        return order
+
+    @property
+    def topo_order(self) -> list[str]:
+        if self._topo_order is None:
+            self._topo_order = self._topological_sort()
+        return self._topo_order
+
+    def step(self, inputs: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
+        """Execute one timestep through the graph.
+
+        Parameters
+        ----------
+        inputs : dict mapping input node name → input array
+
+        Returns
+        -------
+        dict mapping output node name → output array
+        """
+        values: dict[str, np.ndarray] = {}
+
+        for name in self.topo_order:
+            node = self.nodes[name]
+
+            if name in self.input_nodes:
+                x = inputs.get(name, np.array([0.0]))
+                values[name] = node.forward(x)
+            else:
+                # Gather inputs from all predecessor edges
+                predecessors = [src for src, dst in self.edges if dst == name]
+                if len(predecessors) == 1:
+                    x = values[predecessors[0]]
+                elif len(predecessors) > 1:
+                    x = sum(values[p] for p in predecessors)
+                else:
+                    x = np.array([0.0])
+                values[name] = node.forward(x)
+
+        return {name: values[name] for name in self.output_nodes if name in values}
+
+    def run(self, inputs: dict[str, np.ndarray], steps: int = 100) -> dict[str, list[np.ndarray]]:
+        """Run the network for multiple timesteps.
+
+        Parameters
+        ----------
+        inputs : dict mapping input node name → input array (constant across steps)
+        steps : number of timesteps
+
+        Returns
+        -------
+        dict mapping output node name → list of output arrays per timestep
+        """
+        results: dict[str, list[np.ndarray]] = {n: [] for n in self.output_nodes}
+        for _ in range(steps):
+            out = self.step(inputs)
+            for name, val in out.items():
+                results[name].append(val.copy())
+        return results
+
+    def reset(self):
+        """Reset all stateful nodes."""
+        for node in self.nodes.values():
+            if hasattr(node, "reset"):
+                node.reset()
+
+    def summary(self) -> str:
+        """Human-readable network summary."""
+        lines = [f"SCNetwork: {len(self.nodes)} nodes, {len(self.edges)} edges"]
+        for name in self.topo_order:
+            node = self.nodes[name]
+            lines.append(f"  {name}: {type(node).__name__}")
+        lines.append(f"  inputs: {self.input_nodes}")
+        lines.append(f"  outputs: {self.output_nodes}")
+        return "\n".join(lines)
+
+
+def from_nir(source, dt: float = 1.0) -> SCNetwork:
+    """Convert a NIR graph to an executable SC-NeuroCore network.
+
+    Parameters
+    ----------
+    source : nir.NIRGraph or str or Path
+        NIR graph object, or path to a .nir file.
+    dt : float
+        Timestep for leaky integrator dynamics (ms).
+
+    Returns
+    -------
+    SCNetwork
+        Executable network with topologically sorted forward pass.
+    """
+    if isinstance(source, (str, Path)):
+        graph = nir.read(str(source))
+    elif isinstance(source, nir.NIRGraph):
+        graph = source
+    else:
+        raise TypeError(f"Expected NIRGraph or path, got {type(source)}")
+
+    return _parse_graph(graph, dt=dt)
+
+
+def _parse_graph(graph: nir.NIRGraph, dt: float = 1.0) -> SCNetwork:
+    """Recursively parse a NIR graph into an SCNetwork."""
+    nodes = {}
+    input_nodes = []
+    output_nodes = []
+
+    for name, node in graph.nodes.items():
+        if isinstance(node, nir.NIRGraph):
+            # Nested subgraph — recursive parse
+            sub = _parse_graph(node, dt=dt)
+            nodes[name] = sub
+        else:
+            sc_node = map_node(name, node, dt=dt)
+            nodes[name] = sc_node
+            if isinstance(node, nir.Input):
+                input_nodes.append(name)
+            elif isinstance(node, nir.Output):
+                output_nodes.append(name)
+
+    edges = [(src, dst) for src, dst in graph.edges]
+
+    return SCNetwork(
+        nodes=nodes,
+        edges=edges,
+        input_nodes=input_nodes,
+        output_nodes=output_nodes,
+    )
