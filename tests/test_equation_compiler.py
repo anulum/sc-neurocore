@@ -411,6 +411,40 @@ class TestTranscendentalFunctions:
             compile_to_verilog(neuron)
 
 
+class TestTestbenchGenerator:
+    def test_generates_testbench(self):
+        from sc_neurocore.compiler.equation_compiler import generate_testbench
+
+        neuron = from_equations(
+            "dv/dt = -(v - E_L)/tau_m + I/C",
+            threshold="v > -50",
+            reset="v = -65",
+            params=dict(E_L=-65, tau_m=10, C=1),
+            init=dict(v=-65),
+        )
+        tb = generate_testbench(neuron, module_name="test_lif", n_steps=100, input_current=2.0)
+        assert "module tb_test_lif" in tb
+        assert "endmodule" in tb
+        assert "$dumpfile" in tb
+        assert "$dumpvars" in tb
+        assert "spike_count" in tb
+        assert "100" in tb
+        assert "v_out" in tb
+        assert "uut" in tb
+
+    def test_testbench_multi_variable(self):
+        from sc_neurocore.compiler.equation_compiler import generate_testbench
+
+        neuron = EquationNeuron(
+            equations={"v": "I - w", "w": "0.01 * v"},
+            state={"v": 0.0, "w": 0.0},
+            dt=0.1,
+        )
+        tb = generate_testbench(neuron, module_name="two_var_tb")
+        assert "v_out" in tb
+        assert "w_out" in tb
+
+
 class TestEdgeCaseCoverage:
     """Tests for error branches and edge cases."""
 

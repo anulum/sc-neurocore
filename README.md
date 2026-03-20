@@ -157,14 +157,22 @@ Persistent spiking network for identity continuity (`sc_neurocore.identity`).
 ## Quick Start
 
 ```bash
-# Install from PyPI (ships the `sc-neurocore` product package)
 pip install sc-neurocore
+```
 
-# Or install with all research modules included
-pip install sc-neurocore[full]
+```python
+from sc_neurocore import StochasticLIFNeuron
 
-# GPU acceleration (requires CUDA)
-pip install sc-neurocore[gpu]
+neuron = StochasticLIFNeuron(v_threshold=1.0, tau_mem=20.0, noise_std=0.0)
+spikes = sum(neuron.step(0.8) for _ in range(500))
+print(f"{spikes} spikes in 500 steps")
+```
+
+```bash
+# Optional extras
+pip install sc-neurocore[full]     # all research modules
+pip install sc-neurocore[gpu]      # CuPy GPU acceleration
+pip install sc-neurocore[nir]      # NIR interop (Norse, snnTorch, Lava)
 ```
 
 `pip install sc-neurocore` publishes the Python suite under the public
