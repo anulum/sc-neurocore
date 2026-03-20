@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader, TensorDataset
 
 from sc_neurocore.training.loops import evaluate, train_epoch
 from sc_neurocore.training.losses import membrane_loss, spike_rate_loss
-from sc_neurocore.training.snn_modules import SpikingNet
+from sc_neurocore.training.snn_modules import ConvSpikingNet, SpikingNet
 
 
 @pytest.fixture
@@ -65,3 +65,26 @@ def test_spike_rate_loss_fn(tiny_model, tiny_loader):
     opt = torch.optim.Adam(tiny_model.parameters(), lr=1e-3)
     loss, _ = train_epoch(tiny_model, tiny_loader, opt, n_timesteps=5, loss_fn=rate_loss)
     assert loss >= 0
+
+
+def test_conv_spiking_net_train_epoch():
+    """ConvSpikingNet should work with train_epoch (Tier 5.4)."""
+    x = torch.randn(16, 1, 28, 28)
+    y = torch.randint(0, 5, (16,))
+    loader = DataLoader(TensorDataset(x, y), batch_size=4)
+    model = ConvSpikingNet(n_output=5)
+    opt = torch.optim.Adam(model.parameters(), lr=1e-3)
+    loss, acc = train_epoch(model, loader, opt, n_timesteps=3, flatten_input=False)
+    assert loss > 0
+    assert 0 <= acc <= 1
+
+
+def test_conv_spiking_net_evaluate():
+    """ConvSpikingNet should work with evaluate."""
+    x = torch.randn(8, 1, 28, 28)
+    y = torch.randint(0, 5, (8,))
+    loader = DataLoader(TensorDataset(x, y), batch_size=4)
+    model = ConvSpikingNet(n_output=5)
+    loss, acc = evaluate(model, loader, n_timesteps=3, flatten_input=False)
+    assert loss > 0
+    assert 0 <= acc <= 1
