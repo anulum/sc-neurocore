@@ -43,14 +43,19 @@ populations scaling to 100K+ neurons), CuPy GPU acceleration, JAX JIT
 training, MPI distributed simulation (billion-neuron scale via mpi4py),
 an identity continuity substrate (persistent spiking networks with
 checkpointing and L16 Director control), a 125-function spike train
-analysis toolkit (23 modules), 14 visualization plots, 7 advanced
-plasticity rules, 10 model zoo configurations with 3 pre-trained weight
-sets, 9 hardware chip emulators, quantum hybrid computing (Qiskit +
-PennyLane), surrogate gradient training reaching 99.49% MNIST accuracy,
-and a [NIR](https://neuroir.org/) bridge — the first FPGA backend for the
-neuromorphic intermediate representation standard (interop with Norse,
-snnTorch, Lava-DL).
-2 112 Python tests across 118+ files and 336 Rust tests hold 100% line
+analysis toolkit (23 modules), 14 visualization plots, 13 advanced
+plasticity rules (pair/triplet/voltage STDP, BCM, BPTT, TBPTT, EWC,
+e-prop, R-STDP, MAML, STP, structural plasticity), 7 biological circuit
+primitives (gap junctions, tripartite synapse, Rall dendrite, cortical
+column, lateral inhibition, WTA, gamma oscillation), 10 model zoo
+configurations with 3 pre-trained weight sets, 9 hardware chip emulators,
+quantum hybrid computing (Qiskit + PennyLane + SC-to-quantum compiler),
+surrogate gradient training reaching 99.49% MNIST accuracy, a
+[NIR](https://neuroir.org/) bridge — the first FPGA backend for the
+neuromorphic intermediate representation standard (17/17 primitives,
+recurrent edges, multi-port subgraphs; interop with Norse, snnTorch,
+Lava-DL), and a SpikeInterface adapter for experimental data import.
+2 400+ Python tests across 130+ files and 350+ Rust tests hold 100% line
 coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 
 ## Feature Comparison
@@ -72,7 +77,14 @@ coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 | Pre-trained model zoo | **10 configs, 3 weights** | — | — | — | — |
 | Spike train analysis | **125 functions** | — | — | — | — |
 | Visualization plots | **14** | — | — | — | — |
-| Advanced plasticity rules | **7** | — | — | — | — |
+| Advanced plasticity rules | **13** | — | — | — | — |
+| Biological circuits | **7** | — | — | — | — |
+| SC→quantum compiler | **Yes** | — | — | — | — |
+| Predictive coding (SC) | **Yes** | — | — | — | — |
+| Fault tolerance benchmark | **Yes** | — | — | — | — |
+| Phi* (IIT) estimation | **Yes** | — | — | — | — |
+| SpikeInterface adapter | **Yes** | — | — | — | — |
+| NIR primitives | **17/17** | — | 12 | 5 | — |
 | MNIST accuracy (SNN) | **99.49%** | ~95% | ~93% | — | — |
 | Plasticity (STDP, R-STDP) | Yes | — | Yes | Yes | Yes |
 | Quantum hybrid (Qiskit/PennyLane) | **Yes** | — | — | — | — |
