@@ -47,7 +47,7 @@ class _UnitDelayNode:
 
 @dataclass
 class SCSubgraphNode:
-    """Executable wrapper for a nested NIR subgraph."""
+    """Executable wrapper for a nested NIR subgraph (single I/O port)."""
 
     name: str
     network: SCNetwork
@@ -59,6 +59,43 @@ class SCSubgraphNode:
     def forward(self, x: np.ndarray) -> np.ndarray:
         outputs = self.network.step({self.network.input_nodes[0]: np.atleast_1d(np.asarray(x))})
         return outputs[self.network.output_nodes[0]]
+
+    def reset(self):
+        self.network.reset()
+
+
+@dataclass
+class SCMultiPortSubgraphNode:
+    """Executable wrapper for a nested NIR subgraph with multiple I/O ports.
+
+    Supports modular architectures where subgraphs expose multiple named
+    inputs and outputs (e.g., encoder-decoder, skip connections).
+    """
+
+    name: str
+    network: SCNetwork
+
+    def __post_init__(self):
+        if not self.network.input_nodes or not self.network.output_nodes:
+            raise ValueError("Multi-port subgraph must have at least one input and one output")
+
+    @property
+    def input_ports(self) -> list[str]:
+        return self.network.input_nodes
+
+    @property
+    def output_ports(self) -> list[str]:
+        return self.network.output_nodes
+
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        """Single-input convenience: feeds x to first input, returns first output."""
+        inputs = {self.network.input_nodes[0]: np.atleast_1d(np.asarray(x))}
+        outputs = self.network.step(inputs)
+        return outputs[self.network.output_nodes[0]]
+
+    def forward_multi(self, inputs: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
+        """Multi-port forward: provide named inputs, get named outputs."""
+        return self.network.step(inputs)
 
     def reset(self):
         self.network.reset()
@@ -264,7 +301,11 @@ def _parse_graph(graph: nir.NIRGraph, dt: float = 1.0) -> SCNetwork:
 
     for name, node in graph.nodes.items():
         if isinstance(node, nir.NIRGraph):
-            nodes[name] = SCSubgraphNode(name=name, network=_parse_graph(node, dt=dt))
+            sub_net = _parse_graph(node, dt=dt)
+            if len(sub_net.input_nodes) == 1 and len(sub_net.output_nodes) == 1:
+                nodes[name] = SCSubgraphNode(name=name, network=sub_net)
+            else:
+                nodes[name] = SCMultiPortSubgraphNode(name=name, network=sub_net)
         else:
             sc_node = map_node(name, node, dt=dt)
             nodes[name] = sc_node
