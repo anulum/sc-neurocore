@@ -7,7 +7,6 @@
 
 """Tests for ClopathSTDP (Clopath et al. 2010)."""
 
-import numpy as np
 
 from sc_neurocore.synapses.clopath_stdp import ClopathSTDP
 

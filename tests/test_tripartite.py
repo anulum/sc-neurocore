@@ -7,7 +7,6 @@
 
 """Tests for TripartiteSynapse (astrocyte ↔ synapse coupling)."""
 
-import numpy as np
 
 from sc_neurocore.synapses.tripartite import TripartiteSynapse
 

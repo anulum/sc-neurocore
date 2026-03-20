@@ -7,7 +7,6 @@
 
 """Tests for adaptive_length(): error-variance model for precision vs speed."""
 
-import numpy as np
 import pytest
 
 from sc_neurocore.utils.bitstreams import (
@@ -70,6 +69,14 @@ class TestAdaptiveLength:
     def test_unknown_method_raises(self):
         with pytest.raises(ValueError, match="Unknown method"):
             adaptive_length(0.5, epsilon=0.01, method="magic")
+
+    def test_chebyshev_confidence_1_raises(self):
+        with pytest.raises(ValueError, match="confidence must be < 1.0"):
+            adaptive_length(0.5, epsilon=0.01, confidence=1.0, method="chebyshev")
+
+    def test_hoeffding_confidence_1_raises(self):
+        with pytest.raises(ValueError, match="confidence must be < 1.0"):
+            adaptive_length(0.5, epsilon=0.01, confidence=1.0, method="hoeffding")
 
     def test_empirical_accuracy_meets_target(self):
         """Adaptive length should actually achieve the target precision."""

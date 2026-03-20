@@ -107,7 +107,8 @@ class TestTBPTTLearner:
         n_steps = 15
         inputs = np.random.randn(n_steps, pop_a.n) * 5
         targets = np.zeros((n_steps, pop_a.n))
-        mse = lambda p, t: float(np.mean((p - t) ** 2))
+        def mse(p, t):
+            return float(np.mean((p - t) ** 2))
 
         learner = TBPTTLearner(net, loss_fn=mse, lr=0.0, k=n_steps)
         loss_full = learner.train_step(inputs, targets)
@@ -118,7 +119,8 @@ class TestTBPTTLearner:
         net, pop_a, _, _ = simple_net
         inputs = np.random.randn(25, pop_a.n) * 5
         targets = np.zeros((25, pop_a.n))
-        mse = lambda p, t: float(np.mean((p - t) ** 2))
+        def mse(p, t):
+            return float(np.mean((p - t) ** 2))
         learner = TBPTTLearner(net, loss_fn=mse, lr=1e-4, k=7)
         loss = learner.train_step(inputs, targets)
         assert loss >= 0

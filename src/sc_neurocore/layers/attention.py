@@ -13,7 +13,6 @@ import numpy as np
 from ..utils.bitstreams import (
     generate_bernoulli_bitstream,
     generate_sobol_bitstream,
-    bitstream_to_probability,
 )
 
 
