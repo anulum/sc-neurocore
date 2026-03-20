@@ -28,7 +28,7 @@ try:
     from sc_neurocore_engine import BitStreamTensor
 except ImportError:
     print(
-        "This example requires the Rust engine. Install with: cd engine && maturin develop --release"
+        "This example requires the Rust engine. Install with: cd bridge && maturin develop --release"
     )
     sys.exit(0)
 
