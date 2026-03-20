@@ -78,15 +78,24 @@ class IFCell(nn.Module):
         self,
         threshold: float = 1.0,
         surrogate_fn: Callable = atan_surrogate,
+        learn_threshold: bool = False,
     ):
         super().__init__()
-        self.register_buffer("_threshold", torch.tensor(threshold))
+        if learn_threshold:
+            self._threshold_log = nn.Parameter(torch.tensor(float(threshold)).log())
+        else:
+            self.register_buffer("_threshold_val", torch.tensor(threshold))
+        self._learn_threshold = learn_threshold
         self.surrogate_fn = surrogate_fn
+
+    @property
+    def threshold(self) -> torch.Tensor:
+        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val
 
     def forward(self, current: torch.Tensor, v: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         v_next = v + current
-        spike = self.surrogate_fn(v_next - self._threshold)
-        v_next = v_next - spike.detach() * self._threshold
+        spike = self.surrogate_fn(v_next - self.threshold)
+        v_next = v_next - spike.detach() * self.threshold
         return spike, v_next
 
 
@@ -104,6 +113,7 @@ class SynapticCell(nn.Module):
         threshold: float = 1.0,
         surrogate_fn: Callable = atan_surrogate,
         learn_beta: bool = False,
+        learn_threshold: bool = False,
     ):
         super().__init__()
         self.alpha = alpha
@@ -112,12 +122,21 @@ class SynapticCell(nn.Module):
         else:
             self.register_buffer("_beta_val", torch.tensor(beta))
         self._learn_beta = learn_beta
-        self.register_buffer("_threshold", torch.tensor(threshold))
+
+        if learn_threshold:
+            self._threshold_log = nn.Parameter(torch.tensor(float(threshold)).log())
+        else:
+            self.register_buffer("_threshold_val", torch.tensor(threshold))
+        self._learn_threshold = learn_threshold
         self.surrogate_fn = surrogate_fn
 
     @property
     def beta(self) -> torch.Tensor:
         return self._beta_logit.sigmoid() if self._learn_beta else self._beta_val
+
+    @property
+    def threshold(self) -> torch.Tensor:
+        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val
 
     def forward(
         self,
@@ -128,8 +147,8 @@ class SynapticCell(nn.Module):
         """Returns (spike, i_syn_next, v_next)."""
         i_syn_next = self.alpha * i_syn + current
         v_next = self.beta * v + i_syn_next
-        spike = self.surrogate_fn(v_next - self._threshold)
-        v_next = v_next - spike.detach() * self._threshold
+        spike = self.surrogate_fn(v_next - self.threshold)
+        v_next = v_next - spike.detach() * self.threshold
         return spike, i_syn_next, v_next
 
 
@@ -184,19 +203,37 @@ class ExpIFCell(nn.Module):
         delta_t: float = 0.5,
         v_rh: float = 0.8,
         surrogate_fn: Callable = atan_surrogate,
+        learn_beta: bool = False,
+        learn_threshold: bool = False,
     ):
         super().__init__()
-        self.beta = beta
+        if learn_beta:
+            self._beta_logit = nn.Parameter(torch.tensor(_logit(beta)))
+        else:
+            self.register_buffer("_beta_val", torch.tensor(beta))
+        self._learn_beta = learn_beta
         self.delta_t = delta_t
         self.v_rh = v_rh
-        self.register_buffer("_threshold", torch.tensor(threshold))
+        if learn_threshold:
+            self._threshold_log = nn.Parameter(torch.tensor(float(threshold)).log())
+        else:
+            self.register_buffer("_threshold_val", torch.tensor(threshold))
+        self._learn_threshold = learn_threshold
         self.surrogate_fn = surrogate_fn
+
+    @property
+    def beta(self) -> torch.Tensor:
+        return self._beta_logit.sigmoid() if self._learn_beta else self._beta_val
+
+    @property
+    def threshold(self) -> torch.Tensor:
+        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val
 
     def forward(self, current: torch.Tensor, v: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         exp_term = self.delta_t * torch.exp(torch.clamp((v - self.v_rh) / self.delta_t, max=5.0))
         v_next = self.beta * v + exp_term + current
-        spike = self.surrogate_fn(v_next - self._threshold)
-        v_next = v_next - spike.detach() * self._threshold
+        spike = self.surrogate_fn(v_next - self.threshold)
+        v_next = v_next - spike.detach() * self.threshold
         return spike, v_next
 
 
@@ -218,17 +255,35 @@ class AdExCell(nn.Module):
         rho: float = 0.99,
         v_rest: float = 0.0,
         surrogate_fn: Callable = atan_surrogate,
+        learn_beta: bool = False,
+        learn_threshold: bool = False,
     ):
         super().__init__()
-        self.beta = beta
+        if learn_beta:
+            self._beta_logit = nn.Parameter(torch.tensor(_logit(beta)))
+        else:
+            self.register_buffer("_beta_val", torch.tensor(beta))
+        self._learn_beta = learn_beta
         self.delta_t = delta_t
         self.v_rh = v_rh
         self.a = a
         self.b = b
         self.rho = rho
         self.v_rest = v_rest
-        self.register_buffer("_threshold", torch.tensor(threshold))
+        if learn_threshold:
+            self._threshold_log = nn.Parameter(torch.tensor(float(threshold)).log())
+        else:
+            self.register_buffer("_threshold_val", torch.tensor(threshold))
+        self._learn_threshold = learn_threshold
         self.surrogate_fn = surrogate_fn
+
+    @property
+    def beta(self) -> torch.Tensor:
+        return self._beta_logit.sigmoid() if self._learn_beta else self._beta_val
+
+    @property
+    def threshold(self) -> torch.Tensor:
+        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val
 
     def forward(
         self,
@@ -238,8 +293,8 @@ class AdExCell(nn.Module):
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         exp_term = self.delta_t * torch.exp(torch.clamp((v - self.v_rh) / self.delta_t, max=5.0))
         v_next = self.beta * v + exp_term - w + current
-        spike = self.surrogate_fn(v_next - self._threshold)
-        v_next = v_next - spike.detach() * self._threshold
+        spike = self.surrogate_fn(v_next - self.threshold)
+        v_next = v_next - spike.detach() * self.threshold
         w_next = self.rho * w + self.a * (v - self.v_rest) + self.b * spike.detach()
         return spike, v_next, w_next
 
@@ -259,18 +314,27 @@ class LapicqueCell(nn.Module):
         threshold: float = 1.0,
         v_rest: float = 0.0,
         surrogate_fn: Callable = atan_surrogate,
+        learn_threshold: bool = False,
     ):
         super().__init__()
         self.decay = 1.0 - dt / tau
         self.gain = r * dt / tau
         self.v_rest = v_rest
-        self.register_buffer("_threshold", torch.tensor(threshold))
+        if learn_threshold:
+            self._threshold_log = nn.Parameter(torch.tensor(float(threshold)).log())
+        else:
+            self.register_buffer("_threshold_val", torch.tensor(threshold))
+        self._learn_threshold = learn_threshold
         self.surrogate_fn = surrogate_fn
+
+    @property
+    def threshold(self) -> torch.Tensor:
+        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val
 
     def forward(self, current: torch.Tensor, v: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         v_next = self.decay * (v - self.v_rest) + self.v_rest + self.gain * current
-        spike = self.surrogate_fn(v_next - self._threshold)
-        v_next = v_next - spike.detach() * (self._threshold - self.v_rest)
+        spike = self.surrogate_fn(v_next - self.threshold)
+        v_next = v_next - spike.detach() * (self.threshold - self.v_rest)
         return spike, v_next
 
 
@@ -288,13 +352,32 @@ class AlphaCell(nn.Module):
         beta: float = 0.9,
         threshold: float = 1.0,
         surrogate_fn: Callable = atan_surrogate,
+        learn_beta: bool = False,
+        learn_threshold: bool = False,
     ):
         super().__init__()
         self.alpha_exc = alpha_exc
         self.alpha_inh = alpha_inh
-        self.beta = beta
-        self.register_buffer("_threshold", torch.tensor(threshold))
+        if learn_beta:
+            self._beta_logit = nn.Parameter(torch.tensor(_logit(beta)))
+        else:
+            self.register_buffer("_beta_val", torch.tensor(beta))
+        self._learn_beta = learn_beta
+
+        if learn_threshold:
+            self._threshold_log = nn.Parameter(torch.tensor(float(threshold)).log())
+        else:
+            self.register_buffer("_threshold_val", torch.tensor(threshold))
+        self._learn_threshold = learn_threshold
         self.surrogate_fn = surrogate_fn
+
+    @property
+    def beta(self) -> torch.Tensor:
+        return self._beta_logit.sigmoid() if self._learn_beta else self._beta_val
+
+    @property
+    def threshold(self) -> torch.Tensor:
+        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val
 
     def forward(
         self,
@@ -307,8 +390,8 @@ class AlphaCell(nn.Module):
         i_exc_next = self.alpha_exc * i_exc + exc_current
         i_inh_next = self.alpha_inh * i_inh + inh_current
         v_next = self.beta * v + i_exc_next - i_inh_next
-        spike = self.surrogate_fn(v_next - self._threshold)
-        v_next = v_next - spike.detach() * self._threshold
+        spike = self.surrogate_fn(v_next - self.threshold)
+        v_next = v_next - spike.detach() * self.threshold
         return spike, i_exc_next, i_inh_next, v_next
 
 
@@ -326,12 +409,31 @@ class SecondOrderLIFCell(nn.Module):
         beta: float = 0.9,
         threshold: float = 1.0,
         surrogate_fn: Callable = atan_surrogate,
+        learn_beta: bool = False,
+        learn_threshold: bool = False,
     ):
         super().__init__()
         self.alpha = alpha
-        self.beta = beta
-        self.register_buffer("_threshold", torch.tensor(threshold))
+        if learn_beta:
+            self._beta_logit = nn.Parameter(torch.tensor(_logit(beta)))
+        else:
+            self.register_buffer("_beta_val", torch.tensor(beta))
+        self._learn_beta = learn_beta
+
+        if learn_threshold:
+            self._threshold_log = nn.Parameter(torch.tensor(float(threshold)).log())
+        else:
+            self.register_buffer("_threshold_val", torch.tensor(threshold))
+        self._learn_threshold = learn_threshold
         self.surrogate_fn = surrogate_fn
+
+    @property
+    def beta(self) -> torch.Tensor:
+        return self._beta_logit.sigmoid() if self._learn_beta else self._beta_val
+
+    @property
+    def threshold(self) -> torch.Tensor:
+        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val
 
     def forward(
         self,
@@ -341,8 +443,8 @@ class SecondOrderLIFCell(nn.Module):
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         a_next = self.alpha * a + current
         v_next = self.beta * v + a_next
-        spike = self.surrogate_fn(v_next - self._threshold)
-        v_next = v_next - spike.detach() * self._threshold
+        spike = self.surrogate_fn(v_next - self.threshold)
+        v_next = v_next - spike.detach() * self.threshold
         return spike, a_next, v_next
 
 

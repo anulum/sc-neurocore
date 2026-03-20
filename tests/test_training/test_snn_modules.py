@@ -13,10 +13,17 @@ torch = pytest.importorskip("torch")
 
 from sc_neurocore.training.snn_modules import (
     ALIFCell,
+    AdExCell,
+    AlphaCell,
     ConvSpikingNet,
+    ExpIFCell,
+    IFCell,
+    LapicqueCell,
     LIFCell,
     RecurrentLIFCell,
+    SecondOrderLIFCell,
     SpikingNet,
+    SynapticCell,
 )
 from sc_neurocore.training.surrogate import superspike
 
@@ -187,9 +194,10 @@ class TestSpikingNet:
         net = SpikingNet(n_input=5, n_hidden=8, n_output=3, n_layers=1)
         weights = net.to_sc_weights()
         assert len(weights) == 2
-        for w in weights:
-            assert w.min() >= 0.0
-            assert w.max() <= 1.0
+        for entry in weights:
+            assert "weight" in entry
+            assert entry["weight"].min() >= 0.0
+            assert entry["weight"].max() <= 1.0
 
     def test_single_layer(self):
         net = SpikingNet(n_input=5, n_hidden=8, n_output=3, n_layers=0)
@@ -214,6 +222,82 @@ class TestSpikingNet:
         assert len(thresh_params) > 0
         for p in beta_params + thresh_params:
             assert p.grad is not None
+
+
+class TestLearnableParamsAllCells:
+    """Verify learn_beta/learn_threshold across all cell types (Tier 5.9)."""
+
+    def test_if_learnable_threshold(self):
+        cell = IFCell(threshold=1.5, learn_threshold=True)
+        assert cell.threshold.item() == pytest.approx(1.5, abs=1e-4)
+        x = torch.ones(4) * 2.0
+        v = torch.zeros(4)
+        spike, _ = cell(x, v)
+        spike.sum().backward()
+        assert cell._threshold_log.grad is not None
+
+    def test_synaptic_learnable_threshold(self):
+        cell = SynapticCell(learn_beta=True, learn_threshold=True)
+        assert "_beta_logit" in [n for n, _ in cell.named_parameters()]
+        assert "_threshold_log" in [n for n, _ in cell.named_parameters()]
+        x = torch.ones(4) * 2.0
+        i_syn = torch.zeros(4)
+        v = torch.zeros(4)
+        spike, _, _ = cell(x, i_syn, v)
+        spike.sum().backward()
+        assert cell._threshold_log.grad is not None
+
+    def test_expif_learnable(self):
+        cell = ExpIFCell(beta=0.8, threshold=1.0, learn_beta=True, learn_threshold=True)
+        assert cell.beta.item() == pytest.approx(0.8, abs=1e-4)
+        x = torch.ones(4) * 3.0
+        v = torch.zeros(4)
+        spike, _ = cell(x, v)
+        spike.sum().backward()
+        assert cell._beta_logit.grad is not None
+        assert cell._threshold_log.grad is not None
+
+    def test_adex_learnable(self):
+        cell = AdExCell(beta=0.85, threshold=1.0, learn_beta=True, learn_threshold=True)
+        assert cell.beta.item() == pytest.approx(0.85, abs=1e-4)
+        x = torch.ones(4) * 3.0
+        v = torch.zeros(4)
+        w = torch.zeros(4)
+        spike, _, _ = cell(x, v, w)
+        spike.sum().backward()
+        assert cell._beta_logit.grad is not None
+
+    def test_lapicque_learnable_threshold(self):
+        cell = LapicqueCell(threshold=2.0, learn_threshold=True)
+        assert cell.threshold.item() == pytest.approx(2.0, abs=1e-4)
+        x = torch.ones(4) * 5.0
+        v = torch.zeros(4)
+        spike, _ = cell(x, v)
+        spike.sum().backward()
+        assert cell._threshold_log.grad is not None
+
+    def test_alpha_learnable(self):
+        cell = AlphaCell(beta=0.9, threshold=1.0, learn_beta=True, learn_threshold=True)
+        assert cell.beta.item() == pytest.approx(0.9, abs=1e-4)
+        exc = torch.ones(4) * 2.0
+        inh = torch.zeros(4)
+        i_exc = torch.zeros(4)
+        i_inh = torch.zeros(4)
+        v = torch.zeros(4)
+        spike, _, _, _ = cell(exc, inh, i_exc, i_inh, v)
+        spike.sum().backward()
+        assert cell._beta_logit.grad is not None
+
+    def test_second_order_learnable(self):
+        cell = SecondOrderLIFCell(beta=0.9, threshold=1.0, learn_beta=True, learn_threshold=True)
+        assert cell.beta.item() == pytest.approx(0.9, abs=1e-4)
+        x = torch.ones(4) * 3.0
+        a = torch.zeros(4)
+        v = torch.zeros(4)
+        spike, _, _ = cell(x, a, v)
+        spike.sum().backward()
+        assert cell._beta_logit.grad is not None
+        assert cell._threshold_log.grad is not None
 
 
 class TestConvSpikingNet:
