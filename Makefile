@@ -10,13 +10,16 @@ test-rust:
 test-all: test test-rust
 
 lint:
-	black --check src/ tests/
+	ruff format --check src/ tests/
 	ruff check src/ tests/
 
 fmt:
-	black src/ tests/
+	ruff format src/ tests/
 	ruff check --fix src/ tests/
 	cargo fmt --manifest-path engine/Cargo.toml
+
+install:
+	pip install -e ".[dev]"
 
 bandit:
 	bandit -r src/sc_neurocore/ -c pyproject.toml -q

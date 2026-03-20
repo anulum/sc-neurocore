@@ -25,7 +25,7 @@ module sc_lif_neuron_formal (
         .V_REST(0),
         .V_RESET(0),
         .V_THRESHOLD(16'sd256),   // 1.0 in Q8.8
-        .REFRACTORY_PERIOD(3)
+        .REFRACTORY_PERIOD(2)
     ) uut (
         .clk(clk),
         .rst_n(rst_n),

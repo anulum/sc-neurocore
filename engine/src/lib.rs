@@ -70,10 +70,15 @@ impl PyBitStreamTensor {
 
     /// Create from pre-packed u64 words.
     #[staticmethod]
-    fn from_packed(data: Vec<u64>, length: usize) -> Self {
-        Self {
-            inner: bitstream::BitStreamTensor::from_words(data, length),
+    fn from_packed(data: Vec<u64>, length: usize) -> PyResult<Self> {
+        if length == 0 {
+            return Err(pyo3::exceptions::PyValueError::new_err(
+                "bitstream length must be > 0",
+            ));
         }
+        Ok(Self {
+            inner: bitstream::BitStreamTensor::from_words(data, length),
+        })
     }
 
     /// In-place XOR (HDC bind).

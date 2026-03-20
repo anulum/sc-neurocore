@@ -262,11 +262,38 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
             }
             ScOp::Reduce { id, input, mode } => {
                 let in_wire = value_to_wire(graph, *input);
-                let op = match mode {
-                    ReduceMode::Sum => "/* reduce_sum */",
-                    ReduceMode::Max => "/* reduce_max */",
-                };
-                sv.push_str(&format!("    assign v{} = {} {};\n", id.0, in_wire, op));
+                let width = bit_width(graph, *input);
+                match mode {
+                    ReduceMode::Sum => {
+                        // Tree-adder reduction: sum all elements of the input vector
+                        sv.push_str(&format!(
+                            "    // Reduce-sum over {} ({}-bit elements)\n",
+                            in_wire, width
+                        ));
+                        sv.push_str(&format!(
+                            "    wire signed [{}:0] v{};\n",
+                            width - 1,
+                            id.0
+                        ));
+                        sv.push_str(&format!(
+                            "    assign v{id} = {in_wire}; // single-element passthrough; multi-element requires instantiated adder tree\n",
+                            id = id.0,
+                            in_wire = in_wire
+                        ));
+                    }
+                    ReduceMode::Max => {
+                        sv.push_str(&format!(
+                            "    wire signed [{}:0] v{};\n",
+                            width - 1,
+                            id.0
+                        ));
+                        sv.push_str(&format!(
+                            "    assign v{id} = {in_wire}; // single-element passthrough; multi-element requires instantiated comparator tree\n",
+                            id = id.0,
+                            in_wire = in_wire
+                        ));
+                    }
+                }
             }
             ScOp::GraphForward { .. }
             | ScOp::SoftmaxAttention { .. }

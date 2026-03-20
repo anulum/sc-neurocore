@@ -273,7 +273,9 @@ class HomeostaticPlasticity:
             return
         scale = self.target_rate / self._rate_estimate
         scale = np.clip(scale, 0.9, 1.1)
-        population._voltages *= 1.0  # no-op; scaling applied below via projection
+        for proj in getattr(population, "_projections", []):
+            if hasattr(proj, "data"):
+                proj.data *= scale
         self._last_scale = float(scale)
 
 
