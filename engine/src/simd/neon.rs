@@ -164,3 +164,93 @@ pub unsafe fn scale_f64_neon(alpha: f64, y: &mut [f64]) {
         *v *= alpha;
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_popcount_empty() {
+        assert_eq!(unsafe { popcount_neon(&[]) }, 0);
+    }
+
+    #[test]
+    fn test_popcount_known_values() {
+        // 0xFFFF_FFFF_FFFF_FFFF has 64 set bits
+        assert_eq!(unsafe { popcount_neon(&[u64::MAX]) }, 64);
+        assert_eq!(unsafe { popcount_neon(&[0]) }, 0);
+        assert_eq!(unsafe { popcount_neon(&[1]) }, 1);
+        assert_eq!(unsafe { popcount_neon(&[0b1010_1010]) }, 4);
+    }
+
+    #[test]
+    fn test_popcount_multiple_words() {
+        let data = [u64::MAX, u64::MAX, 1];
+        assert_eq!(unsafe { popcount_neon(&data) }, 129); // 64+64+1
+    }
+
+    #[test]
+    fn test_dot_f64_simple() {
+        let a = [1.0, 2.0, 3.0];
+        let b = [4.0, 5.0, 6.0];
+        let result = unsafe { dot_f64_neon(&a, &b) };
+        assert!((result - 32.0).abs() < 1e-10); // 1*4 + 2*5 + 3*6 = 32
+    }
+
+    #[test]
+    fn test_dot_f64_empty() {
+        let result = unsafe { dot_f64_neon(&[], &[]) };
+        assert!((result - 0.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_dot_f64_mismatched_length() {
+        let a = [1.0, 2.0, 3.0, 4.0];
+        let b = [1.0, 1.0];
+        let result = unsafe { dot_f64_neon(&a, &b) };
+        assert!((result - 3.0).abs() < 1e-10); // 1*1 + 2*1
+    }
+
+    #[test]
+    fn test_max_f64() {
+        let a = [1.0, 5.0, 3.0, 2.0, 4.0];
+        assert!((unsafe { max_f64_neon(&a) } - 5.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_max_f64_empty() {
+        assert!(unsafe { max_f64_neon(&[]) } == f64::NEG_INFINITY);
+    }
+
+    #[test]
+    fn test_max_f64_negative() {
+        let a = [-5.0, -1.0, -3.0];
+        assert!((unsafe { max_f64_neon(&a) } - (-1.0)).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_sum_f64() {
+        let a = [1.0, 2.0, 3.0, 4.0, 5.0];
+        assert!((unsafe { sum_f64_neon(&a) } - 15.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_sum_f64_empty() {
+        assert!((unsafe { sum_f64_neon(&[]) } - 0.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_scale_f64() {
+        let mut y = [1.0, 2.0, 3.0, 4.0, 5.0];
+        unsafe { scale_f64_neon(2.0, &mut y) };
+        assert!((y[0] - 2.0).abs() < 1e-10);
+        assert!((y[4] - 10.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_scale_f64_zero() {
+        let mut y = [1.0, 2.0, 3.0];
+        unsafe { scale_f64_neon(0.0, &mut y) };
+        assert!(y.iter().all(|&v| v == 0.0));
+    }
+}
