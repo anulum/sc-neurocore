@@ -5,9 +5,26 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Compiler Package Init
 
-__all__: list[str] = []
+from .equation_compiler import compile_to_verilog, equation_to_fpga, Q88
+from .pipeline import CompilerPipeline
+from .mlir_emitter import MLIREmitter
+from .quantizer import (
+    QFormat,
+    quantize_weights,
+    dequantize_weights,
+    q_weights_to_sc_probabilities,
+    quantization_error,
+)
 
-# Submodule imports (not eager — avoids coverage issues with optional paths):
-#   from sc_neurocore.compiler.equation_compiler import compile_to_verilog, equation_to_fpga
-#   from sc_neurocore.compiler.pipeline import CompilerPipeline
-#   from sc_neurocore.compiler.mlir_emitter import MLIREmitter
+__all__ = [
+    "compile_to_verilog",
+    "equation_to_fpga",
+    "Q88",
+    "CompilerPipeline",
+    "MLIREmitter",
+    "QFormat",
+    "quantize_weights",
+    "dequantize_weights",
+    "q_weights_to_sc_probabilities",
+    "quantization_error",
+]
