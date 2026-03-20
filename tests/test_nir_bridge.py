@@ -38,7 +38,12 @@ from sc_neurocore.nir_bridge.node_map import (
     SCOutputNode,
     map_node,
 )
-from sc_neurocore.nir_bridge.parser import SCNetwork, SCSubgraphNode, _UnitDelayNode
+from sc_neurocore.nir_bridge.parser import (
+    SCMultiPortSubgraphNode,
+    SCNetwork,
+    SCSubgraphNode,
+    _UnitDelayNode,
+)
 
 
 @pytest.fixture
@@ -412,6 +417,61 @@ class TestGraphParsing:
         )
         with pytest.raises(ValueError, match="exactly one input and one output"):
             SCSubgraphNode(name="subgraph", network=inner)
+
+    def test_multi_port_subgraph_creation(self):
+        """Multi-port subgraph should accept multiple I/O."""
+        inner = SCNetwork(
+            nodes={
+                "in_a": SCInputNode(name="in_a", shape=(1,)),
+                "in_b": SCInputNode(name="in_b", shape=(1,)),
+                "out": SCOutputNode(name="out", shape=(1,)),
+            },
+            edges=[("in_a", "out"), ("in_b", "out")],
+            input_nodes=["in_a", "in_b"],
+            output_nodes=["out"],
+        )
+        sub = SCMultiPortSubgraphNode(name="multi", network=inner)
+        assert sub.input_ports == ["in_a", "in_b"]
+        assert sub.output_ports == ["out"]
+
+    def test_multi_port_forward_single(self):
+        """Single-input convenience should work."""
+        inner = SCNetwork(
+            nodes={
+                "in_a": SCInputNode(name="in_a", shape=(1,)),
+                "in_b": SCInputNode(name="in_b", shape=(1,)),
+                "out": SCOutputNode(name="out", shape=(1,)),
+            },
+            edges=[("in_a", "out"), ("in_b", "out")],
+            input_nodes=["in_a", "in_b"],
+            output_nodes=["out"],
+        )
+        sub = SCMultiPortSubgraphNode(name="multi", network=inner)
+        result = sub.forward(np.array([1.0]))
+        assert result.shape == (1,)
+
+    def test_multi_port_forward_multi(self):
+        """Multi-input forward should return named outputs."""
+        inner = SCNetwork(
+            nodes={
+                "in_a": SCInputNode(name="in_a", shape=(1,)),
+                "in_b": SCInputNode(name="in_b", shape=(1,)),
+                "out": SCOutputNode(name="out", shape=(1,)),
+            },
+            edges=[("in_a", "out"), ("in_b", "out")],
+            input_nodes=["in_a", "in_b"],
+            output_nodes=["out"],
+        )
+        sub = SCMultiPortSubgraphNode(name="multi", network=inner)
+        result = sub.forward_multi({"in_a": np.array([1.0]), "in_b": np.array([2.0])})
+        assert "out" in result
+        np.testing.assert_allclose(result["out"], [3.0])
+
+    def test_multi_port_requires_io(self):
+        """Empty I/O should raise."""
+        inner = SCNetwork(nodes={}, edges=[], input_nodes=[], output_nodes=[])
+        with pytest.raises(ValueError, match="at least one input"):
+            SCMultiPortSubgraphNode(name="empty", network=inner)
 
 
 # --- Execution tests ---
