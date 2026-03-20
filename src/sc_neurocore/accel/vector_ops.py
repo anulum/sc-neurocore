@@ -103,6 +103,30 @@ def vec_and(a_packed: np.ndarray[Any, Any], b_packed: np.ndarray[Any, Any]) -> n
     return np.bitwise_and(a_packed, b_packed)
 
 
+def vec_xnor(
+    a_packed: np.ndarray[Any, Any], b_packed: np.ndarray[Any, Any]
+) -> np.ndarray[Any, Any]:
+    """Bitwise XNOR on packed arrays. SC bipolar multiplication: P(A XNOR B) = P(A)*P(B) + (1-P(A))*(1-P(B))."""
+    return ~np.bitwise_xor(a_packed, b_packed)
+
+
+def vec_not(packed: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+    """Bitwise NOT on packed arrays. SC complement: P(NOT A) = 1 - P(A)."""
+    return ~packed
+
+
+def vec_mux(
+    select_packed: np.ndarray[Any, Any],
+    a_packed: np.ndarray[Any, Any],
+    b_packed: np.ndarray[Any, Any],
+) -> np.ndarray[Any, Any]:
+    """Bitwise MUX on packed arrays. SC scaled addition: P(out) = P(sel)*P(A) + (1-P(sel))*P(B).
+
+    When sel is a Bernoulli(0.5) stream, this computes the average (A+B)/2.
+    """
+    return (select_packed & a_packed) | (~select_packed & b_packed)
+
+
 def vec_popcount(packed: np.ndarray[Any, Any]) -> int:
     """
     Count total set bits (1s) in the packed array.
