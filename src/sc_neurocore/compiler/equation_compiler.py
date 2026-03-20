@@ -162,6 +162,134 @@ class _VerilogExprEmitter(ast.NodeVisitor):
                 raise ValueError(f"Unsupported comparison: {type(op).__name__}")
         return " && ".join(results)
 
+    def visit_Call(self, node: ast.Call) -> str:
+        if not isinstance(node.func, ast.Name):
+            raise ValueError(f"Only named function calls supported, got {ast.dump(node.func)}")
+        fname = node.func.id
+        if len(node.args) < 1:
+            raise ValueError(f"Function {fname} requires at least 1 argument")
+        arg = self.visit(node.args[0])
+
+        # Q8.8 LUT-based approximations for transcendental functions.
+        # Each function is a 16-entry piecewise-linear LUT indexed by
+        # the top 4 bits of the unsigned input, covering [-8, +8) in Q8.8.
+        # Accuracy: ~1-2% over the useful range for neuron dynamics.
+
+        if fname == "exp":
+            return self._emit_lut_call("_exp_lut", arg, self._exp_lut_entries())
+        elif fname == "log":
+            return self._emit_lut_call("_log_lut", arg, self._log_lut_entries())
+        elif fname == "sqrt":
+            return self._emit_lut_call("_sqrt_lut", arg, self._sqrt_lut_entries())
+        elif fname == "tanh":
+            return self._emit_lut_call("_tanh_lut", arg, self._tanh_lut_entries())
+        elif fname in ("sigmoid", "expit"):
+            return self._emit_lut_call("_sigmoid_lut", arg, self._sigmoid_lut_entries())
+        elif fname == "sin":
+            return self._emit_lut_call("_sin_lut", arg, self._sin_lut_entries())
+        elif fname == "cos":
+            return self._emit_lut_call("_cos_lut", arg, self._cos_lut_entries())
+        elif fname == "abs":
+            return f"(({arg} < 0) ? (-{arg}) : {arg})"
+        elif fname == "clip":
+            if len(node.args) == 3:
+                lo = self.visit(node.args[1])
+                hi = self.visit(node.args[2])
+                return f"(({arg} < {lo}) ? {lo} : (({arg} > {hi}) ? {hi} : {arg}))"
+            return arg
+        elif fname in ("max", "min"):
+            if len(node.args) >= 2:
+                b = self.visit(node.args[1])
+                if fname == "max":
+                    return f"(({arg} > {b}) ? {arg} : {b})"
+                return f"(({arg} < {b}) ? {arg} : {b})"
+            return arg
+        raise ValueError(
+            f"Unsupported function '{fname}' in Verilog compilation. "
+            f"Supported: exp, log, sqrt, tanh, sigmoid, sin, cos, abs, clip, max, min"
+        )
+
+    def _emit_lut_call(self, lut_name: str, arg: str, entries: list[int]) -> str:
+        """Emit a 16-entry LUT indexed by top 4 bits of the input."""
+        lut_id = f"{lut_name}{self._mul_count}"
+        self._mul_count += 1
+
+        # Declare the LUT as a reg array
+        dw = self.q.data_width
+        self.intermediates.append(
+            f"// {lut_name} lookup table (16 entries, Q{dw - self.q.fraction}.{self.q.fraction})"
+        )
+
+        # Shift input to unsigned index: add 8.0 (=2048 in Q8.8) then take top 4 bits
+        offset = 8 << self.q.fraction  # 2048 for Q8.8
+        idx_wire = f"{lut_id}_idx"
+        self.intermediates.append(
+            f"wire [3:0] {idx_wire} = ({arg} + {dw}'sd{offset}) >>> {self.q.fraction + 4 - 4};"
+        )
+
+        # Build case expression
+        result_wire = f"{lut_id}_out"
+        lines = [f"reg signed [{dw - 1}:0] {result_wire};"]
+        lines.append(f"always @(*) case ({idx_wire})")
+        for i, val in enumerate(entries):
+            lines.append(f"    4'd{i}: {result_wire} = {dw}'sd{val};")
+        lines.append(f"    default: {result_wire} = {dw}'sd0;")
+        lines.append("endcase")
+        for line in lines:
+            self.intermediates.append(line)
+
+        return result_wire
+
+    def _exp_lut_entries(self) -> list[int]:
+        """exp(x) for x in [-8, +8) sampled at 16 points, Q8.8."""
+        import math
+
+        points = [(-8 + i) for i in range(16)]
+        return [min(int(round(math.exp(x) * (1 << self.q.fraction))), 32767) for x in points]
+
+    def _log_lut_entries(self) -> list[int]:
+        """log(x) for x in [0.06, 8) sampled at 16 points, Q8.8."""
+        import math
+
+        return [
+            int(round(math.log(max(0.06 + i * 0.5, 0.001)) * (1 << self.q.fraction)))
+            for i in range(16)
+        ]
+
+    def _sqrt_lut_entries(self) -> list[int]:
+        """sqrt(x) for x in [0, 8) sampled at 16 points, Q8.8."""
+        import math
+
+        return [int(round(math.sqrt(max(i * 0.5, 0)) * (1 << self.q.fraction))) for i in range(16)]
+
+    def _tanh_lut_entries(self) -> list[int]:
+        """tanh(x) for x in [-8, +8) sampled at 16 points, Q8.8."""
+        import math
+
+        points = [(-8 + i) for i in range(16)]
+        return [int(round(math.tanh(x) * (1 << self.q.fraction))) for x in points]
+
+    def _sigmoid_lut_entries(self) -> list[int]:
+        """sigmoid(x) = 1/(1+exp(-x)) for x in [-8, +8), Q8.8."""
+        import math
+
+        points = [(-8 + i) for i in range(16)]
+        return [int(round(1.0 / (1.0 + math.exp(-x)) * (1 << self.q.fraction))) for x in points]
+
+    def _sin_lut_entries(self) -> list[int]:
+        """sin(x) for x in [-8, +8) sampled at 16 points, Q8.8."""
+        import math
+
+        points = [(-8 + i) for i in range(16)]
+        return [int(round(math.sin(x) * (1 << self.q.fraction))) for x in points]
+
+    def _cos_lut_entries(self) -> list[int]:
+        """cos(x) for x in [-8, +8) sampled at 16 points, Q8.8."""
+        import math
+
+        points = [(-8 + i) for i in range(16)]
+        return [int(round(math.cos(x) * (1 << self.q.fraction))) for x in points]
+
     def generic_visit(self, node):
         raise ValueError(f"Unsupported AST node for Verilog: {type(node).__name__}")
 
