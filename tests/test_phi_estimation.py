@@ -40,9 +40,9 @@ class TestPhiStar:
         shared = rng.randn(100)
         a = shared + 0.1 * rng.randn(100)
         b = shared + 0.1 * rng.randn(100)
-        phi_ab = phi_star(np.vstack([a, b]), tau=1)
-        phi_ba = phi_star(np.vstack([b, a]), tau=1)
-        np.testing.assert_allclose(phi_ab, phi_ba, atol=1e-10)
+        phi_forward = phi_star(np.vstack([a, b]), tau=1)
+        phi_reversed = phi_star(np.vstack([b, a]), tau=1)
+        np.testing.assert_allclose(phi_forward, phi_reversed, atol=1e-10)
 
     def test_single_channel_returns_zero(self):
         """A single channel system should have Phi = 0."""
