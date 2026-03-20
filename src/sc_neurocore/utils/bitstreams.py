@@ -104,6 +104,45 @@ def bitstream_to_probability(bitstream: np.ndarray[Any, Any]) -> float:
     return float(bitstream.mean())
 
 
+def generate_bipolar_bitstream(
+    x: float,
+    length: int,
+    rng: Optional[RNG] = None,
+) -> np.ndarray[Any, Any]:
+    """Generate a bipolar SC bitstream encoding a value in [-1, +1].
+
+    Bipolar encoding: value x in [-1, 1] maps to probability p = (x + 1) / 2.
+    Bit=1 with probability p, bit=0 with probability 1-p.
+    Decoding: x = 2 * mean(bits) - 1.
+
+    Bipolar multiplication uses XNOR: P(A XNOR B) encodes A*B in bipolar.
+    """
+    if not -1.0 <= x <= 1.0:
+        raise SCEncodingError(f"Bipolar value must be in [-1,1], got {x}.")
+    p = (x + 1.0) / 2.0
+    return generate_bernoulli_bitstream(p, length, rng)
+
+
+def bipolar_to_value(bitstream: np.ndarray[Any, Any]) -> float:
+    """Decode a bipolar bitstream to a value in [-1, +1].
+
+    x = 2 * mean(bits) - 1
+    """
+    if bitstream.size == 0:
+        raise SCEncodingError("Bitstream is empty.")
+    return float(2.0 * bitstream.mean() - 1.0)
+
+
+def value_to_bipolar_prob(x: float) -> float:
+    """Map a value in [-1, 1] to the unipolar probability used in bipolar encoding.
+
+    p = (x + 1) / 2. This p is then used with standard Bernoulli generation.
+    """
+    if not -1.0 <= x <= 1.0:
+        raise SCEncodingError(f"Bipolar value must be in [-1,1], got {x}.")
+    return (x + 1.0) / 2.0
+
+
 def value_to_unipolar_prob(
     x: float,
     x_min: float,
@@ -155,22 +194,32 @@ class BitstreamEncoder:
     x_max: float
     length: int = 256
     seed: Optional[int] = None
-    mode: str = "bernoulli"  # "bernoulli" or "sobol"
+    mode: str = "bernoulli"  # "bernoulli", "sobol", or "bipolar"
 
     def __post_init__(self) -> None:
-        if self.mode == "bernoulli":
+        if self.mode in ("bernoulli", "bipolar"):
             self._rng = RNG(self.seed)
         elif self.mode != "sobol":
             raise SCEncodingError(f"Unknown mode: {self.mode}")
 
     def encode(self, x: float) -> np.ndarray[Any, Any]:
+        if self.mode == "bipolar":
+            # Map x from [x_min, x_max] to [-1, 1], then bipolar encode
+            if self.x_min >= self.x_max:
+                raise SCEncodingError("x_min must be < x_max.")
+            x_clipped = max(min(x, self.x_max), self.x_min)
+            bipolar_val = 2.0 * (x_clipped - self.x_min) / (self.x_max - self.x_min) - 1.0
+            return generate_bipolar_bitstream(bipolar_val, self.length, rng=self._rng)
         p = value_to_unipolar_prob(x, self.x_min, self.x_max, clip=True)
         if self.mode == "sobol":
             return generate_sobol_bitstream(p, self.length, seed=self.seed)
-        else:
-            return generate_bernoulli_bitstream(p, self.length, rng=self._rng)
+        return generate_bernoulli_bitstream(p, self.length, rng=self._rng)
 
     def decode(self, bitstream: np.ndarray[Any, Any]) -> float:
+        if self.mode == "bipolar":
+            bipolar_val = bipolar_to_value(bitstream)
+            # Map [-1, 1] back to [x_min, x_max]
+            return float(self.x_min + (bipolar_val + 1.0) / 2.0 * (self.x_max - self.x_min))
         p_hat = bitstream_to_probability(bitstream)
         return unipolar_prob_to_value(p_hat, self.x_min, self.x_max)
 

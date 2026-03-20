@@ -98,6 +98,50 @@ class TestVecMux:
         np.testing.assert_allclose(_prob(result, length), expected, atol=0.03)
 
 
+class TestBipolarEncoding:
+    def test_bipolar_encode_positive(self):
+        from sc_neurocore.utils.bitstreams import generate_bipolar_bitstream, bipolar_to_value
+
+        bits = generate_bipolar_bitstream(0.6, 10000)
+        val = bipolar_to_value(bits)
+        np.testing.assert_allclose(val, 0.6, atol=0.05)
+
+    def test_bipolar_encode_negative(self):
+        from sc_neurocore.utils.bitstreams import generate_bipolar_bitstream, bipolar_to_value
+
+        bits = generate_bipolar_bitstream(-0.4, 10000)
+        val = bipolar_to_value(bits)
+        np.testing.assert_allclose(val, -0.4, atol=0.05)
+
+    def test_bipolar_multiply_via_xnor(self):
+        from sc_neurocore.utils.bitstreams import generate_bipolar_bitstream
+
+        a_bits = generate_bipolar_bitstream(0.6, 20000)
+        b_bits = generate_bipolar_bitstream(-0.3, 20000)
+        packed_a = pack_bitstream(a_bits)
+        packed_b = pack_bitstream(b_bits)
+        result_packed = vec_xnor(packed_a, packed_b)
+        result_prob = _prob(result_packed, 20000)
+        result_bipolar = 2.0 * result_prob - 1.0
+        np.testing.assert_allclose(result_bipolar, 0.6 * -0.3, atol=0.06)
+
+    def test_bipolar_encoder_mode(self):
+        from sc_neurocore.utils.bitstreams import BitstreamEncoder
+
+        enc = BitstreamEncoder(x_min=-5.0, x_max=5.0, length=10000, mode="bipolar")
+        bits = enc.encode(2.5)
+        decoded = enc.decode(bits)
+        np.testing.assert_allclose(decoded, 2.5, atol=0.5)
+
+    def test_bipolar_out_of_range_raises(self):
+        from sc_neurocore.utils.bitstreams import generate_bipolar_bitstream
+        from sc_neurocore.exceptions import SCEncodingError
+        import pytest
+
+        with pytest.raises(SCEncodingError):
+            generate_bipolar_bitstream(1.5, 100)
+
+
 class TestVecAnd:
     def test_multiply(self):
         pa, pb = 0.6, 0.4
