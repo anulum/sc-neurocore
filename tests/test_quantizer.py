@@ -50,9 +50,16 @@ class TestQuantizeWeights:
         np.testing.assert_allclose(r, w, atol=1 / 256)
 
     def test_nearest_rounding(self):
-        w = np.array([0.501953125])  # 128.5 / 256 — rounds to 129
+        # np.rint uses banker's rounding: 128.5 → 128 (round half to even)
+        w = np.array([0.501953125])  # 128.5 / 256
         q = quantize_weights(w, fmt="Q8.8", rounding="nearest")
-        assert q[0] == 129
+        assert q[0] == 128  # banker's rounding: 128.5 → 128 (even)
+
+    def test_nearest_rounding_odd(self):
+        # 129.5 → 130 (round half to even, 130 is even)
+        w = np.array([129.5 / 256])
+        q = quantize_weights(w, fmt="Q8.8", rounding="nearest")
+        assert q[0] == 130
 
     def test_floor_rounding(self):
         w = np.array([0.501953125])

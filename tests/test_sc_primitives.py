@@ -141,6 +141,29 @@ class TestBipolarEncoding:
         with pytest.raises(SCEncodingError):
             generate_bipolar_bitstream(1.5, 100)
 
+    def test_bipolar_to_value_empty_raises(self):
+        from sc_neurocore.utils.bitstreams import bipolar_to_value
+        from sc_neurocore.exceptions import SCEncodingError
+        import pytest
+
+        with pytest.raises(SCEncodingError, match="empty"):
+            bipolar_to_value(np.array([], dtype=np.uint8))
+
+    def test_value_to_bipolar_prob(self):
+        from sc_neurocore.utils.bitstreams import value_to_bipolar_prob
+
+        assert value_to_bipolar_prob(0.0) == 0.5
+        assert value_to_bipolar_prob(1.0) == 1.0
+        assert value_to_bipolar_prob(-1.0) == 0.0
+
+    def test_value_to_bipolar_prob_out_of_range(self):
+        from sc_neurocore.utils.bitstreams import value_to_bipolar_prob
+        from sc_neurocore.exceptions import SCEncodingError
+        import pytest
+
+        with pytest.raises(SCEncodingError):
+            value_to_bipolar_prob(2.0)
+
 
 class TestVecAnd:
     def test_multiply(self):
