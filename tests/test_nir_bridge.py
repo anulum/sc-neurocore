@@ -583,3 +583,38 @@ class TestExport:
         exported = to_nir(network)
         assert isinstance(exported.nodes["linear"], nir.Linear)
         assert isinstance(exported.nodes["scale"], nir.Scale)
+
+    def test_export_all_basic_types(self):
+        """Roundtrip every exportable node type."""
+        from sc_neurocore.nir_bridge import from_nir, to_nir
+
+        nodes = {
+            "input": nir.Input(input_type={"input": np.array([2])}),
+            "if": nir.IF(r=np.array([1.0, 1.0]), v_threshold=np.array([0.5, 0.5])),
+            "li": nir.LI(tau=np.array([10.0, 10.0]), r=np.ones(2), v_leak=np.zeros(2)),
+            "integ": nir.I(r=np.array([1.0, 1.0])),
+            "aff": nir.Affine(
+                weight=np.eye(2, dtype=np.float32), bias=np.zeros(2, dtype=np.float32)
+            ),
+            "thr": nir.Threshold(threshold=np.array([0.5, 0.5])),
+            "flat": nir.Flatten(start_dim=0, end_dim=-1),
+            "output": nir.Output(output_type={"output": np.array([2])}),
+        }
+        edges = [
+            ("input", "if"),
+            ("if", "li"),
+            ("li", "integ"),
+            ("integ", "aff"),
+            ("aff", "thr"),
+            ("thr", "flat"),
+            ("flat", "output"),
+        ]
+        graph = nir.NIRGraph(nodes=nodes, edges=edges)
+        network = from_nir(graph)
+        exported = to_nir(network)
+        assert isinstance(exported.nodes["if"], nir.IF)
+        assert isinstance(exported.nodes["li"], nir.LI)
+        assert isinstance(exported.nodes["integ"], nir.I)
+        assert isinstance(exported.nodes["aff"], nir.Affine)
+        assert isinstance(exported.nodes["thr"], nir.Threshold)
+        assert isinstance(exported.nodes["flat"], nir.Flatten)
