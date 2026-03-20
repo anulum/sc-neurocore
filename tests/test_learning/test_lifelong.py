@@ -47,10 +47,51 @@ def test_ewc_fisher_info_matches_weights():
     assert np.allclose(layer.fisher_info, layer.get_weights())
 
 
-def test_ewc_apply_penalty_no_error():
-    """apply_ewc_penalty should be a no-op without errors."""
+def test_ewc_apply_penalty_returns_magnitude():
+    """apply_ewc_penalty returns total penalty magnitude."""
     layer = _make_layer()
-    assert layer.apply_ewc_penalty() is None
+    layer.consolidate_task()
+    mag = layer.apply_ewc_penalty()
+    assert isinstance(mag, float)
+    # Right after consolidation, weights == star_weights, so penalty is zero
+    assert mag == pytest.approx(0.0, abs=1e-12)
+
+
+def test_ewc_penalty_pushes_toward_star():
+    """Penalty should pull drifted weights back toward consolidated values."""
+    layer = _make_layer()
+    layer.consolidate_task()
+    star = layer.star_weights.copy()
+
+    # Artificially drift weights away from star
+    for i in range(layer.n_neurons):
+        for j in range(layer.n_inputs):
+            layer.synapses[i][j].w = min(layer.synapses[i][j].w + 0.2, layer.w_max)
+
+    w_drifted = layer.get_weights().copy()
+    mag = layer.apply_ewc_penalty(step_size=0.1)
+    w_after = layer.get_weights()
+
+    assert mag > 0
+    # Weights should be closer to star than before
+    dist_before = np.sum(np.abs(w_drifted - star))
+    dist_after = np.sum(np.abs(w_after - star))
+    assert dist_after < dist_before
+
+
+def test_ewc_penalty_respects_bounds():
+    """Penalty should not push weights outside [w_min, w_max]."""
+    layer = _make_layer(w_min=0.0, w_max=1.0)
+    layer.consolidate_task()
+    # Set star_weights very high, current weights low → large correction
+    layer.star_weights[:] = 1.0
+    for i in range(layer.n_neurons):
+        for j in range(layer.n_inputs):
+            layer.synapses[i][j].w = 0.0
+    layer.apply_ewc_penalty(step_size=1.0)
+    w = layer.get_weights()
+    assert np.all(w >= 0.0)
+    assert np.all(w <= 1.0)
 
 
 def test_ewc_inherits_run_epoch():
