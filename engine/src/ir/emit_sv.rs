@@ -274,7 +274,13 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
                     wire = in_wire,
                 ));
             }
-            ScOp::GraphForward { id, features, adjacency, n_nodes, n_features } => {
+            ScOp::GraphForward {
+                id,
+                features,
+                adjacency,
+                n_nodes,
+                n_features,
+            } => {
                 // SC graph forward: features × adjacency via AND-popcount per node
                 let feat_wire = value_to_wire(graph, *features);
                 let adj_wire = value_to_wire(graph, *adjacency);
@@ -297,10 +303,20 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
                      \x20   // Score[i][j] = popcount(Q[i] AND K[j]) / {dk}\n\
                      \x20   // Output = normalized_scores · V\n\
                      \x20   assign v{id} = {vw}; // TODO: instantiate sc_attention_dk{dk}\n",
-                    dk = dim_k, qw = q_wire, kw = k_wire, vw = v_wire, id = id.0,
+                    dk = dim_k,
+                    qw = q_wire,
+                    kw = k_wire,
+                    vw = v_wire,
+                    id = id.0,
                 ));
             }
-            ScOp::KuramotoStep { id, phases, omega, coupling, dt } => {
+            ScOp::KuramotoStep {
+                id,
+                phases,
+                omega,
+                coupling,
+                dt,
+            } => {
                 // Kuramoto oscillator: dθ/dt = ω + ΣK·sin(θ_m - θ_n)
                 let ph_wire = value_to_wire(graph, *phases);
                 let om_wire = value_to_wire(graph, *omega);
@@ -310,7 +326,11 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
                      \x20   // phases={ph}, omega={om}, coupling={kn}\n\
                      \x20   // θ_next = θ + dt*(ω + Σ K·sin(θ_m - θ_n))\n\
                      \x20   assign v{id} = {ph}; // TODO: instantiate sc_kuramoto_step\n",
-                    dt = dt, ph = ph_wire, om = om_wire, kn = kn_wire, id = id.0,
+                    dt = dt,
+                    ph = ph_wire,
+                    om = om_wire,
+                    kn = kn_wire,
+                    id = id.0,
                 ));
             }
             ScOp::Output { name, source, .. } => {
