@@ -177,6 +177,72 @@ def unipolar_prob_to_value(
     return float(x_min + p * (x_max - x_min))
 
 
+def adaptive_length(
+    p: float,
+    epsilon: float = 0.01,
+    confidence: float = 0.95,
+    method: str = "hoeffding",
+    min_length: int = 64,
+    max_length: int = 65536,
+) -> int:
+    """Compute minimum bitstream length for target precision.
+
+    Given probability p and error tolerance epsilon, returns the smallest L
+    such that |p_hat - p| < epsilon with the given confidence.
+
+    Parameters
+    ----------
+    p : float
+        Encoded probability in [0, 1].
+    epsilon : float
+        Maximum acceptable absolute error.
+    confidence : float
+        Confidence level (e.g. 0.95 for 95%).
+    method : str
+        Bound type: "hoeffding" (tighter), "chebyshev", or "variance" (no confidence).
+    min_length : int
+        Minimum returned length.
+    max_length : int
+        Maximum returned length (hardware cap).
+
+    Returns
+    -------
+    int
+        Minimum bitstream length (rounded up to nearest power of 2 for Sobol compatibility).
+    """
+    if epsilon <= 0:
+        raise ValueError(f"epsilon must be positive, got {epsilon}")
+
+    if method == "variance":
+        # Var(p_hat) = p(1-p)/L < epsilon^2 → L > p(1-p)/epsilon^2
+        var_factor = p * (1.0 - p)
+        L = var_factor / (epsilon ** 2)
+    elif method == "chebyshev":
+        # P(|p_hat - p| >= epsilon) <= Var/epsilon^2 <= (1-confidence)
+        # L >= p(1-p) / (epsilon^2 * (1-confidence))
+        delta = 1.0 - confidence
+        if delta <= 0:
+            raise ValueError("confidence must be < 1.0")
+        L = p * (1.0 - p) / (epsilon ** 2 * delta)
+    elif method == "hoeffding":
+        # P(|p_hat - p| >= epsilon) <= 2*exp(-2*L*epsilon^2) <= (1-confidence)
+        # L >= -ln((1-confidence)/2) / (2*epsilon^2)
+        delta = 1.0 - confidence
+        if delta <= 0:
+            raise ValueError("confidence must be < 1.0")
+        import math
+        L = -math.log(delta / 2.0) / (2.0 * epsilon ** 2)
+    else:
+        raise ValueError(f"Unknown method: {method}. Use 'hoeffding', 'chebyshev', or 'variance'.")
+
+    L_int = max(min_length, int(np.ceil(L)))
+    # Round up to next power of 2 for Sobol compatibility
+    L_pow2 = 1
+    while L_pow2 < L_int:
+        L_pow2 *= 2
+    return min(L_pow2, max_length)
+
+
 def sc_divide(
     numerator: np.ndarray[Any, Any],
     denominator: np.ndarray[Any, Any],
