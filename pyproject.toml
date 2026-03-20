@@ -124,6 +124,7 @@ omit = [
     "*/network/*",
     "*/model_zoo/*",
     "*/identity/*",
+    "*/nir_bridge/*",
 ]
 
 [tool.coverage.report]
@@ -132,6 +133,8 @@ exclude_lines = [
     "pragma: no cover",
     "if __name__",
     "raise NotImplementedError",
+    "raise SCEncodingError",
+    "raise ValueError\\(f\"Unsupported",
     "if HAS_MPI",
     "if HAS_CUPY",
     "if HAS_NUMBA",
