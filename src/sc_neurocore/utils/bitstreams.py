@@ -305,11 +305,15 @@ class BitstreamEncoder:
     x_max: float
     length: int = 256
     seed: Optional[int] = None
-    mode: str = "bernoulli"  # "bernoulli", "sobol", or "bipolar"
+    mode: str = "bernoulli"  # "bernoulli", "sobol", "bipolar", or "chaotic"
 
     def __post_init__(self) -> None:
         if self.mode in ("bernoulli", "bipolar"):
             self._rng = RNG(self.seed)
+        elif self.mode == "chaotic":
+            from sc_neurocore.chaos.rng import ChaoticRNG
+            x0 = (self.seed % 997) / 1000.0 + 0.001 if self.seed is not None else 0.5
+            self._chaotic_rng = ChaoticRNG(r=4.0, x=x0)
         elif self.mode != "sobol":
             raise SCEncodingError(f"Unknown mode: {self.mode}")
 
@@ -324,6 +328,8 @@ class BitstreamEncoder:
         p = value_to_unipolar_prob(x, self.x_min, self.x_max, clip=True)
         if self.mode == "sobol":
             return generate_sobol_bitstream(p, self.length, seed=self.seed)
+        if self.mode == "chaotic":
+            return self._chaotic_rng.generate_bitstream(p, self.length)
         return generate_bernoulli_bitstream(p, self.length, rng=self._rng)
 
     def decode(self, bitstream: np.ndarray[Any, Any]) -> float:
