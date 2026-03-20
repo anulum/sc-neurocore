@@ -177,6 +177,51 @@ def unipolar_prob_to_value(
     return float(x_min + p * (x_max - x_min))
 
 
+def sc_divide(
+    numerator: np.ndarray[Any, Any],
+    denominator: np.ndarray[Any, Any],
+) -> np.ndarray[Any, Any]:
+    """Stochastic computing division via CORDIV circuit.
+
+    Li, Qian, Riedel & Bazargan, IEEE Trans. Signal Process. 62(9), 2014.
+
+    Sequential circuit: at each bit position t,
+      - x[t]=1         → z[t] = 1
+      - x[t]=0, y[t]=1 → z[t] = 0
+      - x[t]=0, y[t]=0 → z[t] = z[t-1] (hold)
+
+    Converges to P(z=1) ≈ P(x=1) / P(y=1) when P(x) ≤ P(y).
+
+    Parameters
+    ----------
+    numerator : np.ndarray
+        Bitstream (uint8, {0,1}) of length L.
+    denominator : np.ndarray
+        Bitstream (uint8, {0,1}) of length L. Must have higher or equal density.
+
+    Returns
+    -------
+    np.ndarray
+        Quotient bitstream of length L.
+    """
+    numerator = np.asarray(numerator, dtype=np.uint8)
+    denominator = np.asarray(denominator, dtype=np.uint8)
+    if numerator.shape != denominator.shape:
+        raise ValueError("numerator and denominator must have the same shape")
+
+    out = np.zeros_like(numerator)
+    prev = 0
+    for t in range(len(numerator)):
+        if numerator[t] == 1:
+            out[t] = 1
+        elif denominator[t] == 1:
+            out[t] = 0
+        else:
+            out[t] = prev
+        prev = out[t]
+    return out
+
+
 @dataclass
 class BitstreamEncoder:
     """
