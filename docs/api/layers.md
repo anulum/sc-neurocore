@@ -59,7 +59,7 @@ and recorders into reusable building blocks.
 ## Hardware-Aware SC Layer
 
 Trains around memristive defects (stuck-at faults) by masking gradients
-on defective synapses. See [Fault Tolerance](../benchmarks/fault_tolerance.md).
+on defective synapses.
 
 ::: sc_neurocore.layers.hardware_aware.HardwareAwareSCLayer
 
