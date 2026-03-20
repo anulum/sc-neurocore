@@ -233,7 +233,10 @@ if HAS_JAX:
                     # Fast sigmoid surrogate: σ(β(v-θ)) / β
                     sg = 1.0 / (1.0 + jnp.abs(beta * (v - 1.0)))
                     spike_sum = spike_sum + sg
-                    v = v * (1.0 - (v >= 1.0).astype(v.dtype))
+                    # Straight-through estimator: hard reset forward, surrogate backward
+                    spike_hard = (v >= 1.0).astype(v.dtype)
+                    spike_st = sg + jax.lax.stop_gradient(spike_hard - sg)
+                    v = v * (1.0 - spike_st)
                 spikes_in = spike_sum / n_steps
             logits = spikes_in
             log_softmax = logits - jax.nn.logsumexp(logits, axis=-1, keepdims=True)
