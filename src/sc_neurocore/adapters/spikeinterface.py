@@ -112,7 +112,7 @@ def firing_rates_to_sc_probs(
     return probs
 
 
-def from_sorting(sorting, dt: float = 1.0) -> np.ndarray:
+def from_sorting(sorting, dt: float = 1.0) -> np.ndarray:  # pragma: no cover
     """Convert a SpikeInterface SortingExtractor to bitstream matrix.
 
     Parameters
