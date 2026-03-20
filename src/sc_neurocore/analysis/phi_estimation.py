@@ -53,7 +53,7 @@ def phi_star(data: np.ndarray, tau: int = 1) -> float:
         Phi* estimate (bits). Non-negative; 0 = fully reducible.
     """
     n, T = data.shape
-    if T <= 2 * tau or n < 2:
+    if 2 * tau >= T or n < 2:
         return 0.0
 
     past = data[:, :-tau]

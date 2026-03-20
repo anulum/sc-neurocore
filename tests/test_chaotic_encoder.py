@@ -8,7 +8,6 @@
 """Tests for BitstreamEncoder mode='chaotic' (logistic map RNG)."""
 
 import numpy as np
-import pytest
 
 from sc_neurocore.utils.bitstreams import BitstreamEncoder, bitstream_to_probability
 

@@ -8,7 +8,6 @@
 """Tests for SC-to-quantum compilation (Conjecture C1+C4)."""
 
 import numpy as np
-import pytest
 
 from sc_neurocore.quantum.sc_quantum_compiler import (
     sc_prob_to_statevector,
@@ -17,8 +16,6 @@ from sc_neurocore.quantum.sc_quantum_compiler import (
     ry_gate,
     compile_sc_multiply,
     compile_sc_layer,
-    SCQuantumCircuit,
-    QuantumGate,
 )
 
 
@@ -93,6 +90,50 @@ class TestSCMultiplyCircuit:
         s = circuit.summary()
         assert "SCQuantumCircuit" in s
         assert "Ry" in s
+
+
+class TestOutputProbability:
+    def test_output_probability_matches_manual(self):
+        """output_probability should match P(output_qubit=|1⟩)."""
+        circuit = compile_sc_multiply(0.6, 0.4)
+        p = circuit.output_probability()
+        # Marginal on q1: P(q1=1) = P(01) + P(11) = 0.4
+        np.testing.assert_allclose(p, 0.4, atol=1e-10)
+
+
+class TestTwoQubitGate:
+    def test_cnot_flips(self):
+        """CNOT with control=|1⟩ should flip target."""
+        from sc_neurocore.quantum.sc_quantum_compiler import (
+            _X, QuantumGate, SCQuantumCircuit,
+        )
+        cnot = np.array([
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 0, 1],
+            [0, 0, 1, 0],
+        ], dtype=complex)
+        # |10⟩ → CNOT → |11⟩
+        circuit = SCQuantumCircuit(
+            n_qubits=2,
+            gates=[
+                QuantumGate("X", _X, [0]),          # put q0 in |1⟩
+                QuantumGate("CNOT", cnot, [0, 1]),   # flip q1
+            ],
+            input_qubits=[0],
+            output_qubit=1,
+        )
+        state = circuit.simulate()
+        # Should be |11⟩ = index 3
+        np.testing.assert_allclose(np.abs(state[3]) ** 2, 1.0, atol=1e-10)
+
+    def test_three_qubit_gate_raises(self):
+        from sc_neurocore.quantum.sc_quantum_compiler import _apply_gate
+        import pytest
+        state = np.array([1, 0, 0, 0, 0, 0, 0, 0], dtype=complex)
+        gate = np.eye(8, dtype=complex)
+        with pytest.raises(ValueError, match="not supported"):
+            _apply_gate(state, gate, [0, 1, 2], 3)
 
 
 class TestCompileSCLayer:
