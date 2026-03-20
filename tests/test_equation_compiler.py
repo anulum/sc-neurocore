@@ -507,3 +507,91 @@ class TestEdgeCaseCoverage:
         )
         verilog = compile_to_verilog(neuron, module_name="rt_div")
         assert "/" in verilog
+
+    def test_gte_comparison(self):
+        neuron = EquationNeuron(
+            equations={"v": "I"},
+            state={"v": 0.0},
+            threshold="v >= 1",
+            dt=1.0,
+        )
+        verilog = compile_to_verilog(neuron, module_name="gte_cmp")
+        assert ">=" in verilog
+
+    def test_unsupported_binop_raises(self):
+        """Modulo operator is not supported in Verilog emission."""
+        import pytest
+
+        neuron = EquationNeuron(
+            equations={"v": "v % 2"},
+            state={"v": 1.0},
+            dt=0.1,
+        )
+        with pytest.raises(ValueError, match="Unsupported binary op"):
+            compile_to_verilog(neuron)
+
+    def test_unsupported_comparison_raises(self):
+        import pytest
+
+        neuron = EquationNeuron(
+            equations={"v": "I"},
+            state={"v": 0.0},
+            threshold="v == 0",
+            dt=1.0,
+        )
+        with pytest.raises(ValueError, match="Unsupported comparison"):
+            compile_to_verilog(neuron)
+
+    def test_non_name_function_raises(self):
+        """Attribute-style calls like obj.method() should raise."""
+        import pytest
+        import ast
+
+        from sc_neurocore.compiler.equation_compiler import _VerilogExprEmitter, Q88
+
+        q = Q88()
+        emitter = _VerilogExprEmitter(set(), {}, q)
+        # Construct an ast.Call with ast.Attribute func (not ast.Name)
+        node = ast.Call(
+            func=ast.Attribute(value=ast.Name(id="np", ctx=ast.Load()), attr="exp", ctx=ast.Load()),
+            args=[ast.Constant(value=1.0)],
+            keywords=[],
+        )
+        with pytest.raises(ValueError, match="Only named function calls"):
+            emitter.visit_Call(node)
+
+    def test_zero_arg_function_raises(self):
+        import pytest
+        import ast
+
+        from sc_neurocore.compiler.equation_compiler import _VerilogExprEmitter, Q88
+
+        q = Q88()
+        emitter = _VerilogExprEmitter(set(), {}, q)
+        node = ast.Call(
+            func=ast.Name(id="exp", ctx=ast.Load()),
+            args=[],
+            keywords=[],
+        )
+        with pytest.raises(ValueError, match="requires at least 1 argument"):
+            emitter.visit_Call(node)
+
+    def test_clip_single_arg_passthrough(self):
+        """clip(x) with only 1 arg returns x unchanged."""
+        neuron = EquationNeuron(
+            equations={"v": "clip(I)"},
+            state={"v": 0.0},
+            dt=1.0,
+        )
+        verilog = compile_to_verilog(neuron, module_name="clip1")
+        assert "module clip1" in verilog
+
+    def test_max_single_arg_passthrough(self):
+        """max(x) with only 1 arg returns x unchanged."""
+        neuron = EquationNeuron(
+            equations={"v": "max(I)"},
+            state={"v": 0.0},
+            dt=1.0,
+        )
+        verilog = compile_to_verilog(neuron, module_name="max1")
+        assert "module max1" in verilog
