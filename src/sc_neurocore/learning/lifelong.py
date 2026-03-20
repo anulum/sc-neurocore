@@ -37,11 +37,30 @@ class EWC_SCLayer(SCLearningLayer):
         # Assume all non-zero weights are somewhat important
         self.fisher_info = current_w.copy()
 
-    def apply_ewc_penalty(self) -> None:
+    def apply_ewc_penalty(self, step_size: float = 0.01) -> float:
+        """Push weights back toward consolidated values, weighted by Fisher info.
+
+        Kirkpatrick et al. 2017, adapted to SC/STDP setting.
+        Penalty gradient per synapse: F_i * (w_i - w_star_i).
+
+        Parameters
+        ----------
+        step_size : float
+            Fraction of penalty gradient to apply per call.
+
+        Returns
+        -------
+        float
+            Total penalty magnitude (for logging).
         """
-        This would be called during the learning loop.
-        Instead of gradient descent, we modify STDP probability.
-        """
-        # If we try to move W away from W_star, probability decreases.
-        pass  # Concept implementation logic resides in the custom synapse step usually.
-        # For this demo, we assume the 'consolidate' action sets the state.
+        current_w = self.get_weights()
+        delta = current_w - self.star_weights
+        penalty_grad = self.fisher_info * delta
+        correction = self.ewc_lambda * step_size * penalty_grad
+        new_w = np.clip(current_w - correction, self.w_min, self.w_max)
+
+        for i in range(self.n_neurons):
+            for j in range(self.n_inputs):
+                self.synapses[i][j].w = float(new_w[i, j])
+
+        return float(np.sum(np.abs(penalty_grad)))
