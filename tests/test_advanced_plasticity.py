@@ -95,9 +95,7 @@ class TestTBPTTLearner:
         w_before = proj.data.copy()
         inputs = np.random.randn(20, pop_a.n) * 10
         targets = np.ones((20, pop_a.n))
-        learner = TBPTTLearner(
-            net, loss_fn=lambda p, t: float(np.mean((p - t) ** 2)), k=5
-        )
+        learner = TBPTTLearner(net, loss_fn=lambda p, t: float(np.mean((p - t) ** 2)), k=5)
         learner.train_step(inputs, targets)
         assert not np.allclose(proj.data, w_before)
 
@@ -107,6 +105,7 @@ class TestTBPTTLearner:
         n_steps = 15
         inputs = np.random.randn(n_steps, pop_a.n) * 5
         targets = np.zeros((n_steps, pop_a.n))
+
         def mse(p, t):
             return float(np.mean((p - t) ** 2))
 
@@ -119,8 +118,10 @@ class TestTBPTTLearner:
         net, pop_a, _, _ = simple_net
         inputs = np.random.randn(25, pop_a.n) * 5
         targets = np.zeros((25, pop_a.n))
+
         def mse(p, t):
             return float(np.mean((p - t) ** 2))
+
         learner = TBPTTLearner(net, loss_fn=mse, lr=1e-4, k=7)
         loss = learner.train_step(inputs, targets)
         assert loss >= 0

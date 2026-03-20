@@ -65,9 +65,9 @@ class ClopathSTDP:
     weight: float = 0.5
 
     def __post_init__(self):
-        self.x_bar = 0.0       # low-pass filtered pre-synaptic trace
+        self.x_bar = 0.0  # low-pass filtered pre-synaptic trace
         self.u_bar_minus = 0.0  # slow voltage trace (LTD)
-        self.u_bar_plus = 0.0   # fast voltage trace (LTP)
+        self.u_bar_plus = 0.0  # fast voltage trace (LTP)
 
     def step(self, pre_spike: bool, u_post: float, dt: float = 1.0) -> float:
         """Advance one timestep.

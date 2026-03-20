@@ -216,14 +216,14 @@ def adaptive_length(
     if method == "variance":
         # Var(p_hat) = p(1-p)/L < epsilon^2 → L > p(1-p)/epsilon^2
         var_factor = p * (1.0 - p)
-        L = var_factor / (epsilon ** 2)
+        L = var_factor / (epsilon**2)
     elif method == "chebyshev":
         # P(|p_hat - p| >= epsilon) <= Var/epsilon^2 <= (1-confidence)
         # L >= p(1-p) / (epsilon^2 * (1-confidence))
         delta = 1.0 - confidence
         if delta <= 0:
             raise ValueError("confidence must be < 1.0")
-        L = p * (1.0 - p) / (epsilon ** 2 * delta)
+        L = p * (1.0 - p) / (epsilon**2 * delta)
     elif method == "hoeffding":
         # P(|p_hat - p| >= epsilon) <= 2*exp(-2*L*epsilon^2) <= (1-confidence)
         # L >= -ln((1-confidence)/2) / (2*epsilon^2)
@@ -231,7 +231,8 @@ def adaptive_length(
         if delta <= 0:
             raise ValueError("confidence must be < 1.0")
         import math
-        L = -math.log(delta / 2.0) / (2.0 * epsilon ** 2)
+
+        L = -math.log(delta / 2.0) / (2.0 * epsilon**2)
     else:
         raise ValueError(f"Unknown method: {method}. Use 'hoeffding', 'chebyshev', or 'variance'.")
 
@@ -312,6 +313,7 @@ class BitstreamEncoder:
             self._rng = RNG(self.seed)
         elif self.mode == "chaotic":
             from sc_neurocore.chaos.rng import ChaoticRNG
+
             x0 = (self.seed % 997) / 1000.0 + 0.001 if self.seed is not None else 0.5
             self._chaotic_rng = ChaoticRNG(r=4.0, x=x0)
         elif self.mode != "sobol":

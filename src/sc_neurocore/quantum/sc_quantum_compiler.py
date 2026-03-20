@@ -70,6 +70,7 @@ def prob_to_ry_angle(p: float) -> float:
 @dataclass
 class QuantumGate:
     """A quantum gate applied to specific qubits."""
+
     name: str
     matrix: np.ndarray
     qubits: list[int]  # target qubit indices
@@ -78,6 +79,7 @@ class QuantumGate:
 @dataclass
 class SCQuantumCircuit:
     """Quantum circuit compiled from SC operations."""
+
     n_qubits: int
     gates: list[QuantumGate]
     input_qubits: list[int]
@@ -85,7 +87,7 @@ class SCQuantumCircuit:
 
     def simulate(self) -> np.ndarray:
         """Simulate the circuit and return the full statevector."""
-        dim = 2 ** self.n_qubits
+        dim = 2**self.n_qubits
         state = np.zeros(dim, dtype=complex)
         state[0] = 1.0  # |000...0⟩
 
@@ -126,7 +128,7 @@ def _apply_single_qubit_gate(
     state: np.ndarray, gate: np.ndarray, qubit: int, n_qubits: int
 ) -> np.ndarray:
     """Apply a 2x2 gate to one qubit in a multi-qubit state."""
-    dim = 2 ** n_qubits
+    dim = 2**n_qubits
     new_state = np.zeros(dim, dtype=complex)
     for i in range(dim):
         bit = (i >> qubit) & 1
@@ -142,7 +144,7 @@ def _apply_two_qubit_gate(
     state: np.ndarray, gate: np.ndarray, q0: int, q1: int, n_qubits: int
 ) -> np.ndarray:
     """Apply a 4x4 gate to two qubits."""
-    dim = 2 ** n_qubits
+    dim = 2**n_qubits
     new_state = np.zeros(dim, dtype=complex)
     for i in range(dim):
         b0 = (i >> q0) & 1
@@ -182,9 +184,7 @@ def compile_sc_multiply(p_a: float, p_b: float) -> SCQuantumCircuit:
     return circuit
 
 
-def compile_sc_layer(
-    weights: np.ndarray, input_probs: np.ndarray
-) -> list[dict[str, Any]]:
+def compile_sc_layer(weights: np.ndarray, input_probs: np.ndarray) -> list[dict[str, Any]]:
     """Compile an SC dense layer to quantum gate descriptions.
 
     Parameters
@@ -227,11 +227,13 @@ def compile_sc_layer(
         sc_output = float(np.clip(sc_output / max(n_inputs, 1), 0, 1))
         q_output = float(np.clip(sum(quantum_outputs) / max(n_inputs, 1), 0, 1))
 
-        results.append({
-            "neuron_idx": j,
-            "ry_angles": ry_angles,
-            "expected_output": sc_output,
-            "quantum_output": q_output,
-        })
+        results.append(
+            {
+                "neuron_idx": j,
+                "ry_angles": ry_angles,
+                "expected_output": sc_output,
+                "quantum_output": q_output,
+            }
+        )
 
     return results

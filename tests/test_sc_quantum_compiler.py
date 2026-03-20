@@ -105,20 +105,26 @@ class TestTwoQubitGate:
     def test_cnot_flips(self):
         """CNOT with control=|1⟩ should flip target."""
         from sc_neurocore.quantum.sc_quantum_compiler import (
-            _X, QuantumGate, SCQuantumCircuit,
+            _X,
+            QuantumGate,
+            SCQuantumCircuit,
         )
-        cnot = np.array([
-            [1, 0, 0, 0],
-            [0, 1, 0, 0],
-            [0, 0, 0, 1],
-            [0, 0, 1, 0],
-        ], dtype=complex)
+
+        cnot = np.array(
+            [
+                [1, 0, 0, 0],
+                [0, 1, 0, 0],
+                [0, 0, 0, 1],
+                [0, 0, 1, 0],
+            ],
+            dtype=complex,
+        )
         # |10⟩ → CNOT → |11⟩
         circuit = SCQuantumCircuit(
             n_qubits=2,
             gates=[
-                QuantumGate("X", _X, [0]),          # put q0 in |1⟩
-                QuantumGate("CNOT", cnot, [0, 1]),   # flip q1
+                QuantumGate("X", _X, [0]),  # put q0 in |1⟩
+                QuantumGate("CNOT", cnot, [0, 1]),  # flip q1
             ],
             input_qubits=[0],
             output_qubit=1,
@@ -130,6 +136,7 @@ class TestTwoQubitGate:
     def test_three_qubit_gate_raises(self):
         from sc_neurocore.quantum.sc_quantum_compiler import _apply_gate
         import pytest
+
         state = np.array([1, 0, 0, 0, 0, 0, 0, 0], dtype=complex)
         gate = np.eye(8, dtype=complex)
         with pytest.raises(ValueError, match="not supported"):
@@ -154,9 +161,7 @@ class TestCompileSCLayer:
         inputs = np.array([0.6, 0.4, 0.8])
         results = compile_sc_layer(weights, inputs)
         r = results[0]
-        np.testing.assert_allclose(
-            r["expected_output"], r["quantum_output"], atol=1e-10
-        )
+        np.testing.assert_allclose(r["expected_output"], r["quantum_output"], atol=1e-10)
 
     def test_all_outputs_bounded(self):
         rng = np.random.RandomState(42)

@@ -24,11 +24,13 @@ class TestPhiStar:
         """Strongly correlated channels should have Phi > 0."""
         rng = np.random.RandomState(42)
         shared = rng.randn(200)
-        data = np.vstack([
-            shared + 0.1 * rng.randn(200),
-            shared + 0.1 * rng.randn(200),
-            shared + 0.1 * rng.randn(200),
-        ])
+        data = np.vstack(
+            [
+                shared + 0.1 * rng.randn(200),
+                shared + 0.1 * rng.randn(200),
+                shared + 0.1 * rng.randn(200),
+            ]
+        )
         phi = phi_star(data, tau=1)
         assert phi > 0
 

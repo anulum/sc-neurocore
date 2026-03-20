@@ -87,10 +87,9 @@ class PredictiveCodingSCLayer:
         rng = np.random.RandomState(None)
 
         # Generate actual input bitstreams
-        actual_streams = np.array([
-            generate_bernoulli_bitstream(float(np.clip(p, 0, 1)), self.length)
-            for p in inputs
-        ])  # shape: (n_inputs, length)
+        actual_streams = np.array(
+            [generate_bernoulli_bitstream(float(np.clip(p, 0, 1)), self.length) for p in inputs]
+        )  # shape: (n_inputs, length)
 
         surprises = np.zeros(self.n_neurons)
         predictions = np.zeros((self.n_neurons, self.n_inputs))

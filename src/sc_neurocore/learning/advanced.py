@@ -150,10 +150,7 @@ class TBPTTLearner:
                 grad_w = np.zeros_like(proj.data)
                 for t_local in range(chunk_len):
                     surr = _fast_sigmoid_surrogate(recorded_v[t_local])
-                    post_delta = (
-                        output_error[t_local][: proj.target.n]
-                        * surr[: proj.target.n]
-                    )
+                    post_delta = output_error[t_local][: proj.target.n] * surr[: proj.target.n]
                     for i in range(n_src):
                         for k_idx in range(proj.indptr[i], proj.indptr[i + 1]):
                             j = proj.indices[k_idx]

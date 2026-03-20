@@ -103,9 +103,7 @@ def _gaussian_mi(x: np.ndarray, y: np.ndarray) -> float:
     return max(0.0, float(mi))
 
 
-def phi_from_spike_trains(
-    spikes: np.ndarray, bin_size: int = 10, tau: int = 1
-) -> float:
+def phi_from_spike_trains(spikes: np.ndarray, bin_size: int = 10, tau: int = 1) -> float:
     """Compute Phi* from binary spike trains.
 
     Parameters

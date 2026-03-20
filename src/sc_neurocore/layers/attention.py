@@ -140,10 +140,12 @@ class StochasticAttention:
         gen = generate_sobol_bitstream if use_sobol else generate_bernoulli_bitstream
 
         # Encode Q, K as bitstreams
-        Q_bits = np.array([[gen(float(np.clip(Q[i, d], 0, 1)), length)
-                            for d in range(dk)] for i in range(N)])  # (N, dk, L)
-        K_bits = np.array([[gen(float(np.clip(K[j, d], 0, 1)), length)
-                            for d in range(dk)] for j in range(M)])  # (M, dk, L)
+        Q_bits = np.array(
+            [[gen(float(np.clip(Q[i, d], 0, 1)), length) for d in range(dk)] for i in range(N)]
+        )  # (N, dk, L)
+        K_bits = np.array(
+            [[gen(float(np.clip(K[j, d], 0, 1)), length) for d in range(dk)] for j in range(M)]
+        )  # (M, dk, L)
 
         # Compute attention scores via AND (SC multiply) + popcount
         scores = np.zeros((N, M))

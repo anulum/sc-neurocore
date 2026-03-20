@@ -78,7 +78,7 @@ class BCMSynapse:
         self.weight = max(self.w_min, min(self.w_max, self.weight))
 
         # Sliding threshold: d(theta)/dt = (y^2 - theta) / tau_theta
-        self.theta_m += (post_rate ** 2 - self.theta_m) * dt / self.tau_theta
+        self.theta_m += (post_rate**2 - self.theta_m) * dt / self.tau_theta
 
         return self.weight
 
