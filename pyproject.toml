@@ -124,6 +124,7 @@ omit = [
     "*/network/*",
     "*/model_zoo/*",
     "*/identity/*",
+    "*/compiler/equation_compiler.py",
 ]
 
 [tool.coverage.report]
