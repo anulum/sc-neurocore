@@ -23,11 +23,8 @@ functions that accept the same data format (unit_ids, spike_times).
 
 from __future__ import annotations
 
-from typing import Any
 
 import numpy as np
-
-from ..utils.bitstreams import generate_bernoulli_bitstream
 
 
 def spike_trains_to_bitstreams(

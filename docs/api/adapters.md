@@ -13,6 +13,14 @@ and accessible via the `create_adapter(layer)` factory.
 
 ::: sc_neurocore.adapters.holonomic
 
+## SpikeInterface / Neo Adapter
+
+Import experimental spike data into SC-NeuroCore. Converts between
+SpikeInterface sorting results and SC-NeuroCore representations
+(bitstream matrices, Population inputs, SC probabilities).
+
+::: sc_neurocore.adapters.spikeinterface
+
 ## Plugin Discovery
 
 Community-contributed adapters can be discovered via `importlib.metadata`

@@ -30,7 +30,6 @@ decorrelation across the entire weight matrix with a single sequence.
 
 from __future__ import annotations
 
-from typing import Any
 
 import numpy as np
 import scipy.stats.qmc as qmc

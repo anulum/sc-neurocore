@@ -309,3 +309,12 @@ Gaussian Process Factor Analysis (Yu et al. 2009).
 ## Explainability
 
 ::: sc_neurocore.analysis.explainability
+
+## Integrated Information (Phi*)
+
+Approximate Phi (Barrett & Seth 2011) measures how much a system exceeds
+the sum of its parts — the consciousness-relevant integrated information.
+
+::: sc_neurocore.analysis.phi_estimation.phi_star
+
+::: sc_neurocore.analysis.phi_estimation.phi_from_spike_trains

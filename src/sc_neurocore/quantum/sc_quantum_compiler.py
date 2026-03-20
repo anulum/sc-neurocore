@@ -149,7 +149,8 @@ class SCQuantumCircuit:
                 prob_1 += float(np.real(rho[i, i]))
         # Apply readout noise via sampling
         ones = sum(
-            1 for _ in range(n_shots)
+            1
+            for _ in range(n_shots)
             if noise_model.apply_readout_noise(1 if np.random.random() < prob_1 else 0) == 1
         )
         return ones / n_shots

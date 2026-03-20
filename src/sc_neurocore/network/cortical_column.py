@@ -111,16 +111,17 @@ class CorticalColumn:
         thal = np.atleast_1d(np.asarray(thalamic_input, dtype=np.float64))
 
         # L4: thalamic input + L6 feedback
-        i_l4 = self.w_thal_to_l4 @ thal + self.w_l6_to_l4 @ (self.v_l6 > self.threshold).astype(float)
+        i_l4 = self.w_thal_to_l4 @ thal + self.w_l6_to_l4 @ (self.v_l6 > self.threshold).astype(
+            float
+        )
         self.v_l4 = self._decay * self.v_l4 + i_l4 * self.dt / self.tau
         spk_l4 = (self.v_l4 > self.threshold).astype(np.float64)
         self.v_l4 -= spk_l4 * self.threshold
 
         # L2/3 excitatory: L4 feedforward + L2/3 inhibitory feedback
-        i_l23e = (
-            self.w_l4_to_l23e @ spk_l4
-            + self.w_l23i_to_l23e @ (self.v_l23_inh > self.threshold).astype(float)
-        )
+        i_l23e = self.w_l4_to_l23e @ spk_l4 + self.w_l23i_to_l23e @ (
+            self.v_l23_inh > self.threshold
+        ).astype(float)
         self.v_l23_exc = self._decay * self.v_l23_exc + i_l23e * self.dt / self.tau
         spk_l23e = (self.v_l23_exc > self.threshold).astype(np.float64)
         self.v_l23_exc -= spk_l23e * self.threshold

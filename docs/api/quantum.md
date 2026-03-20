@@ -34,3 +34,17 @@ VQE-style quantum-classical optimization pipeline.
 ## QEC
 
 ::: sc_neurocore.quantum.qec
+
+## SC→Quantum Compiler (Conjecture C1+C4)
+
+Compiles SC operations to quantum circuits. SC probability p encodes as
+Ry(2·arcsin(√p)) rotation; AND gate maps to joint measurement; Born rule
+recovers P(|1⟩) = p exactly. Includes noisy simulation via HeronR2NoiseModel.
+
+::: sc_neurocore.quantum.sc_quantum_compiler.sc_prob_to_statevector
+
+::: sc_neurocore.quantum.sc_quantum_compiler.compile_sc_multiply
+
+::: sc_neurocore.quantum.sc_quantum_compiler.compile_sc_layer
+
+::: sc_neurocore.quantum.sc_quantum_compiler.SCQuantumCircuit

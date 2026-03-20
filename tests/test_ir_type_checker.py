@@ -10,7 +10,6 @@
 from sc_neurocore.compiler.ir_type_checker import (
     IREdge,
     IRNode,
-    IRTypeError,
     SignalType,
     check_ir_types,
     types_compatible,
@@ -41,7 +40,9 @@ class TestCheckIRTypes:
     def test_valid_bitstream_graph(self):
         nodes = {
             "enc": IRNode("enc", "encoder", [], SignalType.BITSTREAM),
-            "and": IRNode("and", "and", [SignalType.BITSTREAM, SignalType.BITSTREAM], SignalType.BITSTREAM),
+            "and": IRNode(
+                "and", "and", [SignalType.BITSTREAM, SignalType.BITSTREAM], SignalType.BITSTREAM
+            ),
         }
         edges = [IREdge("enc", "and", dst_port=0)]
         errors = check_ir_types(nodes, edges)
@@ -80,7 +81,8 @@ class TestCheckIRTypes:
             "rate_in": IRNode("rate_in", "input", [], SignalType.RATE),
             "fixed_in": IRNode("fixed_in", "input", [], SignalType.FIXED),
             "and": IRNode(
-                "and", "and",
+                "and",
+                "and",
                 [SignalType.BITSTREAM, SignalType.BITSTREAM],
                 SignalType.BITSTREAM,
             ),
