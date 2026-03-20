@@ -105,6 +105,55 @@ class SCQuantumCircuit:
                 prob += np.abs(state[i]) ** 2
         return float(prob)
 
+    def simulate_noisy(self, noise_model) -> np.ndarray:
+        """Simulate with noise: evolve density matrix through Kraus channels.
+
+        Parameters
+        ----------
+        noise_model : HeronR2NoiseModel or compatible
+            Must provide apply_single_qubit_noise(rho) and apply_readout_noise(measurement).
+
+        Returns
+        -------
+        np.ndarray
+            Final density matrix of shape (2^n, 2^n).
+        """
+        dim = 2**self.n_qubits
+        state = np.zeros(dim, dtype=complex)
+        state[0] = 1.0
+        # Apply gates as unitary
+        for gate in self.gates:
+            state = _apply_gate(state, gate.matrix, gate.qubits, self.n_qubits)
+        # Convert to density matrix
+        rho = np.outer(state, state.conj())
+        # Apply per-qubit noise
+        for q in range(self.n_qubits):
+            rho = _apply_single_qubit_channel(rho, noise_model, q, self.n_qubits)
+        return rho
+
+    def output_probability_noisy(self, noise_model, n_shots: int = 1000) -> float:
+        """Simulate with noise and return P(output=1) via measurement sampling.
+
+        Parameters
+        ----------
+        noise_model : HeronR2NoiseModel or compatible
+        n_shots : int
+            Number of measurement shots.
+        """
+        rho = self.simulate_noisy(noise_model)
+        # Extract output qubit probability from density matrix diagonal
+        prob_1 = 0.0
+        dim = 2**self.n_qubits
+        for i in range(dim):
+            if (i >> self.output_qubit) & 1:
+                prob_1 += float(np.real(rho[i, i]))
+        # Apply readout noise via sampling
+        ones = sum(
+            1 for _ in range(n_shots)
+            if noise_model.apply_readout_noise(1 if np.random.random() < prob_1 else 0) == 1
+        )
+        return ones / n_shots
+
     def summary(self) -> str:
         lines = [f"SCQuantumCircuit: {self.n_qubits} qubits, {len(self.gates)} gates"]
         for g in self.gates:
@@ -156,6 +205,30 @@ def _apply_two_qubit_gate(
             j = (i & ~(1 << q0) & ~(1 << q1)) | (cb0 << q0) | (cb1 << q1)
             new_state[i] += gate[row, col] * state[j]
     return new_state
+
+
+def _apply_single_qubit_channel(
+    rho: np.ndarray, noise_model, qubit: int, n_qubits: int
+) -> np.ndarray:
+    """Apply single-qubit noise channel to one qubit of a multi-qubit density matrix."""
+    dim = 2**n_qubits
+    # Get Kraus operators for the noise channel
+    kraus_ops = noise_model.depolarizing_channel(noise_model.params.single_qubit_error)
+    new_rho = np.zeros_like(rho)
+    for K_small in kraus_ops:
+        # Embed 2x2 Kraus op into full space acting on `qubit`
+        K_full = np.zeros((dim, dim), dtype=complex)
+        for i in range(dim):
+            for j in range(dim):
+                bi = (i >> qubit) & 1
+                bj = (j >> qubit) & 1
+                # Other bits must match
+                i_other = i & ~(1 << qubit)
+                j_other = j & ~(1 << qubit)
+                if i_other == j_other:
+                    K_full[i, j] = K_small[bi, bj]
+        new_rho += K_full @ rho @ K_full.conj().T
+    return new_rho
 
 
 def compile_sc_multiply(p_a: float, p_b: float) -> SCQuantumCircuit:
