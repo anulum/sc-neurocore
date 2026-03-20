@@ -64,6 +64,7 @@ Durstewitz = "Durstewitz"
 Synopsys = "Synopsys"
 Comput = "Comput"
 iz = "iz"
+IIT = "IIT"
 
 [files]
 extend-exclude = [
