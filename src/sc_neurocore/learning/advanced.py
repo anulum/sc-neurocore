@@ -89,6 +89,82 @@ class BPTTLearner:
         return loss
 
 
+class TBPTTLearner:
+    """Truncated Backpropagation Through Time for long sequences.
+
+    Splits input into chunks of ``k`` timesteps, backpropagating gradients
+    only within each chunk while carrying forward state (membrane voltage)
+    across boundaries. Reduces memory from O(T) to O(k).
+
+    Williams & Peng 1990.
+    """
+
+    def __init__(self, network, loss_fn, lr=1e-3, k: int = 50):
+        self.network = network
+        self.loss_fn = loss_fn
+        self.lr = lr
+        self.k = k
+
+    def train_step(self, inputs, targets):
+        """One TBPTT step over the full sequence, chunked into windows of k.
+
+        Parameters
+        ----------
+        inputs : np.ndarray
+            Shape (n_steps, n_input).
+        targets : np.ndarray
+            Shape (n_steps, n_output).
+
+        Returns
+        -------
+        float
+            Total loss summed across chunks.
+        """
+        n_steps = inputs.shape[0]
+        total_loss = 0.0
+
+        for pop in self.network.populations:
+            pop.reset_all()
+
+        for chunk_start in range(0, n_steps, self.k):
+            chunk_end = min(chunk_start + self.k, n_steps)
+            chunk_len = chunk_end - chunk_start
+
+            recorded_v = []
+            recorded_spikes = []
+            for t in range(chunk_start, chunk_end):
+                pop = self.network.populations[0]
+                spikes = pop.step_all(inputs[t][: pop.n])
+                recorded_v.append(pop.voltages.copy())
+                recorded_spikes.append(spikes.copy())
+
+            spike_arr = np.stack(recorded_spikes)
+            chunk_targets = targets[chunk_start:chunk_end]
+            chunk_loss = float(self.loss_fn(spike_arr, chunk_targets))
+            total_loss += chunk_loss
+
+            # Backward within this chunk only
+            output_error = spike_arr - chunk_targets
+            for proj in self.network.projections:
+                n_src = proj.source.n
+                grad_w = np.zeros_like(proj.data)
+                for t_local in range(chunk_len):
+                    surr = _fast_sigmoid_surrogate(recorded_v[t_local])
+                    post_delta = (
+                        output_error[t_local][: proj.target.n]
+                        * surr[: proj.target.n]
+                    )
+                    for i in range(n_src):
+                        for k_idx in range(proj.indptr[i], proj.indptr[i + 1]):
+                            j = proj.indices[k_idx]
+                            grad_w[k_idx] += recorded_spikes[t_local][i] * post_delta[j]
+                proj.data -= self.lr * grad_w / max(chunk_len, 1)
+
+            # State (voltages) carries forward — no reset between chunks
+
+        return total_loss
+
+
 class EligibilityTrace:
     """E-prop eligibility trace: three-factor learning (pre x post x error).
 

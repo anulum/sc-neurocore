@@ -11,6 +11,7 @@ __tier__ = "research"
 
 from .advanced import (
     BPTTLearner,
+    TBPTTLearner,
     EligibilityTrace,
     HomeostaticPlasticity,
     MetaLearner,
@@ -24,6 +25,7 @@ from .neuroevolution import SNNGeneticEvolver
 
 __all__ = [
     "BPTTLearner",
+    "TBPTTLearner",
     "EligibilityTrace",
     "FederatedAggregator",
     "EWC_SCLayer",
