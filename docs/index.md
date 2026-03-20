@@ -7,7 +7,7 @@ stochastic computing (SC) neural networks — from individual neurons to full
 SCPN layer hierarchies, with both software simulation and Verilog RTL for
 FPGA deployment.
 
-**Version 3.13.2** | 2 112 passing Python tests + 336 Rust tests | 100% Coverage | 122 Neuron Models | 111-Model NetworkRunner | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
+**Version 3.13.3** | 2 400+ passing Python tests + 350+ Rust tests | 100% Coverage | 122 Neuron Models | 111-Model NetworkRunner | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
 
 ![SC-NeuroCore train-to-hardware pipeline](assets/pipeline.png)
 *Train in PyTorch → Quantise to Q8.8 → Simulate with stochastic bitstreams → Compile to SystemVerilog → Synthesise for FPGA. The Rust SIMD engine accelerates all stages.*
@@ -23,8 +23,9 @@ FPGA deployment.
 - **Model zoo** — 10 pre-built configs, 3 pre-trained weight sets (MNIST, SHD, DVS)
 - **125-function analysis toolkit** — spike train stats, distance, correlation, causality, decoding (23 modules)
 - **14 visualization plots** — raster, voltage, ISI, PSD, cross-correlogram, and more
-- **7 advanced plasticity rules** — BPTT, e-prop, R-STDP, MAML, homeostatic, STP, structural
-- **Packed bitwise layers** — 64-bit vectorised AND/popcount for high throughput
+- **13 advanced plasticity rules** — pair/triplet/voltage STDP, BCM, BPTT, TBPTT, EWC, e-prop, R-STDP, MAML, homeostatic, STP, structural
+- **7 biological circuits** — gap junctions, tripartite synapse (astrocyte), Rall dendrite, cortical column, lateral inhibition, WTA, gamma oscillation
+- **Packed bitwise layers** — 64-bit vectorised AND/MUX/XNOR/NOT/CORDIV for high throughput
 - **Rust SIMD engine** — 41.3 Gbit/s bitstream packing (AVX-512), AVX2/NEON/SVE/RVV dispatch
 - **GPU acceleration** — CuPy backend + JAX JIT training + CuPy sparse GPU
 - **SNN training** — Surrogate gradient training (ATan, FastSigmoid, SuperSpike) with `to_sc_weights()` bridge
@@ -32,7 +33,15 @@ FPGA deployment.
 - **Equation → Verilog compiler** — arbitrary ODE string to synthesizable Q8.8 fixed-point RTL in one function call
 - **Verilog RTL** — 10 synthesisable modules, 7 formal verification files (61 properties), bit-exact co-simulation
 - **HDC/VSA** — Hyper-dimensional computing for symbolic AI workloads
-- **[NIR bridge](guides/nir_integration.md)** — first FPGA backend for [NIR](https://neuroir.org/) (interop with Norse, snnTorch, Lava-DL)
+- **[NIR bridge](guides/nir_integration.md)** — first FPGA backend for [NIR](https://neuroir.org/) (17/17 primitives, recurrent edges, multi-port subgraphs)
+- **SC→quantum compiler** — compile SC operations to quantum circuits, statevector + noisy simulation
+- **Predictive coding** — zero-multiplication SC layer (XOR=error, popcount=magnitude)
+- **Topological observables** — winding number, Ollivier-Ricci curvature, sheaf defect
+- **Phi* (IIT)** — integrated information estimation for spiking networks
+- **Fault tolerance** — SC vs fixed-point degradation benchmark, hardware-aware training
+- **SpikeInterface adapter** — import experimental spike data (spike trains, sorting results)
+- **Adaptive bitstream length** — Hoeffding/Chebyshev bounds for precision-speed tradeoff
+- **AXI-Stream + DMA** — production hardware interface (stream, DMA, parameterized registers, CDC)
 - **conda-forge recipe** — ready for conda-forge distribution
 
 The default `pip install sc-neurocore` wheel ships the public

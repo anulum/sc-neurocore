@@ -82,6 +82,12 @@ nav:
       - Formal Verification: tutorials/21_formal_verification.md
       - Neuron Model Selection: tutorials/22_neuron_model_selection.md
       - Spike Train Analysis: tutorials/23_spike_train_analysis.md
+      - Biological Circuits: tutorials/24_biological_circuits.md
+      - SC→Quantum Bridge: tutorials/25_sc_quantum_bridge.md
+      - Predictive Coding: tutorials/26_predictive_coding.md
+      - Fault Tolerance: tutorials/27_fault_tolerance.md
+      - Learning Rules Catalog: tutorials/28_learning_rules.md
+      - SpikeInterface Import: tutorials/29_spikeinterface_import.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
