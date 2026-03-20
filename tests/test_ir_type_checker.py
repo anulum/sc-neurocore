@@ -66,6 +66,13 @@ class TestCheckIRTypes:
         assert len(errors) == 1
         assert "not found" in errors[0].message
 
+    def test_missing_destination_node(self):
+        nodes = {"a": IRNode("a", "enc", [], SignalType.BITSTREAM)}
+        edges = [IREdge("a", "z")]
+        errors = check_ir_types(nodes, edges)
+        assert len(errors) == 1
+        assert "not found" in errors[0].message
+
     def test_port_out_of_range(self):
         nodes = {
             "a": IRNode("a", "enc", [], SignalType.BITSTREAM),
