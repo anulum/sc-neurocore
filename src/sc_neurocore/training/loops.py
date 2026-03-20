@@ -34,8 +34,16 @@ def train_epoch(
     loss_fn: Callable = spike_count_loss,
     device: str | torch.device = "cpu",
     max_grad_norm: float | None = None,
+    flatten_input: bool = True,
 ) -> Tuple[float, float]:
-    """One training epoch. Returns (avg_loss, accuracy)."""
+    """One training epoch. Returns (avg_loss, accuracy).
+
+    Parameters
+    ----------
+    flatten_input : bool
+        If True (default), flatten data to (batch, features) for feedforward SNNs.
+        Set to False for convolutional models that need spatial dimensions.
+    """
     model.train()
     total_loss = 0.0
     correct = 0
@@ -43,9 +51,10 @@ def train_epoch(
 
     for data, targets in loader:
         data, targets = data.to(device), targets.to(device)
-        data = data.view(data.shape[0], -1)
-        # (batch, features) -> (T, batch, features)
-        data = data.unsqueeze(0).expand(n_timesteps, -1, -1)
+        if flatten_input:
+            data = data.view(data.shape[0], -1)
+        # Prepend time dimension: (batch, ...) -> (T, batch, ...)
+        data = data.unsqueeze(0).expand(n_timesteps, *data.shape)
 
         spike_counts, _ = model(data)
         loss = loss_fn(spike_counts, targets)
@@ -70,6 +79,7 @@ def evaluate(
     n_timesteps: int,
     loss_fn: Callable = spike_count_loss,
     device: str = "cpu",
+    flatten_input: bool = True,
 ) -> Tuple[float, float]:
     """Evaluate model. Returns (avg_loss, accuracy)."""
     model.eval()
@@ -79,8 +89,9 @@ def evaluate(
 
     for data, targets in loader:
         data, targets = data.to(device), targets.to(device)
-        data = data.view(data.shape[0], -1)
-        data = data.unsqueeze(0).expand(n_timesteps, -1, -1)
+        if flatten_input:
+            data = data.view(data.shape[0], -1)
+        data = data.unsqueeze(0).expand(n_timesteps, *data.shape)
 
         spike_counts, _ = model(data)
         loss = loss_fn(spike_counts, targets)
