@@ -169,7 +169,9 @@ class TestNoisySimulation:
         circuit = compile_sc_multiply(0.6, 0.7)
         ideal_prob = circuit.output_probability()
         # High noise
-        noisy_params = HeronR2NoiseParams(single_qubit_error=0.3, readout_0to1=0.1, readout_1to0=0.1)
+        noisy_params = HeronR2NoiseParams(
+            single_qubit_error=0.3, readout_0to1=0.1, readout_1to0=0.1
+        )
         noise = HeronR2NoiseModel(noisy_params)
         rho = circuit.simulate_noisy(noise)
         noisy_prob = sum(

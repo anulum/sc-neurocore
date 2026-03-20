@@ -9,6 +9,11 @@ neurons using bitstream multiplication (AND gates).
 | `StochasticSTDPSynapse` | Hebbian STDP | Unsupervised learning |
 | `RewardModulatedSTDPSynapse` | Three-factor R-STDP | Reinforcement learning |
 | `BitstreamDotProduct` | None | Multi-input weighted sum |
+| `TripletSTDP` | Pfister-Gerstner 2006 | Rate-dependent cortical plasticity |
+| `BCMSynapse` | Sliding threshold | Metaplasticity, selectivity |
+| `ClopathSTDP` | Voltage-based | Unifies rate + timing plasticity |
+| `TripartiteSynapse` | Astrocyte-modulated | Neuron-glia-synapse coupling |
+| `GapJunction` | Electrical coupling | Interneuron synchrony |
 
 ## Static Synapse
 
@@ -25,3 +30,23 @@ neurons using bitstream multiplication (AND gates).
 ## Dot Product
 
 ::: sc_neurocore.synapses.dot_product.BitstreamDotProduct
+
+## Triplet STDP (Pfister-Gerstner 2006)
+
+::: sc_neurocore.synapses.triplet_stdp.TripletSTDP
+
+## BCM Metaplasticity (Bienenstock-Cooper-Munro 1982)
+
+::: sc_neurocore.synapses.bcm.BCMSynapse
+
+## Voltage-Based STDP (Clopath et al. 2010)
+
+::: sc_neurocore.synapses.clopath_stdp.ClopathSTDP
+
+## Tripartite Synapse (Astrocyte Coupling)
+
+::: sc_neurocore.synapses.tripartite.TripartiteSynapse
+
+## Gap Junction (Electrical Synapse)
+
+::: sc_neurocore.synapses.gap_junction.GapJunction

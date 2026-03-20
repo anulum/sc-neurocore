@@ -19,6 +19,31 @@ generation, and signal analysis.
 
 ::: sc_neurocore.utils.bitstreams.BitstreamAverager
 
+### Bipolar Encoding
+
+::: sc_neurocore.utils.bitstreams.generate_bipolar_bitstream
+
+::: sc_neurocore.utils.bitstreams.bipolar_to_value
+
+### SC Division (CORDIV, Li et al. 2014)
+
+::: sc_neurocore.utils.bitstreams.sc_divide
+
+### Adaptive Bitstream Length
+
+Compute minimum bitstream length for target precision via Hoeffding,
+Chebyshev, or variance bounds.
+
+::: sc_neurocore.utils.bitstreams.adaptive_length
+
+## LDS Decorrelation (Sobol/Halton)
+
+Multi-dimensional low-discrepancy sequences for per-synapse decorrelation.
+
+::: sc_neurocore.utils.lds_decorrelation.generate_decorrelated_bitstreams
+
+::: sc_neurocore.utils.lds_decorrelation.star_discrepancy_estimate
+
 ## Random Number Generation
 
 ::: sc_neurocore.utils.rng.RNG

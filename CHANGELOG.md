@@ -4,6 +4,62 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.13.3] - 2026-03-20
+
+### SC Arithmetic
+- CORDIV division circuit: Python `sc_divide()` + Verilog `sc_cordiv.v` (Li et al. 2014)
+- Adaptive bitstream length: Hoeffding/Chebyshev/variance bounds via `adaptive_length()`
+- Sobol/Halton multi-dimensional decorrelation for per-synapse independent streams
+- Chaotic RNG mode in BitstreamEncoder (logistic map)
+- Sobol bitstream attention: `StochasticAttention.forward_bitstream()` with LDS variance reduction
+
+### Learning Rules
+- BCM metaplasticity with sliding threshold (Bienenstock-Cooper-Munro 1982)
+- Voltage-based STDP (Clopath et al. 2010)
+- Truncated BPTT for long sequences (`TBPTTLearner`, Williams & Peng 1990)
+- EWC penalty implemented (was no-op stub) — Kirkpatrick et al. 2017
+- Learnable beta/threshold on all 10 SNN cell types (ExpIF, AdEx, Lapicque, Alpha, SecondOrderLIF, IF, Synaptic)
+- ConvSpikingNet now works with `train_epoch()` via `flatten_input=False`
+
+### Biological Circuits
+- Tripartite synapse: astrocyte ↔ synapse bidirectional coupling (Araque et al. 1999)
+- Rall branching dendrite: compartmental tree with 3/2 power rule
+- Canonical cortical microcircuit: 5-population column (L2/3 exc/inh, L4, L5, L6)
+- Astrocyte adapter: `AstrocyteNeuron` wraps Li-Rinzel model for Population/Network
+
+### Theoretical Depth
+- SC→quantum circuit compiler: Ry encoding, statevector simulator, layer compilation
+- Zero-multiplication predictive coding SC layer (Conjecture C9: XOR=error, popcount=magnitude)
+- Topological observables: winding number, Ollivier-Ricci curvature, sheaf defect
+- Phi* integrated information estimation (Barrett & Seth 2011, IIT)
+- Goldstone mode verification for Knm coupling spectrum
+- Fault tolerance benchmark: SC vs fixed-point degradation curves
+- Hardware-aware SC layer with memristive defect injection
+- Noisy quantum simulation via HeronR2NoiseModel Kraus channels
+
+### NIR Bridge
+- Recurrent edge handling via unit-delay insertion (LSTM-like feedback)
+- Multi-port subgraph support (`SCMultiPortSubgraphNode`)
+
+### Compiler
+- IR type checker: Bitstream/Rate/Spike mismatch detection before emission
+- SV/MLIR emission for GraphForward, SoftmaxAttention, KuramotoStep (was error stub)
+- Weight quantizer exported in compiler `__init__.py`
+
+### Hardware Stack
+- AXI-Stream interface for bulk bitstream I/O (`sc_axis_interface.v`)
+- DMA controller for weight upload and output readback (`sc_dma_controller.v`)
+- Parameterized AXI-Lite register file (`sc_axil_cfg_param.v`)
+- Clock domain crossing primitives: 2-FF sync, Gray counter, async FIFO (`sc_cdc_primitives.v`)
+- NEON scalar-equivalence tests (13 tests for popcount, dot, max, sum, scale)
+
+### Infrastructure
+- Rust engine wheel publishing in PyPI release workflow
+- SpikeInterface/Neo adapter for experimental data import
+- Static CycloneDX SBOM (v1.6)
+- JAX autodiff fix: straight-through estimator for spike reset
+- IIT added to typos allowlist
+
 ## [3.13.2] - 2026-03-19
 
 ### Equation → Verilog RTL Compiler

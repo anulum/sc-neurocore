@@ -14,6 +14,19 @@
         - from_nir
         - SCNetwork
         - SCSubgraphNode
+        - SCMultiPortSubgraphNode
+
+### Recurrent Edge Handling
+
+Graphs with cycles (feedback connections) are automatically handled by
+inserting unit-delay nodes on back edges. The delay node buffers the
+previous timestep's value, breaking algebraic loops while preserving
+temporal dynamics. See `_UnitDelayNode`.
+
+### Multi-Port Subgraphs
+
+Nested NIR graphs with multiple inputs/outputs use `SCMultiPortSubgraphNode`,
+which exposes `forward_multi(inputs_dict) → outputs_dict` for named I/O ports.
 
 ## Node Map
 

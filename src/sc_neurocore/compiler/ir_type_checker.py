@@ -107,16 +107,26 @@ def check_ir_types(
 
     for edge in edges:
         if edge.src not in nodes:
-            errors.append(IRTypeError(
-                edge.src, edge.dst, SignalType.ANY, SignalType.ANY,
-                f"Source node '{edge.src}' not found in graph",
-            ))
+            errors.append(
+                IRTypeError(
+                    edge.src,
+                    edge.dst,
+                    SignalType.ANY,
+                    SignalType.ANY,
+                    f"Source node '{edge.src}' not found in graph",
+                )
+            )
             continue
         if edge.dst not in nodes:
-            errors.append(IRTypeError(
-                edge.src, edge.dst, SignalType.ANY, SignalType.ANY,
-                f"Destination node '{edge.dst}' not found in graph",
-            ))
+            errors.append(
+                IRTypeError(
+                    edge.src,
+                    edge.dst,
+                    SignalType.ANY,
+                    SignalType.ANY,
+                    f"Destination node '{edge.dst}' not found in graph",
+                )
+            )
             continue
 
         src_node = nodes[edge.src]
@@ -124,21 +134,31 @@ def check_ir_types(
         src_type = src_node.output_type
 
         if edge.dst_port >= len(dst_node.input_types):
-            errors.append(IRTypeError(
-                edge.src, edge.dst, src_type, SignalType.ANY,
-                f"Port {edge.dst_port} out of range for '{edge.dst}' "
-                f"(has {len(dst_node.input_types)} inputs)",
-            ))
+            errors.append(
+                IRTypeError(
+                    edge.src,
+                    edge.dst,
+                    src_type,
+                    SignalType.ANY,
+                    f"Port {edge.dst_port} out of range for '{edge.dst}' "
+                    f"(has {len(dst_node.input_types)} inputs)",
+                )
+            )
             continue
 
         dst_type = dst_node.input_types[edge.dst_port]
 
         if not types_compatible(src_type, dst_type):
-            errors.append(IRTypeError(
-                edge.src, edge.dst, src_type, dst_type,
-                f"Type mismatch: {edge.src} outputs {src_type.name} "
-                f"but {edge.dst} port {edge.dst_port} expects {dst_type.name}. "
-                f"Insert a converter (encoder/decoder).",
-            ))
+            errors.append(
+                IRTypeError(
+                    edge.src,
+                    edge.dst,
+                    src_type,
+                    dst_type,
+                    f"Type mismatch: {edge.src} outputs {src_type.name} "
+                    f"but {edge.dst} port {edge.dst_port} expects {dst_type.name}. "
+                    f"Insert a converter (encoder/decoder).",
+                )
+            )
 
     return errors
