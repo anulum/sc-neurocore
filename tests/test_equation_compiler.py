@@ -205,3 +205,87 @@ class TestVerilogSyntax:
         )
         verilog = compile_to_verilog(neuron, data_width=32, fraction=16)
         assert "[31:0]" in verilog
+
+
+class TestTranscendentalFunctions:
+    def test_exp_compiles(self):
+        neuron = EquationNeuron(
+            equations={"v": "exp(-v / tau) + I"},
+            parameters={"tau": 10.0},
+            state={"v": 0.0},
+            dt=0.1,
+        )
+        verilog = compile_to_verilog(neuron, module_name="exp_neuron")
+        assert "module exp_neuron" in verilog
+        assert "_exp_lut" in verilog
+        assert "case" in verilog
+
+    def test_tanh_compiles(self):
+        neuron = EquationNeuron(
+            equations={"v": "tanh(I) - v"},
+            state={"v": 0.0},
+            dt=0.1,
+        )
+        verilog = compile_to_verilog(neuron, module_name="tanh_neuron")
+        assert "_tanh_lut" in verilog
+
+    def test_sigmoid_compiles(self):
+        neuron = EquationNeuron(
+            equations={"v": "sigmoid(v) * I"},
+            state={"v": 0.0},
+            dt=0.1,
+        )
+        verilog = compile_to_verilog(neuron, module_name="sig_neuron")
+        assert "_sigmoid_lut" in verilog
+
+    def test_sqrt_compiles(self):
+        neuron = EquationNeuron(
+            equations={"v": "sqrt(abs(I))"},
+            state={"v": 0.0},
+            dt=1.0,
+        )
+        verilog = compile_to_verilog(neuron, module_name="sqrt_neuron")
+        assert "_sqrt_lut" in verilog
+
+    def test_sin_cos_compile(self):
+        neuron = EquationNeuron(
+            equations={"v": "sin(v) + cos(I)"},
+            state={"v": 0.0},
+            dt=0.1,
+        )
+        verilog = compile_to_verilog(neuron, module_name="trig_neuron")
+        assert "_sin_lut" in verilog
+        assert "_cos_lut" in verilog
+
+    def test_abs_compiles(self):
+        neuron = EquationNeuron(
+            equations={"v": "abs(I - v)"},
+            state={"v": 0.0},
+            dt=1.0,
+        )
+        verilog = compile_to_verilog(neuron, module_name="abs_neuron")
+        assert "?" in verilog  # ternary operator from abs
+
+    def test_hodgkin_huxley_gating_compiles(self):
+        """The HH alpha_m function uses exp — this was the blocking case."""
+        neuron = EquationNeuron(
+            equations={"v": "-(v - E_L) / tau + 4 * exp(-(v + 65) / 18)"},
+            parameters={"E_L": -65.0, "tau": 10.0},
+            state={"v": -65.0},
+            dt=0.01,
+        )
+        verilog = compile_to_verilog(neuron, module_name="hh_gating")
+        assert "module hh_gating" in verilog
+        assert "_exp_lut" in verilog
+        assert "endmodule" in verilog
+
+    def test_unsupported_function_raises(self):
+        import pytest
+
+        neuron = EquationNeuron(
+            equations={"v": "cosh(v)"},
+            state={"v": 0.0},
+            dt=1.0,
+        )
+        with pytest.raises(ValueError, match="cosh"):
+            compile_to_verilog(neuron)
