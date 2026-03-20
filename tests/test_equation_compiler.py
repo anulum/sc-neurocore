@@ -389,6 +389,16 @@ class TestTranscendentalFunctions:
         assert entries[0] < 5  # sigmoid(-8) ≈ 0
         assert entries[15] > 250  # sigmoid(7) ≈ 1
 
+    def test_saturating_arithmetic(self):
+        _, verilog = equation_to_fpga(
+            "dv/dt = I",
+            init={"v": 0.0},
+            module_name="sat_check",
+        )
+        assert "v_raw" in verilog
+        assert "32767" in verilog
+        assert "-32768" in verilog
+
     def test_unsupported_function_raises(self):
         import pytest
 
@@ -399,3 +409,67 @@ class TestTranscendentalFunctions:
         )
         with pytest.raises(ValueError, match="cosh"):
             compile_to_verilog(neuron)
+
+
+class TestEdgeCaseCoverage:
+    """Tests for error branches and edge cases."""
+
+    def test_power_4_raises(self):
+        import pytest
+
+        neuron = EquationNeuron(
+            equations={"v": "v**4"},
+            state={"v": 1.0},
+            dt=0.1,
+        )
+        with pytest.raises(ValueError, match="Only integer powers"):
+            compile_to_verilog(neuron)
+
+    def test_unary_plus(self):
+        neuron = EquationNeuron(
+            equations={"v": "+I"},
+            state={"v": 0.0},
+            dt=1.0,
+        )
+        verilog = compile_to_verilog(neuron, module_name="uadd")
+        assert "module uadd" in verilog
+
+    def test_less_than_comparison(self):
+        neuron = EquationNeuron(
+            equations={"v": "I"},
+            state={"v": 0.0},
+            threshold="v < 10",
+            dt=1.0,
+        )
+        verilog = compile_to_verilog(neuron, module_name="lt_cmp")
+        assert "<" in verilog
+
+    def test_less_equal_comparison(self):
+        neuron = EquationNeuron(
+            equations={"v": "I"},
+            state={"v": 0.0},
+            threshold="v <= 10",
+            dt=1.0,
+        )
+        verilog = compile_to_verilog(neuron, module_name="lte_cmp")
+        assert "<=" in verilog
+
+    def test_unknown_name_passthrough(self):
+        """Unknown names pass through as-is (for external signals)."""
+        neuron = EquationNeuron(
+            equations={"v": "external_signal + I"},
+            state={"v": 0.0},
+            dt=1.0,
+        )
+        verilog = compile_to_verilog(neuron, module_name="ext_sig")
+        assert "external_signal" in verilog
+
+    def test_runtime_division(self):
+        """Division by non-constant produces raw Verilog division."""
+        neuron = EquationNeuron(
+            equations={"v": "I / v"},
+            state={"v": 1.0},
+            dt=0.1,
+        )
+        verilog = compile_to_verilog(neuron, module_name="rt_div")
+        assert "/" in verilog
