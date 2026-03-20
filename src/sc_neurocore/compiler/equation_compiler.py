@@ -361,10 +361,19 @@ def compile_to_verilog(
             f"wire signed [{data_width - 1}:0] {deriv_name} = ({dt_tmp} >>> {fraction})[{data_width - 1}:0];"
         )
 
-    # Next-state computation
+    # Next-state computation with saturation
+    max_val = (1 << (data_width - 1)) - 1  # e.g. 32767 for 16-bit
+    min_val = -(1 << (data_width - 1))  # e.g. -32768 for 16-bit
     next_wires: list[str] = []
     for var in neuron.equations:
-        next_wires.append(f"wire signed [{data_width - 1}:0] {var}_next = {var}_reg + d{var};")
+        raw = f"{var}_raw"
+        next_wires.append(f"wire signed [{data_width}:0] {raw} = {var}_reg + d{var};")
+        next_wires.append(
+            f"wire signed [{data_width - 1}:0] {var}_next = "
+            f"({raw} > {data_width + 1}'sd{max_val}) ? {data_width}'sd{max_val} : "
+            f"({raw} < {data_width + 1}'sd{min_val}) ? {data_width}'sd{min_val} : "
+            f"{raw}[{data_width - 1}:0];"
+        )
 
     # Threshold expression
     threshold_verilog = ""
