@@ -83,7 +83,7 @@ class RallDendrite:
         self.v *= self._decay
 
         # Inject input at distal tip (last compartment)
-        self.v[:, -1] += branch_inputs[:self.n_branches] * self.dt / self.tau
+        self.v[:, -1] += branch_inputs[: self.n_branches] * self.dt / self.tau
 
         # Propagate along branch: distal → proximal (toward soma)
         for k in range(self.branch_length - 1, 0, -1):

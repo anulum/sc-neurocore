@@ -7,7 +7,6 @@
 
 """Tests for TripartiteSynapse (astrocyte ↔ synapse coupling)."""
 
-
 from sc_neurocore.synapses.tripartite import TripartiteSynapse
 
 
@@ -37,8 +36,11 @@ class TestTripartiteSynapse:
     def test_facilitation_increases_weight(self):
         """When astrocyte Ca exceeds threshold, weight should increase."""
         syn = TripartiteSynapse(
-            base_weight=0.3, glut_per_spike=10.0, ca_threshold=0.005,
-            facilitation=5.0, w_max=1.0,
+            base_weight=0.3,
+            glut_per_spike=10.0,
+            ca_threshold=0.005,
+            facilitation=5.0,
+            w_max=1.0,
         )
         for _ in range(1000):
             syn.step(pre_spike=True, post_spike=False, dt=0.01)
@@ -56,8 +58,11 @@ class TestTripartiteSynapse:
     def test_weight_bounds(self):
         """Weight should stay in [w_min, w_max]."""
         syn = TripartiteSynapse(
-            facilitation=100.0, glut_per_spike=50.0, ca_threshold=0.01,
-            w_min=0.0, w_max=1.0,
+            facilitation=100.0,
+            glut_per_spike=50.0,
+            ca_threshold=0.01,
+            w_min=0.0,
+            w_max=1.0,
         )
         for _ in range(2000):
             syn.step(pre_spike=True, post_spike=False, dt=0.01)

@@ -28,9 +28,7 @@ class TestPredictiveCodingSCLayer:
 
     def test_error_decreases_with_learning(self):
         """Repeated exposure to same input should reduce prediction error."""
-        layer = PredictiveCodingSCLayer(
-            n_inputs=3, n_neurons=2, length=256, lr=0.1, seed=42
-        )
+        layer = PredictiveCodingSCLayer(n_inputs=3, n_neurons=2, length=256, lr=0.1, seed=42)
         inputs = [0.3, 0.5, 0.7]
         errors = []
         for _ in range(20):
@@ -41,9 +39,7 @@ class TestPredictiveCodingSCLayer:
 
     def test_high_surprise_on_novel_input(self):
         """Novel input after learning should produce higher surprise."""
-        layer = PredictiveCodingSCLayer(
-            n_inputs=2, n_neurons=2, length=512, lr=0.2, seed=42
-        )
+        layer = PredictiveCodingSCLayer(n_inputs=2, n_neurons=2, length=512, lr=0.2, seed=42)
         # Train on one pattern
         for _ in range(30):
             layer.forward([0.8, 0.2])
@@ -62,9 +58,7 @@ class TestPredictiveCodingSCLayer:
 
     def test_weights_stay_bounded(self):
         """Weights should remain in [0, 1] after learning."""
-        layer = PredictiveCodingSCLayer(
-            n_inputs=3, n_neurons=2, length=128, lr=0.5, seed=42
-        )
+        layer = PredictiveCodingSCLayer(n_inputs=3, n_neurons=2, length=128, lr=0.5, seed=42)
         for _ in range(50):
             layer.forward([0.9, 0.9, 0.9])
         assert np.all(layer.weights >= 0.0)
@@ -72,9 +66,7 @@ class TestPredictiveCodingSCLayer:
 
     def test_zero_input_low_error_after_learning(self):
         """Learning all-zero input should converge to near-zero predictions."""
-        layer = PredictiveCodingSCLayer(
-            n_inputs=2, n_neurons=1, length=512, lr=0.2, seed=42
-        )
+        layer = PredictiveCodingSCLayer(n_inputs=2, n_neurons=1, length=512, lr=0.2, seed=42)
         for _ in range(30):
             layer.forward([0.0, 0.0])
         result = layer.forward([0.0, 0.0])
@@ -90,9 +82,7 @@ class TestPredictiveCodingSCLayer:
 
     def test_xor_is_zero_multiplication(self):
         """Verify the XOR operation: error between identical streams should be ~0."""
-        layer = PredictiveCodingSCLayer(
-            n_inputs=1, n_neurons=1, length=1024, lr=0.0, seed=42
-        )
+        layer = PredictiveCodingSCLayer(n_inputs=1, n_neurons=1, length=1024, lr=0.0, seed=42)
         # Set weight to match input exactly
         layer.weights[0, 0] = 0.5
         result = layer.forward([0.5])

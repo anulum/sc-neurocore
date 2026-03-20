@@ -7,7 +7,6 @@
 
 """Tests for BCM synapse with sliding threshold."""
 
-
 from sc_neurocore.synapses.bcm import BCMSynapse
 
 

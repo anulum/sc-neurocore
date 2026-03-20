@@ -69,7 +69,7 @@ class TestBitFlipDegradation:
             bits = q_val
             for bit_pos in range(16):
                 if np.random.random() < error_rate:
-                    bits ^= (1 << bit_pos)
+                    bits ^= 1 << bit_pos
             # Interpret as signed Q8.8
             if bits >= 32768:
                 bits -= 65536
@@ -127,9 +127,7 @@ class TestHardwareAwareFaultResilience:
 
     def test_stuck_synapses_dont_degrade_output(self):
         """Network with stuck synapses should still produce valid output."""
-        layer = HardwareAwareSCLayer(
-            n_inputs=8, n_neurons=4, length=128, stuck_rate=0.2, seed=42
-        )
+        layer = HardwareAwareSCLayer(n_inputs=8, n_neurons=4, length=128, stuck_rate=0.2, seed=42)
         out = layer.forward([0.5] * 8)
         assert out.shape == (4,)
         assert np.all(np.isfinite(out))
