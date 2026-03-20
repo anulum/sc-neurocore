@@ -1,0 +1,107 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later | Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Tests for weight quantizer
+
+"""Tests for quantizer: float weights → Q-format fixed-point → SC probabilities."""
+
+import numpy as np
+import pytest
+
+from sc_neurocore.compiler.quantizer import (
+    QFormat,
+    quantize_weights,
+    dequantize_weights,
+    q_weights_to_sc_probabilities,
+    quantization_error,
+)
+
+
+class TestQFormat:
+    def test_parse_q88(self):
+        q = QFormat.from_string("Q8.8")
+        assert q.integer_bits == 8
+        assert q.fraction_bits == 8
+        assert q.total_bits == 16
+        assert q.scale == 256
+
+    def test_parse_q4_12(self):
+        q = QFormat.from_string("Q4.12")
+        assert q.total_bits == 16
+        assert q.scale == 4096
+
+    def test_range_q88(self):
+        q = QFormat.from_string("Q8.8")
+        assert q.min_val == -128.0
+        assert q.max_val == pytest.approx(127.99609375)
+
+    def test_invalid_format_raises(self):
+        with pytest.raises(ValueError, match="Expected format"):
+            QFormat.from_string("float32")
+
+
+class TestQuantizeWeights:
+    def test_roundtrip_identity(self):
+        w = np.array([0.0, 0.5, 1.0, -1.0, -0.5])
+        q = quantize_weights(w, fmt="Q8.8")
+        r = dequantize_weights(q, fmt="Q8.8")
+        np.testing.assert_allclose(r, w, atol=1 / 256)
+
+    def test_nearest_rounding(self):
+        w = np.array([0.501953125])  # 128.5 / 256 — rounds to 129
+        q = quantize_weights(w, fmt="Q8.8", rounding="nearest")
+        assert q[0] == 129
+
+    def test_floor_rounding(self):
+        w = np.array([0.501953125])
+        q = quantize_weights(w, fmt="Q8.8", rounding="floor")
+        assert q[0] == 128
+
+    def test_stochastic_rounding_average(self):
+        np.random.seed(42)
+        w = np.array([0.501953125] * 10000)
+        q = quantize_weights(w, fmt="Q8.8", rounding="stochastic")
+        # Stochastic: half round up, half round down on average
+        assert 128 < q.mean() < 129
+
+    def test_clipping(self):
+        w = np.array([200.0, -200.0])
+        q = quantize_weights(w, fmt="Q8.8", clip=True)
+        assert q[0] == 32767  # max Q8.8
+        assert q[1] == -32768  # min Q8.8
+
+    def test_invalid_rounding_raises(self):
+        with pytest.raises(ValueError, match="Unknown rounding"):
+            quantize_weights(np.array([1.0]), rounding="random")
+
+
+class TestSCProbabilities:
+    def test_zero_maps_to_half(self):
+        q = quantize_weights(np.array([0.0]), fmt="Q8.8")
+        p = q_weights_to_sc_probabilities(q, fmt="Q8.8")
+        np.testing.assert_allclose(p[0], 0.5, atol=0.001)
+
+    def test_range_zero_one(self):
+        w = np.linspace(-10, 10, 100)
+        q = quantize_weights(w, fmt="Q8.8")
+        p = q_weights_to_sc_probabilities(q, fmt="Q8.8")
+        assert np.all(p >= 0.0)
+        assert np.all(p <= 1.0)
+
+
+class TestQuantizationError:
+    def test_error_stats(self):
+        w = np.random.randn(100)
+        stats = quantization_error(w, fmt="Q8.8")
+        assert stats["max_abs_error"] < 1 / 256 + 1e-9
+        assert stats["mean_abs_error"] < 1 / 256
+        assert stats["rmse"] > 0
+        assert stats["snr_db"] > 30  # good SNR for Q8.8
+
+    def test_higher_precision_lower_error(self):
+        w = np.random.randn(100)
+        e88 = quantization_error(w, fmt="Q8.8")
+        e412 = quantization_error(w, fmt="Q4.12")
+        assert e412["rmse"] < e88["rmse"]
