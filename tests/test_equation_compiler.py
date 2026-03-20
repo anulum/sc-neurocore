@@ -279,6 +279,116 @@ class TestTranscendentalFunctions:
         assert "_exp_lut" in verilog
         assert "endmodule" in verilog
 
+    def test_log_compiles(self):
+        neuron = EquationNeuron(
+            equations={"v": "log(abs(v) + 0.01)"},
+            state={"v": 1.0},
+            dt=0.1,
+        )
+        verilog = compile_to_verilog(neuron, module_name="log_neuron")
+        assert "_log_lut" in verilog
+
+    def test_clip_three_args(self):
+        neuron = EquationNeuron(
+            equations={"v": "clip(I, -1.0, 1.0)"},
+            state={"v": 0.0},
+            dt=1.0,
+        )
+        verilog = compile_to_verilog(neuron, module_name="clip_neuron")
+        assert "?" in verilog
+
+    def test_max_two_args(self):
+        neuron = EquationNeuron(
+            equations={"v": "max(I, 0.0)"},
+            state={"v": 0.0},
+            dt=1.0,
+        )
+        verilog = compile_to_verilog(neuron, module_name="max_neuron")
+        assert "?" in verilog
+
+    def test_min_two_args(self):
+        neuron = EquationNeuron(
+            equations={"v": "min(I, 1.0)"},
+            state={"v": 0.0},
+            dt=1.0,
+        )
+        verilog = compile_to_verilog(neuron, module_name="min_neuron")
+        assert "?" in verilog
+
+    def test_sigmoid_alias_expit(self):
+        neuron = EquationNeuron(
+            equations={"v": "sigmoid(v)"},
+            state={"v": 0.0},
+            dt=0.1,
+        )
+        verilog = compile_to_verilog(neuron, module_name="expit_neuron")
+        assert "_sigmoid_lut" in verilog
+
+    def test_nested_transcendentals(self):
+        """exp(tanh(v)) — nested function calls."""
+        neuron = EquationNeuron(
+            equations={"v": "exp(tanh(v)) + I"},
+            state={"v": 0.0},
+            dt=0.1,
+        )
+        verilog = compile_to_verilog(neuron, module_name="nested_neuron")
+        assert "_exp_lut" in verilog
+        assert "_tanh_lut" in verilog
+
+    def test_all_lut_entries_are_integers(self):
+        """Verify all LUT helper methods return integer lists."""
+        from sc_neurocore.compiler.equation_compiler import _VerilogExprEmitter, Q88
+
+        q = Q88()
+        emitter = _VerilogExprEmitter(set(), {}, q)
+        for method in [
+            emitter._exp_lut_entries,
+            emitter._log_lut_entries,
+            emitter._sqrt_lut_entries,
+            emitter._tanh_lut_entries,
+            emitter._sigmoid_lut_entries,
+            emitter._sin_lut_entries,
+            emitter._cos_lut_entries,
+        ]:
+            entries = method()
+            assert len(entries) == 16
+            assert all(isinstance(e, int) for e in entries)
+
+    def test_lut_exp_boundary_values(self):
+        """exp(-8) ≈ 0, exp(0) = 256 in Q8.8, exp(7) capped at 32767."""
+        from sc_neurocore.compiler.equation_compiler import _VerilogExprEmitter, Q88
+
+        q = Q88()
+        emitter = _VerilogExprEmitter(set(), {}, q)
+        entries = emitter._exp_lut_entries()
+        assert entries[0] < 1  # exp(-8) ≈ 0.000335 → 0 in Q8.8
+        assert entries[8] == 256  # exp(0) = 1.0 → 256 in Q8.8
+        assert entries[15] == 32767  # exp(7) capped
+
+    def test_lut_tanh_symmetry(self):
+        """tanh is odd: tanh(-x) = -tanh(x)."""
+        from sc_neurocore.compiler.equation_compiler import _VerilogExprEmitter, Q88
+
+        q = Q88()
+        emitter = _VerilogExprEmitter(set(), {}, q)
+        entries = emitter._tanh_lut_entries()
+        # tanh(-8) ≈ -1.0 → -256, tanh(7) ≈ 1.0 → 256
+        assert entries[0] < 0
+        assert entries[15] > 0
+        # Approximate symmetry around index 8 (x=0)
+        assert abs(entries[8]) < 5  # tanh(0) ≈ 0
+
+    def test_lut_sigmoid_range(self):
+        """sigmoid output in [0, 1] → [0, 256] in Q8.8."""
+        from sc_neurocore.compiler.equation_compiler import _VerilogExprEmitter, Q88
+
+        q = Q88()
+        emitter = _VerilogExprEmitter(set(), {}, q)
+        entries = emitter._sigmoid_lut_entries()
+        assert all(0 <= e <= 256 for e in entries)
+        assert entries[0] < 5  # sigmoid(-8) ≈ 0
+        assert entries[15] > 250  # sigmoid(7) ≈ 1
+
     def test_unsupported_function_raises(self):
         import pytest
 
