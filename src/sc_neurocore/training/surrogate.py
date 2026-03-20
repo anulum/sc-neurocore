@@ -20,7 +20,7 @@ from torch.autograd import Function
 
 
 class _FastSigmoid(Function):
-    """Zenke & Ganguli 2018, Eq. 11."""
+    """Zenke & Vogels 2021 (normalized variant). slope / (1 + slope|x|)^2."""
 
     @staticmethod
     def forward(ctx, x: torch.Tensor, slope: float) -> torch.Tensor:
@@ -36,7 +36,7 @@ class _FastSigmoid(Function):
 
 
 class _SuperSpike(Function):
-    """Zenke & Vogels 2021."""
+    """Zenke & Ganguli 2018 (unnormalized). 1 / (1 + beta|x|)^2."""
 
     @staticmethod
     def forward(ctx, x: torch.Tensor, beta: float) -> torch.Tensor:
