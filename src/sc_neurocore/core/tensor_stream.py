@@ -47,11 +47,10 @@ class TensorStream:
     def to_quantum(self) -> np.ndarray[Any, Any]:
         if self.domain == "quantum":
             return self.data
-        p = self.to_prob()
-        # Map p to state vector: cos(theta/2)|0> + sin(theta/2)|1>
-        # theta = p * pi
-        theta = p * np.pi
-        alpha = np.cos(theta / 2.0)
-        beta = np.sin(theta / 2.0)
-        # Result: (..., 2) complex array
+        p = np.clip(self.to_prob(), 0.0, 1.0)
+        # Amplitude encoding: |psi> = sqrt(1-p)|0> + sqrt(p)|1>
+        # Measurement P(|1>) = |beta|^2 = p — preserves SC probability exactly.
+        # Matches CategoryTheoryBridge.stochastic_to_quantum().
+        alpha = np.sqrt(1.0 - p)
+        beta = np.sqrt(p)
         return np.stack([alpha, beta], axis=-1).astype(complex)
