@@ -539,8 +539,47 @@ class TestFileIO:
 
 
 class TestExport:
-    def test_to_nir_not_implemented(self):
+    def test_roundtrip_lif_affine(self):
+        from sc_neurocore.nir_bridge import from_nir, to_nir
+
+        graph = _make_lif_affine_graph(n_in=3, n_out=2)
+        network = from_nir(graph)
+        exported = to_nir(network)
+        assert isinstance(exported, nir.NIRGraph)
+        assert len(exported.nodes) == 4
+        assert len(exported.edges) == 3
+        assert isinstance(exported.nodes["lif"], nir.LIF)
+        assert isinstance(exported.nodes["affine"], nir.Affine)
+
+    def test_roundtrip_file_io(self, local_tmp_path):
+        from sc_neurocore.nir_bridge import from_nir, to_nir
+
+        graph = _make_lif_affine_graph()
+        network = from_nir(graph)
+        path = local_tmp_path / "exported.nir"
+        to_nir(network, path=str(path))
+        assert path.exists()
+        reloaded = from_nir(str(path))
+        assert len(reloaded.nodes) == 4
+
+    def test_export_type_error(self):
         from sc_neurocore.nir_bridge import to_nir
 
-        with pytest.raises(NotImplementedError, match="Phase 3"):
-            to_nir(None)
+        with pytest.raises(TypeError, match="Expected SCNetwork"):
+            to_nir("not a network")
+
+    def test_export_linear_chain(self):
+        from sc_neurocore.nir_bridge import from_nir, to_nir
+
+        nodes = {
+            "input": nir.Input(input_type={"input": np.array([2])}),
+            "linear": nir.Linear(weight=np.eye(2, dtype=np.float32)),
+            "scale": nir.Scale(scale=np.array([2.0, 2.0])),
+            "output": nir.Output(output_type={"output": np.array([2])}),
+        }
+        edges = [("input", "linear"), ("linear", "scale"), ("scale", "output")]
+        graph = nir.NIRGraph(nodes=nodes, edges=edges)
+        network = from_nir(graph)
+        exported = to_nir(network)
+        assert isinstance(exported.nodes["linear"], nir.Linear)
+        assert isinstance(exported.nodes["scale"], nir.Scale)
