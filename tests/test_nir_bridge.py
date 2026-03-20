@@ -38,7 +38,7 @@ from sc_neurocore.nir_bridge.node_map import (
     SCOutputNode,
     map_node,
 )
-from sc_neurocore.nir_bridge.parser import SCNetwork, SCSubgraphNode
+from sc_neurocore.nir_bridge.parser import SCNetwork, SCSubgraphNode, _UnitDelayNode
 
 
 @pytest.fixture
@@ -333,10 +333,71 @@ class TestGraphParsing:
         assert "SCLIFNode" in s
         assert "SCAffineNode" in s
 
-    def test_cycle_raises_value_error(self):
-        net = SCNetwork(nodes={"a": object(), "b": object()}, edges=[("a", "b"), ("b", "a")])
-        with pytest.raises(ValueError, match="cycle"):
-            _ = net.topo_order
+    def test_cycle_inserts_delay_node(self):
+        """Recurrent edges should be broken by implicit delay nodes."""
+        node_a = SCInputNode(name="a", shape=(1,))
+        node_b = SCOutputNode(name="b", shape=(1,))
+        net = SCNetwork(
+            nodes={"a": node_a, "b": node_b},
+            edges=[("a", "b"), ("b", "a")],
+            input_nodes=["a"],
+            output_nodes=["b"],
+        )
+        order = net.topo_order
+        assert len(order) == 3  # a, b, + 1 delay node
+        delay_names = [n for n in order if n.startswith("_delay_")]
+        assert len(delay_names) == 1
+        assert isinstance(net.nodes[delay_names[0]], _UnitDelayNode)
+
+    def test_recurrent_network_runs(self):
+        """A network with feedback via scale node executes across timesteps."""
+        # input → scale → output, with scale → scale self-recurrence
+        input_node = SCInputNode(name="input", shape=(1,))
+        scale_node = SCScaleNode(name="scale", scale=np.array([0.5]))
+        output_node = SCOutputNode(name="output", shape=(1,))
+        net = SCNetwork(
+            nodes={"input": input_node, "scale": scale_node, "output": output_node},
+            edges=[("input", "scale"), ("scale", "output"), ("scale", "scale")],
+            input_nodes=["input"],
+            output_nodes=["output"],
+        )
+        results = net.run({"input": np.array([1.0])}, steps=5)
+        assert "output" in results
+        assert len(results["output"]) == 5
+        # Step 0: scale gets input=1.0, delay feedback=0.0 → output = 0.5*1.0 = 0.5
+        np.testing.assert_allclose(results["output"][0], [0.5], atol=1e-10)
+        # Step 1: scale gets input=1.0 + delay=0.5 → output = 0.5*1.5 = 0.75
+        np.testing.assert_allclose(results["output"][1], [0.75], atol=1e-10)
+
+    def test_recurrent_reset_clears_delay(self):
+        """Reset should clear delay node buffers."""
+        scale_node = SCScaleNode(name="s", scale=np.array([1.0]))
+        net = SCNetwork(
+            nodes={"s": scale_node},
+            edges=[("s", "s")],
+            input_nodes=[],
+            output_nodes=[],
+        )
+        _ = net.topo_order  # trigger delay insertion
+        delay_names = [n for n in net.nodes if n.startswith("_delay_")]
+        assert len(delay_names) == 1
+        # Force a buffer value
+        net.nodes[delay_names[0]].update_buffer(np.array([5.0]))
+        net.reset()
+        assert net.nodes[delay_names[0]]._buffer is None
+
+    def test_summary_shows_recurrent(self):
+        """Summary should mention recurrent connections."""
+        scale_node = SCScaleNode(name="s", scale=np.array([1.0]))
+        net = SCNetwork(
+            nodes={"s": scale_node},
+            edges=[("s", "s")],
+            input_nodes=[],
+            output_nodes=[],
+        )
+        _ = net.topo_order
+        s = net.summary()
+        assert "recurrent" in s
 
     def test_nested_subgraph_requires_single_io(self):
         inner = SCNetwork(

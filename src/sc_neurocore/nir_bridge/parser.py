@@ -22,6 +22,30 @@ from .node_map import map_node
 
 
 @dataclass
+class _UnitDelayNode:
+    """Implicit unit-delay inserted on recurrent (back) edges.
+
+    Acts as a DAG source: outputs the previous timestep's buffered value.
+    Buffer is updated externally by SCNetwork.step() after execution.
+    """
+
+    name: str
+    _buffer: np.ndarray | None = None
+
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        if self._buffer is None:
+            x = np.atleast_1d(np.asarray(x, dtype=np.float64))
+            self._buffer = np.zeros_like(x)
+        return self._buffer.copy()
+
+    def update_buffer(self, value: np.ndarray) -> None:
+        self._buffer = np.atleast_1d(np.asarray(value, dtype=np.float64)).copy()
+
+    def reset(self):
+        self._buffer = None
+
+
+@dataclass
 class SCSubgraphNode:
     """Executable wrapper for a nested NIR subgraph."""
 
@@ -47,6 +71,9 @@ class SCNetwork:
     Nodes are stored by name. Edges define the forward pass order.
     Calling ``run()`` feeds input through the graph for the given
     number of timesteps and returns the output node's accumulated result.
+
+    Recurrent edges (cycles) are automatically handled by inserting
+    unit-delay nodes that feed from the previous timestep.
     """
 
     nodes: dict[str, Any] = field(default_factory=dict)
@@ -54,9 +81,53 @@ class SCNetwork:
     input_nodes: list[str] = field(default_factory=list)
     output_nodes: list[str] = field(default_factory=list)
     _topo_order: list[str] | None = None
+    # Maps delay_node_name → source_node_name for recurrent connections
+    _recurrent_map: dict[str, str] = field(default_factory=dict)
+
+    def _find_back_edges(self) -> list[tuple[str, str]]:
+        """DFS-based back-edge detection."""
+        WHITE, GRAY, BLACK = 0, 1, 2
+        color: dict[str, int] = {n: WHITE for n in self.nodes}
+        adj: dict[str, list[str]] = {n: [] for n in self.nodes}
+        for src, dst in self.edges:
+            adj[src].append(dst)
+
+        back_edges: list[tuple[str, str]] = []
+
+        def dfs(u: str) -> None:
+            color[u] = GRAY
+            for v in adj[u]:
+                if v not in color:
+                    continue
+                if color[v] == GRAY:
+                    back_edges.append((u, v))
+                elif color[v] == WHITE:
+                    dfs(v)
+            color[u] = BLACK
+
+        for n in self.nodes:
+            if color[n] == WHITE:
+                dfs(n)
+        return back_edges
+
+    def _break_cycles(self) -> None:
+        """Replace back edges with unit-delay source nodes."""
+        back_edges = self._find_back_edges()
+        if not back_edges:
+            return
+
+        for src, dst in back_edges:
+            delay_name = f"_delay_{src}_to_{dst}"
+            self.edges.remove((src, dst))
+            # Delay node is a DAG source (no incoming edges) — feeds dst
+            self.nodes[delay_name] = _UnitDelayNode(name=delay_name)
+            self.edges.append((delay_name, dst))
+            self._recurrent_map[delay_name] = src
 
     def _topological_sort(self) -> list[str]:
-        """Kahn's algorithm on the edge list."""
+        """Kahn's algorithm with automatic cycle breaking via delay nodes."""
+        self._break_cycles()
+
         adj: dict[str, list[str]] = {n: [] for n in self.nodes}
         in_deg: dict[str, int] = {n: 0 for n in self.nodes}
         for src, dst in self.edges:
@@ -74,7 +145,7 @@ class SCNetwork:
                     queue.append(nxt)
 
         if len(order) != len(self.nodes):
-            raise ValueError("NIR graph contains a cycle")
+            raise ValueError("NIR graph contains a cycle that cannot be broken by delay insertion")
         return order
 
     @property
@@ -102,8 +173,10 @@ class SCNetwork:
             if name in self.input_nodes:
                 x = inputs.get(name, np.array([0.0]))
                 values[name] = node.forward(x)
+            elif isinstance(node, _UnitDelayNode):
+                # Delay nodes are sources — forward() returns buffered value
+                values[name] = node.forward(np.array([0.0]))
             else:
-                # Gather inputs from all predecessor edges
                 predecessors = [src for src, dst in self.edges if dst == name]
                 if len(predecessors) == 1:
                     x = values[predecessors[0]]
@@ -112,6 +185,11 @@ class SCNetwork:
                 else:
                     x = np.array([0.0])
                 values[name] = node.forward(x)
+
+        # Update delay buffers with this timestep's source values
+        for delay_name, src_name in self._recurrent_map.items():
+            if src_name in values:
+                self.nodes[delay_name].update_buffer(values[src_name])
 
         return {name: values[name] for name in self.output_nodes if name in values}
 
@@ -146,6 +224,8 @@ class SCNetwork:
         for name in self.topo_order:
             node = self.nodes[name]
             lines.append(f"  {name}: {type(node).__name__}")
+        if self._recurrent_map:
+            lines.append(f"  recurrent: {list(self._recurrent_map.values())}")
         lines.append(f"  inputs: {self.input_nodes}")
         lines.append(f"  outputs: {self.output_nodes}")
         return "\n".join(lines)
