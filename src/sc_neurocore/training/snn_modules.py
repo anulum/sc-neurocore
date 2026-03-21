@@ -624,9 +624,13 @@ class ConvSpikingNet(nn.Module):
 
         return spike_sum, mem_sum
 
-    def to_sc_weights(self) -> List[torch.Tensor]:
-        """Export weight matrices normalized to [0,1] for SC bitstream deployment."""
-        weights = []
+    def to_sc_weights(self, include_bias: bool = True) -> List[dict]:
+        """Export weight matrices normalized to [0,1] for SC bitstream deployment.
+
+        Returns list of dicts with "weight" and optionally "bias" keys,
+        matching SpikingNet.to_sc_weights() format.
+        """
+        layers = []
         for mod in [self.conv1, self.conv2, self.fc1, self.fc2]:
             w = (
                 mod.weight.detach().flatten(1)
@@ -638,8 +642,11 @@ class ConvSpikingNet(nn.Module):
                 w = (w - w_min) / (w_max - w_min)
             else:
                 w = torch.zeros_like(w)
-            weights.append(w)
-        return weights
+            entry: dict = {"weight": w}
+            if include_bias and mod.bias is not None:
+                entry["bias"] = mod.bias.detach()
+            layers.append(entry)
+        return layers
 
 
 def _logit(p: float) -> float:

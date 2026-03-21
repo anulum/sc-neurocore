@@ -82,6 +82,9 @@ class EquationNeuron:
         self.dt = dt
         self.method = method
 
+        def _sigmoid(x):
+            return 1.0 / (1.0 + np.exp(-np.clip(x, -500, 500)))
+
         self._namespace = {
             "exp": np.exp,
             "log": np.log,
@@ -92,11 +95,13 @@ class EquationNeuron:
             "tanh": np.tanh,
             "cosh": np.cosh,
             "sinh": np.sinh,
+            "sigmoid": _sigmoid,
             "pi": math.pi,
             "clip": np.clip,
             "max": max,
             "min": min,
         }
+        self._noise_scale = np.sqrt(self.dt)
 
         all_exprs = list(self.equations.values()) + list(self.reset_rules.values())
         if self.threshold_expr:
@@ -184,6 +189,8 @@ class EquationNeuron:
 
     def _build_env(self, **kwargs):
         env = dict(self._namespace)
+        # Fresh noise each call (Euler-Maruyama SDE scheme)
+        env["xi"] = self._noise_scale * np.random.randn()
         env.update(self.parameters)
         env.update(self.constants)
         env.update(self.state)

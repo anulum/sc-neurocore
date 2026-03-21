@@ -81,6 +81,32 @@ class SpikeMonitor:
         self._records.clear()
 
 
+def model_info(model: nn.Module) -> dict:
+    """Quick architecture summary for SNN models."""
+    n_params = sum(p.numel() for p in model.parameters())
+    n_trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+    cell_types = set()
+    n_lif_cells = 0
+    for m in model.modules():
+        if hasattr(m, "surrogate_fn"):
+            cell_types.add(type(m).__name__)
+            n_lif_cells += 1
+
+    learnable_dynamics = []
+    for name, _p in model.named_parameters():
+        if "beta_logit" in name or "threshold_log" in name:
+            learnable_dynamics.append(name)
+
+    return {
+        "total_params": n_params,
+        "trainable_params": n_trainable,
+        "spiking_cells": n_lif_cells,
+        "cell_types": sorted(cell_types),
+        "learnable_dynamics": learnable_dynamics,
+    }
+
+
 def population_decode(
     spike_counts: torch.Tensor,
     preferred_values: torch.Tensor | None = None,
