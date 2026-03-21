@@ -29,7 +29,7 @@ if HAS_TORCH:
         spike_rate_loss,
     )
     from .loops import auto_device, evaluate, train_epoch
-    from .utils import SpikeMonitor, population_decode, reset_states
+    from .utils import SpikeMonitor, model_info, population_decode, reset_states
     from .snn_modules import (
         ALIFCell,
         ConvSpikingNet,
@@ -81,6 +81,7 @@ __all__ = [
     "evaluate",
     # Utilities
     "SpikeMonitor",
+    "model_info",
     "population_decode",
     "reset_states",
 ]

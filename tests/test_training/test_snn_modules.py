@@ -319,9 +319,10 @@ class TestConvSpikingNet:
         net = ConvSpikingNet(n_output=3)
         weights = net.to_sc_weights()
         assert len(weights) == 4  # conv1, conv2, fc1, fc2
-        for w in weights:
-            assert w.min() >= 0.0
-            assert w.max() <= 1.0
+        for entry in weights:
+            assert "weight" in entry
+            assert entry["weight"].min() >= 0.0
+            assert entry["weight"].max() <= 1.0
 
     def test_learnable_params(self):
         net = ConvSpikingNet(n_output=5, learn_beta=True, learn_threshold=True)
