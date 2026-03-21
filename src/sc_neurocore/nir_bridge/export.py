@@ -17,17 +17,24 @@ except ImportError as e:
     raise ImportError("pip install nir") from e
 
 from .node_map import (
-    SCInputNode,
-    SCOutputNode,
-    SCLIFNode,
-    SCIFNode,
-    SCLINode,
-    SCIntegratorNode,
     SCAffineNode,
-    SCLinearNode,
-    SCScaleNode,
-    SCThresholdNode,
+    SCAvgPool2dNode,
+    SCConv1dNode,
+    SCConv2dNode,
+    SCCubaLIFNode,
+    SCCubaLINode,
+    SCDelayNode,
     SCFlattenNode,
+    SCIFNode,
+    SCInputNode,
+    SCIntegratorNode,
+    SCLIFNode,
+    SCLINode,
+    SCLinearNode,
+    SCOutputNode,
+    SCScaleNode,
+    SCSumPool2dNode,
+    SCThresholdNode,
 )
 
 
@@ -38,7 +45,6 @@ def _node_to_nir(name: str, node) -> nir.NIRNode | None:
     if isinstance(node, SCOutputNode):
         return nir.Output(output_type={"output": np.array(list(node.shape))})
     if isinstance(node, SCLIFNode):
-        n = len(node.neurons)
         return nir.LIF(
             tau=np.array([neuron.tau_mem for neuron in node.neurons]),
             r=np.array([neuron.resistance for neuron in node.neurons]),
@@ -70,6 +76,55 @@ def _node_to_nir(name: str, node) -> nir.NIRNode | None:
         return nir.Threshold(threshold=node.threshold.copy())
     if isinstance(node, SCFlattenNode):
         return nir.Flatten(start_dim=node.start_dim, end_dim=node.end_dim)
+    if isinstance(node, SCCubaLIFNode):
+        return nir.CubaLIF(
+            tau_syn=node.tau_syn.copy(),
+            tau_mem=node.tau_mem.copy(),
+            r=node.r.copy(),
+            v_leak=node.v_leak.copy(),
+            v_threshold=node.v_threshold.copy(),
+            w_in=node.w_in.copy(),
+        )
+    if isinstance(node, SCCubaLINode):
+        return nir.CubaLI(
+            tau_syn=node.tau_syn.copy(),
+            tau_mem=node.tau_mem.copy(),
+            r=node.r.copy(),
+            v_leak=node.v_leak.copy(),
+            w_in=node.w_in.copy(),
+        )
+    if isinstance(node, SCDelayNode):
+        return nir.Delay(delay=node.delay_steps.astype(np.float64))
+    if isinstance(node, SCConv1dNode):
+        return nir.Conv1d(
+            weight=node.weight.copy(),
+            stride=node.stride,
+            padding=node.padding,
+            dilation=node.dilation,
+            groups=node.groups,
+            bias=node.bias.copy() if node.bias is not None else None,
+        )
+    if isinstance(node, SCConv2dNode):
+        return nir.Conv2d(
+            weight=node.weight.copy(),
+            stride=node.stride,
+            padding=node.padding,
+            dilation=node.dilation,
+            groups=node.groups,
+            bias=node.bias.copy() if node.bias is not None else None,
+        )
+    if isinstance(node, SCSumPool2dNode):
+        return nir.SumPool2d(
+            kernel_size=node.kernel_size,
+            stride=node.stride,
+            padding=node.padding,
+        )
+    if isinstance(node, SCAvgPool2dNode):
+        return nir.AvgPool2d(
+            kernel_size=node.kernel_size,
+            stride=node.stride,
+            padding=node.padding,
+        )
     return None
 
 
@@ -87,19 +142,40 @@ def to_nir(network, path: str | Path | None = None) -> nir.NIRGraph:
     -------
     nir.NIRGraph
     """
-    from .parser import SCNetwork
+    from .parser import SCNetwork, _UnitDelayNode
 
     if not isinstance(network, SCNetwork):
         raise TypeError(f"Expected SCNetwork, got {type(network)}")
 
+    # Ensure topo_order has been computed (triggers delay insertion)
+    _ = network.topo_order
+
     nodes = {}
+    edges = list(network.edges)
+
     for name, node in network.nodes.items():
+        # Skip internal delay nodes — reconstruct as direct recurrent edges
+        if isinstance(node, _UnitDelayNode):
+            continue
         nir_node = _node_to_nir(name, node)
         if nir_node is None:
             raise ValueError(f"Cannot export node {name!r} of type {type(node).__name__} to NIR")
         nodes[name] = nir_node
 
-    graph = nir.NIRGraph(nodes=nodes, edges=network.edges)
+    # Replace delay edges with original recurrent edges
+    clean_edges = []
+    for src, dst in edges:
+        if src.startswith("_delay_") and src in network._recurrent_map:
+            # Restore original back edge: recurrent_source -> dst
+            original_src = network._recurrent_map[src]
+            clean_edges.append((original_src, dst))
+        elif dst.startswith("_delay_"):
+            # Skip the edge feeding INTO the delay node (it's implicit)
+            continue
+        else:
+            clean_edges.append((src, dst))
+
+    graph = nir.NIRGraph(nodes=nodes, edges=clean_edges)
 
     if path is not None:
         nir.write(str(path), graph)
