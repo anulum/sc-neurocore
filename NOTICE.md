@@ -37,6 +37,12 @@ Contact [protoscience@anulum.li](mailto:protoscience@anulum.li) for terms.
 | Embedded in closed-source product | Commercial |
 | FPGA bitstreams generated from HDL templates | Commercial (HDL templates are AGPL-covered) |
 
+## AI-Assisted Development
+
+This project uses LLMs for advanced control mechanisms and GitHub
+handling. All output is reviewed, tested, and verified by the project
+author.
+
 ## Third-Party Components
 
 | Component | License | Location |

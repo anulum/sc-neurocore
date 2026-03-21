@@ -547,6 +547,12 @@ If you use SC-NeuroCore in your research, please cite:
 
 See also [`CITATION.cff`](CITATION.cff) for the machine-readable citation metadata.
 
+## AI Disclosure
+
+This project uses LLMs for advanced control mechanisms and GitHub
+handling. All output is reviewed, tested, and verified by the project
+author.
+
 ## License
 
 SC-NeuroCore is dual-licensed:
