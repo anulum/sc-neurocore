@@ -448,16 +448,35 @@ class TestTestbenchGenerator:
 class TestEdgeCaseCoverage:
     """Tests for error branches and edge cases."""
 
-    def test_power_4_raises(self):
-        import pytest
-
+    def test_power_4_compiles(self):
         neuron = EquationNeuron(
             equations={"v": "v**4"},
             state={"v": 1.0},
             dt=0.1,
         )
+        verilog = compile_to_verilog(neuron)
+        assert "assign" in verilog
+
+    def test_power_9_raises(self):
+        import pytest
+
+        neuron = EquationNeuron(
+            equations={"v": "v**9"},
+            state={"v": 1.0},
+            dt=0.1,
+        )
         with pytest.raises(ValueError, match="Only integer powers"):
             compile_to_verilog(neuron)
+
+    def test_sigmoid_in_equation_builder(self):
+        """Exercise sigmoid function through equation builder step()."""
+        neuron = EquationNeuron(
+            equations={"v": "sigmoid(I) - v"},
+            state={"v": 0.0},
+            dt=0.1,
+        )
+        neuron.step(I=5.0)
+        assert neuron.state["v"] > 0
 
     def test_unary_plus(self):
         neuron = EquationNeuron(
