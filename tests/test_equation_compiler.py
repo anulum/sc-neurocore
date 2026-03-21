@@ -455,7 +455,7 @@ class TestEdgeCaseCoverage:
             dt=0.1,
         )
         verilog = compile_to_verilog(neuron)
-        assert "assign" in verilog
+        assert "_mul" in verilog  # chained multiplications for power 4
 
     def test_power_9_raises(self):
         import pytest
