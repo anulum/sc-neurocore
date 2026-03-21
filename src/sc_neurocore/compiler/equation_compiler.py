@@ -119,8 +119,24 @@ class _VerilogExprEmitter(ast.NodeVisitor):
                     f"wire signed [{2 * self.q.data_width - 1}:0] {cu} = {sq_trunc} * {left};"
                 )
                 return f"({cu} >>> {self.q.fraction})[{self.q.data_width - 1}:0]"
+            elif (
+                isinstance(node.right, ast.Constant)
+                and isinstance(node.right.value, int)
+                and 4 <= node.right.value <= 8
+            ):
+                # General small integer power via chained squaring
+                exp = node.right.value
+                prev = left
+                for step in range(exp - 1):
+                    tmp = f"_mul{self._mul_count}"
+                    self._mul_count += 1
+                    self.intermediates.append(
+                        f"wire signed [{2 * self.q.data_width - 1}:0] {tmp} = {prev} * {left};"
+                    )
+                    prev = f"({tmp} >>> {self.q.fraction})[{self.q.data_width - 1}:0]"
+                return prev
             raise ValueError(
-                f"Only integer powers 2 and 3 supported in Verilog, got {node.right.value}"
+                f"Only integer powers 2-8 supported in Verilog, got {node.right.value}"
             )
         raise ValueError(f"Unsupported binary op: {type(node.op).__name__}")
 
@@ -502,8 +518,13 @@ def equation_to_fpga(
     """
     from ..neurons.equation_builder import from_equations
 
+    # Split semicolons within single strings for convenience
+    expanded = []
+    for s in equation_strings:
+        expanded.extend(part.strip() for part in s.split(";") if part.strip())
+
     neuron = from_equations(
-        *equation_strings,
+        *expanded,
         threshold=threshold,
         reset=reset,
         params=params,
