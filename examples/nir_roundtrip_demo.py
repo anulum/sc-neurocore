@@ -1,0 +1,145 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-or-later | Commercial license available
+# SC-NeuroCore -- NIR roundtrip demo: CubaLIF + recurrent connections
+#
+# Usage:
+#   pip install sc-neurocore nir
+#   python examples/nir_roundtrip_demo.py
+
+"""Demonstrate NIR roundtrip: build graph -> from_nir() -> run -> to_nir() -> verify.
+
+Tests CubaLIF and recurrent connections as requested by Jens Pedersen (NIR).
+"""
+
+import numpy as np
+
+try:
+    import nir
+except ImportError:
+    raise ImportError("pip install nir")
+
+from sc_neurocore.nir_bridge import from_nir, to_nir
+
+
+def build_recurrent_cubalif_graph():
+    """Build a NIR graph with CubaLIF + recurrent Linear feedback."""
+    np.random.seed(42)
+    nodes = {
+        "input": nir.Input(input_type={"input": np.array([4])}),
+        "affine": nir.Affine(
+            weight=np.random.randn(6, 4).astype(np.float32) * 0.5,
+            bias=np.zeros(6, dtype=np.float32),
+        ),
+        "lif": nir.CubaLIF(
+            tau_syn=np.full(6, 5.0, dtype=np.float32),
+            tau_mem=np.full(6, 10.0, dtype=np.float32),
+            r=np.ones(6, dtype=np.float32),
+            v_leak=np.zeros(6, dtype=np.float32),
+            v_threshold=np.ones(6, dtype=np.float32),
+            w_in=np.ones(6, dtype=np.float32),
+        ),
+        "rec": nir.Linear(
+            weight=np.random.randn(6, 6).astype(np.float32) * 0.1,
+        ),
+        "readout": nir.Affine(
+            weight=np.random.randn(2, 6).astype(np.float32) * 0.3,
+            bias=np.zeros(2, dtype=np.float32),
+        ),
+        "output": nir.Output(output_type={"output": np.array([2])}),
+    }
+    edges = [
+        ("input", "affine"),
+        ("affine", "lif"),
+        ("lif", "rec"),  # recurrent: lif -> rec -> lif
+        ("rec", "lif"),  # back edge (cycle)
+        ("lif", "readout"),
+        ("readout", "output"),
+    ]
+    return nir.NIRGraph(nodes=nodes, edges=edges)
+
+
+def main():
+    print("SC-NeuroCore NIR Roundtrip Demo")
+    print("=" * 50)
+
+    # 1. Build NIR graph
+    graph = build_recurrent_cubalif_graph()
+    print(f"\n1. Built NIR graph:")
+    print(f"   Nodes: {sorted(graph.nodes.keys())}")
+    print(f"   Edges: {graph.edges}")
+    print(
+        f"   CubaLIF tau_syn={graph.nodes['lif'].tau_syn[0]:.1f}, "
+        f"tau_mem={graph.nodes['lif'].tau_mem[0]:.1f}"
+    )
+    print(f"   Recurrent: lif -> rec -> lif (cycle)")
+
+    # 2. Import into SC-NeuroCore
+    net = from_nir(graph, dt=1.0)
+    print(f"\n2. Imported into SC-NeuroCore:")
+    print(f"   {len(net.topo_order)} nodes in execution order")
+    print(f"   Recurrent connections: {len(net._recurrent_map)}")
+    delay_nodes = [n for n in net.nodes if n.startswith("_delay_")]
+    if delay_nodes:
+        print(f"   Delay nodes inserted: {delay_nodes}")
+
+    # 3. Run simulation
+    input_data = np.array([2.0, 1.0, 0.5, 0.3])
+    n_steps = 50
+    results = net.run({"input": input_data}, steps=n_steps)
+    spike_counts = np.array([r.sum() for r in results["output"]])
+    total_spikes = spike_counts.sum()
+    print(f"\n3. Simulation ({n_steps} steps, input={input_data}):")
+    print(f"   Total output spikes: {total_spikes:.0f}")
+    print(f"   Output per step (first 10): {spike_counts[:10]}")
+
+    # 4. Export back to NIR
+    graph_out = to_nir(net)
+    print(f"\n4. Exported back to NIR:")
+    print(f"   Nodes: {sorted(graph_out.nodes.keys())}")
+    print(f"   Edges: {graph_out.edges}")
+
+    # 5. Verify roundtrip
+    print(f"\n5. Roundtrip verification:")
+    assert set(graph_out.nodes.keys()) == set(graph.nodes.keys()), "Node mismatch!"
+    print(f"   Node names match: OK")
+
+    assert len(graph_out.edges) == len(graph.edges), "Edge count mismatch!"
+    print(f"   Edge count matches: OK ({len(graph_out.edges)} edges)")
+
+    for name in graph.nodes:
+        assert type(graph_out.nodes[name]) == type(graph.nodes[name]), f"Type mismatch for {name}"
+    print(f"   All node types match: OK")
+
+    # Verify CubaLIF parameters
+    orig = graph.nodes["lif"]
+    exported = graph_out.nodes["lif"]
+    np.testing.assert_allclose(exported.tau_syn, orig.tau_syn)
+    np.testing.assert_allclose(exported.tau_mem, orig.tau_mem)
+    np.testing.assert_allclose(exported.v_threshold, orig.v_threshold)
+    np.testing.assert_allclose(exported.w_in, orig.w_in)
+    print(f"   CubaLIF parameters match: OK")
+
+    # Verify recurrent edge survives
+    assert ("rec", "lif") in graph_out.edges, "Recurrent edge lost!"
+    assert ("lif", "rec") in graph_out.edges, "Feedback edge lost!"
+    print(f"   Recurrent edges preserved: OK")
+
+    # 6. File roundtrip
+    import tempfile
+
+    with tempfile.NamedTemporaryFile(suffix=".nir", delete=False) as f:
+        path = f.name
+    to_nir(net, path=path)
+    graph_reload = nir.read(path)
+    assert len(graph_reload.nodes) == len(graph.nodes)
+    import os
+
+    os.unlink(path)
+    print(f"   File save/load roundtrip: OK")
+
+    print(f"\n{'=' * 50}")
+    print("ALL TESTS PASS -- NIR roundtrip with CubaLIF + recurrent connections verified.")
+
+
+if __name__ == "__main__":
+    main()
