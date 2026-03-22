@@ -16,11 +16,11 @@ import torch.nn as nn
 
 
 def reset_states(model: nn.Module) -> None:
-    """Reset all hidden states in an SNN model.
+    """Clear SpikeMonitor logs attached to the model.
 
-    Walks the module tree and zeros any `v`, `a`, `i_syn`, `spike_prev`
-    buffers found in LIF/ALIF/Synaptic cells. Also clears any
-    `_spike_log` attached by SpikeMonitor.
+    Note: this does NOT reset membrane voltages or adaptation variables.
+    To reset neuron state, re-initialize the model or call forward()
+    with fresh zero-initialized hidden states.
     """
     for module in model.modules():
         if hasattr(module, "_spike_log"):

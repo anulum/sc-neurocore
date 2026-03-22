@@ -11,7 +11,7 @@ Commercial Licensing: Available
 </p>
 
 [![CI](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml/badge.svg)](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-3.13.2-blue)](https://github.com/anulum/sc-neurocore/releases)
+[![Version](https://img.shields.io/badge/version-3.13.3-blue)](https://github.com/anulum/sc-neurocore/releases)
 [![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/anulum/sc-neurocore)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://anulum.github.io/sc-neurocore/)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
@@ -22,8 +22,8 @@ Commercial Licensing: Available
 [![REUSE](https://img.shields.io/badge/REUSE-compliant-green)](https://reuse.software/)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)
 
-**Version:** 3.13.2
-**Status:** 122 Neuron Models (113 Bio + 9 AI) | 99.49% MNIST | 2 112 Python tests passing + 336 Rust tests | 100% Coverage | 111 Rust Neuron Models | 111-Model NetworkRunner
+**Version:** 3.13.3
+**Status:** 122 Neuron Models (113 Bio + 9 AI) | 99.49% MNIST | 2 000+ Python tests passing + 336 Rust tests | 100% Coverage | 111 Rust Neuron Models | 111-Model NetworkRunner
 
 <p align="center">
   <img src="docs/assets/spike_raster.png" width="800" alt="LIF spike raster — 5 neurons, sinusoidal input">
@@ -55,7 +55,7 @@ surrogate gradient training reaching 99.49% MNIST accuracy, a
 neuromorphic intermediate representation standard (17/17 primitives,
 recurrent edges, multi-port subgraphs; interop with Norse, snnTorch,
 Lava-DL), and a SpikeInterface adapter for experimental data import.
-2 400+ Python tests across 130+ files and 350+ Rust tests hold 100% line
+2 000+ Python tests across 130+ files and 350+ Rust tests hold 100% line
 coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 
 ## Feature Comparison
@@ -90,7 +90,7 @@ coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 | Quantum hybrid (Qiskit/PennyLane) | **Yes** | — | — | — | — |
 | MLIR emitter (CIRCT) | **Yes** | — | — | — | — |
 | Hyperdimensional computing | Yes | — | — | — | — |
-| Formal verification (SymbiYosys) | **7 modules, 64 props** | — | — | — | — |
+| Formal verification (SymbiYosys) | **7 modules, 61 props** | — | — | — | — |
 | JAX JIT training | **Yes** | — | — | — | — |
 | CuPy sparse GPU | **Yes** | — | — | — | — |
 | AI-optimized neurons | **9 (ArcaneNeuron + 8)** | — | — | — | — |
@@ -199,7 +199,7 @@ runtime dependency. Source-only Frontier modules such as `analysis`, `viz`,
 git clone https://github.com/anulum/sc-neurocore.git
 cd sc-neurocore
 pip install -e ".[dev]"    # editable install with all dev tools
-make preflight             # verify setup (lint + 2 112 tests)
+make preflight             # verify setup (lint + 2 000+ tests)
 ```
 
 If you are changing the Rust bridge locally, install `bridge/` in the same
@@ -372,7 +372,7 @@ Co-simulation traces are generated deterministically from fixed LFSR seeds.
 To reproduce a published benchmark:
 
 ```bash
-git checkout v3.13.2
+git checkout v3.13.3
 pip install -e ".[dev]"
 python benchmarks/benchmark_suite.py --markdown > BENCHMARKS.md
 ```
@@ -537,7 +537,7 @@ If you use SC-NeuroCore in your research, please cite:
 @software{sotek2026scneurocore,
   author    = {Šotek, Miroslav},
   title     = {SC-NeuroCore: A Deterministic Stochastic Computing Framework for Neuromorphic Hardware Design},
-  version   = {3.13.2},
+  version   = {3.13.3},
   year      = {2026},
   doi       = {10.5281/zenodo.18906614},
   url       = {https://github.com/anulum/sc-neurocore},

@@ -36,7 +36,7 @@ import numpy as np
 
 @dataclass
 class CorticalColumn:
-    """Canonical 4-population cortical microcircuit.
+    """Canonical 5-population cortical microcircuit (L2/3 exc, L2/3 inh, L4, L5, L6).
 
     Parameters
     ----------
