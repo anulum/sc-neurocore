@@ -39,7 +39,7 @@ def test_synapse_multiplication():
 
 
 def test_synapse_update():
-    syn = BitstreamSynapse(w_min=0.0, w_max=1.0, length=100, w=0.2)
+    syn = BitstreamSynapse(w_min=0.0, w_max=1.0, length=1024, w=0.2)
     initial_p = syn.effective_weight_probability()
 
     syn.update_weight(0.8)
