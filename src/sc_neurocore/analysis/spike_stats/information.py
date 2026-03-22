@@ -156,16 +156,15 @@ def kozachenko_leonenko_mi(x: np.ndarray, y: np.ndarray, k: int = 3) -> float:
     y = y[:n].astype(np.float64).reshape(-1, 1)
     xy = np.hstack([x, y])
 
+    from scipy.special import digamma
+
     def _kth_dist(data, idx, kk):
         dists = np.max(np.abs(data - data[idx]), axis=1)
         dists[idx] = np.inf
         return np.partition(dists, kk - 1)[kk - 1]
 
-    def digamma(z):
-        return np.log(z) - 0.5 / z  # Stirling approx
-
-    psi_k = digamma(k)
-    psi_n = digamma(n)
+    psi_k = float(digamma(k))
+    psi_n = float(digamma(n))
     nx_sum = 0.0
     ny_sum = 0.0
     for i in range(n):

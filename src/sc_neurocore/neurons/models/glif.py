@@ -54,7 +54,7 @@ class GLIFNeuron:
         self.theta += dtheta
         if self.v >= self.theta:
             self.v = self.v_reset
-            self.theta = max(self.theta, self.theta + self.delta_theta)
+            self.theta += self.delta_theta
             self.i_asc1 += self.r_asc1
             self.i_asc2 += self.r_asc2
             return 1

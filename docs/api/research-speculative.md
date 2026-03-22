@@ -4,7 +4,7 @@ The `research/` directory contains theoretical explorations and speculative modu
 that are **not part of the installable `sc_neurocore` package**.
 
 These modules are maintained separately for academic interest and future research
-directions. They are not covered by the core test suite's 97% coverage threshold.
+directions. They are not covered by the core test suite's 100% coverage threshold.
 
 ## Packages
 

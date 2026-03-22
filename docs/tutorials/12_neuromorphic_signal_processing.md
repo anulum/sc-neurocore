@@ -40,7 +40,7 @@ t = np.arange(int(fs * duration)) / fs
 signal = 0.5 + 0.4 * np.sin(2 * np.pi * 1000 * t)  # unipolar [0.1, 0.9]
 
 L = 256  # bitstream length per sample
-encoder = BitstreamEncoder(length=L, seed=42)
+encoder = BitstreamEncoder(x_min=0.0, x_max=1.0, length=L, seed=42)
 
 # Encode each sample as an L-bit stream
 bitstreams = np.zeros((len(signal), L), dtype=np.uint8)

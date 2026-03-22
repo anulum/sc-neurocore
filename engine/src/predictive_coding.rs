@@ -15,6 +15,9 @@ use crate::bitstream;
 /// Compute prediction error between two packed bitstreams via XOR + popcount.
 /// Returns error magnitude in [0, 1].
 pub fn prediction_error_packed(predicted: &[u64], actual: &[u64], length: usize) -> f64 {
+    if length == 0 {
+        return 0.0;
+    }
     let n = predicted.len().min(actual.len());
     let mut xor_result = vec![0u64; n];
     for i in 0..n {

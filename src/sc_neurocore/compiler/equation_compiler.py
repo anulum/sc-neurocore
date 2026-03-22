@@ -48,11 +48,7 @@ class Q88:
         raw = int(round(value * (1 << self.fraction)))
         if raw < 0:
             raw = raw & ((1 << self.data_width) - 1)
-        return (
-            f"{self.data_width}'sd{raw}"
-            if raw >= 0
-            else f"-{self.data_width}'sd{abs(int(round(value * (1 << self.fraction))))}"
-        )
+        return f"{self.data_width}'sd{raw}"
 
 
 class _VerilogExprEmitter(ast.NodeVisitor):

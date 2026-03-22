@@ -86,33 +86,29 @@ class ClopathSTDP:
         float
             Updated weight.
         """
-        # Decay traces
         decay_x = math.exp(-dt / self.tau_x)
         decay_minus = math.exp(-dt / self.tau_minus)
         decay_plus = math.exp(-dt / self.tau_plus)
 
-        self.x_bar *= decay_x
-        self.u_bar_minus *= decay_minus
-        self.u_bar_plus *= decay_plus
-
-        # LTD: triggered by pre-synaptic spike when post is depolarized
+        # LTD: pre-synaptic spike × post depolarization (Clopath 2010, Eq. 2)
         if pre_spike:
             ltd = self.a_ltd * self.x_bar * max(0.0, self.u_bar_minus - self.theta_minus)
             self.weight -= ltd
 
-        # LTP: triggered when post voltage exceeds theta_plus
+        # LTP: evaluated every timestep, pre contribution via x_bar trace (Clopath 2010, Eq. 3)
         ltp_post = max(0.0, u_post - self.theta_plus)
         ltp_pre = max(0.0, self.u_bar_plus - self.theta_minus)
-        if pre_spike and ltp_post > 0 and ltp_pre > 0:
-            self.weight += self.a_ltp * ltp_post * ltp_pre
+        if ltp_post > 0 and ltp_pre > 0:
+            self.weight += self.a_ltp * self.x_bar * ltp_post * ltp_pre
 
         self.weight = max(self.w_min, min(self.w_max, self.weight))
 
-        # Update traces
+        # Update traces: exact exponential filter (no double-decay)
+        self.x_bar *= decay_x
         if pre_spike:
             self.x_bar += 1.0
-        self.u_bar_minus += (u_post - self.u_bar_minus) * dt / self.tau_minus
-        self.u_bar_plus += (u_post - self.u_bar_plus) * dt / self.tau_plus
+        self.u_bar_minus = decay_minus * self.u_bar_minus + (1 - decay_minus) * u_post
+        self.u_bar_plus = decay_plus * self.u_bar_plus + (1 - decay_plus) * u_post
 
         return self.weight
 

@@ -84,7 +84,7 @@ coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 | Fault tolerance benchmark | **Yes** | — | — | — | — |
 | Phi* (IIT) estimation | **Yes** | — | — | — | — |
 | SpikeInterface adapter | **Yes** | — | — | — | — |
-| NIR primitives | **17/17** | — | 12 | 5 | — |
+| NIR primitives | **18/18** | — | 12 | 5 | — |
 | MNIST accuracy (SNN) | **99.49%** | ~95% | ~93% | — | — |
 | Plasticity (STDP, R-STDP) | Yes | — | Yes | Yes | Yes |
 | Quantum hybrid (Qiskit/PennyLane) | **Yes** | — | — | — | — |
@@ -501,7 +501,7 @@ pip install -r requirements.txt       # runtime only
 pip install -r requirements-dev.txt   # runtime + dev tools
 ```
 
-## Rust Engine (111 Neuron Models, 336 Tests)
+## Rust Engine (111 Neuron Models, 373 Tests)
 
 The `sc_neurocore_engine` crate provides 111 Rust neuron models callable
 from Python via PyO3 bindings (including ArcaneNeuron), a 111-model
@@ -509,7 +509,7 @@ NetworkRunner with Rayon-parallel population simulation (100K+ neurons),
 and SIMD-accelerated primitives with dispatch across five ISAs (AVX-512,
 AVX2, NEON, SVE, RISC-V V).
 
-336 Rust tests across 17 test binaries.
+373 Rust tests across 17 test binaries.
 
 | Category | Scope |
 |----------|-------|

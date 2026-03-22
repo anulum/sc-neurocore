@@ -15,7 +15,7 @@ Real neural circuits operate across scales:
 
 | Scale | SC-NeuroCore component | Timescale |
 |-------|----------------------|-----------|
-| Synapse | `SCSynapse`, `StochasticSTDPSynapse` | ~1 ms (bitstream step) |
+| Synapse | `BitstreamSynapse`, `StochasticSTDPSynapse` | ~1 ms (bitstream step) |
 | Neuron | `StochasticLIFNeuron`, `SCIzhikevichNeuron` | 1-20 ms (membrane τ) |
 | Microcircuit | `SCDenseLayer`, `SCRecurrentLayer` | 10-100 ms |
 | Population | `VectorizedSCLayer`, ensembles | 100 ms - 1 s |

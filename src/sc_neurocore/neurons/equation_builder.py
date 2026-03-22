@@ -211,12 +211,15 @@ class EquationNeuron:
         elif self.method == "rk4":
             s0 = deepcopy(self.state)
 
+            xi_sample = self._noise_scale * np.random.randn()
+
             def eval_derivs(state_override):
                 e = dict(self._namespace)
                 e.update(self.parameters)
                 e.update(self.constants)
                 e.update(state_override)
                 e.update(kwargs)
+                e["xi"] = xi_sample
                 return {
                     var: float(eval(code, {"__builtins__": {}}, e))
                     for var, code in self._compiled_eqs.items()
@@ -305,7 +308,7 @@ def from_equations(
     threshold_expr = None
     if threshold:
         threshold = threshold.strip()
-        threshold_expr = threshold.replace(">=", ">=").replace("<=", "<=")
+        threshold_expr = threshold
 
     state = init or {k: 0.0 for k in equations}
 
