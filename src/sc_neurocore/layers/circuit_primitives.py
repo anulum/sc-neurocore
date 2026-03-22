@@ -99,7 +99,7 @@ class WinnerTakeAll:
         """
         if self.k >= self.n_neurons:
             return rates.copy()
-        top_k = np.argsort(rates)[-self.k:]
+        top_k = np.argsort(rates)[-self.k :]
         result = np.zeros_like(rates)
         result[top_k] = rates[top_k]
         return result
