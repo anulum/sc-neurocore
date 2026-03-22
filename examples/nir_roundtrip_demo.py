@@ -33,10 +33,11 @@ def build_recurrent_cubalif_graph():
         "lif": nir.CubaLIF(
             tau_syn=np.full(6, 5.0, dtype=np.float32),
             tau_mem=np.full(6, 10.0, dtype=np.float32),
-            r=np.ones(6, dtype=np.float32),
-            v_leak=np.zeros(6, dtype=np.float32),
+            r=np.full(6, 0.8, dtype=np.float32),
+            v_leak=np.full(6, -0.1, dtype=np.float32),
             v_threshold=np.ones(6, dtype=np.float32),
-            w_in=np.ones(6, dtype=np.float32),
+            w_in=np.full(6, 1.2, dtype=np.float32),
+            v_reset=np.full(6, -0.25, dtype=np.float32),
         ),
         "rec": nir.Linear(
             weight=np.random.randn(6, 6).astype(np.float32) * 0.1,
@@ -110,19 +111,23 @@ def main():
         assert type(graph_out.nodes[name]) == type(graph.nodes[name]), f"Type mismatch for {name}"
     print(f"   All node types match: OK")
 
-    # Verify CubaLIF parameters
+    # Verify ALL CubaLIF parameters (including r, v_leak, v_reset)
     orig = graph.nodes["lif"]
     exported = graph_out.nodes["lif"]
     np.testing.assert_allclose(exported.tau_syn, orig.tau_syn)
     np.testing.assert_allclose(exported.tau_mem, orig.tau_mem)
+    np.testing.assert_allclose(exported.r, orig.r)
+    np.testing.assert_allclose(exported.v_leak, orig.v_leak)
     np.testing.assert_allclose(exported.v_threshold, orig.v_threshold)
     np.testing.assert_allclose(exported.w_in, orig.w_in)
-    print(f"   CubaLIF parameters match: OK")
+    np.testing.assert_allclose(exported.v_reset, orig.v_reset)
+    print(f"   CubaLIF ALL 7 parameters match: OK")
 
-    # Verify recurrent edge survives
-    assert ("rec", "lif") in graph_out.edges, "Recurrent edge lost!"
-    assert ("lif", "rec") in graph_out.edges, "Feedback edge lost!"
-    print(f"   Recurrent edges preserved: OK")
+    # Verify full edge-set equality (not just count)
+    assert set(graph_out.edges) == set(graph.edges), (
+        f"Edge set mismatch!\n  Expected: {set(graph.edges)}\n  Got: {set(graph_out.edges)}"
+    )
+    print(f"   Full edge set matches: OK")
 
     # 6. File roundtrip
     import tempfile
@@ -131,11 +136,12 @@ def main():
         path = f.name
     to_nir(net, path=path)
     graph_reload = nir.read(path)
-    assert len(graph_reload.nodes) == len(graph.nodes)
+    assert set(graph_reload.nodes.keys()) == set(graph.nodes.keys())
+    assert set(graph_reload.edges) == set(graph.edges)
     import os
 
     os.unlink(path)
-    print(f"   File save/load roundtrip: OK")
+    print(f"   File save/load full roundtrip: OK")
 
     print(f"\n{'=' * 50}")
     print("ALL TESTS PASS -- NIR roundtrip with CubaLIF + recurrent connections verified.")
