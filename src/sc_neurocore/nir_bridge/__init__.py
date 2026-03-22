@@ -14,8 +14,8 @@ networks, giving NIR its first FPGA synthesis backend.
     >>> import nir
     >>> from sc_neurocore.nir_bridge import from_nir
     >>> graph = nir.read("model.nir")
-    >>> network = from_nir(graph)
-    >>> network.run(inputs, dt=1.0, steps=100)
+    >>> network = from_nir(graph, dt=1.0)
+    >>> network.run(inputs, steps=100)
 """
 
 from .parser import from_nir
