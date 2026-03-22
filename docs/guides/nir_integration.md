@@ -2,7 +2,8 @@
 
 SC-NeuroCore is the first [NIR](https://neuroir.org/) backend that targets
 FPGA synthesis. Import any NIR graph, simulate it with SC-NeuroCore's
-stochastic computing engine, and emit SystemVerilog for hardware deployment.
+stochastic computing engine, export back to NIR, and emit SystemVerilog
+for hardware deployment.
 
 ## What is NIR?
 
@@ -10,7 +11,7 @@ NIR (Neuromorphic Intermediate Representation) is an open standard for
 exchanging spiking neural network models between frameworks. It defines
 17 primitives (LIF, IF, Affine, Conv, etc.) as a directed graph.
 Libraries like Norse, snnTorch, and Lava-DL can export to NIR. SC-NeuroCore
-can import those graphs and deploy them to FPGAs.
+can import those graphs, run them, export back, and deploy them to FPGAs.
 
 ## Installation
 
@@ -27,15 +28,16 @@ pip install sc-neurocore nir
 ## Quick Start
 
 ```python
+import numpy as np
 import nir
-from sc_neurocore.nir_bridge import from_nir
+from sc_neurocore.nir_bridge import from_nir, to_nir
 
 # Load a NIR graph from file
-network = from_nir("model.nir")
+network = from_nir("model.nir", dt=1.0)
 
 # Or from a NIR graph object
 graph = nir.read("model.nir")
-network = from_nir(graph)
+network = from_nir(graph, dt=1.0)
 
 # Run for 100 timesteps
 results = network.run({"input": np.array([1.0, 0.5, 0.2])}, steps=100)
@@ -43,33 +45,69 @@ results = network.run({"input": np.array([1.0, 0.5, 0.2])}, steps=100)
 # Inspect output spikes
 for step_output in results["output"]:
     print(step_output)
+
+# Export back to NIR
+graph_out = to_nir(network)
+nir.write("exported.nir", graph_out)
 ```
 
 ## Supported NIR Primitives
 
 | NIR Primitive | SC-NeuroCore Mapping | Notes |
 |---|---|---|
-| `Input` | Passthrough | Graph entry point |
-| `Output` | Collector | Graph exit point |
-| `LIF` | `StochasticLIFNeuron` | Full parameter mapping (tau, R, v_leak, v_threshold, v_reset) |
-| `IF` | `SCIFNode` | Integrate-and-fire without leak |
+| `Input` | `SCInputNode` | Graph entry point (passthrough) |
+| `Output` | `SCOutputNode` | Graph exit point (collector) |
+| `LIF` | `SCLIFNode` | Euler: v += ((v_leak - v) + R*I) * dt/tau |
+| `IF` | `SCIFNode` | Euler: v += R*I*dt, fire when v > threshold |
 | `LI` | `SCLINode` | Leaky integrator (no threshold) |
-| `I` | `SCIntegratorNode` | Pure integrator (no leak, no threshold) |
+| `I` | `SCIntegratorNode` | Pure integrator: v += R*I*dt |
 | `Affine` | `SCAffineNode` | W @ x + b (dense layer with bias) |
 | `Linear` | `SCLinearNode` | W @ x (dense layer without bias) |
 | `Scale` | `SCScaleNode` | Element-wise scaling |
 | `Threshold` | `SCThresholdNode` | Spike generation |
 | `Flatten` | `SCFlattenNode` | Tensor reshape with dim range |
-| `NIRGraph` | `SCSubgraphNode` | Nested subgraph (recursive) |
+| `NIRGraph` | `SCSubgraphNode` / `SCMultiPortSubgraphNode` | Nested subgraph (recursive, single or multi-port) |
 | `CubaLIF` | `SCCubaLIFNode` | Current-based LIF with synaptic filter (dual tau) |
 | `CubaLI` | `SCCubaLINode` | Current-based leaky integrator |
-| `Delay` | `SCDelayNode` | Circular buffer, configurable timestep delay |
+| `Delay` | `SCDelayNode` | Circular buffer delay (zero-delay passthrough supported) |
 | `Conv1d` | `SCConv1dNode` | 1D convolution with stride, padding, dilation, groups |
 | `Conv2d` | `SCConv2dNode` | 2D convolution with full parameter support |
 | `SumPool2d` | `SCSumPool2dNode` | Spatial sum pooling over kernel windows |
 | `AvgPool2d` | `SCAvgPool2dNode` | Average pooling (SumPool / kernel_area) |
 
 All 17 NIR primitives are supported. 100% coverage of the NIR standard.
+Bidirectional: `from_nir()` imports, `to_nir()` exports — full roundtrip
+with parameter fidelity verified for all node types.
+
+## Recurrent Connections
+
+Graphs with cycles (feedback/recurrent connections) are automatically
+handled. Back edges are detected by DFS and replaced with unit-delay
+nodes that buffer the previous timestep's output. On export, the
+original recurrent edges are reconstructed.
+
+```python
+# Example: LIF with recurrent feedback
+edges = [
+    ("input", "affine"),
+    ("affine", "lif"),
+    ("lif", "rec_weight"),  # forward
+    ("rec_weight", "lif"),  # back edge (cycle)
+    ("lif", "output"),
+]
+# from_nir() handles this automatically
+network = from_nir(graph, dt=1.0)
+# to_nir() reconstructs the original edges
+graph_out = to_nir(network)
+```
+
+## Nested Subgraphs
+
+NIR supports nested `NIRGraph` nodes. SC-NeuroCore wraps these as:
+- `SCSubgraphNode` for single-input single-output subgraphs
+- `SCMultiPortSubgraphNode` for multi-input/multi-output subgraphs
+
+Both are handled automatically during import and export recursively.
 
 ## Building a NIR Graph Manually
 
@@ -119,13 +157,6 @@ When multiple edges converge on a single node, their outputs are summed
 before being passed as input. This matches standard neural network
 semantics for additive synaptic currents.
 
-### Nested Subgraphs
-
-NIR supports nested `NIRGraph` nodes. SC-NeuroCore wraps these as
-`SCSubgraphNode` instances that execute the inner graph as a single
-forward pass. Nested subgraphs must have exactly one input and one
-output node.
-
 ## Interoperability
 
 ### Import from Norse
@@ -145,7 +176,7 @@ graph = norse.to_nir(model)
 
 # Import into SC-NeuroCore
 from sc_neurocore.nir_bridge import from_nir
-network = from_nir(graph)
+network = from_nir(graph, dt=1.0)
 ```
 
 ### Import from snnTorch
@@ -159,12 +190,15 @@ graph = snn.export_to_nir(model, sample_data)
 
 # Import into SC-NeuroCore
 from sc_neurocore.nir_bridge import from_nir
-network = from_nir(graph)
+network = from_nir(graph, dt=1.0)
 ```
 
-## Roadmap
+## Runnable Demo
 
-- **Phase 1** (done): All 17 NIR primitives mapped, graph parser, 41 tests
-- **Phase 2**: RTL emission — NIR graph to SystemVerilog via `CompilerPipeline`
-- **Phase 3**: Export path — SC-NeuroCore networks to NIR format (`to_nir()`)
-- **Phase 4**: Full primitive coverage (Conv, Delay, CubaLIF, pooling)
+See `examples/nir_roundtrip_demo.py` for a complete CubaLIF + recurrent
+connection roundtrip with parameter verification.
+
+```bash
+pip install sc-neurocore nir
+python examples/nir_roundtrip_demo.py
+```

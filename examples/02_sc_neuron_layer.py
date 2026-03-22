@@ -8,7 +8,6 @@
 #!/usr/bin/env python3
 """Example 02: Building and Running SC Neuron Layers."""
 
-import numpy as np
 from sc_neurocore import SCDenseLayer
 
 
