@@ -9,10 +9,18 @@ from .sc_synapse import BitstreamSynapse
 from .dot_product import BitstreamDotProduct
 from .stochastic_stdp import StochasticSTDPSynapse
 from .r_stdp import RewardModulatedSTDPSynapse
+from .triplet_stdp import TripletSTDP
+from .bcm import BCMSynapse
+from .clopath_stdp import ClopathSTDP
+from .tripartite import TripartiteSynapse
 
 __all__ = [
     "BitstreamSynapse",
     "BitstreamDotProduct",
     "StochasticSTDPSynapse",
     "RewardModulatedSTDPSynapse",
+    "TripletSTDP",
+    "BCMSynapse",
+    "ClopathSTDP",
+    "TripartiteSynapse",
 ]

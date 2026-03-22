@@ -26,6 +26,7 @@ This is the first SC+FPGA implementation of tripartite synaptic coupling.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 from ..neurons.models.astrocyte import AstrocyteModel
@@ -84,8 +85,8 @@ class TripartiteSynapse:
         # Pre-synaptic activity → glutamate → IP3
         if pre_spike:
             self._glut_current += self.glut_per_spike
-        # Glutamate decays
-        self._glut_current *= 0.95
+        # Glutamate decays (tau_glut ~ 0.2s)
+        self._glut_current *= math.exp(-dt / 0.2)
 
         # Step the astrocyte with glutamate-driven IP3 production
         self.astrocyte.dt = dt

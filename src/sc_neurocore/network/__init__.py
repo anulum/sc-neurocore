@@ -24,6 +24,8 @@ from .topology import (
 )
 from .export import export_verilog
 from .mpi_runner import HAS_MPI, MPIRunner
+from .cortical_column import CorticalColumn
+from .gamma_oscillation import PINGCircuit
 
 __all__ = [
     "Population",
@@ -44,4 +46,6 @@ __all__ = [
     "export_verilog",
     "MPIRunner",
     "HAS_MPI",
+    "CorticalColumn",
+    "PINGCircuit",
 ]

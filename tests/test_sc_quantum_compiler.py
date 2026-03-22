@@ -177,8 +177,10 @@ class TestNoisySimulation:
         noisy_prob = sum(
             float(np.real(rho[i, i])) for i in range(4) if (i >> circuit.output_qubit) & 1
         )
-        # With 30% depolarizing error, output should differ from ideal
-        assert abs(noisy_prob - ideal_prob) > 0.01 or True  # noise is probabilistic
+        # With 30% depolarizing error, noisy density matrix trace should still be ~1
+        assert np.isclose(np.trace(rho).real, 1.0, atol=1e-10)
+        # Noisy probability should be between 0 and 1
+        assert 0.0 <= noisy_prob <= 1.0
 
 
 class TestCompileSCLayer:

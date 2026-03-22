@@ -13,6 +13,10 @@ from .recurrent import SCRecurrentLayer
 from .memristive import MemristiveDenseLayer
 from .fusion import SCFusionLayer
 from .attention import StochasticAttention
+from .hardware_aware import HardwareAwareSCLayer
+from .predictive_coding import PredictiveCodingSCLayer
+from .rall_dendrite import RallDendrite
+from .circuit_primitives import LateralInhibition, WinnerTakeAll
 
 __all__ = [
     "SCDenseLayer",
@@ -23,4 +27,9 @@ __all__ = [
     "MemristiveDenseLayer",
     "SCFusionLayer",
     "StochasticAttention",
+    "HardwareAwareSCLayer",
+    "PredictiveCodingSCLayer",
+    "RallDendrite",
+    "LateralInhibition",
+    "WinnerTakeAll",
 ]
