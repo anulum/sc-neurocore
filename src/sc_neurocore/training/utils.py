@@ -15,16 +15,24 @@ import torch
 import torch.nn as nn
 
 
-def reset_states(model: nn.Module) -> None:
-    """Clear SpikeMonitor logs attached to the model.
+def reset_states(monitors: list | None = None) -> None:
+    """Clear SpikeMonitor recorded data.
+
+    Parameters
+    ----------
+    monitors : list of SpikeMonitor, optional
+        Monitors to reset. If None, does nothing.
 
     Note: this does NOT reset membrane voltages or adaptation variables.
     To reset neuron state, re-initialize the model or call forward()
-    with fresh zero-initialized hidden states.
+    with fresh zero-initialized hidden states. To reset a single
+    monitor, call ``monitor.reset()`` directly.
     """
-    for module in model.modules():
-        if hasattr(module, "_spike_log"):
-            module._spike_log.clear()
+    if monitors is None:
+        return
+    for mon in monitors:
+        if hasattr(mon, "reset"):
+            mon.reset()
 
 
 class SpikeMonitor:

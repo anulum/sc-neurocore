@@ -15,6 +15,13 @@ from .quantizer import (
     q_weights_to_sc_probabilities,
     quantization_error,
 )
+from .ir_type_checker import (
+    check_ir_types,
+    IRNode,
+    IREdge,
+    IRTypeError,
+    SignalType,
+)
 
 __all__ = [
     "compile_to_verilog",
@@ -27,4 +34,9 @@ __all__ = [
     "dequantize_weights",
     "q_weights_to_sc_probabilities",
     "quantization_error",
+    "check_ir_types",
+    "IRNode",
+    "IREdge",
+    "IRTypeError",
+    "SignalType",
 ]

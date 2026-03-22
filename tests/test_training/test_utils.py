@@ -83,5 +83,10 @@ class TestResetStates:
         net = SpikingNet(n_input=5, n_hidden=8, n_output=2, n_layers=1)
         monitor = SpikeMonitor(net)
         net(torch.randn(3, 2, 5))
-        reset_states(net)
+        assert any(len(v) > 0 for v in monitor._records.values())
+        reset_states([monitor])
+        assert all(len(v) == 0 for v in monitor._records.values())
         monitor.remove()
+
+    def test_reset_states_none(self):
+        reset_states(None)  # should not raise
