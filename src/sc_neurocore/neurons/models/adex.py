@@ -36,7 +36,9 @@ class AdExNeuron:
 
     def step(self, current: float) -> int:
         exp_term = self.delta_t * np.exp(np.clip((self.v - self.v_rh) / self.delta_t, -20.0, 20.0))
-        dv = ((-(self.v - self.v_rest) + exp_term) / self.tau + (-self.w + current) / self.c_m) * self.dt
+        dv = (
+            (-(self.v - self.v_rest) + exp_term) / self.tau + (-self.w + current) / self.c_m
+        ) * self.dt
         dw = (self.a * (self.v - self.v_rest) - self.w) / self.tau_w * self.dt
 
         self.v += dv
