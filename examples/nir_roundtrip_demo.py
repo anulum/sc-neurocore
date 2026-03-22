@@ -65,18 +65,18 @@ def main():
 
     # 1. Build NIR graph
     graph = build_recurrent_cubalif_graph()
-    print(f"\n1. Built NIR graph:")
+    print("\n1. Built NIR graph:")
     print(f"   Nodes: {sorted(graph.nodes.keys())}")
     print(f"   Edges: {graph.edges}")
     print(
         f"   CubaLIF tau_syn={graph.nodes['lif'].tau_syn[0]:.1f}, "
         f"tau_mem={graph.nodes['lif'].tau_mem[0]:.1f}"
     )
-    print(f"   Recurrent: lif -> rec -> lif (cycle)")
+    print("   Recurrent: lif -> rec -> lif (cycle)")
 
     # 2. Import into SC-NeuroCore
     net = from_nir(graph, dt=1.0)
-    print(f"\n2. Imported into SC-NeuroCore:")
+    print("\n2. Imported into SC-NeuroCore:")
     print(f"   {len(net.topo_order)} nodes in execution order")
     print(f"   Recurrent connections: {len(net._recurrent_map)}")
     delay_nodes = [n for n in net.nodes if n.startswith("_delay_")]
@@ -95,21 +95,23 @@ def main():
 
     # 4. Export back to NIR
     graph_out = to_nir(net)
-    print(f"\n4. Exported back to NIR:")
+    print("\n4. Exported back to NIR:")
     print(f"   Nodes: {sorted(graph_out.nodes.keys())}")
     print(f"   Edges: {graph_out.edges}")
 
     # 5. Verify roundtrip
-    print(f"\n5. Roundtrip verification:")
+    print("\n5. Roundtrip verification:")
     assert set(graph_out.nodes.keys()) == set(graph.nodes.keys()), "Node mismatch!"
-    print(f"   Node names match: OK")
+    print("   Node names match: OK")
 
     assert len(graph_out.edges) == len(graph.edges), "Edge count mismatch!"
     print(f"   Edge count matches: OK ({len(graph_out.edges)} edges)")
 
     for name in graph.nodes:
-        assert type(graph_out.nodes[name]) == type(graph.nodes[name]), f"Type mismatch for {name}"
-    print(f"   All node types match: OK")
+        assert isinstance(graph_out.nodes[name], type(graph.nodes[name])), (
+            f"Type mismatch for {name}"
+        )
+    print("   All node types match: OK")
 
     # Verify ALL CubaLIF parameters (including r, v_leak, v_reset)
     orig = graph.nodes["lif"]
@@ -121,13 +123,13 @@ def main():
     np.testing.assert_allclose(exported.v_threshold, orig.v_threshold)
     np.testing.assert_allclose(exported.w_in, orig.w_in)
     np.testing.assert_allclose(exported.v_reset, orig.v_reset)
-    print(f"   CubaLIF ALL 7 parameters match: OK")
+    print("   CubaLIF ALL 7 parameters match: OK")
 
     # Verify full edge-set equality (not just count)
     assert set(graph_out.edges) == set(graph.edges), (
         f"Edge set mismatch!\n  Expected: {set(graph.edges)}\n  Got: {set(graph_out.edges)}"
     )
-    print(f"   Full edge set matches: OK")
+    print("   Full edge set matches: OK")
 
     # 6. File roundtrip
     import tempfile
@@ -141,7 +143,7 @@ def main():
     import os
 
     os.unlink(path)
-    print(f"   File save/load full roundtrip: OK")
+    print("   File save/load full roundtrip: OK")
 
     print(f"\n{'=' * 50}")
     print("ALL TESTS PASS -- NIR roundtrip with CubaLIF + recurrent connections verified.")

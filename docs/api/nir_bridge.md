@@ -46,6 +46,13 @@ which exposes `forward_multi(inputs_dict) → outputs_dict` for named I/O ports.
         - SCFlattenNode
         - SCInputNode
         - SCOutputNode
+        - SCDelayNode
+        - SCCubaLIFNode
+        - SCCubaLINode
+        - SCConv1dNode
+        - SCConv2dNode
+        - SCSumPool2dNode
+        - SCAvgPool2dNode
         - NODE_MAP
 
 ## Export

@@ -12,7 +12,6 @@ Demonstrates multi-agent ensemble orchestration where multiple
 CognitiveOrchestrator agents vote on outputs via averaging.
 """
 
-import numpy as np
 from sc_neurocore.core import CognitiveOrchestrator
 from sc_neurocore.ensembles import EnsembleOrchestrator
 from sc_neurocore import VectorizedSCLayer
