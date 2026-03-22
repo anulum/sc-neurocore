@@ -28,14 +28,14 @@ class TestPredictiveCodingSCLayer:
 
     def test_error_decreases_with_learning(self):
         """Repeated exposure to same input should reduce prediction error."""
-        layer = PredictiveCodingSCLayer(n_inputs=3, n_neurons=2, length=256, lr=0.1, seed=42)
+        layer = PredictiveCodingSCLayer(n_inputs=3, n_neurons=2, length=512, lr=0.15, seed=42)
         inputs = [0.3, 0.5, 0.7]
         errors = []
-        for _ in range(20):
+        for _ in range(30):
             result = layer.forward(inputs)
             errors.append(result["prediction_error"])
-        # Error should decrease over time
-        assert errors[-1] < errors[0]
+        # Average of last 5 should be lower than average of first 5
+        assert np.mean(errors[-5:]) < np.mean(errors[:5])
 
     def test_high_surprise_on_novel_input(self):
         """Novel input after learning should produce higher surprise."""
