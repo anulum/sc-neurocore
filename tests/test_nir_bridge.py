@@ -103,9 +103,9 @@ class TestNodeMapping:
         )
         sc = map_node("lif", node)
         assert isinstance(sc, SCLIFNode)
-        assert len(sc.neurons) == 2
-        assert sc.neurons[0].tau_mem == 10.0
-        assert sc.neurons[1].tau_mem == 20.0
+        assert sc.n_neurons == 2
+        assert sc.tau[0] == 10.0
+        assert sc.tau[1] == 20.0
 
     def test_map_if(self):
         node = nir.IF(
@@ -500,8 +500,7 @@ class TestExecution:
         net.run({"input": np.array([2.0, 1.0, 0.5])}, steps=10)
         net.reset()
         lif_node = net.nodes["lif"]
-        for neuron in lif_node.neurons:
-            assert neuron.v == neuron.v_rest
+        np.testing.assert_allclose(lif_node.v, lif_node.v_leak)
 
     def test_if_neuron_fires(self):
         nodes = {

@@ -103,6 +103,7 @@ class SCIFNode:
     """IF neuron — integrator with threshold, no leak.
 
     NIR IF: dv/dt = R*I, spike when v > v_threshold
+    Euler: v += R*I*dt
     """
 
     name: str
@@ -111,15 +112,18 @@ class SCIFNode:
     v_threshold: np.ndarray
     v_reset: np.ndarray
     v: np.ndarray | None = None
+    dt: float = 1.0
 
     @classmethod
-    def from_nir(cls, name: str, node: nir.IF) -> SCIFNode:
+    def from_nir(cls, name: str, node: nir.IF, dt: float = 1.0) -> SCIFNode:
         r = np.atleast_1d(node.r).flatten()
         v_threshold = np.atleast_1d(node.v_threshold).flatten()
         v_reset = (
             np.atleast_1d(node.v_reset).flatten() if node.v_reset is not None else np.zeros_like(r)
         )
-        return cls(name=name, n_neurons=len(r), r=r, v_threshold=v_threshold, v_reset=v_reset)
+        return cls(
+            name=name, n_neurons=len(r), r=r, v_threshold=v_threshold, v_reset=v_reset, dt=dt
+        )
 
     def __post_init__(self):
         if self.v is None:
@@ -127,7 +131,7 @@ class SCIFNode:
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         x = np.atleast_1d(x).flatten()[: self.n_neurons]
-        self.v += self.r * x
+        self.v += self.r * x * self.dt
         spikes = (self.v >= self.v_threshold).astype(np.float64)
         self.v = np.where(spikes > 0, self.v_reset, self.v)
         return spikes
@@ -272,16 +276,17 @@ class SCFlattenNode:
 
 @dataclass
 class SCIntegratorNode:
-    """Pure integrator: dv/dt = R*I (no leak, no threshold)"""
+    """Pure integrator: dv/dt = R*I (no leak, no threshold). Euler: v += R*I*dt"""
 
     name: str
     r: np.ndarray
     v: np.ndarray | None = None
+    dt: float = 1.0
 
     @classmethod
-    def from_nir(cls, name: str, node: nir.I) -> SCIntegratorNode:
+    def from_nir(cls, name: str, node: nir.I, dt: float = 1.0) -> SCIntegratorNode:
         r = np.atleast_1d(node.r).flatten()
-        return cls(name=name, r=r)
+        return cls(name=name, r=r, dt=dt)
 
     def __post_init__(self):
         if self.v is None:
@@ -289,7 +294,7 @@ class SCIntegratorNode:
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         x = np.atleast_1d(x).flatten()[: len(self.r)]
-        self.v += self.r * x
+        self.v += self.r * x * self.dt
         return self.v.copy()
 
     def reset(self):
@@ -312,7 +317,7 @@ class SCDelayNode:
     @classmethod
     def from_nir(cls, name: str, node: nir.Delay, dt: float = 1.0) -> SCDelayNode:
         delay = np.atleast_1d(node.delay).flatten()
-        steps = np.maximum(np.round(delay / dt).astype(int), 1)
+        steps = np.round(delay / dt).astype(int)
         return cls(name=name, delay_steps=steps, delay_time=delay.copy())
 
     def __post_init__(self):
@@ -323,9 +328,13 @@ class SCDelayNode:
         x = np.atleast_1d(x).flatten()
         out = np.zeros(len(self.delay_steps))
         for i, buf in enumerate(self._buffers):
-            out[i] = buf[0][0]
-            buf.append(np.array([float(x[i]) if i < len(x) else 0.0]))
-            buf.pop(0)
+            xi = float(x[i]) if i < len(x) else 0.0
+            if len(buf) == 0:
+                out[i] = xi  # zero-delay passthrough
+            else:
+                out[i] = buf[0][0]
+                buf.append(np.array([xi]))
+                buf.pop(0)
         return out
 
     def reset(self):
@@ -673,9 +682,9 @@ NODE_MAP: dict[type, Any] = {
         else (),
     ),
     nir.LIF: lambda name, node, **kw: SCLIFNode.from_nir(name, node, dt=kw.get("dt", 1.0)),
-    nir.IF: lambda name, node, **kw: SCIFNode.from_nir(name, node),
+    nir.IF: lambda name, node, **kw: SCIFNode.from_nir(name, node, dt=kw.get("dt", 1.0)),
     nir.LI: lambda name, node, **kw: SCLINode.from_nir(name, node, dt=kw.get("dt", 1.0)),
-    nir.I: lambda name, node, **kw: SCIntegratorNode.from_nir(name, node),
+    nir.I: lambda name, node, **kw: SCIntegratorNode.from_nir(name, node, dt=kw.get("dt", 1.0)),
     nir.Affine: lambda name, node, **kw: SCAffineNode.from_nir(name, node),
     nir.Linear: lambda name, node, **kw: SCLinearNode.from_nir(name, node),
     nir.Scale: lambda name, node, **kw: SCScaleNode.from_nir(name, node),
