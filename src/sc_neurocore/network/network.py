@@ -185,7 +185,7 @@ class Network:
             if pid not in pop_to_currents:
                 continue
             if isinstance(stim, PoissonInput):
-                pop_to_currents[pid][: stim.n] += stim.get_current(t)
+                pop_to_currents[pid][: stim.n] += stim.get_current(t, dt=dt)
             elif isinstance(stim, TimedArray):
                 pop_to_currents[pid] += stim.get_current(t)
             elif isinstance(stim, StepCurrent):

@@ -61,7 +61,7 @@ class HodgkinHuxleyNeuron:
 
     def step(self, current: float) -> int:
         v_prev = self.v
-        for _ in range(int(1.0 / self.dt)):
+        for _ in range(round(1.0 / self.dt)):
             am, bm = self._alpha_m(self.v), self._beta_m(self.v)
             ah, bh = self._alpha_h(self.v), self._beta_h(self.v)
             an, bn = self._alpha_n(self.v), self._beta_n(self.v)

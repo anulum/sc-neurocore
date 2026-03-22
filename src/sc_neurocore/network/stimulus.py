@@ -37,9 +37,10 @@ class PoissonInput:
         self._rng = np.random.default_rng(seed)
         self.target = None
 
-    def get_current(self, t_step) -> np.ndarray:
+    def get_current(self, t_step, dt=None) -> np.ndarray:
         """Generate Poisson spikes and return weighted current vector."""
-        p_spike = self.rate_hz * self.dt
+        step_dt = dt if dt is not None else self.dt
+        p_spike = self.rate_hz * step_dt
         spikes = (self._rng.random(self.n) < p_spike).astype(np.float64)
         return spikes * self.weight
 

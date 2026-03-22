@@ -434,10 +434,10 @@ fn py_prediction_error(
     predicted: PyReadonlyArray1<'_, u64>,
     actual: PyReadonlyArray1<'_, u64>,
     length: usize,
-) -> f64 {
-    let pred = predicted.as_slice().unwrap_or(&[]);
-    let act = actual.as_slice().unwrap_or(&[]);
-    predictive_coding::prediction_error_packed(pred, act, length)
+) -> PyResult<f64> {
+    let pred = predicted.as_slice().map_err(|e| PyValueError::new_err(format!("predicted array must be contiguous: {e}")))?;
+    let act = actual.as_slice().map_err(|e| PyValueError::new_err(format!("actual array must be contiguous: {e}")))?;
+    Ok(predictive_coding::prediction_error_packed(pred, act, length))
 }
 
 // ── Phi* ─────────────────────────────────────────────────────────────

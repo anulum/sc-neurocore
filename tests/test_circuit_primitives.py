@@ -75,5 +75,5 @@ class TestWinnerTakeAll:
         wta = WinnerTakeAll(n_neurons=4, k=1)
         rates = np.array([0.5, 0.5, 0.5, 0.5])
         result = wta.apply(rates)
-        # All equal → WTA suppresses all (threshold = 0.5, rates <= threshold)
-        assert np.count_nonzero(result) == 0
+        # All equal → WTA still picks exactly k=1 winner (ties broken by index)
+        assert np.count_nonzero(result) == 1

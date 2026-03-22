@@ -86,15 +86,14 @@ class StochasticLIFNeuron(BaseNeuron):
         # Input term (simple Ohm's law; you can absorb R into current)
         dv_input = self.resistance * input_current * self.dt
 
-        # Noise term
+        # Noise term (Euler-Maruyama: sigma * sqrt(dt) * N(0,1))
         dv_noise = 0.0
         if self.noise_std > 0.0:
+            sqrt_dt = self.dt**0.5
             if self.entropy_source is not None:
-                # Use external (Quantum) source
-                dv_noise = float(self.entropy_source.sample_normal(0.0, self.noise_std))
+                dv_noise = float(self.entropy_source.sample_normal(0.0, self.noise_std * sqrt_dt))
             else:
-                # Use internal (Pseudo-random) source
-                dv_noise = float(self._rng.normal(0.0, self.noise_std))
+                dv_noise = float(self._rng.normal(0.0, self.noise_std * sqrt_dt))
 
         # Update membrane potential
         self.v += dv_leak + dv_input + dv_noise

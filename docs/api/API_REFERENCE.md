@@ -61,16 +61,16 @@ Used for integration/accumulation.
 
 ---
 
-## Module `analysis.consciousness`
+## Module `analysis.phi_estimation`
 
-### Class `PhiEvaluator`
-Evaluates Integrated Information (Phi) for SC Networks.
-Based on 'PyPhi' principles but adapted for bitstreams.
+### Function `phi_star`
+Estimates integrated information (Phi*) for multivariate time series.
+Barrett & Seth 2011, Gaussian approximation with contiguous bipartition search.
 
-- **entropy**(bitstream)
-  - Shannon entropy of a bitstream distribution.
-- **calculate_phi**(layer_outputs)
-  - Approximates Phi for a layer state.
+- **phi_star**(data, tau=1) → float
+  - data: shape (n_channels, T). Returns Phi* in nats.
+- **phi_from_spike_trains**(trains, bin_size=10, tau=1) → float
+  - Converts spike trains to binned rates, then computes Phi*.
 
 ---
 

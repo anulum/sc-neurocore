@@ -99,10 +99,9 @@ class WinnerTakeAll:
         """
         if self.k >= self.n_neurons:
             return rates.copy()
-        threshold_idx = np.argsort(rates)[-(self.k + 1)]
-        threshold = rates[threshold_idx]
-        result = rates.copy()
-        result[rates <= threshold] = 0.0
+        top_k = np.argsort(rates)[-self.k:]
+        result = np.zeros_like(rates)
+        result[top_k] = rates[top_k]
         return result
 
     def winners(self, rates: np.ndarray) -> np.ndarray:

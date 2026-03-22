@@ -30,6 +30,7 @@ class AstrocyteModel:
     d3: float = 0.9434  # uM, IP3 binding with Ca
     d5: float = 0.08234  # uM, Ca activation dissociation
     a2: float = 0.2  # uM^-1 s^-1, Ca inactivation rate
+    c0: float = 2.0  # uM, total cell calcium (conserved)
     c1: float = 0.185  # ER/cyt volume ratio
     leak: float = 0.01  # s^-1, ER leak rate
     ip3_prod: float = 0.0  # uM/s, external IP3 production
@@ -41,9 +42,10 @@ class AstrocyteModel:
         # Li-Rinzel IP3R open probability
         m_inf = self.ip3 / (self.ip3 + self.d1)
         n_inf = self.ca / (self.ca + self.d5)
-        j_channel = self.v_er * (m_inf * n_inf * self.h) ** 3 * (self.ca * self.c1 - self.ca)
+        ca_er = (self.c0 - self.ca) / self.c1  # Li-Rinzel 1994 conservation
+        j_channel = self.v_er * (m_inf * n_inf * self.h) ** 3 * (ca_er - self.ca)
         j_serca = self.v_serca * self.ca**2 / (self.ca**2 + self.k_er**2)
-        j_leak = self.leak * (self.ca * self.c1 - self.ca)
+        j_leak = self.leak * (ca_er - self.ca)
 
         dca = j_channel - j_serca + j_leak
         q2 = self.d2 * (self.ip3 + self.d1) / (self.ip3 + self.d3)

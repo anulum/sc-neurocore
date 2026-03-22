@@ -36,7 +36,7 @@ try:
     import pennylane as qml
 
     HAS_PENNYLANE = True
-except ImportError:
+except (ImportError, AttributeError):
     HAS_PENNYLANE = False
 
 
