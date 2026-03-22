@@ -12,8 +12,10 @@
 pub struct RallDendriteRust {
     pub n_branches: usize,
     pub branch_length: usize,
+    #[allow(dead_code)]
     tau: f64,
     coupling: f64,
+    #[allow(dead_code)]
     dt: f64,
     decay: f64,
     dt_over_tau: f64,
