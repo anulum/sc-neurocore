@@ -26,6 +26,8 @@ pub mod bitstream;
 pub mod brunel;
 pub mod connectome;
 pub mod conv;
+pub mod cordiv;
+pub mod cortical_column;
 pub mod encoder;
 pub mod fault;
 pub mod fusion;
@@ -36,7 +38,10 @@ pub mod layer;
 pub mod network_runner;
 pub mod neuron;
 pub mod neurons;
+pub mod phi;
+pub mod predictive_coding;
 pub mod pyo3_neurons;
+pub mod rall_dendrite;
 pub mod recorder;
 pub mod recurrent;
 pub mod scpn;
@@ -393,7 +398,141 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyLapicqueNeuron>()?;
     pyo3_neurons::register_neuron_classes(m)?;
     m.add_class::<PyNetworkRunner>()?;
+    m.add_function(wrap_pyfunction!(py_cordiv, m)?)?;
+    m.add_function(wrap_pyfunction!(py_adaptive_length, m)?)?;
+    m.add_function(wrap_pyfunction!(py_prediction_error, m)?)?;
+    m.add_function(wrap_pyfunction!(py_phi_star, m)?)?;
+    m.add_class::<PyCorticalColumn>()?;
+    m.add_class::<PyRallDendrite>()?;
     Ok(())
+}
+
+// ── CORDIV + adaptive length ─────────────────────────────────────────
+
+#[pyfunction]
+fn py_cordiv(
+    py: Python<'_>,
+    numerator: PyReadonlyArray1<'_, u8>,
+    denominator: PyReadonlyArray1<'_, u8>,
+) -> PyResult<Py<PyArray1<u8>>> {
+    let num = numerator.as_slice()?;
+    let den = denominator.as_slice()?;
+    let result = cordiv::cordiv(num, den);
+    Ok(result.into_pyarray(py).into())
+}
+
+#[pyfunction]
+fn py_adaptive_length(epsilon: f64, confidence: f64) -> usize {
+    cordiv::adaptive_length_hoeffding(epsilon, confidence)
+}
+
+// ── Predictive coding ────────────────────────────────────────────────
+
+#[pyfunction]
+fn py_prediction_error(
+    _py: Python<'_>,
+    predicted: PyReadonlyArray1<'_, u64>,
+    actual: PyReadonlyArray1<'_, u64>,
+    length: usize,
+) -> f64 {
+    let pred = predicted.as_slice().unwrap_or(&[]);
+    let act = actual.as_slice().unwrap_or(&[]);
+    predictive_coding::prediction_error_packed(pred, act, length)
+}
+
+// ── Phi* ─────────────────────────────────────────────────────────────
+
+#[pyfunction]
+fn py_phi_star(_py: Python<'_>, data: PyReadonlyArray2<'_, f64>, tau: usize) -> f64 {
+    let shape = data.shape();
+    let n_channels = shape[0];
+    let n_timesteps = shape[1];
+    let flat = data.as_slice().unwrap_or(&[]);
+    let channels: Vec<Vec<f64>> = (0..n_channels)
+        .map(|i| flat[i * n_timesteps..(i + 1) * n_timesteps].to_vec())
+        .collect();
+    phi::phi_star(&channels, tau)
+}
+
+// ── Cortical column ──────────────────────────────────────────────────
+
+#[pyclass(
+    name = "CorticalColumnRust",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
+pub struct PyCorticalColumn {
+    inner: cortical_column::CorticalColumnRust,
+}
+
+#[pymethods]
+impl PyCorticalColumn {
+    #[new]
+    fn new(n: usize, tau: f64, dt: f64, threshold: f64, w_exc: f64, w_inh: f64, seed: u64) -> Self {
+        Self {
+            inner: cortical_column::CorticalColumnRust::new(
+                n, tau, dt, threshold, w_exc, w_inh, seed,
+            ),
+        }
+    }
+
+    fn step<'py>(
+        &mut self,
+        py: Python<'py>,
+        thalamic_input: PyReadonlyArray1<'py, f64>,
+    ) -> PyResult<Py<PyDict>> {
+        let input = thalamic_input.as_slice()?;
+        let spikes = self.inner.step(input);
+        let dict = PyDict::new(py);
+        let names = ["l4", "l23_exc", "l23_inh", "l5", "l6"];
+        for (i, name) in names.iter().enumerate() {
+            dict.set_item(*name, spikes[i].clone().into_pyarray(py))?;
+        }
+        Ok(dict.into())
+    }
+
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
+}
+
+// ── Rall dendrite ────────────────────────────────────────────────────
+
+#[pyclass(
+    name = "RallDendriteRust",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
+pub struct PyRallDendrite {
+    inner: rall_dendrite::RallDendriteRust,
+}
+
+#[pymethods]
+impl PyRallDendrite {
+    #[new]
+    fn new(n_branches: usize, branch_length: usize, tau: f64, coupling: f64, dt: f64) -> Self {
+        Self {
+            inner: rall_dendrite::RallDendriteRust::new(
+                n_branches,
+                branch_length,
+                tau,
+                coupling,
+                dt,
+            ),
+        }
+    }
+
+    fn step(&mut self, branch_inputs: PyReadonlyArray1<'_, f64>) -> PyResult<f64> {
+        let inputs = branch_inputs.as_slice()?;
+        Ok(self.inner.step(inputs))
+    }
+
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
+
+    #[getter]
+    fn soma_v(&self) -> f64 {
+        self.inner.soma_v
+    }
 }
 
 /// Returns the highest SIMD tier available on this CPU.
