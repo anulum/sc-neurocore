@@ -33,7 +33,7 @@ FPGA deployment.
 - **Equation → Verilog compiler** — arbitrary ODE string to synthesizable Q8.8 fixed-point RTL in one function call
 - **Verilog RTL** — 10 synthesisable modules, 7 formal verification files (61 properties), bit-exact co-simulation
 - **HDC/VSA** — Hyper-dimensional computing for symbolic AI workloads
-- **[NIR bridge](guides/nir_integration.md)** — first FPGA backend for [NIR](https://neuroir.org/) (17/17 primitives, recurrent edges, multi-port subgraphs)
+- **[NIR bridge](guides/nir_integration.md)** — first FPGA backend for [NIR](https://neuroir.org/) (18/18 primitives, recurrent edges, multi-port subgraphs)
 - **SC→quantum compiler** — compile SC operations to quantum circuits, statevector + noisy simulation
 - **Predictive coding** — zero-multiplication SC layer (XOR=error, popcount=magnitude)
 - **Topological observables** — winding number, Ollivier-Ricci curvature, sheaf defect

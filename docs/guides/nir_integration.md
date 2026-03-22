@@ -75,7 +75,7 @@ nir.write("exported.nir", graph_out)
 | `SumPool2d` | `SCSumPool2dNode` | Spatial sum pooling over kernel windows |
 | `AvgPool2d` | `SCAvgPool2dNode` | Average pooling (SumPool / kernel_area) |
 
-All 17 NIR primitives are supported. 100% coverage of the NIR standard.
+All 18 NIR primitives are supported. 100% coverage of the NIR standard.
 Bidirectional: `from_nir()` imports, `to_nir()` exports — full roundtrip
 with parameter fidelity verified for all node types.
 

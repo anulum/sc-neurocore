@@ -52,7 +52,7 @@ configurations with 3 pre-trained weight sets, 9 hardware chip emulators,
 quantum hybrid computing (Qiskit + PennyLane + SC-to-quantum compiler),
 surrogate gradient training reaching 99.49% MNIST accuracy, a
 [NIR](https://neuroir.org/) bridge — the first FPGA backend for the
-neuromorphic intermediate representation standard (17/17 primitives,
+neuromorphic intermediate representation standard (18/18 primitives,
 recurrent edges, multi-port subgraphs; interop with Norse, snnTorch,
 Lava-DL), and a SpikeInterface adapter for experimental data import.
 2 155 passing Python tests (2 353 defined) across 130+ files and 373 Rust tests hold 100% line
