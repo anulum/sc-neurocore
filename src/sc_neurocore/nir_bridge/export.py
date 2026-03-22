@@ -46,11 +46,11 @@ def _node_to_nir(name: str, node) -> nir.NIRNode | None:
         return nir.Output(output_type={"output": np.array(list(node.shape))})
     if isinstance(node, SCLIFNode):
         return nir.LIF(
-            tau=np.array([neuron.tau_mem for neuron in node.neurons]),
-            r=np.array([neuron.resistance for neuron in node.neurons]),
-            v_leak=np.array([neuron.v_rest for neuron in node.neurons]),
-            v_threshold=np.array([neuron.v_threshold for neuron in node.neurons]),
-            v_reset=np.array([neuron.v_reset for neuron in node.neurons]),
+            tau=node.tau.copy(),
+            r=node.r.copy(),
+            v_leak=node.v_leak.copy(),
+            v_threshold=node.v_threshold.copy(),
+            v_reset=node.v_reset.copy(),
         )
     if isinstance(node, SCIFNode):
         return nir.IF(
@@ -84,6 +84,7 @@ def _node_to_nir(name: str, node) -> nir.NIRNode | None:
             v_leak=node.v_leak.copy(),
             v_threshold=node.v_threshold.copy(),
             w_in=node.w_in.copy(),
+            v_reset=node.v_reset.copy(),
         )
     if isinstance(node, SCCubaLINode):
         return nir.CubaLI(
@@ -94,9 +95,13 @@ def _node_to_nir(name: str, node) -> nir.NIRNode | None:
             w_in=node.w_in.copy(),
         )
     if isinstance(node, SCDelayNode):
-        return nir.Delay(delay=node.delay_steps.astype(np.float64))
+        delay = (
+            node.delay_time if node.delay_time is not None else node.delay_steps.astype(np.float64)
+        )
+        return nir.Delay(delay=delay)
     if isinstance(node, SCConv1dNode):
         return nir.Conv1d(
+            input_shape=node.input_shape,
             weight=node.weight.copy(),
             stride=node.stride,
             padding=node.padding,
@@ -106,6 +111,7 @@ def _node_to_nir(name: str, node) -> nir.NIRNode | None:
         )
     if isinstance(node, SCConv2dNode):
         return nir.Conv2d(
+            input_shape=node.input_shape,
             weight=node.weight.copy(),
             stride=node.stride,
             padding=node.padding,
@@ -142,7 +148,7 @@ def to_nir(network, path: str | Path | None = None) -> nir.NIRGraph:
     -------
     nir.NIRGraph
     """
-    from .parser import SCNetwork, _UnitDelayNode
+    from .parser import SCMultiPortSubgraphNode, SCNetwork, SCSubgraphNode, _UnitDelayNode
 
     if not isinstance(network, SCNetwork):
         raise TypeError(f"Expected SCNetwork, got {type(network)}")
@@ -156,6 +162,10 @@ def to_nir(network, path: str | Path | None = None) -> nir.NIRGraph:
     for name, node in network.nodes.items():
         # Skip internal delay nodes — reconstruct as direct recurrent edges
         if isinstance(node, _UnitDelayNode):
+            continue
+        # Recursively export subgraphs
+        if isinstance(node, (SCSubgraphNode, SCMultiPortSubgraphNode)):
+            nodes[name] = to_nir(node.network)
             continue
         nir_node = _node_to_nir(name, node)
         if nir_node is None:

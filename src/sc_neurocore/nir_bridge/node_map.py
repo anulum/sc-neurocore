@@ -17,8 +17,6 @@ try:
 except ImportError as e:
     raise ImportError("pip install nir") from e
 
-from ..neurons.stochastic_lif import StochasticLIFNeuron
-
 
 @dataclass
 class SCInputNode:
@@ -49,46 +47,55 @@ class SCLIFNode:
     """LIF neuron mapped from NIR LIF primitive.
 
     NIR LIF: tau*dv/dt = (v_leak - v) + R*I, spike when v > v_threshold
-    Maps directly to StochasticLIFNeuron.
+    Euler: v += ((v_leak - v) + R*I) * dt/tau
     """
 
     name: str
-    neurons: list[StochasticLIFNeuron]
+    n_neurons: int
+    tau: np.ndarray
+    r: np.ndarray
+    v_leak: np.ndarray
+    v_threshold: np.ndarray
+    v_reset: np.ndarray
+    v: np.ndarray | None = None
+    dt: float = 1.0
 
     @classmethod
-    def from_nir(cls, name: str, node: nir.LIF) -> SCLIFNode:
+    def from_nir(cls, name: str, node: nir.LIF, dt: float = 1.0) -> SCLIFNode:
         tau = np.atleast_1d(node.tau).flatten()
         r = np.atleast_1d(node.r).flatten()
         v_leak = np.atleast_1d(node.v_leak).flatten()
         v_threshold = np.atleast_1d(node.v_threshold).flatten()
-        v_reset = np.atleast_1d(node.v_reset).flatten() if node.v_reset is not None else v_leak
+        v_reset = (
+            np.atleast_1d(node.v_reset).flatten()
+            if node.v_reset is not None
+            else np.zeros_like(v_threshold)
+        )
+        return cls(
+            name=name,
+            n_neurons=len(tau),
+            tau=tau,
+            r=r,
+            v_leak=v_leak,
+            v_threshold=v_threshold,
+            v_reset=v_reset,
+            dt=dt,
+        )
 
-        n = len(tau)
-        neurons = []
-        for i in range(n):
-            neurons.append(
-                StochasticLIFNeuron(
-                    tau_mem=float(tau[i]),
-                    resistance=float(r[i]),
-                    v_rest=float(v_leak[i]),
-                    v_threshold=float(v_threshold[i]),
-                    v_reset=float(v_reset[i]),
-                    noise_std=0.0,
-                )
-            )
-        return cls(name=name, neurons=neurons)
+    def __post_init__(self):
+        if self.v is None:
+            self.v = self.v_leak.copy()
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        x = np.atleast_1d(x).flatten()
-        spikes = np.zeros(len(self.neurons), dtype=np.float64)
-        for i, neuron in enumerate(self.neurons):
-            current = float(x[i]) if i < len(x) else 0.0
-            spikes[i] = float(neuron.step(current))
+        x = np.atleast_1d(x).flatten()[: self.n_neurons]
+        dv = (self.v_leak - self.v + self.r * x) * (self.dt / self.tau)
+        self.v += dv
+        spikes = (self.v >= self.v_threshold).astype(np.float64)
+        self.v = np.where(spikes > 0, self.v_reset, self.v)
         return spikes
 
     def reset(self):
-        for n in self.neurons:
-            n.reset_state()
+        self.v = self.v_leak.copy()
 
 
 @dataclass
@@ -299,13 +306,14 @@ class SCDelayNode:
 
     name: str
     delay_steps: np.ndarray
+    delay_time: np.ndarray | None = None  # original physical time for lossless export
     _buffers: list[list[np.ndarray]] | None = None
 
     @classmethod
     def from_nir(cls, name: str, node: nir.Delay, dt: float = 1.0) -> SCDelayNode:
         delay = np.atleast_1d(node.delay).flatten()
         steps = np.maximum(np.round(delay / dt).astype(int), 1)
-        return cls(name=name, delay_steps=steps)
+        return cls(name=name, delay_steps=steps, delay_time=delay.copy())
 
     def __post_init__(self):
         if self._buffers is None:
@@ -354,7 +362,9 @@ class SCCubaLIFNode:
         v_leak = np.atleast_1d(node.v_leak).flatten()
         v_threshold = np.atleast_1d(node.v_threshold).flatten()
         v_reset = (
-            np.atleast_1d(node.v_reset).flatten() if node.v_reset is not None else v_leak.copy()
+            np.atleast_1d(node.v_reset).flatten()
+            if node.v_reset is not None
+            else np.zeros_like(v_threshold)
         )
         w_in = np.atleast_1d(node.w_in).flatten()
         return cls(
@@ -536,10 +546,15 @@ class SCConv1dNode:
     padding: int
     dilation: int
     groups: int
+    input_shape: int | None = None
 
     @classmethod
     def from_nir(cls, name: str, node: nir.Conv1d) -> SCConv1dNode:
-        padding = node.padding if isinstance(node.padding, int) else 0
+        if isinstance(node.padding, str):
+            raise NotImplementedError(
+                f"String padding '{node.padding}' not supported; use integer padding"
+            )
+        padding = int(node.padding)
         return cls(
             name=name,
             weight=node.weight,
@@ -548,6 +563,7 @@ class SCConv1dNode:
             padding=padding,
             dilation=node.dilation,
             groups=node.groups,
+            input_shape=getattr(node, "input_shape", None),
         )
 
     def forward(self, x: np.ndarray) -> np.ndarray:
@@ -586,13 +602,16 @@ class SCConv2dNode:
     padding: tuple[int, int]
     dilation: tuple[int, int]
     groups: int
+    input_shape: tuple[int, int] | None = None
 
     @classmethod
     def from_nir(cls, name: str, node: nir.Conv2d) -> SCConv2dNode:
         stride = node.stride if isinstance(node.stride, tuple) else (node.stride, node.stride)
         padding = node.padding if isinstance(node.padding, tuple) else (node.padding, node.padding)
         if isinstance(padding[0], str):
-            padding = (0, 0)
+            raise NotImplementedError(
+                f"String padding '{padding[0]}' not supported; use integer padding"
+            )
         dilation = (
             node.dilation if isinstance(node.dilation, tuple) else (node.dilation, node.dilation)
         )
@@ -604,6 +623,7 @@ class SCConv2dNode:
             padding=padding,
             dilation=dilation,
             groups=node.groups,
+            input_shape=getattr(node, "input_shape", None),
         )
 
     def forward(self, x: np.ndarray) -> np.ndarray:
@@ -652,7 +672,7 @@ NODE_MAP: dict[type, Any] = {
         if node.output_type
         else (),
     ),
-    nir.LIF: lambda name, node, **kw: SCLIFNode.from_nir(name, node),
+    nir.LIF: lambda name, node, **kw: SCLIFNode.from_nir(name, node, dt=kw.get("dt", 1.0)),
     nir.IF: lambda name, node, **kw: SCIFNode.from_nir(name, node),
     nir.LI: lambda name, node, **kw: SCLINode.from_nir(name, node, dt=kw.get("dt", 1.0)),
     nir.I: lambda name, node, **kw: SCIntegratorNode.from_nir(name, node),
