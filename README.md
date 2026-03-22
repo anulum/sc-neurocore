@@ -23,7 +23,7 @@ Commercial Licensing: Available
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)
 
 **Version:** 3.13.3
-**Status:** 122 Neuron Models (113 Bio + 9 AI) | 99.49% MNIST | 2 155 Python tests passing (2 353 defined) + 349 Rust tests | 100% Coverage | 111 Rust Neuron Models | 111-Model NetworkRunner
+**Status:** 122 Neuron Models (113 Bio + 9 AI) | 99.49% MNIST | 2 155 Python tests passing (2 353 defined) + 373 Rust tests | 100% Coverage | 111 Rust Neuron Models | 111-Model NetworkRunner
 
 <p align="center">
   <img src="docs/assets/spike_raster.png" width="800" alt="LIF spike raster — 5 neurons, sinusoidal input">
@@ -55,7 +55,7 @@ surrogate gradient training reaching 99.49% MNIST accuracy, a
 neuromorphic intermediate representation standard (17/17 primitives,
 recurrent edges, multi-port subgraphs; interop with Norse, snnTorch,
 Lava-DL), and a SpikeInterface adapter for experimental data import.
-2 155 passing Python tests (2 353 defined) across 130+ files and 349 Rust tests hold 100% line
+2 155 passing Python tests (2 353 defined) across 130+ files and 373 Rust tests hold 100% line
 coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 
 ## Feature Comparison
