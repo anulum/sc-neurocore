@@ -33,7 +33,7 @@ net.run(duration=1.0, dt=0.001)
 
 # Access spike monitors (automatically attached)
 for mon in net.monitors:
-    print(f"{mon.label}: {mon.count()} spikes")
+    print(f"{mon.label}: {mon.count} spikes")
 ```
 
 ## 2. MNIST Classifier

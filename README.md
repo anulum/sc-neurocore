@@ -43,7 +43,7 @@ populations scaling to 100K+ neurons), CuPy GPU acceleration, JAX JIT
 training, MPI distributed simulation (billion-neuron scale via mpi4py),
 an identity continuity substrate (persistent spiking networks with
 checkpointing and L16 Director control), a 125-function spike train
-analysis toolkit (23 modules), 14 visualization plots, 13 advanced
+analysis toolkit (23 modules), 12 visualization plots, 13 advanced
 plasticity rules (pair/triplet/voltage STDP, BCM, BPTT, TBPTT, EWC,
 e-prop, R-STDP, MAML, STP, structural plasticity), 7 biological circuit
 primitives (gap junctions, tripartite synapse, Rall dendrite, cortical
@@ -76,7 +76,7 @@ coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 | MPI distributed simulation | **Yes** | — | — | — | — |
 | Pre-trained model zoo | **10 configs, 3 weights** | — | — | — | — |
 | Spike train analysis | **125 functions** | — | — | — | — |
-| Visualization plots | **14** | — | — | — | — |
+| Visualization plots | **12** | — | — | — | — |
 | Advanced plasticity rules | **13** | — | — | — | — |
 | Biological circuits | **7** | — | — | — | — |
 | SC→quantum compiler | **Yes** | — | — | — | — |
@@ -114,7 +114,7 @@ Population-Projection-Network architecture with 3 backends:
 | **MPI** | Billion-neuron distributed simulation via mpi4py | Multi-node HPC clusters |
 
 6 topology generators (random, small-world, scale-free, ring, grid, all-to-all),
-14 visualization plots (raster, voltage, ISI, cross-correlogram, PSD, firing rate,
+12 visualization plots (raster, voltage, ISI, cross-correlogram, PSD, firing rate,
 phase portrait, population activity, instantaneous rate, spike train comparison,
 network graph, weight matrix), and 13 advanced plasticity rules (pair/triplet/voltage
 STDP, BCM, BPTT, TBPTT, EWC, e-prop, R-STDP, MAML, homeostatic, STP, structural).

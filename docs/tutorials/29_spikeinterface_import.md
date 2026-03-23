@@ -95,7 +95,7 @@ monitor = SpikeMonitor(pop)
 
 net = Network(pop, stimulus, monitor)
 net.run(duration=0.2, dt=0.001)
-print(f"Model spikes: {monitor.count()}")
+print(f"Model spikes: {monitor.count}")
 ```
 
 ## 4. From SpikeInterface SortingExtractor
@@ -148,7 +148,7 @@ from sc_neurocore.analysis import (
 exp_trains = spike_times
 
 # Model spike trains (from SpikeMonitor)
-model_trains = monitor.spike_trains()
+model_trains = monitor.spike_trains
 
 # Compare statistics
 for unit_id in exp_trains:

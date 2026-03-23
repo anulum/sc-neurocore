@@ -22,16 +22,15 @@ stimuli, record spikes, and run with automatic backend selection.
 ```python
 import numpy as np
 from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
-from sc_neurocore.neurons.models.wang_buzsaki import WangBuzsakiNeuron
 from sc_neurocore.network.population import Population
 from sc_neurocore.network.projection import Projection
 from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 
-# 80 excitatory HH neurons, 20 inhibitory WB neurons
+# 80 excitatory HH neurons, 20 inhibitory HH neurons
 exc = Population(HodgkinHuxleyNeuron, n=80, label="exc")
-inh = Population(WangBuzsakiNeuron, n=20, label="inh")
+inh = Population(HodgkinHuxleyNeuron, n=20, label="inh")
 
 # Connect them
 exc_to_exc = Projection(exc, exc, weight=0.05, topology="random", probability=0.1)
@@ -49,8 +48,8 @@ mon_inh = SpikeMonitor(inh)
 net = Network(exc, inh, exc_to_exc, exc_to_inh, inh_to_exc, drive, mon_exc, mon_inh)
 net.run(duration=0.5, dt=0.001)  # 500 ms
 
-print(f"Excitatory spikes: {mon_exc.count()}")
-print(f"Inhibitory spikes: {mon_inh.count()}")
+print(f"Excitatory spikes: {mon_exc.count}")
+print(f"Inhibitory spikes: {mon_inh.count}")
 ```
 
 ## 2. Topology Generators
@@ -115,8 +114,8 @@ net.run(duration=1.0, dt=0.001)
 
 # After running, apply STDP to a projection
 exc_to_exc.update_plasticity(
-    src_spikes=mon_exc.spike_trains(),
-    tgt_spikes=mon_exc.spike_trains(),
+    src_spikes=mon_exc.spike_trains,
+    tgt_spikes=mon_exc.spike_trains,
     a_plus=0.01,    # LTP amplitude
     a_minus=0.012,  # LTD amplitude
     tau=20.0,       # time constant (ms)
@@ -175,7 +174,7 @@ from sc_neurocore.analysis import (
     victor_purpura_distance,
 )
 
-trains = mon_exc.spike_trains()
+trains = mon_exc.spike_trains
 rates = {i: firing_rate(t, duration=0.5) for i, t in trains.items()}
 print(f"Mean rate: {np.mean(list(rates.values())):.1f} Hz")
 ```

@@ -22,7 +22,7 @@ FPGA deployment.
 - **MPI distributed** — billion-neuron scale via mpi4py
 - **Model zoo** — 10 pre-built configs, 3 pre-trained weight sets (MNIST, SHD, DVS)
 - **125-function analysis toolkit** — spike train stats, distance, correlation, causality, decoding (23 modules)
-- **14 visualization plots** — raster, voltage, ISI, PSD, cross-correlogram, and more
+- **12 visualization plots** — raster, voltage, ISI, PSD, cross-correlogram, and more
 - **13 advanced plasticity rules** — pair/triplet/voltage STDP, BCM, BPTT, TBPTT, EWC, e-prop, R-STDP, MAML, homeostatic, STP, structural
 - **7 biological circuits** — gap junctions, tripartite synapse (astrocyte), Rall dendrite, cortical column, lateral inhibition, WTA, gamma oscillation
 - **Packed bitwise layers** — 64-bit vectorised AND/MUX/XNOR/NOT/CORDIV for high throughput

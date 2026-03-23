@@ -107,7 +107,7 @@ that are planned but not yet implemented in this repository.
     *   `DirectorController`: L16 cybernetic self-regulation
 *   **`network/`**
     *   Population-Projection-Network engine (3 backends: Python, Rust, MPI)
-    *   6 topology generators, 14 visualization plots
+    *   6 topology generators, 12 visualization plots
 *   **`model_zoo/`**
     *   10 pre-built network configs, 3 pre-trained weight sets (MNIST, SHD, DVS)
 *   **`training/`**
