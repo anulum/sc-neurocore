@@ -60,6 +60,9 @@ def test_neurons_lazy_load_model():
     assert HH is not None
     n = HH()
     assert hasattr(n, "step")
+    # Second model access triggers the _load_rust_map early-return path
+    FHN = neurons_mod.FitzHughNagumoNeuron
+    assert FHN is not None
 
 
 def test_neurons_getattr_invalid():
