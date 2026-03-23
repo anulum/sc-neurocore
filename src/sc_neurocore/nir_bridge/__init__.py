@@ -9,7 +9,7 @@
 NIR integration for SC-NeuroCore.
 
 Provides bidirectional conversion between NIR graphs and SC-NeuroCore
-networks, giving NIR its first FPGA synthesis backend.
+networks.
 
     >>> import nir
     >>> from sc_neurocore.nir_bridge import from_nir

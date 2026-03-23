@@ -1184,3 +1184,383 @@ class TestExport:
         network4 = from_nir(graph4)
         exported4 = to_nir(network4)
         assert isinstance(exported4.nodes["apool"], nir.AvgPool2d)
+
+
+# --- Sinabs interop tests ---
+# Sinabs exports: nir.LIF (r=1, v_leak=0, tau=physical), nir.IF, nir.LI,
+# nir.Affine (always, even bias=0). No CubaLIF. No dt baked into params.
+# Internal dynamics use exponential decay: alpha = exp(-1/tau_mem).
+
+
+class TestSinabsInterop:
+    def _sinabs_lif_graph(self, n=4, tau_mem=10.0):
+        """Reproduce what sinabs.nir.to_nir() exports for Linear→LIF."""
+        rng = np.random.RandomState(99)
+        nodes = {
+            "input": nir.Input(input_type={"input": np.array([n])}),
+            # Sinabs always exports Affine (bias=zeros even if no bias)
+            "affine": nir.Affine(
+                weight=rng.randn(n, n).astype(np.float32),
+                bias=np.zeros(n, dtype=np.float32),
+            ),
+            "lif": nir.LIF(
+                tau=np.full(n, tau_mem),
+                r=np.ones(n),  # sinabs: r=1 always
+                v_leak=np.zeros(n),  # sinabs: v_leak=0 always
+                v_threshold=np.ones(n),
+            ),
+            "output": nir.Output(output_type={"output": np.array([n])}),
+        }
+        edges = [("input", "affine"), ("affine", "lif"), ("lif", "output")]
+        return nir.NIRGraph(nodes=nodes, edges=edges)
+
+    def test_sinabs_lif_loads(self):
+        """Sinabs-style LIF graph parses and runs."""
+        graph = self._sinabs_lif_graph()
+        net = from_nir(graph, dt=1.0)
+        assert isinstance(net.nodes["lif"], SCLIFNode)
+        assert net.nodes["lif"].tau[0] == 10.0
+        assert net.nodes["lif"].r[0] == 1.0
+        assert net.nodes["lif"].v_leak[0] == 0.0
+        results = net.run({"input": np.array([5.0, 3.0, 1.0, 2.0])}, steps=50)
+        total_spikes = sum(r.sum() for r in results["output"])
+        assert total_spikes > 0
+
+    def test_sinabs_euler_vs_exponential(self):
+        """Quantify Euler (ours) vs exponential (sinabs) decay mismatch.
+
+        Sinabs: alpha = exp(-dt/tau), v *= alpha
+        SC-NeuroCore (Euler): v += (v_leak - v) * dt/tau
+        For v_leak=0: v *= (1 - dt/tau) [Euler] vs v *= exp(-dt/tau) [exact]
+        With dt=1, tau=10: Euler=0.9, exact=0.9048. ~0.5% per step.
+        """
+        tau = 10.0
+        dt = 1.0
+        euler_decay = 1 - dt / tau  # 0.9
+        exact_decay = np.exp(-dt / tau)  # 0.9048
+        # After 50 steps of pure leak (no input):
+        # Euler: v0 * 0.9^50 = 0.00515
+        # Exact: v0 * 0.9048^50 = 0.00657
+        # These diverge — this is expected, not a bug.
+        v_euler = 1.0 * euler_decay**50
+        v_exact = 1.0 * exact_decay**50
+        # Euler underestimates voltage (decays faster)
+        assert v_euler < v_exact
+        # Within 30% after 50 steps — acceptable for discrete-time bridge
+        assert abs(v_euler - v_exact) / v_exact < 0.3
+
+    def test_sinabs_iaf_graph(self):
+        """Sinabs IAF → nir.IF roundtrip through bridge."""
+        nodes = {
+            "input": nir.Input(input_type={"input": np.array([2])}),
+            "if": nir.IF(
+                r=np.ones(2),  # sinabs: r=1
+                v_threshold=np.ones(2),
+            ),
+            "output": nir.Output(output_type={"output": np.array([2])}),
+        }
+        edges = [("input", "if"), ("if", "output")]
+        graph = nir.NIRGraph(nodes=nodes, edges=edges)
+        net = from_nir(graph, dt=1.0)
+        assert isinstance(net.nodes["if"], SCIFNode)
+        results = net.run({"input": np.array([0.6, 0.6])}, steps=5)
+        # IF accumulates: step1 v=0.6, step2 v=1.2>1→spike
+        spike_counts = [r.sum() for r in results["output"]]
+        assert sum(spike_counts) > 0
+
+    def test_sinabs_expleak_graph(self):
+        """Sinabs ExpLeak → nir.LI roundtrip through bridge."""
+        tau = 5.0
+        nodes = {
+            "input": nir.Input(input_type={"input": np.array([3])}),
+            "li": nir.LI(
+                tau=np.full(3, tau),
+                r=np.ones(3),
+                v_leak=np.zeros(3),
+            ),
+            "output": nir.Output(output_type={"output": np.array([3])}),
+        }
+        edges = [("input", "li"), ("li", "output")]
+        graph = nir.NIRGraph(nodes=nodes, edges=edges)
+        net = from_nir(graph, dt=1.0)
+        assert isinstance(net.nodes["li"], SCLINode)
+        out = net.step({"input": np.array([1.0, 2.0, 3.0])})
+        # dt/tau = 0.2, dv = (0 - 0 + 1*I) * 0.2 = 0.2*I
+        np.testing.assert_allclose(out["output"], [0.2, 0.4, 0.6])
+
+
+# --- Rockpool interop tests ---
+# Rockpool exports: nir.LIF, nir.CubaLIF, nir.LI, nir.Linear/Affine.
+# Key: r = tau * exp(-dt/tau) / dt (encodes dt into r).
+# Weights are transposed on export (NIR is (out,in), rockpool is (in,out)).
+# Tests use dt=1e-3 and tau_mem=10.0, matching rockpool's test suite.
+
+
+class TestRockpoolInterop:
+    def _rockpool_r(self, tau, dt):
+        """Compute r the way rockpool encodes it: r = tau * exp(-dt/tau) / dt."""
+        return tau * np.exp(-dt / tau) / dt
+
+    def test_rockpool_lif_graph(self):
+        """Rockpool LIFNeuronTorch → nir.LIF with encoded r."""
+        dt = 1e-3
+        tau = 10.0
+        r = self._rockpool_r(tau, dt)  # ~9990.005
+        n = 4
+        rng = np.random.RandomState(77)
+        nodes = {
+            "input": nir.Input(input_type={"input": np.array([n])}),
+            # Rockpool transposes weights on export
+            "linear": nir.Linear(weight=rng.randn(n, n).astype(np.float32)),
+            "lif": nir.LIF(
+                tau=np.full(n, tau),
+                r=np.full(n, r),
+                v_leak=np.zeros(n),
+                v_threshold=np.ones(n),
+            ),
+            "output": nir.Output(output_type={"output": np.array([n])}),
+        }
+        edges = [("input", "linear"), ("linear", "lif"), ("lif", "output")]
+        graph = nir.NIRGraph(nodes=nodes, edges=edges)
+        # Must use matching dt for correct dynamics
+        net = from_nir(graph, dt=dt)
+        assert isinstance(net.nodes["lif"], SCLIFNode)
+        assert net.nodes["lif"].dt == dt
+        # Verify r was loaded correctly
+        np.testing.assert_allclose(net.nodes["lif"].r[0], r, rtol=1e-10)
+        results = net.run({"input": np.array([5.0, 3.0, 1.0, 2.0])}, steps=200)
+        total_spikes = sum(r_.sum() for r_ in results["output"])
+        assert total_spikes > 0
+
+    def test_rockpool_cubalif_graph(self):
+        """Rockpool LIFTorch → nir.CubaLIF with encoded r."""
+        dt = 1e-3
+        tau_mem = 10.0
+        tau_syn = 5.0
+        r_mem = self._rockpool_r(tau_mem, dt)
+        n = 3
+        nodes = {
+            "input": nir.Input(input_type={"input": np.array([n])}),
+            "cubalif": nir.CubaLIF(
+                tau_syn=np.full(n, tau_syn),
+                tau_mem=np.full(n, tau_mem),
+                r=np.full(n, r_mem),
+                v_leak=np.zeros(n),
+                v_threshold=np.ones(n),
+                w_in=np.ones(n),  # rockpool: w_in defaults to 1.0
+            ),
+            "output": nir.Output(output_type={"output": np.array([n])}),
+        }
+        edges = [("input", "cubalif"), ("cubalif", "output")]
+        graph = nir.NIRGraph(nodes=nodes, edges=edges)
+        net = from_nir(graph, dt=dt)
+        assert isinstance(net.nodes["cubalif"], SCCubaLIFNode)
+        results = net.run({"input": np.array([10.0, 10.0, 10.0])}, steps=500)
+        total_spikes = sum(r_.sum() for r_ in results["output"])
+        assert total_spikes > 0
+
+    def test_rockpool_li_graph(self):
+        """Rockpool ExpSynTorch → nir.LI."""
+        dt = 1e-3
+        tau = 0.02
+        r = self._rockpool_r(tau, dt)
+        n = 2
+        nodes = {
+            "input": nir.Input(input_type={"input": np.array([n])}),
+            "li": nir.LI(
+                tau=np.full(n, tau),
+                r=np.full(n, r),
+                v_leak=np.zeros(n),
+            ),
+            "output": nir.Output(output_type={"output": np.array([n])}),
+        }
+        edges = [("input", "li"), ("li", "output")]
+        graph = nir.NIRGraph(nodes=nodes, edges=edges)
+        net = from_nir(graph, dt=dt)
+        assert isinstance(net.nodes["li"], SCLINode)
+        out = net.step({"input": np.array([1.0, 2.0])})
+        # dv = (0 - 0 + r*I) * dt/tau
+        expected = r * np.array([1.0, 2.0]) * dt / tau
+        np.testing.assert_allclose(out["output"], expected, rtol=1e-10)
+
+    def test_rockpool_euler_vs_exponential_divergence(self):
+        """Document divergence between Euler (ours) and exponential (rockpool).
+
+        Rockpool uses exact exponential: v *= exp(-dt/tau)
+        We use Euler: v += (v_leak - v + r*I) * dt/tau
+        For pure decay (I=0, v_leak=0): Euler gives v *= (1 - dt/tau)
+        With dt=1e-3, tau=10: difference is ~5e-8 per step (negligible).
+        """
+        dt = 1e-3
+        tau = 10.0
+        euler_factor = 1 - dt / tau
+        exact_factor = np.exp(-dt / tau)
+        # Per-step relative error
+        per_step_err = abs(euler_factor - exact_factor) / exact_factor
+        assert per_step_err < 1e-6  # <1ppm per step
+        # After 10000 steps (10 seconds): still tight
+        v_euler = euler_factor**10000
+        v_exact = exact_factor**10000
+        assert abs(v_euler - v_exact) / v_exact < 0.01  # <1%
+
+
+# --- snnTorch RSynaptic interop tests ---
+# snnTorch RSynaptic exports as nir.NIRGraph subgraph:
+#   Input → CubaLIF → Linear(w_rec) → CubaLIF → Output
+# dt=1e-4 hardcoded. r=tau_mem/dt, w_in=tau_syn/dt.
+
+
+class TestSnnTorchRSynapticInterop:
+    def _snntorch_rsynaptic_graph(self, n=4, beta=0.8, alpha=0.9):
+        """Construct an RSynaptic-style NIR graph matching snnTorch export.
+
+        snnTorch encodes: tau_mem = dt/(1-beta), tau_syn = dt/(1-alpha),
+        r = tau_mem/dt = 1/(1-beta), w_in = tau_syn/dt = 1/(1-alpha).
+        """
+        dt = 1e-4
+        tau_mem = dt / (1 - beta)  # 5e-4
+        tau_syn = dt / (1 - alpha)  # 1e-3
+        r = tau_mem / dt  # 5.0
+        w_in = tau_syn / dt  # 10.0
+        rng = np.random.RandomState(88)
+        w_rec = np.abs(rng.randn(n, n).astype(np.float32)) * 0.05
+
+        # RSynaptic exports as a subgraph with recurrent CubaLIF
+        sub_nodes = {
+            "input": nir.Input(input_type={"input": np.array([n])}),
+            "cubalif": nir.CubaLIF(
+                tau_syn=np.full(n, tau_syn),
+                tau_mem=np.full(n, tau_mem),
+                r=np.full(n, r),
+                v_leak=np.zeros(n),
+                v_threshold=np.ones(n),
+                w_in=np.full(n, w_in),
+                v_reset=np.zeros(n),
+            ),
+            "w_rec": nir.Linear(weight=w_rec),
+            "output": nir.Output(output_type={"output": np.array([n])}),
+        }
+        sub_edges = [
+            ("input", "cubalif"),
+            ("cubalif", "w_rec"),
+            ("w_rec", "cubalif"),
+            ("cubalif", "output"),
+        ]
+        rsynaptic_subgraph = nir.NIRGraph(nodes=sub_nodes, edges=sub_edges)
+
+        # Wrap in outer graph: Affine → RSynaptic subgraph
+        # Positive weights to ensure excitatory drive
+        nodes = {
+            "input": nir.Input(input_type={"input": np.array([n])}),
+            "linear": nir.Affine(
+                weight=np.abs(rng.randn(n, n).astype(np.float32)) * 0.5,
+                bias=np.zeros(n, dtype=np.float32),
+            ),
+            "rsynaptic": rsynaptic_subgraph,
+            "output": nir.Output(output_type={"output": np.array([n])}),
+        }
+        edges = [("input", "linear"), ("linear", "rsynaptic"), ("rsynaptic", "output")]
+        return nir.NIRGraph(nodes=nodes, edges=edges), dt
+
+    def test_rsynaptic_parses(self):
+        """RSynaptic subgraph parses into SCSubgraphNode."""
+        graph, dt = self._snntorch_rsynaptic_graph()
+        net = from_nir(graph, dt=dt)
+        sub = net.nodes["rsynaptic"]
+        assert isinstance(sub, SCSubgraphNode)
+        inner = sub.network
+        assert "cubalif" in inner.nodes
+        assert isinstance(inner.nodes["cubalif"], SCCubaLIFNode)
+        # Trigger topological sort (populates _recurrent_map lazily)
+        _ = inner.topo_order
+        # w_rec creates a cycle: cubalif→w_rec→cubalif, broken by delay node
+        assert len(inner._recurrent_map) > 0
+
+    def test_rsynaptic_runs(self):
+        """RSynaptic graph produces output over multiple timesteps."""
+        graph, dt = self._snntorch_rsynaptic_graph()
+        net = from_nir(graph, dt=dt)
+        results = net.run({"input": np.array([10.0, 5.0, 3.0, 1.0])}, steps=100)
+        assert len(results["output"]) == 100
+        # With strong input, at least some timesteps should produce spikes
+        total_spikes = sum(r.sum() for r in results["output"])
+        assert total_spikes > 0
+
+    def test_rsynaptic_cubalif_params(self):
+        """Verify snnTorch CubaLIF parameter encoding is preserved."""
+        dt = 1e-4
+        beta, alpha = 0.8, 0.9
+        tau_mem = dt / (1 - beta)
+        tau_syn = dt / (1 - alpha)
+        r_expected = tau_mem / dt
+        w_in_expected = tau_syn / dt
+
+        graph, _ = self._snntorch_rsynaptic_graph(beta=beta, alpha=alpha)
+        net = from_nir(graph, dt=dt)
+        cubalif = net.nodes["rsynaptic"].network.nodes["cubalif"]
+        np.testing.assert_allclose(cubalif.tau_mem[0], tau_mem, rtol=1e-10)
+        np.testing.assert_allclose(cubalif.tau_syn[0], tau_syn, rtol=1e-10)
+        np.testing.assert_allclose(cubalif.r[0], r_expected, rtol=1e-10)
+        np.testing.assert_allclose(cubalif.w_in[0], w_in_expected, rtol=1e-10)
+
+    def test_rsynaptic_reset_clears_subgraph(self):
+        """Reset on outer network propagates to RSynaptic subgraph."""
+        graph, dt = self._snntorch_rsynaptic_graph()
+        net = from_nir(graph, dt=dt)
+        net.run({"input": np.array([10.0, 5.0, 3.0, 1.0])}, steps=20)
+        cubalif = net.nodes["rsynaptic"].network.nodes["cubalif"]
+        # i_syn accumulates during simulation (v may be 0 from resets)
+        assert not np.allclose(cubalif.i_syn, 0.0)
+        net.reset()
+        np.testing.assert_allclose(cubalif.v, cubalif.v_leak)
+        np.testing.assert_allclose(cubalif.i_syn, 0.0)
+
+
+# --- Cross-framework r-encoding comparison ---
+
+
+class TestCrossFrameworkREncoding:
+    """Verify that the same physical neuron produces different NIR r values
+    depending on which framework exported it, and that our bridge handles
+    all encodings when the user provides the correct dt."""
+
+    def test_r_encoding_differences(self):
+        """Same tau/dt produce different r across frameworks."""
+        tau = 10.0
+        dt = 1e-3
+        r_sinabs = 1.0  # sinabs: r=1 always
+        r_snntorch = tau / dt  # 10000.0
+        r_rockpool = tau * np.exp(-dt / tau) / dt  # ~9999.0005
+        # All three are different
+        assert r_sinabs != r_snntorch
+        assert r_snntorch != r_rockpool
+        # snnTorch and rockpool are close (differ by ~0.005% at small dt/tau)
+        assert abs(r_snntorch - r_rockpool) / r_snntorch < 0.001
+
+    def test_all_r_encodings_produce_spikes(self):
+        """All three r-encodings produce spikes with matching dt."""
+        tau = 10.0
+        dt = 1e-3
+        encodings = {
+            # Sinabs: r=1, no dt baked in — use dt=1.0 (physical tau)
+            "sinabs": (1.0, 1.0),
+            "snntorch": (tau / dt, dt),
+            "rockpool": (tau * np.exp(-dt / tau) / dt, dt),
+        }
+        for name, (r, use_dt) in encodings.items():
+            nodes = {
+                "input": nir.Input(input_type={"input": np.array([1])}),
+                "lif": nir.LIF(
+                    tau=np.array([tau]),
+                    r=np.array([r]),
+                    v_leak=np.zeros(1),
+                    v_threshold=np.ones(1),
+                ),
+                "output": nir.Output(output_type={"output": np.array([1])}),
+            }
+            edges = [("input", "lif"), ("lif", "output")]
+            graph = nir.NIRGraph(nodes=nodes, edges=edges)
+            net = from_nir(graph, dt=use_dt)
+            results = net.run({"input": np.array([5.0])}, steps=500)
+            spikes = sum(r_.sum() for r_ in results["output"])
+            assert spikes > 0, f"{name} r-encoding produced no spikes"
