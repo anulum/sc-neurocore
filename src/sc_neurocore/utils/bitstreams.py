@@ -9,7 +9,6 @@ from __future__ import annotations
 from typing import Any, Optional
 from dataclasses import dataclass
 import numpy as np
-import scipy.stats.qmc as qmc
 from .rng import RNG
 from sc_neurocore.exceptions import SCEncodingError
 
@@ -71,6 +70,8 @@ def generate_sobol_bitstream(
         raise SCEncodingError(f"Probability p must be in [0,1], got {p}.")
 
     # Create Sobol engine (1 dimension)
+    import scipy.stats.qmc as qmc
+
     sampler = qmc.Sobol(d=1, seed=seed)
 
     # Generate samples. Sobol works best with powers of 2,
