@@ -27,6 +27,7 @@ def _get_scipy_sparse():
     global _scipy_sparse
     if _scipy_sparse is None:
         import scipy.sparse
+
         _scipy_sparse = scipy.sparse
     return _scipy_sparse
 
