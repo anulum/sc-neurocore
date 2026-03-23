@@ -108,7 +108,7 @@ commercial licenses for proprietary integration.
 <ul class="pricing-features">
 <li>122 neuron models</li>
 <li>Full Python + Rust SIMD engine</li>
-<li>10 Verilog HDL modules</li>
+<li>16 Verilog HDL modules</li>
 <li>IR compiler (SystemVerilog + MLIR)</li>
 <li>Surrogate gradient training</li>
 <li>Quantum hybrid (Qiskit/PennyLane)</li>

@@ -113,7 +113,7 @@ python examples/06_hdl_generation.py    # Generates Verilog
 yosys -p "synth_xilinx" hdl/sc_neurocore_top.v   # Synthesis report
 ```
 
-10 synthesisable Verilog modules. Yosys reports 3 673 LUTs for
+16 synthesisable Verilog modules. Yosys reports 3 673 LUTs for
 3-input 7-neuron core on Xilinx 7-series. MNIST 16→10 fits an
 Artix-7 100T at ~56K LUTs.
 
