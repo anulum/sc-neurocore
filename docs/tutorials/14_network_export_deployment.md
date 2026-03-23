@@ -166,17 +166,16 @@ The SC-NeuroCore compiler translates a network into an intermediate
 representation for the SCPN ecosystem:
 
 ```python
-from sc_neurocore.compiler import compile_network
+from sc_neurocore.compiler.equation_compiler import compile_to_verilog
 
-# compile_network expects a list of (layer_type, params) tuples
-network_spec = [
-    ("dense", {"n_inputs": 50, "n_neurons": 128, "length": 512}),
-    ("dense", {"n_inputs": 128, "n_neurons": 10, "length": 512}),
-]
-
-ir = compile_network(network_spec)
-print(f"IR nodes: {len(ir.nodes)}")
-print(f"IR edges: {len(ir.edges)}")
+# Compile an equation-defined neuron to synthesizable Verilog
+verilog_src = compile_to_verilog(
+    equations={"v": "-(v - v_rest) / tau + I"},
+    threshold="v >= v_threshold",
+    reset={"v": "v_reset"},
+    parameters={"tau": 20.0, "v_rest": 0.0, "v_threshold": 1.0, "v_reset": 0.0},
+)
+print(f"Generated {len(verilog_src)} characters of SystemVerilog")
 ```
 
 ## 7. Deployment checklist

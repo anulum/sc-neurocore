@@ -218,14 +218,14 @@ for t in range(100):
 ## 8. Analysis: population statistics
 
 ```python
-from sc_neurocore.analysis import firing_rate, coefficient_of_variation
+from sc_neurocore.analysis import firing_rate, cv_isi
 
 # Collect spike trains from a simulation
 # spike_trains shape: (n_neurons, n_steps)
 spike_trains = (exc_rates > 0.5).astype(float)
 
 rates = firing_rate(spike_trains, dt=1.0)
-cvs = coefficient_of_variation(spike_trains)
+cvs = cv_isi(spike_trains)
 
 print(f"Mean firing rate: {rates.mean():.2f} Hz")
 print(f"Mean CV(ISI): {cvs[~np.isnan(cvs)].mean():.2f}")

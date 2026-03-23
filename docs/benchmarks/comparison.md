@@ -74,5 +74,5 @@ SC-NeuroCore-specific.
 | Python models | **122** | 11 | 6 | Custom eq. | 3 |
 | Rust/compiled models | **111** | — | — | C++ codegen | — |
 | Hardware emulators | **9** | — | — | — | Loihi only |
-| Formal verification | **61 properties** | — | — | — | — |
+| Formal verification | **65 properties** | — | — | — | — |
 | Train-to-FPGA export | **Yes** | No | No | No | No |

@@ -1,8 +1,8 @@
-# SC-NeuroCore v3.13.2 Capability Report
+# SC-NeuroCore v3.13.3 Capability Report
 
 **Stochastic Computing Framework for Neuromorphic Hardware Design**
 
-**Version:** 3.13.2
+**Version:** 3.13.3
 **Report Date:** March 18, 2026
 **Author:** Miroslav Šotek (Anulum Research)
 
@@ -122,7 +122,7 @@ Synthesisable Verilog-2005 modules:
 
 ### 2.4 Formal Verification
 
-61 properties across 7 SymbiYosys formal modules covering:
+65 properties across 7 SymbiYosys formal modules covering:
 encoder, neuron, synapse, dense layer, dotproduct, firing rate,
 AXI-Lite config. Properties include safety (no overflow), liveness
 (neurons fire under sufficient input), and equivalence (Python
@@ -143,7 +143,7 @@ learnable membrane and threshold parameters.
 `to_sc_weights()` exports trained float weights normalised to [0,1]
 for SC bitstream deployment.
 
-### 2.6 Spike Train Analysis (126 functions)
+### 2.6 Spike Train Analysis (125 functions)
 
 Pure NumPy, zero external dependencies. Covers:
 
@@ -268,7 +268,7 @@ This is a research module, not a production inference tool.
 | Linting | ruff 0.15.6 | Zero violations |
 | Security | bandit | Zero findings |
 | SPDX headers | CI guard | All .py, .rs, .v files |
-| Formal | SymbiYosys | 61 properties |
+| Formal | SymbiYosys | 65 properties |
 | Supply chain | CodeQL + OpenSSF Scorecard | Active |
 | CI workflows | 13, all SHA-pinned | Every push |
 
@@ -315,7 +315,7 @@ Python 3.10–3.14. Linux, macOS, Windows.
   title={SC-NeuroCore: A Deterministic Stochastic Computing Framework
          for Neuromorphic Hardware Design},
   author={Šotek, Miroslav},
-  version={3.13.2},
+  version={3.13.3},
   year={2026},
   doi={10.5281/zenodo.18906614},
   url={https://github.com/anulum/sc-neurocore}
