@@ -42,7 +42,7 @@ net = Network(exc, inh, exc_exc, exc_inh, inh_exc, drive, mon)
 net.run(duration=1.0, dt=0.001, backend="mpi")
 
 if net.rank == 0:
-    print(f"Total spikes: {mon.count()}")
+    print(f"Total spikes: {mon.count}")
 ```
 
 Launch with MPI:

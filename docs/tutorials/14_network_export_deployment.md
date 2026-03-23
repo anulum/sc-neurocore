@@ -170,7 +170,7 @@ from sc_neurocore.compiler.equation_compiler import equation_to_fpga
 
 # Compile equation-defined neuron to Python model + Verilog RTL
 neuron, verilog_src = equation_to_fpga(
-    "dv/dt = -(v - v_rest) / tau + I : volt",
+    "dv/dt = -(v - v_rest) / tau + I",
     threshold="v >= v_threshold",
     reset="v = v_reset",
     params={"tau": 20.0, "v_rest": 0.0, "v_threshold": 1.0, "v_reset": 0.0},

@@ -117,7 +117,7 @@ New in this release:
 - **Rust NetworkRunner**: 111-model fused loop (was 80), Rayon parallel, 100K+ neurons
 - **MPI distributed simulation**: billion-neuron scale via mpi4py
 - **Model zoo**: 10 configurations + 3 pre-trained weight sets (MNIST, SHD, DVS)
-- **14 visualization plots**, **13 advanced plasticity rules**, **6 topology generators**
+- **12 visualization plots**, **13 advanced plasticity rules**, **6 topology generators**
 - **125 analysis functions** across 23 modules
 - **conda-forge recipe** ready for distribution
 

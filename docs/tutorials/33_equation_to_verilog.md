@@ -22,7 +22,7 @@ from sc_neurocore.compiler.equation_compiler import equation_to_fpga
 
 # Define a simple LIF neuron as an ODE string
 neuron, verilog = equation_to_fpga(
-    "dv/dt = (-v + R*I) / tau : volt",
+    "dv/dt = (-v + R*I) / tau",
     threshold="v > 1.0",
     reset="v = 0.0",
     params={"R": 1.0, "tau": 20.0},
@@ -30,8 +30,9 @@ neuron, verilog = equation_to_fpga(
 )
 
 # `neuron` is a Python EquationNeuron — simulate it
+# I must exceed threshold (1.0) for the LIF to spike: steady state v = R*I
 for t in range(200):
-    spike = neuron.step(I=0.8)
+    spike = neuron.step(I=25.0)
     if spike:
         print(f"  Spike at t={t}")
 
@@ -48,8 +49,8 @@ The compiler handles coupled differential equations:
 ```python
 # FitzHugh-Nagumo (2 variables)
 neuron, verilog = equation_to_fpga(
-    "dv/dt = v - v**3/3 - w + I : volt",
-    "dw/dt = 0.08 * (v + 0.7 - 0.8*w) : 1",
+    "dv/dt = v - v**3/3 - w + I",
+    "dw/dt = 0.08 * (v + 0.7 - 0.8*w)",
     threshold="v > 1.0",
     reset="v = -1.0",
     params={},
@@ -67,8 +68,8 @@ for t in range(1000):
 ```python
 # Izhikevich (fast spiking)
 neuron, verilog = equation_to_fpga(
-    "dv/dt = 0.04*v**2 + 5*v + 140 - u + I : volt",
-    "du/dt = a * (b*v - u) : 1",
+    "dv/dt = 0.04*v**2 + 5*v + 140 - u + I",
+    "du/dt = a * (b*v - u)",
     threshold="v >= 30.0",
     reset="v = c; u = u + d",
     params={"a": 0.1, "b": 0.2, "c": -65.0, "d": 2.0},
@@ -84,7 +85,7 @@ Build custom neurons from equations without the Verilog step:
 from sc_neurocore.neurons.equation_builder import from_equations
 
 neuron = from_equations(
-    "dv/dt = (-v + I) / tau : volt",
+    "dv/dt = (-v + I) / tau",
     threshold="v > 1.0",
     reset="v = 0.0",
     params={"tau": 10.0},
@@ -132,7 +133,7 @@ from sc_neurocore.compiler.equation_compiler import equation_to_fpga, generate_t
 
 # First create the neuron
 neuron, verilog = equation_to_fpga(
-    "dv/dt = (-v + R*I) / tau : volt",
+    "dv/dt = (-v + R*I) / tau",
     threshold="v > 1.0", reset="v = 0.0",
     params={"R": 1.0, "tau": 20.0}, module_name="custom_lif",
 )
@@ -154,7 +155,7 @@ with open("tb_custom_lif.sv", "w") as f:
 # 1. Generate Verilog from equations (Python)
 python -c "
 from sc_neurocore.compiler.equation_compiler import equation_to_fpga
-_, v = equation_to_fpga('dv/dt = (-v + I) / 20 : volt',
+_, v = equation_to_fpga('dv/dt = (-v + I) / 20',
     'v > 1.0', 'v = 0.0', {}, 'my_neuron')
 open('my_neuron.sv', 'w').write(v)
 "

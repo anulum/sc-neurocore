@@ -174,7 +174,7 @@ mon = SpikeMonitor(pop)
 
 net = Network(pop, mon)
 net.run(duration=2.0, dt=0.001)
-print(f"Spikes: {mon.count()}")
+print(f"Spikes: {mon.count}")
 ```
 
 ## Further Reading

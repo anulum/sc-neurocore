@@ -39,7 +39,7 @@ sc_neurocore/
 │
 ├── Simulation Tier (Available from source)
 │   ├── analysis/      125-function spike train analysis toolkit
-│   ├── viz/           14 visualization plots (raster, voltage, ISI, PSD, ...)
+│   ├── viz/           12 visualization plots (raster, voltage, ISI, PSD, ...)
 │   ├── bio/           Biological circuits (gap junctions, tripartite, cortical column)
 │   ├── chaos/         Chaotic RNG
 │   ├── optics/        Optical/photonic neuron models
