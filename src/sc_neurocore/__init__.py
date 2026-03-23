@@ -35,9 +35,6 @@ Module Tiers
 
 __version__ = "3.13.3"
 
-# -- Adapters --
-from .adapters import base as adapter_base  # noqa: F401
-
 # ── Datasets ────────────────────────────────────────────────────────────────
 from . import datasets  # noqa: F401
 
