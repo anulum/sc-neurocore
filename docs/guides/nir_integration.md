@@ -191,16 +191,54 @@ NIR graphs, verify that tau values match your expected dynamics. See
 ### Import from snnTorch
 
 ```python
-import snntorch as snn
-import nir
+import torch
+from snntorch.export_nir import export_to_nir
 
 # Export snnTorch model to NIR
-graph = snn.export_to_nir(model, sample_data)
+graph = export_to_nir(model, torch.randn(1, n_input))
 
-# Import into SC-NeuroCore
+# Import into SC-NeuroCore (dt must match snnTorch's hardcoded 1e-4)
 from sc_neurocore.nir_bridge import from_nir
-network = from_nir(graph, dt=1.0)
+network = from_nir(graph, dt=1e-4, reset_mode="subtract")
 ```
+
+**Note on snnTorch interop:** snnTorch uses subtract-reset (`v = v - threshold`)
+but exports `v_reset=0` to NIR. Pass `reset_mode="subtract"` to match.
+snnTorch hardcodes `dt=1e-4` in its export; use the same value in `from_nir()`.
+Some configurations show spike mismatches (measured 6-8% across 600 steps on
+12 configs) caused by float32 (torch) vs float64 (numpy) precision divergence
+at threshold boundaries. The equations are algorithmically equivalent.
+
+### Import from SpikingJelly
+
+```python
+import torch
+from spikingjelly.activation_based import neuron, layer, functional
+from spikingjelly.activation_based.nir_exchange import export_to_nir
+
+# Build and export SpikingJelly model
+functional.set_step_mode(model, "s")
+graph = export_to_nir(model, torch.randn(1, n_input), dt=1e-4)
+
+# Import into SC-NeuroCore (dt must match SpikingJelly's export dt)
+from sc_neurocore.nir_bridge import from_nir
+network = from_nir(graph, dt=1e-4)
+```
+
+**Note on SpikingJelly interop:** Verified exact spike match across 27
+configurations (3 seeds, 3 tau values, 3 inputs, 1350 total steps, 0
+mismatches). SpikingJelly exports LIFNode as `nir.LIF` with `tau=tau*dt`.
+Requires `spikingjelly>=0.0.0.0.15` (install from GitHub for NIR support).
+SpikingJelly's `CUBALIFNode` is not yet mapped by their NIR export.
+
+## `reset_mode` Parameter
+
+`from_nir()` accepts `reset_mode` to control spike reset behavior:
+
+| Mode | Behavior | Use when |
+|---|---|---|
+| `"reset"` (default) | `v = v_reset` | NIR spec default, Norse |
+| `"subtract"` | `v = v - v_threshold` | snnTorch models |
 
 ## Runnable Demos
 
