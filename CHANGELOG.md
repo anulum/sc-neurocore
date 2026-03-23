@@ -70,7 +70,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Threshold and reset logic auto-generated
 
 ### NIR Bridge (Phase 1)
-- `nir_bridge` package: import NIR graphs into SC-NeuroCore (first FPGA backend for NIR)
+- `nir_bridge` package: import NIR graphs into SC-NeuroCore (FPGA backend for NIR)
 - Maps 11 NIR primitives (LIF, IF, LI, Integrator, Affine, Linear, Scale, Threshold, Flatten, Input, Output)
 - Recursive graph parser with topological sort, fan-in summation, nested subgraph support
 - NIR integration guide, API docs, notebook (05_nir_bridge.ipynb)

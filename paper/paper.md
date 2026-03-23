@@ -135,9 +135,9 @@ primitives (LIF, IF, LI, CubaLIF, CubaLI, Affine, Linear, Conv1d,
 Conv2d, Scale, Threshold, Flatten, Delay, SumPool2d, AvgPool2d,
 Integrator, Input, Output) to SC-NeuroCore equivalents with a
 recursive graph parser and topological execution. SC-NeuroCore is the
-first NIR backend with 100\% primitive coverage AND FPGA synthesis,
-enabling models from Norse, snnTorch, and Lava-DL to be deployed
-on reconfigurable hardware.
+to our knowledge the first NIR backend combining 100\% primitive
+coverage with FPGA synthesis, enabling models from SpikingJelly,
+snnTorch, and Norse to be deployed on reconfigurable hardware.
 
 A minimal end-to-end example:
 

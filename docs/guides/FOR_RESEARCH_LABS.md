@@ -34,8 +34,8 @@ That's it. NumPy is the only hard dependency. Everything else is optional.
 
 ## NIR Interoperability
 
-SC-NeuroCore is the first [NIR](https://neuroir.org/) backend targeting FPGA synthesis.
-Import models from Norse, snnTorch, or Lava-DL via the NIR standard, then simulate
+SC-NeuroCore is an [NIR](https://neuroir.org/) backend targeting FPGA synthesis.
+Import models from SpikingJelly, snnTorch, or Norse via the NIR standard, then simulate
 or compile to SystemVerilog. See the [NIR Integration Guide](nir_integration.md) and
 the [NIR Bridge Notebook](https://github.com/anulum/sc-neurocore/blob/main/notebooks/05_nir_bridge.ipynb).
 

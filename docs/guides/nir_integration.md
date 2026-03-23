@@ -1,9 +1,8 @@
 # NIR Integration Guide
 
-SC-NeuroCore is the first [NIR](https://neuroir.org/) backend that targets
-FPGA synthesis. Import any NIR graph, simulate it with SC-NeuroCore's
-stochastic computing engine, export back to NIR, and emit SystemVerilog
-for hardware deployment.
+SC-NeuroCore is an [NIR](https://neuroir.org/) backend targeting FPGA synthesis.
+Import any NIR graph, simulate it with SC-NeuroCore's stochastic computing
+engine, export back to NIR, and emit SystemVerilog for hardware deployment.
 
 ## What is NIR?
 
