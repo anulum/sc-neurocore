@@ -4,6 +4,31 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### NIR Bridge
+- Roundtrip tests for all 18/18 NIR primitives (was 7/18)
+- Auto-broadcast scalar neuron params to input size (Norse/snnTorch export 0-dim tensors)
+- Threshold fix: `>=` to `>` matching NIR spec and snnTorch behavior
+- `reset_mode="subtract"` for snnTorch compatibility (subtract-reset vs zero-reset)
+- IF subtract-reset test and unknown `reset_mode` fallback handling
+- Cross-framework interop tests: Sinabs LIF/IAF/ExpLeak, Rockpool LIF/CubaLIF/LI, snnTorch RSynaptic subgraph
+- Cross-framework r-encoding test documenting per-framework dt conventions
+- SpikingJelly NIR roundtrip demo (`examples/spikingjelly_nir_roundtrip.py`)
+- Norse NIR roundtrip demo with real Norse weights (`examples/norse_nir_roundtrip.py`)
+- NIR roundtrip demo: stronger input to produce visible spikes
+- Documentation: added SpikingJelly, Rockpool, Sinabs, snnTorch RSynaptic sections to `docs/guides/nir_integration.md`
+- Documentation: framework dt/r quick reference table
+- Documented Norse tau observation (export/import roundtrip discrepancy in Norse code)
+- Removed unverified "first FPGA backend" claim from 6 files
+
+### Performance
+- Lazy-load 109 neuron models: import time 200s → 57s
+- Deferred scipy imports (stats.qmc, sparse): import time 57s → 10s
+
+### Infrastructure
+- Coverage fixes: test second model access, pragma Rust-only branch
+- Coverage for lazy-load path, sparse guard mock path
+- Ruff F401 re-export fixes, format vectorized_layer
+
 ## [3.13.3] - 2026-03-20
 
 ### SC Arithmetic

@@ -38,7 +38,7 @@ Every push is guarded by `tools/preflight.py`, which runs the same checks as CI:
 | **ruff check** | Code quality and import hygiene |
 | **bandit** | Security static analysis |
 | **spdx-guard** | SPDX license headers on all source files |
-| **pytest** | 2 112+ tests with 100% coverage gate |
+| **pytest** | 2 155+ tests with 100% coverage gate |
 
 ```bash
 make preflight          # full gate (lint + tests)

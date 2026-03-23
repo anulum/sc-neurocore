@@ -130,14 +130,14 @@ verifies structural invariants, and emits synthesisable SystemVerilog
 targeting Xilinx and Intel FPGAs.
 
 **NIR Bridge** (`sc_neurocore.nir_bridge`): Imports NIR
-(Neuromorphic Intermediate Representation) graphs, mapping all 17
+(Neuromorphic Intermediate Representation) graphs, mapping all 18
 primitives (LIF, IF, LI, CubaLIF, CubaLI, Affine, Linear, Conv1d,
 Conv2d, Scale, Threshold, Flatten, Delay, SumPool2d, AvgPool2d,
 Integrator, Input, Output) to SC-NeuroCore equivalents with a
-recursive graph parser and topological execution. SC-NeuroCore is the
-to our knowledge the first NIR backend combining 100\% primitive
-coverage with FPGA synthesis, enabling models from SpikingJelly,
-snnTorch, and Norse to be deployed on reconfigurable hardware.
+recursive graph parser and topological execution. To our knowledge,
+SC-NeuroCore is the first NIR backend to combine 100\% primitive
+coverage with an FPGA synthesis path, enabling models from SpikingJelly,
+snnTorch, and Norse to target reconfigurable hardware.
 
 A minimal end-to-end example:
 
@@ -164,13 +164,13 @@ AGPL-3.0-or-later with a commercial license option.
 [Documentation](https://anulum.github.io/sc-neurocore/) is hosted on
 GitHub Pages. The repository includes a
 [contributing guide](https://github.com/anulum/sc-neurocore/blob/main/CONTRIBUTING.md),
-24 tutorials, 16 examples, and 6 Jupyter notebooks including an
+35 tutorials, 19 examples, and 6 Jupyter notebooks including an
 interactive neuron model explorer and an NIR bridge walkthrough.
 A Zenodo-archived DOI is available [@scneurocore_zenodo].
 
 # Quality Assurance
 
-SC-NeuroCore maintains 2 112 Python and 336 Rust tests with 100% line
+SC-NeuroCore maintains 2 155 Python and 373 Rust tests with 100% line
 coverage enforced by CI on every push. The test suite includes unit
 tests, integration tests, property-based tests (Hypothesis),
 cross-layer coupling tests, and hardware co-simulation checks.

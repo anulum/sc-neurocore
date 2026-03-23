@@ -117,6 +117,20 @@ ecosystem, connecting to Norse, snnTorch, Lava-DL, and hardware targets includin
 BrainScaleS-2, Loihi, and SpiNNaker2. SC-NeuroCore adds the missing FPGA deployment
 backend via bit-true Verilog co-simulation.
 
-**Contact:** [neurocore@anulum.li](mailto:neurocore@anulum.li) |
+**Contact:** [protoscience@anulum.li](mailto:protoscience@anulum.li) |
 [GitHub Discussions](https://github.com/anulum/sc-neurocore/discussions) |
 [www.anulum.li](https://www.anulum.li)
+
+---
+
+<p align="center">
+  <a href="https://www.anulum.li">
+    <img src="assets/anulum_logo_company.jpg" width="180" alt="ANULUM">
+  </a>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="https://www.anulum.li">
+    <img src="assets/fortis_studio_logo.jpg" width="180" alt="Fortis Studio">
+  </a>
+  <br>
+  <em>SC-NeuroCore is developed by <a href="https://www.anulum.li">ANULUM</a> / Fortis Studio</em>
+</p>
