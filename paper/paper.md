@@ -164,7 +164,7 @@ AGPL-3.0-or-later with a commercial license option.
 [Documentation](https://anulum.github.io/sc-neurocore/) is hosted on
 GitHub Pages. The repository includes a
 [contributing guide](https://github.com/anulum/sc-neurocore/blob/main/CONTRIBUTING.md),
-35 tutorials, 19 examples, and 6 Jupyter notebooks including an
+38 tutorials, 19 examples, and 6 Jupyter notebooks including an
 interactive neuron model explorer and an NIR bridge walkthrough.
 A Zenodo-archived DOI is available [@scneurocore_zenodo].
 
