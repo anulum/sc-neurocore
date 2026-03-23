@@ -178,7 +178,7 @@ def _load_rust_map():
 
     _rust_map = {}
     if not os.environ.get("SC_NEUROCORE_NO_RUST"):
-        try:
+        try:  # pragma: no cover
             from sc_neurocore_engine import sc_neurocore_engine as _eng
 
             _rust_map = {name: getattr(_eng, name) for name in __all__ if hasattr(_eng, name)}

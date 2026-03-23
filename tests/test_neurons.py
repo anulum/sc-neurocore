@@ -50,3 +50,22 @@ def test_lif_noise():
     neuron = StochasticLIFNeuron(noise_std=0.5, seed=42)
     neuron.step(0.0)
     assert neuron.v != 0.0  # Should have moved due to noise
+
+
+def test_neurons_lazy_load_model():
+    """Accessing a model neuron through sc_neurocore.neurons triggers __getattr__."""
+    import sc_neurocore.neurons as neurons_mod
+
+    HH = neurons_mod.HodgkinHuxleyNeuron
+    assert HH is not None
+    n = HH()
+    assert hasattr(n, "step")
+
+
+def test_neurons_getattr_invalid():
+    """Invalid attribute on neurons package raises AttributeError."""
+    import pytest
+    import sc_neurocore.neurons as neurons_mod
+
+    with pytest.raises(AttributeError, match="no_such_neuron"):
+        neurons_mod.no_such_neuron

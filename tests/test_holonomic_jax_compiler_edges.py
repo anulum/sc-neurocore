@@ -669,7 +669,10 @@ class TestVectorizedSparseGuard:
     def test_sparse_without_scipy(self):
         from unittest.mock import patch
 
-        with patch("sc_neurocore.layers.vectorized_layer.HAS_SCIPY_SPARSE", False):
+        with patch(
+            "sc_neurocore.layers.vectorized_layer._has_scipy_sparse",
+            return_value=False,
+        ):
             from sc_neurocore.layers.vectorized_layer import VectorizedSCLayer
 
             with pytest.raises(ImportError, match="scipy"):
