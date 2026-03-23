@@ -49,9 +49,7 @@ class TestTripartiteSynapse:
 
     def test_no_activity_returns_to_baseline(self):
         """Without pre-synaptic activity, weight drifts toward baseline."""
-        syn = TripartiteSynapse(
-            base_weight=0.5, depression_rate=0.1, ca_threshold=5.0
-        )
+        syn = TripartiteSynapse(base_weight=0.5, depression_rate=0.1, ca_threshold=5.0)
         syn.weight = 0.8
         for _ in range(200):
             syn.step(pre_spike=False, post_spike=False, dt=0.01)
