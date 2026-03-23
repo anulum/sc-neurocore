@@ -89,6 +89,43 @@ that are planned but not yet implemented in this repository.
     *   `ConstructorCell`: Von Neumann Universal Constructor.
     *   `DysonPowerGrid`: Stellar-scale energy distribution.
 
+## 5b. Implemented Modules (Not Listed Above)
+*   **`nir_bridge/`**
+    *   `from_nir()`, `to_nir()`: NIR graph import/export (18/18 primitives)
+    *   `SCNetwork`: Topological execution engine for imported NIR graphs
+    *   `SCSubgraphNode`, `SCMultiPortSubgraphNode`: Nested graph support
+    *   Verified interop: Norse, snnTorch, SpikingJelly, Sinabs, Rockpool
+*   **`compiler/`**
+    *   IR graph builder, parser, verifier
+    *   SystemVerilog + MLIR/CIRCT emitters
+    *   Weight quantizer, type checker
+*   **`identity/`**
+    *   `IdentitySubstrate`: 3-population persistent SNN (HH + WB + HR)
+    *   `TraceEncoder`: LSH text-to-spike encoding
+    *   `StateDecoder`: PCA + attractor extraction
+    *   `Checkpoint`: Lazarus protocol (save/restore/merge)
+    *   `DirectorController`: L16 cybernetic self-regulation
+*   **`network/`**
+    *   Population-Projection-Network engine (3 backends: Python, Rust, MPI)
+    *   6 topology generators, 14 visualization plots
+*   **`model_zoo/`**
+    *   10 pre-built network configs, 3 pre-trained weight sets (MNIST, SHD, DVS)
+*   **`training/`**
+    *   Surrogate gradient training cells (LIF, ALIF, RecurrentLIF, EPropALIF)
+    *   ConvSpikingNet (99.49% MNIST)
+*   **`learning/`**
+    *   13 plasticity rules: pair/triplet/voltage STDP, BCM, BPTT, TBPTT, EWC, e-prop, R-STDP, MAML, homeostatic, STP, structural
+*   **`adapters/`**
+    *   Holonomic L1-L16 adapters with JAX acceleration
+*   **`scpn/`**
+    *   SCPN 16-layer stack implementations
+*   **`solvers/`**
+    *   ODE solvers (RK4, Euler)
+*   **`datasets/`**
+    *   Dataset loaders (MNIST, SHD, DVS)
+*   **`cli/`**
+    *   `sc-neurocore` command-line interface
+
 ## 6. Systems, Pipeline & Tools
 *   **`core/`**
     *   `TensorStream`: Unified high-performance data pipeline.

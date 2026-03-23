@@ -356,6 +356,14 @@ pip install sc-neurocore nir norse torch
 python examples/norse_nir_roundtrip.py
 ```
 
-Both demos verify full roundtrip: node names, edge sets, CubaLIF parameter
+**SpikingJelly weights + LIF roundtrip** (requires SpikingJelly, torch):
+
+```bash
+pip install sc-neurocore nir torch
+pip install spikingjelly  # or install from GitHub for NIR support
+python examples/spikingjelly_nir_roundtrip.py
+```
+
+All demos verify full roundtrip: node names, edge sets, CubaLIF parameter
 preservation, and file save/load. SC-NeuroCore's roundtrip preserves all
 7 CubaLIF parameters exactly (bit-for-bit verified).

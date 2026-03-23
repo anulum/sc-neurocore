@@ -37,6 +37,12 @@ Yosys for Lattice iCE40 and ECP5:
 | `sc_firing_rate_bank.v` | Population rate measurement | ~M×8 | ~M×8 |
 | `sc_dense_layer_core.v` | Dense layer datapath FSM | ~N×M×2 | ~M×48 |
 | `sc_dense_layer_top.v` | Top-level with AXI config | ~N×M×2+200 | ~M×48+64 |
+| `sc_dense_matrix_layer.v` | N×M weight matrix layer | ~N×M×2 | ~M×48 |
+| `sc_axil_cfg.v` | AXI-Lite register file | ~200 | ~64 |
+| `sc_axil_cfg_param.v` | Parameterized AXI-Lite register file | ~250 | ~80 |
+| `sc_axis_interface.v` | AXI-Stream bulk bitstream I/O | ~150 | ~48 |
+| `sc_dma_controller.v` | DMA for weight upload and output readback | ~300 | ~96 |
+| `sc_cdc_primitives.v` | Clock domain crossing (2-FF sync, Gray counter, async FIFO) | ~60 | ~32 |
 | `sc_neurocore_top.v` | System top (DMA + AXI + layers) | varies | varies |
 
 ## Architecture: `sc_dense_layer_top.v`

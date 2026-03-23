@@ -4,38 +4,64 @@
 
 ```
 sc_neurocore/
-├── Core Tier (Production-Ready)
-│   ├── neurons/       122 neuron models (LIF, Izhikevich, HH, ArcaneNeuron, 8 AI-optimized, …)
+├── Core Tier (Production-Ready — ships in pip install sc-neurocore)
+│   ├── neurons/       122 neuron models (111 in models/, 5 core SC neurons)
 │   ├── synapses/      4 synapse types (bitstream, dot product, STDP, R-STDP)
-│   ├── layers/        8 layer types (dense, conv, learning, vectorized, recurrent, ...)
+│   ├── layers/        8 layer types (dense, conv, learning, vectorized, recurrent, memristive, fusion, attention)
 │   ├── sources/       Bitstream current sources
-│   ├── recorders/     Spike recording
+│   ├── recorders/     Spike and voltage recording
 │   ├── utils/         RNG, bitstreams, connectomes, decorrelators, fault injection
-│   ├── accel/         GPU backend (CuPy), JIT kernels (Numba), MPI, vector ops
+│   ├── accel/         GPU backend (CuPy), JIT kernels (Numba), JAX, MPI, vector ops
+│   ├── compiler/      IR graph → SystemVerilog + MLIR/CIRCT pipeline
+│   ├── hardware/      HDL generation (Verilog emitter)
+│   ├── hdl_gen/       Equation-to-Verilog RTL compiler
+│   ├── nir_bridge/    NIR import/export (18/18 primitives, Norse/snnTorch/SpikingJelly/Sinabs/Rockpool interop)
 │   ├── identity/      Persistent spiking network, trace encoder/decoder, checkpoint, L16 Director
-│   ├── viz/           12 visualization plots (raster, voltage, ISI, PSD, ...)
-│   ├── learning/      7 advanced plasticity rules (BPTT, e-prop, R-STDP, MAML, ...)
-│   ├── model_zoo/     10 pre-built network configs, 3 pre-trained weight sets
-│   └── network/       Population-Projection-Network engine (Python, Rust, MPI backends)
-│
-├── Research Tier (Experimental)
-│   ├── analysis/      Phi evaluation, qualia testing, Kardashev metrics
-│   ├── bio/           DNA storage, gene regulatory networks, neuromodulation
-│   ├── core/          Digital souls, orchestration, replication, self-awareness
-│   ├── dashboard/     Terminal-based monitoring
+│   ├── network/       Population-Projection-Network engine (Python, Rust, MPI backends)
+│   ├── learning/      13 plasticity rules (STDP, BPTT, TBPTT, EWC, e-prop, R-STDP, MAML, STP, BCM, ...)
+│   ├── training/      Surrogate gradient training cells
+│   ├── hdc/           Hyper-dimensional computing (VSA)
+│   ├── quantum/       Quantum circuit bridge (Qiskit + PennyLane)
+│   ├── math/          SC arithmetic (add, mul, div, CORDIV)
+│   ├── solvers/       ODE solvers (RK4, Euler)
+│   ├── graphs/        Petri nets, graph algorithms
 │   ├── ensembles/     Multi-agent consensus
+│   ├── transformers/  Stochastic transformer blocks
+│   ├── model_zoo/     10 pre-built network configs, 3 pre-trained weight sets
+│   ├── models/        Pre-built network architectures
 │   ├── export/        ONNX export
-│   ├── generative/    Audio, text, and 3D generation
-│   ├── hdl_gen/       Verilog and SPICE generation
-│   ├── interfaces/    BCI, DVS, interstellar, real-world sensors
-│   ├── learning/      Federated, lifelong, neuroevolution
-│   ├── pipeline/      Data ingestion and training loops
-│   ├── scpn/          7-layer SCPN consciousness model
-│   ├── security/      Ethics (Asimov), immune system, watermarks, ZKP
-│   ├── verification/  Formal proofs, safety verification
-│   └── viz/           Web visualization, generative neuro-art
+│   ├── adapters/      SCPN layer adapters (L1-L16), holonomic (JAX)
+│   ├── scpn/          SCPN layer implementations (L1-L16)
+│   ├── cli/           Command-line interface
+│   ├── exceptions/    Custom exception hierarchy
+│   ├── security/      Pickle allowlist, input sanitisation
+│   └── verification/  Property-based test helpers
 │
-└── Contrib Tier (Speculative/Theoretical)
+├── Simulation Tier (Available from source)
+│   ├── analysis/      125-function spike train analysis toolkit
+│   ├── viz/           14 visualization plots (raster, voltage, ISI, PSD, ...)
+│   ├── bio/           Biological circuits (gap junctions, tripartite, cortical column)
+│   ├── chaos/         Chaotic RNG
+│   ├── optics/        Optical/photonic neuron models
+│   ├── physics/       Wolfram hypergraph
+│   ├── robotics/      Swarm coupling
+│   ├── sleep/         Sleep protocol optimiser
+│   ├── spatial/       3D voxel grids, point clouds
+│   ├── pipeline/      Data ingestion and training loops
+│   ├── profiling/     Performance profiling
+│   ├── datasets/      Dataset loaders (MNIST, SHD, DVS)
+│   ├── interfaces/    SpikeInterface adapter, external tool bridges
+│   ├── integrations/  Third-party integrations
+│   ├── drivers/       Hardware driver interfaces
+│   ├── experiments/   Experiment management
+│   ├── dashboard/     Terminal-based monitoring
+│   ├── audio/         Audio processing with spiking networks
+│   ├── swarm/         Swarm intelligence
+│   ├── generative/    Generative spiking models
+│   ├── world_model/   World model / predictive coding
+│   └── core/          Core bitstream types
+│
+└── Contrib Tier (Speculative — research/ directory)
     ├── eschaton/      Heat death, holographic principle, nested universes
     ├── exotic/        Anyons, chemical RD, Dyson grids, mycelium, matrioshka
     ├── meta/          DAO governance, omega point, singularity, time crystals

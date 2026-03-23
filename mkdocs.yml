@@ -7,6 +7,8 @@ repo_name: sc-neurocore
 
 theme:
   name: material
+  logo: assets/anulum_logo.png
+  favicon: assets/anulum_logo_company.jpg
   palette:
     - scheme: default
       primary: indigo
@@ -27,6 +29,8 @@ theme:
     - content.code.copy
     - search.highlight
     - search.suggest
+    - navigation.tabs
+    - navigation.indexes
 
 plugins:
   - search
@@ -88,6 +92,11 @@ nav:
       - Fault Tolerance: tutorials/27_fault_tolerance.md
       - Learning Rules Catalog: tutorials/28_learning_rules.md
       - SpikeInterface Import: tutorials/29_spikeinterface_import.md
+      - NIR Bridge: tutorials/30_nir_bridge.md
+      - Network Simulation Engine: tutorials/31_network_simulation_engine.md
+      - Identity Substrate: tutorials/32_identity_substrate.md
+      - Equation-to-Verilog Compiler: tutorials/33_equation_to_verilog.md
+      - ArcaneNeuron: tutorials/34_arcane_neuron.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
@@ -172,9 +181,31 @@ nav:
   - Pricing: pricing.md
   - Rust Engine API: api/rust-engine.md
 
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/anulum/sc-neurocore
+    - icon: fontawesome/solid/globe
+      link: https://www.anulum.li
+  generator: false
+
+copyright: >
+  © 1998–2026 Miroslav Šotek / ANULUM — All rights reserved.
+  <br><a href="https://www.anulum.li">www.anulum.li</a> |
+  <a href="mailto:protoscience@anulum.li">protoscience@anulum.li</a>
+
 markdown_extensions:
   - pymdownx.highlight
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.details
   - admonition
+  - attr_list
+  - md_in_html
   - toc:
       permalink: true

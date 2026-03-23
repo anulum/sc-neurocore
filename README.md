@@ -90,7 +90,7 @@ coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 | Quantum hybrid (Qiskit/PennyLane) | **Yes** | — | — | — | — |
 | MLIR emitter (CIRCT) | **Yes** | — | — | — | — |
 | Hyperdimensional computing | Yes | — | — | — | — |
-| Formal verification (SymbiYosys) | **7 modules, 61 props** | — | — | — | — |
+| Formal verification (SymbiYosys) | **7 modules, 65 props** | — | — | — | — |
 | JAX JIT training | **Yes** | — | — | — | — |
 | CuPy sparse GPU | **Yes** | — | — | — | — |
 | AI-optimized neurons | **9 (ArcaneNeuron + 8)** | — | — | — | — |
@@ -116,8 +116,8 @@ Population-Projection-Network architecture with 3 backends:
 6 topology generators (random, small-world, scale-free, ring, grid, all-to-all),
 14 visualization plots (raster, voltage, ISI, cross-correlogram, PSD, firing rate,
 phase portrait, population activity, instantaneous rate, spike train comparison,
-network graph, weight matrix), and 7 advanced plasticity rules (BPTT, e-prop,
-R-STDP, MAML, homeostatic, STP, structural).
+network graph, weight matrix), and 13 advanced plasticity rules (pair/triplet/voltage
+STDP, BCM, BPTT, TBPTT, EWC, e-prop, R-STDP, MAML, homeostatic, STP, structural).
 
 ### Model Zoo
 
@@ -404,9 +404,14 @@ Runnable scripts in `examples/`:
 | `09_safety_critical_logic.py` | Fault-tolerant Boolean logic with stochastic redundancy (v3 Rust engine) |
 | `10_benchmark_report.py` | Head-to-head v2/v3 benchmark suite (v3 Rust engine) |
 | `11_sc_training_demo.py` | Surrogate-gradient training of an SC dense layer (v3 Rust engine) |
+| `12_load_pretrained_model.py` | Load pretrained ConvSpikingNet and classify MNIST digits |
+| `jax_training_demo.py` | JAX JIT surrogate-gradient SNN training on synthetic data |
 | `mnist_fpga/demo.py` | MNIST classifier: train → quantise Q8.8 → SC simulate → Verilog export |
 | `mnist_conv_train.py` | **ConvSpikingNet: 99.49% MNIST** (learnable beta/threshold, cosine LR) |
 | `mnist_surrogate/train.py` | Surrogate gradient SNN training (FastSigmoid/SuperSpike/ATan, ~95% MNIST) |
+| `nir_roundtrip_demo.py` | NIR roundtrip: CubaLIF + recurrent connections, build → import → run → export |
+| `norse_nir_roundtrip.py` | Norse → NIR → SC-NeuroCore roundtrip with real Norse weights |
+| `spikingjelly_nir_roundtrip.py` | SpikingJelly → NIR → SC-NeuroCore roundtrip |
 
 ```bash
 PYTHONPATH=src:bridge python examples/01_basic_sc_encoding.py
@@ -461,7 +466,7 @@ Sample results (CPU, quick mode):
 **Live site**: [anulum.github.io/sc-neurocore](https://anulum.github.io/sc-neurocore/)
 
 - [Getting Started](docs/guides/getting-started.md) — Installation & quickstart
-- [**Tutorials**](https://anulum.github.io/sc-neurocore/tutorials/01_stochastic_computing_fundamentals/) — 30 hands-on guides (SC fundamentals → MNIST → FPGA → quantum → formal verification)
+- [**Tutorials**](https://anulum.github.io/sc-neurocore/tutorials/01_stochastic_computing_fundamentals/) — 35 hands-on guides (SC fundamentals → MNIST → FPGA → quantum → formal verification)
 - [API Reference](docs/api/API_REFERENCE.md) — Python package API
 - [Rust Engine API](https://anulum.github.io/sc-neurocore/rust-api/sc_neurocore_engine/) — Rust engine docs
 - [Hardware Guide](docs/hardware/HARDWARE_GUIDE.md) — FPGA deployment workflow
@@ -561,3 +566,17 @@ SC-NeuroCore is dual-licensed:
 - **Commercial**: Proprietary license available for integration into closed-source products
 
 For commercial licensing enquiries, contact [protoscience@anulum.li](mailto:protoscience@anulum.li).
+
+---
+
+<p align="center">
+  <a href="https://www.anulum.li">
+    <img src="docs/assets/anulum_logo_company.jpg" width="180" alt="ANULUM">
+  </a>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="https://www.anulum.li">
+    <img src="docs/assets/fortis_studio_logo.jpg" width="180" alt="Fortis Studio">
+  </a>
+  <br>
+  <em>Developed by <a href="https://www.anulum.li">ANULUM</a> / Fortis Studio</em>
+</p>

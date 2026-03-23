@@ -21,7 +21,7 @@ compiler emitting SystemVerilog.
 | Metric | Value | Basis |
 |--------|-------|-------|
 | Neuron models | 122 Python, 111 Rust | Counted |
-| Test suite | 2 112 Python + 336 Rust, 100% coverage | CI-enforced |
+| Test suite | 2 155+ Python + 373 Rust, 100% coverage | CI-enforced |
 | MNIST accuracy | 99.49% (conv SNN) | Measured |
 | Brunel 1K speedup vs Brian2 | 4.0x | Benchmarked (Numba JIT) |
 | Bitstream packing | 41.3 Gbit/s (AVX-512) | Criterion benchmark |
@@ -262,8 +262,8 @@ This is a research module, not a production inference tool.
 
 | Gate | Tool | Threshold |
 |------|------|-----------|
-| Python tests | pytest | 2 112 tests, 100% line coverage |
-| Rust tests | cargo test | 336 tests |
+| Python tests | pytest | 2 155+ tests, 100% line coverage |
+| Rust tests | cargo test | 373 tests |
 | Formatting | ruff format 0.15.6 | 529 files |
 | Linting | ruff 0.15.6 | Zero violations |
 | Security | bandit | Zero findings |

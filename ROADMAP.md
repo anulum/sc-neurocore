@@ -1,13 +1,13 @@
 # Roadmap
 
-> Last updated: 2026-03-19 (v3.13.2). Priorities may shift based on
+> Last updated: 2026-03-23 (v3.13.3). Priorities may shift based on
 > validation results and community feedback.
 
 ## v3.8 — Hardening & Edge AI Readiness ✓
 
 ### ~~Coverage gate ≥ 98%~~ ✓
 
-Done. 100% enforced (2 112 tests passed; gate at 100).
+Done. 100% enforced (2 155+ tests passed; gate at 100).
 
 ### ~~NumPy 2.x full compatibility~~ ✓
 
@@ -53,7 +53,7 @@ stabilisation in Rust.
 
 SymbiYosys proofs across 7 HDL modules: LIF neuron (6), bitstream synapse
 (8), encoder (3), dense layer core (7), dotproduct (5), firing rate
-bank (22), AXI-Lite config (13). 64 formal properties total.
+bank (22), AXI-Lite config (13). 65 formal properties total.
 
 ### ~~Brunel balanced-network benchmark~~ ✓
 
@@ -101,11 +101,11 @@ targeting Xilinx 7-series.
 README benchmarks, all 10 HDL modules listed, Zenodo DOI corrected,
 test counts updated across all docs.
 
-## v3.12 — Competitive Sprint ✓ (current)
+## v3.12 — Competitive Sprint ✓
 
 122 Python + 111 Rust neuron models, PyO3 bindings for all extended
 model categories, JAX training support, CuPy sparse GPU paths, FMEA +
-traceability matrix, 2 112 Python tests, 336 Rust tests, 13 CI
+traceability matrix, 2 155+ Python tests, 373 Rust tests, 13 CI
 workflows, conda-forge recipe ready.
 
 New in this release:
@@ -117,9 +117,22 @@ New in this release:
 - **Rust NetworkRunner**: 111-model fused loop (was 80), Rayon parallel, 100K+ neurons
 - **MPI distributed simulation**: billion-neuron scale via mpi4py
 - **Model zoo**: 10 configurations + 3 pre-trained weight sets (MNIST, SHD, DVS)
-- **12 visualization plots**, **7 advanced plasticity rules**, **6 topology generators**
-- **126 analysis functions** across 23 modules
+- **14 visualization plots**, **13 advanced plasticity rules**, **6 topology generators**
+- **125 analysis functions** across 23 modules
 - **conda-forge recipe** ready for distribution
+
+## v3.13 — NIR Interop, Equation Compiler, Import Speed ✓ (current)
+
+- **NIR bridge**: 18/18 primitives (was 11), full roundtrip verified
+- **Cross-framework interop**: verified with Norse, snnTorch, SpikingJelly, Sinabs, Rockpool
+- **Equation-to-Verilog compiler**: any `EquationNeuron` ODE string → synthesizable Q8.8 RTL
+- **Surrogate gradient MNIST**: 99.49% (ConvSpikingNet with learnable beta/threshold)
+- **Import time optimization**: 200s → 10s via lazy-load neuron models + deferred scipy
+- **SC arithmetic**: CORDIV division, adaptive bitstream length, Sobol/Halton decorrelation
+- **Learning rules**: BCM, voltage STDP, TBPTT, EWC (real implementation), learnable beta/threshold
+- **Biological circuits**: tripartite synapse, Rall dendrite, cortical microcircuit, astrocyte adapter
+- **Hardware**: AXI-Stream interface, DMA controller, parameterized AXI-Lite, CDC primitives
+- **Deep audit**: 15 bugs + 7 concerns fixed across 942 files (6-agent + Gemini audit)
 
 ## v4.0 — Physical FPGA & Production (target: Q3 2026)
 
