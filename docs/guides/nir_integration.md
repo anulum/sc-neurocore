@@ -9,7 +9,7 @@ for hardware deployment.
 
 NIR (Neuromorphic Intermediate Representation) is an open standard for
 exchanging spiking neural network models between frameworks. It defines
-17 primitives (LIF, IF, Affine, Conv, etc.) as a directed graph.
+18 primitives (LIF, IF, CubaLIF, Affine, Conv, etc.) as a directed graph.
 Libraries like Norse, snnTorch, and Lava-DL can export to NIR. SC-NeuroCore
 can import those graphs, run them, export back, and deploy them to FPGAs.
 

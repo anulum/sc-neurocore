@@ -169,8 +169,8 @@ def verify_backends(layer, test_input, tolerance=0.05):
     py_out = layer.forward(test_input)
 
     try:
-        from sc_neurocore.accel import rust_forward
-        rust_out = rust_forward(layer, test_input)
+        from sc_neurocore_engine import DenseLayer as RustDenseLayer
+        rust_out = RustDenseLayer(layer.weights, layer.length).forward(test_input)
         max_diff = np.max(np.abs(py_out - rust_out))
         print(f"Python vs Rust max diff: {max_diff:.4f}")
         if max_diff > tolerance:

@@ -4,7 +4,7 @@
 
 Formal verification proves that hardware properties hold for **all
 possible inputs**, not just a finite test set. SC-NeuroCore ships 7
-formal verification modules covering 69 properties across the core
+formal verification modules covering 65 properties across the core
 HDL pipeline.
 
 **Prerequisites**: [SymbiYosys](https://symbiyosys.readthedocs.io/),
@@ -25,13 +25,13 @@ SC-NeuroCore proves properties on 7 Verilog modules:
 |--------|-----------|---------------|
 | `sc_lif_neuron` | 5 assert + 1 cover | Reset → V_REST, spike → V_RESET, refractory silence, counter bounded, spike reachable |
 | `sc_bitstream_encoder` | 2 assert + 1 cover | LFSR never locks to zero, zero probability → zero output, spike reachable |
-| `sc_bitstream_synapse` | 6 assert + 2 cover | AND-gate correctness, weight-zero blocks output, output bounded {0,1} |
+| `sc_bitstream_synapse` | 4 assert + 4 cover | AND-gate correctness, weight-zero blocks output, output bounded {0,1} |
 | `sc_dotproduct_to_current` | 4 assert + 1 cover | Popcount bounded by word count, reset clears accumulator |
-| `sc_dense_layer_core` | 6 assert + 2 cover | FSM transitions valid, done pulse singular, neuron count bounded |
-| `sc_firing_rate_bank` | 18 assert + 4 cover | Rate counter bounded, window rollover, rate monotonicity |
-| `sc_axil_cfg` | 14 assert + 3 cover | AXI-Lite protocol compliance, register read-back, address decode |
+| `sc_dense_layer_core` | 6 assert + 1 cover | FSM transitions valid, done pulse singular, neuron count bounded |
+| `sc_firing_rate_bank` | 21 assert + 1 cover | Rate counter bounded per accumulator, window rollover, rate stability |
+| `sc_axil_cfg` | 12 assert + 2 cover | AXI-Lite protocol compliance, register read-back, address decode |
 
-**Total: 55 assertions + 14 cover properties = 69 formal properties**
+**Total: 54 assertions + 11 cover properties = 65 formal properties**
 
 ## 2. Running a single proof
 

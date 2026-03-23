@@ -61,7 +61,7 @@ signals — verified in benchmarks against Brian2 Brunel networks.
 
 | SC-NeuroCore | Neuroscience | Operation |
 |-------------|-------------|-----------|
-| `SCSynapse` | Static synapse | AND gate (weight × input) |
+| `BitstreamSynapse` | Static synapse | AND gate (weight × input) |
 | `StochasticSTDPSynapse` | STDP (Bi & Poo 1998) | Trace-based, operates on bitstream |
 | `RewardModulatedSTDPSynapse` | R-STDP (Florian 2007) | Three-factor: timing + eligibility + reward |
 

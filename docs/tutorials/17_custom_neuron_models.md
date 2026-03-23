@@ -157,7 +157,7 @@ plt.savefig("adex_neuron.png", dpi=150)
 Wrap the custom neuron into `SCDenseLayer`-compatible form:
 
 ```python
-from sc_neurocore import SCSynapse
+from sc_neurocore import BitstreamSynapse
 
 class AdExLayer:
     """Dense layer using AdEx neurons."""

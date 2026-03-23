@@ -58,7 +58,7 @@ A first-order IIR low-pass filter in SC uses a shift register to
 maintain state and an AND gate for multiplication:
 
 ```python
-from sc_neurocore import SCSynapse
+from sc_neurocore import BitstreamSynapse
 
 def sc_lowpass(bitstreams, alpha=0.9):
     """First-order IIR filter: y[n] = α·y[n-1] + (1-α)·x[n].

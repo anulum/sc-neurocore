@@ -37,7 +37,7 @@ from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
 
 ::: sc_neurocore.neurons.dendritic.StochasticDendriticNeuron
 
-## Extended Model Library (108 models in `neurons/models/`)
+## Extended Model Library (109 models in `neurons/models/`)
 
 ### Integrate-and-Fire Variants (21)
 

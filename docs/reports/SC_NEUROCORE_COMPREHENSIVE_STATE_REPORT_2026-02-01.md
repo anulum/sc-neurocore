@@ -1,6 +1,6 @@
 # SC-NeuroCore Comprehensive State Report
 
-**Version:** 3.10.0
+**Version:** 3.13.3
 **Date:** March 11, 2026
 **Author:** Arcane Sapience
 **Principal Investigator:** Miroslav Šotek

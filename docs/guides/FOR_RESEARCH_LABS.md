@@ -119,7 +119,7 @@ Artix-7 100T at ~56K LUTs.
 
 ### Formal verification
 
-61 properties across 7 SymbiYosys formal modules (encoder, neuron,
+65 properties across 7 SymbiYosys formal modules (encoder, neuron,
 synapse, dense layer, dotproduct, firing rate, AXI-Lite config).
 
 ### Prerequisites for physical deployment

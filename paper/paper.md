@@ -123,7 +123,7 @@ Elephant [@elephant2023] and PySpike.
 `sc_lif_neuron.v` (Q8.8 LIF), `sc_dense_matrix_layer.v`, and
 `sc_neurocore_top.v` (AXI-Lite wrapper). Yosys synthesis of
 `sc_neurocore_top` yields 3 673 LUTs on Xilinx 7-series. SymbiYosys
-formal verification covers 61 properties across 7 modules.
+formal verification covers 65 properties across 7 modules.
 
 **IR Compiler**: Parses a graph-based intermediate representation,
 verifies structural invariants, and emits synthesisable SystemVerilog

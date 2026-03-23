@@ -37,7 +37,7 @@ with bit-true Verilog RTL co-simulation, FPGA synthesis via an IR compiler
 (SystemVerilog + MLIR/CIRCT backends), an equation-to-Verilog compiler
 that turns arbitrary ODE strings into synthesizable Q8.8 fixed-point RTL,
 formal verification (7 SymbiYosys
-modules, 61 properties), a Rust SIMD engine at 41.3 Gbit/s AVX-512 (111 Rust
+modules, 65 properties), a Rust SIMD engine at 41.3 Gbit/s AVX-512 (111 Rust
 neuron models with PyO3 bindings, 111-model NetworkRunner with Rayon-parallel
 populations scaling to 100K+ neurons), CuPy GPU acceleration, JAX JIT
 training, MPI distributed simulation (billion-neuron scale via mpi4py),
@@ -461,7 +461,7 @@ Sample results (CPU, quick mode):
 **Live site**: [anulum.github.io/sc-neurocore](https://anulum.github.io/sc-neurocore/)
 
 - [Getting Started](docs/guides/getting-started.md) — Installation & quickstart
-- [**Tutorials**](https://anulum.github.io/sc-neurocore/tutorials/01_stochastic_computing_fundamentals/) — 22 hands-on guides (SC fundamentals → MNIST → FPGA → quantum → formal verification)
+- [**Tutorials**](https://anulum.github.io/sc-neurocore/tutorials/01_stochastic_computing_fundamentals/) — 30 hands-on guides (SC fundamentals → MNIST → FPGA → quantum → formal verification)
 - [API Reference](docs/api/API_REFERENCE.md) — Python package API
 - [Rust Engine API](https://anulum.github.io/sc-neurocore/rust-api/sc_neurocore_engine/) — Rust engine docs
 - [Hardware Guide](docs/hardware/HARDWARE_GUIDE.md) — FPGA deployment workflow

@@ -1,6 +1,6 @@
 # SC-NeuroCore Component Inventory
 
-**Version:** 3.10.0
+**Version:** 3.13.3
 **Date:** 2026-03-11
 
 This document lists all components in the `sc-neurocore` framework, organized

@@ -6,7 +6,7 @@ An honest comparison of SC-NeuroCore with peer frameworks. Every claim
 is backed by measured data or cited literature. Unverified claims are
 marked explicitly.
 
-**Last updated**: 2026-03-19 (v3.13.2)
+**Last updated**: 2026-03-19 (v3.13.3)
 
 ---
 

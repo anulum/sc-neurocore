@@ -29,15 +29,15 @@ Yosys for Lattice iCE40 and ECP5:
 | Module | Function | LUTs (iCE40) | FFs |
 |--------|----------|-------------|-----|
 | `sc_lif_neuron.v` | Q8.8 LIF neuron | ~120 | ~48 |
-| `sc_stochastic_encoder.v` | Probability → bitstream | ~40 | ~16 |
-| `sc_stochastic_decoder.v` | Bitstream → count | ~20 | ~16 |
-| `sc_lfsr_16bit.v` | 16-bit LFSR (PRNG) | ~8 | 16 |
-| `sc_synapse.v` | AND-gate multiply | 1 | 0 |
-| `sc_mux_adder.v` | 2-input MUX (scaled add) | 2 | 0 |
-| `sc_dense_layer_top.v` | N-input, M-neuron layer | ~N×M×2 | ~M×48 |
-| `sc_bitstream_mux.v` | N-input MUX tree | ~N | ~log₂(N) |
-| `sc_spike_counter.v` | Population spike count | ~M×8 | ~M×8 |
-| `sc_noise_injector.v` | LFSR-based noise source | ~12 | 16 |
+| `sc_bitstream_encoder.v` | LFSR + threshold → bitstream | ~40 | ~16 |
+| `sc_bitstream_synapse.v` | AND-gate multiply | 1 | 0 |
+| `sc_mux_add.v` | 2-input MUX (scaled add) | 2 | 0 |
+| `sc_cordiv.v` | CORDIV stochastic divider | ~10 | ~2 |
+| `sc_dotproduct_to_current.v` | Popcount → membrane current | ~N×4 | ~16 |
+| `sc_firing_rate_bank.v` | Population rate measurement | ~M×8 | ~M×8 |
+| `sc_dense_layer_core.v` | Dense layer datapath FSM | ~N×M×2 | ~M×48 |
+| `sc_dense_layer_top.v` | Top-level with AXI config | ~N×M×2+200 | ~M×48+64 |
+| `sc_neurocore_top.v` | System top (DMA + AXI + layers) | varies | varies |
 
 ## Architecture: `sc_dense_layer_top.v`
 
