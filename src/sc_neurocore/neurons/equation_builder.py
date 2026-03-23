@@ -189,8 +189,9 @@ class EquationNeuron:
 
     def _build_env(self, **kwargs):
         env = dict(self._namespace)
-        # Fresh noise each call (Euler-Maruyama SDE scheme)
-        env["xi"] = self._noise_scale * np.random.randn()
+        # Euler-Maruyama: noise scaled by sqrt(dt)/dt so that after deriv*dt
+        # the net noise is noise_scale * sqrt(dt) * N(0,1)
+        env["xi"] = self._noise_scale * np.random.randn() / max(self.dt, 1e-12) ** 0.5
         env.update(self.parameters)
         env.update(self.constants)
         env.update(self.state)
@@ -211,7 +212,7 @@ class EquationNeuron:
         elif self.method == "rk4":
             s0 = deepcopy(self.state)
 
-            xi_sample = self._noise_scale * np.random.randn()
+            xi_sample = self._noise_scale * np.random.randn() / max(self.dt, 1e-12) ** 0.5
 
             def eval_derivs(state_override):
                 e = dict(self._namespace)

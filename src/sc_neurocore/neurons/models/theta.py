@@ -27,9 +27,9 @@ class ThetaNeuron:
         theta_prev = self.theta
         dtheta = ((1.0 - np.cos(self.theta)) + (1.0 + np.cos(self.theta)) * current) * self.dt
         self.theta += dtheta
-        # Wrap to [-π, π]
+        spike = 1 if (theta_prev < np.pi * 0.99 and self.theta >= np.pi * 0.99) else 0
         self.theta = ((self.theta + np.pi) % (2 * np.pi)) - np.pi
-        return 1 if (theta_prev < np.pi * 0.99 and self.theta >= np.pi * 0.99) else 0
+        return spike
 
     def reset(self):
         self.theta = 0.0
