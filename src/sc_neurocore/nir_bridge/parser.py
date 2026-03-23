@@ -268,7 +268,7 @@ class SCNetwork:
         return "\n".join(lines)
 
 
-def from_nir(source, dt: float = 1.0) -> SCNetwork:
+def from_nir(source, dt: float = 1.0, reset_mode: str = "reset") -> SCNetwork:
     """Convert a NIR graph to an executable SC-NeuroCore network.
 
     Parameters
@@ -276,7 +276,10 @@ def from_nir(source, dt: float = 1.0) -> SCNetwork:
     source : nir.NIRGraph or str or Path
         NIR graph object, or path to a .nir file.
     dt : float
-        Timestep for leaky integrator dynamics (ms).
+        Timestep for leaky integrator dynamics.
+    reset_mode : str
+        Spike reset mechanism: "reset" (v = v_reset, NIR spec default)
+        or "subtract" (v = v - v_threshold, used by snnTorch).
 
     Returns
     -------
@@ -290,10 +293,14 @@ def from_nir(source, dt: float = 1.0) -> SCNetwork:
     else:
         raise TypeError(f"Expected NIRGraph or path, got {type(source)}")
 
-    return _parse_graph(graph, dt=dt)
+    return _parse_graph(graph, dt=dt, reset_mode=reset_mode)
 
 
-def _parse_graph(graph: nir.NIRGraph, dt: float = 1.0) -> SCNetwork:
+def _parse_graph(
+    graph: nir.NIRGraph,
+    dt: float = 1.0,
+    reset_mode: str = "reset",
+) -> SCNetwork:
     """Recursively parse a NIR graph into an SCNetwork."""
     nodes = {}
     input_nodes = []
@@ -301,13 +308,13 @@ def _parse_graph(graph: nir.NIRGraph, dt: float = 1.0) -> SCNetwork:
 
     for name, node in graph.nodes.items():
         if isinstance(node, nir.NIRGraph):
-            sub_net = _parse_graph(node, dt=dt)
+            sub_net = _parse_graph(node, dt=dt, reset_mode=reset_mode)
             if len(sub_net.input_nodes) == 1 and len(sub_net.output_nodes) == 1:
                 nodes[name] = SCSubgraphNode(name=name, network=sub_net)
             else:
                 nodes[name] = SCMultiPortSubgraphNode(name=name, network=sub_net)
         else:
-            sc_node = map_node(name, node, dt=dt)
+            sc_node = map_node(name, node, dt=dt, reset_mode=reset_mode)
             nodes[name] = sc_node
             if isinstance(node, nir.Input):
                 input_nodes.append(name)
