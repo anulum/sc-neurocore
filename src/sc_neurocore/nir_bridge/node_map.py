@@ -86,8 +86,19 @@ class SCLIFNode:
         if self.v is None:
             self.v = self.v_leak.copy()
 
+    def _broadcast_to(self, size: int):
+        self.n_neurons = size
+        for attr in ("tau", "r", "v_leak", "v_threshold", "v_reset"):
+            arr = getattr(self, attr)
+            if len(arr) == 1 and size > 1:
+                setattr(self, attr, np.broadcast_to(arr, (size,)).copy())
+        self.v = np.broadcast_to(self.v, (size,)).copy()
+
     def forward(self, x: np.ndarray) -> np.ndarray:
-        x = np.atleast_1d(x).flatten()[: self.n_neurons]
+        x = np.atleast_1d(x).flatten()
+        if self.n_neurons == 1 and len(x) > 1:
+            self._broadcast_to(len(x))
+        x = x[: self.n_neurons]
         dv = (self.v_leak - self.v + self.r * x) * (self.dt / self.tau)
         self.v += dv
         spikes = (self.v >= self.v_threshold).astype(np.float64)
@@ -129,8 +140,19 @@ class SCIFNode:
         if self.v is None:
             self.v = np.zeros(self.n_neurons)
 
+    def _broadcast_to(self, size: int):
+        self.n_neurons = size
+        for attr in ("r", "v_threshold", "v_reset"):
+            arr = getattr(self, attr)
+            if len(arr) == 1 and size > 1:
+                setattr(self, attr, np.broadcast_to(arr, (size,)).copy())
+        self.v = np.zeros(size)
+
     def forward(self, x: np.ndarray) -> np.ndarray:
-        x = np.atleast_1d(x).flatten()[: self.n_neurons]
+        x = np.atleast_1d(x).flatten()
+        if self.n_neurons == 1 and len(x) > 1:
+            self._broadcast_to(len(x))
+        x = x[: self.n_neurons]
         self.v += self.r * x * self.dt
         spikes = (self.v >= self.v_threshold).astype(np.float64)
         self.v = np.where(spikes > 0, self.v_reset, self.v)
@@ -166,8 +188,19 @@ class SCLINode:
         if self.v is None:
             self.v = self.v_leak.copy()
 
+    def _broadcast_to(self, size: int):
+        self.n_neurons = size
+        for attr in ("tau", "r", "v_leak"):
+            arr = getattr(self, attr)
+            if len(arr) == 1 and size > 1:
+                setattr(self, attr, np.broadcast_to(arr, (size,)).copy())
+        self.v = np.broadcast_to(self.v, (size,)).copy()
+
     def forward(self, x: np.ndarray) -> np.ndarray:
-        x = np.atleast_1d(x).flatten()[: self.n_neurons]
+        x = np.atleast_1d(x).flatten()
+        if self.n_neurons == 1 and len(x) > 1:
+            self._broadcast_to(len(x))
+        x = x[: self.n_neurons]
         dv = (self.v_leak - self.v + self.r * x) * (self.dt / self.tau)
         self.v += dv
         return self.v.copy()
@@ -395,8 +428,21 @@ class SCCubaLIFNode:
         if self.i_syn is None:
             self.i_syn = np.zeros(self.n_neurons)
 
+    def _broadcast_to(self, size: int):
+        """Broadcast scalar params to match actual input size."""
+        self.n_neurons = size
+        for attr in ("tau_syn", "tau_mem", "r", "v_leak", "v_threshold", "v_reset", "w_in"):
+            arr = getattr(self, attr)
+            if len(arr) == 1 and size > 1:
+                setattr(self, attr, np.broadcast_to(arr, (size,)).copy())
+        self.v = np.broadcast_to(self.v, (size,)).copy()
+        self.i_syn = np.zeros(size)
+
     def forward(self, x: np.ndarray) -> np.ndarray:
-        x = np.atleast_1d(x).flatten()[: self.n_neurons]
+        x = np.atleast_1d(x).flatten()
+        if self.n_neurons == 1 and len(x) > 1:
+            self._broadcast_to(len(x))
+        x = x[: self.n_neurons]
         di = (-self.i_syn + self.w_in * x) * (self.dt / self.tau_syn)
         self.i_syn += di
         dv = (self.v_leak - self.v + self.r * self.i_syn) * (self.dt / self.tau_mem)
@@ -453,8 +499,20 @@ class SCCubaLINode:
         if self.i_syn is None:
             self.i_syn = np.zeros(self.n_neurons)
 
+    def _broadcast_to(self, size: int):
+        self.n_neurons = size
+        for attr in ("tau_syn", "tau_mem", "r", "v_leak", "w_in"):
+            arr = getattr(self, attr)
+            if len(arr) == 1 and size > 1:
+                setattr(self, attr, np.broadcast_to(arr, (size,)).copy())
+        self.v = np.broadcast_to(self.v, (size,)).copy()
+        self.i_syn = np.zeros(size)
+
     def forward(self, x: np.ndarray) -> np.ndarray:
-        x = np.atleast_1d(x).flatten()[: self.n_neurons]
+        x = np.atleast_1d(x).flatten()
+        if self.n_neurons == 1 and len(x) > 1:
+            self._broadcast_to(len(x))
+        x = x[: self.n_neurons]
         di = (-self.i_syn + self.w_in * x) * (self.dt / self.tau_syn)
         self.i_syn += di
         dv = (self.v_leak - self.v + self.r * self.i_syn) * (self.dt / self.tau_mem)
