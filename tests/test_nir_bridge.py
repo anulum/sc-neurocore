@@ -411,6 +411,149 @@ class TestScalarBroadcast:
         assert len(results["output"][0]) == 6
 
 
+# --- Threshold and reset mode tests ---
+
+
+class TestThresholdAndReset:
+    def test_strict_threshold(self):
+        """NIR spec: z=1 when v > v_threshold (strict, not >=)."""
+        node = nir.LIF(
+            tau=np.array([100.0]),
+            r=np.array([1.0]),
+            v_leak=np.array([0.0]),
+            v_threshold=np.array([1.0]),
+        )
+        sc = map_node("lif", node, dt=1.0)
+        # Feed exactly threshold worth of current: v should reach 1.0 but not spike
+        # dv = (0 - 0 + 1*100) * 1/100 = 1.0, so v = 1.0
+        sc.forward(np.array([100.0]))
+        assert sc.v[0] == 1.0  # strict >: v == threshold means no spike
+        # Larger input to push v above threshold
+        # dv = (0 - 1.0 + 1*200) * 0.01 = 199*0.01 = 1.99, v = 1.0 + 1.99 = 2.99
+        out = sc.forward(np.array([200.0]))
+        assert out[0] == 1.0  # now fires (v > threshold)
+
+    def test_reset_mode_default(self):
+        """Default reset: v = v_reset after spike."""
+        from sc_neurocore.nir_bridge import from_nir
+
+        nodes = {
+            "input": nir.Input(input_type={"input": np.array([1])}),
+            "lif": nir.LIF(
+                tau=np.array([1.0]),
+                r=np.array([1.0]),
+                v_leak=np.array([0.0]),
+                v_threshold=np.array([0.5]),
+                v_reset=np.array([0.1]),
+            ),
+            "output": nir.Output(output_type={"output": np.array([1])}),
+        }
+        edges = [("input", "lif"), ("lif", "output")]
+        graph = nir.NIRGraph(nodes=nodes, edges=edges)
+        net = from_nir(graph, dt=1.0, reset_mode="reset")
+        net.run({"input": np.array([10.0])}, steps=3)
+        lif = net.nodes["lif"]
+        # After spiking, v should be near v_reset (0.1), not near v-threshold
+        assert lif.v[0] < 1.0
+
+    def test_reset_mode_subtract(self):
+        """Subtract reset: v = v - v_threshold after spike."""
+        from sc_neurocore.nir_bridge import from_nir
+
+        nodes = {
+            "input": nir.Input(input_type={"input": np.array([1])}),
+            "lif": nir.LIF(
+                tau=np.array([1.0]),
+                r=np.array([1.0]),
+                v_leak=np.array([0.0]),
+                v_threshold=np.array([0.5]),
+                v_reset=np.array([0.0]),
+            ),
+            "output": nir.Output(output_type={"output": np.array([1])}),
+        }
+        edges = [("input", "lif"), ("lif", "output")]
+        graph = nir.NIRGraph(nodes=nodes, edges=edges)
+        net = from_nir(graph, dt=1.0, reset_mode="subtract")
+        # Large input -> spike -> v should be v_at_spike - threshold, not v_reset
+        out = net.step({"input": np.array([2.0])})
+        assert out["output"][0] == 1.0  # spiked
+        lif = net.nodes["lif"]
+        # v was 2.0 (from r*I*dt/tau = 1*2*1/1 = 2), spiked, subtract: 2.0-0.5=1.5
+        assert lif.v[0] == pytest.approx(1.5)
+
+    def test_cubalif_subtract_reset(self):
+        """CubaLIF subtract reset mode."""
+        from sc_neurocore.nir_bridge import from_nir
+
+        nodes = {
+            "input": nir.Input(input_type={"input": np.array([2])}),
+            "cubalif": nir.CubaLIF(
+                tau_syn=np.array([1.0, 1.0]),
+                tau_mem=np.array([1.0, 1.0]),
+                r=np.ones(2),
+                v_leak=np.zeros(2),
+                v_threshold=np.ones(2),
+                w_in=np.ones(2),
+                v_reset=np.zeros(2),
+            ),
+            "output": nir.Output(output_type={"output": np.array([2])}),
+        }
+        edges = [("input", "cubalif"), ("cubalif", "output")]
+        graph = nir.NIRGraph(nodes=nodes, edges=edges)
+        net = from_nir(graph, dt=1.0, reset_mode="subtract")
+        out = net.run({"input": np.array([5.0, 5.0])}, steps=3)
+        # Should produce spikes with subtract reset
+        total = sum(r.sum() for r in out["output"])
+        assert total > 0
+
+
+class TestSpikingJellyInterop:
+    def test_spikingjelly_lif_roundtrip(self):
+        """SpikingJelly LIFNode -> NIR -> SC-NeuroCore produces identical spikes."""
+        pytest_mod = __import__("pytest")
+        try:
+            import torch
+            from spikingjelly.activation_based import neuron, layer, functional
+            from spikingjelly.activation_based.nir_exchange import export_to_nir
+        except ImportError:
+            pytest_mod.skip("spikingjelly not installed from git")
+
+        from sc_neurocore.nir_bridge import from_nir
+
+        torch.manual_seed(42)
+
+        class Net(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.fc1 = layer.Linear(4, 6)
+                self.lif1 = neuron.LIFNode(tau=2.0)
+                self.fc2 = layer.Linear(6, 2)
+                self.lif2 = neuron.LIFNode(tau=2.0)
+
+            def forward(self, x):
+                x = self.lif1(self.fc1(x))
+                x = self.lif2(self.fc2(x))
+                return x
+
+        model = Net()
+        functional.set_step_mode(model, "s")
+        graph = export_to_nir(model, torch.randn(1, 4), dt=1e-4)
+        net = from_nir(graph, dt=1e-4)
+
+        inp_t = torch.tensor([[5.0, 3.0, 1.0, 2.0]])
+        inp_np = np.array([5.0, 3.0, 1.0, 2.0])
+        functional.reset_net(model)
+
+        mismatches = 0
+        for _ in range(50):
+            sj_out = model(inp_t).detach().numpy().flatten()
+            sc_out = net.step({"x": inp_np})["output"]
+            if not np.array_equal(sj_out, sc_out):
+                mismatches += 1
+
+        assert mismatches == 0, f"{mismatches}/50 mismatches"
+
+
 # --- Graph parsing tests ---
 
 
