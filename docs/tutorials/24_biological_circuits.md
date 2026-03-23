@@ -31,12 +31,16 @@ no delay, no plasticity. They're used for synchronization and rapid signaling.
 import numpy as np
 from sc_neurocore.synapses.gap_junction import GapJunction
 
-# Create gap junction network for 5 neurons
-gj = GapJunction(conductance=0.1, n_neurons=5)
+# Create a gap junction with conductance 0.1 nS
+gj = GapJunction(conductance=0.1)
+
+# Define connectivity: all-to-all (adjacency matrix)
+n = 5
+adjacency = np.ones((n, n)) - np.eye(n)  # connected to all except self
 
 # Given membrane voltages, compute coupling currents
 voltages = np.array([-65.0, -60.0, -70.0, -55.0, -68.0])
-currents = gj.current_matrix(voltages)
+currents = gj.current_matrix(voltages, adjacency)
 # Each neuron receives current from its coupled neighbors
 # Current flows from high voltage to low voltage
 print(f"Coupling currents: {currents}")
@@ -185,7 +189,7 @@ in the retina and orientation selectivity in V1.
 import numpy as np
 from sc_neurocore.layers.circuit_primitives import LateralInhibition
 
-li = LateralInhibition(n_neurons=10, sigma=2.0, strength=0.5)
+li = LateralInhibition(n_neurons=10, inhibition_strength=0.5, radius=2)
 
 # Input: broad activation with a peak at neuron 5
 activations = np.array([0.1, 0.2, 0.4, 0.6, 0.8, 1.0, 0.7, 0.5, 0.3, 0.1])
