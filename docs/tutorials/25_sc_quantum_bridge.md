@@ -136,22 +136,19 @@ from sc_neurocore.quantum.param_shift import (
 )
 import numpy as np
 
-def circuit_fn(params):
-    """Parameterized circuit cost function."""
-    from sc_neurocore.quantum.sc_quantum_compiler import SCQuantumCircuit
-    qc = SCQuantumCircuit(n_qubits=2)
-    qc.ry(0, params[0])
-    qc.ry(1, params[1])
-    qc.cnot(0, 1)
-    return qc.expectation_value()
+# Define a cost function that builds and evaluates a circuit
+def cost_fn(params):
+    from sc_neurocore.quantum.sc_quantum_compiler import compile_sc_multiply
+    circuit = compile_sc_multiply(params[0], params[1])
+    return circuit.output_probability()
 
 # Exact gradient via parameter shift
-params = np.array([0.5, 1.2])
-grad = parameter_shift_gradient(circuit_fn, params)
+params = np.array([0.5, 0.7])
+grad = parameter_shift_gradient(cost_fn, params)
 print(f"Gradient: {grad}")
 
 # Gradient-based optimization
-optimizer = ParameterShiftOptimizer(circuit_fn, lr=0.1)
+optimizer = ParameterShiftOptimizer(cost_fn, lr=0.1)
 for step in range(50):
     loss = optimizer.step()
     if step % 10 == 0:
