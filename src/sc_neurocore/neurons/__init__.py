@@ -24,12 +24,14 @@ to keep ``import sc_neurocore`` fast (<5s). Core neurons (StochasticLIFNeuron,
 FixedPointLIFNeuron, etc.) are always available immediately.
 """
 
-from .base import BaseNeuron
-from .stochastic_lif import StochasticLIFNeuron
-from .fixed_point_lif import FixedPointLIFNeuron, FixedPointLFSR, FixedPointBitstreamEncoder
-from .homeostatic_lif import HomeostaticLIFNeuron
-from .dendritic import StochasticDendriticNeuron
-from .sc_izhikevich import SCIzhikevichNeuron
+from .base import BaseNeuron as BaseNeuron
+from .stochastic_lif import StochasticLIFNeuron as StochasticLIFNeuron
+from .fixed_point_lif import FixedPointLIFNeuron as FixedPointLIFNeuron
+from .fixed_point_lif import FixedPointLFSR as FixedPointLFSR
+from .fixed_point_lif import FixedPointBitstreamEncoder as FixedPointBitstreamEncoder
+from .homeostatic_lif import HomeostaticLIFNeuron as HomeostaticLIFNeuron
+from .dendritic import StochasticDendriticNeuron as StochasticDendriticNeuron
+from .sc_izhikevich import SCIzhikevichNeuron as SCIzhikevichNeuron
 
 _CORE_NAMES = {
     "BaseNeuron",
