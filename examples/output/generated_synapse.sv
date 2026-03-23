@@ -15,7 +15,7 @@ module sc_synapse (
     wire v2;
     wire v3;
     wire v4;
-    wire [63:0] v5;
+    logic [63:0] v5;
     wire [63:0] v6;
 
     sc_bitstream_encoder #(
@@ -46,7 +46,13 @@ module sc_synapse (
         .post_bit(v4)
     );
 
-    assign v5 = {63'd0, v4};
+    // Combinatorial popcount for v5
+    always_comb begin
+        v5 = 64'd0;
+        for (integer _pc_i = 0; _pc_i < 64; _pc_i = _pc_i + 1)
+            v5 = v5 + {63'd0, v4[_pc_i]};
+    end
+
     assign v6 = v5 / 1024;
     assign firing_rate = v6;
 

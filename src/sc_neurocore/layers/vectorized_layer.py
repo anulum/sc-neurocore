@@ -20,12 +20,23 @@ from ..accel.gpu_backend import (
 )
 from ..constants import LAYER_DEFAULT_LENGTH
 
-try:
-    import scipy.sparse as sp
+_scipy_sparse = None
 
-    HAS_SCIPY_SPARSE = True
-except ImportError:  # pragma: no cover
-    HAS_SCIPY_SPARSE = False
+
+def _get_scipy_sparse():
+    global _scipy_sparse
+    if _scipy_sparse is None:
+        import scipy.sparse
+        _scipy_sparse = scipy.sparse
+    return _scipy_sparse
+
+
+def _has_scipy_sparse():
+    try:
+        _get_scipy_sparse()
+        return True
+    except ImportError:  # pragma: no cover
+        return False
 
 
 def _popcount_rows(packed: np.ndarray) -> np.ndarray:
@@ -75,7 +86,7 @@ class VectorizedSCLayer:
             raise ValueError(f"n_neurons must be >= 1, got {self.n_neurons}")
         if self.length < 1:
             raise ValueError(f"length must be >= 1, got {self.length}")
-        if self.sparse and not HAS_SCIPY_SPARSE:
+        if self.sparse and not _has_scipy_sparse():
             raise ImportError("scipy is required for sparse=True")
         if not 0.0 < self.connectivity <= 1.0:
             raise ValueError(f"connectivity must be in (0, 1], got {self.connectivity}")
@@ -109,6 +120,7 @@ class VectorizedSCLayer:
     # -- Sparse path -----------------------------------------------------------
 
     def _init_sparse(self):
+        sp = _get_scipy_sparse()
         n_total = self.n_neurons * self.n_inputs
         n_nonzero = max(1, int(round(n_total * self.connectivity)))
         indices = np.random.choice(n_total, size=n_nonzero, replace=False)
