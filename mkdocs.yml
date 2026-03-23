@@ -97,6 +97,9 @@ nav:
       - Identity Substrate: tutorials/32_identity_substrate.md
       - Equation-to-Verilog Compiler: tutorials/33_equation_to_verilog.md
       - ArcaneNeuron: tutorials/34_arcane_neuron.md
+      - Model Zoo: tutorials/35_model_zoo.md
+      - MPI Distributed Simulation: tutorials/36_mpi_distributed.md
+      - JAX Training: tutorials/37_jax_training.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
