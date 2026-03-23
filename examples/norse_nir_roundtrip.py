@@ -152,7 +152,7 @@ def main():
     print("\n1. Norse model -> NIR graph:")
     print(f"   Nodes: {sorted(graph.nodes.keys())}")
     print(f"   Edges: {graph.edges}")
-    print("   CubaLIF: tau_syn=5.0, tau_mem=10.0 (Norse defaults)")
+    print("   CubaLIF: tau_syn=5.0, tau_mem=10.0 (1/tau_inv at dt=1.0)")
     print("   Recurrent: lif1 -> rec -> lif1")
     print("   Weights from: Norse nn.Linear (seed=42, scaled 3x for visibility)")
     print("   Note: weights scaled so untrained init produces spikes for demo")
