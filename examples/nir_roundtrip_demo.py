@@ -84,8 +84,8 @@ def main():
         print(f"   Delay nodes inserted: {delay_nodes}")
 
     # 3. Run simulation
-    input_data = np.array([2.0, 1.0, 0.5, 0.3])
-    n_steps = 50
+    input_data = np.array([8.0, 6.0, 4.0, 3.0])
+    n_steps = 200
     results = net.run({"input": input_data}, steps=n_steps)
     spike_counts = np.array([r.sum() for r in results["output"]])
     total_spikes = spike_counts.sum()
