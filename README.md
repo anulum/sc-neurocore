@@ -320,14 +320,20 @@ from sc_neurocore import (
 hdl/
   sc_bitstream_encoder.v      -- LFSR-based stochastic encoder (SEED_INIT param)
   sc_bitstream_synapse.v      -- AND-gate SC multiplier
+  sc_mux_add.v                -- 2-input MUX (scaled addition)
+  sc_cordiv.v                 -- CORDIV stochastic divider (Li et al. 2014)
   sc_dotproduct_to_current.v  -- Popcount -> fixed-point current
   sc_lif_neuron.v             -- Q8.8 leaky integrate-and-fire
   sc_firing_rate_bank.v       -- Spike rate estimator
   sc_dense_layer_core.v       -- Full dense layer pipeline (decorrelated seeds)
   sc_dense_matrix_layer.v     -- N×M weight matrix layer
-  sc_neurocore_top.v          -- AXI-Lite configuration wrapper
   sc_axil_cfg.v               -- AXI-Lite register file
+  sc_axil_cfg_param.v         -- Parameterized AXI-Lite register file
+  sc_axis_interface.v         -- AXI-Stream bulk bitstream I/O
+  sc_dma_controller.v         -- DMA for weight upload and output readback
+  sc_cdc_primitives.v         -- Clock domain crossing (2-FF sync, Gray, async FIFO)
   sc_dense_layer_top.v        -- Dense layer top wrapper
+  sc_neurocore_top.v          -- System top (DMA + AXI + layers)
   tb_sc_*.v (7 testbenches)   -- Self-checking simulation testbenches
   formal/ (7 modules)         -- SymbiYosys formal verification properties
 ```
