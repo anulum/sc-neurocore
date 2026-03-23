@@ -49,7 +49,7 @@ marked explicitly.
 | STDP / R-STDP plasticity | Yes | — | Yes | Yes | Yes |
 | Quantum hybrid circuits | **Yes** | — | — | — | — |
 | Hyperdimensional computing | **Yes** | — | — | — | — |
-| Formal verification | **7 modules, 64 props** | — | — | — | — |
+| Formal verification | **7 modules, 65 props** | — | — | — | — |
 | Sobol low-discrepancy encoding | **Yes** | — | — | — | — |
 | Multi-head attention (SC) | **Yes** | — | — | — | — |
 | Connectome generators | Yes | — | — | — | Yes |
