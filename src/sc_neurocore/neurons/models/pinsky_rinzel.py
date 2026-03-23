@@ -32,6 +32,7 @@ class PinskyRinzelNeuron:
     g_kdr: float = 15.0
     g_ca: float = 10.0
     g_kahp: float = 0.8
+    g_kc: float = 15.0
     g_l: float = 0.1
     e_na: float = 60.0
     e_k: float = -75.0
@@ -66,20 +67,22 @@ class PinskyRinzelNeuron:
         s_inf = 1.0 / (1.0 + np.exp(-(self.v_d + 20.0) / 9.0))
         c_inf = min(self.c, 1.0) if self.c > 0 else 0.0
 
-        # Soma
+        # Soma (PR 1994, Table 1)
         i_na = self.g_na * m_inf**2 * self.h * (self.v_s - self.e_na)
-        i_kdr = self.g_kdr * self.n**2 * (self.v_s - self.e_k)
+        i_kdr = self.g_kdr * self.n * (self.v_s - self.e_k)
         i_ls = self.g_l * (self.v_s - self.e_l)
         i_ds = (self.gc / self.p) * (self.v_s - self.v_d)
 
-        # Dendrite
+        # Dendrite (PR 1994, Table 1)
         i_ca = self.g_ca * self.s**2 * (self.v_d - self.e_ca)
         i_kahp = self.g_kahp * self.q * (self.v_d - self.e_k)
+        chi = min(self.v_d / 250.0 + 0.5, 1.0) if self.v_d <= 50.0 else 2.0
+        i_kc = self.g_kc * self.c * chi * (self.v_d - self.e_k)
         i_ld = self.g_l * (self.v_d - self.e_l)
         i_sd = (self.gc / (1 - self.p)) * (self.v_d - self.v_s)
 
         self.v_s += (-i_na - i_kdr - i_ls - i_ds + current_soma / self.p) * self.dt
-        self.v_d += (-i_ca - i_kahp - i_ld - i_sd + current_dend / (1 - self.p)) * self.dt
+        self.v_d += (-i_ca - i_kahp - i_kc - i_ld - i_sd + current_dend / (1 - self.p)) * self.dt
         self.h += (ah * (1 - self.h) - bh * self.h) * self.dt
         self.n += (an * (1 - self.n) - bn * self.n) * self.dt
         self.s += ((s_inf - self.s) / 5.0) * self.dt

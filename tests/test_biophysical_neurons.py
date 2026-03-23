@@ -46,15 +46,15 @@ class TestPinskyRinzel:
         from sc_neurocore.neurons.models import PinskyRinzelNeuron
 
         n = PinskyRinzelNeuron()
-        spikes = sum(n.step(2.0) for _ in range(200))
+        spikes = sum(n.step(10.0) for _ in range(2000))
         assert spikes > 0
 
     def test_two_compartments(self):
         from sc_neurocore.neurons.models import PinskyRinzelNeuron
 
         n = PinskyRinzelNeuron()
-        for _ in range(100):
-            n.step(2.0)
+        for _ in range(200):
+            n.step(10.0)
         assert n.v_s != n.v_d, "soma and dendrite must have different voltages"
 
 

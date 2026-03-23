@@ -171,8 +171,8 @@ def kozachenko_leonenko_mi(x: np.ndarray, y: np.ndarray, k: int = 3) -> float:
         eps = _kth_dist(xy, i, k)
         nx = np.sum(np.abs(x - x[i]).ravel() < eps) - 1
         ny = np.sum(np.abs(y - y[i]).ravel() < eps) - 1
-        nx_sum += digamma(max(nx, 1))
-        ny_sum += digamma(max(ny, 1))
+        nx_sum += digamma(nx + 1)
+        ny_sum += digamma(ny + 1)
     return float(max(0.0, psi_k + psi_n - nx_sum / n - ny_sum / n))
 
 
