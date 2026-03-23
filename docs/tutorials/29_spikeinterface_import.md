@@ -113,9 +113,10 @@ sorting = si.read_sorting("path/to/sorting_results")
 bitstreams = from_sorting(sorting, dt=1.0)
 print(f"Units: {bitstreams.shape[0]}, Time bins: {bitstreams.shape[1]}")
 
-# Or convert to SC probabilities
-from sc_neurocore.adapters.spikeinterface import sorting_to_sc_probs
-probs = sorting_to_sc_probs(sorting, max_rate_hz=100.0)
+# Convert sorting to spike times dict, then to SC probabilities
+spike_dict = {uid: sorting.get_unit_spike_train(uid) / sorting.get_sampling_frequency() * 1000
+              for uid in sorting.get_unit_ids()}
+probs = firing_rates_to_sc_probs(spike_dict, duration_ms=1000.0, max_rate_hz=100.0)
 ```
 
 ### Supported formats

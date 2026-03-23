@@ -166,14 +166,14 @@ The SC-NeuroCore compiler translates a network into an intermediate
 representation for the SCPN ecosystem:
 
 ```python
-from sc_neurocore.compiler.equation_compiler import compile_to_verilog
+from sc_neurocore.compiler.equation_compiler import equation_to_fpga
 
-# Compile an equation-defined neuron to synthesizable Verilog
-verilog_src = compile_to_verilog(
-    equations={"v": "-(v - v_rest) / tau + I"},
+# Compile equation-defined neuron to Python model + Verilog RTL
+neuron, verilog_src = equation_to_fpga(
+    "dv/dt = -(v - v_rest) / tau + I : volt",
     threshold="v >= v_threshold",
-    reset={"v": "v_reset"},
-    parameters={"tau": 20.0, "v_rest": 0.0, "v_threshold": 1.0, "v_reset": 0.0},
+    reset="v = v_reset",
+    params={"tau": 20.0, "v_rest": 0.0, "v_threshold": 1.0, "v_reset": 0.0},
 )
 print(f"Generated {len(verilog_src)} characters of SystemVerilog")
 ```

@@ -22,10 +22,10 @@ from sc_neurocore.compiler.equation_compiler import equation_to_fpga
 
 # Define a simple LIF neuron as an ODE string
 neuron, verilog = equation_to_fpga(
-    equations="dv/dt = (-v + R*I) / tau : volt",
+    "dv/dt = (-v + R*I) / tau : volt",
     threshold="v > 1.0",
     reset="v = 0.0",
-    parameters={"R": 1.0, "tau": 20.0},
+    params={"R": 1.0, "tau": 20.0},
     module_name="custom_lif",
 )
 
@@ -48,13 +48,11 @@ The compiler handles coupled differential equations:
 ```python
 # FitzHugh-Nagumo (2 variables)
 neuron, verilog = equation_to_fpga(
-    equations="""
-    dv/dt = v - v**3/3 - w + I : volt
-    dw/dt = 0.08 * (v + 0.7 - 0.8*w) : 1
-    """,
+    "dv/dt = v - v**3/3 - w + I : volt",
+    "dw/dt = 0.08 * (v + 0.7 - 0.8*w) : 1",
     threshold="v > 1.0",
     reset="v = -1.0",
-    parameters={},
+    params={},
     module_name="fitzhugh_nagumo",
 )
 
@@ -69,13 +67,11 @@ for t in range(1000):
 ```python
 # Izhikevich (fast spiking)
 neuron, verilog = equation_to_fpga(
-    equations="""
-    dv/dt = 0.04*v**2 + 5*v + 140 - u + I : volt
-    du/dt = a * (b*v - u) : 1
-    """,
+    "dv/dt = 0.04*v**2 + 5*v + 140 - u + I : volt",
+    "du/dt = a * (b*v - u) : 1",
     threshold="v >= 30.0",
     reset="v = c; u = u + d",
-    parameters={"a": 0.1, "b": 0.2, "c": -65.0, "d": 2.0},
+    params={"a": 0.1, "b": 0.2, "c": -65.0, "d": 2.0},
     module_name="izhikevich_fs",
 )
 ```
@@ -88,10 +84,10 @@ Build custom neurons from equations without the Verilog step:
 from sc_neurocore.neurons.equation_builder import from_equations
 
 neuron = from_equations(
-    equations="dv/dt = (-v + I) / tau : volt",
+    "dv/dt = (-v + I) / tau : volt",
     threshold="v > 1.0",
     reset="v = 0.0",
-    parameters={"tau": 10.0},
+    params={"tau": 10.0},
     dt=0.1,
 )
 
@@ -132,11 +128,19 @@ The compiler parses Python/Brian2 AST and emits Verilog:
 ## 6. Generate a Testbench
 
 ```python
-from sc_neurocore.compiler.equation_compiler import generate_testbench
+from sc_neurocore.compiler.equation_compiler import equation_to_fpga, generate_testbench
 
+# First create the neuron
+neuron, verilog = equation_to_fpga(
+    "dv/dt = (-v + R*I) / tau : volt",
+    threshold="v > 1.0", reset="v = 0.0",
+    params={"R": 1.0, "tau": 20.0}, module_name="custom_lif",
+)
+
+# Generate testbench from the neuron
 tb = generate_testbench(
+    neuron,
     module_name="custom_lif",
-    parameters={"R": 1.0, "tau": 20.0},
     n_steps=200,
     input_current=0.8,
 )

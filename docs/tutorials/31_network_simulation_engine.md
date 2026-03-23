@@ -67,25 +67,24 @@ from sc_neurocore.network.topology import (
     all_to_all,
 )
 
-# Random (Erdos-Renyi)
+# Random (Erdos-Renyi) — works directly as string
 proj = Projection(exc, inh, weight=0.1, topology="random", probability=0.2)
 
-# Small-world (Watts-Strogatz)
-proj = Projection(exc, exc, weight=0.05, topology="small_world",
-                  k=4, p_rewire=0.1)
-
-# Scale-free (Barabasi-Albert)
-proj = Projection(exc, exc, weight=0.05, topology="scale_free", m=3)
-
-# Ring
-proj = Projection(exc, exc, weight=0.05, topology="ring", k=4)
-
-# 2D Grid (local connectivity within radius)
-proj = Projection(exc, exc, weight=0.05, topology="grid",
-                  rows=10, cols=8, radius=2)
-
-# All-to-all
+# All-to-all — works directly as string
 proj = Projection(exc, inh, weight=0.01, topology="all_to_all")
+
+# Small-world, scale-free, ring, grid — build CSR tuple first, then pass
+sw_csr = small_world(n=80, k=4, p_rewire=0.1, weight=0.05, seed=42)
+proj = Projection(exc, exc, weight=0.05, topology=sw_csr)
+
+sf_csr = scale_free(n=80, m=3, weight=0.05, seed=42)
+proj = Projection(exc, exc, weight=0.05, topology=sf_csr)
+
+ring_csr = ring_topology(n=80, k=4, weight=0.05)
+proj = Projection(exc, exc, weight=0.05, topology=ring_csr)
+
+grid_csr = grid_topology(rows_count=10, cols_count=8, radius=2, weight=0.05)
+proj = Projection(exc, exc, weight=0.05, topology=grid_csr)
 ```
 
 ## 3. Stimulus Types
@@ -153,18 +152,15 @@ net.run(duration=0.5, dt=0.001, backend="mpi")
 Pre-built network configurations with optional pre-trained weights:
 
 ```python
-from sc_neurocore.model_zoo import load_config, list_configs
+from sc_neurocore.model_zoo.configs import brunel_balanced_network
+from sc_neurocore.model_zoo.pretrained import load_pretrained
 
-# See available configs
-for name in list_configs():
-    print(name)
-# brunel_balanced, cortical_column, cpg, decision_making,
-# working_memory, visual_cortex_v1, auditory_processing,
-# mnist_classifier, shd_speech, dvs_gesture
-
-# Load a config
-net = load_config("brunel_balanced", n_scale=1.0)
+# Create a pre-built network configuration
+net = brunel_balanced_network(n_exc=800, n_inh=200)
 net.run(duration=1.0, dt=0.001)
+
+# Or load with pre-trained weights
+net = load_pretrained("mnist_784_128_10")
 ```
 
 ## 7. Spike Analysis

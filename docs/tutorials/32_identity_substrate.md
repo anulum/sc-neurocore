@@ -38,9 +38,9 @@ substrate.run(duration=1.0, dt=0.001)
 
 # Check health
 health = substrate.health_check()
-print(f"Cortical rate: {health['cortical_rate']:.1f} Hz")
-print(f"Memory rate: {health['memory_rate']:.1f} Hz")
-print(f"E/I balance: {health['ei_ratio']:.2f}")
+print(f"Mean rate: {health['mean_rate']:.1f} Hz")
+print(f"CV: {health['cv']:.2f}")
+print(f"Healthy: {health['is_healthy']}")
 ```
 
 ## 2. Inject Experiences
