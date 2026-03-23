@@ -162,22 +162,31 @@ semantics for additive synaptic currents.
 ### Import from Norse
 
 ```python
+import torch
 import norse.torch as norse
-import nir
 
-# Train a Norse SNN
+# Build a Norse SNN
 model = norse.SequentialState(
     norse.LIFBoxCell(),
     norse.LILinearCell(128, 10),
 )
 
-# Export to NIR (Norse >= 1.0)
-graph = norse.to_nir(model)
+# Export to NIR (requires sample_data for tracing)
+graph = norse.to_nir(model, torch.randn(1, 128))
 
 # Import into SC-NeuroCore
 from sc_neurocore.nir_bridge import from_nir
 network = from_nir(graph, dt=1.0)
 ```
+
+**Note on Norse tau values:** Norse `export_nir.py` computes
+`tau = dt / tau_inv` (default dt=0.001), which bakes the simulation
+timestep into the exported time constants. Norse `import_nir.py` inverts
+as `tau_inv = 1 / tau` without compensating for dt. We observed that
+Norse's own export-import cycle produces different spike patterns on
+identical input (verified with Norse 1.1.0). If importing Norse-exported
+NIR graphs, verify that tau values match your expected dynamics. See
+`examples/norse_nir_roundtrip.py` for a documented workaround.
 
 ### Import from snnTorch
 
@@ -193,12 +202,22 @@ from sc_neurocore.nir_bridge import from_nir
 network = from_nir(graph, dt=1.0)
 ```
 
-## Runnable Demo
+## Runnable Demos
 
-See `examples/nir_roundtrip_demo.py` for a complete CubaLIF + recurrent
-connection roundtrip with parameter verification.
+**CubaLIF + recurrent roundtrip** (synthetic graph, no extra deps):
 
 ```bash
 pip install sc-neurocore nir
 python examples/nir_roundtrip_demo.py
 ```
+
+**Norse weights + CubaLIF + recurrent roundtrip** (requires Norse, torch):
+
+```bash
+pip install sc-neurocore nir norse torch
+python examples/norse_nir_roundtrip.py
+```
+
+Both demos verify full roundtrip: node names, edge sets, CubaLIF parameter
+preservation, and file save/load. SC-NeuroCore's roundtrip preserves all
+7 CubaLIF parameters exactly (bit-for-bit verified).
