@@ -507,6 +507,42 @@ class TestThresholdAndReset:
         assert total > 0
 
 
+    def test_if_subtract_reset(self):
+        """IF neuron subtract reset mode."""
+        node = nir.IF(
+            r=np.array([1.0]),
+            v_threshold=np.array([0.5]),
+        )
+        sc = map_node("if", node, dt=1.0, reset_mode="subtract")
+        out = sc.forward(np.array([2.0]))
+        assert out[0] == 1.0
+        # v was 2.0 (r*I*dt = 1*2*1 = 2.0), spiked, subtract: 2.0 - 0.5 = 1.5
+        assert sc.v[0] == pytest.approx(1.5)
+
+    def test_invalid_reset_mode_still_works(self):
+        """Unknown reset_mode falls through to default (reset) behavior."""
+        from sc_neurocore.nir_bridge import from_nir
+
+        nodes = {
+            "input": nir.Input(input_type={"input": np.array([1])}),
+            "lif": nir.LIF(
+                tau=np.array([1.0]),
+                r=np.array([1.0]),
+                v_leak=np.array([0.0]),
+                v_threshold=np.array([0.5]),
+                v_reset=np.array([0.0]),
+            ),
+            "output": nir.Output(output_type={"output": np.array([1])}),
+        }
+        edges = [("input", "lif"), ("lif", "output")]
+        graph = nir.NIRGraph(nodes=nodes, edges=edges)
+        net = from_nir(graph, dt=1.0, reset_mode="unknown")
+        out = net.step({"input": np.array([2.0])})
+        assert out["output"][0] == 1.0
+        # Unknown mode falls through to else (reset mode)
+        assert net.nodes["lif"].v[0] == pytest.approx(0.0)
+
+
 class TestSpikingJellyInterop:
     def test_spikingjelly_lif_roundtrip(self):
         """SpikingJelly LIFNode -> NIR -> SC-NeuroCore produces identical spikes."""
