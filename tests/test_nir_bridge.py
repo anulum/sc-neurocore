@@ -506,7 +506,6 @@ class TestThresholdAndReset:
         total = sum(r.sum() for r in out["output"])
         assert total > 0
 
-
     def test_if_subtract_reset(self):
         """IF neuron subtract reset mode."""
         node = nir.IF(
