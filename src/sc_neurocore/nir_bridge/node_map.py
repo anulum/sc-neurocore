@@ -59,9 +59,16 @@ class SCLIFNode:
     v_reset: np.ndarray
     v: np.ndarray | None = None
     dt: float = 1.0
+    reset_mode: str = "reset"
 
     @classmethod
-    def from_nir(cls, name: str, node: nir.LIF, dt: float = 1.0) -> SCLIFNode:
+    def from_nir(
+        cls,
+        name: str,
+        node: nir.LIF,
+        dt: float = 1.0,
+        reset_mode: str = "reset",
+    ) -> SCLIFNode:
         tau = np.atleast_1d(node.tau).flatten()
         r = np.atleast_1d(node.r).flatten()
         v_leak = np.atleast_1d(node.v_leak).flatten()
@@ -80,6 +87,7 @@ class SCLIFNode:
             v_threshold=v_threshold,
             v_reset=v_reset,
             dt=dt,
+            reset_mode=reset_mode,
         )
 
     def __post_init__(self):
@@ -101,8 +109,11 @@ class SCLIFNode:
         x = x[: self.n_neurons]
         dv = (self.v_leak - self.v + self.r * x) * (self.dt / self.tau)
         self.v += dv
-        spikes = (self.v >= self.v_threshold).astype(np.float64)
-        self.v = np.where(spikes > 0, self.v_reset, self.v)
+        spikes = (self.v > self.v_threshold).astype(np.float64)
+        if self.reset_mode == "subtract":
+            self.v = np.where(spikes > 0, self.v - self.v_threshold, self.v)
+        else:
+            self.v = np.where(spikes > 0, self.v_reset, self.v)
         return spikes
 
     def reset(self):
@@ -124,16 +135,29 @@ class SCIFNode:
     v_reset: np.ndarray
     v: np.ndarray | None = None
     dt: float = 1.0
+    reset_mode: str = "reset"
 
     @classmethod
-    def from_nir(cls, name: str, node: nir.IF, dt: float = 1.0) -> SCIFNode:
+    def from_nir(
+        cls,
+        name: str,
+        node: nir.IF,
+        dt: float = 1.0,
+        reset_mode: str = "reset",
+    ) -> SCIFNode:
         r = np.atleast_1d(node.r).flatten()
         v_threshold = np.atleast_1d(node.v_threshold).flatten()
         v_reset = (
             np.atleast_1d(node.v_reset).flatten() if node.v_reset is not None else np.zeros_like(r)
         )
         return cls(
-            name=name, n_neurons=len(r), r=r, v_threshold=v_threshold, v_reset=v_reset, dt=dt
+            name=name,
+            n_neurons=len(r),
+            r=r,
+            v_threshold=v_threshold,
+            v_reset=v_reset,
+            dt=dt,
+            reset_mode=reset_mode,
         )
 
     def __post_init__(self):
@@ -154,8 +178,11 @@ class SCIFNode:
             self._broadcast_to(len(x))
         x = x[: self.n_neurons]
         self.v += self.r * x * self.dt
-        spikes = (self.v >= self.v_threshold).astype(np.float64)
-        self.v = np.where(spikes > 0, self.v_reset, self.v)
+        spikes = (self.v > self.v_threshold).astype(np.float64)
+        if self.reset_mode == "subtract":
+            self.v = np.where(spikes > 0, self.v - self.v_threshold, self.v)
+        else:
+            self.v = np.where(spikes > 0, self.v_reset, self.v)
         return spikes
 
     def reset(self):
@@ -395,9 +422,16 @@ class SCCubaLIFNode:
     v: np.ndarray | None = None
     i_syn: np.ndarray | None = None
     dt: float = 1.0
+    reset_mode: str = "reset"
 
     @classmethod
-    def from_nir(cls, name: str, node: nir.CubaLIF, dt: float = 1.0) -> SCCubaLIFNode:
+    def from_nir(
+        cls,
+        name: str,
+        node: nir.CubaLIF,
+        dt: float = 1.0,
+        reset_mode: str = "reset",
+    ) -> SCCubaLIFNode:
         tau_syn = np.atleast_1d(node.tau_syn).flatten()
         tau_mem = np.atleast_1d(node.tau_mem).flatten()
         r = np.atleast_1d(node.r).flatten()
@@ -420,6 +454,7 @@ class SCCubaLIFNode:
             v_reset=v_reset,
             w_in=w_in,
             dt=dt,
+            reset_mode=reset_mode,
         )
 
     def __post_init__(self):
@@ -447,8 +482,11 @@ class SCCubaLIFNode:
         self.i_syn += di
         dv = (self.v_leak - self.v + self.r * self.i_syn) * (self.dt / self.tau_mem)
         self.v += dv
-        spikes = (self.v >= self.v_threshold).astype(np.float64)
-        self.v = np.where(spikes > 0, self.v_reset, self.v)
+        spikes = (self.v > self.v_threshold).astype(np.float64)
+        if self.reset_mode == "subtract":
+            self.v = np.where(spikes > 0, self.v - self.v_threshold, self.v)
+        else:
+            self.v = np.where(spikes > 0, self.v_reset, self.v)
         return spikes
 
     def reset(self):
@@ -739,8 +777,12 @@ NODE_MAP: dict[type, Any] = {
         if node.output_type
         else (),
     ),
-    nir.LIF: lambda name, node, **kw: SCLIFNode.from_nir(name, node, dt=kw.get("dt", 1.0)),
-    nir.IF: lambda name, node, **kw: SCIFNode.from_nir(name, node, dt=kw.get("dt", 1.0)),
+    nir.LIF: lambda name, node, **kw: SCLIFNode.from_nir(
+        name, node, dt=kw.get("dt", 1.0), reset_mode=kw.get("reset_mode", "reset")
+    ),
+    nir.IF: lambda name, node, **kw: SCIFNode.from_nir(
+        name, node, dt=kw.get("dt", 1.0), reset_mode=kw.get("reset_mode", "reset")
+    ),
     nir.LI: lambda name, node, **kw: SCLINode.from_nir(name, node, dt=kw.get("dt", 1.0)),
     nir.I: lambda name, node, **kw: SCIntegratorNode.from_nir(name, node, dt=kw.get("dt", 1.0)),
     nir.Affine: lambda name, node, **kw: SCAffineNode.from_nir(name, node),
@@ -749,7 +791,9 @@ NODE_MAP: dict[type, Any] = {
     nir.Threshold: lambda name, node, **kw: SCThresholdNode.from_nir(name, node),
     nir.Flatten: lambda name, node, **kw: SCFlattenNode.from_nir(name, node),
     nir.Delay: lambda name, node, **kw: SCDelayNode.from_nir(name, node, dt=kw.get("dt", 1.0)),
-    nir.CubaLIF: lambda name, node, **kw: SCCubaLIFNode.from_nir(name, node, dt=kw.get("dt", 1.0)),
+    nir.CubaLIF: lambda name, node, **kw: SCCubaLIFNode.from_nir(
+        name, node, dt=kw.get("dt", 1.0), reset_mode=kw.get("reset_mode", "reset")
+    ),
     nir.CubaLI: lambda name, node, **kw: SCCubaLINode.from_nir(name, node, dt=kw.get("dt", 1.0)),
     nir.SumPool2d: lambda name, node, **kw: SCSumPool2dNode.from_nir(name, node),
     nir.AvgPool2d: lambda name, node, **kw: SCAvgPool2dNode.from_nir(name, node),
