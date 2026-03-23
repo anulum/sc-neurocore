@@ -230,6 +230,107 @@ mismatches). SpikingJelly exports LIFNode as `nir.LIF` with `tau=tau*dt`.
 Requires `spikingjelly>=0.0.0.0.15` (install from GitHub for NIR support).
 SpikingJelly's `CUBALIFNode` is not yet mapped by their NIR export.
 
+### Import from Sinabs
+
+```python
+import sinabs
+import sinabs.nir
+
+# Export sinabs model to NIR
+graph = sinabs.nir.to_nir(model)
+
+# Import into SC-NeuroCore (no dt baked into sinabs params)
+from sc_neurocore.nir_bridge import from_nir
+network = from_nir(graph, dt=1.0)
+```
+
+**Sinabs conventions:**
+- Exports `nir.LIF` (for `LIF`/`LIFSqueeze`), `nir.IF` (for `IAF`/`IAFSqueeze`),
+  `nir.LI` (for `ExpLeak`/`ExpLeakSqueeze`)
+- Always exports `nir.Affine` (never `nir.Linear`) — fills bias with zeros
+  even for bias-free layers
+- Fixed: `r=1.0`, `v_leak=0.0` for all neuron types
+- **No dt baked into parameters.** Tau is the physical time constant.
+  Use `dt=1.0` for sinabs graphs.
+- Does not export `CubaLIF`. No synaptic neuron types in sinabs NIR export.
+- **Discretization difference:** Sinabs uses exponential decay
+  (`alpha = exp(-dt/tau)`) while SC-NeuroCore uses Euler (`alpha = 1 - dt/tau`).
+  With `dt=1.0, tau=10.0`: Euler gives 0.9, exact gives 0.9048 (~0.5% per step).
+  After many steps the difference accumulates but remains bounded.
+
+### Import from Rockpool
+
+```python
+from rockpool.nn.modules.torch.nir import to_nir
+
+# Export rockpool model to NIR
+graph = to_nir(model)
+
+# Import into SC-NeuroCore (dt must match rockpool module's dt)
+from sc_neurocore.nir_bridge import from_nir
+network = from_nir(graph, dt=1e-3)  # rockpool tests use dt=1e-3
+```
+
+**Rockpool conventions:**
+- Exports `nir.LIF` (for `LIFNeuronTorch`), `nir.CubaLIF` (for `LIFTorch`),
+  `nir.LI` (for `ExpSynTorch`)
+- **r encoding**: `r = tau * exp(-dt/tau) / dt` — encodes dt into the `r` field.
+  You must use the same dt when calling `from_nir()`.
+- `w_in` defaults to 1.0 (NIR default) for CubaLIF.
+- **Weight transposition:** Rockpool transposes weights on NIR export
+  (rockpool stores `(in, out)`, NIR expects `(out, in)`). Already transposed
+  in the NIR graph, so `from_nir()` handles it transparently.
+- `v_leak=0`, `v_reset=0` (NIR defaults) for all neuron types.
+- **Discretization difference:** Rockpool uses exact exponential decay internally.
+  With `dt=1e-3, tau=10.0`, the per-step Euler error is <1ppm, accumulating to
+  <1% after 10,000 steps. At larger dt/tau ratios, divergence increases.
+
+### Import from snnTorch RSynaptic (recurrent)
+
+```python
+import snntorch as snn
+from snntorch.export_nir import export_to_nir
+
+# RSynaptic model: recurrent CubaLIF
+model = torch.nn.Sequential(
+    torch.nn.Linear(4, 6),
+    snn.RSynaptic(alpha=0.9, beta=0.8, all_to_all=True,
+                  linear_features=6),
+)
+graph = export_to_nir(model, torch.randn(1, 4))
+
+# Import — RSynaptic exports as NIRGraph subgraph
+from sc_neurocore.nir_bridge import from_nir
+network = from_nir(graph, dt=1e-4, reset_mode="subtract")
+```
+
+**snnTorch RSynaptic conventions:**
+- Exports as a `nir.NIRGraph` subgraph: `Input → CubaLIF → Linear(w_rec) → CubaLIF → Output`
+- SC-NeuroCore parses this as `SCSubgraphNode` with automatic cycle breaking
+- Same dt=1e-4, subtract-reset, and float32/64 precision notes as snnTorch Synaptic above
+- `RLeaky` exports similarly but with `nir.LIF` instead of `nir.CubaLIF`
+
+### Lava-DL (Intel Loihi)
+
+Lava-DL does not have a public NIR export function. It uses its own HDF5 network
+exchange format. Interop with SC-NeuroCore requires manual graph construction or
+conversion through an intermediate NIR graph. If Intel publishes NIR export support
+in the future, `from_nir()` will handle it transparently.
+
+## Framework dt/r Quick Reference
+
+| Framework | `r` encoding | `dt` for `from_nir()` |
+|---|---|---|
+| Sinabs | `r = 1.0` (fixed) | `dt=1.0` |
+| snnTorch | `r = tau_mem / dt` (dt=1e-4) | `dt=1e-4` |
+| Rockpool | `r = tau * exp(-dt/tau) / dt` | Match module's dt |
+| Norse | `r = 1.0` | `dt=1.0` |
+| SpikingJelly | tau has dt baked in | Match export dt |
+
+**The `r` field is the main cross-framework incompatibility.** The same physical
+neuron produces different NIR `r` values depending on which framework exported it.
+Always use the dt value that matches the exporting framework.
+
 ## `reset_mode` Parameter
 
 `from_nir()` accepts `reset_mode` to control spike reset behavior:
