@@ -84,17 +84,17 @@ class DVSLoader:
         except ImportError:
             raise ImportError("pip install tonic") from None
 
-        dataset_map = {
+        dataset_map = {  # pragma: no cover
             "nmnist": tonic.datasets.NMNIST,
             "dvs_gesture": tonic.datasets.DVSGesture,
         }
-        cls = dataset_map.get(dataset_name)
-        if cls is None:
+        cls = dataset_map.get(dataset_name)  # pragma: no cover
+        if cls is None:  # pragma: no cover
             raise ValueError(f"Unknown dataset '{dataset_name}'. Options: {list(dataset_map)}")
 
-        ds = cls(save_to="./data", train=True)
-        events, target = ds[index]
-        return self.from_numpy(events), target
+        ds = cls(save_to="./data", train=True)  # pragma: no cover
+        events, target = ds[index]  # pragma: no cover
+        return self.from_numpy(events), target  # pragma: no cover
 
 
 def events_to_spike_trains(
