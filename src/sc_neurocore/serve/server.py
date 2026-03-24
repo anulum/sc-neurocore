@@ -43,7 +43,7 @@ class SpikeServer:
         Listen port (default 8001).
     """
 
-    def __init__(self, network, host: str = "0.0.0.0", port: int = 8001):
+    def __init__(self, network, host: str = "127.0.0.1", port: int = 8001):
         self.network = network
         self.host = host
         self.port = port

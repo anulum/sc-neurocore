@@ -104,7 +104,7 @@ class AERReceiver:
         Socket timeout in seconds.
     """
 
-    def __init__(self, host: str = "0.0.0.0", port: int = 9000, timeout: float = 1.0):
+    def __init__(self, host: str = "127.0.0.1", port: int = 9000, timeout: float = 1.0):
         self.host = host
         self.port = port
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
