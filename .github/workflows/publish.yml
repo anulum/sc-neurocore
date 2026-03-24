@@ -79,23 +79,6 @@ jobs:
           name: engine-wheel-${{ matrix.os }}-py${{ matrix.python-version }}
           path: dist-engine/*.whl
 
-  publish-engine-pypi:
-    if: github.event_name != 'workflow_dispatch' || github.event.inputs.publish == 'true'
-    needs: [build-engine-wheels]
-    runs-on: ubuntu-latest
-    environment: pypi
-    permissions:
-      id-token: write
-    steps:
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
-        with:
-          pattern: engine-wheel-*
-          path: dist-engine/
-          merge-multiple: true
-      - uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # release/v1
-        with:
-          packages-dir: dist-engine/
-
   publish-crate:
     if: github.event_name != 'workflow_dispatch' || github.event.inputs.publish == 'true'
     needs: [publish-python-pypi]
