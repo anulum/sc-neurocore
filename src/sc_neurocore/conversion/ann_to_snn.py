@@ -93,9 +93,7 @@ class ConvertedSNN:
             input_spikes = (rng.random(x.shape) < x).astype(np.float64)
 
             layer_input = input_spikes
-            for i, (w, b, theta) in enumerate(
-                zip(self.weights, self.biases, self.thresholds)
-            ):
+            for i, (w, b, theta) in enumerate(zip(self.weights, self.biases, self.thresholds)):
                 current = layer_input @ w.T
                 if b is not None:
                     current += b / self.T
@@ -121,11 +119,7 @@ def _extract_layers(model) -> list[tuple[np.ndarray, np.ndarray | None]]:
     """Extract (weight, bias) pairs from a PyTorch Sequential model."""
     layers = []
     for module in model.modules():
-        if isinstance(module, nn.Linear):
-            w = module.weight.detach().cpu().numpy()
-            b = module.bias.detach().cpu().numpy() if module.bias is not None else None
-            layers.append((w, b))
-        elif isinstance(module, nn.Conv2d):
+        if isinstance(module, (nn.Linear, nn.Conv2d)):
             w = module.weight.detach().cpu().numpy()
             b = module.bias.detach().cpu().numpy() if module.bias is not None else None
             layers.append((w, b))

@@ -20,7 +20,6 @@ References:
 
 from __future__ import annotations
 
-from typing import Tuple
 
 import torch
 import torch.nn as nn
@@ -89,9 +88,7 @@ class DelayLinear(nn.Module):
             self.register_buffer("delay", delay_init)
 
         # Spike history buffer: (max_delay + 1, in_features)
-        self.register_buffer(
-            "_history", torch.zeros(max_delay + 1, in_features)
-        )
+        self.register_buffer("_history", torch.zeros(max_delay + 1, in_features))
         self._t = 0
 
     def reset(self):
@@ -162,7 +159,7 @@ class DelayLinear(nn.Module):
         with torch.no_grad():
             return self.delay.clamp(0, self.max_delay).round().long()
 
-    def to_nir_delay_array(self) -> "np.ndarray":
+    def to_nir_delay_array(self):
         """Export delays as flat array matching CSR data order.
 
         Returns delays in the same order as weights flattened row-major,
