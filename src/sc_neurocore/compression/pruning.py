@@ -1,0 +1,152 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later | Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — SNN weight and structural pruning
+
+"""Weight pruning and structural pruning for SNN model compression.
+
+Weight pruning: zero out weights below a magnitude threshold.
+Structural pruning: remove entire neurons that fire below an
+activity threshold, reducing layer width.
+
+Both reduce FPGA resource usage when combined with
+Projection(weight_threshold=) for runtime sparsity exploitation.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+import numpy as np
+
+
+@dataclass
+class PruningReport:
+    """Results of a pruning operation."""
+
+    original_params: int
+    pruned_params: int
+    remaining_params: int
+    sparsity: float
+    original_neurons: int = 0
+    pruned_neurons: int = 0
+
+
+def prune_weights(
+    weights: list[np.ndarray],
+    threshold: float = 0.01,
+    method: str = "magnitude",
+) -> tuple[list[np.ndarray], PruningReport]:
+    """Prune small weights from layer weight matrices.
+
+    Parameters
+    ----------
+    weights : list of ndarray
+        Weight matrices for each layer.
+    threshold : float
+        Pruning threshold. Weights with |w| <= threshold are zeroed.
+    method : str
+        'magnitude' (default): prune by absolute value.
+        'percentile': treat threshold as percentile (0-100) of weight
+        magnitudes to prune.
+
+    Returns
+    -------
+    (pruned_weights, PruningReport)
+    """
+    pruned = []
+    total_original = 0
+    total_pruned = 0
+
+    for w in weights:
+        total_original += w.size
+        w_copy = w.copy()
+
+        if method == "percentile":
+            abs_w = np.abs(w_copy)
+            cutoff = np.percentile(abs_w[abs_w > 0], threshold) if np.any(abs_w > 0) else 0.0
+            mask = abs_w <= cutoff
+        else:
+            mask = np.abs(w_copy) <= threshold
+
+        w_copy[mask] = 0.0
+        total_pruned += int(mask.sum())
+        pruned.append(w_copy)
+
+    remaining = total_original - total_pruned
+    sparsity = total_pruned / max(total_original, 1)
+
+    return pruned, PruningReport(
+        original_params=total_original,
+        pruned_params=total_pruned,
+        remaining_params=remaining,
+        sparsity=sparsity,
+    )
+
+
+def prune_neurons(
+    weights: list[np.ndarray],
+    firing_rates: list[np.ndarray] | None = None,
+    activity_threshold: float = 0.001,
+) -> tuple[list[np.ndarray], PruningReport]:
+    """Structural pruning: remove neurons with low firing rates.
+
+    Removes entire rows from weight matrices (output neurons) and
+    corresponding columns from the next layer's weight matrix (input
+    connections). Reduces layer width, not just sparsity.
+
+    Parameters
+    ----------
+    weights : list of ndarray
+        Weight matrices [W1, W2, ...] where W_i has shape (n_out, n_in).
+    firing_rates : list of ndarray, optional
+        Per-neuron firing rates for each layer. If None, uses output
+        weight magnitude as a proxy for importance.
+    activity_threshold : float
+        Neurons with firing rate (or weight norm) below this are pruned.
+
+    Returns
+    -------
+    (pruned_weights, PruningReport)
+    """
+    n_layers = len(weights)
+    pruned_weights = [w.copy() for w in weights]
+    total_neurons = sum(w.shape[0] for w in weights)
+    neurons_pruned = 0
+
+    for i in range(n_layers):
+        w = pruned_weights[i]
+        n_out = w.shape[0]
+
+        if firing_rates is not None and i < len(firing_rates):
+            importance = firing_rates[i]
+        else:
+            importance = np.linalg.norm(w, axis=1)
+
+        keep_mask = importance > activity_threshold
+        if keep_mask.all():
+            continue
+
+        n_removed = int((~keep_mask).sum())
+        neurons_pruned += n_removed
+
+        pruned_weights[i] = w[keep_mask]
+
+        if i + 1 < n_layers:
+            pruned_weights[i + 1] = pruned_weights[i + 1][:, keep_mask]
+
+    total_remaining = total_neurons - neurons_pruned
+
+    original_params = sum(w.size for w in weights)
+    remaining_params = sum(w.size for w in pruned_weights)
+
+    return pruned_weights, PruningReport(
+        original_params=original_params,
+        pruned_params=original_params - remaining_params,
+        remaining_params=remaining_params,
+        sparsity=(original_params - remaining_params) / max(original_params, 1),
+        original_neurons=total_neurons,
+        pruned_neurons=neurons_pruned,
+    )
