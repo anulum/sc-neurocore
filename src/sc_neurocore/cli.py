@@ -21,7 +21,7 @@ def main() -> int:
     parser.add_argument(
         "command",
         nargs="?",
-        choices=["info", "benchmark", "preflight", "deploy"],
+        choices=["info", "benchmark", "preflight", "deploy", "serve"],
         help="Command to run",
     )
     parser.add_argument("model", nargs="?", help="Model file (.nir, .pt, .onnx) for deploy command")
@@ -36,6 +36,7 @@ def main() -> int:
         "--dt", type=float, default=0.001, help="Simulation timestep for NIR import"
     )
     parser.add_argument("--T", type=int, default=256, help="Bitstream length for SC layers")
+    parser.add_argument("--port", type=int, default=8001, help="Port for serve command")
     args = parser.parse_args()
 
     if args.version:
@@ -57,8 +58,37 @@ def main() -> int:
             )
             return 1
         return _cmd_deploy(args.model, args.target, args.output, args.dt, args.T)
+    if args.command == "serve":
+        if not args.model:
+            print(
+                "Error: serve requires a model file. Usage: sc-neurocore serve model.nir --port 8001"
+            )
+            return 1
+        return _cmd_serve(args.model, args.port, args.dt)
 
     parser.print_help()
+    return 0
+
+
+def _cmd_serve(model_path: str, port: int, dt: float) -> int:
+    """Start streaming inference server."""
+    import os
+
+    ext = os.path.splitext(model_path)[1].lower()
+    if ext != ".nir":
+        print(f"Error: serve currently supports .nir files only, got '{ext}'")
+        return 1
+
+    import nir as nir_lib
+    from sc_neurocore.nir_bridge import from_nir
+    from sc_neurocore.serve import SpikeServer
+
+    graph = nir_lib.read(model_path)
+    network = from_nir(graph, dt=dt)
+    print(f"Loaded NIR graph with {len(network.topo_order)} nodes")
+
+    server = SpikeServer(network, port=port)
+    server.start(blocking=True)
     return 0
 
 
