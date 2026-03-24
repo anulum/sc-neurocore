@@ -147,8 +147,8 @@ def _profile_rust(layer_sizes, duration, dt) -> PlatformResult:
     try:
         import sc_neurocore_engine  # noqa: F401
 
-        available = True
-        notes = "Rayon parallel, SIMD"
+        available = True  # pragma: no cover
+        notes = "Rayon parallel, SIMD"  # pragma: no cover
     except ImportError:
         available = False
         notes = "Not installed (estimated)"

@@ -93,23 +93,35 @@ def running_server():
 
 def _post(path, data):
     body = json.dumps(data).encode("utf-8")
-    req = urllib.request.Request(
-        f"http://127.0.0.1:{_HTTP_PORT}{path}",
-        data=body,
-        headers={"Content-Type": "application/json", "Connection": "close"},
-        method="POST",
-    )
-    with urllib.request.urlopen(req, timeout=5) as resp:
-        return json.loads(resp.read())
+    for attempt in range(3):
+        try:
+            req = urllib.request.Request(
+                f"http://127.0.0.1:{_HTTP_PORT}{path}",
+                data=body,
+                headers={"Content-Type": "application/json", "Connection": "close"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                return json.loads(resp.read())
+        except (ConnectionError, OSError):
+            if attempt == 2:
+                raise
+            time.sleep(0.2)
 
 
 def _get(path):
-    req = urllib.request.Request(
-        f"http://127.0.0.1:{_HTTP_PORT}{path}",
-        headers={"Connection": "close"},
-    )
-    with urllib.request.urlopen(req, timeout=5) as resp:
-        return json.loads(resp.read())
+    for attempt in range(3):
+        try:
+            req = urllib.request.Request(
+                f"http://127.0.0.1:{_HTTP_PORT}{path}",
+                headers={"Connection": "close"},
+            )
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                return json.loads(resp.read())
+        except (ConnectionError, OSError):
+            if attempt == 2:
+                raise
+            time.sleep(0.2)
 
 
 class TestSpikeServerHTTP:

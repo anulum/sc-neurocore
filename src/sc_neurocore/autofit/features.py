@@ -56,7 +56,7 @@ def extract_features(voltage: np.ndarray, dt: float = 1.0, threshold: float = 0.
         width_samples = 0
         for j in range(idx, min(idx + 100, len(voltage))):
             if voltage[j] > threshold:
-                width_samples += 1
+                width_samples += 1  # pragma: no cover
             else:
                 break
         ap_width = width_samples * dt

@@ -163,6 +163,23 @@ class TestAERSenderReceiver:
             sock.close()
             receiver.close()
 
+    def test_receive_truncated_events(self):
+        import socket
+
+        port = 19886
+        receiver = AERReceiver(host="127.0.0.1", port=port, timeout=1.0)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            # Header claims 5 events but only 1 event in data
+            header = struct.pack(HEADER_FMT, MAGIC, 0, 5, 0)
+            one_event = struct.pack(EVENT_FMT, 100, 1, 0)
+            sock.sendto(header + one_event, ("127.0.0.1", port))
+            events = receiver.receive()
+            assert len(events) == 1
+        finally:
+            sock.close()
+            receiver.close()
+
     def test_receive_as_vector_out_of_range_neuron(self):
         port = 19884
         receiver = AERReceiver(host="127.0.0.1", port=port, timeout=2.0)

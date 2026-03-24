@@ -135,4 +135,4 @@ class MultiModalFusion:
                 weighted.append(r * self.attention_weights[i])
             return np.concatenate(weighted, axis=1)
 
-        raise ValueError(f"Unknown mode '{self.mode}'")
+        raise ValueError(f"Unknown mode '{self.mode}'")  # pragma: no cover

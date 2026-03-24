@@ -196,3 +196,49 @@ class TestCausalChain:
         trace = _make_trace(spikes=spikes)
         chain = causal_chain(trace, neuron_id=0, timestep=0, max_depth=5)
         assert len(chain) == 1
+
+
+class _MockPop:
+    def __init__(self, label, n):
+        self.label = label
+        self.n = n
+        self.voltages = np.zeros(n)
+
+    def step_all(self, currents):
+        self.voltages = currents * 0.1
+        return (currents > 0.5).astype(np.int8)
+
+
+class _MockNetwork:
+    def __init__(self):
+        self.populations = [_MockPop("exc", 3), _MockPop("inh", 2)]
+
+    def _apply_stimuli(self, pop_currents, t, dt):
+        for pid in pop_currents:
+            pop_currents[pid] += 1.0
+
+    def _apply_projections(self, pop_currents, last_spikes):
+        pass
+
+    def _record(self, pop, spikes, t, dt):
+        pass
+
+    def _update_plasticity(self, last_spikes):
+        pass
+
+
+class TestSpikeTracer:
+    def test_run(self):
+        from sc_neurocore.debug.tracer import SpikeTracer
+
+        net = _MockNetwork()
+        tracer = SpikeTracer(net)
+        trace = tracer.run(duration=0.005, dt=0.001)
+        assert isinstance(trace, ExecutionTrace)
+        assert trace.n_neurons == 5
+        assert trace.n_steps == 5
+        assert trace.spikes.shape == (5, 5)
+        assert trace.voltages.shape == (5, 5)
+        assert trace.currents.shape == (5, 5)
+        assert trace.population_labels == ["exc", "inh"]
+        assert trace.spike_count >= 0

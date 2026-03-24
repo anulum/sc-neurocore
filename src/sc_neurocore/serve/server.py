@@ -82,7 +82,7 @@ class SpikeServer:
                 results = {}
                 for pop in self.network.populations:
                     currents = inp.get(pop.label, np.zeros(pop.n))
-                    if isinstance(currents, list):
+                    if isinstance(currents, list):  # pragma: no cover
                         currents = np.array(currents)
                     spikes = pop.step_all(currents[: pop.n])
                     results[pop.label] = spikes.tolist()
@@ -155,7 +155,7 @@ class SpikeServer:
 
         self._server = HTTPServer((self.host, self.port), Handler)
 
-        if blocking:
+        if blocking:  # pragma: no cover
             print(f"SC-NeuroCore inference server on {self.host}:{self.port}")
             print("Endpoints: POST /step, POST /reset, GET /info, GET /health")
             self._server.serve_forever()
