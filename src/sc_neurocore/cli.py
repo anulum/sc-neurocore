@@ -143,8 +143,19 @@ def _cmd_deploy(
         import torch
         from sc_neurocore.conversion import convert
 
-        model = torch.load(model_path, map_location="cpu", weights_only=False)
-        cal_data = torch.randn(64, next(model.parameters()).shape[1])
+        state = torch.load(model_path, map_location="cpu", weights_only=True)
+        layers: list[torch.nn.Module] = []
+        weight_keys = [k for k in state if k.endswith(".weight") and state[k].dim() == 2]
+        for k in weight_keys:
+            w = state[k]
+            layers.append(torch.nn.Linear(w.shape[1], w.shape[0]))
+            layers.append(torch.nn.ReLU())
+        if layers and isinstance(layers[-1], torch.nn.ReLU):
+            layers.pop()
+        model = torch.nn.Sequential(*layers)
+        model.load_state_dict(state, strict=False)
+        in_dim = layers[0].in_features if layers else 1
+        cal_data = torch.randn(64, in_dim)
         snn = convert(model, calibration_data=cal_data, T=bitstream_length)
         network = None
         print(f"  Converted {snn.n_layers}-layer SNN, T={snn.T}")
