@@ -5,7 +5,17 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Projection: synaptic connectivity with CSR storage and delay buffer
 
-"""Projection: synaptic connectivity with CSR storage and delay buffer."""
+"""Projection: synaptic connectivity with per-synapse delay support.
+
+Supports three delay modes:
+  - No delay (delay=0): direct propagation, no buffering.
+  - Uniform axonal delay (delay=scalar): single circular buffer on
+    aggregated current. All synapses in the projection share one delay.
+  - Per-synapse delay (delay=array): each connection has its own delay.
+    Source spike history is stored and each synapse reads from the
+    appropriate past timestep. Enables learnable delays (Masquelier
+    DelRec, Hammouamri et al. 2023).
+"""
 
 from __future__ import annotations
 
@@ -26,8 +36,37 @@ def _csr_matvec(indptr, indices, data, x, n_out):
     return out
 
 
+def _csr_delayed_matvec(indptr, indices, data, delay_steps, spike_history, hist_idx, n_out):
+    """CSR matrix-vector product with per-synapse delays.
+
+    For each synapse k connecting source i to target j with delay d_k:
+        current[j] += data[k] * spike_history[(hist_idx - d_k) % max_delay, i]
+    """
+    out = np.zeros(n_out, dtype=np.float64)
+    max_delay = spike_history.shape[0]
+    n_rows = len(indptr) - 1
+    for i in range(n_rows):
+        for k in range(indptr[i], indptr[i + 1]):
+            d = delay_steps[k]
+            read_idx = (hist_idx - d) % max_delay
+            spike_val = spike_history[read_idx, i]
+            if spike_val == 0:
+                continue
+            out[indices[k]] += data[k] * spike_val
+    return out
+
+
 class Projection:
-    """Synaptic projection from source to target population."""
+    """Synaptic projection from source to target population.
+
+    Parameters
+    ----------
+    delay : float, array-like, or 0
+        - 0: no delay (default)
+        - scalar > 0: uniform axonal delay (all synapses share one delay)
+        - 1-D array of length n_synapses: per-synapse delay in timesteps.
+          Enables heterogeneous axonal/synaptic delays.
+    """
 
     TOPOLOGY_MAP = {
         "random": _topo.random_connectivity,
@@ -52,22 +91,75 @@ class Projection:
         self.source = source
         self.target = target
         self.weight = weight
-        self.delay = delay
         self.plasticity = plasticity
         self.seed = seed
 
         self.indptr, self.indices, self.data = self._build_connectivity(topology, probability, seed)
 
-        self._delay_steps = max(1, int(round(delay))) if delay > 0 else 0
-        if self._delay_steps > 0:
-            self._delay_buf = np.zeros((self._delay_steps, target.n), dtype=np.float64)
-            self._delay_idx = 0
-        else:
-            self._delay_buf = None
+        self._init_delays(delay)
 
         if plasticity == "stdp":
             self._pre_trace = np.zeros(source.n, dtype=np.float64)
             self._post_trace = np.zeros(target.n, dtype=np.float64)
+
+    def _init_delays(self, delay):
+        """Set up delay buffers based on delay specification."""
+        delay = np.atleast_1d(np.asarray(delay, dtype=np.float64)).flatten()
+        n_synapses = len(self.data)
+
+        if delay.size == 1 and delay[0] == 0.0:
+            # No delay
+            self._delay_mode = "none"
+            self.delay = 0.0
+            self._delay_buf = None
+            self._per_syn_delays = None
+            return
+
+        if delay.size == 1:
+            # Uniform axonal delay
+            self._delay_mode = "uniform"
+            self.delay = float(delay[0])
+            steps = max(1, int(round(self.delay)))
+            self._delay_buf = np.zeros((steps, self.target.n), dtype=np.float64)
+            self._delay_idx = 0
+            self._delay_steps_uniform = steps
+            self._per_syn_delays = None
+            return
+
+        # Per-synapse delays
+        if delay.size != n_synapses:
+            raise ValueError(
+                f"Per-synapse delay array length ({delay.size}) must match "
+                f"number of connections ({n_synapses})"
+            )
+        self._delay_mode = "per_synapse"
+        self.delay = delay
+        self._per_syn_delays = np.round(delay).astype(np.int64)
+        self._per_syn_delays = np.clip(self._per_syn_delays, 0, None)
+        max_d = int(self._per_syn_delays.max()) + 1
+        # Spike history ring buffer: (max_delay+1, n_source)
+        self._spike_history = np.zeros((max_d, self.source.n), dtype=np.float64)
+        self._hist_idx = 0
+        self._delay_buf = None
+
+    @property
+    def n_synapses(self) -> int:
+        """Number of synaptic connections."""
+        return len(self.data)
+
+    @property
+    def delay_mode(self) -> str:
+        """Delay mode: 'none', 'uniform', or 'per_synapse'."""
+        return self._delay_mode
+
+    @property
+    def max_delay(self) -> int:
+        """Maximum delay in timesteps across all synapses."""
+        if self._delay_mode == "none":
+            return 0
+        if self._delay_mode == "uniform":
+            return self._delay_steps_uniform
+        return int(self._per_syn_delays.max())
 
     def _build_connectivity(self, topology, probability, seed):
         """Build CSR arrays from topology name or pre-built tuple."""
@@ -87,13 +179,31 @@ class Projection:
         raise ValueError(f"Unknown topology '{topology}'")
 
     def propagate(self, source_spikes) -> np.ndarray:
-        """Compute target currents from source spikes through CSR connectivity."""
-        current = _csr_matvec(self.indptr, self.indices, self.data, source_spikes, self.target.n)
-        if self._delay_buf is not None:
+        """Compute target currents from source spikes through CSR connectivity.
+
+        Handles three delay modes:
+        - none: direct CSR matvec
+        - uniform: aggregated current through circular buffer
+        - per_synapse: each synapse reads from spike history at its own delay
+        """
+        if self._delay_mode == "none":
+            return _csr_matvec(self.indptr, self.indices, self.data, source_spikes, self.target.n)
+
+        if self._delay_mode == "uniform":
+            current = _csr_matvec(self.indptr, self.indices, self.data, source_spikes, self.target.n)
             output = self._delay_buf[self._delay_idx].copy()
             self._delay_buf[self._delay_idx] = current
-            self._delay_idx = (self._delay_idx + 1) % self._delay_steps
+            self._delay_idx = (self._delay_idx + 1) % self._delay_steps_uniform
             return output
+
+        # Per-synapse delay
+        self._spike_history[self._hist_idx] = source_spikes.astype(np.float64)
+        current = _csr_delayed_matvec(
+            self.indptr, self.indices, self.data,
+            self._per_syn_delays, self._spike_history,
+            self._hist_idx, self.target.n,
+        )
+        self._hist_idx = (self._hist_idx + 1) % self._spike_history.shape[0]
         return current
 
     def update_plasticity(self, src_spikes, tgt_spikes, a_plus=0.01, a_minus=0.012, tau=20.0):
