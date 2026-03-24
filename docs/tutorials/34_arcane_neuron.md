@@ -47,8 +47,8 @@ for t in range(2000):
     spike = neuron.step(current=0.8)
     if spike:
         state = neuron.get_state()
-        print(f"  t={t}: spike, confidence={neuron.confidence():.3f}, "
-              f"novelty={neuron.novelty():.3f}, deep={neuron.identity_state():.4f}")
+        print(f"  t={t}: spike, confidence={neuron.confidence:.3f}, "
+              f"novelty={neuron.novelty:.3f}, deep={neuron.identity_state:.4f}")
 ```
 
 ## 2. Observing Identity Accumulation
@@ -61,17 +61,17 @@ neuron = ArcaneNeuron()
 # Phase 1: routine input (constant)
 for t in range(5000):
     neuron.step(current=0.5)
-deep_after_routine = neuron.identity_state()
+deep_after_routine = neuron.identity_state
 
 # Phase 2: novel input (sudden change)
 for t in range(5000):
     neuron.step(current=2.0)
-deep_after_novel = neuron.identity_state()
+deep_after_novel = neuron.identity_state
 
 # Phase 3: return to routine
 for t in range(5000):
     neuron.step(current=0.5)
-deep_after_return = neuron.identity_state()
+deep_after_return = neuron.identity_state
 
 print(f"Deep after routine: {deep_after_routine:.4f}")
 print(f"Deep after novel:   {deep_after_novel:.4f}")  # changed
@@ -91,7 +91,7 @@ for t in range(3000):
     neuron.step(current=0.7)
 
 confident_threshold = neuron.get_state()["effective_threshold"]
-confident_rate = neuron.confidence()
+confident_rate = neuron.confidence
 
 # Unpredictable input → confidence falls → threshold rises → cautious firing
 import numpy as np
@@ -99,7 +99,7 @@ for t in range(3000):
     neuron.step(current=np.random.uniform(0, 2.0))
 
 uncertain_threshold = neuron.get_state()["effective_threshold"]
-uncertain_rate = neuron.confidence()
+uncertain_rate = neuron.confidence
 
 print(f"After predictable: confidence={confident_rate:.3f}, threshold={confident_threshold:.3f}")
 print(f"After random:      confidence={uncertain_rate:.3f}, threshold={uncertain_threshold:.3f}")
@@ -115,12 +115,12 @@ neuron = ArcaneNeuron()
 # Stable regime
 for _ in range(2000):
     neuron.step(current=0.5)
-stable_lr = neuron.meta_learning_rate()
+stable_lr = neuron.meta_learning_rate
 
 # Inject surprise
 for _ in range(100):
     neuron.step(current=5.0)
-surprised_lr = neuron.meta_learning_rate()
+surprised_lr = neuron.meta_learning_rate
 
 print(f"Stable learning rate:    {stable_lr:.4f}")
 print(f"Surprised learning rate: {surprised_lr:.4f}")  # higher

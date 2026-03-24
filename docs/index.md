@@ -7,7 +7,7 @@ stochastic computing (SC) neural networks — from individual neurons to full
 SCPN layer hierarchies, with both software simulation and Verilog RTL for
 FPGA deployment.
 
-**Version 3.13.3** | 2 155 passing Python tests (2 353 defined) + 373 Rust tests | 100% Coverage | 122 Neuron Models | 111-Model NetworkRunner | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
+**Version 3.13.3** | 2 155 passing Python tests (2 353 defined) + 373 Rust tests | 100% Coverage | 122 Neuron Models | 81-Model NetworkRunner | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
 
 ![SC-NeuroCore train-to-hardware pipeline](assets/pipeline.png)
 *Train in PyTorch → Quantise to Q8.8 → Simulate with stochastic bitstreams → Compile to SystemVerilog → Synthesise for FPGA. The Rust SIMD engine accelerates all stages.*
@@ -15,7 +15,7 @@ FPGA deployment.
 ## Key Features
 
 - **122 neuron models** — McCulloch-Pitts (1943) through ArcaneNeuron (2026), 9 hardware chip emulators, 9 AI-optimized
-- **111 Rust neuron models** — PyO3 bindings, 111-model NetworkRunner with Rayon parallelism
+- **111 Rust neuron models** — PyO3 bindings, 81-model NetworkRunner with Rayon parallelism
 - **ArcaneNeuron** — flagship self-referential cognition model with 5 coupled subsystems (fast/working/deep/gate/predictor)
 - **Identity substrate** — persistent spiking network with checkpointing, trace encoding/decoding, L16 Director control
 - **Network simulation** — Population-Projection-Network with 3 backends (Python, Rust, MPI)

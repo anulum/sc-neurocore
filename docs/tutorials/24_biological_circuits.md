@@ -74,10 +74,10 @@ astrocyte releases gliotransmitter that modulates synaptic weight.
 from sc_neurocore.synapses.tripartite import TripartiteSynapse
 
 syn = TripartiteSynapse(
-    glut_per_spike=5.0,    # glutamate per pre-synaptic spike
-    ca_threshold=0.1,      # Ca²⁺ threshold for gliotransmitter release
-    tau_ip3=7.0,           # IP3 decay time constant (seconds)
-    tau_ca=5.0,            # Ca²⁺ decay time constant (seconds)
+    glut_per_spike=5.0,    # IP3 production rate per spike (µM/s)
+    ca_threshold=0.1,      # Ca²⁺ threshold for gliotransmitter release (µM)
+    facilitation=1.5,      # weight gain when astrocyte active
+    depression_rate=0.001, # weight depression rate below Ca²⁺ threshold
 )
 
 # Simulate 10 seconds with spikes every 50ms
@@ -242,14 +242,15 @@ decays, pyramidal cells fire again — the cycle repeats at gamma frequency.
 import numpy as np
 from sc_neurocore.network.gamma_oscillation import PINGCircuit
 
-ping = PINGCircuit(n_exc=80, n_inh=20, seed=42)
-results = ping.run(drive=5.0, steps=1000)
+ping = PINGCircuit(n_excitatory=80, n_inhibitory=20)
 
-# Compute population firing rate over time
-exc_rate = results['exc_rate']  # instantaneous rate
-print(f"Mean excitatory rate: {np.mean(exc_rate):.1f} Hz")
-print(f"Peak-to-peak oscillation: {np.max(exc_rate) - np.min(exc_rate):.1f} Hz")
+# Step the circuit in a loop (no run() — use step())
+exc_spikes_total = 0
+for t in range(1000):
+    exc_spikes, inh_spikes = ping.step(drive=5.0, dt=0.1)
+    exc_spikes_total += exc_spikes.sum()
 
+print(f"Total excitatory spikes: {exc_spikes_total}")
 # The frequency depends on the drive and E/I balance
 # drive=5.0 typically produces 40-50 Hz gamma
 ```

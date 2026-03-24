@@ -23,7 +23,7 @@ Commercial Licensing: Available
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)
 
 **Version:** 3.13.3
-**Status:** 122 Neuron Models (113 Bio + 9 AI) | 99.49% MNIST | 2 155 Python tests passing (2 353 defined) + 373 Rust tests | 100% Coverage | 111 Rust Neuron Models | 111-Model NetworkRunner
+**Status:** 122 Neuron Models (113 Bio + 9 AI) | 99.49% MNIST | 2 155 Python tests passing (2 353 defined) + 373 Rust tests | 100% Coverage | 111 Rust Neuron Models | 81-Model NetworkRunner
 
 <p align="center">
   <img src="docs/assets/spike_raster.png" width="800" alt="LIF spike raster — 5 neurons, sinusoidal input">
@@ -38,7 +38,7 @@ with bit-true Verilog RTL co-simulation, FPGA synthesis via an IR compiler
 that turns arbitrary ODE strings into synthesizable Q8.8 fixed-point RTL,
 formal verification (7 SymbiYosys
 modules, 65 properties), a Rust SIMD engine at 41.3 Gbit/s AVX-512 (111 Rust
-neuron models with PyO3 bindings, 111-model NetworkRunner with Rayon-parallel
+neuron models with PyO3 bindings, 81-model NetworkRunner with Rayon-parallel
 populations scaling to 100K+ neurons), CuPy GPU acceleration, JAX JIT
 training, MPI distributed simulation (billion-neuron scale via mpi4py),
 an identity continuity substrate (persistent spiking networks with
@@ -71,7 +71,7 @@ coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 | GPU acceleration | CuPy | PyTorch | PyTorch | — | — |
 | Neuron model library | **122** | 11 | 6 | 3 | ~5 builtin |
 | Rust neuron models (PyO3) | **111** | — | — | — | — |
-| NetworkRunner (fused loop) | **111 models** | — | — | — | — |
+| NetworkRunner (fused loop) | **81 models** | — | — | — | — |
 | Network simulation engine | **3 backends** | PyTorch | PyTorch | Lava | C++ codegen |
 | MPI distributed simulation | **Yes** | — | — | — | — |
 | Pre-trained model zoo | **10 configs, 3 weights** | — | — | — | — |
@@ -262,7 +262,7 @@ graph TD
         B --> F{Backend?}
         F -->|CPU| G[NumPy / Numba SIMD]
         F -->|GPU| H[CuPy CUDA]
-        F -->|Rust| I[sc_neurocore_engine<br/>41.3 Gbit/s AVX-512 · 111 neuron models<br/>111-model NetworkRunner]
+        F -->|Rust| I[sc_neurocore_engine<br/>41.3 Gbit/s AVX-512 · 111 neuron models<br/>81-model NetworkRunner]
         F -->|MPI| MPI[mpi4py distributed<br/>billion-neuron scale]
     end
 

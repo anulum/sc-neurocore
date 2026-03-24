@@ -35,20 +35,18 @@ before pre (anti-causal), weaken.
 from sc_neurocore.synapses.stochastic_stdp import StochasticSTDPSynapse
 
 syn = StochasticSTDPSynapse(
-    w=0.5,           # initial weight
-    a_plus=0.01,     # LTP amplitude
-    a_minus=0.012,   # LTD amplitude (slightly stronger → stability)
-    tau_plus=20.0,   # LTP time constant (ms)
-    tau_minus=20.0,  # LTD time constant (ms)
+    learning_rate=0.01,  # STDP learning rate
+    window_size=20,      # STDP window (timesteps)
+    ltd_ratio=1.2,       # LTD/LTP ratio (>1 for stability)
 )
 
 # Simulate causal pairing: pre at t=10, post at t=15
 for t in range(100):
-    pre_spike = (t == 10)
-    post_spike = (t == 15)
-    syn.step(pre_spike=pre_spike, post_spike=post_spike, dt=1.0)
+    pre_bit = 1 if t == 10 else 0
+    post_bit = 1 if t == 15 else 0
+    syn.process_step(pre_bit=pre_bit, post_bit=post_bit)
 
-print(f"Weight after causal pairing: {syn.w:.4f}")  # > 0.5 (potentiated)
+print(f"Weight after causal pairing: {syn.w:.4f}")
 ```
 
 **When to use**: Unsupervised feature extraction, receptive field development,
@@ -234,7 +232,7 @@ Stabilizes firing rates by adjusting intrinsic excitability:
 ```python
 from sc_neurocore.learning.advanced import HomeostaticPlasticity
 
-hp = HomeostaticPlasticity(target_rate=10.0, tau_homeo=10000.0)
+hp = HomeostaticPlasticity(target_rate=10.0, tau=1000.0)
 # Neurons firing above target → threshold increases
 # Neurons firing below target → threshold decreases
 ```
@@ -246,7 +244,7 @@ Synaptic facilitation and depression on the timescale of 10-1000 ms:
 ```python
 from sc_neurocore.learning.advanced import ShortTermPlasticity
 
-stp = ShortTermPlasticity(tau_rec=800.0, tau_facil=100.0, U=0.5)
+stp = ShortTermPlasticity(tau_d=200.0, tau_f=600.0, u_se=0.2)
 # High-frequency → depression (resources depleted)
 # Low-frequency → facilitation (resources accumulate)
 ```
@@ -258,7 +256,7 @@ Create and destroy synapses based on activity:
 ```python
 from sc_neurocore.learning.advanced import StructuralPlasticity
 
-sp = StructuralPlasticity(growth_rate=0.001, pruning_threshold=0.01)
+sp = StructuralPlasticity(growth_rate=0.001, prune_threshold=0.01)
 # Low-weight synapses are pruned
 # New synapses grow between co-active neurons
 ```

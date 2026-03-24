@@ -159,7 +159,7 @@ net = brunel_balanced_network(n_exc=800, n_inh=200)
 net.run(duration=1.0, dt=0.001)
 
 # Or load with pre-trained weights
-net = load_pretrained("mnist_784_128_10")
+net = load_pretrained("mnist")
 ```
 
 ## 7. Spike Analysis

@@ -32,7 +32,7 @@ net = brunel_balanced_network(n_exc=800, n_inh=200)
 net.run(duration=1.0, dt=0.001)
 
 # Access spike monitors (automatically attached)
-for mon in net.monitors:
+for mon in net.spike_monitors:
     print(f"{mon.label}: {mon.count} spikes")
 ```
 
@@ -54,7 +54,7 @@ net = mnist_classifier(n_hidden=128)
 ```python
 from sc_neurocore.model_zoo.pretrained import load_pretrained
 
-net = load_pretrained("mnist_784_128_10")
+net = load_pretrained("mnist")
 # Weights trained with surrogate gradients (95.5% accuracy)
 # Ready to classify — feed pixel values as input currents
 ```
@@ -63,16 +63,16 @@ net = load_pretrained("mnist_784_128_10")
 
 | Name | Architecture | Accuracy | Training method |
 |------|-------------|----------|-----------------|
-| `mnist_784_128_10` | FC 784→128→10 | 95.5% | Surrogate gradient (ATan) |
-| `shd_700_256_20` | FC 700→256→20 | — | Surrogate gradient |
-| `dvs_256_256_11` | FC 256→256→11 | — | Surrogate gradient |
+| `mnist` | FC 784→128→10 | 95.5% | Surrogate gradient (ATan) |
+| `shd` | FC 700→256→20 | — | Surrogate gradient |
+| `dvs_gesture` | FC 256→256→11 | — | Surrogate gradient |
 
 ```python
 from sc_neurocore.model_zoo.pretrained import load_pretrained
 
 # Load any pretrained network
-net = load_pretrained("shd_700_256_20")
-net = load_pretrained("dvs_256_256_11")
+net = load_pretrained("shd")
+net = load_pretrained("dvs_gesture")
 ```
 
 ## 4. Central Pattern Generator (CPG)

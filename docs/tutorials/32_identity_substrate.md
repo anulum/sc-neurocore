@@ -123,15 +123,20 @@ from sc_neurocore.identity.director import DirectorController
 
 director = DirectorController(substrate)
 
-# Monitor: assess current state
-diagnosis = director.diagnose()
-print(f"State: {diagnosis['state']}")
-print(f"Issues: {diagnosis['issues']}")
+# Monitor: get network metrics
+metrics = director.monitor()
+print(f"Metrics: {metrics}")
 
-# Correct: apply interventions if needed
-corrections = director.correct()
-for c in corrections:
-    print(f"Applied: {c}")
+# Diagnose: list any problems
+problems = director.diagnose()
+if problems:
+    for p in problems:
+        print(f"Issue: {p}")
+else:
+    print("No issues detected")
+
+# Correct: apply interventions (modifies substrate in-place)
+director.correct()
 ```
 
 ## 6. Full Lifecycle Example
