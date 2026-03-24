@@ -6,10 +6,10 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from sc_neurocore.conversion.ann_to_snn import ConvertedSNN
-
 torch = pytest.importorskip("torch")
-import torch.nn as nn
+import torch.nn as nn  # noqa: E402
+
+from sc_neurocore.conversion.ann_to_snn import ConvertedSNN  # noqa: E402
 
 
 class TestConvertedSNN:
