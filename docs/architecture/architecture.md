@@ -32,8 +32,9 @@ sc_neurocore/
 │   ├── export/        ONNX export
 │   ├── adapters/      SCPN layer adapters (L1-L16), holonomic (JAX)
 │   ├── scpn/          SCPN layer implementations (L1-L16)
-│   ├── cli/           Command-line interface
-│   ├── exceptions/    Custom exception hierarchy
+│   ├── conversion/    ANN-to-SNN conversion (convert(), QCFS)
+│   ├── cli/           Command-line interface (info, deploy, benchmark)
+│   └── exceptions/    Custom exception hierarchy
 │   ├── security/      Pickle allowlist, input sanitisation
 │   └── verification/  Property-based test helpers
 │

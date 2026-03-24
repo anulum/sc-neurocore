@@ -54,8 +54,14 @@ surrogate gradient training reaching 99.49% MNIST accuracy, a
 [NIR](https://neuroir.org/) bridge — FPGA backend for the
 neuromorphic intermediate representation standard (18/18 primitives,
 recurrent edges, multi-port subgraphs; verified interop with SpikingJelly,
-snnTorch, and Norse), and a SpikeInterface adapter for experimental data import.
-2 155 passing Python tests (2 353 defined) across 130+ files and 373 Rust tests hold 100% line
+snnTorch, and Norse), a SpikeInterface adapter for experimental data import,
+ANN-to-SNN conversion (trained PyTorch models to rate-coded SNNs in one call),
+trainable per-synapse delays (DelayLinear with differentiable interpolation),
+one-command FPGA deployment (`sc-neurocore deploy model.nir --target artix7`),
+per-layer adaptive bitstream length for mixed-precision SC networks,
+and event-driven FPGA RTL (AER encoder, event neuron, spike router —
+power proportional to spike rate, not clock rate).
+2 155+ passing Python tests across 130+ files and 373 Rust tests hold 100% line
 coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 
 ## Feature Comparison
@@ -95,6 +101,11 @@ coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 | CuPy sparse GPU | **Yes** | — | — | — | — |
 | AI-optimized neurons | **9 (ArcaneNeuron + 8)** | — | — | — | — |
 | Identity substrate | **Yes** | — | — | — | — |
+| ANN-to-SNN conversion | **Yes** | — | — | — | — |
+| Trainable per-synapse delays | **Yes** | — | — | — | — |
+| One-command FPGA deploy CLI | **Yes** | — | — | — | — |
+| Per-layer adaptive bitstream | **Yes** | — | — | — | — |
+| Event-driven FPGA RTL (AER) | **Yes** | — | — | — | — |
 | conda-forge recipe | **Ready** | Yes | — | — | Yes |
 | PyPI package | Yes | Yes | Yes | Yes | Yes |
 | License | AGPL-3.0 | MIT | LGPL-3.0 | BSD-3 | CeCILL-2.1 |
@@ -422,6 +433,8 @@ Runnable scripts in `examples/`:
 | `norse_nir_roundtrip.py` | Norse → NIR → SC-NeuroCore roundtrip with real Norse weights |
 | `snntorch_nir_roundtrip.py` | snnTorch RSynaptic → NIR → SC-NeuroCore roundtrip (CubaLIF + recurrent) |
 | `spikingjelly_nir_roundtrip.py` | SpikingJelly → NIR → SC-NeuroCore roundtrip |
+| `ann_to_snn_demo.py` | Convert trained PyTorch ANN to rate-coded SNN |
+| `delay_training_demo.py` | Train spiking network with learnable per-synapse delays |
 
 ```bash
 PYTHONPATH=src:bridge python examples/01_basic_sc_encoding.py

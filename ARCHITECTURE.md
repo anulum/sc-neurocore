@@ -76,19 +76,23 @@ sc-neurocore/
 │   ├── experiments/        Experiment management
 │   ├── security/           Pickle allowlist, input sanitisation
 │   ├── verification/       Property-based test helpers
-│   ├── cli/                Command-line interface
+│   ├── conversion/         ANN-to-SNN conversion (convert(), QCFS activation)
+│   ├── cli/                Command-line interface (info, deploy, benchmark)
 │   └── exceptions/         Custom exception hierarchy
 │
-├── tests/                  Python test suite (2 155+ tests, 100% coverage)
+├── tests/                  Python test suite (2 200+ tests, 100% coverage)
 │
 ├── hdl/                    Verilog RTL (FPGA targets)
 │   ├── sc_neurocore_top.v  AXI-Lite top-level wrapper
 │   ├── sc_lif_neuron.v     Q8.8 leaky integrate-and-fire
 │   ├── sc_dense_layer_core.v  Full dense pipeline
+│   ├── sc_aer_encoder.v    AER spike encoder (event-driven output)
+│   ├── sc_event_neuron.v   Event-triggered LIF (power ∝ spike rate)
+│   ├── sc_aer_router.v     AER event distribution to target neurons
 │   ├── formal/             SymbiYosys formal verification (7 modules, 65 properties)
 │   └── tb_sc_*.v           Co-simulation testbenches
 │
-├── examples/               19 runnable demo scripts (SC, MNIST, NIR, JAX)
+├── examples/               20 runnable demo scripts (SC, MNIST, NIR, JAX, snnTorch)
 ├── notebooks/              Jupyter notebooks
 ├── benchmarks/             Python benchmark suite
 ├── scripts/                Co-simulation + utility scripts
