@@ -112,13 +112,17 @@ Projections can learn via spike-timing dependent plasticity:
 # Run network
 net.run(duration=1.0, dt=0.001)
 
-# After running, apply STDP to a projection
+# STDP is applied per-timestep during run() if projection has plasticity="stdp".
+# For manual STDP after simulation, pass binary spike arrays (one timestep):
+import numpy as np
+src_spikes = np.random.randint(0, 2, size=exc.n)  # example binary array
+tgt_spikes = np.random.randint(0, 2, size=exc.n)
 exc_to_exc.update_plasticity(
-    src_spikes=mon_exc.spike_trains,
-    tgt_spikes=mon_exc.spike_trains,
-    a_plus=0.01,    # LTP amplitude
-    a_minus=0.012,  # LTD amplitude
-    tau=20.0,       # time constant (ms)
+    src_spikes=src_spikes,
+    tgt_spikes=tgt_spikes,
+    a_plus=0.01,
+    a_minus=0.012,
+    tau=20.0,
 )
 ```
 

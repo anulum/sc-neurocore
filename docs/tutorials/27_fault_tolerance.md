@@ -180,7 +180,7 @@ for replica in range(3):
     layer = VectorizedSCLayer(n_inputs=4, n_neurons=2, length=512)
     out = layer.forward(inputs)
     # Inject SEU faults
-    out_noisy = FaultInjector.inject_analog_noise(out, sigma=0.05)
+    out_noisy = out + np.random.normal(0, 0.05, out.shape)  # analog noise
     outputs.append(out_noisy)
 
 # Majority vote (median)

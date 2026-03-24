@@ -90,7 +90,7 @@ neuron = ArcaneNeuron()
 for t in range(3000):
     neuron.step(current=0.7)
 
-confident_threshold = neuron.get_state()["effective_threshold"]
+confident_conf = neuron.get_state()["confidence"]
 confident_rate = neuron.confidence
 
 # Unpredictable input → confidence falls → threshold rises → cautious firing
@@ -98,11 +98,11 @@ import numpy as np
 for t in range(3000):
     neuron.step(current=np.random.uniform(0, 2.0))
 
-uncertain_threshold = neuron.get_state()["effective_threshold"]
+uncertain_conf = neuron.get_state()["confidence"]
 uncertain_rate = neuron.confidence
 
-print(f"After predictable: confidence={confident_rate:.3f}, threshold={confident_threshold:.3f}")
-print(f"After random:      confidence={uncertain_rate:.3f}, threshold={uncertain_threshold:.3f}")
+print(f"After predictable: confidence={confident_rate:.3f}, threshold={confident_conf:.3f}")
+print(f"After random:      confidence={uncertain_rate:.3f}, threshold={uncertain_conf:.3f}")
 ```
 
 ## 4. Meta-Learning Rate
