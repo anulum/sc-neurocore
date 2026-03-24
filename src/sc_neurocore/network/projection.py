@@ -24,14 +24,20 @@ import numpy as np
 from . import topology as _topo
 
 
-def _csr_matvec(indptr, indices, data, x, n_out):
-    """CSR matrix-vector product: result[j] += data[k] * x[i] for each (i,j)."""
+def _csr_matvec(indptr, indices, data, x, n_out, weight_threshold=0.0):
+    """CSR matrix-vector product: result[j] += data[k] * x[i] for each (i,j).
+
+    Skips source neurons with x[i]==0 (spike-driven) and optionally
+    skips synapses with |data[k]| <= weight_threshold (sparse weights).
+    """
     out = np.zeros(n_out, dtype=np.float64)
     n_rows = len(indptr) - 1
     for i in range(n_rows):
         if x[i] == 0:
             continue
         for k in range(indptr[i], indptr[i + 1]):
+            if weight_threshold > 0.0 and abs(data[k]) <= weight_threshold:
+                continue
             out[indices[k]] += data[k] * x[i]
     return out
 
@@ -86,13 +92,19 @@ class Projection:
         topology="random",
         plasticity=None,
         seed=42,
+        weight_threshold=0.0,
     ):
-        """Create projection with CSR connectivity and optional delay/plasticity."""
+        """Create projection with CSR connectivity and optional delay/plasticity.
+
+        *weight_threshold*: skip synapses with |w| <= threshold during
+        propagation. Set > 0 to exploit weight sparsity after pruning.
+        """
         self.source = source
         self.target = target
         self.weight = weight
         self.plasticity = plasticity
         self.seed = seed
+        self.weight_threshold = weight_threshold
 
         self.indptr, self.indices, self.data = self._build_connectivity(topology, probability, seed)
 
@@ -186,11 +198,12 @@ class Projection:
         - uniform: aggregated current through circular buffer
         - per_synapse: each synapse reads from spike history at its own delay
         """
+        wt = self.weight_threshold
         if self._delay_mode == "none":
-            return _csr_matvec(self.indptr, self.indices, self.data, source_spikes, self.target.n)
+            return _csr_matvec(self.indptr, self.indices, self.data, source_spikes, self.target.n, wt)
 
         if self._delay_mode == "uniform":
-            current = _csr_matvec(self.indptr, self.indices, self.data, source_spikes, self.target.n)
+            current = _csr_matvec(self.indptr, self.indices, self.data, source_spikes, self.target.n, wt)
             output = self._delay_buf[self._delay_idx].copy()
             self._delay_buf[self._delay_idx] = current
             self._delay_idx = (self._delay_idx + 1) % self._delay_steps_uniform
