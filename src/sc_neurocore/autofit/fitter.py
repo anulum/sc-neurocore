@@ -190,7 +190,7 @@ def fit(
             result = _fit_single_model(cls, name, voltage, current, dt, threshold)
             if result is not None:
                 results.append(result)
-        except Exception:
+        except (ValueError, TypeError, RuntimeError, ArithmeticError):
             continue
 
     results.sort(key=lambda r: r.combined_score)
