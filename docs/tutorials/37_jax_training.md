@@ -22,11 +22,11 @@ import jax
 import jax.numpy as jnp
 from sc_neurocore.layers.jax_dense_layer import JaxSCDenseLayer
 
-layer = JaxSCDenseLayer(n_inputs=8, n_neurons=4, length=256, seed=42)
+layer = JaxSCDenseLayer(n_inputs=8, n_neurons=4, bitstream_length=256, seed=42)
 
-# Forward pass — JIT-compiled
+# Step pass — JIT-compiled
 inputs = jnp.array([0.3, 0.5, 0.7, 0.2, 0.8, 0.1, 0.6, 0.4])
-output = layer.forward(inputs)
+output = layer.step(inputs)
 print(f"Output: {output}")
 ```
 
@@ -164,11 +164,11 @@ print(f"SC output: {output}")
 The SCPN holonomic adapter ecosystem uses JAX for differentiable layer transforms:
 
 ```python
-from sc_neurocore.adapters.holonomic.l1_quantum import L1QuantumAdapter
+from sc_neurocore.adapters.holonomic.l1_quantum import L1_QuantumAdapter
 
-adapter = L1QuantumAdapter()
-# adapt() uses JAX JIT under the hood
-state = adapter.adapt(initial_state)
+adapter = L1_QuantumAdapter()
+# step_jax() uses JAX JIT under the hood
+state = adapter.step_jax(dt=0.01)
 ```
 
 ## JAX vs PyTorch vs NumPy

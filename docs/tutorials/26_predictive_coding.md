@@ -150,7 +150,7 @@ inputs = [0.3, 0.7, 0.5, 0.9, 0.2, 0.8, 0.4, 0.6]
 for epoch in range(50):
     r1 = l1.forward(inputs)
     # Feed L1's prediction error as L2's input
-    r2 = l2.forward(list(r1['neuron_errors'][:4]))
+    r2 = l2.forward(list(r1['surprises'][:4]))
 
     if epoch % 10 == 0:
         print(f"Epoch {epoch}: L1 error={r1['prediction_error']:.4f}, "

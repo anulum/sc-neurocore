@@ -279,7 +279,7 @@ from sc_neurocore.synapses.gap_junction import GapJunction
 col = CorticalColumn(n_per_layer=20, seed=42)
 
 # Add gap junctions between L2/3 inhibitory neurons
-gj = GapJunction(conductance=0.05, n_neurons=20)
+gj = GapJunction(conductance=0.05)
 
 # Run with coupled dynamics
 results = col.run(thalamic_input=np.ones(20) * 5.0, steps=500)

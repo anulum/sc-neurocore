@@ -224,19 +224,19 @@ compile to IR → emit SystemVerilog → synthesize for FPGA.
 
 ```python
 from sc_neurocore.nir_bridge import from_nir
-from sc_neurocore.compiler import IRBuilder, SystemVerilogEmitter
+from sc_neurocore.compiler import compile_to_verilog
+from sc_neurocore.compiler.equation_compiler import equation_to_fpga
 
 # Step 1: Import NIR graph
 network = from_nir(graph, dt=1e-4, reset_mode="subtract")
 
-# Step 2: Build IR
-ir = IRBuilder.from_network(network)
-ir.verify()
-
-# Step 3: Emit SystemVerilog
-emitter = SystemVerilogEmitter(ir)
-sv_code = emitter.emit()
-with open("snn_core.sv", "w") as f:
+# Step 2: For individual neuron models, compile to Verilog
+neuron, sv_code = equation_to_fpga(
+    "dv/dt = (-v + I) / tau",
+    threshold="v > 1.0", reset="v = 0.0",
+    params={"tau": 20.0}, module_name="nir_lif",
+)
+with open("nir_lif.sv", "w") as f:
     f.write(sv_code)
 print(f"Generated {len(sv_code)} chars of SystemVerilog")
 ```

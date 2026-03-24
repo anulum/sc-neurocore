@@ -111,7 +111,7 @@ for t in range(5000):
     post_rate = 20.0 + 10.0 * np.sin(t / 500.0)  # oscillating rate
     syn.step(pre_rate=15.0, post_rate=post_rate, dt=1.0)
 
-print(f"Weight: {syn.w:.4f}, Threshold: {syn.theta:.1f}")
+print(f"Weight: {syn.w:.4f}, Threshold: {syn.theta_m:.1f}")
 ```
 
 **When to use**: Self-stabilizing networks, preventing epileptic-like runaway activity.

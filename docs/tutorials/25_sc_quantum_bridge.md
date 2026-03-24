@@ -109,19 +109,15 @@ Combine variational quantum circuits with classical optimization:
 ```python
 from sc_neurocore.quantum.hybrid_pipeline import HybridQuantumClassicalPipeline
 
-pipeline = HybridQuantumClassicalPipeline(n_qubits=4)
+pipeline = HybridQuantumClassicalPipeline(n_qubits=4, n_layers=2)
 
-# Ising chain Hamiltonian: H = Z₀Z₁ + Z₁Z₂ + Z₂Z₃
-pipeline.set_hamiltonian([
-    (1.0, [(0, 'Z'), (1, 'Z')]),
-    (1.0, [(1, 'Z'), (2, 'Z')]),
-    (1.0, [(2, 'Z'), (3, 'Z')]),
-])
+# Train the variational circuit
+result = pipeline.train(n_steps=100, lr=0.01)
+print(f"Training complete")
 
-# VQE optimization
-result = pipeline.optimize(n_layers=2, method='COBYLA', maxiter=100)
-print(f"Ground state energy: {result['energy']:.4f}")
-print(f"Optimal parameters: {result['params']}")
+# Evaluate with learned parameters
+energy = pipeline.evaluate(result)
+print(f"Final energy: {energy:.4f}")
 ```
 
 ## 6. Parameter-Shift Gradients
@@ -148,11 +144,12 @@ grad = parameter_shift_gradient(cost_fn, params)
 print(f"Gradient: {grad}")
 
 # Gradient-based optimization
-optimizer = ParameterShiftOptimizer(cost_fn, lr=0.1)
-for step in range(50):
-    loss = optimizer.step()
-    if step % 10 == 0:
-        print(f"  Step {step}: loss = {loss:.4f}")
+optimizer = ParameterShiftOptimizer(cost_fn, n_params=2, lr=0.1)
+params = np.array([0.5, 0.7])
+for s in range(50):
+    params = optimizer.step(params)
+    if s % 10 == 0:
+        print(f"  Step {s}: cost = {cost_fn(params):.4f}")
 ```
 
 ## 7. Quantum Error Correction
@@ -162,13 +159,11 @@ Protect quantum circuits from noise using error correction codes:
 ```python
 from sc_neurocore.quantum.qec import QecShield, SurfaceCodeShield
 
-# 3-qubit repetition code
-shield = QecShield(n_data=1, n_syndrome=2)
+# Repetition code (distance-3)
+shield = QecShield(code_type="repetition", distance=3)
 
-# Surface code (distance-3, higher error threshold)
+# Surface code (distance-3)
 surface = SurfaceCodeShield(distance=3)
-print(f"Surface code threshold: {surface.threshold:.4f}")
-# Below this physical error rate, logical errors are exponentially suppressed
 ```
 
 ## The SC↔Quantum Correspondence Table
