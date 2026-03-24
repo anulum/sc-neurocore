@@ -10,9 +10,10 @@
 Pack AER (Address Event Representation) spike events into UDP packets
 for communication between FPGA boards or between FPGA and host.
 
-Packet format:
-  Header: [magic:16][seq:16][n_events:16][reserved:16] = 8 bytes
-  Events: [timestamp:32][neuron_id:16][data:16] = 8 bytes each
+Packet format::
+
+  Header: magic(16) | seq(16) | n_events(16) | reserved(16) = 8 bytes
+  Events: timestamp(32) | neuron_id(16) | data(16) = 8 bytes each
   Max events per packet: 180 (fits in 1500-byte Ethernet MTU)
 
 No equivalent open standard exists for multi-FPGA SNN communication.
