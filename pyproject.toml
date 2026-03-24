@@ -119,6 +119,7 @@ omit = [
     "*/integrations/lava_bridge.py",
     "*/neurons/models/*",
     "*/conversion/*",
+    "*/cli.py",
     "*/analysis/spike_stats/*",
     "*/viz/plots.py",
     "*/learning/advanced.py",

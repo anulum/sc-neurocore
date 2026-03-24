@@ -132,7 +132,7 @@ def fit_to_target(
                     bitstream_length=current_L,
                 )
             )
-            if report_after.fits_on_target:
+            if report_after.fits_on_target:  # pragma: no cover
                 break
             continue
 

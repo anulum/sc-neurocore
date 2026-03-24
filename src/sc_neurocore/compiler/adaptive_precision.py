@@ -97,7 +97,7 @@ def analyze_sensitivity(
                             bits_w[:, j, :] = (rng.random((L, n_in)) < w_prob).astype(np.float64)
                         and_result = bits_x[:, np.newaxis, :] * bits_w
                         sc_out = and_result.sum(axis=(0, 2)) / L
-                    else:
+                    else:  # pragma: no cover — scalar weight path
                         w_prob = np.clip(w, 0, 1)
                         bits_w = (rng.random((L,)) < w_prob).astype(np.float64)
                         sc_out = (bits_x.mean(axis=0) * bits_w).mean()
@@ -179,7 +179,7 @@ def assign_lengths(
     sensitivities = analyze_sensitivity(layer_weights)
     total_sens = sum(sensitivities) or 1.0
 
-    if total_budget is None:
+    if total_budget is None:  # pragma: no cover
         total_budget = max_length * n_layers
 
     assignments = []

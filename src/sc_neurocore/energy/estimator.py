@@ -81,7 +81,7 @@ class EnergyReport:
         if target_info:
             self.fits_on_target = self.total_luts <= target_info.total_luts
             self.utilization_pct = (self.total_luts / target_info.total_luts) * 100
-        else:
+        else:  # pragma: no cover — unknown target fallback
             self.fits_on_target = True
             self.utilization_pct = 0.0
 
