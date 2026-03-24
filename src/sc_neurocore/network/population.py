@@ -43,12 +43,30 @@ class Population:
         for i, neuron in enumerate(self.neurons):
             self._voltages[i] = getattr(neuron, "v", 0.0)
 
-    def step_all(self, currents) -> np.ndarray:
-        """Advance all neurons one timestep; return binary spike vector."""
+    def step_all(self, currents, spike_gating=False) -> np.ndarray:
+        """Advance all neurons one timestep; return binary spike vector.
+
+        If *spike_gating* is True, neurons with zero input current and
+        voltage near rest (within 1% of threshold) are skipped. This
+        makes compute roughly proportional to active neurons — useful for
+        sparse-firing networks. Skipped neurons still decay via leak if
+        their model tracks sub-threshold dynamics.
+        """
         spikes = np.zeros(self.n, dtype=np.int8)
-        for i, neuron in enumerate(self.neurons):
-            spikes[i] = neuron.step(float(currents[i]))
-            self._voltages[i] = getattr(neuron, "v", 0.0)
+        if spike_gating:
+            for i, neuron in enumerate(self.neurons):
+                v = getattr(neuron, "v", 0.0)
+                v_thresh = getattr(neuron, "v_threshold", 1.0)
+                v_rest = getattr(neuron, "v_rest", 0.0)
+                # Skip if no input AND voltage within 1% of rest
+                if currents[i] == 0.0 and abs(v - v_rest) < 0.01 * abs(v_thresh - v_rest):
+                    continue
+                spikes[i] = neuron.step(float(currents[i]))
+                self._voltages[i] = getattr(neuron, "v", 0.0)
+        else:
+            for i, neuron in enumerate(self.neurons):
+                spikes[i] = neuron.step(float(currents[i]))
+                self._voltages[i] = getattr(neuron, "v", 0.0)
         return spikes
 
     def reset_all(self):

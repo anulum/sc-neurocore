@@ -81,14 +81,19 @@ class Network:
                 return False
         return not any(p.plasticity for p in self.projections)
 
-    def run(self, duration, dt=0.001, progress=False, backend="auto"):
+    def run(self, duration, dt=0.001, progress=False, backend="auto", spike_gating=False):
         """Run the simulation for *duration* seconds at timestep *dt*.
 
         *backend* selects execution: ``'auto'`` picks Rust when available
         and all models are supported, ``'rust'`` forces the Rust backend
         (raises if unavailable), ``'python'`` forces pure-Python,
         ``'mpi'`` runs MPI-distributed (requires mpi4py).
+
+        *spike_gating*: skip neurons with zero input and near-rest voltage.
+        Makes compute roughly proportional to active neuron count. Python
+        backend only.
         """
+        self._spike_gating = spike_gating
         if backend == "mpi":
             return self._run_mpi(duration, dt)
         if backend == "rust" or (backend == "auto" and self._can_use_rust()):
@@ -162,7 +167,7 @@ class Network:
 
             for pop in self.populations:
                 pid = id(pop)
-                spikes = pop.step_all(pop_to_currents[pid])
+                spikes = pop.step_all(pop_to_currents[pid], spike_gating=self._spike_gating)
                 last_spikes[pid] = spikes
                 self._record(pop, spikes, t, dt)
 
