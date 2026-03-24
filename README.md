@@ -489,7 +489,7 @@ Sample results (CPU, quick mode):
 **Live site**: [anulum.github.io/sc-neurocore](https://anulum.github.io/sc-neurocore/)
 
 - [Getting Started](docs/guides/getting-started.md) — Installation & quickstart
-- [**Tutorials**](https://anulum.github.io/sc-neurocore/tutorials/01_stochastic_computing_fundamentals/) — 41 hands-on guides (SC fundamentals → MNIST → FPGA → quantum → formal verification)
+- [**Tutorials**](https://anulum.github.io/sc-neurocore/tutorials/01_stochastic_computing_fundamentals/) — 51 hands-on guides (SC fundamentals → MNIST → FPGA → quantum → formal verification)
 - [API Reference](docs/api/API_REFERENCE.md) — Python package API
 - [Rust Engine API](https://anulum.github.io/sc-neurocore/rust-api/sc_neurocore_engine/) — Rust engine docs
 - [Hardware Guide](docs/hardware/HARDWARE_GUIDE.md) — FPGA deployment workflow

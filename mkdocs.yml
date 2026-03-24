@@ -103,6 +103,16 @@ nav:
       - ANN-to-SNN Conversion: tutorials/38_ann_to_snn_conversion.md
       - Learnable Delays: tutorials/39_learnable_delays.md
       - FPGA Deployment: tutorials/40_deploy_to_fpga.md
+      - Energy Estimation: tutorials/41_energy_estimation.md
+      - Spike Debugger: tutorials/42_spike_debugger.md
+      - Platform Profiler: tutorials/43_platform_profiler.md
+      - Model Compression: tutorials/44_model_compression.md
+      - DVS Pipeline: tutorials/45_dvs_pipeline.md
+      - NeuroBench: tutorials/46_neurobench.md
+      - Auto-Fit: tutorials/47_autofit.md
+      - Digital Twin: tutorials/48_digital_twin.md
+      - Multimodal Fusion: tutorials/49_multimodal_fusion.md
+      - AER Communication: tutorials/50_aer_communication.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
@@ -137,6 +147,20 @@ nav:
       - Identity & AI:
           - Identity Substrate: api/identity.md
           - AI-Optimized Neurons: api/ai_neurons.md
+      - Tools:
+          - Energy Estimator: api/energy.md
+          - Spike Debugger: api/debug.md
+          - Streaming Server: api/serve.md
+          - Platform Profiler: api/profiler.md
+          - Model Compression: api/compression.md
+          - Resource Optimizer: api/optimizer.md
+          - Auto-Fit: api/autofit.md
+          - Digital Twin: api/digital_twin.md
+          - Multimodal Fusion: api/fusion.md
+          - NeuroBench: api/benchmarks.md
+      - Sensors & Communication:
+          - DVS Pipeline: api/sensors.md
+          - AER-over-UDP: api/comm.md
       - Interoperability:
           - NIR Bridge: api/nir_bridge.md
       - Domain Modules:
