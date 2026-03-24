@@ -39,13 +39,13 @@ marked explicitly.
 | GPU acceleration | CuPy | PyTorch | PyTorch | — | — |
 | Neuron models | **122** | 11 | 6 | 3 | Arbitrary |
 | Rust neuron models (PyO3) | **111** | — | — | — | — |
-| NetworkRunner (fused loop) | **111 models** | — | — | — | — |
+| NetworkRunner (fused loop) | **81 models** | — | — | — | — |
 | Network simulation backends | **3** (Python, Rust, MPI) | PyTorch | PyTorch | Lava | C++ codegen |
 | MPI distributed simulation | **Yes** | — | — | — | — |
 | Pre-trained model zoo | **10 configs, 3 weights** | — | — | — | — |
 | Spike train analysis | **125 functions** | — | — | — | — |
-| Visualization plots | **14** | — | — | — | — |
-| Advanced plasticity rules | **7** | — | — | — | — |
+| Visualization plots | **12** | — | — | — | — |
+| Advanced plasticity rules | **13** | — | — | — | — |
 | STDP / R-STDP plasticity | Yes | — | Yes | Yes | Yes |
 | Quantum hybrid circuits | **Yes** | — | — | — | — |
 | Hyperdimensional computing | **Yes** | — | — | — | — |
@@ -67,10 +67,10 @@ marked explicitly.
    simulation, packed AND+popcount operations, and Sobol LDS encoding
 2. **FPGA co-design** — IR compiler emits synthesisable SystemVerilog
    and MLIR/CIRCT, with bit-exact Python↔Verilog co-simulation
-3. **Formal verification** — 64 SymbiYosys properties across 7 HDL
+3. **Formal verification** — 65 SymbiYosys properties across 7 HDL
    modules (no other SNN framework offers formal proofs)
 4. **Rust SIMD engine** — AVX-512/AVX2/NEON/SVE/RVV dispatch with
-   111 Rust neuron models with PyO3 bindings, 111-model NetworkRunner
+   111 Rust neuron models with PyO3 bindings, 81-model NetworkRunner
 5. **Network simulation** — 3 backends (Python, Rust, MPI), 6 topology
    generators, 10 model zoo configs, 3 pre-trained weight sets
 6. **Analysis toolkit** — 125 spike train analysis functions across

@@ -32,7 +32,7 @@ print(neuron.meta_learning_rate)   # lr_base * (1 + eta * novelty)
 ```
 
 Rust implementation: `ArcaneNeuron` in `network_runner.rs` (included
-in the 111-model NetworkRunner).
+in the 81-model NetworkRunner).
 
 ## AI-Optimized Models
 
