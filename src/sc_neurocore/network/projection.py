@@ -200,10 +200,14 @@ class Projection:
         """
         wt = self.weight_threshold
         if self._delay_mode == "none":
-            return _csr_matvec(self.indptr, self.indices, self.data, source_spikes, self.target.n, wt)
+            return _csr_matvec(
+                self.indptr, self.indices, self.data, source_spikes, self.target.n, wt
+            )
 
         if self._delay_mode == "uniform":
-            current = _csr_matvec(self.indptr, self.indices, self.data, source_spikes, self.target.n, wt)
+            current = _csr_matvec(
+                self.indptr, self.indices, self.data, source_spikes, self.target.n, wt
+            )
             output = self._delay_buf[self._delay_idx].copy()
             self._delay_buf[self._delay_idx] = current
             self._delay_idx = (self._delay_idx + 1) % self._delay_steps_uniform
@@ -212,9 +216,13 @@ class Projection:
         # Per-synapse delay
         self._spike_history[self._hist_idx] = source_spikes.astype(np.float64)
         current = _csr_delayed_matvec(
-            self.indptr, self.indices, self.data,
-            self._per_syn_delays, self._spike_history,
-            self._hist_idx, self.target.n,
+            self.indptr,
+            self.indices,
+            self.data,
+            self._per_syn_delays,
+            self._spike_history,
+            self._hist_idx,
+            self.target.n,
         )
         self._hist_idx = (self._hist_idx + 1) % self._spike_history.shape[0]
         return current

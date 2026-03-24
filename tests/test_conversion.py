@@ -15,7 +15,7 @@ import numpy as np
 torch = pytest.importorskip("torch")
 nn = torch.nn
 
-from sc_neurocore.conversion.ann_to_snn import convert, ConvertedSNN, _extract_layers
+from sc_neurocore.conversion.ann_to_snn import convert, _extract_layers
 from sc_neurocore.conversion.qcfs import QCFSActivation
 
 
