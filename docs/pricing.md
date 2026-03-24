@@ -112,7 +112,7 @@ commercial licenses for proprietary integration.
 <li>IR compiler (SystemVerilog + MLIR)</li>
 <li>Surrogate gradient training</li>
 <li>Quantum hybrid (Qiskit/PennyLane)</li>
-<li>38 tutorials + full documentation</li>
+<li>41 tutorials + full documentation</li>
 <li>Community support (GitHub Discussions)</li>
 <li>Source code must remain open (AGPL)</li>
 </ul>

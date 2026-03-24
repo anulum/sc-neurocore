@@ -119,7 +119,7 @@ zoo with 10 pre-built configurations, 3 pre-trained weight sets, and
 125 spike train analysis functions covering the combined scope of
 Elephant [@elephant2023] and PySpike.
 
-**Verilog RTL** (`hdl/`): 16 synthesisable modules including
+**Verilog RTL** (`hdl/`): 19 synthesisable modules including
 `sc_lif_neuron.v` (Q8.8 LIF), `sc_dense_matrix_layer.v`, and
 `sc_neurocore_top.v` (AXI-Lite wrapper). Yosys synthesis of
 `sc_neurocore_top` yields 3 673 LUTs on Xilinx 7-series. SymbiYosys
@@ -164,7 +164,7 @@ AGPL-3.0-or-later with a commercial license option.
 [Documentation](https://anulum.github.io/sc-neurocore/) is hosted on
 GitHub Pages. The repository includes a
 [contributing guide](https://github.com/anulum/sc-neurocore/blob/main/CONTRIBUTING.md),
-41 tutorials, 20 examples, and 8 Jupyter notebooks including an
+41 tutorials, 22 examples, and 8 Jupyter notebooks including an
 interactive neuron model explorer and an NIR bridge walkthrough.
 A Zenodo-archived DOI is available [@scneurocore_zenodo].
 

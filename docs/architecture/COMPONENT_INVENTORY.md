@@ -107,11 +107,16 @@ that are planned but not yet implemented in this repository.
     *   `DirectorController`: L16 cybernetic self-regulation
 *   **`network/`**
     *   Population-Projection-Network engine (3 backends: Python, Rust, MPI)
+    *   Per-synapse delays, spike-gating, weight sparsity exploitation
     *   6 topology generators, 12 visualization plots
 *   **`model_zoo/`**
     *   10 pre-built network configs, 3 pre-trained weight sets (MNIST, SHD, DVS)
+*   **`conversion/`**
+    *   `convert()`: ANN-to-SNN conversion (PyTorch → rate-coded SNN)
+    *   `QCFSActivation`: conversion-aware training activation
 *   **`training/`**
     *   Surrogate gradient training cells (LIF, ALIF, RecurrentLIF, EPropALIF)
+    *   `DelayLinear`: trainable per-synapse delays with differentiable interpolation
     *   ConvSpikingNet (99.49% MNIST)
 *   **`learning/`**
     *   13 plasticity rules: pair/triplet/voltage STDP, BCM, BPTT, TBPTT, EWC, e-prop, R-STDP, MAML, homeostatic, STP, structural
