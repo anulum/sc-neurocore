@@ -115,7 +115,42 @@ Before deploying:
 
 ---
 
-## 10. Next steps
+## 10. Event-Driven Architecture
+
+SC-NeuroCore includes three event-driven Verilog modules for power-efficient
+SNN execution:
+
+| Module | Purpose |
+|--------|---------|
+| `sc_aer_encoder.v` | Converts spike vector to AER (Address-Event Representation) packets. Only active neurons generate events. |
+| `sc_event_neuron.v` | Q8.8 LIF that computes only on input events or periodic leak ticks. Idle neurons consume zero switching power. |
+| `sc_aer_router.v` | Distributes AER events to target neurons using BRAM connectivity lookup. Sparse fanout serialized. |
+
+For a 1000-neuron network firing at 10 Hz with 1 MHz clock:
+- **Clock-driven**: 1000 neurons × 1M cycles/s = 1 billion operations/s
+- **Event-driven**: 10,000 events/s × ~32 fanout = 320K operations/s (**3000x fewer**)
+
+Use event-driven modules when:
+- Network firing rates are sparse (<50 Hz average)
+- Power budget is critical (edge deployment)
+- FPGA resource constraints limit dense matrix operations
+
+Use clock-driven modules when:
+- Bit-exact Python-Verilog co-simulation is needed
+- Network is dense (most neurons active every cycle)
+- Deterministic timing is required for formal verification
+
+## 11. One-Command Deployment
+
+```bash
+sc-neurocore deploy model.nir --target artix7 -o build/
+```
+
+This generates a complete project with all 19 HDL modules, a generated
+neuron SystemVerilog file, and target-specific build scripts. See
+Tutorial 40 for details.
+
+## 12. Next steps
 
 - Use BENCHMARKS.md to record performance and accuracy data.
 - Update TECHNICAL_MANUAL.md if hardware flows change.

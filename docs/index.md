@@ -31,7 +31,7 @@ FPGA deployment.
 - **SNN training** — Surrogate gradient training (ATan, FastSigmoid, SuperSpike) with `to_sc_weights()` bridge
 - **SCPN layer stack** — 16-layer holonomic model (L1 Quantum → L16 Meta) with JAX acceleration
 - **Equation → Verilog compiler** — arbitrary ODE string to synthesizable Q8.8 fixed-point RTL in one function call
-- **Verilog RTL** — 16 synthesisable modules, 7 formal verification files (65 properties), bit-exact co-simulation
+- **Verilog RTL** — 19 synthesisable modules (incl. event-driven AER encoder/router/neuron), 7 formal verification files (65 properties), bit-exact co-simulation
 - **HDC/VSA** — Hyper-dimensional computing for symbolic AI workloads
 - **[NIR bridge](guides/nir_integration.md)** — FPGA backend for [NIR](https://neuroir.org/) (18/18 primitives, recurrent edges, multi-port subgraphs)
 - **SC→quantum compiler** — compile SC operations to quantum circuits, statevector + noisy simulation
@@ -42,6 +42,11 @@ FPGA deployment.
 - **SpikeInterface adapter** — import experimental spike data (spike trains, sorting results)
 - **Adaptive bitstream length** — Hoeffding/Chebyshev bounds for precision-speed tradeoff
 - **AXI-Stream + DMA** — production hardware interface (stream, DMA, parameterized registers, CDC)
+- **ANN-to-SNN conversion** — `convert()` turns trained PyTorch ANNs into rate-coded SNNs with QCFS activation
+- **Learnable delays** — `DelayLinear` with trainable per-synapse delays via differentiable interpolation
+- **One-command deploy** — `sc-neurocore deploy model.nir --target artix7` produces a bitstream-ready project
+- **Mixed-precision SC** — per-layer adaptive bitstream length (Hoeffding/sensitivity-based)
+- **Event-driven FPGA** — AER encoder, event neuron, spike router (power proportional to spike rate)
 - **conda-forge recipe** — ready for conda-forge distribution
 
 The default `pip install sc-neurocore` wheel ships the public

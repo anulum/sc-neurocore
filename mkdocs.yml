@@ -100,6 +100,9 @@ nav:
       - Model Zoo: tutorials/35_model_zoo.md
       - MPI Distributed Simulation: tutorials/36_mpi_distributed.md
       - JAX Training: tutorials/37_jax_training.md
+      - ANN-to-SNN Conversion: tutorials/38_ann_to_snn_conversion.md
+      - Learnable Delays: tutorials/39_learnable_delays.md
+      - FPGA Deployment: tutorials/40_deploy_to_fpga.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
@@ -125,8 +128,12 @@ nav:
           - Transformers: api/transformers.md
       - Compiler & Export:
           - Compiler: api/compiler.md
+          - Adaptive Precision: api/adaptive_precision.md
           - Export: api/export.md
           - HDL Generation: api/hdl_gen.md
+      - Training:
+          - Delay Training: api/delay_training.md
+          - ANN-to-SNN Conversion: api/conversion.md
       - Identity & AI:
           - Identity Substrate: api/identity.md
           - AI-Optimized Neurons: api/ai_neurons.md
