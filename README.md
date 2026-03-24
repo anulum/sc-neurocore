@@ -334,6 +334,9 @@ hdl/
   sc_cdc_primitives.v         -- Clock domain crossing (2-FF sync, Gray, async FIFO)
   sc_dense_layer_top.v        -- Dense layer top wrapper
   sc_neurocore_top.v          -- System top (DMA + AXI + layers)
+  sc_aer_encoder.v            -- AER spike encoder (event-driven output)
+  sc_event_neuron.v           -- Event-triggered LIF (power ∝ spike rate)
+  sc_aer_router.v             -- AER event distribution to target neurons
   tb_sc_*.v (7 testbenches)   -- Self-checking simulation testbenches
   formal/ (7 modules)         -- SymbiYosys formal verification properties
 ```
@@ -473,7 +476,7 @@ Sample results (CPU, quick mode):
 **Live site**: [anulum.github.io/sc-neurocore](https://anulum.github.io/sc-neurocore/)
 
 - [Getting Started](docs/guides/getting-started.md) — Installation & quickstart
-- [**Tutorials**](https://anulum.github.io/sc-neurocore/tutorials/01_stochastic_computing_fundamentals/) — 38 hands-on guides (SC fundamentals → MNIST → FPGA → quantum → formal verification)
+- [**Tutorials**](https://anulum.github.io/sc-neurocore/tutorials/01_stochastic_computing_fundamentals/) — 41 hands-on guides (SC fundamentals → MNIST → FPGA → quantum → formal verification)
 - [API Reference](docs/api/API_REFERENCE.md) — Python package API
 - [Rust Engine API](https://anulum.github.io/sc-neurocore/rust-api/sc_neurocore_engine/) — Rust engine docs
 - [Hardware Guide](docs/hardware/HARDWARE_GUIDE.md) — FPGA deployment workflow

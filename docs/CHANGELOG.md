@@ -20,6 +20,38 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Documented Norse tau observation (export/import roundtrip discrepancy in Norse code)
 - Removed unverified "first FPGA backend" claim from 6 files
 
+### ANN-to-SNN Conversion Engine
+- `sc_neurocore.conversion.convert()`: automated PyTorch ANN to rate-coded SNN conversion
+- QCFS activation (Quantization-Clip-Floor-Shift): ReLU replacement for conversion-aware training
+- Threshold normalization from calibration data activation statistics
+- `ConvertedSNN.run()` and `.classify()` for inference with Poisson rate coding
+
+### Learnable Delay Training
+- `DelayLinear`: PyTorch module with trainable per-synapse delays via linear interpolation
+- Differentiable delays: gradients flow through fractional delay positions
+- Export to integer delays for hardware deployment via `delays_int` and `to_nir_delay_array()`
+- DCLS (Dilated Convolutions with Learnable Spacings) principle for fully-connected SNN layers
+
+### One-Command FPGA Deploy
+- `sc-neurocore deploy model.nir --target artix7`: NIR/PyTorch → Verilog → project in one command
+- Target presets: ice40, ecp5 (Yosys Makefile), artix7, zynq (Vivado project.tcl)
+- Copies 19 HDL library modules, generates neuron SystemVerilog, build script, README
+
+### Network Engine
+- Per-synapse delays in Projection: `delay=array` for heterogeneous axonal/synaptic delays
+- Spike-gating: `Population.step_all(spike_gating=True)` skips idle neurons, compute proportional to active count
+- Weight sparsity: `Projection(weight_threshold=0.01)` skips near-zero synapses during propagation
+
+### Compiler
+- Per-layer adaptive bitstream length: `assign_lengths()` with Hoeffding or sensitivity-based allocation
+- Mixed-precision SC networks: shallow layers use short L (fast), deep layers use long L (precise)
+
+### Event-Driven FPGA RTL
+- `sc_aer_encoder.v`: spike vector → AER packets via priority encoder, idle neurons consume zero power
+- `sc_event_neuron.v`: Q8.8 LIF that computes only on input events or periodic leak ticks
+- `sc_aer_router.v`: distributes AER events to target neurons using connectivity lookup table
+- Total HDL modules: 19 (was 16)
+
 ### Performance
 - Lazy-load 109 neuron models: import time 200s → 57s
 - Deferred scipy imports (stats.qmc, sparse): import time 57s → 10s
