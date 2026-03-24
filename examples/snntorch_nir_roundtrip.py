@@ -55,10 +55,10 @@ def build_snntorch_rsynaptic_graph(
     for a Sequential(Linear, RSynaptic) model.
     """
     dt = 1e-4  # snnTorch hardcoded
-    tau_mem = dt / (1 - beta)   # 5e-4
+    tau_mem = dt / (1 - beta)  # 5e-4
     tau_syn = dt / (1 - alpha)  # 1e-3
-    r = tau_mem / dt            # 5.0 (Euler compensation)
-    w_in = tau_syn / dt         # 10.0
+    r = tau_mem / dt  # 5.0 (Euler compensation)
+    w_in = tau_syn / dt  # 10.0
 
     rng = np.random.RandomState(seed)
 
@@ -114,7 +114,7 @@ def main():
 
     # 1. Build snnTorch-style graph
     graph, dt = build_snntorch_rsynaptic_graph(n_input=4, n_hidden=6)
-    print(f"\n1. Built snnTorch RSynaptic graph:")
+    print("\n1. Built snnTorch RSynaptic graph:")
     print(f"   Nodes: {list(graph.nodes.keys())}")
     print(f"   Edges: {graph.edges}")
     print(f"   dt={dt} (snnTorch hardcoded)")
@@ -124,12 +124,14 @@ def main():
     print(f"   Subgraph nodes: {list(sub.nodes.keys())}")
     print(f"   Subgraph edges: {sub.edges}")
     cuba = sub.nodes["cubalif"]
-    print(f"   CubaLIF tau_mem={cuba.tau_mem[0]:.6f}, "
-          f"tau_syn={cuba.tau_syn[0]:.6f}, r={cuba.r[0]:.1f}, w_in={cuba.w_in[0]:.1f}")
+    print(
+        f"   CubaLIF tau_mem={cuba.tau_mem[0]:.6f}, "
+        f"tau_syn={cuba.tau_syn[0]:.6f}, r={cuba.r[0]:.1f}, w_in={cuba.w_in[0]:.1f}"
+    )
 
     # 2. Import with snnTorch conventions
     network = from_nir(graph, dt=dt, reset_mode="subtract")
-    print(f"\n2. Imported into SC-NeuroCore")
+    print("\n2. Imported into SC-NeuroCore")
     print(f"   Execution order: {network.topo_order}")
 
     # 3. Run simulation
@@ -148,19 +150,18 @@ def main():
     print(f"\n3. Simulation ({n_steps} steps, dt={dt}):")
     print(f"   Total output spikes: {total_spikes}")
     if spike_steps:
-        print(f"   First spike at step {spike_steps[0]}, "
-              f"last at {spike_steps[-1]}")
+        print(f"   First spike at step {spike_steps[0]}, last at {spike_steps[-1]}")
     else:
         print("   (No spikes — try increasing input magnitude)")
 
     # 4. Export back to NIR
     graph_out = to_nir(network)
-    print(f"\n4. Exported back to NIR:")
+    print("\n4. Exported back to NIR:")
     print(f"   Nodes: {list(graph_out.nodes.keys())}")
     print(f"   Edges: {graph_out.edges}")
 
     # 5. Verify parameter roundtrip
-    print(f"\n5. Parameter roundtrip verification:")
+    print("\n5. Parameter roundtrip verification:")
     orig_cuba = graph.nodes["rsynaptic"].nodes["cubalif"]
     # Find CubaLIF in exported graph
     exported_cuba = None
