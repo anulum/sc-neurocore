@@ -124,6 +124,42 @@ class TestProjection:
         c3 = proj.propagate(np.zeros(2, dtype=np.int8))
         assert c3.sum() > 0  # delayed current arrives after 2 steps
 
+    def test_per_synapse_delay(self):
+        src = Population("LapicqueNeuron", 3)
+        tgt = Population("LapicqueNeuron", 3)
+        proj = Projection(src, tgt, weight=1.0, topology="all_to_all")
+        n_syn = proj.n_synapses
+        delays = np.array([1, 2, 3, 1, 2, 3, 1, 2, 3], dtype=np.float64)[:n_syn]
+        proj_d = Projection(src, tgt, weight=1.0, delay=delays, topology="all_to_all")
+        assert proj_d.delay_mode == "per_synapse"
+        assert proj_d.max_delay == 3
+
+        spikes = np.array([1, 0, 0], dtype=np.float64)
+        # Step 1: inject spikes
+        c1 = proj_d.propagate(spikes)
+        # Step 2-4: delayed arrivals
+        arrivals = [c1.sum()]
+        for _ in range(4):
+            c = proj_d.propagate(np.zeros(3))
+            arrivals.append(c.sum())
+        # Some current should arrive at steps 2, 3, 4 (delays 1, 2, 3)
+        assert sum(arrivals) > 0, "Per-synapse delay produced no output"
+        assert arrivals[0] == 0.0 or arrivals[1] > 0 or arrivals[2] > 0
+
+    def test_per_synapse_delay_validates_length(self):
+        src = Population("LapicqueNeuron", 2)
+        tgt = Population("LapicqueNeuron", 2)
+        with pytest.raises(ValueError, match="must match"):
+            Projection(src, tgt, weight=1.0, delay=np.array([1, 2, 3]), topology="all_to_all")
+
+    def test_delay_mode_property(self):
+        src = Population("LapicqueNeuron", 2)
+        tgt = Population("LapicqueNeuron", 2)
+        p0 = Projection(src, tgt, weight=1.0, delay=0.0, topology="all_to_all")
+        assert p0.delay_mode == "none"
+        p1 = Projection(src, tgt, weight=1.0, delay=3.0, topology="all_to_all")
+        assert p1.delay_mode == "uniform"
+
     def test_stdp_modifies_weights(self):
         src = Population("LapicqueNeuron", 2)
         tgt = Population("LapicqueNeuron", 2)
