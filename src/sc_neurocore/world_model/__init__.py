@@ -11,8 +11,10 @@ __tier__ = "research"
 
 from .planner import SCPlanner
 from .predictive_model import PredictiveWorldModel
+from .spike_predictor import SpikePredictor
 
 __all__ = [
     "SCPlanner",
     "PredictiveWorldModel",
+    "SpikePredictor",
 ]

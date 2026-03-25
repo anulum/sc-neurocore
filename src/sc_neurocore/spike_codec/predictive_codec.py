@@ -31,6 +31,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from .codec import SpikeCodec, CompressionResult
+from ..world_model.spike_predictor import predict_and_xor_world_model, xor_and_recover_world_model
 
 # Rust backend (optional, ~100x faster for LFSR predictor)
 _HAS_RUST = False
@@ -327,14 +328,15 @@ def _xor_and_recover_lfsr(
 class PredictiveSpikeCodec:
     """Predictive spike codec: compress prediction errors, not raw spikes.
 
-    Three predictor modes:
+    Four predictor modes:
         'ema' (default): float EMA rate tracking + threshold comparison.
         'lfsr': Q8.8 fixed-point rate + LFSR comparator. Bit-true with
                 sc_bitstream_encoder.v — maps directly to Verilog RTL.
         'context': Markov context predictor. Hashes last K spike states
-                   per channel, predicts from accumulated statistics. Beats
-                   EMA on any data with temporal structure (bursts, oscillations,
-                   refractory periods).
+                   per channel, predicts from accumulated statistics.
+        'world_model': Learnable autoregressive predictor (LMS-trained).
+                   Predicts spike[t] from spike[t-K:t] via linear model
+                   with sigmoid activation. Learns cross-channel correlations.
 
     Compression pipeline:
         1. For each timestep t:
@@ -367,6 +369,7 @@ class PredictiveSpikeCodec:
     HEADER_MAGIC = b"PSCX"  # Predictive Spike Codec XOR (EMA)
     HEADER_MAGIC_LFSR = b"PSCL"  # Predictive Spike Codec LFSR
     HEADER_MAGIC_CTX = b"PSCC"  # Predictive Spike Codec Context
+    HEADER_MAGIC_WM = b"PSCW"  # Predictive Spike Codec World Model
 
     def __init__(
         self,
@@ -386,7 +389,7 @@ class PredictiveSpikeCodec:
         self.seed = seed
         self.context_bits = context_bits
         # Context predictor benefits from Huffman backend (sparse scattered errors)
-        entropy = "huffman" if predictor == "context" else "auto"
+        entropy = "huffman" if predictor in ("context", "world_model") else "auto"
         self.base_codec = SpikeCodec(
             mode=base_mode,
             timing_precision=timing_precision,
@@ -410,7 +413,23 @@ class PredictiveSpikeCodec:
         T, N = spikes.shape
         original_bits = T * N
 
-        if self.predictor == "context":
+        if self.predictor == "world_model":
+            errors, correct_predictions = predict_and_xor_world_model(
+                spikes,
+                N,
+                history_len=self.context_bits,
+                lr=self.alpha,
+                threshold=self.threshold,
+                seed=self.seed,
+            )
+            error_data, _ = self.base_codec.compress(errors)
+            header = self.HEADER_MAGIC_WM + struct.pack(
+                "!BdH",
+                self.context_bits,
+                self.alpha,
+                self.seed,
+            )
+        elif self.predictor == "context":
             errors, correct_predictions = _predict_and_xor_context(
                 spikes,
                 N,
@@ -494,6 +513,19 @@ class PredictiveSpikeCodec:
         import struct
 
         magic = data[:4]
+
+        if magic == self.HEADER_MAGIC_WM:
+            history_len = data[4]
+            alpha, seed = struct.unpack("!dH", data[5:15])
+            error_data = data[15:]
+            errors = self.base_codec.decompress(error_data, T, N)
+            return xor_and_recover_world_model(
+                errors,
+                N,
+                history_len=history_len,
+                lr=alpha,
+                seed=seed,
+            )
 
         if magic == self.HEADER_MAGIC_CTX:
             context_bits = data[4]
