@@ -120,6 +120,8 @@ nav:
       - O(1) Memory Training: tutorials/55_online_learning.md
       - Architecture Doctor: tutorials/56_architecture_doctor.md
       - Spike Augmentation: tutorials/57_spike_augmentation.md
+      - Continual Learning: tutorials/58_continual_learning.md
+      - Chip Compiler: tutorials/59_chip_compiler.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
@@ -170,6 +172,9 @@ nav:
           - O(1) Online Learning: api/online_learning.md
           - Architecture Doctor: api/doctor.md
           - Spike Augmentation: api/augmentation.md
+          - Continual Learning: api/continual.md
+      - Hardware Compilation:
+          - Chip Compiler: api/chip_compiler.md
       - Transformers & SSM:
           - Spiking Transformers: api/spikformer.md
       - Architecture Search:
