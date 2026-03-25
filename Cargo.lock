@@ -844,7 +844,7 @@ dependencies = [
 
 [[package]]
 name = "sc_neurocore_engine"
-version = "3.13.2"
+version = "3.13.3"
 dependencies = [
  "criterion",
  "ndarray",
