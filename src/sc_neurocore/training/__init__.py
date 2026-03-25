@@ -31,14 +31,20 @@ if HAS_TORCH:
     from .loops import auto_device, evaluate, train_epoch
     from .utils import SpikeMonitor, model_info, population_decode, reset_states
     from .snn_modules import (
+        AdExCell,
         ALIFCell,
+        AlphaCell,
         ConvSpikingNet,
+        ExpIFCell,
         IFCell,
+        LapicqueCell,
         LIFCell,
         RecurrentLIFCell,
+        SecondOrderLIFCell,
         SpikingNet,
         SynapticCell,
     )
+    from .delay_linear import DelayLinear
     from .surrogate import (
         atan_surrogate,
         fast_sigmoid,
@@ -56,8 +62,15 @@ __all__ = [
     "ALIFCell",
     "SynapticCell",
     "RecurrentLIFCell",
+    "ExpIFCell",
+    "AdExCell",
+    "LapicqueCell",
+    "AlphaCell",
+    "SecondOrderLIFCell",
     "SpikingNet",
     "ConvSpikingNet",
+    # Delay layer
+    "DelayLinear",
     # Surrogate gradients
     "fast_sigmoid",
     "superspike",
