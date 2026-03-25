@@ -614,3 +614,102 @@ class TestEdgeCaseCoverage:
         )
         verilog = compile_to_verilog(neuron, module_name="max1")
         assert "module max1" in verilog
+
+
+class TestCompileCLI:
+    """Tests for the sc-neurocore compile CLI command."""
+
+    def test_compile_command_generates_verilog(self, tmp_path):
+        from unittest.mock import patch
+        from sc_neurocore.cli import main
+
+        out = str(tmp_path / "out")
+        with patch(
+            "sys.argv",
+            [
+                "sc-neurocore",
+                "compile",
+                "dv/dt = -(v - E_L)/tau_m + I/C",
+                "--threshold",
+                "v > -50",
+                "--reset",
+                "v = -65",
+                "--params",
+                "E_L=-65,tau_m=10,C=1",
+                "--init",
+                "v=-65",
+                "-o",
+                out,
+            ],
+        ):
+            ret = main()
+        assert ret == 0
+        import os
+
+        v_path = os.path.join(out, "sc_equation_neuron.v")
+        assert os.path.exists(v_path)
+        content = (tmp_path / "out" / "sc_equation_neuron.v").read_text()
+        assert "module sc_equation_neuron" in content
+        assert "endmodule" in content
+
+    def test_compile_with_testbench(self, tmp_path):
+        from unittest.mock import patch
+        from sc_neurocore.cli import main
+
+        out = str(tmp_path / "tb_out")
+        with patch(
+            "sys.argv",
+            [
+                "sc-neurocore",
+                "compile",
+                "dv/dt = I",
+                "--init",
+                "v=0",
+                "--testbench",
+                "-o",
+                out,
+                "--module-name",
+                "simple",
+            ],
+        ):
+            ret = main()
+        assert ret == 0
+        import os
+
+        assert os.path.exists(os.path.join(out, "simple.v"))
+        assert os.path.exists(os.path.join(out, "tb_simple.v"))
+
+    def test_compile_no_ode_shows_usage(self, capsys):
+        from unittest.mock import patch
+        from sc_neurocore.cli import main
+
+        with patch("sys.argv", ["sc-neurocore", "compile"]):
+            ret = main()
+        assert ret == 1
+        captured = capsys.readouterr()
+        assert "compile requires an ODE string" in captured.out
+
+    def test_compile_with_custom_module_name(self, tmp_path):
+        from unittest.mock import patch
+        from sc_neurocore.cli import main
+
+        out = str(tmp_path / "custom")
+        with patch(
+            "sys.argv",
+            [
+                "sc-neurocore",
+                "compile",
+                "dv/dt = -v + I",
+                "--module-name",
+                "my_custom_lif",
+                "-o",
+                out,
+            ],
+        ):
+            ret = main()
+        assert ret == 0
+        import os
+
+        assert os.path.exists(os.path.join(out, "my_custom_lif.v"))
+        content = (tmp_path / "custom" / "my_custom_lif.v").read_text()
+        assert "module my_custom_lif" in content

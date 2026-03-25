@@ -149,39 +149,131 @@ with open("tb_custom_lif.sv", "w") as f:
     f.write(tb)
 ```
 
-## 7. Full Pipeline: Equations to FPGA Bitstream
+## 7. CLI: One-Command Compile
+
+The `sc-neurocore compile` command wraps the full pipeline into a single
+invocation — ODE string to Verilog RTL to FPGA bitstream:
 
 ```bash
-# 1. Generate Verilog from equations (Python)
-python -c "
-from sc_neurocore.compiler.equation_compiler import equation_to_fpga
-_, v = equation_to_fpga('dv/dt = (-v + I) / 20',
-    'v > 1.0', 'v = 0.0', {}, 'my_neuron')
-open('my_neuron.sv', 'w').write(v)
-"
+# Basic: ODE → Verilog
+sc-neurocore compile "dv/dt = -(v - E_L)/tau_m + I/C" \
+    --threshold "v > -50" --reset "v = -65" \
+    --params "E_L=-65,tau_m=10,C=1" --init "v=-65" \
+    -o build/my_lif
 
-# 2. Synthesize with Yosys
-yosys -p "read_verilog -sv my_neuron.sv; synth_ice40 -top my_neuron; stat"
+# With testbench
+sc-neurocore compile "dv/dt = -(v - E_L)/tau_m + I/C" \
+    --threshold "v > -50" --reset "v = -65" \
+    --params "E_L=-65,tau_m=10,C=1" --init "v=-65" \
+    --testbench -o build/my_lif
 
-# 3. Place and route
-nextpnr-ice40 --hx8k --json my_neuron.json --asc my_neuron.asc
-
-# 4. Generate bitstream
-icepack my_neuron.asc my_neuron.bin
+# Full pipeline: compile + synthesize (requires Yosys)
+sc-neurocore compile "dv/dt = -(v - E_L)/tau_m + I/C" \
+    --threshold "v > -50" --reset "v = -65" \
+    --params "E_L=-65,tau_m=10,C=1" --init "v=-65" \
+    --target ice40 --testbench --synthesize -o build/my_lif
 ```
+
+```mermaid
+flowchart LR
+    A["ODE string"] --> B["equation_to_fpga()"]
+    B --> C["Verilog RTL<br/>Q8.8 fixed-point"]
+    B --> D["generate_testbench()"]
+    C --> E["Yosys synthesis"]
+    E --> F["nextpnr P&R"]
+    F --> G["icepack bitstream"]
+
+    style A fill:#e1f5fe
+    style C fill:#e8f5e9
+    style G fill:#fce4ec
+```
+
+Output:
+```
+[1/4] Parsing ODE: dv/dt = -(v - E_L)/tau_m + I/C
+  State variables: ['v']
+  Parameters: ['E_L', 'tau_m', 'C']
+[2/4] Verilog written: build/my_lif/sc_equation_neuron.v
+[3/4] Testbench written: build/my_lif/tb_sc_equation_neuron.v
+[4/4] Synthesis complete
+  Number of cells: 89
+  Number of SB_LUT4: 73
+  Synthesis JSON: build/my_lif/sc_equation_neuron.json
+```
+
+## 8. Transcendental Functions
+
+The compiler supports transcendental functions via 16-entry Q8.8 lookup
+tables. Each function is a piecewise constant indexed by the top 4 bits
+of the unsigned input, covering the [-8, +8) range.
+
+| Function | Python/Brian2 | Verilog | Accuracy |
+|----------|--------------|---------|----------|
+| `exp(x)` | `exp(v)` | 16-entry LUT | ~1-2% over [-3, 3] |
+| `log(x)` | `log(v)` | 16-entry LUT | ~2-3% over [0.1, 8] |
+| `sqrt(x)` | `sqrt(v)` | 16-entry LUT | ~1% over [0, 8] |
+| `tanh(x)` | `tanh(v)` | 16-entry LUT | ~1% over [-3, 3] |
+| `sigmoid(x)` | `sigmoid(v)` | 16-entry LUT | ~1% over [-4, 4] |
+| `sin(x)` | `sin(v)` | 16-entry LUT | ~2% |
+| `cos(x)` | `cos(v)` | 16-entry LUT | ~2% |
+| `abs(x)` | `abs(v)` | ternary | exact |
+| `clip(x, lo, hi)` | `clip(v, -1, 1)` | ternary | exact |
+| `max(a, b)` | `max(v, 0)` | ternary | exact |
+| `min(a, b)` | `min(v, 1)` | ternary | exact |
+
+Example — Hodgkin-Huxley with exponentials:
+
+```python
+neuron, verilog = equation_to_fpga(
+    "dv/dt = (I - g_Na*m**3*h*(v-E_Na) - g_K*n**4*(v-E_K) - g_L*(v-E_L)) / C_m",
+    "dm/dt = alpha_m*(1-m) - beta_m*m",
+    "dh/dt = alpha_h*(1-h) - beta_h*h",
+    "dn/dt = alpha_n*(1-n) - beta_n*n",
+    threshold="v > 0",
+    reset="v = -65",
+    params={"g_Na": 120, "g_K": 36, "g_L": 0.3,
+            "E_Na": 50, "E_K": -77, "E_L": -54.4, "C_m": 1,
+            "alpha_m": 0.1, "beta_m": 4.0,
+            "alpha_h": 0.07, "beta_h": 1.0,
+            "alpha_n": 0.01, "beta_n": 0.125},
+    init={"v": -65, "m": 0.05, "h": 0.6, "n": 0.32},
+    module_name="hh_neuron",
+)
+```
+
+## 9. Saturating Arithmetic
+
+All next-state updates include overflow protection:
+
+```verilog
+// Raw sum may exceed 16-bit range
+wire signed [16:0] v_raw = v_reg + dv;
+// Clamp to [-32768, 32767]
+wire signed [15:0] v_next =
+    (v_raw > 17'sd32767) ? 16'sd32767 :
+    (v_raw < -17'sd32768) ? -16'sd32768 :
+    v_raw[15:0];
+```
+
+Without saturation, integer overflow wraps around silently — a
+neuron at +127 receiving +5 input would jump to -124 instead of
+clamping at +127. The compiler prevents this automatically.
 
 ## Supported ODE Features
 
 | Feature | Supported | Example |
 |---------|-----------|---------|
 | Linear terms | Yes | `-v / tau` |
-| Polynomial | Yes | `v**2`, `v**3` |
+| Polynomial (2-8) | Yes | `v**2`, `v**3`, `v**4` |
 | Products | Yes | `a * b * v` |
 | Addition/subtraction | Yes | `v - w + I` |
+| Transcendentals | Yes | `exp(v)`, `tanh(v)`, `sigmoid(v)`, `sin(x)`, `cos(x)` |
+| abs / clip / max / min | Yes | `abs(v)`, `clip(v, -1, 1)` |
 | Threshold comparison | Yes | `v > 1.0`, `v >= 30` |
 | Multi-variable reset | Yes | `v = c; u = u + d` |
 | Named parameters | Yes | `tau`, `a`, `b`, `c`, `d` |
 | External input | Yes | `I` (injected per step) |
+| Saturating overflow | Yes | automatic on all additions |
 
 ## Further Reading
 
