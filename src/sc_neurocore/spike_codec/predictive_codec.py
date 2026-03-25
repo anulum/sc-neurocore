@@ -32,6 +32,19 @@ import numpy as np
 
 from .codec import SpikeCodec, CompressionResult
 
+# Rust backend (optional, ~100x faster for LFSR predictor)
+try:
+    from sc_neurocore_engine import (
+        py_predict_xor_ema as _rust_predict_ema,
+        py_predict_xor_lfsr as _rust_predict_lfsr,
+        py_recover_xor_ema as _rust_recover_ema,
+        py_recover_xor_lfsr as _rust_recover_lfsr,
+    )
+
+    _HAS_RUST = True
+except ImportError:
+    _HAS_RUST = False
+
 
 @dataclass
 class PredictiveCompressionResult(CompressionResult):
@@ -295,21 +308,41 @@ class PredictiveSpikeCodec:
         original_bits = T * N
 
         if self.predictor == "lfsr":
-            errors, correct_predictions = _predict_and_xor_lfsr(
-                spikes,
-                N,
-                self.alpha_q8,
-                self.seed,
-            )
+            if _HAS_RUST:
+                flat = np.ascontiguousarray(spikes).ravel()
+                err_flat, correct_predictions = _rust_predict_lfsr(
+                    flat,
+                    N,
+                    self.alpha_q8,
+                    self.seed,
+                )
+                errors = np.asarray(err_flat).reshape(T, N)
+            else:
+                errors, correct_predictions = _predict_and_xor_lfsr(
+                    spikes,
+                    N,
+                    self.alpha_q8,
+                    self.seed,
+                )
             error_data, _ = self.base_codec.compress(errors)
             header = self.HEADER_MAGIC_LFSR + struct.pack("!HH", self.alpha_q8, self.seed)
         else:
-            errors, correct_predictions = _predict_and_xor(
-                spikes,
-                N,
-                self.alpha,
-                self.threshold,
-            )
+            if _HAS_RUST:
+                flat = np.ascontiguousarray(spikes).ravel()
+                err_flat, correct_predictions = _rust_predict_ema(
+                    flat,
+                    N,
+                    self.alpha,
+                    self.threshold,
+                )
+                errors = np.asarray(err_flat).reshape(T, N)
+            else:
+                errors, correct_predictions = _predict_and_xor(
+                    spikes,
+                    N,
+                    self.alpha,
+                    self.threshold,
+                )
             error_data, _ = self.base_codec.compress(errors)
             header = self.HEADER_MAGIC + struct.pack("!dd", self.alpha, self.threshold)
 
@@ -355,12 +388,20 @@ class PredictiveSpikeCodec:
             alpha_q8, seed = struct.unpack("!HH", data[4:8])
             error_data = data[8:]
             errors = self.base_codec.decompress(error_data, T, N)
+            if _HAS_RUST:
+                flat = np.ascontiguousarray(errors).ravel()
+                rec = np.asarray(_rust_recover_lfsr(flat, N, alpha_q8, seed))
+                return rec.reshape(T, N)
             return _xor_and_recover_lfsr(errors, N, alpha_q8, seed)
 
         if magic == self.HEADER_MAGIC:
             alpha, threshold = struct.unpack("!dd", data[4:20])
             error_data = data[20:]
             errors = self.base_codec.decompress(error_data, T, N)
+            if _HAS_RUST:
+                flat = np.ascontiguousarray(errors).ravel()
+                rec = np.asarray(_rust_recover_ema(flat, N, alpha, threshold))
+                return rec.reshape(T, N)
             return _xor_and_recover(errors, N, alpha, threshold)
 
         raise ValueError(
