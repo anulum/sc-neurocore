@@ -137,6 +137,12 @@ nav:
       - Energy Accounting: tutorials/72_energy_accounting.md
       - Spike GNN: tutorials/73_spike_gnn.md
       - Reservoir Computing: tutorials/74_reservoir.md
+      - Spike Normalization: tutorials/75_spike_norm.md
+      - Knowledge Distillation: tutorials/76_distillation.md
+      - Quantization-Aware Training: tutorials/77_qat.md
+      - Residual Blocks: tutorials/78_residual.md
+      - Neuromorphic Control: tutorials/79_control.md
+      - Contrastive SSL: tutorials/80_contrastive.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
@@ -210,6 +216,14 @@ nav:
           - Energy Accounting: api/energy_accounting.md
       - Reservoir:
           - Auto-Critical: api/reservoir.md
+      - Training Trifecta:
+          - Spike Normalization: api/spike_norm.md
+          - Knowledge Distillation: api/distillation.md
+          - QAT: api/qat.md
+          - Residual Blocks: api/residual.md
+          - Contrastive SSL: api/contrastive.md
+      - Control:
+          - Neuromorphic Control: api/control.md
       - Stability:
           - Homeostasis: api/homeostasis.md
           - Multi-Timescale: api/temporal_hierarchy.md
