@@ -77,8 +77,9 @@ coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 | Verilog / FPGA synthesis | **Yes** | — | — | Loihi only | — |
 | IR compiler → SystemVerilog | **Yes** | — | — | — | — |
 | Rust SIMD engine (41.3 Gbit/s) | **Yes** | — | — | — | — |
-| Surrogate gradient training | Yes | Yes | Yes | Yes | — |
-| GPU acceleration | CuPy | PyTorch | PyTorch | — | — |
+| Surrogate gradient training | **7 surrogates, 10 cells** | Yes | Yes | Yes | — |
+| PyTorch `nn.Module` SNN | **Yes** (+ SC weight export) | Yes | Yes | — | — |
+| GPU acceleration | PyTorch + CuPy | PyTorch | PyTorch | — | — |
 | Neuron model library | **122** | 11 | 6 | 3 | ~5 builtin |
 | Rust neuron models (PyO3) | **111** | — | — | — | — |
 | NetworkRunner (fused loop) | **81 models** | — | — | — | — |
