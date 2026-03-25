@@ -21,10 +21,10 @@ def main() -> int:
     parser.add_argument(
         "command",
         nargs="?",
-        choices=["info", "benchmark", "preflight", "deploy", "serve"],
+        choices=["info", "benchmark", "preflight", "deploy", "serve", "compile"],
         help="Command to run",
     )
-    parser.add_argument("model", nargs="?", help="Model file (.nir, .pt, .onnx) for deploy command")
+    parser.add_argument("model", nargs="?", help="Model file (.nir) or ODE string for compile")
     parser.add_argument(
         "--target",
         default="ice40",
@@ -37,6 +37,25 @@ def main() -> int:
     )
     parser.add_argument("--T", type=int, default=256, help="Bitstream length for SC layers")
     parser.add_argument("--port", type=int, default=8001, help="Port for serve command")
+    parser.add_argument(
+        "--threshold", default=None, help="Threshold expression for compile (e.g. 'v > -50')"
+    )
+    parser.add_argument(
+        "--reset", default=None, help="Reset expression for compile (e.g. 'v = -65; w = 0')"
+    )
+    parser.add_argument(
+        "--params", default=None, help="Parameters as key=val pairs (e.g. 'E_L=-65,tau_m=10,C=1')"
+    )
+    parser.add_argument(
+        "--init", default=None, help="Initial state as key=val pairs (e.g. 'v=-65,w=0')"
+    )
+    parser.add_argument("--module-name", default="sc_equation_neuron", help="Verilog module name")
+    parser.add_argument(
+        "--testbench", action="store_true", help="Generate testbench alongside Verilog"
+    )
+    parser.add_argument(
+        "--synthesize", action="store_true", help="Run Yosys synthesis after compilation"
+    )
     args = parser.parse_args()
 
     if args.version:
@@ -51,6 +70,17 @@ def main() -> int:
         return _cmd_benchmark()
     if args.command == "preflight":
         return _cmd_preflight()
+    if args.command == "compile":
+        if not args.model:
+            print(
+                "Error: compile requires an ODE string. Usage:\n"
+                '  sc-neurocore compile "dv/dt = -(v-E_L)/tau_m + I/C" \\\n'
+                '    --threshold "v > -50" --reset "v = -65" \\\n'
+                '    --params "E_L=-65,tau_m=10,C=1" --init "v=-65" \\\n'
+                "    --target ice40 --testbench --synthesize"
+            )
+            return 1
+        return _cmd_compile(args)
     if args.command == "deploy":
         if not args.model:
             print(
@@ -67,6 +97,82 @@ def main() -> int:
         return _cmd_serve(args.model, args.port, args.dt)
 
     parser.print_help()
+    return 0
+
+
+def _cmd_compile(args: Any) -> int:
+    """Compile ODE equation string to Verilog RTL + optional synthesis."""
+    import os
+
+    from sc_neurocore.compiler.equation_compiler import (
+        equation_to_fpga,
+        generate_testbench,
+    )
+
+    # Parse params/init from comma-separated key=val strings
+    def _parse_kvpairs(s: str | None) -> dict[str, float] | None:
+        if not s:
+            return None
+        result = {}
+        for pair in s.split(","):
+            k, v = pair.strip().split("=")
+            result[k.strip()] = float(v.strip())
+        return result
+
+    params = _parse_kvpairs(args.params)
+    init = _parse_kvpairs(args.init)
+
+    print(f"[1/4] Parsing ODE: {args.model}")
+    neuron, verilog = equation_to_fpga(
+        args.model,
+        threshold=args.threshold,
+        reset=args.reset,
+        params=params,
+        init=init,
+        dt=args.dt,
+        module_name=args.module_name,
+    )
+    print(f"  State variables: {list(neuron.equations.keys())}")
+    print(f"  Parameters: {list(neuron.parameters.keys())}")
+
+    # Write output
+    out_dir = args.output
+    os.makedirs(out_dir, exist_ok=True)
+    v_path = os.path.join(out_dir, f"{args.module_name}.v")
+    with open(v_path, "w") as f:
+        f.write(verilog)
+    print(f"[2/4] Verilog written: {v_path}")
+
+    # Testbench
+    if args.testbench:
+        tb_src = generate_testbench(neuron, module_name=args.module_name)
+        tb_path = os.path.join(out_dir, f"tb_{args.module_name}.v")
+        with open(tb_path, "w") as f:
+            f.write(tb_src)
+        print(f"[3/4] Testbench written: {tb_path}")
+    else:
+        print("[3/4] Testbench skipped (use --testbench to generate)")
+
+    # Synthesis
+    if args.synthesize:
+        cfg = _TARGET_CONFIGS.get(args.target)
+        if cfg and cfg["tool"] == "yosys":
+            synth_ok = _auto_synthesize(out_dir, args.target, args.module_name, cfg)
+            if synth_ok:
+                print("[4/4] Synthesis complete")
+            else:
+                print("[4/4] Synthesis skipped (Yosys not found)")
+        else:
+            print(f"[4/4] Synthesis skipped (target '{args.target}' requires Vivado)")
+    else:
+        print("[4/4] Synthesis skipped (use --synthesize to run Yosys)")
+
+    print()
+    print(f"Output: {out_dir}/")
+    print(f"  {args.module_name}.v — synthesizable Verilog RTL")
+    if args.testbench:
+        print(f"  tb_{args.module_name}.v — simulation testbench")
+        print(f"  Run: iverilog -o sim {args.module_name}.v tb_{args.module_name}.v && vvp sim")
     return 0
 
 
