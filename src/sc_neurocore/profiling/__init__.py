@@ -5,13 +5,18 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — sc_neurocore.profiling -- Tier: research (experimental /
 
-"""sc_neurocore.profiling -- Tier: research (experimental / research)."""
+"""SNN profiling: energy tracking + spike-level training diagnostics."""
 
 __tier__ = "research"
 
 from .energy import EnergyMetrics, track_energy
+from .spike_profiler import SpikeProfiler, LayerStats, ProfileReport, Pathology
 
 __all__ = [
     "EnergyMetrics",
     "track_energy",
+    "SpikeProfiler",
+    "LayerStats",
+    "ProfileReport",
+    "Pathology",
 ]
