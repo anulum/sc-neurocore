@@ -24,16 +24,16 @@ commercial licenses for proprietary integration.
   box-shadow: 0 8px 24px rgba(0,0,0,0.12);
 }
 .pricing-card.featured {
-  border-color: #2d6a4f;
+  border-color: #b45309;
   position: relative;
 }
 .pricing-card.featured::before {
-  content: "RECOMMENDED";
+  content: "EARLY ADOPTER";
   position: absolute;
   top: -12px;
   left: 50%;
   transform: translateX(-50%);
-  background: #2d6a4f;
+  background: #b45309;
   color: white;
   padding: 4px 16px;
   border-radius: 12px;
@@ -50,8 +50,19 @@ commercial licenses for proprietary integration.
   font-weight: 700;
   margin: 1rem 0 0.25rem;
 }
+.pricing-price-full {
+  text-decoration: line-through;
+  color: #999;
+  font-size: 1.2rem;
+}
 .pricing-period {
   color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+.pricing-savings {
+  color: #b45309;
+  font-weight: 700;
   font-size: 0.9rem;
   margin-bottom: 1.5rem;
 }
@@ -106,7 +117,24 @@ commercial licenses for proprietary integration.
 .pricing-btn-founding:hover {
   background: #92400e;
 }
+.pricing-badge {
+  display: inline-block;
+  background: #fef3c7;
+  color: #92400e;
+  padding: 2px 10px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
 </style>
+
+!!! warning "Early Adopter Pricing — First 25 Customers"
+    SC-NeuroCore commercial licenses are available at **introductory pricing**
+    for the first 25 customers. These rates lock in permanently — when the
+    program closes, standard pricing applies to new customers.
+
+    **Spots remaining: 25 of 25**
 
 <div class="pricing-grid">
 
@@ -114,16 +142,17 @@ commercial licenses for proprietary integration.
 <h3>Community</h3>
 <div class="pricing-price">Free</div>
 <div class="pricing-period">Open Source — AGPL-3.0</div>
+<div class="pricing-savings">&nbsp;</div>
 <ul class="pricing-features">
 <li>122 neuron models (113 biophysical + 9 AI-optimized)</li>
-<li>Full Python + Rust SIMD engine (41.3 Gbit/s)</li>
-<li>19 Verilog HDL modules + 7 formal verification files</li>
-<li>Equation → Verilog compiler (<code>sc-neurocore compile</code>)</li>
-<li>PyTorch training (7 surrogates, 10 cells, SpikingNet)</li>
-<li>6-codec neural data compression library</li>
+<li>Rust SIMD engine (41.3 Gbit/s AVX-512)</li>
+<li>19 Verilog HDL modules + 67 formal properties</li>
+<li>ODE → Verilog compiler (<code>sc-neurocore compile</code>)</li>
+<li>PyTorch training (7 surrogates, 10 cells)</li>
+<li>6-codec neural data compression</li>
 <li>125-function spike analysis toolkit</li>
 <li>Quantum hybrid (Qiskit/PennyLane)</li>
-<li>84 tutorials + full documentation</li>
+<li>84 tutorials + full API documentation</li>
 <li>Community support (GitHub Discussions)</li>
 <li>Source modifications must remain open (AGPL)</li>
 </ul>
@@ -132,68 +161,73 @@ commercial licenses for proprietary integration.
 
 <div class="pricing-card featured">
 <h3>Professional</h3>
+<span class="pricing-badge">First 25 customers</span>
+<div class="pricing-price-full">CHF 1,490 /yr</div>
 <div class="pricing-price">CHF 490</div>
-<div class="pricing-period">per seat / year</div>
+<div class="pricing-period">per seat / year — locked permanently</div>
+<div class="pricing-savings">Save CHF 1,000/yr (67% off)</div>
 <ul class="pricing-features">
 <li>Everything in Community</li>
 <li>Closed-source integration permitted</li>
-<li>Priority email support (48h SLA)</li>
-<li>Pre-built FPGA bitstreams (ice40, ECP5, Artix-7)</li>
-<li>Visual SNN Design Studio (when available)</li>
+<li>Priority email support (48h business hours)</li>
+<li>FPGA synthesis support + build guidance</li>
+<li>Visual SNN Design Studio (coming soon)</li>
 <li>Custom neuron model development (2 models/year)</li>
 <li>Quarterly security advisories</li>
 <li>No AGPL copyleft obligation</li>
 </ul>
-<a href="https://polar.sh/checkout/polar_c_A6s1rmJQVQX6SFLqTuqyVFK2Y9wzigjSs5x193JWV1F" class="pricing-btn pricing-btn-primary">Buy Professional</a>
+<a href="https://polar.sh/checkout/polar_c_A6s1rmJQVQX6SFLqTuqyVFK2Y9wzigjSs5x193JWV1F" class="pricing-btn pricing-btn-founding">Buy Now — CHF 490/yr</a>
 </div>
 
 <div class="pricing-card">
 <h3>Enterprise</h3>
+<span class="pricing-badge">First 25 customers</span>
+<div class="pricing-price-full">CHF 14,900 /yr</div>
 <div class="pricing-price">CHF 4,900</div>
-<div class="pricing-period">site license / year</div>
+<div class="pricing-period">site license / year — locked permanently</div>
+<div class="pricing-savings">Save CHF 10,000/yr (67% off)</div>
 <ul class="pricing-features">
 <li>Everything in Professional</li>
 <li>Unlimited seats across organization</li>
-<li>Dedicated support engineer (24h SLA)</li>
+<li>Priority email support (24h business hours)</li>
 <li>On-premise deployment assistance</li>
-<li>Custom FPGA/ASIC integration + target-specific RTL</li>
-<li>Safety-critical certification support (ISO 26262)</li>
+<li>Custom FPGA target integration + RTL adaptation</li>
 <li>Formal verification reports for your design</li>
 <li>White-label and OEM licensing</li>
 <li>Joint development agreements</li>
 </ul>
-<a href="https://polar.sh/checkout/polar_c_LYpNQdmXAtYGZDU7BgiuD0p16dCO7a6Hz9PsP4cTsIh" class="pricing-btn pricing-btn-enterprise">Buy Enterprise</a>
+<a href="https://polar.sh/checkout/polar_c_LYpNQdmXAtYGZDU7BgiuD0p16dCO7a6Hz9PsP4cTsIh" class="pricing-btn pricing-btn-enterprise">Buy Now — CHF 4,900/yr</a>
 </div>
 
 </div>
 
 <div style="text-align: center; margin: 1.5rem 0;">
-<div class="pricing-card" style="display: inline-block; max-width: 400px; border-color: #b45309;">
+<div class="pricing-card" style="display: inline-block; max-width: 420px; border-color: #dc2626; border-width: 3px;">
+<span class="pricing-badge" style="background: #fecaca; color: #991b1b;">10 spots — never again</span>
 <h3>Founding Member</h3>
+<div class="pricing-price-full">CHF 1,490 /yr</div>
 <div class="pricing-price">CHF 290</div>
-<div class="pricing-period">per seat / year — 10 spots only</div>
+<div class="pricing-period">per seat / year — locked for life</div>
+<div class="pricing-savings">Save CHF 1,200/yr (81% off standard price — forever)</div>
 <ul class="pricing-features">
 <li>Everything in Professional</li>
-<li>50% lifetime discount (locked in forever)</li>
-<li>Direct access to lead developer</li>
+<li>Lifetime price lock (CHF 290/yr — even when standard is CHF 1,490)</li>
+<li>Direct access to lead developer (email + video calls)</li>
 <li>Input on roadmap priorities</li>
 <li>Name in CONTRIBUTORS.md + release notes</li>
-<li>Free 30-day pilot before commitment</li>
+<li>Free 30-day evaluation before commitment</li>
+<li>Early access to Visual SNN Design Studio</li>
 </ul>
-<a href="https://polar.sh/checkout/polar_c_u6tIXv44uMXqtILxY3KIk9epbMK3AHZJEwllq0MpHut" class="pricing-btn pricing-btn-founding">Claim Your Spot</a>
+<a href="https://polar.sh/checkout/polar_c_u6tIXv44uMXqtILxY3KIk9epbMK3AHZJEwllq0MpHut" class="pricing-btn pricing-btn-founding">Claim Founding Spot — CHF 290/yr</a>
+<p style="font-size: 0.8rem; color: #666; margin-top: 0.5rem;">
+Spots remaining: 10 of 10. When gone, this tier closes permanently.
+</p>
 </div>
 </div>
 
 ---
 
 ## What You Get
-
-### 122 Neuron Models — 82 Years of Computational Neuroscience
-
-Every published neuron model from McCulloch-Pitts 1943 to ArcaneNeuron
-2026. Biophysical (Hodgkin-Huxley, Izhikevich, AdEx, FitzHugh-Nagumo),
-hardware emulators (Loihi, TrueNorth, BrainScaleS, SpiNNaker, Akida),
-and 9 AI-optimized models. All with Rust SIMD acceleration.
 
 ### ODE → FPGA in One Command
 
@@ -204,34 +238,37 @@ sc-neurocore compile "dv/dt = -(v-E_L)/tau + I/C" \
     --target ice40 --testbench --synthesize
 ```
 
-Transcendental functions (exp, log, tanh, sigmoid, sin, cos) via Q8.8
-lookup tables. Saturating arithmetic prevents overflow bugs. Auto testbench
-generation. One-click Yosys synthesis when toolchain is installed.
+Write neuron equations as strings. The compiler produces synthesizable
+Q8.8 Verilog RTL with saturating arithmetic, transcendental function
+LUTs (exp, log, tanh, sigmoid, sin, cos), auto-generated testbenches,
+and one-click Yosys synthesis. Python simulation matches Verilog
+bit-for-bit (67 formal properties verified by SymbiYosys).
 
-### PyTorch Training with SC Export
+### PyTorch Training → SC Bitstream → FPGA
 
-7 surrogate gradient functions, 10 differentiable neuron cells, SpikingNet
-and ConvSpikingNet architectures. Train on GPU, export to stochastic
-computing bitstreams via `to_sc_weights()`. Trainable per-synapse delays
-(DelayLinear).
+7 surrogate gradient functions, 10 differentiable neuron cells
+(`nn.Module`), SpikingNet and ConvSpikingNet architectures. Train on
+GPU with standard PyTorch optimizers, export weights to stochastic
+computing bitstreams via `to_sc_weights()`, compile to Verilog RTL.
+Trainable per-synapse delays (DelayLinear).
 
 ### 6-Codec Neural Data Compression
 
 ISI+Huffman, Predictive (4 learnable predictors), Delta, Streaming, AER,
-and WaveformCodec (24x on 1024-channel Neuralink-scale data). Unified API:
-`get_codec(name)`, `recommend_codec()`. Rust backend (780x speedup).
+and WaveformCodec (24x compression on 1024-channel Neuralink-scale data).
+Unified API: `get_codec(name)`, `recommend_codec()`. Rust backend (780x).
 
-### Python → Verilog Bit-True
+### 122 Neuron Models + Rust SIMD Engine
 
-Python simulation matches synthesisable RTL bit-for-bit (deterministic
-LFSR seeds, Q8.8 fixed-point, cycle-exact co-simulation). Formal
-verification with 67 SymbiYosys properties across 7 modules.
+82 years of computational neuroscience (1943-2026). 111 Rust models with
+PyO3 bindings, 81-model NetworkRunner with Rayon-parallel populations.
+41.3 Gbit/s bitstream packing (AVX-512). 224 Mstep/s LIF throughput.
 
-### Rust SIMD Engine — 41.3 Gbit/s AVX-512
+### 125-Function Spike Analysis Toolkit
 
-111 Rust neuron models with PyO3 bindings, 81-model NetworkRunner with
-Rayon-parallel populations. AVX-512, AVX2, NEON, SVE, RISC-V Vector
-dispatch. 224 Mstep/s LIF neuron throughput.
+CV, Fano factor, cross-correlation, Victor-Purpura distance, SPIKE-sync,
+Granger causality, GPFA, SPADE pattern detection. Matches Elephant +
+PySpike combined. Pure NumPy — no additional dependencies.
 
 ---
 
@@ -239,32 +276,59 @@ dispatch. 224 Mstep/s LIF neuron throughput.
 
 | Feature | Community | Professional | Enterprise |
 |---------|:---------:|:------------:|:----------:|
-| 122 neuron models | Yes | Yes | Yes |
-| Rust SIMD engine (41.3 Gbit/s) | Yes | Yes | Yes |
+| 122 neuron models + Rust engine | Yes | Yes | Yes |
 | `sc-neurocore compile` (ODE → Verilog) | Yes | Yes | Yes |
 | PyTorch training (7 surrogates, 10 cells) | Yes | Yes | Yes |
 | 6-codec neural compression | Yes | Yes | Yes |
 | 125-function spike analysis | Yes | Yes | Yes |
-| 19 Verilog modules + formal verification | Yes | Yes | Yes |
+| 19 Verilog modules + 67 formal properties | Yes | Yes | Yes |
 | Quantum hybrid (Qiskit/PennyLane) | Yes | Yes | Yes |
 | 84 tutorials + full docs | Yes | Yes | Yes |
 | Closed-source use | No (AGPL) | **Yes** | **Yes** |
-| Priority support | Community | 48h SLA | **24h SLA** |
-| Pre-built FPGA bitstreams | — | ice40/ECP5/Artix-7 | **Custom targets** |
-| Visual SNN Design Studio | — | **Yes** | **Yes** |
+| Priority support | Community | **48h** | **24h** |
+| FPGA synthesis support | Self-serve | **Guided** | **Custom targets** |
+| Visual SNN Design Studio | — | **Yes** (coming) | **Yes** (coming) |
 | Custom neuron models | — | 2/year | **Unlimited** |
-| Safety certification (ISO 26262) | — | — | **Yes** |
 | Formal verification reports | — | — | **Yes** |
 | OEM / white-label | — | — | **Yes** |
 | On-premise deployment | — | — | **Yes** |
 
 ---
 
+## Why Buy Now?
+
+```
+Standard pricing (after early adopter program closes):
+
+    Professional:     CHF 1,490 /yr per seat
+    Enterprise:       CHF 14,900 /yr site license
+
+Early adopter pricing (first 25 customers — locked permanently):
+
+    Professional:     CHF 490 /yr per seat      ← you save CHF 1,000/yr
+    Enterprise:       CHF 4,900 /yr site license ← you save CHF 10,000/yr
+    Founding Member:  CHF 290 /yr per seat       ← you save CHF 1,200/yr
+
+    Example: Year 1 you pay CHF 490.
+             Year 5 new customers pay CHF 1,490.
+             You still pay CHF 490. Every year. Forever.
+```
+
+SC-NeuroCore is the only open-source framework with a complete
+ODE → PyTorch training → SC bitstream → Verilog RTL → FPGA bitstream
+pipeline. The standard pricing reflects this — CHF 1,490/yr is still
+less than a single Vivado license (CHF 3,000+/yr), and SC-NeuroCore
+includes the full SNN training stack, 122 neuron models, and formal
+verification that Vivado doesn't offer.
+
+Early adopters get this at 67-81% off. Permanently.
+
+---
+
 ## Academic Pricing
 
 Free Professional license for .edu email addresses. Includes closed-source
-rights for thesis work and research prototypes. Apply with your
-institutional email:
+rights for thesis work and research prototypes. No strings attached.
 
 <a href="mailto:protoscience@anulum.li?subject=SC-NeuroCore%20Academic%20License&body=Institution:%0AResearch%20group:%0AUse%20case:" class="pricing-btn pricing-btn-outline">Apply for Academic License</a>
 
@@ -274,43 +338,46 @@ institutional email:
 
 **Can I use the Community edition for commercial research?**
 Yes, as long as your modifications are also released under AGPL-3.0.
-If you need to keep your code proprietary, choose the Professional license.
+If you need to keep your code proprietary, choose Professional.
 
 **What FPGA targets are supported?**
-The RTL is vendor-agnostic (standard Verilog-2005). The `compile` CLI
-targets ice40, ECP5, Artix-7, and Zynq. Professional includes pre-built
-bitstreams. Enterprise adds custom ASIC targets.
+The RTL is vendor-agnostic (Verilog-2005). The `compile` CLI targets
+ice40, ECP5, Artix-7, and Zynq. Professional includes guided synthesis
+support. Enterprise adds custom ASIC targets.
 
-**What is the Founding Member program?**
-10 spots at 50% lifetime discount (CHF 290/seat/year instead of CHF 490).
-Includes a free 30-day pilot, direct developer access, and roadmap input.
-Once 10 spots are filled, the program closes permanently.
+**What is the early adopter program?**
+The first 25 paying customers lock in current pricing permanently.
+When the 25th customer signs up, prices increase to standard rates
+for all new customers. Existing customers keep their locked rate.
+
+**What is the Founding Member tier?**
+10 spots at 81% off standard pricing — CHF 290/yr instead of CHF 1,490.
+Includes direct developer access, roadmap input, and a free 30-day
+evaluation. Once 10 spots fill, the tier closes permanently.
 
 **Can I evaluate before purchasing?**
-The Community edition is fully functional — all 122 neuron models,
-Rust engine, Verilog RTL, compiler, training stack, and quantum modules.
-The Professional license adds closed-source rights, support, and
-pre-built bitstreams. Founding Members get 30 days free.
+The Community edition is fully functional. Founding Members additionally
+get 30 days free before their first payment.
 
 **What is the Visual SNN Design Studio?**
-A web-based IDE for visual SNN design — ODE equation editor, network
-canvas, training monitor, compiler inspector, and synthesis dashboard.
-Currently in development. Professional and Enterprise licensees get
-access when it launches.
-
-**Do you offer volume discounts?**
-Enterprise site licenses cover unlimited seats. For teams of 3-9,
-contact us for multi-seat Professional pricing.
+A web-based IDE for visual SNN design — equation editor, network canvas,
+training monitor, compiler inspector, synthesis dashboard. Currently in
+development. Professional and Enterprise licensees get access at launch.
 
 **What payment methods do you accept?**
-Bank transfer (IBAN), Polar.sh (credit card), or invoice (NET-30 for
+Credit card via Polar.sh, bank transfer (IBAN), or invoice (NET-30 for
 Enterprise). All prices in CHF. EUR and GBP accepted at daily exchange rate.
+
+**Do you offer refunds?**
+30-day money-back guarantee on all tiers. No questions asked.
 
 ---
 
 <p style="text-align: center; margin-top: 3rem;">
 <strong>Ready to deploy neuromorphic AI on silicon?</strong><br>
-<a href="mailto:protoscience@anulum.li?subject=SC-NeuroCore%20Inquiry" class="pricing-btn pricing-btn-primary" style="margin-top: 1rem;">Contact Us</a>
+<a href="https://polar.sh/checkout/polar_c_A6s1rmJQVQX6SFLqTuqyVFK2Y9wzigjSs5x193JWV1F" class="pricing-btn pricing-btn-primary" style="margin-top: 1rem;">Get Started — CHF 490/yr</a>
+&nbsp;&nbsp;
+<a href="mailto:protoscience@anulum.li?subject=SC-NeuroCore%20Inquiry" class="pricing-btn pricing-btn-outline" style="margin-top: 1rem;">Talk to Us</a>
 </p>
 
 ---
