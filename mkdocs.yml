@@ -118,6 +118,7 @@ nav:
       - Training Profiler: tutorials/53_spike_profiler.md
       - Spiking Transformers: tutorials/54_spikformer.md
       - O(1) Memory Training: tutorials/55_online_learning.md
+      - Architecture Doctor: tutorials/56_architecture_doctor.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
@@ -166,6 +167,7 @@ nav:
       - Training & Profiling:
           - Spike Profiler: api/spike_profiler.md
           - O(1) Online Learning: api/online_learning.md
+          - Architecture Doctor: api/doctor.md
       - Transformers & SSM:
           - Spiking Transformers: api/spikformer.md
       - Architecture Search:
