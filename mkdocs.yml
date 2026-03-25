@@ -143,6 +143,7 @@ nav:
       - Residual Blocks: tutorials/78_residual.md
       - Neuromorphic Control: tutorials/79_control.md
       - Contrastive SSL: tutorials/80_contrastive.md
+      - Transfer Learning: tutorials/81_transfer.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
@@ -222,6 +223,8 @@ nav:
           - QAT: api/qat.md
           - Residual Blocks: api/residual.md
           - Contrastive SSL: api/contrastive.md
+      - Transfer:
+          - Transfer Learning: api/transfer.md
       - Control:
           - Neuromorphic Control: api/control.md
       - Stability:
