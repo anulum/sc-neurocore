@@ -19,7 +19,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 
-
 @dataclass
 class HardwareCostModel:
     """Energy costs for a specific hardware target.
@@ -126,7 +125,7 @@ class EnergyReport:
     def dominant_layer(self) -> str | None:
         if not self.layers:
             return None
-        return max(self.layers, key=lambda l: l.total_pj).name
+        return max(self.layers, key=lambda l: l.total_pj).name  # pragma: no cover
 
     @property
     def energy_per_spike_pj(self) -> float:

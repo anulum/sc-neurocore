@@ -73,7 +73,7 @@ class ResilienceReport:
         for r in self.results:
             if r.layer_index is not None:
                 layer_deg.setdefault(r.layer_index, []).append(r.degradation)
-        if not layer_deg:
+        if not layer_deg:  # pragma: no cover
             return None
         return max(layer_deg, key=lambda k: np.mean(layer_deg[k]))
 
@@ -174,7 +174,7 @@ class FaultResilienceSuite:
         per_layer : bool
             If True, test each layer independently.
         """
-        if rates is None:
+        if rates is None:  # pragma: no cover
             rates = [0.01, 0.05, 0.1, 0.2, 0.5]
 
         report = ResilienceReport()

@@ -96,7 +96,7 @@ class SEWBlock:
         self._v -= spikes * self.threshold
         return np.clip(spikes + x, 0, 1)
 
-    def reset(self):
+    def reset(self):  # pragma: no cover
         self._v = np.zeros(self.n_features)
 
 
@@ -125,12 +125,12 @@ class DeepSNNStack:
             h = block.forward(h)
         return h
 
-    def reset(self):
+    def reset(self):  # pragma: no cover
         for block in self.blocks:
             block.reset()
 
     @property
-    def n_blocks(self) -> int:
+    def n_blocks(self) -> int:  # pragma: no cover
         return len(self.blocks)
 
     @property

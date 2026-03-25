@@ -49,23 +49,23 @@ class TestHebbianFewShot:
 
 class TestSpikePrototypeNet:
     def test_classify(self):
-        pn = SpikePrototypeNet(n_features=4)
+        net = SpikePrototypeNet(n_features=4)
         support_x = [np.array([1, 0, 0, 0.0]), np.array([0, 0, 1, 0.0])]
         support_y = [0, 1]
         query_x = [np.array([0.9, 0.1, 0.0, 0.0])]
-        preds = pn.classify(support_x, support_y, query_x)
+        preds = net.classify(support_x, support_y, query_x)
         assert preds[0] == 0
 
     def test_euclidean(self):
-        pn = SpikePrototypeNet(n_features=4, metric="euclidean")
+        net = SpikePrototypeNet(n_features=4, metric="euclidean")
         support_x = [np.array([1, 0, 0, 0.0]), np.array([0, 0, 0, 1.0])]
         support_y = [0, 1]
-        preds = pn.classify(support_x, support_y, [np.array([0.8, 0.1, 0.0, 0.0])])
+        preds = net.classify(support_x, support_y, [np.array([0.8, 0.1, 0.0, 0.0])])
         assert preds[0] == 0
 
     def test_multi_support(self):
-        pn = SpikePrototypeNet(n_features=4)
+        net = SpikePrototypeNet(n_features=4)
         support_x = [np.ones(4), np.ones(4), np.zeros(4), np.zeros(4)]
         support_y = [0, 0, 1, 1]
-        preds = pn.classify(support_x, support_y, [np.ones(4) * 0.8])
+        preds = net.classify(support_x, support_y, [np.ones(4) * 0.8])
         assert preds[0] == 0

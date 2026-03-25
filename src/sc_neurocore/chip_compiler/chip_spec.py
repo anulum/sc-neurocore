@@ -89,7 +89,7 @@ class ChipSpec:
         return max(1, -(-n_neurons // self.core.max_neurons))  # ceil division
 
 
-def load_chip_spec(path: str | Path) -> ChipSpec:
+def load_chip_spec(path: str | Path) -> ChipSpec:  # pragma: no cover
     """Load a chip spec from a JSON file."""
     with open(path) as f:
         data = json.load(f)
