@@ -33,17 +33,48 @@ import numpy as np
 from .codec import SpikeCodec, CompressionResult
 
 # Rust backend (optional, ~100x faster for LFSR predictor)
-try:
-    from sc_neurocore_engine import (  # pragma: no cover
-        py_predict_xor_ema as _rust_predict_ema,
-        py_predict_xor_lfsr as _rust_predict_lfsr,
-        py_recover_xor_ema as _rust_recover_ema,
-        py_recover_xor_lfsr as _rust_recover_lfsr,
-    )
+_HAS_RUST = False
+_rust_predict_ema = None
+_rust_predict_lfsr = None
+_rust_recover_ema = None
+_rust_recover_lfsr = None
 
-    _HAS_RUST = True  # pragma: no cover
-except ImportError:
-    _HAS_RUST = False
+try:
+    # Load the compiled Rust .pyd directly from site-packages,
+    # bypassing bridge/ __init__.py which may shadow it.
+    import importlib.util as _ilu
+    import glob as _glob
+    import sys as _sys
+
+    import os as _os
+
+    _site = [p for p in _sys.path if "site-packages" in p]
+    for _sp in _site:
+        _pkg_dir = _os.path.join(_sp, "sc_neurocore_engine")
+        _pyds = _glob.glob(_os.path.join(_pkg_dir, "sc_neurocore_engine*.pyd"))
+        _pyds += _glob.glob(_os.path.join(_pkg_dir, "sc_neurocore_engine*.so"))
+        if _pyds:
+            _spec = _ilu.spec_from_file_location("sc_neurocore_engine", _pyds[0])
+            if _spec and _spec.loader:
+                _mod = _ilu.module_from_spec(_spec)
+                _spec.loader.exec_module(_mod)
+                _rust_predict_ema = getattr(_mod, "py_predict_xor_ema", None)
+                _rust_predict_lfsr = getattr(_mod, "py_predict_xor_lfsr", None)
+                _rust_recover_ema = getattr(_mod, "py_recover_xor_ema", None)
+                _rust_recover_lfsr = getattr(_mod, "py_recover_xor_lfsr", None)
+                if all(
+                    f is not None
+                    for f in [
+                        _rust_predict_ema,
+                        _rust_predict_lfsr,
+                        _rust_recover_ema,
+                        _rust_recover_lfsr,
+                    ]
+                ):
+                    _HAS_RUST = True  # pragma: no cover
+                break
+except Exception:  # pragma: no cover
+    pass
 
 
 @dataclass
