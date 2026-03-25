@@ -6,7 +6,7 @@ An honest comparison of SC-NeuroCore with peer frameworks. Every claim
 is backed by measured data or cited literature. Unverified claims are
 marked explicitly.
 
-**Last updated**: 2026-03-19 (v3.13.3)
+**Last updated**: 2026-03-25 (v3.13.3)
 
 ---
 
@@ -35,8 +35,9 @@ marked explicitly.
 | Equation → Verilog compiler | **Yes** | — | — | — | — |
 | IR compiler → MLIR/CIRCT | **Yes** | — | — | — | — |
 | Rust SIMD engine | **Yes** (41.3 Gbit/s) | — | — | — | — |
-| Surrogate gradient training | Yes | Yes | Yes | Yes | — |
-| GPU acceleration | CuPy | PyTorch | PyTorch | — | — |
+| Surrogate gradient training | **Yes** (7 surrogates, 10 cells) | Yes | Yes | Yes | — |
+| PyTorch `nn.Module` SNN | **Yes** (+ SC export) | Yes | Yes | — | — |
+| GPU acceleration | PyTorch + CuPy | PyTorch | PyTorch | — | — |
 | Neuron models | **122** | 11 | 6 | 3 | Arbitrary |
 | Rust neuron models (PyO3) | **111** | — | — | — | — |
 | NetworkRunner (fused loop) | **81 models** | — | — | — | — |
@@ -49,7 +50,7 @@ marked explicitly.
 | STDP / R-STDP plasticity | Yes | — | Yes | Yes | Yes |
 | Quantum hybrid circuits | **Yes** | — | — | — | — |
 | Hyperdimensional computing | **Yes** | — | — | — | — |
-| Formal verification | **7 modules, 65 props** | — | — | — | — |
+| Formal verification | **7 modules, 67 props** | — | — | — | — |
 | Sobol low-discrepancy encoding | **Yes** | — | — | — | — |
 | Multi-head attention (SC) | **Yes** | — | — | — | — |
 | Connectome generators | Yes | — | — | — | Yes |
@@ -57,6 +58,8 @@ marked explicitly.
 | CuPy sparse GPU | **Yes** | — | — | — | — |
 | AI-optimized neurons | **9 (ArcaneNeuron + 8)** | — | — | — | — |
 | Identity substrate | **Yes** (persistent SNN + checkpoint) | — | — | — | — |
+| Neural data compression | **6 codecs** (ISI, predictive, delta, streaming, AER, waveform) | — | — | — | — |
+| Trainable per-synapse delays | **Yes** (DelayLinear, differentiable) | — | — | — | — |
 | [NIR](https://neuroir.org/) support | **Yes** (FPGA backend) | Yes | Yes | Yes | — |
 | conda-forge recipe | **Ready** | Yes | — | — | Yes |
 | PyPI package | Yes | Yes | Yes | Yes | Yes |
@@ -84,16 +87,18 @@ marked explicitly.
 
 ### Where others lead
 
-1. **snnTorch** — Deep
-   PyTorch integration, extensive tutorials, large community
-2. **Norse** — Strongest bio-plausibility, Norse-compatible neuron
-   equations, auto-differentiation through spike dynamics
-3. **Lava** — Direct Intel Loihi 2 hardware support, event-driven
-   asynchronous execution, chip-in-the-loop validation
-4. **Brian2** — Arbitrary neuron equations (string-based), flexible
-   for computational neuroscience research, large publication base
+1. **snnTorch** — Larger community, more tutorials, established
+   research ecosystem with 40+ citing publications
+2. **Norse** — Bio-plausible SNN equations with auto-differentiation,
+   active research community
+3. **Lava** — Direct Intel Loihi 2 hardware, event-driven asynchronous
+   execution, chip-in-the-loop validation (no other framework offers this)
+4. **Brian2** — Arbitrary neuron equations (string-based), 3000+
+   publications, gold standard for computational neuroscience
 5. **Nengo** — Large-scale brain modelling (100K+ neurons), NEF
    (Neural Engineering Framework), SpiNNaker support
+6. **Flexi-NeurA** — Bit-exact Python/RTL co-simulation for FPGA/ASIC
+   SNN deployment (arXiv:2602.18140, Feb 2026)
 
 ---
 
@@ -190,7 +195,7 @@ highest reported SNN accuracy among open-source frameworks.
 |----------|-------------|-----|
 | FPGA deployment | **SC-NeuroCore** | Only option with IR→Verilog+MLIR |
 | Intel Loihi hardware | **Lava** | Native Loihi support |
-| PyTorch SNN training | **snnTorch** | Deepest PyTorch integration |
+| PyTorch SNN training | snnTorch or **SC-NeuroCore** | snnTorch has larger community; SC-NeuroCore adds SC export + FPGA path |
 | Computational neuroscience | **Brian2** | Arbitrary neuron equations |
 | Bio-plausible learning | **Norse** or **BindsNET** | STDP/bio-learning focus |
 | Large-scale brain models | **Nengo** | NEF, SpiNNaker support |
