@@ -9,10 +9,13 @@
 
 from .codec import SpikeCodec, CompressionResult
 from .predictive_codec import PredictiveSpikeCodec, PredictiveCompressionResult
+from .delta_codec import DeltaSpikeCodec, DeltaCompressionResult
 
 __all__ = [
     "SpikeCodec",
     "CompressionResult",
     "PredictiveSpikeCodec",
     "PredictiveCompressionResult",
+    "DeltaSpikeCodec",
+    "DeltaCompressionResult",
 ]
