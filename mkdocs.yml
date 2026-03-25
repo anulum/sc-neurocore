@@ -115,6 +115,7 @@ nav:
       - AER Communication: tutorials/50_aer_communication.md
       - Hardware-Aware NAS: tutorials/51_nas.md
       - Formal Equivalence: tutorials/52_formal_equiv.md
+      - Training Profiler: tutorials/53_spike_profiler.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
@@ -160,6 +161,8 @@ nav:
           - Digital Twin: api/digital_twin.md
           - Multimodal Fusion: api/fusion.md
           - NeuroBench: api/benchmarks.md
+      - Training & Profiling:
+          - Spike Profiler: api/spike_profiler.md
       - Architecture Search:
           - Hardware-Aware NAS: api/nas.md
       - Sensors & Communication:
