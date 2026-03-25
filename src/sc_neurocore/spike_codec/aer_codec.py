@@ -87,9 +87,13 @@ class AERSpikeCodec:
 
         neuron_bits = self.neuron_bits if self.neuron_bits > 0 else max(1, int(np.ceil(np.log2(max(N, 2)))))
         neuron_bytes = (neuron_bits + 7) // 8
+        # Escape marker is all-1s bytes. If max valid ID (N-1) fills all
+        # bits in neuron_bytes, bump size to avoid escape collision.
+        while (N - 1) >= (1 << (neuron_bytes * 8)) - 1:
+            neuron_bytes += 1
 
-        # Header: magic(4) + T(4) + N(4) + n_events(4) + neuron_bits(1) = 17 bytes
-        header = self.HEADER_MAGIC + struct.pack("!IIIB", T, N, n_events, neuron_bits)
+        # Header: magic(4) + T(4) + N(4) + n_events(4) + neuron_bytes(1) = 17 bytes
+        header = self.HEADER_MAGIC + struct.pack("!IIIB", T, N, n_events, neuron_bytes)
 
         if n_events == 0:
             encoded = header
@@ -149,13 +153,11 @@ class AERSpikeCodec:
         if magic != self.HEADER_MAGIC:
             raise ValueError(f"Invalid header magic: {magic!r}, expected {self.HEADER_MAGIC!r}")
 
-        T_stored, N_stored, n_events, neuron_bits = struct.unpack("!IIIB", data[4:17])
+        T_stored, N_stored, n_events, neuron_bytes = struct.unpack("!IIIB", data[4:17])
         if T == 0:
             T = T_stored
         if N == 0:
             N = N_stored
-
-        neuron_bytes = (neuron_bits + 7) // 8
         ts_max = (1 << self.timestamp_bits) - 1
         escape_marker = b"\xff" * neuron_bytes
 
