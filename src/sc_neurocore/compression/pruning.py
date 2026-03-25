@@ -5,13 +5,15 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — SNN weight and structural pruning
 
-"""Weight pruning and structural pruning for SNN model compression.
+"""Weight, structural, and stochastic-aware pruning for SNN model compression.
 
 Weight pruning: zero out weights below a magnitude threshold.
 Structural pruning: remove entire neurons that fire below an
 activity threshold, reducing layer width.
+Stochastic pruning: score weights by bitstream contribution —
+how many popcount bits they contribute per inference. SC-specific.
 
-Both reduce FPGA resource usage when combined with
+All methods reduce FPGA resource usage when combined with
 Projection(weight_threshold=) for runtime sparsity exploitation.
 """
 
@@ -149,4 +151,63 @@ def prune_neurons(
         sparsity=(original_params - remaining_params) / max(original_params, 1),
         original_neurons=total_neurons,
         pruned_neurons=neurons_pruned,
+    )
+
+
+def prune_stochastic(
+    weights: list[np.ndarray],
+    bitstream_length: int = 256,
+    min_popcount_bits: float = 1.0,
+) -> tuple[list[np.ndarray], PruningReport]:
+    """Stochastic-aware pruning: score weights by bitstream contribution.
+
+    In SC networks, weight w encodes probability p = clip(|w|, 0, 1).
+    The expected popcount contribution per inference is:
+        contribution = min(p, 1-p) * bitstream_length
+
+    Weights that produce nearly-deterministic bitstreams (p near 0 or 1)
+    contribute almost nothing to computation — they can be replaced with
+    constant 0/1 gates, saving AND+popcount hardware.
+
+    Parameters
+    ----------
+    weights : list of ndarray
+        Weight matrices (values in [0, 1] for unipolar SC).
+    bitstream_length : int
+        Bitstream length (L). Longer streams = more bits per weight.
+    min_popcount_bits : float
+        Minimum expected popcount contribution to keep a weight.
+        Weights contributing fewer bits than this are zeroed.
+
+    Returns
+    -------
+    (pruned_weights, PruningReport)
+    """
+    pruned = []
+    total_original = 0
+    total_pruned = 0
+
+    for w in weights:
+        total_original += w.size
+        w_copy = w.copy()
+
+        # SC probability: clip to [0, 1]
+        p = np.clip(np.abs(w_copy), 0.0, 1.0)
+        # Expected popcount contribution: min(p, 1-p) * L
+        # This is the "unpredictable" fraction of the bitstream
+        contribution = np.minimum(p, 1.0 - p) * bitstream_length
+
+        mask = contribution < min_popcount_bits
+        w_copy[mask] = 0.0
+        total_pruned += int(mask.sum())
+        pruned.append(w_copy)
+
+    remaining = total_original - total_pruned
+    sparsity = total_pruned / max(total_original, 1)
+
+    return pruned, PruningReport(
+        original_params=total_original,
+        pruned_params=total_pruned,
+        remaining_params=remaining,
+        sparsity=sparsity,
     )
