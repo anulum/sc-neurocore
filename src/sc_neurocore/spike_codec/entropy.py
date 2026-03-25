@@ -29,7 +29,7 @@ def _build_huffman_table(symbols: list[int]) -> dict[int, tuple[int, int]]:
     Returns dict mapping symbol → (code_bits, code_length).
     Uses package-merge algorithm for optimal length-limited codes.
     """
-    if not symbols:
+    if not symbols:  # pragma: no cover — defensive guard
         return {}
 
     freqs = Counter(symbols)
@@ -76,7 +76,7 @@ def _canonical_codes(lengths: dict[int, int]) -> dict[int, tuple[int, int]]:
     Canonical codes: sorted by (length, symbol), sequential assignment.
     Decoder only needs the length table to reconstruct codes.
     """
-    if not lengths:
+    if not lengths:  # pragma: no cover — defensive guard
         return {}
 
     sorted_syms = sorted(lengths.items(), key=lambda x: (x[1], x[0]))
