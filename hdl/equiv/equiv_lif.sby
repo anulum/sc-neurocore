@@ -1,0 +1,20 @@
+[tasks]
+bmc
+
+[options]
+bmc: mode bmc
+bmc: depth 30
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal ../sc_lif_neuron.v
+read -formal sc_lif_reference.v
+read -formal equiv_lif.v
+prep -top equiv_lif
+
+[files]
+equiv_lif.v
+sc_lif_reference.v
+../sc_lif_neuron.v

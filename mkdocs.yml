@@ -113,6 +113,8 @@ nav:
       - Digital Twin: tutorials/48_digital_twin.md
       - Multimodal Fusion: tutorials/49_multimodal_fusion.md
       - AER Communication: tutorials/50_aer_communication.md
+      - Hardware-Aware NAS: tutorials/51_nas.md
+      - Formal Equivalence: tutorials/52_formal_equiv.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
@@ -158,6 +160,8 @@ nav:
           - Digital Twin: api/digital_twin.md
           - Multimodal Fusion: api/fusion.md
           - NeuroBench: api/benchmarks.md
+      - Architecture Search:
+          - Hardware-Aware NAS: api/nas.md
       - Sensors & Communication:
           - DVS Pipeline: api/sensors.md
           - AER-over-UDP: api/comm.md
