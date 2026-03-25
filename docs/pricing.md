@@ -176,7 +176,7 @@ commercial licenses for proprietary integration.
 <li>Quarterly security advisories</li>
 <li>No AGPL copyleft obligation</li>
 </ul>
-<a href="https://polar.sh/checkout/polar_c_A6s1rmJQVQX6SFLqTuqyVFK2Y9wzigjSs5x193JWV1F" class="pricing-btn pricing-btn-founding">Buy Now — CHF 490/yr</a>
+<a href="https://polar.sh/checkout/polar_c_KhZxFeUlgfnriOpNWcUAMs39o7102otpmSO1l2ZRpZG" class="pricing-btn pricing-btn-founding">Buy Now — CHF 490/yr</a>
 </div>
 
 <div class="pricing-card">
@@ -196,7 +196,7 @@ commercial licenses for proprietary integration.
 <li>White-label and OEM licensing</li>
 <li>Joint development agreements</li>
 </ul>
-<a href="https://polar.sh/checkout/polar_c_LYpNQdmXAtYGZDU7BgiuD0p16dCO7a6Hz9PsP4cTsIh" class="pricing-btn pricing-btn-enterprise">Buy Now — CHF 4,900/yr</a>
+<a href="https://polar.sh/checkout/polar_c_YQvtDeDz3nGObr4llMZIPvGZj7QAoQ8phL6BY0tTU5Z" class="pricing-btn pricing-btn-enterprise">Buy Now — CHF 4,900/yr</a>
 </div>
 
 </div>
@@ -218,7 +218,7 @@ commercial licenses for proprietary integration.
 <li>Free 30-day evaluation before commitment</li>
 <li>Early access to Visual SNN Design Studio</li>
 </ul>
-<a href="https://polar.sh/checkout/polar_c_u6tIXv44uMXqtILxY3KIk9epbMK3AHZJEwllq0MpHut" class="pricing-btn pricing-btn-founding">Claim Founding Spot — CHF 290/yr</a>
+<a href="https://polar.sh/checkout/polar_c_Umb7XhLU0HsWaKdhWDHOdQNYXrauBHFtmYT2R0TJ9NU" class="pricing-btn pricing-btn-founding">Claim Founding Spot — CHF 290/yr</a>
 <p style="font-size: 0.8rem; color: #666; margin-top: 0.5rem;">
 Spots remaining: 10 of 10. When gone, this tier closes permanently.
 </p>
@@ -375,7 +375,7 @@ Enterprise). All prices in CHF. EUR and GBP accepted at daily exchange rate.
 
 <p style="text-align: center; margin-top: 3rem;">
 <strong>Ready to deploy neuromorphic AI on silicon?</strong><br>
-<a href="https://polar.sh/checkout/polar_c_A6s1rmJQVQX6SFLqTuqyVFK2Y9wzigjSs5x193JWV1F" class="pricing-btn pricing-btn-primary" style="margin-top: 1rem;">Get Started — CHF 490/yr</a>
+<a href="https://polar.sh/checkout/polar_c_KhZxFeUlgfnriOpNWcUAMs39o7102otpmSO1l2ZRpZG" class="pricing-btn pricing-btn-primary" style="margin-top: 1rem;">Get Started — CHF 490/yr</a>
 &nbsp;&nbsp;
 <a href="mailto:protoscience@anulum.li?subject=SC-NeuroCore%20Inquiry" class="pricing-btn pricing-btn-outline" style="margin-top: 1rem;">Talk to Us</a>
 </p>
