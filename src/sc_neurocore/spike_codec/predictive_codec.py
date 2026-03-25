@@ -99,6 +99,89 @@ class _RatePredictor:
         self.rates[:] = 0.0
 
 
+def _predict_and_xor_context(spikes: np.ndarray, N: int, context_bits: int = 8):
+    """Context-model predict-XOR loop. Returns (errors, correct_count).
+
+    Per-channel Markov predictor: hash last K spike states as context key,
+    predict based on accumulated statistics for that context.
+    Captures temporal patterns (bursts, oscillations, refractory periods)
+    that EMA misses.
+    """
+    T = spikes.shape[0]
+    errors = np.empty_like(spikes)
+    correct = 0
+    mask = (1 << context_bits) - 1
+
+    # Per-channel: context register + prediction table
+    contexts = np.zeros(N, dtype=np.int64)
+    # Tables: context_key → [n_spikes_after, n_total]
+    tables: list[dict[int, list[int]]] = [{} for _ in range(N)]
+
+    for t in range(T):
+        row = spikes[t]
+        for ch in range(N):
+            ctx = int(contexts[ch])
+            table = tables[ch]
+
+            # Predict from context statistics
+            if ctx in table:
+                n_spike, n_total = table[ctx]
+                predicted = 1 if n_spike * 2 > n_total else 0
+            else:
+                predicted = 0
+
+            actual = int(row[ch])
+            err = actual ^ predicted
+            errors[t, ch] = err
+            if err == 0:
+                correct += 1
+
+            # Update context table
+            if ctx not in table:
+                table[ctx] = [0, 0]
+            table[ctx][1] += 1
+            if actual:
+                table[ctx][0] += 1
+
+            # Shift context register
+            contexts[ch] = ((contexts[ch] << 1) | actual) & mask
+
+    return errors, correct
+
+
+def _xor_and_recover_context(errors: np.ndarray, N: int, context_bits: int = 8):
+    """Context-model XOR-recover loop for decoder."""
+    T = errors.shape[0]
+    spikes = np.empty((T, N), dtype=np.int8)
+    mask = (1 << context_bits) - 1
+    contexts = np.zeros(N, dtype=np.int64)
+    tables: list[dict[int, list[int]]] = [{} for _ in range(N)]
+
+    for t in range(T):
+        for ch in range(N):
+            ctx = int(contexts[ch])
+            table = tables[ch]
+
+            if ctx in table:
+                n_spike, n_total = table[ctx]
+                predicted = 1 if n_spike * 2 > n_total else 0
+            else:
+                predicted = 0
+
+            actual = int(errors[t, ch]) ^ predicted
+            spikes[t, ch] = actual
+
+            if ctx not in table:
+                table[ctx] = [0, 0]
+            table[ctx][1] += 1
+            if actual:
+                table[ctx][0] += 1
+
+            contexts[ch] = ((contexts[ch] << 1) | actual) & mask
+
+    return spikes
+
+
 def _predict_and_xor(spikes: np.ndarray, N: int, alpha: float, threshold: float):
     """EMA predict-XOR loop. Returns (errors, correct_count)."""
     T = spikes.shape[0]
@@ -238,11 +321,14 @@ def _xor_and_recover_lfsr(
 class PredictiveSpikeCodec:
     """Predictive spike codec: compress prediction errors, not raw spikes.
 
-    Two predictor modes:
+    Three predictor modes:
         'ema' (default): float EMA rate tracking + threshold comparison.
         'lfsr': Q8.8 fixed-point rate + LFSR comparator. Bit-true with
-                sc_bitstream_encoder.v — the prediction logic maps directly
-                to Verilog RTL. No float arithmetic, no multipliers.
+                sc_bitstream_encoder.v — maps directly to Verilog RTL.
+        'context': Markov context predictor. Hashes last K spike states
+                   per channel, predicts from accumulated statistics. Beats
+                   EMA on any data with temporal structure (bursts, oscillations,
+                   refractory periods).
 
     Compression pipeline:
         1. For each timestep t:
@@ -255,23 +341,26 @@ class PredictiveSpikeCodec:
     Parameters
     ----------
     alpha : float
-        EMA smoothing factor (ema mode). Ignored in lfsr mode.
+        EMA smoothing factor (ema mode). Ignored in lfsr/context mode.
     threshold : float
-        Spike prediction threshold (ema mode). Ignored in lfsr mode.
+        Spike prediction threshold (ema mode). Ignored in lfsr/context mode.
     predictor : str
-        'ema' (float EMA) or 'lfsr' (SC-native, bit-true with Verilog).
+        'ema', 'lfsr', or 'context'.
     alpha_q8 : int
         Q8.8 smoothing factor for lfsr mode. 1 = 1/256 ≈ 0.004.
     seed : int
         LFSR seed for lfsr mode (non-zero, 16-bit).
+    context_bits : int
+        Context history length for context mode (default 8 = last 8 spikes).
     base_mode : str
         'lossless' or 'lossy' for the underlying ISI codec.
     timing_precision : int
         For lossy mode: quantize timing resolution.
     """
 
-    HEADER_MAGIC = b"PSCX"  # Predictive Spike Codec XOR
+    HEADER_MAGIC = b"PSCX"  # Predictive Spike Codec XOR (EMA)
     HEADER_MAGIC_LFSR = b"PSCL"  # Predictive Spike Codec LFSR
+    HEADER_MAGIC_CTX = b"PSCC"  # Predictive Spike Codec Context
 
     def __init__(
         self,
@@ -280,6 +369,7 @@ class PredictiveSpikeCodec:
         predictor: str = "ema",
         alpha_q8: int = 1,
         seed: int = 0xACE1,
+        context_bits: int = 8,
         base_mode: str = "lossless",
         timing_precision: int = 1,
     ):
@@ -288,7 +378,14 @@ class PredictiveSpikeCodec:
         self.predictor = predictor
         self.alpha_q8 = alpha_q8
         self.seed = seed
-        self.base_codec = SpikeCodec(mode=base_mode, timing_precision=timing_precision)
+        self.context_bits = context_bits
+        # Context predictor benefits from Huffman backend (sparse scattered errors)
+        entropy = "huffman" if predictor == "context" else "auto"
+        self.base_codec = SpikeCodec(
+            mode=base_mode,
+            timing_precision=timing_precision,
+            entropy=entropy,
+        )
 
     def compress(self, spikes: np.ndarray) -> tuple[bytes, PredictiveCompressionResult]:
         """Compress spike raster using predictive error coding.
@@ -307,7 +404,15 @@ class PredictiveSpikeCodec:
         T, N = spikes.shape
         original_bits = T * N
 
-        if self.predictor == "lfsr":
+        if self.predictor == "context":
+            errors, correct_predictions = _predict_and_xor_context(
+                spikes,
+                N,
+                self.context_bits,
+            )
+            error_data, _ = self.base_codec.compress(errors)
+            header = self.HEADER_MAGIC_CTX + struct.pack("!B", self.context_bits)
+        elif self.predictor == "lfsr":
             if _HAS_RUST:
                 flat = np.ascontiguousarray(spikes).ravel()
                 err_flat, correct_predictions = _rust_predict_lfsr(
@@ -383,6 +488,12 @@ class PredictiveSpikeCodec:
         import struct
 
         magic = data[:4]
+
+        if magic == self.HEADER_MAGIC_CTX:
+            context_bits = data[4]
+            error_data = data[5:]
+            errors = self.base_codec.decompress(error_data, T, N)
+            return _xor_and_recover_context(errors, N, context_bits)
 
         if magic == self.HEADER_MAGIC_LFSR:
             alpha_q8, seed = struct.unpack("!HH", data[4:8])
