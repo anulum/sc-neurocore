@@ -66,6 +66,9 @@ Comput = "Comput"
 iz = "iz"
 IIT = "IIT"
 NCE = "NCE"
+PnR = "PnR"
+pnr = "pnr"
+Alph = "Alph"
 
 [files]
 extend-exclude = [
