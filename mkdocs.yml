@@ -127,6 +127,7 @@ nav:
       - Differential Privacy: tutorials/62_privacy.md
       - Fault Resilience: tutorials/63_fault_resilience.md
       - Encoding Optimizer: tutorials/64_encoding_optimizer.md
+      - Event-Driven Simulation: tutorials/65_event_driven.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
@@ -185,6 +186,8 @@ nav:
           - Fault Resilience: api/resilience.md
       - Encoding:
           - Encoding Zoo + Optimizer: api/encoding_zoo.md
+      - Simulation:
+          - Event-Driven: api/event_driven.md
       - Verification:
           - Temporal Properties: api/temporal_properties.md
       - Hardware Compilation:
