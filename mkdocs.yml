@@ -123,6 +123,7 @@ nav:
       - Continual Learning: tutorials/58_continual_learning.md
       - Chip Compiler: tutorials/59_chip_compiler.md
       - Temporal Verification: tutorials/60_temporal_verification.md
+      - Explainability: tutorials/61_explainability.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
@@ -174,6 +175,8 @@ nav:
           - Architecture Doctor: api/doctor.md
           - Spike Augmentation: api/augmentation.md
           - Continual Learning: api/continual.md
+      - Explainability:
+          - SNN XAI: api/explain.md
       - Verification:
           - Temporal Properties: api/temporal_properties.md
       - Hardware Compilation:
