@@ -116,6 +116,7 @@ nav:
       - Hardware-Aware NAS: tutorials/51_nas.md
       - Formal Equivalence: tutorials/52_formal_equiv.md
       - Training Profiler: tutorials/53_spike_profiler.md
+      - Spiking Transformers: tutorials/54_spikformer.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
@@ -163,6 +164,8 @@ nav:
           - NeuroBench: api/benchmarks.md
       - Training & Profiling:
           - Spike Profiler: api/spike_profiler.md
+      - Transformers & SSM:
+          - Spiking Transformers: api/spikformer.md
       - Architecture Search:
           - Hardware-Aware NAS: api/nas.md
       - Sensors & Communication:

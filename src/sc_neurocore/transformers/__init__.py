@@ -10,7 +10,11 @@
 __tier__ = "research"
 
 from .block import StochasticTransformerBlock
+from .spikformer import SpikeDrivenAttention, SpikyStateSpace, CPGPositionalEncoding
 
 __all__ = [
     "StochasticTransformerBlock",
+    "SpikeDrivenAttention",
+    "SpikyStateSpace",
+    "CPGPositionalEncoding",
 ]
