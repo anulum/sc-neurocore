@@ -47,6 +47,7 @@ FPGA deployment.
 - **One-command deploy** — `sc-neurocore deploy model.nir --target artix7` produces a bitstream-ready project
 - **Mixed-precision SC** — per-layer adaptive bitstream length (Hoeffding/sensitivity-based)
 - **Event-driven FPGA** — AER encoder, event neuron, spike router (power proportional to spike rate)
+- **Spike codec library** — 5 codecs (ISI, predictive, delta, streaming, AER) with unified API, auto-recommendation, benchmarked on 1024+ channel data
 - **conda-forge recipe** — ready for conda-forge distribution
 
 The default `pip install sc-neurocore` wheel ships the public
@@ -94,6 +95,7 @@ See [Architecture](architecture/architecture.md) for the full package map.
 | [FPGA in 20 Minutes](tutorials/fpga_in_20_minutes.md) | Train → quantise → synthesise → deploy |
 | [Rust Engine & Performance](tutorials/05_rust_engine_performance.md) | SIMD tiers, GPU, benchmarking |
 | [Brunel Network Translation](tutorials/06_brunel_network_translation.md) | Brian2 → SC conversion workflow |
+| [Spike Codec Library](tutorials/70_spike_codec.md) | 5 codecs for BCI, probes, neuromorphic, real-time |
 
 ## Documentation
 

@@ -59,8 +59,12 @@ ANN-to-SNN conversion (trained PyTorch models to rate-coded SNNs in one call),
 trainable per-synapse delays (DelayLinear with differentiable interpolation),
 one-command FPGA deployment (`sc-neurocore deploy model.nir --target artix7`),
 per-layer adaptive bitstream length for mixed-precision SC networks,
-and event-driven FPGA RTL (AER encoder, event neuron, spike router —
-power proportional to spike rate, not clock rate).
+event-driven FPGA RTL (AER encoder, event neuron, spike router —
+power proportional to spike rate, not clock rate),
+and a 5-codec spike compression library (ISI, predictive, delta, streaming,
+AER) with a unified API and auto-recommendation engine — targeting BCI
+implants (Neuralink-scale 1024+ channels), neural probes (Neuropixels),
+neuromorphic inter-chip routing, and real-time closed-loop telemetry.
 2 155+ passing Python tests across 130+ files and 373 Rust tests hold 100% line
 coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 
@@ -106,11 +110,14 @@ coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 | One-command FPGA deploy CLI | **Yes** | — | — | — | — |
 | Per-layer adaptive bitstream | **Yes** | — | — | — | — |
 | Event-driven FPGA RTL (AER) | **Yes** | — | — | — | — |
+| Spike codec library (5 codecs) | **Yes** | — | — | — | — |
 | conda-forge recipe | **Ready** | Yes | — | — | Yes |
 | PyPI package | Yes | Yes | Yes | Yes | Yes |
 | License | AGPL-3.0 | MIT | LGPL-3.0 | BSD-3 | CeCILL-2.1 |
 
 - **125-function spike train analysis toolkit** — CV, Fano factor, cross-correlation, Victor-Purpura distance, SPIKE-sync, Granger causality, GPFA, SPADE pattern detection, and 115 more functions. Matches Elephant + PySpike combined. Pure NumPy.
+
+- **5-codec spike compression library** — ISI (50-200x baseline), Predictive (EMA + XOR surprise-only, for BCI implants), Delta (inter-channel correlation, for neural probes), Streaming (fixed-latency frames, for real-time), AER (event list, for neuromorphic routing). Unified API: `get_codec(name)`, `recommend_codec()`. All lossless. Benchmarked on 1024-channel Neuralink-scale data.
 
 SC-NeuroCore's niche: **deterministic stochastic computing with FPGA co-design** — the only framework where Python simulation matches synthesisable RTL bit-for-bit.
 
