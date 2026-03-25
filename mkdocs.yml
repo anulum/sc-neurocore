@@ -117,6 +117,7 @@ nav:
       - Formal Equivalence: tutorials/52_formal_equiv.md
       - Training Profiler: tutorials/53_spike_profiler.md
       - Spiking Transformers: tutorials/54_spikformer.md
+      - O(1) Memory Training: tutorials/55_online_learning.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
@@ -164,6 +165,7 @@ nav:
           - NeuroBench: api/benchmarks.md
       - Training & Profiling:
           - Spike Profiler: api/spike_profiler.md
+          - O(1) Online Learning: api/online_learning.md
       - Transformers & SSM:
           - Spiking Transformers: api/spikformer.md
       - Architecture Search:
