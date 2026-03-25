@@ -341,3 +341,101 @@ class TestWorldModelPredictor:
         np.testing.assert_array_equal(
             PredictiveSpikeCodec(predictor="ema").decompress(data, 100, 8), spikes
         )
+
+
+class TestPythonFallbackFunctions:
+    """Direct tests for Python fallback functions.
+
+    These are never hit when the Rust engine is available (CI builds Rust).
+    Testing them directly ensures 100% coverage regardless of Rust availability.
+    """
+
+    def test_predict_and_xor_roundtrip(self):
+        from sc_neurocore.spike_codec.predictive_codec import (
+            _predict_and_xor,
+            _xor_and_recover,
+        )
+
+        rng = np.random.RandomState(42)
+        spikes = (rng.random((200, 16)) < 0.05).astype(np.int8)
+        errors, correct = _predict_and_xor(spikes, 16, 0.005, 0.5)
+        assert errors.shape == spikes.shape
+        assert correct >= 0
+        recovered = _xor_and_recover(errors, 16, 0.005, 0.5)
+        np.testing.assert_array_equal(recovered, spikes)
+
+    def test_predict_and_xor_silent(self):
+        from sc_neurocore.spike_codec.predictive_codec import (
+            _predict_and_xor,
+            _xor_and_recover,
+        )
+
+        spikes = np.zeros((100, 8), dtype=np.int8)
+        errors, correct = _predict_and_xor(spikes, 8, 0.01, 0.5)
+        assert correct == 800  # all correct (predict 0, actual 0)
+        recovered = _xor_and_recover(errors, 8, 0.01, 0.5)
+        np.testing.assert_array_equal(recovered, spikes)
+
+    def test_lfsr16_step(self):
+        from sc_neurocore.spike_codec.predictive_codec import _lfsr16_step
+
+        reg = 0xACE1
+        seen = set()
+        for _ in range(100):
+            reg = _lfsr16_step(reg)
+            assert 0 <= reg <= 0xFFFF
+            seen.add(reg)
+        assert len(seen) == 100  # no short cycle
+
+    def test_predict_and_xor_lfsr_roundtrip(self):
+        from sc_neurocore.spike_codec.predictive_codec import (
+            _predict_and_xor_lfsr,
+            _xor_and_recover_lfsr,
+        )
+
+        rng = np.random.RandomState(42)
+        spikes = (rng.random((200, 16)) < 0.05).astype(np.int8)
+        errors, correct = _predict_and_xor_lfsr(spikes, 16, 1, 0xACE1)
+        assert errors.shape == spikes.shape
+        assert correct >= 0
+        recovered = _xor_and_recover_lfsr(errors, 16, 1, 0xACE1)
+        np.testing.assert_array_equal(recovered, spikes)
+
+    def test_predict_and_xor_lfsr_all_firing(self):
+        from sc_neurocore.spike_codec.predictive_codec import (
+            _predict_and_xor_lfsr,
+            _xor_and_recover_lfsr,
+        )
+
+        spikes = np.ones((50, 4), dtype=np.int8)
+        errors, _ = _predict_and_xor_lfsr(spikes, 4, 50, 0xBEEF)
+        recovered = _xor_and_recover_lfsr(errors, 4, 50, 0xBEEF)
+        np.testing.assert_array_equal(recovered, spikes)
+
+
+class TestPythonFallbackPath:
+    """Force Python path through the class by monkeypatching _HAS_RUST."""
+
+    def test_ema_python_path(self, monkeypatch):
+        import sc_neurocore.spike_codec.predictive_codec as mod
+
+        monkeypatch.setattr(mod, "_HAS_RUST", False)
+        rng = np.random.RandomState(42)
+        spikes = (rng.random((200, 16)) < 0.05).astype(np.int8)
+        codec = PredictiveSpikeCodec(predictor="ema")
+        data, result = codec.compress(spikes)
+        recovered = codec.decompress(data, 200, 16)
+        np.testing.assert_array_equal(recovered, spikes)
+        assert result.predictor_type == "ema"
+
+    def test_lfsr_python_path(self, monkeypatch):
+        import sc_neurocore.spike_codec.predictive_codec as mod
+
+        monkeypatch.setattr(mod, "_HAS_RUST", False)
+        rng = np.random.RandomState(42)
+        spikes = (rng.random((200, 16)) < 0.05).astype(np.int8)
+        codec = PredictiveSpikeCodec(predictor="lfsr", alpha_q8=1, seed=0xACE1)
+        data, result = codec.compress(spikes)
+        recovered = codec.decompress(data, 200, 16)
+        np.testing.assert_array_equal(recovered, spikes)
+        assert result.predictor_type == "lfsr"

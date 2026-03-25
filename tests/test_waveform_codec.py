@@ -75,3 +75,48 @@ class TestWaveformCodec:
         assert result.n_samples == 2000
         assert result.spike_bytes > 0 or result.n_spikes_detected == 0
         assert result.background_bytes > 0
+
+    def test_spike_near_edge_pads_snippet(self):
+        """Spike at end of recording: clip shorter than snippet_samples, triggers padding."""
+        rng = np.random.RandomState(42)
+        waveform = rng.randn(100, 4).astype(np.float32) * 50.0
+        # Inject spike very close to end — snippet will be shorter than 48
+        waveform[97:100, 0] = -500.0
+        codec = WaveformCodec(threshold_sigma=3.0, snippet_samples=48)
+        data, result = codec.compress(waveform)
+        assert isinstance(data, bytes)
+
+    def test_template_matching_reuses_template(self):
+        """Repeated identical spike shapes trigger template match (best_corr >= threshold)."""
+        rng = np.random.RandomState(42)
+        waveform = rng.randn(5000, 4).astype(np.float32) * 20.0
+        # Same spike template repeated many times per channel
+        template = np.zeros(30, dtype=np.float32)
+        template[10:15] = -400.0
+        template[15:20] = 200.0
+        for ch in range(4):
+            for i in range(15):
+                t = 200 + i * 300
+                if t + 30 < 5000:
+                    waveform[t : t + 30, ch] += template
+        codec = WaveformCodec(threshold_sigma=3.0, max_templates=16, template_threshold=0.7)
+        data, result = codec.compress(waveform)
+        assert result.n_spikes_detected > 5
+        assert result.n_templates >= 1
+
+    def test_very_short_recording_skips_downsample(self):
+        """T < downsample factor (4): background returned without downsampling."""
+        rng = np.random.RandomState(42)
+        waveform = rng.randn(3, 2).astype(np.float32) * 50.0
+        codec = WaveformCodec(threshold_sigma=10.0)
+        data, result = codec.compress(waveform)
+        assert isinstance(data, bytes)
+        assert result.compression_ratio >= 0.1
+
+    def test_empty_background(self):
+        """Empty background array produces empty compressed bytes."""
+        from sc_neurocore.spike_codec.waveform_codec import WaveformCodec
+
+        codec = WaveformCodec()
+        result = codec._compress_background(np.array([]).reshape(0, 0))
+        assert result == b""
