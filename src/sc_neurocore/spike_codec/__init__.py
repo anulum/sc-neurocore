@@ -12,6 +12,7 @@ from .predictive_codec import PredictiveSpikeCodec, PredictiveCompressionResult
 from .delta_codec import DeltaSpikeCodec, DeltaCompressionResult
 from .streaming_codec import StreamingSpikeCodec, StreamingCompressionResult
 from .aer_codec import AERSpikeCodec, AERCompressionResult
+from .registry import get_codec, list_codecs, recommend_codec
 
 __all__ = [
     "SpikeCodec",
@@ -24,4 +25,7 @@ __all__ = [
     "StreamingCompressionResult",
     "AERSpikeCodec",
     "AERCompressionResult",
+    "get_codec",
+    "list_codecs",
+    "recommend_codec",
 ]

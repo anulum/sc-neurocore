@@ -1,122 +1,161 @@
-# BCI Spike Codec
+# Spike Codec Library
 
-Spike train compression for brain-computer interface telemetry.
+Spike train compression for neural recording, BCI telemetry, and neuromorphic routing.
 
 ## The Problem
 
-High-density neural implants (Neuralink N1: 1,024 electrodes at 20 kHz, 10-bit)
-generate ~200 Mbps raw data. Wireless uplinks deliver 10-20 Mbps. The gap
-requires 10-200x compression running on-implant under severe constraints:
-<10 mW power, <1 ms latency, deterministic worst-case.
+| System | Channels | Raw Rate | Uplink | Gap |
+|--------|----------|----------|--------|-----|
+| Neuralink N1 (2026) | 1,024 | 200 Mbps | 10-20 Mbps | 10-20x |
+| Neuralink next-gen | 3,000-10,000 | 600-2000 Mbps | 10-20 Mbps | 60-200x |
+| Neuropixels 2.0 | 384 | 30 Mbps | storage | archival |
+| Loihi 2 inter-chip | variable | event-based | NoC | routing overhead |
+| Closed-loop BCI | 256-1024 | 200 Mbps | on-chip | <1ms latency |
 
-Scaling to 3,000-10,000+ channels (Neuralink 2026+ roadmap) makes this 3-10x worse.
-
-## SC-NeuroCore Solution
-
-Two-layer codec architecture:
-
-1. **ISI Codec** (`SpikeCodec`) — baseline compression via inter-spike interval
-   encoding with LEB128 variable-length integers. Exploits sparsity: cortical
-   neurons fire at 0.5-5 Hz, so >99.9% of time bins are zeros. Achieves 50-200x
-   on typical data.
-
-2. **Predictive Codec** (`PredictiveSpikeCodec`) — surprise-only transmission.
-   Maintains a per-channel firing rate predictor (exponential moving average).
-   XORs actual spikes against predictions. Compresses only the prediction errors.
-   Removes structured correlations (bursts, oscillations, drift) that ISI alone
-   cannot exploit.
-
-### Architecture Diagram
-
-```
-Encoder (on-implant)                    Decoder (external)
-┌─────────────────────┐                ┌─────────────────────┐
-│ actual spikes (T,N) │                │ compressed bytes    │
-│         │           │                │         │           │
-│    ┌────▼────┐      │                │    ┌────▼────┐      │
-│    │Predictor│◄──┐  │                │    │ISI Decode│      │
-│    │ (EMA)   │   │  │                │    └────┬────┘      │
-│    └────┬────┘   │  │                │         │           │
-│         │predict │  │                │    error matrix     │
-│    ┌────▼────┐   │  │                │         │           │
-│    │  XOR    │   │  │                │    ┌────▼────┐      │
-│    └────┬────┘   │  │                │    │  XOR    │      │
-│         │error   │  │                │    └────┬────┘      │
-│    ┌────▼────┐   │  │                │         │           │
-│    │ISI Encode│  │  │                │    ┌────▼────┐      │
-│    └────┬────┘   │  │                │    │Predictor│◄──┐  │
-│         │        │  │                │    │ (EMA)   │   │  │
-│    compressed   update              │    └────┬────┘   │  │
-│    bytes         │  │                │         │      update│
-│                  └──┘                │    recovered     │  │
-│                                      │    spikes       └──┘ │
-└─────────────────────┘                └─────────────────────┘
-```
-
-Both sides run identical predictors. Encoder updates predictor with actual spikes.
-Decoder recovers actual spikes first (XOR error with prediction), then updates
-its predictor with the recovered spikes. Deterministic — no state synchronization
-needed.
-
-## Quick Start
+## Five Codecs, One API
 
 ```python
-import numpy as np
-from sc_neurocore.spike_codec import PredictiveSpikeCodec, SpikeCodec
+from sc_neurocore.spike_codec import get_codec, recommend_codec, list_codecs
 
-# Generate synthetic spike data: 1024 channels, 1 second at 20 kHz
-rng = np.random.RandomState(42)
-spikes = (rng.random((20000, 1024)) < 0.001).astype(np.int8)  # ~1 Hz firing
+# Auto-select based on your system
+name = recommend_codec(n_channels=1024, firing_rate=2.0, latency_ms=5.0)
+codec = get_codec(name)
 
-# Baseline ISI codec
-baseline = SpikeCodec(mode="lossless")
-raw_data, raw_result = baseline.compress(spikes)
-print(raw_result.summary())
+# Or pick directly
+codec = get_codec("predictive", alpha=0.005)
 
-# Predictive codec — should beat baseline on structured data
-codec = PredictiveSpikeCodec(alpha=0.005, threshold=0.5)
-pred_data, pred_result = codec.compress(spikes)
-print(f"Predictive: {pred_result.compression_ratio:.1f}x, "
-      f"prediction accuracy: {pred_result.prediction_accuracy:.1%}, "
-      f"error sparsity: {pred_result.error_sparsity:.1%}")
-
-# Lossless roundtrip
-recovered = codec.decompress(pred_data, 20000, 1024)
-assert np.array_equal(recovered, spikes)
+# All codecs: compress(spikes) → (bytes, result), decompress(bytes, T, N) → spikes
+data, result = codec.compress(spikes)
+recovered = codec.decompress(data, T, N)
 ```
 
-## Parameters
+| Codec | Best For | Strategy | Compression |
+|-------|----------|----------|-------------|
+| `isi` | General purpose | ISI + LEB128 varint | 50-200x (sparse) |
+| `predictive` | BCI implants | EMA predictor + XOR errors | 10-15x + structure |
+| `delta` | Neural probes | Inter-channel XOR residuals | 2-5x over ISI (correlated) |
+| `streaming` | Real-time BCI | Fixed-latency bitmask frames | bounded worst-case |
+| `aer` | Neuromorphic | Event list (timestamp, neuron_id) | 40x+ (sparse) |
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `alpha` | 0.005 | EMA smoothing factor. Higher = faster adaptation. 0.001-0.01 for 20 kHz. |
-| `threshold` | 0.5 | Predicted rate above this → predict spike. Tune to firing rate. |
-| `base_mode` | 'lossless' | 'lossless' or 'lossy' for underlying ISI codec. |
-| `timing_precision` | 1 | Lossy mode: quantize timing to this resolution. |
+## ISI Codec (Baseline)
 
-## Hardware Mapping
+Inter-spike interval encoding with LEB128 variable-length integers. Per-neuron
+spike times → differences → varint bytes. Exploits sparsity: cortical neurons
+fire at 0.5-5 Hz, so >99.9% of time bins are zeros.
 
-The predictive codec maps to on-implant ASIC:
+```python
+from sc_neurocore.spike_codec import SpikeCodec
 
-- **EMA update**: one multiply-accumulate per channel per timestep (or fixed-point shift-add)
-- **Threshold compare**: one comparator per channel
-- **XOR**: one gate per channel per timestep
-- **ISI encoder**: counter + LEB128 shift register per channel
+codec = SpikeCodec(mode="lossless")  # or "lossy" with timing_precision
+data, result = codec.compress(spikes)
+print(result.summary())
+```
 
-Total gate count for 1024 channels: ~50K gates (excluding ISI FIFO).
-Power estimate: <1 mW at 7nm (dominated by SRAM for ISI buffers).
+## Predictive Codec (BCI Implants)
 
-The Verilog RTL in `hdl/` provides verified building blocks:
-`sc_aer_encoder.v` (priority encoder), `sc_lif_neuron.v` (Q8.8 fixed-point),
-`sc_bitstream_encoder.v` (LFSR comparator).
+Only transmit surprises. EMA predictor learns per-channel firing rates.
+XOR actual vs predicted → compress only error bits.
+
+```
+Encoder:                          Decoder:
+  predict → XOR → ISI encode       ISI decode → XOR → recover
+      ↑                                              ↑
+      └── update(actual)                 update(recovered) ──┘
+```
+
+Encoder and decoder run identical predictors. Deterministic, no state sync.
+
+```python
+from sc_neurocore.spike_codec import PredictiveSpikeCodec
+
+codec = PredictiveSpikeCodec(alpha=0.005, threshold=0.5)
+data, result = codec.compress(spikes)
+print(f"{result.compression_ratio:.1f}x, accuracy: {result.prediction_accuracy:.1%}")
+```
+
+### Hardware Mapping
+
+- EMA update: one MAC per channel per timestep (or shift-add in fixed-point)
+- Threshold compare: one comparator per channel
+- XOR: one gate per channel per timestep
+- ISI encoder: counter + LEB128 shift register per channel
+- Verilog building blocks in `hdl/`: `sc_aer_encoder.v`, `sc_lif_neuron.v`
+
+## Delta Codec (Neural Probes)
+
+Exploits spatial correlation on probe arrays. Groups channels, picks reference
+(highest spike count), XOR-encodes others as delta residuals.
+
+```python
+from sc_neurocore.spike_codec import DeltaSpikeCodec
+
+# Neuropixels: 384 channels, nearby electrodes correlated
+codec = DeltaSpikeCodec(group_size=8)
+data, result = codec.compress(spikes)
+print(f"{result.compression_ratio:.1f}x, delta sparsity: {result.mean_delta_sparsity:.1%}")
+```
+
+## Streaming Codec (Real-Time)
+
+Fixed-size time windows, each independently decodable. Bounded worst-case
+latency = window_size / sample_rate.
+
+```python
+from sc_neurocore.spike_codec import StreamingSpikeCodec
+
+# 1ms windows at 20kHz = 20 samples per frame
+codec = StreamingSpikeCodec(window_size=20)
+data, result = codec.compress(spikes)
+
+# Frame-level API for real-time use
+frame = codec.compress_frame(window)  # single window
+recovered = codec.decompress_frame(frame)
+```
+
+## AER Codec (Neuromorphic)
+
+Address-Event Representation: compact (timestamp_delta, neuron_id) event stream.
+Compatible with `comm/aer_udp.py` protocol. Delta-encodes timestamps for
+compression. O(n_spikes) bytes.
+
+```python
+from sc_neurocore.spike_codec import AERSpikeCodec
+
+codec = AERSpikeCodec()
+data, result = codec.compress(spikes)
+print(f"{result.compression_ratio:.1f}x, {result.n_events} events, "
+      f"{result.bytes_per_event:.1f} bytes/event")
+```
+
+## Codec Selection Guide
+
+```python
+from sc_neurocore.spike_codec import recommend_codec
+
+# Auto-recommend based on constraints
+name = recommend_codec(
+    n_channels=1024,
+    firing_rate=2.0,        # Hz per neuron
+    latency_ms=5.0,         # max acceptable latency
+    correlated=False,       # nearby channels correlated?
+    neuromorphic=False,     # target is neuromorphic hardware?
+)
+```
+
+Decision logic:
+
+1. Neuromorphic target → `aer`
+2. Latency ≤ 1ms → `streaming`
+3. Correlated channels, N ≥ 16 → `delta`
+4. High channel count (N ≥ 64) → `predictive`
+5. Default → `isi`
 
 ## API Reference
 
-::: sc_neurocore.spike_codec.predictive_codec.PredictiveSpikeCodec
+::: sc_neurocore.spike_codec.registry
     options:
       show_source: true
       members:
-        - compress
-        - decompress
-
-::: sc_neurocore.spike_codec.predictive_codec.PredictiveCompressionResult
+        - get_codec
+        - list_codecs
+        - recommend_codec
