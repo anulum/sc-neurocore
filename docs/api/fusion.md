@@ -1,12 +1,15 @@
-# Multimodal Spike Fusion
+# Multimodal Fusion
 
-Cross-sensor spike train fusion for multi-modal SNN processing.
+Multimodal spike train fusion for cross-sensor SNN processing.
 
-## Fusion Layer
+- `MultimodalFuser` — Combine spike streams from different modalities (vision, audio, proprioception) into a unified representation. Supports temporal alignment, cross-modal attention, and late/early/hybrid fusion strategies.
 
-::: sc_neurocore.fusion.multimodal
+```python
+from sc_neurocore.fusion import MultimodalFuser
+```
+
+See [Tutorial 49: Multimodal Fusion](../tutorials/49_multimodal_fusion.md).
+
+::: sc_neurocore.fusion
     options:
       show_root_heading: true
-      members:
-        - MultiModalFusion
-        - ModalityConfig

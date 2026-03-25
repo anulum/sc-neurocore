@@ -1,13 +1,16 @@
-# Cross-Platform Profiler
+# Platform Profiler
 
-Compare SNN performance across CPU, Rust, and FPGA platforms.
+Cross-platform SNN performance profiler (CPU, GPU, Rust, simulated FPGA).
 
-## Profiler
+```python
+from sc_neurocore.profiler import PlatformProfiler
 
-::: sc_neurocore.profiler.platform_profiler
+profiler = PlatformProfiler()
+report = profiler.profile(model, inputs, backends=["python", "rust"])
+```
+
+See [Tutorial 43: Platform Profiler](../tutorials/43_platform_profiler.md).
+
+::: sc_neurocore.profiler
     options:
       show_root_heading: true
-      members:
-        - compare
-        - format_table
-        - PlatformResult

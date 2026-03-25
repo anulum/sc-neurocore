@@ -1,15 +1,16 @@
-# Spike-Domain Augmentation & Curriculum Learning
+# Spike Augmentation
 
-Spike-native data augmentation and curriculum scheduling for SNN training.
+Spike-aware data augmentation: temporal jitter, spike dropout, rate scaling, noise injection, time reversal. Preserves spike structure unlike image augmentation.
 
-## Spike Augmentation
+```python
+from sc_neurocore.augmentation import SpikeAugmenter
 
-::: sc_neurocore.augmentation.spike_augment.SpikeAugment
-    options:
-      show_root_heading: true
+aug = SpikeAugmenter(jitter_ms=1.0, dropout_rate=0.1)
+augmented = aug.transform(spike_train)
+```
 
-## Curriculum Learning
+See [Tutorial 57: Spike Augmentation](../tutorials/57_spike_augmentation.md).
 
-::: sc_neurocore.augmentation.curriculum.SpikeCurriculum
+::: sc_neurocore.augmentation
     options:
       show_root_heading: true

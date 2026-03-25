@@ -1,13 +1,14 @@
-# FPGA Resource Optimizer
+# Resource Optimizer
 
-Automatically compress an SNN to fit a target FPGA.
+Compress an SNN to fit a target FPGA (LUT/BRAM/DSP constraints).
 
-## Optimizer
+```python
+from sc_neurocore.optimizer import ResourceOptimizer
 
-::: sc_neurocore.optimizer.resource_optimizer
+opt = ResourceOptimizer(target_luts=10000, target_bram=36)
+compressed = opt.optimize(model)
+```
+
+::: sc_neurocore.optimizer
     options:
       show_root_heading: true
-      members:
-        - fit_to_target
-        - OptimizationResult
-        - OptimizationStep

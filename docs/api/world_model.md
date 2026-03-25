@@ -1,11 +1,14 @@
 # World Model
 
-Internal world model for planning and prediction in spiking agents.
+Predictive state transition models for spike-domain planning.
 
-## Planner
+- `PredictiveWorldModel` — Learns `state_next = f(state, action)` in probability domain. Linear transition matrix, clip to [0,1]. Stub for future learnable world models.
+- `SCPlanner` — Action selection via predictive rollouts using the world model.
 
-::: sc_neurocore.world_model.planner
+```python
+from sc_neurocore.world_model import PredictiveWorldModel, SCPlanner
+```
 
-## Predictive Model
-
-::: sc_neurocore.world_model.predictive_model
+::: sc_neurocore.world_model
+    options:
+      show_root_heading: true
