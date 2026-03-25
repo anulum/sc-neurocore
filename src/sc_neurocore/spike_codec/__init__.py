@@ -10,6 +10,7 @@
 from .codec import SpikeCodec, CompressionResult
 from .predictive_codec import PredictiveSpikeCodec, PredictiveCompressionResult
 from .delta_codec import DeltaSpikeCodec, DeltaCompressionResult
+from .streaming_codec import StreamingSpikeCodec, StreamingCompressionResult
 
 __all__ = [
     "SpikeCodec",
@@ -18,4 +19,6 @@ __all__ = [
     "PredictiveCompressionResult",
     "DeltaSpikeCodec",
     "DeltaCompressionResult",
+    "StreamingSpikeCodec",
+    "StreamingCompressionResult",
 ]
