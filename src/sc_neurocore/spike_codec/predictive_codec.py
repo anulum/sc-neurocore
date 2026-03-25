@@ -87,7 +87,7 @@ class _RatePredictor:
 
 
 def _predict_and_xor(spikes: np.ndarray, N: int, alpha: float, threshold: float):
-    """Vectorized predict-XOR loop. Returns (errors, correct_count)."""
+    """EMA predict-XOR loop. Returns (errors, correct_count)."""
     T = spikes.shape[0]
     rates = np.zeros(N, dtype=np.float64)
     errors = np.empty_like(spikes)
@@ -105,7 +105,7 @@ def _predict_and_xor(spikes: np.ndarray, N: int, alpha: float, threshold: float)
 
 
 def _xor_and_recover(errors: np.ndarray, N: int, alpha: float, threshold: float):
-    """Vectorized XOR-recover loop for decoder."""
+    """EMA XOR-recover loop for decoder."""
     T = errors.shape[0]
     rates = np.zeros(N, dtype=np.float64)
     spikes = np.empty((T, N), dtype=np.int8)
@@ -120,12 +120,116 @@ def _xor_and_recover(errors: np.ndarray, N: int, alpha: float, threshold: float)
     return spikes
 
 
+# --- SC-native LFSR predictor (bit-true with sc_bitstream_encoder.v) ---
+
+# LFSR-16 polynomial: x^16 + x^14 + x^13 + x^11 + 1
+# Taps (0-indexed from MSB): 15, 13, 12, 10
+_LFSR_MASK = 0xFFFF
+
+
+def _lfsr16_step(reg: int) -> int:
+    """One step of 16-bit Galois LFSR. Matches sc_bitstream_encoder.v."""
+    feedback = ((reg >> 15) ^ (reg >> 13) ^ (reg >> 12) ^ (reg >> 10)) & 1
+    return ((reg << 1) & _LFSR_MASK) | feedback
+
+
+def _predict_and_xor_lfsr(
+    spikes: np.ndarray,
+    N: int,
+    alpha_q8: int,
+    seed: int,
+):
+    """LFSR-based predict-XOR loop. Bit-true with Verilog.
+
+    Uses Q8.8 fixed-point rate tracking + LFSR comparator for prediction.
+    Same polynomial and step semantics as sc_bitstream_encoder.v.
+
+    Parameters
+    ----------
+    spikes : (T, N) int8
+    N : int
+    alpha_q8 : int
+        Q8.8 smoothing factor. 1 = 1/256 ≈ 0.004.
+    seed : int
+        LFSR seed (non-zero, 16-bit).
+    """
+    T = spikes.shape[0]
+    # Per-channel Q8.8 rate estimates (0-255 maps to 0.0-~1.0)
+    rates_q8 = np.zeros(N, dtype=np.int32)
+    errors = np.empty_like(spikes)
+    correct = 0
+
+    # Per-channel LFSR state (different seed per channel for decorrelation)
+    lfsr_regs = np.array(
+        [((seed + ch * 7919) & _LFSR_MASK) or 1 for ch in range(N)],
+        dtype=np.int32,
+    )
+
+    for t in range(T):
+        row = spikes[t]
+
+        # Predict: LFSR < rate_q8 → predict spike (same as Verilog comparator)
+        predicted = (lfsr_regs < rates_q8).astype(np.int8)
+
+        # Step all LFSRs
+        for ch in range(N):
+            lfsr_regs[ch] = _lfsr16_step(int(lfsr_regs[ch]))
+
+        # XOR
+        errors[t] = row ^ predicted
+        correct += N - int(np.count_nonzero(errors[t]))
+
+        # Q8.8 EMA update: rate += alpha * (actual - rate) >> 8
+        # Equivalent: rate = rate + alpha * (actual*256 - rate) >> 8
+        for ch in range(N):
+            target = 255 if row[ch] else 0
+            rates_q8[ch] += (alpha_q8 * (target - rates_q8[ch])) >> 8
+            rates_q8[ch] = max(0, min(255, rates_q8[ch]))
+
+    return errors, correct
+
+
+def _xor_and_recover_lfsr(
+    errors: np.ndarray,
+    N: int,
+    alpha_q8: int,
+    seed: int,
+):
+    """LFSR-based XOR-recover loop for decoder."""
+    T = errors.shape[0]
+    rates_q8 = np.zeros(N, dtype=np.int32)
+    spikes = np.empty((T, N), dtype=np.int8)
+
+    lfsr_regs = np.array(
+        [((seed + ch * 7919) & _LFSR_MASK) or 1 for ch in range(N)],
+        dtype=np.int32,
+    )
+
+    for t in range(T):
+        predicted = (lfsr_regs < rates_q8).astype(np.int8)
+
+        for ch in range(N):
+            lfsr_regs[ch] = _lfsr16_step(int(lfsr_regs[ch]))
+
+        row = errors[t] ^ predicted
+        spikes[t] = row
+
+        for ch in range(N):
+            target = 255 if row[ch] else 0
+            rates_q8[ch] += (alpha_q8 * (target - rates_q8[ch])) >> 8
+            rates_q8[ch] = max(0, min(255, rates_q8[ch]))
+
+    return spikes
+
+
 class PredictiveSpikeCodec:
     """Predictive spike codec: compress prediction errors, not raw spikes.
 
-    Operates on spike rasters (T, N) where T = timesteps, N = channels.
-    Encoder and decoder maintain identical predictors, so reconstruction
-    is lossless despite only transmitting error bits.
+    Two predictor modes:
+        'ema' (default): float EMA rate tracking + threshold comparison.
+        'lfsr': Q8.8 fixed-point rate + LFSR comparator. Bit-true with
+                sc_bitstream_encoder.v — the prediction logic maps directly
+                to Verilog RTL. No float arithmetic, no multipliers.
 
     Compression pipeline:
         1. For each timestep t:
@@ -133,14 +237,20 @@ class PredictiveSpikeCodec:
            b. error[t] = actual[t] XOR predicted[t]
            c. predictor.update(actual[t])
         2. ISI-compress the error matrix (sparser than raw spikes)
-        3. Pack with header: T, N, alpha, threshold (decoder needs these)
+        3. Pack with header (predictor params for decoder sync)
 
     Parameters
     ----------
     alpha : float
-        EMA smoothing factor for rate predictor.
+        EMA smoothing factor (ema mode). Ignored in lfsr mode.
     threshold : float
-        Spike prediction threshold.
+        Spike prediction threshold (ema mode). Ignored in lfsr mode.
+    predictor : str
+        'ema' (float EMA) or 'lfsr' (SC-native, bit-true with Verilog).
+    alpha_q8 : int
+        Q8.8 smoothing factor for lfsr mode. 1 = 1/256 ≈ 0.004.
+    seed : int
+        LFSR seed for lfsr mode (non-zero, 16-bit).
     base_mode : str
         'lossless' or 'lossy' for the underlying ISI codec.
     timing_precision : int
@@ -148,16 +258,23 @@ class PredictiveSpikeCodec:
     """
 
     HEADER_MAGIC = b"PSCX"  # Predictive Spike Codec XOR
+    HEADER_MAGIC_LFSR = b"PSCL"  # Predictive Spike Codec LFSR
 
     def __init__(
         self,
         alpha: float = 0.005,
         threshold: float = 0.5,
+        predictor: str = "ema",
+        alpha_q8: int = 1,
+        seed: int = 0xACE1,
         base_mode: str = "lossless",
         timing_precision: int = 1,
     ):
         self.alpha = alpha
         self.threshold = threshold
+        self.predictor = predictor
+        self.alpha_q8 = alpha_q8
+        self.seed = seed
         self.base_codec = SpikeCodec(mode=base_mode, timing_precision=timing_precision)
 
     def compress(self, spikes: np.ndarray) -> tuple[bytes, PredictiveCompressionResult]:
@@ -177,13 +294,26 @@ class PredictiveSpikeCodec:
         T, N = spikes.shape
         original_bits = T * N
 
-        errors, correct_predictions = _predict_and_xor(spikes, N, self.alpha, self.threshold)
+        if self.predictor == "lfsr":
+            errors, correct_predictions = _predict_and_xor_lfsr(
+                spikes,
+                N,
+                self.alpha_q8,
+                self.seed,
+            )
+            error_data, _ = self.base_codec.compress(errors)
+            header = self.HEADER_MAGIC_LFSR + struct.pack("!HH", self.alpha_q8, self.seed)
+        else:
+            errors, correct_predictions = _predict_and_xor(
+                spikes,
+                N,
+                self.alpha,
+                self.threshold,
+            )
+            error_data, _ = self.base_codec.compress(errors)
+            header = self.HEADER_MAGIC + struct.pack("!dd", self.alpha, self.threshold)
 
-        error_data, _ = self.base_codec.compress(errors)
-
-        header = self.HEADER_MAGIC + struct.pack("!dd", self.alpha, self.threshold)
         encoded = header + error_data
-
         compressed_bits = len(encoded) * 8
         ratio = original_bits / max(compressed_bits, 1)
 
@@ -197,14 +327,14 @@ class PredictiveSpikeCodec:
             lossless=self.base_codec.mode == "lossless",
             prediction_accuracy=correct_predictions / max(T * N, 1),
             error_sparsity=1.0 - (int(np.sum(errors)) / max(T * N, 1)),
-            predictor_type="ema",
+            predictor_type=self.predictor,
         )
 
     def decompress(self, data: bytes, T: int, N: int) -> np.ndarray:
         """Decompress to spike raster.
 
         Runs identical predictor on decoder side. XOR(error, predicted)
-        recovers original spikes.
+        recovers original spikes. Predictor type auto-detected from header.
 
         Parameters
         ----------
@@ -220,11 +350,19 @@ class PredictiveSpikeCodec:
         import struct
 
         magic = data[:4]
-        if magic != self.HEADER_MAGIC:
-            raise ValueError(f"Invalid header magic: {magic!r}, expected {self.HEADER_MAGIC!r}")
 
-        alpha, threshold = struct.unpack("!dd", data[4:20])
-        error_data = data[20:]
+        if magic == self.HEADER_MAGIC_LFSR:
+            alpha_q8, seed = struct.unpack("!HH", data[4:8])
+            error_data = data[8:]
+            errors = self.base_codec.decompress(error_data, T, N)
+            return _xor_and_recover_lfsr(errors, N, alpha_q8, seed)
 
-        errors = self.base_codec.decompress(error_data, T, N)
-        return _xor_and_recover(errors, N, alpha, threshold)
+        if magic == self.HEADER_MAGIC:
+            alpha, threshold = struct.unpack("!dd", data[4:20])
+            error_data = data[20:]
+            errors = self.base_codec.decompress(error_data, T, N)
+            return _xor_and_recover(errors, N, alpha, threshold)
+
+        raise ValueError(
+            f"Invalid header magic: {magic!r}, expected {self.HEADER_MAGIC!r} or {self.HEADER_MAGIC_LFSR!r}"
+        )
