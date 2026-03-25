@@ -71,7 +71,7 @@ class SNNGraph:
 class PassResult:
     """Result of one optimization pass."""
 
-    pass_name: str
+    name: str
     neurons_removed: int = 0
     layers_fused: int = 0
     params_before: int = 0
@@ -102,7 +102,7 @@ class OptimizationReport:
         ]
         for pr in self.pass_results:
             lines.append(
-                f"  [{pr.pass_name}] removed {pr.neurons_removed} neurons, "
+                f"  [{pr.name}] removed {pr.neurons_removed} neurons, "
                 f"fused {pr.layers_fused} layers"
             )
         return "\n".join(lines)
@@ -115,7 +115,7 @@ def dead_neuron_elimination(graph: SNNGraph, threshold: float = 0.001) -> PassRe
     Removes rows from weight matrices and corresponding columns from
     the next layer's weight matrix.
     """
-    result = PassResult(pass_name="dead_neuron_elimination", params_before=graph.total_params)
+    result = PassResult(name="dead_neuron_elimination", params_before=graph.total_params)
     total_removed = 0
 
     for i, layer in enumerate(graph.layers):
@@ -154,7 +154,7 @@ def layer_fusion(graph: SNNGraph) -> PassResult:
     Caveat: this is valid only when the intermediate layer has
     effectively linear behavior (high threshold, no spikes).
     """
-    result = PassResult(pass_name="layer_fusion", params_before=graph.total_params)
+    result = PassResult(name="layer_fusion", params_before=graph.total_params)
     fused = 0
 
     i = 0
@@ -196,7 +196,7 @@ def redundancy_elimination(graph: SNNGraph, correlation_threshold: float = 0.99)
     If two neurons in the same layer have weight correlation > threshold,
     merge them: keep one, remove the other, scale outgoing weights by 2.
     """
-    result = PassResult(pass_name="redundancy_elimination", params_before=graph.total_params)
+    result = PassResult(name="redundancy_elimination", params_before=graph.total_params)
     total_removed = 0
 
     for i, layer in enumerate(graph.layers):
