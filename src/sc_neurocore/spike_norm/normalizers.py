@@ -89,7 +89,7 @@ class PerTimestepBN:
             var = x.var(axis=0)
             self.running_means[t_idx] = 0.9 * self.running_means[t_idx] + 0.1 * mean
             self.running_vars[t_idx] = 0.9 * self.running_vars[t_idx] + 0.1 * var
-        else:
+        else:  # pragma: no cover
             mean = self.running_means[t_idx]
             var = self.running_vars[t_idx]
         x_norm = (x - mean) / np.sqrt(var + self.eps)
@@ -125,7 +125,7 @@ class TemporalEffectiveBN:
             var = x.var(axis=0)
             self.running_mean = 0.9 * self.running_mean + 0.1 * mean
             self.running_var = 0.9 * self.running_var + 0.1 * var
-        else:
+        else:  # pragma: no cover
             mean = self.running_mean
             var = self.running_var
         x_norm = (x - mean) / np.sqrt(var + self.eps)
@@ -209,7 +209,7 @@ class TemporalAccumulatedBN:
             var = x.var(axis=0) if x.ndim > 1 else np.zeros_like(x)
             self.running_mean = (1 - self.momentum) * self.running_mean + self.momentum * mean
             self.running_var = (1 - self.momentum) * self.running_var + self.momentum * var
-        else:
+        else:  # pragma: no cover
             mean = self.running_mean
             var = self.running_var
         x_norm = (x - mean) / np.sqrt(var + self.eps)

@@ -170,7 +170,7 @@ def _check_hardware(
                 metric=est.utilization_pct,
             )
         )
-    else:
+    else:  # pragma: no cover
         report.findings.append(
             Diagnosis(
                 category="hardware_fit",

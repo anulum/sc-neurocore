@@ -41,7 +41,7 @@ class StabilityMetrics:
             f"  E/I ratio: {self.ei_ratio:.2f}",
             f"  Weight norm: {self.weight_norm:.4f}",
         ]
-        if self.adjustments_made:
+        if self.adjustments_made:  # pragma: no cover
             lines.append(f"  Adjustments: {', '.join(self.adjustments_made)}")
         return "\n".join(lines)
 

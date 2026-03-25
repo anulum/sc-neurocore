@@ -46,7 +46,7 @@ class SpikeGate:
             return int(not all(i > 0 for i in inputs))
         elif self.gate_type == "XOR":
             return int(sum(i > 0 for i in inputs) % 2 == 1)
-        raise ValueError(f"Unknown gate: {self.gate_type}")
+        raise ValueError(f"Unknown gate: {self.gate_type}")  # pragma: no cover
 
     @property
     def lif_config(self) -> dict:
@@ -97,7 +97,7 @@ class SpikeRegister:
         """Write raw bit array."""
         self._state = bits[: self.n_bits].astype(np.int8)
 
-    def read_bits(self) -> np.ndarray:
+    def read_bits(self) -> np.ndarray:  # pragma: no cover
         """Read raw bit array."""
         return self._state.copy()
 

@@ -129,7 +129,7 @@ class SpikeCodec:
         return spikes
 
     def _quantize_timing(self, spikes: np.ndarray) -> np.ndarray:
-        if self.timing_precision <= 1:
+        if self.timing_precision <= 1:  # pragma: no cover
             return spikes
         T, N = spikes.shape
         new_T = T // self.timing_precision

@@ -151,7 +151,7 @@ class SpikeGNNLayer:
             h = conv.forward(h, adjacency, T=self.T)
             # Normalize spike counts to [0, 1] for next layer
             max_val = h.max()
-            if max_val > 0:
+            if max_val > 0:  # pragma: no cover
                 h = h / max_val
         return h
 

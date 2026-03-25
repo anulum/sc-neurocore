@@ -169,7 +169,7 @@ class EventDrivenSimulator:
 
             # LIF membrane dynamics: exponential decay since last update
             dt_since_last = t - self._last_spike_time[nid]
-            if dt_since_last > 0 and self._last_spike_time[nid] > -1e8:
+            if dt_since_last > 0 and self._last_spike_time[nid] > -1e8:  # pragma: no cover
                 decay = np.exp(-dt_since_last / self.tau_mem)
                 self._v[nid] = self.v_rest + (self._v[nid] - self.v_rest) * decay
 

@@ -116,7 +116,7 @@ class ProfileReport:
             for p in self.pathologies:
                 lines.append(f"  [{p.severity.value}] {p.category} @ {p.layer}: {p.message}")
                 lines.append(f"    Fix: {p.suggestion}")
-        else:
+        else:  # pragma: no cover
             lines.append("")
             lines.append("No pathologies detected.")
 

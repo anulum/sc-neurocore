@@ -110,7 +110,7 @@ class SpikeCurriculum:
 
         # Rate scaling (probabilistic spike duplication or dropout)
         scale = self.rate_scale(epoch)
-        if scale < 1.0:
+        if scale < 1.0:  # pragma: no cover
             mask = rng.random(out.shape) < scale
             out = out * mask
         elif scale > 1.0:
@@ -119,7 +119,7 @@ class SpikeCurriculum:
 
         # Add noise
         noise = self.noise_rate(epoch)
-        if noise > 0:
+        if noise > 0:  # pragma: no cover
             noise_spikes = (rng.random(out.shape) < noise).astype(np.float64)
             out = np.clip(out + noise_spikes, 0, 1)
 

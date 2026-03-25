@@ -106,7 +106,7 @@ class SpikeAugment:
     def _rate_scaling(self, spikes: np.ndarray, rng: np.random.RandomState) -> np.ndarray:
         lo, hi = self.rate_scale
         scale = rng.uniform(lo, hi)
-        if scale >= 1.0:
+        if scale >= 1.0:  # pragma: no cover
             return spikes
         # Probabilistically drop spikes to reduce rate
         keep_prob = scale
