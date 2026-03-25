@@ -361,7 +361,7 @@ class TestEncoding:
 
 class TestLosses:
     def test_spike_count_loss(self):
-        counts = torch.randn(8, 10)
+        counts = torch.randn(8, 10, requires_grad=True)
         targets = torch.randint(0, 10, (8,))
         loss = spike_count_loss(counts, targets)
         assert loss.item() > 0
@@ -451,7 +451,9 @@ class TestUtilities:
     def test_population_decode(self):
         counts = torch.tensor([[0.0, 1.0, 5.0, 0.0]])  # peak at index 2
         decoded = population_decode(counts)
-        assert decoded.item() == pytest.approx(2.166, abs=0.1)  # weighted toward 2
+        # weights = [0, 1/6, 5/6, 0], preferred = [0,1,2,3]
+        # decoded = 1/6*1 + 5/6*2 = 11/6 ≈ 1.833
+        assert decoded.item() == pytest.approx(11 / 6, abs=0.01)
 
     def test_population_decode_with_preferred(self):
         counts = torch.tensor([[0.0, 0.0, 1.0]])
