@@ -7,7 +7,7 @@
 
 """Codec registry: lookup by name, recommend by data characteristics.
 
-Five codecs for different use cases:
+Six codecs for different use cases:
 
     isi         — Baseline ISI + varint. Simple, general-purpose.
     predictive  — EMA predictor + XOR errors. Best for BCI implants.

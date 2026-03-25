@@ -12,7 +12,7 @@ Uses framework-native encoding (seeded RNG for reproducibility, Sobol
 quasi-random for low-discrepancy encoding). Supports windowed encoding
 for streaming BCI pipelines.
 
-For spike compression/telemetry, see spike_codec (5 codecs).
+For spike compression/telemetry, see spike_codec (6 codecs).
 """
 
 from __future__ import annotations

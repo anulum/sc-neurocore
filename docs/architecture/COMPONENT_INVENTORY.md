@@ -130,7 +130,7 @@ that are planned but not yet implemented in this repository.
     *   Dataset loaders (MNIST, SHD, DVS)
 *   **`cli/`**
     *   `sc-neurocore` command-line interface
-*   **`spike_codec/`** — Spike Codec Library (5 codecs, unified API)
+*   **`spike_codec/`** — Spike Codec Library (6 codecs, unified API)
     *   `codec.py`: `SpikeCodec` — ISI + LEB128 varint baseline (50-200x).
     *   `predictive_codec.py`: `PredictiveSpikeCodec` — EMA predictor + XOR error coding for BCI implants.
     *   `delta_codec.py`: `DeltaSpikeCodec` — inter-channel XOR residuals for correlated probe arrays.

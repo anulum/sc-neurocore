@@ -75,7 +75,7 @@ print(f"{result.compression_ratio:.1f}x, {result.n_spikes_detected} spikes detec
 python examples/demo_waveform_codec.py --channels 1024 --duration 1.0
 ```
 
-## Five Codecs, One API
+## Six Codecs, One API
 
 ```python
 from sc_neurocore.spike_codec import get_codec, recommend_codec, list_codecs

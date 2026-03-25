@@ -1,6 +1,6 @@
 # Spike Codec Library
 
-Five codecs for neural data compression — BCI telemetry, neural probes,
+Six codecs for neural data compression — BCI telemetry, neural probes,
 neuromorphic routing, real-time streaming, and general-purpose archival.
 
 All codecs share `compress(spikes) → (bytes, result)` and
