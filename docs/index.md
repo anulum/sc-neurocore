@@ -27,8 +27,8 @@ FPGA deployment.
 - **7 biological circuits** — gap junctions, tripartite synapse (astrocyte), Rall dendrite, cortical column, lateral inhibition, WTA, gamma oscillation
 - **Packed bitwise layers** — 64-bit vectorised AND/MUX/XNOR/NOT/CORDIV for high throughput
 - **Rust SIMD engine** — 41.3 Gbit/s bitstream packing (AVX-512), AVX2/NEON/SVE/RVV dispatch
-- **GPU acceleration** — CuPy backend + JAX JIT training + CuPy sparse GPU
-- **SNN training** — Surrogate gradient training (ATan, FastSigmoid, SuperSpike) with `to_sc_weights()` bridge
+- **GPU acceleration** — PyTorch CUDA + CuPy backend + JAX JIT training
+- **SNN training** — 7 surrogate gradients, 10 differentiable neuron cells (`nn.Module`), SpikingNet + ConvSpikingNet, `to_sc_weights()` bridge to bitstreams
 - **SCPN layer stack** — 16-layer holonomic model (L1 Quantum → L16 Meta) with JAX acceleration
 - **Equation → Verilog compiler** — arbitrary ODE string to synthesizable Q8.8 fixed-point RTL in one function call
 - **Verilog RTL** — 19 synthesisable modules (incl. event-driven AER encoder/router/neuron), 7 formal verification files (67 properties), bit-exact co-simulation
