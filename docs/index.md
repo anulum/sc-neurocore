@@ -95,7 +95,7 @@ See [Architecture](architecture/architecture.md) for the full package map.
 | [FPGA in 20 Minutes](tutorials/fpga_in_20_minutes.md) | Train → quantise → synthesise → deploy |
 | [Rust Engine & Performance](tutorials/05_rust_engine_performance.md) | SIMD tiers, GPU, benchmarking |
 | [Brunel Network Translation](tutorials/06_brunel_network_translation.md) | Brian2 → SC conversion workflow |
-| [Spike Codec Library](tutorials/70_spike_codec.md) | 5 codecs for BCI, probes, neuromorphic, real-time |
+| [Spike Codec Library](tutorials/70_spike_codec.md) | 6 codecs for BCI, probes, neuromorphic, real-time |
 
 ## Documentation
 

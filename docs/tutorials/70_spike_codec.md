@@ -1,7 +1,7 @@
 # Tutorial 70: Spike Codec Library
 
 Compress spike trains for BCI telemetry, neural probes, neuromorphic routing,
-and real-time streaming. Five codecs behind one API.
+and real-time streaming. Six codecs behind one API.
 
 ## The Bandwidth Problem
 
