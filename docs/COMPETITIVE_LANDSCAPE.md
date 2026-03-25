@@ -64,6 +64,26 @@ marked explicitly.
 | conda-forge recipe | **Ready** | Yes | — | — | Yes |
 | PyPI package | Yes | Yes | Yes | Yes | Yes |
 
+### Capability coverage map
+
+```mermaid
+quadrantChart
+    title Framework Capabilities (technical breadth vs FPGA depth)
+    x-axis "Shallow FPGA" --> "Deep FPGA"
+    y-axis "Narrow Scope" --> "Broad Scope"
+    quadrant-1 "Full Stack"
+    quadrant-2 "Broad but no HW"
+    quadrant-3 "Narrow, no HW"
+    quadrant-4 "HW-focused"
+    SC-NeuroCore: [0.85, 0.9]
+    snnTorch: [0.1, 0.65]
+    Norse: [0.1, 0.55]
+    Lava: [0.5, 0.45]
+    Brian2: [0.05, 0.7]
+    Nengo: [0.15, 0.6]
+    Flexi-NeurA: [0.7, 0.3]
+```
+
 ### Where SC-NeuroCore leads
 
 1. **Stochastic computing** — Only framework with bitstream-level

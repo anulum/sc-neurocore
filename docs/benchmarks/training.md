@@ -28,6 +28,16 @@ SC-NeuroCore's training stack provides:
 All cells are `torch.nn.Module` instances with standard PyTorch optimizer
 support.
 
+```mermaid
+pie title Training Stack Components
+    "Neuron Cells" : 10
+    "Surrogate Gradients" : 7
+    "Loss Functions" : 5
+    "Spike Encoders" : 3
+    "Network Architectures" : 2
+    "Delay Layer" : 1
+```
+
 ---
 
 ## MNIST Classification
@@ -79,6 +89,26 @@ end-to-end pathway: **train in PyTorch → export `to_sc_weights()` →
 SC bitstream simulation → Verilog RTL synthesis**. No other framework
 provides this pipeline.
 
+```
+    MNIST Accuracy (%) — SNN frameworks
+    ┌─────────────────────────────────────────────────────────┐
+100 │                                        ████             │
+    │                                        ████  ████       │
+ 99 │                                        ████  ████       │
+    │                                  ████  ████  ████       │
+ 98 │                            ████  ████  ████  ████       │
+    │                      ████  ████  ████  ████  ████       │
+ 97 │                ████  ████  ████  ████  ████  ████       │
+    │          ████  ████  ████  ████  ████  ████  ████       │
+ 96 │    ████  ████  ████  ████  ████  ████  ████  ████       │
+    │    ████  ████  ████  ████  ████  ████  ████  ████       │
+ 95 │    ████  ████  ████  ████  ████  ████  ████  ████       │
+    └────┴────┴────┴────┴────┴────┴────┴────┴────┴────┘
+         Norse snnT  Spk   SC    SC    SC    SC   SpkJelly
+                orch  Net  Feed  Conv  Conv  Conv
+                           FF        +LB  +LB+LT
+```
+
 ---
 
 ## SC Weight Export Fidelity
@@ -94,9 +124,59 @@ length:
 | 2048 bits | ~11 bit | ~94% |
 | 4096 bits | ~12 bit | ~95% |
 
-Longer bitstreams converge toward the float accuracy. The Q8.8 fixed-point
-Verilog RTL (16-bit) provides exact integer arithmetic matching the Python
-simulation bit-for-bit (verified by SymbiYosys formal properties).
+Longer bitstreams converge toward the float accuracy:
+
+```
+    SC Inference Accuracy vs Bitstream Length
+    ┌──────────────────────────────────────────────────┐
+ 95%│                                    ●─────────────│ float target
+    │                              ●                   │
+ 93%│                        ●                         │
+    │                                                  │
+ 91%│                                                  │
+    │                  ●                               │
+ 90%│            ●                                     │
+    │      ●                                           │
+ 88%│●                                                 │
+    └──┬────┬────┬────┬────┬────┬────┬────┬────┬──────┘
+      64  128  256  512  1K   2K   4K   8K   16K
+                   Bitstream length (bits)
+```
+
+The Q8.8 fixed-point Verilog RTL (16-bit) provides exact integer arithmetic
+matching the Python simulation bit-for-bit (verified by SymbiYosys formal
+properties).
+
+```mermaid
+flowchart TB
+    subgraph Train["1. Train (PyTorch)"]
+        T1["SpikingNet / ConvSpikingNet"]
+        T2["surrogate gradient backward"]
+        T1 --> T2
+    end
+    subgraph Export["2. Export"]
+        E1["to_sc_weights()"]
+        E2["weights in 0,1"]
+        E1 --> E2
+    end
+    subgraph Verify["3. Verify"]
+        V1["SC bitstream sim<br/>SCDenseLayer"]
+        V2["Q8.8 co-sim<br/>bit-exact match"]
+        V1 --> V2
+    end
+    subgraph Deploy["4. Deploy"]
+        D1["equation_compiler<br/>→ Verilog RTL"]
+        D2["Yosys synthesis<br/>→ bitstream"]
+        D3["FPGA<br/>ice40 / ECP5 / Artix7"]
+        D1 --> D2 --> D3
+    end
+    Train --> Export --> Verify --> Deploy
+
+    style Train fill:#e1f5fe
+    style Export fill:#e8f5e9
+    style Verify fill:#fff3e0
+    style Deploy fill:#fce4ec
+```
 
 ---
 
@@ -137,9 +217,29 @@ All cells trained on sklearn digits (64→128→10, T=25, 10 epochs):
 | SecondOrderLIFCell | 2 (a, v) | 95.1% | 1.2× | Smooth voltage dynamics |
 | RecurrentLIFCell | 2 (v, s) | 96.2% | 1.4× | Sequences, temporal context |
 
+```
+    Accuracy by Neuron Cell (sklearn digits, 10 epochs)
+    ┌──────────────────────────────────────────────────┐
+ 96%│                                            ████  │ RecurrentLIF
+    │          ████  ████                              │ Synaptic, ALIF
+ 95%│    ████  ████  ████  ████        ████            │ LIF, ExpIF, 2ndOrder
+    │    ████  ████  ████  ████  ████  ████            │ AdEx
+    │    ████  ████  ████  ████  ████  ████  ████      │ Lapicque
+ 94%│    ████  ████  ████  ████  ████  ████  ████      │
+    │    ████  ████  ████  ████  ████  ████  ████ ████ │ Alpha
+ 93%│    ████  ████  ████  ████  ████  ████  ████ ████ │
+    │    ████  ████  ████  ████  ████  ████  ████ ████ │ IF
+    └────┴────┴────┴────┴────┴────┴────┴────┴────┴────┘
+         LIF  Syn  ALIF  2nd  ExpIF AdEx  Lap  Alph  IF  Rec
+```
+
 **Note**: RecurrentLIFCell shows highest accuracy due to temporal
 context from recurrent connections. SynapticCell also benefits from
 temporal filtering of input.
+
+**Cell complexity vs accuracy tradeoff**: More state variables (AlphaCell: 3,
+AdExCell: 2) don't necessarily increase accuracy on simple tasks. Choose
+cells based on the dynamics you need, not complexity.
 
 ---
 

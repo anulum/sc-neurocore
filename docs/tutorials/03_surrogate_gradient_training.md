@@ -16,6 +16,23 @@ Neural Networks", *IEEE Signal Processing Magazine* 36(6), 2019.
 
 **Requires**: `pip install sc-neurocore[training]` (installs PyTorch)
 
+```mermaid
+flowchart LR
+    subgraph FWD["Forward Pass"]
+        A["v = β·v + I"] --> B{"v > θ?"}
+        B -->|Yes| C["spike = 1<br/>v -= θ"]
+        B -->|No| D["spike = 0"]
+    end
+    subgraph BWD["Backward Pass"]
+        E["∂L/∂spike"] --> F["× surrogate'(v-θ)"]
+        F --> G["∂L/∂v → ∂L/∂W"]
+    end
+    FWD -.->|"Heaviside replaced<br/>by smooth approx"| BWD
+
+    style FWD fill:#e8f5e9
+    style BWD fill:#fff3e0
+```
+
 ## Surrogate functions
 
 SC-NeuroCore provides seven surrogates. The three most commonly used:
@@ -177,6 +194,20 @@ sharper gradients near threshold — better for temporal coding but can be
 unstable with high learning rates.
 
 ## Bridge to stochastic computing: `to_sc_weights()`
+
+```mermaid
+flowchart LR
+    A["Trained SpikingNet<br/>float32 weights"] --> B["to_sc_weights()<br/>min-max → [0,1]"]
+    B --> C["SCDenseLayer<br/>bitstream simulation"]
+    B --> D["equation_compiler<br/>→ Q8.8 Verilog"]
+    D --> E["Yosys + nextpnr<br/>→ FPGA bitstream"]
+    C --> F["Verify:<br/>float ≈ SC ≈ RTL"]
+    E --> F
+
+    style A fill:#fff3e0
+    style B fill:#e8f5e9
+    style E fill:#fce4ec
+```
 
 After training, export weight matrices normalized to [0,1] for SC bitstream
 deployment:

@@ -26,22 +26,38 @@ this practical: train in PyTorch, export integer delays to FPGA via
 
 ## Architecture
 
-```
-Spike history buffer: circular buffer of max_delay+1 timesteps
-                      ↓
-For each synapse (i → j):
-  d = delay[j, i]                           # continuous, in [0, max_delay)
-  delayed_input = interp(history, t - d)    # linear interpolation
-  output[j] += weight[j, i] * delayed_input
+```mermaid
+flowchart TB
+    subgraph Buffer["Circular Spike History Buffer"]
+        direction LR
+        H0["t-0"] --- H1["t-1"] --- H2["t-2"] --- H3["t-3"] --- H4["..."] --- HN["t-max"]
+    end
+    subgraph Synapse["For each synapse (i → j)"]
+        D["delay[j,i] = 2.3<br/>(continuous)"]
+        D --> I["interp(t-2, t-3)<br/>0.7 × h[t-2] + 0.3 × h[t-3]"]
+        I --> W["× weight[j,i]"]
+        W --> O["output[j] += ..."]
+    end
+    Buffer --> Synapse
+
+    style Buffer fill:#e1f5fe
+    style Synapse fill:#fff3e0
 ```
 
-The interpolation makes delays differentiable:
-
 ```
-interp(history, t - 2.3) = 0.7 * history[t-2] + 0.3 * history[t-3]
+Interpolation detail — differentiable delay readout:
+
+    spike history:  ──┬──○──●──○──●──○──○──●──○──
+                      t  t-1 t-2 t-3 t-4 ...
+
+    delay d = 2.3:        │←─ 2.3 ─→│
+                          ▼
+    interp(t-2.3) = 0.7 × history[t-2] + 0.3 × history[t-3]
+                    └── floor fraction ──┘   └── ceil fraction ──┘
 ```
 
-Gradient tells the optimizer whether to increase or decrease each delay.
+Gradient flows through the interpolation weights (0.7 and 0.3), telling
+the optimizer whether to increase or decrease each delay.
 
 ## Parameters
 
