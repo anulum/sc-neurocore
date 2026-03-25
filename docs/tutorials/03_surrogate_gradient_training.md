@@ -18,7 +18,7 @@ Neural Networks", *IEEE Signal Processing Magazine* 36(6), 2019.
 
 ## Surrogate functions
 
-SC-NeuroCore provides six surrogates. The three most commonly used:
+SC-NeuroCore provides seven surrogates. The three most commonly used:
 
 | Function | Backward gradient | Default shape param | Citation |
 |---|---|---|---|
@@ -53,9 +53,23 @@ v[t] -= spike[t] * threshold       # subtract reset
 `beta` controls membrane leak (higher = longer memory). Set `learn_beta=True`
 or `learn_threshold=True` to make them trainable parameters.
 
-Other cells: `IFCell` (no leak), `ALIFCell` (adaptive threshold, Bellec 2020),
-`SynapticCell` (dual-exponential synapse), `RecurrentLIFCell` (trainable
-recurrent weights).
+### All neuron cells
+
+| Cell | States | Key feature | Citation |
+|---|---|---|---|
+| `LIFCell` | v | Leaky integrate-and-fire (default) | Lapicque 1907 |
+| `IFCell` | v | No leak (beta=1), simplest model | — |
+| `SynapticCell` | i_syn, v | Dual-exponential synaptic current | — |
+| `ALIFCell` | v, a | Adaptive threshold (spike-frequency adaptation) | Bellec et al. 2020 |
+| `ExpIFCell` | v | Exponential upstroke near threshold | Fourcaud-Trocmé et al. 2003 |
+| `AdExCell` | v, w | Adaptive exponential IF (tonic/bursting/adapting) | Brette & Gerstner 2005 |
+| `LapicqueCell` | v | Explicit RC parameters (tau, R, dt) | Lapicque 1907 |
+| `AlphaCell` | i_exc, i_inh, v | Separate excitatory/inhibitory synapses | Rall 1967 |
+| `SecondOrderLIFCell` | a, v | Inertial acceleration term | Dayan & Abbott 2001 |
+| `RecurrentLIFCell` | v, spike_prev | Trainable recurrent weights | — |
+
+All cells support `learn_beta=True` and `learn_threshold=True` where
+applicable. Import any cell from `sc_neurocore.training`.
 
 ## SpikingNet: full classifier
 
@@ -229,8 +243,8 @@ pooling architecture).
 
 | Component | API |
 |---|---|
-| Surrogates | `atan_surrogate`, `fast_sigmoid`, `superspike` + 3 more |
-| Neurons | `LIFCell`, `IFCell`, `ALIFCell`, `SynapticCell`, `RecurrentLIFCell` |
+| Surrogates | `atan_surrogate`, `fast_sigmoid`, `superspike`, `sigmoid_surrogate`, `straight_through`, `triangular` |
+| Neurons | `LIFCell`, `IFCell`, `ALIFCell`, `SynapticCell`, `RecurrentLIFCell`, `ExpIFCell`, `AdExCell`, `LapicqueCell`, `AlphaCell`, `SecondOrderLIFCell` |
 | Networks | `SpikingNet`, `ConvSpikingNet` |
 | Encoding | `rate_encode`, `latency_encode`, `delta_encode` |
 | Losses | `spike_count_loss`, `membrane_loss`, `spike_rate_loss`, `spike_l1_loss`, `spike_l2_loss` |
