@@ -124,6 +124,9 @@ nav:
       - Chip Compiler: tutorials/59_chip_compiler.md
       - Temporal Verification: tutorials/60_temporal_verification.md
       - Explainability: tutorials/61_explainability.md
+      - Differential Privacy: tutorials/62_privacy.md
+      - Fault Resilience: tutorials/63_fault_resilience.md
+      - Encoding Optimizer: tutorials/64_encoding_optimizer.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
@@ -177,6 +180,11 @@ nav:
           - Continual Learning: api/continual.md
       - Explainability:
           - SNN XAI: api/explain.md
+      - Privacy & Safety:
+          - Differential Privacy: api/privacy.md
+          - Fault Resilience: api/resilience.md
+      - Encoding:
+          - Encoding Zoo + Optimizer: api/encoding_zoo.md
       - Verification:
           - Temporal Properties: api/temporal_properties.md
       - Hardware Compilation:
