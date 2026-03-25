@@ -7,12 +7,13 @@
 
 """SNN model compression: pruning, quantization, clustering."""
 
-from .pruning import prune_weights, prune_neurons, PruningReport
+from .pruning import prune_weights, prune_neurons, prune_stochastic, PruningReport
 from .quantization import quantize_delays, quantize_weights
 
 __all__ = [
     "prune_weights",
     "prune_neurons",
+    "prune_stochastic",
     "PruningReport",
     "quantize_delays",
     "quantize_weights",
