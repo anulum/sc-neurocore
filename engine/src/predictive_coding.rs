@@ -69,6 +69,141 @@ pub fn update_prediction_weights(
     }
 }
 
+// --- Spike codec predictor loops (EMA + LFSR) for PredictiveSpikeCodec ---
+
+use crate::encoder::Lfsr16;
+
+/// EMA predict-and-XOR loop for spike codec compression.
+/// Returns (error_matrix flattened row-major, correct_prediction_count).
+pub fn predict_and_xor_ema(
+    spikes: &[i8],  // (T * N) row-major
+    n_channels: usize,
+    alpha: f64,
+    threshold: f64,
+) -> (Vec<i8>, usize) {
+    let t_steps = spikes.len() / n_channels;
+    let mut rates = vec![0.0f64; n_channels];
+    let mut errors = vec![0i8; spikes.len()];
+    let mut correct: usize = 0;
+    let one_minus_alpha = 1.0 - alpha;
+
+    for t in 0..t_steps {
+        let row_start = t * n_channels;
+        for ch in 0..n_channels {
+            let actual = spikes[row_start + ch];
+            let predicted = if rates[ch] > threshold { 1i8 } else { 0i8 };
+            let err = actual ^ predicted;
+            errors[row_start + ch] = err;
+            if err == 0 {
+                correct += 1;
+            }
+            rates[ch] = one_minus_alpha * rates[ch] + alpha * (actual as f64);
+        }
+    }
+    (errors, correct)
+}
+
+/// EMA XOR-and-recover loop for spike codec decompression.
+pub fn xor_and_recover_ema(
+    errors: &[i8],
+    n_channels: usize,
+    alpha: f64,
+    threshold: f64,
+) -> Vec<i8> {
+    let t_steps = errors.len() / n_channels;
+    let mut rates = vec![0.0f64; n_channels];
+    let mut spikes = vec![0i8; errors.len()];
+    let one_minus_alpha = 1.0 - alpha;
+
+    for t in 0..t_steps {
+        let row_start = t * n_channels;
+        for ch in 0..n_channels {
+            let predicted = if rates[ch] > threshold { 1i8 } else { 0i8 };
+            let actual = errors[row_start + ch] ^ predicted;
+            spikes[row_start + ch] = actual;
+            rates[ch] = one_minus_alpha * rates[ch] + alpha * (actual as f64);
+        }
+    }
+    spikes
+}
+
+/// LFSR predict-and-XOR loop: bit-true with sc_bitstream_encoder.v.
+/// Returns (error_matrix flattened row-major, correct_prediction_count).
+pub fn predict_and_xor_lfsr(
+    spikes: &[i8],
+    n_channels: usize,
+    alpha_q8: i32,
+    seed: u16,
+) -> (Vec<i8>, usize) {
+    let t_steps = spikes.len() / n_channels;
+    let mut rates_q8 = vec![0i32; n_channels];
+    let mut errors = vec![0i8; spikes.len()];
+    let mut correct: usize = 0;
+
+    // Per-channel LFSR (decorrelated seeds)
+    let mut lfsrs: Vec<Lfsr16> = (0..n_channels)
+        .map(|ch| {
+            let s = ((seed as u32).wrapping_add((ch as u32).wrapping_mul(7919))) & 0xFFFF;
+            Lfsr16::new(if s == 0 { 1 } else { s as u16 })
+        })
+        .collect();
+
+    for t in 0..t_steps {
+        let row_start = t * n_channels;
+        for ch in 0..n_channels {
+            let actual = spikes[row_start + ch];
+            let predicted = if (lfsrs[ch].reg as i32) < rates_q8[ch] { 1i8 } else { 0i8 };
+            lfsrs[ch].step();
+
+            let err = actual ^ predicted;
+            errors[row_start + ch] = err;
+            if err == 0 {
+                correct += 1;
+            }
+
+            let target: i32 = if actual != 0 { 255 } else { 0 };
+            rates_q8[ch] += (alpha_q8 * (target - rates_q8[ch])) >> 8;
+            rates_q8[ch] = rates_q8[ch].clamp(0, 255);
+        }
+    }
+    (errors, correct)
+}
+
+/// LFSR XOR-and-recover loop for decompression.
+pub fn xor_and_recover_lfsr(
+    errors: &[i8],
+    n_channels: usize,
+    alpha_q8: i32,
+    seed: u16,
+) -> Vec<i8> {
+    let t_steps = errors.len() / n_channels;
+    let mut rates_q8 = vec![0i32; n_channels];
+    let mut spikes = vec![0i8; errors.len()];
+
+    let mut lfsrs: Vec<Lfsr16> = (0..n_channels)
+        .map(|ch| {
+            let s = ((seed as u32).wrapping_add((ch as u32).wrapping_mul(7919))) & 0xFFFF;
+            Lfsr16::new(if s == 0 { 1 } else { s as u16 })
+        })
+        .collect();
+
+    for t in 0..t_steps {
+        let row_start = t * n_channels;
+        for ch in 0..n_channels {
+            let predicted = if (lfsrs[ch].reg as i32) < rates_q8[ch] { 1i8 } else { 0i8 };
+            lfsrs[ch].step();
+
+            let actual = errors[row_start + ch] ^ predicted;
+            spikes[row_start + ch] = actual;
+
+            let target: i32 = if actual != 0 { 255 } else { 0 };
+            rates_q8[ch] += (alpha_q8 * (target - rates_q8[ch])) >> 8;
+            rates_q8[ch] = rates_q8[ch].clamp(0, 255);
+        }
+    }
+    spikes
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -104,5 +239,54 @@ mod tests {
         update_prediction_weights(&mut weights, &actual, 2, 2, 0.5);
         assert!(weights[0] > 0.5); // moved toward 0.8
         assert!(weights[1] < 0.5); // moved toward 0.2
+    }
+
+    #[test]
+    fn test_ema_roundtrip() {
+        // All zeros: predict 0, XOR 0 = 0 error
+        let spikes = vec![0i8; 100]; // 10 timesteps x 10 channels
+        let (errors, correct) = predict_and_xor_ema(&spikes, 10, 0.005, 0.5);
+        assert_eq!(errors.len(), 100);
+        assert_eq!(correct, 100); // all correct (predict 0, actual 0)
+        let recovered = xor_and_recover_ema(&errors, 10, 0.005, 0.5);
+        assert_eq!(recovered, spikes);
+    }
+
+    #[test]
+    fn test_ema_roundtrip_with_spikes() {
+        let mut spikes = vec![0i8; 200]; // 20 x 10
+        spikes[5] = 1; // spike at t=0, ch=5
+        spikes[15] = 1; // spike at t=1, ch=5
+        let (errors, _) = predict_and_xor_ema(&spikes, 10, 0.01, 0.5);
+        let recovered = xor_and_recover_ema(&errors, 10, 0.01, 0.5);
+        assert_eq!(recovered, spikes);
+    }
+
+    #[test]
+    fn test_lfsr_roundtrip() {
+        let spikes = vec![0i8; 100];
+        let (errors, correct) = predict_and_xor_lfsr(&spikes, 10, 1, 0xACE1);
+        assert_eq!(correct, 100);
+        let recovered = xor_and_recover_lfsr(&errors, 10, 1, 0xACE1);
+        assert_eq!(recovered, spikes);
+    }
+
+    #[test]
+    fn test_lfsr_roundtrip_with_spikes() {
+        let mut spikes = vec![0i8; 200];
+        spikes[5] = 1;
+        spikes[15] = 1;
+        spikes[100] = 1;
+        let (errors, _) = predict_and_xor_lfsr(&spikes, 10, 2, 0x1234);
+        let recovered = xor_and_recover_lfsr(&errors, 10, 2, 0x1234);
+        assert_eq!(recovered, spikes);
+    }
+
+    #[test]
+    fn test_lfsr_deterministic() {
+        let spikes = vec![0i8; 50]; // 5 x 10
+        let (e1, _) = predict_and_xor_lfsr(&spikes, 10, 1, 0xBEEF);
+        let (e2, _) = predict_and_xor_lfsr(&spikes, 10, 1, 0xBEEF);
+        assert_eq!(e1, e2);
     }
 }
