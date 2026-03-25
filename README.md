@@ -110,14 +110,15 @@ coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 | One-command FPGA deploy CLI | **Yes** | — | — | — | — |
 | Per-layer adaptive bitstream | **Yes** | — | — | — | — |
 | Event-driven FPGA RTL (AER) | **Yes** | — | — | — | — |
-| Spike codec library (5 codecs) | **Yes** | — | — | — | — |
+| Raw waveform compression (24x) | **Yes** | — | — | — | — |
+| Spike codec library (6 codecs) | **Yes** | — | — | — | — |
 | conda-forge recipe | **Ready** | Yes | — | — | Yes |
 | PyPI package | Yes | Yes | Yes | Yes | Yes |
 | License | AGPL-3.0 | MIT | LGPL-3.0 | BSD-3 | CeCILL-2.1 |
 
 - **125-function spike train analysis toolkit** — CV, Fano factor, cross-correlation, Victor-Purpura distance, SPIKE-sync, Granger causality, GPFA, SPADE pattern detection, and 115 more functions. Matches Elephant + PySpike combined. Pure NumPy.
 
-- **5-codec spike compression library** — ISI (50-200x baseline), Predictive (EMA + XOR surprise-only, for BCI implants), Delta (inter-channel correlation, for neural probes), Streaming (fixed-latency frames, for real-time), AER (event list, for neuromorphic routing). Unified API: `get_codec(name)`, `recommend_codec()`. All lossless. Benchmarked on 1024-channel Neuralink-scale data.
+- **Neural data compression library** — Two layers: **WaveformCodec** compresses raw 10-bit electrode waveforms end-to-end (spike detection + template matching + LFP compression, 24x on 1024-channel Neuralink-scale data, fits Bluetooth uplink). **Spike raster codecs** (ISI+Huffman, Predictive with 4 learnable predictors, Delta, Streaming, AER) compress binary spike trains 50-750x. Unified API: `get_codec(name)`, `recommend_codec()`. Learnable world-model predictor (99.6% accuracy). Rust backend (780x speedup). Bit-true LFSR matches Verilog RTL.
 
 SC-NeuroCore's niche: **deterministic stochastic computing with FPGA co-design** — the only framework where Python simulation matches synthesisable RTL bit-for-bit.
 

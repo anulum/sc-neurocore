@@ -75,3 +75,16 @@ timestamps. Compatible with `comm.aer_udp` protocol. O(n_spikes) bytes.
       members:
         - AERSpikeCodec
         - AERCompressionResult
+
+## Waveform Codec (Raw Electrode)
+
+End-to-end raw waveform compression: spike detection + template matching +
+background LFP compression. 24x on 1024-channel Neuralink-scale data.
+Spike timing is lossless. Fits in Bluetooth uplink.
+
+::: sc_neurocore.spike_codec.waveform_codec
+    options:
+      show_root_heading: true
+      members:
+        - WaveformCodec
+        - WaveformCompressionResult
