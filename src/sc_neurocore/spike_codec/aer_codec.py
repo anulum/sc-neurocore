@@ -5,24 +5,19 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — AER spike codec: address-event representation encoding
 
-"""AER spike compression: event-based encoding for neuromorphic systems.
+"""AER spike compression with adaptive density handling.
 
 Architecture:
-    1. Scan spike raster for active (timestamp, neuron_id) pairs
-    2. Encode as compact AER event stream: (timestamp, neuron_id) tuples
-    3. Timestamp delta encoding: store differences between consecutive events
-    4. Neuron ID encoding: variable-width based on N
+    1. Measure spike density
+    2. If density <= 50%: encode spike events (standard AER)
+    3. If density > 50%: invert matrix, encode silence events
+       (O(n_gaps) bytes when most channels are firing)
+    4. Delta-code timestamps, variable-width neuron IDs
 
 Compatible with the AER-over-UDP protocol in comm/aer_udp.py.
-Uses the same event semantics but without socket overhead.
 
-Target: neuromorphic chip-to-chip communication (Loihi, SpiNNaker,
-BrainScaleS), where event-based encoding is the native data format.
-Also natural for event cameras (DVS) and event-driven simulators.
-
-Compression depends on sparsity: O(n_spikes) bytes vs O(T*N) raw.
-For typical cortical firing rates (0.5-5 Hz at 20 kHz), this gives
-100-1000x compression without any information loss.
+Target: neuromorphic chip-to-chip (Loihi, SpiNNaker, BrainScaleS),
+event cameras (DVS), and event-driven simulators.
 """
 
 from __future__ import annotations
@@ -60,6 +55,7 @@ class AERSpikeCodec:
     """
 
     HEADER_MAGIC = b"AERX"
+    HEADER_MAGIC_INV = b"AERI"  # Inverted: encoding silences, not spikes
 
     def __init__(self, timestamp_bits: int = 16, neuron_bits: int = 0):
         self.timestamp_bits = timestamp_bits
@@ -80,8 +76,14 @@ class AERSpikeCodec:
         T, N = spikes.shape
         original_bits = T * N
 
+        # Adaptive: if >50% density, invert (encode silences instead of spikes)
+        n_ones = int(np.sum(spikes))
+        density = n_ones / max(T * N, 1)
+        inverted = density > 0.5
+        encode_matrix = 1 - spikes if inverted else spikes
+
         # Extract events as (timestamp, neuron_id) sorted by time then neuron
-        times, neurons = np.nonzero(spikes)
+        times, neurons = np.nonzero(encode_matrix)
         # Already sorted by time (row-major), then by neuron within same time
         n_events = len(times)
 
@@ -95,7 +97,8 @@ class AERSpikeCodec:
             neuron_bytes += 1
 
         # Header: magic(4) + T(4) + N(4) + n_events(4) + neuron_bytes(1) = 17 bytes
-        header = self.HEADER_MAGIC + struct.pack("!IIIB", T, N, n_events, neuron_bytes)
+        magic = self.HEADER_MAGIC_INV if inverted else self.HEADER_MAGIC
+        header = magic + struct.pack("!IIIB", T, N, n_events, neuron_bytes)
 
         if n_events == 0:
             encoded = header
@@ -130,7 +133,7 @@ class AERSpikeCodec:
             original_bits=original_bits,
             compressed_bits=compressed_bits,
             compression_ratio=ratio,
-            n_spikes=n_events,
+            n_spikes=n_ones,
             n_neurons=N,
             n_timesteps=T,
             lossless=True,
@@ -152,18 +155,20 @@ class AERSpikeCodec:
         ndarray of shape (T, N), int8
         """
         magic = data[:4]
-        if magic != self.HEADER_MAGIC:
-            raise ValueError(f"Invalid header magic: {magic!r}, expected {self.HEADER_MAGIC!r}")
+        if magic not in (self.HEADER_MAGIC, self.HEADER_MAGIC_INV):
+            raise ValueError(
+                f"Invalid header magic: {magic!r}, expected {self.HEADER_MAGIC!r} or {self.HEADER_MAGIC_INV!r}"
+            )
+        inverted = magic == self.HEADER_MAGIC_INV
 
         T_stored, N_stored, n_events, neuron_bytes = struct.unpack("!IIIB", data[4:17])
         if T == 0:
             T = T_stored
         if N == 0:
             N = N_stored
-        ts_max = (1 << self.timestamp_bits) - 1
         escape_marker = b"\xff" * neuron_bytes
 
-        spikes = np.zeros((T, N), dtype=np.int8)
+        decoded = np.zeros((T, N), dtype=np.int8)
         offset = 17
         current_t = 0
         events_read = 0
@@ -174,7 +179,6 @@ class AERSpikeCodec:
             offset += 2 + neuron_bytes
 
             if nid_bytes == escape_marker:
-                # Escape: just advance time, no event
                 current_t += dt
                 continue
 
@@ -182,7 +186,9 @@ class AERSpikeCodec:
             nid = int.from_bytes(nid_bytes, "big")
 
             if 0 <= current_t < T and 0 <= nid < N:
-                spikes[current_t, nid] = 1
+                decoded[current_t, nid] = 1
             events_read += 1
 
-        return spikes
+        if inverted:
+            return 1 - decoded
+        return decoded
