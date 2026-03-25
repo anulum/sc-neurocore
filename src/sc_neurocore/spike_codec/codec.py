@@ -5,13 +5,17 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Spike train compression codec
 
-"""Compress spike trains for BCI telemetry and neural recording storage.
+"""Baseline spike train compression via ISI + LEB128 varint encoding.
 
-Neuralink generates ~200 Mbps but can transmit 1-2 Mbps. This codec
-targets 50-200x compression via ISI entropy coding, population delta
-encoding, and configurable lossy/lossless modes.
+Per-neuron inter-spike interval encoding with variable-length integers.
+Exploits sparsity: at 0.5-5 Hz cortical firing rates (20 kHz sampling),
+>99.9% of time bins are zeros. Measured compression: 15x at 0.5% firing
+rate (1024ch x 1000t), 460x at 0.01% firing rate.
 
-No Python library provides spike-domain compression.
+This is the simplest codec in the library. For better compression on
+structured data, see PredictiveSpikeCodec (temporal prediction),
+DeltaSpikeCodec (inter-channel correlation), or AERSpikeCodec (event
+encoding). Use get_codec() / recommend_codec() from the registry.
 """
 
 from __future__ import annotations
@@ -43,16 +47,15 @@ class CompressionResult:
 
 
 class SpikeCodec:
-    """Spike train compression codec.
+    """ISI + LEB128 spike train codec.
 
     Compression strategy:
-    1. Extract spike events (time, neuron_id) from binary matrix
-    2. Encode ISIs (inter-spike intervals) per neuron — ISIs follow
-       approximate exponential distribution, compressing well with
-       variable-length coding
-    3. Population delta: correlated neurons share spike times, encode
-       only differences
-    4. Variable-length integer encoding for ISIs
+    1. Extract per-neuron spike times from binary raster
+    2. Compute inter-spike intervals (ISIs) per neuron
+    3. Encode ISIs as LEB128 variable-length integers
+
+    Each neuron is encoded independently. No inter-channel modeling.
+    For inter-channel compression, use DeltaSpikeCodec.
 
     Parameters
     ----------
