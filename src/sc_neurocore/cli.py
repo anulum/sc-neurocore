@@ -237,16 +237,109 @@ def _cmd_deploy(
     print("[5/5] Generating project files...")
     _generate_project(output_dir, target, "sc_deploy_lif")
 
+    # Step 6: Auto-synthesize if open-source toolchain available
+    cfg = _TARGET_CONFIGS[target]
+    if cfg["tool"] == "yosys":
+        synth_ok = _auto_synthesize(output_dir, target, "sc_deploy_lif", cfg)
+    else:
+        synth_ok = False
+
     print()
     print(f"Deploy complete. Project in {output_dir}/")
-    print("Next steps:")
-    if target == "ice40":
-        print(f"  cd {output_dir} && make synth  # Yosys synthesis")
-    elif target == "ecp5":
-        print(f"  cd {output_dir} && make synth  # Yosys + nextpnr-ecp5")
+    if synth_ok:
+        print("Synthesis succeeded. Results in output directory.")
+    elif cfg["tool"] == "yosys":
+        print("Yosys not found. To synthesize manually:")
+        print(f"  cd {output_dir} && make synth")
     else:
+        print("Vivado project generated. To synthesize:")
         print(f"  cd {output_dir} && vivado -mode batch -source project.tcl")
     return 0
+
+
+def _auto_synthesize(output_dir: str, target: str, top_module: str, cfg: dict[str, str]) -> bool:
+    """Run Yosys synthesis automatically if yosys is installed. Returns True on success."""
+    import os
+    import shutil
+    import subprocess
+
+    yosys = shutil.which("yosys")
+    if not yosys:
+        return False
+
+    print()
+    print("[6/6] Running Yosys synthesis...")
+    verilog_files = " ".join(
+        [
+            os.path.join("hdl", f)
+            for f in os.listdir(os.path.join(output_dir, "hdl"))
+            if f.endswith(".v")
+        ]
+        + [f"{top_module}.sv"]
+    )
+    synth_cmd = f"synth_{cfg['family']}"
+    yosys_script = (
+        f"read_verilog -sv {verilog_files}; "
+        f"{synth_cmd} -top {top_module}; "
+        f"write_json {top_module}.json; stat"
+    )
+    result = subprocess.run(
+        [yosys, "-p", yosys_script],
+        cwd=output_dir,
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    if result.returncode == 0:
+        for line in result.stdout.splitlines():
+            if any(k in line for k in ("Number of cells", "Number of wires", "LUT", "SB_")):
+                print(f"  {line.strip()}")
+        print(f"  Synthesis JSON: {os.path.join(output_dir, top_module + '.json')}")
+
+        # Try place-and-route if nextpnr available
+        pnr_tool = shutil.which(f"nextpnr-{cfg['family']}")
+        if pnr_tool:
+            print("  Running nextpnr place-and-route...")
+            pnr_result = subprocess.run(
+                [
+                    pnr_tool,
+                    f"--{cfg['device']}",
+                    "--json",
+                    f"{top_module}.json",
+                    "--asc",
+                    f"{top_module}.asc",
+                    "--package",
+                    cfg["package"],
+                ],
+                cwd=output_dir,
+                capture_output=True,
+                text=True,
+                timeout=300,
+            )
+            if pnr_result.returncode == 0:
+                print(f"  PnR succeeded: {top_module}.asc")
+                # Try bitstream generation
+                pack_tool = "icepack" if cfg["family"] == "ice40" else "ecppack"
+                pack_bin = shutil.which(pack_tool)
+                if pack_bin:
+                    subprocess.run(
+                        [pack_bin, f"{top_module}.asc", f"{top_module}.bin"],
+                        cwd=output_dir,
+                        capture_output=True,
+                        timeout=60,
+                    )
+                    bin_path = os.path.join(output_dir, f"{top_module}.bin")
+                    if os.path.exists(bin_path):
+                        size_kb = os.path.getsize(bin_path) / 1024
+                        print(f"  Bitstream: {bin_path} ({size_kb:.1f} KB)")
+            else:
+                print("  PnR failed (nextpnr error). Synthesis JSON still available.")
+        return True
+    else:
+        print("  Yosys synthesis failed:")
+        for line in result.stderr.splitlines()[-5:]:
+            print(f"    {line}")
+        return False
 
 
 _TARGET_CONFIGS = {

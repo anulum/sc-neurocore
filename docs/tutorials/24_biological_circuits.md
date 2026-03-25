@@ -19,7 +19,7 @@ edges. Real brains use fundamentally different connectivity mechanisms:
 - **Lateral inhibition** sharpens population responses
 - **Gamma oscillations** synchronize distributed processing
 
-SC-NeuroCore is the only SC framework that ships all seven as composable primitives.
+SC-NeuroCore ships all seven as composable primitives.
 
 ## 1. Gap Junctions (Electrical Synapses)
 

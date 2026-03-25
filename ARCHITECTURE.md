@@ -89,7 +89,7 @@ sc-neurocore/
 │   ├── sc_aer_encoder.v    AER spike encoder (event-driven output)
 │   ├── sc_event_neuron.v   Event-triggered LIF (power ∝ spike rate)
 │   ├── sc_aer_router.v     AER event distribution to target neurons
-│   ├── formal/             SymbiYosys formal verification (7 modules, 65 properties)
+│   ├── formal/             SymbiYosys formal verification (7 modules, 67 properties)
 │   └── tb_sc_*.v           Co-simulation testbenches
 │
 ├── examples/               20 runnable demo scripts (SC, MNIST, NIR, JAX, snnTorch)

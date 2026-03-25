@@ -5,7 +5,7 @@ Network-to-hardware compilation pipeline.
 ## Equation → Verilog Compiler
 
 Compile arbitrary ODE neuron equations to synthesizable Verilog RTL.
-The only framework that goes from a string equation to FPGA hardware.
+Compile string equations directly to FPGA hardware.
 
 ::: sc_neurocore.compiler.equation_compiler
 

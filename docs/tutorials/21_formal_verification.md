@@ -4,7 +4,7 @@
 
 Formal verification proves that hardware properties hold for **all
 possible inputs**, not just a finite test set. SC-NeuroCore ships 7
-formal verification modules covering 65 properties across the core
+formal verification modules covering 67 properties across the core
 HDL pipeline.
 
 **Prerequisites**: [SymbiYosys](https://symbiyosys.readthedocs.io/),
@@ -31,7 +31,7 @@ SC-NeuroCore proves properties on 7 Verilog modules:
 | `sc_firing_rate_bank` | 21 assert + 1 cover | Rate counter bounded per accumulator, window rollover, rate stability |
 | `sc_axil_cfg` | 12 assert + 2 cover | AXI-Lite protocol compliance, register read-back, address decode |
 
-**Total: 54 assertions + 11 cover properties = 65 formal properties**
+**Total: 53 assertions + 3 assumes + 11 cover properties = 67 formal properties**
 
 ## 2. Running a single proof
 
