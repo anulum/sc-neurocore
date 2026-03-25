@@ -144,6 +144,9 @@ nav:
       - Neuromorphic Control: tutorials/79_control.md
       - Contrastive SSL: tutorials/80_contrastive.md
       - Transfer Learning: tutorials/81_transfer.md
+      - Spiking Neural ODEs: tutorials/82_spike_ode.md
+      - Topology Analysis: tutorials/83_topology.md
+      - Few-Shot Learning: tutorials/84_few_shot.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
@@ -225,6 +228,12 @@ nav:
           - Contrastive SSL: api/contrastive.md
       - Transfer:
           - Transfer Learning: api/transfer.md
+      - Continuous:
+          - Spiking Neural ODEs: api/spike_ode.md
+      - Analysis:
+          - Graph Topology: api/graph_topology.md
+      - Few-Shot:
+          - Meta-Learning: api/few_shot.md
       - Control:
           - Neuromorphic Control: api/control.md
       - Stability:
