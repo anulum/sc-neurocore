@@ -7,11 +7,11 @@ Trainable per-synapse delays for temporal coding in SNNs.
 Temporal coding (spike timing) carries more information per spike than rate coding. Trainable delays let the network learn optimal spike timing relationships.
 
 ```python
-from sc_neurocore.learning.delay_training import DelayLinear
+from sc_neurocore.training.delay_linear import DelayLinear
 ```
 
 See [Tutorial 39: Learnable Delays](../tutorials/39_learnable_delays.md).
 
-::: sc_neurocore.learning.delay_training
+::: sc_neurocore.training.delay_linear
     options:
       show_root_heading: true
