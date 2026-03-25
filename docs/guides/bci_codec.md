@@ -29,13 +29,44 @@ data, result = codec.compress(spikes)
 recovered = codec.decompress(data, T, N)
 ```
 
-| Codec | Best For | Strategy | Compression |
-|-------|----------|----------|-------------|
-| `isi` | General purpose | ISI + LEB128 varint | 50-200x (sparse) |
-| `predictive` | BCI implants | EMA predictor + XOR errors | 10-15x + structure |
-| `delta` | Neural probes | Inter-channel XOR residuals | 2-5x over ISI (correlated) |
-| `streaming` | Real-time BCI | Fixed-latency bitmask frames | bounded worst-case |
-| `aer` | Neuromorphic | Event list (timestamp, neuron_id) | 40x+ (sparse) |
+| Codec | Best For | Strategy | Measured Compression |
+|-------|----------|----------|---------------------|
+| `isi` (auto entropy) | General purpose | ISI + varint/Huffman | 401x at 0.1%, 8.8x at 30% |
+| `predictive` (context) | Structured data | Markov context + XOR | 25.5x on bursty (3x over ISI) |
+| `predictive` (lfsr) | Hardware BCI | Q8.8 LFSR, bit-true Verilog | Same ratio, ASIC-deployable |
+| `delta` | Neural probes | Inter-channel XOR residuals | 8.2x on correlated (70% over ISI) |
+| `streaming` | Real-time BCI | Fixed-latency bitmask frames | Bounded worst-case |
+| `aer` (adaptive) | Neuromorphic | Event list, auto-invert >50% | Format-compatible with Loihi/SpiNNaker |
+
+### Competitive Benchmarks (measured, all lossless)
+
+ISI codec with auto entropy selection beats zlib-9 at every firing rate:
+
+| Firing Rate | ISI (auto) | zlib-9 | lzma | Advantage |
+|-------------|-----------|--------|------|-----------|
+| 0.1% | **401x** | 359x | 194x | +12% over zlib |
+| 1% | **78x** | 65x | 48x | +20% over zlib |
+| 5% | **24x** | 19x | 20x | +28% over zlib |
+| 10% | **16x** | 12x | 13x | +30% over zlib |
+| 30% | **8.8x** | 7.0x | 7.8x | +24% over zlib |
+
+Context predictor on structured data (periodic bursts):
+
+| Predictor | Ratio | Accuracy |
+|-----------|-------|----------|
+| ISI (no prediction) | 8.6x | — |
+| EMA | 8.5x | 90% |
+| **Context (Markov)** | **25.5x** | 97.8% |
+
+Realistic SpikeInterface benchmarks (physiological spike trains):
+
+| Scenario | Best Codec | Ratio |
+|----------|-----------|-------|
+| Neuropixels 10 units 1-5 Hz | ISI | 457x |
+| BCI-scale 50 units 0.5-3 Hz | ISI | 756x |
+| High-density 100 units 1-10 Hz | ISI | 317x |
+
+All above Neuralink's 200x target.
 
 ## ISI Codec (Baseline)
 

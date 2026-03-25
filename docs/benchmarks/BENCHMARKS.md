@@ -454,6 +454,62 @@ python benchmarks/snntorch_vs_sc_microbench.py --runs 5 --scales 100 500 1000
 
 ---
 
+## 16. Spike Codec Library (2026-03-25)
+
+Compression ratios for the spike codec library. All codecs lossless.
+Measured on (2000 x 64) rasters at various firing rates.
+
+### ISI Codec vs General-Purpose Compressors
+
+Auto entropy selection (varint for sparse, Huffman for dense):
+
+| Firing Rate | ISI (auto) | zlib-9 | lzma | ISI Advantage |
+|-------------|-----------|--------|------|---------------|
+| 0.1% | **401x** | 359x | 194x | +12% over zlib |
+| 1% | **78x** | 65x | 48x | +20% over zlib |
+| 5% | **24x** | 19x | 20x | +28% over zlib |
+| 10% | **16x** | 12x | 13x | +30% over zlib |
+| 30% | **8.8x** | 7.0x | 7.8x | +24% over zlib |
+
+### Context Predictor on Structured Data
+
+Periodic bursting (32ch, 5-spike bursts every 50 steps):
+
+| Predictor | Ratio | Accuracy |
+|-----------|-------|----------|
+| ISI (no prediction) | 8.6x | — |
+| EMA | 8.5x | 90.0% |
+| **Context (Markov)** | **25.5x** | 97.8% |
+
+### Realistic SpikeInterface Benchmarks
+
+SpikeInterface ground-truth recordings with physiological ISI distributions:
+
+| Scenario | Channels | Units | Firing Rate | Best Ratio |
+|----------|----------|-------|-------------|-----------|
+| Neuropixels-like | 96 | 10 | 1-5 Hz | 457x |
+| BCI-scale | 256 | 50 | 0.5-3 Hz | 756x |
+| High-density | 384 | 100 | 1-10 Hz | 317x |
+
+All above Neuralink 200x target.
+
+### Yosys Synthesis (gate counts)
+
+Generic gate-level synthesis via Yosys 0.63:
+
+| Verilog Module | Cells | Function |
+|---------------|------:|----------|
+| `sc_bitstream_encoder.v` | 115 | LFSR predictor (bit-true with Python/Rust) |
+| `sc_cordiv.v` | 2 | Stochastic division |
+| `sc_dotproduct_to_current.v` | 448 | AND accumulation + popcount |
+| `sc_aer_encoder.v` | 1,423 | Priority encoder for AER |
+| `sc_event_neuron.v` | 2,135 | Event-driven LIF |
+| `sc_lif_neuron.v` | 3,134 | Q8.8 fixed-point LIF |
+
+1024-channel codec estimate: ~406K gates, ~0.02 mm^2 at 7nm.
+
+---
+
 ## Notes
 
 - Python benchmarks run in `--full` mode (10x iterations vs quick).
