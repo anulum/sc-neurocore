@@ -21,7 +21,6 @@ decompress(bytes, T, N) → spikes.
 
 from __future__ import annotations
 
-import numpy as np
 
 from .codec import SpikeCodec
 from .predictive_codec import PredictiveSpikeCodec

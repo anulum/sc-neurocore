@@ -85,11 +85,13 @@ class AERSpikeCodec:
         # Already sorted by time (row-major), then by neuron within same time
         n_events = len(times)
 
-        neuron_bits = self.neuron_bits if self.neuron_bits > 0 else max(1, int(np.ceil(np.log2(max(N, 2)))))
+        neuron_bits = (
+            self.neuron_bits if self.neuron_bits > 0 else max(1, int(np.ceil(np.log2(max(N, 2)))))
+        )
         neuron_bytes = (neuron_bits + 7) // 8
         # Escape marker is all-1s bytes. If max valid ID (N-1) fills all
         # bits in neuron_bytes, bump size to avoid escape collision.
-        while (N - 1) >= (1 << (neuron_bytes * 8)) - 1:
+        while (1 << (neuron_bytes * 8)) - 1 <= (N - 1):
             neuron_bytes += 1
 
         # Header: magic(4) + T(4) + N(4) + n_events(4) + neuron_bytes(1) = 17 bytes

@@ -15,7 +15,6 @@ from sc_neurocore.spike_codec.registry import (
 
 
 class TestCodecRegistry:
-
     def test_list_codecs(self):
         codecs = list_codecs()
         assert "isi" in codecs
@@ -55,13 +54,10 @@ class TestCodecRegistry:
                 recovered = codec.decompress(data)
             else:
                 recovered = codec.decompress(data, 100, 16)
-            np.testing.assert_array_equal(
-                recovered, spikes, err_msg=f"Roundtrip failed for {name}"
-            )
+            np.testing.assert_array_equal(recovered, spikes, err_msg=f"Roundtrip failed for {name}")
 
 
 class TestRecommendCodec:
-
     def test_neuromorphic_gets_aer(self):
         assert recommend_codec(64, 5.0, neuromorphic=True) == "aer"
 

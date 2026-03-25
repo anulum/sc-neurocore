@@ -177,9 +177,7 @@ class PredictiveSpikeCodec:
         T, N = spikes.shape
         original_bits = T * N
 
-        errors, correct_predictions = _predict_and_xor(
-            spikes, N, self.alpha, self.threshold
-        )
+        errors, correct_predictions = _predict_and_xor(spikes, N, self.alpha, self.threshold)
 
         error_data, _ = self.base_codec.compress(errors)
 
