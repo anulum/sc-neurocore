@@ -136,6 +136,7 @@ that are planned but not yet implemented in this repository.
     *   `delta_codec.py`: `DeltaSpikeCodec` — inter-channel XOR residuals for correlated probe arrays.
     *   `streaming_codec.py`: `StreamingSpikeCodec` — fixed-latency, independently decodable frames.
     *   `aer_codec.py`: `AERSpikeCodec` — address-event representation for neuromorphic routing.
+    *   `waveform_codec.py`: `WaveformCodec` — end-to-end raw 10-bit waveform compression (spike detect + template match + LFP compress, 24x on 1024ch).
     *   `registry.py`: `get_codec()`, `list_codecs()`, `recommend_codec()` — unified lookup and auto-selection.
 
 ## 6. Systems, Pipeline & Tools

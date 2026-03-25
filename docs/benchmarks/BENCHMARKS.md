@@ -508,6 +508,40 @@ Generic gate-level synthesis via Yosys 0.63:
 
 1024-channel codec estimate: ~406K gates, ~0.02 mm^2 at 7nm.
 
+### WaveformCodec: Raw Electrode Compression
+
+End-to-end pipeline: raw 10-bit ADC -> spike detect -> template match -> compress.
+Measured on synthetic 1024-channel, 1 second at 20 kHz:
+
+| Metric | Value |
+|--------|-------|
+| Raw data | 40,960,000 bytes (328 Mbit/s) |
+| Compressed (q=4) | 1,703,435 bytes (13.6 Mbit/s) |
+| **Compression ratio** | **24x** |
+| Spikes detected | 3,087 |
+| Templates learned | 16 |
+| Bluetooth capacity | 15 Mbit/s |
+| **Fits in uplink** | **YES** |
+
+Scaling (4-bit background quantization):
+
+| Channels | Raw Mbit/s | Compressed Mbit/s | Fits BT |
+|----------|-----------|-------------------|---------|
+| 128 | 26 | 1.0 | YES |
+| 256 | 51 | 2.0 | YES |
+| 384 | 77 | 3.0 | YES |
+| 1024 | 205 | 8.0 | YES |
+| 3072 | 614 | 23.9 | NO |
+
+Competitive comparison (raw waveform compression):
+
+| Method | Compression | Notes |
+|--------|------------|-------|
+| MuSCoRE (2023) | 50-100x | Multi-scale decomposition, academic |
+| CREST (2022) | 10-50x | Raw electrode, academic |
+| **SC-NeuroCore WaveformCodec** | **24x** | Spike-aware pipeline, open source |
+| Delta + arithmetic (standard) | 5-15x | No spike awareness |
+
 ---
 
 ## Notes

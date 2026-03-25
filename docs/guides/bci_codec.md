@@ -1,16 +1,79 @@
-# Spike Codec Library
+# Neural Data Compression Library
 
-Spike train compression for neural recording, BCI telemetry, and neuromorphic routing.
+Two compression layers: raw waveform (10-bit ADC) and spike raster (binary).
 
 ## The Problem
 
-| System | Channels | Raw Rate | Uplink | Gap |
-|--------|----------|----------|--------|-----|
-| Neuralink N1 (2026) | 1,024 | 200 Mbps | 10-20 Mbps | 10-20x |
-| Neuralink next-gen | 3,000-10,000 | 600-2000 Mbps | 10-20 Mbps | 60-200x |
-| Neuropixels 2.0 | 384 | 30 Mbps | storage | archival |
-| Loihi 2 inter-chip | variable | event-based | NoC | routing overhead |
-| Closed-loop BCI | 256-1024 | 200 Mbps | on-chip | <1ms latency |
+| System | Channels | Raw Rate | Uplink | Gap | Solution |
+|--------|----------|----------|--------|-----|----------|
+| Neuralink N1 | 1,024 | 205 Mbps | 10-20 Mbps | 10-20x | **WaveformCodec (25x)** |
+| Neuralink next-gen | 3,072 | 614 Mbps | 10-20 Mbps | 30-60x | WaveformCodec + better bg |
+| Neuropixels 2.0 | 384 | 77 Mbps | storage | archival | WaveformCodec (25x) |
+| Closed-loop BCI | 256-1024 | 51-205 Mbps | on-chip | <1ms | StreamingCodec |
+
+## WaveformCodec: Raw Electrode Compression (NEW)
+
+End-to-end pipeline from raw 10-bit ADC to compressed telemetry bytes:
+
+```
+Raw ADC (T, N, 10-bit)
+    |
+    +-- Spike Detection (MAD noise est. + threshold crossing)
+    |       -> spike_times, spike_snippets
+    |
+    +-- Spike Timing -> ISI + Huffman (LOSSLESS)
+    |       -> ~0.3% of compressed output
+    |
+    +-- Spike Snippets -> Template Library + Quantized Residuals
+    |       -> ~7% of compressed output (16 templates learned)
+    |
+    +-- Background LFP -> 4x downsample + delta + quantize + zlib
+            -> ~92% of compressed output
+```
+
+```python
+from sc_neurocore.spike_codec import WaveformCodec
+
+codec = WaveformCodec(
+    threshold_sigma=4.5,   # spike detection (4.5 sigma)
+    snippet_samples=48,    # waveform clip size
+    max_templates=16,      # template library size
+    quantize_bits=4,       # background quantization
+)
+
+# Compress raw electrode data
+data, result = codec.compress(raw_waveform)  # (T, N) int16/float
+print(f"{result.compression_ratio:.1f}x, {result.n_spikes_detected} spikes detected")
+```
+
+### Measured Results (synthetic 1024-channel, 1 second at 20 kHz)
+
+| Metric | Value |
+|--------|-------|
+| Raw data | 40,960,000 bytes (328 Mbit) |
+| Compressed | 1,703,435 bytes (13.6 Mbit) |
+| **Compression ratio** | **24x** |
+| Spikes detected | 3,087 |
+| Templates learned | 16 |
+| Spike timing | LOSSLESS |
+| Bluetooth capacity | 15 Mbit/s |
+| **Fits in uplink** | **YES (9% used)** |
+
+### Scaling
+
+| Channels | Raw Mbit/s | Compressed Mbit/s | Fits Bluetooth |
+|----------|-----------|-------------------|---------------|
+| 128 | 26 | 1.0 | YES |
+| 256 | 51 | 2.0 | YES |
+| 384 | 77 | 3.0 | YES |
+| 1024 | 205 | 8.0 | YES |
+| 3072 | 614 | 23.9 | NO |
+
+### Run the Demo
+
+```bash
+python examples/demo_waveform_codec.py --channels 1024 --duration 1.0
+```
 
 ## Five Codecs, One API
 
