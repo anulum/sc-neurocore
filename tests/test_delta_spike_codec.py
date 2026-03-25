@@ -10,7 +10,6 @@ from sc_neurocore.spike_codec.delta_codec import DeltaSpikeCodec, DeltaCompressi
 
 
 class TestDeltaSpikeCodecRoundtrip:
-
     def test_roundtrip_random(self):
         rng = np.random.RandomState(42)
         spikes = (rng.random((500, 32)) < 0.05).astype(np.int8)
@@ -77,7 +76,6 @@ class TestDeltaSpikeCodecRoundtrip:
 
 
 class TestDeltaSpikeCodecCompression:
-
     def test_correlated_beats_uncorrelated(self):
         """Correlated data should compress better with delta codec."""
         rng = np.random.RandomState(42)
@@ -85,7 +83,9 @@ class TestDeltaSpikeCodecCompression:
 
         # Correlated: shared base pattern
         base = (rng.random((T, 1)) < 0.03).astype(np.int8)
-        corr_spikes = (np.broadcast_to(base, (T, N)) | (rng.random((T, N)) < 0.002).astype(np.int8)).astype(np.int8)
+        corr_spikes = (
+            np.broadcast_to(base, (T, N)) | (rng.random((T, N)) < 0.002).astype(np.int8)
+        ).astype(np.int8)
 
         # Uncorrelated: independent
         uncorr_spikes = (rng.random((T, N)) < 0.03).astype(np.int8)
@@ -108,7 +108,6 @@ class TestDeltaSpikeCodecCompression:
 
 
 class TestDeltaSpikeCodecEdgeCases:
-
     def test_invalid_magic_raises(self):
         codec = DeltaSpikeCodec()
         with pytest.raises(ValueError, match="Invalid header magic"):

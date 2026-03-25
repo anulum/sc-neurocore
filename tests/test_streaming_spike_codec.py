@@ -13,7 +13,6 @@ from sc_neurocore.spike_codec.streaming_codec import (
 
 
 class TestStreamingSpikeCodecRoundtrip:
-
     def test_roundtrip_basic(self):
         rng = np.random.RandomState(42)
         spikes = (rng.random((100, 16)) < 0.05).astype(np.int8)
@@ -79,7 +78,6 @@ class TestStreamingSpikeCodecRoundtrip:
 
 
 class TestStreamingSpikeCodecFrameAPI:
-
     def test_single_frame_roundtrip(self):
         rng = np.random.RandomState(42)
         window = (rng.random((20, 16)) < 0.05).astype(np.int8)
@@ -99,7 +97,6 @@ class TestStreamingSpikeCodecFrameAPI:
 
 
 class TestStreamingSpikeCodecCompression:
-
     def test_silent_frames_small(self):
         """Silent frames should be very compact."""
         silent = np.zeros((20, 64), dtype=np.int8)
@@ -117,7 +114,6 @@ class TestStreamingSpikeCodecCompression:
 
 
 class TestStreamingSpikeCodecEdgeCases:
-
     def test_invalid_magic_raises(self):
         codec = StreamingSpikeCodec()
         with pytest.raises(ValueError, match="Invalid header magic"):

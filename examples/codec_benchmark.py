@@ -30,7 +30,6 @@ from sc_neurocore.spike_codec import (
     DeltaSpikeCodec,
     StreamingSpikeCodec,
     AERSpikeCodec,
-    get_codec,
     recommend_codec,
 )
 
@@ -103,8 +102,10 @@ def print_table(results: list[dict], scenario: str):
     print(f"\n{'=' * 70}")
     print(f"  {scenario}")
     print(f"{'=' * 70}")
-    print(f"  {'Codec':<14} {'Ratio':>8} {'Enc (ms)':>10} {'Dec (ms)':>10} {'Bytes':>10} {'Lossless':>9}")
-    print(f"  {'-'*14} {'-'*8} {'-'*10} {'-'*10} {'-'*10} {'-'*9}")
+    print(
+        f"  {'Codec':<14} {'Ratio':>8} {'Enc (ms)':>10} {'Dec (ms)':>10} {'Bytes':>10} {'Lossless':>9}"
+    )
+    print(f"  {'-' * 14} {'-' * 8} {'-' * 10} {'-' * 10} {'-' * 10} {'-' * 9}")
     for r in results:
         print(
             f"  {r['codec']:<14} {r['ratio']:>8.1f}x {r['compress_ms']:>9.1f} "
@@ -160,11 +161,7 @@ def main():
         all_results[scenario_name] = results
 
     # Verify all codecs are lossless
-    all_lossless = all(
-        r["lossless"]
-        for results in all_results.values()
-        for r in results
-    )
+    all_lossless = all(r["lossless"] for results in all_results.values() for r in results)
     print(f"\n{'=' * 70}")
     print(f"  All codecs lossless: {'YES' if all_lossless else 'FAILURES DETECTED'}")
     print(f"{'=' * 70}")

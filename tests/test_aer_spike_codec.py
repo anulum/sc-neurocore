@@ -10,7 +10,6 @@ from sc_neurocore.spike_codec.aer_codec import AERSpikeCodec, AERCompressionResu
 
 
 class TestAERSpikeCodecRoundtrip:
-
     def test_roundtrip_sparse(self):
         rng = np.random.RandomState(42)
         spikes = (rng.random((500, 32)) < 0.02).astype(np.int8)
@@ -74,7 +73,6 @@ class TestAERSpikeCodecRoundtrip:
 
 
 class TestAERSpikeCodecCompression:
-
     def test_sparse_high_compression(self):
         """Very sparse data (0.1% firing) should compress >30x."""
         rng = np.random.RandomState(42)
@@ -101,7 +99,6 @@ class TestAERSpikeCodecCompression:
 
 
 class TestAERSpikeCodecEdgeCases:
-
     def test_invalid_magic_raises(self):
         codec = AERSpikeCodec()
         with pytest.raises(ValueError, match="Invalid header magic"):
