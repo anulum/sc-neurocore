@@ -75,7 +75,7 @@ try:
                     _HAS_RUST = True  # pragma: no cover
                 break
 except Exception:  # pragma: no cover
-    pass
+    _HAS_RUST = False
 
 
 @dataclass
