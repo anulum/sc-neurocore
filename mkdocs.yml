@@ -128,6 +128,7 @@ nav:
       - Fault Resilience: tutorials/63_fault_resilience.md
       - Encoding Optimizer: tutorials/64_encoding_optimizer.md
       - Event-Driven Simulation: tutorials/65_event_driven.md
+      - SNN Optimizer: tutorials/66_snn_optimizer.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
@@ -188,6 +189,8 @@ nav:
           - Encoding Zoo + Optimizer: api/encoding_zoo.md
       - Simulation:
           - Event-Driven: api/event_driven.md
+      - Optimization:
+          - SNN Optimizer: api/snn_optimizer.md
       - Verification:
           - Temporal Properties: api/temporal_properties.md
       - Hardware Compilation:
