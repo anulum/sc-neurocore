@@ -27,7 +27,7 @@ def _ste_quantize(x: np.ndarray, bits: int, symmetric: bool = True) -> np.ndarra
         abs_max = max(np.abs(x).max(), 1e-8)
         scale = abs_max / (n_levels // 2 - 1)
         return np.round(x / scale) * scale
-    x_min, x_max = x.min(), x.max()  # pragma: no cover
+    x_min, x_max = x.min(), x.max()
     x_range = max(x_max - x_min, 1e-8)
     scale = x_range / (n_levels - 1)
     return np.round((x - x_min) / scale) * scale + x_min

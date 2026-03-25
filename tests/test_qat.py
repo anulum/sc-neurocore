@@ -2,6 +2,7 @@
 from __future__ import annotations
 import numpy as np
 from sc_neurocore.qat import QuantizedSNNLayer, quantize_aware_train_step, TernaryWeights
+from sc_neurocore.qat.quantize import _ste_quantize
 
 
 class TestQuantizedSNNLayer:
@@ -30,3 +31,12 @@ class TestTernaryWeights:
     def test_sparsity(self):
         tw = TernaryWeights(threshold_ratio=0.5)
         assert 0 < tw.sparsity(np.random.randn(100, 100)) < 1
+
+
+class TestSteQuantize:
+    def test_asymmetric(self):
+        x = np.array([0.1, 0.5, 0.9, 1.3])
+        q = _ste_quantize(x, bits=4, symmetric=False)
+        assert q.shape == x.shape
+        assert q.min() >= x.min() - 1e-6
+        assert q.max() <= x.max() + 1e-6

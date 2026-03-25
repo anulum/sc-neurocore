@@ -65,6 +65,7 @@ Synopsys = "Synopsys"
 Comput = "Comput"
 iz = "iz"
 IIT = "IIT"
+NCE = "NCE"
 
 [files]
 extend-exclude = [

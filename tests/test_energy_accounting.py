@@ -3,7 +3,7 @@
 from __future__ import annotations
 import pytest
 from sc_neurocore.energy_accounting import EnergyAccountant, HardwareCostModel
-from sc_neurocore.energy_accounting.accountant import HARDWARE_COSTS
+from sc_neurocore.energy_accounting.accountant import HARDWARE_COSTS, EnergyReport
 
 
 class TestHardwareCosts:
@@ -63,3 +63,7 @@ class TestEnergyAccountant:
         acc = EnergyAccountant("loihi2")
         r = acc.account(["h"], [(10, 5)], [100], 10)
         assert r.routing_energy_pj > 0
+
+    def test_dominant_layer_empty(self):
+        r = EnergyReport(hardware="loihi2")
+        assert r.dominant_layer is None
