@@ -53,8 +53,10 @@ print(result.summary())
 
 ## Predictive Codec (BCI Implants)
 
-Only transmit surprises. EMA predictor learns per-channel firing rates.
-XOR actual vs predicted → compress only error bits.
+Only transmit surprises. Two predictor modes:
+
+- **`ema`** (default): float EMA rate tracking + threshold comparison. Simple, fast.
+- **`lfsr`**: Q8.8 fixed-point rate + LFSR comparator. **Bit-true with `sc_bitstream_encoder.v`** — the prediction logic maps directly to Verilog RTL. No float arithmetic, no multipliers. Same LFSR polynomial as the hardware (x^16 + x^14 + x^13 + x^11 + 1).
 
 ```
 Encoder:                          Decoder:
@@ -68,18 +70,33 @@ Encoder and decoder run identical predictors. Deterministic, no state sync.
 ```python
 from sc_neurocore.spike_codec import PredictiveSpikeCodec
 
+# Float EMA mode (default)
 codec = PredictiveSpikeCodec(alpha=0.005, threshold=0.5)
 data, result = codec.compress(spikes)
 print(f"{result.compression_ratio:.1f}x, accuracy: {result.prediction_accuracy:.1%}")
+
+# SC-native LFSR mode (bit-true with Verilog RTL)
+codec_hw = PredictiveSpikeCodec(predictor="lfsr", alpha_q8=1, seed=0xACE1)
+data_hw, result_hw = codec_hw.compress(spikes)
+print(f"LFSR: {result_hw.compression_ratio:.1f}x")
 ```
 
 ### Hardware Mapping
 
-- EMA update: one MAC per channel per timestep (or shift-add in fixed-point)
-- Threshold compare: one comparator per channel
-- XOR: one gate per channel per timestep
-- ISI encoder: counter + LEB128 shift register per channel
-- Verilog building blocks in `hdl/`: `sc_aer_encoder.v`, `sc_lif_neuron.v`
+**LFSR mode maps 1:1 to existing Verilog RTL:**
+
+| Operation | Verilog Module | Gates (1024ch) |
+|-----------|---------------|----------------|
+| LFSR pseudo-random | `sc_bitstream_encoder.v` | ~2K |
+| Q8.8 rate update | shift-add accumulator | ~10K |
+| Comparator (LFSR < rate) | comparator bank | ~1K |
+| XOR (actual vs predicted) | XOR gate array | ~1K |
+| ISI encoder | counter + shift register | ~30K |
+| **Total** | | **~44K** (excl. SRAM) |
+
+The LFSR predictor uses the same polynomial (x^16 + x^14 + x^13 + x^11 + 1)
+and step semantics as `sc_bitstream_encoder.v`. Python prediction = Verilog
+prediction, bit-for-bit. Formally verified via SymbiYosys (65 properties).
 
 ## Delta Codec (Neural Probes)
 

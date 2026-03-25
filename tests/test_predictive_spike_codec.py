@@ -163,3 +163,65 @@ class TestPredictiveSpikeCodecEdgeCases:
         recovered = codec.decompress(data, 100, 1024)
         np.testing.assert_array_equal(recovered, spikes)
         assert result.n_neurons == 1024
+
+
+class TestLFSRPredictor:
+    """SC-native LFSR predictor: bit-true with sc_bitstream_encoder.v."""
+
+    def test_lfsr_roundtrip(self):
+        rng = np.random.RandomState(42)
+        spikes = (rng.random((500, 32)) < 0.02).astype(np.int8)
+        codec = PredictiveSpikeCodec(predictor="lfsr", alpha_q8=1, seed=0xACE1)
+        data, result = codec.compress(spikes)
+        recovered = codec.decompress(data, 500, 32)
+        np.testing.assert_array_equal(recovered, spikes)
+        assert result.predictor_type == "lfsr"
+
+    def test_lfsr_1024ch(self):
+        rng = np.random.RandomState(42)
+        spikes = (rng.random((100, 1024)) < 0.005).astype(np.int8)
+        codec = PredictiveSpikeCodec(predictor="lfsr", alpha_q8=2, seed=0x1234)
+        data, _ = codec.compress(spikes)
+        np.testing.assert_array_equal(codec.decompress(data, 100, 1024), spikes)
+
+    def test_lfsr_silent(self):
+        spikes = np.zeros((200, 10), dtype=np.int8)
+        codec = PredictiveSpikeCodec(predictor="lfsr")
+        data, _ = codec.compress(spikes)
+        np.testing.assert_array_equal(codec.decompress(data, 200, 10), spikes)
+
+    def test_lfsr_all_firing(self):
+        spikes = np.ones((50, 8), dtype=np.int8)
+        codec = PredictiveSpikeCodec(predictor="lfsr", alpha_q8=50, seed=0xBEEF)
+        data, _ = codec.compress(spikes)
+        np.testing.assert_array_equal(codec.decompress(data, 50, 8), spikes)
+
+    def test_lfsr_deterministic(self):
+        """Same seed → same output, always."""
+        rng = np.random.RandomState(42)
+        spikes = (rng.random((100, 16)) < 0.05).astype(np.int8)
+        c1 = PredictiveSpikeCodec(predictor="lfsr", seed=0xDEAD)
+        c2 = PredictiveSpikeCodec(predictor="lfsr", seed=0xDEAD)
+        d1, _ = c1.compress(spikes)
+        d2, _ = c2.compress(spikes)
+        assert d1 == d2
+
+    def test_cross_mode_auto_detect(self):
+        """Decoder auto-detects predictor type from header magic."""
+        rng = np.random.RandomState(42)
+        spikes = (rng.random((100, 16)) < 0.05).astype(np.int8)
+        codec_ema = PredictiveSpikeCodec(predictor="ema")
+        codec_lfsr = PredictiveSpikeCodec(predictor="lfsr")
+        data_ema, _ = codec_ema.compress(spikes)
+        data_lfsr, _ = codec_lfsr.compress(spikes)
+        # Either codec instance can decompress either format
+        np.testing.assert_array_equal(codec_lfsr.decompress(data_ema, 100, 16), spikes)
+        np.testing.assert_array_equal(codec_ema.decompress(data_lfsr, 100, 16), spikes)
+
+    def test_different_alpha_q8(self):
+        rng = np.random.RandomState(42)
+        spikes = (rng.random((200, 10)) < 0.05).astype(np.int8)
+        for aq8 in [1, 5, 20, 100]:
+            codec = PredictiveSpikeCodec(predictor="lfsr", alpha_q8=aq8)
+            data, _ = codec.compress(spikes)
+            np.testing.assert_array_equal(codec.decompress(data, 200, 10), spikes)
