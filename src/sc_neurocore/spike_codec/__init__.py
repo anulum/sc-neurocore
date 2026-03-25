@@ -8,5 +8,11 @@
 """Spike train compression: 50-200x for BCI telemetry and neural recording."""
 
 from .codec import SpikeCodec, CompressionResult
+from .predictive_codec import PredictiveSpikeCodec, PredictiveCompressionResult
 
-__all__ = ["SpikeCodec", "CompressionResult"]
+__all__ = [
+    "SpikeCodec",
+    "CompressionResult",
+    "PredictiveSpikeCodec",
+    "PredictiveCompressionResult",
+]

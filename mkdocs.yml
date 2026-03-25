@@ -60,6 +60,7 @@ nav:
       - SC for Neuroscientists: guides/SC_FOR_NEUROSCIENTISTS.md
       - SC for Hardware Engineers: guides/SC_FOR_HARDWARE_ENGINEERS.md
       - SC for ML Engineers: guides/SC_FOR_ML_ENGINEERS.md
+      - BCI Spike Codec: guides/bci_codec.md
       - NIR Integration: guides/nir_integration.md
   - Tutorials:
       - SC Fundamentals: tutorials/01_stochastic_computing_fundamentals.md
