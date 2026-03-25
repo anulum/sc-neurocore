@@ -123,7 +123,7 @@ jobs:
         run: pip install -e ".[dev,training]"
 
       - name: Run training tests
-        run: pytest tests/test_training.py -v --timeout=180
+        run: pytest tests/test_torch_training.py -v
 
   spdx-guard:
     runs-on: ubuntu-latest
