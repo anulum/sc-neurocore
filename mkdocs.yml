@@ -129,6 +129,9 @@ nav:
       - Encoding Optimizer: tutorials/64_encoding_optimizer.md
       - Event-Driven Simulation: tutorials/65_event_driven.md
       - SNN Optimizer: tutorials/66_snn_optimizer.md
+      - Spike-Domain DSP: tutorials/67_spike_dsp.md
+      - Homeostasis: tutorials/68_homeostasis.md
+      - Multi-Timescale: tutorials/69_multi_timescale.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
@@ -191,6 +194,11 @@ nav:
           - Event-Driven: api/event_driven.md
       - Optimization:
           - SNN Optimizer: api/snn_optimizer.md
+      - Signal Processing:
+          - Spike DSP: api/spike_dsp.md
+      - Stability:
+          - Homeostasis: api/homeostasis.md
+          - Multi-Timescale: api/temporal_hierarchy.md
       - Verification:
           - Temporal Properties: api/temporal_properties.md
       - Hardware Compilation:
