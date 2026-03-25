@@ -125,7 +125,7 @@ class EnergyReport:
     def dominant_layer(self) -> str | None:
         if not self.layers:
             return None
-        return max(self.layers, key=lambda l: l.total_pj).name  # pragma: no cover
+        return max(self.layers, key=lambda l: l.total_pj).name
 
     @property
     def energy_per_spike_pj(self) -> float:
