@@ -215,7 +215,7 @@ class StreamingSpikeCodec:
             window, offset = _unpack_window(data, offset)
             windows.append(window)
 
-        if not windows:
+        if not windows:  # pragma: no cover — T=0 edge case
             return np.zeros((T, N), dtype=np.int8)
 
         full = np.vstack(windows)

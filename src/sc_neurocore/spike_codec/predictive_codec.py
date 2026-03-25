@@ -55,23 +55,8 @@ class PredictiveCompressionResult(CompressionResult):
     predictor_type: str = "ema"
 
 
-class _RatePredictor:
-    """Per-channel exponential moving average firing rate predictor.
-
-    Deterministic: given same spike history, encoder and decoder produce
-    identical predictions. No random state needed.
-
-    Parameters
-    ----------
-    n_channels : int
-        Number of neural channels.
-    alpha : float
-        EMA smoothing factor. Higher = faster adaptation, less smoothing.
-        0.001-0.01 typical for 20 kHz sampling with 1-5 Hz firing rates.
-    threshold : float
-        Predicted rate above this → predict spike. Below → predict no spike.
-        Optimal threshold depends on firing rate distribution.
-    """
+class _RatePredictor:  # pragma: no cover — superseded by _predict_and_xor inline
+    """Per-channel EMA rate predictor (legacy, kept for reference)."""
 
     def __init__(self, n_channels: int, alpha: float = 0.005, threshold: float = 0.5):
         self.n_channels = n_channels
@@ -80,19 +65,9 @@ class _RatePredictor:
         self.rates = np.zeros(n_channels, dtype=np.float64)
 
     def predict(self) -> np.ndarray:
-        """Predict next spike pattern from learned rates.
-
-        Returns binary array: 1 where rate > threshold, 0 otherwise.
-        """
         return (self.rates > self.threshold).astype(np.int8)
 
     def update(self, actual: np.ndarray):
-        """Update rate estimates with observed spikes.
-
-        Parameters
-        ----------
-        actual : ndarray of shape (n_channels,), binary
-        """
         self.rates += self.alpha * (actual.astype(np.float64) - self.rates)
 
     def reset(self):

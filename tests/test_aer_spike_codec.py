@@ -60,6 +60,15 @@ class TestAERSpikeCodecRoundtrip:
         np.testing.assert_array_equal(recovered, spikes)
         assert result.n_neurons == 1024
 
+    def test_roundtrip_256ch_escape_collision(self):
+        """N=256: neuron 255 = 0xFF would collide with escape marker."""
+        rng = np.random.RandomState(42)
+        spikes = (rng.random((200, 256)) < 0.01).astype(np.int8)
+        codec = AERSpikeCodec()
+        data, _ = codec.compress(spikes)
+        recovered = codec.decompress(data)
+        np.testing.assert_array_equal(recovered, spikes)
+
     def test_roundtrip_large_time_gap(self):
         """Test timestamp delta overflow (gap > 65535)."""
         spikes = np.zeros((100000, 4), dtype=np.int8)
