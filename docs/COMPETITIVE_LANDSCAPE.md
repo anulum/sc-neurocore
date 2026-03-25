@@ -67,7 +67,7 @@ marked explicitly.
    simulation, packed AND+popcount operations, and Sobol LDS encoding
 2. **FPGA co-design** — IR compiler emits synthesisable SystemVerilog
    and MLIR/CIRCT, with bit-exact Python↔Verilog co-simulation
-3. **Formal verification** — 65 SymbiYosys properties across 7 HDL
+3. **Formal verification** — 67 SymbiYosys properties across 7 HDL
    modules (no other SNN framework offers formal proofs)
 4. **Rust SIMD engine** — AVX-512/AVX2/NEON/SVE/RVV dispatch with
    111 Rust neuron models with PyO3 bindings, 81-model NetworkRunner
@@ -195,7 +195,7 @@ highest reported SNN accuracy among open-source frameworks.
 | Bio-plausible learning | **Norse** or **BindsNET** | STDP/bio-learning focus |
 | Large-scale brain models | **Nengo** | NEF, SpiNNaker support |
 | Stochastic + quantum hybrid | **SC-NeuroCore** | Unique quantum-SC bridge |
-| Formal safety verification | **SC-NeuroCore** | 64 SymbiYosys properties |
+| Formal safety verification | **SC-NeuroCore** | 67 SymbiYosys properties |
 
 ---
 

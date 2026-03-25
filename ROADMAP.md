@@ -53,7 +53,7 @@ stabilisation in Rust.
 
 SymbiYosys proofs across 7 HDL modules: LIF neuron (6), bitstream synapse
 (8), encoder (3), dense layer core (7), dotproduct (5), firing rate
-bank (22), AXI-Lite config (13). 65 formal properties total.
+bank (22), AXI-Lite config (13). 67 formal properties total.
 
 ### ~~Brunel balanced-network benchmark~~ ✓
 

@@ -7,7 +7,7 @@
 
 """Compile arbitrary ODE neuron equations to synthesizable Verilog.
 
-The only framework that goes from a string equation to FPGA hardware:
+Compile string equations directly to FPGA hardware:
 
     from sc_neurocore.neurons.equation_builder import from_equations
     from sc_neurocore.compiler.equation_compiler import compile_to_verilog

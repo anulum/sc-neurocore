@@ -29,15 +29,15 @@ Commercial Licensing: Available
   <img src="docs/assets/spike_raster.png" width="800" alt="LIF spike raster — 5 neurons, sinusoidal input">
 </p>
 
-SC-NeuroCore is the most comprehensive spiking neural network framework
-available. 122 neuron models (113 biophysical + 9 AI-optimized) spanning
+SC-NeuroCore is an open-source stochastic computing SNN framework
+with FPGA synthesis. 122 neuron models (113 biophysical + 9 AI-optimized) spanning
 82 years of computational neuroscience (McCulloch-Pitts 1943 through
 ArcaneNeuron 2026) run inside a deterministic stochastic computing engine
 with bit-true Verilog RTL co-simulation, FPGA synthesis via an IR compiler
 (SystemVerilog + MLIR/CIRCT backends), an equation-to-Verilog compiler
 that turns arbitrary ODE strings into synthesizable Q8.8 fixed-point RTL,
 formal verification (7 SymbiYosys
-modules, 65 properties), a Rust SIMD engine at 41.3 Gbit/s AVX-512 (111 Rust
+modules, 67 properties), a Rust SIMD engine at 41.3 Gbit/s AVX-512 (111 Rust
 neuron models with PyO3 bindings, 81-model NetworkRunner with Rayon-parallel
 populations scaling to 100K+ neurons), CuPy GPU acceleration, JAX JIT
 training, MPI distributed simulation (billion-neuron scale via mpi4py),
@@ -57,11 +57,11 @@ recurrent edges, multi-port subgraphs; verified interop with SpikingJelly,
 snnTorch, and Norse), a SpikeInterface adapter for experimental data import,
 ANN-to-SNN conversion (trained PyTorch models to rate-coded SNNs in one call),
 trainable per-synapse delays (DelayLinear with differentiable interpolation),
-one-command FPGA deployment (`sc-neurocore deploy model.nir --target artix7`),
+one-command FPGA synthesis (`sc-neurocore deploy model.nir --target ice40` auto-runs Yosys+nextpnr+icepack if installed; generates project files for Vivado targets),
 per-layer adaptive bitstream length for mixed-precision SC networks,
 event-driven FPGA RTL (AER encoder, event neuron, spike router —
-power proportional to spike rate, not clock rate),
-and a 5-codec spike compression library (ISI, predictive, delta, streaming,
+15-39x fewer register toggles than clock-driven at 0.01-10% activity, measured),
+and a 6-codec neural data compression library (ISI, predictive, delta, streaming,
 AER) with a unified API and auto-recommendation engine — targeting BCI
 implants (Neuralink-scale 1024+ channels), neural probes (Neuropixels),
 neuromorphic inter-chip routing, and real-time closed-loop telemetry.
@@ -100,7 +100,7 @@ coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 | Quantum hybrid (Qiskit/PennyLane) | **Yes** | — | — | — | — |
 | MLIR emitter (CIRCT) | **Yes** | — | — | — | — |
 | Hyperdimensional computing | Yes | — | — | — | — |
-| Formal verification (SymbiYosys) | **7 modules, 65 props** | — | — | — | — |
+| Formal verification (SymbiYosys) | **7 modules, 67 props** | — | — | — | — |
 | JAX JIT training | **Yes** | — | — | — | — |
 | CuPy sparse GPU | **Yes** | — | — | — | — |
 | AI-optimized neurons | **9 (ArcaneNeuron + 8)** | — | — | — | — |
@@ -120,7 +120,7 @@ coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 
 - **Neural data compression library** — Two layers: **WaveformCodec** compresses raw 10-bit electrode waveforms end-to-end (spike detection + template matching + LFP compression, 24x on 1024-channel Neuralink-scale data, fits Bluetooth uplink). **Spike raster codecs** (ISI+Huffman, Predictive with 4 learnable predictors, Delta, Streaming, AER) compress binary spike trains 50-750x. Unified API: `get_codec(name)`, `recommend_codec()`. Learnable world-model predictor (99.6% accuracy). Rust backend (780x speedup). Bit-true LFSR matches Verilog RTL.
 
-SC-NeuroCore's niche: **deterministic stochastic computing with FPGA co-design** — the only framework where Python simulation matches synthesisable RTL bit-for-bit.
+SC-NeuroCore's niche: **deterministic stochastic computing with FPGA co-design** — Python simulation matches synthesisable RTL bit-for-bit (deterministic LFSR seeds, Q8.8 fixed-point, cycle-exact co-simulation).
 
 ### Network Simulation Engine
 

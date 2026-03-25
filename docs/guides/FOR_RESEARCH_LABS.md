@@ -96,7 +96,7 @@ reduction, decoding, and pattern detection — all pure NumPy.
 
 ## For Hardware / FPGA Labs
 
-SC-NeuroCore is the only open-source framework where the Python
+SC-NeuroCore provides an open-source framework where the Python
 simulation matches synthesisable Verilog RTL cycle-exactly.
 
 ### Pipeline
@@ -119,7 +119,7 @@ Artix-7 100T at ~56K LUTs.
 
 ### Formal verification
 
-65 properties across 7 SymbiYosys formal modules (encoder, neuron,
+67 properties across 7 SymbiYosys formal modules (encoder, neuron,
 synapse, dense layer, dotproduct, firing rate, AXI-Lite config).
 
 ### Prerequisites for physical deployment

@@ -181,8 +181,8 @@ to stochastic bitstream weights for FPGA deployment.
 Train in PyTorch → Export SC weights → IR Compiler → SystemVerilog / MLIR → FPGA Bitstream
 ```
 
-The only framework where the Python simulation matches synthesisable
-RTL bit-for-bit. Formal verification with 64 SymbiYosys properties across 7 modules.
+Python simulation matches synthesisable
+RTL bit-for-bit. Formal verification with 67 SymbiYosys properties across 7 modules.
 
 ### Rust SIMD Engine — 41.3 Gbit/s AVX-512
 

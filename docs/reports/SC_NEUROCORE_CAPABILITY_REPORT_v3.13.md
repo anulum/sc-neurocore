@@ -122,7 +122,7 @@ Synthesisable Verilog-2005 modules:
 
 ### 2.4 Formal Verification
 
-65 properties across 7 SymbiYosys formal modules covering:
+67 properties across 7 SymbiYosys formal modules covering:
 encoder, neuron, synapse, dense layer, dotproduct, firing rate,
 AXI-Lite config. Properties include safety (no overflow), liveness
 (neurons fire under sufficient input), and equivalence (Python
@@ -268,7 +268,7 @@ This is a research module, not a production inference tool.
 | Linting | ruff 0.15.6 | Zero violations |
 | Security | bandit | Zero findings |
 | SPDX headers | CI guard | All .py, .rs, .v files |
-| Formal | SymbiYosys | 65 properties |
+| Formal | SymbiYosys | 67 properties |
 | Supply chain | CodeQL + OpenSSF Scorecard | Active |
 | CI workflows | 13, all SHA-pinned | Every push |
 

@@ -61,7 +61,7 @@ substrate.inject_experience("The Euler method converges as O(dt)")
 
 # Multiple experiences build up weight structure
 substrate.inject_experience("NIR bridge maps 18 primitives to SC nodes")
-substrate.inject_experience("Formal verification covers 65 properties")
+substrate.inject_experience("Formal verification covers 67 properties")
 ```
 
 ## 3. Extract State

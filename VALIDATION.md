@@ -7,7 +7,7 @@
 | Python unit/integration | 2 155+ | `pytest tests/` across 130+ files |
 | Rust engine | 373 | `cargo test --manifest-path engine/Cargo.toml` |
 | Bridge (PyO3) | — | Maturin build + Python import smoke test |
-| HDL formal verification | 65 | 7 formal files across `hdl/formal/` (assert + cover properties) |
+| HDL formal verification | 67 | 7 formal files across `hdl/formal/` (assert + cover properties) |
 
 CI runs tests on Python 3.10–3.14 (Ubuntu) and Rust on Ubuntu + Windows.
 
