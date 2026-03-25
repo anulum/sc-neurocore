@@ -76,7 +76,7 @@ use crate::encoder::Lfsr16;
 /// EMA predict-and-XOR loop for spike codec compression.
 /// Returns (error_matrix flattened row-major, correct_prediction_count).
 pub fn predict_and_xor_ema(
-    spikes: &[i8],  // (T * N) row-major
+    spikes: &[i8], // (T * N) row-major
     n_channels: usize,
     alpha: f64,
     threshold: f64,
@@ -152,7 +152,11 @@ pub fn predict_and_xor_lfsr(
         let row_start = t * n_channels;
         for ch in 0..n_channels {
             let actual = spikes[row_start + ch];
-            let predicted = if (lfsrs[ch].reg as i32) < rates_q8[ch] { 1i8 } else { 0i8 };
+            let predicted = if (lfsrs[ch].reg as i32) < rates_q8[ch] {
+                1i8
+            } else {
+                0i8
+            };
             lfsrs[ch].step();
 
             let err = actual ^ predicted;
@@ -170,12 +174,7 @@ pub fn predict_and_xor_lfsr(
 }
 
 /// LFSR XOR-and-recover loop for decompression.
-pub fn xor_and_recover_lfsr(
-    errors: &[i8],
-    n_channels: usize,
-    alpha_q8: i32,
-    seed: u16,
-) -> Vec<i8> {
+pub fn xor_and_recover_lfsr(errors: &[i8], n_channels: usize, alpha_q8: i32, seed: u16) -> Vec<i8> {
     let t_steps = errors.len() / n_channels;
     let mut rates_q8 = vec![0i32; n_channels];
     let mut spikes = vec![0i8; errors.len()];
@@ -190,7 +189,11 @@ pub fn xor_and_recover_lfsr(
     for t in 0..t_steps {
         let row_start = t * n_channels;
         for ch in 0..n_channels {
-            let predicted = if (lfsrs[ch].reg as i32) < rates_q8[ch] { 1i8 } else { 0i8 };
+            let predicted = if (lfsrs[ch].reg as i32) < rates_q8[ch] {
+                1i8
+            } else {
+                0i8
+            };
             lfsrs[ch].step();
 
             let actual = errors[row_start + ch] ^ predicted;

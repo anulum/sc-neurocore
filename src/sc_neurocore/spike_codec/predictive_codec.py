@@ -34,14 +34,14 @@ from .codec import SpikeCodec, CompressionResult
 
 # Rust backend (optional, ~100x faster for LFSR predictor)
 try:
-    from sc_neurocore_engine import (
+    from sc_neurocore_engine import (  # pragma: no cover
         py_predict_xor_ema as _rust_predict_ema,
         py_predict_xor_lfsr as _rust_predict_lfsr,
         py_recover_xor_ema as _rust_recover_ema,
         py_recover_xor_lfsr as _rust_recover_lfsr,
     )
 
-    _HAS_RUST = True
+    _HAS_RUST = True  # pragma: no cover
 except ImportError:
     _HAS_RUST = False
 
@@ -413,7 +413,7 @@ class PredictiveSpikeCodec:
             error_data, _ = self.base_codec.compress(errors)
             header = self.HEADER_MAGIC_CTX + struct.pack("!B", self.context_bits)
         elif self.predictor == "lfsr":
-            if _HAS_RUST:
+            if _HAS_RUST:  # pragma: no cover
                 flat = np.ascontiguousarray(spikes).ravel()
                 err_flat, correct_predictions = _rust_predict_lfsr(
                     flat,
@@ -432,7 +432,7 @@ class PredictiveSpikeCodec:
             error_data, _ = self.base_codec.compress(errors)
             header = self.HEADER_MAGIC_LFSR + struct.pack("!HH", self.alpha_q8, self.seed)
         else:
-            if _HAS_RUST:
+            if _HAS_RUST:  # pragma: no cover
                 flat = np.ascontiguousarray(spikes).ravel()
                 err_flat, correct_predictions = _rust_predict_ema(
                     flat,
@@ -499,7 +499,7 @@ class PredictiveSpikeCodec:
             alpha_q8, seed = struct.unpack("!HH", data[4:8])
             error_data = data[8:]
             errors = self.base_codec.decompress(error_data, T, N)
-            if _HAS_RUST:
+            if _HAS_RUST:  # pragma: no cover
                 flat = np.ascontiguousarray(errors).ravel()
                 rec = np.asarray(_rust_recover_lfsr(flat, N, alpha_q8, seed))
                 return rec.reshape(T, N)
@@ -509,7 +509,7 @@ class PredictiveSpikeCodec:
             alpha, threshold = struct.unpack("!dd", data[4:20])
             error_data = data[20:]
             errors = self.base_codec.decompress(error_data, T, N)
-            if _HAS_RUST:
+            if _HAS_RUST:  # pragma: no cover
                 flat = np.ascontiguousarray(errors).ravel()
                 rec = np.asarray(_rust_recover_ema(flat, N, alpha, threshold))
                 return rec.reshape(T, N)
