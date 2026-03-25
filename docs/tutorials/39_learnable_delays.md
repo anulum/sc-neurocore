@@ -15,6 +15,32 @@ simultaneously (for coincidence detection) and which should be staggered
 (for sequence recognition). Research shows delays can replace entire
 layers — same accuracy with fewer parameters.
 
+```
+    Standard SNN (no delays)         With trainable delays
+    ─────────────────────────         ───────────────────────
+    input A ──┐                      input A ──[d=0]──┐
+              ├──→ neuron                              ├──→ neuron
+    input B ──┘                      input B ──[d=3]──┘
+
+    A and B arrive simultaneously    B arrives 3 timesteps later
+    → only rate matters              → timing encodes information
+```
+
+```mermaid
+flowchart LR
+    subgraph Standard["Fixed-delay SNN"]
+        SA["spike A"] --> N1["neuron"]
+        SB["spike B"] --> N1
+    end
+    subgraph Delayed["Delay-trained SNN"]
+        DA["spike A"] -->|"d=0"| N2["neuron<br/>coincidence<br/>detector"]
+        DB["spike B"] -->|"d=3 (learned)"| N2
+    end
+
+    style Standard fill:#fff3e0
+    style Delayed fill:#e8f5e9
+```
+
 ## 1. DelayLinear Module
 
 ```python

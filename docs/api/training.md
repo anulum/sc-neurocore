@@ -14,6 +14,87 @@ All modules are `torch.nn.Module` subclasses. Train with standard PyTorch
 optimizers and loss functions, then export weights to stochastic computing
 bitstreams via `to_sc_weights()`.
 
+### End-to-end pipeline
+
+```mermaid
+flowchart LR
+    A[Raw Data<br/>images, audio, events] --> B[Spike Encoder<br/>rate / latency / delta]
+    B --> C[SpikingNet<br/>Linear → LIFCell × N]
+    C --> D{Loss + Backward<br/>surrogate gradient}
+    D --> |optimizer.step| C
+    D --> E[to_sc_weights<br/>normalize to 0,1]
+    E --> F[SC Bitstream<br/>SCDenseLayer]
+    E --> G[Verilog RTL<br/>equation compiler]
+    G --> H[FPGA Bitstream<br/>Yosys + nextpnr]
+
+    style A fill:#e1f5fe
+    style C fill:#fff3e0
+    style E fill:#e8f5e9
+    style H fill:#fce4ec
+```
+
+### Module hierarchy
+
+```mermaid
+classDiagram
+    class nn_Module["torch.nn.Module"]
+
+    class LIFCell {
+        beta: float
+        threshold: float
+        surrogate_fn: Callable
+        forward(current, v) → spike, v
+    }
+    class IFCell {
+        forward(current, v) → spike, v
+    }
+    class SynapticCell {
+        alpha: float
+        forward(current, i_syn, v) → spike, i_syn, v
+    }
+    class ALIFCell {
+        rho: float
+        beta_adapt: float
+        forward(current, v, a) → spike, v, a
+    }
+    class ExpIFCell {
+        delta_t: float
+        v_rh: float
+        forward(current, v) → spike, v
+    }
+    class AdExCell {
+        a: float
+        b: float
+        forward(current, v, w) → spike, v, w
+    }
+    class SpikingNet {
+        linears: ModuleList
+        lifs: ModuleList
+        forward(x) → spike_counts, mem_acc
+        to_sc_weights() → List
+    }
+    class ConvSpikingNet {
+        conv1, conv2: Conv2d
+        fc1, fc2: Linear
+        forward(x) → spike_counts, mem_acc
+    }
+    class DelayLinear {
+        delay: Parameter
+        step(x) → current
+        delays_int → LongTensor
+    }
+
+    nn_Module <|-- LIFCell
+    nn_Module <|-- IFCell
+    nn_Module <|-- SynapticCell
+    nn_Module <|-- ALIFCell
+    nn_Module <|-- ExpIFCell
+    nn_Module <|-- AdExCell
+    nn_Module <|-- SpikingNet
+    nn_Module <|-- ConvSpikingNet
+    nn_Module <|-- DelayLinear
+```
+
 ---
 
 ## Surrogate Gradient Functions
@@ -22,6 +103,41 @@ Surrogate gradients solve the non-differentiability of spike generation.
 Forward pass: Heaviside step `(x > 0) → {0, 1}`. Backward pass: smooth
 approximation of the Dirac delta. All functions expect pre-shifted input
 `x = v - threshold`.
+
+```mermaid
+flowchart LR
+    subgraph Forward["Forward Pass"]
+        direction TB
+        F1["v - threshold"] --> F2{"x > 0 ?"}
+        F2 -->|Yes| F3["spike = 1"]
+        F2 -->|No| F4["spike = 0"]
+    end
+    subgraph Backward["Backward Pass (surrogate)"]
+        direction TB
+        B1["grad_output"] --> B2["× surrogate'(x)"]
+        B2 --> B3["grad_input"]
+    end
+    Forward -.->|"gradient path<br/>(smooth approx)"| Backward
+
+    style Forward fill:#e8f5e9
+    style Backward fill:#fff3e0
+```
+
+**Surrogate gradient shapes** (backward pass — gradient magnitude vs distance from threshold):
+
+```
+    gradient
+    ▲
+1.0 │  ╱╲   atan (wide, stable)
+    │ ╱  ╲
+0.5 │╱    ╲╱╲  fast_sigmoid (sharp, fast)
+    │       ╲
+0.0 │────────╲─────────────► x = v - threshold
+   -3  -2  -1   0   1   2   3
+
+    Wider gradient window = more neurons receive learning signal
+    Narrower = sharper threshold, faster convergence but less stable
+```
 
 | Function | Backward formula | Default param | Citation |
 |---|---|---|---|
@@ -258,6 +374,28 @@ Multi-layer feedforward SNN: `[Linear → LIFCell] × (n_layers + 1)`.
 Readout accumulates output spike counts and membrane potential over T
 timesteps.
 
+```mermaid
+flowchart LR
+    subgraph Input
+        X["x<br/>(T, batch, 784)"]
+    end
+    subgraph Hidden["Hidden Layers × n_layers"]
+        L1[Linear<br/>784→128] --> LIF1[LIFCell<br/>β=0.9]
+        LIF1 -->|spikes| L2[Linear<br/>128→128]
+        L2 --> LIF2[LIFCell<br/>β=0.9]
+    end
+    subgraph Output
+        L3[Linear<br/>128→10] --> LIF3[LIFCell<br/>β=0.9]
+        LIF3 -->|accumulate T steps| SC["spike_counts<br/>(batch, 10)"]
+    end
+    X --> L1
+    LIF2 -->|spikes| L3
+
+    style Input fill:#e1f5fe
+    style Hidden fill:#fff3e0
+    style Output fill:#e8f5e9
+```
+
 ```python
 from sc_neurocore.training import SpikingNet
 
@@ -298,8 +436,25 @@ the equation compiler's Verilog RTL.
 ### ConvSpikingNet
 
 Convolutional SNN for image classification:
-`Conv2d(1,32,5) → LIF → AvgPool → Conv2d(32,64,5) → LIF → AvgPool →
-Flatten → Linear(1024,128) → LIF → Linear(128,n_output) → LIF`
+
+```mermaid
+flowchart LR
+    I["Input<br/>28×28×1"] --> C1["Conv2d<br/>1→32, 5×5"]
+    C1 --> S1["LIF<br/>24×24×32"]
+    S1 --> P1["AvgPool<br/>12×12×32"]
+    P1 --> C2["Conv2d<br/>32→64, 5×5"]
+    C2 --> S2["LIF<br/>8×8×64"]
+    S2 --> P2["AvgPool<br/>4×4×64"]
+    P2 --> FL["Flatten<br/>1024"]
+    FL --> F1["Linear<br/>1024→128"]
+    F1 --> S3["LIF"]
+    S3 --> F2["Linear<br/>128→10"]
+    F2 --> S4["LIF"]
+    S4 --> O["spike_counts<br/>(batch, 10)"]
+
+    style I fill:#e1f5fe
+    style O fill:#e8f5e9
+```
 
 ```python
 from sc_neurocore.training import ConvSpikingNet
