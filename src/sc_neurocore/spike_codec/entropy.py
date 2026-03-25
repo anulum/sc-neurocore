@@ -190,7 +190,7 @@ class HuffmanEncoder:
                 current_code = 0
                 current_len = 0
 
-            if current_len > max_len:
+            if current_len > max_len:  # pragma: no cover
                 break
 
         return values, pos
