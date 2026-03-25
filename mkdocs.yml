@@ -132,6 +132,11 @@ nav:
       - Spike-Domain DSP: tutorials/67_spike_dsp.md
       - Homeostasis: tutorials/68_homeostasis.md
       - Multi-Timescale: tutorials/69_multi_timescale.md
+      - Spike Codec: tutorials/70_spike_codec.md
+      - Symbolic Reasoning: tutorials/71_symbolic_reasoning.md
+      - Energy Accounting: tutorials/72_energy_accounting.md
+      - Spike GNN: tutorials/73_spike_gnn.md
+      - Reservoir Computing: tutorials/74_reservoir.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
@@ -196,6 +201,15 @@ nav:
           - SNN Optimizer: api/snn_optimizer.md
       - Signal Processing:
           - Spike DSP: api/spike_dsp.md
+      - Data:
+          - Spike Codec: api/spike_codec.md
+          - Spike GNN: api/spike_gnn.md
+      - Symbolic:
+          - Symbolic Reasoning: api/symbolic.md
+      - Energy:
+          - Energy Accounting: api/energy_accounting.md
+      - Reservoir:
+          - Auto-Critical: api/reservoir.md
       - Stability:
           - Homeostasis: api/homeostasis.md
           - Multi-Timescale: api/temporal_hierarchy.md
