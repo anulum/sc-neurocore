@@ -1,12 +1,13 @@
 # Spatial
 
-Spatial encoding for spiking networks: coordinate representations
-and 3D transformer attention over volumetric spike data.
+3D spatial representations for spike-domain processing.
 
-## Representations
+- `VoxelGrid`, `PointCloud`, `SpatialTransformer3D`
 
-::: sc_neurocore.spatial.representations
+```python
+from sc_neurocore.spatial import VoxelGrid, PointCloud
+```
 
-## 3D Transformer
-
-::: sc_neurocore.spatial.transformer_3d
+::: sc_neurocore.spatial
+    options:
+      show_root_heading: true

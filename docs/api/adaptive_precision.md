@@ -1,13 +1,13 @@
-# Adaptive Bitstream Precision
+# Adaptive Precision
 
-Per-layer bitstream length assignment for mixed-precision SC networks.
+Per-layer adaptive bitstream length for mixed-precision SC networks.
 
-## Precision Assignment
+- `AdaptivePrecisionManager` — Auto-select bitstream length per layer (Hoeffding/Chebyshev/sensitivity bounds). Layers needing high precision get longer bitstreams; tolerant layers get shorter ones.
 
-::: sc_neurocore.compiler.adaptive_precision
+```python
+from sc_neurocore.adaptive_precision import AdaptivePrecisionManager
+```
+
+::: sc_neurocore.adaptive_precision
     options:
       show_root_heading: true
-      members:
-        - assign_lengths
-        - analyze_sensitivity
-        - LayerPrecision

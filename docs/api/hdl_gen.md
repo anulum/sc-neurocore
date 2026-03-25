@@ -1,11 +1,16 @@
 # HDL Generation
 
-Generate synthesisable Verilog from SC network descriptions.
+Verilog RTL generation from Python SNN descriptions.
 
-## Verilog Generator
+- `generate_verilog()` — Convert SC layer/neuron descriptions to synthesizable Verilog modules. Supports Q8.8 fixed-point, LFSR encoders, popcount trees, and event-driven AER.
+- IR compiler pipeline: Python → intermediate representation → SystemVerilog / MLIR (CIRCT backend)
 
-::: sc_neurocore.hdl_gen.verilog_generator
+19 hand-written Verilog modules + equation-to-Verilog compiler for arbitrary ODEs.
 
-## SPICE Generator
+```python
+from sc_neurocore.hdl_gen import generate_verilog
+```
 
-::: sc_neurocore.hdl_gen.spice_generator
+::: sc_neurocore.hdl_gen
+    options:
+      show_root_heading: true

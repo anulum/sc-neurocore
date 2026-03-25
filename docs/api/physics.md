@@ -1,12 +1,16 @@
 # Physics
 
-Physics-informed spiking layers: thermal diffusion solver and
-Wolfram-style hypergraph rewriting.
+Physics simulation layers using stochastic computing.
 
-## Heat
+- Coupled oscillator models, wave propagation, and diffusion equations implemented via SC arithmetic
+- Applications: computational fluid dynamics, molecular dynamics, reaction-diffusion systems
 
-::: sc_neurocore.physics.heat
+All physics simulations use bitstream operations — no floating-point arithmetic.
 
-## Wolfram Hypergraph
+```python
+from sc_neurocore.physics import CoupledOscillatorLayer
+```
 
-::: sc_neurocore.physics.wolfram_hypergraph
+::: sc_neurocore.physics
+    options:
+      show_root_heading: true

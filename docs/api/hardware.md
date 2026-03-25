@@ -1,10 +1,13 @@
 # Hardware
 
-HDL modules for FPGA/ASIC deployment of spiking neuron cores.
+Hardware abstraction layer for chip emulators and deployment targets.
 
-## Microtubule Neuron (Verilog)
+9 hardware chip emulators: Loihi CUBA, Loihi 2, TrueNorth, BrainScaleS AdEx, SpiNNaker, Akida, DPI, MemristorArray, GenericASIC. Each emulates the target chip's neuron dynamics, precision constraints, and routing limitations.
 
-The `microtubule_neuron.v` module implements a LIF neuron with microtubule-inspired
-dendritic processing in synthesisable Verilog.
+```python
+from sc_neurocore.hardware import LoihiCUBANeuron, TrueNorthNeuron
+```
 
-Source: `src/sc_neurocore/hardware/microtubule_neuron.v`
+::: sc_neurocore.hardware
+    options:
+      show_root_heading: true

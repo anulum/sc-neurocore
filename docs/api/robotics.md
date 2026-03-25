@@ -1,12 +1,15 @@
 # Robotics
 
-Spiking motor control: central pattern generators for locomotion
-and swarm coordination protocols.
+Spiking neural network primitives for robotic control.
 
-## CPG
+- CPG (Central Pattern Generator) for locomotion
+- Spike-based sensorimotor loops
+- Population-coded motor commands
 
-::: sc_neurocore.robotics.cpg
+```python
+from sc_neurocore.robotics import CPGNetwork
+```
 
-## Swarm
-
-::: sc_neurocore.robotics.swarm
+::: sc_neurocore.robotics
+    options:
+      show_root_heading: true

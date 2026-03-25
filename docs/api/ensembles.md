@@ -1,8 +1,13 @@
 # Ensembles
 
-Ensemble orchestration for running multiple SC networks in parallel
-and aggregating their outputs.
+Multi-model ensemble coordination for SNN networks.
 
-## Orchestrator
+- `EnsembleOrchestrator` — Coordinate multiple SNN models in parallel, aggregate outputs via voting, averaging, or stacking. Supports heterogeneous architectures (different neuron models, topologies).
 
-::: sc_neurocore.ensembles.orchestrator
+```python
+from sc_neurocore.ensembles import EnsembleOrchestrator
+```
+
+::: sc_neurocore.ensembles
+    options:
+      show_root_heading: true

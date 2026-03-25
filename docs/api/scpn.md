@@ -1,11 +1,13 @@
 # SCPN Layers
 
-SCPN 16-layer hierarchy implementation and parameter catalogue.
+Stochastic Coupled Phase-oscillator Network layer adapters.
 
-## Parameters
+Maps the 16-layer SCPN holonomic model (L1 Quantum through L16 Meta) into SC-NeuroCore's simulation engine. JAX-accelerated Kuramoto coupling, UPDE solvers, and phase coherence metrics.
 
-::: sc_neurocore.scpn.params
+```python
+from sc_neurocore.scpn import KuramotoCoupling, PhaseCoherenceMetric
+```
 
-## Layer Implementations
-
-::: sc_neurocore.scpn.layers
+::: sc_neurocore.scpn
+    options:
+      show_root_heading: true

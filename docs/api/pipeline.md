@@ -1,11 +1,14 @@
 # Pipeline
 
-Data ingestion and training orchestration for spiking network experiments.
+Data ingestion and training orchestration for SNN workflows.
 
-## Ingestion
+- `DataIngestor` — Multimodal dataset preparation: spike encoding, batching, augmentation
+- `SCTrainingLoop` — Standard and RL training orchestration with logging, checkpointing, and early stopping
 
-::: sc_neurocore.pipeline.ingestion
+```python
+from sc_neurocore.pipeline import DataIngestor, SCTrainingLoop
+```
 
-## Training
-
-::: sc_neurocore.pipeline.training
+::: sc_neurocore.pipeline
+    options:
+      show_root_heading: true
