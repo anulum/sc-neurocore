@@ -178,6 +178,7 @@ nav:
           - Export: api/export.md
           - HDL Generation: api/hdl_gen.md
       - Training:
+          - Training API: api/training.md
           - Delay Training: api/delay_training.md
           - ANN-to-SNN Conversion: api/conversion.md
       - Identity & AI:
