@@ -15,47 +15,83 @@ function fmt(n: number): string {
 const PROTOCOLS = [
   { value: "constant", label: "Constant" },
   { value: "step", label: "Step (20%-80%)" },
-  { value: "ramp", label: "Ramp (0→I)" },
+  { value: "ramp", label: "Ramp (0 → I)" },
   { value: "pulse", label: "Pulse train" },
 ];
 
+function Slider({ label, value, onChange, min, max, step }: {
+  label: string; value: number;
+  onChange: (v: number) => void;
+  min?: number; max?: number; step?: number;
+}) {
+  const [lo, hi, st] = min !== undefined
+    ? [min, max!, step!]
+    : sliderRange(value);
+  return (
+    <div className="slider-row">
+      <span className="slider-label">{label}</span>
+      <input type="range" min={lo} max={hi} step={st} value={value}
+        onChange={(e) => onChange(parseFloat(e.target.value))} />
+      <span className="slider-value">{fmt(value)}</span>
+    </div>
+  );
+}
+
 export default function ParameterSliders() {
   const {
-    params, init, current, dt, duration, protocol,
-    setParam, setInit, setCurrent, setDt, setDuration, setProtocol,
+    sourceMode, modelDetail, modelParams, setModelParam,
+    odeParams, odeInit, setOdeParam, setOdeInit,
+    current, dt, duration, protocol,
+    setCurrent, setDt, setDuration, setProtocol,
   } = useStudioStore();
 
   return (
     <>
-      <div className="panel-section">
-        <div className="panel-header">Parameters</div>
-        {Object.entries(params).map(([key, value]) => {
-          const [lo, hi, step] = sliderRange(value);
-          return (
-            <div className="slider-row" key={key}>
-              <span className="slider-label">{key}</span>
-              <input type="range" min={lo} max={hi} step={step} value={value}
-                onChange={(e) => setParam(key, parseFloat(e.target.value))} />
-              <span className="slider-value">{fmt(value)}</span>
+      {sourceMode === "model" && modelDetail && (
+        <>
+          <div className="panel-section">
+            <div className="panel-header">
+              Parameters ({modelDetail.params.length})
             </div>
-          );
-        })}
-      </div>
+            {modelDetail.params.map((p) => (
+              <Slider key={p.name} label={p.name}
+                value={modelParams[p.name] ?? p.default}
+                onChange={(v) => setModelParam(p.name, v)} />
+            ))}
+          </div>
+          {modelDetail.state_vars.length > 0 && (
+            <div className="panel-section">
+              <div className="panel-header">
+                Initial State ({modelDetail.state_vars.length})
+              </div>
+              {modelDetail.state_vars.map((s) => (
+                <Slider key={`init-${s.name}`} label={`${s.name}₀`}
+                  value={modelParams[s.name] ?? s.default}
+                  onChange={(v) => setModelParam(s.name, v)} />
+              ))}
+            </div>
+          )}
+        </>
+      )}
 
-      <div className="panel-section">
-        <div className="panel-header">Initial State</div>
-        {Object.entries(init).map(([key, value]) => {
-          const [lo, hi, step] = sliderRange(value);
-          return (
-            <div className="slider-row" key={`init-${key}`}>
-              <span className="slider-label">{key}₀</span>
-              <input type="range" min={lo} max={hi} step={step} value={value}
-                onChange={(e) => setInit(key, parseFloat(e.target.value))} />
-              <span className="slider-value">{fmt(value)}</span>
-            </div>
-          );
-        })}
-      </div>
+      {sourceMode === "ode" && (
+        <>
+          <div className="panel-section">
+            <div className="panel-header">Parameters</div>
+            {Object.entries(odeParams).map(([key, value]) => (
+              <Slider key={key} label={key} value={value}
+                onChange={(v) => setOdeParam(key, v)} />
+            ))}
+          </div>
+          <div className="panel-section">
+            <div className="panel-header">Initial State</div>
+            {Object.entries(odeInit).map(([key, value]) => (
+              <Slider key={`init-${key}`} label={`${key}₀`} value={value}
+                onChange={(v) => setOdeInit(key, v)} />
+            ))}
+          </div>
+        </>
+      )}
 
       <div className="panel-section">
         <div className="panel-header">Current Injection</div>
@@ -68,24 +104,12 @@ export default function ParameterSliders() {
             ))}
           </select>
         </div>
-        <div className="slider-row">
-          <span className="slider-label">I</span>
-          <input type="range" min={-100} max={100} step={0.1} value={current}
-            onChange={(e) => setCurrent(parseFloat(e.target.value))} />
-          <span className="slider-value">{fmt(current)}</span>
-        </div>
-        <div className="slider-row">
-          <span className="slider-label">dt</span>
-          <input type="range" min={0.001} max={1} step={0.001} value={dt}
-            onChange={(e) => setDt(parseFloat(e.target.value))} />
-          <span className="slider-value">{dt}</span>
-        </div>
-        <div className="slider-row">
-          <span className="slider-label">T (ms)</span>
-          <input type="range" min={10} max={1000} step={10} value={duration}
-            onChange={(e) => setDuration(parseFloat(e.target.value))} />
-          <span className="slider-value">{duration}</span>
-        </div>
+        <Slider label="I" value={current} onChange={setCurrent}
+          min={-100} max={100} step={0.1} />
+        <Slider label="dt" value={dt} onChange={setDt}
+          min={0.001} max={1} step={0.001} />
+        <Slider label="T (ms)" value={duration} onChange={setDuration}
+          min={10} max={2000} step={10} />
       </div>
     </>
   );

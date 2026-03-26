@@ -2,24 +2,18 @@ import { useEffect } from "react";
 import { useStudioStore } from "../stores/studio";
 
 export default function TemplateLibrary() {
-  const { templates, selectedTemplate, loadTemplates, selectTemplate } =
-    useStudioStore();
+  const { templates, loadTemplates, selectTemplate } = useStudioStore();
 
-  useEffect(() => {
-    loadTemplates().then(() => {
-      useStudioStore.getState().runSimulation();
-    });
-  }, [loadTemplates]);
+  useEffect(() => { loadTemplates(); }, [loadTemplates]);
 
   return (
     <select
-      value={selectedTemplate}
-      onChange={(e) => selectTemplate(e.target.value)}
+      defaultValue=""
+      onChange={(e) => { if (e.target.value) selectTemplate(e.target.value); }}
     >
+      <option value="" disabled>ODE templates...</option>
       {templates.map((t) => (
-        <option key={t.name} value={t.name}>
-          {t.description}
-        </option>
+        <option key={t.name} value={t.name}>{t.description}</option>
       ))}
     </select>
   );
