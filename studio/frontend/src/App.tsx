@@ -109,6 +109,12 @@ export default function App() {
           </>
         )}
 
+        <Btn label="STA" onClick={s.computeSTA} disabled={!s.result || s.result.spikes.length < 3} color="#b0bec5" />
+        <Btn label="Freq" onClick={s.runFreqResponse} disabled={s.isSimulating} color="#fff176" />
+        {s.sourceMode === "ode" && s.equations.length >= 2 && (
+          <Btn label="Nullcl." onClick={s.runNullclines} disabled={s.isSimulating} color="#ef9a9a" />
+        )}
+        <Btn label="Share" onClick={s.shareURL} outline />
         <Btn label="Reset" onClick={s.resetDefaults} outline />
         <Btn label="JSON" onClick={s.exportData} disabled={!s.result} outline />
         <Btn label="PNG" onClick={s.exportSVG} outline />
@@ -123,6 +129,8 @@ export default function App() {
           <Tab active={s.activeTab === "bifurcation"} color="#ef9a9a" label="Bif" onClick={() => s.setActiveTab("bifurcation")} />
           <Tab active={s.activeTab === "heatmap"} color="#ffab91" label="2D" onClick={() => s.setActiveTab("heatmap")} />
           <Tab active={s.activeTab === "sensitivity"} color="#ce93d8" label="Sens" onClick={() => s.setActiveTab("sensitivity")} />
+          <Tab active={s.activeTab === "sta"} color="#b0bec5" label="STA" onClick={() => s.setActiveTab("sta")} />
+          <Tab active={s.activeTab === "freq"} color="#fff176" label="Freq" onClick={() => s.setActiveTab("freq")} />
           <Tab active={s.activeTab === "code"} color="#90a4ae" label="Code" onClick={() => s.setActiveTab("code")} />
           {s.sourceMode === "ode" && (
             <>
@@ -186,6 +194,34 @@ export default function App() {
               </div>
             </div>
           )}
+
+          <div className="panel-section">
+            <div className="panel-header">Sessions</div>
+            <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
+              <button onClick={() => {
+                const name = prompt("Session name:");
+                if (name) s.saveSession(name);
+              }} style={{
+                fontSize: 10, padding: "2px 6px", background: "var(--bg-tertiary)",
+                color: "var(--text-secondary)", border: "1px solid var(--border)",
+                borderRadius: 3, cursor: "pointer",
+              }}>Save</button>
+            </div>
+            {s.savedSessions.length > 0 && (
+              <div style={{ maxHeight: 60, overflowY: "auto" }}>
+                {s.savedSessions.map((ss) => (
+                  <div key={ss.name} style={{
+                    display: "flex", justifyContent: "space-between", fontSize: 10,
+                    padding: "1px 4px", color: "var(--text-secondary)",
+                  }}>
+                    <span style={{ cursor: "pointer" }} onClick={() => s.loadSession(ss.name)}>{ss.name}</span>
+                    <span style={{ cursor: "pointer", color: "var(--text-muted)" }}
+                      onClick={() => s.deleteSession(ss.name)}>x</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
           <div className="panel-section">
             <div className="panel-header">Info</div>
