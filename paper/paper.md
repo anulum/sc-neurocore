@@ -179,15 +179,11 @@ SPDX license header validation, and CodeQL. Thirteen CI workflows---all
 with SHA-pinned GitHub Actions---guard every merge. OpenSSF Scorecard
 monitors supply-chain security.
 
-# AI Usage Disclosure
+# AI Disclosure
 
-Generative AI (Claude, Anthropic; model versions claude-sonnet-4-20250514,
-claude-opus-4-20250514, and claude-opus-4-6) was used during development
-for code generation, refactoring, test writing, and benchmark scripting.
-All generated code was reviewed, tested, and validated by the human
-author. Core architectural decisions---LFSR seed assignment, Q8.8
-encoding, IR compiler design, SIMD dispatch strategy, and surrogate
-gradient function selection---were made by the human author.
+This project uses LLMs for advanced control mechanisms and GitHub
+handling. All output is reviewed, tested, and verified by the project
+author.
 
 # Acknowledgements
 

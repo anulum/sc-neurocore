@@ -132,7 +132,7 @@ New in this release:
 - **Learning rules**: BCM, voltage STDP, TBPTT, EWC (real implementation), learnable beta/threshold
 - **Biological circuits**: tripartite synapse, Rall dendrite, cortical microcircuit, astrocyte adapter
 - **Hardware**: AXI-Stream interface, DMA controller, parameterized AXI-Lite, CDC primitives
-- **Deep audit**: 15 bugs + 7 concerns fixed across 942 files (6-agent + Gemini audit)
+- **Deep audit**: 15 bugs + 7 concerns fixed across 942 files
 
 ## v4.0 — Physical FPGA & Production (target: Q3 2026)
 
