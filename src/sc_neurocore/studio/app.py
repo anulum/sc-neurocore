@@ -18,6 +18,7 @@ from sc_neurocore.studio.analysis import (
     precision_compare, sensitivity_analysis, spike_triggered_average,
 )
 from sc_neurocore.studio.characterize import characterize_model
+from sc_neurocore.studio.model_scan import scan_all_models
 from sc_neurocore.studio.codegen import (
     classify_firing_pattern, generate_model_script, generate_ode_script, generate_oneliner,
 )
@@ -231,6 +232,11 @@ def create_app() -> FastAPI:
     @app.get("/api/models/{name}")
     def api_model(name: str):
         return _safe(lambda: get_model_detail(name) or (_ for _ in ()).throw(HTTPException(404, f"Model '{name}' not found")))
+
+    # --- Model scan (behavior classification) ---
+    @app.get("/api/models/scan")
+    def api_model_scan():
+        return _safe(lambda: scan_all_models(current=10.0, duration=100.0))
 
     # --- Presets (#3) ---
     @app.get("/api/presets")
