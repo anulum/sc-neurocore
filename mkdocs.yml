@@ -260,7 +260,14 @@ nav:
           - Audio: api/audio.md
           - Bio: api/bio.md
           - Chaos: api/chaos.md
+          - Contrastive SSL: api/contrastive.md
+          - Continual Learning: api/continual.md
           - Core Modules: api/core.md
+          - Dashboard: api/dashboard.md
+          - Digital Twin: api/digital_twin.md
+          - Distillation: api/distillation.md
+          - Few-Shot: api/few_shot.md
+          - Fusion: api/fusion.md
           - Generative: api/generative.md
           - Graphs: api/graphs.md
           - HDC: api/hdc.md
@@ -271,11 +278,18 @@ nav:
           - Optics: api/optics.md
           - Physics: api/physics.md
           - Pipeline: api/pipeline.md
+          - Privacy: api/privacy.md
+          - QAT: api/qat.md
           - Quantum: api/quantum.md
+          - Resilience: api/resilience.md
+          - Reservoir: api/reservoir.md
           - Robotics: api/robotics.md
           - SCPN Layers: api/scpn.md
           - Sleep: api/sleep.md
           - Spatial: api/spatial.md
+          - Spike GNN: api/spike_gnn.md
+          - Symbolic: api/symbolic.md
+          - Temporal Hierarchy: api/temporal_hierarchy.md
           - World Model: api/world_model.md
       - Safety:
           - FMEA: safety/FMEA_SNN_COMPILER.md
