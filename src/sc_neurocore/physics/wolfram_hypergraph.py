@@ -112,6 +112,7 @@ class WolframHypergraph:
             return 0.0
 
         import numpy as np
+
         r_vals = np.arange(1, len(volumes) + 1, dtype=np.float64)
         v_vals = np.array(volumes, dtype=np.float64)
         log_r = np.log(r_vals)

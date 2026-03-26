@@ -162,9 +162,7 @@ class TestSpikeALU:
 
 class TestSpikeSorter:
     def test_sort_basic(self):
-        assert spike_sort([3, 1, 4, 1, 5, 9, 2, 6]) == sorted(
-            [3, 1, 4, 1, 5, 9, 2, 6]
-        )
+        assert spike_sort([3, 1, 4, 1, 5, 9, 2, 6]) == sorted([3, 1, 4, 1, 5, 9, 2, 6])
 
     def test_sort_already_sorted(self):
         assert spike_sort([1, 2, 3, 4, 5]) == [1, 2, 3, 4, 5]

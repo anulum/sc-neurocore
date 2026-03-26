@@ -10,7 +10,7 @@ from __future__ import annotations
 import numpy as np
 
 from sc_neurocore.resilience import FaultResilienceSuite, FaultModel
-from sc_neurocore.resilience.fault_suite import FaultType, FaultResult, ResilienceReport
+from sc_neurocore.resilience.fault_suite import FaultType, FaultResult
 
 
 def _eval_fn(weights):
@@ -25,8 +25,14 @@ class TestFaultModel:
         assert fm.layer_index is None
 
     def test_all_fault_types_exist(self):
-        expected = {"stuck_at_0", "stuck_at_1", "weight_bit_flip",
-                    "dead_synapse", "noisy_membrane", "bitstream_bias"}
+        expected = {
+            "stuck_at_0",
+            "stuck_at_1",
+            "weight_bit_flip",
+            "dead_synapse",
+            "noisy_membrane",
+            "bitstream_bias",
+        }
         actual = {ft.value for ft in FaultType}
         assert actual == expected
 

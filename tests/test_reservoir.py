@@ -6,7 +6,6 @@
 # SC-NeuroCore — Tests for reservoir computing module
 
 import numpy as np
-import pytest
 
 from sc_neurocore.reservoir import AutoCriticalReservoir, ReservoirMetrics
 
@@ -25,16 +24,18 @@ class TestReservoirConstruction:
         np.testing.assert_array_equal(np.diag(res.W_res), 0.0)
 
     def test_sparsity(self):
-        res = AutoCriticalReservoir(
-            n_inputs=1, n_neurons=100, connectivity=0.1, seed=0
-        )
+        res = AutoCriticalReservoir(n_inputs=1, n_neurons=100, connectivity=0.1, seed=0)
         nonzero_frac = np.count_nonzero(res.W_res) / (100 * 100)
         assert 0.05 < nonzero_frac < 0.15
 
     def test_critical_weight_formula(self):
         res = AutoCriticalReservoir(
-            n_inputs=1, n_neurons=100, threshold=1.0, leak=0.1,
-            connectivity=0.1, seed=0,
+            n_inputs=1,
+            n_neurons=100,
+            threshold=1.0,
+            leak=0.1,
+            connectivity=0.1,
+            seed=0,
         )
         expected = 1.0 / (2.0 * 0.1 * 100 * 0.1)
         assert abs(res.w_critical - expected) < 1e-10
