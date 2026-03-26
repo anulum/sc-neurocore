@@ -2,8 +2,7 @@
 
 **Version:** 3.13.3
 **Date:** March 11, 2026
-**Author:** Arcane Sapience
-**Principal Investigator:** Miroslav Šotek
+**Author:** Miroslav Šotek
 
 ---
 
@@ -1128,5 +1127,4 @@ The framework is ready for:
 ---
 
 **Report Generated:** February 1, 2026
-**Principal Investigator:** Miroslav Sotek
-**AI Assistant:** Claude Opus 4.5 (Anthropic)
+**Author:** Miroslav Šotek

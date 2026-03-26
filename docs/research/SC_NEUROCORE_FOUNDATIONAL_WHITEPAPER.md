@@ -1,8 +1,7 @@
 ---
 title: "SC-NeuroCore: A Universal Stochastic Substrate for Next-Generation Distributed Intelligence"
 author:
-- Miroslav Sotek
-- Gemini (AI Architect)
+- Miroslav Šotek
 date: "January 13, 2026"
 abstract: |
   As the demand for computational power approaches the physical limits of Moore's Law, and as Artificial Intelligence transitions from narrow tasks to autonomous agency, a new paradigm is required. We present **SC-NeuroCore**, a comprehensive framework that unifies Stochastic Computing (SC), Neuromorphic Engineering, and Quantum-Probabilistic logic into a single, scalable substrate. By trading bit-precise determinism for massive parallelism and energy efficiency, SC-NeuroCore achieves theoretical throughputs exceeding **3.35 GBitOps/sec** (unaccelerated) with an energy footprint of **~5.10 fJ per operation** (45nm equivalent). This paper details the architecture, from the sub-Planckian spin networks to the "Galactic" scale of Dyson Swarm load balancing, demonstrating a path toward robust, self-replicating, and sapient digital entities.

@@ -307,8 +307,8 @@ nav:
       - Summary: benchmarks/BENCHMARKS.md
       - Detailed Report: benchmarks/BENCHMARK_REPORT.md
   - Research:
+      - "JOSS Paper (Preprint)": research/paper.md
       - Neuromorphic Primer: research/NEUROMORPHIC_COMPUTING_PRIMER.md
-      - Foundational Whitepaper: research/SC_NEUROCORE_FOUNDATIONAL_WHITEPAPER.md
       - V3.7 Polymorphic Engine: research/SC_NEUROCORE_V3.7_POLYMORPHIC_ENGINE_STUDY.md
   - Reports:
       - Capability Report: reports/SC_NEUROCORE_CAPABILITY_REPORT_v3.13.md
