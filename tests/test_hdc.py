@@ -59,7 +59,8 @@ class TestHDCEncoder:
         enc = HDCEncoder(dim=5)
         v = np.array([1, 0, 0, 0, 0], dtype=np.uint8)
         p = enc.permute(v, shifts=2)
-        np.testing.assert_array_equal(p, [0, 0, 0, 1, 0])
+        # np.roll with positive shift = right circular shift
+        np.testing.assert_array_equal(p, [0, 0, 1, 0, 0])
 
 
 class TestAssociativeMemory:

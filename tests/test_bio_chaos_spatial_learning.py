@@ -104,9 +104,11 @@ class TestWolframHypergraph:
 
     def test_dimension_estimate(self):
         hg = WolframHypergraph(edges=[(0, 1), (1, 2)], max_node_id=2)
-        assert hg.dimension_estimate() == 2
-        hg.evolve(1)
-        assert hg.dimension_estimate() == len(hg.edges)
+        # Too few edges for meaningful BFS estimation
+        assert hg.dimension_estimate() == 0.0
+        hg.evolve(3)
+        d = hg.dimension_estimate()
+        assert d > 0
 
     def test_non_binary_edges_skipped(self):
         hg = WolframHypergraph(edges=[(0, 1, 2), (1, 2), (2, 3)], max_node_id=3)

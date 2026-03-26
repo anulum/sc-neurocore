@@ -33,8 +33,11 @@ class TestSpikePredictor:
 
     def test_update_changes_weights(self):
         p = SpikePredictor(n_channels=4, lr=0.1)
-        w_before = p.W.copy()
+        # First update populates history (features are zero → W unchanged via outer)
         p.update(np.array([1, 0, 1, 0]))
+        # Second update has non-zero history → W changes
+        w_before = p.W.copy()
+        p.update(np.array([0, 1, 0, 1]))
         assert not np.array_equal(p.W, w_before)
 
     def test_reset(self):
