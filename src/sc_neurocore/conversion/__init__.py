@@ -5,9 +5,26 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — ANN-to-SNN conversion engine
 
-"""ANN-to-SNN conversion: convert trained PyTorch ANNs to spiking networks."""
+"""ANN-to-SNN conversion: convert trained PyTorch ANNs to spiking networks.
 
-from .ann_to_snn import convert, ConvertedSNN
-from .qcfs import QCFSActivation
+Requires ``pip install sc-neurocore[torch]`` (PyTorch).
+"""
+
+
+def __getattr__(name):
+    if name in ("convert", "ConvertedSNN"):
+        from .ann_to_snn import convert, ConvertedSNN
+
+        return {"convert": convert, "ConvertedSNN": ConvertedSNN}[name]
+    if name == "QCFSActivation":
+        try:
+            from .qcfs import QCFSActivation
+        except ImportError as exc:
+            raise ImportError(
+                "QCFSActivation requires PyTorch: pip install sc-neurocore[torch]"
+            ) from exc
+        return QCFSActivation
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 __all__ = ["convert", "ConvertedSNN", "QCFSActivation"]
