@@ -98,6 +98,21 @@ def get_model_detail(name: str) -> dict | None:
         return None
 
 
+def _detect_step_kwarg(cls: type) -> str:
+    """Figure out what keyword the .step() method uses for current injection."""
+    import inspect
+    sig = inspect.signature(cls.step)
+    params = list(sig.parameters.keys())
+    # Skip 'self'
+    for candidate in ["current", "I", "input_current", "i_ext", "ext_input"]:
+        if candidate in params:
+            return candidate
+    # Fallback: second param after self (positional)
+    if len(params) >= 2:
+        return params[1]
+    return "current"
+
+
 def simulate_model(
     name: str,
     param_overrides: dict[str, float] | None = None,
@@ -114,13 +129,40 @@ def simulate_model(
         raise ValueError(f"Unknown model: {name}")
 
     cls = _load_class(name)
+
+    # Build constructor kwargs — only pass fields that actually exist on the dataclass
+    valid_fields = {}
+    if dataclasses.is_dataclass(cls):
+        for f in dataclasses.fields(cls):
+            valid_fields[f.name] = f.default if f.default is not dataclasses.MISSING else None
     kwargs: dict[str, Any] = {}
     if param_overrides:
-        kwargs.update(param_overrides)
-    if dt is not None:
+        for k, v in param_overrides.items():
+            if k not in valid_fields:
+                continue
+            default = valid_fields[k]
+            # Skip if value matches default (avoids float→int type issues)
+            if default is not None and isinstance(default, (int, float)) and abs(v - default) < 1e-12:
+                continue
+            # Preserve int type for integer-arithmetic models
+            if default is not None and isinstance(default, int):
+                kwargs[k] = int(round(v))
+            else:
+                kwargs[k] = v
+    if dt is not None and "dt" in valid_fields:
         kwargs["dt"] = dt
 
-    neuron = cls(**kwargs)
+    try:
+        neuron = cls(**kwargs)
+    except (TypeError, OverflowError):
+        # Some models need int params (bitshift arithmetic)
+        int_kwargs = {k: int(v) if isinstance(v, float) and v == int(v) else v
+                      for k, v in kwargs.items()}
+        try:
+            neuron = cls(**int_kwargs)
+        except (TypeError, OverflowError):
+            neuron = cls()
+
     actual_dt = getattr(neuron, "dt", 0.1)
     n_steps = min(int(duration / actual_dt), MAX_STEPS)
     if n_steps < 1:
@@ -132,12 +174,28 @@ def simulate_model(
     spike_indices: list[int] = []
 
     I_trace = _make_current_trace(protocol, current, n_steps)
+    step_kwarg = _detect_step_kwarg(cls)
+
+    # Detect if this is an integer-arithmetic model
+    _is_int_model = any(isinstance(valid_fields.get(k), int) for k in valid_fields if k == "v")
 
     for t in range(n_steps):
-        spike = neuron.step(current=float(I_trace[t]))
+        i_val: Any = int(I_trace[t]) if _is_int_model else float(I_trace[t])
+        try:
+            spike = neuron.step(**{step_kwarg: i_val})
+        except TypeError:
+            try:
+                spike = neuron.step(i_val)
+            except TypeError:
+                spike = neuron.step(int(i_val))
+        except (OverflowError, FloatingPointError):
+            spike = 0
         for v in var_names:
             val = getattr(neuron, v, 0.0)
-            traces[v][t] = float(val) if isinstance(val, (int, float)) else 0.0
+            try:
+                traces[v][t] = float(val) if isinstance(val, (int, float)) else 0.0
+            except (ValueError, OverflowError):
+                traces[v][t] = 0.0
         if spike:
             spike_indices.append(t)
 
@@ -149,6 +207,10 @@ def simulate_model(
         time = time[::stride]
         traces = {v: arr[::stride] for v, arr in traces.items()}
         I_trace = I_trace[::stride]
+
+    # Replace NaN/Inf with 0 for JSON serialisation
+    for v in traces:
+        traces[v] = np.nan_to_num(traces[v], nan=0.0, posinf=0.0, neginf=0.0)
 
     return {
         "time": time.tolist(),
