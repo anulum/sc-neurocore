@@ -22,11 +22,16 @@ class SpikeMonitor:
         self._timesteps: list[int] = []
 
     def record(self, spikes, t_step):
-        """Store spike events for this timestep."""
+        """Store spike events for this timestep (from binary spike vector)."""
         idx = np.nonzero(spikes)[0]
         for i in idx:
             self._neuron_ids.append(int(i))
             self._timesteps.append(t_step)
+
+    def record_event(self, neuron_id, t_step):
+        """Store a single spike event directly (from Rust backend)."""
+        self._neuron_ids.append(neuron_id)
+        self._timesteps.append(t_step)
 
     @property
     def spike_times(self) -> np.ndarray:

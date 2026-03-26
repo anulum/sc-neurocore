@@ -33,6 +33,7 @@ class Population:
         kw = params or {}
         self.neurons = [cls(**kw) for _ in range(n)]
         self.n = n
+        self.model_name = cls.__name__
         self.label = label or cls.__name__
         self._model_cls = cls
         self._voltages = np.zeros(n, dtype=np.float64)
@@ -93,6 +94,13 @@ class Population:
         for k in keys:
             result[k] = np.array([getattr(n, k, 0.0) for n in self.neurons])
         return result
+
+    def set_voltages(self, voltages):
+        """Sync voltages from an external source (e.g. Rust backend) into neurons."""
+        for i, neuron in enumerate(self.neurons):
+            if hasattr(neuron, "v"):
+                neuron.v = float(voltages[i])
+        self._voltages[:] = voltages[: self.n]
 
     @property
     def voltages(self) -> np.ndarray:

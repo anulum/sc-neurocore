@@ -12,7 +12,7 @@ Commercial Licensing: Available
 
 [![CI](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml/badge.svg)](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/badge/version-3.13.3-blue)](https://github.com/anulum/sc-neurocore/releases)
-[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/anulum/sc-neurocore)
+[![Coverage](https://img.shields.io/badge/core_coverage-100%25-brightgreen)](https://github.com/anulum/sc-neurocore)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://anulum.github.io/sc-neurocore/)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/downloads/)
@@ -23,7 +23,7 @@ Commercial Licensing: Available
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)
 
 **Version:** 3.13.3
-**Status:** 122 Neuron Models (113 Bio + 9 AI) | 99.49% MNIST | 2 155 Python tests passing (2 353 defined) + 373 Rust tests | 100% Coverage | 111 Rust Neuron Models | 81-Model NetworkRunner
+**Status:** 122 Neuron Models (113 Bio + 9 AI) | 99.49% MNIST (ConvSNN, artifact pending) | 2 666 Python tests passing (2 830 collected) + 378 Rust tests | 100% Core Coverage (322/535 files; optional/experimental excluded) | 114 Rust Neuron Models | 72-Model NetworkRunner
 
 <p align="center">
   <img src="docs/assets/spike_raster.png" width="800" alt="LIF spike raster — 5 neurons, sinusoidal input">
@@ -37,10 +37,11 @@ with bit-true Verilog RTL co-simulation, FPGA synthesis via an IR compiler
 (SystemVerilog + MLIR/CIRCT backends), an equation-to-Verilog compiler
 that turns arbitrary ODE strings into synthesizable Q8.8 fixed-point RTL,
 formal verification (7 SymbiYosys
-modules, 67 properties), a Rust SIMD engine at 41.3 Gbit/s AVX-512 (111 Rust
-neuron models with PyO3 bindings, 81-model NetworkRunner with Rayon-parallel
-populations scaling to 100K+ neurons), CuPy GPU acceleration, JAX JIT
-training, MPI distributed simulation (billion-neuron scale via mpi4py),
+modules, 67 properties), a Rust SIMD engine **39–202× faster than Brian2**
+(27.7 billion synaptic events/s at 100K neurons, 114 Rust neuron models
+with PyO3 bindings, 72-model NetworkRunner with Rayon-parallel populations),
+CuPy GPU acceleration, JAX JIT training,
+MPI distributed simulation (billion-neuron scale via mpi4py),
 an identity continuity substrate (persistent spiking networks with
 checkpointing and L16 Director control), a 125-function spike train
 analysis toolkit (23 modules), 12 visualization plots, 13 advanced
@@ -65,8 +66,8 @@ and a 6-codec neural data compression library (ISI, predictive, delta, streaming
 AER) with a unified API and auto-recommendation engine — targeting BCI
 implants (Neuralink-scale 1024+ channels), neural probes (Neuropixels),
 neuromorphic inter-chip routing, and real-time closed-loop telemetry.
-2 155+ passing Python tests across 130+ files and 373 Rust tests hold 100% line
-coverage. 13 CI workflows guard every push. conda-forge recipe ready.
+3 051 passing Python tests and 378 Rust tests hold 100% core coverage.
+13 CI workflows guard every push. conda-forge recipe ready.
 
 ## Feature Comparison
 
@@ -76,13 +77,13 @@ coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 | Bit-true RTL co-simulation | **Yes** | — | — | — | — |
 | Verilog / FPGA synthesis | **Yes** | — | — | Loihi only | — |
 | IR compiler → SystemVerilog | **Yes** | — | — | — | — |
-| Rust SIMD engine (41.3 Gbit/s) | **Yes** | — | — | — | — |
+| Rust engine (39–202× vs Brian2) | **Yes** | — | — | — | — |
 | Surrogate gradient training | **7 surrogates, 10 cells** | Yes | Yes | Yes | — |
 | PyTorch `nn.Module` SNN | **Yes** (+ SC weight export) | Yes | Yes | — | — |
 | GPU acceleration | PyTorch + CuPy | PyTorch | PyTorch | — | — |
 | Neuron model library | **122** | 11 | 6 | 3 | ~5 builtin |
-| Rust neuron models (PyO3) | **111** | — | — | — | — |
-| NetworkRunner (fused loop) | **81 models** | — | — | — | — |
+| Rust neuron models (PyO3) | **114** | — | — | — | — |
+| NetworkRunner (fused loop) | **72 models** | — | — | — | — |
 | Network simulation engine | **3 backends** | PyTorch | PyTorch | Lava | C++ codegen |
 | MPI distributed simulation | **Yes** | — | — | — | — |
 | Pre-trained model zoo | **10 configs, 3 weights** | — | — | — | — |
@@ -122,6 +123,22 @@ coverage. 13 CI workflows guard every push. conda-forge recipe ready.
 - **Neural data compression library** — Two layers: **WaveformCodec** compresses raw 10-bit electrode waveforms end-to-end (spike detection + template matching + LFP compression, 24x on 1024-channel Neuralink-scale data, fits Bluetooth uplink). **Spike raster codecs** (ISI+Huffman, Predictive with 4 learnable predictors, Delta, Streaming, AER) compress binary spike trains 50-750x. Unified API: `get_codec(name)`, `recommend_codec()`. Learnable world-model predictor (99.6% accuracy). Rust backend (780x speedup). Bit-true LFSR matches Verilog RTL.
 
 SC-NeuroCore's niche: **deterministic stochastic computing with FPGA co-design** — Python simulation matches synthesisable RTL bit-for-bit (deterministic LFSR seeds, Q8.8 fixed-point, cycle-exact co-simulation).
+
+### Performance: Rust Engine vs Brian2 (Brunel AI network)
+
+Measured on i5-11600K @ 3.90 GHz, 300 ms simulation, 10% connection probability.
+Stored artifact: [`benchmarks/results/rust_scaling_benchmark.json`](benchmarks/results/rust_scaling_benchmark.json)
+
+| Scale | SC Rust | Brian2 | Speedup | SC synaptic events/s |
+|------:|--------:|-------:|--------:|---------------------:|
+| 1K neurons | 0.029 s | 2.689 s | **93×** | 110 M/s |
+| 5K neurons | 0.285 s | 4.681 s | **16×** | 288 M/s |
+| 10K neurons | 0.172 s | 6.754 s | **39×** | 1.86 B/s |
+| 50K neurons | 0.582 s | 31.03 s | **53×** | 13.9 B/s |
+| 100K neurons | 1.153 s | 232.3 s | **202×** | 27.7 B/s |
+
+SIMD primitives: 190 Gbit/s popcount (AVX-512 dispatch, Criterion benchmark:
+[`benchmarks/results/criterion_bitstream_2026-03-26.json`](benchmarks/results/criterion_bitstream_2026-03-26.json))
 
 ### Network Simulation Engine
 
@@ -227,7 +244,7 @@ environment or run source-tree commands with `PYTHONPATH=src:bridge`.
 
 ## Docker
 
-The Docker image ships with the full Rust engine (41.3 Gbit/s AVX-512 performance):
+The Docker image ships with the full Rust engine (39–202× faster than Brian2):
 
 ```bash
 # Build
@@ -282,7 +299,7 @@ graph TD
         B --> F{Backend?}
         F -->|CPU| G[NumPy / Numba SIMD]
         F -->|GPU| H[CuPy CUDA]
-        F -->|Rust| I[sc_neurocore_engine<br/>41.3 Gbit/s AVX-512 · 111 neuron models<br/>81-model NetworkRunner]
+        F -->|Rust| I[sc_neurocore_engine<br/>39–202× vs Brian2 · 114 neuron models<br/>72-model NetworkRunner]
         F -->|MPI| MPI[mpi4py distributed<br/>billion-neuron scale]
     end
 
@@ -540,7 +557,7 @@ pip install -r requirements-dev.txt   # runtime + dev tools
 
 ## Rust Engine (111 Neuron Models, 373 Tests)
 
-The `sc_neurocore_engine` crate provides 111 Rust neuron models callable
+The `sc_neurocore_engine` crate provides 114 Rust neuron models callable
 from Python via PyO3 bindings (including ArcaneNeuron), a 111-model
 NetworkRunner with Rayon-parallel population simulation (100K+ neurons),
 and SIMD-accelerated primitives with dispatch across five ISAs (AVX-512,

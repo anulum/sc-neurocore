@@ -333,10 +333,10 @@ impl PyNetworkRunner {
         let dict = PyDict::new(py);
         let spike_counts: Vec<u64> = results.spike_counts.iter().map(|&c| c as u64).collect();
         dict.set_item("spike_counts", spike_counts.into_pyarray(py))?;
-        let spike_data: Vec<Py<PyArray1<u32>>> = results
+        let spike_data: Vec<Py<PyArray1<u64>>> = results
             .spike_data
             .into_iter()
-            .map(|v: Vec<u32>| v.into_pyarray(py).unbind())
+            .map(|v: Vec<u64>| v.into_pyarray(py).unbind())
             .collect();
         dict.set_item("spike_data", spike_data)?;
         let voltages: Vec<Py<PyArray1<f64>>> = results

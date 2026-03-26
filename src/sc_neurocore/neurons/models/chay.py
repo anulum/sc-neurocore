@@ -33,8 +33,8 @@ class ChayNeuron:
 
     def step(self, current: float) -> int:
         v_prev = self.v
-        m_inf = 1.0 / (1.0 + np.exp(-(self.v + 25.0) / 8.0))
-        n_inf = 1.0 / (1.0 + np.exp(-(self.v + 18.0) / 14.0))
+        m_inf = 1.0 / (1.0 + np.exp(np.clip(-(self.v + 25.0) / 8.0, -500.0, 500.0)))
+        n_inf = 1.0 / (1.0 + np.exp(np.clip(-(self.v + 18.0) / 14.0, -500.0, 500.0)))
         tau_n = 1.0 / (0.01 * max(abs(self.v + 18.0), 0.01))
         i_ca = self.g_ca * m_inf * (self.v - self.e_ca)
         kca_act = self.ca / (self.ca + 1.0)

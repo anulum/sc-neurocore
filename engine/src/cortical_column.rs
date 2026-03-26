@@ -224,7 +224,8 @@ mod tests {
     #[test]
     fn test_column_reset() {
         let mut col = CorticalColumnRust::new(5, 10.0, 1.0, 1.0, 0.5, -0.3, 42);
-        col.step(&vec![10.0; 5]);
+        let input = vec![10.0; 5];
+        col.step(&input);
         col.reset();
         assert!(col.v_l4.iter().all(|&v| v == 0.0));
         assert!(col.v_l5.iter().all(|&v| v == 0.0));

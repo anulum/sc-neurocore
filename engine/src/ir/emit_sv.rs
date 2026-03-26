@@ -281,56 +281,21 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
                 n_nodes,
                 n_features,
             } => {
-                // SC graph forward: features × adjacency via AND-popcount per node
-                let feat_wire = value_to_wire(graph, *features);
-                let adj_wire = value_to_wire(graph, *adjacency);
-                sv.push_str(&format!(
-                    "    // GraphForward: {n} nodes × {f} features — SC AND-popcount aggregation\n\
-                     \x20   // Input: features={feat}, adjacency={adj}\n\
-                     \x20   // Each output[i] = popcount(features[j] AND adjacency[i][j]) for all j\n\
-                     \x20   assign v{id} = {feat}; // TODO: instantiate sc_graph_forward_{n}x{f}\n",
-                    n = n_nodes, f = n_features, feat = feat_wire, adj = adj_wire, id = id.0,
+                return Err(format!(
+                    "GraphForward (v{}, {} nodes × {} features) has no synthesizable RTL implementation yet",
+                    id.0, n_nodes, n_features
                 ));
             }
-            ScOp::SoftmaxAttention { id, q, k, v, dim_k } => {
-                // SC attention: Q·K^T via AND, row-sum normalize, ·V via MUX
-                let q_wire = value_to_wire(graph, *q);
-                let k_wire = value_to_wire(graph, *k);
-                let v_wire = value_to_wire(graph, *v);
-                sv.push_str(&format!(
-                    "    // SoftmaxAttention: dim_k={dk} — SC bitstream attention\n\
-                     \x20   // Q={qw}, K={kw}, V={vw}\n\
-                     \x20   // Score[i][j] = popcount(Q[i] AND K[j]) / {dk}\n\
-                     \x20   // Output = normalized_scores · V\n\
-                     \x20   assign v{id} = {vw}; // TODO: instantiate sc_attention_dk{dk}\n",
-                    dk = dim_k,
-                    qw = q_wire,
-                    kw = k_wire,
-                    vw = v_wire,
-                    id = id.0,
+            ScOp::SoftmaxAttention { id, dim_k, .. } => {
+                return Err(format!(
+                    "SoftmaxAttention (v{}, dim_k={}) has no synthesizable RTL implementation yet",
+                    id.0, dim_k
                 ));
             }
-            ScOp::KuramotoStep {
-                id,
-                phases,
-                omega,
-                coupling,
-                dt,
-            } => {
-                // Kuramoto oscillator: dθ/dt = ω + ΣK·sin(θ_m - θ_n)
-                let ph_wire = value_to_wire(graph, *phases);
-                let om_wire = value_to_wire(graph, *omega);
-                let kn_wire = value_to_wire(graph, *coupling);
-                sv.push_str(&format!(
-                    "    // KuramotoStep: dt={dt} — phase accumulator with coupling\n\
-                     \x20   // phases={ph}, omega={om}, coupling={kn}\n\
-                     \x20   // θ_next = θ + dt*(ω + Σ K·sin(θ_m - θ_n))\n\
-                     \x20   assign v{id} = {ph}; // TODO: instantiate sc_kuramoto_step\n",
-                    dt = dt,
-                    ph = ph_wire,
-                    om = om_wire,
-                    kn = kn_wire,
-                    id = id.0,
+            ScOp::KuramotoStep { id, .. } => {
+                return Err(format!(
+                    "KuramotoStep (v{}) has no synthesizable RTL implementation yet",
+                    id.0
                 ));
             }
             ScOp::Output { name, source, .. } => {

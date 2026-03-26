@@ -65,9 +65,8 @@ tb_sc_dense_layer_top
 obj_dir/
 cosim/obj_dir/
 
-# Benchmark artifacts
+# Benchmark artifacts (Criterion working dirs)
 .benchmarks/
-benchmarks/results/
 
 # Ad-hoc fix scripts
 auto_fix*.py
