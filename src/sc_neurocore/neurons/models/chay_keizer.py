@@ -37,9 +37,9 @@ class ChayKeizerNeuron:
 
     def step(self, current: float) -> int:
         v_prev = self.v
-        m_inf = 1.0 / (1.0 + np.exp(-(self.v + 25.0) / 8.0))
-        n_inf = 1.0 / (1.0 + np.exp(-(self.v + 18.0) / 14.0))
-        tau_n = 20.0 / (1.0 + np.exp((self.v + 18.0) / 14.0))
+        m_inf = 1.0 / (1.0 + np.exp(np.clip(-(self.v + 25.0) / 8.0, -500.0, 500.0)))
+        n_inf = 1.0 / (1.0 + np.exp(np.clip(-(self.v + 18.0) / 14.0, -500.0, 500.0)))
+        tau_n = 20.0 / (1.0 + np.exp(np.clip((self.v + 18.0) / 14.0, -500.0, 500.0)))
         q_kca = self.ca / (self.ca + self.k_d)
 
         i_ca = self.g_ca * m_inf * (self.v - self.e_ca)
@@ -48,7 +48,9 @@ class ChayKeizerNeuron:
         i_l = self.g_l * (self.v - self.e_l)
 
         self.v += (-i_ca - i_k - i_kca - i_l + current) * self.dt
+        self.v = np.clip(self.v, -200.0, 200.0)
         self.n += (n_inf - self.n) / max(tau_n, 0.1) * self.dt
+        self.n = np.clip(self.n, 0.0, 1.0)
         self.ca = max(0.0, self.ca + (-self.f_ca * i_ca - self.k_ca * self.ca) * self.dt)
 
         return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0

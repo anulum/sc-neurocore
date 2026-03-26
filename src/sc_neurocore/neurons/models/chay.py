@@ -42,7 +42,9 @@ class ChayNeuron:
         i_kca = self.g_kca * kca_act * (self.v - self.e_k)
         i_l = self.g_l * (self.v - self.e_l)
         self.v += (-i_ca - i_k - i_kca - i_l + current) * self.dt
+        self.v = np.clip(self.v, -200.0, 200.0)
         self.n += (n_inf - self.n) / max(tau_n, 0.01) * self.dt
+        self.n = np.clip(self.n, 0.0, 1.0)
         self.ca = max(
             0.0, self.ca + self.rho * (-self.alpha_ca * i_ca - self.k_ca * self.ca) * self.dt
         )
