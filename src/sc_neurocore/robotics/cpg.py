@@ -27,7 +27,7 @@ class StochasticCPG:
         self.n2 = HomeostaticLIFNeuron(v_threshold=1.0, adaptation_rate=0.1, target_rate=0.3)
 
         self.s1_trace = 0.0
-        self.s2_trace = 0.0
+        self.s2_trace = 0.05  # Small asymmetry to break initial symmetry
         self.decay = 0.8
 
     def step(self) -> tuple[int, int]:

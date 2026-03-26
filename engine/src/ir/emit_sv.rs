@@ -276,8 +276,8 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
             }
             ScOp::GraphForward {
                 id,
-                features,
-                adjacency,
+                features: _,
+                adjacency: _,
                 n_nodes,
                 n_features,
             } => {
