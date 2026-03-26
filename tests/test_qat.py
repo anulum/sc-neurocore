@@ -53,9 +53,7 @@ class TestQuantizedSNNLayer:
     def test_train_step(self):
         layer = QuantizedSNNLayer(n_inputs=4, n_neurons=2, weight_bits=8)
         w_before = layer.W.copy()
-        result = quantize_aware_train_step(
-            layer, np.random.rand(4), np.array([1.0, 0.0])
-        )
+        result = quantize_aware_train_step(layer, np.random.rand(4), np.array([1.0, 0.0]))
         assert result["loss"] >= 0
         assert not np.array_equal(layer.W, w_before)
 

@@ -75,12 +75,8 @@ class TestCodecRoundtrip:
         rng = np.random.RandomState(42)
         spikes = (rng.random((T, n_ch)) < 0.3).astype(np.int8)
 
-        errors, correct = predict_and_xor_world_model(
-            spikes, n_channels=n_ch, seed=0
-        )
-        recovered = xor_and_recover_world_model(
-            errors, n_channels=n_ch, seed=0
-        )
+        errors, correct = predict_and_xor_world_model(spikes, n_channels=n_ch, seed=0)
+        recovered = xor_and_recover_world_model(errors, n_channels=n_ch, seed=0)
         np.testing.assert_array_equal(spikes, recovered)
 
     def test_correct_count_sane(self):

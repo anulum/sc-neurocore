@@ -5,8 +5,6 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Tests for robotics CPG module
 
-import numpy as np
-
 from sc_neurocore.robotics.cpg import StochasticCPG
 
 

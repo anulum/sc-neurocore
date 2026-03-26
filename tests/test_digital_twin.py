@@ -6,7 +6,6 @@
 # SC-NeuroCore — Tests for digital twin FPGA mismatch module
 
 import numpy as np
-import pytest
 
 from sc_neurocore.digital_twin import FPGAMismatchModel
 
