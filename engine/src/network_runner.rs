@@ -405,8 +405,9 @@ impl ProjectionRunner {
 
 pub struct SimResults {
     pub spike_counts: Vec<usize>,
-    /// Per-population flat spike data: (neuron_id << 16) | timestep packed as u32.
-    pub spike_data: Vec<Vec<u32>>,
+    /// Per-population flat spike data: (neuron_id << 32) | timestep packed as u64.
+    /// Supports up to 2^32 neurons and 2^32 timesteps.
+    pub spike_data: Vec<Vec<u64>>,
     pub voltages: Vec<Vec<f64>>,
 }
 
@@ -438,7 +439,7 @@ impl NetworkRunner {
     pub fn run(&mut self, n_steps: usize) -> SimResults {
         let n_pops = self.populations.len();
         let mut spike_counts = vec![0usize; n_pops];
-        let mut spike_data: Vec<Vec<u32>> = vec![Vec::new(); n_pops];
+        let mut spike_data: Vec<Vec<u64>> = vec![Vec::new(); n_pops];
 
         for t in 0..n_steps {
             // Reset currents
@@ -472,9 +473,7 @@ impl NetworkRunner {
                 for (nid, &spike) in pop.spikes.iter().enumerate() {
                     if spike != 0 {
                         spike_counts[pop_idx] += 1;
-                        if t <= 0xFFFF && nid <= 0xFFFF {
-                            spike_data[pop_idx].push(((nid as u32) << 16) | (t as u32));
-                        }
+                        spike_data[pop_idx].push(((nid as u64) << 32) | (t as u64));
                     }
                 }
             }

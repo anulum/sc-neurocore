@@ -33,11 +33,11 @@ def _get_rust_engine():
     return _RUST_ENGINE
 
 
-def _rust_supports_model(model_label):
+def _rust_supports_model(model_name):
     engine = _get_rust_engine()
     if engine is False:
         return False
-    return model_label in engine.supported_models()
+    return model_name in engine.supported_models()
 
 
 class Network:
@@ -77,7 +77,7 @@ class Network:
         if _get_rust_engine() is False:
             return False
         for pop in self.populations:
-            if not _rust_supports_model(pop.label):
+            if not _rust_supports_model(pop.model_name):
                 return False
         return not any(p.plasticity for p in self.projections)
 
@@ -115,7 +115,7 @@ class Network:
         runner = engine_cls()
         pop_indices = {}
         for pop in self.populations:
-            idx = runner.add_population(pop.label, pop.n)
+            idx = runner.add_population(pop.model_name, pop.n)
             pop_indices[id(pop)] = idx
 
         for proj in self.projections:
@@ -134,19 +134,23 @@ class Network:
         results = runner.run(n_steps)
 
         for i, pop in enumerate(self.populations):
+            # Sync voltages back from Rust
+            if "voltages" in results and i < len(results["voltages"]):
+                rust_v = results["voltages"][i]
+                if len(rust_v) == pop.n:
+                    pop.set_voltages(rust_v)
+
+            # Decode spike events (u64: neuron_id << 32 | timestep)
             spike_arr = results["spike_data"][i]
-            for packed in spike_arr:
-                nid = int(packed >> 16)
-                t = int(packed & 0xFFFF)
-                for mon in self.spike_monitors:
-                    if mon.population is pop:
-                        mon.record(
-                            np.array([1 if j == nid else 0 for j in range(pop.n)], dtype=np.int8),
-                            t,
-                        )
+            for mon in self.spike_monitors:
+                if mon.population is pop:
+                    for packed in spike_arr:
+                        nid = int(packed >> 32)
+                        t = int(packed & 0xFFFFFFFF)
+                        mon.record_event(nid, t)
 
     def _run_python(self, duration, dt, progress=False):
-        np.random.seed(self.seed)
+        self._rng = np.random.default_rng(self.seed)
         n_steps = int(round(duration / dt))
 
         pop_to_currents = {id(p): np.zeros(p.n, dtype=np.float64) for p in self.populations}

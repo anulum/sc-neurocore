@@ -1,0 +1,67 @@
+{
+  "timestamp": "2026-03-09T13:37:42.209309+00:00",
+  "system": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.12.5",
+    "cpu": "Intel64 Family 6 Model 167 Stepping 1, GenuineIntel",
+    "numpy": "1.26.4",
+    "brian2": "2.10.1",
+    "numba": "0.63.1"
+  },
+  "brunel_params": {
+    "regime": "AI",
+    "g_inh": 5.0,
+    "eta": 2.0,
+    "sim_ms": 1000.0,
+    "dt": 0.1,
+    "conn_prob": 0.1,
+    "weight_exc": 0.1,
+    "v_threshold": 20.0,
+    "v_reset": 10.0,
+    "tau_mem": 20.0,
+    "repeats": 1,
+    "scales": [
+      1000
+    ]
+  },
+  "rows": [
+    {
+      "scale": 1000,
+      "backend": "Brian2 (reference)",
+      "wall_mean_s": 12.709098799852654,
+      "wall_std_s": 0.0,
+      "spikes_mean": 0.0,
+      "rate_mean_hz": 0.0,
+      "rate_std_hz": 0.0,
+      "memory_mean_mb": 8.573139190673828,
+      "n_runs": 1,
+      "runs": [
+        {
+          "wall_time_s": 12.709098799852654,
+          "total_spikes": 0,
+          "mean_rate_hz": 0.0,
+          "peak_memory_mb": 8.573139190673828
+        }
+      ]
+    },
+    {
+      "scale": 1000,
+      "backend": "SC V20 Vectorized",
+      "wall_mean_s": 9.253439499996603,
+      "wall_std_s": 0.0,
+      "spikes_mean": 100618.0,
+      "rate_mean_hz": 100.618,
+      "rate_std_hz": 0.0,
+      "memory_mean_mb": 9.591886520385742,
+      "n_runs": 1,
+      "runs": [
+        {
+          "wall_time_s": 9.253439499996603,
+          "total_spikes": 100618,
+          "mean_rate_hz": 100.618,
+          "peak_memory_mb": 9.591886520385742
+        }
+      ]
+    }
+  ]
+}
