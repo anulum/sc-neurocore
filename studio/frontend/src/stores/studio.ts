@@ -2,11 +2,15 @@ import { create } from "zustand";
 import {
   fetchTemplates,
   simulate,
+  fetchFICurve,
   type NeuronTemplate,
   type SimulateResponse,
+  type FICurveResponse,
 } from "../api/client";
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+type ViewTab = "trace" | "fi-curve";
 
 interface StudioState {
   equations: string[];
@@ -17,12 +21,15 @@ interface StudioState {
   dt: number;
   duration: number;
   current: number;
+  protocol: string;
 
   templates: NeuronTemplate[];
   selectedTemplate: string;
   result: SimulateResponse | null;
+  fiResult: FICurveResponse | null;
   error: string | null;
   isSimulating: boolean;
+  activeTab: ViewTab;
 
   setEquations: (eqs: string[]) => void;
   setThreshold: (t: string) => void;
@@ -32,10 +39,14 @@ interface StudioState {
   setDt: (dt: number) => void;
   setDuration: (d: number) => void;
   setCurrent: (c: number) => void;
+  setProtocol: (p: string) => void;
+  setActiveTab: (tab: ViewTab) => void;
   loadTemplates: () => Promise<void>;
   selectTemplate: (name: string) => void;
   runSimulation: () => Promise<void>;
+  runFICurve: () => Promise<void>;
   autoSimulate: () => void;
+  exportData: () => void;
 }
 
 export const useStudioStore = create<StudioState>((set, get) => ({
@@ -47,12 +58,15 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   dt: 0.1,
   duration: 100,
   current: 30,
+  protocol: "constant",
 
   templates: [],
   selectedTemplate: "lif",
   result: null,
+  fiResult: null,
   error: null,
   isSimulating: false,
+  activeTab: "trace",
 
   setEquations: (eqs) => { set({ equations: eqs }); get().autoSimulate(); },
   setThreshold: (t) => { set({ threshold: t }); get().autoSimulate(); },
@@ -68,6 +82,8 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   setDt: (dt) => { set({ dt }); get().autoSimulate(); },
   setDuration: (d) => { set({ duration: d }); get().autoSimulate(); },
   setCurrent: (c) => { set({ current: c }); get().autoSimulate(); },
+  setProtocol: (p) => { set({ protocol: p }); get().autoSimulate(); },
+  setActiveTab: (tab) => set({ activeTab: tab }),
 
   loadTemplates: async () => {
     const templates = await fetchTemplates();
@@ -88,6 +104,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       duration: t.duration,
       current: t.current,
       result: null,
+      fiResult: null,
       error: null,
     });
     get().runSimulation();
@@ -97,7 +114,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
       get().runSimulation();
-    }, 300);
+    }, 250);
   },
 
   runSimulation: async () => {
@@ -114,6 +131,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
         dt: s.dt,
         duration: s.duration,
         current: s.current,
+        protocol: s.protocol,
       });
       set({ result, isSimulating: false });
     } catch (e) {
@@ -122,5 +140,43 @@ export const useStudioStore = create<StudioState>((set, get) => ({
         isSimulating: false,
       });
     }
+  },
+
+  runFICurve: async () => {
+    const s = get();
+    if (s.isSimulating) return;
+    set({ isSimulating: true, error: null, activeTab: "fi-curve" });
+    try {
+      const fiResult = await fetchFICurve({
+        equations: s.equations,
+        threshold: s.threshold || null,
+        reset: s.reset || null,
+        params: s.params,
+        init: s.init,
+        dt: s.dt,
+        duration: s.duration,
+        i_min: 0,
+        i_max: Math.abs(s.current) * 2 || 50,
+        i_steps: 25,
+      });
+      set({ fiResult, isSimulating: false });
+    } catch (e) {
+      set({
+        error: e instanceof Error ? e.message : String(e),
+        isSimulating: false,
+      });
+    }
+  },
+
+  exportData: () => {
+    const { result } = get();
+    if (!result) return;
+    const blob = new Blob([JSON.stringify(result, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "simulation.json";
+    a.click();
+    URL.revokeObjectURL(url);
   },
 }));

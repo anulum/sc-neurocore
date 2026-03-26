@@ -11,7 +11,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from sc_neurocore.studio.simulation import simulate
+from sc_neurocore.studio.simulation import fi_curve, simulate
 from sc_neurocore.studio.templates import get_template, list_templates
 
 
@@ -24,6 +24,20 @@ class SimulateRequest(BaseModel):
     dt: float = Field(default=0.1, gt=0)
     duration: float = Field(default=100.0, gt=0)
     current: float = 0.0
+    protocol: str = "constant"
+
+
+class FICurveRequest(BaseModel):
+    equations: list[str]
+    threshold: str | None = None
+    reset: str | None = None
+    params: dict[str, float] | None = None
+    init: dict[str, float] | None = None
+    dt: float = Field(default=0.1, gt=0)
+    duration: float = Field(default=200.0, gt=0)
+    i_min: float = 0.0
+    i_max: float = 50.0
+    i_steps: int = Field(default=20, ge=2, le=100)
 
 
 def create_app() -> FastAPI:
@@ -63,6 +77,26 @@ def create_app() -> FastAPI:
                 dt=req.dt,
                 duration=req.duration,
                 current=req.current,
+                protocol=req.protocol,
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=422, detail=str(e)) from e
+        return result
+
+    @app.post("/api/fi-curve")
+    def run_fi_curve(req: FICurveRequest):
+        try:
+            result = fi_curve(
+                equations=req.equations,
+                threshold=req.threshold,
+                reset=req.reset,
+                params=req.params,
+                init=req.init,
+                dt=req.dt,
+                duration=req.duration,
+                i_min=req.i_min,
+                i_max=req.i_max,
+                i_steps=req.i_steps,
             )
         except ValueError as e:
             raise HTTPException(status_code=422, detail=str(e)) from e
