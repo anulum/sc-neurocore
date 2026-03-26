@@ -69,11 +69,54 @@ class WolframHypergraph:
             self.edges = new_edges
 
     def dimension_estimate(self) -> float:
+        """Estimate effective dimension via BFS neighborhood growth.
+
+        Builds an adjacency graph from hyperedges, picks a random node,
+        measures how |B(r)| grows with r. Fits d from V(r) ~ r^d.
+        Returns 0.0 if the graph is too small for meaningful estimation.
         """
-        Estimates the effective dimension of the space graph.
-        Growth rate of neighborhood ball B(r).
-        V(r) ~ r^d  => d ~ log(V) / log(r)
-        """
-        # Very simplified: just return node count growth log?
-        # Or just return current edge count as proxy for complexity
-        return len(self.edges)
+        if len(self.edges) < 3:
+            return 0.0
+
+        adj: dict[int, set[int]] = {}
+        for edge in self.edges:
+            for node in edge:
+                adj.setdefault(node, set())
+            for i in range(len(edge)):
+                for j in range(i + 1, len(edge)):
+                    adj[edge[i]].add(edge[j])
+                    adj[edge[j]].add(edge[i])
+
+        nodes = list(adj.keys())
+        if len(nodes) < 4:
+            return 0.0
+
+        start = nodes[len(nodes) // 2]
+        visited = {start}
+        frontier = {start}
+        volumes = []
+
+        for _ in range(min(10, len(nodes))):
+            next_frontier: set[int] = set()
+            for n in frontier:
+                for nb in adj.get(n, set()):
+                    if nb not in visited:
+                        visited.add(nb)
+                        next_frontier.add(nb)
+            if not next_frontier:
+                break
+            frontier = next_frontier
+            volumes.append(len(visited))
+
+        if len(volumes) < 2:
+            return 0.0
+
+        import numpy as np
+        r_vals = np.arange(1, len(volumes) + 1, dtype=np.float64)
+        v_vals = np.array(volumes, dtype=np.float64)
+        log_r = np.log(r_vals)
+        log_v = np.log(np.clip(v_vals, 1, None))
+        if log_r[-1] - log_r[0] < 1e-10:
+            return 0.0
+        slope = (log_v[-1] - log_v[0]) / (log_r[-1] - log_r[0])
+        return float(max(slope, 0.0))
