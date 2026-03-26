@@ -2,17 +2,17 @@ import { create } from "zustand";
 import {
   fetchTemplates, fetchModels, fetchModelDetail, fetchPresets, fetchPreset,
   simulateODE, simulateModel, fetchFICurve, compileVerilog,
-  fetchBifurcation, fetchSensitivity, fetchPrecision,
+  fetchBifurcation, fetchSensitivity, fetchPrecision, fetchHeatmap, fetchCodegen,
   type NeuronTemplate, type ModelSummary, type ModelDetail, type PresetSummary,
   type SimulateResponse, type FICurveResponse, type BifurcationResponse,
-  type SensitivityResponse, type PrecisionResponse,
+  type SensitivityResponse, type PrecisionResponse, type HeatmapResponse,
 } from "../api/client";
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 type SourceMode = "model" | "ode";
 type ViewTab = "trace" | "phase" | "isi" | "fi-curve" | "bifurcation" |
-  "sensitivity" | "precision" | "verilog";
+  "sensitivity" | "precision" | "heatmap" | "verilog" | "code";
 
 interface StudioState {
   sourceMode: SourceMode;
@@ -36,7 +36,10 @@ interface StudioState {
   bifResult: BifurcationResponse | null;
   sensResult: SensitivityResponse | null;
   precResult: PrecisionResponse | null;
+  heatmapResult: HeatmapResponse | null;
   verilogSrc: string;
+  codeScript: string;
+  codeOneliner: string;
   error: string | null;
   isSimulating: boolean;
   activeTab: ViewTab;
@@ -69,11 +72,15 @@ interface StudioState {
   runBifurcation: () => Promise<void>;
   runSensitivity: () => Promise<void>;
   runPrecision: () => Promise<void>;
+  runHeatmap: () => Promise<void>;
+  runCodegen: () => Promise<void>;
   runCompile: () => Promise<void>;
   autoSimulate: () => void;
   exportData: () => void;
   exportSVG: () => void;
   resetDefaults: () => void;
+  sweepParamY: string;
+  setSweepParamY: (p: string) => void;
 }
 
 function currentConfig(s: StudioState): Record<string, unknown> {
@@ -100,8 +107,9 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   templates: [], presets: [],
   dt: 0.1, duration: 100, current: 10, protocol: "constant",
   result: null, fiResult: null, bifResult: null, sensResult: null, precResult: null,
-  verilogSrc: "", error: null, isSimulating: false,
-  activeTab: "trace", modelFilter: "", sweepParam: "",
+  heatmapResult: null, verilogSrc: "", codeScript: "", codeOneliner: "",
+  error: null, isSimulating: false,
+  activeTab: "trace", modelFilter: "", sweepParam: "", sweepParamY: "",
 
   setSourceMode: (m) => set({ sourceMode: m }),
   setEquations: (eqs) => { set({ equations: eqs }); get().autoSimulate(); },
@@ -117,6 +125,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   setActiveTab: (tab) => set({ activeTab: tab }),
   setModelFilter: (f) => set({ modelFilter: f }),
   setSweepParam: (p) => set({ sweepParam: p }),
+  setSweepParamY: (p) => set({ sweepParamY: p }),
 
   loadTemplates: async () => set({ templates: await fetchTemplates() }),
   loadModels: async () => {
@@ -266,6 +275,41 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       });
       set({ verilogSrc: res.verilog, isSimulating: false });
     } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+  },
+
+  runHeatmap: async () => {
+    const s = get();
+    if (s.isSimulating || !s.sweepParam || !s.sweepParamY) return;
+    set({ isSimulating: true, error: null, activeTab: "heatmap" });
+    try {
+      const params = s.sourceMode === "model" ? s.modelParams : s.odeParams;
+      const xVal = params[s.sweepParam] ?? 0;
+      const yVal = params[s.sweepParamY] ?? 0;
+      const cfg = currentConfig(s);
+      const heatmapResult = await fetchHeatmap({
+        ...cfg,
+        param_x: s.sweepParam, x_min: xVal * 0.2, x_max: xVal * 3, x_steps: 15,
+        param_y: s.sweepParamY, y_min: yVal * 0.2, y_max: yVal * 3, y_steps: 15,
+      });
+      set({ heatmapResult, isSimulating: false });
+    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+  },
+
+  runCodegen: async () => {
+    const s = get();
+    set({ activeTab: "code" });
+    try {
+      const res = await fetchCodegen({
+        mode: s.sourceMode,
+        model_name: s.sourceMode === "model" ? s.selectedModelName : null,
+        equations: s.sourceMode === "ode" ? s.equations : null,
+        threshold: s.threshold, reset: s.reset,
+        params: s.sourceMode === "model" ? s.modelParams : s.odeParams,
+        init: s.sourceMode === "ode" ? s.odeInit : null,
+        dt: s.dt, duration: s.duration, current: s.current,
+      });
+      set({ codeScript: res.script, codeOneliner: res.oneliner });
+    } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
   },
 
   exportData: () => {

@@ -14,8 +14,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from sc_neurocore.studio.analysis import (
-    bifurcation_sweep, frequency_response, nullclines_2d,
+    bifurcation_sweep, frequency_response, heatmap_2d, nullclines_2d,
     precision_compare, sensitivity_analysis, spike_triggered_average,
+)
+from sc_neurocore.studio.codegen import (
+    classify_firing_pattern, generate_model_script, generate_ode_script, generate_oneliner,
 )
 from sc_neurocore.studio.models import get_model_detail, list_models, simulate_model
 from sc_neurocore.studio.presets import get_preset, list_presets
@@ -126,6 +129,37 @@ class FreqResponseRequest(BaseModel):
     freq_max: float = 100.0
     n_freqs: int = Field(default=15, ge=3, le=50)
 
+class HeatmapRequest(BaseModel):
+    equations: list[str] | None = None
+    model_name: str | None = None
+    threshold: str | None = None
+    reset: str | None = None
+    params: dict[str, float] | None = None
+    init: dict[str, float] | None = None
+    dt: float = 0.1
+    duration: float = 100.0
+    current: float = 10.0
+    param_x: str
+    x_min: float
+    x_max: float
+    x_steps: int = Field(default=15, ge=3, le=30)
+    param_y: str
+    y_min: float
+    y_max: float
+    y_steps: int = Field(default=15, ge=3, le=30)
+
+class CodegenRequest(BaseModel):
+    mode: str = "model"
+    model_name: str | None = None
+    equations: list[str] | None = None
+    threshold: str | None = None
+    reset: str | None = None
+    params: dict[str, float] | None = None
+    init: dict[str, float] | None = None
+    dt: float = 0.1
+    duration: float = 100.0
+    current: float = 10.0
+
 
 def _safe(fn, detail_prefix: str = ""):
     try:
@@ -209,21 +243,29 @@ def create_app() -> FastAPI:
             raise HTTPException(404, f"Preset '{preset_id}' not found")
         return p
 
-    # --- Simulation ---
+    # --- Simulation (with auto-classification) ---
     @app.post("/api/simulate")
     def api_simulate(req: SimulateRequest):
-        return _safe(lambda: simulate(
-            equations=req.equations, threshold=req.threshold, reset=req.reset,
-            params=req.params, init=req.init, dt=req.dt,
-            duration=req.duration, current=req.current, protocol=req.protocol,
-        ))
+        def fn():
+            result = simulate(
+                equations=req.equations, threshold=req.threshold, reset=req.reset,
+                params=req.params, init=req.init, dt=req.dt,
+                duration=req.duration, current=req.current, protocol=req.protocol,
+            )
+            result["pattern"] = classify_firing_pattern(result["spikes"], result["n_steps"], result["dt"])
+            return result
+        return _safe(fn)
 
     @app.post("/api/models/simulate")
     def api_model_simulate(req: ModelSimulateRequest):
-        return _safe(lambda: simulate_model(
-            name=req.name, param_overrides=req.params, dt=req.dt,
-            duration=req.duration, current=req.current, protocol=req.protocol,
-        ), f"Model '{req.name}': ")
+        def fn():
+            result = simulate_model(
+                name=req.name, param_overrides=req.params, dt=req.dt,
+                duration=req.duration, current=req.current, protocol=req.protocol,
+            )
+            result["pattern"] = classify_firing_pattern(result["spikes"], result["n_steps"], result["dt"])
+            return result
+        return _safe(fn, f"Model '{req.name}': ")
 
     # --- Comparison (#1) ---
     @app.post("/api/compare")
@@ -303,6 +345,43 @@ def create_app() -> FastAPI:
             base_cfg = {"params": req.params, "init": req.init, "dt": req.dt,
                         "duration": req.duration, "current": req.amplitude, "protocol": "constant"}
             return frequency_response(sim_fn, base_cfg, req.freq_min, req.freq_max, req.n_freqs, req.amplitude)
+        return _safe(fn)
+
+    # --- 2D Heatmap ---
+    @app.post("/api/heatmap")
+    def api_heatmap(req: HeatmapRequest):
+        def fn():
+            sim_fn = _make_simulate_fn(req.model_dump())
+            base_cfg = {"params": req.params, "init": req.init, "dt": req.dt,
+                        "duration": req.duration, "current": req.current, "protocol": "constant"}
+            return heatmap_2d(sim_fn, base_cfg,
+                req.param_x, req.x_min, req.x_max, req.x_steps,
+                req.param_y, req.y_min, req.y_max, req.y_steps)
+        return _safe(fn)
+
+    # --- Code Generation ---
+    @app.post("/api/codegen")
+    def api_codegen(req: CodegenRequest):
+        if req.mode == "model" and req.model_name:
+            script = generate_model_script(req.model_name, req.params, req.duration, req.current, req.dt)
+            oneliner = generate_oneliner(req.model_name, req.params, req.current)
+        else:
+            script = generate_ode_script(req.equations or [], req.threshold, req.reset,
+                req.params, req.init, req.duration, req.current, req.dt)
+            oneliner = ""
+        return {"script": script, "oneliner": oneliner}
+
+    # --- Firing Pattern Classification ---
+    @app.post("/api/classify")
+    def api_classify(req: SimulateRequest):
+        def fn():
+            result = simulate(
+                equations=req.equations, threshold=req.threshold, reset=req.reset,
+                params=req.params, init=req.init, dt=req.dt,
+                duration=req.duration, current=req.current, protocol=req.protocol,
+            )
+            pattern = classify_firing_pattern(result["spikes"], result["n_steps"], result["dt"])
+            return {**result, "pattern": pattern}
         return _safe(fn)
 
     return app

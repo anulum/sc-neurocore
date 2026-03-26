@@ -151,6 +151,38 @@ def nullclines_2d(
     }
 
 
+def heatmap_2d(
+    simulate_fn, base_config: dict,
+    param_x: str, x_min: float, x_max: float, x_steps: int,
+    param_y: str, y_min: float, y_max: float, y_steps: int,
+) -> dict:
+    """Sweep two parameters and compute firing rate heatmap."""
+    x_vals = np.linspace(x_min, x_max, x_steps).tolist()
+    y_vals = np.linspace(y_min, y_max, y_steps).tolist()
+    rates = np.zeros((y_steps, x_steps))
+
+    for j, yv in enumerate(y_vals):
+        for i, xv in enumerate(x_vals):
+            cfg = dict(base_config)
+            params = dict(cfg.get("params") or {})
+            params[param_x] = xv
+            params[param_y] = yv
+            cfg["params"] = params
+            try:
+                result = simulate_fn(**cfg)
+                rates[j, i] = result["stats"]["rate_hz"]
+            except Exception:
+                rates[j, i] = 0.0
+
+    return {
+        "param_x": param_x, "x_values": x_vals,
+        "param_y": param_y, "y_values": y_vals,
+        "rates": rates.tolist(),
+        "rate_min": float(np.min(rates)),
+        "rate_max": float(np.max(rates)),
+    }
+
+
 def spike_triggered_average(
     time: list[float], voltage: list[float], spikes: list[int],
     dt: float, window_ms: float = 20.0,
