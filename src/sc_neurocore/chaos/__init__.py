@@ -9,8 +9,9 @@
 
 __tier__ = "research"
 
-from .rng import ChaoticRNG
+from .rng import ChaoticRNG, TentMapRNG
 
 __all__ = [
     "ChaoticRNG",
+    "TentMapRNG",
 ]
