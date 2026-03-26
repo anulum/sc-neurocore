@@ -439,6 +439,21 @@ def create_app() -> FastAPI:
             },
         }
 
+    # --- Static file serving for production mode ---
+    import os
+    dist_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "studio", "frontend", "dist")
+    if not os.path.isdir(dist_dir):
+        dist_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "studio", "frontend", "dist")
+    if os.path.isdir(dist_dir):
+        from fastapi.staticfiles import StaticFiles
+        from fastapi.responses import FileResponse
+
+        @app.get("/")
+        def serve_index():
+            return FileResponse(os.path.join(dist_dir, "index.html"))
+
+        app.mount("/", StaticFiles(directory=dist_dir), name="static")
+
     return app
 
 

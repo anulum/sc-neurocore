@@ -84,11 +84,39 @@ function drawLine(
 export default function SimulationPlot() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const store = useStudioStore();
   const {
     result, activeTab, fiResult, bifResult, sensResult, precResult,
     heatmapResult, compareResult, nullclineResult, freqResult, staResult,
     charResult, multiResults, importedTrace,
-  } = useStudioStore();
+  } = store;
+
+  function handleCanvasClick(e: React.MouseEvent<HTMLCanvasElement>) {
+    if (activeTab !== "heatmap" || !heatmapResult) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const x = (e.clientX - rect.left) * dpr;
+    const y = (e.clientY - rect.top) * dpr;
+    const L = 52, T = 8, R = 12, B = 18;
+    const pw = canvas.width - L * dpr - R * dpr;
+    const ph = canvas.height - T * dpr - B * dpr - 16 * dpr;
+    const { x_values, y_values } = heatmapResult;
+    const xi = Math.floor(((x - L * dpr) / pw) * x_values.length);
+    const yi = y_values.length - 1 - Math.floor(((y - T * dpr) / ph) * y_values.length);
+    if (xi >= 0 && xi < x_values.length && yi >= 0 && yi < y_values.length) {
+      const params = store.sourceMode === "model" ? { ...store.modelParams } : { ...store.odeParams };
+      params[heatmapResult.param_x] = x_values[xi];
+      params[heatmapResult.param_y] = y_values[yi];
+      if (store.sourceMode === "model") {
+        useStudioStore.setState({ modelParams: params, activeTab: "trace" });
+      } else {
+        useStudioStore.setState({ odeParams: params, activeTab: "trace" });
+      }
+      store.runSimulation();
+    }
+  }
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -547,8 +575,9 @@ export default function SimulationPlot() {
     <div ref={containerRef} style={{
       flex: 1, position: "relative", overflow: "hidden",
     }}>
-      <canvas ref={canvasRef} style={{
+      <canvas ref={canvasRef} onClick={handleCanvasClick} style={{
         position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
+        cursor: activeTab === "heatmap" ? "crosshair" : "default",
       }} />
     </div>
   );

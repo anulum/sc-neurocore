@@ -8,6 +8,7 @@ import ModelInfo from "./components/ModelInfo";
 import SpikeStats from "./components/SpikeStats";
 import ModelBrowser from "./components/ModelBrowser";
 import VerilogPreview from "./components/VerilogPreview";
+import MultiModelPicker from "./components/MultiModelPicker";
 
 function Tab({ active, color, label, onClick }: {
   active: boolean; color: string; label: string; onClick: () => void;
@@ -178,10 +179,13 @@ export default function App() {
       <div className="main-content">
         <div className="left-panel">
           {s.sourceMode === "model" ? (
-            <div className="panel-section">
-              <div className="panel-header">Model Library (118)</div>
-              <ModelBrowser />
-            </div>
+            <>
+              <div className="panel-section">
+                <div className="panel-header">Model Library (118)</div>
+                <ModelBrowser />
+              </div>
+              <MultiModelPicker />
+            </>
           ) : (
             <div className="panel-section">
               <div className="panel-header">Equations</div>
