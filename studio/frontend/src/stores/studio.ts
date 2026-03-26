@@ -9,7 +9,7 @@ import {
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 type SourceMode = "model" | "ode";
-type ViewTab = "trace" | "fi-curve" | "verilog";
+type ViewTab = "trace" | "phase" | "isi" | "fi-curve" | "verilog";
 
 interface StudioState {
   sourceMode: SourceMode;
@@ -61,6 +61,7 @@ interface StudioState {
   runCompile: () => Promise<void>;
   autoSimulate: () => void;
   exportData: () => void;
+  resetDefaults: () => void;
 }
 
 export const useStudioStore = create<StudioState>((set, get) => ({
@@ -245,5 +246,16 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     a.download = `simulation_${result.model_name || "custom"}.json`;
     a.click();
     URL.revokeObjectURL(url);
+  },
+
+  resetDefaults: () => {
+    const s = get();
+    if (s.sourceMode === "model" && s.modelDetail) {
+      const params: Record<string, number> = {};
+      for (const p of s.modelDetail.params) params[p.name] = p.default;
+      for (const sv of s.modelDetail.state_vars) params[sv.name] = sv.default;
+      set({ modelParams: params, dt: s.modelDetail.dt, current: 10, duration: 100 });
+    }
+    get().runSimulation();
   },
 }));

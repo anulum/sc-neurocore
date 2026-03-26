@@ -51,8 +51,33 @@ def _classify_fields(cls: type) -> tuple[list[dict], list[dict]]:
     return state_vars, params
 
 
+_CATEGORY_RULES = [
+    ("Conductance", ["HodgkinHuxley", "ConnorStevens", "WangBuzsaki", "TraubMiles",
+                     "PinskyRinzel", "MainenSejnowski", "BoothRinzel", "HayL5",
+                     "COBA", "TwoCompartment", "ReducedTraub"]),
+    ("Integrate-and-Fire", ["LIF", "IF", "QIF", "EIF", "AdEx", "CLIF", "Adaptive",
+                           "GIF", "GLIF", "Mihalas", "Brette", "Integer"]),
+    ("Oscillator", ["FitzHugh", "MorrisLecar", "Hindmarsh", "VanDerPol", "Theta",
+                    "Selkov", "Oregonator", "Lotka"]),
+    ("Bursting", ["Chay", "Izhikevich", "Bertram", "Butera", "Rulkov", "Map"]),
+    ("Hardware", ["Loihi", "SpiNNaker", "Akida", "BrainScale", "TrueNorth", "DPI", "Xylo"]),
+    ("Network/Population", ["WilsonCowan", "WongWang", "JansenRit", "Wendling",
+                            "Ermentrout", "Amari", "Compte", "Larter"]),
+    ("Statistical", ["Poisson", "Gamma", "GLM", "SpikeResponse", "GalvesLocherbach",
+                     "McCullochPitts", "Renewal"]),
+    ("AI-Optimized", ["Attention", "Compositional", "CFC", "Arcane"]),
+]
+
+
+def _categorize(name: str) -> str:
+    for category, keywords in _CATEGORY_RULES:
+        if any(kw in name for kw in keywords):
+            return category
+    return "Other"
+
+
 def list_models() -> list[dict]:
-    """Return metadata for all 118 neuron models."""
+    """Return metadata for all 118 neuron models with categories."""
     result = []
     for name in sorted(_CLASS_TO_MODULE.keys()):
         try:
@@ -65,6 +90,7 @@ def list_models() -> list[dict]:
             result.append({
                 "name": name,
                 "module": _CLASS_TO_MODULE[name],
+                "category": _categorize(name),
                 "n_state_vars": len(state_vars),
                 "n_params": len(params),
                 "state_var_names": [s["name"] for s in state_vars],
