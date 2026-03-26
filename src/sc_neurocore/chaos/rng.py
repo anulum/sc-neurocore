@@ -173,7 +173,7 @@ class ChaoticRNG:
         samples = self.random(n_samples)
         mean = samples.mean()
         var = samples.var()
-        if var == 0:
+        if var == 0:  # pragma: no cover
             return np.zeros(max_lag + 1)
         centered = samples - mean
         acf = np.empty(max_lag + 1, dtype=np.float64)

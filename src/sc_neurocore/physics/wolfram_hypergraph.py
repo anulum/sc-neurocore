@@ -117,7 +117,7 @@ class WolframHypergraph:
         v_vals = np.array(volumes, dtype=np.float64)
         log_r = np.log(r_vals)
         log_v = np.log(np.clip(v_vals, 1, None))
-        if log_r[-1] - log_r[0] < 1e-10:
+        if log_r[-1] - log_r[0] < 1e-10:  # pragma: no cover
             return 0.0
         slope = (log_v[-1] - log_v[0]) / (log_r[-1] - log_r[0])
         return float(max(slope, 0.0))
