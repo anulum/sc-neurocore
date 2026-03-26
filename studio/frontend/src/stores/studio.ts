@@ -3,16 +3,18 @@ import {
   fetchTemplates, fetchModels, fetchModelDetail, fetchPresets, fetchPreset,
   simulateODE, simulateModel, fetchFICurve, compileVerilog,
   fetchBifurcation, fetchSensitivity, fetchPrecision, fetchHeatmap, fetchCodegen,
+  fetchCompare, fetchNullclines, fetchFreqResponse,
   type NeuronTemplate, type ModelSummary, type ModelDetail, type PresetSummary,
   type SimulateResponse, type FICurveResponse, type BifurcationResponse,
   type SensitivityResponse, type PrecisionResponse, type HeatmapResponse,
+  type CompareResponse, type NullclineResponse, type FreqResponse,
 } from "../api/client";
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 type SourceMode = "model" | "ode";
 type ViewTab = "trace" | "phase" | "isi" | "fi-curve" | "bifurcation" |
-  "sensitivity" | "precision" | "heatmap" | "verilog" | "code";
+  "sensitivity" | "precision" | "heatmap" | "verilog" | "code" | "compare" | "freq" | "sta";
 
 interface StudioState {
   sourceMode: SourceMode;
@@ -37,9 +39,14 @@ interface StudioState {
   sensResult: SensitivityResponse | null;
   precResult: PrecisionResponse | null;
   heatmapResult: HeatmapResponse | null;
+  compareResult: CompareResponse | null;
+  nullclineResult: NullclineResponse | null;
+  freqResult: FreqResponse | null;
+  staResult: { time_ms: number[]; average: number[]; n_spikes: number } | null;
   verilogSrc: string;
   codeScript: string;
   codeOneliner: string;
+  savedSessions: { name: string; state: Record<string, unknown> }[];
   error: string | null;
   isSimulating: boolean;
   activeTab: ViewTab;
@@ -75,10 +82,18 @@ interface StudioState {
   runHeatmap: () => Promise<void>;
   runCodegen: () => Promise<void>;
   runCompile: () => Promise<void>;
+  runCompare: (configB: Record<string, unknown>) => Promise<void>;
+  runNullclines: () => Promise<void>;
+  runFreqResponse: () => Promise<void>;
+  computeSTA: () => void;
   autoSimulate: () => void;
   exportData: () => void;
   exportSVG: () => void;
   resetDefaults: () => void;
+  saveSession: (name: string) => void;
+  loadSession: (name: string) => void;
+  deleteSession: (name: string) => void;
+  shareURL: () => void;
   sweepParamY: string;
   setSweepParamY: (p: string) => void;
 }
@@ -107,7 +122,10 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   templates: [], presets: [],
   dt: 0.1, duration: 100, current: 10, protocol: "constant",
   result: null, fiResult: null, bifResult: null, sensResult: null, precResult: null,
-  heatmapResult: null, verilogSrc: "", codeScript: "", codeOneliner: "",
+  heatmapResult: null, compareResult: null, nullclineResult: null,
+  freqResult: null, staResult: null,
+  verilogSrc: "", codeScript: "", codeOneliner: "",
+  savedSessions: JSON.parse(localStorage.getItem("sc-studio-sessions") || "[]"),
   error: null, isSimulating: false,
   activeTab: "trace", modelFilter: "", sweepParam: "", sweepParamY: "",
 
@@ -331,6 +349,76 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     a.click();
   },
 
+  runCompare: async (configB) => {
+    const s = get();
+    if (s.isSimulating) return;
+    set({ isSimulating: true, error: null, activeTab: "compare" });
+    try {
+      const configA = currentConfig(s);
+      const compareResult = await fetchCompare(configA, configB);
+      set({ compareResult, isSimulating: false });
+    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+  },
+
+  runNullclines: async () => {
+    const s = get();
+    if (s.sourceMode !== "ode" || s.equations.length < 2) {
+      set({ error: "Nullclines need 2+ variable ODE in custom mode" });
+      return;
+    }
+    set({ isSimulating: true, error: null });
+    try {
+      const vars = Object.keys(s.odeInit);
+      if (vars.length < 2) { set({ isSimulating: false }); return; }
+      const v0vals = s.result?.states[vars[0]];
+      const v1vals = s.result?.states[vars[1]];
+      const r0: [number, number] = v0vals
+        ? [Math.min(...v0vals) - 10, Math.max(...v0vals) + 10]
+        : [-80, 40];
+      const r1: [number, number] = v1vals
+        ? [Math.min(...v1vals) - 0.5, Math.max(...v1vals) + 0.5]
+        : [-2, 2];
+      const nullclineResult = await fetchNullclines({
+        equations: s.equations, params: s.odeParams,
+        var_names: vars, ranges: { [vars[0]]: r0, [vars[1]]: r1 }, grid_size: 60,
+      });
+      set({ nullclineResult, isSimulating: false, activeTab: "phase" });
+    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+  },
+
+  runFreqResponse: async () => {
+    const s = get();
+    if (s.isSimulating) return;
+    set({ isSimulating: true, error: null, activeTab: "freq" });
+    try {
+      const cfg = currentConfig(s);
+      const freqResult = await fetchFreqResponse({
+        ...cfg, amplitude: Math.abs(s.current) || 10, freq_min: 1, freq_max: 200, n_freqs: 20,
+      });
+      set({ freqResult, isSimulating: false });
+    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+  },
+
+  computeSTA: () => {
+    const { result } = get();
+    if (!result || result.spikes.length < 3) return;
+    const vars = Object.keys(result.states);
+    const voltage = result.states[vars[0]];
+    const halfWin = Math.min(Math.floor(10 / result.dt), 200);
+    const snippets: number[][] = [];
+    for (const idx of result.spikes) {
+      if (idx - halfWin >= 0 && idx + halfWin < voltage.length) {
+        snippets.push(voltage.slice(idx - halfWin, idx + halfWin));
+      }
+    }
+    if (snippets.length === 0) return;
+    const avg = snippets[0].map((_, i) =>
+      snippets.reduce((sum, s) => sum + s[i], 0) / snippets.length
+    );
+    const time_ms = avg.map((_, i) => (i - halfWin) * result.dt);
+    set({ staResult: { time_ms, average: avg, n_spikes: snippets.length }, activeTab: "sta" });
+  },
+
   resetDefaults: () => {
     const s = get();
     if (s.sourceMode === "model" && s.modelDetail) {
@@ -341,4 +429,75 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     }
     get().runSimulation();
   },
+
+  saveSession: (name) => {
+    const s = get();
+    const state = {
+      sourceMode: s.sourceMode, equations: s.equations, threshold: s.threshold,
+      reset: s.reset, odeParams: s.odeParams, odeInit: s.odeInit,
+      selectedModelName: s.selectedModelName, modelParams: s.modelParams,
+      dt: s.dt, duration: s.duration, current: s.current, protocol: s.protocol,
+    };
+    const sessions = s.savedSessions.filter((ss) => ss.name !== name);
+    sessions.unshift({ name, state });
+    set({ savedSessions: sessions });
+    localStorage.setItem("sc-studio-sessions", JSON.stringify(sessions));
+  },
+
+  loadSession: (name) => {
+    const session = get().savedSessions.find((ss) => ss.name === name);
+    if (!session) return;
+    const st = session.state as Record<string, unknown>;
+    set({
+      sourceMode: (st.sourceMode as SourceMode) || "model",
+      equations: (st.equations as string[]) || [],
+      threshold: (st.threshold as string) || "",
+      reset: (st.reset as string) || "",
+      odeParams: (st.odeParams as Record<string, number>) || {},
+      odeInit: (st.odeInit as Record<string, number>) || {},
+      selectedModelName: (st.selectedModelName as string) || "",
+      modelParams: (st.modelParams as Record<string, number>) || {},
+      dt: (st.dt as number) || 0.1,
+      duration: (st.duration as number) || 100,
+      current: (st.current as number) || 10,
+      protocol: (st.protocol as string) || "constant",
+    });
+    get().runSimulation();
+  },
+
+  deleteSession: (name) => {
+    const sessions = get().savedSessions.filter((ss) => ss.name !== name);
+    set({ savedSessions: sessions });
+    localStorage.setItem("sc-studio-sessions", JSON.stringify(sessions));
+  },
+
+  shareURL: () => {
+    const s = get();
+    const state = {
+      m: s.sourceMode, mn: s.selectedModelName, eq: s.equations,
+      th: s.threshold, rs: s.reset,
+      p: s.sourceMode === "model" ? s.modelParams : s.odeParams,
+      i: s.odeInit, dt: s.dt, d: s.duration, c: s.current, pr: s.protocol,
+    };
+    const encoded = btoa(JSON.stringify(state));
+    const url = `${window.location.origin}${window.location.pathname}#${encoded}`;
+    navigator.clipboard.writeText(url);
+    set({ error: "URL copied to clipboard" });
+    setTimeout(() => set({ error: null }), 2000);
+  },
 }));
+
+// Load from URL hash on startup
+try {
+  const hash = window.location.hash.slice(1);
+  if (hash) {
+    const state = JSON.parse(atob(hash));
+    if (state.m && state.mn) {
+      useStudioStore.getState().selectModel(state.mn);
+      useStudioStore.setState({
+        current: state.c || 10, duration: state.d || 100,
+        protocol: state.pr || "constant",
+      });
+    }
+  }
+} catch { /* ignore invalid hash */ }

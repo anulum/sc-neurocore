@@ -84,7 +84,10 @@ function drawLine(
 export default function SimulationPlot() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { result, activeTab, fiResult, bifResult, sensResult, precResult, heatmapResult } = useStudioStore();
+  const {
+    result, activeTab, fiResult, bifResult, sensResult, precResult,
+    heatmapResult, compareResult, nullclineResult, freqResult, staResult,
+  } = useStudioStore();
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -170,6 +173,28 @@ export default function SimulationPlot() {
       ctx.beginPath(); ctx.arc(sx, sy, 4, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = AXIS; ctx.font = "10px monospace"; ctx.textAlign = "left";
       ctx.fillText(vars[1], L + 4, T + 12);
+
+      // Nullcline overlay
+      if (nullclineResult) {
+        const xRange = xMax - xMin || 1;
+        const yRange = yMax - yMin || 1;
+        for (const [nc, color] of [
+          [nullclineResult.nullcline_0, "#ff5252"],
+          [nullclineResult.nullcline_1, "#81c784"],
+        ] as const) {
+          ctx.fillStyle = color;
+          for (const [px, py] of nc.points) {
+            const cx = L + ((px - xMin) / xRange) * pw;
+            const cy = T + ph - ((py - yMin) / yRange) * ph;
+            if (cx >= L && cx <= L + pw && cy >= T && cy <= T + ph) {
+              ctx.fillRect(cx - 1, cy - 1, 2, 2);
+            }
+          }
+        }
+        ctx.font = "9px monospace"; ctx.textAlign = "right";
+        ctx.fillStyle = "#ff5252"; ctx.fillText(`d${vars[0]}/dt=0`, L + pw - 4, T + ph - 16);
+        ctx.fillStyle = "#81c784"; ctx.fillText(`d${vars[1]}/dt=0`, L + pw - 4, T + ph - 4);
+      }
       return;
     }
 
@@ -299,7 +324,59 @@ export default function SimulationPlot() {
       return;
     }
 
-    // Default: Trace view
+    // Comparison view
+    if (activeTab === "compare" && compareResult) {
+      const ph = (h - T - B - 10) / 2;
+      for (const [idx, label, res] of [[0, "A", compareResult.a], [1, "B", compareResult.b]] as const) {
+        const yOff = T + idx * (ph + 10);
+        const v0 = Object.keys(res.states)[0];
+        const data = res.states[v0];
+        const tm = res.time;
+        let yMin = Math.min(...data), yMax = Math.max(...data);
+        const yPad = (yMax - yMin) * 0.05 || 1;
+        yMin -= yPad; yMax += yPad;
+        drawAxes(ctx, L, yOff, pw, ph, tm[0], tm[tm.length - 1], yMin, yMax);
+        drawLine(ctx, L, yOff, pw, ph, tm, data, tm[0], tm[tm.length - 1], yMin, yMax, COLORS[idx], 1.2);
+        ctx.fillStyle = COLORS[idx]; ctx.font = "10px monospace"; ctx.textAlign = "left";
+        ctx.fillText(`${label}: ${res.model_name || "custom"} (${res.stats.rate_hz} Hz)`, L + 6, yOff + 12);
+      }
+      return;
+    }
+
+    // Frequency response
+    if (activeTab === "freq" && freqResult) {
+      const ph = h - T - B;
+      const xMin = freqResult.frequencies_hz[0];
+      const xMax = freqResult.frequencies_hz[freqResult.frequencies_hz.length - 1];
+      const yMax = Math.max(...freqResult.rates, 1);
+      drawAxes(ctx, L, T, pw, ph, xMin, xMax, 0, yMax * 1.1, "freq (Hz)");
+      drawLine(ctx, L, T, pw, ph, freqResult.frequencies_hz, freqResult.rates,
+        xMin, xMax, 0, yMax * 1.1, "#4fc3f7", 2);
+      ctx.fillStyle = AXIS; ctx.font = "10px monospace"; ctx.textAlign = "left";
+      ctx.fillText(`rate (Hz) @ amplitude=${freqResult.amplitude}`, L + 4, T + 12);
+      return;
+    }
+
+    // Spike-triggered average
+    if (activeTab === "sta" && staResult && staResult.time_ms.length > 0) {
+      const ph = h - T - B;
+      const xMin = staResult.time_ms[0], xMax = staResult.time_ms[staResult.time_ms.length - 1];
+      let yMin = Math.min(...staResult.average), yMax = Math.max(...staResult.average);
+      const yPad = (yMax - yMin) * 0.05 || 1;
+      yMin -= yPad; yMax += yPad;
+      drawAxes(ctx, L, T, pw, ph, xMin, xMax, yMin, yMax, "ms (relative to spike)");
+      drawLine(ctx, L, T, pw, ph, staResult.time_ms, staResult.average, xMin, xMax, yMin, yMax, "#4fc3f7", 2);
+      // Vertical line at t=0
+      const x0 = L + ((0 - xMin) / (xMax - xMin)) * pw;
+      ctx.strokeStyle = "#ff5252"; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(x0, T); ctx.lineTo(x0, T + ph); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = AXIS; ctx.font = "10px monospace"; ctx.textAlign = "left";
+      ctx.fillText(`STA (n=${staResult.n_spikes} spikes)`, L + 4, T + 12);
+      return;
+    }
+
+    // Default: Trace view (with nullcline overlay on phase)
     // Layout: voltage 65%, current 15%, raster 8%, x-labels
     const gap = 4;
     const rasterH = hasSpikes ? 22 : 0;
@@ -369,7 +446,7 @@ export default function SimulationPlot() {
       ctx.fillText(v.toFixed(0), x, h - 2);
     }
     ctx.textAlign = "right"; ctx.fillText("ms", L + pw, h - 2);
-  }, [result, activeTab, fiResult, bifResult, sensResult, precResult, heatmapResult]);
+  }, [result, activeTab, fiResult, bifResult, sensResult, precResult, heatmapResult, compareResult, nullclineResult, freqResult, staResult]);
 
   useEffect(() => {
     draw();
