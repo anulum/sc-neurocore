@@ -6,6 +6,8 @@ import {
   type SimulateResponse,
 } from "../api/client";
 
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
 interface StudioState {
   equations: string[];
   threshold: string;
@@ -33,6 +35,7 @@ interface StudioState {
   loadTemplates: () => Promise<void>;
   selectTemplate: (name: string) => void;
   runSimulation: () => Promise<void>;
+  autoSimulate: () => void;
 }
 
 export const useStudioStore = create<StudioState>((set, get) => ({
@@ -51,16 +54,20 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   error: null,
   isSimulating: false,
 
-  setEquations: (eqs) => set({ equations: eqs }),
-  setThreshold: (t) => set({ threshold: t }),
-  setReset: (r) => set({ reset: r }),
-  setParam: (key, value) =>
-    set((s) => ({ params: { ...s.params, [key]: value } })),
-  setInit: (key, value) =>
-    set((s) => ({ init: { ...s.init, [key]: value } })),
-  setDt: (dt) => set({ dt }),
-  setDuration: (d) => set({ duration: d }),
-  setCurrent: (c) => set({ current: c }),
+  setEquations: (eqs) => { set({ equations: eqs }); get().autoSimulate(); },
+  setThreshold: (t) => { set({ threshold: t }); get().autoSimulate(); },
+  setReset: (r) => { set({ reset: r }); get().autoSimulate(); },
+  setParam: (key, value) => {
+    set((s) => ({ params: { ...s.params, [key]: value } }));
+    get().autoSimulate();
+  },
+  setInit: (key, value) => {
+    set((s) => ({ init: { ...s.init, [key]: value } }));
+    get().autoSimulate();
+  },
+  setDt: (dt) => { set({ dt }); get().autoSimulate(); },
+  setDuration: (d) => { set({ duration: d }); get().autoSimulate(); },
+  setCurrent: (c) => { set({ current: c }); get().autoSimulate(); },
 
   loadTemplates: async () => {
     const templates = await fetchTemplates();
@@ -83,10 +90,19 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       result: null,
       error: null,
     });
+    get().runSimulation();
+  },
+
+  autoSimulate: () => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      get().runSimulation();
+    }, 300);
   },
 
   runSimulation: async () => {
     const s = get();
+    if (s.isSimulating) return;
     set({ isSimulating: true, error: null });
     try {
       const result = await simulate({

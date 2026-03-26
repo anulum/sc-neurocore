@@ -6,14 +6,15 @@ export default function TemplateLibrary() {
     useStudioStore();
 
   useEffect(() => {
-    loadTemplates();
+    loadTemplates().then(() => {
+      useStudioStore.getState().runSimulation();
+    });
   }, [loadTemplates]);
 
   return (
     <select
       value={selectedTemplate}
       onChange={(e) => selectTemplate(e.target.value)}
-      style={{ fontSize: 14, padding: "4px 8px" }}
     >
       {templates.map((t) => (
         <option key={t.name} value={t.name}>
