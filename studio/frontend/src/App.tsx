@@ -80,6 +80,8 @@ export default function App() {
         {s.sourceMode === "ode" && <TemplateLibrary />}
 
         <Btn label={s.isSimulating ? "..." : "Run"} onClick={s.runSimulation} disabled={s.isSimulating} />
+        <Btn label="Char." onClick={s.runCharacterize}
+          disabled={s.isSimulating || s.sourceMode !== "model"} color="#fff176" />
         <Btn label="f-I" onClick={s.runFICurve} disabled={s.isSimulating} color="var(--success)" />
         <Btn label="Sens" onClick={s.runSensitivity} disabled={s.isSimulating} color="#ce93d8" />
         <Btn label="Code" onClick={s.runCodegen} color="#90a4ae" />
@@ -114,6 +116,10 @@ export default function App() {
         {s.sourceMode === "ode" && s.equations.length >= 2 && (
           <Btn label="Nullcl." onClick={s.runNullclines} disabled={s.isSimulating} color="#ef9a9a" />
         )}
+        <Btn label="Import" onClick={() => {
+          const csv = prompt("Paste voltage trace (one value per line, or CSV):");
+          if (csv) s.importCSV(csv);
+        }} outline />
         <Btn label="Share" onClick={s.shareURL} outline />
         <Btn label="Reset" onClick={s.resetDefaults} outline />
         <Btn label="JSON" onClick={s.exportData} disabled={!s.result} outline />
@@ -131,6 +137,10 @@ export default function App() {
           <Tab active={s.activeTab === "sensitivity"} color="#ce93d8" label="Sens" onClick={() => s.setActiveTab("sensitivity")} />
           <Tab active={s.activeTab === "sta"} color="#b0bec5" label="STA" onClick={() => s.setActiveTab("sta")} />
           <Tab active={s.activeTab === "freq"} color="#fff176" label="Freq" onClick={() => s.setActiveTab("freq")} />
+          {s.sourceMode === "model" && (
+            <Tab active={s.activeTab === "characterize"} color="#fff176" label="Char" onClick={() => s.setActiveTab("characterize")} />
+          )}
+          <Tab active={s.activeTab === "multi"} color="#80cbc4" label="Multi" onClick={() => s.setActiveTab("multi")} />
           <Tab active={s.activeTab === "code"} color="#90a4ae" label="Code" onClick={() => s.setActiveTab("code")} />
           {s.sourceMode === "ode" && (
             <>

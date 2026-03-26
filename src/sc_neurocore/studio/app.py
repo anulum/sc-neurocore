@@ -17,6 +17,7 @@ from sc_neurocore.studio.analysis import (
     bifurcation_sweep, frequency_response, heatmap_2d, nullclines_2d,
     precision_compare, sensitivity_analysis, spike_triggered_average,
 )
+from sc_neurocore.studio.characterize import characterize_model
 from sc_neurocore.studio.codegen import (
     classify_firing_pattern, generate_model_script, generate_ode_script, generate_oneliner,
 )
@@ -383,6 +384,60 @@ def create_app() -> FastAPI:
             pattern = classify_firing_pattern(result["spikes"], result["n_steps"], result["dt"])
             return {**result, "pattern": pattern}
         return _safe(fn)
+
+    # --- One-click Characterisation ---
+    @app.post("/api/characterize")
+    def api_characterize(req: ModelSimulateRequest):
+        def fn():
+            sim_fn = _make_simulate_fn({"model_name": req.name, "params": req.params,
+                "dt": req.dt, "duration": req.duration, "current": req.current, "protocol": "constant"})
+            base_cfg = {"params": req.params, "dt": req.dt, "duration": req.duration,
+                        "current": req.current, "protocol": "constant"}
+            return characterize_model(sim_fn, base_cfg)
+        return _safe(fn, f"Characterize '{req.name}': ")
+
+    # --- Multi-model Overlay ---
+    @app.post("/api/multi-simulate")
+    def api_multi_simulate(configs: list[ModelSimulateRequest]):
+        def fn():
+            results = []
+            for cfg in configs[:4]:
+                sim_fn = _make_simulate_fn({"model_name": cfg.name, "params": cfg.params,
+                    "dt": cfg.dt, "duration": cfg.duration, "current": cfg.current, "protocol": cfg.protocol})
+                r = sim_fn()
+                r["pattern"] = classify_firing_pattern(r["spikes"], r["n_steps"], r["dt"])
+                results.append(r)
+            return results
+        return _safe(fn)
+
+    # --- Data Import (CSV voltage trace) ---
+    @app.post("/api/import-trace")
+    def api_import_trace(data: dict):
+        """Accept a voltage trace as JSON array for overlay comparison."""
+        voltage = data.get("voltage", [])
+        dt = data.get("dt", 0.1)
+        if not voltage or not isinstance(voltage, list):
+            raise HTTPException(422, "Expected {voltage: [...], dt: float}")
+        import numpy as np
+        v = np.array(voltage, dtype=float)
+        time = (np.arange(len(v)) * dt).tolist()
+        # Detect spikes (threshold crossings)
+        threshold = np.mean(v) + 2 * np.std(v)
+        crossings = np.where(np.diff(np.sign(v - threshold)) > 0)[0]
+        return {
+            "time": time,
+            "voltage": v.tolist(),
+            "spikes": crossings.tolist(),
+            "spike_count": len(crossings),
+            "dt": dt,
+            "stats": {
+                "mean": round(float(np.mean(v)), 2),
+                "std": round(float(np.std(v)), 2),
+                "min": round(float(np.min(v)), 2),
+                "max": round(float(np.max(v)), 2),
+                "threshold_estimate": round(float(threshold), 2),
+            },
+        }
 
     return app
 
