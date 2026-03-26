@@ -84,6 +84,8 @@ function drawLine(
 export default function SimulationPlot() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const zoomRef = useRef({ xMin: NaN, xMax: NaN, yMin: NaN, yMax: NaN });
+  const dragRef = useRef<{ startX: number; startY: number; origXMin: number; origXMax: number; origYMin: number; origYMax: number } | null>(null);
   const store = useStudioStore();
   const {
     result, activeTab, fiResult, bifResult, sensResult, precResult,
@@ -117,6 +119,55 @@ export default function SimulationPlot() {
       store.runSimulation();
     }
   }
+
+  function handleWheel(e: React.WheelEvent) {
+    if (activeTab !== "trace" || !result) return;
+    e.preventDefault();
+    const z = zoomRef.current;
+    const time = result.time;
+    if (isNaN(z.xMin)) { z.xMin = time[0]; z.xMax = time[time.length - 1]; }
+    const range = z.xMax - z.xMin;
+    const factor = e.deltaY > 0 ? 1.2 : 0.8;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = (e.clientX - rect.left) / rect.width;
+    const center = z.xMin + range * mouseX;
+    const newRange = range * factor;
+    z.xMin = center - newRange * mouseX;
+    z.xMax = center + newRange * (1 - mouseX);
+    draw();
+  }
+
+  function handleMouseDown(e: React.MouseEvent) {
+    if (activeTab !== "trace" || !result) return;
+    const z = zoomRef.current;
+    if (isNaN(z.xMin)) return;
+    dragRef.current = { startX: e.clientX, startY: e.clientY, origXMin: z.xMin, origXMax: z.xMax, origYMin: z.yMin, origYMax: z.yMax };
+  }
+
+  function handleMouseMove(e: React.MouseEvent) {
+    const d = dragRef.current;
+    if (!d || !canvasRef.current) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const dx = (e.clientX - d.startX) / rect.width;
+    const xRange = d.origXMax - d.origXMin;
+    zoomRef.current.xMin = d.origXMin - dx * xRange;
+    zoomRef.current.xMax = d.origXMax - dx * xRange;
+    draw();
+  }
+
+  function handleMouseUp() { dragRef.current = null; }
+
+  function resetZoom() {
+    zoomRef.current = { xMin: NaN, xMax: NaN, yMin: NaN, yMax: NaN };
+    draw();
+  }
+
+  // Reset zoom when result changes
+  useEffect(() => {
+    zoomRef.current = { xMin: NaN, xMax: NaN, yMin: NaN, yMax: NaN };
+  }, [result]);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -483,6 +534,11 @@ export default function SimulationPlot() {
     }
 
     // Default: Trace view (with nullcline overlay on phase + imported trace overlay)
+    // Apply zoom viewport if set
+    const z = zoomRef.current;
+    const zTMin = isNaN(z.xMin) ? tMin : z.xMin;
+    const zTMax = isNaN(z.xMax) ? tMax : z.xMax;
+
     // Layout: voltage 65%, current 15%, raster 8%, x-labels
     const gap = 4;
     const rasterH = hasSpikes ? 22 : 0;
@@ -502,15 +558,15 @@ export default function SimulationPlot() {
     vMin -= vPad; vMax += vPad;
 
     // Voltage plot
-    drawAxes(ctx, L, T, pw, voltH, tMin, tMax, vMin, vMax);
+    drawAxes(ctx, L, T, pw, voltH, zTMin, zTMax, vMin, vMax);
     vars.forEach((v, i) => {
-      drawLine(ctx, L, T, pw, voltH, time, result.states[v], tMin, tMax, vMin, vMax, COLORS[i % COLORS.length]);
+      drawLine(ctx, L, T, pw, voltH, time, result.states[v], zTMin, zTMax, vMin, vMax, COLORS[i % COLORS.length]);
     });
     // Spike markers
     if (hasSpikes) {
       ctx.strokeStyle = "rgba(255,82,82,0.2)"; ctx.lineWidth = 1;
       for (const idx of result.spikes) {
-        const x = L + ((idx * result.dt - tMin) / (tMax - tMin || 1)) * pw;
+        const x = L + ((idx * result.dt - zTMin) / (zTMax - zTMin || 1)) * pw;
         ctx.beginPath(); ctx.moveTo(x, T); ctx.lineTo(x, T + voltH); ctx.stroke();
       }
     }
@@ -526,7 +582,7 @@ export default function SimulationPlot() {
     if (importedTrace) {
       ctx.setLineDash([4, 3]);
       drawLine(ctx, L, T, pw, voltH, importedTrace.time, importedTrace.voltage,
-        tMin, tMax, vMin, vMax, "#ff9800", 1.5);
+        zTMin, zTMax, vMin, vMax, "#ff9800", 1.5);
       ctx.setLineDash([]);
       ctx.fillStyle = "#ff9800"; ctx.font = "9px monospace"; ctx.textAlign = "left";
       ctx.fillText("imported", L + 6 + vars.length * 52, T + 9);
@@ -537,8 +593,8 @@ export default function SimulationPlot() {
     const I = result.current_trace;
     let iMin = Math.min(...I), iMax = Math.max(...I);
     if (iMin === iMax) { iMin -= 1; iMax += 1; }
-    drawAxes(ctx, L, curY, pw, currentH, tMin, tMax, iMin, iMax * 1.1);
-    drawLine(ctx, L, curY, pw, currentH, time, I, tMin, tMax, iMin, iMax * 1.1, "#ffb74d", 1.5);
+    drawAxes(ctx, L, curY, pw, currentH, zTMin, zTMax, iMin, iMax * 1.1);
+    drawLine(ctx, L, curY, pw, currentH, time, I, zTMin, zTMax, iMin, iMax * 1.1, "#ffb74d", 1.5);
     ctx.fillStyle = "#ffb74d"; ctx.font = "10px monospace"; ctx.textAlign = "left";
     ctx.fillText("I", L + 4, curY + 10);
 
@@ -549,19 +605,25 @@ export default function SimulationPlot() {
       ctx.strokeStyle = BORDER; ctx.lineWidth = 1; ctx.strokeRect(L, rasY, pw, rasterH);
       ctx.strokeStyle = "#ff5252"; ctx.lineWidth = 1.5;
       for (const idx of result.spikes) {
-        const x = L + ((idx * result.dt - tMin) / (tMax - tMin || 1)) * pw;
+        const x = L + ((idx * result.dt - zTMin) / (zTMax - zTMin || 1)) * pw;
         ctx.beginPath(); ctx.moveTo(x, rasY + 2); ctx.lineTo(x, rasY + rasterH - 2); ctx.stroke();
       }
     }
 
     // X-axis labels
     ctx.fillStyle = AXIS; ctx.font = "10px monospace"; ctx.textAlign = "center";
-    const xs = niceStep(tMax - tMin, 6);
-    for (let v = Math.ceil(tMin / xs) * xs; v <= tMax; v += xs) {
-      const x = L + ((v - tMin) / (tMax - tMin || 1)) * pw;
+    const xs = niceStep(zTMax - zTMin, 6);
+    for (let v = Math.ceil(zTMin / xs) * xs; v <= zTMax; v += xs) {
+      const x = L + ((v - zTMin) / (zTMax - zTMin || 1)) * pw;
       ctx.fillText(v.toFixed(0), x, h - 2);
     }
     ctx.textAlign = "right"; ctx.fillText("ms", L + pw, h - 2);
+
+    // Zoom indicator
+    if (!isNaN(zoomRef.current.xMin)) {
+      ctx.fillStyle = "#4fc3f7"; ctx.font = "9px monospace"; ctx.textAlign = "right";
+      ctx.fillText(`zoom: ${zTMin.toFixed(1)}–${zTMax.toFixed(1)} ms (dbl-click to reset)`, L + pw - 2, h - 2);
+    }
   }, [result, activeTab, fiResult, bifResult, sensResult, precResult, heatmapResult, compareResult, nullclineResult, freqResult, staResult, charResult, multiResults, importedTrace]);
 
   useEffect(() => {
@@ -575,10 +637,19 @@ export default function SimulationPlot() {
     <div ref={containerRef} style={{
       flex: 1, position: "relative", overflow: "hidden",
     }}>
-      <canvas ref={canvasRef} onClick={handleCanvasClick} style={{
-        position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
-        cursor: activeTab === "heatmap" ? "crosshair" : "default",
-      }} />
+      <canvas ref={canvasRef}
+        onClick={handleCanvasClick}
+        onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onDoubleClick={resetZoom}
+        style={{
+          position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
+          cursor: activeTab === "heatmap" ? "crosshair" :
+                  activeTab === "trace" ? "grab" : "default",
+        }} />
     </div>
   );
 }
