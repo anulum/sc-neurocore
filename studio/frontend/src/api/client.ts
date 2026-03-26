@@ -121,6 +121,12 @@ export const fetchCompare = (a: Record<string, unknown>, b: Record<string, unkno
 export const fetchFreqResponse = (req: Record<string, unknown>) => post<FreqResponse>("/freq-response", req);
 export const fetchHeatmap = (req: Record<string, unknown>) => post<HeatmapResponse>("/heatmap", req);
 export const fetchCodegen = (req: Record<string, unknown>) => post<{ script: string; oneliner: string }>("/codegen", req);
+export const fetchModelScan = () => get<ModelBehavior[]>("/models/scan");
+
+export interface ModelBehavior {
+  name: string; category: string; pattern: string;
+  description: string; rate_hz: number; spike_count: number;
+}
 export const fetchCharacterize = (req: Record<string, unknown>) => post<CharacterizeResponse>("/characterize", req);
 export const fetchMultiSimulate = (configs: Record<string, unknown>[]) => post<SimulateResponse[]>("/multi-simulate", configs);
 export const importTrace = (data: { voltage: number[]; dt: number }) => post<ImportedTrace>("/import-trace", data);
