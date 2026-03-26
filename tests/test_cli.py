@@ -11,7 +11,7 @@ import builtins
 import types
 from unittest import mock
 
-from sc_neurocore.cli import _cmd_info, _format_engine_status, main
+from sc_neurocore.cli import _cmd_info, _cmd_studio, _format_engine_status, main
 
 
 def _run_main(*argv: str) -> int:
@@ -136,3 +136,37 @@ def test_preflight_delegates_to_subprocess():
         rc = _run_main("preflight")
     assert rc == 0
     m.assert_called_once()
+
+
+def test_studio_launches_uvicorn(capsys):
+    with (
+        mock.patch("uvicorn.run") as m_uvicorn,
+        mock.patch("webbrowser.open") as m_browser,
+    ):
+        rc = _cmd_studio(port=8001)
+    assert rc == 0
+    m_uvicorn.assert_called_once()
+    m_browser.assert_called_once_with("http://127.0.0.1:8001")
+
+
+def test_studio_missing_fastapi(capsys):
+    real_import = builtins.__import__
+
+    def block_uvicorn(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "uvicorn":
+            raise ImportError("No module named 'uvicorn'")
+        return real_import(name, globals, locals, fromlist, level)
+
+    with mock.patch("builtins.__import__", side_effect=block_uvicorn):
+        rc = _cmd_studio(port=8001)
+    assert rc == 1
+    assert "pip install" in capsys.readouterr().out
+
+
+def test_studio_command_via_main(capsys):
+    with (
+        mock.patch("sc_neurocore.cli._cmd_studio", return_value=0) as m_studio,
+    ):
+        rc = _run_main("studio")
+    assert rc == 0
+    m_studio.assert_called_once_with(8001)
