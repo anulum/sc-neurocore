@@ -38,19 +38,27 @@ export default function EquationEditor() {
   }
 
   return (
-    <Editor
-      height="200px"
-      defaultLanguage="plaintext"
-      value={text}
-      onChange={handleChange}
-      options={{
-        minimap: { enabled: false },
-        lineNumbers: "off",
-        fontSize: 14,
-        scrollBeyondLastLine: false,
-        wordWrap: "on",
-      }}
-      theme="vs-dark"
-    />
+    <div className="monaco-wrapper">
+      <Editor
+        height="180px"
+        defaultLanguage="plaintext"
+        value={text}
+        onChange={handleChange}
+        options={{
+          minimap: { enabled: false },
+          lineNumbers: "off",
+          fontSize: 13,
+          fontFamily: "var(--font-mono)",
+          scrollBeyondLastLine: false,
+          wordWrap: "on",
+          padding: { top: 8, bottom: 8 },
+          renderLineHighlight: "none",
+          overviewRulerLanes: 0,
+          hideCursorInOverviewRuler: true,
+          scrollbar: { vertical: "hidden", horizontal: "hidden" },
+        }}
+        theme="vs-dark"
+      />
+    </div>
   );
 }
