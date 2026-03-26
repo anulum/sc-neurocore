@@ -84,7 +84,7 @@ function drawLine(
 export default function SimulationPlot() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { result, activeTab, fiResult, bifResult, sensResult, precResult } = useStudioStore();
+  const { result, activeTab, fiResult, bifResult, sensResult, precResult, heatmapResult } = useStudioStore();
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -218,6 +218,34 @@ export default function SimulationPlot() {
       return;
     }
 
+    // 2D Heatmap
+    if (activeTab === "heatmap" && heatmapResult) {
+      const ph = h - T - B - 16;
+      const { x_values, y_values, rates, rate_min, rate_max } = heatmapResult;
+      const xMin = x_values[0], xMax = x_values[x_values.length - 1];
+      const yMin = y_values[0], yMax = y_values[y_values.length - 1];
+      const rRange = rate_max - rate_min || 1;
+
+      drawAxes(ctx, L, T, pw, ph, xMin, xMax, yMin, yMax, heatmapResult.param_x);
+      const cellW = pw / x_values.length;
+      const cellH = ph / y_values.length;
+      for (let j = 0; j < y_values.length; j++) {
+        for (let i = 0; i < x_values.length; i++) {
+          const norm = (rates[j][i] - rate_min) / rRange;
+          const r = Math.floor(norm * 200 + 20);
+          const g = Math.floor(norm * 50);
+          const b = Math.floor((1 - norm) * 200 + 55);
+          ctx.fillStyle = `rgb(${r},${g},${b})`;
+          const cx = L + (i / x_values.length) * pw;
+          const cy = T + ph - ((j + 1) / y_values.length) * ph;
+          ctx.fillRect(cx, cy, cellW + 1, cellH + 1);
+        }
+      }
+      ctx.fillStyle = AXIS; ctx.font = "10px monospace"; ctx.textAlign = "left";
+      ctx.fillText(`${heatmapResult.param_y} vs ${heatmapResult.param_x}  (${rate_min.toFixed(0)}–${rate_max.toFixed(0)} Hz)`, L + 4, T + 12);
+      return;
+    }
+
     // Sensitivity (#8)
     if (activeTab === "sensitivity" && sensResult) {
       const ph = h - T - B - 20;
@@ -341,7 +369,7 @@ export default function SimulationPlot() {
       ctx.fillText(v.toFixed(0), x, h - 2);
     }
     ctx.textAlign = "right"; ctx.fillText("ms", L + pw, h - 2);
-  }, [result, activeTab, fiResult, bifResult, sensResult, precResult]);
+  }, [result, activeTab, fiResult, bifResult, sensResult, precResult, heatmapResult]);
 
   useEffect(() => {
     draw();

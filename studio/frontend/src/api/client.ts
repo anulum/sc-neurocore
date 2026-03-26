@@ -5,6 +5,13 @@ export interface SpikeStats {
   isi_histogram: { counts: number[]; edges: number[] } | null;
 }
 
+export interface FiringPattern {
+  pattern: string;
+  description: string;
+  rate_hz?: number;
+  isi_cv?: number;
+}
+
 export interface SimulateResponse {
   time: number[];
   states: Record<string, number[]>;
@@ -12,9 +19,17 @@ export interface SimulateResponse {
   spikes: number[];
   spike_count: number;
   stats: SpikeStats;
+  pattern?: FiringPattern;
   dt: number;
   n_steps: number;
   model_name?: string;
+}
+
+export interface HeatmapResponse {
+  param_x: string; x_values: number[];
+  param_y: string; y_values: number[];
+  rates: number[][];
+  rate_min: number; rate_max: number;
 }
 
 export interface FICurveResponse { currents: number[]; rates: number[]; }
@@ -104,3 +119,5 @@ export const fetchNullclines = (req: Record<string, unknown>) => post<NullclineR
 export const fetchPrecision = (req: Record<string, unknown>) => post<PrecisionResponse>("/precision", req);
 export const fetchCompare = (a: Record<string, unknown>, b: Record<string, unknown>) => post<CompareResponse>("/compare", { config_a: a, config_b: b });
 export const fetchFreqResponse = (req: Record<string, unknown>) => post<FreqResponse>("/freq-response", req);
+export const fetchHeatmap = (req: Record<string, unknown>) => post<HeatmapResponse>("/heatmap", req);
+export const fetchCodegen = (req: Record<string, unknown>) => post<{ script: string; oneliner: string }>("/codegen", req);

@@ -14,12 +14,11 @@ function Tab({ active, color, label, onClick }: {
 }) {
   return (
     <button onClick={onClick} style={{
-      padding: "3px 7px", fontSize: 10, fontWeight: 600,
+      padding: "2px 6px", fontSize: 9, fontWeight: 600,
       fontFamily: "var(--font-ui)", lineHeight: 1.4,
       background: active ? color : "transparent",
       color: active ? "var(--bg-primary)" : "var(--text-muted)",
-      border: "1px solid var(--border)", cursor: "pointer",
-      whiteSpace: "nowrap",
+      border: "1px solid var(--border)", cursor: "pointer", whiteSpace: "nowrap",
     }}>{label}</button>
   );
 }
@@ -33,7 +32,7 @@ function Btn({ label, onClick, disabled, color, outline }: {
       background: outline ? "transparent" : (color || "var(--accent)"),
       border: outline ? "1px solid var(--border)" : "none",
       color: outline ? "var(--text-muted)" : "var(--bg-primary)",
-      padding: "3px 8px", fontSize: 10,
+      padding: "2px 7px", fontSize: 10,
     }}>{label}</button>
   );
 }
@@ -44,8 +43,24 @@ export default function App() {
   const hasPhase = vars.length >= 2;
   const hasISI = s.result?.stats?.isi_histogram != null;
   const paramKeys = Object.keys(s.sourceMode === "model" ? s.modelParams : s.odeParams);
+  const pattern = s.result?.pattern;
 
   useEffect(() => { s.loadPresets(); }, []);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.code === "Space") { e.preventDefault(); s.runSimulation(); }
+      if (e.key === "1") s.setActiveTab("trace");
+      if (e.key === "2" && hasPhase) s.setActiveTab("phase");
+      if (e.key === "3") s.setActiveTab("fi-curve");
+      if (e.key === "4") s.setActiveTab("bifurcation");
+      if (e.key === "5") s.setActiveTab("sensitivity");
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  });
 
   return (
     <div className="studio">
@@ -57,25 +72,33 @@ export default function App() {
 
         <div style={{ display: "flex", gap: 0, borderRadius: "var(--radius)", overflow: "hidden" }}>
           <Tab active={s.sourceMode === "model"} color="var(--accent)"
-            label="Models (118)" onClick={() => s.setSourceMode("model")} />
+            label="Models" onClick={() => s.setSourceMode("model")} />
           <Tab active={s.sourceMode === "ode"} color="var(--warning)"
-            label="Custom ODE" onClick={() => s.setSourceMode("ode")} />
+            label="ODE" onClick={() => s.setSourceMode("ode")} />
         </div>
 
         {s.sourceMode === "ode" && <TemplateLibrary />}
 
         <Btn label={s.isSimulating ? "..." : "Run"} onClick={s.runSimulation} disabled={s.isSimulating} />
         <Btn label="f-I" onClick={s.runFICurve} disabled={s.isSimulating} color="var(--success)" />
-        <Btn label="Sens." onClick={s.runSensitivity} disabled={s.isSimulating} color="#ce93d8" />
+        <Btn label="Sens" onClick={s.runSensitivity} disabled={s.isSimulating} color="#ce93d8" />
+        <Btn label="Code" onClick={s.runCodegen} color="#90a4ae" />
 
         {paramKeys.length > 0 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
             <select value={s.sweepParam} onChange={(e) => s.setSweepParam(e.target.value)}
-              style={{ fontSize: 10, padding: "2px 4px" }}>
-              <option value="">Bifurc. param...</option>
+              style={{ fontSize: 9, padding: "1px 2px", maxWidth: 70 }}>
+              <option value="">X...</option>
               {paramKeys.map((k) => <option key={k} value={k}>{k}</option>)}
             </select>
-            <Btn label="Bifurc." onClick={s.runBifurcation} disabled={s.isSimulating || !s.sweepParam} color="#ef9a9a" />
+            <Btn label="Bif" onClick={s.runBifurcation} disabled={s.isSimulating || !s.sweepParam} color="#ef9a9a" />
+            <select value={s.sweepParamY} onChange={(e) => s.setSweepParamY(e.target.value)}
+              style={{ fontSize: 9, padding: "1px 2px", maxWidth: 70 }}>
+              <option value="">Y...</option>
+              {paramKeys.filter((k) => k !== s.sweepParam).map((k) => <option key={k} value={k}>{k}</option>)}
+            </select>
+            <Btn label="2D" onClick={s.runHeatmap}
+              disabled={s.isSimulating || !s.sweepParam || !s.sweepParamY} color="#ffab91" />
           </div>
         )}
 
@@ -97,8 +120,10 @@ export default function App() {
           {hasPhase && <Tab active={s.activeTab === "phase"} color="#ce93d8" label="Phase" onClick={() => s.setActiveTab("phase")} />}
           {hasISI && <Tab active={s.activeTab === "isi"} color="var(--warning)" label="ISI" onClick={() => s.setActiveTab("isi")} />}
           <Tab active={s.activeTab === "fi-curve"} color="var(--success)" label="f-I" onClick={() => s.setActiveTab("fi-curve")} />
-          <Tab active={s.activeTab === "bifurcation"} color="#ef9a9a" label="Bif." onClick={() => s.setActiveTab("bifurcation")} />
-          <Tab active={s.activeTab === "sensitivity"} color="#ce93d8" label="Sens." onClick={() => s.setActiveTab("sensitivity")} />
+          <Tab active={s.activeTab === "bifurcation"} color="#ef9a9a" label="Bif" onClick={() => s.setActiveTab("bifurcation")} />
+          <Tab active={s.activeTab === "heatmap"} color="#ffab91" label="2D" onClick={() => s.setActiveTab("heatmap")} />
+          <Tab active={s.activeTab === "sensitivity"} color="#ce93d8" label="Sens" onClick={() => s.setActiveTab("sensitivity")} />
+          <Tab active={s.activeTab === "code"} color="#90a4ae" label="Code" onClick={() => s.setActiveTab("code")} />
           {s.sourceMode === "ode" && (
             <>
               <Tab active={s.activeTab === "precision"} color="#80deea" label="Q8.8" onClick={() => s.setActiveTab("precision")} />
@@ -107,20 +132,36 @@ export default function App() {
           )}
         </div>
 
-        {s.result && (
-          <span className="header-stats">
-            {s.result.stats.rate_hz}Hz {s.result.spike_count}spk
+        {pattern && (
+          <span className="header-stats" style={{
+            color: pattern.pattern === "tonic" ? "var(--success)" :
+                   pattern.pattern === "bursting" ? "var(--warning)" :
+                   pattern.pattern === "silent" ? "var(--text-muted)" : "var(--accent)",
+          }}>
+            {pattern.pattern} {s.result ? `${s.result.stats.rate_hz}Hz` : ""}
           </span>
         )}
       </header>
 
       {s.error && <div className="error-banner">{s.error}</div>}
 
+      {s.codeOneliner && (
+        <div style={{
+          padding: "4px 16px", fontSize: 10, fontFamily: "var(--font-mono)",
+          background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)",
+          color: "var(--text-muted)", cursor: "pointer", overflow: "hidden", whiteSpace: "nowrap",
+          textOverflow: "ellipsis",
+        }} onClick={() => { navigator.clipboard.writeText(s.codeOneliner); }}
+          title="Click to copy">
+          {s.codeOneliner}
+        </div>
+      )}
+
       <div className="main-content">
         <div className="left-panel">
           {s.sourceMode === "model" ? (
             <div className="panel-section">
-              <div className="panel-header">Model Library</div>
+              <div className="panel-header">Model Library (118)</div>
               <ModelBrowser />
             </div>
           ) : (
@@ -132,11 +173,11 @@ export default function App() {
 
           {s.presets.length > 0 && (
             <div className="panel-section">
-              <div className="panel-header">Experiments</div>
-              <div style={{ maxHeight: 120, overflowY: "auto" }}>
+              <div className="panel-header">Experiments ({s.presets.length})</div>
+              <div style={{ maxHeight: 100, overflowY: "auto" }}>
                 {s.presets.map((p) => (
                   <div key={p.id} onClick={() => s.loadPreset(p.id)} style={{
-                    padding: "3px 6px", fontSize: 11, cursor: "pointer",
+                    padding: "2px 6px", fontSize: 10, cursor: "pointer",
                     borderRadius: 3, color: "var(--text-secondary)",
                   }} title={p.description}>
                     {p.title}
@@ -149,6 +190,16 @@ export default function App() {
           <div className="panel-section">
             <div className="panel-header">Info</div>
             <ModelInfo />
+            {pattern && (
+              <div style={{
+                marginTop: 4, fontSize: 11,
+                color: pattern.pattern === "tonic" ? "var(--success)" :
+                       pattern.pattern === "bursting" ? "var(--warning)" :
+                       pattern.pattern === "silent" ? "var(--text-muted)" : "var(--text-primary)",
+              }}>
+                {pattern.description}
+              </div>
+            )}
           </div>
 
           {s.result && (
@@ -162,7 +213,28 @@ export default function App() {
         </div>
 
         <div className="right-panel">
-          {s.activeTab === "verilog" ? <VerilogPreview /> : <SimulationPlot />}
+          {s.activeTab === "verilog" ? (
+            <VerilogPreview />
+          ) : s.activeTab === "code" ? (
+            <div style={{ flex: 1, padding: 8 }}>
+              {s.codeScript ? (
+                <pre style={{
+                  fontSize: 11, fontFamily: "var(--font-mono)",
+                  color: "var(--text-primary)", background: "var(--bg-secondary)",
+                  padding: 12, borderRadius: "var(--radius)",
+                  overflow: "auto", height: "100%", whiteSpace: "pre-wrap",
+                }}>
+                  {s.codeScript}
+                </pre>
+              ) : (
+                <div style={{ color: "var(--text-muted)", padding: 20 }}>
+                  Click "Code" to generate a Python script
+                </div>
+              )}
+            </div>
+          ) : (
+            <SimulationPlot />
+          )}
         </div>
       </div>
     </div>
