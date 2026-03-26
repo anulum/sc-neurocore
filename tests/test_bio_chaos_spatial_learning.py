@@ -110,6 +110,17 @@ class TestWolframHypergraph:
         d = hg.dimension_estimate()
         assert d > 0
 
+    def test_dimension_estimate_few_nodes(self):
+        # 3 edges but only 3 nodes → too few for BFS estimation
+        hg = WolframHypergraph(edges=[(0, 1), (1, 2), (0, 2)], max_node_id=2)
+        assert hg.dimension_estimate() == 0.0
+
+    def test_dimension_estimate_complete_graph(self):
+        # 4-node complete graph → BFS reaches all in 1 step → < 2 volumes
+        edges = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)]
+        hg = WolframHypergraph(edges=edges, max_node_id=3)
+        assert hg.dimension_estimate() == 0.0
+
     def test_non_binary_edges_skipped(self):
         hg = WolframHypergraph(edges=[(0, 1, 2), (1, 2), (2, 3)], max_node_id=3)
         hg.evolve(1)
