@@ -141,7 +141,7 @@ class TestTentMapRNG:
         assert 0.0 < rng.state < 1.0
 
     def test_collapse_guard(self):
-        # x=0.5 at mu=2: step 1 → 1.0, step 2 → 0.0 → guard rescues to 1e-10
-        rng = TentMapRNG(x=0.5)
+        # x=0.5 at mu=2.0 exactly: step 1 → 1.0, step 2 → 0.0 → guard rescues
+        rng = TentMapRNG(mu=2.0, x=0.5)
         vals = rng.random(100)
         assert vals.min() > 0.0
