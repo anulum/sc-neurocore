@@ -13,10 +13,17 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
+from sc_neurocore.studio.analysis import (
+    bifurcation_sweep, frequency_response, nullclines_2d,
+    precision_compare, sensitivity_analysis, spike_triggered_average,
+)
 from sc_neurocore.studio.models import get_model_detail, list_models, simulate_model
+from sc_neurocore.studio.presets import get_preset, list_presets
 from sc_neurocore.studio.simulation import fi_curve, simulate
 from sc_neurocore.studio.templates import get_template, list_templates
 
+
+# --- Request schemas ---
 
 class SimulateRequest(BaseModel):
     equations: list[str]
@@ -29,7 +36,6 @@ class SimulateRequest(BaseModel):
     current: float = 0.0
     protocol: str = "constant"
 
-
 class ModelSimulateRequest(BaseModel):
     name: str
     params: dict[str, float] | None = None
@@ -37,7 +43,6 @@ class ModelSimulateRequest(BaseModel):
     duration: float = Field(default=100.0, gt=0)
     current: float = 10.0
     protocol: str = "constant"
-
 
 class FICurveRequest(BaseModel):
     equations: list[str] | None = None
@@ -52,7 +57,6 @@ class FICurveRequest(BaseModel):
     i_max: float = 50.0
     i_steps: int = Field(default=25, ge=2, le=100)
 
-
 class CompileRequest(BaseModel):
     equations: list[str]
     threshold: str | None = None
@@ -61,98 +65,227 @@ class CompileRequest(BaseModel):
     init: dict[str, float] | None = None
     module_name: str = "sc_neuron"
 
+class BifurcationRequest(BaseModel):
+    equations: list[str] | None = None
+    model_name: str | None = None
+    threshold: str | None = None
+    reset: str | None = None
+    params: dict[str, float] | None = None
+    init: dict[str, float] | None = None
+    dt: float = 0.1
+    duration: float = 200.0
+    current: float = 10.0
+    sweep_param: str
+    sweep_min: float
+    sweep_max: float
+    sweep_steps: int = Field(default=30, ge=5, le=80)
+
+class SensitivityRequest(BaseModel):
+    equations: list[str] | None = None
+    model_name: str | None = None
+    threshold: str | None = None
+    reset: str | None = None
+    params: dict[str, float] | None = None
+    init: dict[str, float] | None = None
+    dt: float = 0.1
+    duration: float = 200.0
+    current: float = 10.0
+
+class NullclineRequest(BaseModel):
+    equations: list[str]
+    params: dict[str, float]
+    var_names: list[str]
+    ranges: dict[str, list[float]]
+    grid_size: int = Field(default=60, ge=20, le=150)
+
+class PrecisionRequest(BaseModel):
+    equations: list[str]
+    threshold: str | None = None
+    reset: str | None = None
+    params: dict[str, float] | None = None
+    init: dict[str, float] | None = None
+    dt: float = 0.1
+    duration: float = 200.0
+    current: float = 10.0
+
+class CompareRequest(BaseModel):
+    config_a: dict
+    config_b: dict
+
+class FreqResponseRequest(BaseModel):
+    equations: list[str] | None = None
+    model_name: str | None = None
+    threshold: str | None = None
+    reset: str | None = None
+    params: dict[str, float] | None = None
+    init: dict[str, float] | None = None
+    dt: float = 0.1
+    duration: float = 200.0
+    amplitude: float = 10.0
+    freq_min: float = 1.0
+    freq_max: float = 100.0
+    n_freqs: int = Field(default=15, ge=3, le=50)
+
 
 def _safe(fn, detail_prefix: str = ""):
-    """Wrap any callable so exceptions become 422 with traceback detail, never 500."""
     try:
         return fn()
     except HTTPException:
         raise
     except Exception as e:
-        tb = traceback.format_exc().split("\n")[-3:]
+        tb_lines = traceback.format_exc().split("\n")[-4:-1]
         msg = f"{detail_prefix}{e}" if detail_prefix else str(e)
-        raise HTTPException(status_code=422, detail=f"{msg}\n{''.join(tb)}") from e
+        raise HTTPException(status_code=422, detail=f"{msg}\n{''.join(tb_lines)}") from e
+
+
+def _make_simulate_fn(req_dict: dict):
+    """Build a simulate callable from request params (ODE or model)."""
+    if req_dict.get("model_name"):
+        def fn(**overrides):
+            cfg = {
+                "name": req_dict["model_name"],
+                "param_overrides": overrides.get("params", req_dict.get("params")),
+                "dt": overrides.get("dt", req_dict.get("dt")),
+                "duration": overrides.get("duration", req_dict.get("duration", 200)),
+                "current": overrides.get("current", req_dict.get("current", 10)),
+                "protocol": overrides.get("protocol", req_dict.get("protocol", "constant")),
+            }
+            return simulate_model(**cfg)
+        return fn
+    else:
+        def fn(**overrides):
+            return simulate(
+                equations=req_dict.get("equations", []),
+                threshold=req_dict.get("threshold"),
+                reset=req_dict.get("reset"),
+                params=overrides.get("params", req_dict.get("params")),
+                init=overrides.get("init", req_dict.get("init")),
+                dt=overrides.get("dt", req_dict.get("dt", 0.1)),
+                duration=overrides.get("duration", req_dict.get("duration", 200)),
+                current=overrides.get("current", req_dict.get("current", 10)),
+                protocol=overrides.get("protocol", req_dict.get("protocol", "constant")),
+            )
+        return fn
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="SC-NeuroCore Studio", version="0.2.0")
+    app = FastAPI(title="SC-NeuroCore Studio", version="0.3.0")
+    app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-
+    # --- Health ---
     @app.get("/api/health")
     def health():
         return {"status": "ok"}
 
+    # --- Templates & Models ---
     @app.get("/api/templates")
-    def templates_list():
+    def api_templates():
         return list_templates()
 
     @app.get("/api/templates/{name}")
-    def template_detail(name: str):
+    def api_template(name: str):
         t = get_template(name)
-        if t is None:
-            raise HTTPException(status_code=404, detail=f"Template '{name}' not found")
+        if not t:
+            raise HTTPException(404, f"Template '{name}' not found")
         return t
 
     @app.get("/api/models")
-    def models_list():
+    def api_models():
         return _safe(list_models)
 
     @app.get("/api/models/{name}")
-    def model_detail(name: str):
-        def fn():
-            m = get_model_detail(name)
-            if m is None:
-                raise HTTPException(status_code=404, detail=f"Model '{name}' not found")
-            return m
-        return _safe(fn)
+    def api_model(name: str):
+        return _safe(lambda: get_model_detail(name) or (_ for _ in ()).throw(HTTPException(404, f"Model '{name}' not found")))
 
-    @app.post("/api/models/simulate")
-    def model_simulate(req: ModelSimulateRequest):
-        return _safe(lambda: simulate_model(
-            name=req.name, param_overrides=req.params, dt=req.dt,
-            duration=req.duration, current=req.current, protocol=req.protocol,
-        ), f"Model '{req.name}': ")
+    # --- Presets (#3) ---
+    @app.get("/api/presets")
+    def api_presets():
+        return list_presets()
 
+    @app.get("/api/presets/{preset_id}")
+    def api_preset(preset_id: str):
+        p = get_preset(preset_id)
+        if not p:
+            raise HTTPException(404, f"Preset '{preset_id}' not found")
+        return p
+
+    # --- Simulation ---
     @app.post("/api/simulate")
-    def run_simulation(req: SimulateRequest):
+    def api_simulate(req: SimulateRequest):
         return _safe(lambda: simulate(
             equations=req.equations, threshold=req.threshold, reset=req.reset,
             params=req.params, init=req.init, dt=req.dt,
             duration=req.duration, current=req.current, protocol=req.protocol,
         ))
 
-    @app.post("/api/fi-curve")
-    def run_fi_curve(req: FICurveRequest):
+    @app.post("/api/models/simulate")
+    def api_model_simulate(req: ModelSimulateRequest):
+        return _safe(lambda: simulate_model(
+            name=req.name, param_overrides=req.params, dt=req.dt,
+            duration=req.duration, current=req.current, protocol=req.protocol,
+        ), f"Model '{req.name}': ")
+
+    # --- Comparison (#1) ---
+    @app.post("/api/compare")
+    def api_compare(req: CompareRequest):
         def fn():
-            if req.model_name:
-                import numpy as np
-                currents, rates = [], []
-                for I_val in np.linspace(req.i_min, req.i_max, req.i_steps):
-                    r = simulate_model(
-                        name=req.model_name, param_overrides=req.params,
-                        dt=req.dt if req.dt != 0.1 else None,
-                        duration=req.duration, current=float(I_val), protocol="constant",
-                    )
-                    currents.append(float(I_val))
-                    rates.append(r["stats"]["rate_hz"])
-                return {"currents": currents, "rates": rates}
-            elif req.equations:
-                return fi_curve(
-                    equations=req.equations, threshold=req.threshold, reset=req.reset,
-                    params=req.params, init=req.init, dt=req.dt,
-                    duration=req.duration, i_min=req.i_min, i_max=req.i_max, i_steps=req.i_steps,
-                )
-            raise ValueError("Either equations or model_name required")
+            sim_a = _make_simulate_fn(req.config_a)
+            sim_b = _make_simulate_fn(req.config_b)
+            return {"a": sim_a(), "b": sim_b()}
         return _safe(fn)
 
+    # --- f-I Curve ---
+    @app.post("/api/fi-curve")
+    def api_fi_curve(req: FICurveRequest):
+        def fn():
+            import numpy as np
+            sim_fn = _make_simulate_fn(req.model_dump())
+            currents = np.linspace(req.i_min, req.i_max, req.i_steps).tolist()
+            rates = [sim_fn(current=float(I))["stats"]["rate_hz"] for I in currents]
+            return {"currents": currents, "rates": rates}
+        return _safe(fn)
+
+    # --- Bifurcation (#2) ---
+    @app.post("/api/bifurcation")
+    def api_bifurcation(req: BifurcationRequest):
+        def fn():
+            sim_fn = _make_simulate_fn(req.model_dump())
+            base_cfg = {"params": req.params, "init": req.init, "dt": req.dt,
+                        "duration": req.duration, "current": req.current, "protocol": "constant"}
+            return bifurcation_sweep(sim_fn, base_cfg, req.sweep_param, req.sweep_min, req.sweep_max, req.sweep_steps)
+        return _safe(fn)
+
+    # --- Sensitivity (#8) ---
+    @app.post("/api/sensitivity")
+    def api_sensitivity(req: SensitivityRequest):
+        def fn():
+            sim_fn = _make_simulate_fn(req.model_dump())
+            param_names = list((req.params or {}).keys())
+            base_cfg = {"params": req.params, "init": req.init, "dt": req.dt,
+                        "duration": req.duration, "current": req.current, "protocol": "constant"}
+            return sensitivity_analysis(sim_fn, base_cfg, param_names)
+        return _safe(fn)
+
+    # --- Nullclines (#9) ---
+    @app.post("/api/nullclines")
+    def api_nullclines(req: NullclineRequest):
+        def fn():
+            ranges = {k: tuple(v) for k, v in req.ranges.items()}
+            return nullclines_2d(req.equations, req.params, req.var_names, ranges, req.grid_size)
+        return _safe(fn)
+
+    # --- Precision Compare (#5) ---
+    @app.post("/api/precision")
+    def api_precision(req: PrecisionRequest):
+        return _safe(lambda: precision_compare(
+            equations=req.equations, threshold=req.threshold, reset=req.reset,
+            params=req.params, init=req.init, dt=req.dt,
+            duration=req.duration, current=req.current,
+        ))
+
+    # --- Compile (#5 adjacent) ---
     @app.post("/api/compile")
-    def compile_verilog(req: CompileRequest):
+    def api_compile(req: CompileRequest):
         def fn():
             from sc_neurocore.compiler.equation_compiler import equation_to_fpga
             _, verilog = equation_to_fpga(
@@ -160,6 +293,16 @@ def create_app() -> FastAPI:
                 params=req.params, init=req.init, module_name=req.module_name,
             )
             return {"verilog": verilog, "module_name": req.module_name, "chars": len(verilog)}
+        return _safe(fn)
+
+    # --- Frequency Response (#11) ---
+    @app.post("/api/freq-response")
+    def api_freq_response(req: FreqResponseRequest):
+        def fn():
+            sim_fn = _make_simulate_fn(req.model_dump())
+            base_cfg = {"params": req.params, "init": req.init, "dt": req.dt,
+                        "duration": req.duration, "current": req.amplitude, "protocol": "constant"}
+            return frequency_response(sim_fn, base_cfg, req.freq_min, req.freq_max, req.n_freqs, req.amplitude)
         return _safe(fn)
 
     return app
