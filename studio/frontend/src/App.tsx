@@ -8,27 +8,44 @@ import SpikeStats from "./components/SpikeStats";
 import ModelBrowser from "./components/ModelBrowser";
 import VerilogPreview from "./components/VerilogPreview";
 
-function TabButton({ active, color, label, onClick }: {
+function Tab({ active, color, label, onClick }: {
   active: boolean; color: string; label: string; onClick: () => void;
 }) {
   return (
     <button onClick={onClick} style={{
-      padding: "4px 10px", fontSize: 11, fontWeight: 600,
-      fontFamily: "var(--font-ui)",
+      padding: "3px 8px", fontSize: 10, fontWeight: 600,
+      fontFamily: "var(--font-ui)", lineHeight: 1.4,
       background: active ? color : "transparent",
       color: active ? "var(--bg-primary)" : "var(--text-muted)",
-      border: "1px solid var(--border)",
-      cursor: "pointer",
+      border: "1px solid var(--border)", cursor: "pointer",
+    }}>{label}</button>
+  );
+}
+
+function Btn({ label, onClick, disabled, color, outline }: {
+  label: string; onClick: () => void; disabled?: boolean;
+  color?: string; outline?: boolean;
+}) {
+  return (
+    <button className="btn-simulate" onClick={onClick} disabled={disabled} style={{
+      background: outline ? "transparent" : (color || "var(--accent)"),
+      border: outline ? "1px solid var(--border)" : "none",
+      color: outline ? "var(--text-muted)" : "var(--bg-primary)",
+      padding: "4px 10px", fontSize: 11,
     }}>{label}</button>
   );
 }
 
 export default function App() {
   const {
-    sourceMode, setSourceMode,
-    runSimulation, runFICurve, runCompile, exportData,
-    isSimulating, error, result, activeTab, setActiveTab,
+    sourceMode, setSourceMode, result,
+    runSimulation, runFICurve, runCompile, exportData, resetDefaults,
+    isSimulating, error, activeTab, setActiveTab,
   } = useStudioStore();
+
+  const vars = result ? Object.keys(result.states) : [];
+  const hasPhase = vars.length >= 2;
+  const hasISI = result?.stats?.isi_histogram != null;
 
   return (
     <div className="studio">
@@ -39,43 +56,34 @@ export default function App() {
         </div>
 
         <div style={{ display: "flex", gap: 0, borderRadius: "var(--radius)", overflow: "hidden" }}>
-          <TabButton active={sourceMode === "model"} color="var(--accent)"
-            label={`Models (118)`} onClick={() => setSourceMode("model")} />
-          <TabButton active={sourceMode === "ode"} color="var(--warning)"
+          <Tab active={sourceMode === "model"} color="var(--accent)"
+            label="Models (118)" onClick={() => setSourceMode("model")} />
+          <Tab active={sourceMode === "ode"} color="var(--warning)"
             label="Custom ODE" onClick={() => setSourceMode("ode")} />
         </div>
 
         {sourceMode === "ode" && <TemplateLibrary />}
 
-        <button className="btn-simulate" onClick={runSimulation} disabled={isSimulating}>
-          {isSimulating ? "..." : "Simulate"}
-        </button>
-        <button className="btn-simulate" onClick={runFICurve} disabled={isSimulating}
-          style={{ background: "var(--success)" }}>f-I</button>
+        <Btn label={isSimulating ? "..." : "Run"} onClick={runSimulation} disabled={isSimulating} />
+        <Btn label="f-I" onClick={runFICurve} disabled={isSimulating} color="var(--success)" />
         {sourceMode === "ode" && (
-          <button className="btn-simulate" onClick={runCompile} disabled={isSimulating}
-            style={{ background: "#ce93d8" }}>Compile</button>
+          <Btn label="Compile" onClick={runCompile} disabled={isSimulating} color="#ce93d8" />
         )}
-        <button className="btn-simulate" onClick={exportData} disabled={!result}
-          style={{ background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
-          Export
-        </button>
+        <Btn label="Reset" onClick={resetDefaults} outline />
+        <Btn label="Export" onClick={exportData} disabled={!result} outline />
 
-        <div style={{ display: "flex", gap: 0, marginLeft: 8, borderRadius: "var(--radius)", overflow: "hidden" }}>
-          <TabButton active={activeTab === "trace"} color="var(--accent)"
-            label="Trace" onClick={() => setActiveTab("trace")} />
-          <TabButton active={activeTab === "fi-curve"} color="var(--success)"
-            label="f-I" onClick={() => setActiveTab("fi-curve")} />
-          {sourceMode === "ode" && (
-            <TabButton active={activeTab === "verilog"} color="#ce93d8"
-              label="Verilog" onClick={() => setActiveTab("verilog")} />
-          )}
+        <div style={{ display: "flex", gap: 0, marginLeft: 4, borderRadius: "var(--radius)", overflow: "hidden" }}>
+          <Tab active={activeTab === "trace"} color="var(--accent)" label="Trace" onClick={() => setActiveTab("trace")} />
+          {hasPhase && <Tab active={activeTab === "phase"} color="#ce93d8" label="Phase" onClick={() => setActiveTab("phase")} />}
+          {hasISI && <Tab active={activeTab === "isi"} color="var(--warning)" label="ISI" onClick={() => setActiveTab("isi")} />}
+          <Tab active={activeTab === "fi-curve"} color="var(--success)" label="f-I" onClick={() => setActiveTab("fi-curve")} />
+          {sourceMode === "ode" && <Tab active={activeTab === "verilog"} color="#ce93d8" label="RTL" onClick={() => setActiveTab("verilog")} />}
         </div>
 
         <div className="header-spacer" />
         {result && (
           <span className="header-stats">
-            {result.stats.rate_hz} Hz &middot; {result.n_steps.toLocaleString()} steps
+            {result.stats.rate_hz} Hz &middot; {result.spike_count} spk &middot; {result.n_steps.toLocaleString()} steps
           </span>
         )}
       </header>
@@ -97,9 +105,7 @@ export default function App() {
           )}
 
           <div className="panel-section">
-            <div className="panel-header">
-              {sourceMode === "model" ? "Model" : "ODE"} Info
-            </div>
+            <div className="panel-header">Info</div>
             <ModelInfo />
           </div>
 

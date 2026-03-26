@@ -2,6 +2,7 @@ export interface SpikeStats {
   rate_hz: number;
   isi_mean_ms: number | null;
   isi_cv: number | null;
+  isi_histogram: { counts: number[]; edges: number[] } | null;
 }
 
 export interface SimulateResponse {
@@ -37,6 +38,7 @@ export interface NeuronTemplate {
 export interface ModelSummary {
   name: string;
   module: string;
+  category: string;
   n_state_vars: number;
   n_params: number;
   state_var_names: string[];

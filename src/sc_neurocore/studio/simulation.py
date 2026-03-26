@@ -20,15 +20,19 @@ def _spike_stats(spike_indices: list[int], dt: float, n_steps: int) -> dict:
     duration_s = n_steps * dt / 1000.0
     rate = len(spike_indices) / duration_s if duration_s > 0 else 0.0
     if len(spike_indices) < 2:
-        return {"rate_hz": round(rate, 2), "isi_mean_ms": None, "isi_cv": None}
+        return {"rate_hz": round(rate, 2), "isi_mean_ms": None, "isi_cv": None,
+                "isi_histogram": None}
     isis = np.diff(spike_indices).astype(float) * dt
     isi_mean = float(np.mean(isis))
     isi_std = float(np.std(isis))
     isi_cv = isi_std / isi_mean if isi_mean > 0 else 0.0
+    # ISI histogram (10 bins)
+    counts, edges = np.histogram(isis, bins=min(15, max(3, len(isis) // 3)))
     return {
         "rate_hz": round(rate, 2),
         "isi_mean_ms": round(isi_mean, 3),
         "isi_cv": round(isi_cv, 4),
+        "isi_histogram": {"counts": counts.tolist(), "edges": edges.tolist()},
     }
 
 
