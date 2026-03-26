@@ -40,7 +40,7 @@ marked explicitly.
 | GPU acceleration | PyTorch + CuPy | PyTorch | PyTorch | — | — |
 | Neuron models | **116** | 11 | 6 | 3 | Arbitrary |
 | Rust neuron models (PyO3) | **109** | — | — | — | — |
-| NetworkRunner (fused loop) | **81 models** | — | — | — | — |
+| NetworkRunner (fused loop) | **80 models** | — | — | — | — |
 | Network simulation backends | **3** (Python, Rust, MPI) | PyTorch | PyTorch | Lava | C++ codegen |
 | MPI distributed simulation | **Yes** | — | — | — | — |
 | Pre-trained model zoo | **10 configs, 3 weights** | — | — | — | — |
@@ -93,7 +93,7 @@ quadrantChart
 3. **Formal verification** — 67 SymbiYosys properties across 7 HDL
    modules (no other SNN framework offers formal proofs)
 4. **Rust SIMD engine** — AVX-512/AVX2/NEON/SVE/RVV dispatch with
-   109 Rust neuron models with PyO3 bindings, 81-model NetworkRunner
+   109 Rust neuron models with PyO3 bindings, 80-model NetworkRunner
 5. **Network simulation** — 3 backends (Python, Rust, MPI), 6 topology
    generators, 10 model zoo configs, 3 pre-trained weight sets
 6. **Analysis toolkit** — 128 spike train analysis functions across
