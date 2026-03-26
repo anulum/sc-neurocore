@@ -1,5 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later | Commercial license available
-# Tests for sc_neurocore.continual (continual learning engine)
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Tests for continual learning engine
 
 from __future__ import annotations
 
@@ -15,6 +19,12 @@ class TestPlasticityConfig:
         assert c.tau_pre == 20.0
         assert c.w_min == 0.0
 
+    def test_custom_values(self):
+        c = PlasticityConfig(layer_name="x", rule="r_stdp", tau_pre=10.0, w_max=2.0)
+        assert c.rule == "r_stdp"
+        assert c.tau_pre == 10.0
+        assert c.w_max == 2.0
+
 
 class TestContinualLearner:
     def _make_learner(self):
@@ -26,25 +36,34 @@ class TestContinualLearner:
         assert len(cl.weights) == 2
         assert cl.ewc_lambda == 1000.0
 
+    def test_weights_are_copies(self):
+        w = [np.ones((4, 4))]
+        cl = ContinualLearner(w)
+        w[0][0, 0] = 999.0
+        assert cl.weights[0][0, 0] == 1.0
+
     def test_compute_fisher(self):
         cl = self._make_learner()
         grads = [[np.random.randn(16, 8), np.random.randn(4, 16)] for _ in range(10)]
         cl.compute_fisher(grads)
         assert cl._fisher_diag is not None
         assert cl._star_weights is not None
+        assert all(f.shape == w.shape for f, w in zip(cl._fisher_diag, cl.weights))
 
     def test_ewc_penalty_before_fisher(self):
         cl = self._make_learner()
         assert cl.ewc_penalty() == 0.0
 
-    def test_ewc_penalty_after_fisher(self):
+    def test_ewc_penalty_zero_when_unchanged(self):
         cl = self._make_learner()
         grads = [[np.random.randn(16, 8), np.random.randn(4, 16)] for _ in range(10)]
         cl.compute_fisher(grads)
-        # No weight change -> penalty = 0
         assert cl.ewc_penalty() < 1e-10
 
-        # Change weights -> penalty > 0
+    def test_ewc_penalty_positive_after_weight_change(self):
+        cl = self._make_learner()
+        grads = [[np.random.randn(16, 8), np.random.randn(4, 16)] for _ in range(10)]
+        cl.compute_fisher(grads)
         cl.update_weights([w + 0.1 for w in cl.weights])
         assert cl.ewc_penalty() > 0
 
@@ -62,6 +81,7 @@ class TestContinualLearner:
         assert configs[0].layer_name == "hidden"
         assert configs[0].rule == "stdp"
         assert configs[0].lr_potentiation > 0
+        assert configs[0].lr_depression > configs[0].lr_potentiation
 
     def test_report(self):
         cl = self._make_learner()
