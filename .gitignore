@@ -79,6 +79,10 @@ full_test_report.txt
 *.so
 !engine/src/**/*.rs
 
+# Studio frontend build artifacts
+studio/frontend/node_modules/
+studio/frontend/dist/
+
 # MkDocs build output
 site/
 

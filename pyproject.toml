@@ -73,6 +73,7 @@ quantum = ["qiskit", "pennylane", "qiskit-aer"]
 nir = ["nir>=1.0"]
 mpi = ["mpi4py>=3.0"]
 lava = ["lava-nc"]
+studio = ["fastapi>=0.100", "uvicorn[standard]>=0.20"]
 docs = ["mkdocs>=1.6", "mkdocs-material>=9.5", "mkdocstrings[python]>=0.25"]
 
 [tool.setuptools.packages.find]
@@ -133,6 +134,8 @@ omit = [
     "*/learning/advanced.py",
     "*/model_zoo/*",
     "*/identity/*",
+    # --- Studio web UI (requires fastapi, tested separately) ---
+    "*/studio/*",
 ]
 
 [tool.coverage.report]
@@ -188,5 +191,5 @@ ignore_missing_imports = false
 warn_unused_ignores = true
 warn_return_any = true
 [[tool.mypy.overrides]]
-module = ['cupy.*', 'mpi4py.*', 'numba.*', 'matplotlib.*', 'scipy.*', 'networkx.*', 'onnx.*', 'torch.*', 'gym.*', 'flask.*', 'scpn_evo2_real_interface.*', 'scpn_opentrions_verify.*', 'scpn_cross_layer_integration_L1_L7.*', 'jax.*', 'qiskit.*', 'pennylane.*', 'qiskit_aer.*']
+module = ['cupy.*', 'mpi4py.*', 'numba.*', 'matplotlib.*', 'scipy.*', 'networkx.*', 'onnx.*', 'torch.*', 'gym.*', 'flask.*', 'scpn_evo2_real_interface.*', 'scpn_opentrions_verify.*', 'scpn_cross_layer_integration_L1_L7.*', 'jax.*', 'qiskit.*', 'pennylane.*', 'qiskit_aer.*', 'fastapi.*', 'uvicorn.*', 'starlette.*', 'pydantic.*']
 ignore_missing_imports = true
