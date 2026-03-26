@@ -29,13 +29,53 @@ class TestCodeSafetyVerifierBranches:
         v = CodeSafetyVerifier()
         assert v.verify_code_safety("def (broken syntax") is False
 
-    def test_dangerous_call_detected(self):
+    def test_blocked_attr_system(self):
         from sc_neurocore.verification.safety import CodeSafetyVerifier
 
         v = CodeSafetyVerifier()
-        # Code with os.system call — verify_code_safety scans but still returns True
-        result = v.verify_code_safety("import os\nos.system('ls')")
-        assert isinstance(result, bool)
+        assert v.verify_code_safety("import os\nos.system('ls')") is False
+
+    def test_blocked_attr_unlink(self):
+        from sc_neurocore.verification.safety import CodeSafetyVerifier
+
+        v = CodeSafetyVerifier()
+        assert v.verify_code_safety("from pathlib import Path\nPath('x').unlink()") is False
+
+    def test_blocked_attr_remove(self):
+        from sc_neurocore.verification.safety import CodeSafetyVerifier
+
+        v = CodeSafetyVerifier()
+        assert v.verify_code_safety("import os\nos.remove('x')") is False
+
+    def test_blocked_import_subprocess(self):
+        from sc_neurocore.verification.safety import CodeSafetyVerifier
+
+        v = CodeSafetyVerifier()
+        assert v.verify_code_safety("import subprocess") is False
+
+    def test_blocked_import_socket(self):
+        from sc_neurocore.verification.safety import CodeSafetyVerifier
+
+        v = CodeSafetyVerifier()
+        assert v.verify_code_safety("import socket") is False
+
+    def test_blocked_import_from(self):
+        from sc_neurocore.verification.safety import CodeSafetyVerifier
+
+        v = CodeSafetyVerifier()
+        assert v.verify_code_safety("from importlib import import_module") is False
+
+    def test_blocked_import_ctypes(self):
+        from sc_neurocore.verification.safety import CodeSafetyVerifier
+
+        v = CodeSafetyVerifier()
+        assert v.verify_code_safety("import ctypes") is False
+
+    def test_safe_code_passes(self):
+        from sc_neurocore.verification.safety import CodeSafetyVerifier
+
+        v = CodeSafetyVerifier()
+        assert v.verify_code_safety("import numpy as np\nx = np.zeros(10)") is True
 
     def test_while_true_detection(self):
         from sc_neurocore.verification.safety import CodeSafetyVerifier
