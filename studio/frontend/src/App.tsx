@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useStudioStore } from "./stores/studio";
 import TemplateLibrary from "./components/TemplateLibrary";
 import EquationEditor from "./components/EquationEditor";
@@ -13,11 +14,12 @@ function Tab({ active, color, label, onClick }: {
 }) {
   return (
     <button onClick={onClick} style={{
-      padding: "3px 8px", fontSize: 10, fontWeight: 600,
+      padding: "3px 7px", fontSize: 10, fontWeight: 600,
       fontFamily: "var(--font-ui)", lineHeight: 1.4,
       background: active ? color : "transparent",
       color: active ? "var(--bg-primary)" : "var(--text-muted)",
       border: "1px solid var(--border)", cursor: "pointer",
+      whiteSpace: "nowrap",
     }}>{label}</button>
   );
 }
@@ -31,21 +33,19 @@ function Btn({ label, onClick, disabled, color, outline }: {
       background: outline ? "transparent" : (color || "var(--accent)"),
       border: outline ? "1px solid var(--border)" : "none",
       color: outline ? "var(--text-muted)" : "var(--bg-primary)",
-      padding: "4px 10px", fontSize: 11,
+      padding: "3px 8px", fontSize: 10,
     }}>{label}</button>
   );
 }
 
 export default function App() {
-  const {
-    sourceMode, setSourceMode, result,
-    runSimulation, runFICurve, runCompile, exportData, resetDefaults,
-    isSimulating, error, activeTab, setActiveTab,
-  } = useStudioStore();
-
-  const vars = result ? Object.keys(result.states) : [];
+  const s = useStudioStore();
+  const vars = s.result ? Object.keys(s.result.states) : [];
   const hasPhase = vars.length >= 2;
-  const hasISI = result?.stats?.isi_histogram != null;
+  const hasISI = s.result?.stats?.isi_histogram != null;
+  const paramKeys = Object.keys(s.sourceMode === "model" ? s.modelParams : s.odeParams);
+
+  useEffect(() => { s.loadPresets(); }, []);
 
   return (
     <div className="studio">
@@ -56,43 +56,69 @@ export default function App() {
         </div>
 
         <div style={{ display: "flex", gap: 0, borderRadius: "var(--radius)", overflow: "hidden" }}>
-          <Tab active={sourceMode === "model"} color="var(--accent)"
-            label="Models (118)" onClick={() => setSourceMode("model")} />
-          <Tab active={sourceMode === "ode"} color="var(--warning)"
-            label="Custom ODE" onClick={() => setSourceMode("ode")} />
+          <Tab active={s.sourceMode === "model"} color="var(--accent)"
+            label="Models (118)" onClick={() => s.setSourceMode("model")} />
+          <Tab active={s.sourceMode === "ode"} color="var(--warning)"
+            label="Custom ODE" onClick={() => s.setSourceMode("ode")} />
         </div>
 
-        {sourceMode === "ode" && <TemplateLibrary />}
+        {s.sourceMode === "ode" && <TemplateLibrary />}
 
-        <Btn label={isSimulating ? "..." : "Run"} onClick={runSimulation} disabled={isSimulating} />
-        <Btn label="f-I" onClick={runFICurve} disabled={isSimulating} color="var(--success)" />
-        {sourceMode === "ode" && (
-          <Btn label="Compile" onClick={runCompile} disabled={isSimulating} color="#ce93d8" />
+        <Btn label={s.isSimulating ? "..." : "Run"} onClick={s.runSimulation} disabled={s.isSimulating} />
+        <Btn label="f-I" onClick={s.runFICurve} disabled={s.isSimulating} color="var(--success)" />
+        <Btn label="Sens." onClick={s.runSensitivity} disabled={s.isSimulating} color="#ce93d8" />
+
+        {paramKeys.length > 0 && (
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <select value={s.sweepParam} onChange={(e) => s.setSweepParam(e.target.value)}
+              style={{ fontSize: 10, padding: "2px 4px" }}>
+              <option value="">Bifurc. param...</option>
+              {paramKeys.map((k) => <option key={k} value={k}>{k}</option>)}
+            </select>
+            <Btn label="Bifurc." onClick={s.runBifurcation} disabled={s.isSimulating || !s.sweepParam} color="#ef9a9a" />
+          </div>
         )}
-        <Btn label="Reset" onClick={resetDefaults} outline />
-        <Btn label="Export" onClick={exportData} disabled={!result} outline />
 
-        <div style={{ display: "flex", gap: 0, marginLeft: 4, borderRadius: "var(--radius)", overflow: "hidden" }}>
-          <Tab active={activeTab === "trace"} color="var(--accent)" label="Trace" onClick={() => setActiveTab("trace")} />
-          {hasPhase && <Tab active={activeTab === "phase"} color="#ce93d8" label="Phase" onClick={() => setActiveTab("phase")} />}
-          {hasISI && <Tab active={activeTab === "isi"} color="var(--warning)" label="ISI" onClick={() => setActiveTab("isi")} />}
-          <Tab active={activeTab === "fi-curve"} color="var(--success)" label="f-I" onClick={() => setActiveTab("fi-curve")} />
-          {sourceMode === "ode" && <Tab active={activeTab === "verilog"} color="#ce93d8" label="RTL" onClick={() => setActiveTab("verilog")} />}
-        </div>
+        {s.sourceMode === "ode" && (
+          <>
+            <Btn label="Q8.8" onClick={s.runPrecision} disabled={s.isSimulating} color="#80deea" />
+            <Btn label="RTL" onClick={s.runCompile} disabled={s.isSimulating} color="#a5d6a7" />
+          </>
+        )}
+
+        <Btn label="Reset" onClick={s.resetDefaults} outline />
+        <Btn label="JSON" onClick={s.exportData} disabled={!s.result} outline />
+        <Btn label="PNG" onClick={s.exportSVG} outline />
 
         <div className="header-spacer" />
-        {result && (
+
+        <div style={{ display: "flex", gap: 0, borderRadius: "var(--radius)", overflow: "hidden" }}>
+          <Tab active={s.activeTab === "trace"} color="var(--accent)" label="Trace" onClick={() => s.setActiveTab("trace")} />
+          {hasPhase && <Tab active={s.activeTab === "phase"} color="#ce93d8" label="Phase" onClick={() => s.setActiveTab("phase")} />}
+          {hasISI && <Tab active={s.activeTab === "isi"} color="var(--warning)" label="ISI" onClick={() => s.setActiveTab("isi")} />}
+          <Tab active={s.activeTab === "fi-curve"} color="var(--success)" label="f-I" onClick={() => s.setActiveTab("fi-curve")} />
+          <Tab active={s.activeTab === "bifurcation"} color="#ef9a9a" label="Bif." onClick={() => s.setActiveTab("bifurcation")} />
+          <Tab active={s.activeTab === "sensitivity"} color="#ce93d8" label="Sens." onClick={() => s.setActiveTab("sensitivity")} />
+          {s.sourceMode === "ode" && (
+            <>
+              <Tab active={s.activeTab === "precision"} color="#80deea" label="Q8.8" onClick={() => s.setActiveTab("precision")} />
+              <Tab active={s.activeTab === "verilog"} color="#a5d6a7" label="RTL" onClick={() => s.setActiveTab("verilog")} />
+            </>
+          )}
+        </div>
+
+        {s.result && (
           <span className="header-stats">
-            {result.stats.rate_hz} Hz &middot; {result.spike_count} spk &middot; {result.n_steps.toLocaleString()} steps
+            {s.result.stats.rate_hz}Hz {s.result.spike_count}spk
           </span>
         )}
       </header>
 
-      {error && <div className="error-banner">{error}</div>}
+      {s.error && <div className="error-banner">{s.error}</div>}
 
       <div className="main-content">
         <div className="left-panel">
-          {sourceMode === "model" ? (
+          {s.sourceMode === "model" ? (
             <div className="panel-section">
               <div className="panel-header">Model Library</div>
               <ModelBrowser />
@@ -104,12 +130,28 @@ export default function App() {
             </div>
           )}
 
+          {s.presets.length > 0 && (
+            <div className="panel-section">
+              <div className="panel-header">Experiments</div>
+              <div style={{ maxHeight: 120, overflowY: "auto" }}>
+                {s.presets.map((p) => (
+                  <div key={p.id} onClick={() => s.loadPreset(p.id)} style={{
+                    padding: "3px 6px", fontSize: 11, cursor: "pointer",
+                    borderRadius: 3, color: "var(--text-secondary)",
+                  }} title={p.description}>
+                    {p.title}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="panel-section">
             <div className="panel-header">Info</div>
             <ModelInfo />
           </div>
 
-          {result && (
+          {s.result && (
             <div className="panel-section">
               <div className="panel-header">Spike Statistics</div>
               <SpikeStats />
@@ -120,7 +162,7 @@ export default function App() {
         </div>
 
         <div className="right-panel">
-          {activeTab === "verilog" ? <VerilogPreview /> : <SimulationPlot />}
+          {s.activeTab === "verilog" ? <VerilogPreview /> : <SimulationPlot />}
         </div>
       </div>
     </div>

@@ -84,7 +84,7 @@ function drawLine(
 export default function SimulationPlot() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { result, activeTab, fiResult } = useStudioStore();
+  const { result, activeTab, fiResult, bifResult, sensResult, precResult } = useStudioStore();
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -194,6 +194,83 @@ export default function SimulationPlot() {
       return;
     }
 
+    // Bifurcation diagram (#2)
+    if (activeTab === "bifurcation" && bifResult) {
+      const ph = h - T - B;
+      const { param_values, attractors } = bifResult;
+      const xMin = param_values[0], xMax = param_values[param_values.length - 1];
+      let yMin = Infinity, yMax = -Infinity;
+      for (const a of attractors) for (const v of a) { if (v < yMin) yMin = v; if (v > yMax) yMax = v; }
+      if (!isFinite(yMin)) { yMin = -80; yMax = 40; }
+      const yPad = (yMax - yMin) * 0.05 || 1;
+      yMin -= yPad; yMax += yPad;
+      drawAxes(ctx, L, T, pw, ph, xMin, xMax, yMin, yMax, bifResult.param_name);
+      ctx.fillStyle = "rgba(79,195,247,0.5)";
+      for (let i = 0; i < param_values.length; i++) {
+        const x = L + ((param_values[i] - xMin) / (xMax - xMin || 1)) * pw;
+        for (const v of attractors[i]) {
+          const y = T + ph - ((v - yMin) / (yMax - yMin)) * ph;
+          ctx.fillRect(x - 1, y - 1, 2, 2);
+        }
+      }
+      ctx.fillStyle = AXIS; ctx.font = "10px monospace"; ctx.textAlign = "left";
+      ctx.fillText("V attractor", L + 4, T + 12);
+      return;
+    }
+
+    // Sensitivity (#8)
+    if (activeTab === "sensitivity" && sensResult) {
+      const ph = h - T - B - 20;
+      const sens = sensResult.sensitivities.slice(0, 15);
+      if (sens.length === 0) return;
+      const maxS = Math.max(...sens.map((s) => s.sensitivity), 0.01);
+      const barH = Math.min(20, ph / sens.length - 2);
+      ctx.font = "10px monospace";
+      sens.forEach((s, i) => {
+        const y = T + i * (barH + 2);
+        const bw = (s.sensitivity / maxS) * (pw - 80);
+        ctx.fillStyle = "rgba(79,195,247,0.6)";
+        ctx.fillRect(L + 70, y, bw, barH);
+        ctx.fillStyle = AXIS; ctx.textAlign = "right";
+        ctx.fillText(s.param, L + 65, y + barH - 4);
+        ctx.textAlign = "left";
+        ctx.fillText(s.sensitivity.toFixed(3), L + 75 + bw, y + barH - 4);
+      });
+      ctx.fillStyle = AXIS; ctx.textAlign = "left";
+      ctx.fillText(`base rate: ${sensResult.base_rate} Hz`, L + 4, h - 8);
+      return;
+    }
+
+    // Precision compare (#5)
+    if (activeTab === "precision" && precResult) {
+      const ph = (h - T - B - 30) / 2;
+      const float_v = precResult.float_result.states[precResult.error.variable];
+      const fixed_v = precResult.fixed_result.states[precResult.error.variable];
+      const time_f = precResult.float_result.time;
+      const tMin = time_f[0], tMax = time_f[time_f.length - 1];
+      let vMin = Math.min(...float_v, ...fixed_v);
+      let vMax = Math.max(...float_v, ...fixed_v);
+      const vPad = (vMax - vMin) * 0.05 || 1;
+      vMin -= vPad; vMax += vPad;
+
+      drawAxes(ctx, L, T, pw, ph, tMin, tMax, vMin, vMax);
+      drawLine(ctx, L, T, pw, ph, time_f, float_v, tMin, tMax, vMin, vMax, "#4fc3f7", 1.2);
+      drawLine(ctx, L, T, pw, ph, time_f, fixed_v, tMin, tMax, vMin, vMax, "#ff5252", 1.2);
+      ctx.font = "10px monospace"; ctx.textAlign = "left";
+      ctx.fillStyle = "#4fc3f7"; ctx.fillText("float64", L + 6, T + 12);
+      ctx.fillStyle = "#ff5252"; ctx.fillText("Q8.8", L + 60, T + 12);
+
+      // Error trace
+      const errY = T + ph + 16;
+      const errH = ph - 8;
+      const errMax = Math.max(...precResult.error.trace, 0.001);
+      drawAxes(ctx, L, errY, pw, errH, tMin, tMax, 0, errMax * 1.1, "ms");
+      drawLine(ctx, L, errY, pw, errH, time_f, precResult.error.trace, tMin, tMax, 0, errMax * 1.1, "#ffb74d", 1.5);
+      ctx.fillStyle = "#ffb74d"; ctx.font = "10px monospace"; ctx.textAlign = "left";
+      ctx.fillText(`error (max=${precResult.error.max_error.toFixed(4)}, rms=${precResult.error.rms_error.toFixed(4)})`, L + 6, errY + 12);
+      return;
+    }
+
     // Default: Trace view
     // Layout: voltage 65%, current 15%, raster 8%, x-labels
     const gap = 4;
@@ -264,7 +341,7 @@ export default function SimulationPlot() {
       ctx.fillText(v.toFixed(0), x, h - 2);
     }
     ctx.textAlign = "right"; ctx.fillText("ms", L + pw, h - 2);
-  }, [result, activeTab, fiResult]);
+  }, [result, activeTab, fiResult, bifResult, sensResult, precResult]);
 
   useEffect(() => {
     draw();
