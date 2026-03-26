@@ -105,28 +105,34 @@ testpaths = ["tests"]
 [tool.coverage.run]
 source = ["sc_neurocore"]
 omit = [
+    # --- Requires external hardware/services ---
+    "*/quantum/hardware_bridge.py",     # IBM Quantum hardware
+    "*/integrations/lava_bridge.py",    # Intel Loihi hardware
+    "*/interfaces/ccw_bridge.py",       # CCW system bridge
+    # --- Requires optional heavy deps (torch, JAX, nir) ---
+    "*/training/*",                     # PyTorch training pipeline
+    "*/conversion/*",                   # ANN-to-SNN (torch)
+    "*/nir_bridge/*",                   # NIR interop (nir package)
+    "*/accel/jax_backend.py",           # JAX GPU backend
+    "*/layers/jax_dense_layer.py",      # JAX dense layer
+    # --- 116 neuron model files (each tested via model-agnostic step/reset) ---
+    "*/neurons/models/*",
+    # --- Network engine (tested via Rust engine + integration) ---
+    "*/network/*",
+    # --- CLI (tested via subprocess in CI, not via pytest) ---
+    "*/cli.py",
+    # --- Research/frontier modules ---
     "*/experiments/*",
     "*/drivers/*",
-    "*/interfaces/ccw_bridge.py",
     "*/audio/adaptive_engine.py",
     "*/audio/evs_engine.py",
     "*/sleep/report_generator.py",
     "*/sleep/sleep_optimizer.py",
-    "*/training/*",
-    "*/accel/jax_backend.py",
-    "*/layers/jax_dense_layer.py",
-    "*/quantum/hardware_bridge.py",
-    "*/integrations/lava_bridge.py",
-    "*/neurons/models/*",
-    "*/conversion/*",
-    "*/cli.py",
     "*/analysis/spike_stats/*",
     "*/viz/plots.py",
     "*/learning/advanced.py",
-    "*/network/*",
     "*/model_zoo/*",
     "*/identity/*",
-    "*/nir_bridge/*",
 ]
 
 [tool.coverage.report]
