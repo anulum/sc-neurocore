@@ -121,3 +121,26 @@ export const fetchCompare = (a: Record<string, unknown>, b: Record<string, unkno
 export const fetchFreqResponse = (req: Record<string, unknown>) => post<FreqResponse>("/freq-response", req);
 export const fetchHeatmap = (req: Record<string, unknown>) => post<HeatmapResponse>("/heatmap", req);
 export const fetchCodegen = (req: Record<string, unknown>) => post<{ script: string; oneliner: string }>("/codegen", req);
+export const fetchCharacterize = (req: Record<string, unknown>) => post<CharacterizeResponse>("/characterize", req);
+export const fetchMultiSimulate = (configs: Record<string, unknown>[]) => post<SimulateResponse[]>("/multi-simulate", configs);
+export const importTrace = (data: { voltage: number[]; dt: number }) => post<ImportedTrace>("/import-trace", data);
+
+export interface CharacterizeResponse {
+  pattern: { pattern: string; description: string };
+  fi_curve: { currents: number[]; rates: number[] };
+  threshold_current: number | null;
+  max_rate: number;
+  state_ranges: Record<string, { min: number; max: number; mean: number }>;
+  top_sensitivities: { param: string; rate_change: number }[];
+  spike_count: number;
+  stats: SpikeStats;
+}
+
+export interface ImportedTrace {
+  time: number[];
+  voltage: number[];
+  spikes: number[];
+  spike_count: number;
+  dt: number;
+  stats: { mean: number; std: number; min: number; max: number; threshold_estimate: number };
+}

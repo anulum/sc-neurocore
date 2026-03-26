@@ -4,6 +4,8 @@ import {
   simulateODE, simulateModel, fetchFICurve, compileVerilog,
   fetchBifurcation, fetchSensitivity, fetchPrecision, fetchHeatmap, fetchCodegen,
   fetchCompare, fetchNullclines, fetchFreqResponse,
+  fetchCharacterize, fetchMultiSimulate, importTrace,
+  type CharacterizeResponse, type ImportedTrace,
   type NeuronTemplate, type ModelSummary, type ModelDetail, type PresetSummary,
   type SimulateResponse, type FICurveResponse, type BifurcationResponse,
   type SensitivityResponse, type PrecisionResponse, type HeatmapResponse,
@@ -14,7 +16,8 @@ let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 type SourceMode = "model" | "ode";
 type ViewTab = "trace" | "phase" | "isi" | "fi-curve" | "bifurcation" |
-  "sensitivity" | "precision" | "heatmap" | "verilog" | "code" | "compare" | "freq" | "sta";
+  "sensitivity" | "precision" | "heatmap" | "verilog" | "code" |
+  "compare" | "freq" | "sta" | "characterize" | "multi";
 
 interface StudioState {
   sourceMode: SourceMode;
@@ -43,6 +46,9 @@ interface StudioState {
   nullclineResult: NullclineResponse | null;
   freqResult: FreqResponse | null;
   staResult: { time_ms: number[]; average: number[]; n_spikes: number } | null;
+  charResult: CharacterizeResponse | null;
+  multiResults: SimulateResponse[] | null;
+  importedTrace: ImportedTrace | null;
   verilogSrc: string;
   codeScript: string;
   codeOneliner: string;
@@ -82,6 +88,9 @@ interface StudioState {
   runHeatmap: () => Promise<void>;
   runCodegen: () => Promise<void>;
   runCompile: () => Promise<void>;
+  runCharacterize: () => Promise<void>;
+  runMultiSimulate: (modelNames: string[]) => Promise<void>;
+  importCSV: (csv: string) => Promise<void>;
   runCompare: (configB: Record<string, unknown>) => Promise<void>;
   runNullclines: () => Promise<void>;
   runFreqResponse: () => Promise<void>;
@@ -124,6 +133,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   result: null, fiResult: null, bifResult: null, sensResult: null, precResult: null,
   heatmapResult: null, compareResult: null, nullclineResult: null,
   freqResult: null, staResult: null,
+  charResult: null, multiResults: null, importedTrace: null,
   verilogSrc: "", codeScript: "", codeOneliner: "",
   savedSessions: JSON.parse(localStorage.getItem("sc-studio-sessions") || "[]"),
   error: null, isSimulating: false,
@@ -347,6 +357,47 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     a.href = canvas.toDataURL("image/png", 1.0);
     a.download = "sc_neurocore_plot.png";
     a.click();
+  },
+
+  runCharacterize: async () => {
+    const s = get();
+    if (s.isSimulating || !s.selectedModelName) return;
+    set({ isSimulating: true, error: null, activeTab: "characterize" });
+    try {
+      const charResult = await fetchCharacterize({
+        name: s.selectedModelName, params: s.modelParams,
+        dt: s.dt, duration: s.duration, current: s.current,
+      });
+      set({ charResult, isSimulating: false });
+    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+  },
+
+  runMultiSimulate: async (modelNames) => {
+    const s = get();
+    if (s.isSimulating) return;
+    set({ isSimulating: true, error: null, activeTab: "multi" });
+    try {
+      const configs = modelNames.slice(0, 4).map((name) => ({
+        name, params: null, dt: null, duration: s.duration, current: s.current, protocol: s.protocol,
+      }));
+      const multiResults = await fetchMultiSimulate(configs);
+      set({ multiResults, isSimulating: false });
+    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+  },
+
+  importCSV: async (csv) => {
+    const lines = csv.trim().split("\n").map((l) => l.trim()).filter((l) => l);
+    const values: number[] = [];
+    for (const line of lines) {
+      const parts = line.split(/[,\t\s]+/);
+      const num = parseFloat(parts[parts.length - 1]);
+      if (!isNaN(num)) values.push(num);
+    }
+    if (values.length < 10) { set({ error: "Need at least 10 data points" }); return; }
+    try {
+      const importedTrace = await importTrace({ voltage: values, dt: get().dt });
+      set({ importedTrace, activeTab: "trace" });
+    } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
   },
 
   runCompare: async (configB) => {

@@ -87,6 +87,7 @@ export default function SimulationPlot() {
   const {
     result, activeTab, fiResult, bifResult, sensResult, precResult,
     heatmapResult, compareResult, nullclineResult, freqResult, staResult,
+    charResult, multiResults, importedTrace,
   } = useStudioStore();
 
   const draw = useCallback(() => {
@@ -376,7 +377,84 @@ export default function SimulationPlot() {
       return;
     }
 
-    // Default: Trace view (with nullcline overlay on phase)
+    // Characterize dashboard
+    if (activeTab === "characterize" && charResult) {
+      ctx.fillStyle = "#e6edf3"; ctx.font = "12px sans-serif"; ctx.textAlign = "left";
+      let y = T + 16;
+      const lineH = 18;
+      const col1 = L, col2 = L + pw / 2;
+
+      ctx.fillStyle = "#4fc3f7"; ctx.font = "bold 13px sans-serif";
+      ctx.fillText("Model Characterisation", col1, y); y += lineH + 4;
+
+      ctx.font = "11px monospace"; ctx.fillStyle = "#e6edf3";
+      ctx.fillText(`Pattern: ${charResult.pattern.description}`, col1, y); y += lineH;
+      ctx.fillText(`Threshold current: ${charResult.threshold_current ?? "N/A"} nA`, col1, y); y += lineH;
+      ctx.fillText(`Max firing rate: ${charResult.max_rate} Hz`, col1, y); y += lineH;
+      ctx.fillText(`Spikes: ${charResult.spike_count}`, col1, y); y += lineH;
+      if (charResult.stats.isi_mean_ms) {
+        ctx.fillText(`ISI: ${charResult.stats.isi_mean_ms} ms (CV=${charResult.stats.isi_cv})`, col1, y); y += lineH;
+      }
+
+      y += 8;
+      ctx.fillStyle = "#4fc3f7"; ctx.font = "bold 11px sans-serif";
+      ctx.fillText("State Variable Ranges", col1, y); y += lineH;
+      ctx.font = "10px monospace"; ctx.fillStyle = "#8b949e";
+      for (const [v, r] of Object.entries(charResult.state_ranges)) {
+        ctx.fillText(`${v}: [${r.min}, ${r.max}] mean=${r.mean}`, col1, y); y += lineH - 2;
+      }
+
+      y += 8;
+      ctx.fillStyle = "#4fc3f7"; ctx.font = "bold 11px sans-serif";
+      ctx.fillText("Top Sensitive Parameters", col1, y); y += lineH;
+      ctx.font = "10px monospace"; ctx.fillStyle = "#8b949e";
+      for (const s of charResult.top_sensitivities) {
+        ctx.fillText(`${s.param}: ±${s.rate_change} Hz`, col1, y); y += lineH - 2;
+      }
+
+      // f-I curve in right half
+      const fiX = col2, fiY = T + 20, fiW = pw / 2 - 20, fiH = h - T - B - 40;
+      const curs = charResult.fi_curve.currents;
+      const rts = charResult.fi_curve.rates;
+      const rMax = Math.max(...rts, 1);
+      drawAxes(ctx, fiX, fiY, fiW, fiH, curs[0], curs[curs.length - 1], 0, rMax * 1.1, "I (nA)");
+      drawLine(ctx, fiX, fiY, fiW, fiH, curs, rts, curs[0], curs[curs.length - 1], 0, rMax * 1.1, "#4fc3f7", 2);
+      ctx.fillStyle = "#4fc3f7"; ctx.font = "10px monospace"; ctx.textAlign = "left";
+      ctx.fillText("f-I curve", fiX + 4, fiY + 12);
+      return;
+    }
+
+    // Multi-model overlay
+    if (activeTab === "multi" && multiResults && multiResults.length > 0) {
+      const ph = h - T - B;
+      let tMin = Infinity, tMax = -Infinity, vMin = Infinity, vMax = -Infinity;
+      for (const r of multiResults) {
+        if (r.time[0] < tMin) tMin = r.time[0];
+        if (r.time[r.time.length - 1] > tMax) tMax = r.time[r.time.length - 1];
+        const v0 = Object.keys(r.states)[0];
+        for (const v of r.states[v0]) {
+          if (isFinite(v)) { if (v < vMin) vMin = v; if (v > vMax) vMax = v; }
+        }
+      }
+      const vPad = (vMax - vMin) * 0.06 || 1;
+      vMin -= vPad; vMax += vPad;
+      drawAxes(ctx, L, T, pw, ph, tMin, tMax, vMin, vMax, "ms");
+      multiResults.forEach((r, i) => {
+        const v0 = Object.keys(r.states)[0];
+        drawLine(ctx, L, T, pw, ph, r.time, r.states[v0], tMin, tMax, vMin, vMax, COLORS[i % COLORS.length], 1.5);
+      });
+      ctx.font = "10px monospace";
+      multiResults.forEach((r, i) => {
+        const name = r.model_name || `Model ${i + 1}`;
+        ctx.fillStyle = COLORS[i % COLORS.length];
+        ctx.fillRect(L + 6 + i * 120, T + 4, 8, 2);
+        ctx.textAlign = "left";
+        ctx.fillText(`${name} (${r.stats.rate_hz}Hz)`, L + 17 + i * 120, T + 9);
+      });
+      return;
+    }
+
+    // Default: Trace view (with nullcline overlay on phase + imported trace overlay)
     // Layout: voltage 65%, current 15%, raster 8%, x-labels
     const gap = 4;
     const rasterH = hasSpikes ? 22 : 0;
@@ -416,6 +494,16 @@ export default function SimulationPlot() {
       ctx.textAlign = "left"; ctx.fillText(v, L + 17 + i * 52, T + 9);
     });
 
+    // Imported trace overlay
+    if (importedTrace) {
+      ctx.setLineDash([4, 3]);
+      drawLine(ctx, L, T, pw, voltH, importedTrace.time, importedTrace.voltage,
+        tMin, tMax, vMin, vMax, "#ff9800", 1.5);
+      ctx.setLineDash([]);
+      ctx.fillStyle = "#ff9800"; ctx.font = "9px monospace"; ctx.textAlign = "left";
+      ctx.fillText("imported", L + 6 + vars.length * 52, T + 9);
+    }
+
     // Current plot
     const curY = T + voltH + gap;
     const I = result.current_trace;
@@ -446,7 +534,7 @@ export default function SimulationPlot() {
       ctx.fillText(v.toFixed(0), x, h - 2);
     }
     ctx.textAlign = "right"; ctx.fillText("ms", L + pw, h - 2);
-  }, [result, activeTab, fiResult, bifResult, sensResult, precResult, heatmapResult, compareResult, nullclineResult, freqResult, staResult]);
+  }, [result, activeTab, fiResult, bifResult, sensResult, precResult, heatmapResult, compareResult, nullclineResult, freqResult, staResult, charResult, multiResults, importedTrace]);
 
   useEffect(() => {
     draw();
