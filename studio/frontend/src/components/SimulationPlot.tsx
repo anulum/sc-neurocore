@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useState } from "react";
 import { useStudioStore } from "../stores/studio";
 
 const COLORS = ["#4fc3f7", "#81c784", "#ffb74d", "#e57373", "#ce93d8", "#90a4ae"];
@@ -86,6 +86,7 @@ export default function SimulationPlot() {
   const containerRef = useRef<HTMLDivElement>(null);
   const zoomRef = useRef({ xMin: NaN, xMax: NaN, yMin: NaN, yMax: NaN });
   const dragRef = useRef<{ startX: number; startY: number; origXMin: number; origXMax: number; origYMin: number; origYMax: number } | null>(null);
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; text: string } | null>(null);
   const store = useStudioStore();
   const {
     result, activeTab, fiResult, bifResult, sensResult, precResult,
@@ -148,16 +149,45 @@ export default function SimulationPlot() {
 
   function handleMouseMove(e: React.MouseEvent) {
     const d = dragRef.current;
-    if (!d || !canvasRef.current) return;
-    const rect = canvasRef.current.getBoundingClientRect();
-    const dx = (e.clientX - d.startX) / rect.width;
-    const xRange = d.origXMax - d.origXMin;
-    zoomRef.current.xMin = d.origXMin - dx * xRange;
-    zoomRef.current.xMax = d.origXMax - dx * xRange;
-    draw();
+    if (d && canvasRef.current) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      const dx = (e.clientX - d.startX) / rect.width;
+      const xRange = d.origXMax - d.origXMin;
+      zoomRef.current.xMin = d.origXMin - dx * xRange;
+      zoomRef.current.xMax = d.origXMax - dx * xRange;
+      setTooltip(null);
+      draw();
+      return;
+    }
+    // Tooltip on trace view
+    if (activeTab === "trace" && result && canvasRef.current) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      const L = 52, pw = rect.width - L - 12;
+      const fracX = (e.clientX - rect.left - L) / pw;
+      if (fracX < 0 || fracX > 1) { setTooltip(null); return; }
+      const z = zoomRef.current;
+      const t0 = isNaN(z.xMin) ? result.time[0] : z.xMin;
+      const t1 = isNaN(z.xMax) ? result.time[result.time.length - 1] : z.xMax;
+      const tAt = t0 + fracX * (t1 - t0);
+      const idx = Math.round(tAt / result.dt);
+      const vars = Object.keys(result.states);
+      const vals = vars.map((v) => {
+        const arr = result.states[v];
+        const i = Math.min(Math.max(idx, 0), arr.length - 1);
+        return `${v}=${arr[i].toFixed(2)}`;
+      }).join(" ");
+      setTooltip({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+        text: `t=${tAt.toFixed(1)} ${vals}`,
+      });
+    } else {
+      setTooltip(null);
+    }
   }
 
   function handleMouseUp() { dragRef.current = null; }
+  function handleMouseLeave() { dragRef.current = null; setTooltip(null); }
 
   function resetZoom() {
     zoomRef.current = { xMin: NaN, xMax: NaN, yMin: NaN, yMax: NaN };
@@ -637,13 +667,22 @@ export default function SimulationPlot() {
     <div ref={containerRef} style={{
       flex: 1, position: "relative", overflow: "hidden",
     }}>
+      {tooltip && (
+        <div style={{
+          position: "absolute", left: tooltip.x + 10, top: tooltip.y - 24,
+          background: "rgba(22,27,34,0.95)", color: "#e6edf3",
+          padding: "2px 6px", borderRadius: 3, fontSize: 10,
+          fontFamily: "var(--font-mono)", pointerEvents: "none",
+          border: "1px solid var(--border)", whiteSpace: "nowrap",
+        }}>{tooltip.text}</div>
+      )}
       <canvas ref={canvasRef}
         onClick={handleCanvasClick}
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
         onDoubleClick={resetZoom}
         style={{
           position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
