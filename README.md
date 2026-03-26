@@ -23,14 +23,14 @@ Commercial Licensing: Available
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)
 
 **Version:** 3.13.3
-**Status:** 122 Neuron Models (113 Bio + 9 AI) | 99.49% MNIST (ConvSNN, artifact pending) | 2 666 Python tests passing (2 830 collected) + 378 Rust tests | 100% Core Coverage (322/535 files; optional/experimental excluded) | 114 Rust Neuron Models | 72-Model NetworkRunner
+**Status:** 116 Neuron Models (107 Bio + 9 AI) | 99.49% MNIST (ConvSNN) | 2 928 Python tests passing (3 132 collected) + 378 Rust tests | 100% Core Coverage (322/535 files; optional/experimental excluded) | 109 Rust Neuron Models | 80-Model NetworkRunner
 
 <p align="center">
   <img src="docs/assets/spike_raster.png" width="800" alt="LIF spike raster — 5 neurons, sinusoidal input">
 </p>
 
 SC-NeuroCore is an open-source stochastic computing SNN framework
-with FPGA synthesis. 122 neuron models (113 biophysical + 9 AI-optimized) spanning
+with FPGA synthesis. 116 neuron models (107 biophysical + 9 AI-optimized) spanning
 82 years of computational neuroscience (McCulloch-Pitts 1943 through
 ArcaneNeuron 2026) run inside a deterministic stochastic computing engine
 with bit-true Verilog RTL co-simulation, FPGA synthesis via an IR compiler
@@ -38,12 +38,12 @@ with bit-true Verilog RTL co-simulation, FPGA synthesis via an IR compiler
 that turns arbitrary ODE strings into synthesizable Q8.8 fixed-point RTL,
 formal verification (7 SymbiYosys
 modules, 67 properties), a Rust SIMD engine **39–202× faster than Brian2**
-(27.7 billion synaptic events/s at 100K neurons, 114 Rust neuron models
-with PyO3 bindings, 72-model NetworkRunner with Rayon-parallel populations),
+(27.7 billion synaptic events/s at 100K neurons, 109 Rust neuron models
+with PyO3 bindings, 80-model NetworkRunner with Rayon-parallel populations),
 CuPy GPU acceleration, JAX JIT training,
 MPI distributed simulation (billion-neuron scale via mpi4py),
 an identity continuity substrate (persistent spiking networks with
-checkpointing and L16 Director control), a 125-function spike train
+checkpointing and L16 Director control), a 128-function spike train
 analysis toolkit (23 modules), 12 visualization plots, 13 advanced
 plasticity rules (pair/triplet/voltage STDP, BCM, BPTT, TBPTT, EWC,
 e-prop, R-STDP, MAML, STP, structural plasticity), 7 biological circuit
@@ -66,7 +66,7 @@ and a 6-codec neural data compression library (ISI, predictive, delta, streaming
 AER) with a unified API and auto-recommendation engine — targeting BCI
 implants (Neuralink-scale 1024+ channels), neural probes (Neuropixels),
 neuromorphic inter-chip routing, and real-time closed-loop telemetry.
-3 051 passing Python tests and 378 Rust tests hold 100% core coverage.
+2 928 passing Python tests and 378 Rust tests hold 100% core coverage.
 13 CI workflows guard every push. conda-forge recipe ready.
 
 ## Feature Comparison
@@ -81,13 +81,13 @@ neuromorphic inter-chip routing, and real-time closed-loop telemetry.
 | Surrogate gradient training | **7 surrogates, 10 cells** | Yes | Yes | Yes | — |
 | PyTorch `nn.Module` SNN | **Yes** (+ SC weight export) | Yes | Yes | — | — |
 | GPU acceleration | PyTorch + CuPy | PyTorch | PyTorch | — | — |
-| Neuron model library | **122** | 11 | 6 | 3 | ~5 builtin |
-| Rust neuron models (PyO3) | **114** | — | — | — | — |
-| NetworkRunner (fused loop) | **72 models** | — | — | — | — |
+| Neuron model library | **116** | 11 | 6 | 3 | ~5 builtin |
+| Rust neuron models (PyO3) | **109** | — | — | — | — |
+| NetworkRunner (fused loop) | **80 models** | — | — | — | — |
 | Network simulation engine | **3 backends** | PyTorch | PyTorch | Lava | C++ codegen |
 | MPI distributed simulation | **Yes** | — | — | — | — |
 | Pre-trained model zoo | **10 configs, 3 weights** | — | — | — | — |
-| Spike train analysis | **125 functions** | — | — | — | — |
+| Spike train analysis | **128 functions** | — | — | — | — |
 | Visualization plots | **12** | — | — | — | — |
 | Advanced plasticity rules | **13** | — | — | — | — |
 | Biological circuits | **7** | — | — | — | — |
@@ -146,8 +146,8 @@ Population-Projection-Network architecture with 3 backends:
 
 | Backend | Scope | Performance |
 |---------|-------|-------------|
-| **Python** | Any of 122 neuron models | NumPy vectorized |
-| **Rust NetworkRunner** | 111 models in fused Rayon-parallel loop | 100K+ neurons, near-linear scaling |
+| **Python** | Any of 116 neuron models | NumPy vectorized |
+| **Rust NetworkRunner** | 80 models in fused Rayon-parallel loop | 100K+ neurons, near-linear scaling |
 | **MPI** | Billion-neuron distributed simulation via mpi4py | Multi-node HPC clusters |
 
 6 topology generators (random, small-world, scale-free, ring, grid, all-to-all),
@@ -163,7 +163,7 @@ decision-making, working memory, visual cortex V1, auditory processing, MNIST
 classifier, SHD speech classifier, DVS gesture classifier) with 3 pre-trained
 weight sets (MNIST 784-128-10, SHD 700-256-20, DVS 256-256-11).
 
-### 122 Neuron Models (1943--2026)
+### 116 Neuron Models (1943--2026)
 
 Every model has a uniform `step(current) -> spike` API, a `reset()`, and a
 cited reference. One file per model in `src/sc_neurocore/neurons/models/`.
@@ -288,7 +288,7 @@ Research and Frontier modules are available from source (`pip install -e ".[dev]
 graph TD
     subgraph "Python API (pip install sc-neurocore)"
         A[BitstreamEncoder] --> B[SCDenseLayer / SCConv2DLayer]
-        B --> C[122 Neuron Models<br/>LIF · HH · AdEx · Izhikevich · ArcaneNeuron · ...]
+        B --> C[116 Neuron Models<br/>LIF · HH · AdEx · Izhikevich · ArcaneNeuron · ...]
         C --> NET[Network Engine<br/>Population · Projection · 3 Backends]
         C --> ID[Identity Substrate<br/>Persistent SNN · Checkpoint · Director]
         C --> D[STDP / R-STDP Synapses]
@@ -299,7 +299,7 @@ graph TD
         B --> F{Backend?}
         F -->|CPU| G[NumPy / Numba SIMD]
         F -->|GPU| H[CuPy CUDA]
-        F -->|Rust| I[sc_neurocore_engine<br/>39–202× vs Brian2 · 114 neuron models<br/>72-model NetworkRunner]
+        F -->|Rust| I[sc_neurocore_engine<br/>39–202× vs Brian2 · 109 neuron models<br/>80-model NetworkRunner]
         F -->|MPI| MPI[mpi4py distributed<br/>billion-neuron scale]
     end
 
@@ -555,21 +555,21 @@ pip install -r requirements.txt       # runtime only
 pip install -r requirements-dev.txt   # runtime + dev tools
 ```
 
-## Rust Engine (111 Neuron Models, 373 Tests)
+## Rust Engine (109 Neuron Models, 378 Tests)
 
-The `sc_neurocore_engine` crate provides 114 Rust neuron models callable
-from Python via PyO3 bindings (including ArcaneNeuron), a 111-model
+The `sc_neurocore_engine` crate provides 109 Rust neuron models callable
+from Python via PyO3 bindings (including ArcaneNeuron), an 80-model
 NetworkRunner with Rayon-parallel population simulation (100K+ neurons),
 and SIMD-accelerated primitives with dispatch across five ISAs (AVX-512,
 AVX2, NEON, SVE, RISC-V V).
 
-373 Rust tests across 17 test binaries.
+378 Rust tests across 17 test binaries.
 
 | Category | Scope |
 |----------|-------|
 | Primitives | Bernoulli + Sobol bitstream, pack/unpack, popcount, SIMD (5 ISAs) |
-| Neurons | 111 models: LIF variants, HH-type, maps, hardware emulators, population, ArcaneNeuron |
-| NetworkRunner | 111-model fused simulation loop with CSR projections and Rayon parallelism |
+| Neurons | 109 models: LIF variants, HH-type, maps, hardware emulators, population, ArcaneNeuron |
+| NetworkRunner | 80-model fused simulation loop with CSR projections and Rayon parallelism |
 | Synapses | Static, STDP, Reward-STDP |
 | Layers | Dense, Conv2D, Recurrent, Learning, Fusion, Memristive, Attention |
 | Networks | Brunel, GNN, Spike recorder, Connectome, Fault injection |
