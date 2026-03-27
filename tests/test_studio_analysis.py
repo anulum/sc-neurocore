@@ -54,10 +54,14 @@ class TestSimulationProtocols:
     def test_step_protocol(self):
         r = simulate(
             equations=["dv/dt = -(v - E_L) / tau_m + I / C"],
-            threshold="v > -50", reset="v = -65",
+            threshold="v > -50",
+            reset="v = -65",
             params={"E_L": -65.0, "tau_m": 10.0, "C": 1.0},
-            init={"v": -65.0}, dt=0.1, duration=100.0,
-            current=30.0, protocol="step",
+            init={"v": -65.0},
+            dt=0.1,
+            duration=100.0,
+            current=30.0,
+            protocol="step",
         )
         assert "current_trace" in r
         assert r["current_trace"][0] == 0.0
@@ -66,8 +70,12 @@ class TestSimulationProtocols:
 
     def test_ramp_protocol(self):
         r = simulate(
-            equations=["dv/dt = I"], init={"v": 0.0},
-            dt=0.1, duration=10.0, current=10.0, protocol="ramp",
+            equations=["dv/dt = I"],
+            init={"v": 0.0},
+            dt=0.1,
+            duration=10.0,
+            current=10.0,
+            protocol="ramp",
         )
         assert r["current_trace"][0] == 0.0
         assert r["current_trace"][-1] == pytest.approx(10.0, rel=0.1)
@@ -75,9 +83,12 @@ class TestSimulationProtocols:
     def test_stats_have_isi_histogram(self):
         r = simulate(
             equations=["dv/dt = -(v - E_L) / tau_m + I / C"],
-            threshold="v > -50", reset="v = -65",
+            threshold="v > -50",
+            reset="v = -65",
             params={"E_L": -65.0, "tau_m": 10.0, "C": 1.0},
-            init={"v": -65.0}, dt=0.1, duration=200.0,
+            init={"v": -65.0},
+            dt=0.1,
+            duration=200.0,
             current=30.0,
         )
         if r["spike_count"] >= 3:
@@ -87,9 +98,14 @@ class TestSimulationProtocols:
 
 class TestAnalysisEndpoints:
     def test_characterize(self, client):
-        r = client.post("/api/characterize", json={
-            "name": "COBALIFNeuron", "current": 500, "duration": 100,
-        })
+        r = client.post(
+            "/api/characterize",
+            json={
+                "name": "COBALIFNeuron",
+                "current": 500,
+                "duration": 100,
+            },
+        )
         assert r.status_code == 200
         d = r.json()
         assert "pattern" in d
@@ -97,32 +113,53 @@ class TestAnalysisEndpoints:
         assert "top_sensitivities" in d
 
     def test_fi_curve_model(self, client):
-        r = client.post("/api/fi-curve", json={
-            "model_name": "HodgkinHuxleyNeuron",
-            "dt": 0.01, "duration": 50, "i_min": 0, "i_max": 20, "i_steps": 5,
-        })
+        r = client.post(
+            "/api/fi-curve",
+            json={
+                "model_name": "HodgkinHuxleyNeuron",
+                "dt": 0.01,
+                "duration": 50,
+                "i_min": 0,
+                "i_max": 20,
+                "i_steps": 5,
+            },
+        )
         assert r.status_code == 200
         d = r.json()
         assert len(d["currents"]) == 5
         assert len(d["rates"]) == 5
 
     def test_codegen(self, client):
-        r = client.post("/api/codegen", json={
-            "mode": "model", "model_name": "COBALIFNeuron",
-            "params": {"c_m": 200}, "dt": 0.1, "duration": 100, "current": 10,
-        })
+        r = client.post(
+            "/api/codegen",
+            json={
+                "mode": "model",
+                "model_name": "COBALIFNeuron",
+                "params": {"c_m": 200},
+                "dt": 0.1,
+                "duration": 100,
+                "current": 10,
+            },
+        )
         assert r.status_code == 200
         d = r.json()
         assert "COBALIFNeuron" in d["script"]
         assert "oneliner" in d
 
     def test_classify_endpoint(self, client):
-        r = client.post("/api/classify", json={
-            "equations": ["dv/dt = -(v + 65) / 10 + I"],
-            "threshold": "v > -50", "reset": "v = -65",
-            "params": {}, "init": {"v": -65.0},
-            "dt": 0.1, "duration": 100, "current": 30,
-        })
+        r = client.post(
+            "/api/classify",
+            json={
+                "equations": ["dv/dt = -(v + 65) / 10 + I"],
+                "threshold": "v > -50",
+                "reset": "v = -65",
+                "params": {},
+                "init": {"v": -65.0},
+                "dt": 0.1,
+                "duration": 100,
+                "current": 30,
+            },
+        )
         assert r.status_code == 200
         assert "pattern" in r.json()
 
@@ -135,10 +172,13 @@ class TestAnalysisEndpoints:
         assert "stats" in d
 
     def test_multi_simulate(self, client):
-        r = client.post("/api/multi-simulate", json=[
-            {"name": "COBALIFNeuron", "current": 500, "duration": 50},
-            {"name": "HodgkinHuxleyNeuron", "current": 10, "duration": 50, "dt": 0.01},
-        ])
+        r = client.post(
+            "/api/multi-simulate",
+            json=[
+                {"name": "COBALIFNeuron", "current": 500, "duration": 50},
+                {"name": "HodgkinHuxleyNeuron", "current": 10, "duration": 50, "dt": 0.01},
+            ],
+        )
         assert r.status_code == 200
         d = r.json()
         assert len(d) == 2

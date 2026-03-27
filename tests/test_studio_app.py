@@ -60,16 +60,19 @@ class TestTemplatesEndpoints:
 class TestSimulateEndpoint:
     def test_simulate_lif(self, client):
         t = TEMPLATES["lif"]
-        r = client.post("/api/simulate", json={
-            "equations": t["equations"],
-            "threshold": t["threshold"],
-            "reset": t["reset"],
-            "params": t["params"],
-            "init": t["init"],
-            "dt": t["dt"],
-            "duration": t["duration"],
-            "current": t["current"],
-        })
+        r = client.post(
+            "/api/simulate",
+            json={
+                "equations": t["equations"],
+                "threshold": t["threshold"],
+                "reset": t["reset"],
+                "params": t["params"],
+                "init": t["init"],
+                "dt": t["dt"],
+                "duration": t["duration"],
+                "current": t["current"],
+            },
+        )
         assert r.status_code == 200
         data = r.json()
         assert data["spike_count"] > 0
@@ -77,43 +80,55 @@ class TestSimulateEndpoint:
         assert "states" in data
 
     def test_simulate_minimal(self, client):
-        r = client.post("/api/simulate", json={
-            "equations": ["dv/dt = I"],
-            "init": {"v": 0.0},
-            "dt": 0.1,
-            "duration": 10.0,
-            "current": 1.0,
-        })
+        r = client.post(
+            "/api/simulate",
+            json={
+                "equations": ["dv/dt = I"],
+                "init": {"v": 0.0},
+                "dt": 0.1,
+                "duration": 10.0,
+                "current": 1.0,
+            },
+        )
         assert r.status_code == 200
 
     def test_simulate_bad_equation(self, client):
-        r = client.post("/api/simulate", json={
-            "equations": ["v = I"],
-            "dt": 0.1,
-            "duration": 10.0,
-        })
+        r = client.post(
+            "/api/simulate",
+            json={
+                "equations": ["v = I"],
+                "dt": 0.1,
+                "duration": 10.0,
+            },
+        )
         assert r.status_code == 422
 
     def test_simulate_invalid_dt(self, client):
-        r = client.post("/api/simulate", json={
-            "equations": ["dv/dt = I"],
-            "dt": -1.0,
-            "duration": 10.0,
-        })
+        r = client.post(
+            "/api/simulate",
+            json={
+                "equations": ["dv/dt = I"],
+                "dt": -1.0,
+                "duration": 10.0,
+            },
+        )
         assert r.status_code == 422
 
     def test_simulate_returns_all_state_vars(self, client):
         t = TEMPLATES["izhikevich"]
-        r = client.post("/api/simulate", json={
-            "equations": t["equations"],
-            "threshold": t["threshold"],
-            "reset": t["reset"],
-            "params": t["params"],
-            "init": t["init"],
-            "dt": t["dt"],
-            "duration": 50.0,
-            "current": t["current"],
-        })
+        r = client.post(
+            "/api/simulate",
+            json={
+                "equations": t["equations"],
+                "threshold": t["threshold"],
+                "reset": t["reset"],
+                "params": t["params"],
+                "init": t["init"],
+                "dt": t["dt"],
+                "duration": 50.0,
+                "current": t["current"],
+            },
+        )
         assert r.status_code == 200
         data = r.json()
         assert "v" in data["states"]
