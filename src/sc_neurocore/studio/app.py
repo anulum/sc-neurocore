@@ -40,6 +40,11 @@ from sc_neurocore.studio.compiler import (
     emit_systemverilog,
     verify_ir,
 )
+from sc_neurocore.studio.synthesis import (
+    check_tools,
+    run_pnr,
+    run_synthesis,
+)
 from sc_neurocore.studio.models import get_model_detail, list_models, simulate_model
 from sc_neurocore.studio.presets import get_preset, list_presets
 from sc_neurocore.studio.simulation import simulate
@@ -733,6 +738,27 @@ def create_app() -> FastAPI:
                 current=req.current,
             )
         )
+
+    # --- Synthesis Dashboard (Block 3) ---
+    @app.get("/api/synth/tools-status")
+    def api_synth_tools():
+        return check_tools()
+
+    @app.post("/api/synth/run")
+    def api_synth_run(data: dict):
+        verilog = data.get("verilog", "")
+        target = data.get("target", "ice40")
+        if not verilog:
+            raise HTTPException(422, "verilog source required")
+        return _safe(lambda: run_synthesis(verilog, target))
+
+    @app.post("/api/synth/pnr")
+    def api_synth_pnr(data: dict):
+        json_path = data.get("json_path", "")
+        target = data.get("target", "ice40")
+        if not json_path:
+            raise HTTPException(422, "json_path required")
+        return _safe(lambda: run_pnr(json_path, target))
 
     # --- Static file serving for production mode ---
     import os
