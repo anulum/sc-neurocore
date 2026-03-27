@@ -103,13 +103,18 @@ Click **Char.** to run a one-click analysis that produces:
 
 ### E-I Network
 
-Simulates a balanced excitatory-inhibitory LIF network with adjustable
-parameters:
+Simulates a balanced excitatory-inhibitory LIF network. When the Rust engine
+is installed, the entire simulation runs in compiled Rust — connectivity
+construction, Poisson input generation, Euler integration, spike detection,
+and rate binning happen in a single `py_simulate_ei_network()` call with zero
+Python per-timestep overhead. Falls back to NumPy if the engine is unavailable.
+
+Parameters (adjustable via sidebar sliders):
 
 - Neuron counts (N exc, N inh)
 - Synaptic weights (E→E, E→I, I→E, I→I)
 - Connection probability
-- External Poisson drive rate
+- External Poisson drive rate (Hz)
 
 Displays a spike raster (blue = excitatory, red = inhibitory) and population
 firing rate traces.

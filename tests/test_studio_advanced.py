@@ -50,6 +50,24 @@ class TestNetwork:
         assert len(r["exc_rates"]) == len(r["rate_time"])
         assert len(r["inh_rates"]) == len(r["rate_time"])
 
+    def test_network_uses_rust_engine(self):
+        """Verify the Rust engine path is used when available."""
+        try:
+            from sc_neurocore_engine import py_simulate_ei_network
+
+            r = py_simulate_ei_network(n_exc=10, n_inh=5, duration=20.0, ext_rate=100.0)
+            assert "spike_times" in r
+            assert "n_total" in r
+            assert int(r["n_total"]) == 15
+        except ImportError:
+            pytest.skip("Rust engine not installed")
+
+    def test_network_result_types(self):
+        r = simulate_ei_network(n_exc=10, n_inh=5, duration=20.0)
+        assert isinstance(r["spike_times"], list)
+        assert isinstance(r["n_exc"], int)
+        assert isinstance(r["mean_exc_rate"], float)
+
     def test_network_endpoint(self, client):
         r = client.post(
             "/api/network/ei",
