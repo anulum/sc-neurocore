@@ -47,6 +47,15 @@ from sc_neurocore.studio.synthesis import (
     run_pnr,
     run_synthesis,
 )
+from sc_neurocore.studio.network_graph import (
+    available_models as graph_available_models,
+    create_population,
+    create_projection,
+    graph_to_nir,
+    nir_to_graph,
+    simulate_graph,
+    validate_graph,
+)
 from sc_neurocore.studio.training import (
     get_training_status,
     list_cell_types,
@@ -785,6 +794,50 @@ def create_app() -> FastAPI:
         if not json_path:
             raise HTTPException(422, "json_path required")
         return _safe(lambda: run_pnr(json_path, target))
+
+    # --- Network Canvas (Block 5) ---
+    @app.get("/api/graph/models")
+    def api_graph_models():
+        return graph_available_models()
+
+    @app.post("/api/graph/population")
+    def api_create_population(data: dict):
+        return create_population(
+            **{
+                k: v
+                for k, v in data.items()
+                if k in ("label", "model", "count", "neuron_type", "x", "y")
+            }
+        )
+
+    @app.post("/api/graph/projection")
+    def api_create_projection(data: dict):
+        return _safe(
+            lambda: create_projection(
+                **{
+                    k: v
+                    for k, v in data.items()
+                    if k in ("source_id", "target_id", "weight", "delay", "probability")
+                }
+            )
+        )
+
+    @app.post("/api/graph/validate")
+    def api_validate_graph(data: dict):
+        errors = validate_graph(data)
+        return {"valid": len(errors) == 0, "errors": errors}
+
+    @app.post("/api/graph/simulate")
+    def api_simulate_graph(data: dict):
+        return _safe(lambda: simulate_graph(data))
+
+    @app.post("/api/graph/export-nir")
+    def api_export_nir(data: dict):
+        return graph_to_nir(data)
+
+    @app.post("/api/graph/import-nir")
+    def api_import_nir(data: dict):
+        return nir_to_graph(data)
 
     # --- Training Monitor (Block 4) ---
     @app.get("/api/training/surrogates")

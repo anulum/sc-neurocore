@@ -321,3 +321,68 @@ export const stopTraining = (jobId: string) =>
 export const fetchTrainingStatus = (jobId: string) =>
   get<TrainingJobStatus>(`/training/status/${jobId}`);
 export const fetchTrainingJobs = () => get<TrainingJobSummary[]>("/training/jobs");
+
+// --- Network Canvas (Block 5) ---
+
+export interface PopulationNode {
+  id: string;
+  type: "population";
+  label: string;
+  model: string;
+  count: number;
+  neuron_type: "excitatory" | "inhibitory";
+  position: { x: number; y: number };
+  params: Record<string, number>;
+}
+
+export interface ProjectionEdge {
+  id: string;
+  source: string;
+  target: string;
+  weight: number;
+  delay: number;
+  probability: number;
+}
+
+export interface NetworkGraph {
+  populations: PopulationNode[];
+  projections: ProjectionEdge[];
+  duration?: number;
+  dt?: number;
+}
+
+export interface GraphSimResult {
+  success: boolean;
+  errors?: string[];
+  spike_times?: number[];
+  spike_neurons?: number[];
+  n_exc?: number;
+  n_inh?: number;
+  n_total?: number;
+  n_spikes?: number;
+  rate_time?: number[];
+  exc_rates?: number[];
+  inh_rates?: number[];
+  graph_summary?: { n_populations: number; n_projections: number; n_exc: number; n_inh: number };
+}
+
+export interface NIRFormat {
+  format: string;
+  version: string;
+  nodes: Record<string, unknown>;
+  edges: unknown[];
+}
+
+export const fetchGraphModels = () => get<string[]>("/graph/models");
+export const createPopulation = (data: Partial<PopulationNode>) =>
+  post<PopulationNode>("/graph/population", data);
+export const createProjection = (data: { source_id: string; target_id: string; weight?: number; delay?: number; probability?: number }) =>
+  post<ProjectionEdge>("/graph/projection", data);
+export const validateGraph = (graph: NetworkGraph) =>
+  post<{ valid: boolean; errors: string[] }>("/graph/validate", graph);
+export const simulateGraph = (graph: NetworkGraph) =>
+  post<GraphSimResult>("/graph/simulate", graph);
+export const exportNIR = (graph: NetworkGraph) =>
+  post<NIRFormat>("/graph/export-nir", graph);
+export const importNIR = (nir: NIRFormat) =>
+  post<NetworkGraph>("/graph/import-nir", nir);
