@@ -1,0 +1,111 @@
+# Integration & Project Management
+
+Block 6 ties all Studio components together: project save/load for
+persistent workspaces, and a full pipeline that chains network design
+through compilation to FPGA synthesis in a single action.
+
+## Project Save/Load
+
+Save and restore complete Studio state — equations, parameters, network
+graph, synthesis target, training config — as JSON files on the server.
+
+### Save
+
+Click **Save** in the Projects panel (left sidebar), enter a name. The
+full state is serialised and stored in `~/.sc-neurocore/studio/projects/`.
+
+### Load
+
+Click a project name to restore all state: equations, model selection,
+parameters, network graph populations and projections, synthesis target.
+
+### Storage Format
+
+```json
+{
+  "name": "my_network",
+  "saved_at": 1711504200.0,
+  "version": "0.3.0",
+  "state": {
+    "sourceMode": "model",
+    "selectedModelName": "LIFNeuron",
+    "graphPopulations": [...],
+    "graphProjections": [...],
+    "synthTarget": "ice40",
+    "trainingConfig": {...}
+  }
+}
+```
+
+## Full Pipeline
+
+The pipeline runs from the Network Canvas with a single click:
+
+```
+Network Graph → Validate → Simulate → Compile → Synthesise
+```
+
+### Steps
+
+1. **Validate** — check graph structure (populations exist, projections
+   point to valid nodes, neuron count within 2000 limit)
+2. **Simulate** — run the E-I balanced network simulation
+3. **Compile** — generate SystemVerilog from LIF equations via the
+   equation compiler
+4. **Synthesise** — run Yosys on the generated Verilog for the selected
+   FPGA target (ice40, ECP5, Gowin, Xilinx)
+
+If any step fails, the pipeline stops and reports which step failed
+and why.
+
+### Using the Pipeline
+
+1. Design your network on the Canvas tab
+2. Select FPGA target in the Synthesis Dashboard (or use default ice40)
+3. Click **Pipeline → ICE40** (or whichever target) on the Canvas toolbar
+4. View results: simulation stats + synthesis resource usage
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/project/save` | Save project state |
+| GET | `/api/project/list` | List all saved projects |
+| GET | `/api/project/load/{name}` | Load a saved project |
+| DELETE | `/api/project/{name}` | Delete a saved project |
+| POST | `/api/pipeline/run` | Run full pipeline |
+
+### POST /api/project/save
+
+```json
+{"name": "my_network", "state": {"sourceMode": "model", ...}}
+```
+
+### POST /api/pipeline/run
+
+```json
+{
+  "graph": {
+    "populations": [...],
+    "projections": [...],
+    "duration": 200.0
+  },
+  "target": "ice40"
+}
+```
+
+Returns:
+
+```json
+{
+  "success": true,
+  "target": "ice40",
+  "pipeline": "graph → simulate → compile → synthesise",
+  "steps": {
+    "validate": {"passed": true},
+    "simulate": {"n_spikes": 342, "n_total": 100},
+    "compile": {"chars": 1580, "module": "sc_pipeline_neuron"},
+    "synthesise": {"success": true, "target": "ice40", "resources": {...}}
+  }
+}
+```

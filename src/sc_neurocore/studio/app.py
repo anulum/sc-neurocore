@@ -47,6 +47,13 @@ from sc_neurocore.studio.synthesis import (
     run_pnr,
     run_synthesis,
 )
+from sc_neurocore.studio.project import (
+    delete_project,
+    list_projects,
+    load_project,
+    run_pipeline,
+    save_project,
+)
 from sc_neurocore.studio.network_graph import (
     available_models as graph_available_models,
     create_population,
@@ -794,6 +801,39 @@ def create_app() -> FastAPI:
         if not json_path:
             raise HTTPException(422, "json_path required")
         return _safe(lambda: run_pnr(json_path, target))
+
+    # --- Integration (Block 6) ---
+    @app.post("/api/project/save")
+    def api_project_save(data: dict):
+        name = data.get("name", "")
+        state = data.get("state", {})
+        if not name:
+            raise HTTPException(422, "Project name required")
+        return save_project(name, state)
+
+    @app.get("/api/project/list")
+    def api_project_list():
+        return list_projects()
+
+    @app.get("/api/project/load/{name}")
+    def api_project_load(name: str):
+        result = load_project(name)
+        if "error" in result:
+            raise HTTPException(404, result["error"])
+        return result
+
+    @app.delete("/api/project/{name}")
+    def api_project_delete(name: str):
+        result = delete_project(name)
+        if "error" in result:
+            raise HTTPException(404, result["error"])
+        return result
+
+    @app.post("/api/pipeline/run")
+    def api_pipeline_run(data: dict):
+        graph = data.get("graph", {})
+        target = data.get("target", "ice40")
+        return _safe(lambda: run_pipeline(graph, target))
 
     # --- Network Canvas (Block 5) ---
     @app.get("/api/graph/models")

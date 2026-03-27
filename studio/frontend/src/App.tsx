@@ -230,6 +230,39 @@ export default function App() {
           )}
 
           <div className="panel-section">
+            <div className="panel-header">Projects</div>
+            <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
+              <button onClick={() => {
+                const name = prompt("Project name:");
+                if (name) s.saveProjectToServer(name);
+              }} style={{
+                fontSize: 10, padding: "2px 6px", background: "var(--bg-tertiary)",
+                color: "var(--text-secondary)", border: "1px solid var(--border)",
+                borderRadius: 3, cursor: "pointer",
+              }}>Save</button>
+              <button onClick={() => s.listServerProjects()} style={{
+                fontSize: 10, padding: "2px 6px", background: "var(--bg-tertiary)",
+                color: "var(--text-secondary)", border: "1px solid var(--border)",
+                borderRadius: 3, cursor: "pointer",
+              }}>Refresh</button>
+            </div>
+            {s.serverProjects.length > 0 && (
+              <div style={{ maxHeight: 60, overflowY: "auto" }}>
+                {s.serverProjects.map((p) => (
+                  <div key={p.name} style={{
+                    display: "flex", justifyContent: "space-between", fontSize: 10,
+                    padding: "1px 4px", color: "var(--text-secondary)",
+                  }}>
+                    <span style={{ cursor: "pointer" }} onClick={() => s.loadProjectFromServer(p.name)}>{p.name}</span>
+                    <span style={{ cursor: "pointer", color: "var(--text-muted)" }}
+                      onClick={() => s.deleteServerProject(p.name)}>x</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="panel-section">
             <div className="panel-header">Sessions</div>
             <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
               <button onClick={() => {
