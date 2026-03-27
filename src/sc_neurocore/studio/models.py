@@ -95,6 +95,7 @@ def list_models() -> list[dict]:
                 "n_params": len(params),
                 "state_var_names": [s["name"] for s in state_vars],
                 "dt": dt_val,
+                "description": (cls.__doc__ or "").strip().split("\n")[0],
             })
         except Exception:
             continue
@@ -115,6 +116,7 @@ def get_model_detail(name: str) -> dict | None:
         return {
             "name": name,
             "module": _CLASS_TO_MODULE[name],
+            "category": _categorize(name),
             "state_vars": state_vars,
             "params": params,
             "dt": dt_val,

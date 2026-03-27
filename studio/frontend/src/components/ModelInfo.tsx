@@ -11,6 +11,11 @@ export default function ModelInfo() {
         <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 4 }}>
           {modelDetail.docstring || modelDetail.name}
         </div>
+        {modelDetail.category && (
+          <div style={{ fontSize: 10, color: "var(--accent)", marginBottom: 4 }}>
+            {modelDetail.category}
+          </div>
+        )}
         <div className="model-info">
           <div className="info-item">
             <span className="info-label">vars:</span>

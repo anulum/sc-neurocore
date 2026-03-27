@@ -42,11 +42,12 @@ export interface NeuronTemplate {
 
 export interface ModelSummary {
   name: string; module: string; category: string;
-  n_state_vars: number; n_params: number; state_var_names: string[]; dt: number;
+  n_state_vars: number; n_params: number; state_var_names: string[];
+  dt: number; description: string;
 }
 
 export interface ModelDetail {
-  name: string; module: string;
+  name: string; module: string; category: string;
   state_vars: { name: string; default: number }[];
   params: { name: string; default: number }[];
   dt: number; docstring: string;
