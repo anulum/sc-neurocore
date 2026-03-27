@@ -73,7 +73,7 @@ def characterize_model(simulate_fn, base_config: dict) -> dict:
             r_hi = simulate_fn(**{**base_config, "params": {**params, pname: pval + delta}})
             rate_change = abs(r_hi["stats"]["rate_hz"] - r_lo["stats"]["rate_hz"])
             sensitivities.append({"param": pname, "rate_change": round(rate_change, 2)})
-        except Exception:
+        except (ValueError, ZeroDivisionError, KeyError, RuntimeError):
             continue
     sensitivities.sort(key=lambda s: s["rate_change"], reverse=True)
 

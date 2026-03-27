@@ -200,7 +200,7 @@ def list_models() -> list[dict]:
                     "description": (cls.__doc__ or "").strip().split("\n")[0],
                 }
             )
-        except Exception:
+        except (TypeError, AttributeError, ValueError):
             continue
     return result
 

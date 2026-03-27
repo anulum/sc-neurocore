@@ -249,7 +249,7 @@ class _SimCache:
 
     def _key(self, data: dict) -> str:
         raw = json.dumps(data, sort_keys=True, default=str)
-        return hashlib.md5(raw.encode()).hexdigest()
+        return hashlib.md5(raw.encode(), usedforsecurity=False).hexdigest()
 
     def get(self, params: dict):
         k = self._key(params)

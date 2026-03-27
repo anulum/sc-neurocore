@@ -140,7 +140,7 @@ def nullclines_2d(
             try:
                 dv0[i, j] = float(eval(compiled_eq0, {"__builtins__": {}}, env))
                 dv1[i, j] = float(eval(compiled_eq1, {"__builtins__": {}}, env))
-            except Exception:
+            except (ValueError, ZeroDivisionError, OverflowError):
                 pass
 
     # Extract zero-contours via sign changes
