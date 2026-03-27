@@ -50,6 +50,7 @@ interface StudioState {
   multiResults: SimulateResponse[] | null;
   importedTrace: ImportedTrace | null;
   networkResult: NetworkResult | null;
+  networkParams: { n_exc: number; n_inh: number; w_ee: number; w_ei: number; w_ie: number; w_ii: number; p_conn: number; ext_rate: number };
   verilogSrc: string;
   codeScript: string;
   codeOneliner: string;
@@ -92,6 +93,7 @@ interface StudioState {
   runCharacterize: () => Promise<void>;
   runMultiSimulate: (modelNames: string[]) => Promise<void>;
   runNetwork: () => Promise<void>;
+  setNetworkParam: (key: string, value: number) => void;
   importCSV: (csv: string) => Promise<void>;
   runCompare: (configB: Record<string, unknown>) => Promise<void>;
   runNullclines: () => Promise<void>;
@@ -137,6 +139,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   heatmapResult: null, compareResult: null, nullclineResult: null,
   freqResult: null, staResult: null,
   charResult: null, multiResults: null, importedTrace: null, networkResult: null,
+  networkParams: { n_exc: 80, n_inh: 20, w_ee: 0.1, w_ei: 0.4, w_ie: 0.1, w_ii: 0.4, p_conn: 0.2, ext_rate: 5.0 },
   verilogSrc: "", codeScript: "", codeOneliner: "",
   savedSessions: JSON.parse(localStorage.getItem("sc-studio-sessions") || "[]"),
   error: null, isSimulating: false,
@@ -405,13 +408,18 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
   },
 
+  setNetworkParam: (key, value) => {
+    set((s) => ({ networkParams: { ...s.networkParams, [key]: value } }));
+  },
+
   runNetwork: async () => {
     const s = get();
     if (s.isSimulating) return;
     set({ isSimulating: true, error: null, activeTab: "network" });
     try {
+      const np = s.networkParams;
       const networkResult = await simulateNetwork({
-        n_exc: 80, n_inh: 20, duration: s.duration, ext_rate: Math.abs(s.current) || 5,
+        ...np, duration: s.duration,
       });
       set({ networkResult, isSimulating: false });
     } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
