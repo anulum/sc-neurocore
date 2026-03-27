@@ -15,10 +15,20 @@ import {
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
+interface SynthResult {
+  success: boolean;
+  error?: string;
+  target: string;
+  resources: { luts: number; ffs: number; brams: number; dsps: number; cells: number; wires: number };
+  capacity: { luts: number; ffs: number; brams: number; dsps: number };
+  utilisation: Record<string, number>;
+  log_excerpt: string;
+}
+
 type SourceMode = "model" | "ode";
 type ViewTab = "trace" | "phase" | "isi" | "fi-curve" | "bifurcation" |
   "sensitivity" | "precision" | "heatmap" | "verilog" | "code" |
-  "compare" | "freq" | "sta" | "characterize" | "multi" | "network" | "ir";
+  "compare" | "freq" | "sta" | "characterize" | "multi" | "network" | "ir" | "synth";
 
 interface StudioState {
   sourceMode: SourceMode;
@@ -56,6 +66,9 @@ interface StudioState {
   irText: string;
   svSource: string;
   irErrors: string[];
+  synthTarget: string;
+  synthResult: SynthResult | null;
+  toolsAvailable: Record<string, { available: boolean; version: string | null }> | null;
   codeScript: string;
   codeOneliner: string;
   savedSessions: { name: string; state: Record<string, unknown> }[];
@@ -105,6 +118,9 @@ interface StudioState {
   computeSTA: () => void;
   runBuildIR: () => Promise<void>;
   runEmitSV: () => Promise<void>;
+  setSynthTarget: (t: string) => void;
+  runSynthesis: () => Promise<void>;
+  checkSynthTools: () => Promise<void>;
   autoSimulate: () => void;
   exportData: () => void;
   exportCSV: () => void;
@@ -147,6 +163,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   charResult: null, multiResults: null, importedTrace: null, networkResult: null,
   networkParams: { n_exc: 80, n_inh: 20, w_ee: 0.1, w_ei: 0.4, w_ie: 0.1, w_ii: 0.4, p_conn: 0.2, ext_rate: 5.0 },
   verilogSrc: "", irText: "", svSource: "", irErrors: [] as string[],
+  synthTarget: "ice40", synthResult: null, toolsAvailable: null,
   codeScript: "", codeOneliner: "",
   savedSessions: JSON.parse(localStorage.getItem("sc-studio-sessions") || "[]"),
   error: null, isSimulating: false,
@@ -546,6 +563,32 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       });
       set({ svSource: result.verilog, irText: result.ir_repr, isSimulating: false });
     } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+  },
+
+  setSynthTarget: (t) => set({ synthTarget: t }),
+
+  runSynthesis: async () => {
+    const s = get();
+    if (!s.svSource && !s.verilogSrc) { set({ error: "Generate Verilog first" }); return; }
+    set({ isSimulating: true, error: null, activeTab: "synth" });
+    try {
+      const verilog = s.svSource || s.verilogSrc;
+      const r = await fetch("/api/synth/run", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ verilog, target: s.synthTarget }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.detail || "Synthesis failed");
+      set({ synthResult: data, isSimulating: false });
+    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+  },
+
+  checkSynthTools: async () => {
+    try {
+      const r = await fetch("/api/synth/tools-status");
+      const data = await r.json();
+      set({ toolsAvailable: data });
+    } catch { /* tools check is non-critical */ }
   },
 
   resetDefaults: () => {
