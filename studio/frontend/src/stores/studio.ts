@@ -4,8 +4,8 @@ import {
   simulateODE, simulateModel, fetchFICurve, compileVerilog,
   fetchBifurcation, fetchSensitivity, fetchPrecision, fetchHeatmap, fetchCodegen,
   fetchCompare, fetchNullclines, fetchFreqResponse,
-  fetchCharacterize, fetchMultiSimulate, importTrace,
-  type CharacterizeResponse, type ImportedTrace,
+  fetchCharacterize, fetchMultiSimulate, importTrace, simulateNetwork,
+  type CharacterizeResponse, type ImportedTrace, type NetworkResult,
   type NeuronTemplate, type ModelSummary, type ModelDetail, type PresetSummary,
   type SimulateResponse, type FICurveResponse, type BifurcationResponse,
   type SensitivityResponse, type PrecisionResponse, type HeatmapResponse,
@@ -17,7 +17,7 @@ let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 type SourceMode = "model" | "ode";
 type ViewTab = "trace" | "phase" | "isi" | "fi-curve" | "bifurcation" |
   "sensitivity" | "precision" | "heatmap" | "verilog" | "code" |
-  "compare" | "freq" | "sta" | "characterize" | "multi";
+  "compare" | "freq" | "sta" | "characterize" | "multi" | "network";
 
 interface StudioState {
   sourceMode: SourceMode;
@@ -49,6 +49,7 @@ interface StudioState {
   charResult: CharacterizeResponse | null;
   multiResults: SimulateResponse[] | null;
   importedTrace: ImportedTrace | null;
+  networkResult: NetworkResult | null;
   verilogSrc: string;
   codeScript: string;
   codeOneliner: string;
@@ -90,6 +91,7 @@ interface StudioState {
   runCompile: () => Promise<void>;
   runCharacterize: () => Promise<void>;
   runMultiSimulate: (modelNames: string[]) => Promise<void>;
+  runNetwork: () => Promise<void>;
   importCSV: (csv: string) => Promise<void>;
   runCompare: (configB: Record<string, unknown>) => Promise<void>;
   runNullclines: () => Promise<void>;
@@ -133,7 +135,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   result: null, fiResult: null, bifResult: null, sensResult: null, precResult: null,
   heatmapResult: null, compareResult: null, nullclineResult: null,
   freqResult: null, staResult: null,
-  charResult: null, multiResults: null, importedTrace: null,
+  charResult: null, multiResults: null, importedTrace: null, networkResult: null,
   verilogSrc: "", codeScript: "", codeOneliner: "",
   savedSessions: JSON.parse(localStorage.getItem("sc-studio-sessions") || "[]"),
   error: null, isSimulating: false,
@@ -382,6 +384,18 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       }));
       const multiResults = await fetchMultiSimulate(configs);
       set({ multiResults, isSimulating: false });
+    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+  },
+
+  runNetwork: async () => {
+    const s = get();
+    if (s.isSimulating) return;
+    set({ isSimulating: true, error: null, activeTab: "network" });
+    try {
+      const networkResult = await simulateNetwork({
+        n_exc: 80, n_inh: 20, duration: s.duration, ext_rate: Math.abs(s.current) || 5,
+      });
+      set({ networkResult, isSimulating: false });
     } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
   },
 

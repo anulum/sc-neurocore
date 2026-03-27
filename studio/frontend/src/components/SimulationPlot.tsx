@@ -91,7 +91,7 @@ export default function SimulationPlot() {
   const {
     result, activeTab, fiResult, bifResult, sensResult, precResult,
     heatmapResult, compareResult, nullclineResult, freqResult, staResult,
-    charResult, multiResults, importedTrace,
+    charResult, multiResults, importedTrace, networkResult,
   } = store;
 
   function handleCanvasClick(e: React.MouseEvent<HTMLCanvasElement>) {
@@ -563,6 +563,44 @@ export default function SimulationPlot() {
       return;
     }
 
+    // Network E-I raster + rates
+    if (activeTab === "network" && networkResult) {
+      const rasterH = Math.floor((h - T - B) * 0.6);
+      const rateH = h - T - B - rasterH - 10;
+
+      // Raster plot
+      ctx.fillStyle = PANEL_BG; ctx.fillRect(L, T, pw, rasterH);
+      ctx.strokeStyle = BORDER; ctx.strokeRect(L, T, pw, rasterH);
+      const dur = networkResult.duration;
+      for (let i = 0; i < networkResult.spike_times.length; i++) {
+        const t = networkResult.spike_times[i];
+        const n = networkResult.spike_neurons[i];
+        const x = L + (t / dur) * pw;
+        const y = T + (n / networkResult.n_total) * rasterH;
+        ctx.fillStyle = n < networkResult.n_exc ? "#4fc3f7" : "#ff5252";
+        ctx.fillRect(x, y, 1.5, 1.5);
+      }
+      ctx.fillStyle = "#4fc3f7"; ctx.font = "9px monospace"; ctx.textAlign = "left";
+      ctx.fillText(`E (${networkResult.n_exc})`, L + 4, T + 10);
+      ctx.fillStyle = "#ff5252";
+      ctx.fillText(`I (${networkResult.n_inh})`, L + 60, T + 10);
+      ctx.fillStyle = AXIS;
+      ctx.fillText(`${networkResult.n_spikes} spikes`, L + 120, T + 10);
+
+      // Population rates
+      const rateY = T + rasterH + 10;
+      const rt = networkResult.rate_time;
+      if (rt.length > 1) {
+        const rMax = Math.max(...networkResult.exc_rates, ...networkResult.inh_rates, 1);
+        drawAxes(ctx, L, rateY, pw, rateH, rt[0], rt[rt.length - 1], 0, rMax * 1.1, "ms");
+        drawLine(ctx, L, rateY, pw, rateH, rt, networkResult.exc_rates, rt[0], rt[rt.length - 1], 0, rMax * 1.1, "#4fc3f7", 1.5);
+        drawLine(ctx, L, rateY, pw, rateH, rt, networkResult.inh_rates, rt[0], rt[rt.length - 1], 0, rMax * 1.1, "#ff5252", 1.5);
+        ctx.fillStyle = AXIS; ctx.font = "9px monospace"; ctx.textAlign = "left";
+        ctx.fillText(`E: ${networkResult.mean_exc_rate}Hz  I: ${networkResult.mean_inh_rate}Hz`, L + 4, rateY + 10);
+      }
+      return;
+    }
+
     // Default: Trace view (with nullcline overlay on phase + imported trace overlay)
     // Apply zoom viewport if set
     const z = zoomRef.current;
@@ -654,7 +692,7 @@ export default function SimulationPlot() {
       ctx.fillStyle = "#4fc3f7"; ctx.font = "9px monospace"; ctx.textAlign = "right";
       ctx.fillText(`zoom: ${zTMin.toFixed(1)}–${zTMax.toFixed(1)} ms (dbl-click to reset)`, L + pw - 2, h - 2);
     }
-  }, [result, activeTab, fiResult, bifResult, sensResult, precResult, heatmapResult, compareResult, nullclineResult, freqResult, staResult, charResult, multiResults, importedTrace]);
+  }, [result, activeTab, fiResult, bifResult, sensResult, precResult, heatmapResult, compareResult, nullclineResult, freqResult, staResult, charResult, multiResults, importedTrace, networkResult]);
 
   useEffect(() => {
     draw();

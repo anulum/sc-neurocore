@@ -122,6 +122,16 @@ export const fetchFreqResponse = (req: Record<string, unknown>) => post<FreqResp
 export const fetchHeatmap = (req: Record<string, unknown>) => post<HeatmapResponse>("/heatmap", req);
 export const fetchCodegen = (req: Record<string, unknown>) => post<{ script: string; oneliner: string }>("/codegen", req);
 export const fetchModelScan = () => get<ModelBehavior[]>("/models/scan");
+export const simulateNetwork = (req: Record<string, unknown>) => post<NetworkResult>("/network/ei", req);
+
+export interface NetworkResult {
+  spike_times: number[];
+  spike_neurons: number[];
+  n_exc: number; n_inh: number; n_total: number; n_spikes: number;
+  rate_time: number[]; exc_rates: number[]; inh_rates: number[];
+  duration: number; dt: number;
+  mean_exc_rate: number; mean_inh_rate: number;
+}
 
 export interface ModelBehavior {
   name: string; category: string; pattern: string;

@@ -19,6 +19,7 @@ from sc_neurocore.studio.analysis import (
 )
 from sc_neurocore.studio.characterize import characterize_model
 from sc_neurocore.studio.model_scan import scan_all_models
+from sc_neurocore.studio.network import simulate_ei_network
 from sc_neurocore.studio.codegen import (
     classify_firing_pattern, generate_model_script, generate_ode_script, generate_oneliner,
 )
@@ -149,6 +150,18 @@ class HeatmapRequest(BaseModel):
     y_min: float
     y_max: float
     y_steps: int = Field(default=15, ge=3, le=30)
+
+class NetworkRequest(BaseModel):
+    n_exc: int = Field(default=80, ge=10, le=500)
+    n_inh: int = Field(default=20, ge=5, le=200)
+    w_ee: float = 0.1
+    w_ei: float = 0.4
+    w_ie: float = 0.1
+    w_ii: float = 0.4
+    p_conn: float = Field(default=0.2, ge=0.01, le=1.0)
+    ext_rate: float = 5.0
+    duration: float = Field(default=200.0, gt=0, le=2000)
+    dt: float = Field(default=0.1, gt=0)
 
 class CodegenRequest(BaseModel):
     mode: str = "model"
@@ -444,6 +457,16 @@ def create_app() -> FastAPI:
                 "threshold_estimate": round(float(threshold), 2),
             },
         }
+
+    # --- E-I Network Simulation ---
+    @app.post("/api/network/ei")
+    def api_network_ei(req: NetworkRequest):
+        return _safe(lambda: simulate_ei_network(
+            n_exc=req.n_exc, n_inh=req.n_inh,
+            w_ee=req.w_ee, w_ei=req.w_ei, w_ie=req.w_ie, w_ii=req.w_ii,
+            p_conn=req.p_conn, ext_rate=req.ext_rate,
+            duration=req.duration, dt=req.dt,
+        ))
 
     # --- Static file serving for production mode ---
     import os
