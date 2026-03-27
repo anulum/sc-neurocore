@@ -32,11 +32,10 @@ try:
         BitStreamTensor,
         BrunelNetwork,
     )
-except ImportError as exc:
-    raise ImportError(
-        "sc_neurocore_engine native module not found. "
-        "Build with: cd engine && maturin develop --release"
-    ) from exc
+except ImportError:
+    _core_available = False
+else:
+    _core_available = True
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (
@@ -174,15 +173,48 @@ try:
 except ImportError:
     _ai_available = False
 
-from .layers import VectorizedSCLayer
-from .neurons import FixedPointLIFNeuron
-from .grad import SurrogateLif, DifferentiableDenseLayer
-from .attention import StochasticAttention
-from .graphs import StochasticGraphLayer
-from .scpn import KuramotoSolver
-from .ir import ScGraph, ScGraphBuilder, parse_ir
-from .hdc import HDCVector
-from .petri_net import PetriNetEngine
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
+        py_simulate_ei_network,
+        py_batch_simulate,
+    )
+
+    _studio_rust_available = True
+except (ImportError, ModuleNotFoundError):
+    # Bridge can't find the .pyd submodule — try loading from site-packages directly
+    try:
+        import glob as _glob
+        import importlib.util as _ilu
+        import sysconfig as _sc
+
+        _site = _sc.get_path("purelib")
+        _pyds = _glob.glob(f"{_site}/sc_neurocore_engine/sc_neurocore_engine*.pyd")
+        _pyds += _glob.glob(f"{_site}/sc_neurocore_engine/sc_neurocore_engine*.so")
+        if _pyds:
+            _spec = _ilu.spec_from_file_location("sc_neurocore_engine", _pyds[0])
+            _mod = _ilu.module_from_spec(_spec)
+            _spec.loader.exec_module(_mod)
+            py_simulate_ei_network = _mod.py_simulate_ei_network
+            py_batch_simulate = _mod.py_batch_simulate
+            _studio_rust_available = True
+        else:
+            _studio_rust_available = False
+    except Exception:
+        _studio_rust_available = False
+
+try:
+    from .layers import VectorizedSCLayer
+    from .neurons import FixedPointLIFNeuron
+    from .grad import SurrogateLif, DifferentiableDenseLayer
+    from .attention import StochasticAttention
+    from .graphs import StochasticGraphLayer
+    from .scpn import KuramotoSolver
+    from .ir import ScGraph, ScGraphBuilder, parse_ir
+    from .hdc import HDCVector
+    from .petri_net import PetriNetEngine
+    _bridge_available = True
+except (ImportError, ModuleNotFoundError):
+    _bridge_available = False
 
 _NEURON_MODELS = [
     "QuadraticIFNeuron",
@@ -347,4 +379,5 @@ __all__ = [
     "NetworkRunner",
     *(_NEURON_MODELS if _neurons_available else []),
     *(_AI_MODELS if _ai_available else []),
+    *(["py_simulate_ei_network", "py_batch_simulate"] if _studio_rust_available else []),
 ]
