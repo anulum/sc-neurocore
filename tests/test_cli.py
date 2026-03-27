@@ -8,8 +8,11 @@
 """Tests for sc_neurocore.cli."""
 
 import builtins
+import importlib.util
 import types
 from unittest import mock
+
+import pytest
 
 from sc_neurocore.cli import _cmd_info, _cmd_studio, _format_engine_status, main
 
@@ -138,6 +141,10 @@ def test_preflight_delegates_to_subprocess():
     m.assert_called_once()
 
 
+@pytest.mark.skipif(
+    not importlib.util.find_spec("uvicorn"),
+    reason="uvicorn not installed (studio extra)",
+)
 def test_studio_launches_uvicorn(capsys):
     with (
         mock.patch("uvicorn.run") as m_uvicorn,
