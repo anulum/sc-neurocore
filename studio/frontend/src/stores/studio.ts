@@ -14,6 +14,9 @@ import {
   createPopulation as apiCreatePop, createProjection as apiCreateProj,
   simulateGraph as apiSimGraph, validateGraph as apiValidateGraph,
   exportNIR as apiExportNIR, importNIR as apiImportNIR,
+  saveProject as apiSaveProject, loadProject as apiLoadProject,
+  listProjects as apiListProjects, deleteProject as apiDeleteProject,
+  runPipeline as apiRunPipeline,
   type CharacterizeResponse, type ImportedTrace, type NetworkResult,
   type NeuronTemplate, type ModelSummary, type ModelDetail, type PresetSummary,
   type SimulateResponse, type FICurveResponse, type BifurcationResponse,
@@ -23,6 +26,7 @@ import {
   type SynthToolInfo,
   type SurrogateInfo, type TrainingEpochMetrics,
   type PopulationNode, type ProjectionEdge, type GraphSimResult, type NIRFormat,
+  type ProjectSummary, type PipelineResult,
 } from "../api/client";
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -78,6 +82,8 @@ interface StudioState {
   graphModels: string[];
   graphSimResult: GraphSimResult | null;
   graphErrors: string[];
+  serverProjects: ProjectSummary[];
+  pipelineResult: PipelineResult | null;
   trainingJobId: string | null;
   trainingStatus: string;
   trainingEpochs: TrainingEpochMetrics[];
@@ -141,6 +147,11 @@ interface StudioState {
   runMultiTargetSynthesis: () => Promise<void>;
   runSynthEstimate: () => Promise<void>;
   checkSynthTools: () => Promise<void>;
+  saveProjectToServer: (name: string) => Promise<void>;
+  loadProjectFromServer: (name: string) => Promise<void>;
+  listServerProjects: () => Promise<void>;
+  deleteServerProject: (name: string) => Promise<void>;
+  runPipelineAction: () => Promise<void>;
   loadGraphModels: () => Promise<void>;
   addPopulation: (neuronType: "excitatory" | "inhibitory") => Promise<void>;
   removePopulation: (id: string) => void;
@@ -198,6 +209,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   networkParams: { n_exc: 80, n_inh: 20, w_ee: 0.1, w_ei: 0.4, w_ie: 0.1, w_ii: 0.4, p_conn: 0.2, ext_rate: 5.0 },
   verilogSrc: "", irText: "", svSource: "", irErrors: [] as string[],
   graphPopulations: [], graphProjections: [], graphModels: [], graphSimResult: null, graphErrors: [],
+  serverProjects: [], pipelineResult: null,
   synthTarget: "ice40", synthResult: null, synthEstimate: null, multiTargetResult: null, toolsAvailable: null,
   trainingJobId: null, trainingStatus: "idle", trainingEpochs: [], trainingSurrogates: [],
   trainingConfig: {
@@ -645,6 +657,72 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       const toolsAvailable = await fetchSynthTools();
       set({ toolsAvailable });
     } catch { /* tools check is non-critical */ }
+  },
+
+  saveProjectToServer: async (name) => {
+    const s = get();
+    const state = {
+      sourceMode: s.sourceMode, equations: s.equations, threshold: s.threshold,
+      reset: s.reset, odeParams: s.odeParams, odeInit: s.odeInit,
+      selectedModelName: s.selectedModelName, modelParams: s.modelParams,
+      dt: s.dt, duration: s.duration, current: s.current, protocol: s.protocol,
+      graphPopulations: s.graphPopulations, graphProjections: s.graphProjections,
+      synthTarget: s.synthTarget, trainingConfig: s.trainingConfig,
+    };
+    try {
+      await apiSaveProject(name, state);
+      await get().listServerProjects();
+    } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
+  },
+
+  loadProjectFromServer: async (name) => {
+    try {
+      const data = await apiLoadProject(name);
+      const st = (data as Record<string, unknown>).state as Record<string, unknown> || {};
+      set({
+        sourceMode: (st.sourceMode as "model" | "ode") || "model",
+        equations: (st.equations as string[]) || [],
+        threshold: (st.threshold as string) || "",
+        reset: (st.reset as string) || "",
+        odeParams: (st.odeParams as Record<string, number>) || {},
+        odeInit: (st.odeInit as Record<string, number>) || {},
+        selectedModelName: (st.selectedModelName as string) || "",
+        modelParams: (st.modelParams as Record<string, number>) || {},
+        dt: (st.dt as number) || 0.1,
+        duration: (st.duration as number) || 100,
+        current: (st.current as number) || 10,
+        protocol: (st.protocol as string) || "constant",
+        graphPopulations: (st.graphPopulations as PopulationNode[]) || [],
+        graphProjections: (st.graphProjections as ProjectionEdge[]) || [],
+        synthTarget: (st.synthTarget as string) || "ice40",
+      });
+      get().runSimulation();
+    } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
+  },
+
+  listServerProjects: async () => {
+    try {
+      const serverProjects = await apiListProjects();
+      set({ serverProjects });
+    } catch { /* non-critical */ }
+  },
+
+  deleteServerProject: async (name) => {
+    try {
+      await apiDeleteProject(name);
+      await get().listServerProjects();
+    } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
+  },
+
+  runPipelineAction: async () => {
+    const s = get();
+    if (s.isSimulating || s.graphPopulations.length === 0) return;
+    set({ isSimulating: true, error: null, pipelineResult: null });
+    try {
+      const graph = { populations: s.graphPopulations, projections: s.graphProjections, duration: s.duration, dt: s.dt };
+      const pipelineResult = await apiRunPipeline(graph, s.synthTarget);
+      set({ pipelineResult, isSimulating: false });
+    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
   },
 
   loadGraphModels: async () => {

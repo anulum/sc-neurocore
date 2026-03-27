@@ -41,11 +41,11 @@ const nodeTypes = { population: PopulationNodeContent };
 
 export default function NetworkCanvas() {
   const {
-    graphPopulations, graphProjections, graphSimResult, graphErrors,
+    graphPopulations, graphProjections, graphSimResult, graphErrors, pipelineResult,
     addPopulation, updatePopulation,
     addProjection, removeProjection,
-    simulateGraphAction, exportGraphNIR, loadGraphModels,
-    isSimulating,
+    simulateGraphAction, exportGraphNIR, loadGraphModels, runPipelineAction,
+    isSimulating, synthTarget,
   } = useStudioStore();
 
   useEffect(() => { loadGraphModels(); }, [loadGraphModels]);
@@ -123,6 +123,12 @@ export default function NetworkCanvas() {
         }}>
           {isSimulating ? "..." : "Simulate"}
         </button>
+        <button onClick={runPipelineAction} disabled={isSimulating || graphPopulations.length === 0} style={{
+          background: "#a5d6a7", color: "#0d1117", border: "none",
+          padding: "3px 10px", fontSize: 10, cursor: "pointer",
+        }}>
+          Pipeline → {synthTarget.toUpperCase()}
+        </button>
         <button onClick={exportGraphNIR} disabled={graphPopulations.length === 0} style={{
           background: "transparent", color: "var(--text-muted)", border: "1px solid var(--border)",
           padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
@@ -167,6 +173,19 @@ export default function NetworkCanvas() {
           </ReactFlow>
         )}
       </div>
+
+      {/* Pipeline result */}
+      {pipelineResult && (
+        <div style={{
+          padding: "6px 12px", borderTop: "1px solid var(--border)",
+          fontSize: 10, color: pipelineResult.success ? "var(--text-secondary)" : "#ff5252",
+          background: pipelineResult.success ? "rgba(129, 199, 132, 0.05)" : "rgba(255, 82, 82, 0.05)",
+        }}>
+          {pipelineResult.success
+            ? `Pipeline complete: ${pipelineResult.pipeline} → ${pipelineResult.target?.toUpperCase()}`
+            : `Pipeline failed at ${pipelineResult.step}: ${pipelineResult.errors?.join(", ") || pipelineResult.error || "unknown"}`}
+        </div>
+      )}
 
       {/* Sim results summary */}
       {graphSimResult?.success && (
