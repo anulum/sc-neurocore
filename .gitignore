@@ -82,6 +82,7 @@ full_test_report.txt
 # Studio frontend build artifacts
 studio/frontend/node_modules/
 studio/frontend/dist/
+studio/frontend/tsconfig.tsbuildinfo
 
 # MkDocs build output
 site/
