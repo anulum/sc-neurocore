@@ -2,6 +2,45 @@
 
 All notable changes to the `sc-neurocore` project will be documented in this file.
 
+## [3.14.0] — 2026-03-27
+
+### Visual SNN Design Studio (Experimental)
+- **New feature:** web-based IDE for designing, training, compiling, and deploying SNNs
+- 118-model browser with live simulation, parameter sliders, pattern classification
+- 20+ analysis views: trace, phase, ISI, f-I, bifurcation, heatmap, sensitivity, STA, frequency response, characterisation, multi-model overlay, A/B comparison
+- Compiler Inspector: SC IR build/verify/emit, SystemVerilog generation, co-simulation
+- Synthesis Dashboard: Yosys synthesis for 4 FPGA targets (ice40, ECP5, Gowin, Xilinx), multi-target comparison, resource estimation without Yosys
+- Training Monitor: live SSE metric streaming, 6 surrogate gradients, per-layer spike rates, learnable beta/threshold
+- Network Canvas: React Flow drag-and-drop populations and projections, NIR export/import
+- Full pipeline: network graph → validate → simulate → compile → synthesise in one click
+- Project save/load: persistent JSON workspaces on server
+- E-I balanced network simulation with Rust engine fast path
+- 140+ Studio-specific tests
+- Documentation: 7 pages on GitHub Pages, 10-step quickstart tutorial
+- Launch: `pip install sc-neurocore[studio] && sc-neurocore studio`
+
+### Rust Engine
+- `py_simulate_ei_network()`: fused E-I network simulation (CSR + Poisson + Euler) in single Rust call
+- `py_batch_simulate()`: batch model simulation with NeuronVariant dispatch loop
+- `create_neuron()` made `pub` for reuse across lib.rs
+- 288 Rust tests passing
+
+### Performance
+- Model list caching: first `/api/models` call loads 118 models in ~1s, subsequent calls <1ms
+
+### Security
+- 25 CodeQL "information exposure through exception" fixes — no tracebacks in HTTP responses
+- 5 CodeQL "uncontrolled data in path expression" fixes — project name sanitisation
+- DOMPurify XSS fix via npm override (>=3.3.2)
+- Bandit: MD5 usedforsecurity=False, narrowed bare except clauses
+
+### CI
+- Engine wheel publish job added to publish.yml (PyPI OIDC)
+- Bridge ImportError restored for pytest.importorskip compatibility
+- PnR added to typos dictionary
+- tsconfig.tsbuildinfo gitignored
+- uvicorn skip guard for studio optional extra
+
 ## [Unreleased]
 
 ### NIR Bridge

@@ -11,7 +11,7 @@ Commercial Licensing: Available
 </p>
 
 [![CI](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml/badge.svg)](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-3.13.3-blue)](https://github.com/anulum/sc-neurocore/releases)
+[![Version](https://img.shields.io/badge/version-3.14.0-blue)](https://github.com/anulum/sc-neurocore/releases)
 [![Coverage](https://img.shields.io/badge/core_coverage-100%25-brightgreen)](https://github.com/anulum/sc-neurocore)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://anulum.github.io/sc-neurocore/)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
@@ -22,7 +22,7 @@ Commercial Licensing: Available
 [![REUSE](https://img.shields.io/badge/REUSE-compliant-green)](https://reuse.software/)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)
 
-**Version:** 3.13.3
+**Version:** 3.14.0
 **Status:** 116 Neuron Models (107 Bio + 9 AI) | 99.49% MNIST (ConvSNN) | 2 928 Python tests passing (3 132 collected) + 378 Rust tests | 100% Core Coverage (322/535 files; optional/experimental excluded) | 109 Rust Neuron Models | 80-Model NetworkRunner
 
 <p align="center">
