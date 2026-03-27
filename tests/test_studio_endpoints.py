@@ -17,7 +17,7 @@ from starlette.testclient import TestClient
 from sc_neurocore.studio.app import create_app
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def client():
     app = create_app()
     return TestClient(app)
