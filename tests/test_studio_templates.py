@@ -12,8 +12,18 @@ import pytest
 from sc_neurocore.studio.templates import TEMPLATES, get_template, list_templates
 
 
-REQUIRED_KEYS = {"name", "description", "equations", "threshold", "reset",
-                 "params", "init", "dt", "current", "duration"}
+REQUIRED_KEYS = {
+    "name",
+    "description",
+    "equations",
+    "threshold",
+    "reset",
+    "params",
+    "init",
+    "dt",
+    "current",
+    "duration",
+}
 
 
 class TestTemplateStructure:
