@@ -157,6 +157,8 @@ nav:
       - Spiking Neural ODEs: tutorials/82_spike_ode.md
       - Topology Analysis: tutorials/83_topology.md
       - Few-Shot Learning: tutorials/84_few_shot.md
+  - Benchmarks:
+      - Cross-Framework Comparison: benchmarks/cross_framework.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
