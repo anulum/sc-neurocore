@@ -11,6 +11,8 @@ import VerilogPreview from "./components/VerilogPreview";
 import MultiModelPicker from "./components/MultiModelPicker";
 import NetworkControls from "./components/NetworkControls";
 import ComparePanel from "./components/ComparePanel";
+import KeyboardHelp from "./components/KeyboardHelp";
+import StatusBar from "./components/StatusBar";
 
 function Tab({ active, color, label, onClick }: {
   active: boolean; color: string; label: string; onClick: () => void;
@@ -295,6 +297,8 @@ export default function App() {
           )}
         </div>
       </div>
+      <StatusBar />
+      <KeyboardHelp />
     </div>
   );
 }
