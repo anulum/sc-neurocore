@@ -11,8 +11,12 @@ import numpy as np
 
 
 def bifurcation_sweep(
-    simulate_fn, base_config: dict,
-    param_name: str, param_min: float, param_max: float, n_values: int = 30,
+    simulate_fn,
+    base_config: dict,
+    param_name: str,
+    param_min: float,
+    param_max: float,
+    n_values: int = 30,
 ) -> dict:
     """Sweep one parameter and extract voltage attractors at each value.
 
@@ -31,7 +35,7 @@ def bifurcation_sweep(
         result = simulate_fn(**cfg)
         v = result["states"][list(result["states"].keys())[0]]
         # Use second half to skip transient
-        half = v[len(v) // 2:]
+        half = v[len(v) // 2 :]
         if len(half) < 10:
             attractors.append([])
             continue
@@ -40,10 +44,12 @@ def bifurcation_sweep(
         diffs = np.diff(np.sign(np.diff(arr)))
         maxima = arr[1:-1][diffs < 0]
         minima = arr[1:-1][diffs > 0]
-        extrema = sorted(set(
-            [round(float(x), 2) for x in maxima[-20:]] +
-            [round(float(x), 2) for x in minima[-20:]]
-        ))
+        extrema = sorted(
+            set(
+                [round(float(x), 2) for x in maxima[-20:]]
+                + [round(float(x), 2) for x in minima[-20:]]
+            )
+        )
         if not extrema:
             extrema = [round(float(np.mean(half)), 2)]
         attractors.append(extrema)
@@ -52,7 +58,9 @@ def bifurcation_sweep(
 
 
 def sensitivity_analysis(
-    simulate_fn, base_config: dict, param_names: list[str],
+    simulate_fn,
+    base_config: dict,
+    param_names: list[str],
     perturbation: float = 0.1,
 ) -> dict:
     """Compute firing rate sensitivity to each parameter (±perturbation fraction)."""
@@ -78,21 +86,25 @@ def sensitivity_analysis(
             results.append(r["stats"]["rate_hz"])
 
         deriv = (results[1] - results[0]) / (2 * delta) if delta > 0 else 0.0
-        sensitivities.append({
-            "param": pname,
-            "sensitivity": round(abs(deriv) * abs(base_val) / max(base_rate, 0.1), 4),
-            "base_rate": base_rate,
-            "rate_minus": results[0],
-            "rate_plus": results[1],
-        })
+        sensitivities.append(
+            {
+                "param": pname,
+                "sensitivity": round(abs(deriv) * abs(base_val) / max(base_rate, 0.1), 4),
+                "base_rate": base_rate,
+                "rate_minus": results[0],
+                "rate_plus": results[1],
+            }
+        )
 
     sensitivities.sort(key=lambda s: s["sensitivity"], reverse=True)
     return {"base_rate": base_rate, "sensitivities": sensitivities}
 
 
 def nullclines_2d(
-    equations: list[str], params: dict[str, float],
-    var_names: list[str], ranges: dict[str, tuple[float, float]],
+    equations: list[str],
+    params: dict[str, float],
+    var_names: list[str],
+    ranges: dict[str, tuple[float, float]],
     grid_size: int = 80,
 ) -> dict:
     """Compute nullclines for a 2-variable ODE system on a grid."""
@@ -152,9 +164,16 @@ def nullclines_2d(
 
 
 def heatmap_2d(
-    simulate_fn, base_config: dict,
-    param_x: str, x_min: float, x_max: float, x_steps: int,
-    param_y: str, y_min: float, y_max: float, y_steps: int,
+    simulate_fn,
+    base_config: dict,
+    param_x: str,
+    x_min: float,
+    x_max: float,
+    x_steps: int,
+    param_y: str,
+    y_min: float,
+    y_max: float,
+    y_steps: int,
 ) -> dict:
     """Sweep two parameters and compute firing rate heatmap."""
     x_vals = np.linspace(x_min, x_max, x_steps).tolist()
@@ -175,8 +194,10 @@ def heatmap_2d(
                 rates[j, i] = 0.0
 
     return {
-        "param_x": param_x, "x_values": x_vals,
-        "param_y": param_y, "y_values": y_vals,
+        "param_x": param_x,
+        "x_values": x_vals,
+        "param_y": param_y,
+        "y_values": y_vals,
         "rates": rates.tolist(),
         "rate_min": float(np.min(rates)),
         "rate_max": float(np.max(rates)),
@@ -184,8 +205,11 @@ def heatmap_2d(
 
 
 def spike_triggered_average(
-    time: list[float], voltage: list[float], spikes: list[int],
-    dt: float, window_ms: float = 20.0,
+    time: list[float],
+    voltage: list[float],
+    spikes: list[int],
+    dt: float,
+    window_ms: float = 20.0,
 ) -> dict:
     """Compute spike-triggered average of voltage around each spike."""
     if len(spikes) < 2:
@@ -217,8 +241,11 @@ def spike_triggered_average(
 
 
 def frequency_response(
-    simulate_fn, base_config: dict,
-    freq_min: float = 1.0, freq_max: float = 100.0, n_freqs: int = 20,
+    simulate_fn,
+    base_config: dict,
+    freq_min: float = 1.0,
+    freq_max: float = 100.0,
+    n_freqs: int = 20,
     amplitude: float = 10.0,
 ) -> dict:
     """Sweep sinusoidal current frequency and measure spike rate response."""
@@ -256,16 +283,27 @@ def frequency_response(
 
 
 def precision_compare(
-    equations: list[str], threshold: str | None, reset: str | None,
-    params: dict[str, float] | None, init: dict[str, float] | None,
-    dt: float, duration: float, current: float,
+    equations: list[str],
+    threshold: str | None,
+    reset: str | None,
+    params: dict[str, float] | None,
+    init: dict[str, float] | None,
+    dt: float,
+    duration: float,
+    current: float,
 ) -> dict:
     """Compare float64 vs Q8.8 fixed-point simulation of the same ODE."""
     from sc_neurocore.studio.simulation import simulate
 
     float_result = simulate(
-        equations=equations, threshold=threshold, reset=reset,
-        params=params, init=init, dt=dt, duration=duration, current=current,
+        equations=equations,
+        threshold=threshold,
+        reset=reset,
+        params=params,
+        init=init,
+        dt=dt,
+        duration=duration,
+        current=current,
     )
 
     # Q8.8: quantize params to 16-bit fixed point (8.8 format)
@@ -277,8 +315,14 @@ def precision_compare(
     q_init = {k: q88(v) for k, v in (init or {}).items()}
 
     fixed_result = simulate(
-        equations=equations, threshold=threshold, reset=reset,
-        params=q_params, init=q_init, dt=dt, duration=duration, current=current,
+        equations=equations,
+        threshold=threshold,
+        reset=reset,
+        params=q_params,
+        init=q_init,
+        dt=dt,
+        duration=duration,
+        current=current,
     )
 
     # Compute error

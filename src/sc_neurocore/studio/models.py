@@ -14,11 +14,45 @@ from typing import Any
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
 
 # State variable names that change during .step() — common across models
-_KNOWN_STATE_VARS = {"v", "m", "h", "n", "w", "u", "g_e", "g_i", "s", "r", "q",
-                     "ca", "ca_i", "ca_concentration", "a", "b", "z", "x", "y",
-                     "phase", "amplitude", "trace", "s_trace", "refractory_timer",
-                     "n_k", "h_na", "m_na", "m_t", "h_t", "m_a", "h_a",
-                     "m_kd", "m_h", "m_ca", "h_ca", "m_nap", "h_nap"}
+_KNOWN_STATE_VARS = {
+    "v",
+    "m",
+    "h",
+    "n",
+    "w",
+    "u",
+    "g_e",
+    "g_i",
+    "s",
+    "r",
+    "q",
+    "ca",
+    "ca_i",
+    "ca_concentration",
+    "a",
+    "b",
+    "z",
+    "x",
+    "y",
+    "phase",
+    "amplitude",
+    "trace",
+    "s_trace",
+    "refractory_timer",
+    "n_k",
+    "h_na",
+    "m_na",
+    "m_t",
+    "h_t",
+    "m_a",
+    "h_a",
+    "m_kd",
+    "m_h",
+    "m_ca",
+    "h_ca",
+    "m_nap",
+    "h_nap",
+}
 
 
 def _load_class(name: str) -> type:
@@ -35,13 +69,15 @@ def _classify_fields(cls: type) -> tuple[list[dict], list[dict]]:
         if f.name == "dt":
             continue
         default = f.default if f.default is not dataclasses.MISSING else 0.0
-        entry = {"name": f.name, "default": float(default) if isinstance(default, (int, float)) else 0.0}
+        entry = {
+            "name": f.name,
+            "default": float(default) if isinstance(default, (int, float)) else 0.0,
+        }
         if f.name in _KNOWN_STATE_VARS or f.name.startswith("v") and len(f.name) <= 2:
             state_vars.append(entry)
-        elif (
-            f.name.startswith(("v_", "e_", "g_", "tau_", "c_", "sigma", "alpha", "beta"))
-            or f.name.endswith(("_threshold", "_reset", "_rest", "_rev", "_max", "_min"))
-        ):
+        elif f.name.startswith(
+            ("v_", "e_", "g_", "tau_", "c_", "sigma", "alpha", "beta")
+        ) or f.name.endswith(("_threshold", "_reset", "_rest", "_rev", "_max", "_min")):
             params.append(entry)
         elif f.name in _KNOWN_STATE_VARS:
             state_vars.append(entry)
@@ -53,19 +89,79 @@ def _classify_fields(cls: type) -> tuple[list[dict], list[dict]]:
 
 
 _CATEGORY_RULES = [
-    ("Conductance", ["HodgkinHuxley", "ConnorStevens", "WangBuzsaki", "TraubMiles",
-                     "PinskyRinzel", "MainenSejnowski", "BoothRinzel", "HayL5",
-                     "COBA", "TwoCompartment", "ReducedTraub"]),
-    ("Integrate-and-Fire", ["LIF", "IF", "QIF", "EIF", "AdEx", "CLIF", "Adaptive",
-                           "GIF", "GLIF", "Mihalas", "Brette", "Integer"]),
-    ("Oscillator", ["FitzHugh", "MorrisLecar", "Hindmarsh", "VanDerPol", "Theta",
-                    "Selkov", "Oregonator", "Lotka"]),
+    (
+        "Conductance",
+        [
+            "HodgkinHuxley",
+            "ConnorStevens",
+            "WangBuzsaki",
+            "TraubMiles",
+            "PinskyRinzel",
+            "MainenSejnowski",
+            "BoothRinzel",
+            "HayL5",
+            "COBA",
+            "TwoCompartment",
+            "ReducedTraub",
+        ],
+    ),
+    (
+        "Integrate-and-Fire",
+        [
+            "LIF",
+            "IF",
+            "QIF",
+            "EIF",
+            "AdEx",
+            "CLIF",
+            "Adaptive",
+            "GIF",
+            "GLIF",
+            "Mihalas",
+            "Brette",
+            "Integer",
+        ],
+    ),
+    (
+        "Oscillator",
+        [
+            "FitzHugh",
+            "MorrisLecar",
+            "Hindmarsh",
+            "VanDerPol",
+            "Theta",
+            "Selkov",
+            "Oregonator",
+            "Lotka",
+        ],
+    ),
     ("Bursting", ["Chay", "Izhikevich", "Bertram", "Butera", "Rulkov", "Map"]),
     ("Hardware", ["Loihi", "SpiNNaker", "Akida", "BrainScale", "TrueNorth", "DPI", "Xylo"]),
-    ("Network/Population", ["WilsonCowan", "WongWang", "JansenRit", "Wendling",
-                            "Ermentrout", "Amari", "Compte", "Larter"]),
-    ("Statistical", ["Poisson", "Gamma", "GLM", "SpikeResponse", "GalvesLocherbach",
-                     "McCullochPitts", "Renewal"]),
+    (
+        "Network/Population",
+        [
+            "WilsonCowan",
+            "WongWang",
+            "JansenRit",
+            "Wendling",
+            "Ermentrout",
+            "Amari",
+            "Compte",
+            "Larter",
+        ],
+    ),
+    (
+        "Statistical",
+        [
+            "Poisson",
+            "Gamma",
+            "GLM",
+            "SpikeResponse",
+            "GalvesLocherbach",
+            "McCullochPitts",
+            "Renewal",
+        ],
+    ),
     ("AI-Optimized", ["Attention", "Compositional", "CFC", "Arcane"]),
 ]
 
@@ -87,17 +183,23 @@ def list_models() -> list[dict]:
                 continue
             state_vars, params = _classify_fields(cls)
             dt_field = next((f for f in dataclasses.fields(cls) if f.name == "dt"), None)
-            dt_val = float(dt_field.default) if dt_field and dt_field.default is not dataclasses.MISSING else 0.1
-            result.append({
-                "name": name,
-                "module": _CLASS_TO_MODULE[name],
-                "category": _categorize(name),
-                "n_state_vars": len(state_vars),
-                "n_params": len(params),
-                "state_var_names": [s["name"] for s in state_vars],
-                "dt": dt_val,
-                "description": (cls.__doc__ or "").strip().split("\n")[0],
-            })
+            dt_val = (
+                float(dt_field.default)
+                if dt_field and dt_field.default is not dataclasses.MISSING
+                else 0.1
+            )
+            result.append(
+                {
+                    "name": name,
+                    "module": _CLASS_TO_MODULE[name],
+                    "category": _categorize(name),
+                    "n_state_vars": len(state_vars),
+                    "n_params": len(params),
+                    "state_var_names": [s["name"] for s in state_vars],
+                    "dt": dt_val,
+                    "description": (cls.__doc__ or "").strip().split("\n")[0],
+                }
+            )
         except Exception:
             continue
     return result
@@ -113,7 +215,11 @@ def get_model_detail(name: str) -> dict | None:
             return None
         state_vars, params = _classify_fields(cls)
         dt_field = next((f for f in dataclasses.fields(cls) if f.name == "dt"), None)
-        dt_val = float(dt_field.default) if dt_field and dt_field.default is not dataclasses.MISSING else 0.1
+        dt_val = (
+            float(dt_field.default)
+            if dt_field and dt_field.default is not dataclasses.MISSING
+            else 0.1
+        )
         return {
             "name": name,
             "module": _CLASS_TO_MODULE[name],
@@ -130,6 +236,7 @@ def get_model_detail(name: str) -> dict | None:
 def _detect_step_kwarg(cls: type) -> str:
     """Figure out what keyword the .step() method uses for current injection."""
     import inspect
+
     sig = inspect.signature(cls.step)
     params = list(sig.parameters.keys())
     # Skip 'self'
@@ -152,7 +259,12 @@ def simulate_model(
 ) -> dict[str, Any]:
     """Simulate a named model and return traces."""
     import numpy as np
-    from sc_neurocore.studio.simulation import MAX_PLOT_POINTS, MAX_STEPS, _make_current_trace, _spike_stats
+    from sc_neurocore.studio.simulation import (
+        MAX_PLOT_POINTS,
+        MAX_STEPS,
+        _make_current_trace,
+        _spike_stats,
+    )
 
     if name not in _CLASS_TO_MODULE:
         raise ValueError(f"Unknown model: {name}")
@@ -171,7 +283,11 @@ def simulate_model(
                 continue
             default = valid_fields[k]
             # Skip if value matches default (avoids float→int type issues)
-            if default is not None and isinstance(default, (int, float)) and abs(v - default) < 1e-12:
+            if (
+                default is not None
+                and isinstance(default, (int, float))
+                and abs(v - default) < 1e-12
+            ):
                 continue
             # Preserve int type for integer-arithmetic models
             if default is not None and isinstance(default, int):
@@ -185,8 +301,9 @@ def simulate_model(
         neuron = cls(**kwargs)
     except (TypeError, OverflowError):
         # Some models need int params (bitshift arithmetic)
-        int_kwargs = {k: int(v) if isinstance(v, float) and v == int(v) else v
-                      for k, v in kwargs.items()}
+        int_kwargs = {
+            k: int(v) if isinstance(v, float) and v == int(v) else v for k, v in kwargs.items()
+        }
         try:
             neuron = cls(**int_kwargs)
         except (TypeError, OverflowError):

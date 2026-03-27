@@ -122,7 +122,9 @@ def generate_oneliner(
 
 
 def classify_firing_pattern(
-    spikes: list[int], n_steps: int, dt: float,
+    spikes: list[int],
+    n_steps: int,
+    dt: float,
 ) -> dict:
     """Classify the firing pattern from spike indices."""
     if len(spikes) == 0:
@@ -132,10 +134,14 @@ def classify_firing_pattern(
     rate = len(spikes) / duration_s if duration_s > 0 else 0
 
     if len(spikes) < 3:
-        return {"pattern": "single_spike", "description": f"Only {len(spikes)} spike(s)",
-                "rate_hz": round(rate, 1)}
+        return {
+            "pattern": "single_spike",
+            "description": f"Only {len(spikes)} spike(s)",
+            "rate_hz": round(rate, 1),
+        }
 
     import numpy as np
+
     isis = np.diff(spikes).astype(float) * dt
     isi_mean = float(np.mean(isis))
     isi_cv = float(np.std(isis) / isi_mean) if isi_mean > 0 else 0
@@ -152,29 +158,43 @@ def classify_firing_pattern(
                 return {
                     "pattern": "bursting",
                     "description": f"Burst-pause pattern (ISI ratio {ratio:.1f}x)",
-                    "rate_hz": round(rate, 1), "isi_cv": round(isi_cv, 3),
+                    "rate_hz": round(rate, 1),
+                    "isi_cv": round(isi_cv, 3),
                     "burst_isi_ms": round(float(np.mean(short)), 2),
                     "inter_burst_ms": round(float(np.mean(long)), 2),
                 }
 
     # Detect adaptation: ISIs increase over time
     if len(isis) >= 5:
-        first_third = np.mean(isis[:len(isis) // 3])
-        last_third = np.mean(isis[-len(isis) // 3:])
+        first_third = np.mean(isis[: len(isis) // 3])
+        last_third = np.mean(isis[-len(isis) // 3 :])
         if last_third > first_third * 1.3:
             return {
                 "pattern": "adapting",
                 "description": f"Spike-frequency adaptation ({first_third:.1f}→{last_third:.1f} ms ISI)",
-                "rate_hz": round(rate, 1), "isi_cv": round(isi_cv, 3),
+                "rate_hz": round(rate, 1),
+                "isi_cv": round(isi_cv, 3),
             }
 
     if isi_cv < 0.15:
-        return {"pattern": "tonic", "description": f"Regular tonic firing (CV={isi_cv:.3f})",
-                "rate_hz": round(rate, 1), "isi_cv": round(isi_cv, 3)}
+        return {
+            "pattern": "tonic",
+            "description": f"Regular tonic firing (CV={isi_cv:.3f})",
+            "rate_hz": round(rate, 1),
+            "isi_cv": round(isi_cv, 3),
+        }
 
     if isi_cv < 0.5:
-        return {"pattern": "irregular", "description": f"Irregular spiking (CV={isi_cv:.3f})",
-                "rate_hz": round(rate, 1), "isi_cv": round(isi_cv, 3)}
+        return {
+            "pattern": "irregular",
+            "description": f"Irregular spiking (CV={isi_cv:.3f})",
+            "rate_hz": round(rate, 1),
+            "isi_cv": round(isi_cv, 3),
+        }
 
-    return {"pattern": "chaotic", "description": f"Highly irregular/chaotic (CV={isi_cv:.3f})",
-            "rate_hz": round(rate, 1), "isi_cv": round(isi_cv, 3)}
+    return {
+        "pattern": "chaotic",
+        "description": f"Highly irregular/chaotic (CV={isi_cv:.3f})",
+        "rate_hz": round(rate, 1),
+        "isi_cv": round(isi_cv, 3),
+    }

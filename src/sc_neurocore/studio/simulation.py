@@ -20,8 +20,12 @@ def _spike_stats(spike_indices: list[int], dt: float, n_steps: int) -> dict:
     duration_s = n_steps * dt / 1000.0
     rate = len(spike_indices) / duration_s if duration_s > 0 else 0.0
     if len(spike_indices) < 2:
-        return {"rate_hz": round(rate, 2), "isi_mean_ms": None, "isi_cv": None,
-                "isi_histogram": None}
+        return {
+            "rate_hz": round(rate, 2),
+            "isi_mean_ms": None,
+            "isi_cv": None,
+            "isi_histogram": None,
+        }
     isis = np.diff(spike_indices).astype(float) * dt
     isi_mean = float(np.mean(isis))
     isi_std = float(np.std(isis))
@@ -37,9 +41,13 @@ def _spike_stats(spike_indices: list[int], dt: float, n_steps: int) -> dict:
 
 
 def _make_current_trace(
-    protocol: str, current: float, n_steps: int,
-    step_onset: float = 0.2, step_offset: float = 0.8,
-    ramp_start: float = 0.0, ramp_end: float | None = None,
+    protocol: str,
+    current: float,
+    n_steps: int,
+    step_onset: float = 0.2,
+    step_offset: float = 0.8,
+    ramp_start: float = 0.0,
+    ramp_end: float | None = None,
 ) -> np.ndarray:
     """Generate a current injection trace for the given protocol."""
     I = np.zeros(n_steps)
@@ -143,9 +151,15 @@ def fi_curve(
     rates: list[float] = []
     for I_val in currents:
         result = simulate(
-            equations=equations, threshold=threshold, reset=reset,
-            params=params, init=init, dt=dt, duration=duration,
-            current=I_val, protocol="constant",
+            equations=equations,
+            threshold=threshold,
+            reset=reset,
+            params=params,
+            init=init,
+            dt=dt,
+            duration=duration,
+            current=I_val,
+            protocol="constant",
         )
         rates.append(result["stats"]["rate_hz"])
     return {"currents": currents, "rates": rates}

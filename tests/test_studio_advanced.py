@@ -30,6 +30,7 @@ def client():
 
 # --- Network simulation ---
 
+
 class TestNetwork:
     def test_basic_ei_network(self):
         r = simulate_ei_network(n_exc=20, n_inh=5, duration=50.0, ext_rate=10.0)
@@ -50,9 +51,15 @@ class TestNetwork:
         assert len(r["inh_rates"]) == len(r["rate_time"])
 
     def test_network_endpoint(self, client):
-        r = client.post("/api/network/ei", json={
-            "n_exc": 20, "n_inh": 5, "duration": 30, "ext_rate": 10,
-        })
+        r = client.post(
+            "/api/network/ei",
+            json={
+                "n_exc": 20,
+                "n_inh": 5,
+                "duration": 30,
+                "ext_rate": 10,
+            },
+        )
         assert r.status_code == 200
         d = r.json()
         assert d["n_total"] == 25
@@ -60,6 +67,7 @@ class TestNetwork:
 
 
 # --- Characterise ---
+
 
 class TestCharacterize:
     def test_characterize_lif(self):
@@ -83,23 +91,42 @@ class TestCharacterize:
         assert "state_ranges" in r
 
     def test_characterize_endpoint(self, client):
-        r = client.post("/api/characterize", json={
-            "name": "HodgkinHuxleyNeuron", "current": 10, "duration": 50, "dt": 0.01,
-        })
+        r = client.post(
+            "/api/characterize",
+            json={
+                "name": "HodgkinHuxleyNeuron",
+                "current": 10,
+                "duration": 50,
+                "dt": 0.01,
+            },
+        )
         assert r.status_code == 200
         d = r.json()
-        assert d["pattern"]["pattern"] in ("tonic", "bursting", "adapting", "irregular", "chaotic", "silent", "single_spike")
+        assert d["pattern"]["pattern"] in (
+            "tonic",
+            "bursting",
+            "adapting",
+            "irregular",
+            "chaotic",
+            "silent",
+            "single_spike",
+        )
 
 
 # --- Codegen ---
+
 
 class TestCodegenAdvanced:
     def test_ode_script(self):
         script = generate_ode_script(
             equations=["dv/dt = -(v - E_L) / tau_m + I / C"],
-            threshold="v > -50", reset="v = -65",
+            threshold="v > -50",
+            reset="v = -65",
             params={"E_L": -65.0, "tau_m": 10.0, "C": 1.0},
-            init={"v": -65.0}, duration=100, current=30, dt=0.1,
+            init={"v": -65.0},
+            duration=100,
+            current=30,
+            dt=0.1,
         )
         assert "from_equations" in script
         assert "E_L" in script
@@ -130,80 +157,130 @@ class TestCodegenAdvanced:
 
 # --- Analysis functions ---
 
+
 class TestAnalysisFunctions:
     def test_bifurcation_endpoint(self, client):
-        r = client.post("/api/bifurcation", json={
-            "equations": ["dv/dt = -(v - E_L) / tau_m + I / C"],
-            "threshold": "v > -50", "reset": "v = -65",
-            "params": {"E_L": -65.0, "tau_m": 10.0, "C": 1.0},
-            "init": {"v": -65.0}, "dt": 0.1, "duration": 100, "current": 30,
-            "sweep_param": "C", "sweep_min": 0.5, "sweep_max": 3.0, "sweep_steps": 5,
-        })
+        r = client.post(
+            "/api/bifurcation",
+            json={
+                "equations": ["dv/dt = -(v - E_L) / tau_m + I / C"],
+                "threshold": "v > -50",
+                "reset": "v = -65",
+                "params": {"E_L": -65.0, "tau_m": 10.0, "C": 1.0},
+                "init": {"v": -65.0},
+                "dt": 0.1,
+                "duration": 100,
+                "current": 30,
+                "sweep_param": "C",
+                "sweep_min": 0.5,
+                "sweep_max": 3.0,
+                "sweep_steps": 5,
+            },
+        )
         assert r.status_code == 200
         d = r.json()
         assert len(d["param_values"]) == 5
         assert len(d["attractors"]) == 5
 
     def test_sensitivity_endpoint(self, client):
-        r = client.post("/api/sensitivity", json={
-            "equations": ["dv/dt = -(v - E_L) / tau_m + I / C"],
-            "threshold": "v > -50", "reset": "v = -65",
-            "params": {"E_L": -65.0, "tau_m": 10.0, "C": 1.0},
-            "init": {"v": -65.0}, "dt": 0.1, "duration": 100, "current": 30,
-        })
+        r = client.post(
+            "/api/sensitivity",
+            json={
+                "equations": ["dv/dt = -(v - E_L) / tau_m + I / C"],
+                "threshold": "v > -50",
+                "reset": "v = -65",
+                "params": {"E_L": -65.0, "tau_m": 10.0, "C": 1.0},
+                "init": {"v": -65.0},
+                "dt": 0.1,
+                "duration": 100,
+                "current": 30,
+            },
+        )
         assert r.status_code == 200
         d = r.json()
         assert "sensitivities" in d
         assert len(d["sensitivities"]) > 0
 
     def test_precision_endpoint(self, client):
-        r = client.post("/api/precision", json={
-            "equations": ["dv/dt = -(v - E_L) / tau_m + I / C"],
-            "threshold": "v > -50", "reset": "v = -65",
-            "params": {"E_L": -65.0, "tau_m": 10.0, "C": 1.0},
-            "init": {"v": -65.0}, "dt": 0.1, "duration": 50, "current": 30,
-        })
+        r = client.post(
+            "/api/precision",
+            json={
+                "equations": ["dv/dt = -(v - E_L) / tau_m + I / C"],
+                "threshold": "v > -50",
+                "reset": "v = -65",
+                "params": {"E_L": -65.0, "tau_m": 10.0, "C": 1.0},
+                "init": {"v": -65.0},
+                "dt": 0.1,
+                "duration": 50,
+                "current": 30,
+            },
+        )
         assert r.status_code == 200
         d = r.json()
         assert "error" in d
         assert d["error"]["max_error"] >= 0
 
     def test_heatmap_endpoint(self, client):
-        r = client.post("/api/heatmap", json={
-            "equations": ["dv/dt = -(v - E_L) / tau_m + I / C"],
-            "threshold": "v > -50", "reset": "v = -65",
-            "params": {"E_L": -65.0, "tau_m": 10.0, "C": 1.0},
-            "init": {"v": -65.0}, "dt": 0.1, "duration": 50, "current": 30,
-            "param_x": "tau_m", "x_min": 5, "x_max": 20, "x_steps": 3,
-            "param_y": "C", "y_min": 0.5, "y_max": 2.0, "y_steps": 3,
-        })
+        r = client.post(
+            "/api/heatmap",
+            json={
+                "equations": ["dv/dt = -(v - E_L) / tau_m + I / C"],
+                "threshold": "v > -50",
+                "reset": "v = -65",
+                "params": {"E_L": -65.0, "tau_m": 10.0, "C": 1.0},
+                "init": {"v": -65.0},
+                "dt": 0.1,
+                "duration": 50,
+                "current": 30,
+                "param_x": "tau_m",
+                "x_min": 5,
+                "x_max": 20,
+                "x_steps": 3,
+                "param_y": "C",
+                "y_min": 0.5,
+                "y_max": 2.0,
+                "y_steps": 3,
+            },
+        )
         assert r.status_code == 200
         d = r.json()
         assert len(d["rates"]) == 3
         assert len(d["rates"][0]) == 3
 
     def test_compile_endpoint(self, client):
-        r = client.post("/api/compile", json={
-            "equations": ["dv/dt = -(v - E_L) / tau_m + I / C"],
-            "threshold": "v > -50", "reset": "v = -65",
-            "params": {"E_L": -65.0, "tau_m": 10.0, "C": 1.0},
-        })
+        r = client.post(
+            "/api/compile",
+            json={
+                "equations": ["dv/dt = -(v - E_L) / tau_m + I / C"],
+                "threshold": "v > -50",
+                "reset": "v = -65",
+                "params": {"E_L": -65.0, "tau_m": 10.0, "C": 1.0},
+            },
+        )
         assert r.status_code == 200
         d = r.json()
         assert "module" in d["verilog"]
         assert d["chars"] > 100
 
     def test_codegen_endpoint(self, client):
-        r = client.post("/api/codegen", json={
-            "mode": "ode",
-            "equations": ["dv/dt = -(v + 65) / 10 + I"],
-            "params": {}, "init": {"v": -65}, "dt": 0.1, "duration": 100, "current": 30,
-        })
+        r = client.post(
+            "/api/codegen",
+            json={
+                "mode": "ode",
+                "equations": ["dv/dt = -(v + 65) / 10 + I"],
+                "params": {},
+                "init": {"v": -65},
+                "dt": 0.1,
+                "duration": 100,
+                "current": 30,
+            },
+        )
         assert r.status_code == 200
         assert "from_equations" in r.json()["script"]
 
 
 # --- Presets ---
+
 
 class TestPresets:
     def test_list_presets(self, client):
@@ -226,22 +303,37 @@ class TestPresets:
 
 # --- Error handling ---
 
+
 class TestErrorHandling:
     def test_bad_model_name(self, client):
-        r = client.post("/api/models/simulate", json={
-            "name": "NonExistentNeuron", "current": 10, "duration": 50,
-        })
+        r = client.post(
+            "/api/models/simulate",
+            json={
+                "name": "NonExistentNeuron",
+                "current": 10,
+                "duration": 50,
+            },
+        )
         assert r.status_code == 422
 
     def test_bad_ode_equation(self, client):
-        r = client.post("/api/simulate", json={
-            "equations": ["this is not an ODE"],
-            "dt": 0.1, "duration": 10,
-        })
+        r = client.post(
+            "/api/simulate",
+            json={
+                "equations": ["this is not an ODE"],
+                "dt": 0.1,
+                "duration": 10,
+            },
+        )
         assert r.status_code == 422
 
     def test_negative_duration(self, client):
-        r = client.post("/api/simulate", json={
-            "equations": ["dv/dt = I"], "dt": 0.1, "duration": -10,
-        })
+        r = client.post(
+            "/api/simulate",
+            json={
+                "equations": ["dv/dt = I"],
+                "dt": 0.1,
+                "duration": -10,
+            },
+        )
         assert r.status_code == 422
