@@ -55,10 +55,17 @@ _KNOWN_STATE_VARS = {
 }
 
 
+_class_cache: dict[str, type] = {}
+
+
 def _load_class(name: str) -> type:
+    if name in _class_cache:
+        return _class_cache[name]
     module_name = _CLASS_TO_MODULE[name]
     mod = importlib.import_module(f"sc_neurocore.neurons.models.{module_name}")
-    return getattr(mod, name)
+    cls = getattr(mod, name)
+    _class_cache[name] = cls
+    return cls
 
 
 def _classify_fields(cls: type) -> tuple[list[dict], list[dict]]:
@@ -173,8 +180,18 @@ def _categorize(name: str) -> str:
     return "Other"
 
 
+_models_cache: list[dict] | None = None
+
+
 def list_models() -> list[dict]:
-    """Return metadata for all 118 neuron models with categories."""
+    """Return metadata for all 118 neuron models with categories.
+
+    Results are cached after first call — subsequent calls return instantly.
+    """
+    global _models_cache
+    if _models_cache is not None:
+        return _models_cache
+
     result = []
     for name in sorted(_CLASS_TO_MODULE.keys()):
         try:
@@ -202,6 +219,7 @@ def list_models() -> list[dict]:
             )
         except (TypeError, AttributeError, ValueError):
             continue
+    _models_cache = result
     return result
 
 
