@@ -15,6 +15,7 @@ import KeyboardHelp from "./components/KeyboardHelp";
 import StatusBar from "./components/StatusBar";
 import CompilerInspector from "./components/CompilerInspector";
 import SynthesisDashboard from "./components/SynthesisDashboard";
+import TrainingMonitor from "./components/TrainingMonitor";
 
 function Tab({ active, color, label, onClick }: {
   active: boolean; color: string; label: string; onClick: () => void;
@@ -120,6 +121,7 @@ export default function App() {
           </>
         )}
 
+        <Btn label="Train" onClick={() => s.setActiveTab("train")} color="#b39ddb" />
         <Btn label="E-I Net" onClick={s.runNetwork} disabled={s.isSimulating} color="#80cbc4" />
         <Btn label="STA" onClick={s.computeSTA} disabled={!s.result || s.result.spikes.length < 3} color="#b0bec5" />
         <Btn label="Freq" onClick={s.runFreqResponse} disabled={s.isSimulating} color="#fff176" />
@@ -163,6 +165,7 @@ export default function App() {
               <Tab active={s.activeTab === "synth"} color="#a5d6a7" label="FPGA" onClick={() => s.setActiveTab("synth")} />
             </>
           )}
+          <Tab active={s.activeTab === "train"} color="#b39ddb" label="Train" onClick={() => s.setActiveTab("train")} />
         </div>
 
         {pattern && (
@@ -279,7 +282,9 @@ export default function App() {
         </div>
 
         <div className="right-panel">
-          {s.activeTab === "synth" ? (
+          {s.activeTab === "train" ? (
+            <TrainingMonitor />
+          ) : s.activeTab === "synth" ? (
             <SynthesisDashboard />
           ) : s.activeTab === "ir" ? (
             <CompilerInspector />

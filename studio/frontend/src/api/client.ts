@@ -263,3 +263,61 @@ export const fetchSynthEstimate = (irOpCount: number, target: string) =>
   post<SynthEstimate>("/synth/estimate", { ir_op_count: irOpCount, target });
 export const runPnR = (jsonPath: string, target: string) =>
   post<PnRResult>("/synth/pnr", { json_path: jsonPath, target });
+
+// --- Training Monitor (Block 4) ---
+
+export interface SurrogateInfo {
+  name: string;
+  available: boolean;
+}
+
+export interface CellTypeInfo {
+  name: string;
+  available: boolean;
+}
+
+export interface TrainingConfig {
+  dataset: string;
+  epochs: number;
+  batch_size: number;
+  lr: number;
+  hidden: number[];
+  timesteps: number;
+  surrogate: string;
+  learn_beta: boolean;
+  learn_threshold: boolean;
+  max_grad_norm: number;
+}
+
+export interface TrainingEpochMetrics {
+  epoch: number;
+  train_loss: number;
+  train_accuracy: number;
+  val_loss: number;
+  val_accuracy: number;
+  layer_spike_rates: Record<string, number>;
+  param_snapshot: Record<string, number>;
+}
+
+export interface TrainingJobStatus {
+  job_id: string;
+  status: string;
+  error: string | null;
+  final_metrics: Record<string, number> | null;
+}
+
+export interface TrainingJobSummary {
+  job_id: string;
+  status: string;
+  config: TrainingConfig;
+}
+
+export const fetchSurrogates = () => get<SurrogateInfo[]>("/training/surrogates");
+export const fetchCellTypes = () => get<CellTypeInfo[]>("/training/cell-types");
+export const startTraining = (config: Partial<TrainingConfig>) =>
+  post<{ job_id: string; status: string }>("/training/start", config);
+export const stopTraining = (jobId: string) =>
+  post<{ job_id: string; status: string }>("/training/stop", { job_id: jobId });
+export const fetchTrainingStatus = (jobId: string) =>
+  get<TrainingJobStatus>(`/training/status/${jobId}`);
+export const fetchTrainingJobs = () => get<TrainingJobSummary[]>("/training/jobs");

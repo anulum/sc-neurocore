@@ -47,6 +47,15 @@ from sc_neurocore.studio.synthesis import (
     run_pnr,
     run_synthesis,
 )
+from sc_neurocore.studio.training import (
+    get_training_status,
+    list_cell_types,
+    list_jobs,
+    list_surrogates,
+    start_training,
+    stop_training,
+    stream_metrics,
+)
 from sc_neurocore.studio.models import get_model_detail, list_models, simulate_model
 from sc_neurocore.studio.presets import get_preset, list_presets
 from sc_neurocore.studio.simulation import simulate
@@ -776,6 +785,47 @@ def create_app() -> FastAPI:
         if not json_path:
             raise HTTPException(422, "json_path required")
         return _safe(lambda: run_pnr(json_path, target))
+
+    # --- Training Monitor (Block 4) ---
+    @app.get("/api/training/surrogates")
+    def api_surrogates():
+        return list_surrogates()
+
+    @app.get("/api/training/cell-types")
+    def api_cell_types():
+        return list_cell_types()
+
+    @app.post("/api/training/start")
+    def api_training_start(data: dict):
+        return _safe(lambda: start_training(data))
+
+    @app.post("/api/training/stop")
+    def api_training_stop(data: dict):
+        job_id = data.get("job_id", "")
+        if not job_id:
+            raise HTTPException(422, "job_id required")
+        return stop_training(job_id)
+
+    @app.get("/api/training/jobs")
+    def api_training_jobs():
+        return list_jobs()
+
+    @app.get("/api/training/status/{job_id}")
+    def api_training_status(job_id: str):
+        result = get_training_status(job_id)
+        if result.get("error") and "job_id" not in result:
+            raise HTTPException(404, result["error"])
+        return result
+
+    @app.get("/api/training/stream/{job_id}")
+    def api_training_stream(job_id: str):
+        from starlette.responses import StreamingResponse
+
+        return StreamingResponse(
+            stream_metrics(job_id),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
 
     # --- Static file serving for production mode ---
     import os
