@@ -185,9 +185,10 @@ class TestBifurcationEndpoint:
                 "model_name": MODEL,
                 "duration": 20.0,
                 "current": 10.0,
+                "params": {"v_rest": -65.0},
                 "sweep_param": "v_rest",
-                "sweep_min": -80,
-                "sweep_max": -50,
+                "sweep_min": -75,
+                "sweep_max": -55,
                 "sweep_steps": 3,
             },
         )
@@ -241,7 +242,7 @@ class TestMultiSimulate:
             "/api/multi-simulate",
             json=[
                 {"name": MODEL, "duration": 20, "current": 10},
-                {"name": "IzhikevichNeuron", "duration": 20, "current": 10},
+                {"name": "ChayNeuron", "duration": 20, "current": 10},
             ],
         )
         assert r.status_code == 200
