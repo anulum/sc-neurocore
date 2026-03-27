@@ -14,6 +14,7 @@ import ComparePanel from "./components/ComparePanel";
 import KeyboardHelp from "./components/KeyboardHelp";
 import StatusBar from "./components/StatusBar";
 import CompilerInspector from "./components/CompilerInspector";
+import SynthesisDashboard from "./components/SynthesisDashboard";
 
 function Tab({ active, color, label, onClick }: {
   active: boolean; color: string; label: string; onClick: () => void;
@@ -159,6 +160,7 @@ export default function App() {
               <Tab active={s.activeTab === "precision"} color="#80deea" label="Q8.8" onClick={() => s.setActiveTab("precision")} />
               <Tab active={s.activeTab === "verilog"} color="#a5d6a7" label="RTL" onClick={() => s.setActiveTab("verilog")} />
               <Tab active={s.activeTab === "ir"} color="#ffcc80" label="IR" onClick={() => s.setActiveTab("ir")} />
+              <Tab active={s.activeTab === "synth"} color="#a5d6a7" label="FPGA" onClick={() => s.setActiveTab("synth")} />
             </>
           )}
         </div>
@@ -277,7 +279,9 @@ export default function App() {
         </div>
 
         <div className="right-panel">
-          {s.activeTab === "ir" ? (
+          {s.activeTab === "synth" ? (
+            <SynthesisDashboard />
+          ) : s.activeTab === "ir" ? (
             <CompilerInspector />
           ) : s.activeTab === "verilog" ? (
             <VerilogPreview />
