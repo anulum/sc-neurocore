@@ -33,6 +33,13 @@ from sc_neurocore.studio.codegen import (
     generate_ode_script,
     generate_oneliner,
 )
+from sc_neurocore.studio.compiler import (
+    build_ir_from_equation,
+    cosim_traces,
+    emit_sv_from_equation,
+    emit_systemverilog,
+    verify_ir,
+)
 from sc_neurocore.studio.models import get_model_detail, list_models, simulate_model
 from sc_neurocore.studio.presets import get_preset, list_presets
 from sc_neurocore.studio.simulation import simulate
@@ -671,6 +678,59 @@ def create_app() -> FastAPI:
                 ext_rate=req.ext_rate,
                 duration=req.duration,
                 dt=req.dt,
+            )
+        )
+
+    # --- Compiler Inspector (Block 2) ---
+    @app.post("/api/ir/build")
+    def api_ir_build(req: SimulateRequest):
+        return _safe(
+            lambda: build_ir_from_equation(
+                equations=req.equations,
+                params=req.params,
+                threshold=req.threshold,
+                reset=req.reset,
+                dt=req.dt,
+            )
+        )
+
+    @app.post("/api/ir/verify")
+    def api_ir_verify(data: dict):
+        ir_text = data.get("ir_text", "")
+        if not ir_text:
+            raise HTTPException(422, "ir_text required")
+        return _safe(lambda: verify_ir(ir_text))
+
+    @app.post("/api/ir/emit-sv")
+    def api_ir_emit_sv(data: dict):
+        ir_text = data.get("ir_text", "")
+        if not ir_text:
+            raise HTTPException(422, "ir_text required")
+        return _safe(lambda: emit_systemverilog(ir_text))
+
+    @app.post("/api/ir/emit-sv-direct")
+    def api_ir_emit_sv_direct(req: SimulateRequest):
+        return _safe(
+            lambda: emit_sv_from_equation(
+                equations=req.equations,
+                params=req.params,
+                threshold=req.threshold,
+                reset=req.reset,
+            )
+        )
+
+    @app.post("/api/ir/cosim")
+    def api_ir_cosim(req: PrecisionRequest):
+        return _safe(
+            lambda: cosim_traces(
+                equations=req.equations,
+                threshold=req.threshold,
+                reset=req.reset,
+                params=req.params,
+                init=req.init,
+                dt=req.dt,
+                duration=req.duration,
+                current=req.current,
             )
         )
 

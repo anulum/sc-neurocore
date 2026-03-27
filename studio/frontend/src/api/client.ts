@@ -161,3 +161,41 @@ export interface ImportedTrace {
   dt: number;
   stats: { mean: number; std: number; min: number; max: number; threshold_estimate: number };
 }
+
+// --- Compiler Inspector (Block 2) ---
+
+export interface IRBuildResponse {
+  ir_text: string;
+  errors: string[];
+  n_ops: number;
+  n_inputs: number;
+  n_outputs: number;
+  graph_name: string;
+  params_q88: Record<string, number>;
+}
+
+export interface IRVerifyResponse {
+  valid: boolean;
+  errors: string[];
+  n_ops: number;
+  graph_name: string;
+}
+
+export interface SVEmitResponse {
+  systemverilog: string;
+  graph_name: string;
+  chars: number;
+}
+
+export interface SVDirectResponse {
+  verilog: string;
+  ir_repr: string;
+  chars: number;
+  module_name: string;
+}
+
+export const buildIR = (req: Record<string, unknown>) => post<IRBuildResponse>("/ir/build", req);
+export const verifyIR = (irText: string) => post<IRVerifyResponse>("/ir/verify", { ir_text: irText });
+export const emitSV = (irText: string) => post<SVEmitResponse>("/ir/emit-sv", { ir_text: irText });
+export const emitSVDirect = (req: Record<string, unknown>) => post<SVDirectResponse>("/ir/emit-sv-direct", req);
+export const fetchCosimDetail = (req: Record<string, unknown>) => post<PrecisionResponse>("/ir/cosim", req);
