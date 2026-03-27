@@ -112,6 +112,7 @@ export default function App() {
           </>
         )}
 
+        <Btn label="E-I Net" onClick={s.runNetwork} disabled={s.isSimulating} color="#80cbc4" />
         <Btn label="STA" onClick={s.computeSTA} disabled={!s.result || s.result.spikes.length < 3} color="#b0bec5" />
         <Btn label="Freq" onClick={s.runFreqResponse} disabled={s.isSimulating} color="#fff176" />
         {s.sourceMode === "ode" && s.equations.length >= 2 && (
@@ -142,6 +143,7 @@ export default function App() {
             <Tab active={s.activeTab === "characterize"} color="#fff176" label="Char" onClick={() => s.setActiveTab("characterize")} />
           )}
           <Tab active={s.activeTab === "multi"} color="#80cbc4" label="Multi" onClick={() => s.setActiveTab("multi")} />
+          <Tab active={s.activeTab === "network"} color="#80cbc4" label="E-I" onClick={() => s.setActiveTab("network")} />
           <Tab active={s.activeTab === "code"} color="#90a4ae" label="Code" onClick={() => s.setActiveTab("code")} />
           {s.sourceMode === "ode" && (
             <>
