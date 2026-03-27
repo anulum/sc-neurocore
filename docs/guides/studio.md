@@ -1,8 +1,9 @@
 # Visual SNN Design Studio
 
-The Studio is a web-based Equation Playground for designing and simulating
-spiking neurons interactively. Write ODE equations, adjust parameters with
-sliders, and see voltage traces and spike rasters update in real time.
+The Studio is a web-based research workbench for designing, simulating, and
+analysing spiking neurons interactively. It combines 118 built-in neuron models,
+custom ODE editing, 15 analysis views, and Verilog RTL generation in a single
+interface.
 
 ## Installation
 
@@ -18,9 +19,9 @@ This installs FastAPI and Uvicorn alongside the core package.
 sc-neurocore studio
 ```
 
-This starts the backend server on `http://127.0.0.1:8001` and opens your
-browser. Select a neuron template from the dropdown, adjust parameters,
-and click **Simulate**.
+Opens `http://127.0.0.1:8001` in your browser. The Studio starts in **Model
+mode** with 118 neuron models browsable by category. Switch to **ODE mode** to
+write custom equations.
 
 To use a different port:
 
@@ -28,27 +29,21 @@ To use a different port:
 sc-neurocore studio --port 9000
 ```
 
-## Interface
+## Two Modes
 
-### Template Dropdown
+### Model Mode (118 models)
 
-Five built-in neuron models:
+Browse all sc-neurocore neuron models grouped by category (Conductance, IF,
+Oscillator, Bursting, Hardware, Network, Statistical, AI). Each model's
+parameters appear as sliders. Models are auto-classified by firing pattern
+(tonic, bursting, adapting, irregular, chaotic, silent) with colour-coded
+badges.
 
-| Template | Variables | Description |
-|----------|-----------|-------------|
-| LIF | v | Leaky integrate-and-fire with threshold and reset |
-| Izhikevich | v, u | Regular spiking with recovery variable |
-| AdEx | v, w | Adaptive exponential with subthreshold oscillations |
-| Hodgkin-Huxley | v, m, h, n | 4-variable conductance model with Na/K channels |
-| FitzHugh-Nagumo | v, w | 2-variable relaxation oscillator |
+**Pattern filter:** click a pattern badge in the model list to filter.
 
-Selecting a template loads its equations, parameters, threshold, reset rule,
-and default current into the editor and sliders.
+### ODE Mode (custom equations)
 
-### Equation Editor
-
-A Monaco (VS Code) editor where you write ODE equations in Brian2-style
-syntax:
+Write ODEs in Brian2-style syntax in the Monaco editor:
 
 ```
 dv/dt = -(v - E_L) / tau_m + I / C
@@ -57,40 +52,136 @@ dv/dt = -(v - E_L) / tau_m + I / C
 # reset: v = -65
 ```
 
-Equations must follow the `d<var>/dt = <expression>` format.
-Threshold and reset lines start with `# threshold:` and `# reset:`.
+Five built-in templates: LIF, Izhikevich, AdEx, Hodgkin-Huxley, FitzHugh-Nagumo.
 
-Supported functions in expressions: `exp`, `log`, `sqrt`, `abs`, `sin`,
-`cos`, `tanh`, `sigmoid`, `clip`, `max`, `min`. Constants: `pi`.
-Multi-variable reset uses semicolons: `v = -65; w = w + 0.08`.
+## Analysis Views
 
-### Parameter Sliders
+The Studio provides 15 view tabs, each showing a different analysis of the
+current simulation:
 
-Each parameter from the ODE equations gets an auto-ranging slider.
-The simulation controls below the parameters set:
+| View | Tab | What it shows |
+|------|-----|---------------|
+| Trace | Trace | Voltage + current + spike raster with zoom/pan |
+| Phase portrait | Phase | v vs w trajectory with nullcline overlay |
+| ISI histogram | ISI | Interspike interval distribution |
+| f-I curve | f-I | Firing rate vs input current |
+| Bifurcation | Bif | Parameter sweep → voltage attractor scatter |
+| 2D Heatmap | 2D | Two-parameter sweep → firing rate colour map |
+| Sensitivity | Sens | Parameter importance bar chart |
+| Spike-triggered average | STA | Average voltage shape around spikes |
+| Frequency response | Freq | Firing rate vs input frequency |
+| Characterisation | Char | One-click dashboard: pattern, rheobase, f-I, sensitivity |
+| Multi-model overlay | Multi | Compare 2-4 models in one plot |
+| A/B Comparison | A/B | Split-view of two configurations |
+| E-I Network | E-I | Excitatory-inhibitory network raster + population rates |
+| Code generator | Code | Python script + one-liner for notebooks |
+| Q8.8 Precision | Q8.8 | Float64 vs fixed-point comparison + error trace |
+| Verilog RTL | RTL | Generated Verilog module from ODE (ODE mode only) |
 
-- **I** — input current (nA)
-- **dt** — integration timestep (ms)
-- **T** — simulation duration (ms)
+### Trace View
 
-### Voltage Plot
+The main view shows:
 
-A dark-themed canvas showing:
+- **Voltage traces** for all state variables (colour-coded)
+- **Current injection** subplot showing the input protocol
+- **Spike raster** with red tick marks
+- **Zoom/pan**: mouse wheel zooms the time axis centred on cursor, drag to pan,
+  double-click to reset
+- **Crosshair cursor** with tooltip showing exact time and voltage values
+- **Axis labels**: mV for voltage, nA for current, ms for time
+- **Imported data overlay**: paste CSV data to compare with simulation
 
-- **Voltage trace** (blue line) — membrane potential over time
-- **Additional state variables** (green, orange, red) for multi-variable models
-- **Spike raster** (red vertical bars) below the trace
-- **Spike count** in the bottom-left corner
+### Characterisation Dashboard
+
+Click **Char.** to run a one-click analysis that produces:
+
+- Firing pattern classification
+- Threshold current (rheobase estimate)
+- f-I curve
+- Top sensitive parameters
+- State variable ranges
+
+### E-I Network
+
+Simulates a balanced excitatory-inhibitory LIF network with adjustable
+parameters:
+
+- Neuron counts (N exc, N inh)
+- Synaptic weights (E→E, E→I, I→E, I→I)
+- Connection probability
+- External Poisson drive rate
+
+Displays a spike raster (blue = excitatory, red = inhibitory) and population
+firing rate traces.
+
+## Current Injection Protocols
+
+Four injection protocols for all simulations:
+
+| Protocol | Description |
+|----------|-------------|
+| Constant | Steady current for full duration |
+| Step | 0 for first 20%, then I for remaining 80% |
+| Ramp | Linear increase from 0 to I |
+| Pulse train | 5ms on/off pulses at amplitude I |
+
+## Interactive Features
+
+- **Auto-simulate**: simulation reruns 250ms after any slider change
+- **Keyboard shortcuts**: Space=run, 1-5=switch tabs, ?=help overlay
+- **Session save/load**: save named sessions to localStorage
+- **Shareable URLs**: state encoded in URL hash (click Share)
+- **10 preset experiments**: threshold exploration, adaptation, bursting, chaos,
+  hardware comparison, and more
+- **CSV export**: download simulation data as comma-separated values
+- **JSON export**: download raw simulation response
+- **PNG export**: screenshot the current plot
 
 ## API Reference
 
-The Studio backend exposes a REST API for programmatic use.
+The Studio backend exposes a REST API. All POST endpoints accept JSON.
+Simulations are cached (LRU, 64 slots) for instant replay.
 
-### POST /api/simulate
+### Core Simulation
 
-Run an ODE simulation.
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/simulate` | Run ODE simulation |
+| POST | `/api/models/simulate` | Run named model simulation |
+| POST | `/api/compare` | A/B comparison of two configs |
+| POST | `/api/multi-simulate` | Simulate 2-4 models in parallel |
+| POST | `/api/network/ei` | E-I balanced network simulation |
 
-**Request body:**
+### Analysis
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/fi-curve` | Firing rate vs current sweep |
+| POST | `/api/bifurcation` | Parameter sweep attractor map |
+| POST | `/api/sensitivity` | Parameter sensitivity analysis |
+| POST | `/api/heatmap` | Two-parameter firing rate heatmap |
+| POST | `/api/characterize` | Full model characterisation |
+| POST | `/api/freq-response` | Frequency response curve |
+| POST | `/api/precision` | Float vs Q8.8 precision compare |
+| POST | `/api/nullclines` | Nullcline computation for 2D ODEs |
+
+### Resources
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/templates` | List ODE templates |
+| GET | `/api/templates/{name}` | Get template by name |
+| GET | `/api/models` | List all 118 models |
+| GET | `/api/models/scan` | Classify all models by firing pattern |
+| GET | `/api/models/{name}` | Get model detail (params, state vars) |
+| GET | `/api/presets` | List preset experiments |
+| GET | `/api/presets/{id}` | Get preset detail |
+| POST | `/api/codegen` | Generate Python script |
+| POST | `/api/compile` | Compile ODE to Verilog |
+| GET | `/api/cache/stats` | Cache hit/miss statistics |
+| GET | `/api/health` | Health check |
+
+### Example: POST /api/simulate
 
 ```json
 {
@@ -105,65 +196,35 @@ Run an ODE simulation.
 }
 ```
 
-**Response:**
-
-```json
-{
-  "time": [0.0, 0.1, 0.2, ...],
-  "states": {"v": [-65.0, -64.5, ...]},
-  "spikes": [142, 287, 431],
-  "spike_count": 3,
-  "dt": 0.1,
-  "n_steps": 1000
-}
-```
-
-Simulations are capped at 100,000 steps. Traces longer than 5,000 points
-are downsampled for browser performance.
-
-### GET /api/templates
-
-Returns a list of all neuron templates with their default parameters.
-
-### GET /api/templates/{name}
-
-Returns a single template by name (`lif`, `izhikevich`, `adex`,
-`hodgkin_huxley`, `fitzhugh_nagumo`).
-
-### GET /api/health
-
-Returns `{"status": "ok"}`.
+Response includes `time`, `states`, `spikes`, `spike_count`, `dt`, `n_steps`,
+`stats` (rate_hz, isi_mean_ms, isi_cv, isi_histogram), `current_trace`, and
+`pattern` (auto-classified firing behaviour).
 
 ## Development
 
-To work on the frontend:
-
 ```bash
-# Terminal 1: start backend
+# Terminal 1: backend
 sc-neurocore studio --port 8001
 
-# Terminal 2: start Vite dev server (hot reload)
+# Terminal 2: frontend dev server (hot reload)
 cd studio/frontend
 npm install
 npm run dev
 ```
 
-The Vite dev server proxies `/api/*` requests to the backend at port 8001.
+The Vite dev server proxies `/api/*` to `http://127.0.0.1:8001`.
 
-To build the frontend for production:
+Production build:
 
 ```bash
 cd studio/frontend
-npm run build
+npm run build   # → studio/frontend/dist/
 ```
-
-Output goes to `studio/frontend/dist/`.
 
 ## Roadmap
 
-Phase 1 (current) delivers the Equation Playground. Future phases:
-
-- **Phase 2:** Network canvas with drag-and-drop populations and projections
-- **Phase 3:** Live training monitor with surrogate gradient selection
-- **Phase 4:** Compiler inspector showing IR and generated Verilog
-- **Phase 5:** One-click FPGA synthesis dashboard with resource charts
+- **WebSocket support** for long-running operations (characterise, scan, heatmap)
+- **Network canvas** with drag-and-drop populations and projections (Phase 2)
+- **Live training monitor** with surrogate gradient selection (Phase 3)
+- **Compiler inspector** showing IR and generated Verilog (Phase 4)
+- **One-click FPGA synthesis** dashboard with resource charts (Phase 5)
