@@ -67,9 +67,15 @@ iz = "iz"
 IIT = "IIT"
 NCE = "NCE"
 Alph = "Alph"
+PnR = "PnR"
+pnr = "pnr"
 
 [default.extend-identifiers]
 PnR = "PnR"
+PnRResult = "PnRResult"
+TestPnREndpoint = "TestPnREndpoint"
+runPnR = "runPnR"
+run_pnr = "run_pnr"
 
 [files]
 extend-exclude = [
