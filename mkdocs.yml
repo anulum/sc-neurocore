@@ -63,7 +63,15 @@ nav:
       - Spike Codec Library: guides/bci_codec.md
       - NIR Integration: guides/nir_integration.md
       - Visual Studio: guides/studio.md
+  - Studio (Experimental):
+      - Overview: studio/index.md
+      - Compiler Inspector: studio/compiler-inspector.md
+      - Synthesis Dashboard: studio/synthesis-dashboard.md
+      - Training Monitor: studio/training-monitor.md
+      - Network Canvas: studio/network-canvas.md
+      - Integration & Projects: studio/integration.md
   - Tutorials:
+      - Studio Quickstart: tutorials/studio_quickstart.md
       - SC Fundamentals: tutorials/01_stochastic_computing_fundamentals.md
       - Building Your First SNN: tutorials/02_building_your_first_snn.md
       - Surrogate Gradient Training: tutorials/03_surrogate_gradient_training.md
