@@ -223,7 +223,29 @@ print(f"{spikes} spikes in 500 steps")
 pip install sc-neurocore[full]     # all research modules
 pip install sc-neurocore[gpu]      # CuPy GPU acceleration
 pip install sc-neurocore[nir]      # NIR interop (Norse, snnTorch, Lava)
+pip install sc-neurocore[studio]   # Visual SNN Design Studio (web IDE)
 ```
+
+### Rust Engine (39–202× faster)
+
+The optional Rust engine provides SIMD-accelerated simulation, 109 neuron
+models via PyO3, and fused E-I network simulation. Pre-built wheels are
+available for Linux, Windows, and macOS (Python 3.10–3.13):
+
+```bash
+pip install sc-neurocore-engine
+```
+
+When installed, SC-NeuroCore automatically uses the Rust engine for:
+
+- **NetworkRunner:** 80-model fused Rayon-parallel simulation loop
+- **E-I network:** single Rust call for connectivity + Poisson + Euler + spike detection
+- **Batch simulate:** model dispatch loop in compiled Rust
+- **SIMD bitstream ops:** 190 Gbit/s popcount (AVX-512)
+
+The pure Python package works without the engine — NumPy fallbacks are
+used for all operations. Install the engine only when you need the
+performance advantage.
 
 `pip install sc-neurocore` publishes the Python suite under the public
 `sc-neurocore` package name. The optional Rust engine remains part of the
