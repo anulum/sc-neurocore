@@ -249,6 +249,50 @@ def _detect_step_kwarg(cls: type) -> str:
     return "current"
 
 
+def _try_rust_simulate(
+    name: str,
+    n_steps: int,
+    current_trace,
+    actual_dt: float,
+) -> dict[str, Any] | None:
+    """Attempt Rust batch simulation. Returns None if model not in Rust dispatch."""
+    try:
+        import numpy as np
+        from sc_neurocore_engine import py_batch_simulate
+        from sc_neurocore.studio.simulation import MAX_PLOT_POINTS, _spike_stats
+
+        current_arr = np.asarray(current_trace, dtype=np.float64)
+        result = py_batch_simulate(name, n_steps, current_arr)
+        voltages = np.asarray(result["voltages"])
+        spikes = result["spikes"].tolist()
+        stats = _spike_stats(spikes, actual_dt, n_steps)
+
+        time = np.arange(n_steps) * actual_dt
+        if n_steps > MAX_PLOT_POINTS:
+            stride = n_steps // MAX_PLOT_POINTS
+            time = time[::stride]
+            voltages = voltages[::stride]
+            current_trace = current_trace[::stride]
+
+        voltages = np.nan_to_num(voltages, nan=0.0, posinf=0.0, neginf=0.0)
+
+        return {
+            "time": time.tolist(),
+            "states": {"v": voltages.tolist()},
+            "current_trace": current_trace.tolist()
+            if hasattr(current_trace, "tolist")
+            else list(current_trace),
+            "spikes": spikes,
+            "spike_count": len(spikes),
+            "stats": stats,
+            "dt": actual_dt,
+            "n_steps": n_steps,
+            "model_name": name,
+        }
+    except (ImportError, Exception):
+        return None
+
+
 def simulate_model(
     name: str,
     param_overrides: dict[str, float] | None = None,
@@ -257,7 +301,7 @@ def simulate_model(
     current: float = 10.0,
     protocol: str = "constant",
 ) -> dict[str, Any]:
-    """Simulate a named model and return traces."""
+    """Simulate a named model. Uses Rust engine when model has default params."""
     import numpy as np
     from sc_neurocore.studio.simulation import (
         MAX_PLOT_POINTS,
@@ -268,6 +312,22 @@ def simulate_model(
 
     if name not in _CLASS_TO_MODULE:
         raise ValueError(f"Unknown model: {name}")
+
+    # Rust fast path: default params, no overrides
+    has_overrides = param_overrides and any(True for _ in param_overrides.values())
+    if not has_overrides and dt is None:
+        cls = _load_class(name)
+        actual_dt = 0.1
+        if dataclasses.is_dataclass(cls):
+            dt_field = next((f for f in dataclasses.fields(cls) if f.name == "dt"), None)
+            if dt_field and dt_field.default is not dataclasses.MISSING:
+                actual_dt = float(dt_field.default)
+        n_steps = min(int(duration / actual_dt), MAX_STEPS)
+        if n_steps >= 1:
+            I_trace = _make_current_trace(protocol, current, n_steps)
+            rust_result = _try_rust_simulate(name, n_steps, I_trace, actual_dt)
+            if rust_result is not None:
+                return rust_result
 
     cls = _load_class(name)
 

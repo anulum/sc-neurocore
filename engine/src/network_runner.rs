@@ -509,7 +509,7 @@ pub fn create_population(model_name: &str, n: usize) -> Result<PopulationRunner,
     Ok(PopulationRunner::new(neurons))
 }
 
-fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
+pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
     match name {
         "Izhikevich" => Ok(NeuronVariant::Izhikevich(Izhikevich::regular_spiking())),
         "AdEx" | "AdExNeuron" => Ok(NeuronVariant::AdEx(AdExNeuron::new())),

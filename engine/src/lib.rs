@@ -355,6 +355,40 @@ impl PyNetworkRunner {
     }
 }
 
+// ── Batch model simulate PyO3 wrapper ────────────────────────────────
+
+/// Run a named neuron model for n_steps with a current trace, returning
+/// voltage trace + spike indices. Entire simulation in Rust.
+#[pyfunction]
+fn py_batch_simulate<'py>(
+    py: Python<'py>,
+    model_name: &str,
+    n_steps: usize,
+    current_trace: PyReadonlyArray1<'py, f64>,
+) -> PyResult<Py<PyAny>> {
+    let mut neuron = network_runner::create_neuron(model_name)
+        .map_err(PyValueError::new_err)?;
+    let currents = current_trace.as_slice()?;
+    let steps = n_steps.min(currents.len());
+
+    let mut voltages = vec![0.0f64; steps];
+    let mut spikes: Vec<u64> = Vec::new();
+
+    for t in 0..steps {
+        let fired = neuron.step(currents[t]);
+        voltages[t] = neuron.soma_voltage();
+        if fired != 0 {
+            spikes.push(t as u64);
+        }
+    }
+
+    let d = PyDict::new(py);
+    d.set_item("voltages", voltages.into_pyarray(py))?;
+    d.set_item("spikes", spikes.into_pyarray(py))?;
+    d.set_item("n_steps", steps)?;
+    Ok(d.into_any().unbind())
+}
+
 // ── E-I Network PyO3 wrapper ───────────────────────────────────────
 
 #[pyfunction]
@@ -444,6 +478,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     pyo3_neurons::register_neuron_classes(m)?;
     m.add_class::<PyNetworkRunner>()?;
     m.add_function(wrap_pyfunction!(py_simulate_ei_network, m)?)?;
+    m.add_function(wrap_pyfunction!(py_batch_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_cordiv, m)?)?;
     m.add_function(wrap_pyfunction!(py_adaptive_length, m)?)?;
     m.add_function(wrap_pyfunction!(py_prediction_error, m)?)?;
