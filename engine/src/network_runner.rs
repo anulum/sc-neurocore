@@ -878,4 +878,31 @@ mod tests {
             assert!(v.is_finite(), "voltage must be finite");
         }
     }
+
+    #[test]
+    fn batch_simulate_single_neuron() {
+        let mut neuron = create_neuron("AdEx").unwrap();
+        let n_steps = 1000;
+        let current = 500.0;
+        let mut voltages = Vec::with_capacity(n_steps);
+        let mut spikes = Vec::new();
+        for t in 0..n_steps {
+            let fired = neuron.step(current);
+            voltages.push(neuron.soma_voltage());
+            if fired != 0 {
+                spikes.push(t);
+            }
+        }
+        assert_eq!(voltages.len(), n_steps);
+        assert!(voltages.iter().all(|v| v.is_finite()));
+        assert!(!spikes.is_empty(), "AdEx with I=10 should spike");
+    }
+
+    #[test]
+    fn create_neuron_all_supported() {
+        for name in supported_models() {
+            let result = create_neuron(name);
+            assert!(result.is_ok(), "create_neuron({name}) failed: {:?}", result.err());
+        }
+    }
 }
