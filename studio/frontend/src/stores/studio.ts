@@ -5,6 +5,7 @@ import {
   fetchBifurcation, fetchSensitivity, fetchPrecision, fetchHeatmap, fetchCodegen,
   fetchCompare, fetchNullclines, fetchFreqResponse,
   fetchCharacterize, fetchMultiSimulate, importTrace, simulateNetwork,
+  buildIR, emitSV, emitSVDirect,
   type CharacterizeResponse, type ImportedTrace, type NetworkResult,
   type NeuronTemplate, type ModelSummary, type ModelDetail, type PresetSummary,
   type SimulateResponse, type FICurveResponse, type BifurcationResponse,
@@ -17,7 +18,7 @@ let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 type SourceMode = "model" | "ode";
 type ViewTab = "trace" | "phase" | "isi" | "fi-curve" | "bifurcation" |
   "sensitivity" | "precision" | "heatmap" | "verilog" | "code" |
-  "compare" | "freq" | "sta" | "characterize" | "multi" | "network";
+  "compare" | "freq" | "sta" | "characterize" | "multi" | "network" | "ir";
 
 interface StudioState {
   sourceMode: SourceMode;
@@ -52,6 +53,9 @@ interface StudioState {
   networkResult: NetworkResult | null;
   networkParams: { n_exc: number; n_inh: number; w_ee: number; w_ei: number; w_ie: number; w_ii: number; p_conn: number; ext_rate: number };
   verilogSrc: string;
+  irText: string;
+  svSource: string;
+  irErrors: string[];
   codeScript: string;
   codeOneliner: string;
   savedSessions: { name: string; state: Record<string, unknown> }[];
@@ -99,6 +103,8 @@ interface StudioState {
   runNullclines: () => Promise<void>;
   runFreqResponse: () => Promise<void>;
   computeSTA: () => void;
+  runBuildIR: () => Promise<void>;
+  runEmitSV: () => Promise<void>;
   autoSimulate: () => void;
   exportData: () => void;
   exportCSV: () => void;
@@ -140,7 +146,8 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   freqResult: null, staResult: null,
   charResult: null, multiResults: null, importedTrace: null, networkResult: null,
   networkParams: { n_exc: 80, n_inh: 20, w_ee: 0.1, w_ei: 0.4, w_ie: 0.1, w_ii: 0.4, p_conn: 0.2, ext_rate: 5.0 },
-  verilogSrc: "", codeScript: "", codeOneliner: "",
+  verilogSrc: "", irText: "", svSource: "", irErrors: [] as string[],
+  codeScript: "", codeOneliner: "",
   savedSessions: JSON.parse(localStorage.getItem("sc-studio-sessions") || "[]"),
   error: null, isSimulating: false,
   activeTab: "trace", modelFilter: "", sweepParam: "", sweepParamY: "",
@@ -508,6 +515,37 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     );
     const time_ms = avg.map((_, i) => (i - halfWin) * result.dt);
     set({ staResult: { time_ms, average: avg, n_spikes: snippets.length }, activeTab: "sta" });
+  },
+
+  runBuildIR: async () => {
+    const s = get();
+    if (s.sourceMode !== "ode") { set({ error: "IR build requires ODE mode" }); return; }
+    set({ isSimulating: true, error: null, activeTab: "ir" });
+    try {
+      const cfg = {
+        equations: s.equations, threshold: s.threshold || null, reset: s.reset || null,
+        params: s.odeParams, dt: s.dt,
+      };
+      const result = await buildIR(cfg);
+      set({ irText: result.ir_text, irErrors: result.errors, isSimulating: false });
+      if (result.errors.length === 0) {
+        const sv = await emitSV(result.ir_text);
+        set({ svSource: sv.systemverilog });
+      }
+    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+  },
+
+  runEmitSV: async () => {
+    const s = get();
+    if (s.sourceMode !== "ode") { set({ error: "SV emit requires ODE mode" }); return; }
+    set({ isSimulating: true, error: null, activeTab: "ir" });
+    try {
+      const result = await emitSVDirect({
+        equations: s.equations, threshold: s.threshold || null, reset: s.reset || null,
+        params: s.odeParams,
+      });
+      set({ svSource: result.verilog, irText: result.ir_repr, isSimulating: false });
+    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
   },
 
   resetDefaults: () => {
