@@ -107,7 +107,9 @@ export default function ModelBrowser() {
             {ms.map((m) => {
               const beh = behaviors[m.name];
               return (
-                <div key={m.name} onClick={() => selectModel(m.name)} style={{
+                <div key={m.name} onClick={() => selectModel(m.name)}
+                  title={m.description || m.name}
+                  style={{
                   padding: "2px 8px", fontSize: 10, fontFamily: "var(--font-mono)",
                   cursor: "pointer", borderRadius: 3,
                   background: m.name === selectedModelName ? "var(--accent-dim)" : "transparent",
