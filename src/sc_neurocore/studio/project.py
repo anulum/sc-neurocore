@@ -18,8 +18,17 @@ def _ensure_dir():
     os.makedirs(_PROJECTS_DIR, exist_ok=True)
 
 
+def _safe_name(name: str) -> str:
+    """Sanitise project name to prevent path traversal."""
+    base = os.path.basename(name).replace("..", "").strip()
+    if not base or base in (".", ".."):
+        raise ValueError("Invalid project name")
+    return base
+
+
 def save_project(name: str, state: dict) -> dict:
     """Save full studio state to a JSON file."""
+    name = _safe_name(name)
     _ensure_dir()
     path = os.path.join(_PROJECTS_DIR, f"{name}.json")
     payload = {
@@ -35,6 +44,7 @@ def save_project(name: str, state: dict) -> dict:
 
 def load_project(name: str) -> dict:
     """Load a saved project by name."""
+    name = _safe_name(name)
     path = os.path.join(_PROJECTS_DIR, f"{name}.json")
     if not os.path.exists(path):
         return {"error": f"Project '{name}' not found"}
@@ -68,6 +78,7 @@ def list_projects() -> list[dict]:
 
 def delete_project(name: str) -> dict:
     """Delete a saved project."""
+    name = _safe_name(name)
     path = os.path.join(_PROJECTS_DIR, f"{name}.json")
     if not os.path.exists(path):
         return {"error": f"Project '{name}' not found"}

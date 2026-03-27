@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import traceback
 from collections import OrderedDict
 
 from fastapi import FastAPI, HTTPException
@@ -277,9 +276,8 @@ def _safe(fn, detail_prefix: str = ""):
     except HTTPException:
         raise
     except Exception as e:
-        tb_lines = traceback.format_exc().split("\n")[-4:-1]
         msg = f"{detail_prefix}{e}" if detail_prefix else str(e)
-        raise HTTPException(status_code=422, detail=f"{msg}\n{''.join(tb_lines)}") from e
+        raise HTTPException(status_code=422, detail=msg) from e
 
 
 def _make_simulate_fn(req_dict: dict):
