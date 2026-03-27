@@ -202,7 +202,7 @@ except (ImportError, ModuleNotFoundError):
     except Exception:
         _studio_rust_available = False
 
-try:
+if _core_available:
     from .layers import VectorizedSCLayer
     from .neurons import FixedPointLIFNeuron
     from .grad import SurrogateLif, DifferentiableDenseLayer
@@ -213,8 +213,13 @@ try:
     from .hdc import HDCVector
     from .petri_net import PetriNetEngine
     _bridge_available = True
-except (ImportError, ModuleNotFoundError):
+else:
+    # Rust engine not built — raise ImportError so pytest.importorskip works
     _bridge_available = False
+    raise ImportError(
+        "sc_neurocore_engine native module not found. "
+        "Build with: cd engine && maturin develop --release"
+    )
 
 _NEURON_MODELS = [
     "QuadraticIFNeuron",
