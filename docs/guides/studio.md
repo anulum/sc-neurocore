@@ -226,10 +226,14 @@ cd studio/frontend
 npm run build   # → studio/frontend/dist/
 ```
 
-## Roadmap
+## Additional Panels (Blocks 2–6)
 
-- **WebSocket support** for long-running operations (characterise, scan, heatmap)
-- **Network canvas** with drag-and-drop populations and projections (Phase 2)
-- **Live training monitor** with surrogate gradient selection (Phase 3)
-- **Compiler inspector** showing IR and generated Verilog (Phase 4)
-- **One-click FPGA synthesis** dashboard with resource charts (Phase 5)
+The Studio includes five additional panels beyond the core research workbench:
+
+- **Compiler Inspector** — build SC IR, verify, emit SystemVerilog. [Details](../studio/compiler-inspector.md)
+- **Synthesis Dashboard** — Yosys synthesis for 4 FPGA targets, multi-target comparison, resource estimation. [Details](../studio/synthesis-dashboard.md)
+- **Training Monitor** — live SNN training with 6 surrogate gradients, SSE metric streaming. [Details](../studio/training-monitor.md)
+- **Network Canvas** — drag-and-drop populations and projections with React Flow, NIR export/import. [Details](../studio/network-canvas.md)
+- **Integration** — full pipeline (graph → compile → synthesise), project save/load. [Details](../studio/integration.md)
+
+Full documentation: [Studio Hub](../studio/index.md)

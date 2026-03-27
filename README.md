@@ -114,6 +114,7 @@ neuromorphic inter-chip routing, and real-time closed-loop telemetry.
 | Event-driven FPGA RTL (AER) | **Yes** | — | — | — | — |
 | Raw waveform compression (24x) | **Yes** | — | — | — | — |
 | Spike codec library (6 codecs) | **Yes** | — | — | — | — |
+| Visual SNN Design Studio | **Yes (web IDE)** | Basic GUI | Jupyter | — | — |
 | conda-forge recipe | **Ready** | Yes | — | — | Yes |
 | PyPI package | Yes | Yes | Yes | Yes | Yes |
 | License | AGPL-3.0 | MIT | LGPL-3.0 | BSD-3 | CeCILL-2.1 |
@@ -241,6 +242,45 @@ make preflight             # verify setup (lint + tests)
 
 If you are changing the Rust bridge locally, install `bridge/` in the same
 environment or run source-tree commands with `PYTHONPATH=src:bridge`.
+
+### Visual SNN Design Studio (Experimental)
+
+> **Status:** Development preview. The Studio is functional but under active
+> development. API and UI may change between releases.
+
+A web-based IDE for designing, training, compiling, and deploying spiking
+neural networks — from ODE equations to FPGA bitstream in a single browser tab.
+
+```bash
+pip install sc-neurocore[studio]
+sc-neurocore studio              # opens browser at http://127.0.0.1:8001
+```
+
+| Feature | What it does |
+|---------|-------------|
+| **118 Model Browser** | Browse all neuron models by category, simulate with parameter sliders |
+| **18+ Analysis Views** | Trace, phase portrait, ISI, f-I curve, bifurcation, heatmap, STA, frequency response, characterisation dashboard |
+| **Compiler Inspector** | Build SC IR from equations, verify, emit SystemVerilog |
+| **Synthesis Dashboard** | One-click Yosys synthesis to ice40/ECP5/Gowin/Xilinx, multi-target comparison, resource bars |
+| **Training Monitor** | Live loss/accuracy curves via SSE, 6 surrogate gradients, per-layer spike rates |
+| **Network Canvas** | Drag-and-drop populations and projections (React Flow), NIR export/import |
+| **Full Pipeline** | Network → simulate → compile → synthesise in one click |
+| **Project Save/Load** | Persistent workspaces as JSON, server-side storage |
+
+No other SNN framework provides a visual design-to-hardware pipeline.
+snnTorch has Jupyter notebooks. Brian2 has a basic GUI. Neither goes from
+visual network design to FPGA resource estimation.
+
+| Feature | SC-NeuroCore Studio | Brian2 GUI | snnTorch | Nengo GUI |
+|---------|:---:|:---:|:---:|:---:|
+| Visual network design | **Yes** | Basic | No | Yes |
+| ODE equation editor | **Yes** | No | No | No |
+| Live training curves | **Yes** | No | TensorBoard | No |
+| Verilog output viewer | **Yes** | No | No | No |
+| FPGA synthesis | **Yes** | No | No | No |
+| Co-simulation view | **Yes** | No | No | No |
+
+Full documentation: [Studio Guide](https://anulum.github.io/sc-neurocore/studio/)
 
 ## Docker
 
