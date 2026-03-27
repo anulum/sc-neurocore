@@ -8,6 +8,8 @@ import {
   buildIR, emitSV, emitSVDirect,
   fetchSynthTools, runSynthesis as apiRunSynthesis, runMultiTargetSynthesis,
   fetchSynthEstimate,
+  fetchSurrogates as apiFetchSurrogates, startTraining as apiStartTraining,
+  stopTraining as apiStopTraining,
   type CharacterizeResponse, type ImportedTrace, type NetworkResult,
   type NeuronTemplate, type ModelSummary, type ModelDetail, type PresetSummary,
   type SimulateResponse, type FICurveResponse, type BifurcationResponse,
@@ -15,6 +17,7 @@ import {
   type CompareResponse, type NullclineResponse, type FreqResponse,
   type SynthResult, type SynthEstimate, type MultiTargetResult,
   type SynthToolInfo,
+  type SurrogateInfo, type TrainingEpochMetrics,
 } from "../api/client";
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -22,7 +25,7 @@ let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 type SourceMode = "model" | "ode";
 type ViewTab = "trace" | "phase" | "isi" | "fi-curve" | "bifurcation" |
   "sensitivity" | "precision" | "heatmap" | "verilog" | "code" |
-  "compare" | "freq" | "sta" | "characterize" | "multi" | "network" | "ir" | "synth";
+  "compare" | "freq" | "sta" | "characterize" | "multi" | "network" | "ir" | "synth" | "train";
 
 interface StudioState {
   sourceMode: SourceMode;
@@ -65,6 +68,15 @@ interface StudioState {
   synthEstimate: SynthEstimate | null;
   multiTargetResult: MultiTargetResult | null;
   toolsAvailable: Record<string, SynthToolInfo> | null;
+  trainingJobId: string | null;
+  trainingStatus: string;
+  trainingEpochs: TrainingEpochMetrics[];
+  trainingSurrogates: SurrogateInfo[];
+  trainingConfig: {
+    dataset: string; epochs: number; batch_size: number; lr: number;
+    hidden: number[]; timesteps: number; surrogate: string;
+    learn_beta: boolean; learn_threshold: boolean;
+  };
   codeScript: string;
   codeOneliner: string;
   savedSessions: { name: string; state: Record<string, unknown> }[];
@@ -119,6 +131,10 @@ interface StudioState {
   runMultiTargetSynthesis: () => Promise<void>;
   runSynthEstimate: () => Promise<void>;
   checkSynthTools: () => Promise<void>;
+  loadSurrogates: () => Promise<void>;
+  startTraining: () => Promise<void>;
+  stopTraining: () => Promise<void>;
+  setTrainingConfig: (key: string, value: unknown) => void;
   autoSimulate: () => void;
   exportData: () => void;
   exportCSV: () => void;
@@ -162,6 +178,12 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   networkParams: { n_exc: 80, n_inh: 20, w_ee: 0.1, w_ei: 0.4, w_ie: 0.1, w_ii: 0.4, p_conn: 0.2, ext_rate: 5.0 },
   verilogSrc: "", irText: "", svSource: "", irErrors: [] as string[],
   synthTarget: "ice40", synthResult: null, synthEstimate: null, multiTargetResult: null, toolsAvailable: null,
+  trainingJobId: null, trainingStatus: "idle", trainingEpochs: [], trainingSurrogates: [],
+  trainingConfig: {
+    dataset: "synthetic", epochs: 10, batch_size: 64, lr: 0.001,
+    hidden: [128], timesteps: 25, surrogate: "atan_surrogate",
+    learn_beta: false, learn_threshold: false,
+  },
   codeScript: "", codeOneliner: "",
   savedSessions: JSON.parse(localStorage.getItem("sc-studio-sessions") || "[]"),
   error: null, isSimulating: false,
@@ -602,6 +624,60 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       const toolsAvailable = await fetchSynthTools();
       set({ toolsAvailable });
     } catch { /* tools check is non-critical */ }
+  },
+
+  loadSurrogates: async () => {
+    try {
+      const trainingSurrogates = await apiFetchSurrogates();
+      set({ trainingSurrogates });
+    } catch { /* non-critical */ }
+  },
+
+  startTraining: async () => {
+    const s = get();
+    if (s.trainingStatus === "running") return;
+    set({ trainingStatus: "starting", trainingEpochs: [], error: null, activeTab: "train" });
+    try {
+      const result = await apiStartTraining(s.trainingConfig);
+      set({ trainingJobId: result.job_id, trainingStatus: "running" });
+      // Start SSE listener
+      const evtSource = new EventSource(`/api/training/stream/${result.job_id}`);
+      evtSource.onmessage = (e) => {
+        try {
+          const msg = JSON.parse(e.data);
+          if (msg.event === "epoch") {
+            set((prev) => ({ trainingEpochs: [...prev.trainingEpochs, msg.data] }));
+          } else if (msg.event === "completed" || msg.event === "stopped") {
+            set({ trainingStatus: msg.event });
+            evtSource.close();
+          } else if (msg.event === "error") {
+            set({ trainingStatus: "failed", error: msg.data.message });
+            evtSource.close();
+          }
+        } catch { /* ignore parse errors */ }
+      };
+      evtSource.onerror = () => {
+        set({ trainingStatus: "disconnected" });
+        evtSource.close();
+      };
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : String(e), trainingStatus: "failed" });
+    }
+  },
+
+  stopTraining: async () => {
+    const s = get();
+    if (!s.trainingJobId) return;
+    try {
+      await apiStopTraining(s.trainingJobId);
+      set({ trainingStatus: "stopping" });
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : String(e) });
+    }
+  },
+
+  setTrainingConfig: (key, value) => {
+    set((s) => ({ trainingConfig: { ...s.trainingConfig, [key]: value } }));
   },
 
   resetDefaults: () => {
