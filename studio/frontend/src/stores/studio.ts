@@ -99,6 +99,7 @@ interface StudioState {
   computeSTA: () => void;
   autoSimulate: () => void;
   exportData: () => void;
+  exportCSV: () => void;
   exportSVG: () => void;
   resetDefaults: () => void;
   saveSession: (name: string) => void;
@@ -349,6 +350,23 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = `simulation_${result.model_name || "custom"}.json`;
+    a.click();
+  },
+
+  exportCSV: () => {
+    const { result } = get();
+    if (!result) return;
+    const vars = Object.keys(result.states);
+    const header = ["time", ...vars, "current"].join(",");
+    const rows = result.time.map((t, i) => {
+      const vals = vars.map((v) => result.states[v][i]?.toFixed(6) ?? "");
+      return [t.toFixed(4), ...vals, result.current_trace[i]?.toFixed(4) ?? ""].join(",");
+    });
+    const csv = [header, ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `simulation_${result.model_name || "custom"}.csv`;
     a.click();
   },
 
