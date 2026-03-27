@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 
 from sc_neurocore.studio.analysis import (
     bifurcation_sweep, frequency_response, heatmap_2d, nullclines_2d,
-    precision_compare, sensitivity_analysis, spike_triggered_average,
+    precision_compare, sensitivity_analysis,
 )
 from sc_neurocore.studio.characterize import characterize_model
 from sc_neurocore.studio.model_scan import scan_all_models
@@ -28,7 +28,7 @@ from sc_neurocore.studio.codegen import (
 )
 from sc_neurocore.studio.models import get_model_detail, list_models, simulate_model
 from sc_neurocore.studio.presets import get_preset, list_presets
-from sc_neurocore.studio.simulation import fi_curve, simulate
+from sc_neurocore.studio.simulation import simulate
 from sc_neurocore.studio.templates import get_template, list_templates
 
 
