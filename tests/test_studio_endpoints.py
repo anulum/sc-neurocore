@@ -189,7 +189,7 @@ class TestBifurcationEndpoint:
                 "sweep_param": "v_rest",
                 "sweep_min": -75,
                 "sweep_max": -55,
-                "sweep_steps": 3,
+                "sweep_steps": 5,
             },
         )
         assert r.status_code == 200
