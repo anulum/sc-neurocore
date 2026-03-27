@@ -6,24 +6,18 @@ import {
   fetchCompare, fetchNullclines, fetchFreqResponse,
   fetchCharacterize, fetchMultiSimulate, importTrace, simulateNetwork,
   buildIR, emitSV, emitSVDirect,
+  fetchSynthTools, runSynthesis as apiRunSynthesis, runMultiTargetSynthesis,
+  fetchSynthEstimate,
   type CharacterizeResponse, type ImportedTrace, type NetworkResult,
   type NeuronTemplate, type ModelSummary, type ModelDetail, type PresetSummary,
   type SimulateResponse, type FICurveResponse, type BifurcationResponse,
   type SensitivityResponse, type PrecisionResponse, type HeatmapResponse,
   type CompareResponse, type NullclineResponse, type FreqResponse,
+  type SynthResult, type SynthEstimate, type MultiTargetResult,
+  type SynthToolInfo,
 } from "../api/client";
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-
-interface SynthResult {
-  success: boolean;
-  error?: string;
-  target: string;
-  resources: { luts: number; ffs: number; brams: number; dsps: number; cells: number; wires: number };
-  capacity: { luts: number; ffs: number; brams: number; dsps: number };
-  utilisation: Record<string, number>;
-  log_excerpt: string;
-}
 
 type SourceMode = "model" | "ode";
 type ViewTab = "trace" | "phase" | "isi" | "fi-curve" | "bifurcation" |
@@ -68,7 +62,9 @@ interface StudioState {
   irErrors: string[];
   synthTarget: string;
   synthResult: SynthResult | null;
-  toolsAvailable: Record<string, { available: boolean; version: string | null }> | null;
+  synthEstimate: SynthEstimate | null;
+  multiTargetResult: MultiTargetResult | null;
+  toolsAvailable: Record<string, SynthToolInfo> | null;
   codeScript: string;
   codeOneliner: string;
   savedSessions: { name: string; state: Record<string, unknown> }[];
@@ -120,6 +116,8 @@ interface StudioState {
   runEmitSV: () => Promise<void>;
   setSynthTarget: (t: string) => void;
   runSynthesis: () => Promise<void>;
+  runMultiTargetSynthesis: () => Promise<void>;
+  runSynthEstimate: () => Promise<void>;
   checkSynthTools: () => Promise<void>;
   autoSimulate: () => void;
   exportData: () => void;
@@ -163,7 +161,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   charResult: null, multiResults: null, importedTrace: null, networkResult: null,
   networkParams: { n_exc: 80, n_inh: 20, w_ee: 0.1, w_ei: 0.4, w_ie: 0.1, w_ii: 0.4, p_conn: 0.2, ext_rate: 5.0 },
   verilogSrc: "", irText: "", svSource: "", irErrors: [] as string[],
-  synthTarget: "ice40", synthResult: null, toolsAvailable: null,
+  synthTarget: "ice40", synthResult: null, synthEstimate: null, multiTargetResult: null, toolsAvailable: null,
   codeScript: "", codeOneliner: "",
   savedSessions: JSON.parse(localStorage.getItem("sc-studio-sessions") || "[]"),
   error: null, isSimulating: false,
@@ -573,21 +571,36 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     set({ isSimulating: true, error: null, activeTab: "synth" });
     try {
       const verilog = s.svSource || s.verilogSrc;
-      const r = await fetch("/api/synth/run", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ verilog, target: s.synthTarget }),
-      });
-      const data = await r.json();
-      if (!r.ok) throw new Error(data.detail || "Synthesis failed");
-      set({ synthResult: data, isSimulating: false });
+      const synthResult = await apiRunSynthesis(verilog, s.synthTarget);
+      set({ synthResult, isSimulating: false });
     } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+  },
+
+  runMultiTargetSynthesis: async () => {
+    const s = get();
+    if (!s.svSource && !s.verilogSrc) { set({ error: "Generate Verilog first" }); return; }
+    set({ isSimulating: true, error: null, activeTab: "synth" });
+    try {
+      const verilog = s.svSource || s.verilogSrc;
+      const multiTargetResult = await runMultiTargetSynthesis(verilog);
+      set({ multiTargetResult, isSimulating: false });
+    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+  },
+
+  runSynthEstimate: async () => {
+    const s = get();
+    const irOps = s.irText ? s.irText.split("\n").filter((l) => l.trim().startsWith("%")).length : 0;
+    if (irOps < 1) { set({ error: "Build IR first to estimate resources" }); return; }
+    try {
+      const synthEstimate = await fetchSynthEstimate(irOps, s.synthTarget);
+      set({ synthEstimate });
+    } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
   },
 
   checkSynthTools: async () => {
     try {
-      const r = await fetch("/api/synth/tools-status");
-      const data = await r.json();
-      set({ toolsAvailable: data });
+      const toolsAvailable = await fetchSynthTools();
+      set({ toolsAvailable });
     } catch { /* tools check is non-critical */ }
   },
 

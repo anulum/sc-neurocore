@@ -199,3 +199,67 @@ export const verifyIR = (irText: string) => post<IRVerifyResponse>("/ir/verify",
 export const emitSV = (irText: string) => post<SVEmitResponse>("/ir/emit-sv", { ir_text: irText });
 export const emitSVDirect = (req: Record<string, unknown>) => post<SVDirectResponse>("/ir/emit-sv-direct", req);
 export const fetchCosimDetail = (req: Record<string, unknown>) => post<PrecisionResponse>("/ir/cosim", req);
+
+// --- Synthesis Dashboard (Block 3) ---
+
+export interface SynthToolInfo {
+  available: boolean;
+  version: string | null;
+}
+
+export interface SynthResources {
+  luts: number;
+  ffs: number;
+  brams: number;
+  dsps: number;
+  cells: number;
+  wires: number;
+}
+
+export interface SynthCapacity {
+  luts: number;
+  ffs: number;
+  brams: number;
+  dsps: number;
+}
+
+export interface SynthResult {
+  success: boolean;
+  error?: string;
+  target: string;
+  resources: SynthResources;
+  capacity: SynthCapacity;
+  utilisation: Record<string, number>;
+  log_excerpt: string;
+}
+
+export interface SynthEstimate {
+  target: string;
+  estimated: boolean;
+  resources: { luts: number; ffs: number; brams: number; dsps: number };
+  capacity: SynthCapacity;
+  utilisation: Record<string, number>;
+}
+
+export interface MultiTargetResult {
+  targets: Record<string, SynthResult>;
+  supported: string[];
+}
+
+export interface PnRResult {
+  success: boolean;
+  error?: string;
+  max_freq_mhz: number | null;
+  critical_path: string | null;
+  log_excerpt: string;
+}
+
+export const fetchSynthTools = () => get<Record<string, SynthToolInfo>>("/synth/tools-status");
+export const runSynthesis = (verilog: string, target: string) =>
+  post<SynthResult>("/synth/run", { verilog, target });
+export const runMultiTargetSynthesis = (verilog: string) =>
+  post<MultiTargetResult>("/synth/multi-target", { verilog });
+export const fetchSynthEstimate = (irOpCount: number, target: string) =>
+  post<SynthEstimate>("/synth/estimate", { ir_op_count: irOpCount, target });
+export const runPnR = (jsonPath: string, target: string) =>
+  post<PnRResult>("/synth/pnr", { json_path: jsonPath, target });

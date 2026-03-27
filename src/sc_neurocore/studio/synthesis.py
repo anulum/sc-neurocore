@@ -132,6 +132,38 @@ def _parse_yosys_json(json_path: str) -> dict:
     return resources
 
 
+def estimate_resources(ir_op_count: int, target: str = "ice40") -> dict:
+    """Quick resource estimate from IR operation count, no Yosys needed.
+
+    Heuristic: each IR op maps to ~2 LUTs + 1 FF on average.
+    LIF step op maps to ~12 LUTs + 8 FFs + 1 DSP (multiplier).
+    """
+    capacity = _DEVICE_CAPACITY.get(target, _DEVICE_CAPACITY["ice40"])
+    est_luts = ir_op_count * 2 + 12
+    est_ffs = ir_op_count + 8
+    est_dsps = 1
+    est_brams = 0
+    resources = {"luts": est_luts, "ffs": est_ffs, "brams": est_brams, "dsps": est_dsps}
+    return {
+        "target": target,
+        "estimated": True,
+        "resources": resources,
+        "capacity": capacity,
+        "utilisation": {
+            k: round(resources[k] / max(capacity.get(k, 1), 1) * 100, 1)
+            for k in ["luts", "ffs", "brams", "dsps"]
+        },
+    }
+
+
+def multi_target_synthesis(verilog_source: str) -> dict:
+    """Run synthesis on all supported targets, return comparison."""
+    results = {}
+    for target in _TARGETS:
+        results[target] = run_synthesis(verilog_source, target)
+    return {"targets": results, "supported": list(_TARGETS.keys())}
+
+
 def run_pnr(json_path: str, target: str = "ice40") -> dict:
     """Run nextpnr place-and-route and return timing report."""
     cfg = _TARGETS.get(target)

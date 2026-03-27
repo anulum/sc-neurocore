@@ -42,6 +42,8 @@ from sc_neurocore.studio.compiler import (
 )
 from sc_neurocore.studio.synthesis import (
     check_tools,
+    estimate_resources,
+    multi_target_synthesis,
     run_pnr,
     run_synthesis,
 )
@@ -751,6 +753,21 @@ def create_app() -> FastAPI:
         if not verilog:
             raise HTTPException(422, "verilog source required")
         return _safe(lambda: run_synthesis(verilog, target))
+
+    @app.post("/api/synth/multi-target")
+    def api_synth_multi(data: dict):
+        verilog = data.get("verilog", "")
+        if not verilog:
+            raise HTTPException(422, "verilog source required")
+        return _safe(lambda: multi_target_synthesis(verilog))
+
+    @app.post("/api/synth/estimate")
+    def api_synth_estimate(data: dict):
+        ir_op_count = data.get("ir_op_count", 0)
+        target = data.get("target", "ice40")
+        if ir_op_count < 1:
+            raise HTTPException(422, "ir_op_count must be >= 1")
+        return estimate_resources(ir_op_count, target)
 
     @app.post("/api/synth/pnr")
     def api_synth_pnr(data: dict):
