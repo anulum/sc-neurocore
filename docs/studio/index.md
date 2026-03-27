@@ -180,8 +180,18 @@ for complete API details with request/response examples.
 ```bash
 pip install sc-neurocore[studio]   # FastAPI, uvicorn, React frontend
 pip install sc-neurocore[research] # PyTorch training (optional)
+pip install sc-neurocore-engine    # Rust engine for 39–202× speedup (optional)
 # Yosys + nextpnr for FPGA synthesis (optional)
 ```
+
+### Rust Engine
+
+The optional `sc-neurocore-engine` package provides SIMD-accelerated
+simulation. Pre-built wheels are available on PyPI for Linux, Windows,
+and macOS (Python 3.10–3.13). When installed, the Studio automatically
+uses it for E-I network simulation and batch model runs. Without it,
+NumPy fallbacks are used — everything works, just slower for large
+networks.
 
 ---
 

@@ -7,7 +7,7 @@ stochastic computing (SC) neural networks — from individual neurons to full
 SCPN layer hierarchies, with both software simulation and Verilog RTL for
 FPGA deployment.
 
-**Version 3.13.3** | 2 155 passing Python tests (2 353 defined) + 373 Rust tests | 100% Coverage | 122 Neuron Models | 81-Model NetworkRunner | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
+**Version 3.14.0** | 2 155 passing Python tests (2 353 defined) + 378 Rust tests | 100% Coverage | 118 Neuron Models | 80-Model NetworkRunner | [PyPI](https://pypi.org/project/sc-neurocore/) | [Rust Engine](https://pypi.org/project/sc-neurocore-engine/) | [GitHub](https://github.com/anulum/sc-neurocore)
 
 ![SC-NeuroCore train-to-hardware pipeline](assets/pipeline.png)
 *Train in PyTorch → Quantise to Q8.8 → Simulate with stochastic bitstreams → Compile to SystemVerilog → Synthesise for FPGA. The Rust SIMD engine accelerates all stages.*
@@ -61,8 +61,15 @@ product name. Frontier modules such as `analysis`, `viz`, `audio`,
 pip install sc-neurocore
 ```
 
-This installs the public `sc-neurocore` package from PyPI. The optional Rust
-engine remains available from source builds and release assets.
+For the 39–202× Rust SIMD engine (pre-built wheels for Linux/Windows/macOS):
+
+```bash
+pip install sc-neurocore-engine
+```
+
+When installed, SC-NeuroCore automatically uses Rust for NetworkRunner,
+E-I network simulation, batch model dispatch, and SIMD bitstream ops.
+Everything works without it — NumPy fallbacks are used.
 
 ```python
 from sc_neurocore import VectorizedSCLayer, BitstreamEncoder
