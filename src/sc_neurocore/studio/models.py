@@ -38,9 +38,10 @@ def _classify_fields(cls: type) -> tuple[list[dict], list[dict]]:
         entry = {"name": f.name, "default": float(default) if isinstance(default, (int, float)) else 0.0}
         if f.name in _KNOWN_STATE_VARS or f.name.startswith("v") and len(f.name) <= 2:
             state_vars.append(entry)
-        elif f.name.startswith(("v_", "e_", "g_", "tau_", "c_", "sigma", "alpha", "beta")):
-            params.append(entry)
-        elif f.name.endswith(("_threshold", "_reset", "_rest", "_rev", "_max", "_min")):
+        elif (
+            f.name.startswith(("v_", "e_", "g_", "tau_", "c_", "sigma", "alpha", "beta"))
+            or f.name.endswith(("_threshold", "_reset", "_rest", "_rev", "_max", "_min"))
+        ):
             params.append(entry)
         elif f.name in _KNOWN_STATE_VARS:
             state_vars.append(entry)

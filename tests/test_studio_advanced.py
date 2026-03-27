@@ -17,12 +17,10 @@ from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.characterize import characterize_model
 from sc_neurocore.studio.codegen import (
     classify_firing_pattern,
-    generate_model_script,
     generate_ode_script,
     generate_oneliner,
 )
 from sc_neurocore.studio.network import simulate_ei_network
-from sc_neurocore.studio.simulation import simulate
 
 
 @pytest.fixture
