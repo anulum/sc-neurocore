@@ -315,7 +315,7 @@ def _make_simulate_fn(req_dict: dict):
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="SC-NeuroCore Studio", version="0.3.0")
+    app = FastAPI(title="SC-NeuroCore Studio", version="1.0.0")
     app.add_middleware(
         CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
     )
