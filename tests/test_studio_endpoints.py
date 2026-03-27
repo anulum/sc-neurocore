@@ -46,9 +46,14 @@ class TestModelEndpoints:
         assert r.status_code == 404
 
     def test_simulate_model(self, client):
-        r = client.post("/api/models/simulate", json={
-            "name": MODEL, "duration": 50.0, "current": 10.0,
-        })
+        r = client.post(
+            "/api/models/simulate",
+            json={
+                "name": MODEL,
+                "duration": 50.0,
+                "current": 10.0,
+            },
+        )
         assert r.status_code == 200
         data = r.json()
         assert "time" in data
@@ -66,10 +71,16 @@ class TestNetworkEndpoint:
         assert data["n_total"] == 100
 
     def test_network_custom(self, client):
-        r = client.post("/api/network/ei", json={
-            "n_exc": 40, "n_inh": 10, "duration": 50.0,
-            "ext_rate": 20.0, "w_ee": 0.05,
-        })
+        r = client.post(
+            "/api/network/ei",
+            json={
+                "n_exc": 40,
+                "n_inh": 10,
+                "duration": 50.0,
+                "ext_rate": 20.0,
+                "w_ee": 0.05,
+            },
+        )
         assert r.status_code == 200
         data = r.json()
         assert data["n_exc"] == 40
@@ -79,10 +90,16 @@ class TestNetworkEndpoint:
 
 class TestFICurveEndpoint:
     def test_fi_curve_model(self, client):
-        r = client.post("/api/fi-curve", json={
-            "model_name": MODEL, "duration": 30.0,
-            "i_min": 0, "i_max": 20, "i_steps": 3,
-        })
+        r = client.post(
+            "/api/fi-curve",
+            json={
+                "model_name": MODEL,
+                "duration": 30.0,
+                "i_min": 0,
+                "i_max": 20,
+                "i_steps": 3,
+            },
+        )
         assert r.status_code == 200
         data = r.json()
         assert "currents" in data
@@ -92,9 +109,14 @@ class TestFICurveEndpoint:
 
 class TestSensitivityEndpoint:
     def test_sensitivity_model(self, client):
-        r = client.post("/api/sensitivity", json={
-            "model_name": MODEL, "duration": 20.0, "current": 10.0,
-        })
+        r = client.post(
+            "/api/sensitivity",
+            json={
+                "model_name": MODEL,
+                "duration": 20.0,
+                "current": 10.0,
+            },
+        )
         assert r.status_code == 200
         data = r.json()
         assert "base_rate" in data
@@ -103,10 +125,17 @@ class TestSensitivityEndpoint:
 
 class TestCodegenEndpoint:
     def test_codegen_model(self, client):
-        r = client.post("/api/codegen", json={
-            "mode": "model", "model_name": MODEL,
-            "params": {}, "dt": 0.1, "duration": 100, "current": 10,
-        })
+        r = client.post(
+            "/api/codegen",
+            json={
+                "mode": "model",
+                "model_name": MODEL,
+                "params": {},
+                "dt": 0.1,
+                "duration": 100,
+                "current": 10,
+            },
+        )
         assert r.status_code == 200
         data = r.json()
         assert "script" in data
@@ -114,10 +143,18 @@ class TestCodegenEndpoint:
         assert MODEL in data["script"]
 
     def test_codegen_ode(self, client):
-        r = client.post("/api/codegen", json={
-            "mode": "ode", "equations": ["dv/dt = I"],
-            "params": {}, "init": {"v": 0}, "dt": 0.1, "duration": 100, "current": 10,
-        })
+        r = client.post(
+            "/api/codegen",
+            json={
+                "mode": "ode",
+                "equations": ["dv/dt = I"],
+                "params": {},
+                "init": {"v": 0},
+                "dt": 0.1,
+                "duration": 100,
+                "current": 10,
+            },
+        )
         assert r.status_code == 200
         data = r.json()
         assert "script" in data
@@ -142,11 +179,18 @@ class TestPresetsEndpoint:
 
 class TestBifurcationEndpoint:
     def test_bifurcation_model(self, client):
-        r = client.post("/api/bifurcation", json={
-            "model_name": MODEL, "duration": 20.0, "current": 10.0,
-            "sweep_param": "v_rest", "sweep_min": -80, "sweep_max": -50,
-            "sweep_steps": 3,
-        })
+        r = client.post(
+            "/api/bifurcation",
+            json={
+                "model_name": MODEL,
+                "duration": 20.0,
+                "current": 10.0,
+                "sweep_param": "v_rest",
+                "sweep_min": -80,
+                "sweep_max": -50,
+                "sweep_steps": 3,
+            },
+        )
         assert r.status_code == 200
         data = r.json()
         assert "param_values" in data
@@ -155,9 +199,15 @@ class TestBifurcationEndpoint:
 
 class TestCharacterizeEndpoint:
     def test_characterize_model(self, client):
-        r = client.post("/api/characterize", json={
-            "name": MODEL, "dt": 0.5, "duration": 20.0, "current": 10.0,
-        })
+        r = client.post(
+            "/api/characterize",
+            json={
+                "name": MODEL,
+                "dt": 0.5,
+                "duration": 20.0,
+                "current": 10.0,
+            },
+        )
         assert r.status_code == 200
         data = r.json()
         assert "pattern" in data
@@ -167,10 +217,18 @@ class TestCharacterizeEndpoint:
 
 class TestFreqResponseEndpoint:
     def test_freq_response(self, client):
-        r = client.post("/api/freq-response", json={
-            "model_name": MODEL, "duration": 20.0, "current": 10.0,
-            "amplitude": 10, "freq_min": 1, "freq_max": 50, "n_freqs": 3,
-        })
+        r = client.post(
+            "/api/freq-response",
+            json={
+                "model_name": MODEL,
+                "duration": 20.0,
+                "current": 10.0,
+                "amplitude": 10,
+                "freq_min": 1,
+                "freq_max": 50,
+                "n_freqs": 3,
+            },
+        )
         assert r.status_code == 200
         data = r.json()
         assert "frequencies_hz" in data
@@ -179,10 +237,13 @@ class TestFreqResponseEndpoint:
 
 class TestMultiSimulate:
     def test_multi_simulate(self, client):
-        r = client.post("/api/multi-simulate", json=[
-            {"name": MODEL, "duration": 20, "current": 10},
-            {"name": "IzhikevichNeuron", "duration": 20, "current": 10},
-        ])
+        r = client.post(
+            "/api/multi-simulate",
+            json=[
+                {"name": MODEL, "duration": 20, "current": 10},
+                {"name": "IzhikevichNeuron", "duration": 20, "current": 10},
+            ],
+        )
         assert r.status_code == 200
         data = r.json()
         assert len(data) == 2

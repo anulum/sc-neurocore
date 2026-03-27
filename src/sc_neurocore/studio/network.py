@@ -78,7 +78,9 @@ def simulate_ei_network(
         # Synaptic input from spikes in previous step
         syn_input = np.zeros(n_total)
         if t > 0:
-            prev_spikes = np.where((refractory > tau_ref - dt - 0.001) & (refractory <= tau_ref + 0.001))[0]
+            prev_spikes = np.where(
+                (refractory > tau_ref - dt - 0.001) & (refractory <= tau_ref + 0.001)
+            )[0]
             if len(prev_spikes) > 0:
                 syn_input = W[:, prev_spikes].sum(axis=1)
 

@@ -137,8 +137,15 @@ PRESETS: list[dict] = [
 
 
 def list_presets() -> list[dict]:
-    return [{"id": p["id"], "title": p["title"], "description": p["description"],
-             "suggested_view": p.get("suggested_view", "trace")} for p in PRESETS]
+    return [
+        {
+            "id": p["id"],
+            "title": p["title"],
+            "description": p["description"],
+            "suggested_view": p.get("suggested_view", "trace"),
+        }
+        for p in PRESETS
+    ]
 
 
 def get_preset(preset_id: str) -> dict | None:
