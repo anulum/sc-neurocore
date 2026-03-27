@@ -7,7 +7,10 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import traceback
+from collections import OrderedDict
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -176,6 +179,39 @@ class CodegenRequest(BaseModel):
     current: float = 10.0
 
 
+class _SimCache:
+    """LRU cache for simulation results keyed by JSON hash."""
+
+    def __init__(self, maxsize: int = 64):
+        self._cache: OrderedDict[str, dict] = OrderedDict()
+        self._maxsize = maxsize
+        self.hits = 0
+        self.misses = 0
+
+    def _key(self, data: dict) -> str:
+        raw = json.dumps(data, sort_keys=True, default=str)
+        return hashlib.md5(raw.encode()).hexdigest()
+
+    def get(self, params: dict):
+        k = self._key(params)
+        if k in self._cache:
+            self.hits += 1
+            self._cache.move_to_end(k)
+            return self._cache[k]
+        self.misses += 1
+        return None
+
+    def put(self, params: dict, result: dict):
+        k = self._key(params)
+        self._cache[k] = result
+        self._cache.move_to_end(k)
+        if len(self._cache) > self._maxsize:
+            self._cache.popitem(last=False)
+
+
+_cache = _SimCache()
+
+
 def _safe(fn, detail_prefix: str = ""):
     try:
         return fn()
@@ -242,14 +278,14 @@ def create_app() -> FastAPI:
     def api_models():
         return _safe(list_models)
 
-    @app.get("/api/models/{name}")
-    def api_model(name: str):
-        return _safe(lambda: get_model_detail(name) or (_ for _ in ()).throw(HTTPException(404, f"Model '{name}' not found")))
-
-    # --- Model scan (behavior classification) ---
+    # --- Model scan (behavior classification) — must precede /api/models/{name} ---
     @app.get("/api/models/scan")
     def api_model_scan():
         return _safe(lambda: scan_all_models(current=10.0, duration=100.0))
+
+    @app.get("/api/models/{name}")
+    def api_model(name: str):
+        return _safe(lambda: get_model_detail(name) or (_ for _ in ()).throw(HTTPException(404, f"Model '{name}' not found")))
 
     # --- Presets (#3) ---
     @app.get("/api/presets")
@@ -263,9 +299,13 @@ def create_app() -> FastAPI:
             raise HTTPException(404, f"Preset '{preset_id}' not found")
         return p
 
-    # --- Simulation (with auto-classification) ---
+    # --- Simulation (with auto-classification + cache) ---
     @app.post("/api/simulate")
     def api_simulate(req: SimulateRequest):
+        cache_key = {"_type": "ode", **req.model_dump()}
+        cached = _cache.get(cache_key)
+        if cached:
+            return cached
         def fn():
             result = simulate(
                 equations=req.equations, threshold=req.threshold, reset=req.reset,
@@ -273,19 +313,29 @@ def create_app() -> FastAPI:
                 duration=req.duration, current=req.current, protocol=req.protocol,
             )
             result["pattern"] = classify_firing_pattern(result["spikes"], result["n_steps"], result["dt"])
+            _cache.put(cache_key, result)
             return result
         return _safe(fn)
 
     @app.post("/api/models/simulate")
     def api_model_simulate(req: ModelSimulateRequest):
+        cache_key = {"_type": "model", **req.model_dump()}
+        cached = _cache.get(cache_key)
+        if cached:
+            return cached
         def fn():
             result = simulate_model(
                 name=req.name, param_overrides=req.params, dt=req.dt,
                 duration=req.duration, current=req.current, protocol=req.protocol,
             )
             result["pattern"] = classify_firing_pattern(result["spikes"], result["n_steps"], result["dt"])
+            _cache.put(cache_key, result)
             return result
         return _safe(fn, f"Model '{req.name}': ")
+
+    @app.get("/api/cache/stats")
+    def api_cache_stats():
+        return {"hits": _cache.hits, "misses": _cache.misses, "size": len(_cache._cache)}
 
     # --- Comparison (#1) ---
     @app.post("/api/compare")
