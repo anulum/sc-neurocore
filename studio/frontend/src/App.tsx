@@ -9,6 +9,8 @@ import SpikeStats from "./components/SpikeStats";
 import ModelBrowser from "./components/ModelBrowser";
 import VerilogPreview from "./components/VerilogPreview";
 import MultiModelPicker from "./components/MultiModelPicker";
+import NetworkControls from "./components/NetworkControls";
+import ComparePanel from "./components/ComparePanel";
 
 function Tab({ active, color, label, onClick }: {
   active: boolean; color: string; label: string; onClick: () => void;
@@ -144,6 +146,7 @@ export default function App() {
             <Tab active={s.activeTab === "characterize"} color="#fff176" label="Char" onClick={() => s.setActiveTab("characterize")} />
           )}
           <Tab active={s.activeTab === "multi"} color="#80cbc4" label="Multi" onClick={() => s.setActiveTab("multi")} />
+          <Tab active={s.activeTab === "compare"} color="#ce93d8" label="A/B" onClick={() => s.setActiveTab("compare")} />
           <Tab active={s.activeTab === "network"} color="#80cbc4" label="E-I" onClick={() => s.setActiveTab("network")} />
           <Tab active={s.activeTab === "code"} color="#90a4ae" label="Code" onClick={() => s.setActiveTab("code")} />
           {s.sourceMode === "ode" && (
@@ -262,6 +265,8 @@ export default function App() {
             </div>
           )}
 
+          <ComparePanel />
+          <NetworkControls />
           <ParameterSliders />
         </div>
 

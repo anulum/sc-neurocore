@@ -87,6 +87,7 @@ export default function SimulationPlot() {
   const zoomRef = useRef({ xMin: NaN, xMax: NaN, yMin: NaN, yMax: NaN });
   const dragRef = useRef<{ startX: number; startY: number; origXMin: number; origXMax: number; origYMin: number; origYMax: number } | null>(null);
   const [tooltip, setTooltip] = useState<{ x: number; y: number; text: string } | null>(null);
+  const crosshairRef = useRef<number | null>(null);
   const store = useStudioStore();
   const {
     result, activeTab, fiResult, bifResult, sensResult, precResult,
@@ -176,18 +177,21 @@ export default function SimulationPlot() {
         const i = Math.min(Math.max(idx, 0), arr.length - 1);
         return `${v}=${arr[i].toFixed(2)}`;
       }).join(" ");
+      crosshairRef.current = e.clientX - rect.left;
       setTooltip({
         x: e.clientX - rect.left,
         y: e.clientY - rect.top,
         text: `t=${tAt.toFixed(1)} ${vals}`,
       });
+      draw();
     } else {
+      crosshairRef.current = null;
       setTooltip(null);
     }
   }
 
   function handleMouseUp() { dragRef.current = null; }
-  function handleMouseLeave() { dragRef.current = null; setTooltip(null); }
+  function handleMouseLeave() { dragRef.current = null; crosshairRef.current = null; setTooltip(null); draw(); }
 
   function resetZoom() {
     zoomRef.current = { xMin: NaN, xMax: NaN, yMin: NaN, yMax: NaN };
@@ -630,6 +634,13 @@ export default function SimulationPlot() {
     vars.forEach((v, i) => {
       drawLine(ctx, L, T, pw, voltH, time, result.states[v], zTMin, zTMax, vMin, vMax, COLORS[i % COLORS.length]);
     });
+    // Y-axis label
+    ctx.save();
+    ctx.translate(10, T + voltH / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillStyle = AXIS; ctx.font = "9px monospace"; ctx.textAlign = "center";
+    ctx.fillText("mV", 0, 0);
+    ctx.restore();
     // Spike markers
     if (hasSpikes) {
       ctx.strokeStyle = "rgba(255,82,82,0.2)"; ctx.lineWidth = 1;
@@ -665,6 +676,13 @@ export default function SimulationPlot() {
     drawLine(ctx, L, curY, pw, currentH, time, I, zTMin, zTMax, iMin, iMax * 1.1, "#ffb74d", 1.5);
     ctx.fillStyle = "#ffb74d"; ctx.font = "10px monospace"; ctx.textAlign = "left";
     ctx.fillText("I", L + 4, curY + 10);
+    // Y-axis label for current
+    ctx.save();
+    ctx.translate(10, curY + currentH / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillStyle = AXIS; ctx.font = "9px monospace"; ctx.textAlign = "center";
+    ctx.fillText("nA", 0, 0);
+    ctx.restore();
 
     // Spike raster
     if (hasSpikes) {
@@ -686,6 +704,15 @@ export default function SimulationPlot() {
       ctx.fillText(v.toFixed(0), x, h - 2);
     }
     ctx.textAlign = "right"; ctx.fillText("ms", L + pw, h - 2);
+
+    // Crosshair
+    if (crosshairRef.current !== null) {
+      const cx = crosshairRef.current;
+      ctx.strokeStyle = "rgba(79,195,247,0.3)"; ctx.lineWidth = 1;
+      ctx.setLineDash([2, 2]);
+      ctx.beginPath(); ctx.moveTo(cx, T); ctx.lineTo(cx, h - 10); ctx.stroke();
+      ctx.setLineDash([]);
+    }
 
     // Zoom indicator
     if (!isNaN(zoomRef.current.xMin)) {
