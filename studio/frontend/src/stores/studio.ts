@@ -10,6 +10,10 @@ import {
   fetchSynthEstimate,
   fetchSurrogates as apiFetchSurrogates, startTraining as apiStartTraining,
   stopTraining as apiStopTraining,
+  fetchGraphModels as apiFetchGraphModels,
+  createPopulation as apiCreatePop, createProjection as apiCreateProj,
+  simulateGraph as apiSimGraph, validateGraph as apiValidateGraph,
+  exportNIR as apiExportNIR, importNIR as apiImportNIR,
   type CharacterizeResponse, type ImportedTrace, type NetworkResult,
   type NeuronTemplate, type ModelSummary, type ModelDetail, type PresetSummary,
   type SimulateResponse, type FICurveResponse, type BifurcationResponse,
@@ -18,6 +22,7 @@ import {
   type SynthResult, type SynthEstimate, type MultiTargetResult,
   type SynthToolInfo,
   type SurrogateInfo, type TrainingEpochMetrics,
+  type PopulationNode, type ProjectionEdge, type GraphSimResult, type NIRFormat,
 } from "../api/client";
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -25,7 +30,7 @@ let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 type SourceMode = "model" | "ode";
 type ViewTab = "trace" | "phase" | "isi" | "fi-curve" | "bifurcation" |
   "sensitivity" | "precision" | "heatmap" | "verilog" | "code" |
-  "compare" | "freq" | "sta" | "characterize" | "multi" | "network" | "ir" | "synth" | "train";
+  "compare" | "freq" | "sta" | "characterize" | "multi" | "network" | "ir" | "synth" | "train" | "canvas";
 
 interface StudioState {
   sourceMode: SourceMode;
@@ -68,6 +73,11 @@ interface StudioState {
   synthEstimate: SynthEstimate | null;
   multiTargetResult: MultiTargetResult | null;
   toolsAvailable: Record<string, SynthToolInfo> | null;
+  graphPopulations: PopulationNode[];
+  graphProjections: ProjectionEdge[];
+  graphModels: string[];
+  graphSimResult: GraphSimResult | null;
+  graphErrors: string[];
   trainingJobId: string | null;
   trainingStatus: string;
   trainingEpochs: TrainingEpochMetrics[];
@@ -131,6 +141,16 @@ interface StudioState {
   runMultiTargetSynthesis: () => Promise<void>;
   runSynthEstimate: () => Promise<void>;
   checkSynthTools: () => Promise<void>;
+  loadGraphModels: () => Promise<void>;
+  addPopulation: (neuronType: "excitatory" | "inhibitory") => Promise<void>;
+  removePopulation: (id: string) => void;
+  updatePopulation: (id: string, updates: Partial<PopulationNode>) => void;
+  addProjection: (sourceId: string, targetId: string) => Promise<void>;
+  removeProjection: (id: string) => void;
+  updateProjection: (id: string, updates: Partial<ProjectionEdge>) => void;
+  simulateGraphAction: () => Promise<void>;
+  exportGraphNIR: () => Promise<void>;
+  importGraphNIR: (nir: NIRFormat) => Promise<void>;
   loadSurrogates: () => Promise<void>;
   startTraining: () => Promise<void>;
   stopTraining: () => Promise<void>;
@@ -177,6 +197,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   charResult: null, multiResults: null, importedTrace: null, networkResult: null,
   networkParams: { n_exc: 80, n_inh: 20, w_ee: 0.1, w_ei: 0.4, w_ie: 0.1, w_ii: 0.4, p_conn: 0.2, ext_rate: 5.0 },
   verilogSrc: "", irText: "", svSource: "", irErrors: [] as string[],
+  graphPopulations: [], graphProjections: [], graphModels: [], graphSimResult: null, graphErrors: [],
   synthTarget: "ice40", synthResult: null, synthEstimate: null, multiTargetResult: null, toolsAvailable: null,
   trainingJobId: null, trainingStatus: "idle", trainingEpochs: [], trainingSurrogates: [],
   trainingConfig: {
@@ -624,6 +645,91 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       const toolsAvailable = await fetchSynthTools();
       set({ toolsAvailable });
     } catch { /* tools check is non-critical */ }
+  },
+
+  loadGraphModels: async () => {
+    try {
+      const graphModels = await apiFetchGraphModels();
+      set({ graphModels });
+    } catch { /* non-critical */ }
+  },
+
+  addPopulation: async (neuronType) => {
+    const s = get();
+    const idx = s.graphPopulations.length;
+    const label = neuronType === "excitatory" ? `Exc ${idx}` : `Inh ${idx}`;
+    try {
+      const pop = await apiCreatePop({
+        label, model: "LIFNeuron", count: neuronType === "excitatory" ? 80 : 20,
+        neuron_type: neuronType, x: 100 + idx * 200, y: neuronType === "excitatory" ? 100 : 300,
+      } as Record<string, unknown>);
+      set((prev) => ({ graphPopulations: [...prev.graphPopulations, pop] }));
+    } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
+  },
+
+  removePopulation: (id) => {
+    set((s) => ({
+      graphPopulations: s.graphPopulations.filter((p) => p.id !== id),
+      graphProjections: s.graphProjections.filter((e) => e.source !== id && e.target !== id),
+    }));
+  },
+
+  updatePopulation: (id, updates) => {
+    set((s) => ({
+      graphPopulations: s.graphPopulations.map((p) => p.id === id ? { ...p, ...updates } : p),
+    }));
+  },
+
+  addProjection: async (sourceId, targetId) => {
+    try {
+      const proj = await apiCreateProj({ source_id: sourceId, target_id: targetId, weight: 0.1, probability: 0.2 });
+      set((prev) => ({ graphProjections: [...prev.graphProjections, proj] }));
+    } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
+  },
+
+  removeProjection: (id) => {
+    set((s) => ({ graphProjections: s.graphProjections.filter((e) => e.id !== id) }));
+  },
+
+  updateProjection: (id, updates) => {
+    set((s) => ({
+      graphProjections: s.graphProjections.map((e) => e.id === id ? { ...e, ...updates } : e),
+    }));
+  },
+
+  simulateGraphAction: async () => {
+    const s = get();
+    if (s.isSimulating) return;
+    set({ isSimulating: true, error: null, graphErrors: [] });
+    try {
+      const graph = { populations: s.graphPopulations, projections: s.graphProjections, duration: s.duration, dt: s.dt };
+      const validation = await apiValidateGraph(graph);
+      if (!validation.valid) {
+        set({ graphErrors: validation.errors, isSimulating: false });
+        return;
+      }
+      const graphSimResult = await apiSimGraph(graph);
+      set({ graphSimResult, isSimulating: false });
+    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+  },
+
+  exportGraphNIR: async () => {
+    const s = get();
+    try {
+      const nir = await apiExportNIR({ populations: s.graphPopulations, projections: s.graphProjections });
+      const blob = new Blob([JSON.stringify(nir, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "network.nir.json";
+      a.click();
+    } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
+  },
+
+  importGraphNIR: async (nir) => {
+    try {
+      const graph = await apiImportNIR(nir);
+      set({ graphPopulations: graph.populations, graphProjections: graph.projections, activeTab: "canvas" });
+    } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
   },
 
   loadSurrogates: async () => {

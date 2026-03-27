@@ -16,6 +16,7 @@ import StatusBar from "./components/StatusBar";
 import CompilerInspector from "./components/CompilerInspector";
 import SynthesisDashboard from "./components/SynthesisDashboard";
 import TrainingMonitor from "./components/TrainingMonitor";
+import NetworkCanvas from "./components/NetworkCanvas";
 
 function Tab({ active, color, label, onClick }: {
   active: boolean; color: string; label: string; onClick: () => void;
@@ -121,6 +122,7 @@ export default function App() {
           </>
         )}
 
+        <Btn label="Canvas" onClick={() => s.setActiveTab("canvas")} color="#4fc3f7" />
         <Btn label="Train" onClick={() => s.setActiveTab("train")} color="#b39ddb" />
         <Btn label="E-I Net" onClick={s.runNetwork} disabled={s.isSimulating} color="#80cbc4" />
         <Btn label="STA" onClick={s.computeSTA} disabled={!s.result || s.result.spikes.length < 3} color="#b0bec5" />
@@ -165,6 +167,7 @@ export default function App() {
               <Tab active={s.activeTab === "synth"} color="#a5d6a7" label="FPGA" onClick={() => s.setActiveTab("synth")} />
             </>
           )}
+          <Tab active={s.activeTab === "canvas"} color="#4fc3f7" label="Canvas" onClick={() => s.setActiveTab("canvas")} />
           <Tab active={s.activeTab === "train"} color="#b39ddb" label="Train" onClick={() => s.setActiveTab("train")} />
         </div>
 
@@ -282,7 +285,9 @@ export default function App() {
         </div>
 
         <div className="right-panel">
-          {s.activeTab === "train" ? (
+          {s.activeTab === "canvas" ? (
+            <NetworkCanvas />
+          ) : s.activeTab === "train" ? (
             <TrainingMonitor />
           ) : s.activeTab === "synth" ? (
             <SynthesisDashboard />
