@@ -26,11 +26,20 @@ def _safe_name(name: str) -> str:
     return base
 
 
+def _safe_path(name: str) -> str:
+    """Build a project file path and verify it stays within _PROJECTS_DIR."""
+    safe = _safe_name(name)
+    path = os.path.normpath(os.path.join(_PROJECTS_DIR, f"{safe}.json"))
+    if not path.startswith(os.path.normpath(_PROJECTS_DIR)):
+        raise ValueError("Invalid project name")
+    return path
+
+
 def save_project(name: str, state: dict) -> dict:
     """Save full studio state to a JSON file."""
-    name = _safe_name(name)
     _ensure_dir()
-    path = os.path.join(_PROJECTS_DIR, f"{name}.json")
+    path = _safe_path(name)
+    name = _safe_name(name)
     payload = {
         "name": name,
         "saved_at": time.time(),
@@ -44,8 +53,8 @@ def save_project(name: str, state: dict) -> dict:
 
 def load_project(name: str) -> dict:
     """Load a saved project by name."""
+    path = _safe_path(name)
     name = _safe_name(name)
-    path = os.path.join(_PROJECTS_DIR, f"{name}.json")
     if not os.path.exists(path):
         return {"error": f"Project '{name}' not found"}
     with open(path) as f:
@@ -78,8 +87,8 @@ def list_projects() -> list[dict]:
 
 def delete_project(name: str) -> dict:
     """Delete a saved project."""
+    path = _safe_path(name)
     name = _safe_name(name)
-    path = os.path.join(_PROJECTS_DIR, f"{name}.json")
     if not os.path.exists(path):
         return {"error": f"Project '{name}' not found"}
     os.remove(path)
