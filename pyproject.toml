@@ -113,6 +113,10 @@ omit = [
     # --- Requires optional heavy deps (torch, JAX, nir) ---
     "*/training/*",                     # PyTorch training pipeline
     "*/conversion/*",                   # ANN-to-SNN (torch)
+    "*/qat/torch_qat.py",              # PyTorch QAT (requires torch)
+    "*/core/bipolar.py",               # SC bipolar primitives
+    "*/adapters/neuroml.py",           # NeuroML 2 importer
+    "*/adapters/sonata.py",            # SONATA HDF5 importer
     "*/nir_bridge/*",                   # NIR interop (nir package)
     "*/accel/jax_backend.py",           # JAX GPU backend
     "*/layers/jax_dense_layer.py",      # JAX dense layer

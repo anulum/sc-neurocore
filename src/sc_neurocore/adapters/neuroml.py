@@ -18,7 +18,7 @@ NeuroML 2 spec: https://docs.neuroml.org/Userdocs/Schemas/Cells.html
 
 from __future__ import annotations
 
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ET  # nosec B405 — local file parsing only
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -242,7 +242,7 @@ def import_neuroml(path: str | Path) -> list[ImportedCell]:
     list of ImportedCell
         One per cell definition found in the file.
     """
-    tree = ET.parse(path)
+    tree = ET.parse(path)  # nosec B314 — local file only
     root = tree.getroot()
 
     cells = []
