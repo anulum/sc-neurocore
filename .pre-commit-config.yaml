@@ -23,3 +23,12 @@ repos:
     rev: d11834eeac776f87614aef80119b38800a9a2bac  # v1.29.5
     hooks:
       - id: typos
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: "v1.19.1"
+    hooks:
+      - id: mypy
+        args: [--config-file=pyproject.toml]
+        additional_dependencies: [numpy]
+        pass_filenames: false
+        entry: mypy src/sc_neurocore/
