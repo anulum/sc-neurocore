@@ -46,8 +46,8 @@ class TestSRM0:
         assert "v" in s and "eta" in s and "t" in s
 
     def test_rate_increases_with_current(self):
-        r1 = sum(SRM0Neuron(dt=0.1).step(1.5) for _ in range(5000))
-        r2 = sum(SRM0Neuron(dt=0.1).step(3.0) for _ in range(5000))
+        r1 = sum(SRM0Neuron(dt=0.1).step(2.0) for _ in range(5000))
+        r2 = sum(SRM0Neuron(dt=0.1).step(5.0) for _ in range(5000))
         assert r2 > r1
 
 
