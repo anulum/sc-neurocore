@@ -27,16 +27,19 @@ sys.stdout.flush()
 def atan_surr(x, a=2.0):
     return 0.5 + (1.0 / 3.14159265) * torch.atan(a * x)
 
+
 class LIF(nn.Module):
     def __init__(self, beta=0.9):
         super().__init__()
         self.register_buffer("b", torch.tensor(beta))
         self.register_buffer("th", torch.tensor(1.0))
+
     def forward(self, cur, v):
         vn = self.b * v + cur
         sp = atan_surr(vn - self.th)
         vn = vn - sp.detach() * self.th
         return sp, vn
+
 
 class SCAwareLin(nn.Module):
     def __init__(self, inf, outf, L=256):
@@ -45,6 +48,7 @@ class SCAwareLin(nn.Module):
         self.L = L
         with torch.no_grad():
             self.lin.weight.clamp_(-1, 1)
+
     def forward(self, x):
         w = self.lin.weight.clamp(-1, 1)
         if self.training:
@@ -52,13 +56,15 @@ class SCAwareLin(nn.Module):
             w = w + torch.randn_like(w) * (p * (1 - p) / self.L).sqrt()
         return nn.functional.linear(x, w, self.lin.bias)
 
+
 class SCANet(nn.Module):
     def __init__(self, ni, nh, no, nl=1, L=1024, beta=0.9):
         super().__init__()
         self.no = no
-        sz = [ni] + [nh]*nl + [no]
-        self.lins = nn.ModuleList(SCAwareLin(sz[i], sz[i+1], L) for i in range(len(sz)-1))
-        self.lifs = nn.ModuleList(LIF(beta) for _ in range(len(sz)-1))
+        sz = [ni] + [nh] * nl + [no]
+        self.lins = nn.ModuleList(SCAwareLin(sz[i], sz[i + 1], L) for i in range(len(sz) - 1))
+        self.lifs = nn.ModuleList(LIF(beta) for _ in range(len(sz) - 1))
+
     def forward(self, x):
         T, B, _ = x.shape
         d = x.device
@@ -118,12 +124,15 @@ def calibrate_fixed(model, test_data, T=25):
     # Hook the LIFCell outputs, not the Linear outputs
     for i, lif in enumerate(model.lifs):
         acts[i] = []
+
         def mk(idx):
             def hook(m, inp, out):
                 # LIFCell returns (spike, v_next) — capture spike
                 spike = out[0] if isinstance(out, tuple) else out
                 acts[idx].append(spike.detach().cpu())
+
             return hook
+
         hooks.append(lif.register_forward_hook(mk(i)))
 
     with torch.no_grad():
@@ -149,7 +158,9 @@ def sc_infer_fixed(img_flat, layers, L, rng, cal):
         w, bias, row_scale = lay["w"], lay["b"], lay["row_scale"]
         no, ni = w.shape
         if len(x) < ni:
-            xp = np.zeros(ni); xp[:len(x)] = x; x = xp
+            xp = np.zeros(ni)
+            xp[: len(x)] = x
+            x = xp
         elif len(x) > ni:
             x = x[:ni]
 
@@ -207,19 +218,24 @@ def train_model(model, tr_ld, te_ld, epochs, T, tag):
             x = d.view(d.size(0), -1).unsqueeze(0).expand(T, d.size(0), 784)
             sp = model(x)
             loss = lf(sp, tgt)
-            opt.zero_grad(); loss.backward()
+            opt.zero_grad()
+            loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             opt.step()
-            cr += (sp.argmax(1) == tgt).sum().item(); tot += tgt.size(0)
+            cr += (sp.argmax(1) == tgt).sum().item()
+            tot += tgt.size(0)
         model.eval()
         tc, tt = 0, 0
         with torch.no_grad():
             for d, tgt in te_ld:
                 x = d.view(d.size(0), -1).unsqueeze(0).expand(T, d.size(0), 784)
-                tc += (model(x).argmax(1) == tgt).sum().item(); tt += tgt.size(0)
+                tc += (model(x).argmax(1) == tgt).sum().item()
+                tt += tgt.size(0)
         acc = tc / tt
         best = max(best, acc)
-        print(f"  [{tag}] Ep {ep+1}/{epochs}: train={cr/tot:.3f} test={acc:.3f} ({time.time()-t0:.1f}s)")
+        print(
+            f"  [{tag}] Ep {ep + 1}/{epochs}: train={cr / tot:.3f} test={acc:.3f} ({time.time() - t0:.1f}s)"
+        )
         sys.stdout.flush()
     return best
 
@@ -257,17 +273,26 @@ def main():
         print(f"  L={L:5d}: {r['accuracy']:.2%} (drop: {float_acc - r['accuracy']:.2%})")
     print(f"  Time: {total:.0f}s")
 
-    out = {"timestamp": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
-           "fixes": ["calibration_no_3x", "hook_lif_not_linear", "per_trial_mac", "per_row_norm"],
-           "float_accuracy": round(float_acc, 4),
-           "sc_results": results, "total_s": round(total, 1)}
+    out = {
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        "fixes": ["calibration_no_3x", "hook_lif_not_linear", "per_trial_mac", "per_row_norm"],
+        "float_accuracy": round(float_acc, 4),
+        "sc_results": results,
+        "total_s": round(total, 1),
+    }
     p = Path("/kaggle/working/sc_all_fixes_results.json")
-    if not p.parent.exists(): p = Path("sc_all_fixes_results.json")
-    with open(p, "w") as f: json.dump(out, f, indent=2, default=str)
+    if not p.parent.exists():
+        p = Path("sc_all_fixes_results.json")
+    with open(p, "w") as f:
+        json.dump(out, f, indent=2, default=str)
     print(f"  Saved: {p}")
+
 
 if __name__ == "__main__":
     try:
         main()
     except Exception:
-        import traceback; traceback.print_exc(); sys.exit(1)
+        import traceback
+
+        traceback.print_exc()
+        sys.exit(1)

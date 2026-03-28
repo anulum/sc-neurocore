@@ -57,8 +57,7 @@ def ste_quantize(x: torch.Tensor, n_bits: int, symmetric: bool = True) -> torch.
 class QuantizedLinear(nn.Module):
     """Linear layer with STE weight quantization."""
 
-    def __init__(self, in_features: int, out_features: int, n_bits: int = 8,
-                 bias: bool = True):
+    def __init__(self, in_features: int, out_features: int, n_bits: int = 8, bias: bool = True):
         super().__init__()
         self.linear = nn.Linear(in_features, out_features, bias=bias)
         self.n_bits = n_bits
@@ -111,20 +110,17 @@ class QuantizedLIFNet(nn.Module):
 
         sizes = [n_input] + [n_hidden] * n_layers + [n_output]
         self.linears = nn.ModuleList(
-            QuantizedLinear(sizes[i], sizes[i + 1], n_bits=n_bits)
-            for i in range(len(sizes) - 1)
+            QuantizedLinear(sizes[i], sizes[i + 1], n_bits=n_bits) for i in range(len(sizes) - 1)
         )
         self.lifs = nn.ModuleList(
-            LIFCell(beta=beta, surrogate_fn=surrogate_fn)
-            for _ in range(len(sizes) - 1)
+            LIFCell(beta=beta, surrogate_fn=surrogate_fn) for _ in range(len(sizes) - 1)
         )
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """x: (T, batch, n_input). Returns (spike_counts, membrane_acc)."""
         T, batch, _ = x.shape
         device = x.device
-        v = [torch.zeros(batch, lin.linear.out_features, device=device)
-             for lin in self.linears]
+        v = [torch.zeros(batch, lin.linear.out_features, device=device) for lin in self.linears]
 
         spike_sum = torch.zeros(batch, self.n_output, device=device)
         mem_sum = torch.zeros(batch, self.n_output, device=device)
@@ -164,8 +160,9 @@ class SCAwareLinear(nn.Module):
     During eval: no noise, standard linear.
     """
 
-    def __init__(self, in_features: int, out_features: int,
-                 bitstream_length: int = 256, bias: bool = True):
+    def __init__(
+        self, in_features: int, out_features: int, bitstream_length: int = 256, bias: bool = True
+    ):
         super().__init__()
         self.linear = nn.Linear(in_features, out_features, bias=bias)
         self.bitstream_length = bitstream_length
@@ -216,21 +213,18 @@ class SCAwareLIFNet(nn.Module):
 
         sizes = [n_input] + [n_hidden] * n_layers + [n_output]
         self.linears = nn.ModuleList(
-            SCAwareLinear(sizes[i], sizes[i + 1],
-                          bitstream_length=bitstream_length)
+            SCAwareLinear(sizes[i], sizes[i + 1], bitstream_length=bitstream_length)
             for i in range(len(sizes) - 1)
         )
         self.lifs = nn.ModuleList(
-            LIFCell(beta=beta, surrogate_fn=surrogate_fn)
-            for _ in range(len(sizes) - 1)
+            LIFCell(beta=beta, surrogate_fn=surrogate_fn) for _ in range(len(sizes) - 1)
         )
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """x: (T, batch, n_input). Returns (spike_counts, membrane_acc)."""
         T, batch, _ = x.shape
         device = x.device
-        v = [torch.zeros(batch, lin.linear.out_features, device=device)
-             for lin in self.linears]
+        v = [torch.zeros(batch, lin.linear.out_features, device=device) for lin in self.linears]
 
         spike_sum = torch.zeros(batch, self.n_output, device=device)
         mem_sum = torch.zeros(batch, self.n_output, device=device)

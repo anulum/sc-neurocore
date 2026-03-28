@@ -45,10 +45,8 @@ class StandardNet(nn.Module):
         super().__init__()
         self.n_out = n_out
         sizes = [n_in] + [n_hid] * n_layers + [n_out]
-        self.lins = nn.ModuleList(
-            nn.Linear(sizes[i], sizes[i+1]) for i in range(len(sizes)-1)
-        )
-        self.lifs = nn.ModuleList(LIFCell(beta) for _ in range(len(sizes)-1))
+        self.lins = nn.ModuleList(nn.Linear(sizes[i], sizes[i + 1]) for i in range(len(sizes) - 1))
+        self.lifs = nn.ModuleList(LIFCell(beta) for _ in range(len(sizes) - 1))
 
     def forward(self, x):
         T, B, _ = x.shape
@@ -88,9 +86,9 @@ class SCAwareNet(nn.Module):
         self.n_out = n_out
         sizes = [n_in] + [n_hid] * n_layers + [n_out]
         self.lins = nn.ModuleList(
-            SCAwareLin(sizes[i], sizes[i+1], L=L) for i in range(len(sizes)-1)
+            SCAwareLin(sizes[i], sizes[i + 1], L=L) for i in range(len(sizes) - 1)
         )
-        self.lifs = nn.ModuleList(LIFCell(beta) for _ in range(len(sizes)-1))
+        self.lifs = nn.ModuleList(LIFCell(beta) for _ in range(len(sizes) - 1))
 
     def forward(self, x):
         T, B, _ = x.shape
@@ -115,7 +113,9 @@ def bipolar_sc_infer(image_flat, layers, L, rng, calibration):
         w, bias, scale = lay["w"], lay["b"], lay["s"]
         n_out, n_in = w.shape
         if len(x) < n_in:
-            xp = np.zeros(n_in); xp[:len(x)] = x; x = xp
+            xp = np.zeros(n_in)
+            xp[: len(x)] = x
+            x = xp
         elif len(x) > n_in:
             x = x[:n_in]
 
@@ -145,10 +145,10 @@ def bipolar_sc_infer(image_flat, layers, L, rng, calibration):
 
 def extract_bipolar_layers(model):
     layers = []
-    lins = model.lins if hasattr(model, 'lins') else model.lins
+    lins = model.lins if hasattr(model, "lins") else model.lins
     for lin_mod in lins:
-        w_tensor = lin_mod.weight if hasattr(lin_mod, 'weight') else lin_mod.lin.weight
-        b_tensor = lin_mod.bias if hasattr(lin_mod, 'bias') else lin_mod.lin.bias
+        w_tensor = lin_mod.weight if hasattr(lin_mod, "weight") else lin_mod.lin.weight
+        b_tensor = lin_mod.bias if hasattr(lin_mod, "bias") else lin_mod.lin.bias
         w = w_tensor.detach().clamp(-1, 1).cpu().numpy()
         mx = max(np.abs(w).max(), 1e-8)
         b = b_tensor.detach().cpu().numpy() if b_tensor is not None else None
@@ -164,10 +164,13 @@ def calibrate(model, test_data, T=25):
     lins = model.lins
     for i, lin in enumerate(lins):
         acts[i] = []
+
         def mk(idx):
             def hook(m, inp, out):
                 acts[idx].append(out.detach().cpu())
+
             return hook
+
         hooks.append(lin.register_forward_hook(mk(i)))
 
     with torch.no_grad():
@@ -211,19 +214,24 @@ def train(model, train_ld, test_ld, epochs, T, tag):
             x = data.view(data.size(0), -1).unsqueeze(0).expand(T, data.size(0), 784)
             sp = model(x)
             loss = loss_fn(sp, tgt)
-            opt.zero_grad(); loss.backward()
+            opt.zero_grad()
+            loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             opt.step()
-            cr += (sp.argmax(1) == tgt).sum().item(); tot += tgt.size(0)
+            cr += (sp.argmax(1) == tgt).sum().item()
+            tot += tgt.size(0)
         model.eval()
         tc, tt = 0, 0
         with torch.no_grad():
             for data, tgt in test_ld:
                 x = data.view(data.size(0), -1).unsqueeze(0).expand(T, data.size(0), 784)
-                tc += (model(x).argmax(1) == tgt).sum().item(); tt += tgt.size(0)
+                tc += (model(x).argmax(1) == tgt).sum().item()
+                tt += tgt.size(0)
         tacc = tc / tt
         best = max(best, tacc)
-        print(f"  [{tag}] Ep {ep+1}/{epochs}: train={cr/tot:.3f} test={tacc:.3f} ({time.time()-t0:.1f}s)")
+        print(
+            f"  [{tag}] Ep {ep + 1}/{epochs}: train={cr / tot:.3f} test={tacc:.3f} ({time.time() - t0:.1f}s)"
+        )
         sys.stdout.flush()
     return best
 
@@ -240,15 +248,18 @@ def main():
     results = {}
 
     print("\n--- Standard SNN ---")
-    m_std = StandardNet(784, 128, 10); std_acc = train(m_std, tr_ld, te_ld, 10, T, "Std")
+    m_std = StandardNet(784, 128, 10)
+    std_acc = train(m_std, tr_ld, te_ld, 10, T, "Std")
     print(f"  Float: {std_acc:.4f}")
 
     print("\n--- SC-Aware L=256 ---")
-    m_256 = SCAwareNet(784, 128, 10, L=256); a256 = train(m_256, tr_ld, te_ld, 10, T, "SC256")
+    m_256 = SCAwareNet(784, 128, 10, L=256)
+    a256 = train(m_256, tr_ld, te_ld, 10, T, "SC256")
     print(f"  Float: {a256:.4f}")
 
     print("\n--- SC-Aware L=1024 ---")
-    m_1k = SCAwareNet(784, 128, 10, L=1024); a1k = train(m_1k, tr_ld, te_ld, 10, T, "SC1k")
+    m_1k = SCAwareNet(784, 128, 10, L=1024)
+    a1k = train(m_1k, tr_ld, te_ld, 10, T, "SC1k")
     print(f"  Float: {a1k:.4f}")
 
     print("\n--- Bipolar SC Inference ---")
@@ -272,12 +283,17 @@ def main():
         print(f"  SC L=1024 [{nm}]: {results[nm][1024]['accuracy']:.2%}")
     print(f"  Time: {total:.0f}s")
 
-    out = {"timestamp": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
-           "float": {"standard": round(std_acc, 4), "sc256": round(a256, 4), "sc1024": round(a1k, 4)},
-           "sc_inference": results, "total_s": round(total, 1)}
+    out = {
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        "float": {"standard": round(std_acc, 4), "sc256": round(a256, 4), "sc1024": round(a1k, 4)},
+        "sc_inference": results,
+        "total_s": round(total, 1),
+    }
     p = Path("/kaggle/working/sc_aware_results.json")
-    if not p.parent.exists(): p = Path("sc_aware_results.json")
-    with open(p, "w") as f: json.dump(out, f, indent=2, default=str)
+    if not p.parent.exists():
+        p = Path("sc_aware_results.json")
+    with open(p, "w") as f:
+        json.dump(out, f, indent=2, default=str)
     print(f"  Saved: {p}")
 
 
@@ -285,4 +301,7 @@ if __name__ == "__main__":
     try:
         main()
     except Exception:
-        import traceback; traceback.print_exc(); sys.exit(1)
+        import traceback
+
+        traceback.print_exc()
+        sys.exit(1)

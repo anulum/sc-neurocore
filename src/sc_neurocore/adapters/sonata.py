@@ -29,6 +29,7 @@ import numpy as np
 @dataclass
 class SONATANode:
     """A single node (neuron) from a SONATA population."""
+
     node_id: int
     node_type_id: int
     model_type: str = "point_neuron"
@@ -39,6 +40,7 @@ class SONATANode:
 @dataclass
 class SONATAEdge:
     """A single edge (synapse) from a SONATA population."""
+
     source_id: int
     target_id: int
     edge_type_id: int
@@ -50,6 +52,7 @@ class SONATAEdge:
 @dataclass
 class SONATANetwork:
     """Parsed SONATA network with nodes and edges."""
+
     nodes: list[SONATANode]
     edges: list[SONATAEdge]
     node_populations: dict[str, list[int]]
@@ -114,12 +117,14 @@ def import_sonata_nodes(path: str | Path) -> list[SONATANode]:
                 if "model_type" in props:
                     model_type = str(props.pop("model_type"))
 
-                nodes.append(SONATANode(
-                    node_id=int(node_ids[i]),
-                    node_type_id=int(type_ids[i]),
-                    model_type=model_type,
-                    properties=props,
-                ))
+                nodes.append(
+                    SONATANode(
+                        node_id=int(node_ids[i]),
+                        node_type_id=int(type_ids[i]),
+                        model_type=model_type,
+                        properties=props,
+                    )
+                )
 
     return nodes
 
@@ -145,7 +150,11 @@ def import_sonata_edges(path: str | Path) -> list[SONATAEdge]:
             pop = f["edges"][pop_name]
             src_ids = pop["source_node_id"][:] if "source_node_id" in pop else np.array([])
             tgt_ids = pop["target_node_id"][:] if "target_node_id" in pop else np.array([])
-            type_ids = pop["edge_type_id"][:] if "edge_type_id" in pop else np.zeros(len(src_ids), dtype=int)
+            type_ids = (
+                pop["edge_type_id"][:]
+                if "edge_type_id" in pop
+                else np.zeros(len(src_ids), dtype=int)
+            )
 
             props_group = pop.get("0")
             weights = None
@@ -157,13 +166,15 @@ def import_sonata_edges(path: str | Path) -> list[SONATAEdge]:
                     delays = props_group["delay"][:]
 
             for i in range(len(src_ids)):
-                edges.append(SONATAEdge(
-                    source_id=int(src_ids[i]),
-                    target_id=int(tgt_ids[i]),
-                    edge_type_id=int(type_ids[i]),
-                    weight=float(weights[i]) if weights is not None else 1.0,
-                    delay=float(delays[i]) if delays is not None else 0.0,
-                ))
+                edges.append(
+                    SONATAEdge(
+                        source_id=int(src_ids[i]),
+                        target_id=int(tgt_ids[i]),
+                        edge_type_id=int(type_ids[i]),
+                        weight=float(weights[i]) if weights is not None else 1.0,
+                        delay=float(delays[i]) if delays is not None else 0.0,
+                    )
+                )
 
     return edges
 

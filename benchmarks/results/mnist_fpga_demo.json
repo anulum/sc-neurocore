@@ -1,19 +1,19 @@
 {
-  "n_features": 16,
-  "stream_length": 1024,
-  "n_test": 100,
-  "pca_variance_retained": 0.8494,
-  "accuracy_float": 0.9417,
-  "accuracy_q88": 0.9417,
-  "accuracy_sc": 0.94,
-  "max_quantization_error": 0.001944,
-  "sc_inference_time_s": 6.13,
-  "resource_estimate": {
-    "input_encoders": 16,
-    "weight_encoders": 160,
-    "synapses": 160,
-    "neurons": 10,
-    "est_luts": 56243,
-    "est_ffs": 18605
-  }
+    "n_features": 16,
+    "stream_length": 1024,
+    "n_test": 100,
+    "pca_variance_retained": 0.8494,
+    "accuracy_float": 0.9417,
+    "accuracy_q88": 0.9417,
+    "accuracy_sc": 0.94,
+    "max_quantization_error": 0.001944,
+    "sc_inference_time_s": 6.13,
+    "resource_estimate": {
+        "input_encoders": 16,
+        "weight_encoders": 160,
+        "synapses": 160,
+        "neurons": 10,
+        "est_luts": 56243,
+        "est_ffs": 18605,
+    },
 }

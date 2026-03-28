@@ -24,9 +24,17 @@ print("=" * 70)
 sys.stdout.flush()
 try:
     subprocess.check_call(
-        [sys.executable, "-m", "pip", "install", "-q", "--no-deps",
-         "git+https://github.com/anulum/sc-neurocore.git@main"],
-        stdout=sys.stdout, stderr=sys.stderr,
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "-q",
+            "--no-deps",
+            "git+https://github.com/anulum/sc-neurocore.git@main",
+        ],
+        stdout=sys.stdout,
+        stderr=sys.stderr,
     )
     print("  sc-neurocore installed")
 except Exception as e:
@@ -61,6 +69,7 @@ def bipolar_mac(inputs, weights, L, rng):
 # ===========================================================================
 try:
     from sc_neurocore.training.snn_modules import LIFCell, atan_surrogate
+
     print("  LIFCell imported from sc_neurocore")
 except ImportError:
     print("  WARNING: sc_neurocore import failed, using embedded LIFCell")
@@ -76,17 +85,22 @@ except ImportError:
             self.register_buffer("_beta", torch.tensor(beta))
             self.register_buffer("_th", torch.tensor(1.0))
             self.sfn = surrogate_fn or atan_surrogate
+
         @property
         def beta(self):
             return self._beta
+
         @property
         def threshold(self):
             return self._th
+
         def forward(self, current, v):
             v_next = self.beta * v + current
             spike = self.sfn(v_next - self.threshold)
             v_next = v_next - spike.detach() * self.threshold
             return spike, v_next
+
+
 sys.stdout.flush()
 
 
@@ -113,17 +127,16 @@ class SCAwareLIFNet(nn.Module):
         self.n_out = n_out
         sizes = [n_in] + [n_hid] * n_layers + [n_out]
         self.linears = nn.ModuleList(
-            SCAwareLinear(sizes[i], sizes[i+1], L=L) for i in range(len(sizes)-1)
+            SCAwareLinear(sizes[i], sizes[i + 1], L=L) for i in range(len(sizes) - 1)
         )
         self.lifs = nn.ModuleList(
-            LIFCell(beta=beta, surrogate_fn=atan_surrogate) for _ in range(len(sizes)-1)
+            LIFCell(beta=beta, surrogate_fn=atan_surrogate) for _ in range(len(sizes) - 1)
         )
 
     def forward(self, x):
         T, batch, _ = x.shape
         device = x.device
-        v = [torch.zeros(batch, lin.linear.out_features, device=device)
-             for lin in self.linears]
+        v = [torch.zeros(batch, lin.linear.out_features, device=device) for lin in self.linears]
         spike_sum = torch.zeros(batch, self.n_out, device=device)
         mem_sum = torch.zeros(batch, self.n_out, device=device)
         for t in range(T):
@@ -168,9 +181,11 @@ def train_model(model, train_loader, test_loader, n_epochs, T, tag=""):
                 t_correct += (spikes.argmax(1) == targets).sum().item()
                 t_total += targets.size(0)
 
-        print(f"  [{tag}] Epoch {epoch+1}/{n_epochs}: "
-              f"train={correct/total:.3f} test={t_correct/t_total:.3f} "
-              f"({time.time()-t0:.1f}s)")
+        print(
+            f"  [{tag}] Epoch {epoch + 1}/{n_epochs}: "
+            f"train={correct / total:.3f} test={t_correct / t_total:.3f} "
+            f"({time.time() - t0:.1f}s)"
+        )
 
     return t_correct / t_total
 
@@ -191,10 +206,13 @@ def sc_inference(model, test_data, L, n_samples=300):
     activations = {i: [] for i in range(len(model.linears))}
     hooks = []
     for i, lin in enumerate(model.linears):
+
         def make_hook(idx):
             def hook(m, inp, out):
                 activations[idx].append(out.detach().cpu())
+
             return hook
+
         hooks.append(lin.register_forward_hook(make_hook(i)))
 
     with torch.no_grad():
@@ -223,7 +241,9 @@ def sc_inference(model, test_data, L, n_samples=300):
             w = layer["weight"]
             n_out, n_in = w.shape
             if len(x) < n_in:
-                xp = np.zeros(n_in); xp[:len(x)] = x; x = xp
+                xp = np.zeros(n_in)
+                xp[: len(x)] = x
+                x = xp
             elif len(x) > n_in:
                 x = x[:n_in]
 
@@ -253,14 +273,18 @@ def main():
     print(f"PyTorch: {torch.__version__}")
     print("=" * 70)
 
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,)),
-    ])
-    train_data = datasets.MNIST("/kaggle/working/data", train=True, download=True,
-                                transform=transform)
-    test_data = datasets.MNIST("/kaggle/working/data", train=False, download=True,
-                               transform=transform)
+    transform = transforms.Compose(
+        [
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,)),
+        ]
+    )
+    train_data = datasets.MNIST(
+        "/kaggle/working/data", train=True, download=True, transform=transform
+    )
+    test_data = datasets.MNIST(
+        "/kaggle/working/data", train=False, download=True, transform=transform
+    )
     train_loader = DataLoader(train_data, batch_size=128, shuffle=True)
     test_loader = DataLoader(test_data, batch_size=128, shuffle=False)
 
@@ -345,6 +369,7 @@ if __name__ == "__main__":
         main()
     except Exception as e:
         import traceback
+
         print("\n" + "=" * 70)
         print("FATAL ERROR")
         print("=" * 70)

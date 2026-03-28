@@ -25,23 +25,28 @@ sys.stdout.flush()
 def atan_surr(x, a=2.0):
     return 0.5 + (1.0 / 3.14159265) * torch.atan(a * x)
 
+
 class LIF(nn.Module):
     def __init__(self, beta=0.9):
         super().__init__()
         self.register_buffer("b", torch.tensor(beta))
         self.register_buffer("th", torch.tensor(1.0))
+
     def forward(self, cur, v):
         vn = self.b * v + cur
         sp = atan_surr(vn - self.th)
         vn = vn - sp.detach() * self.th
         return sp, vn
 
+
 class SCAwareLin(nn.Module):
     def __init__(self, inf, outf, L=1024):
         super().__init__()
         self.lin = nn.Linear(inf, outf)
         self.L = L
-        with torch.no_grad(): self.lin.weight.clamp_(-1, 1)
+        with torch.no_grad():
+            self.lin.weight.clamp_(-1, 1)
+
     def forward(self, x):
         w = self.lin.weight.clamp(-1, 1)
         if self.training:
@@ -49,13 +54,15 @@ class SCAwareLin(nn.Module):
             w = w + torch.randn_like(w) * (p * (1 - p) / self.L).sqrt()
         return nn.functional.linear(x, w, self.lin.bias)
 
+
 class SCANet(nn.Module):
     def __init__(self, ni, nh, no, nl=1, L=1024, beta=0.9):
         super().__init__()
         self.no = no
-        sz = [ni] + [nh]*nl + [no]
-        self.lins = nn.ModuleList(SCAwareLin(sz[i], sz[i+1], L) for i in range(len(sz)-1))
-        self.lifs = nn.ModuleList(LIF(beta) for _ in range(len(sz)-1))
+        sz = [ni] + [nh] * nl + [no]
+        self.lins = nn.ModuleList(SCAwareLin(sz[i], sz[i + 1], L) for i in range(len(sz) - 1))
+        self.lifs = nn.ModuleList(LIF(beta) for _ in range(len(sz) - 1))
+
     def forward(self, x):
         T, B, _ = x.shape
         d = x.device
@@ -112,7 +119,9 @@ def sc_infer_with_lif(img_flat, layers, L, rng, beta=0.9, T_lif=25):
 
         # Pad/truncate input
         if len(x_bp) < ni:
-            xp = np.zeros(ni); xp[:len(x_bp)] = x_bp; x_bp = xp
+            xp = np.zeros(ni)
+            xp[: len(x_bp)] = x_bp
+            x_bp = xp
         elif len(x_bp) > ni:
             x_bp = x_bp[:ni]
 
@@ -175,22 +184,31 @@ def train_model(model, tr_ld, te_ld, epochs, T, tag):
     lf = nn.CrossEntropyLoss()
     best = 0.0
     for ep in range(epochs):
-        model.train(); t0 = time.time(); cr, tot = 0, 0
+        model.train()
+        t0 = time.time()
+        cr, tot = 0, 0
         for d, tgt in tr_ld:
             x = d.view(d.size(0), -1).unsqueeze(0).expand(T, d.size(0), 784)
             sp = model(x)
             loss = lf(sp, tgt)
-            opt.zero_grad(); loss.backward()
+            opt.zero_grad()
+            loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             opt.step()
-            cr += (sp.argmax(1) == tgt).sum().item(); tot += tgt.size(0)
-        model.eval(); tc, tt = 0, 0
+            cr += (sp.argmax(1) == tgt).sum().item()
+            tot += tgt.size(0)
+        model.eval()
+        tc, tt = 0, 0
         with torch.no_grad():
             for d, tgt in te_ld:
                 x = d.view(d.size(0), -1).unsqueeze(0).expand(T, d.size(0), 784)
-                tc += (model(x).argmax(1) == tgt).sum().item(); tt += tgt.size(0)
-        acc = tc / tt; best = max(best, acc)
-        print(f"  [{tag}] Ep {ep+1}/{epochs}: train={cr/tot:.3f} test={acc:.3f} ({time.time()-t0:.1f}s)")
+                tc += (model(x).argmax(1) == tgt).sum().item()
+                tt += tgt.size(0)
+        acc = tc / tt
+        best = max(best, acc)
+        print(
+            f"  [{tag}] Ep {ep + 1}/{epochs}: train={cr / tot:.3f} test={acc:.3f} ({time.time() - t0:.1f}s)"
+        )
         sys.stdout.flush()
     return best
 
@@ -221,6 +239,7 @@ def main():
     print("\n--- Compare: SC inference WITHOUT LIF (previous method) ---")
     prev_results = {}
     from pathlib import Path as _P
+
     # Quick comparison at L=1024 only using old method (no LIF between layers)
     layers_raw = extract_layers(model)
     rng = np.random.default_rng(42)
@@ -232,18 +251,24 @@ def main():
         for li, lay in enumerate(layers_raw):
             w, bias, rs = lay["w"], lay["b"], lay["row_scale"]
             no, ni = w.shape
-            if len(x) < ni: xp = np.zeros(ni); xp[:len(x)] = x; x = xp
-            elif len(x) > ni: x = x[:ni]
+            if len(x) < ni:
+                xp = np.zeros(ni)
+                xp[: len(x)] = x
+                x = xp
+            elif len(x) > ni:
+                x = x[:ni]
             out = bipolar_mac(np.clip(x, -1, 1), w, 1024, rng)
             out = out * rs
-            if bias is not None: out += bias
+            if bias is not None:
+                out += bias
             if li < len(layers_raw) - 1:
                 out = np.maximum(out, 0.0)
                 mx = max(abs(out).max(), 1e-8)
                 x = np.clip(out / mx, -1, 1)
             else:
                 x = out
-        if int(np.argmax(x)) == label: correct += 1
+        if int(np.argmax(x)) == label:
+            correct += 1
     no_lif_acc = correct / n
     print(f"  L=1024 without LIF: {no_lif_acc:.2%}")
 
@@ -258,17 +283,27 @@ def main():
     print(f"  SC without LIF (L=1024): {no_lif_acc:.2%}")
     print(f"  Time: {total:.0f}s")
 
-    out = {"timestamp": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
-           "fix": "lif_spike_threshold_between_layers",
-           "float_accuracy": round(float_acc, 4),
-           "sc_with_lif": results,
-           "sc_without_lif_L1024": round(no_lif_acc, 4),
-           "total_s": round(total, 1)}
+    out = {
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        "fix": "lif_spike_threshold_between_layers",
+        "float_accuracy": round(float_acc, 4),
+        "sc_with_lif": results,
+        "sc_without_lif_L1024": round(no_lif_acc, 4),
+        "total_s": round(total, 1),
+    }
     p = Path("/kaggle/working/sc_spike_threshold_results.json")
-    if not p.parent.exists(): p = Path("sc_spike_threshold_results.json")
-    with open(p, "w") as f: json.dump(out, f, indent=2, default=str)
+    if not p.parent.exists():
+        p = Path("sc_spike_threshold_results.json")
+    with open(p, "w") as f:
+        json.dump(out, f, indent=2, default=str)
     print(f"  Saved: {p}")
 
+
 if __name__ == "__main__":
-    try: main()
-    except Exception: import traceback; traceback.print_exc(); sys.exit(1)
+    try:
+        main()
+    except Exception:
+        import traceback
+
+        traceback.print_exc()
+        sys.exit(1)

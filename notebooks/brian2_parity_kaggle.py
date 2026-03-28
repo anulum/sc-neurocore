@@ -19,13 +19,22 @@ print("=" * 70)
 print("SETUP")
 print("=" * 70)
 subprocess.check_call(
-    [sys.executable, "-m", "pip", "install", "-q", "--no-deps",
-     "git+https://github.com/anulum/sc-neurocore.git@main"],
-    stdout=sys.stdout, stderr=sys.stderr,
+    [
+        sys.executable,
+        "-m",
+        "pip",
+        "install",
+        "-q",
+        "--no-deps",
+        "git+https://github.com/anulum/sc-neurocore.git@main",
+    ],
+    stdout=sys.stdout,
+    stderr=sys.stderr,
 )
 subprocess.check_call(
     [sys.executable, "-m", "pip", "install", "-q", "brian2"],
-    stdout=sys.stdout, stderr=sys.stderr,
+    stdout=sys.stdout,
+    stderr=sys.stderr,
 )
 
 RESULTS = {}
@@ -46,9 +55,9 @@ def test_single_lif():
     print("=" * 70)
 
     # Brian2
-    from brian2 import (NeuronGroup, SpikeMonitor, defaultclock,
-                        ms, mV, run, prefs, seed as b2seed)
+    from brian2 import NeuronGroup, SpikeMonitor, defaultclock, ms, mV, run, prefs, seed as b2seed
     import brian2
+
     brian2.start_scope()
     prefs.codegen.target = "numpy"
     b2seed(42)
@@ -56,8 +65,7 @@ def test_single_lif():
 
     tau = 20 * ms
     eqs = "dv/dt = (-v + 14*mV) / tau : volt"
-    G = NeuronGroup(1, eqs, threshold="v > 10*mV", reset="v = 0*mV",
-                    method="euler")
+    G = NeuronGroup(1, eqs, threshold="v > 10*mV", reset="v = 0*mV", method="euler")
     G.v = 0 * mV
     mon = SpikeMonitor(G)
     run(500 * ms)
@@ -81,13 +89,11 @@ def test_single_lif():
 
     # Compare
     spike_match = b2_spikes == sc_spikes
-    report("single_lif_spike_count", spike_match,
-           f"B2={b2_spikes}, SC={sc_spikes}")
+    report("single_lif_spike_count", spike_match, f"B2={b2_spikes}, SC={sc_spikes}")
 
     if b2_spikes > 0 and sc_spikes > 0:
         max_diff = max(abs(b - s) for b, s in zip(b2_times, np.array(sc_times)))
-        report("single_lif_spike_timing", max_diff < 0.5,
-               f"max timing diff={max_diff:.3f}ms")
+        report("single_lif_spike_timing", max_diff < 0.5, f"max timing diff={max_diff:.3f}ms")
 
     b2_isis = np.diff(b2_times) if len(b2_times) > 1 else np.array([])
     sc_isis = np.diff(sc_times) if len(sc_times) > 1 else np.array([])
@@ -95,12 +101,18 @@ def test_single_lif():
         b2_mean_isi = float(np.mean(b2_isis))
         sc_mean_isi = float(np.mean(sc_isis))
         isi_err = abs(b2_mean_isi - sc_mean_isi) / b2_mean_isi
-        report("single_lif_isi_match", isi_err < 0.01,
-               f"B2 ISI={b2_mean_isi:.2f}ms, SC ISI={sc_mean_isi:.2f}ms, err={isi_err:.2%}")
+        report(
+            "single_lif_isi_match",
+            isi_err < 0.01,
+            f"B2 ISI={b2_mean_isi:.2f}ms, SC ISI={sc_mean_isi:.2f}ms, err={isi_err:.2%}",
+        )
 
-    return {"b2_spikes": b2_spikes, "sc_spikes": sc_spikes,
-            "b2_times": b2_times.tolist() if len(b2_times) > 0 else [],
-            "sc_times": sc_times}
+    return {
+        "b2_spikes": b2_spikes,
+        "sc_spikes": sc_spikes,
+        "b2_times": b2_times.tolist() if len(b2_times) > 0 else [],
+        "sc_times": sc_times,
+    }
 
 
 # ===========================================================================
@@ -111,9 +123,21 @@ def test_population_poisson():
     print("TEST 2: 100 LIF neurons with Poisson input")
     print("=" * 70)
 
-    from brian2 import (NeuronGroup, PoissonGroup, Synapses, SpikeMonitor,
-                        defaultclock, ms, mV, Hz, run, prefs, seed as b2seed)
+    from brian2 import (
+        NeuronGroup,
+        PoissonGroup,
+        Synapses,
+        SpikeMonitor,
+        defaultclock,
+        ms,
+        mV,
+        Hz,
+        run,
+        prefs,
+        seed as b2seed,
+    )
     import brian2
+
     brian2.start_scope()
     prefs.codegen.target = "numpy"
     b2seed(42)
@@ -122,8 +146,7 @@ def test_population_poisson():
     N = 100
     tau = 20 * ms
     eqs = "dv/dt = -v / tau : volt"
-    G = NeuronGroup(N, eqs, threshold="v > 10*mV", reset="v = 0*mV",
-                    method="euler")
+    G = NeuronGroup(N, eqs, threshold="v > 10*mV", reset="v = 0*mV", method="euler")
     G.v = "rand() * 5 * mV"
 
     P = PoissonGroup(N, rates=500 * Hz)
@@ -173,28 +196,41 @@ def test_population_poisson():
     sc_rates = sc_spike_counts / 0.5  # Hz
     sc_mean_rate = float(np.mean(sc_rates))
 
-    print(f"  SC-NeuroCore: {sc_total} spikes, mean rate={sc_mean_rate:.1f} Hz, time={sc_time:.4f}s")
+    print(
+        f"  SC-NeuroCore: {sc_total} spikes, mean rate={sc_mean_rate:.1f} Hz, time={sc_time:.4f}s"
+    )
 
     # Compare (looser tolerance due to different Poisson seeds)
     if b2_total > 0:
         spike_ratio = sc_total / b2_total
-        report("pop_spike_count_20pct", 0.8 < spike_ratio < 1.2,
-               f"B2={b2_total}, SC={sc_total}, ratio={spike_ratio:.2f}")
+        report(
+            "pop_spike_count_20pct",
+            0.8 < spike_ratio < 1.2,
+            f"B2={b2_total}, SC={sc_total}, ratio={spike_ratio:.2f}",
+        )
     else:
         report("pop_spike_count_20pct", False, "Brian2 produced 0 spikes")
 
     if b2_mean_rate > 0:
         rate_ratio = sc_mean_rate / b2_mean_rate
-        report("pop_mean_rate_20pct", 0.8 < rate_ratio < 1.2,
-               f"B2={b2_mean_rate:.1f}Hz, SC={sc_mean_rate:.1f}Hz")
+        report(
+            "pop_mean_rate_20pct",
+            0.8 < rate_ratio < 1.2,
+            f"B2={b2_mean_rate:.1f}Hz, SC={sc_mean_rate:.1f}Hz",
+        )
     else:
         report("pop_mean_rate_20pct", False, "Brian2 rate=0")
 
-    report("pop_sc_faster", sc_time < b2_time,
-           f"SC={sc_time:.4f}s, B2={b2_time:.2f}s, ratio={b2_time/max(sc_time,1e-6):.0f}x")
+    report(
+        "pop_sc_faster",
+        sc_time < b2_time,
+        f"SC={sc_time:.4f}s, B2={b2_time:.2f}s, ratio={b2_time / max(sc_time, 1e-6):.0f}x",
+    )
 
-    return {"b2": {"spikes": b2_total, "mean_rate": b2_mean_rate, "time": b2_time},
-            "sc": {"spikes": sc_total, "mean_rate": sc_mean_rate, "time": sc_time}}
+    return {
+        "b2": {"spikes": b2_total, "mean_rate": b2_mean_rate, "time": b2_time},
+        "sc": {"spikes": sc_total, "mean_rate": sc_mean_rate, "time": sc_time},
+    }
 
 
 # ===========================================================================
@@ -211,10 +247,8 @@ def test_network_api():
         from sc_neurocore.network.projection import Projection
 
         net = Network()
-        exc = Population("StochasticLIFNeuron", 200, label="exc",
-                         params={"noise_std": 0.0})
-        inh = Population("StochasticLIFNeuron", 50, label="inh",
-                         params={"noise_std": 0.0})
+        exc = Population("StochasticLIFNeuron", 200, label="exc", params={"noise_std": 0.0})
+        inh = Population("StochasticLIFNeuron", 50, label="inh", params={"noise_std": 0.0})
         net.add(exc)
         net.add(inh)
 
@@ -226,6 +260,7 @@ def test_network_api():
 
         # Add external stimulus
         from sc_neurocore.network.stimulus import PoissonStimulus
+
         stim = PoissonStimulus(exc, rate=800.0, weight=0.1, seed=44)
         net.add(stim)
 
@@ -251,6 +286,7 @@ def test_network_api():
         return {"ok": False, "error": str(e)}
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         report("network_api_runs", False, f"Error: {e}")
         return {"ok": False, "error": str(e)}

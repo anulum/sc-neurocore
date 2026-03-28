@@ -66,9 +66,7 @@ class TestBipolarMultiply:
             product = bipolar_multiply(a, b)
             decoded = bipolar_decode(product)
             expected = va * vb
-            assert abs(decoded - expected) < 0.03, (
-                f"{va}*{vb}: expected={expected}, got={decoded}"
-            )
+            assert abs(decoded - expected) < 0.03, f"{va}*{vb}: expected={expected}, got={decoded}"
 
 
 class TestBipolarMAC:
@@ -115,8 +113,7 @@ class TestBipolarSCLayer:
     def test_relu_clips_negative(self):
         inputs = np.array([-0.9])
         weights = np.array([[0.9]])
-        out = bipolar_sc_layer(inputs, weights, bias=None, L=50000,
-                               activation="relu")
+        out = bipolar_sc_layer(inputs, weights, bias=None, L=50000, activation="relu")
         # -0.9 * 0.9 = -0.81, relu -> 0
         assert out[0] >= 0.0
 
@@ -143,7 +140,7 @@ class TestFloatToBipolarWeights:
         assert bp[2] == 0.0
 
     def test_torch_tensor(self):
-        import torch
+        torch = __import__("pytest").importorskip("torch")
         w = torch.tensor([[-1.5, 0.5], [0.3, -0.8]])
         bp = float_to_bipolar_weights(w)
         assert isinstance(bp, np.ndarray)

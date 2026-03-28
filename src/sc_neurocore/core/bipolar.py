@@ -137,6 +137,10 @@ def float_to_bipolar_weights(weight_tensor) -> np.ndarray:
 
     Preserves sign information (unlike unipolar to_sc_weights).
     """
-    w = weight_tensor.detach().cpu().numpy() if hasattr(weight_tensor, 'detach') else np.asarray(weight_tensor)
+    w = (
+        weight_tensor.detach().cpu().numpy()
+        if hasattr(weight_tensor, "detach")
+        else np.asarray(weight_tensor)
+    )
     abs_max = max(np.abs(w).max(), 1e-8)
     return w / abs_max

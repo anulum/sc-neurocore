@@ -27,13 +27,22 @@ print("SETUP")
 print("=" * 70)
 # Install sc-neurocore without deps to avoid overwriting Kaggle's CUDA torch
 subprocess.check_call(
-    [sys.executable, "-m", "pip", "install", "-q", "--no-deps",
-     "git+https://github.com/anulum/sc-neurocore.git@main"],
-    stdout=sys.stdout, stderr=sys.stderr,
+    [
+        sys.executable,
+        "-m",
+        "pip",
+        "install",
+        "-q",
+        "--no-deps",
+        "git+https://github.com/anulum/sc-neurocore.git@main",
+    ],
+    stdout=sys.stdout,
+    stderr=sys.stderr,
 )
 subprocess.check_call(
     [sys.executable, "-m", "pip", "install", "-q", "h5py"],
-    stdout=sys.stdout, stderr=sys.stderr,
+    stdout=sys.stdout,
+    stderr=sys.stderr,
 )
 
 import torch
@@ -118,6 +127,7 @@ def load_shd_binned(train: bool = True) -> tuple[np.ndarray, np.ndarray]:
 def build_model(n_hidden=256, n_layers=2, beta=0.9):
     """Build feedforward SNN for SHD classification."""
     from sc_neurocore.training.snn_modules import SpikingNet
+
     return SpikingNet(
         n_input=N_CHANNELS,
         n_hidden=n_hidden,
@@ -168,14 +178,16 @@ def train_and_evaluate(
             torch.tensor(X_train, dtype=torch.float32),
             torch.tensor(y_train, dtype=torch.long),
         ),
-        batch_size=batch_size, shuffle=True,
+        batch_size=batch_size,
+        shuffle=True,
     )
     test_loader = DataLoader(
         TensorDataset(
             torch.tensor(X_test, dtype=torch.float32),
             torch.tensor(y_test, dtype=torch.long),
         ),
-        batch_size=batch_size, shuffle=False,
+        batch_size=batch_size,
+        shuffle=False,
     )
 
     model = build_model(n_hidden, n_layers, beta).to(device)
@@ -237,20 +249,25 @@ def train_and_evaluate(
             best_acc = test_acc
             torch.save(model.state_dict(), "/kaggle/working/shd_best.pt")
 
-        history.append({
-            "epoch": epoch + 1,
-            "train_loss": round(train_loss / train_total, 4),
-            "train_acc": round(train_acc, 4),
-            "test_acc": round(test_acc, 4),
-            "avg_spikes_per_sample": round(avg_spikes, 1),
-            "time_s": round(elapsed, 1),
-        })
+        history.append(
+            {
+                "epoch": epoch + 1,
+                "train_loss": round(train_loss / train_total, 4),
+                "train_acc": round(train_acc, 4),
+                "test_acc": round(test_acc, 4),
+                "avg_spikes_per_sample": round(avg_spikes, 1),
+                "time_s": round(elapsed, 1),
+            }
+        )
 
-        print(f"  Epoch {epoch+1:2d}/{n_epochs}: "
-              f"loss={train_loss/train_total:.4f} "
-              f"train={train_acc:.3f} test={test_acc:.3f} "
-              f"spikes={avg_spikes:.0f} "
-              f"best={best_acc:.3f} "                f"({elapsed:.1f}s)")
+        print(
+            f"  Epoch {epoch + 1:2d}/{n_epochs}: "
+            f"loss={train_loss / train_total:.4f} "
+            f"train={train_acc:.3f} test={test_acc:.3f} "
+            f"spikes={avg_spikes:.0f} "
+            f"best={best_acc:.3f} "
+            f"({elapsed:.1f}s)"
+        )
 
     # Final evaluation with timing
     model.load_state_dict(torch.load("/kaggle/working/shd_best.pt", weights_only=True))
@@ -297,8 +314,10 @@ def main():
     print(f"Time: {time.strftime('%Y-%m-%dT%H:%M:%S%z')}")
     print(f"Python: {sys.version}")
     print(f"PyTorch: {torch.__version__}")
-    print(f"CUDA: {torch.cuda.is_available()}"
-          f"{' - ' + torch.cuda.get_device_name(0) if torch.cuda.is_available() else ''}")
+    print(
+        f"CUDA: {torch.cuda.is_available()}"
+        f"{' - ' + torch.cuda.get_device_name(0) if torch.cuda.is_available() else ''}"
+    )
     print("=" * 70)
 
     t0 = time.time()

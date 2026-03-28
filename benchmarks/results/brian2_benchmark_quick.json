@@ -1,86 +1,84 @@
 {
-  "timestamp": "2026-03-09T13:11:22.291133+00:00",
-  "system": {
-    "platform": "Windows-11-10.0.26200-SP0",
-    "python": "3.12.5",
-    "cpu": "Intel64 Family 6 Model 167 Stepping 1, GenuineIntel",
-    "numpy": "1.26.4",
-    "brian2": "2.10.1",
-    "numba": "0.63.1"
-  },
-  "brunel_params": {
-    "regime": "AI",
-    "g_inh": 5.0,
-    "eta": 2.0,
-    "sim_ms": 1000.0,
-    "dt": 0.1,
-    "conn_prob": 0.1,
-    "weight_exc": 0.1,
-    "v_threshold": 20.0,
-    "v_reset": 10.0,
-    "tau_mem": 20.0,
-    "repeats": 1,
-    "scales": [
-      1000
-    ]
-  },
-  "rows": [
-    {
-      "scale": 1000,
-      "backend": "Brian2 (reference)",
-      "wall_mean_s": 14.606387299951166,
-      "wall_std_s": 0.0,
-      "spikes_mean": 119000.0,
-      "rate_mean_hz": 119.0,
-      "rate_std_hz": 0.0,
-      "memory_mean_mb": 5.437771797180176,
-      "n_runs": 1,
-      "runs": [
-        {
-          "wall_time_s": 14.606387299951166,
-          "total_spikes": 119000,
-          "mean_rate_hz": 119.0,
-          "peak_memory_mb": 5.437771797180176
-        }
-      ]
+    "timestamp": "2026-03-09T13:11:22.291133+00:00",
+    "system": {
+        "platform": "Windows-11-10.0.26200-SP0",
+        "python": "3.12.5",
+        "cpu": "Intel64 Family 6 Model 167 Stepping 1, GenuineIntel",
+        "numpy": "1.26.4",
+        "brian2": "2.10.1",
+        "numba": "0.63.1",
     },
-    {
-      "scale": 1000,
-      "backend": "SC V18 Numba JIT",
-      "wall_mean_s": 1.0103440000675619,
-      "wall_std_s": 0.0,
-      "spikes_mean": 100011.0,
-      "rate_mean_hz": 100.011,
-      "rate_std_hz": 0.0,
-      "memory_mean_mb": 8.719564437866211,
-      "n_runs": 1,
-      "runs": [
-        {
-          "wall_time_s": 1.0103440000675619,
-          "total_spikes": 100011,
-          "mean_rate_hz": 100.011,
-          "peak_memory_mb": 8.719564437866211
-        }
-      ]
+    "brunel_params": {
+        "regime": "AI",
+        "g_inh": 5.0,
+        "eta": 2.0,
+        "sim_ms": 1000.0,
+        "dt": 0.1,
+        "conn_prob": 0.1,
+        "weight_exc": 0.1,
+        "v_threshold": 20.0,
+        "v_reset": 10.0,
+        "tau_mem": 20.0,
+        "repeats": 1,
+        "scales": [1000],
     },
-    {
-      "scale": 1000,
-      "backend": "SC V20 Vectorized",
-      "wall_mean_s": 2.802204600069672,
-      "wall_std_s": 0.0,
-      "spikes_mean": 99830.0,
-      "rate_mean_hz": 99.83,
-      "rate_std_hz": 0.0,
-      "memory_mean_mb": 9.08473014831543,
-      "n_runs": 1,
-      "runs": [
+    "rows": [
         {
-          "wall_time_s": 2.802204600069672,
-          "total_spikes": 99830,
-          "mean_rate_hz": 99.83,
-          "peak_memory_mb": 9.08473014831543
-        }
-      ]
-    }
-  ]
+            "scale": 1000,
+            "backend": "Brian2 (reference)",
+            "wall_mean_s": 14.606387299951166,
+            "wall_std_s": 0.0,
+            "spikes_mean": 119000.0,
+            "rate_mean_hz": 119.0,
+            "rate_std_hz": 0.0,
+            "memory_mean_mb": 5.437771797180176,
+            "n_runs": 1,
+            "runs": [
+                {
+                    "wall_time_s": 14.606387299951166,
+                    "total_spikes": 119000,
+                    "mean_rate_hz": 119.0,
+                    "peak_memory_mb": 5.437771797180176,
+                }
+            ],
+        },
+        {
+            "scale": 1000,
+            "backend": "SC V18 Numba JIT",
+            "wall_mean_s": 1.0103440000675619,
+            "wall_std_s": 0.0,
+            "spikes_mean": 100011.0,
+            "rate_mean_hz": 100.011,
+            "rate_std_hz": 0.0,
+            "memory_mean_mb": 8.719564437866211,
+            "n_runs": 1,
+            "runs": [
+                {
+                    "wall_time_s": 1.0103440000675619,
+                    "total_spikes": 100011,
+                    "mean_rate_hz": 100.011,
+                    "peak_memory_mb": 8.719564437866211,
+                }
+            ],
+        },
+        {
+            "scale": 1000,
+            "backend": "SC V20 Vectorized",
+            "wall_mean_s": 2.802204600069672,
+            "wall_std_s": 0.0,
+            "spikes_mean": 99830.0,
+            "rate_mean_hz": 99.83,
+            "rate_std_hz": 0.0,
+            "memory_mean_mb": 9.08473014831543,
+            "n_runs": 1,
+            "runs": [
+                {
+                    "wall_time_s": 2.802204600069672,
+                    "total_spikes": 99830,
+                    "mean_rate_hz": 99.83,
+                    "peak_memory_mb": 9.08473014831543,
+                }
+            ],
+        },
+    ],
 }
