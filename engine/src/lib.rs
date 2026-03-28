@@ -22,13 +22,13 @@ use pyo3::types::PyDict;
 use pyo3::IntoPyObject;
 
 pub mod attention;
-pub mod ei_network;
 pub mod bitstream;
 pub mod brunel;
 pub mod connectome;
 pub mod conv;
 pub mod cordiv;
 pub mod cortical_column;
+pub mod ei_network;
 pub mod encoder;
 pub mod fault;
 pub mod fusion;
@@ -366,8 +366,7 @@ fn py_batch_simulate<'py>(
     n_steps: usize,
     current_trace: PyReadonlyArray1<'py, f64>,
 ) -> PyResult<Py<PyAny>> {
-    let mut neuron = network_runner::create_neuron(model_name)
-        .map_err(PyValueError::new_err)?;
+    let mut neuron = network_runner::create_neuron(model_name).map_err(PyValueError::new_err)?;
     let currents = current_trace.as_slice()?;
     let steps = n_steps.min(currents.len());
 
@@ -418,7 +417,14 @@ fn py_simulate_ei_network<'py>(
     let n_spikes = r.spike_times.len();
     let d = PyDict::new(py);
     d.set_item("spike_times", r.spike_times.into_pyarray(py))?;
-    d.set_item("spike_neurons", r.spike_neurons.iter().map(|&x| x as i64).collect::<Vec<_>>().into_pyarray(py))?;
+    d.set_item(
+        "spike_neurons",
+        r.spike_neurons
+            .iter()
+            .map(|&x| x as i64)
+            .collect::<Vec<_>>()
+            .into_pyarray(py),
+    )?;
     d.set_item("n_exc", r.n_exc)?;
     d.set_item("n_inh", r.n_inh)?;
     d.set_item("n_total", r.n_exc + r.n_inh)?;
