@@ -17,6 +17,7 @@ import CompilerInspector from "./components/CompilerInspector";
 import SynthesisDashboard from "./components/SynthesisDashboard";
 import TrainingMonitor from "./components/TrainingMonitor";
 import NetworkCanvas from "./components/NetworkCanvas";
+import OnboardingOverlay from "./components/OnboardingOverlay";
 
 function Tab({ active, color, label, onClick }: {
   active: boolean; color: string; label: string; onClick: () => void;
@@ -370,6 +371,7 @@ export default function App() {
       </div>
       <StatusBar />
       <KeyboardHelp />
+      <OnboardingOverlay />
     </div>
   );
 }

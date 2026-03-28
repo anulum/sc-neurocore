@@ -8,6 +8,13 @@ neural network lifecycle: design neuron models, build networks, train with
 surrogate gradients, compile to SystemVerilog, and synthesise to FPGA — all
 from a single browser tab.
 
+## First-Time Onboarding
+
+On first visit, an 8-step guided tour introduces the key features:
+model browser, ODE mode, analysis views, FPGA pipeline, network canvas,
+training monitor, and keyboard shortcuts. The tour is dismissable and
+won't appear again (stored in localStorage).
+
 ## Launch
 
 ```bash
