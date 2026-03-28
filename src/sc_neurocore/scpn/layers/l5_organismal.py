@@ -163,7 +163,7 @@ class L5_OrganismalLayer:
         baseline = np.array([0.5, 0.3, 0.5, 0.5, 0.5, 0.5, 0.5, 0.6])
         self.emotional_state += self.params.emotional_decay * (baseline - self.emotional_state) * dt
 
-        self.emotional_state = np.clip(self.emotional_state, 0.0, 1.0)
+        self.emotional_state = np.clip(self.emotional_state, 0.0, 1.0)  # type: ignore[assignment]
 
         # 3. Autonomic nervous system dynamics
         # Sympathetic driven by arousal and threat
@@ -203,7 +203,7 @@ class L5_OrganismalLayer:
             sync = l4_input["synchronization"]
             # High cellular sync improves emotional stability
             self.emotional_state[self.CERTAINTY] += sync * self.params.cellular_coupling * dt
-            self.emotional_state = np.clip(self.emotional_state, 0.0, 1.0)
+            self.emotional_state = np.clip(self.emotional_state, 0.0, 1.0)  # type: ignore[assignment]
 
         # 6. Update interoceptive state
         self.interoceptive_state = (
@@ -227,10 +227,10 @@ class L5_OrganismalLayer:
 
         return {
             "emotional_state": self.emotional_state.copy(),
-            "sympathetic": self.sympathetic,  # type: ignore
-            "parasympathetic": self.parasympathetic,  # type: ignore
-            "heart_rate": self.heart_rate,  # type: ignore
-            "hrv_rmssd": self._compute_rmssd(),  # type: ignore
+            "sympathetic": self.sympathetic,
+            "parasympathetic": self.parasympathetic,
+            "heart_rate": self.heart_rate,
+            "hrv_rmssd": self._compute_rmssd(),
             "interoceptive_state": self.interoceptive_state.copy(),
             "output_bitstreams": output_bitstreams,
         }
