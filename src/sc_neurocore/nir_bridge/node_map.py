@@ -94,12 +94,13 @@ class SCLIFNode:
         if self.v is None:
             self.v = self.v_leak.copy()
 
-    def _broadcast_to(self, size: int):
+    def _broadcast_to(self, size: int) -> None:
         self.n_neurons = size
         for attr in ("tau", "r", "v_leak", "v_threshold", "v_reset"):
             arr = getattr(self, attr)
             if len(arr) == 1 and size > 1:
                 setattr(self, attr, np.broadcast_to(arr, (size,)).copy())
+        assert self.v is not None
         self.v = np.broadcast_to(self.v, (size,)).copy()
 
     def forward(self, x: np.ndarray) -> np.ndarray:
@@ -164,7 +165,7 @@ class SCIFNode:
         if self.v is None:
             self.v = np.zeros(self.n_neurons)
 
-    def _broadcast_to(self, size: int):
+    def _broadcast_to(self, size: int) -> None:
         self.n_neurons = size
         for attr in ("r", "v_threshold", "v_reset"):
             arr = getattr(self, attr)
@@ -215,15 +216,17 @@ class SCLINode:
         if self.v is None:
             self.v = self.v_leak.copy()
 
-    def _broadcast_to(self, size: int):
+    def _broadcast_to(self, size: int) -> None:
         self.n_neurons = size
         for attr in ("tau", "r", "v_leak"):
             arr = getattr(self, attr)
             if len(arr) == 1 and size > 1:
                 setattr(self, attr, np.broadcast_to(arr, (size,)).copy())
+        assert self.v is not None
         self.v = np.broadcast_to(self.v, (size,)).copy()
 
     def forward(self, x: np.ndarray) -> np.ndarray:
+        assert self.v is not None
         x = np.atleast_1d(x).flatten()
         if self.n_neurons == 1 and len(x) > 1:
             self._broadcast_to(len(x))
@@ -385,6 +388,7 @@ class SCDelayNode:
             self._buffers = [[np.zeros(1) for _ in range(int(d))] for d in self.delay_steps]
 
     def forward(self, x: np.ndarray) -> np.ndarray:
+        assert self._buffers is not None
         x = np.atleast_1d(x).flatten()
         out = np.zeros(len(self.delay_steps))
         for i, buf in enumerate(self._buffers):
@@ -463,17 +467,19 @@ class SCCubaLIFNode:
         if self.i_syn is None:
             self.i_syn = np.zeros(self.n_neurons)
 
-    def _broadcast_to(self, size: int):
+    def _broadcast_to(self, size: int) -> None:
         """Broadcast scalar params to match actual input size."""
         self.n_neurons = size
         for attr in ("tau_syn", "tau_mem", "r", "v_leak", "v_threshold", "v_reset", "w_in"):
             arr = getattr(self, attr)
             if len(arr) == 1 and size > 1:
                 setattr(self, attr, np.broadcast_to(arr, (size,)).copy())
+        assert self.v is not None
         self.v = np.broadcast_to(self.v, (size,)).copy()
         self.i_syn = np.zeros(size)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
+        assert self.v is not None and self.i_syn is not None
         x = np.atleast_1d(x).flatten()
         if self.n_neurons == 1 and len(x) > 1:
             self._broadcast_to(len(x))
@@ -537,16 +543,18 @@ class SCCubaLINode:
         if self.i_syn is None:
             self.i_syn = np.zeros(self.n_neurons)
 
-    def _broadcast_to(self, size: int):
+    def _broadcast_to(self, size: int) -> None:
         self.n_neurons = size
         for attr in ("tau_syn", "tau_mem", "r", "v_leak", "w_in"):
             arr = getattr(self, attr)
             if len(arr) == 1 and size > 1:
                 setattr(self, attr, np.broadcast_to(arr, (size,)).copy())
+        assert self.v is not None
         self.v = np.broadcast_to(self.v, (size,)).copy()
         self.i_syn = np.zeros(size)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
+        assert self.v is not None and self.i_syn is not None
         x = np.atleast_1d(x).flatten()
         if self.n_neurons == 1 and len(x) > 1:
             self._broadcast_to(len(x))
@@ -573,15 +581,12 @@ class SCSumPool2dNode:
 
     @classmethod
     def from_nir(cls, name: str, node: nir.SumPool2d) -> SCSumPool2dNode:
-        ks = tuple(int(x) for x in np.atleast_1d(node.kernel_size).flatten()[:2])
-        st = tuple(int(x) for x in np.atleast_1d(node.stride).flatten()[:2])
-        pad = tuple(int(x) for x in np.atleast_1d(node.padding).flatten()[:2])
-        if len(ks) == 1:
-            ks = (ks[0], ks[0])
-        if len(st) == 1:
-            st = (st[0], st[0])
-        if len(pad) == 1:
-            pad = (pad[0], pad[0])
+        ks_raw = tuple(int(x) for x in np.atleast_1d(node.kernel_size).flatten()[:2])
+        st_raw = tuple(int(x) for x in np.atleast_1d(node.stride).flatten()[:2])
+        pad_raw = tuple(int(x) for x in np.atleast_1d(node.padding).flatten()[:2])
+        ks = (ks_raw[0], ks_raw[0]) if len(ks_raw) == 1 else (ks_raw[0], ks_raw[1])
+        st = (st_raw[0], st_raw[0]) if len(st_raw) == 1 else (st_raw[0], st_raw[1])
+        pad = (pad_raw[0], pad_raw[0]) if len(pad_raw) == 1 else (pad_raw[0], pad_raw[1])
         return cls(name=name, kernel_size=ks, stride=st, padding=pad)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
@@ -617,15 +622,12 @@ class SCAvgPool2dNode:
 
     @classmethod
     def from_nir(cls, name: str, node: nir.AvgPool2d) -> SCAvgPool2dNode:
-        ks = tuple(int(x) for x in np.atleast_1d(node.kernel_size).flatten()[:2])
-        st = tuple(int(x) for x in np.atleast_1d(node.stride).flatten()[:2])
-        pad = tuple(int(x) for x in np.atleast_1d(node.padding).flatten()[:2])
-        if len(ks) == 1:
-            ks = (ks[0], ks[0])
-        if len(st) == 1:
-            st = (st[0], st[0])
-        if len(pad) == 1:
-            pad = (pad[0], pad[0])
+        ks_raw = tuple(int(x) for x in np.atleast_1d(node.kernel_size).flatten()[:2])
+        st_raw = tuple(int(x) for x in np.atleast_1d(node.stride).flatten()[:2])
+        pad_raw = tuple(int(x) for x in np.atleast_1d(node.padding).flatten()[:2])
+        ks = (ks_raw[0], ks_raw[0]) if len(ks_raw) == 1 else (ks_raw[0], ks_raw[1])
+        st = (st_raw[0], st_raw[0]) if len(st_raw) == 1 else (st_raw[0], st_raw[1])
+        pad = (pad_raw[0], pad_raw[0]) if len(pad_raw) == 1 else (pad_raw[0], pad_raw[1])
         return cls(name=name, kernel_size=ks, stride=st, padding=pad)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
@@ -802,7 +804,7 @@ NODE_MAP: dict[type, Any] = {
 }
 
 
-def map_node(name: str, node: nir.NIRNode, **kwargs) -> Any:
+def map_node(name: str, node: nir.NIRNode, **kwargs: Any) -> Any:
     """Convert a single NIR node to its SC-NeuroCore equivalent."""
     factory = NODE_MAP.get(type(node))
     if factory is None:
