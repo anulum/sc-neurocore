@@ -10,11 +10,12 @@ from __future__ import annotations
 import json
 import os
 import time
+from typing import Any
 
 _PROJECTS_DIR = os.path.join(os.path.expanduser("~"), ".sc-neurocore", "studio", "projects")
 
 
-def _ensure_dir():
+def _ensure_dir() -> None:
     os.makedirs(_PROJECTS_DIR, exist_ok=True)
 
 
@@ -105,7 +106,7 @@ def run_pipeline(graph: dict, target: str = "ice40") -> dict:
     from sc_neurocore.studio.network_graph import validate_graph, simulate_graph
     from sc_neurocore.studio.synthesis import run_synthesis
 
-    steps = {}
+    steps: dict[str, Any] = {}
 
     # Step 1: Validate graph
     errors = validate_graph(graph)

@@ -98,7 +98,7 @@ class DirectorController:
 
         return problems
 
-    def correct(self):
+    def correct(self) -> None:
         """Apply corrective actions based on diagnosis."""
         problems = self.diagnose()
         if not problems:
@@ -144,7 +144,7 @@ class DirectorController:
         return "\n".join(lines)
 
 
-def _add_weight_noise(data: np.ndarray, scale: float):
+def _add_weight_noise(data: np.ndarray, scale: float) -> None:
     """Add Gaussian noise to nonzero weights, clip to non-negative."""
     mask = data > 0
     noise = np.random.default_rng().normal(0, scale, size=data.shape)
@@ -152,7 +152,7 @@ def _add_weight_noise(data: np.ndarray, scale: float):
     np.clip(data, 0, None, out=data)
 
 
-def _homeostatic_scale(data: np.ndarray, factor: float):
+def _homeostatic_scale(data: np.ndarray, factor: float) -> None:
     """Scale all weights toward the mean. Turrigiano 2008."""
     mean_w = data[data > 0].mean() if np.any(data > 0) else 0.0
     if mean_w > 0:
@@ -160,12 +160,12 @@ def _homeostatic_scale(data: np.ndarray, factor: float):
         np.clip(data, 0, None, out=data)
 
 
-def _prune_weak(data: np.ndarray, threshold: float):
+def _prune_weak(data: np.ndarray, threshold: float) -> None:
     """Zero out weights below threshold."""
     data[data < threshold] = 0.0
 
 
-def _grow_synapses(data: np.ndarray, fraction: float, seed: int):
+def _grow_synapses(data: np.ndarray, fraction: float, seed: int) -> None:
     """Reinitialize a fraction of zero weights to small positive values."""
     rng = np.random.default_rng(seed)
     zero_mask = data == 0.0
