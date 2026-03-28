@@ -37,19 +37,19 @@ class TensorBoardCallback(TrainingCallback):
 
     def __init__(self, log_dir: str = "runs"):
         try:
-            from torch.utils.tensorboard import SummaryWriter
+            from torch.utils.tensorboard import SummaryWriter  # type: ignore[attr-defined]
         except ImportError:
             from sc_neurocore.exceptions import SCDependencyError
 
             raise SCDependencyError("TensorBoard requires torch: pip install sc-neurocore[gpu]")
-        self._writer = SummaryWriter(log_dir=log_dir)
+        self._writer = SummaryWriter(log_dir=log_dir)  # type: ignore[no-untyped-call]
 
     def log(self, metrics: dict[str, float], step: int) -> None:
         for key, value in metrics.items():
-            self._writer.add_scalar(key, value, step)
+            self._writer.add_scalar(key, value, step)  # type: ignore[no-untyped-call]
 
     def close(self) -> None:
-        self._writer.close()
+        self._writer.close()  # type: ignore[no-untyped-call]
 
 
 class WandBCallback(TrainingCallback):

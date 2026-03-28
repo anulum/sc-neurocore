@@ -63,8 +63,8 @@ class PINGCircuit:
     w_ee: float = 0.1
     threshold: float = 1.0
     reset: float = 0.0
-    v_e: np.ndarray = field(default=None)  # type: ignore[assignment]
-    v_i: np.ndarray = field(default=None)  # type: ignore[assignment]
+    v_e: np.ndarray = field(default=None)  # type: ignore[arg-type]
+    v_i: np.ndarray = field(default=None)  # type: ignore[arg-type]
 
     def __post_init__(self) -> None:
         if self.v_e is None:
