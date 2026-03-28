@@ -902,7 +902,11 @@ mod tests {
     fn create_neuron_all_supported() {
         for name in supported_models() {
             let result = create_neuron(name);
-            assert!(result.is_ok(), "create_neuron({name}) failed: {:?}", result.err());
+            assert!(
+                result.is_ok(),
+                "create_neuron({name}) failed: {:?}",
+                result.err()
+            );
         }
     }
 }

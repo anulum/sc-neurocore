@@ -174,7 +174,9 @@ pub fn simulate_ei(
         }
     }
 
-    let rate_time: Vec<f64> = (0..n_bins).map(|i| i as f64 * bin_size as f64 * dt).collect();
+    let rate_time: Vec<f64> = (0..n_bins)
+        .map(|i| i as f64 * bin_size as f64 * dt)
+        .collect();
 
     let mean_exc = if exc_rates.iter().any(|&r| r > 0.0) {
         let pos: Vec<f64> = exc_rates.iter().copied().filter(|&r| r > 0.0).collect();
@@ -219,6 +221,9 @@ mod tests {
     fn ei_network_with_high_drive_produces_spikes() {
         // ext_rate=5000 Hz → lambda=0.5 per step → frequent Poisson events
         let r = simulate_ei(40, 10, 0.1, 0.4, 0.1, 0.4, 0.2, 5000.0, 100.0, 0.1, 42);
-        assert!(!r.spike_times.is_empty(), "high drive should produce spikes");
+        assert!(
+            !r.spike_times.is_empty(),
+            "high drive should produce spikes"
+        );
     }
 }
