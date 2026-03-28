@@ -153,3 +153,106 @@ class QuantizedLIFNet(nn.Module):
             total_params += n
             total_bits += n * self.n_bits
         return total_bits / max(total_params, 1)
+
+
+class SCAwareLinear(nn.Module):
+    """Linear layer with SC noise injection during training.
+
+    During training: injects Gaussian noise with std = sqrt(p*(1-p)/L)
+    to simulate bitstream variance. Weights clamped to [-1, 1].
+
+    During eval: no noise, standard linear.
+    """
+
+    def __init__(self, in_features: int, out_features: int,
+                 bitstream_length: int = 256, bias: bool = True):
+        super().__init__()
+        self.linear = nn.Linear(in_features, out_features, bias=bias)
+        self.bitstream_length = bitstream_length
+        # Clamp weights to [-1, 1] at init
+        with torch.no_grad():
+            self.linear.weight.clamp_(-1.0, 1.0)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # Clamp weights to bipolar range during forward
+        w = self.linear.weight.clamp(-1.0, 1.0)
+
+        if self.training:
+            # SC noise: std = sqrt(p * (1-p) / L) where p = (w + 1) / 2
+            p = (w + 1.0) / 2.0
+            sc_variance = p * (1.0 - p) / self.bitstream_length
+            noise = torch.randn_like(w) * sc_variance.sqrt()
+            w = w + noise
+
+        return nn.functional.linear(x, w, self.linear.bias)
+
+
+class SCAwareLIFNet(nn.Module):
+    """SNN with SC-aware training: noise injection + weight clamping.
+
+    Trains the model to be robust to stochastic computing bitstream
+    variance. Weights are constrained to [-1, 1] (bipolar SC range).
+
+    Example
+    -------
+    >>> net = SCAwareLIFNet(784, 128, 10, bitstream_length=256)
+    >>> x = torch.randn(25, 32, 784)
+    >>> spikes, mem = net(x)
+    """
+
+    def __init__(
+        self,
+        n_input: int,
+        n_hidden: int,
+        n_output: int,
+        n_layers: int = 2,
+        bitstream_length: int = 256,
+        beta: float = 0.9,
+        surrogate_fn: Callable = atan_surrogate,
+    ):
+        super().__init__()
+        self.n_output = n_output
+        self.bitstream_length = bitstream_length
+
+        sizes = [n_input] + [n_hidden] * n_layers + [n_output]
+        self.linears = nn.ModuleList(
+            SCAwareLinear(sizes[i], sizes[i + 1],
+                          bitstream_length=bitstream_length)
+            for i in range(len(sizes) - 1)
+        )
+        self.lifs = nn.ModuleList(
+            LIFCell(beta=beta, surrogate_fn=surrogate_fn)
+            for _ in range(len(sizes) - 1)
+        )
+
+    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """x: (T, batch, n_input). Returns (spike_counts, membrane_acc)."""
+        T, batch, _ = x.shape
+        device = x.device
+        v = [torch.zeros(batch, lin.linear.out_features, device=device)
+             for lin in self.linears]
+
+        spike_sum = torch.zeros(batch, self.n_output, device=device)
+        mem_sum = torch.zeros(batch, self.n_output, device=device)
+
+        for t in range(T):
+            h = x[t]
+            for i in range(len(self.linears)):
+                h = self.linears[i](h)
+                spike, v[i] = self.lifs[i](h, v[i])
+                h = spike
+            spike_sum = spike_sum + spike
+            mem_sum = mem_sum + v[-1]
+
+        return spike_sum, mem_sum
+
+    def export_bipolar_weights(self) -> list[dict]:
+        """Export weights clamped to [-1, 1] for bipolar SC deployment."""
+        layers = []
+        for lin in self.linears:
+            w = lin.linear.weight.detach().clamp(-1.0, 1.0)
+            entry = {"weight": w.cpu().numpy()}
+            if lin.linear.bias is not None:
+                entry["bias"] = lin.linear.bias.detach().cpu().numpy()
+            layers.append(entry)
+        return layers
