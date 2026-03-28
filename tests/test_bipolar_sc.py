@@ -73,25 +73,28 @@ class TestBipolarMultiply:
 
 class TestBipolarMAC:
     def test_single_input(self):
+        # 1 input: dot product = 0.5 * 0.8 = 0.4
         inputs = np.array([0.5])
         weights = np.array([[0.8]])
         result = bipolar_mac(inputs, weights, L=50000, seed=42)
         assert abs(result[0] - 0.4) < 0.05
 
-    def test_two_inputs(self):
+    def test_two_inputs_dot_product(self):
+        # dot product: 0.6*0.5 + (-0.4)*0.3 = 0.3 - 0.12 = 0.18
         inputs = np.array([0.6, -0.4])
         weights = np.array([[0.5, 0.3]])
-        # Expected: 0.6*0.5 + (-0.4)*0.3 = 0.3 - 0.12 = 0.18
-        # But MAC averages over N, so result is mean of individual products
         result = bipolar_mac(inputs, weights, L=50000, seed=42)
-        # Mean of (0.3, -0.12) = 0.09
-        assert abs(result[0] - 0.09) < 0.1
+        assert abs(result[0] - 0.18) < 0.1
 
     def test_multiple_outputs(self):
         inputs = np.array([0.5, -0.5])
         weights = np.array([[0.8, 0.2], [-0.3, 0.7]])
         result = bipolar_mac(inputs, weights, L=50000, seed=42)
         assert result.shape == (2,)
+        # out[0] = 0.5*0.8 + (-0.5)*0.2 = 0.4 - 0.1 = 0.3
+        # out[1] = 0.5*(-0.3) + (-0.5)*0.7 = -0.15 - 0.35 = -0.5
+        assert abs(result[0] - 0.3) < 0.1
+        assert abs(result[1] - (-0.5)) < 0.1
 
     def test_longer_bitstream_more_accurate(self):
         inputs = np.array([0.5])
