@@ -270,16 +270,27 @@ class _SimCache:
 _cache = _SimCache()
 
 
+_SAFE_ERRORS: dict[str, str] = {
+    "ValueError": "Invalid parameter value",
+    "TypeError": "Invalid parameter type",
+    "KeyError": "Missing required field",
+    "IndexError": "Index out of range",
+    "ZeroDivisionError": "Division by zero in computation",
+    "FileNotFoundError": "Required file not found",
+    "OverflowError": "Numerical overflow in simulation",
+}
+
+
 def _safe(fn, detail_prefix: str = ""):
     try:
         return fn()
     except HTTPException:
         raise
-    except (ValueError, TypeError, KeyError) as e:
-        msg = f"{detail_prefix}{type(e).__name__}: {e}"
-        raise HTTPException(status_code=422, detail=msg) from None
-    except Exception:
-        raise HTTPException(status_code=500, detail=f"{detail_prefix}Internal error") from None
+    except Exception as e:
+        name = type(e).__name__
+        msg = _SAFE_ERRORS.get(name, "Internal error")
+        status = 422 if name in _SAFE_ERRORS else 500
+        raise HTTPException(status_code=status, detail=f"{detail_prefix}{msg}") from None
 
 
 def _make_simulate_fn(req_dict: dict):
