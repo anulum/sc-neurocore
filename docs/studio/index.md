@@ -162,6 +162,7 @@ project from the sidebar.
 | Frontend | React 19 + TypeScript (strict) |
 | Graph editor | @xyflow/react (React Flow) |
 | State | Zustand |
+| Responsive | 4 breakpoints (1024, 768, 480px) |
 | Build | Vite |
 | Backend | FastAPI |
 | Simulation | SC-NeuroCore Python + Rust engine |

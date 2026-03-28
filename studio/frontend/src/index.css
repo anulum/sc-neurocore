@@ -252,3 +252,81 @@ input[type="range"]::-moz-range-thumb {
   border-radius: var(--radius);
   overflow: hidden;
 }
+
+/* --- Responsive layout --- */
+
+/* Header: scrollable on narrow screens */
+.header {
+  flex-wrap: wrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Tablet: narrower sidebar */
+@media (max-width: 1024px) {
+  .main-content {
+    grid-template-columns: 280px 1fr;
+  }
+  .header-logo h1 {
+    font-size: 14px;
+  }
+}
+
+/* Mobile: stacked layout */
+@media (max-width: 768px) {
+  .studio {
+    grid-template-rows: auto auto 1fr;
+  }
+  .main-content {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+  .left-panel {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    max-height: 35vh;
+    overflow-y: auto;
+  }
+  .right-panel {
+    min-height: 50vh;
+  }
+  .header {
+    padding: 6px 8px;
+    gap: 4px;
+  }
+  .header-logo h1 {
+    font-size: 12px;
+  }
+  .btn-simulate {
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+  select {
+    font-size: 11px;
+    padding: 3px 6px;
+  }
+  .slider-label {
+    width: 50px;
+    font-size: 10px;
+  }
+  .slider-value {
+    width: 55px;
+    font-size: 10px;
+  }
+  .panel-section {
+    padding: 8px;
+  }
+}
+
+/* Very narrow (phone portrait) */
+@media (max-width: 480px) {
+  .header-logo h1 {
+    display: none;
+  }
+  .main-content {
+    grid-template-columns: 1fr;
+  }
+  .left-panel {
+    max-height: 25vh;
+  }
+}
