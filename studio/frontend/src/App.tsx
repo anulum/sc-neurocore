@@ -139,7 +139,7 @@ export default function App() {
         <Btn label="Reset" onClick={s.resetDefaults} outline />
         <Btn label="JSON" onClick={s.exportData} disabled={!s.result} outline />
         <Btn label="CSV" onClick={s.exportCSV} disabled={!s.result} outline />
-        <Btn label="PNG" onClick={s.exportSVG} outline />
+        <Btn label="SVG" onClick={s.exportSVG} disabled={!s.result} outline />
 
         <div className="header-spacer" />
 

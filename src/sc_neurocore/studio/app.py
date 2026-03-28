@@ -918,6 +918,32 @@ def create_app() -> FastAPI:
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
 
+    # --- SVG export ---
+    @app.post("/api/export/svg")
+    def export_svg(req: ModelSimulateRequest):
+        from fastapi.responses import Response
+        from sc_neurocore.studio.svg_export import traces_to_svg
+
+        def fn():
+            result = simulate_model(
+                name=req.name,
+                param_overrides=req.params,
+                dt=req.dt,
+                duration=req.duration,
+                current=req.current,
+                protocol=req.protocol,
+            )
+            svg = traces_to_svg(
+                time=result["time"],
+                states=result["states"],
+                spikes=result.get("spikes", []),
+                model_name=result.get("model_name", req.name),
+                dt=req.dt,
+            )
+            return Response(content=svg, media_type="image/svg+xml")
+
+        return _safe(fn)
+
     # --- WebSocket progress streaming ---
     @app.websocket("/ws/progress")
     async def ws_progress(websocket: WebSocket):
