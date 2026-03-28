@@ -12,7 +12,7 @@ Train in float with PyTorch autograd, deploy to SC bitstreams via to_sc_weights(
 
 from __future__ import annotations
 
-from typing import Callable, List, Tuple
+from typing import Any, Callable, List, Tuple
 
 import torch
 import torch.nn as nn
@@ -55,11 +55,11 @@ class LIFCell(nn.Module):
 
     @property
     def beta(self) -> torch.Tensor:
-        return self._beta_logit.sigmoid() if self._learn_beta else self._beta_val
+        return self._beta_logit.sigmoid() if self._learn_beta else self._beta_val  # type: ignore[return-value]
 
     @property
     def threshold(self) -> torch.Tensor:
-        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val
+        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val  # type: ignore[return-value]
 
     def forward(self, current: torch.Tensor, v: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         v_next = self.beta * v + current
@@ -90,7 +90,7 @@ class IFCell(nn.Module):
 
     @property
     def threshold(self) -> torch.Tensor:
-        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val
+        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val  # type: ignore[return-value]
 
     def forward(self, current: torch.Tensor, v: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         v_next = v + current
@@ -132,11 +132,11 @@ class SynapticCell(nn.Module):
 
     @property
     def beta(self) -> torch.Tensor:
-        return self._beta_logit.sigmoid() if self._learn_beta else self._beta_val
+        return self._beta_logit.sigmoid() if self._learn_beta else self._beta_val  # type: ignore[return-value]
 
     @property
     def threshold(self) -> torch.Tensor:
-        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val
+        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val  # type: ignore[return-value]
 
     def forward(
         self,
@@ -223,11 +223,11 @@ class ExpIFCell(nn.Module):
 
     @property
     def beta(self) -> torch.Tensor:
-        return self._beta_logit.sigmoid() if self._learn_beta else self._beta_val
+        return self._beta_logit.sigmoid() if self._learn_beta else self._beta_val  # type: ignore[return-value]
 
     @property
     def threshold(self) -> torch.Tensor:
-        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val
+        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val  # type: ignore[return-value]
 
     def forward(self, current: torch.Tensor, v: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         exp_term = self.delta_t * torch.exp(torch.clamp((v - self.v_rh) / self.delta_t, max=5.0))
@@ -279,11 +279,11 @@ class AdExCell(nn.Module):
 
     @property
     def beta(self) -> torch.Tensor:
-        return self._beta_logit.sigmoid() if self._learn_beta else self._beta_val
+        return self._beta_logit.sigmoid() if self._learn_beta else self._beta_val  # type: ignore[return-value]
 
     @property
     def threshold(self) -> torch.Tensor:
-        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val
+        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val  # type: ignore[return-value]
 
     def forward(
         self,
@@ -329,7 +329,7 @@ class LapicqueCell(nn.Module):
 
     @property
     def threshold(self) -> torch.Tensor:
-        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val
+        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val  # type: ignore[return-value]
 
     def forward(self, current: torch.Tensor, v: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         v_next = self.decay * (v - self.v_rest) + self.v_rest + self.gain * current
@@ -373,11 +373,11 @@ class AlphaCell(nn.Module):
 
     @property
     def beta(self) -> torch.Tensor:
-        return self._beta_logit.sigmoid() if self._learn_beta else self._beta_val
+        return self._beta_logit.sigmoid() if self._learn_beta else self._beta_val  # type: ignore[return-value]
 
     @property
     def threshold(self) -> torch.Tensor:
-        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val
+        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val  # type: ignore[return-value]
 
     def forward(
         self,
@@ -429,11 +429,11 @@ class SecondOrderLIFCell(nn.Module):
 
     @property
     def beta(self) -> torch.Tensor:
-        return self._beta_logit.sigmoid() if self._learn_beta else self._beta_val
+        return self._beta_logit.sigmoid() if self._learn_beta else self._beta_val  # type: ignore[return-value]
 
     @property
     def threshold(self) -> torch.Tensor:
-        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val
+        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val  # type: ignore[return-value]
 
     def forward(
         self,
@@ -572,7 +572,7 @@ class ConvSpikingNet(nn.Module):
     ):
         super().__init__()
         self.n_output = n_output
-        lif_kw = dict(
+        lif_kw: dict[str, Any] = dict(
             beta=beta,
             surrogate_fn=surrogate_fn,
             learn_beta=learn_beta,
@@ -635,16 +635,16 @@ class ConvSpikingNet(nn.Module):
             w = (
                 mod.weight.detach().flatten(1)
                 if isinstance(mod, nn.Conv2d)
-                else mod.weight.detach()
+                else mod.weight.detach()  # type: ignore[operator]
             )
             w_min, w_max = w.min(), w.max()
             if w_max > w_min:
                 w = (w - w_min) / (w_max - w_min)
             else:
                 w = torch.zeros_like(w)
-            entry: dict = {"weight": w}
+            entry: dict[str, Any] = {"weight": w}
             if include_bias and mod.bias is not None:
-                entry["bias"] = mod.bias.detach()
+                entry["bias"] = mod.bias.detach()  # type: ignore[operator]
             layers.append(entry)
         return layers
 
