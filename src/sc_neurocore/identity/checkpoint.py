@@ -13,6 +13,8 @@ plasticity traces, and metadata in .npz for compact storage.
 
 from __future__ import annotations
 
+from typing import Any
+
 import time
 
 import numpy as np
@@ -22,7 +24,7 @@ class Checkpoint:
     """Save and restore complete IdentitySubstrate state."""
 
     @staticmethod
-    def save(substrate, path: str):
+    def save(substrate: Any, path: str) -> None:
         """Save complete state to .npz file.
 
         Captures: population voltages, projection CSR arrays,
@@ -84,7 +86,7 @@ class Checkpoint:
         )
 
     @staticmethod
-    def load(path: str):
+    def load(path: str) -> Any:
         """Restore substrate from checkpoint."""
         from .substrate import IdentitySubstrate
 
@@ -127,7 +129,7 @@ class Checkpoint:
         return substrate
 
     @staticmethod
-    def merge(paths: list[str]):
+    def merge(paths: list[str]) -> Any:
         """Merge multiple checkpoints by averaging weights and concatenating history."""
 
         if not paths:
@@ -169,7 +171,7 @@ class Checkpoint:
         return base
 
 
-def _restore_voltages(population, voltages):
+def _restore_voltages(population: Any, voltages: np.ndarray) -> None:
     """Write voltage array back into individual neuron objects."""
     for i, neuron in enumerate(population.neurons):
         if hasattr(neuron, "v"):
