@@ -26,6 +26,8 @@ on top of ISI baseline.
 
 from __future__ import annotations
 
+from typing import Any
+
 from dataclasses import dataclass
 
 import numpy as np
@@ -35,10 +37,10 @@ from ..world_model.spike_predictor import predict_and_xor_world_model, xor_and_r
 
 # Rust backend (optional, ~100x faster for LFSR predictor)
 _HAS_RUST = False
-_rust_predict_ema = None
-_rust_predict_lfsr = None
-_rust_recover_ema = None
-_rust_recover_lfsr = None
+_rust_predict_ema: Any = None
+_rust_predict_lfsr: Any = None
+_rust_recover_ema: Any = None
+_rust_recover_lfsr: Any = None
 
 try:
     # Load the compiled Rust .pyd directly from site-packages,
@@ -99,14 +101,14 @@ class _RatePredictor:  # pragma: no cover — superseded by _predict_and_xor inl
     def predict(self) -> np.ndarray:
         return (self.rates > self.threshold).astype(np.int8)
 
-    def update(self, actual: np.ndarray):
+    def update(self, actual: np.ndarray) -> None:
         self.rates += self.alpha * (actual.astype(np.float64) - self.rates)
 
-    def reset(self):
+    def reset(self) -> None:
         self.rates[:] = 0.0
 
 
-def _predict_and_xor_context(spikes: np.ndarray, N: int, context_bits: int = 8):
+def _predict_and_xor_context(spikes: np.ndarray, N: int, context_bits: int = 8) -> tuple[np.ndarray, int]:
     """Context-model predict-XOR loop. Returns (errors, correct_count).
 
     Per-channel Markov predictor: hash last K spike states as context key,
@@ -156,7 +158,7 @@ def _predict_and_xor_context(spikes: np.ndarray, N: int, context_bits: int = 8):
     return errors, correct
 
 
-def _xor_and_recover_context(errors: np.ndarray, N: int, context_bits: int = 8):
+def _xor_and_recover_context(errors: np.ndarray, N: int, context_bits: int = 8) -> np.ndarray:
     """Context-model XOR-recover loop for decoder."""
     T = errors.shape[0]
     spikes = np.empty((T, N), dtype=np.int8)
@@ -189,7 +191,7 @@ def _xor_and_recover_context(errors: np.ndarray, N: int, context_bits: int = 8):
     return spikes
 
 
-def _predict_and_xor(spikes: np.ndarray, N: int, alpha: float, threshold: float):
+def _predict_and_xor(spikes: np.ndarray, N: int, alpha: float, threshold: float) -> tuple[np.ndarray, int]:
     """EMA predict-XOR loop. Returns (errors, correct_count)."""
     T = spikes.shape[0]
     rates = np.zeros(N, dtype=np.float64)
@@ -207,7 +209,7 @@ def _predict_and_xor(spikes: np.ndarray, N: int, alpha: float, threshold: float)
     return errors, correct
 
 
-def _xor_and_recover(errors: np.ndarray, N: int, alpha: float, threshold: float):
+def _xor_and_recover(errors: np.ndarray, N: int, alpha: float, threshold: float) -> np.ndarray:
     """EMA XOR-recover loop for decoder."""
     T = errors.shape[0]
     rates = np.zeros(N, dtype=np.float64)
@@ -241,7 +243,7 @@ def _predict_and_xor_lfsr(
     N: int,
     alpha_q8: int,
     seed: int,
-):
+) -> tuple[np.ndarray, int]:
     """LFSR-based predict-XOR loop. Bit-true with Verilog.
 
     Uses Q8.8 fixed-point rate tracking + LFSR comparator for prediction.
@@ -297,7 +299,7 @@ def _xor_and_recover_lfsr(
     N: int,
     alpha_q8: int,
     seed: int,
-):
+) -> np.ndarray:
     """LFSR-based XOR-recover loop for decoder."""
     T = errors.shape[0]
     rates_q8 = np.zeros(N, dtype=np.int32)
