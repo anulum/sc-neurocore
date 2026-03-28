@@ -13,6 +13,10 @@ is unavailable, so adapter code can stay backend-agnostic.
 
 from __future__ import annotations
 
+import types
+from collections.abc import Callable
+from typing import Any
+
 import numpy as np
 
 try:
@@ -21,18 +25,18 @@ try:
 
     HAS_JAX = True
 except ImportError:
-    jnp = np
+    jnp: types.ModuleType = np
     HAS_JAX = False
 
 
-def make_rng(seed: int = 0):
+def make_rng(seed: int = 0) -> np.ndarray:
     """Create a PRNG key (JAX) or seed array (NumPy fallback)."""
     if HAS_JAX:
         return jax.random.PRNGKey(seed)
     return np.array([0, seed], dtype=np.uint32)
 
 
-def split_rng(key):
+def split_rng(key: Any) -> tuple[Any, Any]:
     """Split a PRNG key into two children."""
     if HAS_JAX:
         return jax.random.split(key)
@@ -40,7 +44,7 @@ def split_rng(key):
     return np.array([0, s + 1], dtype=np.uint32), np.array([0, s + 2], dtype=np.uint32)
 
 
-def uniform(key, shape: tuple, minval: float = 0.0, maxval: float = 1.0):
+def uniform(key: Any, shape: tuple[int, ...], minval: float = 0.0, maxval: float = 1.0) -> Any:
     """Uniform samples in [minval, maxval)."""
     if HAS_JAX:
         return jax.random.uniform(key, shape, minval=minval, maxval=maxval)
@@ -48,7 +52,7 @@ def uniform(key, shape: tuple, minval: float = 0.0, maxval: float = 1.0):
     return rng.uniform(low=minval, high=maxval, size=shape).astype(np.float32)
 
 
-def normal(key, shape: tuple):
+def normal(key: Any, shape: tuple[int, ...]) -> Any:
     """Standard normal samples."""
     if HAS_JAX:
         return jax.random.normal(key, shape)
@@ -56,7 +60,7 @@ def normal(key, shape: tuple):
     return rng.standard_normal(size=shape).astype(np.float32)
 
 
-def maybe_jit(fn):
+def maybe_jit(fn: Callable[..., Any]) -> Callable[..., Any]:
     """JIT-compile if JAX available, otherwise identity."""
     if HAS_JAX:
         return jax.jit(fn)
