@@ -65,7 +65,7 @@ class L11_MorphicLayer:
             - 0.1 * self.spins
         )
         self.spins = np.clip(self.spins + d_spin * dt, 0, 1)
-        self.info_density = 0.9 * self.info_density + 0.1 * np.abs(self.spins - 0.5)
+        self.info_density = 0.9 * self.info_density + 0.1 * np.abs(self.spins - 0.5)  # type: ignore[assignment]
 
         rands = np.random.random((n, self.params.bitstream_length))
         output_bitstreams = (rands < self.spins[:, None]).astype(np.uint8)

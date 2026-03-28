@@ -130,7 +130,7 @@ class DeltaSpikeCodec:
         if delta_spike_counts:
             raw_per_channel = n_spikes / max(N, 1)
             mean_delta = np.mean(delta_spike_counts)
-            mean_delta_sparsity = 1.0 - (mean_delta / max(T, 1))
+            mean_delta_sparsity = 1.0 - (mean_delta / max(T, 1))  # type: ignore[assignment]
 
         return encoded, DeltaCompressionResult(
             original_bits=original_bits,

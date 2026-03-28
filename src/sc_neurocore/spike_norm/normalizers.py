@@ -216,7 +216,7 @@ class TemporalAccumulatedBN:
             mean = self._accumulated
             # Variance estimated from current input
             var = x.var(axis=0) if x.ndim > 1 else np.zeros_like(x)
-            self.running_mean = (1 - self.momentum) * self.running_mean + self.momentum * mean
+            self.running_mean = (1 - self.momentum) * self.running_mean + self.momentum * mean  # type: ignore[assignment]
             self.running_var = (1 - self.momentum) * self.running_var + self.momentum * var
         else:  # pragma: no cover
             mean = self.running_mean

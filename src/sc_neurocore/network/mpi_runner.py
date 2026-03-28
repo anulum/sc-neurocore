@@ -185,7 +185,7 @@ class MPIRunner:
                     idx = pop_id_to_idx.get(id(mon.population))
                     if idx is not None and idx in all_spikes:
                         mon.record(all_spikes[idx], t)
-                for mon in net.rate_monitors:
+                for mon in net.rate_monitors:  # type: ignore[assignment]
                     idx = pop_id_to_idx.get(id(mon.population))
                     if idx is not None and idx in all_spikes:
                         mon.record(all_spikes[idx], t, dt)

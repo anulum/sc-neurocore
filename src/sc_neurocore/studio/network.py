@@ -150,7 +150,7 @@ def _simulate_numpy(
     inh_bin = 0
 
     for t in range(n_steps):
-        refractory = np.maximum(refractory - dt, 0)
+        refractory = np.maximum(refractory - dt, 0)  # type: ignore[assignment]
         ext_input = rng.poisson(ext_rate * dt / 1000.0, n_total).astype(float) * 5.0
 
         syn_input = np.zeros(n_total)

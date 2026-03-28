@@ -60,7 +60,7 @@ class L13_TemporalLayer:
             coh = l12_input["coherence"]
             signal[: len(coh)] = coh[:n] if len(coh) >= n else np.pad(coh, (0, n - len(coh)))
 
-        self.history = np.roll(self.history, -1, axis=1)
+        self.history = np.roll(self.history, -1, axis=1)  # type: ignore[assignment]
         self.history[:, -1] = signal
 
         # Cross-correlation binding (simplified: Pearson on history)

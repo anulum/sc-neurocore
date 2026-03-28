@@ -105,7 +105,7 @@ class ChaoticRNG:
         steps_per_map = (size + n_maps - 1) // n_maps
         buf = np.empty((n_maps, steps_per_map), dtype=np.float64)
         for t in range(steps_per_map):
-            states = self.r * states * (1.0 - states)
+            states = self.r * states * (1.0 - states)  # type: ignore[assignment]
             buf[:, t] = states
         self._state = float(states[0])
         return buf.ravel(order="F")[:size]

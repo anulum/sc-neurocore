@@ -87,7 +87,7 @@ def build_knm_matrix(n_layers: int = N_LAYERS) -> np.ndarray:
             K[i - 1, j - 1] = val
             K[j - 1, i - 1] = val
 
-    K = 0.5 * (K + K.T)
+    K = 0.5 * (K + K.T)  # type: ignore[assignment]
     np.fill_diagonal(K, 0.0)
 
     return K
