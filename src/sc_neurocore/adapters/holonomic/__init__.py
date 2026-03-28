@@ -9,6 +9,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from sc_neurocore.utils.registry import registry
 
 from .l1_quantum import L1_QuantumAdapter
@@ -53,7 +55,7 @@ for _name, _cls in _ADAPTERS.items():
 _LAYER_MAP = {i + 1: cls for i, cls in enumerate(_ADAPTERS.values())}
 
 
-def create_adapter(layer: int):
+def create_adapter(layer: int) -> Any:
     """Factory: create adapter by layer number (1-16)."""
     if layer not in _LAYER_MAP:
         raise ValueError(f"Layer {layer} not in 1-16")

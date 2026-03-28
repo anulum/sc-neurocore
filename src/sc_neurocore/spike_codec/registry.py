@@ -21,6 +21,8 @@ decompress(bytes, T, N) → spikes.
 
 from __future__ import annotations
 
+from typing import Any
+
 
 from .codec import SpikeCodec
 from .predictive_codec import PredictiveSpikeCodec
@@ -38,7 +40,7 @@ CODEC_REGISTRY: dict[str, type] = {
 }
 
 
-def get_codec(name: str, **kwargs):
+def get_codec(name: str, **kwargs: Any) -> Any:
     """Get a codec by name.
 
     Parameters
