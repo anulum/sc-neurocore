@@ -11,9 +11,11 @@ from __future__ import annotations
 
 import functools
 import warnings
+from collections.abc import Callable
+from typing import Any
 
 
-def deprecated(since: str, removal: str, alternative: str | None = None):
+def deprecated(since: str, removal: str, alternative: str | None = None) -> Callable[[Any], Any]:
     """Mark a function or class as deprecated.
 
     Example::
@@ -32,7 +34,7 @@ def deprecated(since: str, removal: str, alternative: str | None = None):
         Name of the replacement function/class.
     """
 
-    def decorator(obj):
+    def decorator(obj: Any) -> Any:
         alt_msg = f" Use {alternative} instead." if alternative else ""
         msg = (
             f"{obj.__qualname__} is deprecated since v{since} "
@@ -43,15 +45,15 @@ def deprecated(since: str, removal: str, alternative: str | None = None):
             original_init = obj.__init__
 
             @functools.wraps(original_init)
-            def new_init(self, *args, **kwargs):
+            def new_init(self: Any, *args: Any, **kwargs: Any) -> None:
                 warnings.warn(msg, DeprecationWarning, stacklevel=2)
                 original_init(self, *args, **kwargs)
 
-            obj.__init__ = new_init
+            obj.__init__ = new_init  # type: ignore[misc]
             return obj
 
         @functools.wraps(obj)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             warnings.warn(msg, DeprecationWarning, stacklevel=2)
             return obj(*args, **kwargs)
 

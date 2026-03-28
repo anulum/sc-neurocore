@@ -21,6 +21,8 @@ Usage::
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 
 class ComponentRegistry:
     """Thread-safe component registry with namespace support."""
@@ -28,7 +30,7 @@ class ComponentRegistry:
     def __init__(self) -> None:
         self._store: dict[str, dict[str, type]] = {}
 
-    def register(self, namespace: str, name: str | None = None):
+    def register(self, namespace: str, name: str | None = None) -> Callable[[type], type]:
         """Decorator to register a class under *namespace*/*name*.
 
         If *name* is ``None``, ``cls.__name__`` is used.

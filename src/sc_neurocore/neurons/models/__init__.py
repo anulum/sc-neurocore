@@ -136,7 +136,7 @@ _CLASS_TO_MODULE = {
 __all__ = sorted(_CLASS_TO_MODULE.keys())
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> type:
     if name in _CLASS_TO_MODULE:
         import importlib
 
