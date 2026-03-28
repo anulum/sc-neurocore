@@ -54,11 +54,19 @@ Browse 118 neuron models by category (integrate-and-fire, biophysical,
 stochastic, hardware emulators, AI-optimised). Select a model and
 adjust parameters with sliders — the trace view updates live.
 
-Switch to ODE mode to write custom equations:
+Switch to ODE mode to write custom equations with syntax highlighting:
 
 ```
 dv/dt = -(v - E_L) / tau_m + I / C
 ```
+
+The Monaco editor provides SC-NeuroCore-specific syntax highlighting:
+- **Blue bold:** ODE derivatives (`dv/dt`, `dw/dt`)
+- **Teal:** parameters (`E_L`, `tau_m`, `g_Na`, `V_threshold`)
+- **Light blue:** state variables (`v`, `w`, `m`, `h`, `n`)
+- **Yellow:** functions (`exp`, `sqrt`, `tanh`)
+- **Purple:** directives (`threshold`, `reset`)
+- **Green:** comments (`# ...`)
 
 ### 18+ Analysis Views
 
