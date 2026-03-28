@@ -15,6 +15,8 @@ All functions expect pre-shifted input x = v - threshold.
 
 from __future__ import annotations
 
+from typing import Any
+
 import torch
 from torch.autograd import Function
 
@@ -23,13 +25,13 @@ class _FastSigmoid(Function):
     """Zenke & Vogels 2021 (normalized variant). slope / (1 + slope|x|)^2."""
 
     @staticmethod
-    def forward(ctx, x: torch.Tensor, slope: float) -> torch.Tensor:
+    def forward(ctx: Any, x: torch.Tensor, slope: float) -> torch.Tensor:
         ctx.save_for_backward(x)
         ctx.slope = slope
         return (x > 0).float()
 
     @staticmethod
-    def backward(ctx, grad_output: torch.Tensor):
+    def backward(ctx: Any, grad_output: torch.Tensor) -> tuple[torch.Tensor, None]:
         (x,) = ctx.saved_tensors
         grad = ctx.slope / (1.0 + ctx.slope * x.abs()) ** 2
         return grad_output * grad, None
@@ -39,13 +41,13 @@ class _SuperSpike(Function):
     """Zenke & Ganguli 2018 (unnormalized). 1 / (1 + beta|x|)^2."""
 
     @staticmethod
-    def forward(ctx, x: torch.Tensor, beta: float) -> torch.Tensor:
+    def forward(ctx: Any, x: torch.Tensor, beta: float) -> torch.Tensor:
         ctx.save_for_backward(x)
         ctx.beta = beta
         return (x > 0).float()
 
     @staticmethod
-    def backward(ctx, grad_output: torch.Tensor):
+    def backward(ctx: Any, grad_output: torch.Tensor) -> tuple[torch.Tensor, None]:
         (x,) = ctx.saved_tensors
         grad = 1.0 / (1.0 + ctx.beta * x.abs()) ** 2
         return grad_output * grad, None
@@ -55,13 +57,13 @@ class _ATan(Function):
     """Fang et al. 2021."""
 
     @staticmethod
-    def forward(ctx, x: torch.Tensor, alpha: float) -> torch.Tensor:
+    def forward(ctx: Any, x: torch.Tensor, alpha: float) -> torch.Tensor:
         ctx.save_for_backward(x)
         ctx.alpha = alpha
         return (x > 0).float()
 
     @staticmethod
-    def backward(ctx, grad_output: torch.Tensor):
+    def backward(ctx: Any, grad_output: torch.Tensor) -> tuple[torch.Tensor, None]:
         (x,) = ctx.saved_tensors
         a = ctx.alpha
         grad = a / (2.0 * (1.0 + (torch.pi * a * x / 2.0) ** 2))
@@ -70,30 +72,30 @@ class _ATan(Function):
 
 def fast_sigmoid(x: torch.Tensor, slope: float = 25.0) -> torch.Tensor:
     """Heaviside forward, fast-sigmoid backward."""
-    return _FastSigmoid.apply(x, slope)
+    return _FastSigmoid.apply(x, slope)  # type: ignore[no-untyped-call]
 
 
 def superspike(x: torch.Tensor, beta: float = 10.0) -> torch.Tensor:
     """Heaviside forward, SuperSpike backward."""
-    return _SuperSpike.apply(x, beta)
+    return _SuperSpike.apply(x, beta)  # type: ignore[no-untyped-call]
 
 
 def atan_surrogate(x: torch.Tensor, alpha: float = 2.0) -> torch.Tensor:
     """Heaviside forward, arctan backward."""
-    return _ATan.apply(x, alpha)
+    return _ATan.apply(x, alpha)  # type: ignore[no-untyped-call]
 
 
 class _Sigmoid(Function):
     """Standard sigmoid surrogate."""
 
     @staticmethod
-    def forward(ctx, x: torch.Tensor, slope: float) -> torch.Tensor:
+    def forward(ctx: Any, x: torch.Tensor, slope: float) -> torch.Tensor:
         ctx.save_for_backward(x)
         ctx.slope = slope
         return (x > 0).float()
 
     @staticmethod
-    def backward(ctx, grad_output: torch.Tensor):
+    def backward(ctx: Any, grad_output: torch.Tensor) -> tuple[torch.Tensor, None]:
         (x,) = ctx.saved_tensors
         sx = torch.sigmoid(ctx.slope * x)
         grad = ctx.slope * sx * (1.0 - sx)
@@ -104,11 +106,11 @@ class _StraightThrough(Function):
     """Straight-Through Estimator (STE). Bengio et al. 2013."""
 
     @staticmethod
-    def forward(ctx, x: torch.Tensor) -> torch.Tensor:
+    def forward(ctx: Any, x: torch.Tensor) -> torch.Tensor:
         return (x > 0).float()
 
     @staticmethod
-    def backward(ctx, grad_output: torch.Tensor):
+    def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
         return grad_output
 
 
@@ -116,13 +118,13 @@ class _Triangular(Function):
     """Triangular window surrogate. Esser et al. 2016."""
 
     @staticmethod
-    def forward(ctx, x: torch.Tensor, width: float) -> torch.Tensor:
+    def forward(ctx: Any, x: torch.Tensor, width: float) -> torch.Tensor:
         ctx.save_for_backward(x)
         ctx.width = width
         return (x > 0).float()
 
     @staticmethod
-    def backward(ctx, grad_output: torch.Tensor):
+    def backward(ctx: Any, grad_output: torch.Tensor) -> tuple[torch.Tensor, None]:
         (x,) = ctx.saved_tensors
         grad = torch.clamp(1.0 - x.abs() / ctx.width, min=0.0) / ctx.width
         return grad_output * grad, None
@@ -130,14 +132,14 @@ class _Triangular(Function):
 
 def sigmoid_surrogate(x: torch.Tensor, slope: float = 5.0) -> torch.Tensor:
     """Heaviside forward, sigmoid backward."""
-    return _Sigmoid.apply(x, slope)
+    return _Sigmoid.apply(x, slope)  # type: ignore[no-untyped-call]
 
 
 def straight_through(x: torch.Tensor) -> torch.Tensor:
     """Heaviside forward, identity backward (STE)."""
-    return _StraightThrough.apply(x)
+    return _StraightThrough.apply(x)  # type: ignore[no-untyped-call]
 
 
 def triangular(x: torch.Tensor, width: float = 1.0) -> torch.Tensor:
     """Heaviside forward, triangular window backward."""
-    return _Triangular.apply(x, width)
+    return _Triangular.apply(x, width)  # type: ignore[no-untyped-call]
