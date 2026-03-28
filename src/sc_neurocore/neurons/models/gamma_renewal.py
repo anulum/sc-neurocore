@@ -25,7 +25,7 @@ class GammaRenewalNeuron:
     _time_since_spike: float = 0.0
     _rng: object = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self._rng = np.random.default_rng()
 
     def step(self, rate_override: float = -1.0) -> int:
@@ -51,7 +51,7 @@ class GammaRenewalNeuron:
             return 1
         return 0
 
-    def reset(self):
+    def reset(self) -> None:
         self._time_since_spike = 0.0
 
 

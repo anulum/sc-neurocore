@@ -52,7 +52,7 @@ class HardwareAwareSCLayer:
     variability: float = 0.02
     seed: int = 42
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self._layer = VectorizedSCLayer(
             n_inputs=self.n_inputs,
             n_neurons=self.n_neurons,

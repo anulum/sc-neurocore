@@ -59,5 +59,5 @@ class AstrocyteModel:
         self.ip3 = max(0.0, self.ip3 + dip3 * self.dt)
         return self.ca
 
-    def reset(self):
+    def reset(self) -> None:
         self.ca, self.h, self.ip3 = 0.05, 0.8, 0.5

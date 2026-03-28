@@ -38,7 +38,7 @@ class GutkinErmentroutNeuron:
         self.v += (-i_na - i_k - i_l + current) * self.dt
         return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = -65.0
         self.n = 0.1
 

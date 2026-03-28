@@ -92,6 +92,6 @@ class PinskyRinzelNeuron:
 
         return 1 if (self.v_s >= self.v_threshold and v_prev < self.v_threshold) else 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v_s, self.v_d = -60.0, -60.0
         self.h, self.n, self.s, self.c, self.q = 0.9, 0.1, 0.0, 0.0, 0.0

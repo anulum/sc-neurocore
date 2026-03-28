@@ -42,5 +42,5 @@ class WilsonCowanUnit:
         self.i += (-self.i + si) / self.tau_i * self.dt
         return self.e
 
-    def reset(self):
+    def reset(self) -> None:
         self.e, self.i = 0.1, 0.05

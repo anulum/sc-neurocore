@@ -53,7 +53,7 @@ class SpikeDrivenAttention:
     T: int = 8
     threshold: float = 1.0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.head_dim = self.embed_dim // self.num_heads
         rng = np.random.RandomState(42)
         # Linear projections (Q, K, V)
@@ -158,7 +158,7 @@ class SpikyStateSpace:
     threshold: float = 1.0
     dt: float = 0.01
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         rng = np.random.RandomState(42)
         # State-space matrices (discretized)
         # A: state transition (diagonal for efficiency)
@@ -168,7 +168,7 @@ class SpikyStateSpace:
         self._h = np.zeros(self.d_state)
         self._v = np.zeros(self.d_model)
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset hidden state and membrane potential."""
         self._h = np.zeros(self.d_state)
         self._v = np.zeros(self.d_model)
@@ -236,7 +236,7 @@ class CPGPositionalEncoding:
     d_model: int
     max_len: int = 1024
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         rng = np.random.RandomState(42)
         self.frequencies = np.exp(rng.randn(self.d_model) * 0.5)
         self.phases = rng.uniform(0, 2 * np.pi, self.d_model)

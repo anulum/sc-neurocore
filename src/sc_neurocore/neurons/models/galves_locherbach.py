@@ -38,5 +38,5 @@ class GalvesLocherbachNeuron:
             self.v = self.v_rest
         return spike
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = self.v_rest

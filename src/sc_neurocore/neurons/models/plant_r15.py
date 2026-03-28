@@ -69,7 +69,7 @@ class PlantR15Neuron:
 
         return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = -50.0
         self.m, self.h, self.n = 0.05, 0.6, 0.3
         self.ca = 0.1

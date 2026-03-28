@@ -91,7 +91,7 @@ class DelayLinear(nn.Module):
         self.register_buffer("_history", torch.zeros(max_delay + 1, in_features))
         self._t = 0
 
-    def reset(self):
+    def reset(self) -> None:
         """Clear spike history. Call between sequences."""
         self._history.zero_()
         self._t = 0

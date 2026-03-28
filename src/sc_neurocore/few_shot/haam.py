@@ -117,7 +117,7 @@ class HebbianFewShot:
             self.store(pattern, label)
         return [self.query(q) for q in query_x]
 
-    def reset(self):
+    def reset(self) -> None:
         self.memory[:] = 0
         self._counts[:] = 0
 

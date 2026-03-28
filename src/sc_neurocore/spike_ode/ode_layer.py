@@ -174,7 +174,7 @@ class SpikingODELayer:
             outputs[t] = self.step(inputs[t], interval)
         return outputs
 
-    def reset(self):
+    def reset(self) -> None:
         self._v = np.full(self.n_neurons, self.dynamics.v_rest)
 
     @property

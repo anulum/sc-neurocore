@@ -87,7 +87,7 @@ class BoothRinzelNeuron:
 
         return 1 if (self.vs >= self.v_threshold and vs_prev < self.v_threshold) else 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.vs = -65.0
         self.vd = -65.0
         self.h, self.n, self.q = 0.9, 0.0, 0.0

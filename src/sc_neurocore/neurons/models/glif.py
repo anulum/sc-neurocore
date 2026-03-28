@@ -60,7 +60,7 @@ class GLIFNeuron:
             return 1
         return 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = self.v_rest
         self.theta = self.theta_inf
         self.i_asc1, self.i_asc2 = 0.0, 0.0

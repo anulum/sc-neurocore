@@ -64,5 +64,5 @@ class LarterBreakspearNeuron:
 
         return self.v
 
-    def reset(self):
+    def reset(self) -> None:
         self.v, self.w, self.z = -0.5, 0.0, 0.0

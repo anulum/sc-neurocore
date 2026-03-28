@@ -36,7 +36,7 @@ class SRM0Neuron:
     resistance: float = 1.0
     dt: float = 1.0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self._eta = 0.0
         self._last_spike_time = -1000.0
         self._t = 0.0
@@ -60,7 +60,7 @@ class SRM0Neuron:
             return 1
         return 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = self.v_rest
         self._eta = 0.0
         self._t = 0.0

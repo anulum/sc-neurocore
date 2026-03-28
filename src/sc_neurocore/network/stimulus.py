@@ -9,35 +9,40 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
+
 import numpy as np
+
+if TYPE_CHECKING:
+    from .population import Population
 
 
 class TimedArray:
     """Time-varying current from a pre-computed array."""
 
-    def __init__(self, values, dt=0.001):
+    def __init__(self, values: np.ndarray | list[float], dt: float = 0.001) -> None:
         self.values = np.asarray(values, dtype=np.float64)
         self.dt = dt
-        self.target = None
+        self.target: Population | None = None
 
-    def get_current(self, t_step):
+    def get_current(self, t_step: int) -> float:
         """Return the value at timestep t_step (clamps to last value)."""
         idx = min(t_step, len(self.values) - 1)
-        return self.values[idx]
+        return float(self.values[idx])
 
 
 class PoissonInput:
     """Random Poisson spike input producing weighted current."""
 
-    def __init__(self, n, rate_hz, weight, dt=0.001, seed=42):
+    def __init__(self, n: int, rate_hz: float, weight: float, dt: float = 0.001, seed: int = 42) -> None:
         self.n = n
         self.rate_hz = rate_hz
         self.weight = weight
         self.dt = dt
         self._rng = np.random.default_rng(seed)
-        self.target = None
+        self.target: Population | None = None
 
-    def get_current(self, t_step, dt=None) -> np.ndarray:
+    def get_current(self, t_step: int, dt: float | None = None) -> np.ndarray:
         """Generate Poisson spikes and return weighted current vector."""
         step_dt = dt if dt is not None else self.dt
         p_spike = self.rate_hz * step_dt
@@ -48,13 +53,13 @@ class PoissonInput:
 class StepCurrent:
     """Rectangular step current between onset and offset timesteps."""
 
-    def __init__(self, onset, offset, amplitude):
+    def __init__(self, onset: int, offset: int, amplitude: float) -> None:
         self.onset = onset
         self.offset = offset
         self.amplitude = amplitude
-        self.target = None
+        self.target: Population | None = None
 
-    def get_current(self, t_step, dt=0.001):
+    def get_current(self, t_step: int, dt: float = 0.001) -> float:
         """Return amplitude if within [onset, offset), else 0."""
         if self.onset <= t_step < self.offset:
             return self.amplitude

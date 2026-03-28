@@ -21,7 +21,7 @@ class LeakyCompeteFireNeuron:
     w_inh: float = 0.5
     dt: float = 1.0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.v = [0.0] * self.n_units
 
     def step(self, currents) -> list:
@@ -40,5 +40,5 @@ class LeakyCompeteFireNeuron:
                         self.v[j] = max(0.0, self.v[j])
         return spikes
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = [0.0] * self.n_units

@@ -28,7 +28,7 @@ class MedvedevMapNeuron:
         self.x = self.x % 1.0
         return 1 if (self.x >= self.x_threshold and x_prev < self.x_threshold) else 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.x = 0.0
 
 

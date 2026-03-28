@@ -27,5 +27,5 @@ class SigmaDeltaNeuron:
             return -1
         return 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.sigma = 0.0

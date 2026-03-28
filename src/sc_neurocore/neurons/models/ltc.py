@@ -40,5 +40,5 @@ class LiquidTimeConstantNeuron:
             return 1
         return 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.x = 0.0

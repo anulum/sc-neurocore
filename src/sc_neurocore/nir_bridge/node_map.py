@@ -90,7 +90,7 @@ class SCLIFNode:
             reset_mode=reset_mode,
         )
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.v is None:
             self.v = self.v_leak.copy()
 
@@ -116,7 +116,7 @@ class SCLIFNode:
             self.v = np.where(spikes > 0, self.v_reset, self.v)
         return spikes
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = self.v_leak.copy()
 
 
@@ -160,7 +160,7 @@ class SCIFNode:
             reset_mode=reset_mode,
         )
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.v is None:
             self.v = np.zeros(self.n_neurons)
 
@@ -185,7 +185,7 @@ class SCIFNode:
             self.v = np.where(spikes > 0, self.v_reset, self.v)
         return spikes
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = np.zeros(self.n_neurons)
 
 
@@ -211,7 +211,7 @@ class SCLINode:
         v_leak = np.atleast_1d(node.v_leak).flatten()
         return cls(name=name, n_neurons=len(tau), tau=tau, r=r, v_leak=v_leak, dt=dt)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.v is None:
             self.v = self.v_leak.copy()
 
@@ -232,7 +232,7 @@ class SCLINode:
         self.v += dv
         return self.v.copy()
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = self.v_leak.copy()
 
 
@@ -348,7 +348,7 @@ class SCIntegratorNode:
         r = np.atleast_1d(node.r).flatten()
         return cls(name=name, r=r, dt=dt)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.v is None:
             self.v = np.zeros_like(self.r)
 
@@ -357,7 +357,7 @@ class SCIntegratorNode:
         self.v += self.r * x * self.dt
         return self.v.copy()
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = np.zeros_like(self.r)
 
 
@@ -380,7 +380,7 @@ class SCDelayNode:
         steps = np.round(delay / dt).astype(int)
         return cls(name=name, delay_steps=steps, delay_time=delay.copy())
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self._buffers is None:
             self._buffers = [[np.zeros(1) for _ in range(int(d))] for d in self.delay_steps]
 
@@ -397,7 +397,7 @@ class SCDelayNode:
                 buf.pop(0)
         return out
 
-    def reset(self):
+    def reset(self) -> None:
         self._buffers = [[np.zeros(1) for _ in range(int(d))] for d in self.delay_steps]
 
 
@@ -457,7 +457,7 @@ class SCCubaLIFNode:
             reset_mode=reset_mode,
         )
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.v is None:
             self.v = self.v_leak.copy()
         if self.i_syn is None:
@@ -489,7 +489,7 @@ class SCCubaLIFNode:
             self.v = np.where(spikes > 0, self.v_reset, self.v)
         return spikes
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = self.v_leak.copy()
         self.i_syn = np.zeros(self.n_neurons)
 
@@ -531,7 +531,7 @@ class SCCubaLINode:
             dt=dt,
         )
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.v is None:
             self.v = self.v_leak.copy()
         if self.i_syn is None:
@@ -557,7 +557,7 @@ class SCCubaLINode:
         self.v += dv
         return self.v.copy()
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = self.v_leak.copy()
         self.i_syn = np.zeros(self.n_neurons)
 

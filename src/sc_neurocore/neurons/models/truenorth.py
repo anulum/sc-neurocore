@@ -28,5 +28,5 @@ class TrueNorthNeuron:
             self.v = self.v_reset
         return 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = 0

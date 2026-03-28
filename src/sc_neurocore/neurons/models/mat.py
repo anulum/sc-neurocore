@@ -41,6 +41,6 @@ class MATNeuron:
             return 1
         return 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = self.v_rest
         self.theta1, self.theta2 = 0.0, 0.0

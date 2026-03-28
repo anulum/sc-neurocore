@@ -41,7 +41,7 @@ class ShermanRinzelKeizerNeuron:
         self.s += (s_inf - self.s) / self.tau_s * self.dt
         return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v, self.n, self.s = -50.0, 0.1, 0.1
 
 

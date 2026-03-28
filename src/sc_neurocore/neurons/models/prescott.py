@@ -41,6 +41,6 @@ class PrescottNeuron:
         self.w += self.phi * (w_inf - self.w) / self.tau_w * self.dt
         return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = -65.0
         self.w = 0.0

@@ -10,8 +10,13 @@
 from __future__ import annotations
 
 import os
+from typing import TYPE_CHECKING
 
 from sc_neurocore.exceptions import SCHardwareError
+
+if TYPE_CHECKING:
+    from .network import Network
+    from .population import Population
 
 _LIF_MODELS = frozenset(
     {
@@ -36,7 +41,7 @@ _LIF_MODELS = frozenset(
 )
 
 
-def _check_exportable(network):
+def _check_exportable(network: Network) -> None:
     """Validate all populations use LIF-compatible models."""
     for pop in network.populations:
         name = pop._model_cls.__name__
@@ -46,7 +51,7 @@ def _check_exportable(network):
             )
 
 
-def _emit_lif_module(pop, idx):
+def _emit_lif_module(pop: Population, idx: int) -> str:
     """Generate Verilog for one LIF population."""
     n = pop.n
     sample = pop.neurons[0]
@@ -69,7 +74,7 @@ def _emit_lif_module(pop, idx):
     )
 
 
-def _emit_top(network, target):
+def _emit_top(network: Network, target: str) -> str:
     """Emit top-level Verilog wrapper."""
     n_pops = len(network.populations)
     lines = [
@@ -91,7 +96,7 @@ def _emit_top(network, target):
     return "".join(lines)
 
 
-def export_verilog(network, output_dir, target="ice40"):
+def export_verilog(network: Network, output_dir: str, target: str = "ice40") -> str:
     """Export a LIF-based network to Verilog files."""
     _check_exportable(network)
     os.makedirs(output_dir, exist_ok=True)

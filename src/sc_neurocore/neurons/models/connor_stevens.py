@@ -76,6 +76,6 @@ class ConnorStevensNeuron:
 
         return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = -68.0
         self.m, self.h, self.n, self.a, self.b = 0.01, 0.99, 0.1, 0.5, 0.1

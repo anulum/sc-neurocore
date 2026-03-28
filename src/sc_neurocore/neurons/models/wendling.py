@@ -88,6 +88,6 @@ class WendlingNeuron:
 
         return self.y1 - self.y2 - self.y3
 
-    def reset(self):
+    def reset(self) -> None:
         self.y0 = self.y1 = self.y2 = self.y3 = 0.0
         self.y5 = self.y6 = self.y7 = self.y8 = 0.0

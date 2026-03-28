@@ -122,7 +122,7 @@ class SpikeGNNLayer:
     threshold: float = 1.0
     T: int = 8
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.convs = []
         for i in range(len(self.layer_dims) - 1):
             self.convs.append(

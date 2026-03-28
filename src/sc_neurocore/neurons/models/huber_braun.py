@@ -45,6 +45,6 @@ class HuberBraunNeuron:
         self.v += (-i_sd - i_sr - i_l + current + self.eta * np.random.randn()) * self.dt
         return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = -50.0
         self.a_sd, self.a_sr = 0.0, 0.0

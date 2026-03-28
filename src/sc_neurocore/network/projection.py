@@ -19,12 +19,22 @@ Supports three delay modes:
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 from . import topology as _topo
+from .population import Population
 
 
-def _csr_matvec(indptr, indices, data, x, n_out, weight_threshold=0.0):
+def _csr_matvec(
+    indptr: np.ndarray,
+    indices: np.ndarray,
+    data: np.ndarray,
+    x: np.ndarray,
+    n_out: int,
+    weight_threshold: float = 0.0,
+) -> np.ndarray:
     """CSR matrix-vector product: result[j] += data[k] * x[i] for each (i,j).
 
     Skips source neurons with x[i]==0 (spike-driven) and optionally
@@ -42,7 +52,15 @@ def _csr_matvec(indptr, indices, data, x, n_out, weight_threshold=0.0):
     return out
 
 
-def _csr_delayed_matvec(indptr, indices, data, delay_steps, spike_history, hist_idx, n_out):
+def _csr_delayed_matvec(
+    indptr: np.ndarray,
+    indices: np.ndarray,
+    data: np.ndarray,
+    delay_steps: np.ndarray,
+    spike_history: np.ndarray,
+    hist_idx: int,
+    n_out: int,
+) -> np.ndarray:
     """CSR matrix-vector product with per-synapse delays.
 
     For each synapse k connecting source i to target j with delay d_k:
@@ -84,16 +102,16 @@ class Projection:
 
     def __init__(
         self,
-        source,
-        target,
-        weight,
-        probability=1.0,
-        delay=0.0,
-        topology="random",
-        plasticity=None,
-        seed=42,
-        weight_threshold=0.0,
-    ):
+        source: Population,
+        target: Population,
+        weight: float,
+        probability: float = 1.0,
+        delay: float | np.ndarray = 0.0,
+        topology: str | tuple[np.ndarray, np.ndarray, np.ndarray] = "random",
+        plasticity: str | None = None,
+        seed: int = 42,
+        weight_threshold: float = 0.0,
+    ) -> None:
         """Create projection with CSR connectivity and optional delay/plasticity.
 
         *weight_threshold*: skip synapses with |w| <= threshold during
@@ -114,7 +132,7 @@ class Projection:
             self._pre_trace = np.zeros(source.n, dtype=np.float64)
             self._post_trace = np.zeros(target.n, dtype=np.float64)
 
-    def _init_delays(self, delay):
+    def _init_delays(self, delay: float | np.ndarray) -> None:
         """Set up delay buffers based on delay specification."""
         delay = np.atleast_1d(np.asarray(delay, dtype=np.float64)).flatten()
         n_synapses = len(self.data)
@@ -173,7 +191,12 @@ class Projection:
             return self._delay_steps_uniform
         return int(self._per_syn_delays.max())
 
-    def _build_connectivity(self, topology, probability, seed):
+    def _build_connectivity(
+        self,
+        topology: str | tuple[np.ndarray, np.ndarray, np.ndarray],
+        probability: float,
+        seed: int,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Build CSR arrays from topology name or pre-built tuple."""
         if isinstance(topology, tuple) and len(topology) == 3:
             return topology
@@ -190,7 +213,7 @@ class Projection:
             )
         raise ValueError(f"Unknown topology '{topology}'")
 
-    def propagate(self, source_spikes) -> np.ndarray:
+    def propagate(self, source_spikes: np.ndarray) -> np.ndarray:
         """Compute target currents from source spikes through CSR connectivity.
 
         Handles three delay modes:
@@ -227,7 +250,14 @@ class Projection:
         self._hist_idx = (self._hist_idx + 1) % self._spike_history.shape[0]
         return current
 
-    def update_plasticity(self, src_spikes, tgt_spikes, a_plus=0.01, a_minus=0.012, tau=20.0):
+    def update_plasticity(
+        self,
+        src_spikes: np.ndarray,
+        tgt_spikes: np.ndarray,
+        a_plus: float = 0.01,
+        a_minus: float = 0.012,
+        tau: float = 20.0,
+    ) -> None:
         """Trace-based STDP weight update."""
         if self.plasticity != "stdp":
             return

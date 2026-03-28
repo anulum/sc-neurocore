@@ -63,5 +63,5 @@ class JansenRitUnit:
         self.y5 += dy5 * self.dt
         return self.y1 - self.y2
 
-    def reset(self):
+    def reset(self) -> None:
         self.y0 = self.y1 = self.y2 = self.y3 = self.y4 = self.y5 = 0.0

@@ -65,7 +65,7 @@ class MembraneShortcutBlock:
         self._v -= spikes * self.threshold
         return spikes
 
-    def reset(self):
+    def reset(self) -> None:
         self._v = np.zeros(self.n_features)
 
 
@@ -96,7 +96,7 @@ class SEWBlock:
         self._v -= spikes * self.threshold
         return np.clip(spikes + x, 0, 1)
 
-    def reset(self):  # pragma: no cover
+    def reset(self) -> None:  # pragma: no cover
         self._v = np.zeros(self.n_features)
 
 
@@ -125,7 +125,7 @@ class DeepSNNStack:
             h = block.forward(h)
         return h
 
-    def reset(self):  # pragma: no cover
+    def reset(self) -> None:  # pragma: no cover
         for block in self.blocks:
             block.reset()
 

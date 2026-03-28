@@ -68,7 +68,7 @@ class TripletSTDP:
     w_max: float = 1.0
     weight: float = 0.5
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.r1 = 0.0  # fast pre-synaptic trace
         self.r2 = 0.0  # slow pre-synaptic trace
         self.o1 = 0.0  # fast post-synaptic trace
@@ -108,5 +108,5 @@ class TripletSTDP:
 
         return self.weight
 
-    def reset(self):
+    def reset(self) -> None:
         self.r1 = self.r2 = self.o1 = self.o2 = 0.0

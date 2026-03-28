@@ -31,7 +31,7 @@ class AmariNeuralField:
     u: np.ndarray = field(default=None, repr=False)
     _w: np.ndarray = field(default=None, repr=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.u is None:
             self.u = np.zeros(self.n)
         self._build_kernel()
@@ -48,5 +48,5 @@ class AmariNeuralField:
         self.u += (-self.u + conv + current) / self.tau * self.dt
         return float(np.mean(np.maximum(self.u, 0.0)))
 
-    def reset(self):
+    def reset(self) -> None:
         self.u = np.zeros(self.n)

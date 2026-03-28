@@ -180,7 +180,7 @@ class SpikeProfiler:
             self._layers[layer] = _LayerAccumulator(layer)
         self._layers[layer].add(spikes, voltages, gradients)
 
-    def reset(self):
+    def reset(self) -> None:
         """Clear all accumulated data."""
         self._layers.clear()
 

@@ -67,7 +67,7 @@ class EnergyReport:
     fits_on_target: bool = field(init=False)
     utilization_pct: float = field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.total_luts = sum(l.luts for l in self.layers) + self.infra_luts
         self.total_ffs = sum(l.ffs for l in self.layers)
         self.total_bram_kb = sum(l.bram_bits for l in self.layers) / 8192.0

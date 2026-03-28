@@ -91,7 +91,7 @@ class SpikingPID:
 
         return np.concatenate([p_spikes, i_spikes, d_spikes])
 
-    def reset(self):
+    def reset(self) -> None:
         self._integral = 0.0
         self._prev_error = 0.0
 
@@ -156,7 +156,7 @@ class SpikingKalmanFilter:
         self.predict()
         return self.update(z)
 
-    def reset(self):
+    def reset(self) -> None:
         self.x = np.zeros(self.n_states)
         self.P = np.eye(self.n_states)
 

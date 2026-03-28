@@ -30,7 +30,7 @@ class FractionalLIFNeuron:
     _history: list = None
     _max_history: int = 100
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self._history = [0.0] * self._max_history
         self._gl_coeffs = self._compute_gl_coefficients()
 
@@ -58,6 +58,6 @@ class FractionalLIFNeuron:
             return 1
         return 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = self.v_rest
         self._history = [0.0] * self._max_history

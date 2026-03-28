@@ -22,5 +22,5 @@ class McCullochPittsNeuron:
     def step(self, weighted_input: float) -> int:
         return 1 if weighted_input >= self.theta else 0
 
-    def reset(self):
+    def reset(self) -> None:
         pass

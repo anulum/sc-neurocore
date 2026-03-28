@@ -32,7 +32,7 @@ class GLMNeuron:
     _spike_buf: np.ndarray = field(default=None, repr=False)
     _rng: object = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.k is None:
             self.k = np.exp(-np.arange(self.n_k) / 3.0) * 0.5
         if self.h is None:
@@ -53,6 +53,6 @@ class GLMNeuron:
         self._spike_buf[0] = float(spike)
         return spike
 
-    def reset(self):
+    def reset(self) -> None:
         self._stim_buf = np.zeros(self.n_k)
         self._spike_buf = np.zeros(self.n_h)

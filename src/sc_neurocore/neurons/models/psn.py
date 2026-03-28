@@ -26,7 +26,7 @@ class ParallelSpikingNeuron:
     buffer: np.ndarray = field(init=False)
     _ptr: int = field(init=False, default=0)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.kernel = np.ones(self.kernel_size) / self.kernel_size
         self.buffer = np.zeros(self.kernel_size)
 
@@ -40,6 +40,6 @@ class ParallelSpikingNeuron:
             return 1
         return 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.buffer[:] = 0.0
         self._ptr = 0

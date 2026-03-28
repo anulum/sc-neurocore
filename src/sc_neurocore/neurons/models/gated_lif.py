@@ -27,7 +27,7 @@ class GatedLIFNeuron:
             return 1
         return 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = 0.0
 
 

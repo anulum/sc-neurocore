@@ -72,7 +72,7 @@ class DeSchutterPurkinjeNeuron:
 
         return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = -68.0
         self.h_na, self.n_k, self.m_cap, self.h_cap, self.q_kca = 0.8, 0.1, 0.0, 0.9, 0.0
         self.ca = 0.0001

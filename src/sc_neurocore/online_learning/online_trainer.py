@@ -45,12 +45,12 @@ class OnlineLIFLayer:
     _spikes: np.ndarray = field(init=False, repr=False)
     _trace: np.ndarray = field(init=False, repr=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         rng = np.random.RandomState(42)
         self.W = rng.randn(self.n_neurons, self.n_inputs) * np.sqrt(2.0 / self.n_inputs)
         self.reset()
 
-    def reset(self):
+    def reset(self) -> None:
         self._v = np.zeros(self.n_neurons)
         self._spikes = np.zeros(self.n_neurons)
         self._trace = np.zeros((self.n_neurons, self.n_inputs))
@@ -100,7 +100,7 @@ class OnlineTrainer:
 
     layers: list[OnlineLIFLayer] = field(init=False, repr=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.layers = []
         for i in range(len(self.layer_sizes) - 1):
             self.layers.append(
@@ -113,7 +113,7 @@ class OnlineTrainer:
                 )
             )
 
-    def reset(self):
+    def reset(self) -> None:
         for layer in self.layers:
             layer.reset()
 

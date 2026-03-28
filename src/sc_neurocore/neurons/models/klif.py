@@ -27,7 +27,7 @@ class KLIFNeuron:
     dt: float = 1.0
     alpha: float = field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.alpha = np.exp(-self.dt / self.tau)
 
     def step(self, current: float) -> int:
@@ -37,5 +37,5 @@ class KLIFNeuron:
             return 1
         return 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = 0.0
