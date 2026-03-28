@@ -63,8 +63,8 @@ class SpikeDrivenAttention:
         self.W_v = rng.randn(self.embed_dim, self.embed_dim) * scale
         self.W_out = rng.randn(self.embed_dim, self.embed_dim) * scale
         # Membrane state for Q/K spike generation
-        self._v_q = None
-        self._v_k = None
+        self._v_q: np.ndarray | None = None
+        self._v_k: np.ndarray | None = None
 
     def _spike_fn(self, membrane: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """Integrate-and-fire: returns (spikes, new_membrane)."""
