@@ -11,7 +11,7 @@ Requires ``pip install sc-neurocore[torch]`` (PyTorch).
 """
 
 
-def __getattr__(name):
+def __getattr__(name):  # type: ignore[no-untyped-def]
     if name in ("convert", "ConvertedSNN"):
         from .ann_to_snn import convert, ConvertedSNN
 

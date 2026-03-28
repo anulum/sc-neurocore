@@ -121,7 +121,7 @@ class _VerilogExprEmitter(ast.NodeVisitor):
                 and 4 <= node.right.value <= 8
             ):
                 # General small integer power via chained squaring
-                exp: int = node.right.value  # type: ignore[assignment]
+                exp: int = node.right.value
                 prev: str = left
                 for step in range(exp - 1):
                     tmp = f"_mul{self._mul_count}"

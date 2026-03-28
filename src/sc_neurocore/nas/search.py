@@ -62,7 +62,7 @@ class NASResult:
         return "\n".join(lines)
 
 
-def _evaluate(
+def _evaluate(  # type: ignore[no-untyped-def]
     arch: Architecture,
     target: str,
     accuracy_fn=None,
@@ -174,7 +174,7 @@ def _tournament_select(
     return a if rng.random() < 0.5 else b
 
 
-def nas(
+def nas(  # type: ignore[no-untyped-def]
     space: SearchSpace,
     target: str = "ice40",
     population_size: int = 50,

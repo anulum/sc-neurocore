@@ -64,7 +64,7 @@ class SCKeywordSpotter:
     Uses: Recurrent / Dense Layer
     """
 
-    def __init__(self, n_keywords=2) -> None:
+    def __init__(self, n_keywords=2) -> None:  # type: ignore[no-untyped-def]
         # Simple Dense for demo (RNN requires sequence logic implementation)
         self.classifier = VectorizedSCLayer(n_inputs=16, n_neurons=n_keywords)
 

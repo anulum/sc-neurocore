@@ -268,7 +268,7 @@ class SCNetwork:
         return "\n".join(lines)
 
 
-def from_nir(source, dt: float = 1.0, reset_mode: str = "reset") -> SCNetwork:
+def from_nir(source, dt: float = 1.0, reset_mode: str = "reset") -> SCNetwork:  # type: ignore[no-untyped-def]
     """Convert a NIR graph to an executable SC-NeuroCore network.
 
     Parameters

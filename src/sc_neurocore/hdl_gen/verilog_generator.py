@@ -17,7 +17,7 @@ class VerilogGenerator:
     Generates Top-Level Verilog for a defined SC Network.
     """
 
-    def __init__(self, module_name="sc_network_top") -> None:
+    def __init__(self, module_name="sc_network_top") -> None:  # type: ignore[no-untyped-def]
         self.module_name = module_name
         self.layers = []  # type: ignore[var-annotated]
         self.wires = []  # type: ignore[var-annotated]

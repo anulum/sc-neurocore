@@ -30,7 +30,7 @@ class _STEQuantize(torch.autograd.Function):
     """Straight-through estimator for uniform quantization."""
 
     @staticmethod
-    def forward(ctx, x, n_bits, symmetric=True):
+    def forward(ctx, x, n_bits, symmetric=True):  # type: ignore[no-untyped-def]
         n_levels = 2**n_bits
         if symmetric:
             abs_max = x.abs().max().clamp(min=1e-8)
@@ -44,7 +44,7 @@ class _STEQuantize(torch.autograd.Function):
         return x_q
 
     @staticmethod
-    def backward(ctx, grad_output):
+    def backward(ctx, grad_output):  # type: ignore[no-untyped-def]
         # STE: pass gradient through unchanged
         return grad_output, None, None
 

@@ -136,7 +136,7 @@ class TemporalSaliency:
         spike counts or rates (N_output,).
     """
 
-    def __init__(self, run_fn):
+    def __init__(self, run_fn):  # type: ignore[no-untyped-def]
         self.run_fn = run_fn
 
     def explain(
@@ -200,7 +200,7 @@ class CausalImportance:
         Function that takes input spikes (T, N) and returns output (N_output,).
     """
 
-    def __init__(self, run_fn):
+    def __init__(self, run_fn):  # type: ignore[no-untyped-def]
         self.run_fn = run_fn
 
     def explain(

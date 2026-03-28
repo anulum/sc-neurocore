@@ -150,7 +150,7 @@ class SwarmEnvironment:
     # Step
     # ------------------------------------------------------------------
 
-    def step(self, dt: float = 1.0, fields=None) -> None:
+    def step(self, dt: float = 1.0, fields=None) -> None:  # type: ignore[no-untyped-def]
         """Advance the simulation by one tick.
 
         Parameters

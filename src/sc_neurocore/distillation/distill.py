@@ -116,7 +116,7 @@ class SelfDistiller:
     T_student: int = 8
     temperature: float = 3.0
 
-    def generate_targets(self, run_fn, inputs: np.ndarray) -> np.ndarray:
+    def generate_targets(self, run_fn, inputs: np.ndarray) -> np.ndarray:  # type: ignore[no-untyped-def]
         """Run model at T_teacher steps to generate soft targets.
 
         Parameters

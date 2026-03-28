@@ -61,7 +61,7 @@ class SpikeMonitor:
                 self._hooks.append(hook)
 
     def _make_hook(self, name: str) -> Callable:
-        def hook(module, input, output):
+        def hook(module, input, output):  # type: ignore[no-untyped-def]
             # output is (spike, v_next) or (spike, v_next, a_next) etc.
             if isinstance(output, tuple) and len(output) >= 1:
                 self._records[name].append(output[0].detach())

@@ -12,7 +12,7 @@ from __future__ import annotations
 import numpy as np
 
 
-def estimate_memory(layers, unit: str = "MB") -> dict:
+def estimate_memory(layers, unit: str = "MB") -> dict:  # type: ignore[no-untyped-def]
     """Estimate memory usage of a list of SC layers.
 
     Example::

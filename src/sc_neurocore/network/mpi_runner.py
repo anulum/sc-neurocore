@@ -23,7 +23,7 @@ try:
 
     HAS_MPI = True
 except ImportError:
-    MPI = None  # type: ignore[assignment]
+    MPI = None
     HAS_MPI = False
 
 from .population import Population
