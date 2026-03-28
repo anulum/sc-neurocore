@@ -130,7 +130,7 @@ def demo() -> None:
                 preds = []
                 for sample in X:
                     preds.append(nearest_centroid_multi(sample, centroids))
-                preds = np.array(preds, dtype=int)
+                preds = np.array(preds, dtype=int)  # type: ignore[assignment]
 
                 accuracy = float((preds == y_true).mean())
 
@@ -139,7 +139,7 @@ def demo() -> None:
                 )
 
                 if accuracy > best_accuracy:
-                    best_accuracy = accuracy
+                    best_accuracy = accuracy  # type: ignore[assignment]
                     best_params = {"n_neurons": n_neurons, "T": T, "noise_std": noise_std}
 
     print("\n--- Best Parameters ---")

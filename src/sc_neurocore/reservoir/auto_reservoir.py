@@ -113,7 +113,7 @@ class AutoCriticalReservoir:
         """Process one timestep, return reservoir state (spikes)."""
         current = self.W_in @ x + self.W_res @ self._spikes
         self._v = (1 - self.leak) * self._v + self.leak * current
-        self._spikes = (self._v >= self.threshold).astype(np.float64)
+        self._spikes = (self._v >= self.threshold).astype(np.float64)  # type: ignore[assignment]
         self._v -= self._spikes * self.threshold
         return self._spikes.copy()
 

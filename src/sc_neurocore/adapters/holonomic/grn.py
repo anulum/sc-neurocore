@@ -31,7 +31,7 @@ class GeneticRegulatoryLayer:
         # dP/dt = alpha * spikes - beta * P
         delta = (self.production_rate * spikes) - (self.decay_rate * self.protein_levels)
         self.protein_levels += delta
-        self.protein_levels = np.clip(self.protein_levels, 0, 10.0)
+        self.protein_levels = np.clip(self.protein_levels, 0, 10.0)  # type: ignore[assignment]
 
     def get_threshold_modulators(self) -> np.ndarray[Any, Any]:
         """

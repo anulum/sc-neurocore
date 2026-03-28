@@ -218,7 +218,7 @@ class SCNetwork:
                 if len(predecessors) == 1:
                     x = values[predecessors[0]]
                 elif len(predecessors) > 1:
-                    x = sum(values[p] for p in predecessors)
+                    x = sum(values[p] for p in predecessors)  # type: ignore[assignment]
                 else:
                     x = np.array([0.0])
                 values[name] = node.forward(x)
@@ -312,7 +312,7 @@ def _parse_graph(
             if len(sub_net.input_nodes) == 1 and len(sub_net.output_nodes) == 1:
                 nodes[name] = SCSubgraphNode(name=name, network=sub_net)
             else:
-                nodes[name] = SCMultiPortSubgraphNode(name=name, network=sub_net)
+                nodes[name] = SCMultiPortSubgraphNode(name=name, network=sub_net)  # type: ignore[assignment]
         else:
             sc_node = map_node(name, node, dt=dt, reset_mode=reset_mode)
             nodes[name] = sc_node

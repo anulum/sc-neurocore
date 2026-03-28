@@ -19,7 +19,7 @@ class VoxelGrid:
     """
 
     resolution: int
-    data: np.ndarray[Any, Any] = None
+    data: np.ndarray[Any, Any] = None  # type: ignore[assignment]
 
     def __post_init__(self) -> None:
         if self.data is None:

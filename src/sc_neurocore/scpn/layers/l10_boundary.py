@@ -57,7 +57,7 @@ class L10_BoundaryLayer:
         noise = np.zeros(n)
         if external_noise is not None:
             noise = (
-                external_noise[:n]
+                external_noise[:n]  # type: ignore[assignment]
                 if len(external_noise) >= n
                 else np.pad(external_noise, (0, n - len(external_noise)))
             )

@@ -409,8 +409,8 @@ class SC3DGenerator:
                             faces.append([v1_idx, v1_idx + 1, v1_idx + 2])
 
         # Convert to numpy arrays
-        vertices = np.array(vertices) if vertices else np.zeros((0, 3))
-        faces = np.array(faces, dtype=np.int32) if faces else np.zeros((0, 3), dtype=np.int32)
+        vertices = np.array(vertices) if vertices else np.zeros((0, 3))  # type: ignore[assignment]
+        faces = np.array(faces, dtype=np.int32) if faces else np.zeros((0, 3), dtype=np.int32)  # type: ignore[assignment]
 
         # Compute normals
         normals = self._compute_normals(vertices, faces)

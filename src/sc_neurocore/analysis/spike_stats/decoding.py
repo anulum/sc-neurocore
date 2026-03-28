@@ -41,7 +41,7 @@ def population_vector_decode(
 
 
 def bayesian_decode(
-    spike_counts: np.ndarray, tuning_rates: np.ndarray, prior: np.ndarray = None
+    spike_counts: np.ndarray, tuning_rates: np.ndarray, prior: np.ndarray = None  # type: ignore[assignment]
 ) -> int:
     """Bayesian MAP decoder. Dayan & Abbott 2001.
 

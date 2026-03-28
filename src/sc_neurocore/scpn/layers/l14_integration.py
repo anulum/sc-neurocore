@@ -78,7 +78,7 @@ class L14_IntegrationLayer:
         self.integrated_coherence = float(np.dot(w, self.layer_metrics))
 
         activation = np.full(self.params.n_dimensions, self.integrated_coherence)
-        activation = np.clip(activation, 0, 1)
+        activation = np.clip(activation, 0, 1)  # type: ignore[assignment]
 
         rands = np.random.random((self.params.n_dimensions, self.params.bitstream_length))
         output_bitstreams = (rands < activation[:, None]).astype(np.uint8)

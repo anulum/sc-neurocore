@@ -135,7 +135,7 @@ class L2_NeurochemicalLayer:
         if l1_input is not None:
             quantum_mod = np.mean(l1_input) * self.params.quantum_coupling
             self.receptor_states *= 1.0 + quantum_mod
-            self.receptor_states = np.clip(self.receptor_states, 0.0, 1.0)
+            self.receptor_states = np.clip(self.receptor_states, 0.0, 1.0)  # type: ignore[assignment]
 
         # 5. Generate output bitstreams
         output_probs = receptor_activity

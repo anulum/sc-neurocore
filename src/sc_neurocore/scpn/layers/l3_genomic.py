@@ -135,7 +135,7 @@ class L3_GenomicLayer:
 
         # Chromatin openness inversely related to methylation
         self.chromatin_openness = (
-            1.0 - self.methylation + np.random.normal(0, 0.05, self.params.n_genes)
+            1.0 - self.methylation + np.random.normal(0, 0.05, self.params.n_genes)  # type: ignore[assignment]
         )
         self.chromatin_openness = np.clip(self.chromatin_openness, 0.0, 1.0)
 
@@ -166,9 +166,9 @@ class L3_GenomicLayer:
         # Spin polarization depends on DNA chirality and electron flow
         electron_flow = np.mean(self.expression_levels)  # Proxy for metabolic activity
         self.spin_polarization = (
-            self.params.ciss_efficiency * self.params.dna_chirality * electron_flow
+            self.params.ciss_efficiency * self.params.dna_chirality * electron_flow  # type: ignore[assignment]
         )
-        self.spin_polarization = np.clip(
+        self.spin_polarization = np.clip(  # type: ignore[assignment]
             self.spin_polarization + np.random.normal(0, 0.1, self.params.n_genes), -1.0, 1.0
         )
 

@@ -145,12 +145,12 @@ class SwarmAgent:
 
         # Membrane integration
         self.membrane = (
-            c.membrane_decay * self.membrane + self.W_in @ inp + self.W_rec @ self.firing_rate
+            c.membrane_decay * self.membrane + self.W_in @ inp + self.W_rec @ self.firing_rate  # type: ignore[assignment]
         )
 
         # Soft spike (sigmoid pseudo-rate)
         spike_prob = 1.0 / (1.0 + np.exp(-(self.membrane - c.threshold)))
-        self.firing_rate = 0.8 * self.firing_rate + 0.2 * spike_prob
+        self.firing_rate = 0.8 * self.firing_rate + 0.2 * spike_prob  # type: ignore[assignment]
 
         # Reset membrane where spike probability high
         self.membrane *= 1.0 - spike_prob

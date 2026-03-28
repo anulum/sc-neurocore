@@ -66,7 +66,7 @@ class WolframHypergraph:
                 if k not in matched_indices:
                     new_edges.append(e)
 
-            self.edges = new_edges
+            self.edges = new_edges  # type: ignore[assignment]
 
     def dimension_estimate(self) -> float:
         """Estimate effective dimension via BFS neighborhood growth.
