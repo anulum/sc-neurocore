@@ -14,6 +14,8 @@ Tsodyks-Markram STP, and structural plasticity (synapse grow/prune).
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 
@@ -22,7 +24,7 @@ import numpy as np
 SURROGATE_BETA = 25.0  # steepness of fast-sigmoid surrogate
 
 
-def _fast_sigmoid_surrogate(v, threshold=1.0):
+def _fast_sigmoid_surrogate(v: np.ndarray, threshold: float = 1.0) -> np.ndarray:
     """Surrogate gradient: d/dv of fast-sigmoid spike function.
 
     Neftci et al. 2019, Eq. 5.
@@ -37,12 +39,12 @@ class BPTTLearner:
     the spike non-differentiability.
     """
 
-    def __init__(self, network, loss_fn, lr=1e-3):
+    def __init__(self, network: Any, loss_fn: Callable[..., float], lr: float = 1e-3) -> None:
         self.network = network
         self.loss_fn = loss_fn
         self.lr = lr
 
-    def train_step(self, inputs, targets):
+    def train_step(self, inputs: np.ndarray, targets: np.ndarray) -> float:
         """One BPTT step: forward pass, loss, backward with surrogate gradients.
 
         Parameters
@@ -99,13 +101,13 @@ class TBPTTLearner:
     Williams & Peng 1990.
     """
 
-    def __init__(self, network, loss_fn, lr=1e-3, k: int = 50):
+    def __init__(self, network: Any, loss_fn: Callable[..., float], lr: float = 1e-3, k: int = 50) -> None:
         self.network = network
         self.loss_fn = loss_fn
         self.lr = lr
         self.k = k
 
-    def train_step(self, inputs, targets):
+    def train_step(self, inputs: np.ndarray, targets: np.ndarray) -> float:
         """One TBPTT step over the full sequence, chunked into windows of k.
 
         Parameters
@@ -168,11 +170,11 @@ class EligibilityTrace:
     Bellec et al. 2020.
     """
 
-    def __init__(self, tau_e=20.0, dt=1.0):
-        self.decay = np.exp(-dt / tau_e)
-        self._trace = None
+    def __init__(self, tau_e: float = 20.0, dt: float = 1.0) -> None:
+        self.decay = float(np.exp(-dt / tau_e))
+        self._trace: np.ndarray | None = None
 
-    def update(self, pre_spike, post_spike, error_signal):
+    def update(self, pre_spike: np.ndarray, post_spike: np.ndarray, error_signal: np.ndarray) -> np.ndarray:
         """Compute weight delta from three-factor rule.
 
         Parameters
@@ -201,7 +203,7 @@ class RewardModulatedLearner:
     scaled by a global reward signal.
     """
 
-    def __init__(self, network, tau_reward=100.0):
+    def __init__(self, network: Any, tau_reward: float = 100.0) -> None:
         self.network = network
         self.reward_decay = np.exp(-1.0 / tau_reward)
         self._elig: dict[int, np.ndarray] = {}
@@ -209,14 +211,14 @@ class RewardModulatedLearner:
         self._post_trace: dict[int, np.ndarray] = {}
         self._init_traces()
 
-    def _init_traces(self):
+    def _init_traces(self) -> None:
         for proj in self.network.projections:
             pid = id(proj)
             self._elig[pid] = np.zeros_like(proj.data)
             self._pre_trace[pid] = np.zeros(proj.source.n)
             self._post_trace[pid] = np.zeros(proj.target.n)
 
-    def step(self, reward):
+    def step(self, reward: float) -> None:
         """Apply reward-modulated weight update.
 
         Parameters
@@ -251,19 +253,19 @@ class MetaLearner:
     Outer loop: meta-gradient across tasks.
     """
 
-    def __init__(self, network, inner_lr=0.01, outer_lr=0.001):
+    def __init__(self, network: Any, inner_lr: float = 0.01, outer_lr: float = 0.001) -> None:
         self.network = network
         self.inner_lr = inner_lr
         self.outer_lr = outer_lr
 
-    def _snapshot_weights(self):
+    def _snapshot_weights(self) -> list[np.ndarray]:
         return [proj.data.copy() for proj in self.network.projections]
 
-    def _restore_weights(self, snapshot):
+    def _restore_weights(self, snapshot: list[np.ndarray]) -> None:
         for proj, w in zip(self.network.projections, snapshot):
             proj.data[:] = w
 
-    def inner_loop(self, task_data, n_steps=5):
+    def inner_loop(self, task_data: tuple[np.ndarray, np.ndarray], n_steps: int = 5) -> None:
         """Fast adaptation: n_steps of gradient descent on task_data.
 
         Parameters
@@ -294,7 +296,7 @@ class MetaLearner:
                             grad[k] += recorded_spikes[t][i] * error[t][j]
                 proj.data -= self.inner_lr * grad / max(n_t, 1)
 
-    def outer_step(self, tasks):
+    def outer_step(self, tasks: list[tuple[np.ndarray, np.ndarray]]) -> None:
         """Meta-gradient update across multiple tasks.
 
         Parameters
@@ -324,12 +326,12 @@ class HomeostaticPlasticity:
     the population mean rate near target_rate.
     """
 
-    def __init__(self, target_rate=10.0, tau=1000.0):
+    def __init__(self, target_rate: float = 10.0, tau: float = 1000.0) -> None:
         self.target_rate = target_rate
         self.tau = tau
-        self._rate_estimate = None
+        self._rate_estimate: float | None = None
 
-    def update(self, population):
+    def update(self, population: Any) -> None:
         """Scale weights of all incoming projections to *population*.
 
         Parameters
@@ -359,14 +361,14 @@ class ShortTermPlasticity:
     with use parameter u_se.
     """
 
-    def __init__(self, tau_d=200.0, tau_f=600.0, u_se=0.2):
+    def __init__(self, tau_d: float = 200.0, tau_f: float = 600.0, u_se: float = 0.2) -> None:
         self.tau_d = tau_d
         self.tau_f = tau_f
         self.u_se = u_se
         self._x = None  # available resources
         self._u = None  # utilisation variable
 
-    def update(self, pre_spikes):
+    def update(self, pre_spikes: np.ndarray) -> np.ndarray:
         """Compute effective weight scaling given pre-synaptic spikes.
 
         Parameters
@@ -402,7 +404,7 @@ class StructuralPlasticity:
     Grows new synapses between correlated neurons and prunes weak ones.
     """
 
-    def __init__(self, growth_rate=0.001, prune_threshold=0.01):
+    def __init__(self, growth_rate: float = 0.001, prune_threshold: float = 0.01) -> None:
         self.growth_rate = growth_rate
         self.prune_threshold = prune_threshold
 
