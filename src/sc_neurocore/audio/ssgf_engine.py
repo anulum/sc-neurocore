@@ -115,7 +115,7 @@ class SSGFEngine:
         A = np.zeros((N, N))
         idx_upper = np.triu_indices(N, k=1)
         A[idx_upper] = flat
-        A = A + A.T  # symmetric  # type: ignore[assignment]
+        A = A + A.T  # type: ignore[assignment]  # symmetric
 
         # Softplus: log(1 + exp(x)), numerically stable
         W = np.where(A > 20, A, np.log1p(np.exp(A)))

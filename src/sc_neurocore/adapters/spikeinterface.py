@@ -23,6 +23,7 @@ functions that accept the same data format (unit_ids, spike_times).
 
 from __future__ import annotations
 
+from typing import Any
 
 import numpy as np
 
@@ -112,7 +113,7 @@ def firing_rates_to_sc_probs(
     return probs
 
 
-def from_sorting(sorting, dt: float = 1.0) -> np.ndarray:  # pragma: no cover  # type: ignore[no-untyped-def]
+def from_sorting(sorting: Any, dt: float = 1.0) -> np.ndarray:  # pragma: no cover
     """Convert a SpikeInterface SortingExtractor to bitstream matrix.
 
     Parameters

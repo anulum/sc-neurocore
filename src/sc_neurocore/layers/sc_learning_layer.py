@@ -117,10 +117,10 @@ class SCLearningLayer:
                     # We'll manually call potentiate/depress here to be explicit
                     if pre_bit == 1 and post_spike == 1:
                         if np.random.random() < self.learning_rate:
-                            neuron_syns[j]._potentiate()  # type: ignore
+                            neuron_syns[j]._potentiate()
                     elif pre_bit == 1 and post_spike == 0:
                         if np.random.random() < self.learning_rate * self.ltd_ratio:
-                            neuron_syns[j]._depress()  # type: ignore
+                            neuron_syns[j]._depress()
 
         return epoch_spikes
 
