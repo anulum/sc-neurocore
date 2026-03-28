@@ -2,6 +2,38 @@
 
 All notable changes to the `sc-neurocore` project will be documented in this file.
 
+## [Unreleased]
+
+### Model Validation (Phase 1)
+- LIF f-I curve: 29/29 tests, <5% error vs analytical solution
+- Izhikevich 20 firing patterns: all from Izhikevich (2003) Table 1 validated
+- Hodgkin-Huxley 1952: AP peak 40.6mV, spike width 1.46ms, AHP -75.1mV
+- NeuroBench SHD: 79.28% test accuracy (250K params, feedforward)
+- Brian2 parity: exact LIF match (0.000ms timing diff), 7.3x speedup
+- 5 validation docs with measured data in `docs/validation/`
+
+### Stochastic Computing Pipeline
+- Bipolar SC (XNOR): `core/bipolar.py` for signed weight multiplication
+- SC bitstream MNIST: 10% (unipolar) -> 35.6% (bipolar) -> 50.0% (all fixes)
+- SC-aware training: `SCAwareLIFNet` with bitstream noise injection (+9.5pp)
+
+### Quantization-Aware Training
+- `QuantizedLIFNet`: 2/4/8/16-bit STE weight quantization (PyTorch)
+- `SCAwareLIFNet`: SC noise injection during training
+- `SCAwareLinear`: drop-in layer replacement
+
+### Encoding Comparison
+- 7 temporal spike encodings benchmarked on MNIST
+- Latency encoding Pareto-optimal: 88.1% at 142 spikes (17x fewer than rate)
+
+### Interoperability
+- NeuroML 2 importer: iafCell, Izhikevich (2003/2007), AdEx
+- SONATA network format importer: nodes.h5 + edges.h5, connectivity matrix
+
+### Reproducibility
+- 7 Kaggle scripts in `notebooks/*_kaggle.py`
+- JSON artifacts in `benchmarks/results/`
+
 ## [3.14.0] — 2026-03-27
 
 ### Visual SNN Design Studio (Experimental)
