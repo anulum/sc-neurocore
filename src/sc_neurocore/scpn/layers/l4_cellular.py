@@ -114,7 +114,7 @@ class L4_CellularLayer:
         dt: float,
         l3_input: Optional[Dict[str, Any]] = None,
         external_stimulus: Optional[np.ndarray[Any, Any]] = None,
-    ) -> Dict[str, np.ndarray[Any, Any]]:
+    ) -> Dict[str, Any]:
         """
         Advance the layer by one time step.
 

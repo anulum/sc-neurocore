@@ -46,7 +46,7 @@ class L15_MetaLayer:
         self,
         dt: float,
         l14_input: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, np.ndarray]:
+    ) -> Dict[str, Any]:
         self.time += dt
 
         actual = 0.5

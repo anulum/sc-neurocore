@@ -50,7 +50,7 @@ class L10_BoundaryLayer:
         dt: float,
         l9_input: Optional[Dict[str, Any]] = None,
         external_noise: Optional[np.ndarray] = None,
-    ) -> Dict[str, np.ndarray]:
+    ) -> Dict[str, Any]:
         self.time += dt
         n = self.params.n_boundary_nodes
 

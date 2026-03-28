@@ -46,7 +46,7 @@ class L12_QuantumInfoLayer:
         self,
         dt: float,
         l11_input: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, np.ndarray]:
+    ) -> Dict[str, Any]:
         self.time += dt
         n = self.params.n_sites
 

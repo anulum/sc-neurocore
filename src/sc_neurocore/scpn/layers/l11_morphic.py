@@ -49,7 +49,7 @@ class L11_MorphicLayer:
         self,
         dt: float,
         l10_input: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, np.ndarray]:
+    ) -> Dict[str, Any]:
         self.time += dt
         n = self.params.n_nodes
 

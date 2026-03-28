@@ -109,7 +109,7 @@ class L3_GenomicLayer:
         dt: float,
         l2_input: Optional[Dict[str, Any]] = None,
         bioelectric_signal: Optional[np.ndarray[Any, Any]] = None,
-    ) -> Dict[str, np.ndarray[Any, Any]]:
+    ) -> Dict[str, Any]:
         """
         Advance the layer by one time step.
 

@@ -55,7 +55,7 @@ class L16_DirectorLayer:
         self,
         dt: float,
         l15_input: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, np.ndarray]:
+    ) -> Dict[str, Any]:
         self.time += dt
         n = self.params.n_control_nodes
 

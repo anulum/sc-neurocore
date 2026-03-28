@@ -99,7 +99,7 @@ class L6_EcologicalLayer:
         l5_input: Optional[Dict[str, Any]] = None,
         solar_activity: float = 0.5,
         lunar_phase: float = 0.0,
-    ) -> Dict[str, np.ndarray[Any, Any]]:
+    ) -> Dict[str, Any]:
         """
         Advance the layer by one time step.
 
