@@ -1,0 +1,44 @@
+{
+  "timestamp": "2026-03-28T07:38:54+0000",
+  "torch_version": "2.10.0+cpu",
+  "total_time_s": 1146.1,
+  "method": "bipolar_xnor_with_calibration",
+  "float_accuracy": 0.9619,
+  "sc_results": {
+    "64": {
+      "accuracy": 0.174,
+      "n_samples": 500,
+      "time_s": 26.5
+    },
+    "128": {
+      "accuracy": 0.24,
+      "n_samples": 500,
+      "time_s": 49.6
+    },
+    "256": {
+      "accuracy": 0.25,
+      "n_samples": 500,
+      "time_s": 98.7
+    },
+    "512": {
+      "accuracy": 0.336,
+      "n_samples": 500,
+      "time_s": 212.3
+    },
+    "1024": {
+      "accuracy": 0.356,
+      "n_samples": 500,
+      "time_s": 418.2
+    }
+  },
+  "calibration": {
+    "0": {
+      "mean": -2.919623613357544,
+      "std": 5.782416343688965
+    },
+    "1": {
+      "mean": -0.06145075336098671,
+      "std": 0.3268390893936157
+    }
+  }
+}
