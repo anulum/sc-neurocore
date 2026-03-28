@@ -45,8 +45,6 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
-import numpy as np
-
 
 @dataclass
 class BenchResult:
@@ -71,56 +69,93 @@ def _measure(fn, label: str, n_neurons: int, mode: str) -> BenchResult:
         _, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
         return BenchResult(
-            framework=label, mode=mode, n_neurons=n_neurons,
-            wall_time_s=round(dt, 4), peak_memory_mb=round(peak / 1e6, 1),
-            n_spikes=n_spikes, rate_hz=round(rate, 2),
+            framework=label,
+            mode=mode,
+            n_neurons=n_neurons,
+            wall_time_s=round(dt, 4),
+            peak_memory_mb=round(peak / 1e6, 1),
+            n_spikes=n_spikes,
+            rate_hz=round(rate, 2),
         )
     except Exception as e:
         tracemalloc.stop()
         return BenchResult(
-            framework=label, mode=mode, n_neurons=n_neurons,
-            wall_time_s=0, peak_memory_mb=0, n_spikes=0, rate_hz=0,
+            framework=label,
+            mode=mode,
+            n_neurons=n_neurons,
+            wall_time_s=0,
+            peak_memory_mb=0,
+            n_spikes=0,
+            rate_hz=0,
             error=str(e)[:200],
         )
 
 
 # --- SC-NeuroCore NumPy ---
 
+
 def bench_sc_numpy(n_neurons: int, duration_ms: float = 300.0, dt: float = 0.1) -> BenchResult:
     def run():
         from sc_neurocore.studio.network import _simulate_numpy
+
         n_exc = int(n_neurons * 0.8)
         n_inh = n_neurons - n_exc
-        r = _simulate_numpy(n_exc=n_exc, n_inh=n_inh, w_ee=0.1, w_ei=0.4,
-                            w_ie=0.1, w_ii=0.4, p_conn=0.1, ext_rate=8.0,
-                            duration=duration_ms, dt=dt)
+        r = _simulate_numpy(
+            n_exc=n_exc,
+            n_inh=n_inh,
+            w_ee=0.1,
+            w_ei=0.4,
+            w_ie=0.1,
+            w_ii=0.4,
+            p_conn=0.1,
+            ext_rate=8.0,
+            duration=duration_ms,
+            dt=dt,
+        )
         n_spikes = r["n_spikes"]
         rate = n_spikes / (n_neurons * duration_ms / 1000)
         return n_spikes, rate
+
     return _measure(run, "SC-NeuroCore", "NumPy", n_neurons)
 
 
 # --- SC-NeuroCore Rust ---
 
+
 def bench_sc_rust(n_neurons: int, duration_ms: float = 300.0, dt: float = 0.1) -> BenchResult:
     def run():
         from sc_neurocore.studio.network import _simulate_rust
+
         n_exc = int(n_neurons * 0.8)
         n_inh = n_neurons - n_exc
-        r = _simulate_rust(n_exc=n_exc, n_inh=n_inh, w_ee=0.1, w_ei=0.4,
-                           w_ie=0.1, w_ii=0.4, p_conn=0.1, ext_rate=8.0,
-                           duration=duration_ms, dt=dt)
+        r = _simulate_rust(
+            n_exc=n_exc,
+            n_inh=n_inh,
+            w_ee=0.1,
+            w_ei=0.4,
+            w_ie=0.1,
+            w_ii=0.4,
+            p_conn=0.1,
+            ext_rate=8.0,
+            duration=duration_ms,
+            dt=dt,
+        )
         n_spikes = r["n_spikes"]
         rate = n_spikes / (n_neurons * duration_ms / 1000)
         return n_spikes, rate
+
     return _measure(run, "SC-NeuroCore", "Rust", n_neurons)
 
 
 # --- Brian2 Runtime ---
 
-def bench_brian2_runtime(n_neurons: int, duration_ms: float = 300.0, dt: float = 0.1) -> BenchResult:
+
+def bench_brian2_runtime(
+    n_neurons: int, duration_ms: float = 300.0, dt: float = 0.1
+) -> BenchResult:
     def run():
         import brian2
+
         brian2.prefs.codegen.target = "numpy"
         brian2.start_scope()
 
@@ -136,8 +171,12 @@ def bench_brian2_runtime(n_neurons: int, duration_ms: float = 300.0, dt: float =
         v_reset = -65 * brian2.mV
 
         G = brian2.NeuronGroup(
-            n_neurons, eqs, threshold="v > v_thresh",
-            reset="v = v_reset", refractory=2 * brian2.ms, method="euler",
+            n_neurons,
+            eqs,
+            threshold="v > v_thresh",
+            reset="v = v_reset",
+            refractory=2 * brian2.ms,
+            method="euler",
         )
         G.v = v_rest
 
@@ -156,7 +195,9 @@ def bench_brian2_runtime(n_neurons: int, duration_ms: float = 300.0, dt: float =
         S_ii = brian2.Synapses(inh, inh, on_pre="v += w_i")
         S_ii.connect(p=0.1)
 
-        P = brian2.PoissonInput(G, "v", N=int(n_neurons * 0.1), rate=8 * brian2.Hz, weight=0.5 * brian2.mV)
+        P = brian2.PoissonInput(
+            G, "v", N=int(n_neurons * 0.1), rate=8 * brian2.Hz, weight=0.5 * brian2.mV
+        )
 
         M = brian2.SpikeMonitor(G)
         brian2.run(duration_ms * brian2.ms)
@@ -170,11 +211,13 @@ def bench_brian2_runtime(n_neurons: int, duration_ms: float = 300.0, dt: float =
 
 # --- Brian2 C++ Standalone ---
 
-def bench_brian2_standalone(n_neurons: int, duration_ms: float = 300.0, dt: float = 0.1) -> BenchResult:
+
+def bench_brian2_standalone(
+    n_neurons: int, duration_ms: float = 300.0, dt: float = 0.1
+) -> BenchResult:
     def run():
         import brian2
         import tempfile
-        import os
 
         tmpdir = tempfile.mkdtemp(prefix="brian2_standalone_")
         brian2.set_device("cpp_standalone", directory=tmpdir, build_on_run=True)
@@ -192,8 +235,12 @@ def bench_brian2_standalone(n_neurons: int, duration_ms: float = 300.0, dt: floa
         v_reset = -65 * brian2.mV
 
         G = brian2.NeuronGroup(
-            n_neurons, eqs, threshold="v > v_thresh",
-            reset="v = v_reset", refractory=2 * brian2.ms, method="euler",
+            n_neurons,
+            eqs,
+            threshold="v > v_thresh",
+            reset="v = v_reset",
+            refractory=2 * brian2.ms,
+            method="euler",
         )
         G.v = v_rest
 
@@ -212,7 +259,9 @@ def bench_brian2_standalone(n_neurons: int, duration_ms: float = 300.0, dt: floa
         S_ii = brian2.Synapses(inh, inh, on_pre="v += w_i")
         S_ii.connect(p=0.1)
 
-        P = brian2.PoissonInput(G, "v", N=int(n_neurons * 0.1), rate=8 * brian2.Hz, weight=0.5 * brian2.mV)
+        P = brian2.PoissonInput(
+            G, "v", N=int(n_neurons * 0.1), rate=8 * brian2.Hz, weight=0.5 * brian2.mV
+        )
 
         M = brian2.SpikeMonitor(G)
         brian2.run(duration_ms * brian2.ms)
@@ -229,6 +278,7 @@ def bench_brian2_standalone(n_neurons: int, duration_ms: float = 300.0, dt: floa
 
 
 # --- snnTorch ---
+
 
 def bench_snntorch(n_neurons: int, duration_ms: float = 300.0, dt: float = 0.1) -> BenchResult:
     def run():
@@ -264,6 +314,7 @@ def bench_snntorch(n_neurons: int, duration_ms: float = 300.0, dt: float = 0.1) 
 
 # --- Norse ---
 
+
 def bench_norse(n_neurons: int, duration_ms: float = 300.0, dt: float = 0.1) -> BenchResult:
     def run():
         import torch
@@ -292,8 +343,11 @@ def main():
     parser = argparse.ArgumentParser(description="Cross-framework SNN benchmark")
     parser.add_argument("--scales", nargs="+", type=int, default=[1000])
     parser.add_argument("--json", type=str, default=None)
-    parser.add_argument("--skip-standalone", action="store_true",
-                        help="Skip Brian2 C++ standalone (slow compilation)")
+    parser.add_argument(
+        "--skip-standalone",
+        action="store_true",
+        help="Skip Brian2 C++ standalone (slow compilation)",
+    )
     args = parser.parse_args()
 
     print("=" * 70)
@@ -323,18 +377,24 @@ def main():
             if r.error:
                 print(f"ERROR: {r.error[:60]}")
             else:
-                print(f"{r.wall_time_s:8.3f}s  {r.peak_memory_mb:7.1f}MB  {r.n_spikes:>8} spikes  {r.rate_hz:6.1f} Hz")
+                print(
+                    f"{r.wall_time_s:8.3f}s  {r.peak_memory_mb:7.1f}MB  {r.n_spikes:>8} spikes  {r.rate_hz:6.1f} Hz"
+                )
             results.append(r)
 
     # Summary table
     print("\n" + "=" * 70)
-    print(f"{'Framework':<20} {'Mode':<20} {'Neurons':>8} {'Time (s)':>10} {'Memory':>10} {'Spikes':>8}")
+    print(
+        f"{'Framework':<20} {'Mode':<20} {'Neurons':>8} {'Time (s)':>10} {'Memory':>10} {'Spikes':>8}"
+    )
     print("-" * 70)
     for r in results:
         if r.error:
             print(f"{r.framework:<20} {r.mode:<20} {r.n_neurons:>8} {'ERROR':>10}")
         else:
-            print(f"{r.framework:<20} {r.mode:<20} {r.n_neurons:>8} {r.wall_time_s:>10.3f} {r.peak_memory_mb:>9.1f}M {r.n_spikes:>8}")
+            print(
+                f"{r.framework:<20} {r.mode:<20} {r.n_neurons:>8} {r.wall_time_s:>10.3f} {r.peak_memory_mb:>9.1f}M {r.n_spikes:>8}"
+            )
 
     if args.json:
         output = {
