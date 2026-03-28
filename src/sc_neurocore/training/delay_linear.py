@@ -20,6 +20,7 @@ References:
 
 from __future__ import annotations
 
+from typing import Any
 
 import torch
 import torch.nn as nn
@@ -93,7 +94,7 @@ class DelayLinear(nn.Module):
 
     def reset(self) -> None:
         """Clear spike history. Call between sequences."""
-        self._history.zero_()
+        self._history.zero_()  # type: ignore[operator]
         self._t = 0
 
     def step(self, x: torch.Tensor) -> torch.Tensor:
@@ -118,7 +119,7 @@ class DelayLinear(nn.Module):
 
         # Store current input in history (use first batch element for buffer)
         write_idx = self._t % buf_len
-        self._history[write_idx] = x[0].detach()
+        self._history[write_idx] = x[0].detach()  # type: ignore[operator]
 
         # Clamp delays to valid range
         d = self.delay.clamp(0, self.max_delay - 1e-6)
@@ -136,8 +137,8 @@ class DelayLinear(nn.Module):
         # Gather delayed spikes via linear interpolation
         # history shape: (buf_len, in_features)
         # We need history[idx[j,i], i] for each (j, i)
-        hist_floor = self._history[idx_floor, torch.arange(self.in_features).unsqueeze(0)]
-        hist_ceil = self._history[idx_ceil, torch.arange(self.in_features).unsqueeze(0)]
+        hist_floor = self._history[idx_floor, torch.arange(self.in_features).unsqueeze(0)]  # type: ignore[index]
+        hist_ceil = self._history[idx_ceil, torch.arange(self.in_features).unsqueeze(0)]  # type: ignore[index]
         delayed_x = (1 - frac) * hist_floor + frac * hist_ceil
 
         # Weighted sum: out[j] = sum_i W[j,i] * delayed_x[j,i]
@@ -159,7 +160,7 @@ class DelayLinear(nn.Module):
         with torch.no_grad():
             return self.delay.clamp(0, self.max_delay).round().long()
 
-    def to_nir_delay_array(self):
+    def to_nir_delay_array(self) -> Any:
         """Export delays as flat array matching CSR data order.
 
         Returns delays in the same order as weights flattened row-major,
