@@ -9,12 +9,14 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 from .basic import isi, bin_spike_train
 
 
-def isolation_distance(cluster: np.ndarray, noise: np.ndarray) -> float:
+def isolation_distance(cluster: np.ndarray[Any, Any], noise: np.ndarray[Any, Any]) -> float:
     """Isolation distance. Harris et al. 2001.
 
     Mahalanobis distance at which the number of noise points equals cluster size.
@@ -37,7 +39,7 @@ def isolation_distance(cluster: np.ndarray, noise: np.ndarray) -> float:
     return float(mah_sorted[-1])
 
 
-def l_ratio(cluster: np.ndarray, noise: np.ndarray) -> float:
+def l_ratio(cluster: np.ndarray[Any, Any], noise: np.ndarray[Any, Any]) -> float:
     """L-ratio. Schmitzer-Torbert et al. 2005.
 
     Sum of inverse-chi2 CDF values for noise Mahalanobis distances, normalized by cluster size.
@@ -61,7 +63,7 @@ def l_ratio(cluster: np.ndarray, noise: np.ndarray) -> float:
     return float(l_vals.sum() / n_c)
 
 
-def silhouette_score(features: np.ndarray, labels: np.ndarray) -> float:
+def silhouette_score(features: np.ndarray[Any, Any], labels: np.ndarray[Any, Any]) -> float:
     """Mean silhouette score. Rousseeuw 1987.
 
     Measures cluster separation: s_i = (b_i - a_i) / max(a_i, b_i).
@@ -88,7 +90,7 @@ def silhouette_score(features: np.ndarray, labels: np.ndarray) -> float:
     return float(scores.mean())
 
 
-def d_prime(cluster_a: np.ndarray, cluster_b: np.ndarray) -> float:
+def d_prime(cluster_a: np.ndarray[Any, Any], cluster_b: np.ndarray[Any, Any]) -> float:
     """d-prime (sensitivity index) between two clusters. Green & Swets 1966.
 
     Uses first principal axis for projection.
@@ -111,7 +113,7 @@ def d_prime(cluster_a: np.ndarray, cluster_b: np.ndarray) -> float:
 
 
 def isi_violation_rate(
-    binary_train: np.ndarray, dt: float = 0.001, refractory_ms: float = 1.5
+    binary_train: np.ndarray[Any, Any], dt: float = 0.001, refractory_ms: float = 1.5
 ) -> float:
     """ISI violation rate: fraction of ISIs below refractory period. Hill et al. 2011."""
     intervals = isi(binary_train, dt)
@@ -121,14 +123,14 @@ def isi_violation_rate(
     return float(np.sum(intervals < ref) / intervals.size)
 
 
-def presence_ratio(binary_train: np.ndarray, n_bins: int = 100) -> float:
+def presence_ratio(binary_train: np.ndarray[Any, Any], n_bins: int = 100) -> float:
     """Presence ratio: fraction of time bins containing at least one spike. IBL 2019."""
     bin_size = max(1, binary_train.size // n_bins)
     counts = bin_spike_train(binary_train, bin_size)
     return float(np.sum(counts > 0) / max(counts.size, 1))
 
 
-def amplitude_cutoff(amplitudes: np.ndarray, bins: int = 100) -> float:
+def amplitude_cutoff(amplitudes: np.ndarray[Any, Any], bins: int = 100) -> float:
     """Amplitude cutoff estimate. Hill et al. 2011.
 
     Fraction of spikes estimated to be missing below the amplitude histogram peak.
@@ -148,7 +150,7 @@ def amplitude_cutoff(amplitudes: np.ndarray, bins: int = 100) -> float:
     return float(estimated_missing / (total + estimated_missing))
 
 
-def snr(waveforms: np.ndarray) -> float:
+def snr(waveforms: np.ndarray[Any, Any]) -> float:
     """Signal-to-noise ratio of spike waveforms. Suner et al. 2005.
 
     waveforms: (n_spikes, n_samples). SNR = peak_amplitude / noise_std.
@@ -163,7 +165,7 @@ def snr(waveforms: np.ndarray) -> float:
     return float(peak / noise_std)
 
 
-def nn_hit_rate(cluster: np.ndarray, noise: np.ndarray, k: int = 4) -> float:
+def nn_hit_rate(cluster: np.ndarray[Any, Any], noise: np.ndarray[Any, Any], k: int = 4) -> float:
     """Nearest-neighbor hit rate. Chung et al. 2017.
 
     Fraction of cluster points whose k nearest neighbors are also in the cluster.
@@ -183,7 +185,7 @@ def nn_hit_rate(cluster: np.ndarray, noise: np.ndarray, k: int = 4) -> float:
     return float(hits / n_c)
 
 
-def drift_metric(waveforms: np.ndarray, timestamps: np.ndarray, n_bins: int = 10) -> float:
+def drift_metric(waveforms: np.ndarray[Any, Any], timestamps: np.ndarray[Any, Any], n_bins: int = 10) -> float:
     """Waveform drift metric. IBL 2019.
 
     Measures change in mean waveform amplitude over time.
@@ -194,11 +196,11 @@ def drift_metric(waveforms: np.ndarray, timestamps: np.ndarray, n_bins: int = 10
     sorted_idx = np.argsort(timestamps)
     amplitudes = amplitudes[sorted_idx]
     bin_size = len(amplitudes) // n_bins
-    means = []
+    means_list: list[Any] = []
     for i in range(n_bins):
         chunk = amplitudes[i * bin_size : (i + 1) * bin_size]
-        means.append(chunk.mean())
-    means = np.array(means)
+        means_list.append(chunk.mean())
+    means = np.array(means_list)
     if means.std() < 1e-30:
         return 0.0
     return float((means.max() - means.min()) / means.mean())

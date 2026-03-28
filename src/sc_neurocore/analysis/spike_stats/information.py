@@ -9,12 +9,14 @@
 
 from __future__ import annotations
 
+from typing import Any, Callable
+
 import numpy as np
 
 from .basic import bin_spike_train
 
 
-def mutual_information(train_a: np.ndarray, train_b: np.ndarray, bin_size: int = 10) -> float:
+def mutual_information(train_a: np.ndarray[Any, Any], train_b: np.ndarray[Any, Any], bin_size: int = 10) -> float:
     """Mutual information between two binned spike trains (bits).
 
     MI = H(A) + H(B) - H(A,B) using binned spike counts.
@@ -24,7 +26,7 @@ def mutual_information(train_a: np.ndarray, train_b: np.ndarray, bin_size: int =
     n = min(ca.size, cb.size)
     ca, cb = ca[:n], cb[:n]
 
-    def _entropy(x):
+    def _entropy(x: np.ndarray[Any, Any]) -> float:
         vals, counts = np.unique(x, return_counts=True)
         p = counts / counts.sum()
         return float(-np.sum(p * np.log2(p + 1e-30)))
@@ -37,7 +39,7 @@ def mutual_information(train_a: np.ndarray, train_b: np.ndarray, bin_size: int =
 
 
 def transfer_entropy(
-    source: np.ndarray, target: np.ndarray, bin_size: int = 10, lag: int = 1
+    source: np.ndarray[Any, Any], target: np.ndarray[Any, Any], bin_size: int = 10, lag: int = 1
 ) -> float:
     """Transfer entropy from source to target spike train (bits).
 
@@ -54,17 +56,17 @@ def transfer_entropy(
     s_past = cs[:-lag]
     n_pts = t_past.size
 
-    def _cond_entropy(future, *pasts):
+    def _cond_entropy(future: np.ndarray[Any, Any], *pasts: np.ndarray[Any, Any]) -> float:
         joint = future.copy()
         for p in pasts:
             joint = joint * (p.max() + 1) + p
         vals, counts = np.unique(joint, return_counts=True)
-        h_joint = -np.sum(counts / n_pts * np.log2(counts / n_pts + 1e-30))
+        h_joint = float(-np.sum(counts / n_pts * np.log2(counts / n_pts + 1e-30)))
         past_joint = pasts[0].copy()
         for p in pasts[1:]:
             past_joint = past_joint * (p.max() + 1) + p
         vals2, counts2 = np.unique(past_joint, return_counts=True)
-        h_past = -np.sum(counts2 / n_pts * np.log2(counts2 / n_pts + 1e-30))
+        h_past = float(-np.sum(counts2 / n_pts * np.log2(counts2 / n_pts + 1e-30)))
         return h_joint - h_past
 
     h1 = _cond_entropy(t_future, t_past)
@@ -73,7 +75,7 @@ def transfer_entropy(
 
 
 def spike_train_entropy(
-    binary_train: np.ndarray, bin_size: int = 10, word_length: int = 4
+    binary_train: np.ndarray[Any, Any], bin_size: int = 10, word_length: int = 4
 ) -> float:
     """Spike train entropy via binary word analysis. Strong et al. 1998.
 
@@ -96,7 +98,7 @@ def spike_train_entropy(
 
 
 def noise_entropy(
-    binary_train: np.ndarray, n_trials: int = 10, bin_size: int = 10, word_length: int = 4
+    binary_train: np.ndarray[Any, Any], n_trials: int = 10, bin_size: int = 10, word_length: int = 4
 ) -> float:
     """Noise entropy estimate via splitting train into pseudo-trials. de Ruyter van Steveninck et al. 1997.
 
@@ -117,7 +119,7 @@ def noise_entropy(
     return float(np.mean(entropies))
 
 
-def stimulus_specific_information(spike_counts: np.ndarray, stimulus_ids: np.ndarray) -> float:
+def stimulus_specific_information(spike_counts: np.ndarray[Any, Any], stimulus_ids: np.ndarray[Any, Any]) -> float:
     """Stimulus-specific information (SSI). Butts 2003.
 
     spike_counts: array of spike counts per trial.
@@ -144,7 +146,7 @@ def stimulus_specific_information(spike_counts: np.ndarray, stimulus_ids: np.nda
     return float(max(0.0, ssi))
 
 
-def kozachenko_leonenko_mi(x: np.ndarray, y: np.ndarray, k: int = 3) -> float:
+def kozachenko_leonenko_mi(x: np.ndarray[Any, Any], y: np.ndarray[Any, Any], k: int = 3) -> float:
     """Kozachenko-Leonenko k-NN mutual information estimator. Kraskov et al. 2004.
 
     x, y: 1D arrays of same length. Returns MI in nats.
@@ -158,10 +160,10 @@ def kozachenko_leonenko_mi(x: np.ndarray, y: np.ndarray, k: int = 3) -> float:
 
     from scipy.special import digamma
 
-    def _kth_dist(data, idx, kk):
+    def _kth_dist(data: np.ndarray[Any, Any], idx: int, kk: int) -> float:
         dists = np.max(np.abs(data - data[idx]), axis=1)
         dists[idx] = np.inf
-        return np.partition(dists, kk - 1)[kk - 1]
+        return float(np.partition(dists, kk - 1)[kk - 1])
 
     psi_k = float(digamma(k))
     psi_n = float(digamma(n))
@@ -177,7 +179,7 @@ def kozachenko_leonenko_mi(x: np.ndarray, y: np.ndarray, k: int = 3) -> float:
 
 
 def time_rescaling_ks_test(
-    times: np.ndarray, rate_func, t_start: float = 0.0, t_end: float = 1.0
+    times: np.ndarray[Any, Any], rate_func: Callable[[float], float], t_start: float = 0.0, t_end: float = 1.0
 ) -> tuple[float, bool]:
     """Time-rescaling KS test for point process goodness-of-fit. Brown et al. 2002.
 

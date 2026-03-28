@@ -16,11 +16,14 @@ Simplified hash-based implementation for populations up to ~50 neurons.
 
 from __future__ import annotations
 
+from typing import Any
 
 import numpy as np
 
 
-def _find_frequent_itemsets(binary_matrix, min_support, max_size):
+def _find_frequent_itemsets(
+    binary_matrix: np.ndarray[Any, Any], min_support: int, max_size: int
+) -> list[tuple[frozenset[int], int]]:
     """Apriori-style frequent itemset mining on a binary neuron x time matrix."""
     n_neurons, n_bins = binary_matrix.shape
     neuron_ids = list(range(n_neurons))
@@ -61,7 +64,13 @@ def _find_frequent_itemsets(binary_matrix, min_support, max_size):
     return freq
 
 
-def _extend_to_spatiotemporal(trains, itemsets, bin_ms, dt, max_lag_bins=10):
+def _extend_to_spatiotemporal(
+    trains: list[np.ndarray[Any, Any]],
+    itemsets: list[tuple[frozenset[int], int]],
+    bin_ms: float,
+    dt: float,
+    max_lag_bins: int = 10,
+) -> list[dict[str, Any]]:
     """Extend synchronous itemsets to spatiotemporal patterns with lags."""
     n_neurons = len(trains)
     bin_steps = max(1, int(bin_ms / (dt * 1000)))
@@ -83,9 +92,9 @@ def _extend_to_spatiotemporal(trains, itemsets, bin_ms, dt, max_lag_bins=10):
             if trains[ref][start:end].any():
                 ref_bins[b] = 1
 
-        best_lags = {ref: 0}
+        best_lags: dict[int, int] = {ref: 0}
         best_count = int(ref_bins.sum())
-        coincidence = ref_bins.copy()
+        coincidence: np.ndarray[Any, Any] = ref_bins.copy()
 
         for nid in neuron_list[1:]:
             best_lag = 0
@@ -129,15 +138,15 @@ def _extend_to_spatiotemporal(trains, itemsets, bin_ms, dt, max_lag_bins=10):
 
 
 def spade_detect(
-    trains,
-    bin_ms=5.0,
-    dt=0.001,
-    min_support=3,
-    max_pattern_size=5,
-    n_surrogates=100,
-    alpha=0.05,
-    seed=42,
-):
+    trains: list[np.ndarray[Any, Any]],
+    bin_ms: float = 5.0,
+    dt: float = 0.001,
+    min_support: int = 3,
+    max_pattern_size: int = 5,
+    n_surrogates: int = 100,
+    alpha: float = 0.05,
+    seed: int = 42,
+) -> list[dict[str, Any]]:
     """Detect repeated spatiotemporal spike patterns with significance testing."""
     n_neurons = len(trains)
     if n_neurons < 2:
@@ -186,15 +195,15 @@ def spade_detect(
             # Count coincidences for this pattern's neurons with lags
             neuron_list = pat["neurons"]
             lags = pat["lags"]
-            coincidence = np.ones(n_bins, dtype=np.int8)
+            coincidence_s: np.ndarray[Any, Any] = np.ones(n_bins, dtype=np.int8)
             for nid, lag in zip(neuron_list, lags):
                 nbins_n = np.zeros(n_bins, dtype=np.int8)
                 for b in range(n_bins):
                     src_b = b - lag
                     if 0 <= src_b < n_bins:
                         nbins_n[b] = surr_binary[nid, src_b]
-                coincidence = coincidence & nbins_n
-            surr_counts[s] = coincidence.sum()
+                coincidence_s = coincidence_s & nbins_n
+            surr_counts[s] = coincidence_s.sum()
 
         p_value = float((surr_counts >= pat["count"]).sum() + 1) / (n_surrogates + 1)
         if p_value <= alpha:

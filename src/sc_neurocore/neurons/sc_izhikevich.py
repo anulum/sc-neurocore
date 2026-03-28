@@ -52,6 +52,8 @@ class SCIzhikevichNeuron(BaseNeuron):
 
     def __post_init__(self) -> None:
         self._rng = RNG(self.seed)
+        self.v: float = self.c
+        self.u: float = self.b * self.c
         self.reset_state()
 
     def step(self, input_current: float) -> int:

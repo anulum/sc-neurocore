@@ -71,7 +71,7 @@ class SurfaceCodeShield:
             self._z_lut = self._build_d3_lut(self.z_stabilizers)
 
     @staticmethod
-    def _build_stabilizers(d: int):
+    def _build_stabilizers(d: int) -> tuple[list[list[int]], list[list[int]]]:
         """Build X and Z stabilizer generators for rotated surface code."""
         x_stabs: list[list[int]] = []
         z_stabs: list[list[int]] = []
@@ -112,7 +112,7 @@ class SurfaceCodeShield:
                 lut[key] = qubit
         return lut
 
-    def encode(self, bitstream: np.ndarray) -> np.ndarray:
+    def encode(self, bitstream: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """
         Encode logical bitstream into surface code physical qubits.
 
@@ -121,7 +121,7 @@ class SurfaceCodeShield:
         """
         return np.repeat(bitstream[:, np.newaxis, :], self.n_data, axis=1)
 
-    def measure_syndrome(self, physical_bits: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    def measure_syndrome(self, physical_bits: np.ndarray[Any, Any]) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
         """
         Measure X and Z stabilizer syndromes.
 
@@ -143,7 +143,7 @@ class SurfaceCodeShield:
             z_syn[:, s_idx, :] = parity
         return x_syn, z_syn
 
-    def decode(self, physical_bits: np.ndarray) -> np.ndarray:
+    def decode(self, physical_bits: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """
         Decode surface code: measure syndromes, correct single-qubit errors, majority vote.
 
@@ -163,11 +163,12 @@ class SurfaceCodeShield:
 
         # Majority vote across all data qubits
         means = np.mean(corrected, axis=1)
-        return (means > 0.5).astype(np.uint8)
+        result: np.ndarray[Any, Any] = (means > 0.5).astype(np.uint8)
+        return result
 
     @staticmethod
     def _apply_lut_correction(
-        physical: np.ndarray, syndromes: np.ndarray, lut: dict[tuple[int, ...], int]
+        physical: np.ndarray[Any, Any], syndromes: np.ndarray[Any, Any], lut: dict[tuple[int, ...], int]
     ) -> None:
         """Apply lookup-table correction for each bitstream position."""
         n_logical, n_stab, length = syndromes.shape
@@ -179,6 +180,6 @@ class SurfaceCodeShield:
                     if qubit is not None:
                         physical[l_idx, qubit, t] ^= 1
 
-    def get_error_rate(self, x_syn: np.ndarray, z_syn: np.ndarray) -> float:
+    def get_error_rate(self, x_syn: np.ndarray[Any, Any], z_syn: np.ndarray[Any, Any]) -> float:
         """Estimated error rate from syndrome density."""
         return float((np.mean(x_syn) + np.mean(z_syn)) / 2)

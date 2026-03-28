@@ -22,10 +22,12 @@ ACM TECS 12(2s):1-19.
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 
-def bipolar_encode(value: float, L: int, rng=None) -> np.ndarray:
+def bipolar_encode(value: float, L: int, rng: Any = None) -> np.ndarray:
     """Encode a bipolar value in [-1, 1] as a Bernoulli bitstream.
 
     p = (value + 1) / 2.  Bitstream has P(bit=1) = p.
@@ -132,7 +134,7 @@ def bipolar_sc_layer(
     return np.clip(out, -1.0, 1.0)
 
 
-def float_to_bipolar_weights(weight_tensor) -> np.ndarray:
+def float_to_bipolar_weights(weight_tensor: Any) -> np.ndarray:
     """Normalise float weights to [-1, 1] for bipolar SC.
 
     Preserves sign information (unlike unipolar to_sc_weights).

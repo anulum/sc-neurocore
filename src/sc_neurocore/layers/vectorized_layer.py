@@ -23,7 +23,7 @@ from ..constants import LAYER_DEFAULT_LENGTH
 _scipy_sparse = None
 
 
-def _get_scipy_sparse():
+def _get_scipy_sparse() -> Any:
     global _scipy_sparse
     if _scipy_sparse is None:
         import scipy.sparse
@@ -32,7 +32,7 @@ def _get_scipy_sparse():
     return _scipy_sparse
 
 
-def _has_scipy_sparse():
+def _has_scipy_sparse() -> bool:
     try:
         _get_scipy_sparse()
         return True
@@ -40,7 +40,7 @@ def _has_scipy_sparse():
         return False
 
 
-def _popcount_rows(packed: np.ndarray) -> np.ndarray:
+def _popcount_rows(packed: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     """Vectorized Hamming-weight popcount across rows of a uint64 array."""
     x = packed.astype(np.uint64).copy()
     m1 = np.uint64(0x5555555555555555)
@@ -51,7 +51,8 @@ def _popcount_rows(packed: np.ndarray) -> np.ndarray:
     x = (x & m2) + ((x >> np.uint64(2)) & m2)
     x = (x + (x >> np.uint64(4))) & m4
     x = (x * h01) >> np.uint64(56)
-    return x.sum(axis=1).astype(np.float64)
+    result: np.ndarray[Any, Any] = x.sum(axis=1).astype(np.float64)
+    return result
 
 
 @dataclass
@@ -98,7 +99,7 @@ class VectorizedSCLayer:
             self._init_sparse()
         else:
             self.weights = np.random.uniform(0.0, 1.0, (self.n_neurons, self.n_inputs))
-            self.packed_weights = None
+            self.packed_weights: np.ndarray[Any, Any] | None = None
             self._refresh_packed_weights()
 
     # -- Dense path (unchanged) ------------------------------------------------
@@ -120,7 +121,7 @@ class VectorizedSCLayer:
 
     # -- Sparse path -----------------------------------------------------------
 
-    def _init_sparse(self):
+    def _init_sparse(self) -> None:
         sp = _get_scipy_sparse()
         n_total = self.n_neurons * self.n_inputs
         n_nonzero = max(1, int(round(n_total * self.connectivity)))
@@ -138,7 +139,7 @@ class VectorizedSCLayer:
         )
         self._pack_sparse_weights()
 
-    def _pack_sparse_weights(self):
+    def _pack_sparse_weights(self) -> None:
         """Pack bitstreams only for non-zero synapses, stored in a flat array."""
         csr = self.weights_csr
         n_words = (self.length + 63) // 64
@@ -166,7 +167,7 @@ class VectorizedSCLayer:
             return self._forward_sparse(in_probs)
         return self._forward_dense(in_probs)
 
-    def _forward_dense(self, in_probs: np.ndarray) -> np.ndarray:
+    def _forward_dense(self, in_probs: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         input_bits = (np.random.random((self.n_inputs, self.length)) < in_probs[:, None]).astype(
             np.uint8
         )
@@ -177,13 +178,14 @@ class VectorizedSCLayer:
             counts = gpu_vec_mac(self.packed_weights, packed_inputs_dev)
             outputs = to_host(counts).astype(np.float64)
         else:
+            assert self.packed_weights is not None
             products = vec_and(self.packed_weights, packed_inputs[None, :, :])
             flat_products = products.reshape(self.n_neurons, -1)
             outputs = _popcount_rows(flat_products)
 
         return outputs / self.length
 
-    def _forward_sparse(self, in_probs: np.ndarray) -> np.ndarray:
+    def _forward_sparse(self, in_probs: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         input_bits = (np.random.random((self.n_inputs, self.length)) < in_probs[:, None]).astype(
             np.uint8
         )
@@ -205,7 +207,7 @@ class VectorizedSCLayer:
 
         return outputs / self.length
 
-    def _forward_sparse_gpu(self, packed_inputs: np.ndarray) -> np.ndarray:  # pragma: no cover
+    def _forward_sparse_gpu(self, packed_inputs: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:  # pragma: no cover
         """CuPy CSR matmul path for sparse connectivity on GPU."""
         import cupy
         import cupyx.scipy.sparse as cusp
@@ -222,4 +224,5 @@ class VectorizedSCLayer:
         in_probs_flat = _popcount_rows(packed_inputs).astype(np.float32) / self.length
         in_gpu = cupy.asarray(in_probs_flat)
         out_gpu = w_gpu @ in_gpu
-        return cupy.asnumpy(out_gpu).astype(np.float64)
+        result: np.ndarray[Any, Any] = cupy.asnumpy(out_gpu).astype(np.float64)
+        return result

@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 import numpy as np
-from typing import Optional
+from typing import Any, Optional
 
 
 class RNG:
@@ -27,17 +27,17 @@ class RNG:
     def __init__(self, seed: Optional[int] = None) -> None:
         self._rng = np.random.default_rng(seed)
 
-    def normal(self, mean: float = 0.0, std: float = 1.0, size=None):
+    def normal(self, mean: float = 0.0, std: float = 1.0, size: int | tuple[int, ...] | None = None) -> Any:
         return self._rng.normal(mean, std, size)
 
-    def uniform(self, low: float = 0.0, high: float = 1.0, size=None):
+    def uniform(self, low: float = 0.0, high: float = 1.0, size: int | tuple[int, ...] | None = None) -> Any:
         return self._rng.uniform(low, high, size)
 
-    def bernoulli(self, p: float, size=None):
+    def bernoulli(self, p: float, size: int | tuple[int, ...] | None = None) -> Any:
         return self._rng.random(size) < p
 
-    def random(self, size=None):
+    def random(self, size: int | tuple[int, ...] | None = None) -> Any:
         return self._rng.random(size)
 
-    def shuffle(self, x):
-        return self._rng.shuffle(x)
+    def shuffle(self, x: np.ndarray) -> None:
+        self._rng.shuffle(x)

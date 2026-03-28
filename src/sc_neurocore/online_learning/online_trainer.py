@@ -14,6 +14,7 @@ All computation is O(1) in sequence length — no stored activations, no BPTT.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 import numpy as np
 
@@ -40,10 +41,10 @@ class OnlineLIFLayer:
     lr: float = 0.01
     dt: float = 1.0
 
-    W: np.ndarray = field(init=False, repr=False)
-    _v: np.ndarray = field(init=False, repr=False)
-    _spikes: np.ndarray = field(init=False, repr=False)
-    _trace: np.ndarray = field(init=False, repr=False)
+    W: np.ndarray[Any, Any] = field(init=False, repr=False)
+    _v: np.ndarray[Any, Any] = field(init=False, repr=False)
+    _spikes: np.ndarray[Any, Any] = field(init=False, repr=False)
+    _trace: np.ndarray[Any, Any] = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
         rng = np.random.RandomState(42)
@@ -55,7 +56,7 @@ class OnlineLIFLayer:
         self._spikes = np.zeros(self.n_neurons)
         self._trace = np.zeros((self.n_neurons, self.n_inputs))
 
-    def step(self, x: np.ndarray) -> np.ndarray:
+    def step(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Forward one timestep. Returns spike vector."""
         alpha = np.exp(-self.dt / self.tau_mem)
         current = self.W @ x
@@ -68,7 +69,7 @@ class OnlineLIFLayer:
         self._trace = 0.95 * self._trace + np.outer(pseudo, x)
         return self._spikes
 
-    def apply_learning_signal(self, signal: np.ndarray):
+    def apply_learning_signal(self, signal: np.ndarray[Any, Any]) -> None:
         """Apply a top-down learning signal to update weights.
 
         Parameters
@@ -117,7 +118,7 @@ class OnlineTrainer:
         for layer in self.layers:
             layer.reset()
 
-    def step(self, x: np.ndarray, target: np.ndarray | None = None) -> dict:
+    def step(self, x: np.ndarray[Any, Any], target: np.ndarray[Any, Any] | None = None) -> dict[str, Any]:
         """Forward one timestep through all layers with optional learning.
 
         Parameters
@@ -133,7 +134,7 @@ class OnlineTrainer:
         for layer in self.layers:
             h = layer.step(h)
 
-        result = {"output": h.copy()}
+        result: dict[str, Any] = {"output": h.copy()}
 
         if target is not None:
             error = h - target
@@ -146,14 +147,14 @@ class OnlineTrainer:
 
         return result
 
-    def train_sequence(self, inputs: np.ndarray, targets: np.ndarray) -> float:
+    def train_sequence(self, inputs: np.ndarray[Any, Any], targets: np.ndarray[Any, Any]) -> float:
         """Train on one sequence, return mean loss."""
         self.reset()
         total_loss = 0.0
-        T = inputs.shape[0]
+        T: int = int(inputs.shape[0])
         for t in range(T):
             result = self.step(inputs[t], target=targets[t])
-            total_loss += result.get("loss", 0.0)
+            total_loss += float(result.get("loss", 0.0))
         return total_loss / T
 
     @property

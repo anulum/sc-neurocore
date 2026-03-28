@@ -35,29 +35,29 @@ class HodgkinHuxleyNeuron:
     dt: float = 0.01
     v_threshold: float = 0.0
 
-    def _alpha_m(self, v):
+    def _alpha_m(self, v: float) -> float:
         d = v + 40.0
         if abs(d) < 1e-7:
             return 1.0
         return 0.1 * d / (1.0 - np.exp(-d / 10.0))
 
-    def _beta_m(self, v):
-        return 4.0 * np.exp(-(v + 65.0) / 18.0)
+    def _beta_m(self, v: float) -> float:
+        return float(4.0 * np.exp(-(v + 65.0) / 18.0))
 
-    def _alpha_h(self, v):
-        return 0.07 * np.exp(-(v + 65.0) / 20.0)
+    def _alpha_h(self, v: float) -> float:
+        return float(0.07 * np.exp(-(v + 65.0) / 20.0))
 
-    def _beta_h(self, v):
-        return 1.0 / (1.0 + np.exp(-(v + 35.0) / 10.0))
+    def _beta_h(self, v: float) -> float:
+        return float(1.0 / (1.0 + np.exp(-(v + 35.0) / 10.0)))
 
-    def _alpha_n(self, v):
+    def _alpha_n(self, v: float) -> float:
         d = v + 55.0
         if abs(d) < 1e-7:
             return 0.1
         return 0.01 * d / (1.0 - np.exp(-d / 10.0))
 
-    def _beta_n(self, v):
-        return 0.125 * np.exp(-(v + 65.0) / 80.0)
+    def _beta_n(self, v: float) -> float:
+        return float(0.125 * np.exp(-(v + 65.0) / 80.0))
 
     def step(self, current: float) -> int:
         v_prev = self.v
@@ -78,7 +78,7 @@ class HodgkinHuxleyNeuron:
 
         return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = -65.0
         self.m = 0.05
         self.h = 0.6

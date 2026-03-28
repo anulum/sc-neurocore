@@ -7,7 +7,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+
 import numpy as np
 
 
@@ -23,7 +24,7 @@ class GammaRenewalNeuron:
     shape_k: int = 3
     dt_ms: float = 1.0
     _time_since_spike: float = 0.0
-    _rng: object = None
+    _rng: np.random.Generator = field(init=False)
 
     def __post_init__(self) -> None:
         self._rng = np.random.default_rng()
@@ -69,4 +70,4 @@ def _gamma_survival(k: int, x: float) -> float:
     for i in range(1, k):
         term *= x / i
         s += term
-    return np.exp(-x) * s
+    return float(np.exp(-x) * s)

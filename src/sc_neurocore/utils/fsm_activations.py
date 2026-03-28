@@ -48,10 +48,10 @@ class TanhFSM(FSMActivation):
     Output: 1 if state >= N/2 else 0
     """
 
-    def __init__(self, states: int = 16):
+    def __init__(self, states: int = 16) -> None:
         self.num_states = states
         self.initial_state = states // 2
-        super().__post_init__()  # type: ignore
+        super().__post_init__()
 
     def step(self, bit: int) -> int:
         if bit == 1:
@@ -72,10 +72,10 @@ class ReLKFSM(FSMActivation):
     Here we implement a simple saturating counter.
     """
 
-    def __init__(self, states: int = 16):
+    def __init__(self, states: int = 16) -> None:
         self.num_states = states
         self.initial_state = 0  # Start at 0
-        super().__post_init__()  # type: ignore
+        super().__post_init__()
 
     def step(self, bit: int) -> int:
         if bit == 1:

@@ -82,7 +82,7 @@ class FPGAMismatchModel:
         """Apply all hardware imperfections to a list of weight matrices."""
         return [self.perturb_weights(w) for w in weights]
 
-    def mismatch_report(self, weights: list[np.ndarray]) -> dict:
+    def mismatch_report(self, weights: list[np.ndarray]) -> dict[str, object]:
         """Report expected mismatch statistics for given weights."""
         perturbed = self.apply_to_network_weights(weights)
         total_params = sum(w.size for w in weights)

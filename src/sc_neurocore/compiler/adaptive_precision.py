@@ -24,6 +24,7 @@ Reference: Sim & Lee 2019 — "Adjustable Sequence Length for SC NNs"
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -42,7 +43,7 @@ class LayerPrecision:
 
 
 def analyze_sensitivity(
-    layer_weights: list[np.ndarray],
+    layer_weights: list[np.ndarray[Any, Any]],
     lengths: list[int] | None = None,
     n_trials: int = 100,
     seed: int = 42,
@@ -117,7 +118,7 @@ def analyze_sensitivity(
 
 
 def assign_lengths(
-    layer_weights: list[np.ndarray],
+    layer_weights: list[np.ndarray[Any, Any]],
     layer_names: list[str] | None = None,
     total_budget: int | None = None,
     min_length: int = 32,

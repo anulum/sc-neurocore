@@ -6,10 +6,10 @@
 # SC-NeuroCore — SC dense layer with integrated STDP learning
 
 from __future__ import annotations
-from typing import Any, Optional
-from dataclasses import dataclass
-from typing import List
+
 from collections.abc import Sequence
+from dataclasses import dataclass
+
 import numpy as np
 
 from ..synapses.stochastic_stdp import StochasticSTDPSynapse
@@ -35,13 +35,13 @@ class SCLearningLayer:
     learning_rate: float = STDP_LEARNING_RATE
     ltd_ratio: float = STDP_LTD_RATIO
     length: int = LAYER_DEFAULT_LENGTH
-    base_seed: Optional[int] = None
+    base_seed: int | None = None
 
     def __post_init__(self) -> None:
-        self.neurons: List[StochasticLIFNeuron] = []
+        self.neurons: list[StochasticLIFNeuron] = []
         # synapses[neuron_idx][input_idx]
-        self.synapses: List[List[StochasticSTDPSynapse]] = []
-        self.recorders: List[BitstreamSpikeRecorder] = []
+        self.synapses: list[list[StochasticSTDPSynapse]] = []
+        self.recorders: list[BitstreamSpikeRecorder] = []
 
         self.input_encoders = [
             BitstreamEncoder(
@@ -74,7 +74,7 @@ class SCLearningLayer:
                 )
             self.synapses.append(neuron_syns)
 
-    def run_epoch(self, input_values: Sequence[float]) -> np.ndarray[Any, Any]:
+    def run_epoch(self, input_values: Sequence[float]) -> np.ndarray:
         """
         Run one bitstream epoch (length 'length').
         """
@@ -124,7 +124,7 @@ class SCLearningLayer:
 
         return epoch_spikes
 
-    def get_weights(self) -> np.ndarray[Any, Any]:
+    def get_weights(self) -> np.ndarray:
         weights = np.zeros((self.n_neurons, self.n_inputs))
         for i in range(self.n_neurons):
             for j in range(self.n_inputs):

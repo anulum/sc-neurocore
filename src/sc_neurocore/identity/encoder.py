@@ -15,6 +15,7 @@ Pure numpy, no external NLP dependencies.
 from __future__ import annotations
 
 import re
+from typing import Any
 
 import numpy as np
 
@@ -51,14 +52,14 @@ class TraceEncoder:
     weighted by chunk salience deliver the encoded signal.
     """
 
-    def __init__(self, n_neurons=500, hash_dims=64, seed=42):
+    def __init__(self, n_neurons: int = 500, hash_dims: int = 64, seed: int = 42) -> None:
         self.n_neurons = n_neurons
         self.hash_dims = hash_dims
         self.seed = seed
         rng = np.random.default_rng(seed)
         self._projection = rng.standard_normal((hash_dims, n_neurons))
 
-    def _hash_to_neurons(self, text: str) -> np.ndarray:
+    def _hash_to_neurons(self, text: str) -> np.ndarray[Any, Any]:
         """Map text to an activation vector over neurons via LSH."""
         words = _word_set(text)
         if not words:
@@ -79,7 +80,7 @@ class TraceEncoder:
             activations /= total
         return activations
 
-    def encode(self, text: str, duration_ms=100, dt=0.001) -> np.ndarray:
+    def encode(self, text: str, duration_ms: int = 100, dt: float = 0.001) -> np.ndarray[Any, Any]:
         """Convert text to spike pattern array (n_neurons, n_steps).
 
         Each chunk maps to a neuron group; Poisson spike trains
@@ -109,7 +110,7 @@ class TraceEncoder:
 
         return spikes
 
-    def encode_key_value(self, key: str, value: str) -> np.ndarray:
+    def encode_key_value(self, key: str, value: str) -> np.ndarray[Any, Any]:
         """Encode a key-value pair as a combined spike pattern."""
         combined = f"{key}: {value}"
         return self.encode(combined, duration_ms=150)

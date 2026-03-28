@@ -66,5 +66,5 @@ class SRM0Neuron:
         self._t = 0.0
         self._last_spike_time = -1000.0
 
-    def get_state(self):
+    def get_state(self) -> dict[str, float]:
         return {"v": self.v, "eta": self._eta, "t": self._t}

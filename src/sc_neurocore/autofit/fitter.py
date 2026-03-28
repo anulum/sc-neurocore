@@ -20,6 +20,7 @@ Usage:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 import numpy as np
 
@@ -31,14 +32,14 @@ class FittedModel:
     """Result of fitting one model to experimental data."""
 
     model_name: str
-    model_class: type
-    params: dict
+    model_class: type[Any]
+    params: dict[str, Any]
     rmse: float
     feature_error: float
     combined_score: float
-    simulated_voltage: np.ndarray
-    target_features: dict = field(repr=False, default_factory=dict)
-    model_features: dict = field(repr=False, default_factory=dict)
+    simulated_voltage: np.ndarray[Any, Any]
+    target_features: dict[str, Any] = field(repr=False, default_factory=dict)
+    model_features: dict[str, Any] = field(repr=False, default_factory=dict)
 
 
 # Models that can be auto-fitted (single-compartment with step(current))
@@ -59,14 +60,15 @@ _FITTABLE_MODELS = [
 ]
 
 
-def _get_model_class(name: str):
+def _get_model_class(name: str) -> type[Any] | None:
     """Resolve model name to class."""
     from sc_neurocore.neurons import models as registry
 
-    return getattr(registry, name, None)
+    result: type[Any] | None = getattr(registry, name, None)
+    return result
 
 
-def _simulate(model_class, params: dict, current: np.ndarray, dt: float) -> np.ndarray:
+def _simulate(model_class: type[Any], params: dict[str, Any], current: np.ndarray[Any, Any], dt: float) -> np.ndarray[Any, Any]:
     """Run a model with given params and current injection."""
     try:
         neuron = model_class(**params)
@@ -87,14 +89,14 @@ def _simulate(model_class, params: dict, current: np.ndarray, dt: float) -> np.n
     return voltages
 
 
-def _cost_rmse(voltage_target: np.ndarray, voltage_model: np.ndarray) -> float:
+def _cost_rmse(voltage_target: np.ndarray[Any, Any], voltage_model: np.ndarray[Any, Any]) -> float:
     """Root mean squared error between two voltage traces."""
     n = min(len(voltage_target), len(voltage_model))
     diff = voltage_target[:n] - voltage_model[:n]
     return float(np.sqrt(np.mean(diff**2)))
 
 
-def _cost_features(target_feats: dict, model_feats: dict) -> float:
+def _cost_features(target_feats: dict[str, Any], model_feats: dict[str, Any]) -> float:
     """Feature-based cost: compare spike count, rate, ISI statistics."""
     errors = []
 
@@ -117,10 +119,10 @@ def _cost_features(target_feats: dict, model_feats: dict) -> float:
 
 
 def _fit_single_model(
-    model_class,
+    model_class: type[Any],
     model_name: str,
-    voltage_target: np.ndarray,
-    current: np.ndarray,
+    voltage_target: np.ndarray[Any, Any],
+    current: np.ndarray[Any, Any],
     dt: float,
     threshold: float,
 ) -> FittedModel | None:
@@ -149,8 +151,8 @@ def _fit_single_model(
 
 
 def fit(
-    voltage: np.ndarray,
-    current: np.ndarray,
+    voltage: np.ndarray[Any, Any],
+    current: np.ndarray[Any, Any],
     dt: float = 0.1,
     threshold: float = 0.0,
     candidates: list[str] | None = None,

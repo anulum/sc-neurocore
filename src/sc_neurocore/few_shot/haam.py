@@ -45,7 +45,7 @@ class HebbianFewShot:
         self.memory = np.zeros((n_classes, n_features))
         self._counts = np.zeros(n_classes, dtype=int)
 
-    def store(self, spike_pattern: np.ndarray, label: int):
+    def store(self, spike_pattern: np.ndarray, label: int) -> None:
         """Store one support example via Hebbian update.
 
         Parameters

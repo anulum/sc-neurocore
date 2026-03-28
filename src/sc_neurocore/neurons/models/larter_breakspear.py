@@ -8,6 +8,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
+
 import numpy as np
 
 
@@ -39,13 +41,13 @@ class LarterBreakspearNeuron:
     i_ext: float = 0.3
     dt: float = 0.01
 
-    def _m_ca(self, v):
+    def _m_ca(self, v: float) -> Any:
         return 0.5 * (1.0 + np.tanh((v - (-0.01)) / 0.15))
 
-    def _m_na(self, v):
+    def _m_na(self, v: float) -> Any:
         return 0.5 * (1.0 + np.tanh((v - 0.12) / 0.15))
 
-    def _m_k(self, v):
+    def _m_k(self, v: float) -> Any:
         return 0.5 * (1.0 + np.tanh((v - self.v0) / 0.3))
 
     def step(self, coupling: float = 0.0) -> float:

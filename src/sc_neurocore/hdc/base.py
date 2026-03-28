@@ -6,10 +6,11 @@
 # SC-NeuroCore — Hyperdimensional Computing Encoder
 
 from __future__ import annotations
+
+from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
-from dataclasses import dataclass
 
 
 @dataclass
@@ -21,16 +22,16 @@ class HDCEncoder:
 
     dim: int = 10000
 
-    def generate_random_vector(self) -> np.ndarray[Any, Any]:
+    def generate_random_vector(self) -> np.ndarray:
         """Generates a random D-dimensional bipolar vector {-1, 1} or {0, 1}."""
         # We use {0, 1} for compatibility with our SC
         return np.random.randint(0, 2, self.dim).astype(np.uint8)
 
-    def bind(self, v1: np.ndarray[Any, Any], v2: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+    def bind(self, v1: np.ndarray, v2: np.ndarray) -> np.ndarray:
         """XOR Binding operation."""
         return np.bitwise_xor(v1, v2)
 
-    def bundle(self, vectors: list[np.ndarray[Any, Any]]) -> np.ndarray[Any, Any]:
+    def bundle(self, vectors: list[np.ndarray]) -> np.ndarray:
         """
         Majority Bundling (Superposition).
         """
@@ -43,7 +44,7 @@ class HDCEncoder:
 
         return (sum_vec > threshold).astype(np.uint8)
 
-    def permute(self, v: np.ndarray[Any, Any], shifts: int = 1) -> np.ndarray[Any, Any]:
+    def permute(self, v: np.ndarray, shifts: int = 1) -> np.ndarray:
         """Cyclic shift (Permutation)."""
         return np.roll(v, shifts)
 
@@ -55,15 +56,15 @@ class AssociativeMemory:
     Stores (Key, Value) pairs or just prototypes.
     """
 
-    memory: dict[str, Any] = None
+    memory: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        self.memory = {}
+        pass
 
-    def store(self, label: str, vector: np.ndarray[Any, Any]):
+    def store(self, label: str, vector: np.ndarray) -> None:
         self.memory[label] = vector
 
-    def query(self, query_vec: np.ndarray[Any, Any]) -> str:
+    def query(self, query_vec: np.ndarray) -> str | None:
         """Returns label of closest vector (Hamming Distance)."""
         best_label = None
         min_dist = float("inf")

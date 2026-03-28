@@ -115,7 +115,7 @@ class ConvertedSNN:
         return np.argmax(counts, axis=-1)
 
 
-def _extract_layers(model) -> list[tuple[np.ndarray, np.ndarray | None]]:
+def _extract_layers(model: object) -> list[tuple[np.ndarray, np.ndarray | None]]:
     """Extract (weight, bias) pairs from a PyTorch Sequential model."""
     layers = []
     for module in model.modules():
@@ -127,14 +127,14 @@ def _extract_layers(model) -> list[tuple[np.ndarray, np.ndarray | None]]:
 
 
 def _compute_max_activations(
-    model, calibration_data: "torch.Tensor", percentile: float = 99.9
+    model: object, calibration_data: "torch.Tensor", percentile: float = 99.9
 ) -> list[float]:
     """Run calibration data through model, record per-layer max activation."""
     maxes = []
     hooks = []
     activations = []
 
-    def hook_fn(module, inp, out):
+    def hook_fn(module: object, inp: object, out: object) -> None:
         activations.append(out.detach().cpu())
 
     for module in model.modules():
@@ -155,8 +155,8 @@ def _compute_max_activations(
 
 
 def convert(
-    model,
-    calibration_data=None,
+    model: object,
+    calibration_data: object = None,
     T: int = 16,
     percentile: float = 99.9,
 ) -> ConvertedSNN:

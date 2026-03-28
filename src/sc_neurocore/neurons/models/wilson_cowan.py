@@ -8,6 +8,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
+
 import numpy as np
 
 
@@ -32,7 +34,7 @@ class WilsonCowanUnit:
     theta: float = 4.0
     dt: float = 0.1
 
-    def _sigmoid(self, x):
+    def _sigmoid(self, x: float) -> Any:
         return 1.0 / (1.0 + np.exp(-self.a * (x - self.theta)))
 
     def step(self, ext_input: float = 0.0) -> float:

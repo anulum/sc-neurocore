@@ -70,11 +70,13 @@ def to_device(arr: np.ndarray[Any, Any]) -> xp.ndarray:  # type: ignore
     return arr
 
 
-def to_host(arr) -> np.ndarray[Any, Any]:  # type: ignore
+def to_host(arr: Any) -> np.ndarray[Any, Any]:
     """Bring an array back to host RAM as a NumPy array."""
     if HAS_CUPY and isinstance(arr, cp.ndarray):  # pragma: no cover
-        return cp.asnumpy(arr)
-    return np.asarray(arr)
+        result: np.ndarray[Any, Any] = cp.asnumpy(arr)
+        return result
+    out: np.ndarray[Any, Any] = np.asarray(arr)
+    return out
 
 
 # ---------------------------------------------------------------------------

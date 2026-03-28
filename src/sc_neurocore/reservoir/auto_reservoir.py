@@ -70,7 +70,7 @@ class AutoCriticalReservoir:
         leak: float = 0.1,
         connectivity: float = 0.1,
         seed: int = 42,
-    ):
+    ) -> None:
         self.n_inputs = n_inputs
         self.n_neurons = n_neurons
         self.n_outputs = n_outputs
@@ -135,7 +135,7 @@ class AutoCriticalReservoir:
             states[t] = self.step(inputs[t])
         return states
 
-    def fit_readout(self, states: np.ndarray, targets: np.ndarray, ridge: float = 1e-4):
+    def fit_readout(self, states: np.ndarray, targets: np.ndarray, ridge: float = 1e-4) -> None:
         """Train readout via ridge regression.
 
         Parameters

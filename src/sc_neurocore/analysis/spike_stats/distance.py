@@ -9,6 +9,8 @@
 
 from __future__ import annotations
 
+from typing import Any, Callable
+
 import numpy as np
 
 from .basic import isi
@@ -16,7 +18,7 @@ from .rate import instantaneous_rate
 
 
 def van_rossum_distance(
-    train_a: np.ndarray, train_b: np.ndarray, dt: float = 0.001, tau_ms: float = 10.0
+    train_a: np.ndarray[Any, Any], train_b: np.ndarray[Any, Any], dt: float = 0.001, tau_ms: float = 10.0
 ) -> float:
     """Van Rossum 2001 -- exponential-kernel spike train distance."""
     tau = tau_ms / 1000.0
@@ -29,7 +31,7 @@ def van_rossum_distance(
 
 
 def victor_purpura_distance(
-    times_a: np.ndarray, times_b: np.ndarray, cost_per_s: float = 1000.0
+    times_a: np.ndarray[Any, Any], times_b: np.ndarray[Any, Any], cost_per_s: float = 1000.0
 ) -> float:
     """Victor-Purpura 1996 -- edit distance between spike time arrays.
 
@@ -52,7 +54,7 @@ def victor_purpura_distance(
     return float(d[na, nb])
 
 
-def isi_distance(train_a: np.ndarray, train_b: np.ndarray, dt: float = 0.001) -> float:
+def isi_distance(train_a: np.ndarray[Any, Any], train_b: np.ndarray[Any, Any], dt: float = 0.001) -> float:
     """ISI-distance (Kreuz et al. 2007) -- ratio-based ISI comparison."""
     isi_a = isi(train_a, dt)
     isi_b = isi(train_b, dt)
@@ -72,7 +74,7 @@ def isi_distance(train_a: np.ndarray, train_b: np.ndarray, dt: float = 0.001) ->
 
 
 def spike_distance(
-    times_a: np.ndarray, times_b: np.ndarray, t_start: float = 0.0, t_end: float = 1.0
+    times_a: np.ndarray[Any, Any], times_b: np.ndarray[Any, Any], t_start: float = 0.0, t_end: float = 1.0
 ) -> float:
     """SPIKE-distance. Kreuz et al. 2013.
 
@@ -103,19 +105,19 @@ def spike_distance(
     return float(s_vals.mean())
 
 
-def _local_isi(times: np.ndarray, idx: int) -> float:
+def _local_isi(times: np.ndarray[Any, Any], idx: int) -> float:
     """Nearest-neighbour ISI at index idx."""
     if times.size < 2:
         return 1.0
     if idx == 0:
-        return times[1] - times[0]
+        return float(times[1] - times[0])
     if idx >= times.size - 1:
-        return times[-1] - times[-2]
-    return min(times[idx] - times[idx - 1], times[idx + 1] - times[idx])
+        return float(times[-1] - times[-2])
+    return float(min(times[idx] - times[idx - 1], times[idx + 1] - times[idx]))
 
 
 def spike_sync(
-    times_a: np.ndarray, times_b: np.ndarray, t_start: float = 0.0, t_end: float = 1.0
+    times_a: np.ndarray[Any, Any], times_b: np.ndarray[Any, Any], t_start: float = 0.0, t_end: float = 1.0
 ) -> float:
     """SPIKE-synchronization. Kreuz et al. 2015.
 
@@ -129,7 +131,7 @@ def spike_sync(
     total_possible = ta.size + tb.size
     for i in range(ta.size):
         diffs = np.abs(tb - ta[i])
-        j = np.argmin(diffs)
+        j = int(np.argmin(diffs))
         isi_a = _local_isi(ta, i)
         isi_b = _local_isi(tb, j)
         tau = min(isi_a, isi_b) / 2.0
@@ -137,7 +139,7 @@ def spike_sync(
             total_coincidences += 1
     for j in range(tb.size):
         diffs = np.abs(ta - tb[j])
-        i = np.argmin(diffs)
+        i = int(np.argmin(diffs))
         isi_a = _local_isi(ta, i)
         isi_b = _local_isi(tb, j)
         tau = min(isi_a, isi_b) / 2.0
@@ -149,12 +151,12 @@ def spike_sync(
 
 
 def spike_sync_profile(
-    times_a: np.ndarray,
-    times_b: np.ndarray,
+    times_a: np.ndarray[Any, Any],
+    times_b: np.ndarray[Any, Any],
     n_bins: int = 50,
     t_start: float = 0.0,
     t_end: float = 1.0,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """Binned SPIKE-synchronization profile. Kreuz et al. 2015."""
     edges = np.linspace(t_start, t_end, n_bins + 1)
     profile = np.zeros(n_bins)
@@ -169,12 +171,12 @@ def spike_sync_profile(
 
 
 def spike_profile(
-    times_a: np.ndarray,
-    times_b: np.ndarray,
+    times_a: np.ndarray[Any, Any],
+    times_b: np.ndarray[Any, Any],
     n_bins: int = 50,
     t_start: float = 0.0,
     t_end: float = 1.0,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """Binned SPIKE-distance profile. Kreuz et al. 2013."""
     edges = np.linspace(t_start, t_end, n_bins + 1)
     profile = np.zeros(n_bins)
@@ -188,8 +190,8 @@ def spike_profile(
 
 
 def isi_profile(
-    binary_train_a: np.ndarray, binary_train_b: np.ndarray, dt: float = 0.001, n_bins: int = 50
-) -> np.ndarray:
+    binary_train_a: np.ndarray[Any, Any], binary_train_b: np.ndarray[Any, Any], dt: float = 0.001, n_bins: int = 50
+) -> np.ndarray[Any, Any]:
     """Binned ISI-distance profile. Kreuz et al. 2007."""
     n = min(binary_train_a.size, binary_train_b.size)
     bin_size = max(1, n // n_bins)
@@ -204,8 +206,8 @@ def isi_profile(
 
 
 def adaptive_spike_distance(
-    times_a: np.ndarray,
-    times_b: np.ndarray,
+    times_a: np.ndarray[Any, Any],
+    times_b: np.ndarray[Any, Any],
     t_start: float = 0.0,
     t_end: float = 1.0,
     cost: float = 0.0,
@@ -226,7 +228,7 @@ def adaptive_spike_distance(
 
 
 def schreiber_similarity(
-    train_a: np.ndarray, train_b: np.ndarray, dt: float = 0.001, sigma_ms: float = 5.0
+    train_a: np.ndarray[Any, Any], train_b: np.ndarray[Any, Any], dt: float = 0.001, sigma_ms: float = 5.0
 ) -> float:
     """Schreiber et al. 2003 -- spike train similarity via smoothed correlation.
 
@@ -245,7 +247,7 @@ def schreiber_similarity(
 
 
 def hunter_milton_similarity(
-    times_a: np.ndarray, times_b: np.ndarray, dt_max: float = 0.01
+    times_a: np.ndarray[Any, Any], times_b: np.ndarray[Any, Any], dt_max: float = 0.01
 ) -> float:
     """Hunter-Milton 2003 similarity. Fraction of spikes with nearest-neighbour < dt_max."""
     if times_a.size == 0 or times_b.size == 0:
@@ -262,8 +264,8 @@ def hunter_milton_similarity(
 
 
 def earth_movers_distance(
-    times_a: np.ndarray,
-    times_b: np.ndarray,
+    times_a: np.ndarray[Any, Any],
+    times_b: np.ndarray[Any, Any],
     t_start: float = 0.0,
     t_end: float = 1.0,
     n_bins: int = 100,
@@ -282,8 +284,8 @@ def earth_movers_distance(
 
 
 def multi_neuron_victor_purpura(
-    spike_times_list: list[np.ndarray], cost_per_s: float = 1000.0
-) -> np.ndarray:
+    spike_times_list: list[np.ndarray[Any, Any]], cost_per_s: float = 1000.0
+) -> np.ndarray[Any, Any]:
     """All-pairs Victor-Purpura distance matrix for multiple neurons."""
     n = len(spike_times_list)
     mat = np.zeros((n, n))
@@ -294,7 +296,9 @@ def multi_neuron_victor_purpura(
     return mat
 
 
-def generalized_victor_purpura(times_a: np.ndarray, times_b: np.ndarray, cost_func=None) -> float:
+def generalized_victor_purpura(
+    times_a: np.ndarray[Any, Any], times_b: np.ndarray[Any, Any], cost_func: Callable[[float], float] | None = None
+) -> float:
     """Generalized Victor-Purpura with arbitrary cost function. Victor & Purpura 1997.
 
     cost_func(dt) returns the cost of shifting a spike by dt seconds.
@@ -302,7 +306,7 @@ def generalized_victor_purpura(times_a: np.ndarray, times_b: np.ndarray, cost_fu
     """
     if cost_func is None:
 
-        def cost_func(delta_t):
+        def cost_func(delta_t: float) -> float:
             return 1000.0 * abs(delta_t)
 
     na, nb = len(times_a), len(times_b)
@@ -323,21 +327,22 @@ def generalized_victor_purpura(times_a: np.ndarray, times_b: np.ndarray, cost_fu
 
 
 def spike_distance_matrix(
-    spike_times_list: list[np.ndarray],
+    spike_times_list: list[np.ndarray[Any, Any]],
     metric: str = "spike_distance",
     t_start: float = 0.0,
     t_end: float = 1.0,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """All-pairs spike train distance matrix.
 
     metric: 'spike_distance', 'spike_sync', 'victor_purpura'.
     """
-    funcs = {
+    _F = Callable[[np.ndarray[Any, Any], np.ndarray[Any, Any]], float]
+    funcs: dict[str, _F] = {
         "spike_distance": lambda a, b: spike_distance(a, b, t_start, t_end),
         "spike_sync": lambda a, b: 1.0 - spike_sync(a, b, t_start, t_end),
         "victor_purpura": lambda a, b: victor_purpura_distance(a, b),
     }
-    f = funcs.get(metric, funcs["spike_distance"])
+    f: _F = funcs.get(metric, funcs["spike_distance"])
     n = len(spike_times_list)
     mat = np.zeros((n, n))
     for i in range(n):

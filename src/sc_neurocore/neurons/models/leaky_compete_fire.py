@@ -15,7 +15,7 @@ class LeakyCompeteFireNeuron:
     """Oster, Douglas & Liu 2009 — winner-take-all with lateral inhibition."""
 
     n_units: int = 4
-    v: list = field(default_factory=lambda: [0.0] * 4)
+    v: list[float] = field(default_factory=lambda: [0.0] * 4)
     tau: float = 10.0
     v_threshold: float = 1.0
     w_inh: float = 0.5
@@ -24,7 +24,7 @@ class LeakyCompeteFireNeuron:
     def __post_init__(self) -> None:
         self.v = [0.0] * self.n_units
 
-    def step(self, currents) -> list:
+    def step(self, currents: list[float] | float) -> list[int]:
         if isinstance(currents, (int, float)):
             currents = [currents] * self.n_units
         spikes = [0] * self.n_units

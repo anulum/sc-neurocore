@@ -18,6 +18,8 @@ Reference: Stagsted et al. 2020 (RSS) — spiking PID on Loihi
 from __future__ import annotations
 
 
+from typing import Any
+
 import numpy as np
 
 
@@ -70,7 +72,7 @@ class SpikingPID:
         self._prev_error = error
         return self.Kp * error + self.Ki * self._integral + self.Kd * derivative
 
-    def step_spike(self, error: float, rng: np.random.RandomState | None = None) -> np.ndarray:
+    def step_spike(self, error: float, rng: np.random.RandomState | None = None) -> np.ndarray[Any, Any]:
         """Compute PID output as spike population.
 
         Returns binary spike vector of shape (3 * n_neurons,) representing
@@ -122,27 +124,27 @@ class SpikingKalmanFilter:
         self,
         n_states: int,
         n_measurements: int,
-        A: np.ndarray | None = None,
-        H: np.ndarray | None = None,
-        Q: np.ndarray | None = None,
-        R: np.ndarray | None = None,
+        A: np.ndarray[Any, Any] | None = None,
+        H: np.ndarray[Any, Any] | None = None,
+        Q: np.ndarray[Any, Any] | None = None,
+        R: np.ndarray[Any, Any] | None = None,
     ):
         self.n_states = n_states
         self.n_measurements = n_measurements
-        self.A = A if A is not None else np.eye(n_states)
-        self.H = H if H is not None else np.eye(n_measurements, n_states)
-        self.Q = Q if Q is not None else np.eye(n_states) * 0.01
-        self.R = R if R is not None else np.eye(n_measurements) * 0.1
-        self.x = np.zeros(n_states)
-        self.P = np.eye(n_states)
+        self.A: np.ndarray[Any, Any] = A if A is not None else np.eye(n_states)
+        self.H: np.ndarray[Any, Any] = H if H is not None else np.eye(n_measurements, n_states)
+        self.Q: np.ndarray[Any, Any] = Q if Q is not None else np.eye(n_states) * 0.01
+        self.R: np.ndarray[Any, Any] = R if R is not None else np.eye(n_measurements) * 0.1
+        self.x: np.ndarray[Any, Any] = np.zeros(n_states)
+        self.P: np.ndarray[Any, Any] = np.eye(n_states)
 
-    def predict(self) -> np.ndarray:
+    def predict(self) -> np.ndarray[Any, Any]:
         """Predict step: x = A @ x, P = A @ P @ A^T + Q."""
         self.x = self.A @ self.x
         self.P = self.A @ self.P @ self.A.T + self.Q
         return self.x.copy()
 
-    def update(self, z: np.ndarray) -> np.ndarray:
+    def update(self, z: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Update step with measurement z."""
         S = self.H @ self.P @ self.H.T + self.R
         K = self.P @ self.H.T @ np.linalg.inv(S)
@@ -151,7 +153,7 @@ class SpikingKalmanFilter:
         self.P = (np.eye(self.n_states) - K @ self.H) @ self.P
         return self.x.copy()
 
-    def step(self, z: np.ndarray) -> np.ndarray:
+    def step(self, z: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Predict + update in one call."""
         self.predict()
         return self.update(z)
@@ -176,7 +178,7 @@ class SpikingLQR:
     """
 
     def __init__(
-        self, A: np.ndarray, B: np.ndarray, Q: np.ndarray | None = None, R: np.ndarray | None = None
+        self, A: np.ndarray[Any, Any], B: np.ndarray[Any, Any], Q: np.ndarray[Any, Any] | None = None, R: np.ndarray[Any, Any] | None = None
     ):
         n = A.shape[0]
         m = B.shape[1]
@@ -186,7 +188,7 @@ class SpikingLQR:
         self.R = R if R is not None else np.eye(m)
         self.K = self._solve_dare()
 
-    def _solve_dare(self, max_iter: int = 200) -> np.ndarray:
+    def _solve_dare(self, max_iter: int = 200) -> np.ndarray[Any, Any]:
         """Solve discrete algebraic Riccati equation iteratively."""
         P = self.Q.copy()
         for _ in range(max_iter):
@@ -198,15 +200,17 @@ class SpikingLQR:
             if np.allclose(P, P_new, atol=1e-10):
                 break
             P = P_new
-        return np.linalg.solve(
+        result: np.ndarray[Any, Any] = np.linalg.solve(
             self.R + self.B.T @ P @ self.B,
             self.B.T @ P @ self.A,
         )
+        return result
 
-    def control(self, x: np.ndarray) -> np.ndarray:
+    def control(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Compute optimal control: u = -K @ x."""
-        return -self.K @ x
+        result: np.ndarray[Any, Any] = -self.K @ x
+        return result
 
     @property
-    def gain_matrix(self) -> np.ndarray:
+    def gain_matrix(self) -> np.ndarray[Any, Any]:
         return self.K.copy()

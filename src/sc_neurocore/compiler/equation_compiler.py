@@ -66,8 +66,8 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         self.intermediates: list[str] = []
 
     def visit_BinOp(self, node: ast.BinOp) -> str:
-        left = self.visit(node.left)
-        right = self.visit(node.right)
+        left: str = self.visit(node.left)
+        right: str = self.visit(node.right)
 
         if isinstance(node.op, ast.Add):
             return f"({left} + {right})"
@@ -83,8 +83,8 @@ class _VerilogExprEmitter(ast.NodeVisitor):
             return f"({tmp} >>> {self.q.fraction})[{self.q.data_width - 1}:0]"
         elif isinstance(node.op, ast.Div):
             # Division by constant → multiply by reciprocal
-            if isinstance(node.right, ast.Constant):
-                recip = 1.0 / node.right.value
+            if isinstance(node.right, ast.Constant) and isinstance(node.right.value, (int, float)):
+                recip = 1.0 / float(node.right.value)
                 recip_q = self.q.encode_signed_literal(recip)
                 tmp = f"_mul{self._mul_count}"
                 self._mul_count += 1
@@ -121,8 +121,8 @@ class _VerilogExprEmitter(ast.NodeVisitor):
                 and 4 <= node.right.value <= 8
             ):
                 # General small integer power via chained squaring
-                exp = node.right.value
-                prev = left
+                exp: int = node.right.value  # type: ignore[assignment]
+                prev: str = left
                 for step in range(exp - 1):
                     tmp = f"_mul{self._mul_count}"
                     self._mul_count += 1
@@ -132,16 +132,16 @@ class _VerilogExprEmitter(ast.NodeVisitor):
                     prev = f"({tmp} >>> {self.q.fraction})[{self.q.data_width - 1}:0]"
                 return prev
             raise ValueError(
-                f"Only integer powers 2-8 supported in Verilog, got {node.right.value}"
+                f"Only integer powers 2-8 supported in Verilog, got {ast.dump(node.right)}"
             )
         raise ValueError(f"Unsupported binary op: {type(node.op).__name__}")
 
     def visit_UnaryOp(self, node: ast.UnaryOp) -> str:
-        operand = self.visit(node.operand)
+        operand: str = self.visit(node.operand)
         if isinstance(node.op, ast.USub):
             return f"(-{operand})"
         if isinstance(node.op, ast.UAdd):
-            return operand
+            return str(operand)
         raise ValueError(f"Unsupported unary op: {type(node.op).__name__}")
 
     def visit_Name(self, node: ast.Name) -> str:
@@ -155,13 +155,14 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         return name
 
     def visit_Constant(self, node: ast.Constant) -> str:
-        return self.q.encode_signed_literal(float(node.value))
+        val: float = float(node.value) if isinstance(node.value, (int, float)) else 0.0
+        return self.q.encode_signed_literal(val)
 
     def visit_Compare(self, node: ast.Compare) -> str:
-        left = self.visit(node.left)
-        results = []
+        left: str = self.visit(node.left)
+        results: list[str] = []
         for op, comp in zip(node.ops, node.comparators):
-            right = self.visit(comp)
+            right: str = self.visit(comp)
             if isinstance(op, ast.Gt):
                 results.append(f"({left} > {right})")
             elif isinstance(op, ast.GtE):
@@ -180,7 +181,7 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         fname = node.func.id
         if len(node.args) < 1:
             raise ValueError(f"Function {fname} requires at least 1 argument")
-        arg = self.visit(node.args[0])
+        arg: str = self.visit(node.args[0])
 
         # Q8.8 LUT-based approximations for transcendental functions.
         # Each function is a 16-entry piecewise-linear LUT indexed by
@@ -205,13 +206,13 @@ class _VerilogExprEmitter(ast.NodeVisitor):
             return f"(({arg} < 0) ? (-{arg}) : {arg})"
         elif fname == "clip":
             if len(node.args) == 3:
-                lo = self.visit(node.args[1])
-                hi = self.visit(node.args[2])
+                lo: str = self.visit(node.args[1])
+                hi: str = self.visit(node.args[2])
                 return f"(({arg} < {lo}) ? {lo} : (({arg} > {hi}) ? {hi} : {arg}))"
             return arg
         elif fname in ("max", "min"):
             if len(node.args) >= 2:
-                b = self.visit(node.args[1])
+                b: str = self.visit(node.args[1])
                 if fname == "max":
                     return f"(({arg} > {b}) ? {arg} : {b})"
                 return f"(({arg} < {b}) ? {arg} : {b})"
@@ -302,7 +303,7 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         points = [(-8 + i) for i in range(16)]
         return [int(round(math.cos(x) * (1 << self.q.fraction))) for x in points]
 
-    def generic_visit(self, node):
+    def generic_visit(self, node: ast.AST) -> str:
         raise ValueError(f"Unsupported AST node for Verilog: {type(node).__name__}")
 
 
@@ -515,7 +516,7 @@ def equation_to_fpga(
     from ..neurons.equation_builder import from_equations
 
     # Split semicolons within single strings for convenience
-    expanded = []
+    expanded: list[str] = []
     for s in equation_strings:
         expanded.extend(part.strip() for part in s.split(";") if part.strip())
 

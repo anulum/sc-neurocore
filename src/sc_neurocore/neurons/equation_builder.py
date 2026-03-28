@@ -49,6 +49,7 @@ import ast
 import math
 import re
 from copy import deepcopy
+from typing import Any
 
 import numpy as np
 
@@ -82,7 +83,7 @@ class EquationNeuron:
         self.dt = dt
         self.method = method
 
-        def _sigmoid(x):
+        def _sigmoid(x: float) -> Any:
             return 1.0 / (1.0 + np.exp(-np.clip(x, -500, 500)))
 
         self._namespace = {
@@ -187,8 +188,8 @@ class EquationNeuron:
             if isinstance(node, ast.Attribute) and node.attr in self._BLOCKED_NAMES:
                 raise ValueError(f"Blocked attribute {node.attr!r} in equation: {expr!r}")
 
-    def _build_env(self, **kwargs):
-        env = dict(self._namespace)
+    def _build_env(self, **kwargs: float) -> dict[str, object]:
+        env: dict[str, object] = dict(self._namespace)
         # Euler-Maruyama: noise scaled by sqrt(dt)/dt so that after deriv*dt
         # the net noise is noise_scale * sqrt(dt) * N(0,1)
         env["xi"] = self._noise_scale * np.random.randn() / max(self.dt, 1e-12) ** 0.5
@@ -198,7 +199,7 @@ class EquationNeuron:
         env.update(kwargs)
         return env
 
-    def step(self, I: float = 0.0, **kwargs) -> int:
+    def step(self, I: float = 0.0, **kwargs: float) -> int:
         kwargs["I"] = I
         env = self._build_env(**kwargs)
 
@@ -214,8 +215,8 @@ class EquationNeuron:
 
             xi_sample = self._noise_scale * np.random.randn() / max(self.dt, 1e-12) ** 0.5
 
-            def eval_derivs(state_override):
-                e = dict(self._namespace)
+            def eval_derivs(state_override: dict[str, float]) -> dict[str, float]:
+                e: dict[str, object] = dict(self._namespace)
                 e.update(self.parameters)
                 e.update(self.constants)
                 e.update(state_override)
@@ -253,7 +254,7 @@ class EquationNeuron:
     def reset(self) -> None:
         self.state = deepcopy(self.initial_state)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         eqs = ", ".join(f"d{k}/dt = {v}" for k, v in self.equations.items())
         return f"EquationNeuron({eqs})"
 

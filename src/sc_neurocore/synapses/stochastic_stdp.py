@@ -61,10 +61,10 @@ class StochasticSTDPSynapse(BitstreamSynapse):
 
         return output_bit
 
-    def _potentiate(self):
+    def _potentiate(self) -> None:
         new_w = min(self.w_max, self.w + self.learning_rate * (self.w_max - self.w_min))
         self.update_weight(new_w)
 
-    def _depress(self):
+    def _depress(self) -> None:
         new_w = max(self.w_min, self.w - self.learning_rate * (self.w_max - self.w_min))
         self.update_weight(new_w)

@@ -5,6 +5,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Interval arithmetic checker for stochastic probability
 
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass
 
@@ -16,10 +18,10 @@ class Interval:
     min_val: float
     max_val: float
 
-    def __add__(self, other) -> None:
+    def __add__(self, other: Interval) -> Interval:
         return Interval(self.min_val + other.min_val, self.max_val + other.max_val)
 
-    def __mul__(self, other) -> None:
+    def __mul__(self, other: Interval) -> Interval:
         # Interval multiplication
         vals = [
             self.min_val * other.min_val,
@@ -29,7 +31,7 @@ class Interval:
         ]
         return Interval(min(vals), max(vals))
 
-    def __repr__(self) -> None:
+    def __repr__(self) -> str:
         return f"[{self.min_val:.4f}, {self.max_val:.4f}]"
 
 

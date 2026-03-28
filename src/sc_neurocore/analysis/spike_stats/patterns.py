@@ -9,11 +9,13 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 
 def spike_directionality(
-    times_a: np.ndarray, times_b: np.ndarray, t_start: float = 0.0, t_end: float = 1.0
+    times_a: np.ndarray[Any, Any], times_b: np.ndarray[Any, Any], t_start: float = 0.0, t_end: float = 1.0
 ) -> float:
     """Spike directionality. Kreuz et al. 2015.
 
@@ -43,8 +45,8 @@ def spike_directionality(
 
 
 def spike_train_order(
-    times_list: list[np.ndarray], t_start: float = 0.0, t_end: float = 1.0
-) -> np.ndarray:
+    times_list: list[np.ndarray[Any, Any]], t_start: float = 0.0, t_end: float = 1.0
+) -> np.ndarray[Any, Any]:
     """Spike train order matrix. Kreuz et al. 2017.
 
     Returns (n x n) matrix of pairwise directionality values.
@@ -60,8 +62,8 @@ def spike_train_order(
 
 
 def cubic_higher_order(
-    binary_train: np.ndarray, dt: float = 0.001, max_lag: int = 20
-) -> np.ndarray:
+    binary_train: np.ndarray[Any, Any], dt: float = 0.001, max_lag: int = 20
+) -> np.ndarray[Any, Any]:
     """Third-order cumulant (bispectrum domain). Nikias & Petropulu 1993.
 
     Returns 2D array C3(tau1, tau2) for lag pairs up to max_lag.

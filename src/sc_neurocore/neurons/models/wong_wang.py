@@ -8,6 +8,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
+
 import numpy as np
 
 
@@ -25,14 +27,14 @@ class WongWangUnit:
     sigma: float = 0.02
     dt: float = 0.001
 
-    def _phi(self, i_syn):
+    def _phi(self, i_syn: float) -> Any:
         a, b, d = 270.0, 108.0, 0.154
         x = a * i_syn - b
         if abs(x) < 1e-6:
             return 1.0 / d
         return x / (1.0 - np.exp(-d * x))
 
-    def step(self, stim1: float = 0.0, stim2: float = 0.0) -> tuple:
+    def step(self, stim1: float = 0.0, stim2: float = 0.0) -> tuple[Any, Any]:
         i1 = (
             self.j_n * self.s1
             - self.j_cross * self.s2

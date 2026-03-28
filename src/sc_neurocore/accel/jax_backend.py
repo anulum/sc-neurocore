@@ -21,6 +21,9 @@ Usage::
         packed = jax_pack_bitstream(bits)
 """
 
+from __future__ import annotations
+
+import types
 from typing import Any
 import numpy as np
 
@@ -32,7 +35,7 @@ try:
     HAS_JAX = True
 except ImportError:
     HAS_JAX = False
-    jnp = np
+    jnp: types.ModuleType = np
 
 __all__ = [
     "jax",
@@ -220,7 +223,7 @@ if HAS_JAX:
         Returns (updated_weights, loss_value).
         """
 
-        def loss_fn(ws):
+        def loss_fn(ws: list[jax.Array]) -> jax.Array:
             batch = x.shape[0]
             spikes_in = x
             for W in ws:

@@ -35,7 +35,7 @@ from typing import Any
 import numpy as np
 
 
-def sc_prob_to_statevector(p: float) -> np.ndarray:
+def sc_prob_to_statevector(p: float) -> np.ndarray[Any, Any]:
     """Encode SC probability as a single-qubit state vector.
 
     |ψ⟩ = √(1-p)|0⟩ + √p|1⟩  →  P(measure |1⟩) = p exactly.
@@ -44,7 +44,7 @@ def sc_prob_to_statevector(p: float) -> np.ndarray:
     return np.array([np.sqrt(1.0 - p), np.sqrt(p)], dtype=complex)
 
 
-def statevector_to_prob(sv: np.ndarray) -> float:
+def statevector_to_prob(sv: np.ndarray[Any, Any]) -> float:
     """Extract SC probability from a single-qubit state vector via Born rule."""
     return float(np.abs(sv[1]) ** 2)
 
@@ -55,7 +55,7 @@ _X = np.array([[0, 1], [1, 0]], dtype=complex)  # Pauli-X (NOT)
 _H = np.array([[1, 1], [1, -1]], dtype=complex) / np.sqrt(2)  # Hadamard
 
 
-def ry_gate(theta: float) -> np.ndarray:
+def ry_gate(theta: float) -> np.ndarray[Any, Any]:
     """Ry rotation gate: encodes probability via rotation angle."""
     c = np.cos(theta / 2)
     s = np.sin(theta / 2)
@@ -64,7 +64,7 @@ def ry_gate(theta: float) -> np.ndarray:
 
 def prob_to_ry_angle(p: float) -> float:
     """Compute Ry angle that encodes probability p: sin²(θ/2) = p."""
-    return 2.0 * np.arcsin(np.sqrt(np.clip(p, 0.0, 1.0)))
+    return float(2.0 * np.arcsin(np.sqrt(np.clip(p, 0.0, 1.0))))
 
 
 @dataclass
@@ -72,7 +72,7 @@ class QuantumGate:
     """A quantum gate applied to specific qubits."""
 
     name: str
-    matrix: np.ndarray
+    matrix: np.ndarray[Any, Any]
     qubits: list[int]  # target qubit indices
 
 
@@ -85,7 +85,7 @@ class SCQuantumCircuit:
     input_qubits: list[int]
     output_qubit: int
 
-    def simulate(self) -> np.ndarray:
+    def simulate(self) -> np.ndarray[Any, Any]:
         """Simulate the circuit and return the full statevector."""
         dim = 2**self.n_qubits
         state = np.zeros(dim, dtype=complex)
@@ -105,7 +105,7 @@ class SCQuantumCircuit:
                 prob += np.abs(state[i]) ** 2
         return float(prob)
 
-    def simulate_noisy(self, noise_model) -> np.ndarray:
+    def simulate_noisy(self, noise_model: Any) -> np.ndarray[Any, Any]:
         """Simulate with noise: evolve density matrix through Kraus channels.
 
         Parameters
@@ -131,7 +131,7 @@ class SCQuantumCircuit:
             rho = _apply_single_qubit_channel(rho, noise_model, q, self.n_qubits)
         return rho
 
-    def output_probability_noisy(self, noise_model, n_shots: int = 1000) -> float:
+    def output_probability_noisy(self, noise_model: Any, n_shots: int = 1000) -> float:
         """Simulate with noise and return P(output=1) via measurement sampling.
 
         Parameters
@@ -164,8 +164,8 @@ class SCQuantumCircuit:
 
 
 def _apply_gate(
-    state: np.ndarray, gate: np.ndarray, qubits: list[int], n_qubits: int
-) -> np.ndarray:
+    state: np.ndarray[Any, Any], gate: np.ndarray[Any, Any], qubits: list[int], n_qubits: int
+) -> np.ndarray[Any, Any]:
     """Apply a gate to specific qubits in a full statevector."""
     if len(qubits) == 1:
         return _apply_single_qubit_gate(state, gate, qubits[0], n_qubits)
@@ -175,8 +175,8 @@ def _apply_gate(
 
 
 def _apply_single_qubit_gate(
-    state: np.ndarray, gate: np.ndarray, qubit: int, n_qubits: int
-) -> np.ndarray:
+    state: np.ndarray[Any, Any], gate: np.ndarray[Any, Any], qubit: int, n_qubits: int
+) -> np.ndarray[Any, Any]:
     """Apply a 2x2 gate to one qubit in a multi-qubit state."""
     dim = 2**n_qubits
     new_state = np.zeros(dim, dtype=complex)
@@ -191,8 +191,8 @@ def _apply_single_qubit_gate(
 
 
 def _apply_two_qubit_gate(
-    state: np.ndarray, gate: np.ndarray, q0: int, q1: int, n_qubits: int
-) -> np.ndarray:
+    state: np.ndarray[Any, Any], gate: np.ndarray[Any, Any], q0: int, q1: int, n_qubits: int
+) -> np.ndarray[Any, Any]:
     """Apply a 4x4 gate to two qubits."""
     dim = 2**n_qubits
     new_state = np.zeros(dim, dtype=complex)
@@ -209,8 +209,8 @@ def _apply_two_qubit_gate(
 
 
 def _apply_single_qubit_channel(
-    rho: np.ndarray, noise_model, qubit: int, n_qubits: int
-) -> np.ndarray:
+    rho: np.ndarray[Any, Any], noise_model: Any, qubit: int, n_qubits: int
+) -> np.ndarray[Any, Any]:
     """Apply single-qubit noise channel to one qubit of a multi-qubit density matrix."""
     dim = 2**n_qubits
     # Get Kraus operators for the noise channel
@@ -258,7 +258,7 @@ def compile_sc_multiply(p_a: float, p_b: float) -> SCQuantumCircuit:
     return circuit
 
 
-def compile_sc_layer(weights: np.ndarray, input_probs: np.ndarray) -> list[dict[str, Any]]:
+def compile_sc_layer(weights: np.ndarray[Any, Any], input_probs: np.ndarray[Any, Any]) -> list[dict[str, Any]]:
     """Compile an SC dense layer to quantum gate descriptions.
 
     Parameters

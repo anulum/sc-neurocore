@@ -8,7 +8,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
+
 import numpy as np
+from numpy.typing import NDArray
 
 
 @dataclass
@@ -28,20 +31,20 @@ class AmariNeuralField:
     b_width: float = 2.0
     dx: float = 0.5
     dt: float = 0.5
-    u: np.ndarray = field(default=None, repr=False)
-    _w: np.ndarray = field(default=None, repr=False)
+    u: NDArray[Any] = field(default=None, repr=False)  # type: ignore[arg-type]
+    _w: NDArray[Any] = field(default=None, repr=False)  # type: ignore[arg-type]
 
     def __post_init__(self) -> None:
         if self.u is None:
             self.u = np.zeros(self.n)
         self._build_kernel()
 
-    def _build_kernel(self):
+    def _build_kernel(self) -> None:
         x = np.abs(np.arange(self.n) - self.n // 2) * self.dx
         k = self.a_exc * np.exp(-self.a_width * x) - self.b_inh * np.exp(-self.b_width * x)
         self._w = np.roll(k, -self.n // 2)
 
-    def step(self, current: np.ndarray) -> float:
+    def step(self, current: NDArray[Any]) -> float:
         """Advance one timestep. Returns mean activation."""
         f_u = np.maximum(self.u, 0.0)
         conv = np.real(np.fft.ifft(np.fft.fft(self._w) * np.fft.fft(f_u))) * self.dx

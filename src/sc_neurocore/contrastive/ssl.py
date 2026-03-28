@@ -17,6 +17,7 @@ No SNN library ships self-supervised learning utilities.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -39,8 +40,8 @@ class SpikeContrastiveLoss:
 
     def compute(
         self,
-        view_a: np.ndarray,
-        view_b: np.ndarray,
+        view_a: np.ndarray[Any, Any],
+        view_b: np.ndarray[Any, Any],
     ) -> float:
         """Compute contrastive loss for a batch of spike-rate pairs.
 
@@ -104,10 +105,10 @@ class CSDPRule:
 
     def positive_update(
         self,
-        weights: np.ndarray,
-        pre_spikes: np.ndarray,
-        post_spikes: np.ndarray,
-    ) -> np.ndarray:
+        weights: np.ndarray[Any, Any],
+        pre_spikes: np.ndarray[Any, Any],
+        post_spikes: np.ndarray[Any, Any],
+    ) -> np.ndarray[Any, Any]:
         """Hebbian update from positive (real) data.
 
         dW = lr * (post @ pre^T) - decay * W
@@ -117,10 +118,10 @@ class CSDPRule:
 
     def negative_update(
         self,
-        weights: np.ndarray,
-        pre_spikes: np.ndarray,
-        post_spikes: np.ndarray,
-    ) -> np.ndarray:
+        weights: np.ndarray[Any, Any],
+        pre_spikes: np.ndarray[Any, Any],
+        post_spikes: np.ndarray[Any, Any],
+    ) -> np.ndarray[Any, Any]:
         """Anti-Hebbian update from negative (corrupted) data.
 
         dW = -lr * (post @ pre^T)
@@ -130,18 +131,18 @@ class CSDPRule:
 
     def contrastive_step(
         self,
-        weights: np.ndarray,
-        pos_pre: np.ndarray,
-        pos_post: np.ndarray,
-        neg_pre: np.ndarray,
-        neg_post: np.ndarray,
-    ) -> np.ndarray:
+        weights: np.ndarray[Any, Any],
+        pos_pre: np.ndarray[Any, Any],
+        pos_post: np.ndarray[Any, Any],
+        neg_pre: np.ndarray[Any, Any],
+        neg_post: np.ndarray[Any, Any],
+    ) -> np.ndarray[Any, Any]:
         """Full contrastive update: positive + negative phase."""
         w = self.positive_update(weights, pos_pre, pos_post)
         w = self.negative_update(w, neg_pre, neg_post)
         return w
 
-    def goodness(self, activations: np.ndarray) -> float:
+    def goodness(self, activations: np.ndarray[Any, Any]) -> float:
         """Compute 'goodness' score (sum of squared activations).
 
         Positive data should have high goodness, negative data low.

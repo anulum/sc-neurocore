@@ -19,6 +19,7 @@ Reference: Plana et al. 2022 — Spike-based logic gates on SpiNNaker
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -49,7 +50,7 @@ class SpikeGate:
         raise ValueError(f"Unknown gate: {self.gate_type}")  # pragma: no cover
 
     @property
-    def lif_config(self) -> dict:
+    def lif_config(self) -> dict[str, Any]:
         """LIF neuron configuration for this gate.
 
         Returns threshold, excitatory/inhibitory input weights.
@@ -77,11 +78,11 @@ class SpikeRegister:
         Register width.
     """
 
-    def __init__(self, n_bits: int = 8):
+    def __init__(self, n_bits: int = 8) -> None:
         self.n_bits = n_bits
         self._state = np.zeros(n_bits, dtype=np.int8)
 
-    def write(self, value: int):
+    def write(self, value: int) -> None:
         """Write an integer value to the register."""
         for i in range(self.n_bits):
             self._state[i] = (value >> i) & 1
@@ -93,15 +94,15 @@ class SpikeRegister:
             value |= int(self._state[i]) << i
         return value
 
-    def write_bits(self, bits: np.ndarray):
+    def write_bits(self, bits: np.ndarray) -> None:
         """Write raw bit array."""
-        self._state = bits[: self.n_bits].astype(np.int8)
+        self._state = bits[: self.n_bits].astype(np.int8)  # type: ignore[assignment]
 
     def read_bits(self) -> np.ndarray:  # pragma: no cover
         """Read raw bit array."""
         return self._state.copy()
 
-    def clear(self):
+    def clear(self) -> None:
         self._state[:] = 0
 
 
@@ -117,7 +118,7 @@ class SpikeALU:
         Word width.
     """
 
-    def __init__(self, n_bits: int = 8):
+    def __init__(self, n_bits: int = 8) -> None:
         self.n_bits = n_bits
         self._and = SpikeGate("AND")
         self._xor = SpikeGate("XOR")

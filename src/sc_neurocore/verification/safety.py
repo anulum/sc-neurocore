@@ -5,9 +5,12 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — AST blocklist screen for auto-generated code
 
+from __future__ import annotations
+
 import ast
 import logging
 from dataclasses import dataclass
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +131,7 @@ class CodeSafetyVerifier:
 
         return True
 
-    def verify_logic_invariant(self, func, input_sample, expected_condition) -> None:
+    def verify_logic_invariant(self, func: Any, input_sample: Any, expected_condition: Any) -> bool:
         """Dynamic verification: run func and check output against condition."""
         try:
             res = func(input_sample)

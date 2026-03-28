@@ -5,8 +5,6 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — SCPN L5 Organismal-Psychoemotional Layer (Stochastic
 
-from typing import Any, Optional
-
 """
 SCPN L5: Organismal-Psychoemotional Layer (Stochastic Implementation)
 ======================================================================
@@ -23,10 +21,13 @@ Key Features:
 
 """
 
-from dataclasses import dataclass
-import numpy as np
+from __future__ import annotations
+
 import logging
-from typing import Dict, List
+from dataclasses import dataclass
+from typing import Any
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +78,7 @@ class L5_OrganismalLayer:
     FAIRNESS = 6  # Fair-Unfair
     SAFETY = 7  # Safe-Threatened
 
-    def __init__(self, params: Optional[L5_StochasticParameters] = None):
+    def __init__(self, params: L5_StochasticParameters | None = None) -> None:
         self.params = params or L5_StochasticParameters()
 
         # Emotional state vector
@@ -93,7 +94,7 @@ class L5_OrganismalLayer:
         # Heart dynamics
         self.heart_rate = self.params.base_heart_rate
         self.hrv_phase = 0.0
-        self.rr_intervals: List[float] = []
+        self.rr_intervals: list[float] = []
 
         # Interoceptive state (body sense)
         self.interoceptive_state = np.random.random(self.params.n_autonomic_nodes) * 0.3
@@ -104,7 +105,7 @@ class L5_OrganismalLayer:
         # Time tracking
         self.time = 0.0
 
-    def _init_emotional_attractors(self) -> np.ndarray[Any, Any]:
+    def _init_emotional_attractors(self) -> np.ndarray:
         """Initialize emotional attractor states."""
         # Define stable emotional configurations
         attractors = np.array(
@@ -121,9 +122,9 @@ class L5_OrganismalLayer:
     def step(
         self,
         dt: float,
-        l4_input: Optional[Dict[str, Any]] = None,
-        external_event: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, np.ndarray[Any, Any]]:
+        l4_input: dict[str, Any] | None = None,
+        external_event: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """
         Advance the layer by one time step.
 

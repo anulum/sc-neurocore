@@ -8,6 +8,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
+
 import numpy as np
 
 
@@ -34,7 +36,7 @@ class JansenRitUnit:
     r: float = 0.56
     dt: float = 0.001
 
-    def _sigmoid(self, x):
+    def _sigmoid(self, x: float) -> Any:
         return 2.0 * self.e0 / (1.0 + np.exp(self.r * (self.v0 - x)))
 
     def step(self, p_ext: float = 220.0) -> float:

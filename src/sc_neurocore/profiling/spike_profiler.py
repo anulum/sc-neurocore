@@ -149,7 +149,7 @@ class SpikeProfiler:
         dead_threshold: float = 0.01,
         saturated_threshold: float = 0.95,
         gradient_explosion_ratio: float = 100.0,
-    ):
+    ) -> None:
         self.dead_threshold = dead_threshold
         self.saturated_threshold = saturated_threshold
         self.gradient_explosion_ratio = gradient_explosion_ratio
@@ -162,7 +162,7 @@ class SpikeProfiler:
         spikes: np.ndarray,
         voltages: np.ndarray | None = None,
         gradients: np.ndarray | None = None,
-    ):
+    ) -> None:
         """Record one timestep of data for a layer.
 
         Parameters
@@ -315,7 +315,7 @@ class SpikeProfiler:
 class _LayerAccumulator:
     """Internal: accumulates per-step data for one layer."""
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         self.name = name
         self._spike_sums: np.ndarray | None = None
         self._n_neurons = 0
@@ -335,14 +335,14 @@ class _LayerAccumulator:
         spikes: np.ndarray,
         voltages: np.ndarray | None,
         gradients: np.ndarray | None,
-    ):
+    ) -> None:
         # Flatten batch dimension if present
         if spikes.ndim > 1:
             spikes_flat = spikes.reshape(-1, spikes.shape[-1])
             spikes_summed = spikes_flat.sum(axis=0)
         else:
             spikes_summed = spikes
-            spikes_flat = spikes[np.newaxis]
+            spikes_flat = spikes[np.newaxis]  # type: ignore[assignment]
 
         n_neurons = spikes_summed.shape[0]
 

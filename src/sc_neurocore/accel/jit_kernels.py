@@ -5,9 +5,13 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Packs a uint8 bitstream into uint64 array
 
-from typing import Any
+from __future__ import annotations
+
+from typing import Any, Callable, TypeVar
 import numpy as np
 import warnings
+
+_F = TypeVar("_F", bound=Callable[..., Any])
 
 # Try to import Numba
 try:
@@ -18,8 +22,8 @@ except ImportError:
     HAS_NUMBA = False
 
     # Fallback decorator: returns the original function
-    def jit(*args, **kwargs) -> None:
-        def decorator(func) -> None:
+    def jit(*args: Any, **kwargs: Any) -> Callable[[_F], _F]:
+        def decorator(func: _F) -> _F:
             return func
 
         return decorator
@@ -51,11 +55,11 @@ def jit_pack_bits(
 
 
 @jit(nopython=True)
-def jit_vec_mac(  # type: ignore
+def jit_vec_mac(
     packed_weights: np.ndarray[Any, Any],
     packed_inputs: np.ndarray[Any, Any],
     outputs: np.ndarray[Any, Any],
-):  # pragma: no cover
+) -> None:  # pragma: no cover
     """
     Vectorized Multiply-Accumulate (MAC).
     Simulates: Output[i] = Sum(Weights[i] AND Inputs)

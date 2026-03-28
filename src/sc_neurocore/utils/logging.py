@@ -24,6 +24,7 @@ import json
 import logging
 import sys
 from datetime import datetime, timezone
+from typing import IO
 
 
 class JSONFormatter(logging.Formatter):
@@ -47,7 +48,7 @@ _HUMAN_FMT = "%(asctime)s %(levelname)-8s %(name)s — %(message)s"
 def configure_logging(
     level: str | int = "WARNING",
     json: bool = False,  # noqa: A002 — shadows builtin intentionally for clean API
-    stream: object | None = None,
+    stream: IO[str] | None = None,
 ) -> None:
     """Configure the ``sc_neurocore`` logger hierarchy.
 

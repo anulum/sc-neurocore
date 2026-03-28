@@ -5,8 +5,6 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — 3D Generation Module
 
-from typing import Any, Optional
-
 """
 SC-NeuroCore 3D Generation Module
 ==================================
@@ -16,11 +14,14 @@ probability distributions using the Marching Cubes algorithm.
 
 """
 
-import logging
-import numpy as np
-from dataclasses import dataclass
-from typing import Dict, List, Tuple
+from __future__ import annotations
+
 import json
+import logging
+from dataclasses import dataclass
+from typing import Any
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -323,7 +324,7 @@ class SC3DGenerator:
     iso_level: float = 0.5  # Threshold for surface extraction
 
     def export_point_cloud_json(
-        self, points: np.ndarray[Any, Any], intensities: np.ndarray[Any, Any], filename: str
+        self, points: np.ndarray, intensities: np.ndarray, filename: str
     ) -> None:
         """
         Export a point cloud to JSON format.
@@ -345,8 +346,8 @@ class SC3DGenerator:
         logger.info("3D Export: Saved %d points to %s", len(points), filename)
 
     def generate_surface_mesh(
-        self, voxel_grid: np.ndarray[Any, Any], iso_level: Optional[float] = None
-    ) -> Dict[str, Any]:
+        self, voxel_grid: np.ndarray, iso_level: float | None = None
+    ) -> dict[str, Any]:
         """
         Generate a surface mesh from a voxel grid using Marching Cubes.
 
@@ -423,8 +424,8 @@ class SC3DGenerator:
         }
 
     def _get_edge_vertices(
-        self, i: int, j: int, k: int, cube_vals: List[float], iso_level: float
-    ) -> Dict[int, np.ndarray[Any, Any]]:
+        self, i: int, j: int, k: int, cube_vals: list[float], iso_level: float
+    ) -> dict[int, np.ndarray]:
         """Compute vertex positions along cube edges."""
         # Cube corner positions
         corners = np.array(
@@ -470,8 +471,8 @@ class SC3DGenerator:
         return edge_verts
 
     def _compute_normals(
-        self, vertices: np.ndarray[Any, Any], faces: np.ndarray[Any, Any]
-    ) -> np.ndarray[Any, Any]:
+        self, vertices: np.ndarray, faces: np.ndarray
+    ) -> np.ndarray:
         """Compute vertex normals from face normals."""
         if len(vertices) == 0 or len(faces) == 0:
             return np.zeros((0, 3))
@@ -498,7 +499,7 @@ class SC3DGenerator:
 
         return normals
 
-    def export_mesh_obj(self, mesh: Dict[str, Any], filename: str) -> None:
+    def export_mesh_obj(self, mesh: dict[str, Any], filename: str) -> None:
         """
         Export mesh to OBJ format.
 
@@ -532,7 +533,7 @@ class SC3DGenerator:
 
         logger.info("3D Export: Saved mesh to %s", filename)
 
-    def export_mesh_json(self, mesh: Dict[str, Any], filename: str) -> None:
+    def export_mesh_json(self, mesh: dict[str, Any], filename: str) -> None:
         """
         Export mesh to JSON format.
 
@@ -554,8 +555,8 @@ class SC3DGenerator:
         logger.info("3D Export: Saved mesh JSON to %s", filename)
 
     def bitstream_to_voxels(
-        self, bitstreams: np.ndarray[Any, Any], grid_size: Tuple[int, int, int] = (16, 16, 16)
-    ) -> np.ndarray[Any, Any]:
+        self, bitstreams: np.ndarray, grid_size: tuple[int, int, int] = (16, 16, 16)
+    ) -> np.ndarray:
         """
         Convert bitstream outputs to a voxel grid.
 
@@ -586,8 +587,8 @@ class SC3DGenerator:
         return voxel_values.reshape(grid_size)
 
     def generate_from_scpn(
-        self, scpn_outputs: Dict[str, Any], grid_size: Tuple[int, int, int] = (16, 16, 16)
-    ) -> Dict[str, Any]:
+        self, scpn_outputs: dict[str, Any], grid_size: tuple[int, int, int] = (16, 16, 16)
+    ) -> dict[str, Any]:
         """
         Generate 3D mesh directly from SCPN layer outputs.
 

@@ -69,7 +69,7 @@ class HardwareAwareSCLayer:
         # Apply stuck-at defects to initial weights
         self._apply_defects()
 
-    def _apply_defects(self):
+    def _apply_defects(self) -> None:
         self._layer.weights[self.stuck_mask] = self.stuck_values[self.stuck_mask]
         if self.variability > 0:
             noise = np.random.RandomState(self.seed + 1).normal(
@@ -79,10 +79,10 @@ class HardwareAwareSCLayer:
             self._layer.weights[mask] = np.clip(self._layer.weights[mask] + noise[mask], 0.0, 1.0)
         self._layer._refresh_packed_weights()
 
-    def forward(self, input_values) -> np.ndarray:
+    def forward(self, input_values: list[float] | np.ndarray) -> np.ndarray:
         return self._layer.forward(input_values)
 
-    def update_weights(self, gradient: np.ndarray, lr: float = 0.01):
+    def update_weights(self, gradient: np.ndarray, lr: float = 0.01) -> None:
         """Update weights with gradient, respecting stuck-at mask.
 
         Stuck synapses receive zero gradient — the network learns

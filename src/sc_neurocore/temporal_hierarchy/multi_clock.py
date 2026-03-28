@@ -112,7 +112,7 @@ class HetSynLayer:
         self._v = np.zeros(self.n_neurons)
 
     @property
-    def tau_stats(self) -> dict:
+    def tau_stats(self) -> dict[str, float]:
         return {
             "mean": float(self.tau.mean()),
             "std": float(self.tau.std()),

@@ -5,15 +5,17 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Training loops for stochastic computing networks (RL and
 
-from typing import Any
-
 """Training loops for stochastic computing networks (RL and multimodal fusion)."""
 
+from __future__ import annotations
+
 import logging
+from typing import Any, Callable
+
 import numpy as np
-from typing import Callable
-from ..synapses.r_stdp import RewardModulatedSTDPSynapse
+
 from ..layers.sc_learning_layer import SCLearningLayer
+from ..synapses.r_stdp import RewardModulatedSTDPSynapse
 
 logger = logging.getLogger(__name__)
 
@@ -24,12 +26,12 @@ class SCTrainingLoop:
     """
 
     @staticmethod
-    def run_rl_epoch(  # type: ignore
+    def run_rl_epoch(
         agent: SCLearningLayer,
-        env_step_func: Callable[[np.ndarray[Any, Any]], float],
-        input_data: np.ndarray[Any, Any],
+        env_step_func: Callable[[np.ndarray], float],
+        input_data: np.ndarray,
         generations: int = 10,
-    ):
+    ) -> None:
         """
         Runs a reinforcement learning epoch.
         Uses RewardModulatedSTDPSynapse logic.
@@ -51,7 +53,7 @@ class SCTrainingLoop:
             logger.info("RL Epoch %d: Reward = %.4f", gen, reward)
 
     @staticmethod
-    def train_multimodal_fusion(fusion_layer, dataset, epochs: int = 5) -> None:
+    def train_multimodal_fusion(fusion_layer: object, dataset: object, epochs: int = 5) -> None:
         """
         Stub for training weights in a fusion layer.
         """

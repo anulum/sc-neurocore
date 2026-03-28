@@ -106,7 +106,7 @@ class EventDrivenSimulator:
         self._event_queue: list[SpikeEvent] = []
         self._spike_log: list[tuple[float, int]] = []
 
-    def inject_spikes(self, events: list[tuple[float, int]]):
+    def inject_spikes(self, events: list[tuple[float, int]]) -> None:
         """Inject external spike events.
 
         Parameters
@@ -121,7 +121,7 @@ class EventDrivenSimulator:
                     SpikeEvent(time=t + d, source_id=nid, target_id=tgt, weight=w, delay=d),
                 )
 
-    def inject_current(self, events: list[tuple[float, int, float]]):
+    def inject_current(self, events: list[tuple[float, int, float]]) -> None:
         """Inject current pulses.
 
         Parameters
