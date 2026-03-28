@@ -8,21 +8,28 @@
 """Train SNNs through quantization for hardware deployment."""
 
 from .quantize import QuantizedSNNLayer, quantize_aware_train_step, TernaryWeights
-from .torch_qat import (
-    QuantizedLIFNet,
-    QuantizedLinear,
-    SCAwareLIFNet,
-    SCAwareLinear,
-    ste_quantize,
-)
 
 __all__ = [
     "QuantizedSNNLayer",
     "quantize_aware_train_step",
     "TernaryWeights",
-    "QuantizedLIFNet",
-    "QuantizedLinear",
-    "SCAwareLIFNet",
-    "SCAwareLinear",
-    "ste_quantize",
 ]
+
+try:
+    from .torch_qat import (
+        QuantizedLIFNet,
+        QuantizedLinear,
+        SCAwareLIFNet,
+        SCAwareLinear,
+        ste_quantize,
+    )
+
+    __all__ += [
+        "QuantizedLIFNet",
+        "QuantizedLinear",
+        "SCAwareLIFNet",
+        "SCAwareLinear",
+        "ste_quantize",
+    ]
+except ImportError:
+    pass
