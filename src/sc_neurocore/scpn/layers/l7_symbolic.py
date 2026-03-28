@@ -118,7 +118,7 @@ class L7_SymbolicLayer:
         l6_input: Optional[Dict[str, Any]] = None,
         symbol_input: Optional[np.ndarray[Any, Any]] = None,
         acupoint_stimulus: Optional[Dict[int, float]] = None,
-    ) -> Dict[str, np.ndarray[Any, Any]]:
+    ) -> Dict[str, Any]:
         """
         Advance the layer by one time step.
 
@@ -226,7 +226,7 @@ class L7_SymbolicLayer:
         self.acupoint_activations *= 1.0 - self.params.symbol_decay * dt
 
         # 10. Assemble glyph vector
-        self.glyph_vector = np.array(
+        self.glyph_vector = np.array(  # type: ignore[assignment]
             [
                 self.phi_alignment,
                 self.fibonacci_alignment,
