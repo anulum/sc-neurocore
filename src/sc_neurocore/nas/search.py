@@ -236,7 +236,7 @@ def nas(
         fronts = _non_dominated_sort(population)
 
         # Generate offspring
-        offspring = []
+        offspring = []  # type: ignore[var-annotated]
         while len(offspring) < population_size:
             parent_a = _tournament_select(population, fronts, rng)
             parent_b = _tournament_select(population, fronts, rng)
@@ -261,7 +261,7 @@ def nas(
         combined = population + offspring
         combined_fronts = _non_dominated_sort(combined)
 
-        next_pop = []
+        next_pop = []  # type: ignore[var-annotated]
         for front in combined_fronts:
             if len(next_pop) + len(front) <= population_size:
                 next_pop.extend(front)

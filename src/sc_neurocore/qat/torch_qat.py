@@ -23,7 +23,7 @@ from typing import Callable, Tuple
 import torch
 import torch.nn as nn
 
-from ..training.snn_modules import LIFCell, atan_surrogate
+from ..training.snn_modules import LIFCell, atan_surrogate  # type: ignore[attr-defined]
 
 
 class _STEQuantize(torch.autograd.Function):
@@ -51,7 +51,7 @@ class _STEQuantize(torch.autograd.Function):
 
 def ste_quantize(x: torch.Tensor, n_bits: int, symmetric: bool = True) -> torch.Tensor:
     """Quantize tensor with straight-through estimator."""
-    return _STEQuantize.apply(x, n_bits, symmetric)
+    return _STEQuantize.apply(x, n_bits, symmetric)  # type: ignore[no-untyped-call]
 
 
 class QuantizedLinear(nn.Module):

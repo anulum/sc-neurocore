@@ -84,7 +84,7 @@ class SCtoLavaConverter:
 
     def convert_dense_layer(self, sc_layer: object) -> LoihiNetworkConfig:
         """Convert an SCDenseLayer or VectorizedSCLayer to Loihi config."""
-        weights = np.array(sc_layer.weights)
+        weights = np.array(sc_layer.weights)  # type: ignore[attr-defined]
         loihi_weights = export_weights_loihi(weights, self.weight_bits)
         thresholds = np.full(weights.shape[0], loihi_threshold_from_sc(1.0, self.weight_bits))
         return LoihiNetworkConfig(
@@ -98,7 +98,7 @@ class SCtoLavaConverter:
     def convert_training_model(self, spiking_net: object) -> list[LoihiNetworkConfig]:
         """Convert a trained SpikingNet to a list of LoihiNetworkConfigs."""
         configs = []
-        sc_weights = spiking_net.to_sc_weights()
+        sc_weights = spiking_net.to_sc_weights()  # type: ignore[attr-defined]
         for w in sc_weights:
             w_np = w.numpy() if hasattr(w, "numpy") else np.array(w)
             loihi_w = export_weights_loihi(w_np, self.weight_bits)
@@ -118,7 +118,7 @@ class SCtoLavaConverter:
 
 if HAS_LAVA:
 
-    class SCDenseProcess(AbstractProcess):
+    class SCDenseProcess(AbstractProcess):  # type: ignore[misc]
         """Lava Process wrapping an SC-NeuroCore dense layer."""
 
         def __init__(self, config: LoihiNetworkConfig):
@@ -132,7 +132,7 @@ if HAS_LAVA:
 
     @implements(proc=SCDenseProcess, protocol=LoihiProtocol)
     @requires(CPU)
-    class PySCDenseModel(PyLoihiProcessModel):
+    class PySCDenseModel(PyLoihiProcessModel):  # type: ignore[misc]
         s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
         s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
         weights: np.ndarray = LavaPyType(np.ndarray, int)

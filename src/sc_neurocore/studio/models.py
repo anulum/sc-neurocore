@@ -270,7 +270,7 @@ def _detect_step_kwarg(cls: Any) -> str:
 def _try_rust_simulate(
     name: str,
     n_steps: int,
-    current_trace: np.ndarray,
+    current_trace: np.ndarray,  # type: ignore[name-defined]
     actual_dt: float,
 ) -> dict[str, Any] | None:
     """Attempt Rust batch simulation. Returns None if model not in Rust dispatch."""

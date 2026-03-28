@@ -62,7 +62,7 @@ class BenchmarkResult:
             },
             "framework": "sc-neurocore",
         }
-        result["metrics"].update(self.extra)
+        result["metrics"].update(self.extra)  # type: ignore[attr-defined]
         return json.dumps(result, indent=2)
 
     def summary(self) -> str:

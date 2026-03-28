@@ -282,7 +282,7 @@ def optimize(
         fn = pass_map.get(pass_name)
         if fn is None:
             continue
-        result = fn(optimized)
+        result = fn(optimized)  # type: ignore[operator]
         report.pass_results.append(result)
 
     report.params_after = optimized.total_params

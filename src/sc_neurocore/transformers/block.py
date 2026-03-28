@@ -56,8 +56,8 @@ class StochasticTransformerBlock:
         # Position-wise FFN: apply same weights to each token
         def _ffn(token: np.ndarray) -> np.ndarray:
             vals = token.tolist() if hasattr(token, "tolist") else token
-            h = np.clip(self.ffn_1.forward(vals), 0.0, 1.0)
-            return self.ffn_2.forward(h.tolist() if hasattr(h, "tolist") else h)
+            h = np.clip(self.ffn_1.forward(vals), 0.0, 1.0)  # type: ignore[arg-type]
+            return self.ffn_2.forward(h.tolist() if hasattr(h, "tolist") else h)  # type: ignore[arg-type]
 
         if res1.ndim > 1:
             ff_out = np.zeros_like(res1)

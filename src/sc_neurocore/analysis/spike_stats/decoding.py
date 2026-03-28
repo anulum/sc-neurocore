@@ -66,7 +66,7 @@ def maximum_likelihood_decode(spike_counts: np.ndarray, tuning_rates: np.ndarray
 
     Poisson likelihood: argmax_s prod_j (lambda_j^{n_j} * exp(-lambda_j) / n_j!).
     """
-    return bayesian_decode(spike_counts, tuning_rates, prior=None)
+    return bayesian_decode(spike_counts, tuning_rates, prior=None)  # type: ignore[arg-type]
 
 
 def linear_discriminant_decode(

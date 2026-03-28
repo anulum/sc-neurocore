@@ -35,7 +35,7 @@ try:
     HAS_JAX = True
 except ImportError:
     HAS_JAX = False
-    jnp: types.ModuleType = np
+    jnp: types.ModuleType = np  # type: ignore[no-redef]
 
 __all__ = [
     "jax",

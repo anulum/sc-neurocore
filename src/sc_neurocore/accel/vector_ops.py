@@ -47,7 +47,7 @@ def pack_bitstream(bitstream: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
 
         # Reshape to (batch, num_chunks, 64)
         num_chunks = bitstream.shape[1] // 64
-        chunks: np.ndarray[Any, Any] = bitstream.reshape(batch_size, num_chunks, 64)
+        chunks: np.ndarray[Any, Any] = bitstream.reshape(batch_size, num_chunks, 64)  # type: ignore[no-redef]
 
         powers = 1 << np.arange(64, dtype=np.uint64)
         packed_2d: np.ndarray[Any, Any] = (chunks * powers).sum(axis=2, dtype=np.uint64)

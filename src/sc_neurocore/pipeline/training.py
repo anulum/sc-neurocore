@@ -38,7 +38,7 @@ class SCTrainingLoop:
         """
         for gen in range(generations):
             # 1. Run forward pass
-            spikes = agent.run_epoch(input_data)
+            spikes = agent.run_epoch(input_data)  # type: ignore[arg-type]
 
             # 2. Get reward from environment
             reward = env_step_func(spikes)

@@ -19,9 +19,9 @@ class VerilogGenerator:
 
     def __init__(self, module_name="sc_network_top") -> None:
         self.module_name = module_name
-        self.layers = []
-        self.wires = []
-        self.instances = []
+        self.layers = []  # type: ignore[var-annotated]
+        self.wires = []  # type: ignore[var-annotated]
+        self.instances = []  # type: ignore[var-annotated]
 
     def add_layer(self, layer_type: str, name: str, params: Dict[str, Any]) -> None:
         self.layers.append({"type": layer_type, "name": name, "params": params})

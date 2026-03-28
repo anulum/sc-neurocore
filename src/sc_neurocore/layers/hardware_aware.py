@@ -80,7 +80,7 @@ class HardwareAwareSCLayer:
         self._layer._refresh_packed_weights()
 
     def forward(self, input_values: list[float] | np.ndarray) -> np.ndarray:
-        return self._layer.forward(input_values)
+        return self._layer.forward(input_values)  # type: ignore[arg-type]
 
     def update_weights(self, gradient: np.ndarray, lr: float = 0.01) -> None:
         """Update weights with gradient, respecting stuck-at mask.

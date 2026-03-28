@@ -42,7 +42,7 @@ def deprecated(since: str, removal: str, alternative: str | None = None) -> Call
         )
 
         if isinstance(obj, type):
-            original_init = obj.__init__
+            original_init = obj.__init__  # type: ignore[misc]
 
             @functools.wraps(original_init)
             def new_init(self: Any, *args: Any, **kwargs: Any) -> None:

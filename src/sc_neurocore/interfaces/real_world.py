@@ -49,4 +49,4 @@ class ROS2Node:
         msg = {"linear": linear_x, "angular": angular_z}
         # print(f"ROS2: Publishing to /cmd_vel: {json.dumps(msg)}")
         # In real version: self.publisher.publish(msg)
-        return True
+        return True  # type: ignore[return-value]

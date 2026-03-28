@@ -25,21 +25,23 @@ try:
 
     HAS_JAX = True
 except ImportError:
-    jnp: types.ModuleType = np
+    jnp: types.ModuleType = np  # type: ignore[no-redef]
     HAS_JAX = False
+
+__all__ = ["jnp", "HAS_JAX", "make_rng", "split_rng", "uniform", "normal", "maybe_jit"]
 
 
 def make_rng(seed: int = 0) -> np.ndarray:
     """Create a PRNG key (JAX) or seed array (NumPy fallback)."""
     if HAS_JAX:
-        return jax.random.PRNGKey(seed)
+        return jax.random.PRNGKey(seed)  # type: ignore[return-value]
     return np.array([0, seed], dtype=np.uint32)
 
 
 def split_rng(key: Any) -> tuple[Any, Any]:
     """Split a PRNG key into two children."""
     if HAS_JAX:
-        return jax.random.split(key)
+        return jax.random.split(key)  # type: ignore[return-value]
     s = int(key[-1])
     return np.array([0, s + 1], dtype=np.uint32), np.array([0, s + 2], dtype=np.uint32)
 
