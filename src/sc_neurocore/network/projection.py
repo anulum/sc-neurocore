@@ -123,6 +123,10 @@ class Projection:
         self.plasticity = plasticity
         self.seed = seed
         self.weight_threshold = weight_threshold
+        self.delay: float | np.ndarray = 0.0
+        self._delay_mode: str = "none"
+        self._delay_buf: np.ndarray | None = None
+        self._per_syn_delays: np.ndarray | None = None
 
         self.indptr, self.indices, self.data = self._build_connectivity(topology, probability, seed)
 
@@ -189,6 +193,7 @@ class Projection:
             return 0
         if self._delay_mode == "uniform":
             return self._delay_steps_uniform
+        assert self._per_syn_delays is not None
         return int(self._per_syn_delays.max())
 
     def _build_connectivity(
@@ -228,6 +233,7 @@ class Projection:
             )
 
         if self._delay_mode == "uniform":
+            assert self._delay_buf is not None
             current = _csr_matvec(
                 self.indptr, self.indices, self.data, source_spikes, self.target.n, wt
             )
@@ -237,6 +243,7 @@ class Projection:
             return output
 
         # Per-synapse delay
+        assert self._per_syn_delays is not None
         self._spike_history[self._hist_idx] = source_spikes.astype(np.float64)
         current = _csr_delayed_matvec(
             self.indptr,
