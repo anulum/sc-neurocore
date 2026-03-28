@@ -19,10 +19,10 @@ from .projection import Projection
 from .monitor import SpikeMonitor, StateMonitor, RateMonitor
 from .stimulus import TimedArray, PoissonInput, StepCurrent
 
-_RUST_ENGINE: type[Any] | bool | None = None
+_RUST_ENGINE: Any = None
 
 
-def _get_rust_engine() -> type[Any] | bool:
+def _get_rust_engine() -> Any:
     global _RUST_ENGINE
     if _RUST_ENGINE is None:
         try:
@@ -135,7 +135,7 @@ class Network:
                 proj.indptr.tolist(),
                 proj.indices.tolist(),
                 proj.data.tolist(),
-                proj._delay_steps,
+                proj._delay_steps,  # type: ignore[attr-defined]
             )
 
         n_steps = int(round(duration / dt))
@@ -219,15 +219,15 @@ class Network:
 
     def _record(self, pop: Population, spikes: np.ndarray, t: int, dt: float) -> None:
         """Feed spikes/states to all monitors attached to this population."""
-        for mon in self.spike_monitors:
-            if mon.population is pop:
-                mon.record(spikes, t)
-        for mon in self.state_monitors:
-            if mon.population is pop:
-                mon.snapshot(t)
-        for mon in self.rate_monitors:
-            if mon.population is pop:
-                mon.record(spikes, t, dt)
+        for sp_mon in self.spike_monitors:
+            if sp_mon.population is pop:
+                sp_mon.record(spikes, t)
+        for st_mon in self.state_monitors:
+            if st_mon.population is pop:
+                st_mon.snapshot(t)
+        for rt_mon in self.rate_monitors:
+            if rt_mon.population is pop:
+                rt_mon.record(spikes, t, dt)
 
     def _update_plasticity(self, last_spikes: dict[int, np.ndarray]) -> None:
         """Apply plasticity rules to projections that have them."""
