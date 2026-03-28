@@ -65,17 +65,38 @@ Bipolar XNOR + calibration improved from random chance (10%) to 35.6%.
 Accuracy increases with L (expected SC convergence). Remaining gap
 is from layer calibration not fully matching float distributions.
 
+## SC-Aware Training Results (Fix 2, Kaggle 2026-03-28)
+
+SC-aware training injects bitstream noise during float training,
+making the model robust to SC variance.
+
+| Model | Float | SC L=256 | SC L=512 | SC L=1024 |
+|-------|:-----:|:--------:|:--------:|:---------:|
+| Standard SNN | 96.6% | 24.5% | 25.0% | 31.0% |
+| SC-Aware L=256 | 96.8% | 25.5% | 32.5% | 34.0% |
+| SC-Aware L=1024 | 96.6% | 27.5% | 34.5% | **40.5%** |
+
+SC-aware training improves SC inference by **9.5 percentage points**
+(31.0% -> 40.5% at L=1024) without degrading float accuracy.
+
+## SC Pipeline Progression
+
+| Method | SC Accuracy (L=1024) |
+|--------|:-------------------:|
+| Unipolar AND (naive) | ~10% (random) |
+| Bipolar XNOR | 35.6% |
+| Bipolar + SC-aware training | **40.5%** |
+
 ## Honest Assessment
 
-- Unipolar SC (AND): fails completely (random chance). Expected.
-- Bipolar SC (XNOR): partial recovery (35.6%). MAC sum bug fixed.
-- Remaining gap: calibration normalisation too aggressive.
-  Layer 0 float output has std=5.78, bipolar clips to [-1,1].
-- SC-aware training (Fix 2) and end-to-end training (Fix 4) needed
-  to close the gap to the literature's 80-95% range.
+- 40.5% is well above random (10%) but well below float (96.6%)
+- Remaining gap from calibration compression + single-pass inference
+- End-to-end SC training (Fix 4) is the path to 80%+
+- Literature SC accuracy on MNIST with careful design: 85-95%
 
 ## Files
 
-- `benchmarks/results/sc_mnist_results.json` -- unipolar (failed)
-- `benchmarks/results/sc_mnist_bipolar_results.json` -- bipolar (35.6%)
-- `notebooks/sc_mnist_pipeline_kaggle.py` -- Kaggle scripts
+- `benchmarks/results/sc_mnist_results.json` -- unipolar
+- `benchmarks/results/sc_mnist_bipolar_results.json` -- bipolar
+- `benchmarks/results/sc_aware_results.json` -- SC-aware training
+- `notebooks/sc_aware_standalone_kaggle.py` -- standalone Kaggle script
