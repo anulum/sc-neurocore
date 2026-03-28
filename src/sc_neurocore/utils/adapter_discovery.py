@@ -22,7 +22,7 @@ def discover_adapters() -> dict[str, type]:
     try:
         eps = importlib.metadata.entry_points(group="sc_neurocore.adapters")
     except TypeError:
-        eps = importlib.metadata.entry_points().get("sc_neurocore.adapters", [])
+        eps = importlib.metadata.entry_points().get("sc_neurocore.adapters", [])  # type: ignore[attr-defined]
 
     for ep in eps:
         try:

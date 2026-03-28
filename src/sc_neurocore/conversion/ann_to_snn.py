@@ -191,7 +191,7 @@ def convert(
     biases = [b for _, b in layers]
 
     if calibration_data is not None:
-        max_acts = _compute_max_activations(model, calibration_data, percentile)
+        max_acts = _compute_max_activations(model, calibration_data, percentile)  # type: ignore[arg-type]
         # Pad if fewer ReLUs than Linear layers
         while len(max_acts) < len(weights):
             max_acts.append(1.0)

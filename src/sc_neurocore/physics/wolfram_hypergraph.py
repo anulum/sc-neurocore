@@ -64,7 +64,7 @@ class WolframHypergraph:
             # Keep unmatched edges
             for k, e in enumerate(self.edges):
                 if k not in matched_indices:
-                    new_edges.append(e)
+                    new_edges.append(e)  # type: ignore[arg-type]
 
             self.edges = new_edges  # type: ignore[assignment]
 

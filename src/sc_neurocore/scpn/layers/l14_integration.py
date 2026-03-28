@@ -67,7 +67,7 @@ class L14_IntegrationLayer:
         self,
         dt: float,
         layer_metrics: Optional[Dict[str, float]] = None,
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, Any]:  # type: ignore[name-defined]
         self.time += dt
 
         if layer_metrics is not None:
@@ -75,7 +75,7 @@ class L14_IntegrationLayer:
             self.layer_metrics[: len(values)] = values
 
         w = self.params.integration_weights
-        self.integrated_coherence = float(np.dot(w, self.layer_metrics))
+        self.integrated_coherence = float(np.dot(w, self.layer_metrics))  # type: ignore[arg-type]
 
         activation = np.full(self.params.n_dimensions, self.integrated_coherence)
         activation = np.clip(activation, 0, 1)  # type: ignore[assignment]

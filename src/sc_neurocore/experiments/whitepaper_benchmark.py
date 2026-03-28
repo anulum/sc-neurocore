@@ -38,11 +38,11 @@ def run_whitepaper_benchmark() -> None:
     layer = VectorizedSCLayer(n_inputs=N_INPUTS, n_neurons=N_NEURONS, length=LENGTH)
 
     # Warmup
-    _ = layer.forward(np.random.random(N_INPUTS))
+    _ = layer.forward(np.random.random(N_INPUTS))  # type: ignore[arg-type]
 
     start_time = time.time()
     for _ in range(TRIALS):
-        _ = layer.forward(np.random.random(N_INPUTS))
+        _ = layer.forward(np.random.random(N_INPUTS))  # type: ignore[arg-type]
     end_time = time.time()
 
     total_time = end_time - start_time
@@ -68,7 +68,7 @@ def run_whitepaper_benchmark() -> None:
     # It doesn't measure wall power (which is impossible in pure software)
     # But it gives us the 45nm equivalent.
 
-    layer.forward = track_energy(layer.forward)
+    layer.forward = track_energy(layer.forward)  # type: ignore[method-assign]
     _ = layer.forward(np.random.random(N_INPUTS))
 
     joules = profiler.estimate_energy()

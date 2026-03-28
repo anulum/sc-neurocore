@@ -52,7 +52,7 @@ class SCDigitClassifier:
         flat_probs = flat_features / norm_factor
         flat_probs = np.clip(flat_probs, 0, 1)
 
-        outputs = self.dense.forward(flat_probs)
+        outputs = self.dense.forward(flat_probs)  # type: ignore[arg-type]
 
         # Argmax
         return int(np.argmax(outputs))
@@ -69,4 +69,4 @@ class SCKeywordSpotter:
         self.classifier = VectorizedSCLayer(n_inputs=16, n_neurons=n_keywords)
 
     def predict(self, mfcc_features: np.ndarray[Any, Any]) -> int:
-        return int(np.argmax(self.classifier.forward(mfcc_features)))
+        return int(np.argmax(self.classifier.forward(mfcc_features)))  # type: ignore[arg-type]

@@ -295,7 +295,7 @@ def _cmd_deploy(
         model = torch.nn.Sequential(*layers)
         model.load_state_dict(state, strict=False)
         in_dim = layers[0].in_features if layers else 1
-        cal_data = torch.randn(64, in_dim)
+        cal_data = torch.randn(64, in_dim)  # type: ignore[arg-type]
         snn = convert(model, calibration_data=cal_data, T=bitstream_length)
         network = None
         print(f"  Converted {snn.n_layers}-layer SNN, T={snn.T}")

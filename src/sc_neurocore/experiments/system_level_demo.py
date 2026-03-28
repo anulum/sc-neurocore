@@ -37,7 +37,7 @@ def run_system_demo() -> None:
     layer = VectorizedSCLayer(n_inputs=10, n_neurons=5, length=256)
 
     # Manually decorate for demo
-    layer.forward = track_energy(layer.forward)
+    layer.forward = track_energy(layer.forward)  # type: ignore[method-assign]
 
     profiler.reset()
     _ = layer.forward(np.random.random(10))

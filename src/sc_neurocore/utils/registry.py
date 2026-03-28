@@ -57,7 +57,7 @@ class ComponentRegistry:
         """Return sorted names in *namespace*."""
         return sorted(self._store.get(namespace, {}))
 
-    def namespaces(self) -> list[str]:
+    def namespaces(self) -> list[str]:  # type: ignore[valid-type]
         """Return all registered namespaces."""
         return sorted(self._store)
 

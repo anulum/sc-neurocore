@@ -413,7 +413,7 @@ class SC3DGenerator:
         faces = np.array(faces, dtype=np.int32) if faces else np.zeros((0, 3), dtype=np.int32)  # type: ignore[assignment]
 
         # Compute normals
-        normals = self._compute_normals(vertices, faces)
+        normals = self._compute_normals(vertices, faces)  # type: ignore[arg-type]
 
         return {
             "vertices": vertices,

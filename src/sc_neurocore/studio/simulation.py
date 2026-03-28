@@ -119,7 +119,7 @@ def simulate(
     if n_steps > MAX_PLOT_POINTS:
         stride = n_steps // MAX_PLOT_POINTS
         time = time[::stride]
-        traces = {v: arr[::stride] for v, arr in traces.items()}
+        traces = {v: arr[::stride] for v, arr in traces.items()}  # type: ignore[misc]
         current_trace = current_trace[::stride]
 
     return {

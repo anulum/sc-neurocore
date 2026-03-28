@@ -33,7 +33,7 @@ except ImportError:
     )
 
 
-@jit(nopython=True)
+@jit(nopython=True)  # type: ignore[untyped-decorator]
 def jit_pack_bits(
     bitstream: np.ndarray[Any, Any], packed_arr: np.ndarray[Any, Any]
 ) -> None:  # pragma: no cover
@@ -54,7 +54,7 @@ def jit_pack_bits(
         packed_arr[i] = val
 
 
-@jit(nopython=True)
+@jit(nopython=True)  # type: ignore[untyped-decorator]
 def jit_vec_mac(
     packed_weights: np.ndarray[Any, Any],
     packed_inputs: np.ndarray[Any, Any],

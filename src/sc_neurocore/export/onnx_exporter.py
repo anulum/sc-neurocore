@@ -155,9 +155,9 @@ class SCOnnxExporter:
                 },
             }
             if hasattr(layer, "weights"):
-                node["attributes"]["has_weights"] = True
+                node["attributes"]["has_weights"] = True  # type: ignore[index]
                 np.save(f"{filename}_layer_{i}_weights.npy", layer.weights)
-                node["attributes"]["weights_file"] = f"{filename}_layer_{i}_weights.npy"
+                node["attributes"]["weights_file"] = f"{filename}_layer_{i}_weights.npy"  # type: ignore[index]
             graph["nodes"].append(node)
             prev = out
 

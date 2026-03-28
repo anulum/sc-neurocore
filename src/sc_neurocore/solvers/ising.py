@@ -69,7 +69,7 @@ class StochasticIsingGraph:
         # Anneal
         self.temperature *= self.anneal_rate
 
-        return self.get_energy()
+        return self.get_energy()  # type: ignore[return-value]
 
     def get_energy(self) -> float:
         """Calculate global energy."""

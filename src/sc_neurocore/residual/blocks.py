@@ -117,7 +117,7 @@ class DeepSNNStack:
             if block_type == "ms":
                 self.blocks.append(MembraneShortcutBlock(n_features, seed=42 + i))
             else:
-                self.blocks.append(SEWBlock(n_features, seed=42 + i))
+                self.blocks.append(SEWBlock(n_features, seed=42 + i))  # type: ignore[arg-type]
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         h = x

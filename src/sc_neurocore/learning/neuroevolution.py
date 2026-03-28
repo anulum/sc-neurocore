@@ -49,7 +49,7 @@ class SNNGeneticEvolver:
             while len(next_gen) < self.population_size:
                 # Simple random selection for parents
                 p1, p2 = np.random.choice(ranked_pop[: n_elite + 5], 2, replace=False)
-                child = self._crossover(p1, p2)
+                child = self._crossover(p1, p2)  # type: ignore[func-returns-value]
                 self._mutate(child)
                 next_gen.append(child)
 

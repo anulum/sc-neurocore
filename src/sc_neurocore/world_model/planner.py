@@ -47,7 +47,7 @@ class SCPlanner:
                 min_dist = dist  # type: ignore[assignment]
                 best_action = candidate_action
 
-        return best_action
+        return best_action  # type: ignore[return-value]
 
     def plan_sequence(
         self,

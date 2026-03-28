@@ -41,7 +41,7 @@ def run_exascale_demo() -> None:
         return float(out[0])  # Higher is better
 
     evolver = SNNGeneticEvolver(factory, fitness)
-    best = evolver.evolve(generations=3)
+    best = evolver.evolve(generations=3)  # type: ignore[func-returns-value]
     print(f"    Best Fitness Evolved: {fitness(best):.4f}")
 
     # 3. Twin
