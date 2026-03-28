@@ -7,12 +7,15 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Any
+
 import numpy as np
 
 
 def bifurcation_sweep(
-    simulate_fn,
-    base_config: dict,
+    simulate_fn: Callable[..., dict[str, Any]],
+    base_config: dict[str, Any],
     param_name: str,
     param_min: float,
     param_max: float,
@@ -58,8 +61,8 @@ def bifurcation_sweep(
 
 
 def sensitivity_analysis(
-    simulate_fn,
-    base_config: dict,
+    simulate_fn: Callable[..., dict[str, Any]],
+    base_config: dict[str, Any],
     param_names: list[str],
     perturbation: float = 0.1,
 ) -> dict:
@@ -144,7 +147,7 @@ def nullclines_2d(
                 pass
 
     # Extract zero-contours via sign changes
-    def contour_points(Z, threshold=0.0):
+    def contour_points(Z: np.ndarray, threshold: float = 0.0) -> list[list[float]]:
         pts = []
         for i in range(grid_size - 1):
             for j in range(grid_size - 1):
@@ -164,8 +167,8 @@ def nullclines_2d(
 
 
 def heatmap_2d(
-    simulate_fn,
-    base_config: dict,
+    simulate_fn: Callable[..., dict[str, Any]],
+    base_config: dict[str, Any],
     param_x: str,
     x_min: float,
     x_max: float,
@@ -241,8 +244,8 @@ def spike_triggered_average(
 
 
 def frequency_response(
-    simulate_fn,
-    base_config: dict,
+    simulate_fn: Callable[..., dict[str, Any]],
+    base_config: dict[str, Any],
     freq_min: float = 1.0,
     freq_max: float = 100.0,
     n_freqs: int = 20,
