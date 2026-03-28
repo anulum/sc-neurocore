@@ -11,7 +11,7 @@ import hashlib
 import json
 from collections import OrderedDict
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -917,6 +917,17 @@ def create_app() -> FastAPI:
             media_type="text/event-stream",
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
+
+    # --- WebSocket progress streaming ---
+    @app.websocket("/ws/progress")
+    async def ws_progress(websocket: WebSocket):
+        await websocket.accept()
+        from sc_neurocore.studio.progress import ws_progress_handler
+
+        try:
+            await ws_progress_handler(websocket)
+        except WebSocketDisconnect:
+            pass
 
     # --- Static file serving for production mode ---
     import os

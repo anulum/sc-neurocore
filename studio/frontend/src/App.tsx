@@ -184,6 +184,24 @@ export default function App() {
 
       {s.error && <div className="error-banner">{s.error}</div>}
 
+      {s.isSimulating && s.progressMsg && (
+        <div style={{
+          padding: "4px 16px", borderBottom: "1px solid var(--border)",
+          background: "var(--bg-secondary)",
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, marginBottom: 2 }}>
+            <span style={{ color: "var(--text-secondary)" }}>{s.progressMsg}</span>
+            <span style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>{s.progressPct}%</span>
+          </div>
+          <div style={{ height: 4, background: "var(--bg-tertiary)", borderRadius: 2, overflow: "hidden" }}>
+            <div style={{
+              height: "100%", width: `${s.progressPct}%`, background: "var(--accent)",
+              borderRadius: 2, transition: "width 0.3s",
+            }} />
+          </div>
+        </div>
+      )}
+
       {s.codeOneliner && (
         <div style={{
           padding: "4px 16px", fontSize: 10, fontFamily: "var(--font-mono)",

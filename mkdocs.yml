@@ -70,6 +70,7 @@ nav:
       - Training Monitor: studio/training-monitor.md
       - Network Canvas: studio/network-canvas.md
       - Integration & Projects: studio/integration.md
+      - WebSocket Progress: studio/websocket-progress.md
   - Tutorials:
       - Studio Quickstart: tutorials/studio_quickstart.md
       - SC Fundamentals: tutorials/01_stochastic_computing_fundamentals.md

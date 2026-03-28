@@ -413,3 +413,30 @@ export const deleteProject = (name: string) =>
   fetch(`/api/project/${name}`, { method: "DELETE" }).then((r) => json<{ deleted: string }>(r));
 export const runPipeline = (graph: NetworkGraph, target: string) =>
   post<PipelineResult>("/pipeline/run", { graph, target });
+
+// --- WebSocket Progress ---
+
+export interface ProgressMessage {
+  type: "progress" | "complete" | "error" | "heartbeat";
+  step?: string;
+  pct?: number;
+  msg?: string;
+  result?: unknown;
+}
+
+export function connectProgress(
+  op: string,
+  config: Record<string, unknown>,
+  onMessage: (msg: ProgressMessage) => void,
+): WebSocket {
+  const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
+  const ws = new WebSocket(`${proto}//${window.location.host}/ws/progress`);
+  ws.onopen = () => ws.send(JSON.stringify({ op, config }));
+  ws.onmessage = (e) => {
+    try {
+      onMessage(JSON.parse(e.data));
+    } catch { /* ignore parse errors */ }
+  };
+  ws.onerror = () => onMessage({ type: "error", msg: "WebSocket connection failed" });
+  return ws;
+}
