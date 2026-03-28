@@ -104,7 +104,7 @@ class FaultResilienceSuite:
         Baseline (unfaulted) weight matrices.
     """
 
-    def __init__(self, eval_fn, weights: list[np.ndarray]):
+    def __init__(self, eval_fn, weights: list[np.ndarray]):  # type: ignore[no-untyped-def]
         self.eval_fn = eval_fn
         self.weights = [w.copy() for w in weights]
         self._baseline_accuracy: float | None = None

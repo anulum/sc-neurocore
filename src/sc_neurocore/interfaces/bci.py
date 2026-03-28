@@ -139,5 +139,5 @@ class BCIEncoder:
 class BCIDecoder(BCIEncoder):
     """Legacy alias. Use BCIEncoder instead."""
 
-    def __init__(self, channels: int, sampling_rate: int = 1000, **kwargs):
+    def __init__(self, channels: int, sampling_rate: int = 1000, **kwargs):  # type: ignore[no-untyped-def]
         super().__init__(n_channels=channels, sampling_rate=sampling_rate, **kwargs)

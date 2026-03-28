@@ -18,7 +18,7 @@ class WebVisualizer:
     """
 
     @staticmethod
-    def generate_html(layers: list[Any], filename="network_viz.html") -> None:
+    def generate_html(layers: list[Any], filename="network_viz.html") -> None:  # type: ignore[no-untyped-def]
         # 1. Build Graph Data
         nodes = []
         links = []

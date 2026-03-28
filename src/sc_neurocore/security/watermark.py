@@ -18,7 +18,7 @@ class WatermarkInjector:
     """
 
     @staticmethod
-    def inject_backdoor(
+    def inject_backdoor(  # type: ignore[no-untyped-def]
         layer, trigger_pattern: np.ndarray[Any, Any], target_neuron_idx: int
     ) -> None:
         """
@@ -60,7 +60,7 @@ class WatermarkInjector:
             layer._refresh_packed_weights()
 
     @staticmethod
-    def verify_watermark(layer, trigger_pattern, target_neuron_idx: int) -> float:
+    def verify_watermark(layer, trigger_pattern, target_neuron_idx: int) -> float:  # type: ignore[no-untyped-def]
         """
         Returns the activation of the target neuron for the trigger.
         High activation = Watermark Present.

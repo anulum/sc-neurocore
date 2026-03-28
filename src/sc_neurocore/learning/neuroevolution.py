@@ -57,7 +57,7 @@ class SNNGeneticEvolver:
 
         return self.population[0]  # Return best
 
-    def _crossover(self, p1, p2) -> None:
+    def _crossover(self, p1, p2) -> None:  # type: ignore[no-untyped-def]
         # Create new instance
         child = self.layer_factory()
         if not hasattr(p1, "weights"):
@@ -68,7 +68,7 @@ class SNNGeneticEvolver:
         child.weights = np.where(mask, p1.weights, p2.weights)
         return child
 
-    def _mutate(self, ind) -> None:
+    def _mutate(self, ind) -> None:  # type: ignore[no-untyped-def]
         if not hasattr(ind, "weights"):
             return
 

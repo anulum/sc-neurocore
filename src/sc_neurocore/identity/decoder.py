@@ -27,7 +27,7 @@ class StateDecoder:
     def __init__(self, substrate: IdentitySubstrate):
         self.substrate = substrate
 
-    def _recent_trains(self, n_neurons=50, window=1000) -> list[np.ndarray]:
+    def _recent_trains(self, n_neurons=50, window=1000) -> list[np.ndarray]:  # type: ignore[no-untyped-def]
         """Get recent binary spike trains for the first n_neurons."""
         history = self.substrate.spike_history
         if len(history) < 2:
@@ -36,7 +36,7 @@ class StateDecoder:
         n = min(n_neurons, self.substrate.n_cortical)
         return [np.array([h[i] for h in recent], dtype=np.int8) for i in range(n)]
 
-    def extract_dominant_patterns(self, n_components=10) -> np.ndarray:
+    def extract_dominant_patterns(self, n_components=10) -> np.ndarray:  # type: ignore[no-untyped-def]
         """PCA on recent spike trains -> dominant activity patterns."""
         trains = self._recent_trains()
         if not trains:
@@ -45,7 +45,7 @@ class StateDecoder:
         projected, _ = spike_train_pca(trains, n_components=n_comp)
         return projected
 
-    def extract_attractor_states(self, threshold=0.8) -> list[np.ndarray]:
+    def extract_attractor_states(self, threshold=0.8) -> list[np.ndarray]:  # type: ignore[no-untyped-def]
         """Find stable attractor states via correlation clustering.
 
         Groups of neurons that fire together with correlation above

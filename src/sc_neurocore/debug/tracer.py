@@ -93,7 +93,7 @@ class SpikeTracer:
     >>> divergence = find_divergence(trace, expected_spikes)
     """
 
-    def __init__(self, network):
+    def __init__(self, network):  # type: ignore[no-untyped-def]
         self.network = network
 
     def run(self, duration: float, dt: float = 0.001, seed: int = 42) -> ExecutionTrace:

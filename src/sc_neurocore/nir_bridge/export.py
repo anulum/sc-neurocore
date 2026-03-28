@@ -38,7 +38,7 @@ from .node_map import (
 )
 
 
-def _node_to_nir(name: str, node) -> nir.NIRNode | None:
+def _node_to_nir(name: str, node) -> nir.NIRNode | None:  # type: ignore[no-untyped-def]
     """Convert a single SC-NeuroCore node to its NIR equivalent."""
     if isinstance(node, SCInputNode):
         return nir.Input(input_type={"input": np.array(list(node.shape))})
@@ -134,7 +134,7 @@ def _node_to_nir(name: str, node) -> nir.NIRNode | None:
     return None
 
 
-def to_nir(network, path: str | Path | None = None) -> nir.NIRGraph:
+def to_nir(network, path: str | Path | None = None) -> nir.NIRGraph:  # type: ignore[no-untyped-def]
     """Export an SC-NeuroCore SCNetwork to NIR format.
 
     Parameters

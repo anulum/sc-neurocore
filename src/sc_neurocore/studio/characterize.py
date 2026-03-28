@@ -12,7 +12,7 @@ import numpy as np
 from sc_neurocore.studio.codegen import classify_firing_pattern
 
 
-def characterize_model(simulate_fn, base_config: dict) -> dict:
+def characterize_model(simulate_fn, base_config: dict) -> dict:  # type: ignore[no-untyped-def]
     """Run a full characterisation suite on a neuron model.
 
     Returns a dict with:
