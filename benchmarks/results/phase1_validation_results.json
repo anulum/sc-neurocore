@@ -1,286 +1,615 @@
 {
-    "timestamp": "2026-03-28T05:07:53+0000",
-    "python": "3.12.12 (main, Oct 10 2025, 08:52:57) [GCC 11.4.0]",
-    "elapsed": 2.14,
-    "summary": {"total": 83, "passed": 75, "failed": 8},
-    "lif_fi": [
-        {
-            "current": 0.06,
-            "analytical": 0.02790553132756236,
-            "simulated": 0.0278,
-            "error_pct": 0.378,
-        },
-        {
-            "current": 0.08,
-            "analytical": 0.05097727239116331,
-            "simulated": 0.051,
-            "error_pct": 0.045,
-        },
-        {
-            "current": 0.1,
-            "analytical": 0.07213475204444816,
-            "simulated": 0.0718,
-            "error_pct": 0.464,
-        },
-        {
-            "current": 0.15,
-            "analytical": 0.12331517311882156,
-            "simulated": 0.1234,
-            "error_pct": 0.069,
-        },
-        {"current": 0.2, "analytical": 0.1738029748391104, "simulated": 0.1724, "error_pct": 0.807},
-        {
-            "current": 0.3,
-            "analytical": 0.27424074738735393,
-            "simulated": 0.2702,
-            "error_pct": 1.473,
-        },
-        {"current": 0.5, "analytical": 0.4745610790514949, "simulated": 0.4544, "error_pct": 4.248},
+  "timestamp": "2026-03-28T05:07:53+0000",
+  "python": "3.12.12 (main, Oct 10 2025, 08:52:57) [GCC 11.4.0]",
+  "elapsed": 2.14,
+  "summary": {
+    "total": 83,
+    "passed": 75,
+    "failed": 8
+  },
+  "lif_fi": [
+    {
+      "current": 0.06,
+      "analytical": 0.02790553132756236,
+      "simulated": 0.0278,
+      "error_pct": 0.378
+    },
+    {
+      "current": 0.08,
+      "analytical": 0.05097727239116331,
+      "simulated": 0.051,
+      "error_pct": 0.045
+    },
+    {
+      "current": 0.1,
+      "analytical": 0.07213475204444816,
+      "simulated": 0.0718,
+      "error_pct": 0.464
+    },
+    {
+      "current": 0.15,
+      "analytical": 0.12331517311882156,
+      "simulated": 0.1234,
+      "error_pct": 0.069
+    },
+    {
+      "current": 0.2,
+      "analytical": 0.1738029748391104,
+      "simulated": 0.1724,
+      "error_pct": 0.807
+    },
+    {
+      "current": 0.3,
+      "analytical": 0.27424074738735393,
+      "simulated": 0.2702,
+      "error_pct": 1.473
+    },
+    {
+      "current": 0.5,
+      "analytical": 0.4745610790514949,
+      "simulated": 0.4544,
+      "error_pct": 4.248
+    }
+  ],
+  "izhikevich": {
+    "RS": {
+      "n_ref": 12,
+      "n_native": 12,
+      "mean_isi": 44.95454545454545,
+      "cv": 0.12307481540710165,
+      "v_range": [
+        -75.01,
+        30.0
+      ]
+    },
+    "IB": {
+      "n_ref": 16,
+      "n_native": 17,
+      "mean_isi": 31.233333333333334,
+      "cv": 0.23829730180495817,
+      "v_range": [
+        -69.6,
+        30.0
+      ]
+    },
+    "CH": {
+      "n_ref": 37,
+      "n_native": 41,
+      "mean_isi": 13.069444444444445,
+      "cv": 1.4215957177814589,
+      "v_range": [
+        -73.89,
+        30.0
+      ]
+    },
+    "FS": {
+      "n_ref": 50,
+      "n_native": 59,
+      "mean_isi": 9.959183673469388,
+      "cv": 0.11149687895962455,
+      "v_range": [
+        -67.9,
+        30.0
+      ]
+    },
+    "TC1": {
+      "n_ref": 0,
+      "n_native": 0,
+      "mean_isi": null,
+      "cv": null,
+      "v_range": [
+        -64.88,
+        -63.75
+      ]
+    },
+    "TC2": {
+      "n_ref": 46,
+      "n_native": 56,
+      "mean_isi": 10.811111111111112,
+      "cv": 0.22239790411637322,
+      "v_range": [
+        -64.81,
+        30.0
+      ]
+    },
+    "RZ": {
+      "n_ref": 1,
+      "n_native": 1,
+      "mean_isi": null,
+      "cv": null,
+      "v_range": [
+        -72.14,
+        30.0
+      ]
+    },
+    "LTS": {
+      "n_ref": 35,
+      "n_native": 38,
+      "mean_isi": 14.529411764705882,
+      "cv": 0.23204420859768585,
+      "v_range": [
+        -66.21,
+        30.0
+      ]
+    },
+    "tonic_spiking": {
+      "n_ref": 19,
+      "n_native": 20,
+      "mean_isi": 26.75,
+      "cv": 0.2086297277290121,
+      "v_range": [
+        -71.92,
+        30.0
+      ]
+    },
+    "phasic_spiking": {
+      "n_ref": 1,
+      "n_native": 1,
+      "mean_isi": null,
+      "cv": null,
+      "v_range": [
+        -74.48,
+        30.0
+      ]
+    },
+    "tonic_bursting": {
+      "n_ref": 58,
+      "n_native": 63,
+      "mean_isi": 8.491228070175438,
+      "cv": 1.3989243589506304,
+      "v_range": [
+        -73.1,
+        30.0
+      ]
+    },
+    "phasic_bursting": {
+      "n_ref": 1,
+      "n_native": 1,
+      "mean_isi": null,
+      "cv": null,
+      "v_range": [
+        -69.34,
+        30.0
+      ]
+    },
+    "mixed_mode": {
+      "n_ref": 16,
+      "n_native": 17,
+      "mean_isi": 31.233333333333334,
+      "cv": 0.23829730180495817,
+      "v_range": [
+        -69.6,
+        30.0
+      ]
+    },
+    "spike_freq_adapt": {
+      "n_ref": 20,
+      "n_native": 20,
+      "mean_isi": 24.86842105263158,
+      "cv": 0.3680745168796727,
+      "v_range": [
+        -72.78,
+        30.0
+      ]
+    },
+    "class1_excitable": {
+      "n_ref": 15,
+      "n_native": 15,
+      "mean_isi": 33.107142857142854,
+      "cv": 0.2571972976998092,
+      "v_range": [
+        -70.23,
+        30.0
+      ]
+    },
+    "class2_excitable": {
+      "n_ref": 53,
+      "n_native": 65,
+      "mean_isi": 9.490384615384615,
+      "cv": 0.13211302134891603,
+      "v_range": [
+        -71.72,
+        30.0
+      ]
+    },
+    "spike_latency": {
+      "n_ref": 9,
+      "n_native": 9,
+      "mean_isi": 55.5625,
+      "cv": 0.09345814909421526,
+      "v_range": [
+        -73.88,
+        30.0
+      ]
+    },
+    "subthreshold_osc": {
+      "n_ref": 25,
+      "n_native": 29,
+      "mean_isi": 20.3125,
+      "cv": 0.260777172558893,
+      "v_range": [
+        -66.52,
+        30.0
+      ]
+    },
+    "accommodation": {
+      "n_ref": 84,
+      "n_native": 106,
+      "mean_isi": 5.993975903614458,
+      "cv": 0.42721252634147333,
+      "v_range": [
+        -66.2,
+        30.0
+      ]
+    },
+    "inhibition_induced": {
+      "n_ref": 1,
+      "n_native": 1,
+      "mean_isi": null,
+      "cv": null,
+      "v_range": [
+        -75.84,
+        30.0
+      ]
+    }
+  },
+  "hh": {
+    "v_rest": -64.99971508761959,
+    "v_peak": 40.64556506513898,
+    "width_ms": 1.46,
+    "gates": {
+      "m": 0.8944897011915116,
+      "h": 0.35507424193115567,
+      "n": 0.5001073878037425
+    },
+    "ahp": -75.10405652252996,
+    "fi": [
+      6,
+      7,
+      8,
+      9
     ],
-    "izhikevich": {
-        "RS": {
-            "n_ref": 12,
-            "n_native": 12,
-            "mean_isi": 44.95454545454545,
-            "cv": 0.12307481540710165,
-            "v_range": [-75.01, 30.0],
-        },
-        "IB": {
-            "n_ref": 16,
-            "n_native": 17,
-            "mean_isi": 31.233333333333334,
-            "cv": 0.23829730180495817,
-            "v_range": [-69.6, 30.0],
-        },
-        "CH": {
-            "n_ref": 37,
-            "n_native": 41,
-            "mean_isi": 13.069444444444445,
-            "cv": 1.4215957177814589,
-            "v_range": [-73.89, 30.0],
-        },
-        "FS": {
-            "n_ref": 50,
-            "n_native": 59,
-            "mean_isi": 9.959183673469388,
-            "cv": 0.11149687895962455,
-            "v_range": [-67.9, 30.0],
-        },
-        "TC1": {
-            "n_ref": 0,
-            "n_native": 0,
-            "mean_isi": null,
-            "cv": null,
-            "v_range": [-64.88, -63.75],
-        },
-        "TC2": {
-            "n_ref": 46,
-            "n_native": 56,
-            "mean_isi": 10.811111111111112,
-            "cv": 0.22239790411637322,
-            "v_range": [-64.81, 30.0],
-        },
-        "RZ": {"n_ref": 1, "n_native": 1, "mean_isi": null, "cv": null, "v_range": [-72.14, 30.0]},
-        "LTS": {
-            "n_ref": 35,
-            "n_native": 38,
-            "mean_isi": 14.529411764705882,
-            "cv": 0.23204420859768585,
-            "v_range": [-66.21, 30.0],
-        },
-        "tonic_spiking": {
-            "n_ref": 19,
-            "n_native": 20,
-            "mean_isi": 26.75,
-            "cv": 0.2086297277290121,
-            "v_range": [-71.92, 30.0],
-        },
-        "phasic_spiking": {
-            "n_ref": 1,
-            "n_native": 1,
-            "mean_isi": null,
-            "cv": null,
-            "v_range": [-74.48, 30.0],
-        },
-        "tonic_bursting": {
-            "n_ref": 58,
-            "n_native": 63,
-            "mean_isi": 8.491228070175438,
-            "cv": 1.3989243589506304,
-            "v_range": [-73.1, 30.0],
-        },
-        "phasic_bursting": {
-            "n_ref": 1,
-            "n_native": 1,
-            "mean_isi": null,
-            "cv": null,
-            "v_range": [-69.34, 30.0],
-        },
-        "mixed_mode": {
-            "n_ref": 16,
-            "n_native": 17,
-            "mean_isi": 31.233333333333334,
-            "cv": 0.23829730180495817,
-            "v_range": [-69.6, 30.0],
-        },
-        "spike_freq_adapt": {
-            "n_ref": 20,
-            "n_native": 20,
-            "mean_isi": 24.86842105263158,
-            "cv": 0.3680745168796727,
-            "v_range": [-72.78, 30.0],
-        },
-        "class1_excitable": {
-            "n_ref": 15,
-            "n_native": 15,
-            "mean_isi": 33.107142857142854,
-            "cv": 0.2571972976998092,
-            "v_range": [-70.23, 30.0],
-        },
-        "class2_excitable": {
-            "n_ref": 53,
-            "n_native": 65,
-            "mean_isi": 9.490384615384615,
-            "cv": 0.13211302134891603,
-            "v_range": [-71.72, 30.0],
-        },
-        "spike_latency": {
-            "n_ref": 9,
-            "n_native": 9,
-            "mean_isi": 55.5625,
-            "cv": 0.09345814909421526,
-            "v_range": [-73.88, 30.0],
-        },
-        "subthreshold_osc": {
-            "n_ref": 25,
-            "n_native": 29,
-            "mean_isi": 20.3125,
-            "cv": 0.260777172558893,
-            "v_range": [-66.52, 30.0],
-        },
-        "accommodation": {
-            "n_ref": 84,
-            "n_native": 106,
-            "mean_isi": 5.993975903614458,
-            "cv": 0.42721252634147333,
-            "v_range": [-66.2, 30.0],
-        },
-        "inhibition_induced": {
-            "n_ref": 1,
-            "n_native": 1,
-            "mean_isi": null,
-            "cv": null,
-            "v_range": [-75.84, 30.0],
-        },
+    "native_spikes": 4,
+    "native_rest": -64.9997224032042
+  },
+  "results": {
+    "1.4": {
+      "euler_sub_I=0.01": {
+        "passed": true,
+        "detail": "rate=0.0"
+      },
+      "euler_sub_I=0.02": {
+        "passed": true,
+        "detail": "rate=0.0"
+      },
+      "euler_sub_I=0.03": {
+        "passed": true,
+        "detail": "rate=0.0"
+      },
+      "euler_sub_I=0.04": {
+        "passed": true,
+        "detail": "rate=0.0"
+      },
+      "euler_rheobase": {
+        "passed": true,
+        "detail": "rate=0.0"
+      },
+      "euler_supra_I=0.06": {
+        "passed": true,
+        "detail": "rate=0.026000"
+      },
+      "euler_supra_I=0.1": {
+        "passed": true,
+        "detail": "rate=0.070000"
+      },
+      "euler_supra_I=0.2": {
+        "passed": true,
+        "detail": "rate=0.172000"
+      },
+      "euler_supra_I=0.5": {
+        "passed": true,
+        "detail": "rate=0.454000"
+      },
+      "euler_monotonic": {
+        "passed": true,
+        "detail": "rates=['0.0270', '0.0510', '0.0710', '0.1230', '0.1720', '0.2700', '0.4540', '0.9090']"
+      },
+      "euler_anal_I=0.06": {
+        "passed": true,
+        "detail": "a=0.027906, s=0.027800, e=0.38%"
+      },
+      "euler_anal_I=0.08": {
+        "passed": true,
+        "detail": "a=0.050977, s=0.051000, e=0.04%"
+      },
+      "euler_anal_I=0.1": {
+        "passed": true,
+        "detail": "a=0.072135, s=0.071800, e=0.46%"
+      },
+      "euler_anal_I=0.15": {
+        "passed": true,
+        "detail": "a=0.123315, s=0.123400, e=0.07%"
+      },
+      "euler_anal_I=0.2": {
+        "passed": true,
+        "detail": "a=0.173803, s=0.172400, e=0.81%"
+      },
+      "euler_anal_I=0.3": {
+        "passed": true,
+        "detail": "a=0.274241, s=0.270200, e=1.47%"
+      },
+      "euler_anal_I=0.5": {
+        "passed": true,
+        "detail": "a=0.474561, s=0.454400, e=4.25%"
+      },
+      "euler_ref_reduces": {
+        "passed": true,
+        "detail": "no=0.172000, ref5=0.158500"
+      },
+      "euler_ref_anal": {
+        "passed": true,
+        "detail": "a=0.159907, s=0.158600, e=0.82%"
+      },
+      "euler_tau=10.0": {
+        "passed": true,
+        "detail": "a=0.091024, s=0.090800, e=0.25%"
+      },
+      "euler_tau=20.0": {
+        "passed": true,
+        "detail": "a=0.123315, s=0.123400, e=0.07%"
+      },
+      "euler_tau=40.0": {
+        "passed": true,
+        "detail": "a=0.137120, s=0.136800, e=0.23%"
+      },
+      "known_ISI": {
+        "passed": true,
+        "detail": "ISI=13.8629ms"
+      },
+      "native_anal_I=0.06": {
+        "passed": true,
+        "detail": "a=0.027906, n=0.027800, e=0.38%"
+      },
+      "native_anal_I=0.1": {
+        "passed": true,
+        "detail": "a=0.072135, n=0.071800, e=0.46%"
+      },
+      "native_anal_I=0.2": {
+        "passed": true,
+        "detail": "a=0.173803, n=0.172400, e=0.81%"
+      },
+      "native_anal_I=0.3": {
+        "passed": true,
+        "detail": "a=0.274241, n=0.270200, e=1.47%"
+      },
+      "euler_vs_native_I=0.1": {
+        "passed": true,
+        "detail": "e=0.071500, n=0.071500, err=0.00%"
+      },
+      "euler_vs_native_I=0.2": {
+        "passed": true,
+        "detail": "e=0.172000, n=0.172000, err=0.00%"
+      }
     },
-    "hh": {
-        "v_rest": -64.99971508761959,
-        "v_peak": 40.64556506513898,
-        "width_ms": 1.46,
-        "gates": {"m": 0.8944897011915116, "h": 0.35507424193115567, "n": 0.5001073878037425},
-        "ahp": -75.10405652252996,
-        "fi": [6, 7, 8, 9],
-        "native_spikes": 4,
-        "native_rest": -64.9997224032042,
+    "1.2": {
+      "pat_RS": {
+        "passed": true,
+        "detail": "12 spikes (ISI=45.0ms)"
+      },
+      "native_RS": {
+        "passed": true,
+        "detail": "ref=12, native=12"
+      },
+      "pat_IB": {
+        "passed": true,
+        "detail": "16 spikes (ISI=31.2ms)"
+      },
+      "native_IB": {
+        "passed": true,
+        "detail": "ref=16, native=17"
+      },
+      "pat_CH": {
+        "passed": true,
+        "detail": "37 spikes (ISI=13.1ms)"
+      },
+      "native_CH": {
+        "passed": false,
+        "detail": "ref=37, native=41"
+      },
+      "pat_FS": {
+        "passed": true,
+        "detail": "50 spikes (ISI=10.0ms)"
+      },
+      "native_FS": {
+        "passed": false,
+        "detail": "ref=50, native=59"
+      },
+      "pat_TC1": {
+        "passed": true,
+        "detail": "0 spikes (no ISI)"
+      },
+      "native_TC1": {
+        "passed": true,
+        "detail": "ref=0, native=0"
+      },
+      "pat_TC2": {
+        "passed": true,
+        "detail": "46 spikes (ISI=10.8ms)"
+      },
+      "native_TC2": {
+        "passed": false,
+        "detail": "ref=46, native=56"
+      },
+      "pat_RZ": {
+        "passed": true,
+        "detail": "1 spikes (no ISI)"
+      },
+      "native_RZ": {
+        "passed": true,
+        "detail": "ref=1, native=1"
+      },
+      "pat_LTS": {
+        "passed": true,
+        "detail": "35 spikes (ISI=14.5ms)"
+      },
+      "native_LTS": {
+        "passed": true,
+        "detail": "ref=35, native=38"
+      },
+      "pat_tonic_spiking": {
+        "passed": true,
+        "detail": "19 spikes (ISI=26.8ms)"
+      },
+      "native_tonic_spiking": {
+        "passed": true,
+        "detail": "ref=19, native=20"
+      },
+      "pat_phasic_spiking": {
+        "passed": true,
+        "detail": "1 spikes (no ISI)"
+      },
+      "native_phasic_spiking": {
+        "passed": true,
+        "detail": "ref=1, native=1"
+      },
+      "pat_tonic_bursting": {
+        "passed": true,
+        "detail": "58 spikes (ISI=8.5ms)"
+      },
+      "native_tonic_bursting": {
+        "passed": true,
+        "detail": "ref=58, native=63"
+      },
+      "pat_phasic_bursting": {
+        "passed": true,
+        "detail": "1 spikes (no ISI)"
+      },
+      "native_phasic_bursting": {
+        "passed": true,
+        "detail": "ref=1, native=1"
+      },
+      "pat_mixed_mode": {
+        "passed": true,
+        "detail": "16 spikes (ISI=31.2ms)"
+      },
+      "native_mixed_mode": {
+        "passed": true,
+        "detail": "ref=16, native=17"
+      },
+      "pat_spike_freq_adapt": {
+        "passed": true,
+        "detail": "20 spikes (ISI=24.9ms)"
+      },
+      "native_spike_freq_adapt": {
+        "passed": true,
+        "detail": "ref=20, native=20"
+      },
+      "pat_class1_excitable": {
+        "passed": true,
+        "detail": "15 spikes (ISI=33.1ms)"
+      },
+      "native_class1_excitable": {
+        "passed": true,
+        "detail": "ref=15, native=15"
+      },
+      "pat_class2_excitable": {
+        "passed": true,
+        "detail": "53 spikes (ISI=9.5ms)"
+      },
+      "native_class2_excitable": {
+        "passed": false,
+        "detail": "ref=53, native=65"
+      },
+      "pat_spike_latency": {
+        "passed": true,
+        "detail": "9 spikes (ISI=55.6ms)"
+      },
+      "native_spike_latency": {
+        "passed": true,
+        "detail": "ref=9, native=9"
+      },
+      "pat_subthreshold_osc": {
+        "passed": true,
+        "detail": "25 spikes (ISI=20.3ms)"
+      },
+      "native_subthreshold_osc": {
+        "passed": false,
+        "detail": "ref=25, native=29"
+      },
+      "pat_accommodation": {
+        "passed": true,
+        "detail": "84 spikes (ISI=6.0ms)"
+      },
+      "native_accommodation": {
+        "passed": false,
+        "detail": "ref=84, native=106"
+      },
+      "pat_inhibition_induced": {
+        "passed": true,
+        "detail": "1 spikes (no ISI)"
+      },
+      "native_inhibition_induced": {
+        "passed": true,
+        "detail": "ref=1, native=1"
+      },
+      "RS_regular": {
+        "passed": true,
+        "detail": "CV=0.123"
+      },
+      "FS>RS": {
+        "passed": true,
+        "detail": "FS=50 RS=12"
+      }
     },
-    "results": {
-        "1.4": {
-            "euler_sub_I=0.01": {"passed": true, "detail": "rate=0.0"},
-            "euler_sub_I=0.02": {"passed": true, "detail": "rate=0.0"},
-            "euler_sub_I=0.03": {"passed": true, "detail": "rate=0.0"},
-            "euler_sub_I=0.04": {"passed": true, "detail": "rate=0.0"},
-            "euler_rheobase": {"passed": true, "detail": "rate=0.0"},
-            "euler_supra_I=0.06": {"passed": true, "detail": "rate=0.026000"},
-            "euler_supra_I=0.1": {"passed": true, "detail": "rate=0.070000"},
-            "euler_supra_I=0.2": {"passed": true, "detail": "rate=0.172000"},
-            "euler_supra_I=0.5": {"passed": true, "detail": "rate=0.454000"},
-            "euler_monotonic": {
-                "passed": true,
-                "detail": "rates=['0.0270', '0.0510', '0.0710', '0.1230', '0.1720', '0.2700', '0.4540', '0.9090']",
-            },
-            "euler_anal_I=0.06": {"passed": true, "detail": "a=0.027906, s=0.027800, e=0.38%"},
-            "euler_anal_I=0.08": {"passed": true, "detail": "a=0.050977, s=0.051000, e=0.04%"},
-            "euler_anal_I=0.1": {"passed": true, "detail": "a=0.072135, s=0.071800, e=0.46%"},
-            "euler_anal_I=0.15": {"passed": true, "detail": "a=0.123315, s=0.123400, e=0.07%"},
-            "euler_anal_I=0.2": {"passed": true, "detail": "a=0.173803, s=0.172400, e=0.81%"},
-            "euler_anal_I=0.3": {"passed": true, "detail": "a=0.274241, s=0.270200, e=1.47%"},
-            "euler_anal_I=0.5": {"passed": true, "detail": "a=0.474561, s=0.454400, e=4.25%"},
-            "euler_ref_reduces": {"passed": true, "detail": "no=0.172000, ref5=0.158500"},
-            "euler_ref_anal": {"passed": true, "detail": "a=0.159907, s=0.158600, e=0.82%"},
-            "euler_tau=10.0": {"passed": true, "detail": "a=0.091024, s=0.090800, e=0.25%"},
-            "euler_tau=20.0": {"passed": true, "detail": "a=0.123315, s=0.123400, e=0.07%"},
-            "euler_tau=40.0": {"passed": true, "detail": "a=0.137120, s=0.136800, e=0.23%"},
-            "known_ISI": {"passed": true, "detail": "ISI=13.8629ms"},
-            "native_anal_I=0.06": {"passed": true, "detail": "a=0.027906, n=0.027800, e=0.38%"},
-            "native_anal_I=0.1": {"passed": true, "detail": "a=0.072135, n=0.071800, e=0.46%"},
-            "native_anal_I=0.2": {"passed": true, "detail": "a=0.173803, n=0.172400, e=0.81%"},
-            "native_anal_I=0.3": {"passed": true, "detail": "a=0.274241, n=0.270200, e=1.47%"},
-            "euler_vs_native_I=0.1": {
-                "passed": true,
-                "detail": "e=0.071500, n=0.071500, err=0.00%",
-            },
-            "euler_vs_native_I=0.2": {
-                "passed": true,
-                "detail": "e=0.172000, n=0.172000, err=0.00%",
-            },
-        },
-        "1.2": {
-            "pat_RS": {"passed": true, "detail": "12 spikes (ISI=45.0ms)"},
-            "native_RS": {"passed": true, "detail": "ref=12, native=12"},
-            "pat_IB": {"passed": true, "detail": "16 spikes (ISI=31.2ms)"},
-            "native_IB": {"passed": true, "detail": "ref=16, native=17"},
-            "pat_CH": {"passed": true, "detail": "37 spikes (ISI=13.1ms)"},
-            "native_CH": {"passed": false, "detail": "ref=37, native=41"},
-            "pat_FS": {"passed": true, "detail": "50 spikes (ISI=10.0ms)"},
-            "native_FS": {"passed": false, "detail": "ref=50, native=59"},
-            "pat_TC1": {"passed": true, "detail": "0 spikes (no ISI)"},
-            "native_TC1": {"passed": true, "detail": "ref=0, native=0"},
-            "pat_TC2": {"passed": true, "detail": "46 spikes (ISI=10.8ms)"},
-            "native_TC2": {"passed": false, "detail": "ref=46, native=56"},
-            "pat_RZ": {"passed": true, "detail": "1 spikes (no ISI)"},
-            "native_RZ": {"passed": true, "detail": "ref=1, native=1"},
-            "pat_LTS": {"passed": true, "detail": "35 spikes (ISI=14.5ms)"},
-            "native_LTS": {"passed": true, "detail": "ref=35, native=38"},
-            "pat_tonic_spiking": {"passed": true, "detail": "19 spikes (ISI=26.8ms)"},
-            "native_tonic_spiking": {"passed": true, "detail": "ref=19, native=20"},
-            "pat_phasic_spiking": {"passed": true, "detail": "1 spikes (no ISI)"},
-            "native_phasic_spiking": {"passed": true, "detail": "ref=1, native=1"},
-            "pat_tonic_bursting": {"passed": true, "detail": "58 spikes (ISI=8.5ms)"},
-            "native_tonic_bursting": {"passed": true, "detail": "ref=58, native=63"},
-            "pat_phasic_bursting": {"passed": true, "detail": "1 spikes (no ISI)"},
-            "native_phasic_bursting": {"passed": true, "detail": "ref=1, native=1"},
-            "pat_mixed_mode": {"passed": true, "detail": "16 spikes (ISI=31.2ms)"},
-            "native_mixed_mode": {"passed": true, "detail": "ref=16, native=17"},
-            "pat_spike_freq_adapt": {"passed": true, "detail": "20 spikes (ISI=24.9ms)"},
-            "native_spike_freq_adapt": {"passed": true, "detail": "ref=20, native=20"},
-            "pat_class1_excitable": {"passed": true, "detail": "15 spikes (ISI=33.1ms)"},
-            "native_class1_excitable": {"passed": true, "detail": "ref=15, native=15"},
-            "pat_class2_excitable": {"passed": true, "detail": "53 spikes (ISI=9.5ms)"},
-            "native_class2_excitable": {"passed": false, "detail": "ref=53, native=65"},
-            "pat_spike_latency": {"passed": true, "detail": "9 spikes (ISI=55.6ms)"},
-            "native_spike_latency": {"passed": true, "detail": "ref=9, native=9"},
-            "pat_subthreshold_osc": {"passed": true, "detail": "25 spikes (ISI=20.3ms)"},
-            "native_subthreshold_osc": {"passed": false, "detail": "ref=25, native=29"},
-            "pat_accommodation": {"passed": true, "detail": "84 spikes (ISI=6.0ms)"},
-            "native_accommodation": {"passed": false, "detail": "ref=84, native=106"},
-            "pat_inhibition_induced": {"passed": true, "detail": "1 spikes (no ISI)"},
-            "native_inhibition_induced": {"passed": true, "detail": "ref=1, native=1"},
-            "RS_regular": {"passed": true, "detail": "CV=0.123"},
-            "FS>RS": {"passed": true, "detail": "FS=50 RS=12"},
-        },
-        "1.3": {
-            "resting": {"passed": true, "detail": "V=-65.00mV"},
-            "AP_peak>0": {"passed": true, "detail": "V=40.6mV"},
-            "AP_20-60": {"passed": true, "detail": "V=40.6mV"},
-            "spike_width": {"passed": true, "detail": "w=1.46ms"},
-            "m>0.8": {"passed": true, "detail": "m=0.894"},
-            "h<0.3": {"passed": false, "detail": "h=0.355"},
-            "n_rises": {"passed": "True", "detail": "n=0.500"},
-            "AHP<-65": {"passed": true, "detail": "AHP=-75.1mV"},
-            "fI_mono": {"passed": true, "detail": "spikes=[6, 7, 8, 9]"},
-            "sub_I=3": {"passed": false, "detail": "spikes=1"},
-            "native_fires": {"passed": true, "detail": "4 spikes/50ms"},
-            "native_rest": {"passed": "True", "detail": "V=-65.00"},
-        },
-    },
+    "1.3": {
+      "resting": {
+        "passed": true,
+        "detail": "V=-65.00mV"
+      },
+      "AP_peak>0": {
+        "passed": true,
+        "detail": "V=40.6mV"
+      },
+      "AP_20-60": {
+        "passed": true,
+        "detail": "V=40.6mV"
+      },
+      "spike_width": {
+        "passed": true,
+        "detail": "w=1.46ms"
+      },
+      "m>0.8": {
+        "passed": true,
+        "detail": "m=0.894"
+      },
+      "h<0.3": {
+        "passed": false,
+        "detail": "h=0.355"
+      },
+      "n_rises": {
+        "passed": "True",
+        "detail": "n=0.500"
+      },
+      "AHP<-65": {
+        "passed": true,
+        "detail": "AHP=-75.1mV"
+      },
+      "fI_mono": {
+        "passed": true,
+        "detail": "spikes=[6, 7, 8, 9]"
+      },
+      "sub_I=3": {
+        "passed": false,
+        "detail": "spikes=1"
+      },
+      "native_fires": {
+        "passed": true,
+        "detail": "4 spikes/50ms"
+      },
+      "native_rest": {
+        "passed": "True",
+        "detail": "V=-65.00"
+      }
+    }
+  }
 }

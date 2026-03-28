@@ -1,44 +1,44 @@
 {
-    "timestamp": "2026-03-26T12:28:20Z",
-    "system": {
-        "cpu": "11th Gen Intel Core i5-11600K @ 3.90GHz",
-        "cpu_features": "AVX2, AVX-512 (Rocket Lake)",
-        "os": "Windows 11 Pro 10.0.26200",
-        "rust_profile": "release (opt-level=3, lto=fat, codegen-units=1)",
+  "timestamp": "2026-03-26T12:28:20Z",
+  "system": {
+    "cpu": "11th Gen Intel Core i5-11600K @ 3.90GHz",
+    "cpu_features": "AVX2, AVX-512 (Rocket Lake)",
+    "os": "Windows 11 Pro 10.0.26200",
+    "rust_profile": "release (opt-level=3, lto=fat, codegen-units=1)"
+  },
+  "benchmark_tool": "Criterion 0.8",
+  "workload": "1,048,576 bits (1M)",
+  "results": [
+    {
+      "name": "pack_bitstream_1m",
+      "time_mean_us": 1309.6,
+      "time_low_us": 1212.9,
+      "time_high_us": 1412.3,
+      "throughput_gbit_s": 0.8,
+      "note": "Packs u8 array into packed u64 words. SIMD dispatch path."
     },
-    "benchmark_tool": "Criterion 0.8",
-    "workload": "1,048,576 bits (1M)",
-    "results": [
-        {
-            "name": "pack_bitstream_1m",
-            "time_mean_us": 1309.6,
-            "time_low_us": 1212.9,
-            "time_high_us": 1412.3,
-            "throughput_gbit_s": 0.8,
-            "note": "Packs u8 array into packed u64 words. SIMD dispatch path.",
-        },
-        {
-            "name": "popcount_portable_1m",
-            "time_mean_us": 9.67,
-            "time_low_us": 9.21,
-            "time_high_us": 10.15,
-            "throughput_gbit_s": 108.4,
-            "note": "Portable popcount on packed u64 words (no SIMD intrinsics).",
-        },
-        {
-            "name": "popcount_simd_dispatch_1m",
-            "time_mean_us": 5.52,
-            "time_low_us": 5.28,
-            "time_high_us": 5.79,
-            "throughput_gbit_s": 190.0,
-            "note": "SIMD-dispatched popcount. Uses AVX2/AVX-512 when available.",
-        },
-    ],
-    "comparison_to_readme_claim": {
-        "readme_claim": "41.3 Gbit/s AVX-512 bitstream packing",
-        "readme_source": "docs/benchmarks/BENCHMARKS.md — measured at 25.4 us on unknown cloud instance",
-        "local_pack_result": "0.8 Gbit/s (1.31 ms) — 51x slower than claimed",
-        "local_popcount_result": "190 Gbit/s (5.52 us) — 4.6x faster than claimed, but different operation",
-        "conclusion": "The 41.3 Gbit/s claim likely measured popcount throughput, not pack throughput, or was measured on a significantly faster CPU. Either way the claim needs clarification.",
+    {
+      "name": "popcount_portable_1m",
+      "time_mean_us": 9.67,
+      "time_low_us": 9.21,
+      "time_high_us": 10.15,
+      "throughput_gbit_s": 108.4,
+      "note": "Portable popcount on packed u64 words (no SIMD intrinsics)."
     },
+    {
+      "name": "popcount_simd_dispatch_1m",
+      "time_mean_us": 5.52,
+      "time_low_us": 5.28,
+      "time_high_us": 5.79,
+      "throughput_gbit_s": 190.0,
+      "note": "SIMD-dispatched popcount. Uses AVX2/AVX-512 when available."
+    }
+  ],
+  "comparison_to_readme_claim": {
+    "readme_claim": "41.3 Gbit/s AVX-512 bitstream packing",
+    "readme_source": "docs/benchmarks/BENCHMARKS.md — measured at 25.4 us on unknown cloud instance",
+    "local_pack_result": "0.8 Gbit/s (1.31 ms) — 51x slower than claimed",
+    "local_popcount_result": "190 Gbit/s (5.52 us) — 4.6x faster than claimed, but different operation",
+    "conclusion": "The 41.3 Gbit/s claim likely measured popcount throughput, not pack throughput, or was measured on a significantly faster CPU. Either way the claim needs clarification."
+  }
 }

@@ -1,75 +1,98 @@
 {
-    "timestamp": "2026-03-28T05:41:27+0000",
-    "elapsed_s": 6.5,
-    "single_lif": {
-        "b2_spikes": 20,
-        "sc_spikes": 20,
-        "b2_times": [
-            24.900000000000002,
-            49.9,
-            74.9,
-            99.9,
-            124.9,
-            149.9,
-            174.9,
-            199.9,
-            224.9,
-            249.9,
-            274.90000000000003,
-            299.9,
-            324.90000000000003,
-            349.90000000000003,
-            374.9,
-            399.90000000000003,
-            424.9,
-            449.90000000000003,
-            474.90000000000003,
-            499.9,
-        ],
-        "sc_times": [
-            24.900000000000002,
-            49.900000000000006,
-            74.9,
-            99.9,
-            124.9,
-            149.9,
-            174.9,
-            199.9,
-            224.9,
-            249.9,
-            274.90000000000003,
-            299.90000000000003,
-            324.90000000000003,
-            349.90000000000003,
-            374.90000000000003,
-            399.90000000000003,
-            424.90000000000003,
-            449.90000000000003,
-            474.90000000000003,
-            499.90000000000003,
-        ],
+  "timestamp": "2026-03-28T05:41:27+0000",
+  "elapsed_s": 6.5,
+  "single_lif": {
+    "b2_spikes": 20,
+    "sc_spikes": 20,
+    "b2_times": [
+      24.900000000000002,
+      49.9,
+      74.9,
+      99.9,
+      124.9,
+      149.9,
+      174.9,
+      199.9,
+      224.9,
+      249.9,
+      274.90000000000003,
+      299.9,
+      324.90000000000003,
+      349.90000000000003,
+      374.9,
+      399.90000000000003,
+      424.9,
+      449.90000000000003,
+      474.90000000000003,
+      499.9
+    ],
+    "sc_times": [
+      24.900000000000002,
+      49.900000000000006,
+      74.9,
+      99.9,
+      124.9,
+      149.9,
+      174.9,
+      199.9,
+      224.9,
+      249.9,
+      274.90000000000003,
+      299.90000000000003,
+      324.90000000000003,
+      349.90000000000003,
+      374.90000000000003,
+      399.90000000000003,
+      424.90000000000003,
+      449.90000000000003,
+      474.90000000000003,
+      499.90000000000003
+    ]
+  },
+  "population_poisson": {
+    "b2": {
+      "spikes": 3456,
+      "mean_rate": 69.12,
+      "time": 0.507366418838501
     },
-    "population_poisson": {
-        "b2": {"spikes": 3456, "mean_rate": 69.12, "time": 0.507366418838501},
-        "sc": {"spikes": 3524, "mean_rate": 70.48, "time": 0.0691986083984375},
+    "sc": {
+      "spikes": 3524,
+      "mean_rate": 70.48,
+      "time": 0.0691986083984375
+    }
+  },
+  "network_api": {
+    "ok": false,
+    "error": "Unknown model 'StochasticLIFNeuron'. Check neurons.models.__all__."
+  },
+  "checks": {
+    "single_lif_spike_count": {
+      "passed": true,
+      "detail": "B2=20, SC=20"
     },
-    "network_api": {
-        "ok": false,
-        "error": "Unknown model 'StochasticLIFNeuron'. Check neurons.models.__all__.",
+    "single_lif_spike_timing": {
+      "passed": "True",
+      "detail": "max timing diff=0.000ms"
     },
-    "checks": {
-        "single_lif_spike_count": {"passed": true, "detail": "B2=20, SC=20"},
-        "single_lif_spike_timing": {"passed": "True", "detail": "max timing diff=0.000ms"},
-        "single_lif_isi_match": {
-            "passed": true,
-            "detail": "B2 ISI=25.00ms, SC ISI=25.00ms, err=0.00%",
-        },
-        "pop_spike_count_20pct": {"passed": true, "detail": "B2=3456, SC=3524, ratio=1.02"},
-        "pop_mean_rate_20pct": {"passed": true, "detail": "B2=69.1Hz, SC=70.5Hz"},
-        "pop_sc_faster": {"passed": true, "detail": "SC=0.0692s, B2=0.51s, ratio=7x"},
-        "network_api_runs": {
-            "passed": false,
-            "detail": "Error: Unknown model 'StochasticLIFNeuron'. Check neurons.models.__all__.",
-        },
+    "single_lif_isi_match": {
+      "passed": true,
+      "detail": "B2 ISI=25.00ms, SC ISI=25.00ms, err=0.00%"
     },
+    "pop_spike_count_20pct": {
+      "passed": true,
+      "detail": "B2=3456, SC=3524, ratio=1.02"
+    },
+    "pop_mean_rate_20pct": {
+      "passed": true,
+      "detail": "B2=69.1Hz, SC=70.5Hz"
+    },
+    "pop_sc_faster": {
+      "passed": true,
+      "detail": "SC=0.0692s, B2=0.51s, ratio=7x"
+    },
+    "network_api_runs": {
+      "passed": false,
+      "detail": "Error: Unknown model 'StochasticLIFNeuron'. Check neurons.models.__all__."
+    }
+  }
 }

@@ -63,7 +63,7 @@ def _parse_unit_value(s: str) -> float:
         "uF_per_cm2": 1.0,
         "kohm_cm": 1.0,
     }
-    for unit, mult in sorted(multipliers.keys(), key=len, reverse=True):
+    for unit in sorted(multipliers, key=len, reverse=True):
         if s.endswith(unit):
             num = s[: -len(unit)].strip()
             return float(num) * multipliers[unit]

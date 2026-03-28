@@ -1,22 +1,53 @@
 {
-    "timestamp": "2026-03-28T09:47:17+0000",
-    "float": {"standard": 0.9663, "sc256": 0.9684, "sc1024": 0.9662},
-    "sc_inference": {
-        "standard": {
-            "256": {"accuracy": 0.245, "time_s": 50.9},
-            "512": {"accuracy": 0.25, "time_s": 97.8},
-            "1024": {"accuracy": 0.31, "time_s": 195.6},
-        },
-        "sc_L256": {
-            "256": {"accuracy": 0.255, "time_s": 51.2},
-            "512": {"accuracy": 0.325, "time_s": 97.9},
-            "1024": {"accuracy": 0.34, "time_s": 176.9},
-        },
-        "sc_L1024": {
-            "256": {"accuracy": 0.275, "time_s": 46.6},
-            "512": {"accuracy": 0.345, "time_s": 89.0},
-            "1024": {"accuracy": 0.405, "time_s": 176.3},
-        },
+  "timestamp": "2026-03-28T09:47:17+0000",
+  "float": {
+    "standard": 0.9663,
+    "sc256": 0.9684,
+    "sc1024": 0.9662
+  },
+  "sc_inference": {
+    "standard": {
+      "256": {
+        "accuracy": 0.245,
+        "time_s": 50.9
+      },
+      "512": {
+        "accuracy": 0.25,
+        "time_s": 97.8
+      },
+      "1024": {
+        "accuracy": 0.31,
+        "time_s": 195.6
+      }
     },
-    "total_s": 2360.5,
+    "sc_L256": {
+      "256": {
+        "accuracy": 0.255,
+        "time_s": 51.2
+      },
+      "512": {
+        "accuracy": 0.325,
+        "time_s": 97.9
+      },
+      "1024": {
+        "accuracy": 0.34,
+        "time_s": 176.9
+      }
+    },
+    "sc_L1024": {
+      "256": {
+        "accuracy": 0.275,
+        "time_s": 46.6
+      },
+      "512": {
+        "accuracy": 0.345,
+        "time_s": 89.0
+      },
+      "1024": {
+        "accuracy": 0.405,
+        "time_s": 176.3
+      }
+    }
+  },
+  "total_s": 2360.5
 }
