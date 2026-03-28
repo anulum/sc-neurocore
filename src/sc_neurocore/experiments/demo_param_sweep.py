@@ -13,14 +13,14 @@ from sc_neurocore.layers.sc_dense_layer import SCDenseLayer
 
 def run_pattern_trials(
     label: int,
-    x_inputs,
-    weight_values,
+    x_inputs: list[float],
+    weight_values: list[float],
     n_neurons: int,
     T: int,
     noise_std: float,
     n_trials: int,
     base_seed: int = 42,
-):
+) -> np.ndarray:
     """
     Run multiple trials of SCDenseLayer for a given pattern (x_inputs).
     Return matrix of shape (n_trials, n_neurons) with firing rates.

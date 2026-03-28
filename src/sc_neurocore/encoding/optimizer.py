@@ -16,6 +16,7 @@ No framework provides automatic encoding selection.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -143,7 +144,7 @@ class EncodingOptimizer:
         corr = np.corrcoef(original, decoded_approx)[0, 1]
         return float(max(0, corr)) if np.isfinite(corr) else 0.0
 
-    def _encodings(self):
+    def _encodings(self) -> list[tuple[str, Any, Any]]:
         return [
             ("rate", encoders.rate_encode, lambda s: 0.7 + 0.3 * (1 - s["sparsity"])),
             ("latency", encoders.latency_encode, lambda s: 0.8 if s["sparsity"] < 0.5 else 0.4),

@@ -118,7 +118,7 @@ class ContinualLearner:
         self._task_count = 0
         self._accuracy_history: list[float] = []
 
-    def compute_fisher(self, gradients_per_sample: list[list[np.ndarray]]):
+    def compute_fisher(self, gradients_per_sample: list[list[np.ndarray]]) -> None:
         """Compute Fisher Information diagonal from per-sample gradients.
 
         Parameters
@@ -147,12 +147,12 @@ class ContinualLearner:
             penalty += float(np.sum(fisher * (w - w_star) ** 2))
         return 0.5 * self.ewc_lambda * penalty
 
-    def register_task(self, accuracy: float):
+    def register_task(self, accuracy: float) -> None:
         """Register completion of a task."""
         self._task_count += 1
         self._accuracy_history.append(accuracy)
 
-    def update_weights(self, new_weights: list[np.ndarray]):
+    def update_weights(self, new_weights: list[np.ndarray]) -> None:
         """Update weights (e.g., after training on a new task)."""
         self.weights = [w.copy() for w in new_weights]
 

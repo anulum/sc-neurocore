@@ -88,7 +88,7 @@ class AERSender:
             return self.send(events)
         return 0
 
-    def close(self):
+    def close(self) -> None:
         self._sock.close()
 
 
@@ -151,5 +151,5 @@ class AERReceiver:
             ts = e.timestamp
         return vector, ts
 
-    def close(self):
+    def close(self) -> None:
         self._sock.close()
