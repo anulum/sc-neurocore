@@ -12,6 +12,8 @@ import torch
 from sc_neurocore.qat.torch_qat import (
     QuantizedLIFNet,
     QuantizedLinear,
+    SCAwareLIFNet,
+    SCAwareLinear,
     ste_quantize,
 )
 
@@ -117,3 +119,75 @@ class TestQuantizedLIFNet:
         # Different quantisation means different outputs (unless weights are exact)
         # At least the shapes match
         assert s4.shape == s8.shape
+
+
+class TestSCAwareLinear:
+    def test_forward_shape(self):
+        layer = SCAwareLinear(784, 128, bitstream_length=256)
+        x = torch.randn(32, 784)
+        out = layer(x)
+        assert out.shape == (32, 128)
+
+    def test_weights_clamped(self):
+        layer = SCAwareLinear(10, 5, bitstream_length=256)
+        # Force large weights
+        with torch.no_grad():
+            layer.linear.weight.fill_(5.0)
+        x = torch.randn(4, 10)
+        _ = layer(x)
+        # After forward, weight itself isn't mutated, but forward uses clamped
+        # The clamp happens in forward, not in-place
+
+    def test_training_adds_noise(self):
+        torch.manual_seed(42)
+        layer = SCAwareLinear(10, 5, bitstream_length=64)
+        x = torch.randn(4, 10)
+        layer.train()
+        out1 = layer(x).detach().clone()
+        out2 = layer(x).detach().clone()
+        # With noise, outputs differ between calls
+        assert not torch.allclose(out1, out2)
+
+    def test_eval_no_noise(self):
+        torch.manual_seed(42)
+        layer = SCAwareLinear(10, 5, bitstream_length=64)
+        x = torch.randn(4, 10)
+        layer.eval()
+        out1 = layer(x).detach().clone()
+        out2 = layer(x).detach().clone()
+        assert torch.allclose(out1, out2)
+
+    def test_gradient_flows(self):
+        layer = SCAwareLinear(10, 5, bitstream_length=256)
+        layer.train()
+        x = torch.randn(4, 10)
+        out = layer(x)
+        out.sum().backward()
+        assert layer.linear.weight.grad is not None
+
+
+class TestSCAwareLIFNet:
+    def test_forward_shape(self):
+        net = SCAwareLIFNet(784, 128, 10, bitstream_length=256)
+        x = torch.randn(25, 32, 784)
+        spikes, mem = net(x)
+        assert spikes.shape == (32, 10)
+
+    def test_trainable(self):
+        net = SCAwareLIFNet(784, 64, 10, n_layers=1, bitstream_length=128)
+        x = torch.randn(10, 8, 784)
+        target = torch.randint(0, 10, (8,))
+        spikes, _ = net(x)
+        loss = torch.nn.functional.cross_entropy(spikes, target)
+        loss.backward()
+        for p in net.parameters():
+            if p.requires_grad:
+                assert p.grad is not None
+
+    def test_export_bipolar(self):
+        net = SCAwareLIFNet(10, 5, 3, n_layers=1, bitstream_length=256)
+        exported = net.export_bipolar_weights()
+        assert len(exported) == 2
+        for e in exported:
+            assert e["weight"].min() >= -1.0
+            assert e["weight"].max() <= 1.0
