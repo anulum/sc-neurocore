@@ -176,6 +176,7 @@ class EnergyAccountant:
         EnergyReport
         """
         c = self.cost_model
+        assert c is not None
         report = EnergyReport(hardware=c.name)
         total_spikes_all = 0
 

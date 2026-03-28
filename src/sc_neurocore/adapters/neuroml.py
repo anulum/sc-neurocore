@@ -81,7 +81,7 @@ class ImportedCell:
     source_tag: str
 
 
-def _import_iaf_cell(elem) -> ImportedCell:
+def _import_iaf_cell(elem: Any) -> ImportedCell:
     """Import <iafCell> or <iafRefCell>."""
     tag = _strip_ns(elem.tag)
     cell_id = elem.get("id", "unnamed")
@@ -118,7 +118,7 @@ def _import_iaf_cell(elem) -> ImportedCell:
     return ImportedCell(cell_id, "StochasticLIFNeuron", params, tag)
 
 
-def _import_iaf_tau_cell(elem) -> ImportedCell:
+def _import_iaf_tau_cell(elem: Any) -> ImportedCell:
     """Import <iafTauCell> or <iafTauRefCell>."""
     tag = _strip_ns(elem.tag)
     cell_id = elem.get("id", "unnamed")
@@ -145,7 +145,7 @@ def _import_iaf_tau_cell(elem) -> ImportedCell:
     return ImportedCell(cell_id, "StochasticLIFNeuron", params, tag)
 
 
-def _import_izhikevich_cell(elem) -> ImportedCell:
+def _import_izhikevich_cell(elem: Any) -> ImportedCell:
     """Import <izhikevichCell> (2003 dimensionless)."""
     cell_id = elem.get("id", "unnamed")
     return ImportedCell(
@@ -163,7 +163,7 @@ def _import_izhikevich_cell(elem) -> ImportedCell:
     )
 
 
-def _import_izhikevich2007_cell(elem) -> ImportedCell:
+def _import_izhikevich2007_cell(elem: Any) -> ImportedCell:
     """Import <izhikevich2007Cell> (biophysical units).
 
     Convert to dimensionless 2003 model parameters.
@@ -196,7 +196,7 @@ def _import_izhikevich2007_cell(elem) -> ImportedCell:
     )
 
 
-def _import_adex_cell(elem) -> ImportedCell:
+def _import_adex_cell(elem: Any) -> ImportedCell:
     """Import <adExIaFCell>."""
     cell_id = elem.get("id", "unnamed")
     return ImportedCell(
@@ -254,7 +254,7 @@ def import_neuroml(path: str | Path) -> list[ImportedCell]:
     return cells
 
 
-def create_neuron(cell: ImportedCell):
+def create_neuron(cell: ImportedCell) -> Any:
     """Instantiate an SC-NeuroCore neuron from an ImportedCell.
 
     Returns a neuron object ready for .step() calls.
