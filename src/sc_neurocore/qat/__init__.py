@@ -15,8 +15,8 @@ __all__ = [
     "TernaryWeights",
 ]
 
-try:
-    from .torch_qat import (
+try:  # pragma: no cover — torch optional
+    from .torch_qat import (  # pragma: no cover
         QuantizedLIFNet,
         QuantizedLinear,
         SCAwareLIFNet,
@@ -24,7 +24,7 @@ try:
         ste_quantize,
     )
 
-    __all__ += [
+    __all__ += [  # pragma: no cover
         "QuantizedLIFNet",
         "QuantizedLinear",
         "SCAwareLIFNet",
