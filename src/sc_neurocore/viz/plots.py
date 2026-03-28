@@ -9,6 +9,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 try:
@@ -19,12 +21,12 @@ except ImportError:  # pragma: no cover
     HAS_MPL = False
 
 
-def _require_mpl():
+def _require_mpl() -> None:
     if not HAS_MPL:
         raise ImportError("matplotlib is required for sc_neurocore.viz.plots")
 
 
-def _get_ax(ax):
+def _get_ax(ax: Any) -> Any:
     """Return existing axes or create a new figure+axes pair."""
     if ax is not None:
         return ax
@@ -32,7 +34,13 @@ def _get_ax(ax):
     return ax
 
 
-def raster_plot(spike_monitor, ax=None, color="k", marker=".", s=1):
+def raster_plot(
+    spike_monitor: Any,
+    ax: Any = None,
+    color: str = "k",
+    marker: str = ".",
+    s: float = 1,
+) -> Any:
     """Spike raster from a SpikeMonitor."""
     _require_mpl()
     ax = _get_ax(ax)
@@ -44,7 +52,9 @@ def raster_plot(spike_monitor, ax=None, color="k", marker=".", s=1):
     return ax
 
 
-def voltage_trace(state_monitor, neuron_ids=None, ax=None):
+def voltage_trace(
+    state_monitor: Any, neuron_ids: Any = None, ax: Any = None
+) -> Any:
     """Membrane voltage traces from a StateMonitor."""
     _require_mpl()
     ax = _get_ax(ax)
@@ -64,7 +74,9 @@ def voltage_trace(state_monitor, neuron_ids=None, ax=None):
     return ax
 
 
-def firing_rate_plot(spike_monitor, bin_ms=10, ax=None):
+def firing_rate_plot(
+    spike_monitor: Any, bin_ms: int = 10, ax: Any = None
+) -> Any:
     """Population firing rate histogram (spikes per bin)."""
     _require_mpl()
     ax = _get_ax(ax)
@@ -81,7 +93,9 @@ def firing_rate_plot(spike_monitor, bin_ms=10, ax=None):
     return ax
 
 
-def isi_histogram(spike_monitor, neuron_id, bins=50, ax=None):
+def isi_histogram(
+    spike_monitor: Any, neuron_id: int, bins: int = 50, ax: Any = None
+) -> Any:
     """Inter-spike interval distribution for a single neuron."""
     _require_mpl()
     ax = _get_ax(ax)
@@ -96,7 +110,9 @@ def isi_histogram(spike_monitor, neuron_id, bins=50, ax=None):
     return ax
 
 
-def cross_correlogram(spike_monitor, i, j, max_lag_ms=50, ax=None):
+def cross_correlogram(
+    spike_monitor: Any, i: int, j: int, max_lag_ms: int = 50, ax: Any = None
+) -> Any:
     """Spike cross-correlation between neurons *i* and *j*."""
     _require_mpl()
     ax = _get_ax(ax)
@@ -108,7 +124,9 @@ def cross_correlogram(spike_monitor, i, j, max_lag_ms=50, ax=None):
     return ax
 
 
-def population_activity(spike_monitor, bin_ms=5, ax=None):
+def population_activity(
+    spike_monitor: Any, bin_ms: int = 5, ax: Any = None
+) -> Any:
     """Heatmap of binned spike counts per neuron."""
     _require_mpl()
     ax = _get_ax(ax)
@@ -130,7 +148,13 @@ def population_activity(spike_monitor, bin_ms=5, ax=None):
     return ax
 
 
-def phase_portrait(state_monitor, var_x="v", var_y="w", neuron_id=0, ax=None):
+def phase_portrait(
+    state_monitor: Any,
+    var_x: str = "v",
+    var_y: str = "w",
+    neuron_id: int = 0,
+    ax: Any = None,
+) -> Any:
     """2-D phase-plane trajectory for a single neuron."""
     _require_mpl()
     ax = _get_ax(ax)
@@ -147,7 +171,7 @@ def phase_portrait(state_monitor, var_x="v", var_y="w", neuron_id=0, ax=None):
     return ax
 
 
-def weight_matrix(projection, ax=None, cmap="RdBu_r"):
+def weight_matrix(projection: Any, ax: Any = None, cmap: str = "RdBu_r") -> Any:
     """Connectivity weight heatmap from a Projection's CSR data."""
     _require_mpl()
     ax = _get_ax(ax)
@@ -165,7 +189,7 @@ def weight_matrix(projection, ax=None, cmap="RdBu_r"):
     return ax
 
 
-def network_graph(network, ax=None):
+def network_graph(network: Any, ax: Any = None) -> Any:
     """Node/edge diagram of populations and projections."""
     _require_mpl()
     ax = _get_ax(ax)
@@ -196,7 +220,7 @@ def network_graph(network, ax=None):
     return ax
 
 
-def psd_plot(spike_monitor, neuron_id, ax=None):
+def psd_plot(spike_monitor: Any, neuron_id: int, ax: Any = None) -> Any:
     """Power spectral density of a single neuron's spike train."""
     _require_mpl()
     ax = _get_ax(ax)
@@ -217,7 +241,9 @@ def psd_plot(spike_monitor, neuron_id, ax=None):
     return ax
 
 
-def instantaneous_rate_plot(spike_monitor, neuron_id, sigma_ms=20, ax=None):
+def instantaneous_rate_plot(
+    spike_monitor: Any, neuron_id: int, sigma_ms: int = 20, ax: Any = None
+) -> Any:
     """Gaussian-kernel-smoothed instantaneous firing rate."""
     _require_mpl()
     ax = _get_ax(ax)
@@ -241,7 +267,9 @@ def instantaneous_rate_plot(spike_monitor, neuron_id, sigma_ms=20, ax=None):
     return ax
 
 
-def spike_train_comparison(trains, labels=None, ax=None):
+def spike_train_comparison(
+    trains: list[np.ndarray], labels: list[str] | None = None, ax: Any = None
+) -> Any:
     """Overlay multiple spike trains as event plots.
 
     Parameters
