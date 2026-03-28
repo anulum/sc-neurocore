@@ -71,6 +71,9 @@ nav:
       - Network Canvas: studio/network-canvas.md
       - Integration & Projects: studio/integration.md
       - WebSocket Progress: studio/websocket-progress.md
+      - ODE Equation Editor: studio/ode-editor.md
+      - SVG Vector Export: studio/svg-export.md
+      - Onboarding Tour: studio/onboarding.md
   - Tutorials:
       - Studio Quickstart: tutorials/studio_quickstart.md
       - SC Fundamentals: tutorials/01_stochastic_computing_fundamentals.md
