@@ -8,6 +8,7 @@
 import numpy as np
 import sys
 import os
+from typing import Any
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
@@ -31,10 +32,10 @@ def run_exascale_demo() -> None:
     # 2. Neuroevolution
     print("\n[2] Testing Genetic Neuroevolution...")
 
-    def factory() -> None:
+    def factory() -> Any:
         return VectorizedSCLayer(n_inputs=5, n_neurons=1)
 
-    def fitness(layer) -> None:
+    def fitness(layer: Any) -> float:
         # Target: Output 1.0 for input [1,1,1,1,1]
         out = layer.forward(np.ones(5))
         return float(out[0])  # Higher is better
