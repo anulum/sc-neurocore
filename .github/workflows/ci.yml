@@ -52,7 +52,9 @@ jobs:
           cache: pip
 
       - name: Install tools
-        run: pip install --require-hashes -r requirements/lint.txt
+        run: |
+          pip install --require-hashes -r requirements/lint.txt
+          pip install mypy==1.19.1 numpy
 
       - name: ruff check
         run: ruff check src/ tests/
@@ -62,6 +64,9 @@ jobs:
 
       - name: bandit
         run: bandit -r src/sc_neurocore/ -c pyproject.toml -q
+
+      - name: mypy
+        run: mypy src/sc_neurocore/
 
   test:
     runs-on: ubuntu-latest
