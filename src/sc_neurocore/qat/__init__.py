@@ -8,5 +8,13 @@
 """Train SNNs through quantization for hardware deployment."""
 
 from .quantize import QuantizedSNNLayer, quantize_aware_train_step, TernaryWeights
+from .torch_qat import QuantizedLIFNet, QuantizedLinear, ste_quantize
 
-__all__ = ["QuantizedSNNLayer", "quantize_aware_train_step", "TernaryWeights"]
+__all__ = [
+    "QuantizedSNNLayer",
+    "quantize_aware_train_step",
+    "TernaryWeights",
+    "QuantizedLIFNet",
+    "QuantizedLinear",
+    "ste_quantize",
+]
