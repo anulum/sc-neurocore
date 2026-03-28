@@ -17,19 +17,21 @@ counts via EM with squared-exponential GP priors on latent dimensions.
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 from .basic import bin_spike_train
 
 
-def _gp_kernel(n_bins, tau, sigma=1.0):
+def _gp_kernel(n_bins: int, tau: float, sigma: float = 1.0) -> np.ndarray:
     """Squared-exponential kernel matrix for *n_bins* time points."""
     t = np.arange(n_bins, dtype=np.float64)
     diff = t[:, None] - t[None, :]
     return sigma**2 * np.exp(-0.5 * diff**2 / (tau**2 + 1e-12))
 
 
-def _gpfa_e_step(Y, C, d, R, K_all):
+def _gpfa_e_step(Y: np.ndarray, C: np.ndarray, d: np.ndarray, R: np.ndarray, K_all: list[np.ndarray]) -> tuple[np.ndarray, np.ndarray]:
     """Posterior p(x|y) for each latent dimension jointly."""
     n_neurons, n_bins = Y.shape
     n_latents = C.shape[1]
@@ -96,7 +98,7 @@ def _gpfa_e_step(Y, C, d, R, K_all):
     return x_post, xx_post
 
 
-def _gpfa_m_step(Y, x_post, xx_post):
+def _gpfa_m_step(Y: np.ndarray, x_post: np.ndarray, xx_post: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Update C, d, R from sufficient statistics."""
     n_neurons, n_bins = Y.shape
 
@@ -117,7 +119,7 @@ def _gpfa_m_step(Y, x_post, xx_post):
     return C_new, d_new, R_new
 
 
-def gpfa(trains, n_latents=3, bin_ms=20.0, dt=0.001, max_iter=50, tol=1e-4, seed=42):
+def gpfa(trains: list[np.ndarray], n_latents: int = 3, bin_ms: float = 20.0, dt: float = 0.001, max_iter: int = 50, tol: float = 1e-4, seed: int = 42) -> dict[str, Any]:
     """Extract smooth latent trajectories from parallel spike trains via EM."""
     n_neurons = len(trains)
     if n_neurons == 0:
@@ -173,7 +175,7 @@ def gpfa(trains, n_latents=3, bin_ms=20.0, dt=0.001, max_iter=50, tol=1e-4, seed
     }
 
 
-def gpfa_transform(new_trains, params, bin_ms=20.0, dt=0.001):
+def gpfa_transform(new_trains: list[np.ndarray], params: dict[str, Any], bin_ms: float = 20.0, dt: float = 0.001) -> np.ndarray:
     """Project new spike trains using learned GPFA parameters."""
     C = params["C"]
     d = params["d"]
