@@ -70,7 +70,7 @@ def bipolar_mac(
 
     Returns
     -------
-    (M,) float array, MAC results in [-1, 1] (bipolar)
+    (M,) float array, dot product results (sum of N bipolar products)
     """
     N = len(inputs)
     M = weights.shape[0]
@@ -84,18 +84,14 @@ def bipolar_mac(
     weight_probs = np.clip((weights + 1.0) / 2.0, 0.0, 1.0)
     weight_bits = (rng.random((M, N, L)) < weight_probs[:, :, None]).astype(np.uint8)
 
-    # XNOR multiplication + popcount across inputs
+    # XNOR multiplication: per-input bipolar product, then sum (dot product)
     outputs = np.zeros(M)
     for j in range(M):
-        # XNOR: (N, L) — 1 where input_bits[i,t] == weight_bits[j,i,t]
-        xnor = (input_bits == weight_bits[j]).astype(np.float32)
-        # Sum across inputs (MAC), then average across bitstream length
-        mac_per_t = xnor.sum(axis=0)  # (L,) — sum of N XNOR results per timestep
-        # Decode: each XNOR result is bipolar product, sum of N products
-        # Average over L for noise reduction
-        avg_ones = mac_per_t.mean()
-        # Convert from popcount to bipolar: result = 2 * (avg_ones / N) - 1
-        outputs[j] = 2.0 * (avg_ones / N) - 1.0
+        xnor = (input_bits == weight_bits[j]).astype(np.float32)  # (N, L)
+        # Per-input: average over L, decode to bipolar [-1, 1]
+        per_input = 2.0 * xnor.mean(axis=1) - 1.0  # (N,)
+        # Sum across inputs = dot product (matches w @ x)
+        outputs[j] = per_input.sum()
 
     return outputs
 
