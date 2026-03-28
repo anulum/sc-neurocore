@@ -14,19 +14,19 @@ from sc_neurocore.neurons.models.brunel_wang import BrunelWangNeuron
 class TestSRM0:
     def test_fires_with_current(self):
         n = SRM0Neuron(tau_m=20.0, v_threshold=1.0, dt=0.1)
-        spikes = sum(n.step(0.2) for _ in range(1000))
+        spikes = sum(n.step(2.0) for _ in range(1000))
         assert spikes > 0
 
     def test_subthreshold_no_spikes(self):
         n = SRM0Neuron(tau_m=20.0, v_threshold=1.0, dt=0.1)
-        spikes = sum(n.step(0.001) for _ in range(1000))
+        spikes = sum(n.step(0.5) for _ in range(1000))
         assert spikes == 0
 
     def test_eta_refractory(self):
         n = SRM0Neuron(tau_m=20.0, v_threshold=1.0, eta_reset=10.0, dt=0.1)
         # Drive hard until spike
         for _ in range(1000):
-            if n.step(0.5):
+            if n.step(2.0):
                 break
         # Right after spike, v should be near rest due to eta
         assert n.v < 0.5
@@ -46,8 +46,8 @@ class TestSRM0:
         assert "v" in s and "eta" in s and "t" in s
 
     def test_rate_increases_with_current(self):
-        r1 = sum(SRM0Neuron(dt=0.1).step(0.1) for _ in range(5000))
-        r2 = sum(SRM0Neuron(dt=0.1).step(0.3) for _ in range(5000))
+        r1 = sum(SRM0Neuron(dt=0.1).step(1.5) for _ in range(5000))
+        r2 = sum(SRM0Neuron(dt=0.1).step(3.0) for _ in range(5000))
         assert r2 > r1
 
 

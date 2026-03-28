@@ -1,14 +1,29 @@
 {
-    "timestamp": "2026-03-28T11:03:42+0000",
-    "fix": "lif_spike_threshold_between_layers",
-    "float_accuracy": 0.9692,
-    "sc_with_lif": {
-        "128": {"accuracy": 0.23, "time_s": 27.9},
-        "256": {"accuracy": 0.2467, "time_s": 59.7},
-        "512": {"accuracy": 0.24, "time_s": 119.6},
-        "1024": {"accuracy": 0.24, "time_s": 243.2},
-        "2048": {"accuracy": 0.2467, "time_s": 485.6},
+  "timestamp": "2026-03-28T11:03:42+0000",
+  "fix": "lif_spike_threshold_between_layers",
+  "float_accuracy": 0.9692,
+  "sc_with_lif": {
+    "128": {
+      "accuracy": 0.23,
+      "time_s": 27.9
     },
-    "sc_without_lif_L1024": 0.2433,
-    "total_s": 1780.8,
+    "256": {
+      "accuracy": 0.2467,
+      "time_s": 59.7
+    },
+    "512": {
+      "accuracy": 0.24,
+      "time_s": 119.6
+    },
+    "1024": {
+      "accuracy": 0.24,
+      "time_s": 243.2
+    },
+    "2048": {
+      "accuracy": 0.2467,
+      "time_s": 485.6
+    }
+  },
+  "sc_without_lif_L1024": 0.2433,
+  "total_s": 1780.8
 }
