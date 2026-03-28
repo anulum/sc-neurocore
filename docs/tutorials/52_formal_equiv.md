@@ -98,3 +98,42 @@ Not covered (future work):
 - Refractory period (set to 0 for equivalence)
 - Multi-neuron layer interactions
 - Synapse weight multiplication
+
+## Co-simulation vs Formal Verification
+
+| Property | Co-simulation | Formal Equivalence |
+|----------|:------------:|:-----------------:|
+| Input coverage | N test vectors | ALL possible inputs |
+| Time to run | Seconds | Minutes to hours |
+| Bug detection | Probabilistic | Guaranteed (within depth) |
+| Tools needed | Python only | SymbiYosys + Z3 |
+| Debugging | Easy (print values) | Counterexample trace |
+
+Use co-simulation for quick sanity checks during development.
+Use formal verification before FPGA deployment for safety-critical
+applications.
+
+## Integration with Studio
+
+The Studio's Compiler Inspector provides co-simulation (float vs Q8.8)
+as a first pass. For formal proof, export the generated SystemVerilog
+and run SymbiYosys offline. The `check_equivalence()` API automates
+this when SymbiYosys is installed.
+
+## Comparison
+
+| Feature | SC-NeuroCore | Brian2 | snnTorch | NEST |
+|---------|:-----------:|:------:|:--------:|:----:|
+| Formal verification | 7 modules, 67 properties | No | No | No |
+| Equivalence proof | LIF (BMC, Z3) | No | No | No |
+| Co-simulation | Python ↔ Verilog | No | No | No |
+| RTL generation | Yes | No | No | No |
+
+SC-NeuroCore is the only SNN framework with formal hardware
+verification.
+
+## References
+
+- Clarke et al. (2018). "Handbook of Model Checking." Springer.
+- Wolf et al. (2019). "SymbiYosys: A Formal Verification Framework
+  for Yosys." Workshop on Open-Source EDA.
