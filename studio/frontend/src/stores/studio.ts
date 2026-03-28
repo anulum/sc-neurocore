@@ -27,6 +27,7 @@ import {
   type SurrogateInfo, type TrainingEpochMetrics,
   type PopulationNode, type ProjectionEdge, type GraphSimResult, type NIRFormat,
   type ProjectSummary, type PipelineResult,
+  connectProgress,
 } from "../api/client";
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -81,6 +82,8 @@ interface StudioState {
   graphProjections: ProjectionEdge[];
   graphModels: string[];
   graphSimResult: GraphSimResult | null;
+  progressPct: number;
+  progressMsg: string;
   graphErrors: string[];
   serverProjects: ProjectSummary[];
   pipelineResult: PipelineResult | null;
@@ -208,6 +211,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   charResult: null, multiResults: null, importedTrace: null, networkResult: null,
   networkParams: { n_exc: 80, n_inh: 20, w_ee: 0.1, w_ei: 0.4, w_ie: 0.1, w_ii: 0.4, p_conn: 0.2, ext_rate: 5.0 },
   verilogSrc: "", irText: "", svSource: "", irErrors: [] as string[],
+  progressPct: 0, progressMsg: "",
   graphPopulations: [], graphProjections: [], graphModels: [], graphSimResult: null, graphErrors: [],
   serverProjects: [], pipelineResult: null,
   synthTarget: "ice40", synthResult: null, synthEstimate: null, multiTargetResult: null, toolsAvailable: null,
@@ -462,14 +466,27 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   runCharacterize: async () => {
     const s = get();
     if (s.isSimulating || !s.selectedModelName) return;
-    set({ isSimulating: true, error: null, activeTab: "characterize" });
-    try {
-      const charResult = await fetchCharacterize({
-        name: s.selectedModelName, params: s.modelParams,
-        dt: s.dt, duration: s.duration, current: s.current,
-      });
-      set({ charResult, isSimulating: false });
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+    set({ isSimulating: true, error: null, activeTab: "characterize", progressPct: 0, progressMsg: "Starting characterisation..." });
+    const config = {
+      name: s.selectedModelName, params: s.modelParams,
+      dt: s.dt, duration: s.duration, current: s.current,
+    };
+    const ws = connectProgress("characterize", config, (msg) => {
+      if (msg.type === "progress") {
+        set({ progressPct: msg.pct || 0, progressMsg: msg.msg || "" });
+      } else if (msg.type === "complete") {
+        set({ charResult: msg.result as CharacterizeResponse, isSimulating: false, progressPct: 100, progressMsg: "" });
+      } else if (msg.type === "error") {
+        set({ error: msg.msg || "Characterisation failed", isSimulating: false, progressPct: 0, progressMsg: "" });
+      }
+    });
+    ws.onerror = () => {
+      // Fallback to HTTP if WebSocket unavailable
+      fetchCharacterize(config).then(
+        (charResult) => set({ charResult, isSimulating: false, progressPct: 0, progressMsg: "" }),
+        (e) => set({ error: e instanceof Error ? e.message : String(e), isSimulating: false, progressPct: 0, progressMsg: "" }),
+      );
+    };
   },
 
   runMultiSimulate: async (modelNames) => {
