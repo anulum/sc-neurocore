@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
@@ -28,7 +29,7 @@ class SNNCheckpoint:
     layer_names: list[str]
     layer_sizes: list[tuple[int, int]]
     neuron_types: list[str] = field(default_factory=list)
-    metadata: dict = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     frozen_layers: list[str] = field(default_factory=list)
 
     @property
@@ -40,7 +41,7 @@ class SNNCheckpoint:
         return sum(w.size for w in self.weights)
 
 
-def save_checkpoint(checkpoint: SNNCheckpoint, path: str | Path):
+def save_checkpoint(checkpoint: SNNCheckpoint, path: str | Path) -> None:
     """Save SNN checkpoint to .npz + .json.
 
     Parameters
@@ -53,7 +54,7 @@ def save_checkpoint(checkpoint: SNNCheckpoint, path: str | Path):
 
     # Save weights
     weight_dict = {f"layer_{i}": w for i, w in enumerate(checkpoint.weights)}
-    np.savez_compressed(str(path) + ".npz", **weight_dict)
+    np.savez_compressed(str(path) + ".npz", **weight_dict)  # type: ignore[arg-type]
 
     # Save metadata
     meta = {

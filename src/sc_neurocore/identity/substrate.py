@@ -15,6 +15,8 @@ cortical-inhibitory-memory architecture.
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 from sc_neurocore.network import (
@@ -47,7 +49,7 @@ class IdentitySubstrate:
     Connectivity: small-world E->E with STDP, random E->I, I->E, E->M, M->E.
     """
 
-    def __init__(self, n_cortical=500, n_inhibitory=200, n_memory=100, seed=42):
+    def __init__(self, n_cortical: int = 500, n_inhibitory: int = 200, n_memory: int = 100, seed: int = 42) -> None:
         self.n_cortical = n_cortical
         self.n_inhibitory = n_inhibitory
         self.n_memory = n_memory
@@ -61,10 +63,10 @@ class IdentitySubstrate:
         self._build_monitors()
         self._build_network()
 
-        self._spike_history: list[np.ndarray] = []
+        self._spike_history: list[np.ndarray[Any, Any]] = []
         self._total_steps = 0
 
-    def _build_projections(self, seed):
+    def _build_projections(self, seed: int) -> None:
         rng = np.random.default_rng(seed)
         seeds = rng.integers(0, 2**31, size=6)
 
@@ -130,12 +132,12 @@ class IdentitySubstrate:
             seed=int(seeds[5]),
         )
 
-    def _build_monitors(self):
+    def _build_monitors(self) -> None:
         self.mon_cortical = SpikeMonitor(self.cortical)
         self.mon_inhibitory = SpikeMonitor(self.inhibitory)
         self.mon_memory = SpikeMonitor(self.memory)
 
-    def _build_network(self):
+    def _build_network(self) -> None:
         self.network = Network(
             self.cortical,
             self.inhibitory,
@@ -152,7 +154,7 @@ class IdentitySubstrate:
             seed=self.seed,
         )
 
-    def step(self, stimuli=None, dt=0.001):
+    def step(self, stimuli: Any = None, dt: float = 0.001) -> np.ndarray[Any, Any]:
         """Advance one timestep. Inject external current into cortical neurons."""
         if stimuli is not None:
             currents = np.asarray(stimuli, dtype=np.float64)
@@ -178,7 +180,7 @@ class IdentitySubstrate:
         self._total_steps += 1
         return spikes_c
 
-    def run(self, duration, dt=0.001, stimuli_sequence=None):
+    def run(self, duration: float, dt: float = 0.001, stimuli_sequence: np.ndarray[Any, Any] | None = None) -> np.ndarray[Any, Any]:
         """Run for *duration* seconds. Optional time-varying stimuli array.
 
         stimuli_sequence: (n_steps, n_cortical) array or None.
@@ -190,7 +192,7 @@ class IdentitySubstrate:
             all_spikes[t] = self.step(stim, dt)
         return all_spikes
 
-    def inject_experience(self, reasoning_trace: str):
+    def inject_experience(self, reasoning_trace: str) -> None:
         """Encode a reasoning trace as spike patterns and inject via run().
 
         Uses TraceEncoder (imported lazily to avoid circular deps).
@@ -204,7 +206,7 @@ class IdentitySubstrate:
             currents = pattern[:, t] * 15.0  # scale spikes to nA-range current
             self.step(currents)
 
-    def extract_state(self) -> dict:
+    def extract_state(self) -> dict[str, Any]:
         """Extract current network state for session priming."""
         if len(self._spike_history) < 10:
             return {
@@ -234,7 +236,7 @@ class IdentitySubstrate:
             "total_steps": self._total_steps,
         }
 
-    def health_check(self) -> dict:
+    def health_check(self) -> dict[str, Any]:
         """L16 Director: check network dynamics are healthy."""
         if len(self._spike_history) < 100:
             return {
@@ -275,9 +277,9 @@ class IdentitySubstrate:
         }
 
     @property
-    def spike_history(self) -> list[np.ndarray]:
+    def spike_history(self) -> list[np.ndarray[Any, Any]]:
         return self._spike_history
 
     @property
-    def ee_weights(self) -> np.ndarray:
+    def ee_weights(self) -> np.ndarray[Any, Any]:
         return self.proj_ee.data.copy()

@@ -167,10 +167,10 @@ _MODEL_NAMES = {
 __all__ = sorted(_CORE_NAMES | _MODEL_NAMES)
 
 # -- Rust auto-dispatch cache --
-_rust_map: dict | None = None
+_rust_map: dict[str, type] | None = None
 
 
-def _load_rust_map():
+def _load_rust_map() -> None:
     global _rust_map
     if _rust_map is not None:
         return
@@ -186,10 +186,11 @@ def _load_rust_map():
             pass
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> type:
     """Lazy-load neuron models and apply Rust auto-dispatch on first access."""
     if name in _MODEL_NAMES:
         _load_rust_map()
+        assert _rust_map is not None
         if name in _rust_map:  # pragma: no cover
             obj = _rust_map[name]
         else:

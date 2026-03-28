@@ -9,12 +9,14 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 from .basic import isi, spike_times
 
 
-def cv_isi(binary_train: np.ndarray, dt: float = 0.001) -> float:
+def cv_isi(binary_train: np.ndarray[Any, Any], dt: float = 0.001) -> float:
     """Coefficient of variation of ISI. CV=1 for Poisson, <1 for regular."""
     intervals = isi(binary_train, dt)
     if intervals.size < 2:
@@ -25,7 +27,7 @@ def cv_isi(binary_train: np.ndarray, dt: float = 0.001) -> float:
     return float(intervals.std() / mu)
 
 
-def cv2(binary_train: np.ndarray, dt: float = 0.001) -> float:
+def cv2(binary_train: np.ndarray[Any, Any], dt: float = 0.001) -> float:
     """Local coefficient of variation CV2. Holt et al. 1996.
 
     CV2 = mean(2|ISI_{i+1} - ISI_i| / (ISI_{i+1} + ISI_i)).
@@ -42,7 +44,7 @@ def cv2(binary_train: np.ndarray, dt: float = 0.001) -> float:
     return float(np.mean(2.0 * diffs[valid] / sums[valid]))
 
 
-def local_variation(binary_train: np.ndarray, dt: float = 0.001) -> float:
+def local_variation(binary_train: np.ndarray[Any, Any], dt: float = 0.001) -> float:
     """Local variation LV. Shinomoto et al. 2003.
 
     LV = (3/(N-1)) * sum((ISI_i - ISI_{i+1})^2 / (ISI_i + ISI_{i+1})^2).
@@ -60,7 +62,7 @@ def local_variation(binary_train: np.ndarray, dt: float = 0.001) -> float:
     return float(3.0 / (n - 1) * np.sum((diffs[valid] / sums[valid]) ** 2))
 
 
-def lvr(binary_train: np.ndarray, dt: float = 0.001, refractoriness_ms: float = 2.0) -> float:
+def lvr(binary_train: np.ndarray[Any, Any], dt: float = 0.001, refractoriness_ms: float = 2.0) -> float:
     """Revised local variation LvR. Shinomoto et al. 2009.
 
     Corrects LV for refractoriness: LvR = mean(3(1 - 4*ISI_i*ISI_{i+1}/(ISI_i+ISI_{i+1})^2)(1 + 4*R/(ISI_i+ISI_{i+1}))).
@@ -84,7 +86,7 @@ def lvr(binary_train: np.ndarray, dt: float = 0.001, refractoriness_ms: float = 
     return float(3.0 * result / count)
 
 
-def fano_factor(binary_train: np.ndarray, window_ms: float = 50.0, dt: float = 0.001) -> float:
+def fano_factor(binary_train: np.ndarray[Any, Any], window_ms: float = 50.0, dt: float = 0.001) -> float:
     """Fano factor: variance/mean of spike counts in sliding windows."""
     window_steps = max(1, int(window_ms / (dt * 1000)))
     n = binary_train.size
@@ -98,7 +100,7 @@ def fano_factor(binary_train: np.ndarray, window_ms: float = 50.0, dt: float = 0
     return float(counts.var() / mu)
 
 
-def isi_entropy(binary_train: np.ndarray, dt: float = 0.001, bins: int = 20) -> float:
+def isi_entropy(binary_train: np.ndarray[Any, Any], dt: float = 0.001, bins: int = 20) -> float:
     """Shannon entropy of the ISI distribution (bits).
 
     Higher entropy = more irregular. Poisson has maximum entropy
@@ -117,7 +119,7 @@ def isi_entropy(binary_train: np.ndarray, dt: float = 0.001, bins: int = 20) -> 
     return float(-np.sum(p * np.log2(p)))
 
 
-def lempel_ziv_complexity(binary_train: np.ndarray) -> float:
+def lempel_ziv_complexity(binary_train: np.ndarray[Any, Any]) -> float:
     """Lempel-Ziv 1976 complexity. Normalized by N/log2(N).
 
     Counts distinct substrings in the binary sequence.
@@ -147,7 +149,7 @@ def lempel_ziv_complexity(binary_train: np.ndarray) -> float:
     return float(complexity / norm)
 
 
-def approximate_entropy(binary_train: np.ndarray, m: int = 2, r_factor: float = 0.2) -> float:
+def approximate_entropy(binary_train: np.ndarray[Any, Any], m: int = 2, r_factor: float = 0.2) -> float:
     """Approximate entropy (ApEn). Pincus 1991.
 
     m: embedding dimension. r_factor: tolerance as fraction of std.
@@ -160,19 +162,19 @@ def approximate_entropy(binary_train: np.ndarray, m: int = 2, r_factor: float = 
     if r <= 0:
         r = 0.01
 
-    def _phi(dim):
+    def _phi(dim: int) -> float:
         templates = np.array([x[i : i + dim] for i in range(n - dim + 1)])
         count = np.zeros(len(templates))
         for i in range(len(templates)):
             dists = np.max(np.abs(templates - templates[i]), axis=1)
             count[i] = np.sum(dists <= r)
         count /= len(templates)
-        return np.mean(np.log(count + 1e-30))
+        return float(np.mean(np.log(count + 1e-30)))
 
     return float(_phi(m) - _phi(m + 1))
 
 
-def sample_entropy(binary_train: np.ndarray, m: int = 2, r_factor: float = 0.2) -> float:
+def sample_entropy(binary_train: np.ndarray[Any, Any], m: int = 2, r_factor: float = 0.2) -> float:
     """Sample entropy (SampEn). Richman & Moorman 2000.
 
     Unlike ApEn, excludes self-matches. Lower bias for short series.
@@ -185,12 +187,12 @@ def sample_entropy(binary_train: np.ndarray, m: int = 2, r_factor: float = 0.2) 
     if r <= 0:
         r = 0.01
 
-    def _count_matches(dim):
+    def _count_matches(dim: int) -> int:
         templates = np.array([x[i : i + dim] for i in range(n - dim)])
         total = 0
         for i in range(len(templates)):
             dists = np.max(np.abs(templates[i + 1 :] - templates[i]), axis=1)
-            total += np.sum(dists <= r)
+            total += int(np.sum(dists <= r))
         return total
 
     a = _count_matches(m + 1)
@@ -200,7 +202,7 @@ def sample_entropy(binary_train: np.ndarray, m: int = 2, r_factor: float = 0.2) 
     return float(-np.log((a + 1e-30) / (b + 1e-30)))
 
 
-def permutation_entropy(binary_train: np.ndarray, order: int = 3, delay: int = 1) -> float:
+def permutation_entropy(binary_train: np.ndarray[Any, Any], order: int = 3, delay: int = 1) -> float:
     """Bandt-Pompe permutation entropy. Bandt & Pompe 2002.
 
     Normalized to [0, 1]. Uses ordinal patterns of given order and delay.
@@ -227,7 +229,7 @@ def permutation_entropy(binary_train: np.ndarray, order: int = 3, delay: int = 1
     return float(h / h_max) if h_max > 0 else 0.0
 
 
-def hurst_exponent(binary_train: np.ndarray, min_window: int = 10) -> float:
+def hurst_exponent(binary_train: np.ndarray[Any, Any], min_window: int = 10) -> float:
     """Hurst exponent via detrended fluctuation analysis (DFA). Peng et al. 1994.
 
     H > 0.5: long-range positive correlation. H < 0.5: anti-correlated.
@@ -264,8 +266,8 @@ def hurst_exponent(binary_train: np.ndarray, min_window: int = 10) -> float:
 
 
 def allan_factor(
-    binary_train: np.ndarray, dt: float = 0.001, n_scales: int = 10
-) -> tuple[np.ndarray, np.ndarray]:
+    binary_train: np.ndarray[Any, Any], dt: float = 0.001, n_scales: int = 10
+) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
     """Allan factor for spike trains. Allan 1966, adapted for point processes.
 
     Returns (af_values, window_sizes_s). AF > 1 indicates fractal clustering.
@@ -291,7 +293,7 @@ def allan_factor(
     return af, windows * dt
 
 
-def rescaled_range(binary_train: np.ndarray, min_window: int = 10) -> float:
+def rescaled_range(binary_train: np.ndarray[Any, Any], min_window: int = 10) -> float:
     """Hurst exponent via rescaled range (R/S) analysis. Hurst 1951.
 
     Classic alternative to DFA. Returns H from log-log fit of R/S vs scale.
@@ -328,7 +330,7 @@ def rescaled_range(binary_train: np.ndarray, min_window: int = 10) -> float:
     return float(coeffs[0])
 
 
-def complexity_pdf(binary_train: np.ndarray, dt: float = 0.001, bins: int = 20) -> np.ndarray:
+def complexity_pdf(binary_train: np.ndarray[Any, Any], dt: float = 0.001, bins: int = 20) -> np.ndarray[Any, Any]:
     """ISI probability density function via histogram. Abeles 1982."""
     intervals = isi(binary_train, dt)
     if intervals.size < 2:
@@ -337,7 +339,7 @@ def complexity_pdf(binary_train: np.ndarray, dt: float = 0.001, bins: int = 20) 
     return hist.astype(np.float64)
 
 
-def optimal_bin_width(binary_train: np.ndarray, dt: float = 0.001) -> float:
+def optimal_bin_width(binary_train: np.ndarray[Any, Any], dt: float = 0.001) -> float:
     """Shimazaki-Shinomoto 2007 optimal histogram bin width for firing rate.
 
     Minimizes MISE cost C(delta) = (2*mean - var) / (N * delta)^2 over candidate deltas.
@@ -366,7 +368,7 @@ def optimal_bin_width(binary_train: np.ndarray, dt: float = 0.001) -> float:
     return float(best_delta)
 
 
-def optimal_kernel_bandwidth(binary_train: np.ndarray, dt: float = 0.001) -> float:
+def optimal_kernel_bandwidth(binary_train: np.ndarray[Any, Any], dt: float = 0.001) -> float:
     """Silverman's rule-of-thumb bandwidth for ISI kernel density. Silverman 1986.
 
     h = 0.9 * min(std, IQR/1.34) * N^{-1/5}.

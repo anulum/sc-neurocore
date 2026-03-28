@@ -26,6 +26,7 @@ from __future__ import annotations
 import json
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from typing import Any
 
 import numpy as np
 
@@ -43,15 +44,15 @@ class SpikeServer:
         Listen port (default 8001).
     """
 
-    def __init__(self, network, host: str = "127.0.0.1", port: int = 8001):
+    def __init__(self, network: Any, host: str = "127.0.0.1", port: int = 8001) -> None:
         self.network = network
         self.host = host
         self.port = port
         self._timestep = 0
         self._lock = threading.Lock()
-        self._server = None
+        self._server: HTTPServer | None = None
 
-    def step(self, inputs: dict[str, list[float]]) -> dict:
+    def step(self, inputs: dict[str, list[float]]) -> dict[str, Any]:
         """Run one network timestep and return output spikes.
 
         Parameters
@@ -91,7 +92,7 @@ class SpikeServer:
 
             raise TypeError(f"Unsupported network type: {type(self.network).__name__}")
 
-    def start(self, blocking: bool = True):
+    def start(self, blocking: bool = True) -> None:
         """Start the HTTP server.
 
         Parameters
@@ -103,7 +104,7 @@ class SpikeServer:
         server_ref = self
 
         class Handler(BaseHTTPRequestHandler):
-            def do_POST(self):
+            def do_POST(self) -> None:
                 if self.path == "/step":
                     length = int(self.headers.get("Content-Length", 0))
                     body = self.rfile.read(length)
@@ -130,7 +131,7 @@ class SpikeServer:
                 else:
                     self._respond(404, {"error": "Not found. Use /step, /reset, /info"})
 
-            def do_GET(self):
+            def do_GET(self) -> None:
                 if self.path == "/info":
                     self._respond(
                         200,
@@ -144,13 +145,13 @@ class SpikeServer:
                 else:
                     self._respond(404, {"error": "Not found"})
 
-            def _respond(self, code, data):
+            def _respond(self, code: int, data: dict[str, Any]) -> None:
                 self.send_response(code)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps(data).encode("utf-8"))
 
-            def log_message(self, format, *args):
+            def log_message(self, format: str, *args: Any) -> None:
                 pass  # suppress default logging
 
         self._server = HTTPServer((self.host, self.port), Handler)
@@ -163,7 +164,7 @@ class SpikeServer:
             thread = threading.Thread(target=self._server.serve_forever, daemon=True)
             thread.start()
 
-    def stop(self):
+    def stop(self) -> None:
         """Shut down the server."""
         if self._server:
             self._server.shutdown()

@@ -82,7 +82,7 @@ class SCtoLavaConverter:
     def __init__(self, weight_bits: int = 8):
         self.weight_bits = weight_bits
 
-    def convert_dense_layer(self, sc_layer) -> LoihiNetworkConfig:
+    def convert_dense_layer(self, sc_layer: object) -> LoihiNetworkConfig:
         """Convert an SCDenseLayer or VectorizedSCLayer to Loihi config."""
         weights = np.array(sc_layer.weights)
         loihi_weights = export_weights_loihi(weights, self.weight_bits)
@@ -95,7 +95,7 @@ class SCtoLavaConverter:
             weight_bits=self.weight_bits,
         )
 
-    def convert_training_model(self, spiking_net) -> list:
+    def convert_training_model(self, spiking_net: object) -> list[LoihiNetworkConfig]:
         """Convert a trained SpikingNet to a list of LoihiNetworkConfigs."""
         configs = []
         sc_weights = spiking_net.to_sc_weights()
@@ -140,7 +140,7 @@ if HAS_LAVA:
         threshold: np.ndarray = LavaPyType(np.ndarray, int)
         decay: np.ndarray = LavaPyType(np.ndarray, int)
 
-        def run_spk(self):
+        def run_spk(self) -> None:
             spikes_in = self.s_in.recv()
             current = self.weights @ spikes_in
             self.v[:] = (self.v * self.decay[0]) // 256 + current

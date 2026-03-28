@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -52,7 +53,7 @@ class BrunelWangNeuron:
         self._s_gaba = 0.0
         self._ref_remaining = 0.0
 
-    def _nmda_voltage_dep(self, v: float) -> float:
+    def _nmda_voltage_dep(self, v: float) -> Any:
         """Mg2+ block factor: 1 / (1 + [Mg2+]/3.57 * exp(-0.062 * V))."""
         return 1.0 / (1.0 + self.mg_conc / 3.57 * np.exp(-0.062 * v))
 
@@ -101,5 +102,5 @@ class BrunelWangNeuron:
         self._s_gaba = 0.0
         self._ref_remaining = 0.0
 
-    def get_state(self):
+    def get_state(self) -> dict[str, float]:
         return {"v": self.v, "ref_remaining": self._ref_remaining}

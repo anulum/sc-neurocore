@@ -60,7 +60,7 @@ class TripartiteSynapse:
     w_min: float = 0.0
     w_max: float = 1.0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.weight = self.base_weight
         self.astrocyte = AstrocyteModel()
         self._glut_current = 0.0  # accumulated glutamate signal
@@ -117,7 +117,7 @@ class TripartiteSynapse:
         """Current effective synaptic weight."""
         return self.weight
 
-    def reset(self):
+    def reset(self) -> None:
         self.weight = self.base_weight
         self.astrocyte.reset()
         self._glut_current = 0.0

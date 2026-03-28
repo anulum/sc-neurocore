@@ -7,7 +7,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Any
+
 import numpy as np
 
 
@@ -27,12 +29,12 @@ class BendaHerzNeuron:
     tau_a: float = 100.0
     delta_a: float = 0.5
     dt: float = 1.0
-    _rng: object = None
+    _rng: np.random.Generator = field(init=False)
 
     def __post_init__(self) -> None:
         self._rng = np.random.default_rng()
 
-    def _f_onset(self, x: float) -> float:
+    def _f_onset(self, x: float) -> Any:
         return self.f_max / (1.0 + np.exp(-self.beta * (x - self.i_half)))
 
     def step(self, current: float) -> int:

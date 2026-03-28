@@ -375,6 +375,7 @@ class BitstreamAverager:
         if bit not in (0, 1):
             raise SCEncodingError("Bit must be 0 or 1.")
 
+        assert self._buffer is not None
         # Remove old bit from sum if buffer is wrapping around
         old_bit = self._buffer[self._index]
         self._buffer[self._index] = bit

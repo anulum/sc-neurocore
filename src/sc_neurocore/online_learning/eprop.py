@@ -21,6 +21,7 @@ tasks requiring very long-range credit assignment (>100 steps).
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 import numpy as np
 
@@ -59,17 +60,17 @@ class EpropTrainer:
     dt: float = 1.0
 
     # Learned weights
-    W_in: np.ndarray = field(init=False, repr=False)
-    W_rec: np.ndarray = field(init=False, repr=False)
-    W_out: np.ndarray = field(init=False, repr=False)
+    W_in: np.ndarray[Any, Any] = field(init=False, repr=False)
+    W_rec: np.ndarray[Any, Any] = field(init=False, repr=False)
+    W_out: np.ndarray[Any, Any] = field(init=False, repr=False)
 
     # Internal state
-    _v: np.ndarray = field(init=False, repr=False)
-    _spikes: np.ndarray = field(init=False, repr=False)
-    _trace_in: np.ndarray = field(init=False, repr=False)
-    _trace_rec: np.ndarray = field(init=False, repr=False)
-    _eligibility_in: np.ndarray = field(init=False, repr=False)
-    _eligibility_rec: np.ndarray = field(init=False, repr=False)
+    _v: np.ndarray[Any, Any] = field(init=False, repr=False)
+    _spikes: np.ndarray[Any, Any] = field(init=False, repr=False)
+    _trace_in: np.ndarray[Any, Any] = field(init=False, repr=False)
+    _trace_rec: np.ndarray[Any, Any] = field(init=False, repr=False)
+    _eligibility_in: np.ndarray[Any, Any] = field(init=False, repr=False)
+    _eligibility_rec: np.ndarray[Any, Any] = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
         rng = np.random.RandomState(42)
@@ -90,7 +91,7 @@ class EpropTrainer:
         self._eligibility_in = np.zeros((self.n_neurons, self.n_inputs))
         self._eligibility_rec = np.zeros((self.n_neurons, self.n_neurons))
 
-    def step(self, x: np.ndarray, target: np.ndarray | None = None) -> dict:
+    def step(self, x: np.ndarray[Any, Any], target: np.ndarray[Any, Any] | None = None) -> dict[str, Any]:
         """Process one timestep with optional learning.
 
         Parameters
@@ -127,7 +128,7 @@ class EpropTrainer:
         # Readout
         output = self.W_out @ self._spikes
 
-        result = {"spikes": self._spikes.copy(), "output": output}
+        result: dict[str, Any] = {"spikes": self._spikes.copy(), "output": output}
 
         if target is not None:
             error = output - target
@@ -149,7 +150,7 @@ class EpropTrainer:
 
         return result
 
-    def train_sequence(self, inputs: np.ndarray, targets: np.ndarray) -> float:
+    def train_sequence(self, inputs: np.ndarray[Any, Any], targets: np.ndarray[Any, Any]) -> float:
         """Train on one sequence, return mean loss.
 
         Parameters
@@ -164,13 +165,13 @@ class EpropTrainer:
         """
         self.reset()
         total_loss = 0.0
-        T = inputs.shape[0]
+        T: int = int(inputs.shape[0])
         for t in range(T):
             result = self.step(inputs[t], target=targets[t])
-            total_loss += result.get("loss", 0.0)
+            total_loss += float(result.get("loss", 0.0))
         return total_loss / T
 
-    def predict_sequence(self, inputs: np.ndarray) -> np.ndarray:
+    def predict_sequence(self, inputs: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Run inference on a sequence without learning.
 
         Parameters

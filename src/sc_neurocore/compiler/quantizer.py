@@ -17,6 +17,7 @@ sc_probs = q_weights_to_sc_probabilities(q_weights, format="Q8.8")
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -55,11 +56,11 @@ class QFormat:
 
 
 def quantize_weights(
-    weights: np.ndarray,
+    weights: np.ndarray[Any, Any],
     fmt: str = "Q8.8",
     rounding: str = "nearest",
     clip: bool = True,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """Quantize float weights to fixed-point integers.
 
     Parameters
@@ -106,13 +107,13 @@ def quantize_weights(
     return np.clip(quantized, min_int, max_int)
 
 
-def dequantize_weights(quantized: np.ndarray, fmt: str = "Q8.8") -> np.ndarray:
+def dequantize_weights(quantized: np.ndarray[Any, Any], fmt: str = "Q8.8") -> np.ndarray[Any, Any]:
     """Convert quantized integer weights back to float."""
     q = QFormat.from_string(fmt)
     return quantized.astype(np.float64) / q.scale
 
 
-def q_weights_to_sc_probabilities(quantized: np.ndarray, fmt: str = "Q8.8") -> np.ndarray:
+def q_weights_to_sc_probabilities(quantized: np.ndarray[Any, Any], fmt: str = "Q8.8") -> np.ndarray[Any, Any]:
     """Convert quantized weights to SC probabilities in [0, 1].
 
     Maps the Q-format range [min, max] linearly to [0, 1] for
@@ -124,7 +125,7 @@ def q_weights_to_sc_probabilities(quantized: np.ndarray, fmt: str = "Q8.8") -> n
     return (quantized.astype(np.float64) - min_int) / (max_int - min_int)
 
 
-def quantization_error(weights: np.ndarray, fmt: str = "Q8.8", rounding: str = "nearest") -> dict:
+def quantization_error(weights: np.ndarray[Any, Any], fmt: str = "Q8.8", rounding: str = "nearest") -> dict[str, float]:
     """Compute quantization error statistics.
 
     Returns

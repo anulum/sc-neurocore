@@ -8,6 +8,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
+
 import numpy as np
 
 
@@ -36,13 +38,13 @@ class MorrisLecarNeuron:
     dt: float = 0.1
     v_threshold: float = 0.0
 
-    def _m_inf(self, v):
+    def _m_inf(self, v: float) -> Any:
         return 0.5 * (1.0 + np.tanh((v - self.v1) / self.v2))
 
-    def _w_inf(self, v):
+    def _w_inf(self, v: float) -> Any:
         return 0.5 * (1.0 + np.tanh((v - self.v3) / self.v4))
 
-    def _lam(self, v):
+    def _lam(self, v: float) -> Any:
         return self.phi * np.cosh((v - self.v3) / (2.0 * self.v4))
 
     def step(self, current: float) -> int:
@@ -60,6 +62,6 @@ class MorrisLecarNeuron:
 
         return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = -60.0
         self.w = 0.0

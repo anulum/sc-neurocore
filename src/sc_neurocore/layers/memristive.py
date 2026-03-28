@@ -27,7 +27,7 @@ class MemristiveDenseLayer(VectorizedSCLayer):
         super().__post_init__()
         self.apply_hardware_defects()
 
-    def apply_hardware_defects(self):
+    def apply_hardware_defects(self) -> None:
         """
         Corrupt weights based on physical properties.
         """

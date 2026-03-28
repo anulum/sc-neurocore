@@ -9,13 +9,15 @@
 
 from __future__ import annotations
 
+from typing import Any, Callable
+
 import numpy as np
 
 
 def significance_bootstrap(
-    statistic_func,
-    train_a: np.ndarray,
-    train_b: np.ndarray,
+    statistic_func: Callable[[np.ndarray[Any, Any], np.ndarray[Any, Any]], float],
+    train_a: np.ndarray[Any, Any],
+    train_b: np.ndarray[Any, Any],
     n_surrogates: int = 200,
     seed: int = 42,
 ) -> tuple[float, float]:

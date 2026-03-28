@@ -86,7 +86,7 @@ class SpikePredictor:
         """Predict binary spike pattern."""
         return (self.predict_probs() > self.threshold).astype(np.int8)
 
-    def update(self, actual: np.ndarray):
+    def update(self, actual: np.ndarray) -> None:
         """Update weights with observed spike pattern (LMS rule).
 
         Parameters
@@ -117,7 +117,7 @@ def predict_and_xor_world_model(
     lr: float = 0.01,
     threshold: float = 0.5,
     seed: int = 42,
-):
+) -> tuple[np.ndarray, int]:
     """World-model predict-XOR loop for codec compression.
 
     Returns (errors, correct_count).
@@ -150,7 +150,7 @@ def xor_and_recover_world_model(
     lr: float = 0.01,
     threshold: float = 0.5,
     seed: int = 42,
-):
+) -> np.ndarray:
     """World-model XOR-recover loop for codec decompression."""
     T = errors.shape[0]
     predictor = SpikePredictor(

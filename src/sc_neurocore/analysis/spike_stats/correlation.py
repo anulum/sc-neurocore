@@ -9,14 +9,16 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 from .basic import spike_times, bin_spike_train
 
 
 def cross_correlation(
-    train_a: np.ndarray, train_b: np.ndarray, max_lag_ms: float = 50.0, dt: float = 0.001
-) -> tuple[np.ndarray, np.ndarray]:
+    train_a: np.ndarray[Any, Any], train_b: np.ndarray[Any, Any], max_lag_ms: float = 50.0, dt: float = 0.001
+) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
     """Cross-correlogram between two binary spike trains.
 
     Returns (correlation, lags_ms).
@@ -39,7 +41,7 @@ def cross_correlation(
     return cc, lags * dt * 1000
 
 
-def pairwise_correlation(trains: list[np.ndarray], dt: float = 0.001) -> np.ndarray:
+def pairwise_correlation(trains: list[np.ndarray[Any, Any]], dt: float = 0.001) -> np.ndarray[Any, Any]:
     """Pairwise Pearson correlation matrix across neurons."""
     n = len(trains)
     if n == 0:
@@ -50,7 +52,7 @@ def pairwise_correlation(trains: list[np.ndarray], dt: float = 0.001) -> np.ndar
 
 
 def event_synchronization(
-    train_a: np.ndarray, train_b: np.ndarray, dt: float = 0.001, tau_ms: float = 5.0
+    train_a: np.ndarray[Any, Any], train_b: np.ndarray[Any, Any], dt: float = 0.001, tau_ms: float = 5.0
 ) -> float:
     """Quian Quiroga et al. 2002 -- event synchronization.
 
@@ -72,8 +74,8 @@ def event_synchronization(
 
 
 def spike_train_coherence(
-    train_a: np.ndarray, train_b: np.ndarray, dt: float = 0.001
-) -> tuple[np.ndarray, np.ndarray]:
+    train_a: np.ndarray[Any, Any], train_b: np.ndarray[Any, Any], dt: float = 0.001
+) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
     """Magnitude-squared coherence between two binary spike trains.
 
     Returns (coherence, freqs_hz).
@@ -96,7 +98,7 @@ def spike_train_coherence(
 
 
 def spike_time_tiling_coefficient(
-    train_a: np.ndarray, train_b: np.ndarray, dt_param: float = 0.001, delta_ms: float = 5.0
+    train_a: np.ndarray[Any, Any], train_b: np.ndarray[Any, Any], dt_param: float = 0.001, delta_ms: float = 5.0
 ) -> float:
     """Spike Time Tiling Coefficient (STTC). Cutts & Eglen 2014.
 
@@ -109,9 +111,9 @@ def spike_time_tiling_coefficient(
     if ta.size == 0 or tb.size == 0:
         return 0.0
 
-    def _tile_fraction(times):
+    def _tile_fraction(times: np.ndarray[Any, Any]) -> float:
         covered = 0.0
-        intervals = []
+        intervals: list[tuple[Any, Any]] = []
         for t in times:
             intervals.append((t - delta, t + delta))
         intervals.sort()
@@ -128,7 +130,7 @@ def spike_time_tiling_coefficient(
                 covered += hi_c - lo_c
         return min(covered / duration, 1.0) if duration > 0 else 0.0
 
-    def _coincidence_fraction(times_ref, times_target):
+    def _coincidence_fraction(times_ref: np.ndarray[Any, Any], times_target: np.ndarray[Any, Any]) -> float:
         count = 0
         for t in times_ref:
             if np.any(np.abs(times_target - t) <= delta):
@@ -140,7 +142,7 @@ def spike_time_tiling_coefficient(
     pa = _coincidence_fraction(ta, tb)
     pb = _coincidence_fraction(tb, ta)
 
-    def _sttc_term(p, t):
+    def _sttc_term(p: float, t: float) -> float:
         if abs(1.0 - t) < 1e-15:
             return 0.0
         return (p - t) / (1.0 - p * t) if abs(1.0 - p * t) > 1e-15 else 0.0
@@ -148,7 +150,7 @@ def spike_time_tiling_coefficient(
     return float(0.5 * (_sttc_term(pa, tb_frac) + _sttc_term(pb, ta_frac)))
 
 
-def covariance_matrix(trains: list[np.ndarray], bin_size: int = 10) -> np.ndarray:
+def covariance_matrix(trains: list[np.ndarray[Any, Any]], bin_size: int = 10) -> np.ndarray[Any, Any]:
     """Spike count covariance matrix across neurons. de la Rocha et al. 2007."""
     binned = [bin_spike_train(t, bin_size).astype(np.float64) for t in trains]
     min_bins = min(b.size for b in binned)
@@ -157,7 +159,7 @@ def covariance_matrix(trains: list[np.ndarray], bin_size: int = 10) -> np.ndarra
 
 
 def autocorrelation_time(
-    binary_train: np.ndarray, dt: float = 0.001, max_lag_ms: float = 100.0
+    binary_train: np.ndarray[Any, Any], dt: float = 0.001, max_lag_ms: float = 100.0
 ) -> float:
     """Autocorrelation time (seconds). Integral of normalized autocorrelation until first zero crossing."""
     max_lag = int(max_lag_ms / (dt * 1000))
@@ -174,7 +176,7 @@ def autocorrelation_time(
     return float(tau)
 
 
-def noise_correlation(trains: list[np.ndarray], bin_size: int = 50) -> np.ndarray:
+def noise_correlation(trains: list[np.ndarray[Any, Any]], bin_size: int = 50) -> np.ndarray[Any, Any]:
     """Noise correlation (trial-to-trial variability correlation). Averbeck & Lee 2006.
 
     Uses residuals after subtracting mean across neurons.
@@ -194,7 +196,7 @@ def noise_correlation(trains: list[np.ndarray], bin_size: int = 50) -> np.ndarra
     return corr
 
 
-def signal_correlation(trains: list[np.ndarray], bin_size: int = 50) -> np.ndarray:
+def signal_correlation(trains: list[np.ndarray[Any, Any]], bin_size: int = 50) -> np.ndarray[Any, Any]:
     """Signal correlation (tuning similarity). Pearson correlation of mean responses."""
     binned = [bin_spike_train(t, bin_size).astype(np.float64) for t in trains]
     min_bins = min(b.size for b in binned)
@@ -202,12 +204,12 @@ def signal_correlation(trains: list[np.ndarray], bin_size: int = 50) -> np.ndarr
     return np.corrcoef(mat)
 
 
-def spike_count_covariance(trains: list[np.ndarray], window: int = 50) -> np.ndarray:
+def spike_count_covariance(trains: list[np.ndarray[Any, Any]], window: int = 50) -> np.ndarray[Any, Any]:
     """Windowed spike count covariance. Kohn & Smith 2005."""
     return covariance_matrix(trains, bin_size=window)
 
 
-def joint_psth(train_a: np.ndarray, train_b: np.ndarray, bin_size: int = 10) -> np.ndarray:
+def joint_psth(train_a: np.ndarray[Any, Any], train_b: np.ndarray[Any, Any], bin_size: int = 10) -> np.ndarray[Any, Any]:
     """Joint PSTH (JPSTH) matrix. Aertsen et al. 1989.
 
     Returns 2D histogram of binned spike counts (neuron_a x neuron_b).
@@ -222,7 +224,7 @@ def joint_psth(train_a: np.ndarray, train_b: np.ndarray, bin_size: int = 10) -> 
 
 
 def coincidence_index(
-    train_a: np.ndarray, train_b: np.ndarray, dt: float = 0.001, delta_ms: float = 2.0
+    train_a: np.ndarray[Any, Any], train_b: np.ndarray[Any, Any], dt: float = 0.001, delta_ms: float = 2.0
 ) -> float:
     """Coincidence index (kappa). Joris et al. 2006.
 

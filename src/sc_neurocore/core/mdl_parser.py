@@ -5,6 +5,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Parser for Mind Description Language (MDL)
 
+from __future__ import annotations
+
 from typing import Any
 import logging
 import yaml
@@ -29,7 +31,7 @@ class MindDescriptionLanguage:
     """
 
     @staticmethod
-    def encode(orchestrator, agent_name: str) -> str:
+    def encode(orchestrator: Any, agent_name: str) -> str:
         """
         Exports the Orchestrator state to YAML MDL.
         """

@@ -107,7 +107,7 @@ def format_table(results: list[PlatformResult]) -> str:
     return "\n".join(lines)
 
 
-def _profile_python(layer_sizes, duration, dt) -> PlatformResult:
+def _profile_python(layer_sizes: list[tuple[int, int]], duration: float, dt: float) -> PlatformResult:
     """Measure Python/NumPy backend performance."""
     total_neurons = sum(n for _, n in layer_sizes)
     n_steps = int(round(duration / dt))
@@ -131,7 +131,7 @@ def _profile_python(layer_sizes, duration, dt) -> PlatformResult:
     )
 
 
-def _profile_rust(layer_sizes, duration, dt) -> PlatformResult:
+def _profile_rust(layer_sizes: list[tuple[int, int]], duration: float, dt: float) -> PlatformResult:
     """Estimate Rust NetworkRunner performance."""
     total_neurons = sum(n for _, n in layer_sizes)
     n_steps = int(round(duration / dt))
@@ -164,7 +164,7 @@ def _profile_rust(layer_sizes, duration, dt) -> PlatformResult:
     )
 
 
-def _profile_fpga(layer_sizes, target, bitstream_length) -> PlatformResult:
+def _profile_fpga(layer_sizes: list[tuple[int, int]], target: str, bitstream_length: int) -> PlatformResult:
     """Estimate FPGA performance using energy estimator."""
     from sc_neurocore.energy import estimate
 

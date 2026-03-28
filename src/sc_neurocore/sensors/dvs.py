@@ -65,7 +65,7 @@ class DVSLoader:
             return structured
         raise ValueError("Events must be structured array or (N, 4+) array with x, y, t, p columns")
 
-    def from_tonic(self, dataset_name: str, index: int = 0):
+    def from_tonic(self, dataset_name: str, index: int = 0) -> tuple[np.ndarray, int]:
         """Load events from a Tonic dataset (requires tonic package).
 
         Parameters

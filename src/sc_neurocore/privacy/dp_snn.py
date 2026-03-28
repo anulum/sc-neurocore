@@ -17,7 +17,9 @@ No SNN framework has built-in differential privacy.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -42,7 +44,7 @@ class PrivacyAccountant:
     _spent_epsilon: float = 0.0
     _steps: int = 0
 
-    def record_step(self, step_epsilon: float):
+    def record_step(self, step_epsilon: float) -> None:
         """Record privacy cost of one training step."""
         self._spent_epsilon += step_epsilon
         self._steps += 1
@@ -85,7 +87,7 @@ class SpikeLevelDP:
 
     def __init__(
         self, epsilon: float = 1.0, mechanism: str = "randomized_response", seed: int = 42
-    ):
+    ) -> None:
         self.epsilon = epsilon
         self.mechanism = mechanism
         self._rng = np.random.RandomState(seed)
@@ -141,14 +143,14 @@ class MembershipAudit:
         Model function: takes spikes (T, N) → output (N_out,).
     """
 
-    def __init__(self, run_fn):
+    def __init__(self, run_fn: Callable[..., Any]) -> None:
         self.run_fn = run_fn
 
     def audit(
         self,
         member_samples: list[np.ndarray],
         non_member_samples: list[np.ndarray],
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Run membership inference audit.
 
         Parameters

@@ -111,7 +111,7 @@ def quantize_aware_train_step(
     x: np.ndarray,
     target: np.ndarray,
     lr: float = 0.01,
-) -> dict:
+) -> dict[str, object]:
     """One QAT training step with STE.
 
     Parameters

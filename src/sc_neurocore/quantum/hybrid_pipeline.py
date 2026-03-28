@@ -7,17 +7,19 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 from .param_shift import parameter_shift_gradient
 
 
-def _ry(theta):
+def _ry(theta: float) -> np.ndarray[Any, Any]:
     """Ry rotation gate."""
     c, s = np.cos(theta / 2), np.sin(theta / 2)
     return np.array([[c, -s], [s, c]], dtype=complex)
 
 
-def _cnot():
+def _cnot() -> np.ndarray[Any, Any]:
     return np.array(
         [
             [1, 0, 0, 0],
@@ -29,7 +31,7 @@ def _cnot():
     )
 
 
-def _kron_gate(gate, qubit, n_qubits):
+def _kron_gate(gate: np.ndarray[Any, Any], qubit: int, n_qubits: int) -> np.ndarray[Any, Any]:
     """Embed single-qubit gate into n-qubit space."""
     ops = [np.eye(2, dtype=complex)] * n_qubits
     ops[qubit] = gate
@@ -40,13 +42,13 @@ def _kron_gate(gate, qubit, n_qubits):
 
 
 class HybridQuantumClassicalPipeline:
-    def __init__(self, n_qubits=2, n_layers=1, noise_model=None):
+    def __init__(self, n_qubits: int = 2, n_layers: int = 1, noise_model: Any = None) -> None:
         self.n_qubits = n_qubits
         self.n_layers = n_layers
         self.noise_model = noise_model
         self.n_params = n_qubits * n_layers
 
-    def circuit(self, params):
+    def circuit(self, params: np.ndarray[Any, Any]) -> float:
         """Parameterized Ry-CNOT circuit → ⟨Z⊗Z⟩ expectation."""
         dim = 2**self.n_qubits
         state = np.zeros(dim, dtype=complex)
@@ -81,7 +83,7 @@ class HybridQuantumClassicalPipeline:
         z_all = np.array([(-1) ** bin(i).count("1") for i in range(dim)], dtype=float)
         return float(np.real(np.conj(state) @ (z_all * state)))
 
-    def train(self, n_steps=100, lr=0.01):
+    def train(self, n_steps: int = 100, lr: float = 0.01) -> tuple[list[float], np.ndarray[Any, Any]]:
         """VQE-style optimization: minimize ⟨Z⊗Z⟩."""
         params = np.random.randn(self.n_params) * 0.1
         history = []
@@ -92,5 +94,5 @@ class HybridQuantumClassicalPipeline:
             params -= lr * grad
         return history, params
 
-    def evaluate(self, params):
+    def evaluate(self, params: np.ndarray[Any, Any]) -> float:
         return self.circuit(params)

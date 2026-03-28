@@ -8,7 +8,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
+
 import numpy as np
+from numpy.typing import NDArray
 
 
 @dataclass
@@ -26,11 +29,11 @@ class GLMNeuron:
     n_h: int = 20
     mu: float = -3.0
     dt_ms: float = 1.0
-    k: np.ndarray = field(default=None, repr=False)
-    h: np.ndarray = field(default=None, repr=False)
-    _stim_buf: np.ndarray = field(default=None, repr=False)
-    _spike_buf: np.ndarray = field(default=None, repr=False)
-    _rng: object = None
+    k: NDArray[Any] = field(default=None, repr=False)  # type: ignore[arg-type]
+    h: NDArray[Any] = field(default=None, repr=False)  # type: ignore[arg-type]
+    _stim_buf: NDArray[Any] = field(default=None, repr=False)  # type: ignore[arg-type]
+    _spike_buf: NDArray[Any] = field(default=None, repr=False)  # type: ignore[arg-type]
+    _rng: np.random.Generator = field(init=False)
 
     def __post_init__(self) -> None:
         if self.k is None:

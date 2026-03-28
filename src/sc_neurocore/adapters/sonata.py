@@ -67,7 +67,7 @@ class SONATANetwork:
     def n_edges(self) -> int:
         return len(self.edges)
 
-    def connectivity_matrix(self) -> np.ndarray:
+    def connectivity_matrix(self) -> np.ndarray[Any, Any]:
         """Build dense connectivity matrix (n_nodes x n_nodes)."""
         N = self.n_nodes
         W = np.zeros((N, N))
@@ -90,7 +90,7 @@ def import_sonata_nodes(path: str | Path) -> list[SONATANode]:
     """
     import h5py
 
-    nodes = []
+    nodes: list[SONATANode] = []
     with h5py.File(path, "r") as f:
         if "nodes" not in f:
             return nodes
@@ -141,7 +141,7 @@ def import_sonata_edges(path: str | Path) -> list[SONATAEdge]:
     """
     import h5py
 
-    edges = []
+    edges: list[SONATAEdge] = []
     with h5py.File(path, "r") as f:
         if "edges" not in f:
             return edges

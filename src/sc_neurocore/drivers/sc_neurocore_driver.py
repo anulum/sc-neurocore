@@ -5,8 +5,11 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Raised when physical hardware is required but missing
 
-import os
+from __future__ import annotations
+
 import logging
+import os
+
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -26,7 +29,7 @@ class SC_NeuroCore_Driver:
     unless explicitly in 'EMULATION' mode.
     """
 
-    def __init__(self, bitstream_path="sc_neurocore.bit", mode="HARDWARE"):
+    def __init__(self, bitstream_path: str = "sc_neurocore.bit", mode: str = "HARDWARE") -> None:
         self.mode = mode
         self.overlay = None
         self.dma = None
@@ -41,7 +44,7 @@ class SC_NeuroCore_Driver:
         else:
             raise ValueError("Invalid mode. Use 'HARDWARE' or 'EMULATION'.")
 
-    def _connect_to_fpga(self):
+    def _connect_to_fpga(self) -> None:
         """
         Attempts to load the PYNQ libraries and flash the bitstream.
         """
@@ -77,7 +80,7 @@ class SC_NeuroCore_Driver:
             logger.error(f"FPGA Connection Failed: {e}")
             raise RealityHardwareError(f"Hardware initialization failed: {e}")
 
-    def write_layer_params(self, layer_id, params):
+    def write_layer_params(self, layer_id: int, params: dict[str, float]) -> None:
         """
         Writes parameters to a specific layer's AXI-Lite registers.
         """
@@ -96,7 +99,7 @@ class SC_NeuroCore_Driver:
         if "threshold" in params:
             layer_ip.write(0x14, int(params["threshold"] * 65536))
 
-    def run_step(self, input_vector):
+    def run_step(self, input_vector: object) -> np.ndarray:
         """
         Executes one integration step on the FPGA.
         """

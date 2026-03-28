@@ -9,12 +9,14 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 from .basic import bin_spike_train
 
 
-def _var_coefficients(trains_binned: np.ndarray, order: int) -> tuple[np.ndarray, np.ndarray]:
+def _var_coefficients(trains_binned: np.ndarray[Any, Any], order: int) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
     """Fit VAR(order) model. Returns (coefficients [order*d x d], residual covariance)."""
     d, t = trains_binned.shape
     if t <= order + 1:
@@ -30,7 +32,7 @@ def _var_coefficients(trains_binned: np.ndarray, order: int) -> tuple[np.ndarray
 
 
 def pairwise_granger_causality(
-    source: np.ndarray, target: np.ndarray, bin_size: int = 10, order: int = 5
+    source: np.ndarray[Any, Any], target: np.ndarray[Any, Any], bin_size: int = 10, order: int = 5
 ) -> float:
     """Pairwise Granger causality. Granger 1969.
 
@@ -48,12 +50,12 @@ def pairwise_granger_causality(
     x_r = np.column_stack([ct[order - k - 1 : n - k - 1] for k in range(order)])
     x_f = np.column_stack([x_r] + [cs[order - k - 1 : n - k - 1] for k in range(order)])
 
-    def _sse(x, yy):
+    def _sse(x: np.ndarray[Any, Any], yy: np.ndarray[Any, Any]) -> float:
         xtx = x.T @ x
         reg = 1e-8 * np.eye(xtx.shape[0])
         beta = np.linalg.solve(xtx + reg, x.T @ yy)
         residuals = yy - x @ beta
-        return np.sum(residuals**2)
+        return float(np.sum(residuals**2))
 
     sse_r = _sse(x_r, y)
     sse_f = _sse(x_f, y)
@@ -63,9 +65,9 @@ def pairwise_granger_causality(
 
 
 def conditional_granger_causality(
-    source: np.ndarray,
-    target: np.ndarray,
-    condition: np.ndarray,
+    source: np.ndarray[Any, Any],
+    target: np.ndarray[Any, Any],
+    condition: np.ndarray[Any, Any],
     bin_size: int = 10,
     order: int = 5,
 ) -> float:
@@ -87,10 +89,10 @@ def conditional_granger_causality(
     )
     x_full = np.column_stack([x_cond] + [cs[order - k - 1 : n - k - 1] for k in range(order)])
 
-    def _sse(x, yy):
+    def _sse(x: np.ndarray[Any, Any], yy: np.ndarray[Any, Any]) -> float:
         reg = 1e-8 * np.eye(x.shape[1])
         beta = np.linalg.solve(x.T @ x + reg, x.T @ yy)
-        return np.sum((yy - x @ beta) ** 2)
+        return float(np.sum((yy - x @ beta) ** 2))
 
     sse_c = _sse(x_cond, y)
     sse_f = _sse(x_full, y)
@@ -100,8 +102,8 @@ def conditional_granger_causality(
 
 
 def spectral_granger_causality(
-    trains: list[np.ndarray], bin_size: int = 10, order: int = 5, n_freqs: int = 64
-) -> np.ndarray:
+    trains: list[np.ndarray[Any, Any]], bin_size: int = 10, order: int = 5, n_freqs: int = 64
+) -> np.ndarray[Any, Any]:
     """Spectral Granger causality. Geweke 1982.
 
     Returns (n_neurons x n_neurons x n_freqs) array of frequency-domain GC values.
@@ -136,8 +138,8 @@ def spectral_granger_causality(
 
 
 def partial_directed_coherence(
-    trains: list[np.ndarray], bin_size: int = 10, order: int = 5, n_freqs: int = 64
-) -> np.ndarray:
+    trains: list[np.ndarray[Any, Any]], bin_size: int = 10, order: int = 5, n_freqs: int = 64
+) -> np.ndarray[Any, Any]:
     """Partial directed coherence (PDC). Baccala & Sameshima 2001.
 
     Returns (n_neurons x n_neurons x n_freqs) normalized PDC values.
@@ -161,8 +163,8 @@ def partial_directed_coherence(
 
 
 def directed_transfer_function(
-    trains: list[np.ndarray], bin_size: int = 10, order: int = 5, n_freqs: int = 64
-) -> np.ndarray:
+    trains: list[np.ndarray[Any, Any]], bin_size: int = 10, order: int = 5, n_freqs: int = 64
+) -> np.ndarray[Any, Any]:
     """Directed transfer function (DTF). Kaminski & Blinowska 1991.
 
     Returns (n_neurons x n_neurons x n_freqs) normalized DTF values.

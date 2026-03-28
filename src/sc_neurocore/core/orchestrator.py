@@ -5,6 +5,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Central Orchestrator for sc-neurocore Agents
 
+from __future__ import annotations
+
 from typing import Any, Optional
 import logging
 import numpy as np

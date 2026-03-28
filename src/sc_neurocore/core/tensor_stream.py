@@ -5,6 +5,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Unified Data Structure for sc-neurocore
 
+from __future__ import annotations
+
 from typing import Any
 import numpy as np
 from dataclasses import dataclass
@@ -21,7 +23,7 @@ class TensorStream:
     domain: str  # 'prob', 'bitstream', 'quantum', 'spike'
 
     @classmethod
-    def from_prob(cls, probs: np.ndarray[Any, Any]) -> None:
+    def from_prob(cls, probs: np.ndarray[Any, Any]) -> TensorStream:
         return cls(data=probs, domain="prob")
 
     def to_bitstream(self, length: int = 1024) -> np.ndarray[Any, Any]:

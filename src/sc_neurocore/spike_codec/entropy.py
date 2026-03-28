@@ -21,6 +21,7 @@ from __future__ import annotations
 import heapq
 import struct
 from collections import Counter
+from typing import Any
 
 
 def _build_huffman_table(symbols: list[int]) -> dict[int, tuple[int, int]]:
@@ -39,7 +40,7 @@ def _build_huffman_table(symbols: list[int]) -> dict[int, tuple[int, int]]:
 
     # Build tree with heapq
     # Nodes: (freq, id, symbol_or_None, left, right)
-    heap = []
+    heap: list[tuple[int, int, int | None, Any, Any]] = []
     node_id = 0
     for sym, freq in freqs.items():
         heapq.heappush(heap, (freq, node_id, sym, None, None))
@@ -59,7 +60,7 @@ def _build_huffman_table(symbols: list[int]) -> dict[int, tuple[int, int]]:
     return _canonical_codes(lengths)
 
 
-def _walk_tree(node, lengths, depth):
+def _walk_tree(node: tuple[int, int, int | None, Any, Any], lengths: dict[int, int], depth: int) -> None:
     _, _, sym, left, right = node
     if sym is not None:
         lengths[sym] = max(depth, 1)
@@ -170,7 +171,7 @@ class HuffmanEncoder:
         pos += n_bytes
 
         # Decode bit stream
-        values = []
+        values: list[int] = []
         bit_pos = 0
         current_code = 0
         current_len = 0

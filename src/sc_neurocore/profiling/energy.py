@@ -5,6 +5,10 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Decorator to track energy of a layer call (simulated)
 
+from __future__ import annotations
+
+from collections.abc import Callable
+from typing import Any
 from dataclasses import dataclass
 
 
@@ -30,7 +34,7 @@ class EnergyMetrics:
         e_mem = self.total_bits_mem * self.E_MEM
         return e_logic + e_mem
 
-    def co2_emission_g(self, carbon_intensity_g_per_kwh=475) -> float:
+    def co2_emission_g(self, carbon_intensity_g_per_kwh: float = 475) -> float:
         # Energy in Joules -> kWh -> Grams CO2
         # 1 J = 2.77e-7 kWh
         kwh = self.estimate_energy() * 2.7778e-7
@@ -41,10 +45,10 @@ class EnergyMetrics:
 profiler = EnergyMetrics()
 
 
-def track_energy(func) -> None:
+def track_energy(func: Callable[..., Any]) -> Callable[..., Any]:
     """Decorator to track energy of a layer call (simulated)."""
 
-    def wrapper(*args, **kwargs) -> None:
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         res = func(*args, **kwargs)
 
         # Determine 'self' object

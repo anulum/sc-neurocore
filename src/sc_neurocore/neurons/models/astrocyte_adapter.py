@@ -43,7 +43,7 @@ class AstrocyteNeuron:
     ca_threshold: float = 0.3
     dt: float = 0.01
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self._astro = AstrocyteModel(dt=self.dt)
         self.v = self._astro.ca
 
@@ -61,6 +61,6 @@ class AstrocyteNeuron:
     def ip3(self) -> float:
         return self._astro.ip3
 
-    def reset(self):
+    def reset(self) -> None:
         self._astro.reset()
         self.v = self._astro.ca

@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import struct
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -85,7 +86,7 @@ class WaveformCodec:
         self.quantize_bits = quantize_bits
         self.spike_codec = SpikeCodec(entropy="auto")
 
-    def compress(self, waveform: np.ndarray) -> tuple[bytes, WaveformCompressionResult]:
+    def compress(self, waveform: np.ndarray[Any, Any]) -> tuple[bytes, WaveformCompressionResult]:
         """Compress raw electrode waveform.
 
         Parameters
@@ -164,7 +165,7 @@ class WaveformCodec:
             lossless_spikes=True,
         )
 
-    def _detect_spikes(self, waveform, thresholds):
+    def _detect_spikes(self, waveform: np.ndarray[Any, Any], thresholds: np.ndarray[Any, Any]) -> tuple[np.ndarray[Any, Any], list[list[int]]]:
         """Threshold-crossing spike detection with refractory period."""
         T, N = waveform.shape
         raster = np.zeros((T, N), dtype=np.int8)
@@ -185,7 +186,7 @@ class WaveformCodec:
 
         return raster, times_per_ch
 
-    def _extract_snippets(self, waveform, times_per_ch, N):
+    def _extract_snippets(self, waveform: np.ndarray[Any, Any], times_per_ch: list[list[int]], N: int) -> tuple[list[np.ndarray[Any, Any]], list[tuple[int, int]]]:
         """Extract waveform clips around detected spikes."""
         T = waveform.shape[0]
         half = self.snippet_samples // 2
@@ -206,7 +207,7 @@ class WaveformCodec:
 
         return snippets, indices
 
-    def _template_match(self, snippets):
+    def _template_match(self, snippets: list[np.ndarray[Any, Any]]) -> tuple[list[np.ndarray[Any, Any]], list[int], list[np.ndarray[Any, Any]]]:
         """Build template library and match snippets."""
         if not snippets:
             return [], [], []
@@ -245,7 +246,7 @@ class WaveformCodec:
 
         return templates, template_ids, residuals
 
-    def _compress_snippets(self, templates, template_ids, residuals):
+    def _compress_snippets(self, templates: list[np.ndarray[Any, Any]], template_ids: list[int], residuals: list[np.ndarray[Any, Any]]) -> bytes:
         """Compress templates + IDs + quantized residuals."""
         parts = []
 
@@ -271,7 +272,7 @@ class WaveformCodec:
 
         return b"".join(parts)
 
-    def _extract_background(self, waveform, times_per_ch):
+    def _extract_background(self, waveform: np.ndarray[Any, Any], times_per_ch: list[list[int]]) -> np.ndarray[Any, Any]:
         """Extract low-frequency background (remove spikes)."""
         T, N = waveform.shape
         bg = waveform.copy()
@@ -284,13 +285,14 @@ class WaveformCodec:
 
         # Downsample by 4x (LFP doesn't need 20kHz)
         ds = 4
+        bg_ds: np.ndarray[Any, Any]
         if ds <= T:
             bg_ds = bg[: T - T % ds].reshape(-1, ds, N).mean(axis=1)
         else:
             bg_ds = bg
         return bg_ds
 
-    def _compress_background(self, background):
+    def _compress_background(self, background: np.ndarray[Any, Any]) -> bytes:
         """Delta-encode + quantize background signal."""
         if background.size == 0:
             return b""

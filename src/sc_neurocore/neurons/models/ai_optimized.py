@@ -135,7 +135,7 @@ class SelfReferentialNeuron:
     target_rate: float = 0.1
     window: int = 50
     dt: float = 1.0
-    _history: deque = field(default_factory=lambda: deque(maxlen=50))
+    _history: deque[int] = field(default_factory=lambda: deque(maxlen=50))
     _step_count: int = 0
 
     def step(self, current: float) -> int:
@@ -236,8 +236,8 @@ class ContinuousAttractorNeuron:
     excitation: float = 4.0
     inhibition: float = 0.5
     dt: float = 1.0
-    u: list = field(default_factory=list)
-    _weights: list = field(default_factory=list)
+    u: list[float] = field(default_factory=list)
+    _weights: list[list[float]] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if not self.u:
@@ -245,7 +245,7 @@ class ContinuousAttractorNeuron:
         if not self._weights:
             self._build_weights()
 
-    def _build_weights(self):
+    def _build_weights(self) -> None:
         n = self.n_units
         self._weights = [[0.0] * n for _ in range(n)]
         for i in range(n):
@@ -307,7 +307,7 @@ class MetaPlasticNeuron:
             return 1
         return 0
 
-    def update_meta(self, reward: float):
+    def update_meta(self, reward: float) -> None:
         error = abs(reward - self.expected_reward)
         self.error_trace += (-self.error_trace + error) / self.tau_meta * self.dt
         meta_lr = self.lr0 / (1.0 + math.exp(-self.kappa * (self.error_trace - self.target_error)))

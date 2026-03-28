@@ -21,7 +21,7 @@ class CourageNekorkinMapNeuron:
     j: float = 0.1
     x_threshold: float = 1.0
 
-    def _f(self, x):
+    def _f(self, x: float) -> float:
         if x < 0:
             return self.alpha * x
         return self.alpha * x / (1.0 + self.alpha * x)

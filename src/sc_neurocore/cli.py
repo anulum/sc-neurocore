@@ -7,6 +7,8 @@
 
 """Minimal CLI for SC-NeuroCore."""
 
+from __future__ import annotations
+
 import argparse
 import sys
 from typing import Any

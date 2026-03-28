@@ -17,6 +17,7 @@ TAB: temporal accumulated BN (Jiang 2024, ICLR)
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -46,7 +47,7 @@ class ThresholdDependentBN:
         self.running_mean = np.zeros(self.n_features)
         self.running_var = np.ones(self.n_features)
 
-    def forward(self, x: np.ndarray, training: bool = True) -> np.ndarray:
+    def forward(self, x: np.ndarray[Any, Any], training: bool = True) -> np.ndarray[Any, Any]:
         if training:
             mean = x.mean(axis=0)
             var = x.var(axis=0)
@@ -56,7 +57,8 @@ class ThresholdDependentBN:
             mean = self.running_mean
             var = self.running_var
         x_norm = (x - mean) / np.sqrt(var + self.eps)
-        return self.gamma * x_norm * self.threshold + self.beta
+        result: np.ndarray[Any, Any] = self.gamma * x_norm * self.threshold + self.beta
+        return result
 
 
 @dataclass
@@ -82,7 +84,7 @@ class PerTimestepBN:
         self.running_means = [np.zeros(self.n_features) for _ in range(self.T)]
         self.running_vars = [np.ones(self.n_features) for _ in range(self.T)]
 
-    def forward(self, x: np.ndarray, t: int, training: bool = True) -> np.ndarray:
+    def forward(self, x: np.ndarray[Any, Any], t: int, training: bool = True) -> np.ndarray[Any, Any]:
         t_idx = min(t, self.T - 1)
         if training:
             mean = x.mean(axis=0)
@@ -93,7 +95,8 @@ class PerTimestepBN:
             mean = self.running_means[t_idx]
             var = self.running_vars[t_idx]
         x_norm = (x - mean) / np.sqrt(var + self.eps)
-        return self.gammas[t_idx] * x_norm + self.betas[t_idx]
+        result: np.ndarray[Any, Any] = self.gammas[t_idx] * x_norm + self.betas[t_idx]
+        return result
 
 
 @dataclass
@@ -119,7 +122,7 @@ class TemporalEffectiveBN:
         self.running_mean = np.zeros(self.n_features)
         self.running_var = np.ones(self.n_features)
 
-    def forward(self, x: np.ndarray, t: int, training: bool = True) -> np.ndarray:
+    def forward(self, x: np.ndarray[Any, Any], t: int, training: bool = True) -> np.ndarray[Any, Any]:
         if training:
             mean = x.mean(axis=0)
             var = x.var(axis=0)
@@ -130,7 +133,8 @@ class TemporalEffectiveBN:
             var = self.running_var
         x_norm = (x - mean) / np.sqrt(var + self.eps)
         t_idx = min(t, self.T - 1)
-        return self.lambdas[t_idx] * (self.gamma * x_norm + self.beta)
+        result: np.ndarray[Any, Any] = self.lambdas[t_idx] * (self.gamma * x_norm + self.beta)
+        return result
 
 
 @dataclass
@@ -157,25 +161,29 @@ class MembranePotentialBN:
         self.running_mean = np.zeros(self.n_features)
         self.running_var = np.ones(self.n_features)
 
-    def forward(self, membrane: np.ndarray, training: bool = True) -> np.ndarray:
+    def forward(self, membrane: np.ndarray[Any, Any], training: bool = True) -> np.ndarray[Any, Any]:
         if training:
             mean = membrane.mean(axis=0) if membrane.ndim > 1 else membrane
             var = membrane.var(axis=0) if membrane.ndim > 1 else np.zeros_like(membrane)
             self.running_mean = (1 - self.momentum) * self.running_mean + self.momentum * mean
             self.running_var = (1 - self.momentum) * self.running_var + self.momentum * var
             norm = (membrane - mean) / np.sqrt(var + self.eps)
-            return self.gamma * norm + self.beta
+            result: np.ndarray[Any, Any] = self.gamma * norm + self.beta
+            return result
         return membrane
 
-    def fused_threshold(self) -> np.ndarray:
+    def fused_threshold(self) -> np.ndarray[Any, Any]:
         """Compute per-neuron threshold that absorbs BN at inference.
 
         Returns ndarray of shape (n_features,) — use as per-neuron threshold
         instead of applying BN at inference (zero overhead).
         """
-        return (self.threshold - self.beta) * np.sqrt(self.running_var + self.eps) / np.clip(
-            self.gamma, 1e-8, None
-        ) + self.running_mean
+        result: np.ndarray[Any, Any] = (
+            (self.threshold - self.beta) * np.sqrt(self.running_var + self.eps) / np.clip(
+                self.gamma, 1e-8, None
+            ) + self.running_mean
+        )
+        return result
 
 
 @dataclass
@@ -201,8 +209,9 @@ class TemporalAccumulatedBN:
         self.running_var = np.ones(self.n_features)
         self._accumulated = np.zeros(self.n_features)
 
-    def forward(self, x: np.ndarray, training: bool = True) -> np.ndarray:
-        self._accumulated += x.mean(axis=0) if x.ndim > 1 else x
+    def forward(self, x: np.ndarray[Any, Any], training: bool = True) -> np.ndarray[Any, Any]:
+        increment: np.ndarray[Any, Any] = x.mean(axis=0) if x.ndim > 1 else x
+        self._accumulated = self._accumulated + increment
         if training:
             mean = self._accumulated
             # Variance estimated from current input
@@ -213,7 +222,8 @@ class TemporalAccumulatedBN:
             mean = self.running_mean
             var = self.running_var
         x_norm = (x - mean) / np.sqrt(var + self.eps)
-        return self.gamma * x_norm + self.beta
+        result: np.ndarray[Any, Any] = self.gamma * x_norm + self.beta
+        return result
 
     def reset(self) -> None:
         self._accumulated = np.zeros(self.n_features)

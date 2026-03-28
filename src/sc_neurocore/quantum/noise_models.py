@@ -8,6 +8,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
+
 import numpy as np
 
 
@@ -26,10 +28,10 @@ class HeronR2NoiseParams:
 
 
 class HeronR2NoiseModel:
-    def __init__(self, params=None):
+    def __init__(self, params: HeronR2NoiseParams | None = None) -> None:
         self.params = params or HeronR2NoiseParams()
 
-    def depolarizing_channel(self, p):
+    def depolarizing_channel(self, p: float) -> list[np.ndarray[Any, Any]]:
         """Kraus operators for single-qubit depolarizing channel."""
         I = np.eye(2, dtype=complex)
         X = np.array([[0, 1], [1, 0]], dtype=complex)
@@ -42,32 +44,32 @@ class HeronR2NoiseModel:
             np.sqrt(p / 3) * Z,
         ]
 
-    def amplitude_damping(self, gamma):
+    def amplitude_damping(self, gamma: float) -> list[np.ndarray[Any, Any]]:
         """Kraus operators for amplitude damping (T1 decay)."""
         K0 = np.array([[1, 0], [0, np.sqrt(1 - gamma)]], dtype=complex)
         K1 = np.array([[0, np.sqrt(gamma)], [0, 0]], dtype=complex)
         return [K0, K1]
 
-    def phase_damping(self, gamma):
+    def phase_damping(self, gamma: float) -> list[np.ndarray[Any, Any]]:
         """Kraus operators for phase damping (T2 decay)."""
         K0 = np.array([[1, 0], [0, np.sqrt(1 - gamma)]], dtype=complex)
         K1 = np.array([[0, 0], [0, np.sqrt(gamma)]], dtype=complex)
         return [K0, K1]
 
-    def apply_single_qubit_noise(self, rho):
+    def apply_single_qubit_noise(self, rho: np.ndarray[Any, Any]) -> Any:
         """Apply single-qubit noise channel to density matrix."""
         kraus = self.depolarizing_channel(self.params.single_qubit_error)
         return sum(K @ rho @ K.conj().T for K in kraus)
 
-    def apply_readout_noise(self, measurement):
+    def apply_readout_noise(self, measurement: int) -> int:
         """Apply asymmetric readout error."""
         p = self.params
         if measurement == 0:
             return 1 if np.random.random() < p.readout_0to1 else 0
         return 0 if np.random.random() < p.readout_1to0 else 1
 
-    def gate_fidelity_1q(self):
+    def gate_fidelity_1q(self) -> float:
         return 1.0 - self.params.single_qubit_error
 
-    def gate_fidelity_2q(self):
+    def gate_fidelity_2q(self) -> float:
         return 1.0 - self.params.cx_error

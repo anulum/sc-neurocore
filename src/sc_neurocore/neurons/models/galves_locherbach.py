@@ -8,6 +8,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
+
 import numpy as np
 
 
@@ -27,7 +29,7 @@ class GalvesLocherbachNeuron:
     steepness: float = 5.0
     dt: float = 1.0
 
-    def _firing_prob(self):
+    def _firing_prob(self) -> Any:
         return 1.0 / (1.0 + np.exp(-self.steepness * (self.v - self.threshold_rate)))
 
     def step(self, weighted_input: float) -> int:
