@@ -42,13 +42,13 @@ class SRM0Neuron:
         self._t = 0.0
 
     def step(self, current: float) -> int:
-        # Integrate input
-        dv = (self.resistance * current - (self.v - self.v_rest)) * self.dt / self.tau_m
-        self.v += dv
-
-        # Add refractory kernel (eta)
+        # Decay refractory kernel
         self._eta *= np.exp(-self.dt / self.tau_eta)
-        self.v += self._eta
+
+        # Integrate input with eta as effective rest offset
+        effective_rest = self.v_rest + self._eta
+        dv = (self.resistance * current - (self.v - effective_rest)) * self.dt / self.tau_m
+        self.v += dv
 
         self._t += self.dt
 
