@@ -49,5 +49,5 @@ class TraubMilesNeuron:
             self.v += (-i_na - i_k - i_l + current) * self.dt
         return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v, self.m, self.h, self.n = -67.0, 0.05, 0.6, 0.3

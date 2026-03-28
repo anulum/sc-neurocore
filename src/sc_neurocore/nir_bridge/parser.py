@@ -41,7 +41,7 @@ class _UnitDelayNode:
     def update_buffer(self, value: np.ndarray) -> None:
         self._buffer = np.atleast_1d(np.asarray(value, dtype=np.float64)).copy()
 
-    def reset(self):
+    def reset(self) -> None:
         self._buffer = None
 
 
@@ -52,7 +52,7 @@ class SCSubgraphNode:
     name: str
     network: SCNetwork
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if len(self.network.input_nodes) != 1 or len(self.network.output_nodes) != 1:
             raise ValueError("Nested NIRGraph nodes must expose exactly one input and one output")
 
@@ -60,7 +60,7 @@ class SCSubgraphNode:
         outputs = self.network.step({self.network.input_nodes[0]: np.atleast_1d(np.asarray(x))})
         return outputs[self.network.output_nodes[0]]
 
-    def reset(self):
+    def reset(self) -> None:
         self.network.reset()
 
 
@@ -75,7 +75,7 @@ class SCMultiPortSubgraphNode:
     name: str
     network: SCNetwork
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not self.network.input_nodes or not self.network.output_nodes:
             raise ValueError("Multi-port subgraph must have at least one input and one output")
 
@@ -97,7 +97,7 @@ class SCMultiPortSubgraphNode:
         """Multi-port forward: provide named inputs, get named outputs."""
         return self.network.step(inputs)
 
-    def reset(self):
+    def reset(self) -> None:
         self.network.reset()
 
 
@@ -249,7 +249,7 @@ class SCNetwork:
                 results[name].append(val.copy())
         return results
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset all stateful nodes."""
         for node in self.nodes.values():
             if hasattr(node, "reset"):

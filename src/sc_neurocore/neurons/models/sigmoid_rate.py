@@ -29,5 +29,5 @@ class SigmoidRateNeuron:
         self.r += (-self.r + sigma) / self.tau * self.dt
         return self.r
 
-    def reset(self):
+    def reset(self) -> None:
         self.r = 0.0

@@ -41,6 +41,6 @@ class NonlinearLIFNeuron:
             return 1
         return 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = self.v_rest
         self.w = 0.0

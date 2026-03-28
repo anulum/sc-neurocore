@@ -9,26 +9,31 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
+
+if TYPE_CHECKING:
+    from .population import Population
 
 
 class SpikeMonitor:
     """Records (neuron_idx, timestep) pairs from a population."""
 
-    def __init__(self, population, label=None):
+    def __init__(self, population: Population, label: str | None = None) -> None:
         self.population = population
         self.label = label or f"spikes_{population.label}"
         self._neuron_ids: list[int] = []
         self._timesteps: list[int] = []
 
-    def record(self, spikes, t_step):
+    def record(self, spikes: np.ndarray, t_step: int) -> None:
         """Store spike events for this timestep (from binary spike vector)."""
         idx = np.nonzero(spikes)[0]
         for i in idx:
             self._neuron_ids.append(int(i))
             self._timesteps.append(t_step)
 
-    def record_event(self, neuron_id, t_step):
+    def record_event(self, neuron_id: int, t_step: int) -> None:
         """Store a single spike event directly (from Rust backend)."""
         self._neuron_ids.append(neuron_id)
         self._timesteps.append(t_step)
@@ -58,7 +63,7 @@ class SpikeMonitor:
             np.array(self._neuron_ids, dtype=np.int64),
         )
 
-    def firing_rates(self, n_steps, dt=0.001) -> np.ndarray:
+    def firing_rates(self, n_steps: int, dt: float = 0.001) -> np.ndarray:
         """Mean firing rate (Hz) per neuron over the simulation."""
         duration = n_steps * dt
         rates = np.zeros(self.population.n, dtype=np.float64)
@@ -69,7 +74,7 @@ class SpikeMonitor:
         rates /= duration
         return rates
 
-    def isi(self, neuron) -> np.ndarray:
+    def isi(self, neuron: int) -> np.ndarray:
         """Inter-spike intervals (timestep units) for a single neuron."""
         trains = self.spike_trains
         ts = trains.get(neuron, np.array([], dtype=np.int64))
@@ -77,7 +82,7 @@ class SpikeMonitor:
             return np.array([], dtype=np.int64)
         return np.diff(ts)
 
-    def cross_correlation(self, i, j, max_lag=50) -> tuple[np.ndarray, np.ndarray]:
+    def cross_correlation(self, i: int, j: int, max_lag: int = 50) -> tuple[np.ndarray, np.ndarray]:
         """Cross-correlogram between neurons i and j."""
         from sc_neurocore.analysis.spike_stats import cross_correlation as _cc
 
@@ -98,14 +103,19 @@ class SpikeMonitor:
 class StateMonitor:
     """Records state variable traces from a population."""
 
-    def __init__(self, population, variables=None, record=None):
+    def __init__(
+        self,
+        population: Population,
+        variables: list[str] | None = None,
+        record: list[int] | None = None,
+    ) -> None:
         self.population = population
         self.variables = variables or ["v"]
         self.record = record
         self._data: dict[str, list[np.ndarray]] = {v: [] for v in self.variables}
         self._t: list[int] = []
 
-    def snapshot(self, t_step):
+    def snapshot(self, t_step: int) -> None:
         """Capture current state variables."""
         self._t.append(t_step)
         states = self.population.get_states()
@@ -129,7 +139,7 @@ class StateMonitor:
 class RateMonitor:
     """Population firing rate in time bins."""
 
-    def __init__(self, population, bin_ms=10):
+    def __init__(self, population: Population, bin_ms: int = 10) -> None:
         self.population = population
         self.bin_ms = bin_ms
         self._spike_counts: list[int] = []
@@ -137,7 +147,7 @@ class RateMonitor:
         self._current_count = 0
         self._steps_in_bin = 0
 
-    def record(self, spikes, t_step, dt=0.001):
+    def record(self, spikes: np.ndarray, t_step: int, dt: float = 0.001) -> None:
         """Accumulate spikes; flush when a bin completes."""
         self._current_count += int(spikes.sum())
         self._steps_in_bin += 1

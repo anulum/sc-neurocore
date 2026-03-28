@@ -57,7 +57,7 @@ class AssociativeMemory:
 
     memory: dict[str, Any] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.memory = {}
 
     def store(self, label: str, vector: np.ndarray[Any, Any]):

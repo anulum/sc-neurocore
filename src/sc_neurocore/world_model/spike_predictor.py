@@ -58,7 +58,7 @@ class SpikePredictor:
     threshold: float = 0.5
     seed: int = 42
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         rng = np.random.RandomState(self.seed)
         n_features = self.n_channels * self.history_len
         # Small random weights — predict from history
@@ -105,7 +105,7 @@ class SpikePredictor:
         self._history[self._t % self.history_len] = actual.astype(np.float64)
         self._t += 1
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset to initial state (same seed → same weights)."""
         self.__post_init__()
 

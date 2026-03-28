@@ -32,7 +32,7 @@ class L8_StochasticParameters:
     director_coupling: float = 0.15  # to L16
     pulsar_omegas: Optional[np.ndarray] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.pulsar_omegas is None:
             self.pulsar_omegas = np.array(
                 [1.6, 2.3, 0.8, 4.1, 1.1, 0.5, 3.2, 2.7, 1.9, 0.4, 5.5, 0.2]

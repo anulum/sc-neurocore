@@ -176,7 +176,7 @@ class ArcaneNeuron:
 
         return spike
 
-    def reset(self):
+    def reset(self) -> None:
         self.v_fast = 0.0
         self.v_work = 0.0
         # Deep compartment does NOT reset — it IS the identity

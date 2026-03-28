@@ -33,5 +33,5 @@ class CourageNekorkinMapNeuron:
         self.x, self.y = x_new, y_new
         return 1 if (self.x >= self.x_threshold and x_prev < self.x_threshold) else 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.x, self.y = 0.0, 0.0

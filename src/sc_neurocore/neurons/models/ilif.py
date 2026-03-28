@@ -30,7 +30,7 @@ class InhibitoryLIFNeuron:
     alpha_m: float = field(init=False)
     alpha_inh: float = field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.alpha_m = np.exp(-self.dt / self.tau_m)
         self.alpha_inh = np.exp(-self.dt / self.tau_inh)
 
@@ -43,5 +43,5 @@ class InhibitoryLIFNeuron:
             return 1
         return 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v, self.inh_trace = 0.0, 0.0

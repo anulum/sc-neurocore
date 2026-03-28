@@ -61,7 +61,7 @@ class ConvertedSNN:
     T: int
     n_layers: int = field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.n_layers = len(self.weights)
 
     def run(self, x: np.ndarray) -> np.ndarray:

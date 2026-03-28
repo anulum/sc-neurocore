@@ -21,5 +21,5 @@ class InhomogeneousPoissonNeuron:
         p = max(0.0, rate_hz) * self.dt_ms / 1000.0
         return 1 if np.random.random() < p else 0
 
-    def reset(self):
+    def reset(self) -> None:
         pass

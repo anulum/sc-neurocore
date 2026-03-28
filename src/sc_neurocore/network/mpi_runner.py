@@ -14,6 +14,8 @@ via ``MPI_Allgatherv`` per timestep. Falls back gracefully when
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 
 try:
@@ -26,6 +28,9 @@ except ImportError:
 
 from .population import Population
 from .projection import Projection
+
+if TYPE_CHECKING:
+    from .network import Network
 
 
 def _require_mpi() -> None:
@@ -45,7 +50,7 @@ class MPIRunner:
     rank uses Rust for its local step.
     """
 
-    def __init__(self, network: object) -> None:
+    def __init__(self, network: Network) -> None:
         _require_mpi()
         assert MPI is not None
         self.comm = MPI.COMM_WORLD
@@ -53,9 +58,8 @@ class MPIRunner:
         self.size: int = self.comm.Get_size()
         self.network = network
 
-        self._populations: list[Population] = network.populations  # type: ignore[attr-defined]
-        self._projections: list[Projection] = network.projections  # type: ignore[attr-defined]
-
+        self._populations: list[Population] = network.populations
+        self._projections: list[Projection] = network.projections
         self._local_indices: list[int] = []
         self._rank_of: dict[int, int] = {}
         self._partition_populations()
@@ -145,8 +149,7 @@ class MPIRunner:
         Results are recorded via the network's monitors. Global monitors
         aggregate on rank 0 only.
         """
-        np.random.seed(self.network.seed + self.rank)  # type: ignore[attr-defined]
-
+        np.random.seed(self.network.seed + self.rank)
         pop_id_to_idx = {id(p): i for i, p in enumerate(self._populations)}
         all_spikes: dict[int, np.ndarray] = {
             i: np.zeros(p.n, dtype=np.int8) for i, p in enumerate(self._populations)
@@ -178,11 +181,11 @@ class MPIRunner:
 
             if self.rank == 0:
                 net = self.network
-                for mon in net.spike_monitors:  # type: ignore[attr-defined]
+                for mon in net.spike_monitors:
                     idx = pop_id_to_idx.get(id(mon.population))
                     if idx is not None and idx in all_spikes:
                         mon.record(all_spikes[idx], t)
-                for mon in net.rate_monitors:  # type: ignore[attr-defined]
+                for mon in net.rate_monitors:
                     idx = pop_id_to_idx.get(id(mon.population))
                     if idx is not None and idx in all_spikes:
                         mon.record(all_spikes[idx], t, dt)

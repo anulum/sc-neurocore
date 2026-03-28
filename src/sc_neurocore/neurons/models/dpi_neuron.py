@@ -37,5 +37,5 @@ class DPINeuron:
             return 1
         return 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.i_mem = 0.0

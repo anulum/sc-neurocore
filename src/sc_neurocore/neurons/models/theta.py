@@ -31,5 +31,5 @@ class ThetaNeuron:
         self.theta = ((self.theta + np.pi) % (2 * np.pi)) - np.pi
         return spike
 
-    def reset(self):
+    def reset(self) -> None:
         self.theta = 0.0

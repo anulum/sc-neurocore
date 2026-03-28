@@ -49,7 +49,7 @@ class MultiTimescaleNeuron:
             self.v_fast = 0.0
         return fired
 
-    def reset(self):
+    def reset(self) -> None:
         self.v_fast = 0.0
         self.v_medium = 0.0
         self.v_slow = 0.0
@@ -81,7 +81,7 @@ class AttentionGatedNeuron:
             return 1
         return 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = 0.0
 
 
@@ -112,7 +112,7 @@ class PredictiveCodingNeuron:
             return 1
         return 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = 0.0
         self.pred = 0.0
 
@@ -151,7 +151,7 @@ class SelfReferentialNeuron:
         self._history.append(0)
         return 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = 0.0
         self._history.clear()
         self._step_count = 0
@@ -184,7 +184,7 @@ class CompositionalBindingNeuron:
             return 1
         return 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.phi = 0.0
         self.amplitude = 0.0
 
@@ -210,7 +210,7 @@ class DifferentiableSurrogateNeuron:
         self.v = self.alpha * self.v * (1 - spike) + current
         return spike
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = 0.0
 
     def surrogate_grad(self) -> float:
@@ -239,7 +239,7 @@ class ContinuousAttractorNeuron:
     u: list = field(default_factory=list)
     _weights: list = field(default_factory=list)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not self.u:
             self.u = [0.0] * self.n_units
         if not self._weights:
@@ -274,7 +274,7 @@ class ContinuousAttractorNeuron:
     def bump_position(self) -> int:
         return self.u.index(max(self.u))
 
-    def reset(self):
+    def reset(self) -> None:
         self.u = [0.0] * self.n_units
 
 
@@ -317,7 +317,7 @@ class MetaPlasticNeuron:
     def meta_lr(self) -> float:
         return self.lr0 / (1.0 + math.exp(-self.kappa * (self.error_trace - self.target_error)))
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = 0.0
         self.error_trace = 0.0
         self.expected_reward = 0.0

@@ -40,7 +40,7 @@ class ThresholdDependentBN:
     momentum: float = 0.1
     eps: float = 1e-5
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.gamma = np.ones(self.n_features)
         self.beta = np.zeros(self.n_features)
         self.running_mean = np.zeros(self.n_features)
@@ -76,7 +76,7 @@ class PerTimestepBN:
     T: int
     eps: float = 1e-5
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.gammas = [np.ones(self.n_features) for _ in range(self.T)]
         self.betas = [np.zeros(self.n_features) for _ in range(self.T)]
         self.running_means = [np.zeros(self.n_features) for _ in range(self.T)]
@@ -112,7 +112,7 @@ class TemporalEffectiveBN:
     T: int
     eps: float = 1e-5
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.gamma = np.ones(self.n_features)
         self.beta = np.zeros(self.n_features)
         self.lambdas = np.ones(self.T)
@@ -151,7 +151,7 @@ class MembranePotentialBN:
     momentum: float = 0.1
     eps: float = 1e-5
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.gamma = np.ones(self.n_features)
         self.beta = np.zeros(self.n_features)
         self.running_mean = np.zeros(self.n_features)
@@ -194,7 +194,7 @@ class TemporalAccumulatedBN:
     momentum: float = 0.1
     eps: float = 1e-5
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.gamma = np.ones(self.n_features)
         self.beta = np.zeros(self.n_features)
         self.running_mean = np.zeros(self.n_features)
@@ -215,5 +215,5 @@ class TemporalAccumulatedBN:
         x_norm = (x - mean) / np.sqrt(var + self.eps)
         return self.gamma * x_norm + self.beta
 
-    def reset(self):
+    def reset(self) -> None:
         self._accumulated = np.zeros(self.n_features)

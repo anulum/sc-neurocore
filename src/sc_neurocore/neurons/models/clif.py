@@ -26,7 +26,7 @@ class ComplementaryLIFNeuron:
     dt: float = 1.0
     alpha: float = field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.alpha = np.exp(-self.dt / self.tau)
 
     def step(self, current: float) -> int:
@@ -45,5 +45,5 @@ class ComplementaryLIFNeuron:
             return -1
         return 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v_pos, self.v_neg = 0.0, 0.0

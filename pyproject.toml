@@ -195,5 +195,5 @@ ignore_missing_imports = false
 warn_unused_ignores = true
 warn_return_any = true
 [[tool.mypy.overrides]]
-module = ['cupy.*', 'mpi4py.*', 'numba.*', 'matplotlib.*', 'scipy.*', 'networkx.*', 'onnx.*', 'torch.*', 'gym.*', 'flask.*', 'scpn_evo2_real_interface.*', 'scpn_opentrions_verify.*', 'scpn_cross_layer_integration_L1_L7.*', 'jax.*', 'qiskit.*', 'pennylane.*', 'qiskit_aer.*', 'fastapi.*', 'uvicorn.*', 'starlette.*', 'pydantic.*']
+module = ['cupy.*', 'cupyx.*', 'mpi4py.*', 'numba.*', 'matplotlib.*', 'scipy.*', 'networkx.*', 'onnx.*', 'torch.*', 'torchvision.*', 'gym.*', 'flask.*', 'scpn_evo2_real_interface.*', 'scpn_opentrions_verify.*', 'scpn_cross_layer_integration_L1_L7.*', 'jax.*', 'qiskit.*', 'pennylane.*', 'qiskit_aer.*', 'fastapi.*', 'uvicorn.*', 'starlette.*', 'pydantic.*', 'nir.*', 'h5py.*', 'sc_neurocore_engine.*', 'tonic.*', 'lava.*', 'wandb.*']
 ignore_missing_imports = true

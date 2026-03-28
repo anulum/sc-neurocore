@@ -52,7 +52,7 @@ class BCMSynapse:
     w_max: float = 1.0
     weight: float = 0.5
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.theta_m = self.theta_init
 
     def step(self, pre_rate: float, post_rate: float, dt: float = 1.0) -> float:
@@ -82,5 +82,5 @@ class BCMSynapse:
 
         return self.weight
 
-    def reset(self):
+    def reset(self) -> None:
         self.theta_m = self.theta_init

@@ -29,7 +29,7 @@ class BendaHerzNeuron:
     dt: float = 1.0
     _rng: object = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self._rng = np.random.default_rng()
 
     def _f_onset(self, x: float) -> float:
@@ -41,5 +41,5 @@ class BendaHerzNeuron:
         p = rate * self.dt / 1000.0
         return 1 if self._rng.random() < min(p, 1.0) else 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.a = 0.0

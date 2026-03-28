@@ -39,6 +39,6 @@ class ResonateAndFireNeuron:
             return 1
         return 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.x = 0.0
         self.y = 0.0

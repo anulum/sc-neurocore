@@ -41,7 +41,7 @@ class LateralInhibition:
     inhibition_strength: float = 0.3
     radius: int = 2
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         # Build inhibition kernel matrix
         kernel = np.zeros((self.n_neurons, self.n_neurons))
         for i in range(self.n_neurons):

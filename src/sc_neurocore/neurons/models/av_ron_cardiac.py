@@ -56,5 +56,5 @@ class AvRonCardiacNeuron:
         self.v += (-i_na - i_k - i_s - i_l + current) * self.dt
         return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v, self.h, self.n, self.s = -60.0, 0.6, 0.3, 0.5

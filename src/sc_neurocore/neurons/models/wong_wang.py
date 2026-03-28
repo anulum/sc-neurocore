@@ -54,5 +54,5 @@ class WongWangUnit:
         self.s2 = np.clip(self.s2, 0.0, 1.0)
         return (r1, r2)
 
-    def reset(self):
+    def reset(self) -> None:
         self.s1, self.s2 = 0.1, 0.1

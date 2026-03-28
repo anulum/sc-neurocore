@@ -32,7 +32,7 @@ class EPropALIFNeuron:
     alpha_m: float = field(init=False)
     alpha_a: float = field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.alpha_m = np.exp(-self.dt / self.tau_m)
         self.alpha_a = np.exp(-self.dt / self.tau_a)
 
@@ -49,5 +49,5 @@ class EPropALIFNeuron:
         self.a *= self.alpha_a
         return 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v, self.a, self.e_trace = 0.0, 0.0, 0.0

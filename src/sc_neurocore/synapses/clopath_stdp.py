@@ -64,7 +64,7 @@ class ClopathSTDP:
     w_max: float = 1.0
     weight: float = 0.5
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.x_bar = 0.0  # low-pass filtered pre-synaptic trace
         self.u_bar_minus = 0.0  # slow voltage trace (LTD)
         self.u_bar_plus = 0.0  # fast voltage trace (LTP)
@@ -112,7 +112,7 @@ class ClopathSTDP:
 
         return self.weight
 
-    def reset(self):
+    def reset(self) -> None:
         self.x_bar = 0.0
         self.u_bar_minus = 0.0
         self.u_bar_plus = 0.0

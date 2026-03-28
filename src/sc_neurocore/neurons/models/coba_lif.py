@@ -47,7 +47,7 @@ class COBALIFNeuron:
             return 1
         return 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = self.e_l
         self.g_e = 0.0
         self.g_i = 0.0

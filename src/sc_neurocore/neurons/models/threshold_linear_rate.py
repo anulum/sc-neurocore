@@ -25,5 +25,5 @@ class ThresholdLinearRateNeuron:
         self.r = self.gain * max(0.0, current - self.theta)
         return self.r
 
-    def reset(self):
+    def reset(self) -> None:
         self.r = 0.0

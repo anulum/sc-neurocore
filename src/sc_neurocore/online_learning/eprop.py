@@ -71,7 +71,7 @@ class EpropTrainer:
     _eligibility_in: np.ndarray = field(init=False, repr=False)
     _eligibility_rec: np.ndarray = field(init=False, repr=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         rng = np.random.RandomState(42)
         scale_in = np.sqrt(2.0 / self.n_inputs)
         scale_rec = np.sqrt(2.0 / self.n_neurons)
@@ -81,7 +81,7 @@ class EpropTrainer:
         self.W_out = rng.randn(self.n_outputs, self.n_neurons) * np.sqrt(2.0 / self.n_neurons)
         self.reset()
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset all internal state and eligibility traces."""
         self._v = np.zeros(self.n_neurons)
         self._spikes = np.zeros(self.n_neurons)

@@ -64,7 +64,7 @@ class MainenSejnowskiNeuron:
 
         return 1 if (self.vs >= self.v_threshold and vs_prev < self.v_threshold) else 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.vs = -65.0
         self.va = -65.0
         self.m, self.h, self.n = 0.05, 0.6, 0.3

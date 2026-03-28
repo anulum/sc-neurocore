@@ -23,7 +23,7 @@ class MemristiveDenseLayer(VectorizedSCLayer):
     stuck_rate: float = MEMRISTIVE_STUCK_RATE
     variability: float = MEMRISTIVE_VARIABILITY
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         self.apply_hardware_defects()
 

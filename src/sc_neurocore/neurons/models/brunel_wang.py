@@ -45,7 +45,7 @@ class BrunelWangNeuron:
     mg_conc: float = 1.0
     dt: float = 0.1
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self._s_ampa = 0.0
         self._s_nmda = 0.0
         self._x_nmda = 0.0
@@ -93,7 +93,7 @@ class BrunelWangNeuron:
             return 1
         return 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = self.v_rest
         self._s_ampa = 0.0
         self._s_nmda = 0.0

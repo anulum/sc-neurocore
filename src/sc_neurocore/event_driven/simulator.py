@@ -200,7 +200,7 @@ class EventDrivenSimulator:
 
         return self._spike_log, stats
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset all state."""
         self._v = np.full(self.n_neurons, self.v_rest)
         self._last_spike_time = np.full(self.n_neurons, -1e9)

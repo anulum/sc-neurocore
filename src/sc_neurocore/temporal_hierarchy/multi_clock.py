@@ -107,7 +107,7 @@ class HetSynLayer:
         self._v -= spikes * self.threshold
         return spikes
 
-    def reset(self):
+    def reset(self) -> None:
         self._traces = np.zeros((self.n_neurons, self.n_inputs))
         self._v = np.zeros(self.n_neurons)
 
@@ -191,7 +191,7 @@ class MultiClockSNN:
             outputs[t] = self.step(inputs[t], dt)
         return outputs
 
-    def reset(self):
+    def reset(self) -> None:
         self._step_count = 0
         for i, layer in enumerate(self.layers):
             layer.reset()

@@ -9,12 +9,14 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 from sc_neurocore.neurons import models as _model_registry
 
 
-def _resolve_model(model):
+def _resolve_model(model: type[Any] | str) -> type[Any]:
     """Return a model class from a string name or pass through a class."""
     if isinstance(model, str):
         cls = getattr(_model_registry, model, None)
@@ -27,7 +29,13 @@ def _resolve_model(model):
 class Population:
     """A group of N identical neurons with vectorized state access."""
 
-    def __init__(self, model, n, params=None, label=None):
+    def __init__(
+        self,
+        model: type[Any] | str,
+        n: int,
+        params: dict[str, Any] | None = None,
+        label: str | None = None,
+    ) -> None:
         """Create *n* neurons of *model* (class or string name)."""
         cls = _resolve_model(model)
         kw = params or {}
@@ -39,12 +47,12 @@ class Population:
         self._voltages = np.zeros(n, dtype=np.float64)
         self._sync_voltages()
 
-    def _sync_voltages(self):
+    def _sync_voltages(self) -> None:
         """Pull membrane voltage from each neuron into the flat array."""
         for i, neuron in enumerate(self.neurons):
             self._voltages[i] = getattr(neuron, "v", 0.0)
 
-    def step_all(self, currents, spike_gating=False) -> np.ndarray:
+    def step_all(self, currents: np.ndarray, spike_gating: bool = False) -> np.ndarray:
         """Advance all neurons one timestep; return binary spike vector.
 
         If *spike_gating* is True, neurons with zero input current and
@@ -70,7 +78,7 @@ class Population:
                 self._voltages[i] = getattr(neuron, "v", 0.0)
         return spikes
 
-    def reset_all(self):
+    def reset_all(self) -> None:
         """Reset every neuron to its initial state."""
         for neuron in self.neurons:
             if hasattr(neuron, "reset"):
@@ -95,7 +103,7 @@ class Population:
             result[k] = np.array([getattr(n, k, 0.0) for n in self.neurons])
         return result
 
-    def set_voltages(self, voltages):
+    def set_voltages(self, voltages: np.ndarray) -> None:
         """Sync voltages from an external source (e.g. Rust backend) into neurons."""
         for i, neuron in enumerate(self.neurons):
             if hasattr(neuron, "v"):

@@ -63,10 +63,10 @@ class PINGCircuit:
     w_ee: float = 0.1
     threshold: float = 1.0
     reset: float = 0.0
-    v_e: np.ndarray = field(default=None)
-    v_i: np.ndarray = field(default=None)
+    v_e: np.ndarray = field(default=None)  # type: ignore[assignment]
+    v_i: np.ndarray = field(default=None)  # type: ignore[assignment]
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.v_e is None:
             self.v_e = np.random.uniform(0, 0.5, self.n_excitatory)
         if self.v_i is None:
@@ -115,6 +115,6 @@ class PINGCircuit:
 
         return spikes_e, spikes_i
 
-    def reset_state(self):
+    def reset_state(self) -> None:
         self.v_e = np.random.uniform(0, 0.5, self.n_excitatory)
         self.v_i = np.random.uniform(0, 0.5, self.n_inhibitory)

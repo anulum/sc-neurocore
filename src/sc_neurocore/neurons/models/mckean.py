@@ -48,6 +48,6 @@ class McKeanNeuron:
         self.w += dw
         return 1 if (self.v >= self.v_peak and v_prev < self.v_peak) else 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = 0.0
         self.w = 0.0

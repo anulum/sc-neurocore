@@ -65,6 +65,6 @@ class PospischilNeuron:
 
         return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = -70.0
         self.m, self.h, self.n, self.p = 0.05, 0.6, 0.3, 0.0

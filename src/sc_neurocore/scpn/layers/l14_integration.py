@@ -49,7 +49,7 @@ class L14_StochasticParameters:
     integration_weights: Optional[np.ndarray] = None
     temporal_coupling: float = 0.1  # from L13
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.integration_weights is None:
             self.integration_weights = _DEFAULT_WEIGHTS.copy()
 

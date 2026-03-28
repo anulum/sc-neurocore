@@ -40,7 +40,7 @@ class ErmentroutKopellPopulation:
         self.v += dv
         return self.r
 
-    def reset(self):
+    def reset(self) -> None:
         self.r, self.v = 0.1, -2.0
 
 

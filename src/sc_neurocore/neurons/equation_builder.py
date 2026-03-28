@@ -250,7 +250,7 @@ class EquationNeuron:
     def get_state(self) -> dict[str, float]:
         return dict(self.state)
 
-    def reset(self):
+    def reset(self) -> None:
         self.state = deepcopy(self.initial_state)
 
     def __repr__(self):

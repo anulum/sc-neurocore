@@ -44,7 +44,7 @@ class SiegertTransferFunction:
         t_isi = self.tau_rp + self.tau_m * np.sqrt(np.pi) * integral_val
         return 1000.0 / max(t_isi, 0.01)  # Hz
 
-    def reset(self):
+    def reset(self) -> None:
         pass
 
 

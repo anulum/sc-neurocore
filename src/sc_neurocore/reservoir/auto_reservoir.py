@@ -105,7 +105,7 @@ class AutoCriticalReservoir:
         eigvals = np.abs(np.linalg.eigvals(self.W_res))
         return float(eigvals.max()) if len(eigvals) > 0 else 0.0
 
-    def reset(self):
+    def reset(self) -> None:
         self._v = np.zeros(self.n_neurons)
         self._spikes = np.zeros(self.n_neurons)
 

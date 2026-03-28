@@ -11,8 +11,16 @@ from __future__ import annotations
 
 import numpy as np
 
+CSR = tuple[np.ndarray, np.ndarray, np.ndarray]
 
-def _to_csr(n_rows, n_cols, rows, cols, weights):
+
+def _to_csr(
+    n_rows: int,
+    n_cols: int,
+    rows: np.ndarray,
+    cols: np.ndarray,
+    weights: np.ndarray,
+) -> CSR:
     """Convert COO arrays to CSR (indptr, indices, data)."""
     if len(rows) == 0:
         return (
@@ -29,7 +37,9 @@ def _to_csr(n_rows, n_cols, rows, cols, weights):
     return indptr, cols.astype(np.int64), weights.astype(np.float64)
 
 
-def random_connectivity(n_src, n_tgt, p, weight, seed=42):
+def random_connectivity(
+    n_src: int, n_tgt: int, p: float, weight: float, seed: int = 42
+) -> CSR:
     """Erdos-Renyi random connectivity."""
     rng = np.random.default_rng(seed)
     mask = rng.random((n_src, n_tgt)) < p
@@ -38,18 +48,21 @@ def random_connectivity(n_src, n_tgt, p, weight, seed=42):
     return _to_csr(n_src, n_tgt, rows, cols, weights)
 
 
-def small_world(n, k, p_rewire, weight, seed=42):
+def small_world(
+    n: int, k: int, p_rewire: float, weight: float, seed: int = 42
+) -> CSR:
     """Watts-Strogatz small-world graph (n-by-n adjacency)."""
     rng = np.random.default_rng(seed)
     half_k = k // 2
-    row_list, col_list = [], []
+    row_list: list[int] = []
+    col_list: list[int] = []
     for i in range(n):
         for j in range(1, half_k + 1):
             tgt = (i + j) % n
             if rng.random() < p_rewire:
-                tgt = rng.integers(0, n)
+                tgt = int(rng.integers(0, n))
                 while tgt == i:
-                    tgt = rng.integers(0, n)
+                    tgt = int(rng.integers(0, n))
             row_list.append(i)
             col_list.append(tgt)
             row_list.append(tgt)
@@ -60,11 +73,12 @@ def small_world(n, k, p_rewire, weight, seed=42):
     return _to_csr(n, n, rows, cols, weights)
 
 
-def scale_free(n, m, weight, seed=42):
+def scale_free(n: int, m: int, weight: float, seed: int = 42) -> CSR:
     """Barabasi-Albert preferential attachment (n-by-n adjacency)."""
     rng = np.random.default_rng(seed)
     degree = np.zeros(n, dtype=np.float64)
-    row_list, col_list = [], []
+    row_list: list[int] = []
+    col_list: list[int] = []
     targets = list(range(m))
     for t in targets:
         degree[t] = 1.0
@@ -78,20 +92,21 @@ def scale_free(n, m, weight, seed=42):
         chosen = rng.choice(src, size=min(m, src), replace=False, p=probs)
         for tgt in chosen:
             row_list.append(src)
-            col_list.append(tgt)
-            row_list.append(tgt)
+            col_list.append(int(tgt))
+            row_list.append(int(tgt))
             col_list.append(src)
             degree[src] += 1
-            degree[tgt] += 1
+            degree[int(tgt)] += 1
     rows = np.array(row_list, dtype=np.int64)
     cols = np.array(col_list, dtype=np.int64)
     weights = np.full(len(rows), weight, dtype=np.float64)
     return _to_csr(n, n, rows, cols, weights)
 
 
-def ring_topology(n, k, weight):
+def ring_topology(n: int, k: int, weight: float) -> CSR:
     """Ring topology with k nearest neighbours in each direction."""
-    row_list, col_list = [], []
+    row_list: list[int] = []
+    col_list: list[int] = []
     for i in range(n):
         for j in range(1, k + 1):
             row_list.append(i)
@@ -104,10 +119,13 @@ def ring_topology(n, k, weight):
     return _to_csr(n, n, rows, cols, weights)
 
 
-def grid_topology(rows_count, cols_count, radius, weight):
+def grid_topology(
+    rows_count: int, cols_count: int, radius: int, weight: float
+) -> CSR:
     """2D lattice connectivity within Manhattan radius."""
     n = rows_count * cols_count
-    row_list, col_list = [], []
+    row_list: list[int] = []
+    col_list: list[int] = []
     for r in range(rows_count):
         for c in range(cols_count):
             idx = r * cols_count + c
@@ -125,7 +143,7 @@ def grid_topology(rows_count, cols_count, radius, weight):
     return _to_csr(n, n, r_arr, c_arr, weights)
 
 
-def all_to_all(n_src, n_tgt, weight):
+def all_to_all(n_src: int, n_tgt: int, weight: float) -> CSR:
     """Full connectivity (every source to every target)."""
     rows = np.repeat(np.arange(n_src, dtype=np.int64), n_tgt)
     cols = np.tile(np.arange(n_tgt, dtype=np.int64), n_src)

@@ -53,7 +53,7 @@ class FPGAMismatchModel:
     clock_jitter_pct: float = 0.01
     seed: int = 42
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self._rng = np.random.RandomState(self.seed)
 
     def quantize(self, values: np.ndarray) -> np.ndarray:

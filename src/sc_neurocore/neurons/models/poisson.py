@@ -22,7 +22,7 @@ class PoissonNeuron:
     dt_ms: float = 1.0
     _rng: object = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self._rng = np.random.default_rng()
 
     def step(self, rate_override: float = -1.0) -> int:
@@ -30,5 +30,5 @@ class PoissonNeuron:
         p = r * self.dt_ms / 1000.0
         return 1 if self._rng.random() < p else 0
 
-    def reset(self):
+    def reset(self) -> None:
         pass

@@ -52,7 +52,7 @@ class RallDendrite:
     coupling: float = 0.5
     dt: float = 1.0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         # Each branch has branch_length compartments
         # Compartment voltages: shape (n_branches, branch_length)
         self.v = np.zeros((self.n_branches, self.branch_length))
@@ -103,6 +103,6 @@ class RallDendrite:
         """Current compartment voltages, shape (n_branches, branch_length)."""
         return self.v.copy()
 
-    def reset(self):
+    def reset(self) -> None:
         self.v[:] = 0.0
         self.soma_v = 0.0

@@ -83,7 +83,7 @@ class QuantizedSNNLayer:
     threshold: float = 1.0
     tau_mem: float = 20.0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         rng = np.random.RandomState(42)
         self.W = rng.randn(self.n_neurons, self.n_inputs) * np.sqrt(2.0 / self.n_inputs)
         self._v = np.zeros(self.n_neurons)
@@ -102,7 +102,7 @@ class QuantizedSNNLayer:
         """Export quantized weights for hardware deployment."""
         return _ste_quantize(self.W, self.weight_bits)
 
-    def reset(self):  # pragma: no cover
+    def reset(self) -> None:  # pragma: no cover
         self._v = np.zeros(self.n_neurons)
 
 

@@ -38,7 +38,7 @@ class AlphaNeuron:
             return 1
         return 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = self.v_rest
         self.i_exc = 0.0
         self.i_inh = 0.0

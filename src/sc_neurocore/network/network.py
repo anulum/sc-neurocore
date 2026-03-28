@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import sys
+from typing import Any
 
 import numpy as np
 
@@ -18,10 +19,10 @@ from .projection import Projection
 from .monitor import SpikeMonitor, StateMonitor, RateMonitor
 from .stimulus import TimedArray, PoissonInput, StepCurrent
 
-_RUST_ENGINE = None
+_RUST_ENGINE: type[Any] | bool | None = None
 
 
-def _get_rust_engine():
+def _get_rust_engine() -> type[Any] | bool:
     global _RUST_ENGINE
     if _RUST_ENGINE is None:
         try:
@@ -33,28 +34,28 @@ def _get_rust_engine():
     return _RUST_ENGINE
 
 
-def _rust_supports_model(model_name):
+def _rust_supports_model(model_name: str) -> bool:
     engine = _get_rust_engine()
     if engine is False:
         return False
-    return model_name in engine.supported_models()
+    return bool(model_name in engine.supported_models())
 
 
 class Network:
     """Declarative network: collects objects, runs the simulation loop."""
 
-    def __init__(self, *objects, seed=42):
+    def __init__(self, *objects: Any, seed: int = 42) -> None:
         self.populations: list[Population] = []
         self.projections: list[Projection] = []
         self.spike_monitors: list[SpikeMonitor] = []
         self.state_monitors: list[StateMonitor] = []
         self.rate_monitors: list[RateMonitor] = []
-        self.stimuli: list = []
+        self.stimuli: list[TimedArray | PoissonInput | StepCurrent] = []
         self.seed = seed
         for obj in objects:
             self.add(obj)
 
-    def add(self, obj):
+    def add(self, obj: Any) -> None:
         """Register a simulation object by type."""
         if isinstance(obj, Population):
             self.populations.append(obj)
@@ -71,7 +72,7 @@ class Network:
         else:
             raise TypeError(f"Unknown object type: {type(obj).__name__}")
 
-    def _can_use_rust(self):
+    def _can_use_rust(self) -> bool:
         if self.stimuli:
             return False
         if _get_rust_engine() is False:
@@ -81,7 +82,14 @@ class Network:
                 return False
         return not any(p.plasticity for p in self.projections)
 
-    def run(self, duration, dt=0.001, progress=False, backend="auto", spike_gating=False):
+    def run(
+        self,
+        duration: float,
+        dt: float = 0.001,
+        progress: bool = False,
+        backend: str = "auto",
+        spike_gating: bool = False,
+    ) -> None:
         """Run the simulation for *duration* seconds at timestep *dt*.
 
         *backend* selects execution: ``'auto'`` picks Rust when available
@@ -100,14 +108,14 @@ class Network:
             return self._run_rust(duration, dt)
         return self._run_python(duration, dt, progress)
 
-    def _run_mpi(self, duration, dt):
+    def _run_mpi(self, duration: float, dt: float) -> None:
         from .mpi_runner import MPIRunner
 
         n_steps = int(round(duration / dt))
         runner = MPIRunner(self)
         runner.run(n_steps, dt)
 
-    def _run_rust(self, duration, dt):
+    def _run_rust(self, duration: float, dt: float) -> None:
         engine_cls = _get_rust_engine()
         if engine_cls is False:
             raise RuntimeError("Rust engine not available")
@@ -149,7 +157,7 @@ class Network:
                         t = int(packed & 0xFFFFFFFF)
                         mon.record_event(nid, t)
 
-    def _run_python(self, duration, dt, progress=False):
+    def _run_python(self, duration: float, dt: float, progress: bool = False) -> None:
         self._rng = np.random.default_rng(self.seed)
         n_steps = int(round(duration / dt))
 
@@ -181,7 +189,7 @@ class Network:
             sys.stdout.write(f"\r[100%] step {n_steps}/{n_steps}\n")
             sys.stdout.flush()
 
-    def _apply_stimuli(self, pop_to_currents, t, dt):
+    def _apply_stimuli(self, pop_to_currents: dict[int, np.ndarray], t: int, dt: float) -> None:
         """Inject stimulus currents into target populations."""
         for stim in self.stimuli:
             target = stim.target
@@ -200,7 +208,7 @@ class Network:
             elif isinstance(stim, StepCurrent):
                 pop_to_currents[pid] += stim.get_current(t, dt)
 
-    def _apply_projections(self, pop_to_currents, last_spikes):
+    def _apply_projections(self, pop_to_currents: dict[int, np.ndarray], last_spikes: dict[int, np.ndarray]) -> None:
         """Propagate spikes through all projections."""
         for proj in self.projections:
             src_spikes = last_spikes.get(id(proj.source), np.zeros(proj.source.n, dtype=np.int8))
@@ -209,7 +217,7 @@ class Network:
             if pid in pop_to_currents:
                 pop_to_currents[pid] += current
 
-    def _record(self, pop, spikes, t, dt):
+    def _record(self, pop: Population, spikes: np.ndarray, t: int, dt: float) -> None:
         """Feed spikes/states to all monitors attached to this population."""
         for mon in self.spike_monitors:
             if mon.population is pop:
@@ -221,7 +229,7 @@ class Network:
             if mon.population is pop:
                 mon.record(spikes, t, dt)
 
-    def _update_plasticity(self, last_spikes):
+    def _update_plasticity(self, last_spikes: dict[int, np.ndarray]) -> None:
         """Apply plasticity rules to projections that have them."""
         for proj in self.projections:
             if proj.plasticity:

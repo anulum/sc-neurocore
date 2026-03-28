@@ -62,7 +62,7 @@ class PredictiveCodingSCLayer:
     lr: float = 0.01
     seed: int | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         rng = np.random.RandomState(self.seed)
         # Prediction weights: each neuron predicts the next input
         self.weights = rng.uniform(0.1, 0.9, (self.n_neurons, self.n_inputs))
@@ -128,7 +128,7 @@ class PredictiveCodingSCLayer:
             "predictions": predictions,
         }
 
-    def reset(self):
+    def reset(self) -> None:
         rng = np.random.RandomState(self.seed)
         self.weights = rng.uniform(0.1, 0.9, (self.n_neurons, self.n_inputs))
         self._prev_input = None

@@ -30,7 +30,7 @@ class SuperSpikeNeuron:
     alpha_m: float = field(init=False)
     alpha_e: float = field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.alpha_m = np.exp(-self.dt / self.tau_m)
         self.alpha_e = np.exp(-self.dt / self.tau_e)
 
@@ -46,5 +46,5 @@ class SuperSpikeNeuron:
             return 1
         return 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v, self.trace = 0.0, 0.0

@@ -59,6 +59,6 @@ class GolombFSNeuron:
 
         return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = -65.0
         self.h, self.n, self.p = 0.9, 0.1, 0.0

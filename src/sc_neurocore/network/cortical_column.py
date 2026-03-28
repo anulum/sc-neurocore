@@ -64,7 +64,7 @@ class CorticalColumn:
     threshold: float = 1.0
     seed: int | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         n = self.n_per_layer
         rng = np.random.RandomState(self.seed)
         decay = np.exp(-self.dt / self.tau)
@@ -78,7 +78,7 @@ class CorticalColumn:
         self.v_l6 = np.zeros(n)
 
         # Connection weight matrices (sparse, random)
-        def _make_weights(n_pre, n_post, strength, prob=0.3):
+        def _make_weights(n_pre: int, n_post: int, strength: float, prob: float = 0.3) -> np.ndarray:
             w = rng.uniform(0, abs(strength), (n_post, n_pre))
             mask = rng.random((n_post, n_pre)) < prob
             w *= mask
@@ -157,14 +157,14 @@ class CorticalColumn:
 
         Returns dict mapping layer name → (steps, n_per_layer) spike arrays.
         """
-        results = {k: [] for k in ("l23_exc", "l23_inh", "l4", "l5", "l6")}
+        results: dict[str, list[np.ndarray]] = {k: [] for k in ("l23_exc", "l23_inh", "l4", "l5", "l6")}
         for _ in range(steps):
             spikes = self.step(thalamic_input)
             for k, v in spikes.items():
                 results[k].append(v.copy())
         return {k: np.array(v) for k, v in results.items()}
 
-    def reset(self):
+    def reset(self) -> None:
         self.v_l23_exc[:] = 0
         self.v_l23_inh[:] = 0
         self.v_l4[:] = 0

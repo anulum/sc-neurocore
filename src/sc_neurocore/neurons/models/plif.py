@@ -34,5 +34,5 @@ class ParametricLIFNeuron:
         self.v = self.alpha * self.v * (1 - spike) + current
         return 1 if self.v >= self.threshold else 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v = 0.0

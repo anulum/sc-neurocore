@@ -129,7 +129,7 @@ class HayL5PyramidalNeuron:
 
         return 1 if (self.v_s >= self.v_threshold and v_s_prev < self.v_threshold) else 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.v_s = self.v_t = self.v_a = -75.0
         self.h_na = 0.9
         self.n_k = 0.1

@@ -42,5 +42,5 @@ class Loihi2Neuron:
             return 1
         return 0
 
-    def reset(self):
+    def reset(self) -> None:
         self.s1, self.s2, self.s3 = 0, 0, 0
