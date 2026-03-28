@@ -134,7 +134,7 @@ def _check_hardware(
     layer_sizes: list[tuple[int, int]],
     target: str,
     bitstream_length: int,
-):
+) -> None:
     from sc_neurocore.energy.estimator import estimate
 
     est = estimate(layer_sizes, target=target, bitstream_length=bitstream_length)
@@ -182,7 +182,7 @@ def _check_hardware(
         )
 
 
-def _check_weights(report: DiagnosticReport, weights: list[np.ndarray]):
+def _check_weights(report: DiagnosticReport, weights: list[np.ndarray]) -> None:
     for i, w in enumerate(weights):
         # Near-zero weights (dead synapses)
         sparsity = float(np.mean(np.abs(w) < 1e-6))
@@ -225,7 +225,7 @@ def _check_weights(report: DiagnosticReport, weights: list[np.ndarray]):
             )
 
 
-def _check_spike_rates(report: DiagnosticReport, spike_rates: list[np.ndarray]):
+def _check_spike_rates(report: DiagnosticReport, spike_rates: list[np.ndarray]) -> None:
     for i, rates in enumerate(spike_rates):
         dead = float(np.mean(rates < 0.01))
         saturated = float(np.mean(rates > 0.95))
@@ -263,7 +263,7 @@ def _check_spike_rates(report: DiagnosticReport, spike_rates: list[np.ndarray]):
             )
 
 
-def _check_architecture(report: DiagnosticReport, layer_sizes: list[tuple[int, int]]):
+def _check_architecture(report: DiagnosticReport, layer_sizes: list[tuple[int, int]]) -> None:
     widths = [n for _, n in layer_sizes]
 
     # Bottleneck detection: sudden width reduction > 4x
@@ -298,7 +298,7 @@ def _check_coding_efficiency(
     report: DiagnosticReport,
     layer_sizes: list[tuple[int, int]],
     bitstream_length: int,
-):
+) -> None:
     total_neurons = sum(n for _, n in layer_sizes)
 
     if bitstream_length > 256 and total_neurons < 50:
