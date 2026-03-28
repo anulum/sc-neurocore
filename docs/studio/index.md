@@ -100,6 +100,19 @@ The Monaco editor provides SC-NeuroCore-specific syntax highlighting:
 | Train | Live training monitor |
 | Canvas | Network graph editor |
 
+### Data Export
+
+| Format | Contents | Use Case |
+|--------|----------|----------|
+| SVG | Vector traces with axes, legend, spike markers | Paper figures, LaTeX, Inkscape |
+| CSV | Time column + state variables | External analysis (MATLAB, R, pandas) |
+| JSON | Full simulation result (time, states, spikes, params) | Reproducibility, archival |
+
+The SVG export produces a dark-themed 800x400 plot with grid lines,
+axis labels, colour-coded state variables, spike markers, and a legend.
+Polylines are downsampled to 2000 points for file-size efficiency
+while preserving trace shape.
+
 ### Network Canvas
 
 Drag-and-drop populations (excitatory = blue, inhibitory = red) and
