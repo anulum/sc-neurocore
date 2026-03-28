@@ -125,7 +125,7 @@ class SCOnnxExporter:
 
     @staticmethod
     def _export_json(layers: list[Any], filename: str) -> None:
-        graph = {
+        graph: dict[str, Any] = {
             "producer_name": "sc-neurocore",
             "producer_version": "2.0.0",
             "nodes": [],

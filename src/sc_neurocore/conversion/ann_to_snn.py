@@ -25,6 +25,7 @@ deep networks through weight and threshold balancing"
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 import numpy as np
 
@@ -115,7 +116,7 @@ class ConvertedSNN:
         return np.argmax(counts, axis=-1)
 
 
-def _extract_layers(model: object) -> list[tuple[np.ndarray, np.ndarray | None]]:
+def _extract_layers(model: Any) -> list[tuple[np.ndarray, np.ndarray | None]]:
     """Extract (weight, bias) pairs from a PyTorch Sequential model."""
     layers = []
     for module in model.modules():
@@ -127,14 +128,14 @@ def _extract_layers(model: object) -> list[tuple[np.ndarray, np.ndarray | None]]
 
 
 def _compute_max_activations(
-    model: object, calibration_data: "torch.Tensor", percentile: float = 99.9
+    model: Any, calibration_data: torch.Tensor, percentile: float = 99.9
 ) -> list[float]:
     """Run calibration data through model, record per-layer max activation."""
     maxes = []
     hooks = []
     activations = []
 
-    def hook_fn(module: object, inp: object, out: object) -> None:
+    def hook_fn(module: Any, inp: Any, out: Any) -> None:
         activations.append(out.detach().cpu())
 
     for module in model.modules():

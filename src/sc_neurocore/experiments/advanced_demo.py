@@ -9,6 +9,7 @@ import numpy as np
 import time
 import sys
 import os
+from typing import Any
 
 # Path Fix
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -59,17 +60,17 @@ def run_advanced_demo() -> None:
             visual_in = np.zeros(10)
             print("    >> Sparse Input Detect (Energy Saving Mode)")
         else:
-            audio_in = np.random.random(10)
-            visual_in = np.random.random(10)
+            audio_in = np.random.random(10)  # type: ignore[assignment]
+            visual_in = np.random.random(10)  # type: ignore[assignment]
 
         # Fuse
         fused_input = fusion.forward({"audio": audio_in, "visual": visual_in})
 
         # Adaptive Execution Wrapper
-        def run_layer_step() -> None:
+        def run_layer_step() -> Any:
             # In a real adaptive loop, we would increment 'length'
             # Here we simulate the result of a forward pass
-            res = layer.forward(fused_input)
+            res = layer.forward(fused_input)  # type: ignore[arg-type]
             # return mean firing rate or confidence as metric?
             # actually adaptive usually runs *inside* forward.
             # We'll just call forward here.
