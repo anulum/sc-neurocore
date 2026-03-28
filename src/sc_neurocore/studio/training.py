@@ -12,6 +12,7 @@ import secrets
 import threading
 import time
 import queue
+from typing import Any
 
 try:
     import torch
@@ -65,15 +66,15 @@ class TrainingJob:
         self.error: str | None = None
         self.final_metrics: dict | None = None
 
-    def start(self):
+    def start(self) -> None:
         self.status = "running"
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
 
-    def stop(self):
+    def stop(self) -> None:
         self._stop_event.set()
 
-    def _emit(self, event_type: str, data: dict):
+    def _emit(self, event_type: str, data: dict[str, Any]) -> None:
         payload = {"event": event_type, "data": data, "timestamp": time.time()}
         try:
             self.metrics.put_nowait(payload)
@@ -84,7 +85,7 @@ class TrainingJob:
                 pass
             self.metrics.put_nowait(payload)
 
-    def _run(self):
+    def _run(self) -> None:
         try:
             self._train()
         except Exception as e:
@@ -92,7 +93,7 @@ class TrainingJob:
             self._emit("error", {"message": str(e)})
             self.status = "failed"
 
-    def _train(self):
+    def _train(self) -> None:
         if not HAS_TORCH:
             raise RuntimeError("PyTorch not installed. pip install sc-neurocore[research]")
 
@@ -176,7 +177,7 @@ class TrainingJob:
                 loss = spike_count_loss(spike_counts, targets)
 
                 optimizer.zero_grad()
-                loss.backward()
+                loss.backward()  # type: ignore[no-untyped-call]
                 if max_grad_norm:
                     torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
                 optimizer.step()
@@ -259,7 +260,7 @@ class TrainingJob:
         monitor.remove()
 
 
-def _make_synthetic(batch_size: int):
+def _make_synthetic(batch_size: int) -> Any:
     """Generate synthetic classification data for quick demos."""
     import torch
 
@@ -279,7 +280,7 @@ def _make_synthetic(batch_size: int):
     )
 
 
-def _load_mnist(batch_size: int):
+def _load_mnist(batch_size: int) -> Any:
     """Load MNIST via torchvision if available, else synthetic fallback."""
     try:
         from torchvision import datasets, transforms
@@ -337,7 +338,7 @@ def get_training_status(job_id: str) -> dict:
     }
 
 
-def stream_metrics(job_id: str):
+def stream_metrics(job_id: str) -> Any:
     """Generator that yields SSE-formatted metric events."""
     with _jobs_lock:
         job = _jobs.get(job_id)
