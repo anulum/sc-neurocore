@@ -1,5 +1,10 @@
-import Editor from "@monaco-editor/react";
+import Editor, { type Monaco } from "@monaco-editor/react";
 import { useStudioStore } from "../stores/studio";
+import { ODE_LANGUAGE_ID, registerODELanguage } from "../ode-language";
+
+function handleEditorMount(monaco: Monaco) {
+  registerODELanguage(monaco as unknown as typeof import("monaco-editor"));
+}
 
 export default function EquationEditor() {
   const { equations, threshold, reset, setEquations, setThreshold, setReset } =
@@ -41,9 +46,10 @@ export default function EquationEditor() {
     <div className="monaco-wrapper">
       <Editor
         height="180px"
-        defaultLanguage="plaintext"
+        defaultLanguage={ODE_LANGUAGE_ID}
         value={text}
         onChange={handleChange}
+        beforeMount={handleEditorMount}
         options={{
           minimap: { enabled: false },
           lineNumbers: "off",
@@ -57,7 +63,7 @@ export default function EquationEditor() {
           hideCursorInOverviewRuler: true,
           scrollbar: { vertical: "hidden", horizontal: "hidden" },
         }}
-        theme="vs-dark"
+        theme="sc-ode-dark"
       />
     </div>
   );
