@@ -365,8 +365,8 @@ class ShortTermPlasticity:
         self.tau_d = tau_d
         self.tau_f = tau_f
         self.u_se = u_se
-        self._x = None  # available resources
-        self._u = None  # utilisation variable
+        self._x: np.ndarray | None = None
+        self._u: np.ndarray | None = None
 
     def update(self, pre_spikes: np.ndarray) -> np.ndarray:
         """Compute effective weight scaling given pre-synaptic spikes.
@@ -385,6 +385,7 @@ class ShortTermPlasticity:
         if self._x is None:
             self._x = np.ones(n)
             self._u = np.full(n, self.u_se)
+        assert self._x is not None and self._u is not None
 
         dt = 1.0
         self._x += dt / self.tau_d * (1.0 - self._x)
@@ -408,7 +409,7 @@ class StructuralPlasticity:
         self.growth_rate = growth_rate
         self.prune_threshold = prune_threshold
 
-    def update(self, projection):
+    def update(self, projection: Any) -> None:
         """Grow or prune synapses in a Projection based on activity.
 
         Parameters
