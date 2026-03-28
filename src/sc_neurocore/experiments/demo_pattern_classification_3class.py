@@ -13,13 +13,13 @@ from sc_neurocore.layers.sc_dense_layer import SCDenseLayer
 
 def run_pattern_trials(
     label: int,
-    x_inputs,
-    weight_values,
+    x_inputs: list[float],
+    weight_values: list[float],
     n_neurons: int,
     T: int,
     n_trials: int,
     base_seed: int = 42,
-):
+) -> np.ndarray:
     """
     Run multiple trials of SCDenseLayer for a given pattern (x_inputs).
     Return matrix of shape (n_trials, n_neurons) with firing rates.
@@ -98,7 +98,7 @@ def demo() -> None:
         print(f"Centroid class {label}: {centroid}")
 
     # --- TESTING: confusion matrix for 3 classes ---
-    def gen_test_samples(label: int, pattern, n_samples: int) -> None:
+    def gen_test_samples(label: int, pattern: list[float], n_samples: int) -> tuple[np.ndarray, np.ndarray]:
         rates = run_pattern_trials(
             label=label,
             x_inputs=pattern,
@@ -121,10 +121,10 @@ def demo() -> None:
     X = np.vstack(all_rates)
     y_true = np.concatenate(all_labels_true)
 
-    preds = []
+    pred_list: list[int] = []
     for sample in X:
-        preds.append(nearest_centroid_multi(sample, centroids))
-    preds = np.array(preds, dtype=int)
+        pred_list.append(nearest_centroid_multi(sample, centroids))
+    preds = np.array(pred_list, dtype=int)
 
     accuracy = float((preds == y_true).mean())
 

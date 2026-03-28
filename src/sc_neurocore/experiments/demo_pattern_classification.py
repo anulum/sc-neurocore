@@ -13,13 +13,13 @@ from sc_neurocore.layers.sc_dense_layer import SCDenseLayer
 
 def run_pattern_trials(
     label: int,
-    x_inputs,
-    weight_values,
+    x_inputs: list[float],
+    weight_values: list[float],
     n_neurons: int = 5,
     T: int = 2500,
     n_trials: int = 10,
     base_seed: int = 42,
-):
+) -> np.ndarray:
     """
     Run multiple trials of SCDenseLayer for a given pattern (x_inputs).
     Return matrix of shape (n_trials, n_neurons) with firing rates.
@@ -110,7 +110,7 @@ def demo() -> None:
     print("Centroid B (firing rates per neuron):", centroid_B)
 
     # --- TESTING: generate new samples and classify by nearest centroid ---
-    def gen_test_samples(label: int, pattern, n_samples: int) -> None:
+    def gen_test_samples(label: int, pattern: list[float], n_samples: int) -> tuple[np.ndarray, np.ndarray]:
         rates = run_pattern_trials(
             label=label,
             x_inputs=pattern,
@@ -129,11 +129,11 @@ def demo() -> None:
     test_all = np.vstack([test_A, test_B])
     labels_true = np.concatenate([labels_A, labels_B])
 
-    preds = []
+    pred_list: list[int] = []
     for sample in test_all:
         y = nearest_centroid_classify(sample, centroid_A, centroid_B)
-        preds.append(y)
-    preds = np.array(preds, dtype=int)
+        pred_list.append(y)
+    preds = np.array(pred_list, dtype=int)
 
     accuracy = float((preds == labels_true).mean())
     print(f"\nTest accuracy (nearest-centroid in firing-rate space): {accuracy * 100:.1f}%")
