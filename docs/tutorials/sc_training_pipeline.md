@@ -49,16 +49,33 @@ float-to-SC conversion does not preserve discriminative power. Causes:
 - Calibrate inter-layer probability mapping
 - Consider SC-native training (gradient through bitstream operations)
 
+## Bipolar SC Results (Fix 1 + Fix 3, Kaggle 2026-03-28)
+
+After implementing bipolar XNOR multiplication and per-layer calibration:
+
+| Bitstream Length L | Bipolar Accuracy | Unipolar Accuracy | Float |
+|:------------------:|:----------------:|:-----------------:|:-----:|
+| 64 | 17.4% | 9.0% | 96.2% |
+| 128 | 24.0% | 11.2% | 96.2% |
+| 256 | 25.0% | 8.2% | 96.2% |
+| 512 | 33.6% | 10.8% | 96.2% |
+| 1024 | **35.6%** | 10.6% | 96.2% |
+
+Bipolar XNOR + calibration improved from random chance (10%) to 35.6%.
+Accuracy increases with L (expected SC convergence). Remaining gap
+is from layer calibration not fully matching float distributions.
+
 ## Honest Assessment
 
-The first-ever SC SNN inference attempt on MNIST failed at the
-weight-conversion stage. This is consistent with the literature:
-naive post-training conversion to SC typically fails; SC-aware training
-or careful calibration is required. The float training pipeline
-(96.2%) and SC infrastructure (bitstream generation, AND multiplication,
-popcount) both work correctly.
+- Unipolar SC (AND): fails completely (random chance). Expected.
+- Bipolar SC (XNOR): partial recovery (35.6%). MAC sum bug fixed.
+- Remaining gap: calibration normalisation too aggressive.
+  Layer 0 float output has std=5.78, bipolar clips to [-1,1].
+- SC-aware training (Fix 2) and end-to-end training (Fix 4) needed
+  to close the gap to the literature's 80-95% range.
 
 ## Files
 
-- `benchmarks/results/sc_mnist_results.json` -- measured data
-- `notebooks/sc_mnist_pipeline_kaggle.py` -- Kaggle script
+- `benchmarks/results/sc_mnist_results.json` -- unipolar (failed)
+- `benchmarks/results/sc_mnist_bipolar_results.json` -- bipolar (35.6%)
+- `notebooks/sc_mnist_pipeline_kaggle.py` -- Kaggle scripts
