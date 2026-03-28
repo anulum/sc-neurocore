@@ -67,7 +67,7 @@ class L14_IntegrationLayer:
         self,
         dt: float,
         layer_metrics: Optional[Dict[str, float]] = None,
-    ) -> Dict[str, np.ndarray]:
+    ) -> Dict[str, Any]:
         self.time += dt
 
         if layer_metrics is not None:

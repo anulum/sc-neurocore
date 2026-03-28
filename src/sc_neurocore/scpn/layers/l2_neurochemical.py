@@ -86,7 +86,7 @@ class L2_NeurochemicalLayer:
         dt: float,
         nt_release: Optional[np.ndarray[Any, Any]] = None,
         l1_input: Optional[np.ndarray[Any, Any]] = None,
-    ) -> Dict[str, np.ndarray[Any, Any]]:
+    ) -> Dict[str, Any]:
         """
         Advance the layer by one time step.
 

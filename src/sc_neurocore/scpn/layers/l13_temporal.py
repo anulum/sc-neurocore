@@ -49,7 +49,7 @@ class L13_TemporalLayer:
         self,
         dt: float,
         l12_input: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, np.ndarray]:
+    ) -> Dict[str, Any]:
         self.time += dt
         self.step_count += 1
         n = self.params.n_channels

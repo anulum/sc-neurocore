@@ -51,7 +51,7 @@ class L8_PhaseFieldLayer:
         self,
         dt: float,
         l7_input: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, np.ndarray]:
+    ) -> Dict[str, Any]:
         self.time += dt
         n = self.params.n_pulsars
         omegas = self.params.pulsar_omegas

@@ -56,7 +56,7 @@ class L9_MemoryLayer:
         self,
         dt: float,
         l8_input: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, np.ndarray]:
+    ) -> Dict[str, Any]:
         self.time += dt
         n = self.params.n_memory_slots
 
