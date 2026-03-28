@@ -11,13 +11,15 @@ import asyncio
 import json
 import threading
 import queue
+from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 
 from sc_neurocore.studio.codegen import classify_firing_pattern
 
 
-def _characterize_with_progress(simulate_fn, base_config: dict, q: queue.Queue):
+def _characterize_with_progress(simulate_fn: Callable[..., dict[str, Any]], base_config: dict[str, Any], q: queue.Queue[dict[str, Any]]) -> None:
     """Run characterisation with progress updates pushed to queue."""
     try:
         total_steps = 20 + 15 * 2 + 2
@@ -105,7 +107,7 @@ def _characterize_with_progress(simulate_fn, base_config: dict, q: queue.Queue):
         q.put({"type": "error", "msg": str(e)})
 
 
-def _heatmap_with_progress(simulate_fn, base_config, param_x, x_vals, param_y, y_vals, q):
+def _heatmap_with_progress(simulate_fn: Callable[..., dict[str, Any]], base_config: dict[str, Any], param_x: str, x_vals: list[float], param_y: str, y_vals: list[float], q: queue.Queue[dict[str, Any]]) -> None:
     """Run 2D heatmap sweep with progress updates."""
     try:
         total = len(x_vals) * len(y_vals)
@@ -149,7 +151,7 @@ def _heatmap_with_progress(simulate_fn, base_config, param_x, x_vals, param_y, y
         q.put({"type": "error", "msg": str(e)})
 
 
-def _scan_with_progress(q):
+def _scan_with_progress(q: queue.Queue[dict[str, Any]]) -> None:
     """Scan all models with progress updates."""
     try:
         from sc_neurocore.studio.models import list_models, simulate_model
@@ -199,7 +201,7 @@ def _scan_with_progress(q):
         q.put({"type": "error", "msg": str(e)})
 
 
-async def ws_progress_handler(websocket):
+async def ws_progress_handler(websocket: Any) -> None:
     """WebSocket handler for long-running operations with progress."""
     try:
         raw = await websocket.receive_text()
@@ -217,7 +219,7 @@ async def ws_progress_handler(websocket):
 
         config = request.get("config", {})
 
-        def sim_fn(**kw):
+        def sim_fn(**kw: Any) -> dict[str, Any]:
             return simulate_model(
                 name=config.get("name", "LIFNeuron"),
                 param_overrides=kw.get("params", config.get("params")),
@@ -242,7 +244,7 @@ async def ws_progress_handler(websocket):
 
         config = request.get("config", {})
 
-        def sim_fn(**kw):
+        def sim_fn(**kw: Any) -> dict[str, Any]:
             return simulate_model(
                 name=config.get("name", "LIFNeuron"),
                 param_overrides=kw.get("params"),

@@ -10,6 +10,8 @@ from __future__ import annotations
 import hashlib
 import json
 from collections import OrderedDict
+from collections.abc import Callable
+from typing import Any
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -240,8 +242,8 @@ class CodegenRequest(BaseModel):
 class _SimCache:
     """LRU cache for simulation results keyed by JSON hash."""
 
-    def __init__(self, maxsize: int = 64):
-        self._cache: OrderedDict[str, dict] = OrderedDict()
+    def __init__(self, maxsize: int = 64) -> None:
+        self._cache: OrderedDict[str, dict[str, Any]] = OrderedDict()
         self._maxsize = maxsize
         self.hits = 0
         self.misses = 0
@@ -250,7 +252,7 @@ class _SimCache:
         raw = json.dumps(data, sort_keys=True, default=str)
         return hashlib.md5(raw.encode(), usedforsecurity=False).hexdigest()
 
-    def get(self, params: dict):
+    def get(self, params: dict[str, Any]) -> dict[str, Any] | None:
         k = self._key(params)
         if k in self._cache:
             self.hits += 1
@@ -259,7 +261,7 @@ class _SimCache:
         self.misses += 1
         return None
 
-    def put(self, params: dict, result: dict):
+    def put(self, params: dict[str, Any], result: dict[str, Any]) -> None:
         k = self._key(params)
         self._cache[k] = result
         self._cache.move_to_end(k)
@@ -270,7 +272,7 @@ class _SimCache:
 _cache = _SimCache()
 
 
-def _safe(fn, detail_prefix: str = ""):
+def _safe(fn: Callable[..., Any], detail_prefix: str = "") -> Any:
     try:
         return fn()
     except HTTPException:
@@ -281,11 +283,11 @@ def _safe(fn, detail_prefix: str = ""):
         raise HTTPException(status_code=500, detail=f"{detail_prefix}Internal error") from None
 
 
-def _make_simulate_fn(req_dict: dict):
+def _make_simulate_fn(req_dict: dict[str, Any]) -> Callable[..., dict[str, Any]]:
     """Build a simulate callable from request params (ODE or model)."""
     if req_dict.get("model_name"):
 
-        def fn(**overrides):
+        def fn(**overrides: Any) -> dict[str, Any]:
             cfg = {
                 "name": req_dict["model_name"],
                 "param_overrides": overrides.get("params", req_dict.get("params")),
@@ -299,7 +301,7 @@ def _make_simulate_fn(req_dict: dict):
         return fn
     else:
 
-        def fn(**overrides):
+        def fn(**overrides: Any) -> dict[str, Any]:
             return simulate(
                 equations=req_dict.get("equations", []),
                 threshold=req_dict.get("threshold"),
@@ -323,32 +325,32 @@ def create_app() -> FastAPI:
 
     # --- Health ---
     @app.get("/api/health")
-    def health():
+    def health() -> dict[str, Any]:
         return {"status": "ok"}
 
     # --- Templates & Models ---
     @app.get("/api/templates")
-    def api_templates():
+    def api_templates() -> list[dict[str, Any]]:
         return list_templates()
 
     @app.get("/api/templates/{name}")
-    def api_template(name: str):
+    def api_template(name: str) -> Any:
         t = get_template(name)
         if not t:
             raise HTTPException(404, f"Template '{name}' not found")
         return t
 
     @app.get("/api/models")
-    def api_models():
+    def api_models() -> Any:
         return _safe(list_models)
 
     # --- Model scan (behavior classification) — must precede /api/models/{name} ---
     @app.get("/api/models/scan")
-    def api_model_scan():
+    def api_model_scan() -> Any:
         return _safe(lambda: scan_all_models(current=10.0, duration=100.0))
 
     @app.get("/api/models/{name}")
-    def api_model(name: str):
+    def api_model(name: str) -> Any:
         return _safe(
             lambda: (
                 get_model_detail(name)
@@ -358,11 +360,11 @@ def create_app() -> FastAPI:
 
     # --- Presets (#3) ---
     @app.get("/api/presets")
-    def api_presets():
+    def api_presets() -> Any:
         return list_presets()
 
     @app.get("/api/presets/{preset_id}")
-    def api_preset(preset_id: str):
+    def api_preset(preset_id: str) -> Any:
         p = get_preset(preset_id)
         if not p:
             raise HTTPException(404, f"Preset '{preset_id}' not found")
@@ -370,13 +372,13 @@ def create_app() -> FastAPI:
 
     # --- Simulation (with auto-classification + cache) ---
     @app.post("/api/simulate")
-    def api_simulate(req: SimulateRequest):
+    def api_simulate(req: SimulateRequest) -> Any:
         cache_key = {"_type": "ode", **req.model_dump()}
         cached = _cache.get(cache_key)
         if cached:
             return cached
 
-        def fn():
+        def fn() -> dict[str, Any]:
             result = simulate(
                 equations=req.equations,
                 threshold=req.threshold,
@@ -397,13 +399,13 @@ def create_app() -> FastAPI:
         return _safe(fn)
 
     @app.post("/api/models/simulate")
-    def api_model_simulate(req: ModelSimulateRequest):
+    def api_model_simulate(req: ModelSimulateRequest) -> Any:
         cache_key = {"_type": "model", **req.model_dump()}
         cached = _cache.get(cache_key)
         if cached:
             return cached
 
-        def fn():
+        def fn() -> dict[str, Any]:
             result = simulate_model(
                 name=req.name,
                 param_overrides=req.params,
@@ -421,13 +423,13 @@ def create_app() -> FastAPI:
         return _safe(fn, f"Model '{req.name}': ")
 
     @app.get("/api/cache/stats")
-    def api_cache_stats():
+    def api_cache_stats() -> dict[str, int]:
         return {"hits": _cache.hits, "misses": _cache.misses, "size": len(_cache._cache)}
 
     # --- Comparison (#1) ---
     @app.post("/api/compare")
-    def api_compare(req: CompareRequest):
-        def fn():
+    def api_compare(req: CompareRequest) -> Any:
+        def fn() -> dict[str, Any]:
             sim_a = _make_simulate_fn(req.config_a)
             sim_b = _make_simulate_fn(req.config_b)
             return {"a": sim_a(), "b": sim_b()}
@@ -436,8 +438,8 @@ def create_app() -> FastAPI:
 
     # --- f-I Curve ---
     @app.post("/api/fi-curve")
-    def api_fi_curve(req: FICurveRequest):
-        def fn():
+    def api_fi_curve(req: FICurveRequest) -> Any:
+        def fn() -> dict[str, Any]:
             import numpy as np
 
             sim_fn = _make_simulate_fn(req.model_dump())
@@ -449,8 +451,8 @@ def create_app() -> FastAPI:
 
     # --- Bifurcation (#2) ---
     @app.post("/api/bifurcation")
-    def api_bifurcation(req: BifurcationRequest):
-        def fn():
+    def api_bifurcation(req: BifurcationRequest) -> Any:
+        def fn() -> dict[str, Any]:
             sim_fn = _make_simulate_fn(req.model_dump())
             base_cfg = {
                 "params": req.params,
@@ -468,8 +470,8 @@ def create_app() -> FastAPI:
 
     # --- Sensitivity (#8) ---
     @app.post("/api/sensitivity")
-    def api_sensitivity(req: SensitivityRequest):
-        def fn():
+    def api_sensitivity(req: SensitivityRequest) -> Any:
+        def fn() -> dict[str, Any]:
             sim_fn = _make_simulate_fn(req.model_dump())
             param_names = list((req.params or {}).keys())
             base_cfg = {
@@ -486,16 +488,16 @@ def create_app() -> FastAPI:
 
     # --- Nullclines (#9) ---
     @app.post("/api/nullclines")
-    def api_nullclines(req: NullclineRequest):
-        def fn():
-            ranges = {k: tuple(v) for k, v in req.ranges.items()}
+    def api_nullclines(req: NullclineRequest) -> Any:
+        def fn() -> dict[str, Any]:
+            ranges = {k: (v[0], v[1]) for k, v in req.ranges.items()}
             return nullclines_2d(req.equations, req.params, req.var_names, ranges, req.grid_size)
 
         return _safe(fn)
 
     # --- Precision Compare (#5) ---
     @app.post("/api/precision")
-    def api_precision(req: PrecisionRequest):
+    def api_precision(req: PrecisionRequest) -> Any:
         return _safe(
             lambda: precision_compare(
                 equations=req.equations,
@@ -511,8 +513,8 @@ def create_app() -> FastAPI:
 
     # --- Compile (#5 adjacent) ---
     @app.post("/api/compile")
-    def api_compile(req: CompileRequest):
-        def fn():
+    def api_compile(req: CompileRequest) -> Any:
+        def fn() -> dict[str, Any]:
             from sc_neurocore.compiler.equation_compiler import equation_to_fpga
 
             _, verilog = equation_to_fpga(
@@ -529,8 +531,8 @@ def create_app() -> FastAPI:
 
     # --- Frequency Response (#11) ---
     @app.post("/api/freq-response")
-    def api_freq_response(req: FreqResponseRequest):
-        def fn():
+    def api_freq_response(req: FreqResponseRequest) -> Any:
+        def fn() -> dict[str, Any]:
             sim_fn = _make_simulate_fn(req.model_dump())
             base_cfg = {
                 "params": req.params,
@@ -548,8 +550,8 @@ def create_app() -> FastAPI:
 
     # --- 2D Heatmap ---
     @app.post("/api/heatmap")
-    def api_heatmap(req: HeatmapRequest):
-        def fn():
+    def api_heatmap(req: HeatmapRequest) -> Any:
+        def fn() -> dict[str, Any]:
             sim_fn = _make_simulate_fn(req.model_dump())
             base_cfg = {
                 "params": req.params,
@@ -576,7 +578,7 @@ def create_app() -> FastAPI:
 
     # --- Code Generation ---
     @app.post("/api/codegen")
-    def api_codegen(req: CodegenRequest):
+    def api_codegen(req: CodegenRequest) -> Any:
         if req.mode == "model" and req.model_name:
             script = generate_model_script(
                 req.model_name, req.params, req.duration, req.current, req.dt
@@ -598,8 +600,8 @@ def create_app() -> FastAPI:
 
     # --- Firing Pattern Classification ---
     @app.post("/api/classify")
-    def api_classify(req: SimulateRequest):
-        def fn():
+    def api_classify(req: SimulateRequest) -> Any:
+        def fn() -> dict[str, Any]:
             result = simulate(
                 equations=req.equations,
                 threshold=req.threshold,
@@ -618,8 +620,8 @@ def create_app() -> FastAPI:
 
     # --- One-click Characterisation ---
     @app.post("/api/characterize")
-    def api_characterize(req: ModelSimulateRequest):
-        def fn():
+    def api_characterize(req: ModelSimulateRequest) -> Any:
+        def fn() -> dict[str, Any]:
             sim_fn = _make_simulate_fn(
                 {
                     "model_name": req.name,
@@ -643,9 +645,9 @@ def create_app() -> FastAPI:
 
     # --- Multi-model Overlay ---
     @app.post("/api/multi-simulate")
-    def api_multi_simulate(configs: list[ModelSimulateRequest]):
-        def fn():
-            results = []
+    def api_multi_simulate(configs: list[ModelSimulateRequest]) -> Any:
+        def fn() -> list[dict[str, Any]]:
+            results: list[dict[str, Any]] = []
             for cfg in configs[:4]:
                 sim_fn = _make_simulate_fn(
                     {
@@ -666,7 +668,7 @@ def create_app() -> FastAPI:
 
     # --- Data Import (CSV voltage trace) ---
     @app.post("/api/import-trace")
-    def api_import_trace(data: dict):
+    def api_import_trace(data: dict[str, Any]) -> Any:
         """Accept a voltage trace as JSON array for overlay comparison."""
         voltage = data.get("voltage", [])
         dt = data.get("dt", 0.1)
@@ -696,7 +698,7 @@ def create_app() -> FastAPI:
 
     # --- E-I Network Simulation ---
     @app.post("/api/network/ei")
-    def api_network_ei(req: NetworkRequest):
+    def api_network_ei(req: NetworkRequest) -> Any:
         return _safe(
             lambda: simulate_ei_network(
                 n_exc=req.n_exc,
@@ -714,7 +716,7 @@ def create_app() -> FastAPI:
 
     # --- Compiler Inspector (Block 2) ---
     @app.post("/api/ir/build")
-    def api_ir_build(req: SimulateRequest):
+    def api_ir_build(req: SimulateRequest) -> Any:
         return _safe(
             lambda: build_ir_from_equation(
                 equations=req.equations,
@@ -726,21 +728,21 @@ def create_app() -> FastAPI:
         )
 
     @app.post("/api/ir/verify")
-    def api_ir_verify(data: dict):
+    def api_ir_verify(data: dict[str, Any]) -> Any:
         ir_text = data.get("ir_text", "")
         if not ir_text:
             raise HTTPException(422, "ir_text required")
         return _safe(lambda: verify_ir(ir_text))
 
     @app.post("/api/ir/emit-sv")
-    def api_ir_emit_sv(data: dict):
+    def api_ir_emit_sv(data: dict[str, Any]) -> Any:
         ir_text = data.get("ir_text", "")
         if not ir_text:
             raise HTTPException(422, "ir_text required")
         return _safe(lambda: emit_systemverilog(ir_text))
 
     @app.post("/api/ir/emit-sv-direct")
-    def api_ir_emit_sv_direct(req: SimulateRequest):
+    def api_ir_emit_sv_direct(req: SimulateRequest) -> Any:
         return _safe(
             lambda: emit_sv_from_equation(
                 equations=req.equations,
@@ -751,7 +753,7 @@ def create_app() -> FastAPI:
         )
 
     @app.post("/api/ir/cosim")
-    def api_ir_cosim(req: PrecisionRequest):
+    def api_ir_cosim(req: PrecisionRequest) -> Any:
         return _safe(
             lambda: cosim_traces(
                 equations=req.equations,
@@ -767,11 +769,11 @@ def create_app() -> FastAPI:
 
     # --- Synthesis Dashboard (Block 3) ---
     @app.get("/api/synth/tools-status")
-    def api_synth_tools():
+    def api_synth_tools() -> Any:
         return check_tools()
 
     @app.post("/api/synth/run")
-    def api_synth_run(data: dict):
+    def api_synth_run(data: dict[str, Any]) -> Any:
         verilog = data.get("verilog", "")
         target = data.get("target", "ice40")
         if not verilog:
@@ -779,14 +781,14 @@ def create_app() -> FastAPI:
         return _safe(lambda: run_synthesis(verilog, target))
 
     @app.post("/api/synth/multi-target")
-    def api_synth_multi(data: dict):
+    def api_synth_multi(data: dict[str, Any]) -> Any:
         verilog = data.get("verilog", "")
         if not verilog:
             raise HTTPException(422, "verilog source required")
         return _safe(lambda: multi_target_synthesis(verilog))
 
     @app.post("/api/synth/estimate")
-    def api_synth_estimate(data: dict):
+    def api_synth_estimate(data: dict[str, Any]) -> Any:
         ir_op_count = data.get("ir_op_count", 0)
         target = data.get("target", "ice40")
         if ir_op_count < 1:
@@ -794,7 +796,7 @@ def create_app() -> FastAPI:
         return estimate_resources(ir_op_count, target)
 
     @app.post("/api/synth/pnr")
-    def api_synth_pnr(data: dict):
+    def api_synth_pnr(data: dict[str, Any]) -> Any:
         json_path = data.get("json_path", "")
         target = data.get("target", "ice40")
         if not json_path:
@@ -803,7 +805,7 @@ def create_app() -> FastAPI:
 
     # --- Integration (Block 6) ---
     @app.post("/api/project/save")
-    def api_project_save(data: dict):
+    def api_project_save(data: dict[str, Any]) -> Any:
         name = data.get("name", "")
         state = data.get("state", {})
         if not name:
@@ -811,36 +813,36 @@ def create_app() -> FastAPI:
         return save_project(name, state)
 
     @app.get("/api/project/list")
-    def api_project_list():
+    def api_project_list() -> Any:
         return list_projects()
 
     @app.get("/api/project/load/{name}")
-    def api_project_load(name: str):
+    def api_project_load(name: str) -> Any:
         result = load_project(name)
         if "error" in result:
             raise HTTPException(404, result["error"])
         return result
 
     @app.delete("/api/project/{name}")
-    def api_project_delete(name: str):
+    def api_project_delete(name: str) -> Any:
         result = delete_project(name)
         if "error" in result:
             raise HTTPException(404, result["error"])
         return result
 
     @app.post("/api/pipeline/run")
-    def api_pipeline_run(data: dict):
+    def api_pipeline_run(data: dict[str, Any]) -> Any:
         graph = data.get("graph", {})
         target = data.get("target", "ice40")
         return _safe(lambda: run_pipeline(graph, target))
 
     # --- Network Canvas (Block 5) ---
     @app.get("/api/graph/models")
-    def api_graph_models():
+    def api_graph_models() -> Any:
         return graph_available_models()
 
     @app.post("/api/graph/population")
-    def api_create_population(data: dict):
+    def api_create_population(data: dict[str, Any]) -> Any:
         return create_population(
             **{
                 k: v
@@ -850,7 +852,7 @@ def create_app() -> FastAPI:
         )
 
     @app.post("/api/graph/projection")
-    def api_create_projection(data: dict):
+    def api_create_projection(data: dict[str, Any]) -> Any:
         return _safe(
             lambda: create_projection(
                 **{
@@ -862,55 +864,55 @@ def create_app() -> FastAPI:
         )
 
     @app.post("/api/graph/validate")
-    def api_validate_graph(data: dict):
+    def api_validate_graph(data: dict[str, Any]) -> Any:
         errors = validate_graph(data)
         return {"valid": len(errors) == 0, "errors": errors}
 
     @app.post("/api/graph/simulate")
-    def api_simulate_graph(data: dict):
+    def api_simulate_graph(data: dict[str, Any]) -> Any:
         return _safe(lambda: simulate_graph(data))
 
     @app.post("/api/graph/export-nir")
-    def api_export_nir(data: dict):
+    def api_export_nir(data: dict[str, Any]) -> Any:
         return graph_to_nir(data)
 
     @app.post("/api/graph/import-nir")
-    def api_import_nir(data: dict):
+    def api_import_nir(data: dict[str, Any]) -> Any:
         return nir_to_graph(data)
 
     # --- Training Monitor (Block 4) ---
     @app.get("/api/training/surrogates")
-    def api_surrogates():
+    def api_surrogates() -> Any:
         return list_surrogates()
 
     @app.get("/api/training/cell-types")
-    def api_cell_types():
+    def api_cell_types() -> Any:
         return list_cell_types()
 
     @app.post("/api/training/start")
-    def api_training_start(data: dict):
+    def api_training_start(data: dict[str, Any]) -> Any:
         return _safe(lambda: start_training(data))
 
     @app.post("/api/training/stop")
-    def api_training_stop(data: dict):
+    def api_training_stop(data: dict[str, Any]) -> Any:
         job_id = data.get("job_id", "")
         if not job_id:
             raise HTTPException(422, "job_id required")
         return stop_training(job_id)
 
     @app.get("/api/training/jobs")
-    def api_training_jobs():
+    def api_training_jobs() -> Any:
         return list_jobs()
 
     @app.get("/api/training/status/{job_id}")
-    def api_training_status(job_id: str):
+    def api_training_status(job_id: str) -> Any:
         result = get_training_status(job_id)
         if result.get("error") and "job_id" not in result:
             raise HTTPException(404, result["error"])
         return result
 
     @app.get("/api/training/stream/{job_id}")
-    def api_training_stream(job_id: str):
+    def api_training_stream(job_id: str) -> Any:
         from starlette.responses import StreamingResponse
 
         return StreamingResponse(
@@ -921,11 +923,11 @@ def create_app() -> FastAPI:
 
     # --- SVG export ---
     @app.post("/api/export/svg")
-    def export_svg(req: ModelSimulateRequest):
+    def export_svg(req: ModelSimulateRequest) -> Any:
         from fastapi.responses import Response
         from sc_neurocore.studio.svg_export import traces_to_svg
 
-        def fn():
+        def fn() -> Any:
             result = simulate_model(
                 name=req.name,
                 param_overrides=req.params,
@@ -939,7 +941,7 @@ def create_app() -> FastAPI:
                 states=result["states"],
                 spikes=result.get("spikes", []),
                 model_name=result.get("model_name", req.name),
-                dt=req.dt,
+                dt=req.dt or 0.1,
             )
             return Response(content=svg, media_type="image/svg+xml")
 
@@ -947,7 +949,7 @@ def create_app() -> FastAPI:
 
     # --- WebSocket progress streaming ---
     @app.websocket("/ws/progress")
-    async def ws_progress(websocket: WebSocket):
+    async def ws_progress(websocket: WebSocket) -> None:
         await websocket.accept()
         from sc_neurocore.studio.progress import ws_progress_handler
 
@@ -971,7 +973,7 @@ def create_app() -> FastAPI:
         from fastapi.responses import FileResponse
 
         @app.get("/")
-        def serve_index():
+        def serve_index() -> Any:
             return FileResponse(os.path.join(dist_dir, "index.html"))
 
         app.mount("/", StaticFiles(directory=dist_dir), name="static")
