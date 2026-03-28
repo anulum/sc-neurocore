@@ -275,9 +275,11 @@ def _safe(fn, detail_prefix: str = ""):
         return fn()
     except HTTPException:
         raise
-    except Exception as e:
-        msg = f"{detail_prefix}{e}" if detail_prefix else str(e)
-        raise HTTPException(status_code=422, detail=msg) from e
+    except (ValueError, TypeError, KeyError) as e:
+        msg = f"{detail_prefix}{type(e).__name__}: {e}"
+        raise HTTPException(status_code=422, detail=msg) from None
+    except Exception:
+        raise HTTPException(status_code=500, detail=f"{detail_prefix}Internal error") from None
 
 
 def _make_simulate_fn(req_dict: dict):

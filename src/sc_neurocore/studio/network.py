@@ -205,6 +205,6 @@ def _simulate_numpy(
         "inh_rates": inh_r.tolist(),
         "duration": duration,
         "dt": dt,
-        "mean_exc_rate": round(float(np.mean(exc_r[exc_r > 0])) if np.any(exc_r > 0) else 0, 1),
-        "mean_inh_rate": round(float(np.mean(inh_r[inh_r > 0])) if np.any(inh_r > 0) else 0, 1),
+        "mean_exc_rate": round(float(np.mean(exc_r[exc_r > 0])), 1) if np.any(exc_r > 0) else 0.0,
+        "mean_inh_rate": round(float(np.mean(inh_r[inh_r > 0])), 1) if np.any(inh_r > 0) else 0.0,
     }
