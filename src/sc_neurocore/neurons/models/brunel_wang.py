@@ -56,8 +56,13 @@ class BrunelWangNeuron:
         """Mg2+ block factor: 1 / (1 + [Mg2+]/3.57 * exp(-0.062 * V))."""
         return 1.0 / (1.0 + self.mg_conc / 3.57 * np.exp(-0.062 * v))
 
-    def step(self, i_ampa_ext: float = 0.0, s_ampa_rec: float = 0.0,
-             s_nmda_rec: float = 0.0, s_gaba: float = 0.0) -> int:
+    def step(
+        self,
+        i_ampa_ext: float = 0.0,
+        s_ampa_rec: float = 0.0,
+        s_nmda_rec: float = 0.0,
+        s_gaba: float = 0.0,
+    ) -> int:
         """Advance one timestep.
 
         Parameters

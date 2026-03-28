@@ -23,9 +23,17 @@ print("=" * 70)
 print("SETUP")
 print("=" * 70)
 subprocess.check_call(
-    [sys.executable, "-m", "pip", "install", "-q", "--no-deps",
-     "git+https://github.com/anulum/sc-neurocore.git@main"],
-    stdout=sys.stdout, stderr=sys.stderr,
+    [
+        sys.executable,
+        "-m",
+        "pip",
+        "install",
+        "-q",
+        "--no-deps",
+        "git+https://github.com/anulum/sc-neurocore.git@main",
+    ],
+    stdout=sys.stdout,
+    stderr=sys.stderr,
 )
 
 import torch
@@ -38,6 +46,7 @@ from sc_neurocore.training.snn_modules import SpikingNet
 # ===========================================================================
 # Bipolar SC primitives (embedded for Kaggle, also in core/bipolar.py)
 # ===========================================================================
+
 
 def bipolar_mac_vectorised(inputs, weights, L, rng):
     """Bipolar XNOR MAC: inputs (N,) x weights (M, N) -> (M,)"""
@@ -71,29 +80,35 @@ def train_float_mnist(n_hidden=128, n_epochs=10, batch_size=128):
     print("STEP 1: Train float SpikingNet on MNIST")
     print("=" * 70)
 
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,)),
-    ])
-    train_data = datasets.MNIST("/kaggle/working/data", train=True, download=True,
-                                transform=transform)
-    test_data = datasets.MNIST("/kaggle/working/data", train=False, download=True,
-                               transform=transform)
+    transform = transforms.Compose(
+        [
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,)),
+        ]
+    )
+    train_data = datasets.MNIST(
+        "/kaggle/working/data", train=True, download=True, transform=transform
+    )
+    test_data = datasets.MNIST(
+        "/kaggle/working/data", train=False, download=True, transform=transform
+    )
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
 
-    model = SpikingNet(n_input=784, n_hidden=n_hidden, n_output=10,
-                       n_layers=1, beta=0.9)
+    model = SpikingNet(n_input=784, n_hidden=n_hidden, n_output=10, n_layers=1, beta=0.9)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
     T = 25
 
     from sc_neurocore.training.loops import train_epoch, evaluate
+
     for epoch in range(n_epochs):
         t0 = time.time()
         _, train_acc = train_epoch(model, train_loader, optimizer, T)
         _, test_acc = evaluate(model, test_loader, T)
-        print(f"  Epoch {epoch+1}/{n_epochs}: train={train_acc:.3f} test={test_acc:.3f} "
-              f"({time.time()-t0:.1f}s)")
+        print(
+            f"  Epoch {epoch + 1}/{n_epochs}: train={train_acc:.3f} test={test_acc:.3f} "
+            f"({time.time() - t0:.1f}s)"
+        )
 
     _, final_acc = evaluate(model, test_loader, T)
     print(f"\n  Float accuracy: {final_acc:.4f}")
@@ -123,8 +138,10 @@ def export_bipolar_weights(model):
             b = lin.bias.detach().cpu().numpy()
 
         layers.append({"weight": w_bp, "bias": b, "scale": float(abs_max)})
-        print(f"  Layer {i}: shape={w_bp.shape}, range=[{w_bp.min():.3f}, {w_bp.max():.3f}], "
-              f"scale={abs_max:.4f}")
+        print(
+            f"  Layer {i}: shape={w_bp.shape}, range=[{w_bp.min():.3f}, {w_bp.max():.3f}], "
+            f"scale={abs_max:.4f}"
+        )
 
     return layers
 
@@ -144,6 +161,7 @@ def calibrate_layers(model, test_data, n_cal=200):
     def make_hook(layer_idx):
         def hook(module, input, output):
             activations[layer_idx].append(output.detach().cpu())
+
         return hook
 
     hooks = []
@@ -188,7 +206,7 @@ def sc_inference_bipolar(image_flat, bp_layers, L=1024, seed=42, calibration=Non
         # Pad or truncate input to match layer width
         if len(x) < n_in:
             x_padded = np.zeros(n_in)
-            x_padded[:len(x)] = x
+            x_padded[: len(x)] = x
             x = x_padded
         elif len(x) > n_in:
             x = x[:n_in]
@@ -232,8 +250,9 @@ def run_bipolar_inference(bp_layers, test_data, lengths, n_samples=500, calibrat
         for i in range(total):
             img, label = test_data[i]
             img_flat = img.numpy().flatten()
-            output = sc_inference_bipolar(img_flat, bp_layers, L=L, seed=42 + i,
-                                          calibration=calibration)
+            output = sc_inference_bipolar(
+                img_flat, bp_layers, L=L, seed=42 + i, calibration=calibration
+            )
             pred = int(np.argmax(output))
             if pred == label:
                 correct += 1

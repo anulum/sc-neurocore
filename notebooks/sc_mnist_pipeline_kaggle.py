@@ -24,9 +24,17 @@ print("SETUP")
 print("=" * 70)
 # Install sc-neurocore without overwriting torch
 subprocess.check_call(
-    [sys.executable, "-m", "pip", "install", "-q", "--no-deps",
-     "git+https://github.com/anulum/sc-neurocore.git@main"],
-    stdout=sys.stdout, stderr=sys.stderr,
+    [
+        sys.executable,
+        "-m",
+        "pip",
+        "install",
+        "-q",
+        "--no-deps",
+        "git+https://github.com/anulum/sc-neurocore.git@main",
+    ],
+    stdout=sys.stdout,
+    stderr=sys.stderr,
 )
 
 import torch
@@ -48,14 +56,18 @@ def train_float_mnist(n_hidden=128, n_epochs=10, batch_size=128):
     print("=" * 70)
 
     device = torch.device("cpu")
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,)),
-    ])
-    train_data = datasets.MNIST("/kaggle/working/data", train=True, download=True,
-                                transform=transform)
-    test_data = datasets.MNIST("/kaggle/working/data", train=False, download=True,
-                               transform=transform)
+    transform = transforms.Compose(
+        [
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,)),
+        ]
+    )
+    train_data = datasets.MNIST(
+        "/kaggle/working/data", train=True, download=True, transform=transform
+    )
+    test_data = datasets.MNIST(
+        "/kaggle/working/data", train=False, download=True, transform=transform
+    )
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
 
@@ -75,12 +87,12 @@ def train_float_mnist(n_hidden=128, n_epochs=10, batch_size=128):
 
     for epoch in range(n_epochs):
         t0 = time.time()
-        train_loss, train_acc = train_epoch(
-            model, train_loader, optimizer, T, device=device
-        )
+        train_loss, train_acc = train_epoch(model, train_loader, optimizer, T, device=device)
         test_loss, test_acc = evaluate(model, test_loader, T, device=device)
-        print(f"  Epoch {epoch+1}/{n_epochs}: "
-              f"train={train_acc:.3f} test={test_acc:.3f} ({time.time()-t0:.1f}s)")
+        print(
+            f"  Epoch {epoch + 1}/{n_epochs}: "
+            f"train={train_acc:.3f} test={test_acc:.3f} ({time.time() - t0:.1f}s)"
+        )
 
     # Final evaluation
     _, final_acc = evaluate(model, test_loader, T, device=device)
@@ -101,9 +113,11 @@ def export_sc_weights(model):
     sc_layers = model.to_sc_weights(include_bias=True)
     for i, layer in enumerate(sc_layers):
         w = layer["weight"]
-        print(f"  Layer {i}: shape={tuple(w.shape)}, "
-              f"min={w.min():.4f}, max={w.max():.4f}, "
-              f"mean={w.mean():.4f}")
+        print(
+            f"  Layer {i}: shape={tuple(w.shape)}, "
+            f"min={w.min():.4f}, max={w.max():.4f}, "
+            f"mean={w.mean():.4f}"
+        )
     return sc_layers
 
 
@@ -213,9 +227,7 @@ def main():
     t0 = time.time()
 
     # Step 1: Train
-    model, float_acc, test_data = train_float_mnist(
-        n_hidden=128, n_epochs=10, batch_size=128
-    )
+    model, float_acc, test_data = train_float_mnist(n_hidden=128, n_epochs=10, batch_size=128)
 
     # Step 2: Export
     sc_layers = export_sc_weights(model)

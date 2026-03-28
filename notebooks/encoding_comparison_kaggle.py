@@ -23,9 +23,17 @@ print("=" * 70)
 print("SETUP")
 print("=" * 70)
 subprocess.check_call(
-    [sys.executable, "-m", "pip", "install", "-q", "--no-deps",
-     "git+https://github.com/anulum/sc-neurocore.git@main"],
-    stdout=sys.stdout, stderr=sys.stderr,
+    [
+        sys.executable,
+        "-m",
+        "pip",
+        "install",
+        "-q",
+        "--no-deps",
+        "git+https://github.com/anulum/sc-neurocore.git@main",
+    ],
+    stdout=sys.stdout,
+    stderr=sys.stderr,
 )
 
 import torch
@@ -34,8 +42,11 @@ from torch.utils.data import DataLoader, TensorDataset
 from torchvision import datasets, transforms
 
 from sc_neurocore.encoding.encoders import (
-    rate_encode, latency_encode, phase_encode,
-    burst_encode, rank_order_encode,
+    rate_encode,
+    latency_encode,
+    phase_encode,
+    burst_encode,
+    rank_order_encode,
 )
 from sc_neurocore.training.snn_modules import SpikingNet
 
@@ -73,7 +84,7 @@ def encode_dataset(images, labels, encoding_name, T=25, n_samples=2000, seed=42)
         if spikes.shape[0] == T:
             encoded[i] = spikes[:T, :784].astype(np.float32)
         else:
-            encoded[i, :min(spikes.shape[0], T)] = spikes[:T, :784].astype(np.float32)
+            encoded[i, : min(spikes.shape[0], T)] = spikes[:T, :784].astype(np.float32)
 
     return (
         torch.tensor(encoded, dtype=torch.float32),
@@ -84,27 +95,38 @@ def encode_dataset(images, labels, encoding_name, T=25, n_samples=2000, seed=42)
 # ===========================================================================
 # Training
 # ===========================================================================
-def train_with_encoding(encoding_name, T=25, n_hidden=128, n_epochs=5,
-                        batch_size=128, n_train=5000, n_test=1000):
+def train_with_encoding(
+    encoding_name, T=25, n_hidden=128, n_epochs=5, batch_size=128, n_train=5000, n_test=1000
+):
     """Train SpikingNet with a specific encoding on MNIST."""
     print(f"\n  --- {encoding_name} encoding ---")
 
     transform = transforms.ToTensor()
-    train_data = datasets.MNIST("/kaggle/working/data", train=True, download=True,
-                                transform=transform)
-    test_data = datasets.MNIST("/kaggle/working/data", train=False, download=True,
-                               transform=transform)
+    train_data = datasets.MNIST(
+        "/kaggle/working/data", train=True, download=True, transform=transform
+    )
+    test_data = datasets.MNIST(
+        "/kaggle/working/data", train=False, download=True, transform=transform
+    )
 
     t0 = time.time()
 
     # Encode
     X_train, y_train = encode_dataset(
-        train_data.data.float() / 255.0, train_data.targets,
-        encoding_name, T=T, n_samples=n_train, seed=42,
+        train_data.data.float() / 255.0,
+        train_data.targets,
+        encoding_name,
+        T=T,
+        n_samples=n_train,
+        seed=42,
     )
     X_test, y_test = encode_dataset(
-        test_data.data.float() / 255.0, test_data.targets,
-        encoding_name, T=T, n_samples=n_test, seed=1000,
+        test_data.data.float() / 255.0,
+        test_data.targets,
+        encoding_name,
+        T=T,
+        n_samples=n_test,
+        seed=1000,
     )
     encode_time = time.time() - t0
 
@@ -113,12 +135,8 @@ def train_with_encoding(encoding_name, T=25, n_hidden=128, n_epochs=5,
     test_spikes = X_test.sum().item() / n_test
 
     # DataLoaders
-    train_loader = DataLoader(
-        TensorDataset(X_train, y_train), batch_size=batch_size, shuffle=True
-    )
-    test_loader = DataLoader(
-        TensorDataset(X_test, y_test), batch_size=batch_size, shuffle=False
-    )
+    train_loader = DataLoader(TensorDataset(X_train, y_train), batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(TensorDataset(X_test, y_test), batch_size=batch_size, shuffle=False)
 
     model = SpikingNet(n_input=784, n_hidden=n_hidden, n_output=10, n_layers=1, beta=0.9)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
@@ -168,8 +186,10 @@ def train_with_encoding(encoding_name, T=25, n_hidden=128, n_epochs=5,
         "n_epochs": n_epochs,
     }
 
-    print(f"    Accuracy: {accuracy:.2%}  |  Spikes/sample: {test_spikes:.0f}  |  "
-          f"Encode: {encode_time:.1f}s  Train: {train_time:.1f}s")
+    print(
+        f"    Accuracy: {accuracy:.2%}  |  Spikes/sample: {test_spikes:.0f}  |  "
+        f"Encode: {encode_time:.1f}s  Train: {train_time:.1f}s"
+    )
 
     return result
 
@@ -189,8 +209,12 @@ def main():
     results = []
     for enc_name in ENCODINGS:
         r = train_with_encoding(
-            enc_name, T=25, n_hidden=128, n_epochs=5,
-            n_train=5000, n_test=1000,
+            enc_name,
+            T=25,
+            n_hidden=128,
+            n_epochs=5,
+            n_train=5000,
+            n_test=1000,
         )
         results.append(r)
 
@@ -207,8 +231,10 @@ def main():
     results.sort(key=lambda x: x["test_accuracy"], reverse=True)
     for r in results:
         total = r["encode_time_s"] + r["train_time_s"] + r["eval_time_s"]
-        print(f"  {r['encoding']:<16} {r['test_accuracy']:>9.2%} "
-              f"{r['avg_spikes_per_test_sample']:>14.0f} {total:>11.1f}s")
+        print(
+            f"  {r['encoding']:<16} {r['test_accuracy']:>9.2%} "
+            f"{r['avg_spikes_per_test_sample']:>14.0f} {total:>11.1f}s"
+        )
 
     print(f"\n  Total time: {total_time:.0f}s")
 

@@ -7,7 +7,9 @@
 
 from __future__ import annotations
 
-import torch
+import pytest
+
+torch = pytest.importorskip("torch")
 
 from sc_neurocore.qat.torch_qat import (
     QuantizedLIFNet,

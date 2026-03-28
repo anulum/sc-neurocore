@@ -41,12 +41,25 @@ def _parse_unit_value(s: str) -> float:
         return 0.0
     s = s.strip()
     multipliers = {
-        "mV": 1.0, "V": 1e3, "uV": 1e-3,
-        "nS": 1.0, "uS": 1e3, "mS": 1e6, "S": 1e9,
-        "pF": 1.0, "nF": 1e3, "uF": 1e6, "F": 1e12,
-        "ms": 1.0, "s": 1e3, "us": 1e-3,
-        "nA": 1.0, "uA": 1e3, "pA": 1e-3,
-        "mS_per_cm2": 1.0, "S_per_m2": 0.1,
+        "mV": 1.0,
+        "V": 1e3,
+        "uV": 1e-3,
+        "nS": 1.0,
+        "uS": 1e3,
+        "mS": 1e6,
+        "S": 1e9,
+        "pF": 1.0,
+        "nF": 1e3,
+        "uF": 1e6,
+        "F": 1e12,
+        "ms": 1.0,
+        "s": 1e3,
+        "us": 1e-3,
+        "nA": 1.0,
+        "uA": 1e3,
+        "pA": 1e-3,
+        "mS_per_cm2": 1.0,
+        "S_per_m2": 0.1,
         "uF_per_cm2": 1.0,
         "kohm_cm": 1.0,
     }
@@ -61,6 +74,7 @@ def _parse_unit_value(s: str) -> float:
 @dataclass
 class ImportedCell:
     """Result of importing a NeuroML cell definition."""
+
     cell_id: str
     cell_type: str
     params: dict[str, Any]
@@ -134,14 +148,19 @@ def _import_iaf_tau_cell(elem) -> ImportedCell:
 def _import_izhikevich_cell(elem) -> ImportedCell:
     """Import <izhikevichCell> (2003 dimensionless)."""
     cell_id = elem.get("id", "unnamed")
-    return ImportedCell(cell_id, "SCIzhikevichNeuron", {
-        "a": float(elem.get("a", "0.02")),
-        "b": float(elem.get("b", "0.2")),
-        "c": float(elem.get("c", "-65")),
-        "d": float(elem.get("d", "8")),
-        "dt": 0.5,
-        "noise_std": 0.0,
-    }, "izhikevichCell")
+    return ImportedCell(
+        cell_id,
+        "SCIzhikevichNeuron",
+        {
+            "a": float(elem.get("a", "0.02")),
+            "b": float(elem.get("b", "0.2")),
+            "c": float(elem.get("c", "-65")),
+            "d": float(elem.get("d", "8")),
+            "dt": 0.5,
+            "noise_std": 0.0,
+        },
+        "izhikevichCell",
+    )
 
 
 def _import_izhikevich2007_cell(elem) -> ImportedCell:
@@ -161,32 +180,42 @@ def _import_izhikevich2007_cell(elem) -> ImportedCell:
     d = _parse_unit_value(elem.get("d", "100"))
 
     # Store as 2003 dimensionless (approximate mapping)
-    return ImportedCell(cell_id, "SCIzhikevichNeuron", {
-        "a": a / 1000.0 if a > 1 else a,  # per_time -> dimensionless
-        "b": b / 1000.0 if abs(b) > 1 else b,
-        "c": c,
-        "d": d / 1000.0 if abs(d) > 10 else d,
-        "dt": 0.5,
-        "noise_std": 0.0,
-        "_neuroml2007_raw": {"C": C, "k": k, "vr": vr, "vt": vt, "vpeak": vpeak},
-    }, "izhikevich2007Cell")
+    return ImportedCell(
+        cell_id,
+        "SCIzhikevichNeuron",
+        {
+            "a": a / 1000.0 if a > 1 else a,  # per_time -> dimensionless
+            "b": b / 1000.0 if abs(b) > 1 else b,
+            "c": c,
+            "d": d / 1000.0 if abs(d) > 10 else d,
+            "dt": 0.5,
+            "noise_std": 0.0,
+            "_neuroml2007_raw": {"C": C, "k": k, "vr": vr, "vt": vt, "vpeak": vpeak},
+        },
+        "izhikevich2007Cell",
+    )
 
 
 def _import_adex_cell(elem) -> ImportedCell:
     """Import <adExIaFCell>."""
     cell_id = elem.get("id", "unnamed")
-    return ImportedCell(cell_id, "AdExNeuron", {
-        "C": _parse_unit_value(elem.get("C", "281pF")),
-        "g_L": _parse_unit_value(elem.get("gL", "30nS")),
-        "E_L": _parse_unit_value(elem.get("EL", "-70.6mV")),
-        "V_T": _parse_unit_value(elem.get("VT", "-50.4mV")),
-        "delta_T": _parse_unit_value(elem.get("delT", "2mV")),
-        "tau_w": _parse_unit_value(elem.get("tauw", "144ms")),
-        "a": _parse_unit_value(elem.get("a", "4nS")),
-        "b": _parse_unit_value(elem.get("b", "0.0805nA")),
-        "V_reset": _parse_unit_value(elem.get("reset", "-70.6mV")),
-        "V_thresh": _parse_unit_value(elem.get("thresh", "-40mV")),
-    }, "adExIaFCell")
+    return ImportedCell(
+        cell_id,
+        "AdExNeuron",
+        {
+            "C": _parse_unit_value(elem.get("C", "281pF")),
+            "g_L": _parse_unit_value(elem.get("gL", "30nS")),
+            "E_L": _parse_unit_value(elem.get("EL", "-70.6mV")),
+            "V_T": _parse_unit_value(elem.get("VT", "-50.4mV")),
+            "delta_T": _parse_unit_value(elem.get("delT", "2mV")),
+            "tau_w": _parse_unit_value(elem.get("tauw", "144ms")),
+            "a": _parse_unit_value(elem.get("a", "4nS")),
+            "b": _parse_unit_value(elem.get("b", "0.0805nA")),
+            "V_reset": _parse_unit_value(elem.get("reset", "-70.6mV")),
+            "V_thresh": _parse_unit_value(elem.get("thresh", "-40mV")),
+        },
+        "adExIaFCell",
+    )
 
 
 _IMPORTERS = {
@@ -232,16 +261,19 @@ def create_neuron(cell: ImportedCell):
     """
     if cell.cell_type == "StochasticLIFNeuron":
         from ..neurons.stochastic_lif import StochasticLIFNeuron
+
         safe = {k: v for k, v in cell.params.items() if not k.startswith("_")}
         return StochasticLIFNeuron(**safe)
 
     if cell.cell_type == "SCIzhikevichNeuron":
         from ..neurons.sc_izhikevich import SCIzhikevichNeuron
+
         safe = {k: v for k, v in cell.params.items() if not k.startswith("_")}
         return SCIzhikevichNeuron(**safe)
 
     if cell.cell_type == "AdExNeuron":
         from ..neurons.models.adex import AdExNeuron
+
         return AdExNeuron(**cell.params)
 
     raise ValueError(f"Unknown cell type: {cell.cell_type}")

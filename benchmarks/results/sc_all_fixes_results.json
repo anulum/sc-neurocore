@@ -1,33 +1,13 @@
 {
-  "timestamp": "2026-03-28T10:16:26+0000",
-  "fixes": [
-    "calibration_no_3x",
-    "hook_lif_not_linear",
-    "per_trial_mac",
-    "per_row_norm"
-  ],
-  "float_accuracy": 0.9661,
-  "sc_results": {
-    "128": {
-      "accuracy": 0.4067,
-      "time_s": 21.6
+    "timestamp": "2026-03-28T10:16:26+0000",
+    "fixes": ["calibration_no_3x", "hook_lif_not_linear", "per_trial_mac", "per_row_norm"],
+    "float_accuracy": 0.9661,
+    "sc_results": {
+        "128": {"accuracy": 0.4067, "time_s": 21.6},
+        "256": {"accuracy": 0.4233, "time_s": 41.0},
+        "512": {"accuracy": 0.4633, "time_s": 80.8},
+        "1024": {"accuracy": 0.5, "time_s": 170.0},
+        "2048": {"accuracy": 0.4767, "time_s": 331.2},
     },
-    "256": {
-      "accuracy": 0.4233,
-      "time_s": 41.0
-    },
-    "512": {
-      "accuracy": 0.4633,
-      "time_s": 80.8
-    },
-    "1024": {
-      "accuracy": 0.5,
-      "time_s": 170.0
-    },
-    "2048": {
-      "accuracy": 0.4767,
-      "time_s": 331.2
-    }
-  },
-  "total_s": 1056.5
+    "total_s": 1056.5,
 }
