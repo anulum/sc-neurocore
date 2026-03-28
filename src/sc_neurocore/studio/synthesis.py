@@ -31,7 +31,7 @@ def check_tools() -> dict:
     return tools
 
 
-_TARGETS = {
+_TARGETS: dict[str, dict[str, str | None]] = {
     "ice40": {"synth_cmd": "synth_ice40", "pnr": "nextpnr-ice40", "device": "up5k"},
     "ecp5": {"synth_cmd": "synth_ecp5", "pnr": "nextpnr-ecp5", "device": "25k"},
     "gowin": {"synth_cmd": "synth_gowin", "pnr": None, "device": None},

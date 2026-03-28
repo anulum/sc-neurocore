@@ -251,7 +251,7 @@ def get_model_detail(name: str) -> dict | None:
         return None
 
 
-def _detect_step_kwarg(cls: type) -> str:
+def _detect_step_kwarg(cls: Any) -> str:
     """Figure out what keyword the .step() method uses for current injection."""
     import inspect
 
@@ -270,7 +270,7 @@ def _detect_step_kwarg(cls: type) -> str:
 def _try_rust_simulate(
     name: str,
     n_steps: int,
-    current_trace,
+    current_trace: np.ndarray,
     actual_dt: float,
 ) -> dict[str, Any] | None:
     """Attempt Rust batch simulation. Returns None if model not in Rust dispatch."""
@@ -429,12 +429,12 @@ def simulate_model(
     if n_steps > MAX_PLOT_POINTS:
         stride = n_steps // MAX_PLOT_POINTS
         time = time[::stride]
-        traces = {v: arr[::stride] for v, arr in traces.items()}
+        traces = {v: arr[::stride] for v, arr in traces.items()}  # type: ignore[misc]
         I_trace = I_trace[::stride]
 
     # Replace NaN/Inf with 0 for JSON serialisation
     for v in traces:
-        traces[v] = np.nan_to_num(traces[v], nan=0.0, posinf=0.0, neginf=0.0)
+        traces[v] = np.nan_to_num(traces[v], nan=0.0, posinf=0.0, neginf=0.0)  # type: ignore[assignment]
 
     return {
         "time": time.tolist(),
