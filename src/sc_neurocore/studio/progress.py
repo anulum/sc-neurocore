@@ -19,7 +19,11 @@ import numpy as np
 from sc_neurocore.studio.codegen import classify_firing_pattern
 
 
-def _characterize_with_progress(simulate_fn: Callable[..., dict[str, Any]], base_config: dict[str, Any], q: queue.Queue[dict[str, Any]]) -> None:
+def _characterize_with_progress(
+    simulate_fn: Callable[..., dict[str, Any]],
+    base_config: dict[str, Any],
+    q: queue.Queue[dict[str, Any]],
+) -> None:
     """Run characterisation with progress updates pushed to queue."""
     try:
         total_steps = 20 + 15 * 2 + 2
@@ -107,7 +111,15 @@ def _characterize_with_progress(simulate_fn: Callable[..., dict[str, Any]], base
         q.put({"type": "error", "msg": str(e)})
 
 
-def _heatmap_with_progress(simulate_fn: Callable[..., dict[str, Any]], base_config: dict[str, Any], param_x: str, x_vals: list[float], param_y: str, y_vals: list[float], q: queue.Queue[dict[str, Any]]) -> None:
+def _heatmap_with_progress(
+    simulate_fn: Callable[..., dict[str, Any]],
+    base_config: dict[str, Any],
+    param_x: str,
+    x_vals: list[float],
+    param_y: str,
+    y_vals: list[float],
+    q: queue.Queue[dict[str, Any]],
+) -> None:
     """Run 2D heatmap sweep with progress updates."""
     try:
         total = len(x_vals) * len(y_vals)

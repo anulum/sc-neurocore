@@ -52,9 +52,7 @@ def raster_plot(
     return ax
 
 
-def voltage_trace(
-    state_monitor: Any, neuron_ids: Any = None, ax: Any = None
-) -> Any:
+def voltage_trace(state_monitor: Any, neuron_ids: Any = None, ax: Any = None) -> Any:
     """Membrane voltage traces from a StateMonitor."""
     _require_mpl()
     ax = _get_ax(ax)
@@ -74,9 +72,7 @@ def voltage_trace(
     return ax
 
 
-def firing_rate_plot(
-    spike_monitor: Any, bin_ms: int = 10, ax: Any = None
-) -> Any:
+def firing_rate_plot(spike_monitor: Any, bin_ms: int = 10, ax: Any = None) -> Any:
     """Population firing rate histogram (spikes per bin)."""
     _require_mpl()
     ax = _get_ax(ax)
@@ -93,9 +89,7 @@ def firing_rate_plot(
     return ax
 
 
-def isi_histogram(
-    spike_monitor: Any, neuron_id: int, bins: int = 50, ax: Any = None
-) -> Any:
+def isi_histogram(spike_monitor: Any, neuron_id: int, bins: int = 50, ax: Any = None) -> Any:
     """Inter-spike interval distribution for a single neuron."""
     _require_mpl()
     ax = _get_ax(ax)
@@ -124,9 +118,7 @@ def cross_correlogram(
     return ax
 
 
-def population_activity(
-    spike_monitor: Any, bin_ms: int = 5, ax: Any = None
-) -> Any:
+def population_activity(spike_monitor: Any, bin_ms: int = 5, ax: Any = None) -> Any:
     """Heatmap of binned spike counts per neuron."""
     _require_mpl()
     ax = _get_ax(ax)

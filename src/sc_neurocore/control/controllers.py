@@ -72,7 +72,9 @@ class SpikingPID:
         self._prev_error = error
         return self.Kp * error + self.Ki * self._integral + self.Kd * derivative
 
-    def step_spike(self, error: float, rng: np.random.RandomState | None = None) -> np.ndarray[Any, Any]:
+    def step_spike(
+        self, error: float, rng: np.random.RandomState | None = None
+    ) -> np.ndarray[Any, Any]:
         """Compute PID output as spike population.
 
         Returns binary spike vector of shape (3 * n_neurons,) representing
@@ -178,7 +180,11 @@ class SpikingLQR:
     """
 
     def __init__(
-        self, A: np.ndarray[Any, Any], B: np.ndarray[Any, Any], Q: np.ndarray[Any, Any] | None = None, R: np.ndarray[Any, Any] | None = None
+        self,
+        A: np.ndarray[Any, Any],
+        B: np.ndarray[Any, Any],
+        Q: np.ndarray[Any, Any] | None = None,
+        R: np.ndarray[Any, Any] | None = None,
     ):
         n = A.shape[0]
         m = B.shape[1]

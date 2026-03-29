@@ -78,7 +78,9 @@ class CorticalColumn:
         self.v_l6 = np.zeros(n)
 
         # Connection weight matrices (sparse, random)
-        def _make_weights(n_pre: int, n_post: int, strength: float, prob: float = 0.3) -> np.ndarray:
+        def _make_weights(
+            n_pre: int, n_post: int, strength: float, prob: float = 0.3
+        ) -> np.ndarray:
             w = rng.uniform(0, abs(strength), (n_post, n_pre))
             mask = rng.random((n_post, n_pre)) < prob
             w *= mask
@@ -157,7 +159,9 @@ class CorticalColumn:
 
         Returns dict mapping layer name → (steps, n_per_layer) spike arrays.
         """
-        results: dict[str, list[np.ndarray]] = {k: [] for k in ("l23_exc", "l23_inh", "l4", "l5", "l6")}
+        results: dict[str, list[np.ndarray]] = {
+            k: [] for k in ("l23_exc", "l23_inh", "l4", "l5", "l6")
+        }
         for _ in range(steps):
             spikes = self.step(thalamic_input)
             for k, v in spikes.items():

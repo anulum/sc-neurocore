@@ -68,7 +68,9 @@ def _get_model_class(name: str) -> type[Any] | None:
     return result
 
 
-def _simulate(model_class: type[Any], params: dict[str, Any], current: np.ndarray[Any, Any], dt: float) -> np.ndarray[Any, Any]:
+def _simulate(
+    model_class: type[Any], params: dict[str, Any], current: np.ndarray[Any, Any], dt: float
+) -> np.ndarray[Any, Any]:
     """Run a model with given params and current injection."""
     try:
         neuron = model_class(**params)

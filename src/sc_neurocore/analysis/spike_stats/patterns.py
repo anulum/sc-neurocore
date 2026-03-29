@@ -15,7 +15,10 @@ import numpy as np
 
 
 def spike_directionality(
-    times_a: np.ndarray[Any, Any], times_b: np.ndarray[Any, Any], t_start: float = 0.0, t_end: float = 1.0
+    times_a: np.ndarray[Any, Any],
+    times_b: np.ndarray[Any, Any],
+    t_start: float = 0.0,
+    t_end: float = 1.0,
 ) -> float:
     """Spike directionality. Kreuz et al. 2015.
 

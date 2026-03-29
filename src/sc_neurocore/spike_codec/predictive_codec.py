@@ -108,7 +108,9 @@ class _RatePredictor:  # pragma: no cover — superseded by _predict_and_xor inl
         self.rates[:] = 0.0
 
 
-def _predict_and_xor_context(spikes: np.ndarray, N: int, context_bits: int = 8) -> tuple[np.ndarray, int]:
+def _predict_and_xor_context(
+    spikes: np.ndarray, N: int, context_bits: int = 8
+) -> tuple[np.ndarray, int]:
     """Context-model predict-XOR loop. Returns (errors, correct_count).
 
     Per-channel Markov predictor: hash last K spike states as context key,
@@ -191,7 +193,9 @@ def _xor_and_recover_context(errors: np.ndarray, N: int, context_bits: int = 8) 
     return spikes
 
 
-def _predict_and_xor(spikes: np.ndarray, N: int, alpha: float, threshold: float) -> tuple[np.ndarray, int]:
+def _predict_and_xor(
+    spikes: np.ndarray, N: int, alpha: float, threshold: float
+) -> tuple[np.ndarray, int]:
     """EMA predict-XOR loop. Returns (errors, correct_count)."""
     T = spikes.shape[0]
     rates = np.zeros(N, dtype=np.float64)

@@ -83,7 +83,9 @@ class HybridQuantumClassicalPipeline:
         z_all = np.array([(-1) ** bin(i).count("1") for i in range(dim)], dtype=float)
         return float(np.real(np.conj(state) @ (z_all * state)))
 
-    def train(self, n_steps: int = 100, lr: float = 0.01) -> tuple[list[float], np.ndarray[Any, Any]]:
+    def train(
+        self, n_steps: int = 100, lr: float = 0.01
+    ) -> tuple[list[float], np.ndarray[Any, Any]]:
         """VQE-style optimization: minimize ⟨Z⊗Z⟩."""
         params = np.random.randn(self.n_params) * 0.1
         history = []

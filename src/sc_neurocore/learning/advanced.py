@@ -101,7 +101,9 @@ class TBPTTLearner:
     Williams & Peng 1990.
     """
 
-    def __init__(self, network: Any, loss_fn: Callable[..., float], lr: float = 1e-3, k: int = 50) -> None:
+    def __init__(
+        self, network: Any, loss_fn: Callable[..., float], lr: float = 1e-3, k: int = 50
+    ) -> None:
         self.network = network
         self.loss_fn = loss_fn
         self.lr = lr
@@ -174,7 +176,9 @@ class EligibilityTrace:
         self.decay = float(np.exp(-dt / tau_e))
         self._trace: np.ndarray | None = None
 
-    def update(self, pre_spike: np.ndarray, post_spike: np.ndarray, error_signal: np.ndarray) -> np.ndarray:
+    def update(
+        self, pre_spike: np.ndarray, post_spike: np.ndarray, error_signal: np.ndarray
+    ) -> np.ndarray:
         """Compute weight delta from three-factor rule.
 
         Parameters

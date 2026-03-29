@@ -121,7 +121,9 @@ class SurfaceCodeShield:
         """
         return np.repeat(bitstream[:, np.newaxis, :], self.n_data, axis=1)
 
-    def measure_syndrome(self, physical_bits: np.ndarray[Any, Any]) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
+    def measure_syndrome(
+        self, physical_bits: np.ndarray[Any, Any]
+    ) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
         """
         Measure X and Z stabilizer syndromes.
 
@@ -168,7 +170,9 @@ class SurfaceCodeShield:
 
     @staticmethod
     def _apply_lut_correction(
-        physical: np.ndarray[Any, Any], syndromes: np.ndarray[Any, Any], lut: dict[tuple[int, ...], int]
+        physical: np.ndarray[Any, Any],
+        syndromes: np.ndarray[Any, Any],
+        lut: dict[tuple[int, ...], int],
     ) -> None:
         """Apply lookup-table correction for each bitstream position."""
         n_logical, n_stab, length = syndromes.shape

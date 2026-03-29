@@ -84,7 +84,9 @@ class PerTimestepBN:
         self.running_means = [np.zeros(self.n_features) for _ in range(self.T)]
         self.running_vars = [np.ones(self.n_features) for _ in range(self.T)]
 
-    def forward(self, x: np.ndarray[Any, Any], t: int, training: bool = True) -> np.ndarray[Any, Any]:
+    def forward(
+        self, x: np.ndarray[Any, Any], t: int, training: bool = True
+    ) -> np.ndarray[Any, Any]:
         t_idx = min(t, self.T - 1)
         if training:
             mean = x.mean(axis=0)
@@ -122,7 +124,9 @@ class TemporalEffectiveBN:
         self.running_mean = np.zeros(self.n_features)
         self.running_var = np.ones(self.n_features)
 
-    def forward(self, x: np.ndarray[Any, Any], t: int, training: bool = True) -> np.ndarray[Any, Any]:
+    def forward(
+        self, x: np.ndarray[Any, Any], t: int, training: bool = True
+    ) -> np.ndarray[Any, Any]:
         if training:
             mean = x.mean(axis=0)
             var = x.var(axis=0)
@@ -161,7 +165,9 @@ class MembranePotentialBN:
         self.running_mean = np.zeros(self.n_features)
         self.running_var = np.ones(self.n_features)
 
-    def forward(self, membrane: np.ndarray[Any, Any], training: bool = True) -> np.ndarray[Any, Any]:
+    def forward(
+        self, membrane: np.ndarray[Any, Any], training: bool = True
+    ) -> np.ndarray[Any, Any]:
         if training:
             mean = membrane.mean(axis=0) if membrane.ndim > 1 else membrane
             var = membrane.var(axis=0) if membrane.ndim > 1 else np.zeros_like(membrane)
@@ -178,11 +184,9 @@ class MembranePotentialBN:
         Returns ndarray of shape (n_features,) — use as per-neuron threshold
         instead of applying BN at inference (zero overhead).
         """
-        result: np.ndarray[Any, Any] = (
-            (self.threshold - self.beta) * np.sqrt(self.running_var + self.eps) / np.clip(
-                self.gamma, 1e-8, None
-            ) + self.running_mean
-        )
+        result: np.ndarray[Any, Any] = (self.threshold - self.beta) * np.sqrt(
+            self.running_var + self.eps
+        ) / np.clip(self.gamma, 1e-8, None) + self.running_mean
         return result
 
 

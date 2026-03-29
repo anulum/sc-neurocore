@@ -16,7 +16,9 @@ import numpy as np
 from .basic import bin_spike_train
 
 
-def _var_coefficients(trains_binned: np.ndarray[Any, Any], order: int) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
+def _var_coefficients(
+    trains_binned: np.ndarray[Any, Any], order: int
+) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
     """Fit VAR(order) model. Returns (coefficients [order*d x d], residual covariance)."""
     d, t = trains_binned.shape
     if t <= order + 1:

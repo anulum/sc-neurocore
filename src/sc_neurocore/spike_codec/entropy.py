@@ -60,7 +60,9 @@ def _build_huffman_table(symbols: list[int]) -> dict[int, tuple[int, int]]:
     return _canonical_codes(lengths)
 
 
-def _walk_tree(node: tuple[int, int, int | None, Any, Any], lengths: dict[int, int], depth: int) -> None:
+def _walk_tree(
+    node: tuple[int, int, int | None, Any, Any], lengths: dict[int, int], depth: int
+) -> None:
     _, _, sym, left, right = node
     if sym is not None:
         lengths[sym] = max(depth, 1)
