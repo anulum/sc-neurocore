@@ -70,11 +70,13 @@ class Population:
                 # Skip if no input AND voltage within 1% of rest
                 if currents[i] == 0.0 and abs(v - v_rest) < 0.01 * abs(v_thresh - v_rest):
                     continue
-                spikes[i] = neuron.step(float(currents[i]))
+                raw = neuron.step(float(currents[i]))
+                spikes[i] = min(max(int(raw), 0), 1)
                 self._voltages[i] = getattr(neuron, "v", 0.0)
         else:
             for i, neuron in enumerate(self.neurons):
-                spikes[i] = neuron.step(float(currents[i]))
+                raw = neuron.step(float(currents[i]))
+                spikes[i] = min(max(int(raw), 0), 1)
                 self._voltages[i] = getattr(neuron, "v", 0.0)
         return spikes
 
