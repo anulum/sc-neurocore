@@ -162,13 +162,15 @@ def approximate_entropy(
     """
     x = binary_train.astype(np.float64)
     n = x.size
-    if n < m + 1:
+    if n < m + 2:
         return float("nan")
     r = r_factor * x.std()
     if r <= 0:
         r = 0.01
 
     def _phi(dim: int) -> float:
+        if n - dim + 1 < 1:
+            return 0.0
         templates = np.array([x[i : i + dim] for i in range(n - dim + 1)])
         count = np.zeros(len(templates))
         for i in range(len(templates)):
@@ -344,6 +346,8 @@ def complexity_pdf(
     """ISI probability density function via histogram. Abeles 1982."""
     intervals = isi(binary_train, dt)
     if intervals.size < 2:
+        return np.array([], dtype=np.float64)
+    if intervals.max() - intervals.min() < 1e-12:
         return np.array([], dtype=np.float64)
     hist, edges = np.histogram(intervals, bins=bins, density=True)
     return hist.astype(np.float64)

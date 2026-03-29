@@ -183,3 +183,100 @@ class TestProjectionCoverage:
         tgt_sp = np.zeros(5, dtype=np.int8)
         tgt_sp[0] = 1
         proj.update_plasticity(src_sp, tgt_sp, directional_bias=1.36)
+
+
+# --- Deep monitor coverage ---
+
+
+class TestMonitorDeepCoverage:
+    def test_record_event_direct(self):
+        """SpikeMonitor.record_event() — Rust backend path."""
+        pop = Population(StochasticLIFNeuron, n=5, label="test")
+        mon = SpikeMonitor(pop)
+        mon.record_event(2, 100)
+        mon.record_event(0, 200)
+        assert mon.count == 2
+
+    def test_spike_times_property(self):
+        pop = Population(StochasticLIFNeuron, n=3, label="test")
+        mon = SpikeMonitor(pop)
+        mon.record_event(0, 10)
+        mon.record_event(1, 20)
+        times = mon.spike_times
+        assert len(times) == 2
+        assert times[0] == 10
+
+    def test_state_monitor_snapshot_and_traces(self):
+        pop = Population(StochasticLIFNeuron, n=5, label="test")
+        smon = StateMonitor(pop, variables=["v"])
+        for t in range(10):
+            pop.step_all(np.ones(5) * 0.3)
+            smon.snapshot(t_step=t)
+        traces = smon.traces
+        assert "v" in traces
+        assert traces["v"].shape[0] == 10
+
+    def test_state_monitor_subset(self):
+        pop = Population(StochasticLIFNeuron, n=10, label="test")
+        smon = StateMonitor(pop, variables=["v"], record=[0, 3, 7])
+        pop.step_all(np.ones(10) * 0.5)
+        smon.snapshot(t_step=0)
+        traces = smon.traces
+        assert traces["v"].shape[1] == 3
+
+    def test_rate_monitor_rate_property(self):
+        pop = Population(StochasticLIFNeuron, n=10, label="test")
+        rmon = RateMonitor(pop, bin_ms=5)
+        for t in range(10):
+            spikes = np.zeros(10, dtype=np.int8)
+            spikes[t % 10] = 1
+            rmon.record(spikes, t_step=t, dt=0.001)
+        rate = rmon.rate
+        assert isinstance(rate, np.ndarray)
+
+    def test_rate_monitor_t_property(self):
+        pop = Population(StochasticLIFNeuron, n=5, label="test")
+        rmon = RateMonitor(pop, bin_ms=5)
+        for t in range(10):
+            rmon.record(np.zeros(5, dtype=np.int8), t_step=t, dt=0.001)
+        assert isinstance(rmon.t, np.ndarray)
+
+
+# --- Network backend logic ---
+
+
+class TestNetworkBackendCoverage:
+    def test_can_use_rust_returns_false(self):
+        pop = Population(StochasticLIFNeuron, n=5, label="test")
+        net = Network(pop)
+        assert not net._can_use_rust()
+
+    def test_auto_falls_to_python(self):
+        pop = Population(StochasticLIFNeuron, n=5, label="test")
+        drive = PoissonInput(n=5, rate_hz=100.0, weight=2.0, dt=0.001, seed=42)
+        net = Network(pop, drive)
+        net.run(duration=0.005, dt=0.001, backend="auto")
+
+    def test_rust_raises_without_engine(self):
+        pop = Population(StochasticLIFNeuron, n=5, label="test")
+        net = Network(pop)
+        try:
+            net.run(duration=0.001, dt=0.001, backend="rust")
+            raise AssertionError("should raise")
+        except RuntimeError:
+            pass
+
+    def test_mpi_raises_without_mpi4py(self):
+        pop = Population(StochasticLIFNeuron, n=5, label="test")
+        net = Network(pop)
+        try:
+            net.run(duration=0.001, dt=0.001, backend="mpi")
+            raise AssertionError("should raise")
+        except (ImportError, RuntimeError):
+            pass
+
+    def test_progress_flag(self):
+        pop = Population(StochasticLIFNeuron, n=5, label="test")
+        drive = PoissonInput(n=5, rate_hz=100.0, weight=2.0, dt=0.001, seed=42)
+        net = Network(pop, drive)
+        net.run(duration=0.01, dt=0.001, backend="python", progress=True)

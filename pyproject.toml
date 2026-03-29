@@ -137,11 +137,7 @@ omit = [
     "*/audio/evs_engine.py",
     "*/sleep/report_generator.py",
     "*/sleep/sleep_optimizer.py",
-    "*/analysis/spike_stats/*",
     "*/viz/plots.py",
-    "*/learning/advanced.py",
-    "*/model_zoo/*",
-    "*/identity/*",
     # --- Studio web UI (requires fastapi, tested separately) ---
     "*/studio/*",
 ]
