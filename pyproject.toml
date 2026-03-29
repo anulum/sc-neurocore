@@ -122,8 +122,12 @@ omit = [
     "*/layers/jax_dense_layer.py",      # JAX dense layer
     # --- 116 neuron model files (each tested via model-agnostic step/reset) ---
     "*/neurons/models/*",
-    # --- Network engine (tested via Rust engine + integration) ---
-    "*/network/*",
+    # --- Network engine: coverage enforced since v3.14.0 ---
+    # Previously omitted; now covered by test_network_monitors_stimulus,
+    # test_topology_generators, test_cortical_column_dynamics,
+    # test_fim_symmetry_dynamics, test_identity_lazarus.
+    # Remaining omits: mpi_runner.py (requires mpi4py)
+    "*/network/mpi_runner.py",
     # --- CLI (tested via subprocess in CI, not via pytest) ---
     "*/cli.py",
     # --- Research/frontier modules ---
