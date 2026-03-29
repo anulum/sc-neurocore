@@ -127,12 +127,12 @@ def demo() -> None:
                 X = np.vstack(all_rates)
                 y_true = np.concatenate(all_labels_true)
 
-                preds = []
+                pred_list: list[int] = []
                 for sample in X:
-                    preds.append(nearest_centroid_multi(sample, centroids))
-                preds = np.array(preds, dtype=int)  # type: ignore[assignment]
+                    pred_list.append(nearest_centroid_multi(sample, centroids))
+                preds = np.array(pred_list, dtype=int)
 
-                accuracy = float((preds == y_true).mean())
+                accuracy = float(np.mean(preds == y_true))
 
                 print(
                     f"Params: n_neurons={n_neurons}, T={T}, noise_std={noise_std} -> Accuracy: {accuracy * 100:.2f}%"

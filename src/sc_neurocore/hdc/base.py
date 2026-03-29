@@ -73,7 +73,7 @@ class AssociativeMemory:
             # Hamming distance = count(XOR)
             dist = np.count_nonzero(np.bitwise_xor(query_vec, mem_vec))
             if dist < min_dist:
-                min_dist = dist
+                min_dist = dist  # type: ignore[assignment]
                 best_label = label
 
         return best_label
