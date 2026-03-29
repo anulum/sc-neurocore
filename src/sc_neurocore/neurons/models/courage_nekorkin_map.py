@@ -30,7 +30,9 @@ class CourageNekorkinMapNeuron:
         x_prev = self.x
         x_new = self._f(self.x) + self.y + current + self.j
         y_new = self.y - self.beta * (self.x + 1.0)
-        self.x, self.y = x_new, y_new
+        # Clip to prevent divergence (map can escape without bounds)
+        self.x = max(min(x_new, 1e6), -1e6)
+        self.y = max(min(y_new, 1e6), -1e6)
         return 1 if (self.x >= self.x_threshold and x_prev < self.x_threshold) else 0
 
     def reset(self) -> None:
