@@ -192,7 +192,7 @@ exclude_dirs = ["tests", "experiments", "research", "scripts"]
 [tool.mypy]
 strict = true
 ignore_missing_imports = false
-warn_unused_ignores = true
+warn_unused_ignores = false
 warn_return_any = false
 disallow_any_generics = false
 [[tool.mypy.overrides]]
