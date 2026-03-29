@@ -44,7 +44,7 @@ def _rust_supports_model(model_name: str) -> bool:
 class Network:
     """Declarative network: collects objects, runs the simulation loop."""
 
-    def __init__(self, *objects: Any, seed: int = 42) -> None:
+    def __init__(self, *objects: Any, seed: int = 42, fim_lambda: float = 0.0) -> None:
         self.populations: list[Population] = []
         self.projections: list[Projection] = []
         self.spike_monitors: list[SpikeMonitor] = []
@@ -52,6 +52,7 @@ class Network:
         self.rate_monitors: list[RateMonitor] = []
         self.stimuli: list[TimedArray | PoissonInput | StepCurrent] = []
         self.seed = seed
+        self.fim_lambda = fim_lambda
         for obj in objects:
             self.add(obj)
 
@@ -184,6 +185,8 @@ class Network:
                 self._record(pop, spikes, t, dt)
 
             self._update_plasticity(last_spikes)
+            if self.fim_lambda > 0:
+                self._apply_fim(last_spikes)
 
         if report_interval:
             sys.stdout.write(f"\r[100%] step {n_steps}/{n_steps}\n")
@@ -238,3 +241,28 @@ class Network:
                 src_sp = last_spikes.get(id(proj.source), np.zeros(proj.source.n, dtype=np.int8))
                 tgt_sp = last_spikes.get(id(proj.target), np.zeros(proj.target.n, dtype=np.int8))
                 proj.update_plasticity(src_sp, tgt_sp)
+
+    def _apply_fim(self, last_spikes: dict[int, np.ndarray]) -> None:
+        """Fisher Information Metric self-observation feedback.
+
+        Pulls each neuron's activity toward the population mean,
+        creating a global synchronisation force analogous to the FIM
+        gradient in the Kuramoto model.
+
+        ΔW_ij -= λ_fim · (activity_i - μ) / N
+
+        Derived from scpn-quantum-control NB26-28: FIM alone synchronises
+        (K=0, λ≥8), increases Φ by 73%, and is topology-universal.
+        """
+        lam = self.fim_lambda
+        for proj in self.projections:
+            src_sp = last_spikes.get(id(proj.source), np.zeros(proj.source.n))
+            n_src = proj.source.n
+            mu = float(np.mean(src_sp))
+            deviation = src_sp.astype(np.float64) - mu
+            for i in range(n_src):
+                if deviation[i] == 0:
+                    continue
+                correction = lam * deviation[i] / n_src
+                for k in range(proj.indptr[i], proj.indptr[i + 1]):
+                    proj.data[k] = max(0.0, proj.data[k] - correction)
