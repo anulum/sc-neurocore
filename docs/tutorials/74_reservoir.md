@@ -127,3 +127,7 @@ reservoir.export_weights("reservoir_ice40.npz")
   of Chaos in Recurrent Neural Networks." Neural Computation 16(7).
 - Lukoševičius & Jaeger (2009). "Reservoir computing approaches to
   recurrent neural network training." Computer Science Review 3(3).
+
+## Interactive Notebook
+
+Run the hands-on notebook: [`notebooks/17_reservoir_computing.ipynb`](https://github.com/anulum/sc-neurocore/blob/main/notebooks/17_reservoir_computing.ipynb)

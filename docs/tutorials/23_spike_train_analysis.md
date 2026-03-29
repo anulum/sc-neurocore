@@ -348,3 +348,7 @@ print(f"Isolation distance: {iso:.1f}")
 - [API Reference](../api/analysis.md) -- full 125-function listing with signatures
 - [Neuron Model Selection](22_neuron_model_selection.md) -- choosing models for your simulation
 - [Building Your First SNN](02_building_your_first_snn.md) -- network construction basics
+
+## Interactive Notebook
+
+Run the hands-on notebook: [`notebooks/10_spike_train_analysis.ipynb`](https://github.com/anulum/sc-neurocore/blob/main/notebooks/10_spike_train_analysis.ipynb)
