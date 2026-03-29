@@ -11,7 +11,6 @@ sheaf_consistency_defect, connection_curvature."""
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from sc_neurocore.math.topology import (
     winding_number,

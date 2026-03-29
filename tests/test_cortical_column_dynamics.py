@@ -45,7 +45,7 @@ class TestCorticalColumnBasic:
         thalamic = np.ones(10) * 3.0
         result = col.step(thalamic)
         for key, arr in result.items():
-            assert set(np.unique(arr)).issubset({0, 1, 0.0, 1.0}), (
+            assert set(np.unique(arr)).issubset({0, 1}), (
                 f"{key} has non-binary values"
             )
 
