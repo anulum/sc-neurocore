@@ -51,8 +51,56 @@ net.run(duration=0.1, dt=0.001)
 to threshold (default 100). Weight=30 at rate=1000 Hz reaches threshold
 in ~6 events.
 
+## Infrastructure Pipeline
+
+```
+AkidaNeuron
+├── step(weight: int) → int {0,1}
+├── reset() → v=0, rank=0, spiked=False
+├── In Population: 1 instance per neuron, scalar current (cast to int)
+│   └── Return value: 0 or 1 (fires at most once per presentation)
+├── In Network: compatible with PoissonInput (weight as integer current)
+│   ├── PoissonInput (weight=30, rate=1000Hz)
+│   ├── SpikeMonitor
+│   └── Must call reset() between presentations
+├── Analysis: spike_count (binary train, max 1 spike per neuron)
+├── SC encoding: NOT applicable (event-domain, not rate-coded)
+├── Verilog: NOT directly compilable (integer accumulator, rank counter)
+│   Could be implemented as custom HDL with counter + shift register
+└── Rust NetworkRunner: NOT supported (non-standard step() signature)
+```
+
+## Wiring Plan
+
+```
+PoissonInput(weight=30, rate=1000Hz)
+    ↓ integer weight per event
+Population(AkidaNeuron, n=N)
+    ↓ binary spike vector (max N spikes total — first-to-spike)
+SpikeMonitor → spike_trains
+    ├── Each neuron fires at most ONCE
+    ├── Spike latency = number of events to reach threshold
+    └── Earlier spike = stronger input match (rank-order coding)
+```
+
+## Performance
+
+| Metric | Python (NumPy) | Rust engine |
+|--------|---------------|-------------|
+| Isolation (single neuron, with reset) | 2.43 Msteps/s | N/A (non-standard interface) |
+| Network (100 neurons, 100ms) | 794 Kneuron-steps/s | N/A |
+| Max spikes (100 neurons) | 100 (one per neuron) | — |
+
+Measured on AMD EPYC / Python 3.12. Event-domain model — speed depends
+on input event rate, not clock cycles.
+
 ## Test Coverage
 
-See `tests/test_model_akida_neuron.py` (12 tests):
-isolation, rank-order modulation, first-to-spike property,
-network integration, analysis toolkit.
+| Category | Tests | What is verified |
+|----------|------:|-----------------|
+| Isolation | 8 | construction, step binary, spikes under drive, fires-only-once, rank modulation, zero weight, reset, integer state |
+| Network | 3 | Population creation, spike production, first-to-spike property (each neuron ≤ 1 spike) |
+| Analysis | 1 | spike_count on binary train |
+| **Total** | **12** | |
+
+See `tests/test_model_akida_neuron.py`.
