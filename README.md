@@ -11,8 +11,13 @@ Commercial Licensing: Available
 </p>
 
 [![CI](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml/badge.svg)](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/anulum/sc-neurocore/actions/workflows/codeql.yml/badge.svg)](https://github.com/anulum/sc-neurocore/actions/workflows/codeql.yml)
 [![Version](https://img.shields.io/badge/version-3.14.0-blue)](https://github.com/anulum/sc-neurocore/releases)
 [![Coverage](https://img.shields.io/badge/core_coverage-100%25-brightgreen)](https://github.com/anulum/sc-neurocore)
+[![mypy](https://img.shields.io/badge/mypy-strict-blue)](https://mypy-lang.org/)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Typed](https://img.shields.io/badge/typed-py.typed-blue)](https://peps.python.org/pep-0561/)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://anulum.github.io/sc-neurocore/)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/downloads/)
