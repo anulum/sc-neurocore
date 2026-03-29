@@ -69,6 +69,7 @@ NCE = "NCE"
 Alph = "Alph"
 PnR = "PnR"
 pnr = "pnr"
+pn = "pn"
 
 [default.extend-identifiers]
 PnR = "PnR"
