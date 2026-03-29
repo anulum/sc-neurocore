@@ -72,16 +72,23 @@ Population). Access `neuron.u` for the full N-dimensional state.
 
 ## Performance
 
-| Backend | N=64 field | 1000 steps | Notes |
-|---------|-----------|------------|-------|
-| Python (NumPy) | ~0.5 ms/step | ~0.5 s | FFT-based, vectorised |
-| Rust | N/A | N/A | Not supported (population model) |
+| Metric | Python (NumPy) | Rust engine |
+|--------|---------------|-------------|
+| Isolation (N=64 field) | 30.7 Ksteps/s (0.033 ms/step) | N/A (population model) |
+| Network (10 fields × 64 nodes, 100ms) | 28.5 Kfield-steps/s | N/A |
+
+Measured on AMD EPYC / Python 3.12. Dominated by FFT convolution (O(N log N)).
+For N=256: expect ~4× slower. For N=16: ~4× faster.
 
 ## Test Coverage
 
-See `tests/test_model_amari_field.py` (11 tests):
-- Isolation: construction, custom size, step return type, localised bump
-  formation, Mexican hat kernel sign, state finiteness, reset, scalar broadcast
+| Category | Tests | What is verified |
+|----------|------:|-----------------|
+| Isolation | 8 | construction, custom size, step return type, bump formation, kernel sign, state finiteness, reset, scalar broadcast |
+| Network | 3 | Population creation, network run (no crash), field state nonzero after drive |
+| **Total** | **11** | |
+
+See `tests/test_model_amari_field.py`.
 - Network: Population creation, network run, field state after drive
 
 **Production bug found and fixed:** Population.step_all() overflowed int8
