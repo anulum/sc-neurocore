@@ -118,9 +118,7 @@ class TestMajorityVoteTMR:
         single_errs, tmr_errs = [], []
 
         for trial in range(n_trials):
-            clean = generate_bernoulli_bitstream(
-                target, L, rng=RNG(trial)
-            )
+            clean = generate_bernoulli_bitstream(target, L, rng=RNG(trial))
             f1 = FaultInjector.inject_bit_flips(clean.copy(), rate)
             single_errs.append(abs(np.mean(f1) - target))
 
@@ -153,9 +151,7 @@ class TestFixedPointComparison:
         sc_errs, fp_errs = [], []
         for trial in range(n_trials):
             # SC
-            bits = generate_bernoulli_bitstream(
-                target, L, rng=RNG(trial)
-            )
+            bits = generate_bernoulli_bitstream(target, L, rng=RNG(trial))
             faulted = FaultInjector.inject_bit_flips(bits, rate)
             sc_errs.append(abs(np.mean(faulted) - target))
 

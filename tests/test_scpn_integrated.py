@@ -45,7 +45,7 @@ class TestKnmMatrix:
         """Adjacent layers should have nonzero coupling."""
         K = build_knm_matrix(16)
         for i in range(15):
-            assert K[i, i + 1] > 0, f"L{i+1}↔L{i+2} not coupled"
+            assert K[i, i + 1] > 0, f"L{i + 1}↔L{i + 2} not coupled"
 
 
 class TestOmegaN:

@@ -45,9 +45,7 @@ class TestCorticalColumnBasic:
         thalamic = np.ones(10) * 3.0
         result = col.step(thalamic)
         for key, arr in result.items():
-            assert set(np.unique(arr)).issubset({0, 1}), (
-                f"{key} has non-binary values"
-            )
+            assert set(np.unique(arr)).issubset({0, 1}), f"{key} has non-binary values"
 
 
 class TestCorticalColumnRun:
@@ -131,5 +129,4 @@ class TestCorticalColumnDeterminism:
         r2 = col2.run(thalamic, steps=T)
 
         for key in r1:
-            np.testing.assert_array_equal(r1[key], r2[key],
-                                          err_msg=f"{key} differs between runs")
+            np.testing.assert_array_equal(r1[key], r2[key], err_msg=f"{key} differs between runs")

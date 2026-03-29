@@ -120,6 +120,6 @@ class TestAdaptiveLength:
         """L >= ln(2/delta) / (2*eps^2) for Hoeffding bound."""
         eps = 0.05
         delta = 0.05  # 95% confidence
-        expected_min = np.log(2.0 / delta) / (2.0 * eps ** 2)
+        expected_min = np.log(2.0 / delta) / (2.0 * eps**2)
         L = adaptive_length(0.5, epsilon=eps, confidence=0.95, max_length=100000)
         assert int(expected_min) - 1 <= L, f"L={L} < Hoeffding {expected_min:.0f}"

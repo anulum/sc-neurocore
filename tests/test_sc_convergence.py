@@ -137,9 +137,7 @@ class TestCorrelationViolation:
         expected = px * py
         corr_err = abs(corr_product - expected)
         ind_err = abs(ind_product - expected)
-        assert corr_err > ind_err, (
-            "correlated inputs should produce larger error than independent"
-        )
+        assert corr_err > ind_err, "correlated inputs should produce larger error than independent"
 
 
 class TestBitstreamEncoderRoundtrip:
