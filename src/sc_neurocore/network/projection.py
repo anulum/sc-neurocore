@@ -262,8 +262,15 @@ class Projection:
         a_plus: float = 0.01,
         a_minus: float = 0.012,
         tau: float = 20.0,
+        directional_bias: float = 1.0,
     ) -> None:
-        """Trace-based STDP weight update."""
+        """Trace-based STDP weight update.
+
+        *directional_bias* scales a_plus for this projection. Set to 1.36
+        for bottom-up (sensory → higher) projections per quantum-control
+        NB19 (measured autonomic → cortical asymmetry = 0.36).
+        Default 1.0 = symmetric learning.
+        """
         if self.plasticity != "stdp":
             return
         decay = np.exp(-1.0 / tau)
@@ -277,7 +284,7 @@ class Projection:
                 if src_spikes[i]:
                     self.data[k] -= a_minus * self._post_trace[j]
                 if tgt_spikes[j]:
-                    self.data[k] += a_plus * self._pre_trace[i]
+                    self.data[k] += a_plus * directional_bias * self._pre_trace[i]
                 self.data[k] = max(0.0, self.data[k])
 
         # Enforce K symmetry for self-projections (same source and target).
