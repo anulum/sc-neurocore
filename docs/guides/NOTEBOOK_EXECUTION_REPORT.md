@@ -64,3 +64,34 @@
 - 15 test files: **2,742 lines**, 340 tests
 - 1 documentation guide: `docs/guides/notebook_guide.md`
 - 7 tutorials updated with notebook cross-references
+
+## Raw Execution Log
+
+```
+08_equation_to_verilog.ipynb: PASS (395582B)
+09_topology_and_dynamics.ipynb: PASS (494620B)
+10_spike_train_analysis.ipynb: PASS (161579B)
+11_biological_circuits.ipynb: PASS (245464B)
+12_learning_rules.ipynb: PASS (228807B)
+13_quantisation_pipeline.ipynb: PASS (165971B)
+14_sc_arithmetic_theory.ipynb: PASS (398577B)
+15_fault_tolerance.ipynb: PASS (274560B)
+16_neuron_atlas.ipynb: PASS (480771B)
+17_reservoir_computing.ipynb: PASS (146754B)
+18_mixed_precision_sc.ipynb: PASS (154021B)
+19_compression_and_pruning.ipynb: PASS (104661B)
+20_power_analysis.ipynb: PASS (151593B)
+21_spike_alu.ipynb: PASS (15815B)
+22_ir_type_safety.ipynb: PASS (12613B)
+23_topological_observables.ipynb: PASS (229384B)
+24_identity_lazarus.ipynb: PASS (42918B)
+25_cortical_column_dynamics.ipynb: PASS (99300B)
+26_spike_codec_benchmark.ipynb: PARTIAL (108599B) — TypeError in decompress cells
+27_python_to_proven_silicon.ipynb: PASS (139185B)
+28_domain_bridge.ipynb: PASS (82337B)
+```
+
+**nb26 failure detail:** `SpikeCodec.decompress()` missing 2 required positional
+arguments: `T` and `N`. ISI/Predictive/Delta codecs require shape at decompress
+time; AER/Streaming embed shape in the compressed data. Compress + ratio cells
+pass; only roundtrip verification cells fail.
