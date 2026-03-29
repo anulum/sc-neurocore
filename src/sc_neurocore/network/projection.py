@@ -279,3 +279,29 @@ class Projection:
                 if tgt_spikes[j]:
                     self.data[k] += a_plus * self._pre_trace[i]
                 self.data[k] = max(0.0, self.data[k])
+
+        # Enforce K symmetry for self-projections (same source and target).
+        # Gradient/STDP updates break W = W^T after ~30 steps (SPO Finding #7).
+        # Asymmetric coupling hurts sync by +12% (quantum-control NB24).
+        if self.source is self.target:
+            self._enforce_symmetry()
+
+    def _enforce_symmetry(self) -> None:
+        """Symmetrise CSR weight data: W_ij = W_ji = (W_ij + W_ji) / 2.
+
+        Only meaningful for self-projections (source is target, square matrix).
+        Iterates over non-zero entries and averages with their transpose.
+        """
+        n = self.source.n
+        for i in range(n):
+            for k in range(self.indptr[i], self.indptr[i + 1]):
+                j = self.indices[k]
+                if j <= i:
+                    continue
+                # Find reverse edge j→i
+                for k2 in range(self.indptr[j], self.indptr[j + 1]):
+                    if self.indices[k2] == i:
+                        avg = (self.data[k] + self.data[k2]) / 2.0
+                        self.data[k] = avg
+                        self.data[k2] = avg
+                        break
