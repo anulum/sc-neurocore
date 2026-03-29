@@ -54,7 +54,7 @@ jobs:
       - name: Install tools
         run: |
           pip install --require-hashes -r requirements/lint.txt
-          pip install mypy==1.19.1 numpy
+          pip install mypy==1.19.1 numpy scipy fastapi pydantic uvicorn starlette
 
       - name: ruff check
         run: ruff check src/ tests/
