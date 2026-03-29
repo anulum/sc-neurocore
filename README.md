@@ -28,7 +28,7 @@ Commercial Licensing: Available
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)
 
 **Version:** 3.14.0
-**Status:** 116 Neuron Models (107 Bio + 9 AI) | 99.49% MNIST (ConvSNN) | 2 928 Python tests passing (3 132 collected) + 378 Rust tests | 100% Core Coverage (322/535 files; optional/experimental excluded) | 109 Rust Neuron Models | 80-Model NetworkRunner
+**Status:** 120 Neuron Models (111 Bio + 9 AI) | 99.49% MNIST (ConvSNN) | 3 376 Python tests passing (3 552 collected) + 378 Rust tests | 100% Core Coverage | 109 Rust Neuron Models | 111-Model NetworkRunner | 29 Notebooks
 
 <p align="center">
   <img src="docs/assets/spike_raster.png" width="800" alt="LIF spike raster — 5 neurons, sinusoidal input">
@@ -71,7 +71,7 @@ and a 6-codec neural data compression library (ISI, predictive, delta, streaming
 AER) with a unified API and auto-recommendation engine — targeting BCI
 implants (Neuralink-scale 1024+ channels), neural probes (Neuropixels),
 neuromorphic inter-chip routing, and real-time closed-loop telemetry.
-2 928 passing Python tests and 378 Rust tests hold 100% core coverage.
+3 376 passing Python tests and 378 Rust tests hold 100% core coverage.
 13 CI workflows guard every push. conda-forge recipe ready.
 
 ## Feature Comparison
