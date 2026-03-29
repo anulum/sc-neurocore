@@ -19,8 +19,6 @@ Supports three delay modes:
 
 from __future__ import annotations
 
-from typing import Any
-
 import numpy as np
 
 from . import topology as _topo
