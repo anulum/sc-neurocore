@@ -45,18 +45,24 @@ class BoothRinzelNeuron:
     dt: float = 0.025
     v_threshold: float = -20.0
 
+    @staticmethod
+    def _safe_exp(x: float) -> float:
+        return float(np.exp(np.clip(x, -500, 500)))
+
     def step(self, current: float) -> int:
         vs_prev = self.vs
         for _ in range(4):
             # Soma: fast Na + delayed-rectifier K
-            m_inf = 1.0 / (1.0 + np.exp(-(self.vs + 35.0) / 7.8))
-            h_inf = 1.0 / (1.0 + np.exp((self.vs + 55.0) / 7.0))
-            tau_h = 30.0 / (np.exp((self.vs + 50.0) / 15.0) + np.exp(-(self.vs + 50.0) / 16.0))
-            n_inf = 1.0 / (1.0 + np.exp(-(self.vs + 28.0) / 15.0))
-            tau_n = 7.0 / (np.exp((self.vs + 40.0) / 40.0) + np.exp(-(self.vs + 40.0) / 50.0))
+            m_inf = 1.0 / (1.0 + self._safe_exp(-(self.vs + 35.0) / 7.8))
+            h_inf = 1.0 / (1.0 + self._safe_exp((self.vs + 55.0) / 7.0))
+            tau_h = 30.0 / (self._safe_exp((self.vs + 50.0) / 15.0) + self._safe_exp(-(self.vs + 50.0) / 16.0) + 1e-12)
+            n_inf = 1.0 / (1.0 + self._safe_exp(-(self.vs + 28.0) / 15.0))
+            tau_n = 7.0 / (self._safe_exp((self.vs + 40.0) / 40.0) + self._safe_exp(-(self.vs + 40.0) / 50.0) + 1e-12)
 
             self.h += (h_inf - self.h) / tau_h * self.dt
+            self.h = float(np.clip(self.h, 0, 1))
             self.n += (n_inf - self.n) / tau_n * self.dt
+            self.n = float(np.clip(self.n, 0, 1))
 
             i_na = self.g_na * m_inf**3 * self.h * (self.vs - self.e_na)
             i_k = self.g_k * self.n**4 * (self.vs - self.e_k)
@@ -66,11 +72,12 @@ class BoothRinzelNeuron:
             dvs = (-i_na - i_k - i_ls - i_coup_s + current / self.p) / self.c_m * self.dt
 
             # Dendrite: Ca + KCa
-            s_inf = 1.0 / (1.0 + np.exp(-(self.vd + 22.0) / 5.0))
-            q_inf = 1.0 / (1.0 + np.exp(-(self.vd + 35.0) / 2.0))
+            s_inf = 1.0 / (1.0 + self._safe_exp(-(self.vd + 22.0) / 5.0))
+            q_inf = 1.0 / (1.0 + self._safe_exp(-(self.vd + 35.0) / 2.0))
             tau_q = 400.0
 
             self.q += (q_inf - self.q) / tau_q * self.dt
+            self.q = float(np.clip(self.q, 0, 1))
 
             i_ca = self.g_ca * s_inf**2 * (self.vd - self.e_ca)
             chi = min(self.ca / 250.0, 1.0)
@@ -82,8 +89,8 @@ class BoothRinzelNeuron:
             self.ca += self.f_ca * (-self.alpha_ca * i_ca - self.k_ca * self.ca) * self.dt
             self.ca = max(self.ca, 0.0)
 
-            self.vs += dvs
-            self.vd += dvd
+            self.vs = float(np.clip(self.vs + dvs, -200, 100))
+            self.vd = float(np.clip(self.vd + dvd, -200, 100))
 
         return 1 if (self.vs >= self.v_threshold and vs_prev < self.v_threshold) else 0
 
