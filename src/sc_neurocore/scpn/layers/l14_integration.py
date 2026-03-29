@@ -18,7 +18,7 @@ Ref: Paper 14 — Transdimensional Resonance.
 
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 import numpy as np
 
@@ -67,7 +67,7 @@ class L14_IntegrationLayer:
         self,
         dt: float,
         layer_metrics: Optional[Dict[str, float]] = None,
-    ) -> Dict[str, Any]:  # type: ignore[name-defined]
+    ) -> Dict[str, Any]:
         self.time += dt
 
         if layer_metrics is not None:
