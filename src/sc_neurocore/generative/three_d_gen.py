@@ -470,9 +470,7 @@ class SC3DGenerator:
 
         return edge_verts
 
-    def _compute_normals(
-        self, vertices: np.ndarray, faces: np.ndarray
-    ) -> np.ndarray:
+    def _compute_normals(self, vertices: np.ndarray, faces: np.ndarray) -> np.ndarray:
         """Compute vertex normals from face normals."""
         if len(vertices) == 0 or len(faces) == 0:
             return np.zeros((0, 3))

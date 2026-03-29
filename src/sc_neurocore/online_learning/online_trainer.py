@@ -118,7 +118,9 @@ class OnlineTrainer:
         for layer in self.layers:
             layer.reset()
 
-    def step(self, x: np.ndarray[Any, Any], target: np.ndarray[Any, Any] | None = None) -> dict[str, Any]:
+    def step(
+        self, x: np.ndarray[Any, Any], target: np.ndarray[Any, Any] | None = None
+    ) -> dict[str, Any]:
         """Forward one timestep through all layers with optional learning.
 
         Parameters

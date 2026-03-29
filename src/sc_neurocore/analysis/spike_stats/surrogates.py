@@ -14,7 +14,9 @@ from typing import Any, Callable
 import numpy as np
 
 
-def surrogate_isi_shuffle(binary_train: np.ndarray[Any, Any], seed: int = 0) -> np.ndarray[Any, Any]:
+def surrogate_isi_shuffle(
+    binary_train: np.ndarray[Any, Any], seed: int = 0
+) -> np.ndarray[Any, Any]:
     """Generate surrogate by shuffling ISIs. Preserves rate + ISI distribution."""
     intervals = np.diff(np.where(binary_train > 0)[0])
     if intervals.size < 2:
@@ -46,7 +48,9 @@ def surrogate_dither(
     return out
 
 
-def surrogate_trial_shuffle(trains: list[np.ndarray[Any, Any]], seed: int = 0) -> list[np.ndarray[Any, Any]]:
+def surrogate_trial_shuffle(
+    trains: list[np.ndarray[Any, Any]], seed: int = 0
+) -> list[np.ndarray[Any, Any]]:
     """Shuffle trial order. Destroys trial-to-trial correlation."""
     rng = np.random.default_rng(seed)
     idx = rng.permutation(len(trains))

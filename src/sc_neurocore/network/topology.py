@@ -37,9 +37,7 @@ def _to_csr(
     return indptr, cols.astype(np.int64), weights.astype(np.float64)
 
 
-def random_connectivity(
-    n_src: int, n_tgt: int, p: float, weight: float, seed: int = 42
-) -> CSR:
+def random_connectivity(n_src: int, n_tgt: int, p: float, weight: float, seed: int = 42) -> CSR:
     """Erdos-Renyi random connectivity."""
     rng = np.random.default_rng(seed)
     mask = rng.random((n_src, n_tgt)) < p
@@ -48,9 +46,7 @@ def random_connectivity(
     return _to_csr(n_src, n_tgt, rows, cols, weights)
 
 
-def small_world(
-    n: int, k: int, p_rewire: float, weight: float, seed: int = 42
-) -> CSR:
+def small_world(n: int, k: int, p_rewire: float, weight: float, seed: int = 42) -> CSR:
     """Watts-Strogatz small-world graph (n-by-n adjacency)."""
     rng = np.random.default_rng(seed)
     half_k = k // 2
@@ -119,9 +115,7 @@ def ring_topology(n: int, k: int, weight: float) -> CSR:
     return _to_csr(n, n, rows, cols, weights)
 
 
-def grid_topology(
-    rows_count: int, cols_count: int, radius: int, weight: float
-) -> CSR:
+def grid_topology(rows_count: int, cols_count: int, radius: int, weight: float) -> CSR:
     """2D lattice connectivity within Manhattan radius."""
     n = rows_count * cols_count
     row_list: list[int] = []

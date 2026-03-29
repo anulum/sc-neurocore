@@ -91,7 +91,9 @@ class EpropTrainer:
         self._eligibility_in = np.zeros((self.n_neurons, self.n_inputs))
         self._eligibility_rec = np.zeros((self.n_neurons, self.n_neurons))
 
-    def step(self, x: np.ndarray[Any, Any], target: np.ndarray[Any, Any] | None = None) -> dict[str, Any]:
+    def step(
+        self, x: np.ndarray[Any, Any], target: np.ndarray[Any, Any] | None = None
+    ) -> dict[str, Any]:
         """Process one timestep with optional learning.
 
         Parameters

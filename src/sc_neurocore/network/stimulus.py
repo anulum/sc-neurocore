@@ -34,7 +34,9 @@ class TimedArray:
 class PoissonInput:
     """Random Poisson spike input producing weighted current."""
 
-    def __init__(self, n: int, rate_hz: float, weight: float, dt: float = 0.001, seed: int = 42) -> None:
+    def __init__(
+        self, n: int, rate_hz: float, weight: float, dt: float = 0.001, seed: int = 42
+    ) -> None:
         self.n = n
         self.rate_hz = rate_hz
         self.weight = weight

@@ -27,10 +27,14 @@ class RNG:
     def __init__(self, seed: Optional[int] = None) -> None:
         self._rng = np.random.default_rng(seed)
 
-    def normal(self, mean: float = 0.0, std: float = 1.0, size: int | tuple[int, ...] | None = None) -> Any:
+    def normal(
+        self, mean: float = 0.0, std: float = 1.0, size: int | tuple[int, ...] | None = None
+    ) -> Any:
         return self._rng.normal(mean, std, size)
 
-    def uniform(self, low: float = 0.0, high: float = 1.0, size: int | tuple[int, ...] | None = None) -> Any:
+    def uniform(
+        self, low: float = 0.0, high: float = 1.0, size: int | tuple[int, ...] | None = None
+    ) -> Any:
         return self._rng.uniform(low, high, size)
 
     def bernoulli(self, p: float, size: int | tuple[int, ...] | None = None) -> Any:

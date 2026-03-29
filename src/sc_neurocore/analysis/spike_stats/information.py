@@ -16,7 +16,9 @@ import numpy as np
 from .basic import bin_spike_train
 
 
-def mutual_information(train_a: np.ndarray[Any, Any], train_b: np.ndarray[Any, Any], bin_size: int = 10) -> float:
+def mutual_information(
+    train_a: np.ndarray[Any, Any], train_b: np.ndarray[Any, Any], bin_size: int = 10
+) -> float:
     """Mutual information between two binned spike trains (bits).
 
     MI = H(A) + H(B) - H(A,B) using binned spike counts.
@@ -119,7 +121,9 @@ def noise_entropy(
     return float(np.mean(entropies))
 
 
-def stimulus_specific_information(spike_counts: np.ndarray[Any, Any], stimulus_ids: np.ndarray[Any, Any]) -> float:
+def stimulus_specific_information(
+    spike_counts: np.ndarray[Any, Any], stimulus_ids: np.ndarray[Any, Any]
+) -> float:
     """Stimulus-specific information (SSI). Butts 2003.
 
     spike_counts: array of spike counts per trial.
@@ -179,7 +183,10 @@ def kozachenko_leonenko_mi(x: np.ndarray[Any, Any], y: np.ndarray[Any, Any], k: 
 
 
 def time_rescaling_ks_test(
-    times: np.ndarray[Any, Any], rate_func: Callable[[float], float], t_start: float = 0.0, t_end: float = 1.0
+    times: np.ndarray[Any, Any],
+    rate_func: Callable[[float], float],
+    t_start: float = 0.0,
+    t_end: float = 1.0,
 ) -> tuple[float, bool]:
     """Time-rescaling KS test for point process goodness-of-fit. Brown et al. 2002.
 

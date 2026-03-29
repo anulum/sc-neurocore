@@ -258,7 +258,9 @@ def compile_sc_multiply(p_a: float, p_b: float) -> SCQuantumCircuit:
     return circuit
 
 
-def compile_sc_layer(weights: np.ndarray[Any, Any], input_probs: np.ndarray[Any, Any]) -> list[dict[str, Any]]:
+def compile_sc_layer(
+    weights: np.ndarray[Any, Any], input_probs: np.ndarray[Any, Any]
+) -> list[dict[str, Any]]:
     """Compile an SC dense layer to quantum gate descriptions.
 
     Parameters

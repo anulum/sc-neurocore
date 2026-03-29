@@ -49,7 +49,9 @@ class IdentitySubstrate:
     Connectivity: small-world E->E with STDP, random E->I, I->E, E->M, M->E.
     """
 
-    def __init__(self, n_cortical: int = 500, n_inhibitory: int = 200, n_memory: int = 100, seed: int = 42) -> None:
+    def __init__(
+        self, n_cortical: int = 500, n_inhibitory: int = 200, n_memory: int = 100, seed: int = 42
+    ) -> None:
         self.n_cortical = n_cortical
         self.n_inhibitory = n_inhibitory
         self.n_memory = n_memory
@@ -180,7 +182,12 @@ class IdentitySubstrate:
         self._total_steps += 1
         return spikes_c
 
-    def run(self, duration: float, dt: float = 0.001, stimuli_sequence: np.ndarray[Any, Any] | None = None) -> np.ndarray[Any, Any]:
+    def run(
+        self,
+        duration: float,
+        dt: float = 0.001,
+        stimuli_sequence: np.ndarray[Any, Any] | None = None,
+    ) -> np.ndarray[Any, Any]:
         """Run for *duration* seconds. Optional time-varying stimuli array.
 
         stimuli_sequence: (n_steps, n_cortical) array or None.

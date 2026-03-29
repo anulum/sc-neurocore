@@ -113,7 +113,9 @@ def dequantize_weights(quantized: np.ndarray[Any, Any], fmt: str = "Q8.8") -> np
     return quantized.astype(np.float64) / q.scale
 
 
-def q_weights_to_sc_probabilities(quantized: np.ndarray[Any, Any], fmt: str = "Q8.8") -> np.ndarray[Any, Any]:
+def q_weights_to_sc_probabilities(
+    quantized: np.ndarray[Any, Any], fmt: str = "Q8.8"
+) -> np.ndarray[Any, Any]:
     """Convert quantized weights to SC probabilities in [0, 1].
 
     Maps the Q-format range [min, max] linearly to [0, 1] for
@@ -125,7 +127,9 @@ def q_weights_to_sc_probabilities(quantized: np.ndarray[Any, Any], fmt: str = "Q
     return (quantized.astype(np.float64) - min_int) / (max_int - min_int)
 
 
-def quantization_error(weights: np.ndarray[Any, Any], fmt: str = "Q8.8", rounding: str = "nearest") -> dict[str, float]:
+def quantization_error(
+    weights: np.ndarray[Any, Any], fmt: str = "Q8.8", rounding: str = "nearest"
+) -> dict[str, float]:
     """Compute quantization error statistics.
 
     Returns

@@ -62,7 +62,9 @@ def local_variation(binary_train: np.ndarray[Any, Any], dt: float = 0.001) -> fl
     return float(3.0 / (n - 1) * np.sum((diffs[valid] / sums[valid]) ** 2))
 
 
-def lvr(binary_train: np.ndarray[Any, Any], dt: float = 0.001, refractoriness_ms: float = 2.0) -> float:
+def lvr(
+    binary_train: np.ndarray[Any, Any], dt: float = 0.001, refractoriness_ms: float = 2.0
+) -> float:
     """Revised local variation LvR. Shinomoto et al. 2009.
 
     Corrects LV for refractoriness: LvR = mean(3(1 - 4*ISI_i*ISI_{i+1}/(ISI_i+ISI_{i+1})^2)(1 + 4*R/(ISI_i+ISI_{i+1}))).
@@ -86,7 +88,9 @@ def lvr(binary_train: np.ndarray[Any, Any], dt: float = 0.001, refractoriness_ms
     return float(3.0 * result / count)
 
 
-def fano_factor(binary_train: np.ndarray[Any, Any], window_ms: float = 50.0, dt: float = 0.001) -> float:
+def fano_factor(
+    binary_train: np.ndarray[Any, Any], window_ms: float = 50.0, dt: float = 0.001
+) -> float:
     """Fano factor: variance/mean of spike counts in sliding windows."""
     window_steps = max(1, int(window_ms / (dt * 1000)))
     n = binary_train.size
@@ -149,7 +153,9 @@ def lempel_ziv_complexity(binary_train: np.ndarray[Any, Any]) -> float:
     return float(complexity / norm)
 
 
-def approximate_entropy(binary_train: np.ndarray[Any, Any], m: int = 2, r_factor: float = 0.2) -> float:
+def approximate_entropy(
+    binary_train: np.ndarray[Any, Any], m: int = 2, r_factor: float = 0.2
+) -> float:
     """Approximate entropy (ApEn). Pincus 1991.
 
     m: embedding dimension. r_factor: tolerance as fraction of std.
@@ -202,7 +208,9 @@ def sample_entropy(binary_train: np.ndarray[Any, Any], m: int = 2, r_factor: flo
     return float(-np.log((a + 1e-30) / (b + 1e-30)))
 
 
-def permutation_entropy(binary_train: np.ndarray[Any, Any], order: int = 3, delay: int = 1) -> float:
+def permutation_entropy(
+    binary_train: np.ndarray[Any, Any], order: int = 3, delay: int = 1
+) -> float:
     """Bandt-Pompe permutation entropy. Bandt & Pompe 2002.
 
     Normalized to [0, 1]. Uses ordinal patterns of given order and delay.
@@ -330,7 +338,9 @@ def rescaled_range(binary_train: np.ndarray[Any, Any], min_window: int = 10) -> 
     return float(coeffs[0])
 
 
-def complexity_pdf(binary_train: np.ndarray[Any, Any], dt: float = 0.001, bins: int = 20) -> np.ndarray[Any, Any]:
+def complexity_pdf(
+    binary_train: np.ndarray[Any, Any], dt: float = 0.001, bins: int = 20
+) -> np.ndarray[Any, Any]:
     """ISI probability density function via histogram. Abeles 1982."""
     intervals = isi(binary_train, dt)
     if intervals.size < 2:

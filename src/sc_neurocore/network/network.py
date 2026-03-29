@@ -208,7 +208,9 @@ class Network:
             elif isinstance(stim, StepCurrent):
                 pop_to_currents[pid] += stim.get_current(t, dt)
 
-    def _apply_projections(self, pop_to_currents: dict[int, np.ndarray], last_spikes: dict[int, np.ndarray]) -> None:
+    def _apply_projections(
+        self, pop_to_currents: dict[int, np.ndarray], last_spikes: dict[int, np.ndarray]
+    ) -> None:
         """Propagate spikes through all projections."""
         for proj in self.projections:
             src_spikes = last_spikes.get(id(proj.source), np.zeros(proj.source.n, dtype=np.int8))

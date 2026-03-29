@@ -18,7 +18,10 @@ from .rate import instantaneous_rate
 
 
 def van_rossum_distance(
-    train_a: np.ndarray[Any, Any], train_b: np.ndarray[Any, Any], dt: float = 0.001, tau_ms: float = 10.0
+    train_a: np.ndarray[Any, Any],
+    train_b: np.ndarray[Any, Any],
+    dt: float = 0.001,
+    tau_ms: float = 10.0,
 ) -> float:
     """Van Rossum 2001 -- exponential-kernel spike train distance."""
     tau = tau_ms / 1000.0
@@ -54,7 +57,9 @@ def victor_purpura_distance(
     return float(d[na, nb])
 
 
-def isi_distance(train_a: np.ndarray[Any, Any], train_b: np.ndarray[Any, Any], dt: float = 0.001) -> float:
+def isi_distance(
+    train_a: np.ndarray[Any, Any], train_b: np.ndarray[Any, Any], dt: float = 0.001
+) -> float:
     """ISI-distance (Kreuz et al. 2007) -- ratio-based ISI comparison."""
     isi_a = isi(train_a, dt)
     isi_b = isi(train_b, dt)
@@ -74,7 +79,10 @@ def isi_distance(train_a: np.ndarray[Any, Any], train_b: np.ndarray[Any, Any], d
 
 
 def spike_distance(
-    times_a: np.ndarray[Any, Any], times_b: np.ndarray[Any, Any], t_start: float = 0.0, t_end: float = 1.0
+    times_a: np.ndarray[Any, Any],
+    times_b: np.ndarray[Any, Any],
+    t_start: float = 0.0,
+    t_end: float = 1.0,
 ) -> float:
     """SPIKE-distance. Kreuz et al. 2013.
 
@@ -117,7 +125,10 @@ def _local_isi(times: np.ndarray[Any, Any], idx: int) -> float:
 
 
 def spike_sync(
-    times_a: np.ndarray[Any, Any], times_b: np.ndarray[Any, Any], t_start: float = 0.0, t_end: float = 1.0
+    times_a: np.ndarray[Any, Any],
+    times_b: np.ndarray[Any, Any],
+    t_start: float = 0.0,
+    t_end: float = 1.0,
 ) -> float:
     """SPIKE-synchronization. Kreuz et al. 2015.
 
@@ -190,7 +201,10 @@ def spike_profile(
 
 
 def isi_profile(
-    binary_train_a: np.ndarray[Any, Any], binary_train_b: np.ndarray[Any, Any], dt: float = 0.001, n_bins: int = 50
+    binary_train_a: np.ndarray[Any, Any],
+    binary_train_b: np.ndarray[Any, Any],
+    dt: float = 0.001,
+    n_bins: int = 50,
 ) -> np.ndarray[Any, Any]:
     """Binned ISI-distance profile. Kreuz et al. 2007."""
     n = min(binary_train_a.size, binary_train_b.size)
@@ -228,7 +242,10 @@ def adaptive_spike_distance(
 
 
 def schreiber_similarity(
-    train_a: np.ndarray[Any, Any], train_b: np.ndarray[Any, Any], dt: float = 0.001, sigma_ms: float = 5.0
+    train_a: np.ndarray[Any, Any],
+    train_b: np.ndarray[Any, Any],
+    dt: float = 0.001,
+    sigma_ms: float = 5.0,
 ) -> float:
     """Schreiber et al. 2003 -- spike train similarity via smoothed correlation.
 
@@ -297,7 +314,9 @@ def multi_neuron_victor_purpura(
 
 
 def generalized_victor_purpura(
-    times_a: np.ndarray[Any, Any], times_b: np.ndarray[Any, Any], cost_func: Callable[[float], float] | None = None
+    times_a: np.ndarray[Any, Any],
+    times_b: np.ndarray[Any, Any],
+    cost_func: Callable[[float], float] | None = None,
 ) -> float:
     """Generalized Victor-Purpura with arbitrary cost function. Victor & Purpura 1997.
 

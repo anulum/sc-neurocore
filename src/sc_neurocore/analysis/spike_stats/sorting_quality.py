@@ -185,7 +185,9 @@ def nn_hit_rate(cluster: np.ndarray[Any, Any], noise: np.ndarray[Any, Any], k: i
     return float(hits / n_c)
 
 
-def drift_metric(waveforms: np.ndarray[Any, Any], timestamps: np.ndarray[Any, Any], n_bins: int = 10) -> float:
+def drift_metric(
+    waveforms: np.ndarray[Any, Any], timestamps: np.ndarray[Any, Any], n_bins: int = 10
+) -> float:
     """Waveform drift metric. IBL 2019.
 
     Measures change in mean waveform amplitude over time.

@@ -207,7 +207,9 @@ class VectorizedSCLayer:
 
         return outputs / self.length
 
-    def _forward_sparse_gpu(self, packed_inputs: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:  # pragma: no cover
+    def _forward_sparse_gpu(
+        self, packed_inputs: np.ndarray[Any, Any]
+    ) -> np.ndarray[Any, Any]:  # pragma: no cover
         """CuPy CSR matmul path for sparse connectivity on GPU."""
         import cupy
         import cupyx.scipy.sparse as cusp
