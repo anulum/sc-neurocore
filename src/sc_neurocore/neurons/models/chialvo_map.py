@@ -8,7 +8,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import numpy as np
+
+from sc_neurocore.utils.numerics import safe_exp
 
 
 @dataclass
@@ -29,7 +30,7 @@ class ChialvoMapNeuron:
 
     def step(self, current: float = 0.0) -> int:
         x_prev = self.x
-        x_new = self.x**2 * np.exp(self.y - self.x) + self.k + current
+        x_new = self.x**2 * safe_exp(self.y - self.x) + self.k + current
         y_new = self.a * self.y - self.b * self.x + self.c
         self.x = x_new
         self.y = y_new
