@@ -272,15 +272,15 @@ class _SimCache:
 _cache = _SimCache()
 
 
-def _safe(fn: Callable[..., Any], detail_prefix: str = "") -> Any:
+def _safe(fn: Callable[..., Any]) -> Any:
     try:
         return fn()
     except HTTPException:
         raise
     except (ValueError, TypeError, KeyError):
-        raise HTTPException(status_code=422, detail=f"{detail_prefix}Invalid input") from None
+        raise HTTPException(status_code=422, detail="Invalid input") from None
     except Exception:
-        raise HTTPException(status_code=500, detail=f"{detail_prefix}Internal error") from None
+        raise HTTPException(status_code=500, detail="Internal error") from None
 
 
 def _make_simulate_fn(req_dict: dict[str, Any]) -> Callable[..., dict[str, Any]]:
@@ -420,7 +420,7 @@ def create_app() -> FastAPI:
             _cache.put(cache_key, result)
             return result
 
-        return _safe(fn, f"Model '{req.name}': ")
+        return _safe(fn)
 
     @app.get("/api/cache/stats")
     def api_cache_stats() -> dict[str, int]:
@@ -641,7 +641,7 @@ def create_app() -> FastAPI:
             }
             return characterize_model(sim_fn, base_cfg)
 
-        return _safe(fn, f"Characterize '{req.name}': ")
+        return _safe(fn)
 
     # --- Multi-model Overlay ---
     @app.post("/api/multi-simulate")
