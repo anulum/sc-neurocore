@@ -203,3 +203,7 @@ print(f"TMR+SC output: {voted}")
 - [Tutorial 13: Fixed-Point Arithmetic](13_fixed_point_design.md) — Q8.8 details
 - [Tutorial 26: Predictive Coding](26_predictive_coding.md) — another SC advantage
 - [Safety: FMEA](../safety/FMEA_SNN_COMPILER.md) — failure mode analysis
+
+## Interactive Notebook
+
+Run the hands-on notebook: [`notebooks/15_fault_tolerance.ipynb`](https://github.com/anulum/sc-neurocore/blob/main/notebooks/15_fault_tolerance.ipynb)

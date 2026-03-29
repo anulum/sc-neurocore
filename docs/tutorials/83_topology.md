@@ -102,3 +102,7 @@ that your designed connectivity has the desired graph properties.
 - Barabási & Albert (1999). "Emergence of Scaling in Random Networks."
   Science 286:509-512.
 - Sporns (2011). "Networks of the Brain." MIT Press.
+
+## Interactive Notebook
+
+Run the hands-on notebook: [`notebooks/09_topology_and_dynamics.ipynb`](https://github.com/anulum/sc-neurocore/blob/main/notebooks/09_topology_and_dynamics.ipynb)

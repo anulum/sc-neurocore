@@ -61,6 +61,7 @@ nav:
       - SC for Hardware Engineers: guides/SC_FOR_HARDWARE_ENGINEERS.md
       - SC for ML Engineers: guides/SC_FOR_ML_ENGINEERS.md
       - Spike Codec Library: guides/bci_codec.md
+      - Notebook Guide: guides/notebook_guide.md
       - NIR Integration: guides/nir_integration.md
       - Visual Studio: guides/studio.md
       - Encoding Guide: guides/encoding_guide.md

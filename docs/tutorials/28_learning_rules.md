@@ -267,3 +267,7 @@ sp = StructuralPlasticity(growth_rate=0.001, prune_threshold=0.01)
 - [Tutorial 08: Online Learning](08_online_learning_stdp.md) — STDP in depth
 - [Tutorial 34: ArcaneNeuron](34_arcane_neuron.md) — meta-learning rate dynamics
 - [API: Learning](../api/learning.md) — auto-generated API docs
+
+## Interactive Notebook
+
+Run the hands-on notebook: [`notebooks/12_learning_rules.ipynb`](https://github.com/anulum/sc-neurocore/blob/main/notebooks/12_learning_rules.ipynb)

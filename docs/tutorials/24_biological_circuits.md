@@ -290,3 +290,7 @@ results = col.run(thalamic_input=np.ones(20) * 5.0, steps=500)
 - [Tutorial 02: Building Your First SNN](02_building_your_first_snn.md) — basic neuron/synapse concepts
 - [Tutorial 31: Network Simulation Engine](31_network_simulation_engine.md) — Population-Projection-Network
 - [API: Bio](../api/bio.md) — biological circuit API docs
+
+## Interactive Notebook
+
+Run the hands-on notebook: [`notebooks/11_biological_circuits.ipynb`](https://github.com/anulum/sc-neurocore/blob/main/notebooks/11_biological_circuits.ipynb)

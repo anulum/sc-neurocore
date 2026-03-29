@@ -281,3 +281,7 @@ clamping at +127. The compiler prevents this automatically.
 - [Tutorial 13: Fixed-Point Arithmetic](13_fixed_point_design.md) — Q8.8 details
 - [API: Compiler](../api/compiler.md) — auto-generated API docs
 - [Hardware Guide](../hardware/HARDWARE_GUIDE.md) — FPGA deployment
+
+## Interactive Notebook
+
+Run the hands-on notebook: [`notebooks/08_equation_to_verilog.ipynb`](https://github.com/anulum/sc-neurocore/blob/main/notebooks/08_equation_to_verilog.ipynb)
