@@ -280,3 +280,76 @@ class TestNetworkBackendCoverage:
         drive = PoissonInput(n=5, rate_hz=100.0, weight=2.0, dt=0.001, seed=42)
         net = Network(pop, drive)
         net.run(duration=0.01, dt=0.001, backend="python", progress=True)
+
+
+# --- Rust backend mock coverage ---
+
+
+class TestRustBackendMock:
+    def test_get_rust_engine_caches(self):
+        import sc_neurocore.network.network as netmod
+
+        old = netmod._RUST_ENGINE
+        try:
+            netmod._RUST_ENGINE = None
+            result = netmod._get_rust_engine()
+            assert result is False
+            assert netmod._RUST_ENGINE is False
+        finally:
+            netmod._RUST_ENGINE = old
+
+    def test_rust_supports_model_false(self):
+        import sc_neurocore.network.network as netmod
+
+        assert not netmod._rust_supports_model("StochasticLIFNeuron")
+
+    def test_can_use_rust_with_stimuli(self):
+        pop = Population(StochasticLIFNeuron, n=5, label="test")
+        drive = PoissonInput(n=5, rate_hz=100.0, weight=2.0, dt=0.001, seed=42)
+        net = Network(pop, drive)
+        assert not net._can_use_rust()
+
+    def test_can_use_rust_with_plasticity(self):
+        pop = Population(StochasticLIFNeuron, n=5, label="test")
+        proj = Projection(pop, pop, weight=0.3, probability=0.3, plasticity="stdp", seed=42)
+        net = Network(pop, proj)
+        assert not net._can_use_rust()
+
+    def test_run_rust_mock(self):
+        from unittest.mock import MagicMock
+        import sc_neurocore.network.network as netmod
+
+        mock_runner = MagicMock()
+        mock_runner.add_population.return_value = 0
+        mock_runner.run.return_value = {
+            "voltages": [np.zeros(5)],
+            "spike_data": [np.array([], dtype=np.uint64)],
+        }
+        mock_cls = MagicMock(return_value=mock_runner)
+        mock_cls.supported_models.return_value = ["StochasticLIFNeuron"]
+
+        old = netmod._RUST_ENGINE
+        try:
+            netmod._RUST_ENGINE = mock_cls
+            pop = Population(StochasticLIFNeuron, n=5, label="test")
+            mon = SpikeMonitor(pop)
+            net = Network(pop, mon)
+            net.run(duration=0.005, dt=0.001, backend="rust")
+            mock_runner.run.assert_called_once()
+        finally:
+            netmod._RUST_ENGINE = old
+
+    def test_rust_supports_model_mock(self):
+        from unittest.mock import MagicMock
+        import sc_neurocore.network.network as netmod
+
+        mock_cls = MagicMock()
+        mock_cls.supported_models.return_value = ["StochasticLIFNeuron"]
+
+        old = netmod._RUST_ENGINE
+        try:
+            netmod._RUST_ENGINE = mock_cls
+            assert netmod._rust_supports_model("StochasticLIFNeuron")
+            assert not netmod._rust_supports_model("Nonexistent")
+        finally:
+            netmod._RUST_ENGINE = old
