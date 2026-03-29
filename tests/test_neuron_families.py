@@ -201,9 +201,7 @@ class TestNeuronFamilies:
         name, neuron, I = model_and_current
         eq_vars = set(neuron.equations.keys())
         state_vars = set(neuron.state.keys())
-        assert eq_vars == state_vars, (
-            f"{name}: equations have {eq_vars}, state has {state_vars}"
-        )
+        assert eq_vars == state_vars, f"{name}: equations have {eq_vars}, state has {state_vars}"
 
     def test_deterministic(self, model_and_current):
         """Same initial state + same input → same result."""
@@ -217,7 +215,9 @@ class TestNeuronFamilies:
             assert s1 == s2, f"{name}: non-deterministic at same input"
         for var in neuron1.state:
             np.testing.assert_allclose(
-                neuron1.state[var], neuron2.state[var], rtol=1e-10,
+                neuron1.state[var],
+                neuron2.state[var],
+                rtol=1e-10,
                 err_msg=f"{name}: divergent state in {var}",
             )
 

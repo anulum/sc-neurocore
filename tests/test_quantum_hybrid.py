@@ -95,9 +95,7 @@ class TestQuantumStochasticLayer:
         qsl = QuantumStochasticLayer(n_qubits=n, length=4096)
         np.random.seed(42)
         probs = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
-        input_bits = np.stack([
-            (np.random.random(4096) < p).astype(np.uint8) for p in probs
-        ])
+        input_bits = np.stack([(np.random.random(4096) < p).astype(np.uint8) for p in probs])
         output = qsl.forward(input_bits)
         p_out = np.mean(output, axis=1)
         expected = np.cos(probs * np.pi / 2) ** 2

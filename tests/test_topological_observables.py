@@ -146,8 +146,7 @@ class TestConnectionCurvature:
     def test_synchronised_equals_coupling(self):
         """cos(0) = 1, so F_ij = K_ij when synchronised."""
         N = 4
-        K = np.array([[0, 0.5, 0.3, 0], [0.5, 0, 0, 0.2],
-                       [0.3, 0, 0, 0.1], [0, 0.2, 0.1, 0]])
+        K = np.array([[0, 0.5, 0.3, 0], [0.5, 0, 0, 0.2], [0.3, 0, 0, 0.1], [0, 0.2, 0.1, 0]])
         phases = np.zeros(N)
         F = connection_curvature(phases, K)
         np.testing.assert_allclose(F, K, atol=1e-10)
