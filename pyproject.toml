@@ -200,6 +200,6 @@ module = ['cupy.*', 'cupyx.*', 'mpi4py.*', 'numba.*', 'matplotlib.*', 'scipy.*',
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = ['sc_neurocore.training.*', 'sc_neurocore.qat.*', 'sc_neurocore.accel.jax_backend', 'sc_neurocore.accel.jit_kernels']
+module = ['sc_neurocore.training.*', 'sc_neurocore.qat.*', 'sc_neurocore.conversion.*', 'sc_neurocore.accel.jax_backend', 'sc_neurocore.accel.jit_kernels']
 disallow_subclassing_any = false
 disallow_untyped_decorators = false
