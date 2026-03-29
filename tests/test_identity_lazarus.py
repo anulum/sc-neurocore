@@ -142,7 +142,7 @@ class TestCheckpoint:
     def test_load_file_not_found(self):
         try:
             Checkpoint.load("/nonexistent/path.npz")
-            assert False, "should raise"
+            raise AssertionError("should raise FileNotFoundError")
         except (FileNotFoundError, OSError):
             pass
 

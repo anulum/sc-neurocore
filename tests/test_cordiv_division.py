@@ -10,7 +10,6 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from sc_neurocore.utils.bitstreams import (
     generate_bernoulli_bitstream,
@@ -123,4 +122,4 @@ class TestAdaptiveLength:
         delta = 0.05  # 95% confidence
         expected_min = np.log(2.0 / delta) / (2.0 * eps ** 2)
         L = adaptive_length(0.5, epsilon=eps, confidence=0.95, max_length=100000)
-        assert L >= int(expected_min) - 1, f"L={L} < Hoeffding {expected_min:.0f}"
+        assert int(expected_min) - 1 <= L, f"L={L} < Hoeffding {expected_min:.0f}"
