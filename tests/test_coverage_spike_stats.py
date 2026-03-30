@@ -691,3 +691,90 @@ def test_dtf_singular():
     trains = [np.zeros(50, dtype=np.int8)] * 3
     r = directed_transfer_function(trains, order=2)
     assert r.shape[0] > 0
+
+
+# === ROUND 3: precise branch targeting ===
+
+from sc_neurocore.analysis.spike_stats.stimulus import spatial_information as _si2
+
+
+def test_spatial_info_with_rate():
+    # stimulus.py:74 — mean_rate > 0 path
+    rng = np.random.default_rng(42)
+    train = rng.integers(0, 2, size=200, dtype=np.int8)
+    pos = rng.uniform(0, 1, size=200)
+    r = _si2(train, pos, n_bins=10)
+    assert np.isfinite(r)
+
+
+def test_sorting_cutoff_nonzero():
+    # sorting_quality.py:148 — total > 0, right > left
+    amps = np.concatenate([np.random.randn(200) + 2, np.random.randn(50) + 5])
+    r = amplitude_cutoff(amps, bins=50)
+    assert np.isfinite(r)
+
+
+def test_cubic_with_real_data():
+    # patterns.py:81 — valid_n > 0
+    rng = np.random.default_rng(1)
+    train = rng.integers(0, 2, size=500, dtype=np.int8).astype(np.float64)
+    r = cubic_higher_order(train, max_lag=3)
+    assert np.any(r != 0)
+
+
+def test_ssi_mixed_classes():
+    # information.py:145 — n_s > 0 AND mean_s > 0
+    counts = np.array([1, 5, 2, 8, 3, 7, 4, 6])
+    labels = np.array([0, 1, 0, 1, 0, 1, 0, 1])
+    r = stimulus_specific_information(counts, labels)
+    assert r >= 0
+
+
+def test_spike_sync_close_spikes():
+    # distance.py:160 — total_coincidences > 0
+    ta = np.array([0.1, 0.2, 0.3, 0.4, 0.5])
+    tb = np.array([0.101, 0.201, 0.301, 0.401, 0.501])
+    r = _spike_sync(ta, tb)
+    assert r > 0
+
+
+def test_sttc_with_real_spikes():
+    # correlation.py:123 — ta and tb both non-empty
+    rng = np.random.default_rng(42)
+    a = rng.integers(0, 2, size=500, dtype=np.int8)
+    b = rng.integers(0, 2, size=500, dtype=np.int8)
+    r = spike_time_tiling_coefficient(a, b, delta_ms=5.0)
+    assert np.isfinite(r)
+
+
+def test_lda_decode_valid():
+    # decoding.py:84 — len(classes) >= 2
+    from sc_neurocore.analysis.spike_stats.decoding import linear_discriminant_decode
+
+    train_data = np.array([[1, 2], [2, 3], [5, 6], [6, 7]], dtype=float)
+    labels = np.array([0, 0, 1, 1])
+    r = linear_discriminant_decode(train_data, labels, np.array([3.0, 4.0]))
+    assert r in (0, 1)
+
+
+def test_dtf_with_real_data():
+    # causality.py:186 — det_a NOT near zero
+    rng = np.random.default_rng(42)
+    trains = [rng.integers(0, 2, size=200, dtype=np.int8) for _ in range(3)]
+    r = directed_transfer_function(trains, order=2)
+    assert r.shape[0] > 0
+
+
+def test_waveform_recovery_valid():
+    # waveform.py:53 — dv.size > 0 path
+    wf = np.array([0.0, -1.0, -0.5, 0.2, 0.8, 0.5, 0.1])
+    r = waveform_recovery_slope(wf, dt=1.0)
+    assert np.isfinite(r)
+
+
+def test_rescaled_range_real_data():
+    # variability.py:334 — scales with real data
+    rng = np.random.default_rng(42)
+    train = rng.integers(0, 2, size=2000, dtype=np.int8)
+    r = rescaled_range(train)
+    assert np.isfinite(r)

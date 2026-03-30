@@ -282,3 +282,71 @@ def test_network_stimulus_poisson_routing():
     mon = SpikeMonitor(pop)
     net = Network(pop, drive, mon)
     net.run(duration=0.05, dt=0.001, backend="python")
+
+
+# === ROUND 3: precise branch targeting ===
+
+from sc_neurocore.utils.numerics import clip_gating, boltzmann
+
+
+def test_clip_gating():
+    # numerics.py:51 area
+    assert clip_gating(1.5) == 1.0
+    assert clip_gating(-0.5) == 0.0
+
+
+def test_boltzmann():
+    r = boltzmann(-60.0, -40.0, 10.0)
+    assert 0 < r < 1
+
+
+def test_projection_uniform_max_delay():
+    # projection.py:191,193 — uniform delay path
+    src = Population(LapicqueNeuron, n=3, label="du")
+    tgt = Population(LapicqueNeuron, n=3, label="dv")
+    proj = Projection(src, tgt, weight=0.5, probability=1.0, delay=5)
+    assert proj.delay_mode == "uniform"
+    assert proj.max_delay == 5
+
+
+def test_population_get_states_dataclass():
+    # population.py:102 — __dataclass_fields__ branch
+    pop = Population(LapicqueNeuron, n=3, label="dc")
+    states = pop.get_states()
+    assert "v" in states
+    assert "tau" in states
+
+
+def test_decoder_with_spiking_substrate():
+    # decoder.py:72-73 — group >= 2 → append attractor
+    sub = IdentitySubstrate(n_cortical=8)
+    rng = np.random.default_rng(0)
+    for _ in range(200):
+        sub.step(rng.standard_normal(8) * 10)
+    dec = StateDecoder(sub)
+    attractors = dec.extract_attractor_states(threshold=0.3)
+    assert isinstance(attractors, list)
+
+
+def test_substrate_with_spiking():
+    # substrate.py:271 — psd.sum() > 0 path
+    sub = IdentitySubstrate(n_cortical=8)
+    rng = np.random.default_rng(42)
+    for _ in range(500):
+        sub.step(rng.standard_normal(8) * 20)
+    state = sub.extract_state()
+    assert "total_steps" in state
+    assert state["total_steps"] == 500
+
+
+from sc_neurocore.network.stimulus import StepCurrent
+
+
+def test_network_step_current():
+    # network.py:206 — StepCurrent branch
+    pop = Population(LapicqueNeuron, n=5, label="sc")
+    step = StepCurrent(onset=10, offset=50, amplitude=5.0)
+    step.target = pop
+    mon = SpikeMonitor(pop)
+    net = Network(pop, step, mon)
+    net.run(duration=0.1, dt=0.001, backend="python")
