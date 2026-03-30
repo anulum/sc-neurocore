@@ -370,3 +370,187 @@ def test_safe_tanh():
 def test_boltzmann_inv():
     r = boltzmann_inv(-60.0, -40.0, 10.0)
     assert 0 < r < 1
+
+
+# === ROUND 5: mock Rust engine, MPI, pretrained weights ===
+
+from unittest.mock import MagicMock, patch
+
+
+def test_rust_engine_import_success():
+    # network.py:31 — _RUST_ENGINE = NetworkRunner
+    import sc_neurocore.network.network as _nn
+
+    old = _nn._RUST_ENGINE
+    try:
+        _nn._RUST_ENGINE = None
+        mock_runner = MagicMock()
+        mock_module = MagicMock()
+        mock_module.NetworkRunner = mock_runner
+        with patch.dict(
+            "sys.modules",
+            {
+                "sc_neurocore_engine": mock_module,
+                "sc_neurocore_engine.sc_neurocore_engine": mock_module,
+            },
+        ):
+            result = _nn._get_rust_engine()
+        assert result is not False
+    finally:
+        _nn._RUST_ENGINE = old
+
+
+def test_can_use_rust_all_supported():
+    # network.py:81-84 — loop through pops, all supported
+    import sc_neurocore.network.network as _nn
+
+    old = _nn._RUST_ENGINE
+    try:
+        mock_engine = MagicMock()
+        mock_engine.SUPPORTED_MODELS = ["LapicqueNeuron"]
+        _nn._RUST_ENGINE = mock_engine
+        pop = Population(LapicqueNeuron, n=3, label="ru")
+        net = Network(pop)
+        with patch.object(_nn, "_rust_supports_model", return_value=True):
+            r = net._can_use_rust()
+        assert r is True
+    finally:
+        _nn._RUST_ENGINE = old
+
+
+def test_run_mpi():
+    # network.py:117 — runner.run(n_steps, dt)
+    pop = Population(LapicqueNeuron, n=3, label="mpi")
+    net = Network(pop)
+    mock_runner_inst = MagicMock()
+    mock_mpi_cls = MagicMock(return_value=mock_runner_inst)
+    mock_mpi_module = MagicMock()
+    mock_mpi_module.MPIRunner = mock_mpi_cls
+    with patch.dict("sys.modules", {"sc_neurocore.network.mpi_runner": mock_mpi_module}):
+        with patch("sc_neurocore.network.network.MPIRunner", mock_mpi_cls, create=True):
+            net._run_mpi(0.01, 0.001)
+    mock_runner_inst.run.assert_called_once()
+
+
+def test_run_rust_full():
+    # network.py:131-133,157-159 — projection add + spike unpacking
+    import sc_neurocore.network.network as _nn
+
+    pop = Population(LapicqueNeuron, n=3, label="rf")
+    mon = SpikeMonitor(pop)
+    proj_src = Population(LapicqueNeuron, n=3, label="rs")
+    proj = Projection(proj_src, pop, weight=0.5, probability=1.0)
+    proj._delay_steps = 0
+    net = Network(pop)
+    net.add(proj_src)
+    net.add(proj)
+    net.add(mon)
+
+    mock_runner_inst = MagicMock()
+    mock_runner_inst.add_population.side_effect = [0, 1]
+    mock_runner_inst.run.return_value = {
+        "voltages": [np.zeros(3), np.zeros(3)],
+        "spike_data": [
+            np.array([0x0000000100000005], dtype=np.uint64),
+            np.array([], dtype=np.uint64),
+        ],
+    }
+    mock_engine = MagicMock(return_value=mock_runner_inst)
+
+    old = _nn._RUST_ENGINE
+    try:
+        _nn._RUST_ENGINE = mock_engine
+        net._run_rust(0.01, 0.001)
+    finally:
+        _nn._RUST_ENGINE = old
+
+    assert mon.count > 0
+
+
+def test_network_stimulus_timed_array():
+    # network.py:203,206 — TimedArray branch
+    from sc_neurocore.network.stimulus import TimedArray
+
+    pop = Population(LapicqueNeuron, n=3, label="ta")
+    ta = TimedArray(values=[0.0, 1.0, 2.0, 3.0, 4.0] * 20)
+    ta.target = pop
+    mon = SpikeMonitor(pop)
+    net = Network(pop, ta, mon)
+    net.run(duration=0.05, dt=0.001, backend="python")
+
+
+def test_network_stimulus_no_target():
+    # network.py:203 — target is None → use first pop
+    pop = Population(LapicqueNeuron, n=3, label="nt")
+    drive = PoissonInput(n=3, rate_hz=500.0, weight=2.0, dt=0.001, seed=42)
+    drive.target = None
+    mon = SpikeMonitor(pop)
+    net = Network(pop)
+    net.add(drive)
+    net.add(mon)
+    net.run(duration=0.01, dt=0.001, backend="python")
+
+
+def test_pretrained_mnist(tmp_path):
+    # pretrained.py:66,72-74 — mnist path
+    from sc_neurocore.model_zoo import pretrained as _pt
+    from sc_neurocore.model_zoo.configs import mnist_classifier
+
+    weight_path = tmp_path / "mnist_784_128_10.npz"
+    net = mnist_classifier()
+    W0 = np.random.randn(784, 128).astype(np.float64) * 0.01
+    W1 = np.random.randn(128, 10).astype(np.float64) * 0.01
+    np.savez(weight_path, W0=W0, W1=W1)
+
+    old_dir = _pt._WEIGHTS_DIR
+    try:
+        _pt._WEIGHTS_DIR = tmp_path
+        result = _pt.load_pretrained("mnist")
+        assert len(result.projections) >= 2
+    finally:
+        _pt._WEIGHTS_DIR = old_dir
+
+
+def test_pretrained_shd(tmp_path):
+    # pretrained.py:76-78 — shd path
+    from sc_neurocore.model_zoo import pretrained as _pt
+    from sc_neurocore.model_zoo.configs import shd_speech_classifier
+
+    weight_path = tmp_path / "shd_700_256_20.npz"
+    net = shd_speech_classifier()
+    W0 = np.random.randn(700, 256).astype(np.float64) * 0.01
+    W_rec = np.random.randn(256, 256).astype(np.float64) * 0.01
+    W1 = np.random.randn(256, 20).astype(np.float64) * 0.01
+    np.savez(weight_path, W0=W0, W_rec=W_rec, W1=W1)
+
+    old_dir = _pt._WEIGHTS_DIR
+    try:
+        _pt._WEIGHTS_DIR = tmp_path
+        result = _pt.load_pretrained("shd")
+        assert len(result.projections) >= 3
+    finally:
+        _pt._WEIGHTS_DIR = old_dir
+
+
+def test_projection_uniform_delay_max():
+    # projection.py:191,193 — uniform delay path via max_delay property
+    src = Population(LapicqueNeuron, n=3, label="d1")
+    tgt = Population(LapicqueNeuron, n=3, label="d2")
+    proj = Projection(src, tgt, weight=0.5, probability=1.0, delay=7)
+    assert proj.delay_mode == "uniform"
+    assert proj.max_delay == 7
+
+
+def test_topology_scale_free_early():
+    # topology.py:87 — total == 0 fallback
+    data, indices, indptr = scale_free(n=3, m=1, weight=1.0, seed=99)
+    assert indices.size > 0
+
+
+def test_population_get_states_plain_object():
+    # population.py:102 — else: keys = ["v"]
+    from sc_neurocore.neurons.models.mcculloch_pitts import McCullochPittsNeuron
+
+    pop = Population(McCullochPittsNeuron, n=3, label="mp")
+    states = pop.get_states()
+    assert isinstance(states, dict)
