@@ -24,13 +24,11 @@ from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count
 
 
-def _run(neuron: RallCableNeuron, current: float,
-         steps: int) -> list[int]:
+def _run(neuron: RallCableNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
 
 
 class TestRallCableIsolation:
-
     def test_construction_defaults(self):
         n = RallCableNeuron()
         assert n.n_comp == 5
@@ -66,7 +64,6 @@ class TestRallCableIsolation:
 
 
 class TestRallCablePropagation:
-
     def test_distal_depolarises_more(self):
         """Current at distal end → distal compartment most depolarised."""
         n = RallCableNeuron()
@@ -81,9 +78,7 @@ class TestRallCablePropagation:
             n.step(200.0)
         # Monotonic attenuation: v[4] > v[3] > ... > v[0]
         for i in range(n.n_comp - 1):
-            assert n.v[i + 1] >= n.v[i] - 1.0, (
-                f"Compartment {i}: {n.v[i]:.2f} > {n.v[i+1]:.2f}"
-            )
+            assert n.v[i + 1] >= n.v[i] - 1.0, f"Compartment {i}: {n.v[i]:.2f} > {n.v[i + 1]:.2f}"
 
     def test_coupling_strength_affects_propagation(self):
         """Stronger coupling (g_ratio) → less attenuation → more somatic depolarisation."""
@@ -98,7 +93,6 @@ class TestRallCablePropagation:
 
 
 class TestRallCableSpiking:
-
     def test_fewer_compartments_easier_to_spike(self):
         """Shorter cable (fewer compartments) → less attenuation → more spikes."""
         n2 = RallCableNeuron(n_comp=2, g_ratio=2.0)
@@ -132,7 +126,6 @@ class TestRallCableSpiking:
 
 
 class TestRallCableParameters:
-
     @pytest.mark.parametrize("n_comp", [2, 3, 5, 10])
     def test_n_comp_variations(self, n_comp: int):
         n = RallCableNeuron(n_comp=n_comp)
@@ -158,7 +151,6 @@ class TestRallCableParameters:
 
 
 class TestRallCableNetwork:
-
     def test_population_incompatible(self):
         """RallCableNeuron has array-valued v — Population._sync_voltages
         cannot handle this (expects scalar v). Document this limitation."""
@@ -167,7 +159,6 @@ class TestRallCableNetwork:
 
 
 class TestRallCableAnalysis:
-
     def test_spike_count(self):
         n = RallCableNeuron(n_comp=2, g_ratio=5.0)
         train = np.array([float(n.step(500.0)) for _ in range(50000)])

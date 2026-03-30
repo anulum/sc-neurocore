@@ -29,8 +29,8 @@ from sc_neurocore.analysis.spike_stats.basic import spike_count
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _run(neuron: PospischilNeuron, current: float,
-         steps: int) -> list[int]:
+
+def _run(neuron: PospischilNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
 
 
@@ -38,8 +38,8 @@ def _run(neuron: PospischilNeuron, current: float,
 # 1. Isolation
 # ---------------------------------------------------------------------------
 
-class TestPospischilIsolation:
 
+class TestPospischilIsolation:
     def test_construction_defaults(self):
         n = PospischilNeuron()
         assert n.v == -70.0
@@ -56,9 +56,7 @@ class TestPospischilIsolation:
         initial = (n.v, n.m, n.h, n.n, n.p)
         for _ in range(500):
             n.step(5.0)
-        for name, v0, v1 in zip(["v", "m", "h", "n", "p"],
-                                 initial,
-                                 (n.v, n.m, n.h, n.n, n.p)):
+        for name, v0, v1 in zip(["v", "m", "h", "n", "p"], initial, (n.v, n.m, n.h, n.n, n.p)):
             assert v0 != v1, f"{name} didn't evolve"
 
     def test_state_finite_long_run(self):
@@ -88,8 +86,8 @@ class TestPospischilIsolation:
 # 2. f–I curve
 # ---------------------------------------------------------------------------
 
-class TestPospischilFI:
 
+class TestPospischilFI:
     def test_subthreshold_no_spikes(self):
         """Low current (I<2) → no sustained spiking."""
         n = PospischilNeuron()
@@ -118,8 +116,8 @@ class TestPospischilFI:
 # 3. Spike-frequency adaptation (I_M) — key property
 # ---------------------------------------------------------------------------
 
-class TestPospischilAdaptation:
 
+class TestPospischilAdaptation:
     def test_adaptation_lengthens_later_isis(self):
         """I_M activates slowly → later ISIs should be longer than early ISIs.
 
@@ -150,9 +148,7 @@ class TestPospischilAdaptation:
         n_rs = PospischilNeuron(g_m=0.07)
         s_fs = len(_run(n_fs, current=5.0, steps=50000))
         s_rs = len(_run(n_rs, current=5.0, steps=50000))
-        assert s_fs > s_rs, (
-            f"FS: {s_fs} spikes, RS: {s_rs} — expected FS > RS"
-        )
+        assert s_fs > s_rs, f"FS: {s_fs} spikes, RS: {s_rs} — expected FS > RS"
 
     def test_g_m_scales_adaptation(self):
         """Higher g_m → stronger adaptation → fewer spikes."""
@@ -167,13 +163,16 @@ class TestPospischilAdaptation:
 # 4. Cell type variants
 # ---------------------------------------------------------------------------
 
-class TestPospischilCellTypes:
 
-    @pytest.mark.parametrize("g_m,label", [
-        (0.07, "RS"),
-        (0.0, "FS"),
-        (0.03, "IB"),
-    ])
+class TestPospischilCellTypes:
+    @pytest.mark.parametrize(
+        "g_m,label",
+        [
+            (0.07, "RS"),
+            (0.0, "FS"),
+            (0.03, "IB"),
+        ],
+    )
     def test_cell_type_fires(self, g_m: float, label: str):
         """All cell types should fire at sufficient current."""
         n = PospischilNeuron(g_m=g_m)
@@ -193,8 +192,8 @@ class TestPospischilCellTypes:
 # 5. Gating and stability
 # ---------------------------------------------------------------------------
 
-class TestPospischilGating:
 
+class TestPospischilGating:
     def test_gating_bounded(self):
         """m, h, n, p should stay approximately in [0, 1]."""
         n = PospischilNeuron()
@@ -215,8 +214,8 @@ class TestPospischilGating:
 # 6. Upward crossing detection
 # ---------------------------------------------------------------------------
 
-class TestPospischilSpikeMechanism:
 
+class TestPospischilSpikeMechanism:
     def test_upward_crossing_only(self):
         n = PospischilNeuron()
         prev_v = n.v
@@ -239,8 +238,8 @@ class TestPospischilSpikeMechanism:
 # 7. Determinism
 # ---------------------------------------------------------------------------
 
-class TestPospischilDeterminism:
 
+class TestPospischilDeterminism:
     def test_bit_exact_reproducibility(self):
         traces = []
         for _ in range(2):
@@ -254,8 +253,8 @@ class TestPospischilDeterminism:
 # 8. Network
 # ---------------------------------------------------------------------------
 
-class TestPospischilNetwork:
 
+class TestPospischilNetwork:
     def test_population(self):
         pop = Population(PospischilNeuron, n=5, label="posp")
         assert pop.n == 5
@@ -273,8 +272,8 @@ class TestPospischilNetwork:
 # 9. Analysis
 # ---------------------------------------------------------------------------
 
-class TestPospischilAnalysis:
 
+class TestPospischilAnalysis:
     def test_spike_count(self):
         n = PospischilNeuron()
         train = np.array([float(n.step(10.0)) for _ in range(50000)])

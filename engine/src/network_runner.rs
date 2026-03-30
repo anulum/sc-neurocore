@@ -737,9 +737,9 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         "AttentionGated" | "AttentionGatedNeuron" => {
             Ok(NeuronVariant::AttentionGated(AttentionGatedNeuron::new()))
         }
-        "PredictiveCoding" | "PredictiveCodingNeuron" => {
-            Ok(NeuronVariant::PredictiveCoding(PredictiveCodingNeuron::new()))
-        }
+        "PredictiveCoding" | "PredictiveCodingNeuron" => Ok(NeuronVariant::PredictiveCoding(
+            PredictiveCodingNeuron::new(),
+        )),
         "SelfReferential" | "SelfReferentialNeuron" => {
             Ok(NeuronVariant::SelfReferential(SelfReferentialNeuron::new()))
         }
@@ -762,9 +762,9 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         "InhomogeneousPoisson" | "InhomogeneousPoissonNeuron" => Ok(
             NeuronVariant::InhomogeneousPoisson(InhomogeneousPoissonNeuron::new(1.0, 42)),
         ),
-        "GammaRenewal" | "GammaRenewalNeuron" => {
-            Ok(NeuronVariant::GammaRenewal(GammaRenewalNeuron::new(50.0, 3, 42)))
-        }
+        "GammaRenewal" | "GammaRenewalNeuron" => Ok(NeuronVariant::GammaRenewal(
+            GammaRenewalNeuron::new(50.0, 3, 42),
+        )),
         "EscapeRate" | "EscapeRateNeuron" => {
             Ok(NeuronVariant::EscapeRate(EscapeRateNeuron::new(42)))
         }

@@ -28,8 +28,8 @@ from sc_neurocore.analysis.spike_stats.basic import spike_count
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _run(neuron: PrescottNeuron, current: float,
-         steps: int) -> list[int]:
+
+def _run(neuron: PrescottNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
 
 
@@ -37,8 +37,8 @@ def _run(neuron: PrescottNeuron, current: float,
 # 1. Isolation
 # ---------------------------------------------------------------------------
 
-class TestPrescottIsolation:
 
+class TestPrescottIsolation:
     def test_construction_defaults(self):
         n = PrescottNeuron()
         assert n.v == -65.0
@@ -76,15 +76,13 @@ class TestPrescottIsolation:
 # 2. Oscillatory dynamics
 # ---------------------------------------------------------------------------
 
-class TestPrescottOscillations:
 
+class TestPrescottOscillations:
     def test_spontaneous_oscillation(self):
         """Model oscillates even at I=0 (slow relaxation oscillation)."""
         n = PrescottNeuron()
         spikes = _run(n, current=0.0, steps=100000)
-        assert len(spikes) >= 3, (
-            f"Expected spontaneous oscillation, got {len(spikes)} spikes"
-        )
+        assert len(spikes) >= 3, f"Expected spontaneous oscillation, got {len(spikes)} spikes"
 
     def test_slow_isi(self):
         """ISI is on the order of thousands of steps (slow oscillator)."""
@@ -119,25 +117,21 @@ class TestPrescottOscillations:
 # 3. Excitability type via beta_w
 # ---------------------------------------------------------------------------
 
-class TestPrescottExcitability:
 
+class TestPrescottExcitability:
     def test_beta_w_modulates_firing(self):
         """Higher beta_w (more positive) → stronger slow K → fewer spikes."""
-        n_low = PrescottNeuron(beta_w=-30.0)   # Type I-like
-        n_high = PrescottNeuron(beta_w=-10.0)   # Type II/III-like
+        n_low = PrescottNeuron(beta_w=-30.0)  # Type I-like
+        n_high = PrescottNeuron(beta_w=-10.0)  # Type II/III-like
         s_low = len(_run(n_low, current=50.0, steps=100000))
         s_high = len(_run(n_high, current=50.0, steps=100000))
-        assert s_low >= s_high, (
-            f"beta_w=-30: {s_low} spikes, beta_w=-10: {s_high}"
-        )
+        assert s_low >= s_high, f"beta_w=-30: {s_low} spikes, beta_w=-10: {s_high}"
 
     def test_high_beta_w_suppresses_firing(self):
         """At beta_w=0, slow K is strongly activated → minimal firing."""
         n = PrescottNeuron(beta_w=0.0)
         spikes = _run(n, current=50.0, steps=100000)
-        assert len(spikes) <= 5, (
-            f"beta_w=0: {len(spikes)} spikes — expected suppression"
-        )
+        assert len(spikes) <= 5, f"beta_w=0: {len(spikes)} spikes — expected suppression"
 
     def test_w_dynamics_timescale(self):
         """w evolves on tau_w timescale. Larger tau_w → slower adaptation."""
@@ -156,8 +150,8 @@ class TestPrescottExcitability:
 # 4. Parameter sensitivity
 # ---------------------------------------------------------------------------
 
-class TestPrescottParameters:
 
+class TestPrescottParameters:
     def test_g_slow_affects_dynamics(self):
         """Different g_slow values produce different spike patterns.
 
@@ -193,8 +187,8 @@ class TestPrescottParameters:
 # 5. Determinism
 # ---------------------------------------------------------------------------
 
-class TestPrescottDeterminism:
 
+class TestPrescottDeterminism:
     def test_bit_exact(self):
         traces = []
         for _ in range(2):
@@ -208,8 +202,8 @@ class TestPrescottDeterminism:
 # 6. Network
 # ---------------------------------------------------------------------------
 
-class TestPrescottNetwork:
 
+class TestPrescottNetwork:
     def test_population(self):
         pop = Population(PrescottNeuron, n=5, label="prescott")
         assert pop.n == 5
@@ -227,8 +221,8 @@ class TestPrescottNetwork:
 # 7. Analysis
 # ---------------------------------------------------------------------------
 
-class TestPrescottAnalysis:
 
+class TestPrescottAnalysis:
     def test_spike_count(self):
         n = PrescottNeuron()
         train = np.array([float(n.step(50.0)) for _ in range(100000)])

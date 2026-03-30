@@ -28,15 +28,15 @@ from sc_neurocore.analysis.spike_stats.basic import spike_count
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _collect_spike_times(neuron: PerfectIntegratorNeuron,
-                         current: float, steps: int) -> list[int]:
+
+def _collect_spike_times(neuron: PerfectIntegratorNeuron, current: float, steps: int) -> list[int]:
     """Run neuron and return list of step indices where spikes occurred."""
     return [t for t in range(steps) if neuron.step(current) == 1]
 
 
-def _analytical_isi_steps(current: float, c_m: float,
-                          threshold: float, v_reset: float,
-                          dt: float) -> float:
+def _analytical_isi_steps(
+    current: float, c_m: float, threshold: float, v_reset: float, dt: float
+) -> float:
     """Exact ISI in steps: voltage ramp from v_reset to threshold.
 
     Each step adds dV = I/C * dt.  Steps to threshold = (θ - v_reset) / dV.
@@ -50,6 +50,7 @@ def _analytical_isi_steps(current: float, c_m: float,
 # ---------------------------------------------------------------------------
 # 1. Isolation tests — dynamics, invariants, edge cases
 # ---------------------------------------------------------------------------
+
 
 class TestPerfectIntegratorIsolation:
     """Core single-neuron dynamics."""
@@ -131,7 +132,11 @@ class TestPerfectIntegratorAnalyticalFI:
         steps = 10000
         spikes = sum(n.step(current) for _ in range(steps))
         isi_analytical = _analytical_isi_steps(
-            current, n.c_m, n.v_threshold, n.v_reset, n.dt,
+            current,
+            n.c_m,
+            n.v_threshold,
+            n.v_reset,
+            n.dt,
         )
         # Max 1 spike per step (discrete time clamp)
         expected_spikes = min(steps, steps / isi_analytical)
@@ -183,9 +188,7 @@ class TestPerfectIntegratorISI:
         assert len(times) >= 10, "Not enough spikes to analyse ISI"
         isis = np.diff(times)
         # All ISIs should be identical (±0 for deterministic model)
-        assert np.all(isis == isis[0]), (
-            f"ISI variability detected: unique ISIs = {np.unique(isis)}"
-        )
+        assert np.all(isis == isis[0]), f"ISI variability detected: unique ISIs = {np.unique(isis)}"
 
     def test_isi_matches_analytical(self):
         """Measured ISI matches C·(θ-V_reset) / (I·dt)."""
@@ -195,7 +198,11 @@ class TestPerfectIntegratorISI:
         assert len(times) >= 5
         measured_isi = np.median(np.diff(times))
         expected_isi = _analytical_isi_steps(
-            I, n.c_m, n.v_threshold, n.v_reset, n.dt,
+            I,
+            n.c_m,
+            n.v_threshold,
+            n.v_reset,
+            n.dt,
         )
         # Allow 1 step tolerance for floating-point rounding
         assert abs(measured_isi - round(expected_isi)) <= 1
@@ -317,6 +324,7 @@ class TestPerfectIntegratorParameterSweep:
 # 2. Network integration
 # ---------------------------------------------------------------------------
 
+
 class TestPerfectIntegratorNetwork:
     def test_population_construction(self):
         pop = Population(PerfectIntegratorNeuron, n=10, label="pi")
@@ -348,6 +356,7 @@ class TestPerfectIntegratorNetwork:
 # ---------------------------------------------------------------------------
 # 3. Analysis pipeline
 # ---------------------------------------------------------------------------
+
 
 class TestPerfectIntegratorAnalysis:
     def test_spike_count_matches_manual(self):
