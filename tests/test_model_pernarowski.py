@@ -29,8 +29,10 @@ from sc_neurocore.analysis.spike_stats.basic import spike_count
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _run_and_collect(neuron: PernarowskiNeuron, current: float,
-                     steps: int) -> tuple[list[int], list[float]]:
+
+def _run_and_collect(
+    neuron: PernarowskiNeuron, current: float, steps: int
+) -> tuple[list[int], list[float]]:
     """Return (spike_times, voltage_trace)."""
     spike_times: list[int] = []
     voltages: list[float] = []
@@ -46,8 +48,8 @@ def _run_and_collect(neuron: PernarowskiNeuron, current: float,
 # 1. Isolation — construction and basic dynamics
 # ---------------------------------------------------------------------------
 
-class TestPernarowskiIsolation:
 
+class TestPernarowskiIsolation:
     def test_construction_defaults(self):
         n = PernarowskiNeuron()
         assert n.v == -1.0
@@ -94,8 +96,8 @@ class TestPernarowskiIsolation:
 # 2. Oscillatory dynamics — the core of this model
 # ---------------------------------------------------------------------------
 
-class TestPernarowskiOscillations:
 
+class TestPernarowskiOscillations:
     def test_spontaneous_oscillation(self):
         """Model oscillates even with zero input (relaxation oscillator)."""
         n = PernarowskiNeuron()
@@ -146,8 +148,8 @@ class TestPernarowskiOscillations:
 # 3. Current-dependent regimes — f–I characteristics
 # ---------------------------------------------------------------------------
 
-class TestPernarowskiFI:
 
+class TestPernarowskiFI:
     def test_moderate_current_sustains_oscillation(self):
         """I ∈ [0, 1.0] should sustain oscillatory spiking."""
         for I in [0.0, 0.3, 0.5, 1.0]:
@@ -183,8 +185,8 @@ class TestPernarowskiFI:
 # 4. Slow variable dynamics
 # ---------------------------------------------------------------------------
 
-class TestPernarowskiSlowVariables:
 
+class TestPernarowskiSlowVariables:
     def test_z_evolves_slowly(self):
         """z (eps2=0.001) should change much more slowly than w (eps1=0.1)."""
         n = PernarowskiNeuron()
@@ -194,9 +196,7 @@ class TestPernarowskiSlowVariables:
             n.step(0.5)
         dz = abs(n.z - z_initial)
         dw = abs(n.w - w_initial)
-        assert dw > 10 * dz, (
-            f"dw={dw:.6f}, dz={dz:.6f} — z should be much slower than w"
-        )
+        assert dw > 10 * dz, f"dw={dw:.6f}, dz={dz:.6f} — z should be much slower than w"
 
     def test_eps2_affects_dynamics(self):
         """Increasing eps2 speeds up z, changing the burst pattern."""
@@ -205,9 +205,7 @@ class TestPernarowskiSlowVariables:
         s_slow, _ = _run_and_collect(n_slow, current=0.5, steps=10000)
         s_fast, _ = _run_and_collect(n_fast, current=0.5, steps=10000)
         # Different eps2 should produce different spike counts
-        assert len(s_slow) != len(s_fast), (
-            "eps2 change had no effect on spike count"
-        )
+        assert len(s_slow) != len(s_fast), "eps2 change had no effect on spike count"
 
     def test_z_bounded(self):
         """Ultra-slow variable z should remain bounded."""
@@ -221,8 +219,8 @@ class TestPernarowskiSlowVariables:
 # 5. Parameter sensitivity
 # ---------------------------------------------------------------------------
 
-class TestPernarowskiParameters:
 
+class TestPernarowskiParameters:
     def test_custom_threshold(self):
         """Lower threshold → more spikes detected."""
         n_low = PernarowskiNeuron(v_threshold=0.0)
@@ -267,8 +265,8 @@ class TestPernarowskiParameters:
 # 6. Determinism
 # ---------------------------------------------------------------------------
 
-class TestPernarowskiDeterminism:
 
+class TestPernarowskiDeterminism:
     def test_bit_exact_reproducibility(self):
         """Identical runs produce identical traces (no RNG)."""
         traces = []
@@ -283,8 +281,8 @@ class TestPernarowskiDeterminism:
 # 7. Network integration
 # ---------------------------------------------------------------------------
 
-class TestPernarowskiNetwork:
 
+class TestPernarowskiNetwork:
     def test_population(self):
         pop = Population(PernarowskiNeuron, n=10, label="pern")
         assert pop.n == 10
@@ -302,8 +300,8 @@ class TestPernarowskiNetwork:
 # 8. Analysis pipeline
 # ---------------------------------------------------------------------------
 
-class TestPernarowskiAnalysis:
 
+class TestPernarowskiAnalysis:
     def test_spike_count(self):
         n = PernarowskiNeuron()
         train = np.array([float(n.step(0.5)) for _ in range(5000)])

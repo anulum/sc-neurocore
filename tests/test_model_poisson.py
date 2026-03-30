@@ -28,8 +28,8 @@ from sc_neurocore.analysis.spike_stats.basic import spike_count
 # 1. Isolation — construction and basic API
 # ---------------------------------------------------------------------------
 
-class TestPoissonIsolation:
 
+class TestPoissonIsolation:
     def test_construction_defaults(self):
         n = PoissonNeuron()
         assert n.rate_hz == 100.0
@@ -54,8 +54,8 @@ class TestPoissonIsolation:
 # 2. Spike rate — statistical tests
 # ---------------------------------------------------------------------------
 
-class TestPoissonRate:
 
+class TestPoissonRate:
     def test_mean_rate_matches_lambda(self):
         """Over many trials, spike rate ≈ λ·dt/1000.
 
@@ -69,7 +69,7 @@ class TestPoissonRate:
         # 5σ tolerance for statistical test
         sigma = np.sqrt(N * 0.1 * 0.9)
         assert abs(spikes - expected) < 5 * sigma, (
-            f"spikes={spikes}, expected={expected:.0f}, 5σ={5*sigma:.0f}"
+            f"spikes={spikes}, expected={expected:.0f}, 5σ={5 * sigma:.0f}"
         )
 
     @pytest.mark.parametrize("rate_hz", [50.0, 100.0, 200.0, 500.0])
@@ -116,8 +116,8 @@ class TestPoissonRate:
 # 3. Statistical properties — ISI distribution
 # ---------------------------------------------------------------------------
 
-class TestPoissonISI:
 
+class TestPoissonISI:
     def test_isi_exponentially_distributed(self):
         """For Poisson process, ISI follows geometric distribution.
 
@@ -165,8 +165,8 @@ class TestPoissonISI:
 # 4. dt_ms scaling
 # ---------------------------------------------------------------------------
 
-class TestPoissonDtScaling:
 
+class TestPoissonDtScaling:
     def test_dt_scales_probability(self):
         """P(spike) = λ·dt/1000. Doubling dt doubles spike probability."""
         N = 100000
@@ -189,8 +189,8 @@ class TestPoissonDtScaling:
 # 5. Stochasticity
 # ---------------------------------------------------------------------------
 
-class TestPoissonStochasticity:
 
+class TestPoissonStochasticity:
     def test_different_runs_differ(self):
         """Two neurons with same params produce different spike trains."""
         n1 = PoissonNeuron(rate_hz=200.0)
@@ -216,8 +216,8 @@ class TestPoissonStochasticity:
 # 6. Network
 # ---------------------------------------------------------------------------
 
-class TestPoissonNetwork:
 
+class TestPoissonNetwork:
     def test_population(self):
         pop = Population(PoissonNeuron, n=20, label="poisson")
         assert pop.n == 20
@@ -236,8 +236,8 @@ class TestPoissonNetwork:
 # 7. Analysis
 # ---------------------------------------------------------------------------
 
-class TestPoissonAnalysis:
 
+class TestPoissonAnalysis:
     def test_spike_count(self):
         n = PoissonNeuron(rate_hz=200.0)
         train = np.array([float(n.step()) for _ in range(10000)])

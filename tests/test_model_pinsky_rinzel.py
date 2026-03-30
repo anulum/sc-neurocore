@@ -29,19 +29,20 @@ from sc_neurocore.analysis.spike_stats.basic import spike_count
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _run(neuron: PinskyRinzelNeuron, current_soma: float,
-         steps: int, current_dend: float = 0.0) -> list[int]:
+
+def _run(
+    neuron: PinskyRinzelNeuron, current_soma: float, steps: int, current_dend: float = 0.0
+) -> list[int]:
     """Return spike times."""
-    return [t for t in range(steps)
-            if neuron.step(current_soma, current_dend) == 1]
+    return [t for t in range(steps) if neuron.step(current_soma, current_dend) == 1]
 
 
 # ---------------------------------------------------------------------------
 # 1. Isolation — construction, state evolution, compartments
 # ---------------------------------------------------------------------------
 
-class TestPinskyRinzelIsolation:
 
+class TestPinskyRinzelIsolation:
     def test_construction_defaults(self):
         n = PinskyRinzelNeuron()
         assert n.v_s == -60.0
@@ -70,9 +71,7 @@ class TestPinskyRinzelIsolation:
             n.step(20.0)
         final = (n.v_s, n.v_d, n.h, n.n, n.s, n.c, n.q)
         diffs = [abs(f - i) for f, i in zip(final, initial)]
-        assert all(d > 1e-10 for d in diffs), (
-            f"Some variables didn't evolve: {diffs}"
-        )
+        assert all(d > 1e-10 for d in diffs), f"Some variables didn't evolve: {diffs}"
 
     def test_state_finite_long_run(self):
         """No divergence over 50k steps at moderate drive."""
@@ -100,8 +99,8 @@ class TestPinskyRinzelIsolation:
 # 2. Compartmental coupling
 # ---------------------------------------------------------------------------
 
-class TestPinskyRinzelCompartments:
 
+class TestPinskyRinzelCompartments:
     def test_soma_dendrite_coupling(self):
         """Somatic drive should affect dendritic voltage via gc coupling.
 
@@ -147,8 +146,8 @@ class TestPinskyRinzelCompartments:
 # 3. f–I curve — non-monotonic (key property)
 # ---------------------------------------------------------------------------
 
-class TestPinskyRinzelFI:
 
+class TestPinskyRinzelFI:
     def test_subthreshold_no_spikes(self):
         """Low current (I<10) produces no spikes."""
         n = PinskyRinzelNeuron()
@@ -160,9 +159,7 @@ class TestPinskyRinzelFI:
         for I in [20.0, 30.0, 50.0]:
             n = PinskyRinzelNeuron()
             spike_times = _run(n, current_soma=I, steps=50000)
-            assert len(spike_times) >= 10, (
-                f"I={I}: only {len(spike_times)} spikes"
-            )
+            assert len(spike_times) >= 10, f"I={I}: only {len(spike_times)} spikes"
 
     def test_non_monotonic_fi(self):
         """f–I curve is non-monotonic: peak around I≈50, then decline.
@@ -192,8 +189,8 @@ class TestPinskyRinzelFI:
 # 4. ISI regularity at peak firing
 # ---------------------------------------------------------------------------
 
-class TestPinskyRinzelISI:
 
+class TestPinskyRinzelISI:
     def test_isi_stabilises(self):
         """After transient, ISI should stabilise (limit cycle)."""
         n = PinskyRinzelNeuron()
@@ -221,17 +218,15 @@ class TestPinskyRinzelISI:
 # 5. Gating variable constraints
 # ---------------------------------------------------------------------------
 
-class TestPinskyRinzelGating:
 
+class TestPinskyRinzelGating:
     def test_gating_variables_bounded(self):
         """h, n, s, q should stay in [0, 1] (biological constraint)."""
         n = PinskyRinzelNeuron()
         for _ in range(50000):
             n.step(50.0)
         for name, val in [("h", n.h), ("n", n.n), ("s", n.s), ("q", n.q)]:
-            assert -0.01 <= val <= 1.01, (
-                f"{name} = {val:.6f}, outside [0, 1]"
-            )
+            assert -0.01 <= val <= 1.01, f"{name} = {val:.6f}, outside [0, 1]"
 
     def test_h_inactivation_at_high_current(self):
         """Na inactivation gate h should decrease under sustained depolarisation."""
@@ -239,17 +234,15 @@ class TestPinskyRinzelGating:
         h_initial = n.h
         for _ in range(50000):
             n.step(100.0)
-        assert n.h < h_initial, (
-            f"h = {n.h:.4f} >= {h_initial} — expected Na inactivation"
-        )
+        assert n.h < h_initial, f"h = {n.h:.4f} >= {h_initial} — expected Na inactivation"
 
 
 # ---------------------------------------------------------------------------
 # 6. Parameter sensitivity
 # ---------------------------------------------------------------------------
 
-class TestPinskyRinzelParameters:
 
+class TestPinskyRinzelParameters:
     def test_gc_coupling_strength(self):
         """Stronger coupling (gc) should synchronise compartments better."""
         n_weak = PinskyRinzelNeuron(gc=0.5)
@@ -259,9 +252,7 @@ class TestPinskyRinzelParameters:
             n_strong.step(20.0)
         gap_weak = abs(n_weak.v_s - n_weak.v_d)
         gap_strong = abs(n_strong.v_s - n_strong.v_d)
-        assert gap_strong < gap_weak, (
-            f"Strong coupling gap {gap_strong:.2f} >= weak {gap_weak:.2f}"
-        )
+        assert gap_strong < gap_weak, f"Strong coupling gap {gap_strong:.2f} >= weak {gap_weak:.2f}"
 
     @pytest.mark.parametrize("dt", [0.01, 0.02, 0.05])
     def test_dt_stability(self, dt: float):
@@ -276,8 +267,8 @@ class TestPinskyRinzelParameters:
 # 7. Determinism
 # ---------------------------------------------------------------------------
 
-class TestPinskyRinzelDeterminism:
 
+class TestPinskyRinzelDeterminism:
     def test_bit_exact_reproducibility(self):
         traces = []
         for _ in range(2):
@@ -291,8 +282,8 @@ class TestPinskyRinzelDeterminism:
 # 8. Network
 # ---------------------------------------------------------------------------
 
-class TestPinskyRinzelNetwork:
 
+class TestPinskyRinzelNetwork:
     def test_population(self):
         pop = Population(PinskyRinzelNeuron, n=5, label="pr")
         assert pop.n == 5
@@ -310,8 +301,8 @@ class TestPinskyRinzelNetwork:
 # 9. Analysis
 # ---------------------------------------------------------------------------
 
-class TestPinskyRinzelAnalysis:
 
+class TestPinskyRinzelAnalysis:
     def test_spike_count(self):
         n = PinskyRinzelNeuron()
         train = np.array([float(n.step(30.0)) for _ in range(50000)])

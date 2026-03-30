@@ -25,7 +25,6 @@ from sc_neurocore.analysis.spike_stats.basic import spike_count
 
 
 class TestPSNIsolation:
-
     def test_construction_defaults(self):
         n = ParallelSpikingNeuron()
         assert n.kernel_size == 8
@@ -60,7 +59,6 @@ class TestPSNIsolation:
 
 
 class TestPSNScoring:
-
     def test_spike_at_threshold(self):
         """With uniform kernel: score = mean(buffer). Spike when mean >= θ."""
         n = ParallelSpikingNeuron(kernel_size=4, v_threshold=1.0)
@@ -104,7 +102,6 @@ class TestPSNScoring:
 
 
 class TestPSNCustomKernel:
-
     def test_custom_kernel_affects_scoring(self):
         """Non-uniform kernel weights recent inputs differently."""
         n = ParallelSpikingNeuron(kernel_size=4, v_threshold=1.0)
@@ -118,7 +115,6 @@ class TestPSNCustomKernel:
 
 
 class TestPSNEdgeCases:
-
     @pytest.mark.parametrize("ks", [2, 4, 8, 16])
     def test_kernel_size_variations(self, ks: int):
         n = ParallelSpikingNeuron(kernel_size=ks, v_threshold=1.0)
@@ -140,7 +136,6 @@ class TestPSNEdgeCases:
 
 
 class TestPSNNetwork:
-
     def test_population(self):
         assert Population(ParallelSpikingNeuron, n=10, label="psn").n == 10
 
@@ -154,7 +149,6 @@ class TestPSNNetwork:
 
 
 class TestPSNAnalysis:
-
     def test_spike_count(self):
         n = ParallelSpikingNeuron()
         train = np.array([float(n.step(2.0)) for _ in range(500)])

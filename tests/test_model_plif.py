@@ -29,8 +29,8 @@ from sc_neurocore.analysis.spike_stats.basic import spike_count
 # 1. Isolation — construction and learnable parameter
 # ---------------------------------------------------------------------------
 
-class TestPLIFIsolation:
 
+class TestPLIFIsolation:
     def test_construction_defaults(self):
         n = ParametricLIFNeuron()
         assert n.v == 0.0
@@ -78,8 +78,8 @@ class TestPLIFIsolation:
 # 2. Voltage dynamics — geometric accumulation
 # ---------------------------------------------------------------------------
 
-class TestPLIFDynamics:
 
+class TestPLIFDynamics:
     def test_voltage_accumulation(self):
         """V(t) = sum_{k=0}^{t-1} alpha^k · I = I · (1 - alpha^t) / (1 - alpha).
 
@@ -89,9 +89,7 @@ class TestPLIFDynamics:
         expected = [0.5, 0.75, 0.875]
         for t, exp_v in enumerate(expected):
             n.step(0.5)
-            assert abs(n.v - exp_v) < 1e-12, (
-                f"t={t+1}: v={n.v}, expected={exp_v}"
-            )
+            assert abs(n.v - exp_v) < 1e-12, f"t={t + 1}: v={n.v}, expected={exp_v}"
 
     def test_steady_state_voltage(self):
         """V_ss = I / (1 - alpha) when V_ss < threshold (no spikes)."""
@@ -117,9 +115,7 @@ class TestPLIFDynamics:
         for i in range(1, len(errors)):
             if errors[i - 1] > 1e-12:
                 ratio = errors[i] / errors[i - 1]
-                assert abs(ratio - 0.5) < 0.01, (
-                    f"Error ratio = {ratio:.4f}, expected ≈0.5"
-                )
+                assert abs(ratio - 0.5) < 0.01, f"Error ratio = {ratio:.4f}, expected ≈0.5"
 
     def test_no_leak_when_alpha_near_1(self):
         """With alpha ≈ 1, voltage barely decays — nearly a perfect integrator."""
@@ -127,9 +123,7 @@ class TestPLIFDynamics:
         n.step(0.3)
         v_after = n.v
         n.step(0.0)  # zero input — should decay by factor alpha
-        assert n.v > 0.99 * v_after, (
-            f"v decayed from {v_after:.6f} to {n.v:.6f}"
-        )
+        assert n.v > 0.99 * v_after, f"v decayed from {v_after:.6f} to {n.v:.6f}"
 
     def test_fast_decay_when_alpha_near_0(self):
         """With alpha ≈ 0, voltage decays almost instantly."""
@@ -143,8 +137,8 @@ class TestPLIFDynamics:
 # 3. Threshold and spike mechanism
 # ---------------------------------------------------------------------------
 
-class TestPLIFThreshold:
 
+class TestPLIFThreshold:
     def test_spike_on_updated_voltage(self):
         """Returned spike is based on updated V, not pre-step V.
 
@@ -204,13 +198,13 @@ class TestPLIFThreshold:
 # 4. Learnable parameter effect on firing rate
 # ---------------------------------------------------------------------------
 
-class TestPLIFLearnableRate:
 
+class TestPLIFLearnableRate:
     def test_higher_alpha_more_spikes(self):
         """Higher alpha (more memory) → easier to reach threshold → more spikes."""
         I = 0.4  # Below I_crit for alpha=0.5, above for alpha=0.73
-        n_low = ParametricLIFNeuron(a=-1.0)   # alpha ≈ 0.27
-        n_high = ParametricLIFNeuron(a=1.0)    # alpha ≈ 0.73
+        n_low = ParametricLIFNeuron(a=-1.0)  # alpha ≈ 0.27
+        n_high = ParametricLIFNeuron(a=1.0)  # alpha ≈ 0.73
         s_low = sum(n_low.step(I) for _ in range(500))
         s_high = sum(n_high.step(I) for _ in range(500))
         assert s_high > s_low
@@ -240,8 +234,8 @@ class TestPLIFLearnableRate:
 # 5. Edge cases
 # ---------------------------------------------------------------------------
 
-class TestPLIFEdgeCases:
 
+class TestPLIFEdgeCases:
     def test_zero_input(self):
         """Zero input from rest → V stays at 0, no spikes."""
         n = ParametricLIFNeuron()
@@ -275,8 +269,8 @@ class TestPLIFEdgeCases:
 # 6. Network
 # ---------------------------------------------------------------------------
 
-class TestPLIFNetwork:
 
+class TestPLIFNetwork:
     def test_population(self):
         pop = Population(ParametricLIFNeuron, n=10, label="plif")
         assert pop.n == 10
@@ -294,8 +288,8 @@ class TestPLIFNetwork:
 # 7. Analysis
 # ---------------------------------------------------------------------------
 
-class TestPLIFAnalysis:
 
+class TestPLIFAnalysis:
     def test_spike_count(self):
         n = ParametricLIFNeuron(a=1.0)
         train = np.array([float(n.step(0.5)) for _ in range(500)])

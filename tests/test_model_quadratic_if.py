@@ -24,13 +24,11 @@ from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count
 
 
-def _run(neuron: QuadraticIFNeuron, current: float,
-         steps: int) -> list[int]:
+def _run(neuron: QuadraticIFNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
 
 
 class TestQIFIsolation:
-
     def test_construction_defaults(self):
         n = QuadraticIFNeuron()
         assert n.v == -1.0
@@ -124,7 +122,6 @@ class TestQIFFI:
 
 
 class TestQIFISI:
-
     def test_constant_isi(self):
         """Deterministic → constant ISI at steady state."""
         n = QuadraticIFNeuron()
@@ -139,13 +136,12 @@ class TestQIFISI:
         n5 = QuadraticIFNeuron()
         s1 = _run(n1, current=1.0, steps=50000)
         s5 = _run(n5, current=5.0, steps=50000)
-        isi1 = np.mean(np.diff(s1[5:])) if len(s1) > 10 else float('inf')
-        isi5 = np.mean(np.diff(s5[5:])) if len(s5) > 10 else float('inf')
+        isi1 = np.mean(np.diff(s1[5:])) if len(s1) > 10 else float("inf")
+        isi5 = np.mean(np.diff(s5[5:])) if len(s5) > 10 else float("inf")
         assert isi5 < isi1
 
 
 class TestQIFEdgeCases:
-
     def test_quadratic_divergence(self):
         """At I>0, V accelerates upward (V² positive feedback)."""
         n = QuadraticIFNeuron()
@@ -179,7 +175,6 @@ class TestQIFEdgeCases:
 
 
 class TestQIFNetwork:
-
     def test_population(self):
         assert Population(QuadraticIFNeuron, n=10, label="qif").n == 10
 
@@ -193,7 +188,6 @@ class TestQIFNetwork:
 
 
 class TestQIFAnalysis:
-
     def test_spike_count(self):
         n = QuadraticIFNeuron()
         train = np.array([float(n.step(1.0)) for _ in range(50000)])
