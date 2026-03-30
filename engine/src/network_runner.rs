@@ -120,6 +120,30 @@ pub enum NeuronVariant {
     SpikeResponse(SpikeResponseNeuron),
     GLM(GLMNeuron),
     Arcane(ArcaneNeuron),
+
+    // --- newly wired (step(f64)->i32 compatible) ---
+    // ai_optimized.rs
+    MultiTimescale(MultiTimescaleNeuron),
+    AttentionGated(AttentionGatedNeuron),
+    PredictiveCoding(PredictiveCodingNeuron),
+    SelfReferential(SelfReferentialNeuron),
+    CompositionalBinding(CompositionalBindingNeuron),
+    DifferentiableSurrogate(DifferentiableSurrogateNeuron),
+    ContinuousAttractor(ContinuousAttractorNeuron),
+    MetaPlastic(MetaPlasticNeuron),
+    // simple_spiking.rs
+    BendaHerz(BendaHerzNeuron),
+    // special.rs
+    Poisson(PoissonNeuron),
+    InhomogeneousPoisson(InhomogeneousPoissonNeuron),
+    GammaRenewal(GammaRenewalNeuron),
+    EscapeRate(EscapeRateNeuron),
+    // Not wired (multi-arg / i32 input / f64 return / no reset):
+    // Alpha (2 args), COBALIF (3 args), TsodyksMarkram (bool arg),
+    // CompteWM (bool arg), McCullochPitts (no reset), SigmoidRate (f64 ret),
+    // ThresholdLinearRate (f64 ret), AstrocyteModel (f64 ret),
+    // PinskyRinzel (2 args), HayL5 (2 args),
+    // LoihiCUBA/Loihi2/TrueNorth/SpiNNaker2/Akida (i32 input)
 }
 
 macro_rules! dispatch_step {
@@ -165,6 +189,11 @@ macro_rules! all_variants {
             LiquidTimeConstant, ParallelSpiking, FractionalLIF,
             StochasticIF, GalvesLocherbach, SpikeResponse, GLM,
             Arcane,
+            MultiTimescale, AttentionGated, PredictiveCoding,
+            SelfReferential, CompositionalBinding, DifferentiableSurrogate,
+            ContinuousAttractor, MetaPlastic,
+            BendaHerz,
+            Poisson, InhomogeneousPoisson, GammaRenewal, EscapeRate,
         )
     };
 }
@@ -260,6 +289,20 @@ impl NeuronVariant {
             NeuronVariant::SpikeResponse(n) => n.v,
             NeuronVariant::GLM(n) => n.mu,
             NeuronVariant::Arcane(n) => n.v_fast,
+            // newly wired — default voltage field
+            NeuronVariant::MultiTimescale(n) => n.v_fast,
+            NeuronVariant::AttentionGated(n) => n.v,
+            NeuronVariant::PredictiveCoding(n) => n.v,
+            NeuronVariant::SelfReferential(n) => n.v,
+            NeuronVariant::CompositionalBinding(_) => 0.0,
+            NeuronVariant::DifferentiableSurrogate(n) => n.v,
+            NeuronVariant::ContinuousAttractor(_) => 0.0,
+            NeuronVariant::MetaPlastic(n) => n.v,
+            NeuronVariant::BendaHerz(n) => n.a,
+            NeuronVariant::Poisson(_) => 0.0,
+            NeuronVariant::InhomogeneousPoisson(_) => 0.0,
+            NeuronVariant::GammaRenewal(_) => 0.0,
+            NeuronVariant::EscapeRate(n) => n.v,
         }
     }
 }
@@ -687,6 +730,44 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         }
         "GLM" | "GLMNeuron" => Ok(NeuronVariant::GLM(GLMNeuron::new(5, 10, 42))),
         "Arcane" | "ArcaneNeuron" => Ok(NeuronVariant::Arcane(ArcaneNeuron::new())),
+        // newly wired
+        "MultiTimescale" | "MultiTimescaleNeuron" => {
+            Ok(NeuronVariant::MultiTimescale(MultiTimescaleNeuron::new()))
+        }
+        "AttentionGated" | "AttentionGatedNeuron" => {
+            Ok(NeuronVariant::AttentionGated(AttentionGatedNeuron::new()))
+        }
+        "PredictiveCoding" | "PredictiveCodingNeuron" => {
+            Ok(NeuronVariant::PredictiveCoding(PredictiveCodingNeuron::new()))
+        }
+        "SelfReferential" | "SelfReferentialNeuron" => {
+            Ok(NeuronVariant::SelfReferential(SelfReferentialNeuron::new()))
+        }
+        "CompositionalBinding" | "CompositionalBindingNeuron" => Ok(
+            NeuronVariant::CompositionalBinding(CompositionalBindingNeuron::new()),
+        ),
+        "DifferentiableSurrogate" | "DifferentiableSurrogateNeuron" => Ok(
+            NeuronVariant::DifferentiableSurrogate(DifferentiableSurrogateNeuron::new()),
+        ),
+        "ContinuousAttractor" | "ContinuousAttractorNeuron" => Ok(
+            NeuronVariant::ContinuousAttractor(ContinuousAttractorNeuron::new(8)),
+        ),
+        "MetaPlastic" | "MetaPlasticNeuron" => {
+            Ok(NeuronVariant::MetaPlastic(MetaPlasticNeuron::new()))
+        }
+        "BendaHerz" | "BendaHerzNeuron" => Ok(NeuronVariant::BendaHerz(BendaHerzNeuron::new(42))),
+        "Poisson" | "PoissonNeuron" => {
+            Ok(NeuronVariant::Poisson(PoissonNeuron::new(50.0, 1.0, 42)))
+        }
+        "InhomogeneousPoisson" | "InhomogeneousPoissonNeuron" => Ok(
+            NeuronVariant::InhomogeneousPoisson(InhomogeneousPoissonNeuron::new(1.0, 42)),
+        ),
+        "GammaRenewal" | "GammaRenewalNeuron" => {
+            Ok(NeuronVariant::GammaRenewal(GammaRenewalNeuron::new(50.0, 3, 42)))
+        }
+        "EscapeRate" | "EscapeRateNeuron" => {
+            Ok(NeuronVariant::EscapeRate(EscapeRateNeuron::new(42)))
+        }
         _ => Err(format!("Unsupported model: '{name}'")),
     }
 }
