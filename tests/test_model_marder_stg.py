@@ -60,8 +60,7 @@ class TestSTGIsolation:
 
     def test_eleven_state_variables(self):
         n = MarderSTGNeuron()
-        states = ["v", "m_na", "h_na", "m_cat", "h_cat", "m_cas",
-                   "m_a", "h_a", "m_kd", "m_h", "ca"]
+        states = ["v", "m_na", "h_na", "m_cat", "h_cat", "m_cas", "m_a", "h_a", "m_kd", "m_h", "ca"]
         for s in states:
             assert hasattr(n, s)
 
