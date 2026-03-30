@@ -426,9 +426,11 @@ def test_run_mpi():
     mock_mpi_cls = MagicMock(return_value=mock_runner_inst)
     mock_mpi_module = MagicMock()
     mock_mpi_module.MPIRunner = mock_mpi_cls
-    with patch.dict("sys.modules", {"sc_neurocore.network.mpi_runner": mock_mpi_module}):
-        with patch("sc_neurocore.network.network.MPIRunner", mock_mpi_cls, create=True):
-            net._run_mpi(0.01, 0.001)
+    with (
+        patch.dict("sys.modules", {"sc_neurocore.network.mpi_runner": mock_mpi_module}),
+        patch("sc_neurocore.network.network.MPIRunner", mock_mpi_cls, create=True),
+    ):
+        net._run_mpi(0.01, 0.001)
     mock_runner_inst.run.assert_called_once()
 
 
