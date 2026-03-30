@@ -18,9 +18,6 @@ import pytest
 
 from sc_neurocore.neurons.models.rall_cable import RallCableNeuron
 from sc_neurocore.network.population import Population
-from sc_neurocore.network.network import Network
-from sc_neurocore.network.monitor import SpikeMonitor
-from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count
 
 
