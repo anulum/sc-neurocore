@@ -55,9 +55,17 @@ class BoothRinzelNeuron:
             # Soma: fast Na + delayed-rectifier K
             m_inf = 1.0 / (1.0 + self._safe_exp(-(self.vs + 35.0) / 7.8))
             h_inf = 1.0 / (1.0 + self._safe_exp((self.vs + 55.0) / 7.0))
-            tau_h = 30.0 / (self._safe_exp((self.vs + 50.0) / 15.0) + self._safe_exp(-(self.vs + 50.0) / 16.0) + 1e-12)
+            tau_h = 30.0 / (
+                self._safe_exp((self.vs + 50.0) / 15.0)
+                + self._safe_exp(-(self.vs + 50.0) / 16.0)
+                + 1e-12
+            )
             n_inf = 1.0 / (1.0 + self._safe_exp(-(self.vs + 28.0) / 15.0))
-            tau_n = 7.0 / (self._safe_exp((self.vs + 40.0) / 40.0) + self._safe_exp(-(self.vs + 40.0) / 50.0) + 1e-12)
+            tau_n = 7.0 / (
+                self._safe_exp((self.vs + 40.0) / 40.0)
+                + self._safe_exp(-(self.vs + 40.0) / 50.0)
+                + 1e-12
+            )
 
             self.h += (h_inf - self.h) / tau_h * self.dt
             self.h = float(np.clip(self.h, 0, 1))
