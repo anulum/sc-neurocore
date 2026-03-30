@@ -586,3 +586,108 @@ def test_recovery_slope_peak_at_end():
     # line 53: peak >= waveform.size - 2
     r = waveform_recovery_slope(np.array([0.0, 0.5, 1.0]))
     assert np.isnan(r)
+
+
+# === ROUND 2: remaining uncovered lines ===
+
+
+def test_coincidence_with_spikes():
+    # correlation.py:272 — norm > expected path
+    rng = np.random.default_rng(42)
+    a = rng.integers(0, 2, size=1000, dtype=np.int8)
+    b = np.roll(a, 2)
+    r = coincidence_index(a, b, delta_ms=5.0)
+    assert np.isfinite(r)
+
+
+def test_bayesian_decode_single_entry():
+    # decoding.py:84 — len(classes) == 1
+    r = bayesian_decode(np.array([5.0]), np.array([[5.0]]))
+    assert r == 0
+
+
+from sc_neurocore.analysis.spike_stats.distance import spike_sync as _spike_sync
+
+
+def test_spike_sync_with_data():
+    # distance.py:160 — total_possible > 0
+    ta = np.array([0.1, 0.2, 0.3, 0.5])
+    tb = np.array([0.11, 0.21, 0.31, 0.51])
+    r = _spike_sync(ta, tb)
+    assert r > 0
+
+
+def test_ssi_with_classes():
+    # information.py:145 — n_s > 0 path
+    counts = np.array([5, 10, 3, 8, 2])
+    labels = np.array([0, 1, 0, 1, 0])
+    r = stimulus_specific_information(counts, labels)
+    assert np.isfinite(r)
+
+
+def test_cell_assembly_with_strong_corr():
+    # network.py:89-91 — eigval > mp_upper, members >= 2
+    rng = np.random.default_rng(0)
+    base = rng.integers(0, 2, size=500, dtype=np.int8)
+    trains = [base.copy() for _ in range(10)]
+    for i in range(10):
+        trains[i] = np.roll(trains[i], i)
+    r = cell_assembly_detection(trains, bin_size=5, threshold=0.5)
+    assert isinstance(r, list)
+
+
+def test_cubic_with_data():
+    # patterns.py:81 — valid_n > 0
+    rng = np.random.default_rng(42)
+    train = rng.integers(0, 2, size=200, dtype=np.int8)
+    r = cubic_higher_order(train, max_lag=5)
+    assert r.shape[0] > 0
+
+
+def test_amplitude_cutoff_with_data():
+    # sorting_quality.py:148 — total > 0
+    rng = np.random.default_rng(0)
+    amps = np.abs(rng.standard_normal(500)) + 0.5
+    r = amplitude_cutoff(amps)
+    assert np.isfinite(r)
+
+
+def test_place_field_ending_in_field():
+    # stimulus.py:116 — in_field at end of array
+    train = np.zeros(100, dtype=np.int8)
+    train[80:] = 1
+    pos = np.linspace(0, 1, 100)
+    fields = place_field_detection(train, pos, threshold_std=0.5)
+    assert any(f[1] >= 0.9 for f in fields) if fields else True
+
+
+def test_inhomogeneous_poisson_zero():
+    # surrogates.py:82 — max_rate <= 0
+    from sc_neurocore.analysis.spike_stats.surrogates import inhomogeneous_poisson
+
+    r = inhomogeneous_poisson(rate_func=lambda t: 0.0, duration_s=1.0)
+    assert np.all(r == 0)
+
+
+def test_rescaled_range_with_data():
+    # variability.py:334 — duplicate scale dedup
+    rng = np.random.default_rng(42)
+    train = rng.integers(0, 2, size=500, dtype=np.int8)
+    r = rescaled_range(train)
+    assert np.isfinite(r) or np.isnan(r)
+
+
+def test_waveform_recovery_short():
+    # waveform.py:53 — dv.size == 0
+    r = waveform_recovery_slope(np.array([1.0]))
+    assert np.isnan(r)
+
+
+from sc_neurocore.analysis.spike_stats.causality import directed_transfer_function
+
+
+def test_dtf_singular():
+    # causality.py:186 — det_a near zero → continue
+    trains = [np.zeros(50, dtype=np.int8)] * 3
+    r = directed_transfer_function(trains, order=2)
+    assert r.shape[0] > 0

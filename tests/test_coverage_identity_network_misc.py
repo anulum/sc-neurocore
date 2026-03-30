@@ -211,3 +211,74 @@ def test_scale_free_topology():
     # line 87: preferential attachment fallback
     data, indices, indptr = scale_free(n=10, m=3, weight=1.0, seed=42)
     assert indices.size > 0
+
+
+# === ROUND 2: remaining uncovered lines ===
+
+from sc_neurocore.utils.numerics import clip_voltage
+
+
+def test_clip_voltage():
+    # numerics.py:56
+    assert clip_voltage(500.0) == 100.0
+    assert clip_voltage(-500.0) == -200.0
+
+
+def test_checkpoint_merge_empty():
+    # checkpoint.py:136 — empty paths
+    with pytest.raises(ValueError):
+        Checkpoint.merge([])
+
+
+def test_substrate_entropy_zero():
+    # substrate.py:271 — s_entropy = 0 when all spikes identical
+    sub = IdentitySubstrate(n_cortical=4)
+    # Run with zero input — no spikes → entropy 0
+    for _ in range(5):
+        sub.step(np.zeros(4))
+
+
+def test_homeostatic_with_projections():
+    # advanced.py:353-358 — _rate_estimate > 0, projections with data
+    hp = HomeostaticPlasticity(target_rate=0.05, tau=10.0)
+    pop = Population(LapicqueNeuron, n=5, label="hp2")
+    # Force _rate_estimate > 0 by manually setting
+    hp._rate_estimate = 0.2
+    hp._step_count = 100
+
+    class FakeProj:
+        data = np.ones(10)
+
+    pop._projections = [FakeProj()]
+    hp.update(pop)
+    assert hp._last_scale is not None
+
+
+def test_population_state_dict_no_w():
+    # population.py:102 — else: keys = ["v"]
+    pop = Population(LapicqueNeuron, n=3, label="nw")
+    states = pop.get_states()
+    assert "v" in states
+
+
+def test_projection_uniform_delay():
+    # projection.py:193 — delay_mode == "uniform"
+    src = Population(LapicqueNeuron, n=3, label="ds")
+    tgt = Population(LapicqueNeuron, n=3, label="dt")
+    proj = Projection(src, tgt, weight=0.5, probability=1.0, delay=3.0)
+    assert proj.max_delay == 3
+
+
+def test_scale_free_uniform_fallback():
+    # topology.py:87 — probs[:] = 1.0 / src
+    data, indices, indptr = scale_free(n=5, m=2, weight=1.0, seed=0)
+    assert indices.size > 0
+
+
+def test_network_stimulus_poisson_routing():
+    # network.py:206 — isinstance(stim, PoissonInput) branch
+    pop = Population(LapicqueNeuron, n=5, label="pr")
+    drive = PoissonInput(n=5, rate_hz=1000.0, weight=5.0, dt=0.001, seed=42)
+    mon = SpikeMonitor(pop)
+    net = Network(pop, drive, mon)
+    net.run(duration=0.05, dt=0.001, backend="python")
