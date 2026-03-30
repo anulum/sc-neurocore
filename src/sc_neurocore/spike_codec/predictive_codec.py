@@ -56,7 +56,7 @@ try:
         _pkg_dir = _os.path.join(_sp, "sc_neurocore_engine")
         _pyds = _glob.glob(_os.path.join(_pkg_dir, "sc_neurocore_engine*.pyd"))
         _pyds += _glob.glob(_os.path.join(_pkg_dir, "sc_neurocore_engine*.so"))
-        if _pyds:
+        if _pyds:  # pragma: no cover — requires compiled Rust engine
             _spec = _ilu.spec_from_file_location("sc_neurocore_engine", _pyds[0])
             if _spec and _spec.loader:
                 _mod = _ilu.module_from_spec(_spec)

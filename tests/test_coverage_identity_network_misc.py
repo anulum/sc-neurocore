@@ -350,3 +350,23 @@ def test_network_step_current():
     mon = SpikeMonitor(pop)
     net = Network(pop, step, mon)
     net.run(duration=0.1, dt=0.001, backend="python")
+
+
+# === ROUND 4: numerics + remaining ===
+
+from sc_neurocore.utils.numerics import safe_cosh, safe_tanh, boltzmann_inv
+
+
+def test_safe_cosh():
+    assert np.isfinite(safe_cosh(0.0))
+    assert np.isfinite(safe_cosh(1000.0))
+
+
+def test_safe_tanh():
+    assert safe_tanh(0.0) == 0.0
+    assert abs(safe_tanh(1000.0) - 1.0) < 1e-10
+
+
+def test_boltzmann_inv():
+    r = boltzmann_inv(-60.0, -40.0, 10.0)
+    assert 0 < r < 1
