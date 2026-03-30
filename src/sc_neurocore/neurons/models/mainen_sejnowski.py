@@ -11,6 +11,10 @@ from dataclasses import dataclass
 import numpy as np
 
 
+def _safe_exp(x: float) -> float:
+    return np.exp(np.clip(x, -500.0, 500.0))
+
+
 @dataclass
 class MainenSejnowskiNeuron:
     """Mainen & Sejnowski 1996 — axonal Na spike initiation model.
@@ -42,16 +46,16 @@ class MainenSejnowskiNeuron:
         vs_prev = self.vs
         for _ in range(20):
             # Axon HH gates (shifted for fast initiation)
-            am = 0.182 * (self.va + 25.0) / (1.0 - np.exp(-(self.va + 25.0) / 9.0) + 1e-12)
-            bm = -0.124 * (self.va + 25.0) / (1.0 - np.exp((self.va + 25.0) / 9.0) + 1e-12)
-            ah = 0.024 * (self.va + 40.0) / (1.0 - np.exp(-(self.va + 40.0) / 5.0) + 1e-12)
-            bh = -0.0091 * (self.va + 65.0) / (1.0 - np.exp((self.va + 65.0) / 5.0) + 1e-12)
-            an = 0.02 * (self.va - 20.0) / (1.0 - np.exp(-(self.va - 20.0) / 9.0) + 1e-12)
-            bn = -0.002 * (self.va - 20.0) / (1.0 - np.exp((self.va - 20.0) / 9.0) + 1e-12)
+            am = 0.182 * (self.va + 25.0) / (1.0 - _safe_exp(-(self.va + 25.0) / 9.0) + 1e-12)
+            bm = -0.124 * (self.va + 25.0) / (1.0 - _safe_exp((self.va + 25.0) / 9.0) + 1e-12)
+            ah = 0.024 * (self.va + 40.0) / (1.0 - _safe_exp(-(self.va + 40.0) / 5.0) + 1e-12)
+            bh = -0.0091 * (self.va + 65.0) / (1.0 - _safe_exp((self.va + 65.0) / 5.0) + 1e-12)
+            an = 0.02 * (self.va - 20.0) / (1.0 - _safe_exp(-(self.va - 20.0) / 9.0) + 1e-12)
+            bn = -0.002 * (self.va - 20.0) / (1.0 - _safe_exp((self.va - 20.0) / 9.0) + 1e-12)
 
-            self.m += (am * (1 - self.m) - bm * self.m) * self.dt
-            self.h += (ah * (1 - self.h) - bh * self.h) * self.dt
-            self.n += (an * (1 - self.n) - bn * self.n) * self.dt
+            self.m = np.clip(self.m + (am * (1 - self.m) - bm * self.m) * self.dt, 0.0, 1.0)
+            self.h = np.clip(self.h + (ah * (1 - self.h) - bh * self.h) * self.dt, 0.0, 1.0)
+            self.n = np.clip(self.n + (an * (1 - self.n) - bn * self.n) * self.dt, 0.0, 1.0)
 
             i_na = self.g_na * self.m**3 * self.h * (self.va - self.e_na)
             i_k = self.g_k * self.n * (self.va - self.e_k)
@@ -59,8 +63,8 @@ class MainenSejnowskiNeuron:
 
             dvs = (-i_l + self.kappa * (self.va - self.vs) + current) / self.c_s * self.dt
             dva = (-i_na - i_k + self.kappa * (self.vs - self.va)) / self.c_a * self.dt
-            self.vs += dvs
-            self.va += dva
+            self.vs = float(np.clip(self.vs + dvs, -200.0, 200.0))
+            self.va = float(np.clip(self.va + dva, -200.0, 200.0))
 
         return 1 if (self.vs >= self.v_threshold and vs_prev < self.v_threshold) else 0
 
