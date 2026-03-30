@@ -1,0 +1,81 @@
+# PinskyRinzelNeuron
+
+**Module:** `sc_neurocore.neurons.models.pinsky_rinzel`
+**Reference:** Pinsky & Rinzel 1994
+**Family:** Conductance-based (2-compartment pyramidal)
+**State variables:** `v_s`, `v_d`, `h`, `n`, `s`, `c` (Ca²⁺), `q`
+
+## Equations
+
+**Soma:**
+$$C \frac{dV_s}{dt} = -I_{Na} - I_{KDR} - I_L - \frac{g_c}{p}(V_s - V_d) + I_s/p$$
+
+**Dendrite:**
+$$C \frac{dV_d}{dt} = -I_{Ca} - I_{KAHP} - I_{KC} - I_L - \frac{g_c}{1-p}(V_d - V_s) + I_d/(1-p)$$
+
+**Ca dynamics:** $dCa/dt = -0.13 \cdot I_{Ca} - 0.075 \cdot Ca$, clamped ≥ 0.
+
+Spike: upward crossing of $V_s$ through $V_\theta = -20$ mV.
+
+## Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `v_s`, `v_d` | −60.0 | Soma / dendrite voltage (mV) |
+| `gc` | 2.1 | Compartment coupling conductance |
+| `p` | 0.5 | Soma area fraction |
+| `g_na` | 30.0 | Sodium conductance |
+| `g_ca` | 10.0 | Calcium conductance |
+| `g_kahp` | 0.8 | Ca-activated K conductance |
+| `dt` | 0.02 | Time step (ms) |
+
+## Behaviour
+
+- **2-compartment model:** Soma (fast Na/K) coupled to dendrite (Ca, KAHP, KC).
+  Coupling strength gc controls synchronisation between compartments.
+- **Non-monotonic f–I curve:** Peak firing at I≈50, then depolarisation block
+  at I≥200. Characteristic of compartmental models with Na inactivation.
+- **Dual input:** `step(current_soma, current_dend)` — somatic drive is more
+  effective for triggering spikes than dendritic input.
+- **Calcium dynamics:** Dendritic Ca accumulates during spiking, activates KAHP
+  and KC currents (spike-frequency adaptation). Ca clamped ≥ 0.
+- **Warm-up transient:** First ~10 ISIs are longer than steady-state.
+- **Deterministic:** No stochastic element.
+
+## Dynamic Regimes
+
+| Current (soma) | Regime | Description |
+|-----------------|--------|-------------|
+| I < 10 | Subthreshold | No spikes |
+| I ∈ [10, 50] | Oscillatory | Sustained spiking, ISI ~150 steps |
+| I ∈ [50, 100] | High rate | Peak firing rate region |
+| I ≥ 200 | Depolarisation block | Na inactivation → ≤1 spike |
+
+## Infrastructure Pipeline
+
+```
+PinskyRinzelNeuron
+├── step(I_soma, I_dend) → int {0,1} (deterministic)
+├── Population: PoissonInput(weight=30, rate=500Hz)
+├── Verilog: 7 Euler integrators + HH rate functions, ~300 LUTs
+└── Rust: multi-arg adapter needed
+```
+
+## Test Coverage
+
+| Category | Tests | What is verified |
+|----------|------:|-----------------|
+| Isolation | 6 | defaults, binary, dual input, 7-var evolution, finite 50k, reset |
+| Compartments | 4 | coupling (gc comparison), soma vs dend drive, Ca accumulation, Ca ≥ 0 |
+| f–I curve | 4 | subthreshold, oscillation, non-monotonic peak, depolarisation block |
+| ISI | 2 | steady-state regularity (CV<0.05), transient shortening |
+| Gating | 2 | bounded [0,1], Na inactivation at high I |
+| Parameters | 4 | gc coupling strength, dt stability (3 values) |
+| Determinism | 1 | bit-exact reproducibility |
+| Network | 2 | population, spikes |
+| Analysis | 2 | spike_count, consistency |
+| **Total** | **27** | |
+
+Key finding: non-monotonic f–I curve confirmed — f(50) > f(200) due to
+Na inactivation. Dendritic K currents hyperpolarise v_d despite somatic
+depolarisation (KAHP/KC dominate over coupling current).
