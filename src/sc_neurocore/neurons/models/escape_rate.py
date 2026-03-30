@@ -10,6 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
 
+from sc_neurocore.utils.numerics import safe_exp
+
 
 @dataclass
 class EscapeRateNeuron:
@@ -27,7 +29,7 @@ class EscapeRateNeuron:
 
     def step(self, current: float) -> int:
         self.v += (-(self.v - self.v_rest) + self.resistance * current) / self.tau_m * self.dt
-        rate = self.rho_0 * np.exp((self.v - self.v_threshold) / self.delta_u)
+        rate = self.rho_0 * safe_exp((self.v - self.v_threshold) / self.delta_u)
         p_spike = rate * self.dt
         if np.random.random() < p_spike:
             self.v = self.v_reset
