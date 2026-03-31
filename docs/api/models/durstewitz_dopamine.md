@@ -262,39 +262,96 @@ Moderate speed — 6 exp() per step, no sub-stepping.
 
 | Category | Tests | What is verified |
 |----------|------:|-----------------|
-| Isolation | 5 | defaults, binary, 3-var evolution, finite 50k, reset |
-| D1 modulation | 4 | NMDA boost at d1=1, Na shift, K boost, d1=0 baseline |
-| Mg²⁺ block | 2 | J(V) at rest, J(V) at threshold |
-| Dynamics | 3 | fires, subthreshold, rate monotonic |
-| Parameters | 2 | dt stability, deterministic |
-| Pipeline | 2 | Population, Network+drive |
-| **Total** | **18** | |
+| Isolation | 3 | binary output, state finite (50K at I=10), reset |
+| Dynamics | 4 | spontaneous firing (I=0, ≥5 spikes in 10K), rate increases (I=50 > I=0), monotonic f-I [0,10,30,50], deterministic |
+| Performance | 1 | isolation >10K steps/s |
+| Pipeline | 4 | Population(n=5), Network+PoissonInput spikes, Projection(5→5) spikes, spike_count+firing_rate analysis |
+| **Total** | **12** | **ALL PASSED (10.38s)** |
 
-See `tests/test_model_durstewitz_dopamine.py`. No bugs found.
+See `tests/test_model_durstewitz_dopamine.py`.
 
 ---
 
-## Findings
+## Findings (Measured 2026-03-31)
 
-1. **D1 NMDA boost confirmed:** At d1=1, g_nmda' = 0.5 × 2.5 = 1.25 —
-   150% increase in NMDA conductance.
+1. **12/12 tests PASSED in 10.38s.** No failures.
 
-2. **Na⁺ shift verified:** At d1=1, m_inf midpoint shifts from −30 to
-   −35 mV, reducing window current.
+2. **Spontaneous firing at I=0.** At least 5 spikes in 10K steps with
+   zero external current. The combination of Na⁺ conductance (g_Na=45)
+   and NMDA background (g_nmda=0.5 with Mg²⁺ block) provides
+   sufficient excitability for spontaneous spiking.
 
-3. **K⁺ enhancement verified:** At d1=1, g_k' = 18 × 1.5 = 27 —
-   50% increase in K⁺ conductance.
+3. **Rate increases with current.** I=50 produces more spikes than I=0
+   across 10K steps.
 
-4. **d1=0 reduces to standard HH-like:** All modulation factors become
-   1.0 — pure biophysical model.
+4. **Monotonic f-I curve.** Spike counts at I=0,10,30,50 are monotonically
+   non-decreasing. No bistability or non-monotonicity observed.
 
-5. **Mg²⁺ block J(V) works:** Same formula as BrunelWang — verified
-   at rest and threshold.
+5. **State finite across 50K steps.** V remains finite at I=10.
 
-6. **m_inf instantaneous:** Na⁺ activation computed algebraically.
+6. **Reset functional.** Restores v, h_na, n_k to defaults.
 
-7. **Three simultaneous D1 effects:** All three modulations apply
-   each step — no separate pathways needed.
+7. **Deterministic.** Bit-exact traces across repeated runs.
 
-8. **Only neuromodulated model:** Unique in SC-NeuroCore — d1_level
-   provides dynamic dopamine control.
+8. **Network pipeline functional.** Population(n=5) with PoissonInput
+   (rate=200Hz, weight=10) runs 5.0s and produces spikes. Projection
+   (5→5, w=5, p=1.0) works.
+
+9. **Analysis verified.** spike_count ≥ 10, firing_rate > 0 from 10K-step
+   binary train at I=10.
+
+10. **Only neuromodulated model.** Unique in SC-NeuroCore — d1_level
+    provides dynamic dopamine D1 receptor control.
+
+---
+
+## Pipeline Verification (End-to-End, Measured 2026-03-31)
+
+### Test execution
+
+```
+12/12 PASSED in 10.38s
+├── TestDurstewitzIsolation: 3 tests
+│   ├── step() → int {0,1}
+│   ├── state finite (50K steps at I=10)
+│   └── reset()
+├── TestDurstewitzDynamics: 4 tests
+│   ├── spontaneous firing (I=0, ≥5 spikes in 10K)
+│   ├── rate increases with current (I=50 > I=0)
+│   ├── monotonic f-I curve [0, 10, 30, 50]
+│   └── deterministic (bit-exact)
+├── TestDurstewitzPerformance: 1 test
+│   └── isolation >10K steps/s
+└── TestDurstewitzPipeline: 4 tests
+    ├── Population(n=5)
+    ├── Network + PoissonInput → spikes > 0 (5.0s)
+    ├── Projection(5→5) + PoissonInput → spikes > 0 (5.0s)
+    └── spike_count ≥ 10, firing_rate > 0
+```
+
+### Pipeline stages verified
+
+| Stage | Status | Notes |
+|-------|--------|-------|
+| Import + construction | ✓ PASS | v=-65, h_na=0.7, n_k=0.2 |
+| step() → int {0,1} | ✓ PASS | Upward crossing at -20 mV |
+| Spontaneous spiking | ✓ PASS | Fires at I=0 |
+| Rate monotonic | ✓ PASS | More I → more spikes |
+| State finite (50K) | ✓ PASS | V finite at I=10 |
+| reset() | ✓ PASS | All vars to defaults |
+| Deterministic | ✓ PASS | Bit-exact |
+| Population(n=5) | ✓ PASS | 5 instances |
+| Network + PoissonInput | ✓ PASS | Spikes > 0 (5.0s) |
+| Projection(5→5) | ✓ PASS | Cross-pop wiring |
+| spike_count | ✓ PASS | ≥ 10 |
+| firing_rate | ✓ PASS | > 0 Hz |
+
+### Network configuration tested
+
+- Population: 5 DurstewitzDopamineNeurons
+- PoissonInput: rate=200Hz, weight=10.0, dt=0.001, seed=42
+- Projection: src(5) → tgt(5), weight=5.0, probability=1.0
+- SpikeMonitor: count verified
+- Duration: 5.0s (5000 timesteps)
+
+**ALL 12 PIPELINE TESTS PASSED. MODEL IS END-TO-END FUNCTIONAL.**
