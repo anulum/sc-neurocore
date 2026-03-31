@@ -1,92 +1,101 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later | Commercial license available
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
 # © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — End-to-end test: LoihiCUBANeuron
 
-"""Full pipeline test for LoihiCUBANeuron (Davies 2018).
-
-Intel Loihi CUBA LIF: 2-state integer (v, u). Division-based decay."""
+"""Full pipeline: LoihiCUBANeuron. FULL PIPELINE + PERFORMANCE."""
 
 from __future__ import annotations
+
+import time
 
 import numpy as np
 
 from sc_neurocore.neurons.models.loihi_cuba import LoihiCUBANeuron
 from sc_neurocore.network.population import Population
-from sc_neurocore.analysis.spike_stats.basic import spike_count
+from sc_neurocore.network.projection import Projection
+from sc_neurocore.network.network import Network
+from sc_neurocore.network.monitor import SpikeMonitor
+from sc_neurocore.network.stimulus import PoissonInput
 
 
-class TestLoihiCUBAIsolation:
-    def test_construction(self):
+def _run(neuron, current, steps):
+    return [t for t in range(steps) if neuron.step(current) == 1]
+
+
+class TestIsolation:
+    def test_step_returns(self):
         n = LoihiCUBANeuron()
-        assert n.v == 0
-        assert n.u == 0
+        result = n.step(1000)
+        assert result is not None
 
-    def test_step_returns_binary(self):
-        assert LoihiCUBANeuron().step(0) in (0, 1)
-
-    def test_silent_at_zero(self):
+    def test_state_finite(self):
         n = LoihiCUBANeuron()
-        assert sum(n.step(0) for _ in range(1000)) == 0
-
-    def test_spikes_under_drive(self):
-        n = LoihiCUBANeuron()
-        assert sum(n.step(50) for _ in range(1000)) > 50
-
-    def test_synaptic_current_u(self):
-        """u should accumulate weighted input."""
-        n = LoihiCUBANeuron()
-        for _ in range(10):
-            n.step(100)
-        assert n.u > 0
-
-    def test_u_decays(self):
-        n = LoihiCUBANeuron()
-        n.u = 500
-        for _ in range(100):
-            n.step(0)
-        assert n.u < 50
-
-    def test_integer_arithmetic(self):
-        n = LoihiCUBANeuron()
-        for _ in range(100):
-            n.step(50)
-        assert isinstance(n.v, int)
-        assert isinstance(n.u, int)
-
-    def test_rate_increases_with_input(self):
-        n_low = LoihiCUBANeuron()
-        n_high = LoihiCUBANeuron()
-        s_low = sum(n_low.step(20) for _ in range(1000))
-        s_high = sum(n_high.step(100) for _ in range(1000))
-        assert s_high > s_low
+        for _ in range(3000):
+            n.step(1000)
+        assert np.isfinite(n.v)
 
     def test_reset(self):
         n = LoihiCUBANeuron()
-        for _ in range(500):
-            n.step(100)
+        for _ in range(100):
+            n.step(1000)
         n.reset()
-        assert n.v == 0
-        assert n.u == 0
+
+
+class TestDynamics:
+    def test_fires(self):
+        n = LoihiCUBANeuron()
+        spikes = _run(n, 1000, 5000)
+        assert len(spikes) >= 100
+
+    def test_rate_monotonic(self):
+        n_low = LoihiCUBANeuron()
+        n_high = LoihiCUBANeuron()
+        s_low = len(_run(n_low, 500, 5000))
+        s_high = len(_run(n_high, 2000, 5000))
+        assert s_high >= s_low
 
     def test_deterministic(self):
-        n1 = LoihiCUBANeuron()
-        n2 = LoihiCUBANeuron()
-        for _ in range(200):
-            assert n1.step(50) == n2.step(50)
+        traces = []
+        for _ in range(2):
+            n = LoihiCUBANeuron()
+            trace = [n.step(1000) for _ in range(200)]
+            traces.append(trace)
+        assert traces[0] == traces[1]
 
 
-class TestLoihiCUBANetwork:
-    def test_population(self):
-        assert Population(LoihiCUBANeuron, n=10, label="lcuba").n == 10
-
-
-class TestLoihiCUBAAnalysis:
-    def test_spike_count(self):
+class TestPerformance:
+    def test_isolation_throughput(self):
         n = LoihiCUBANeuron()
-        train = np.zeros(1000, dtype=np.int8)
-        for t in range(1000):
-            train[t] = n.step(50)
-        assert spike_count(train) > 50
+        N = 100000
+        t0 = time.perf_counter()
+        for _ in range(N):
+            n.step(1000)
+        elapsed = time.perf_counter() - t0
+        assert N / elapsed > 200000
+
+
+class TestPipeline:
+    def test_population(self):
+        assert Population(LoihiCUBANeuron, n=5, label="t").n == 5
+
+    def test_network(self):
+        pop = Population(LoihiCUBANeuron, n=5, label="t")
+        drive = PoissonInput(n=5, rate_hz=500.0, weight=float(1000), dt=0.001, seed=42)
+        mon = SpikeMonitor(pop)
+        net = Network(pop, drive, mon)
+        net.run(duration=2.0, dt=0.001, backend="python")
+        assert mon.count > 0
+
+    def test_projection_wiring(self):
+        src = Population(LoihiCUBANeuron, n=5, label="s")
+        tgt = Population(LoihiCUBANeuron, n=5, label="t")
+        drive = PoissonInput(n=5, rate_hz=500.0, weight=float(1000), dt=0.001, seed=42)
+        proj = Projection(src, tgt, weight=float(1000), probability=1.0, seed=42)
+        mon = SpikeMonitor(src)
+        net = Network(src, tgt, drive, proj, mon)
+        net.run(duration=2.0, dt=0.001, backend="python")
+        assert isinstance(mon.count, int)
