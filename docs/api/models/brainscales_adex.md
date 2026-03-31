@@ -317,3 +317,40 @@ is the entire point of analog neuromorphic computing.
 10. **Calibration not modelled:** The software emulation uses ideal
     parameters. Real hardware has device mismatch that requires per-neuron
     calibration — a significant engineering challenge not captured here.
+
+---
+
+## BrainScaleS-2 in Research
+
+### Human Brain Project (HBP)
+
+BrainScaleS-2 is one of the two neuromorphic platforms of the EU Human
+Brain Project (the other being SpiNNaker). It is operated as a shared
+research infrastructure at Heidelberg University, accessible via the
+EBRAINS platform.
+
+### Accelerated learning
+
+The 1000× speedup enables applications impossible on real-time hardware:
+- **Evolutionary optimisation:** Evolve network configurations in minutes
+  instead of hours
+- **Long-term plasticity studies:** Simulate hours of biological STDP in
+  seconds of wall-clock time
+- **Parameter sweeps:** Explore vast parameter spaces by running thousands
+  of simulations per real second
+
+### In-the-loop training
+
+Pehle et al. (2022) demonstrated gradient-based training of BrainScaleS-2
+networks using surrogate gradients — the hardware executes the forward
+pass (1000× fast), and a host computer computes gradients. This
+"in-the-loop" approach achieved competitive accuracy on MNIST and other
+benchmarks.
+
+### Analog noise as computational resource
+
+The device mismatch and analog noise in BrainScaleS-2 can be exploited:
+- As a source of stochasticity for sampling-based inference (Boltzmann
+  machines)
+- As regularisation that prevents overfitting (similar to dropout)
+- As a model of biological neural variability (each neuron is unique)
