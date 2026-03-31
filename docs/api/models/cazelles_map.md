@@ -341,3 +341,7 @@ At a=3.8, the Cazelles model lives in the chaotic regime — the fast
 dynamics are genuinely unpredictable in the long term, even though
 the model is completely deterministic. This creates biologically
 realistic spike timing variability from a purely deterministic mechanism.
+
+The Cazelles model demonstrates that **chaos and bursting can coexist** —
+the spike pattern within each burst is chaotic, while the burst envelope
+is regular (controlled by the slow variable y).
