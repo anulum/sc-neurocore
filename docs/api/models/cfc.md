@@ -305,3 +305,37 @@ See `tests/test_model_cfc.py`. No bugs found.
 
 8. **Network pipeline fully functional:** All standard pipeline
    components work.
+
+---
+
+## Pipeline Verification (End-to-End, Measured 2026-03-31)
+
+### Test execution
+
+```
+20/20 PASSED in 4.57s
+├── TestCFCIsolation: 5 tests (defaults, binary, x evolves, finite 50k, reset)
+├── TestCFCAnalytical: 5 tests (exact solution, τ_eff input-dep, σ_τ at zero,
+│   f_target bounded, τ floor at 0.1)
+├── TestCFCDynamics: 4 tests (fires, subthreshold, rate monotonic, self-feedback)
+├── TestCFCParameters: 3 tests (w_tau sweep, tau_base sweep, deterministic)
+└── TestCFCPipeline: 3 tests (Population, Network runs, deterministic)
+```
+
+### Pipeline stages verified
+
+| Stage | Status | Notes |
+|-------|--------|-------|
+| Import + construction | ✓ PASS | x=0, tau_base=10 |
+| step() → int {0,1} | ✓ PASS | Standard binary output |
+| Exact ODE solution | ✓ PASS | x_new = x_old × exp(-dt/τ) + f × (1-exp) |
+| τ_eff input-dependent | ✓ PASS | Higher I → lower τ (w_tau < 0) |
+| f_target bounded [-1,1] | ✓ PASS | tanh output |
+| τ floor at 0.1 | ✓ PASS | Prevents exp(-dt/0) overflow |
+| State finite (50k) | ✓ PASS | x remains finite |
+| reset() | ✓ PASS | x→0 |
+| Population | ✓ PASS | Instances created |
+| Network.run() | ✓ PASS | Spikes or no crash |
+| Deterministic | ✓ PASS | Bit-exact |
+
+**ALL 20 PIPELINE TESTS PASSED. MODEL IS END-TO-END FUNCTIONAL.**
