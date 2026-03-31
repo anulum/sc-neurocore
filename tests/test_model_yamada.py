@@ -100,9 +100,7 @@ class TestYamadaSlowDynamics:
             n_fast.step(50.0)
             n_slow.step(50.0)
         # Fast tau_q should have moved q further from initial 0.0
-        assert n_fast.q > n_slow.q, (
-            f"fast q={n_fast.q:.6f}, slow q={n_slow.q:.6f}"
-        )
+        assert n_fast.q > n_slow.q, f"fast q={n_fast.q:.6f}, slow q={n_slow.q:.6f}"
 
 
 class TestYamadaFI:
