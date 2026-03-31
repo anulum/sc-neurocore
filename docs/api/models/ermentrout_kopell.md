@@ -340,3 +340,14 @@ rate dynamics are best exploited in isolation or with custom network
 logic that preserves the float values.
 
 **ALL 23 PIPELINE TESTS PASSED. MODEL IS END-TO-END FUNCTIONAL.**
+
+---
+
+## Theoretical Significance
+
+The Montbrió-Pazó-Roxin (2015) result is one of the most important
+theoretical advances in computational neuroscience of the 2010s.
+It provides the first **exact** low-dimensional reduction of a
+heterogeneous spiking neural network — bridging the gap between
+microscopic (single-neuron) and macroscopic (population) descriptions
+without any approximation.
