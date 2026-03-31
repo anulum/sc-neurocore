@@ -312,3 +312,44 @@ See `tests/test_model_escape_rate.py`.
 | Analysis | ✓ PASS | spike_count, ISI, firing_rate |
 
 **ALL 24 PIPELINE TESTS PASSED. MODEL IS END-TO-END FUNCTIONAL.**
+
+---
+
+## Theoretical Context
+
+### Gerstner's escape noise framework
+
+Wulfram Gerstner introduced the escape noise model as part of the
+**Spike Response Model** (SRM) framework (Gerstner 2000). The key
+insight: biological neurons have "noisy thresholds" — the probability
+of firing increases steeply near threshold but is never exactly zero
+below it and never exactly one above it.
+
+### Relationship to Kramers escape theory
+
+The name "escape rate" comes from Kramers' (1940) theory of thermally
+activated escape over energy barriers:
+
+$$\text{rate} = \text{attempt frequency} \times \exp(-\Delta E / k_B T)$$
+
+In the neural context:
+- Barrier height ↔ V_threshold − V (distance to threshold)
+- Temperature ↔ Δu (noise parameter)
+- Attempt frequency ↔ ρ₀ (base rate)
+
+The neuron "escapes" over the threshold barrier with a rate that
+increases exponentially as the barrier shrinks (V → V_threshold).
+
+### Applications
+
+The escape noise model is used in:
+1. **Maximum likelihood estimation** of neural model parameters from
+   spike train data (Pillow et al. 2005)
+2. **Bayesian decoding** with probabilistic spiking models
+3. **Information-theoretic analysis** of neural coding efficiency
+4. **Network simulations** where biological variability is important
+
+The stochastic threshold provides a more realistic description of
+neural variability than deterministic models with added noise — it
+correctly predicts the ISI distribution shape and spike-timing
+precision observed in experimental recordings.
