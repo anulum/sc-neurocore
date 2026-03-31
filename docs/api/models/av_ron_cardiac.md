@@ -258,3 +258,49 @@ See `tests/test_model_av_ron_cardiac.py`. No bugs found.
    strength, inter-burst interval maps to heart rate.
 
 8. **Network pipeline functional:** All standard components work.
+
+---
+
+## Biological Context
+
+### Crustacean cardiac ganglion
+
+The cardiac ganglion (CG) is a small network of ~9 neurons in the lobster
+heart that generates rhythmic bursts driving cardiac muscle contraction.
+It is one of the best-characterised central pattern generators:
+- 4 large motor neurons: produce bursts → contract the heart
+- 5 small pacemaker neurons: generate rhythm → entrain motor neurons
+- The AvRon model captures the motor neuron dynamics
+
+### Plateau potentials in vertebrates
+
+Plateau bursting is not restricted to invertebrates. Similar dynamics
+occur in:
+- **Thalamocortical relay neurons:** T-type Ca²⁺ plateau during sleep
+- **Motoneurons:** Persistent inward currents create plateaus
+  (Heckman & Enoka 2012)
+- **Cardiac Purkinje fibres:** Long plateaus (~200 ms) drive the
+  cardiac action potential
+
+### Bursting classification
+
+In Izhikevich's (2000) taxonomy, the AvRon model implements **fold/fold
+cycle** (Type III) bursting:
+- Active phase begins via fold bifurcation (saddle-node)
+- Active phase ends via fold of cycles bifurcation
+- The plateau provides the intermediate stable state between rest and
+  full spiking
+
+This differs from:
+- Type I (fold/homoclinic): square-wave bursting (ChayKeizer)
+- Type II (circle/fold cycle): parabolic bursting
+- Type IV (subcritical Hopf): Yamada-type
+
+### Neuromodulation
+
+In the biological CG, neuromodulators (serotonin, dopamine, octopamine)
+adjust burst parameters by modifying conductances:
+- Serotonin: increases g_s → longer plateaus → stronger contractions
+- Dopamine: decreases g_K → higher excitability → faster heart rate
+- The model parameters (g_na, g_k, g_s) directly correspond to these
+  pharmacological targets
