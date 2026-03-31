@@ -291,3 +291,23 @@ See `tests/test_model_terman_wang.py`. No bugs found.
 
 10. **FitzHugh-Nagumo variant:** Same cubic excitability but with steep
     tanh recovery — specialised for synchronisation-based computation.
+
+---
+
+## Theoretical Significance
+
+### Temporal binding problem
+
+The LEGION framework addresses the **binding problem** in perception:
+how does the brain combine features processed by different neurons into
+coherent objects? Terman & Wang's answer: synchronised oscillation.
+Features belonging to the same object oscillate in phase; features from
+different objects oscillate out of phase.
+
+### Relation to gamma oscillations
+
+The 30–80 Hz gamma oscillations observed in visual cortex during
+perceptual grouping (Singer & Gray 1995) may implement a mechanism
+similar to LEGION. The Terman-Wang oscillator generates frequencies in
+this range with appropriate parameters, providing a computational model
+for the oscillatory binding hypothesis.
