@@ -281,3 +281,27 @@ See `tests/test_model_wong_wang.py`. No bugs found.
 10. **Pipeline-limited:** Tuple return and two-argument step prevent
     standard Network integration. The model is designed for standalone
     decision-making simulations.
+
+---
+
+## Applications in Neuroscience
+
+### Random dot motion discrimination
+
+The canonical application: two pools represent "left" and "right" motion
+direction. Stimulus coherence maps to stim1 − stim2. At 0% coherence
+(equal stimuli), accuracy is 50%. At 51.2% coherence, accuracy reaches
+~96% — matching monkey psychophysics (Roitman & Shadlen 2002).
+
+### Speed-accuracy tradeoff
+
+By varying the decision threshold (e.g., s > 0.6 for commitment):
+- Lower threshold → faster, less accurate decisions
+- Higher threshold → slower, more accurate decisions
+This tradeoff is a fundamental prediction of the model.
+
+### Dynamic causal modelling (DCM)
+
+The Wong-Wang model is used in SPM12 (Donders/Wellcome) for spectral DCM
+of resting-state fMRI. The NMDA dynamics map to the BOLD timescale via
+a Balloon-Windkessel hemodynamic model.
