@@ -284,3 +284,69 @@ float return treated as spike detection.
 9. **Only neural field model** in SC-NeuroCore.
 
 10. **FFT convolution efficient:** O(N log N) vs O(N²) direct.
+
+---
+
+## Historical and Theoretical Context
+
+### Amari 1977 — foundational neural field theory
+
+Shun-ichi Amari introduced the continuous neural field equation in 1977,
+establishing a mathematical framework for spatially-extended neural
+dynamics. This was the first rigorous treatment of:
+
+- **Pattern formation** in neural tissue via local excitation / lateral
+  inhibition (Mexican hat connectivity)
+- **Persistent activity** without external drive (bump attractors)
+- **Bifurcation analysis** of neural population dynamics
+
+The Amari equation is the neural analogue of the reaction-diffusion
+equation in chemical systems — it describes how patterns of activity
+emerge and stabilise in neural tissue.
+
+### Relationship to Wilson-Cowan
+
+The Amari field can be seen as a spatially-extended Wilson-Cowan model:
+- Wilson-Cowan: 2 ODEs (E, I) at a single point
+- Amari: N coupled equations across space, with the Mexican hat kernel
+  implementing the E/I interaction spatially
+
+### Dynamic Neural Fields (DNF) framework
+
+The Amari equation is the foundation of the **Dynamic Neural Fields**
+framework (Schöner & Spencer 2016), which models:
+- Spatial attention (bump tracks attended location)
+- Motor planning (bump represents planned movement)
+- Decision-making (competing bumps represent alternatives)
+- Memory (bump persists → remembered location)
+
+The DNF framework is used in robotics (embodied cognition), developmental
+psychology, and cognitive science.
+
+### Turing patterns
+
+The Mexican hat kernel can produce **Turing patterns** — stable periodic
+patterns that arise from the interaction of local activation and lateral
+inhibition. This connects neural field theory to:
+- Alan Turing's 1952 morphogenesis paper
+- Pattern formation in biology (animal coat patterns, cortical columns)
+- Self-organisation in neural development
+
+### Bump solution existence theorem (Amari 1977)
+
+Amari proved that for the 1D neural field with Mexican hat kernel:
+- A unique stable bump exists for a range of kernel parameters
+- The bump width depends on the kernel shape (not the input)
+- The bump position is determined by the input (or initial conditions)
+- Perturbations of the bump position decay exponentially (stable attractor)
+
+This is a **theorem, not a simulation result** — one of the few rigorous
+mathematical results in computational neuroscience.
+
+### Connection to SCPN theory
+
+In the SCPN framework, the Amari field represents the **spatial layer**
+of neural computation — the continuous substrate on which discrete spiking
+events are organised. The bump attractor mechanism is a special case of
+the SCPN self-sustaining activity principle (persistent representations
+without external drive).
