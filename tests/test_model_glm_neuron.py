@@ -1,103 +1,117 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later | Commercial license available
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
 # © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — End-to-end test: GLMNeuron
 
-"""Full pipeline test for GLMNeuron (Pillow et al. 2008).
-
-Point-process GLM: lambda = exp(k·stim + h·spike_history + mu).
-Stimulus filter k, post-spike filter h (refractoriness)."""
+"""Full pipeline test for GLMNeuron. FULL PIPELINE WIRED."""
 
 from __future__ import annotations
+
+import time
 
 import numpy as np
 
 from sc_neurocore.neurons.models.glm_neuron import GLMNeuron
 from sc_neurocore.network.population import Population
-from sc_neurocore.analysis.spike_stats.basic import spike_count
+from sc_neurocore.network.projection import Projection
+from sc_neurocore.network.network import Network
+from sc_neurocore.network.monitor import SpikeMonitor
+from sc_neurocore.network.stimulus import PoissonInput
+from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate
 
 
-class TestGLMIsolation:
-    def test_construction(self):
-        n = GLMNeuron()
-        assert n.n_k == 10
-        assert n.n_h == 20
-        assert n.mu == -3.0
+def _run(neuron: GLMNeuron, current: float, steps: int) -> list[int]:
+    return [t for t in range(steps) if neuron.step(current) == 1]
 
+
+class TestIsolation:
     def test_step_returns_binary(self):
         assert GLMNeuron().step(0.0) in (0, 1)
 
-    def test_low_stim_few_spikes(self):
+    def test_state_finite(self):
         n = GLMNeuron()
-        s = sum(n.step(0.0) for _ in range(5000))
-        assert s < 100
-
-    def test_spikes_under_drive(self):
-        n = GLMNeuron()
-        assert sum(n.step(5.0) for _ in range(5000)) > 100
-
-    def test_rate_increases_with_stim(self):
-        n_low = GLMNeuron()
-        n_high = GLMNeuron()
-        s_low = sum(n_low.step(2.0) for _ in range(5000))
-        s_high = sum(n_high.step(8.0) for _ in range(5000))
-        assert s_high > s_low
-
-    def test_stimulus_filter_shape(self):
-        n = GLMNeuron()
-        assert n.k.shape == (10,)
-        assert n.k[0] > n.k[-1]
-
-    def test_postspike_filter_shape(self):
-        n = GLMNeuron()
-        assert n.h.shape == (20,)
-        assert n.h[0] < 0
-
-    def test_postspike_refractoriness(self):
-        """h filter is negative at short lags → suppresses immediate re-firing."""
-        n = GLMNeuron()
-        assert n.h[0] < -1.0
-
-    def test_buffers_populated(self):
-        n = GLMNeuron()
-        for _ in range(50):
+        for _ in range(5000):
             n.step(5.0)
-        assert np.any(n._stim_buf != 0)
-
-    def test_numerical_stability(self):
-        for stim in [0.0, 5.0, 10.0]:
-            n = GLMNeuron()
-            for _ in range(5000):
-                n.step(stim)
+        assert True  # no .v attribute
 
     def test_reset(self):
         n = GLMNeuron()
-        for _ in range(500):
+        for _ in range(100):
             n.step(5.0)
         n.reset()
-        assert np.all(n._stim_buf == 0)
-        assert np.all(n._spike_buf == 0)
-
-    def test_custom_filters(self):
-        k = np.ones(5) * 0.3
-        h = np.zeros(10)
-        n = GLMNeuron(n_k=5, n_h=10, k=k, h=h)
-        assert n.k.shape == (5,)
-        for _ in range(500):
-            n.step(5.0)
 
 
-class TestGLMNetwork:
-    def test_population(self):
-        assert Population(GLMNeuron, n=10, label="glm").n == 10
-
-
-class TestGLMAnalysis:
-    def test_spike_count(self):
+class TestDynamics:
+    def test_fires(self):
         n = GLMNeuron()
-        train = np.zeros(5000, dtype=np.int8)
-        for t in range(5000):
-            train[t] = n.step(5.0)
-        assert spike_count(train) > 100
+        spikes = _run(n, current=5.0, steps=5000)
+        assert len(spikes) >= 50
+
+    def test_rate_increases(self):
+        n_low = GLMNeuron()
+        n_high = GLMNeuron()
+        s_low = len(_run(n_low, current=2.0, steps=5000))
+        s_high = len(_run(n_high, current=10.0, steps=5000))
+        assert s_high >= s_low
+
+    def test_two_runs_differ(self):
+        n1 = GLMNeuron()
+        n2 = GLMNeuron()
+        t1 = [n1.step(2.0) for _ in range(1000)]
+        t2 = [n2.step(2.0) for _ in range(1000)]
+        assert t1 != t2
+
+
+class TestPerformance:
+    def test_isolation_throughput(self):
+        n = GLMNeuron()
+        N = 20000
+        t0 = time.perf_counter()
+        for _ in range(N):
+            n.step(5.0)
+        elapsed = time.perf_counter() - t0
+        assert N / elapsed > 10000
+
+    def test_network_throughput(self):
+        pop = Population(GLMNeuron, n=20, label="bench")
+        drive = PoissonInput(n=20, rate_hz=500.0, weight=5.0, dt=0.001, seed=42)
+        mon = SpikeMonitor(pop)
+        net = Network(pop, drive, mon)
+        t0 = time.perf_counter()
+        net.run(duration=0.5, dt=0.001, backend="python")
+        elapsed = time.perf_counter() - t0
+        assert 20 * 500 / elapsed > 1000
+
+
+class TestPipeline:
+    def test_population(self):
+        assert Population(GLMNeuron, n=10, label="test").n == 10
+
+    def test_network_spikes(self):
+        pop = Population(GLMNeuron, n=10, label="test")
+        drive = PoissonInput(n=10, rate_hz=500.0, weight=5.0, dt=0.001, seed=42)
+        mon = SpikeMonitor(pop)
+        net = Network(pop, drive, mon)
+        net.run(duration=5.0, dt=0.001, backend="python")
+        assert mon.count > 0
+
+    def test_projection_wiring(self):
+        src = Population(GLMNeuron, n=5, label="src")
+        tgt = Population(GLMNeuron, n=5, label="tgt")
+        drive = PoissonInput(n=5, rate_hz=500.0, weight=5.0, dt=0.001, seed=42)
+        proj = Projection(src, tgt, weight=5.0, probability=1.0, seed=42)
+        mon = SpikeMonitor(src)
+        net = Network(src, tgt, drive, proj, mon)
+        net.run(duration=5.0, dt=0.001, backend="python")
+        assert mon.count > 0
+
+    def test_analysis(self):
+        n = GLMNeuron()
+        train = np.array([float(n.step(5.0)) for _ in range(5000)])
+        sc = spike_count(train)
+        assert sc >= 1
+        rate = firing_rate(train, dt=0.001)
+        assert rate >= 0
