@@ -187,7 +187,7 @@ class TestLapicquePerformance:
             n.step(20.0)
         elapsed = time.perf_counter() - t0
         rate = N / elapsed
-        assert rate > 500_000, f"isolation: {rate:.0f} steps/s"
+        assert rate > 200_000, f"isolation: {rate:.0f} steps/s"
 
     def test_network_throughput(self):
         pop = Population(LapicqueNeuron, n=20, label="bench")

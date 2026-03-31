@@ -137,9 +137,7 @@ class TestThetaAnalyticalISI:
         isis = np.diff(spikes[2:])
         unique_isis = np.unique(isis)
         assert len(unique_isis) <= 2, f"Too many ISI values: {unique_isis}"
-        assert max(unique_isis) - min(unique_isis) <= 1, (
-            f"ISI jitter > 1: {unique_isis}"
-        )
+        assert max(unique_isis) - min(unique_isis) <= 1, f"ISI jitter > 1: {unique_isis}"
 
     def test_sqrt_scaling(self):
         """f(4I)/f(I) ≈ 2 (since f ∝ √I)."""
