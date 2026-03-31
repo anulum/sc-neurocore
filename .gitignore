@@ -89,3 +89,7 @@ site/
 
 # Downloaded datasets
 data/
+
+# Claude Code local config — never commit
+CLAUDE.md
+.claude/
