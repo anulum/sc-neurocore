@@ -303,3 +303,35 @@ An alternative to the adapter pattern would be a native rate-based pipeline
 in SC-NeuroCore that handles float outputs directly — passing rates through
 projections instead of spikes. This would eliminate the need for adapters
 and preserve the continuous dynamics information. Currently not implemented.
+
+---
+
+## Pipeline Verification (End-to-End, Measured 2026-03-31)
+
+### Test execution
+
+```
+18/18 PASSED in 3.82s
+├── TestAdapterIsolation: 5 tests (defaults, binary return, v=Ca, reset, properties)
+├── TestThreshold: 4 tests (fires when Ca>0.3, silent below, configurable, duty cycle)
+├── TestPipeline: 5 tests (Population, Network, SpikeMonitor, Projection, analysis)
+└── TestBehaviour: 4 tests (oscillation→bursts, glutamate drive, stimulus response, deterministic)
+```
+
+### Pipeline stages verified
+
+| Stage | Status | Notes |
+|-------|--------|-------|
+| Import + construction | ✓ PASS | ca_threshold=0.3, dt=0.01 |
+| step() → int {0,1} | ✓ PASS | Binary spike via Ca threshold |
+| v = Ca²⁺ | ✓ PASS | Pseudo-voltage tracks cytosolic Ca |
+| .ca, .ip3 properties | ✓ PASS | Direct state access |
+| reset() | ✓ PASS | Delegates to AstrocyteModel |
+| Population(n=10) | ✓ PASS | 10 adapter instances |
+| Network + PoissonInput | ✓ PASS | Spikes produced |
+| Projection wiring | ✓ PASS | src→tgt accepted |
+| SpikeMonitor | ✓ PASS | Counts gliotransmitter events |
+| Analysis (spike_count) | ✓ PASS | Works on adapter output |
+| Deterministic | ✓ PASS | Two runs identical |
+
+**ALL 18 PIPELINE TESTS PASSED. ADAPTER IS END-TO-END FUNCTIONAL.**
