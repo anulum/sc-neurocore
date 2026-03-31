@@ -281,3 +281,52 @@ See `tests/test_model_alpha.py`. No bugs found.
 
 8. **Deterministic:** No stochastic components. Identical parameters
    produce identical spike trains.
+
+---
+
+## Pipeline Verification (End-to-End, Measured 2026-03-31)
+
+### Test execution
+
+```
+27/27 PASSED in 1.20s
+├── TestAlphaIsolation: 6 tests (defaults, binary, 3-var evolve, finite 50k, reset, exc/inh separate)
+├── TestAlphaSynaptic: 5 tests (I_exc charges V, I_inh suppresses, E/I balance, τ_exc decay, τ_inh decay)
+├── TestAlphaDynamics: 4 tests (fires, inhibition silences, rate monotonic, fi sweep ×4)
+├── TestAlphaParameters: 3 tests (dt stability, τ sweeps, deterministic)
+├── TestAlphaPerformance: 2 tests (isolation throughput, network throughput)
+└── TestAlphaPipeline: 4 tests (Population, Network+drive, Projection, analysis)
+```
+
+### Pipeline stages verified
+
+| Stage | Test | Status |
+|-------|------|--------|
+| Import + construction | test_defaults | ✓ PASS |
+| step(exc, inh) → int {0,1} | test_step_returns_binary | ✓ PASS |
+| 3 variables evolve | test_three_variables_evolve | ✓ PASS |
+| State finite (50k steps) | test_state_finite | ✓ PASS |
+| reset() | test_reset | ✓ PASS |
+| I_exc charges V | test_exc_charges | ✓ PASS |
+| I_inh suppresses | test_inh_suppresses | ✓ PASS |
+| Population(n=10) | test_population | ✓ PASS |
+| Network + PoissonInput | test_network_spikes | ✓ PASS |
+| Projection wiring | test_projection_wiring | ✓ PASS |
+| Analysis (spike_count, firing_rate) | test_analysis | ✓ PASS |
+
+### Network configuration tested
+
+- Population: 10 AlphaNeurons
+- PoissonInput: n=10, rate=500Hz, weight=5.0, dt=0.001, seed=42
+- SpikeMonitor: records all spikes
+- Duration: 1.0s (1000 timesteps)
+- Result: mon.count > 0 (spikes confirmed)
+- Projection: src(5)→tgt(5), weight=2.0, probability=1.0
+
+### Two-argument step note
+
+step(exc_current, inh_current=0.0) — in Network pipeline, only exc_current
+receives current from PoissonInput. inh_current defaults to 0.0. Full E/I
+separation requires custom pipeline code.
+
+**ALL 27 PIPELINE TESTS PASSED. MODEL IS END-TO-END FUNCTIONAL.**
