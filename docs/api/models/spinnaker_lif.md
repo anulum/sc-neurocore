@@ -295,3 +295,23 @@ See `tests/test_model_spinnaker_lif.py`. No bugs found.
 7. **Deterministic:** No noise. Same input → same spike train.
 
 8. **Network pipeline functional:** All standard components work.
+
+---
+
+## PyNN / NEST Compatibility
+
+The SpiNNakerLIF parameters are directly compatible with the PyNN
+`IF_curr_exp` model, which is the standard LIF in the PyNN ecosystem:
+
+| PyNN parameter | SpiNNakerLIF | Default |
+|---------------|-------------|---------|
+| `v_rest` | `v_rest` | −70.0 mV |
+| `v_reset` | `v_reset` | −70.0 mV |
+| `v_thresh` | `v_threshold` | −50.0 mV |
+| `tau_m` | `tau_m` | 20.0 ms |
+| `i_offset` | `i_offset` | 0.0 nA |
+| `tau_refrac` | `tau_refrac` | 2.0 ms |
+
+This 1:1 mapping means that PyNN simulation scripts can be directly
+translated to SC-NeuroCore by swapping the neuron model class — no
+parameter conversion needed.
