@@ -291,3 +291,22 @@ See `tests/test_model_ai_optimized.py`. No bugs found.
 
 8. **All use math, not numpy:** Eliminates numpy overhead for single-
    neuron computation.
+
+---
+
+## Relationship to SCPN Theory
+
+Several of these models connect to the SCPN (Structural Causal
+Potentiation Network) framework developed in the GOTM project:
+
+- **MultiTimescale:** The 3 timescales mirror the SCPN layer hierarchy
+  (fast sensory → medium associative → slow executive)
+- **PredictiveCoding:** Implements the SCPN principle that neural activity
+  should encode prediction errors, not raw stimuli
+- **SelfReferential:** Mirrors SCPN self-observation (the system monitors
+  its own activity to maintain coherence)
+- **MetaPlastic:** Implements the SCPN adaptivity axiom (learning rate
+  itself is a learnable parameter)
+
+These connections make the AI-optimized models the computational bridge
+between abstract SCPN theory and concrete spiking implementations.
