@@ -18,7 +18,7 @@ import pytest
 
 from sc_neurocore.neurons.models.rall_cable import RallCableNeuron
 from sc_neurocore.network.population import Population
-from sc_neurocore.analysis.spike_stats.basic import spike_count
+from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate, isi
 
 
 def _run(neuron: RallCableNeuron, current: float, steps: int) -> list[int]:
@@ -155,13 +155,85 @@ class TestRallCableNetwork:
             Population(RallCableNeuron, n=5, label="rall")
 
 
+class TestRallCablePerformance:
+    def test_isolation_throughput(self):
+        import time
+
+        n = RallCableNeuron(n_comp=5)
+        N = 50_000
+        t0 = time.perf_counter()
+        for _ in range(N):
+            n.step(100.0)
+        elapsed = time.perf_counter() - t0
+        rate = N / elapsed
+        # N-compartment cable with numpy array ops
+        assert rate > 10_000, f"isolation: {rate:.0f} steps/s"
+
+
+class TestRallCableAnalytical:
+    def test_cable_equation_one_step(self):
+        """dV_i = (leak + axial + inj) / tau_m · dt."""
+        n = RallCableNeuron(n_comp=3)
+        v0 = n.v.copy()
+        I = 100.0
+        # Compute expected dv for each compartment
+        expected_dv = np.zeros(3)
+        for i in range(3):
+            leak = -(v0[i] - n.v_rest)
+            left = v0[i - 1] if i > 0 else v0[i]
+            right = v0[i + 1] if i < 2 else v0[i]
+            axial = n.g_ratio * (left - 2.0 * v0[i] + right)
+            inj = I if i == 2 else 0.0
+            expected_dv[i] = (leak + axial + inj) / n.tau_m * n.dt
+        n.step(I)
+        actual_dv = n.v - v0
+        np.testing.assert_allclose(actual_dv, expected_dv, atol=1e-10)
+
+    def test_input_at_distal_end_only(self):
+        """Current injected only at compartment N-1."""
+        n = RallCableNeuron(n_comp=3)
+        n.step(100.0)
+        # Distal end (2) got input, others only leak/axial
+        assert n.v[2] > n.v[0]
+
+    def test_boundary_conditions(self):
+        """Sealed ends: left of comp 0 = v[0], right of comp N-1 = v[N-1]."""
+        n = RallCableNeuron(n_comp=3)
+        v0 = n.v.copy()
+        # At rest all equal → axial=0, only distal gets current
+        n.step(100.0)
+        # Comp 0: left=v[0] (sealed), so axial = g_ratio*(v[0]-2v[0]+v[1])
+        # With all equal at rest: axial=0 → dv[0] = leak/tau_m = 0 (at rest)
+        assert abs(n.v[0] - v0[0]) < 0.01
+
+
 class TestRallCableAnalysis:
     def test_spike_count(self):
         n = RallCableNeuron(n_comp=2, g_ratio=5.0)
-        train = np.array([float(n.step(500.0)) for _ in range(50000)])
+        train = np.array([float(n.step(500.0)) for _ in range(50_000)])
         assert spike_count(train) >= 10
 
-    def test_spike_count_consistency(self):
+    def test_analysis_isi(self):
         n = RallCableNeuron(n_comp=2, g_ratio=5.0)
-        train = np.array([float(n.step(500.0)) for _ in range(50000)])
-        assert spike_count(train) == int(train.sum())
+        train = np.array([float(n.step(500.0)) for _ in range(50_000)])
+        intervals = isi(train, dt=0.0001)
+        if intervals.size > 0:
+            assert np.all(np.isfinite(intervals))
+            assert np.all(intervals > 0)
+
+    def test_analysis_firing_rate(self):
+        n = RallCableNeuron(n_comp=2, g_ratio=5.0)
+        train = np.array([float(n.step(500.0)) for _ in range(50_000)])
+        rate = firing_rate(train, dt=0.0001)
+        assert rate > 0
+
+    def test_analysis_cross_validation(self):
+        n = RallCableNeuron(n_comp=2, g_ratio=5.0)
+        train = np.array([float(n.step(500.0)) for _ in range(50_000)])
+        sc = spike_count(train)
+        dt_sim = 0.0001
+        duration = len(train) * dt_sim
+        rate = firing_rate(train, dt=dt_sim)
+        if sc > 0:
+            expected = sc / duration
+            assert abs(rate - expected) < expected * 0.1
