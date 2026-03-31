@@ -292,3 +292,27 @@ See `tests/test_model_yamada.py`. No bugs found.
 10. **Simplest biophysical burster:** 3 ODEs with explicit Boltzmann
     activation functions and 4 ionic currents — minimal biophysical
     bursting model.
+
+---
+
+## Biological Relevance
+
+### Pancreatic beta cells
+
+The Yamada model's square-wave bursting pattern closely matches
+electrical activity in pancreatic beta cells, which burst with periods
+of 10–60 seconds. The slow variable q corresponds to intracellular
+Ca²⁺ concentration, which modulates K(Ca) channels.
+
+### Thalamic relay neurons
+
+Thalamic neurons exhibit burst firing during sleep (delta oscillations)
+and tonic firing during wakefulness. The transition is controlled by a
+slow variable (similar to q) that modulates a T-type Ca²⁺ current.
+
+### Bursting classification (Izhikevich 2000)
+
+The Yamada model implements **fold/subcritical Hopf** bursting — one of
+the 16 topologically distinct bursting types classified by Izhikevich
+(2000). The active phase terminates when the limit cycle collides with
+an unstable fixed point via a subcritical Hopf bifurcation.
