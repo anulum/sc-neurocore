@@ -294,3 +294,55 @@ See `tests/test_model_fitzhugh_rinzel.py`.
 | Analysis | ✓ PASS | Pipeline complete |
 
 **ALL 22 PIPELINE TESTS PASSED. MODEL IS END-TO-END FUNCTIONAL.**
+
+---
+
+## Theoretical Significance
+
+### Rinzel's classification of bursting
+
+John Rinzel (1987) used fast-slow decomposition to classify bursting
+into types based on the bifurcation structure of the fast subsystem:
+
+1. **Square-wave (Type I):** Fast subsystem has a saddle-node bifurcation
+   at burst onset and a homoclinic orbit at burst termination.
+2. **Parabolic (Type II):** Fast subsystem has a saddle-node on invariant
+   circle (SNIC) bifurcation at both onset and termination.
+3. **Elliptic (Type III):** Fast subsystem has a subcritical Hopf
+   bifurcation.
+
+The FHR model, depending on parameters, can exhibit **square-wave
+bursting** — the most common type in biological neurons. The y variable
+slowly sweeps the fast v-w subsystem through the saddle-node bifurcation.
+
+### From FHN to bursting
+
+The FHR demonstrates a fundamental principle: **adding one slow variable
+to an oscillator creates a burster.** This is the minimal mechanism:
+
+- 2D oscillator (FHN) → tonic spiking
+- 2D oscillator + 1 slow variable (FHR) → bursting
+- No new nonlinearities needed — just timescale separation
+
+This principle extends to all bursting models: HindmarshRose (x-y + z),
+Chay (V-n + Ca), ChayKeizer (V-n + Ca). The slow variable always
+modulates the fast oscillation.
+
+### The 0.0001 ratio
+
+The µ/1 ratio of 10⁻⁴ is extreme — even by biological standards.
+In real neurons, burst periods are typically 10–100× the spike period
+(ratio 10⁻¹ to 10⁻²). The FHR's µ=0.0001 produces very long bursts
+and long silent intervals — more characteristic of endocrine cells
+(pancreatic beta cells, hypothalamic neurons) than cortical neurons.
+
+### Phase space topology
+
+The FHR trajectories live on a 3D manifold. During bursting:
+- **Fast oscillation:** v-w trace a limit cycle (2D cylinder in 3D)
+- **Slow drift:** y slowly moves the cylinder → it eventually
+  collapses → trajectory falls to the silent branch
+- **Recovery:** y slowly moves back → cylinder reappears → new burst
+
+This "slow passage through a Hopf bifurcation" creates the characteristic
+bursting waveform with gradually changing spike amplitude within bursts.
