@@ -289,3 +289,28 @@ See `tests/test_model_wilson_hr.py`. No bugs found.
 10. **Wilson's polynomial fit to HH:** The model demonstrates that
     cortical spike dynamics can be captured by a polynomial without
     explicitly modelling ion channels.
+
+---
+
+## Historical Context
+
+### Hugh Wilson's modelling approach
+
+Wilson (1999) took a fundamentally different approach from traditional
+biophysical modelling. Rather than deriving equations from ion channel
+biophysics (Hodgkin-Huxley approach), he fitted a polynomial directly
+to the current-voltage characteristic of a cortical neuron.
+
+The philosophy: if the goal is to reproduce spike dynamics (not to
+understand ion channels), then a polynomial fit is simpler, faster, and
+equally accurate for network-level studies.
+
+### Influence on reduced models
+
+Wilson's polynomial approach influenced subsequent reduced models:
+- Izhikevich (2003): quadratic V + linear u (even simpler polynomial)
+- Brette & Gerstner (2005): exponential IF (single transcendental)
+- Touboul (2008): polynomial IF models
+
+All share the idea that complex biophysics can be captured by simple
+nonlinear functions of voltage.
