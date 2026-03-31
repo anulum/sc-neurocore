@@ -301,3 +301,43 @@ Among the fastest models — pure arithmetic, no exp(), no ODE integration.
 
 10. **Map-based alternative to ODE bursters:** Achieves bursting without
     differential equations — computationally efficient for large networks.
+
+---
+
+## Theoretical Context
+
+### Map-based neuron models in computational neuroscience
+
+Map-based models (discrete-time) have a long history in theoretical
+neuroscience:
+
+- **Chialvo (1995):** Simplest 2D map producing excitable dynamics
+- **Rulkov (2002):** Piecewise map with explicit spiking/bursting modes
+- **Cazelles et al. (2001):** Logistic map + slow variable (this model)
+- **Izhikevich (2003):** While technically an ODE, uses quadratic V
+  nonlinearity that is map-like in discrete time
+- **Ibarz & Tanaka (2004):** Piecewise-linear map with slow variable
+
+### Why maps?
+
+Maps are preferred when:
+1. **Speed matters:** No Euler error, no dt stability issues, no exp()
+2. **Qualitative dynamics matter more than waveform:** The exact shape
+   of the action potential is unimportant
+3. **Large network simulations:** 10,000+ neurons benefit from
+   map efficiency
+4. **Dynamical systems analysis:** Maps have a richer mathematical theory
+   (Lyapunov exponents, symbolic dynamics, topological conjugacy)
+
+### Logistic map and chaos theory
+
+The logistic map f(x) = ax(1−x) is one of the foundational objects of
+chaos theory:
+- **Feigenbaum (1978):** Universal constants in period-doubling cascades
+- **May (1976):** Logistic map as a model of population dynamics
+- **Li & Yorke (1975):** "Period three implies chaos" — proved for maps
+
+At a=3.8, the Cazelles model lives in the chaotic regime — the fast
+dynamics are genuinely unpredictable in the long term, even though
+the model is completely deterministic. This creates biologically
+realistic spike timing variability from a purely deterministic mechanism.
