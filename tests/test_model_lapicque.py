@@ -6,13 +6,23 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — End-to-end test: LapicqueNeuron
 
-"""Full pipeline: LapicqueNeuron. FULL PIPELINE + PERFORMANCE."""
+"""Full pipeline test for LapicqueNeuron (Lapicque 1907).
+
+Classical RC integrate-and-fire — the original IF model:
+τ · dV/dt = -(V - V_rest) + R·I
+Spike: V → V_reset when V ≥ V_threshold.
+
+Steady state: V_ss = V_rest + R·I. Fires only if V_ss ≥ V_threshold,
+i.e. I ≥ (V_threshold - V_rest) / R = rheobase.
+Euler: dV = (-(V-V_rest) + R·I) / τ · dt.
+FULL PIPELINE WIRED + PERFORMANCE."""
 
 from __future__ import annotations
 
 import time
 
 import numpy as np
+import pytest
 
 from sc_neurocore.neurons.models.lapicque import LapicqueNeuron
 from sc_neurocore.network.population import Population
@@ -20,82 +30,229 @@ from sc_neurocore.network.projection import Projection
 from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
+from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate, isi
 
 
-def _run(neuron, current, steps):
+def _run(neuron: LapicqueNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
 
 
-class TestIsolation:
-    def test_step_returns(self):
+# ---------------------------------------------------------------------------
+# 1. ISOLATION
+# ---------------------------------------------------------------------------
+class TestLapicqueIsolation:
+    def test_defaults(self):
         n = LapicqueNeuron()
-        result = n.step(20.0)
-        assert result is not None
+        assert n.v == 0.0 and n.v_rest == 0.0
+        assert n.v_threshold == 1.0 and n.v_reset == 0.0
+        assert n.tau == 20.0 and n.resistance == 1.0 and n.dt == 1.0
 
-    def test_state_finite(self):
+    def test_step_returns_binary(self):
+        assert LapicqueNeuron().step(0.0) in (0, 1)
+
+    def test_state_finite_long_run(self):
         n = LapicqueNeuron()
-        for _ in range(3000):
+        for _ in range(100_000):
             n.step(20.0)
         assert np.isfinite(n.v)
 
-    def test_reset(self):
+    def test_reset_restores_default(self):
         n = LapicqueNeuron()
         for _ in range(100):
             n.step(20.0)
         n.reset()
-
-
-class TestDynamics:
-    def test_fires(self):
-        n = LapicqueNeuron()
-        spikes = _run(n, 20.0, 5000)
-        assert len(spikes) >= 100
-
-    def test_rate_monotonic(self):
-        n_low = LapicqueNeuron()
-        n_high = LapicqueNeuron()
-        s_low = len(_run(n_low, 10.0, 5000))
-        s_high = len(_run(n_high, 50.0, 5000))
-        assert s_high >= s_low
+        assert n.v == n.v_rest
 
     def test_deterministic(self):
         traces = []
         for _ in range(2):
             n = LapicqueNeuron()
-            trace = [n.step(20.0) for _ in range(200)]
+            trace = [(n.step(20.0), n.v) for _ in range(500)]
             traces.append(trace)
         assert traces[0] == traces[1]
 
 
-class TestPerformance:
+# ---------------------------------------------------------------------------
+# 2. ANALYTICAL — dV formula, steady state, rheobase
+# ---------------------------------------------------------------------------
+class TestLapicqueAnalytical:
+    def test_dv_formula(self):
+        """dV = (-(V-V_rest) + R·I) / τ · dt."""
+        n = LapicqueNeuron()
+        v0 = n.v
+        I = 0.5  # subthreshold
+        expected = (-(v0 - n.v_rest) + n.resistance * I) / n.tau * n.dt
+        n.step(I)
+        assert abs((n.v - v0) - expected) < 1e-14
+
+    def test_steady_state(self):
+        """V_ss = V_rest + R·I (at equilibrium dV=0)."""
+        n = LapicqueNeuron()
+        I = 0.5  # subthreshold
+        for _ in range(10_000):
+            n.step(I)
+        expected_ss = n.v_rest + n.resistance * I
+        assert abs(n.v - expected_ss) < 0.01
+
+    def test_rheobase(self):
+        """Rheobase = (V_threshold - V_rest) / R. Below: silent."""
+        n = LapicqueNeuron()
+        rheobase = (n.v_threshold - n.v_rest) / n.resistance
+        # Below rheobase: no spikes
+        assert len(_run(n, current=rheobase * 0.9, steps=5000)) == 0
+
+    def test_above_rheobase_fires(self):
+        n = LapicqueNeuron()
+        rheobase = (n.v_threshold - n.v_rest) / n.resistance
+        assert len(_run(n, current=rheobase * 1.5, steps=5000)) >= 10
+
+    def test_spike_resets_voltage(self):
+        n = LapicqueNeuron()
+        for _ in range(10_000):
+            if n.step(20.0) == 1:
+                assert n.v == n.v_reset
+                break
+
+    def test_resistance_scales_input(self):
+        """Higher R → more effective current."""
+        n1 = LapicqueNeuron(resistance=0.5, v_threshold=100.0)
+        n2 = LapicqueNeuron(resistance=2.0, v_threshold=100.0)
+        for _ in range(100):
+            n1.step(10.0)
+            n2.step(10.0)
+        assert n2.v > n1.v
+
+
+# ---------------------------------------------------------------------------
+# 3. DYNAMICS
+# ---------------------------------------------------------------------------
+class TestLapicqueDynamics:
+    def test_fires_under_drive(self):
+        n = LapicqueNeuron()
+        assert len(_run(n, current=20.0, steps=5000)) >= 100
+
+    def test_subthreshold_silent(self):
+        n = LapicqueNeuron()
+        assert len(_run(n, current=0.5, steps=5000)) == 0
+
+    def test_rate_monotonic(self):
+        rates = []
+        for I in [10.0, 20.0, 50.0]:
+            n = LapicqueNeuron()
+            rates.append(len(_run(n, current=I, steps=5000)))
+        assert rates[-1] >= rates[0]
+
+    @pytest.mark.parametrize("current", [0.0, 5.0, 10.0, 20.0, 50.0])
+    def test_fi_sweep(self, current: float):
+        n = LapicqueNeuron()
+        for _ in range(5000):
+            n.step(current)
+        assert np.isfinite(n.v)
+
+
+# ---------------------------------------------------------------------------
+# 4. PARAMETERS
+# ---------------------------------------------------------------------------
+class TestLapicqueParameters:
+    @pytest.mark.parametrize("tau", [5.0, 20.0, 50.0])
+    def test_tau_sweep(self, tau: float):
+        n = LapicqueNeuron(tau=tau)
+        for _ in range(5000):
+            n.step(20.0)
+        assert np.isfinite(n.v)
+
+    @pytest.mark.parametrize("resistance", [0.5, 1.0, 2.0])
+    def test_resistance_sweep(self, resistance: float):
+        n = LapicqueNeuron(resistance=resistance)
+        spikes = len(_run(n, current=20.0, steps=5000))
+        assert isinstance(spikes, int)
+
+    @pytest.mark.parametrize("dt", [0.1, 1.0, 2.0])
+    def test_dt_stability(self, dt: float):
+        n = LapicqueNeuron(dt=dt)
+        for _ in range(5000):
+            n.step(20.0)
+        assert np.isfinite(n.v)
+
+
+# ---------------------------------------------------------------------------
+# 5. PERFORMANCE
+# ---------------------------------------------------------------------------
+class TestLapicquePerformance:
     def test_isolation_throughput(self):
         n = LapicqueNeuron()
-        N = 50000
+        N = 500_000
         t0 = time.perf_counter()
         for _ in range(N):
             n.step(20.0)
         elapsed = time.perf_counter() - t0
-        assert N / elapsed > 50000
+        rate = N / elapsed
+        assert rate > 500_000, f"isolation: {rate:.0f} steps/s"
 
-
-class TestPipeline:
-    def test_population(self):
-        assert Population(LapicqueNeuron, n=5, label="t").n == 5
-
-    def test_network(self):
-        pop = Population(LapicqueNeuron, n=5, label="t")
-        drive = PoissonInput(n=5, rate_hz=500.0, weight=20.0, dt=0.001, seed=42)
+    def test_network_throughput(self):
+        pop = Population(LapicqueNeuron, n=20, label="bench")
+        drive = PoissonInput(n=20, rate_hz=500.0, weight=20.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
         net = Network(pop, drive, mon)
-        net.run(duration=2.0, dt=0.001, backend="python")
-        assert mon.count > 0
+        t0 = time.perf_counter()
+        net.run(duration=0.5, dt=0.001, backend="python")
+        elapsed = time.perf_counter() - t0
+        neuron_steps = 20 * 500
+        rate = neuron_steps / elapsed
+        assert rate > 5_000, f"network: {rate:.0f} neuron-steps/s"
+
+
+# ---------------------------------------------------------------------------
+# 6. FULL PIPELINE
+# ---------------------------------------------------------------------------
+class TestLapicquePipeline:
+    def test_population(self):
+        assert Population(LapicqueNeuron, n=10, label="lap").n == 10
 
     def test_projection_wiring(self):
-        src = Population(LapicqueNeuron, n=5, label="s")
-        tgt = Population(LapicqueNeuron, n=5, label="t")
+        src = Population(LapicqueNeuron, n=5, label="src")
+        tgt = Population(LapicqueNeuron, n=5, label="tgt")
         drive = PoissonInput(n=5, rate_hz=500.0, weight=20.0, dt=0.001, seed=42)
-        proj = Projection(src, tgt, weight=20.0, probability=1.0, seed=42)
-        mon = SpikeMonitor(src)
-        net = Network(src, tgt, drive, proj, mon)
-        net.run(duration=2.0, dt=0.001, backend="python")
-        assert isinstance(mon.count, int)
+        proj = Projection(src, tgt, weight=5.0, probability=1.0, seed=42)
+        mon_src = SpikeMonitor(src)
+        net = Network(src, tgt, drive, proj, mon_src)
+        net.run(duration=1.0, dt=0.001, backend="python")
+        assert mon_src.count > 0
+
+    def test_network_spikes(self):
+        pop = Population(LapicqueNeuron, n=10, label="lap")
+        drive = PoissonInput(n=10, rate_hz=500.0, weight=20.0, dt=0.001, seed=42)
+        mon = SpikeMonitor(pop)
+        net = Network(pop, drive, mon)
+        net.run(duration=1.0, dt=0.001, backend="python")
+        assert mon.count > 0
+
+    def test_analysis_spike_count(self):
+        n = LapicqueNeuron()
+        train = np.array([float(n.step(20.0)) for _ in range(5000)])
+        sc = spike_count(train)
+        assert sc >= 50
+
+    def test_analysis_isi(self):
+        n = LapicqueNeuron()
+        train = np.array([float(n.step(20.0)) for _ in range(5000)])
+        intervals = isi(train, dt=0.001)
+        if intervals.size > 0:
+            assert np.all(np.isfinite(intervals))
+
+    def test_analysis_firing_rate(self):
+        n = LapicqueNeuron()
+        train = np.array([float(n.step(20.0)) for _ in range(5000)])
+        rate = firing_rate(train, dt=0.001)
+        assert rate > 0
+
+    def test_analysis_cross_validation(self):
+        n = LapicqueNeuron()
+        train = np.array([float(n.step(20.0)) for _ in range(5000)])
+        sc = spike_count(train)
+        dt_sim = 0.001
+        duration = len(train) * dt_sim
+        rate = firing_rate(train, dt=dt_sim)
+        if sc > 0:
+            expected = sc / duration
+            assert abs(rate - expected) < expected * 0.1
