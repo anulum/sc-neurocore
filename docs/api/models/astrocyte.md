@@ -277,3 +277,42 @@ See `tests/test_model_astrocyte.py`. No bugs found.
 
 8. **Tripartite synapse:** The model enables simulation of neuron-
    astrocyte-neuron interactions when coupled to spiking models.
+
+---
+
+## Neuroscience of Astrocytes
+
+### Astrocytes are not passive
+
+For decades, astrocytes were considered passive "glue" cells. Modern
+research shows they actively participate in neural computation:
+
+1. **Ca²⁺ signalling:** Astrocytes use Ca²⁺ waves instead of electrical
+   signals (this model)
+2. **Gliotransmission:** Ca²⁺ elevations trigger release of glutamate,
+   D-serine, ATP from astrocytes
+3. **Synaptic modulation:** Astrocytic glutamate/D-serine modulates NMDA
+   receptors on postsynaptic neurons
+4. **K⁺ buffering:** Astrocytes maintain extracellular K⁺ homeostasis
+   during neural activity
+5. **Metabolic support:** Astrocyte-neuron lactate shuttle provides
+   energy to active neurons
+6. **Blood-brain barrier:** Astrocytic endfeet form part of the BBB
+
+### Astrocyte networks
+
+Astrocytes are coupled via gap junctions (connexin-43), forming a
+**syncytium** that can propagate Ca²⁺ waves over millimetres. These
+intercellular waves coordinate neural activity across brain regions
+and are implicated in:
+- Epileptic seizure propagation
+- Cortical spreading depression (migraine)
+- Sleep-wake transitions
+- Memory consolidation
+
+### Astrocyte-to-neuron ratio
+
+The brain contains roughly equal numbers of neurons and astrocytes
+(~86 billion each in humans). Each astrocyte contacts ~4–8 neurons and
+~100,000 synapses in its territory, making it a "hub" for local circuit
+modulation.
