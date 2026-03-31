@@ -264,3 +264,48 @@ See `tests/test_model_de_schutter_purkinje.py`. No bugs found.
 
 8. **Network pipeline functional:** All standard components work despite
    the model's complexity.
+
+---
+
+## Cerebellar Context
+
+### Motor learning and the Purkinje cell
+
+Purkinje cells are central to the **Marr-Albus theory of cerebellar
+learning** (Marr 1969, Albus 1971):
+- Parallel fibres (from granule cells) provide a rich, high-dimensional
+  input representing sensory/motor context
+- Climbing fibres (from inferior olive) provide an error signal
+- LTD at PF → Purkinje synapses encodes motor corrections
+- The Purkinje cell's output (inhibitory) modulates deep cerebellar nuclei
+
+De Schutter & Bower (1994) showed that the dendritic Ca²⁺ dynamics
+(captured by the P-type current in this model) are critical for:
+- Complex spike generation (climbing fibre → dendritic Ca²⁺ spike)
+- Dendritic plateau potentials
+- Local Ca²⁺ transients that trigger LTD
+
+### Ataxia and cerebellar disease
+
+Purkinje cell loss or dysfunction causes **cerebellar ataxia:**
+- Spinocerebellar ataxias (SCA1–SCA48): genetic Purkinje degeneration
+- Alcohol cerebellar degeneration: Purkinje cells are selectively vulnerable
+- The model predicts that changes in Ca²⁺ channel density (g_CaP) or
+  K(Ca) sensitivity directly affect spike regularity and timing precision
+
+### De Schutter & Bower 1994 — the full model
+
+The original model had **1142 compartments** with 10 ion channel types.
+The simplified version in SC-NeuroCore captures the 5 most important
+channels in a single compartment. The full model remains one of the most
+detailed single-neuron simulations ever published.
+
+### Purkinje cell uniqueness
+
+Purkinje cells are unique in neuroscience for:
+1. Largest dendritic tree (fan-shaped, 200,000 synapses)
+2. Only output of cerebellar cortex
+3. Highest spontaneous rate (30–100 Hz)
+4. P/Q-type Ca²⁺ channel named after them
+5. Highest expression of calbindin (Ca²⁺ buffer)
+6. The only neurons that undergo LTD as the primary learning mechanism
