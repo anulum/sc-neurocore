@@ -272,3 +272,36 @@ See `tests/test_model_stochastic_if.py`. No bugs found.
 
 10. **Fast model:** ~500K steps/s — the noise adds minimal overhead
     (one randn() call) compared to deterministic LIF.
+
+---
+
+## Theoretical Context
+
+The Brunel & Hakim (1999) model is foundational for understanding cortical
+network dynamics in the fluctuation-driven regime. Key theoretical results:
+
+### Fluctuation-driven regime
+
+In balanced E/I networks (like Brunel 2000), individual neurons receive
+large excitatory and inhibitory inputs that nearly cancel. The residual
+is small mean drive plus noise — exactly the regime described by this model.
+The noise amplitude σ arises from the variance of synaptic input, not from
+intrinsic channel noise.
+
+### Asynchronous irregular state
+
+When many StochasticIF neurons are coupled in a network, the stochastic
+ISI variability (CV ≈ 1 in the noise-driven regime) produces the
+asynchronous irregular (AI) firing pattern observed in cortex. This is the
+dynamical regime of the Brunel balanced network.
+
+### Self-consistent mean-field theory
+
+The Siegert transfer function of this model enables self-consistent
+mean-field equations for the network:
+1. Assume stationary rates r_E, r_I for E and I populations
+2. Compute mean input μ = J_E·r_E − J_I·r_I and noise σ from rates
+3. Apply Siegert to get output rates
+4. Solve for self-consistency: output = assumed rates
+
+This is the basis of the Brunel 2000 phase diagram (AI, SI, SR, SO regimes).
