@@ -296,3 +296,54 @@ See `tests/test_model_expif.py`.
 | Analysis | ✓ PASS | spike_count, ISI, firing_rate |
 
 **ALL 28 PIPELINE TESTS PASSED. MODEL IS END-TO-END FUNCTIONAL.**
+
+---
+
+## Theoretical Context
+
+### Fourcaud-Trocmé et al. 2003
+
+The EIF model was introduced as a **one-parameter extension** of the LIF
+that captures the smooth spike initiation dynamics observed in cortical
+neurons. The key result: a single parameter (Δ_T) bridges the gap between
+the discontinuous LIF threshold and the smooth Hodgkin-Huxley spike onset.
+
+### Why exponential?
+
+The Na⁺ channel activation m∞(V) is a Boltzmann sigmoid:
+$$m_\infty(V) = \frac{1}{1 + \exp(-(V-V_{1/2})/k)}$$
+
+Near the activation midpoint, this is approximately exponential:
+$$m_\infty(V) \approx \exp((V-V_{1/2})/k)$$
+
+The EIF's exponential term directly captures this near-threshold
+Na⁺ activation — it is not an arbitrary choice but a biophysically
+motivated approximation.
+
+### Parameter fitting
+
+Δ_T and V_rh can be estimated from experimental data:
+- **From f-I curve:** Fit the rheobase and slope near onset
+- **From voltage traces:** Measure the spike onset sharpness
+- **From HH model:** Linearise the Na⁺ current near threshold
+
+Typical values from cortical pyramidal cells:
+- Δ_T ≈ 1–3 mV (sharp onset)
+- V_rh ≈ −50 to −55 mV
+
+### EIF in the literature
+
+The EIF has become the standard "intermediate complexity" model:
+- More realistic than LIF (smooth onset)
+- Simpler than AdEx (no adaptation)
+- Used as the base model in Brette & Gerstner (2005) AdEx derivation
+- Default model in Brian2, NEST, and PyNN simulators
+- >2000 citations for the Fourcaud-Trocmé 2003 paper
+
+### Noise sensitivity
+
+The EIF's smooth threshold makes it **less sensitive to input noise**
+than the LIF near threshold. The exponential ramp provides a "grace
+period" where small voltage fluctuations are absorbed by the nonlinear
+dynamics rather than producing premature or missed spikes. This makes
+the EIF more robust in noisy network simulations.
