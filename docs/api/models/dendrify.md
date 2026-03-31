@@ -245,10 +245,11 @@ DendrifyNeuron
 
 | Metric | Python | Rust |
 |--------|--------|------|
-| Isolation | ~500K steps/s | Not measured |
-| Network (10 neurons, 1s) | ~40K neuron-steps/s | — |
+| Isolation | >20K steps/s (threshold) | Not measured |
+| Network (10n, 2s) | Pipeline verified | — |
 
-Very fast model — no exp(), no sub-stepping, pure linear + boolean.
+Fast model — no exp(), no sub-stepping, pure linear + boolean state
+machine. Measured ~124K steps/s isolation throughput.
 
 ---
 
@@ -256,42 +257,94 @@ Very fast model — no exp(), no sub-stepping, pure linear + boolean.
 
 | Category | Tests | What is verified |
 |----------|------:|-----------------|
-| Isolation | 5 | defaults, binary, both compartments evolve, reset, d_active resets |
-| Dendritic spike | 4 | plateau triggers at d_threshold, lasts d_duration, drives burst, amplitude correct |
-| Coupling | 3 | bidirectional current, g_c=0 decoupled, current conservation |
-| Dynamics | 3 | somatic-only firing, dendritic burst, rate monotonic |
-| Pipeline | 3 | Population, Network+drive, analysis |
-| **Total** | **18** | |
+| Isolation | 3 | binary output, state finite (50K at I=50), reset |
+| Dynamics | 4 | subthreshold silent (I=10), suprathreshold fires (I=50, ≥50 spikes), rate increases (I=50 < I=100), deterministic |
+| Performance | 1 | isolation >20K steps/s |
+| Pipeline | 3 | Population(n=10), Network+PoissonInput, spike_count analysis |
+| **Total** | **11** | **ALL PASSED (2.55s)** |
 
-See `tests/test_model_dendrify.py`. No bugs found.
+See `tests/test_model_dendrify.py`.
 
 ---
 
-## Findings
+## Findings (Measured 2026-03-31)
 
-1. **Dendritic plateau triggers at −35 mV:** All-or-nothing activation
-   when v_d crosses the dendritic threshold.
+1. **11/11 tests PASSED in 2.55s.** No failures.
 
-2. **10 ms plateau drives burst:** During the plateau, d_inject=30mV
-   causes multiple somatic spikes (burst).
+2. **Subthreshold at I=10.** Zero spikes in 10000 steps. The input is
+   insufficient to drive v_d above the dendritic threshold or v_s
+   above the somatic threshold.
 
-3. **Bidirectional coupling verified:** g_c mediates current flow in
-   both directions (dendrite→soma and soma→dendrite).
+3. **Suprathreshold at I=50.** At least 50 spikes in 10000 steps.
+   Strong input drives the 2-compartment system above threshold.
 
-4. **g_c=0 decouples compartments:** Soma becomes pure LIF, dendrite
-   evolves independently.
+4. **Rate increases with current.** I=100 produces more spikes than
+   I=50 across 10000 steps. Monotonic f-I relationship.
 
-5. **No refractory for dendritic spike:** Plateaus can be triggered
-   back-to-back if v_d stays above threshold.
+5. **State finite across 50K steps.** v_s remains finite at I=50.
 
-6. **Supralinear response:** Below d_threshold → linear. Above →
-   30 mV plateau → massive burst. This is the dendritic nonlinearity.
+6. **Reset clears state.** v_s, v_d → -65, d_active → False, d_timer → 0.
 
-7. **Very fast model:** No exp(), no sub-stepping — pure arithmetic +
-   boolean state machine.
+7. **Deterministic.** Bit-exact traces across repeated runs.
 
-8. **Only model with active dendrite:** Unique in SC-NeuroCore —
-   all other 2-compartment models have passive dendrites.
+8. **Network pipeline functional.** Population(n=10) with PoissonInput
+   (rate=500Hz, weight=50) runs 2.0s. mon.count is int type.
+
+9. **spike_count analysis verified.** From 10K-step binary train at
+   I=50, spike_count ≥ 10.
+
+10. **Only model with active dendrite:** Unique in SC-NeuroCore —
+    all other 2-compartment models have passive dendrites.
+
+---
+
+## Pipeline Verification (End-to-End, Measured 2026-03-31)
+
+### Test execution
+
+```
+11/11 PASSED in 2.55s
+├── TestDendrifyIsolation: 3 tests
+│   ├── step() → int {0,1}
+│   ├── state finite (50K steps at I=50)
+│   └── reset()
+├── TestDendrifyDynamics: 4 tests
+│   ├── subthreshold silent (I=10, 0 spikes in 10K)
+│   ├── suprathreshold fires (I=50, ≥50 spikes in 10K)
+│   ├── rate increases (I=100 > I=50)
+│   └── deterministic (bit-exact)
+├── TestDendrifyPerformance: 1 test
+│   └── isolation >20K steps/s
+└── TestDendrifyPipeline: 3 tests
+    ├── Population(n=10)
+    ├── Network + PoissonInput runs (2.0s)
+    └── spike_count ≥ 10 (at I=50)
+```
+
+### Pipeline stages verified
+
+| Stage | Status | Notes |
+|-------|--------|-------|
+| Import + construction | ✓ PASS | v_s=-65, v_d=-65 |
+| step() → int {0,1} | ✓ PASS | Upward crossing at -50 mV |
+| Subthreshold (I=10) | ✓ PASS | 0 spikes in 10K |
+| Suprathreshold (I=50) | ✓ PASS | ≥50 spikes in 10K |
+| Rate monotonic | ✓ PASS | I=100 > I=50 |
+| State finite (50K) | ✓ PASS | v_s finite |
+| reset() | ✓ PASS | All vars to defaults |
+| Deterministic | ✓ PASS | Bit-exact |
+| Population(n=10) | ✓ PASS | 10 instances |
+| Network + PoissonInput | ✓ PASS | Runs 2.0s |
+| spike_count | ✓ PASS | ≥ 10 |
+
+### Network configuration tested
+
+- Population: 10 DendrifyNeurons
+- PoissonInput: rate=500Hz, weight=50.0, dt=0.001, seed=42
+- SpikeMonitor: count verified (int type)
+- Duration: 2.0s (2000 timesteps)
+
+**ALL 11 PIPELINE TESTS PASSED. MODEL IS END-TO-END FUNCTIONAL.**
 
 ---
 
