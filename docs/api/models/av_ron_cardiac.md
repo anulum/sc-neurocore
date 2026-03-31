@@ -304,3 +304,57 @@ adjust burst parameters by modifying conductances:
 - Dopamine: decreases g_K → higher excitability → faster heart rate
 - The model parameters (g_na, g_k, g_s) directly correspond to these
   pharmacological targets
+
+---
+
+## Pipeline Verification (End-to-End, Measured 2026-03-31)
+
+### Test execution
+
+```
+14/14 PASSED in 10.83s
+├── TestAvRonIsolation: 5 tests (defaults, binary, 4-var evolve, finite, reset)
+├── TestAvRonBoltzmann: 3 tests (midpoints, s_inf inactivation, tau_s slow)
+├── TestAvRonDynamics: 3 tests (fires, subthreshold, rate monotonic)
+└── TestAvRonPipeline: 3 tests (Population, Projection, analysis + deterministic)
+```
+
+### Pipeline stages verified
+
+| Stage | Status | Notes |
+|-------|--------|-------|
+| Import + construction | ✓ PASS | v=-60, h=0.6, n=0.3, s=0.5 |
+| step() → int {0,1} | ✓ PASS | Upward-crossing detection |
+| 4 variables evolve | ✓ PASS | v, h, n, s all change |
+| State finite (50k steps) | ✓ PASS | All 4 vars finite |
+| reset() | ✓ PASS | All 4 restored |
+| Fires with drive | ✓ PASS | Spikes at I=5 |
+| Subthreshold silent | ✓ PASS | No spikes at I=0 |
+| Population(n=10) | ✓ PASS | 10 instances |
+| Projection wiring | ✓ PASS | src→tgt accepted |
+| Analysis | ✓ PASS | spike_count, firing_rate |
+| Deterministic | ✓ PASS | Bit-exact |
+
+### Network configuration tested
+
+- Population: 10 AvRonCardiacNeurons
+- PoissonInput: n=10, rate=500Hz, weight=5.0, dt=0.001, seed=42
+- SpikeMonitor: records all spikes
+- Projection: src(5)→tgt(5), weight=3.0, probability=1.0
+- Duration: ~2s (slow model due to 7 exp() per step)
+- Result: spikes confirmed, projection accepted
+
+### Analysis pipeline verified
+
+| Function | Input | Result |
+|----------|-------|--------|
+| spike_count(train) | binary train from isolation | > 0 |
+| firing_rate(train, dt) | same | > 0 Hz |
+
+### Slow model note
+
+10.83s for 14 tests — the 7 Boltzmann evaluations per step (7 exp() calls)
+make this one of the slower models. No sub-stepping is used, but the
+per-step cost is high due to the 4 activation functions + 3 time constants.
+
+**ALL 14 PIPELINE TESTS PASSED. MODEL IS END-TO-END FUNCTIONAL.**
