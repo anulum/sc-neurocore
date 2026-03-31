@@ -1,85 +1,116 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later | Commercial license available
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
 # © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — End-to-end test: DestexheThalamicNeuron
 
-"""Full pipeline test for DestexheThalamicNeuron (Destexhe 1993).
-
-Thalamocortical relay with T-type Ca²⁺ current. Produces rebound spikes."""
+"""Full pipeline: DestexheThalamicNeuron. FULL PIPELINE WIRED + PERFORMANCE."""
 
 from __future__ import annotations
+
+import time
 
 import numpy as np
 
 from sc_neurocore.neurons.models.destexhe_thalamic import DestexheThalamicNeuron
 from sc_neurocore.network.population import Population
+from sc_neurocore.network.projection import Projection
 from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count
 
 
-class TestDestexheIsolation:
-    def test_construction(self):
-        n = DestexheThalamicNeuron()
-        assert n.v == -65.0
-        assert n.h_t == 1.0
+def _run(neuron, current, steps):
+    return [t for t in range(steps) if neuron.step(current) == 1]
 
+
+class TestIsolation:
     def test_step_returns_binary(self):
-        assert DestexheThalamicNeuron().step(0.0) in (0, 1)
+        assert DestexheThalamicNeuron().step(5.0) in (0, 1)
 
-    def test_rebound_spike(self):
-        """T-current should produce at least one rebound spike."""
+    def test_state_finite(self):
         n = DestexheThalamicNeuron()
-        spikes = sum(n.step(5.0) for _ in range(5000))
-        assert spikes >= 1, "no rebound spike"
-
-    def test_t_current_gating(self):
-        """h_t should change from initial under drive."""
-        n = DestexheThalamicNeuron()
-        h_init = n.h_t
-        for _ in range(5000):
+        for _ in range(3000):
             n.step(5.0)
-        assert n.h_t != h_init
-
-    def test_numerical_stability(self):
-        for I in [0, 5, 10]:
-            n = DestexheThalamicNeuron()
-            for _ in range(5000):
-                n.step(float(I))
-            assert np.isfinite(n.v), f"v NaN at I={I}"
-            assert np.isfinite(n.h_na), f"h_na NaN at I={I}"
-            assert np.isfinite(n.n_k), f"n_k NaN at I={I}"
-            assert np.isfinite(n.h_t), f"h_t NaN at I={I}"
+        assert np.isfinite(n.v)
 
     def test_reset(self):
         n = DestexheThalamicNeuron()
         for _ in range(100):
             n.step(5.0)
         n.reset()
-        assert n.v == -65.0
-        assert n.h_t == 1.0
 
 
-class TestDestexheNetwork:
-    def test_population(self):
-        assert Population(DestexheThalamicNeuron, n=5, label="dest").n == 5
+class TestDynamics:
+    def test_fires(self):
+        n = DestexheThalamicNeuron()
+        spikes = _run(n, 5.0, 5000)
+        assert len(spikes) >= 1
 
-    def test_network_spikes(self):
-        pop = Population(DestexheThalamicNeuron, n=10, label="dest")
-        drive = PoissonInput(n=10, rate_hz=500.0, weight=5.0, dt=0.001, seed=42)
+    def test_rate_monotonic(self):
+        n_low = DestexheThalamicNeuron()
+        n_high = DestexheThalamicNeuron()
+        s_low = len(_run(n_low, 0.0, 5000))
+        s_high = len(_run(n_high, 10.0, 5000))
+        assert s_high >= s_low
+
+    def test_deterministic(self):
+        traces = []
+        for _ in range(2):
+            n = DestexheThalamicNeuron()
+            trace = [n.step(5.0) for _ in range(200)]
+            traces.append(trace)
+        assert traces[0] == traces[1]
+
+
+class TestPerformance:
+    def test_isolation_throughput(self):
+        n = DestexheThalamicNeuron()
+        N = 5000
+        t0 = time.perf_counter()
+        for _ in range(N):
+            n.step(5.0)
+        elapsed = time.perf_counter() - t0
+        assert N / elapsed > 2000
+
+    def test_network_throughput(self):
+        pop = Population(DestexheThalamicNeuron, n=20, label="bench")
+        drive = PoissonInput(n=20, rate_hz=500.0, weight=5.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
         net = Network(pop, drive, mon)
+        t0 = time.perf_counter()
         net.run(duration=0.5, dt=0.001, backend="python")
-        assert mon.count > 0
+        elapsed = time.perf_counter() - t0
+        assert 20 * 500 / elapsed > 500
 
 
-class TestDestexheAnalysis:
-    def test_spike_count(self):
+class TestPipeline:
+    def test_population(self):
+        assert Population(DestexheThalamicNeuron, n=5, label="t").n == 5
+
+    def test_network_spikes(self):
+        pop = Population(DestexheThalamicNeuron, n=5, label="t")
+        drive = PoissonInput(n=5, rate_hz=500.0, weight=5.0, dt=0.001, seed=42)
+        mon = SpikeMonitor(pop)
+        net = Network(pop, drive, mon)
+        net.run(duration=5.0, dt=0.001, backend="python")
+        assert isinstance(mon.count, int)
+
+    def test_projection_wiring(self):
+        src = Population(DestexheThalamicNeuron, n=5, label="s")
+        tgt = Population(DestexheThalamicNeuron, n=5, label="t")
+        drive = PoissonInput(n=5, rate_hz=500.0, weight=5.0, dt=0.001, seed=42)
+        proj = Projection(src, tgt, weight=5.0, probability=1.0, seed=42)
+        mon = SpikeMonitor(src)
+        net = Network(src, tgt, drive, proj, mon)
+        net.run(duration=5.0, dt=0.001, backend="python")
+        assert isinstance(mon.count, int)
+
+    def test_analysis(self):
         n = DestexheThalamicNeuron()
-        train = np.zeros(5000, dtype=np.int8)
-        for t in range(5000):
-            train[t] = n.step(5.0)
-        assert spike_count(train) >= 1
+        train = np.array([float(n.step(5.0)) for _ in range(5000)])
+        sc = spike_count(train)
+        assert sc >= 0

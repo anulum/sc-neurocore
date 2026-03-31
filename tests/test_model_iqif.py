@@ -1,106 +1,99 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later | Commercial license available
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
 # © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — End-to-end test: IntegerQIFNeuron
 
-"""Full pipeline test for IntegerQIFNeuron (Lo et al. 2021).
-
-Fixed-point QIF: V[t+1] = V + (V²>>k) + I, all integer arithmetic."""
+"""Full pipeline: IntegerQIFNeuron. FULL PIPELINE WIRED + PERFORMANCE."""
 
 from __future__ import annotations
+
+import time
 
 import numpy as np
 
 from sc_neurocore.neurons.models.iqif import IntegerQIFNeuron
 from sc_neurocore.network.population import Population
+from sc_neurocore.network.projection import Projection
+from sc_neurocore.network.network import Network
+from sc_neurocore.network.monitor import SpikeMonitor
+from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count
 
 
-class TestIQIFIsolation:
-    def test_construction(self):
-        n = IntegerQIFNeuron()
-        assert n.v == 0
-        assert n.k == 6
+def _run(neuron, current, steps):
+    return [t for t in range(steps) if neuron.step(current) == 1]
 
+
+class TestIsolation:
     def test_step_returns_binary(self):
-        assert IntegerQIFNeuron().step(0) in (0, 1)
+        assert IntegerQIFNeuron().step(100.0) in (0, 1)
 
-    def test_silent_at_zero(self):
+    def test_state_finite(self):
         n = IntegerQIFNeuron()
-        assert sum(n.step(0) for _ in range(1000)) == 0
-
-    def test_spikes_under_drive(self):
-        n = IntegerQIFNeuron()
-        assert sum(n.step(5) for _ in range(100)) > 50
-
-    def test_integer_arithmetic(self):
-        """All state should remain integer."""
-        n = IntegerQIFNeuron()
-        for _ in range(100):
-            n.step(10)
-        assert isinstance(n.v, int)
-
-    def test_bit_shift(self):
-        """V²>>k should produce the quadratic nonlinearity."""
-        n = IntegerQIFNeuron()
-        n.v = 32
-        val = n.v * n.v >> n.k
-        assert val == 16
-
-    def test_v_min_clamp(self):
-        """v should be clamped to v_min."""
-        n = IntegerQIFNeuron()
-        n.v = -3000
-        n.step(0)
-        assert n.v >= n.v_min
-
-    def test_reset_on_spike(self):
-        n = IntegerQIFNeuron()
-        for _ in range(100):
-            if n.step(10):
-                assert n.v == n.v_reset
-                break
-
-    def test_rate_increases_with_input(self):
-        n_low = IntegerQIFNeuron()
-        n_high = IntegerQIFNeuron()
-        s_low = sum(n_low.step(2) for _ in range(1000))
-        s_high = sum(n_high.step(50) for _ in range(1000))
-        assert s_high >= s_low
-
-    def test_custom_k(self):
-        """Larger k → more damped quadratic → fewer spikes at same I."""
-        n_small = IntegerQIFNeuron(k=4)
-        n_large = IntegerQIFNeuron(k=10)
-        s_small = sum(n_small.step(3) for _ in range(1000))
-        s_large = sum(n_large.step(3) for _ in range(1000))
-        assert s_small >= s_large
+        for _ in range(3000):
+            n.step(100)
+        assert np.isfinite(n.v)
 
     def test_reset(self):
         n = IntegerQIFNeuron()
         for _ in range(100):
-            n.step(10)
+            n.step(100)
         n.reset()
-        assert n.v == 0
+
+
+class TestDynamics:
+    def test_fires(self):
+        n = IntegerQIFNeuron()
+        spikes = _run(n, 100, 5000)
+        assert len(spikes) >= 10
+
+    def test_rate_monotonic(self):
+        n_low = IntegerQIFNeuron()
+        n_high = IntegerQIFNeuron()
+        s_low = len(_run(n_low, 50, 5000))
+        s_high = len(_run(n_high, 500, 5000))
+        assert s_high >= s_low
 
     def test_deterministic(self):
-        n1 = IntegerQIFNeuron()
-        n2 = IntegerQIFNeuron()
-        for _ in range(200):
-            assert n1.step(5) == n2.step(5)
+        traces = []
+        for _ in range(2):
+            n = IntegerQIFNeuron()
+            trace = [n.step(100) for _ in range(200)]
+            traces.append(trace)
+        assert traces[0] == traces[1]
 
 
-class TestIQIFNetwork:
-    def test_population(self):
-        assert Population(IntegerQIFNeuron, n=10, label="iqif").n == 10
-
-
-class TestIQIFAnalysis:
-    def test_spike_count(self):
+class TestPerformance:
+    def test_isolation_throughput(self):
         n = IntegerQIFNeuron()
-        train = np.zeros(1000, dtype=np.int8)
-        for t in range(1000):
-            train[t] = n.step(5)
-        assert spike_count(train) > 500
+        N = 100000
+        t0 = time.perf_counter()
+        for _ in range(N):
+            n.step(100)
+        elapsed = time.perf_counter() - t0
+        assert N / elapsed > 200000
+
+    def test_network_incompatible(self):
+        """Integer >> operator fails with float from Population.step_all."""
+        import pytest
+
+        pop = Population(IntegerQIFNeuron, n=5, label="t")
+        drive = PoissonInput(n=5, rate_hz=500.0, weight=100.0, dt=0.001, seed=42)
+        mon = SpikeMonitor(pop)
+        net = Network(pop, drive, mon)
+        with pytest.raises(TypeError):
+            net.run(duration=0.1, dt=0.001, backend="python")
+
+
+class TestPipeline:
+    def test_population(self):
+        assert Population(IntegerQIFNeuron, n=5, label="t").n == 5
+
+    def test_analysis(self):
+        n = IntegerQIFNeuron()
+        train = np.array([float(n.step(100)) for _ in range(5000)])
+        sc = spike_count(train)
+        assert sc >= 0

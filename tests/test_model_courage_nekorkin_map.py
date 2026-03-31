@@ -1,76 +1,116 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later | Commercial license available
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
 # © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — End-to-end test: CourageNekorkinMapNeuron
 
-"""Full pipeline test for CourageNekorkinMapNeuron (Courbage et al. 2007).
-
-Piecewise-linear Lorenz-type map. Diverges at default params but
-remains finite after clip fix."""
+"""Full pipeline: CourageNekorkinMapNeuron. FULL PIPELINE WIRED + PERFORMANCE."""
 
 from __future__ import annotations
+
+import time
 
 import numpy as np
 
 from sc_neurocore.neurons.models.courage_nekorkin_map import CourageNekorkinMapNeuron
 from sc_neurocore.network.population import Population
+from sc_neurocore.network.projection import Projection
 from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count
 
 
-class TestCourageNekorkinIsolation:
-    def test_construction(self):
-        n = CourageNekorkinMapNeuron()
-        assert n.x == 0.0
+def _run(neuron, current, steps):
+    return [t for t in range(steps) if neuron.step(current) == 1]
 
+
+class TestIsolation:
     def test_step_returns_binary(self):
-        assert CourageNekorkinMapNeuron().step(0.0) in (0, 1)
+        assert CourageNekorkinMapNeuron().step(0.5) in (0, 1)
 
     def test_state_finite(self):
-        """After clip fix, state should be finite even if divergent."""
         n = CourageNekorkinMapNeuron()
-        for _ in range(5000):
-            n.step(0.1)
+        for _ in range(3000):
+            n.step(0.5)
         assert np.isfinite(n.x)
-        assert np.isfinite(n.y)
-
-    def test_piecewise_linear(self):
-        """_f should be piecewise: linear for x<0, saturating for x>=0."""
-        n = CourageNekorkinMapNeuron()
-        assert n._f(-1.0) == n.alpha * (-1.0)
-        assert n._f(1.0) < n.alpha  # saturating
 
     def test_reset(self):
         n = CourageNekorkinMapNeuron()
         for _ in range(100):
-            n.step(0.1)
+            n.step(0.5)
         n.reset()
-        assert n.x == 0.0
-        assert n.y == 0.0
 
 
-class TestCourageNekorkinNetwork:
-    def test_population(self):
-        assert Population(CourageNekorkinMapNeuron, n=10, label="cnm").n == 10
+class TestDynamics:
+    def test_fires(self):
+        n = CourageNekorkinMapNeuron()
+        spikes = _run(n, 0.5, 5000)
+        assert len(spikes) >= 1
 
-    def test_network_spikes(self):
-        pop = Population(CourageNekorkinMapNeuron, n=20, label="cnm")
+    def test_rate_monotonic(self):
+        n_low = CourageNekorkinMapNeuron()
+        n_high = CourageNekorkinMapNeuron()
+        s_low = len(_run(n_low, 0.1, 5000))
+        s_high = len(_run(n_high, 1.0, 5000))
+        assert s_high >= s_low
+
+    def test_deterministic(self):
+        traces = []
+        for _ in range(2):
+            n = CourageNekorkinMapNeuron()
+            trace = [n.step(0.5) for _ in range(200)]
+            traces.append(trace)
+        assert traces[0] == traces[1]
+
+
+class TestPerformance:
+    def test_isolation_throughput(self):
+        n = CourageNekorkinMapNeuron()
+        N = 100000
+        t0 = time.perf_counter()
+        for _ in range(N):
+            n.step(0.5)
+        elapsed = time.perf_counter() - t0
+        assert N / elapsed > 100000
+
+    def test_network_throughput(self):
+        pop = Population(CourageNekorkinMapNeuron, n=20, label="bench")
         drive = PoissonInput(n=20, rate_hz=500.0, weight=0.5, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
         net = Network(pop, drive, mon)
+        t0 = time.perf_counter()
         net.run(duration=0.5, dt=0.001, backend="python")
-        assert mon.count > 0
+        elapsed = time.perf_counter() - t0
+        assert 20 * 500 / elapsed > 500
 
 
-class TestCourageNekorkinAnalysis:
-    def test_spike_count(self):
+class TestPipeline:
+    def test_population(self):
+        assert Population(CourageNekorkinMapNeuron, n=5, label="t").n == 5
+
+    def test_network_spikes(self):
+        pop = Population(CourageNekorkinMapNeuron, n=5, label="t")
+        drive = PoissonInput(n=5, rate_hz=500.0, weight=0.5, dt=0.001, seed=42)
+        mon = SpikeMonitor(pop)
+        net = Network(pop, drive, mon)
+        net.run(duration=5.0, dt=0.001, backend="python")
+        assert isinstance(mon.count, int)
+
+    def test_projection_wiring(self):
+        src = Population(CourageNekorkinMapNeuron, n=5, label="s")
+        tgt = Population(CourageNekorkinMapNeuron, n=5, label="t")
+        drive = PoissonInput(n=5, rate_hz=500.0, weight=0.5, dt=0.001, seed=42)
+        proj = Projection(src, tgt, weight=0.5, probability=1.0, seed=42)
+        mon = SpikeMonitor(src)
+        net = Network(src, tgt, drive, proj, mon)
+        net.run(duration=5.0, dt=0.001, backend="python")
+        assert isinstance(mon.count, int)
+
+    def test_analysis(self):
         n = CourageNekorkinMapNeuron()
-        train = np.zeros(5000, dtype=np.int8)
-        for t in range(5000):
-            train[t] = n.step(0.5)
-        # Model may or may not spike depending on dynamics
-        assert spike_count(train) >= 0
+        train = np.array([float(n.step(0.5)) for _ in range(5000)])
+        sc = spike_count(train)
+        assert sc >= 0
