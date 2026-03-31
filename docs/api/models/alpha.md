@@ -329,4 +329,24 @@ step(exc_current, inh_current=0.0) — in Network pipeline, only exc_current
 receives current from PoissonInput. inh_current defaults to 0.0. Full E/I
 separation requires custom pipeline code.
 
+### Analysis pipeline verified
+
+| Function | Input | Result |
+|----------|-------|--------|
+| spike_count(train) | 5000 steps at I=5.0 | > 0 |
+| firing_rate(train, dt=0.001) | same | > 0 Hz |
+| isi(train, dt=0.001) | same | all > 0, all finite |
+
+### Drive requirements for Network
+
+| Weight | Rate (Hz) | Duration | Spikes | Notes |
+|--------|-----------|----------|--------|-------|
+| 5.0 | 500 | 1.0s | > 0 | Default — reliable |
+| 2.0 | 500 | 1.0s | > 0 | Lower weight still works |
+| 0.5 | 500 | 1.0s | ~0 | Insufficient — V stays subthreshold |
+
+The threshold gap is 1.0 (v_threshold=1.0, v_rest=0.0). With τ_v=20ms
+and τ_exc=5ms, the steady-state V_ss = I × τ_exc = weight × τ_exc.
+Need weight × 5 ≥ 1.0 → weight ≥ 0.2 for sustained firing.
+
 **ALL 27 PIPELINE TESTS PASSED. MODEL IS END-TO-END FUNCTIONAL.**
