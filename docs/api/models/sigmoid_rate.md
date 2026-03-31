@@ -254,3 +254,54 @@ See `tests/test_model_sigmoid_rate.py`. No bugs found.
 10. **Foundation for Wilson-Cowan:** The single-unit SigmoidRate is
     exactly one equation of the Wilson-Cowan model — E and I are each
     SigmoidRateNeurons with cross-coupled inputs.
+
+---
+
+## Theoretical Context
+
+### Rate coding vs temporal coding
+
+The SigmoidRateNeuron implements the **rate coding** hypothesis: neural
+information is carried by the mean firing rate, not by individual spike
+times. This is the classical view (Adrian 1926) and remains dominant in
+sensory neuroscience, motor control, and machine learning.
+
+In contrast, spiking models (LIF, HH, etc.) can capture **temporal
+coding** — information in spike timing, synchrony, and oscillatory phase.
+
+### Mean-field reduction
+
+For a population of N identical LIF neurons driven by independent noise,
+the mean firing rate converges to a sigmoid function of the mean input
+as N → ∞ (central limit theorem + Siegert formula). The SigmoidRateNeuron
+is therefore the infinite-population limit of a LIF ensemble — a rigorous
+mean-field reduction.
+
+### Gradient computation
+
+The sigmoid transfer function is differentiable everywhere:
+
+$$\sigma'(x) = \sigma(x)(1 - \sigma(x))$$
+
+Maximum gradient: σ'(0) = 0.25 (at the midpoint). This enables gradient-
+based learning in rate networks (backpropagation, BPTT) — the SigmoidRate
+is the spiking-network equivalent of a standard artificial neuron.
+
+### Relationship to artificial neural networks
+
+With β=1 and θ=0, the SigmoidRateNeuron is mathematically identical to
+a single-layer perceptron with sigmoid activation — the foundational unit
+of classical neural networks. The only difference is the temporal dynamics
+(τ), which are absent in feedforward ANNs. Setting τ→0 recovers the
+instantaneous perceptron.
+
+### Recurrent rate networks
+
+A collection of SigmoidRateNeurons with mutual connectivity implements
+a continuous-time recurrent neural network (CTRNN):
+
+$$\tau_i \frac{dr_i}{dt} = -r_i + \sigma\!\left(\sum_j w_{ij} r_j + I_i\right)$$
+
+CTRNNs are universal function approximators (Funahashi & Nakamura 1993)
+and can implement any finite-state automaton (Siegelmann & Sontag 1995).
+The SigmoidRateNeuron provides the node dynamics for such networks.
