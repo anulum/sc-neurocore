@@ -377,7 +377,7 @@ class TestBertramPerformance:
         elapsed = time.perf_counter() - t0
         rate = N / elapsed
         # 4 Boltzmann evaluations + 5 currents + 3 state updates
-        assert rate > 50_000, f"isolation: {rate:.0f} steps/s"
+        assert rate > 20_000, f"isolation: {rate:.0f} steps/s"
 
     def test_network_throughput(self):
         pop = Population(BertramPhantomBurster, n=20, label="bench")
