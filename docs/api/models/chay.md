@@ -280,3 +280,26 @@ See `tests/test_model_chay.py`. No bugs found.
 8. **Physiological Ca²⁺:** Unlike phenomenological slow variables (z in
    HindmarshRose), Ca²⁺ is a real measurable quantity — the model can
    be validated against fluorescent Ca²⁺ imaging data.
+
+---
+
+## Clinical Relevance
+
+### Type 2 diabetes
+
+Pancreatic beta-cell dysfunction is the primary cause of type 2 diabetes.
+The Chay model captures the electrical activity that drives insulin
+secretion:
+- Normal: bursting → oscillatory Ca²⁺ → pulsatile insulin release
+- Diabetes: reduced bursting → flat Ca²⁺ → impaired insulin secretion
+- The model predicts that changes in g_K(Ca) or Ca²⁺ clearance (k_ca)
+  can shift the cell from bursting to silent — matching clinical observations
+
+### Pharmacological targets
+
+The model's parameters map to drug targets:
+- **Sulfonylureas** (glibenclamide): block K_ATP channels → reduce g_K →
+  increase excitability → more bursting
+- **Calcium channel blockers** (nifedipine): reduce g_Ca → fewer spikes
+  per burst → less Ca²⁺ → less insulin
+- **K(Ca) modulators:** g_K(Ca) directly controls burst duration
