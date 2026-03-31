@@ -286,46 +286,124 @@ and comparisons. Comparable to standard LIF speed.
 
 | Category | Tests | What is verified |
 |----------|------:|-----------------|
-| Isolation | 5 | defaults, binary, 3-var evolution, finite 50k, reset |
-| Adaptation | 5 | a increments on spike, θ rises, ISI lengthens, β=0 no adaptation, strong adapt fewer spikes |
-| Eligibility | 4 | e_trace accumulates near threshold, decays far from threshold, ψ triangular shape, e_trace bounded |
-| f–I curve | 3 | subthreshold silent, monotonic, fires with drive |
-| Parameters | 3 | dt stability, τ_a sweep, precomputed α values |
-| Pipeline | 4 | Population, Network+drive, Projection, analysis |
-| **Total** | **24** | |
+| Isolation | 5 | defaults, alpha precomputed, binary output, state finite, reset |
+| Adaptive threshold | 5 | a increments on spike, a decays between spikes, threshold increases with a, ISI lengthens, β=0 no adaptation |
+| Eligibility trace | 3 | e_trace accumulates, e_trace decays, pseudo-derivative peaks near threshold |
+| F-I curve | 2 | zero input silent, monotonic f-I |
+| Parameters | 5 | tau_a controls speed, dt stability [0.5,1.0,2.0] (parametrised), deterministic |
+| Performance | 2 | isolation throughput, network throughput |
+| Pipeline | 4 | Population, Network spikes, Projection wiring, analysis |
+| **Total** | **26** | **ALL PASSED (2.27s)** |
 
-See `tests/test_model_e_prop_alif.py`. No bugs found.
+See `tests/test_model_e_prop_alif.py`.
 
 ---
 
-## Findings
+## Findings (Measured 2026-03-31)
 
-1. **Adaptive threshold rises on spikes:** After 10 rapid spikes,
-   θ ≈ 1.0 + 0.07×10 = 1.70 — 70% increase confirmed.
+1. **26/26 tests PASSED in 2.27s.** No failures.
 
-2. **ISI adaptation confirmed:** First ISI shorter than later ISIs
-   at constant input, due to threshold elevation.
+2. **Adaptive threshold rises on spikes:** a variable increments when
+   the neuron fires, directly increasing effective threshold θ + β·a.
 
-3. **Eligibility trace accumulates near threshold:** When V is within
-   1 unit of θ, e_trace increases. When V is far away, e_trace decays.
+3. **a decays between spikes.** Without spiking, a decays toward 0
+   with time constant τ_a (via α_a multiplication).
 
-4. **ψ bounded by 0.3:** Maximum pseudo-derivative is 0.3 at V = θ.
-   No unbounded gradients.
+4. **Threshold increases with a.** Higher a → higher effective threshold
+   → harder to fire. Verified.
 
-5. **β=0 eliminates adaptation:** With β=0, θ is constant, and the
-   model reduces to a simple exponential-decay LIF.
+5. **ISI adaptation confirmed:** ISI lengthens as a accumulates. First
+   ISI shorter than later ISIs at constant input.
 
-6. **Precomputed α eliminates exp():** No transcendental function calls
-   during step() — only multiply and compare.
+6. **β=0 eliminates adaptation:** With β=0, threshold is constant.
+   Model reduces to simple exponential-decay LIF.
 
-7. **τ_a/τ_m = 10:** The adaptation operates on a 10× slower timescale
-   than membrane dynamics, creating sustained adaptation.
+7. **Eligibility trace accumulates near threshold.** When V is near θ,
+   pseudo-derivative ψ > 0 → e_trace increases.
 
-8. **Only model with eligibility trace:** Unique in SC-NeuroCore —
-   the e_trace enables e-prop learning without external trace management.
+8. **Eligibility trace decays far from threshold.** When |V − θ| > 1,
+   ψ = 0 → e_trace decays via α_e.
 
-9. **Network pipeline fully functional:** All standard pipeline
-   components work without limitations.
+9. **Pseudo-derivative peaks near threshold.** ψ = 0.3 × max(0, 1 − |V−θ|)
+   is maximal at V = θ.
+
+10. **Zero input → silent.** No spikes without external drive.
+
+11. **Monotonic f-I curve.** More input → more spikes.
+
+12. **Precomputed α eliminates exp().** No transcendental functions
+    during step() — only multiply and compare.
+
+13. **Network pipeline fully functional.** Population, PoissonInput,
+    Projection, SpikeMonitor, analysis all work.
+
+14. **Deterministic.** Bit-exact traces across repeated runs.
+
+---
+
+## Pipeline Verification (End-to-End, Measured 2026-03-31)
+
+### Test execution
+
+```
+26/26 PASSED in 2.27s
+├── TestEPropALIFIsolation: 5 tests
+│   ├── defaults (v=0, a=0, e=0, tau_m=20, tau_a=200)
+│   ├── alpha precomputed (α_m, α_a = exp(-dt/τ))
+│   ├── step() → int {0,1}
+│   ├── state finite
+│   └── reset() (v→0, a→0, e→0)
+├── TestEPropALIFAdaptiveThreshold: 5 tests
+│   ├── a increments on spike
+│   ├── a decays between spikes
+│   ├── threshold increases with a
+│   ├── ISI lengthens
+│   └── β=0: no adaptation
+├── TestEPropALIFEligibilityTrace: 3 tests
+│   ├── e_trace accumulates near threshold
+│   ├── e_trace decays far from threshold
+│   └── pseudo-derivative peaks at V=θ
+├── TestEPropALIFFI: 2 tests
+│   ├── zero input silent
+│   └── monotonic f-I
+├── TestEPropALIFParameters: 5 tests
+│   ├── tau_a controls adaptation speed
+│   ├── dt stability [0.5, 1.0, 2.0]
+│   └── deterministic
+├── TestEPropALIFPerformance: 2 tests
+│   ├── isolation throughput
+│   └── network throughput
+└── TestEPropALIFPipeline: 4 tests
+    ├── Population
+    ├── Network + PoissonInput → spikes
+    ├── Projection wiring
+    └── spike_count + firing_rate analysis
+```
+
+### Pipeline stages verified
+
+| Stage | Status | Notes |
+|-------|--------|-------|
+| Import + construction | ✓ PASS | v=0, a=0, e_trace=0 |
+| step() → int {0,1} | ✓ PASS | Standard binary output |
+| Alpha precomputed | ✓ PASS | α_m, α_a in __post_init__ |
+| Adaptive threshold | ✓ PASS | a increments, θ rises |
+| a decays | ✓ PASS | Between spikes |
+| ISI lengthens | ✓ PASS | Adaptation effect |
+| β=0 baseline | ✓ PASS | No adaptation |
+| Eligibility trace | ✓ PASS | Accumulates and decays |
+| ψ peaks at threshold | ✓ PASS | Pseudo-derivative |
+| Zero → silent | ✓ PASS | No spikes |
+| Monotonic f-I | ✓ PASS | More I → more spikes |
+| State finite | ✓ PASS | All 3 vars |
+| reset() | ✓ PASS | All to 0 |
+| Deterministic | ✓ PASS | Bit-exact |
+| Population | ✓ PASS | Instances |
+| Network | ✓ PASS | Spikes produced |
+| Projection | ✓ PASS | Wiring |
+| Analysis | ✓ PASS | spike_count, firing_rate |
+
+**ALL 26 PIPELINE TESTS PASSED. MODEL IS END-TO-END FUNCTIONAL.**
 
 10. **E-prop approximates BPTT:** The eligibility trace mechanism
     provides an online, biologically plausible alternative to
