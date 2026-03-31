@@ -135,8 +135,13 @@ def run_pipeline(graph: dict, target: str = "ice40") -> dict:
             module_name="sc_pipeline_neuron",
         )
         steps["compile"] = {"chars": len(verilog), "module": "sc_pipeline_neuron"}
-    except Exception as e:
-        return {"success": False, "step": "compile", "error": str(e)}
+    except Exception:
+        # Avoid exposing internal exception details to API consumers.
+        return {
+            "success": False,
+            "step": "compile",
+            "error": "Compilation failed",
+        }
 
     # Step 4: Synthesise
     synth_result = run_synthesis(verilog, target)
