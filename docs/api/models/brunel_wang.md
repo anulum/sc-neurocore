@@ -281,3 +281,32 @@ See `tests/test_model_brunel_wang.py`. No bugs found.
 
 8. **Most detailed synaptic model:** Only model in SC-NeuroCore with
    explicit AMPA, NMDA (with Mg²⁺ block), and GABA conductances.
+
+---
+
+## Theoretical Context
+
+### NMDA as computational substrate
+
+The NMDA receptor is unique among ionotropic receptors:
+- **Voltage-dependent Mg²⁺ block:** Creates a coincidence detector
+  (requires both presynaptic glutamate AND postsynaptic depolarisation)
+- **Slow kinetics (100 ms):** Provides temporal integration on the
+  working memory timescale
+- **Ca²⁺ permeability:** Triggers LTP/LTD (not modelled here, but the
+  voltage dependence that gates Ca²⁺ entry is captured by J(V))
+
+These three properties make NMDA the biophysical substrate for:
+- Persistent neural activity (working memory)
+- Hebbian learning (LTP)
+- Attractor dynamics (decision-making)
+
+### Brunel & Wang 2001 key results
+
+The original paper showed that:
+1. NMDA-dominated recurrence is necessary for persistent activity
+2. AMPA alone cannot sustain working memory (too fast, 2 ms)
+3. GABA inhibition is required for selectivity (prevents all neurons
+   from becoming active simultaneously)
+4. Dopaminergic modulation (via NMDA conductance changes) controls
+   working memory stability — linking to schizophrenia models
