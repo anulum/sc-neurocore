@@ -285,3 +285,31 @@ See `tests/test_model_traub_miles.py`. No bugs found.
 
 8. **Network pipeline functional:** Population + PoissonInput + Projection
    all work. Spikes detected via upward-crossing at −20 mV.
+
+---
+
+## Biological Context
+
+### Hippocampal CA3 pyramidal cells
+
+CA3 pyramidal neurons are the principal excitatory cells of the hippocampus
+CA3 region. They are notable for:
+
+- **Recurrent collaterals:** Each CA3 cell projects to ~3% of all other
+  CA3 cells — the densest recurrent connectivity in the brain.
+- **Burst firing:** Under certain conditions (high [K⁺]_o, epileptogenic),
+  CA3 cells produce bursts of action potentials.
+- **Pattern completion:** The recurrent CA3 network is thought to act as
+  an autoassociative memory — the Traub-Miles model was developed to
+  simulate this network.
+
+### Epilepsy modelling
+
+Traub & Miles (1991) developed this model specifically to study
+synchronised epileptiform bursting in CA3. Key findings from their
+network simulations:
+- Recurrent excitation can sustain population bursts
+- The deep AHP (E_K = −100) terminates bursts
+- Network synchronisation emerges from sparse connectivity
+- The 10 sub-step efficiency was critical for simulating networks of
+  ~1000 neurons on 1991 hardware
