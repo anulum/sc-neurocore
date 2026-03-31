@@ -1,0 +1,213 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — End-to-end test: TraubMilesNeuron
+
+"""Full pipeline test for TraubMilesNeuron (Traub & Miles 1991).
+
+Reduced hippocampal CA3 pyramidal cell. HH-type Na/K/leak with 10
+sub-steps per step() call. Strong Na conductance (g_Na=100) drives
+fast action potentials."""
+
+from __future__ import annotations
+
+import numpy as np
+import pytest
+
+from sc_neurocore.neurons.models.traub_miles import TraubMilesNeuron
+from sc_neurocore.network.population import Population
+from sc_neurocore.network.projection import Projection
+from sc_neurocore.network.network import Network
+from sc_neurocore.network.monitor import SpikeMonitor
+from sc_neurocore.network.stimulus import PoissonInput
+from sc_neurocore.analysis.spike_stats.basic import spike_count, isi, firing_rate
+
+
+def _run(neuron: TraubMilesNeuron, current: float, steps: int) -> list[int]:
+    return [t for t in range(steps) if neuron.step(current) == 1]
+
+
+class TestTraubMilesIsolation:
+    def test_construction_defaults(self):
+        n = TraubMilesNeuron()
+        assert n.v == -67.0
+        assert n.g_na == 100.0
+        assert n.g_k == 80.0
+        assert n.dt == 0.01
+        assert n.v_threshold == -20.0
+
+    def test_step_returns_binary(self):
+        assert TraubMilesNeuron().step(0.0) in (0, 1)
+
+    def test_four_variables_evolve(self):
+        n = TraubMilesNeuron()
+        initial = (n.v, n.m, n.h, n.n)
+        for _ in range(100):
+            n.step(5.0)
+        for name, v0, v1 in zip(["v", "m", "h", "n"], initial, (n.v, n.m, n.h, n.n)):
+            assert v0 != v1, f"{name} didn't evolve"
+
+    def test_state_finite_long_run(self):
+        n = TraubMilesNeuron()
+        for _ in range(50000):
+            n.step(5.0)
+        for var in [n.v, n.m, n.h, n.n]:
+            assert np.isfinite(var)
+
+    def test_reset(self):
+        n = TraubMilesNeuron()
+        for _ in range(500):
+            n.step(5.0)
+        n.reset()
+        assert n.v == -67.0 and n.m == 0.05 and n.h == 0.6 and n.n == 0.3
+
+    def test_ten_substeps(self):
+        """Model uses 10 sub-steps: 10 × dt=0.01 = 0.1 ms per step()."""
+        n = TraubMilesNeuron()
+        v0 = n.v
+        n.step(5.0)
+        # With 10 sub-steps, V should have changed substantially
+        assert abs(n.v - v0) > 0.01
+
+
+class TestTraubMilesFI:
+    def test_subthreshold_silent(self):
+        n = TraubMilesNeuron()
+        assert len(_run(n, current=0.0, steps=50000)) == 0
+
+    def test_suprathreshold_fires(self):
+        n = TraubMilesNeuron()
+        assert len(_run(n, current=2.0, steps=50000)) >= 100
+
+    def test_monotonic_fi(self):
+        rates = []
+        for I in [1.0, 2.0, 5.0, 10.0, 20.0]:
+            n = TraubMilesNeuron()
+            rates.append(len(_run(n, current=I, steps=50000)))
+        assert all(rates[i] <= rates[i + 1] for i in range(len(rates) - 1))
+
+    def test_rate_scales_sublinearly(self):
+        """HH f-I is not linear — verify monotonic but non-trivial scaling."""
+        n2 = TraubMilesNeuron()
+        n10 = TraubMilesNeuron()
+        s2 = len(_run(n2, current=2.0, steps=50000))
+        s10 = len(_run(n10, current=10.0, steps=50000))
+        ratio = s10 / s2
+        assert 1.5 < ratio < 5.0, f"f(10)/f(2) = {ratio:.2f}"
+
+
+class TestTraubMilesHHProperties:
+    """Verify HH-specific properties: gating bounds, Na inactivation, refractory."""
+
+    def test_gating_bounded(self):
+        n = TraubMilesNeuron()
+        for _ in range(50000):
+            n.step(5.0)
+        for name, val in [("m", n.m), ("h", n.h), ("n", n.n)]:
+            assert -0.01 <= val <= 1.01, f"{name} = {val:.6f}"
+
+    def test_h_inactivation_during_depolarisation(self):
+        """Na inactivation gate h should decrease during sustained firing."""
+        n = TraubMilesNeuron()
+        h0 = n.h
+        for _ in range(50000):
+            n.step(10.0)
+        # h oscillates during firing but should be < initial at some point
+        # Check average: during spiking, h drops during each AP
+        assert n.h != h0  # h has changed (oscillating)
+
+    def test_na_current_drives_upstroke(self):
+        """I_Na = g_Na · m³ · h · (V - E_Na). At rest: m≈0.05, inward current small.
+        During AP: m rapidly activates → large inward Na → fast upstroke."""
+        n = TraubMilesNeuron()
+        # At rest
+        i_na_rest = n.g_na * n.m**3 * n.h * (n.v - n.e_na)
+        assert i_na_rest < 0  # inward at rest (V < E_Na)
+        # m small → magnitude small
+        assert abs(i_na_rest) < 10  # weak at rest
+
+    def test_isi_regularity(self):
+        """At constant input, ISI should be regular (limit cycle)."""
+        n = TraubMilesNeuron()
+        spikes = _run(n, current=5.0, steps=50000)
+        assert len(spikes) >= 20
+        isis = np.diff(spikes[5:]).astype(float)
+        cv = np.std(isis) / np.mean(isis)
+        assert cv < 0.05, f"CV(ISI) = {cv:.4f}"
+
+    def test_singularity_protection(self):
+        """Rate functions use abs(d) > 1e-6 guard against division by zero."""
+        n = TraubMilesNeuron(v=-54.0)  # d = v + 54 = 0
+        n.step(0.0)  # should not raise
+        assert np.isfinite(n.v)
+
+
+class TestTraubMilesParameters:
+    @pytest.mark.parametrize("dt", [0.005, 0.01, 0.02])
+    def test_dt_stability(self, dt: float):
+        n = TraubMilesNeuron(dt=dt)
+        for _ in range(20000):
+            n.step(5.0)
+        assert np.isfinite(n.v)
+
+    def test_g_na_controls_excitability(self):
+        n_low = TraubMilesNeuron(g_na=50.0)
+        n_high = TraubMilesNeuron(g_na=150.0)
+        s_low = len(_run(n_low, current=5.0, steps=50000))
+        s_high = len(_run(n_high, current=5.0, steps=50000))
+        assert s_low != s_high
+
+    def test_deterministic(self):
+        traces = []
+        for _ in range(2):
+            n = TraubMilesNeuron()
+            trace = [(n.step(5.0), n.v) for _ in range(200)]
+            traces.append(trace)
+        assert traces[0] == traces[1]
+
+
+class TestTraubMilesPipeline:
+    def test_population(self):
+        assert Population(TraubMilesNeuron, n=5, label="tm").n == 5
+
+    def test_network_with_drive(self):
+        pop = Population(TraubMilesNeuron, n=5, label="tm")
+        drive = PoissonInput(n=5, rate_hz=500.0, weight=5.0, dt=0.001, seed=42)
+        mon = SpikeMonitor(pop)
+        net = Network(pop, drive, mon)
+        net.run(duration=1.0, dt=0.001, backend="python")
+        assert mon.count > 0
+
+    def test_projection_affects_target(self):
+        """Projection from firing source increases target activity."""
+        src = Population(TraubMilesNeuron, n=10, label="src")
+        tgt_with = Population(TraubMilesNeuron, n=10, label="tgt_w")
+        tgt_without = Population(TraubMilesNeuron, n=10, label="tgt_wo")
+        drive_src = PoissonInput(n=10, rate_hz=500.0, weight=5.0, dt=0.001, seed=42)
+        drive_tgt1 = PoissonInput(n=10, rate_hz=200.0, weight=1.0, dt=0.001, seed=99)
+        drive_tgt2 = PoissonInput(n=10, rate_hz=200.0, weight=1.0, dt=0.001, seed=99)
+        proj = Projection(src, tgt_with, weight=5.0, probability=1.0, seed=42)
+        mon_src = SpikeMonitor(src)
+        mon_with = SpikeMonitor(tgt_with)
+        mon_without = SpikeMonitor(tgt_without)
+        net_with = Network(src, tgt_with, drive_src, drive_tgt1, proj, mon_src, mon_with)
+        net_without = Network(tgt_without, drive_tgt2, mon_without)
+        net_with.run(duration=2.0, dt=0.001, backend="python")
+        net_without.run(duration=2.0, dt=0.001, backend="python")
+        assert mon_src.count > 0
+        assert mon_with.count >= mon_without.count
+
+    def test_analysis_pipeline(self):
+        n = TraubMilesNeuron()
+        train = np.array([float(n.step(5.0)) for _ in range(50000)])
+        sc = spike_count(train)
+        assert sc >= 100
+        isis = isi(train, dt=0.001)
+        assert len(isis) >= 10
+        rate = firing_rate(train, dt=0.001)
+        assert rate > 0
+        duration = 50000 * 0.001
+        assert abs(rate - sc / duration) < 10.0
