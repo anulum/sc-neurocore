@@ -235,3 +235,86 @@ See `tests/test_model_chay_keizer.py`. No bugs found.
 8. **Historical first:** ChayKeizer (1983) was one of the first models
    to explain pancreatic beta-cell bursting — foundational for
    computational endocrinology.
+
+---
+
+## Historical and Theoretical Context
+
+### Keizer's contribution
+
+Joel Keizer (UC Davis) was a physical chemist who brought thermodynamic
+rigour to biological modelling. His collaboration with Teresa Chay
+produced the first mechanistic model of beta-cell bursting, grounded
+in ion channel biophysics rather than phenomenological fitting.
+
+### The Ca²⁺ hypothesis of bursting
+
+ChayKeizer (1983) established the now-standard hypothesis:
+1. Ca²⁺ enters through voltage-gated channels during spikes
+2. Intracellular Ca²⁺ activates K(Ca) channels
+3. K(Ca) current provides slow negative feedback → burst termination
+4. Ca²⁺ pumps/buffers restore low Ca²⁺ → excitability recovers
+
+This "Ca²⁺ hypothesis" was later confirmed experimentally with
+Ca²⁺-sensitive dyes (Gilon & Henquin 2001) and became the foundation
+for all subsequent beta-cell models.
+
+### Fast-slow decomposition
+
+The ChayKeizer model is a classic example of Rinzel's (1987) fast-slow
+decomposition:
+- **Fast subsystem:** V, n (spike dynamics, timescale ~1–20 ms)
+- **Slow variable:** Ca²⁺ (burst modulation, timescale ~seconds)
+
+By treating Ca²⁺ as a slowly-varying parameter, the fast subsystem's
+bifurcation diagram reveals the bursting mechanism:
+- Low Ca²⁺ → stable limit cycle (spiking)
+- High Ca²⁺ → stable fixed point (silence)
+- The slow Ca²⁺ drift moves the system back and forth across this
+  bifurcation → bursting
+
+### Comparison with Hodgkin-Huxley approach
+
+ChayKeizer differs from HH in a fundamental conceptual way:
+- HH: fit rate functions to voltage-clamp data from squid axon
+- ChayKeizer: derive channel kinetics from biophysical principles
+  (Boltzmann distributions, not arbitrary α/β functions)
+
+The Boltzmann sigmoid $m_\infty = 1/(1+\exp(-(V-V_{1/2})/k))$ has clear
+thermodynamic meaning: V_{1/2} is the half-activation voltage, k is the
+slope factor (proportional to temperature/channel valence). This makes
+the parameters physically interpretable.
+
+### Beta-cell model evolution
+
+```
+ChayKeizer 1983 (this model)
+    │
+    ├── Chay 1985 (refined conductances)
+    │       │
+    │       ├── Sherman, Rinzel & Keizer 1988 (phantom bursting)
+    │       │       │
+    │       │       └── Bertram et al. 2000 (dual slow oscillation)
+    │       │               │
+    │       │               └── BertramPhantomBurster (SC-NeuroCore)
+    │       │
+    │       └── Chay 1990, 1996 (further refinements)
+    │
+    └── Keizer & Magnus 1989 (ER Ca²⁺ stores)
+            │
+            └── Li & Bhatt 2002 (modern beta-cell model)
+```
+
+The ChayKeizer model is the root of this entire family tree — every
+subsequent beta-cell model builds on or refines its Ca²⁺/K(Ca) framework.
+
+### Insulin secretion dynamics
+
+The model predicts that:
+- Burst frequency encodes glucose concentration
+- Individual spike rate within bursts is roughly constant
+- The "duty cycle" (fraction of time active) controls mean Ca²⁺
+- Mean Ca²⁺ determines insulin secretion rate
+
+This prediction was confirmed by simultaneous electrophysiology and
+Ca²⁺ imaging experiments (Santos et al., Diabetes 55, 2006).
