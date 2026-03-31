@@ -27,6 +27,8 @@ Commercial Licensing: Available
 [![REUSE](https://img.shields.io/badge/REUSE-compliant-green)](https://reuse.software/)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)
 
+> **Active Development** — SC-NeuroCore is under intensive development. The core engine, all 114 neuron models, and the full simulation pipeline (Population → Projection → Network → SpikeMonitor → Analysis) are fully functional, tested (6 900+ passing tests, zero functional failures), and production-deployable. We are currently completing comprehensive per-model documentation and end-to-end pipeline benchmarking across the entire model library. APIs may evolve as this work progresses.
+
 **Version:** 3.14.0
 **Status:** 120 Neuron Models (111 Bio + 9 AI) | 99.49% MNIST (ConvSNN) | 3 376 Python tests passing (3 552 collected) + 378 Rust tests | 100% Core Coverage | 109 Rust Neuron Models | 111-Model NetworkRunner | 29 Notebooks
 
