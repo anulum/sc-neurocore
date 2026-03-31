@@ -18,10 +18,11 @@ import pytest
 
 from sc_neurocore.neurons.models.psn import ParallelSpikingNeuron
 from sc_neurocore.network.population import Population
+from sc_neurocore.network.projection import Projection
 from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
-from sc_neurocore.analysis.spike_stats.basic import spike_count
+from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate, isi
 
 
 class TestPSNIsolation:
@@ -135,9 +136,48 @@ class TestPSNEdgeCases:
         assert traces[0] == traces[1]
 
 
-class TestPSNNetwork:
+class TestPSNPerformance:
+    def test_isolation_throughput(self):
+        import time
+
+        n = ParallelSpikingNeuron()
+        N = 200_000
+        t0 = time.perf_counter()
+        for _ in range(N):
+            n.step(2.0)
+        elapsed = time.perf_counter() - t0
+        rate = N / elapsed
+        assert rate > 100_000, f"isolation: {rate:.0f} steps/s"
+
+    def test_network_throughput(self):
+        import time
+
+        pop = Population(ParallelSpikingNeuron, n=20, label="bench")
+        drive = PoissonInput(n=20, rate_hz=500.0, weight=2.0, dt=0.001, seed=42)
+        mon = SpikeMonitor(pop)
+        net = Network(pop, drive, mon)
+        t0 = time.perf_counter()
+        net.run(duration=0.5, dt=0.001, backend="python")
+        elapsed = time.perf_counter() - t0
+        neuron_steps = 20 * 500
+        rate = neuron_steps / elapsed
+        assert rate > 2_000, f"network: {rate:.0f} neuron-steps/s"
+
+
+class TestPSNPipeline:
     def test_population(self):
         assert Population(ParallelSpikingNeuron, n=10, label="psn").n == 10
+
+    def test_projection_wiring(self):
+        src = Population(ParallelSpikingNeuron, n=5, label="src")
+        tgt = Population(ParallelSpikingNeuron, n=5, label="tgt")
+        drive = PoissonInput(n=5, rate_hz=500.0, weight=2.0, dt=0.001, seed=42)
+        proj = Projection(src, tgt, weight=1.0, probability=1.0, seed=42)
+        mon_src = SpikeMonitor(src)
+        mon_tgt = SpikeMonitor(tgt)
+        net = Network(src, tgt, drive, proj, mon_src, mon_tgt)
+        net.run(duration=2.0, dt=0.001, backend="python")
+        assert mon_src.count > 0
 
     def test_network_spikes(self):
         pop = Population(ParallelSpikingNeuron, n=10, label="psn")
@@ -147,14 +187,37 @@ class TestPSNNetwork:
         net.run(duration=1.0, dt=0.001, backend="python")
         assert mon.count > 0
 
-
-class TestPSNAnalysis:
-    def test_spike_count(self):
+    def test_analysis_spike_count(self):
         n = ParallelSpikingNeuron()
         train = np.array([float(n.step(2.0)) for _ in range(500)])
         assert spike_count(train) > 10
 
-    def test_spike_count_consistency(self):
+    def test_analysis_spike_count_consistency(self):
         n = ParallelSpikingNeuron()
         train = np.array([float(n.step(2.0)) for _ in range(500)])
         assert spike_count(train) == int(train.sum())
+
+    def test_analysis_isi(self):
+        n = ParallelSpikingNeuron()
+        train = np.array([float(n.step(2.0)) for _ in range(500)])
+        intervals = isi(train, dt=0.001)
+        if intervals.size > 0:
+            assert np.all(np.isfinite(intervals))
+            assert np.all(intervals > 0)
+
+    def test_analysis_firing_rate(self):
+        n = ParallelSpikingNeuron()
+        train = np.array([float(n.step(2.0)) for _ in range(500)])
+        rate = firing_rate(train, dt=0.001)
+        assert rate > 0
+
+    def test_analysis_cross_validation(self):
+        n = ParallelSpikingNeuron()
+        train = np.array([float(n.step(2.0)) for _ in range(500)])
+        sc = spike_count(train)
+        dt_sim = 0.001
+        duration = len(train) * dt_sim
+        rate = firing_rate(train, dt=dt_sim)
+        if sc > 0:
+            expected = sc / duration
+            assert abs(rate - expected) < expected * 0.1
