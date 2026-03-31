@@ -257,3 +257,49 @@ See `tests/test_model_astrocyte_adapter.py`. No bugs found.
 
 8. **Only adapter model:** Unique in SC-NeuroCore — demonstrates the
    pattern for wrapping any continuous-output model for pipeline use.
+
+---
+
+## Design Pattern for Other Rate Models
+
+The AstrocyteNeuron adapter demonstrates a general pattern that can be
+applied to any float-returning model to make it pipeline-compatible:
+
+```python
+@dataclass
+class ThresholdAdapter:
+    threshold: float = 0.5
+    def __post_init__(self):
+        self._inner = SomeRateModel()
+        self.v = 0.0
+    def step(self, current: float) -> int:
+        output = self._inner.step(current)
+        self.v = output
+        return 1 if output > self.threshold else 0
+    def reset(self):
+        self._inner.reset()
+        self.v = 0.0
+```
+
+This pattern could be applied to: WilsonCowanUnit, SiegertTransferFunction,
+WendlingNeuron, JansenRitUnit, LarterBreakspearNeuron, SigmoidRateNeuron,
+ThresholdLinearRateNeuron, WongWangUnit — all of which return float and
+are currently pipeline-limited.
+
+### Limitations of the pattern
+
+The threshold conversion is a lossy transformation:
+- The continuous rate/concentration information is reduced to binary
+- The threshold choice affects the spike pattern significantly
+- For models with multi-dimensional output (WongWang returns tuple),
+  additional logic is needed
+
+Despite these limitations, the adapter pattern provides the simplest path
+to pipeline integration for non-spiking models.
+
+### Future: native rate pipeline
+
+An alternative to the adapter pattern would be a native rate-based pipeline
+in SC-NeuroCore that handles float outputs directly — passing rates through
+projections instead of spikes. This would eliminate the need for adapters
+and preserve the continuous dynamics information. Currently not implemented.
