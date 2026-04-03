@@ -11,8 +11,11 @@ import json
 import os
 import time
 from typing import Any
+import logging
 
 _PROJECTS_DIR = os.path.join(os.path.expanduser("~"), ".sc-neurocore", "studio", "projects")
+
+logger = logging.getLogger(__name__)
 
 
 def _ensure_dir() -> None:
@@ -136,7 +139,9 @@ def run_pipeline(graph: dict, target: str = "ice40") -> dict:
         )
         steps["compile"] = {"chars": len(verilog), "module": "sc_pipeline_neuron"}
     except Exception as e:
-        return {"success": False, "step": "compile", "error": str(e)}
+        # Log detailed exception server-side, but return a generic message to the client
+        logger.exception("Error during pipeline compile step")
+        return {"success": False, "step": "compile", "error": "Compilation failed"}
 
     # Step 4: Synthesise
     synth_result = run_synthesis(verilog, target)
