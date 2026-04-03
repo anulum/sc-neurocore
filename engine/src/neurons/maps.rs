@@ -78,14 +78,13 @@ impl RulkovMapNeuron {
     }
     pub fn step(&mut self, current: f64) -> i32 {
         let x_prev = self.x;
-        let f = if self.x <= 0.0 {
-            self.alpha / (1.0 - self.x) + self.y
-        } else if self.x < self.alpha + self.y {
-            self.alpha + self.y
+        let x_new = if self.x <= 0.0 {
+            self.alpha / (1.0 - self.x) + self.y + current
+        } else if self.x < self.alpha + self.y + current {
+            self.alpha + self.y + current
         } else {
             -1.0
         };
-        let x_new = f + current;
         let y_new = self.y - self.mu * (self.x + 1.0) + self.mu * self.sigma;
         self.x = x_new;
         self.y = y_new;
@@ -180,8 +179,12 @@ impl MedvedevMapNeuron {
     }
     pub fn step(&mut self, current: f64) -> i32 {
         let x_prev = self.x;
-        let f = self.alpha * self.x * (1.0 - self.x) + self.beta * current;
-        self.x = f - f.floor();
+        self.x = if self.x < self.beta {
+            self.alpha * self.x + current
+        } else {
+            self.alpha * (1.0 - self.x) + current
+        };
+        self.x = self.x.rem_euclid(1.0);
         if self.x >= self.x_threshold && x_prev < self.x_threshold {
             1
         } else {

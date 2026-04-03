@@ -85,9 +85,9 @@ impl Loihi2Neuron {
         }
     }
     pub fn step(&mut self, weighted_input: i32) -> i32 {
-        self.s2 = self.s2 - (self.s2 >> self.tau2.max(1)) + self.w12 * self.s1;
-        self.s3 = self.s3 - (self.s3 >> self.tau3.max(1)) + self.w13 * self.s1 + self.w23 * self.s2;
-        self.s1 = self.s1 - (self.s1 >> self.tau1.max(1)) + self.s2 + weighted_input;
+        self.s3 -= self.s3 / self.tau3;
+        self.s2 = self.s2 - self.s2 / self.tau2 + weighted_input + self.w23 * self.s3;
+        self.s1 = self.s1 - self.s1 / self.tau1 + self.w12 * self.s2 + self.w13 * self.s3;
         if self.s1 >= self.s1_threshold {
             self.s1 = self.s1_reset;
             self.s3 += self.s3_incr;
