@@ -376,7 +376,7 @@ impl AkidaNeuron {
             spiked: false,
         }
     }
-    pub fn step(&mut self, weight: i32) -> i32 {
+    pub fn step(&mut self, weight: f64) -> i32 {
         if self.spiked {
             return 0;
         }
@@ -512,7 +512,7 @@ mod tests {
     #[test]
     fn akida_fires() {
         let mut n = AkidaNeuron::default();
-        let t: i32 = (0..10).map(|_| n.step(50)).sum();
+        let t: i32 = (0..10).map(|_| n.step(50.0)).sum();
         assert!(t > 0);
     }
     #[test]

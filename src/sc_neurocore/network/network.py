@@ -38,7 +38,13 @@ def _rust_supports_model(model_name: str) -> bool:
     engine = _get_rust_engine()
     if engine is False:
         return False
-    return bool(model_name in engine.supported_models())
+    supported = engine.supported_models()
+    if model_name in supported:
+        return True
+    # Try without "Neuron" suffix
+    if model_name.endswith("Neuron") and model_name[:-6] in supported:
+        return True
+    return False
 
 
 class Network:
@@ -136,7 +142,7 @@ class Network:
                 proj.indptr.tolist(),
                 proj.indices.tolist(),
                 proj.data.tolist(),
-                proj._delay_steps,  # type: ignore[attr-defined]
+                proj.max_delay,  # type: ignore[attr-defined]
             )
 
         n_steps = int(round(duration / dt))

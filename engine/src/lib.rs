@@ -2133,6 +2133,10 @@ pub struct PyKuramotoSolver {
 
 #[pymethods]
 impl PyKuramotoSolver {
+    #[getter]
+    fn phases(&self) -> Vec<f64> {
+        self.inner.phases.clone()
+    }
     #[new]
     #[pyo3(signature = (omega, coupling, phases, noise_amp=0.1))]
     fn new(
@@ -2195,54 +2199,69 @@ impl PyKuramotoSolver {
     #[pyo3(signature = (
         dt,
         seed=0,
-        w_flat=vec![],
+        W=None,
         sigma_g=0.0,
-        h_flat=vec![],
+        h_munu=None,
         pgbo_weight=0.0,
     ))]
+    #[allow(non_snake_case)]
     fn step_ssgf(
         &mut self,
         dt: f64,
         seed: u64,
-        w_flat: Vec<f64>,
+        W: Option<&Bound<'_, PyAny>>,
         sigma_g: f64,
-        h_flat: Vec<f64>,
+        h_munu: Option<&Bound<'_, PyAny>>,
         pgbo_weight: f64,
-    ) -> f64 {
-        self.inner
-            .step_ssgf(dt, seed, &w_flat, sigma_g, &h_flat, pgbo_weight)
+    ) -> PyResult<f64> {
+        let (w_flat, _, _) = match W {
+            Some(w) => extract_matrix_f64(w, "W")?,
+            None => (vec![], 0, 0),
+        };
+        let (h_flat, _, _) = match h_munu {
+            Some(h) => extract_matrix_f64(h, "h_munu")?,
+            None => (vec![], 0, 0),
+        };
+        Ok(self
+            .inner
+            .step_ssgf(dt, seed, &w_flat, sigma_g, &h_flat, pgbo_weight))
     }
 
     #[pyo3(signature = (
         n_steps,
         dt,
         seed=0,
-        w_flat=vec![],
+        W=None,
         sigma_g=0.0,
-        h_flat=vec![],
+        h_munu=None,
         pgbo_weight=0.0,
     ))]
-    #[allow(clippy::too_many_arguments)]
+    #[allow(clippy::too_many_arguments, non_snake_case)]
     fn run_ssgf(
         &mut self,
         n_steps: usize,
         dt: f64,
         seed: u64,
-        w_flat: Vec<f64>,
+        W: Option<&Bound<'_, PyAny>>,
         sigma_g: f64,
-        h_flat: Vec<f64>,
+        h_munu: Option<&Bound<'_, PyAny>>,
         pgbo_weight: f64,
-    ) -> Vec<f64> {
-        self.inner
-            .run_ssgf(n_steps, dt, seed, &w_flat, sigma_g, &h_flat, pgbo_weight)
+    ) -> PyResult<Vec<f64>> {
+        let (w_flat, _, _) = match W {
+            Some(w) => extract_matrix_f64(w, "W")?,
+            None => (vec![], 0, 0),
+        };
+        let (h_flat, _, _) = match h_munu {
+            Some(h) => extract_matrix_f64(h, "h_munu")?,
+            None => (vec![], 0, 0),
+        };
+        Ok(self
+            .inner
+            .run_ssgf(n_steps, dt, seed, &w_flat, sigma_g, &h_flat, pgbo_weight))
     }
 
     fn order_parameter(&self) -> f64 {
         self.inner.order_parameter()
-    }
-
-    fn get_phases(&self) -> Vec<f64> {
-        self.inner.get_phases().to_vec()
     }
 
     fn set_phases(&mut self, phases: Vec<f64>) -> PyResult<()> {

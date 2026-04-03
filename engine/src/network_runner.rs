@@ -102,6 +102,8 @@ pub enum NeuronVariant {
     SpiNNakerLIF(SpiNNakerLIFNeuron),
     NeuroGrid(NeuroGridNeuron),
     DPI(DPINeuron),
+    Akida(AkidaNeuron),
+    StochasticLIF(StochasticLIFNeuron),
 
     // multi_compartment.rs (single-f64-input subset)
     MarderSTG(MarderSTGNeuron),
@@ -173,7 +175,7 @@ macro_rules! all_variants {
             DestexheThalamic, HuberBraun, GolombFS,
             Pospischil, MainenSejnowski, DeSchutterPurkinje,
             PlantR15, Prescott, MihalasNiebur, GLIF, GIFPopulation,
-            AvRonCardiac, DurstewitzDopamine, HillTononi, BertramPhantom, Yamada,
+            AvRonCardiac, DurstewitzDopamine, HillTononi, BertramPhantom, Yamada, Akida, StochasticLIF,
             FitzHughNagumo, MorrisLecar, HindmarshRose, ResonateAndFire,
             FitzHughRinzel, McKean, TermanWang, GutkinErmentrout, WilsonHR,
             Chay, ChayKeizer, ShermanRinzelKeizer, ButeraRespiratory,
@@ -303,6 +305,8 @@ impl NeuronVariant {
             NeuronVariant::InhomogeneousPoisson(_) => 0.0,
             NeuronVariant::GammaRenewal(_) => 0.0,
             NeuronVariant::EscapeRate(n) => n.v,
+            NeuronVariant::Akida(n) => n.v as f64,
+            NeuronVariant::StochasticLIF(n) => n.v,
         }
     }
 }
@@ -710,6 +714,10 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
             Ok(NeuronVariant::BoothRinzel(BoothRinzelNeuron::new()))
         }
         "Dendrify" | "DendrifyNeuron" => Ok(NeuronVariant::Dendrify(DendrifyNeuron::new())),
+        "Akida" | "AkidaNeuron" => Ok(NeuronVariant::Akida(AkidaNeuron::new(100))),
+        "StochasticLIF" | "StochasticLIFNeuron" => {
+            Ok(NeuronVariant::StochasticLIF(StochasticLIFNeuron::new(42)))
+        }
         "LiquidTimeConstant" | "LiquidTimeConstantNeuron" => Ok(NeuronVariant::LiquidTimeConstant(
             LiquidTimeConstantNeuron::new(),
         )),
@@ -794,6 +802,8 @@ pub fn supported_models() -> Vec<&'static str> {
         "TermanWang",
         "GutkinErmentrout",
         "WilsonHR",
+        "Akida",
+        "StochasticLIF",
         "Chay",
         "ChayKeizer",
         "ShermanRinzelKeizer",

@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+import math
 import numpy as np
 
 
@@ -39,13 +40,13 @@ class MorrisLecarNeuron:
     v_threshold: float = 0.0
 
     def _m_inf(self, v: float) -> Any:
-        return 0.5 * (1.0 + np.tanh((v - self.v1) / self.v2))
+        return 0.5 * (1.0 + math.tanh((v - self.v1) / self.v2))
 
     def _w_inf(self, v: float) -> Any:
-        return 0.5 * (1.0 + np.tanh((v - self.v3) / self.v4))
+        return 0.5 * (1.0 + math.tanh((v - self.v3) / self.v4))
 
     def _lam(self, v: float) -> Any:
-        return self.phi * np.cosh((v - self.v3) / (2.0 * self.v4))
+        return self.phi * math.cosh((v - self.v3) / (2.0 * self.v4))
 
     def step(self, current: float) -> int:
         v_prev = self.v

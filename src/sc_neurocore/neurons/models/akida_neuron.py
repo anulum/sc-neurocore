@@ -24,13 +24,18 @@ class AkidaNeuron:
     modulation: float = 0.75
     _rank: int = 0
     _spiked: bool = False
+    _current_modulation: float = 1.0
 
     def step(self, weight: int) -> int:
         """Process one input spike event with given synaptic weight."""
         if weight != 0:
-            scaled = int(weight * self.modulation**self._rank)
+            # OPTIMIZATION: Use iterative multiplication instead of power operator
+            # to achieve >1M steps/s in Python.
+            scaled = int(weight * self._current_modulation)
             self.v += scaled
             self._rank += 1
+            self._current_modulation *= self.modulation
+            
         if self.v >= self.threshold and not self._spiked:
             self._spiked = True
             return 1
@@ -40,3 +45,4 @@ class AkidaNeuron:
         self.v = 0
         self._rank = 0
         self._spiked = False
+        self._current_modulation = 1.0
