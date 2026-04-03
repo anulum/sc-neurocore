@@ -689,7 +689,9 @@ impl ChayNeuron {
         let i_kca = self.g_kca * kca_act * (self.v - self.e_k);
         let i_l = self.g_l * (self.v - self.e_l);
         self.v += (-i_ca - i_k - i_kca - i_l + current) * self.dt;
+        self.v = self.v.clamp(-200.0, 200.0);
         self.n += (n_inf - self.n) / tau_n.max(0.01) * self.dt;
+        self.n = self.n.clamp(0.0, 1.0);
         self.ca =
             (self.ca + self.rho * (-self.alpha_ca * i_ca - self.k_ca * self.ca) * self.dt).max(0.0);
         if self.v >= self.v_threshold && v_prev < self.v_threshold {
@@ -761,6 +763,7 @@ impl ChayKeizerNeuron {
         let i_kca = self.g_kca * q_kca * (self.v - self.e_k);
         let i_l = self.g_l * (self.v - self.e_l);
         self.v += (-i_ca - i_k - i_kca - i_l + current) * self.dt;
+        self.v = self.v.clamp(-200.0, 200.0);
         self.n += (n_inf - self.n) / tau_n * self.dt;
         self.ca = (self.ca + (-self.f_ca * i_ca - self.k_ca * self.ca) * self.dt).max(0.0);
         if self.v >= self.v_threshold && v_prev < self.v_threshold {

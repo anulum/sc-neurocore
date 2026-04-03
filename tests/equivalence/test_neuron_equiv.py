@@ -63,7 +63,7 @@ class TestLIFBlueprintSemantics:
         v3 = V3Lif()
         for t in range(100):
             exp_spike, exp_v = ref.step(leak_k=20, gain_k=256, i_t=128, noise_in=0)
-            got_spike, got_v = v3.step(leak_k=20, gain_k=256, I_t=128, noise_in=0)
+            got_spike, got_v = v3.step(leak_k=20, gain_k=256, i_t=128, noise_in=0)
             assert got_spike == exp_spike, f"Spike mismatch at step {t}"
             assert got_v == exp_v, f"Voltage mismatch at step {t}: expected={exp_v}, got={got_v}"
 

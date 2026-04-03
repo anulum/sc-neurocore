@@ -1087,7 +1087,7 @@ impl PyAkidaNeuron {
         }
     }
     fn step(&mut self, weight: i32) -> i32 {
-        self.inner.step(weight)
+        self.inner.step(weight as f64)
     }
     fn reset(&mut self) {
         self.inner.reset();

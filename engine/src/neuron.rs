@@ -71,6 +71,7 @@ impl FixedPointLif {
     /// Advance one simulation step.
     ///
     /// Returns `(spike, membrane_voltage)`.
+    #[allow(non_snake_case)]
     pub fn step(&mut self, leak_k: i16, gain_k: i16, i_t: i16, noise_in: i16) -> (i32, i16) {
         let w = self.data_width;
 

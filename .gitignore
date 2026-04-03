@@ -31,6 +31,7 @@ Thumbs.db
 .coverage.*
 htmlcov/
 *.cover
+*,cover
 
 # Generated artifacts
 network_viz.html

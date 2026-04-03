@@ -5,8 +5,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Simple integrate-and-fire variants
 
-//! Simple integrate-and-fire variants.
-
+/// Simple integrate-and-fire variants.
 use rand::{RngExt, SeedableRng};
 use rand_xoshiro::Xoshiro256PlusPlus;
 
@@ -1010,5 +1009,75 @@ mod tests {
         };
         let total: i32 = (0..100).map(|_| n.step(5.0)).sum();
         assert!(total > 0);
+    }
+}
+
+/// Stochastic LIF — LIF with Gaussian noise.
+#[derive(Clone, Debug)]
+pub struct StochasticLIFNeuron {
+    pub v: f64,
+    pub v_rest: f64,
+    pub v_reset: f64,
+    pub v_threshold: f64,
+    pub tau_mem: f64,
+    pub dt: f64,
+    pub noise_std: f64,
+    pub resistance: f64,
+    pub refractory_period: i32,
+    pub refractory_counter: i32,
+    rng: Xoshiro256PlusPlus,
+}
+
+impl StochasticLIFNeuron {
+    pub fn new(seed: u64) -> Self {
+        Self {
+            v: 0.0,
+            v_rest: 0.0,
+            v_reset: 0.0,
+            v_threshold: 1.0,
+            tau_mem: 20.0,
+            dt: 1.0,
+            noise_std: 0.0,
+            resistance: 1.0,
+            refractory_period: 0,
+            refractory_counter: 0,
+            rng: Xoshiro256PlusPlus::seed_from_u64(seed),
+        }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        if self.refractory_counter > 0 {
+            self.refractory_counter -= 1;
+            self.v = self.v_rest;
+            return 0;
+        }
+        let dv_leak = -(self.v - self.v_rest) * (self.dt / self.tau_mem);
+        let dv_input = self.resistance * current * self.dt;
+        let mut dv_noise = 0.0;
+        if self.noise_std > 0.0 {
+            let u1: f64 = self.rng.random();
+            let u2: f64 = self.rng.random();
+            let z0 = (-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos();
+            dv_noise = self.noise_std * self.dt.sqrt() * z0;
+        }
+        self.v += dv_leak + dv_input + dv_noise;
+        if self.v >= self.v_threshold {
+            self.v = self.v_reset;
+            self.refractory_counter = self.refractory_period;
+            1
+        } else {
+            0
+        }
+    }
+
+    pub fn reset(&mut self) {
+        self.v = self.v_rest;
+        self.refractory_counter = 0;
+    }
+}
+
+impl Default for StochasticLIFNeuron {
+    fn default() -> Self {
+        Self::new(42)
     }
 }
