@@ -208,7 +208,8 @@ impl WangBuzsakiNeuron {
     }
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
-        for _ in 0..10 {
+        let n_sub = (0.5 / self.dt.max(0.001)) as usize;
+        for _ in 0..n_sub {
             let am = safe_rate(0.1, 35.0, self.v, 10.0, 1.0);
             let bm = 4.0 * (-(self.v + 60.0) / 18.0).exp();
             let m_inf = am / (am + bm);
@@ -562,6 +563,7 @@ pub struct PospischilNeuron {
     pub e_na: f64,
     pub e_k: f64,
     pub e_l: f64,
+    pub c_m: f64,
     pub vt: f64,
     pub dt: f64,
     pub v_threshold: f64,
@@ -577,11 +579,12 @@ impl PospischilNeuron {
             p: 0.0,
             g_na: 50.0,
             g_k: 5.0,
-            g_m: 0.004,
-            g_l: 0.01,
+            g_m: 0.07,
+            g_l: 0.1,
             e_na: 50.0,
             e_k: -90.0,
             e_l: -70.0,
+            c_m: 1.0,
             vt: -56.2,
             dt: 0.025,
             v_threshold: -20.0,
@@ -591,22 +594,39 @@ impl PospischilNeuron {
         let v_prev = self.v;
         for _ in 0..4 {
             let dv = self.v - self.vt;
-            let am = safe_rate(-0.32, 0.0, dv - 13.0, -4.0, 8.0);
-            let bm = safe_rate(0.28, 0.0, dv - 40.0, 5.0, 5.6);
+            let x_m = dv - 13.0;
+            let am = if x_m.abs() < 1e-6 {
+                -0.32 * -4.0
+            } else {
+                -0.32 * x_m / ((-(x_m) / 4.0).exp() - 1.0)
+            };
+            let x_bm = dv - 40.0;
+            let bm = if x_bm.abs() < 1e-6 {
+                0.28 * 5.0
+            } else {
+                0.28 * x_bm / ((x_bm / 5.0).exp() - 1.0)
+            };
             let ah = 0.128 * (-(dv - 17.0) / 18.0).exp();
             let bh = 4.0 / (1.0 + (-(dv - 40.0) / 5.0).exp());
-            let an = safe_rate(-0.032, 0.0, dv - 15.0, -5.0, 0.32);
+            let x_n = dv - 15.0;
+            let an = if x_n.abs() < 1e-6 {
+                -0.032 * -5.0
+            } else {
+                -0.032 * x_n / ((-(x_n) / 5.0).exp() - 1.0)
+            };
             let bn = 0.5 * (-(dv - 10.0) / 40.0).exp();
             let p_inf = 1.0 / (1.0 + (-(self.v + 35.0) / 10.0).exp());
             self.m += (am * (1.0 - self.m) - bm * self.m) * self.dt;
             self.h += (ah * (1.0 - self.h) - bh * self.h) * self.dt;
             self.n += (an * (1.0 - self.n) - bn * self.n) * self.dt;
-            self.p += (p_inf - self.p) / 100.0 * self.dt;
+            let tau_p =
+                608.0 / (3.3 * ((self.v + 35.0) / 20.0).exp() + (-(self.v + 35.0) / 20.0).exp());
+            self.p += (p_inf - self.p) / tau_p * self.dt;
             let i_na = self.g_na * self.m.powi(3) * self.h * (self.v - self.e_na);
             let i_k = self.g_k * self.n.powi(4) * (self.v - self.e_k);
             let i_m = self.g_m * self.p * (self.v - self.e_k);
             let i_l = self.g_l * (self.v - self.e_l);
-            self.v += (-i_na - i_k - i_m - i_l + current) * self.dt;
+            self.v += (-i_na - i_k - i_m - i_l + current) / self.c_m * self.dt;
         }
         if self.v >= self.v_threshold && v_prev < self.v_threshold {
             1
@@ -622,6 +642,7 @@ impl PospischilNeuron {
         self.p = 0.0;
     }
 }
+#[allow(clippy::derivable_impls)]
 impl Default for PospischilNeuron {
     fn default() -> Self {
         Self::new()

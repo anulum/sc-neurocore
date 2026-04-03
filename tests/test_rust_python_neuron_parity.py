@@ -59,20 +59,7 @@ _STOCHASTIC = {
     "GIFPopulationNeuron",
     "WongWangUnit",
 }
-_KNOWN_PARITY_DIVERGENCE = {
-    "AmariNeuralField",
-    "BoothRinzelNeuron",
-    "CompteWMNeuron",
-    "LiquidTimeConstantNeuron",
-    "Loihi2Neuron",
-    "MedvedevMapNeuron",
-    "ParallelSpikingNeuron",
-    "PospischilNeuron",
-    "RulkovMapNeuron",
-    "ShermanRinzelKeizerNeuron",
-    "SiegertTransferFunction",
-    "WangBuzsakiNeuron",
-}
+_KNOWN_PARITY_DIVERGENCE: set[str] = set()
 
 
 def _get_all_model_names():

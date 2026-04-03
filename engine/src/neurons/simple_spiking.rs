@@ -819,13 +819,13 @@ impl ShermanRinzelKeizerNeuron {
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
         let m_inf = 1.0 / (1.0 + (-(self.v + 20.0) / 12.0).exp());
-        let n_inf = 1.0 / (1.0 + (-(self.v + 16.0) / 5.6).exp());
+        let n_inf = 1.0 / (1.0 + (-(self.v + 16.0) / 5.0).exp());
         let s_inf = 1.0 / (1.0 + (-(self.v + 35.0) / 10.0).exp());
         let tau_n = 9.09;
         let i_ca = self.g_ca * m_inf * (self.v - self.e_ca);
         let i_k = self.g_k * self.n * (self.v - self.e_k);
         let i_s = self.g_s * self.s * (self.v - self.e_k);
-        self.v += (-i_ca - i_k - i_s + current) * self.dt / 5.3;
+        self.v += (-i_ca - i_k - i_s + current) * self.dt;
         self.n += (n_inf - self.n) / tau_n * self.dt;
         self.s += (s_inf - self.s) / self.tau_s * self.dt;
         if self.v >= self.v_threshold && v_prev < self.v_threshold {

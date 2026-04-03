@@ -254,10 +254,9 @@ impl LiquidTimeConstantNeuron {
         let sigma_tau = 1.0 / (1.0 + (-(self.w_tau * current + self.bias)).exp());
         let tau = (self.tau_base * sigma_tau).max(0.1);
         let f_target = (self.w_x * self.x + self.w_in * current).tanh();
-        let decay = (-self.dt / tau).exp();
-        self.x = self.x * decay + f_target * (1.0 - decay);
+        self.x += self.dt / tau * (-self.x + f_target);
         if self.x >= self.v_threshold {
-            self.x -= self.v_threshold;
+            self.x = 0.0;
             1
         } else {
             0
@@ -286,15 +285,14 @@ pub struct CompteWMNeuron {
     pub g_nmda: f64,
     pub g_gaba: f64,
     pub e_l: f64,
-    pub e_ampa: f64,
-    pub e_nmda: f64,
-    pub e_gaba: f64,
+    pub e_exc: f64,
+    pub e_inh: f64,
     pub c_m: f64,
     pub mg: f64,
     pub tau_ampa: f64,
-    pub tau_nmda_rise: f64,
-    pub tau_nmda_decay: f64,
-    pub tau_gaba: f64,
+    pub tau_nmda: f64,
+    pub tau_x: f64,
+    pub alpha_nmda: f64,
     pub v_threshold: f64,
     pub v_reset: f64,
     pub dt: f64,
@@ -313,36 +311,39 @@ impl CompteWMNeuron {
             g_nmda: 0.165,
             g_gaba: 0.013,
             e_l: -70.0,
-            e_ampa: 0.0,
-            e_nmda: 0.0,
-            e_gaba: -70.0,
+            e_exc: 0.0,
+            e_inh: -70.0,
             c_m: 0.5,
             mg: 1.0,
             tau_ampa: 2.0,
-            tau_nmda_rise: 2.0,
-            tau_nmda_decay: 100.0,
-            tau_gaba: 5.0,
+            tau_nmda: 100.0,
+            tau_x: 2.0,
+            alpha_nmda: 0.5,
             v_threshold: -50.0,
             v_reset: -55.0,
             dt: 0.1,
         }
     }
     pub fn step(&mut self, current: f64, spike_in: bool) -> i32 {
-        let mg_block = 1.0 / (1.0 + self.mg * (-0.062 * self.v).exp() / 3.57);
-        let i_l = self.g_l * (self.v - self.e_l);
-        let i_ampa = self.g_ampa * self.s_ampa * (self.v - self.e_ampa);
-        let i_nmda = self.g_nmda * self.s_nmda * mg_block * (self.v - self.e_nmda);
-        let i_gaba = self.g_gaba * self.s_gaba * (self.v - self.e_gaba);
-        self.v += (-i_l - i_ampa - i_nmda - i_gaba + current) / self.c_m * self.dt;
-        let spike_f = if spike_in { 1.0 } else { 0.0 };
-        self.s_ampa += (-self.s_ampa / self.tau_ampa + spike_f) * self.dt;
-        self.x_nmda += (-self.x_nmda / self.tau_nmda_rise + spike_f) * self.dt;
-        self.s_nmda += (-self.s_nmda / self.tau_nmda_decay
-            + 0.5 * self.x_nmda * (1.0 - self.s_nmda))
+        if spike_in {
+            self.s_ampa += 1.0;
+            self.x_nmda += 1.0;
+        }
+        self.s_ampa *= (-self.dt / self.tau_ampa).exp();
+        self.s_nmda += (-self.s_nmda / self.tau_nmda
+            + self.alpha_nmda * self.x_nmda * (1.0 - self.s_nmda))
             * self.dt;
-        self.s_gaba += (-self.s_gaba / self.tau_gaba + spike_f * 0.5) * self.dt;
+        self.x_nmda *= (-self.dt / self.tau_x).exp();
+        self.s_gaba *= (-self.dt / 5.0).exp();
+        let mg_block = 1.0 / (1.0 + self.mg / 3.57 * (-0.062 * self.v).exp());
+        let i_l = self.g_l * (self.v - self.e_l);
+        let i_ampa = self.g_ampa * self.s_ampa * (self.v - self.e_exc);
+        let i_nmda = self.g_nmda * mg_block * self.s_nmda * (self.v - self.e_exc);
+        let i_gaba = self.g_gaba * self.s_gaba * (self.v - self.e_inh);
+        self.v += (-i_l - i_ampa - i_nmda - i_gaba + current) / self.c_m * self.dt;
         if self.v >= self.v_threshold {
             self.v = self.v_reset;
+            self.s_gaba += 1.0;
             1
         } else {
             0
@@ -382,15 +383,17 @@ impl ParallelSpikingNeuron {
         }
     }
     pub fn step(&mut self, current: f64) -> i32 {
-        self.buffer[self.ptr] = current;
-        self.ptr = (self.ptr + 1) % self.buffer.len();
-        let v: f64 = self
-            .kernel
+        let ks = self.buffer.len();
+        self.buffer[self.ptr % ks] = current;
+        self.ptr += 1;
+        let n = self.ptr.min(ks);
+        let score: f64 = self.kernel[..n]
             .iter()
-            .enumerate()
-            .map(|(i, &w)| w * self.buffer[(self.ptr + i) % self.buffer.len()])
+            .zip(self.buffer[..n].iter())
+            .map(|(&w, &b)| w * b)
             .sum();
-        if v >= self.v_threshold {
+        if score >= self.v_threshold {
+            self.buffer.fill(0.0);
             1
         } else {
             0
@@ -489,53 +492,66 @@ impl SiegertTransferFunction {
     }
     pub fn step(&self, current: f64) -> f64 {
         let mu = self.v_rest + current;
-        let sigma: f64 = 3.0; // noise amplitude (fixed default)
-        if sigma.abs() < 1e-10 {
-            return if mu > self.v_threshold {
-                1000.0 / self.tau_rp
-            } else {
-                0.0
-            };
-        }
+        let sigma = current.abs().max(1e-6) * 0.1;
         let upper = (self.v_threshold - mu) / sigma;
         let lower = (self.v_reset - mu) / sigma;
-        // Gauss-Legendre 10-point quadrature for ∫ exp(u²)(1+erf(u)) du
+        // Gauss-Legendre 20-point quadrature for ∫ exp(u²)(1+erf(u)) du
         let nodes = [
-            -0.973906528517172,
-            -0.865063366688985,
-            -0.679409568299024,
-            -0.433395394129247,
-            -0.148874338981631,
-            0.148874338981631,
-            0.433395394129247,
-            0.679409568299024,
-            0.865063366688985,
-            0.973906528517172,
+            -0.993128599185095,
+            -0.963971927277914,
+            -0.912234428251326,
+            -0.839116971822219,
+            -0.746331906460151,
+            -0.636053680726515,
+            -0.510867001950827,
+            -0.373706088715420,
+            -0.227785851141645,
+            -0.076526521133497,
+            0.076526521133497,
+            0.227785851141645,
+            0.373706088715420,
+            0.510867001950827,
+            0.636053680726515,
+            0.746331906460151,
+            0.839116971822219,
+            0.912234428251326,
+            0.963971927277914,
+            0.993128599185095,
         ];
         let weights = [
-            0.066671344308688,
-            0.149451349150581,
-            0.219086362515982,
-            0.269266719309996,
-            0.295524224714753,
-            0.295524224714753,
-            0.269266719309996,
-            0.219086362515982,
-            0.149451349150581,
-            0.066671344308688,
+            0.017614007139152,
+            0.040601429800387,
+            0.062672048334109,
+            0.083276741576704,
+            0.101930119817240,
+            0.118194531961518,
+            0.131688638449177,
+            0.142096109318382,
+            0.149172986472604,
+            0.152753387130726,
+            0.152753387130726,
+            0.149172986472604,
+            0.142096109318382,
+            0.131688638449177,
+            0.118194531961518,
+            0.101930119817240,
+            0.083276741576704,
+            0.062672048334109,
+            0.040601429800387,
+            0.017614007139152,
         ];
         let half = (upper - lower) / 2.0;
         let mid = (upper + lower) / 2.0;
         let mut integral = 0.0;
         for (&node, &w) in nodes.iter().zip(weights.iter()) {
             let u = mid + half * node;
-            let eu2 = (u * u).min(500.0).exp();
+            let eu2 = (u * u).min(50.0).exp();
             let erf_u = Self::erf_approx(u);
             integral += w * eu2 * (1.0 + erf_u);
         }
         integral *= half;
-        let rate = 1.0 / (self.tau_rp + self.tau_m * std::f64::consts::PI.sqrt() * integral);
-        rate.max(0.0) * 1000.0
+        let t_isi = self.tau_rp + self.tau_m * std::f64::consts::PI.sqrt() * integral;
+        1000.0 / t_isi.max(0.01)
     }
     fn erf_approx(x: f64) -> f64 {
         // Abramowitz-Stegun approximation
@@ -580,11 +596,13 @@ impl AmariNeuralField {
         let a_width = 1.0;
         let b_inh = 0.75;
         let b_width = 2.0;
+        // Exponential Mexican hat kernel, rolled to match Python's np.roll
         for i in 0..n {
-            let d = (i as f64 - n as f64 / 2.0) * dx;
-            w[i] = a_exc * (-d * d / (2.0 * a_width * a_width)).exp()
-                - b_inh * (-d * d / (2.0 * b_width * b_width)).exp();
+            let x = ((i as isize - n as isize / 2).unsigned_abs() as f64) * dx;
+            w[i] = a_exc * (-a_width * x).exp() - b_inh * (-b_width * x).exp();
         }
+        // Roll by -n/2 to match Python's np.roll(k, -n//2)
+        w.rotate_left(n / 2);
         Self {
             u: vec![0.0; n],
             n,
@@ -600,23 +618,24 @@ impl AmariNeuralField {
     }
     pub fn step(&mut self, input: &[f64]) -> f64 {
         let n = self.n;
-        let mut du = vec![0.0; n];
+        // f(u) = max(0, u)
+        let f_u: Vec<f64> = self.u.iter().map(|&v| v.max(0.0)).collect();
+        // Circular convolution (matching Python FFT-based conv)
+        let mut conv = vec![0.0; n];
         for i in 0..n {
-            let s_i = if self.u[i] > 0.0 { self.u[i] } else { 0.0 };
-            let mut conv = 0.0;
+            let mut s = 0.0;
             for j in 0..n {
-                let s_j = if self.u[j] > 0.0 { self.u[j] } else { 0.0 };
-                let idx = ((i as i64 - j as i64).unsigned_abs() as usize).min(n - 1);
-                conv += self.w[idx] * s_j * self.dx;
+                let idx = (i + n - j) % n;
+                s += self.w[idx] * f_u[j];
             }
-            let inp = if i < input.len() { input[i] } else { 0.0 };
-            du[i] = (-self.u[i] + conv + inp) / self.tau * self.dt;
-            let _ = s_i; // used for convolution input
+            conv[i] = s * self.dx;
         }
         for i in 0..n {
-            self.u[i] += du[i];
+            let inp = if i < input.len() { input[i] } else { 0.0 };
+            self.u[i] += (-self.u[i] + conv[i] + inp) / self.tau * self.dt;
         }
-        self.u.iter().sum::<f64>() / n as f64
+        // Return mean of ReLU activations
+        self.u.iter().map(|&v| v.max(0.0)).sum::<f64>() / n as f64
     }
     pub fn reset(&mut self) {
         self.u.fill(0.0);
