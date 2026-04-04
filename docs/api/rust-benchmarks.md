@@ -143,6 +143,7 @@ cargo bench --bench analysis_bench -- --quick
 | Model | Steps | Median | Per step | Notes |
 |-------|-------|--------|----------|-------|
 | Aihara map | 100k | 1.97 ms | **19.7 ns** | Chaotic sigmoid map |
+| Kilinc-Bhatt map | 100k | 8.19 ms | **81.9 ns** | Adaptive threshold map |
 
 ---
 
