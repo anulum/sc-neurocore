@@ -104,6 +104,7 @@ cargo bench --bench analysis_bench -- --quick
 | Model | 1k steps | Per step | Sub-steps | Notes |
 |-------|----------|----------|-----------|-------|
 | Alpha motor | 34.2 ms | **34.2 µs** | 50 | WB + PIC + AHP + Ca2+ |
+| Gamma motor | 1.21 ms (10k) | **121 ns** | 1 | LIF + adaptation |
 
 > Alpha motor is the most expensive per-step model due to WB gating (50 sub-steps),
 > PIC evaluation, Ca2+ dynamics, and AHP computation at each sub-step.

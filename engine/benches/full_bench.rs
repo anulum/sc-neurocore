@@ -409,6 +409,13 @@ fn bench_all(c: &mut Criterion) {
         })
     });
 
+    c.bench_function("gamma_motor_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = sc_neurocore_engine::neurons::GammaMotorNeuron::new();
+            for _ in 0..10_000 { black_box(n.step(20.0)); }
+        })
+    });
+
     // -- Sensory Neurons (Phase 3B) --
     c.bench_function("ihc_10k_steps", |b| {
         b.iter(|| {
