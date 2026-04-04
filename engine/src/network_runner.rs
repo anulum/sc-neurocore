@@ -173,6 +173,7 @@ pub enum NeuronVariant {
     // channels.rs (step(f64)->i32)
     PersistentNa(PersistentNaNeuron),
     Ih(IhNeuron),
+    TTypeCa(TTypeCaNeuron),
 
     // Not wired (multi-arg / i32 input / f64 return / no reset):
     // Alpha (2 args), COBALIF (3 args), TsodyksMarkram (bool arg),
@@ -236,7 +237,7 @@ macro_rules! all_variants {
             AlphaMotor, GammaMotor, UpperMotor, Renshaw, MotorUnitCell,
             RetinalGanglion, Merkel, Pacinian, NociceptorCell, OlfactoryReceptor,
             Granule, Golgi, Stellate, Lugaro, UnipolarBrush, DCN,
-            PersistentNa, Ih,
+            PersistentNa, Ih, TTypeCa,
         )
     };
 }
@@ -377,6 +378,7 @@ impl NeuronVariant {
             // channels
             NeuronVariant::PersistentNa(n) => n.v,
             NeuronVariant::Ih(n) => n.v,
+            NeuronVariant::TTypeCa(n) => n.v,
         }
     }
 }
@@ -895,6 +897,7 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         // channels
         "PersistentNa" | "PersistentNaNeuron" => Ok(NeuronVariant::PersistentNa(PersistentNaNeuron::new())),
         "Ih" | "IhNeuron" => Ok(NeuronVariant::Ih(IhNeuron::new())),
+        "TTypeCa" | "TTypeCaNeuron" => Ok(NeuronVariant::TTypeCa(TTypeCaNeuron::new())),
         _ => Err(format!("Unsupported model: '{name}'")),
     }
 }
@@ -998,6 +1001,7 @@ pub fn supported_models() -> Vec<&'static str> {
         // channels
         "PersistentNa",
         "Ih",
+        "TTypeCa",
     ]
 }
 
