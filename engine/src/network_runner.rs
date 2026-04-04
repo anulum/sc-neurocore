@@ -175,6 +175,7 @@ pub enum NeuronVariant {
     Ih(IhNeuron),
     TTypeCa(TTypeCaNeuron),
     ATypeK(ATypeKNeuron),
+    BK(BKNeuron),
 
     // Not wired (multi-arg / i32 input / f64 return / no reset):
     // Alpha (2 args), COBALIF (3 args), TsodyksMarkram (bool arg),
@@ -238,7 +239,7 @@ macro_rules! all_variants {
             AlphaMotor, GammaMotor, UpperMotor, Renshaw, MotorUnitCell,
             RetinalGanglion, Merkel, Pacinian, NociceptorCell, OlfactoryReceptor,
             Granule, Golgi, Stellate, Lugaro, UnipolarBrush, DCN,
-            PersistentNa, Ih, TTypeCa, ATypeK,
+            PersistentNa, Ih, TTypeCa, ATypeK, BK,
         )
     };
 }
@@ -381,6 +382,7 @@ impl NeuronVariant {
             NeuronVariant::Ih(n) => n.v,
             NeuronVariant::TTypeCa(n) => n.v,
             NeuronVariant::ATypeK(n) => n.v,
+            NeuronVariant::BK(n) => n.v,
         }
     }
 }
@@ -901,6 +903,7 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         "Ih" | "IhNeuron" => Ok(NeuronVariant::Ih(IhNeuron::new())),
         "TTypeCa" | "TTypeCaNeuron" => Ok(NeuronVariant::TTypeCa(TTypeCaNeuron::new())),
         "ATypeK" | "ATypeKNeuron" => Ok(NeuronVariant::ATypeK(ATypeKNeuron::new())),
+        "BK" | "BKNeuron" => Ok(NeuronVariant::BK(BKNeuron::new())),
         _ => Err(format!("Unsupported model: '{name}'")),
     }
 }
@@ -1006,6 +1009,7 @@ pub fn supported_models() -> Vec<&'static str> {
         "Ih",
         "TTypeCa",
         "ATypeK",
+        "BK",
     ]
 }
 

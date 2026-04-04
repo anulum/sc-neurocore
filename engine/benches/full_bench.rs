@@ -25,7 +25,7 @@ use sc_neurocore_engine::neurons::{
     PacinianCorpuscle, Nociceptor, OlfactoryReceptorNeuron,
     AlphaMotorNeuron,
     GranuleCell, GolgiCell, StellateCell, LugaroCell, UnipolarBrushCell, DCNNeuron,
-    PersistentNaNeuron, IhNeuron, TTypeCaNeuron, ATypeKNeuron,
+    PersistentNaNeuron, IhNeuron, TTypeCaNeuron, ATypeKNeuron, BKNeuron,
 };
 use sc_neurocore_engine::scpn::KuramotoSolver;
 use sc_neurocore_engine::simd::{fused_and_popcount_dispatch, pack_dispatch, popcount_dispatch};
@@ -557,6 +557,13 @@ fn bench_all(c: &mut Criterion) {
     c.bench_function("atype_k_1k_steps", |b| {
         b.iter(|| {
             let mut n = ATypeKNeuron::new();
+            for _ in 0..1_000 { black_box(n.step(3.0)); }
+        })
+    });
+
+    c.bench_function("bk_1k_steps", |b| {
+        b.iter(|| {
+            let mut n = BKNeuron::new();
             for _ in 0..1_000 { black_box(n.step(3.0)); }
         })
     });
