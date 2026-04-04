@@ -146,6 +146,12 @@ cargo bench --bench analysis_bench -- --quick
 | Kilinc-Bhatt map | 100k | 8.19 ms | **81.9 ns** | Adaptive threshold map |
 | Ermentrout-Kopell | 100k | 5.45 ms | **54.5 ns** | Canonical Type I (theta) |
 
+### Population / Mean-Field (`neurons/population.rs`) — Phase 3G
+
+| Model | Steps | Median | Per step | Notes |
+|-------|-------|--------|----------|-------|
+| Montbrio-Pazo-Roxin | 100k | 3.92 ms | **39.2 ns** | Exact mean-field of QIF |
+
 ---
 
 ## Analysis Modules (`analysis_bench`)

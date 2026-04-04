@@ -27,6 +27,7 @@ use sc_neurocore_engine::neurons::{
     GranuleCell, GolgiCell, StellateCell, LugaroCell, UnipolarBrushCell, DCNNeuron,
     PersistentNaNeuron, IhNeuron, TTypeCaNeuron, ATypeKNeuron, BKNeuron, SKNeuron, NMDANeuron,
     AiharaMapNeuron, KilincBhattMapNeuron, ErmentroutKopellMapNeuron,
+    MontbrioMeanField,
 };
 use sc_neurocore_engine::scpn::KuramotoSolver;
 use sc_neurocore_engine::simd::{fused_and_popcount_dispatch, pack_dispatch, popcount_dispatch};
@@ -602,6 +603,14 @@ fn bench_all(c: &mut Criterion) {
         b.iter(|| {
             let mut n = ErmentroutKopellMapNeuron::new();
             for _ in 0..100_000 { black_box(n.step(0.5)); }
+        })
+    });
+
+    // -- Population / Mean-Field (Phase 3G) --
+    c.bench_function("montbrio_100k_steps", |b| {
+        b.iter(|| {
+            let mut n = MontbrioMeanField::new();
+            for _ in 0..100_000 { black_box(n.step(5.0)); }
         })
     });
 }
