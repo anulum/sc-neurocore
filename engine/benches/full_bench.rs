@@ -23,6 +23,7 @@ use sc_neurocore_engine::neurons::{
     PVFastSpikingNeuron, SSTNeuron, VIPNeuron,
     InnerHairCell, RodPhotoreceptor, RetinalGanglionCell, MerkelCell,
     PacinianCorpuscle, Nociceptor, OlfactoryReceptorNeuron,
+    AlphaMotorNeuron,
 };
 use sc_neurocore_engine::scpn::KuramotoSolver;
 use sc_neurocore_engine::simd::{fused_and_popcount_dispatch, pack_dispatch, popcount_dispatch};
@@ -396,6 +397,14 @@ fn bench_all(c: &mut Criterion) {
     c.bench_function("martinotti_1k_steps", |b| {
         b.iter(|| {
             let mut n = MartinottiNeuron::new();
+            for _ in 0..1000 { black_box(n.step(4.0)); }
+        })
+    });
+
+    // -- Motor Neurons (Phase 3C) --
+    c.bench_function("alpha_motor_1k_steps", |b| {
+        b.iter(|| {
+            let mut n = AlphaMotorNeuron::new();
             for _ in 0..1000 { black_box(n.step(4.0)); }
         })
     });

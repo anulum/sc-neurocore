@@ -1414,6 +1414,12 @@ py_neuron_default!("CerebellarBasketNeuron", PyCerebellarBasketNeuron, neurons::
 py_neuron_default!("MartinottiNeuron", PyMartinottiNeuron, neurons::MartinottiNeuron, state v, state m, state h, state n, state p, state s);
 
 // ═══════════════════════════════════════════════════════════════════
+// motor.rs models
+// ═══════════════════════════════════════════════════════════════════
+
+py_neuron_default!("AlphaMotorNeuron", PyAlphaMotorNeuron, neurons::AlphaMotorNeuron, state v, state h, state n, state m_pic, state ca);
+
+// ═══════════════════════════════════════════════════════════════════
 // sensory.rs models (10 sensory neuron types)
 // ═══════════════════════════════════════════════════════════════════
 
@@ -1692,6 +1698,8 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyChandelierNeuron>()?;
     m.add_class::<PyCerebellarBasketNeuron>()?;
     m.add_class::<PyMartinottiNeuron>()?;
+    // motor
+    m.add_class::<PyAlphaMotorNeuron>()?;
     // sensory
     m.add_class::<PyInnerHairCell>()?;
     m.add_class::<PyOuterHairCell>()?;

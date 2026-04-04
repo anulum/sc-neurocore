@@ -99,6 +99,15 @@ cargo bench --bench analysis_bench -- --quick
 > Sensory models use simple Euler integration (no sub-stepping).
 > Measured 2026-04-04 on i5-11600K @ 3.90 GHz.
 
+### Motor Neurons (`neurons/motor.rs`) — Phase 3C
+
+| Model | 1k steps | Per step | Sub-steps | Notes |
+|-------|----------|----------|-----------|-------|
+| Alpha motor | 34.2 ms | **34.2 µs** | 50 | WB + PIC + AHP + Ca2+ |
+
+> Alpha motor is the most expensive per-step model due to WB gating (50 sub-steps),
+> PIC evaluation, Ca2+ dynamics, and AHP computation at each sub-step.
+
 ---
 
 ## Analysis Modules (`analysis_bench`)
