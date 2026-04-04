@@ -1414,6 +1414,50 @@ py_neuron_default!("CerebellarBasketNeuron", PyCerebellarBasketNeuron, neurons::
 py_neuron_default!("MartinottiNeuron", PyMartinottiNeuron, neurons::MartinottiNeuron, state v, state m, state h, state n, state p, state s);
 
 // ═══════════════════════════════════════════════════════════════════
+// sensory.rs models (10 sensory neuron types)
+// ═══════════════════════════════════════════════════════════════════
+
+// Graded sensory neurons (step returns f64)
+macro_rules! py_sensory_graded {
+    ($pylit:literal, $pyname:ident, $rust:ty $(, state $sname:ident)*) => {
+        #[pyclass(name = $pylit, module = "sc_neurocore_engine.sc_neurocore_engine")]
+        #[derive(Clone)]
+        pub struct $pyname { inner: $rust }
+
+        #[pymethods]
+        impl $pyname {
+            #[new]
+            fn new() -> Self { Self { inner: <$rust>::default() } }
+
+            fn step(&mut self, input: f64) -> f64 { self.inner.step(input) }
+
+            fn reset(&mut self) { self.inner.reset(); }
+
+            fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+                let d = PyDict::new(py);
+                $(d.set_item(stringify!($sname), self.inner.$sname)?;)*
+                Ok(d.into_any().unbind())
+            }
+        }
+    };
+}
+
+py_sensory_graded!("InnerHairCell", PyInnerHairCell, neurons::InnerHairCell, state v, state ca);
+py_sensory_graded!("OuterHairCell", PyOuterHairCell, neurons::OuterHairCell, state v, state motility);
+py_sensory_graded!("RodPhotoreceptor", PyRodPhotoreceptor, neurons::RodPhotoreceptor, state v, state cgmp);
+py_sensory_graded!("ConePhotoreceptor", PyConePhotoreceptor, neurons::ConePhotoreceptor, state v, state cgmp);
+py_sensory_graded!("TasteReceptorCell", PyTasteReceptorCell, neurons::TasteReceptorCell, state v, state ca, state ip3, state atp_release);
+
+// Spiking sensory neurons (step returns i32)
+py_neuron_default!("MerkelCell", PyMerkelCell, neurons::MerkelCell, state v, state adapt);
+py_neuron_default!("Nociceptor", PyNociceptor, neurons::Nociceptor, state v, state sensitisation);
+py_neuron_default!("OlfactoryReceptorNeuron", PyOlfactoryReceptorNeuron, neurons::OlfactoryReceptorNeuron, state v, state camp, state adapt);
+
+// RetinalGanglionCell and PacinianCorpuscle: spiking but non-default constructors
+py_neuron_default!("RetinalGanglionCell", PyRetinalGanglionCell, neurons::RetinalGanglionCell, state v, state refrac_count);
+py_neuron_default!("PacinianCorpuscle", PyPacinianCorpuscle, neurons::PacinianCorpuscle, state v, state prev_pressure, state adapt);
+
+// ═══════════════════════════════════════════════════════════════════
 // neuron.rs models (legacy module — AdEx, ExpIF, Lapicque)
 // ═══════════════════════════════════════════════════════════════════
 
@@ -1648,6 +1692,17 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyChandelierNeuron>()?;
     m.add_class::<PyCerebellarBasketNeuron>()?;
     m.add_class::<PyMartinottiNeuron>()?;
+    // sensory
+    m.add_class::<PyInnerHairCell>()?;
+    m.add_class::<PyOuterHairCell>()?;
+    m.add_class::<PyRodPhotoreceptor>()?;
+    m.add_class::<PyConePhotoreceptor>()?;
+    m.add_class::<PyRetinalGanglionCell>()?;
+    m.add_class::<PyMerkelCell>()?;
+    m.add_class::<PyPacinianCorpuscle>()?;
+    m.add_class::<PyNociceptor>()?;
+    m.add_class::<PyOlfactoryReceptorNeuron>()?;
+    m.add_class::<PyTasteReceptorCell>()?;
     Ok(())
 }
 
