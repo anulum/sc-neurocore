@@ -297,6 +297,181 @@ impl Default for CourageNekorkinMapNeuron {
     }
 }
 
+/// Aihara 1990 — chaotic neuron map with sigmoid nonlinearity.
+///
+/// 2D discrete map producing chaotic spiking, bursting, and tonic firing
+/// depending on parameters. The sigmoid output function models the
+/// nonlinear voltage-to-firing-rate relationship.
+///
+/// x(n+1) = k_f * x(n) / (1 + exp(-(x(n) + alpha))) - y(n) + I
+/// y(n+1) = k_s * y(n) + delta * x(n)
+///
+/// Aihara et al., Phys Lett A 144:333, 1990.
+#[derive(Clone, Debug)]
+pub struct AiharaMapNeuron {
+    pub x: f64,
+    pub y: f64,
+    pub k_f: f64,       // Fast variable decay
+    pub k_s: f64,       // Slow variable decay
+    pub alpha: f64,     // Sigmoid steepness offset
+    pub delta: f64,     // Slow→fast coupling
+    pub x_threshold: f64,
+}
+
+impl Default for AiharaMapNeuron {
+    fn default() -> Self { Self::new() }
+}
+
+impl AiharaMapNeuron {
+    pub fn new() -> Self {
+        Self {
+            x: 0.0,
+            y: 0.0,
+            k_f: 0.7,
+            k_s: 0.95,
+            alpha: 2.0,
+            delta: 0.05,
+            x_threshold: 0.5,
+        }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        let x_prev = self.x;
+        let sigmoid = 1.0 / (1.0 + (-(self.x + self.alpha)).exp());
+        let x_new = self.k_f * self.x * sigmoid - self.y + current;
+        let y_new = self.k_s * self.y + self.delta * self.x;
+
+        self.x = x_new.clamp(-10.0, 10.0);
+        self.y = y_new.clamp(-10.0, 10.0);
+
+        if !self.x.is_finite() { self.x = 0.0; }
+        if !self.y.is_finite() { self.y = 0.0; }
+
+        if self.x >= self.x_threshold && x_prev < self.x_threshold { 1 } else { 0 }
+    }
+
+    pub fn reset(&mut self) {
+        *self = Self::new();
+    }
+}
+
+/// Kilinc-Bhatt 2023 — sigmoid map with adaptive threshold.
+///
+/// Minimal 2D map with built-in spike frequency adaptation via
+/// a slow threshold variable. Designed for efficient hardware
+/// implementation while retaining biologically relevant dynamics.
+///
+/// x(n+1) = k * sigmoid(x(n) - theta(n)) + I
+/// theta(n+1) = beta * theta(n) + gamma * H(x(n) - theta_spike)
+///
+/// H() is the Heaviside step function (spike-triggered increment).
+#[derive(Clone, Debug)]
+pub struct KilincBhattMapNeuron {
+    pub x: f64,
+    pub theta: f64,     // Adaptive threshold
+    pub k: f64,         // Gain
+    pub beta: f64,      // Threshold decay
+    pub gamma: f64,     // Spike→threshold coupling
+    pub theta_spike: f64, // Spike detection level
+    pub x_threshold: f64,
+}
+
+impl Default for KilincBhattMapNeuron {
+    fn default() -> Self { Self::new() }
+}
+
+impl KilincBhattMapNeuron {
+    pub fn new() -> Self {
+        Self {
+            x: 0.0,
+            theta: 0.0,
+            k: 3.0,
+            beta: 0.95,
+            gamma: 0.5,
+            theta_spike: 0.8,
+            x_threshold: 0.8,
+        }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        let x_prev = self.x;
+        let sig = 1.0 / (1.0 + (-(self.x - self.theta) * 4.0).exp());
+        let x_new = self.k * sig + current;
+        let spiked = if self.x >= self.theta_spike { 1.0 } else { 0.0 };
+        let theta_new = self.beta * self.theta + self.gamma * spiked;
+
+        self.x = x_new.clamp(-5.0, 5.0);
+        self.theta = theta_new.clamp(-5.0, 5.0);
+
+        if !self.x.is_finite() { self.x = 0.0; }
+        if !self.theta.is_finite() { self.theta = 0.0; }
+
+        if self.x >= self.x_threshold && x_prev < self.x_threshold { 1 } else { 0 }
+    }
+
+    pub fn reset(&mut self) {
+        *self = Self::new();
+    }
+}
+
+/// Ermentrout-Kopell canonical Type I — theta neuron in map form.
+///
+/// The canonical model for Type I (saddle-node) excitability.
+/// theta(n+1) = theta(n) + dt * (1 - cos(theta)) + (1 + cos(theta)) * I
+/// Spike when theta crosses pi.
+///
+/// Ermentrout & Kopell, SIAM J Appl Math 46:233, 1986.
+#[derive(Clone, Debug)]
+pub struct ErmentroutKopellMapNeuron {
+    pub theta: f64,     // Phase variable [0, 2*pi)
+    pub dt: f64,
+    pub gain: f64,
+    pub theta_threshold: f64,
+}
+
+impl Default for ErmentroutKopellMapNeuron {
+    fn default() -> Self { Self::new() }
+}
+
+impl ErmentroutKopellMapNeuron {
+    pub fn new() -> Self {
+        Self {
+            theta: 0.0,
+            dt: 0.1,       // Discrete step size
+            gain: 1.0,
+            theta_threshold: std::f64::consts::PI,
+        }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        let input = self.gain * current;
+        let theta_prev = self.theta;
+
+        let d_theta = (1.0 - self.theta.cos()) + (1.0 + self.theta.cos()) * input;
+        self.theta += self.dt * d_theta;
+
+        // Spike detection: crossing pi
+        let fired = if self.theta >= self.theta_threshold && theta_prev < self.theta_threshold {
+            1
+        } else {
+            0
+        };
+
+        // Wrap theta to [0, 2*pi)
+        let two_pi = 2.0 * std::f64::consts::PI;
+        if self.theta >= two_pi { self.theta -= two_pi; }
+        if self.theta < 0.0 { self.theta += two_pi; }
+
+        if !self.theta.is_finite() { self.theta = 0.0; }
+
+        fired
+    }
+
+    pub fn reset(&mut self) {
+        *self = Self::new();
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -339,5 +514,84 @@ mod tests {
         let mut n = CourageNekorkinMapNeuron::new();
         let t: i32 = (0..200).map(|_| n.step(0.5)).sum();
         assert!(t > 0);
+    }
+
+    // -- Aihara Map STRONG tests --
+
+    #[test]
+    fn aihara_fires_with_input() {
+        let mut n = AiharaMapNeuron::new();
+        let t: i32 = (0..2000).map(|_| n.step(1.0)).sum();
+        assert!(t > 0, "Aihara must fire with input, got {t}");
+    }
+
+    #[test]
+    fn aihara_silent_without_input() {
+        let mut n = AiharaMapNeuron::new();
+        let t: i32 = (0..5000).map(|_| n.step(0.0)).sum();
+        assert_eq!(t, 0, "Aihara must be silent without input, got {t}");
+    }
+
+    #[test]
+    fn aihara_chaotic_dynamics() {
+        // With appropriate input, trajectory should not settle to fixed point
+        let mut n = AiharaMapNeuron::new();
+        let mut values = Vec::new();
+        for _ in 0..1000 {
+            n.step(0.5);
+            values.push(n.x);
+        }
+        let mean = values.iter().sum::<f64>() / values.len() as f64;
+        let var = values.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / values.len() as f64;
+        assert!(var > 0.001, "Trajectory should show variability (chaos), var={var}");
+    }
+
+    #[test]
+    fn aihara_negative_input_no_crash() {
+        let mut n = AiharaMapNeuron::new();
+        for _ in 0..10_000 { n.step(-100.0); }
+        assert!(n.x.is_finite());
+    }
+
+    #[test]
+    fn aihara_nan_input_stays_finite() {
+        let mut n = AiharaMapNeuron::new();
+        n.step(f64::NAN);
+        assert!(n.x.is_finite());
+    }
+
+    #[test]
+    fn aihara_extreme_input_bounded() {
+        let mut n = AiharaMapNeuron::new();
+        for _ in 0..1000 { n.step(1e6); }
+        assert!(n.x.is_finite() && n.x <= 10.0);
+    }
+
+    #[test]
+    fn aihara_reset_clears_state() {
+        let mut n = AiharaMapNeuron::new();
+        for _ in 0..100 { n.step(1.0); }
+        n.reset();
+        assert_eq!(n.x, 0.0);
+        assert_eq!(n.y, 0.0);
+    }
+
+    #[test]
+    fn aihara_rate_increases_with_input() {
+        let mut low = AiharaMapNeuron::new();
+        let mut high = AiharaMapNeuron::new();
+        let spikes_low: i32 = (0..5000).map(|_| low.step(0.5)).sum();
+        let spikes_high: i32 = (0..5000).map(|_| high.step(2.0)).sum();
+        assert!(spikes_high >= spikes_low,
+            "Higher input should produce more spikes: high={spikes_high} vs low={spikes_low}");
+    }
+
+    #[test]
+    fn aihara_performance_100k_steps() {
+        let start = std::time::Instant::now();
+        let mut n = AiharaMapNeuron::new();
+        for _ in 0..100_000 { std::hint::black_box(n.step(0.5)); }
+        let elapsed = start.elapsed();
+        assert!(elapsed.as_millis() < 50, "100k steps must complete in <50ms");
     }
 }

@@ -26,6 +26,7 @@ use sc_neurocore_engine::neurons::{
     AlphaMotorNeuron,
     GranuleCell, GolgiCell, StellateCell, LugaroCell, UnipolarBrushCell, DCNNeuron,
     PersistentNaNeuron, IhNeuron, TTypeCaNeuron, ATypeKNeuron, BKNeuron, SKNeuron, NMDANeuron,
+    AiharaMapNeuron,
 };
 use sc_neurocore_engine::scpn::KuramotoSolver;
 use sc_neurocore_engine::simd::{fused_and_popcount_dispatch, pack_dispatch, popcount_dispatch};
@@ -579,6 +580,14 @@ fn bench_all(c: &mut Criterion) {
         b.iter(|| {
             let mut n = NMDANeuron::new();
             for _ in 0..1_000 { black_box(n.step(3.0)); }
+        })
+    });
+
+    // -- Map Neurons (Phase 3F) --
+    c.bench_function("aihara_100k_steps", |b| {
+        b.iter(|| {
+            let mut n = AiharaMapNeuron::new();
+            for _ in 0..100_000 { black_box(n.step(0.5)); }
         })
     });
 }

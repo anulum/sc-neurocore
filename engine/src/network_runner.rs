@@ -96,6 +96,7 @@ pub enum NeuronVariant {
     MedvedevMap(MedvedevMapNeuron),
     CazellesMap(CazellesMapNeuron),
     CourageNekorkinMap(CourageNekorkinMapNeuron),
+    AiharaMap(AiharaMapNeuron),
 
     // hardware.rs (f64 input subset)
     BrainScaleSAdEx(BrainScaleSAdExNeuron),
@@ -226,7 +227,7 @@ macro_rules! all_variants {
             NonResettingLIF, AdaptiveThresholdIF, SigmaDelta, EnergyLIF,
             ClosedFormContinuous,
             ChialvoMap, RulkovMap, IbarzTanakaMap, MedvedevMap,
-            CazellesMap, CourageNekorkinMap,
+            CazellesMap, CourageNekorkinMap, AiharaMap,
             BrainScaleSAdEx, SpiNNakerLIF, NeuroGrid, DPI,
             MarderSTG, RallCable, BoothRinzel, Dendrify,
             LiquidTimeConstant, ParallelSpiking, FractionalLIF,
@@ -321,6 +322,7 @@ impl NeuronVariant {
             NeuronVariant::MedvedevMap(n) => n.x,
             NeuronVariant::CazellesMap(n) => n.x,
             NeuronVariant::CourageNekorkinMap(n) => n.x,
+            NeuronVariant::AiharaMap(n) => n.x,
             NeuronVariant::BrainScaleSAdEx(n) => n.v,
             NeuronVariant::SpiNNakerLIF(n) => n.v,
             NeuronVariant::NeuroGrid(n) => n.v_s,
@@ -780,6 +782,7 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         "CourageNekorkinMap" | "CourageNekorkinMapNeuron" => Ok(NeuronVariant::CourageNekorkinMap(
             CourageNekorkinMapNeuron::new(),
         )),
+        "AiharaMap" | "AiharaMapNeuron" => Ok(NeuronVariant::AiharaMap(AiharaMapNeuron::new())),
         "BrainScaleSAdEx" | "BrainScaleSAdExNeuron" => {
             Ok(NeuronVariant::BrainScaleSAdEx(BrainScaleSAdExNeuron::new()))
         }
@@ -968,6 +971,7 @@ pub fn supported_models() -> Vec<&'static str> {
         "MedvedevMap",
         "CazellesMap",
         "CourageNekorkinMap",
+        "AiharaMap",
         "BrainScaleSAdEx",
         "SpiNNakerLIF",
         "NeuroGrid",
