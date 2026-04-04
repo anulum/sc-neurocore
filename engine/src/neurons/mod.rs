@@ -8,6 +8,7 @@
 pub mod ai_optimized;
 pub mod biophysical;
 pub mod hardware;
+pub mod interneurons;
 pub mod maps;
 pub mod multi_compartment;
 pub mod rate;
@@ -18,6 +19,7 @@ pub mod trivial;
 pub use ai_optimized::*;
 pub use biophysical::*;
 pub use hardware::*;
+pub use interneurons::*;
 pub use maps::*;
 pub use multi_compartment::*;
 pub use rate::*;

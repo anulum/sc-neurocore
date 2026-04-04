@@ -18,6 +18,10 @@ use sc_neurocore_engine::encoder::BitstreamEncoder;
 use sc_neurocore_engine::graph::StochasticGraphLayer;
 use sc_neurocore_engine::layer::DenseLayer;
 use sc_neurocore_engine::neuron::{AdExNeuron, ExpIfNeuron, FixedPointLif, LapicqueNeuron};
+use sc_neurocore_engine::neurons::{
+    CerebellarBasketNeuron, ChandelierNeuron, MartinottiNeuron,
+    PVFastSpikingNeuron, SSTNeuron, VIPNeuron,
+};
 use sc_neurocore_engine::scpn::KuramotoSolver;
 use sc_neurocore_engine::simd::{fused_and_popcount_dispatch, pack_dispatch, popcount_dispatch};
 use std::hint::black_box;
@@ -348,6 +352,49 @@ fn bench_all(c: &mut Criterion) {
             for _ in 0..10_000 {
                 black_box(n.step(5.0));
             }
+        })
+    });
+
+    // -- Interneurons (Phase 3A) --
+    c.bench_function("pv_fs_1k_steps", |b| {
+        b.iter(|| {
+            let mut n = PVFastSpikingNeuron::new();
+            for _ in 0..1000 { black_box(n.step(3.0)); }
+        })
+    });
+
+    c.bench_function("sst_1k_steps", |b| {
+        b.iter(|| {
+            let mut n = SSTNeuron::new();
+            for _ in 0..1000 { black_box(n.step(5.0)); }
+        })
+    });
+
+    c.bench_function("vip_1k_steps", |b| {
+        b.iter(|| {
+            let mut n = VIPNeuron::new();
+            for _ in 0..1000 { black_box(n.step(3.0)); }
+        })
+    });
+
+    c.bench_function("chandelier_1k_steps", |b| {
+        b.iter(|| {
+            let mut n = ChandelierNeuron::new();
+            for _ in 0..1000 { black_box(n.step(3.0)); }
+        })
+    });
+
+    c.bench_function("basket_cerebellar_1k_steps", |b| {
+        b.iter(|| {
+            let mut n = CerebellarBasketNeuron::new();
+            for _ in 0..1000 { black_box(n.step(3.0)); }
+        })
+    });
+
+    c.bench_function("martinotti_1k_steps", |b| {
+        b.iter(|| {
+            let mut n = MartinottiNeuron::new();
+            for _ in 0..1000 { black_box(n.step(4.0)); }
         })
     });
 }
