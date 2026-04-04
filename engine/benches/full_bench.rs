@@ -17,7 +17,7 @@ use sc_neurocore_engine::bitstream::{
 use sc_neurocore_engine::encoder::BitstreamEncoder;
 use sc_neurocore_engine::graph::StochasticGraphLayer;
 use sc_neurocore_engine::layer::DenseLayer;
-use sc_neurocore_engine::neuron::FixedPointLif;
+use sc_neurocore_engine::neuron::{AdExNeuron, ExpIfNeuron, FixedPointLif, LapicqueNeuron};
 use sc_neurocore_engine::scpn::KuramotoSolver;
 use sc_neurocore_engine::simd::{fused_and_popcount_dispatch, pack_dispatch, popcount_dispatch};
 use std::hint::black_box;
@@ -295,6 +295,61 @@ fn bench_all(c: &mut Criterion) {
             b.iter(|| black_box(gnn.forward(black_box(&features)).unwrap()))
         });
     }
+
+    // -- AdEx, ExpIF, Lapicque neurons --
+    c.bench_function("adex_1k_steps", |b| {
+        b.iter(|| {
+            let mut n = AdExNeuron::new();
+            for _ in 0..1000 {
+                black_box(n.step(500.0));
+            }
+        })
+    });
+
+    c.bench_function("adex_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = AdExNeuron::new();
+            for _ in 0..10_000 {
+                black_box(n.step(500.0));
+            }
+        })
+    });
+
+    c.bench_function("expif_1k_steps", |b| {
+        b.iter(|| {
+            let mut n = ExpIfNeuron::new();
+            for _ in 0..1000 {
+                black_box(n.step(500.0));
+            }
+        })
+    });
+
+    c.bench_function("expif_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = ExpIfNeuron::new();
+            for _ in 0..10_000 {
+                black_box(n.step(500.0));
+            }
+        })
+    });
+
+    c.bench_function("lapicque_1k_steps", |b| {
+        b.iter(|| {
+            let mut n = LapicqueNeuron::new(20.0, 1.0, 1.0, 1.0);
+            for _ in 0..1000 {
+                black_box(n.step(5.0));
+            }
+        })
+    });
+
+    c.bench_function("lapicque_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = LapicqueNeuron::new(20.0, 1.0, 1.0, 1.0);
+            for _ in 0..10_000 {
+                black_box(n.step(5.0));
+            }
+        })
+    });
 }
 
 criterion_group!(benches, bench_all);

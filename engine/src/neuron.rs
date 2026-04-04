@@ -341,6 +341,7 @@ impl DendriticNeuron {
 }
 
 /// Adaptive Exponential IF neuron. Brette & Gerstner 2005.
+/// PyO3 wrapper: `pyo3_neurons::PyAdExNeuron`
 #[derive(Clone, Debug)]
 pub struct AdExNeuron {
     pub v: f64,
@@ -829,5 +830,192 @@ mod tests {
         }
         n.reset();
         assert!((n.v).abs() < 1e-12);
+    }
+
+    // ── AdEx STRONG tests ────────────────────────────────────────
+
+    #[test]
+    fn adex_no_fire_without_input() {
+        let mut n = AdExNeuron::new();
+        let total: i32 = (0..1000).map(|_| n.step(0.0)).sum();
+        assert_eq!(total, 0);
+    }
+
+    #[test]
+    fn adex_negative_current_no_fire() {
+        let mut n = AdExNeuron::new();
+        let total: i32 = (0..500).map(|_| n.step(-100.0)).sum();
+        assert_eq!(total, 0, "negative current must not cause spikes");
+    }
+
+    #[test]
+    fn adex_reset_roundtrip() {
+        let mut n = AdExNeuron::new();
+        for _ in 0..200 {
+            n.step(500.0);
+        }
+        assert!(n.w > 0.0, "w must grow during spiking");
+        n.reset();
+        assert_eq!(n.v, n.v_rest);
+        assert_eq!(n.w, 0.0);
+        // Post-reset: should behave identically to fresh
+        let mut fresh = AdExNeuron::new();
+        let r1: i32 = (0..100).map(|_| n.step(500.0)).sum();
+        let r2: i32 = (0..100).map(|_| fresh.step(500.0)).sum();
+        assert_eq!(r1, r2, "reset neuron must match fresh neuron");
+    }
+
+    #[test]
+    fn adex_voltage_bounded() {
+        let mut n = AdExNeuron::new();
+        for _ in 0..5000 {
+            n.step(1000.0);
+        }
+        assert!(n.v.is_finite(), "voltage must stay finite");
+        assert!(n.w.is_finite(), "adaptation must stay finite");
+    }
+
+    #[test]
+    fn adex_pipeline_sustained_spiking() {
+        let mut n = AdExNeuron::new();
+        let spikes: i32 = (0..10000).map(|_| n.step(500.0)).sum();
+        assert!(spikes > 100, "sustained input should produce many spikes: got {spikes}");
+        assert!(n.v.is_finite());
+    }
+
+    #[test]
+    fn adex_performance_10k_steps() {
+        let mut n = AdExNeuron::new();
+        let start = std::time::Instant::now();
+        for _ in 0..10_000 {
+            n.step(500.0);
+        }
+        let elapsed = start.elapsed();
+        assert!(elapsed.as_millis() < 50, "10k steps took too long: {:?}", elapsed);
+    }
+
+    // ── ExpIF STRONG tests ───────────────────────────────────────
+
+    #[test]
+    fn expif_negative_current_no_fire() {
+        let mut n = ExpIfNeuron::new();
+        let total: i32 = (0..500).map(|_| n.step(-100.0)).sum();
+        assert_eq!(total, 0);
+    }
+
+    #[test]
+    fn expif_reset_roundtrip() {
+        let mut n = ExpIfNeuron::new();
+        for _ in 0..200 {
+            n.step(500.0);
+        }
+        n.reset();
+        assert_eq!(n.v, n.v_rest);
+        let mut fresh = ExpIfNeuron::new();
+        let r1: i32 = (0..100).map(|_| n.step(500.0)).sum();
+        let r2: i32 = (0..100).map(|_| fresh.step(500.0)).sum();
+        assert_eq!(r1, r2);
+    }
+
+    #[test]
+    fn expif_voltage_bounded() {
+        let mut n = ExpIfNeuron::new();
+        for _ in 0..5000 {
+            n.step(1000.0);
+        }
+        assert!(n.v.is_finite());
+    }
+
+    #[test]
+    fn expif_fires_more_than_adex() {
+        // ExpIF has no adaptation, should fire at least as much as AdEx
+        let mut eif = ExpIfNeuron::new();
+        let mut adex = AdExNeuron::new();
+        let eif_spikes: i32 = (0..5000).map(|_| eif.step(500.0)).sum();
+        let adex_spikes: i32 = (0..5000).map(|_| adex.step(500.0)).sum();
+        assert!(
+            eif_spikes >= adex_spikes,
+            "ExpIF ({eif_spikes}) should fire >= AdEx ({adex_spikes}) due to no adaptation"
+        );
+    }
+
+    #[test]
+    fn expif_performance_10k_steps() {
+        let mut n = ExpIfNeuron::new();
+        let start = std::time::Instant::now();
+        for _ in 0..10_000 {
+            n.step(500.0);
+        }
+        let elapsed = start.elapsed();
+        assert!(elapsed.as_millis() < 50, "10k steps took too long: {:?}", elapsed);
+    }
+
+    // ── Lapicque STRONG tests ────────────────────────────────────
+
+    #[test]
+    fn lapicque_no_fire_without_input() {
+        let mut n = LapicqueNeuron::new(20.0, 1.0, 1.0, 1.0);
+        let total: i32 = (0..500).map(|_| n.step(0.0)).sum();
+        assert_eq!(total, 0);
+    }
+
+    #[test]
+    fn lapicque_negative_current_no_fire() {
+        let mut n = LapicqueNeuron::new(20.0, 1.0, 1.0, 1.0);
+        let total: i32 = (0..500).map(|_| n.step(-5.0)).sum();
+        assert_eq!(total, 0);
+    }
+
+    #[test]
+    fn lapicque_reset_roundtrip() {
+        let mut n = LapicqueNeuron::new(20.0, 1.0, 1.0, 1.0);
+        for _ in 0..100 {
+            n.step(5.0);
+        }
+        n.reset();
+        assert_eq!(n.v, n.v_rest);
+        let mut fresh = LapicqueNeuron::new(20.0, 1.0, 1.0, 1.0);
+        let r1: i32 = (0..100).map(|_| n.step(5.0)).sum();
+        let r2: i32 = (0..100).map(|_| fresh.step(5.0)).sum();
+        assert_eq!(r1, r2);
+    }
+
+    #[test]
+    fn lapicque_voltage_bounded() {
+        let mut n = LapicqueNeuron::new(20.0, 1.0, 1.0, 1.0);
+        for _ in 0..5000 {
+            n.step(100.0);
+        }
+        assert!(n.v.is_finite());
+    }
+
+    #[test]
+    fn lapicque_higher_resistance_fires_faster() {
+        let mut lo = LapicqueNeuron::new(20.0, 0.5, 1.0, 1.0);
+        let mut hi = LapicqueNeuron::new(20.0, 2.0, 1.0, 1.0);
+        let lo_spikes: i32 = (0..200).map(|_| lo.step(1.0)).sum();
+        let hi_spikes: i32 = (0..200).map(|_| hi.step(1.0)).sum();
+        assert!(
+            hi_spikes >= lo_spikes,
+            "higher R ({hi_spikes}) should fire >= lower R ({lo_spikes})"
+        );
+    }
+
+    #[test]
+    fn lapicque_performance_10k_steps() {
+        let mut n = LapicqueNeuron::new(20.0, 1.0, 1.0, 1.0);
+        let start = std::time::Instant::now();
+        for _ in 0..10_000 {
+            n.step(5.0);
+        }
+        let elapsed = start.elapsed();
+        assert!(elapsed.as_millis() < 50, "10k steps took too long: {:?}", elapsed);
+    }
+
+    #[test]
+    fn lapicque_pipeline_sustained_spiking() {
+        let mut n = LapicqueNeuron::new(20.0, 1.0, 1.0, 1.0);
+        let spikes: i32 = (0..10000).map(|_| n.step(5.0)).sum();
+        assert!(spikes > 100, "sustained input should produce many spikes: got {spikes}");
     }
 }
