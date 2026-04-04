@@ -150,6 +150,7 @@ pub enum NeuronVariant {
 
     // motor.rs (step(f64)->i32)
     AlphaMotor(AlphaMotorNeuron),
+    GammaMotor(GammaMotorNeuron),
 
     // sensory.rs (spiking subset: step(f64)->i32)
     RetinalGanglion(RetinalGanglionCell),
@@ -217,7 +218,7 @@ macro_rules! all_variants {
             BendaHerz,
             Poisson, InhomogeneousPoisson, GammaRenewal, EscapeRate,
             PVFastSpiking, SST, VIP, Chandelier, CerebellarBasket, Martinotti,
-            AlphaMotor,
+            AlphaMotor, GammaMotor,
             RetinalGanglion, Merkel, Pacinian, NociceptorCell, OlfactoryReceptor,
         )
     };
@@ -339,6 +340,7 @@ impl NeuronVariant {
             NeuronVariant::Martinotti(n) => n.v,
             // motor
             NeuronVariant::AlphaMotor(n) => n.v,
+            NeuronVariant::GammaMotor(n) => n.v,
             // sensory (spiking)
             NeuronVariant::RetinalGanglion(n) => n.v,
             NeuronVariant::Merkel(n) => n.v,
@@ -833,6 +835,9 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         "AlphaMotor" | "AlphaMotorNeuron" => {
             Ok(NeuronVariant::AlphaMotor(AlphaMotorNeuron::new()))
         }
+        "GammaMotor" | "GammaMotorNeuron" => {
+            Ok(NeuronVariant::GammaMotor(GammaMotorNeuron::new()))
+        }
         // sensory (spiking)
         "RetinalGanglion" | "RetinalGanglionCell" => {
             Ok(NeuronVariant::RetinalGanglion(RetinalGanglionCell::new()))
@@ -928,6 +933,7 @@ pub fn supported_models() -> Vec<&'static str> {
         "Martinotti",
         // motor
         "AlphaMotor",
+        "GammaMotor",
         // sensory (spiking)
         "RetinalGanglion",
         "Merkel",
