@@ -1449,6 +1449,9 @@ py_neuron_default!("BrunelNetwork", PyBrunelNetwork, neurons::BrunelNetwork, sta
 py_neuron_default!("TUMNetwork", PyTUMNetwork, neurons::TUMNetwork, state r, state x, state u);
 py_neuron_default!("ElBoustaniNetwork", PyElBoustaniNetwork, neurons::ElBoustaniNetwork, state r_e, state r_i, state s);
 
+// misc.rs models
+py_neuron_default!("GradedSynapseNeuron", PyGradedSynapseNeuron, neurons::GradedSynapseNeuron, state v);
+
 // ═══════════════════════════════════════════════════════════════════
 // sensory.rs models (10 sensory neuron types)
 // ═══════════════════════════════════════════════════════════════════
@@ -1768,6 +1771,8 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyBrunelNetwork>()?;
     m.add_class::<PyTUMNetwork>()?;
     m.add_class::<PyElBoustaniNetwork>()?;
+    // misc
+    m.add_class::<PyGradedSynapseNeuron>()?;
     Ok(())
 }
 
