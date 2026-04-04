@@ -21,6 +21,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObject;
 
+pub mod analysis;
 pub mod attention;
 pub mod bitstream;
 pub mod brunel;
@@ -495,6 +496,23 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_phi_star, m)?)?;
     m.add_class::<PyCorticalColumn>()?;
     m.add_class::<PyRallDendrite>()?;
+    // Analysis functions (P0-A: spike_stats)
+    m.add_function(wrap_pyfunction!(py_spike_times, m)?)?;
+    m.add_function(wrap_pyfunction!(py_isi, m)?)?;
+    m.add_function(wrap_pyfunction!(py_firing_rate, m)?)?;
+    m.add_function(wrap_pyfunction!(py_spike_count, m)?)?;
+    m.add_function(wrap_pyfunction!(py_bin_spike_train, m)?)?;
+    m.add_function(wrap_pyfunction!(py_instantaneous_rate, m)?)?;
+    m.add_function(wrap_pyfunction!(py_psth, m)?)?;
+    m.add_function(wrap_pyfunction!(py_cv_isi, m)?)?;
+    m.add_function(wrap_pyfunction!(py_cv2, m)?)?;
+    m.add_function(wrap_pyfunction!(py_local_variation, m)?)?;
+    m.add_function(wrap_pyfunction!(py_fano_factor, m)?)?;
+    m.add_function(wrap_pyfunction!(py_lempel_ziv_complexity, m)?)?;
+    m.add_function(wrap_pyfunction!(py_permutation_entropy, m)?)?;
+    m.add_function(wrap_pyfunction!(py_hurst_exponent, m)?)?;
+    m.add_function(wrap_pyfunction!(py_approximate_entropy, m)?)?;
+    m.add_function(wrap_pyfunction!(py_sample_entropy, m)?)?;
     Ok(())
 }
 
@@ -2686,4 +2704,152 @@ fn parse_sc_type(s: &str) -> PyResult<ir::graph::ScType> {
             Err(PyValueError::new_err(format!("Unknown IR type: '{s}'")))
         }
     }
+}
+
+// ── Analysis PyO3 wrappers (P0-A: spike_stats) ─────────────────────
+
+#[pyfunction]
+#[pyo3(signature = (binary_train, dt=0.001))]
+fn py_spike_times(
+    py: Python<'_>,
+    binary_train: PyReadonlyArray1<'_, i32>,
+    dt: f64,
+) -> Py<PyArray1<f64>> {
+    let data = binary_train.as_slice().unwrap();
+    analysis::basic::spike_times(data, dt)
+        .into_pyarray(py)
+        .into()
+}
+
+#[pyfunction]
+#[pyo3(signature = (binary_train, dt=0.001))]
+fn py_isi(py: Python<'_>, binary_train: PyReadonlyArray1<'_, i32>, dt: f64) -> Py<PyArray1<f64>> {
+    let data = binary_train.as_slice().unwrap();
+    analysis::basic::isi(data, dt).into_pyarray(py).into()
+}
+
+#[pyfunction]
+#[pyo3(signature = (binary_train, dt=0.001))]
+fn py_firing_rate(binary_train: PyReadonlyArray1<'_, i32>, dt: f64) -> f64 {
+    let data = binary_train.as_slice().unwrap();
+    analysis::basic::firing_rate(data, dt)
+}
+
+#[pyfunction]
+fn py_spike_count(binary_train: PyReadonlyArray1<'_, i32>) -> i64 {
+    let data = binary_train.as_slice().unwrap();
+    analysis::basic::spike_count(data)
+}
+
+#[pyfunction]
+#[pyo3(signature = (binary_train, bin_size=10))]
+fn py_bin_spike_train(
+    py: Python<'_>,
+    binary_train: PyReadonlyArray1<'_, i32>,
+    bin_size: usize,
+) -> Py<PyArray1<i64>> {
+    let data = binary_train.as_slice().unwrap();
+    analysis::basic::bin_spike_train(data, bin_size)
+        .into_pyarray(py)
+        .into()
+}
+
+#[pyfunction]
+#[pyo3(signature = (binary_train, dt=0.001, kernel="gaussian", sigma_ms=10.0))]
+fn py_instantaneous_rate(
+    py: Python<'_>,
+    binary_train: PyReadonlyArray1<'_, f64>,
+    dt: f64,
+    kernel: &str,
+    sigma_ms: f64,
+) -> Py<PyArray1<f64>> {
+    let data = binary_train.as_slice().unwrap();
+    analysis::rate::instantaneous_rate(data, dt, kernel, sigma_ms)
+        .into_pyarray(py)
+        .into()
+}
+
+#[pyfunction]
+#[pyo3(signature = (trials, bin_ms=10.0, dt=0.001))]
+fn py_psth(
+    py: Python<'_>,
+    trials: Vec<PyReadonlyArray1<'_, f64>>,
+    bin_ms: f64,
+    dt: f64,
+) -> (Py<PyArray1<f64>>, Py<PyArray1<f64>>) {
+    let vecs: Vec<Vec<f64>> = trials
+        .iter()
+        .map(|t| t.as_slice().unwrap().to_vec())
+        .collect();
+    let (rates, centers) = analysis::rate::psth(&vecs, bin_ms, dt);
+    (
+        rates.into_pyarray(py).into(),
+        centers.into_pyarray(py).into(),
+    )
+}
+
+#[pyfunction]
+#[pyo3(signature = (binary_train, dt=0.001))]
+fn py_cv_isi(binary_train: PyReadonlyArray1<'_, i32>, dt: f64) -> f64 {
+    let data = binary_train.as_slice().unwrap();
+    analysis::variability::cv_isi(data, dt)
+}
+
+#[pyfunction]
+#[pyo3(signature = (binary_train, dt=0.001))]
+fn py_cv2(binary_train: PyReadonlyArray1<'_, i32>, dt: f64) -> f64 {
+    let data = binary_train.as_slice().unwrap();
+    analysis::variability::cv2(data, dt)
+}
+
+#[pyfunction]
+#[pyo3(signature = (binary_train, dt=0.001))]
+fn py_local_variation(binary_train: PyReadonlyArray1<'_, i32>, dt: f64) -> f64 {
+    let data = binary_train.as_slice().unwrap();
+    analysis::variability::local_variation(data, dt)
+}
+
+#[pyfunction]
+#[pyo3(signature = (binary_train, window_ms=50.0, dt=0.001))]
+fn py_fano_factor(binary_train: PyReadonlyArray1<'_, i32>, window_ms: f64, dt: f64) -> f64 {
+    let data = binary_train.as_slice().unwrap();
+    analysis::variability::fano_factor(data, window_ms, dt)
+}
+
+#[pyfunction]
+fn py_lempel_ziv_complexity(binary_train: PyReadonlyArray1<'_, i32>) -> f64 {
+    let data = binary_train.as_slice().unwrap();
+    analysis::variability::lempel_ziv_complexity(data)
+}
+
+#[pyfunction]
+#[pyo3(signature = (binary_train, order=3, delay=1))]
+fn py_permutation_entropy(
+    binary_train: PyReadonlyArray1<'_, i32>,
+    order: usize,
+    delay: usize,
+) -> f64 {
+    let data = binary_train.as_slice().unwrap();
+    analysis::variability::permutation_entropy(data, order, delay)
+}
+
+#[pyfunction]
+#[pyo3(signature = (binary_train, min_window=10))]
+fn py_hurst_exponent(binary_train: PyReadonlyArray1<'_, i32>, min_window: usize) -> f64 {
+    let data = binary_train.as_slice().unwrap();
+    analysis::variability::hurst_exponent(data, min_window)
+}
+
+#[pyfunction]
+#[pyo3(signature = (binary_train, m=2, r_factor=0.2))]
+fn py_approximate_entropy(binary_train: PyReadonlyArray1<'_, i32>, m: usize, r_factor: f64) -> f64 {
+    let data = binary_train.as_slice().unwrap();
+    analysis::variability::approximate_entropy(data, m, r_factor)
+}
+
+#[pyfunction]
+#[pyo3(signature = (binary_train, m=2, r_factor=0.2))]
+fn py_sample_entropy(binary_train: PyReadonlyArray1<'_, i32>, m: usize, r_factor: f64) -> f64 {
+    let data = binary_train.as_slice().unwrap();
+    analysis::variability::sample_entropy(data, m, r_factor)
 }
