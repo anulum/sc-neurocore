@@ -102,6 +102,10 @@ fn bench_variability(c: &mut Criterion) {
         g.bench_with_input(BenchmarkId::new("fano_factor", n), &train, |b, t| {
             b.iter(|| black_box(analysis::variability::fano_factor(t, 50.0, 0.001)))
         });
+    }
+    // sample_entropy is O(n^2) — only bench small inputs
+    for &n in &[100, 1_000] {
+        let train = make_binary_train(n, 0.05, 42);
         g.bench_with_input(BenchmarkId::new("sample_entropy", n), &train, |b, t| {
             b.iter(|| black_box(analysis::variability::sample_entropy(t, 2, 0.2)))
         });
