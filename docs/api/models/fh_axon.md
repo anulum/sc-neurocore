@@ -57,4 +57,4 @@ $$I_p = P_p \cdot p^2 \cdot (V - E_p)$$
 | `create_neuron("FrankenhaeUserHuxleyAxon")` | Yes |
 | `supported_models()` | Includes "FrankenhaeUserHuxleyAxon" |
 | STRONG tests | 10 |
-| Benchmark | `fh_axon_1k_steps`: **13.13 ms** (13.13 µs/step), i5-11600K |
+| Benchmark | `fh_axon_1k_steps`: **19.88 ms** (19.88 µs/step), i5-11600K |
