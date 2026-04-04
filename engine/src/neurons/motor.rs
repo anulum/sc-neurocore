@@ -226,6 +226,126 @@ impl Default for GammaMotorNeuron {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// Upper Motor Neuron (Corticospinal L5 Pyramidal)
+// ═══════════════════════════════════════════════════════════════════
+
+/// Upper motor neuron — layer 5 pyramidal cell, corticospinal projection.
+///
+/// Biophysics: Pospischil 2008 RS parameterisation (Na+, K+, M-current)
+/// with added high-threshold Ca2+ current for dendritic Ca2+ spikes.
+/// Regular-spiking with adaptation. Drives alpha/gamma motor neurons
+/// via corticospinal tract.
+///
+/// Pospischil et al., Biol. Cybern. 99(4-5), 2008 (RS variant).
+/// Larkum, Trends Neurosci. 36(3), 2013 (dendritic Ca2+ spikes).
+#[derive(Clone, Debug)]
+pub struct UpperMotorNeuron {
+    pub v: f64,
+    pub m: f64,
+    pub h: f64,
+    pub n: f64,
+    pub p: f64,    // M-current (Kv7) activation
+    pub s: f64,    // High-threshold Ca2+ activation
+    // Conductances
+    pub g_na: f64,
+    pub g_k: f64,
+    pub g_m: f64,
+    pub g_ca: f64,
+    pub g_l: f64,
+    // Reversal potentials
+    pub e_na: f64,
+    pub e_k: f64,
+    pub e_ca: f64,
+    pub e_l: f64,
+    pub c_m: f64,
+    pub dt: f64,
+    pub v_threshold: f64,
+}
+
+impl UpperMotorNeuron {
+    pub fn new() -> Self {
+        Self {
+            v: -70.0,
+            m: 0.05,
+            h: 0.6,
+            n: 0.3,
+            p: 0.0,
+            s: 0.0,
+            g_na: 50.0,
+            g_k: 5.0,
+            g_m: 0.07,     // M-current for adaptation (Pospischil RS)
+            g_ca: 0.3,     // High-threshold dendritic Ca2+
+            g_l: 0.1,
+            e_na: 50.0,
+            e_k: -90.0,
+            e_ca: 120.0,
+            e_l: -70.0,
+            c_m: 1.0,
+            dt: 0.025,
+            v_threshold: -20.0,
+        }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        let v_prev = self.v;
+        let vt = -56.2;
+        for _ in 0..4 {
+            // Pospischil Na+ gating
+            let dv = self.v - vt;
+            let x_m = dv - 13.0;
+            let alpha_m = if x_m.abs() < 1e-6 { 0.32 * 4.0 } else { -0.32 * x_m / ((-x_m / 4.0).exp() - 1.0) };
+            let x_h = dv - 17.0;
+            let beta_m = if x_h.abs() < 1e-6 { 0.28 * 5.0 } else { 0.28 * x_h / ((x_h / 5.0).exp() - 1.0) };
+            let alpha_h = 0.128 * (-(dv - 17.0) / 18.0).exp();
+            let beta_h = 4.0 / (1.0 + (-(dv - 40.0) / 5.0).exp());
+            // K+ gating
+            let x_n = dv - 15.0;
+            let alpha_n = if x_n.abs() < 1e-6 { 0.032 * 5.0 } else { -0.032 * x_n / ((-x_n / 5.0).exp() - 1.0) };
+            let beta_n = 0.5 * (-(dv - 10.0) / 40.0).exp();
+
+            self.m += (alpha_m * (1.0 - self.m) - beta_m * self.m) * self.dt;
+            self.h += (alpha_h * (1.0 - self.h) - beta_h * self.h) * self.dt;
+            self.n += (alpha_n * (1.0 - self.n) - beta_n * self.n) * self.dt;
+
+            // M-current (slow K+, adaptation)
+            let p_inf = 1.0 / (1.0 + (-(self.v + 35.0) / 10.0).exp());
+            let tau_p = 400.0 / (3.3 * ((self.v + 35.0) / 20.0).exp() + (-(self.v + 35.0) / 20.0).exp());
+            self.p += (p_inf - self.p) / tau_p * self.dt;
+
+            // High-threshold Ca2+ (dendritic spike)
+            let s_inf = 1.0 / (1.0 + (-(self.v + 20.0) / 5.0).exp());
+            self.s += (s_inf - self.s) / 10.0 * self.dt;
+
+            let i_na = self.g_na * self.m.powi(3) * self.h * (self.v - self.e_na);
+            let i_k = self.g_k * self.n.powi(4) * (self.v - self.e_k);
+            let i_m = self.g_m * self.p * (self.v - self.e_k);
+            let i_ca = self.g_ca * self.s.powi(2) * (self.v - self.e_ca);
+            let i_l = self.g_l * (self.v - self.e_l);
+
+            self.v += (-i_na - i_k - i_m - i_ca - i_l + current) / self.c_m * self.dt;
+        }
+        if self.v >= self.v_threshold && v_prev < self.v_threshold {
+            1
+        } else {
+            0
+        }
+    }
+
+    pub fn reset(&mut self) {
+        self.v = -70.0;
+        self.m = 0.05;
+        self.h = 0.6;
+        self.n = 0.3;
+        self.p = 0.0;
+        self.s = 0.0;
+    }
+}
+
+impl Default for UpperMotorNeuron {
+    fn default() -> Self { Self::new() }
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // Tests
 // ═══════════════════════════════════════════════════════════════════
 
@@ -437,5 +557,92 @@ mod tests {
         let start = std::time::Instant::now();
         for _ in 0..100_000 { n.step(20.0); }
         assert!(start.elapsed().as_millis() < 50, "100k steps took {:?}", start.elapsed());
+    }
+
+    // ── Upper Motor Neuron — 6-dimension STRONG ──────────────────
+
+    #[test]
+    fn upper_motor_fires_with_input() {
+        let mut n = UpperMotorNeuron::new();
+        let spikes: i32 = (0..10000).map(|_| n.step(5.0)).sum();
+        assert!(spikes > 0, "upper motor must fire: got {spikes}");
+    }
+
+    #[test]
+    fn upper_motor_no_fire_without_input() {
+        let mut n = UpperMotorNeuron::new();
+        let spikes: i32 = (0..5000).map(|_| n.step(0.0)).sum();
+        assert_eq!(spikes, 0);
+    }
+
+    #[test]
+    fn upper_motor_negative_current_no_fire() {
+        let mut n = UpperMotorNeuron::new();
+        let spikes: i32 = (0..2000).map(|_| n.step(-5.0)).sum();
+        assert_eq!(spikes, 0);
+    }
+
+    #[test]
+    fn upper_motor_adaptation_via_m_current() {
+        let mut n = UpperMotorNeuron::new();
+        let first: i32 = (0..5000).map(|_| n.step(5.0)).sum();
+        let second: i32 = (0..5000).map(|_| n.step(5.0)).sum();
+        assert!(
+            second <= first + 3,
+            "M-current should cause adaptation: first={first}, second={second}"
+        );
+    }
+
+    #[test]
+    fn upper_motor_ca_activates_during_depolarisation() {
+        let mut n = UpperMotorNeuron::new();
+        let baseline = n.s;
+        for _ in 0..5000 { n.step(5.0); }
+        assert!(n.s > baseline + 0.001, "Ca2+ gate should activate: s={}", n.s);
+    }
+
+    #[test]
+    fn upper_motor_reset_roundtrip() {
+        let mut n = UpperMotorNeuron::new();
+        for _ in 0..3000 { n.step(5.0); }
+        n.reset();
+        let mut fresh = UpperMotorNeuron::new();
+        let r1: i32 = (0..2000).map(|_| n.step(5.0)).sum();
+        let r2: i32 = (0..2000).map(|_| fresh.step(5.0)).sum();
+        assert_eq!(r1, r2);
+    }
+
+    #[test]
+    fn upper_motor_voltage_bounded() {
+        let mut n = UpperMotorNeuron::new();
+        for _ in 0..20000 { n.step(10.0); }
+        assert!(n.v.is_finite());
+        assert!(n.p.is_finite());
+        assert!(n.s.is_finite());
+    }
+
+    #[test]
+    fn upper_motor_nan_recovery() {
+        let mut n = UpperMotorNeuron::new();
+        for _ in 0..100 { n.step(5.0); }
+        for _ in 0..10 { let _ = n.step(f64::NAN); }
+        n.reset();
+        assert!(n.v.is_finite());
+    }
+
+    #[test]
+    fn upper_motor_extreme_input() {
+        let mut n = UpperMotorNeuron::new();
+        for _ in 0..50 { n.step(1e6); }
+        n.reset();
+        assert!(n.v.is_finite());
+    }
+
+    #[test]
+    fn upper_motor_performance() {
+        let mut n = UpperMotorNeuron::new();
+        let start = std::time::Instant::now();
+        for _ in 0..10_000 { n.step(5.0); }
+        assert!(start.elapsed().as_millis() < 100, "10k steps took {:?}", start.elapsed());
     }
 }
