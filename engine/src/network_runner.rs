@@ -98,6 +98,7 @@ pub enum NeuronVariant {
     CourageNekorkinMap(CourageNekorkinMapNeuron),
     AiharaMap(AiharaMapNeuron),
     KilincBhattMap(KilincBhattMapNeuron),
+    ErmentroutKopellMap(ErmentroutKopellMapNeuron),
 
     // hardware.rs (f64 input subset)
     BrainScaleSAdEx(BrainScaleSAdExNeuron),
@@ -228,7 +229,7 @@ macro_rules! all_variants {
             NonResettingLIF, AdaptiveThresholdIF, SigmaDelta, EnergyLIF,
             ClosedFormContinuous,
             ChialvoMap, RulkovMap, IbarzTanakaMap, MedvedevMap,
-            CazellesMap, CourageNekorkinMap, AiharaMap, KilincBhattMap,
+            CazellesMap, CourageNekorkinMap, AiharaMap, KilincBhattMap, ErmentroutKopellMap,
             BrainScaleSAdEx, SpiNNakerLIF, NeuroGrid, DPI,
             MarderSTG, RallCable, BoothRinzel, Dendrify,
             LiquidTimeConstant, ParallelSpiking, FractionalLIF,
@@ -325,6 +326,7 @@ impl NeuronVariant {
             NeuronVariant::CourageNekorkinMap(n) => n.x,
             NeuronVariant::AiharaMap(n) => n.x,
             NeuronVariant::KilincBhattMap(n) => n.x,
+            NeuronVariant::ErmentroutKopellMap(n) => n.theta,
             NeuronVariant::BrainScaleSAdEx(n) => n.v,
             NeuronVariant::SpiNNakerLIF(n) => n.v,
             NeuronVariant::NeuroGrid(n) => n.v_s,
@@ -786,6 +788,7 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         )),
         "AiharaMap" | "AiharaMapNeuron" => Ok(NeuronVariant::AiharaMap(AiharaMapNeuron::new())),
         "KilincBhattMap" | "KilincBhattMapNeuron" => Ok(NeuronVariant::KilincBhattMap(KilincBhattMapNeuron::new())),
+        "ErmentroutKopellMap" | "ErmentroutKopellMapNeuron" => Ok(NeuronVariant::ErmentroutKopellMap(ErmentroutKopellMapNeuron::new())),
         "BrainScaleSAdEx" | "BrainScaleSAdExNeuron" => {
             Ok(NeuronVariant::BrainScaleSAdEx(BrainScaleSAdExNeuron::new()))
         }
@@ -976,6 +979,7 @@ pub fn supported_models() -> Vec<&'static str> {
         "CourageNekorkinMap",
         "AiharaMap",
         "KilincBhattMap",
+        "ErmentroutKopellMap",
         "BrainScaleSAdEx",
         "SpiNNakerLIF",
         "NeuroGrid",

@@ -144,6 +144,7 @@ cargo bench --bench analysis_bench -- --quick
 |-------|-------|--------|----------|-------|
 | Aihara map | 100k | 1.97 ms | **19.7 ns** | Chaotic sigmoid map |
 | Kilinc-Bhatt map | 100k | 8.19 ms | **81.9 ns** | Adaptive threshold map |
+| Ermentrout-Kopell | 100k | 5.45 ms | **54.5 ns** | Canonical Type I (theta) |
 
 ---
 
