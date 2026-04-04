@@ -24,7 +24,7 @@ use sc_neurocore_engine::neurons::{
     InnerHairCell, RodPhotoreceptor, RetinalGanglionCell, MerkelCell,
     PacinianCorpuscle, Nociceptor, OlfactoryReceptorNeuron,
     AlphaMotorNeuron,
-    GranuleCell,
+    GranuleCell, GolgiCell,
 };
 use sc_neurocore_engine::scpn::KuramotoSolver;
 use sc_neurocore_engine::simd::{fused_and_popcount_dispatch, pack_dispatch, popcount_dispatch};
@@ -493,6 +493,13 @@ fn bench_all(c: &mut Criterion) {
         b.iter(|| {
             let mut n = GranuleCell::new();
             for _ in 0..10_000 { black_box(n.step(15.0)); }
+        })
+    });
+
+    c.bench_function("golgi_1k_steps", |b| {
+        b.iter(|| {
+            let mut n = GolgiCell::new();
+            for _ in 0..1_000 { black_box(n.step(5.0)); }
         })
     });
 }

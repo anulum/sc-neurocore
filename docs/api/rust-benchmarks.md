@@ -114,9 +114,10 @@ cargo bench --bench analysis_bench -- --quick
 
 ### Cerebellar Neurons (`neurons/cerebellar.rs`) — Phase 3D
 
-| Model | 10k steps | Per step | Sub-steps | Notes |
-|-------|-----------|----------|-----------|-------|
-| Granule cell | 466 µs | **46.6 ns** | 1 | LIF + tonic GABA + T-type Ca2+ |
+| Model | Steps | Median | Per step | Sub-steps | Notes |
+|-------|-------|--------|----------|-----------|-------|
+| Granule cell | 10k | 466 µs | **46.6 ns** | 1 | LIF + tonic GABA + T-type Ca2+ |
+| Golgi cell | 1k | 396 µs | **396 ns** | 4 | WB + A-type K+ + Ca2+-AHP |
 
 > Granule cell uses simple Euler integration with T-type Ca2+ gating for
 > rebound bursting. No sub-stepping needed.
