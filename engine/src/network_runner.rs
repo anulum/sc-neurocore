@@ -166,6 +166,7 @@ pub enum NeuronVariant {
     Granule(GranuleCell),
     Golgi(GolgiCell),
     Stellate(StellateCell),
+    Lugaro(LugaroCell),
 
     // Not wired (multi-arg / i32 input / f64 return / no reset):
     // Alpha (2 args), COBALIF (3 args), TsodyksMarkram (bool arg),
@@ -228,7 +229,7 @@ macro_rules! all_variants {
             PVFastSpiking, SST, VIP, Chandelier, CerebellarBasket, Martinotti,
             AlphaMotor, GammaMotor, UpperMotor, Renshaw, MotorUnitCell,
             RetinalGanglion, Merkel, Pacinian, NociceptorCell, OlfactoryReceptor,
-            Granule, Golgi, Stellate,
+            Granule, Golgi, Stellate, Lugaro,
         )
     };
 }
@@ -363,6 +364,7 @@ impl NeuronVariant {
             NeuronVariant::Granule(n) => n.v,
             NeuronVariant::Golgi(n) => n.v,
             NeuronVariant::Stellate(n) => n.v,
+            NeuronVariant::Lugaro(n) => n.v,
         }
     }
 }
@@ -875,6 +877,7 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         "GranuleCell" | "Granule" => Ok(NeuronVariant::Granule(GranuleCell::new())),
         "GolgiCell" | "Golgi" => Ok(NeuronVariant::Golgi(GolgiCell::new())),
         "StellateCell" | "Stellate" => Ok(NeuronVariant::Stellate(StellateCell::new())),
+        "LugaroCell" | "Lugaro" => Ok(NeuronVariant::Lugaro(LugaroCell::new())),
         _ => Err(format!("Unsupported model: '{name}'")),
     }
 }
@@ -972,6 +975,7 @@ pub fn supported_models() -> Vec<&'static str> {
         "GranuleCell",
         "GolgiCell",
         "StellateCell",
+        "LugaroCell",
     ]
 }
 

@@ -1427,6 +1427,7 @@ py_neuron_default!("MotorUnit", PyMotorUnit, neurons::MotorUnit, state v, state 
 py_neuron_default!("GranuleCell", PyGranuleCell, neurons::GranuleCell, state v, state s);
 py_neuron_default!("GolgiCell", PyGolgiCell, neurons::GolgiCell, state v, state m, state h, state n, state a, state b, state ca);
 py_neuron_default!("StellateCell", PyStellateCell, neurons::StellateCell, state v, state h, state n, state p);
+py_neuron_default!("LugaroCell", PyLugaroCell, neurons::LugaroCell, state v, state adapt);
 
 // ═══════════════════════════════════════════════════════════════════
 // sensory.rs models (10 sensory neuron types)
@@ -1728,6 +1729,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyGranuleCell>()?;
     m.add_class::<PyGolgiCell>()?;
     m.add_class::<PyStellateCell>()?;
+    m.add_class::<PyLugaroCell>()?;
     Ok(())
 }
 

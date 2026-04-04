@@ -409,6 +409,98 @@ impl StellateCell {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// Lugaro Cell
+// ═══════════════════════════════════════════════════════════════════
+
+/// Cerebellar Lugaro cell — rare fusiform interneuron in the granular layer.
+///
+/// Biophysics: LIF with adaptation for regular spiking, serotonin modulation
+/// (5-HT increases gain), and a depolarised leak for spontaneous firing.
+/// Inhibits Golgi cells and molecular layer interneurons (stellate, basket).
+///
+/// Lugaro cells are distinguished by their horizontal axonal projection,
+/// large fusiform soma, and sensitivity to serotonergic afferents from
+/// the brainstem raphe nuclei.
+///
+/// Dieudonné & Bhatt, J Physiol 548:97, 2003; Lainé & Bhatt, Front Syst Neurosci 1:4, 2007.
+#[derive(Clone, Debug)]
+pub struct LugaroCell {
+    pub v: f64,
+    pub adapt: f64,         // Adaptation current
+    pub v_rest: f64,
+    pub v_reset: f64,
+    pub v_threshold: f64,
+    pub tau_m: f64,
+    pub tau_adapt: f64,
+    pub a_adapt: f64,       // Adaptation coupling strength
+    pub gain: f64,
+    pub serotonin: f64,     // 5-HT modulation factor [0, 1]
+    pub dt: f64,
+}
+
+impl Default for LugaroCell {
+    fn default() -> Self { Self::new() }
+}
+
+impl LugaroCell {
+    pub fn new() -> Self {
+        Self {
+            v: -55.0,
+            adapt: 0.0,
+            v_rest: -55.0,      // Depolarised rest for spontaneous firing
+            v_reset: -65.0,
+            v_threshold: -48.0,
+            tau_m: 10.0,
+            tau_adapt: 150.0,
+            a_adapt: 0.05,
+            gain: 2.0,
+            serotonin: 0.0,    // No 5-HT modulation by default
+            dt: 0.5,
+        }
+    }
+
+    /// Create with serotonin modulation active.
+    pub fn with_serotonin(serotonin_level: f64) -> Self {
+        let mut n = Self::new();
+        n.serotonin = serotonin_level.clamp(0.0, 1.0);
+        n
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        // 5-HT modulation: increases effective gain
+        let effective_gain = self.gain * (1.0 + 0.5 * self.serotonin);
+        let input = effective_gain * current;
+
+        // LIF dynamics with adaptation
+        let dv = (-(self.v - self.v_rest) - self.adapt + input) / self.tau_m;
+        self.v += self.dt * dv;
+
+        // Adaptation dynamics
+        let da = (self.a_adapt * (self.v - self.v_rest) - self.adapt) / self.tau_adapt;
+        self.adapt += self.dt * da;
+
+        // Spike detection
+        if self.v >= self.v_threshold {
+            self.v = self.v_reset;
+            self.adapt += 1.0; // Spike-triggered adaptation increment
+            return 1;
+        }
+
+        // Safety bounds
+        if self.v < -100.0 { self.v = -100.0; }
+        if self.v > 60.0 { self.v = 60.0; }
+        if !self.v.is_finite() { self.v = self.v_reset; }
+        if !self.adapt.is_finite() { self.adapt = 0.0; }
+
+        0
+    }
+
+    pub fn reset(&mut self) {
+        *self = Self::new();
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // Tests
 // ═══════════════════════════════════════════════════════════════════
 
@@ -839,6 +931,124 @@ mod tests {
         assert!(
             elapsed.as_millis() < 200,
             "1k steps must complete in <200ms, took {}ms",
+            elapsed.as_millis()
+        );
+    }
+
+    // -- Lugaro Cell tests --
+
+    #[test]
+    fn lugaro_fires_with_input() {
+        let mut n = LugaroCell::new();
+        let mut spikes = 0;
+        for _ in 0..10_000 {
+            spikes += n.step(5.0);
+        }
+        assert!(spikes > 10, "Lugaro must fire with excitatory input, got {spikes}");
+    }
+
+    #[test]
+    fn lugaro_low_threshold() {
+        // Near-threshold rest → fires easily with moderate input
+        let mut n = LugaroCell::new();
+        let mut spikes = 0;
+        for _ in 0..10_000 {
+            spikes += n.step(4.0);
+        }
+        assert!(spikes > 10, "Lugaro should fire easily with moderate input, got {spikes}");
+    }
+
+    #[test]
+    fn lugaro_adaptation() {
+        let mut n = LugaroCell::new();
+        let input = 10.0;
+        let mut spikes_early = 0;
+        for _ in 0..2000 {
+            spikes_early += n.step(input);
+        }
+        let mut spikes_late = 0;
+        for _ in 0..2000 {
+            spikes_late += n.step(input);
+        }
+        assert!(spikes_early >= spikes_late,
+            "Adaptation should slow firing: early={spikes_early}, late={spikes_late}");
+    }
+
+    #[test]
+    fn lugaro_serotonin_increases_firing() {
+        let mut no_5ht = LugaroCell::new();
+        let mut with_5ht = LugaroCell::with_serotonin(1.0);
+
+        let input = 3.0;
+        let mut spikes_no = 0;
+        let mut spikes_5ht = 0;
+        for _ in 0..10_000 {
+            spikes_no += no_5ht.step(input);
+            spikes_5ht += with_5ht.step(input);
+        }
+        assert!(spikes_5ht >= spikes_no,
+            "5-HT must increase firing: 5HT={spikes_5ht} vs none={spikes_no}");
+    }
+
+    #[test]
+    fn lugaro_negative_input_no_crash() {
+        let mut n = LugaroCell::new();
+        for _ in 0..10_000 {
+            n.step(-100.0);
+        }
+        assert!(n.v.is_finite());
+        assert!(n.v >= -100.0);
+    }
+
+    #[test]
+    fn lugaro_nan_input_stays_finite() {
+        let mut n = LugaroCell::new();
+        n.step(f64::NAN);
+        assert!(n.v.is_finite());
+    }
+
+    #[test]
+    fn lugaro_extreme_input_bounded() {
+        let mut n = LugaroCell::new();
+        for _ in 0..1000 {
+            n.step(1e6);
+        }
+        assert!(n.v.is_finite() && n.v <= 60.0);
+    }
+
+    #[test]
+    fn lugaro_reset_clears_state() {
+        let mut n = LugaroCell::new();
+        for _ in 0..1000 {
+            n.step(10.0);
+        }
+        n.reset();
+        assert_eq!(n.v, -55.0);
+        assert_eq!(n.adapt, 0.0);
+        assert_eq!(n.serotonin, 0.0);
+    }
+
+    #[test]
+    fn lugaro_adapt_increases_during_spiking() {
+        let mut n = LugaroCell::new();
+        let initial = n.adapt;
+        for _ in 0..5000 {
+            n.step(10.0);
+        }
+        assert!(n.adapt > initial, "Adaptation must increase during spiking, adapt={}", n.adapt);
+    }
+
+    #[test]
+    fn lugaro_performance_10k_steps() {
+        let start = std::time::Instant::now();
+        let mut n = LugaroCell::new();
+        for _ in 0..10_000 {
+            std::hint::black_box(n.step(5.0));
+        }
+        let elapsed = start.elapsed();
+        assert!(
+            elapsed.as_millis() < 50,
+            "10k steps must complete in <50ms, took {}ms",
             elapsed.as_millis()
         );
     }
