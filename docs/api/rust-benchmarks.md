@@ -88,16 +88,16 @@ cargo bench --bench analysis_bench -- --quick
 
 | Model | 10k steps | Per step | Type | Notes |
 |-------|-----------|----------|------|-------|
-| Inner hair cell | *pending* | — | graded | MET + Ca2+ |
-| Rod photoreceptor | *pending* | — | graded | cGMP cascade |
-| Retinal ganglion | *pending* | — | spiking | ON/OFF + refractory |
-| Merkel cell | *pending* | — | spiking | Slow adapting |
-| Pacinian corpuscle | *pending* | — | spiking | Fast adapting |
-| Nociceptor | *pending* | — | spiking | Sensitisation |
-| Olfactory receptor | *pending* | — | spiking | cAMP + Ca2+/CaM |
+| Retinal ganglion | 130 µs | **13 ns** | spiking | ON/OFF + refractory |
+| Inner hair cell | 195 µs | **19.5 ns** | graded | MET + Ca2+ |
+| Merkel cell | 239 µs | **23.9 ns** | spiking | Slow adapting |
+| Rod photoreceptor | 308 µs | **30.8 ns** | graded | cGMP cascade |
+| Nociceptor | 370 µs | **37 ns** | spiking | Sensitisation |
+| Pacinian corpuscle | 837 µs | **83.7 ns** | spiking | sin() input, fast adapting |
+| Olfactory receptor | 1.48 ms | **148 ns** | spiking | cAMP + Ca2+/CaM |
 
-> Sensory models use simple Euler integration (no sub-stepping) — expect
-> ns-range per step.
+> Sensory models use simple Euler integration (no sub-stepping).
+> Measured 2026-04-04 on i5-11600K @ 3.90 GHz.
 
 ---
 
