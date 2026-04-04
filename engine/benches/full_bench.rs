@@ -26,7 +26,7 @@ use sc_neurocore_engine::neurons::{
     AlphaMotorNeuron,
     GranuleCell, GolgiCell, StellateCell, LugaroCell, UnipolarBrushCell, DCNNeuron,
     PersistentNaNeuron, IhNeuron, TTypeCaNeuron, ATypeKNeuron, BKNeuron, SKNeuron, NMDANeuron,
-    AiharaMapNeuron, KilincBhattMapNeuron,
+    AiharaMapNeuron, KilincBhattMapNeuron, ErmentroutKopellMapNeuron,
 };
 use sc_neurocore_engine::scpn::KuramotoSolver;
 use sc_neurocore_engine::simd::{fused_and_popcount_dispatch, pack_dispatch, popcount_dispatch};
@@ -594,6 +594,13 @@ fn bench_all(c: &mut Criterion) {
     c.bench_function("kilinc_bhatt_100k_steps", |b| {
         b.iter(|| {
             let mut n = KilincBhattMapNeuron::new();
+            for _ in 0..100_000 { black_box(n.step(0.5)); }
+        })
+    });
+
+    c.bench_function("ermentrout_kopell_100k_steps", |b| {
+        b.iter(|| {
+            let mut n = ErmentroutKopellMapNeuron::new();
             for _ in 0..100_000 { black_box(n.step(0.5)); }
         })
     });
