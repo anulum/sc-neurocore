@@ -118,6 +118,7 @@ cargo bench --bench analysis_bench -- --quick
 |-------|-------|--------|----------|-----------|-------|
 | Granule cell | 10k | 466 µs | **46.6 ns** | 1 | LIF + tonic GABA + T-type Ca2+ |
 | Golgi cell | 1k | 396 µs | **396 ns** | 4 | WB + A-type K+ + Ca2+-AHP |
+| Stellate cell | 1k | 5.58 ms | **5.58 µs** | 50 | WB + Kv3.1 |
 
 > Granule cell uses simple Euler integration with T-type Ca2+ gating for
 > rebound bursting. No sub-stepping needed.
