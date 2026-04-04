@@ -136,6 +136,7 @@ cargo bench --bench analysis_bench -- --quick
 | A-type K+ | 1k | 4.00 ms | **4.00 µs** | 50 | WB + IA onset delay |
 | BK (Ca2+-K+) | 1k | 3.16 ms | **3.16 µs** | 50 | WB + BK fast AHP |
 | SK (Ca2+-K+) | 1k | 2.79 ms | **2.79 µs** | 50 | WB + SK medium AHP |
+| NMDA receptor | 1k | 3.29 ms | **3.29 µs** | 50 | WB + NMDA + Mg2+ block |
 
 ---
 
