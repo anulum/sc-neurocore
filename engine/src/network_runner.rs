@@ -170,6 +170,9 @@ pub enum NeuronVariant {
     UnipolarBrush(UnipolarBrushCell),
     DCN(DCNNeuron),
 
+    // channels.rs (step(f64)->i32)
+    PersistentNa(PersistentNaNeuron),
+
     // Not wired (multi-arg / i32 input / f64 return / no reset):
     // Alpha (2 args), COBALIF (3 args), TsodyksMarkram (bool arg),
     // CompteWM (bool arg), McCullochPitts (no reset), SigmoidRate (f64 ret),
@@ -232,6 +235,7 @@ macro_rules! all_variants {
             AlphaMotor, GammaMotor, UpperMotor, Renshaw, MotorUnitCell,
             RetinalGanglion, Merkel, Pacinian, NociceptorCell, OlfactoryReceptor,
             Granule, Golgi, Stellate, Lugaro, UnipolarBrush, DCN,
+            PersistentNa,
         )
     };
 }
@@ -369,6 +373,8 @@ impl NeuronVariant {
             NeuronVariant::Lugaro(n) => n.v,
             NeuronVariant::UnipolarBrush(n) => n.v,
             NeuronVariant::DCN(n) => n.v,
+            // channels
+            NeuronVariant::PersistentNa(n) => n.v,
         }
     }
 }
@@ -884,6 +890,8 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         "LugaroCell" | "Lugaro" => Ok(NeuronVariant::Lugaro(LugaroCell::new())),
         "UnipolarBrushCell" | "UBC" => Ok(NeuronVariant::UnipolarBrush(UnipolarBrushCell::new())),
         "DCNNeuron" | "DCN" => Ok(NeuronVariant::DCN(DCNNeuron::new())),
+        // channels
+        "PersistentNa" | "PersistentNaNeuron" => Ok(NeuronVariant::PersistentNa(PersistentNaNeuron::new())),
         _ => Err(format!("Unsupported model: '{name}'")),
     }
 }
@@ -984,6 +992,8 @@ pub fn supported_models() -> Vec<&'static str> {
         "LugaroCell",
         "UnipolarBrushCell",
         "DCNNeuron",
+        // channels
+        "PersistentNa",
     ]
 }
 

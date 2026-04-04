@@ -1431,6 +1431,9 @@ py_neuron_default!("LugaroCell", PyLugaroCell, neurons::LugaroCell, state v, sta
 py_neuron_default!("UnipolarBrushCell", PyUnipolarBrushCell, neurons::UnipolarBrushCell, state v, state persistent);
 py_neuron_default!("DCNNeuron", PyDCNNeuron, neurons::DCNNeuron, state v, state h, state n, state s, state r);
 
+// channels.rs models
+py_neuron_default!("PersistentNaNeuron", PyPersistentNaNeuron, neurons::PersistentNaNeuron, state v, state h, state n, state p);
+
 // ═══════════════════════════════════════════════════════════════════
 // sensory.rs models (10 sensory neuron types)
 // ═══════════════════════════════════════════════════════════════════
@@ -1734,6 +1737,8 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyLugaroCell>()?;
     m.add_class::<PyUnipolarBrushCell>()?;
     m.add_class::<PyDCNNeuron>()?;
+    // channels
+    m.add_class::<PyPersistentNaNeuron>()?;
     Ok(())
 }
 
