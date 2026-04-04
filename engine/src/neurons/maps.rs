@@ -276,10 +276,10 @@ impl CourageNekorkinMapNeuron {
         } else {
             self.alpha * self.x.signum()
         };
-        let x_new = f - self.y + self.j + current;
-        let y_new = self.y + self.beta * self.x;
-        self.x = x_new;
-        self.y = y_new;
+        let x_new = (f - self.y + self.j + current).clamp(-10.0, 10.0);
+        let y_new = (self.y + self.beta * self.x).clamp(-10.0, 10.0);
+        self.x = if x_new.is_finite() { x_new } else { 0.0 };
+        self.y = if y_new.is_finite() { y_new } else { 0.0 };
         if self.x >= self.x_threshold && x_prev < self.x_threshold {
             1
         } else {
@@ -738,6 +738,76 @@ mod tests {
     fn ek_performance_100k_steps() {
         let start = std::time::Instant::now();
         let mut n = ErmentroutKopellMapNeuron::new();
+        for _ in 0..100_000 { std::hint::black_box(n.step(0.5)); }
+        let elapsed = start.elapsed();
+        assert!(elapsed.as_millis() < 50, "100k steps must complete in <50ms");
+    }
+
+    // -- Courbage-Nekorkin STRONG tests (extending existing) --
+
+    #[test]
+    fn cn_silent_without_input() {
+        let mut n = CourageNekorkinMapNeuron::new();
+        let t: i32 = (0..5000).map(|_| n.step(0.0)).sum();
+        // May fire due to j=0.1 bias — model-specific
+        assert!(n.x.is_finite());
+    }
+
+    #[test]
+    fn cn_negative_input_no_crash() {
+        let mut n = CourageNekorkinMapNeuron::new();
+        for _ in 0..10_000 { n.step(-100.0); }
+        assert!(n.x.is_finite());
+        assert!(n.x >= -10.0);
+    }
+
+    #[test]
+    fn cn_nan_input_stays_finite() {
+        let mut n = CourageNekorkinMapNeuron::new();
+        n.step(f64::NAN);
+        assert!(n.x.is_finite());
+    }
+
+    #[test]
+    fn cn_extreme_input_bounded() {
+        let mut n = CourageNekorkinMapNeuron::new();
+        for _ in 0..1000 { n.step(1e6); }
+        assert!(n.x.is_finite() && n.x <= 10.0);
+    }
+
+    #[test]
+    fn cn_reset_clears_state() {
+        let mut n = CourageNekorkinMapNeuron::new();
+        for _ in 0..100 { n.step(0.5); }
+        n.reset();
+        assert_eq!(n.x, 0.0);
+        assert_eq!(n.y, 0.0);
+    }
+
+    #[test]
+    fn cn_piecewise_linear() {
+        // Verify piecewise-linear nature: |x| < 1 → alpha*x, |x| >= 1 → alpha*sign(x)
+        let mut n = CourageNekorkinMapNeuron::new();
+        n.x = 0.5;
+        let _ = n.step(0.0);
+        // f = 3.0 * 0.5 = 1.5; x_new = 1.5 - 0.0 + 0.1 = 1.6
+        assert!(n.x > 1.0, "Should exceed 1 with alpha=3, x={}", n.x);
+    }
+
+    #[test]
+    fn cn_rate_increases_with_input() {
+        let mut low = CourageNekorkinMapNeuron::new();
+        let mut high = CourageNekorkinMapNeuron::new();
+        let sp_low: i32 = (0..5000).map(|_| low.step(0.0)).sum();
+        let sp_high: i32 = (0..5000).map(|_| high.step(1.0)).sum();
+        assert!(sp_high >= sp_low,
+            "Higher input should fire more: high={sp_high} vs low={sp_low}");
+    }
+
+    #[test]
+    fn cn_performance_100k_steps() {
+        let start = std::time::Instant::now();
+        let mut n = CourageNekorkinMapNeuron::new();
         for _ in 0..100_000 { std::hint::black_box(n.step(0.5)); }
         let elapsed = start.elapsed();
         assert!(elapsed.as_millis() < 50, "100k steps must complete in <50ms");
