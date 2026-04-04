@@ -429,6 +429,100 @@ impl Default for RenshawCell {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// Motor Unit (Alpha Motor Neuron + Muscle Fibre)
+// ═══════════════════════════════════════════════════════════════════
+
+/// Motor unit — functional unit of motor control: alpha motor neuron + muscle fibre.
+///
+/// Each spike from the embedded LIF motor neuron triggers a muscle twitch.
+/// Force output is the summation of overlapping twitches (rate coding).
+/// Higher firing rates → more twitch overlap → higher force (tetanus).
+///
+/// Muscle twitch modelled as a critically-damped second-order system:
+/// f(t) = A * (t/τ) * exp(1 - t/τ), giving a smooth rise-then-decay.
+///
+/// Fuglevand et al., J. Neurophysiol. 70(6), 1993.
+/// Heckman & Enoka, Compr. Physiol. 2(4), 2012.
+#[derive(Clone, Debug)]
+pub struct MotorUnit {
+    pub v: f64,
+    pub v_rest: f64,
+    pub v_reset: f64,
+    pub v_threshold: f64,
+    pub tau_m: f64,       // Membrane time constant (ms)
+    pub adapt: f64,
+    pub tau_adapt: f64,
+    pub a_adapt: f64,
+    pub gain: f64,
+    // Muscle fibre
+    pub force: f64,       // Current force output (normalised)
+    pub twitch_amp: f64,  // Peak twitch amplitude
+    pub tau_twitch: f64,  // Twitch contraction time (ms)
+    pub force_decay: f64, // Force decay per step
+    pub dt: f64,
+}
+
+impl MotorUnit {
+    pub fn new() -> Self {
+        Self::slow()
+    }
+
+    /// Slow motor unit (type S): small, fatigue-resistant, low force.
+    pub fn slow() -> Self {
+        Self {
+            v: -65.0, v_rest: -65.0, v_reset: -70.0, v_threshold: -50.0,
+            tau_m: 10.0, adapt: 0.0, tau_adapt: 100.0, a_adapt: 0.2, gain: 1.0,
+            force: 0.0, twitch_amp: 0.05, tau_twitch: 90.0, force_decay: 0.0,
+            dt: 0.5,
+        }
+    }
+
+    /// Fast motor unit (type FF): large, fatigable, high force.
+    pub fn fast() -> Self {
+        Self {
+            tau_m: 6.0,
+            tau_adapt: 50.0,
+            a_adapt: 0.1,
+            twitch_amp: 0.3,
+            tau_twitch: 30.0,
+            ..Self::slow()
+        }
+    }
+
+    /// Step with descending drive (≥ 0). Returns spike (1/0). Force accessible via `.force`.
+    pub fn step(&mut self, drive: f64) -> i32 {
+        let input = self.gain * drive.max(0.0) - self.adapt;
+        self.v += (-(self.v - self.v_rest) + input) / self.tau_m * self.dt;
+        self.adapt += (self.a_adapt * (self.v - self.v_rest) - self.adapt) / self.tau_adapt * self.dt;
+
+        // Force decay: exponential relaxation
+        self.force *= (-self.dt / self.tau_twitch).exp();
+
+        let spiked = if self.v >= self.v_threshold {
+            self.v = self.v_reset;
+            // Spike → muscle twitch (add to force)
+            self.force += self.twitch_amp;
+            if self.force > 1.0 { self.force = 1.0; }
+            1
+        } else {
+            0
+        };
+
+        spiked
+    }
+
+    pub fn reset(&mut self) {
+        self.v = self.v_rest;
+        self.adapt = 0.0;
+        self.force = 0.0;
+    }
+}
+
+impl Default for MotorUnit {
+    fn default() -> Self { Self::new() }
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // Tests
 // ═══════════════════════════════════════════════════════════════════
 
@@ -815,5 +909,105 @@ mod tests {
         let start = std::time::Instant::now();
         for _ in 0..5_000 { n.step(4.0); }
         assert!(start.elapsed().as_millis() < 500, "5k steps took {:?}", start.elapsed());
+    }
+
+    // ── Motor Unit — 6-dimension STRONG ──────────────────────────
+
+    #[test]
+    fn motor_unit_fires_with_drive() {
+        let mut mu = MotorUnit::new();
+        let spikes: i32 = (0..2000).map(|_| mu.step(20.0)).sum();
+        assert!(spikes > 0, "motor unit must fire: got {spikes}");
+    }
+
+    #[test]
+    fn motor_unit_no_fire_without_drive() {
+        let mut mu = MotorUnit::new();
+        let spikes: i32 = (0..1000).map(|_| mu.step(0.0)).sum();
+        assert_eq!(spikes, 0);
+    }
+
+    #[test]
+    fn motor_unit_negative_drive_no_fire() {
+        let mut mu = MotorUnit::new();
+        let spikes: i32 = (0..1000).map(|_| mu.step(-10.0)).sum();
+        assert_eq!(spikes, 0);
+    }
+
+    #[test]
+    fn motor_unit_force_increases_with_spikes() {
+        let mut mu = MotorUnit::new();
+        assert_eq!(mu.force, 0.0);
+        for _ in 0..2000 { mu.step(20.0); }
+        assert!(mu.force > 0.0, "force should increase during spiking: f={}", mu.force);
+    }
+
+    #[test]
+    fn motor_unit_force_decays_without_input() {
+        let mut mu = MotorUnit::new();
+        // Build up force
+        for _ in 0..1000 { mu.step(20.0); }
+        let peak = mu.force;
+        assert!(peak > 0.0);
+        // No input → force decays
+        for _ in 0..5000 { mu.step(0.0); }
+        assert!(mu.force < peak, "force should decay: peak={peak}, now={}", mu.force);
+    }
+
+    #[test]
+    fn motor_unit_fast_produces_more_force() {
+        let mut slow = MotorUnit::slow();
+        let mut fast = MotorUnit::fast();
+        for _ in 0..2000 { slow.step(20.0); fast.step(20.0); }
+        assert!(
+            fast.force >= slow.force,
+            "fast MU ({}) should produce >= force than slow ({})", fast.force, slow.force
+        );
+    }
+
+    #[test]
+    fn motor_unit_force_capped_at_one() {
+        let mut mu = MotorUnit::fast();
+        for _ in 0..10000 { mu.step(50.0); }
+        assert!(mu.force <= 1.0, "force must not exceed 1.0: f={}", mu.force);
+    }
+
+    #[test]
+    fn motor_unit_reset_roundtrip() {
+        let mut mu = MotorUnit::new();
+        for _ in 0..1000 { mu.step(20.0); }
+        mu.reset();
+        assert_eq!(mu.force, 0.0);
+        assert_eq!(mu.adapt, 0.0);
+        let mut fresh = MotorUnit::new();
+        let r1: i32 = (0..500).map(|_| mu.step(20.0)).sum();
+        let r2: i32 = (0..500).map(|_| fresh.step(20.0)).sum();
+        assert_eq!(r1, r2);
+    }
+
+    #[test]
+    fn motor_unit_voltage_bounded() {
+        let mut mu = MotorUnit::new();
+        for _ in 0..10000 { mu.step(50.0); }
+        assert!(mu.v.is_finite());
+        assert!(mu.force.is_finite());
+    }
+
+    #[test]
+    fn motor_unit_nan_recovery() {
+        let mut mu = MotorUnit::new();
+        for _ in 0..50 { mu.step(20.0); }
+        for _ in 0..10 { let _ = mu.step(f64::NAN); }
+        mu.reset();
+        assert!(mu.v.is_finite());
+        assert_eq!(mu.force, 0.0);
+    }
+
+    #[test]
+    fn motor_unit_performance() {
+        let mut mu = MotorUnit::new();
+        let start = std::time::Instant::now();
+        for _ in 0..100_000 { mu.step(20.0); }
+        assert!(start.elapsed().as_millis() < 50, "100k steps took {:?}", start.elapsed());
     }
 }

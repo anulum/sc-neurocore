@@ -1421,6 +1421,7 @@ py_neuron_default!("AlphaMotorNeuron", PyAlphaMotorNeuron, neurons::AlphaMotorNe
 py_neuron_default!("GammaMotorNeuron", PyGammaMotorNeuron, neurons::GammaMotorNeuron, state v, state adapt);
 py_neuron_default!("UpperMotorNeuron", PyUpperMotorNeuron, neurons::UpperMotorNeuron, state v, state m, state h, state n, state p, state s);
 py_neuron_default!("RenshawCell", PyRenshawCell, neurons::RenshawCell, state v, state h, state n, state adapt);
+py_neuron_default!("MotorUnit", PyMotorUnit, neurons::MotorUnit, state v, state adapt, state force);
 
 // ═══════════════════════════════════════════════════════════════════
 // sensory.rs models (10 sensory neuron types)
@@ -1706,6 +1707,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyGammaMotorNeuron>()?;
     m.add_class::<PyUpperMotorNeuron>()?;
     m.add_class::<PyRenshawCell>()?;
+    m.add_class::<PyMotorUnit>()?;
     // sensory
     m.add_class::<PyInnerHairCell>()?;
     m.add_class::<PyOuterHairCell>()?;
