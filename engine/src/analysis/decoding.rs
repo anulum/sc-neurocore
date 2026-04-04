@@ -1,0 +1,455 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Commercial license available
+// © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+// © Code 2020–2026 Miroslav Šotek. All rights reserved.
+// ORCID: 0009-0009-3560-0851
+// Contact: www.anulum.li | protoscience@anulum.li
+// SC-NeuroCore — Neural population decoding algorithms
+
+use std::f64::consts::PI;
+
+/// Georgopoulos population vector decoding.
+/// trains: slice of binary spike trains (i32). preferred_directions: angle per neuron (radians).
+/// Returns decoded angle per time bin.
+pub fn population_vector_decode(
+    trains: &[&[i32]],
+    preferred_directions: &[f64],
+    window: usize,
+) -> Vec<f64> {
+    if trains.is_empty() || window == 0 {
+        return vec![];
+    }
+    let min_len = trains.iter().map(|t| t.len()).min().unwrap_or(0);
+    let n_bins = min_len / window;
+    if n_bins == 0 {
+        return vec![];
+    }
+    let mut decoded = Vec::with_capacity(n_bins);
+    for b in 0..n_bins {
+        let mut sx = 0.0_f64;
+        let mut sy = 0.0_f64;
+        for (i, t) in trains.iter().enumerate() {
+            let count: i64 = t[b * window..(b + 1) * window]
+                .iter()
+                .map(|&v| v as i64)
+                .sum();
+            let dir = preferred_directions.get(i).copied().unwrap_or(0.0);
+            sx += count as f64 * dir.cos();
+            sy += count as f64 * dir.sin();
+        }
+        decoded.push(sy.atan2(sx));
+    }
+    decoded
+}
+
+/// Bayesian MAP decoder (Dayan & Abbott 2001).
+/// spike_counts: (n_neurons,). tuning_rates: (n_stimuli × n_neurons, row-major flat).
+/// prior: (n_stimuli,) or empty for uniform. Returns MAP stimulus index.
+pub fn bayesian_decode(
+    spike_counts: &[f64],
+    tuning_rates: &[f64],
+    n_stimuli: usize,
+    n_neurons: usize,
+    prior: &[f64],
+) -> usize {
+    if n_stimuli == 0 || n_neurons == 0 {
+        return 0;
+    }
+    let use_uniform = prior.is_empty();
+    let log_prior_uniform = -(n_stimuli as f64).ln();
+
+    let mut best_s = 0_usize;
+    let mut best_lp = f64::NEG_INFINITY;
+
+    for s in 0..n_stimuli {
+        let mut lp = if use_uniform {
+            log_prior_uniform
+        } else {
+            (prior.get(s).copied().unwrap_or(1e-30) + 1e-30).ln()
+        };
+        for j in 0..n_neurons {
+            let lam = tuning_rates[s * n_neurons + j].max(1e-10);
+            let n_j = spike_counts.get(j).copied().unwrap_or(0.0);
+            lp += n_j * lam.ln() - lam;
+        }
+        if lp > best_lp {
+            best_lp = lp;
+            best_s = s;
+        }
+    }
+    best_s
+}
+
+/// Maximum likelihood stimulus decoder (Dayan & Abbott 2001). Uniform prior.
+pub fn maximum_likelihood_decode(
+    spike_counts: &[f64],
+    tuning_rates: &[f64],
+    n_stimuli: usize,
+    n_neurons: usize,
+) -> usize {
+    bayesian_decode(spike_counts, tuning_rates, n_stimuli, n_neurons, &[])
+}
+
+/// Fisher linear discriminant decoder (Fisher 1936).
+/// train_data: (n_samples × n_features, row-major flat). labels: (n_samples,).
+/// test_point: (n_features,). Returns predicted class label.
+pub fn linear_discriminant_decode(
+    train_data: &[f64],
+    n_samples: usize,
+    n_features: usize,
+    labels: &[i64],
+    test_point: &[f64],
+) -> i64 {
+    if n_samples == 0 || n_features == 0 {
+        return 0;
+    }
+
+    // Unique classes
+    let mut classes: Vec<i64> = labels[..n_samples].to_vec();
+    classes.sort();
+    classes.dedup();
+    if classes.len() < 2 {
+        return classes.first().copied().unwrap_or(0);
+    }
+
+    // Class means
+    let mut class_means: Vec<Vec<f64>> = Vec::new();
+    let mut class_indices: Vec<Vec<usize>> = Vec::new();
+    for &c in &classes {
+        let indices: Vec<usize> = (0..n_samples).filter(|&i| labels[i] == c).collect();
+        let mut mean = vec![0.0_f64; n_features];
+        for &idx in &indices {
+            for f in 0..n_features {
+                mean[f] += train_data[idx * n_features + f];
+            }
+        }
+        let n = indices.len() as f64;
+        for v in &mut mean {
+            *v /= n;
+        }
+        class_means.push(mean);
+        class_indices.push(indices);
+    }
+
+    // Within-class scatter S_w (n_features × n_features)
+    let nf = n_features;
+    let mut s_w = vec![0.0_f64; nf * nf];
+    for (ci, indices) in class_indices.iter().enumerate() {
+        let mean = &class_means[ci];
+        for &idx in indices {
+            for i in 0..nf {
+                let di = train_data[idx * nf + i] - mean[i];
+                for j in 0..nf {
+                    let dj = train_data[idx * nf + j] - mean[j];
+                    s_w[i * nf + j] += di * dj;
+                }
+            }
+        }
+    }
+    // Regularise
+    for i in 0..nf {
+        s_w[i * nf + i] += 1e-8;
+    }
+
+    // Overall mean
+    let mut overall_mean = vec![0.0_f64; nf];
+    for i in 0..n_samples {
+        for f in 0..nf {
+            overall_mean[f] += train_data[i * nf + f];
+        }
+    }
+    for v in &mut overall_mean {
+        *v /= n_samples as f64;
+    }
+
+    // For each class: w = S_w^{-1} (mean_c - overall_mean), score = w . test_point
+    let mut best_class = classes[0];
+    let mut best_score = f64::NEG_INFINITY;
+
+    for (ci, &c) in classes.iter().enumerate() {
+        let diff: Vec<f64> = (0..nf)
+            .map(|f| class_means[ci][f] - overall_mean[f])
+            .collect();
+        let w = solve_linear(&s_w, &diff, nf);
+        let score: f64 = (0..nf).map(|f| w[f] * test_point[f]).sum();
+        if score > best_score {
+            best_score = score;
+            best_class = c;
+        }
+    }
+    best_class
+}
+
+/// Gaussian naive Bayes decoder (Mitchell 1997).
+/// train_data: (n_samples × n_features, row-major flat). labels: (n_samples,).
+/// test_point: (n_features,). Returns predicted class label.
+pub fn naive_bayes_decode(
+    train_data: &[f64],
+    n_samples: usize,
+    n_features: usize,
+    labels: &[i64],
+    test_point: &[f64],
+) -> i64 {
+    if n_samples == 0 || n_features == 0 {
+        return 0;
+    }
+
+    let mut classes: Vec<i64> = labels[..n_samples].to_vec();
+    classes.sort();
+    classes.dedup();
+
+    let mut best_class = classes.first().copied().unwrap_or(0);
+    let mut best_log_p = f64::NEG_INFINITY;
+
+    for &c in &classes {
+        let indices: Vec<usize> = (0..n_samples).filter(|&i| labels[i] == c).collect();
+        let n_c = indices.len() as f64;
+        let log_prior = (n_c / n_samples as f64).ln();
+
+        // Per-feature mean and variance
+        let mut log_likelihood = 0.0_f64;
+        for f in 0..n_features {
+            let vals: Vec<f64> = indices
+                .iter()
+                .map(|&i| train_data[i * n_features + f])
+                .collect();
+            let mu: f64 = vals.iter().sum::<f64>() / n_c;
+            let var: f64 = vals.iter().map(|&v| (v - mu).powi(2)).sum::<f64>() / n_c + 1e-10;
+            let x = test_point[f];
+            log_likelihood += -0.5 * ((2.0 * PI * var).ln() + (x - mu).powi(2) / var);
+        }
+
+        let log_p = log_prior + log_likelihood;
+        if log_p > best_log_p {
+            best_log_p = log_p;
+            best_class = c;
+        }
+    }
+    best_class
+}
+
+/// Solve A x = b via Gaussian elimination with partial pivoting.
+fn solve_linear(a: &[f64], b: &[f64], n: usize) -> Vec<f64> {
+    let mut aug = vec![0.0_f64; n * (n + 1)];
+    for i in 0..n {
+        for j in 0..n {
+            aug[i * (n + 1) + j] = a[i * n + j];
+        }
+        aug[i * (n + 1) + n] = b[i];
+    }
+    let stride = n + 1;
+    for col in 0..n {
+        let mut max_row = col;
+        let mut max_val = aug[col * stride + col].abs();
+        for row in (col + 1)..n {
+            let v = aug[row * stride + col].abs();
+            if v > max_val {
+                max_val = v;
+                max_row = row;
+            }
+        }
+        if max_row != col {
+            for j in 0..stride {
+                aug.swap(col * stride + j, max_row * stride + j);
+            }
+        }
+        let pivot = aug[col * stride + col];
+        if pivot.abs() < 1e-30 {
+            continue;
+        }
+        for row in (col + 1)..n {
+            let factor = aug[row * stride + col] / pivot;
+            for j in col..stride {
+                aug[row * stride + j] -= factor * aug[col * stride + j];
+            }
+        }
+    }
+    let mut x = vec![0.0_f64; n];
+    for i in (0..n).rev() {
+        let mut sum = aug[i * stride + n];
+        for j in (i + 1)..n {
+            sum -= aug[i * stride + j] * x[j];
+        }
+        let diag = aug[i * stride + i];
+        x[i] = if diag.abs() > 1e-30 { sum / diag } else { 0.0 };
+    }
+    x
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ── population_vector_decode ────────────────────────────────────
+
+    #[test]
+    fn test_pv_single_neuron_right() {
+        // Single neuron with preferred direction 0 (right)
+        let train = vec![1i32; 100];
+        let trains: Vec<&[i32]> = vec![&train];
+        let dirs = vec![0.0_f64]; // 0 radians = right
+        let decoded = population_vector_decode(&trains, &dirs, 50);
+        assert_eq!(decoded.len(), 2);
+        assert!((decoded[0] - 0.0).abs() < 1e-10, "should decode to 0 rad");
+    }
+
+    #[test]
+    fn test_pv_two_neurons_45deg() {
+        // Two neurons: one at 0, one at π/2, equal firing → 45°
+        let train = vec![1i32; 100];
+        let trains: Vec<&[i32]> = vec![&train, &train];
+        let dirs = vec![0.0, PI / 2.0];
+        let decoded = population_vector_decode(&trains, &dirs, 100);
+        assert_eq!(decoded.len(), 1);
+        assert!(
+            (decoded[0] - PI / 4.0).abs() < 1e-10,
+            "equal firing at 0 and π/2 → π/4, got {}",
+            decoded[0]
+        );
+    }
+
+    #[test]
+    fn test_pv_empty() {
+        let decoded = population_vector_decode(&[], &[], 50);
+        assert!(decoded.is_empty());
+    }
+
+    #[test]
+    fn test_pv_no_bins() {
+        let train = vec![1i32; 10];
+        let trains: Vec<&[i32]> = vec![&train];
+        let decoded = population_vector_decode(&trains, &[0.0], 100);
+        assert!(decoded.is_empty(), "train shorter than window → empty");
+    }
+
+    // ── bayesian_decode ─────────────────────────────────────────────
+
+    #[test]
+    fn test_bayesian_obvious() {
+        // 2 stimuli, 2 neurons. Stimulus 0: high rate neuron 0, low neuron 1.
+        let tuning = vec![10.0, 0.1, 0.1, 10.0]; // 2×2
+        let counts = vec![8.0, 0.0]; // neuron 0 fires a lot → stimulus 0
+        let s = bayesian_decode(&counts, &tuning, 2, 2, &[]);
+        assert_eq!(s, 0, "high neuron 0 firing → stimulus 0");
+    }
+
+    #[test]
+    fn test_bayesian_with_prior() {
+        let tuning = vec![5.0, 5.0, 5.0, 5.0]; // equal tuning
+        let counts = vec![5.0, 5.0];
+        let prior = vec![0.1, 0.9]; // strong prior for stimulus 1
+        let s = bayesian_decode(&counts, &tuning, 2, 2, &prior);
+        assert_eq!(s, 1, "equal evidence + strong prior → stimulus 1");
+    }
+
+    #[test]
+    fn test_bayesian_empty() {
+        assert_eq!(bayesian_decode(&[], &[], 0, 0, &[]), 0);
+    }
+
+    // ── maximum_likelihood_decode ───────────────────────────────────
+
+    #[test]
+    fn test_ml_matches_bayesian_uniform() {
+        let tuning = vec![10.0, 0.1, 0.1, 10.0];
+        let counts = vec![0.0, 8.0]; // neuron 1 fires → stimulus 1
+        let s_ml = maximum_likelihood_decode(&counts, &tuning, 2, 2);
+        let s_bay = bayesian_decode(&counts, &tuning, 2, 2, &[]);
+        assert_eq!(s_ml, s_bay);
+        assert_eq!(s_ml, 1);
+    }
+
+    // ── linear_discriminant_decode ──────────────────────────────────
+
+    #[test]
+    fn test_lda_separable() {
+        // Class 0: features around (0, 0). Class 1: around (10, 10).
+        // Fisher score = w . test where w = S_w_inv * (mean_c - overall_mean).
+        // Test points at class centroids for unambiguous projection.
+        #[rustfmt::skip]
+        let data = vec![
+            0.0, 0.0,
+            0.1, 0.1,
+            -0.1, 0.1,
+            10.0, 10.0,
+            10.1, 9.9,
+            9.9, 10.1,
+        ];
+        let labels = vec![0_i64, 0, 0, 1, 1, 1];
+        // Test at class centroids: class 1 centroid should decode to 1
+        let test_1 = vec![10.0, 10.0];
+        assert_eq!(linear_discriminant_decode(&data, 6, 2, &labels, &test_1), 1);
+        // Two different tests should give different classes
+        let r0 = linear_discriminant_decode(&data, 6, 2, &labels, &[-5.0, -5.0]);
+        let r1 = linear_discriminant_decode(&data, 6, 2, &labels, &[15.0, 15.0]);
+        assert_ne!(r0, r1, "distant points should decode to different classes");
+    }
+
+    #[test]
+    fn test_lda_single_class() {
+        let data = vec![1.0, 2.0, 3.0, 4.0];
+        let labels = vec![5_i64, 5];
+        let test = vec![2.0, 3.0];
+        assert_eq!(linear_discriminant_decode(&data, 2, 2, &labels, &test), 5);
+    }
+
+    #[test]
+    fn test_lda_empty() {
+        assert_eq!(linear_discriminant_decode(&[], 0, 0, &[], &[]), 0);
+    }
+
+    // ── naive_bayes_decode ──────────────────────────────────────────
+
+    #[test]
+    fn test_nb_separable() {
+        #[rustfmt::skip]
+        let data = vec![
+            0.0, 0.0,
+            0.1, 0.1,
+            -0.1, -0.1,
+            10.0, 10.0,
+            10.1, 10.1,
+            9.9, 9.9,
+        ];
+        let labels = vec![0_i64, 0, 0, 1, 1, 1];
+        let test_0 = vec![0.2, 0.2];
+        let test_1 = vec![9.8, 9.8];
+        assert_eq!(naive_bayes_decode(&data, 6, 2, &labels, &test_0), 0);
+        assert_eq!(naive_bayes_decode(&data, 6, 2, &labels, &test_1), 1);
+    }
+
+    #[test]
+    fn test_nb_single_class() {
+        let data = vec![1.0, 2.0];
+        let labels = vec![7_i64];
+        assert_eq!(naive_bayes_decode(&data, 1, 2, &labels, &[1.0, 2.0]), 7);
+    }
+
+    #[test]
+    fn test_nb_agrees_with_lda_simple() {
+        // For well-separated Gaussian data, NB and LDA should agree
+        #[rustfmt::skip]
+        let data = vec![
+            -5.0, -5.0,
+            -4.9, -5.1,
+            5.0, 5.0,
+            5.1, 4.9,
+        ];
+        let labels = vec![0_i64, 0, 1, 1];
+        let test = vec![4.0, 4.0];
+        let lda = linear_discriminant_decode(&data, 4, 2, &labels, &test);
+        let nb = naive_bayes_decode(&data, 4, 2, &labels, &test);
+        assert_eq!(lda, nb, "well-separated → both predict same class");
+    }
+
+    // ── solve_linear ────────────────────────────────────────────────
+
+    #[test]
+    fn test_solve_2x2() {
+        let a = vec![2.0, 1.0, 1.0, 3.0];
+        let b = vec![5.0, 10.0];
+        let x = solve_linear(&a, &b, 2);
+        assert!((x[0] - 1.0).abs() < 1e-10);
+        assert!((x[1] - 3.0).abs() < 1e-10);
+    }
+}

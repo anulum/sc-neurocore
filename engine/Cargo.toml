@@ -37,8 +37,10 @@ numpy = "0.28"
 ndarray = "0.16"
 rand = "0.10"
 rand_chacha = "0.10"
+rand_distr = "0.6"
 rand_xoshiro = "0.8"
 rayon = "1.10"
+rustfft = "6.2"
 
 [dev-dependencies]
 criterion = { version = "0.8", features = ["html_reports"] }

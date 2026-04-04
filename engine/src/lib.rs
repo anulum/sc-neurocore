@@ -513,6 +513,76 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_hurst_exponent, m)?)?;
     m.add_function(wrap_pyfunction!(py_approximate_entropy, m)?)?;
     m.add_function(wrap_pyfunction!(py_sample_entropy, m)?)?;
+    // correlation
+    m.add_function(wrap_pyfunction!(py_cross_correlation, m)?)?;
+    m.add_function(wrap_pyfunction!(py_pairwise_correlation, m)?)?;
+    m.add_function(wrap_pyfunction!(py_event_synchronization, m)?)?;
+    m.add_function(wrap_pyfunction!(py_spike_train_coherence, m)?)?;
+    m.add_function(wrap_pyfunction!(py_spike_time_tiling_coefficient, m)?)?;
+    m.add_function(wrap_pyfunction!(py_covariance_matrix, m)?)?;
+    m.add_function(wrap_pyfunction!(py_autocorrelation_time, m)?)?;
+    m.add_function(wrap_pyfunction!(py_noise_correlation, m)?)?;
+    m.add_function(wrap_pyfunction!(py_signal_correlation, m)?)?;
+    m.add_function(wrap_pyfunction!(py_spike_count_covariance, m)?)?;
+    m.add_function(wrap_pyfunction!(py_joint_psth, m)?)?;
+    m.add_function(wrap_pyfunction!(py_coincidence_index, m)?)?;
+    // distance
+    m.add_function(wrap_pyfunction!(py_van_rossum_distance, m)?)?;
+    m.add_function(wrap_pyfunction!(py_victor_purpura_distance, m)?)?;
+    m.add_function(wrap_pyfunction!(py_isi_distance, m)?)?;
+    m.add_function(wrap_pyfunction!(py_spike_distance, m)?)?;
+    m.add_function(wrap_pyfunction!(py_spike_sync, m)?)?;
+    m.add_function(wrap_pyfunction!(py_spike_sync_profile, m)?)?;
+    m.add_function(wrap_pyfunction!(py_spike_profile, m)?)?;
+    m.add_function(wrap_pyfunction!(py_isi_profile, m)?)?;
+    m.add_function(wrap_pyfunction!(py_adaptive_spike_distance, m)?)?;
+    m.add_function(wrap_pyfunction!(py_schreiber_similarity, m)?)?;
+    m.add_function(wrap_pyfunction!(py_hunter_milton_similarity, m)?)?;
+    m.add_function(wrap_pyfunction!(py_earth_movers_distance, m)?)?;
+    m.add_function(wrap_pyfunction!(py_multi_neuron_victor_purpura, m)?)?;
+    m.add_function(wrap_pyfunction!(py_spike_distance_matrix, m)?)?;
+    // information
+    m.add_function(wrap_pyfunction!(py_mutual_information, m)?)?;
+    m.add_function(wrap_pyfunction!(py_transfer_entropy, m)?)?;
+    m.add_function(wrap_pyfunction!(py_spike_train_entropy, m)?)?;
+    m.add_function(wrap_pyfunction!(py_noise_entropy, m)?)?;
+    m.add_function(wrap_pyfunction!(py_stimulus_specific_information, m)?)?;
+    m.add_function(wrap_pyfunction!(py_kozachenko_leonenko_mi, m)?)?;
+    // causality
+    m.add_function(wrap_pyfunction!(py_pairwise_granger_causality, m)?)?;
+    m.add_function(wrap_pyfunction!(py_conditional_granger_causality, m)?)?;
+    m.add_function(wrap_pyfunction!(py_spectral_granger_causality, m)?)?;
+    m.add_function(wrap_pyfunction!(py_partial_directed_coherence, m)?)?;
+    m.add_function(wrap_pyfunction!(py_directed_transfer_function, m)?)?;
+    // decoding
+    m.add_function(wrap_pyfunction!(py_population_vector_decode, m)?)?;
+    m.add_function(wrap_pyfunction!(py_bayesian_decode, m)?)?;
+    m.add_function(wrap_pyfunction!(py_maximum_likelihood_decode, m)?)?;
+    m.add_function(wrap_pyfunction!(py_linear_discriminant_decode, m)?)?;
+    m.add_function(wrap_pyfunction!(py_naive_bayes_decode, m)?)?;
+    // network
+    m.add_function(wrap_pyfunction!(py_functional_connectivity, m)?)?;
+    m.add_function(wrap_pyfunction!(py_unitary_events, m)?)?;
+    m.add_function(wrap_pyfunction!(py_cell_assembly_detection, m)?)?;
+    m.add_function(wrap_pyfunction!(py_synfire_chain_detection, m)?)?;
+    // surrogates
+    m.add_function(wrap_pyfunction!(py_surrogate_isi_shuffle, m)?)?;
+    m.add_function(wrap_pyfunction!(py_surrogate_dither, m)?)?;
+    m.add_function(wrap_pyfunction!(py_homogeneous_poisson, m)?)?;
+    m.add_function(wrap_pyfunction!(py_gamma_process, m)?)?;
+    m.add_function(wrap_pyfunction!(py_compound_poisson_process, m)?)?;
+    m.add_function(wrap_pyfunction!(py_surrogate_joint_isi, m)?)?;
+    m.add_function(wrap_pyfunction!(py_surrogate_bin_shuffling, m)?)?;
+    m.add_function(wrap_pyfunction!(py_surrogate_spike_train_shifting, m)?)?;
+    // temporal
+    m.add_function(wrap_pyfunction!(py_burst_detection, m)?)?;
+    m.add_function(wrap_pyfunction!(py_first_spike_latency, m)?)?;
+    m.add_function(wrap_pyfunction!(py_response_onset, m)?)?;
+    m.add_function(wrap_pyfunction!(py_change_point_detection, m)?)?;
+    // patterns
+    m.add_function(wrap_pyfunction!(py_spike_directionality, m)?)?;
+    m.add_function(wrap_pyfunction!(py_spike_train_order, m)?)?;
+    m.add_function(wrap_pyfunction!(py_cubic_higher_order, m)?)?;
     Ok(())
 }
 
@@ -2852,4 +2922,933 @@ fn py_approximate_entropy(binary_train: PyReadonlyArray1<'_, i32>, m: usize, r_f
 fn py_sample_entropy(binary_train: PyReadonlyArray1<'_, i32>, m: usize, r_factor: f64) -> f64 {
     let data = binary_train.as_slice().unwrap();
     analysis::variability::sample_entropy(data, m, r_factor)
+}
+
+// ── Correlation PyO3 wrappers (P0-A: spike_stats/correlation) ────
+
+#[pyfunction]
+#[pyo3(signature = (train_a, train_b, max_lag_ms=50.0, dt=0.001))]
+fn py_cross_correlation(
+    py: Python<'_>,
+    train_a: PyReadonlyArray1<'_, i32>,
+    train_b: PyReadonlyArray1<'_, i32>,
+    max_lag_ms: f64,
+    dt: f64,
+) -> (Py<PyArray1<f64>>, Py<PyArray1<f64>>) {
+    let a = train_a.as_slice().unwrap();
+    let b = train_b.as_slice().unwrap();
+    let (cc, lags) = analysis::correlation::cross_correlation(a, b, max_lag_ms, dt);
+    (cc.into_pyarray(py).into(), lags.into_pyarray(py).into())
+}
+
+#[pyfunction]
+#[pyo3(signature = (trains, dt=0.001))]
+fn py_pairwise_correlation(
+    py: Python<'_>,
+    trains: Vec<PyReadonlyArray1<'_, i32>>,
+    dt: f64,
+) -> Py<PyArray2<f64>> {
+    let vecs: Vec<Vec<i32>> = trains
+        .iter()
+        .map(|t| t.as_slice().unwrap().to_vec())
+        .collect();
+    let refs: Vec<&[i32]> = vecs.iter().map(|v| v.as_slice()).collect();
+    let mat = analysis::correlation::pairwise_correlation(&refs, dt);
+    let n = mat.len();
+    let flat: Vec<f64> = mat.into_iter().flatten().collect();
+    numpy::PyArray2::from_vec2(py, &flat.chunks(n).map(|c| c.to_vec()).collect::<Vec<_>>())
+        .unwrap()
+        .into()
+}
+
+#[pyfunction]
+#[pyo3(signature = (train_a, train_b, dt=0.001, tau_ms=5.0))]
+fn py_event_synchronization(
+    train_a: PyReadonlyArray1<'_, i32>,
+    train_b: PyReadonlyArray1<'_, i32>,
+    dt: f64,
+    tau_ms: f64,
+) -> f64 {
+    let a = train_a.as_slice().unwrap();
+    let b = train_b.as_slice().unwrap();
+    analysis::correlation::event_synchronization(a, b, dt, tau_ms)
+}
+
+#[pyfunction]
+#[pyo3(signature = (train_a, train_b, dt=0.001))]
+fn py_spike_train_coherence(
+    py: Python<'_>,
+    train_a: PyReadonlyArray1<'_, i32>,
+    train_b: PyReadonlyArray1<'_, i32>,
+    dt: f64,
+) -> (Py<PyArray1<f64>>, Py<PyArray1<f64>>) {
+    let a = train_a.as_slice().unwrap();
+    let b = train_b.as_slice().unwrap();
+    let (coh, freqs) = analysis::correlation::spike_train_coherence(a, b, dt);
+    (coh.into_pyarray(py).into(), freqs.into_pyarray(py).into())
+}
+
+#[pyfunction]
+#[pyo3(signature = (train_a, train_b, dt=0.001, delta_ms=5.0))]
+fn py_spike_time_tiling_coefficient(
+    train_a: PyReadonlyArray1<'_, i32>,
+    train_b: PyReadonlyArray1<'_, i32>,
+    dt: f64,
+    delta_ms: f64,
+) -> f64 {
+    let a = train_a.as_slice().unwrap();
+    let b = train_b.as_slice().unwrap();
+    analysis::correlation::spike_time_tiling_coefficient(a, b, dt, delta_ms)
+}
+
+#[pyfunction]
+#[pyo3(signature = (trains, bin_size=10))]
+fn py_covariance_matrix(
+    py: Python<'_>,
+    trains: Vec<PyReadonlyArray1<'_, i32>>,
+    bin_size: usize,
+) -> Py<PyArray2<f64>> {
+    let vecs: Vec<Vec<i32>> = trains
+        .iter()
+        .map(|t| t.as_slice().unwrap().to_vec())
+        .collect();
+    let refs: Vec<&[i32]> = vecs.iter().map(|v| v.as_slice()).collect();
+    let mat = analysis::correlation::covariance_matrix(&refs, bin_size);
+    let n = mat.len();
+    let rows: Vec<Vec<f64>> = mat.into_iter().collect();
+    numpy::PyArray2::from_vec2(py, &rows)
+        .unwrap_or_else(|_| numpy::PyArray2::zeros(py, [n, n], false))
+        .into()
+}
+
+#[pyfunction]
+#[pyo3(signature = (binary_train, dt=0.001, max_lag_ms=100.0))]
+fn py_autocorrelation_time(
+    binary_train: PyReadonlyArray1<'_, i32>,
+    dt: f64,
+    max_lag_ms: f64,
+) -> f64 {
+    let data = binary_train.as_slice().unwrap();
+    analysis::correlation::autocorrelation_time(data, dt, max_lag_ms)
+}
+
+#[pyfunction]
+#[pyo3(signature = (trains, bin_size=50))]
+fn py_noise_correlation(
+    py: Python<'_>,
+    trains: Vec<PyReadonlyArray1<'_, i32>>,
+    bin_size: usize,
+) -> Py<PyArray2<f64>> {
+    let vecs: Vec<Vec<i32>> = trains
+        .iter()
+        .map(|t| t.as_slice().unwrap().to_vec())
+        .collect();
+    let refs: Vec<&[i32]> = vecs.iter().map(|v| v.as_slice()).collect();
+    let mat = analysis::correlation::noise_correlation(&refs, bin_size);
+    let rows: Vec<Vec<f64>> = mat.into_iter().collect();
+    let n = rows.len();
+    numpy::PyArray2::from_vec2(py, &rows)
+        .unwrap_or_else(|_| numpy::PyArray2::zeros(py, [n, n], false))
+        .into()
+}
+
+#[pyfunction]
+#[pyo3(signature = (trains, bin_size=50))]
+fn py_signal_correlation(
+    py: Python<'_>,
+    trains: Vec<PyReadonlyArray1<'_, i32>>,
+    bin_size: usize,
+) -> Py<PyArray2<f64>> {
+    let vecs: Vec<Vec<i32>> = trains
+        .iter()
+        .map(|t| t.as_slice().unwrap().to_vec())
+        .collect();
+    let refs: Vec<&[i32]> = vecs.iter().map(|v| v.as_slice()).collect();
+    let mat = analysis::correlation::signal_correlation(&refs, bin_size);
+    let rows: Vec<Vec<f64>> = mat.into_iter().collect();
+    let n = rows.len();
+    numpy::PyArray2::from_vec2(py, &rows)
+        .unwrap_or_else(|_| numpy::PyArray2::zeros(py, [n, n], false))
+        .into()
+}
+
+#[pyfunction]
+#[pyo3(signature = (trains, window=50))]
+fn py_spike_count_covariance(
+    py: Python<'_>,
+    trains: Vec<PyReadonlyArray1<'_, i32>>,
+    window: usize,
+) -> Py<PyArray2<f64>> {
+    let vecs: Vec<Vec<i32>> = trains
+        .iter()
+        .map(|t| t.as_slice().unwrap().to_vec())
+        .collect();
+    let refs: Vec<&[i32]> = vecs.iter().map(|v| v.as_slice()).collect();
+    let mat = analysis::correlation::spike_count_covariance(&refs, window);
+    let rows: Vec<Vec<f64>> = mat.into_iter().collect();
+    let n = rows.len();
+    numpy::PyArray2::from_vec2(py, &rows)
+        .unwrap_or_else(|_| numpy::PyArray2::zeros(py, [n, n], false))
+        .into()
+}
+
+#[pyfunction]
+#[pyo3(signature = (train_a, train_b, bin_size=10))]
+fn py_joint_psth(
+    py: Python<'_>,
+    train_a: PyReadonlyArray1<'_, i32>,
+    train_b: PyReadonlyArray1<'_, i32>,
+    bin_size: usize,
+) -> Py<PyArray2<f64>> {
+    let a = train_a.as_slice().unwrap();
+    let b = train_b.as_slice().unwrap();
+    let (flat, n) = analysis::correlation::joint_psth(a, b, bin_size);
+    if n == 0 {
+        return numpy::PyArray2::zeros(py, [0, 0], false).into();
+    }
+    let rows: Vec<Vec<f64>> = flat.chunks(n).map(|c| c.to_vec()).collect();
+    numpy::PyArray2::from_vec2(py, &rows).unwrap().into()
+}
+
+#[pyfunction]
+#[pyo3(signature = (train_a, train_b, dt=0.001, delta_ms=2.0))]
+fn py_coincidence_index(
+    train_a: PyReadonlyArray1<'_, i32>,
+    train_b: PyReadonlyArray1<'_, i32>,
+    dt: f64,
+    delta_ms: f64,
+) -> f64 {
+    let a = train_a.as_slice().unwrap();
+    let b = train_b.as_slice().unwrap();
+    analysis::correlation::coincidence_index(a, b, dt, delta_ms)
+}
+
+// ── Distance PyO3 wrappers (P0-A: spike_stats/distance) ─────────
+
+#[pyfunction]
+#[pyo3(signature = (train_a, train_b, dt=0.001, tau_ms=10.0))]
+fn py_van_rossum_distance(
+    train_a: PyReadonlyArray1<'_, i32>,
+    train_b: PyReadonlyArray1<'_, i32>,
+    dt: f64,
+    tau_ms: f64,
+) -> f64 {
+    let a = train_a.as_slice().unwrap();
+    let b = train_b.as_slice().unwrap();
+    analysis::distance::van_rossum_distance(a, b, dt, tau_ms)
+}
+
+#[pyfunction]
+#[pyo3(signature = (times_a, times_b, cost_per_s=1000.0))]
+fn py_victor_purpura_distance(
+    times_a: PyReadonlyArray1<'_, f64>,
+    times_b: PyReadonlyArray1<'_, f64>,
+    cost_per_s: f64,
+) -> f64 {
+    let a = times_a.as_slice().unwrap();
+    let b = times_b.as_slice().unwrap();
+    analysis::distance::victor_purpura_distance(a, b, cost_per_s)
+}
+
+#[pyfunction]
+#[pyo3(signature = (train_a, train_b, dt=0.001))]
+fn py_isi_distance(
+    train_a: PyReadonlyArray1<'_, i32>,
+    train_b: PyReadonlyArray1<'_, i32>,
+    dt: f64,
+) -> f64 {
+    let a = train_a.as_slice().unwrap();
+    let b = train_b.as_slice().unwrap();
+    analysis::distance::isi_distance(a, b, dt)
+}
+
+#[pyfunction]
+#[pyo3(signature = (times_a, times_b, t_start=0.0, t_end=1.0))]
+fn py_spike_distance(
+    times_a: PyReadonlyArray1<'_, f64>,
+    times_b: PyReadonlyArray1<'_, f64>,
+    t_start: f64,
+    t_end: f64,
+) -> f64 {
+    let a = times_a.as_slice().unwrap();
+    let b = times_b.as_slice().unwrap();
+    analysis::distance::spike_distance(a, b, t_start, t_end)
+}
+
+#[pyfunction]
+#[pyo3(signature = (times_a, times_b, t_start=0.0, t_end=1.0))]
+fn py_spike_sync(
+    times_a: PyReadonlyArray1<'_, f64>,
+    times_b: PyReadonlyArray1<'_, f64>,
+    t_start: f64,
+    t_end: f64,
+) -> f64 {
+    let a = times_a.as_slice().unwrap();
+    let b = times_b.as_slice().unwrap();
+    analysis::distance::spike_sync(a, b, t_start, t_end)
+}
+
+#[pyfunction]
+#[pyo3(signature = (times_a, times_b, n_bins=50, t_start=0.0, t_end=1.0))]
+fn py_spike_sync_profile(
+    py: Python<'_>,
+    times_a: PyReadonlyArray1<'_, f64>,
+    times_b: PyReadonlyArray1<'_, f64>,
+    n_bins: usize,
+    t_start: f64,
+    t_end: f64,
+) -> Py<PyArray1<f64>> {
+    let a = times_a.as_slice().unwrap();
+    let b = times_b.as_slice().unwrap();
+    analysis::distance::spike_sync_profile(a, b, n_bins, t_start, t_end)
+        .into_pyarray(py)
+        .into()
+}
+
+#[pyfunction]
+#[pyo3(signature = (times_a, times_b, n_bins=50, t_start=0.0, t_end=1.0))]
+fn py_spike_profile(
+    py: Python<'_>,
+    times_a: PyReadonlyArray1<'_, f64>,
+    times_b: PyReadonlyArray1<'_, f64>,
+    n_bins: usize,
+    t_start: f64,
+    t_end: f64,
+) -> Py<PyArray1<f64>> {
+    let a = times_a.as_slice().unwrap();
+    let b = times_b.as_slice().unwrap();
+    analysis::distance::spike_profile(a, b, n_bins, t_start, t_end)
+        .into_pyarray(py)
+        .into()
+}
+
+#[pyfunction]
+#[pyo3(signature = (binary_train_a, binary_train_b, dt=0.001, n_bins=50))]
+fn py_isi_profile(
+    py: Python<'_>,
+    binary_train_a: PyReadonlyArray1<'_, i32>,
+    binary_train_b: PyReadonlyArray1<'_, i32>,
+    dt: f64,
+    n_bins: usize,
+) -> Py<PyArray1<f64>> {
+    let a = binary_train_a.as_slice().unwrap();
+    let b = binary_train_b.as_slice().unwrap();
+    analysis::distance::isi_profile(a, b, dt, n_bins)
+        .into_pyarray(py)
+        .into()
+}
+
+#[pyfunction]
+#[pyo3(signature = (times_a, times_b, t_start=0.0, t_end=1.0, cost=0.0))]
+fn py_adaptive_spike_distance(
+    times_a: PyReadonlyArray1<'_, f64>,
+    times_b: PyReadonlyArray1<'_, f64>,
+    t_start: f64,
+    t_end: f64,
+    cost: f64,
+) -> f64 {
+    let a = times_a.as_slice().unwrap();
+    let b = times_b.as_slice().unwrap();
+    analysis::distance::adaptive_spike_distance(a, b, t_start, t_end, cost)
+}
+
+#[pyfunction]
+#[pyo3(signature = (train_a, train_b, dt=0.001, sigma_ms=5.0))]
+fn py_schreiber_similarity(
+    train_a: PyReadonlyArray1<'_, i32>,
+    train_b: PyReadonlyArray1<'_, i32>,
+    dt: f64,
+    sigma_ms: f64,
+) -> f64 {
+    let a = train_a.as_slice().unwrap();
+    let b = train_b.as_slice().unwrap();
+    analysis::distance::schreiber_similarity(a, b, dt, sigma_ms)
+}
+
+#[pyfunction]
+#[pyo3(signature = (times_a, times_b, dt_max=0.01))]
+fn py_hunter_milton_similarity(
+    times_a: PyReadonlyArray1<'_, f64>,
+    times_b: PyReadonlyArray1<'_, f64>,
+    dt_max: f64,
+) -> f64 {
+    let a = times_a.as_slice().unwrap();
+    let b = times_b.as_slice().unwrap();
+    analysis::distance::hunter_milton_similarity(a, b, dt_max)
+}
+
+#[pyfunction]
+#[pyo3(signature = (times_a, times_b, t_start=0.0, t_end=1.0, n_bins=100))]
+fn py_earth_movers_distance(
+    times_a: PyReadonlyArray1<'_, f64>,
+    times_b: PyReadonlyArray1<'_, f64>,
+    t_start: f64,
+    t_end: f64,
+    n_bins: usize,
+) -> f64 {
+    let a = times_a.as_slice().unwrap();
+    let b = times_b.as_slice().unwrap();
+    analysis::distance::earth_movers_distance(a, b, t_start, t_end, n_bins)
+}
+
+#[pyfunction]
+#[pyo3(signature = (spike_times_list, cost_per_s=1000.0))]
+fn py_multi_neuron_victor_purpura(
+    py: Python<'_>,
+    spike_times_list: Vec<PyReadonlyArray1<'_, f64>>,
+    cost_per_s: f64,
+) -> Py<PyArray2<f64>> {
+    let vecs: Vec<Vec<f64>> = spike_times_list
+        .iter()
+        .map(|t| t.as_slice().unwrap().to_vec())
+        .collect();
+    let refs: Vec<&[f64]> = vecs.iter().map(|v| v.as_slice()).collect();
+    let mat = analysis::distance::multi_neuron_victor_purpura(&refs, cost_per_s);
+    let rows: Vec<Vec<f64>> = mat.into_iter().collect();
+    let n = rows.len();
+    numpy::PyArray2::from_vec2(py, &rows)
+        .unwrap_or_else(|_| numpy::PyArray2::zeros(py, [n, n], false))
+        .into()
+}
+
+#[pyfunction]
+#[pyo3(signature = (spike_times_list, metric="spike_distance", t_start=0.0, t_end=1.0))]
+fn py_spike_distance_matrix(
+    py: Python<'_>,
+    spike_times_list: Vec<PyReadonlyArray1<'_, f64>>,
+    metric: &str,
+    t_start: f64,
+    t_end: f64,
+) -> Py<PyArray2<f64>> {
+    let vecs: Vec<Vec<f64>> = spike_times_list
+        .iter()
+        .map(|t| t.as_slice().unwrap().to_vec())
+        .collect();
+    let refs: Vec<&[f64]> = vecs.iter().map(|v| v.as_slice()).collect();
+    let mat = analysis::distance::spike_distance_matrix(&refs, metric, t_start, t_end);
+    let rows: Vec<Vec<f64>> = mat.into_iter().collect();
+    let n = rows.len();
+    numpy::PyArray2::from_vec2(py, &rows)
+        .unwrap_or_else(|_| numpy::PyArray2::zeros(py, [n, n], false))
+        .into()
+}
+
+// ── Information PyO3 wrappers (P0-A: spike_stats/information) ────
+
+#[pyfunction]
+#[pyo3(signature = (train_a, train_b, bin_size=10))]
+fn py_mutual_information(
+    train_a: PyReadonlyArray1<'_, i32>,
+    train_b: PyReadonlyArray1<'_, i32>,
+    bin_size: usize,
+) -> f64 {
+    let a = train_a.as_slice().unwrap();
+    let b = train_b.as_slice().unwrap();
+    analysis::information::mutual_information(a, b, bin_size)
+}
+
+#[pyfunction]
+#[pyo3(signature = (source, target, bin_size=10, lag=1))]
+fn py_transfer_entropy(
+    source: PyReadonlyArray1<'_, i32>,
+    target: PyReadonlyArray1<'_, i32>,
+    bin_size: usize,
+    lag: usize,
+) -> f64 {
+    let s = source.as_slice().unwrap();
+    let t = target.as_slice().unwrap();
+    analysis::information::transfer_entropy(s, t, bin_size, lag)
+}
+
+#[pyfunction]
+#[pyo3(signature = (binary_train, bin_size=10, word_length=4))]
+fn py_spike_train_entropy(
+    binary_train: PyReadonlyArray1<'_, i32>,
+    bin_size: usize,
+    word_length: usize,
+) -> f64 {
+    let data = binary_train.as_slice().unwrap();
+    analysis::information::spike_train_entropy(data, bin_size, word_length)
+}
+
+#[pyfunction]
+#[pyo3(signature = (binary_train, n_trials=10, bin_size=10, word_length=4))]
+fn py_noise_entropy(
+    binary_train: PyReadonlyArray1<'_, i32>,
+    n_trials: usize,
+    bin_size: usize,
+    word_length: usize,
+) -> f64 {
+    let data = binary_train.as_slice().unwrap();
+    analysis::information::noise_entropy(data, n_trials, bin_size, word_length)
+}
+
+#[pyfunction]
+fn py_stimulus_specific_information(
+    spike_counts: PyReadonlyArray1<'_, f64>,
+    stimulus_ids: PyReadonlyArray1<'_, i64>,
+) -> f64 {
+    let counts = spike_counts.as_slice().unwrap();
+    let ids = stimulus_ids.as_slice().unwrap();
+    analysis::information::stimulus_specific_information(counts, ids)
+}
+
+#[pyfunction]
+#[pyo3(signature = (x, y, k=3))]
+fn py_kozachenko_leonenko_mi(
+    x: PyReadonlyArray1<'_, f64>,
+    y: PyReadonlyArray1<'_, f64>,
+    k: usize,
+) -> f64 {
+    let xd = x.as_slice().unwrap();
+    let yd = y.as_slice().unwrap();
+    analysis::information::kozachenko_leonenko_mi(xd, yd, k)
+}
+
+// ── Causality PyO3 wrappers (P0-A: spike_stats/causality) ───────
+
+#[pyfunction]
+#[pyo3(signature = (source, target, bin_size=10, order=5))]
+fn py_pairwise_granger_causality(
+    source: PyReadonlyArray1<'_, i32>,
+    target: PyReadonlyArray1<'_, i32>,
+    bin_size: usize,
+    order: usize,
+) -> f64 {
+    let s = source.as_slice().unwrap();
+    let t = target.as_slice().unwrap();
+    analysis::causality::pairwise_granger_causality(s, t, bin_size, order)
+}
+
+#[pyfunction]
+#[pyo3(signature = (source, target, condition, bin_size=10, order=5))]
+fn py_conditional_granger_causality(
+    source: PyReadonlyArray1<'_, i32>,
+    target: PyReadonlyArray1<'_, i32>,
+    condition: PyReadonlyArray1<'_, i32>,
+    bin_size: usize,
+    order: usize,
+) -> f64 {
+    let s = source.as_slice().unwrap();
+    let t = target.as_slice().unwrap();
+    let c = condition.as_slice().unwrap();
+    analysis::causality::conditional_granger_causality(s, t, c, bin_size, order)
+}
+
+#[pyfunction]
+#[pyo3(signature = (trains, bin_size=10, order=5, n_freqs=64))]
+fn py_spectral_granger_causality(
+    py: Python<'_>,
+    trains: Vec<PyReadonlyArray1<'_, i32>>,
+    bin_size: usize,
+    order: usize,
+    n_freqs: usize,
+) -> (Py<PyArray1<f64>>, usize, usize) {
+    let vecs: Vec<Vec<i32>> = trains
+        .iter()
+        .map(|t| t.as_slice().unwrap().to_vec())
+        .collect();
+    let refs: Vec<&[i32]> = vecs.iter().map(|v| v.as_slice()).collect();
+    let (gc, d) = analysis::causality::spectral_granger_causality(&refs, bin_size, order, n_freqs);
+    (gc.into_pyarray(py).into(), d, n_freqs)
+}
+
+#[pyfunction]
+#[pyo3(signature = (trains, bin_size=10, order=5, n_freqs=64))]
+fn py_partial_directed_coherence(
+    py: Python<'_>,
+    trains: Vec<PyReadonlyArray1<'_, i32>>,
+    bin_size: usize,
+    order: usize,
+    n_freqs: usize,
+) -> (Py<PyArray1<f64>>, usize, usize) {
+    let vecs: Vec<Vec<i32>> = trains
+        .iter()
+        .map(|t| t.as_slice().unwrap().to_vec())
+        .collect();
+    let refs: Vec<&[i32]> = vecs.iter().map(|v| v.as_slice()).collect();
+    let (pdc, d) = analysis::causality::partial_directed_coherence(&refs, bin_size, order, n_freqs);
+    (pdc.into_pyarray(py).into(), d, n_freqs)
+}
+
+#[pyfunction]
+#[pyo3(signature = (trains, bin_size=10, order=5, n_freqs=64))]
+fn py_directed_transfer_function(
+    py: Python<'_>,
+    trains: Vec<PyReadonlyArray1<'_, i32>>,
+    bin_size: usize,
+    order: usize,
+    n_freqs: usize,
+) -> (Py<PyArray1<f64>>, usize, usize) {
+    let vecs: Vec<Vec<i32>> = trains
+        .iter()
+        .map(|t| t.as_slice().unwrap().to_vec())
+        .collect();
+    let refs: Vec<&[i32]> = vecs.iter().map(|v| v.as_slice()).collect();
+    let (dtf, d) = analysis::causality::directed_transfer_function(&refs, bin_size, order, n_freqs);
+    (dtf.into_pyarray(py).into(), d, n_freqs)
+}
+
+// ── Decoding PyO3 wrappers (P0-A: spike_stats/decoding) ─────────
+
+#[pyfunction]
+#[pyo3(signature = (trains, preferred_directions, window=50))]
+fn py_population_vector_decode(
+    py: Python<'_>,
+    trains: Vec<PyReadonlyArray1<'_, i32>>,
+    preferred_directions: PyReadonlyArray1<'_, f64>,
+    window: usize,
+) -> Py<PyArray1<f64>> {
+    let vecs: Vec<Vec<i32>> = trains
+        .iter()
+        .map(|t| t.as_slice().unwrap().to_vec())
+        .collect();
+    let refs: Vec<&[i32]> = vecs.iter().map(|v| v.as_slice()).collect();
+    let dirs = preferred_directions.as_slice().unwrap();
+    analysis::decoding::population_vector_decode(&refs, dirs, window)
+        .into_pyarray(py)
+        .into()
+}
+
+#[pyfunction]
+#[pyo3(signature = (spike_counts, tuning_rates, n_stimuli, n_neurons, prior=None))]
+fn py_bayesian_decode(
+    spike_counts: PyReadonlyArray1<'_, f64>,
+    tuning_rates: PyReadonlyArray1<'_, f64>,
+    n_stimuli: usize,
+    n_neurons: usize,
+    prior: Option<PyReadonlyArray1<'_, f64>>,
+) -> usize {
+    let counts = spike_counts.as_slice().unwrap();
+    let rates = tuning_rates.as_slice().unwrap();
+    let p: Vec<f64> = prior
+        .map(|p| p.as_slice().unwrap().to_vec())
+        .unwrap_or_default();
+    analysis::decoding::bayesian_decode(counts, rates, n_stimuli, n_neurons, &p)
+}
+
+#[pyfunction]
+fn py_maximum_likelihood_decode(
+    spike_counts: PyReadonlyArray1<'_, f64>,
+    tuning_rates: PyReadonlyArray1<'_, f64>,
+    n_stimuli: usize,
+    n_neurons: usize,
+) -> usize {
+    let counts = spike_counts.as_slice().unwrap();
+    let rates = tuning_rates.as_slice().unwrap();
+    analysis::decoding::maximum_likelihood_decode(counts, rates, n_stimuli, n_neurons)
+}
+
+#[pyfunction]
+fn py_linear_discriminant_decode(
+    train_data: PyReadonlyArray1<'_, f64>,
+    n_samples: usize,
+    n_features: usize,
+    labels: PyReadonlyArray1<'_, i64>,
+    test_point: PyReadonlyArray1<'_, f64>,
+) -> i64 {
+    let data = train_data.as_slice().unwrap();
+    let lbl = labels.as_slice().unwrap();
+    let tp = test_point.as_slice().unwrap();
+    analysis::decoding::linear_discriminant_decode(data, n_samples, n_features, lbl, tp)
+}
+
+#[pyfunction]
+fn py_naive_bayes_decode(
+    train_data: PyReadonlyArray1<'_, f64>,
+    n_samples: usize,
+    n_features: usize,
+    labels: PyReadonlyArray1<'_, i64>,
+    test_point: PyReadonlyArray1<'_, f64>,
+) -> i64 {
+    let data = train_data.as_slice().unwrap();
+    let lbl = labels.as_slice().unwrap();
+    let tp = test_point.as_slice().unwrap();
+    analysis::decoding::naive_bayes_decode(data, n_samples, n_features, lbl, tp)
+}
+
+// ── Network PyO3 wrappers (P0-A: spike_stats/network) ───────────
+
+#[pyfunction]
+#[pyo3(signature = (trains, max_lag_ms=20.0, dt=0.001))]
+fn py_functional_connectivity(
+    py: Python<'_>,
+    trains: Vec<PyReadonlyArray1<'_, i32>>,
+    max_lag_ms: f64,
+    dt: f64,
+) -> Py<PyArray2<f64>> {
+    let vecs: Vec<Vec<i32>> = trains
+        .iter()
+        .map(|t| t.as_slice().unwrap().to_vec())
+        .collect();
+    let refs: Vec<&[i32]> = vecs.iter().map(|v| v.as_slice()).collect();
+    let mat = analysis::network::functional_connectivity(&refs, max_lag_ms, dt);
+    let n = refs.len();
+    let rows: Vec<Vec<f64>> = mat.chunks(n).map(|c| c.to_vec()).collect();
+    numpy::PyArray2::from_vec2(py, &rows)
+        .unwrap_or_else(|_| numpy::PyArray2::zeros(py, [n, n], false))
+        .into()
+}
+
+#[pyfunction]
+#[pyo3(signature = (trains, bin_size=5, alpha=0.05))]
+fn py_unitary_events(
+    py: Python<'_>,
+    trains: Vec<PyReadonlyArray1<'_, i32>>,
+    bin_size: usize,
+    alpha: f64,
+) -> Py<PyArray1<i64>> {
+    let vecs: Vec<Vec<i32>> = trains
+        .iter()
+        .map(|t| t.as_slice().unwrap().to_vec())
+        .collect();
+    let refs: Vec<&[i32]> = vecs.iter().map(|v| v.as_slice()).collect();
+    let result = analysis::network::unitary_events(&refs, bin_size, alpha);
+    let as_i64: Vec<i64> = result.into_iter().map(|v| v as i64).collect();
+    as_i64.into_pyarray(py).into()
+}
+
+#[pyfunction]
+#[pyo3(signature = (trains, bin_size=5, threshold=2.0))]
+fn py_cell_assembly_detection(
+    trains: Vec<PyReadonlyArray1<'_, i32>>,
+    bin_size: usize,
+    threshold: f64,
+) -> Vec<Vec<usize>> {
+    let vecs: Vec<Vec<i32>> = trains
+        .iter()
+        .map(|t| t.as_slice().unwrap().to_vec())
+        .collect();
+    let refs: Vec<&[i32]> = vecs.iter().map(|v| v.as_slice()).collect();
+    analysis::network::cell_assembly_detection(&refs, bin_size, threshold)
+}
+
+#[pyfunction]
+#[pyo3(signature = (trains, dt=0.001, max_delay_ms=20.0, min_chain_length=3))]
+fn py_synfire_chain_detection(
+    trains: Vec<PyReadonlyArray1<'_, i32>>,
+    dt: f64,
+    max_delay_ms: f64,
+    min_chain_length: usize,
+) -> Vec<Vec<usize>> {
+    let vecs: Vec<Vec<i32>> = trains
+        .iter()
+        .map(|t| t.as_slice().unwrap().to_vec())
+        .collect();
+    let refs: Vec<&[i32]> = vecs.iter().map(|v| v.as_slice()).collect();
+    analysis::network::synfire_chain_detection(&refs, dt, max_delay_ms, min_chain_length)
+}
+
+// ── Surrogates PyO3 wrappers (P0-A: spike_stats/surrogates) ─────
+
+#[pyfunction]
+#[pyo3(signature = (binary_train, seed=0))]
+fn py_surrogate_isi_shuffle(
+    py: Python<'_>,
+    binary_train: PyReadonlyArray1<'_, i32>,
+    seed: u64,
+) -> Py<PyArray1<i32>> {
+    let data = binary_train.as_slice().unwrap();
+    analysis::surrogates::surrogate_isi_shuffle(data, seed)
+        .into_pyarray(py)
+        .into()
+}
+
+#[pyfunction]
+#[pyo3(signature = (binary_train, dither_ms=5.0, dt=0.001, seed=0))]
+fn py_surrogate_dither(
+    py: Python<'_>,
+    binary_train: PyReadonlyArray1<'_, i32>,
+    dither_ms: f64,
+    dt: f64,
+    seed: u64,
+) -> Py<PyArray1<i32>> {
+    let data = binary_train.as_slice().unwrap();
+    analysis::surrogates::surrogate_dither(data, dither_ms, dt, seed)
+        .into_pyarray(py)
+        .into()
+}
+
+#[pyfunction]
+#[pyo3(signature = (rate_hz, duration_s, dt=0.001, seed=0))]
+fn py_homogeneous_poisson(
+    py: Python<'_>,
+    rate_hz: f64,
+    duration_s: f64,
+    dt: f64,
+    seed: u64,
+) -> Py<PyArray1<f64>> {
+    analysis::surrogates::homogeneous_poisson(rate_hz, duration_s, dt, seed)
+        .into_pyarray(py)
+        .into()
+}
+
+#[pyfunction]
+#[pyo3(signature = (rate_hz, shape, duration_s, dt=0.001, seed=0))]
+fn py_gamma_process(
+    py: Python<'_>,
+    rate_hz: f64,
+    shape: f64,
+    duration_s: f64,
+    dt: f64,
+    seed: u64,
+) -> Py<PyArray1<f64>> {
+    analysis::surrogates::gamma_process(rate_hz, shape, duration_s, dt, seed)
+        .into_pyarray(py)
+        .into()
+}
+
+#[pyfunction]
+#[pyo3(signature = (rate_hz, burst_mean, duration_s, dt=0.001, seed=0))]
+fn py_compound_poisson_process(
+    py: Python<'_>,
+    rate_hz: f64,
+    burst_mean: f64,
+    duration_s: f64,
+    dt: f64,
+    seed: u64,
+) -> Py<PyArray1<f64>> {
+    analysis::surrogates::compound_poisson_process(rate_hz, burst_mean, duration_s, dt, seed)
+        .into_pyarray(py)
+        .into()
+}
+
+#[pyfunction]
+#[pyo3(signature = (binary_train, seed=0))]
+fn py_surrogate_joint_isi(
+    py: Python<'_>,
+    binary_train: PyReadonlyArray1<'_, i32>,
+    seed: u64,
+) -> Py<PyArray1<i32>> {
+    let data = binary_train.as_slice().unwrap();
+    analysis::surrogates::surrogate_joint_isi(data, seed)
+        .into_pyarray(py)
+        .into()
+}
+
+#[pyfunction]
+#[pyo3(signature = (binary_train, bin_size=10, seed=0))]
+fn py_surrogate_bin_shuffling(
+    py: Python<'_>,
+    binary_train: PyReadonlyArray1<'_, i32>,
+    bin_size: usize,
+    seed: u64,
+) -> Py<PyArray1<i32>> {
+    let data = binary_train.as_slice().unwrap();
+    analysis::surrogates::surrogate_bin_shuffling(data, bin_size, seed)
+        .into_pyarray(py)
+        .into()
+}
+
+#[pyfunction]
+#[pyo3(signature = (binary_train, max_shift=50, seed=0))]
+fn py_surrogate_spike_train_shifting(
+    py: Python<'_>,
+    binary_train: PyReadonlyArray1<'_, i32>,
+    max_shift: usize,
+    seed: u64,
+) -> Py<PyArray1<i32>> {
+    let data = binary_train.as_slice().unwrap();
+    analysis::surrogates::surrogate_spike_train_shifting(data, max_shift, seed)
+        .into_pyarray(py)
+        .into()
+}
+
+// ── Temporal PyO3 wrappers (P0-A: spike_stats/temporal) ─────────
+
+#[pyfunction]
+#[pyo3(signature = (binary_train, dt=0.001, max_isi_ms=10.0, min_spikes=3))]
+fn py_burst_detection(
+    binary_train: PyReadonlyArray1<'_, i32>,
+    dt: f64,
+    max_isi_ms: f64,
+    min_spikes: usize,
+) -> Vec<(f64, f64, usize)> {
+    let data = binary_train.as_slice().unwrap();
+    analysis::temporal::burst_detection(data, dt, max_isi_ms, min_spikes)
+}
+
+#[pyfunction]
+#[pyo3(signature = (binary_train, dt=0.001))]
+fn py_first_spike_latency(binary_train: PyReadonlyArray1<'_, i32>, dt: f64) -> f64 {
+    let data = binary_train.as_slice().unwrap();
+    analysis::temporal::first_spike_latency(data, dt)
+}
+
+#[pyfunction]
+#[pyo3(signature = (binary_train, baseline_steps=100, dt=0.001, threshold_sigma=3.0))]
+fn py_response_onset(
+    binary_train: PyReadonlyArray1<'_, i32>,
+    baseline_steps: usize,
+    dt: f64,
+    threshold_sigma: f64,
+) -> f64 {
+    let data = binary_train.as_slice().unwrap();
+    analysis::temporal::response_onset(data, baseline_steps, dt, threshold_sigma)
+}
+
+#[pyfunction]
+#[pyo3(signature = (binary_train, bin_size=50, threshold=3.0))]
+fn py_change_point_detection(
+    py: Python<'_>,
+    binary_train: PyReadonlyArray1<'_, i32>,
+    bin_size: usize,
+    threshold: f64,
+) -> Py<PyArray1<i64>> {
+    let data = binary_train.as_slice().unwrap();
+    let cps = analysis::temporal::change_point_detection(data, bin_size, threshold);
+    let as_i64: Vec<i64> = cps.into_iter().map(|v| v as i64).collect();
+    as_i64.into_pyarray(py).into()
+}
+
+// ── Patterns PyO3 wrappers (P0-A: spike_stats/patterns) ─────────
+
+#[pyfunction]
+#[pyo3(signature = (times_a, times_b, t_start=0.0, t_end=1.0))]
+fn py_spike_directionality(
+    times_a: PyReadonlyArray1<'_, f64>,
+    times_b: PyReadonlyArray1<'_, f64>,
+    t_start: f64,
+    t_end: f64,
+) -> f64 {
+    let a = times_a.as_slice().unwrap();
+    let b = times_b.as_slice().unwrap();
+    analysis::patterns::spike_directionality(a, b, t_start, t_end)
+}
+
+#[pyfunction]
+#[pyo3(signature = (times_list, t_start=0.0, t_end=1.0))]
+fn py_spike_train_order(
+    py: Python<'_>,
+    times_list: Vec<PyReadonlyArray1<'_, f64>>,
+    t_start: f64,
+    t_end: f64,
+) -> Py<PyArray2<f64>> {
+    let vecs: Vec<Vec<f64>> = times_list
+        .iter()
+        .map(|t| t.as_slice().unwrap().to_vec())
+        .collect();
+    let refs: Vec<&[f64]> = vecs.iter().map(|v| v.as_slice()).collect();
+    let mat = analysis::patterns::spike_train_order(&refs, t_start, t_end);
+    let n = refs.len();
+    let rows: Vec<Vec<f64>> = mat.chunks(n).map(|c| c.to_vec()).collect();
+    numpy::PyArray2::from_vec2(py, &rows)
+        .unwrap_or_else(|_| numpy::PyArray2::zeros(py, [n, n], false))
+        .into()
+}
+
+#[pyfunction]
+#[pyo3(signature = (binary_train, dt=0.001, max_lag=20))]
+fn py_cubic_higher_order(
+    py: Python<'_>,
+    binary_train: PyReadonlyArray1<'_, i32>,
+    dt: f64,
+    max_lag: usize,
+) -> Py<PyArray2<f64>> {
+    let data = binary_train.as_slice().unwrap();
+    let c3 = analysis::patterns::cubic_higher_order(data, dt, max_lag);
+    let rows: Vec<Vec<f64>> = c3.chunks(max_lag).map(|c| c.to_vec()).collect();
+    numpy::PyArray2::from_vec2(py, &rows)
+        .unwrap_or_else(|_| numpy::PyArray2::zeros(py, [max_lag, max_lag], false))
+        .into()
 }
