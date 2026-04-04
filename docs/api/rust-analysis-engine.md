@@ -232,16 +232,171 @@ cargo test --lib analysis::spectral
 cargo test --lib analysis::gpfa
 ```
 
+## Benchmark Results
+
+Measured with Criterion 0.8 on mining rig (i7-11700, DDR4-3200).
+Values are median latency in nanoseconds. Hardware: 5x RX 6600 XT +
+GTX 1060 (GPUs unused — pure CPU benchmarks).
+
+### basic
+
+| Function | 100 | 10K | 100K |
+|----------|----:|----:|-----:|
+| spike_times | 142 ns | 7.9 us | 102 us |
+| isi | 176 ns | 8.5 us | 100 us |
+| firing_rate | 24 ns | 1.6 us | 23 us |
+| bin_spike_train | 62 ns | 3.6 us | 49 us |
+
+### rate
+
+| Function | 100 | 10K | 100K |
+|----------|----:|----:|-----:|
+| instantaneous_rate | 5.7 us | 446 us | 4.1 ms |
+
+### variability
+
+| Function | 100 | 10K | 100K |
+|----------|----:|----:|-----:|
+| cv_isi | 146 ns | 9.8 us | 125 us |
+| fano_factor | 98 ns | 6.5 us | 75 us |
+| sample_entropy | 46 us | 4.3 ms | O(n^2) — not benchmarked |
+
+### correlation
+
+| Function | 100 | 10K |
+|----------|----:|----:|
+| cross_correlation | 8.8 us | 1.5 ms |
+| event_synchronization | 212 ns | 73 us |
+
+### distance
+
+| Function | 100 | 5K |
+|----------|----:|---:|
+| van_rossum | 1.4 us | 388 us |
+| victor_purpura | 258 ns | 339 us |
+| isi_distance | 254 ns | 8.3 us |
+
+### information
+
+| Function | 100 | 10K |
+|----------|----:|----:|
+| mutual_information | 1.0 us | 70 us |
+| transfer_entropy | 1.3 us | 91 us |
+
+### causality
+
+| Function | 100 | 5K |
+|----------|----:|---:|
+| pairwise_granger | 157 ns | 113 us |
+
+### decoding
+
+| Function | Latency |
+|----------|--------:|
+| population_vector_decode (20n, 1000t) | 10.7 us |
+| bayesian_decode (20n, 8 stim) | 982 ns |
+
+### network
+
+| Function | Latency |
+|----------|--------:|
+| functional_connectivity (10n, 2000t) | 4.3 ms |
+
+### surrogates
+
+| Function | 1K | 100K |
+|----------|---:|-----:|
+| isi_shuffle | 1.2 us | 139 us |
+| homogeneous_poisson | 3.5 us | 316 us |
+
+### temporal
+
+| Function | 1K | 100K |
+|----------|---:|-----:|
+| burst_detection | 1.0 us | 131 us |
+| change_point_detection | 347 ns | 39 us |
+
+### patterns
+
+| Function | Latency |
+|----------|--------:|
+| spike_directionality (5K) | 68 us |
+| cubic_higher_order (5K, lag=20) | 2.2 ms |
+
+### spectral
+
+| Function | 256 | 10K | 100K |
+|----------|----:|----:|-----:|
+| power_spectrum | 4.0 us | 194 us | 5.7 ms |
+
+### waveform (64 samples)
+
+| Function | Latency |
+|----------|--------:|
+| waveform_width | 63 ns |
+| waveform_amplitude | 39 ns |
+| waveform_repolarization_slope | 75 ns |
+| waveform_halfwidth | 216 ns |
+| waveform_pt_ratio | 61 ns |
+
+### point_process
+
+| Function | 1K | 100K |
+|----------|---:|-----:|
+| conditional_intensity | 25 us | 3.0 ms |
+| isi_hazard | 1.5 us | 126 us |
+
+### statistics
+
+| Function | Latency |
+|----------|--------:|
+| significance_bootstrap (200 surr) | 727 us |
+
+### stimulus
+
+| Function | 1K | 50K |
+|----------|---:|----:|
+| spike_triggered_average | 1.4 us | 85 us |
+| spatial_information | 4.7 us | 224 us |
+
+### lfp
+
+| Function | 500 | 10K |
+|----------|----:|----:|
+| phase_locking_value | 34 us | 628 us |
+| spike_field_coherence | 13 us | 330 us |
+
+### sorting_quality
+
+| Function | Latency |
+|----------|--------:|
+| isolation_distance (50 pts, 4D) | 8.9 us |
+| isolation_distance (200 pts, 4D) | 33 us |
+| silhouette_score (100 pts, 4D) | 40 us |
+| silhouette_score (400 pts, 4D) | 544 us |
+| isi_violation_rate (5K) | 4.2 us |
+
+### dimensionality
+
+| Function | Latency |
+|----------|--------:|
+| pca (10n, 2000t) | 58 us |
+| factor_analysis (10n, 2000t, 20 iter) | 531 us |
+
+### gpfa
+
+| Function | Latency |
+|----------|--------:|
+| gpfa (4n, 500t, 5 EM iter) | 5.8 ms |
+
+### spade
+
+| Function | Latency |
+|----------|--------:|
+| spade_detect (3n, 500t, 50 surr) | 811 us |
+
 ## Performance Notes
 
-The Rust analysis modules outperform their Python/NumPy counterparts
-on all functions by virtue of zero-copy array access and elimination
-of Python interpreter overhead. The largest gains are in:
-
-- **SPADE** (O(2^n * T * S) surrogate testing): 10-50x faster
-- **GPFA** (dense matrix operations per EM iteration): 5-20x faster
-- **Sorting quality** (O(n^2 * d) distance computations): 5-15x faster
-- **Cross-correlation** (sliding window): 3-10x faster
-
-All functions are single-threaded. Parallelisation is left to the
+All functions are single-threaded pure CPU. Benchmarks run via
+`cargo bench --bench analysis_bench`. Parallelisation is left to the
 Python caller via `concurrent.futures` or joblib.
