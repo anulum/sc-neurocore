@@ -188,6 +188,9 @@ pub enum NeuronVariant {
     TUM(TUMNetwork),
     ElBoustani(ElBoustaniNetwork),
 
+    // misc.rs (step(f64)->i32)
+    GradedSynapse(GradedSynapseNeuron),
+
     // Not wired (multi-arg / i32 input / f64 return / no reset):
     // Alpha (2 args), COBALIF (3 args), TsodyksMarkram (bool arg),
     // CompteWM (bool arg), McCullochPitts (no reset), SigmoidRate (f64 ret),
@@ -252,6 +255,7 @@ macro_rules! all_variants {
             Granule, Golgi, Stellate, Lugaro, UnipolarBrush, DCN,
             PersistentNa, Ih, TTypeCa, ATypeK, BK, SK, NMDA,
             MontbrioMPR, Brunel, TUM, ElBoustani,
+            GradedSynapse,
         )
     };
 }
@@ -405,6 +409,8 @@ impl NeuronVariant {
             NeuronVariant::Brunel(n) => n.r_e,
             NeuronVariant::TUM(n) => n.r,
             NeuronVariant::ElBoustani(n) => n.r_e,
+            // misc
+            NeuronVariant::GradedSynapse(n) => n.v,
         }
     }
 }
@@ -936,6 +942,8 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         "BrunelNetwork" | "Brunel" => Ok(NeuronVariant::Brunel(BrunelNetwork::new())),
         "TUMNetwork" | "TUM" => Ok(NeuronVariant::TUM(TUMNetwork::new())),
         "ElBoustaniNetwork" | "ElBoustani" => Ok(NeuronVariant::ElBoustani(ElBoustaniNetwork::new())),
+        // misc
+        "GradedSynapseNeuron" | "GradedSynapse" => Ok(NeuronVariant::GradedSynapse(GradedSynapseNeuron::new())),
         _ => Err(format!("Unsupported model: '{name}'")),
     }
 }
@@ -1052,6 +1060,8 @@ pub fn supported_models() -> Vec<&'static str> {
         "BrunelNetwork",
         "TUMNetwork",
         "ElBoustaniNetwork",
+        // misc
+        "GradedSynapseNeuron",
     ]
 }
 

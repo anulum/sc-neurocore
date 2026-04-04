@@ -155,6 +155,12 @@ cargo bench --bench analysis_bench -- --quick
 | TUM (STP) | 100k | 15.63 ms | **156.3 ns** | Rate + depression + facilitation, 3 ODEs |
 | El Boustani (NMDA) | 100k | 6.05 ms | **60.5 ns** | E/I + NMDA gating, 3 ODEs |
 
+### Miscellaneous (`neurons/misc.rs`) — Phase 3H
+
+| Model | Steps | Median | Per step | Notes |
+|-------|-------|--------|----------|-------|
+| Graded synapse | 100k | 4.66 ms | **46.6 ns** | Non-spiking, passive RC + release sigmoid |
+
 ---
 
 ## Analysis Modules (`analysis_bench`)
