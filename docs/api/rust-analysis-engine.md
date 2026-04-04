@@ -234,9 +234,9 @@ cargo test --lib analysis::gpfa
 
 ## Benchmark Results
 
-Measured with Criterion 0.8 on mining rig (i7-11700, DDR4-3200).
-Values are median latency in nanoseconds. Hardware: 5x RX 6600 XT +
-GTX 1060 (GPUs unused — pure CPU benchmarks).
+Measured with Criterion 0.8 on mining rig (i5-11600K @ 3.90 GHz, DDR4-2400).
+Values are median latency. GPUs unused — pure CPU benchmarks.
+Hardware verified via `lscpu` on 2026-04-04.
 
 ### basic
 

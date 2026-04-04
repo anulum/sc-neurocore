@@ -1,7 +1,8 @@
 # Rust Engine Benchmarks
 
 All measurements via Criterion 0.8, single-threaded, pure CPU.
-Hardware: i5-11600K (6C/12T, 3.9 GHz), DDR4-2400, Ubuntu 24.04.
+Hardware: 11th Gen Intel Core i5-11600K @ 3.90 GHz (6C/12T), DDR4-2400, Ubuntu 24.04.
+Verified via `lscpu` on 2026-04-04.
 
 Last updated: 2026-04-04.
 
