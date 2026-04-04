@@ -7,6 +7,7 @@
 
 pub mod ai_optimized;
 pub mod biophysical;
+pub mod cerebellar;
 pub mod hardware;
 pub mod interneurons;
 pub mod maps;
@@ -20,6 +21,7 @@ pub mod trivial;
 
 pub use ai_optimized::*;
 pub use biophysical::*;
+pub use cerebellar::*;
 pub use hardware::*;
 pub use interneurons::*;
 pub use maps::*;

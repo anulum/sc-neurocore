@@ -24,6 +24,7 @@ use sc_neurocore_engine::neurons::{
     InnerHairCell, RodPhotoreceptor, RetinalGanglionCell, MerkelCell,
     PacinianCorpuscle, Nociceptor, OlfactoryReceptorNeuron,
     AlphaMotorNeuron,
+    GranuleCell,
 };
 use sc_neurocore_engine::scpn::KuramotoSolver;
 use sc_neurocore_engine::simd::{fused_and_popcount_dispatch, pack_dispatch, popcount_dispatch};
@@ -484,6 +485,14 @@ fn bench_all(c: &mut Criterion) {
         b.iter(|| {
             let mut n = OlfactoryReceptorNeuron::new();
             for _ in 0..10_000 { black_box(n.step(5.0)); }
+        })
+    });
+
+    // -- Cerebellar Neurons (Phase 3D) --
+    c.bench_function("granule_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = GranuleCell::new();
+            for _ in 0..10_000 { black_box(n.step(15.0)); }
         })
     });
 }
