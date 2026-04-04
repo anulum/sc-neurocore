@@ -20,6 +20,9 @@ with SIMD-accelerated bitstream operations, IR compilation, and HDC support.
 | `scpn` | SCPN layer primitives (Petri net places/transitions) |
 | `simd` | Platform-adaptive SIMD kernels (AVX2, SSE4.1, NEON, portable) |
 | `analysis` | **22 spike train analysis modules** (see [Rust Analysis Engine](rust-analysis-engine.md)) |
+| `neurons` | **100+ neuron models** — biophysical, maps, hardware, interneurons |
+
+**[Criterion Benchmarks →](rust-benchmarks.md)** — all measured latencies for engine, neurons, and analysis.
 
 ## Building from Source
 
