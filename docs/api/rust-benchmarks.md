@@ -151,6 +151,7 @@ cargo bench --bench analysis_bench -- --quick
 | Model | Steps | Median | Per step | Notes |
 |-------|-------|--------|----------|-------|
 | Montbrio-Pazo-Roxin | 100k | 3.92 ms | **39.2 ns** | Exact mean-field of QIF |
+| Brunel balanced | 100k | 3.48 ms | **34.8 ns** | E/I balance, 2 rate ODEs |
 
 ---
 
