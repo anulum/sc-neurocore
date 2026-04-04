@@ -167,6 +167,8 @@ pub enum NeuronVariant {
     Golgi(GolgiCell),
     Stellate(StellateCell),
     Lugaro(LugaroCell),
+    UnipolarBrush(UnipolarBrushCell),
+    DCN(DCNNeuron),
 
     // Not wired (multi-arg / i32 input / f64 return / no reset):
     // Alpha (2 args), COBALIF (3 args), TsodyksMarkram (bool arg),
@@ -229,7 +231,7 @@ macro_rules! all_variants {
             PVFastSpiking, SST, VIP, Chandelier, CerebellarBasket, Martinotti,
             AlphaMotor, GammaMotor, UpperMotor, Renshaw, MotorUnitCell,
             RetinalGanglion, Merkel, Pacinian, NociceptorCell, OlfactoryReceptor,
-            Granule, Golgi, Stellate, Lugaro,
+            Granule, Golgi, Stellate, Lugaro, UnipolarBrush, DCN,
         )
     };
 }
@@ -365,6 +367,8 @@ impl NeuronVariant {
             NeuronVariant::Golgi(n) => n.v,
             NeuronVariant::Stellate(n) => n.v,
             NeuronVariant::Lugaro(n) => n.v,
+            NeuronVariant::UnipolarBrush(n) => n.v,
+            NeuronVariant::DCN(n) => n.v,
         }
     }
 }
@@ -878,6 +882,8 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         "GolgiCell" | "Golgi" => Ok(NeuronVariant::Golgi(GolgiCell::new())),
         "StellateCell" | "Stellate" => Ok(NeuronVariant::Stellate(StellateCell::new())),
         "LugaroCell" | "Lugaro" => Ok(NeuronVariant::Lugaro(LugaroCell::new())),
+        "UnipolarBrushCell" | "UBC" => Ok(NeuronVariant::UnipolarBrush(UnipolarBrushCell::new())),
+        "DCNNeuron" | "DCN" => Ok(NeuronVariant::DCN(DCNNeuron::new())),
         _ => Err(format!("Unsupported model: '{name}'")),
     }
 }
@@ -976,6 +982,8 @@ pub fn supported_models() -> Vec<&'static str> {
         "GolgiCell",
         "StellateCell",
         "LugaroCell",
+        "UnipolarBrushCell",
+        "DCNNeuron",
     ]
 }
 
