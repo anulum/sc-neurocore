@@ -153,6 +153,7 @@ cargo bench --bench analysis_bench -- --quick
 | Montbrio-Pazo-Roxin | 100k | 3.92 ms | **39.2 ns** | Exact mean-field of QIF |
 | Brunel balanced | 100k | 3.48 ms | **34.8 ns** | E/I balance, 2 rate ODEs |
 | TUM (STP) | 100k | 15.63 ms | **156.3 ns** | Rate + depression + facilitation, 3 ODEs |
+| El Boustani (NMDA) | 100k | 6.05 ms | **60.5 ns** | E/I + NMDA gating, 3 ODEs |
 
 ---
 
