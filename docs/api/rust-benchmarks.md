@@ -160,6 +160,7 @@ cargo bench --bench analysis_bench -- --quick
 | Model | Steps | Median | Per step | Notes |
 |-------|-------|--------|----------|-------|
 | Graded synapse | 100k | 4.66 ms | **46.6 ns** | Non-spiking, passive RC + release sigmoid |
+| Gap junction | 100k | 6.28 ms | **62.8 ns** | LIF + electrical synapse coupling |
 
 ---
 
