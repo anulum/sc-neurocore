@@ -112,6 +112,15 @@ cargo bench --bench analysis_bench -- --quick
 > Alpha motor is the most expensive per-step model due to WB gating (50 sub-steps),
 > PIC evaluation, Ca2+ dynamics, and AHP computation at each sub-step.
 
+### Cerebellar Neurons (`neurons/cerebellar.rs`) — Phase 3D
+
+| Model | 10k steps | Per step | Sub-steps | Notes |
+|-------|-----------|----------|-----------|-------|
+| Granule cell | 466 µs | **46.6 ns** | 1 | LIF + tonic GABA + T-type Ca2+ |
+
+> Granule cell uses simple Euler integration with T-type Ca2+ gating for
+> rebound bursting. No sub-stepping needed.
+
 ---
 
 ## Analysis Modules (`analysis_bench`)

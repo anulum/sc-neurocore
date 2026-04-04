@@ -162,6 +162,9 @@ pub enum NeuronVariant {
     NociceptorCell(Nociceptor),
     OlfactoryReceptor(OlfactoryReceptorNeuron),
 
+    // cerebellar.rs (step(f64)->i32)
+    Granule(GranuleCell),
+
     // Not wired (multi-arg / i32 input / f64 return / no reset):
     // Alpha (2 args), COBALIF (3 args), TsodyksMarkram (bool arg),
     // CompteWM (bool arg), McCullochPitts (no reset), SigmoidRate (f64 ret),
@@ -223,6 +226,7 @@ macro_rules! all_variants {
             PVFastSpiking, SST, VIP, Chandelier, CerebellarBasket, Martinotti,
             AlphaMotor, GammaMotor, UpperMotor, Renshaw, MotorUnitCell,
             RetinalGanglion, Merkel, Pacinian, NociceptorCell, OlfactoryReceptor,
+            Granule,
         )
     };
 }
@@ -353,6 +357,8 @@ impl NeuronVariant {
             NeuronVariant::Pacinian(n) => n.v,
             NeuronVariant::NociceptorCell(n) => n.v,
             NeuronVariant::OlfactoryReceptor(n) => n.v,
+            // cerebellar
+            NeuronVariant::Granule(n) => n.v,
         }
     }
 }
@@ -861,6 +867,8 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         "OlfactoryReceptor" | "OlfactoryReceptorNeuron" => {
             Ok(NeuronVariant::OlfactoryReceptor(OlfactoryReceptorNeuron::new()))
         }
+        // cerebellar
+        "GranuleCell" | "Granule" => Ok(NeuronVariant::Granule(GranuleCell::new())),
         _ => Err(format!("Unsupported model: '{name}'")),
     }
 }
@@ -954,6 +962,8 @@ pub fn supported_models() -> Vec<&'static str> {
         "Pacinian",
         "Nociceptor",
         "OlfactoryReceptor",
+        // cerebellar
+        "GranuleCell",
     ]
 }
 

@@ -1423,6 +1423,9 @@ py_neuron_default!("UpperMotorNeuron", PyUpperMotorNeuron, neurons::UpperMotorNe
 py_neuron_default!("RenshawCell", PyRenshawCell, neurons::RenshawCell, state v, state h, state n, state adapt);
 py_neuron_default!("MotorUnit", PyMotorUnit, neurons::MotorUnit, state v, state adapt, state force);
 
+// cerebellar.rs models
+py_neuron_default!("GranuleCell", PyGranuleCell, neurons::GranuleCell, state v, state s);
+
 // ═══════════════════════════════════════════════════════════════════
 // sensory.rs models (10 sensory neuron types)
 // ═══════════════════════════════════════════════════════════════════
@@ -1719,6 +1722,8 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyNociceptor>()?;
     m.add_class::<PyOlfactoryReceptorNeuron>()?;
     m.add_class::<PyTasteReceptorCell>()?;
+    // cerebellar
+    m.add_class::<PyGranuleCell>()?;
     Ok(())
 }
 
