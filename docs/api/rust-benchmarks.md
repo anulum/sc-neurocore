@@ -126,6 +126,12 @@ cargo bench --bench analysis_bench -- --quick
 > Granule cell uses simple Euler integration with T-type Ca2+ gating for
 > rebound bursting. No sub-stepping needed.
 
+### Ion Channel Variant Neurons (`neurons/channels.rs`) — Phase 3E
+
+| Model | Steps | Median | Per step | Sub-steps | Notes |
+|-------|-------|--------|----------|-----------|-------|
+| Persistent Na+ | 1k | 3.06 ms | **3.06 µs** | 50 | WB + INaP subthreshold amplification |
+
 ---
 
 ## Analysis Modules (`analysis_bench`)
