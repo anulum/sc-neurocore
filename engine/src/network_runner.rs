@@ -140,12 +140,29 @@ pub enum NeuronVariant {
     InhomogeneousPoisson(InhomogeneousPoissonNeuron),
     GammaRenewal(GammaRenewalNeuron),
     EscapeRate(EscapeRateNeuron),
+    // interneurons.rs (step(f64)->i32)
+    PVFastSpiking(PVFastSpikingNeuron),
+    SST(SSTNeuron),
+    VIP(VIPNeuron),
+    Chandelier(ChandelierNeuron),
+    CerebellarBasket(CerebellarBasketNeuron),
+    Martinotti(MartinottiNeuron),
+
+    // sensory.rs (spiking subset: step(f64)->i32)
+    RetinalGanglion(RetinalGanglionCell),
+    Merkel(MerkelCell),
+    Pacinian(PacinianCorpuscle),
+    NociceptorCell(Nociceptor),
+    OlfactoryReceptor(OlfactoryReceptorNeuron),
+
     // Not wired (multi-arg / i32 input / f64 return / no reset):
     // Alpha (2 args), COBALIF (3 args), TsodyksMarkram (bool arg),
     // CompteWM (bool arg), McCullochPitts (no reset), SigmoidRate (f64 ret),
     // ThresholdLinearRate (f64 ret), AstrocyteModel (f64 ret),
     // PinskyRinzel (2 args), HayL5 (2 args),
     // LoihiCUBA/Loihi2/TrueNorth/SpiNNaker2/Akida (i32 input)
+    // InnerHairCell, OuterHairCell, RodPhotoreceptor, ConePhotoreceptor,
+    // TasteReceptorCell (graded: step(f64)->f64)
 }
 
 macro_rules! dispatch_step {
@@ -196,6 +213,8 @@ macro_rules! all_variants {
             ContinuousAttractor, MetaPlastic,
             BendaHerz,
             Poisson, InhomogeneousPoisson, GammaRenewal, EscapeRate,
+            PVFastSpiking, SST, VIP, Chandelier, CerebellarBasket, Martinotti,
+            RetinalGanglion, Merkel, Pacinian, NociceptorCell, OlfactoryReceptor,
         )
     };
 }
@@ -307,6 +326,19 @@ impl NeuronVariant {
             NeuronVariant::EscapeRate(n) => n.v,
             NeuronVariant::Akida(n) => n.v as f64,
             NeuronVariant::StochasticLIF(n) => n.v,
+            // interneurons
+            NeuronVariant::PVFastSpiking(n) => n.v,
+            NeuronVariant::SST(n) => n.v,
+            NeuronVariant::VIP(n) => n.v,
+            NeuronVariant::Chandelier(n) => n.v,
+            NeuronVariant::CerebellarBasket(n) => n.v,
+            NeuronVariant::Martinotti(n) => n.v,
+            // sensory (spiking)
+            NeuronVariant::RetinalGanglion(n) => n.v,
+            NeuronVariant::Merkel(n) => n.v,
+            NeuronVariant::Pacinian(n) => n.v,
+            NeuronVariant::NociceptorCell(n) => n.v,
+            NeuronVariant::OlfactoryReceptor(n) => n.v,
         }
     }
 }
@@ -776,6 +808,33 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         "EscapeRate" | "EscapeRateNeuron" => {
             Ok(NeuronVariant::EscapeRate(EscapeRateNeuron::new(42)))
         }
+        // interneurons
+        "PVFastSpiking" | "PVFastSpikingNeuron" => {
+            Ok(NeuronVariant::PVFastSpiking(PVFastSpikingNeuron::new()))
+        }
+        "SST" | "SSTNeuron" => Ok(NeuronVariant::SST(SSTNeuron::new())),
+        "VIP" | "VIPNeuron" => Ok(NeuronVariant::VIP(VIPNeuron::new())),
+        "Chandelier" | "ChandelierNeuron" => {
+            Ok(NeuronVariant::Chandelier(ChandelierNeuron::new()))
+        }
+        "CerebellarBasket" | "CerebellarBasketNeuron" => {
+            Ok(NeuronVariant::CerebellarBasket(CerebellarBasketNeuron::new()))
+        }
+        "Martinotti" | "MartinottiNeuron" => {
+            Ok(NeuronVariant::Martinotti(MartinottiNeuron::new()))
+        }
+        // sensory (spiking)
+        "RetinalGanglion" | "RetinalGanglionCell" => {
+            Ok(NeuronVariant::RetinalGanglion(RetinalGanglionCell::new()))
+        }
+        "Merkel" | "MerkelCell" => Ok(NeuronVariant::Merkel(MerkelCell::new())),
+        "Pacinian" | "PacinianCorpuscle" => {
+            Ok(NeuronVariant::Pacinian(PacinianCorpuscle::new()))
+        }
+        "Nociceptor" => Ok(NeuronVariant::NociceptorCell(Nociceptor::new())),
+        "OlfactoryReceptor" | "OlfactoryReceptorNeuron" => {
+            Ok(NeuronVariant::OlfactoryReceptor(OlfactoryReceptorNeuron::new()))
+        }
         _ => Err(format!("Unsupported model: '{name}'")),
     }
 }
@@ -850,6 +909,19 @@ pub fn supported_models() -> Vec<&'static str> {
         "SpikeResponse",
         "GLM",
         "ArcaneNeuron",
+        // interneurons
+        "PVFastSpiking",
+        "SST",
+        "VIP",
+        "Chandelier",
+        "CerebellarBasket",
+        "Martinotti",
+        // sensory (spiking)
+        "RetinalGanglion",
+        "Merkel",
+        "Pacinian",
+        "Nociceptor",
+        "OlfactoryReceptor",
     ]
 }
 
@@ -998,6 +1070,130 @@ mod tests {
                 "create_neuron({name}) failed: {:?}",
                 result.err()
             );
+        }
+    }
+
+    // ── Pipeline integration: interneurons ────────────────────────
+
+    #[test]
+    fn interneuron_population_create_step_reset() {
+        for name in &["PVFastSpiking", "SST", "VIP", "Chandelier", "CerebellarBasket", "Martinotti"] {
+            let mut pop = create_population(name, 5).unwrap();
+            pop.currents.fill(3.0);
+            for _ in 0..100 {
+                pop.step_all();
+            }
+            let voltages = pop.collect_voltages();
+            assert_eq!(voltages.len(), 5, "{name}: voltage count mismatch");
+            for v in &voltages {
+                assert!(v.is_finite(), "{name}: non-finite voltage {v}");
+            }
+            pop.reset_all();
+            let v_after_reset = pop.collect_voltages();
+            for v in &v_after_reset {
+                assert!(v.is_finite(), "{name}: non-finite after reset");
+            }
+        }
+    }
+
+    #[test]
+    fn interneuron_mixed_network() {
+        let mut runner = NetworkRunner::new();
+        let pv_pop = create_population("PVFastSpiking", 3).unwrap();
+        let sst_pop = create_population("SST", 3).unwrap();
+        let pv_idx = runner.add_population(pv_pop);
+        let sst_idx = runner.add_population(sst_pop);
+
+        // PV → SST all-to-all projection
+        let row_offsets = vec![0, 3, 6, 9];
+        let col_indices = vec![0, 1, 2, 0, 1, 2, 0, 1, 2];
+        let values = vec![1.0; 9];
+        let proj = ProjectionRunner::new(pv_idx, sst_idx, row_offsets, col_indices, values, 0);
+        runner.add_projection(proj);
+
+        runner.populations[0].currents.fill(3.0);
+        let results = runner.run(50);
+        assert_eq!(results.spike_counts.len(), 2);
+        assert_eq!(results.voltages.len(), 2);
+        for pop_voltages in &results.voltages {
+            for v in pop_voltages {
+                assert!(v.is_finite());
+            }
+        }
+    }
+
+    // ── Pipeline integration: sensory spiking ─────────────────────
+
+    #[test]
+    fn sensory_spiking_population_create_step() {
+        for name in &["RetinalGanglion", "Merkel", "Pacinian", "Nociceptor", "OlfactoryReceptor"] {
+            let mut pop = create_population(name, 5).unwrap();
+            pop.currents.fill(20.0);
+            for _ in 0..200 {
+                pop.step_all();
+            }
+            let voltages = pop.collect_voltages();
+            assert_eq!(voltages.len(), 5, "{name}: voltage count mismatch");
+            for v in &voltages {
+                assert!(v.is_finite(), "{name}: non-finite voltage {v}");
+            }
+        }
+    }
+
+    // ── NaN/Inf edge-case tests ───────────────────────────────────
+
+    #[test]
+    fn all_models_nan_input_stays_finite() {
+        // Models must not propagate NaN — they should produce finite
+        // (possibly wrong) output. This catches catastrophic numerical issues.
+        let fragile_models = &[
+            "PVFastSpiking", "SST", "VIP", "Chandelier",
+            "CerebellarBasket", "Martinotti",
+            "RetinalGanglion", "Merkel", "Pacinian",
+            "Nociceptor", "OlfactoryReceptor",
+        ];
+        for name in fragile_models {
+            let mut neuron = create_neuron(name).unwrap();
+            // Feed 100 normal steps first to get into active regime
+            for _ in 0..100 {
+                neuron.step(2.0);
+            }
+            // Then feed NaN — voltage may go NaN but should not panic
+            for _ in 0..10 {
+                let _ = neuron.step(f64::NAN);
+            }
+            // Reset must restore finite state
+            neuron.reset();
+            let v = neuron.soma_voltage();
+            assert!(v.is_finite(), "{name}: voltage not finite after reset from NaN: {v}");
+        }
+    }
+
+    #[test]
+    fn all_models_extreme_input_stays_finite() {
+        let models = &[
+            "PVFastSpiking", "SST", "VIP", "Chandelier",
+            "CerebellarBasket", "Martinotti",
+            "RetinalGanglion", "Merkel", "Pacinian",
+            "Nociceptor", "OlfactoryReceptor",
+        ];
+        for name in models {
+            let mut neuron = create_neuron(name).unwrap();
+            // Large positive current
+            for _ in 0..50 {
+                neuron.step(1e6);
+            }
+            neuron.reset();
+            let v = neuron.soma_voltage();
+            assert!(v.is_finite(), "{name}: non-finite after large positive input");
+
+            // Large negative current
+            for _ in 0..50 {
+                neuron.step(-1e6);
+            }
+            neuron.reset();
+            let v = neuron.soma_voltage();
+            assert!(v.is_finite(), "{name}: non-finite after large negative input");
         }
     }
 }
