@@ -83,6 +83,21 @@ cargo bench --bench analysis_bench -- --quick
 > for Wang-Buzsáki gating stability. SST/VIP/Martinotti use 4 sub-steps
 > (dt=0.025 ms, 0.1 ms per call) with Pospischil-style gating.
 
+### Sensory Neurons (`neurons/sensory.rs`) — Phase 3B
+
+| Model | 10k steps | Per step | Type | Notes |
+|-------|-----------|----------|------|-------|
+| Inner hair cell | *pending* | — | graded | MET + Ca2+ |
+| Rod photoreceptor | *pending* | — | graded | cGMP cascade |
+| Retinal ganglion | *pending* | — | spiking | ON/OFF + refractory |
+| Merkel cell | *pending* | — | spiking | Slow adapting |
+| Pacinian corpuscle | *pending* | — | spiking | Fast adapting |
+| Nociceptor | *pending* | — | spiking | Sensitisation |
+| Olfactory receptor | *pending* | — | spiking | cAMP + Ca2+/CaM |
+
+> Sensory models use simple Euler integration (no sub-stepping) — expect
+> ns-range per step.
+
 ---
 
 ## Analysis Modules (`analysis_bench`)

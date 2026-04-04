@@ -21,6 +21,8 @@ use sc_neurocore_engine::neuron::{AdExNeuron, ExpIfNeuron, FixedPointLif, Lapicq
 use sc_neurocore_engine::neurons::{
     CerebellarBasketNeuron, ChandelierNeuron, MartinottiNeuron,
     PVFastSpikingNeuron, SSTNeuron, VIPNeuron,
+    InnerHairCell, RodPhotoreceptor, RetinalGanglionCell, MerkelCell,
+    PacinianCorpuscle, Nociceptor, OlfactoryReceptorNeuron,
 };
 use sc_neurocore_engine::scpn::KuramotoSolver;
 use sc_neurocore_engine::simd::{fused_and_popcount_dispatch, pack_dispatch, popcount_dispatch};
@@ -395,6 +397,56 @@ fn bench_all(c: &mut Criterion) {
         b.iter(|| {
             let mut n = MartinottiNeuron::new();
             for _ in 0..1000 { black_box(n.step(4.0)); }
+        })
+    });
+
+    // -- Sensory Neurons (Phase 3B) --
+    c.bench_function("ihc_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = InnerHairCell::new();
+            for _ in 0..10_000 { black_box(n.step(50.0)); }
+        })
+    });
+
+    c.bench_function("rod_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = RodPhotoreceptor::new();
+            for _ in 0..10_000 { black_box(n.step(100.0)); }
+        })
+    });
+
+    c.bench_function("rgc_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = RetinalGanglionCell::new();
+            for _ in 0..10_000 { black_box(n.step(20.0)); }
+        })
+    });
+
+    c.bench_function("merkel_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = MerkelCell::new();
+            for _ in 0..10_000 { black_box(n.step(20.0)); }
+        })
+    });
+
+    c.bench_function("pacinian_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = PacinianCorpuscle::new();
+            for i in 0..10_000 { black_box(n.step((i as f64 * 0.1).sin() * 50.0)); }
+        })
+    });
+
+    c.bench_function("nociceptor_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = Nociceptor::new();
+            for _ in 0..10_000 { black_box(n.step(50.0)); }
+        })
+    });
+
+    c.bench_function("olfactory_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = OlfactoryReceptorNeuron::new();
+            for _ in 0..10_000 { black_box(n.step(5.0)); }
         })
     });
 }
