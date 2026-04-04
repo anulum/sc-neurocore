@@ -5,6 +5,10 @@ every metric from Elephant, PySpike, SpikeInterface, and NeuroTools.
 125 functions across 23 modules (22 spike_stats + 1 explainability).
 Pure NumPy, zero external dependencies.
 
+**Rust acceleration:** All 22 spike_stats modules have native Rust
+implementations with 96 PyO3 bindings (597 tests). See
+[Rust Analysis Engine](rust-analysis-engine.md) for the Rust API reference.
+
 ## Quick Start
 
 ```python
