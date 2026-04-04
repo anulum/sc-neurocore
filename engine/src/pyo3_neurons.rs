@@ -373,6 +373,7 @@ py_neuron_default!("MedvedevMapNeuron", PyMedvedevMapNeuron, neurons::MedvedevMa
 py_neuron_default!("CazellesMapNeuron", PyCazellesMapNeuron, neurons::CazellesMapNeuron, state x, state y);
 py_neuron_default!("CourageNekorkinMapNeuron", PyCourageNekorkinMapNeuron, neurons::CourageNekorkinMapNeuron, state x, state y);
 py_neuron_default!("AiharaMapNeuron", PyAiharaMapNeuron, neurons::AiharaMapNeuron, state x, state y);
+py_neuron_default!("KilincBhattMapNeuron", PyKilincBhattMapNeuron, neurons::KilincBhattMapNeuron, state x, state theta);
 
 // ═══════════════════════════════════════════════════════════════════
 // biophysical.rs models
@@ -1643,6 +1644,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyCazellesMapNeuron>()?;
     m.add_class::<PyCourageNekorkinMapNeuron>()?;
     m.add_class::<PyAiharaMapNeuron>()?;
+    m.add_class::<PyKilincBhattMapNeuron>()?;
     // biophysical
     m.add_class::<PyHodgkinHuxleyNeuron>()?;
     m.add_class::<PyTraubMilesNeuron>()?;
