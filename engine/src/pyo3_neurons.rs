@@ -1443,6 +1443,9 @@ py_neuron_default!("BKNeuron", PyBKNeuron, neurons::BKNeuron, state v, state h, 
 py_neuron_default!("SKNeuron", PySKNeuron, neurons::SKNeuron, state v, state h, state n, state ca);
 py_neuron_default!("NMDANeuron", PyNMDANeuron, neurons::NMDANeuron, state v, state h, state n, state s_nmda);
 
+// population.rs models
+py_neuron_default!("MontbrioMeanField", PyMontbrioMeanField, neurons::MontbrioMeanField, state r, state v);
+
 // ═══════════════════════════════════════════════════════════════════
 // sensory.rs models (10 sensory neuron types)
 // ═══════════════════════════════════════════════════════════════════
@@ -1757,6 +1760,8 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyBKNeuron>()?;
     m.add_class::<PySKNeuron>()?;
     m.add_class::<PyNMDANeuron>()?;
+    // population
+    m.add_class::<PyMontbrioMeanField>()?;
     Ok(())
 }
 
