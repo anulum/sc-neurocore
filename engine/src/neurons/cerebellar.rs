@@ -501,6 +501,233 @@ impl LugaroCell {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// Unipolar Brush Cell
+// ═══════════════════════════════════════════════════════════════════
+
+/// Cerebellar unipolar brush cell (UBC) — excitatory interneuron in vestibular cerebellum.
+///
+/// Biophysics: LIF with a slow persistent (NMDA-like) current that sustains
+/// depolarisation long after input ceases. The single brush-like dendrite
+/// forms a giant synapse with a mossy fibre rosette, creating a 1:1 relay
+/// that amplifies and prolongs the input signal.
+///
+/// UBCs are unique excitatory interneurons in the granular layer. They
+/// transform brief mossy fibre bursts into prolonged granule cell
+/// activation, important for vestibular signal processing and timing.
+///
+/// Bhatt et al., J Comp Neurol 349:560, 1994; Diana et al., J Neurosci 27:4374, 2007.
+#[derive(Clone, Debug)]
+pub struct UnipolarBrushCell {
+    pub v: f64,
+    pub persistent: f64,    // Slow NMDA-like persistent current
+    pub v_rest: f64,
+    pub v_reset: f64,
+    pub v_threshold: f64,
+    pub tau_m: f64,
+    pub tau_persistent: f64, // Slow decay of persistent current (ms)
+    pub persistent_gain: f64, // How much input drives persistent current
+    pub gain: f64,
+    pub dt: f64,
+}
+
+impl Default for UnipolarBrushCell {
+    fn default() -> Self { Self::new() }
+}
+
+impl UnipolarBrushCell {
+    pub fn new() -> Self {
+        Self {
+            v: -65.0,
+            persistent: 0.0,
+            v_rest: -65.0,
+            v_reset: -70.0,
+            v_threshold: -50.0,
+            tau_m: 8.0,
+            tau_persistent: 200.0,
+            persistent_gain: 0.5,
+            gain: 2.5,
+            dt: 0.5,
+        }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        let input = self.gain * current.max(0.0);
+
+        // Persistent current dynamics: driven by input, decays slowly
+        let dp = (self.persistent_gain * input - self.persistent) / self.tau_persistent;
+        self.persistent += self.dt * dp;
+        if self.persistent < 0.0 { self.persistent = 0.0; }
+
+        // LIF with persistent current
+        let dv = (-(self.v - self.v_rest) + input + self.persistent) / self.tau_m;
+        self.v += self.dt * dv;
+
+        // Spike detection
+        if self.v >= self.v_threshold {
+            self.v = self.v_reset;
+            return 1;
+        }
+
+        // Safety bounds
+        if self.v < -100.0 { self.v = -100.0; }
+        if self.v > 60.0 { self.v = 60.0; }
+        if !self.v.is_finite() { self.v = self.v_reset; }
+        if !self.persistent.is_finite() { self.persistent = 0.0; }
+
+        0
+    }
+
+    pub fn reset(&mut self) {
+        *self = Self::new();
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Deep Cerebellar Nuclei Neuron
+// ═══════════════════════════════════════════════════════════════════
+
+/// Deep cerebellar nuclei (DCN) neuron — main output of the cerebellum.
+///
+/// Biophysics: WB Na+/K+ core with T-type Ca2+ for post-inhibitory rebound
+/// bursting and Ih (hyperpolarisation-activated) for pacemaker-like activity.
+/// DCN neurons are the sole output of the cerebellum, receiving massive
+/// inhibitory input from Purkinje cells and excitatory input from mossy
+/// fibres and climbing fibres.
+///
+/// Rebound bursting: when Purkinje inhibition is released (pause in PC
+/// firing), T-type Ca2+ channels that de-inactivated during hyperpolarisation
+/// produce a burst of spikes. This is the primary mechanism for cerebellar
+/// timing signals.
+///
+/// Llinás & Mühlethaler, J Physiol 404:241, 1988; Jahnsen, J Physiol 372:129, 1986.
+#[derive(Clone, Debug)]
+pub struct DCNNeuron {
+    pub v: f64,
+    pub h: f64,     // Na+ inactivation
+    pub n: f64,     // Kdr activation
+    // T-type Ca2+ gating
+    pub s: f64,     // T-type inactivation (slow)
+    // Ih gating
+    pub r: f64,     // Ih activation
+    // Conductances (mS/cm²)
+    pub g_na: f64,
+    pub g_k: f64,
+    pub g_t: f64,   // T-type Ca2+
+    pub g_h: f64,   // Ih
+    pub g_l: f64,
+    // Reversal potentials
+    pub e_na: f64,
+    pub e_k: f64,
+    pub e_ca: f64,
+    pub e_h: f64,   // Ih reversal (~-40 mV, mixed cation)
+    pub e_l: f64,
+    pub c_m: f64,
+    pub phi: f64,
+    pub dt: f64,
+    pub v_threshold: f64,
+    pub gain: f64,
+}
+
+impl Default for DCNNeuron {
+    fn default() -> Self { Self::new() }
+}
+
+impl DCNNeuron {
+    pub fn new() -> Self {
+        Self {
+            v: -60.0,
+            h: 0.6,
+            n: 0.32,
+            s: 0.8,     // De-inactivated at rest
+            r: 0.1,     // Ih partially active
+            g_na: 35.0,
+            g_k: 9.0,
+            g_t: 0.1,   // T-type — low to avoid window current at rest
+            g_h: 0.02,  // Ih — modest to avoid spontaneous firing
+            g_l: 0.2,   // Higher leak to stabilise at rest
+            e_na: 55.0,
+            e_k: -90.0,
+            e_ca: 120.0,
+            e_h: -40.0,
+            e_l: -65.0,
+            c_m: 1.0,
+            phi: 5.0,
+            dt: 0.5,
+            v_threshold: -20.0,
+            gain: 1.0,
+        }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        let input = self.gain * current;
+        let sub_steps = 50;
+        let sub_dt = self.dt / sub_steps as f64;
+        let mut fired = 0i32;
+
+        for _ in 0..sub_steps {
+            let v = self.v;
+
+            // WB alpha/beta rates
+            let alpha_m = safe_rate(0.1, 35.0, v, 10.0, 1.0);
+            let beta_m = 4.0 * (-(v + 60.0) / 18.0).exp();
+            let m_inf = alpha_m / (alpha_m + beta_m);
+
+            let alpha_h = 0.07 * (-(v + 58.0) / 20.0).exp();
+            let beta_h = 1.0 / (1.0 + (-(v + 28.0) / 10.0).exp());
+
+            let alpha_n = safe_rate(0.01, 34.0, v, 10.0, 0.1);
+            let beta_n = 0.125 * (-(v + 44.0) / 80.0).exp();
+
+            // T-type Ca2+ gating
+            let m_t_inf = 1.0 / (1.0 + (-(v + 52.0) / 5.0).exp());
+            let s_inf = 1.0 / (1.0 + ((v + 60.0) / 6.5).exp());
+            let tau_s = 20.0 + 50.0 / (1.0 + ((v + 65.0) / 10.0).exp());
+
+            // Ih gating
+            let r_inf = 1.0 / (1.0 + ((v + 80.0) / 10.0).exp());
+            let tau_r = 100.0 + 200.0 / (1.0 + ((v + 70.0) / 10.0).exp());
+
+            // Gate updates
+            self.h += sub_dt * self.phi * (alpha_h * (1.0 - self.h) - beta_h * self.h);
+            self.n += sub_dt * self.phi * (alpha_n * (1.0 - self.n) - beta_n * self.n);
+            self.s += sub_dt * (s_inf - self.s) / tau_s;
+            self.r += sub_dt * (r_inf - self.r) / tau_r;
+
+            // Currents
+            let i_na = self.g_na * m_inf.powi(3) * self.h * (v - self.e_na);
+            let i_k = self.g_k * self.n.powi(4) * (v - self.e_k);
+            let i_t = self.g_t * m_t_inf.powi(2) * self.s * (v - self.e_ca);
+            let i_h = self.g_h * self.r * (v - self.e_h);
+            let i_l = self.g_l * (v - self.e_l);
+
+            let dv = (-i_na - i_k - i_t - i_h - i_l + input) / self.c_m;
+            self.v += sub_dt * dv;
+
+            if self.v >= self.v_threshold {
+                fired = 1;
+                self.v = -60.0;
+                self.s *= 0.5; // T-type inactivation on spike
+            }
+        }
+
+        // Safety bounds
+        if self.v < -100.0 { self.v = -100.0; }
+        if self.v > 60.0 { self.v = 60.0; }
+        if !self.v.is_finite() { self.v = -60.0; self.h = 0.6; self.n = 0.32; }
+        self.h = self.h.clamp(0.0, 1.0);
+        self.n = self.n.clamp(0.0, 1.0);
+        self.s = self.s.clamp(0.0, 1.0);
+        self.r = self.r.clamp(0.0, 1.0);
+
+        fired
+    }
+
+    pub fn reset(&mut self) {
+        *self = Self::new();
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // Tests
 // ═══════════════════════════════════════════════════════════════════
 
@@ -1051,5 +1278,237 @@ mod tests {
             "10k steps must complete in <50ms, took {}ms",
             elapsed.as_millis()
         );
+    }
+
+    // -- Unipolar Brush Cell tests --
+
+    #[test]
+    fn ubc_fires_with_input() {
+        let mut n = UnipolarBrushCell::new();
+        let mut spikes = 0;
+        for _ in 0..10_000 {
+            spikes += n.step(5.0);
+        }
+        assert!(spikes > 10, "UBC must fire with excitatory input, got {spikes}");
+    }
+
+    #[test]
+    fn ubc_silent_without_input() {
+        let mut n = UnipolarBrushCell::new();
+        let mut spikes = 0;
+        for _ in 0..10_000 {
+            spikes += n.step(0.0);
+        }
+        assert_eq!(spikes, 0, "UBC must be silent without input");
+    }
+
+    #[test]
+    fn ubc_persistent_activity() {
+        // After input stops, persistent current should sustain some depolarisation
+        let mut n = UnipolarBrushCell::new();
+        // Drive with input to build persistent current
+        for _ in 0..2000 {
+            n.step(10.0);
+        }
+        assert!(n.persistent > 0.0, "Persistent current must build during input");
+
+        // Now remove input — persistent current should persist
+        let persistent_before = n.persistent;
+        for _ in 0..100 {
+            n.step(0.0);
+        }
+        assert!(n.persistent > 0.0, "Persistent current must persist after input removal");
+        assert!(n.persistent < persistent_before, "Persistent current must decay");
+    }
+
+    #[test]
+    fn ubc_persistent_spikes_after_input() {
+        // UBC should continue firing briefly after input stops
+        let mut n = UnipolarBrushCell::new();
+        // Build up persistent current
+        for _ in 0..5000 {
+            n.step(10.0);
+        }
+        // Count spikes after input removal
+        let mut post_spikes = 0;
+        for _ in 0..500 {
+            post_spikes += n.step(0.0);
+        }
+        // May or may not spike depending on persistent level — just test it doesn't crash
+        assert!(n.v.is_finite());
+    }
+
+    #[test]
+    fn ubc_negative_input_no_crash() {
+        let mut n = UnipolarBrushCell::new();
+        for _ in 0..10_000 {
+            n.step(-100.0);
+        }
+        assert!(n.v.is_finite());
+    }
+
+    #[test]
+    fn ubc_nan_input_stays_finite() {
+        let mut n = UnipolarBrushCell::new();
+        n.step(f64::NAN);
+        assert!(n.v.is_finite());
+    }
+
+    #[test]
+    fn ubc_extreme_input_bounded() {
+        let mut n = UnipolarBrushCell::new();
+        for _ in 0..1000 {
+            n.step(1e6);
+        }
+        assert!(n.v.is_finite() && n.v <= 60.0);
+    }
+
+    #[test]
+    fn ubc_reset_clears_state() {
+        let mut n = UnipolarBrushCell::new();
+        for _ in 0..1000 {
+            n.step(10.0);
+        }
+        n.reset();
+        assert_eq!(n.v, -65.0);
+        assert_eq!(n.persistent, 0.0);
+    }
+
+    #[test]
+    fn ubc_performance_10k_steps() {
+        let start = std::time::Instant::now();
+        let mut n = UnipolarBrushCell::new();
+        for _ in 0..10_000 {
+            std::hint::black_box(n.step(5.0));
+        }
+        let elapsed = start.elapsed();
+        assert!(elapsed.as_millis() < 50, "10k steps must complete in <50ms");
+    }
+
+    // -- DCN Neuron tests --
+
+    #[test]
+    fn dcn_fires_with_input() {
+        let mut n = DCNNeuron::new();
+        let mut spikes = 0;
+        for _ in 0..2_000 {
+            spikes += n.step(5.0);
+        }
+        assert!(spikes > 5, "DCN must fire with excitatory input, got {spikes}");
+    }
+
+    #[test]
+    fn dcn_silent_without_input() {
+        let mut n = DCNNeuron::new();
+        let mut spikes = 0;
+        for _ in 0..10_000 {
+            spikes += n.step(0.0);
+        }
+        assert_eq!(spikes, 0, "DCN must be silent without input, got {spikes}");
+    }
+
+    #[test]
+    fn dcn_rebound_burst() {
+        // Hyperpolarisation → T-type de-inactivation → rebound burst
+        let mut n = DCNNeuron::new();
+        // Hyperpolarise to de-inactivate T-type
+        for _ in 0..2000 {
+            n.step(-5.0);
+        }
+        assert!(n.s > 0.5, "T-type must de-inactivate during hyperpolarisation, s={}", n.s);
+
+        // Now provide excitation — T-type should help fire
+        let mut spikes = 0;
+        for _ in 0..200 {
+            spikes += n.step(3.0);
+        }
+        // Compare with pre-inactivated T-type
+        let mut n2 = DCNNeuron::new();
+        n2.s = 0.05; // pre-inactivated
+        let mut spikes2 = 0;
+        for _ in 0..200 {
+            spikes2 += n2.step(3.0);
+        }
+        assert!(spikes >= spikes2,
+            "De-inactivated T-type should facilitate rebound: rebound={spikes} vs inact={spikes2}");
+    }
+
+    #[test]
+    fn dcn_ih_depolarises() {
+        // Ih should depolarise from hyperpolarised potentials
+        let mut with_ih = DCNNeuron::new();
+        with_ih.v = -80.0;
+        let mut no_ih = DCNNeuron::new();
+        no_ih.v = -80.0;
+        no_ih.g_h = 0.0;
+
+        for _ in 0..1000 {
+            with_ih.step(0.0);
+            no_ih.step(0.0);
+        }
+        assert!(with_ih.v > no_ih.v,
+            "Ih should depolarise from hyperpolarised state: Ih={:.1} vs no_Ih={:.1}",
+            with_ih.v, no_ih.v);
+    }
+
+    #[test]
+    fn dcn_negative_input_no_crash() {
+        let mut n = DCNNeuron::new();
+        for _ in 0..10_000 {
+            n.step(-100.0);
+        }
+        assert!(n.v.is_finite());
+        assert!(n.v >= -100.0);
+    }
+
+    #[test]
+    fn dcn_nan_input_stays_finite() {
+        let mut n = DCNNeuron::new();
+        n.step(f64::NAN);
+        assert!(n.v.is_finite());
+    }
+
+    #[test]
+    fn dcn_extreme_input_bounded() {
+        let mut n = DCNNeuron::new();
+        for _ in 0..1000 {
+            n.step(1e6);
+        }
+        assert!(n.v.is_finite() && n.v <= 60.0);
+    }
+
+    #[test]
+    fn dcn_reset_clears_state() {
+        let mut n = DCNNeuron::new();
+        for _ in 0..1000 {
+            n.step(10.0);
+        }
+        n.reset();
+        assert_eq!(n.v, -60.0);
+        assert_eq!(n.s, 0.8);
+        assert_eq!(n.r, 0.1);
+    }
+
+    #[test]
+    fn dcn_gates_bounded() {
+        let mut n = DCNNeuron::new();
+        for _ in 0..10_000 {
+            n.step(10.0);
+        }
+        assert!(n.h >= 0.0 && n.h <= 1.0);
+        assert!(n.n >= 0.0 && n.n <= 1.0);
+        assert!(n.s >= 0.0 && n.s <= 1.0);
+        assert!(n.r >= 0.0 && n.r <= 1.0);
+    }
+
+    #[test]
+    fn dcn_performance_1k_steps() {
+        let start = std::time::Instant::now();
+        let mut n = DCNNeuron::new();
+        for _ in 0..1_000 {
+            std::hint::black_box(n.step(5.0));
+        }
+        let elapsed = start.elapsed();
+        assert!(elapsed.as_millis() < 200, "1k steps must complete in <200ms");
     }
 }

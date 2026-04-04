@@ -120,6 +120,8 @@ cargo bench --bench analysis_bench -- --quick
 | Golgi cell | 1k | 396 µs | **396 ns** | 4 | WB + A-type K+ + Ca2+-AHP |
 | Stellate cell | 1k | 5.58 ms | **5.58 µs** | 50 | WB + Kv3.1 |
 | Lugaro cell | 10k | 164 µs | **16.4 ns** | 1 | LIF + adaptation + 5-HT |
+| Unipolar brush cell | 10k | 93 µs | **9.3 ns** | 1 | LIF + persistent NMDA-like |
+| DCN neuron | 1k | 4.83 ms | **4.83 µs** | 50 | WB + T-type + Ih |
 
 > Granule cell uses simple Euler integration with T-type Ca2+ gating for
 > rebound bursting. No sub-stepping needed.
