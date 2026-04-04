@@ -1452,6 +1452,7 @@ py_neuron_default!("ElBoustaniNetwork", PyElBoustaniNetwork, neurons::ElBoustani
 // misc.rs models
 py_neuron_default!("GradedSynapseNeuron", PyGradedSynapseNeuron, neurons::GradedSynapseNeuron, state v);
 py_neuron_default!("GapJunctionNeuron", PyGapJunctionNeuron, neurons::GapJunctionNeuron, state v);
+py_neuron_default!("FrankenhaeUserHuxleyAxon", PyFHAxon, neurons::FrankenhaeUserHuxleyAxon, state v, state m, state h, state n, state p);
 
 // ═══════════════════════════════════════════════════════════════════
 // sensory.rs models (10 sensory neuron types)
@@ -1775,6 +1776,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // misc
     m.add_class::<PyGradedSynapseNeuron>()?;
     m.add_class::<PyGapJunctionNeuron>()?;
+    m.add_class::<PyFHAxon>()?;
     Ok(())
 }
 

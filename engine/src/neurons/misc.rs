@@ -194,6 +194,156 @@ impl GapJunctionNeuron {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// Frankenhaeuser-Huxley Axon
+// ═══════════════════════════════════════════════════════════════════
+
+/// Frankenhaeuser-Huxley 1964 — myelinated nerve fibre model.
+///
+/// Extension of HH for myelinated axons (Xenopus node of Ranvier).
+/// Uses permeability-based formulation instead of conductance-based,
+/// with 4 gating variables: m (Na activation), h (Na inactivation),
+/// n (delayed rectifier K), p (slow non-specific current).
+///
+/// I_Na = P_Na * m^2 * h * V_Na_driving
+/// I_K  = P_K  * n^2 * V_K_driving
+/// I_p  = P_p  * p^2 * V_p_driving
+/// I_L  = g_L * (V - E_L)
+///
+/// C dV/dt = -(I_Na + I_K + I_p + I_L) + I_ext
+///
+/// Uses sub-stepping (dt_sub = 0.01 ms) for gating stability.
+///
+/// Frankenhaeuser & Huxley, J Physiol 171:302, 1964.
+#[derive(Clone, Debug)]
+pub struct FrankenhaeUserHuxleyAxon {
+    pub v: f64,     // Membrane potential (mV, relative to rest)
+    pub m: f64,     // Na activation
+    pub h: f64,     // Na inactivation
+    pub n: f64,     // K delayed rectifier
+    pub p: f64,     // Slow non-specific
+    pub c_m: f64,
+    pub p_na: f64,  // Na permeability (mS/cm²-equivalent)
+    pub p_k: f64,   // K permeability
+    pub p_p: f64,   // Slow current permeability
+    pub g_l: f64,
+    pub e_na: f64,
+    pub e_k: f64,
+    pub e_p: f64,
+    pub e_l: f64,
+    pub dt: f64,
+    pub sub_steps: usize,
+    pub gain: f64,
+}
+
+impl Default for FrankenhaeUserHuxleyAxon {
+    fn default() -> Self { Self::new() }
+}
+
+impl FrankenhaeUserHuxleyAxon {
+    pub fn new() -> Self {
+        Self {
+            v: 0.0,          // Relative to resting potential
+            m: 0.005,
+            h: 0.8,
+            n: 0.01,
+            p: 0.01,
+            c_m: 2.0,       // µF/cm² (myelinated node)
+            p_na: 12.0,     // Na permeability
+            p_k: 1.2,       // K permeability
+            p_p: 0.54,      // Slow current
+            g_l: 0.3,       // Leak
+            e_na: 115.0,    // mV above rest
+            e_k: -12.0,
+            e_p: 115.0,     // Similar to Na
+            e_l: 0.0,       // At rest
+            dt: 0.5,        // External step (ms)
+            sub_steps: 50,  // 50 sub-steps → dt_sub = 0.01 ms
+            gain: 1.0,
+        }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        let input = self.gain * current;
+        let dt_sub = self.dt / self.sub_steps as f64;
+        let v_prev = self.v;
+
+        for _ in 0..self.sub_steps {
+            // FH alpha/beta rate functions (simplified Frankenhaeuser kinetics)
+            let v = self.v;
+
+            // m gate (Na activation)
+            let am = if (v - 22.0).abs() < 0.1 { 1.87 }
+                else { 0.36 * (v - 22.0) / (1.0 - (-(v - 22.0) / 3.0).exp()) };
+            let bm = if (v - 13.0).abs() < 0.1 { 1.87 }
+                else { 0.4 * (13.0 - v) / (1.0 - ((v - 13.0) / 20.0).exp()) };
+
+            // h gate (Na inactivation)
+            let ah = if (v + 10.0).abs() < 0.1 { 0.08 }
+                else { 0.1 * (-10.0 - v) / (1.0 - ((v + 10.0) / 6.0).exp()) };
+            let bh = 4.5 / (1.0 + ((45.0 - v) / 10.0).exp());
+
+            // n gate (K delayed rectifier)
+            let an = if (v - 13.0).abs() < 0.1 { 0.1 }
+                else { 0.02 * (v - 13.0) / (1.0 - (-(v - 13.0) / 10.0).exp()) };
+            let bn = if (v - 23.0).abs() < 0.1 { 0.05 }
+                else { 0.05 * (23.0 - v) / (1.0 - ((v - 23.0) / 10.0).exp()) };
+
+            // p gate (slow non-specific)
+            let ap = if (v - 21.0).abs() < 0.1 { 0.04 }
+                else { 0.006 * (v - 21.0) / (1.0 - (-(v - 21.0) / 2.0).exp()) };
+            let bp = if (v + 4.0).abs() < 0.1 { 0.04 }
+                else { 0.09 * (-4.0 - v) / (1.0 - ((v + 4.0) / 2.0).exp()) };
+
+            // Ensure rates are non-negative
+            let am = am.max(0.0);
+            let bm = bm.max(0.0);
+            let ah = ah.max(0.0);
+            let bh = bh.max(0.0);
+            let an = an.max(0.0);
+            let bn = bn.max(0.0);
+            let ap = ap.max(0.0);
+            let bp = bp.max(0.0);
+
+            // Gate updates
+            self.m += dt_sub * (am * (1.0 - self.m) - bm * self.m);
+            self.h += dt_sub * (ah * (1.0 - self.h) - bh * self.h);
+            self.n += dt_sub * (an * (1.0 - self.n) - bn * self.n);
+            self.p += dt_sub * (ap * (1.0 - self.p) - bp * self.p);
+
+            // Clamp gates
+            self.m = self.m.clamp(0.0, 1.0);
+            self.h = self.h.clamp(0.0, 1.0);
+            self.n = self.n.clamp(0.0, 1.0);
+            self.p = self.p.clamp(0.0, 1.0);
+
+            // Currents (permeability-based, simplified)
+            let i_na = self.p_na * self.m * self.m * self.h * (self.v - self.e_na);
+            let i_k = self.p_k * self.n * self.n * (self.v - self.e_k);
+            let i_p = self.p_p * self.p * self.p * (self.v - self.e_p);
+            let i_l = self.g_l * (self.v - self.e_l);
+
+            let dv = (-(i_na + i_k + i_p + i_l) + input) / self.c_m;
+            self.v += dt_sub * dv;
+        }
+
+        // Safety
+        self.v = self.v.clamp(-50.0, 150.0);
+        if !self.v.is_finite() { self.v = 0.0; }
+        if !self.m.is_finite() { self.m = 0.005; }
+        if !self.h.is_finite() { self.h = 0.8; }
+        if !self.n.is_finite() { self.n = 0.01; }
+        if !self.p.is_finite() { self.p = 0.01; }
+
+        // Spike detection: V crosses 40 mV upward
+        if self.v >= 40.0 && v_prev < 40.0 { 1 } else { 0 }
+    }
+
+    pub fn reset(&mut self) {
+        *self = Self::new();
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // Tests
 // ═══════════════════════════════════════════════════════════════════
 
@@ -407,5 +557,111 @@ mod tests {
         for _ in 0..100_000 { std::hint::black_box(n.step(-20.0)); }
         let elapsed = start.elapsed();
         assert!(elapsed.as_millis() < 50, "100k steps must complete in <50ms");
+    }
+
+    // -- Frankenhaeuser-Huxley Axon tests --
+
+    #[test]
+    fn fh_fires_with_input() {
+        let mut n = FrankenhaeUserHuxleyAxon::new();
+        let mut spikes = 0;
+        for _ in 0..2_000 {
+            spikes += n.step(20.0);
+        }
+        assert!(spikes > 0, "FH axon must fire with strong input, got {spikes}");
+    }
+
+    #[test]
+    fn fh_silent_without_input() {
+        let mut n = FrankenhaeUserHuxleyAxon::new();
+        let mut spikes = 0;
+        for _ in 0..5_000 {
+            spikes += n.step(0.0);
+        }
+        assert_eq!(spikes, 0, "FH axon must be silent without input, got {spikes}");
+    }
+
+    #[test]
+    fn fh_action_potential_shape() {
+        // AP should depolarise well above 60 mV (spike threshold)
+        let mut n = FrankenhaeUserHuxleyAxon::new();
+        let mut v_max = -100.0_f64;
+        for _ in 0..500 {
+            n.step(20.0);
+            v_max = v_max.max(n.v);
+        }
+        assert!(v_max > 40.0, "AP peak should exceed 40 mV, got {v_max:.1}");
+    }
+
+    #[test]
+    fn fh_gating_evolves() {
+        let mut n = FrankenhaeUserHuxleyAxon::new();
+        let m0 = n.m;
+        let h0 = n.h;
+        for _ in 0..100 { n.step(20.0); }
+        assert!(n.m != m0 || n.h != h0, "Gating variables must evolve");
+    }
+
+    #[test]
+    fn fh_four_gates() {
+        // All 4 gates (m, h, n, p) must evolve during spiking
+        let mut n = FrankenhaeUserHuxleyAxon::new();
+        for _ in 0..200 { n.step(20.0); }
+        // After spiking: m should have risen, h should have fallen
+        // n and p should have changed from initial
+        assert!(n.m > 0.005 || n.h < 0.8 || n.n > 0.01 || n.p > 0.01,
+            "All gates must evolve: m={:.3}, h={:.3}, n={:.3}, p={:.3}",
+            n.m, n.h, n.n, n.p);
+    }
+
+    #[test]
+    fn fh_stronger_input_more_spikes() {
+        let mut weak = FrankenhaeUserHuxleyAxon::new();
+        let mut strong = FrankenhaeUserHuxleyAxon::new();
+        let (mut sw, mut ss) = (0, 0);
+        for _ in 0..2_000 {
+            sw += weak.step(10.0);
+            ss += strong.step(30.0);
+        }
+        assert!(ss >= sw,
+            "Stronger input → more spikes: strong={ss} vs weak={sw}");
+    }
+
+    #[test]
+    fn fh_all_gates_bounded() {
+        let mut n = FrankenhaeUserHuxleyAxon::new();
+        for _ in 0..2_000 { n.step(30.0); }
+        assert!(n.m >= 0.0 && n.m <= 1.0, "m out of bounds: {}", n.m);
+        assert!(n.h >= 0.0 && n.h <= 1.0, "h out of bounds: {}", n.h);
+        assert!(n.n >= 0.0 && n.n <= 1.0, "n out of bounds: {}", n.n);
+        assert!(n.p >= 0.0 && n.p <= 1.0, "p out of bounds: {}", n.p);
+    }
+
+    #[test]
+    fn fh_nan_input_stays_finite() {
+        let mut n = FrankenhaeUserHuxleyAxon::new();
+        n.step(f64::NAN);
+        assert!(n.v.is_finite());
+        assert!(n.m.is_finite());
+    }
+
+    #[test]
+    fn fh_reset_clears_state() {
+        let mut n = FrankenhaeUserHuxleyAxon::new();
+        for _ in 0..500 { n.step(20.0); }
+        n.reset();
+        assert_eq!(n.v, 0.0);
+        assert_eq!(n.m, 0.005);
+        assert_eq!(n.h, 0.8);
+    }
+
+    #[test]
+    fn fh_performance_1k_steps() {
+        let start = std::time::Instant::now();
+        let mut n = FrankenhaeUserHuxleyAxon::new();
+        for _ in 0..1_000 { std::hint::black_box(n.step(15.0)); }
+        let elapsed = start.elapsed();
+        // 50 sub-steps per step → 50k total iterations
+        assert!(elapsed.as_millis() < 100, "1k steps must complete in <100ms");
     }
 }

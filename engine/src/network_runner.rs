@@ -191,6 +191,7 @@ pub enum NeuronVariant {
     // misc.rs (step(f64)->i32)
     GradedSynapse(GradedSynapseNeuron),
     GapJunction(GapJunctionNeuron),
+    FHAxon(FrankenhaeUserHuxleyAxon),
 
     // Not wired (multi-arg / i32 input / f64 return / no reset):
     // Alpha (2 args), COBALIF (3 args), TsodyksMarkram (bool arg),
@@ -256,7 +257,7 @@ macro_rules! all_variants {
             Granule, Golgi, Stellate, Lugaro, UnipolarBrush, DCN,
             PersistentNa, Ih, TTypeCa, ATypeK, BK, SK, NMDA,
             MontbrioMPR, Brunel, TUM, ElBoustani,
-            GradedSynapse, GapJunction,
+            GradedSynapse, GapJunction, FHAxon,
         )
     };
 }
@@ -413,6 +414,7 @@ impl NeuronVariant {
             // misc
             NeuronVariant::GradedSynapse(n) => n.v,
             NeuronVariant::GapJunction(n) => n.v,
+            NeuronVariant::FHAxon(n) => n.v,
         }
     }
 }
@@ -947,6 +949,7 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         // misc
         "GradedSynapseNeuron" | "GradedSynapse" => Ok(NeuronVariant::GradedSynapse(GradedSynapseNeuron::new())),
         "GapJunctionNeuron" | "GapJunction" => Ok(NeuronVariant::GapJunction(GapJunctionNeuron::new())),
+        "FrankenhaeUserHuxleyAxon" | "FHAxon" => Ok(NeuronVariant::FHAxon(FrankenhaeUserHuxleyAxon::new())),
         _ => Err(format!("Unsupported model: '{name}'")),
     }
 }
@@ -1066,6 +1069,7 @@ pub fn supported_models() -> Vec<&'static str> {
         // misc
         "GradedSynapseNeuron",
         "GapJunctionNeuron",
+        "FrankenhaeUserHuxleyAxon",
     ]
 }
 

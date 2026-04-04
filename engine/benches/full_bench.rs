@@ -28,7 +28,7 @@ use sc_neurocore_engine::neurons::{
     PersistentNaNeuron, IhNeuron, TTypeCaNeuron, ATypeKNeuron, BKNeuron, SKNeuron, NMDANeuron,
     AiharaMapNeuron, KilincBhattMapNeuron, ErmentroutKopellMapNeuron,
     MontbrioMeanField, BrunelNetwork, TUMNetwork, ElBoustaniNetwork,
-    GradedSynapseNeuron, GapJunctionNeuron,
+    GradedSynapseNeuron, GapJunctionNeuron, FrankenhaeUserHuxleyAxon,
 };
 use sc_neurocore_engine::scpn::KuramotoSolver;
 use sc_neurocore_engine::simd::{fused_and_popcount_dispatch, pack_dispatch, popcount_dispatch};
@@ -648,6 +648,13 @@ fn bench_all(c: &mut Criterion) {
         b.iter(|| {
             let mut n = GapJunctionNeuron::new();
             for _ in 0..100_000 { black_box(n.step(-20.0)); }
+        })
+    });
+
+    c.bench_function("fh_axon_1k_steps", |b| {
+        b.iter(|| {
+            let mut n = FrankenhaeUserHuxleyAxon::new();
+            for _ in 0..1_000 { black_box(n.step(15.0)); }
         })
     });
 }

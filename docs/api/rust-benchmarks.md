@@ -161,6 +161,7 @@ cargo bench --bench analysis_bench -- --quick
 |-------|-------|--------|----------|-------|
 | Graded synapse | 100k | 4.66 ms | **46.6 ns** | Non-spiking, passive RC + release sigmoid |
 | Gap junction | 100k | 6.28 ms | **62.8 ns** | LIF + electrical synapse coupling |
+| FH axon | 1k | 13.13 ms | **13.13 µs** | Myelinated nerve, 50 sub-steps, 4 gates |
 
 ---
 
