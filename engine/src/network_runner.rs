@@ -185,6 +185,7 @@ pub enum NeuronVariant {
     // population.rs (step(f64)->i32)
     MontbrioMPR(MontbrioMeanField),
     Brunel(BrunelNetwork),
+    TUM(TUMNetwork),
 
     // Not wired (multi-arg / i32 input / f64 return / no reset):
     // Alpha (2 args), COBALIF (3 args), TsodyksMarkram (bool arg),
@@ -249,7 +250,7 @@ macro_rules! all_variants {
             RetinalGanglion, Merkel, Pacinian, NociceptorCell, OlfactoryReceptor,
             Granule, Golgi, Stellate, Lugaro, UnipolarBrush, DCN,
             PersistentNa, Ih, TTypeCa, ATypeK, BK, SK, NMDA,
-            MontbrioMPR, Brunel,
+            MontbrioMPR, Brunel, TUM,
         )
     };
 }
@@ -401,6 +402,7 @@ impl NeuronVariant {
             // population
             NeuronVariant::MontbrioMPR(n) => n.v,
             NeuronVariant::Brunel(n) => n.r_e,
+            NeuronVariant::TUM(n) => n.r,
         }
     }
 }
@@ -930,6 +932,7 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         // population
         "MontbrioMeanField" | "MPR" => Ok(NeuronVariant::MontbrioMPR(MontbrioMeanField::new())),
         "BrunelNetwork" | "Brunel" => Ok(NeuronVariant::Brunel(BrunelNetwork::new())),
+        "TUMNetwork" | "TUM" => Ok(NeuronVariant::TUM(TUMNetwork::new())),
         _ => Err(format!("Unsupported model: '{name}'")),
     }
 }
@@ -1044,6 +1047,7 @@ pub fn supported_models() -> Vec<&'static str> {
         // population
         "MontbrioMeanField",
         "BrunelNetwork",
+        "TUMNetwork",
     ]
 }
 
