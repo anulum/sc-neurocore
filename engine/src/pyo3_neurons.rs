@@ -1403,6 +1403,17 @@ impl PyAmariNeuralField {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// interneurons.rs models (6 specific interneuron types)
+// ═══════════════════════════════════════════════════════════════════
+
+py_neuron_default!("PVFastSpikingNeuron", PyPVFastSpikingNeuron, neurons::PVFastSpikingNeuron, state v, state h, state n, state p);
+py_neuron_default!("SSTNeuron", PySSTNeuron, neurons::SSTNeuron, state v, state m, state h, state n, state p, state s, state r);
+py_neuron_default!("VIPNeuron", PyVIPNeuron, neurons::VIPNeuron, state v, state h, state n, state a, state b);
+py_neuron_default!("ChandelierNeuron", PyChandelierNeuron, neurons::ChandelierNeuron, state v, state h, state n, state d, state p);
+py_neuron_default!("CerebellarBasketNeuron", PyCerebellarBasketNeuron, neurons::CerebellarBasketNeuron, state v, state h, state n, state a, state b, state ca);
+py_neuron_default!("MartinottiNeuron", PyMartinottiNeuron, neurons::MartinottiNeuron, state v, state m, state h, state n, state p, state s);
+
+// ═══════════════════════════════════════════════════════════════════
 // neuron.rs models (legacy module — AdEx, ExpIF, Lapicque)
 // ═══════════════════════════════════════════════════════════════════
 
@@ -1630,6 +1641,13 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyAdExNeuron>()?;
     m.add_class::<PyExpIfNeuron>()?;
     m.add_class::<PyLapicqueNeuron>()?;
+    // interneurons
+    m.add_class::<PyPVFastSpikingNeuron>()?;
+    m.add_class::<PySSTNeuron>()?;
+    m.add_class::<PyVIPNeuron>()?;
+    m.add_class::<PyChandelierNeuron>()?;
+    m.add_class::<PyCerebellarBasketNeuron>()?;
+    m.add_class::<PyMartinottiNeuron>()?;
     Ok(())
 }
 
