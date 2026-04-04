@@ -416,6 +416,13 @@ fn bench_all(c: &mut Criterion) {
         })
     });
 
+    c.bench_function("motor_unit_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = sc_neurocore_engine::neurons::MotorUnit::new();
+            for _ in 0..10_000 { black_box(n.step(20.0)); }
+        })
+    });
+
     c.bench_function("renshaw_1k_steps", |b| {
         b.iter(|| {
             let mut n = sc_neurocore_engine::neurons::RenshawCell::new();
