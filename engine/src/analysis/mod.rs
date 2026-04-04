@@ -7,5 +7,14 @@
 // SC-NeuroCore — Spike train analysis (Rust engine)
 
 pub mod basic;
+pub mod causality;
+pub mod correlation;
+pub mod decoding;
+pub mod distance;
+pub mod information;
+pub mod network;
+pub mod patterns;
 pub mod rate;
+pub mod surrogates;
+pub mod temporal;
 pub mod variability;
