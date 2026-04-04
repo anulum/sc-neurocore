@@ -1433,6 +1433,7 @@ py_neuron_default!("DCNNeuron", PyDCNNeuron, neurons::DCNNeuron, state v, state 
 
 // channels.rs models
 py_neuron_default!("PersistentNaNeuron", PyPersistentNaNeuron, neurons::PersistentNaNeuron, state v, state h, state n, state p);
+py_neuron_default!("IhNeuron", PyIhNeuron, neurons::IhNeuron, state v, state h, state n, state r);
 
 // ═══════════════════════════════════════════════════════════════════
 // sensory.rs models (10 sensory neuron types)
@@ -1739,6 +1740,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyDCNNeuron>()?;
     // channels
     m.add_class::<PyPersistentNaNeuron>()?;
+    m.add_class::<PyIhNeuron>()?;
     Ok(())
 }
 
