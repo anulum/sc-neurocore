@@ -1445,6 +1445,7 @@ py_neuron_default!("NMDANeuron", PyNMDANeuron, neurons::NMDANeuron, state v, sta
 
 // population.rs models
 py_neuron_default!("MontbrioMeanField", PyMontbrioMeanField, neurons::MontbrioMeanField, state r, state v);
+py_neuron_default!("BrunelNetwork", PyBrunelNetwork, neurons::BrunelNetwork, state r_e, state r_i);
 
 // ═══════════════════════════════════════════════════════════════════
 // sensory.rs models (10 sensory neuron types)
@@ -1762,6 +1763,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyNMDANeuron>()?;
     // population
     m.add_class::<PyMontbrioMeanField>()?;
+    m.add_class::<PyBrunelNetwork>()?;
     Ok(())
 }
 
