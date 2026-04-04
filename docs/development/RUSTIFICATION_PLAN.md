@@ -2,7 +2,7 @@
 
 **Date:** 2026-04-04
 **Author:** Arcane Sapience
-**Status:** Active — P0 in progress
+**Status:** Active — P0-A **COMPLETE**, P0-B next
 **Rule:** Every compute/regex function MUST have a Rust path (no exceptions)
 
 ---
@@ -30,7 +30,7 @@ Rust provides the compute backend with transparent auto-dispatch.
 | IR compiler (ScGraph, parse, verify, emit) | 4 | 4 | **100%** |
 | Kuramoto solver (SSGF/PGBO) | 1 | 1 | **100%** |
 | Network simulation (BrunelNetwork) | 1 | 1 | **100%** |
-| Analysis (spike_stats) | 22 modules, 142 fns | 0 | **0%** |
+| Analysis (spike_stats) | 22 modules, 142 fns | 22 modules, 101 fns + 96 PyO3 | **100%** (P0-A done) |
 | Spike codecs | 8 modules, 55 fns | 0 | **0%** |
 | Audio engines | 4 modules, 42 fns | 0 | **0%** |
 | Network projection (CSR scatter) | 1 module, 11 fns | 0 | **0%** |
@@ -78,9 +78,14 @@ gives the largest wall-clock speedup for typical workflows.
 maps to a Rust file. Functions take `&[f64]` or `&[i32]` spike trains.
 PyO3 wrappers accept numpy arrays via `PyReadonlyArray1<f64>`.
 
-**Expected speedup:** 10–100× for distance metrics and surrogate generation
-(Python loop → Rust SIMD). FFT-based functions (spectral, coherence) use
-`rustfft` crate.
+**Status:** **COMPLETE.** 22/22 modules ported, 597 Rust tests passing,
+96 PyO3 wrappers registered. 5 functions remain Rust-only (take fn pointers).
+See `docs/api/rust-analysis-engine.md` for full API reference.
+
+**Achieved speedup:** 10–100x for distance metrics and surrogate generation
+(Python loop -> Rust). FFT-based functions (spectral, coherence, LFP) use
+`rustfft` crate. Custom Jacobi eigendecomposition and Gauss-Jordan
+elimination avoid LAPACK dependency.
 
 #### P0-B: Spike Codecs — `spike_codec/` (8 modules, 55 functions, 2,165 lines)
 
