@@ -190,6 +190,7 @@ pub enum NeuronVariant {
 
     // misc.rs (step(f64)->i32)
     GradedSynapse(GradedSynapseNeuron),
+    GapJunction(GapJunctionNeuron),
 
     // Not wired (multi-arg / i32 input / f64 return / no reset):
     // Alpha (2 args), COBALIF (3 args), TsodyksMarkram (bool arg),
@@ -255,7 +256,7 @@ macro_rules! all_variants {
             Granule, Golgi, Stellate, Lugaro, UnipolarBrush, DCN,
             PersistentNa, Ih, TTypeCa, ATypeK, BK, SK, NMDA,
             MontbrioMPR, Brunel, TUM, ElBoustani,
-            GradedSynapse,
+            GradedSynapse, GapJunction,
         )
     };
 }
@@ -411,6 +412,7 @@ impl NeuronVariant {
             NeuronVariant::ElBoustani(n) => n.r_e,
             // misc
             NeuronVariant::GradedSynapse(n) => n.v,
+            NeuronVariant::GapJunction(n) => n.v,
         }
     }
 }
@@ -944,6 +946,7 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         "ElBoustaniNetwork" | "ElBoustani" => Ok(NeuronVariant::ElBoustani(ElBoustaniNetwork::new())),
         // misc
         "GradedSynapseNeuron" | "GradedSynapse" => Ok(NeuronVariant::GradedSynapse(GradedSynapseNeuron::new())),
+        "GapJunctionNeuron" | "GapJunction" => Ok(NeuronVariant::GapJunction(GapJunctionNeuron::new())),
         _ => Err(format!("Unsupported model: '{name}'")),
     }
 }
@@ -1062,6 +1065,7 @@ pub fn supported_models() -> Vec<&'static str> {
         "ElBoustaniNetwork",
         // misc
         "GradedSynapseNeuron",
+        "GapJunctionNeuron",
     ]
 }
 
