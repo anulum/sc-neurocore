@@ -33,6 +33,11 @@ use sc_neurocore_engine::neurons::{
     PlantR15Neuron, PospischilNeuron, PrescottNeuron, RetinalGanglionCell, RodPhotoreceptor,
     SKNeuron, SSTNeuron, SmoothMuscleCell, StellateCell, TTypeCaNeuron, TUMNetwork,
     TraubMilesNeuron, UnipolarBrushCell, VIPNeuron, WangBuzsakiNeuron, YamadaNeuron,
+    FitzHughNagumoNeuron, MorrisLecarNeuron, HindmarshRoseNeuron, ResonateAndFireNeuron,
+    FitzHughRinzelNeuron, McKeanNeuron, TermanWangOscillator, BendaHerzNeuron,
+    AlphaNeuron, COBALIFNeuron, GutkinErmentroutNeuron, WilsonHRNeuron, ChayNeuron,
+    ChayKeizerNeuron, ShermanRinzelKeizerNeuron, ButeraRespiratoryNeuron,
+    EPropALIFNeuron, SuperSpikeNeuron, LearnableNeuronModel, PernarowskiNeuron,
 };
 use sc_neurocore_engine::scpn::KuramotoSolver;
 use sc_neurocore_engine::simd::{fused_and_popcount_dispatch, pack_dispatch, popcount_dispatch};
@@ -937,6 +942,148 @@ fn bench_all(c: &mut Criterion) {
         b.iter(|| {
             let mut n = YamadaNeuron::new();
             for _ in 0..1_000 { black_box(n.step(5.0)); }
+        })
+    });
+
+    // -- Simple spiking models --
+
+    c.bench_function("fhn_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = FitzHughNagumoNeuron::new();
+            for _ in 0..10_000 { black_box(n.step(1.0)); }
+        })
+    });
+
+    c.bench_function("morris_lecar_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = MorrisLecarNeuron::new();
+            for _ in 0..10_000 { black_box(n.step(100.0)); }
+        })
+    });
+
+    c.bench_function("hindmarsh_rose_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = HindmarshRoseNeuron::new();
+            for _ in 0..10_000 { black_box(n.step(3.0)); }
+        })
+    });
+
+    c.bench_function("resonate_and_fire_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = ResonateAndFireNeuron::new();
+            for _ in 0..10_000 { black_box(n.step(3.0)); }
+        })
+    });
+
+    c.bench_function("fitzhugh_rinzel_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = FitzHughRinzelNeuron::new();
+            for _ in 0..10_000 { black_box(n.step(1.0)); }
+        })
+    });
+
+    c.bench_function("mckean_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = McKeanNeuron::new();
+            for _ in 0..10_000 { black_box(n.step(0.5)); }
+        })
+    });
+
+    c.bench_function("terman_wang_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = TermanWangOscillator::new();
+            for _ in 0..10_000 { black_box(n.step(0.5)); }
+        })
+    });
+
+    c.bench_function("benda_herz_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = BendaHerzNeuron::new(42);
+            for _ in 0..10_000 { black_box(n.step(20.0)); }
+        })
+    });
+
+    c.bench_function("alpha_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = AlphaNeuron::new();
+            for _ in 0..10_000 { black_box(n.step(0.5, 0.0)); }
+        })
+    });
+
+    c.bench_function("coba_lif_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = COBALIFNeuron::new();
+            for _ in 0..10_000 { black_box(n.step(500.0, 0.0, 0.0)); }
+        })
+    });
+
+    c.bench_function("gutkin_ermentrout_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = GutkinErmentroutNeuron::new();
+            for _ in 0..10_000 { black_box(n.step(15.0)); }
+        })
+    });
+
+    c.bench_function("wilson_hr_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = WilsonHRNeuron::new();
+            for _ in 0..10_000 { black_box(n.step(0.5)); }
+        })
+    });
+
+    c.bench_function("chay_1k_steps", |b| {
+        b.iter(|| {
+            let mut n = ChayNeuron::new();
+            for _ in 0..1_000 { black_box(n.step(20.0)); }
+        })
+    });
+
+    c.bench_function("chay_keizer_1k_steps", |b| {
+        b.iter(|| {
+            let mut n = ChayKeizerNeuron::new();
+            for _ in 0..1_000 { black_box(n.step(10.0)); }
+        })
+    });
+
+    c.bench_function("sherman_rinzel_keizer_1k_steps", |b| {
+        b.iter(|| {
+            let mut n = ShermanRinzelKeizerNeuron::new();
+            for _ in 0..1_000 { black_box(n.step(5.0)); }
+        })
+    });
+
+    c.bench_function("butera_respiratory_1k_steps", |b| {
+        b.iter(|| {
+            let mut n = ButeraRespiratoryNeuron::new();
+            for _ in 0..1_000 { black_box(n.step(50.0)); }
+        })
+    });
+
+    c.bench_function("eprop_alif_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = EPropALIFNeuron::default();
+            for _ in 0..10_000 { black_box(n.step(0.5)); }
+        })
+    });
+
+    c.bench_function("superspike_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = SuperSpikeNeuron::default();
+            for _ in 0..10_000 { black_box(n.step(0.5)); }
+        })
+    });
+
+    c.bench_function("learnable_neuron_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = LearnableNeuronModel::new();
+            for _ in 0..10_000 { black_box(n.step(2.0)); }
+        })
+    });
+
+    c.bench_function("pernarowski_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = PernarowskiNeuron::new();
+            for _ in 0..10_000 { black_box(n.step(1.0)); }
         })
     });
 }
