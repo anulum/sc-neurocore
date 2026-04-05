@@ -387,7 +387,7 @@ impl NeuronVariant {
             NeuronVariant::Renshaw(n) => n.v,
             NeuronVariant::MotorUnitCell(n) => n.v,
             // sensory (spiking)
-            NeuronVariant::RetinalGanglion(n) => n.v,
+            NeuronVariant::RetinalGanglion(n) => n.baseline, // GLM: no membrane V
             NeuronVariant::Merkel(n) => n.v,
             NeuronVariant::Pacinian(n) => n.v,
             NeuronVariant::NociceptorCell(n) => n.v,
