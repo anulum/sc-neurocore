@@ -100,15 +100,32 @@ impl Default for HodgkinHuxleyNeuron {
     }
 }
 
-/// Traub-Miles — hippocampal pyramidal HH variant. Traub et al. 1991.
+/// Traub-Miles — hippocampal CA3 pyramidal neuron with M-current.
+///
+/// Full Traub et al. 1991 model with Na, K_dr, leak, plus
+/// M-current (Kv7/KCNQ) for spike frequency adaptation.
+/// The M-current is the slow K⁺ conductance responsible for:
+/// - Spike frequency adaptation (SFA)
+/// - Theta-frequency resonance (~4-8 Hz)
+/// - Subthreshold membrane potential oscillations
+///
+/// IM = g_M * w * (V - E_K)
+/// dw/dt = (w_inf - w) / tau_w
+/// w_inf = 1 / (1 + exp(-(V + 35) / 10))
+/// tau_w = 100 / (3.3 * exp((V+35)/20) + exp(-(V+35)/20))
+///
+/// Traub et al., J Neurophysiol 66:635, 1991.
+/// Yamada et al., Meth Neuronal Model (Koch & Segev), 1989 (M-current kinetics).
 #[derive(Clone, Debug)]
 pub struct TraubMilesNeuron {
     pub v: f64,
     pub m: f64,
     pub h: f64,
     pub n: f64,
+    pub w: f64,        // M-current (Kv7) activation
     pub g_na: f64,
     pub g_k: f64,
+    pub g_m: f64,      // M-current conductance
     pub g_l: f64,
     pub e_na: f64,
     pub e_k: f64,
@@ -124,8 +141,10 @@ impl TraubMilesNeuron {
             m: 0.05,
             h: 0.6,
             n: 0.3,
+            w: 0.01,       // M-current starts low at rest
             g_na: 100.0,
             g_k: 80.0,
+            g_m: 1.5,      // M-current conductance (Yamada 1989 range: 1-3 mS/cm²)
             g_l: 0.1,
             e_na: 50.0,
             e_k: -100.0,
@@ -143,13 +162,23 @@ impl TraubMilesNeuron {
             let bh = 4.0 / (1.0 + (-(self.v + 27.0) / 5.0).exp());
             let an = safe_rate(0.032, 52.0, self.v, 5.0, 0.32);
             let bn = 0.5 * (-(self.v + 57.0) / 40.0).exp();
+
+            // M-current gating (Yamada et al. 1989)
+            let w_inf = 1.0 / (1.0 + (-(self.v + 35.0) / 10.0).exp());
+            let tau_w = 100.0 / (3.3 * ((self.v + 35.0) / 20.0).exp()
+                + (-(self.v + 35.0) / 20.0).exp());
+
             self.m += (am * (1.0 - self.m) - bm * self.m) * self.dt;
             self.h += (ah * (1.0 - self.h) - bh * self.h) * self.dt;
             self.n += (an * (1.0 - self.n) - bn * self.n) * self.dt;
+            self.w += ((w_inf - self.w) / tau_w) * self.dt;
+            self.w = self.w.clamp(0.0, 1.0);
+
             let i_na = self.g_na * self.m.powi(3) * self.h * (self.v - self.e_na);
             let i_k = self.g_k * self.n.powi(4) * (self.v - self.e_k);
+            let i_m = self.g_m * self.w * (self.v - self.e_k);
             let i_l = self.g_l * (self.v - self.e_l);
-            self.v += (-i_na - i_k - i_l + current) * self.dt;
+            self.v += (-i_na - i_k - i_m - i_l + current) * self.dt;
         }
         if self.v >= self.v_threshold && v_prev < self.v_threshold {
             1
@@ -158,10 +187,7 @@ impl TraubMilesNeuron {
         }
     }
     pub fn reset(&mut self) {
-        self.v = -67.0;
-        self.m = 0.05;
-        self.h = 0.6;
-        self.n = 0.3;
+        *self = Self::new();
     }
 }
 impl Default for TraubMilesNeuron {
