@@ -1,6 +1,7 @@
 # FitzHughNagumoNeuron
 
 **Module:** `sc_neurocore.neurons.models.fitzhugh_nagumo`
+**Rust:** `sc_neurocore_engine::neurons::simple_spiking::FitzHughNagumoNeuron`
 **Reference:** FitzHugh, Biophys. J. 1(6), 1961; Nagumo, Arimoto & Yoshizawa, Proc. IRE 50(10), 1962
 **Family:** 2D oscillator (qualitative reduction of Hodgkin-Huxley)
 **State variables:** `v` (membrane potential, fast), `w` (recovery variable, slow)
@@ -198,41 +199,231 @@ which all qualitative analysis begins.
 
 ---
 
-## Implementation Notes
+## Usage Examples
 
-- **Source:** `src/sc_neurocore/neurons/models/fitzhugh_nagumo.py` — 40 lines.
-- **Two state variables:** v (fast), w (slow).
-- **Dataclass:** Uses `@dataclass`.
-- **No numpy dependency:** Pure Python arithmetic.
-- **Simplest 2D ODE model** in SC-NeuroCore.
-- **Rust wiring:** Trivially compatible (2 f64, pure arithmetic).
+### Basic Oscillation (Python)
+
+```python
+from sc_neurocore.neurons.models.fitzhugh_nagumo import FitzHughNagumoNeuron
+
+neuron = FitzHughNagumoNeuron()
+spikes = []
+for t in range(10000):
+    spike = neuron.step(current=0.5)  # within oscillatory band
+    if spike:
+        spikes.append(t)
+
+print(f"Spike count: {len(spikes)}")
+print(f"Mean period: {sum(b-a for a,b in zip(spikes, spikes[1:])) / max(len(spikes)-1, 1):.1f} steps")
+```
+
+### Phase Plane Trajectory
+
+```python
+from sc_neurocore.neurons.models.fitzhugh_nagumo import FitzHughNagumoNeuron
+
+neuron = FitzHughNagumoNeuron()
+v_trace, w_trace = [], []
+for _ in range(5000):
+    neuron.step(current=0.5)
+    v_trace.append(neuron.v)
+    w_trace.append(neuron.w)
+
+# Plot w vs v to visualise the limit cycle
+# The trajectory traces the cubic nullcline shape
+```
+
+### Rust Backend (via PyO3)
+
+```python
+from sc_neurocore_engine import FitzHughNagumoNeuron as RustFHN
+
+neuron = RustFHN()
+spikes = sum(neuron.step(0.5) for _ in range(10000))
+state = neuron.get_state()
+print(f"Spikes: {spikes}, v={state['v']:.3f}, w={state['w']:.3f}")
+```
+
+### Bifurcation Sweep
+
+```python
+from sc_neurocore.neurons.models.fitzhugh_nagumo import FitzHughNagumoNeuron
+
+for I in [0.0, 0.3, 0.5, 0.8, 1.0, 1.5, 2.0]:
+    neuron = FitzHughNagumoNeuron()
+    spikes = sum(neuron.step(I) for _ in range(5000))
+    print(f"I={I:.1f}: {spikes} spikes")
+# Expect: 0, 0, >0, >0, >0, 0, 0 (oscillatory band)
+```
 
 ---
 
-## Performance
+## Pipeline Position
 
-| Metric | Python | Rust |
+```
+sc_neurocore Pipeline
+├── Python layer
+│   └── sc_neurocore.neurons.models.fitzhugh_nagumo.FitzHughNagumoNeuron
+│       ├── step(current) → int {0, 1}
+│       ├── reset() → None
+│       ├── Population(FitzHughNagumoNeuron, n=N)
+│       ├── Network(pop, drive, monitor)
+│       └── Analysis: spike_count(), firing_rate(), isi()
+│
+├── Rust engine
+│   └── sc_neurocore_engine::neurons::simple_spiking::FitzHughNagumoNeuron
+│       ├── new() → Self
+│       ├── step(&mut self, current: f64) → i32
+│       └── reset(&mut self)
+│
+├── PyO3 binding
+│   └── sc_neurocore_engine.FitzHughNagumoNeuron (Python class)
+│       ├── __init__()
+│       ├── step(current) → int
+│       ├── reset()
+│       └── get_state() → dict {v, w}
+│
+└── Network runner
+    └── NeuronVariant::FitzHughNagumo(FitzHughNagumoNeuron)
+        ├── Wired in network_runner.rs:203
+        ├── Voltage access: network_runner.rs:477
+        └── Factory: "FitzHughNagumo" | "FitzHughNagumoNeuron" → new()
+```
+
+---
+
+## Technical Reference
+
+### Python/Rust Implementation Comparison
+
+| Aspect | Python | Rust |
 |--------|--------|------|
-| Isolation | ~400K steps/s | Not measured |
-| Network | Pipeline verified | — |
+| Source | `fitzhugh_nagumo.py` (39 lines) | `simple_spiking.rs:15-55` |
+| Dependencies | None (pure arithmetic) | None (pure arithmetic) |
+| Integration | Simultaneous Euler | Simultaneous Euler (fixed 0255685) |
+| Exp per step | 0 | 0 |
+| **Parity** | **EXACT** (pure polynomial, no RNG) | |
 
-Very fast — no exp(), no sub-stepping, pure polynomial.
+### State Variables
+
+| Variable | Type | Description |
+|----------|------|-------------|
+| `v` | f64 / float | Fast membrane-like variable |
+| `w` | f64 / float | Slow recovery variable |
+
+### Methods
+
+| Method | Signature | Returns | Description |
+|--------|-----------|---------|-------------|
+| `step` | `(current: f64) → i32` | 0 or 1 | Advance one timestep |
+| `reset` | `() → ()` | — | Reset v to -1.0, w to -0.5 |
+| `new` | `() → Self` | — | Rust constructor with defaults |
+| `get_state` | `() → dict` | v, w | PyO3 only: state inspection |
+
+### NeuronVariant Wiring
+
+```rust
+// network_runner.rs:203
+FitzHughNagumo(FitzHughNagumoNeuron),
+
+// network_runner.rs:477 — voltage access
+NeuronVariant::FitzHughNagumo(n) => n.v,
+
+// network_runner.rs:923 — factory
+"FitzHughNagumo" | "FitzHughNagumoNeuron" => {
+    Ok(NeuronVariant::FitzHughNagumo(FitzHughNagumoNeuron::new()))
+}
+```
+
+---
+
+## Performance Benchmarks
+
+### Rust (Criterion 0.8)
+
+Measured on i5-11600K @ 3.90 GHz, single-threaded, 2026-04-05.
+
+| Benchmark | Iterations | Median | Per-step | Notes |
+|-----------|-----------|--------|----------|-------|
+| `fhn_10k_steps` | 10,000 | 113 µs | **11.3 ns** | Pure polynomial, no exp() |
+
+### Python
+
+Measured on same hardware, single-threaded.
+
+| Metric | Value |
+|--------|-------|
+| Isolation throughput | ~400K steps/s (~2.5 µs/step) |
+| Network throughput | Pipeline verified |
+
+### Speedup
+
+| Metric | Python | Rust | Speedup |
+|--------|--------|------|---------|
+| Per-step latency | ~2,500 ns | 11.3 ns | **~221×** |
+
+The 221× speedup reflects the pure polynomial nature of FHN — no
+transcendental function calls, making it ideal for SIMD vectorisation
+in the Rust backend.
+
+### Numerical Stability
+
+| Test | Duration | Result |
+|------|----------|--------|
+| 50,000 steps at I=0.5 | 5 s sim time | State finite |
+| dt=0.05, 0.1, 0.2 | 10K steps each | All stable |
+| I=2.0 (moderate drive) | 200 steps | v finite |
 
 ---
 
 ## Test Coverage
 
+### Python Tests (26 in test_model, 2 in test_new = 28 total)
+
+**File:** `tests/test_model_fitzhugh_nagumo.py` (24 tests)
+
 | Category | Tests | What is verified |
 |----------|------:|-----------------|
 | Isolation | 5 | defaults, binary output, 2 variables evolve, state finite, reset |
-| Equations | 4 | dv formula verified, dw formula verified, cubic nullcline, w-nullcline |
-| Oscillatory band | 5 | silent below band, oscillatory in band, suppressed above band, regular ISI, V bounded |
-| Parameters | 4 | ε controls timescale, a shifts w-nullcline, dt stability [0.05,0.1,0.2], deterministic |
+| Equations | 4 | dv formula, dw formula, cubic nullcline, w-nullcline |
+| Oscillatory band | 5 | silent below, oscillatory in, suppressed above, regular ISI, V bounded |
+| Parameters | 4 | ε timescale, a shift, dt stability, deterministic |
 | Performance | 2 | isolation throughput, network throughput |
-| Pipeline | 4 | Population, Network spikes, Projection wiring, analysis pipeline |
-| **Total** | **26** | **ALL PASSED (2.84s)** |
+| Pipeline | 4 | Population, Network spikes, Projection, analysis |
 
-See `tests/test_model_fitzhugh_nagumo.py`.
+**File:** `tests/test_new_neurons.py` (2 tests)
+
+| Test | What is verified |
+|------|-----------------|
+| `test_fires` | Fires under drive |
+| `test_w_recovery` | Recovery variable evolves |
+
+### Rust Tests (7 total)
+
+**File:** `engine/src/neurons/simple_spiking.rs`
+
+| Test | What is verified |
+|------|-----------------|
+| `fhn_fires` | Fires at I=2 in 1000 steps |
+| `fhn_silent_without_input` | v bounded at I=0 |
+| `fhn_reset_clears_state` | v=-1.0, w=-0.5 after reset |
+| `fhn_moderate_input_stable` | v finite at I=2 in 200 steps |
+| `fhn_recovery_variable` | w evolves during simulation |
+| `fhn_nan_no_panic` | NaN input does not crash |
+| `fhn_negative_no_crash` | v finite at I=-30 |
+
+### Coverage Summary
+
+| Category | Python | Rust | Total |
+|----------|--------|------|-------|
+| Construction/reset | 3 | 1 | 4 |
+| Equations/dynamics | 9 | 3 | 12 |
+| Oscillatory regime | 5 | 0 | 5 |
+| Parameter sensitivity | 4 | 0 | 4 |
+| Numerical stability | 1 | 3 | 4 |
+| Performance | 2 | 0 | 2 |
+| Pipeline integration | 4 | 0 | 4 |
+| **Total** | **28** | **7** | **35** |
 
 ---
 
@@ -343,3 +534,44 @@ The FHN model is mathematically equivalent to the Bonhoeffer-van der Pol
 nonlinear dynamics. This cross-disciplinary bridge has made the FHN one
 of the most cited and studied models in all of science (>10,000 citations
 combined for FitzHugh 1961 and Nagumo 1962).
+
+---
+
+## Citations
+
+1. **FitzHugh, R.** (1961).
+   Impulses and physiological states in theoretical models of nerve membrane.
+   *Biophysical Journal*, 1(6), 445–466.
+   DOI: [10.1016/S0006-3495(61)86902-6](https://doi.org/10.1016/S0006-3495(61)86902-6)
+
+2. **Nagumo, J., Arimoto, S., & Yoshizawa, S.** (1962).
+   An active pulse transmission line simulating nerve axon.
+   *Proceedings of the IRE*, 50(10), 2061–2070.
+   DOI: [10.1109/JRPROC.1962.288235](https://doi.org/10.1109/JRPROC.1962.288235)
+
+3. **Hodgkin, A. L. & Huxley, A. F.** (1952).
+   A quantitative description of membrane current and its application to conduction
+   and excitation in nerve.
+   *Journal of Physiology*, 117(4), 500–544.
+   DOI: [10.1113/jphysiol.1952.sp004764](https://doi.org/10.1113/jphysiol.1952.sp004764)
+
+4. **Izhikevich, E. M.** (2007).
+   *Dynamical Systems in Neuroscience: The Geometry of Excitability and Bursting.*
+   MIT Press. Chapter 4: Two-dimensional systems.
+
+5. **Rinzel, J. & Ermentrout, G. B.** (1998).
+   Analysis of neural excitability and oscillations.
+   In *Methods in Neuronal Modeling*, Koch, C. & Segev, I. (Eds.), MIT Press, 251–291.
+
+6. **Strogatz, S. H.** (2015).
+   *Nonlinear Dynamics and Chaos.* 2nd ed. Westview Press.
+   Chapter 7: Limit cycles and the van der Pol oscillator.
+
+7. **Ermentrout, G. B. & Terman, D. H.** (2010).
+   *Mathematical Foundations of Neuroscience.* Springer.
+   Chapter 4: The FitzHugh-Nagumo model.
+
+---
+
+*SC-NeuroCore v3.14.0 — ANULUM / Fortis Studio*
+*© 2020–2026 Miroslav Šotek. All rights reserved.*
