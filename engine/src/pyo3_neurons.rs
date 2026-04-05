@@ -1456,6 +1456,8 @@ py_neuron_default!("FrankenhaeUserHuxleyAxon", PyFHAxon, neurons::FrankenhaeUser
 py_neuron_default!("NodeOfRanvier", PyNodeOfRanvier, neurons::NodeOfRanvier, state v, state m, state h, state p, state s);
 py_neuron_default!("MyelinatedAxon", PyMyelinatedAxon, neurons::MyelinatedAxon, state v_inter);
 py_neuron_default!("CardiacPurkinjeFibre", PyCardiacPurkinjeFibre, neurons::CardiacPurkinjeFibre, state v, state d, state f, state y);
+py_neuron_default!("SmoothMuscleCell", PySmoothMuscleCell, neurons::SmoothMuscleCell, state v, state ca, state ca_store);
+py_neuron_default!("EndocrineBetaCell", PyEndocrineBetaCell, neurons::EndocrineBetaCell, state v, state n, state ca);
 
 // ═══════════════════════════════════════════════════════════════════
 // sensory.rs models (10 sensory neuron types)
@@ -1783,6 +1785,8 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyNodeOfRanvier>()?;
     m.add_class::<PyMyelinatedAxon>()?;
     m.add_class::<PyCardiacPurkinjeFibre>()?;
+    m.add_class::<PySmoothMuscleCell>()?;
+    m.add_class::<PyEndocrineBetaCell>()?;
     Ok(())
 }
 

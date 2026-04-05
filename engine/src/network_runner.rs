@@ -195,6 +195,8 @@ pub enum NeuronVariant {
     NodeOfRanvier(NodeOfRanvier),
     MyelinAxon(MyelinatedAxon),
     CardiacPurkinje(CardiacPurkinjeFibre),
+    SmoothMuscle(SmoothMuscleCell),
+    BetaCell(EndocrineBetaCell),
 
     // Not wired (multi-arg / i32 input / f64 return / no reset):
     // Alpha (2 args), COBALIF (3 args), TsodyksMarkram (bool arg),
@@ -261,6 +263,7 @@ macro_rules! all_variants {
             PersistentNa, Ih, TTypeCa, ATypeK, BK, SK, NMDA,
             MontbrioMPR, Brunel, TUM, ElBoustani,
             GradedSynapse, GapJunction, FHAxon, NodeOfRanvier, MyelinAxon, CardiacPurkinje,
+            SmoothMuscle, BetaCell,
         )
     };
 }
@@ -421,6 +424,8 @@ impl NeuronVariant {
             NeuronVariant::NodeOfRanvier(n) => n.v,
             NeuronVariant::MyelinAxon(n) => n.v(),
             NeuronVariant::CardiacPurkinje(n) => n.v,
+            NeuronVariant::SmoothMuscle(n) => n.v,
+            NeuronVariant::BetaCell(n) => n.v,
         }
     }
 }
@@ -959,6 +964,8 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         "NodeOfRanvier" => Ok(NeuronVariant::NodeOfRanvier(NodeOfRanvier::new())),
         "MyelinatedAxon" | "MyelinAxon" => Ok(NeuronVariant::MyelinAxon(MyelinatedAxon::new())),
         "CardiacPurkinjeFibre" | "CardiacPurkinje" => Ok(NeuronVariant::CardiacPurkinje(CardiacPurkinjeFibre::new())),
+        "SmoothMuscleCell" | "SmoothMuscle" => Ok(NeuronVariant::SmoothMuscle(SmoothMuscleCell::new())),
+        "EndocrineBetaCell" | "BetaCell" => Ok(NeuronVariant::BetaCell(EndocrineBetaCell::new())),
         _ => Err(format!("Unsupported model: '{name}'")),
     }
 }
@@ -1082,6 +1089,8 @@ pub fn supported_models() -> Vec<&'static str> {
         "NodeOfRanvier",
         "MyelinatedAxon",
         "CardiacPurkinjeFibre",
+        "SmoothMuscleCell",
+        "EndocrineBetaCell",
     ]
 }
 
