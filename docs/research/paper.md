@@ -89,7 +89,7 @@ decorrelated seed assignment (Golomb, 1967). Fixed-point arithmetic
 uses Q8.8 signed two's complement. An optional `training` subpackage
 provides LIF, adaptive LIF (Bellec et al., 2020), and recurrent LIF cells with
 surrogate gradient backward passes and learnable membrane parameters.
-A library of 122 neuron models — from McCulloch-Pitts (1943)
+A library of 173 neuron models — from McCulloch-Pitts (1943)
 through Hodgkin-Huxley (1952), Izhikevich (2003),
 and 9 hardware chip emulators (Loihi, TrueNorth, BrainScaleS, SpiNNaker,
 Akida) — covers 82 years of computational neuroscience.

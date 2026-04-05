@@ -15,9 +15,9 @@ PyTorch 2.6.0, Python 3.12.
 
 SC-NeuroCore's training stack provides:
 
-- **7 surrogate gradient functions**: ATan, FastSigmoid, SuperSpike,
+- **6 surrogate gradient functions**: ATan, FastSigmoid, SuperSpike,
   Sigmoid, STE, Triangular (all from published literature)
-- **10 differentiable neuron cells**: LIF, IF, Synaptic, ALIF, ExpIF,
+- **12 differentiable neuron cells**: LIF, IF, Synaptic, ALIF, ExpIF,
   AdEx, Lapicque, Alpha, SecondOrder, Recurrent
 - **2 network architectures**: SpikingNet (feedforward), ConvSpikingNet
   (convolutional)

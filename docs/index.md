@@ -118,7 +118,7 @@ See [Architecture](architecture/architecture.md) for the full package map.
 
 <!-- TODO: Replace with YouTube embed or hosted video when recorded -->
 See the [Neuron Explorer Notebook](https://github.com/anulum/sc-neurocore/blob/main/notebooks/04_neuron_explorer.ipynb)
-for an interactive walkthrough of all 122 neuron models with voltage traces,
+for an interactive walkthrough of all 173 neuron models with voltage traces,
 phase portraits, and F-I curves. The [NIR Bridge Notebook](https://github.com/anulum/sc-neurocore/blob/main/notebooks/05_nir_bridge.ipynb)
 demonstrates importing NIR graphs and simulating spiking networks. Or try the
 [Quickstart on Google Colab](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)

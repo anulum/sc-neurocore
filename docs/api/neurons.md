@@ -1,9 +1,9 @@
-# Neurons — 122 Models
+# Neurons — 173 Models
 
-122 neuron models spanning 83 years of computational neuroscience
-(1943-2026): 109 individual bio model files under `neurons/models/` plus 5 core
-stochastic computing neurons plus 9 AI-optimized models (ArcaneNeuron + 8
-novel designs in `ai_optimized.py`).
+173 neuron models spanning 83 years of computational neuroscience
+(1943-2026): 113 Python model files under `neurons/models/` plus 172 Rust
+implementations, 9 AI-optimised models (ArcaneNeuron + 8), 159 wired
+into the NetworkRunner pipeline.
 
 ## Quick Start
 
@@ -37,7 +37,7 @@ from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
 
 ::: sc_neurocore.neurons.dendritic.StochasticDendriticNeuron
 
-## Extended Model Library (109 models in `neurons/models/`)
+## Extended Model Library (113 models in `neurons/models/`)
 
 ### Integrate-and-Fire Variants (21)
 

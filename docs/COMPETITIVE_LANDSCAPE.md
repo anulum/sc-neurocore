@@ -35,22 +35,22 @@ marked explicitly.
 | Equation → Verilog compiler | **Yes** | — | — | — | — |
 | IR compiler → MLIR/CIRCT | **Yes** | — | — | — | — |
 | Rust SIMD engine | **Yes** (41.3 Gbit/s pack) | — | — | — | — |
-| Surrogate gradient training | **Yes** (7 surrogates, 10 cells) | Yes | Yes | Yes | — |
+| Surrogate gradient training | **Yes** (6 surrogates, 12 cells) | Yes | Yes | Yes | — |
 | PyTorch `nn.Module` SNN | **Yes** (+ SC export) | Yes | Yes | — | — |
 | GPU acceleration | PyTorch + CuPy | PyTorch | PyTorch | — | — |
-| Neuron models | **116** | 11 | 6 | 3 | Arbitrary |
-| Rust neuron models (PyO3) | **109** | — | — | — | — |
-| NetworkRunner (fused loop) | **80 models** | — | — | — | — |
+| Neuron models | **173** | 11 | 6 | 3 | Arbitrary |
+| Rust neuron models (PyO3) | **172** | — | — | — | — |
+| NetworkRunner (fused loop) | **159 models** | — | — | — | — |
 | Network simulation backends | **3** (Python, Rust, MPI) | PyTorch | PyTorch | Lava | C++ codegen |
 | MPI distributed simulation | **Yes** | — | — | — | — |
 | Pre-trained model zoo | **10 configs, 3 weights** | — | — | — | — |
-| Spike train analysis | **128 functions** | — | — | — | — |
-| Visualization plots | **12** | — | — | — | — |
+| Spike train analysis | **124 functions** | — | — | — | — |
+| Visualization plots | **14** | — | — | — | — |
 | Advanced plasticity rules | **13** | — | — | — | — |
 | STDP / R-STDP plasticity | Yes | — | Yes | Yes | Yes |
 | Quantum hybrid circuits | **Yes** | — | — | — | — |
 | Hyperdimensional computing | **Yes** | — | — | — | — |
-| Formal verification | **7 modules, 67 props** | — | — | — | — |
+| Formal verification | **7 modules, 68 props** | — | — | — | — |
 | Sobol low-discrepancy encoding | **Yes** | — | — | — | — |
 | Multi-head attention (SC) | **Yes** | — | — | — | — |
 | Connectome generators | Yes | — | — | — | Yes |
@@ -93,7 +93,7 @@ quadrantChart
 3. **Formal verification** — 67 SymbiYosys properties across 7 HDL
    modules (no other SNN framework offers formal proofs)
 4. **Rust SIMD engine** — AVX-512/AVX2/NEON/SVE/RVV dispatch with
-   109 Rust neuron models with PyO3 bindings, 80-model NetworkRunner
+   172 Rust neuron models with PyO3 bindings, 159-model NetworkRunner
 5. **Network simulation** — 3 backends (Python, Rust, MPI), 6 topology
    generators, 10 model zoo configs, 3 pre-trained weight sets
 6. **Analysis toolkit** — 128 spike train analysis functions across

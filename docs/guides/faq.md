@@ -4,7 +4,7 @@
 
 ### Why is the first import slow?
 
-SC-NeuroCore lazy-loads 122 neuron model files on first access. The
+SC-NeuroCore lazy-loads 173 neuron model files on first access. The
 initial import takes ~10s (down from 200s in v3.12). Subsequent imports
 within the same process are instant (<1ms).
 

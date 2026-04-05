@@ -23,7 +23,7 @@ That's it. NumPy is the only hard dependency. Everything else is optional.
 
 | Your goal | Install command | What you get |
 |-----------|----------------|--------------|
-| Explore neuron models | `pip install sc-neurocore` | 122 models, simulation, analysis |
+| Explore neuron models | `pip install sc-neurocore` | 173 models, simulation, analysis |
 | Train SNNs on GPU | `pip install sc-neurocore[research]` | + PyTorch training, matplotlib |
 | Benchmark against Brian2 | `pip install sc-neurocore[accel]` | + Numba JIT (4x speedup at 1K neurons) |
 | Deploy to FPGA | `pip install sc-neurocore` + [Yosys](https://github.com/YosysHQ/yosys) | + IR compiler, SystemVerilog emission |
@@ -52,7 +52,7 @@ simulation and synthesised Verilog. What fires in simulation fires
 identically on silicon.
 
 **What you keep:** familiar neuron models. SC-NeuroCore implements
-122 models from McCulloch-Pitts (1943) through Hodgkin-Huxley,
+173 models from McCulloch-Pitts (1943) through Hodgkin-Huxley,
 Izhikevich, multi-compartment Hay L5 pyramidal, all the way to
 hardware chip emulators (Loihi, TrueNorth, BrainScaleS, SpiNNaker,
 Akida).
@@ -119,7 +119,7 @@ Artix-7 100T at ~56K LUTs.
 
 ### Formal verification
 
-67 properties across 7 SymbiYosys formal modules (encoder, neuron,
+68 properties across 7 SymbiYosys formal modules (encoder, neuron,
 synapse, dense layer, dotproduct, firing rate, AXI-Lite config).
 
 ### Prerequisites for physical deployment
@@ -210,7 +210,7 @@ package. The engine adds speed, not features.
 ## Licensing
 
 SC-NeuroCore is **free for research and education** under AGPL-3.0.
-Academic labs can use the full framework — 122 neuron models, Rust
+Academic labs can use the full framework — 173 neuron models, Rust
 engine, Verilog RTL, quantum modules, training pipeline — at no cost.
 
 Proprietary integration requires a [commercial license](../pricing.md).
