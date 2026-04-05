@@ -34,17 +34,17 @@ marked explicitly.
 | IR compiler → SystemVerilog | **Yes** | — | — | — | — |
 | Equation → Verilog compiler | **Yes** | — | — | — | — |
 | IR compiler → MLIR/CIRCT | **Yes** | — | — | — | — |
-| Rust SIMD engine | **Yes** (41.3 Gbit/s pack) | — | — | — | — |
+| Rust SIMD engine | **Yes** (113 Gbit/s pack) | — | — | — | — |
 | Surrogate gradient training | **Yes** (6 surrogates, 12 cells) | Yes | Yes | Yes | — |
 | PyTorch `nn.Module` SNN | **Yes** (+ SC export) | Yes | Yes | — | — |
 | GPU acceleration | PyTorch + CuPy | PyTorch | PyTorch | — | — |
 | Neuron models | **173** | 11 | 6 | 3 | Arbitrary |
-| Rust neuron models (PyO3) | **172** | — | — | — | — |
-| NetworkRunner (fused loop) | **159 models** | — | — | — | — |
+| Rust neuron models (PyO3) | **173** | — | — | — | — |
+| NetworkRunner (fused loop) | **160 models** | — | — | — | — |
 | Network simulation backends | **3** (Python, Rust, MPI) | PyTorch | PyTorch | Lava | C++ codegen |
 | MPI distributed simulation | **Yes** | — | — | — | — |
 | Pre-trained model zoo | **10 configs, 3 weights** | — | — | — | — |
-| Spike train analysis | **124 functions** | — | — | — | — |
+| Spike train analysis | **127 functions** | — | — | — | — |
 | Visualization plots | **14** | — | — | — | — |
 | Advanced plasticity rules | **13** | — | — | — | — |
 | STDP / R-STDP plasticity | Yes | — | Yes | Yes | Yes |
@@ -93,7 +93,7 @@ quadrantChart
 3. **Formal verification** — 67 SymbiYosys properties across 7 HDL
    modules (no other SNN framework offers formal proofs)
 4. **Rust SIMD engine** — AVX-512/AVX2/NEON/SVE/RVV dispatch with
-   172 Rust neuron models with PyO3 bindings, 159-model NetworkRunner
+   173 Rust neuron models with PyO3 bindings, 160-model NetworkRunner
 5. **Network simulation** — 3 backends (Python, Rust, MPI), 6 topology
    generators, 10 model zoo configs, 3 pre-trained weight sets
 6. **Analysis toolkit** — 128 spike train analysis functions across
@@ -130,8 +130,8 @@ Measured on Intel i5-11600K (AVX-512), Python 3.12.
 
 | Framework | Operation | Throughput | Source |
 |-----------|-----------|-----------|--------|
-| SC-NeuroCore (Rust) | LIF neuron step | 224 Mstep/s | Criterion bench |
-| SC-NeuroCore (Rust) | Pack 1M bits | 41.3 Gbit/s | Criterion bench |
+| SC-NeuroCore (Rust) | LIF neuron step | 456 Mstep/s | Criterion bench |
+| SC-NeuroCore (Rust) | Pack 1M bits | 113 Gbit/s | Criterion bench |
 | SC-NeuroCore (Python) | LIF neuron step | 1.07 Mstep/s | benchmark_suite.py |
 | Brian2 | LIF neuron (compiled) | ~10 Mstep/s | Brian2 docs (estimate) |
 | snnTorch | LIF neuron (PyTorch) | ~5 Mstep/s | PyTorch CPU baseline |

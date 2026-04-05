@@ -5,7 +5,7 @@
 ```
 sc_neurocore/
 ├── Core Tier (Production-Ready — ships in pip install sc-neurocore)
-│   ├── neurons/       173 neuron models (113 in models/, 172 Rust)
+│   ├── neurons/       173 neuron models (113 in models/, 173 Rust)
 │   ├── synapses/      4 synapse types (bitstream, dot product, STDP, R-STDP)
 │   ├── layers/        8 layer types (dense, conv, learning, vectorized, recurrent, memristive, fusion, attention)
 │   ├── sources/       Bitstream current sources
@@ -39,7 +39,7 @@ sc_neurocore/
 │   └── verification/  Property-based test helpers
 │
 ├── Simulation Tier (Available from source)
-│   ├── analysis/      124-function spike train analysis toolkit
+│   ├── analysis/      127-function spike train analysis toolkit
 │   ├── viz/           14 visualization plots (raster, voltage, ISI, PSD, ...)
 │   ├── bio/           Biological circuits (gap junctions, tripartite, cortical column)
 │   ├── chaos/         Chaotic RNG

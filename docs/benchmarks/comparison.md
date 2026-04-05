@@ -38,8 +38,8 @@ Criterion benchmarks on Intel i7-10700K:
 
 | Operation | AVX-512 | AVX2 | Scalar |
 |-----------|---------|------|--------|
-| Bitstream packing | 41.3 Gbit/s | ~20 Gbit/s | ~3 Gbit/s |
-| LIF neuron stepping | 224 Mstep/s | ~120 Mstep/s | ~40 Mstep/s |
+| Bitstream packing | 113 Gbit/s | ~20 Gbit/s | ~3 Gbit/s |
+| LIF neuron stepping | 456 Mstep/s | ~120 Mstep/s | ~40 Mstep/s |
 | HDC query (100 patterns) | 1.1 ms | ~2 ms | ~8 ms |
 
 Runtime SIMD detection selects the fastest available path. ARM NEON
@@ -72,7 +72,7 @@ SC-NeuroCore-specific.
 | Category | SC-NeuroCore | snnTorch | Norse | Brian2 | Lava |
 |----------|:---:|:---:|:---:|:---:|:---:|
 | Python models | **120** | 11 | 6 | Custom eq. | 3 |
-| Rust/compiled models | **172** | — | — | C++ codegen | — |
+| Rust/compiled models | **173** | — | — | C++ codegen | — |
 | Hardware emulators | **9** | — | — | — | Loihi only |
-| Formal verification | **68 properties** | — | — | — | — |
+| Formal verification | **72 properties** | — | — | — | — |
 | Train-to-FPGA export | **Yes** | No | No | No | No |

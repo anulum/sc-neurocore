@@ -2,7 +2,7 @@
 
 # Tutorial 22: Choosing the Right Neuron Model
 
-SC-NeuroCore ships 122 neuron models spanning 83 years of computational
+SC-NeuroCore ships 176 neuron models spanning 83 years of computational
 neuroscience (1943-2026). This guide helps you pick the right model
 for your application.
 

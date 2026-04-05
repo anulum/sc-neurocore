@@ -1,5 +1,5 @@
 site_name: SC-NeuroCore Documentation
-site_description: "Stochastic Computing Framework for Neuromorphic Hardware Design — 122 neuron models, Rust SIMD engine, bit-true FPGA co-simulation"
+site_description: "Stochastic Computing Framework for Neuromorphic Hardware Design — 176 neuron models, Rust SIMD engine, bit-true FPGA co-simulation"
 site_author: Miroslav Šotek
 site_url: https://anulum.github.io/sc-neurocore/
 repo_url: https://github.com/anulum/sc-neurocore

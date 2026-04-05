@@ -98,7 +98,7 @@ decorrelated seed assignment [@golomb1967shift]. Fixed-point arithmetic
 uses Q8.8 signed two's complement. An optional `training` subpackage
 provides LIF, adaptive LIF [@bellec2020], and recurrent LIF cells with
 surrogate gradient backward passes and learnable membrane parameters.
-A library of 122 neuron models---from McCulloch-Pitts [@mcculloch1943]
+A library of 176 neuron models---from McCulloch-Pitts [@mcculloch1943]
 through Hodgkin-Huxley [@hodgkin1952], Izhikevich [@izhikevich2003],
 and 9 hardware chip emulators (Loihi, TrueNorth, BrainScaleS, SpiNNaker,
 Akida)---covers 82 years of computational neuroscience.
@@ -108,7 +108,7 @@ providing SIMD-accelerated bitstream operations, 111 neuron model
 implementations, and a `NetworkRunner` with CSR-sparse projections and
 Rayon-parallel population stepping scaling to 100K+ neurons. Runtime
 feature detection selects AVX-512, AVX2, or NEON paths. A Criterion
-benchmark measures 41.3 Gbit/s bitstream packing on AVX-512.
+benchmark measures 113 Gbit/s bitstream packing on AVX-512.
 Cross-compiled wheels target Linux, macOS, and Windows across
 Python 3.10--3.14.
 

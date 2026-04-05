@@ -119,7 +119,7 @@ Artix-7 100T at ~56K LUTs.
 
 ### Formal verification
 
-68 properties across 7 SymbiYosys formal modules (encoder, neuron,
+72 properties across 7 SymbiYosys formal modules (encoder, neuron,
 synapse, dense layer, dotproduct, firing rate, AXI-Lite config).
 
 ### Prerequisites for physical deployment
@@ -174,7 +174,7 @@ train-to-hardware export path.
 
 ## Rust Engine (Optional, Recommended)
 
-The Rust SIMD engine provides 41.3 Gbit/s bitstream packing (AVX-512) with
+The Rust SIMD engine provides 113 Gbit/s bitstream packing (AVX-512) with
 AVX-512, AVX2, or NEON auto-dispatch. 111 neuron models compiled
 to native code with PyO3 bindings.
 

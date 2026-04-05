@@ -99,7 +99,7 @@ providing SIMD-accelerated bitstream operations, 111 neuron model
 implementations, and a `NetworkRunner` with CSR-sparse projections and
 Rayon-parallel population stepping scaling to 100K+ neurons. Runtime
 feature detection selects AVX-512, AVX2, or NEON paths. A Criterion
-benchmark measures 41.3 Gbit/s bitstream packing on AVX-512.
+benchmark measures 113 Gbit/s bitstream packing on AVX-512.
 Cross-compiled wheels target Linux, macOS, and Windows across
 Python 3.10–3.14.
 

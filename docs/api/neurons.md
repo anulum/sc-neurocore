@@ -1,8 +1,8 @@
 # Neurons — 173 Models
 
 173 neuron models spanning 83 years of computational neuroscience
-(1943-2026): 113 Python model files under `neurons/models/` plus 172 Rust
-implementations, 9 AI-optimised models (ArcaneNeuron + 8), 159 wired
+(1943-2026): 113 Python model files under `neurons/models/` plus 173 Rust
+implementations, 9 AI-optimised models (ArcaneNeuron + 8), 160 wired
 into the NetworkRunner pipeline.
 
 ## Quick Start
