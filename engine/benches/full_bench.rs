@@ -19,12 +19,12 @@ use sc_neurocore_engine::graph::StochasticGraphLayer;
 use sc_neurocore_engine::layer::DenseLayer;
 use sc_neurocore_engine::neuron::{AdExNeuron, ExpIfNeuron, FixedPointLif, LapicqueNeuron};
 use sc_neurocore_engine::neurons::{
-    ATypeKNeuron, AiharaMapNeuron, AlphaMotorNeuron, BKNeuron, BrunelNetwork, CardiacPurkinjeFibre,
-    CerebellarBasketNeuron, ChandelierNeuron, DCNNeuron, ElBoustaniNetwork, EndocrineBetaCell,
-    ErmentroutKopellMapNeuron, FrankenhaeUserHuxleyAxon, GapJunctionNeuron, GolgiCell,
-    GradedSynapseNeuron, GranuleCell, IhNeuron, InnerHairCell, KilincBhattMapNeuron, LugaroCell,
-    MartinottiNeuron, MerkelCell, MontbrioMeanField, MyelinatedAxon, NMDANeuron, Nociceptor,
-    NodeOfRanvier, OlfactoryReceptorNeuron, PVFastSpikingNeuron, PacinianCorpuscle,
+    ATypeKNeuron, AiharaMapNeuron, AlphaMotorNeuron, BKNeuron, BrunelNetwork, BrunelWangNeuron,
+    CardiacPurkinjeFibre, CerebellarBasketNeuron, ChandelierNeuron, DCNNeuron, ElBoustaniNetwork,
+    EndocrineBetaCell, ErmentroutKopellMapNeuron, FrankenhaeUserHuxleyAxon, GapJunctionNeuron,
+    GolgiCell, GradedSynapseNeuron, GranuleCell, IhNeuron, InnerHairCell, KilincBhattMapNeuron,
+    LugaroCell, MartinottiNeuron, MerkelCell, MontbrioMeanField, MyelinatedAxon, NMDANeuron,
+    Nociceptor, NodeOfRanvier, OlfactoryReceptorNeuron, PVFastSpikingNeuron, PacinianCorpuscle,
     PersistentNaNeuron, RetinalGanglionCell, RodPhotoreceptor, SKNeuron, SSTNeuron,
     SmoothMuscleCell, StellateCell, TTypeCaNeuron, TUMNetwork, UnipolarBrushCell, VIPNeuron,
 };
@@ -778,6 +778,15 @@ fn bench_all(c: &mut Criterion) {
         b.iter(|| {
             let mut n = EndocrineBetaCell::new();
             for _ in 0..1_000 {
+                black_box(n.step(3.0));
+            }
+        })
+    });
+
+    c.bench_function("brunel_wang_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = BrunelWangNeuron::new();
+            for _ in 0..10_000 {
                 black_box(n.step(3.0));
             }
         })

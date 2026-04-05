@@ -362,6 +362,8 @@ impl PyBendaHerzNeuron {
     }
 }
 
+py_neuron_default!("BrunelWangNeuron", PyBrunelWangNeuron, neurons::BrunelWangNeuron, state v, state ref_remaining);
+
 // ═══════════════════════════════════════════════════════════════════
 // maps.rs models
 // ═══════════════════════════════════════════════════════════════════
@@ -1641,6 +1643,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyMcKeanNeuron>()?;
     m.add_class::<PyTermanWangOscillator>()?;
     m.add_class::<PyBendaHerzNeuron>()?;
+    m.add_class::<PyBrunelWangNeuron>()?;
     m.add_class::<PyAlphaNeuron>()?;
     m.add_class::<PyCOBALIFNeuron>()?;
     m.add_class::<PyGutkinErmentroutNeuron>()?;
