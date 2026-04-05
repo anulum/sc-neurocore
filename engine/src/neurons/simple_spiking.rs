@@ -204,8 +204,11 @@ impl ResonateAndFireNeuron {
         }
     }
     pub fn step(&mut self, current: f64) -> i32 {
-        self.x += (self.b * self.x - self.omega * self.y + current) * self.dt;
-        self.y += (self.omega * self.x + self.b * self.y) * self.dt;
+        // Izhikevich 2001: simultaneous Euler (both derivatives use old state)
+        let dx = (self.b * self.x - self.omega * self.y + current) * self.dt;
+        let dy = (self.omega * self.x + self.b * self.y) * self.dt;
+        self.x += dx;
+        self.y += dy;
         let r = (self.x * self.x + self.y * self.y).sqrt();
         if r >= self.threshold {
             self.x = 0.0;
