@@ -47,6 +47,25 @@ use sc_neurocore_engine::neurons::{
     GalvesLocherbachNeuron, SpikeResponseNeuron, GLMNeuron, WilsonCowanUnit,
     JansenRitUnit, WongWangUnit, ErmentroutKopellPopulation, WendlingNeuron,
     LarterBreakspearNeuron,
+    // rate
+    SigmoidRateNeuron, ThresholdLinearRateNeuron, AstrocyteModel,
+    TsodyksMarkramNeuron, LiquidTimeConstantNeuron, CompteWMNeuron, ParallelSpikingNeuron,
+    FractionalLIFNeuron, SiegertTransferFunction, AmariNeuralField, LeakyCompeteFireNeuron,
+    // hardware
+    LoihiCUBANeuron, Loihi2Neuron, TrueNorthNeuron, BrainScaleSAdExNeuron,
+    SpiNNakerLIFNeuron, SpiNNaker2Neuron, DPINeuron, AkidaNeuron, NeuroGridNeuron,
+    // ai_optimized
+    MultiTimescaleNeuron, AttentionGatedNeuron, PredictiveCodingNeuron,
+    SelfReferentialNeuron, CompositionalBindingNeuron, DifferentiableSurrogateNeuron,
+    ContinuousAttractorNeuron, MetaPlasticNeuron, ArcaneNeuron,
+    // multi_compartment
+    PinskyRinzelNeuron, HayL5PyramidalNeuron, MarderSTGNeuron, RallCableNeuron,
+    BoothRinzelNeuron, DendrifyNeuron, TwoCompartmentLIFNeuron,
+    // maps (remaining 6)
+    ChialvoMapNeuron, RulkovMapNeuron, IbarzTanakaMapNeuron,
+    MedvedevMapNeuron, CazellesMapNeuron, CourageNekorkinMapNeuron,
+    // sensory (remaining 3)
+    OuterHairCell, ConePhotoreceptor, TasteReceptorCell,
 };
 use sc_neurocore_engine::scpn::KuramotoSolver;
 use sc_neurocore_engine::simd::{fused_and_popcount_dispatch, pack_dispatch, popcount_dispatch};
@@ -1321,6 +1340,335 @@ fn bench_all(c: &mut Criterion) {
         b.iter(|| {
             let mut n = LarterBreakspearNeuron::new();
             for _ in 0..100_000 { black_box(n.step(0.0)); }
+        })
+    });
+
+    // -- Rate models --
+
+    c.bench_function("sigmoid_rate_100k_steps", |b| {
+        b.iter(|| {
+            let mut n = SigmoidRateNeuron::new();
+            for _ in 0..100_000 { black_box(n.step(5.0)); }
+        })
+    });
+
+    c.bench_function("threshold_linear_100k_steps", |b| {
+        b.iter(|| {
+            let mut n = ThresholdLinearRateNeuron::new();
+            for _ in 0..100_000 { black_box(n.step(5.0)); }
+        })
+    });
+
+    c.bench_function("astrocyte_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = AstrocyteModel::new();
+            for _ in 0..10_000 { black_box(n.step(0.1)); }
+        })
+    });
+
+    c.bench_function("tsodyks_markram_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = TsodyksMarkramNeuron::new();
+            for _ in 0..10_000 { black_box(n.step(50.0, false)); }
+        })
+    });
+
+    c.bench_function("ltc_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = LiquidTimeConstantNeuron::new();
+            for _ in 0..10_000 { black_box(n.step(5.0)); }
+        })
+    });
+
+    c.bench_function("compte_wm_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = CompteWMNeuron::new();
+            for _ in 0..10_000 { black_box(n.step(5.0, false)); }
+        })
+    });
+
+    c.bench_function("parallel_spiking_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = ParallelSpikingNeuron::new(4, 0.5);
+            for _ in 0..10_000 { black_box(n.step(1.0)); }
+        })
+    });
+
+    c.bench_function("fractional_lif_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = FractionalLIFNeuron::new(0.8, 50);
+            for _ in 0..10_000 { black_box(n.step(2.0)); }
+        })
+    });
+
+    c.bench_function("siegert_100k_steps", |b| {
+        b.iter(|| {
+            let n = SiegertTransferFunction::new();
+            for i in 0..100_000 { black_box(n.step(i as f64 * 0.001)); }
+        })
+    });
+
+    c.bench_function("amari_field_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = AmariNeuralField::new(32);
+            let inp = vec![0.5; 32];
+            for _ in 0..10_000 { black_box(n.step(&inp)); }
+        })
+    });
+
+    c.bench_function("leaky_compete_fire_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = LeakyCompeteFireNeuron::new(4);
+            let inp = vec![3.0; 4];
+            for _ in 0..10_000 { black_box(n.step(&inp)); }
+        })
+    });
+
+    // -- Hardware neuromorphic --
+
+    c.bench_function("loihi_cuba_100k_steps", |b| {
+        b.iter(|| {
+            let mut n = LoihiCUBANeuron::new();
+            for _ in 0..100_000 { black_box(n.step(100)); }
+        })
+    });
+
+    c.bench_function("loihi2_100k_steps", |b| {
+        b.iter(|| {
+            let mut n = Loihi2Neuron { tau3: 8, ..Loihi2Neuron::new() };
+            for _ in 0..100_000 { black_box(n.step(200)); }
+        })
+    });
+
+    c.bench_function("truenorth_100k_steps", |b| {
+        b.iter(|| {
+            let mut n = TrueNorthNeuron::default();
+            for _ in 0..100_000 { black_box(n.step(50)); }
+        })
+    });
+
+    c.bench_function("brainscales_1k_steps", |b| {
+        b.iter(|| {
+            let mut n = BrainScaleSAdExNeuron::new();
+            for _ in 0..1_000 { black_box(n.step(500.0)); }
+        })
+    });
+
+    c.bench_function("spinnaker_lif_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = SpiNNakerLIFNeuron::new();
+            for _ in 0..10_000 { black_box(n.step(30.0)); }
+        })
+    });
+
+    c.bench_function("spinnaker2_100k_steps", |b| {
+        b.iter(|| {
+            let mut n = SpiNNaker2Neuron::new();
+            for _ in 0..100_000 { black_box(n.step(100)); }
+        })
+    });
+
+    c.bench_function("dpi_100k_steps", |b| {
+        b.iter(|| {
+            let mut n = DPINeuron::new();
+            for _ in 0..100_000 { black_box(n.step(1.0)); }
+        })
+    });
+
+    c.bench_function("akida_100k_steps", |b| {
+        b.iter(|| {
+            let mut n = AkidaNeuron::default();
+            for _ in 0..100_000 { black_box(n.step(50.0)); }
+        })
+    });
+
+    c.bench_function("neurogrid_1k_steps", |b| {
+        b.iter(|| {
+            let mut n = NeuroGridNeuron::new();
+            for _ in 0..1_000 { black_box(n.step(500.0)); }
+        })
+    });
+
+    // -- AI-optimised --
+
+    c.bench_function("multi_timescale_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = MultiTimescaleNeuron::new();
+            for _ in 0..10_000 { black_box(n.step(5.0)); }
+        })
+    });
+
+    c.bench_function("attention_gated_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = AttentionGatedNeuron::new();
+            for _ in 0..10_000 { black_box(n.step(5.0)); }
+        })
+    });
+
+    c.bench_function("predictive_coding_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = PredictiveCodingNeuron::new();
+            for _ in 0..10_000 { black_box(n.step(5.0)); }
+        })
+    });
+
+    c.bench_function("self_referential_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = SelfReferentialNeuron::new();
+            for _ in 0..10_000 { black_box(n.step(5.0)); }
+        })
+    });
+
+    c.bench_function("compositional_binding_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = CompositionalBindingNeuron::new();
+            for _ in 0..10_000 { black_box(n.step(5.0)); }
+        })
+    });
+
+    c.bench_function("differentiable_surrogate_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = DifferentiableSurrogateNeuron::new();
+            for _ in 0..10_000 { black_box(n.step(5.0)); }
+        })
+    });
+
+    c.bench_function("continuous_attractor_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = ContinuousAttractorNeuron::new(16);
+            for _ in 0..10_000 { black_box(n.step(5.0)); }
+        })
+    });
+
+    c.bench_function("meta_plastic_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = MetaPlasticNeuron::new();
+            for _ in 0..10_000 { black_box(n.step(5.0)); }
+        })
+    });
+
+    c.bench_function("arcane_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = ArcaneNeuron::new();
+            for _ in 0..10_000 { black_box(n.step(5.0)); }
+        })
+    });
+
+    // -- Multi-compartment --
+
+    c.bench_function("pinsky_rinzel_1k_steps", |b| {
+        b.iter(|| {
+            let mut n = PinskyRinzelNeuron::new();
+            for _ in 0..1_000 { black_box(n.step(5.0, 0.0)); }
+        })
+    });
+
+    c.bench_function("hay_l5_1k_steps", |b| {
+        b.iter(|| {
+            let mut n = HayL5PyramidalNeuron::new();
+            for _ in 0..1_000 { black_box(n.step(20.0, 0.0)); }
+        })
+    });
+
+    c.bench_function("marder_stg_1k_steps", |b| {
+        b.iter(|| {
+            let mut n = MarderSTGNeuron::new();
+            for _ in 0..1_000 { black_box(n.step(5.0)); }
+        })
+    });
+
+    c.bench_function("rall_cable_1k_steps", |b| {
+        b.iter(|| {
+            let mut n = RallCableNeuron::new(5);
+            for _ in 0..1_000 { black_box(n.step(50.0)); }
+        })
+    });
+
+    c.bench_function("booth_rinzel_1k_steps", |b| {
+        b.iter(|| {
+            let mut n = BoothRinzelNeuron::new();
+            for _ in 0..1_000 { black_box(n.step(5.0)); }
+        })
+    });
+
+    c.bench_function("dendrify_1k_steps", |b| {
+        b.iter(|| {
+            let mut n = DendrifyNeuron::new();
+            for _ in 0..1_000 { black_box(n.step(50.0)); }
+        })
+    });
+
+    c.bench_function("two_comp_lif_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = TwoCompartmentLIFNeuron::new();
+            for _ in 0..10_000 { black_box(n.step(0.5, 0.3)); }
+        })
+    });
+
+    // -- Maps (remaining 6) --
+
+    c.bench_function("chialvo_100k_steps", |b| {
+        b.iter(|| {
+            let mut n = ChialvoMapNeuron::new();
+            for _ in 0..100_000 { black_box(n.step(0.04)); }
+        })
+    });
+
+    c.bench_function("rulkov_100k_steps", |b| {
+        b.iter(|| {
+            let mut n = RulkovMapNeuron::new();
+            for _ in 0..100_000 { black_box(n.step(0.001)); }
+        })
+    });
+
+    c.bench_function("ibarz_tanaka_100k_steps", |b| {
+        b.iter(|| {
+            let mut n = IbarzTanakaMapNeuron::new();
+            for _ in 0..100_000 { black_box(n.step(0.0)); }
+        })
+    });
+
+    c.bench_function("medvedev_100k_steps", |b| {
+        b.iter(|| {
+            let mut n = MedvedevMapNeuron::new();
+            for _ in 0..100_000 { black_box(n.step(0.5)); }
+        })
+    });
+
+    c.bench_function("cazelles_100k_steps", |b| {
+        b.iter(|| {
+            let mut n = CazellesMapNeuron::new();
+            for _ in 0..100_000 { black_box(n.step(0.0)); }
+        })
+    });
+
+    c.bench_function("courage_nekorkin_100k_steps", |b| {
+        b.iter(|| {
+            let mut n = CourageNekorkinMapNeuron::new();
+            for _ in 0..100_000 { black_box(n.step(0.0)); }
+        })
+    });
+
+    // -- Sensory (remaining 3) --
+
+    c.bench_function("outer_hair_cell_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = OuterHairCell::new();
+            for _ in 0..10_000 { black_box(n.step(0.01)); }
+        })
+    });
+
+    c.bench_function("cone_photoreceptor_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = ConePhotoreceptor::new();
+            for _ in 0..10_000 { black_box(n.step(1000.0)); }
+        })
+    });
+
+    c.bench_function("taste_receptor_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = TasteReceptorCell::new();
+            for _ in 0..10_000 { black_box(n.step(5.0)); }
         })
     });
 }
