@@ -226,6 +226,33 @@ cargo bench --bench analysis_bench -- --quick
 > Simple spiking models use Euler integration without sub-stepping.
 > Measured 2026-04-05 on i5-11600K @ 3.90 GHz.
 
+### Trivial IF Variants (`neurons/trivial.rs`)
+
+| Model | Steps | Median | Per step | Notes |
+|-------|-------|--------|----------|-------|
+| Perfect integrator | 100k | 206 µs | **2.1 ns** | Pure integration, simplest IF |
+| KLIF | 100k | 224 µs | **2.2 ns** | Kernel-based LIF |
+| Complementary LIF | 100k | 265 µs | **2.7 ns** | Dual-pathway (v_pos + v_neg) |
+| Sigma-delta | 100k | 311 µs | **3.1 ns** | Spike-based A/D encoder |
+| Integer QIF | 100k | 368 µs | **3.7 ns** | Integer arithmetic QIF |
+| Inhibitory LIF | 100k | 447 µs | **4.5 ns** | Self-inhibiting trace |
+| Gated LIF | 100k | 555 µs | **5.6 ns** | Input gating mechanism |
+| Parametric LIF | 100k | 810 µs | **8.1 ns** | Learnable alpha, beta |
+| Stochastic LIF | 10k | 85.1 µs | **8.5 ns** | Gaussian noise injection |
+| Quadratic IF | 100k | 875 µs | **8.7 ns** | Quadratic subthreshold |
+| Non-resetting LIF | 10k | 165 µs | **16.5 ns** | Threshold adaptation, no reset |
+| Energy LIF | 10k | 183 µs | **18.3 ns** | Energy-budget constrained |
+| MAT | 10k | 187 µs | **18.7 ns** | Multi-timescale adaptive threshold |
+| SFA | 10k | 196 µs | **19.6 ns** | Spike frequency adaptation |
+| NLIF | 10k | 261 µs | **26.1 ns** | Nonlinear leak + recovery |
+| Adaptive threshold IF | 10k | 288 µs | **28.8 ns** | Dynamic threshold |
+| Escape rate | 10k | 517 µs | **51.7 ns** | Stochastic, exp() hazard |
+| Theta neuron | 100k | 6.97 ms | **69.7 ns** | Phase model, cos()/sin() |
+| CFC | 100k | 11.6 ms | **116 ns** | Closed-form continuous, exp() |
+
+> Trivial models are the fastest — no sub-stepping, minimal state.
+> Measured 2026-04-05 on i5-11600K @ 3.90 GHz.
+
 ---
 
 ## Analysis Modules (`analysis_bench`)
