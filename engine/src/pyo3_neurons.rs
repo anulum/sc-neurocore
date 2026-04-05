@@ -1497,7 +1497,7 @@ py_sensory_graded!("TasteReceptorCell", PyTasteReceptorCell, neurons::TasteRecep
 // Spiking sensory neurons (step returns i32)
 py_neuron_default!("MerkelCell", PyMerkelCell, neurons::MerkelCell, state v, state adapt);
 py_neuron_default!("Nociceptor", PyNociceptor, neurons::Nociceptor, state v, state sensitisation);
-py_neuron_default!("OlfactoryReceptorNeuron", PyOlfactoryReceptorNeuron, neurons::OlfactoryReceptorNeuron, state v, state camp, state adapt);
+py_neuron_default!("OlfactoryReceptorNeuron", PyOlfactoryReceptorNeuron, neurons::OlfactoryReceptorNeuron, state v, state camp, state adapt, state pde4);
 
 // RetinalGanglionCell and PacinianCorpuscle: spiking but non-default constructors
 py_neuron_default!("RetinalGanglionCell", PyRetinalGanglionCell, neurons::RetinalGanglionCell, state baseline, state on_centre);
