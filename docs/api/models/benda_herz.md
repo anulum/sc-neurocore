@@ -1,7 +1,9 @@
 # BendaHerzNeuron
 
 **Module:** `sc_neurocore.neurons.models.benda_herz`
-**Reference:** Benda & Herz, Neural Computation 15(11), 2003
+**Rust:** `sc_neurocore_engine::neurons::simple_spiking::BendaHerzNeuron`
+**Reference:** Benda, J. & Herz, A. V. M. (2003)
+**Publication:** *A universal model for spike-frequency adaptation.* Neural Computation, 15(11), 2523–2564.
 **Family:** Phenomenological spike-frequency adaptation (stochastic)
 **State variables:** `a` (adaptation variable)
 
@@ -365,3 +367,208 @@ Fast model — single sigmoid evaluation + single random number per step.
 10. **Rate-to-spike bridge:** The model uniquely bridges rate coding
     (internal sigmoid f–I) and spike coding (Bernoulli output) — useful
     for mixed rate/spike network architectures.
+
+---
+
+## Pipeline Position
+
+```
+sc_neurocore Pipeline
+├── Python layer
+│   └── sc_neurocore.neurons.models.benda_herz.BendaHerzNeuron
+│       ├── step(current) → int {0, 1}  (stochastic Bernoulli)
+│       ├── reset() → None  (a=0)
+│       ├── _f_onset(x) → float  (sigmoidal f-I curve)
+│       ├── Population(BendaHerzNeuron, n=N)
+│       ├── Network(pop, drive, monitor)
+│       └── Analysis: spike_count(), firing_rate()
+│
+├── Rust engine
+│   └── sc_neurocore_engine::neurons::simple_spiking::BendaHerzNeuron
+│       ├── new(seed: u64) → Self
+│       ├── step(&mut self, current: f64) → i32
+│       └── reset(&mut self)
+│
+├── PyO3 binding
+│   └── sc_neurocore_engine.BendaHerzNeuron (Python class)
+│       ├── __init__(seed=42)
+│       ├── step(current) → int
+│       ├── reset()
+│       └── get_state() → dict {a}
+│
+└── Network runner
+    └── NeuronVariant::BendaHerz(BendaHerzNeuron)
+        ├── Wired in network_runner.rs
+        ├── Factory: "BendaHerz" | "BendaHerzNeuron" → new(42)
+        └── Stochastic: seed-based, exact cross-backend parity N/A
+```
+
+---
+
+## Technical Reference
+
+### Python/Rust Implementation Comparison
+
+| Aspect | Python | Rust |
+|--------|--------|------|
+| Source | `benda_herz.py` (47 lines) | `simple_spiking.rs` |
+| RNG | numpy PCG64 | Xoshiro256PlusPlus |
+| f_onset sigmoid | `f_max / (1 + exp(-β(x - I_half)))` | identical |
+| Adaptation ODE | `da = (-a/τ_a + δ_a·f) · dt` | identical |
+| Spike probability | `p = f·dt/1000, clamp(0,1)` | `p = f·dt/1000` (no clamp, functionally same) |
+| **Parity** | **Formulae identical** (stochastic, no exact match) | |
+
+### NeuronVariant Wiring
+
+```rust
+// network_runner.rs
+BendaHerz(BendaHerzNeuron),
+
+// Factory
+"BendaHerz" | "BendaHerzNeuron" => {
+    Ok(NeuronVariant::BendaHerz(BendaHerzNeuron::new(42)))
+}
+```
+
+### Methods
+
+| Method | Signature | Returns | Description |
+|--------|-----------|---------|-------------|
+| `step` | `(current: f64) → i32` | 0 or 1 | Stochastic spike via Bernoulli(f·dt/1000) |
+| `reset` | `() → ()` | — | Reset a=0 |
+| `new` | `(seed: u64) → Self` | — | Constructor with RNG seed |
+
+---
+
+## Performance Benchmarks
+
+### Rust (Criterion 0.8)
+
+Measured on i5-11600K @ 3.90 GHz, single-threaded, 2026-04-05.
+
+| Benchmark | Iterations | Median | Per-step | Notes |
+|-----------|-----------|--------|----------|-------|
+| `benda_herz_10k_steps` | 10,000 | 363 µs | **36.3 ns** | 1 exp (sigmoid) + RNG per step |
+
+### Python
+
+| Metric | Value |
+|--------|-------|
+| Isolation throughput | ~142K steps/s (~7.0 µs/step) |
+
+### Speedup
+
+| Metric | Python | Rust | Speedup |
+|--------|--------|------|---------|
+| Per-step latency | ~7,000 ns | 36.3 ns | **~193×** |
+
+---
+
+## Usage Examples
+
+### Basic Adaptation (Python)
+
+```python
+from sc_neurocore.neurons.models.benda_herz import BendaHerzNeuron
+
+neuron = BendaHerzNeuron()
+spikes = sum(neuron.step(current=10.0) for _ in range(5000))
+print(f"Spikes: {spikes}, Final adaptation: {neuron.a:.2f}")
+```
+
+### Adaptation Build-Up
+
+```python
+from sc_neurocore.neurons.models.benda_herz import BendaHerzNeuron
+
+neuron = BendaHerzNeuron()
+a_trace = []
+for _ in range(2000):
+    neuron.step(current=10.0)
+    a_trace.append(neuron.a)
+# a grows during sustained firing, reducing effective input → rate decreases
+```
+
+### Rust Backend (via PyO3)
+
+```python
+from sc_neurocore_engine import BendaHerzNeuron as RustBH
+
+neuron = RustBH(seed=42)
+spikes = sum(neuron.step(10.0) for _ in range(10000))
+state = neuron.get_state()
+print(f"Spikes: {spikes}, a={state['a']:.3f}")
+```
+
+---
+
+## Test Coverage
+
+### Python Tests (13 total)
+
+**File:** `tests/test_model_benda_herz.py`
+
+| Category | Tests | What is verified |
+|----------|------:|-----------------|
+| Isolation | 3 | Construction, binary output, reset |
+| Adaptation | 4 | a increases during firing, rate decreases over time, sigmoid shape, tau_a effect |
+| Stochastic | 2 | Two seeds differ, rate increases with I |
+| Pipeline | 3 | Population, network spikes, analysis |
+| Performance | 1 | Isolation throughput |
+
+### Rust Tests (6 total)
+
+| Test | What is verified |
+|------|-----------------|
+| `bh_fires` | Fires under drive |
+| `bh_adaptation_increases` | a increases during sustained firing |
+| `bh_reset_clears_state` | a=0 after reset |
+| `bh_stochastic_variability` | Different seeds → different spike counts |
+| `bh_nan_no_panic` | NaN safe |
+| `bh_negative_no_crash` | Negative I stable |
+
+### Coverage Summary
+
+| Category | Python | Rust | Total |
+|----------|--------|------|-------|
+| Construction/reset | 2 | 1 | 3 |
+| Adaptation dynamics | 4 | 1 | 5 |
+| Stochastic properties | 2 | 1 | 3 |
+| Numerical stability | 0 | 2 | 2 |
+| Performance | 1 | 0 | 1 |
+| Pipeline | 3 | 0 | 3 |
+| **Total** | **13** | **6** | **19** |
+
+---
+
+## Citations
+
+1. **Benda, J. & Herz, A. V. M.** (2003).
+   A universal model for spike-frequency adaptation.
+   *Neural Computation*, 15(11), 2523–2564.
+   DOI: [10.1162/089976603322385063](https://doi.org/10.1162/089976603322385063)
+
+2. **Benda, J., Longtin, A., & Maler, L.** (2005).
+   Spike-frequency adaptation separates transient communication signals
+   from background oscillations.
+   *Journal of Neuroscience*, 25(9), 2312–2321.
+   DOI: [10.1523/JNEUROSCI.4795-04.2005](https://doi.org/10.1523/JNEUROSCI.4795-04.2005)
+
+3. **Pozzorini, C., Naud, R., Mensi, S., & Gerstner, W.** (2013).
+   Temporal whitening by power-law adaptation in neocortical neurons.
+   *Nature Neuroscience*, 16(7), 942–948.
+   DOI: [10.1038/nn.3431](https://doi.org/10.1038/nn.3431)
+
+4. **Ermentrout, G. B.** (1998).
+   Linearization of F-I curves by adaptation.
+   *Neural Computation*, 10(7), 1721–1729.
+   DOI: [10.1162/089976698300017106](https://doi.org/10.1162/089976698300017106)
+
+5. **Gerstner, W., Kistler, W. M., Naud, R., & Paninski, L.** (2014).
+   *Neuronal Dynamics: From Single Neurons to Networks and Models of Cognition.*
+   Cambridge University Press. Chapter 5: Adaptation and firing patterns.
+
+---
+
+*SC-NeuroCore v3.14.0 — ANULUM / Fortis Studio*
+*© 2020–2026 Miroslav Šotek. All rights reserved.*
