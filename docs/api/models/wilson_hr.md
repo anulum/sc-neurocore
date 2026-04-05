@@ -1,7 +1,9 @@
 # WilsonHRNeuron
 
 **Module:** `sc_neurocore.neurons.models.wilson_hr`
-**Reference:** Wilson, Spikes, Decisions, and Actions, Oxford University Press, 1999, Ch. 4
+**Rust:** `sc_neurocore_engine::neurons::simple_spiking::WilsonHRNeuron`
+**Reference:** Wilson, H. R. (1999)
+**Publication:** *Spikes, Decisions, and Actions: The Dynamical Foundations of Neuroscience.* Oxford University Press, Chapter 4.
 **Family:** Polynomial cortical model (reduced biophysical)
 **State variables:** `v` (membrane potential, dimensionless), `r` (recovery variable)
 
@@ -366,3 +368,207 @@ State returns to initial values after `reset()`.
 2. All pipeline stages verified green
 3. Rust parity: PASS
 4. Numerical stability confirmed over 20K steps
+
+---
+
+## Pipeline Position
+
+```
+sc_neurocore Pipeline
+├── Python layer
+│   └── sc_neurocore.neurons.models.wilson_hr.WilsonHRNeuron
+│       ├── step(current) → int {0, 1}
+│       ├── reset() → None
+│       ├── Population(WilsonHRNeuron, n=N)
+│       ├── Network(pop, drive, monitor)
+│       └── Analysis: spike_count(), firing_rate(), isi()
+│
+├── Rust engine
+│   └── sc_neurocore_engine::neurons::simple_spiking::WilsonHRNeuron
+│       ├── new() → Self
+│       ├── step(&mut self, current: f64) → i32
+│       └── reset(&mut self)
+│
+├── PyO3 binding
+│   └── sc_neurocore_engine.WilsonHRNeuron (Python class)
+│       ├── __init__()
+│       ├── step(current) → int
+│       ├── reset()
+│       └── get_state() → dict {v, r}
+│
+└── Network runner
+    └── NeuronVariant::WilsonHR(WilsonHRNeuron)
+        ├── Wired in network_runner.rs
+        ├── Factory: "WilsonHR" | "WilsonHRNeuron" → new()
+        └── Voltage access via n.v
+```
+
+---
+
+## Technical Reference
+
+### Python/Rust Implementation Comparison
+
+| Aspect | Python | Rust |
+|--------|--------|------|
+| Source | `wilson_hr.py` (43 lines) | `simple_spiking.rs:615-654` |
+| Integration | Simultaneous Euler | Simultaneous Euler (fixed 20350a5) |
+| Spike mechanism | Hard threshold + reset v = -0.7 | Hard threshold + reset v = -0.7 (fixed 20350a5) |
+| Exp per step | 0 | 0 |
+| **Parity** | **EXACT** (after fix, pure polynomial) | |
+
+### NeuronVariant Wiring
+
+```rust
+// network_runner.rs
+WilsonHR(WilsonHRNeuron),
+
+// Voltage access
+NeuronVariant::WilsonHR(n) => n.v,
+
+// Factory
+"WilsonHR" | "WilsonHRNeuron" => {
+    Ok(NeuronVariant::WilsonHR(WilsonHRNeuron::new()))
+}
+```
+
+### Methods
+
+| Method | Signature | Returns | Description |
+|--------|-----------|---------|-------------|
+| `step` | `(current: f64) → i32` | 0 or 1 | Advance one timestep; reset on threshold |
+| `reset` | `() → ()` | — | Reset v=-0.7, r=0.1 |
+| `new` | `() → Self` | — | Constructor with Wilson 1999 defaults |
+
+---
+
+## Performance Benchmarks
+
+### Rust (Criterion 0.8)
+
+Measured on i5-11600K @ 3.90 GHz, single-threaded, 2026-04-05.
+
+| Benchmark | Iterations | Median | Per-step | Notes |
+|-----------|-----------|--------|----------|-------|
+| `wilson_hr_10k_steps` | 10,000 | 261 µs | **26.1 ns** | Pure polynomial, 2 state vars |
+
+### Python
+
+| Metric | Value |
+|--------|-------|
+| Isolation throughput | ~175K steps/s (~5.7 µs/step) |
+
+### Speedup
+
+| Metric | Python | Rust | Speedup |
+|--------|--------|------|---------|
+| Per-step latency | ~5,700 ns | 26.1 ns | **~218×** |
+
+---
+
+## Usage Examples
+
+### Basic Spiking (Python)
+
+```python
+from sc_neurocore.neurons.models.wilson_hr import WilsonHRNeuron
+
+neuron = WilsonHRNeuron()
+spikes = sum(neuron.step(1.0) for _ in range(5000))
+print(f"Spikes at I=1: {spikes}")
+```
+
+### Polynomial Dynamics Trajectory
+
+```python
+from sc_neurocore.neurons.models.wilson_hr import WilsonHRNeuron
+
+neuron = WilsonHRNeuron()
+v_trace, r_trace = [], []
+for _ in range(3000):
+    neuron.step(current=0.5)
+    v_trace.append(neuron.v)
+    r_trace.append(neuron.r)
+# Plot r vs v: limit cycle with polynomial nullclines
+```
+
+### Rust Backend (via PyO3)
+
+```python
+from sc_neurocore_engine import WilsonHRNeuron as RustW
+
+neuron = RustW()
+spikes = sum(neuron.step(1.0) for _ in range(10000))
+state = neuron.get_state()
+print(f"Spikes: {spikes}, v={state['v']:.3f}, r={state['r']:.3f}")
+```
+
+---
+
+## Test Coverage
+
+### Python Tests (24 total)
+
+**File:** `tests/test_model_wilson_hr.py`
+
+| Category | Tests | What is verified |
+|----------|------:|-----------------|
+| Isolation | 5 | Construction, binary output, 2 vars evolve, finite, reset |
+| Dynamics | 5 | Fires under drive, polynomial shape, recovery dynamics, rate-current, bounded |
+| Equations | 4 | dv polynomial verified, dr formula, nullcline intersection, reset mechanism |
+| Parameters | 3 | tau_r effect, v_peak threshold, dt stability |
+| Performance | 2 | Isolation throughput, network throughput |
+| Pipeline | 5 | Population, projection, network spikes, analysis, deterministic |
+
+### Rust Tests (5 total)
+
+| Test | What is verified |
+|------|-----------------|
+| `wilson_hr_fires` | Fires under drive |
+| `wilson_hr_reset_clears_state` | v=-0.7, r=0.1 |
+| `wilson_hr_moderate_stable` | State finite at moderate I |
+| `wilson_hr_nan_no_panic` | NaN safe |
+| `wilson_hr_negative_no_crash` | Negative I stable |
+
+### Coverage Summary
+
+| Category | Python | Rust | Total |
+|----------|--------|------|-------|
+| Construction/reset | 3 | 1 | 4 |
+| Dynamics | 5 | 1 | 6 |
+| Equations | 4 | 0 | 4 |
+| Parameters | 3 | 0 | 3 |
+| Numerical stability | 1 | 3 | 4 |
+| Performance | 2 | 0 | 2 |
+| Pipeline | 5 | 0 | 5 |
+| **Total** | **24** | **5** | **29** |
+
+---
+
+## Citations
+
+1. **Wilson, H. R.** (1999).
+   *Spikes, Decisions, and Actions: The Dynamical Foundations of Neuroscience.*
+   Oxford University Press. Chapter 4: A polynomial model of cortical neurons.
+
+2. **Wilson, H. R.** (1999).
+   Simplified dynamics of human and mammalian neocortical neurons.
+   *Journal of Theoretical Biology*, 200(4), 375–388.
+   DOI: [10.1006/jtbi.1999.1002](https://doi.org/10.1006/jtbi.1999.1002)
+
+3. **Izhikevich, E. M.** (2004).
+   Which model to use for cortical spiking neurons?
+   *IEEE Transactions on Neural Networks*, 15(5), 1063–1070.
+   DOI: [10.1109/TNN.2004.832719](https://doi.org/10.1109/TNN.2004.832719)
+
+4. **Ermentrout, G. B. & Terman, D. H.** (2010).
+   *Mathematical Foundations of Neuroscience.* Springer.
+
+5. **Gerstner, W., Kistler, W. M., Naud, R., & Paninski, L.** (2014).
+   *Neuronal Dynamics: From Single Neurons to Networks and Models of Cognition.*
+   Cambridge University Press.
+
+---
+
+*SC-NeuroCore v3.14.0 — ANULUM / Fortis Studio*
+*© 2020–2026 Miroslav Šotek. All rights reserved.*
