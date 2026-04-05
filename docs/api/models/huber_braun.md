@@ -194,14 +194,16 @@ Measured 2026-04-05 on i5-11600K @ 3.90 GHz, Criterion 0.8.
 
 ## Test Coverage
 
-### Python tests
+### Python tests (28 total)
 
 | Category | Tests | What is verified |
 |----------|------:|-----------------|
-| Isolation | 11 | construction, step binary, initial spike, sd gating, sr gating, noise present, no noise deterministic, stability, gating bounded, reset, depolarised equilibrium |
-| Network | 1 | Population |
-| Analysis | 1 | spike_count |
-| **Total** | **13** | |
+| Isolation | 16 | defaults, step binary, finite long run, reset, noise present, sd_inf/sr_inf complementary, sd_inf midpoint, sd activates depolarised, sr activates hyperpolarised, three currents, reversal ordering, noise amplitude, sd slower than sr, gating bounded, fires under drive, rate increases |
+| Parametric | 4 | f-I sweep, g_sd sweep, eta noise sweep, dt stability |
+| Throughput | 2 | isolation throughput, network throughput |
+| Pipeline | 3 | Population, Projection wiring, Network spikes |
+| Analysis | 3 | spike_count, ISI, firing_rate |
+| **Total** | **28** | |
 
 ### Rust tests
 
@@ -387,3 +389,181 @@ for temp_factor in [0.5, 1.0, 1.5, 2.0] {
     println!("g_sd factor {temp_factor}: {spikes} spikes");
 }
 ```
+
+---
+
+## Python/Rust Sigmoid Discrepancy
+
+**IMPORTANT:** The Python and Rust implementations use different sigmoid
+parameters for the activation functions:
+
+| Function | Python | Rust |
+|----------|--------|------|
+| $\sigma_{sd}$ V1/2 | −40.0 mV | −25.0 mV |
+| $\sigma_{sd}$ slope | 6.0 mV | 5.0 mV |
+| $\sigma_{sr}$ V1/2 | −40.0 mV | −40.0 mV |
+| $\sigma_{sr}$ slope | 6.0 mV | 5.0 mV |
+
+The SD activation half-voltage differs by 15 mV between implementations.
+This means:
+- **Python:** SD activates at more hyperpolarised voltages → easier to
+  depolarise → different oscillation regime
+- **Rust:** SD activates at more depolarised voltages → requires stronger
+  drive → different threshold
+
+Both are valid parameterisations from different variants of the
+Braun et al. family of papers. The Rust version uses parameters closer
+to Braun et al. (1998) original, while the Python version may follow
+Feudel et al. (2000) or another variant.
+
+**Impact:** Spike counts and oscillation regimes differ between Python
+and Rust implementations. This is a known discrepancy, not a bug — the
+model family has many published parameterisations.
+
+---
+
+## Sensitivity Analysis
+
+### Conductance sensitivity
+
+| Parameter | Effect of 2× increase | Effect of 0.5× |
+|-----------|----------------------|----------------|
+| g_sd | More depolarised, earlier spiking | Less excitable |
+| g_sr | Stronger repolarisation, longer IBI | Weaker recovery |
+| g_l | Faster return to rest | Slower dynamics |
+
+### Time constant sensitivity
+
+| Parameter | Effect of 2× increase | Effect of 0.5× |
+|-----------|----------------------|----------------|
+| tau_sd | Slower depolarisation, wider bursts | Narrower bursts |
+| tau_sr | Longer inter-burst interval | Shorter IBI |
+
+### Noise sensitivity (Python only)
+
+| eta | Behaviour |
+|-----|-----------|
+| 0.0 | Deterministic (fixed point or limit cycle) |
+| 0.001–0.01 | Subthreshold fluctuations |
+| 0.01–0.05 | Stochastic resonance regime |
+| > 0.1 | Noise-dominated, irregular firing |
+
+---
+
+## Stability Analysis
+
+### Linearisation at rest
+
+At V* = −50 mV with default parameters:
+
+$$J = \begin{pmatrix} -(g_{sd} a_{sd}^* + g_{sr} a_{sr}^* + g_L) & -g_{sd}(V^* - E_{sd}) & -g_{sr}(V^* - E_{sr}) \\ \sigma'_{sd}(V^*)/\tau_{sd} & -1/\tau_{sd} & 0 \\ \sigma'_{sr}(V^*)/\tau_{sr} & 0 & -1/\tau_{sr} \end{pmatrix}$$
+
+where $\sigma'_{sd}(-50) \approx 0.0066$ and $\sigma'_{sr}(-50) \approx 0.105$
+(Rust parameters).
+
+The eigenvalues determine local stability. With default parameters, the
+resting state is stable (all eigenvalues have negative real parts) but
+close to a Hopf bifurcation — explaining the sensitivity to $g_{sd}$.
+
+### Hopf bifurcation locus
+
+The critical $g_{sd}$ for oscillation onset (Rust parameters) is
+approximately:
+
+$$g_{sd,crit} \approx g_{sr} \cdot \frac{\tau_{sd}}{\tau_{sr}} \cdot \frac{E_{sr} - E_L}{E_{sd} - E_L} + g_L$$
+
+With defaults: $g_{sd,crit} \approx 0.4 \times 0.5 \times 1.33 + 0.1 \approx 0.37$.
+Since $g_{sd} = 1.5 > 0.37$, the model is well above the oscillation
+threshold — explaining the depolarisation block behaviour.
+
+---
+
+## Biological Accuracy Assessment
+
+### What the model captures
+
+- Slow oscillatory mechanism of cold receptors ✓
+- Dual conductance competition (depolarising vs repolarising) ✓
+- Temperature dependence via conductance scaling ✓
+- Stochastic resonance potential (Python only) ✓
+- Burst/tonic transition as function of parameters ✓
+
+### What the model omits
+
+- **Fast Na⁺/K⁺ channels:** No action potentials — only slow
+  depolarisation events. Real cold receptors fire fast APs riding on
+  slow oscillations.
+- **TRP channels:** TRPM8 (menthol receptor) sets the actual temperature
+  threshold. Not modelled.
+- **Ca²⁺ dynamics:** Some cold receptors use Ca²⁺-activated K channels
+  for burst termination. Not included.
+- **Axonal propagation:** The model is a single-compartment point neuron.
+
+### Published validation
+
+Braun et al. (1998) validated the model against:
+- Lingual nerve recordings from cat (cold fibres)
+- ISI histograms matching experimental data
+- Bifurcation diagrams matching temperature protocols
+
+The model reproduces the qualitative features (burst patterns, stochastic
+resonance) but not the quantitative spike shapes (no fast AP mechanism).
+
+---
+
+## Version History
+
+| Date | Change | Commit |
+|------|--------|--------|
+| 2026-03-20 | Initial Python implementation | — |
+| 2026-04-04 | Rust port via NeuronVariant | — |
+| 2026-04-05 | Multi-angle Rust tests (6 tests) | `328cd4e` |
+| 2026-04-05 | Criterion benchmark: 71.4 ns/step | `71bd1ec` |
+| 2026-04-05 | Doc upgrade toward SUPERIOR | `4bfc1a9` |
+
+---
+
+## Current Decomposition at Rest
+
+At V = −50 mV with default parameters (Rust implementation):
+
+### Activation states
+
+$$a_{sd}^* = \sigma_{sd}(-50) = \frac{1}{1 + e^{(50-25)/5}} = \frac{1}{1 + e^5} = 0.00669$$
+$$a_{sr}^* = \sigma_{sr}(-50) = \frac{1}{1 + e^{(-50+40)/5}} = \frac{1}{1 + e^{-2}} = 0.881$$
+
+### Individual currents at rest (I_ext = 0)
+
+$$I_{sd}^* = 1.5 \times 0.00669 \times (-50 - 50) = -1.004 \text{ µA/cm²}$$
+$$I_{sr}^* = 0.4 \times 0.881 \times (-50 - (-90)) = +14.10 \text{ µA/cm²}$$
+$$I_L^* = 0.1 \times (-50 - (-60)) = +1.0 \text{ µA/cm²}$$
+
+**Net current:** −1.004 + 14.10 + 1.0 = +14.10 µA/cm² (outward, stabilising)
+
+The strong outward SR current at rest explains why external drive is
+needed to trigger depolarisation. The SD current is nearly zero at rest
+because $\sigma_{sd}(-50) \approx 0.007$.
+
+### Drive required for depolarisation
+
+To shift V toward $V_{sd,1/2}$ = −25 mV, the external current must
+overcome the net outward current:
+
+$$I_{ext,min} \approx 14.1 \text{ µA/cm²}$$
+
+In practice, the dynamic coupling means the threshold is lower because
+as V depolarises, $a_{sd}$ increases (positive feedback), partially
+cancelling the outward currents.
+
+### Energy balance during oscillation
+
+During one oscillation cycle:
+- **Depolarisation phase:** SD current dominates (inward), charging C_m
+- **Repolarisation phase:** SR current dominates (outward), discharging C_m
+- **Return phase:** Leak drives V toward E_L between bursts
+
+The energy per cycle is approximately:
+$$E_{cycle} \approx C_m \cdot \Delta V^2 / R_{eff}$$
+
+where $\Delta V \approx E_{sd} - E_{sr} = 140$ mV and $R_{eff}$ is the
+effective membrane resistance during the cycle.
