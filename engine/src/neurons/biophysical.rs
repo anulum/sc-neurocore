@@ -1430,9 +1430,8 @@ impl HillTononiNeuron {
         let h_t_inf = 1.0 / (1.0 + ((self.v + 83.0) / 4.0).exp());
         let w_kna = 0.37 / (1.0 + (38.7 / self.na_i.max(0.01)).powf(3.5));
         let tau_h_na = (1.0 + 10.0 / (1.0 + ((self.v + 40.0) / 10.0).exp())).max(0.1);
-        let tau_n_k = (5.0 + 47.0 * (-(((self.v + 50.0) / 25.0).powi(2))))
-            .max(0.1)
-            .exp();
+        // Hill & Tononi 2005: tau_n_k = 5 + 47 * exp(-((V+50)/25)^2)
+        let tau_n_k = (5.0 + 47.0 * (-(((self.v + 50.0) / 25.0).powi(2))).exp()).max(0.1);
         let tau_m_h = (20.0
             + 1000.0 / (((self.v + 71.5) / 14.2).exp() + (-(self.v + 89.0) / 11.6).exp()))
         .max(1.0);
