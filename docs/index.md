@@ -7,31 +7,31 @@ stochastic computing (SC) neural networks — from individual neurons to full
 SCPN layer hierarchies, with both software simulation and Verilog RTL for
 FPGA deployment.
 
-**Version 3.14.0** | 3 376 passing Python tests (3 552 collected) + 378 Rust tests | 100% Coverage | 120 Neuron Models | 111-Model NetworkRunner | 29 Notebooks | [PyPI](https://pypi.org/project/sc-neurocore/) | [Rust Engine](https://pypi.org/project/sc-neurocore-engine/) | [GitHub](https://github.com/anulum/sc-neurocore)
+**Version 3.14.0** | 6 507 Python tests passing + 1 071 Rust tests | 100% Coverage | 173 Neuron Models | 159-Model NetworkRunner | 29 Notebooks | [PyPI](https://pypi.org/project/sc-neurocore/) | [Rust Engine](https://pypi.org/project/sc-neurocore-engine/) | [GitHub](https://github.com/anulum/sc-neurocore)
 
 ![SC-NeuroCore train-to-hardware pipeline](assets/pipeline.png)
 *Train in PyTorch → Quantise to Q8.8 → Simulate with stochastic bitstreams → Compile to SystemVerilog → Synthesise for FPGA. The Rust SIMD engine accelerates all stages.*
 
 ## Key Features
 
-- **122 neuron models** — McCulloch-Pitts (1943) through ArcaneNeuron (2026), 9 hardware chip emulators, 9 AI-optimized
-- **111 Rust neuron models** — PyO3 bindings, 81-model NetworkRunner with Rayon parallelism
+- **173 neuron models** — McCulloch-Pitts (1943) through ArcaneNeuron (2026), 9 hardware chip emulators, 9 AI-optimised
+- **172 Rust neuron models** — PyO3 bindings, 159-model NetworkRunner with Rayon parallelism
 - **ArcaneNeuron** — flagship self-referential cognition model with 5 coupled subsystems (fast/working/deep/gate/predictor)
 - **Identity substrate** — persistent spiking network with checkpointing, trace encoding/decoding, L16 Director control
 - **Network simulation** — Population-Projection-Network with 3 backends (Python, Rust, MPI)
 - **MPI distributed** — billion-neuron scale via mpi4py
 - **Model zoo** — 10 pre-built configs, 3 pre-trained weight sets (MNIST, SHD, DVS)
-- **125-function analysis toolkit** — spike train stats, distance, correlation, causality, decoding (23 modules)
-- **12 visualization plots** — raster, voltage, ISI, PSD, cross-correlogram, and more
+- **124-function analysis toolkit** — spike train stats, distance, correlation, causality, decoding (23 modules)
+- **14 visualization plots** — raster, voltage, ISI, PSD, cross-correlogram, and more
 - **13 advanced plasticity rules** — pair/triplet/voltage STDP, BCM, BPTT, TBPTT, EWC, e-prop, R-STDP, MAML, homeostatic, STP, structural
 - **7 biological circuits** — gap junctions, tripartite synapse (astrocyte), Rall dendrite, cortical column, lateral inhibition, WTA, gamma oscillation
 - **Packed bitwise layers** — 64-bit vectorised AND/MUX/XNOR/NOT/CORDIV for high throughput
 - **Rust SIMD engine** — 41.3 Gbit/s bitstream packing (AVX-512), AVX2/NEON/SVE/RVV dispatch
 - **GPU acceleration** — PyTorch CUDA + CuPy backend + JAX JIT training
-- **SNN training** — 7 surrogate gradients, 10 differentiable neuron cells (`nn.Module`), SpikingNet + ConvSpikingNet, `to_sc_weights()` bridge to bitstreams
+- **SNN training** — 6 surrogate gradients, 12 differentiable neuron cells/nets (`nn.Module`), SpikingNet + ConvSpikingNet, `to_sc_weights()` bridge to bitstreams
 - **SCPN layer stack** — 16-layer holonomic model (L1 Quantum → L16 Meta) with JAX acceleration
 - **Equation → Verilog compiler** — arbitrary ODE string to synthesizable Q8.8 fixed-point RTL in one function call
-- **Verilog RTL** — 19 synthesisable modules (incl. event-driven AER encoder/router/neuron), 7 formal verification files (67 properties), bit-exact co-simulation
+- **Verilog RTL** — 20 synthesisable modules (incl. event-driven AER encoder/router/neuron), 7 formal verification files (68 properties), bit-exact co-simulation
 - **HDC/VSA** — Hyper-dimensional computing for symbolic AI workloads
 - **[NIR bridge](guides/nir_integration.md)** — FPGA backend for [NIR](https://neuroir.org/) (18/18 primitives, recurrent edges, multi-port subgraphs)
 - **SC→quantum compiler** — compile SC operations to quantum circuits, statevector + noisy simulation
