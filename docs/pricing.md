@@ -302,7 +302,7 @@ PySpike combined. Pure NumPy — no additional dependencies.
 
 ## Why Buy Now?
 
-```
+```text
 Standard pricing (after early adopter program closes):
 
     Professional:     CHF 1,490 /yr per seat
