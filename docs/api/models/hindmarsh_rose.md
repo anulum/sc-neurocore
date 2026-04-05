@@ -1,105 +1,567 @@
 # HindmarshRoseNeuron
 
 **Module:** `sc_neurocore.neurons.models.hindmarsh_rose`
-**Reference:** Hindmarsh & Rose 1984
-**Family:** Oscillator / Burster (3D, chaotic)
-**State variables:** `x` (fast, ≈voltage), `y` (fast, ≈recovery), `z` (slow, ≈adaptation)
-
-## Equations
-
-$$\frac{dx}{dt} = y - x^3 + bx^2 - z + I$$
-$$\frac{dy}{dt} = 1 - 5x^2 - y$$
-$$\frac{dz}{dt} = r\bigl(s(x - x_r) - z\bigr)$$
-
-Spike: upward crossing of $x_\theta = 1.0$.
-
-## Parameters
-
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `b` | 3.0 | Quadratic coefficient (excitability) |
-| `r` | 0.001 | Slow time-scale (smaller = slower bursts) |
-| `s` | 4.0 | Slow variable coupling |
-| `x_rest` | -1.6 | Resting x value |
-| `x_threshold` | 1.0 | Spike detection threshold |
-| `dt` | 0.1 | Integration step |
-
-## Behaviour
-
-- **Chaotic bursting:** For I ∈ [2, 5], alternates between rapid spike
-  bursts and silent pauses. The slow z variable controls the burst envelope.
-- **3 dynamical regimes:** Quiescent (I<2), bursting (2<I<5), tonic (I>5).
-- **Canonical burster:** Most-studied bursting model in computational
-  neuroscience. Used for chaos analysis, synchronisation studies.
-- **Bounded orbit:** x, y, z remain bounded for physiological I.
-
-## Infrastructure Pipeline
-
-```
-HindmarshRoseNeuron
-├── step(current) → int {0,1} (threshold crossing)
-├── Population: PoissonInput(weight=5, rate=200Hz)
-├── Verilog: polynomial (x³, x²), ~60 LUTs
-└── Rust: supported via NeuronVariant
-```
-
-## Test Coverage
-
-| Category | Tests | What is verified |
-|----------|------:|-----------------|
-| Isolation | 11 | construction, step binary, subthreshold, spikes, bursting (ISI ratio), 3 state vars, slow z, rate increase, stability, bounded orbit, reset |
-| Network | 2 | Population, spikes |
-| Analysis | 1 | spike_count |
-| **Total** | **14** | |
-
+**Rust:** `sc_neurocore_engine::neurons::simple_spiking::HindmarshRoseNeuron`
+**Reference:** Hindmarsh, J. L. & Rose, R. M. (1984)
+**Publication:** *A model of neuronal bursting using three coupled first order differential equations.* Proceedings of the Royal Society B, 221(1222), 87–102.
+**Family:** 3D oscillator / burster (chaotic)
+**State variables:** `x` (fast, membrane-like), `y` (fast, recovery), `z` (slow, adaptation)
 
 ---
 
-## Measured Performance (2026-04-04)
+## 1. Mathematical Formalism
+
+The Hindmarsh-Rose model is a three-variable phenomenological neuron
+that captures the essential features of bursting dynamics. The complete
+system from Hindmarsh & Rose (1984):
+
+### 1.1 System of ODEs
+
+$$
+\frac{dx}{dt} = y - x^3 + bx^2 - z + I_{\text{ext}}
+$$
+
+$$
+\frac{dy}{dt} = 1 - 5x^2 - y
+$$
+
+$$
+\frac{dz}{dt} = r\bigl(s(x - x_r) - z\bigr)
+$$
+
+where $x$ is the membrane potential analogue, $y$ is the fast recovery
+variable, $z$ is the slow adaptation variable, and $I_{\text{ext}}$ is
+the external input current.
+
+### 1.2 Fast Subsystem (x, y)
+
+The fast subsystem (with $z$ frozen) is a 2D FitzHugh-Nagumo-like
+system:
+
+**x-nullcline** (dx/dt = 0): $y = x^3 - bx^2 + z - I$
+**y-nullcline** (dy/dt = 0): $y = 1 - 5x^2$
+
+The x-nullcline is a cubic curve whose shape depends on $z$ and $I$.
+As $z$ varies slowly, the cubic shifts up and down, creating and
+destroying limit cycles in the fast subsystem — the mechanism behind
+bursting.
+
+### 1.3 Slow Subsystem (z)
+
+The slow variable $z$ acts as a negative feedback:
+- During spiking: $x$ is large → $s(x - x_r) > z$ → $z$ increases
+- $z$ increasing shifts the x-nullcline upward → eventually silences
+  the fast subsystem (saddle-node bifurcation of cycles)
+- During silence: $x \approx x_r$ → $z$ decreases slowly
+- $z$ decreasing restores the limit cycle → bursting resumes
+
+The parameter $r = 0.001$ sets the timescale separation: $z$ evolves
+1000× slower than $x$ and $y$.
+
+### 1.4 Spike Detection
+
+Upward threshold crossing: spike when $x(t) \geq x_\theta$ and
+$x(t - \Delta t) < x_\theta$, with $x_\theta = 1.0$.
+
+### 1.5 Euler Integration (Implementation)
+
+Both Python and Rust use simultaneous forward Euler:
+
+```
+dx = (y - x³ + b·x² - z + I) * dt
+dy = (1 - 5·x² - y) * dt
+dz = r · (s·(x - x_rest) - z) * dt
+x += dx;  y += dy;  z += dz
+```
+
+All three derivatives are computed from the old state before any
+variable is updated.
+
+---
+
+## 2. Theoretical Context
+
+### 2.1 Background
+
+Hindmarsh & Rose (1984) developed this model to capture the bursting
+behaviour observed in neurons that alternate between rapid spiking
+and quiescent periods. The model extends the FitzHugh-Nagumo framework
+by adding a third slow variable $z$ that modulates the fast dynamics,
+producing the characteristic burst-silence pattern.
+
+### 2.2 Three Dynamical Regimes
+
+The model exhibits three qualitatively different regimes as $I$ varies:
+
+1. **Quiescent** ($I \lesssim 2$): The system has a stable fixed point.
+   $x$ remains near $x_r = -1.6$. No spikes.
+
+2. **Bursting** ($2 \lesssim I \lesssim 5$): The system alternates
+   between rapid spike bursts (fast oscillations in x, y) and silent
+   inter-burst intervals (z slowly drifts). This is the signature
+   behaviour of the HR model.
+
+3. **Tonic spiking** ($I \gtrsim 5$): The external drive is strong
+   enough that the slow variable $z$ cannot suppress spiking. The
+   model fires continuously.
+
+### 2.3 Bursting Classification
+
+The HR model produces **square-wave bursting** (also called fold/fold
+or Type I bursting in Rinzel's classification). The mechanism:
+
+1. Burst onset: fold bifurcation of the fast subsystem's fixed point
+   → jump to the spiking branch
+2. Burst termination: fold bifurcation of limit cycles in the fast
+   subsystem → jump back to rest
+3. The slow variable $z$ controls the transit between these bifurcations
+
+### 2.4 Chaos in the HR Model
+
+For specific parameter ranges (notably $r \approx 0.001$, $b \approx 3$,
+$I \approx 3.25$), the HR model exhibits chaotic bursting:
+- Irregular burst durations
+- Non-periodic interburst intervals
+- Positive Lyapunov exponent
+- Strange attractor in (x, y, z) space
+
+This makes the HR model one of the simplest systems that produces
+biologically realistic chaos, and it has been used extensively in
+studies of neural synchronisation and information coding.
+
+### 2.5 Relation to Other Models
+
+| Property | Hindmarsh-Rose | FitzHugh-Nagumo | Izhikevich |
+|----------|---------------|----------------|------------|
+| Dimensions | 3 (x, y, z) | 2 (v, w) | 2 (v, u) |
+| Bursting | Yes (z variable) | No | Yes (reset rules) |
+| Chaos | Yes (continuous) | No | Limited |
+| Nonlinearity | x³, x² | v − v³/3 | v² |
+| Reset | No (limit cycle) | No | Yes (hard) |
+| Exp per step | 0 | 0 | 0 |
+
+### 2.6 Homoclinic Bifurcation and Period-Adding
+
+In the transition region between tonic spiking and bursting (I ≈ 3.3),
+the HR model exhibits **period-adding cascades**: sequences of bursting
+patterns where the number of spikes per burst increases by one at each
+bifurcation. Between successive period-adding regimes lie windows of
+chaotic behaviour. This is mediated by homoclinic orbits — trajectories
+that approach the saddle fixed point arbitrarily closely before being
+ejected back onto the spiking branch. The time spent near the saddle
+determines the interburst interval, and its sensitivity to initial
+conditions is the origin of chaos in the HR model.
+
+### 2.7 Parameter Roles
+
+- **$b = 3$:** Controls the shape of the cubic x-nullcline. Higher $b$
+  makes the system more excitable (lower spiking threshold).
+- **$r = 0.001$:** Timescale separation. Smaller $r$ → longer bursts
+  and longer silences. $r = 0$ freezes $z$, reducing to 2D.
+- **$s = 4$:** Coupling strength between fast and slow subsystems.
+  Larger $s$ → stronger adaptation → shorter bursts.
+- **$x_r = -1.6$:** Resting potential analogue. The equilibrium
+  of $z$ when $x = x_r$.
+
+---
+
+## 3. Pipeline Position
+
+```
+sc_neurocore Pipeline
+├── Python layer
+│   └── sc_neurocore.neurons.models.hindmarsh_rose.HindmarshRoseNeuron
+│       ├── step(current) → int {0, 1}
+│       ├── reset() → None
+│       ├── Population(HindmarshRoseNeuron, n=N)
+│       ├── Network(pop, drive, monitor)
+│       └── Analysis: spike_count(), firing_rate(), isi()
+│
+├── Rust engine
+│   └── sc_neurocore_engine::neurons::simple_spiking::HindmarshRoseNeuron
+│       ├── new() → Self
+│       ├── step(&mut self, current: f64) → i32
+│       └── reset(&mut self)
+│
+├── PyO3 binding
+│   └── sc_neurocore_engine.HindmarshRoseNeuron (Python class)
+│       ├── __init__()
+│       ├── step(current) → int
+│       ├── reset()
+│       └── get_state() → dict {x, y, z}
+│
+└── Network runner
+    └── NeuronVariant::HindmarshRose(HindmarshRoseNeuron)
+        ├── Wired in network_runner.rs:203
+        ├── Voltage access: network_runner.rs:477 (n.x)
+        └── Factory: "HindmarshRose" | "HindmarshRoseNeuron" → new()
+```
+
+---
+
+## 4. Features
+
+### 4.1 Core Features
+
+- **Three dynamical regimes:** Quiescent, bursting, tonic spiking
+- **Chaotic bursting:** Irregular burst patterns for specific parameters
+- **Slow adaptation:** $z$ variable creates burst envelope on ~1000×
+  slower timescale than fast spiking
+- **Pure polynomial:** No transcendental functions — x³, x², multiplications
+- **No reset:** Continuous dynamics via limit cycle, no artificial resets
+- **Bounded orbits:** Cubic term ensures bounded x for physiological I
+
+### 4.2 Supported Operations
+
+| Operation | Python | Rust | PyO3 |
+|-----------|--------|------|------|
+| step(current) → spike | ✅ | ✅ | ✅ |
+| reset() | ✅ | ✅ | ✅ |
+| get_state() → dict | — | — | ✅ (x, y, z) |
+| Population wrapping | ✅ | via NeuronVariant | — |
+| Network integration | ✅ | ✅ | — |
+| Spike analysis | ✅ | — | — |
+
+### 4.3 Parameter Sensitivity
+
+| Parameter | Effect | Typical Range |
+|-----------|--------|---------------|
+| `b` ↑ | More excitable, lower spiking threshold | 2.5–4.0 |
+| `r` ↓ | Longer bursts, longer silences | 0.0005–0.01 |
+| `s` ↑ | Stronger adaptation, shorter bursts | 2–6 |
+| `x_rest` | Shifts z equilibrium, affects burst threshold | -2 to -1 |
+| `I` | 0→2: silent, 2→5: bursting, >5: tonic | 0–10 |
+
+---
+
+## 5. Usage Examples
+
+### 5.1 Basic Bursting (Python)
+
+```python
+from sc_neurocore.neurons.models.hindmarsh_rose import HindmarshRoseNeuron
+
+neuron = HindmarshRoseNeuron()
+spikes = []
+for t in range(50000):
+    spike = neuron.step(current=3.25)  # chaotic bursting regime
+    if spike:
+        spikes.append(t)
+
+print(f"Spike count: {len(spikes)}")
+# Compute ISIs to see burst structure
+isis = [b-a for a,b in zip(spikes, spikes[1:])]
+print(f"Mean ISI: {sum(isis)/len(isis):.1f}, Min: {min(isis)}, Max: {max(isis)}")
+```
+
+### 5.2 Three Regimes Sweep
+
+```python
+from sc_neurocore.neurons.models.hindmarsh_rose import HindmarshRoseNeuron
+
+for I in [1.0, 3.0, 3.25, 5.0, 8.0]:
+    neuron = HindmarshRoseNeuron()
+    spikes = sum(neuron.step(I) for _ in range(20000))
+    print(f"I={I:.2f}: {spikes:4d} spikes")
+# Expect: ~0 (silent), burst, chaotic burst, burst/tonic, tonic
+```
+
+### 5.3 Slow Variable Trajectory
+
+```python
+from sc_neurocore.neurons.models.hindmarsh_rose import HindmarshRoseNeuron
+
+neuron = HindmarshRoseNeuron()
+z_trace, x_trace = [], []
+for _ in range(50000):
+    neuron.step(current=3.25)
+    z_trace.append(neuron.z)
+    x_trace.append(neuron.x)
+# Plot z vs x: slow manifold with fast oscillations visible as loops
+```
+
+### 5.4 Rust Backend (via PyO3)
+
+```python
+from sc_neurocore_engine import HindmarshRoseNeuron as RustHR
+
+neuron = RustHR()
+spikes = sum(neuron.step(5.0) for _ in range(10000))
+state = neuron.get_state()
+print(f"Spikes: {spikes}")
+print(f"x={state['x']:.3f}, y={state['y']:.3f}, z={state['z']:.3f}")
+```
+
+### 5.5 Burst Duration Analysis
+
+```python
+from sc_neurocore.neurons.models.hindmarsh_rose import HindmarshRoseNeuron
+
+neuron = HindmarshRoseNeuron()
+spikes = []
+for t in range(100000):
+    if neuron.step(current=3.0):
+        spikes.append(t)
+
+# Detect bursts: spikes within short ISI belong to same burst
+bursts = []
+current_burst = [spikes[0]]
+for i in range(1, len(spikes)):
+    if spikes[i] - spikes[i-1] < 50:  # within-burst ISI < 50 steps
+        current_burst.append(spikes[i])
+    else:
+        bursts.append(current_burst)
+        current_burst = [spikes[i]]
+bursts.append(current_burst)
+print(f"Bursts: {len(bursts)}, Mean spikes/burst: {sum(len(b) for b in bursts)/len(bursts):.1f}")
+```
+
+---
+
+## 6. Technical Reference
+
+### 6.1 Parameters
+
+| Parameter | Default | Unit | Description |
+|-----------|---------|------|-------------|
+| `x` | -1.6 | — | Fast variable, membrane-like (initial) |
+| `y` | -10.0 | — | Fast recovery variable (initial) |
+| `z` | 2.0 | — | Slow adaptation variable (initial) |
+| `b` | 3.0 | — | Quadratic coefficient (excitability) |
+| `r` | 0.001 | — | Slow timescale (z dynamics rate) |
+| `s` | 4.0 | — | Slow coupling strength |
+| `x_rest` | -1.6 | — | Resting x value for z equilibrium |
+| `dt` | 0.1 | ms | Integration timestep |
+| `x_threshold` | 1.0 | — | Spike detection threshold |
+
+### 6.2 Methods
+
+| Method | Signature | Returns | Description |
+|--------|-----------|---------|-------------|
+| `step` | `(current: f64) → i32` | 0 or 1 | Advance one timestep |
+| `reset` | `() → ()` | — | Reset x=-1.6, y=-10.0, z=2.0 |
+| `new` | `() → Self` | — | Rust constructor with defaults |
+| `get_state` | `() → dict` | x, y, z | PyO3 only: state inspection |
+
+### 6.3 Python/Rust Implementation Comparison
+
+| Aspect | Python | Rust |
+|--------|--------|------|
+| Source | `hindmarsh_rose.py` (45 lines) | `simple_spiking.rs:130-179` |
+| Integration | Simultaneous Euler | Simultaneous Euler |
+| Exp per step | 0 | 0 |
+| Dependencies | None (pure arithmetic) | None (pure arithmetic) |
+| **Parity** | **EXACT** (pure polynomial, no RNG) | |
+
+### 6.4 NeuronVariant Wiring
+
+```rust
+// network_runner.rs:203
+HindmarshRose(HindmarshRoseNeuron),
+
+// network_runner.rs:477 — voltage access
+NeuronVariant::HindmarshRose(n) => n.x,
+
+// network_runner.rs:923 — factory
+"HindmarshRose" | "HindmarshRoseNeuron" => {
+    Ok(NeuronVariant::HindmarshRose(HindmarshRoseNeuron::new()))
+}
+```
+
+---
+
+## 7. Performance Benchmarks
+
+### 7.1 Rust (Criterion 0.8)
+
+Measured on i5-11600K @ 3.90 GHz, single-threaded, 2026-04-05.
+
+| Benchmark | Iterations | Median | Per-step | Notes |
+|-----------|-----------|--------|----------|-------|
+| `hindmarsh_rose_10k_steps` | 10,000 | 90 µs | **9.0 ns** | Pure polynomial, 3 state vars |
+
+### 7.2 Python
+
+Measured on same hardware, single-threaded, 2026-04-04.
 
 | Metric | Value |
 |--------|-------|
-| Python throughput | ~247K steps/s |
+| Isolation throughput | ~247K steps/s (~4.0 µs/step) |
 | Spikes (10K steps, I=5.0) | 156 |
-| State stability (20K steps) | PASS |
-| Rust parity | EXACT |
+
+### 7.3 Speedup
+
+| Metric | Python | Rust | Speedup |
+|--------|--------|------|---------|
+| Per-step latency | ~4,000 ns | 9.0 ns | **~444×** |
+
+The 444× speedup — the highest among all neuron models — reflects the
+pure polynomial nature: x³, x², and multiplications are the entire
+computation. No transcendental functions, no branches, no table lookups.
+The Rust compiler can fully vectorise and pipeline these operations.
+
+### 7.4 Numerical Stability
+
+| Test | Duration | Result |
+|------|----------|--------|
+| 20,000 steps at I=5.0 | 2 s sim time | All 3 state variables finite |
+| 200 steps at I=5.0 (moderate) | 20 ms sim time | Bounded |
+| Extended run (100K steps) | 10 s sim time | No divergence |
 
 ---
 
-## Pipeline Verification (End-to-End)
+## 8. Test Coverage
 
-### 1. Construction
-`HindmarshRoseNeuron()` instantiates with documented defaults.
-**Status: PASS**
+### 8.1 Python Tests (30 total)
 
-### 2. step() → correct type
-Returns `int` (spike indicator) or `float` (rate/potential).
-**Status: PASS**
+**File:** `tests/test_model_hindmarsh_rose.py` (28 tests)
 
-### 3. Spiking behaviour
-156 spikes in 10,000 steps at I=5.0.
-**Status: PASS**
+| Category | Tests | What is verified |
+|----------|------:|-----------------|
+| Isolation | 5 | Construction, binary output, 3 vars evolve, finite, reset |
+| Dynamics | 6 | Fires under drive, bursting pattern, ISI bimodality, tonic spiking, subthreshold silence, z envelope |
+| Equations | 3 | dx formula, dy formula, dz formula |
+| Parameters | 4 | b excitability, r timescale, s coupling, regime transitions |
+| Bursting | 4 | Burst detection, spikes per burst, interburst interval, burst regularity |
+| Performance | 2 | Isolation throughput, network throughput |
+| Pipeline | 4 | Population, projection wiring, network spikes, analysis |
 
-### 4. State stability (20,000 steps)
-All state variables remain finite after extended simulation.
-**Status: PASS**
+**File:** `tests/test_new_neurons.py` (2 tests)
 
-### 5. reset()
-State returns to initial values after `reset()`.
-**Status: PASS**
+| Test | What is verified |
+|------|-----------------|
+| `test_fires` | Fires under drive |
+| `test_z_adaptation` | z variable evolves |
 
-### 6. Population
-`Population(HindmarshRoseNeuron, n=10)` creates correct instances.
-**Status: PASS**
+### 8.2 Rust Tests (6 total)
 
-### 7. Rust parity
-**EXACT** — Python and Rust produce identical spike trains.
+**File:** `engine/src/neurons/simple_spiking.rs`
+
+| Test | What is verified |
+|------|-----------------|
+| `hr_fires` | Fires at I=5 |
+| `hr_silent_without_input` | x bounded at I=0 |
+| `hr_reset_clears_state` | x=-1.6, y=-10, z=2 after reset |
+| `hr_moderate_bounded` | All state finite at moderate I |
+| `hr_nan_no_panic` | NaN input does not crash |
+| `hr_negative_no_crash` | State finite at negative I |
+
+### 8.3 Coverage Summary
+
+| Category | Python | Rust | Total |
+|----------|--------|------|-------|
+| Construction/reset | 3 | 1 | 4 |
+| Dynamics/spiking | 6 | 2 | 8 |
+| Equations | 3 | 0 | 3 |
+| Bursting | 4 | 0 | 4 |
+| Parameters | 4 | 0 | 4 |
+| Numerical stability | 1 | 3 | 4 |
+| Performance | 2 | 0 | 2 |
+| Pipeline | 4 | 0 | 4 |
+| **Total** | **30** | **6** | **36** |
 
 ---
 
-## Findings (measured 2026-04-04)
+## Historical Significance
 
-1. Throughput: ~247K steps/s (Python, single-thread)
-2. All pipeline stages verified green
-3. Rust parity: EXACT
-4. Numerical stability confirmed over 20K steps
+The Hindmarsh-Rose model was introduced in two stages:
+
+1. **1982 (Nature):** Hindmarsh & Rose published a 2D model (x, y only)
+   as an improvement over the FitzHugh-Nagumo model, replacing the
+   cubic v − v³/3 with x³ − bx² + y to better match the shape of
+   real neuronal action potentials.
+
+2. **1984 (Proc. R. Soc. B):** The critical addition of the slow
+   variable z transformed the model into a burster. This was the first
+   simple ODE model to reproduce the bursting patterns observed in
+   molluscan neurons (Aplysia, Helix) with a biologically motivated
+   mechanism (slow adaptation).
+
+The HR model rapidly became the standard testbed for:
+
+- **Dynamical systems analysis of bursting:** Rinzel (1987) used the HR
+  model to develop the formal classification of bursting types (fold/fold,
+  fold/Hopf, circle/fold, etc.) that remains the standard taxonomy.
+- **Chaos in neural systems:** The model's chaotic regime demonstrated
+  that deterministic chaos could arise from simple neural dynamics,
+  challenging the assumption that neural irregularity requires noise.
+- **Synchronisation studies:** Coupled HR neurons exhibit a rich
+  repertoire of synchronisation states (in-phase, anti-phase, lag,
+  chaotic synchronisation) relevant to understanding cortical rhythms.
+- **Hardware implementations:** The purely polynomial dynamics make
+  the HR model ideal for FPGA/ASIC neuromorphic hardware, requiring
+  only multipliers and adders — no lookup tables for exp/tanh.
+
+---
+
+## Numerical Considerations
+
+- **Pure polynomial dynamics:** x³, x², and multiplications only. No
+  transcendental functions (exp, tanh, cosh). This makes the HR model
+  the fastest per-step computation in the sc-neurocore library.
+- **dt = 0.1:** Adequate for the default parameters. The fast subsystem
+  (x, y) has eigenvalues that remain moderate for typical I values.
+  For very small r (< 0.0001), longer simulations are needed to observe
+  complete burst-silence cycles.
+- **Simultaneous Euler:** Essential for this 3D system. Sequential
+  update would create a different effective coupling between the fast
+  and slow subsystems, altering burst duration and onset thresholds.
+- **Bounded orbits:** The negative cubic term $-x^3$ dominates at
+  large $|x|$, ensuring boundedness. No explicit clamping needed.
+- **Stiffness:** Not stiff for default parameters. The timescale
+  separation (r = 0.001) is moderate — adaptive methods are unnecessary.
+- **Lyapunov sensitivity:** In the chaotic regime (I ≈ 3.25), tiny
+  perturbations grow exponentially. Bit-exact parity between Python
+  and Rust is maintained because both use identical arithmetic, but
+  any change in dt or integration order will produce divergent
+  trajectories after a few hundred steps.
+- **FPGA suitability:** The absence of transcendental functions makes
+  the HR model an ideal candidate for FPGA implementation. Only
+  multipliers (for x³, x²) and adders are needed. Estimated resource
+  usage: ~60 LUTs on a Xilinx Artix-7 for a single neuron instance.
+
+---
+
+## 9. Citations
+
+1. **Hindmarsh, J. L. & Rose, R. M.** (1984).
+   A model of neuronal bursting using three coupled first order differential equations.
+   *Proceedings of the Royal Society B*, 221(1222), 87–102.
+   DOI: [10.1098/rspb.1984.0024](https://doi.org/10.1098/rspb.1984.0024)
+
+2. **Hindmarsh, J. L. & Rose, R. M.** (1982).
+   A model of the nerve impulse using two first-order differential equations.
+   *Nature*, 296(5853), 162–164.
+   DOI: [10.1038/296162a0](https://doi.org/10.1038/296162a0)
+
+3. **Rinzel, J.** (1987).
+   A formal classification of bursting mechanisms in excitable systems.
+   In *Mathematical Topics in Population Biology, Morphogenesis and Neurosciences*,
+   Springer, 267–281.
+
+4. **Izhikevich, E. M.** (2000).
+   Neural excitability, spiking and bursting.
+   *International Journal of Bifurcation and Chaos*, 10(6), 1171–1266.
+   DOI: [10.1142/S0218127400000840](https://doi.org/10.1142/S0218127400000840)
+
+5. **Barrio, R. & Shilnikov, A.** (2011).
+   Parameter-sweeping techniques for temporal dynamics of neuronal systems:
+   case study of Hindmarsh-Rose model.
+   *Journal of Mathematical Neuroscience*, 1(1), 6.
+   DOI: [10.1186/2190-8567-1-6](https://doi.org/10.1186/2190-8567-1-6)
+
+6. **Storace, M., Linaro, D., & de Lange, E.** (2008).
+   The Hindmarsh-Rose neuron model: bifurcation analysis and piecewise-linear
+   approximations.
+   *Chaos*, 18(3), 033128.
+   DOI: [10.1063/1.2975967](https://doi.org/10.1063/1.2975967)
+
+7. **González-Miranda, J. M.** (2007).
+   Complex bifurcation structures in the Hindmarsh-Rose neuron model.
+   *International Journal of Bifurcation and Chaos*, 17(9), 3071–3083.
+   DOI: [10.1142/S0218127407018877](https://doi.org/10.1142/S0218127407018877)
+
+---
+
+*SC-NeuroCore v3.14.0 — ANULUM / Fortis Studio*
+*© 2020–2026 Miroslav Šotek. All rights reserved.*
