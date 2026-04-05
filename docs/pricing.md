@@ -153,9 +153,9 @@ commercial licenses for proprietary integration.
 <li>Rust SIMD engine (41.3 Gbit/s AVX-512)</li>
 <li>20 Verilog HDL modules + 68 formal properties</li>
 <li>ODE → Verilog compiler (<code>sc-neurocore compile</code>)</li>
-<li>PyTorch training (7 surrogates, 10 cells)</li>
+<li>PyTorch training (6 surrogates, 12 cells)</li>
 <li>6-codec neural data compression</li>
-<li>125-function spike analysis toolkit</li>
+<li>124-function spike analysis toolkit</li>
 <li>Quantum hybrid (Qiskit/PennyLane)</li>
 <li>84 tutorials + full API documentation</li>
 <li>Community support (GitHub Discussions)</li>
@@ -251,7 +251,7 @@ bit-for-bit (68 formal properties verified by SymbiYosys).
 
 ### PyTorch Training → SC Bitstream → FPGA
 
-7 surrogate gradient functions, 10 differentiable neuron cells
+6 surrogate gradient functions, 12 differentiable neuron cells
 (`nn.Module`), SpikingNet and ConvSpikingNet architectures. Train on
 GPU with standard PyTorch optimizers, export weights to stochastic
 computing bitstreams via `to_sc_weights()`, compile to Verilog RTL.
@@ -263,10 +263,10 @@ ISI+Huffman, Predictive (4 learnable predictors), Delta, Streaming, AER,
 and WaveformCodec (24x compression on 1024-channel Neuralink-scale data).
 Unified API: `get_codec(name)`, `recommend_codec()`. Rust backend (780x).
 
-### 122 Neuron Models + Rust SIMD Engine
+### 173 Neuron Models + Rust SIMD Engine
 
-82 years of computational neuroscience (1943-2026). 111 Rust models with
-PyO3 bindings, 81-model NetworkRunner with Rayon-parallel populations.
+82 years of computational neuroscience (1943-2026). 172 Rust models with
+PyO3 bindings, 159-model NetworkRunner with Rayon-parallel populations.
 41.3 Gbit/s bitstream packing (AVX-512). 224 Mstep/s LIF throughput.
 
 ### 125-Function Spike Analysis Toolkit
@@ -283,9 +283,9 @@ PySpike combined. Pure NumPy — no additional dependencies.
 |---------|:---------:|:------------:|:----------:|
 | 173 neuron models + Rust engine | Yes | Yes | Yes |
 | `sc-neurocore compile` (ODE → Verilog) | Yes | Yes | Yes |
-| PyTorch training (7 surrogates, 10 cells) | Yes | Yes | Yes |
+| PyTorch training (6 surrogates, 12 cells) | Yes | Yes | Yes |
 | 6-codec neural compression | Yes | Yes | Yes |
-| 125-function spike analysis | Yes | Yes | Yes |
+| 124-function spike analysis | Yes | Yes | Yes |
 | 20 Verilog modules + 68 formal properties | Yes | Yes | Yes |
 | Quantum hybrid (Qiskit/PennyLane) | Yes | Yes | Yes |
 | 84 tutorials + full docs | Yes | Yes | Yes |
