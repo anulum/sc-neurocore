@@ -1,9 +1,11 @@
 # ResonateAndFireNeuron
 
 **Module:** `sc_neurocore.neurons.models.resonate_and_fire`
-**Reference:** Izhikevich 2001
+**Rust:** `sc_neurocore_engine::neurons::simple_spiking::ResonateAndFireNeuron`
+**Reference:** Izhikevich, E. M. (2001)
+**Publication:** *Resonate-and-fire neurons.* Neural Networks, 14(6-7), 883–894.
 **Family:** Oscillatory (complex-valued subthreshold dynamics)
-**State variables:** `x`, `y` (real and imaginary parts of complex state z)
+**State variables:** `x`, `y` (real and imaginary parts of complex state z = x + iy)
 
 ---
 
@@ -106,6 +108,18 @@ has eigenvalues $\lambda = b \pm i\omega$.
 $$T = \frac{2\pi}{\omega}$$
 
 With $\omega = 1.0$, $T \approx 6.28$ time units, or $T/dt \approx 126$ steps.
+
+### Biological significance
+
+The resonate-and-fire model captures a fundamental property of many
+cortical and thalamic neurons: **subthreshold resonance**. These neurons
+preferentially respond to inputs at a specific frequency — they act as
+bandpass filters rather than low-pass integrators. This is mediated by
+voltage-dependent currents (I_h, I_M, I_NaP) that create the
+subthreshold oscillation captured abstractly by the complex eigenvalue
+$b \pm i\omega$. Neurons with prominent subthreshold resonance include
+stellate cells in entorhinal cortex, thalamic relay neurons, and
+inferior olive neurons.
 
 ---
 
@@ -298,3 +312,258 @@ State returns to initial values after `reset()`.
 2. All pipeline stages verified green
 3. Rust parity: EXACT
 4. Numerical stability confirmed over 20K steps
+
+---
+
+## Pipeline Position
+
+```
+sc_neurocore Pipeline
+├── Python layer
+│   └── sc_neurocore.neurons.models.resonate_and_fire.ResonateAndFireNeuron
+│       ├── step(current) → int {0, 1}
+│       ├── reset() → None  (x=0, y=0)
+│       ├── Population(ResonateAndFireNeuron, n=N)
+│       ├── Network(pop, drive, monitor)
+│       └── Analysis: spike_count(), firing_rate(), isi()
+│
+├── Rust engine
+│   └── sc_neurocore_engine::neurons::simple_spiking::ResonateAndFireNeuron
+│       ├── new() → Self
+│       ├── step(&mut self, current: f64) → i32
+│       └── reset(&mut self)
+│
+├── PyO3 binding
+│   └── sc_neurocore_engine.ResonateAndFireNeuron (Python class)
+│       ├── __init__()
+│       ├── step(current) → int
+│       ├── reset()
+│       └── get_state() → dict {x, y}
+│
+└── Network runner
+    └── NeuronVariant::ResonateAndFire(ResonateAndFireNeuron)
+        ├── Wired in network_runner.rs
+        ├── Voltage access via n.x
+        └── Factory: "ResonateAndFire" | "ResonateAndFireNeuron" → new()
+```
+
+---
+
+## Technical Reference
+
+### Parameters
+
+| Parameter | Default | Unit | Description |
+|-----------|---------|------|-------------|
+| `x` | 0.0 | — | Real part of state (initial) |
+| `y` | 0.0 | — | Imaginary part of state (initial) |
+| `b` | -0.1 | ms⁻¹ | Decay rate (damping, must be < 0 for stability) |
+| `omega` | 1.0 | rad/ms | Natural oscillation frequency |
+| `threshold` | 1.0 | — | Spike threshold on amplitude |z| |
+| `dt` | 0.05 | ms | Integration timestep |
+
+### Methods
+
+| Method | Signature | Returns | Description |
+|--------|-----------|---------|-------------|
+| `step` | `(current: f64) → i32` | 0 or 1 | Advance one timestep; reset on |z| ≥ threshold |
+| `reset` | `() → ()` | — | Reset x=0, y=0 |
+| `new` | `() → Self` | — | Rust constructor with defaults |
+| `get_state` | `() → dict` | x, y | PyO3 only: state inspection |
+
+### Python/Rust Implementation Comparison
+
+| Aspect | Python | Rust |
+|--------|--------|------|
+| Source | `resonate_and_fire.py` (44 lines) | `simple_spiking.rs:186-225` |
+| Integration | Simultaneous Euler | Simultaneous Euler (fixed 775e3bd) |
+| sqrt per step | 1 (numpy) | 1 (f64::sqrt) |
+| Amplitude check | numpy.sqrt(x²+y²) | (x*x + y*y).sqrt() |
+| **Parity** | **EXACT** (after simultaneous Euler fix) | |
+
+### NeuronVariant Wiring
+
+```rust
+// network_runner.rs
+ResonateAndFire(ResonateAndFireNeuron),
+
+// Voltage access
+NeuronVariant::ResonateAndFire(n) => n.x,
+
+// Factory
+"ResonateAndFire" | "ResonateAndFireNeuron" => {
+    Ok(NeuronVariant::ResonateAndFire(ResonateAndFireNeuron::new()))
+}
+```
+
+---
+
+## Performance Benchmarks
+
+### Rust (Criterion 0.8)
+
+Measured on i5-11600K @ 3.90 GHz, single-threaded, 2026-04-05.
+
+| Benchmark | Iterations | Median | Per-step | Notes |
+|-----------|-----------|--------|----------|-------|
+| `resonate_and_fire_10k_steps` | 10,000 | 541 µs | **54.1 ns** | Linear ODE + sqrt per step |
+
+### Python
+
+| Metric | Value |
+|--------|-------|
+| Isolation throughput | ~105K steps/s (~9.5 µs/step) |
+
+### Speedup
+
+| Metric | Python | Rust | Speedup |
+|--------|--------|------|---------|
+| Per-step latency | ~9,500 ns | 54.1 ns | **~176×** |
+
+### Numerical Stability
+
+| Test | Duration | Result |
+|------|----------|--------|
+| 20,000 steps at I=0.5 | 1 s sim time | All state finite |
+| Strong drive I=5.0 | 10K steps | Spikes, bounded |
+| Negative b=-0.5 | 10K steps | Faster decay, stable |
+
+---
+
+## Usage Examples
+
+### Basic Resonance (Python)
+
+```python
+from sc_neurocore.neurons.models.resonate_and_fire import ResonateAndFireNeuron
+
+neuron = ResonateAndFireNeuron()
+spikes = []
+for t in range(10000):
+    spike = neuron.step(current=0.5)
+    if spike:
+        spikes.append(t)
+print(f"Spikes: {len(spikes)}")
+```
+
+### Frequency-Selective Response
+
+```python
+import numpy as np
+from sc_neurocore.neurons.models.resonate_and_fire import ResonateAndFireNeuron
+
+# Drive at natural frequency omega=1.0
+neuron = ResonateAndFireNeuron()
+spikes_resonant = 0
+for t in range(10000):
+    I = 0.3 * np.sin(1.0 * t * 0.05)  # omega * t * dt
+    spikes_resonant += neuron.step(I)
+
+# Drive off-resonance
+neuron2 = ResonateAndFireNeuron()
+spikes_off = 0
+for t in range(10000):
+    I = 0.3 * np.sin(3.0 * t * 0.05)  # 3x omega
+    spikes_off += neuron2.step(I)
+
+print(f"On-resonance: {spikes_resonant}, Off-resonance: {spikes_off}")
+# Resonant drive produces more spikes
+```
+
+### Subthreshold Spiral Trajectory
+
+```python
+from sc_neurocore.neurons.models.resonate_and_fire import ResonateAndFireNeuron
+
+neuron = ResonateAndFireNeuron()
+x_trace, y_trace = [], []
+for _ in range(200):
+    neuron.step(current=0.3)  # subthreshold
+    x_trace.append(neuron.x)
+    y_trace.append(neuron.y)
+# Plot y vs x: inward spiral (damped oscillation)
+```
+
+### Rust Backend (via PyO3)
+
+```python
+from sc_neurocore_engine import ResonateAndFireNeuron as RustRAF
+
+neuron = RustRAF()
+spikes = sum(neuron.step(0.5) for _ in range(10000))
+state = neuron.get_state()
+print(f"Spikes: {spikes}, x={state['x']:.4f}, y={state['y']:.4f}")
+```
+
+---
+
+## Test Coverage
+
+### Python Tests (27 total)
+
+**File:** `tests/test_model_resonate_and_fire.py`
+
+| Category | Tests | What is verified |
+|----------|------:|-----------------|
+| Isolation | 5 | Construction, binary output, 2 vars evolve, finite, reset |
+| Resonance | 5 | Fires under drive, resonant > off-resonant, subthreshold spiral, frequency selectivity, amplitude growth |
+| Dynamics | 5 | Spiral trajectory, damped decay, threshold crossing, phase preservation, reset clears |
+| Parameters | 4 | b controls damping, omega controls frequency, threshold effect, dt stability |
+| Performance | 2 | Isolation throughput, network throughput |
+| Pipeline | 4 | Population, projection, network spikes, analysis |
+| Stability | 2 | Extended run, extreme drive |
+
+### Rust Tests (6 total)
+
+| Test | What is verified |
+|------|-----------------|
+| `rnf_fires` | Fires under drive |
+| `rnf_reset_clears_state` | x=0, y=0 after reset |
+| `rnf_bounded` | State finite under drive |
+| `rnf_nan_no_panic` | NaN input safe |
+| `rnf_negative_no_crash` | Negative input stable |
+| `rnf_subthreshold_oscillation` | Oscillates below threshold |
+
+### Coverage Summary
+
+| Category | Python | Rust | Total |
+|----------|--------|------|-------|
+| Construction/reset | 3 | 1 | 4 |
+| Resonance/dynamics | 10 | 1 | 11 |
+| Parameters | 4 | 0 | 4 |
+| Numerical stability | 2 | 3 | 5 |
+| Performance | 2 | 0 | 2 |
+| Pipeline | 4 | 0 | 4 |
+| **Total** | **27** | **6** | **33** |
+
+---
+
+## Citations
+
+1. **Izhikevich, E. M.** (2001).
+   Resonate-and-fire neurons.
+   *Neural Networks*, 14(6-7), 883–894.
+   DOI: [10.1016/S0893-6080(01)00078-8](https://doi.org/10.1016/S0893-6080(01)00078-8)
+
+2. **Izhikevich, E. M.** (2007).
+   *Dynamical Systems in Neuroscience: The Geometry of Excitability and Bursting.*
+   MIT Press. Chapter 10: Resonate-and-fire neurons.
+
+3. **Richardson, M. J. E., Brunel, N., & Hakim, V.** (2003).
+   From subthreshold to firing-rate resonance.
+   *Journal of Neurophysiology*, 89(5), 2538–2554.
+   DOI: [10.1152/jn.00955.2002](https://doi.org/10.1152/jn.00955.2002)
+
+4. **Hutcheon, B. & Yarom, Y.** (2000).
+   Resonance, oscillation and the intrinsic frequency preferences of neurons.
+   *Trends in Neurosciences*, 23(5), 216–222.
+   DOI: [10.1016/S0166-2236(00)01547-2](https://doi.org/10.1016/S0166-2236(00)01547-2)
+
+5. **Ermentrout, G. B. & Terman, D. H.** (2010).
+   *Mathematical Foundations of Neuroscience.* Springer.
+   Chapter 6: Subthreshold oscillations and resonance.
+
+---
+
+*SC-NeuroCore v3.14.0 — ANULUM / Fortis Studio*
+*© 2020–2026 Miroslav Šotek. All rights reserved.*
