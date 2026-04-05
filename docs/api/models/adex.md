@@ -249,7 +249,7 @@ print(f"Spikes: {spikes}, v={state['v']:.2f}, w={state['w']:.2f}")
 - **dt stability:** Tested at dt = 0.05, 0.1, 0.2. All produce finite states
   after 10,000 steps at I=500. The exponential term makes the model stiff
   near threshold — dt > 0.5 may cause missed spikes or instability.
-- **Exponential clipping:** Critical for robustness. The clip range [-20, 20]
+- **Exponential clipping:** Critical for numerical safety. The clip range [-20, 20]
   corresponds to exp values in [2.06e-9, 4.85e8], well within float64 range.
 - **Single-step Euler:** No sub-stepping. Adequate for default dt=0.1ms
   because the exponential blowup is immediately caught by the threshold
@@ -335,7 +335,7 @@ See `tests/test_model_adex.py`. No bugs found.
    produces finite output — the clip to [-20, 20] in the exp argument
    prevents IEEE 754 overflow.
 
-6. **dt robust in tested range:** dt=0.05, 0.1, 0.2 all produce finite
+6. **dt stable in tested range:** dt=0.05, 0.1, 0.2 all produce finite
    states after 10,000 steps. No sub-stepping needed at these timesteps.
 
 7. **Network pipeline functional:** Population(n=10) + PoissonInput(500Hz,
