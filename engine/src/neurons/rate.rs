@@ -774,6 +774,165 @@ mod tests {
         assert!(n.u.iter().any(|&x| x.abs() > 0.01));
     }
 
+    // ── Multi-angle tests for rate models ──
+
+    // -- McCullochPitts --
+    #[test]
+    fn mcp_below_threshold() {
+        let n = McCullochPittsNeuron::default();
+        assert_eq!(n.step(0.0), 0);
+    }
+    #[test]
+    fn mcp_nan_no_panic() {
+        McCullochPittsNeuron::default().step(f64::NAN);
+    }
+
+    // -- SigmoidRate --
+    #[test]
+    fn sigmoid_rate_reset() {
+        let mut n = SigmoidRateNeuron::new();
+        for _ in 0..100 { n.step(5.0); }
+        n.reset();
+        assert!((n.r - 0.0).abs() < 1e-10);
+    }
+    #[test]
+    fn sigmoid_rate_bounded() {
+        let mut n = SigmoidRateNeuron::new();
+        for _ in 0..1000 { n.step(1e4); }
+        assert!(n.r.is_finite());
+        assert!(n.r >= 0.0 && n.r <= 1.0, "sigmoid output bounded [0,1]: {}", n.r);
+    }
+    #[test]
+    fn sigmoid_rate_nan_no_panic() { SigmoidRateNeuron::new().step(f64::NAN); }
+
+    // -- ThresholdLinear --
+    #[test]
+    fn tl_rate_reset() {
+        let mut n = ThresholdLinearRateNeuron::new();
+        for _ in 0..100 { n.step(5.0); }
+        n.reset();
+        assert!((n.r - 0.0).abs() < 1e-10);
+    }
+    #[test]
+    fn tl_rate_nan_no_panic() { ThresholdLinearRateNeuron::new().step(f64::NAN); }
+    #[test]
+    fn tl_rate_below_threshold() {
+        let mut n = ThresholdLinearRateNeuron::new();
+        assert!(n.step(-5.0) == 0.0, "below threshold → zero rate");
+    }
+
+    // -- Astrocyte --
+    #[test]
+    fn astrocyte_reset() {
+        let mut n = AstrocyteModel::new();
+        for _ in 0..1000 { n.step(0.1); }
+        n.reset();
+        assert!((n.ca - 0.05).abs() < 1e-10);
+    }
+    #[test]
+    fn astrocyte_nan_no_panic() { AstrocyteModel::new().step(f64::NAN); }
+    #[test]
+    fn astrocyte_ca_nonneg() {
+        let mut n = AstrocyteModel::new();
+        for _ in 0..5000 { n.step(0.1); }
+        assert!(n.ca >= 0.0, "Ca²⁺ must be non-negative");
+    }
+
+    // -- TsodyksMarkram --
+    #[test]
+    fn tm_reset() {
+        let mut n = TsodyksMarkramNeuron::new();
+        for _ in 0..100 { n.step(50.0, false); }
+        n.reset();
+        assert!((n.v - n.v_rest).abs() < 1e-10);
+        assert!((n.x - 1.0).abs() < 1e-10);
+    }
+    #[test]
+    fn tm_bounded() {
+        let mut n = TsodyksMarkramNeuron::new();
+        for _ in 0..1000 { n.step(1e4, false); }
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn tm_nan_no_panic() { TsodyksMarkramNeuron::new().step(f64::NAN, false); }
+    #[test]
+    fn tm_stp_depression() {
+        let mut n = TsodyksMarkramNeuron::new();
+        for _ in 0..500 { n.step(50.0, true); }
+        // With repeated presynaptic spikes, x (available fraction) should decrease
+        assert!(n.x < 1.0, "STP depression: x should be < 1.0 after spikes: {}", n.x);
+    }
+
+    // -- LiquidTimeConstant --
+    #[test]
+    fn ltc_reset() {
+        let mut n = LiquidTimeConstantNeuron { v_threshold: 0.9, ..LiquidTimeConstantNeuron::new() };
+        for _ in 0..50 { n.step(5.0); }
+        n.reset();
+        assert!((n.x - 0.0).abs() < 1e-10);
+    }
+    #[test]
+    fn ltc_nan_no_panic() { LiquidTimeConstantNeuron::new().step(f64::NAN); }
+
+    // -- CompteWM --
+    #[test]
+    fn compte_reset() {
+        let mut n = CompteWMNeuron::new();
+        for _ in 0..100 { n.step(5.0, false); }
+        n.reset();
+        assert!((n.v - n.e_l).abs() < 1e-10);
+    }
+    #[test]
+    fn compte_nan_no_panic() { CompteWMNeuron::new().step(f64::NAN, false); }
+
+    // -- ParallelSpiking --
+    #[test]
+    fn psn_reset() {
+        let mut n = ParallelSpikingNeuron::new(4, 0.5);
+        for _ in 0..20 { n.step(1.0); }
+        n.reset();
+    }
+    #[test]
+    fn psn_nan_no_panic() { ParallelSpikingNeuron::new(4, 0.5).step(f64::NAN); }
+
+    // -- FractionalLIF --
+    #[test]
+    fn frac_lif_reset() {
+        let mut n = FractionalLIFNeuron::new(0.8, 50);
+        for _ in 0..100 { n.step(2.0); }
+        n.reset();
+        assert!((n.v - n.v_rest).abs() < 1e-10);
+    }
+    #[test]
+    fn frac_lif_nan_no_panic() { FractionalLIFNeuron::new(0.8, 50).step(f64::NAN); }
+
+    // -- Siegert --
+    #[test]
+    fn siegert_zero() {
+        let n = SiegertTransferFunction::new();
+        let r = n.step(0.0);
+        assert!(r >= 0.0);
+    }
+    #[test]
+    fn siegert_nan_no_panic() { SiegertTransferFunction::new().step(f64::NAN); }
+
+    // -- Amari --
+    #[test]
+    fn amari_reset() {
+        let mut n = AmariNeuralField::new(32);
+        let inp = vec![0.5; 32];
+        for _ in 0..100 { n.step(&inp); }
+        n.reset();
+        assert!(n.u.iter().all(|&x| x == 0.0));
+    }
+    #[test]
+    fn amari_bounded() {
+        let mut n = AmariNeuralField::new(16);
+        let inp = vec![1e3; 16];
+        for _ in 0..1000 { n.step(&inp); }
+        assert!(n.u.iter().all(|x| x.is_finite()));
+    }
+
     // -- LeakyCompeteFireNeuron tests --
 
     #[test]
