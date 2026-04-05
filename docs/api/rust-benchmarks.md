@@ -226,6 +226,81 @@ cargo bench --bench analysis_bench -- --quick
 > Simple spiking models use Euler integration without sub-stepping.
 > Measured 2026-04-05 on i5-11600K @ 3.90 GHz.
 
+### Rate / Mean-Field (`neurons/rate.rs`)
+
+| Model | Steps | Median | Per step | Notes |
+|-------|-------|--------|----------|-------|
+| Threshold linear rate | 100k | 39.4 µs | **0.4 ns** | Rectified linear |
+| Sigmoid rate | 100k | 921 µs | **9.2 ns** | Sigmoidal firing rate |
+| TsodyksMarkram STP | 10k | 86.4 µs | **8.6 ns** | Short-term plasticity |
+| Parallel spiking | 10k | 60.9 µs | **6.1 ns** | Multi-subunit LIF |
+| Astrocyte | 10k | 190 µs | **19.0 ns** | Ca²⁺/IP3/SERCA dynamics |
+| Compte WM | 10k | 232 µs | **23.2 ns** | Working memory NMDA |
+| LTC | 10k | 409 µs | **40.9 ns** | Liquid time constant |
+| FractionalLIF | 10k | 739 µs | **73.9 ns** | Fractional-order memory kernel |
+| LeakyCompeteFire | 10k | 972 µs | **97.2 ns** | WTA lateral inhibition (4 units) |
+| AmariNeuralField | 10k | 24.2 ms | **2.42 µs** | 32-unit neural field |
+| Siegert | 100k | 44.4 ms | **444 ns** | Transfer function with erf() |
+
+### Hardware Neuromorphic (`neurons/hardware.rs`)
+
+| Model | Steps | Median | Per step | Notes |
+|-------|-------|--------|----------|-------|
+| TrueNorth | 100k | 94.2 µs | **0.9 ns** | IBM integer LIF |
+| SpiNNaker2 | 100k | 103 µs | **1.0 ns** | Fixed-point 3-compartment |
+| Akida | 100k | 60.1 µs | **0.6 ns** | Event-driven threshold |
+| Loihi CUBA | 100k | 342 µs | **3.4 ns** | Intel 2-variable integer IF |
+| Loihi2 | 100k | 416 µs | **4.2 ns** | Intel 3-compartment integer |
+| SpiNNaker LIF | 10k | 44.5 µs | **4.5 ns** | ARM LIF emulation |
+| DPI | 100k | 1.27 ms | **12.7 ns** | Differential pair integrator |
+| BrainScaleS AdEx | 1k | 31.4 µs | **31.4 ns** | Analog accelerated AdEx |
+| NeuroGrid | 1k | 43.6 µs | **43.6 ns** | Subthreshold analog, 2-comp |
+
+### AI-Optimised (`neurons/ai_optimized.rs`)
+
+| Model | Steps | Median | Per step | Notes |
+|-------|-------|--------|----------|-------|
+| Meta-plastic | 10k | 20.9 µs | **2.1 ns** | Learning rate adaptation |
+| Differentiable surrogate | 10k | 38.4 µs | **3.8 ns** | Surrogate gradient SNN |
+| Multi-timescale | 10k | 99.1 µs | **9.9 ns** | Fast + slow dynamics |
+| Predictive coding | 10k | 126 µs | **12.6 ns** | Prediction error driven |
+| Attention-gated | 10k | 175 µs | **17.5 ns** | Gate modulates response |
+| Compositional binding | 10k | 184 µs | **18.4 ns** | Phase-based variable binding |
+| Self-referential | 10k | 404 µs | **40.4 ns** | Self-modifying tau |
+| Continuous attractor | 10k | 6.58 ms | **658 ns** | 16-unit bump attractor |
+| Arcane | 10k | 1.37 ms | **137 ns** | Deep accumulator + novelty |
+
+### Multi-Compartment (`neurons/multi_compartment.rs`)
+
+| Model | Steps | Median | Per step | Notes |
+|-------|-------|--------|----------|-------|
+| Dendrify | 1k | 20.2 µs | **20.2 ns** | Simplified dendritic |
+| Two-compartment LIF | 10k | 26.9 µs | **2.7 ns** | Soma + dendrite LIF |
+| Rall cable | 1k | 75.6 µs | **75.6 ns** | 5-compartment cable |
+| Pinsky-Rinzel | 1k | 122 µs | **122 ns** | 2-comp pyramidal |
+| Marder STG | 1k | 138 µs | **138 ns** | Stomatogastric, 6 currents |
+| Booth-Rinzel | 1k | 253 µs | **253 ns** | Motoneuron soma+dendrite |
+| Hay L5 pyramidal | 1k | 591 µs | **591 ns** | 3-comp (soma+trunk+apical) |
+
+### Maps — Additional (`neurons/maps.rs`)
+
+| Model | Steps | Median | Per step | Notes |
+|-------|-------|--------|----------|-------|
+| Ibarz-Tanaka | 100k | 803 µs | **8.0 ns** | Chaotic bursting map |
+| Cazelles | 100k | 955 µs | **9.6 ns** | Coupled map lattice |
+| Medvedev | 100k | 1.13 ms | **11.3 ns** | Reduce-and-fire map |
+| Courage-Nekorkin | 100k | 1.34 ms | **13.4 ns** | FHN-like map |
+| Rulkov | 100k | 1.67 ms | **16.7 ns** | Slow-fast bursting map |
+| Chialvo | 100k | 1.75 ms | **17.5 ns** | 2D excitable map |
+
+### Sensory — Additional (`neurons/sensory.rs`)
+
+| Model | Steps | Median | Per step | Notes |
+|-------|-------|--------|----------|-------|
+| Outer hair cell | 10k | 106 µs | **10.6 ns** | Prestin electromotility |
+| Taste receptor | 10k | 120 µs | **12.0 ns** | Gustatory transduction |
+| Cone photoreceptor | 10k | 135 µs | **13.5 ns** | Colour vision, cGMP cascade |
+
 ### Trivial IF Variants (`neurons/trivial.rs`)
 
 | Model | Steps | Median | Per step | Notes |
