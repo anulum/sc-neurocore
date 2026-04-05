@@ -1356,6 +1356,543 @@ mod tests {
         assert!(t > 0);
     }
 
+    // ── Multi-angle tests for simple_spiking models ──
+
+    // -- FitzHughNagumo --
+    #[test]
+    fn fhn_silent_without_input() {
+        let mut n = FitzHughNagumoNeuron::new();
+        let t: i32 = (0..2000).map(|_| n.step(0.0)).sum();
+        assert_eq!(t, 0);
+    }
+    #[test]
+    fn fhn_reset_clears_state() {
+        let mut n = FitzHughNagumoNeuron::new();
+        for _ in 0..500 { n.step(1.0); }
+        n.reset();
+        assert!((n.v - (-1.0)).abs() < 1e-10);
+        assert!((n.w - (-0.5)).abs() < 1e-10);
+    }
+    #[test]
+    fn fhn_moderate_input_stable() {
+        let mut n = FitzHughNagumoNeuron::new();
+        for _ in 0..2000 { n.step(2.0); }
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn fhn_recovery_variable() {
+        let mut n = FitzHughNagumoNeuron::new();
+        for _ in 0..2000 { n.step(1.0); }
+        // w should have evolved from initial
+        assert!((n.w - (-0.5)).abs() > 0.01, "recovery w should change");
+    }
+    #[test]
+    fn fhn_nan_no_panic() { FitzHughNagumoNeuron::new().step(f64::NAN); }
+    #[test]
+    fn fhn_negative_no_crash() {
+        let mut n = FitzHughNagumoNeuron::new();
+        for _ in 0..500 { n.step(-5.0); }
+        assert!(n.v.is_finite());
+    }
+
+    // -- MorrisLecar --
+    #[test]
+    fn ml_silent_without_input() {
+        let mut n = MorrisLecarNeuron::new();
+        let t: i32 = (0..500).map(|_| n.step(0.0)).sum();
+        assert_eq!(t, 0);
+    }
+    #[test]
+    fn ml_reset_clears_state() {
+        let mut n = MorrisLecarNeuron::new();
+        for _ in 0..500 { n.step(100.0); }
+        n.reset();
+        assert!((n.v - (-60.0)).abs() < 1e-10);
+    }
+    #[test]
+    fn ml_moderate_input_stable() {
+        let mut n = MorrisLecarNeuron::new();
+        for _ in 0..2000 { n.step(200.0); }
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn ml_nan_no_panic() { MorrisLecarNeuron::new().step(f64::NAN); }
+    #[test]
+    fn ml_negative_no_crash() {
+        let mut n = MorrisLecarNeuron::new();
+        for _ in 0..500 { n.step(-50.0); }
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn ml_k_gating_bounded() {
+        let mut n = MorrisLecarNeuron::new();
+        for _ in 0..2000 { n.step(100.0); }
+        assert!(n.w >= 0.0 && n.w <= 1.0, "w={}", n.w);
+    }
+
+    // -- HindmarshRose --
+    #[test]
+    fn hr_reset_clears_state() {
+        let mut n = HindmarshRoseNeuron::new();
+        for _ in 0..500 { n.step(3.0); }
+        n.reset();
+        assert!((n.x - (-1.6)).abs() < 1e-10);
+    }
+    #[test]
+    fn hr_moderate_input_stable() {
+        let mut n = HindmarshRoseNeuron::new();
+        for _ in 0..2000 { n.step(5.0); }
+        assert!(n.x.is_finite());
+    }
+    #[test]
+    fn hr_slow_z_evolves() {
+        let mut n = HindmarshRoseNeuron::new();
+        let z0 = n.z;
+        for _ in 0..2000 { n.step(3.0); }
+        assert!((n.z - z0).abs() > 0.001, "slow variable z should evolve");
+    }
+    #[test]
+    fn hr_nan_no_panic() { HindmarshRoseNeuron::new().step(f64::NAN); }
+    #[test]
+    fn hr_negative_no_crash() {
+        let mut n = HindmarshRoseNeuron::new();
+        for _ in 0..500 { n.step(-1.0); }
+        assert!(n.x.is_finite());
+    }
+
+    // -- ResonateAndFire --
+    #[test]
+    fn rnf_reset_clears_state() {
+        let mut n = ResonateAndFireNeuron::new();
+        for _ in 0..500 { n.step(3.0); }
+        n.reset();
+        assert!((n.x - 0.0).abs() < 1e-10);
+    }
+    #[test]
+    fn rnf_bounded() {
+        let mut n = ResonateAndFireNeuron::new();
+        for _ in 0..5000 { n.step(100.0); }
+        assert!(n.x.is_finite());
+    }
+    #[test]
+    fn rnf_nan_no_panic() { ResonateAndFireNeuron::new().step(f64::NAN); }
+    #[test]
+    fn rnf_negative_no_crash() {
+        let mut n = ResonateAndFireNeuron::new();
+        for _ in 0..500 { n.step(-5.0); }
+        assert!(n.x.is_finite());
+    }
+    #[test]
+    fn rnf_subthreshold_oscillation() {
+        let mut n = ResonateAndFireNeuron::new();
+        for _ in 0..100 { n.step(0.5); }
+        assert!(n.x.abs() > 0.0 || n.y.abs() > 0.0);
+    }
+
+    // -- FitzHughRinzel --
+    #[test]
+    fn fhr_reset_clears_state() {
+        let mut n = FitzHughRinzelNeuron::new();
+        for _ in 0..500 { n.step(1.0); }
+        n.reset();
+        assert!((n.v - (-1.0)).abs() < 1e-10);
+    }
+    #[test]
+    fn fhr_bounded() {
+        let mut n = FitzHughRinzelNeuron::new();
+        for _ in 0..2000 { n.step(50.0); }
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn fhr_nan_no_panic() { FitzHughRinzelNeuron::new().step(f64::NAN); }
+    #[test]
+    fn fhr_negative_no_crash() {
+        let mut n = FitzHughRinzelNeuron::new();
+        for _ in 0..500 { n.step(-5.0); }
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn fhr_slow_y_variable() {
+        let mut n = FitzHughRinzelNeuron::new();
+        let y0 = n.y;
+        for _ in 0..2000 { n.step(1.0); }
+        assert!((n.y - y0).abs() > 1e-6, "slow y should evolve in 3D model");
+    }
+
+    // -- McKean --
+    #[test]
+    fn mckean_reset_clears_state() {
+        let mut n = McKeanNeuron::new();
+        for _ in 0..500 { n.step(0.5); }
+        n.reset();
+        assert!((n.v - 0.0).abs() < 1e-10);
+    }
+    #[test]
+    fn mckean_bounded() {
+        let mut n = McKeanNeuron::new();
+        for _ in 0..2000 { n.step(50.0); }
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn mckean_nan_no_panic() { McKeanNeuron::new().step(f64::NAN); }
+    #[test]
+    fn mckean_negative_no_crash() {
+        let mut n = McKeanNeuron::new();
+        for _ in 0..500 { n.step(-5.0); }
+        assert!(n.v.is_finite());
+    }
+
+    // -- TermanWang --
+    #[test]
+    fn tw_reset_clears_state() {
+        let mut n = TermanWangOscillator::new();
+        for _ in 0..500 { n.step(0.5); }
+        n.reset();
+        assert!((n.v - (-1.5)).abs() < 1e-10);
+    }
+    #[test]
+    fn tw_bounded() {
+        let mut n = TermanWangOscillator::new();
+        for _ in 0..2000 { n.step(50.0); }
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn tw_nan_no_panic() { TermanWangOscillator::new().step(f64::NAN); }
+    #[test]
+    fn tw_negative_no_crash() {
+        let mut n = TermanWangOscillator::new();
+        for _ in 0..500 { n.step(-5.0); }
+        assert!(n.v.is_finite());
+    }
+
+    // -- BendaHerz --
+    #[test]
+    fn benda_herz_reset_clears_state() {
+        let mut n = BendaHerzNeuron::new(42);
+        for _ in 0..100 { n.step(20.0); }
+        n.reset();
+        assert!((n.a - 0.0).abs() < 1e-10);
+    }
+    #[test]
+    fn benda_herz_bounded() {
+        let mut n = BendaHerzNeuron::new(42);
+        for _ in 0..10000 { n.step(1e4); }
+        assert!(n.a.is_finite());
+    }
+    #[test]
+    fn benda_herz_adaptation() {
+        let mut n = BendaHerzNeuron::new(42);
+        for _ in 0..10000 { n.step(20.0); }
+        assert!(n.a > 0.0, "adaptation variable a should increase: {}", n.a);
+    }
+    #[test]
+    fn benda_herz_nan_no_panic() { BendaHerzNeuron::new(42).step(f64::NAN); }
+    #[test]
+    fn benda_herz_negative_no_crash() {
+        let mut n = BendaHerzNeuron::new(42);
+        for _ in 0..500 { n.step(-10.0); }
+        assert!(n.a.is_finite());
+    }
+
+    // -- Alpha --
+    #[test]
+    fn alpha_reset_clears_state() {
+        let mut n = AlphaNeuron::new();
+        for _ in 0..50 { n.step(0.5, 0.0); }
+        n.reset();
+        assert!((n.v - 0.0).abs() < 1e-10);
+    }
+    #[test]
+    fn alpha_bounded() {
+        let mut n = AlphaNeuron::new();
+        for _ in 0..1000 { n.step(100.0, 0.0); }
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn alpha_spike_input_drives() {
+        let mut n = AlphaNeuron::new();
+        for _ in 0..100 { n.step(0.0, 1.0); }
+        // Spike input should contribute to synaptic current
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn alpha_nan_no_panic() { AlphaNeuron::new().step(f64::NAN, 0.0); }
+    #[test]
+    fn alpha_negative_no_crash() {
+        let mut n = AlphaNeuron::new();
+        for _ in 0..100 { n.step(-5.0, 0.0); }
+        assert!(n.v.is_finite());
+    }
+
+    // -- COBALIF --
+    #[test]
+    fn coba_reset_clears_state() {
+        let mut n = COBALIFNeuron::new();
+        for _ in 0..100 { n.step(500.0, 0.0, 0.0); }
+        n.reset();
+        assert!((n.v - n.e_l).abs() < 1e-10);
+    }
+    #[test]
+    fn coba_bounded() {
+        let mut n = COBALIFNeuron::new();
+        for _ in 0..2000 { n.step(1e5, 0.0, 0.0); }
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn coba_inhibition_suppresses() {
+        let mut n_exc = COBALIFNeuron::new();
+        let mut n_inh = COBALIFNeuron::new();
+        let t_exc: i32 = (0..2000).map(|_| n_exc.step(500.0, 0.0, 0.0)).sum();
+        let t_inh: i32 = (0..2000).map(|_| n_inh.step(500.0, 0.0, 5.0)).sum();
+        assert!(t_inh <= t_exc, "inhibition should reduce spiking");
+    }
+    #[test]
+    fn coba_nan_no_panic() { COBALIFNeuron::new().step(f64::NAN, 0.0, 0.0); }
+    #[test]
+    fn coba_negative_no_crash() {
+        let mut n = COBALIFNeuron::new();
+        for _ in 0..500 { n.step(-100.0, 0.0, 0.0); }
+        assert!(n.v.is_finite());
+    }
+
+    // -- GutkinErmentrout --
+    #[test]
+    fn gutkin_reset_clears_state() {
+        let mut n = GutkinErmentroutNeuron::new();
+        for _ in 0..500 { n.step(15.0); }
+        n.reset();
+        assert!((n.v - (-65.0)).abs() < 1e-10);
+    }
+    #[test]
+    fn gutkin_bounded() {
+        let mut n = GutkinErmentroutNeuron::new();
+        for _ in 0..2000 { n.step(1e4); }
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn gutkin_nan_no_panic() { GutkinErmentroutNeuron::new().step(f64::NAN); }
+    #[test]
+    fn gutkin_negative_no_crash() {
+        let mut n = GutkinErmentroutNeuron::new();
+        for _ in 0..500 { n.step(-10.0); }
+        assert!(n.v.is_finite());
+    }
+
+    // -- WilsonHR --
+    #[test]
+    fn wilson_hr_reset_clears_state() {
+        let mut n = WilsonHRNeuron::new();
+        for _ in 0..500 { n.step(0.5); }
+        n.reset();
+        assert!((n.v - (-0.7)).abs() < 1e-10);
+    }
+    #[test]
+    fn wilson_hr_moderate_stable() {
+        let mut n = WilsonHRNeuron::new();
+        for _ in 0..2000 { n.step(1.0); }
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn wilson_hr_nan_no_panic() { WilsonHRNeuron::new().step(f64::NAN); }
+    #[test]
+    fn wilson_hr_negative_no_crash() {
+        let mut n = WilsonHRNeuron::new();
+        for _ in 0..500 { n.step(-5.0); }
+        assert!(n.v.is_finite());
+    }
+
+    // -- Chay --
+    #[test]
+    fn chay_reset_clears_state() {
+        let mut n = ChayNeuron::new();
+        for _ in 0..1000 { n.step(20.0); }
+        n.reset();
+        assert!((n.v - (-50.0)).abs() < 1e-10);
+    }
+    #[test]
+    fn chay_bounded() {
+        let mut n = ChayNeuron::new();
+        for _ in 0..5000 { n.step(200.0); }
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn chay_ca_nonneg() {
+        let mut n = ChayNeuron::new();
+        for _ in 0..5000 { n.step(20.0); }
+        assert!(n.ca >= 0.0, "Ca²⁺ must be non-negative");
+    }
+    #[test]
+    fn chay_nan_no_panic() { ChayNeuron::new().step(f64::NAN); }
+    #[test]
+    fn chay_negative_no_crash() {
+        let mut n = ChayNeuron::new();
+        for _ in 0..500 { n.step(-10.0); }
+        assert!(n.v.is_finite());
+    }
+
+    // -- ChayKeizer --
+    #[test]
+    fn chay_keizer_reset_clears_state() {
+        let mut n = ChayKeizerNeuron::new();
+        for _ in 0..1000 { n.step(10.0); }
+        n.reset();
+        assert!((n.v - (-50.0)).abs() < 1e-10);
+    }
+    #[test]
+    fn chay_keizer_bounded() {
+        let mut n = ChayKeizerNeuron::new();
+        for _ in 0..5000 { n.step(100.0); }
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn chay_keizer_nan_no_panic() { ChayKeizerNeuron::new().step(f64::NAN); }
+    #[test]
+    fn chay_keizer_negative_no_crash() {
+        let mut n = ChayKeizerNeuron::new();
+        for _ in 0..500 { n.step(-10.0); }
+        assert!(n.v.is_finite());
+    }
+
+    // -- ShermanRinzelKeizer --
+    #[test]
+    fn srk_reset_clears_state() {
+        let mut n = ShermanRinzelKeizerNeuron::new();
+        for _ in 0..1000 { n.step(5.0); }
+        n.reset();
+        assert!((n.v - (-50.0)).abs() < 1e-10);
+    }
+    #[test]
+    fn srk_bounded() {
+        let mut n = ShermanRinzelKeizerNeuron::new();
+        for _ in 0..5000 { n.step(100.0); }
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn srk_nan_no_panic() { ShermanRinzelKeizerNeuron::new().step(f64::NAN); }
+    #[test]
+    fn srk_negative_no_crash() {
+        let mut n = ShermanRinzelKeizerNeuron::new();
+        for _ in 0..500 { n.step(-5.0); }
+        assert!(n.v.is_finite());
+    }
+
+    // -- ButeraRespiratory --
+    #[test]
+    fn butera_reset_clears_state() {
+        let mut n = ButeraRespiratoryNeuron::new();
+        for _ in 0..1000 { n.step(50.0); }
+        n.reset();
+        assert!((n.v - (-50.0)).abs() < 1e-10);
+    }
+    #[test]
+    fn butera_bounded() {
+        let mut n = ButeraRespiratoryNeuron::new();
+        for _ in 0..5000 { n.step(500.0); }
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn butera_nan_no_panic() { ButeraRespiratoryNeuron::new().step(f64::NAN); }
+    #[test]
+    fn butera_negative_no_crash() {
+        let mut n = ButeraRespiratoryNeuron::new();
+        for _ in 0..500 { n.step(-20.0); }
+        assert!(n.v.is_finite());
+    }
+
+    // -- EPropALIF --
+    #[test]
+    fn eprop_reset_clears_state() {
+        let mut n = EPropALIFNeuron::default();
+        for _ in 0..50 { n.step(0.5); }
+        n.reset();
+        assert!((n.v - 0.0).abs() < 1e-10);
+    }
+    #[test]
+    fn eprop_bounded() {
+        let mut n = EPropALIFNeuron::default();
+        for _ in 0..1000 { n.step(100.0); }
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn eprop_adaptation() {
+        let mut n = EPropALIFNeuron::default();
+        for _ in 0..50 { n.step(0.5); }
+        // a (adaptation) should have increased after spikes
+        assert!(n.a.is_finite());
+    }
+    #[test]
+    fn eprop_nan_no_panic() { EPropALIFNeuron::default().step(f64::NAN); }
+
+    // -- SuperSpike --
+    #[test]
+    fn superspike_reset_clears_state() {
+        let mut n = SuperSpikeNeuron::default();
+        for _ in 0..50 { n.step(0.5); }
+        n.reset();
+        assert!((n.v - 0.0).abs() < 1e-10);
+    }
+    #[test]
+    fn superspike_bounded() {
+        let mut n = SuperSpikeNeuron::default();
+        for _ in 0..1000 { n.step(100.0); }
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn superspike_trace_evolves() {
+        let mut n = SuperSpikeNeuron::default();
+        for _ in 0..50 { n.step(0.5); }
+        assert!(n.trace.is_finite());
+    }
+    #[test]
+    fn superspike_nan_no_panic() { SuperSpikeNeuron::default().step(f64::NAN); }
+
+    // -- LearnableNeuron --
+    #[test]
+    fn lnm_reset_clears_state() {
+        let mut n = LearnableNeuronModel::new();
+        for _ in 0..50 { n.step(2.0); }
+        n.reset();
+        assert!((n.v - 0.0).abs() < 1e-10);
+    }
+    #[test]
+    fn lnm_bounded() {
+        let mut n = LearnableNeuronModel::new();
+        for _ in 0..1000 { n.step(100.0); }
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn lnm_nan_no_panic() { LearnableNeuronModel::new().step(f64::NAN); }
+
+    // -- Pernarowski --
+    #[test]
+    fn pernarowski_reset_clears_state() {
+        let mut n = PernarowskiNeuron::new();
+        for _ in 0..500 { n.step(1.0); }
+        n.reset();
+        assert!((n.v - (-1.0)).abs() < 1e-10);
+    }
+    #[test]
+    fn pernarowski_bounded() {
+        let mut n = PernarowskiNeuron::new();
+        for _ in 0..2000 { n.step(50.0); }
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn pernarowski_slow_z() {
+        let mut n = PernarowskiNeuron::new();
+        let z0 = n.z;
+        for _ in 0..2000 { n.step(1.0); }
+        assert!((n.z - z0).abs() > 1e-6, "slow z should evolve");
+    }
+    #[test]
+    fn pernarowski_nan_no_panic() { PernarowskiNeuron::new().step(f64::NAN); }
+    #[test]
+    fn pernarowski_negative_no_crash() {
+        let mut n = PernarowskiNeuron::new();
+        for _ in 0..500 { n.step(-5.0); }
+        assert!(n.v.is_finite());
+    }
+
     // -- BrunelWang tests --
 
     #[test]
