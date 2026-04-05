@@ -122,10 +122,10 @@ pub struct TraubMilesNeuron {
     pub m: f64,
     pub h: f64,
     pub n: f64,
-    pub w: f64,        // M-current (Kv7) activation
+    pub w: f64, // M-current (Kv7) activation
     pub g_na: f64,
     pub g_k: f64,
-    pub g_m: f64,      // M-current conductance
+    pub g_m: f64, // M-current conductance
     pub g_l: f64,
     pub e_na: f64,
     pub e_k: f64,
@@ -141,10 +141,10 @@ impl TraubMilesNeuron {
             m: 0.05,
             h: 0.6,
             n: 0.3,
-            w: 0.01,       // M-current starts low at rest
+            w: 0.01, // M-current starts low at rest
             g_na: 100.0,
             g_k: 80.0,
-            g_m: 1.5,      // M-current conductance (Yamada 1989 range: 1-3 mS/cm²)
+            g_m: 1.5, // M-current conductance (Yamada 1989 range: 1-3 mS/cm²)
             g_l: 0.1,
             e_na: 50.0,
             e_k: -100.0,
@@ -165,8 +165,8 @@ impl TraubMilesNeuron {
 
             // M-current gating (Yamada et al. 1989)
             let w_inf = 1.0 / (1.0 + (-(self.v + 35.0) / 10.0).exp());
-            let tau_w = 100.0 / (3.3 * ((self.v + 35.0) / 20.0).exp()
-                + (-(self.v + 35.0) / 20.0).exp());
+            let tau_w =
+                100.0 / (3.3 * ((self.v + 35.0) / 20.0).exp() + (-(self.v + 35.0) / 20.0).exp());
 
             self.m += (am * (1.0 - self.m) - bm * self.m) * self.dt;
             self.h += (ah * (1.0 - self.h) - bh * self.h) * self.dt;

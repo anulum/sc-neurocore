@@ -27,11 +27,7 @@ pub struct SpadePattern {
 // ── helpers ─────────────────────────────────────────────────────────
 
 /// Build binary matrix (n_neurons x n_bins) from spike trains.
-fn build_binary_matrix(
-    trains: &[&[i32]],
-    bin_steps: usize,
-    n_bins: usize,
-) -> Vec<Vec<u8>> {
+fn build_binary_matrix(trains: &[&[i32]], bin_steps: usize, n_bins: usize) -> Vec<Vec<u8>> {
     trains
         .iter()
         .map(|t| {
@@ -136,9 +132,7 @@ fn extend_to_spatiotemporal(
         for b in 0..n_bins {
             let start = b * bin_steps;
             let end = ((b + 1) * bin_steps).min(trains[ref_id].len());
-            if start < trains[ref_id].len()
-                && trains[ref_id][start..end].iter().any(|&v| v > 0)
-            {
+            if start < trains[ref_id].len() && trains[ref_id][start..end].iter().any(|&v| v > 0) {
                 ref_bins[b] = 1;
             }
         }
@@ -184,9 +178,7 @@ fn extend_to_spatiotemporal(
                 if src_b >= 0 && (src_b as usize) < n_bins {
                     let start = src_b as usize * bin_steps;
                     let end = ((src_b as usize + 1) * bin_steps).min(trains[nid].len());
-                    if start < trains[nid].len()
-                        && trains[nid][start..end].iter().any(|&v| v > 0)
-                    {
+                    if start < trains[nid].len() && trains[nid][start..end].iter().any(|&v| v > 0) {
                         nbins_best[b] = 1;
                     }
                 }
@@ -237,8 +229,7 @@ pub fn spade_detect(
         return vec![];
     }
 
-    let patterns =
-        extend_to_spatiotemporal(trains, &itemsets, bin_steps, n_bins, 10);
+    let patterns = extend_to_spatiotemporal(trains, &itemsets, bin_steps, n_bins, 10);
     if patterns.is_empty() {
         return vec![];
     }
@@ -255,8 +246,7 @@ pub fn spade_detect(
             let surr_trains: Vec<Vec<i32>> = (0..n_neurons)
                 .map(|i| {
                     rng = rng.wrapping_mul(6364136223846793005).wrapping_add(1);
-                    let shift = (rng % (bin_steps as u64 * 10 + 1)) as i64
-                        - (bin_steps as i64 * 5);
+                    let shift = (rng % (bin_steps as u64 * 10 + 1)) as i64 - (bin_steps as i64 * 5);
                     let n = trains[i].len();
                     if n == 0 {
                         return vec![];

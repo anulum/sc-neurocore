@@ -19,17 +19,14 @@ use sc_neurocore_engine::graph::StochasticGraphLayer;
 use sc_neurocore_engine::layer::DenseLayer;
 use sc_neurocore_engine::neuron::{AdExNeuron, ExpIfNeuron, FixedPointLif, LapicqueNeuron};
 use sc_neurocore_engine::neurons::{
-    CerebellarBasketNeuron, ChandelierNeuron, MartinottiNeuron,
-    PVFastSpikingNeuron, SSTNeuron, VIPNeuron,
-    InnerHairCell, RodPhotoreceptor, RetinalGanglionCell, MerkelCell,
-    PacinianCorpuscle, Nociceptor, OlfactoryReceptorNeuron,
-    AlphaMotorNeuron,
-    GranuleCell, GolgiCell, StellateCell, LugaroCell, UnipolarBrushCell, DCNNeuron,
-    PersistentNaNeuron, IhNeuron, TTypeCaNeuron, ATypeKNeuron, BKNeuron, SKNeuron, NMDANeuron,
-    AiharaMapNeuron, KilincBhattMapNeuron, ErmentroutKopellMapNeuron,
-    MontbrioMeanField, BrunelNetwork, TUMNetwork, ElBoustaniNetwork,
-    GradedSynapseNeuron, GapJunctionNeuron, FrankenhaeUserHuxleyAxon, NodeOfRanvier,
-    MyelinatedAxon, CardiacPurkinjeFibre, SmoothMuscleCell, EndocrineBetaCell,
+    ATypeKNeuron, AiharaMapNeuron, AlphaMotorNeuron, BKNeuron, BrunelNetwork, CardiacPurkinjeFibre,
+    CerebellarBasketNeuron, ChandelierNeuron, DCNNeuron, ElBoustaniNetwork, EndocrineBetaCell,
+    ErmentroutKopellMapNeuron, FrankenhaeUserHuxleyAxon, GapJunctionNeuron, GolgiCell,
+    GradedSynapseNeuron, GranuleCell, IhNeuron, InnerHairCell, KilincBhattMapNeuron, LugaroCell,
+    MartinottiNeuron, MerkelCell, MontbrioMeanField, MyelinatedAxon, NMDANeuron, Nociceptor,
+    NodeOfRanvier, OlfactoryReceptorNeuron, PVFastSpikingNeuron, PacinianCorpuscle,
+    PersistentNaNeuron, RetinalGanglionCell, RodPhotoreceptor, SKNeuron, SSTNeuron,
+    SmoothMuscleCell, StellateCell, TTypeCaNeuron, TUMNetwork, UnipolarBrushCell, VIPNeuron,
 };
 use sc_neurocore_engine::scpn::KuramotoSolver;
 use sc_neurocore_engine::simd::{fused_and_popcount_dispatch, pack_dispatch, popcount_dispatch};
@@ -368,42 +365,54 @@ fn bench_all(c: &mut Criterion) {
     c.bench_function("pv_fs_1k_steps", |b| {
         b.iter(|| {
             let mut n = PVFastSpikingNeuron::new();
-            for _ in 0..1000 { black_box(n.step(3.0)); }
+            for _ in 0..1000 {
+                black_box(n.step(3.0));
+            }
         })
     });
 
     c.bench_function("sst_1k_steps", |b| {
         b.iter(|| {
             let mut n = SSTNeuron::new();
-            for _ in 0..1000 { black_box(n.step(5.0)); }
+            for _ in 0..1000 {
+                black_box(n.step(5.0));
+            }
         })
     });
 
     c.bench_function("vip_1k_steps", |b| {
         b.iter(|| {
             let mut n = VIPNeuron::new();
-            for _ in 0..1000 { black_box(n.step(3.0)); }
+            for _ in 0..1000 {
+                black_box(n.step(3.0));
+            }
         })
     });
 
     c.bench_function("chandelier_1k_steps", |b| {
         b.iter(|| {
             let mut n = ChandelierNeuron::new();
-            for _ in 0..1000 { black_box(n.step(3.0)); }
+            for _ in 0..1000 {
+                black_box(n.step(3.0));
+            }
         })
     });
 
     c.bench_function("basket_cerebellar_1k_steps", |b| {
         b.iter(|| {
             let mut n = CerebellarBasketNeuron::new();
-            for _ in 0..1000 { black_box(n.step(3.0)); }
+            for _ in 0..1000 {
+                black_box(n.step(3.0));
+            }
         })
     });
 
     c.bench_function("martinotti_1k_steps", |b| {
         b.iter(|| {
             let mut n = MartinottiNeuron::new();
-            for _ in 0..1000 { black_box(n.step(4.0)); }
+            for _ in 0..1000 {
+                black_box(n.step(4.0));
+            }
         })
     });
 
@@ -411,35 +420,45 @@ fn bench_all(c: &mut Criterion) {
     c.bench_function("alpha_motor_1k_steps", |b| {
         b.iter(|| {
             let mut n = AlphaMotorNeuron::new();
-            for _ in 0..1000 { black_box(n.step(4.0)); }
+            for _ in 0..1000 {
+                black_box(n.step(4.0));
+            }
         })
     });
 
     c.bench_function("upper_motor_1k_steps", |b| {
         b.iter(|| {
             let mut n = sc_neurocore_engine::neurons::UpperMotorNeuron::new();
-            for _ in 0..1000 { black_box(n.step(5.0)); }
+            for _ in 0..1000 {
+                black_box(n.step(5.0));
+            }
         })
     });
 
     c.bench_function("motor_unit_10k_steps", |b| {
         b.iter(|| {
             let mut n = sc_neurocore_engine::neurons::MotorUnit::new();
-            for _ in 0..10_000 { black_box(n.step(20.0)); }
+            for _ in 0..10_000 {
+                black_box(n.step(20.0));
+            }
         })
     });
 
     c.bench_function("renshaw_1k_steps", |b| {
         b.iter(|| {
             let mut n = sc_neurocore_engine::neurons::RenshawCell::new();
-            for _ in 0..1000 { black_box(n.step(4.0)); }
+            for _ in 0..1000 {
+                black_box(n.step(4.0));
+            }
         })
     });
 
     c.bench_function("gamma_motor_10k_steps", |b| {
         b.iter(|| {
             let mut n = sc_neurocore_engine::neurons::GammaMotorNeuron::new();
-            for _ in 0..10_000 { black_box(n.step(20.0)); }
+            for _ in 0..10_000 {
+                black_box(n.step(20.0));
+            }
         })
     });
 
@@ -447,49 +466,63 @@ fn bench_all(c: &mut Criterion) {
     c.bench_function("ihc_10k_steps", |b| {
         b.iter(|| {
             let mut n = InnerHairCell::new();
-            for _ in 0..10_000 { black_box(n.step(50.0)); }
+            for _ in 0..10_000 {
+                black_box(n.step(50.0));
+            }
         })
     });
 
     c.bench_function("rod_10k_steps", |b| {
         b.iter(|| {
             let mut n = RodPhotoreceptor::new();
-            for _ in 0..10_000 { black_box(n.step(100.0)); }
+            for _ in 0..10_000 {
+                black_box(n.step(100.0));
+            }
         })
     });
 
     c.bench_function("rgc_10k_steps", |b| {
         b.iter(|| {
             let mut n = RetinalGanglionCell::new();
-            for _ in 0..10_000 { black_box(n.step(20.0)); }
+            for _ in 0..10_000 {
+                black_box(n.step(20.0));
+            }
         })
     });
 
     c.bench_function("merkel_10k_steps", |b| {
         b.iter(|| {
             let mut n = MerkelCell::new();
-            for _ in 0..10_000 { black_box(n.step(20.0)); }
+            for _ in 0..10_000 {
+                black_box(n.step(20.0));
+            }
         })
     });
 
     c.bench_function("pacinian_10k_steps", |b| {
         b.iter(|| {
             let mut n = PacinianCorpuscle::new();
-            for i in 0..10_000 { black_box(n.step((i as f64 * 0.1).sin() * 50.0)); }
+            for i in 0..10_000 {
+                black_box(n.step((i as f64 * 0.1).sin() * 50.0));
+            }
         })
     });
 
     c.bench_function("nociceptor_10k_steps", |b| {
         b.iter(|| {
             let mut n = Nociceptor::new();
-            for _ in 0..10_000 { black_box(n.step(50.0)); }
+            for _ in 0..10_000 {
+                black_box(n.step(50.0));
+            }
         })
     });
 
     c.bench_function("olfactory_10k_steps", |b| {
         b.iter(|| {
             let mut n = OlfactoryReceptorNeuron::new();
-            for _ in 0..10_000 { black_box(n.step(5.0)); }
+            for _ in 0..10_000 {
+                black_box(n.step(5.0));
+            }
         })
     });
 
@@ -497,42 +530,54 @@ fn bench_all(c: &mut Criterion) {
     c.bench_function("granule_10k_steps", |b| {
         b.iter(|| {
             let mut n = GranuleCell::new();
-            for _ in 0..10_000 { black_box(n.step(15.0)); }
+            for _ in 0..10_000 {
+                black_box(n.step(15.0));
+            }
         })
     });
 
     c.bench_function("golgi_1k_steps", |b| {
         b.iter(|| {
             let mut n = GolgiCell::new();
-            for _ in 0..1_000 { black_box(n.step(5.0)); }
+            for _ in 0..1_000 {
+                black_box(n.step(5.0));
+            }
         })
     });
 
     c.bench_function("stellate_1k_steps", |b| {
         b.iter(|| {
             let mut n = StellateCell::new();
-            for _ in 0..1_000 { black_box(n.step(10.0)); }
+            for _ in 0..1_000 {
+                black_box(n.step(10.0));
+            }
         })
     });
 
     c.bench_function("lugaro_10k_steps", |b| {
         b.iter(|| {
             let mut n = LugaroCell::new();
-            for _ in 0..10_000 { black_box(n.step(5.0)); }
+            for _ in 0..10_000 {
+                black_box(n.step(5.0));
+            }
         })
     });
 
     c.bench_function("ubc_10k_steps", |b| {
         b.iter(|| {
             let mut n = UnipolarBrushCell::new();
-            for _ in 0..10_000 { black_box(n.step(5.0)); }
+            for _ in 0..10_000 {
+                black_box(n.step(5.0));
+            }
         })
     });
 
     c.bench_function("dcn_1k_steps", |b| {
         b.iter(|| {
             let mut n = DCNNeuron::new();
-            for _ in 0..1_000 { black_box(n.step(5.0)); }
+            for _ in 0..1_000 {
+                black_box(n.step(5.0));
+            }
         })
     });
 
@@ -540,49 +585,63 @@ fn bench_all(c: &mut Criterion) {
     c.bench_function("persistent_na_1k_steps", |b| {
         b.iter(|| {
             let mut n = PersistentNaNeuron::new();
-            for _ in 0..1_000 { black_box(n.step(2.0)); }
+            for _ in 0..1_000 {
+                black_box(n.step(2.0));
+            }
         })
     });
 
     c.bench_function("ih_1k_steps", |b| {
         b.iter(|| {
             let mut n = IhNeuron::new();
-            for _ in 0..1_000 { black_box(n.step(2.0)); }
+            for _ in 0..1_000 {
+                black_box(n.step(2.0));
+            }
         })
     });
 
     c.bench_function("ttype_ca_1k_steps", |b| {
         b.iter(|| {
             let mut n = TTypeCaNeuron::new();
-            for _ in 0..1_000 { black_box(n.step(2.0)); }
+            for _ in 0..1_000 {
+                black_box(n.step(2.0));
+            }
         })
     });
 
     c.bench_function("atype_k_1k_steps", |b| {
         b.iter(|| {
             let mut n = ATypeKNeuron::new();
-            for _ in 0..1_000 { black_box(n.step(3.0)); }
+            for _ in 0..1_000 {
+                black_box(n.step(3.0));
+            }
         })
     });
 
     c.bench_function("bk_1k_steps", |b| {
         b.iter(|| {
             let mut n = BKNeuron::new();
-            for _ in 0..1_000 { black_box(n.step(3.0)); }
+            for _ in 0..1_000 {
+                black_box(n.step(3.0));
+            }
         })
     });
 
     c.bench_function("sk_1k_steps", |b| {
         b.iter(|| {
             let mut n = SKNeuron::new();
-            for _ in 0..1_000 { black_box(n.step(3.0)); }
+            for _ in 0..1_000 {
+                black_box(n.step(3.0));
+            }
         })
     });
 
     c.bench_function("nmda_1k_steps", |b| {
         b.iter(|| {
             let mut n = NMDANeuron::new();
-            for _ in 0..1_000 { black_box(n.step(3.0)); }
+            for _ in 0..1_000 {
+                black_box(n.step(3.0));
+            }
         })
     });
 
@@ -590,21 +649,27 @@ fn bench_all(c: &mut Criterion) {
     c.bench_function("aihara_100k_steps", |b| {
         b.iter(|| {
             let mut n = AiharaMapNeuron::new();
-            for _ in 0..100_000 { black_box(n.step(0.5)); }
+            for _ in 0..100_000 {
+                black_box(n.step(0.5));
+            }
         })
     });
 
     c.bench_function("kilinc_bhatt_100k_steps", |b| {
         b.iter(|| {
             let mut n = KilincBhattMapNeuron::new();
-            for _ in 0..100_000 { black_box(n.step(0.5)); }
+            for _ in 0..100_000 {
+                black_box(n.step(0.5));
+            }
         })
     });
 
     c.bench_function("ermentrout_kopell_100k_steps", |b| {
         b.iter(|| {
             let mut n = ErmentroutKopellMapNeuron::new();
-            for _ in 0..100_000 { black_box(n.step(0.5)); }
+            for _ in 0..100_000 {
+                black_box(n.step(0.5));
+            }
         })
     });
 
@@ -612,28 +677,36 @@ fn bench_all(c: &mut Criterion) {
     c.bench_function("montbrio_100k_steps", |b| {
         b.iter(|| {
             let mut n = MontbrioMeanField::new();
-            for _ in 0..100_000 { black_box(n.step(5.0)); }
+            for _ in 0..100_000 {
+                black_box(n.step(5.0));
+            }
         })
     });
 
     c.bench_function("brunel_100k_steps", |b| {
         b.iter(|| {
             let mut n = BrunelNetwork::new();
-            for _ in 0..100_000 { black_box(n.step(3.0)); }
+            for _ in 0..100_000 {
+                black_box(n.step(3.0));
+            }
         })
     });
 
     c.bench_function("tum_100k_steps", |b| {
         b.iter(|| {
             let mut n = TUMNetwork::new();
-            for _ in 0..100_000 { black_box(n.step(5.0)); }
+            for _ in 0..100_000 {
+                black_box(n.step(5.0));
+            }
         })
     });
 
     c.bench_function("elboustani_100k_steps", |b| {
         b.iter(|| {
             let mut n = ElBoustaniNetwork::new();
-            for _ in 0..100_000 { black_box(n.step(3.0)); }
+            for _ in 0..100_000 {
+                black_box(n.step(3.0));
+            }
         })
     });
 
@@ -641,56 +714,72 @@ fn bench_all(c: &mut Criterion) {
     c.bench_function("graded_synapse_100k_steps", |b| {
         b.iter(|| {
             let mut n = GradedSynapseNeuron::new();
-            for _ in 0..100_000 { black_box(n.step(100.0)); }
+            for _ in 0..100_000 {
+                black_box(n.step(100.0));
+            }
         })
     });
 
     c.bench_function("gap_junction_100k_steps", |b| {
         b.iter(|| {
             let mut n = GapJunctionNeuron::new();
-            for _ in 0..100_000 { black_box(n.step(-20.0)); }
+            for _ in 0..100_000 {
+                black_box(n.step(-20.0));
+            }
         })
     });
 
     c.bench_function("fh_axon_1k_steps", |b| {
         b.iter(|| {
             let mut n = FrankenhaeUserHuxleyAxon::new();
-            for _ in 0..1_000 { black_box(n.step(1500.0)); }
+            for _ in 0..1_000 {
+                black_box(n.step(1500.0));
+            }
         })
     });
 
     c.bench_function("node_of_ranvier_1k_steps", |b| {
         b.iter(|| {
             let mut n = NodeOfRanvier::new();
-            for _ in 0..1_000 { black_box(n.step(500.0)); }
+            for _ in 0..1_000 {
+                black_box(n.step(500.0));
+            }
         })
     });
 
     c.bench_function("myelinated_axon_1k_steps", |b| {
         b.iter(|| {
             let mut n = MyelinatedAxon::new();
-            for _ in 0..1_000 { black_box(n.step(500.0)); }
+            for _ in 0..1_000 {
+                black_box(n.step(500.0));
+            }
         })
     });
 
     c.bench_function("cardiac_purkinje_1k_steps", |b| {
         b.iter(|| {
             let mut n = CardiacPurkinjeFibre::new();
-            for _ in 0..1_000 { black_box(n.step(3.0)); }
+            for _ in 0..1_000 {
+                black_box(n.step(3.0));
+            }
         })
     });
 
     c.bench_function("smooth_muscle_1k_steps", |b| {
         b.iter(|| {
             let mut n = SmoothMuscleCell::new();
-            for _ in 0..1_000 { black_box(n.step(3.0)); }
+            for _ in 0..1_000 {
+                black_box(n.step(3.0));
+            }
         })
     });
 
     c.bench_function("beta_cell_1k_steps", |b| {
         b.iter(|| {
             let mut n = EndocrineBetaCell::new();
-            for _ in 0..1_000 { black_box(n.step(3.0)); }
+            for _ in 0..1_000 {
+                black_box(n.step(3.0));
+            }
         })
     });
 }

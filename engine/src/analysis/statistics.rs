@@ -109,7 +109,10 @@ mod tests {
         let (obs, p) = significance_bootstrap(dummy_statistic, &a, &b, 500, 42);
         assert!((obs - 10.0).abs() < 1e-12);
         // Should be significant
-        assert!(p < 0.05, "p-value {p} not significant for clearly different groups");
+        assert!(
+            p < 0.05,
+            "p-value {p} not significant for clearly different groups"
+        );
     }
 
     #[test]

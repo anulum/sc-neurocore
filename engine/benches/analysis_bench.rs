@@ -85,7 +85,9 @@ fn bench_rate(c: &mut Criterion) {
             .collect();
         g.bench_with_input(BenchmarkId::new("instantaneous_rate", n), &train, |b, t| {
             b.iter(|| {
-                black_box(analysis::rate::instantaneous_rate(t, 0.001, "gaussian", 10.0))
+                black_box(analysis::rate::instantaneous_rate(
+                    t, 0.001, "gaussian", 10.0,
+                ))
             })
         });
     }
@@ -120,7 +122,9 @@ fn bench_correlation(c: &mut Criterion) {
         let b = make_binary_train(n, 0.05, 99);
         g.bench_with_input(BenchmarkId::new("cross_correlation", n), &n, |bench, _| {
             bench.iter(|| {
-                black_box(analysis::correlation::cross_correlation(&a, &b, 50.0, 0.001))
+                black_box(analysis::correlation::cross_correlation(
+                    &a, &b, 50.0, 0.001,
+                ))
             })
         });
         g.bench_with_input(
@@ -144,9 +148,7 @@ fn bench_distance(c: &mut Criterion) {
         let a = make_binary_train(n, 0.05, 42);
         let b = make_binary_train(n, 0.05, 99);
         g.bench_with_input(BenchmarkId::new("van_rossum", n), &n, |bench, _| {
-            bench.iter(|| {
-                black_box(analysis::distance::van_rossum_distance(&a, &b, 0.001, 10.0))
-            })
+            bench.iter(|| black_box(analysis::distance::van_rossum_distance(&a, &b, 0.001, 10.0)))
         });
         let times_a = analysis::basic::spike_times(&a, 0.001);
         let times_b = analysis::basic::spike_times(&b, 0.001);
@@ -203,7 +205,11 @@ fn bench_decoding(c: &mut Criterion) {
 
     let mut trains = Vec::new();
     for i in 0..n_neurons {
-        trains.push(make_binary_train(1000, 0.03 + 0.005 * i as f64, 42 + i as u64));
+        trains.push(make_binary_train(
+            1000,
+            0.03 + 0.005 * i as f64,
+            42 + i as u64,
+        ));
     }
     let directions: Vec<f64> = (0..n_neurons)
         .map(|i| i as f64 / n_neurons as f64 * 2.0 * std::f64::consts::PI)
@@ -291,9 +297,7 @@ fn bench_temporal(c: &mut Criterion) {
         g.bench_with_input(
             BenchmarkId::new("change_point_detection", n),
             &train,
-            |b, t| {
-                b.iter(|| black_box(analysis::temporal::change_point_detection(t, 50, 3.0)))
-            },
+            |b, t| b.iter(|| black_box(analysis::temporal::change_point_detection(t, 50, 3.0))),
         );
     }
     g.finish();
@@ -361,7 +365,9 @@ fn bench_point_process(c: &mut Criterion) {
             &train,
             |b, t| {
                 b.iter(|| {
-                    black_box(analysis::point_process::conditional_intensity(t, 0.001, 50.0))
+                    black_box(analysis::point_process::conditional_intensity(
+                        t, 0.001, 50.0,
+                    ))
                 })
             },
         );
@@ -401,7 +407,9 @@ fn bench_stimulus(c: &mut Criterion) {
         let train = make_binary_train(n, 0.05, 99);
         g.bench_with_input(BenchmarkId::new("sta", n), &n, |b, _| {
             b.iter(|| {
-                black_box(analysis::stimulus::spike_triggered_average(&stim, &train, 50))
+                black_box(analysis::stimulus::spike_triggered_average(
+                    &stim, &train, 50,
+                ))
             })
         });
         let positions: Vec<f64> = (0..n).map(|i| i as f64 / n as f64 * 100.0).collect();
@@ -426,15 +434,9 @@ fn bench_lfp(c: &mut Criterion) {
         g.bench_with_input(BenchmarkId::new("phase_locking_value", n), &n, |b, _| {
             b.iter(|| black_box(analysis::lfp::phase_locking_value(&train, &lfp)))
         });
-        g.bench_with_input(
-            BenchmarkId::new("spike_field_coherence", n),
-            &n,
-            |b, _| {
-                b.iter(|| {
-                    black_box(analysis::lfp::spike_field_coherence(&train, &lfp, 0.001))
-                })
-            },
-        );
+        g.bench_with_input(BenchmarkId::new("spike_field_coherence", n), &n, |b, _| {
+            b.iter(|| black_box(analysis::lfp::spike_field_coherence(&train, &lfp, 0.001)))
+        });
     }
     g.finish();
 }
@@ -487,7 +489,11 @@ fn bench_dimensionality(c: &mut Criterion) {
     let n_neurons = 10;
     let mut trains = Vec::new();
     for i in 0..n_neurons {
-        trains.push(make_binary_train(2000, 0.04 + 0.005 * i as f64, 42 + i as u64));
+        trains.push(make_binary_train(
+            2000,
+            0.04 + 0.005 * i as f64,
+            42 + i as u64,
+        ));
     }
     let refs: Vec<&[i32]> = trains.iter().map(|t| t.as_slice()).collect();
     g.bench_function("pca_10n_2000t", |b| {

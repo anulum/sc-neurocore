@@ -3908,10 +3908,7 @@ fn py_power_spectrum(
 ) -> (Py<PyArray1<f64>>, Py<PyArray1<f64>>) {
     let data = binary_train.as_slice().unwrap();
     let (psd, freqs) = analysis::spectral::power_spectrum(data, dt);
-    (
-        psd.into_pyarray(py).into(),
-        freqs.into_pyarray(py).into(),
-    )
+    (psd.into_pyarray(py).into(), freqs.into_pyarray(py).into())
 }
 
 // ── Waveform PyO3 wrappers (P0-A: spike_stats/waveform) ─────────
@@ -4133,10 +4130,7 @@ fn py_spike_field_coherence(
         lfp_signal.as_slice().unwrap(),
         dt,
     );
-    (
-        sfc.into_pyarray(py).into(),
-        freqs.into_pyarray(py).into(),
-    )
+    (sfc.into_pyarray(py).into(), freqs.into_pyarray(py).into())
 }
 
 #[pyfunction]
@@ -4174,10 +4168,7 @@ fn py_isolation_distance(
 }
 
 #[pyfunction]
-fn py_l_ratio(
-    cluster: PyReadonlyArray2<'_, f64>,
-    noise: PyReadonlyArray2<'_, f64>,
-) -> f64 {
+fn py_l_ratio(cluster: PyReadonlyArray2<'_, f64>, noise: PyReadonlyArray2<'_, f64>) -> f64 {
     let c_shape = cluster.shape();
     let n_shape = noise.shape();
     let d = c_shape[1];
@@ -4198,10 +4189,7 @@ fn py_silhouette_score(
 }
 
 #[pyfunction]
-fn py_d_prime(
-    cluster_a: PyReadonlyArray2<'_, f64>,
-    cluster_b: PyReadonlyArray2<'_, f64>,
-) -> f64 {
+fn py_d_prime(cluster_a: PyReadonlyArray2<'_, f64>, cluster_b: PyReadonlyArray2<'_, f64>) -> f64 {
     let a_shape = cluster_a.shape();
     let b_shape = cluster_b.shape();
     let d = a_shape[1];
@@ -4287,10 +4275,7 @@ fn py_spike_train_pca(
         .collect();
     let refs: Vec<&[i32]> = vecs.iter().map(|v| v.as_slice()).collect();
     let (proj, expl) = analysis::dimensionality::spike_train_pca(&refs, n_components, bin_size);
-    (
-        proj.into_pyarray(py).into(),
-        expl.into_pyarray(py).into(),
-    )
+    (proj.into_pyarray(py).into(), expl.into_pyarray(py).into())
 }
 
 #[pyfunction]
@@ -4314,10 +4299,7 @@ fn py_demixed_pca(
         .map(|cond| cond.iter().map(|v| v.as_slice()).collect())
         .collect();
     let (proj, expl) = analysis::dimensionality::demixed_pca(&refs, n_components, bin_size);
-    (
-        proj.into_pyarray(py).into(),
-        expl.into_pyarray(py).into(),
-    )
+    (proj.into_pyarray(py).into(), expl.into_pyarray(py).into())
 }
 
 #[pyfunction]
@@ -4334,7 +4316,8 @@ fn py_factor_analysis(
         .map(|t| t.as_slice().unwrap().to_vec())
         .collect();
     let refs: Vec<&[i32]> = vecs.iter().map(|v| v.as_slice()).collect();
-    let (loadings, psi) = analysis::dimensionality::factor_analysis(&refs, n_factors, bin_size, n_iter);
+    let (loadings, psi) =
+        analysis::dimensionality::factor_analysis(&refs, n_factors, bin_size, n_iter);
     (
         loadings.into_pyarray(py).into(),
         psi.into_pyarray(py).into(),
@@ -4439,7 +4422,10 @@ fn py_spade_detect<'py>(
     let mut dicts = Vec::new();
     for pat in results {
         let dict = PyDict::new(py);
-        dict.set_item("neurons", pat.neurons.iter().map(|&n| n as i64).collect::<Vec<_>>())?;
+        dict.set_item(
+            "neurons",
+            pat.neurons.iter().map(|&n| n as i64).collect::<Vec<_>>(),
+        )?;
         dict.set_item("lags", pat.lags.clone())?;
         dict.set_item("count", pat.count as i64)?;
         dict.set_item("p_value", pat.p_value)?;

@@ -24,12 +24,24 @@ macro_rules! wrap_2arg_f64 {
         #[derive(Clone, Debug)]
         pub struct $name(pub $inner);
         impl $name {
-            pub fn new() -> Self { Self(<$inner>::new()) }
-            pub fn step(&mut self, current: f64) -> i32 { self.0.step(current, $extra) }
-            pub fn reset(&mut self) { self.0.reset(); }
-            pub fn v(&self) -> f64 { self.0.$v as f64 }
+            pub fn new() -> Self {
+                Self(<$inner>::new())
+            }
+            pub fn step(&mut self, current: f64) -> i32 {
+                self.0.step(current, $extra)
+            }
+            pub fn reset(&mut self) {
+                self.0.reset();
+            }
+            pub fn v(&self) -> f64 {
+                self.0.$v as f64
+            }
         }
-        impl Default for $name { fn default() -> Self { Self::new() } }
+        impl Default for $name {
+            fn default() -> Self {
+                Self::new()
+            }
+        }
     };
 }
 
@@ -39,12 +51,24 @@ macro_rules! wrap_3arg {
         #[derive(Clone, Debug)]
         pub struct $name(pub $inner);
         impl $name {
-            pub fn new() -> Self { Self(<$inner>::new()) }
-            pub fn step(&mut self, current: f64) -> i32 { self.0.step(current, $e2, $e3) }
-            pub fn reset(&mut self) { self.0.reset(); }
-            pub fn v(&self) -> f64 { self.0.$v as f64 }
+            pub fn new() -> Self {
+                Self(<$inner>::new())
+            }
+            pub fn step(&mut self, current: f64) -> i32 {
+                self.0.step(current, $e2, $e3)
+            }
+            pub fn reset(&mut self) {
+                self.0.reset();
+            }
+            pub fn v(&self) -> f64 {
+                self.0.$v as f64
+            }
         }
-        impl Default for $name { fn default() -> Self { Self::new() } }
+        impl Default for $name {
+            fn default() -> Self {
+                Self::new()
+            }
+        }
     };
 }
 
@@ -54,12 +78,24 @@ macro_rules! wrap_i32_input {
         #[derive(Clone, Debug)]
         pub struct $name(pub $inner);
         impl $name {
-            pub fn new() -> Self { Self($ctor) }
-            pub fn step(&mut self, current: f64) -> i32 { self.0.step(current as i32) }
-            pub fn reset(&mut self) { self.0.reset(); }
-            pub fn v(&self) -> f64 { self.0.$v as f64 }
+            pub fn new() -> Self {
+                Self($ctor)
+            }
+            pub fn step(&mut self, current: f64) -> i32 {
+                self.0.step(current as i32)
+            }
+            pub fn reset(&mut self) {
+                self.0.reset();
+            }
+            pub fn v(&self) -> f64 {
+                self.0.$v as f64
+            }
         }
-        impl Default for $name { fn default() -> Self { Self::new() } }
+        impl Default for $name {
+            fn default() -> Self {
+                Self::new()
+            }
+        }
     };
 }
 
@@ -69,15 +105,29 @@ macro_rules! wrap_graded {
         #[derive(Clone, Debug)]
         pub struct $name(pub $inner);
         impl $name {
-            pub fn new() -> Self { Self(<$inner>::new()) }
+            pub fn new() -> Self {
+                Self(<$inner>::new())
+            }
             pub fn step(&mut self, current: f64) -> i32 {
                 let out = self.0.step(current);
-                if out > $threshold { 1 } else { 0 }
+                if out > $threshold {
+                    1
+                } else {
+                    0
+                }
             }
-            pub fn reset(&mut self) { self.0.reset(); }
-            pub fn v(&self) -> f64 { self.0.$v as f64 }
+            pub fn reset(&mut self) {
+                self.0.reset();
+            }
+            pub fn v(&self) -> f64 {
+                self.0.$v as f64
+            }
         }
-        impl Default for $name { fn default() -> Self { Self::new() } }
+        impl Default for $name {
+            fn default() -> Self {
+                Self::new()
+            }
+        }
     };
 }
 
@@ -95,7 +145,12 @@ wrap_i32_input!(WrLoihiCUBA, LoihiCUBANeuron, v, LoihiCUBANeuron::new());
 wrap_i32_input!(WrLoihi2, Loihi2Neuron, s1, Loihi2Neuron::new());
 wrap_i32_input!(WrSpiNNaker2, SpiNNaker2Neuron, v, SpiNNaker2Neuron::new());
 wrap_i32_input!(WrTrueNorth, TrueNorthNeuron, v, TrueNorthNeuron::new(256));
-wrap_i32_input!(WrIntegerQIF, IntegerQIFNeuron, v, IntegerQIFNeuron::new(1, 1000));
+wrap_i32_input!(
+    WrIntegerQIF,
+    IntegerQIFNeuron,
+    v,
+    IntegerQIFNeuron::new(1, 1000)
+);
 
 // Graded/rate output wrappers (threshold at 0.5 for rates, 0.0 for sensory)
 wrap_graded!(WrSigmoidRate, SigmoidRateNeuron, r, 0.5);
@@ -955,8 +1010,12 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
             CourageNekorkinMapNeuron::new(),
         )),
         "AiharaMap" | "AiharaMapNeuron" => Ok(NeuronVariant::AiharaMap(AiharaMapNeuron::new())),
-        "KilincBhattMap" | "KilincBhattMapNeuron" => Ok(NeuronVariant::KilincBhattMap(KilincBhattMapNeuron::new())),
-        "ErmentroutKopellMap" | "ErmentroutKopellMapNeuron" => Ok(NeuronVariant::ErmentroutKopellMap(ErmentroutKopellMapNeuron::new())),
+        "KilincBhattMap" | "KilincBhattMapNeuron" => {
+            Ok(NeuronVariant::KilincBhattMap(KilincBhattMapNeuron::new()))
+        }
+        "ErmentroutKopellMap" | "ErmentroutKopellMapNeuron" => Ok(
+            NeuronVariant::ErmentroutKopellMap(ErmentroutKopellMapNeuron::new()),
+        ),
         "BrainScaleSAdEx" | "BrainScaleSAdExNeuron" => {
             Ok(NeuronVariant::BrainScaleSAdEx(BrainScaleSAdExNeuron::new()))
         }
@@ -1039,25 +1098,15 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         }
         "SST" | "SSTNeuron" => Ok(NeuronVariant::SST(SSTNeuron::new())),
         "VIP" | "VIPNeuron" => Ok(NeuronVariant::VIP(VIPNeuron::new())),
-        "Chandelier" | "ChandelierNeuron" => {
-            Ok(NeuronVariant::Chandelier(ChandelierNeuron::new()))
-        }
-        "CerebellarBasket" | "CerebellarBasketNeuron" => {
-            Ok(NeuronVariant::CerebellarBasket(CerebellarBasketNeuron::new()))
-        }
-        "Martinotti" | "MartinottiNeuron" => {
-            Ok(NeuronVariant::Martinotti(MartinottiNeuron::new()))
-        }
+        "Chandelier" | "ChandelierNeuron" => Ok(NeuronVariant::Chandelier(ChandelierNeuron::new())),
+        "CerebellarBasket" | "CerebellarBasketNeuron" => Ok(NeuronVariant::CerebellarBasket(
+            CerebellarBasketNeuron::new(),
+        )),
+        "Martinotti" | "MartinottiNeuron" => Ok(NeuronVariant::Martinotti(MartinottiNeuron::new())),
         // motor
-        "AlphaMotor" | "AlphaMotorNeuron" => {
-            Ok(NeuronVariant::AlphaMotor(AlphaMotorNeuron::new()))
-        }
-        "GammaMotor" | "GammaMotorNeuron" => {
-            Ok(NeuronVariant::GammaMotor(GammaMotorNeuron::new()))
-        }
-        "UpperMotor" | "UpperMotorNeuron" => {
-            Ok(NeuronVariant::UpperMotor(UpperMotorNeuron::new()))
-        }
+        "AlphaMotor" | "AlphaMotorNeuron" => Ok(NeuronVariant::AlphaMotor(AlphaMotorNeuron::new())),
+        "GammaMotor" | "GammaMotorNeuron" => Ok(NeuronVariant::GammaMotor(GammaMotorNeuron::new())),
+        "UpperMotor" | "UpperMotorNeuron" => Ok(NeuronVariant::UpperMotor(UpperMotorNeuron::new())),
         "Renshaw" | "RenshawCell" => Ok(NeuronVariant::Renshaw(RenshawCell::new())),
         "MotorUnit" => Ok(NeuronVariant::MotorUnitCell(MotorUnit::new())),
         // sensory (spiking)
@@ -1065,13 +1114,11 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
             Ok(NeuronVariant::RetinalGanglion(RetinalGanglionCell::new()))
         }
         "Merkel" | "MerkelCell" => Ok(NeuronVariant::Merkel(MerkelCell::new())),
-        "Pacinian" | "PacinianCorpuscle" => {
-            Ok(NeuronVariant::Pacinian(PacinianCorpuscle::new()))
-        }
+        "Pacinian" | "PacinianCorpuscle" => Ok(NeuronVariant::Pacinian(PacinianCorpuscle::new())),
         "Nociceptor" => Ok(NeuronVariant::NociceptorCell(Nociceptor::new())),
-        "OlfactoryReceptor" | "OlfactoryReceptorNeuron" => {
-            Ok(NeuronVariant::OlfactoryReceptor(OlfactoryReceptorNeuron::new()))
-        }
+        "OlfactoryReceptor" | "OlfactoryReceptorNeuron" => Ok(NeuronVariant::OlfactoryReceptor(
+            OlfactoryReceptorNeuron::new(),
+        )),
         // cerebellar
         "GranuleCell" | "Granule" => Ok(NeuronVariant::Granule(GranuleCell::new())),
         "GolgiCell" | "Golgi" => Ok(NeuronVariant::Golgi(GolgiCell::new())),
@@ -1080,7 +1127,9 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         "UnipolarBrushCell" | "UBC" => Ok(NeuronVariant::UnipolarBrush(UnipolarBrushCell::new())),
         "DCNNeuron" | "DCN" => Ok(NeuronVariant::DCN(DCNNeuron::new())),
         // channels
-        "PersistentNa" | "PersistentNaNeuron" => Ok(NeuronVariant::PersistentNa(PersistentNaNeuron::new())),
+        "PersistentNa" | "PersistentNaNeuron" => {
+            Ok(NeuronVariant::PersistentNa(PersistentNaNeuron::new()))
+        }
         "Ih" | "IhNeuron" => Ok(NeuronVariant::Ih(IhNeuron::new())),
         "TTypeCa" | "TTypeCaNeuron" => Ok(NeuronVariant::TTypeCa(TTypeCaNeuron::new())),
         "ATypeK" | "ATypeKNeuron" => Ok(NeuronVariant::ATypeK(ATypeKNeuron::new())),
@@ -1091,39 +1140,71 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         "MontbrioMeanField" | "MPR" => Ok(NeuronVariant::MontbrioMPR(MontbrioMeanField::new())),
         "BrunelNetwork" | "Brunel" => Ok(NeuronVariant::Brunel(BrunelNetwork::new())),
         "TUMNetwork" | "TUM" => Ok(NeuronVariant::TUM(TUMNetwork::new())),
-        "ElBoustaniNetwork" | "ElBoustani" => Ok(NeuronVariant::ElBoustani(ElBoustaniNetwork::new())),
+        "ElBoustaniNetwork" | "ElBoustani" => {
+            Ok(NeuronVariant::ElBoustani(ElBoustaniNetwork::new()))
+        }
         // misc
-        "GradedSynapseNeuron" | "GradedSynapse" => Ok(NeuronVariant::GradedSynapse(GradedSynapseNeuron::new())),
-        "GapJunctionNeuron" | "GapJunction" => Ok(NeuronVariant::GapJunction(GapJunctionNeuron::new())),
-        "FrankenhaeUserHuxleyAxon" | "FHAxon" => Ok(NeuronVariant::FHAxon(FrankenhaeUserHuxleyAxon::new())),
+        "GradedSynapseNeuron" | "GradedSynapse" => {
+            Ok(NeuronVariant::GradedSynapse(GradedSynapseNeuron::new()))
+        }
+        "GapJunctionNeuron" | "GapJunction" => {
+            Ok(NeuronVariant::GapJunction(GapJunctionNeuron::new()))
+        }
+        "FrankenhaeUserHuxleyAxon" | "FHAxon" => {
+            Ok(NeuronVariant::FHAxon(FrankenhaeUserHuxleyAxon::new()))
+        }
         "NodeOfRanvier" => Ok(NeuronVariant::NodeOfRanvier(NodeOfRanvier::new())),
         "MyelinatedAxon" | "MyelinAxon" => Ok(NeuronVariant::MyelinAxon(MyelinatedAxon::new())),
-        "CardiacPurkinjeFibre" | "CardiacPurkinje" => Ok(NeuronVariant::CardiacPurkinje(CardiacPurkinjeFibre::new())),
-        "SmoothMuscleCell" | "SmoothMuscle" => Ok(NeuronVariant::SmoothMuscle(SmoothMuscleCell::new())),
+        "CardiacPurkinjeFibre" | "CardiacPurkinje" => {
+            Ok(NeuronVariant::CardiacPurkinje(CardiacPurkinjeFibre::new()))
+        }
+        "SmoothMuscleCell" | "SmoothMuscle" => {
+            Ok(NeuronVariant::SmoothMuscle(SmoothMuscleCell::new()))
+        }
         "EndocrineBetaCell" | "BetaCell" => Ok(NeuronVariant::BetaCell(EndocrineBetaCell::new())),
         // Wrapped multi-input spiking
         "AlphaNeuron" | "Alpha" => Ok(NeuronVariant::WrAlphaCell(WrAlpha::new())),
         "COBALIFNeuron" | "COBALIF" => Ok(NeuronVariant::WrCOBALIFCell(WrCOBALIF::new())),
         "CompteWMNeuron" | "CompteWM" => Ok(NeuronVariant::WrCompteWMCell(WrCompteWM::new())),
-        "TsodyksMarkramNeuron" | "TsodyksMarkram" => Ok(NeuronVariant::WrTsodyksMarkramCell(WrTsodyksMarkram::new())),
-        "PinskyRinzelNeuron" | "PinskyRinzel" => Ok(NeuronVariant::WrPinskyRinzelCell(WrPinskyRinzel::new())),
+        "TsodyksMarkramNeuron" | "TsodyksMarkram" => {
+            Ok(NeuronVariant::WrTsodyksMarkramCell(WrTsodyksMarkram::new()))
+        }
+        "PinskyRinzelNeuron" | "PinskyRinzel" => {
+            Ok(NeuronVariant::WrPinskyRinzelCell(WrPinskyRinzel::new()))
+        }
         "HayL5PyramidalNeuron" | "HayL5" => Ok(NeuronVariant::WrHayL5Cell(WrHayL5::new())),
-        "TwoCompartmentLIFNeuron" | "TwoCompLIF" => Ok(NeuronVariant::WrTwoCompLIFCell(WrTwoCompLIF::new())),
+        "TwoCompartmentLIFNeuron" | "TwoCompLIF" => {
+            Ok(NeuronVariant::WrTwoCompLIFCell(WrTwoCompLIF::new()))
+        }
         // Wrapped hardware integer-input
         "LoihiCUBANeuron" | "LoihiCUBA" => Ok(NeuronVariant::WrLoihiCUBACell(WrLoihiCUBA::new())),
         "Loihi2Neuron" | "Loihi2" => Ok(NeuronVariant::WrLoihi2Cell(WrLoihi2::new())),
-        "SpiNNaker2Neuron" | "SpiNNaker2" => Ok(NeuronVariant::WrSpiNNaker2Cell(WrSpiNNaker2::new())),
+        "SpiNNaker2Neuron" | "SpiNNaker2" => {
+            Ok(NeuronVariant::WrSpiNNaker2Cell(WrSpiNNaker2::new()))
+        }
         "TrueNorthNeuron" | "TrueNorth" => Ok(NeuronVariant::WrTrueNorthCell(WrTrueNorth::new())),
-        "IntegerQIFNeuron" | "IntegerQIF" => Ok(NeuronVariant::WrIntegerQIFCell(WrIntegerQIF::new())),
+        "IntegerQIFNeuron" | "IntegerQIF" => {
+            Ok(NeuronVariant::WrIntegerQIFCell(WrIntegerQIF::new()))
+        }
         // Wrapped graded/rate output
-        "SigmoidRateNeuron" | "SigmoidRate" => Ok(NeuronVariant::WrSigmoidRateCell(WrSigmoidRate::new())),
-        "ThresholdLinearRateNeuron" | "ThresholdLinearRate" => Ok(NeuronVariant::WrThresholdLinearCell(WrThresholdLinear::new())),
+        "SigmoidRateNeuron" | "SigmoidRate" => {
+            Ok(NeuronVariant::WrSigmoidRateCell(WrSigmoidRate::new()))
+        }
+        "ThresholdLinearRateNeuron" | "ThresholdLinearRate" => Ok(
+            NeuronVariant::WrThresholdLinearCell(WrThresholdLinear::new()),
+        ),
         "AstrocyteModel" | "Astrocyte" => Ok(NeuronVariant::WrAstrocyteCell(WrAstrocyte::new())),
         "InnerHairCell" | "IHC" => Ok(NeuronVariant::WrInnerHairCellCell(WrInnerHairCell::new())),
         "OuterHairCell" | "OHC" => Ok(NeuronVariant::WrOuterHairCellCell(WrOuterHairCell::new())),
-        "RodPhotoreceptor" | "Rod" => Ok(NeuronVariant::WrRodPhotoreceptorCell(WrRodPhotoreceptor::new())),
-        "ConePhotoreceptor" | "Cone" => Ok(NeuronVariant::WrConePhotoreceptorCell(WrConePhotoreceptor::new())),
-        "TasteReceptorCell" | "TasteReceptor" => Ok(NeuronVariant::WrTasteReceptorCell(WrTasteReceptor::new())),
+        "RodPhotoreceptor" | "Rod" => Ok(NeuronVariant::WrRodPhotoreceptorCell(
+            WrRodPhotoreceptor::new(),
+        )),
+        "ConePhotoreceptor" | "Cone" => Ok(NeuronVariant::WrConePhotoreceptorCell(
+            WrConePhotoreceptor::new(),
+        )),
+        "TasteReceptorCell" | "TasteReceptor" => {
+            Ok(NeuronVariant::WrTasteReceptorCell(WrTasteReceptor::new()))
+        }
         _ => Err(format!("Unsupported model: '{name}'")),
     }
 }
@@ -1457,7 +1538,14 @@ mod tests {
 
     #[test]
     fn interneuron_population_create_step_reset() {
-        for name in &["PVFastSpiking", "SST", "VIP", "Chandelier", "CerebellarBasket", "Martinotti"] {
+        for name in &[
+            "PVFastSpiking",
+            "SST",
+            "VIP",
+            "Chandelier",
+            "CerebellarBasket",
+            "Martinotti",
+        ] {
             let mut pop = create_population(name, 5).unwrap();
             pop.currents.fill(3.0);
             for _ in 0..100 {
@@ -1506,7 +1594,13 @@ mod tests {
 
     #[test]
     fn sensory_spiking_population_create_step() {
-        for name in &["RetinalGanglion", "Merkel", "Pacinian", "Nociceptor", "OlfactoryReceptor"] {
+        for name in &[
+            "RetinalGanglion",
+            "Merkel",
+            "Pacinian",
+            "Nociceptor",
+            "OlfactoryReceptor",
+        ] {
             let mut pop = create_population(name, 5).unwrap();
             pop.currents.fill(20.0);
             for _ in 0..200 {
@@ -1527,10 +1621,17 @@ mod tests {
         // Models must not propagate NaN — they should produce finite
         // (possibly wrong) output. This catches catastrophic numerical issues.
         let fragile_models = &[
-            "PVFastSpiking", "SST", "VIP", "Chandelier",
-            "CerebellarBasket", "Martinotti",
-            "RetinalGanglion", "Merkel", "Pacinian",
-            "Nociceptor", "OlfactoryReceptor",
+            "PVFastSpiking",
+            "SST",
+            "VIP",
+            "Chandelier",
+            "CerebellarBasket",
+            "Martinotti",
+            "RetinalGanglion",
+            "Merkel",
+            "Pacinian",
+            "Nociceptor",
+            "OlfactoryReceptor",
         ];
         for name in fragile_models {
             let mut neuron = create_neuron(name).unwrap();
@@ -1545,17 +1646,27 @@ mod tests {
             // Reset must restore finite state
             neuron.reset();
             let v = neuron.soma_voltage();
-            assert!(v.is_finite(), "{name}: voltage not finite after reset from NaN: {v}");
+            assert!(
+                v.is_finite(),
+                "{name}: voltage not finite after reset from NaN: {v}"
+            );
         }
     }
 
     #[test]
     fn all_models_extreme_input_stays_finite() {
         let models = &[
-            "PVFastSpiking", "SST", "VIP", "Chandelier",
-            "CerebellarBasket", "Martinotti",
-            "RetinalGanglion", "Merkel", "Pacinian",
-            "Nociceptor", "OlfactoryReceptor",
+            "PVFastSpiking",
+            "SST",
+            "VIP",
+            "Chandelier",
+            "CerebellarBasket",
+            "Martinotti",
+            "RetinalGanglion",
+            "Merkel",
+            "Pacinian",
+            "Nociceptor",
+            "OlfactoryReceptor",
         ];
         for name in models {
             let mut neuron = create_neuron(name).unwrap();
@@ -1565,7 +1676,10 @@ mod tests {
             }
             neuron.reset();
             let v = neuron.soma_voltage();
-            assert!(v.is_finite(), "{name}: non-finite after large positive input");
+            assert!(
+                v.is_finite(),
+                "{name}: non-finite after large positive input"
+            );
 
             // Large negative current
             for _ in 0..50 {
@@ -1573,7 +1687,10 @@ mod tests {
             }
             neuron.reset();
             let v = neuron.soma_voltage();
-            assert!(v.is_finite(), "{name}: non-finite after large negative input");
+            assert!(
+                v.is_finite(),
+                "{name}: non-finite after large negative input"
+            );
         }
     }
 }

@@ -52,29 +52,29 @@
 #[derive(Clone, Debug)]
 pub struct InnerHairCell {
     // Membrane
-    pub v: f64,          // Receptor potential (mV)
+    pub v: f64, // Receptor potential (mV)
     pub v_rest: f64,
-    pub tau: f64,        // Membrane time constant (ms)
-    pub g_met: f64,      // MET channel max conductance
-    pub x_half: f64,     // Boltzmann half-activation (nm)
-    pub s_met: f64,      // Boltzmann slope
+    pub tau: f64,    // Membrane time constant (ms)
+    pub g_met: f64,  // MET channel max conductance
+    pub x_half: f64, // Boltzmann half-activation (nm)
+    pub s_met: f64,  // Boltzmann slope
     // Ca²⁺
-    pub ca: f64,         // Intracellular Ca²⁺ (µM)
-    pub tau_ca: f64,     // Ca²⁺ decay time constant (ms)
-    pub g_ca: f64,       // Ca²⁺ entry gain
-    pub v_ca_half: f64,  // Ca²⁺ channel half-activation (mV)
-    pub s_ca: f64,       // Ca²⁺ channel slope
+    pub ca: f64,        // Intracellular Ca²⁺ (µM)
+    pub tau_ca: f64,    // Ca²⁺ decay time constant (ms)
+    pub g_ca: f64,      // Ca²⁺ entry gain
+    pub v_ca_half: f64, // Ca²⁺ channel half-activation (mV)
+    pub s_ca: f64,      // Ca²⁺ channel slope
     // Meddis vesicle pool
-    pub q: f64,          // Available vesicles (free pool) [0, M]
-    pub c: f64,          // Cleft transmitter concentration
-    pub w: f64,          // Reprocessing store
-    pub m_pool: f64,     // Maximum vesicle pool size
-    pub y: f64,          // Replenishment rate (ms⁻¹)
-    pub x_r: f64,        // Recovery rate from reprocessing (ms⁻¹)
-    pub k_rel: f64,      // Release rate constant (ms⁻¹)
-    pub l: f64,          // Loss rate from cleft (ms⁻¹)
-    pub r_up: f64,       // Reuptake rate (ms⁻¹)
-    pub k_d: f64,        // Ca²⁺ half-saturation for release (µM)
+    pub q: f64,      // Available vesicles (free pool) [0, M]
+    pub c: f64,      // Cleft transmitter concentration
+    pub w: f64,      // Reprocessing store
+    pub m_pool: f64, // Maximum vesicle pool size
+    pub y: f64,      // Replenishment rate (ms⁻¹)
+    pub x_r: f64,    // Recovery rate from reprocessing (ms⁻¹)
+    pub k_rel: f64,  // Release rate constant (ms⁻¹)
+    pub l: f64,      // Loss rate from cleft (ms⁻¹)
+    pub r_up: f64,   // Reuptake rate (ms⁻¹)
+    pub k_d: f64,    // Ca²⁺ half-saturation for release (µM)
     pub dt: f64,
 }
 
@@ -90,19 +90,19 @@ impl InnerHairCell {
             ca: 0.05,
             tau_ca: 1.0,
             g_ca: 0.5,
-            v_ca_half: -35.0,  // CaV1.3 half-activation
+            v_ca_half: -35.0, // CaV1.3 half-activation
             s_ca: 8.0,
             // Meddis pool defaults (Meddis 2006 Table I range)
             q: 8.0,
             c: 0.0,
             w: 0.0,
-            m_pool: 10.0,      // Max vesicle pool
-            y: 0.01,           // Replenishment (slow, ms⁻¹)
-            x_r: 0.005,        // Recovery from reprocessing (ms⁻¹)
-            k_rel: 0.2,        // Release rate constant (ms⁻¹)
-            l: 0.05,           // Cleft loss (ms⁻¹)
-            r_up: 0.05,        // Reuptake (ms⁻¹)
-            k_d: 0.1,          // Ca²⁺ Kd for release (µM)
+            m_pool: 10.0, // Max vesicle pool
+            y: 0.01,      // Replenishment (slow, ms⁻¹)
+            x_r: 0.005,   // Recovery from reprocessing (ms⁻¹)
+            k_rel: 0.2,   // Release rate constant (ms⁻¹)
+            l: 0.05,      // Cleft loss (ms⁻¹)
+            r_up: 0.05,   // Reuptake (ms⁻¹)
+            k_d: 0.1,     // Ca²⁺ Kd for release (µM)
             dt: 0.025,
         }
     }
@@ -124,7 +124,7 @@ impl InnerHairCell {
 
         // 2. Ca²⁺ dynamics (voltage-gated CaV1.3)
         let m_ca = 1.0 / (1.0 + (-(self.v - self.v_ca_half) / self.s_ca).exp());
-        let ca_entry = self.g_ca * m_ca * m_ca;  // m² activation
+        let ca_entry = self.g_ca * m_ca * m_ca; // m² activation
         self.ca += (-self.ca / self.tau_ca + ca_entry) * self.dt;
         self.ca = self.ca.max(0.0);
 
@@ -142,11 +142,21 @@ impl InnerHairCell {
         self.q = self.q.clamp(0.0, self.m_pool);
         self.c = self.c.max(0.0);
         self.w = self.w.max(0.0);
-        if !self.v.is_finite() { self.v = self.v_rest; }
-        if !self.ca.is_finite() { self.ca = 0.05; }
-        if !self.q.is_finite() { self.q = 8.0; }
-        if !self.c.is_finite() { self.c = 0.0; }
-        if !self.w.is_finite() { self.w = 0.0; }
+        if !self.v.is_finite() {
+            self.v = self.v_rest;
+        }
+        if !self.ca.is_finite() {
+            self.ca = 0.05;
+        }
+        if !self.q.is_finite() {
+            self.q = 8.0;
+        }
+        if !self.c.is_finite() {
+            self.c = 0.0;
+        }
+        if !self.w.is_finite() {
+            self.w = 0.0;
+        }
 
         self.v
     }
@@ -161,7 +171,9 @@ impl InnerHairCell {
 }
 
 impl Default for InnerHairCell {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -199,12 +211,12 @@ pub struct OuterHairCell {
     pub x_half: f64,
     pub s_met: f64,
     // Prestin parameters
-    pub motility: f64,   // Somatic length change (nm, + = contraction)
-    pub l_max: f64,      // Maximum length change (nm)
-    pub v_pk: f64,       // Peak NLC voltage (mV), ~-40
-    pub z_e: f64,        // Prestin charge valence (~0.7)
-    pub v_t: f64,        // kT/e thermal voltage (~26 mV at 37°C)
-    pub q_max: f64,      // Maximum charge moved (pC)
+    pub motility: f64,    // Somatic length change (nm, + = contraction)
+    pub l_max: f64,       // Maximum length change (nm)
+    pub v_pk: f64,        // Peak NLC voltage (mV), ~-40
+    pub z_e: f64,         // Prestin charge valence (~0.7)
+    pub v_t: f64,         // kT/e thermal voltage (~26 mV at 37°C)
+    pub q_max: f64,       // Maximum charge moved (pC)
     pub asym_factor: f64, // Asymmetry: contraction/elongation ratio > 1
     pub dt: f64,
 }
@@ -219,12 +231,12 @@ impl OuterHairCell {
             x_half: 20.0,
             s_met: 6.0,
             motility: 0.0,
-            l_max: 4.0,        // ~4 nm max length change
-            v_pk: -40.0,       // Peak NLC voltage
-            z_e: 0.7,          // Prestin charge valence
-            v_t: 26.0,         // kT/e at 37°C
-            q_max: 0.8,        // pC
-            asym_factor: 0.3,  // 30% asymmetry (contraction > elongation)
+            l_max: 4.0,       // ~4 nm max length change
+            v_pk: -40.0,      // Peak NLC voltage
+            z_e: 0.7,         // Prestin charge valence
+            v_t: 26.0,        // kT/e at 37°C
+            q_max: 0.8,       // pC
+            asym_factor: 0.3, // 30% asymmetry (contraction > elongation)
             dt: 0.025,
         }
     }
@@ -249,13 +261,15 @@ impl OuterHairCell {
         let raw_motility = self.l_max * (0.5 - compact);
         // Asymmetric factor: contraction (positive) enhanced, elongation reduced
         let asym = if raw_motility > 0.0 {
-            1.0 + self.asym_factor  // Contraction enhanced
+            1.0 + self.asym_factor // Contraction enhanced
         } else {
-            1.0 - self.asym_factor  // Elongation reduced
+            1.0 - self.asym_factor // Elongation reduced
         };
         self.motility = raw_motility * asym;
 
-        if !self.v.is_finite() { self.v = self.v_rest; }
+        if !self.v.is_finite() {
+            self.v = self.v_rest;
+        }
         self.v
     }
 
@@ -266,7 +280,9 @@ impl OuterHairCell {
 }
 
 impl Default for OuterHairCell {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -298,15 +314,15 @@ pub struct RodPhotoreceptor {
     pub v: f64,
     pub v_dark: f64,
     pub v_hyper: f64,
-    pub cgmp: f64,       // cGMP concentration (normalised)
-    pub ca: f64,         // Ca²⁺ concentration (normalised, ~1.0 in dark)
-    pub tau_act: f64,    // PDE activation time constant (ms)
-    pub tau_ca: f64,     // Ca²⁺ extrusion time constant (ms)
+    pub cgmp: f64,    // cGMP concentration (normalised)
+    pub ca: f64,      // Ca²⁺ concentration (normalised, ~1.0 in dark)
+    pub tau_act: f64, // PDE activation time constant (ms)
+    pub tau_ca: f64,  // Ca²⁺ extrusion time constant (ms)
     pub sensitivity: f64,
-    pub alpha_max: f64,  // Max GC synthesis rate
-    pub k_gc: f64,       // Ca²⁺ half-inhibition of GC
-    pub n_gc: f64,       // Hill coefficient for GC inhibition
-    pub eta_ca: f64,     // Ca²⁺ entry per unit CNG current
+    pub alpha_max: f64, // Max GC synthesis rate
+    pub k_gc: f64,      // Ca²⁺ half-inhibition of GC
+    pub n_gc: f64,      // Hill coefficient for GC inhibition
+    pub eta_ca: f64,    // Ca²⁺ entry per unit CNG current
     pub dt: f64,
 }
 
@@ -317,9 +333,9 @@ impl RodPhotoreceptor {
             v_dark: -40.0,
             v_hyper: -70.0,
             cgmp: 1.0,
-            ca: 1.0,         // High Ca²⁺ in dark (CNG channels open)
+            ca: 1.0, // High Ca²⁺ in dark (CNG channels open)
             tau_act: 20.0,
-            tau_ca: 30.0,    // Ca²⁺ extrusion (~30 ms, NCKX exchanger)
+            tau_ca: 30.0, // Ca²⁺ extrusion (~30 ms, NCKX exchanger)
             sensitivity: 0.01,
             alpha_max: 0.05, // Max cGMP synthesis rate
             k_gc: 0.5,       // Ca²⁺ half-inhibition of GC
@@ -359,9 +375,15 @@ impl RodPhotoreceptor {
 
         // Membrane potential
         self.v = self.v_hyper + (self.v_dark - self.v_hyper) * cng_fraction;
-        if !self.v.is_finite() { self.v = self.v_dark; }
-        if !self.cgmp.is_finite() { self.cgmp = 1.0; }
-        if !self.ca.is_finite() { self.ca = 1.0; }
+        if !self.v.is_finite() {
+            self.v = self.v_dark;
+        }
+        if !self.cgmp.is_finite() {
+            self.cgmp = 1.0;
+        }
+        if !self.ca.is_finite() {
+            self.ca = 1.0;
+        }
         self.v
     }
 
@@ -373,7 +395,9 @@ impl RodPhotoreceptor {
 }
 
 impl Default for RodPhotoreceptor {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -431,7 +455,9 @@ impl ConePhotoreceptor {
 }
 
 impl Default for ConePhotoreceptor {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -470,18 +496,18 @@ impl Default for ConePhotoreceptor {
 #[derive(Clone, Debug)]
 pub struct RetinalGanglionCell {
     // Stimulus filter (biphasic temporal kernel)
-    pub stim_buffer: Vec<f64>,   // Ring buffer of past stimuli
-    pub stim_kernel: Vec<f64>,   // Temporal filter coefficients (k)
-    pub stim_idx: usize,         // Current write position
+    pub stim_buffer: Vec<f64>, // Ring buffer of past stimuli
+    pub stim_kernel: Vec<f64>, // Temporal filter coefficients (k)
+    pub stim_idx: usize,       // Current write position
 
     // Post-spike history filter
-    pub hist_buffer: Vec<f64>,   // Ring buffer of past spike times (1.0/0.0)
-    pub hist_kernel: Vec<f64>,   // History filter coefficients (h)
+    pub hist_buffer: Vec<f64>, // Ring buffer of past spike times (1.0/0.0)
+    pub hist_kernel: Vec<f64>, // History filter coefficients (h)
     pub hist_idx: usize,
 
-    pub baseline: f64,           // Baseline log-rate (b)
-    pub on_centre: bool,         // true = ON, false = OFF (inverts stimulus)
-    pub spike_threshold: f64,    // λ*dt threshold for spike emission
+    pub baseline: f64,        // Baseline log-rate (b)
+    pub on_centre: bool,      // true = ON, false = OFF (inverts stimulus)
+    pub spike_threshold: f64, // λ*dt threshold for spike emission
     pub dt: f64,
     pub gain: f64,
 }
@@ -504,7 +530,9 @@ impl RetinalGanglionCell {
         // Normalise so peak response ≈ 1
         let peak: f64 = stim_kernel.iter().map(|x| x.abs()).fold(0.0_f64, f64::max);
         if peak > 0.0 {
-            for k in &mut stim_kernel { *k /= peak; }
+            for k in &mut stim_kernel {
+                *k /= peak;
+            }
         }
 
         // Post-spike history filter: refractory + burst
@@ -513,8 +541,8 @@ impl RetinalGanglionCell {
         let mut hist_kernel = vec![0.0; n_hist];
         for i in 0..n_hist {
             let t = i as f64 * 0.5; // time in ms
-            // Strong refractory (negative, fast decay) + weak burst (positive, slow)
-            let refrac = -15.0 * (-t / 1.5).exp();      // Absolute + relative refractory
+                                    // Strong refractory (negative, fast decay) + weak burst (positive, slow)
+            let refrac = -15.0 * (-t / 1.5).exp(); // Absolute + relative refractory
             let burst = 0.3 * (-((t - 5.0) / 3.0).powi(2)).exp(); // Slight burst tendency
             hist_kernel[i] = refrac + burst;
         }
@@ -526,7 +554,7 @@ impl RetinalGanglionCell {
             hist_buffer: vec![0.0; n_hist],
             hist_kernel,
             hist_idx: 0,
-            baseline: -3.0,       // Low spontaneous rate (~exp(-3)*dt ≈ 0.025 Hz per step)
+            baseline: -3.0, // Low spontaneous rate (~exp(-3)*dt ≈ 0.025 Hz per step)
             on_centre: true,
             spike_threshold: 0.7, // λ*dt threshold for deterministic spike
             dt: 0.5,
@@ -535,7 +563,10 @@ impl RetinalGanglionCell {
     }
 
     pub fn off_centre() -> Self {
-        Self { on_centre: false, ..Self::new() }
+        Self {
+            on_centre: false,
+            ..Self::new()
+        }
     }
 
     /// Convolve ring buffer with kernel (dot product with circular indexing).
@@ -575,7 +606,11 @@ impl RetinalGanglionCell {
         let lambda = log_rate.exp().min(1000.0); // Cap rate to prevent overflow
 
         // Deterministic spike: λ * dt > threshold
-        let spiked = if lambda * self.dt > self.spike_threshold { 1 } else { 0 };
+        let spiked = if lambda * self.dt > self.spike_threshold {
+            1
+        } else {
+            0
+        };
 
         // Write spike to history ring buffer
         self.hist_buffer[self.hist_idx % n_hist] = spiked as f64;
@@ -585,15 +620,21 @@ impl RetinalGanglionCell {
     }
 
     pub fn reset(&mut self) {
-        for x in &mut self.stim_buffer { *x = 0.0; }
-        for x in &mut self.hist_buffer { *x = 0.0; }
+        for x in &mut self.stim_buffer {
+            *x = 0.0;
+        }
+        for x in &mut self.hist_buffer {
+            *x = 0.0;
+        }
         self.stim_idx = 0;
         self.hist_idx = 0;
     }
 }
 
 impl Default for RetinalGanglionCell {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -614,9 +655,9 @@ pub struct MerkelCell {
     pub v_reset: f64,
     pub v_threshold: f64,
     pub tau: f64,
-    pub adapt: f64,       // Slow adaptation variable
-    pub tau_adapt: f64,   // Adaptation time constant (ms)
-    pub a_adapt: f64,     // Adaptation coupling
+    pub adapt: f64,     // Slow adaptation variable
+    pub tau_adapt: f64, // Adaptation time constant (ms)
+    pub a_adapt: f64,   // Adaptation coupling
     pub gain: f64,
     pub dt: f64,
 }
@@ -630,7 +671,7 @@ impl MerkelCell {
             v_threshold: -50.0,
             tau: 5.0,
             adapt: 0.0,
-            tau_adapt: 200.0,  // Very slow adaptation
+            tau_adapt: 200.0, // Very slow adaptation
             a_adapt: 0.3,
             gain: 1.5,
             dt: 0.5,
@@ -641,7 +682,8 @@ impl MerkelCell {
     pub fn step(&mut self, pressure: f64) -> i32 {
         let drive = self.gain * pressure.max(0.0) - self.adapt;
         self.v += (-(self.v - self.v_rest) + drive) / self.tau * self.dt;
-        self.adapt += (self.a_adapt * (self.v - self.v_rest) - self.adapt) / self.tau_adapt * self.dt;
+        self.adapt +=
+            (self.a_adapt * (self.v - self.v_rest) - self.adapt) / self.tau_adapt * self.dt;
 
         if self.v >= self.v_threshold {
             self.v = self.v_reset;
@@ -658,7 +700,9 @@ impl MerkelCell {
 }
 
 impl Default for MerkelCell {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -696,8 +740,8 @@ impl PacinianCorpuscle {
             tau: 2.0,
             prev_pressure: 0.0,
             adapt: 0.0,
-            tau_adapt: 5.0,   // Fast adaptation
-            gain: 10.0,       // High gain on derivative
+            tau_adapt: 5.0, // Fast adaptation
+            gain: 10.0,     // High gain on derivative
             dt: 0.5,
         }
     }
@@ -728,7 +772,9 @@ impl PacinianCorpuscle {
 }
 
 impl Default for PacinianCorpuscle {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -749,9 +795,9 @@ pub struct Nociceptor {
     pub v_reset: f64,
     pub v_threshold: f64,
     pub tau: f64,
-    pub sensitisation: f64,    // Threshold reduction (mV)
-    pub tau_sens: f64,         // Sensitisation decay (ms)
-    pub sens_rate: f64,        // Sensitisation buildup rate
+    pub sensitisation: f64, // Threshold reduction (mV)
+    pub tau_sens: f64,      // Sensitisation decay (ms)
+    pub sens_rate: f64,     // Sensitisation buildup rate
     pub gain: f64,
     pub dt: f64,
 }
@@ -762,10 +808,10 @@ impl Nociceptor {
             v: -65.0,
             v_rest: -65.0,
             v_reset: -68.0,
-            v_threshold: -30.0,  // High threshold
+            v_threshold: -30.0, // High threshold
             tau: 8.0,
             sensitisation: 0.0,
-            tau_sens: 5000.0,    // Very slow decay (seconds)
+            tau_sens: 5000.0, // Very slow decay (seconds)
             sens_rate: 0.5,
             gain: 1.0,
             dt: 0.5,
@@ -786,7 +832,9 @@ impl Nociceptor {
         } else {
             // Sensitisation slowly decays
             self.sensitisation += -self.sensitisation / self.tau_sens * self.dt;
-            if self.sensitisation < 0.0 { self.sensitisation = 0.0; }
+            if self.sensitisation < 0.0 {
+                self.sensitisation = 0.0;
+            }
             0
         }
     }
@@ -798,7 +846,9 @@ impl Nociceptor {
 }
 
 impl Default for Nociceptor {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -822,13 +872,13 @@ pub struct OlfactoryReceptorNeuron {
     pub v_reset: f64,
     pub v_threshold: f64,
     pub tau: f64,
-    pub camp: f64,       // Normalised cAMP [0, 1]
-    pub adapt: f64,      // Ca²⁺/CaM adaptation
-    pub pde4: f64,       // PDE4 activity (tracks cAMP with delay)
-    pub tau_camp: f64,   // cAMP dynamics (ms)
-    pub tau_adapt: f64,  // CaM adaptation tau
-    pub tau_pde4: f64,   // PDE4 activation tau (ms)
-    pub k_pde4: f64,     // PDE4 degradation rate on cAMP
+    pub camp: f64,      // Normalised cAMP [0, 1]
+    pub adapt: f64,     // Ca²⁺/CaM adaptation
+    pub pde4: f64,      // PDE4 activity (tracks cAMP with delay)
+    pub tau_camp: f64,  // cAMP dynamics (ms)
+    pub tau_adapt: f64, // CaM adaptation tau
+    pub tau_pde4: f64,  // PDE4 activation tau (ms)
+    pub k_pde4: f64,    // PDE4 degradation rate on cAMP
     pub gain: f64,
     pub dt: f64,
 }
@@ -846,8 +896,8 @@ impl OlfactoryReceptorNeuron {
             pde4: 0.0,
             tau_camp: 50.0,
             tau_adapt: 500.0,
-            tau_pde4: 300.0,   // PDE4 activation ~300 ms (slow negative feedback)
-            k_pde4: 1.5,      // PDE4 degradation strength
+            tau_pde4: 300.0, // PDE4 activation ~300 ms (slow negative feedback)
+            k_pde4: 1.5,     // PDE4 degradation strength
             gain: 1.5,
             dt: 0.5,
         }
@@ -873,7 +923,11 @@ impl OlfactoryReceptorNeuron {
         self.v += (-(self.v - self.v_rest) + drive) / self.tau * self.dt;
 
         // Ca²⁺/CaM adaptation (fast pathway)
-        let ca_proxy = if self.v > self.v_rest { (self.v - self.v_rest) / 20.0 } else { 0.0 };
+        let ca_proxy = if self.v > self.v_rest {
+            (self.v - self.v_rest) / 20.0
+        } else {
+            0.0
+        };
         self.adapt += (ca_proxy - self.adapt) / self.tau_adapt * self.dt;
         self.adapt = self.adapt.clamp(0.0, 1.0);
 
@@ -894,7 +948,9 @@ impl OlfactoryReceptorNeuron {
 }
 
 impl Default for OlfactoryReceptorNeuron {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -913,8 +969,8 @@ pub struct TasteReceptorCell {
     pub v: f64,
     pub v_rest: f64,
     pub tau: f64,
-    pub ca: f64,          // Intracellular Ca2+ (normalised)
-    pub ip3: f64,         // IP3 concentration (normalised)
+    pub ca: f64,  // Intracellular Ca2+ (normalised)
+    pub ip3: f64, // IP3 concentration (normalised)
     pub tau_ip3: f64,
     pub tau_ca: f64,
     pub gain: f64,
@@ -970,7 +1026,9 @@ impl TasteReceptorCell {
 }
 
 impl Default for TasteReceptorCell {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -987,28 +1045,39 @@ mod tests {
     fn ihc_depolarises_with_displacement() {
         let mut c = InnerHairCell::new();
         let v_rest = c.v;
-        for _ in 0..200 { c.step(50.0); }
+        for _ in 0..200 {
+            c.step(50.0);
+        }
         assert!(c.v > v_rest, "IHC should depolarise: v={}", c.v);
     }
 
     #[test]
     fn ihc_no_change_at_zero() {
         let mut c = InnerHairCell::new();
-        for _ in 0..200 { c.step(0.0); }
-        assert!((c.v - c.v_rest).abs() < 5.0, "IHC should stay near rest with no displacement");
+        for _ in 0..200 {
+            c.step(0.0);
+        }
+        assert!(
+            (c.v - c.v_rest).abs() < 5.0,
+            "IHC should stay near rest with no displacement"
+        );
     }
 
     #[test]
     fn ihc_ca_increases_with_depolarisation() {
         let mut c = InnerHairCell::new();
-        for _ in 0..200 { c.step(60.0); }
+        for _ in 0..200 {
+            c.step(60.0);
+        }
         assert!(c.ca > 0.0, "Ca2+ should increase during depolarisation");
     }
 
     #[test]
     fn ihc_reset_roundtrip() {
         let mut c = InnerHairCell::new();
-        for _ in 0..100 { c.step(50.0); }
+        for _ in 0..100 {
+            c.step(50.0);
+        }
         c.reset();
         assert_eq!(c.v, c.v_rest);
         assert_eq!(c.ca, 0.05);
@@ -1020,7 +1089,9 @@ mod tests {
     #[test]
     fn ihc_bounded() {
         let mut c = InnerHairCell::new();
-        for _ in 0..10000 { c.step(100.0); }
+        for _ in 0..10000 {
+            c.step(100.0);
+        }
         assert!(c.v.is_finite());
         assert!(c.ca.is_finite());
     }
@@ -1030,44 +1101,66 @@ mod tests {
         // Sustained stimulation should deplete available vesicles (q)
         let mut c = InnerHairCell::new();
         let q0 = c.q;
-        for _ in 0..5000 { c.step(80.0); }
-        assert!(c.q < q0,
-            "Vesicle pool should deplete: q0={q0}, q_now={}", c.q);
+        for _ in 0..5000 {
+            c.step(80.0);
+        }
+        assert!(
+            c.q < q0,
+            "Vesicle pool should deplete: q0={q0}, q_now={}",
+            c.q
+        );
     }
 
     #[test]
     fn ihc_cleft_transmitter_rises() {
         // Stimulation should release transmitter into cleft
         let mut c = InnerHairCell::new();
-        for _ in 0..2000 { c.step(80.0); }
-        assert!(c.c > 0.0,
-            "Cleft transmitter should rise with stimulation: c={}", c.c);
+        for _ in 0..2000 {
+            c.step(80.0);
+        }
+        assert!(
+            c.c > 0.0,
+            "Cleft transmitter should rise with stimulation: c={}",
+            c.c
+        );
     }
 
     #[test]
     fn ihc_reprocessing_store_fills() {
         // Reuptake from cleft should fill reprocessing store
         let mut c = InnerHairCell::new();
-        for _ in 0..5000 { c.step(80.0); }
-        assert!(c.w > 0.0,
-            "Reprocessing store should fill via reuptake: w={}", c.w);
+        for _ in 0..5000 {
+            c.step(80.0);
+        }
+        assert!(
+            c.w > 0.0,
+            "Reprocessing store should fill via reuptake: w={}",
+            c.w
+        );
     }
 
     #[test]
     fn ihc_pool_mass_conserved() {
         // Total transmitter (q + c + w) should not exceed m_pool
         let mut c = InnerHairCell::new();
-        for _ in 0..10000 { c.step(80.0); }
+        for _ in 0..10000 {
+            c.step(80.0);
+        }
         let total = c.q + c.c + c.w;
-        assert!(total <= c.m_pool * 1.5,
-            "Total transmitter should be bounded: q+c+w={total:.2}, m={}", c.m_pool);
+        assert!(
+            total <= c.m_pool * 1.5,
+            "Total transmitter should be bounded: q+c+w={total:.2}, m={}",
+            c.m_pool
+        );
     }
 
     #[test]
     fn ihc_performance() {
         let mut c = InnerHairCell::new();
         let start = std::time::Instant::now();
-        for _ in 0..100_000 { c.step(50.0); }
+        for _ in 0..100_000 {
+            c.step(50.0);
+        }
         assert!(start.elapsed().as_millis() < 50);
     }
 
@@ -1076,7 +1169,9 @@ mod tests {
     #[test]
     fn ohc_depolarises_and_motility() {
         let mut c = OuterHairCell::new();
-        for _ in 0..200 { c.step(40.0); }
+        for _ in 0..200 {
+            c.step(40.0);
+        }
         assert!(c.v > c.v_rest);
         assert!(c.motility.abs() > 0.01, "OHC should show motility");
     }
@@ -1086,17 +1181,23 @@ mod tests {
         // Depolarisation → contraction (positive motility)
         // Hyperpolarisation → elongation (negative motility)
         let mut dep = OuterHairCell::new();
-        dep.v = -20.0;  // Depolarised
-        dep.step(0.0);   // Update motility
+        dep.v = -20.0; // Depolarised
+        dep.step(0.0); // Update motility
         let mot_dep = dep.motility;
 
         let mut hyp = OuterHairCell::new();
-        hyp.v = -80.0;  // Hyperpolarised
+        hyp.v = -80.0; // Hyperpolarised
         hyp.step(0.0);
         let mot_hyp = hyp.motility;
 
-        assert!(mot_dep > 0.0, "Depolarisation should contract: motility={mot_dep:.3}");
-        assert!(mot_hyp < 0.0, "Hyperpolarisation should elongate: motility={mot_hyp:.3}");
+        assert!(
+            mot_dep > 0.0,
+            "Depolarisation should contract: motility={mot_dep:.3}"
+        );
+        assert!(
+            mot_hyp < 0.0,
+            "Hyperpolarisation should elongate: motility={mot_hyp:.3}"
+        );
     }
 
     #[test]
@@ -1104,25 +1205,33 @@ mod tests {
         // Contraction should be larger than elongation (asymmetry)
         // Drive OHC to depolarised state with strong input
         let mut dep = OuterHairCell::new();
-        for _ in 0..2000 { dep.step(80.0); } // Strong depolarisation
+        for _ in 0..2000 {
+            dep.step(80.0);
+        } // Strong depolarisation
         let contraction = dep.motility;
 
         // Drive OHC with zero input → stays near rest (hyperpolarised relative to V_pk)
         let mut hyp = OuterHairCell::new();
-        for _ in 0..2000 { hyp.step(0.0); } // Near rest = hyperpolarised vs V_pk
+        for _ in 0..2000 {
+            hyp.step(0.0);
+        } // Near rest = hyperpolarised vs V_pk
         let elongation = hyp.motility;
 
         // At rest (V=-70), prestin is mostly in expanded state (elongation)
         // With strong input (depolarised), prestin contracts
         // Due to asymmetry factor, |contraction| > |elongation|
-        assert!(contraction.abs() > elongation.abs() * 0.5,
-            "Asymmetric prestin: contraction={contraction:.3}, elongation={elongation:.3}");
+        assert!(
+            contraction.abs() > elongation.abs() * 0.5,
+            "Asymmetric prestin: contraction={contraction:.3}, elongation={elongation:.3}"
+        );
     }
 
     #[test]
     fn ohc_reset() {
         let mut c = OuterHairCell::new();
-        for _ in 0..100 { c.step(40.0); }
+        for _ in 0..100 {
+            c.step(40.0);
+        }
         c.reset();
         assert_eq!(c.motility, 0.0);
     }
@@ -1130,7 +1239,9 @@ mod tests {
     #[test]
     fn ohc_bounded() {
         let mut c = OuterHairCell::new();
-        for _ in 0..10000 { c.step(100.0); }
+        for _ in 0..10000 {
+            c.step(100.0);
+        }
         assert!(c.v.is_finite());
     }
 
@@ -1140,14 +1251,18 @@ mod tests {
     fn rod_hyperpolarises_with_light() {
         let mut r = RodPhotoreceptor::new();
         let v_dark = r.v;
-        for _ in 0..1000 { r.step(100.0); }
+        for _ in 0..1000 {
+            r.step(100.0);
+        }
         assert!(r.v < v_dark, "rod should hyperpolarise: v={}", r.v);
     }
 
     #[test]
     fn rod_stays_dark_without_light() {
         let mut r = RodPhotoreceptor::new();
-        for _ in 0..500 { r.step(0.0); }
+        for _ in 0..500 {
+            r.step(0.0);
+        }
         assert!((r.v - r.v_dark).abs() < 1.0);
     }
 
@@ -1155,10 +1270,14 @@ mod tests {
     fn rod_slow_recovery() {
         let mut r = RodPhotoreceptor::new();
         // Flash
-        for _ in 0..500 { r.step(200.0); }
+        for _ in 0..500 {
+            r.step(200.0);
+        }
         let v_after_flash = r.v;
         // Dark: slow recovery
-        for _ in 0..1000 { r.step(0.0); }
+        for _ in 0..1000 {
+            r.step(0.0);
+        }
         assert!(r.v > v_after_flash, "rod should recover in dark");
         assert!(r.v < r.v_dark, "rod should not fully recover in 1000 steps");
     }
@@ -1166,12 +1285,24 @@ mod tests {
     #[test]
     fn rod_cgmp_bounded() {
         let mut r = RodPhotoreceptor::new();
-        for _ in 0..10000 { r.step(1000.0); }
-        assert!(r.cgmp >= 0.0 && r.cgmp <= 1.5, "cGMP should be bounded: {}", r.cgmp);
+        for _ in 0..10000 {
+            r.step(1000.0);
+        }
+        assert!(
+            r.cgmp >= 0.0 && r.cgmp <= 1.5,
+            "cGMP should be bounded: {}",
+            r.cgmp
+        );
         r.reset();
-        for _ in 0..10000 { r.step(-10.0); } // Negative light clamped to 0
-        // With Ca²⁺ feedback, cGMP can transiently overshoot during adaptation
-        assert!(r.cgmp >= 0.0 && r.cgmp <= 1.5, "cGMP should be bounded: {}", r.cgmp);
+        for _ in 0..10000 {
+            r.step(-10.0);
+        } // Negative light clamped to 0
+          // With Ca²⁺ feedback, cGMP can transiently overshoot during adaptation
+        assert!(
+            r.cgmp >= 0.0 && r.cgmp <= 1.5,
+            "cGMP should be bounded: {}",
+            r.cgmp
+        );
     }
 
     #[test]
@@ -1180,22 +1311,31 @@ mod tests {
         // sustained light → Ca²⁺ drops → GC increases → cGMP partially recovers
         let mut r = RodPhotoreceptor::new();
         // Apply light
-        for _ in 0..5000 { r.step(100.0); }
+        for _ in 0..5000 {
+            r.step(100.0);
+        }
         let v_adapted = r.v;
         let ca_adapted = r.ca;
         // Ca²⁺ should be lower than dark level
-        assert!(ca_adapted < 1.0,
-            "Ca²⁺ should drop during light: ca={ca_adapted:.3}");
+        assert!(
+            ca_adapted < 1.0,
+            "Ca²⁺ should drop during light: ca={ca_adapted:.3}"
+        );
         // V should not be fully hyperpolarised (adaptation compensates)
-        assert!(v_adapted > r.v_hyper + 1.0,
-            "Adaptation should partially restore: v={v_adapted:.1}, v_hyper={}", r.v_hyper);
+        assert!(
+            v_adapted > r.v_hyper + 1.0,
+            "Adaptation should partially restore: v={v_adapted:.1}, v_hyper={}",
+            r.v_hyper
+        );
     }
 
     #[test]
     fn rod_performance() {
         let mut r = RodPhotoreceptor::new();
         let start = std::time::Instant::now();
-        for _ in 0..100_000 { r.step(50.0); }
+        for _ in 0..100_000 {
+            r.step(50.0);
+        }
         assert!(start.elapsed().as_millis() < 50);
     }
 
@@ -1205,7 +1345,9 @@ mod tests {
     fn cone_hyperpolarises_with_light() {
         let mut c = ConePhotoreceptor::new();
         let v_dark = c.v;
-        for _ in 0..500 { c.step(500.0); }
+        for _ in 0..500 {
+            c.step(500.0);
+        }
         assert!(c.v < v_dark);
     }
 
@@ -1214,8 +1356,14 @@ mod tests {
         let mut rod = RodPhotoreceptor::new();
         let mut cone = ConePhotoreceptor::new();
         // Flash, then dark
-        for _ in 0..500 { rod.step(100.0); cone.step(100.0); }
-        for _ in 0..2000 { rod.step(0.0); cone.step(0.0); }
+        for _ in 0..500 {
+            rod.step(100.0);
+            cone.step(100.0);
+        }
+        for _ in 0..2000 {
+            rod.step(0.0);
+            cone.step(0.0);
+        }
         // Cone should recover more (faster tau_rec)
         let rod_recovery = rod.v - rod.v_hyper;
         let cone_recovery = cone.v - cone.v_hyper;
@@ -1228,7 +1376,9 @@ mod tests {
     #[test]
     fn cone_reset() {
         let mut c = ConePhotoreceptor::new();
-        for _ in 0..500 { c.step(500.0); }
+        for _ in 0..500 {
+            c.step(500.0);
+        }
         c.reset();
         assert_eq!(c.cgmp, 1.0);
         assert_eq!(c.v, c.v_dark);
@@ -1254,7 +1404,10 @@ mod tests {
     fn rgc_on_no_fire_without_input() {
         let mut rgc = RetinalGanglionCell::new();
         let spikes: i32 = (0..500).map(|_| rgc.step(0.0)).sum();
-        assert_eq!(spikes, 0, "GLM with baseline=-3 should be quiescent without input");
+        assert_eq!(
+            spikes, 0,
+            "GLM with baseline=-3 should be quiescent without input"
+        );
     }
 
     #[test]
@@ -1264,13 +1417,18 @@ mod tests {
         let mut rgc = RetinalGanglionCell::new();
         let mut spikes = Vec::new();
         // Use moderate input so refractory is visible
-        for _ in 0..200 { spikes.push(rgc.step(5.0)); }
+        for _ in 0..200 {
+            spikes.push(rgc.step(5.0));
+        }
         // After first spike, check that there's at least one 0 within next 3 steps
         for (i, &s) in spikes.iter().enumerate() {
             if s == 1 && i + 3 < spikes.len() {
-                let next3: i32 = spikes[i+1..i+4].iter().sum();
-                assert!(next3 < 3,
-                    "History filter should suppress some re-firing after spike at {}", i);
+                let next3: i32 = spikes[i + 1..i + 4].iter().sum();
+                assert!(
+                    next3 < 3,
+                    "History filter should suppress some re-firing after spike at {}",
+                    i
+                );
                 break;
             }
         }
@@ -1281,12 +1439,17 @@ mod tests {
         // GLM has temporal filter — brief stimulus should produce delayed response
         let mut rgc = RetinalGanglionCell::new();
         // Inject brief strong stimulus then nothing
-        for _ in 0..5 { rgc.step(50.0); }
+        for _ in 0..5 {
+            rgc.step(50.0);
+        }
         // Response can continue after stimulus ends (filter has memory)
         let late_spikes: i32 = (0..50).map(|_| rgc.step(0.0)).sum();
         // At minimum the buffers should have non-zero content
         let has_memory = rgc.stim_buffer.iter().any(|&x| x != 0.0);
-        assert!(has_memory || late_spikes >= 0, "Stimulus filter should retain memory");
+        assert!(
+            has_memory || late_spikes >= 0,
+            "Stimulus filter should retain memory"
+        );
     }
 
     #[test]
@@ -1302,10 +1465,18 @@ mod tests {
     #[test]
     fn rgc_reset_clears_buffers() {
         let mut rgc = RetinalGanglionCell::new();
-        for _ in 0..100 { rgc.step(20.0); }
+        for _ in 0..100 {
+            rgc.step(20.0);
+        }
         rgc.reset();
-        assert!(rgc.stim_buffer.iter().all(|&x| x == 0.0), "Stimulus buffer not cleared");
-        assert!(rgc.hist_buffer.iter().all(|&x| x == 0.0), "History buffer not cleared");
+        assert!(
+            rgc.stim_buffer.iter().all(|&x| x == 0.0),
+            "Stimulus buffer not cleared"
+        );
+        assert!(
+            rgc.hist_buffer.iter().all(|&x| x == 0.0),
+            "History buffer not cleared"
+        );
     }
 
     // ── Merkel Cell ──────────────────────────────────────────────
@@ -1323,7 +1494,10 @@ mod tests {
         let first: i32 = (0..1000).map(|_| m.step(20.0)).sum();
         let second: i32 = (0..1000).map(|_| m.step(20.0)).sum();
         // Slow adapting: second half may fire slightly fewer but still fires
-        assert!(second > 0, "Merkel should still fire in second half (slow adapting)");
+        assert!(
+            second > 0,
+            "Merkel should still fire in second half (slow adapting)"
+        );
         assert!(second <= first + 5, "Merkel should slowly adapt");
     }
 
@@ -1337,7 +1511,9 @@ mod tests {
     #[test]
     fn merkel_reset() {
         let mut m = MerkelCell::new();
-        for _ in 0..500 { m.step(20.0); }
+        for _ in 0..500 {
+            m.step(20.0);
+        }
         m.reset();
         assert_eq!(m.adapt, 0.0);
     }
@@ -1376,7 +1552,9 @@ mod tests {
     #[test]
     fn pacinian_reset() {
         let mut p = PacinianCorpuscle::new();
-        for i in 0..100 { p.step(i as f64); }
+        for i in 0..100 {
+            p.step(i as f64);
+        }
         p.reset();
         assert_eq!(p.prev_pressure, 0.0);
         assert_eq!(p.adapt, 0.0);
@@ -1400,12 +1578,20 @@ mod tests {
     fn nociceptor_sensitisation() {
         let mut n = Nociceptor::new();
         // Strong stimulus → spikes → sensitisation builds
-        for _ in 0..1000 { n.step(50.0); }
+        for _ in 0..1000 {
+            n.step(50.0);
+        }
         assert!(n.sensitisation > 0.0, "sensitisation should increase");
         let sens = n.sensitisation;
         // After a long pause, sensitisation decays (tau_sens=5000ms, need many steps)
-        for _ in 0..50000 { n.step(0.0); }
-        assert!(n.sensitisation < sens, "sensitisation should decay: was {sens}, now {}", n.sensitisation);
+        for _ in 0..50000 {
+            n.step(0.0);
+        }
+        assert!(
+            n.sensitisation < sens,
+            "sensitisation should decay: was {sens}, now {}",
+            n.sensitisation
+        );
     }
 
     #[test]
@@ -1418,7 +1604,9 @@ mod tests {
     #[test]
     fn nociceptor_reset() {
         let mut n = Nociceptor::new();
-        for _ in 0..500 { n.step(50.0); }
+        for _ in 0..500 {
+            n.step(50.0);
+        }
         n.reset();
         assert_eq!(n.sensitisation, 0.0);
     }
@@ -1453,7 +1641,9 @@ mod tests {
     #[test]
     fn olfactory_reset() {
         let mut o = OlfactoryReceptorNeuron::new();
-        for _ in 0..1000 { o.step(5.0); }
+        for _ in 0..1000 {
+            o.step(5.0);
+        }
         o.reset();
         assert_eq!(o.camp, 0.0);
         assert_eq!(o.adapt, 0.0);
@@ -1465,8 +1655,14 @@ mod tests {
         // PDE4 should rise when cAMP is elevated
         let mut o = OlfactoryReceptorNeuron::new();
         assert_eq!(o.pde4, 0.0);
-        for _ in 0..5000 { o.step(5.0); }
-        assert!(o.pde4 > 0.0, "PDE4 should activate with sustained odorant, got {}", o.pde4);
+        for _ in 0..5000 {
+            o.step(5.0);
+        }
+        assert!(
+            o.pde4 > 0.0,
+            "PDE4 should activate with sustained odorant, got {}",
+            o.pde4
+        );
     }
 
     #[test]
@@ -1480,9 +1676,12 @@ mod tests {
             with_pde4.step(5.0);
             no_pde4.step(5.0);
         }
-        assert!(with_pde4.camp < no_pde4.camp,
+        assert!(
+            with_pde4.camp < no_pde4.camp,
             "PDE4 should reduce cAMP: with={:.3} vs without={:.3}",
-            with_pde4.camp, no_pde4.camp);
+            with_pde4.camp,
+            no_pde4.camp
+        );
     }
 
     #[test]
@@ -1500,8 +1699,10 @@ mod tests {
         // Measure late firing
         let spikes_with: i32 = (0..5000).map(|_| with_pde4.step(5.0)).sum();
         let spikes_no: i32 = (0..5000).map(|_| no_pde4.step(5.0)).sum();
-        assert!(spikes_with <= spikes_no,
-            "PDE4 should enhance adaptation: with={spikes_with}, without={spikes_no}");
+        assert!(
+            spikes_with <= spikes_no,
+            "PDE4 should enhance adaptation: with={spikes_with}, without={spikes_no}"
+        );
     }
 
     // ── Taste Receptor ───────────────────────────────────────────
@@ -1510,21 +1711,27 @@ mod tests {
     fn taste_depolarises_with_tastant() {
         let mut t = TasteReceptorCell::new();
         let v_rest = t.v;
-        for _ in 0..500 { t.step(5.0); }
+        for _ in 0..500 {
+            t.step(5.0);
+        }
         assert!(t.v > v_rest, "taste cell should depolarise");
     }
 
     #[test]
     fn taste_atp_release() {
         let mut t = TasteReceptorCell::new();
-        for _ in 0..500 { t.step(5.0); }
+        for _ in 0..500 {
+            t.step(5.0);
+        }
         assert!(t.atp_release > 0.0, "ATP should be released");
     }
 
     #[test]
     fn taste_no_response_without_tastant() {
         let mut t = TasteReceptorCell::new();
-        for _ in 0..500 { t.step(0.0); }
+        for _ in 0..500 {
+            t.step(0.0);
+        }
         assert!((t.v - t.v_rest).abs() < 2.0);
         assert!(t.atp_release < 0.01);
     }
@@ -1532,7 +1739,9 @@ mod tests {
     #[test]
     fn taste_ca_bounded() {
         let mut t = TasteReceptorCell::new();
-        for _ in 0..10000 { t.step(100.0); }
+        for _ in 0..10000 {
+            t.step(100.0);
+        }
         assert!(t.ca >= 0.0 && t.ca <= 1.0);
         assert!(t.ip3 >= 0.0 && t.ip3 <= 1.0);
     }
@@ -1540,7 +1749,9 @@ mod tests {
     #[test]
     fn taste_reset() {
         let mut t = TasteReceptorCell::new();
-        for _ in 0..500 { t.step(5.0); }
+        for _ in 0..500 {
+            t.step(5.0);
+        }
         t.reset();
         assert_eq!(t.ca, 0.0);
         assert_eq!(t.ip3, 0.0);

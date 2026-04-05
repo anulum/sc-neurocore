@@ -879,7 +879,10 @@ mod tests {
     fn adex_pipeline_sustained_spiking() {
         let mut n = AdExNeuron::new();
         let spikes: i32 = (0..10000).map(|_| n.step(500.0)).sum();
-        assert!(spikes > 100, "sustained input should produce many spikes: got {spikes}");
+        assert!(
+            spikes > 100,
+            "sustained input should produce many spikes: got {spikes}"
+        );
         assert!(n.v.is_finite());
     }
 
@@ -891,7 +894,11 @@ mod tests {
             n.step(500.0);
         }
         let elapsed = start.elapsed();
-        assert!(elapsed.as_millis() < 50, "10k steps took too long: {:?}", elapsed);
+        assert!(
+            elapsed.as_millis() < 50,
+            "10k steps took too long: {:?}",
+            elapsed
+        );
     }
 
     // ── ExpIF STRONG tests ───────────────────────────────────────
@@ -947,7 +954,11 @@ mod tests {
             n.step(500.0);
         }
         let elapsed = start.elapsed();
-        assert!(elapsed.as_millis() < 50, "10k steps took too long: {:?}", elapsed);
+        assert!(
+            elapsed.as_millis() < 50,
+            "10k steps took too long: {:?}",
+            elapsed
+        );
     }
 
     // ── Lapicque STRONG tests ────────────────────────────────────
@@ -1009,13 +1020,20 @@ mod tests {
             n.step(5.0);
         }
         let elapsed = start.elapsed();
-        assert!(elapsed.as_millis() < 50, "10k steps took too long: {:?}", elapsed);
+        assert!(
+            elapsed.as_millis() < 50,
+            "10k steps took too long: {:?}",
+            elapsed
+        );
     }
 
     #[test]
     fn lapicque_pipeline_sustained_spiking() {
         let mut n = LapicqueNeuron::new(20.0, 1.0, 1.0, 1.0);
         let spikes: i32 = (0..10000).map(|_| n.step(5.0)).sum();
-        assert!(spikes > 100, "sustained input should produce many spikes: got {spikes}");
+        assert!(
+            spikes > 100,
+            "sustained input should produce many spikes: got {spikes}"
+        );
     }
 }

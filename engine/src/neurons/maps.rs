@@ -311,15 +311,17 @@ impl Default for CourageNekorkinMapNeuron {
 pub struct AiharaMapNeuron {
     pub x: f64,
     pub y: f64,
-    pub k_f: f64,       // Fast variable decay
-    pub k_s: f64,       // Slow variable decay
-    pub alpha: f64,     // Sigmoid steepness offset
-    pub delta: f64,     // Slow→fast coupling
+    pub k_f: f64,   // Fast variable decay
+    pub k_s: f64,   // Slow variable decay
+    pub alpha: f64, // Sigmoid steepness offset
+    pub delta: f64, // Slow→fast coupling
     pub x_threshold: f64,
 }
 
 impl Default for AiharaMapNeuron {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl AiharaMapNeuron {
@@ -344,10 +346,18 @@ impl AiharaMapNeuron {
         self.x = x_new.clamp(-10.0, 10.0);
         self.y = y_new.clamp(-10.0, 10.0);
 
-        if !self.x.is_finite() { self.x = 0.0; }
-        if !self.y.is_finite() { self.y = 0.0; }
+        if !self.x.is_finite() {
+            self.x = 0.0;
+        }
+        if !self.y.is_finite() {
+            self.y = 0.0;
+        }
 
-        if self.x >= self.x_threshold && x_prev < self.x_threshold { 1 } else { 0 }
+        if self.x >= self.x_threshold && x_prev < self.x_threshold {
+            1
+        } else {
+            0
+        }
     }
 
     pub fn reset(&mut self) {
@@ -368,16 +378,18 @@ impl AiharaMapNeuron {
 #[derive(Clone, Debug)]
 pub struct KilincBhattMapNeuron {
     pub x: f64,
-    pub theta: f64,     // Adaptive threshold
-    pub k: f64,         // Gain
-    pub beta: f64,      // Threshold decay
-    pub gamma: f64,     // Spike→threshold coupling
+    pub theta: f64,       // Adaptive threshold
+    pub k: f64,           // Gain
+    pub beta: f64,        // Threshold decay
+    pub gamma: f64,       // Spike→threshold coupling
     pub theta_spike: f64, // Spike detection level
     pub x_threshold: f64,
 }
 
 impl Default for KilincBhattMapNeuron {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl KilincBhattMapNeuron {
@@ -403,10 +415,18 @@ impl KilincBhattMapNeuron {
         self.x = x_new.clamp(-5.0, 5.0);
         self.theta = theta_new.clamp(-5.0, 5.0);
 
-        if !self.x.is_finite() { self.x = 0.0; }
-        if !self.theta.is_finite() { self.theta = 0.0; }
+        if !self.x.is_finite() {
+            self.x = 0.0;
+        }
+        if !self.theta.is_finite() {
+            self.theta = 0.0;
+        }
 
-        if self.x >= self.x_threshold && x_prev < self.x_threshold { 1 } else { 0 }
+        if self.x >= self.x_threshold && x_prev < self.x_threshold {
+            1
+        } else {
+            0
+        }
     }
 
     pub fn reset(&mut self) {
@@ -423,21 +443,23 @@ impl KilincBhattMapNeuron {
 /// Ermentrout & Kopell, SIAM J Appl Math 46:233, 1986.
 #[derive(Clone, Debug)]
 pub struct ErmentroutKopellMapNeuron {
-    pub theta: f64,     // Phase variable [0, 2*pi)
+    pub theta: f64, // Phase variable [0, 2*pi)
     pub dt: f64,
     pub gain: f64,
     pub theta_threshold: f64,
 }
 
 impl Default for ErmentroutKopellMapNeuron {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ErmentroutKopellMapNeuron {
     pub fn new() -> Self {
         Self {
             theta: 0.0,
-            dt: 0.1,       // Discrete step size
+            dt: 0.1, // Discrete step size
             gain: 1.0,
             theta_threshold: std::f64::consts::PI,
         }
@@ -459,10 +481,16 @@ impl ErmentroutKopellMapNeuron {
 
         // Wrap theta to [0, 2*pi)
         let two_pi = 2.0 * std::f64::consts::PI;
-        if self.theta >= two_pi { self.theta -= two_pi; }
-        if self.theta < 0.0 { self.theta += two_pi; }
+        if self.theta >= two_pi {
+            self.theta -= two_pi;
+        }
+        if self.theta < 0.0 {
+            self.theta += two_pi;
+        }
 
-        if !self.theta.is_finite() { self.theta = 0.0; }
+        if !self.theta.is_finite() {
+            self.theta = 0.0;
+        }
 
         fired
     }
@@ -543,13 +571,18 @@ mod tests {
         }
         let mean = values.iter().sum::<f64>() / values.len() as f64;
         let var = values.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / values.len() as f64;
-        assert!(var > 0.001, "Trajectory should show variability (chaos), var={var}");
+        assert!(
+            var > 0.001,
+            "Trajectory should show variability (chaos), var={var}"
+        );
     }
 
     #[test]
     fn aihara_negative_input_no_crash() {
         let mut n = AiharaMapNeuron::new();
-        for _ in 0..10_000 { n.step(-100.0); }
+        for _ in 0..10_000 {
+            n.step(-100.0);
+        }
         assert!(n.x.is_finite());
     }
 
@@ -563,14 +596,18 @@ mod tests {
     #[test]
     fn aihara_extreme_input_bounded() {
         let mut n = AiharaMapNeuron::new();
-        for _ in 0..1000 { n.step(1e6); }
+        for _ in 0..1000 {
+            n.step(1e6);
+        }
         assert!(n.x.is_finite() && n.x <= 10.0);
     }
 
     #[test]
     fn aihara_reset_clears_state() {
         let mut n = AiharaMapNeuron::new();
-        for _ in 0..100 { n.step(1.0); }
+        for _ in 0..100 {
+            n.step(1.0);
+        }
         n.reset();
         assert_eq!(n.x, 0.0);
         assert_eq!(n.y, 0.0);
@@ -582,17 +619,24 @@ mod tests {
         let mut high = AiharaMapNeuron::new();
         let spikes_low: i32 = (0..5000).map(|_| low.step(0.5)).sum();
         let spikes_high: i32 = (0..5000).map(|_| high.step(2.0)).sum();
-        assert!(spikes_high >= spikes_low,
-            "Higher input should produce more spikes: high={spikes_high} vs low={spikes_low}");
+        assert!(
+            spikes_high >= spikes_low,
+            "Higher input should produce more spikes: high={spikes_high} vs low={spikes_low}"
+        );
     }
 
     #[test]
     fn aihara_performance_100k_steps() {
         let start = std::time::Instant::now();
         let mut n = AiharaMapNeuron::new();
-        for _ in 0..100_000 { std::hint::black_box(n.step(0.5)); }
+        for _ in 0..100_000 {
+            std::hint::black_box(n.step(0.5));
+        }
         let elapsed = start.elapsed();
-        assert!(elapsed.as_millis() < 50, "100k steps must complete in <50ms");
+        assert!(
+            elapsed.as_millis() < 50,
+            "100k steps must complete in <50ms"
+        );
     }
 
     // -- Kilinc-Bhatt Map STRONG tests --
@@ -617,21 +661,32 @@ mod tests {
         let mut n = KilincBhattMapNeuron::new();
         let early: i32 = (0..2000).map(|_| n.step(1.0)).sum();
         let late: i32 = (0..2000).map(|_| n.step(1.0)).sum();
-        assert!(early >= late, "Adaptation should slow firing: early={early}, late={late}");
+        assert!(
+            early >= late,
+            "Adaptation should slow firing: early={early}, late={late}"
+        );
     }
 
     #[test]
     fn kb_theta_increases_during_spiking() {
         let mut n = KilincBhattMapNeuron::new();
         let theta_before = n.theta;
-        for _ in 0..5000 { n.step(1.5); }
-        assert!(n.theta > theta_before, "Theta must increase during spiking, theta={}", n.theta);
+        for _ in 0..5000 {
+            n.step(1.5);
+        }
+        assert!(
+            n.theta > theta_before,
+            "Theta must increase during spiking, theta={}",
+            n.theta
+        );
     }
 
     #[test]
     fn kb_negative_input_no_crash() {
         let mut n = KilincBhattMapNeuron::new();
-        for _ in 0..10_000 { n.step(-100.0); }
+        for _ in 0..10_000 {
+            n.step(-100.0);
+        }
         assert!(n.x.is_finite());
     }
 
@@ -645,14 +700,18 @@ mod tests {
     #[test]
     fn kb_extreme_input_bounded() {
         let mut n = KilincBhattMapNeuron::new();
-        for _ in 0..1000 { n.step(1e6); }
+        for _ in 0..1000 {
+            n.step(1e6);
+        }
         assert!(n.x.is_finite() && n.x <= 5.0);
     }
 
     #[test]
     fn kb_reset_clears_state() {
         let mut n = KilincBhattMapNeuron::new();
-        for _ in 0..100 { n.step(1.0); }
+        for _ in 0..100 {
+            n.step(1.0);
+        }
         n.reset();
         assert_eq!(n.x, 0.0);
         assert_eq!(n.theta, 0.0);
@@ -662,9 +721,14 @@ mod tests {
     fn kb_performance_100k_steps() {
         let start = std::time::Instant::now();
         let mut n = KilincBhattMapNeuron::new();
-        for _ in 0..100_000 { std::hint::black_box(n.step(0.5)); }
+        for _ in 0..100_000 {
+            std::hint::black_box(n.step(0.5));
+        }
         let elapsed = start.elapsed();
-        assert!(elapsed.as_millis() < 50, "100k steps must complete in <50ms");
+        assert!(
+            elapsed.as_millis() < 50,
+            "100k steps must complete in <50ms"
+        );
     }
 
     // -- Ermentrout-Kopell Map STRONG tests --
@@ -691,24 +755,33 @@ mod tests {
         let mut n_high = ErmentroutKopellMapNeuron::new();
         let spikes_low: i32 = (0..10_000).map(|_| n_low.step(0.01)).sum();
         let spikes_high: i32 = (0..10_000).map(|_| n_high.step(1.0)).sum();
-        assert!(spikes_high > spikes_low,
-            "Higher input → higher rate: high={spikes_high} vs low={spikes_low}");
+        assert!(
+            spikes_high > spikes_low,
+            "Higher input → higher rate: high={spikes_high} vs low={spikes_low}"
+        );
     }
 
     #[test]
     fn ek_theta_wraps() {
         // Theta should stay in [0, 2*pi)
         let mut n = ErmentroutKopellMapNeuron::new();
-        for _ in 0..10_000 { n.step(0.5); }
+        for _ in 0..10_000 {
+            n.step(0.5);
+        }
         let two_pi = 2.0 * std::f64::consts::PI;
-        assert!(n.theta >= 0.0 && n.theta < two_pi,
-            "Theta must wrap to [0, 2pi), theta={}", n.theta);
+        assert!(
+            n.theta >= 0.0 && n.theta < two_pi,
+            "Theta must wrap to [0, 2pi), theta={}",
+            n.theta
+        );
     }
 
     #[test]
     fn ek_negative_input_no_crash() {
         let mut n = ErmentroutKopellMapNeuron::new();
-        for _ in 0..10_000 { n.step(-100.0); }
+        for _ in 0..10_000 {
+            n.step(-100.0);
+        }
         assert!(n.theta.is_finite());
     }
 
@@ -722,14 +795,18 @@ mod tests {
     #[test]
     fn ek_extreme_input_bounded() {
         let mut n = ErmentroutKopellMapNeuron::new();
-        for _ in 0..1000 { n.step(1e6); }
+        for _ in 0..1000 {
+            n.step(1e6);
+        }
         assert!(n.theta.is_finite());
     }
 
     #[test]
     fn ek_reset_clears_state() {
         let mut n = ErmentroutKopellMapNeuron::new();
-        for _ in 0..100 { n.step(0.5); }
+        for _ in 0..100 {
+            n.step(0.5);
+        }
         n.reset();
         assert_eq!(n.theta, 0.0);
     }
@@ -738,9 +815,14 @@ mod tests {
     fn ek_performance_100k_steps() {
         let start = std::time::Instant::now();
         let mut n = ErmentroutKopellMapNeuron::new();
-        for _ in 0..100_000 { std::hint::black_box(n.step(0.5)); }
+        for _ in 0..100_000 {
+            std::hint::black_box(n.step(0.5));
+        }
         let elapsed = start.elapsed();
-        assert!(elapsed.as_millis() < 50, "100k steps must complete in <50ms");
+        assert!(
+            elapsed.as_millis() < 50,
+            "100k steps must complete in <50ms"
+        );
     }
 
     // -- Courbage-Nekorkin STRONG tests (extending existing) --
@@ -756,7 +838,9 @@ mod tests {
     #[test]
     fn cn_negative_input_no_crash() {
         let mut n = CourageNekorkinMapNeuron::new();
-        for _ in 0..10_000 { n.step(-100.0); }
+        for _ in 0..10_000 {
+            n.step(-100.0);
+        }
         assert!(n.x.is_finite());
         assert!(n.x >= -10.0);
     }
@@ -771,14 +855,18 @@ mod tests {
     #[test]
     fn cn_extreme_input_bounded() {
         let mut n = CourageNekorkinMapNeuron::new();
-        for _ in 0..1000 { n.step(1e6); }
+        for _ in 0..1000 {
+            n.step(1e6);
+        }
         assert!(n.x.is_finite() && n.x <= 10.0);
     }
 
     #[test]
     fn cn_reset_clears_state() {
         let mut n = CourageNekorkinMapNeuron::new();
-        for _ in 0..100 { n.step(0.5); }
+        for _ in 0..100 {
+            n.step(0.5);
+        }
         n.reset();
         assert_eq!(n.x, 0.0);
         assert_eq!(n.y, 0.0);
@@ -800,16 +888,23 @@ mod tests {
         let mut high = CourageNekorkinMapNeuron::new();
         let sp_low: i32 = (0..5000).map(|_| low.step(0.0)).sum();
         let sp_high: i32 = (0..5000).map(|_| high.step(1.0)).sum();
-        assert!(sp_high >= sp_low,
-            "Higher input should fire more: high={sp_high} vs low={sp_low}");
+        assert!(
+            sp_high >= sp_low,
+            "Higher input should fire more: high={sp_high} vs low={sp_low}"
+        );
     }
 
     #[test]
     fn cn_performance_100k_steps() {
         let start = std::time::Instant::now();
         let mut n = CourageNekorkinMapNeuron::new();
-        for _ in 0..100_000 { std::hint::black_box(n.step(0.5)); }
+        for _ in 0..100_000 {
+            std::hint::black_box(n.step(0.5));
+        }
         let elapsed = start.elapsed();
-        assert!(elapsed.as_millis() < 50, "100k steps must complete in <50ms");
+        assert!(
+            elapsed.as_millis() < 50,
+            "100k steps must complete in <50ms"
+        );
     }
 }

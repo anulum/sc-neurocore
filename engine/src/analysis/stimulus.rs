@@ -16,9 +16,7 @@ pub fn spike_triggered_average(
     window_steps: usize,
 ) -> Vec<f64> {
     let n = stimulus.len().min(binary_train.len());
-    let spike_idx: Vec<usize> = (window_steps..n)
-        .filter(|&i| binary_train[i] > 0)
-        .collect();
+    let spike_idx: Vec<usize> = (window_steps..n).filter(|&i| binary_train[i] > 0).collect();
     if spike_idx.is_empty() {
         return vec![0.0; window_steps];
     }
@@ -44,9 +42,7 @@ pub fn spike_triggered_covariance(
     window_steps: usize,
 ) -> Vec<f64> {
     let n = stimulus.len().min(binary_train.len());
-    let spike_idx: Vec<usize> = (window_steps..n)
-        .filter(|&i| binary_train[i] > 0)
-        .collect();
+    let spike_idx: Vec<usize> = (window_steps..n).filter(|&i| binary_train[i] > 0).collect();
     if spike_idx.len() < 3 {
         // Return identity
         let mut eye = vec![0.0; window_steps * window_steps];
@@ -104,12 +100,7 @@ pub fn spike_triggered_covariance(
 /// Spatial information (bits/spike). Skaggs et al. 1993.
 ///
 /// `positions`: 1D position values (same length as `binary_train`).
-pub fn spatial_information(
-    binary_train: &[i32],
-    positions: &[f64],
-    n_bins: usize,
-    dt: f64,
-) -> f64 {
+pub fn spatial_information(binary_train: &[i32], positions: &[f64], n_bins: usize, dt: f64) -> f64 {
     let n = binary_train.len().min(positions.len());
     if n < 10 {
         return 0.0;
@@ -170,7 +161,9 @@ pub fn place_field_detection(
     let pos_min = pos.iter().cloned().fold(f64::INFINITY, f64::min);
     let pos_max = pos.iter().cloned().fold(f64::NEG_INFINITY, f64::max) + 1e-10;
     let bin_width = (pos_max - pos_min) / n_bins as f64;
-    let edges: Vec<f64> = (0..=n_bins).map(|k| pos_min + k as f64 * bin_width).collect();
+    let edges: Vec<f64> = (0..=n_bins)
+        .map(|k| pos_min + k as f64 * bin_width)
+        .collect();
 
     let mut rates = vec![0.0f64; n_bins];
     for k in 0..n_bins {
@@ -225,8 +218,12 @@ pub fn tuning_curve(
     let stim_min = stim.iter().cloned().fold(f64::INFINITY, f64::min);
     let stim_max = stim.iter().cloned().fold(f64::NEG_INFINITY, f64::max) + 1e-10;
     let bin_width = (stim_max - stim_min) / n_bins as f64;
-    let edges: Vec<f64> = (0..=n_bins).map(|k| stim_min + k as f64 * bin_width).collect();
-    let centres: Vec<f64> = (0..n_bins).map(|k| (edges[k] + edges[k + 1]) / 2.0).collect();
+    let edges: Vec<f64> = (0..=n_bins)
+        .map(|k| stim_min + k as f64 * bin_width)
+        .collect();
+    let centres: Vec<f64> = (0..n_bins)
+        .map(|k| (edges[k] + edges[k + 1]) / 2.0)
+        .collect();
 
     let mut rates = vec![0.0f64; n_bins];
     for k in 0..n_bins {
@@ -285,7 +282,7 @@ mod tests {
         }
         let cov = spike_triggered_covariance(&stim, &train, 10);
         assert_eq!(cov.len(), 100); // 10x10
-        // Diagonal should be non-negative
+                                    // Diagonal should be non-negative
         for i in 0..10 {
             assert!(cov[i * 10 + i] >= 0.0);
         }
@@ -351,7 +348,10 @@ mod tests {
 
     #[test]
     fn test_spatial_information_few_samples() {
-        assert_eq!(spatial_information(&[0, 1, 0], &[1.0, 2.0, 3.0], 5, 0.001), 0.0);
+        assert_eq!(
+            spatial_information(&[0, 1, 0], &[1.0, 2.0, 3.0], 5, 0.001),
+            0.0
+        );
     }
 
     #[test]
@@ -366,7 +366,10 @@ mod tests {
         assert!(!fields.is_empty(), "Should detect at least one place field");
         // Field should overlap the 5-10 range
         let (start, end) = fields[0];
-        assert!(start < 12.0 && end > 4.0, "Field ({start}, {end}) should be near 5-10");
+        assert!(
+            start < 12.0 && end > 4.0,
+            "Field ({start}, {end}) should be near 5-10"
+        );
     }
 
     #[test]
@@ -385,7 +388,9 @@ mod tests {
     #[test]
     fn test_tuning_curve_basic() {
         let mut train = vec![0i32; 200];
-        let stim: Vec<f64> = (0..200).map(|i| (i as f64 / 200.0 * 360.0) % 360.0).collect();
+        let stim: Vec<f64> = (0..200)
+            .map(|i| (i as f64 / 200.0 * 360.0) % 360.0)
+            .collect();
         // Tuned to ~180 degrees
         for i in 90..110 {
             train[i] = 1;

@@ -95,7 +95,10 @@ mod tests {
         // But FFT index = frequency * n * dt / (1/(n*dt))...
         // Actually for n=20, period=4: peak at k = n/period = 5
         // The actual peak may be at k=5 or a harmonic depending on DC removal
-        assert!(peak_idx == 5 || peak_idx == 10, "Expected peak at index 5 or 10, got {peak_idx}");
+        assert!(
+            peak_idx == 5 || peak_idx == 10,
+            "Expected peak at index 5 or 10, got {peak_idx}"
+        );
     }
 
     #[test]
