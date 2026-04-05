@@ -1486,7 +1486,7 @@ macro_rules! py_sensory_graded {
 
 py_sensory_graded!("InnerHairCell", PyInnerHairCell, neurons::InnerHairCell, state v, state ca, state q, state c, state w);
 py_sensory_graded!("OuterHairCell", PyOuterHairCell, neurons::OuterHairCell, state v, state motility);
-py_sensory_graded!("RodPhotoreceptor", PyRodPhotoreceptor, neurons::RodPhotoreceptor, state v, state cgmp);
+py_sensory_graded!("RodPhotoreceptor", PyRodPhotoreceptor, neurons::RodPhotoreceptor, state v, state cgmp, state ca);
 py_sensory_graded!("ConePhotoreceptor", PyConePhotoreceptor, neurons::ConePhotoreceptor, state v, state cgmp);
 py_sensory_graded!("TasteReceptorCell", PyTasteReceptorCell, neurons::TasteReceptorCell, state v, state ca, state ip3, state atp_release);
 
