@@ -75,6 +75,8 @@ PnR = "PnR"
 pnr = "pnr"
 pn = "pn"
 sav = "sav"
+ue = "ue"
+ba = "ba"
 
 [default.extend-identifiers]
 lins = "lins"
