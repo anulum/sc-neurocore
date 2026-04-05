@@ -15,12 +15,104 @@ use rayon::prelude::*;
 use crate::neuron::*;
 use crate::neurons::*;
 
+// ── Interface wrappers for non-standard models ──────────────────────
+
+/// Wrapper: multi-input spiking model → single-input interface.
+/// Extra inputs default to 0/false when driven from the network runner.
+macro_rules! wrap_2arg_f64 {
+    ($name:ident, $inner:ty, $v:ident, $extra:expr) => {
+        #[derive(Clone, Debug)]
+        pub struct $name(pub $inner);
+        impl $name {
+            pub fn new() -> Self { Self(<$inner>::new()) }
+            pub fn step(&mut self, current: f64) -> i32 { self.0.step(current, $extra) }
+            pub fn reset(&mut self) { self.0.reset(); }
+            pub fn v(&self) -> f64 { self.0.$v as f64 }
+        }
+        impl Default for $name { fn default() -> Self { Self::new() } }
+    };
+}
+
+/// Wrapper: 3-arg model → single-input interface.
+macro_rules! wrap_3arg {
+    ($name:ident, $inner:ty, $v:ident, $e2:expr, $e3:expr) => {
+        #[derive(Clone, Debug)]
+        pub struct $name(pub $inner);
+        impl $name {
+            pub fn new() -> Self { Self(<$inner>::new()) }
+            pub fn step(&mut self, current: f64) -> i32 { self.0.step(current, $e2, $e3) }
+            pub fn reset(&mut self) { self.0.reset(); }
+            pub fn v(&self) -> f64 { self.0.$v as f64 }
+        }
+        impl Default for $name { fn default() -> Self { Self::new() } }
+    };
+}
+
+/// Wrapper: i32-input model → f64-input interface.
+macro_rules! wrap_i32_input {
+    ($name:ident, $inner:ty, $v:ident, $ctor:expr) => {
+        #[derive(Clone, Debug)]
+        pub struct $name(pub $inner);
+        impl $name {
+            pub fn new() -> Self { Self($ctor) }
+            pub fn step(&mut self, current: f64) -> i32 { self.0.step(current as i32) }
+            pub fn reset(&mut self) { self.0.reset(); }
+            pub fn v(&self) -> f64 { self.0.$v as f64 }
+        }
+        impl Default for $name { fn default() -> Self { Self::new() } }
+    };
+}
+
+/// Wrapper: f64-output (rate/graded) → i32 spike interface via thresholding.
+macro_rules! wrap_graded {
+    ($name:ident, $inner:ty, $v:ident, $threshold:expr) => {
+        #[derive(Clone, Debug)]
+        pub struct $name(pub $inner);
+        impl $name {
+            pub fn new() -> Self { Self(<$inner>::new()) }
+            pub fn step(&mut self, current: f64) -> i32 {
+                let out = self.0.step(current);
+                if out > $threshold { 1 } else { 0 }
+            }
+            pub fn reset(&mut self) { self.0.reset(); }
+            pub fn v(&self) -> f64 { self.0.$v as f64 }
+        }
+        impl Default for $name { fn default() -> Self { Self::new() } }
+    };
+}
+
+// Multi-input spiking wrappers
+wrap_2arg_f64!(WrAlpha, AlphaNeuron, v, 0.0_f64);
+wrap_3arg!(WrCOBALIF, COBALIFNeuron, v, 0.0_f64, 0.0_f64);
+wrap_2arg_f64!(WrCompteWM, CompteWMNeuron, v, false);
+wrap_2arg_f64!(WrTsodyksMarkram, TsodyksMarkramNeuron, v, false);
+wrap_2arg_f64!(WrPinskyRinzel, PinskyRinzelNeuron, v_s, 0.0_f64);
+wrap_2arg_f64!(WrHayL5, HayL5PyramidalNeuron, v_s, 0.0_f64);
+wrap_2arg_f64!(WrTwoCompLIF, TwoCompartmentLIFNeuron, v_s, 0.0_f64);
+
+// Hardware integer-input wrappers
+wrap_i32_input!(WrLoihiCUBA, LoihiCUBANeuron, v, LoihiCUBANeuron::new());
+wrap_i32_input!(WrLoihi2, Loihi2Neuron, s1, Loihi2Neuron::new());
+wrap_i32_input!(WrSpiNNaker2, SpiNNaker2Neuron, v, SpiNNaker2Neuron::new());
+wrap_i32_input!(WrTrueNorth, TrueNorthNeuron, v, TrueNorthNeuron::new(256));
+wrap_i32_input!(WrIntegerQIF, IntegerQIFNeuron, v, IntegerQIFNeuron::new(1, 1000));
+
+// Graded/rate output wrappers (threshold at 0.5 for rates, 0.0 for sensory)
+wrap_graded!(WrSigmoidRate, SigmoidRateNeuron, r, 0.5);
+wrap_graded!(WrThresholdLinear, ThresholdLinearRateNeuron, r, 0.5);
+wrap_graded!(WrAstrocyte, AstrocyteModel, ca, 0.1);
+wrap_graded!(WrInnerHairCell, InnerHairCell, v, 0.0);
+wrap_graded!(WrOuterHairCell, OuterHairCell, v, 0.0);
+wrap_graded!(WrRodPhotoreceptor, RodPhotoreceptor, v, 0.0);
+wrap_graded!(WrConePhotoreceptor, ConePhotoreceptor, v, 0.0);
+wrap_graded!(WrTasteReceptor, TasteReceptorCell, v, 0.0);
+
 // ── NeuronVariant ───────────────────────────────────────────────────
 
-/// Enum dispatch across all neuron models that accept `step(f64) -> i32`.
+/// Enum dispatch across all neuron models.
 ///
-/// Models with non-standard signatures (multi-input, integer-input,
-/// rate-output) are excluded — they require specialized projection wiring.
+/// Models with non-standard signatures are wrapped via `Wr*` types
+/// to normalise to `step(f64) -> i32`.
 #[allow(clippy::large_enum_variant)]
 pub enum NeuronVariant {
     // neuron.rs
@@ -198,14 +290,30 @@ pub enum NeuronVariant {
     SmoothMuscle(SmoothMuscleCell),
     BetaCell(EndocrineBetaCell),
 
-    // Not wired (multi-arg / i32 input / f64 return / no reset):
-    // Alpha (2 args), COBALIF (3 args), TsodyksMarkram (bool arg),
-    // CompteWM (bool arg), McCullochPitts (no reset), SigmoidRate (f64 ret),
-    // ThresholdLinearRate (f64 ret), AstrocyteModel (f64 ret),
-    // PinskyRinzel (2 args), HayL5 (2 args),
-    // LoihiCUBA/Loihi2/TrueNorth/SpiNNaker2/Akida (i32 input)
-    // InnerHairCell, OuterHairCell, RodPhotoreceptor, ConePhotoreceptor,
-    // TasteReceptorCell (graded: step(f64)->f64)
+    // Wrapped models: non-standard interfaces normalised to step(f64)->i32
+    // Multi-input spiking
+    WrAlphaCell(WrAlpha),
+    WrCOBALIFCell(WrCOBALIF),
+    WrCompteWMCell(WrCompteWM),
+    WrTsodyksMarkramCell(WrTsodyksMarkram),
+    WrPinskyRinzelCell(WrPinskyRinzel),
+    WrHayL5Cell(WrHayL5),
+    WrTwoCompLIFCell(WrTwoCompLIF),
+    // Hardware integer-input
+    WrLoihiCUBACell(WrLoihiCUBA),
+    WrLoihi2Cell(WrLoihi2),
+    WrSpiNNaker2Cell(WrSpiNNaker2),
+    WrTrueNorthCell(WrTrueNorth),
+    WrIntegerQIFCell(WrIntegerQIF),
+    // Graded/rate output
+    WrSigmoidRateCell(WrSigmoidRate),
+    WrThresholdLinearCell(WrThresholdLinear),
+    WrAstrocyteCell(WrAstrocyte),
+    WrInnerHairCellCell(WrInnerHairCell),
+    WrOuterHairCellCell(WrOuterHairCell),
+    WrRodPhotoreceptorCell(WrRodPhotoreceptor),
+    WrConePhotoreceptorCell(WrConePhotoreceptor),
+    WrTasteReceptorCell(WrTasteReceptor),
 }
 
 macro_rules! dispatch_step {
@@ -264,6 +372,12 @@ macro_rules! all_variants {
             MontbrioMPR, Brunel, TUM, ElBoustani,
             GradedSynapse, GapJunction, FHAxon, NodeOfRanvier, MyelinAxon, CardiacPurkinje,
             SmoothMuscle, BetaCell,
+            WrAlphaCell, WrCOBALIFCell, WrCompteWMCell, WrTsodyksMarkramCell,
+            WrPinskyRinzelCell, WrHayL5Cell, WrTwoCompLIFCell,
+            WrLoihiCUBACell, WrLoihi2Cell, WrSpiNNaker2Cell, WrTrueNorthCell, WrIntegerQIFCell,
+            WrSigmoidRateCell, WrThresholdLinearCell, WrAstrocyteCell,
+            WrInnerHairCellCell, WrOuterHairCellCell,
+            WrRodPhotoreceptorCell, WrConePhotoreceptorCell, WrTasteReceptorCell,
         )
     };
 }
@@ -426,6 +540,27 @@ impl NeuronVariant {
             NeuronVariant::CardiacPurkinje(n) => n.v,
             NeuronVariant::SmoothMuscle(n) => n.v,
             NeuronVariant::BetaCell(n) => n.v,
+            // Wrapped models — voltage via wrapper .v()
+            NeuronVariant::WrAlphaCell(n) => n.v(),
+            NeuronVariant::WrCOBALIFCell(n) => n.v(),
+            NeuronVariant::WrCompteWMCell(n) => n.v(),
+            NeuronVariant::WrTsodyksMarkramCell(n) => n.v(),
+            NeuronVariant::WrPinskyRinzelCell(n) => n.v(),
+            NeuronVariant::WrHayL5Cell(n) => n.v(),
+            NeuronVariant::WrTwoCompLIFCell(n) => n.v(),
+            NeuronVariant::WrLoihiCUBACell(n) => n.v(),
+            NeuronVariant::WrLoihi2Cell(n) => n.v(),
+            NeuronVariant::WrSpiNNaker2Cell(n) => n.v(),
+            NeuronVariant::WrTrueNorthCell(n) => n.v(),
+            NeuronVariant::WrIntegerQIFCell(n) => n.v(),
+            NeuronVariant::WrSigmoidRateCell(n) => n.v(),
+            NeuronVariant::WrThresholdLinearCell(n) => n.v(),
+            NeuronVariant::WrAstrocyteCell(n) => n.v(),
+            NeuronVariant::WrInnerHairCellCell(n) => n.v(),
+            NeuronVariant::WrOuterHairCellCell(n) => n.v(),
+            NeuronVariant::WrRodPhotoreceptorCell(n) => n.v(),
+            NeuronVariant::WrConePhotoreceptorCell(n) => n.v(),
+            NeuronVariant::WrTasteReceptorCell(n) => n.v(),
         }
     }
 }
@@ -966,6 +1101,29 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         "CardiacPurkinjeFibre" | "CardiacPurkinje" => Ok(NeuronVariant::CardiacPurkinje(CardiacPurkinjeFibre::new())),
         "SmoothMuscleCell" | "SmoothMuscle" => Ok(NeuronVariant::SmoothMuscle(SmoothMuscleCell::new())),
         "EndocrineBetaCell" | "BetaCell" => Ok(NeuronVariant::BetaCell(EndocrineBetaCell::new())),
+        // Wrapped multi-input spiking
+        "AlphaNeuron" | "Alpha" => Ok(NeuronVariant::WrAlphaCell(WrAlpha::new())),
+        "COBALIFNeuron" | "COBALIF" => Ok(NeuronVariant::WrCOBALIFCell(WrCOBALIF::new())),
+        "CompteWMNeuron" | "CompteWM" => Ok(NeuronVariant::WrCompteWMCell(WrCompteWM::new())),
+        "TsodyksMarkramNeuron" | "TsodyksMarkram" => Ok(NeuronVariant::WrTsodyksMarkramCell(WrTsodyksMarkram::new())),
+        "PinskyRinzelNeuron" | "PinskyRinzel" => Ok(NeuronVariant::WrPinskyRinzelCell(WrPinskyRinzel::new())),
+        "HayL5PyramidalNeuron" | "HayL5" => Ok(NeuronVariant::WrHayL5Cell(WrHayL5::new())),
+        "TwoCompartmentLIFNeuron" | "TwoCompLIF" => Ok(NeuronVariant::WrTwoCompLIFCell(WrTwoCompLIF::new())),
+        // Wrapped hardware integer-input
+        "LoihiCUBANeuron" | "LoihiCUBA" => Ok(NeuronVariant::WrLoihiCUBACell(WrLoihiCUBA::new())),
+        "Loihi2Neuron" | "Loihi2" => Ok(NeuronVariant::WrLoihi2Cell(WrLoihi2::new())),
+        "SpiNNaker2Neuron" | "SpiNNaker2" => Ok(NeuronVariant::WrSpiNNaker2Cell(WrSpiNNaker2::new())),
+        "TrueNorthNeuron" | "TrueNorth" => Ok(NeuronVariant::WrTrueNorthCell(WrTrueNorth::new())),
+        "IntegerQIFNeuron" | "IntegerQIF" => Ok(NeuronVariant::WrIntegerQIFCell(WrIntegerQIF::new())),
+        // Wrapped graded/rate output
+        "SigmoidRateNeuron" | "SigmoidRate" => Ok(NeuronVariant::WrSigmoidRateCell(WrSigmoidRate::new())),
+        "ThresholdLinearRateNeuron" | "ThresholdLinearRate" => Ok(NeuronVariant::WrThresholdLinearCell(WrThresholdLinear::new())),
+        "AstrocyteModel" | "Astrocyte" => Ok(NeuronVariant::WrAstrocyteCell(WrAstrocyte::new())),
+        "InnerHairCell" | "IHC" => Ok(NeuronVariant::WrInnerHairCellCell(WrInnerHairCell::new())),
+        "OuterHairCell" | "OHC" => Ok(NeuronVariant::WrOuterHairCellCell(WrOuterHairCell::new())),
+        "RodPhotoreceptor" | "Rod" => Ok(NeuronVariant::WrRodPhotoreceptorCell(WrRodPhotoreceptor::new())),
+        "ConePhotoreceptor" | "Cone" => Ok(NeuronVariant::WrConePhotoreceptorCell(WrConePhotoreceptor::new())),
+        "TasteReceptorCell" | "TasteReceptor" => Ok(NeuronVariant::WrTasteReceptorCell(WrTasteReceptor::new())),
         _ => Err(format!("Unsupported model: '{name}'")),
     }
 }
@@ -1121,6 +1279,29 @@ pub fn supported_models() -> Vec<&'static str> {
         "CardiacPurkinjeFibre",
         "SmoothMuscleCell",
         "EndocrineBetaCell",
+        // wrapped multi-input spiking
+        "AlphaNeuron",
+        "COBALIFNeuron",
+        "CompteWMNeuron",
+        "TsodyksMarkramNeuron",
+        "PinskyRinzelNeuron",
+        "HayL5PyramidalNeuron",
+        "TwoCompartmentLIFNeuron",
+        // wrapped hardware integer-input
+        "LoihiCUBANeuron",
+        "Loihi2Neuron",
+        "SpiNNaker2Neuron",
+        "TrueNorthNeuron",
+        "IntegerQIFNeuron",
+        // wrapped graded/rate output
+        "SigmoidRateNeuron",
+        "ThresholdLinearRateNeuron",
+        "AstrocyteModel",
+        "InnerHairCell",
+        "OuterHairCell",
+        "RodPhotoreceptor",
+        "ConePhotoreceptor",
+        "TasteReceptorCell",
     ]
 }
 
