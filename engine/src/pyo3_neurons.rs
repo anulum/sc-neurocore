@@ -1432,7 +1432,7 @@ py_neuron_default!("GolgiCell", PyGolgiCell, neurons::GolgiCell, state v, state 
 py_neuron_default!("StellateCell", PyStellateCell, neurons::StellateCell, state v, state h, state n, state p);
 py_neuron_default!("LugaroCell", PyLugaroCell, neurons::LugaroCell, state v, state adapt);
 py_neuron_default!("UnipolarBrushCell", PyUnipolarBrushCell, neurons::UnipolarBrushCell, state v, state persistent);
-py_neuron_default!("DCNNeuron", PyDCNNeuron, neurons::DCNNeuron, state v, state h, state n, state s, state r);
+py_neuron_default!("DCNNeuron", PyDCNNeuron, neurons::DCNNeuron, state v, state h, state n, state p, state s, state r, state ca);
 
 // channels.rs models
 py_neuron_default!("PersistentNaNeuron", PyPersistentNaNeuron, neurons::PersistentNaNeuron, state v, state h, state n, state p);

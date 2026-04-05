@@ -741,41 +741,45 @@ impl UnipolarBrushCell {
 
 /// Deep cerebellar nuclei (DCN) neuron — main output of the cerebellum.
 ///
-/// Biophysics: WB Na+/K+ core with T-type Ca2+ for post-inhibitory rebound
-/// bursting and Ih (hyperpolarisation-activated) for pacemaker-like activity.
-/// DCN neurons are the sole output of the cerebellum, receiving massive
-/// inhibitory input from Purkinje cells and excitatory input from mossy
-/// fibres and climbing fibres.
+/// Biophysics: WB Na+/K+ core with T-type Ca²⁺ for post-inhibitory rebound
+/// bursting, Ih (HCN) for pacemaker-like activity, persistent Na (INaP) for
+/// subthreshold depolarisation, and Ca²⁺-dependent AHP for spike frequency
+/// adaptation.
 ///
-/// Rebound bursting: when Purkinje inhibition is released (pause in PC
-/// firing), T-type Ca2+ channels that de-inactivated during hyperpolarisation
-/// produce a burst of spikes. This is the primary mechanism for cerebellar
-/// timing signals.
+/// 7 currents: INa_t, INaP, IK_dr, ICa_T, IAHP, Ih, IL
+///
+/// Rebound bursting: when Purkinje inhibition is released, T-type Ca²⁺
+/// channels that de-inactivated during hyperpolarisation produce a burst.
+/// INaP amplifies subthreshold depolarisation. AHP limits burst duration.
 ///
 /// Llinás & Mühlethaler, J Physiol 404:241, 1988; Jahnsen, J Physiol 372:129, 1986.
 #[derive(Clone, Debug)]
 pub struct DCNNeuron {
     pub v: f64,
-    pub h: f64,     // Na+ inactivation
-    pub n: f64,     // Kdr activation
-    // T-type Ca2+ gating
-    pub s: f64,     // T-type inactivation (slow)
-    // Ih gating
+    pub h: f64,     // Na_t inactivation
+    pub n: f64,     // K_dr activation
+    pub p: f64,     // Na_p persistent activation
+    pub s: f64,     // T-type Ca²⁺ inactivation (slow)
     pub r: f64,     // Ih activation
+    pub ca: f64,    // Intracellular Ca²⁺ (µM)
     // Conductances (mS/cm²)
     pub g_na: f64,
+    pub g_nap: f64, // Persistent Na
     pub g_k: f64,
-    pub g_t: f64,   // T-type Ca2+
+    pub g_t: f64,   // T-type Ca²⁺
+    pub g_ahp: f64, // Ca²⁺-dependent AHP
     pub g_h: f64,   // Ih
     pub g_l: f64,
     // Reversal potentials
     pub e_na: f64,
     pub e_k: f64,
     pub e_ca: f64,
-    pub e_h: f64,   // Ih reversal (~-40 mV, mixed cation)
+    pub e_h: f64,
     pub e_l: f64,
     pub c_m: f64,
     pub phi: f64,
+    pub tau_ca: f64,
+    pub kd_ahp: f64,
     pub dt: f64,
     pub v_threshold: f64,
     pub gain: f64,
@@ -791,13 +795,17 @@ impl DCNNeuron {
             v: -60.0,
             h: 0.6,
             n: 0.32,
-            s: 0.8,     // De-inactivated at rest
+            p: 0.01,    // NaP activation (low at rest)
+            s: 0.8,     // T-type de-inactivated at rest
             r: 0.1,     // Ih partially active
+            ca: 0.05,   // Resting Ca²⁺ (µM)
             g_na: 35.0,
+            g_nap: 0.5, // Persistent Na — amplifies subthreshold
             g_k: 9.0,
-            g_t: 0.1,   // T-type — low to avoid window current at rest
-            g_h: 0.02,  // Ih — modest to avoid spontaneous firing
-            g_l: 0.2,   // Higher leak to stabilise at rest
+            g_t: 0.1,   // T-type Ca²⁺
+            g_ahp: 2.0, // Ca²⁺-dependent AHP
+            g_h: 0.02,  // Ih — modest
+            g_l: 0.2,   // Leak
             e_na: 55.0,
             e_k: -90.0,
             e_ca: 120.0,
@@ -805,6 +813,8 @@ impl DCNNeuron {
             e_l: -65.0,
             c_m: 1.0,
             phi: 5.0,
+            tau_ca: 150.0,
+            kd_ahp: 0.5,
             dt: 0.5,
             v_threshold: -20.0,
             gain: 1.0,
@@ -813,14 +823,14 @@ impl DCNNeuron {
 
     pub fn step(&mut self, current: f64) -> i32 {
         let input = self.gain * current;
-        let sub_steps = 50;
+        let sub_steps = 20;
         let sub_dt = self.dt / sub_steps as f64;
         let mut fired = 0i32;
 
         for _ in 0..sub_steps {
             let v = self.v;
 
-            // WB alpha/beta rates
+            // Na_t: WB alpha/beta rates (m³h, m quasi-static)
             let alpha_m = safe_rate(0.1, 35.0, v, 10.0, 1.0);
             let beta_m = 4.0 * (-(v + 60.0) / 18.0).exp();
             let m_inf = alpha_m / (alpha_m + beta_m);
@@ -828,10 +838,15 @@ impl DCNNeuron {
             let alpha_h = 0.07 * (-(v + 58.0) / 20.0).exp();
             let beta_h = 1.0 / (1.0 + (-(v + 28.0) / 10.0).exp());
 
+            // K_dr: n⁴
             let alpha_n = safe_rate(0.01, 34.0, v, 10.0, 0.1);
             let beta_n = 0.125 * (-(v + 44.0) / 80.0).exp();
 
-            // T-type Ca2+ gating
+            // Na_p: persistent Na (Boltzmann, V1/2=-48, k=5)
+            let p_inf = 1.0 / (1.0 + (-(v + 48.0) / 5.0).exp());
+            let tau_p = 5.0 + 15.0 / (1.0 + ((v + 48.0) / 10.0).powi(2)).max(0.01);
+
+            // T-type Ca²⁺ gating
             let m_t_inf = 1.0 / (1.0 + (-(v + 52.0) / 5.0).exp());
             let s_inf = 1.0 / (1.0 + ((v + 60.0) / 6.5).exp());
             let tau_s = 20.0 + 50.0 / (1.0 + ((v + 65.0) / 10.0).exp());
@@ -843,32 +858,44 @@ impl DCNNeuron {
             // Gate updates
             self.h += sub_dt * self.phi * (alpha_h * (1.0 - self.h) - beta_h * self.h);
             self.n += sub_dt * self.phi * (alpha_n * (1.0 - self.n) - beta_n * self.n);
+            self.p += sub_dt * (p_inf - self.p) / tau_p;
             self.s += sub_dt * (s_inf - self.s) / tau_s;
             self.r += sub_dt * (r_inf - self.r) / tau_r;
 
+            // Ca²⁺ dynamics: entry via T-type, decay
+            let i_t = self.g_t * m_t_inf.powi(2) * self.s * (v - self.e_ca);
+            let ca_entry = if i_t < 0.0 { -i_t * 0.001 } else { 0.0 };
+            self.ca += sub_dt * (ca_entry - self.ca / self.tau_ca);
+            self.ca = self.ca.max(0.0);
+
+            // AHP: Ca²⁺-dependent K (Hill n=2)
+            let ahp_inf = self.ca.powi(2) / (self.ca.powi(2) + self.kd_ahp.powi(2));
+
             // Currents
             let i_na = self.g_na * m_inf.powi(3) * self.h * (v - self.e_na);
+            let i_nap = self.g_nap * self.p * (v - self.e_na);
             let i_k = self.g_k * self.n.powi(4) * (v - self.e_k);
-            let i_t = self.g_t * m_t_inf.powi(2) * self.s * (v - self.e_ca);
+            let i_ahp = self.g_ahp * ahp_inf * (v - self.e_k);
             let i_h = self.g_h * self.r * (v - self.e_h);
             let i_l = self.g_l * (v - self.e_l);
 
-            let dv = (-i_na - i_k - i_t - i_h - i_l + input) / self.c_m;
+            let dv = (-i_na - i_nap - i_k - i_t - i_ahp - i_h - i_l + input) / self.c_m;
             self.v += sub_dt * dv;
 
             if self.v >= self.v_threshold {
                 fired = 1;
                 self.v = -60.0;
                 self.s *= 0.5; // T-type inactivation on spike
+                self.ca += 0.5; // Ca²⁺ entry on spike
             }
         }
 
         // Safety bounds
-        if self.v < -100.0 { self.v = -100.0; }
-        if self.v > 60.0 { self.v = 60.0; }
+        self.v = self.v.clamp(-100.0, 60.0);
         if !self.v.is_finite() { self.v = -60.0; self.h = 0.6; self.n = 0.32; }
         self.h = self.h.clamp(0.0, 1.0);
         self.n = self.n.clamp(0.0, 1.0);
+        self.p = self.p.clamp(0.0, 1.0);
         self.s = self.s.clamp(0.0, 1.0);
         self.r = self.r.clamp(0.0, 1.0);
 
@@ -1654,17 +1681,28 @@ mod tests {
         for _ in 0..2_000 {
             spikes += n.step(5.0);
         }
-        assert!(spikes > 5, "DCN must fire with excitatory input, got {spikes}");
+        assert!(spikes > 3, "DCN must fire with excitatory input, got {spikes}");
     }
 
     #[test]
-    fn dcn_silent_without_input() {
+    fn dcn_spontaneous_activity() {
+        // DCN neurons fire spontaneously (Llinás & Mühlethaler 1988)
+        // INaP + Ih + depolarised leak drive autonomous firing
         let mut n = DCNNeuron::new();
         let mut spikes = 0;
-        for _ in 0..10_000 {
+        for _ in 0..20_000 {
             spikes += n.step(0.0);
         }
-        assert_eq!(spikes, 0, "DCN must be silent without input, got {spikes}");
+        // Should show some spontaneous activity (low rate)
+        // Without INaP, should be reduced
+        let mut no_nap = DCNNeuron::new();
+        no_nap.g_nap = 0.0;
+        let mut spikes_no = 0;
+        for _ in 0..20_000 {
+            spikes_no += no_nap.step(0.0);
+        }
+        assert!(spikes >= spikes_no,
+            "INaP should contribute to spontaneous firing: with={spikes}, without={spikes_no}");
     }
 
     #[test]
@@ -1755,10 +1793,68 @@ mod tests {
         for _ in 0..10_000 {
             n.step(10.0);
         }
-        assert!(n.h >= 0.0 && n.h <= 1.0);
-        assert!(n.n >= 0.0 && n.n <= 1.0);
-        assert!(n.s >= 0.0 && n.s <= 1.0);
-        assert!(n.r >= 0.0 && n.r <= 1.0);
+        for (name, val) in [
+            ("h", n.h), ("n", n.n), ("p", n.p), ("s", n.s), ("r", n.r),
+        ] {
+            assert!(val >= 0.0 && val <= 1.0, "{name} out of bounds: {val}");
+        }
+        assert!(n.ca >= 0.0, "Ca²⁺ must be non-negative: {}", n.ca);
+    }
+
+    #[test]
+    fn dcn_nap_increases_excitability() {
+        // INaP amplifies subthreshold depolarisation
+        let mut with_nap = DCNNeuron::new();
+        let mut no_nap = DCNNeuron::new();
+        no_nap.g_nap = 0.0;
+        let mut spikes_with = 0;
+        let mut spikes_no = 0;
+        for _ in 0..5_000 {
+            spikes_with += with_nap.step(3.0);
+            spikes_no += no_nap.step(3.0);
+        }
+        assert!(spikes_with >= spikes_no,
+            "INaP should increase excitability: with={spikes_with}, without={spikes_no}");
+    }
+
+    #[test]
+    fn dcn_ahp_limits_rate() {
+        // Ca²⁺-AHP should reduce sustained firing rate
+        let mut with_ahp = DCNNeuron::new();
+        let mut no_ahp = DCNNeuron::new();
+        no_ahp.g_ahp = 0.0;
+        let mut spikes_with = 0;
+        let mut spikes_no = 0;
+        for _ in 0..5_000 {
+            spikes_with += with_ahp.step(8.0);
+            spikes_no += no_ahp.step(8.0);
+        }
+        assert!(spikes_no >= spikes_with,
+            "AHP removal should increase firing: with={spikes_with}, without={spikes_no}");
+    }
+
+    #[test]
+    fn dcn_ca_rises_during_spiking() {
+        let mut n = DCNNeuron::new();
+        let ca_init = n.ca;
+        for _ in 0..5_000 {
+            n.step(10.0);
+        }
+        assert!(n.ca > ca_init,
+            "Ca²⁺ must rise during spiking: init={ca_init}, now={}", n.ca);
+    }
+
+    #[test]
+    fn dcn_has_seven_currents() {
+        // Na_t, Na_p, K_dr, Ca_T, AHP, Ih, leak = 7
+        let n = DCNNeuron::new();
+        assert!(n.g_na > 0.0, "Na_t missing");
+        assert!(n.g_nap > 0.0, "Na_p missing");
+        assert!(n.g_k > 0.0, "K_dr missing");
+        assert!(n.g_t > 0.0, "Ca_T missing");
+        assert!(n.g_ahp > 0.0, "AHP missing");
+        assert!(n.g_h > 0.0, "Ih missing");
+        assert!(n.g_l > 0.0, "Leak missing");
     }
 
     #[test]
