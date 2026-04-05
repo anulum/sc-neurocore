@@ -42,9 +42,7 @@ def _rust_supports_model(model_name: str) -> bool:
     if model_name in supported:
         return True
     # Try without "Neuron" suffix
-    if model_name.endswith("Neuron") and model_name[:-6] in supported:
-        return True
-    return False
+    return model_name.endswith("Neuron") and model_name[:-6] in supported
 
 
 class Network:

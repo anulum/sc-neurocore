@@ -35,7 +35,7 @@ class AkidaNeuron:
             self.v += scaled
             self._rank += 1
             self._current_modulation *= self.modulation
-            
+
         if self.v >= self.threshold and not self._spiked:
             self._spiked = True
             return 1
