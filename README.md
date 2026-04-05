@@ -27,10 +27,10 @@ Commercial Licensing: Available
 [![REUSE](https://img.shields.io/badge/REUSE-compliant-green)](https://reuse.software/)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)
 
-> **Active Development** — SC-NeuroCore is under intensive development. The core engine, all 173 neuron models, and the full simulation pipeline (Population → Projection → Network → SpikeMonitor → Analysis) are fully functional, tested (8 602 passing tests, zero functional failures), and production-deployable. We are currently completing comprehensive per-model documentation and end-to-end pipeline benchmarking across the entire model library. APIs may evolve as this work progresses.
+> **Active Development** — SC-NeuroCore is under intensive development. The core engine, all 173 neuron models, and the full simulation pipeline (Population → Projection → Network → SpikeMonitor → Analysis) are fully functional, tested (7 578 passing tests — 6 507 Python + 1 071 Rust), and production-deployable. We are currently completing comprehensive per-model documentation and end-to-end pipeline benchmarking across the entire model library. APIs may evolve as this work progresses.
 
 **Version:** 3.14.0
-**Status:** 173 Neuron Models (164 Bio + 9 AI) | 99.49% MNIST (ConvSNN) | 7 531 Python tests (collected) + 1 071 Rust tests | 100% Core Coverage | 172 Rust Neuron Models | 159-Model NetworkRunner | 29 Notebooks
+**Status:** 173 Neuron Models (164 Bio + 9 AI) | 99.49% MNIST (ConvSNN) | 6 507 Python tests passing + 1 071 Rust tests | 100% Core Coverage | 172 Rust Neuron Models | 159-Model NetworkRunner | 29 Notebooks
 
 <p align="center">
   <img src="docs/assets/spike_raster.png" width="800" alt="LIF spike raster — 5 neurons, sinusoidal input">
@@ -73,7 +73,7 @@ and a 6-codec neural data compression library (ISI, predictive, delta, streaming
 AER) with a unified API and auto-recommendation engine — targeting BCI
 implants (Neuralink-scale 1024+ channels), neural probes (Neuropixels),
 neuromorphic inter-chip routing, and real-time closed-loop telemetry.
-7 531 Python tests and 1 071 Rust tests hold 100% core coverage.
+6 507 Python tests passing (189 skipped, 1 failure in IR compiler) and 1 071 Rust tests.
 13 CI workflows guard every push. conda-forge recipe ready.
 
 ## Feature Comparison
