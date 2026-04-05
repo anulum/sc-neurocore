@@ -193,6 +193,7 @@ pub enum NeuronVariant {
     GapJunction(GapJunctionNeuron),
     FHAxon(FrankenhaeUserHuxleyAxon),
     NodeOfRanvier(NodeOfRanvier),
+    MyelinAxon(MyelinatedAxon),
 
     // Not wired (multi-arg / i32 input / f64 return / no reset):
     // Alpha (2 args), COBALIF (3 args), TsodyksMarkram (bool arg),
@@ -258,7 +259,7 @@ macro_rules! all_variants {
             Granule, Golgi, Stellate, Lugaro, UnipolarBrush, DCN,
             PersistentNa, Ih, TTypeCa, ATypeK, BK, SK, NMDA,
             MontbrioMPR, Brunel, TUM, ElBoustani,
-            GradedSynapse, GapJunction, FHAxon, NodeOfRanvier,
+            GradedSynapse, GapJunction, FHAxon, NodeOfRanvier, MyelinAxon,
         )
     };
 }
@@ -417,6 +418,7 @@ impl NeuronVariant {
             NeuronVariant::GapJunction(n) => n.v,
             NeuronVariant::FHAxon(n) => n.v,
             NeuronVariant::NodeOfRanvier(n) => n.v,
+            NeuronVariant::MyelinAxon(n) => n.v(),
         }
     }
 }
@@ -953,6 +955,7 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         "GapJunctionNeuron" | "GapJunction" => Ok(NeuronVariant::GapJunction(GapJunctionNeuron::new())),
         "FrankenhaeUserHuxleyAxon" | "FHAxon" => Ok(NeuronVariant::FHAxon(FrankenhaeUserHuxleyAxon::new())),
         "NodeOfRanvier" => Ok(NeuronVariant::NodeOfRanvier(NodeOfRanvier::new())),
+        "MyelinatedAxon" | "MyelinAxon" => Ok(NeuronVariant::MyelinAxon(MyelinatedAxon::new())),
         _ => Err(format!("Unsupported model: '{name}'")),
     }
 }
@@ -1074,6 +1077,7 @@ pub fn supported_models() -> Vec<&'static str> {
         "GapJunctionNeuron",
         "FrankenhaeUserHuxleyAxon",
         "NodeOfRanvier",
+        "MyelinatedAxon",
     ]
 }
 
