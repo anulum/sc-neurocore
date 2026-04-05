@@ -117,7 +117,7 @@ cargo bench --bench analysis_bench -- --quick
 | Model | Steps | Median | Per step | Sub-steps | Notes |
 |-------|-------|--------|----------|-----------|-------|
 | Granule cell | 10k | 466 µs | **46.6 ns** | 1 | LIF + tonic GABA + T-type Ca2+ |
-| Golgi cell | 1k | 396 µs | **396 ns** | 4 | WB + A-type K+ + Ca2+-AHP |
+| Golgi cell (Solinas 2007) | 1k | 1.39 ms | **1.39 µs** | 10 | 11 currents: Na_t, Na_p, K_dr, K_A, K_M, Ca_T, Ca_N, BK, SK, Ih, leak |
 | Stellate cell | 1k | 5.58 ms | **5.58 µs** | 50 | WB + Kv3.1 |
 | Lugaro cell | 10k | 164 µs | **16.4 ns** | 1 | LIF + adaptation + 5-HT |
 | Unipolar brush cell | 10k | 93 µs | **9.3 ns** | 1 | LIF + persistent NMDA-like |
