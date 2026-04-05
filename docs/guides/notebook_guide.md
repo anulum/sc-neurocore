@@ -26,7 +26,7 @@ Complete index of all 29 Jupyter notebooks in `notebooks/`.
 |---|----------|---------------|-------------------|
 | 08 | `08_equation_to_verilog` | ODE string → Python sim → Q8.8 Verilog RTL (LIF, FHN, Izhikevich) | [Tutorial 33](../tutorials/33_equation_to_verilog.md) |
 | 09 | `09_topology_and_dynamics` | 6 connectivity generators, degree distributions, dynamics comparison | [Tutorial 83](../tutorials/83_topology.md) |
-| 10 | `10_spike_train_analysis` | ISI, CV, Fano, cross-correlation, van Rossum, PCA (128 functions) | [Tutorial 23](../tutorials/23_spike_train_analysis.md) |
+| 10 | `10_spike_train_analysis` | ISI, CV, Fano, cross-correlation, van Rossum, PCA (124 functions) | [Tutorial 23](../tutorials/23_spike_train_analysis.md) |
 | 11 | `11_biological_circuits` | Tripartite synapse (Ca²⁺), Rall dendrite (3/2 power law) | [Tutorial 24](../tutorials/24_biological_circuits.md) |
 | 12 | `12_learning_rules` | STDP, e-prop eligibility, R-STDP, STP facilitation/depression | [Tutorial 28](../tutorials/28_learning_rules.md) |
 | 13 | `13_quantisation_pipeline` | Float → Q8.8 → SC probabilities → Verilog export, error budget | [Tutorial 77](../tutorials/77_qat.md) |

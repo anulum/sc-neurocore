@@ -37,7 +37,7 @@ run source-tree commands with `PYTHONPATH=src:bridge`.
 ## Running Tests
 
 ```bash
-# Full suite (3 376+ tests, 100% coverage gate)
+# Full suite (7 578+ tests, 100% coverage gate)
 pytest tests/ -v --cov=sc_neurocore --cov-report=term
 
 # Quick smoke test
