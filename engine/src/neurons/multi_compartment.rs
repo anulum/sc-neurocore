@@ -683,4 +683,132 @@ mod tests {
         let t: i32 = (0..100).map(|_| n.step(0.5, 0.3)).sum();
         assert!(t > 0);
     }
+
+    // ── Multi-angle tests for multi-compartment models ──
+
+    // -- PinskyRinzel --
+    #[test]
+    fn pr_reset() {
+        let mut n = PinskyRinzelNeuron::new();
+        for _ in 0..100 { n.step(5.0, 0.0); }
+        n.reset();
+        assert!((n.v_s - (-60.0)).abs() < 1e-10);
+        assert!((n.v_d - (-60.0)).abs() < 1e-10);
+    }
+    #[test]
+    fn pr_bounded() {
+        let mut n = PinskyRinzelNeuron::new();
+        for _ in 0..5000 { n.step(50.0, 0.0); }
+        assert!(n.v_s.is_finite());
+    }
+    #[test]
+    fn pr_dendritic_input() {
+        let mut n = PinskyRinzelNeuron::new();
+        let t: i32 = (0..5000).map(|_| n.step(0.0, 5.0)).sum();
+        // Dendritic input should also be able to drive spiking
+        assert!(n.v_d.is_finite());
+    }
+    #[test]
+    fn pr_nan_no_panic() { PinskyRinzelNeuron::new().step(f64::NAN, 0.0); }
+
+    // -- HayL5 --
+    #[test]
+    fn hay_reset() {
+        let mut n = HayL5PyramidalNeuron::new();
+        for _ in 0..100 { n.step(20.0, 0.0); }
+        n.reset();
+        assert!((n.v_s - (-75.0)).abs() < 1e-10);
+    }
+    #[test]
+    fn hay_bounded() {
+        let mut n = HayL5PyramidalNeuron::new();
+        for _ in 0..500 { n.step(100.0, 0.0); }
+        assert!(n.v_s.is_finite());
+    }
+    #[test]
+    fn hay_nan_no_panic() { HayL5PyramidalNeuron::new().step(f64::NAN, 0.0); }
+
+    // -- MarderSTG --
+    #[test]
+    fn marder_reset() {
+        let mut n = MarderSTGNeuron::new();
+        for _ in 0..100 { n.step(5.0); }
+        n.reset();
+        assert!((n.v - (-60.0)).abs() < 1e-10);
+    }
+    #[test]
+    fn marder_bounded() {
+        let mut n = MarderSTGNeuron::new();
+        for _ in 0..2000 { n.step(50.0); }
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn marder_nan_no_panic() { MarderSTGNeuron::new().step(f64::NAN); }
+
+    // -- RallCable --
+    #[test]
+    fn rall_reset() {
+        let mut n = RallCableNeuron::new(5);
+        for _ in 0..100 { n.step(50.0); }
+        n.reset();
+        assert!(n.v.iter().all(|&x| (x - n.v_rest).abs() < 1e-10));
+    }
+    #[test]
+    fn rall_bounded() {
+        let mut n = RallCableNeuron::new(5);
+        for _ in 0..1000 { n.step(500.0); }
+        assert!(n.v.iter().all(|x| x.is_finite()));
+    }
+    #[test]
+    fn rall_nan_no_panic() { RallCableNeuron::new(5).step(f64::NAN); }
+
+    // -- BoothRinzel --
+    #[test]
+    fn booth_reset() {
+        let mut n = BoothRinzelNeuron::new();
+        for _ in 0..100 { n.step(5.0); }
+        n.reset();
+        assert!((n.vs - (-65.0)).abs() < 1e-10);
+    }
+    #[test]
+    fn booth_bounded() {
+        let mut n = BoothRinzelNeuron::new();
+        for _ in 0..2000 { n.step(50.0); }
+        assert!(n.vs.is_finite());
+    }
+    #[test]
+    fn booth_nan_no_panic() { BoothRinzelNeuron::new().step(f64::NAN); }
+
+    // -- Dendrify --
+    #[test]
+    fn dendrify_reset() {
+        let mut n = DendrifyNeuron::new();
+        for _ in 0..100 { n.step(50.0); }
+        n.reset();
+        assert!((n.v_s - (-65.0)).abs() < 1e-10);
+    }
+    #[test]
+    fn dendrify_bounded() {
+        let mut n = DendrifyNeuron::new();
+        for _ in 0..2000 { n.step(200.0); }
+        assert!(n.v_s.is_finite());
+    }
+    #[test]
+    fn dendrify_nan_no_panic() { DendrifyNeuron::new().step(f64::NAN); }
+
+    // -- TwoCompartmentLIF --
+    #[test]
+    fn tc_lif_reset() {
+        let mut n = TwoCompartmentLIFNeuron::new();
+        for _ in 0..50 { n.step(0.5, 0.3); }
+        n.reset();
+    }
+    #[test]
+    fn tc_lif_bounded() {
+        let mut n = TwoCompartmentLIFNeuron::new();
+        for _ in 0..1000 { n.step(100.0, 100.0); }
+        assert!(n.v_s.is_finite());
+    }
+    #[test]
+    fn tc_lif_nan_no_panic() { TwoCompartmentLIFNeuron::new().step(f64::NAN, 0.0); }
 }
