@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Spike train variability and regularity measures
 
-use super::basic::{isi, spike_times};
+use super::basic::isi;
 
 /// Coefficient of variation of ISI. CV=1 for Poisson, <1 for regular.
 pub fn cv_isi(binary_train: &[i32], dt: f64) -> f64 {
@@ -143,7 +143,7 @@ pub fn isi_entropy(binary_train: &[i32], dt: f64, bins: usize) -> f64 {
     for &c in &hist {
         if c > 0 {
             let p = (c as f64 / total) * bin_width;
-            let density = c as f64 / (total * bin_width);
+            let _density = c as f64 / (total * bin_width);
             // p * log2(density) — matches Python's density=True histogram
             let p_norm = p;
             if p_norm > 0.0 {

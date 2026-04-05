@@ -147,7 +147,7 @@ pub fn compound_poisson_process(
     for i in 0..n {
         if rng.random::<f64>() < threshold {
             let n_spikes: usize = rng.sample(poisson) as usize;
-            for s in 0..n_spikes as usize {
+            for s in 0..n_spikes {
                 let offset = i + s;
                 if offset < n {
                     train[offset] = 1.0;

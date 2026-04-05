@@ -121,8 +121,7 @@ impl PersistentNaNeuron {
         }
 
         // Safety bounds
-        if self.v < -100.0 { self.v = -100.0; }
-        if self.v > 60.0 { self.v = 60.0; }
+        self.v = self.v.clamp(-100.0, 60.0);
         if !self.v.is_finite() { self.v = -65.0; self.h = 0.6; self.n = 0.32; }
         self.h = self.h.clamp(0.0, 1.0);
         self.n = self.n.clamp(0.0, 1.0);
@@ -249,8 +248,7 @@ impl IhNeuron {
         }
 
         // Safety bounds
-        if self.v < -100.0 { self.v = -100.0; }
-        if self.v > 60.0 { self.v = 60.0; }
+        self.v = self.v.clamp(-100.0, 60.0);
         if !self.v.is_finite() { self.v = -65.0; self.h = 0.6; self.n = 0.32; }
         self.h = self.h.clamp(0.0, 1.0);
         self.n = self.n.clamp(0.0, 1.0);
@@ -379,8 +377,7 @@ impl TTypeCaNeuron {
         }
 
         // Safety bounds
-        if self.v < -100.0 { self.v = -100.0; }
-        if self.v > 60.0 { self.v = 60.0; }
+        self.v = self.v.clamp(-100.0, 60.0);
         if !self.v.is_finite() { self.v = -65.0; self.h = 0.6; self.n = 0.32; }
         self.h = self.h.clamp(0.0, 1.0);
         self.n = self.n.clamp(0.0, 1.0);
@@ -503,8 +500,7 @@ impl ATypeKNeuron {
             }
         }
 
-        if self.v < -100.0 { self.v = -100.0; }
-        if self.v > 60.0 { self.v = 60.0; }
+        self.v = self.v.clamp(-100.0, 60.0);
         if !self.v.is_finite() { self.v = -65.0; self.h = 0.6; self.n = 0.32; }
         self.h = self.h.clamp(0.0, 1.0);
         self.n = self.n.clamp(0.0, 1.0);
@@ -634,13 +630,12 @@ impl BKNeuron {
             }
         }
 
-        if self.v < -100.0 { self.v = -100.0; }
-        if self.v > 60.0 { self.v = 60.0; }
+        self.v = self.v.clamp(-100.0, 60.0);
         if !self.v.is_finite() { self.v = -65.0; self.h = 0.6; self.n = 0.32; }
         if !self.ca.is_finite() { self.ca = 0.0; }
         self.h = self.h.clamp(0.0, 1.0);
         self.n = self.n.clamp(0.0, 1.0);
-        if self.ca < 0.0 { self.ca = 0.0; }
+        self.ca = self.ca.max(0.0);
 
         fired
     }
@@ -759,13 +754,12 @@ impl SKNeuron {
             }
         }
 
-        if self.v < -100.0 { self.v = -100.0; }
-        if self.v > 60.0 { self.v = 60.0; }
+        self.v = self.v.clamp(-100.0, 60.0);
         if !self.v.is_finite() { self.v = -65.0; self.h = 0.6; self.n = 0.32; }
         if !self.ca.is_finite() { self.ca = 0.0; }
         self.h = self.h.clamp(0.0, 1.0);
         self.n = self.n.clamp(0.0, 1.0);
-        if self.ca < 0.0 { self.ca = 0.0; }
+        self.ca = self.ca.max(0.0);
 
         fired
     }
@@ -859,8 +853,7 @@ impl NMDANeuron {
         let drive = if input > 0.0 { input / (input + 5.0) } else { 0.0 };
         let ds = (drive - self.s_nmda) / if drive > self.s_nmda { self.tau_rise } else { self.tau_decay };
         self.s_nmda += self.dt * ds;
-        if self.s_nmda < 0.0 { self.s_nmda = 0.0; }
-        if self.s_nmda > 1.0 { self.s_nmda = 1.0; }
+        self.s_nmda = self.s_nmda.clamp(0.0, 1.0);
 
         for _ in 0..sub_steps {
             let v = self.v;
@@ -896,8 +889,7 @@ impl NMDANeuron {
             }
         }
 
-        if self.v < -100.0 { self.v = -100.0; }
-        if self.v > 60.0 { self.v = 60.0; }
+        self.v = self.v.clamp(-100.0, 60.0);
         if !self.v.is_finite() { self.v = -65.0; self.h = 0.6; self.n = 0.32; }
         if !self.s_nmda.is_finite() { self.s_nmda = 0.0; }
         self.h = self.h.clamp(0.0, 1.0);

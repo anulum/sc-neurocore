@@ -312,7 +312,7 @@ impl FrankenhaeUserHuxleyAxon {
     fn ghk_current(v: f64, c_ratio: f64, v_t: f64) -> f64 {
         if v.abs() < 0.01 {
             // L'Hôpital limit
-            (c_ratio - 1.0)
+            c_ratio - 1.0
         } else {
             let u = v / v_t;
             let exp_neg_u = (-u).exp();

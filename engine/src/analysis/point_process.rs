@@ -23,7 +23,7 @@ pub fn conditional_intensity(binary_train: &[i32], dt: f64, window_ms: f64) -> V
     let half = w / 2;
     let mut result = vec![0.0f64; n];
     for i in 0..n {
-        let lo = if i >= half { i - half } else { 0 };
+        let lo = i.saturating_sub(half);
         let hi = (i + w - half).min(n);
         let mut sum = 0.0;
         for j in lo..hi {

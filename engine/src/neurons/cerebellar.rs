@@ -546,8 +546,7 @@ impl StellateCell {
         }
 
         // Safety bounds
-        if self.v < -100.0 { self.v = -100.0; }
-        if self.v > 60.0 { self.v = 60.0; }
+        self.v = self.v.clamp(-100.0, 60.0);
         if !self.v.is_finite() { self.v = -65.0; self.h = 0.6; self.n = 0.32; }
         self.h = self.h.clamp(0.0, 1.0);
         self.n = self.n.clamp(0.0, 1.0);
@@ -640,8 +639,7 @@ impl LugaroCell {
         }
 
         // Safety bounds
-        if self.v < -100.0 { self.v = -100.0; }
-        if self.v > 60.0 { self.v = 60.0; }
+        self.v = self.v.clamp(-100.0, 60.0);
         if !self.v.is_finite() { self.v = self.v_reset; }
         if !self.adapt.is_finite() { self.adapt = 0.0; }
 
@@ -722,8 +720,7 @@ impl UnipolarBrushCell {
         }
 
         // Safety bounds
-        if self.v < -100.0 { self.v = -100.0; }
-        if self.v > 60.0 { self.v = 60.0; }
+        self.v = self.v.clamp(-100.0, 60.0);
         if !self.v.is_finite() { self.v = self.v_reset; }
         if !self.persistent.is_finite() { self.persistent = 0.0; }
 

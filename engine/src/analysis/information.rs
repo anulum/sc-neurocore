@@ -90,7 +90,7 @@ pub fn transfer_entropy(source: &[i32], target: &[i32], bin_size: usize, lag: us
         .map(|i| t_future[i] * max_tp + t_past[i])
         .collect();
     let h_ft = entropy_from_counts(&count_values(&joint_ft), n_pts);
-    let h_tp = entropy_from_counts(&count_values(&t_past.to_vec()), n_pts);
+    let h_tp = entropy_from_counts(&count_values(t_past), n_pts);
     let h1 = h_ft - h_tp;
 
     // H(t_future | t_past, s_past) = H(t_future, t_past, s_past) - H(t_past, s_past)

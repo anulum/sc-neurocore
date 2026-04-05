@@ -516,7 +516,9 @@ impl MotorUnit {
         // Force decay: exponential relaxation
         self.force *= (-self.dt / self.tau_twitch).exp();
 
-        let spiked = if self.v >= self.v_threshold {
+        
+
+        if self.v >= self.v_threshold {
             self.v = self.v_reset;
             // Spike → muscle twitch (add to force)
             self.force += self.twitch_amp;
@@ -524,9 +526,7 @@ impl MotorUnit {
             1
         } else {
             0
-        };
-
-        spiked
+        }
     }
 
     pub fn reset(&mut self) {

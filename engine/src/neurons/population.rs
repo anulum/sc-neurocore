@@ -79,13 +79,9 @@ impl MontbrioMeanField {
         self.r += self.dt * dr;
         self.v += self.dt * dv;
 
-        // Rate must be non-negative
-        if self.r < 0.0 { self.r = 0.0; }
-
         // Safety bounds
-        if self.r > 100.0 { self.r = 100.0; }
-        if self.v < -50.0 { self.v = -50.0; }
-        if self.v > 50.0 { self.v = 50.0; }
+        self.r = self.r.clamp(0.0, 100.0);
+        self.v = self.v.clamp(-50.0, 50.0);
         if !self.r.is_finite() { self.r = 0.01; }
         if !self.v.is_finite() { self.v = -2.0; }
 
