@@ -1496,7 +1496,7 @@ py_neuron_default!("Nociceptor", PyNociceptor, neurons::Nociceptor, state v, sta
 py_neuron_default!("OlfactoryReceptorNeuron", PyOlfactoryReceptorNeuron, neurons::OlfactoryReceptorNeuron, state v, state camp, state adapt);
 
 // RetinalGanglionCell and PacinianCorpuscle: spiking but non-default constructors
-py_neuron_default!("RetinalGanglionCell", PyRetinalGanglionCell, neurons::RetinalGanglionCell, state v, state refrac_count);
+py_neuron_default!("RetinalGanglionCell", PyRetinalGanglionCell, neurons::RetinalGanglionCell, state baseline, state on_centre);
 py_neuron_default!("PacinianCorpuscle", PyPacinianCorpuscle, neurons::PacinianCorpuscle, state v, state prev_pressure, state adapt);
 
 // ═══════════════════════════════════════════════════════════════════
