@@ -1428,7 +1428,7 @@ py_neuron_default!("MotorUnit", PyMotorUnit, neurons::MotorUnit, state v, state 
 
 // cerebellar.rs models
 py_neuron_default!("GranuleCell", PyGranuleCell, neurons::GranuleCell, state v, state m, state h, state n, state ca);
-py_neuron_default!("GolgiCell", PyGolgiCell, neurons::GolgiCell, state v, state m, state h, state n, state a, state b, state ca);
+py_neuron_default!("GolgiCell", PyGolgiCell, neurons::GolgiCell, state v, state m, state h, state p_na, state n, state a, state b, state w, state m_t, state s, state c_n, state r, state ca);
 py_neuron_default!("StellateCell", PyStellateCell, neurons::StellateCell, state v, state h, state n, state p);
 py_neuron_default!("LugaroCell", PyLugaroCell, neurons::LugaroCell, state v, state adapt);
 py_neuron_default!("UnipolarBrushCell", PyUnipolarBrushCell, neurons::UnipolarBrushCell, state v, state persistent);

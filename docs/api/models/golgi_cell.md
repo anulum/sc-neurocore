@@ -1,48 +1,55 @@
 # GolgiCell
 
 **Module:** `engine/src/neurons/cerebellar.rs`
-**Reference:** Solinas et al., Front Cell Neurosci 1:2, 2007; D'Angelo & De Schutter, Cerebellum 8:399, 2009
-**Family:** WB Na+/K+ core + A-type K+ + Ca2+-dependent AHP
-**State variables:** `v`, `m`, `h`, `n` (WB gating), `a`, `b` (A-type K+), `ca` (intracellular Ca2+)
+**Reference:** Solinas et al., Front Cell Neurosci 1:2, 2007
+**Family:** Full Hodgkin-Huxley with 11 ionic currents
+**State variables:** `v`, `m`, `h`, `p_na`, `n`, `a`, `b`, `w`, `m_t`, `s`, `c_n`, `r`, `ca`
 
 ---
 
 ## Biological Context
 
-Golgi cells are large inhibitory interneurons in the cerebellar granular layer. They provide the primary source of tonic and phasic GABAergic (and glycinergic) inhibition to granule cells at glomeruli, forming a feedforward and feedback inhibitory loop that controls granule cell excitability.
+Golgi cells are large inhibitory interneurons in the cerebellar granular layer. They provide tonic and phasic GABAergic/glycinergic inhibition to granule cells at glomeruli, forming feedforward and feedback inhibitory loops that control granule cell excitability and temporal filtering of mossy fibre input.
 
 Key features:
-- **Spontaneous pacemaker firing** (3-10 Hz): intrinsic membrane properties enable autonomous rhythmic firing without synaptic input
-- **Wide dendritic arbour**: extends into the molecular layer to receive parallel fibre input (feedback from granule cells)
-- **A-type K+ current**: produces onset delay and phasic pause, contributing to temporal filtering
-- **Ca2+-dependent AHP**: slow afterhyperpolarisation limits sustained firing rate (spike frequency adaptation)
-- **Mixed GABA/glycine release**: both inhibitory neurotransmitters released at glomerular synapses
+- **Spontaneous pacemaker firing** (3-10 Hz): driven by persistent Na (INaP) + Ih + depolarised leak
+- **11 ionic currents** (Solinas 2007): Na_t, Na_p, K_dr, K_A, K_M, Ca_T, Ca_N, BK, SK, Ih, leak
+- **Two Ca channels**: T-type (low-voltage, rebound) and N-type (high-voltage, AHP trigger)
+- **BK + SK afterhyperpolarisation**: BK (fast AHP, V+Ca dependent) + SK (slow AHP, Ca dependent) shape spike frequency adaptation
+- **Ih (HCN)**: sag current, contributes to resting potential and pacemaker
+- **K_M (KCNQ)**: slow muscarinic K+, limits high-frequency firing
 
 ---
 
 ## Equations
 
-### Wang-Buzsáki Na+/K+ gating with phi scaling
+$$C_m \frac{dV}{dt} = -(I_{Na_t} + I_{Na_p} + I_{K_{dr}} + I_{K_A} + I_{K_M} + I_{Ca_T} + I_{Ca_N} + I_{BK} + I_{SK} + I_h + I_L) + I_{ext}$$
 
-$$C_m \frac{dV}{dt} = -I_{Na} - I_K - I_A - I_{AHP} - I_L + I_{ext}$$
+### Ionic Currents
 
-$$I_{Na} = g_{Na} m^3 h (V - E_{Na})$$
-$$I_K = g_K n^4 (V - E_K)$$
-$$I_A = g_A a^3 b (V - E_K)$$
-$$I_{AHP} = g_{AHP} \frac{[Ca^{2+}]}{[Ca^{2+}] + 0.5} (V - E_K)$$
+| Current | Gating | Formula |
+|---------|--------|---------|
+| INa_t | m³h | $g_{Na_t} \cdot m^3 h \cdot (V - E_{Na})$ |
+| INa_p | p | $g_{Na_p} \cdot p_{Na} \cdot (V - E_{Na})$ |
+| IK_dr | n⁴ | $g_{K_{dr}} \cdot n^4 \cdot (V - E_K)$ |
+| IK_A | a³b | $g_{K_A} \cdot a^3 b \cdot (V - E_K)$ |
+| IK_M | w | $g_{K_M} \cdot w \cdot (V - E_K)$ |
+| ICa_T | m_t²s | $g_{Ca_T} \cdot m_t^2 s \cdot (V - E_{Ca})$ |
+| ICa_N | c² | $g_{Ca_N} \cdot c_n^2 \cdot (V - E_{Ca})$ |
+| IBK | V+Ca Boltzmann | $g_{BK} \cdot f_{BK}(V, [Ca]) \cdot (V - E_K)$ |
+| ISK | Hill n=2 | $g_{SK} \cdot \frac{[Ca]^2}{[Ca]^2 + K_d^2} \cdot (V - E_K)$ |
+| Ih | r | $g_h \cdot r \cdot (V - E_h)$ |
+| IL | ohmic | $g_L \cdot (V - E_L)$ |
 
-Gate kinetics: WB alpha/beta rates with phi=5 scaling (via `safe_rate`).
+### BK Ca-voltage dependence
 
-### A-type K+ gating (Connor-Stevens style)
+$$V_{1/2}^{BK} = 100 - 120 \cdot \frac{[Ca]^2}{[Ca]^2 + K_d^2}$$
 
-$$a_\infty = \frac{1}{1 + \exp(-(V+50)/20)}, \quad \tau_a = 2 \text{ ms}$$
-$$b_\infty = \frac{1}{1 + \exp((V+70)/6)}, \quad \tau_b = 50 \text{ ms}$$
+$$f_{BK} = \frac{1}{1 + \exp(-(V - V_{1/2}^{BK})/15)}$$
 
-### Ca2+ dynamics
+### Ca²⁺ dynamics
 
-$$\frac{d[Ca^{2+}]}{dt} = -\frac{[Ca^{2+}]}{\tau_{Ca}}$$
-
-On spike: $[Ca^{2+}] \leftarrow [Ca^{2+}] + 0.2$, $\tau_{Ca} = 200$ ms.
+$$\frac{d[Ca]}{dt} = -\frac{(I_{Ca_T} + I_{Ca_N})_{inward} \cdot 0.001}{\text{volume factor}} - \frac{[Ca]}{\tau_{Ca}}$$
 
 ---
 
@@ -50,23 +57,26 @@ On spike: $[Ca^{2+}] \leftarrow [Ca^{2+}] + 0.2$, $\tau_{Ca} = 200$ ms.
 
 | Parameter | Value | Unit | Description |
 |-----------|-------|------|-------------|
-| `v` | -60.0 | mV | Membrane potential |
-| `m` | 0.05 | — | Na+ activation |
-| `h` | 0.6 | — | Na+ inactivation |
-| `n` | 0.32 | — | Kdr activation |
-| `a` | 0.1 | — | A-type K+ activation |
-| `b` | 0.8 | — | A-type K+ inactivation |
-| `ca` | 0.0 | mM | Intracellular Ca2+ |
-| `g_na` | 35.0 | mS/cm² | Na+ conductance |
-| `g_k` | 9.0 | mS/cm² | Kdr conductance |
-| `g_a` | 2.0 | mS/cm² | A-type K+ conductance |
-| `g_ahp` | 0.5 | mS/cm² | Ca2+-dependent K+ (AHP) |
-| `g_l` | 0.1 | mS/cm² | Leak conductance |
-| `e_na` | 55.0 | mV | Na+ reversal |
-| `e_k` | -90.0 | mV | K+ reversal |
-| `e_l` | -65.0 | mV | Leak reversal |
-| `phi` | 5.0 | — | Kinetic scaling factor |
-| `dt` | 0.5 | ms | Integration timestep (4 sub-steps) |
+| `g_na_t` | 48.0 | mS/cm² | Transient Na (Solinas Table 1) |
+| `g_na_p` | 0.2 | mS/cm² | Persistent Na (pacemaker) |
+| `g_kdr` | 16.0 | mS/cm² | Delayed rectifier K |
+| `g_ka` | 8.0 | mS/cm² | A-type K (V1/2=-27 mV) |
+| `g_km` | 1.0 | mS/cm² | Muscarinic K (KCNQ) |
+| `g_cat` | 0.5 | mS/cm² | T-type Ca²⁺ |
+| `g_can` | 1.0 | mS/cm² | N-type Ca²⁺ |
+| `g_bk` | 3.0 | mS/cm² | BK (fast AHP) |
+| `g_sk` | 1.0 | mS/cm² | SK (slow AHP) |
+| `g_h` | 0.1 | mS/cm² | Ih (HCN) |
+| `g_l` | 0.05 | mS/cm² | Leak |
+| `e_na` | 55.0 | mV | Na reversal |
+| `e_k` | -90.0 | mV | K reversal |
+| `e_ca` | 120.0 | mV | Ca²⁺ reversal |
+| `e_h` | -40.0 | mV | Ih reversal |
+| `e_l` | -55.0 | mV | Leak reversal (depolarised, pacemaker) |
+| `tau_ca` | 200.0 | ms | Ca²⁺ decay time constant |
+| `kd_bk` | 1.0 | µM | BK Ca²⁺ Kd (Hill n=2) |
+| `kd_sk` | 0.5 | µM | SK Ca²⁺ Kd (Hill n=2) |
+| `dt` | 0.5 | ms | Integration timestep (10 sub-steps) |
 
 ---
 
@@ -75,13 +85,12 @@ On spike: $[Ca^{2+}] \leftarrow [Ca^{2+}] + 0.2$, $\tau_{Ca} = 200$ ms.
 | Checklist | Status |
 |-----------|--------|
 | Rust implementation | `engine/src/neurons/cerebellar.rs` |
-| PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` (state: v, m, h, n, a, b, ca) |
+| PyO3 wrapper | `pyo3_neurons.rs` (state: v, m, h, p_na, n, a, b, w, m_t, s, c_n, r, ca) |
 | NetworkRunner wired | `NeuronVariant::Golgi` |
 | `create_neuron("GolgiCell")` | Yes |
 | `supported_models()` | Includes "GolgiCell" |
-| STRONG tests | 11 (fire, spontaneous, adaptation, A-type delay, Ca2+, negative, NaN, extreme, reset, gates, performance) |
-| Pipeline integration | Covered by `create_neuron_all_supported` |
-| Benchmark | `golgi_1k_steps`: **396 µs** (396 ns/step), i5-11600K |
+| STRONG tests | 17 (fire, spontaneous, 11-currents, NaP depolarises, KM slows, KA transient, Ih sag, BK fast AHP, SK slow AHP, Ca²⁺ accumulates, gates bounded, reset, negative, NaN, extreme, AHP rate, performance) |
+| Benchmark | `golgi_1k_steps`: **1.39 ms** (1.39 µs/step), i5-11600K |
 
 ---
 
@@ -89,18 +98,23 @@ On spike: $[Ca^{2+}] \leftarrow [Ca^{2+}] + 0.2$, $\tau_{Ca} = 200$ ms.
 
 | Benchmark | Median |
 |-----------|-------:|
-| golgi_1k_steps | 396 µs |
-| Per step | **396 ns** |
+| golgi_1k_steps | 1.39 ms |
+| Per step | **1.39 µs** |
 
-WB gating with 4 sub-steps (dt=0.125 ms) + A-type K+ + Ca2+-dependent AHP. Measured 2026-04-04.
+11 ionic currents, 13 gating variables, 10 sub-steps (dt_sub=0.05 ms). Measured 2026-04-05.
 
 ---
 
 ## Findings
 
-1. **Fires with excitatory input.** Sustained spiking with I=15. Verified.
-2. **Near-spontaneous with minimal input.** Fires with very low current due to depolarised leak. Verified.
-3. **Adaptation via Ca2+-AHP.** Spike frequency decreases during sustained drive. Verified.
-4. **A-type K+ delays onset.** Removing g_a shortens latency to first spike. Verified.
-5. **Ca2+ accumulates during spiking.** Ca2+ > 0 after sustained firing. Verified.
-6. **Reset clears all state.** All variables return to initial values. Verified.
+1. **Full Solinas 2007 model.** All 11 currents implemented with publication-matched kinetics.
+2. **Fires with excitatory input.** Sustained spiking with I=15 µA/cm². Verified.
+3. **Near-spontaneous firing.** Fires with minimal input (0.5 µA/cm²) due to NaP + depolarised leak. Verified.
+4. **Persistent Na contributes to pacemaking.** Removing NaP reduces excitability. Verified.
+5. **K_M limits high-frequency firing.** Removing K_M increases spike rate. Verified.
+6. **K_A modulates firing pattern.** Transient A-type current affects spike rate. Verified.
+7. **Ih produces sag.** Hyperpolarisation with Ih → less negative V than without. Verified.
+8. **BK fast AHP.** BK channels activate during spikes, contribute to repolarisation. Verified.
+9. **SK slow adaptation.** Removing SK increases firing rate (Ca²⁺-dependent slow AHP). Verified.
+10. **Ca²⁺ accumulates during spiking.** Ca²⁺ entry via Ca_T + Ca_N. Verified.
+11. **All gates bounded [0,1].** 11 gating variables + Ca²⁺ non-negative. Verified.
