@@ -20,9 +20,9 @@ chardet==5.2.0 \
     --hash=sha256:1b3b6ff479a8c414bc3fa2c0852995695c4a026dcd6d0633b2dd092ca39c1cf7 \
     --hash=sha256:e1cf59446890a00105fe7b7912492ea04b6e6f06d4b742b2c788469e34c82970
     # via cyclonedx-bom
-cyclonedx-bom==7.2.2 \
-    --hash=sha256:c3cfb62762090c73dbc6937a6da8847de99e949097bc32362a33c55a3a6e5589 \
-    --hash=sha256:dc7b994d41a83dc24caa511462dbf9fa6ede51b962f42533a58d0a8261d98e56
+cyclonedx-bom==7.3.0 \
+    --hash=sha256:73d7d76b3a28ebadc50eabf424cbcf128785a74b8a59ce7893da2e29cfaab585 \
+    --hash=sha256:d54080d65731980945de38e52009a5e5711f4a3c31377a3d13af96eaca5fcf3d
     # via -r requirements/release.in
 cyclonedx-python-lib[validation]==11.6.0 \
     --hash=sha256:7fb85a4371fa3a203e5be577ac22b7e9a7157f8b0058b7448731474d6dea7bf0 \
