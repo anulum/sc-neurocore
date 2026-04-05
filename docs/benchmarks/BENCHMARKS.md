@@ -98,13 +98,16 @@ Source: `benchmarks/results/jarvislabs_a6000/gpu_large_scale.json`,
 All benchmarks run with `cargo bench --manifest-path engine/Cargo.toml` on
 AVX-512 hardware. Times are Criterion medians.
 
+> **Updated 2026-04-05** with UpCloud EPYC 9575F measurements. Previous values
+> (25.4 µs, 446 µs) were from an unidentified earlier run.
+
 ### Bitstream Packing (1M bits = 1,048,576 bits)
 
 | Variant | Time | Throughput | vs. Python |
 |---------|------|------------|------------|
 | `pack` (scalar) | 897 µs | 1.17 Gbit/s | 2.2× |
 | `pack_fast` (u64 chunks) | 286 µs | 3.67 Gbit/s | 7× |
-| `pack_dispatch` (AVX-512) | 25.4 µs | **41.3 Gbit/s** | **79×** |
+| `pack_dispatch` (AVX-512) | 8.85 µs | **113 Gbit/s** | **46.6×** |
 
 ### Popcount (16,384 u64 words = 1M bits)
 
@@ -126,7 +129,7 @@ AVX-512 hardware. Times are Criterion medians.
 |-----------|------|------------|
 | LFSR encoder (64K steps) | 131 µs | 500 Mstep/s |
 | LIF neuron (10K steps) | 47.9 µs | 209 Mstep/s |
-| LIF neuron (100K steps) | 446 µs | 224 Mstep/s |
+| LIF neuron (100K steps) | 219 µs | 456 Mstep/s |
 
 ### Bernoulli Encoding (1,024-bit packed streams)
 

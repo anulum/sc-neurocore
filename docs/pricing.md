@@ -150,14 +150,14 @@ commercial licenses for proprietary integration.
 <div class="pricing-savings">&nbsp;</div>
 <ul class="pricing-features">
 <li>173 neuron models (113 biophysical + 9 AI-optimized)</li>
-<li>Rust SIMD engine (41.3 Gbit/s AVX-512)</li>
-<li>20 Verilog HDL modules + 68 formal properties</li>
+<li>Rust SIMD engine (113 Gbit/s AVX-512)</li>
+<li>20 Verilog HDL modules + 72 formal properties</li>
 <li>ODE → Verilog compiler (<code>sc-neurocore compile</code>)</li>
 <li>PyTorch training (6 surrogates, 12 cells)</li>
 <li>6-codec neural data compression</li>
-<li>124-function spike analysis toolkit</li>
+<li>127-function spike analysis toolkit</li>
 <li>Quantum hybrid (Qiskit/PennyLane)</li>
-<li>84 tutorials + full API documentation</li>
+<li>87 tutorials + full API documentation</li>
 <li>Community support (GitHub Discussions)</li>
 <li>Source modifications must remain open (AGPL)</li>
 </ul>
@@ -247,7 +247,7 @@ Write neuron equations as strings. The compiler produces synthesizable
 Q8.8 Verilog RTL with saturating arithmetic, transcendental function
 LUTs (exp, log, tanh, sigmoid, sin, cos), auto-generated testbenches,
 and one-click Yosys synthesis. Python simulation matches Verilog
-bit-for-bit (68 formal properties verified by SymbiYosys).
+bit-for-bit (72 formal properties verified by SymbiYosys).
 
 ### PyTorch Training → SC Bitstream → FPGA
 
@@ -265,11 +265,11 @@ Unified API: `get_codec(name)`, `recommend_codec()`. Rust backend (780x).
 
 ### 173 Neuron Models + Rust SIMD Engine
 
-82 years of computational neuroscience (1943-2026). 172 Rust models with
-PyO3 bindings, 159-model NetworkRunner with Rayon-parallel populations.
-41.3 Gbit/s bitstream packing (AVX-512). 224 Mstep/s LIF throughput.
+82 years of computational neuroscience (1943-2026). 173 Rust models with
+PyO3 bindings, 160-model NetworkRunner with Rayon-parallel populations.
+113 Gbit/s bitstream packing (AVX-512). 456 Mstep/s LIF throughput.
 
-### 125-Function Spike Analysis Toolkit
+### 127-Function Spike Analysis Toolkit
 
 CV, Fano factor, cross-correlation, Victor-Purpura distance, SPIKE-sync,
 Granger causality, GPFA, SPADE pattern detection. Matches Elephant +
@@ -285,10 +285,10 @@ PySpike combined. Pure NumPy — no additional dependencies.
 | `sc-neurocore compile` (ODE → Verilog) | Yes | Yes | Yes |
 | PyTorch training (6 surrogates, 12 cells) | Yes | Yes | Yes |
 | 6-codec neural compression | Yes | Yes | Yes |
-| 124-function spike analysis | Yes | Yes | Yes |
-| 20 Verilog modules + 68 formal properties | Yes | Yes | Yes |
+| 127-function spike analysis | Yes | Yes | Yes |
+| 20 Verilog modules + 72 formal properties | Yes | Yes | Yes |
 | Quantum hybrid (Qiskit/PennyLane) | Yes | Yes | Yes |
-| 84 tutorials + full docs | Yes | Yes | Yes |
+| 87 tutorials + full docs | Yes | Yes | Yes |
 | Closed-source use | No (AGPL) | **Yes** | **Yes** |
 | Priority support | Community | **48h** | **24h** |
 | FPGA synthesis support | Self-serve | **Guided** | **Custom targets** |

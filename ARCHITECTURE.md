@@ -25,7 +25,7 @@ sc-neurocore/
 ├── bridge/                 PyO3 Python ↔ Rust bridge (maturin build)
 │
 ├── src/sc_neurocore/       Python package (pip install -e ".[dev]")
-│   ├── neurons/            122 neuron models (models/ subdir) + core SC neurons
+│   ├── neurons/            176 neuron models (models/ subdir) + core SC neurons
 │   ├── synapses/           Bitstream synapses (static, STDP, R-STDP)
 │   ├── layers/             SC dense, conv2d, recurrent, vectorized, fusion, memristive, attention
 │   ├── sources/            Current sources (bitstream, Poisson)
@@ -45,7 +45,7 @@ sc-neurocore/
 │   ├── quantum/            Quantum circuit stochastic bridge (Qiskit + PennyLane)
 │   ├── adapters/           SCPN layer adapters (L1-L16), holonomic (JAX)
 │   ├── scpn/               SCPN layer implementations (L1-L16)
-│   ├── analysis/           125-function spike train analysis toolkit
+│   ├── analysis/           127-function spike train analysis toolkit
 │   ├── math/               SC arithmetic (add, mul, div, CORDIV)
 │   ├── solvers/            ODE solvers (RK4, Euler)
 │   ├── graphs/             Petri nets, graph algorithms

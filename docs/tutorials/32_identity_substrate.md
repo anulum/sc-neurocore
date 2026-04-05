@@ -153,8 +153,8 @@ substrate.run(duration=0.5, dt=0.001)  # warm up
 
 # Inject experiences from a work session
 experiences = [
-    "sc-neurocore has 122 neuron models spanning 82 years",
-    "The Rust engine achieves 41.3 Gbit/s on AVX-512",
+    "sc-neurocore has 176 neuron models spanning 82 years",
+    "The Rust engine achieves 113 Gbit/s on AVX-512",
     "NIR bridge verified with Norse, snnTorch, SpikingJelly",
 ]
 for exp in experiences:
