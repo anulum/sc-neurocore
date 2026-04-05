@@ -168,6 +168,35 @@ cargo bench --bench analysis_bench -- --quick
 | Smooth muscle | 1k | 198 µs | **198 ns** | CaL + BK + IP3R/SERCA, 4 sub-steps |
 | Beta cell | 1k | 196 µs | **196 ns** | CaL + K_dr + K_ATP + K_Ca, 4 sub-steps |
 
+### Biophysical Models (`neurons/biophysical.rs`)
+
+| Model | Steps | Median | Per step | Sub-steps | Notes |
+|-------|-------|--------|----------|-----------|-------|
+| Hodgkin-Huxley 1952 | 1k | 13.3 ms | **13.3 µs** | 100 | Full 4-ODE HH with safe_rate kinetics |
+| Wang-Buzsáki 1996 | 1k | 6.94 ms | **6.94 µs** | 50 | FS interneuron, m_inf (no m state) |
+| Connor-Stevens 1977 | 1k | 3.56 ms | **3.56 µs** | 10 | A-type K+ for delay tuning |
+| Traub-Miles 1991 | 1k | 1.80 ms | **1.80 µs** | 10 | CA3 pyramidal + M-current |
+| Mainen-Sejnowski 1996 | 1k | 1.86 ms | **1.86 µs** | 20 | Two-compartment (soma+axon) |
+| Plant R15 1976 | 1k | 1.11 ms | **1.11 µs** | 5 | Aplysia parabolic burster + Ca²⁺/KCa |
+| De Schutter-Bower 1994 | 1k | 775 µs | **775 ns** | 5 | Purkinje cell, Ca²⁺-dependent K |
+| Golomb FS 2007 | 1k | 711 µs | **711 ns** | 10 | Kv3 fast-spiking interneuron |
+| Pospischil 2008 | 1k | 686 µs | **686 ns** | 4 | Minimal HH, 5 cortical cell types |
+| Destexhe 1993 | 1k | 654 µs | **654 ns** | 5 | Thalamocortical + T-current rebound |
+| Hill-Tononi 2005 | 1k | 350 µs | **350 ns** | 1 | Na-dependent K, sleep/wake |
+| Durstewitz 2000 | 1k | 149 µs | **149 ns** | 1 | PFC + D1 dopamine + NMDA Mg²⁺ block |
+| Bertram 2000 | 1k | 132 µs | **132 ns** | 1 | Phantom burster, dual slow K |
+| Av-Ron 1991 | 1k | 120 µs | **120 ns** | 1 | Cardiac ganglion, Type III burst |
+| Yamada 1989 | 1k | 105 µs | **105 ns** | 1 | Subcritical Hopf burster |
+| Huber-Braun 1998 | 1k | 71.4 µs | **71.4 ns** | 1 | Temperature-sensitive cold receptor |
+| Prescott 2008 | 10k | 537 µs | **53.7 ns** | 1 | Type I/II/III excitability tuning |
+| GLIF (Allen) | 10k | 363 µs | **36.3 ns** | 1 | LIF + threshold adapt + ASC |
+| GIF population | 10k | 368 µs | **36.8 ns** | 1 | Escape-rate generalized IF |
+| Mihalas-Niebur 2009 | 10k | 123 µs | **12.3 ns** | 1 | Generalized IF, 20 spike patterns |
+
+> Models with sub-steps have larger per-step cost due to inner ODE integration
+> loops. HH is most expensive (100 sub-steps at dt=0.01 ms).
+> Measured 2026-04-05 on i5-11600K @ 3.90 GHz.
+
 ### Simple Spiking (`neurons/simple_spiking.rs`)
 
 | Model | Steps | Median | Per step | Notes |
