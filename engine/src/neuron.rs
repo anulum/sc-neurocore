@@ -355,6 +355,7 @@ pub struct AdExNeuron {
     pub tau_w: f64,
     pub a: f64,
     pub b: f64,
+    pub c_m: f64,
     pub dt: f64,
 }
 
@@ -378,14 +379,18 @@ impl AdExNeuron {
             tau_w: 100.0,
             a: 0.5,
             b: 7.0,
+            c_m: 200.0,
             dt: 0.1,
         }
     }
 
     pub fn step(&mut self, current: f64) -> i32 {
+        // Brette & Gerstner 2005: C dV/dt = -g_L(V-E_L) + g_L ΔT exp((V-V_T)/ΔT) - w + I
         let exp_arg = ((self.v - self.v_rh) / self.delta_t).clamp(-20.0, 20.0);
         let exp_term = self.delta_t * exp_arg.exp();
-        let dv = (-(self.v - self.v_rest) + exp_term - self.w + current) / self.tau * self.dt;
+        let dv = ((-(self.v - self.v_rest) + exp_term) / self.tau
+            + (-self.w + current) / self.c_m)
+            * self.dt;
         let dw = (self.a * (self.v - self.v_rest) - self.w) / self.tau_w * self.dt;
         self.v += dv;
         self.w += dw;
