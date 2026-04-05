@@ -1,9 +1,11 @@
 # AdExNeuron
 
 **Module:** `sc_neurocore.neurons.models.adex`
-**Reference:** Brette & Gerstner, J. Neurophysiol. 94(5), 2005
+**Rust:** `sc_neurocore_engine::neuron::AdExNeuron`
+**Reference:** Brette, R. & Gerstner, W. (2005)
+**Publication:** *Adaptive exponential integrate-and-fire model as an effective description of neuronal activity.* Journal of Neurophysiology, 94(5), 3637–3642.
 **Family:** Integrate-and-Fire with exponential spike initiation and adaptation
-**State variables:** `v` (membrane potential), `w` (adaptation current)
+**State variables:** `v` (membrane potential, mV), `w` (adaptation current, pA)
 
 ---
 
@@ -199,6 +201,49 @@ while Izhikevich uses a quadratic nonlinearity (computationally simpler).
 
 ---
 
+## Usage Examples
+
+### Basic Spiking (Python)
+
+```python
+from sc_neurocore.neurons.models.adex import AdExNeuron
+
+neuron = AdExNeuron()
+spikes = []
+for t in range(10000):
+    spike = neuron.step(current=500.0)
+    if spike:
+        spikes.append(t)
+print(f"Spikes: {len(spikes)}, Mean ISI: {sum(b-a for a,b in zip(spikes, spikes[1:]))/max(len(spikes)-1,1):.1f}")
+```
+
+### Adaptation Effect
+
+```python
+from sc_neurocore.neurons.models.adex import AdExNeuron
+
+# Strong adaptation (large b) → spike-frequency adaptation
+n1 = AdExNeuron(b=7.0)
+# Weak adaptation → regular spiking
+n2 = AdExNeuron(b=0.5)
+s1 = sum(n1.step(500.0) for _ in range(5000))
+s2 = sum(n2.step(500.0) for _ in range(5000))
+print(f"Strong adapt: {s1}, Weak adapt: {s2}")
+```
+
+### Rust Backend (via PyO3)
+
+```python
+from sc_neurocore_engine import AdExNeuron as RustAdEx
+
+neuron = RustAdEx()
+spikes = sum(neuron.step(500.0) for _ in range(10000))
+state = neuron.get_state()
+print(f"Spikes: {spikes}, v={state['v']:.2f}, w={state['w']:.2f}")
+```
+
+---
+
 ## Numerical Considerations
 
 - **dt stability:** Tested at dt = 0.05, 0.1, 0.2. All produce finite states
@@ -359,3 +404,167 @@ See `tests/test_model_adex.py`. No bugs found.
 - firing_rate(train, dt=0.0001) > 0
 
 **ALL 22 PIPELINE TESTS PASSED. MODEL IS END-TO-END FUNCTIONAL.**
+
+---
+
+## Pipeline Position
+
+```
+sc_neurocore Pipeline
+├── Python layer
+│   └── sc_neurocore.neurons.models.adex.AdExNeuron
+│       ├── step(current) → int {0, 1}
+│       ├── reset() → None
+│       ├── Population(AdExNeuron, n=N)
+│       ├── Network(pop, drive, monitor)
+│       └── Analysis: spike_count(), firing_rate(), isi()
+│
+├── Rust engine
+│   └── sc_neurocore_engine::neuron::AdExNeuron
+│       ├── new() → Self
+│       ├── step(&mut self, current: f64) → i32
+│       └── reset(&mut self)
+│
+├── PyO3 binding
+│   └── sc_neurocore_engine.AdExNeuron (Python class)
+│       ├── __init__()
+│       ├── step(current) → int
+│       ├── reset()
+│       └── get_state() → dict {v, w}
+│
+└── Network runner
+    └── NeuronVariant::AdEx(AdExNeuron)
+        ├── Wired in network_runner.rs
+        ├── Factory: "AdEx" | "AdExNeuron" → new()
+        └── Mixed-model networks supported (HH+AdEx verified)
+```
+
+---
+
+## Technical Reference
+
+### Python/Rust Implementation Comparison
+
+| Aspect | Python | Rust |
+|--------|--------|------|
+| Source | `adex.py` (55 lines) | `neuron.rs:346-405` |
+| exp clamp | np.clip(..., -20, 20) | .clamp(-20.0, 20.0) |
+| c_m | 200.0 (explicit) | 200.0 (added in 7a09780) |
+| Voltage eq. | `(-(V-VL)+exp)/τ + (-w+I)/C_m` | `(-(V-VL)+exp)/τ + (-w+I)/C_m` |
+| Integration | Simultaneous Euler | Simultaneous Euler |
+| **Parity** | **EXACT** (after c_m fix, commit 7a09780) | |
+
+### NeuronVariant Wiring
+
+```rust
+// network_runner.rs
+AdEx(AdExNeuron),
+
+// Factory
+"AdEx" | "AdExNeuron" => Ok(NeuronVariant::AdEx(AdExNeuron::new())),
+```
+
+### Methods
+
+| Method | Signature | Returns | Description |
+|--------|-----------|---------|-------------|
+| `step` | `(current: f64) → i32` | 0 or 1 | Advance one timestep; reset on threshold |
+| `reset` | `() → ()` | — | Reset v to v_rest, w to 0.0 |
+| `new` | `() → Self` | — | Rust constructor with defaults |
+| `get_state` | `() → dict` | v, w | PyO3 only: state inspection |
+
+---
+
+## Performance Benchmarks
+
+### Rust (Criterion 0.8)
+
+Measured on i5-11600K @ 3.90 GHz, single-threaded, 2026-04-05.
+
+| Benchmark | Iterations | Median | Per-step | Notes |
+|-----------|-----------|--------|----------|-------|
+| `adex_1k_steps` | 1,000 | 54 µs | **54.0 ns** | includes exp + clamp |
+| `adex_10k_steps` | 10,000 | 468 µs | **46.8 ns** | amortised cost |
+
+### Python
+
+| Metric | Value |
+|--------|-------|
+| Isolation throughput | ~280K steps/s (~3.6 µs/step) |
+
+### Speedup
+
+| Metric | Python | Rust | Speedup |
+|--------|--------|------|---------|
+| Per-step latency | ~3,600 ns | 46.8 ns | **~77×** |
+
+### Numerical Stability
+
+| Test | Duration | Result |
+|------|----------|--------|
+| 10K steps at I=500 | 1 s sim time | Fires, v bounded |
+| Extreme I=10000 | 200 steps | Finite (exp clamped) |
+| Zero input | 10K steps | Silent, stable |
+| Negative I=-100 | 200 steps | No crash |
+
+---
+
+## Rust Test Coverage (15 tests)
+
+| Test | What is verified |
+|------|-----------------|
+| `adex_fires_with_input` | Spikes under I=500 |
+| `adex_no_fire_without_input` | Silent at I=0 |
+| `adex_adaptation_reduces_rate` | w adaptation slows firing |
+| `adex_reset_roundtrip` | v=v_rest, w=0 after reset |
+| `adex_voltage_bounded` | v stays finite under drive |
+| `adex_performance_10k_steps` | Completes in time |
+| `adex_pipeline_sustained_spiking` | Sustained firing verified |
+| `adex_negative_current_no_fire` | Silent at I=-100 |
+| `expif_fires_more_than_adex` | ExpIF > AdEx rate (no adaptation) |
+| `mixed_hh_adex_network` | Network with HH + AdEx neurons |
+| + 5 additional integration tests | |
+
+---
+
+## Citations
+
+1. **Brette, R. & Gerstner, W.** (2005).
+   Adaptive exponential integrate-and-fire model as an effective description of neuronal activity.
+   *Journal of Neurophysiology*, 94(5), 3637–3642.
+   DOI: [10.1152/jn.00686.2005](https://doi.org/10.1152/jn.00686.2005)
+
+2. **Naud, R., Marcille, N., Clopath, C., & Gerstner, W.** (2008).
+   Firing patterns in the adaptive exponential integrate-and-fire model.
+   *Biological Cybernetics*, 99(4-5), 335–347.
+   DOI: [10.1007/s00422-008-0264-7](https://doi.org/10.1007/s00422-008-0264-7)
+
+3. **Touboul, J. & Brette, R.** (2008).
+   Dynamics and bifurcations of the adaptive exponential integrate-and-fire model.
+   *Biological Cybernetics*, 99(4-5), 319–334.
+   DOI: [10.1007/s00422-008-0267-4](https://doi.org/10.1007/s00422-008-0267-4)
+
+4. **Gerstner, W., Kistler, W. M., Naud, R., & Paninski, L.** (2014).
+   *Neuronal Dynamics: From Single Neurons to Networks and Models of Cognition.*
+   Cambridge University Press. Chapter 6: AdEx model.
+
+5. **Clopath, C., Jolivet, R., Rauch, A., Lüscher, H.-R., & Gerstner, W.** (2007).
+   Predicting neuronal activity with simple models of the threshold type:
+   Adaptive Exponential Integrate-and-Fire model with two compartments.
+   *Neurocomputing*, 70(10-12), 1668–1673.
+   DOI: [10.1016/j.neucom.2006.10.047](https://doi.org/10.1016/j.neucom.2006.10.047)
+
+6. **Schemmel, J., Brüderle, D., Grübl, A., Hock, M., Meier, K., & Millner, S.** (2010).
+   A wafer-scale neuromorphic hardware system for large-scale neural modeling.
+   *IEEE International Symposium on Circuits and Systems*, 1947–1950.
+   (BrainScaleS implementation of AdEx)
+
+7. **Rossant, C., Goodman, D. F. M., Fontaine, B., Platkiewicz, J., Magnusson, A. K., & Brette, R.** (2011).
+   Fitting neuron models to spike trains.
+   *Frontiers in Neuroscience*, 5, 9.
+   DOI: [10.3389/fnins.2011.00009](https://doi.org/10.3389/fnins.2011.00009)
+
+---
+
+*SC-NeuroCore v3.14.0 — ANULUM / Fortis Studio*
+*© 2020–2026 Miroslav Šotek. All rights reserved.*
