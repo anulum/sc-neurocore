@@ -4,6 +4,40 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Neuron Models — Phase 3G-3H (12 new models, 2026-04-04/05)
+- **TUMNetwork**: rate model with short-term plasticity (depression + facilitation), 3 ODEs
+- **ElBoustaniNetwork**: E/I + NMDA bistability, 3 ODEs
+- **GradedSynapseNeuron**: non-spiking, passive RC + sigmoid release
+- **GapJunctionNeuron**: LIF + electrical synapse with Cx36 rectification
+- **FrankenhaeUserHuxleyAxon**: GHK permeability-based currents (not linear V-E)
+- **NodeOfRanvier**: MRG 2002 — Nav1.6 transient + persistent + Kv7 slow K
+- **MyelinatedAxon**: MRG node + passive internode cable
+- **CardiacPurkinjeFibre**: DiFrancesco-Noble 1985, 6 currents
+- **SmoothMuscleCell**: CaL + BK + IP3R/SERCA + Ca²⁺ store
+- **EndocrineBetaCell**: CaL + K_dr + K_ATP + K_Ca glucose-dependent bursting
+
+### Fidelity Audit Fixes (7 models corrected, 2026-04-04)
+- **RetinalGanglionCell**: basic LIF → Pillow 2005 GLM (stimulus + history filters)
+- **InnerHairCell**: no vesicle pool → Meddis 1986/2006 (q/c/w compartments)
+- **OuterHairCell**: unidirectional sigmoid → bidirectional asymmetric prestin (Santos-Sacchi 2006)
+- **GranuleCell**: LIF-style → D'Angelo 2001 full HH (7 ionic currents)
+- **AlphaMotorNeuron**: PIC no inactivation → h_pic + Ca²⁺ buffering
+- **RodPhotoreceptor**: no Ca²⁺ feedback → Ca²⁺-GC feedback (Nikonov 2006, Hill n=4)
+- **TraubMilesNeuron**: missing M-current → Kv7/KCNQ (Yamada 1989)
+
+### Kinetics Audit Fixes (3 models upgraded, 2026-04-05)
+- **GolgiCell** (CRITICAL): 5-current WB → full Solinas 2007 (11 currents, 13 gating variables)
+- **DCNNeuron** (MODERATE): added persistent Na (INaP) + Ca²⁺-dependent AHP (7 currents total)
+- **OlfactoryReceptorNeuron** (MODERATE): added PDE4 negative feedback on cAMP
+
+### Infrastructure (2026-04-05)
+- `supported_models()`: 28 missing entries added (159 total)
+- Interface wrappers: 20 non-standard models wired via Wr* types (multi-input, i32-input, graded/rate)
+- All 4 failing CI workflows fixed (clippy, ruff, MkDocs, typos)
+- `cargo fmt` applied to all engine source
+- Fresh Criterion benchmarks published (2026-04-05)
+- Documentation audit: all stale numbers corrected across README, pricing, index, benchmarks
+
 ### Notebooks (13 new, 21 total)
 - **08_equation_to_verilog**: ODE string → Python sim → Q8.8 Verilog (LIF, FHN, Izhikevich)
 - **09_topology_and_dynamics**: 6 generators, adjacency matrices, degree distributions, raster plots
