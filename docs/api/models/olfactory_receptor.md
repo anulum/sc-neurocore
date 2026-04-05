@@ -76,7 +76,7 @@ Same as before: LIF membrane, Ca²⁺ proxy from depolarisation, slow CaM adapta
 | `create_neuron("OlfactoryReceptorNeuron")` | Yes |
 | `supported_models()` | Includes "OlfactoryReceptorNeuron" |
 | STRONG tests | 7 (fires, adapts, no-fire, reset, PDE4 activates, PDE4 reduces cAMP, PDE4 enhances adaptation) |
-| Benchmark | `olfactory_10k_steps`: **1.48 ms** (148 ns/step), i5-11600K |
+| Benchmark | `olfactory_10k_steps`: **334 µs** (33.4 ns/step), i5-11600K |
 
 ---
 

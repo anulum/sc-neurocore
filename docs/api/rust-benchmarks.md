@@ -94,7 +94,7 @@ cargo bench --bench analysis_bench -- --quick
 | Rod photoreceptor | 308 µs | **30.8 ns** | graded | cGMP cascade |
 | Nociceptor | 370 µs | **37 ns** | spiking | Sensitisation |
 | Pacinian corpuscle | 837 µs | **83.7 ns** | spiking | sin() input, fast adapting |
-| Olfactory receptor | 1.48 ms | **148 ns** | spiking | cAMP + Ca2+/CaM |
+| Olfactory receptor | 334 µs | **33.4 ns** | spiking | cAMP + Ca²⁺/CaM + PDE4 |
 
 > Sensory models use simple Euler integration (no sub-stepping).
 > Measured 2026-04-04 on i5-11600K @ 3.90 GHz.
