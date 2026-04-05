@@ -521,4 +521,182 @@ mod tests {
         let t: i32 = (0..2000).map(|_| n.step(500.0)).sum();
         assert!(t > 0);
     }
+
+    // ── Multi-angle tests for hardware models ──
+
+    // -- LoihiCUBA --
+    #[test]
+    fn loihi_cuba_silent() {
+        let mut n = LoihiCUBANeuron::new();
+        let t: i32 = (0..200).map(|_| n.step(0)).sum();
+        assert_eq!(t, 0);
+    }
+    #[test]
+    fn loihi_cuba_reset() {
+        let mut n = LoihiCUBANeuron::new();
+        for _ in 0..50 { n.step(100); }
+        n.reset();
+        assert_eq!(n.v, 0);
+        assert_eq!(n.u, 0);
+    }
+    #[test]
+    fn loihi_cuba_bounded() {
+        let mut n = LoihiCUBANeuron::new();
+        for _ in 0..1000 { n.step(10000); }
+    }
+
+    // -- Loihi2 --
+    #[test]
+    fn loihi2_silent() {
+        let mut n = Loihi2Neuron::new();
+        let t: i32 = (0..200).map(|_| n.step(0)).sum();
+        assert_eq!(t, 0);
+    }
+    #[test]
+    fn loihi2_reset() {
+        let mut n = Loihi2Neuron::new();
+        for _ in 0..50 { n.step(200); }
+        n.reset();
+        assert_eq!(n.s1, 0);
+    }
+    #[test]
+    fn loihi2_bounded() {
+        let mut n = Loihi2Neuron { tau3: 8, ..Loihi2Neuron::new() };
+        for _ in 0..1000 { n.step(10000); }
+    }
+
+    // -- TrueNorth --
+    #[test]
+    fn truenorth_silent() {
+        let mut n = TrueNorthNeuron::default();
+        let t: i32 = (0..100).map(|_| n.step(0)).sum();
+        assert_eq!(t, 0);
+    }
+    #[test]
+    fn truenorth_reset() {
+        let mut n = TrueNorthNeuron::default();
+        for _ in 0..10 { n.step(50); }
+        n.reset();
+        assert_eq!(n.v, 0);
+    }
+
+    // -- BrainScaleSAdEx --
+    #[test]
+    fn brainscales_silent() {
+        let mut n = BrainScaleSAdExNeuron::new();
+        let t: i32 = (0..200).map(|_| n.step(0.0)).sum();
+        assert_eq!(t, 0);
+    }
+    #[test]
+    fn brainscales_reset() {
+        let mut n = BrainScaleSAdExNeuron::new();
+        for _ in 0..100 { n.step(500.0); }
+        n.reset();
+        assert!((n.v - n.v_rest).abs() < 1e-10);
+    }
+    #[test]
+    fn brainscales_bounded() {
+        let mut n = BrainScaleSAdExNeuron::new();
+        for _ in 0..2000 { n.step(1e4); }
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn brainscales_nan_no_panic() { BrainScaleSAdExNeuron::new().step(f64::NAN); }
+
+    // -- SpiNNakerLIF --
+    #[test]
+    fn spinnaker_silent() {
+        let mut n = SpiNNakerLIFNeuron::new();
+        let t: i32 = (0..200).map(|_| n.step(0.0)).sum();
+        assert_eq!(t, 0);
+    }
+    #[test]
+    fn spinnaker_reset() {
+        let mut n = SpiNNakerLIFNeuron::new();
+        for _ in 0..50 { n.step(30.0); }
+        n.reset();
+        assert!((n.v - n.v_rest).abs() < 1e-10);
+    }
+    #[test]
+    fn spinnaker_bounded() {
+        let mut n = SpiNNakerLIFNeuron::new();
+        for _ in 0..1000 { n.step(1e4); }
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn spinnaker_nan_no_panic() { SpiNNakerLIFNeuron::new().step(f64::NAN); }
+
+    // -- SpiNNaker2 --
+    #[test]
+    fn spinnaker2_silent() {
+        let mut n = SpiNNaker2Neuron::new();
+        let t: i32 = (0..200).map(|_| n.step(0)).sum();
+        assert_eq!(t, 0);
+    }
+    #[test]
+    fn spinnaker2_reset() {
+        let mut n = SpiNNaker2Neuron::new();
+        for _ in 0..50 { n.step(100); }
+        n.reset();
+    }
+    #[test]
+    fn spinnaker2_bounded() {
+        let mut n = SpiNNaker2Neuron::new();
+        for _ in 0..1000 { n.step(10000); }
+    }
+
+    // -- DPI --
+    #[test]
+    fn dpi_silent() {
+        let mut n = DPINeuron::new();
+        let t: i32 = (0..100).map(|_| n.step(0.0)).sum();
+        assert_eq!(t, 0);
+    }
+    #[test]
+    fn dpi_reset() {
+        let mut n = DPINeuron::new();
+        for _ in 0..50 { n.step(1.0); }
+        n.reset();
+    }
+    #[test]
+    fn dpi_nan_no_panic() { DPINeuron::new().step(f64::NAN); }
+
+    // -- Akida --
+    #[test]
+    fn akida_silent() {
+        let mut n = AkidaNeuron::default();
+        let t: i32 = (0..100).map(|_| n.step(0.0)).sum();
+        assert_eq!(t, 0);
+    }
+    #[test]
+    fn akida_reset() {
+        let mut n = AkidaNeuron::default();
+        for _ in 0..10 { n.step(50.0); }
+        n.reset();
+    }
+    #[test]
+    fn akida_nan_no_panic() { AkidaNeuron::default().step(f64::NAN); }
+
+    // -- NeuroGrid --
+    #[test]
+    fn neurogrid_silent() {
+        let mut n = NeuroGridNeuron::new();
+        let t: i32 = (0..200).map(|_| n.step(0.0)).sum();
+        assert_eq!(t, 0);
+    }
+    #[test]
+    fn neurogrid_reset() {
+        let mut n = NeuroGridNeuron::new();
+        for _ in 0..100 { n.step(500.0); }
+        n.reset();
+        assert!((n.v_s - (-65.0)).abs() < 1e-10);
+    }
+    #[test]
+    fn neurogrid_bounded() {
+        let mut n = NeuroGridNeuron::new();
+        for _ in 0..2000 { n.step(1e4); }
+        assert!(n.v_s.is_finite());
+    }
+    #[test]
+    fn neurogrid_nan_no_panic() { NeuroGridNeuron::new().step(f64::NAN); }
 }
