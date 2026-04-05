@@ -1,7 +1,9 @@
 # TermanWangOscillator
 
 **Module:** `sc_neurocore.neurons.models.terman_wang`
-**Reference:** Terman & Wang, Neural Computation 7(5), 1995
+**Rust:** `sc_neurocore_engine::neurons::simple_spiking::TermanWangOscillator`
+**Reference:** Terman, D. & Wang, D. L. (1995)
+**Publication:** *Global competition and local cooperation in a network of neural oscillators.* Neural Computation, 7(5), 1035–1064.
 **Family:** Relaxation oscillator (LEGION network building block)
 **State variables:** `v` (excitatory variable), `w` (inhibitory recovery variable)
 
@@ -131,6 +133,36 @@ the intersection of f and g nullclines and the input current.
 Higher I → faster oscillation (shorter period) and higher mean v.
 Below a critical I: the fixed point is stable (no oscillation).
 Above critical I: limit cycle oscillation.
+
+### LEGION Architecture
+
+The Terman-Wang oscillator was designed specifically as the building
+block for the LEGION (Locally Excitatory, Globally Inhibitory
+Oscillator Network) architecture. In LEGION:
+
+- **Local excitation:** Oscillators representing the same perceptual
+  group synchronise via excitatory coupling
+- **Global inhibition:** A single global inhibitor receives input from
+  all active oscillators and feeds back inhibition via the ρ parameter
+- **Desynchronisation:** Different perceptual groups fire at different
+  phases, enabling temporal coding of visual segmentation
+- **The ρ parameter** in this model represents the global inhibitor's
+  output. In a full LEGION network, ρ is dynamically computed from all
+  oscillators' activity. In standalone mode, ρ is fixed (default 0.0).
+
+LEGION has been applied to image segmentation, auditory scene analysis,
+and feature binding — all relying on the temporal correlation hypothesis
+that neural groups representing the same object fire synchronously.
+
+### Relation to FitzHugh-Nagumo
+
+The Terman-Wang model is structurally a modified FHN system:
+- Both have cubic v-nullcline and sigmoidal w-nullcline
+- TW uses `3v - v³ + 2` (vs FHN's `v - v³/3`), shifting the cubic
+- TW uses tanh for w-nullcline (steep switching), FHN uses linear
+- TW adds the global inhibitor ρ parameter
+- TW's small ε creates stronger timescale separation → sharper
+  relaxation oscillation than FHN
 
 ---
 
@@ -363,3 +395,175 @@ State returns to initial values after `reset()`.
 2. All pipeline stages verified green
 3. Rust parity: EXACT
 4. Numerical stability confirmed over 20K steps
+
+---
+
+## Pipeline Position
+
+```
+sc_neurocore Pipeline
+├── Python layer
+│   └── sc_neurocore.neurons.models.terman_wang.TermanWangOscillator
+│       ├── step(current) → int {0, 1}
+│       ├── reset() → None
+│       ├── Population(TermanWangOscillator, n=N)
+│       └── Network, Analysis pipeline
+│
+├── Rust engine
+│   └── sc_neurocore_engine::neurons::simple_spiking::TermanWangOscillator
+│       ├── new() → Self
+│       ├── step(&mut self, current: f64) → i32
+│       └── reset(&mut self)
+│
+├── PyO3 binding
+│   └── sc_neurocore_engine.TermanWangOscillator
+│       ├── step(current) → int, reset(), get_state() → {v, w}
+│
+└── Network runner
+    └── NeuronVariant::TermanWang(TermanWangOscillator)
+        ├── Wired in network_runner.rs
+        └── Factory: "TermanWang" | "TermanWangOscillator" → new()
+```
+
+---
+
+## Technical Reference
+
+### Python/Rust Implementation Comparison
+
+| Aspect | Python | Rust |
+|--------|--------|------|
+| Source | `terman_wang.py` | `simple_spiking.rs` |
+| v equation | `f = 3v - v³ + 2; dv = (f - w + I + ρ) · dt` | identical |
+| w equation | `g = α(1 + tanh(v/β)); dw = ε(g - w) · dt` | identical |
+| Integration | Simultaneous Euler | Simultaneous Euler (fixed 0255685) |
+| tanh per step | 1 | 1 |
+| **Parity** | **EXACT** (after simultaneous Euler fix) | |
+
+### NeuronVariant Wiring
+
+```rust
+NeuronVariant::TermanWang(TermanWangOscillator),
+"TermanWang" | "TermanWangOscillator" => new()
+```
+
+### Methods
+
+| Method | Signature | Returns |
+|--------|-----------|---------|
+| `step` | `(current: f64) → i32` | 0 or 1 (threshold crossing) |
+| `reset` | `()` | v=-1.5, w=-0.5 |
+
+---
+
+## Performance Benchmarks
+
+### Rust (Criterion 0.8)
+
+Measured on i5-11600K @ 3.90 GHz, single-threaded, 2026-04-05.
+
+| Benchmark | Iterations | Median | Per-step |
+|-----------|-----------|--------|----------|
+| `terman_wang_10k_steps` | 10,000 | 1,228 µs | **122.8 ns** |
+
+### Speedup
+
+| Metric | Python | Rust | Speedup |
+|--------|--------|------|---------|
+| Per-step | ~6,100 ns | 122.8 ns | **~50×** |
+
+The lower speedup (vs FHN 221×) reflects the tanh() call per step.
+
+---
+
+## Usage Examples
+
+### Basic Oscillation
+
+```python
+from sc_neurocore.neurons.models.terman_wang import TermanWangOscillator
+
+osc = TermanWangOscillator()
+spikes = sum(osc.step(0.5) for _ in range(5000))
+print(f"Spikes: {spikes}")
+```
+
+### LEGION Coupling (conceptual)
+
+```python
+from sc_neurocore.neurons.models.terman_wang import TermanWangOscillator
+
+# Two oscillators with different rho (global inhibitor)
+osc1 = TermanWangOscillator(rho=0.0)
+osc2 = TermanWangOscillator(rho=-0.5)
+s1 = sum(osc1.step(1.0) for _ in range(3000))
+s2 = sum(osc2.step(1.0) for _ in range(3000))
+print(f"osc1: {s1}, osc2 (inhibited): {s2}")
+```
+
+### Rust Backend
+
+```python
+from sc_neurocore_engine import TermanWangOscillator as RustTW
+
+osc = RustTW()
+spikes = sum(osc.step(0.5) for _ in range(10000))
+state = osc.get_state()
+print(f"Spikes: {spikes}, v={state['v']:.3f}, w={state['w']:.3f}")
+```
+
+---
+
+## Test Coverage
+
+### Python Tests (20 total)
+
+| Category | Tests |
+|----------|------:|
+| Isolation | 5 |
+| Oscillation dynamics | 5 |
+| Parameters (rho, epsilon, alpha) | 4 |
+| Performance | 2 |
+| Pipeline | 4 |
+
+### Rust Tests (5 total)
+
+| Test | What is verified |
+|------|-----------------|
+| `tw_fires` | Fires under drive |
+| `tw_reset` | State reset correct |
+| `tw_stable` | Finite at moderate I |
+| `tw_nan` | NaN safe |
+| `tw_negative` | Negative I stable |
+
+### Summary: 20 Python + 5 Rust = **25 total**
+
+---
+
+## Citations
+
+1. **Terman, D. & Wang, D. L.** (1995).
+   Global competition and local cooperation in a network of neural oscillators.
+   *Neural Computation*, 7(5), 1035–1064.
+   DOI: [10.1162/neco.1995.7.5.1035](https://doi.org/10.1162/neco.1995.7.5.1035)
+
+2. **Wang, D. L. & Terman, D.** (1997).
+   Locally excitatory globally inhibitory oscillator networks.
+   *IEEE Transactions on Neural Networks*, 6(1), 283–286.
+   DOI: [10.1109/72.363423](https://doi.org/10.1109/72.363423)
+
+3. **Wang, D. L.** (2005).
+   The time dimension for scene analysis.
+   *IEEE Transactions on Neural Networks*, 16(6), 1401–1426.
+   DOI: [10.1109/TNN.2005.852235](https://doi.org/10.1109/TNN.2005.852235)
+
+4. **Izhikevich, E. M.** (2007).
+   *Dynamical Systems in Neuroscience.* MIT Press.
+
+5. **Ermentrout, G. B. & Terman, D. H.** (2010).
+   *Mathematical Foundations of Neuroscience.* Springer.
+
+---
+
+*SC-NeuroCore v3.14.0 — ANULUM / Fortis Studio*
+*© 2020–2026 Miroslav Šotek. All rights reserved.*
