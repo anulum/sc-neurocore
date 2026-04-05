@@ -285,6 +285,7 @@ pub enum NeuronVariant {
     MetaPlastic(MetaPlasticNeuron),
     // simple_spiking.rs
     BendaHerz(BendaHerzNeuron),
+    BrunelWang(BrunelWangNeuron),
     // special.rs
     Poisson(PoissonNeuron),
     InhomogeneousPoisson(InhomogeneousPoissonNeuron),
@@ -417,7 +418,7 @@ macro_rules! all_variants {
             MultiTimescale, AttentionGated, PredictiveCoding,
             SelfReferential, CompositionalBinding, DifferentiableSurrogate,
             ContinuousAttractor, MetaPlastic,
-            BendaHerz,
+            BendaHerz, BrunelWang,
             Poisson, InhomogeneousPoisson, GammaRenewal, EscapeRate,
             PVFastSpiking, SST, VIP, Chandelier, CerebellarBasket, Martinotti,
             AlphaMotor, GammaMotor, UpperMotor, Renshaw, MotorUnitCell,
@@ -541,6 +542,7 @@ impl NeuronVariant {
             NeuronVariant::ContinuousAttractor(_) => 0.0,
             NeuronVariant::MetaPlastic(n) => n.v,
             NeuronVariant::BendaHerz(n) => n.a,
+            NeuronVariant::BrunelWang(n) => n.v,
             NeuronVariant::Poisson(_) => 0.0,
             NeuronVariant::InhomogeneousPoisson(_) => 0.0,
             NeuronVariant::GammaRenewal(_) => 0.0,
@@ -1080,6 +1082,7 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
             Ok(NeuronVariant::MetaPlastic(MetaPlasticNeuron::new()))
         }
         "BendaHerz" | "BendaHerzNeuron" => Ok(NeuronVariant::BendaHerz(BendaHerzNeuron::new(42))),
+        "BrunelWang" | "BrunelWangNeuron" => Ok(NeuronVariant::BrunelWang(BrunelWangNeuron::new())),
         "Poisson" | "PoissonNeuron" => {
             Ok(NeuronVariant::Poisson(PoissonNeuron::new(50.0, 1.0, 42)))
         }
@@ -1312,6 +1315,7 @@ pub fn supported_models() -> Vec<&'static str> {
         "InhomogeneousPoisson",
         "GammaRenewal",
         "EscapeRate",
+        "BrunelWangNeuron",
         // interneurons
         "PVFastSpiking",
         "SST",
