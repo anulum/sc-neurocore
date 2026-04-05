@@ -29,7 +29,7 @@ use sc_neurocore_engine::neurons::{
     AiharaMapNeuron, KilincBhattMapNeuron, ErmentroutKopellMapNeuron,
     MontbrioMeanField, BrunelNetwork, TUMNetwork, ElBoustaniNetwork,
     GradedSynapseNeuron, GapJunctionNeuron, FrankenhaeUserHuxleyAxon, NodeOfRanvier,
-    MyelinatedAxon, CardiacPurkinjeFibre,
+    MyelinatedAxon, CardiacPurkinjeFibre, SmoothMuscleCell, EndocrineBetaCell,
 };
 use sc_neurocore_engine::scpn::KuramotoSolver;
 use sc_neurocore_engine::simd::{fused_and_popcount_dispatch, pack_dispatch, popcount_dispatch};
@@ -676,6 +676,20 @@ fn bench_all(c: &mut Criterion) {
     c.bench_function("cardiac_purkinje_1k_steps", |b| {
         b.iter(|| {
             let mut n = CardiacPurkinjeFibre::new();
+            for _ in 0..1_000 { black_box(n.step(3.0)); }
+        })
+    });
+
+    c.bench_function("smooth_muscle_1k_steps", |b| {
+        b.iter(|| {
+            let mut n = SmoothMuscleCell::new();
+            for _ in 0..1_000 { black_box(n.step(3.0)); }
+        })
+    });
+
+    c.bench_function("beta_cell_1k_steps", |b| {
+        b.iter(|| {
+            let mut n = EndocrineBetaCell::new();
             for _ in 0..1_000 { black_box(n.step(3.0)); }
         })
     });

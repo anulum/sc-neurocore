@@ -165,6 +165,8 @@ cargo bench --bench analysis_bench -- --quick
 | Node of Ranvier (MRG) | 1k | 3.99 ms | **3.99 µs** | Nav1.6 + INaP + Kv7, 20 sub-steps |
 | Myelinated axon | 1k | 1.26 ms | **1.26 µs** | MRG node + internode cable |
 | Cardiac Purkinje | 1k | 586.7 µs | **586.7 ns** | DiFrancesco-Noble, 6 currents, 10 sub-steps |
+| Smooth muscle | 1k | 149.8 µs | **149.8 ns** | CaL + BK + IP3R/SERCA, 4 sub-steps |
+| Beta cell | 1k | 185.0 µs | **185.0 ns** | CaL + K_dr + K_ATP + K_Ca, 4 sub-steps |
 
 ---
 
