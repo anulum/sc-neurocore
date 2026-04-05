@@ -11,7 +11,6 @@ from dataclasses import dataclass
 from typing import Any
 
 import math
-import numpy as np
 
 
 @dataclass
