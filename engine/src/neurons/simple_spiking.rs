@@ -36,8 +36,11 @@ impl FitzHughNagumoNeuron {
     }
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
-        self.v += (self.v - self.v.powi(3) / 3.0 - self.w + current) * self.dt;
-        self.w += self.epsilon * (self.v + self.a - self.b * self.w) * self.dt;
+        // FitzHugh 1961: simultaneous Euler (both derivatives use old state)
+        let dv = (self.v - self.v.powi(3) / 3.0 - self.w + current) * self.dt;
+        let dw = self.epsilon * (self.v + self.a - self.b * self.w) * self.dt;
+        self.v += dv;
+        self.w += dw;
         if self.v >= self.v_threshold && v_prev < self.v_threshold {
             1
         } else {
@@ -257,9 +260,13 @@ impl FitzHughRinzelNeuron {
     }
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
-        self.v += (self.v - self.v.powi(3) / 3.0 - self.w + self.y + current) * self.dt;
-        self.w += self.delta * (self.a + self.v - self.b * self.w) * self.dt;
-        self.y += self.mu * (self.c - self.v - self.d * self.y) * self.dt;
+        // FitzHugh-Rinzel: simultaneous Euler (all derivatives use old state)
+        let dv = (self.v - self.v.powi(3) / 3.0 - self.w + self.y + current) * self.dt;
+        let dw = self.delta * (self.a + self.v - self.b * self.w) * self.dt;
+        let dy = self.mu * (self.c - self.v - self.d * self.y) * self.dt;
+        self.v += dv;
+        self.w += dw;
+        self.y += dy;
         if self.v >= self.v_threshold && v_prev < self.v_threshold {
             1
         } else {
@@ -315,8 +322,11 @@ impl McKeanNeuron {
     }
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
-        self.v += (self.f_v(self.v) - self.w + current) * self.dt;
-        self.w += self.epsilon * (self.v - self.gamma * self.w) * self.dt;
+        // McKean: simultaneous Euler (both derivatives use old state)
+        let dv = (self.f_v(self.v) - self.w + current) * self.dt;
+        let dw = self.epsilon * (self.v - self.gamma * self.w) * self.dt;
+        self.v += dv;
+        self.w += dw;
         if self.v >= self.v_peak && v_prev < self.v_peak {
             1
         } else {
@@ -364,8 +374,11 @@ impl TermanWangOscillator {
         let v_prev = self.v;
         let f = 3.0 * self.v - self.v.powi(3) + 2.0;
         let g = self.alpha * (1.0 + (self.v / self.beta).tanh());
-        self.v += (f - self.w + current + self.rho) * self.dt;
-        self.w += self.epsilon * (g - self.w) * self.dt;
+        // TermanWang: simultaneous Euler (both derivatives use old state)
+        let dv = (f - self.w + current + self.rho) * self.dt;
+        let dw = self.epsilon * (g - self.w) * self.dt;
+        self.v += dv;
+        self.w += dw;
         if self.v >= self.v_peak && v_prev < self.v_peak {
             1
         } else {
@@ -1090,9 +1103,13 @@ impl PernarowskiNeuron {
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
         let f_v = self.v - self.v.powi(3) / 3.0;
-        self.v += (f_v - self.w - self.z + current) * self.dt;
-        self.w += self.eps1 * (self.v - self.gamma * self.w + self.alpha) * self.dt;
-        self.z += self.eps2 * (self.beta * (self.v + 0.7) - self.z) * self.dt;
+        // Pernarowski: simultaneous Euler (all derivatives use old state)
+        let dv = (f_v - self.w - self.z + current) * self.dt;
+        let dw = self.eps1 * (self.v - self.gamma * self.w + self.alpha) * self.dt;
+        let dz = self.eps2 * (self.beta * (self.v + 0.7) - self.z) * self.dt;
+        self.v += dv;
+        self.w += dw;
+        self.z += dz;
         if self.v >= self.v_threshold && v_prev < self.v_threshold {
             1
         } else {
