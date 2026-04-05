@@ -30,13 +30,13 @@ use super::biophysical::safe_rate;
 #[derive(Clone, Debug)]
 pub struct PersistentNaNeuron {
     pub v: f64,
-    pub h: f64,         // Transient Na+ inactivation
-    pub n: f64,         // Kdr activation
-    pub p: f64,         // INaP activation (slow)
+    pub h: f64, // Transient Na+ inactivation
+    pub n: f64, // Kdr activation
+    pub p: f64, // INaP activation (slow)
     // Conductances (mS/cm²)
-    pub g_na: f64,      // Transient Na+
-    pub g_nap: f64,     // Persistent Na+
-    pub g_k: f64,       // Kdr
+    pub g_na: f64,  // Transient Na+
+    pub g_nap: f64, // Persistent Na+
+    pub g_k: f64,   // Kdr
     pub g_l: f64,
     // Reversal potentials (mV)
     pub e_na: f64,
@@ -50,7 +50,9 @@ pub struct PersistentNaNeuron {
 }
 
 impl Default for PersistentNaNeuron {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl PersistentNaNeuron {
@@ -61,9 +63,9 @@ impl PersistentNaNeuron {
             n: 0.32,
             p: 0.0,
             g_na: 35.0,
-            g_nap: 0.15,    // Persistent Na+ — small but significant
+            g_nap: 0.15, // Persistent Na+ — small but significant
             g_k: 9.0,
-            g_l: 0.3,      // Higher leak to counteract INaP window current
+            g_l: 0.3, // Higher leak to counteract INaP window current
             e_na: 55.0,
             e_k: -90.0,
             e_l: -65.0,
@@ -122,7 +124,11 @@ impl PersistentNaNeuron {
 
         // Safety bounds
         self.v = self.v.clamp(-100.0, 60.0);
-        if !self.v.is_finite() { self.v = -65.0; self.h = 0.6; self.n = 0.32; }
+        if !self.v.is_finite() {
+            self.v = -65.0;
+            self.h = 0.6;
+            self.n = 0.32;
+        }
         self.h = self.h.clamp(0.0, 1.0);
         self.n = self.n.clamp(0.0, 1.0);
         self.p = self.p.clamp(0.0, 1.0);
@@ -155,18 +161,18 @@ impl PersistentNaNeuron {
 #[derive(Clone, Debug)]
 pub struct IhNeuron {
     pub v: f64,
-    pub h: f64,     // Na+ inactivation
-    pub n: f64,     // Kdr activation
-    pub r: f64,     // Ih activation (activates on hyperpolarisation)
+    pub h: f64, // Na+ inactivation
+    pub n: f64, // Kdr activation
+    pub r: f64, // Ih activation (activates on hyperpolarisation)
     // Conductances (mS/cm²)
     pub g_na: f64,
     pub g_k: f64,
-    pub g_h: f64,   // Ih conductance
+    pub g_h: f64, // Ih conductance
     pub g_l: f64,
     // Reversal potentials (mV)
     pub e_na: f64,
     pub e_k: f64,
-    pub e_h: f64,   // Ih reversal (~-40 mV, mixed cation)
+    pub e_h: f64, // Ih reversal (~-40 mV, mixed cation)
     pub e_l: f64,
     pub c_m: f64,
     pub phi: f64,
@@ -176,7 +182,9 @@ pub struct IhNeuron {
 }
 
 impl Default for IhNeuron {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl IhNeuron {
@@ -249,7 +257,11 @@ impl IhNeuron {
 
         // Safety bounds
         self.v = self.v.clamp(-100.0, 60.0);
-        if !self.v.is_finite() { self.v = -65.0; self.h = 0.6; self.n = 0.32; }
+        if !self.v.is_finite() {
+            self.v = -65.0;
+            self.h = 0.6;
+            self.n = 0.32;
+        }
         self.h = self.h.clamp(0.0, 1.0);
         self.n = self.n.clamp(0.0, 1.0);
         self.r = self.r.clamp(0.0, 1.0);
@@ -283,13 +295,13 @@ impl IhNeuron {
 #[derive(Clone, Debug)]
 pub struct TTypeCaNeuron {
     pub v: f64,
-    pub h: f64,     // Na+ inactivation
-    pub n: f64,     // Kdr activation
-    pub s: f64,     // T-type Ca2+ inactivation (slow)
+    pub h: f64, // Na+ inactivation
+    pub n: f64, // Kdr activation
+    pub s: f64, // T-type Ca2+ inactivation (slow)
     // Conductances (mS/cm²)
     pub g_na: f64,
     pub g_k: f64,
-    pub g_t: f64,   // T-type Ca2+
+    pub g_t: f64, // T-type Ca2+
     pub g_l: f64,
     // Reversal potentials (mV)
     pub e_na: f64,
@@ -304,7 +316,9 @@ pub struct TTypeCaNeuron {
 }
 
 impl Default for TTypeCaNeuron {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl TTypeCaNeuron {
@@ -313,10 +327,10 @@ impl TTypeCaNeuron {
             v: -65.0,
             h: 0.6,
             n: 0.32,
-            s: 0.9,     // De-inactivated at rest (-65 mV)
+            s: 0.9, // De-inactivated at rest (-65 mV)
             g_na: 35.0,
             g_k: 9.0,
-            g_t: 0.1,   // Reduced to avoid window current at rest
+            g_t: 0.1, // Reduced to avoid window current at rest
             g_l: 0.2,
             e_na: 55.0,
             e_k: -90.0,
@@ -378,7 +392,11 @@ impl TTypeCaNeuron {
 
         // Safety bounds
         self.v = self.v.clamp(-100.0, 60.0);
-        if !self.v.is_finite() { self.v = -65.0; self.h = 0.6; self.n = 0.32; }
+        if !self.v.is_finite() {
+            self.v = -65.0;
+            self.h = 0.6;
+            self.n = 0.32;
+        }
         self.h = self.h.clamp(0.0, 1.0);
         self.n = self.n.clamp(0.0, 1.0);
         self.s = self.s.clamp(0.0, 1.0);
@@ -413,8 +431,8 @@ pub struct ATypeKNeuron {
     pub v: f64,
     pub h: f64,
     pub n: f64,
-    pub a: f64,     // IA activation (fast)
-    pub b: f64,     // IA inactivation (slow)
+    pub a: f64, // IA activation (fast)
+    pub b: f64, // IA inactivation (slow)
     pub g_na: f64,
     pub g_k: f64,
     pub g_a: f64,
@@ -430,7 +448,9 @@ pub struct ATypeKNeuron {
 }
 
 impl Default for ATypeKNeuron {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ATypeKNeuron {
@@ -501,7 +521,11 @@ impl ATypeKNeuron {
         }
 
         self.v = self.v.clamp(-100.0, 60.0);
-        if !self.v.is_finite() { self.v = -65.0; self.h = 0.6; self.n = 0.32; }
+        if !self.v.is_finite() {
+            self.v = -65.0;
+            self.h = 0.6;
+            self.n = 0.32;
+        }
         self.h = self.h.clamp(0.0, 1.0);
         self.n = self.n.clamp(0.0, 1.0);
         self.a = self.a.clamp(0.0, 1.0);
@@ -537,13 +561,13 @@ impl ATypeKNeuron {
 #[derive(Clone, Debug)]
 pub struct BKNeuron {
     pub v: f64,
-    pub h: f64,     // Na+ inactivation
-    pub n: f64,     // Kdr activation
-    pub ca: f64,    // Intracellular Ca2+ concentration
+    pub h: f64,  // Na+ inactivation
+    pub n: f64,  // Kdr activation
+    pub ca: f64, // Intracellular Ca2+ concentration
     // Conductances (mS/cm²)
     pub g_na: f64,
     pub g_k: f64,
-    pub g_bk: f64,  // BK conductance
+    pub g_bk: f64, // BK conductance
     pub g_l: f64,
     // Reversal potentials (mV)
     pub e_na: f64,
@@ -558,7 +582,9 @@ pub struct BKNeuron {
 }
 
 impl Default for BKNeuron {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl BKNeuron {
@@ -631,8 +657,14 @@ impl BKNeuron {
         }
 
         self.v = self.v.clamp(-100.0, 60.0);
-        if !self.v.is_finite() { self.v = -65.0; self.h = 0.6; self.n = 0.32; }
-        if !self.ca.is_finite() { self.ca = 0.0; }
+        if !self.v.is_finite() {
+            self.v = -65.0;
+            self.h = 0.6;
+            self.n = 0.32;
+        }
+        if !self.ca.is_finite() {
+            self.ca = 0.0;
+        }
         self.h = self.h.clamp(0.0, 1.0);
         self.n = self.n.clamp(0.0, 1.0);
         self.ca = self.ca.max(0.0);
@@ -684,7 +716,9 @@ pub struct SKNeuron {
 }
 
 impl Default for SKNeuron {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl SKNeuron {
@@ -703,7 +737,7 @@ impl SKNeuron {
             e_l: -65.0,
             c_m: 1.0,
             phi: 5.0,
-            tau_ca: 150.0,  // Slower Ca2+ decay than BK → longer mAHP
+            tau_ca: 150.0, // Slower Ca2+ decay than BK → longer mAHP
             dt: 0.5,
             v_threshold: -20.0,
             gain: 1.0,
@@ -755,8 +789,14 @@ impl SKNeuron {
         }
 
         self.v = self.v.clamp(-100.0, 60.0);
-        if !self.v.is_finite() { self.v = -65.0; self.h = 0.6; self.n = 0.32; }
-        if !self.ca.is_finite() { self.ca = 0.0; }
+        if !self.v.is_finite() {
+            self.v = -65.0;
+            self.h = 0.6;
+            self.n = 0.32;
+        }
+        if !self.ca.is_finite() {
+            self.ca = 0.0;
+        }
         self.h = self.h.clamp(0.0, 1.0);
         self.n = self.n.clamp(0.0, 1.0);
         self.ca = self.ca.max(0.0);
@@ -794,14 +834,14 @@ pub struct NMDANeuron {
     pub v: f64,
     pub h: f64,
     pub n: f64,
-    pub s_nmda: f64,    // NMDA synaptic variable (slow rise/decay)
+    pub s_nmda: f64, // NMDA synaptic variable (slow rise/decay)
     pub g_na: f64,
     pub g_k: f64,
-    pub g_nmda: f64,    // NMDA conductance
+    pub g_nmda: f64, // NMDA conductance
     pub g_l: f64,
     pub e_na: f64,
     pub e_k: f64,
-    pub e_nmda: f64,    // NMDA reversal (0 mV, mixed cation)
+    pub e_nmda: f64, // NMDA reversal (0 mV, mixed cation)
     pub e_l: f64,
     pub c_m: f64,
     pub phi: f64,
@@ -814,7 +854,9 @@ pub struct NMDANeuron {
 }
 
 impl Default for NMDANeuron {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl NMDANeuron {
@@ -830,7 +872,7 @@ impl NMDANeuron {
             g_l: 0.1,
             e_na: 55.0,
             e_k: -90.0,
-            e_nmda: 0.0,   // Mixed cation reversal
+            e_nmda: 0.0, // Mixed cation reversal
             e_l: -65.0,
             c_m: 1.0,
             phi: 5.0,
@@ -850,8 +892,17 @@ impl NMDANeuron {
         let mut fired = 0i32;
 
         // NMDA synaptic variable: driven by input (as proxy for glutamate)
-        let drive = if input > 0.0 { input / (input + 5.0) } else { 0.0 };
-        let ds = (drive - self.s_nmda) / if drive > self.s_nmda { self.tau_rise } else { self.tau_decay };
+        let drive = if input > 0.0 {
+            input / (input + 5.0)
+        } else {
+            0.0
+        };
+        let ds = (drive - self.s_nmda)
+            / if drive > self.s_nmda {
+                self.tau_rise
+            } else {
+                self.tau_decay
+            };
         self.s_nmda += self.dt * ds;
         self.s_nmda = self.s_nmda.clamp(0.0, 1.0);
 
@@ -890,8 +941,14 @@ impl NMDANeuron {
         }
 
         self.v = self.v.clamp(-100.0, 60.0);
-        if !self.v.is_finite() { self.v = -65.0; self.h = 0.6; self.n = 0.32; }
-        if !self.s_nmda.is_finite() { self.s_nmda = 0.0; }
+        if !self.v.is_finite() {
+            self.v = -65.0;
+            self.h = 0.6;
+            self.n = 0.32;
+        }
+        if !self.s_nmda.is_finite() {
+            self.s_nmda = 0.0;
+        }
         self.h = self.h.clamp(0.0, 1.0);
         self.n = self.n.clamp(0.0, 1.0);
 
@@ -933,8 +990,10 @@ mod tests {
         for _ in 0..10_000 {
             spikes_inhibited += n.step(-2.0);
         }
-        assert_eq!(spikes_inhibited, 0,
-            "INaP neuron must be silent with inhibitory input, got {spikes_inhibited}");
+        assert_eq!(
+            spikes_inhibited, 0,
+            "INaP neuron must be silent with inhibitory input, got {spikes_inhibited}"
+        );
     }
 
     #[test]
@@ -970,7 +1029,11 @@ mod tests {
         }
         // p_inf at -50 mV = 1/(1+exp(2/5)) = 1/(1+1.49) = 0.40
         // After many steps p should approach p_inf
-        assert!(n.p > 0.01, "p gate must activate at subthreshold voltages, p={}", n.p);
+        assert!(
+            n.p > 0.01,
+            "p gate must activate at subthreshold voltages, p={}",
+            n.p
+        );
     }
 
     #[test]
@@ -1051,7 +1114,10 @@ mod tests {
             std::hint::black_box(n.step(5.0));
         }
         let elapsed = start.elapsed();
-        assert!(elapsed.as_millis() < 200, "1k steps must complete in <200ms");
+        assert!(
+            elapsed.as_millis() < 200,
+            "1k steps must complete in <200ms"
+        );
     }
 
     // -- Ih Neuron tests --
@@ -1073,7 +1139,10 @@ mod tests {
         for _ in 0..10_000 {
             spikes += n.step(0.0);
         }
-        assert_eq!(spikes, 0, "Ih neuron must be silent without input, got {spikes}");
+        assert_eq!(
+            spikes, 0,
+            "Ih neuron must be silent without input, got {spikes}"
+        );
     }
 
     #[test]
@@ -1092,7 +1161,8 @@ mod tests {
         assert!(
             with_ih.v > no_ih.v,
             "Ih sag must depolarise from hyperpolarisation: Ih={:.1} vs no_Ih={:.1}",
-            with_ih.v, no_ih.v
+            with_ih.v,
+            no_ih.v
         );
     }
 
@@ -1104,7 +1174,11 @@ mod tests {
         for _ in 0..4000 {
             n.step(-5.0);
         }
-        assert!(n.r > r_before, "r gate must increase during hyperpolarisation, r={}", n.r);
+        assert!(
+            n.r > r_before,
+            "r gate must increase during hyperpolarisation, r={}",
+            n.r
+        );
     }
 
     #[test]
@@ -1116,7 +1190,10 @@ mod tests {
             n.step(-3.0);
         }
         let r_after_hyp = n.r;
-        assert!(r_after_hyp > 0.2, "r must build up during hyperpolarisation, r={r_after_hyp}");
+        assert!(
+            r_after_hyp > 0.2,
+            "r must build up during hyperpolarisation, r={r_after_hyp}"
+        );
 
         // Release — count spikes during rebound period
         let mut rebound_spikes = 0;
@@ -1193,7 +1270,10 @@ mod tests {
             std::hint::black_box(n.step(2.0));
         }
         let elapsed = start.elapsed();
-        assert!(elapsed.as_millis() < 200, "1k steps must complete in <200ms");
+        assert!(
+            elapsed.as_millis() < 200,
+            "1k steps must complete in <200ms"
+        );
     }
 
     // -- T-type Ca2+ Neuron tests --
@@ -1205,7 +1285,10 @@ mod tests {
         for _ in 0..2_000 {
             spikes += n.step(2.0);
         }
-        assert!(spikes > 5, "T-type neuron must fire with input, got {spikes}");
+        assert!(
+            spikes > 5,
+            "T-type neuron must fire with input, got {spikes}"
+        );
     }
 
     #[test]
@@ -1215,7 +1298,10 @@ mod tests {
         for _ in 0..10_000 {
             spikes += n.step(0.0);
         }
-        assert_eq!(spikes, 0, "T-type neuron must be silent without input, got {spikes}");
+        assert_eq!(
+            spikes, 0,
+            "T-type neuron must be silent without input, got {spikes}"
+        );
     }
 
     #[test]
@@ -1226,7 +1312,11 @@ mod tests {
         for _ in 0..4000 {
             n.step(-3.0);
         }
-        assert!(n.s > 0.3, "T-type must de-inactivate during hyperpolarisation, s={}", n.s);
+        assert!(
+            n.s > 0.3,
+            "T-type must de-inactivate during hyperpolarisation, s={}",
+            n.s
+        );
 
         // Release with mild input
         let mut rebound_spikes = 0;
@@ -1252,11 +1342,15 @@ mod tests {
         let mut n = TTypeCaNeuron::new();
         n.v = -85.0;
         n.s = 0.1; // Start inactivated
-        // s_inf at -85 = 1/(1+exp((-85+81)/4)) = 1/(1+exp(-1)) = 1/1.37 = 0.73
+                   // s_inf at -85 = 1/(1+exp((-85+81)/4)) = 1/(1+exp(-1)) = 1/1.37 = 0.73
         for _ in 0..5000 {
             n.step(-5.0);
         }
-        assert!(n.s > 0.5, "s must de-inactivate at hyperpolarised potentials, s={}", n.s);
+        assert!(
+            n.s > 0.5,
+            "s must de-inactivate at hyperpolarised potentials, s={}",
+            n.s
+        );
     }
 
     #[test]
@@ -1272,7 +1366,11 @@ mod tests {
             }
         }
         if spiked {
-            assert!(n.s < s_before_spiking, "Spike must inactivate T-type: before={s_before_spiking}, after={}", n.s);
+            assert!(
+                n.s < s_before_spiking,
+                "Spike must inactivate T-type: before={s_before_spiking}, after={}",
+                n.s
+            );
         }
     }
 
@@ -1332,7 +1430,10 @@ mod tests {
             std::hint::black_box(n.step(2.0));
         }
         let elapsed = start.elapsed();
-        assert!(elapsed.as_millis() < 200, "1k steps must complete in <200ms");
+        assert!(
+            elapsed.as_millis() < 200,
+            "1k steps must complete in <200ms"
+        );
     }
 
     // -- A-type K+ Neuron tests --
@@ -1344,7 +1445,10 @@ mod tests {
         for _ in 0..2_000 {
             spikes += n.step(3.0);
         }
-        assert!(spikes > 5, "A-type neuron must fire with input, got {spikes}");
+        assert!(
+            spikes > 5,
+            "A-type neuron must fire with input, got {spikes}"
+        );
     }
 
     #[test]
@@ -1354,7 +1458,10 @@ mod tests {
         for _ in 0..10_000 {
             spikes += n.step(0.0);
         }
-        assert_eq!(spikes, 0, "A-type neuron must be silent without input, got {spikes}");
+        assert_eq!(
+            spikes, 0,
+            "A-type neuron must be silent without input, got {spikes}"
+        );
     }
 
     #[test]
@@ -1367,11 +1474,17 @@ mod tests {
         let input = 3.0;
         let mut time_with = 10_000usize;
         for i in 0..10_000 {
-            if with_ia.step(input) > 0 { time_with = i; break; }
+            if with_ia.step(input) > 0 {
+                time_with = i;
+                break;
+            }
         }
         let mut time_no = 10_000usize;
         for i in 0..10_000 {
-            if no_ia.step(input) > 0 { time_no = i; break; }
+            if no_ia.step(input) > 0 {
+                time_no = i;
+                break;
+            }
         }
         assert!(
             time_with >= time_no,
@@ -1455,7 +1568,10 @@ mod tests {
             std::hint::black_box(n.step(3.0));
         }
         let elapsed = start.elapsed();
-        assert!(elapsed.as_millis() < 200, "1k steps must complete in <200ms");
+        assert!(
+            elapsed.as_millis() < 200,
+            "1k steps must complete in <200ms"
+        );
     }
 
     // -- BK Neuron tests --
@@ -1477,7 +1593,10 @@ mod tests {
         for _ in 0..10_000 {
             spikes += n.step(0.0);
         }
-        assert_eq!(spikes, 0, "BK neuron must be silent without input, got {spikes}");
+        assert_eq!(
+            spikes, 0,
+            "BK neuron must be silent without input, got {spikes}"
+        );
     }
 
     #[test]
@@ -1487,7 +1606,11 @@ mod tests {
         for _ in 0..5000 {
             n.step(5.0);
         }
-        assert!(n.ca > 0.0, "Ca2+ must accumulate during spiking, ca={}", n.ca);
+        assert!(
+            n.ca > 0.0,
+            "Ca2+ must accumulate during spiking, ca={}",
+            n.ca
+        );
     }
 
     #[test]
@@ -1574,7 +1697,10 @@ mod tests {
             std::hint::black_box(n.step(3.0));
         }
         let elapsed = start.elapsed();
-        assert!(elapsed.as_millis() < 200, "1k steps must complete in <200ms");
+        assert!(
+            elapsed.as_millis() < 200,
+            "1k steps must complete in <200ms"
+        );
     }
 
     // -- SK Neuron tests --
@@ -1596,7 +1722,10 @@ mod tests {
         for _ in 0..10_000 {
             spikes += n.step(0.0);
         }
-        assert_eq!(spikes, 0, "SK neuron must be silent without input, got {spikes}");
+        assert_eq!(
+            spikes, 0,
+            "SK neuron must be silent without input, got {spikes}"
+        );
     }
 
     #[test]
@@ -1612,7 +1741,10 @@ mod tests {
         for _ in 0..2000 {
             late += n.step(input);
         }
-        assert!(early >= late, "SK should cause adaptation: early={early}, late={late}");
+        assert!(
+            early >= late,
+            "SK should cause adaptation: early={early}, late={late}"
+        );
     }
 
     #[test]
@@ -1621,7 +1753,10 @@ mod tests {
         let n = SKNeuron::new();
         let ca2 = n.ca * n.ca;
         let sk_inf = ca2 / (ca2 + 0.25);
-        assert!(sk_inf < 0.001, "SK must be inactive at ca=0, sk_inf={sk_inf}");
+        assert!(
+            sk_inf < 0.001,
+            "SK must be inactive at ca=0, sk_inf={sk_inf}"
+        );
     }
 
     #[test]
@@ -1637,14 +1772,18 @@ mod tests {
             spikes_sk += with_sk.step(input);
             spikes_no += no_sk.step(input);
         }
-        assert!(spikes_no >= spikes_sk,
-            "SK should reduce firing: SK={spikes_sk} vs none={spikes_no}");
+        assert!(
+            spikes_no >= spikes_sk,
+            "SK should reduce firing: SK={spikes_sk} vs none={spikes_no}"
+        );
     }
 
     #[test]
     fn sk_negative_input_no_crash() {
         let mut n = SKNeuron::new();
-        for _ in 0..10_000 { n.step(-100.0); }
+        for _ in 0..10_000 {
+            n.step(-100.0);
+        }
         assert!(n.v.is_finite());
     }
 
@@ -1658,14 +1797,18 @@ mod tests {
     #[test]
     fn sk_extreme_input_bounded() {
         let mut n = SKNeuron::new();
-        for _ in 0..1000 { n.step(1e6); }
+        for _ in 0..1000 {
+            n.step(1e6);
+        }
         assert!(n.v.is_finite() && n.v <= 60.0);
     }
 
     #[test]
     fn sk_reset_clears_state() {
         let mut n = SKNeuron::new();
-        for _ in 0..1000 { n.step(10.0); }
+        for _ in 0..1000 {
+            n.step(10.0);
+        }
         n.reset();
         assert_eq!(n.v, -65.0);
         assert_eq!(n.ca, 0.0);
@@ -1675,9 +1818,14 @@ mod tests {
     fn sk_performance_1k_steps() {
         let start = std::time::Instant::now();
         let mut n = SKNeuron::new();
-        for _ in 0..1_000 { std::hint::black_box(n.step(3.0)); }
+        for _ in 0..1_000 {
+            std::hint::black_box(n.step(3.0));
+        }
         let elapsed = start.elapsed();
-        assert!(elapsed.as_millis() < 200, "1k steps must complete in <200ms");
+        assert!(
+            elapsed.as_millis() < 200,
+            "1k steps must complete in <200ms"
+        );
     }
 
     // -- NMDA Neuron tests --
@@ -1699,7 +1847,10 @@ mod tests {
         for _ in 0..10_000 {
             spikes += n.step(0.0);
         }
-        assert_eq!(spikes, 0, "NMDA neuron must be silent without input, got {spikes}");
+        assert_eq!(
+            spikes, 0,
+            "NMDA neuron must be silent without input, got {spikes}"
+        );
     }
 
     #[test]
@@ -1707,14 +1858,20 @@ mod tests {
         // At -65 mV: B = 1/(1 + 1/3.57 * exp(0.062*65)) = 1/(1 + 0.28 * 56.3) = 1/16.8 = 0.06
         let n = NMDANeuron::new();
         let mg_block = 1.0 / (1.0 + (n.mg_conc / 3.57) * (-0.062 * n.v).exp());
-        assert!(mg_block < 0.1, "Mg2+ block must be strong at rest, B={mg_block}");
+        assert!(
+            mg_block < 0.1,
+            "Mg2+ block must be strong at rest, B={mg_block}"
+        );
     }
 
     #[test]
     fn nmda_mg_relief_at_depolarised() {
         // At -20 mV: B = 1/(1 + 0.28 * exp(0.062*20)) = 1/(1 + 0.28*3.45) = 1/1.97 = 0.51
         let mg_block = 1.0 / (1.0 + (1.0 / 3.57) * (-0.062 * (-20.0_f64)).exp());
-        assert!(mg_block > 0.4, "Mg2+ block must be relieved at -20 mV, B={mg_block}");
+        assert!(
+            mg_block > 0.4,
+            "Mg2+ block must be relieved at -20 mV, B={mg_block}"
+        );
     }
 
     #[test]
@@ -1724,7 +1881,11 @@ mod tests {
         for _ in 0..2000 {
             n.step(5.0);
         }
-        assert!(n.s_nmda > 0.0, "s_nmda must build with input, s={}", n.s_nmda);
+        assert!(
+            n.s_nmda > 0.0,
+            "s_nmda must build with input, s={}",
+            n.s_nmda
+        );
     }
 
     #[test]
@@ -1756,14 +1917,18 @@ mod tests {
             spikes_mg += with_mg.step(input);
             spikes_no += no_mg.step(input);
         }
-        assert!(spikes_no >= spikes_mg,
-            "No Mg2+ should increase NMDA current: no_mg={spikes_no} vs mg={spikes_mg}");
+        assert!(
+            spikes_no >= spikes_mg,
+            "No Mg2+ should increase NMDA current: no_mg={spikes_no} vs mg={spikes_mg}"
+        );
     }
 
     #[test]
     fn nmda_negative_input_no_crash() {
         let mut n = NMDANeuron::new();
-        for _ in 0..10_000 { n.step(-100.0); }
+        for _ in 0..10_000 {
+            n.step(-100.0);
+        }
         assert!(n.v.is_finite());
     }
 
@@ -1777,14 +1942,18 @@ mod tests {
     #[test]
     fn nmda_extreme_input_bounded() {
         let mut n = NMDANeuron::new();
-        for _ in 0..1000 { n.step(1e6); }
+        for _ in 0..1000 {
+            n.step(1e6);
+        }
         assert!(n.v.is_finite() && n.v <= 60.0);
     }
 
     #[test]
     fn nmda_reset_clears_state() {
         let mut n = NMDANeuron::new();
-        for _ in 0..1000 { n.step(10.0); }
+        for _ in 0..1000 {
+            n.step(10.0);
+        }
         n.reset();
         assert_eq!(n.v, -65.0);
         assert_eq!(n.s_nmda, 0.0);
@@ -1794,8 +1963,13 @@ mod tests {
     fn nmda_performance_1k_steps() {
         let start = std::time::Instant::now();
         let mut n = NMDANeuron::new();
-        for _ in 0..1_000 { std::hint::black_box(n.step(3.0)); }
+        for _ in 0..1_000 {
+            std::hint::black_box(n.step(3.0));
+        }
         let elapsed = start.elapsed();
-        assert!(elapsed.as_millis() < 200, "1k steps must complete in <200ms");
+        assert!(
+            elapsed.as_millis() < 200,
+            "1k steps must complete in <200ms"
+        );
     }
 }

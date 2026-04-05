@@ -37,11 +37,7 @@ pub fn conditional_intensity(binary_train: &[i32], dt: f64, window_ms: f64) -> V
 /// ISI hazard function h(t) = f(t) / S(t). Tuckwell 1988.
 ///
 /// Returns `(hazard, bin_centres)`.
-pub fn isi_hazard_function(
-    binary_train: &[i32],
-    dt: f64,
-    bins: usize,
-) -> (Vec<f64>, Vec<f64>) {
+pub fn isi_hazard_function(binary_train: &[i32], dt: f64, bins: usize) -> (Vec<f64>, Vec<f64>) {
     let intervals = basic::isi(binary_train, dt);
     if intervals.len() < 5 {
         return (vec![], vec![]);
@@ -64,11 +60,7 @@ pub fn isi_hazard_function(
 /// ISI survivor function S(t) = P(ISI > t). Tuckwell 1988.
 ///
 /// Returns `(survivor, bin_centres)`.
-pub fn isi_survivor_function(
-    binary_train: &[i32],
-    dt: f64,
-    bins: usize,
-) -> (Vec<f64>, Vec<f64>) {
+pub fn isi_survivor_function(binary_train: &[i32], dt: f64, bins: usize) -> (Vec<f64>, Vec<f64>) {
     let intervals = basic::isi(binary_train, dt);
     if intervals.len() < 2 {
         return (vec![], vec![]);
@@ -77,7 +69,9 @@ pub fn isi_survivor_function(
     sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
     let n = sorted.len() as f64;
     let max_isi = sorted[sorted.len() - 1];
-    let edges: Vec<f64> = (0..=bins).map(|k| k as f64 * max_isi / bins as f64).collect();
+    let edges: Vec<f64> = (0..=bins)
+        .map(|k| k as f64 * max_isi / bins as f64)
+        .collect();
     let centres: Vec<f64> = (0..bins).map(|k| (edges[k] + edges[k + 1]) / 2.0).collect();
     let survivor: Vec<f64> = centres
         .iter()
@@ -148,7 +142,10 @@ mod tests {
         assert_eq!(ci.len(), 200);
         // Should be roughly 100 Hz (1 spike per 10ms = 100 Hz)
         let mid = ci[100];
-        assert!((mid - 100.0).abs() < 50.0, "CI midpoint {mid} not near 100 Hz");
+        assert!(
+            (mid - 100.0).abs() < 50.0,
+            "CI midpoint {mid} not near 100 Hz"
+        );
     }
 
     #[test]

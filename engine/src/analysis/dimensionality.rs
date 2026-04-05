@@ -110,7 +110,7 @@ pub fn spike_train_pca(
         return (vec![], vec![]);
     }
     let d = trains.len(); // neurons
-    // Mean-centre each neuron
+                          // Mean-centre each neuron
     let mut mat = vec![0.0f64; d * min_bins];
     for i in 0..d {
         let mean: f64 = binned[i][..min_bins].iter().sum::<f64>() / min_bins as f64;
@@ -590,6 +590,9 @@ mod tests {
         let (_, explained) = spike_train_pca(&refs, 5, 10);
         // All components should explain the full variance
         let total: f64 = explained.iter().sum();
-        assert!((total - 1.0).abs() < 0.05, "Total explained {total} should be ~1.0");
+        assert!(
+            (total - 1.0).abs() < 0.05,
+            "Total explained {total} should be ~1.0"
+        );
     }
 }

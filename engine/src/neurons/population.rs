@@ -33,19 +33,21 @@
 /// Montbrio, Pazo & Roxin, Phys Rev X 5:021028, 2015.
 #[derive(Clone, Debug)]
 pub struct MontbrioMeanField {
-    pub r: f64,         // Population firing rate (Hz)
-    pub v: f64,         // Mean membrane potential
-    pub delta: f64,     // Heterogeneity width (Lorentzian)
-    pub eta: f64,       // Mean excitability
-    pub tau: f64,       // Membrane time constant (ms)
-    pub j: f64,         // Synaptic coupling strength
+    pub r: f64,     // Population firing rate (Hz)
+    pub v: f64,     // Mean membrane potential
+    pub delta: f64, // Heterogeneity width (Lorentzian)
+    pub eta: f64,   // Mean excitability
+    pub tau: f64,   // Membrane time constant (ms)
+    pub j: f64,     // Synaptic coupling strength
     pub dt: f64,
     pub r_threshold: f64,
     pub gain: f64,
 }
 
 impl Default for MontbrioMeanField {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl MontbrioMeanField {
@@ -54,10 +56,10 @@ impl MontbrioMeanField {
             r: 0.01,
             v: -2.0,
             delta: 1.0,
-            eta: -5.0,      // Below threshold for spontaneous activity
+            eta: -5.0, // Below threshold for spontaneous activity
             tau: 1.0,
-            j: 15.0,        // Excitatory coupling
-            dt: 0.01,       // Small dt for stability
+            j: 15.0,  // Excitatory coupling
+            dt: 0.01, // Small dt for stability
             r_threshold: 0.5,
             gain: 1.0,
         }
@@ -71,10 +73,10 @@ impl MontbrioMeanField {
         let tau = self.tau;
 
         // MPR equations with synaptic coupling (j * r adds recurrence)
-        let dr = (self.delta / (pi * tau * tau))
-            + (2.0 * self.r * self.v / tau);
+        let dr = (self.delta / (pi * tau * tau)) + (2.0 * self.r * self.v / tau);
         let dv = (self.v * self.v + self.eta + input + self.j * tau * self.r
-            - (pi * tau * self.r).powi(2)) / tau;
+            - (pi * tau * self.r).powi(2))
+            / tau;
 
         self.r += self.dt * dr;
         self.v += self.dt * dv;
@@ -82,11 +84,19 @@ impl MontbrioMeanField {
         // Safety bounds
         self.r = self.r.clamp(0.0, 100.0);
         self.v = self.v.clamp(-50.0, 50.0);
-        if !self.r.is_finite() { self.r = 0.01; }
-        if !self.v.is_finite() { self.v = -2.0; }
+        if !self.r.is_finite() {
+            self.r = 0.01;
+        }
+        if !self.v.is_finite() {
+            self.v = -2.0;
+        }
 
         // "Spike" = population burst: r crosses threshold
-        if self.r >= self.r_threshold && r_prev < self.r_threshold { 1 } else { 0 }
+        if self.r >= self.r_threshold && r_prev < self.r_threshold {
+            1
+        } else {
+            0
+        }
     }
 
     pub fn reset(&mut self) {
@@ -130,7 +140,9 @@ pub struct BrunelNetwork {
 }
 
 impl Default for BrunelNetwork {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl BrunelNetwork {
@@ -141,7 +153,7 @@ impl BrunelNetwork {
             tau_e: 20.0,
             tau_i: 10.0,
             j_ee: 0.2,
-            j_ei: 0.8,     // Strong I→E inhibition
+            j_ei: 0.8, // Strong I→E inhibition
             j_ie: 0.5,
             j_ii: 0.2,
             threshold: 0.0,
@@ -175,17 +187,33 @@ impl BrunelNetwork {
         self.r_i += self.dt * dr_i;
 
         // Rates non-negative
-        if self.r_e < 0.0 { self.r_e = 0.0; }
-        if self.r_i < 0.0 { self.r_i = 0.0; }
+        if self.r_e < 0.0 {
+            self.r_e = 0.0;
+        }
+        if self.r_i < 0.0 {
+            self.r_i = 0.0;
+        }
 
         // Safety bounds
-        if self.r_e > 200.0 { self.r_e = 200.0; }
-        if self.r_i > 200.0 { self.r_i = 200.0; }
-        if !self.r_e.is_finite() { self.r_e = 0.1; }
-        if !self.r_i.is_finite() { self.r_i = 0.1; }
+        if self.r_e > 200.0 {
+            self.r_e = 200.0;
+        }
+        if self.r_i > 200.0 {
+            self.r_i = 200.0;
+        }
+        if !self.r_e.is_finite() {
+            self.r_e = 0.1;
+        }
+        if !self.r_i.is_finite() {
+            self.r_i = 0.1;
+        }
 
         // "Spike" when E rate crosses threshold
-        if self.r_e >= self.r_threshold && r_e_prev < self.r_threshold { 1 } else { 0 }
+        if self.r_e >= self.r_threshold && r_e_prev < self.r_threshold {
+            1
+        } else {
+            0
+        }
     }
 
     pub fn reset(&mut self) {
@@ -211,14 +239,14 @@ impl BrunelNetwork {
 /// Tsodyks, Uziel & Markram, J Neurosci 20:RC50, 2000.
 #[derive(Clone, Debug)]
 pub struct TUMNetwork {
-    pub r: f64,         // Population rate
-    pub x: f64,         // Available synaptic resources [0, 1]
-    pub u: f64,         // Release probability (facilitation) [0, 1]
-    pub j: f64,         // Base synaptic strength
-    pub u_base: f64,    // Baseline release probability
-    pub tau: f64,       // Rate time constant (ms)
-    pub tau_d: f64,     // Depression recovery (ms)
-    pub tau_f: f64,     // Facilitation decay (ms)
+    pub r: f64,      // Population rate
+    pub x: f64,      // Available synaptic resources [0, 1]
+    pub u: f64,      // Release probability (facilitation) [0, 1]
+    pub j: f64,      // Base synaptic strength
+    pub u_base: f64, // Baseline release probability
+    pub tau: f64,    // Rate time constant (ms)
+    pub tau_d: f64,  // Depression recovery (ms)
+    pub tau_f: f64,  // Facilitation decay (ms)
     pub threshold: f64,
     pub gain_phi: f64,
     pub dt: f64,
@@ -227,20 +255,22 @@ pub struct TUMNetwork {
 }
 
 impl Default for TUMNetwork {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl TUMNetwork {
     pub fn new() -> Self {
         Self {
             r: 0.1,
-            x: 1.0,        // Full resources
-            u: 0.2,        // Low initial utilisation
+            x: 1.0, // Full resources
+            u: 0.2, // Low initial utilisation
             j: 5.0,
             u_base: 0.2,
             tau: 10.0,
-            tau_d: 200.0,   // Slow depression recovery
-            tau_f: 50.0,    // Faster facilitation decay
+            tau_d: 200.0, // Slow depression recovery
+            tau_f: 50.0,  // Faster facilitation decay
             threshold: 0.0,
             gain_phi: 1.0,
             dt: 0.1,
@@ -250,7 +280,11 @@ impl TUMNetwork {
     }
 
     fn phi(&self, x: f64) -> f64 {
-        if x > self.threshold { self.gain_phi * (x - self.threshold) } else { 0.0 }
+        if x > self.threshold {
+            self.gain_phi * (x - self.threshold)
+        } else {
+            0.0
+        }
     }
 
     pub fn step(&mut self, current: f64) -> i32 {
@@ -259,8 +293,7 @@ impl TUMNetwork {
 
         // STP dynamics
         let dx = (1.0 - self.x) / self.tau_d - self.u * self.x * self.r;
-        let du = (self.u_base - self.u) / self.tau_f
-            + self.u_base * (1.0 - self.u) * self.r;
+        let du = (self.u_base - self.u) / self.tau_f + self.u_base * (1.0 - self.u) * self.r;
 
         self.x += self.dt * dx;
         self.u += self.dt * du;
@@ -274,11 +307,21 @@ impl TUMNetwork {
         self.r = self.r.clamp(0.0, 200.0);
         self.x = self.x.clamp(0.0, 1.0);
         self.u = self.u.clamp(0.0, 1.0);
-        if !self.r.is_finite() { self.r = 0.1; }
-        if !self.x.is_finite() { self.x = 1.0; }
-        if !self.u.is_finite() { self.u = 0.2; }
+        if !self.r.is_finite() {
+            self.r = 0.1;
+        }
+        if !self.x.is_finite() {
+            self.x = 1.0;
+        }
+        if !self.u.is_finite() {
+            self.u = 0.2;
+        }
 
-        if self.r >= self.r_threshold && r_prev < self.r_threshold { 1 } else { 0 }
+        if self.r >= self.r_threshold && r_prev < self.r_threshold {
+            1
+        } else {
+            0
+        }
     }
 
     pub fn reset(&mut self) {
@@ -305,16 +348,16 @@ impl TUMNetwork {
 pub struct ElBoustaniNetwork {
     pub r_e: f64,
     pub r_i: f64,
-    pub s: f64,         // NMDA synaptic gating variable
+    pub s: f64, // NMDA synaptic gating variable
     pub tau_e: f64,
     pub tau_i: f64,
-    pub tau_s: f64,     // NMDA decay (~100 ms)
-    pub j_ampa: f64,    // Fast E→E (AMPA)
-    pub j_nmda: f64,    // Slow E→E (NMDA)
+    pub tau_s: f64,  // NMDA decay (~100 ms)
+    pub j_ampa: f64, // Fast E→E (AMPA)
+    pub j_nmda: f64, // Slow E→E (NMDA)
     pub j_ei: f64,
     pub j_ie: f64,
     pub j_ii: f64,
-    pub gamma: f64,     // NMDA saturation rate
+    pub gamma: f64, // NMDA saturation rate
     pub threshold: f64,
     pub gain_phi: f64,
     pub dt: f64,
@@ -323,7 +366,9 @@ pub struct ElBoustaniNetwork {
 }
 
 impl Default for ElBoustaniNetwork {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ElBoustaniNetwork {
@@ -340,7 +385,7 @@ impl ElBoustaniNetwork {
             j_ei: 0.8,
             j_ie: 0.5,
             j_ii: 0.2,
-            gamma: 0.641,  // NMDA saturation parameter
+            gamma: 0.641, // NMDA saturation parameter
             threshold: 0.0,
             gain_phi: 1.0,
             dt: 0.1,
@@ -350,7 +395,11 @@ impl ElBoustaniNetwork {
     }
 
     fn phi(&self, x: f64) -> f64 {
-        if x > self.threshold { self.gain_phi * (x - self.threshold) } else { 0.0 }
+        if x > self.threshold {
+            self.gain_phi * (x - self.threshold)
+        } else {
+            0.0
+        }
     }
 
     pub fn step(&mut self, current: f64) -> i32 {
@@ -362,8 +411,7 @@ impl ElBoustaniNetwork {
         self.s += self.dt * ds;
 
         // E and I rate dynamics
-        let drive_e = self.j_ampa * self.r_e + self.j_nmda * self.s
-            - self.j_ei * self.r_i + input;
+        let drive_e = self.j_ampa * self.r_e + self.j_nmda * self.s - self.j_ei * self.r_i + input;
         let drive_i = self.j_ie * self.r_e - self.j_ii * self.r_i;
 
         let dr_e = (-self.r_e + self.phi(drive_e)) / self.tau_e;
@@ -376,11 +424,21 @@ impl ElBoustaniNetwork {
         self.r_e = self.r_e.clamp(0.0, 200.0);
         self.r_i = self.r_i.clamp(0.0, 200.0);
         self.s = self.s.clamp(0.0, 1.0);
-        if !self.r_e.is_finite() { self.r_e = 0.1; }
-        if !self.r_i.is_finite() { self.r_i = 0.1; }
-        if !self.s.is_finite() { self.s = 0.0; }
+        if !self.r_e.is_finite() {
+            self.r_e = 0.1;
+        }
+        if !self.r_i.is_finite() {
+            self.r_i = 0.1;
+        }
+        if !self.s.is_finite() {
+            self.s = 0.0;
+        }
 
-        if self.r_e >= self.r_threshold && r_e_prev < self.r_threshold { 1 } else { 0 }
+        if self.r_e >= self.r_threshold && r_e_prev < self.r_threshold {
+            1
+        } else {
+            0
+        }
     }
 
     pub fn reset(&mut self) {
@@ -403,7 +461,10 @@ mod tests {
         for _ in 0..50_000 {
             spikes += n.step(10.0);
         }
-        assert!(spikes > 0, "MPR must produce bursts with strong input, got {spikes}");
+        assert!(
+            spikes > 0,
+            "MPR must produce bursts with strong input, got {spikes}"
+        );
     }
 
     #[test]
@@ -414,7 +475,10 @@ mod tests {
         for _ in 0..50_000 {
             spikes += n.step(0.0);
         }
-        assert_eq!(spikes, 0, "MPR must be quiescent without input (eta<0), got {spikes}");
+        assert_eq!(
+            spikes, 0,
+            "MPR must be quiescent without input (eta<0), got {spikes}"
+        );
     }
 
     #[test]
@@ -425,8 +489,12 @@ mod tests {
             low.step(3.0);
             high.step(15.0);
         }
-        assert!(high.r > low.r,
-            "Higher input → higher rate: high={:.3} vs low={:.3}", high.r, low.r);
+        assert!(
+            high.r > low.r,
+            "Higher input → higher rate: high={:.3} vs low={:.3}",
+            high.r,
+            low.r
+        );
     }
 
     #[test]
@@ -438,7 +506,10 @@ mod tests {
         for _ in 0..1000 {
             n.step(5.0);
         }
-        assert!(n.r != r0 || n.v != v0, "State must evolve from initial conditions");
+        assert!(
+            n.r != r0 || n.v != v0,
+            "State must evolve from initial conditions"
+        );
     }
 
     #[test]
@@ -453,7 +524,9 @@ mod tests {
     #[test]
     fn mpr_negative_input_no_crash() {
         let mut n = MontbrioMeanField::new();
-        for _ in 0..50_000 { n.step(-100.0); }
+        for _ in 0..50_000 {
+            n.step(-100.0);
+        }
         assert!(n.r.is_finite());
         assert!(n.v.is_finite());
     }
@@ -469,7 +542,9 @@ mod tests {
     #[test]
     fn mpr_extreme_input_bounded() {
         let mut n = MontbrioMeanField::new();
-        for _ in 0..10_000 { n.step(1e6); }
+        for _ in 0..10_000 {
+            n.step(1e6);
+        }
         assert!(n.r.is_finite() && n.r <= 100.0);
         assert!(n.v.is_finite() && n.v <= 50.0);
     }
@@ -477,7 +552,9 @@ mod tests {
     #[test]
     fn mpr_reset_clears_state() {
         let mut n = MontbrioMeanField::new();
-        for _ in 0..10_000 { n.step(10.0); }
+        for _ in 0..10_000 {
+            n.step(10.0);
+        }
         n.reset();
         assert_eq!(n.r, 0.01);
         assert_eq!(n.v, -2.0);
@@ -487,9 +564,14 @@ mod tests {
     fn mpr_performance_100k_steps() {
         let start = std::time::Instant::now();
         let mut n = MontbrioMeanField::new();
-        for _ in 0..100_000 { std::hint::black_box(n.step(5.0)); }
+        for _ in 0..100_000 {
+            std::hint::black_box(n.step(5.0));
+        }
         let elapsed = start.elapsed();
-        assert!(elapsed.as_millis() < 50, "100k steps must complete in <50ms");
+        assert!(
+            elapsed.as_millis() < 50,
+            "100k steps must complete in <50ms"
+        );
     }
 
     // -- Brunel Balanced Network tests --
@@ -501,7 +583,10 @@ mod tests {
         for _ in 0..50_000 {
             spikes += n.step(5.0);
         }
-        assert!(spikes > 0, "Brunel must produce bursts with input, got {spikes}");
+        assert!(
+            spikes > 0,
+            "Brunel must produce bursts with input, got {spikes}"
+        );
     }
 
     #[test]
@@ -511,7 +596,10 @@ mod tests {
         for _ in 0..50_000 {
             spikes += n.step(0.0);
         }
-        assert_eq!(spikes, 0, "Brunel must be quiescent without input, got {spikes}");
+        assert_eq!(
+            spikes, 0,
+            "Brunel must be quiescent without input, got {spikes}"
+        );
     }
 
     #[test]
@@ -521,7 +609,11 @@ mod tests {
         for _ in 0..50_000 {
             n.step(3.0);
         }
-        assert!(n.r_e < 50.0, "E/I balance should keep r_e bounded, r_e={}", n.r_e);
+        assert!(
+            n.r_e < 50.0,
+            "E/I balance should keep r_e bounded, r_e={}",
+            n.r_e
+        );
         assert!(n.r_i >= 0.0, "r_i must be non-negative");
     }
 
@@ -537,15 +629,20 @@ mod tests {
             weak_inh.step(5.0);
             strong_inh.step(5.0);
         }
-        assert!(weak_inh.r_e >= strong_inh.r_e,
+        assert!(
+            weak_inh.r_e >= strong_inh.r_e,
             "Stronger inhibition → lower E rate: weak={:.2} vs strong={:.2}",
-            weak_inh.r_e, strong_inh.r_e);
+            weak_inh.r_e,
+            strong_inh.r_e
+        );
     }
 
     #[test]
     fn brunel_rates_non_negative() {
         let mut n = BrunelNetwork::new();
-        for _ in 0..50_000 { n.step(-10.0); }
+        for _ in 0..50_000 {
+            n.step(-10.0);
+        }
         assert!(n.r_e >= 0.0);
         assert!(n.r_i >= 0.0);
     }
@@ -553,7 +650,9 @@ mod tests {
     #[test]
     fn brunel_negative_input_no_crash() {
         let mut n = BrunelNetwork::new();
-        for _ in 0..50_000 { n.step(-100.0); }
+        for _ in 0..50_000 {
+            n.step(-100.0);
+        }
         assert!(n.r_e.is_finite());
         assert!(n.r_i.is_finite());
     }
@@ -569,14 +668,18 @@ mod tests {
     #[test]
     fn brunel_extreme_input_bounded() {
         let mut n = BrunelNetwork::new();
-        for _ in 0..10_000 { n.step(1e6); }
+        for _ in 0..10_000 {
+            n.step(1e6);
+        }
         assert!(n.r_e.is_finite() && n.r_e <= 200.0);
     }
 
     #[test]
     fn brunel_reset_clears_state() {
         let mut n = BrunelNetwork::new();
-        for _ in 0..10_000 { n.step(5.0); }
+        for _ in 0..10_000 {
+            n.step(5.0);
+        }
         n.reset();
         assert_eq!(n.r_e, 0.1);
         assert_eq!(n.r_i, 0.1);
@@ -586,9 +689,14 @@ mod tests {
     fn brunel_performance_100k_steps() {
         let start = std::time::Instant::now();
         let mut n = BrunelNetwork::new();
-        for _ in 0..100_000 { std::hint::black_box(n.step(3.0)); }
+        for _ in 0..100_000 {
+            std::hint::black_box(n.step(3.0));
+        }
         let elapsed = start.elapsed();
-        assert!(elapsed.as_millis() < 50, "100k steps must complete in <50ms");
+        assert!(
+            elapsed.as_millis() < 50,
+            "100k steps must complete in <50ms"
+        );
     }
 
     // -- TUM Network tests --
@@ -600,7 +708,10 @@ mod tests {
         for _ in 0..50_000 {
             spikes += n.step(5.0);
         }
-        assert!(spikes > 0, "TUM must produce bursts with input, got {spikes}");
+        assert!(
+            spikes > 0,
+            "TUM must produce bursts with input, got {spikes}"
+        );
     }
 
     #[test]
@@ -610,7 +721,10 @@ mod tests {
         for _ in 0..50_000 {
             spikes += n.step(0.0);
         }
-        assert_eq!(spikes, 0, "TUM must be quiescent without input, got {spikes}");
+        assert_eq!(
+            spikes, 0,
+            "TUM must be quiescent without input, got {spikes}"
+        );
     }
 
     #[test]
@@ -619,14 +733,20 @@ mod tests {
         // coupling drops → rate should decrease relative to initial transient
         let mut n = TUMNetwork::new();
         // Drive to steady state
-        for _ in 0..20_000 { n.step(8.0); }
+        for _ in 0..20_000 {
+            n.step(8.0);
+        }
         let r_sustained = n.r;
         let x_depleted = n.x;
-        assert!(x_depleted < 0.9,
-            "Sustained activity should deplete resources, x={x_depleted}");
+        assert!(
+            x_depleted < 0.9,
+            "Sustained activity should deplete resources, x={x_depleted}"
+        );
         // Reset and measure transient (fresh resources)
         n.reset();
-        for _ in 0..500 { n.step(8.0); }
+        for _ in 0..500 {
+            n.step(8.0);
+        }
         let r_transient = n.r;
         // Transient may be higher because x=1.0 initially
         // The key test is that x was depleted under sustained drive
@@ -640,9 +760,14 @@ mod tests {
         // With repeated activation, u (utilisation) should increase from baseline
         let mut n = TUMNetwork::new();
         let u0 = n.u;
-        for _ in 0..5_000 { n.step(5.0); }
-        assert!(n.u > u0,
-            "Facilitation should increase u: u0={u0}, u_now={}", n.u);
+        for _ in 0..5_000 {
+            n.step(5.0);
+        }
+        assert!(
+            n.u > u0,
+            "Facilitation should increase u: u0={u0}, u_now={}",
+            n.u
+        );
     }
 
     #[test]
@@ -650,16 +775,22 @@ mod tests {
         // Effective coupling u*x*J changes with activity
         let mut n = TUMNetwork::new();
         let eff_0 = n.u * n.x * n.j;
-        for _ in 0..10_000 { n.step(5.0); }
+        for _ in 0..10_000 {
+            n.step(5.0);
+        }
         let eff_1 = n.u * n.x * n.j;
-        assert!((eff_0 - eff_1).abs() > 0.01,
-            "STP must modulate effective coupling: eff_0={eff_0:.3}, eff_1={eff_1:.3}");
+        assert!(
+            (eff_0 - eff_1).abs() > 0.01,
+            "STP must modulate effective coupling: eff_0={eff_0:.3}, eff_1={eff_1:.3}"
+        );
     }
 
     #[test]
     fn tum_rate_non_negative() {
         let mut n = TUMNetwork::new();
-        for _ in 0..50_000 { n.step(-10.0); }
+        for _ in 0..50_000 {
+            n.step(-10.0);
+        }
         assert!(n.r >= 0.0, "Rate must be non-negative, r={}", n.r);
     }
 
@@ -675,7 +806,9 @@ mod tests {
     #[test]
     fn tum_extreme_input_bounded() {
         let mut n = TUMNetwork::new();
-        for _ in 0..10_000 { n.step(1e6); }
+        for _ in 0..10_000 {
+            n.step(1e6);
+        }
         assert!(n.r.is_finite() && n.r <= 200.0);
         assert!(n.x >= 0.0 && n.x <= 1.0);
         assert!(n.u >= 0.0 && n.u <= 1.0);
@@ -684,7 +817,9 @@ mod tests {
     #[test]
     fn tum_reset_clears_state() {
         let mut n = TUMNetwork::new();
-        for _ in 0..10_000 { n.step(5.0); }
+        for _ in 0..10_000 {
+            n.step(5.0);
+        }
         n.reset();
         assert_eq!(n.r, 0.1);
         assert_eq!(n.x, 1.0);
@@ -695,9 +830,14 @@ mod tests {
     fn tum_performance_100k_steps() {
         let start = std::time::Instant::now();
         let mut n = TUMNetwork::new();
-        for _ in 0..100_000 { std::hint::black_box(n.step(5.0)); }
+        for _ in 0..100_000 {
+            std::hint::black_box(n.step(5.0));
+        }
         let elapsed = start.elapsed();
-        assert!(elapsed.as_millis() < 50, "100k steps must complete in <50ms");
+        assert!(
+            elapsed.as_millis() < 50,
+            "100k steps must complete in <50ms"
+        );
     }
 
     // -- El Boustani Network tests --
@@ -709,7 +849,10 @@ mod tests {
         for _ in 0..50_000 {
             spikes += n.step(5.0);
         }
-        assert!(spikes > 0, "ElBoustani must produce bursts with input, got {spikes}");
+        assert!(
+            spikes > 0,
+            "ElBoustani must produce bursts with input, got {spikes}"
+        );
     }
 
     #[test]
@@ -719,7 +862,10 @@ mod tests {
         for _ in 0..50_000 {
             spikes += n.step(0.0);
         }
-        assert_eq!(spikes, 0, "ElBoustani must be quiescent without input, got {spikes}");
+        assert_eq!(
+            spikes, 0,
+            "ElBoustani must be quiescent without input, got {spikes}"
+        );
     }
 
     #[test]
@@ -727,17 +873,28 @@ mod tests {
         // NMDA gating variable s should increase with sustained E activity
         let mut n = ElBoustaniNetwork::new();
         let s0 = n.s;
-        for _ in 0..10_000 { n.step(5.0); }
-        assert!(n.s > s0,
-            "NMDA gating should increase with activity: s0={s0}, s_now={}", n.s);
+        for _ in 0..10_000 {
+            n.step(5.0);
+        }
+        assert!(
+            n.s > s0,
+            "NMDA gating should increase with activity: s0={s0}, s_now={}",
+            n.s
+        );
     }
 
     #[test]
     fn elboustani_ei_balance() {
         // Inhibition should keep E rate bounded
         let mut n = ElBoustaniNetwork::new();
-        for _ in 0..50_000 { n.step(3.0); }
-        assert!(n.r_e < 50.0, "E/I balance should keep r_e bounded, r_e={}", n.r_e);
+        for _ in 0..50_000 {
+            n.step(3.0);
+        }
+        assert!(
+            n.r_e < 50.0,
+            "E/I balance should keep r_e bounded, r_e={}",
+            n.r_e
+        );
         assert!(n.r_i >= 0.0, "r_i must be non-negative");
     }
 
@@ -751,24 +908,34 @@ mod tests {
             with_nmda.step(3.0);
             no_nmda.step(3.0);
         }
-        assert!(with_nmda.r_e >= no_nmda.r_e,
+        assert!(
+            with_nmda.r_e >= no_nmda.r_e,
             "NMDA should enhance excitation: with={:.3} vs without={:.3}",
-            with_nmda.r_e, no_nmda.r_e);
+            with_nmda.r_e,
+            no_nmda.r_e
+        );
     }
 
     #[test]
     fn elboustani_nmda_bounded() {
         // NMDA gating s must stay in [0, 1]
         let mut n = ElBoustaniNetwork::new();
-        for _ in 0..50_000 { n.step(10.0); }
-        assert!(n.s >= 0.0 && n.s <= 1.0,
-            "NMDA gating must be in [0,1], s={}", n.s);
+        for _ in 0..50_000 {
+            n.step(10.0);
+        }
+        assert!(
+            n.s >= 0.0 && n.s <= 1.0,
+            "NMDA gating must be in [0,1], s={}",
+            n.s
+        );
     }
 
     #[test]
     fn elboustani_rates_non_negative() {
         let mut n = ElBoustaniNetwork::new();
-        for _ in 0..50_000 { n.step(-10.0); }
+        for _ in 0..50_000 {
+            n.step(-10.0);
+        }
         assert!(n.r_e >= 0.0);
         assert!(n.r_i >= 0.0);
     }
@@ -785,7 +952,9 @@ mod tests {
     #[test]
     fn elboustani_extreme_input_bounded() {
         let mut n = ElBoustaniNetwork::new();
-        for _ in 0..10_000 { n.step(1e6); }
+        for _ in 0..10_000 {
+            n.step(1e6);
+        }
         assert!(n.r_e.is_finite() && n.r_e <= 200.0);
         assert!(n.s >= 0.0 && n.s <= 1.0);
     }
@@ -793,7 +962,9 @@ mod tests {
     #[test]
     fn elboustani_reset_clears_state() {
         let mut n = ElBoustaniNetwork::new();
-        for _ in 0..10_000 { n.step(5.0); }
+        for _ in 0..10_000 {
+            n.step(5.0);
+        }
         n.reset();
         assert_eq!(n.r_e, 0.1);
         assert_eq!(n.r_i, 0.1);

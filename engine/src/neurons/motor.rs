@@ -37,15 +37,15 @@ pub struct AlphaMotorNeuron {
     pub v: f64,
     pub h: f64,
     pub n: f64,
-    pub m_pic: f64,    // PIC (L-type Ca²⁺) activation
-    pub h_pic: f64,    // PIC slow inactivation (tau ~200 ms)
-    pub ca: f64,       // Intracellular Ca²⁺ (µM)
-    pub ca_buf: f64,   // Bound Ca²⁺ (buffered fraction)
+    pub m_pic: f64,  // PIC (L-type Ca²⁺) activation
+    pub h_pic: f64,  // PIC slow inactivation (tau ~200 ms)
+    pub ca: f64,     // Intracellular Ca²⁺ (µM)
+    pub ca_buf: f64, // Bound Ca²⁺ (buffered fraction)
     // Conductances (mS/cm²)
     pub g_na: f64,
     pub g_k: f64,
-    pub g_pic: f64,    // Persistent inward current
-    pub g_ahp: f64,    // Ca²⁺-dependent K⁺ (AHP)
+    pub g_pic: f64, // Persistent inward current
+    pub g_ahp: f64, // Ca²⁺-dependent K⁺ (AHP)
     pub g_l: f64,
     // Reversal potentials (mV)
     pub e_na: f64,
@@ -54,7 +54,7 @@ pub struct AlphaMotorNeuron {
     pub e_l: f64,
     pub c_m: f64,
     pub phi: f64,
-    pub tau_ca: f64,   // Ca²⁺ decay (ms)
+    pub tau_ca: f64,    // Ca²⁺ decay (ms)
     pub buf_ratio: f64, // Buffering ratio (fraction of Ca²⁺ bound)
     pub dt: f64,
     pub v_threshold: f64,
@@ -67,21 +67,21 @@ impl AlphaMotorNeuron {
             h: 0.8,
             n: 0.1,
             m_pic: 0.0,
-            h_pic: 1.0,     // PIC inactivation starts de-inactivated
+            h_pic: 1.0, // PIC inactivation starts de-inactivated
             ca: 0.0,
             ca_buf: 0.0,
             g_na: 35.0,
             g_k: 9.0,
-            g_pic: 0.15,    // PIC for plateau potentials (conservative)
-            g_ahp: 3.0,     // Strong AHP for rate limiting
-            g_l: 0.3,       // Higher leak (larger soma, stabilises rest)
+            g_pic: 0.15, // PIC for plateau potentials (conservative)
+            g_ahp: 3.0,  // Strong AHP for rate limiting
+            g_l: 0.3,    // Higher leak (larger soma, stabilises rest)
             e_na: 55.0,
             e_k: -90.0,
             e_ca: 120.0,
             e_l: -65.0,
-            c_m: 1.5,       // Larger soma → higher capacitance
+            c_m: 1.5, // Larger soma → higher capacitance
             phi: 4.0,
-            tau_ca: 150.0,  // Slow Ca²⁺ clearance for AHP
+            tau_ca: 150.0,    // Slow Ca²⁺ clearance for AHP
             buf_ratio: 0.003, // ~0.3% free Ca²⁺ (99.7% buffered)
             dt: 0.01,
             v_threshold: -20.0,
@@ -118,16 +118,25 @@ impl AlphaMotorNeuron {
             // Ca²⁺ dynamics with buffering
             // Total Ca²⁺ entry (PIC-mediated)
             let i_ca_entry = self.g_pic * self.m_pic * self.h_pic * (self.v - self.e_ca);
-            let ca_influx = if i_ca_entry < 0.0 { -i_ca_entry * 0.001 } else { 0.0 };
+            let ca_influx = if i_ca_entry < 0.0 {
+                -i_ca_entry * 0.001
+            } else {
+                0.0
+            };
             let ca_spike = if self.v > -10.0 { 0.02 } else { 0.0 };
             // Only ~0.3% of entering Ca²⁺ is free (rest is buffered)
             let free_ca_change = (ca_influx + ca_spike) * self.buf_ratio;
             self.ca += (-self.ca / self.tau_ca + free_ca_change) * self.dt;
-            if self.ca < 0.0 { self.ca = 0.0; }
+            if self.ca < 0.0 {
+                self.ca = 0.0;
+            }
             // Buffered pool tracks total entry (slower dynamics)
             self.ca_buf += ((ca_influx + ca_spike) * (1.0 - self.buf_ratio)
-                - self.ca_buf / (self.tau_ca * 5.0)) * self.dt;
-            if self.ca_buf < 0.0 { self.ca_buf = 0.0; }
+                - self.ca_buf / (self.tau_ca * 5.0))
+                * self.dt;
+            if self.ca_buf < 0.0 {
+                self.ca_buf = 0.0;
+            }
 
             // AHP: Ca²⁺-activated K⁺ (SK channels), Hill n=2
             let ca_total = self.ca + self.ca_buf * 0.01; // Buffered contributes slowly
@@ -154,7 +163,9 @@ impl AlphaMotorNeuron {
 }
 
 impl Default for AlphaMotorNeuron {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -178,11 +189,11 @@ pub struct GammaMotorNeuron {
     pub v_reset: f64,
     pub v_threshold: f64,
     pub tau: f64,
-    pub adapt: f64,       // Slow adaptation current
-    pub tau_adapt: f64,   // Adaptation time constant (ms)
-    pub a_adapt: f64,     // Adaptation coupling strength
-    pub gain: f64,        // Input gain (fusimotor drive → mV)
-    pub dynamic: bool,    // true = dynamic (bag1), false = static (bag2/chain)
+    pub adapt: f64,     // Slow adaptation current
+    pub tau_adapt: f64, // Adaptation time constant (ms)
+    pub a_adapt: f64,   // Adaptation coupling strength
+    pub gain: f64,      // Input gain (fusimotor drive → mV)
+    pub dynamic: bool,  // true = dynamic (bag1), false = static (bag2/chain)
     pub dt: f64,
 }
 
@@ -211,7 +222,7 @@ impl GammaMotorNeuron {
     /// Static gamma — innervates bag2/chain intrafusal fibres (length-sensitive).
     pub fn static_type() -> Self {
         Self {
-            tau: 12.0,       // Slower membrane
+            tau: 12.0,        // Slower membrane
             tau_adapt: 200.0, // Stronger adaptation (lower steady-state rate)
             a_adapt: 0.5,
             dynamic: false,
@@ -223,7 +234,8 @@ impl GammaMotorNeuron {
     pub fn step(&mut self, drive: f64) -> i32 {
         let input = self.gain * drive.max(0.0) - self.adapt;
         self.v += (-(self.v - self.v_rest) + input) / self.tau * self.dt;
-        self.adapt += (self.a_adapt * (self.v - self.v_rest) - self.adapt) / self.tau_adapt * self.dt;
+        self.adapt +=
+            (self.a_adapt * (self.v - self.v_rest) - self.adapt) / self.tau_adapt * self.dt;
 
         if self.v >= self.v_threshold {
             self.v = self.v_reset;
@@ -240,7 +252,9 @@ impl GammaMotorNeuron {
 }
 
 impl Default for GammaMotorNeuron {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -262,8 +276,8 @@ pub struct UpperMotorNeuron {
     pub m: f64,
     pub h: f64,
     pub n: f64,
-    pub p: f64,    // M-current (Kv7) activation
-    pub s: f64,    // High-threshold Ca2+ activation
+    pub p: f64, // M-current (Kv7) activation
+    pub s: f64, // High-threshold Ca2+ activation
     // Conductances
     pub g_na: f64,
     pub g_k: f64,
@@ -291,8 +305,8 @@ impl UpperMotorNeuron {
             s: 0.0,
             g_na: 50.0,
             g_k: 5.0,
-            g_m: 0.07,     // M-current for adaptation (Pospischil RS)
-            g_ca: 0.3,     // High-threshold dendritic Ca2+
+            g_m: 0.07, // M-current for adaptation (Pospischil RS)
+            g_ca: 0.3, // High-threshold dendritic Ca2+
             g_l: 0.1,
             e_na: 50.0,
             e_k: -90.0,
@@ -311,14 +325,26 @@ impl UpperMotorNeuron {
             // Pospischil Na+ gating
             let dv = self.v - vt;
             let x_m = dv - 13.0;
-            let alpha_m = if x_m.abs() < 1e-6 { 0.32 * 4.0 } else { -0.32 * x_m / ((-x_m / 4.0).exp() - 1.0) };
+            let alpha_m = if x_m.abs() < 1e-6 {
+                0.32 * 4.0
+            } else {
+                -0.32 * x_m / ((-x_m / 4.0).exp() - 1.0)
+            };
             let x_h = dv - 17.0;
-            let beta_m = if x_h.abs() < 1e-6 { 0.28 * 5.0 } else { 0.28 * x_h / ((x_h / 5.0).exp() - 1.0) };
+            let beta_m = if x_h.abs() < 1e-6 {
+                0.28 * 5.0
+            } else {
+                0.28 * x_h / ((x_h / 5.0).exp() - 1.0)
+            };
             let alpha_h = 0.128 * (-(dv - 17.0) / 18.0).exp();
             let beta_h = 4.0 / (1.0 + (-(dv - 40.0) / 5.0).exp());
             // K+ gating
             let x_n = dv - 15.0;
-            let alpha_n = if x_n.abs() < 1e-6 { 0.032 * 5.0 } else { -0.032 * x_n / ((-x_n / 5.0).exp() - 1.0) };
+            let alpha_n = if x_n.abs() < 1e-6 {
+                0.032 * 5.0
+            } else {
+                -0.032 * x_n / ((-x_n / 5.0).exp() - 1.0)
+            };
             let beta_n = 0.5 * (-(dv - 10.0) / 40.0).exp();
 
             self.m += (alpha_m * (1.0 - self.m) - beta_m * self.m) * self.dt;
@@ -327,7 +353,8 @@ impl UpperMotorNeuron {
 
             // M-current (slow K+, adaptation)
             let p_inf = 1.0 / (1.0 + (-(self.v + 35.0) / 10.0).exp());
-            let tau_p = 400.0 / (3.3 * ((self.v + 35.0) / 20.0).exp() + (-(self.v + 35.0) / 20.0).exp());
+            let tau_p =
+                400.0 / (3.3 * ((self.v + 35.0) / 20.0).exp() + (-(self.v + 35.0) / 20.0).exp());
             self.p += (p_inf - self.p) / tau_p * self.dt;
 
             // High-threshold Ca2+ (dendritic spike)
@@ -360,7 +387,9 @@ impl UpperMotorNeuron {
 }
 
 impl Default for UpperMotorNeuron {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -401,11 +430,22 @@ pub struct RenshawCell {
 impl RenshawCell {
     pub fn new() -> Self {
         Self {
-            v: -65.0, h: 0.8, n: 0.1, adapt: 0.0,
-            g_na: 35.0, g_k: 9.0, g_adapt: 5.0, g_l: 0.12,
-            e_na: 55.0, e_k: -90.0, e_l: -65.0,
-            c_m: 1.0, phi: 5.0, tau_adapt: 50.0,
-            dt: 0.01, v_threshold: -20.0,
+            v: -65.0,
+            h: 0.8,
+            n: 0.1,
+            adapt: 0.0,
+            g_na: 35.0,
+            g_k: 9.0,
+            g_adapt: 5.0,
+            g_l: 0.12,
+            e_na: 55.0,
+            e_k: -90.0,
+            e_l: -65.0,
+            c_m: 1.0,
+            phi: 5.0,
+            tau_adapt: 50.0,
+            dt: 0.01,
+            v_threshold: -20.0,
         }
     }
 
@@ -434,16 +474,25 @@ impl RenshawCell {
 
             self.v += (-i_na - i_k - i_adapt - i_l + current) / self.c_m * self.dt;
         }
-        if self.v >= self.v_threshold && v_prev < self.v_threshold { 1 } else { 0 }
+        if self.v >= self.v_threshold && v_prev < self.v_threshold {
+            1
+        } else {
+            0
+        }
     }
 
     pub fn reset(&mut self) {
-        self.v = -65.0; self.h = 0.8; self.n = 0.1; self.adapt = 0.0;
+        self.v = -65.0;
+        self.h = 0.8;
+        self.n = 0.1;
+        self.adapt = 0.0;
     }
 }
 
 impl Default for RenshawCell {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -467,7 +516,7 @@ pub struct MotorUnit {
     pub v_rest: f64,
     pub v_reset: f64,
     pub v_threshold: f64,
-    pub tau_m: f64,       // Membrane time constant (ms)
+    pub tau_m: f64, // Membrane time constant (ms)
     pub adapt: f64,
     pub tau_adapt: f64,
     pub a_adapt: f64,
@@ -488,9 +537,19 @@ impl MotorUnit {
     /// Slow motor unit (type S): small, fatigue-resistant, low force.
     pub fn slow() -> Self {
         Self {
-            v: -65.0, v_rest: -65.0, v_reset: -70.0, v_threshold: -50.0,
-            tau_m: 10.0, adapt: 0.0, tau_adapt: 100.0, a_adapt: 0.2, gain: 1.0,
-            force: 0.0, twitch_amp: 0.05, tau_twitch: 90.0, force_decay: 0.0,
+            v: -65.0,
+            v_rest: -65.0,
+            v_reset: -70.0,
+            v_threshold: -50.0,
+            tau_m: 10.0,
+            adapt: 0.0,
+            tau_adapt: 100.0,
+            a_adapt: 0.2,
+            gain: 1.0,
+            force: 0.0,
+            twitch_amp: 0.05,
+            tau_twitch: 90.0,
+            force_decay: 0.0,
             dt: 0.5,
         }
     }
@@ -511,18 +570,19 @@ impl MotorUnit {
     pub fn step(&mut self, drive: f64) -> i32 {
         let input = self.gain * drive.max(0.0) - self.adapt;
         self.v += (-(self.v - self.v_rest) + input) / self.tau_m * self.dt;
-        self.adapt += (self.a_adapt * (self.v - self.v_rest) - self.adapt) / self.tau_adapt * self.dt;
+        self.adapt +=
+            (self.a_adapt * (self.v - self.v_rest) - self.adapt) / self.tau_adapt * self.dt;
 
         // Force decay: exponential relaxation
         self.force *= (-self.dt / self.tau_twitch).exp();
-
-        
 
         if self.v >= self.v_threshold {
             self.v = self.v_reset;
             // Spike → muscle twitch (add to force)
             self.force += self.twitch_amp;
-            if self.force > 1.0 { self.force = 1.0; }
+            if self.force > 1.0 {
+                self.force = 1.0;
+            }
             1
         } else {
             0
@@ -537,7 +597,9 @@ impl MotorUnit {
 }
 
 impl Default for MotorUnit {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -554,7 +616,10 @@ mod tests {
     fn alpha_motor_fires_with_input() {
         let mut n = AlphaMotorNeuron::new();
         let spikes: i32 = (0..5000).map(|_| n.step(3.0)).sum();
-        assert!(spikes > 0, "alpha motor must fire with sustained input: got {spikes}");
+        assert!(
+            spikes > 0,
+            "alpha motor must fire with sustained input: got {spikes}"
+        );
     }
 
     #[test]
@@ -591,24 +656,35 @@ mod tests {
         // PIC (m_pic) should increase from baseline during sustained input.
         let mut n = AlphaMotorNeuron::new();
         let baseline = n.m_pic;
-        for _ in 0..2000 { n.step(4.0); }
+        for _ in 0..2000 {
+            n.step(4.0);
+        }
         assert!(
             n.m_pic > baseline + 0.001,
-            "PIC should respond to depolarisation: baseline={baseline}, after={}", n.m_pic
+            "PIC should respond to depolarisation: baseline={baseline}, after={}",
+            n.m_pic
         );
     }
 
     #[test]
     fn alpha_motor_ca_increases_during_spiking() {
         let mut n = AlphaMotorNeuron::new();
-        for _ in 0..5000 { n.step(5.0); }
-        assert!(n.ca > 0.0, "Ca2+ should accumulate during spiking: ca={}", n.ca);
+        for _ in 0..5000 {
+            n.step(5.0);
+        }
+        assert!(
+            n.ca > 0.0,
+            "Ca2+ should accumulate during spiking: ca={}",
+            n.ca
+        );
     }
 
     #[test]
     fn alpha_motor_reset_roundtrip() {
         let mut n = AlphaMotorNeuron::new();
-        for _ in 0..2000 { n.step(4.0); }
+        for _ in 0..2000 {
+            n.step(4.0);
+        }
         n.reset();
         let mut fresh = AlphaMotorNeuron::new();
         let r1: i32 = (0..1000).map(|_| n.step(4.0)).sum();
@@ -619,7 +695,9 @@ mod tests {
     #[test]
     fn alpha_motor_voltage_bounded() {
         let mut n = AlphaMotorNeuron::new();
-        for _ in 0..10000 { n.step(10.0); }
+        for _ in 0..10000 {
+            n.step(10.0);
+        }
         assert!(n.v.is_finite(), "voltage must stay finite");
         assert!(n.ca.is_finite(), "Ca2+ must stay finite");
         assert!(n.ca >= 0.0, "Ca2+ must be non-negative");
@@ -628,8 +706,12 @@ mod tests {
     #[test]
     fn alpha_motor_nan_recovery() {
         let mut n = AlphaMotorNeuron::new();
-        for _ in 0..100 { n.step(3.0); }
-        for _ in 0..10 { let _ = n.step(f64::NAN); }
+        for _ in 0..100 {
+            n.step(3.0);
+        }
+        for _ in 0..10 {
+            let _ = n.step(f64::NAN);
+        }
         n.reset();
         assert!(n.v.is_finite());
         assert!(n.ca >= 0.0);
@@ -638,10 +720,14 @@ mod tests {
     #[test]
     fn alpha_motor_extreme_input() {
         let mut n = AlphaMotorNeuron::new();
-        for _ in 0..50 { n.step(1e6); }
+        for _ in 0..50 {
+            n.step(1e6);
+        }
         n.reset();
         assert!(n.v.is_finite());
-        for _ in 0..50 { n.step(-1e6); }
+        for _ in 0..50 {
+            n.step(-1e6);
+        }
         n.reset();
         assert!(n.v.is_finite());
     }
@@ -650,8 +736,14 @@ mod tests {
     fn alpha_motor_performance() {
         let mut n = AlphaMotorNeuron::new();
         let start = std::time::Instant::now();
-        for _ in 0..5_000 { n.step(4.0); }
-        assert!(start.elapsed().as_millis() < 500, "5k steps took {:?}", start.elapsed());
+        for _ in 0..5_000 {
+            n.step(4.0);
+        }
+        assert!(
+            start.elapsed().as_millis() < 500,
+            "5k steps took {:?}",
+            start.elapsed()
+        );
     }
 
     // ── Gamma Motor Neuron — 6-dimension STRONG ──────────────────
@@ -712,7 +804,9 @@ mod tests {
     #[test]
     fn gamma_reset_roundtrip() {
         let mut n = GammaMotorNeuron::new();
-        for _ in 0..1000 { n.step(20.0); }
+        for _ in 0..1000 {
+            n.step(20.0);
+        }
         n.reset();
         let mut fresh = GammaMotorNeuron::new();
         let r1: i32 = (0..500).map(|_| n.step(20.0)).sum();
@@ -723,7 +817,9 @@ mod tests {
     #[test]
     fn gamma_voltage_bounded() {
         let mut n = GammaMotorNeuron::new();
-        for _ in 0..10000 { n.step(50.0); }
+        for _ in 0..10000 {
+            n.step(50.0);
+        }
         assert!(n.v.is_finite());
         assert!(n.adapt.is_finite());
     }
@@ -731,8 +827,12 @@ mod tests {
     #[test]
     fn gamma_nan_recovery() {
         let mut n = GammaMotorNeuron::new();
-        for _ in 0..50 { n.step(20.0); }
-        for _ in 0..10 { let _ = n.step(f64::NAN); }
+        for _ in 0..50 {
+            n.step(20.0);
+        }
+        for _ in 0..10 {
+            let _ = n.step(f64::NAN);
+        }
         n.reset();
         assert!(n.v.is_finite());
         assert_eq!(n.adapt, 0.0);
@@ -741,7 +841,9 @@ mod tests {
     #[test]
     fn gamma_extreme_input() {
         let mut n = GammaMotorNeuron::new();
-        for _ in 0..50 { n.step(1e6); }
+        for _ in 0..50 {
+            n.step(1e6);
+        }
         n.reset();
         assert!(n.v.is_finite());
     }
@@ -750,8 +852,14 @@ mod tests {
     fn gamma_performance() {
         let mut n = GammaMotorNeuron::new();
         let start = std::time::Instant::now();
-        for _ in 0..100_000 { n.step(20.0); }
-        assert!(start.elapsed().as_millis() < 50, "100k steps took {:?}", start.elapsed());
+        for _ in 0..100_000 {
+            n.step(20.0);
+        }
+        assert!(
+            start.elapsed().as_millis() < 50,
+            "100k steps took {:?}",
+            start.elapsed()
+        );
     }
 
     // ── Upper Motor Neuron — 6-dimension STRONG ──────────────────
@@ -792,14 +900,22 @@ mod tests {
     fn upper_motor_ca_activates_during_depolarisation() {
         let mut n = UpperMotorNeuron::new();
         let baseline = n.s;
-        for _ in 0..5000 { n.step(5.0); }
-        assert!(n.s > baseline + 0.001, "Ca2+ gate should activate: s={}", n.s);
+        for _ in 0..5000 {
+            n.step(5.0);
+        }
+        assert!(
+            n.s > baseline + 0.001,
+            "Ca2+ gate should activate: s={}",
+            n.s
+        );
     }
 
     #[test]
     fn upper_motor_reset_roundtrip() {
         let mut n = UpperMotorNeuron::new();
-        for _ in 0..3000 { n.step(5.0); }
+        for _ in 0..3000 {
+            n.step(5.0);
+        }
         n.reset();
         let mut fresh = UpperMotorNeuron::new();
         let r1: i32 = (0..2000).map(|_| n.step(5.0)).sum();
@@ -810,7 +926,9 @@ mod tests {
     #[test]
     fn upper_motor_voltage_bounded() {
         let mut n = UpperMotorNeuron::new();
-        for _ in 0..20000 { n.step(10.0); }
+        for _ in 0..20000 {
+            n.step(10.0);
+        }
         assert!(n.v.is_finite());
         assert!(n.p.is_finite());
         assert!(n.s.is_finite());
@@ -819,8 +937,12 @@ mod tests {
     #[test]
     fn upper_motor_nan_recovery() {
         let mut n = UpperMotorNeuron::new();
-        for _ in 0..100 { n.step(5.0); }
-        for _ in 0..10 { let _ = n.step(f64::NAN); }
+        for _ in 0..100 {
+            n.step(5.0);
+        }
+        for _ in 0..10 {
+            let _ = n.step(f64::NAN);
+        }
         n.reset();
         assert!(n.v.is_finite());
     }
@@ -828,7 +950,9 @@ mod tests {
     #[test]
     fn upper_motor_extreme_input() {
         let mut n = UpperMotorNeuron::new();
-        for _ in 0..50 { n.step(1e6); }
+        for _ in 0..50 {
+            n.step(1e6);
+        }
         n.reset();
         assert!(n.v.is_finite());
     }
@@ -837,8 +961,14 @@ mod tests {
     fn upper_motor_performance() {
         let mut n = UpperMotorNeuron::new();
         let start = std::time::Instant::now();
-        for _ in 0..10_000 { n.step(5.0); }
-        assert!(start.elapsed().as_millis() < 100, "10k steps took {:?}", start.elapsed());
+        for _ in 0..10_000 {
+            n.step(5.0);
+        }
+        assert!(
+            start.elapsed().as_millis() < 100,
+            "10k steps took {:?}",
+            start.elapsed()
+        );
     }
 
     // ── Renshaw Cell — 6-dimension STRONG ────────────────────────
@@ -880,14 +1010,22 @@ mod tests {
     fn renshaw_adapt_increases_during_firing() {
         let mut n = RenshawCell::new();
         let baseline = n.adapt;
-        for _ in 0..3000 { n.step(4.0); }
-        assert!(n.adapt > baseline + 0.01, "adaptation variable should increase: adapt={}", n.adapt);
+        for _ in 0..3000 {
+            n.step(4.0);
+        }
+        assert!(
+            n.adapt > baseline + 0.01,
+            "adaptation variable should increase: adapt={}",
+            n.adapt
+        );
     }
 
     #[test]
     fn renshaw_reset_roundtrip() {
         let mut n = RenshawCell::new();
-        for _ in 0..2000 { n.step(4.0); }
+        for _ in 0..2000 {
+            n.step(4.0);
+        }
         n.reset();
         let mut fresh = RenshawCell::new();
         let r1: i32 = (0..1000).map(|_| n.step(4.0)).sum();
@@ -898,7 +1036,9 @@ mod tests {
     #[test]
     fn renshaw_voltage_bounded() {
         let mut n = RenshawCell::new();
-        for _ in 0..10000 { n.step(10.0); }
+        for _ in 0..10000 {
+            n.step(10.0);
+        }
         assert!(n.v.is_finite());
         assert!(n.adapt.is_finite());
     }
@@ -906,8 +1046,12 @@ mod tests {
     #[test]
     fn renshaw_nan_recovery() {
         let mut n = RenshawCell::new();
-        for _ in 0..100 { n.step(3.0); }
-        for _ in 0..10 { let _ = n.step(f64::NAN); }
+        for _ in 0..100 {
+            n.step(3.0);
+        }
+        for _ in 0..10 {
+            let _ = n.step(f64::NAN);
+        }
         n.reset();
         assert!(n.v.is_finite());
         assert_eq!(n.adapt, 0.0);
@@ -916,7 +1060,9 @@ mod tests {
     #[test]
     fn renshaw_extreme_input() {
         let mut n = RenshawCell::new();
-        for _ in 0..50 { n.step(1e6); }
+        for _ in 0..50 {
+            n.step(1e6);
+        }
         n.reset();
         assert!(n.v.is_finite());
     }
@@ -925,8 +1071,14 @@ mod tests {
     fn renshaw_performance() {
         let mut n = RenshawCell::new();
         let start = std::time::Instant::now();
-        for _ in 0..5_000 { n.step(4.0); }
-        assert!(start.elapsed().as_millis() < 500, "5k steps took {:?}", start.elapsed());
+        for _ in 0..5_000 {
+            n.step(4.0);
+        }
+        assert!(
+            start.elapsed().as_millis() < 500,
+            "5k steps took {:?}",
+            start.elapsed()
+        );
     }
 
     // ── Motor Unit — 6-dimension STRONG ──────────────────────────
@@ -956,44 +1108,67 @@ mod tests {
     fn motor_unit_force_increases_with_spikes() {
         let mut mu = MotorUnit::new();
         assert_eq!(mu.force, 0.0);
-        for _ in 0..2000 { mu.step(20.0); }
-        assert!(mu.force > 0.0, "force should increase during spiking: f={}", mu.force);
+        for _ in 0..2000 {
+            mu.step(20.0);
+        }
+        assert!(
+            mu.force > 0.0,
+            "force should increase during spiking: f={}",
+            mu.force
+        );
     }
 
     #[test]
     fn motor_unit_force_decays_without_input() {
         let mut mu = MotorUnit::new();
         // Build up force
-        for _ in 0..1000 { mu.step(20.0); }
+        for _ in 0..1000 {
+            mu.step(20.0);
+        }
         let peak = mu.force;
         assert!(peak > 0.0);
         // No input → force decays
-        for _ in 0..5000 { mu.step(0.0); }
-        assert!(mu.force < peak, "force should decay: peak={peak}, now={}", mu.force);
+        for _ in 0..5000 {
+            mu.step(0.0);
+        }
+        assert!(
+            mu.force < peak,
+            "force should decay: peak={peak}, now={}",
+            mu.force
+        );
     }
 
     #[test]
     fn motor_unit_fast_produces_more_force() {
         let mut slow = MotorUnit::slow();
         let mut fast = MotorUnit::fast();
-        for _ in 0..2000 { slow.step(20.0); fast.step(20.0); }
+        for _ in 0..2000 {
+            slow.step(20.0);
+            fast.step(20.0);
+        }
         assert!(
             fast.force >= slow.force,
-            "fast MU ({}) should produce >= force than slow ({})", fast.force, slow.force
+            "fast MU ({}) should produce >= force than slow ({})",
+            fast.force,
+            slow.force
         );
     }
 
     #[test]
     fn motor_unit_force_capped_at_one() {
         let mut mu = MotorUnit::fast();
-        for _ in 0..10000 { mu.step(50.0); }
+        for _ in 0..10000 {
+            mu.step(50.0);
+        }
         assert!(mu.force <= 1.0, "force must not exceed 1.0: f={}", mu.force);
     }
 
     #[test]
     fn motor_unit_reset_roundtrip() {
         let mut mu = MotorUnit::new();
-        for _ in 0..1000 { mu.step(20.0); }
+        for _ in 0..1000 {
+            mu.step(20.0);
+        }
         mu.reset();
         assert_eq!(mu.force, 0.0);
         assert_eq!(mu.adapt, 0.0);
@@ -1006,7 +1181,9 @@ mod tests {
     #[test]
     fn motor_unit_voltage_bounded() {
         let mut mu = MotorUnit::new();
-        for _ in 0..10000 { mu.step(50.0); }
+        for _ in 0..10000 {
+            mu.step(50.0);
+        }
         assert!(mu.v.is_finite());
         assert!(mu.force.is_finite());
     }
@@ -1014,8 +1191,12 @@ mod tests {
     #[test]
     fn motor_unit_nan_recovery() {
         let mut mu = MotorUnit::new();
-        for _ in 0..50 { mu.step(20.0); }
-        for _ in 0..10 { let _ = mu.step(f64::NAN); }
+        for _ in 0..50 {
+            mu.step(20.0);
+        }
+        for _ in 0..10 {
+            let _ = mu.step(f64::NAN);
+        }
         mu.reset();
         assert!(mu.v.is_finite());
         assert_eq!(mu.force, 0.0);
@@ -1025,7 +1206,13 @@ mod tests {
     fn motor_unit_performance() {
         let mut mu = MotorUnit::new();
         let start = std::time::Instant::now();
-        for _ in 0..100_000 { mu.step(20.0); }
-        assert!(start.elapsed().as_millis() < 50, "100k steps took {:?}", start.elapsed());
+        for _ in 0..100_000 {
+            mu.step(20.0);
+        }
+        assert!(
+            start.elapsed().as_millis() < 50,
+            "100k steps took {:?}",
+            start.elapsed()
+        );
     }
 }

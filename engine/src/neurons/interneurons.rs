@@ -34,7 +34,7 @@ pub struct PVFastSpikingNeuron {
     pub v: f64,
     pub h: f64,
     pub n: f64,
-    pub p: f64,   // Kv3.1 activation
+    pub p: f64, // Kv3.1 activation
     // Conductances (mS/cm²)
     pub g_na: f64,
     pub g_k: f64,
@@ -59,13 +59,13 @@ impl PVFastSpikingNeuron {
             p: 0.0,
             g_na: 35.0,
             g_k: 9.0,
-            g_kv3: 5.0,     // Kv3.1 for narrow APs
+            g_kv3: 5.0, // Kv3.1 for narrow APs
             g_l: 0.1,
             e_na: 55.0,
             e_k: -90.0,
             e_l: -65.0,
             c_m: 1.0,
-            phi: 5.0,        // Fast kinetics (FS phenotype)
+            phi: 5.0, // Fast kinetics (FS phenotype)
             dt: 0.01,
             v_threshold: -20.0,
         }
@@ -137,9 +137,9 @@ pub struct SSTNeuron {
     pub m: f64,
     pub h: f64,
     pub n: f64,
-    pub p: f64,  // M-current activation
-    pub s: f64,  // T-type Ca2+ inactivation
-    pub r: f64,  // h-current activation
+    pub p: f64, // M-current activation
+    pub s: f64, // T-type Ca2+ inactivation
+    pub r: f64, // h-current activation
     // Conductances
     pub g_na: f64,
     pub g_k: f64,
@@ -170,10 +170,10 @@ impl SSTNeuron {
             r: 0.1,
             g_na: 50.0,
             g_k: 5.0,
-            g_m: 0.12,   // Strong M-current → adaptation
-            g_t: 0.01,   // T-type Ca2+ for rebound (minimal window current)
-            g_h: 0.02,   // Ih for sag
-            g_l: 0.05,   // Leak for resting stability
+            g_m: 0.12, // Strong M-current → adaptation
+            g_t: 0.01, // T-type Ca2+ for rebound (minimal window current)
+            g_h: 0.02, // Ih for sag
+            g_l: 0.05, // Leak for resting stability
             e_na: 50.0,
             e_k: -90.0,
             e_ca: 120.0,
@@ -192,14 +192,26 @@ impl SSTNeuron {
             // Na+ gating (Pospischil)
             let dv = self.v - vt;
             let x_m = dv - 13.0;
-            let alpha_m = if x_m.abs() < 1e-6 { 0.32 * 4.0 } else { -0.32 * x_m / ((-(x_m) / 4.0).exp() - 1.0) };
+            let alpha_m = if x_m.abs() < 1e-6 {
+                0.32 * 4.0
+            } else {
+                -0.32 * x_m / ((-(x_m) / 4.0).exp() - 1.0)
+            };
             let x_h = dv - 17.0;
-            let beta_m = if x_h.abs() < 1e-6 { 0.28 * 5.0 } else { 0.28 * x_h / (((x_h) / 5.0).exp() - 1.0) };
+            let beta_m = if x_h.abs() < 1e-6 {
+                0.28 * 5.0
+            } else {
+                0.28 * x_h / (((x_h) / 5.0).exp() - 1.0)
+            };
             let alpha_h = 0.128 * (-(dv - 17.0) / 18.0).exp();
             let beta_h = 4.0 / (1.0 + (-(dv - 40.0) / 5.0).exp());
             // K+ gating
             let x_n = dv - 15.0;
-            let alpha_n = if x_n.abs() < 1e-6 { 0.032 * 5.0 } else { -0.032 * x_n / ((-x_n / 5.0).exp() - 1.0) };
+            let alpha_n = if x_n.abs() < 1e-6 {
+                0.032 * 5.0
+            } else {
+                -0.032 * x_n / ((-x_n / 5.0).exp() - 1.0)
+            };
             let beta_n = 0.5 * (-(dv - 10.0) / 40.0).exp();
 
             self.m += (alpha_m * (1.0 - self.m) - beta_m * self.m) * self.dt;
@@ -208,7 +220,8 @@ impl SSTNeuron {
 
             // M-current (slow K+, drives adaptation)
             let p_inf = 1.0 / (1.0 + (-(self.v + 35.0) / 10.0).exp());
-            let tau_p = 400.0 / (3.3 * ((self.v + 35.0) / 20.0).exp() + (-(self.v + 35.0) / 20.0).exp());
+            let tau_p =
+                400.0 / (3.3 * ((self.v + 35.0) / 20.0).exp() + (-(self.v + 35.0) / 20.0).exp());
             self.p += (p_inf - self.p) / tau_p * self.dt;
 
             // T-type Ca2+ (low-threshold)
@@ -219,7 +232,8 @@ impl SSTNeuron {
 
             // h-current (Ih, sag)
             let r_inf = 1.0 / (1.0 + ((self.v + 80.0) / 10.0).exp());
-            let tau_r = 100.0 + 500.0 / ((-(self.v + 70.0) / 20.0).exp() + ((self.v + 70.0) / 20.0).exp());
+            let tau_r =
+                100.0 + 500.0 / ((-(self.v + 70.0) / 20.0).exp() + ((self.v + 70.0) / 20.0).exp());
             self.r += (r_inf - self.r) / tau_r * self.dt;
 
             let i_na = self.g_na * self.m.powi(3) * self.h * (self.v - self.e_na);
@@ -272,8 +286,8 @@ pub struct VIPNeuron {
     pub v: f64,
     pub h: f64,
     pub n: f64,
-    pub a: f64,  // A-type K+ activation
-    pub b: f64,  // A-type K+ inactivation
+    pub a: f64, // A-type K+ activation
+    pub b: f64, // A-type K+ inactivation
     // Conductances
     pub g_na: f64,
     pub g_k: f64,
@@ -296,14 +310,14 @@ impl VIPNeuron {
             n: 0.1,
             a: 0.0,
             b: 0.9,
-            g_na: 35.0,    // Lower than PV+ (smaller soma)
+            g_na: 35.0, // Lower than PV+ (smaller soma)
             g_k: 6.0,
-            g_a: 8.0,      // Strong A-current → accommodation
-            g_l: 0.01,     // High input resistance
+            g_a: 8.0,  // Strong A-current → accommodation
+            g_l: 0.01, // High input resistance
             e_na: 55.0,
             e_k: -90.0,
             e_l: -65.0,
-            c_m: 0.5,      // Small soma → low capacitance
+            c_m: 0.5, // Small soma → low capacitance
             dt: 0.025,
             v_threshold: -20.0,
         }
@@ -375,8 +389,8 @@ pub struct ChandelierNeuron {
     pub v: f64,
     pub h: f64,
     pub n: f64,
-    pub d: f64,  // Kv1 (D-type) activation
-    pub p: f64,  // Kv3.1 activation
+    pub d: f64, // Kv1 (D-type) activation
+    pub p: f64, // Kv3.1 activation
     // Conductances
     pub g_na: f64,
     pub g_k: f64,
@@ -403,8 +417,8 @@ impl ChandelierNeuron {
             p: 0.0,
             g_na: 35.0,
             g_k: 9.0,
-            g_kv1: 3.0,     // Kv1 delay current (slower)
-            g_kv3: 4.0,     // Kv3.1 for AP sharpening
+            g_kv1: 3.0, // Kv1 delay current (slower)
+            g_kv3: 4.0, // Kv3.1 for AP sharpening
             g_l: 0.1,
             e_na: 55.0,
             e_k: -90.0,
@@ -489,7 +503,7 @@ pub struct CerebellarBasketNeuron {
     pub n: f64,
     pub a: f64,
     pub b: f64,
-    pub ca: f64,   // Intracellular [Ca2+] (µM)
+    pub ca: f64, // Intracellular [Ca2+] (µM)
     // Conductances
     pub g_na: f64,
     pub g_k: f64,
@@ -556,9 +570,15 @@ impl CerebellarBasketNeuron {
             let q_inf = self.ca / (self.ca + 0.2);
 
             // Ca2+ dynamics: entry during depolarisation
-            let i_ca_entry = if self.v > -20.0 { 0.01 * (self.v + 20.0) } else { 0.0 };
+            let i_ca_entry = if self.v > -20.0 {
+                0.01 * (self.v + 20.0)
+            } else {
+                0.0
+            };
             self.ca += (-self.ca / 80.0 + i_ca_entry) * self.dt;
-            if self.ca < 0.0 { self.ca = 0.0; }
+            if self.ca < 0.0 {
+                self.ca = 0.0;
+            }
 
             let i_na = self.g_na * m_inf.powi(3) * self.h * (self.v - self.e_na);
             let i_k = self.g_k * self.n.powi(4) * (self.v - self.e_k);
@@ -608,8 +628,8 @@ pub struct MartinottiNeuron {
     pub m: f64,
     pub h: f64,
     pub n: f64,
-    pub p: f64,  // M-current activation
-    pub s: f64,  // T-type Ca2+ inactivation
+    pub p: f64, // M-current activation
+    pub s: f64, // T-type Ca2+ inactivation
     // Conductances
     pub g_na: f64,
     pub g_k: f64,
@@ -637,9 +657,9 @@ impl MartinottiNeuron {
             s: 0.9,
             g_na: 40.0,
             g_k: 5.0,
-            g_m: 0.25,    // Very strong M-current → pronounced adaptation
-            g_t: 0.01,    // T-type Ca2+ (minimal window current)
-            g_l: 0.05,    // Leak for resting stability
+            g_m: 0.25, // Very strong M-current → pronounced adaptation
+            g_t: 0.01, // T-type Ca2+ (minimal window current)
+            g_l: 0.05, // Leak for resting stability
             e_na: 50.0,
             e_k: -90.0,
             e_ca: 120.0,
@@ -657,14 +677,26 @@ impl MartinottiNeuron {
             let dv = self.v - vt;
             // Na+ gating
             let x_m = dv - 13.0;
-            let alpha_m = if x_m.abs() < 1e-6 { 0.32 * 4.0 } else { -0.32 * x_m / ((-x_m / 4.0).exp() - 1.0) };
+            let alpha_m = if x_m.abs() < 1e-6 {
+                0.32 * 4.0
+            } else {
+                -0.32 * x_m / ((-x_m / 4.0).exp() - 1.0)
+            };
             let x_h = dv - 17.0;
-            let beta_m = if x_h.abs() < 1e-6 { 0.28 * 5.0 } else { 0.28 * x_h / ((x_h / 5.0).exp() - 1.0) };
+            let beta_m = if x_h.abs() < 1e-6 {
+                0.28 * 5.0
+            } else {
+                0.28 * x_h / ((x_h / 5.0).exp() - 1.0)
+            };
             let alpha_h = 0.128 * (-(dv - 17.0) / 18.0).exp();
             let beta_h = 4.0 / (1.0 + (-(dv - 40.0) / 5.0).exp());
             // K+ gating
             let x_n = dv - 15.0;
-            let alpha_n = if x_n.abs() < 1e-6 { 0.032 * 5.0 } else { -0.032 * x_n / ((-x_n / 5.0).exp() - 1.0) };
+            let alpha_n = if x_n.abs() < 1e-6 {
+                0.032 * 5.0
+            } else {
+                -0.032 * x_n / ((-x_n / 5.0).exp() - 1.0)
+            };
             let beta_n = 0.5 * (-(dv - 10.0) / 40.0).exp();
 
             self.m += (alpha_m * (1.0 - self.m) - beta_m * self.m) * self.dt;
@@ -673,7 +705,8 @@ impl MartinottiNeuron {
 
             // M-current (Kv7, very strong for Martinotti)
             let p_inf = 1.0 / (1.0 + (-(self.v + 35.0) / 10.0).exp());
-            let tau_p = 400.0 / (3.3 * ((self.v + 35.0) / 20.0).exp() + (-(self.v + 35.0) / 20.0).exp());
+            let tau_p =
+                400.0 / (3.3 * ((self.v + 35.0) / 20.0).exp() + (-(self.v + 35.0) / 20.0).exp());
             self.p += (p_inf - self.p) / tau_p * self.dt;
 
             // T-type Ca2+
@@ -755,7 +788,9 @@ mod tests {
     #[test]
     fn pv_reset_roundtrip() {
         let mut n = PVFastSpikingNeuron::new();
-        for _ in 0..1000 { n.step(3.0); }
+        for _ in 0..1000 {
+            n.step(3.0);
+        }
         n.reset();
         let mut fresh = PVFastSpikingNeuron::new();
         let r1: i32 = (0..500).map(|_| n.step(3.0)).sum();
@@ -766,7 +801,9 @@ mod tests {
     #[test]
     fn pv_voltage_bounded() {
         let mut n = PVFastSpikingNeuron::new();
-        for _ in 0..5000 { n.step(5.0); }
+        for _ in 0..5000 {
+            n.step(5.0);
+        }
         assert!(n.v.is_finite());
         assert!(n.h.is_finite());
         assert!(n.n.is_finite());
@@ -776,8 +813,14 @@ mod tests {
     fn pv_performance_5k_steps() {
         let mut n = PVFastSpikingNeuron::new();
         let start = std::time::Instant::now();
-        for _ in 0..5_000 { n.step(3.0); }
-        assert!(start.elapsed().as_millis() < 500, "5k steps took {:?}", start.elapsed());
+        for _ in 0..5_000 {
+            n.step(3.0);
+        }
+        assert!(
+            start.elapsed().as_millis() < 500,
+            "5k steps took {:?}",
+            start.elapsed()
+        );
     }
 
     // ── SST+ tests ───────────────────────────────────────────────
@@ -811,7 +854,9 @@ mod tests {
     #[test]
     fn sst_reset_roundtrip() {
         let mut n = SSTNeuron::new();
-        for _ in 0..5000 { n.step(5.0); }
+        for _ in 0..5000 {
+            n.step(5.0);
+        }
         n.reset();
         let mut fresh = SSTNeuron::new();
         let r1: i32 = (0..2000).map(|_| n.step(5.0)).sum();
@@ -822,7 +867,9 @@ mod tests {
     #[test]
     fn sst_voltage_bounded() {
         let mut n = SSTNeuron::new();
-        for _ in 0..20000 { n.step(10.0); }
+        for _ in 0..20000 {
+            n.step(10.0);
+        }
         assert!(n.v.is_finite());
         assert!(n.p.is_finite());
         assert!(n.s.is_finite());
@@ -832,7 +879,9 @@ mod tests {
     fn sst_performance_10k_steps() {
         let mut n = SSTNeuron::new();
         let start = std::time::Instant::now();
-        for _ in 0..10_000 { n.step(5.0); }
+        for _ in 0..10_000 {
+            n.step(5.0);
+        }
         assert!(start.elapsed().as_millis() < 100);
     }
 
@@ -860,7 +909,9 @@ mod tests {
         // First 500 steps: A-current b gate is high → strong IA → suppresses early spikes
         let onset: i32 = (0..500).map(|_| n.step(3.0)).sum();
         // Skip 5000 steps to reach steady state
-        for _ in 0..5000 { n.step(3.0); }
+        for _ in 0..5000 {
+            n.step(3.0);
+        }
         // Next 500 steps at steady state
         let steady: i32 = (0..500).map(|_| n.step(3.0)).sum();
         // At steady state, b has dropped, IA is weaker → fires at least as much
@@ -873,7 +924,9 @@ mod tests {
     #[test]
     fn vip_reset_roundtrip() {
         let mut n = VIPNeuron::new();
-        for _ in 0..5000 { n.step(3.0); }
+        for _ in 0..5000 {
+            n.step(3.0);
+        }
         n.reset();
         let mut fresh = VIPNeuron::new();
         let r1: i32 = (0..2000).map(|_| n.step(3.0)).sum();
@@ -884,7 +937,9 @@ mod tests {
     #[test]
     fn vip_voltage_bounded() {
         let mut n = VIPNeuron::new();
-        for _ in 0..20000 { n.step(5.0); }
+        for _ in 0..20000 {
+            n.step(5.0);
+        }
         assert!(n.v.is_finite());
     }
 
@@ -892,7 +947,9 @@ mod tests {
     fn vip_performance_10k_steps() {
         let mut n = VIPNeuron::new();
         let start = std::time::Instant::now();
-        for _ in 0..10_000 { n.step(3.0); }
+        for _ in 0..10_000 {
+            n.step(3.0);
+        }
         assert!(start.elapsed().as_millis() < 100);
     }
 
@@ -932,7 +989,9 @@ mod tests {
     #[test]
     fn chandelier_reset_roundtrip() {
         let mut n = ChandelierNeuron::new();
-        for _ in 0..1000 { n.step(3.0); }
+        for _ in 0..1000 {
+            n.step(3.0);
+        }
         n.reset();
         let mut fresh = ChandelierNeuron::new();
         let r1: i32 = (0..500).map(|_| n.step(3.0)).sum();
@@ -943,7 +1002,9 @@ mod tests {
     #[test]
     fn chandelier_voltage_bounded() {
         let mut n = ChandelierNeuron::new();
-        for _ in 0..5000 { n.step(5.0); }
+        for _ in 0..5000 {
+            n.step(5.0);
+        }
         assert!(n.v.is_finite());
     }
 
@@ -951,8 +1012,14 @@ mod tests {
     fn chandelier_performance_5k_steps() {
         let mut n = ChandelierNeuron::new();
         let start = std::time::Instant::now();
-        for _ in 0..5_000 { n.step(3.0); }
-        assert!(start.elapsed().as_millis() < 500, "5k steps took {:?}", start.elapsed());
+        for _ in 0..5_000 {
+            n.step(3.0);
+        }
+        assert!(
+            start.elapsed().as_millis() < 500,
+            "5k steps took {:?}",
+            start.elapsed()
+        );
     }
 
     // ── Cerebellar basket tests ──────────────────────────────────
@@ -976,22 +1043,29 @@ mod tests {
         // Ca2+ decays between spikes but spikes cause transient increases
         let mut n = CerebellarBasketNeuron::new();
         // Run until steady-state Ca2+ with spiking
-        for _ in 0..5000 { n.step(3.0); }
+        for _ in 0..5000 {
+            n.step(3.0);
+        }
         let ca_spiking = n.ca;
         // Ca2+ without spiking should be lower (pure decay)
         let mut n2 = CerebellarBasketNeuron::new();
         n2.ca = ca_spiking;
-        for _ in 0..5000 { n2.step(0.0); }
+        for _ in 0..5000 {
+            n2.step(0.0);
+        }
         assert!(
             ca_spiking > n2.ca,
-            "spiking Ca ({ca_spiking:.4}) should exceed resting Ca ({:.4})", n2.ca
+            "spiking Ca ({ca_spiking:.4}) should exceed resting Ca ({:.4})",
+            n2.ca
         );
     }
 
     #[test]
     fn basket_reset_roundtrip() {
         let mut n = CerebellarBasketNeuron::new();
-        for _ in 0..2000 { n.step(3.0); }
+        for _ in 0..2000 {
+            n.step(3.0);
+        }
         n.reset();
         assert_eq!(n.ca, 0.05);
         let mut fresh = CerebellarBasketNeuron::new();
@@ -1003,7 +1077,9 @@ mod tests {
     #[test]
     fn basket_voltage_bounded() {
         let mut n = CerebellarBasketNeuron::new();
-        for _ in 0..5000 { n.step(5.0); }
+        for _ in 0..5000 {
+            n.step(5.0);
+        }
         assert!(n.v.is_finite());
         assert!(n.ca.is_finite());
         assert!(n.ca >= 0.0);
@@ -1013,8 +1089,14 @@ mod tests {
     fn basket_performance_5k_steps() {
         let mut n = CerebellarBasketNeuron::new();
         let start = std::time::Instant::now();
-        for _ in 0..5_000 { n.step(3.0); }
-        assert!(start.elapsed().as_millis() < 500, "5k steps took {:?}", start.elapsed());
+        for _ in 0..5_000 {
+            n.step(3.0);
+        }
+        assert!(
+            start.elapsed().as_millis() < 500,
+            "5k steps took {:?}",
+            start.elapsed()
+        );
     }
 
     // ── Martinotti tests ─────────────────────────────────────────
@@ -1061,7 +1143,9 @@ mod tests {
     #[test]
     fn martinotti_reset_roundtrip() {
         let mut n = MartinottiNeuron::new();
-        for _ in 0..5000 { n.step(4.0); }
+        for _ in 0..5000 {
+            n.step(4.0);
+        }
         n.reset();
         let mut fresh = MartinottiNeuron::new();
         let r1: i32 = (0..2000).map(|_| n.step(4.0)).sum();
@@ -1072,7 +1156,9 @@ mod tests {
     #[test]
     fn martinotti_voltage_bounded() {
         let mut n = MartinottiNeuron::new();
-        for _ in 0..20000 { n.step(10.0); }
+        for _ in 0..20000 {
+            n.step(10.0);
+        }
         assert!(n.v.is_finite());
         assert!(n.p.is_finite());
     }
@@ -1081,7 +1167,9 @@ mod tests {
     fn martinotti_performance_10k_steps() {
         let mut n = MartinottiNeuron::new();
         let start = std::time::Instant::now();
-        for _ in 0..10_000 { n.step(4.0); }
+        for _ in 0..10_000 {
+            n.step(4.0);
+        }
         assert!(start.elapsed().as_millis() < 100);
     }
 }

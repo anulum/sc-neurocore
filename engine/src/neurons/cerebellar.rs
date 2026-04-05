@@ -39,70 +39,76 @@ use super::biophysical::safe_rate;
 /// D'Angelo & De Zeeuw, Trends Neurosci 32:30, 2009 (review).
 #[derive(Clone, Debug)]
 pub struct GranuleCell {
-    pub v: f64,        // Membrane potential (mV)
-    pub m: f64,        // Na activation
-    pub h: f64,        // Na inactivation
-    pub n: f64,        // K_dr activation
-    pub a: f64,        // K_A activation
-    pub b: f64,        // K_A inactivation
-    pub m_t: f64,      // T-type Ca²⁺ activation
-    pub s: f64,        // T-type Ca²⁺ inactivation
-    pub ca: f64,       // Intracellular Ca²⁺ (µM)
-    pub r: f64,        // Ih activation
-    pub c_m: f64,      // Capacitance (µF/cm²)
-    pub g_na: f64,     // Na conductance
-    pub g_kdr: f64,    // K_dr conductance
-    pub g_ka: f64,     // K_A conductance
-    pub g_t: f64,      // T-type Ca²⁺ conductance
-    pub g_kca: f64,    // Ca²⁺-dependent K conductance
-    pub g_h: f64,      // Ih conductance
-    pub g_l: f64,      // Leak conductance
-    pub g_tonic: f64,  // Tonic GABA conductance
+    pub v: f64,       // Membrane potential (mV)
+    pub m: f64,       // Na activation
+    pub h: f64,       // Na inactivation
+    pub n: f64,       // K_dr activation
+    pub a: f64,       // K_A activation
+    pub b: f64,       // K_A inactivation
+    pub m_t: f64,     // T-type Ca²⁺ activation
+    pub s: f64,       // T-type Ca²⁺ inactivation
+    pub ca: f64,      // Intracellular Ca²⁺ (µM)
+    pub r: f64,       // Ih activation
+    pub c_m: f64,     // Capacitance (µF/cm²)
+    pub g_na: f64,    // Na conductance
+    pub g_kdr: f64,   // K_dr conductance
+    pub g_ka: f64,    // K_A conductance
+    pub g_t: f64,     // T-type Ca²⁺ conductance
+    pub g_kca: f64,   // Ca²⁺-dependent K conductance
+    pub g_h: f64,     // Ih conductance
+    pub g_l: f64,     // Leak conductance
+    pub g_tonic: f64, // Tonic GABA conductance
     pub e_na: f64,
     pub e_k: f64,
     pub e_ca: f64,
-    pub e_h: f64,      // Ih reversal (~-40 mV, mixed cation)
+    pub e_h: f64, // Ih reversal (~-40 mV, mixed cation)
     pub e_l: f64,
     pub e_gaba: f64,
-    pub tau_ca: f64,   // Ca²⁺ decay (ms)
-    pub kd_kca: f64,   // K_Ca half-saturation (µM)
+    pub tau_ca: f64, // Ca²⁺ decay (ms)
+    pub kd_kca: f64, // K_Ca half-saturation (µM)
     pub dt: f64,
     pub sub_steps: usize,
     pub gain: f64,
 }
 
 impl Default for GranuleCell {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl GranuleCell {
     pub fn new() -> Self {
         Self {
             v: -70.0,
-            m: 0.02, h: 0.85, n: 0.05,
-            a: 0.1, b: 0.8,
-            m_t: 0.01, s: 0.95,
+            m: 0.02,
+            h: 0.85,
+            n: 0.05,
+            a: 0.1,
+            b: 0.8,
+            m_t: 0.01,
+            s: 0.95,
             ca: 0.05,
             r: 0.1,
             c_m: 1.0,
-            g_na: 17.0,     // mS/cm² (D'Angelo 2001 Table 1)
-            g_kdr: 9.0,     // Delayed rectifier
-            g_ka: 1.0,      // A-type K
-            g_t: 0.5,       // T-type Ca²⁺
-            g_kca: 3.5,     // Ca²⁺-activated K
-            g_h: 0.03,      // Ih (small in granule cells)
-            g_l: 0.1,       // Leak
-            g_tonic: 0.2,   // Tonic GABA (strong tonic inhibition)
-            e_na: 87.4,     // D'Angelo 2001
+            g_na: 17.0,   // mS/cm² (D'Angelo 2001 Table 1)
+            g_kdr: 9.0,   // Delayed rectifier
+            g_ka: 1.0,    // A-type K
+            g_t: 0.5,     // T-type Ca²⁺
+            g_kca: 3.5,   // Ca²⁺-activated K
+            g_h: 0.03,    // Ih (small in granule cells)
+            g_l: 0.1,     // Leak
+            g_tonic: 0.2, // Tonic GABA (strong tonic inhibition)
+            e_na: 87.4,   // D'Angelo 2001
             e_k: -84.7,
             e_ca: 129.3,
-            e_h: -40.0,     // Mixed cation
-            e_l: -58.0,     // D'Angelo 2001
+            e_h: -40.0, // Mixed cation
+            e_l: -58.0, // D'Angelo 2001
             e_gaba: -75.0,
-            tau_ca: 10.0,   // Ca²⁺ decay
-            kd_kca: 0.2,    // K_Ca half-sat (µM)
+            tau_ca: 10.0, // Ca²⁺ decay
+            kd_kca: 0.2,  // K_Ca half-sat (µM)
             dt: 0.5,
-            sub_steps: 4,   // dt_sub = 0.125 ms
+            sub_steps: 4, // dt_sub = 0.125 ms
             gain: 1.0,
         }
     }
@@ -189,20 +195,35 @@ impl GranuleCell {
             let i_l = self.g_l * (v - self.e_l);
             let i_gaba = self.g_tonic * (v - self.e_gaba);
 
-            let dv = (-(i_na + i_kdr + i_ka + i_ca_t + i_kca + i_h + i_l + i_gaba) + input) / self.c_m;
+            let dv =
+                (-(i_na + i_kdr + i_ka + i_ca_t + i_kca + i_h + i_l + i_gaba) + input) / self.c_m;
             self.v += dt_sub * dv;
         }
 
         // Safety
         self.v = self.v.clamp(-100.0, 60.0);
-        if !self.v.is_finite() { self.v = -70.0; }
-        if !self.m.is_finite() { self.m = 0.02; }
-        if !self.h.is_finite() { self.h = 0.85; }
-        if !self.n.is_finite() { self.n = 0.05; }
-        if !self.ca.is_finite() { self.ca = 0.05; }
+        if !self.v.is_finite() {
+            self.v = -70.0;
+        }
+        if !self.m.is_finite() {
+            self.m = 0.02;
+        }
+        if !self.h.is_finite() {
+            self.h = 0.85;
+        }
+        if !self.n.is_finite() {
+            self.n = 0.05;
+        }
+        if !self.ca.is_finite() {
+            self.ca = 0.05;
+        }
 
         // Spike: V crosses 0 mV
-        if self.v >= 0.0 && v_prev < 0.0 { 1 } else { 0 }
+        if self.v >= 0.0 && v_prev < 0.0 {
+            1
+        } else {
+            0
+        }
     }
 
     pub fn reset(&mut self) {
@@ -239,18 +260,18 @@ impl GranuleCell {
 #[derive(Clone, Debug)]
 pub struct GolgiCell {
     pub v: f64,
-    pub m: f64,      // Na_t activation
-    pub h: f64,      // Na_t inactivation
-    pub p_na: f64,   // Na_p persistent activation
-    pub n: f64,      // K_dr activation
-    pub a: f64,      // K_A activation
-    pub b: f64,      // K_A inactivation
-    pub w: f64,      // K_M (muscarinic) activation
-    pub m_t: f64,    // Ca_T activation
-    pub s: f64,      // Ca_T inactivation
-    pub c_n: f64,    // Ca_N activation
-    pub r: f64,      // Ih activation
-    pub ca: f64,     // Intracellular Ca²⁺ (µM)
+    pub m: f64,    // Na_t activation
+    pub h: f64,    // Na_t inactivation
+    pub p_na: f64, // Na_p persistent activation
+    pub n: f64,    // K_dr activation
+    pub a: f64,    // K_A activation
+    pub b: f64,    // K_A inactivation
+    pub w: f64,    // K_M (muscarinic) activation
+    pub m_t: f64,  // Ca_T activation
+    pub s: f64,    // Ca_T inactivation
+    pub c_n: f64,  // Ca_N activation
+    pub r: f64,    // Ih activation
+    pub ca: f64,   // Intracellular Ca²⁺ (µM)
     // Conductances (mS/cm²)
     pub g_na_t: f64,
     pub g_na_p: f64,
@@ -279,34 +300,43 @@ pub struct GolgiCell {
 }
 
 impl Default for GolgiCell {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl GolgiCell {
     pub fn new() -> Self {
         Self {
             v: -60.0,
-            m: 0.02, h: 0.85, p_na: 0.01,
-            n: 0.05, a: 0.1, b: 0.8, w: 0.01,
-            m_t: 0.01, s: 0.9, c_n: 0.01,
+            m: 0.02,
+            h: 0.85,
+            p_na: 0.01,
+            n: 0.05,
+            a: 0.1,
+            b: 0.8,
+            w: 0.01,
+            m_t: 0.01,
+            s: 0.9,
+            c_n: 0.01,
             r: 0.1,
             ca: 0.05,
-            g_na_t: 48.0,    // Solinas 2007 Table 1
-            g_na_p: 0.2,     // Persistent Na (small but critical for pacemaking)
+            g_na_t: 48.0, // Solinas 2007 Table 1
+            g_na_p: 0.2,  // Persistent Na (small but critical for pacemaking)
             g_kdr: 16.0,
-            g_ka: 8.0,       // A-type
-            g_km: 1.0,       // Muscarinic slow K
-            g_cat: 0.5,      // T-type Ca²⁺
-            g_can: 1.0,      // N-type Ca²⁺ (high-voltage)
-            g_bk: 3.0,       // BK fast AHP
-            g_sk: 1.0,       // SK slow AHP
-            g_h: 0.1,        // Ih
+            g_ka: 8.0,  // A-type
+            g_km: 1.0,  // Muscarinic slow K
+            g_cat: 0.5, // T-type Ca²⁺
+            g_can: 1.0, // N-type Ca²⁺ (high-voltage)
+            g_bk: 3.0,  // BK fast AHP
+            g_sk: 1.0,  // SK slow AHP
+            g_h: 0.1,   // Ih
             g_l: 0.05,
             e_na: 55.0,
             e_k: -90.0,
             e_ca: 120.0,
             e_h: -40.0,
-            e_l: -55.0,      // Depolarised leak for spontaneous activity
+            e_l: -55.0, // Depolarised leak for spontaneous activity
             c_m: 1.0,
             tau_ca: 200.0,
             kd_bk: 1.0,
@@ -356,8 +386,7 @@ impl GolgiCell {
 
             // K_M: w (slow muscarinic)
             let w_inf = Self::boltz(v, -35.0, 10.0);
-            let tau_w = 100.0 / (3.3 * ((v + 35.0) / 20.0).exp()
-                + (-(v + 35.0) / 20.0).exp());
+            let tau_w = 100.0 / (3.3 * ((v + 35.0) / 20.0).exp() + (-(v + 35.0) / 20.0).exp());
             self.w += dt_sub * (w_inf - self.w) / tau_w;
 
             // Ca_T: m_t²s
@@ -393,7 +422,11 @@ impl GolgiCell {
             // Ca²⁺ dynamics (entry via Ca_T + Ca_N, decay)
             let i_cat = self.g_cat * self.m_t.powi(2) * self.s * (v - self.e_ca);
             let i_can = self.g_can * self.c_n.powi(2) * (v - self.e_ca);
-            let ca_entry = if i_cat + i_can < 0.0 { -(i_cat + i_can) * 0.001 } else { 0.0 };
+            let ca_entry = if i_cat + i_can < 0.0 {
+                -(i_cat + i_can) * 0.001
+            } else {
+                0.0
+            };
             self.ca += dt_sub * (ca_entry - self.ca / self.tau_ca);
             self.ca = self.ca.max(0.0);
 
@@ -416,20 +449,43 @@ impl GolgiCell {
             let i_h = self.g_h * self.r * (v - self.e_h);
             let i_l = self.g_l * (v - self.e_l);
 
-            let dv = (-(i_na_t + i_na_p + i_kdr + i_ka + i_km
-                + i_cat + i_can + i_bk + i_sk + i_h + i_l) + input) / self.c_m;
+            let dv = (-(i_na_t
+                + i_na_p
+                + i_kdr
+                + i_ka
+                + i_km
+                + i_cat
+                + i_can
+                + i_bk
+                + i_sk
+                + i_h
+                + i_l)
+                + input)
+                / self.c_m;
             self.v += dt_sub * dv;
         }
 
         // Safety
         self.v = self.v.clamp(-100.0, 60.0);
-        if !self.v.is_finite() { self.v = -60.0; }
-        if !self.m.is_finite() { self.m = 0.02; }
-        if !self.h.is_finite() { self.h = 0.85; }
-        if !self.ca.is_finite() { self.ca = 0.05; }
+        if !self.v.is_finite() {
+            self.v = -60.0;
+        }
+        if !self.m.is_finite() {
+            self.m = 0.02;
+        }
+        if !self.h.is_finite() {
+            self.h = 0.85;
+        }
+        if !self.ca.is_finite() {
+            self.ca = 0.05;
+        }
 
         // Spike: V crosses 0 mV
-        if self.v >= 0.0 && v_prev < 0.0 { 1 } else { 0 }
+        if self.v >= 0.0 && v_prev < 0.0 {
+            1
+        } else {
+            0
+        }
     }
 
     pub fn reset(&mut self) {
@@ -456,9 +512,9 @@ impl GolgiCell {
 #[derive(Clone, Debug)]
 pub struct StellateCell {
     pub v: f64,
-    pub h: f64,     // Na+ inactivation
-    pub n: f64,     // Kdr activation
-    pub p: f64,     // Kv3.1 activation
+    pub h: f64, // Na+ inactivation
+    pub n: f64, // Kdr activation
+    pub p: f64, // Kv3.1 activation
     // Conductances (mS/cm²)
     pub g_na: f64,
     pub g_k: f64,
@@ -476,7 +532,9 @@ pub struct StellateCell {
 }
 
 impl Default for StellateCell {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl StellateCell {
@@ -488,12 +546,12 @@ impl StellateCell {
             p: 0.0,
             g_na: 35.0,
             g_k: 9.0,
-            g_kv3: 3.0,    // Less Kv3.1 than PV+ basket
+            g_kv3: 3.0, // Less Kv3.1 than PV+ basket
             g_l: 0.1,
             e_na: 55.0,
             e_k: -90.0,
             e_l: -65.0,
-            c_m: 0.5,      // Smaller cell → lower capacitance
+            c_m: 0.5, // Smaller cell → lower capacitance
             phi: 5.0,
             dt: 0.5,
             v_threshold: -20.0,
@@ -547,7 +605,11 @@ impl StellateCell {
 
         // Safety bounds
         self.v = self.v.clamp(-100.0, 60.0);
-        if !self.v.is_finite() { self.v = -65.0; self.h = 0.6; self.n = 0.32; }
+        if !self.v.is_finite() {
+            self.v = -65.0;
+            self.h = 0.6;
+            self.n = 0.32;
+        }
         self.h = self.h.clamp(0.0, 1.0);
         self.n = self.n.clamp(0.0, 1.0);
         self.p = self.p.clamp(0.0, 1.0);
@@ -578,20 +640,22 @@ impl StellateCell {
 #[derive(Clone, Debug)]
 pub struct LugaroCell {
     pub v: f64,
-    pub adapt: f64,         // Adaptation current
+    pub adapt: f64, // Adaptation current
     pub v_rest: f64,
     pub v_reset: f64,
     pub v_threshold: f64,
     pub tau_m: f64,
     pub tau_adapt: f64,
-    pub a_adapt: f64,       // Adaptation coupling strength
+    pub a_adapt: f64, // Adaptation coupling strength
     pub gain: f64,
-    pub serotonin: f64,     // 5-HT modulation factor [0, 1]
+    pub serotonin: f64, // 5-HT modulation factor [0, 1]
     pub dt: f64,
 }
 
 impl Default for LugaroCell {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl LugaroCell {
@@ -599,14 +663,14 @@ impl LugaroCell {
         Self {
             v: -55.0,
             adapt: 0.0,
-            v_rest: -55.0,      // Depolarised rest for spontaneous firing
+            v_rest: -55.0, // Depolarised rest for spontaneous firing
             v_reset: -65.0,
             v_threshold: -48.0,
             tau_m: 10.0,
             tau_adapt: 150.0,
             a_adapt: 0.05,
             gain: 2.0,
-            serotonin: 0.0,    // No 5-HT modulation by default
+            serotonin: 0.0, // No 5-HT modulation by default
             dt: 0.5,
         }
     }
@@ -640,8 +704,12 @@ impl LugaroCell {
 
         // Safety bounds
         self.v = self.v.clamp(-100.0, 60.0);
-        if !self.v.is_finite() { self.v = self.v_reset; }
-        if !self.adapt.is_finite() { self.adapt = 0.0; }
+        if !self.v.is_finite() {
+            self.v = self.v_reset;
+        }
+        if !self.adapt.is_finite() {
+            self.adapt = 0.0;
+        }
 
         0
     }
@@ -670,19 +738,21 @@ impl LugaroCell {
 #[derive(Clone, Debug)]
 pub struct UnipolarBrushCell {
     pub v: f64,
-    pub persistent: f64,    // Slow NMDA-like persistent current
+    pub persistent: f64, // Slow NMDA-like persistent current
     pub v_rest: f64,
     pub v_reset: f64,
     pub v_threshold: f64,
     pub tau_m: f64,
-    pub tau_persistent: f64, // Slow decay of persistent current (ms)
+    pub tau_persistent: f64,  // Slow decay of persistent current (ms)
     pub persistent_gain: f64, // How much input drives persistent current
     pub gain: f64,
     pub dt: f64,
 }
 
 impl Default for UnipolarBrushCell {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl UnipolarBrushCell {
@@ -707,7 +777,9 @@ impl UnipolarBrushCell {
         // Persistent current dynamics: driven by input, decays slowly
         let dp = (self.persistent_gain * input - self.persistent) / self.tau_persistent;
         self.persistent += self.dt * dp;
-        if self.persistent < 0.0 { self.persistent = 0.0; }
+        if self.persistent < 0.0 {
+            self.persistent = 0.0;
+        }
 
         // LIF with persistent current
         let dv = (-(self.v - self.v_rest) + input + self.persistent) / self.tau_m;
@@ -721,8 +793,12 @@ impl UnipolarBrushCell {
 
         // Safety bounds
         self.v = self.v.clamp(-100.0, 60.0);
-        if !self.v.is_finite() { self.v = self.v_reset; }
-        if !self.persistent.is_finite() { self.persistent = 0.0; }
+        if !self.v.is_finite() {
+            self.v = self.v_reset;
+        }
+        if !self.persistent.is_finite() {
+            self.persistent = 0.0;
+        }
 
         0
     }
@@ -753,12 +829,12 @@ impl UnipolarBrushCell {
 #[derive(Clone, Debug)]
 pub struct DCNNeuron {
     pub v: f64,
-    pub h: f64,     // Na_t inactivation
-    pub n: f64,     // K_dr activation
-    pub p: f64,     // Na_p persistent activation
-    pub s: f64,     // T-type Ca²⁺ inactivation (slow)
-    pub r: f64,     // Ih activation
-    pub ca: f64,    // Intracellular Ca²⁺ (µM)
+    pub h: f64,  // Na_t inactivation
+    pub n: f64,  // K_dr activation
+    pub p: f64,  // Na_p persistent activation
+    pub s: f64,  // T-type Ca²⁺ inactivation (slow)
+    pub r: f64,  // Ih activation
+    pub ca: f64, // Intracellular Ca²⁺ (µM)
     // Conductances (mS/cm²)
     pub g_na: f64,
     pub g_nap: f64, // Persistent Na
@@ -783,7 +859,9 @@ pub struct DCNNeuron {
 }
 
 impl Default for DCNNeuron {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl DCNNeuron {
@@ -792,10 +870,10 @@ impl DCNNeuron {
             v: -60.0,
             h: 0.6,
             n: 0.32,
-            p: 0.01,    // NaP activation (low at rest)
-            s: 0.8,     // T-type de-inactivated at rest
-            r: 0.1,     // Ih partially active
-            ca: 0.05,   // Resting Ca²⁺ (µM)
+            p: 0.01,  // NaP activation (low at rest)
+            s: 0.8,   // T-type de-inactivated at rest
+            r: 0.1,   // Ih partially active
+            ca: 0.05, // Resting Ca²⁺ (µM)
             g_na: 35.0,
             g_nap: 0.5, // Persistent Na — amplifies subthreshold
             g_k: 9.0,
@@ -889,7 +967,11 @@ impl DCNNeuron {
 
         // Safety bounds
         self.v = self.v.clamp(-100.0, 60.0);
-        if !self.v.is_finite() { self.v = -60.0; self.h = 0.6; self.n = 0.32; }
+        if !self.v.is_finite() {
+            self.v = -60.0;
+            self.h = 0.6;
+            self.n = 0.32;
+        }
         self.h = self.h.clamp(0.0, 1.0);
         self.n = self.n.clamp(0.0, 1.0);
         self.p = self.p.clamp(0.0, 1.0);
@@ -921,7 +1003,10 @@ mod tests {
         for _ in 0..10_000 {
             spikes += n.step(15.0);
         }
-        assert!(spikes > 10, "Granule cell must fire with strong excitatory input, got {spikes}");
+        assert!(
+            spikes > 10,
+            "Granule cell must fire with strong excitatory input, got {spikes}"
+        );
     }
 
     #[test]
@@ -931,7 +1016,10 @@ mod tests {
         for _ in 0..10_000 {
             spikes += n.step(0.0);
         }
-        assert_eq!(spikes, 0, "Granule cell must be silent without input (tonic GABA inhibition)");
+        assert_eq!(
+            spikes, 0,
+            "Granule cell must be silent without input (tonic GABA inhibition)"
+        );
     }
 
     #[test]
@@ -942,7 +1030,10 @@ mod tests {
         for _ in 0..10_000 {
             spikes += n.step(1.0);
         }
-        assert!(spikes == 0, "Weak input should not overcome tonic GABA, got {spikes}");
+        assert!(
+            spikes == 0,
+            "Weak input should not overcome tonic GABA, got {spikes}"
+        );
     }
 
     #[test]
@@ -982,9 +1073,14 @@ mod tests {
     fn granule_t_type_deinactivates_at_rest() {
         // T-type inactivation s should be high at rest (de-inactivated)
         let mut n = GranuleCell::new();
-        for _ in 0..5000 { n.step(0.0); }
-        assert!(n.s > 0.5,
-            "T-type must be partially de-inactivated at rest, s={}", n.s);
+        for _ in 0..5000 {
+            n.step(0.0);
+        }
+        assert!(
+            n.s > 0.5,
+            "T-type must be partially de-inactivated at rest, s={}",
+            n.s
+        );
     }
 
     #[test]
@@ -992,9 +1088,14 @@ mod tests {
         // Ca²⁺ should increase during spiking activity
         let mut n = GranuleCell::new();
         let ca0 = n.ca;
-        for _ in 0..5000 { n.step(15.0); }
-        assert!(n.ca > ca0,
-            "Ca²⁺ should rise during spiking: ca0={ca0}, ca_now={}", n.ca);
+        for _ in 0..5000 {
+            n.step(15.0);
+        }
+        assert!(
+            n.ca > ca0,
+            "Ca²⁺ should rise during spiking: ca0={ca0}, ca_now={}",
+            n.ca
+        );
     }
 
     #[test]
@@ -1020,7 +1121,10 @@ mod tests {
         for _ in 0..1000 {
             n.step(1e6);
         }
-        assert!(n.v.is_finite() && n.v <= 60.0, "Extreme input must stay bounded");
+        assert!(
+            n.v.is_finite() && n.v <= 60.0,
+            "Extreme input must stay bounded"
+        );
     }
 
     #[test]
@@ -1043,7 +1147,10 @@ mod tests {
         // Single step with moderate input
         n.step(5.0);
         let dv = n.v - v_before;
-        assert!(dv > 0.5, "High Rin should give large voltage change, got dv={dv}");
+        assert!(
+            dv > 0.5,
+            "High Rin should give large voltage change, got dv={dv}"
+        );
     }
 
     #[test]
@@ -1070,7 +1177,10 @@ mod tests {
         for _ in 0..10_000 {
             spikes += n.step(15.0);
         }
-        assert!(spikes > 10, "Golgi cell must fire with excitatory input, got {spikes}");
+        assert!(
+            spikes > 10,
+            "Golgi cell must fire with excitatory input, got {spikes}"
+        );
     }
 
     #[test]
@@ -1088,7 +1198,10 @@ mod tests {
         for _ in 0..20_000 {
             spikes_small += n2.step(0.5);
         }
-        assert!(spikes_small > 0, "Golgi cell should fire with minimal input (near-threshold), got {spikes_small}");
+        assert!(
+            spikes_small > 0,
+            "Golgi cell should fire with minimal input (near-threshold), got {spikes_small}"
+        );
     }
 
     #[test]
@@ -1104,8 +1217,10 @@ mod tests {
             spikes_with += with_ahp.step(10.0);
             spikes_no += no_ahp.step(10.0);
         }
-        assert!(spikes_no >= spikes_with,
-            "AHP removal should increase firing: with={spikes_with}, without={spikes_no}");
+        assert!(
+            spikes_no >= spikes_with,
+            "AHP removal should increase firing: with={spikes_with}, without={spikes_no}"
+        );
     }
 
     #[test]
@@ -1124,8 +1239,10 @@ mod tests {
         // Both configurations must fire (K_A doesn't prevent spiking)
         assert!(spikes_with > 0, "Must fire with K_A");
         // K_A modulates rate — the difference should be measurable
-        assert!(spikes_with != spikes_no,
-            "K_A should affect firing rate: with={spikes_with}, without={spikes_no}");
+        assert!(
+            spikes_with != spikes_no,
+            "K_A should affect firing rate: with={spikes_with}, without={spikes_no}"
+        );
     }
 
     #[test]
@@ -1135,8 +1252,11 @@ mod tests {
         for _ in 0..5000 {
             n.step(10.0);
         }
-        assert!(n.ca > ca_init,
-            "Ca²⁺ must rise during spiking: init={ca_init}, now={}", n.ca);
+        assert!(
+            n.ca > ca_init,
+            "Ca²⁺ must rise during spiking: init={ca_init}, now={}",
+            n.ca
+        );
     }
 
     #[test]
@@ -1162,7 +1282,10 @@ mod tests {
         for _ in 0..1000 {
             n.step(1e6);
         }
-        assert!(n.v.is_finite() && n.v <= 60.0, "Extreme input must stay bounded");
+        assert!(
+            n.v.is_finite() && n.v <= 60.0,
+            "Extreme input must stay bounded"
+        );
     }
 
     #[test]
@@ -1190,9 +1313,17 @@ mod tests {
         }
         // All 11 gating variables must be in [0, 1]
         for (name, val) in [
-            ("m", n.m), ("h", n.h), ("p_na", n.p_na),
-            ("n", n.n), ("a", n.a), ("b", n.b), ("w", n.w),
-            ("m_t", n.m_t), ("s", n.s), ("c_n", n.c_n), ("r", n.r),
+            ("m", n.m),
+            ("h", n.h),
+            ("p_na", n.p_na),
+            ("n", n.n),
+            ("a", n.a),
+            ("b", n.b),
+            ("w", n.w),
+            ("m_t", n.m_t),
+            ("s", n.s),
+            ("c_n", n.c_n),
+            ("r", n.r),
         ] {
             assert!(val >= 0.0 && val <= 1.0, "{name} out of bounds: {val}");
         }
@@ -1228,8 +1359,10 @@ mod tests {
             spikes_with += with_nap.step(2.0);
             spikes_no += no_nap.step(2.0);
         }
-        assert!(spikes_with >= spikes_no,
-            "Na_p should increase excitability: with={spikes_with} vs without={spikes_no}");
+        assert!(
+            spikes_with >= spikes_no,
+            "Na_p should increase excitability: with={spikes_with} vs without={spikes_no}"
+        );
     }
 
     #[test]
@@ -1244,8 +1377,10 @@ mod tests {
             spikes_with += with_km.step(10.0);
             spikes_no += no_km.step(10.0);
         }
-        assert!(spikes_no >= spikes_with,
-            "K_M should reduce firing rate: with_km={spikes_with}, without={spikes_no}");
+        assert!(
+            spikes_no >= spikes_with,
+            "K_M should reduce firing rate: with_km={spikes_with}, without={spikes_no}"
+        );
     }
 
     #[test]
@@ -1260,9 +1395,12 @@ mod tests {
             no_h.step(-1.0);
         }
         // Ih should depolarise relative to no-Ih (sag)
-        assert!(with_h.v > no_h.v,
+        assert!(
+            with_h.v > no_h.v,
             "Ih should cause sag (less hyperpolarised): with_h={:.1} vs no_h={:.1}",
-            with_h.v, no_h.v);
+            with_h.v,
+            no_h.v
+        );
     }
 
     #[test]
@@ -1279,8 +1417,10 @@ mod tests {
             spikes_no += no_bk.step(10.0);
         }
         // Without BK, model should still fire (test stability)
-        assert!(spikes_with > 0 && spikes_no > 0,
-            "Both should fire: with_bk={spikes_with}, no_bk={spikes_no}");
+        assert!(
+            spikes_with > 0 && spikes_no > 0,
+            "Both should fire: with_bk={spikes_with}, no_bk={spikes_no}"
+        );
     }
 
     #[test]
@@ -1295,8 +1435,10 @@ mod tests {
             spikes_with += with_sk.step(8.0);
             spikes_no += no_sk.step(8.0);
         }
-        assert!(spikes_no >= spikes_with,
-            "SK removal should increase firing: with_sk={spikes_with}, no_sk={spikes_no}");
+        assert!(
+            spikes_no >= spikes_with,
+            "SK removal should increase firing: with_sk={spikes_with}, no_sk={spikes_no}"
+        );
     }
 
     #[test]
@@ -1323,7 +1465,10 @@ mod tests {
         for _ in 0..2_000 {
             spikes += n.step(2.0);
         }
-        assert!(spikes > 5, "Stellate cell must fire with input, got {spikes}");
+        assert!(
+            spikes > 5,
+            "Stellate cell must fire with input, got {spikes}"
+        );
     }
 
     #[test]
@@ -1333,7 +1478,10 @@ mod tests {
         for _ in 0..10_000 {
             spikes += n.step(0.0);
         }
-        assert_eq!(spikes, 0, "Stellate cell must be silent without input, got {spikes}");
+        assert_eq!(
+            spikes, 0,
+            "Stellate cell must be silent without input, got {spikes}"
+        );
     }
 
     #[test]
@@ -1345,7 +1493,10 @@ mod tests {
             spikes += n.step(20.0);
         }
         // 2000 steps * 0.5ms = 1000 ms; >100 spikes = >100 Hz
-        assert!(spikes > 50, "FS stellate should fire at high rate, got {spikes}");
+        assert!(
+            spikes > 50,
+            "FS stellate should fire at high rate, got {spikes}"
+        );
     }
 
     #[test]
@@ -1363,7 +1514,10 @@ mod tests {
         }
         // No AHP → minimal adaptation
         let diff = (spikes_early as i32 - spikes_late as i32).abs();
-        assert!(diff < 20, "FS should have minimal adaptation: early={spikes_early}, late={spikes_late}");
+        assert!(
+            diff < 20,
+            "FS should have minimal adaptation: early={spikes_early}, late={spikes_late}"
+        );
     }
 
     #[test]
@@ -1455,7 +1609,10 @@ mod tests {
         for _ in 0..10_000 {
             spikes += n.step(5.0);
         }
-        assert!(spikes > 10, "Lugaro must fire with excitatory input, got {spikes}");
+        assert!(
+            spikes > 10,
+            "Lugaro must fire with excitatory input, got {spikes}"
+        );
     }
 
     #[test]
@@ -1466,7 +1623,10 @@ mod tests {
         for _ in 0..10_000 {
             spikes += n.step(4.0);
         }
-        assert!(spikes > 10, "Lugaro should fire easily with moderate input, got {spikes}");
+        assert!(
+            spikes > 10,
+            "Lugaro should fire easily with moderate input, got {spikes}"
+        );
     }
 
     #[test]
@@ -1481,8 +1641,10 @@ mod tests {
         for _ in 0..2000 {
             spikes_late += n.step(input);
         }
-        assert!(spikes_early >= spikes_late,
-            "Adaptation should slow firing: early={spikes_early}, late={spikes_late}");
+        assert!(
+            spikes_early >= spikes_late,
+            "Adaptation should slow firing: early={spikes_early}, late={spikes_late}"
+        );
     }
 
     #[test]
@@ -1497,8 +1659,10 @@ mod tests {
             spikes_no += no_5ht.step(input);
             spikes_5ht += with_5ht.step(input);
         }
-        assert!(spikes_5ht >= spikes_no,
-            "5-HT must increase firing: 5HT={spikes_5ht} vs none={spikes_no}");
+        assert!(
+            spikes_5ht >= spikes_no,
+            "5-HT must increase firing: 5HT={spikes_5ht} vs none={spikes_no}"
+        );
     }
 
     #[test]
@@ -1546,7 +1710,11 @@ mod tests {
         for _ in 0..5000 {
             n.step(10.0);
         }
-        assert!(n.adapt > initial, "Adaptation must increase during spiking, adapt={}", n.adapt);
+        assert!(
+            n.adapt > initial,
+            "Adaptation must increase during spiking, adapt={}",
+            n.adapt
+        );
     }
 
     #[test]
@@ -1573,7 +1741,10 @@ mod tests {
         for _ in 0..10_000 {
             spikes += n.step(5.0);
         }
-        assert!(spikes > 10, "UBC must fire with excitatory input, got {spikes}");
+        assert!(
+            spikes > 10,
+            "UBC must fire with excitatory input, got {spikes}"
+        );
     }
 
     #[test]
@@ -1594,15 +1765,24 @@ mod tests {
         for _ in 0..2000 {
             n.step(10.0);
         }
-        assert!(n.persistent > 0.0, "Persistent current must build during input");
+        assert!(
+            n.persistent > 0.0,
+            "Persistent current must build during input"
+        );
 
         // Now remove input — persistent current should persist
         let persistent_before = n.persistent;
         for _ in 0..100 {
             n.step(0.0);
         }
-        assert!(n.persistent > 0.0, "Persistent current must persist after input removal");
-        assert!(n.persistent < persistent_before, "Persistent current must decay");
+        assert!(
+            n.persistent > 0.0,
+            "Persistent current must persist after input removal"
+        );
+        assert!(
+            n.persistent < persistent_before,
+            "Persistent current must decay"
+        );
     }
 
     #[test]
@@ -1678,7 +1858,10 @@ mod tests {
         for _ in 0..2_000 {
             spikes += n.step(5.0);
         }
-        assert!(spikes > 3, "DCN must fire with excitatory input, got {spikes}");
+        assert!(
+            spikes > 3,
+            "DCN must fire with excitatory input, got {spikes}"
+        );
     }
 
     #[test]
@@ -1698,8 +1881,10 @@ mod tests {
         for _ in 0..20_000 {
             spikes_no += no_nap.step(0.0);
         }
-        assert!(spikes >= spikes_no,
-            "INaP should contribute to spontaneous firing: with={spikes}, without={spikes_no}");
+        assert!(
+            spikes >= spikes_no,
+            "INaP should contribute to spontaneous firing: with={spikes}, without={spikes_no}"
+        );
     }
 
     #[test]
@@ -1710,7 +1895,11 @@ mod tests {
         for _ in 0..2000 {
             n.step(-5.0);
         }
-        assert!(n.s > 0.5, "T-type must de-inactivate during hyperpolarisation, s={}", n.s);
+        assert!(
+            n.s > 0.5,
+            "T-type must de-inactivate during hyperpolarisation, s={}",
+            n.s
+        );
 
         // Now provide excitation — T-type should help fire
         let mut spikes = 0;
@@ -1724,8 +1913,10 @@ mod tests {
         for _ in 0..200 {
             spikes2 += n2.step(3.0);
         }
-        assert!(spikes >= spikes2,
-            "De-inactivated T-type should facilitate rebound: rebound={spikes} vs inact={spikes2}");
+        assert!(
+            spikes >= spikes2,
+            "De-inactivated T-type should facilitate rebound: rebound={spikes} vs inact={spikes2}"
+        );
     }
 
     #[test]
@@ -1741,9 +1932,12 @@ mod tests {
             with_ih.step(0.0);
             no_ih.step(0.0);
         }
-        assert!(with_ih.v > no_ih.v,
+        assert!(
+            with_ih.v > no_ih.v,
             "Ih should depolarise from hyperpolarised state: Ih={:.1} vs no_Ih={:.1}",
-            with_ih.v, no_ih.v);
+            with_ih.v,
+            no_ih.v
+        );
     }
 
     #[test]
@@ -1790,9 +1984,7 @@ mod tests {
         for _ in 0..10_000 {
             n.step(10.0);
         }
-        for (name, val) in [
-            ("h", n.h), ("n", n.n), ("p", n.p), ("s", n.s), ("r", n.r),
-        ] {
+        for (name, val) in [("h", n.h), ("n", n.n), ("p", n.p), ("s", n.s), ("r", n.r)] {
             assert!(val >= 0.0 && val <= 1.0, "{name} out of bounds: {val}");
         }
         assert!(n.ca >= 0.0, "Ca²⁺ must be non-negative: {}", n.ca);
@@ -1810,8 +2002,10 @@ mod tests {
             spikes_with += with_nap.step(3.0);
             spikes_no += no_nap.step(3.0);
         }
-        assert!(spikes_with >= spikes_no,
-            "INaP should increase excitability: with={spikes_with}, without={spikes_no}");
+        assert!(
+            spikes_with >= spikes_no,
+            "INaP should increase excitability: with={spikes_with}, without={spikes_no}"
+        );
     }
 
     #[test]
@@ -1826,8 +2020,10 @@ mod tests {
             spikes_with += with_ahp.step(8.0);
             spikes_no += no_ahp.step(8.0);
         }
-        assert!(spikes_no >= spikes_with,
-            "AHP removal should increase firing: with={spikes_with}, without={spikes_no}");
+        assert!(
+            spikes_no >= spikes_with,
+            "AHP removal should increase firing: with={spikes_with}, without={spikes_no}"
+        );
     }
 
     #[test]
@@ -1837,8 +2033,11 @@ mod tests {
         for _ in 0..5_000 {
             n.step(10.0);
         }
-        assert!(n.ca > ca_init,
-            "Ca²⁺ must rise during spiking: init={ca_init}, now={}", n.ca);
+        assert!(
+            n.ca > ca_init,
+            "Ca²⁺ must rise during spiking: init={ca_init}, now={}",
+            n.ca
+        );
     }
 
     #[test]
@@ -1862,6 +2061,9 @@ mod tests {
             std::hint::black_box(n.step(5.0));
         }
         let elapsed = start.elapsed();
-        assert!(elapsed.as_millis() < 200, "1k steps must complete in <200ms");
+        assert!(
+            elapsed.as_millis() < 200,
+            "1k steps must complete in <200ms"
+        );
     }
 }

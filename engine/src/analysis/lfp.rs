@@ -178,7 +178,10 @@ mod tests {
             }
         }
         let plv = phase_locking_value(&train, &lfp);
-        assert!(plv > 0.5, "PLV={plv} should be high for phase-locked spikes");
+        assert!(
+            plv > 0.5,
+            "PLV={plv} should be high for phase-locked spikes"
+        );
     }
 
     #[test]

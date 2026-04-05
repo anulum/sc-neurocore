@@ -131,11 +131,11 @@ fn mat_solve(a: &[f64], b: &[f64], n: usize, m: usize) -> Vec<f64> {
 
 /// E-step: compute posterior p(x|y).
 fn gpfa_e_step(
-    y: &[f64],           // n_neurons x n_bins (row-major)
-    c: &[f64],           // n_neurons x n_latents
-    d: &[f64],           // n_neurons
-    r_diag: &[f64],      // n_neurons
-    k_all: &[Vec<f64>],  // n_latents kernels, each n_bins x n_bins
+    y: &[f64],          // n_neurons x n_bins (row-major)
+    c: &[f64],          // n_neurons x n_latents
+    d: &[f64],          // n_neurons
+    r_diag: &[f64],     // n_neurons
+    k_all: &[Vec<f64>], // n_latents kernels, each n_bins x n_bins
     n_neurons: usize,
     n_bins: usize,
     n_latents: usize,
@@ -178,7 +178,13 @@ fn gpfa_e_step(
         let k_eye = vec![0.0f64; n_bins * n_bins]
             .iter()
             .enumerate()
-            .map(|(idx, _)| if idx / n_bins == idx % n_bins { 1.0 } else { 0.0 })
+            .map(|(idx, _)| {
+                if idx / n_bins == idx % n_bins {
+                    1.0
+                } else {
+                    0.0
+                }
+            })
             .collect::<Vec<f64>>();
         let k_inv = mat_solve(&k_reg, &k_eye, n_bins, n_bins);
 
@@ -234,8 +240,8 @@ fn gpfa_e_step(
             let xj = x_vec[j * n_bins + t];
             for k in 0..n_latents {
                 let xk = x_vec[k * n_bins + t];
-                xx_post[j * n_latents + k] += xj * xk
-                    + sigma_post[(j * n_bins + t) * kt + (k * n_bins + t)];
+                xx_post[j * n_latents + k] +=
+                    xj * xk + sigma_post[(j * n_bins + t) * kt + (k * n_bins + t)];
             }
         }
     }
@@ -421,12 +427,10 @@ pub fn gpfa(
     for _ in 0..max_iter {
         let k_all: Vec<Vec<f64>> = (0..nl).map(|j| gp_kernel(n_bins, tau[j], 1.0)).collect();
 
-        let (xp, xx_post) =
-            gpfa_e_step(&y, &c, &d_vec, &r_diag, &k_all, n_neurons, n_bins, nl);
+        let (xp, xx_post) = gpfa_e_step(&y, &c, &d_vec, &r_diag, &k_all, n_neurons, n_bins, nl);
         x_post = xp;
 
-        let (c_new, d_new, r_new) =
-            gpfa_m_step(&y, &x_post, &xx_post, n_neurons, n_bins, nl);
+        let (c_new, d_new, r_new) = gpfa_m_step(&y, &x_post, &xx_post, n_neurons, n_bins, nl);
         c = c_new;
         d_vec = d_new;
         r_diag = r_new;
@@ -505,8 +509,7 @@ pub fn gpfa_transform(
     let k_all: Vec<Vec<f64>> = (0..n_latents)
         .map(|j| gp_kernel(n_bins, tau[j], 1.0))
         .collect();
-    let (x_post, _) =
-        gpfa_e_step(&y, c, d, r_diag, &k_all, n_neurons, n_bins, n_latents);
+    let (x_post, _) = gpfa_e_step(&y, c, d, r_diag, &k_all, n_neurons, n_bins, n_latents);
     x_post
 }
 

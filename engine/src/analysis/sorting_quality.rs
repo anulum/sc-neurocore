@@ -211,11 +211,16 @@ pub fn silhouette_score(features: &[f64], n: usize, d: usize, labels: &[i64]) ->
         let mut own_count = 0usize;
         for j in 0..n {
             if labels[j] == own && j != i {
-                own_sum += euclidean_dist(&features[i * d..(i + 1) * d], &features[j * d..(j + 1) * d]);
+                own_sum +=
+                    euclidean_dist(&features[i * d..(i + 1) * d], &features[j * d..(j + 1) * d]);
                 own_count += 1;
             }
         }
-        let a_i = if own_count > 0 { own_sum / own_count as f64 } else { 0.0 };
+        let a_i = if own_count > 0 {
+            own_sum / own_count as f64
+        } else {
+            0.0
+        };
 
         // b_i: min mean distance to any other cluster
         let mut b_i = f64::INFINITY;
@@ -227,7 +232,10 @@ pub fn silhouette_score(features: &[f64], n: usize, d: usize, labels: &[i64]) ->
             let mut c_count = 0usize;
             for j in 0..n {
                 if labels[j] == c {
-                    c_sum += euclidean_dist(&features[i * d..(i + 1) * d], &features[j * d..(j + 1) * d]);
+                    c_sum += euclidean_dist(
+                        &features[i * d..(i + 1) * d],
+                        &features[j * d..(j + 1) * d],
+                    );
                     c_count += 1;
                 }
             }
@@ -252,13 +260,7 @@ fn euclidean_dist(a: &[f64], b: &[f64]) -> f64 {
 /// d-prime (sensitivity index) between two clusters. Green & Swets 1966.
 ///
 /// Both are row-major `(n, d)`.
-pub fn d_prime(
-    cluster_a: &[f64],
-    n_a: usize,
-    cluster_b: &[f64],
-    n_b: usize,
-    d: usize,
-) -> f64 {
+pub fn d_prime(cluster_a: &[f64], n_a: usize, cluster_b: &[f64], n_b: usize, d: usize) -> f64 {
     if n_a == 0 || n_b == 0 || d == 0 {
         return 0.0;
     }
@@ -328,7 +330,11 @@ pub fn amplitude_cutoff(amplitudes: &[f64], bins: usize) -> f64 {
     }
     let min = amplitudes.iter().cloned().fold(f64::INFINITY, f64::min);
     let max = amplitudes.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
-    let range = if (max - min).abs() < 1e-30 { 1.0 } else { max - min };
+    let range = if (max - min).abs() < 1e-30 {
+        1.0
+    } else {
+        max - min
+    };
     let mut hist = vec![0usize; bins];
     for &a in amplitudes {
         let mut k = ((a - min) / range * bins as f64) as usize;
@@ -337,12 +343,7 @@ pub fn amplitude_cutoff(amplitudes: &[f64], bins: usize) -> f64 {
         }
         hist[k] += 1;
     }
-    let peak_idx = hist
-        .iter()
-        .enumerate()
-        .max_by_key(|(_, &c)| c)
-        .unwrap()
-        .0;
+    let peak_idx = hist.iter().enumerate().max_by_key(|(_, &c)| c).unwrap().0;
     if peak_idx == 0 {
         return 0.5;
     }
@@ -505,7 +506,10 @@ mod tests {
         let c = make_cluster(&[0.0, 0.0], 30, 1.0, 42);
         let n = make_cluster(&[10.0, 10.0], 50, 1.0, 99);
         let id = isolation_distance(&c, 30, &n, 50, 2);
-        assert!(id > 10.0, "ID={id} should be large for well-separated clusters");
+        assert!(
+            id > 10.0,
+            "ID={id} should be large for well-separated clusters"
+        );
     }
 
     #[test]
@@ -518,7 +522,10 @@ mod tests {
         let c = make_cluster(&[0.0, 0.0], 20, 0.5, 42);
         let n = make_cluster(&[10.0, 10.0], 30, 0.5, 99);
         let lr = l_ratio(&c, 20, &n, 30, 2);
-        assert!(lr < 0.1, "L-ratio={lr} should be low for well-separated clusters");
+        assert!(
+            lr < 0.1,
+            "L-ratio={lr} should be low for well-separated clusters"
+        );
     }
 
     #[test]
@@ -536,7 +543,10 @@ mod tests {
             labels.push(1i64);
         }
         let s = silhouette_score(&features, 20, 2, &labels);
-        assert!(s > 0.8, "Silhouette={s} should be high for well-separated clusters");
+        assert!(
+            s > 0.8,
+            "Silhouette={s} should be high for well-separated clusters"
+        );
     }
 
     #[test]
@@ -606,7 +616,10 @@ mod tests {
     #[test]
     fn test_snr_basic() {
         // 5 identical waveforms -> infinite SNR
-        let wf = vec![0.0, -1.0, 0.5, 0.0, 0.0, -1.0, 0.5, 0.0, 0.0, -1.0, 0.5, 0.0, 0.0, -1.0, 0.5, 0.0, 0.0, -1.0, 0.5, 0.0];
+        let wf = vec![
+            0.0, -1.0, 0.5, 0.0, 0.0, -1.0, 0.5, 0.0, 0.0, -1.0, 0.5, 0.0, 0.0, -1.0, 0.5, 0.0,
+            0.0, -1.0, 0.5, 0.0,
+        ];
         let s = snr(&wf, 5, 4);
         assert!(s.is_infinite() || s > 100.0);
     }
@@ -636,7 +649,10 @@ mod tests {
         let wf: Vec<f64> = (0..n).flat_map(|_| vec![0.0, 1.0, 0.0]).collect();
         let ts: Vec<f64> = (0..n).map(|i| i as f64).collect();
         let dm = drift_metric(&wf, n, 3, &ts, 10);
-        assert!((dm).abs() < 1e-10, "Drift={dm} should be ~0 for stable waveforms");
+        assert!(
+            (dm).abs() < 1e-10,
+            "Drift={dm} should be ~0 for stable waveforms"
+        );
     }
 
     #[test]
@@ -646,7 +662,10 @@ mod tests {
         let wf: Vec<f64> = (0..n).flat_map(|i| vec![0.0, i as f64, 0.0]).collect();
         let ts: Vec<f64> = (0..n).map(|i| i as f64).collect();
         let dm = drift_metric(&wf, n, 3, &ts, 10);
-        assert!(dm > 0.5, "Drift={dm} should be positive for drifting waveforms");
+        assert!(
+            dm > 0.5,
+            "Drift={dm} should be positive for drifting waveforms"
+        );
     }
 
     #[test]
