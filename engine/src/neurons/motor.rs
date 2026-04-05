@@ -37,13 +37,15 @@ pub struct AlphaMotorNeuron {
     pub v: f64,
     pub h: f64,
     pub n: f64,
-    pub m_pic: f64,   // PIC (L-type Ca2+) activation
-    pub ca: f64,       // Intracellular Ca2+ (µM)
+    pub m_pic: f64,    // PIC (L-type Ca²⁺) activation
+    pub h_pic: f64,    // PIC slow inactivation (tau ~200 ms)
+    pub ca: f64,       // Intracellular Ca²⁺ (µM)
+    pub ca_buf: f64,   // Bound Ca²⁺ (buffered fraction)
     // Conductances (mS/cm²)
     pub g_na: f64,
     pub g_k: f64,
     pub g_pic: f64,    // Persistent inward current
-    pub g_ahp: f64,    // Ca2+-dependent K+ (AHP)
+    pub g_ahp: f64,    // Ca²⁺-dependent K⁺ (AHP)
     pub g_l: f64,
     // Reversal potentials (mV)
     pub e_na: f64,
@@ -52,7 +54,8 @@ pub struct AlphaMotorNeuron {
     pub e_l: f64,
     pub c_m: f64,
     pub phi: f64,
-    pub tau_ca: f64,   // Ca2+ decay time constant (ms)
+    pub tau_ca: f64,   // Ca²⁺ decay (ms)
+    pub buf_ratio: f64, // Buffering ratio (fraction of Ca²⁺ bound)
     pub dt: f64,
     pub v_threshold: f64,
 }
@@ -64,19 +67,22 @@ impl AlphaMotorNeuron {
             h: 0.8,
             n: 0.1,
             m_pic: 0.0,
+            h_pic: 1.0,     // PIC inactivation starts de-inactivated
             ca: 0.0,
+            ca_buf: 0.0,
             g_na: 35.0,
             g_k: 9.0,
-            g_pic: 0.5,     // PIC for plateau potentials
+            g_pic: 0.15,    // PIC for plateau potentials (conservative)
             g_ahp: 3.0,     // Strong AHP for rate limiting
-            g_l: 0.15,      // Slightly higher leak (larger soma)
+            g_l: 0.3,       // Higher leak (larger soma, stabilises rest)
             e_na: 55.0,
             e_k: -90.0,
             e_ca: 120.0,
             e_l: -65.0,
             c_m: 1.5,       // Larger soma → higher capacitance
-            phi: 4.0,       // Slightly slower than PV+ FS
-            tau_ca: 150.0,  // Slow Ca2+ clearance for AHP
+            phi: 4.0,
+            tau_ca: 150.0,  // Slow Ca²⁺ clearance for AHP
+            buf_ratio: 0.003, // ~0.3% free Ca²⁺ (99.7% buffered)
             dt: 0.01,
             v_threshold: -20.0,
         }
@@ -98,22 +104,38 @@ impl AlphaMotorNeuron {
             self.h += self.phi * (ah * (1.0 - self.h) - bh * self.h) * self.dt;
             self.n += self.phi * (an * (1.0 - self.n) - bn * self.n) * self.dt;
 
-            // PIC (L-type Ca2+): activates at subthreshold potentials, slow dynamics
-            let m_pic_inf = 1.0 / (1.0 + (-(self.v + 50.0) / 5.0).exp());
+            // PIC (L-type Ca²⁺): activation + slow inactivation
+            // Activation: m_pic, tau ~50 ms, half-act -50 mV
+            let m_pic_inf = 1.0 / (1.0 + (-(self.v + 40.0) / 5.0).exp());
             self.m_pic += (m_pic_inf - self.m_pic) / 50.0 * self.dt;
+            // Inactivation: h_pic, tau ~200 ms, half-inact -40 mV
+            // L-type inactivation is slow and Ca²⁺-dependent
+            let h_pic_inf = 1.0 / (1.0 + ((self.v + 40.0) / 8.0).exp());
+            let tau_h_pic = 200.0 + 100.0 / (1.0 + ((self.v + 40.0) / 10.0).powi(2)).max(0.01);
+            self.h_pic += (h_pic_inf - self.h_pic) / tau_h_pic * self.dt;
+            self.h_pic = self.h_pic.clamp(0.0, 1.0);
 
-            // Ca2+ dynamics: entry proportional to PIC + spike Ca2+ transient
-            let ca_entry = self.g_pic * self.m_pic * (self.v - self.e_ca).abs() * 0.001;
+            // Ca²⁺ dynamics with buffering
+            // Total Ca²⁺ entry (PIC-mediated)
+            let i_ca_entry = self.g_pic * self.m_pic * self.h_pic * (self.v - self.e_ca);
+            let ca_influx = if i_ca_entry < 0.0 { -i_ca_entry * 0.001 } else { 0.0 };
             let ca_spike = if self.v > -10.0 { 0.02 } else { 0.0 };
-            self.ca += (-self.ca / self.tau_ca + ca_entry + ca_spike) * self.dt;
+            // Only ~0.3% of entering Ca²⁺ is free (rest is buffered)
+            let free_ca_change = (ca_influx + ca_spike) * self.buf_ratio;
+            self.ca += (-self.ca / self.tau_ca + free_ca_change) * self.dt;
             if self.ca < 0.0 { self.ca = 0.0; }
+            // Buffered pool tracks total entry (slower dynamics)
+            self.ca_buf += ((ca_influx + ca_spike) * (1.0 - self.buf_ratio)
+                - self.ca_buf / (self.tau_ca * 5.0)) * self.dt;
+            if self.ca_buf < 0.0 { self.ca_buf = 0.0; }
 
-            // AHP: Ca2+-activated K+ (SK channels)
-            let ahp_inf = self.ca / (self.ca + 0.5);
+            // AHP: Ca²⁺-activated K⁺ (SK channels), Hill n=2
+            let ca_total = self.ca + self.ca_buf * 0.01; // Buffered contributes slowly
+            let ahp_inf = ca_total * ca_total / (ca_total * ca_total + 0.25);
 
             let i_na = self.g_na * m_inf.powi(3) * self.h * (self.v - self.e_na);
             let i_k = self.g_k * self.n.powi(4) * (self.v - self.e_k);
-            let i_pic = self.g_pic * self.m_pic * (self.v - self.e_ca);
+            let i_pic = self.g_pic * self.m_pic * self.h_pic * (self.v - self.e_ca);
             let i_ahp = self.g_ahp * ahp_inf * (self.v - self.e_k);
             let i_l = self.g_l * (self.v - self.e_l);
 
@@ -127,11 +149,7 @@ impl AlphaMotorNeuron {
     }
 
     pub fn reset(&mut self) {
-        self.v = -65.0;
-        self.h = 0.8;
-        self.n = 0.1;
-        self.m_pic = 0.0;
-        self.ca = 0.0;
+        *self = Self::new();
     }
 }
 
