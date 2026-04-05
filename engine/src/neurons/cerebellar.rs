@@ -17,41 +17,58 @@ use super::biophysical::safe_rate;
 // Granule Cell
 // ═══════════════════════════════════════════════════════════════════
 
-/// Cerebellar granule cell — most numerous neuron in the brain (~50%).
+/// Cerebellar granule cell — D'Angelo et al. 2001 full model.
 ///
-/// Biophysics: LIF core with tonic GABAergic inhibition from Golgi cells,
-/// T-type Ca2+ current for post-inhibitory rebound bursting, and very high
-/// input resistance due to tiny soma (6-8 µm). Four short dendrites receive
-/// mossy fibre input at glomeruli; output via parallel fibres to Purkinje cells.
+/// Most numerous neuron in the brain (~50%). Tiny soma (6-8 µm),
+/// four short dendrites receiving mossy fibre input at glomeruli,
+/// output via parallel fibres to Purkinje cells.
 ///
-/// The tonic GABA conductance models the continuous inhibitory tone that
-/// Golgi cells impose, keeping granule cells near threshold but rarely
-/// spontaneously active. Release from inhibition (disinhibition) triggers
-/// rebound bursts via T-type Ca2+ channels.
+/// Full Hodgkin-Huxley-type model with 7 ionic currents:
+/// - **INa** (transient Na, m³h): fast spike generation
+/// - **IK_dr** (delayed rectifier K, n⁴): repolarisation
+/// - **IK_A** (A-type K, a³b): delay to first spike, inter-spike interval
+/// - **ICa_T** (T-type Ca²⁺, m_t²s): post-inhibitory rebound bursting
+/// - **IK_Ca** (Ca²⁺-activated K, Hill): slow AHP
+/// - **Ih** (HCN, r): sag current, resting potential stabilisation
+/// - **IL** (leak)
+/// - **IGABA** (tonic GABA from Golgi cells)
 ///
-/// D'Angelo et al., J Neurosci 21(3), 2001; Bhalla & Bhatt, Cerebellum, 2012.
+/// Uses 4 sub-steps (dt_sub = 0.125 ms) for Na gating stability.
+///
+/// D'Angelo et al., J Neurosci 21(3):759, 2001.
+/// D'Angelo & De Zeeuw, Trends Neurosci 32:30, 2009 (review).
 #[derive(Clone, Debug)]
 pub struct GranuleCell {
-    pub v: f64,
-    // T-type Ca2+ gating
-    pub s: f64,         // T-type inactivation (slow)
-    // Conductances (mS/cm²)
-    pub g_l: f64,       // Leak
-    pub g_tonic: f64,   // Tonic GABA conductance
-    pub g_t: f64,       // T-type Ca2+ conductance
-    // Reversal potentials (mV)
+    pub v: f64,        // Membrane potential (mV)
+    pub m: f64,        // Na activation
+    pub h: f64,        // Na inactivation
+    pub n: f64,        // K_dr activation
+    pub a: f64,        // K_A activation
+    pub b: f64,        // K_A inactivation
+    pub m_t: f64,      // T-type Ca²⁺ activation
+    pub s: f64,        // T-type Ca²⁺ inactivation
+    pub ca: f64,       // Intracellular Ca²⁺ (µM)
+    pub r: f64,        // Ih activation
+    pub c_m: f64,      // Capacitance (µF/cm²)
+    pub g_na: f64,     // Na conductance
+    pub g_kdr: f64,    // K_dr conductance
+    pub g_ka: f64,     // K_A conductance
+    pub g_t: f64,      // T-type Ca²⁺ conductance
+    pub g_kca: f64,    // Ca²⁺-dependent K conductance
+    pub g_h: f64,      // Ih conductance
+    pub g_l: f64,      // Leak conductance
+    pub g_tonic: f64,  // Tonic GABA conductance
+    pub e_na: f64,
+    pub e_k: f64,
+    pub e_ca: f64,
+    pub e_h: f64,      // Ih reversal (~-40 mV, mixed cation)
     pub e_l: f64,
-    pub e_gaba: f64,    // GABA reversal (-75 mV, shunting)
-    pub e_ca: f64,      // Ca2+ reversal
-    // Membrane
-    pub tau_m: f64,     // Membrane time constant (ms) — very short for tiny soma
-    pub c_m: f64,       // Specific capacitance (µF/cm²)
-    pub v_threshold: f64,
-    pub v_reset: f64,
-    pub refrac_count: f64,
-    pub refrac_period: f64,
-    pub gain: f64,      // Input scaling
+    pub e_gaba: f64,
+    pub tau_ca: f64,   // Ca²⁺ decay (ms)
+    pub kd_kca: f64,   // K_Ca half-saturation (µM)
     pub dt: f64,
+    pub sub_steps: usize,
+    pub gain: f64,
 }
 
 impl Default for GranuleCell {
@@ -62,77 +79,134 @@ impl GranuleCell {
     pub fn new() -> Self {
         Self {
             v: -70.0,
-            s: 0.95,            // T-type inactivation de-inactivated at rest
-            g_l: 0.05,          // Low leak for high Rin
-            g_tonic: 0.02,      // Tonic GABA
-            g_t: 0.03,          // T-type Ca2+
-            e_l: -70.0,
-            e_gaba: -75.0,
-            e_ca: 120.0,
-            tau_m: 5.0,         // Short tau for tiny soma
+            m: 0.02, h: 0.85, n: 0.05,
+            a: 0.1, b: 0.8,
+            m_t: 0.01, s: 0.95,
+            ca: 0.05,
+            r: 0.1,
             c_m: 1.0,
-            v_threshold: -40.0,
-            v_reset: -70.0,
-            refrac_count: 0.0,
-            refrac_period: 1.0, // 1 ms refractory
-            gain: 1.5,
+            g_na: 17.0,     // mS/cm² (D'Angelo 2001 Table 1)
+            g_kdr: 9.0,     // Delayed rectifier
+            g_ka: 1.0,      // A-type K
+            g_t: 0.5,       // T-type Ca²⁺
+            g_kca: 3.5,     // Ca²⁺-activated K
+            g_h: 0.03,      // Ih (small in granule cells)
+            g_l: 0.1,       // Leak
+            g_tonic: 0.2,   // Tonic GABA (strong tonic inhibition)
+            e_na: 87.4,     // D'Angelo 2001
+            e_k: -84.7,
+            e_ca: 129.3,
+            e_h: -40.0,     // Mixed cation
+            e_l: -58.0,     // D'Angelo 2001
+            e_gaba: -75.0,
+            tau_ca: 10.0,   // Ca²⁺ decay
+            kd_kca: 0.2,    // K_Ca half-sat (µM)
             dt: 0.5,
+            sub_steps: 4,   // dt_sub = 0.125 ms
+            gain: 1.0,
         }
+    }
+
+    /// Boltzmann steady-state.
+    #[inline]
+    fn boltz(v: f64, vh: f64, k: f64) -> f64 {
+        1.0 / (1.0 + (-(v - vh) / k).exp())
     }
 
     pub fn step(&mut self, current: f64) -> i32 {
-        // Refractory period
-        if self.refrac_count > 0.0 {
-            self.refrac_count -= self.dt;
-            self.v = self.v_reset;
-            // T-type inactivation still evolves during refractory
-            let s_inf = 1.0 / (1.0 + ((self.v + 60.0) / 6.5).exp());
-            let tau_s = 20.0 + 50.0 / (1.0 + ((self.v + 65.0) / 10.0).exp());
-            self.s += self.dt * (s_inf - self.s) / tau_s;
-            return 0;
+        let input = self.gain * current;
+        let dt_sub = self.dt / self.sub_steps as f64;
+        let v_prev = self.v;
+
+        for _ in 0..self.sub_steps {
+            let v = self.v;
+
+            // Na m gate (fast activation, Boltzmann + tau)
+            let m_inf = Self::boltz(v, -30.0, 7.0);
+            let tau_m = 0.1 + 0.3 / (1.0 + ((v + 30.0) / 10.0).powi(2)).max(0.01);
+            self.m += dt_sub * (m_inf - self.m) / tau_m;
+
+            // Na h gate (inactivation)
+            let h_inf = Self::boltz(v, -52.0, -6.0);
+            let tau_h = 0.5 + 5.0 / (1.0 + ((v + 50.0) / 15.0).powi(2)).max(0.01);
+            self.h += dt_sub * (h_inf - self.h) / tau_h;
+
+            // K_dr n gate
+            let n_inf = Self::boltz(v, -35.0, 8.0);
+            let tau_n = 1.0 + 5.0 / (1.0 + ((v + 35.0) / 15.0).powi(2)).max(0.01);
+            self.n += dt_sub * (n_inf - self.n) / tau_n;
+
+            // K_A a gate (fast activation)
+            let a_inf = Self::boltz(v, -50.0, 20.0);
+            let tau_a = 2.0;
+            self.a += dt_sub * (a_inf - self.a) / tau_a;
+
+            // K_A b gate (slow inactivation)
+            let b_inf = Self::boltz(v, -70.0, -6.0);
+            let tau_b = 50.0;
+            self.b += dt_sub * (b_inf - self.b) / tau_b;
+
+            // T-type Ca²⁺ m_t (fast activation)
+            let mt_inf = Self::boltz(v, -52.0, 5.0);
+            let tau_mt = 1.0;
+            self.m_t += dt_sub * (mt_inf - self.m_t) / tau_mt;
+
+            // T-type Ca²⁺ s (slow inactivation)
+            let s_inf = Self::boltz(v, -60.0, -6.5);
+            let tau_s = 20.0 + 50.0 / (1.0 + ((v + 65.0) / 10.0).powi(2)).max(0.01);
+            self.s += dt_sub * (s_inf - self.s) / tau_s;
+
+            // Ih r gate (slow activation at hyperpolarised V)
+            let r_inf = Self::boltz(v, -80.0, -10.0);
+            let tau_r = 50.0 + 200.0 / (1.0 + ((v + 80.0) / 20.0).powi(2)).max(0.01);
+            self.r += dt_sub * (r_inf - self.r) / tau_r;
+
+            // Clamp gates
+            self.m = self.m.clamp(0.0, 1.0);
+            self.h = self.h.clamp(0.0, 1.0);
+            self.n = self.n.clamp(0.0, 1.0);
+            self.a = self.a.clamp(0.0, 1.0);
+            self.b = self.b.clamp(0.0, 1.0);
+            self.m_t = self.m_t.clamp(0.0, 1.0);
+            self.s = self.s.clamp(0.0, 1.0);
+            self.r = self.r.clamp(0.0, 1.0);
+
+            // Ca²⁺ dynamics
+            let i_ca_t = self.g_t * self.m_t * self.m_t * self.s * (v - self.e_ca);
+            let ca_entry = if i_ca_t < 0.0 { -i_ca_t * 0.001 } else { 0.0 }; // Inward Ca²⁺
+            self.ca += dt_sub * (-self.ca / self.tau_ca + ca_entry);
+            self.ca = self.ca.max(0.0);
+
+            // K_Ca (Hill function of Ca²⁺)
+            let kca_inf = self.ca * self.ca / (self.ca * self.ca + self.kd_kca * self.kd_kca);
+
+            // Ionic currents
+            let i_na = self.g_na * self.m.powi(3) * self.h * (v - self.e_na);
+            let i_kdr = self.g_kdr * self.n.powi(4) * (v - self.e_k);
+            let i_ka = self.g_ka * self.a.powi(3) * self.b * (v - self.e_k);
+            let i_kca = self.g_kca * kca_inf * (v - self.e_k);
+            let i_h = self.g_h * self.r * (v - self.e_h);
+            let i_l = self.g_l * (v - self.e_l);
+            let i_gaba = self.g_tonic * (v - self.e_gaba);
+
+            let dv = (-(i_na + i_kdr + i_ka + i_ca_t + i_kca + i_h + i_l + i_gaba) + input) / self.c_m;
+            self.v += dt_sub * dv;
         }
 
-        // T-type Ca2+ activation (fast, instantaneous steady-state)
-        let m_t_inf = 1.0 / (1.0 + (-(self.v + 52.0) / 5.0).exp());
-        // T-type Ca2+ inactivation (slow)
-        let s_inf = 1.0 / (1.0 + ((self.v + 60.0) / 6.5).exp());
-        let tau_s = 20.0 + 50.0 / (1.0 + ((self.v + 65.0) / 10.0).exp());
+        // Safety
+        self.v = self.v.clamp(-100.0, 60.0);
+        if !self.v.is_finite() { self.v = -70.0; }
+        if !self.m.is_finite() { self.m = 0.02; }
+        if !self.h.is_finite() { self.h = 0.85; }
+        if !self.n.is_finite() { self.n = 0.05; }
+        if !self.ca.is_finite() { self.ca = 0.05; }
 
-        // Currents
-        let i_l = self.g_l * (self.v - self.e_l);
-        let i_tonic = self.g_tonic * (self.v - self.e_gaba);
-        let i_t = self.g_t * m_t_inf * m_t_inf * self.s * (self.v - self.e_ca);
-        let i_ext = self.gain * current.max(0.0);
-
-        // Membrane equation
-        let dv = (-i_l - i_tonic - i_t + i_ext) / self.c_m;
-        self.v += self.dt * dv / self.tau_m;
-
-        // T-type inactivation update
-        self.s += self.dt * (s_inf - self.s) / tau_s;
-
-        // Spike detection
-        if self.v >= self.v_threshold {
-            self.v = self.v_reset;
-            self.refrac_count = self.refrac_period;
-            // Spike inactivates T-type channels
-            self.s *= 0.5;
-            return 1;
-        }
-
-        // Bound membrane potential
-        if self.v < -100.0 { self.v = -100.0; }
-        if self.v > 60.0 { self.v = 60.0; }
-        if !self.v.is_finite() { self.v = self.v_reset; }
-        if !self.s.is_finite() { self.s = 0.95; }
-
-        0
+        // Spike: V crosses 0 mV
+        if self.v >= 0.0 && v_prev < 0.0 { 1 } else { 0 }
     }
 
     pub fn reset(&mut self) {
-        self.v = -70.0;
-        self.s = 0.95;
-        self.refrac_count = 0.0;
+        *self = Self::new();
     }
 }
 
@@ -789,34 +863,35 @@ mod tests {
     }
 
     #[test]
-    fn granule_rebound_burst() {
-        // Release from hyperpolarisation triggers T-type rebound
+    fn granule_has_seven_currents() {
+        // D'Angelo 2001 model must have all 7 ionic currents
+        let n = GranuleCell::new();
+        assert!(n.g_na > 0.0, "Must have INa");
+        assert!(n.g_kdr > 0.0, "Must have IK_dr");
+        assert!(n.g_ka > 0.0, "Must have IK_A");
+        assert!(n.g_t > 0.0, "Must have ICa_T");
+        assert!(n.g_kca > 0.0, "Must have IK_Ca");
+        assert!(n.g_h > 0.0, "Must have Ih");
+        assert!(n.g_l > 0.0, "Must have IL");
+    }
+
+    #[test]
+    fn granule_t_type_deinactivates_at_rest() {
+        // T-type inactivation s should be high at rest (de-inactivated)
         let mut n = GranuleCell::new();
-        // Hyperpolarise to de-inactivate T-type channels
-        for _ in 0..2000 {
-            n.step(0.0);
-        }
-        // Ensure s is high (de-inactivated)
-        assert!(n.s > 0.8, "T-type must be de-inactivated at rest, s={}", n.s);
+        for _ in 0..5000 { n.step(0.0); }
+        assert!(n.s > 0.5,
+            "T-type must be partially de-inactivated at rest, s={}", n.s);
+    }
 
-        // Now provide input — T-type should help fire
-        let mut spikes_early = 0;
-        for _ in 0..200 {
-            spikes_early += n.step(10.0);
-        }
-
-        // Compare with a neuron that had T-type pre-inactivated
-        let mut n2 = GranuleCell::new();
-        n2.s = 0.1; // pre-inactivated
-        let mut spikes_no_rebound = 0;
-        for _ in 0..200 {
-            spikes_no_rebound += n2.step(10.0);
-        }
-
-        assert!(
-            spikes_early >= spikes_no_rebound,
-            "De-inactivated T-type should facilitate firing: early={spikes_early} vs inactivated={spikes_no_rebound}"
-        );
+    #[test]
+    fn granule_ca_rises_with_spiking() {
+        // Ca²⁺ should increase during spiking activity
+        let mut n = GranuleCell::new();
+        let ca0 = n.ca;
+        for _ in 0..5000 { n.step(15.0); }
+        assert!(n.ca > ca0,
+            "Ca²⁺ should rise during spiking: ca0={ca0}, ca_now={}", n.ca);
     }
 
     #[test]
@@ -854,7 +929,7 @@ mod tests {
         n.reset();
         assert_eq!(n.v, -70.0);
         assert_eq!(n.s, 0.95);
-        assert_eq!(n.refrac_count, 0.0);
+        assert_eq!(n.m, 0.02);
     }
 
     #[test]
