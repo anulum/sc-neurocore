@@ -194,6 +194,7 @@ pub enum NeuronVariant {
     FHAxon(FrankenhaeUserHuxleyAxon),
     NodeOfRanvier(NodeOfRanvier),
     MyelinAxon(MyelinatedAxon),
+    CardiacPurkinje(CardiacPurkinjeFibre),
 
     // Not wired (multi-arg / i32 input / f64 return / no reset):
     // Alpha (2 args), COBALIF (3 args), TsodyksMarkram (bool arg),
@@ -259,7 +260,7 @@ macro_rules! all_variants {
             Granule, Golgi, Stellate, Lugaro, UnipolarBrush, DCN,
             PersistentNa, Ih, TTypeCa, ATypeK, BK, SK, NMDA,
             MontbrioMPR, Brunel, TUM, ElBoustani,
-            GradedSynapse, GapJunction, FHAxon, NodeOfRanvier, MyelinAxon,
+            GradedSynapse, GapJunction, FHAxon, NodeOfRanvier, MyelinAxon, CardiacPurkinje,
         )
     };
 }
@@ -419,6 +420,7 @@ impl NeuronVariant {
             NeuronVariant::FHAxon(n) => n.v,
             NeuronVariant::NodeOfRanvier(n) => n.v,
             NeuronVariant::MyelinAxon(n) => n.v(),
+            NeuronVariant::CardiacPurkinje(n) => n.v,
         }
     }
 }
@@ -956,6 +958,7 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         "FrankenhaeUserHuxleyAxon" | "FHAxon" => Ok(NeuronVariant::FHAxon(FrankenhaeUserHuxleyAxon::new())),
         "NodeOfRanvier" => Ok(NeuronVariant::NodeOfRanvier(NodeOfRanvier::new())),
         "MyelinatedAxon" | "MyelinAxon" => Ok(NeuronVariant::MyelinAxon(MyelinatedAxon::new())),
+        "CardiacPurkinjeFibre" | "CardiacPurkinje" => Ok(NeuronVariant::CardiacPurkinje(CardiacPurkinjeFibre::new())),
         _ => Err(format!("Unsupported model: '{name}'")),
     }
 }
@@ -1078,6 +1081,7 @@ pub fn supported_models() -> Vec<&'static str> {
         "FrankenhaeUserHuxleyAxon",
         "NodeOfRanvier",
         "MyelinatedAxon",
+        "CardiacPurkinjeFibre",
     ]
 }
 

@@ -164,6 +164,7 @@ cargo bench --bench analysis_bench -- --quick
 | FH axon (GHK) | 1k | 19.88 ms | **19.88 µs** | Myelinated nerve, GHK driving force, 50 sub-steps |
 | Node of Ranvier (MRG) | 1k | 3.99 ms | **3.99 µs** | Nav1.6 + INaP + Kv7, 20 sub-steps |
 | Myelinated axon | 1k | 1.26 ms | **1.26 µs** | MRG node + internode cable |
+| Cardiac Purkinje | 1k | 586.7 µs | **586.7 ns** | DiFrancesco-Noble, 6 currents, 10 sub-steps |
 
 ---
 
