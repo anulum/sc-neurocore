@@ -365,7 +365,8 @@ copyright: >
   <a href="mailto:protoscience@anulum.li">protoscience@anulum.li</a>
 
 markdown_extensions:
-  - pymdownx.highlight
+  - pymdownx.highlight:
+      guess_lang: false
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
