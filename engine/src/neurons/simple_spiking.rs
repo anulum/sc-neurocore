@@ -631,12 +631,16 @@ impl WilsonHRNeuron {
         }
     }
     pub fn step(&mut self, current: f64) -> i32 {
-        let v_prev = self.v;
+        // Wilson 1999: simultaneous Euler (both derivatives use old state)
         let poly = -(17.81 + 47.71 * self.v + 32.63 * self.v * self.v) * (self.v - 0.55);
         let syn = -26.0 * self.r * (self.v + 0.92);
-        self.v += (poly + syn + current) * self.dt;
-        self.r += (-self.r + 1.35 * self.v + 1.03) / self.tau_r * self.dt;
-        if self.v >= self.v_peak && v_prev < self.v_peak {
+        let dv = (poly + syn + current) * self.dt;
+        let dr = (-self.r + 1.35 * self.v + 1.03) / self.tau_r * self.dt;
+        self.v += dv;
+        self.r += dr;
+        // Wilson 1999: hard reset on threshold (not crossing)
+        if self.v >= self.v_peak {
+            self.v = -0.7;
             1
         } else {
             0
