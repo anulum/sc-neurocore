@@ -829,4 +829,257 @@ mod tests {
         }
         assert!((n.v - v0).abs() > 0.001);
     }
+
+    // ── Multi-angle tests for special models ──
+
+    // -- Poisson --
+    #[test]
+    fn poisson_reset_no_panic() {
+        let mut n = PoissonNeuron::new(200.0, 1.0, 42);
+        for _ in 0..100 { n.step(-1.0); }
+        n.reset();
+    }
+    #[test]
+    fn poisson_nan_no_panic() {
+        let mut n = PoissonNeuron::new(200.0, 1.0, 42);
+        n.step(f64::NAN);
+    }
+    #[test]
+    fn poisson_seed_varies() {
+        let mut n1 = PoissonNeuron::new(200.0, 1.0, 1);
+        let mut n2 = PoissonNeuron::new(200.0, 1.0, 999);
+        let t1: i32 = (0..1000).map(|_| n1.step(-1.0)).sum();
+        let t2: i32 = (0..1000).map(|_| n2.step(-1.0)).sum();
+        assert!(t1 > 0 && t2 > 0);
+    }
+
+    // -- InhomogeneousPoisson --
+    #[test]
+    fn inhom_poisson_zero_rate() {
+        let mut n = InhomogeneousPoissonNeuron::new(1.0, 42);
+        let t: i32 = (0..1000).map(|_| n.step(0.0)).sum();
+        assert_eq!(t, 0);
+    }
+    #[test]
+    fn inhom_poisson_nan_no_panic() {
+        let mut n = InhomogeneousPoissonNeuron::new(1.0, 42);
+        n.step(f64::NAN);
+    }
+
+    // -- GammaRenewal --
+    #[test]
+    fn gamma_renewal_reset_clears() {
+        let mut n = GammaRenewalNeuron::new(100.0, 3, 42);
+        for _ in 0..100 { n.step(-1.0); }
+        n.reset();
+        assert!((n.time_since_spike - 0.0).abs() < 1e-10);
+    }
+    #[test]
+    fn gamma_renewal_nan_no_panic() {
+        let mut n = GammaRenewalNeuron::new(100.0, 3, 42);
+        n.step(f64::NAN);
+    }
+
+    // -- StochasticIF --
+    #[test]
+    fn stochastic_if_reset_clears() {
+        let mut n = StochasticIFNeuron::new(42);
+        for _ in 0..100 { n.step(30.0); }
+        n.reset();
+        assert!((n.v - n.v_rest).abs() < 1e-10);
+    }
+    #[test]
+    fn stochastic_if_bounded() {
+        let mut n = StochasticIFNeuron::new(42);
+        for _ in 0..1000 { n.step(1e4); }
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn stochastic_if_nan_no_panic() {
+        StochasticIFNeuron::new(42).step(f64::NAN);
+    }
+    #[test]
+    fn stochastic_if_negative_no_crash() {
+        let mut n = StochasticIFNeuron::new(42);
+        for _ in 0..500 { n.step(-10.0); }
+        assert!(n.v.is_finite());
+    }
+
+    // -- GalvesLocherbach --
+    #[test]
+    fn gl_reset_clears() {
+        let mut n = GalvesLocherbachNeuron::new(42);
+        for _ in 0..100 { n.step(2.0); }
+        n.reset();
+        assert!((n.v - n.v_rest).abs() < 1e-10);
+    }
+    #[test]
+    fn gl_bounded() {
+        let mut n = GalvesLocherbachNeuron::new(42);
+        for _ in 0..1000 { n.step(1e4); }
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn gl_nan_no_panic() {
+        GalvesLocherbachNeuron::new(42).step(f64::NAN);
+    }
+
+    // -- SpikeResponse --
+    #[test]
+    fn srm_reset_clears() {
+        let mut n = SpikeResponseNeuron::new();
+        for _ in 0..100 { n.step(10.0); }
+        n.reset();
+        assert!((n.v - 0.0).abs() < 1e-10);
+    }
+    #[test]
+    fn srm_bounded() {
+        let mut n = SpikeResponseNeuron::new();
+        for _ in 0..1000 { n.step(1e4); }
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn srm_nan_no_panic() {
+        SpikeResponseNeuron::new().step(f64::NAN);
+    }
+    #[test]
+    fn srm_silent_without_input() {
+        let mut n = SpikeResponseNeuron::new();
+        let t: i32 = (0..200).map(|_| n.step(0.0)).sum();
+        assert_eq!(t, 0);
+    }
+
+    // -- GLM --
+    #[test]
+    fn glm_reset_clears() {
+        let mut n = GLMNeuron::new(5, 10, 42);
+        for _ in 0..100 { n.step(20.0); }
+        n.reset();
+    }
+    #[test]
+    fn glm_nan_no_panic() {
+        GLMNeuron::new(5, 10, 42).step(f64::NAN);
+    }
+
+    // -- WilsonCowan --
+    #[test]
+    fn wc_reset_clears() {
+        let mut n = WilsonCowanUnit::new();
+        for _ in 0..200 { n.step(5.0); }
+        n.reset();
+        assert!((n.e - 0.1).abs() < 1e-10);
+        assert!((n.i - 0.05).abs() < 1e-10);
+    }
+    #[test]
+    fn wc_bounded() {
+        let mut n = WilsonCowanUnit::new();
+        for _ in 0..5000 { n.step(1e3); }
+        assert!(n.e.is_finite());
+        assert!(n.i.is_finite());
+    }
+    #[test]
+    fn wc_nan_no_panic() {
+        WilsonCowanUnit::new().step(f64::NAN);
+    }
+
+    // -- JansenRit --
+    #[test]
+    fn jr_reset_clears() {
+        let mut n = JansenRitUnit::new();
+        for _ in 0..1000 { n.step(220.0); }
+        n.reset();
+        assert!(n.y.iter().all(|&x| x == 0.0));
+    }
+    #[test]
+    fn jr_bounded() {
+        let mut n = JansenRitUnit::new();
+        for _ in 0..5000 { n.step(1e3); }
+        assert!(n.y.iter().all(|x| x.is_finite()));
+    }
+    #[test]
+    fn jr_nan_no_panic() {
+        JansenRitUnit::new().step(f64::NAN);
+    }
+
+    // -- WongWang --
+    #[test]
+    fn ww_reset_clears() {
+        let mut n = WongWangUnit::new(42);
+        for _ in 0..1000 { n.step(0.02, 0.0); }
+        n.reset();
+        assert!((n.s1 - 0.1).abs() < 1e-10);
+        assert!((n.s2 - 0.1).abs() < 1e-10);
+    }
+    #[test]
+    fn ww_bounded() {
+        let mut n = WongWangUnit::new(42);
+        for _ in 0..5000 { n.step(1.0, 0.0); }
+        assert!(n.s1.is_finite());
+        assert!(n.s2.is_finite());
+    }
+    #[test]
+    fn ww_nan_no_panic() {
+        WongWangUnit::new(42).step(f64::NAN, 0.0);
+    }
+
+    // -- ErmentroutKopellPopulation --
+    #[test]
+    fn ek_pop_reset_clears() {
+        let mut n = ErmentroutKopellPopulation::new();
+        for _ in 0..500 { n.step(0.0); }
+        n.reset();
+        assert!((n.r - 0.1).abs() < 1e-10);
+        assert!((n.v - (-2.0)).abs() < 1e-10);
+    }
+    #[test]
+    fn ek_pop_moderate_stable() {
+        let mut n = ErmentroutKopellPopulation::new();
+        for _ in 0..5000 { n.step(1.0); }
+        assert!(n.r.is_finite());
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn ek_pop_nan_no_panic() {
+        ErmentroutKopellPopulation::new().step(f64::NAN);
+    }
+
+    // -- Wendling --
+    #[test]
+    fn wendling_reset_clears() {
+        let mut n = WendlingNeuron::new();
+        for _ in 0..1000 { n.step(220.0); }
+        n.reset();
+        assert!(n.y.iter().all(|&x| x == 0.0));
+    }
+    #[test]
+    fn wendling_bounded() {
+        let mut n = WendlingNeuron::new();
+        for _ in 0..5000 { n.step(1e3); }
+        assert!(n.y.iter().all(|x| x.is_finite()));
+    }
+    #[test]
+    fn wendling_nan_no_panic() {
+        WendlingNeuron::new().step(f64::NAN);
+    }
+
+    // -- LarterBreakspear --
+    #[test]
+    fn lb_reset_clears() {
+        let mut n = LarterBreakspearNeuron::new();
+        for _ in 0..500 { n.step(0.0); }
+        n.reset();
+        assert!((n.v - (-0.5)).abs() < 1e-10);
+        assert!((n.w - 0.0).abs() < 1e-10);
+        assert!((n.z - 0.0).abs() < 1e-10);
+    }
+    #[test]
+    fn lb_bounded() {
+        let mut n = LarterBreakspearNeuron::new();
+        for _ in 0..5000 { n.step(10.0); }
+        assert!(n.v.is_finite());
+    }
+    #[test]
+    fn lb_nan_no_panic() {
+        LarterBreakspearNeuron::new().step(f64::NAN);
+    }
 }
