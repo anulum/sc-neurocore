@@ -168,6 +168,15 @@ cargo bench --bench analysis_bench -- --quick
 | Smooth muscle | 1k | 198 µs | **198 ns** | CaL + BK + IP3R/SERCA, 4 sub-steps |
 | Beta cell | 1k | 196 µs | **196 ns** | CaL + K_dr + K_ATP + K_Ca, 4 sub-steps |
 
+### Simple Spiking (`neurons/simple_spiking.rs`)
+
+| Model | Steps | Median | Per step | Notes |
+|-------|-------|--------|----------|-------|
+| Brunel-Wang (LIF+NMDA) | 10k | 23.4 µs | **2.34 ns** | LIF + AMPA + NMDA Mg²⁺ block + GABA, 1 exp() |
+
+> Brunel-Wang uses single Euler step with conductance-based synaptics.
+> The exp() call for the Mg²⁺ block factor is the dominant cost.
+
 ---
 
 ## Analysis Modules (`analysis_bench`)

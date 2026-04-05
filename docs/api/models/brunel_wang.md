@@ -227,18 +227,20 @@ BrunelWang is the most biophysically detailed synaptic model in SC-NeuroCore.
 - **State:** v + 5 private synaptic vars + refractory timer.
 - **Dataclass + __post_init__:** Private state initialised after construction.
 - **get_state():** Returns {v, ref_remaining} for debugging.
-- **Rust wiring:** Limited (4-arg step, complex synaptic state).
+- **Rust implementation:** `engine/src/neurons/simple_spiking.rs` — full Rust port with `step()` (single-current) and `step_full()` (4-arg synaptic). Wired into `NeuronVariant::BrunelWang` with `WrBrunelWang` adapter for single-current pipeline.
 
 ---
 
 ## Performance
 
-| Metric | Python | Rust |
-|--------|--------|------|
-| Isolation | ~300K steps/s | Not measured |
-| Network | Limited (4-arg step) | — |
+| Metric | Python | Rust (Criterion) |
+|--------|--------|-----------------|
+| Isolation | ~300K steps/s | 427M steps/s (2.34 ns/step) |
+| 10k steps | — | 23.4 µs |
+| Network | Limited (4-arg step) | WrBrunelWang adapter (single-current) |
 
-Moderate speed — 1 exp() + 4 conductance-current computations per step.
+Rust is ~1400× faster than Python. 1 exp() + 4 conductance-current computations per step.
+Measured 2026-04-05 on i5-11600K @ 3.90 GHz, Criterion 0.8.
 
 ---
 
