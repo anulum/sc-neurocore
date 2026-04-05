@@ -78,6 +78,7 @@ sav = "sav"
 ue = "ue"
 ba = "ba"
 Lond = "Lond"
+californica = "californica"
 
 [default.extend-identifiers]
 lins = "lins"

@@ -184,7 +184,7 @@ let mut n = GLIFNeuron::new();
 for i in 0..500 {
     let spike = n.step(30.0);
     if i % 50 == 0 || spike == 1 {
-        println!("t={}: v={:.2}, theta={:.2}, i_asc1={:.3}{}", 
+        println!("t={}: v={:.2}, theta={:.2}, i_asc1={:.3}{}",
             i, n.v, n.theta, n.i_asc1,
             if spike == 1 { " *SPIKE*" } else { "" });
     }
