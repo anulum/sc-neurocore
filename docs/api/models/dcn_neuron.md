@@ -2,8 +2,8 @@
 
 **Module:** `engine/src/neurons/cerebellar.rs`
 **Reference:** Llinás & Mühlethaler, J Physiol 404:241, 1988; Jahnsen, J Physiol 372:129, 1986
-**Family:** WB Na+/K+ + T-type Ca2+ + Ih (rebound bursting)
-**State variables:** `v`, `h`, `n` (WB gating), `s` (T-type inactivation), `r` (Ih activation)
+**Family:** WB Na+/K+ + persistent Na + T-type Ca²⁺ + Ca²⁺-AHP + Ih
+**State variables:** `v`, `h`, `n`, `p` (NaP), `s` (T-type inact), `r` (Ih), `ca`
 
 ---
 
@@ -12,30 +12,36 @@
 Deep cerebellar nuclei (DCN) neurons are the main output neurons of the cerebellum. They receive massive GABAergic inhibition from Purkinje cells and excitatory input from mossy fibre and climbing fibre collaterals. DCN neurons relay cerebellar computations to the thalamus, brainstem, and spinal cord.
 
 Key features:
-- **Rebound bursting**: when Purkinje cell inhibition pauses, T-type Ca2+ channels that de-inactivated during hyperpolarisation produce a burst of spikes — the primary cerebellar timing mechanism
-- **Ih (HCN) current**: hyperpolarisation-activated mixed cation current provides a depolarising "sag" and contributes to pacemaker properties
-- **High spontaneous rate**: in vivo, DCN neurons fire at 30-100 Hz, modulated by Purkinje cell inhibition
-- **Sole cerebellar output**: all cerebellar computations must pass through ~50,000 DCN neurons per nucleus
+- **7 ionic currents**: INa_t, INaP, IK_dr, ICa_T, IAHP, Ih, IL
+- **Rebound bursting**: T-type Ca²⁺ de-inactivates during Purkinje inhibition → burst on release
+- **Persistent Na (INaP)**: amplifies subthreshold depolarisation, contributes to spontaneous activity
+- **Ca²⁺-dependent AHP**: limits burst duration and sustained firing rate (Hill n=2)
+- **Ih (HCN)**: sag current, pacemaker contribution
+- **Spontaneous firing**: INaP + Ih + depolarised leak drive autonomous activity (~10-50 Hz)
 
 ---
 
 ## Equations
 
-### WB Na+/K+ gating + T-type + Ih
+$$C_m \frac{dV}{dt} = -(I_{Na_t} + I_{Na_p} + I_{K_{dr}} + I_{Ca_T} + I_{AHP} + I_h + I_L) + I_{ext}$$
 
-$$C_m \frac{dV}{dt} = -I_{Na} - I_K - I_T - I_h - I_L + I_{ext}$$
+| Current | Gating | Formula |
+|---------|--------|---------|
+| INa_t | m³h | $g_{Na} \cdot m_\infty^3 h \cdot (V - E_{Na})$ |
+| INaP | p | $g_{NaP} \cdot p \cdot (V - E_{Na})$ |
+| IK_dr | n⁴ | $g_K \cdot n^4 \cdot (V - E_K)$ |
+| ICa_T | m_t²s | $g_T \cdot m_{T,\infty}^2 s \cdot (V - E_{Ca})$ |
+| IAHP | Hill | $g_{AHP} \cdot \frac{[Ca]^2}{[Ca]^2 + K_d^2} \cdot (V - E_K)$ |
+| Ih | r | $g_h \cdot r \cdot (V - E_h)$ |
+| IL | ohmic | $g_L \cdot (V - E_L)$ |
 
-$$I_T = g_T m_{T,\infty}^2 s (V - E_{Ca})$$
-$$I_h = g_h r (V - E_h)$$
+### NaP gating (Boltzmann)
 
-Gate kinetics: WB alpha/beta with phi=5 (via `safe_rate`), m uses steady-state.
+$$p_\infty = \frac{1}{1 + \exp(-(V+48)/5)}$$
 
-### T-type Ca2+ and Ih gating
+### Ca²⁺ dynamics
 
-Same as GranuleCell T-type: $m_{T,\infty}$, $s_\infty$, $\tau_s$.
-
-$$r_\infty = \frac{1}{1 + \exp((V+80)/10)}$$
-$$\tau_r = 100 + \frac{200}{1 + \exp((V+70)/10)}$$
+$$\frac{d[Ca]}{dt} = -(I_{Ca_T})_{inward} \cdot 0.001 - \frac{[Ca]}{\tau_{Ca}} + 0.5 \text{ on spike}$$
 
 ---
 
@@ -43,23 +49,16 @@ $$\tau_r = 100 + \frac{200}{1 + \exp((V+70)/10)}$$
 
 | Parameter | Value | Unit | Description |
 |-----------|-------|------|-------------|
-| `v` | -60.0 | mV | Membrane potential |
-| `h` | 0.6 | — | Na+ inactivation |
-| `n` | 0.32 | — | Kdr activation |
-| `s` | 0.8 | — | T-type inactivation |
-| `r` | 0.1 | — | Ih activation |
-| `g_na` | 35.0 | mS/cm² | Na+ conductance |
-| `g_k` | 9.0 | mS/cm² | Kdr conductance |
-| `g_t` | 0.1 | mS/cm² | T-type Ca2+ |
-| `g_h` | 0.02 | mS/cm² | Ih conductance |
-| `g_l` | 0.2 | mS/cm² | Leak conductance |
-| `e_na` | 55.0 | mV | Na+ reversal |
-| `e_k` | -90.0 | mV | K+ reversal |
-| `e_ca` | 120.0 | mV | Ca2+ reversal |
-| `e_h` | -40.0 | mV | Ih reversal (mixed cation) |
-| `e_l` | -65.0 | mV | Leak reversal |
-| `phi` | 5.0 | — | Kinetic scaling |
-| `dt` | 0.5 | ms | Timestep (50 sub-steps) |
+| `g_na` | 35.0 | mS/cm² | Transient Na |
+| `g_nap` | 0.5 | mS/cm² | Persistent Na |
+| `g_k` | 9.0 | mS/cm² | Delayed rectifier K |
+| `g_t` | 0.1 | mS/cm² | T-type Ca²⁺ |
+| `g_ahp` | 2.0 | mS/cm² | Ca²⁺-dependent AHP |
+| `g_h` | 0.02 | mS/cm² | Ih (HCN) |
+| `g_l` | 0.2 | mS/cm² | Leak |
+| `tau_ca` | 150.0 | ms | Ca²⁺ decay |
+| `kd_ahp` | 0.5 | µM | AHP Ca²⁺ Kd (Hill n=2) |
+| `dt` | 0.5 | ms | Timestep (20 sub-steps) |
 
 ---
 
@@ -68,12 +67,12 @@ $$\tau_r = 100 + \frac{200}{1 + \exp((V+70)/10)}$$
 | Checklist | Status |
 |-----------|--------|
 | Rust implementation | `engine/src/neurons/cerebellar.rs` |
-| PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` (state: v, h, n, s, r) |
+| PyO3 wrapper | `pyo3_neurons.rs` (state: v, h, n, p, s, r, ca) |
 | NetworkRunner wired | `NeuronVariant::DCN` |
 | `create_neuron("DCNNeuron")` | Yes |
 | `supported_models()` | Includes "DCNNeuron" |
-| STRONG tests | 10 (fire, silent, rebound, Ih depolarisation, negative, NaN, extreme, reset, gates, performance) |
-| Benchmark | `dcn_1k_steps`: **4.83 ms** (4.83 µs/step), i5-11600K |
+| STRONG tests | 14 (fire, spontaneous, rebound, Ih, NaP excitability, AHP limits rate, Ca²⁺ rises, 7 currents, gates, reset, negative, NaN, extreme, performance) |
+| Benchmark | `dcn_1k_steps`: **2.14 ms** (2.14 µs/step), i5-11600K |
 
 ---
 
@@ -81,18 +80,20 @@ $$\tau_r = 100 + \frac{200}{1 + \exp((V+70)/10)}$$
 
 | Benchmark | Median |
 |-----------|-------:|
-| dcn_1k_steps | 4.83 ms |
-| Per step | **4.83 µs** |
+| dcn_1k_steps | 2.14 ms |
+| Per step | **2.14 µs** |
 
-WB gating with 50 sub-steps + T-type Ca2+ + Ih. Measured 2026-04-04.
+7 currents, 20 sub-steps (dt_sub=0.025 ms). Measured 2026-04-05.
 
 ---
 
 ## Findings
 
-1. **Fires with excitatory input.** Sustained spiking with I=5. Verified.
-2. **Silent without input.** No spontaneous firing at rest. Verified.
-3. **Rebound burst via T-type.** De-inactivated T-type facilitates firing after hyperpolarisation. Verified.
-4. **Ih depolarises from hyperpolarised state.** With Ih, resting potential is more depolarised than without. Verified.
-5. **Reset clears state.** All variables return to initial values. Verified.
-6. **All gates bounded [0, 1].** After extensive simulation. Verified.
+1. **7 ionic currents.** Na_t, Na_p, K_dr, Ca_T, AHP, Ih, leak — resolves MODERATE audit finding.
+2. **Fires with excitatory input.** Sustained spiking with I=5 µA/cm². Verified.
+3. **Spontaneous activity.** INaP + Ih drive autonomous firing without input. Verified.
+4. **Rebound burst via T-type.** De-inactivated T-type facilitates firing after hyperpolarisation. Verified.
+5. **INaP increases excitability.** Removing INaP reduces firing rate. Verified.
+6. **AHP limits firing rate.** Removing AHP increases sustained rate. Verified.
+7. **Ca²⁺ accumulates during spiking.** Entry via T-type + spike-triggered bolus. Verified.
+8. **Ih depolarises from hyperpolarised state.** Sag current confirmed. Verified.
