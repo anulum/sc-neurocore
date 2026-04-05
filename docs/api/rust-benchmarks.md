@@ -201,10 +201,30 @@ cargo bench --bench analysis_bench -- --quick
 
 | Model | Steps | Median | Per step | Notes |
 |-------|-------|--------|----------|-------|
-| Brunel-Wang (LIF+NMDA) | 10k | 23.4 µs | **2.34 ns** | LIF + AMPA + NMDA Mg²⁺ block + GABA, 1 exp() |
+| SuperSpike | 10k | 17.8 µs | **1.8 ns** | Surrogate gradient LIF |
+| Brunel-Wang (LIF+NMDA) | 10k | 23.4 µs | **2.34 ns** | AMPA + NMDA Mg²⁺ block + GABA |
+| e-prop ALIF | 10k | 28.3 µs | **2.8 ns** | Adaptive LIF for e-prop learning |
+| Resonate-and-Fire | 10k | 41.8 µs | **4.2 ns** | 2D subthreshold oscillator |
+| Alpha synapse LIF | 10k | 53.1 µs | **5.3 ns** | Excitatory + inhibitory alpha |
+| McKean | 10k | 73.8 µs | **7.4 ns** | Piecewise-linear FHN |
+| Hindmarsh-Rose | 10k | 77.4 µs | **7.7 ns** | 3D burster (x,y,z) |
+| COBA LIF | 10k | 104 µs | **10.4 ns** | Conductance-based with g_e, g_i |
+| FitzHugh-Nagumo | 10k | 110 µs | **11.0 ns** | 2D qualitative spike model |
+| FitzHugh-Rinzel | 10k | 110 µs | **11.0 ns** | 3D extension with slow y |
+| Wilson HR | 10k | 151 µs | **15.1 ns** | Simplified cortical |
+| Benda-Herz | 10k | 218 µs | **21.8 ns** | Stochastic rate + adaptation |
+| Learnable neuron | 10k | 224 µs | **22.4 ns** | Learnable parameters (tau, beta) |
+| Pernarowski | 10k | 232 µs | **23.2 ns** | Coupled oscillator burster |
+| Terman-Wang | 10k | 247 µs | **24.7 ns** | Oscillatory segmentation |
+| Gutkin-Ermentrout | 10k | 289 µs | **28.9 ns** | Type I excitability |
+| Sherman-Rinzel-Keizer | 1k | 29.0 µs | **29.0 ns** | Beta cell burster |
+| Chay-Keizer | 1k | 30.5 µs | **30.5 ns** | Beta cell with KCa |
+| Chay | 1k | 32.8 µs | **32.8 ns** | Beta cell 3-variable |
+| Morris-Lecar | 10k | 561 µs | **56.1 ns** | Ca/K 2D model |
+| Butera respiratory | 1k | 73.3 µs | **73.3 ns** | Pre-Bötzinger + INaP |
 
-> Brunel-Wang uses single Euler step with conductance-based synaptics.
-> The exp() call for the Mg²⁺ block factor is the dominant cost.
+> Simple spiking models use Euler integration without sub-stepping.
+> Measured 2026-04-05 on i5-11600K @ 3.90 GHz.
 
 ---
 
