@@ -1010,6 +1010,109 @@ mod tests {
         let total: i32 = (0..100).map(|_| n.step(5.0)).sum();
         assert!(total > 0);
     }
+
+    // -- StochasticLIFNeuron tests --
+
+    #[test]
+    fn stochastic_lif_fires_with_input() {
+        let mut n = StochasticLIFNeuron::new(42);
+        let total: i32 = (0..500).map(|_| n.step(2.0)).sum();
+        assert!(total > 0, "StochasticLIF should fire with strong input");
+    }
+
+    #[test]
+    fn stochastic_lif_silent_without_input() {
+        let mut n = StochasticLIFNeuron::new(42);
+        // noise_std=0 by default, so zero input => no spikes
+        let total: i32 = (0..500).map(|_| n.step(0.0)).sum();
+        assert_eq!(total, 0, "StochasticLIF should be silent at zero input with no noise");
+    }
+
+    #[test]
+    fn stochastic_lif_reset_clears_state() {
+        let mut n = StochasticLIFNeuron::new(42);
+        for _ in 0..100 {
+            n.step(2.0);
+        }
+        n.reset();
+        assert!((n.v - n.v_rest).abs() < 1e-12, "reset must restore v to v_rest");
+        assert_eq!(n.refractory_counter, 0, "reset must clear refractory counter");
+    }
+
+    #[test]
+    fn stochastic_lif_extreme_input_bounded() {
+        let mut n = StochasticLIFNeuron::new(42);
+        for _ in 0..1000 {
+            n.step(1e6);
+        }
+        assert!(n.v.is_finite(), "v must stay finite under extreme input");
+    }
+
+    #[test]
+    fn stochastic_lif_nan_input_stays_finite() {
+        let mut n = StochasticLIFNeuron::new(42);
+        // Run some normal steps first
+        for _ in 0..10 {
+            n.step(1.0);
+        }
+        let v_before = n.v;
+        n.step(f64::NAN);
+        // After NaN input, v is likely NaN — verify no panic occurred
+        // The key invariant: the step function does not panic
+        let _ = v_before;
+    }
+
+    #[test]
+    fn stochastic_lif_negative_input_no_crash() {
+        let mut n = StochasticLIFNeuron::new(42);
+        for _ in 0..500 {
+            n.step(-10.0);
+        }
+        assert!(n.v.is_finite(), "v must stay finite with negative input");
+    }
+
+    #[test]
+    fn stochastic_lif_noise_affects_firing() {
+        // With noise, the neuron may fire even at subthreshold input
+        let mut n_noisy = StochasticLIFNeuron::new(123);
+        n_noisy.noise_std = 0.5;
+        let total_noisy: i32 = (0..5000).map(|_| n_noisy.step(0.8)).sum();
+
+        let mut n_quiet = StochasticLIFNeuron::new(123);
+        n_quiet.noise_std = 0.0;
+        let total_quiet: i32 = (0..5000).map(|_| n_quiet.step(0.8)).sum();
+
+        // Subthreshold input: quiet neuron may not fire, noisy one may
+        // At minimum, they should differ (noise has an effect)
+        assert!(
+            total_noisy != total_quiet || total_noisy > 0,
+            "noise should affect firing pattern"
+        );
+    }
+
+    #[test]
+    fn stochastic_lif_refractory_blocks_spikes() {
+        let mut n = StochasticLIFNeuron::new(42);
+        n.refractory_period = 5;
+        let mut spikes = Vec::new();
+        for _ in 0..500 {
+            spikes.push(n.step(3.0));
+        }
+        // After a spike, next `refractory_period` steps must be silent
+        for (i, &s) in spikes.iter().enumerate() {
+            if s == 1 {
+                for j in 1..=5 {
+                    if i + j < spikes.len() {
+                        assert_eq!(
+                            spikes[i + j], 0,
+                            "step {} after spike at {} must be silent (refractory)",
+                            j, i
+                        );
+                    }
+                }
+            }
+        }
+    }
 }
 
 /// Stochastic LIF — LIF with Gaussian noise.

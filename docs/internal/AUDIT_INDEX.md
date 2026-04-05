@@ -35,4 +35,24 @@ Kinetics verification for cerebellar + sensory models.
 
 ---
 
-*Last updated: 2026-04-05 by Arcane Sapience*
+---
+
+## audit_7point_checklist_2026-04-05.md (Arcane Sapience)
+
+Full 7-point checklist audit of all 173 Rust neuron structs. 4 phases, tracked.
+
+| # | Dimension | Status | Scope |
+|---|-----------|--------|-------|
+| 1 | Pipeline wiring | PASS | 172/172 |
+| 2 | Multi-angle tests | **FAIL** | 7 files with ratio ≤1.4 (THIN), ~740 tests needed |
+| 3 | Rust path | PASS | 173/173 |
+| 4 | Benchmarks | **FAIL** | 63/173 covered (36%), 98 models missing |
+| 5 | Performance docs | **FAIL** | Mirrors benchmark gap |
+| 6 | Elite docs | **FAIL** | 70 ELITE, 32 ADEQUATE, 61 STUB |
+| 7 | Rules followed | **FAIL** | 2 models with 0 tests (StochasticLIF, LeakyCompeteFire) |
+
+**Execution plan:** Phase 1 (P0 missing tests) → Phase 2 (P1 multi-angle ~740 tests) → Phase 3 (P2 benchmarks ~139 functions) → Phase 4 (P3 docs 93 upgrades)
+
+---
+
+*Last updated: 2026-04-05T1509 by Arcane Sapience*
