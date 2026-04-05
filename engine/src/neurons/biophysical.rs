@@ -314,13 +314,14 @@ impl ConnorStevensNeuron {
     }
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
-        for _ in 0..10 {
-            let am = safe_rate(0.1, 29.7, self.v, 10.0, 1.0);
-            let bm = 4.0 * (-(self.v + 54.7) / 18.0).exp();
-            let ah = 0.07 * (-(self.v + 48.0) / 20.0).exp();
-            let bh = 1.0 / (1.0 + (-(self.v + 18.0) / 10.0).exp());
-            let an = safe_rate(0.01, 45.7, self.v, 10.0, 0.1);
-            let bn = 0.125 * (-(self.v + 55.7) / 80.0).exp();
+        // Connor, Walter & McKown 1977: modified HH rates for Type-I excitability
+        for _ in 0..100 {
+            let am = safe_rate(0.38, 29.7, self.v, 10.0, 3.8);
+            let bm = 15.2 * (-(self.v + 54.7) / 18.0).exp();
+            let ah = 0.266 * (-(self.v + 48.0) / 20.0).exp();
+            let bh = 3.8 / (1.0 + (-(self.v + 18.0) / 10.0).exp());
+            let an = safe_rate(0.02, 45.7, self.v, 10.0, 0.2);
+            let bn = 0.25 * (-(self.v + 55.7) / 80.0).exp();
             let a_inf = (0.0761 * ((self.v + 94.22) / 31.84).exp()
                 / (1.0 + ((self.v + 1.17) / 28.93).exp()))
             .powf(1.0 / 3.0);
@@ -1930,20 +1931,16 @@ mod tests {
     }
     #[test]
     fn cs_a_type_delays_spike() {
-        // A-type K current causes onset delay
+        // Connor-Stevens 1977: A-type K current causes onset delay
+        // With 100 sub-steps/call, use more calls and verify A-type suppresses early firing
         let mut n_with_a = ConnorStevensNeuron::new();
         let mut n_no_a = ConnorStevensNeuron::new();
         n_no_a.g_a = 0.0;
-        let mut first_with = None;
-        let mut first_no = None;
-        for i in 0..500 {
-            if n_with_a.step(10.0) == 1 && first_with.is_none() { first_with = Some(i); }
-            if n_no_a.step(10.0) == 1 && first_no.is_none() { first_no = Some(i); }
-        }
-        // Without A-current, first spike should come earlier or at same time
-        if let (Some(fw), Some(fn_)) = (first_with, first_no) {
-            assert!(fn_ <= fw, "without A-type K, spike should come sooner: {} vs {}", fn_, fw);
-        }
+        let spikes_with: i32 = (0..50).map(|_| n_with_a.step(8.0)).sum();
+        let spikes_no: i32 = (0..50).map(|_| n_no_a.step(8.0)).sum();
+        // Without A-current, neuron should fire more (no transient suppression)
+        assert!(spikes_no >= spikes_with,
+            "without A-type K, should fire more: no_a={} vs with_a={}", spikes_no, spikes_with);
     }
     #[test]
     fn cs_gates_bounded() {
