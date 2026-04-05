@@ -4,7 +4,7 @@ All measurements via Criterion 0.8, single-threaded, pure CPU.
 Hardware: 11th Gen Intel Core i5-11600K @ 3.90 GHz (6C/12T), DDR4-2400, Ubuntu 24.04.
 Verified via `lscpu` on 2026-04-04.
 
-Last updated: 2026-04-04.
+Last updated: 2026-04-05.
 
 ## How to Run
 
@@ -26,36 +26,36 @@ cargo bench --bench analysis_bench -- --quick
 
 | Benchmark | Median |
 |-----------|-------:|
-| pack_1m | 748 µs |
-| pack_fast_1m | 423 µs |
-| pack_dispatch_1m (SIMD) | 35.3 µs |
-| popcount_portable_1m | 19.7 µs |
-| popcount_simd_1m | 3.57 µs |
-| bernoulli_stream_1024 | 4.15 µs |
-| bernoulli_packed_1024 | 3.77 µs |
-| encoder_64k_steps | 163 µs |
+| pack_1m | 811 µs |
+| pack_fast_1m | 477 µs |
+| pack_dispatch_1m (SIMD) | 34.4 µs |
+| popcount_portable_1m | 29.6 µs |
+| popcount_simd_1m | 6.13 µs |
+| bernoulli_stream_1024 | 4.25 µs |
+| bernoulli_packed_1024 | 3.97 µs |
+| encoder_64k_steps | 281 µs |
 
 ### Fixed-Point LIF Neuron
 
 | Benchmark | Median |
 |-----------|-------:|
-| lif_10k_steps | 74.6 µs |
-| lif_100k_steps | 569 µs |
+| lif_10k_steps | 56.3 µs |
+| lif_100k_steps | 758 µs |
 
 ### Dense Layer / Graph / Attention
 
 | Benchmark | Median |
 |-----------|-------:|
-| dense_forward_64x32 | 869 µs |
-| attention_10x16_20x32 | 62.8 µs |
-| gnn_20x8_forward | 80.0 µs |
+| dense_forward_64x32 | 993 µs |
+| attention_10x16_20x32 | 88.5 µs |
+| gnn_20x8_forward | 85.3 µs |
 
 ### PRNG
 
 | Benchmark | Median |
 |-----------|-------:|
-| prng_chacha_fill_1024 | 323 ns |
-| prng_xoshiro_fill_1024 | 197 ns |
+| prng_chacha_fill_1024 | 299 ns |
+| prng_xoshiro_fill_1024 | 194 ns |
 
 ---
 
@@ -65,20 +65,20 @@ cargo bench --bench analysis_bench -- --quick
 
 | Model | 1k steps | 10k steps | Per step |
 |-------|----------|-----------|----------|
-| Lapicque | 2.13 µs | 21.4 µs | **2.1 ns** |
-| ExpIF | 26.8 µs | 250 µs | **25 ns** |
-| AdEx | 32.3 µs | 305 µs | **30 ns** |
+| Lapicque | 2.99 µs | 19.5 µs | **2.0 ns** |
+| ExpIF | 25.0 µs | 237 µs | **24 ns** |
+| AdEx | 29.1 µs | 291 µs | **29 ns** |
 
 ### Interneurons (`neurons/interneurons.rs`) — Phase 3A
 
 | Model | 1k steps | Per step | Sub-steps | Notes |
 |-------|----------|----------|-----------|-------|
-| VIP | 351 µs | **351 ns** | 4 | HH + A-type K+ |
-| Martinotti | 505 µs | **505 ns** | 4 | Pospischil + M-current |
-| SST+ | 586 µs | **586 ns** | 4 | Pospischil LTS + T-type + Ih |
-| PV+ FS | 4.35 ms | **4.35 µs** | 50 | Wang-Buzsáki + Kv3.1 |
-| Chandelier | 4.91 ms | **4.91 µs** | 50 | WB + Kv1 + Kv3.1 |
-| Basket (cerebellar) | 4.91 ms | **4.91 µs** | 50 | WB + A-type + KCa |
+| VIP | 365 µs | **365 ns** | 4 | HH + A-type K+ |
+| Martinotti | 530 µs | **530 ns** | 4 | Pospischil + M-current |
+| SST+ | 552 µs | **552 ns** | 4 | Pospischil LTS + T-type + Ih |
+| PV+ FS | 4.25 ms | **4.25 µs** | 50 | Wang-Buzsáki + Kv3.1 |
+| Chandelier | 4.29 ms | **4.29 µs** | 50 | WB + Kv1 + Kv3.1 |
+| Basket (cerebellar) | 5.60 ms | **5.60 µs** | 50 | WB + A-type + KCa |
 
 > PV+/Chandelier/Basket use 50 sub-steps (dt=0.01 ms, 0.5 ms per call)
 > for Wang-Buzsáki gating stability. SST/VIP/Martinotti use 4 sub-steps
@@ -88,26 +88,26 @@ cargo bench --bench analysis_bench -- --quick
 
 | Model | 10k steps | Per step | Type | Notes |
 |-------|-----------|----------|------|-------|
-| Retinal ganglion | 130 µs | **13 ns** | spiking | ON/OFF + refractory |
-| Inner hair cell | 195 µs | **19.5 ns** | graded | MET + Ca2+ |
-| Merkel cell | 239 µs | **23.9 ns** | spiking | Slow adapting |
-| Rod photoreceptor | 308 µs | **30.8 ns** | graded | cGMP cascade |
-| Nociceptor | 370 µs | **37 ns** | spiking | Sensitisation |
-| Pacinian corpuscle | 837 µs | **83.7 ns** | spiking | sin() input, fast adapting |
-| Olfactory receptor | 334 µs | **33.4 ns** | spiking | cAMP + Ca²⁺/CaM + PDE4 |
+| Retinal ganglion | 1.08 ms | **108 ns** | spiking | Pillow 2005 GLM (stim+history filters) |
+| Inner hair cell | 407 µs | **40.7 ns** | graded | Meddis vesicle pool + CaV1.3 |
+| Merkel cell | 202 µs | **20.2 ns** | spiking | Slow adapting |
+| Rod photoreceptor | 663 µs | **66.3 ns** | graded | cGMP cascade + Ca²⁺-GC feedback |
+| Nociceptor | 68.6 µs | **6.9 ns** | spiking | Sensitisation |
+| Pacinian corpuscle | 240 µs | **24.0 ns** | spiking | sin() input, fast adapting |
+| Olfactory receptor | 411 µs | **41.1 ns** | spiking | cAMP + Ca²⁺/CaM + PDE4 |
 
 > Sensory models use simple Euler integration (no sub-stepping).
-> Measured 2026-04-04 on i5-11600K @ 3.90 GHz.
+> Measured 2026-04-05 on i5-11600K @ 3.90 GHz.
 
 ### Motor Neurons (`neurons/motor.rs`) — Phase 3C
 
 | Model | 1k steps | Per step | Sub-steps | Notes |
 |-------|----------|----------|-----------|-------|
-| Alpha motor | 34.2 ms | **34.2 µs** | 50 | WB + PIC + AHP + Ca2+ |
-| Gamma motor | 1.21 ms (10k) | **121 ns** | 1 | LIF + adaptation |
-| Upper motor | 3.24 ms | **3.24 µs** | 4 | Pospischil RS + Ca2+ |
-| Renshaw cell | 2.78 ms | **2.78 µs** | 50 | WB + adaptation |
-| Motor unit | 187 µs (10k) | **18.7 ns** | 1 | LIF + force model |
+| Alpha motor | 6.48 ms | **6.48 µs** | 50 | WB + PIC (h_pic) + AHP + Ca²⁺ |
+| Gamma motor | 161 µs (10k) | **16.1 ns** | 1 | LIF + adaptation |
+| Upper motor | 475 µs | **475 ns** | 4 | Pospischil RS + Ca²⁺ |
+| Renshaw cell | 4.32 ms | **4.32 µs** | 50 | WB + adaptation |
+| Motor unit | 180 µs (10k) | **18.0 ns** | 1 | LIF + force model |
 
 > Alpha motor is the most expensive per-step model due to WB gating (50 sub-steps),
 > PIC evaluation, Ca2+ dynamics, and AHP computation at each sub-step.
@@ -116,12 +116,12 @@ cargo bench --bench analysis_bench -- --quick
 
 | Model | Steps | Median | Per step | Sub-steps | Notes |
 |-------|-------|--------|----------|-----------|-------|
-| Granule cell | 10k | 466 µs | **46.6 ns** | 1 | LIF + tonic GABA + T-type Ca2+ |
-| Golgi cell (Solinas 2007) | 1k | 1.39 ms | **1.39 µs** | 10 | 11 currents: Na_t, Na_p, K_dr, K_A, K_M, Ca_T, Ca_N, BK, SK, Ih, leak |
-| Stellate cell | 1k | 5.58 ms | **5.58 µs** | 50 | WB + Kv3.1 |
-| Lugaro cell | 10k | 164 µs | **16.4 ns** | 1 | LIF + adaptation + 5-HT |
-| Unipolar brush cell | 10k | 93 µs | **9.3 ns** | 1 | LIF + persistent NMDA-like |
-| DCN neuron | 1k | 2.14 ms | **2.14 µs** | 20 | 7 currents: Na_t, Na_p, K_dr, Ca_T, AHP, Ih, leak |
+| Granule cell (D'Angelo 2001) | 10k | 4.92 ms | **492 ns** | 4 | Full HH: 7 currents (Na, K_dr, K_A, Ca_T, K_Ca, Ih, leak) |
+| Golgi cell (Solinas 2007) | 1k | 2.57 ms | **2.57 µs** | 10 | 11 currents: Na_t, Na_p, K_dr, K_A, K_M, Ca_T, Ca_N, BK, SK, Ih, leak |
+| Stellate cell | 1k | 5.15 ms | **5.15 µs** | 50 | WB + Kv3.1 |
+| Lugaro cell | 10k | 196 µs | **19.6 ns** | 1 | LIF + adaptation + 5-HT |
+| Unipolar brush cell | 10k | 128 µs | **12.8 ns** | 1 | LIF + persistent NMDA-like |
+| DCN neuron | 1k | 2.68 ms | **2.68 µs** | 20 | 7 currents: Na_t, Na_p, K_dr, Ca_T, AHP, Ih, leak |
 
 > Granule cell uses simple Euler integration with T-type Ca2+ gating for
 > rebound bursting. No sub-stepping needed.
@@ -130,43 +130,43 @@ cargo bench --bench analysis_bench -- --quick
 
 | Model | Steps | Median | Per step | Sub-steps | Notes |
 |-------|-------|--------|----------|-----------|-------|
-| Persistent Na+ | 1k | 3.06 ms | **3.06 µs** | 50 | WB + INaP subthreshold amplification |
+| Persistent Na+ | 1k | 4.61 ms | **4.61 µs** | 50 | WB + INaP subthreshold amplification |
 | Ih (HCN) | 1k | 5.17 ms | **5.17 µs** | 50 | WB + Ih sag/rebound |
-| T-type Ca2+ | 1k | 3.94 ms | **3.94 µs** | 50 | WB + IT rebound bursting |
-| A-type K+ | 1k | 4.00 ms | **4.00 µs** | 50 | WB + IA onset delay |
-| BK (Ca2+-K+) | 1k | 3.16 ms | **3.16 µs** | 50 | WB + BK fast AHP |
-| SK (Ca2+-K+) | 1k | 2.79 ms | **2.79 µs** | 50 | WB + SK medium AHP |
-| NMDA receptor | 1k | 3.29 ms | **3.29 µs** | 50 | WB + NMDA + Mg2+ block |
+| T-type Ca²⁺ | 1k | 9.17 ms | **9.17 µs** | 50 | WB + IT rebound bursting |
+| A-type K+ | 1k | 4.92 ms | **4.92 µs** | 50 | WB + IA onset delay |
+| BK (Ca²⁺-K+) | 1k | 5.54 ms | **5.54 µs** | 50 | WB + BK fast AHP |
+| SK (Ca²⁺-K+) | 1k | 4.35 ms | **4.35 µs** | 50 | WB + SK medium AHP |
+| NMDA receptor | 1k | 4.81 ms | **4.81 µs** | 50 | WB + NMDA + Mg²⁺ block |
 
 ### Map Neurons (`neurons/maps.rs`) — Phase 3F
 
 | Model | Steps | Median | Per step | Notes |
 |-------|-------|--------|----------|-------|
-| Aihara map | 100k | 1.97 ms | **19.7 ns** | Chaotic sigmoid map |
-| Kilinc-Bhatt map | 100k | 8.19 ms | **81.9 ns** | Adaptive threshold map |
-| Ermentrout-Kopell | 100k | 5.45 ms | **54.5 ns** | Canonical Type I (theta) |
+| Aihara map | 100k | 3.38 ms | **33.8 ns** | Chaotic sigmoid map |
+| Kilinc-Bhatt map | 100k | 2.45 ms | **24.5 ns** | Adaptive threshold map |
+| Ermentrout-Kopell | 100k | 2.90 ms | **29.0 ns** | Canonical Type I (theta) |
 
 ### Population / Mean-Field (`neurons/population.rs`) — Phase 3G
 
 | Model | Steps | Median | Per step | Notes |
 |-------|-------|--------|----------|-------|
-| Montbrio-Pazo-Roxin | 100k | 3.92 ms | **39.2 ns** | Exact mean-field of QIF |
-| Brunel balanced | 100k | 3.48 ms | **34.8 ns** | E/I balance, 2 rate ODEs |
-| TUM (STP) | 100k | 15.63 ms | **156.3 ns** | Rate + depression + facilitation, 3 ODEs |
-| El Boustani (NMDA) | 100k | 6.05 ms | **60.5 ns** | E/I + NMDA gating, 3 ODEs |
+| Montbrio-Pazo-Roxin | 100k | 1.57 ms | **15.7 ns** | Exact mean-field of QIF |
+| Brunel balanced | 100k | 1.62 ms | **16.2 ns** | E/I balance, 2 rate ODEs |
+| TUM (STP) | 100k | 3.03 ms | **30.3 ns** | Rate + depression + facilitation, 3 ODEs |
+| El Boustani (NMDA) | 100k | 2.74 ms | **27.4 ns** | E/I + NMDA gating, 3 ODEs |
 
 ### Miscellaneous (`neurons/misc.rs`) — Phase 3H
 
 | Model | Steps | Median | Per step | Notes |
 |-------|-------|--------|----------|-------|
-| Graded synapse | 100k | 4.66 ms | **46.6 ns** | Non-spiking, passive RC + release sigmoid |
-| Gap junction | 100k | 6.28 ms | **62.8 ns** | LIF + electrical synapse coupling |
-| FH axon (GHK) | 1k | 19.88 ms | **19.88 µs** | Myelinated nerve, GHK driving force, 50 sub-steps |
-| Node of Ranvier (MRG) | 1k | 3.99 ms | **3.99 µs** | Nav1.6 + INaP + Kv7, 20 sub-steps |
-| Myelinated axon | 1k | 1.26 ms | **1.26 µs** | MRG node + internode cable |
-| Cardiac Purkinje | 1k | 586.7 µs | **586.7 ns** | DiFrancesco-Noble, 6 currents, 10 sub-steps |
-| Smooth muscle | 1k | 149.8 µs | **149.8 ns** | CaL + BK + IP3R/SERCA, 4 sub-steps |
-| Beta cell | 1k | 185.0 µs | **185.0 ns** | CaL + K_dr + K_ATP + K_Ca, 4 sub-steps |
+| Graded synapse | 100k | 1.23 ms | **12.3 ns** | Non-spiking, passive RC + release sigmoid |
+| Gap junction | 100k | 2.96 ms | **29.6 ns** | LIF + electrical synapse + Cx36 rectification |
+| FH axon (GHK) | 1k | 5.84 ms | **5.84 µs** | Myelinated nerve, GHK driving force, 50 sub-steps |
+| Node of Ranvier (MRG) | 1k | 1.46 ms | **1.46 µs** | Nav1.6 + INaP + Kv7, 20 sub-steps |
+| Myelinated axon | 1k | 1.40 ms | **1.40 µs** | MRG node + internode cable |
+| Cardiac Purkinje | 1k | 1.05 ms | **1.05 µs** | DiFrancesco-Noble, 6 currents, 10 sub-steps |
+| Smooth muscle | 1k | 198 µs | **198 ns** | CaL + BK + IP3R/SERCA, 4 sub-steps |
+| Beta cell | 1k | 196 µs | **196 ns** | CaL + K_dr + K_ATP + K_Ca, 4 sub-steps |
 
 ---
 
