@@ -149,9 +149,9 @@ commercial licenses for proprietary integration.
 <div class="pricing-period">Open Source — AGPL-3.0</div>
 <div class="pricing-savings">&nbsp;</div>
 <ul class="pricing-features">
-<li>122 neuron models (113 biophysical + 9 AI-optimized)</li>
+<li>173 neuron models (113 biophysical + 9 AI-optimized)</li>
 <li>Rust SIMD engine (41.3 Gbit/s AVX-512)</li>
-<li>19 Verilog HDL modules + 67 formal properties</li>
+<li>20 Verilog HDL modules + 68 formal properties</li>
 <li>ODE → Verilog compiler (<code>sc-neurocore compile</code>)</li>
 <li>PyTorch training (7 surrogates, 10 cells)</li>
 <li>6-codec neural data compression</li>
@@ -247,7 +247,7 @@ Write neuron equations as strings. The compiler produces synthesizable
 Q8.8 Verilog RTL with saturating arithmetic, transcendental function
 LUTs (exp, log, tanh, sigmoid, sin, cos), auto-generated testbenches,
 and one-click Yosys synthesis. Python simulation matches Verilog
-bit-for-bit (67 formal properties verified by SymbiYosys).
+bit-for-bit (68 formal properties verified by SymbiYosys).
 
 ### PyTorch Training → SC Bitstream → FPGA
 
@@ -281,12 +281,12 @@ PySpike combined. Pure NumPy — no additional dependencies.
 
 | Feature | Community | Professional | Enterprise |
 |---------|:---------:|:------------:|:----------:|
-| 122 neuron models + Rust engine | Yes | Yes | Yes |
+| 173 neuron models + Rust engine | Yes | Yes | Yes |
 | `sc-neurocore compile` (ODE → Verilog) | Yes | Yes | Yes |
 | PyTorch training (7 surrogates, 10 cells) | Yes | Yes | Yes |
 | 6-codec neural compression | Yes | Yes | Yes |
 | 125-function spike analysis | Yes | Yes | Yes |
-| 19 Verilog modules + 67 formal properties | Yes | Yes | Yes |
+| 20 Verilog modules + 68 formal properties | Yes | Yes | Yes |
 | Quantum hybrid (Qiskit/PennyLane) | Yes | Yes | Yes |
 | 84 tutorials + full docs | Yes | Yes | Yes |
 | Closed-source use | No (AGPL) | **Yes** | **Yes** |
@@ -323,7 +323,7 @@ SC-NeuroCore is the only open-source framework with a complete
 ODE → PyTorch training → SC bitstream → Verilog RTL → FPGA bitstream
 pipeline. The standard pricing reflects this — CHF 1,490/yr is still
 less than a single Vivado license (CHF 3,000+/yr), and SC-NeuroCore
-includes the full SNN training stack, 122 neuron models, and formal
+includes the full SNN training stack, 173 neuron models, and formal
 verification that Vivado doesn't offer.
 
 Early adopters get this at 67-81% off. Permanently.
