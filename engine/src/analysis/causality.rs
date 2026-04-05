@@ -37,9 +37,7 @@ fn solve_linear(a: &[f64], b: &[f64], n: usize) -> Vec<f64> {
         }
         if max_row != col {
             for j in 0..stride {
-                let tmp = aug[col * stride + j];
-                aug[col * stride + j] = aug[max_row * stride + j];
-                aug[max_row * stride + j] = tmp;
+                aug.swap(col * stride + j, max_row * stride + j);
             }
         }
         let pivot = aug[col * stride + col];
@@ -207,9 +205,7 @@ fn cmat_inv(a: &[C64], d: usize) -> Option<Vec<C64>> {
         }
         if max_row != col {
             for j in 0..w {
-                let tmp = aug[col * w + j];
-                aug[col * w + j] = aug[max_row * w + j];
-                aug[max_row * w + j] = tmp;
+                aug.swap(col * w + j, max_row * w + j);
             }
         }
         let pivot = aug[col * w + col];
@@ -263,9 +259,7 @@ fn cmat_det(a: &[C64], d: usize) -> C64 {
         }
         if max_row != col {
             for j in 0..d {
-                let tmp = m[col * d + j];
-                m[col * d + j] = m[max_row * d + j];
-                m[max_row * d + j] = tmp;
+                m.swap(col * d + j, max_row * d + j);
             }
             det = det * (-1.0);
         }

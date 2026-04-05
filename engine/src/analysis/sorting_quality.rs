@@ -37,9 +37,7 @@ fn mat_inverse(a: &[f64], n: usize) -> Vec<f64> {
         }
         if max_row != col {
             for k in 0..2 * n {
-                let tmp = aug[col * 2 * n + k];
-                aug[col * 2 * n + k] = aug[max_row * 2 * n + k];
-                aug[max_row * 2 * n + k] = tmp;
+                aug.swap(col * 2 * n + k, max_row * 2 * n + k);
             }
         }
         let pivot = aug[col * 2 * n + col];

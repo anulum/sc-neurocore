@@ -380,7 +380,7 @@ impl AkidaNeuron {
         if self.spiked {
             return 0;
         }
-        self.v += (weight as f64 * self.modulation.powi(self.rank)) as i32;
+        self.v += (weight * self.modulation.powi(self.rank)) as i32;
         self.rank += 1;
         if self.v >= self.threshold {
             self.spiked = true;
