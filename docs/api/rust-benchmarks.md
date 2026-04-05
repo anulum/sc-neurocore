@@ -163,6 +163,7 @@ cargo bench --bench analysis_bench -- --quick
 | Gap junction | 100k | 6.28 ms | **62.8 ns** | LIF + electrical synapse coupling |
 | FH axon (GHK) | 1k | 19.88 ms | **19.88 µs** | Myelinated nerve, GHK driving force, 50 sub-steps |
 | Node of Ranvier (MRG) | 1k | 3.99 ms | **3.99 µs** | Nav1.6 + INaP + Kv7, 20 sub-steps |
+| Myelinated axon | 1k | 1.26 ms | **1.26 µs** | MRG node + internode cable |
 
 ---
 

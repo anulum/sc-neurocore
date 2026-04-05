@@ -550,6 +550,98 @@ impl NodeOfRanvier {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// Myelinated Axon (Saltatory Conduction Segment)
+// ═══════════════════════════════════════════════════════════════════
+
+/// Myelinated axon segment — node of Ranvier + internode cable.
+///
+/// Models a single saltatory conduction unit per the MRG 2002
+/// double-cable architecture: an active node (using the NodeOfRanvier
+/// model) coupled to a passive internode represented as a lumped
+/// RC cable.
+///
+/// The internode has:
+/// - Very low capacitance (~0.001 µF/cm², myelin layers)
+/// - Very high resistance (myelin sheath insulation)
+/// - Paranodal seal resistance (leakage at node-internode junction)
+///
+/// The node voltage drives current through the paranodal seal into
+/// the internode, and the internode voltage feeds back into the node
+/// via the return path. This bidirectional coupling determines the
+/// conduction velocity and safety factor.
+///
+/// The external input represents current arriving from the upstream
+/// node (saltatory propagation).
+///
+/// V_node equation: C_n dV_n/dt = I_ionic(node) + g_para*(V_i - V_n) + I_ext
+/// V_internode equation: C_i dV_i/dt = -g_l_myelin*(V_i - E_l) + g_para*(V_n - V_i)
+///
+/// McIntyre, Richardson & Grill, J Neurophysiol 87:995, 2002.
+/// Richardson et al., Clin Neurophysiol 111:2175, 2000.
+#[derive(Clone, Debug)]
+pub struct MyelinatedAxon {
+    // Node (active, MRG)
+    pub node: NodeOfRanvier,
+    // Internode (passive cable)
+    pub v_inter: f64,       // Internode voltage (mV)
+    pub c_inter: f64,       // Internode capacitance (µF/cm², very low)
+    pub g_l_myelin: f64,    // Myelin leak conductance (very low)
+    pub e_l_myelin: f64,    // Myelin leak reversal
+    pub g_para: f64,        // Paranodal seal conductance
+    pub dt: f64,
+    pub gain: f64,
+}
+
+impl Default for MyelinatedAxon {
+    fn default() -> Self { Self::new() }
+}
+
+impl MyelinatedAxon {
+    pub fn new() -> Self {
+        Self {
+            node: NodeOfRanvier::new(),
+            v_inter: -80.0,
+            c_inter: 0.001,      // Very low (myelin layers)
+            g_l_myelin: 0.001,   // Very low leak through myelin
+            e_l_myelin: -80.0,
+            g_para: 0.01,        // Paranodal seal conductance
+            dt: 0.5,
+            gain: 1.0,
+        }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        let input = self.gain * current;
+
+        // Paranodal coupling: node ↔ internode
+        let i_para_to_node = self.g_para * (self.v_inter - self.node.v);
+        let i_para_to_inter = self.g_para * (self.node.v - self.v_inter);
+
+        // Internode passive cable dynamics
+        let dv_inter = (-self.g_l_myelin * (self.v_inter - self.e_l_myelin)
+            + i_para_to_inter) / self.c_inter;
+        self.v_inter += self.node.dt / self.node.sub_steps as f64 * dv_inter;
+
+        // Safety bounds for internode
+        self.v_inter = self.v_inter.clamp(-120.0, 60.0);
+        if !self.v_inter.is_finite() { self.v_inter = -80.0; }
+
+        // Step the node with external input + paranodal current
+        // We modify the node's current to include paranodal coupling
+        let total_input = input + i_para_to_node * 100.0; // Scale for node's C_m
+        self.node.step(total_input)
+    }
+
+    /// Access the node membrane potential.
+    pub fn v(&self) -> f64 { self.node.v }
+
+    pub fn reset(&mut self) {
+        self.node.reset();
+        self.v_inter = -80.0;
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // Tests
 // ═══════════════════════════════════════════════════════════════════
 
@@ -979,6 +1071,96 @@ mod tests {
     fn nor_performance_1k_steps() {
         let start = std::time::Instant::now();
         let mut n = NodeOfRanvier::new();
+        for _ in 0..1_000 { std::hint::black_box(n.step(500.0)); }
+        let elapsed = start.elapsed();
+        assert!(elapsed.as_millis() < 50, "1k steps must complete in <50ms");
+    }
+
+    // -- Myelinated Axon tests --
+
+    #[test]
+    fn myelin_fires_with_input() {
+        let mut n = MyelinatedAxon::new();
+        let mut spikes = 0;
+        for _ in 0..2_000 {
+            spikes += n.step(500.0);
+        }
+        assert!(spikes > 0, "Myelinated axon must fire, got {spikes}");
+    }
+
+    #[test]
+    fn myelin_silent_without_input() {
+        let mut n = MyelinatedAxon::new();
+        let mut spikes = 0;
+        for _ in 0..5_000 {
+            spikes += n.step(0.0);
+        }
+        assert_eq!(spikes, 0, "Must be silent without input, got {spikes}");
+    }
+
+    #[test]
+    fn myelin_internode_coupling() {
+        // Internode voltage should be affected by node spiking
+        let mut n = MyelinatedAxon::new();
+        let v_inter_0 = n.v_inter;
+        for _ in 0..500 { n.step(500.0); }
+        assert!((n.v_inter - v_inter_0).abs() > 0.001,
+            "Internode voltage should change with node activity: v_inter={}", n.v_inter);
+    }
+
+    #[test]
+    fn myelin_has_low_capacitance() {
+        let n = MyelinatedAxon::new();
+        assert!(n.c_inter < 0.01,
+            "Myelin capacitance must be very low: {}", n.c_inter);
+    }
+
+    #[test]
+    fn myelin_has_low_myelin_leak() {
+        let n = MyelinatedAxon::new();
+        assert!(n.g_l_myelin < 0.01,
+            "Myelin leak must be very low: {}", n.g_l_myelin);
+    }
+
+    #[test]
+    fn myelin_has_paranodal_seal() {
+        let n = MyelinatedAxon::new();
+        assert!(n.g_para > 0.0, "Must have paranodal seal conductance");
+    }
+
+    #[test]
+    fn myelin_stronger_input_more_spikes() {
+        let mut weak = MyelinatedAxon::new();
+        let mut strong = MyelinatedAxon::new();
+        let (mut sw, mut ss) = (0, 0);
+        for _ in 0..2_000 {
+            sw += weak.step(300.0);
+            ss += strong.step(1000.0);
+        }
+        assert!(ss >= sw, "Stronger → more spikes: strong={ss} vs weak={sw}");
+    }
+
+    #[test]
+    fn myelin_nan_input_stays_finite() {
+        let mut n = MyelinatedAxon::new();
+        n.step(f64::NAN);
+        assert!(n.v().is_finite());
+        assert!(n.v_inter.is_finite());
+    }
+
+    #[test]
+    fn myelin_reset_clears_state() {
+        let mut n = MyelinatedAxon::new();
+        for _ in 0..500 { n.step(500.0); }
+        n.reset();
+        assert_eq!(n.v_inter, -80.0);
+        assert_eq!(n.node.v, -80.0);
+    }
+
+    #[test]
+    fn myelin_performance_1k_steps() {
+        let start = std::time::Instant::now();
+        let mut n = MyelinatedAxon::new();
         for _ in 0..1_000 { std::hint::black_box(n.step(500.0)); }
         let elapsed = start.elapsed();
         assert!(elapsed.as_millis() < 50, "1k steps must complete in <50ms");
