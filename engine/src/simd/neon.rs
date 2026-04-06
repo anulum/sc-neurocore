@@ -16,15 +16,38 @@ use core::arch::aarch64::*;
 /// Caller must ensure the current CPU supports `neon`.
 pub unsafe fn popcount_neon(data: &[u64]) -> u64 {
     let mut total = 0_u64;
-    let mut chunks = data.chunks_exact(2);
+    let mut chunks = data.chunks_exact(8);
 
-    for chunk in &mut chunks {
-        let v = vld1q_u8(chunk.as_ptr() as *const u8);
-        let byte_counts = vcntq_u8(v);
-        let sum16 = vpaddlq_u8(byte_counts);
-        let sum32 = vpaddlq_u16(sum16);
-        let sum64 = vpaddlq_u32(sum32);
-        total += vgetq_lane_u64(sum64, 0) + vgetq_lane_u64(sum64, 1);
+    for chunk in chunks.by_ref() {
+        let v0 = vld1q_u8(chunk.as_ptr() as *const u8);
+        let v1 = vld1q_u8(chunk.as_ptr().add(2) as *const u8);
+        let v2 = vld1q_u8(chunk.as_ptr().add(4) as *const u8);
+        let v3 = vld1q_u8(chunk.as_ptr().add(6) as *const u8);
+        
+        let c0 = vcntq_u8(v0);
+        let c1 = vcntq_u8(v1);
+        let c2 = vcntq_u8(v2);
+        let c3 = vcntq_u8(v3);
+        
+        let s0 = vpaddlq_u8(c0);
+        let s1 = vpaddlq_u8(c1);
+        let s2 = vpaddlq_u8(c2);
+        let s3 = vpaddlq_u8(c3);
+        
+        let s32_0 = vpaddlq_u16(s0);
+        let s32_1 = vpaddlq_u16(s1);
+        let s32_2 = vpaddlq_u16(s2);
+        let s32_3 = vpaddlq_u16(s3);
+        
+        let s64_0 = vpaddlq_u32(s32_0);
+        let s64_1 = vpaddlq_u32(s32_1);
+        let s64_2 = vpaddlq_u32(s32_2);
+        let s64_3 = vpaddlq_u32(s32_3);
+        
+        total += vgetq_lane_u64(s64_0, 0) + vgetq_lane_u64(s64_0, 1);
+        total += vgetq_lane_u64(s64_1, 0) + vgetq_lane_u64(s64_1, 1);
+        total += vgetq_lane_u64(s64_2, 0) + vgetq_lane_u64(s64_2, 1);
+        total += vgetq_lane_u64(s64_3, 0) + vgetq_lane_u64(s64_3, 1);
     }
 
     total + crate::bitstream::popcount_words_portable(chunks.remainder())
