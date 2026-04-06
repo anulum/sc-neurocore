@@ -223,18 +223,25 @@ pub fn demixed_pca(
             mean_mat[i * min_bins + j] = all_means[i][j] - grand[j];
         }
     }
-    // Covariance: M^T M / n_cond (min_bins x min_bins)
+    // Covariance: M^T M / n_cond (min_bins x min_bins) - unrolled & SIMD
     let t = min_bins;
     let mut cov = vec![0.0f64; t * t];
+    let n_cond_f = n_cond as f64;
+    
+    // Transpose mean_mat to column-major for SIMD dots: (t x n_cond)
+    let mut m_cols = vec![vec![0.0_f64; n_cond]; t];
+    for c in 0..n_cond {
+        for i in 0..t {
+            m_cols[i][c] = mean_mat[c * t + i];
+        }
+    }
+
     for i in 0..t {
         for j in i..t {
-            let mut s = 0.0;
-            for c in 0..n_cond {
-                s += mean_mat[c * t + i] * mean_mat[c * t + j];
-            }
-            s /= n_cond as f64;
-            cov[i * t + j] = s;
-            cov[j * t + i] = s;
+            let dot = crate::simd::dot_f64_dispatch(&m_cols[i], &m_cols[j]);
+            let val = dot / n_cond_f;
+            cov[i * t + j] = val;
+            cov[j * t + i] = val;
         }
     }
     let (eigvals, eigvecs) = symmetric_eigen(&cov, t);
