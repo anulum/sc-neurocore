@@ -348,22 +348,8 @@ impl DenseLayer {
                 let input_row = &inputs_flat[start..end];
                 let sample_seed = seed.wrapping_add((sample_idx as u64).wrapping_mul(1_000_000));
 
-                for (neuron_idx, out_val) in out_row.iter_mut().enumerate() {
-                    let total: u64 = input_row
-                        .iter()
-                        .enumerate()
-                        .map(|(input_idx, &p)| {
-                            let input_seed = sample_seed.wrapping_add(input_idx as u64);
-                            let mut rng = Xoshiro256PlusPlus::seed_from_u64(input_seed);
-                            bitstream::encode_and_popcount(
-                                self.weight_slice(neuron_idx, input_idx),
-                                p,
-                                self.length,
-                                &mut rng,
-                            )
-                        })
-                        .sum();
-                    *out_val = total as f64 / self.length as f64;
+                if let Ok(res) = self.forward_fast(input_row, sample_seed) {
+                    out_row.copy_from_slice(&res);
                 }
             });
 
