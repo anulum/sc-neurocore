@@ -315,11 +315,18 @@ pub fn bernoulli_packed_simd<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mu
     let threshold = (prob.clamp(0.0, 1.0) * 256.0) as u8;
     let mut data = vec![0_u64; words];
     let full_words = length / 64;
-    let mut buf = [0_u8; 64];
-
-    for word in data.iter_mut().take(full_words) {
+    let mut buf = [0_u8; 1024];
+    let mut chunks = data[..full_words].chunks_exact_mut(16);
+    
+    for w_chunk in chunks.by_ref() {
         rng.fill(&mut buf);
-        *word = simd_bernoulli_compare_exposed(&buf, threshold);
+        crate::simd::bernoulli_compare_batch_1024(&buf, threshold, w_chunk);
+    }
+    
+    for word in chunks.into_remainder() {
+        let mut small_buf = [0_u8; 64];
+        rng.fill(&mut small_buf);
+        *word = simd_bernoulli_compare_exposed(&small_buf, threshold);
     }
 
     if full_words < words {
