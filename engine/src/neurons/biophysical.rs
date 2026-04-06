@@ -122,10 +122,8 @@ pub struct TraubMilesNeuron {
     pub m: f64,
     pub h: f64,
     pub n: f64,
-    pub w: f64, // M-current (Kv7) activation
     pub g_na: f64,
     pub g_k: f64,
-    pub g_m: f64, // M-current conductance
     pub g_l: f64,
     pub e_na: f64,
     pub e_k: f64,
@@ -141,10 +139,8 @@ impl TraubMilesNeuron {
             m: 0.05,
             h: 0.6,
             n: 0.3,
-            w: 0.01, // M-current starts low at rest
             g_na: 100.0,
             g_k: 80.0,
-            g_m: 1.5, // M-current conductance (Yamada 1989 range: 1-3 mS/cm²)
             g_l: 0.1,
             e_na: 50.0,
             e_k: -100.0,
@@ -163,22 +159,14 @@ impl TraubMilesNeuron {
             let an = safe_rate(0.032, 52.0, self.v, 5.0, 0.32);
             let bn = 0.5 * (-(self.v + 57.0) / 40.0).exp();
 
-            // M-current gating (Yamada et al. 1989)
-            let w_inf = 1.0 / (1.0 + (-(self.v + 35.0) / 10.0).exp());
-            let tau_w =
-                100.0 / (3.3 * ((self.v + 35.0) / 20.0).exp() + (-(self.v + 35.0) / 20.0).exp());
-
             self.m += (am * (1.0 - self.m) - bm * self.m) * self.dt;
             self.h += (ah * (1.0 - self.h) - bh * self.h) * self.dt;
             self.n += (an * (1.0 - self.n) - bn * self.n) * self.dt;
-            self.w += ((w_inf - self.w) / tau_w) * self.dt;
-            self.w = self.w.clamp(0.0, 1.0);
 
             let i_na = self.g_na * self.m.powi(3) * self.h * (self.v - self.e_na);
             let i_k = self.g_k * self.n.powi(4) * (self.v - self.e_k);
-            let i_m = self.g_m * self.w * (self.v - self.e_k);
             let i_l = self.g_l * (self.v - self.e_l);
-            self.v += (-i_na - i_k - i_m - i_l + current) * self.dt;
+            self.v += (-i_na - i_k - i_l + current) * self.dt;
         }
         if self.v >= self.v_threshold && v_prev < self.v_threshold {
             1
@@ -1842,7 +1830,6 @@ mod tests {
         for _ in 0..100 { n.step(5.0); }
         n.reset();
         assert!((n.v - (-67.0)).abs() < 1e-10);
-        assert!((n.w - 0.01).abs() < 1e-10);
     }
     #[test]
     fn traub_extreme_bounded() {
@@ -1851,19 +1838,12 @@ mod tests {
         assert!(n.v.is_finite());
     }
     #[test]
-    fn traub_m_current_adaptation() {
-        // M-current causes spike frequency adaptation
-        let mut n = TraubMilesNeuron::new();
-        for _ in 0..100 { n.step(5.0); }
-        for _ in 0..100 { n.step(5.0); }
-        // w (M-current) should have increased from initial
-        assert!(n.w > 0.01, "M-current activation w should increase");
-    }
-    #[test]
     fn traub_gates_bounded() {
         let mut n = TraubMilesNeuron::new();
         for _ in 0..500 { n.step(5.0); }
-        assert!(n.w >= 0.0 && n.w <= 1.0, "w={}", n.w);
+        assert!(n.m >= 0.0 && n.m <= 1.01);
+        assert!(n.h >= 0.0 && n.h <= 1.01);
+        assert!(n.n >= 0.0 && n.n <= 1.01);
     }
     #[test]
     fn traub_weak_negative_no_crash() {
