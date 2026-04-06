@@ -40,16 +40,26 @@ pub fn is_available() -> bool {
 
 impl GpuContext {
     fn try_new() -> Option<Self> {
+        let backends = wgpu::Backends::VULKAN | wgpu::Backends::METAL | wgpu::Backends::DX12;
         let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
-            backends: wgpu::Backends::VULKAN | wgpu::Backends::METAL | wgpu::Backends::DX12,
+            backends,
             ..Default::default()
         });
 
-        let adapter = pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
-            power_preference: wgpu::PowerPreference::HighPerformance,
-            compatible_surface: None,
-            force_fallback_adapter: false,
-        }))?;
+        // Allow adapter selection via SC_GPU_ADAPTER env var (substring match).
+        let adapter = if let Ok(name_filter) = std::env::var("SC_GPU_ADAPTER") {
+            let filter_lower = name_filter.to_lowercase();
+            instance
+                .enumerate_adapters(backends)
+                .into_iter()
+                .find(|a| a.get_info().name.to_lowercase().contains(&filter_lower))
+        } else {
+            pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
+                power_preference: wgpu::PowerPreference::HighPerformance,
+                compatible_surface: None,
+                force_fallback_adapter: false,
+            }))
+        }?;
 
         let adapter_name = adapter.get_info().name.clone();
 
