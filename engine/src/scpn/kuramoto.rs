@@ -26,6 +26,8 @@ const TWO_PI: f64 = std::f64::consts::TAU;
 pub struct KuramotoSolver {
     /// Number of oscillators.
     pub n: usize,
+    /// Precomputed 1/N.
+    pub n_inv: f64,
     /// Natural frequencies `ω_n`, shape `(n,)`.
     pub omega: Vec<f64>,
     /// Baseline coupling matrix `K_nm`, row-major shape `(n*n)`.
@@ -77,6 +79,7 @@ impl KuramotoSolver {
 
         Self {
             n,
+            n_inv: 1.0 / n as f64,
             omega,
             coupling: coupling_flat,
             phases: initial_phases,
@@ -125,14 +128,10 @@ impl KuramotoSolver {
             .for_each(|(row_idx, dtheta_n)| {
                 let coupling_row = &self.coupling[row_idx * n..(row_idx + 1) * n];
                 let sin_row = &self.sin_diff[row_idx * n..(row_idx + 1) * n];
-                let coupling_sum: f64 = coupling_row
-                    .iter()
-                    .zip(sin_row.iter())
-                    .map(|(k_nm, sin_diff)| k_nm * sin_diff)
-                    .sum();
+                let coupling_sum = crate::simd::dot_f64_dispatch(coupling_row, sin_row);
                 // 1/N normalization per Kuramoto (1984)
                 *dtheta_n = self.omega[row_idx]
-                    + coupling_sum / (n as f64)
+                    + coupling_sum * self.n_inv
                     + self.noise_amp * self.noise[row_idx];
             });
 
@@ -266,14 +265,10 @@ impl KuramotoSolver {
             .for_each(|(i, dtheta_n)| {
                 let coupling_row = &self.coupling[i * n..(i + 1) * n];
                 let sin_row = &self.sin_diff[i * n..(i + 1) * n];
-                let coupling_sum: f64 = coupling_row
-                    .iter()
-                    .zip(sin_row.iter())
-                    .map(|(k, s)| k * s)
-                    .sum();
+                let coupling_sum = crate::simd::dot_f64_dispatch(coupling_row, sin_row);
 
                 *dtheta_n = self.omega[i]
-                    + coupling_sum / (n as f64)
+                    + coupling_sum * self.n_inv
                     + self.geo_coupling[i]
                     + self.pgbo_coupling[i]
                     + self.field_pressure * self.cos_theta[i]
