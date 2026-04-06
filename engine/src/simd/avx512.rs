@@ -17,15 +17,15 @@ use core::arch::x86_64::*;
 pub unsafe fn popcount_avx512(data: &[u64]) -> u64 {
     let mut total = 0_u64;
     let mut chunks = data.chunks_exact(16);
-    
+
     for chunk in chunks.by_ref() {
         let v0 = _mm512_loadu_si512(chunk.as_ptr() as *const __m512i);
         let v1 = _mm512_loadu_si512(chunk.as_ptr().add(8) as *const __m512i);
-        
+
         total += _mm512_reduce_add_epi64(_mm512_popcnt_epi64(v0)) as u64;
         total += _mm512_reduce_add_epi64(_mm512_popcnt_epi64(v1)) as u64;
     }
-    
+
     total + crate::bitstream::popcount_words_portable(chunks.remainder())
 }
 
@@ -332,14 +332,13 @@ pub unsafe fn scale_f64_avx512(alpha: f64, y: &mut [f64]) {
     }
 }
 
-
 #[cfg(target_arch = "x86_64")]
 #[target_feature(enable = "avx512bw")]
 /// Compare 1024 random bytes against a threshold and return 16 u64 words.
 pub unsafe fn bernoulli_compare_batch_avx512(buf: &[u8], threshold: u8, out: &mut [u64]) {
     let v_thresh = _mm512_set1_epi8(threshold as i8);
     for i in 0..16 {
-        let chunk = &buf[i*64..(i+1)*64];
+        let chunk = &buf[i * 64..(i + 1) * 64];
         let v = _mm512_loadu_si512(chunk.as_ptr() as *const _);
         // AVX-512 has direct unsigned comparison
         out[i] = _mm512_cmplt_epu8_mask(v, v_thresh);

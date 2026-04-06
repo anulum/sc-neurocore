@@ -78,7 +78,7 @@ fn covariance_matrix(data: &[Vec<f64>], eps: f64) -> Vec<Vec<f64>> {
     let mut cov = vec![vec![0.0; n]; n];
     let t_f = t as f64;
     let denom = (t_f - 1.0).max(1.0);
-    
+
     for i in 0..n {
         for j in 0..=i {
             let dot = crate::simd::dot_f64_dispatch(&data[i], &data[j]);

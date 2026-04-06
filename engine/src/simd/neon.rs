@@ -23,27 +23,27 @@ pub unsafe fn popcount_neon(data: &[u64]) -> u64 {
         let v1 = vld1q_u8(chunk.as_ptr().add(2) as *const u8);
         let v2 = vld1q_u8(chunk.as_ptr().add(4) as *const u8);
         let v3 = vld1q_u8(chunk.as_ptr().add(6) as *const u8);
-        
+
         let c0 = vcntq_u8(v0);
         let c1 = vcntq_u8(v1);
         let c2 = vcntq_u8(v2);
         let c3 = vcntq_u8(v3);
-        
+
         let s0 = vpaddlq_u8(c0);
         let s1 = vpaddlq_u8(c1);
         let s2 = vpaddlq_u8(c2);
         let s3 = vpaddlq_u8(c3);
-        
+
         let s32_0 = vpaddlq_u16(s0);
         let s32_1 = vpaddlq_u16(s1);
         let s32_2 = vpaddlq_u16(s2);
         let s32_3 = vpaddlq_u16(s3);
-        
+
         let s64_0 = vpaddlq_u32(s32_0);
         let s64_1 = vpaddlq_u32(s32_1);
         let s64_2 = vpaddlq_u32(s32_2);
         let s64_3 = vpaddlq_u32(s32_3);
-        
+
         total += vgetq_lane_u64(s64_0, 0) + vgetq_lane_u64(s64_0, 1);
         total += vgetq_lane_u64(s64_1, 0) + vgetq_lane_u64(s64_1, 1);
         total += vgetq_lane_u64(s64_2, 0) + vgetq_lane_u64(s64_2, 1);
@@ -76,15 +76,27 @@ pub unsafe fn dot_f64_neon(a: &[f64], b: &[f64]) -> f64 {
     let mut acc1 = vdupq_n_f64(0.0);
     let mut acc2 = vdupq_n_f64(0.0);
     let mut acc3 = vdupq_n_f64(0.0);
-    
+
     let mut chunks_a = a[..len].chunks_exact(8);
     let mut chunks_b = b[..len].chunks_exact(8);
 
     for (ca, cb) in chunks_a.by_ref().zip(chunks_b.by_ref()) {
         acc0 = vfmaq_f64(acc0, vld1q_f64(ca.as_ptr()), vld1q_f64(cb.as_ptr()));
-        acc1 = vfmaq_f64(acc1, vld1q_f64(ca.as_ptr().add(2)), vld1q_f64(cb.as_ptr().add(2)));
-        acc2 = vfmaq_f64(acc2, vld1q_f64(ca.as_ptr().add(4)), vld1q_f64(cb.as_ptr().add(4)));
-        acc3 = vfmaq_f64(acc3, vld1q_f64(ca.as_ptr().add(6)), vld1q_f64(cb.as_ptr().add(6)));
+        acc1 = vfmaq_f64(
+            acc1,
+            vld1q_f64(ca.as_ptr().add(2)),
+            vld1q_f64(cb.as_ptr().add(2)),
+        );
+        acc2 = vfmaq_f64(
+            acc2,
+            vld1q_f64(ca.as_ptr().add(4)),
+            vld1q_f64(cb.as_ptr().add(4)),
+        );
+        acc3 = vfmaq_f64(
+            acc3,
+            vld1q_f64(ca.as_ptr().add(6)),
+            vld1q_f64(cb.as_ptr().add(6)),
+        );
     }
 
     acc0 = vaddq_f64(acc0, acc1);
@@ -112,7 +124,7 @@ pub unsafe fn max_f64_neon(a: &[f64]) -> f64 {
     let mut vmax1 = vdupq_n_f64(f64::NEG_INFINITY);
     let mut vmax2 = vdupq_n_f64(f64::NEG_INFINITY);
     let mut vmax3 = vdupq_n_f64(f64::NEG_INFINITY);
-    
+
     let mut chunks = a.chunks_exact(8);
     for chunk in chunks.by_ref() {
         vmax0 = vmaxq_f64(vmax0, vld1q_f64(chunk.as_ptr()));
@@ -143,7 +155,7 @@ pub unsafe fn sum_f64_neon(a: &[f64]) -> f64 {
     let mut acc1 = vdupq_n_f64(0.0);
     let mut acc2 = vdupq_n_f64(0.0);
     let mut acc3 = vdupq_n_f64(0.0);
-    
+
     let mut chunks = a.chunks_exact(8);
     for chunk in chunks.by_ref() {
         acc0 = vaddq_f64(acc0, vld1q_f64(chunk.as_ptr()));
@@ -174,10 +186,22 @@ pub unsafe fn scale_f64_neon(alpha: f64, y: &mut [f64]) {
     let mut chunks = y.chunks_exact_mut(8);
 
     for chunk in chunks.by_ref() {
-        vst1q_f64(chunk.as_mut_ptr(), vmulq_f64(vld1q_f64(chunk.as_ptr()), valpha));
-        vst1q_f64(chunk.as_mut_ptr().add(2), vmulq_f64(vld1q_f64(chunk.as_ptr().add(2)), valpha));
-        vst1q_f64(chunk.as_mut_ptr().add(4), vmulq_f64(vld1q_f64(chunk.as_ptr().add(4)), valpha));
-        vst1q_f64(chunk.as_mut_ptr().add(6), vmulq_f64(vld1q_f64(chunk.as_ptr().add(6)), valpha));
+        vst1q_f64(
+            chunk.as_mut_ptr(),
+            vmulq_f64(vld1q_f64(chunk.as_ptr()), valpha),
+        );
+        vst1q_f64(
+            chunk.as_mut_ptr().add(2),
+            vmulq_f64(vld1q_f64(chunk.as_ptr().add(2)), valpha),
+        );
+        vst1q_f64(
+            chunk.as_mut_ptr().add(4),
+            vmulq_f64(vld1q_f64(chunk.as_ptr().add(4)), valpha),
+        );
+        vst1q_f64(
+            chunk.as_mut_ptr().add(6),
+            vmulq_f64(vld1q_f64(chunk.as_ptr().add(6)), valpha),
+        );
     }
 
     for v in chunks.into_remainder() {

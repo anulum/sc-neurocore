@@ -6,8 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Dimensionality reduction for spike train populations
 
-use rayon::prelude::*;
 use super::basic;
+use rayon::prelude::*;
 
 // ── helpers ─────────────────────────────────────────────────────────
 
@@ -227,7 +227,7 @@ pub fn demixed_pca(
     let t = min_bins;
     let mut cov = vec![0.0f64; t * t];
     let n_cond_f = n_cond as f64;
-    
+
     // Transpose mean_mat to column-major for SIMD dots: (t x n_cond)
     let mut m_cols = vec![vec![0.0_f64; n_cond]; t];
     for c in 0..n_cond {

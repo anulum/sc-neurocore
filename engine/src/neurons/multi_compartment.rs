@@ -475,10 +475,12 @@ impl BoothRinzelNeuron {
             let n_inf = 1.0 / (1.0 + (-(self.vs + 28.0) / 15.0).exp());
             let s_inf = 1.0 / (1.0 + (-(self.vd + 22.0) / 5.0).exp());
             let q_inf = 1.0 / (1.0 + (-(self.vd + 35.0) / 2.0).exp());
-            let tau_h = (30.0 / (((self.vs + 50.0) / 15.0).exp()
-                + ((-(self.vs + 50.0)) / 16.0).exp() + 1e-12)).max(0.01);
-            let tau_n = (7.0 / (((self.vs + 40.0) / 40.0).exp()
-                + ((-(self.vs + 40.0)) / 50.0).exp() + 1e-12)).max(0.01);
+            let tau_h = (30.0
+                / (((self.vs + 50.0) / 15.0).exp() + ((-(self.vs + 50.0)) / 16.0).exp() + 1e-12))
+                .max(0.01);
+            let tau_n = (7.0
+                / (((self.vs + 40.0) / 40.0).exp() + ((-(self.vs + 40.0)) / 50.0).exp() + 1e-12))
+                .max(0.01);
             self.h = (self.h + (h_inf - self.h) / tau_h * self.dt).clamp(0.0, 1.0);
             self.n = (self.n + (n_inf - self.n) / tau_n * self.dt).clamp(0.0, 1.0);
             self.q = (self.q + (q_inf - self.q) / 400.0 * self.dt).clamp(0.0, 1.0);
@@ -493,8 +495,7 @@ impl BoothRinzelNeuron {
             let i_ds = (self.gc / (1.0 - self.p)) * (self.vd - self.vs);
             self.vs = (self.vs + (-i_na - i_k - i_ls - i_sd + current / self.p) * self.dt)
                 .clamp(-200.0, 100.0);
-            self.vd = (self.vd + (-i_ca - i_kca - i_ld - i_ds) * self.dt)
-                .clamp(-200.0, 100.0);
+            self.vd = (self.vd + (-i_ca - i_kca - i_ld - i_ds) * self.dt).clamp(-200.0, 100.0);
             self.ca = (self.ca + (0.0025 * (-0.009 * i_ca) - 0.18 * self.ca) * self.dt).max(0.0);
         }
         if self.vs >= self.v_threshold && v_prev < self.v_threshold {
@@ -697,7 +698,9 @@ mod tests {
     #[test]
     fn pr_reset() {
         let mut n = PinskyRinzelNeuron::new();
-        for _ in 0..100 { n.step(5.0, 0.0); }
+        for _ in 0..100 {
+            n.step(5.0, 0.0);
+        }
         n.reset();
         assert!((n.v_s - (-60.0)).abs() < 1e-10);
         assert!((n.v_d - (-60.0)).abs() < 1e-10);
@@ -705,7 +708,9 @@ mod tests {
     #[test]
     fn pr_bounded() {
         let mut n = PinskyRinzelNeuron::new();
-        for _ in 0..5000 { n.step(50.0, 0.0); }
+        for _ in 0..5000 {
+            n.step(50.0, 0.0);
+        }
         assert!(n.v_s.is_finite());
     }
     #[test]
@@ -716,106 +721,144 @@ mod tests {
         assert!(n.v_d.is_finite());
     }
     #[test]
-    fn pr_nan_no_panic() { PinskyRinzelNeuron::new().step(f64::NAN, 0.0); }
+    fn pr_nan_no_panic() {
+        PinskyRinzelNeuron::new().step(f64::NAN, 0.0);
+    }
 
     // -- HayL5 --
     #[test]
     fn hay_reset() {
         let mut n = HayL5PyramidalNeuron::new();
-        for _ in 0..100 { n.step(20.0, 0.0); }
+        for _ in 0..100 {
+            n.step(20.0, 0.0);
+        }
         n.reset();
         assert!((n.v_s - (-75.0)).abs() < 1e-10);
     }
     #[test]
     fn hay_bounded() {
         let mut n = HayL5PyramidalNeuron::new();
-        for _ in 0..500 { n.step(100.0, 0.0); }
+        for _ in 0..500 {
+            n.step(100.0, 0.0);
+        }
         assert!(n.v_s.is_finite());
     }
     #[test]
-    fn hay_nan_no_panic() { HayL5PyramidalNeuron::new().step(f64::NAN, 0.0); }
+    fn hay_nan_no_panic() {
+        HayL5PyramidalNeuron::new().step(f64::NAN, 0.0);
+    }
 
     // -- MarderSTG --
     #[test]
     fn marder_reset() {
         let mut n = MarderSTGNeuron::new();
-        for _ in 0..100 { n.step(5.0); }
+        for _ in 0..100 {
+            n.step(5.0);
+        }
         n.reset();
         assert!((n.v - (-60.0)).abs() < 1e-10);
     }
     #[test]
     fn marder_bounded() {
         let mut n = MarderSTGNeuron::new();
-        for _ in 0..2000 { n.step(50.0); }
+        for _ in 0..2000 {
+            n.step(50.0);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
-    fn marder_nan_no_panic() { MarderSTGNeuron::new().step(f64::NAN); }
+    fn marder_nan_no_panic() {
+        MarderSTGNeuron::new().step(f64::NAN);
+    }
 
     // -- RallCable --
     #[test]
     fn rall_reset() {
         let mut n = RallCableNeuron::new(5);
-        for _ in 0..100 { n.step(50.0); }
+        for _ in 0..100 {
+            n.step(50.0);
+        }
         n.reset();
         assert!(n.v.iter().all(|&x| (x - n.v_rest).abs() < 1e-10));
     }
     #[test]
     fn rall_bounded() {
         let mut n = RallCableNeuron::new(5);
-        for _ in 0..1000 { n.step(500.0); }
+        for _ in 0..1000 {
+            n.step(500.0);
+        }
         assert!(n.v.iter().all(|x| x.is_finite()));
     }
     #[test]
-    fn rall_nan_no_panic() { RallCableNeuron::new(5).step(f64::NAN); }
+    fn rall_nan_no_panic() {
+        RallCableNeuron::new(5).step(f64::NAN);
+    }
 
     // -- BoothRinzel --
     #[test]
     fn booth_reset() {
         let mut n = BoothRinzelNeuron::new();
-        for _ in 0..100 { n.step(5.0); }
+        for _ in 0..100 {
+            n.step(5.0);
+        }
         n.reset();
         assert!((n.vs - (-65.0)).abs() < 1e-10);
     }
     #[test]
     fn booth_bounded() {
         let mut n = BoothRinzelNeuron::new();
-        for _ in 0..2000 { n.step(50.0); }
+        for _ in 0..2000 {
+            n.step(50.0);
+        }
         assert!(n.vs.is_finite());
     }
     #[test]
-    fn booth_nan_no_panic() { BoothRinzelNeuron::new().step(f64::NAN); }
+    fn booth_nan_no_panic() {
+        BoothRinzelNeuron::new().step(f64::NAN);
+    }
 
     // -- Dendrify --
     #[test]
     fn dendrify_reset() {
         let mut n = DendrifyNeuron::new();
-        for _ in 0..100 { n.step(50.0); }
+        for _ in 0..100 {
+            n.step(50.0);
+        }
         n.reset();
         assert!((n.v_s - (-65.0)).abs() < 1e-10);
     }
     #[test]
     fn dendrify_bounded() {
         let mut n = DendrifyNeuron::new();
-        for _ in 0..2000 { n.step(200.0); }
+        for _ in 0..2000 {
+            n.step(200.0);
+        }
         assert!(n.v_s.is_finite());
     }
     #[test]
-    fn dendrify_nan_no_panic() { DendrifyNeuron::new().step(f64::NAN); }
+    fn dendrify_nan_no_panic() {
+        DendrifyNeuron::new().step(f64::NAN);
+    }
 
     // -- TwoCompartmentLIF --
     #[test]
     fn tc_lif_reset() {
         let mut n = TwoCompartmentLIFNeuron::new();
-        for _ in 0..50 { n.step(0.5, 0.3); }
+        for _ in 0..50 {
+            n.step(0.5, 0.3);
+        }
         n.reset();
     }
     #[test]
     fn tc_lif_bounded() {
         let mut n = TwoCompartmentLIFNeuron::new();
-        for _ in 0..1000 { n.step(100.0, 100.0); }
+        for _ in 0..1000 {
+            n.step(100.0, 100.0);
+        }
         assert!(n.v_s.is_finite());
     }
     #[test]
-    fn tc_lif_nan_no_panic() { TwoCompartmentLIFNeuron::new().step(f64::NAN, 0.0); }
+    fn tc_lif_nan_no_panic() {
+        TwoCompartmentLIFNeuron::new().step(f64::NAN, 0.0);
+    }
 }

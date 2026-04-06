@@ -132,21 +132,24 @@ pub fn linear_discriminant_decode(
     }
 
     // Class means (parallelised)
-    let (class_means, class_indices): (Vec<Vec<f64>>, Vec<Vec<usize>>) = classes.par_iter().map(|&c| {
-        let indices: Vec<usize> = (0..n_samples).filter(|&i| labels[i] == c).collect();
-        let mut mean = vec![0.0_f64; n_features];
-        for &idx in &indices {
-            let row = &train_data[idx * n_features..(idx + 1) * n_features];
-            for f in 0..n_features {
-                mean[f] += row[f];
+    let (class_means, class_indices): (Vec<Vec<f64>>, Vec<Vec<usize>>) = classes
+        .par_iter()
+        .map(|&c| {
+            let indices: Vec<usize> = (0..n_samples).filter(|&i| labels[i] == c).collect();
+            let mut mean = vec![0.0_f64; n_features];
+            for &idx in &indices {
+                let row = &train_data[idx * n_features..(idx + 1) * n_features];
+                for f in 0..n_features {
+                    mean[f] += row[f];
+                }
             }
-        }
-        let n_c = indices.len() as f64;
-        for v in &mut mean {
-            *v /= n_c;
-        }
-        (mean, indices)
-    }).unzip();
+            let n_c = indices.len() as f64;
+            for v in &mut mean {
+                *v /= n_c;
+            }
+            (mean, indices)
+        })
+        .unzip();
 
     // Within-class scatter S_w (n_features × n_features)
     let nf = n_features;

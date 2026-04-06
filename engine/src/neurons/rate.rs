@@ -791,30 +791,44 @@ mod tests {
     #[test]
     fn sigmoid_rate_reset() {
         let mut n = SigmoidRateNeuron::new();
-        for _ in 0..100 { n.step(5.0); }
+        for _ in 0..100 {
+            n.step(5.0);
+        }
         n.reset();
         assert!((n.r - 0.0).abs() < 1e-10);
     }
     #[test]
     fn sigmoid_rate_bounded() {
         let mut n = SigmoidRateNeuron::new();
-        for _ in 0..1000 { n.step(1e4); }
+        for _ in 0..1000 {
+            n.step(1e4);
+        }
         assert!(n.r.is_finite());
-        assert!(n.r >= 0.0 && n.r <= 1.0, "sigmoid output bounded [0,1]: {}", n.r);
+        assert!(
+            n.r >= 0.0 && n.r <= 1.0,
+            "sigmoid output bounded [0,1]: {}",
+            n.r
+        );
     }
     #[test]
-    fn sigmoid_rate_nan_no_panic() { SigmoidRateNeuron::new().step(f64::NAN); }
+    fn sigmoid_rate_nan_no_panic() {
+        SigmoidRateNeuron::new().step(f64::NAN);
+    }
 
     // -- ThresholdLinear --
     #[test]
     fn tl_rate_reset() {
         let mut n = ThresholdLinearRateNeuron::new();
-        for _ in 0..100 { n.step(5.0); }
+        for _ in 0..100 {
+            n.step(5.0);
+        }
         n.reset();
         assert!((n.r - 0.0).abs() < 1e-10);
     }
     #[test]
-    fn tl_rate_nan_no_panic() { ThresholdLinearRateNeuron::new().step(f64::NAN); }
+    fn tl_rate_nan_no_panic() {
+        ThresholdLinearRateNeuron::new().step(f64::NAN);
+    }
     #[test]
     fn tl_rate_below_threshold() {
         let mut n = ThresholdLinearRateNeuron::new();
@@ -825,16 +839,22 @@ mod tests {
     #[test]
     fn astrocyte_reset() {
         let mut n = AstrocyteModel::new();
-        for _ in 0..1000 { n.step(0.1); }
+        for _ in 0..1000 {
+            n.step(0.1);
+        }
         n.reset();
         assert!((n.ca - 0.05).abs() < 1e-10);
     }
     #[test]
-    fn astrocyte_nan_no_panic() { AstrocyteModel::new().step(f64::NAN); }
+    fn astrocyte_nan_no_panic() {
+        AstrocyteModel::new().step(f64::NAN);
+    }
     #[test]
     fn astrocyte_ca_nonneg() {
         let mut n = AstrocyteModel::new();
-        for _ in 0..5000 { n.step(0.1); }
+        for _ in 0..5000 {
+            n.step(0.1);
+        }
         assert!(n.ca >= 0.0, "Ca²⁺ must be non-negative");
     }
 
@@ -842,7 +862,9 @@ mod tests {
     #[test]
     fn tm_reset() {
         let mut n = TsodyksMarkramNeuron::new();
-        for _ in 0..100 { n.step(50.0, false); }
+        for _ in 0..100 {
+            n.step(50.0, false);
+        }
         n.reset();
         assert!((n.v - n.v_rest).abs() < 1e-10);
         assert!((n.x - 1.0).abs() < 1e-10);
@@ -850,61 +872,90 @@ mod tests {
     #[test]
     fn tm_bounded() {
         let mut n = TsodyksMarkramNeuron::new();
-        for _ in 0..1000 { n.step(1e4, false); }
+        for _ in 0..1000 {
+            n.step(1e4, false);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
-    fn tm_nan_no_panic() { TsodyksMarkramNeuron::new().step(f64::NAN, false); }
+    fn tm_nan_no_panic() {
+        TsodyksMarkramNeuron::new().step(f64::NAN, false);
+    }
     #[test]
     fn tm_stp_depression() {
         let mut n = TsodyksMarkramNeuron::new();
-        for _ in 0..500 { n.step(50.0, true); }
+        for _ in 0..500 {
+            n.step(50.0, true);
+        }
         // With repeated presynaptic spikes, x (available fraction) should decrease
-        assert!(n.x < 1.0, "STP depression: x should be < 1.0 after spikes: {}", n.x);
+        assert!(
+            n.x < 1.0,
+            "STP depression: x should be < 1.0 after spikes: {}",
+            n.x
+        );
     }
 
     // -- LiquidTimeConstant --
     #[test]
     fn ltc_reset() {
-        let mut n = LiquidTimeConstantNeuron { v_threshold: 0.9, ..LiquidTimeConstantNeuron::new() };
-        for _ in 0..50 { n.step(5.0); }
+        let mut n = LiquidTimeConstantNeuron {
+            v_threshold: 0.9,
+            ..LiquidTimeConstantNeuron::new()
+        };
+        for _ in 0..50 {
+            n.step(5.0);
+        }
         n.reset();
         assert!((n.x - 0.0).abs() < 1e-10);
     }
     #[test]
-    fn ltc_nan_no_panic() { LiquidTimeConstantNeuron::new().step(f64::NAN); }
+    fn ltc_nan_no_panic() {
+        LiquidTimeConstantNeuron::new().step(f64::NAN);
+    }
 
     // -- CompteWM --
     #[test]
     fn compte_reset() {
         let mut n = CompteWMNeuron::new();
-        for _ in 0..100 { n.step(5.0, false); }
+        for _ in 0..100 {
+            n.step(5.0, false);
+        }
         n.reset();
         assert!((n.v - n.e_l).abs() < 1e-10);
     }
     #[test]
-    fn compte_nan_no_panic() { CompteWMNeuron::new().step(f64::NAN, false); }
+    fn compte_nan_no_panic() {
+        CompteWMNeuron::new().step(f64::NAN, false);
+    }
 
     // -- ParallelSpiking --
     #[test]
     fn psn_reset() {
         let mut n = ParallelSpikingNeuron::new(4, 0.5);
-        for _ in 0..20 { n.step(1.0); }
+        for _ in 0..20 {
+            n.step(1.0);
+        }
         n.reset();
     }
     #[test]
-    fn psn_nan_no_panic() { ParallelSpikingNeuron::new(4, 0.5).step(f64::NAN); }
+    fn psn_nan_no_panic() {
+        ParallelSpikingNeuron::new(4, 0.5).step(f64::NAN);
+    }
 
     // -- FractionalLIF --
     #[test]
     fn frac_lif_reset() {
         let mut n = FractionalLIFNeuron::new(0.8, 50);
-        for _ in 0..100 { n.step(2.0); }
+        for _ in 0..100 {
+            n.step(2.0);
+        }
         n.reset();
         assert!((n.v - n.v_rest).abs() < 1e-10);
     }
     #[test]
-    fn frac_lif_nan_no_panic() { FractionalLIFNeuron::new(0.8, 50).step(f64::NAN); }
+    fn frac_lif_nan_no_panic() {
+        FractionalLIFNeuron::new(0.8, 50).step(f64::NAN);
+    }
 
     // -- Siegert --
     #[test]
@@ -914,14 +965,18 @@ mod tests {
         assert!(r >= 0.0);
     }
     #[test]
-    fn siegert_nan_no_panic() { SiegertTransferFunction::new().step(f64::NAN); }
+    fn siegert_nan_no_panic() {
+        SiegertTransferFunction::new().step(f64::NAN);
+    }
 
     // -- Amari --
     #[test]
     fn amari_reset() {
         let mut n = AmariNeuralField::new(32);
         let inp = vec![0.5; 32];
-        for _ in 0..100 { n.step(&inp); }
+        for _ in 0..100 {
+            n.step(&inp);
+        }
         n.reset();
         assert!(n.u.iter().all(|&x| x == 0.0));
     }
@@ -929,7 +984,9 @@ mod tests {
     fn amari_bounded() {
         let mut n = AmariNeuralField::new(16);
         let inp = vec![1e3; 16];
-        for _ in 0..1000 { n.step(&inp); }
+        for _ in 0..1000 {
+            n.step(&inp);
+        }
         assert!(n.u.iter().all(|x| x.is_finite()));
     }
 
@@ -955,7 +1012,10 @@ mod tests {
         let inp = vec![0.0; 4];
         for _ in 0..200 {
             let spikes = n.step(&inp);
-            assert!(spikes.iter().all(|&s| s == 0), "should be silent at zero input");
+            assert!(
+                spikes.iter().all(|&s| s == 0),
+                "should be silent at zero input"
+            );
         }
     }
 
@@ -975,7 +1035,8 @@ mod tests {
         assert!(
             spike_counts[0] > spike_counts[1],
             "unit 0 ({}) should spike more than unit 1 ({}) — winner-take-all",
-            spike_counts[0], spike_counts[1]
+            spike_counts[0],
+            spike_counts[1]
         );
     }
 
@@ -1004,7 +1065,8 @@ mod tests {
         assert!(
             total_inh <= total_no_inh,
             "inhibition ({}) should reduce total spikes vs no inhibition ({})",
-            total_inh, total_no_inh
+            total_inh,
+            total_no_inh
         );
     }
 
@@ -1016,7 +1078,10 @@ mod tests {
             n.step(&inp);
         }
         n.reset();
-        assert!(n.v.iter().all(|&x| x == 0.0), "reset must zero all voltages");
+        assert!(
+            n.v.iter().all(|&x| x == 0.0),
+            "reset must zero all voltages"
+        );
     }
 
     #[test]
@@ -1039,7 +1104,10 @@ mod tests {
         for _ in 0..500 {
             n.step(&inp);
         }
-        assert!(n.v.iter().all(|x| x.is_finite()), "must handle negative input");
+        assert!(
+            n.v.iter().all(|x| x.is_finite()),
+            "must handle negative input"
+        );
     }
 
     #[test]

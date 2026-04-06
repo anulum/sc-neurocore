@@ -33,7 +33,7 @@ fn entropy_from_counts(counts: &[usize], total: usize) -> f64 {
     }
     let n_inv = 1.0 / total as f64;
     let mut h = 0.0_f64;
-    
+
     let mut chunks = counts.chunks_exact(4);
     for chunk in chunks.by_ref() {
         for &c in chunk {

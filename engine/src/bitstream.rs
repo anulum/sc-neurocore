@@ -317,12 +317,12 @@ pub fn bernoulli_packed_simd<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mu
     let full_words = length / 64;
     let mut buf = [0_u8; 1024];
     let mut chunks = data[..full_words].chunks_exact_mut(16);
-    
+
     for w_chunk in chunks.by_ref() {
         rng.fill(&mut buf);
         crate::simd::bernoulli_compare_batch_1024(&buf, threshold, w_chunk);
     }
-    
+
     for word in chunks.into_remainder() {
         let mut small_buf = [0_u8; 64];
         rng.fill(&mut small_buf);
@@ -377,7 +377,7 @@ pub fn encode_and_popcount<R: Rng + ?Sized>(
     let mut total = 0_u64;
     let mut buf = [0_u8; 1024]; // 16 words worth
     let mut chunks = weight_words[..full_words].chunks_exact(16);
-    
+
     let mut encoded_batch = [0_u64; 16];
     for w_chunk in chunks.by_ref() {
         rng.fill(&mut buf);
@@ -386,7 +386,7 @@ pub fn encode_and_popcount<R: Rng + ?Sized>(
             total += (encoded_batch[i] & w_word).count_ones() as u64;
         }
     }
-    
+
     for &w_word in chunks.remainder() {
         let mut small_buf = [0_u8; 64];
         rng.fill(&mut small_buf);

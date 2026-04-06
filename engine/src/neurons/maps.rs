@@ -229,7 +229,11 @@ impl CazellesMapNeuron {
         let y_new = self.y + self.epsilon * (self.x - self.sigma);
         self.x = x_new;
         self.y = y_new;
-        if self.x >= self.x_threshold { 1 } else { 0 }
+        if self.x >= self.x_threshold {
+            1
+        } else {
+            0
+        }
     }
     pub fn reset(&mut self) {
         self.x = 0.1;

@@ -123,7 +123,9 @@ pub fn fused_and_popcount_dispatch(a: &[u64], b: &[u64]) -> u64 {
         total += (ca[2] & cb[2]).count_ones() as u64;
         total += (ca[3] & cb[3]).count_ones() as u64;
     }
-    total += chunks_a.remainder().iter()
+    total += chunks_a
+        .remainder()
+        .iter()
         .zip(chunks_b.remainder().iter())
         .map(|(&wa, &wb)| (wa & wb).count_ones() as u64)
         .sum::<u64>();
@@ -155,7 +157,9 @@ pub fn fused_xor_popcount_dispatch(a: &[u64], b: &[u64]) -> u64 {
                     total += (ca[i] ^ cb[i]).count_ones() as u64;
                 }
             }
-            total += chunks_a.remainder().iter()
+            total += chunks_a
+                .remainder()
+                .iter()
                 .zip(chunks_b.remainder().iter())
                 .map(|(&wa, &wb)| (wa ^ wb).count_ones() as u64)
                 .sum::<u64>();
@@ -185,7 +189,9 @@ pub fn fused_xor_popcount_dispatch(a: &[u64], b: &[u64]) -> u64 {
         total += (ca[2] ^ cb[2]).count_ones() as u64;
         total += (ca[3] ^ cb[3]).count_ones() as u64;
     }
-    total += chunks_a.remainder().iter()
+    total += chunks_a
+        .remainder()
+        .iter()
         .zip(chunks_b.remainder().iter())
         .map(|(&wa, &wb)| (wa ^ wb).count_ones() as u64)
         .sum::<u64>();
@@ -215,7 +221,12 @@ pub fn dot_f64_dispatch(a: &[f64], b: &[f64]) -> f64 {
             for (ca, cb) in chunks_a.by_ref().zip(chunks_b.by_ref()) {
                 sum += ca[0] * cb[0] + ca[1] * cb[1] + ca[2] * cb[2] + ca[3] * cb[3];
             }
-            sum += chunks_a.remainder().iter().zip(chunks_b.remainder()).map(|(x, y)| x * y).sum::<f64>();
+            sum += chunks_a
+                .remainder()
+                .iter()
+                .zip(chunks_b.remainder())
+                .map(|(x, y)| x * y)
+                .sum::<f64>();
             return sum;
         }
     }
@@ -350,7 +361,7 @@ pub fn softmax_inplace_f64_dispatch(scores: &mut [f64]) {
     if scores.is_empty() {
         return;
     }
-    
+
     #[cfg(target_arch = "x86_64")]
     {
         if is_x86_feature_detected!("avx2") {
@@ -370,7 +381,7 @@ pub fn softmax_inplace_f64_dispatch(scores: &mut [f64]) {
     for s in chunks.into_remainder() {
         *s = (*s - max_val).exp();
     }
-    
+
     let exp_sum = sum_f64_dispatch(scores);
     if exp_sum > 0.0 {
         scale_f64_dispatch(1.0 / exp_sum, scores);
@@ -401,8 +412,7 @@ pub fn bernoulli_compare_batch_1024(buf: &[u8], threshold: u8, out: &mut [u64]) 
             return unsafe { avx2::bernoulli_compare_batch_avx2(buf, threshold, out) };
         }
     }
-    
-    
+
     #[cfg(target_arch = "x86_64")]
     {
         // SSE2 fallback (available on all x86_64)
@@ -411,12 +421,12 @@ pub fn bernoulli_compare_batch_1024(buf: &[u8], threshold: u8, out: &mut [u64]) 
             let v_thresh = _mm_set1_epi8(threshold as i8);
             let bias = _mm_set1_epi8(i8::MIN);
             let v_thresh_biased = _mm_xor_si128(v_thresh, bias);
-            
+
             for i in 0..16 {
-                let chunk = &buf[i*64..(i+1)*64];
+                let chunk = &buf[i * 64..(i + 1) * 64];
                 let mut word = 0_u64;
                 for j in 0..4 {
-                    let v = _mm_loadu_si128(chunk.as_ptr().add(j*16) as *const __m128i);
+                    let v = _mm_loadu_si128(chunk.as_ptr().add(j * 16) as *const __m128i);
                     let v_biased = _mm_xor_si128(v, bias);
                     let m = _mm_cmpgt_epi8(v_thresh_biased, v_biased);
                     let mask = _mm_movemask_epi8(m) as u32;
@@ -430,6 +440,7 @@ pub fn bernoulli_compare_batch_1024(buf: &[u8], threshold: u8, out: &mut [u64]) 
 
     // Generic fallback: 16 scalar calls
     for i in 0..16 {
-        out[i] = crate::bitstream::simd_bernoulli_compare_exposed(&buf[i*64..(i+1)*64], threshold);
+        out[i] =
+            crate::bitstream::simd_bernoulli_compare_exposed(&buf[i * 64..(i + 1) * 64], threshold);
     }
 }

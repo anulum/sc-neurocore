@@ -36,13 +36,13 @@ pub fn spike_directionality(times_a: &[f64], times_b: &[f64], t_start: f64, t_en
 
     for &t in &ta {
         let idx = tb_sorted.partition_point(|&x| x < t);
-        
+
         let nearest_after = if idx < tb_sorted.len() {
             Some(tb_sorted[idx] - t)
         } else {
             None
         };
-        
+
         let nearest_before = if idx > 0 {
             Some(t - tb_sorted[idx - 1])
         } else {
@@ -74,7 +74,9 @@ pub fn spike_train_order(times_list: &[&[f64]], t_start: f64, t_end: f64) -> Vec
         .enumerate()
         .for_each(|(i, row)| {
             for j in 0..n {
-                if i == j { continue; }
+                if i == j {
+                    continue;
+                }
                 // Note: full matrix computation simplifies parallel dispatch
                 // even though directionality is antisymmetric.
                 if j > i {
@@ -110,9 +112,9 @@ pub fn cubic_higher_order(binary_train: &[i32], dt: f64, max_lag: usize) -> Vec<
                 let mut k = 0;
                 while k + 3 < valid_n {
                     sum += x[k] * x[k + t1] * x[k + t2];
-                    sum += x[k+1] * x[k+1 + t1] * x[k+1 + t2];
-                    sum += x[k+2] * x[k+2 + t1] * x[k+2 + t2];
-                    sum += x[k+3] * x[k+3 + t1] * x[k+3 + t2];
+                    sum += x[k + 1] * x[k + 1 + t1] * x[k + 1 + t2];
+                    sum += x[k + 2] * x[k + 2 + t1] * x[k + 2 + t2];
+                    sum += x[k + 3] * x[k + 3 + t1] * x[k + 3 + t2];
                     k += 4;
                 }
                 while k < valid_n {

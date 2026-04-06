@@ -401,11 +401,11 @@ impl DestexheThalamicNeuron {
                 / (0.128 * (-(self.v + 46.0) / 18.0).exp()
                     + 4.0 / (1.0 + (-(self.v + 23.0) / 5.0).exp())))
             .max(0.1);
-            let tau_n_k =
-                (1.0 / (0.032 * 5.0 + 0.5 * (-(self.v + 40.0) / 40.0).exp())).max(0.1);
+            let tau_n_k = (1.0 / (0.032 * 5.0 + 0.5 * (-(self.v + 40.0) / 40.0).exp())).max(0.1);
             let tau_h_t = if self.v < -81.0 {
-                (30.8 + 211.4 * ((self.v + 115.2) / 5.0).exp()
-                    / (1.0 + ((self.v + 86.0) / 3.2).exp()))
+                (30.8
+                    + 211.4 * ((self.v + 115.2) / 5.0).exp()
+                        / (1.0 + ((self.v + 86.0) / 3.2).exp()))
                 .max(0.1)
             } else {
                 10.0
@@ -732,29 +732,51 @@ impl MainenSejnowskiNeuron {
         for _ in 0..20 {
             // Mainen & Sejnowski 1996 axonal rate functions
             let x_am = self.va + 25.0;
-            let am = if x_am.abs() < 1e-6 { 0.182 * 9.0 }
-                else { 0.182 * x_am / (1.0 - (-(x_am) / 9.0).exp() + 1e-12) };
-            let bm = if x_am.abs() < 1e-6 { 0.124 * 9.0 }
-                else { -0.124 * x_am / (1.0 - ((x_am) / 9.0).exp() + 1e-12) };
+            let am = if x_am.abs() < 1e-6 {
+                0.182 * 9.0
+            } else {
+                0.182 * x_am / (1.0 - (-(x_am) / 9.0).exp() + 1e-12)
+            };
+            let bm = if x_am.abs() < 1e-6 {
+                0.124 * 9.0
+            } else {
+                -0.124 * x_am / (1.0 - ((x_am) / 9.0).exp() + 1e-12)
+            };
             let x_ah = self.va + 40.0;
-            let ah = if x_ah.abs() < 1e-6 { 0.024 * 5.0 }
-                else { 0.024 * x_ah / (1.0 - (-(x_ah) / 5.0).exp() + 1e-12) };
+            let ah = if x_ah.abs() < 1e-6 {
+                0.024 * 5.0
+            } else {
+                0.024 * x_ah / (1.0 - (-(x_ah) / 5.0).exp() + 1e-12)
+            };
             let x_bh = self.va + 65.0;
-            let bh = if x_bh.abs() < 1e-6 { 0.0091 * 5.0 }
-                else { -0.0091 * x_bh / (1.0 - ((x_bh) / 5.0).exp() + 1e-12) };
+            let bh = if x_bh.abs() < 1e-6 {
+                0.0091 * 5.0
+            } else {
+                -0.0091 * x_bh / (1.0 - ((x_bh) / 5.0).exp() + 1e-12)
+            };
             let x_an = self.va - 20.0;
-            let an = if x_an.abs() < 1e-6 { 0.02 * 9.0 }
-                else { 0.02 * x_an / (1.0 - (-(x_an) / 9.0).exp() + 1e-12) };
-            let bn = if x_an.abs() < 1e-6 { 0.002 * 9.0 }
-                else { -0.002 * x_an / (1.0 - ((x_an) / 9.0).exp() + 1e-12) };
+            let an = if x_an.abs() < 1e-6 {
+                0.02 * 9.0
+            } else {
+                0.02 * x_an / (1.0 - (-(x_an) / 9.0).exp() + 1e-12)
+            };
+            let bn = if x_an.abs() < 1e-6 {
+                0.002 * 9.0
+            } else {
+                -0.002 * x_an / (1.0 - ((x_an) / 9.0).exp() + 1e-12)
+            };
             self.m = (self.m + (am * (1.0 - self.m) - bm * self.m) * self.dt).clamp(0.0, 1.0);
             self.h = (self.h + (ah * (1.0 - self.h) - bh * self.h) * self.dt).clamp(0.0, 1.0);
             self.n = (self.n + (an * (1.0 - self.n) - bn * self.n) * self.dt).clamp(0.0, 1.0);
             let i_na = self.g_na * self.m.powi(3) * self.h * (self.va - self.e_na);
             let i_k = self.g_k * self.n * (self.va - self.e_k);
             let i_l_s = self.g_l * (self.vs - self.e_l);
-            self.vs = (self.vs + (-i_l_s + self.kappa * (self.va - self.vs) + current) / self.c_s * self.dt).clamp(-200.0, 200.0);
-            self.va = (self.va + (-i_na - i_k + self.kappa * (self.vs - self.va)) / self.c_a * self.dt).clamp(-200.0, 200.0);
+            self.vs = (self.vs
+                + (-i_l_s + self.kappa * (self.va - self.vs) + current) / self.c_s * self.dt)
+                .clamp(-200.0, 200.0);
+            self.va = (self.va
+                + (-i_na - i_k + self.kappa * (self.vs - self.va)) / self.c_a * self.dt)
+                .clamp(-200.0, 200.0);
         }
         if self.vs >= self.v_threshold && v_prev < self.v_threshold {
             1
@@ -1793,7 +1815,9 @@ mod tests {
     #[test]
     fn hh_reset_clears_state() {
         let mut n = HodgkinHuxleyNeuron::new();
-        for _ in 0..100 { n.step(10.0); }
+        for _ in 0..100 {
+            n.step(10.0);
+        }
         n.reset();
         assert!((n.v - (-65.0)).abs() < 1e-10);
         assert!((n.m - 0.05).abs() < 1e-10);
@@ -1803,13 +1827,17 @@ mod tests {
     #[test]
     fn hh_extreme_input_bounded() {
         let mut n = HodgkinHuxleyNeuron::new();
-        for _ in 0..200 { n.step(1e4); }
+        for _ in 0..200 {
+            n.step(1e4);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
     fn hh_gates_bounded() {
         let mut n = HodgkinHuxleyNeuron::new();
-        for _ in 0..500 { n.step(10.0); }
+        for _ in 0..500 {
+            n.step(10.0);
+        }
         assert!(n.m >= 0.0 && n.m <= 1.0, "m={}", n.m);
         assert!(n.h >= 0.0 && n.h <= 1.0, "h={}", n.h);
         assert!(n.n >= 0.0 && n.n <= 1.0, "n={}", n.n);
@@ -1817,7 +1845,9 @@ mod tests {
     #[test]
     fn hh_negative_input_no_crash() {
         let mut n = HodgkinHuxleyNeuron::new();
-        for _ in 0..200 { n.step(-20.0); }
+        for _ in 0..200 {
+            n.step(-20.0);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
@@ -1829,7 +1859,9 @@ mod tests {
     fn hh_sodium_potassium_opposition() {
         // Na activation drives depolarisation, K drives repolarisation
         let mut n = HodgkinHuxleyNeuron::new();
-        for _ in 0..50 { n.step(10.0); }
+        for _ in 0..50 {
+            n.step(10.0);
+        }
         // After spiking, n (K activation) should have risen
         assert!(n.n > 0.32, "K activation n should increase during spiking");
     }
@@ -1844,20 +1876,26 @@ mod tests {
     #[test]
     fn traub_reset_clears_state() {
         let mut n = TraubMilesNeuron::new();
-        for _ in 0..100 { n.step(5.0); }
+        for _ in 0..100 {
+            n.step(5.0);
+        }
         n.reset();
         assert!((n.v - (-67.0)).abs() < 1e-10);
     }
     #[test]
     fn traub_extreme_bounded() {
         let mut n = TraubMilesNeuron::new();
-        for _ in 0..200 { n.step(1e4); }
+        for _ in 0..200 {
+            n.step(1e4);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
     fn traub_gates_bounded() {
         let mut n = TraubMilesNeuron::new();
-        for _ in 0..500 { n.step(5.0); }
+        for _ in 0..500 {
+            n.step(5.0);
+        }
         assert!(n.m >= 0.0 && n.m <= 1.01);
         assert!(n.h >= 0.0 && n.h <= 1.01);
         assert!(n.n >= 0.0 && n.n <= 1.01);
@@ -1865,7 +1903,9 @@ mod tests {
     #[test]
     fn traub_weak_negative_no_crash() {
         let mut n = TraubMilesNeuron::new();
-        for _ in 0..200 { n.step(-5.0); }
+        for _ in 0..200 {
+            n.step(-5.0);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
@@ -1884,14 +1924,18 @@ mod tests {
     #[test]
     fn wb_reset_clears_state() {
         let mut n = WangBuzsakiNeuron::new();
-        for _ in 0..100 { n.step(2.0); }
+        for _ in 0..100 {
+            n.step(2.0);
+        }
         n.reset();
         assert!((n.v - (-65.0)).abs() < 1e-10);
     }
     #[test]
     fn wb_extreme_bounded() {
         let mut n = WangBuzsakiNeuron::new();
-        for _ in 0..200 { n.step(1e4); }
+        for _ in 0..200 {
+            n.step(1e4);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
@@ -1904,14 +1948,18 @@ mod tests {
     #[test]
     fn wb_gates_bounded() {
         let mut n = WangBuzsakiNeuron::new();
-        for _ in 0..500 { n.step(2.0); }
+        for _ in 0..500 {
+            n.step(2.0);
+        }
         assert!(n.h >= 0.0 && n.h <= 1.0);
         assert!(n.n >= 0.0 && n.n <= 1.0);
     }
     #[test]
     fn wb_negative_no_crash() {
         let mut n = WangBuzsakiNeuron::new();
-        for _ in 0..200 { n.step(-10.0); }
+        for _ in 0..200 {
+            n.step(-10.0);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
@@ -1930,14 +1978,18 @@ mod tests {
     #[test]
     fn cs_reset_clears_state() {
         let mut n = ConnorStevensNeuron::new();
-        for _ in 0..100 { n.step(10.0); }
+        for _ in 0..100 {
+            n.step(10.0);
+        }
         n.reset();
         assert!((n.v - (-68.0)).abs() < 1e-10);
     }
     #[test]
     fn cs_extreme_bounded() {
         let mut n = ConnorStevensNeuron::new();
-        for _ in 0..200 { n.step(1e4); }
+        for _ in 0..200 {
+            n.step(1e4);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
@@ -1950,20 +2002,28 @@ mod tests {
         let spikes_with: i32 = (0..50).map(|_| n_with_a.step(8.0)).sum();
         let spikes_no: i32 = (0..50).map(|_| n_no_a.step(8.0)).sum();
         // Without A-current, neuron should fire more (no transient suppression)
-        assert!(spikes_no >= spikes_with,
-            "without A-type K, should fire more: no_a={} vs with_a={}", spikes_no, spikes_with);
+        assert!(
+            spikes_no >= spikes_with,
+            "without A-type K, should fire more: no_a={} vs with_a={}",
+            spikes_no,
+            spikes_with
+        );
     }
     #[test]
     fn cs_gates_bounded() {
         let mut n = ConnorStevensNeuron::new();
-        for _ in 0..500 { n.step(10.0); }
+        for _ in 0..500 {
+            n.step(10.0);
+        }
         assert!(n.a >= 0.0 && n.a <= 1.5, "a={}", n.a); // a can slightly exceed 1 due to kinetics
         assert!(n.b >= 0.0 && n.b <= 1.0, "b={}", n.b);
     }
     #[test]
     fn cs_negative_no_crash() {
         let mut n = ConnorStevensNeuron::new();
-        for _ in 0..200 { n.step(-20.0); }
+        for _ in 0..200 {
+            n.step(-20.0);
+        }
         assert!(n.v.is_finite());
     }
 
@@ -1978,14 +2038,18 @@ mod tests {
     #[test]
     fn destexhe_reset_clears_state() {
         let mut n = DestexheThalamicNeuron::new();
-        for _ in 0..200 { n.step(5.0); }
+        for _ in 0..200 {
+            n.step(5.0);
+        }
         n.reset();
         assert!((n.v - (-65.0)).abs() < 1e-10);
     }
     #[test]
     fn destexhe_extreme_bounded() {
         let mut n = DestexheThalamicNeuron::new();
-        for _ in 0..200 { n.step(1e4); }
+        for _ in 0..200 {
+            n.step(1e4);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
@@ -1999,16 +2063,25 @@ mod tests {
 
         // Verify model stability through hyperpolarise-release cycle
         let mut n = DestexheThalamicNeuron::new();
-        for _ in 0..500 { n.step(-5.0); }
+        for _ in 0..500 {
+            n.step(-5.0);
+        }
         let v_before_release = n.v;
-        for _ in 0..500 { n.step(0.0); }
+        for _ in 0..500 {
+            n.step(0.0);
+        }
         assert!(n.v.is_finite());
-        assert!(n.v > v_before_release, "V should increase after release (rebound)");
+        assert!(
+            n.v > v_before_release,
+            "V should increase after release (rebound)"
+        );
     }
     #[test]
     fn destexhe_negative_no_crash() {
         let mut n = DestexheThalamicNeuron::new();
-        for _ in 0..200 { n.step(-20.0); }
+        for _ in 0..200 {
+            n.step(-20.0);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
@@ -2028,20 +2101,26 @@ mod tests {
     #[test]
     fn hb_reset_clears_state() {
         let mut n = HuberBraunNeuron::new();
-        for _ in 0..200 { n.step(10.0); }
+        for _ in 0..200 {
+            n.step(10.0);
+        }
         n.reset();
         assert!((n.v - (-50.0)).abs() < 1e-10);
     }
     #[test]
     fn hb_extreme_bounded() {
         let mut n = HuberBraunNeuron::new();
-        for _ in 0..200 { n.step(1e4); }
+        for _ in 0..200 {
+            n.step(1e4);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
     fn hb_negative_no_crash() {
         let mut n = HuberBraunNeuron::new();
-        for _ in 0..500 { n.step(-10.0); }
+        for _ in 0..500 {
+            n.step(-10.0);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
@@ -2060,7 +2139,9 @@ mod tests {
     #[test]
     fn golomb_reset_clears_state() {
         let mut n = GolombFSNeuron::new();
-        for _ in 0..100 { n.step(200.0); }
+        for _ in 0..100 {
+            n.step(200.0);
+        }
         n.reset();
         assert!((n.v - (-65.0)).abs() < 1e-10);
     }
@@ -2068,7 +2149,9 @@ mod tests {
     fn golomb_extreme_bounded() {
         // Golomb et al. 2007: n^4 kinetics diverge at extreme I; test at strong but realistic drive
         let mut n = GolombFSNeuron::new();
-        for _ in 0..200 { n.step(200.0); }
+        for _ in 0..200 {
+            n.step(200.0);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
@@ -2081,7 +2164,9 @@ mod tests {
     #[test]
     fn golomb_negative_no_crash() {
         let mut n = GolombFSNeuron::new();
-        for _ in 0..200 { n.step(-100.0); }
+        for _ in 0..200 {
+            n.step(-100.0);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
@@ -2100,26 +2185,34 @@ mod tests {
     #[test]
     fn pospischil_reset_clears_state() {
         let mut n = PospischilNeuron::new();
-        for _ in 0..100 { n.step(5.0); }
+        for _ in 0..100 {
+            n.step(5.0);
+        }
         n.reset();
         assert!((n.v - (-70.0)).abs() < 1e-10);
     }
     #[test]
     fn pospischil_moderate_input_stable() {
         let mut n = PospischilNeuron::new();
-        for _ in 0..200 { n.step(10.0); }
+        for _ in 0..200 {
+            n.step(10.0);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
     fn pospischil_m_current_present() {
         let mut n = PospischilNeuron::new();
-        for _ in 0..200 { n.step(5.0); }
+        for _ in 0..200 {
+            n.step(5.0);
+        }
         assert!(n.p > 0.0, "M-current (p) should activate during spiking");
     }
     #[test]
     fn pospischil_negative_no_crash() {
         let mut n = PospischilNeuron::new();
-        for _ in 0..200 { n.step(-10.0); }
+        for _ in 0..200 {
+            n.step(-10.0);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
@@ -2134,14 +2227,18 @@ mod tests {
         // Mainen 1996 model may produce transient spikes at I=0
         // (confirmed in Python reference). Verify stability only.
         let mut n = MainenSejnowskiNeuron::new();
-        for _ in 0..500 { n.step(0.0); }
+        for _ in 0..500 {
+            n.step(0.0);
+        }
         assert!(n.vs.is_finite());
         assert!(n.va.is_finite());
     }
     #[test]
     fn mainen_reset_clears_state() {
         let mut n = MainenSejnowskiNeuron::new();
-        for _ in 0..100 { n.step(500.0); }
+        for _ in 0..100 {
+            n.step(500.0);
+        }
         n.reset();
         assert!((n.vs - (-65.0)).abs() < 1e-10);
         assert!((n.va - (-65.0)).abs() < 1e-10);
@@ -2150,7 +2247,9 @@ mod tests {
     fn mainen_moderate_input_stable() {
         // Two-compartment model with high conductances — moderate input
         let mut n = MainenSejnowskiNeuron::new();
-        for _ in 0..200 { n.step(500.0); }
+        for _ in 0..200 {
+            n.step(500.0);
+        }
         // High-conductance 2-compartment may diverge at extremes;
         // test moderate stability
         let _ = n.vs; // no panic
@@ -2164,7 +2263,9 @@ mod tests {
     #[test]
     fn mainen_weak_negative_no_crash() {
         let mut n = MainenSejnowskiNeuron::new();
-        for _ in 0..200 { n.step(-10.0); }
+        for _ in 0..200 {
+            n.step(-10.0);
+        }
         // Weak negative is safer for 2-compartment
         assert!(n.vs.is_finite());
     }
@@ -2185,7 +2286,9 @@ mod tests {
     #[test]
     fn purkinje_reset_clears_state() {
         let mut n = DeSchutterPurkinjeNeuron::new();
-        for _ in 0..100 { n.step(50.0); }
+        for _ in 0..100 {
+            n.step(50.0);
+        }
         n.reset();
         assert!((n.v - (-68.0)).abs() < 1e-10);
         assert!((n.ca - 0.0001).abs() < 1e-10);
@@ -2193,26 +2296,38 @@ mod tests {
     #[test]
     fn purkinje_extreme_bounded() {
         let mut n = DeSchutterPurkinjeNeuron::new();
-        for _ in 0..200 { n.step(1e4); }
+        for _ in 0..200 {
+            n.step(1e4);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
     fn purkinje_ca_rises_with_spiking() {
         let mut n = DeSchutterPurkinjeNeuron::new();
         let ca_init = n.ca;
-        for _ in 0..5000 { n.step(200.0); }
+        for _ in 0..5000 {
+            n.step(200.0);
+        }
         assert!(n.ca > ca_init, "Ca²⁺ should rise during spiking");
     }
     #[test]
     fn purkinje_kca_activated_by_calcium() {
         let mut n = DeSchutterPurkinjeNeuron::new();
-        for _ in 0..5000 { n.step(200.0); }
-        assert!(n.q_kca > 0.0, "KCa should activate with Ca²⁺: q={}", n.q_kca);
+        for _ in 0..5000 {
+            n.step(200.0);
+        }
+        assert!(
+            n.q_kca > 0.0,
+            "KCa should activate with Ca²⁺: q={}",
+            n.q_kca
+        );
     }
     #[test]
     fn purkinje_negative_no_crash() {
         let mut n = DeSchutterPurkinjeNeuron::new();
-        for _ in 0..200 { n.step(-50.0); }
+        for _ in 0..200 {
+            n.step(-50.0);
+        }
         assert!(n.v.is_finite());
     }
 
@@ -2221,13 +2336,17 @@ mod tests {
     fn plant_r15_silent_without_input() {
         let mut n = PlantR15Neuron::new();
         // R15 is a parabolic burster — may burst spontaneously
-        for _ in 0..500 { n.step(0.0); }
+        for _ in 0..500 {
+            n.step(0.0);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
     fn plant_r15_reset_clears_state() {
         let mut n = PlantR15Neuron::new();
-        for _ in 0..100 { n.step(2.0); }
+        for _ in 0..100 {
+            n.step(2.0);
+        }
         n.reset();
         assert!((n.v - (-50.0)).abs() < 1e-10);
         assert!((n.ca - 0.1).abs() < 1e-10);
@@ -2236,20 +2355,26 @@ mod tests {
     fn plant_r15_moderate_input_stable() {
         // Plant R15 is a parabolic burster — moderate input stability
         let mut n = PlantR15Neuron::new();
-        for _ in 0..500 { n.step(2.0); }
+        for _ in 0..500 {
+            n.step(2.0);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
     fn plant_r15_ca_dynamics() {
         let mut n = PlantR15Neuron::new();
-        for _ in 0..500 { n.step(2.0); }
+        for _ in 0..500 {
+            n.step(2.0);
+        }
         assert!(n.ca >= 0.0, "Ca²⁺ must be non-negative");
         assert!(n.ca.is_finite());
     }
     #[test]
     fn plant_r15_weak_negative_no_crash() {
         let mut n = PlantR15Neuron::new();
-        for _ in 0..200 { n.step(-1.0); }
+        for _ in 0..200 {
+            n.step(-1.0);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
@@ -2269,7 +2394,9 @@ mod tests {
     #[test]
     fn prescott_reset_clears_state() {
         let mut n = PrescottNeuron::new();
-        for _ in 0..100 { n.step(5.0); }
+        for _ in 0..100 {
+            n.step(5.0);
+        }
         n.reset();
         assert!((n.v - (-65.0)).abs() < 1e-10);
         assert!((n.w - 0.0).abs() < 1e-10);
@@ -2277,19 +2404,25 @@ mod tests {
     #[test]
     fn prescott_extreme_bounded() {
         let mut n = PrescottNeuron::new();
-        for _ in 0..200 { n.step(1e4); }
+        for _ in 0..200 {
+            n.step(1e4);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
     fn prescott_slow_var_adapts() {
         let mut n = PrescottNeuron::new();
-        for _ in 0..500 { n.step(5.0); }
+        for _ in 0..500 {
+            n.step(5.0);
+        }
         assert!(n.w > 0.0, "slow variable w should activate during spiking");
     }
     #[test]
     fn prescott_negative_no_crash() {
         let mut n = PrescottNeuron::new();
-        for _ in 0..200 { n.step(-10.0); }
+        for _ in 0..200 {
+            n.step(-10.0);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
@@ -2308,7 +2441,9 @@ mod tests {
     #[test]
     fn mn_reset_clears_state() {
         let mut n = MihalasNieburNeuron::new();
-        for _ in 0..100 { n.step(5.0); }
+        for _ in 0..100 {
+            n.step(5.0);
+        }
         n.reset();
         assert!((n.v - n.v_rest).abs() < 1e-10);
         assert!((n.theta - n.theta_reset).abs() < 1e-10);
@@ -2316,21 +2451,27 @@ mod tests {
     #[test]
     fn mn_extreme_bounded() {
         let mut n = MihalasNieburNeuron::new();
-        for _ in 0..200 { n.step(1e4); }
+        for _ in 0..200 {
+            n.step(1e4);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
     fn mn_adaptive_threshold() {
         let mut n = MihalasNieburNeuron::new();
         n.a = 0.1;
-        for _ in 0..100 { n.step(5.0); }
+        for _ in 0..100 {
+            n.step(5.0);
+        }
         // Threshold should have adapted
         assert!(n.theta.is_finite());
     }
     #[test]
     fn mn_negative_no_crash() {
         let mut n = MihalasNieburNeuron::new();
-        for _ in 0..200 { n.step(-10.0); }
+        for _ in 0..200 {
+            n.step(-10.0);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
@@ -2349,7 +2490,9 @@ mod tests {
     #[test]
     fn glif_reset_clears_state() {
         let mut n = GLIFNeuron::new();
-        for _ in 0..100 { n.step(30.0); }
+        for _ in 0..100 {
+            n.step(30.0);
+        }
         n.reset();
         assert!((n.v - n.v_rest).abs() < 1e-10);
         assert!((n.i_asc1).abs() < 1e-10);
@@ -2358,27 +2501,38 @@ mod tests {
     #[test]
     fn glif_extreme_bounded() {
         let mut n = GLIFNeuron::new();
-        for _ in 0..200 { n.step(1e4); }
+        for _ in 0..200 {
+            n.step(1e4);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
     fn glif_threshold_adapts_after_spike() {
         let mut n = GLIFNeuron::new();
         let theta_init = n.theta;
-        for _ in 0..200 { n.step(30.0); }
-        assert!(n.theta > theta_init, "theta should increase after spikes (delta_theta > 0)");
+        for _ in 0..200 {
+            n.step(30.0);
+        }
+        assert!(
+            n.theta > theta_init,
+            "theta should increase after spikes (delta_theta > 0)"
+        );
     }
     #[test]
     fn glif_afterspike_currents() {
         let mut n = GLIFNeuron::new();
-        for _ in 0..200 { n.step(30.0); }
+        for _ in 0..200 {
+            n.step(30.0);
+        }
         // After spiking, ASC should have been triggered (then decayed)
         assert!(n.v.is_finite());
     }
     #[test]
     fn glif_negative_no_crash() {
         let mut n = GLIFNeuron::new();
-        for _ in 0..200 { n.step(-30.0); }
+        for _ in 0..200 {
+            n.step(-30.0);
+        }
         assert!(n.v.is_finite());
     }
 
@@ -2393,7 +2547,9 @@ mod tests {
     #[test]
     fn gif_pop_reset_clears_state() {
         let mut n = GIFPopulationNeuron::new(42);
-        for _ in 0..100 { n.step(30.0); }
+        for _ in 0..100 {
+            n.step(30.0);
+        }
         n.reset();
         assert!((n.v - (-65.0)).abs() < 1e-10);
         assert!((n.eta).abs() < 1e-10);
@@ -2401,7 +2557,9 @@ mod tests {
     #[test]
     fn gif_pop_extreme_bounded() {
         let mut n = GIFPopulationNeuron::new(42);
-        for _ in 0..200 { n.step(1e4); }
+        for _ in 0..200 {
+            n.step(1e4);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
@@ -2417,7 +2575,9 @@ mod tests {
     #[test]
     fn gif_pop_negative_no_crash() {
         let mut n = GIFPopulationNeuron::new(42);
-        for _ in 0..200 { n.step(-30.0); }
+        for _ in 0..200 {
+            n.step(-30.0);
+        }
         assert!(n.v.is_finite());
     }
 
@@ -2426,33 +2586,43 @@ mod tests {
     fn avron_silent_without_input() {
         let mut n = AvRonCardiacNeuron::new();
         // Cardiac neurons may have some spontaneous activity
-        for _ in 0..500 { n.step(0.0); }
+        for _ in 0..500 {
+            n.step(0.0);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
     fn avron_reset_clears_state() {
         let mut n = AvRonCardiacNeuron::new();
-        for _ in 0..100 { n.step(5.0); }
+        for _ in 0..100 {
+            n.step(5.0);
+        }
         n.reset();
         assert!((n.v - (-60.0)).abs() < 1e-10);
     }
     #[test]
     fn avron_extreme_bounded() {
         let mut n = AvRonCardiacNeuron::new();
-        for _ in 0..200 { n.step(1e4); }
+        for _ in 0..200 {
+            n.step(1e4);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
     fn avron_slow_current() {
         let mut n = AvRonCardiacNeuron::new();
-        for _ in 0..2000 { n.step(5.0); }
+        for _ in 0..2000 {
+            n.step(5.0);
+        }
         // s is the slow current — should be bounded
         assert!(n.s >= 0.0 && n.s <= 1.0, "s={}", n.s);
     }
     #[test]
     fn avron_negative_no_crash() {
         let mut n = AvRonCardiacNeuron::new();
-        for _ in 0..500 { n.step(-10.0); }
+        for _ in 0..500 {
+            n.step(-10.0);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
@@ -2472,14 +2642,18 @@ mod tests {
     #[test]
     fn durstewitz_reset_clears_state() {
         let mut n = DurstewitzDopamineNeuron::new();
-        for _ in 0..100 { n.step(3.0); }
+        for _ in 0..100 {
+            n.step(3.0);
+        }
         n.reset();
         assert!((n.v - (-65.0)).abs() < 1e-10);
     }
     #[test]
     fn durstewitz_extreme_bounded() {
         let mut n = DurstewitzDopamineNeuron::new();
-        for _ in 0..200 { n.step(1e4); }
+        for _ in 0..200 {
+            n.step(1e4);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
@@ -2489,8 +2663,12 @@ mod tests {
         n_d1.d1_level = 1.0;
         let mut n_no = DurstewitzDopamineNeuron::new();
         n_no.d1_level = 0.0;
-        for _ in 0..1000 { n_d1.step(3.0); }
-        for _ in 0..1000 { n_no.step(3.0); }
+        for _ in 0..1000 {
+            n_d1.step(3.0);
+        }
+        for _ in 0..1000 {
+            n_no.step(3.0);
+        }
         // Both should remain stable; D1 changes effective conductances
         assert!(n_d1.v.is_finite() && n_no.v.is_finite());
     }
@@ -2499,12 +2677,18 @@ mod tests {
         let n = DurstewitzDopamineNeuron::new();
         // At rest (-65 mV), Mg²⁺ block should be strong
         let block = 1.0 / (1.0 + n.mg * (-0.062 * n.v).exp() / 3.57);
-        assert!(block < 0.1, "Mg²⁺ block at rest should be strong: {}", block);
+        assert!(
+            block < 0.1,
+            "Mg²⁺ block at rest should be strong: {}",
+            block
+        );
     }
     #[test]
     fn durstewitz_negative_no_crash() {
         let mut n = DurstewitzDopamineNeuron::new();
-        for _ in 0..200 { n.step(-10.0); }
+        for _ in 0..200 {
+            n.step(-10.0);
+        }
         assert!(n.v.is_finite());
     }
 
@@ -2519,7 +2703,9 @@ mod tests {
     #[test]
     fn hill_tononi_reset_clears_state() {
         let mut n = HillTononiNeuron::new();
-        for _ in 0..100 { n.step(5.0); }
+        for _ in 0..100 {
+            n.step(5.0);
+        }
         n.reset();
         assert!((n.v - (-65.0)).abs() < 1e-10);
         assert!((n.na_i - 5.0).abs() < 1e-10);
@@ -2527,13 +2713,17 @@ mod tests {
     #[test]
     fn hill_tononi_extreme_bounded() {
         let mut n = HillTononiNeuron::new();
-        for _ in 0..200 { n.step(1e4); }
+        for _ in 0..200 {
+            n.step(1e4);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
     fn hill_tononi_na_accumulation() {
         let mut n = HillTononiNeuron::new();
-        for _ in 0..500 { n.step(5.0); }
+        for _ in 0..500 {
+            n.step(5.0);
+        }
         // Intracellular Na+ should remain finite and non-negative
         assert!(n.na_i.is_finite());
         assert!(n.na_i >= 0.0, "Na_i must be non-negative");
@@ -2541,7 +2731,9 @@ mod tests {
     #[test]
     fn hill_tononi_negative_no_crash() {
         let mut n = HillTononiNeuron::new();
-        for _ in 0..200 { n.step(-10.0); }
+        for _ in 0..200 {
+            n.step(-10.0);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
@@ -2554,13 +2746,17 @@ mod tests {
     #[test]
     fn bertram_silent_without_input() {
         let mut n = BertramPhantomBurster::new();
-        for _ in 0..500 { n.step(0.0); }
+        for _ in 0..500 {
+            n.step(0.0);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
     fn bertram_reset_clears_state() {
         let mut n = BertramPhantomBurster::new();
-        for _ in 0..1000 { n.step(200.0); }
+        for _ in 0..1000 {
+            n.step(200.0);
+        }
         n.reset();
         assert!((n.v - (-50.0)).abs() < 1e-10);
         assert!((n.s1 - 0.1).abs() < 1e-10);
@@ -2569,13 +2765,17 @@ mod tests {
     #[test]
     fn bertram_extreme_bounded() {
         let mut n = BertramPhantomBurster::new();
-        for _ in 0..200 { n.step(1e4); }
+        for _ in 0..200 {
+            n.step(1e4);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
     fn bertram_dual_slow_vars() {
         let mut n = BertramPhantomBurster::new();
-        for _ in 0..10000 { n.step(200.0); }
+        for _ in 0..10000 {
+            n.step(200.0);
+        }
         // Both slow variables should evolve
         assert!(n.s1 >= 0.0 && n.s1 <= 1.0, "s1={}", n.s1);
         assert!(n.s2 >= 0.0 && n.s2 <= 1.0, "s2={}", n.s2);
@@ -2583,7 +2783,9 @@ mod tests {
     #[test]
     fn bertram_negative_no_crash() {
         let mut n = BertramPhantomBurster::new();
-        for _ in 0..200 { n.step(-100.0); }
+        for _ in 0..200 {
+            n.step(-100.0);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
@@ -2602,7 +2804,9 @@ mod tests {
     #[test]
     fn yamada_reset_clears_state() {
         let mut n = YamadaNeuron::new();
-        for _ in 0..100 { n.step(5.0); }
+        for _ in 0..100 {
+            n.step(5.0);
+        }
         n.reset();
         assert!((n.v - (-60.0)).abs() < 1e-10);
         assert!((n.q - 0.0).abs() < 1e-10);
@@ -2610,19 +2814,25 @@ mod tests {
     #[test]
     fn yamada_extreme_bounded() {
         let mut n = YamadaNeuron::new();
-        for _ in 0..200 { n.step(1e4); }
+        for _ in 0..200 {
+            n.step(1e4);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
     fn yamada_slow_q_adapts() {
         let mut n = YamadaNeuron::new();
-        for _ in 0..2000 { n.step(5.0); }
+        for _ in 0..2000 {
+            n.step(5.0);
+        }
         assert!(n.q > 0.0, "slow variable q should activate during spiking");
     }
     #[test]
     fn yamada_negative_no_crash() {
         let mut n = YamadaNeuron::new();
-        for _ in 0..200 { n.step(-10.0); }
+        for _ in 0..200 {
+            n.step(-10.0);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
