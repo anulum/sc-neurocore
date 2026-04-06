@@ -316,20 +316,20 @@ fn var_coefficients(trains_binned: &[Vec<f64>], order: usize) -> (Vec<f64>, Vec<
     let n_pts = t - order;
     let x_cols = order * d;
 
-    // Build y: (n_pts × d) row-major
-    let mut y = vec![0.0_f64; n_pts * d];
+    // Build y_cols: (d × n_pts) column-major
+    let mut y_cols = vec![vec![0.0_f64; n_pts]; d];
     for ch in 0..d {
         for i in 0..n_pts {
-            y[i * d + ch] = trains_binned[ch][order + i];
+            y_cols[ch][i] = trains_binned[ch][order + i];
         }
     }
 
-    // Build x: (n_pts × order*d) row-major
-    let mut x = vec![0.0_f64; n_pts * x_cols];
+    // Build x_cols_data: (x_cols × n_pts) column-major
+    let mut x_cols_data = vec![vec![0.0_f64; n_pts]; x_cols];
     for i in 0..n_pts {
         for k in 0..order {
             for ch in 0..d {
-                x[i * x_cols + k * d + ch] = trains_binned[ch][order - k - 1 + i];
+                x_cols_data[k * d + ch][i] = trains_binned[ch][order - k - 1 + i];
             }
         }
     }
@@ -337,12 +337,10 @@ fn var_coefficients(trains_binned: &[Vec<f64>], order: usize) -> (Vec<f64>, Vec<
     // X^T X + reg
     let mut xtx = vec![0.0_f64; x_cols * x_cols];
     for i in 0..x_cols {
-        for j in 0..x_cols {
-            let mut s = 0.0;
-            for p in 0..n_pts {
-                s += x[p * x_cols + i] * x[p * x_cols + j];
-            }
-            xtx[i * x_cols + j] = s + if i == j { 1e-8 } else { 0.0 };
+        for j in 0..=i {
+            let dot = crate::simd::dot_f64_dispatch(&x_cols_data[i], &x_cols_data[j]);
+            xtx[i * x_cols + j] = dot + if i == j { 1e-8 } else { 0.0 };
+            xtx[j * x_cols + i] = xtx[i * x_cols + j];
         }
     }
 
@@ -350,33 +348,35 @@ fn var_coefficients(trains_binned: &[Vec<f64>], order: usize) -> (Vec<f64>, Vec<
     let mut xty = vec![0.0_f64; x_cols * d];
     for i in 0..x_cols {
         for j in 0..d {
-            let mut s = 0.0;
-            for p in 0..n_pts {
-                s += x[p * x_cols + i] * y[p * d + j];
-            }
-            xty[i * d + j] = s;
+            xty[i * d + j] = crate::simd::dot_f64_dispatch(&x_cols_data[i], &y_cols[j]);
         }
     }
 
     // beta = (X^T X)^{-1} X^T Y
     let beta = solve_matrix(&xtx, &xty, x_cols, d);
 
-    // Residuals = Y - X beta
+    // Residuals Sigma = (1/N) (Y - X beta)^T (Y - X beta)
     let mut sigma = vec![0.0_f64; d * d];
     let n_norm = n_pts.max(1) as f64;
-    for i in 0..d {
-        for j in 0..d {
-            let mut s = 0.0;
-            for p in 0..n_pts {
-                let mut ri = y[p * d + i];
-                let mut rj = y[p * d + j];
-                for c in 0..x_cols {
-                    ri -= x[p * x_cols + c] * beta[c * d + i];
-                    rj -= x[p * x_cols + c] * beta[c * d + j];
-                }
-                s += ri * rj;
+    
+    // Precompute residuals: res_cols = y_cols - X_cols * beta
+    let mut res_cols = vec![vec![0.0_f64; n_pts]; d];
+    for j in 0..d {
+        for p in 0..n_pts {
+            let mut r = y_cols[j][p];
+            for c in 0..x_cols {
+                r -= x_cols_data[c][p] * beta[c * d + j];
             }
-            sigma[i * d + j] = s / n_norm;
+            res_cols[j][p] = r;
+        }
+    }
+
+    for i in 0..d {
+        for j in 0..=i {
+            let dot = crate::simd::dot_f64_dispatch(&res_cols[i], &res_cols[j]);
+            let val = dot / n_norm;
+            sigma[i * d + j] = val;
+            sigma[j * d + i] = val;
         }
     }
 
