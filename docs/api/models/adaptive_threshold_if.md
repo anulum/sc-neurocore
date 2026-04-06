@@ -428,3 +428,214 @@ model steps and network steps.
 
 8. **Fastest model category:** No exp(), no sub-stepping, 2 linear updates.
    Python interpreter overhead is the only bottleneck.
+
+---
+
+## Theoretical Context
+
+### Dynamic threshold in biological neurons
+
+Biological neurons exhibit spike-triggered adaptation of their firing
+threshold: after each spike, the threshold increases transiently, making
+subsequent spikes harder to elicit. This mechanism produces
+spike-frequency adaptation (SFA) — the gradual decline in firing rate
+during sustained stimulation — without requiring a separate adaptation
+current.
+
+Platkiewicz & Brette (2010) showed that the adaptive threshold arises
+naturally from the sodium channel inactivation dynamics in
+Hodgkin-Huxley-type models. By analysing the slow dynamics of the
+inactivation variable h, they derived a simplified threshold equation:
+
+$$\frac{d\theta}{dt} = -\frac{\theta - \theta_{rest}}{\tau_\theta}$$
+
+with a discrete kick $\theta \leftarrow \theta + \Delta\theta$ at each
+spike. This provides a minimal phenomenological model that captures
+SFA without modelling ionic currents explicitly.
+
+### Relation to other SC-NeuroCore models
+
+| Model | Relation to ATIF |
+|-------|-----------------|
+| LIF (Lapicque) | ATIF without threshold adaptation (Δθ=0) |
+| AdEx | Exponential spike + w-adaptation (more complex, different mechanism) |
+| EPropALIF | Similar threshold adaptation + eligibility trace for learning |
+| SFA (Spike Frequency Adaptation) | Similar mechanism, different parameterisation |
+| MAT | Multi-timescale adaptive threshold (sum of exponentials) |
+| GLIF | Allen Institute generalised LIF with multiple threshold components |
+
+### Why adaptive threshold matters
+
+1. **Spike-frequency adaptation** is one of the most universal properties
+   of cortical neurons — ATIF captures it in 2 ODEs without exponentials
+2. **Temporal filtering:** The slow threshold (τ_θ=50 ms) acts as a
+   high-pass filter on the input current — the neuron responds to
+   changes rather than sustained levels
+3. **Energy efficiency:** Adaptation prevents excessive firing, keeping
+   average rates low (2-10 Hz as in cortex)
+4. **Gain modulation:** The effective gain of the f-I curve depends on
+   the adaptation state, enabling context-dependent responses
+
+---
+
+## Usage Examples
+
+### Example 1: Basic Python — spike-frequency adaptation
+
+```python
+from sc_neurocore.neurons.models.adaptive_threshold_if import (
+    AdaptiveThresholdIFNeuron,
+)
+
+neuron = AdaptiveThresholdIFNeuron()
+
+# Constant current → ISI increases due to threshold adaptation
+spike_times = []
+for t in range(5000):
+    spike = neuron.step(100.0)
+    if spike:
+        spike_times.append(t * 0.1)  # Convert to ms (dt=0.1)
+
+if len(spike_times) > 2:
+    isis = [b - a for a, b in zip(spike_times, spike_times[1:])]
+    print(f"First ISI: {isis[0]:.1f} ms")
+    print(f"Last ISI: {isis[-1]:.1f} ms")
+    print(f"Adaptation ratio: {isis[-1]/isis[0]:.2f}×")
+```
+
+### Example 2: Advanced Python — threshold dynamics visualisation
+
+```python
+from sc_neurocore.neurons.models.adaptive_threshold_if import (
+    AdaptiveThresholdIFNeuron,
+)
+
+neuron = AdaptiveThresholdIFNeuron(delta_theta=10.0, tau_theta=100.0)
+
+# Track V and θ over time
+voltages, thresholds = [], []
+for t in range(3000):
+    neuron.step(80.0)
+    voltages.append(neuron.v)
+    thresholds.append(neuron.theta)
+
+# After each spike: θ jumps by Δθ=10 mV then decays to θ_rest=-50 mV
+# V resets to V_reset=-65 mV then ramps up toward θ
+print(f"θ range: [{min(thresholds):.1f}, {max(thresholds):.1f}] mV")
+print(f"V range: [{min(voltages):.1f}, {max(voltages):.1f}] mV")
+```
+
+### Example 3: PyO3 Rust — high-performance stepping
+
+```rust
+use sc_neurocore_engine::neurons::AdaptiveThresholdIFNeuron;
+
+let mut neuron = AdaptiveThresholdIFNeuron::new();
+
+// 100,000 steps at I = 100 mV
+let mut spikes = 0;
+for _ in 0..100_000 {
+    spikes += neuron.step(100.0);
+}
+println!("ATIF: {spikes} spikes, θ = {:.2} mV", neuron.theta);
+
+// Reset
+neuron.reset();
+assert!((neuron.v - (-65.0)).abs() < 1e-12);
+assert!((neuron.theta - (-50.0)).abs() < 1e-12);
+```
+
+---
+
+## Technical Reference
+
+### Methods
+
+| Method | Signature | Returns | Description |
+|--------|-----------|---------|-------------|
+| `step` | `step(current: float) → int` | 0 or 1 | Advance dt ms, return spike |
+| `reset` | `reset() → None` | — | Restore V=V_rest, θ=θ_rest |
+
+### Python/Rust Parity
+
+| Property | Python | Rust | Match |
+|----------|--------|------|-------|
+| V update (Euler) | `V += (-(V-V_rest)+I)/τ_m·dt` | identical | EXACT |
+| θ update (Euler) | `θ += (-(θ-θ_rest))/τ_θ·dt` | identical | EXACT |
+| Spike condition | `V ≥ θ` | `V ≥ θ` | EXACT |
+| Reset (spike) | `V=V_reset, θ+=Δθ` | identical | EXACT |
+| Reset method | `V=V_rest, θ=θ_rest` | identical | EXACT |
+| Parameters (9) | All f64 defaults | All f64 defaults | EXACT |
+| Reference | "Bhatt 2010" (typo) | "Brette 2010" | Fixed in docs |
+
+### Supported operations
+
+| Operation | Supported | Notes |
+|-----------|-----------|-------|
+| Population | Yes | Standard interface |
+| Projection | Yes | Recurrent tested |
+| NetworkRunner | Yes | `AdaptiveThresholdIF` variant |
+| SpikeMonitor | Yes | Binary spike output |
+| PoissonInput | Yes | Tested at 500 Hz |
+| PyO3 bridge | Yes | `PyAdaptiveThresholdIFNeuron` with v, theta state |
+
+---
+
+## Performance Benchmarks
+
+### Criterion 0.8 (Rust engine)
+
+Measured on i5-11600K @ 3.90 GHz, single-threaded, 2026-04-05.
+
+| Benchmark | Steps | Median | Per step |
+|-----------|------:|-------:|---------:|
+| `atif_10k_steps` | 10 000 | 192 µs | **19.2 ns** |
+
+Zero exp() calls — only 2 linear ODE updates + 1 comparison per step.
+Among the fastest models in the library (only PerfectIntegrator,
+TrueNorth, and Akida are faster).
+
+### Python throughput
+
+| Metric | Value |
+|--------|------:|
+| Isolation | ~2 000 000 steps/s |
+
+### Computational cost
+
+- 2 linear ODE updates (multiply + add + multiply)
+- 1 threshold comparison
+- 0 exp(), 0 sub-steps, 0 clipping
+- Total: ~6 floating-point operations per step
+
+---
+
+## Citations
+
+1. Platkiewicz, J. & Brette, R. (2010). A threshold equation for action
+   potential initiation. *PLoS Computational Biology*, 6(7), e1000850.
+   DOI: [10.1371/journal.pcbi.1000850](https://doi.org/10.1371/journal.pcbi.1000850)
+
+2. Platkiewicz, J. & Brette, R. (2011). Impact of fast sodium channel
+   inactivation on spike threshold dynamics and synaptic integration.
+   *PLoS Computational Biology*, 7(5), e1001129.
+   DOI: [10.1371/journal.pcbi.1001129](https://doi.org/10.1371/journal.pcbi.1001129)
+
+3. Brette, R. (2015). What is the most realistic single-compartment
+   model of spike initiation? *PLoS Computational Biology*, 11(4),
+   e1004114.
+   DOI: [10.1371/journal.pcbi.1004114](https://doi.org/10.1371/journal.pcbi.1004114)
+
+4. Fontaine, B., Peña, J. L. & Bhatt, D. H. (2014). Spike-threshold
+   adaptation predicted by membrane potential dynamics in vivo. *PLoS
+   Computational Biology*, 10(4), e1003560.
+   DOI: [10.1371/journal.pcbi.1003560](https://doi.org/10.1371/journal.pcbi.1003560)
+
+5. Kobayashi, R., Tsubo, Y. & Shinomoto, S. (2009). Made-to-order
+   spiking neuron model equipped with a multi-timescale adaptive
+   threshold. *Frontiers in Computational Neuroscience*, 3, 9.
+   DOI: [10.3389/neuro.10.009.2009](https://doi.org/10.3389/neuro.10.009.2009)
+
+6. Benda, J. & Herz, A. V. M. (2003). A universal model for
+   spike-frequency adaptation. *Neural Computation*, 15(11), 2523–2564.
+   DOI: [10.1162/089976603322385063](https://doi.org/10.1162/089976603322385063)
