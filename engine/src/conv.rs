@@ -8,6 +8,7 @@
 //! SC 2D convolutional layer using probability-domain multiplication.
 
 use rand::{RngExt, SeedableRng};
+use rayon::prelude::*;
 use rand_chacha::ChaCha8Rng;
 
 /// Stochastic 2D convolutional layer.
@@ -76,26 +77,29 @@ impl Conv2DLayer {
 
         let mut output = vec![0.0; self.out_channels * h_out * w_out];
 
-        for oc in 0..self.out_channels {
-            let filter = &self.kernels[oc * filter_size..(oc + 1) * filter_size];
-            for i in 0..h_out {
-                for j in 0..w_out {
-                    let hs = i * self.stride;
-                    let ws = j * self.stride;
-                    let mut acc = 0.0;
-                    for c in 0..c_in {
-                        for ki in 0..k {
-                            for kj in 0..k {
-                                let val = inp[c * ph * pw + (hs + ki) * pw + (ws + kj)];
-                                let wt = filter[c * k * k + ki * k + kj];
-                                acc += val * wt; // P(A)·P(B) in probability domain
+        output.par_chunks_exact_mut(h_out * w_out)
+            .enumerate()
+            .for_each(|(oc, out_plane)| {
+                let filter = &self.kernels[oc * filter_size..(oc + 1) * filter_size];
+                for i in 0..h_out {
+                    for j in 0..w_out {
+                        let hs = i * self.stride;
+                        let ws = j * self.stride;
+                        let mut acc = 0.0;
+                        for c in 0..c_in {
+                            let input_offset = c * ph * pw;
+                            let filter_offset = c * k * k;
+                            for ki in 0..k {
+                                let inp_row = &inp[input_offset + (hs + ki) * pw + ws .. input_offset + (hs + ki) * pw + ws + k];
+                                let filter_row = &filter[filter_offset + ki * k .. filter_offset + (ki + 1) * k];
+                                // We can use dot_f64_dispatch here for the kernel width
+                                acc += crate::simd::dot_f64_dispatch(inp_row, filter_row);
                             }
                         }
+                        out_plane[i * w_out + j] = acc;
                     }
-                    output[oc * h_out * w_out + i * w_out + j] = acc;
                 }
-            }
-        }
+            });
 
         (output, h_out, w_out)
     }
