@@ -86,8 +86,17 @@ pub fn cubic_higher_order(binary_train: &[i32], dt: f64, max_lag: usize) -> Vec<
                 continue;
             }
             let mut sum = 0.0_f64;
-            for k in 0..valid_n {
+            let mut k = 0;
+            while k + 3 < valid_n {
                 sum += x[k] * x[k + t1] * x[k + t2];
+                sum += x[k+1] * x[k+1 + t1] * x[k+1 + t2];
+                sum += x[k+2] * x[k+2 + t1] * x[k+2 + t2];
+                sum += x[k+3] * x[k+3 + t1] * x[k+3 + t2];
+                k += 4;
+            }
+            while k < valid_n {
+                sum += x[k] * x[k + t1] * x[k + t2];
+                k += 1;
             }
             c3[t1 * max_lag + t2] = sum / valid_n as f64;
         }
