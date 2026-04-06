@@ -201,7 +201,7 @@ Yamada produce similar bursting from different mathematical mechanisms.
   Ca²⁺ current with g_ca=25 and E_ca=100 creates fast dynamics near
   the reversal potential.
 - **5 clipping operations:** V [−200,200], n [0,1], Ca ≥0, 2× exp clip.
-  These are essential for numerical robustness.
+  These are essential for numerical safety.
 - **2 exp() per step:** m_inf and n_inf Boltzmann sigmoids.
 - **ρ = 0.00015:** Very small scaling → Ca²⁺ changes slowly.
   dt/ρ = 133 → many steps per Ca²⁺ time constant.
@@ -213,7 +213,7 @@ Yamada produce similar bursting from different mathematical mechanisms.
 - **Source:** `src/sc_neurocore/neurons/models/chay.py` — 55 lines.
 - **Three state variables:** v, n, ca.
 - **Dataclass:** Uses `@dataclass`.
-- **Extensive clipping:** 5 clip operations for numerical robustness.
+- **Extensive clipping:** 5 clip operations for numerical safety.
 - **Rust wiring:** Compatible (3 f64 state vars, clip + exp).
 
 ---
@@ -414,3 +414,216 @@ The model's parameters map to drug targets:
 - **Calcium channel blockers** (nifedipine): reduce g_Ca → fewer spikes
   per burst → less Ca²⁺ → less insulin
 - **K(Ca) modulators:** g_K(Ca) directly controls burst duration
+
+---
+
+## Theoretical Context
+
+### Pancreatic beta-cell electrophysiology
+
+The Chay model (1985) was developed to explain the electrical bursting
+activity of pancreatic beta cells that drives pulsatile insulin
+secretion. Beta cells in the islets of Langerhans exhibit a distinctive
+pattern: periodic bursts of action potentials riding on slow waves of
+membrane depolarisation, separated by silent interburst intervals.
+
+This bursting pattern depends on the interplay between:
+- Fast Ca²⁺ inward current (depolarising, driving spikes)
+- Delayed rectifier K⁺ current (repolarising each spike)
+- Ca²⁺-activated K⁺ current (slow hyperpolarisation, terminating bursts)
+- Intracellular Ca²⁺ accumulation and clearance
+
+### The Chay model in the burster hierarchy
+
+The Chay model is a **square-wave burster** (also called fold/homoclinic
+or Type I burster in Rinzel's classification). The slow variable (Ca²⁺)
+modulates the fast subsystem (V, n) between oscillatory and quiescent
+states. As Ca²⁺ rises during a burst, it activates I_K(Ca), which
+eventually hyperpolarises the membrane below the oscillation threshold.
+During the silent phase, Ca²⁺ decays, reducing I_K(Ca) until the
+membrane depolarises enough to restart the burst.
+
+### Relation to other SC-NeuroCore models
+
+| Model | Relation to Chay |
+|-------|-----------------|
+| ChayKeizer | Extended Chay with separate Ca²⁺ and K(Ca) channels |
+| ShermanRinzelKeizer | Beta-cell model with different slow variable |
+| BertramPhantom | Phantom burster with dual slow variables |
+| HindmarshRose | Phenomenological burster (different mechanism) |
+| PlantR15 | Similar Ca²⁺/K(Ca) bursting but for Aplysia neurons |
+
+---
+
+## Usage Examples
+
+### Example 1: Basic Python — fixed-point behaviour at default parameters
+
+```python
+from sc_neurocore.neurons.models.chay import ChayNeuron
+
+neuron = ChayNeuron()
+
+# Default parameters: g_K=1400 >> g_Ca=25 → no spikes (fixed point)
+spikes = sum(neuron.step(0.0) for _ in range(5000))
+print(f"Spikes at I=0: {spikes}")  # → 0
+
+# Even with strong drive, K⁺ dominance prevents threshold crossing
+spikes = sum(neuron.step(100.0) for _ in range(5000))
+print(f"Spikes at I=100: {spikes}")  # → 0
+
+# To observe bursting, reduce g_K or increase g_Ca
+burster = ChayNeuron(g_k=350.0, g_ca=25.0)
+spikes = sum(burster.step(0.0) for _ in range(5000))
+print(f"Spikes with reduced g_K: {spikes}")
+```
+
+### Example 2: Advanced Python — Ca²⁺ dynamics tracking
+
+```python
+from sc_neurocore.neurons.models.chay import ChayNeuron
+
+# Lower g_K for bursting regime
+neuron = ChayNeuron(g_k=350.0, dt=0.005)
+
+voltages, calcium = [], []
+for t in range(20000):
+    neuron.step(0.0)
+    voltages.append(neuron.v)
+    calcium.append(neuron.ca)
+
+# Ca²⁺ rises during bursts, decays during silent phases
+# V oscillates fast during bursts, quiescent between
+print(f"V range: [{min(voltages):.1f}, {max(voltages):.1f}] mV")
+print(f"Ca range: [{min(calcium):.4f}, {max(calcium):.4f}] µM")
+```
+
+### Example 3: PyO3 Rust — high-performance stepping
+
+```rust
+use sc_neurocore_engine::neurons::ChayNeuron;
+
+let mut neuron = ChayNeuron::new();
+
+// 100,000 steps at default parameters
+let mut spikes = 0;
+for _ in 0..100_000 {
+    spikes += neuron.step(0.0);
+}
+println!("Spikes: {spikes}, V = {:.2} mV, Ca = {:.4} µM",
+    neuron.v, neuron.ca);
+
+// Access state
+println!("n = {:.4} (K⁺ gate)", neuron.n);
+
+// Reset
+neuron.reset();
+assert!((neuron.v - (-50.0)).abs() < 1e-12);
+```
+
+---
+
+## Technical Reference
+
+### Methods
+
+| Method | Signature | Returns | Description |
+|--------|-----------|---------|-------------|
+| `step` | `step(current: float) → int` | 0 or 1 | Advance dt ms, return spike |
+| `reset` | `reset() → None` | — | Restore v, n, ca to initial values |
+
+### Python/Rust Parity
+
+| Property | Python | Rust | Match |
+|----------|--------|------|-------|
+| m_inf sigmoid | `1/(1+exp(clip(-(V+25)/8)))` | `1/(1+(-(V+25)/8).exp())` | NEAR (Python clips exp arg) |
+| n_inf sigmoid | `1/(1+exp(clip(-(V+18)/14)))` | `1/(1+(-(V+18)/14).exp())` | NEAR (Python clips exp arg) |
+| tau_n | `1/(0.01·max(\|V+18\|, 0.01))` | `1/(0.01·(V+18).abs().max(0.01))` | EXACT |
+| Ionic currents | I_Ca, I_K, I_KCa, I_L | I_Ca, I_K, I_KCa, I_L | EXACT |
+| Voltage update | `V += (…)·dt, clip(-200,200)` | `V += (…)·dt, clamp(-200,200)` | EXACT |
+| n-gate update | `n += (…)/tau_n·dt, clip(0,1)` | `n += (…)/tau_n·dt, clamp(0,1)` | EXACT |
+| Ca²⁺ update | `max(0, ca + ρ·(…)·dt)` | `(ca + ρ·(…)·dt).max(0)` | EXACT |
+| Spike detection | Upward crossing at −20 mV | Upward crossing at −20 mV | EXACT |
+| Reset | v=−50, n=0.1, ca=0.1 | v=−50, n=0.1, ca=0.1 | EXACT |
+| Parameters (14) | All identical | All identical | EXACT |
+
+**Note:** Python applies `np.clip(arg, -500, 500)` to exp arguments in
+m_inf and n_inf as overflow protection. Rust uses native `.exp()` without
+clipping. Within V ∈ [−200, 200] (enforced by voltage clamping), the
+clipped and unclipped values are numerically identical (exp argument
+never exceeds ±28). This is a defensive coding difference, not a
+mathematical discrepancy.
+
+### Supported operations
+
+| Operation | Supported | Notes |
+|-----------|-----------|-------|
+| Population | Yes | Standard interface |
+| Projection | Yes | Standard wiring |
+| NetworkRunner | Yes | `Chay` variant |
+| SpikeMonitor | Yes | Binary spike output |
+| PoissonInput | Yes | Tested |
+| PyO3 bridge | Yes | `PyChayNeuron` with v, n, ca state |
+
+---
+
+## Performance Benchmarks
+
+### Criterion 0.8 (Rust engine)
+
+Measured on i5-11600K @ 3.90 GHz, single-threaded, 2026-04-05.
+
+| Benchmark | Steps | Median | Per step |
+|-----------|------:|-------:|---------:|
+| `chay_1k_steps` | 1 000 | 34.2 µs | **34.2 ns** |
+
+2 exp() calls per step (m_inf, n_inf) + Ca²⁺ dynamics.
+No sub-stepping (single dt=0.02 ms step per call).
+
+### Python throughput
+
+| Metric | Value |
+|--------|------:|
+| Isolation | ~12 000 steps/s |
+| Per step | ~83 µs |
+
+### Rust speedup
+
+| Metric | Python | Rust | Speedup |
+|--------|-------:|-----:|--------:|
+| Per step | ~83 µs | 34.2 ns | **~2 400×** |
+
+---
+
+## Citations
+
+1. Chay, T. R. (1985). Chaos in a three-variable model of an excitable
+   cell. *Physica D: Nonlinear Phenomena*, 16(2), 233–242.
+   DOI: [10.1016/0167-2789(85)90060-0](https://doi.org/10.1016/0167-2789(85)90060-0)
+
+2. Chay, T. R. & Keizer, J. (1983). Minimal model for membrane
+   oscillations in the pancreatic beta-cell. *Biophysical Journal*,
+   42(2), 181–190.
+   DOI: [10.1016/S0006-3495(83)84384-7](https://doi.org/10.1016/S0006-3495(83)84384-7)
+
+3. Rinzel, J. (1987). A formal classification of bursting mechanisms in
+   excitable systems. In *Mathematical Topics in Population Biology,
+   Morphogenesis and Neurosciences*, Lecture Notes in Biomathematics,
+   vol. 71, pp. 267–281.
+   DOI: [10.1007/978-3-642-93360-8_26](https://doi.org/10.1007/978-3-642-93360-8_26)
+
+4. Sherman, A., Rinzel, J. & Keizer, J. (1988). Emergence of organized
+   bursting in clusters of pancreatic beta-cells by channel sharing.
+   *Biophysical Journal*, 54(3), 411–425.
+   DOI: [10.1016/S0006-3495(88)82975-0](https://doi.org/10.1016/S0006-3495(88)82975-0)
+
+5. Bertram, R., Butte, M. J., Kiemel, T. & Sherman, A. (1995). Topological
+   and phenomenological classification of bursting oscillations.
+   *Bulletin of Mathematical Biology*, 57(3), 413–439.
+   DOI: [10.1007/BF02460633](https://doi.org/10.1007/BF02460633)
+
+6. Atwater, I., Dawson, C. M., Scott, A., Eddlestone, G. & Rojas, E.
+   (1980). The nature of the oscillatory behaviour in electrical activity
+   from pancreatic beta-cell. *Hormone and Metabolic Research*, Suppl. 10,
+   100–107.
+   PMID: 6997166
