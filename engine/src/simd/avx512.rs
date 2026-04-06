@@ -45,11 +45,20 @@ pub unsafe fn pack_avx512(bits: &[u8]) -> Vec<u64> {
     let full_words = length / 64;
     let zero = _mm512_setzero_si512();
 
-    for (word_idx, word) in data.iter_mut().take(full_words).enumerate() {
+    let mut chunks = data[..full_words].chunks_exact_mut(4);
+    let mut word_idx = 0;
+    for chunk in chunks.by_ref() {
         let base = word_idx * 64;
-        let v = _mm512_loadu_si512(bits.as_ptr().add(base) as *const __m512i);
-        let mask = _mm512_cmpneq_epi8_mask(v, zero);
-        *word = mask;
+        for i in 0..4 {
+            let v = _mm512_loadu_si512(bits.as_ptr().add(base + i * 64) as *const __m512i);
+            chunk[i] = _mm512_cmpneq_epi8_mask(v, zero);
+        }
+        word_idx += 4;
+    }
+
+    for i in word_idx..full_words {
+        let v = _mm512_loadu_si512(bits.as_ptr().add(i * 64) as *const __m512i);
+        data[i] = _mm512_cmpneq_epi8_mask(v, zero);
     }
 
     if full_words < words {
