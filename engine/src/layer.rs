@@ -107,17 +107,25 @@ impl DenseLayer {
 
     /// Rebuild packed weight bitstreams from current weight matrix.
     pub fn refresh_packed_weights(&mut self) {
-        let mut rng = ChaCha8Rng::seed_from_u64(self.weight_seed);
-        let mut packed_weights_flat =
-            vec![0_u64; self.n_neurons * self.n_inputs * self.words_per_input];
+        let n_inputs = self.n_inputs;
+        let words = self.words_per_input;
+        let length = self.length;
+        let weight_seed = self.weight_seed;
+        let weights = &self.weights;
+        
+        let mut packed_weights_flat = vec![0_u64; self.n_neurons * n_inputs * words];
 
-        for (neuron_idx, neuron_weights) in self.weights.iter().enumerate().take(self.n_neurons) {
-            for (input_idx, weight_prob) in neuron_weights.iter().enumerate().take(self.n_inputs) {
-                let packed = bitstream::bernoulli_packed_simd(*weight_prob, self.length, &mut rng);
-                let start = (neuron_idx * self.n_inputs + input_idx) * self.words_per_input;
-                packed_weights_flat[start..start + self.words_per_input].copy_from_slice(&packed);
-            }
-        }
+        packed_weights_flat
+            .par_chunks_mut(n_inputs * words)
+            .enumerate()
+            .for_each(|(neuron_idx, neuron_chunk)| {
+                let mut rng = ChaCha8Rng::seed_from_u64(weight_seed.wrapping_add(neuron_idx as u64));
+                for (input_idx, input_chunk) in neuron_chunk.chunks_mut(words).enumerate() {
+                    let weight_prob = weights[neuron_idx][input_idx];
+                    let packed = bitstream::bernoulli_packed_simd(weight_prob, length, &mut rng);
+                    input_chunk.copy_from_slice(&packed);
+                }
+            });
 
         self.packed_weights_flat = packed_weights_flat;
     }
@@ -499,8 +507,8 @@ mod tests {
         assert_eq!(layer.words_per_input, words);
         assert_eq!(layer.packed_weights_flat.len(), 3 * 2 * words);
 
-        let mut rng = ChaCha8Rng::seed_from_u64(43);
         for neuron in 0..2 {
+            let mut rng = ChaCha8Rng::seed_from_u64(43 + neuron as u64);
             for input in 0..3 {
                 let expected =
                     bitstream::bernoulli_packed_simd(layer.weights[neuron][input], 130, &mut rng);
