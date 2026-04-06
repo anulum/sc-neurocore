@@ -9,7 +9,10 @@
 //!
 //! Differentiable wrappers around SC forward operators.
 
+use rayon::prelude::*;
+
 #[derive(Clone, Debug)]
+
 pub enum SurrogateType {
     /// Fast Sigmoid: d/dx = 1 / (2k * (1 + k|x|)^2)
     FastSigmoid { k: f32 },
@@ -182,40 +185,43 @@ impl DifferentiableDenseLayer {
         let mut grad_input = vec![0.0_f64; self.layer.n_inputs];
         let mut grad_weights = vec![vec![0.0_f64; self.layer.n_inputs]; self.layer.n_neurons];
 
-        for j in 0..self.layer.n_neurons {
-            let surr = self.surrogate.grad((self.output_cache[j] - 0.5) as f32) as f64;
-            let local_grad = grad_output[j] * surr;
-            
-            // Weight gradient: local_grad * inputs (unrolled)
-            {
-                let row_grad_weights = &mut grad_weights[j];
-                let mut chunks_gw = row_grad_weights.chunks_exact_mut(4);
-                let mut chunks_inp = self.input_cache.chunks_exact(4);
-                for (cgw, cinp) in chunks_gw.by_ref().zip(chunks_inp.by_ref()) {
-                    cgw[0] = local_grad * cinp[0];
-                    cgw[1] = local_grad * cinp[1];
-                    cgw[2] = local_grad * cinp[2];
-                    cgw[3] = local_grad * cinp[3];
-                }
-                for (gw, &inp) in chunks_gw.into_remainder().iter_mut().zip(chunks_inp.remainder()) {
-                    *gw = local_grad * inp;
-                }
+        // Compute surr and local_grad for all neurons
+        let local_grads: Vec<f64> = (0..self.layer.n_neurons)
+            .map(|j| {
+                let surr = self.surrogate.grad((self.output_cache[j] - 0.5) as f32) as f64;
+                grad_output[j] * surr
+            })
+            .collect();
+
+        // Parallel weight gradient computation
+        grad_weights.par_iter_mut().enumerate().for_each(|(j, row_grad_weights)| {
+            let local_grad = local_grads[j];
+            let mut chunks_gw = row_grad_weights.chunks_exact_mut(4);
+            let mut chunks_inp = self.input_cache.chunks_exact(4);
+            for (cgw, cinp) in chunks_gw.by_ref().zip(chunks_inp.by_ref()) {
+                cgw[0] = local_grad * cinp[0];
+                cgw[1] = local_grad * cinp[1];
+                cgw[2] = local_grad * cinp[2];
+                cgw[3] = local_grad * cinp[3];
             }
-            
-            // Input gradient accumulation: local_grad * weights (unrolled)
-            {
-                let row_weights = &self.layer.weights[j];
-                let mut chunks_gi = grad_input.chunks_exact_mut(4);
-                let mut chunks_w = row_weights.chunks_exact(4);
-                for (cgi, cw) in chunks_gi.by_ref().zip(chunks_w.by_ref()) {
-                    cgi[0] += local_grad * cw[0];
-                    cgi[1] += local_grad * cw[1];
-                    cgi[2] += local_grad * cw[2];
-                    cgi[3] += local_grad * cw[3];
-                }
-                for (gi, &w) in chunks_gi.into_remainder().iter_mut().zip(chunks_w.remainder()) {
-                    *gi += local_grad * w;
-                }
+            for (gw, &inp) in chunks_gw.into_remainder().iter_mut().zip(chunks_inp.remainder()) {
+                *gw = local_grad * inp;
+            }
+        });
+
+        // Serial input gradient accumulation
+        for (j, &local_grad) in local_grads.iter().enumerate() {
+            let row_weights = &self.layer.weights[j];
+            let mut chunks_gi = grad_input.chunks_exact_mut(4);
+            let mut chunks_w = row_weights.chunks_exact(4);
+            for (cgi, cw) in chunks_gi.by_ref().zip(chunks_w.by_ref()) {
+                cgi[0] += local_grad * cw[0];
+                cgi[1] += local_grad * cw[1];
+                cgi[2] += local_grad * cw[2];
+                cgi[3] += local_grad * cw[3];
+            }
+            for (gi, &w) in chunks_gi.into_remainder().iter_mut().zip(chunks_w.remainder()) {
+                *gi += local_grad * w;
             }
         }
 
