@@ -55,14 +55,20 @@ pub fn bin_spike_train(binary_train: &[i32], bin_size: usize) -> Vec<i64> {
     if n_bins == 0 {
         return vec![binary_train.iter().map(|&s| s as i64).sum()];
     }
-    (0..n_bins)
-        .map(|i| {
-            binary_train[i * bin_size..(i + 1) * bin_size]
-                .iter()
-                .map(|&s| s as i64)
-                .sum()
-        })
-        .collect()
+    let mut res = Vec::with_capacity(n_bins);
+    for i in 0..n_bins {
+        let chunk = &binary_train[i * bin_size..(i + 1) * bin_size];
+        let mut total = 0_i64;
+        let mut c_iter = chunk.chunks_exact(4);
+        for c in c_iter.by_ref() {
+            total += (c[0] + c[1] + c[2] + c[3]) as i64;
+        }
+        for &s in c_iter.remainder() {
+            total += s as i64;
+        }
+        res.push(total);
+    }
+    res
 }
 
 // Also accept f64 spike trains (common in Python pipelines)
