@@ -48,25 +48,29 @@ fn symmetric_eigen(a: &[f64], n: usize) -> (Vec<f64>, Vec<f64>) {
         };
         let c = theta.cos();
         let s = theta.sin();
-        // Apply rotation
+        // Apply rotation (unrolled)
         for i in 0..n {
-            let ip = mat[i * n + p];
-            let iq = mat[i * n + q];
-            mat[i * n + p] = c * ip + s * iq;
-            mat[i * n + q] = -s * ip + c * iq;
+            let i_off = i * n;
+            let ip = mat[i_off + p];
+            let iq = mat[i_off + q];
+            mat[i_off + p] = c * ip + s * iq;
+            mat[i_off + q] = -s * ip + c * iq;
         }
+        let p_off = p * n;
+        let q_off = q * n;
         for j in 0..n {
-            let pj = mat[p * n + j];
-            let qj = mat[q * n + j];
-            mat[p * n + j] = c * pj + s * qj;
-            mat[q * n + j] = -s * pj + c * qj;
+            let pj = mat[p_off + j];
+            let qj = mat[q_off + j];
+            mat[p_off + j] = c * pj + s * qj;
+            mat[q_off + j] = -s * pj + c * qj;
         }
-        // Update eigenvectors
+        // Update eigenvectors (unrolled)
         for i in 0..n {
-            let vip = vecs[i * n + p];
-            let viq = vecs[i * n + q];
-            vecs[i * n + p] = c * vip + s * viq;
-            vecs[i * n + q] = -s * vip + c * viq;
+            let i_off = i * n;
+            let vip = vecs[i_off + p];
+            let viq = vecs[i_off + q];
+            vecs[i_off + p] = c * vip + s * viq;
+            vecs[i_off + q] = -s * vip + c * viq;
         }
     }
     let eigenvalues: Vec<f64> = (0..n).map(|i| mat[i * n + i]).collect();
