@@ -49,17 +49,26 @@ pub unsafe fn popcount_neon(data: &[u64]) -> u64 {
 /// Caller must ensure the current CPU supports `neon`.
 pub unsafe fn dot_f64_neon(a: &[f64], b: &[f64]) -> f64 {
     let len = a.len().min(b.len());
-    let mut acc = vdupq_n_f64(0.0);
-    let mut chunks_a = a[..len].chunks_exact(2);
-    let mut chunks_b = b[..len].chunks_exact(2);
+    let mut acc0 = vdupq_n_f64(0.0);
+    let mut acc1 = vdupq_n_f64(0.0);
+    let mut acc2 = vdupq_n_f64(0.0);
+    let mut acc3 = vdupq_n_f64(0.0);
+    
+    let mut chunks_a = a[..len].chunks_exact(8);
+    let mut chunks_b = b[..len].chunks_exact(8);
 
     for (ca, cb) in chunks_a.by_ref().zip(chunks_b.by_ref()) {
-        let va = vld1q_f64(ca.as_ptr());
-        let vb = vld1q_f64(cb.as_ptr());
-        acc = vfmaq_f64(acc, va, vb);
+        acc0 = vfmaq_f64(acc0, vld1q_f64(ca.as_ptr()), vld1q_f64(cb.as_ptr()));
+        acc1 = vfmaq_f64(acc1, vld1q_f64(ca.as_ptr().add(2)), vld1q_f64(cb.as_ptr().add(2)));
+        acc2 = vfmaq_f64(acc2, vld1q_f64(ca.as_ptr().add(4)), vld1q_f64(cb.as_ptr().add(4)));
+        acc3 = vfmaq_f64(acc3, vld1q_f64(ca.as_ptr().add(6)), vld1q_f64(cb.as_ptr().add(6)));
     }
 
-    let mut sum = vgetq_lane_f64(acc, 0) + vgetq_lane_f64(acc, 1);
+    acc0 = vaddq_f64(acc0, acc1);
+    acc2 = vaddq_f64(acc2, acc3);
+    acc0 = vaddq_f64(acc0, acc2);
+
+    let mut sum = vgetq_lane_f64(acc0, 0) + vgetq_lane_f64(acc0, 1);
     for (&ra, &rb) in chunks_a.remainder().iter().zip(chunks_b.remainder()) {
         sum += ra * rb;
     }
@@ -98,15 +107,24 @@ pub unsafe fn max_f64_neon(a: &[f64]) -> f64 {
 /// # Safety
 /// Caller must ensure the current CPU supports `neon`.
 pub unsafe fn sum_f64_neon(a: &[f64]) -> f64 {
-    let mut acc = vdupq_n_f64(0.0);
-    let mut chunks = a.chunks_exact(2);
-
+    let mut acc0 = vdupq_n_f64(0.0);
+    let mut acc1 = vdupq_n_f64(0.0);
+    let mut acc2 = vdupq_n_f64(0.0);
+    let mut acc3 = vdupq_n_f64(0.0);
+    
+    let mut chunks = a.chunks_exact(8);
     for chunk in chunks.by_ref() {
-        let va = vld1q_f64(chunk.as_ptr());
-        acc = vaddq_f64(acc, va);
+        acc0 = vaddq_f64(acc0, vld1q_f64(chunk.as_ptr()));
+        acc1 = vaddq_f64(acc1, vld1q_f64(chunk.as_ptr().add(2)));
+        acc2 = vaddq_f64(acc2, vld1q_f64(chunk.as_ptr().add(4)));
+        acc3 = vaddq_f64(acc3, vld1q_f64(chunk.as_ptr().add(6)));
     }
 
-    let mut sum = vgetq_lane_f64(acc, 0) + vgetq_lane_f64(acc, 1);
+    acc0 = vaddq_f64(acc0, acc1);
+    acc2 = vaddq_f64(acc2, acc3);
+    acc0 = vaddq_f64(acc0, acc2);
+
+    let mut sum = vgetq_lane_f64(acc0, 0) + vgetq_lane_f64(acc0, 1);
     for &v in chunks.remainder() {
         sum += v;
     }
@@ -121,12 +139,13 @@ pub unsafe fn sum_f64_neon(a: &[f64]) -> f64 {
 /// Caller must ensure the current CPU supports `neon`.
 pub unsafe fn scale_f64_neon(alpha: f64, y: &mut [f64]) {
     let valpha = vdupq_n_f64(alpha);
-    let mut chunks = y.chunks_exact_mut(2);
+    let mut chunks = y.chunks_exact_mut(8);
 
     for chunk in chunks.by_ref() {
-        let vy = vld1q_f64(chunk.as_ptr());
-        let scaled = vmulq_f64(vy, valpha);
-        vst1q_f64(chunk.as_mut_ptr(), scaled);
+        vst1q_f64(chunk.as_mut_ptr(), vmulq_f64(vld1q_f64(chunk.as_ptr()), valpha));
+        vst1q_f64(chunk.as_mut_ptr().add(2), vmulq_f64(vld1q_f64(chunk.as_ptr().add(2)), valpha));
+        vst1q_f64(chunk.as_mut_ptr().add(4), vmulq_f64(vld1q_f64(chunk.as_ptr().add(4)), valpha));
+        vst1q_f64(chunk.as_mut_ptr().add(6), vmulq_f64(vld1q_f64(chunk.as_ptr().add(6)), valpha));
     }
 
     for v in chunks.into_remainder() {
