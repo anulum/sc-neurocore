@@ -37,7 +37,15 @@ pub fn firing_rate(binary_train: &[i32], dt: f64) -> f64 {
 
 /// Total spike count.
 pub fn spike_count(binary_train: &[i32]) -> i64 {
-    binary_train.iter().map(|&s| s as i64).sum()
+    let mut total = 0_i64;
+    let mut chunks = binary_train.chunks_exact(4);
+    for c in chunks.by_ref() {
+        total += (c[0] + c[1] + c[2] + c[3]) as i64;
+    }
+    for &s in chunks.remainder() {
+        total += s as i64;
+    }
+    total
 }
 
 /// Bin a binary spike train into spike counts per bin.
