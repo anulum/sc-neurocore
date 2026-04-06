@@ -207,6 +207,17 @@ pub fn dot_f64_dispatch(a: &[f64], b: &[f64]) -> f64 {
         if is_x86_feature_detected!("avx") {
             return unsafe { avx2::dot_f64_avx(a, b) };
         }
+        if is_x86_feature_detected!("sse2") {
+            let len = a.len().min(b.len());
+            let mut sum = 0.0_f64;
+            let mut chunks_a = a[..len].chunks_exact(4);
+            let mut chunks_b = b[..len].chunks_exact(4);
+            for (ca, cb) in chunks_a.by_ref().zip(chunks_b.by_ref()) {
+                sum += ca[0] * cb[0] + ca[1] * cb[1] + ca[2] * cb[2] + ca[3] * cb[3];
+            }
+            sum += chunks_a.remainder().iter().zip(chunks_b.remainder()).map(|(x, y)| x * y).sum::<f64>();
+            return sum;
+        }
     }
 
     #[cfg(target_arch = "aarch64")]
@@ -214,20 +225,8 @@ pub fn dot_f64_dispatch(a: &[f64], b: &[f64]) -> f64 {
         return unsafe { neon::dot_f64_neon(a, b) };
     }
 
-    #[allow(unreachable_code)]
-    {
-        let len = a.len().min(b.len());
-        let a_slice = &a[..len];
-        let b_slice = &b[..len];
-        let mut sum = 0.0_f64;
-        let mut chunks_a = a_slice.chunks_exact(4);
-        let mut chunks_b = b_slice.chunks_exact(4);
-        for (ca, cb) in chunks_a.by_ref().zip(chunks_b.by_ref()) {
-            sum += ca[0] * cb[0] + ca[1] * cb[1] + ca[2] * cb[2] + ca[3] * cb[3];
-        }
-        sum += chunks_a.remainder().iter().zip(chunks_b.remainder()).map(|(x, y)| x * y).sum::<f64>();
-        sum
-    }
+    let len = a.len().min(b.len());
+    a[..len].iter().zip(&b[..len]).map(|(&x, &y)| x * y).sum()
 }
 
 /// Maximum of f64 slice using the best available SIMD path.
@@ -240,6 +239,20 @@ pub fn max_f64_dispatch(a: &[f64]) -> f64 {
         if is_x86_feature_detected!("avx2") {
             return unsafe { avx2::max_f64_avx2(a) };
         }
+        if is_x86_feature_detected!("avx") {
+            return unsafe { avx2::max_f64_avx(a) };
+        }
+        if is_x86_feature_detected!("sse2") {
+            let mut m = f64::NEG_INFINITY;
+            let mut chunks = a.chunks_exact(4);
+            for c in chunks.by_ref() {
+                m = m.max(c[0].max(c[1]).max(c[2].max(c[3])));
+            }
+            for &v in chunks.remainder() {
+                m = m.max(v);
+            }
+            return m;
+        }
     }
 
     #[cfg(target_arch = "aarch64")]
@@ -247,18 +260,7 @@ pub fn max_f64_dispatch(a: &[f64]) -> f64 {
         return unsafe { neon::max_f64_neon(a) };
     }
 
-    #[allow(unreachable_code)]
-    {
-        let mut m = f64::NEG_INFINITY;
-        let mut chunks = a.chunks_exact(4);
-        for c in chunks.by_ref() {
-            m = m.max(c[0].max(c[1]).max(c[2].max(c[3])));
-        }
-        for &v in chunks.remainder() {
-            m = m.max(v);
-        }
-        m
-    }
+    a.iter().copied().fold(f64::NEG_INFINITY, f64::max)
 }
 
 /// Sum of f64 slice using the best available SIMD path.
@@ -274,6 +276,15 @@ pub fn sum_f64_dispatch(a: &[f64]) -> f64 {
         if is_x86_feature_detected!("avx") {
             return unsafe { avx2::sum_f64_avx(a) };
         }
+        if is_x86_feature_detected!("sse2") {
+            let mut s = 0.0_f64;
+            let mut chunks = a.chunks_exact(4);
+            for c in chunks.by_ref() {
+                s += c[0] + c[1] + c[2] + c[3];
+            }
+            s += chunks.remainder().iter().sum::<f64>();
+            return s;
+        }
     }
 
     #[cfg(target_arch = "aarch64")]
@@ -281,16 +292,7 @@ pub fn sum_f64_dispatch(a: &[f64]) -> f64 {
         return unsafe { neon::sum_f64_neon(a) };
     }
 
-    #[allow(unreachable_code)]
-    {
-        let mut sum = 0.0_f64;
-        let mut chunks = a.chunks_exact(4);
-        for c in chunks.by_ref() {
-            sum += c[0] + c[1] + c[2] + c[3];
-        }
-        sum += chunks.remainder().iter().sum::<f64>();
-        sum
-    }
+    a.iter().sum()
 }
 
 /// Scale f64 slice in-place: y[i] *= alpha, using the best available SIMD path.
@@ -305,6 +307,23 @@ pub fn scale_f64_dispatch(alpha: f64, y: &mut [f64]) {
             unsafe { avx2::scale_f64_avx2(alpha, y) };
             return;
         }
+        if is_x86_feature_detected!("avx") {
+            unsafe { avx2::scale_f64_avx(alpha, y) };
+            return;
+        }
+        if is_x86_feature_detected!("sse2") {
+            let mut chunks = y.chunks_exact_mut(4);
+            for c in chunks.by_ref() {
+                c[0] *= alpha;
+                c[1] *= alpha;
+                c[2] *= alpha;
+                c[3] *= alpha;
+            }
+            for v in chunks.into_remainder() {
+                *v *= alpha;
+            }
+            return;
+        }
     }
 
     #[cfg(target_arch = "aarch64")]
@@ -313,9 +332,8 @@ pub fn scale_f64_dispatch(alpha: f64, y: &mut [f64]) {
         return;
     }
 
-    #[allow(unreachable_code)]
-    for v in y.iter_mut() {
-        *v *= alpha;
+    for x in y.iter_mut() {
+        *x *= alpha;
     }
 }
 
