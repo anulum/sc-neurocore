@@ -368,17 +368,18 @@ fn var_coefficients(trains_binned: &[Vec<f64>], order: usize) -> (Vec<f64>, Vec<
     let mut sigma = vec![0.0_f64; d * d];
     let n_norm = n_pts.max(1) as f64;
     
-    // Precompute residuals: res_cols = y_cols - X_cols * beta
-    let mut res_cols = vec![vec![0.0_f64; n_pts]; d];
-    for j in 0..d {
+    // Precompute residuals: res_cols = y_cols - X_cols * beta (parallel)
+    let res_cols: Vec<Vec<f64>> = (0..d).into_par_iter().map(|j| {
+        let mut res = vec![0.0_f64; n_pts];
         for p in 0..n_pts {
             let mut r = y_cols[j][p];
             for c in 0..x_cols {
                 r -= x_cols_data[c][p] * beta[c * d + j];
             }
-            res_cols[j][p] = r;
+            res[p] = r;
         }
-    }
+        res
+    }).collect();
 
     for i in 0..d {
         for j in 0..=i {
