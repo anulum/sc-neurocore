@@ -85,15 +85,24 @@ pub unsafe fn max_f64_neon(a: &[f64]) -> f64 {
     if a.is_empty() {
         return f64::NEG_INFINITY;
     }
-    let mut vmax = vdupq_n_f64(f64::NEG_INFINITY);
-    let mut chunks = a.chunks_exact(2);
-
+    let mut vmax0 = vdupq_n_f64(f64::NEG_INFINITY);
+    let mut vmax1 = vdupq_n_f64(f64::NEG_INFINITY);
+    let mut vmax2 = vdupq_n_f64(f64::NEG_INFINITY);
+    let mut vmax3 = vdupq_n_f64(f64::NEG_INFINITY);
+    
+    let mut chunks = a.chunks_exact(8);
     for chunk in chunks.by_ref() {
-        let va = vld1q_f64(chunk.as_ptr());
-        vmax = vmaxq_f64(vmax, va);
+        vmax0 = vmaxq_f64(vmax0, vld1q_f64(chunk.as_ptr()));
+        vmax1 = vmaxq_f64(vmax1, vld1q_f64(chunk.as_ptr().add(2)));
+        vmax2 = vmaxq_f64(vmax2, vld1q_f64(chunk.as_ptr().add(4)));
+        vmax3 = vmaxq_f64(vmax3, vld1q_f64(chunk.as_ptr().add(6)));
     }
 
-    let mut m = f64::max(vgetq_lane_f64(vmax, 0), vgetq_lane_f64(vmax, 1));
+    vmax0 = vmaxq_f64(vmax0, vmax1);
+    vmax2 = vmaxq_f64(vmax2, vmax3);
+    vmax0 = vmaxq_f64(vmax0, vmax2);
+
+    let mut m = f64::max(vgetq_lane_f64(vmax0, 0), vgetq_lane_f64(vmax0, 1));
     for &v in chunks.remainder() {
         m = m.max(v);
     }
