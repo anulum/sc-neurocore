@@ -31,11 +31,21 @@ fn entropy_from_counts(counts: &[usize], total: usize) -> f64 {
     if total == 0 {
         return 0.0;
     }
-    let n = total as f64;
+    let n_inv = 1.0 / total as f64;
     let mut h = 0.0_f64;
-    for &c in counts {
+    
+    let mut chunks = counts.chunks_exact(4);
+    for chunk in chunks.by_ref() {
+        for &c in chunk {
+            if c > 0 {
+                let p = c as f64 * n_inv;
+                h -= p * (p + 1e-30).log2();
+            }
+        }
+    }
+    for &c in chunks.remainder() {
         if c > 0 {
-            let p = c as f64 / n;
+            let p = c as f64 * n_inv;
             h -= p * (p + 1e-30).log2();
         }
     }
