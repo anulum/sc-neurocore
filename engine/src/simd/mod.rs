@@ -207,9 +207,6 @@ pub fn dot_f64_dispatch(a: &[f64], b: &[f64]) -> f64 {
         if is_x86_feature_detected!("avx") {
             return unsafe { avx2::dot_f64_avx(a, b) };
         }
-        if is_x86_feature_detected!("avx") {
-            return unsafe { avx2::dot_f64_avx(a, b) };
-        }
     }
 
     #[cfg(target_arch = "aarch64")]
@@ -220,7 +217,16 @@ pub fn dot_f64_dispatch(a: &[f64], b: &[f64]) -> f64 {
     #[allow(unreachable_code)]
     {
         let len = a.len().min(b.len());
-        a[..len].iter().zip(&b[..len]).map(|(&x, &y)| x * y).sum()
+        let a_slice = &a[..len];
+        let b_slice = &b[..len];
+        let mut sum = 0.0_f64;
+        let mut chunks_a = a_slice.chunks_exact(4);
+        let mut chunks_b = b_slice.chunks_exact(4);
+        for (ca, cb) in chunks_a.by_ref().zip(chunks_b.by_ref()) {
+            sum += ca[0] * cb[0] + ca[1] * cb[1] + ca[2] * cb[2] + ca[3] * cb[3];
+        }
+        sum += chunks_a.remainder().iter().zip(chunks_b.remainder()).map(|(x, y)| x * y).sum::<f64>();
+        sum
     }
 }
 
@@ -258,9 +264,6 @@ pub fn sum_f64_dispatch(a: &[f64]) -> f64 {
         if is_x86_feature_detected!("avx") {
             return unsafe { avx2::sum_f64_avx(a) };
         }
-        if is_x86_feature_detected!("avx") {
-            return unsafe { avx2::sum_f64_avx(a) };
-        }
     }
 
     #[cfg(target_arch = "aarch64")]
@@ -269,7 +272,15 @@ pub fn sum_f64_dispatch(a: &[f64]) -> f64 {
     }
 
     #[allow(unreachable_code)]
-    a.iter().sum()
+    {
+        let mut sum = 0.0_f64;
+        let mut chunks = a.chunks_exact(4);
+        for c in chunks.by_ref() {
+            sum += c[0] + c[1] + c[2] + c[3];
+        }
+        sum += chunks.remainder().iter().sum::<f64>();
+        sum
+    }
 }
 
 /// Scale f64 slice in-place: y[i] *= alpha, using the best available SIMD path.
