@@ -8,6 +8,8 @@
 
 /// Spike directionality (Kreuz et al. 2015).
 /// Returns asymmetry in [-1, 1]. Positive: A leads B.
+use rayon::prelude::*;
+
 pub fn spike_directionality(times_a: &[f64], times_b: &[f64], t_start: f64, t_end: f64) -> f64 {
     let mut ta: Vec<f64> = times_a
         .iter()
@@ -79,28 +81,30 @@ pub fn cubic_higher_order(binary_train: &[i32], dt: f64, max_lag: usize) -> Vec<
     let x: Vec<f64> = binary_train.iter().map(|&v| v as f64 - mean).collect();
 
     let mut c3 = vec![0.0_f64; max_lag * max_lag];
-    for t1 in 0..max_lag {
-        for t2 in 0..max_lag {
-            let valid_n = n.saturating_sub(t1.max(t2));
-            if valid_n == 0 {
-                continue;
+    c3.par_chunks_exact_mut(max_lag)
+        .enumerate()
+        .for_each(|(t1, row)| {
+            for t2 in 0..max_lag {
+                let valid_n = n.saturating_sub(t1.max(t2));
+                if valid_n == 0 {
+                    continue;
+                }
+                let mut sum = 0.0_f64;
+                let mut k = 0;
+                while k + 3 < valid_n {
+                    sum += x[k] * x[k + t1] * x[k + t2];
+                    sum += x[k+1] * x[k+1 + t1] * x[k+1 + t2];
+                    sum += x[k+2] * x[k+2 + t1] * x[k+2 + t2];
+                    sum += x[k+3] * x[k+3 + t1] * x[k+3 + t2];
+                    k += 4;
+                }
+                while k < valid_n {
+                    sum += x[k] * x[k + t1] * x[k + t2];
+                    k += 1;
+                }
+                row[t2] = sum / valid_n as f64;
             }
-            let mut sum = 0.0_f64;
-            let mut k = 0;
-            while k + 3 < valid_n {
-                sum += x[k] * x[k + t1] * x[k + t2];
-                sum += x[k+1] * x[k+1 + t1] * x[k+1 + t2];
-                sum += x[k+2] * x[k+2 + t1] * x[k+2 + t2];
-                sum += x[k+3] * x[k+3 + t1] * x[k+3 + t2];
-                k += 4;
-            }
-            while k < valid_n {
-                sum += x[k] * x[k + t1] * x[k + t2];
-                k += 1;
-            }
-            c3[t1 * max_lag + t2] = sum / valid_n as f64;
-        }
-    }
+        });
     c3
 }
 
