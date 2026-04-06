@@ -6,6 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Dimensionality reduction for spike train populations
 
+use rayon::prelude::*;
 use super::basic;
 
 // ── helpers ─────────────────────────────────────────────────────────
