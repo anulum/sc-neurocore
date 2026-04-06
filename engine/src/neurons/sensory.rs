@@ -1758,3 +1758,269 @@ mod tests {
         assert_eq!(t.atp_release, 0.0);
     }
 }
+
+/// Direction-selective retinal ganglion cell (DS-RGC) with On/Off sub-types.
+///
+/// Models the centre-surround receptive field with temporal derivative
+/// for direction selectivity. On-centre RGC responds to light increments,
+/// Off-centre responds to decrements.
+///
+///   response = w_c · (I - I_prev) ± w_s · surround_inhibition
+///   spike if response > θ
+///
+/// Reference: Gollisch & Meister (2010) "Eye smarter than scientists believed",
+/// Masland (2012) "The neuronal organization of the retina".
+#[derive(Clone, Debug)]
+pub struct DirectionSelectiveRGC {
+    pub v: f64,
+    pub tau: f64,
+    pub theta: f64,
+    pub dt: f64,
+    pub is_on_centre: bool,
+    prev_intensity: f64,
+    surround: f64,
+    pub w_centre: f64,
+    pub w_surround: f64,
+    pub direction_pref: f64,
+}
+
+impl DirectionSelectiveRGC {
+    pub fn new_on() -> Self {
+        Self {
+            v: 0.0,
+            tau: 10.0,
+            theta: 0.5,
+            dt: 1.0,
+            is_on_centre: true,
+            prev_intensity: 0.0,
+            surround: 0.0,
+            w_centre: 1.0,
+            w_surround: 0.3,
+            direction_pref: 0.0,
+        }
+    }
+
+    pub fn new_off() -> Self {
+        let mut cell = Self::new_on();
+        cell.is_on_centre = false;
+        cell
+    }
+
+    /// Step with local intensity and surround mean intensity.
+    pub fn step_rf(&mut self, intensity: f64, surround_mean: f64) -> i32 {
+        let temporal_diff = intensity - self.prev_intensity;
+        self.prev_intensity = intensity;
+
+        let centre_response = if self.is_on_centre {
+            self.w_centre * temporal_diff
+        } else {
+            -self.w_centre * temporal_diff
+        };
+
+        self.surround = 0.9 * self.surround + 0.1 * surround_mean;
+        let surround_inhib = self.w_surround * self.surround;
+
+        let drive = centre_response - surround_inhib;
+        self.v += (-self.v + drive) / self.tau * self.dt;
+
+        if self.v >= self.theta {
+            self.v = 0.0;
+            1
+        } else {
+            0
+        }
+    }
+
+    /// Simple step (no surround).
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.step_rf(current, 0.0)
+    }
+
+    pub fn reset(&mut self) {
+        self.v = 0.0;
+        self.prev_intensity = 0.0;
+        self.surround = 0.0;
+    }
+}
+
+impl Default for DirectionSelectiveRGC {
+    fn default() -> Self {
+        Self::new_on()
+    }
+}
+
+/// Cochlear inner hair cell: mechano-electrical transduction.
+///
+/// Converts basilar membrane displacement (mechanical) into receptor potential
+/// via stereocilia tip-link channels with Boltzmann activation:
+///
+///   P_open(x) = 1 / (1 + exp(-(x - x_0) / δ))
+///   I_MET = g_max · P_open · (V - E_MET)
+///   C dV/dt = -g_L(V - E_L) - I_MET + I_ext
+///
+/// Reference: Meddis (2006), Zilany et al. (2009, 2014).
+#[derive(Clone, Debug)]
+pub struct CochlearHairCell {
+    pub v: f64,
+    pub g_max: f64,
+    pub e_met: f64,
+    pub g_l: f64,
+    pub e_l: f64,
+    pub cap: f64,
+    pub x0: f64,
+    pub delta: f64,
+    pub dt: f64,
+    pub glutamate_release: f64,
+}
+
+impl CochlearHairCell {
+    pub fn new() -> Self {
+        Self {
+            v: -60.0,
+            g_max: 10.0,
+            e_met: 0.0,
+            g_l: 1.0,
+            e_l: -60.0,
+            cap: 10.0,
+            x0: 0.0,
+            delta: 0.1,
+            dt: 0.01,
+            glutamate_release: 0.0,
+        }
+    }
+
+    /// Boltzmann activation of MET channels.
+    fn p_open(&self, displacement: f64) -> f64 {
+        1.0 / (1.0 + (-(displacement - self.x0) / self.delta).exp())
+    }
+
+    /// Step with basilar membrane displacement.
+    pub fn step(&mut self, displacement: f64) -> i32 {
+        let po = self.p_open(displacement);
+        let i_met = self.g_max * po * (self.v - self.e_met);
+        let dv = (-self.g_l * (self.v - self.e_l) - i_met) / self.cap;
+        self.v += dv * self.dt;
+
+        // Graded glutamate release (no spike, but we return 1 if above threshold).
+        self.glutamate_release = (self.v + 60.0).max(0.0) / 40.0;
+        if self.glutamate_release > 0.5 {
+            1
+        } else {
+            0
+        }
+    }
+
+    pub fn reset(&mut self) {
+        self.v = self.e_l;
+        self.glutamate_release = 0.0;
+    }
+}
+
+impl Default for CochlearHairCell {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[cfg(test)]
+mod gap_sensory_tests {
+    use super::*;
+
+    #[test]
+    fn rgc_on_responds_to_light_increase() {
+        let mut cell = DirectionSelectiveRGC::new_on();
+        // Flash: darkness then bright.
+        for _ in 0..10 {
+            cell.step_rf(0.0, 0.0);
+        }
+        let mut spikes = 0;
+        for _ in 0..20 {
+            spikes += cell.step_rf(5.0, 0.0);
+        }
+        assert!(spikes > 0, "On-centre must respond to light increase");
+    }
+
+    #[test]
+    fn rgc_off_responds_to_light_decrease() {
+        let mut cell = DirectionSelectiveRGC::new_off();
+        cell.theta = 0.1; // Lower threshold to detect transients.
+                          // Alternate bright/dark to produce transitions.
+        let mut spikes = 0;
+        for i in 0..400 {
+            let intensity = if (i / 10) % 2 == 0 { 5.0 } else { 0.0 };
+            spikes += cell.step_rf(intensity, 0.0);
+        }
+        assert!(spikes > 0, "Off-centre must respond to light transitions");
+    }
+
+    #[test]
+    fn rgc_surround_inhibition() {
+        let mut no_surr = DirectionSelectiveRGC::new_on();
+        let mut with_surr = DirectionSelectiveRGC::new_on();
+        // Same centre stimulus, different surround.
+        let mut spikes_no = 0;
+        let mut spikes_surr = 0;
+        for i in 0..200 {
+            let intensity = if i % 10 == 0 { 3.0 } else { 0.0 };
+            spikes_no += no_surr.step_rf(intensity, 0.0);
+            spikes_surr += with_surr.step_rf(intensity, 2.0);
+        }
+        assert!(
+            spikes_surr <= spikes_no,
+            "Surround should inhibit: surr={spikes_surr} <= no={spikes_no}"
+        );
+    }
+
+    #[test]
+    fn cochlear_displacement_depolarises() {
+        let mut cell = CochlearHairCell::new();
+        let v_rest = cell.v;
+        for _ in 0..100 {
+            cell.step(0.5);
+        }
+        assert!(
+            cell.v > v_rest,
+            "Positive displacement should depolarise: {:.2} > {:.2}",
+            cell.v,
+            v_rest
+        );
+    }
+
+    #[test]
+    fn cochlear_graded_release() {
+        let mut cell = CochlearHairCell::new();
+        for _ in 0..200 {
+            cell.step(1.0);
+        }
+        assert!(
+            cell.glutamate_release > 0.0,
+            "Should release glutamate: {:.4}",
+            cell.glutamate_release
+        );
+    }
+
+    #[test]
+    fn cochlear_zero_displacement_rest() {
+        let mut cell = CochlearHairCell::new();
+        for _ in 0..100 {
+            cell.step(0.0);
+        }
+        // At P_open(0) = 0.5, steady MET current depolarises V above E_L.
+        assert!(
+            cell.v > -80.0 && cell.v < 0.0,
+            "Zero displacement → physiological range: {:.2}",
+            cell.v
+        );
+    }
+
+    #[test]
+    fn cochlear_reset() {
+        let mut cell = CochlearHairCell::new();
+        for _ in 0..100 {
+            cell.step(1.0);
+        }
+        cell.reset();
+        assert_eq!(cell.v, cell.e_l);
+        assert_eq!(cell.glutamate_release, 0.0);
+    }
+}

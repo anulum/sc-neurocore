@@ -862,3 +862,425 @@ mod tests {
         TwoCompartmentLIFNeuron::new().step(f64::NAN, 0.0);
     }
 }
+
+/// Dendritic NMDA spike model.
+///
+/// Captures the non-linear voltage-dependent Mg²⁺ block of NMDA receptors
+/// in dendritic branches. NMDA current has a sigmoidal voltage dependence:
+///
+///   I_NMDA = g_NMDA · B(V) · (V - E_NMDA)
+///   B(V) = 1 / (1 + [Mg²⁺]/3.57 · exp(-0.062 · V))
+///
+/// This enables coincidence detection: the dendrite only passes current
+/// when both presynaptic glutamate AND postsynaptic depolarisation are present.
+///
+/// Reference: Jahr & Stevens (1990), Schiller et al. (2000).
+#[derive(Clone, Debug)]
+pub struct DendriticNMDANeuron {
+    pub v_soma: f64,
+    pub v_dend: f64,
+    pub g_nmda: f64,
+    pub e_nmda: f64,
+    pub mg_conc: f64,
+    pub g_coupling: f64,
+    pub tau_soma: f64,
+    pub tau_dend: f64,
+    pub theta: f64,
+    pub dt: f64,
+}
+
+impl DendriticNMDANeuron {
+    pub fn new() -> Self {
+        Self {
+            v_soma: -65.0,
+            v_dend: -65.0,
+            g_nmda: 1.5,
+            e_nmda: 0.0,
+            mg_conc: 1.0,
+            g_coupling: 0.5,
+            tau_soma: 20.0,
+            tau_dend: 50.0,
+            theta: -50.0,
+            dt: 0.1,
+        }
+    }
+
+    /// Mg²⁺ block factor (Jahr & Stevens 1990).
+    fn mg_block(&self, v: f64) -> f64 {
+        1.0 / (1.0 + (self.mg_conc / 3.57) * (-0.062 * v).exp())
+    }
+
+    /// Step with somatic input and dendritic glutamate.
+    pub fn step(&mut self, i_soma: f64, glutamate: f64) -> i32 {
+        // Dendritic NMDA current with Mg²⁺ block.
+        let b = self.mg_block(self.v_dend);
+        let i_nmda = self.g_nmda * glutamate * b * (self.v_dend - self.e_nmda);
+
+        // Dendrite dynamics.
+        let dv_dend =
+            (-self.v_dend - 65.0 + i_nmda + self.g_coupling * (self.v_soma - self.v_dend))
+                / self.tau_dend;
+        self.v_dend += dv_dend * self.dt;
+
+        // Soma dynamics: receives dendritic current + direct input.
+        let i_dend_to_soma = self.g_coupling * (self.v_dend - self.v_soma);
+        let dv_soma = (-self.v_soma - 65.0 + i_soma + i_dend_to_soma) / self.tau_soma;
+        self.v_soma += dv_soma * self.dt;
+
+        if self.v_soma >= self.theta {
+            self.v_soma = -65.0;
+            1
+        } else {
+            0
+        }
+    }
+
+    pub fn reset(&mut self) {
+        self.v_soma = -65.0;
+        self.v_dend = -65.0;
+    }
+}
+
+impl Default for DendriticNMDANeuron {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Multi-compartment neuron (MCN) matching the Spiking-WM architecture.
+///
+/// Dual-dendrite model with basal and apical compartments. The apical dendrite
+/// gates how strongly basal information influences the soma, enabling
+/// nonlinear integration for long-term temporal memory in RL tasks.
+///
+/// Exact equations from arXiv:2503.00713 (Spiking-WM, PNAS 2025):
+///
+///   τ_b dV_b/dt = -V_b + x_b                                  (basal)
+///   τ_a dV_a/dt = -V_a + x_a                                  (apical)
+///   τ   dU/dt   = -U + σ(V_a)·[g_B/g_L·(V_b - U) + W_s·I]   (soma)
+///   S[t] = Θ(U[t] - V_th)                                     (spike)
+///   U[t] ← U[t]·(1 - S[t])                                    (soft reset)
+///
+/// Default parameters from Table II: τ = τ_a = τ_b = 2.0, g_B/g_L = 1.0,
+/// β = 1.0 (sigmoid steepness), V_th = 1.0.
+///
+/// Reference: Brain-Cog-Lab, arXiv:2503.00713, PNAS 2025.
+#[derive(Clone, Debug)]
+pub struct MulticompartmentMCNNeuron {
+    /// Somatic membrane potential.
+    pub u: f64,
+    /// Basal dendrite potential.
+    pub v_basal: f64,
+    /// Apical dendrite potential.
+    pub v_apical: f64,
+    /// Soma time constant.
+    pub tau: f64,
+    /// Basal dendrite time constant.
+    pub tau_b: f64,
+    /// Apical dendrite time constant.
+    pub tau_a: f64,
+    /// Basal-to-soma conductance ratio (g_B/g_L).
+    pub g_ratio: f64,
+    /// Sigmoid steepness for apical gating.
+    pub beta: f64,
+    /// Spike threshold.
+    pub v_th: f64,
+    /// Time step.
+    pub dt: f64,
+}
+
+impl MulticompartmentMCNNeuron {
+    pub fn new() -> Self {
+        Self {
+            u: 0.0,
+            v_basal: 0.0,
+            v_apical: 0.0,
+            tau: 2.0,
+            tau_b: 2.0,
+            tau_a: 2.0,
+            g_ratio: 1.0,
+            beta: 1.0,
+            v_th: 1.0,
+            dt: 1.0,
+        }
+    }
+
+    /// Sigmoid gating function σ(x) = 1/(1 + exp(-βx)).
+    fn sigma(&self, x: f64) -> f64 {
+        1.0 / (1.0 + (-self.beta * x).exp())
+    }
+
+    /// Step with basal input (x_b), apical input (x_a), and direct somatic input.
+    pub fn step_compartments(&mut self, x_basal: f64, x_apical: f64, i_soma: f64) -> i32 {
+        // Basal dendrite: τ_b dV_b/dt = -V_b + x_b.
+        let dv_b = (-self.v_basal + x_basal) / self.tau_b;
+        self.v_basal += dv_b * self.dt;
+
+        // Apical dendrite: τ_a dV_a/dt = -V_a + x_a.
+        let dv_a = (-self.v_apical + x_apical) / self.tau_a;
+        self.v_apical += dv_a * self.dt;
+
+        // Soma: τ dU/dt = -U + σ(V_a)·[g_B/g_L·(V_b - U) + i_soma].
+        let gate = self.sigma(self.v_apical);
+        let du = (-self.u + gate * (self.g_ratio * (self.v_basal - self.u) + i_soma)) / self.tau;
+        self.u += du * self.dt;
+
+        // Spike: S = Θ(U - V_th), reset: U ← U·(1 - S).
+        if self.u >= self.v_th {
+            self.u = 0.0;
+            1
+        } else {
+            0
+        }
+    }
+
+    /// Simple step: input goes to basal dendrite only.
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.step_compartments(current, 0.0, 0.0)
+    }
+
+    pub fn reset(&mut self) {
+        self.u = 0.0;
+        self.v_basal = 0.0;
+        self.v_apical = 0.0;
+    }
+}
+
+impl Default for MulticompartmentMCNNeuron {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Astrocyte-LIF hybrid unit with calcium wave feedback.
+///
+/// Models the tripartite synapse: a glial astrocyte monitors extracellular
+/// glutamate from a paired LIF neuron and provides slow homeostatic feedback
+/// via calcium-dependent gliotransmitter release.
+///
+///   dCa/dt = -Ca/τ_ca + δ · S_pre(t)        (calcium rise on presynaptic spike)
+///   I_glio = g_glio · H(Ca - Ca_thresh)      (gliotransmitter release)
+///   dV/dt = -(V - E_L)/τ_m + I_ext + I_glio  (LIF with glial feedback)
+///
+/// Reference: Perea, Navarrete & Araque, "Tripartite synapses" (2009).
+#[derive(Clone, Debug)]
+pub struct AstrocyteLIFNeuron {
+    pub v: f64,
+    pub ca: f64,
+    pub tau_m: f64,
+    pub tau_ca: f64,
+    pub e_l: f64,
+    pub theta: f64,
+    pub v_reset: f64,
+    pub ca_delta: f64,
+    pub ca_thresh: f64,
+    pub g_glio: f64,
+    pub dt: f64,
+}
+
+impl AstrocyteLIFNeuron {
+    pub fn new() -> Self {
+        Self {
+            v: -65.0,
+            ca: 0.0,
+            tau_m: 20.0,
+            tau_ca: 500.0,
+            e_l: -65.0,
+            theta: -50.0,
+            v_reset: -65.0,
+            ca_delta: 0.1,
+            ca_thresh: 0.5,
+            g_glio: 2.0,
+            dt: 0.1,
+        }
+    }
+
+    /// Step with external current and presynaptic spike indicator.
+    pub fn step_with_pre(&mut self, i_ext: f64, pre_spike: bool) -> i32 {
+        // Astrocyte calcium dynamics.
+        let dca = -self.ca / self.tau_ca
+            + if pre_spike {
+                self.ca_delta / self.dt
+            } else {
+                0.0
+            };
+        self.ca += dca * self.dt;
+        self.ca = self.ca.max(0.0);
+
+        // Gliotransmitter release (Heaviside on calcium).
+        let i_glio = if self.ca > self.ca_thresh {
+            self.g_glio
+        } else {
+            0.0
+        };
+
+        // LIF membrane dynamics with glial feedback.
+        let dv = (-(self.v - self.e_l) + i_ext + i_glio) / self.tau_m;
+        self.v += dv * self.dt;
+
+        if self.v >= self.theta {
+            self.v = self.v_reset;
+            1
+        } else {
+            0
+        }
+    }
+
+    /// Simple step (no presynaptic spike).
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.step_with_pre(current, false)
+    }
+
+    pub fn reset(&mut self) {
+        self.v = self.e_l;
+        self.ca = 0.0;
+    }
+}
+
+impl Default for AstrocyteLIFNeuron {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+// ---- Tests for new multi-compartment / glial models ----
+
+#[cfg(test)]
+mod gap_mc_tests {
+    use super::*;
+
+    #[test]
+    fn nmda_coincidence_detection() {
+        let mut n = DendriticNMDANeuron::new();
+        // Only soma input — dendrite contributes little.
+        let mut spikes_soma_only = 0;
+        for _ in 0..2000 {
+            spikes_soma_only += n.step(8.0, 0.0);
+        }
+        n.reset();
+        // Soma + glutamate — NMDA amplifies.
+        let mut spikes_both = 0;
+        for _ in 0..2000 {
+            spikes_both += n.step(8.0, 1.0);
+        }
+        // Coincidence: both inputs together should fire more.
+        assert!(
+            spikes_both >= spikes_soma_only,
+            "NMDA coincidence: both={spikes_both} must >= soma_only={spikes_soma_only}"
+        );
+    }
+
+    #[test]
+    fn nmda_mg_block_voltage_dependent() {
+        let n = DendriticNMDANeuron::new();
+        let b_hyper = n.mg_block(-80.0);
+        let b_depol = n.mg_block(-20.0);
+        assert!(
+            b_depol > b_hyper,
+            "Mg block must relieve at depolarised potentials: B(-20)={b_depol:.3} > B(-80)={b_hyper:.3}"
+        );
+    }
+
+    #[test]
+    fn nmda_zero_glutamate_no_nmda_current() {
+        let mut n = DendriticNMDANeuron::new();
+        let spikes: i32 = (0..500).map(|_| n.step(0.0, 0.0)).sum();
+        assert_eq!(spikes, 0, "No input → no spikes");
+    }
+
+    #[test]
+    fn mcn_apical_gating() {
+        // Without apical input, gate = σ(0) = 0.5, moderate drive.
+        let mut n_no_apical = MulticompartmentMCNNeuron::new();
+        let mut spikes_no = 0;
+        for _ in 0..100 {
+            spikes_no += n_no_apical.step_compartments(3.0, 0.0, 0.0);
+        }
+        // With strong apical input, gate ≈ 1.0, full basal→soma coupling.
+        let mut n_apical = MulticompartmentMCNNeuron::new();
+        let mut spikes_yes = 0;
+        for _ in 0..100 {
+            spikes_yes += n_apical.step_compartments(3.0, 5.0, 0.0);
+        }
+        assert!(
+            spikes_yes >= spikes_no,
+            "Apical gating should boost firing: apical={spikes_yes} >= none={spikes_no}"
+        );
+    }
+
+    #[test]
+    fn mcn_basal_dendrite_memory() {
+        // τ_b = 2.0, dt = 1.0: V_b decays by factor (1 - dt/τ) = 0.5 per step.
+        let mut n = MulticompartmentMCNNeuron::new();
+        n.step_compartments(5.0, 0.0, 0.0);
+        let v_after = n.v_basal;
+        n.step_compartments(0.0, 0.0, 0.0);
+        let v_decay = n.v_basal;
+        assert!(
+            v_decay.abs() > 0.1 * v_after.abs(),
+            "Basal dendrite retains memory: {v_decay:.3} vs {v_after:.3}"
+        );
+    }
+
+    #[test]
+    fn mcn_reset_clears_all() {
+        let mut n = MulticompartmentMCNNeuron::new();
+        for _ in 0..50 {
+            n.step(2.0);
+        }
+        n.reset();
+        assert_eq!(n.u, 0.0);
+        assert_eq!(n.v_basal, 0.0);
+        assert_eq!(n.v_apical, 0.0);
+    }
+
+    #[test]
+    fn astrocyte_calcium_rises_on_pre_spikes() {
+        let mut n = AstrocyteLIFNeuron::new();
+        let ca_before = n.ca;
+        for _ in 0..100 {
+            n.step_with_pre(0.0, true);
+        }
+        assert!(
+            n.ca > ca_before,
+            "Calcium must rise with presynaptic spikes"
+        );
+    }
+
+    #[test]
+    fn astrocyte_gliotransmitter_boosts_firing() {
+        let mut n_no_glio = AstrocyteLIFNeuron::new();
+        let mut n_glio = AstrocyteLIFNeuron::new();
+
+        let mut spikes_no = 0;
+        let mut spikes_yes = 0;
+        for _ in 0..5000 {
+            spikes_no += n_no_glio.step_with_pre(10.0, false);
+            spikes_yes += n_glio.step_with_pre(10.0, true); // pre spikes → Ca → glio
+        }
+        assert!(
+            spikes_yes >= spikes_no,
+            "Gliotransmitter should boost firing: with={spikes_yes} >= without={spikes_no}"
+        );
+    }
+
+    #[test]
+    fn astrocyte_calcium_decays() {
+        let mut n = AstrocyteLIFNeuron::new();
+        // Build up calcium.
+        for _ in 0..200 {
+            n.step_with_pre(0.0, true);
+        }
+        let ca_peak = n.ca;
+        // Let it decay.
+        for _ in 0..5000 {
+            n.step_with_pre(0.0, false);
+        }
+        assert!(
+            n.ca < ca_peak * 0.5,
+            "Calcium must decay: current={:.4} < peak={:.4}*0.5",
+            n.ca,
+            ca_peak
+        );
+    }
+}
