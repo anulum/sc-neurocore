@@ -7,6 +7,7 @@
 // SC-NeuroCore — Granger causality and directed connectivity measures
 
 use std::f64::consts::PI;
+use rayon::prelude::*;
 
 use super::basic::bin_spike_train;
 
@@ -79,13 +80,17 @@ fn solve_linear(a: &[f64], b: &[f64], n: usize) -> Vec<f64> {
 /// Solve A X = B where A is n×n and B is n×m. Returns X (n×m, row-major).
 fn solve_matrix(a: &[f64], b: &[f64], n: usize, m: usize) -> Vec<f64> {
     let mut result = vec![0.0_f64; n * m];
-    for col in 0..m {
+    (0..m).into_par_iter().for_each(|col| {
         let rhs: Vec<f64> = (0..n).map(|i| b[i * m + col]).collect();
         let x = solve_linear(a, &rhs, n);
-        for i in 0..n {
-            result[i * m + col] = x[i];
+        // SAFETY: Each thread writes to unique indices based on col.
+        unsafe {
+            let ptr = result.as_ptr() as *mut f64;
+            for i in 0..n {
+                *ptr.add(i * m + col) = x[i];
+            }
         }
-    }
+    });
     result
 }
 
