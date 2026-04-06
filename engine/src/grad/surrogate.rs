@@ -186,16 +186,36 @@ impl DifferentiableDenseLayer {
             let surr = self.surrogate.grad((self.output_cache[j] - 0.5) as f32) as f64;
             let local_grad = grad_output[j] * surr;
             
-            // Weight gradient: local_grad * inputs
-            let row_grad_weights = &mut grad_weights[j];
-            for (gw, &inp) in row_grad_weights.iter_mut().zip(self.input_cache.iter()) {
-                *gw = local_grad * inp;
+            // Weight gradient: local_grad * inputs (unrolled)
+            {
+                let row_grad_weights = &mut grad_weights[j];
+                let mut chunks_gw = row_grad_weights.chunks_exact_mut(4);
+                let mut chunks_inp = self.input_cache.chunks_exact(4);
+                for (cgw, cinp) in chunks_gw.by_ref().zip(chunks_inp.by_ref()) {
+                    cgw[0] = local_grad * cinp[0];
+                    cgw[1] = local_grad * cinp[1];
+                    cgw[2] = local_grad * cinp[2];
+                    cgw[3] = local_grad * cinp[3];
+                }
+                for (gw, &inp) in chunks_gw.into_remainder().iter_mut().zip(chunks_inp.remainder()) {
+                    *gw = local_grad * inp;
+                }
             }
             
-            // Input gradient accumulation: local_grad * weights
-            let row_weights = &self.layer.weights[j];
-            for (gi, &w) in grad_input.iter_mut().zip(row_weights.iter()) {
-                *gi += local_grad * w;
+            // Input gradient accumulation: local_grad * weights (unrolled)
+            {
+                let row_weights = &self.layer.weights[j];
+                let mut chunks_gi = grad_input.chunks_exact_mut(4);
+                let mut chunks_w = row_weights.chunks_exact(4);
+                for (cgi, cw) in chunks_gi.by_ref().zip(chunks_w.by_ref()) {
+                    cgi[0] += local_grad * cw[0];
+                    cgi[1] += local_grad * cw[1];
+                    cgi[2] += local_grad * cw[2];
+                    cgi[3] += local_grad * cw[3];
+                }
+                for (gi, &w) in chunks_gi.into_remainder().iter_mut().zip(chunks_w.remainder()) {
+                    *gi += local_grad * w;
+                }
             }
         }
 
