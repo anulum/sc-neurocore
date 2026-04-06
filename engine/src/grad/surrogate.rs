@@ -183,14 +183,19 @@ impl DifferentiableDenseLayer {
         let mut grad_weights = vec![vec![0.0_f64; self.layer.n_inputs]; self.layer.n_neurons];
 
         for j in 0..self.layer.n_neurons {
-            // Gate upstream gradient through the surrogate derivative at the
-            // output activation (treating output as a soft proxy for the spike
-            // non-linearity). Centre around 0.5 (midpoint of [0,1] output range).
             let surr = self.surrogate.grad((self.output_cache[j] - 0.5) as f32) as f64;
             let local_grad = grad_output[j] * surr;
-            for i in 0..self.layer.n_inputs {
-                grad_weights[j][i] = local_grad * self.input_cache[i];
-                grad_input[i] += local_grad * self.layer.weights[j][i];
+            
+            // Weight gradient: local_grad * inputs
+            let row_grad_weights = &mut grad_weights[j];
+            for (gw, &inp) in row_grad_weights.iter_mut().zip(self.input_cache.iter()) {
+                *gw = local_grad * inp;
+            }
+            
+            // Input gradient accumulation: local_grad * weights
+            let row_weights = &self.layer.weights[j];
+            for (gi, &w) in grad_input.iter_mut().zip(row_weights.iter()) {
+                *gi += local_grad * w;
             }
         }
 
