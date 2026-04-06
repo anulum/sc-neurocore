@@ -16,16 +16,16 @@ use core::arch::x86_64::*;
 /// Caller must ensure the current CPU supports `avx512f` and `avx512vpopcntdq`.
 pub unsafe fn popcount_avx512(data: &[u64]) -> u64 {
     let mut total = 0_u64;
-    let mut chunks = data.chunks_exact(8);
-
-    for chunk in &mut chunks {
-        let v = _mm512_loadu_si512(chunk.as_ptr() as *const __m512i);
-        let counts = _mm512_popcnt_epi64(v);
-        let mut lanes = [0_u64; 8];
-        _mm512_storeu_si512(lanes.as_mut_ptr() as *mut __m512i, counts);
-        total += lanes.iter().sum::<u64>();
+    let mut chunks = data.chunks_exact(16);
+    
+    for chunk in chunks.by_ref() {
+        let v0 = _mm512_loadu_si512(chunk.as_ptr() as *const __m512i);
+        let v1 = _mm512_loadu_si512(chunk.as_ptr().add(8) as *const __m512i);
+        
+        total += _mm512_reduce_add_epi64(_mm512_popcnt_epi64(v0)) as u64;
+        total += _mm512_reduce_add_epi64(_mm512_popcnt_epi64(v1)) as u64;
     }
-
+    
     total + crate::bitstream::popcount_words_portable(chunks.remainder())
 }
 
