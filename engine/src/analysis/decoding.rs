@@ -1,3 +1,4 @@
+use rayon::prelude::*;
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Commercial license available
 // © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
@@ -58,39 +59,37 @@ pub fn bayesian_decode(
     let use_uniform = prior.is_empty();
     let log_prior_uniform = -(n_stimuli as f64).ln();
 
-    let mut best_s = 0_usize;
-    let mut best_lp = f64::NEG_INFINITY;
+    let (best_s, _best_lp) = (0..n_stimuli)
+        .into_par_iter()
+        .map(|s| {
+            let mut lp = if use_uniform {
+                log_prior_uniform
+            } else {
+                (prior.get(s).copied().unwrap_or(1e-30) + 1e-30).ln()
+            };
+            let row_rates = &tuning_rates[s * n_neurons..(s + 1) * n_neurons];
+            let mut j = 0;
+            while j + 3 < n_neurons {
+                let lam0 = row_rates[j].max(1e-10);
+                let lam1 = row_rates[j + 1].max(1e-10);
+                let lam2 = row_rates[j + 2].max(1e-10);
+                let lam3 = row_rates[j + 3].max(1e-10);
 
-    for s in 0..n_stimuli {
-        let mut lp = if use_uniform {
-            log_prior_uniform
-        } else {
-            (prior.get(s).copied().unwrap_or(1e-30) + 1e-30).ln()
-        };
-        let row_rates = &tuning_rates[s * n_neurons .. (s + 1) * n_neurons];
-        let mut j = 0;
-        while j + 3 < n_neurons {
-            let lam0 = row_rates[j].max(1e-10);
-            let lam1 = row_rates[j+1].max(1e-10);
-            let lam2 = row_rates[j+2].max(1e-10);
-            let lam3 = row_rates[j+3].max(1e-10);
-            
-            lp += spike_counts[j] * lam0.ln() - lam0;
-            lp += spike_counts[j+1] * lam1.ln() - lam1;
-            lp += spike_counts[j+2] * lam2.ln() - lam2;
-            lp += spike_counts[j+3] * lam3.ln() - lam3;
-            j += 4;
-        }
-        while j < n_neurons {
-            let lam = row_rates[j].max(1e-10);
-            lp += spike_counts[j] * lam.ln() - lam;
-            j += 1;
-        }
-        if lp > best_lp {
-            best_lp = lp;
-            best_s = s;
-        }
-    }
+                lp += spike_counts[j] * lam0.ln() - lam0;
+                lp += spike_counts[j + 1] * lam1.ln() - lam1;
+                lp += spike_counts[j + 2] * lam2.ln() - lam2;
+                lp += spike_counts[j + 3] * lam3.ln() - lam3;
+                j += 4;
+            }
+            while j < n_neurons {
+                let lam = row_rates[j].max(1e-10);
+                lp += spike_counts[j] * lam.ln() - lam;
+                j += 1;
+            }
+            (s, lp)
+        })
+        .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal))
+        .unwrap_or((0, f64::NEG_INFINITY));
     best_s
 }
 
