@@ -268,6 +268,9 @@ pub fn bernoulli_packed<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mut R) 
 /// same RNG state.
 pub fn bernoulli_packed_fast<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mut R) -> Vec<u64> {
     let words = length.div_ceil(64);
+    if prob <= 0.0 {
+        return vec![0_u64; words];
+    }
     if prob >= 1.0 {
         let mut data = vec![u64::MAX; words];
         let trailing = length % 64;
@@ -298,6 +301,9 @@ pub fn bernoulli_packed_fast<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mu
 /// vectorizing the threshold comparison for full 64-bit words.
 pub fn bernoulli_packed_simd<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mut R) -> Vec<u64> {
     let words = length.div_ceil(64);
+    if prob <= 0.0 {
+        return vec![0_u64; words];
+    }
     if prob >= 1.0 {
         let mut data = vec![u64::MAX; words];
         let trailing = length % 64;
@@ -342,6 +348,9 @@ pub fn encode_and_popcount<R: Rng + ?Sized>(
     length: usize,
     rng: &mut R,
 ) -> u64 {
+    if prob <= 0.0 {
+        return 0;
+    }
     if prob >= 1.0 {
         // All bits set → popcount of weight words directly
         let full_words = length / 64;
@@ -424,7 +433,7 @@ pub fn encode_matrix_prob_to_packed<R: Rng + ?Sized>(
 ) -> Vec<Vec<u64>> {
     let mut packed = Vec::with_capacity(rows * cols);
     for value in values.iter().take(rows * cols) {
-        let mut row = bernoulli_packed(*value, length, rng);
+        let mut row = bernoulli_packed_simd(*value, length, rng);
         row.resize(words, 0);
         packed.push(row);
     }
