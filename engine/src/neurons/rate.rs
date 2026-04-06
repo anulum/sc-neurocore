@@ -138,7 +138,7 @@ impl AstrocyteModel {
         let n_inf = self.ca / (self.ca + self.d5);
         let j_chan = self.v_er * (m_inf * n_inf * self.h).powi(3) * (ca_er - self.ca);
         let j_leak = self.k_er * (ca_er - self.ca);
-        let j_pump = self.v_serca * self.ca.powi(2) / (self.ca.powi(2) + 0.1_f64.powi(2));
+        let j_pump = self.v_serca * self.ca.powi(2) / (self.ca.powi(2) + self.k_er.powi(2));
         let q2 = self.d2 * (self.ip3 + self.d1) / (self.ip3 + self.d3);
         let h_inf = q2 / (q2 + self.ca);
         let tau_h = 1.0 / (0.2 * (q2 + self.ca));
