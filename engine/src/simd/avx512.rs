@@ -239,15 +239,16 @@ pub unsafe fn max_f64_avx512(a: &[f64]) -> f64 {
     if a.is_empty() {
         return f64::NEG_INFINITY;
     }
-    let mut vmax = _mm512_set1_pd(f64::NEG_INFINITY);
-    let mut chunks = a.chunks_exact(8);
+    let mut vmax0 = _mm512_set1_pd(f64::NEG_INFINITY);
+    let mut vmax1 = _mm512_set1_pd(f64::NEG_INFINITY);
+    let mut chunks = a.chunks_exact(16);
 
     for chunk in chunks.by_ref() {
-        let va = _mm512_loadu_pd(chunk.as_ptr());
-        vmax = _mm512_max_pd(vmax, va);
+        vmax0 = _mm512_max_pd(vmax0, _mm512_loadu_pd(chunk.as_ptr()));
+        vmax1 = _mm512_max_pd(vmax1, _mm512_loadu_pd(chunk.as_ptr().add(8)));
     }
 
-    let mut m = _mm512_reduce_max_pd(vmax);
+    let mut m = _mm512_reduce_max_pd(_mm512_max_pd(vmax0, vmax1));
     for &v in chunks.remainder() {
         m = m.max(v);
     }
@@ -261,15 +262,16 @@ pub unsafe fn max_f64_avx512(a: &[f64]) -> f64 {
 /// # Safety
 /// Caller must ensure the current CPU supports `avx512f`.
 pub unsafe fn sum_f64_avx512(a: &[f64]) -> f64 {
-    let mut acc = _mm512_setzero_pd();
-    let mut chunks = a.chunks_exact(8);
+    let mut acc0 = _mm512_setzero_pd();
+    let mut acc1 = _mm512_setzero_pd();
+    let mut chunks = a.chunks_exact(16);
 
     for chunk in chunks.by_ref() {
-        let va = _mm512_loadu_pd(chunk.as_ptr());
-        acc = _mm512_add_pd(acc, va);
+        acc0 = _mm512_add_pd(acc0, _mm512_loadu_pd(chunk.as_ptr()));
+        acc1 = _mm512_add_pd(acc1, _mm512_loadu_pd(chunk.as_ptr().add(8)));
     }
 
-    let mut sum = _mm512_reduce_add_pd(acc);
+    let mut sum = _mm512_reduce_add_pd(_mm512_add_pd(acc0, acc1));
     for &v in chunks.remainder() {
         sum += v;
     }
@@ -284,12 +286,13 @@ pub unsafe fn sum_f64_avx512(a: &[f64]) -> f64 {
 /// Caller must ensure the current CPU supports `avx512f`.
 pub unsafe fn scale_f64_avx512(alpha: f64, y: &mut [f64]) {
     let valpha = _mm512_set1_pd(alpha);
-    let mut chunks = y.chunks_exact_mut(8);
+    let mut chunks = y.chunks_exact_mut(16);
 
     for chunk in chunks.by_ref() {
-        let vy = _mm512_loadu_pd(chunk.as_ptr());
-        let scaled = _mm512_mul_pd(vy, valpha);
-        _mm512_storeu_pd(chunk.as_mut_ptr(), scaled);
+        let v0 = _mm512_loadu_pd(chunk.as_ptr());
+        let v1 = _mm512_loadu_pd(chunk.as_ptr().add(8));
+        _mm512_storeu_pd(chunk.as_mut_ptr(), _mm512_mul_pd(v0, valpha));
+        _mm512_storeu_pd(chunk.as_mut_ptr().add(8), _mm512_mul_pd(v1, valpha));
     }
 
     for v in chunks.into_remainder() {
