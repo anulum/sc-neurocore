@@ -1260,13 +1260,16 @@ impl AvRonCardiacNeuron {
     }
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
-        let m_inf = 1.0 / (1.0 + (-(self.v + 35.0) / 7.8).exp());
-        let h_inf = 1.0 / (1.0 + ((self.v + 55.0) / 7.0).exp());
-        let n_inf = 1.0 / (1.0 + (-(self.v + 28.0) / 15.0).exp());
-        let s_inf = 1.0 / (1.0 + (-(self.v + 27.0) / 5.0).exp());
-        self.h += (h_inf - self.h) / 1.5 * self.dt;
-        self.n += (n_inf - self.n) / 4.0 * self.dt;
-        self.s += (s_inf - self.s) / 50.0 * self.dt;
+        let m_inf = 1.0 / (1.0 + (-(self.v + 40.0) / 7.0).exp());
+        let h_inf = 1.0 / (1.0 + ((self.v + 45.0) / 5.0).exp());
+        let n_inf = 1.0 / (1.0 + (-(self.v + 40.0) / 15.0).exp());
+        let s_inf = 1.0 / (1.0 + ((self.v + 35.0) / 3.0).exp());
+        let tau_h = 1.0 + 12.0 / (1.0 + ((self.v + 50.0) / 8.0).exp());
+        let tau_n = 1.0 + 8.0 / (1.0 + ((self.v + 35.0) / 8.0).exp());
+        let tau_s = 200.0 + 1000.0 / (1.0 + ((self.v + 30.0) / 5.0).exp());
+        self.h += (h_inf - self.h) / tau_h * self.dt;
+        self.n += (n_inf - self.n) / tau_n * self.dt;
+        self.s += (s_inf - self.s) / tau_s * self.dt;
         let i_na = self.g_na * m_inf.powi(3) * self.h * (self.v - self.e_na);
         let i_k = self.g_k * self.n.powi(4) * (self.v - self.e_k);
         let i_s = self.g_s * self.s * (self.v - self.e_s);
