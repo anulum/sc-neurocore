@@ -31,6 +31,7 @@ pub struct DenseLayer {
     pub n_neurons: usize,
     /// Bitstream length per encoded scalar.
     pub length: usize,
+    pub inv_length: f64,
     /// Words per packed input stream (`ceil(length / 64)`).
     pub words_per_input: usize,
     /// Probability-domain weights in `[0, 1]`.
@@ -60,6 +61,7 @@ impl DenseLayer {
             n_inputs,
             n_neurons,
             length,
+            inv_length: 1.0 / length as f64,
             words_per_input: length.div_ceil(64),
             weights,
             packed_weights_flat: vec![],
@@ -162,7 +164,7 @@ impl DenseLayer {
                             )
                         })
                         .sum();
-                    total as f64 / self.length as f64
+                    total as f64 * self.inv_length
                 })
                 .collect()
         } else {
@@ -178,7 +180,7 @@ impl DenseLayer {
                             )
                         })
                         .sum();
-                    total as f64 / self.length as f64
+                    total as f64 * self.inv_length
                 })
                 .collect()
         };
@@ -226,7 +228,7 @@ impl DenseLayer {
                 .par_chunks_exact(n_inputs * words)
                 .map(|neuron_weights| {
                     let total = simd::fused_and_popcount_dispatch(neuron_weights, &packed_inputs_flat);
-                    total as f64 / self.length as f64
+                    total as f64 * self.inv_length
                 })
                 .collect()
         } else {
@@ -235,7 +237,7 @@ impl DenseLayer {
                 .chunks_exact(n_inputs * words)
                 .map(|neuron_weights| {
                     let total = simd::fused_and_popcount_dispatch(neuron_weights, &packed_inputs_flat);
-                    total as f64 / self.length as f64
+                    total as f64 * self.inv_length
                 })
                 .collect()
         };
@@ -274,7 +276,7 @@ impl DenseLayer {
                             )
                         })
                         .sum();
-                    total as f64 / self.length as f64
+                    total as f64 * self.inv_length
                 })
                 .collect()
         } else {
@@ -294,7 +296,7 @@ impl DenseLayer {
                             )
                         })
                         .sum();
-                    total as f64 / self.length as f64
+                    total as f64 * self.inv_length
                 })
                 .collect()
         };
@@ -412,7 +414,7 @@ impl DenseLayer {
                         )
                     })
                     .sum();
-                total as f64 / self.length as f64
+                total as f64 * self.inv_length
             })
             .collect();
 
@@ -464,7 +466,7 @@ impl DenseLayer {
                         )
                     })
                     .sum();
-                total as f64 / self.length as f64
+                total as f64 * self.inv_length
             })
             .collect();
 
