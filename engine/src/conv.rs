@@ -82,7 +82,34 @@ impl Conv2DLayer {
             .for_each(|(oc, out_plane)| {
                 let filter = &self.kernels[oc * filter_size..(oc + 1) * filter_size];
                 for i in 0..h_out {
-                    for j in 0..w_out {
+                    let mut j = 0;
+                    while j + 3 < w_out {
+                        let hs = i * self.stride;
+                        let mut acc0 = 0.0;
+                        let mut acc1 = 0.0;
+                        let mut acc2 = 0.0;
+                        let mut acc3 = 0.0;
+                        for c in 0..c_in {
+                            let input_offset = c * ph * pw;
+                            let filter_offset = c * k * k;
+                            for ki in 0..k {
+                                let row_off = input_offset + (hs + ki) * pw;
+                                let f_row_off = filter_offset + ki * k;
+                                let filter_row = &filter[f_row_off .. f_row_off + k];
+                                
+                                acc0 += crate::simd::dot_f64_dispatch(&inp[row_off + j * self.stride .. row_off + j * self.stride + k], filter_row);
+                                acc1 += crate::simd::dot_f64_dispatch(&inp[row_off + (j + 1) * self.stride .. row_off + (j + 1) * self.stride + k], filter_row);
+                                acc2 += crate::simd::dot_f64_dispatch(&inp[row_off + (j + 2) * self.stride .. row_off + (j + 2) * self.stride + k], filter_row);
+                                acc3 += crate::simd::dot_f64_dispatch(&inp[row_off + (j + 3) * self.stride .. row_off + (j + 3) * self.stride + k], filter_row);
+                            }
+                        }
+                        out_plane[i * w_out + j] = acc0;
+                        out_plane[i * w_out + j + 1] = acc1;
+                        out_plane[i * w_out + j + 2] = acc2;
+                        out_plane[i * w_out + j + 3] = acc3;
+                        j += 4;
+                    }
+                    while j < w_out {
                         let hs = i * self.stride;
                         let ws = j * self.stride;
                         let mut acc = 0.0;
@@ -92,11 +119,11 @@ impl Conv2DLayer {
                             for ki in 0..k {
                                 let inp_row = &inp[input_offset + (hs + ki) * pw + ws .. input_offset + (hs + ki) * pw + ws + k];
                                 let filter_row = &filter[filter_offset + ki * k .. filter_offset + (ki + 1) * k];
-                                // We can use dot_f64_dispatch here for the kernel width
                                 acc += crate::simd::dot_f64_dispatch(inp_row, filter_row);
                             }
                         }
                         out_plane[i * w_out + j] = acc;
+                        j += 1;
                     }
                 }
             });
