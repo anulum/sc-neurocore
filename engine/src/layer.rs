@@ -221,18 +221,19 @@ impl DenseLayer {
         }
 
         let out: Vec<f64> = if self.n_neurons >= RAYON_NEURON_THRESHOLD {
-            (0..self.n_neurons)
-                .into_par_iter()
-                .map(|neuron_idx| {
-                    let neuron_weights = &self.packed_weights_flat[neuron_idx * self.n_inputs * words .. (neuron_idx + 1) * self.n_inputs * words];
+            let n_inputs = self.n_inputs;
+            self.packed_weights_flat
+                .par_chunks_exact(n_inputs * words)
+                .map(|neuron_weights| {
                     let total = simd::fused_and_popcount_dispatch(neuron_weights, &packed_inputs_flat);
                     total as f64 / self.length as f64
                 })
                 .collect()
         } else {
-            (0..self.n_neurons)
-                .map(|neuron_idx| {
-                    let neuron_weights = &self.packed_weights_flat[neuron_idx * self.n_inputs * words .. (neuron_idx + 1) * self.n_inputs * words];
+            let n_inputs = self.n_inputs;
+            self.packed_weights_flat
+                .chunks_exact(n_inputs * words)
+                .map(|neuron_weights| {
                     let total = simd::fused_and_popcount_dispatch(neuron_weights, &packed_inputs_flat);
                     total as f64 / self.length as f64
                 })
