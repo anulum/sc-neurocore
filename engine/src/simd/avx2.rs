@@ -396,19 +396,38 @@ pub unsafe fn softmax_inplace_f64_avx2(scores: &mut [f64]) {
 /// Caller must ensure the current CPU supports `avx`.
 pub unsafe fn dot_f64_avx(a: &[f64], b: &[f64]) -> f64 {
     let len = a.len().min(b.len());
-    let mut acc = _mm256_setzero_pd();
-    let mut chunks_a = a[..len].chunks_exact(4);
-    let mut chunks_b = b[..len].chunks_exact(4);
+    let mut acc0 = _mm256_setzero_pd();
+    let mut acc1 = _mm256_setzero_pd();
+    let mut acc2 = _mm256_setzero_pd();
+    let mut acc3 = _mm256_setzero_pd();
+    
+    let mut chunks_a = a[..len].chunks_exact(16);
+    let mut chunks_b = b[..len].chunks_exact(16);
 
     for (ca, cb) in chunks_a.by_ref().zip(chunks_b.by_ref()) {
-        let va = _mm256_loadu_pd(ca.as_ptr());
-        let vb = _mm256_loadu_pd(cb.as_ptr());
-        let prod = _mm256_mul_pd(va, vb);
-        acc = _mm256_add_pd(acc, prod);
+        let va0 = _mm256_loadu_pd(ca.as_ptr());
+        let vb0 = _mm256_loadu_pd(cb.as_ptr());
+        acc0 = _mm256_add_pd(acc0, _mm256_mul_pd(va0, vb0));
+
+        let va1 = _mm256_loadu_pd(ca.as_ptr().add(4));
+        let vb1 = _mm256_loadu_pd(cb.as_ptr().add(4));
+        acc1 = _mm256_add_pd(acc1, _mm256_mul_pd(va1, vb1));
+
+        let va2 = _mm256_loadu_pd(ca.as_ptr().add(8));
+        let vb2 = _mm256_loadu_pd(cb.as_ptr().add(8));
+        acc2 = _mm256_add_pd(acc2, _mm256_mul_pd(va2, vb2));
+
+        let va3 = _mm256_loadu_pd(ca.as_ptr().add(12));
+        let vb3 = _mm256_loadu_pd(cb.as_ptr().add(12));
+        acc3 = _mm256_add_pd(acc3, _mm256_mul_pd(va3, vb3));
     }
 
+    acc0 = _mm256_add_pd(acc0, acc1);
+    acc2 = _mm256_add_pd(acc2, acc3);
+    acc0 = _mm256_add_pd(acc0, acc2);
+
     let mut lanes = [0.0_f64; 4];
-    _mm256_storeu_pd(lanes.as_mut_ptr(), acc);
+    _mm256_storeu_pd(lanes.as_mut_ptr(), acc0);
     let mut sum = lanes[0] + lanes[1] + lanes[2] + lanes[3];
 
     for (&ra, &rb) in chunks_a.remainder().iter().zip(chunks_b.remainder()) {
