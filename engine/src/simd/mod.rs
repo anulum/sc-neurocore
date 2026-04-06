@@ -350,10 +350,27 @@ pub fn softmax_inplace_f64_dispatch(scores: &mut [f64]) {
     if scores.is_empty() {
         return;
     }
+    
+    #[cfg(target_arch = "x86_64")]
+    {
+        if is_x86_feature_detected!("avx2") {
+            unsafe { avx2::softmax_inplace_f64_avx2(scores) };
+            return;
+        }
+    }
+
     let max_val = max_f64_dispatch(scores);
-    for s in scores.iter_mut() {
+    let mut chunks = scores.chunks_exact_mut(4);
+    for c in chunks.by_ref() {
+        c[0] = (c[0] - max_val).exp();
+        c[1] = (c[1] - max_val).exp();
+        c[2] = (c[2] - max_val).exp();
+        c[3] = (c[3] - max_val).exp();
+    }
+    for s in chunks.into_remainder() {
         *s = (*s - max_val).exp();
     }
+    
     let exp_sum = sum_f64_dispatch(scores);
     if exp_sum > 0.0 {
         scale_f64_dispatch(1.0 / exp_sum, scores);
