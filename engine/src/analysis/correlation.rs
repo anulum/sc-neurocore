@@ -44,17 +44,13 @@ pub fn cross_correlation(
 
     let ni = n as isize;
     for (i, lag) in (-max_lag..=max_lag).enumerate() {
-        let mut sum = 0.0;
-        if lag >= 0 {
-            for j in 0..(ni - lag) as usize {
-                sum += a[j] * b[j + lag as usize];
-            }
+        let sum = if lag >= 0 {
+            let l = lag as usize;
+            crate::simd::dot_f64_dispatch(&a[..n-l], &b[l..n])
         } else {
-            let neg = (-lag) as usize;
-            for j in neg..n {
-                sum += a[j] * b[j - neg];
-            }
-        }
+            let l = (-lag) as usize;
+            crate::simd::dot_f64_dispatch(&a[l..n], &b[..n-l])
+        };
         cc[i] = sum / norm;
     }
 
