@@ -1343,8 +1343,10 @@ impl DurstewitzDopamineNeuron {
         let m_inf = 1.0 / (1.0 + (-(self.v + 30.0 + shift) / 9.5).exp());
         let h_inf = 1.0 / (1.0 + ((self.v + 53.0) / 7.0).exp());
         let n_inf = 1.0 / (1.0 + (-(self.v + 30.0) / 10.0).exp());
-        self.h_na += (h_inf - self.h_na) / 1.0 * self.dt;
-        self.n_k += (n_inf - self.n_k) / 4.0 * self.dt;
+        let tau_h = 0.5 + 14.0 / (1.0 + ((self.v + 50.0) / 12.0).exp());
+        let tau_n = 1.0 + 11.0 / (1.0 + ((self.v + 40.0) / 10.0).exp());
+        self.h_na += (h_inf - self.h_na) / tau_h * self.dt;
+        self.n_k += (n_inf - self.n_k) / tau_n * self.dt;
         let g_eff_nmda = self.g_nmda * (1.0 + self.d1_level * (self.g_nmda_scale - 1.0));
         let g_eff_k = self.g_k * (1.0 + self.d1_level * (self.g_k_scale - 1.0));
         let mg_block = 1.0 / (1.0 + self.mg * (-0.062 * self.v).exp() / 3.57);
