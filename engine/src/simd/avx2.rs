@@ -395,9 +395,20 @@ pub unsafe fn softmax_inplace_f64_avx2(scores: &mut [f64]) {
         return;
     }
     let max_val = max_f64_avx2(scores);
-    for s in scores.iter_mut() {
+    let v_max = _mm256_set1_pd(max_val);
+    
+    let mut chunks = scores.chunks_exact_mut(16);
+    for chunk in chunks.by_ref() {
+        // We still have to use scalar exp() because AVX2 does not have it in core::arch
+        // but we can unroll the subtractions and stores.
+        for i in 0..16 {
+            chunk[i] = (chunk[i] - max_val).exp();
+        }
+    }
+    for s in chunks.into_remainder() {
         *s = (*s - max_val).exp();
     }
+    
     let exp_sum = sum_f64_avx2(scores);
     if exp_sum > 0.0 {
         scale_f64_avx2(1.0 / exp_sum, scores);
@@ -410,9 +421,20 @@ pub unsafe fn softmax_inplace_f64_avx2(scores: &mut [f64]) {
         return;
     }
     let max_val = max_f64_avx2(scores);
-    for s in scores.iter_mut() {
+    let v_max = _mm256_set1_pd(max_val);
+    
+    let mut chunks = scores.chunks_exact_mut(16);
+    for chunk in chunks.by_ref() {
+        // We still have to use scalar exp() because AVX2 does not have it in core::arch
+        // but we can unroll the subtractions and stores.
+        for i in 0..16 {
+            chunk[i] = (chunk[i] - max_val).exp();
+        }
+    }
+    for s in chunks.into_remainder() {
         *s = (*s - max_val).exp();
     }
+    
     let exp_sum = sum_f64_avx2(scores);
     if exp_sum > 0.0 {
         scale_f64_avx2(1.0 / exp_sum, scores);
