@@ -775,8 +775,8 @@ impl ChayKeizerNeuron {
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
         let m_inf = 1.0 / (1.0 + (-(self.v + 25.0) / 8.0).exp());
-        let n_inf = 1.0 / (1.0 + (-(self.v + 18.0) / 7.0).exp());
-        let tau_n = 20.0;
+        let n_inf = 1.0 / (1.0 + (-(self.v + 18.0) / 14.0).exp());
+        let tau_n = (20.0 / (1.0 + ((self.v + 18.0) / 14.0).exp())).max(0.1);
         let q_kca = self.ca / (self.ca + self.k_d);
         let i_ca = self.g_ca * m_inf * (self.v - self.e_ca);
         let i_k = self.g_k * self.n * (self.v - self.e_k);
