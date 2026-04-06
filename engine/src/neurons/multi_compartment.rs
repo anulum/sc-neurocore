@@ -455,7 +455,7 @@ impl BoothRinzelNeuron {
             p: 0.5,
             gc: 0.1,
             g_na: 120.0,
-            g_k: 100.0,
+            g_k: 20.0,
             g_ca: 14.0,
             g_kca: 5.0,
             g_l: 0.51,
@@ -470,25 +470,32 @@ impl BoothRinzelNeuron {
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.vs;
         for _ in 0..4 {
-            let m_inf = 1.0 / (1.0 + (-(self.vs + 30.0) / 9.0).exp());
-            let h_inf = 1.0 / (1.0 + ((self.vs + 45.0) / 7.0).exp());
-            let n_inf = 1.0 / (1.0 + (-(self.vs + 30.0) / 10.0).exp());
-            let m_ca_inf = 1.0 / (1.0 + (-(self.vd + 20.0) / 9.0).exp());
-            let q_inf = (self.ca / (self.ca + 2.0)).min(1.0);
-            self.h += (h_inf - self.h) / 1.0 * self.dt;
-            self.n += (n_inf - self.n) / 3.0 * self.dt;
-            self.q += (q_inf - self.q) / 100.0 * self.dt;
+            let m_inf = 1.0 / (1.0 + (-(self.vs + 35.0) / 7.8).exp());
+            let h_inf = 1.0 / (1.0 + ((self.vs + 55.0) / 7.0).exp());
+            let n_inf = 1.0 / (1.0 + (-(self.vs + 28.0) / 15.0).exp());
+            let s_inf = 1.0 / (1.0 + (-(self.vd + 22.0) / 5.0).exp());
+            let q_inf = 1.0 / (1.0 + (-(self.vd + 35.0) / 2.0).exp());
+            let tau_h = (30.0 / (((self.vs + 50.0) / 15.0).exp()
+                + ((-(self.vs + 50.0)) / 16.0).exp() + 1e-12)).max(0.01);
+            let tau_n = (7.0 / (((self.vs + 40.0) / 40.0).exp()
+                + ((-(self.vs + 40.0)) / 50.0).exp() + 1e-12)).max(0.01);
+            self.h = (self.h + (h_inf - self.h) / tau_h * self.dt).clamp(0.0, 1.0);
+            self.n = (self.n + (n_inf - self.n) / tau_n * self.dt).clamp(0.0, 1.0);
+            self.q = (self.q + (q_inf - self.q) / 400.0 * self.dt).clamp(0.0, 1.0);
+            let chi = (self.ca / 250.0).min(1.0);
             let i_na = self.g_na * m_inf.powi(3) * self.h * (self.vs - self.e_na);
             let i_k = self.g_k * self.n.powi(4) * (self.vs - self.e_k);
             let i_ls = self.g_l * (self.vs - self.e_l);
             let i_sd = (self.gc / self.p) * (self.vs - self.vd);
-            let i_ca = self.g_ca * m_ca_inf.powi(2) * (self.vd - self.e_ca);
-            let i_kca = self.g_kca * self.q * (self.vd - self.e_k);
+            let i_ca = self.g_ca * s_inf.powi(2) * (self.vd - self.e_ca);
+            let i_kca = self.g_kca * chi * (self.vd - self.e_k);
             let i_ld = self.g_l * (self.vd - self.e_l);
             let i_ds = (self.gc / (1.0 - self.p)) * (self.vd - self.vs);
-            self.vs += (-i_na - i_k - i_ls - i_sd + current / self.p) * self.dt;
-            self.vd += (-i_ca - i_kca - i_ld - i_ds) * self.dt;
-            self.ca = (self.ca + (-0.13 * i_ca - 0.075 * self.ca) * self.dt).max(0.0);
+            self.vs = (self.vs + (-i_na - i_k - i_ls - i_sd + current / self.p) * self.dt)
+                .clamp(-200.0, 100.0);
+            self.vd = (self.vd + (-i_ca - i_kca - i_ld - i_ds) * self.dt)
+                .clamp(-200.0, 100.0);
+            self.ca = (self.ca + (0.0025 * (-0.009 * i_ca) - 0.18 * self.ca) * self.dt).max(0.0);
         }
         if self.vs >= self.v_threshold && v_prev < self.v_threshold {
             1
