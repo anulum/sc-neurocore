@@ -70,13 +70,22 @@ pub fn spike_directionality(times_a: &[f64], times_b: &[f64], t_start: f64, t_en
 pub fn spike_train_order(times_list: &[&[f64]], t_start: f64, t_end: f64) -> Vec<f64> {
     let n = times_list.len();
     let mut mat = vec![0.0_f64; n * n];
-    for i in 0..n {
-        for j in (i + 1)..n {
-            let d = spike_directionality(times_list[i], times_list[j], t_start, t_end);
-            mat[i * n + j] = d;
-            mat[j * n + i] = -d;
-        }
-    }
+    mat.par_chunks_exact_mut(n)
+        .enumerate()
+        .for_each(|(i, row)| {
+            for j in 0..n {
+                if i == j { continue; }
+                // Note: full matrix computation simplifies parallel dispatch
+                // even though directionality is antisymmetric.
+                if j > i {
+                    let d = spike_directionality(times_list[i], times_list[j], t_start, t_end);
+                    row[j] = d;
+                } else {
+                    let d = spike_directionality(times_list[j], times_list[i], t_start, t_end);
+                    row[j] = -d;
+                }
+            }
+        });
     mat
 }
 
