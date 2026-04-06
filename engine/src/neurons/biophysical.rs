@@ -819,17 +819,19 @@ impl DeSchutterPurkinjeNeuron {
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
         for _ in 0..5 {
-            let m_na = 1.0 / (1.0 + (-(self.v + 30.0) / 9.0).exp());
-            let h_na_inf = 1.0 / (1.0 + ((self.v + 45.0) / 7.0).exp());
-            let n_inf = 1.0 / (1.0 + (-(self.v + 25.0) / 12.0).exp());
-            let m_cap_inf = 1.0 / (1.0 + (-(self.v + 19.0) / 10.0).exp());
-            let h_cap_inf = 1.0 / (1.0 + ((self.v + 39.0) / 7.0).exp());
-            let q_inf = self.ca / (self.ca + 0.001);
-            self.h_na += (h_na_inf - self.h_na) / 1.0 * self.dt;
-            self.n_k += (n_inf - self.n_k) / 3.0 * self.dt;
-            self.m_cap += (m_cap_inf - self.m_cap) / 1.0 * self.dt;
-            self.h_cap += (h_cap_inf - self.h_cap) / 15.0 * self.dt;
-            self.q_kca += (q_inf - self.q_kca) / 5.0 * self.dt;
+            let m_na = 1.0 / (1.0 + (-(self.v + 35.0) / 7.5).exp());
+            let h_na_inf = 1.0 / (1.0 + ((self.v + 55.0) / 7.0).exp());
+            let n_inf = 1.0 / (1.0 + (-(self.v + 30.0) / 15.0).exp());
+            let m_cap_inf = 1.0 / (1.0 + (-(self.v + 19.0) / 5.5).exp());
+            let h_cap_inf = 1.0 / (1.0 + ((self.v + 48.0) / 7.0).exp());
+            let q_inf = self.ca / (self.ca + 0.0002);
+            let tau_h_na = 0.5 + 14.0 / (1.0 + ((self.v + 40.0) / 12.0).exp());
+            let tau_n_k = 1.0 + 11.0 / (1.0 + ((self.v + 15.0) / 8.0).exp());
+            self.h_na += (h_na_inf - self.h_na) / tau_h_na * self.dt;
+            self.n_k += (n_inf - self.n_k) / tau_n_k * self.dt;
+            self.m_cap += (m_cap_inf - self.m_cap) / 0.3 * self.dt;
+            self.h_cap += (h_cap_inf - self.h_cap) / 45.0 * self.dt;
+            self.q_kca += (q_inf - self.q_kca) / 1.0 * self.dt;
             let i_na = self.g_na * m_na.powi(3) * self.h_na * (self.v - self.e_na);
             let i_k = self.g_k * self.n_k.powi(4) * (self.v - self.e_k);
             let i_cap = self.g_cap * self.m_cap.powi(2) * self.h_cap * (self.v - self.e_ca);
@@ -1705,7 +1707,7 @@ mod tests {
     #[test]
     fn purkinje_fires() {
         let mut n = DeSchutterPurkinjeNeuron::new();
-        let t: i32 = (0..5000).map(|_| n.step(50.0)).sum();
+        let t: i32 = (0..5000).map(|_| n.step(200.0)).sum();
         assert!(t > 0);
     }
     #[test]
@@ -2185,13 +2187,13 @@ mod tests {
     fn purkinje_ca_rises_with_spiking() {
         let mut n = DeSchutterPurkinjeNeuron::new();
         let ca_init = n.ca;
-        for _ in 0..5000 { n.step(50.0); }
+        for _ in 0..5000 { n.step(200.0); }
         assert!(n.ca > ca_init, "Ca²⁺ should rise during spiking");
     }
     #[test]
     fn purkinje_kca_activated_by_calcium() {
         let mut n = DeSchutterPurkinjeNeuron::new();
-        for _ in 0..5000 { n.step(50.0); }
+        for _ in 0..5000 { n.step(200.0); }
         assert!(n.q_kca > 0.0, "KCa should activate with Ca²⁺: q={}", n.q_kca);
     }
     #[test]
