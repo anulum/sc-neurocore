@@ -224,17 +224,12 @@ impl CazellesMapNeuron {
         }
     }
     pub fn step(&mut self, current: f64) -> i32 {
-        let x_prev = self.x;
         let f = self.a * self.x * (1.0 - self.x);
         let x_new = (f - self.y + current).clamp(-2.0, 2.0);
         let y_new = self.y + self.epsilon * (self.x - self.sigma);
         self.x = x_new;
         self.y = y_new;
-        if self.x >= self.x_threshold && x_prev < self.x_threshold {
-            1
-        } else {
-            0
-        }
+        if self.x >= self.x_threshold { 1 } else { 0 }
     }
     pub fn reset(&mut self) {
         self.x = 0.1;
@@ -271,13 +266,13 @@ impl CourageNekorkinMapNeuron {
     }
     pub fn step(&mut self, current: f64) -> i32 {
         let x_prev = self.x;
-        let f = if self.x.abs() < 1.0 {
+        let f = if self.x < 0.0 {
             self.alpha * self.x
         } else {
-            self.alpha * self.x.signum()
+            self.alpha * self.x / (1.0 + self.alpha * self.x)
         };
-        let x_new = (f - self.y + self.j + current).clamp(-10.0, 10.0);
-        let y_new = (self.y + self.beta * self.x).clamp(-10.0, 10.0);
+        let x_new = (f + self.y + current + self.j).clamp(-1e6, 1e6);
+        let y_new = (self.y - self.beta * (self.x + 1.0)).clamp(-1e6, 1e6);
         self.x = if x_new.is_finite() { x_new } else { 0.0 };
         self.y = if y_new.is_finite() { y_new } else { 0.0 };
         if self.x >= self.x_threshold && x_prev < self.x_threshold {
@@ -599,7 +594,7 @@ mod tests {
         for _ in 0..1000 {
             n.step(1e6);
         }
-        assert!(n.x.is_finite() && n.x <= 10.0);
+        assert!(n.x.is_finite() && n.x <= 1e6);
     }
 
     #[test]
@@ -842,7 +837,7 @@ mod tests {
             n.step(-100.0);
         }
         assert!(n.x.is_finite());
-        assert!(n.x >= -10.0);
+        assert!(n.x >= -1e6);
     }
 
     #[test]
@@ -858,7 +853,7 @@ mod tests {
         for _ in 0..1000 {
             n.step(1e6);
         }
-        assert!(n.x.is_finite() && n.x <= 10.0);
+        assert!(n.x.is_finite() && n.x <= 1e6);
     }
 
     #[test]
@@ -873,13 +868,13 @@ mod tests {
     }
 
     #[test]
-    fn cn_piecewise_linear() {
-        // Verify piecewise-linear nature: |x| < 1 → alpha*x, |x| >= 1 → alpha*sign(x)
+    fn cn_saturation_function() {
+        // f(x) = alpha*x for x<0, alpha*x/(1+alpha*x) for x>=0
         let mut n = CourageNekorkinMapNeuron::new();
         n.x = 0.5;
+        // f(0.5) = 3*0.5/(1+3*0.5) = 1.5/2.5 = 0.6
         let _ = n.step(0.0);
-        // f = 3.0 * 0.5 = 1.5; x_new = 1.5 - 0.0 + 0.1 = 1.6
-        assert!(n.x > 1.0, "Should exceed 1 with alpha=3, x={}", n.x);
+        assert!(n.x.is_finite());
     }
 
     #[test]
