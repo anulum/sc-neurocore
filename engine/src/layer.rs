@@ -144,42 +144,30 @@ impl DenseLayer {
             ));
         }
 
+        let words = self.words_per_input;
         let mut rng = Xoshiro256PlusPlus::seed_from_u64(seed);
-        let mut packed_inputs = vec![Vec::<u64>::new(); self.n_inputs];
+        let mut packed_inputs_flat = vec![0_u64; self.n_inputs * words];
+        
         for (idx, p) in input_values.iter().copied().enumerate() {
-            packed_inputs[idx] = bitstream::bernoulli_packed(p, self.length, &mut rng);
+            let packed = bitstream::bernoulli_packed(p, self.length, &mut rng);
+            packed_inputs_flat[idx * words..(idx + 1) * words].copy_from_slice(&packed);
         }
 
         let out: Vec<f64> = if self.n_neurons >= RAYON_NEURON_THRESHOLD {
-            (0..self.n_neurons)
-                .into_par_iter()
-                .map(|neuron_idx| {
-                    let total: u64 = packed_inputs
-                        .iter()
-                        .enumerate()
-                        .map(|(input_idx, input_words)| {
-                            simd::fused_and_popcount_dispatch(
-                                self.weight_slice(neuron_idx, input_idx),
-                                input_words,
-                            )
-                        })
-                        .sum();
+            let n_inputs = self.n_inputs;
+            self.packed_weights_flat
+                .par_chunks_exact(n_inputs * words)
+                .map(|neuron_weights| {
+                    let total = simd::fused_and_popcount_dispatch(neuron_weights, &packed_inputs_flat);
                     total as f64 * self.inv_length
                 })
                 .collect()
         } else {
-            (0..self.n_neurons)
-                .map(|neuron_idx| {
-                    let total: u64 = packed_inputs
-                        .iter()
-                        .enumerate()
-                        .map(|(input_idx, input_words)| {
-                            simd::fused_and_popcount_dispatch(
-                                self.weight_slice(neuron_idx, input_idx),
-                                input_words,
-                            )
-                        })
-                        .sum();
+            let n_inputs = self.n_inputs;
+            self.packed_weights_flat
+                .chunks_exact(n_inputs * words)
+                .map(|neuron_weights| {
+                    let total = simd::fused_and_popcount_dispatch(neuron_weights, &packed_inputs_flat);
                     total as f64 * self.inv_length
                 })
                 .collect()
