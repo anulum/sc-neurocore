@@ -340,12 +340,18 @@ pub unsafe fn sum_f64_avx2(a: &[f64]) -> f64 {
 /// Caller must ensure the current CPU supports `avx2`.
 pub unsafe fn scale_f64_avx2(alpha: f64, y: &mut [f64]) {
     let valpha = _mm256_set1_pd(alpha);
-    let mut chunks = y.chunks_exact_mut(4);
+    let mut chunks = y.chunks_exact_mut(16);
 
     for chunk in chunks.by_ref() {
-        let vy = _mm256_loadu_pd(chunk.as_ptr());
-        let scaled = _mm256_mul_pd(vy, valpha);
-        _mm256_storeu_pd(chunk.as_mut_ptr(), scaled);
+        let v0 = _mm256_loadu_pd(chunk.as_ptr());
+        let v1 = _mm256_loadu_pd(chunk.as_ptr().add(4));
+        let v2 = _mm256_loadu_pd(chunk.as_ptr().add(8));
+        let v3 = _mm256_loadu_pd(chunk.as_ptr().add(12));
+
+        _mm256_storeu_pd(chunk.as_mut_ptr(), _mm256_mul_pd(v0, valpha));
+        _mm256_storeu_pd(chunk.as_mut_ptr().add(4), _mm256_mul_pd(v1, valpha));
+        _mm256_storeu_pd(chunk.as_mut_ptr().add(8), _mm256_mul_pd(v2, valpha));
+        _mm256_storeu_pd(chunk.as_mut_ptr().add(12), _mm256_mul_pd(v3, valpha));
     }
 
     for v in chunks.into_remainder() {
