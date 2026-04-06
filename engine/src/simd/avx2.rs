@@ -53,17 +53,28 @@ pub unsafe fn pack_avx2(bits: &[u8]) -> Vec<u64> {
     let full_words = length / 64;
     let zero = _mm256_setzero_si256();
 
-    for (word_idx, word) in data.iter_mut().take(full_words).enumerate() {
+    let mut chunks = data[..full_words].chunks_exact_mut(4);
+    let mut word_idx = 0;
+    for chunk in chunks.by_ref() {
         let base = word_idx * 64;
+        for i in 0..4 {
+            let b = base + i * 64;
+            let lo = _mm256_loadu_si256(bits.as_ptr().add(b) as *const __m256i);
+            let hi = _mm256_loadu_si256(bits.as_ptr().add(b + 32) as *const __m256i);
+            let lo_mask = !(_mm256_movemask_epi8(_mm256_cmpeq_epi8(lo, zero)) as u32);
+            let hi_mask = !(_mm256_movemask_epi8(_mm256_cmpeq_epi8(hi, zero)) as u32);
+            chunk[i] = ((hi_mask as u64) << 32) | (lo_mask as u64);
+        }
+        word_idx += 4;
+    }
+
+    for i in word_idx..full_words {
+        let base = i * 64;
         let lo = _mm256_loadu_si256(bits.as_ptr().add(base) as *const __m256i);
         let hi = _mm256_loadu_si256(bits.as_ptr().add(base + 32) as *const __m256i);
-
-        let lo_eq_zero = _mm256_cmpeq_epi8(lo, zero);
-        let hi_eq_zero = _mm256_cmpeq_epi8(hi, zero);
-        let lo_mask = !(_mm256_movemask_epi8(lo_eq_zero) as u32);
-        let hi_mask = !(_mm256_movemask_epi8(hi_eq_zero) as u32);
-
-        *word = ((hi_mask as u64) << 32) | (lo_mask as u64);
+        let lo_mask = !(_mm256_movemask_epi8(_mm256_cmpeq_epi8(lo, zero)) as u32);
+        let hi_mask = !(_mm256_movemask_epi8(_mm256_cmpeq_epi8(hi, zero)) as u32);
+        data[i] = ((hi_mask as u64) << 32) | (lo_mask as u64);
     }
 
     if full_words < words {
