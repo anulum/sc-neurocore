@@ -191,58 +191,41 @@ impl DenseLayer {
             ));
         }
 
-        let packed_inputs: Vec<Vec<u64>> = if self.n_inputs >= RAYON_ENCODE_THRESHOLD {
-            input_values
-                .par_iter()
-                .enumerate()
-                .map(|(idx, &p)| {
-                    let input_seed = seed.wrapping_add(idx as u64);
-                    let mut rng = Xoshiro256PlusPlus::seed_from_u64(input_seed);
-                    bitstream::bernoulli_packed_simd(p, self.length, &mut rng)
-                })
-                .collect()
+        let words = self.words_per_input;
+        let mut packed_inputs_flat = vec![0_u64; self.n_inputs * words];
+
+        if self.n_inputs >= RAYON_ENCODE_THRESHOLD {
+            packed_inputs_flat.par_chunks_mut(words).enumerate().for_each(|(idx, chunk)| {
+                let p = input_values[idx];
+                let input_seed = seed.wrapping_add(idx as u64);
+                let mut rng = Xoshiro256PlusPlus::seed_from_u64(input_seed);
+                let packed = bitstream::bernoulli_packed_simd(p, self.length, &mut rng);
+                chunk.copy_from_slice(&packed);
+            });
         } else {
-            input_values
-                .iter()
-                .enumerate()
-                .map(|(idx, &p)| {
-                    let input_seed = seed.wrapping_add(idx as u64);
-                    let mut rng = Xoshiro256PlusPlus::seed_from_u64(input_seed);
-                    bitstream::bernoulli_packed_simd(p, self.length, &mut rng)
-                })
-                .collect()
-        };
+            packed_inputs_flat.chunks_mut(words).enumerate().for_each(|(idx, chunk)| {
+                let p = input_values[idx];
+                let input_seed = seed.wrapping_add(idx as u64);
+                let mut rng = Xoshiro256PlusPlus::seed_from_u64(input_seed);
+                let packed = bitstream::bernoulli_packed_simd(p, self.length, &mut rng);
+                chunk.copy_from_slice(&packed);
+            });
+        }
 
         let out: Vec<f64> = if self.n_neurons >= RAYON_NEURON_THRESHOLD {
             (0..self.n_neurons)
                 .into_par_iter()
                 .map(|neuron_idx| {
-                    let total: u64 = packed_inputs
-                        .iter()
-                        .enumerate()
-                        .map(|(input_idx, input_words)| {
-                            simd::fused_and_popcount_dispatch(
-                                self.weight_slice(neuron_idx, input_idx),
-                                input_words,
-                            )
-                        })
-                        .sum();
+                    let neuron_weights = &self.packed_weights_flat[neuron_idx * self.n_inputs * words .. (neuron_idx + 1) * self.n_inputs * words];
+                    let total = simd::fused_and_popcount_dispatch(neuron_weights, &packed_inputs_flat);
                     total as f64 / self.length as f64
                 })
                 .collect()
         } else {
             (0..self.n_neurons)
                 .map(|neuron_idx| {
-                    let total: u64 = packed_inputs
-                        .iter()
-                        .enumerate()
-                        .map(|(input_idx, input_words)| {
-                            simd::fused_and_popcount_dispatch(
-                                self.weight_slice(neuron_idx, input_idx),
-                                input_words,
-                            )
-                        })
-                        .sum();
+                    let neuron_weights = &self.packed_weights_flat[neuron_idx * self.n_inputs * words .. (neuron_idx + 1) * self.n_inputs * words];
+                    let total = simd::fused_and_popcount_dispatch(neuron_weights, &packed_inputs_flat);
                     total as f64 / self.length as f64
                 })
                 .collect()
@@ -497,7 +480,7 @@ impl DenseLayer {
     ///
     /// This mirrors `forward_fast` and exists for numpy-native Python bindings.
     pub fn forward_numpy_inner(&self, input_values: &[f64], seed: u64) -> Result<Vec<f64>, String> {
-        self.forward_fused(input_values, seed)
+        self.forward_fast(input_values, seed)
     }
 }
 

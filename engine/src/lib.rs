@@ -1670,7 +1670,7 @@ impl DenseLayer {
     #[pyo3(signature = (input_values, seed=44257))]
     fn forward_fast(&self, input_values: Vec<f64>, seed: u64) -> PyResult<Vec<f64>> {
         self.inner
-            .forward_fused(&input_values, seed)
+            .forward_fast(&input_values, seed)
             .map_err(PyValueError::new_err)
     }
 

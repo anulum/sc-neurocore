@@ -114,10 +114,20 @@ pub fn fused_and_popcount_dispatch(a: &[u64], b: &[u64]) -> u64 {
         return unsafe { rvv::fused_and_popcount_rvv(a, b) };
     }
 
-    a.iter()
-        .zip(b.iter())
+    let mut total = 0_u64;
+    let mut chunks_a = a.chunks_exact(4);
+    let mut chunks_b = b.chunks_exact(4);
+    for (ca, cb) in chunks_a.by_ref().zip(chunks_b.by_ref()) {
+        total += (ca[0] & cb[0]).count_ones() as u64;
+        total += (ca[1] & cb[1]).count_ones() as u64;
+        total += (ca[2] & cb[2]).count_ones() as u64;
+        total += (ca[3] & cb[3]).count_ones() as u64;
+    }
+    total += chunks_a.remainder().iter()
+        .zip(chunks_b.remainder().iter())
         .map(|(&wa, &wb)| (wa & wb).count_ones() as u64)
-        .sum()
+        .sum::<u64>();
+    total
 }
 
 /// Fused XOR+popcount dispatch using the best available SIMD path.
