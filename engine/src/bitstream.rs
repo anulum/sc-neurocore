@@ -368,11 +368,21 @@ pub fn encode_and_popcount<R: Rng + ?Sized>(
     let threshold = (prob.clamp(0.0, 1.0) * 256.0) as u8;
     let full_words = length / 64;
     let mut total = 0_u64;
-    let mut buf = [0_u8; 64];
-
-    for &w_word in weight_words.iter().take(full_words) {
+    let mut buf = [0_u8; 1024]; // 16 words worth
+    let mut chunks = weight_words[..full_words].chunks_exact(16);
+    
+    for w_chunk in chunks.by_ref() {
         rng.fill(&mut buf);
-        let encoded = simd_bernoulli_compare(&buf, threshold);
+        for (i, &w_word) in w_chunk.iter().enumerate() {
+            let encoded = simd_bernoulli_compare(&buf[i*64..(i+1)*64], threshold);
+            total += (encoded & w_word).count_ones() as u64;
+        }
+    }
+    
+    for &w_word in chunks.remainder() {
+        let mut small_buf = [0_u8; 64];
+        rng.fill(&mut small_buf);
+        let encoded = simd_bernoulli_compare(&small_buf, threshold);
         total += (encoded & w_word).count_ones() as u64;
     }
 
