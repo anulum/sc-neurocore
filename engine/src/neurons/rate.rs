@@ -999,7 +999,7 @@ mod tests {
         let mut any_spike = false;
         for _ in 0..200 {
             let spikes = n.step(&inp);
-            if spikes.iter().any(|&s| s == 1) {
+            if spikes.contains(&1) {
                 any_spike = true;
             }
         }
@@ -1024,7 +1024,7 @@ mod tests {
         let mut n = LeakyCompeteFireNeuron::new(3);
         // Unit 0 receives strong input, others receive moderate
         let inp = vec![5.0, 2.0, 2.0];
-        let mut spike_counts = vec![0i32; 3];
+        let mut spike_counts = [0i32; 3];
         for _ in 0..1000 {
             let spikes = n.step(&inp);
             for (i, &s) in spikes.iter().enumerate() {
@@ -1045,7 +1045,7 @@ mod tests {
         let mut n = LeakyCompeteFireNeuron::new(2);
         n.w_inh = 2.0; // Strong inhibition
         let inp = vec![3.0, 3.0];
-        let mut spike_counts = vec![0i32; 2];
+        let mut spike_counts = [0i32; 2];
         for _ in 0..500 {
             let spikes = n.step(&inp);
             for (i, &s) in spikes.iter().enumerate() {

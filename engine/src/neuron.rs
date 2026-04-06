@@ -511,7 +511,6 @@ impl LapicqueNeuron {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_exp_if_optimisation_parity() {

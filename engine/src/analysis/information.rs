@@ -473,7 +473,7 @@ mod tests {
         // Regular spikes at constant rate: should pass
         let times: Vec<f64> = (0..50).map(|i| i as f64 * 0.02).collect();
         let (ks, _passes) = time_rescaling_ks_test(&times, rate, 0.0, 1.0);
-        assert!(ks >= 0.0 && ks <= 1.0, "KS stat in [0,1], got {ks}");
+        assert!((0.0..=1.0).contains(&ks), "KS stat in [0,1], got {ks}");
     }
 
     #[test]

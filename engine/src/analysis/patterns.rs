@@ -173,10 +173,7 @@ mod tests {
         let tb = vec![0.15, 0.35, 0.55];
         let trains: Vec<&[f64]> = vec![&ta, &tb];
         let mat = spike_train_order(&trains, 0.0, 1.0);
-        assert!(
-            (mat[0 * 2 + 1] + mat[1 * 2 + 0]).abs() < 1e-10,
-            "antisymmetric"
-        );
+        assert!((mat[1] + mat[2]).abs() < 1e-10, "antisymmetric");
         assert_eq!(mat[0], 0.0, "diagonal = 0");
     }
 

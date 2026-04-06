@@ -829,7 +829,7 @@ mod tests {
     #[test]
     fn cn_silent_without_input() {
         let mut n = CourageNekorkinMapNeuron::new();
-        let t: i32 = (0..5000).map(|_| n.step(0.0)).sum();
+        let _t: i32 = (0..5000).map(|_| n.step(0.0)).sum();
         // May fire due to j=0.1 bias — model-specific
         assert!(n.x.is_finite());
     }

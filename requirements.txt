@@ -1,4 +1,4 @@
-# Pinned runtime dependencies for SC-NeuroCore v3.13.3
+# Pinned runtime dependencies for SC-NeuroCore v3.14.0
 # Canonical source of truth: pyproject.toml [project.dependencies]
 numpy>=1.24
 scipy>=1.10

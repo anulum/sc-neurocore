@@ -716,7 +716,7 @@ mod tests {
     #[test]
     fn pr_dendritic_input() {
         let mut n = PinskyRinzelNeuron::new();
-        let t: i32 = (0..5000).map(|_| n.step(0.0, 5.0)).sum();
+        let _t: i32 = (0..5000).map(|_| n.step(0.0, 5.0)).sum();
         // Dendritic input should also be able to drive spiking
         assert!(n.v_d.is_finite());
     }

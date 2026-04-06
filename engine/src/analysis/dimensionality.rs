@@ -558,7 +558,7 @@ mod tests {
 
     #[test]
     fn test_demixed_pca_single_condition() {
-        let t = vec![vec![1, 0, 1, 0]];
+        let t = [vec![1, 0, 1, 0]];
         let refs: Vec<&[i32]> = t.iter().map(|v| v.as_slice()).collect();
         let (proj, expl) = demixed_pca(&[refs], 2, 2);
         assert!(proj.is_empty());

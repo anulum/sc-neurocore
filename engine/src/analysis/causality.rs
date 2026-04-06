@@ -880,7 +880,7 @@ mod tests {
         let (gc, _) = spectral_granger_causality(&trains, 5, 3, 16);
         // Diagonal entries (i==j) should be 0
         for fi in 0..16 {
-            assert_eq!(gc[0 * 16 + fi], 0.0, "GC[0,0] should be 0");
+            assert_eq!(gc[fi], 0.0, "GC[0,0] should be 0");
             assert_eq!(gc[3 * 16 + fi], 0.0, "GC[1,1] should be 0");
         }
     }
@@ -916,7 +916,7 @@ mod tests {
         let (pdc, _) = partial_directed_coherence(&trains, 5, 3, 16);
         for &v in &pdc {
             assert!(
-                v >= 0.0 && v <= 1.0 + 1e-10,
+                (0.0..=1.0 + 1e-10).contains(&v),
                 "PDC should be in [0,1], got {v}"
             );
         }
@@ -942,7 +942,7 @@ mod tests {
         let (dtf, _) = directed_transfer_function(&trains, 5, 3, 16);
         for &v in &dtf {
             assert!(
-                v >= 0.0 && v <= 1.0 + 1e-10,
+                (0.0..=1.0 + 1e-10).contains(&v),
                 "DTF should be in [0,1], got {v}"
             );
         }

@@ -2031,7 +2031,7 @@ mod tests {
     #[test]
     fn destexhe_no_crash_zero_input() {
         let mut n = DestexheThalamicNeuron::new();
-        let t: i32 = (0..500).map(|_| n.step(0.0)).sum();
+        let _t: i32 = (0..500).map(|_| n.step(0.0)).sum();
         // Thalamic relays may have spontaneous activity via T-current
         assert!(n.v.is_finite());
     }
@@ -2094,7 +2094,7 @@ mod tests {
     #[test]
     fn hb_silent_without_input() {
         let mut n = HuberBraunNeuron::new();
-        let t: i32 = (0..500).map(|_| n.step(0.0)).sum();
+        let _t: i32 = (0..500).map(|_| n.step(0.0)).sum();
         // HuberBraun may have spontaneous activity, so just check finite
         assert!(n.v.is_finite());
     }
@@ -2256,7 +2256,7 @@ mod tests {
     }
     #[test]
     fn mainen_two_compartments_coupled() {
-        let mut n = MainenSejnowskiNeuron::new();
+        let n = MainenSejnowskiNeuron::new();
         // kappa > 0 means compartments are coupled
         assert!(n.kappa > 0.0, "coupling should be positive");
     }
@@ -2279,7 +2279,7 @@ mod tests {
     #[test]
     fn purkinje_silent_without_input() {
         let mut n = DeSchutterPurkinjeNeuron::new();
-        let t: i32 = (0..500).map(|_| n.step(0.0)).sum();
+        let _t: i32 = (0..500).map(|_| n.step(0.0)).sum();
         // Purkinje cells may have some spontaneous activity
         assert!(n.v.is_finite());
     }
@@ -2387,7 +2387,7 @@ mod tests {
     #[test]
     fn prescott_zero_input_stable() {
         let mut n = PrescottNeuron::new();
-        let t: i32 = (0..500).map(|_| n.step(0.0)).sum();
+        let _t: i32 = (0..500).map(|_| n.step(0.0)).sum();
         // Prescott has fast Na conductance — may produce spontaneous activity
         assert!(n.v.is_finite());
     }
@@ -2635,7 +2635,7 @@ mod tests {
     #[test]
     fn durstewitz_low_activity_zero_input() {
         let mut n = DurstewitzDopamineNeuron::new();
-        let t: i32 = (0..500).map(|_| n.step(0.0)).sum();
+        let _t: i32 = (0..500).map(|_| n.step(0.0)).sum();
         // NMDA tonic conductance can produce spontaneous activity
         assert!(n.v.is_finite());
     }
@@ -2696,7 +2696,7 @@ mod tests {
     #[test]
     fn hill_tononi_silent_without_input() {
         let mut n = HillTononiNeuron::new();
-        let t: i32 = (0..500).map(|_| n.step(0.0)).sum();
+        let _t: i32 = (0..500).map(|_| n.step(0.0)).sum();
         // May have some spontaneous activity due to Ih
         assert!(n.v.is_finite());
     }

@@ -399,7 +399,7 @@ mod tests {
         (0..n)
             .map(|_| {
                 rng = rng.wrapping_mul(6364136223846793005).wrapping_add(1);
-                if (rng >> 33) % 10 == 0 {
+                if (rng >> 33).is_multiple_of(10) {
                     1
                 } else {
                     0
@@ -483,7 +483,10 @@ mod tests {
     fn test_isi_entropy() {
         let train = poisson_like_train(1000, 789);
         let h = isi_entropy(&train, 0.001, 20);
-        // May be NaN if not enough spikes, but should not panic
-        assert!(!h.is_nan() || true);
+        // May be NaN if not enough spikes, but should not panic.
+        // If non-NaN, entropy must be non-negative.
+        if !h.is_nan() {
+            assert!(h >= 0.0, "Entropy must be non-negative, got {h}");
+        }
     }
 }
