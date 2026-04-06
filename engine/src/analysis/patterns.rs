@@ -30,19 +30,27 @@ pub fn spike_directionality(times_a: &[f64], times_b: &[f64], t_start: f64, t_en
     let mut lead_a = 0_usize;
     let mut lead_b = 0_usize;
 
+    // Ensure tb is sorted for binary search
+    let mut tb_sorted = tb.clone();
+    tb_sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
+
     for &t in &ta {
-        let mut nearest_after = f64::INFINITY;
-        let mut nearest_before = f64::INFINITY;
-        for &tb_t in &tb {
-            let diff = tb_t - t;
-            if diff > 0.0 && diff < nearest_after {
-                nearest_after = diff;
-            } else if diff < 0.0 && (-diff) < nearest_before {
-                nearest_before = -diff;
-            }
-        }
-        if nearest_after.is_finite() && nearest_before.is_finite() {
-            if nearest_before < nearest_after {
+        let idx = tb_sorted.partition_point(|&x| x < t);
+        
+        let nearest_after = if idx < tb_sorted.len() {
+            Some(tb_sorted[idx] - t)
+        } else {
+            None
+        };
+        
+        let nearest_before = if idx > 0 {
+            Some(t - tb_sorted[idx - 1])
+        } else {
+            None
+        };
+
+        if let (Some(nb), Some(na)) = (nearest_before, nearest_after) {
+            if nb < na {
                 lead_b += 1;
             } else {
                 lead_a += 1;
