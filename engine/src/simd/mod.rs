@@ -248,7 +248,17 @@ pub fn max_f64_dispatch(a: &[f64]) -> f64 {
     }
 
     #[allow(unreachable_code)]
-    a.iter().copied().fold(f64::NEG_INFINITY, f64::max)
+    {
+        let mut m = f64::NEG_INFINITY;
+        let mut chunks = a.chunks_exact(4);
+        for c in chunks.by_ref() {
+            m = m.max(c[0].max(c[1]).max(c[2].max(c[3])));
+        }
+        for &v in chunks.remainder() {
+            m = m.max(v);
+        }
+        m
+    }
 }
 
 /// Sum of f64 slice using the best available SIMD path.
