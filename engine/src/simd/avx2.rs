@@ -387,6 +387,55 @@ pub unsafe fn softmax_inplace_f64_avx2(scores: &mut [f64]) {
     }
 }
 
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx")]
+/// Dot product of two f64 slices using AVX (no FMA).
+///
+/// # Safety
+/// Caller must ensure the current CPU supports `avx`.
+pub unsafe fn dot_f64_avx(a: &[f64], b: &[f64]) -> f64 {
+    let len = a.len().min(b.len());
+    let mut acc = _mm256_setzero_pd();
+    let mut chunks_a = a[..len].chunks_exact(4);
+    let mut chunks_b = b[..len].chunks_exact(4);
+
+    for (ca, cb) in chunks_a.by_ref().zip(chunks_b.by_ref()) {
+        let va = _mm256_loadu_pd(ca.as_ptr());
+        let vb = _mm256_loadu_pd(cb.as_ptr());
+        let prod = _mm256_mul_pd(va, vb);
+        acc = _mm256_add_pd(acc, prod);
+    }
+
+    let mut lanes = [0.0_f64; 4];
+    _mm256_storeu_pd(lanes.as_mut_ptr(), acc);
+    let mut sum = lanes[0] + lanes[1] + lanes[2] + lanes[3];
+
+    for (&ra, &rb) in chunks_a.remainder().iter().zip(chunks_b.remainder()) {
+        sum += ra * rb;
+    }
+    sum
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx")]
+/// Sum of f64 slice using AVX.
+pub unsafe fn sum_f64_avx(a: &[f64]) -> f64 {
+    let mut acc = _mm256_setzero_pd();
+    let mut chunks = a.chunks_exact(4);
+    for chunk in chunks.by_ref() {
+        let va = _mm256_loadu_pd(chunk.as_ptr());
+        acc = _mm256_add_pd(acc, va);
+    }
+    let mut lanes = [0.0_f64; 4];
+    _mm256_storeu_pd(lanes.as_mut_ptr(), acc);
+    let mut sum = lanes[0] + lanes[1] + lanes[2] + lanes[3];
+    for &v in chunks.remainder() {
+        sum += v;
+    }
+    sum
+}
+
 #[cfg(all(test, target_arch = "x86_64"))]
 mod tests {
     use crate::bitstream::pack;
@@ -518,4 +567,20 @@ mod tests {
             );
         }
     }
+
+    #[test]
+    fn dot_f64_avx_matches_scalar() {
+        if !is_x86_feature_detected!("avx") {
+            return;
+        }
+        let a: Vec<f64> = (0..67).map(|i| i as f64 * 0.1).collect();
+        let b: Vec<f64> = (0..67).map(|i| (i as f64 * 0.3) - 5.0).collect();
+        let expected: f64 = a.iter().zip(&b).map(|(x, y)| x * y).sum();
+        let got = unsafe { super::dot_f64_avx(&a, &b) };
+        assert!(
+            (got - expected).abs() < 1e-9,
+            "dot_avx: got {got}, expected {expected}"
+        );
+    }
+
 }

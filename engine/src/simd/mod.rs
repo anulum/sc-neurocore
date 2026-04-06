@@ -189,6 +189,12 @@ pub fn dot_f64_dispatch(a: &[f64], b: &[f64]) -> f64 {
         if is_x86_feature_detected!("avx2") && is_x86_feature_detected!("fma") {
             return unsafe { avx2::dot_f64_avx2(a, b) };
         }
+        if is_x86_feature_detected!("avx") {
+            return unsafe { avx2::dot_f64_avx(a, b) };
+        }
+        if is_x86_feature_detected!("avx") {
+            return unsafe { avx2::dot_f64_avx(a, b) };
+        }
     }
 
     #[cfg(target_arch = "aarch64")]
@@ -233,6 +239,12 @@ pub fn sum_f64_dispatch(a: &[f64]) -> f64 {
         }
         if is_x86_feature_detected!("avx2") {
             return unsafe { avx2::sum_f64_avx2(a) };
+        }
+        if is_x86_feature_detected!("avx") {
+            return unsafe { avx2::sum_f64_avx(a) };
+        }
+        if is_x86_feature_detected!("avx") {
+            return unsafe { avx2::sum_f64_avx(a) };
         }
     }
 
