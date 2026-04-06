@@ -136,17 +136,33 @@ pub unsafe fn fused_and_popcount_avx2(a: &[u64], b: &[u64]) -> u64 {
 pub unsafe fn fused_xor_popcount_avx2(a: &[u64], b: &[u64]) -> u64 {
     let len = a.len().min(b.len());
     let mut total = 0_u64;
-    let mut chunks_a = a[..len].chunks_exact(4);
-    let mut chunks_b = b[..len].chunks_exact(4);
+    let mut chunks_a = a[..len].chunks_exact(16);
+    let mut chunks_b = b[..len].chunks_exact(16);
 
     for (ca, cb) in chunks_a.by_ref().zip(chunks_b.by_ref()) {
-        let va = _mm256_loadu_si256(ca.as_ptr() as *const __m256i);
-        let vb = _mm256_loadu_si256(cb.as_ptr() as *const __m256i);
-        let xored = _mm256_xor_si256(va, vb);
+        let va0 = _mm256_loadu_si256(ca.as_ptr() as *const __m256i);
+        let vb0 = _mm256_loadu_si256(cb.as_ptr() as *const __m256i);
+        let va1 = _mm256_loadu_si256(ca.as_ptr().add(4) as *const __m256i);
+        let vb1 = _mm256_loadu_si256(cb.as_ptr().add(4) as *const __m256i);
+        let va2 = _mm256_loadu_si256(ca.as_ptr().add(8) as *const __m256i);
+        let vb2 = _mm256_loadu_si256(cb.as_ptr().add(8) as *const __m256i);
+        let va3 = _mm256_loadu_si256(ca.as_ptr().add(12) as *const __m256i);
+        let vb3 = _mm256_loadu_si256(cb.as_ptr().add(12) as *const __m256i);
 
-        let mut lanes = [0_u64; 4];
-        _mm256_storeu_si256(lanes.as_mut_ptr() as *mut __m256i, xored);
-        total += lanes.iter().map(|w| w.count_ones() as u64).sum::<u64>();
+        let xor0 = _mm256_xor_si256(va0, vb0);
+        let xor1 = _mm256_xor_si256(va1, vb1);
+        let xor2 = _mm256_xor_si256(va2, vb2);
+        let xor3 = _mm256_xor_si256(va3, vb3);
+
+        let mut lanes = [0_u64; 16];
+        _mm256_storeu_si256(lanes.as_mut_ptr() as *mut __m256i, xor0);
+        _mm256_storeu_si256(lanes.as_mut_ptr().add(4) as *mut __m256i, xor1);
+        _mm256_storeu_si256(lanes.as_mut_ptr().add(8) as *mut __m256i, xor2);
+        _mm256_storeu_si256(lanes.as_mut_ptr().add(12) as *mut __m256i, xor3);
+        
+        for &w in lanes.iter() {
+            total += w.count_ones() as u64;
+        }
     }
 
     total
