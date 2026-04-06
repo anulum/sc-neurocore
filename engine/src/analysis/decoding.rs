@@ -67,10 +67,24 @@ pub fn bayesian_decode(
         } else {
             (prior.get(s).copied().unwrap_or(1e-30) + 1e-30).ln()
         };
-        for j in 0..n_neurons {
-            let lam = tuning_rates[s * n_neurons + j].max(1e-10);
-            let n_j = spike_counts.get(j).copied().unwrap_or(0.0);
-            lp += n_j * lam.ln() - lam;
+        let row_rates = &tuning_rates[s * n_neurons .. (s + 1) * n_neurons];
+        let mut j = 0;
+        while j + 3 < n_neurons {
+            let lam0 = row_rates[j].max(1e-10);
+            let lam1 = row_rates[j+1].max(1e-10);
+            let lam2 = row_rates[j+2].max(1e-10);
+            let lam3 = row_rates[j+3].max(1e-10);
+            
+            lp += spike_counts[j] * lam0.ln() - lam0;
+            lp += spike_counts[j+1] * lam1.ln() - lam1;
+            lp += spike_counts[j+2] * lam2.ln() - lam2;
+            lp += spike_counts[j+3] * lam3.ln() - lam3;
+            j += 4;
+        }
+        while j < n_neurons {
+            let lam = row_rates[j].max(1e-10);
+            lp += spike_counts[j] * lam.ln() - lam;
+            j += 1;
         }
         if lp > best_lp {
             best_lp = lp;
