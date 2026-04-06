@@ -395,7 +395,7 @@ pub unsafe fn softmax_inplace_f64_avx2(scores: &mut [f64]) {
         return;
     }
     let max_val = max_f64_avx2(scores);
-    let v_max = _mm256_set1_pd(max_val);
+    // let v_max = _mm256_set1_pd(max_val);
     
     let mut chunks = scores.chunks_exact_mut(16);
     for chunk in chunks.by_ref() {
@@ -421,7 +421,7 @@ pub unsafe fn softmax_inplace_f64_avx2(scores: &mut [f64]) {
         return;
     }
     let max_val = max_f64_avx2(scores);
-    let v_max = _mm256_set1_pd(max_val);
+    // let v_max = _mm256_set1_pd(max_val);
     
     let mut chunks = scores.chunks_exact_mut(16);
     for chunk in chunks.by_ref() {
