@@ -25,21 +25,27 @@ pub fn population_vector_decode(
     if n_bins == 0 {
         return vec![];
     }
-    let mut decoded = Vec::with_capacity(n_bins);
-    for b in 0..n_bins {
-        let mut sx = 0.0_f64;
-        let mut sy = 0.0_f64;
-        for (i, t) in trains.iter().enumerate() {
-            let count: i64 = t[b * window..(b + 1) * window]
-                .iter()
-                .map(|&v| v as i64)
-                .sum();
-            let dir = preferred_directions.get(i).copied().unwrap_or(0.0);
-            sx += count as f64 * dir.cos();
-            sy += count as f64 * dir.sin();
-        }
-        decoded.push(sy.atan2(sx));
-    }
+    // Pre-calculate cos/sin for preferred directions
+    let dirs_cos: Vec<f64> = preferred_directions.iter().map(|&d| d.cos()).collect();
+    let dirs_sin: Vec<f64> = preferred_directions.iter().map(|&d| d.sin()).collect();
+
+    let decoded: Vec<f64> = (0..n_bins)
+        .into_par_iter()
+        .map(|b| {
+            let mut sx = 0.0_f64;
+            let mut sy = 0.0_f64;
+            let start = b * window;
+            let end = (b + 1) * window;
+            for (i, t) in trains.iter().enumerate() {
+                let count: i64 = t[start..end].iter().map(|&v| v as i64).sum();
+                let c = dirs_cos.get(i).copied().unwrap_or(1.0);
+                let s = dirs_sin.get(i).copied().unwrap_or(0.0);
+                sx += count as f64 * c;
+                sy += count as f64 * s;
+            }
+            sy.atan2(sx)
+        })
+        .collect();
     decoded
 }
 
