@@ -282,16 +282,19 @@ pub fn covariance_matrix(trains: &[&[i32]], bin_size: usize) -> Vec<Vec<f64>> {
         return vec![vec![var]];
     }
 
-    let mut cov = vec![vec![0.0_f64; n]; n];
     let ddof = (min_bins as f64 - 1.0).max(1.0);
-    for i in 0..n {
+    let min_bins_f = min_bins as f64;
+    let mut cov = vec![vec![0.0_f64; n]; n];
+    cov.par_iter_mut().enumerate().for_each(|(i, row)| {
         for j in i..n {
-            let c: f64 = (0..min_bins)
-                .map(|k| (mat[i][k] - means[i]) * (mat[j][k] - means[j]))
-                .sum::<f64>()
-                / ddof;
-            cov[i][j] = c;
-            cov[j][i] = c;
+            let dot = crate::simd::dot_f64_dispatch(&mat[i], &mat[j]);
+            row[j] = (dot - min_bins_f * means[i] * means[j]) / ddof;
+        }
+    });
+    // Mirror
+    for i in 0..n {
+        for j in (i + 1)..n {
+            cov[j][i] = cov[i][j];
         }
     }
     cov
