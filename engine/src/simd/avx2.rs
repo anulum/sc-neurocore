@@ -554,6 +554,64 @@ pub unsafe fn bernoulli_compare_batch_avx2(buf: &[u8], threshold: u8, out: &mut 
     }
 }
 
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx")]
+/// Maximum of f64 slice using AVX (v1).
+pub unsafe fn max_f64_avx(a: &[f64]) -> f64 {
+    if a.is_empty() {
+        return f64::NEG_INFINITY;
+    }
+    let mut max_vec0 = _mm256_set1_pd(f64::NEG_INFINITY);
+    let mut max_vec1 = _mm256_set1_pd(f64::NEG_INFINITY);
+    let mut max_vec2 = _mm256_set1_pd(f64::NEG_INFINITY);
+    let mut max_vec3 = _mm256_set1_pd(f64::NEG_INFINITY);
+    
+    let mut chunks = a.chunks_exact(16);
+    for chunk in chunks.by_ref() {
+        max_vec0 = _mm256_max_pd(max_vec0, _mm256_loadu_pd(chunk.as_ptr()));
+        max_vec1 = _mm256_max_pd(max_vec1, _mm256_loadu_pd(chunk.as_ptr().add(4)));
+        max_vec2 = _mm256_max_pd(max_vec2, _mm256_loadu_pd(chunk.as_ptr().add(8)));
+        max_vec3 = _mm256_max_pd(max_vec3, _mm256_loadu_pd(chunk.as_ptr().add(12)));
+    }
+    
+    max_vec0 = _mm256_max_pd(max_vec0, max_vec1);
+    max_vec2 = _mm256_max_pd(max_vec2, max_vec3);
+    max_vec0 = _mm256_max_pd(max_vec0, max_vec2);
+
+    let mut lanes = [0.0_f64; 4];
+    _mm256_storeu_pd(lanes.as_mut_ptr(), max_vec0);
+    let mut m = lanes[0].max(lanes[1]).max(lanes[2].max(lanes[3]));
+    for &v in chunks.remainder() {
+        m = m.max(v);
+    }
+    m
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx")]
+/// Scale f64 slice using AVX (v1).
+pub unsafe fn scale_f64_avx(alpha: f64, y: &mut [f64]) {
+    let valpha = _mm256_set1_pd(alpha);
+    let mut chunks = y.chunks_exact_mut(16);
+
+    for chunk in chunks.by_ref() {
+        let v0 = _mm256_loadu_pd(chunk.as_ptr());
+        let v1 = _mm256_loadu_pd(chunk.as_ptr().add(4));
+        let v2 = _mm256_loadu_pd(chunk.as_ptr().add(8));
+        let v3 = _mm256_loadu_pd(chunk.as_ptr().add(12));
+
+        _mm256_storeu_pd(chunk.as_mut_ptr(), _mm256_mul_pd(v0, valpha));
+        _mm256_storeu_pd(chunk.as_mut_ptr().add(4), _mm256_mul_pd(v1, valpha));
+        _mm256_storeu_pd(chunk.as_mut_ptr().add(8), _mm256_mul_pd(v2, valpha));
+        _mm256_storeu_pd(chunk.as_mut_ptr().add(12), _mm256_mul_pd(v3, valpha));
+    }
+
+    for v in chunks.into_remainder() {
+        *v *= alpha;
+    }
+}
+
 #[cfg(all(test, target_arch = "x86_64"))]
 mod tests {
     use crate::bitstream::pack;
