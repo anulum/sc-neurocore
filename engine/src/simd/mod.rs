@@ -318,3 +318,21 @@ pub fn encode_and_popcount_dispatch<R: Rng + ?Sized>(
 ) -> u64 {
     crate::bitstream::encode_and_popcount(weight_words, prob, length, rng)
 }
+
+/// Batch compare 1024 bytes against threshold using best SIMD.
+pub fn bernoulli_compare_batch_1024(buf: &[u8], threshold: u8, out: &mut [u64]) {
+    #[cfg(target_arch = "x86_64")]
+    {
+        if is_x86_feature_detected!("avx512bw") {
+            return unsafe { avx512::bernoulli_compare_batch_avx512(buf, threshold, out) };
+        }
+        if is_x86_feature_detected!("avx2") {
+            return unsafe { avx2::bernoulli_compare_batch_avx2(buf, threshold, out) };
+        }
+    }
+    
+    // Fallback: 16 scalar calls
+    for i in 0..16 {
+        out[i] = crate::bitstream::simd_bernoulli_compare_exposed(&buf[i*64..(i+1)*64], threshold);
+    }
+}

@@ -436,6 +436,34 @@ pub unsafe fn sum_f64_avx(a: &[f64]) -> f64 {
     sum
 }
 
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx2")]
+/// Compare 1024 random bytes against a threshold and return 16 u64 words.
+pub unsafe fn bernoulli_compare_batch_avx2(buf: &[u8], threshold: u8, out: &mut [u64]) {
+    let v_thresh = _mm256_set1_epi8(threshold as i8);
+    // Note: epi8 comparison is signed. Using the xor 0x80 trick for unsigned.
+    let bias = _mm256_set1_epi8(i8::MIN);
+    let v_thresh_biased = _mm256_xor_si256(v_thresh, bias);
+    
+    for i in 0..16 {
+        // Each loop iteration processes 64 bytes (2x 256-bit registers)
+        let chunk = &buf[i*64..(i+1)*64];
+        let v0 = _mm256_loadu_si256(chunk.as_ptr() as *const __m256i);
+        let v1 = _mm256_loadu_si256(chunk.as_ptr().add(32) as *const __m256i);
+        
+        let v0_biased = _mm256_xor_si256(v0, bias);
+        let v1_biased = _mm256_xor_si256(v1, bias);
+        
+        let m0 = _mm256_cmpgt_epi8(v_thresh_biased, v0_biased);
+        let m1 = _mm256_cmpgt_epi8(v_thresh_biased, v1_biased);
+        
+        let mask0 = _mm256_movemask_epi8(m0) as u32;
+        let mask1 = _mm256_movemask_epi8(m1) as u32;
+        out[i] = (mask0 as u64) | ((mask1 as u64) << 32);
+    }
+}
+
 #[cfg(all(test, target_arch = "x86_64"))]
 mod tests {
     use crate::bitstream::pack;

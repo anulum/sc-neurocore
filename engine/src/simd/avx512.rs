@@ -312,6 +312,20 @@ pub unsafe fn scale_f64_avx512(alpha: f64, y: &mut [f64]) {
     }
 }
 
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx512bw")]
+/// Compare 1024 random bytes against a threshold and return 16 u64 words.
+pub unsafe fn bernoulli_compare_batch_avx512(buf: &[u8], threshold: u8, out: &mut [u64]) {
+    let v_thresh = _mm512_set1_epi8(threshold as i8);
+    for i in 0..16 {
+        let chunk = &buf[i*64..(i+1)*64];
+        let v = _mm512_loadu_si512(chunk.as_ptr() as *const _);
+        // AVX-512 has direct unsigned comparison
+        out[i] = _mm512_cmplt_epu8_mask(v, v_thresh);
+    }
+}
+
 #[cfg(all(test, target_arch = "x86_64"))]
 mod tests {
     use crate::bitstream::pack;
