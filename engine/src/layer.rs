@@ -129,7 +129,7 @@ impl DenseLayer {
                         input_chunk.fill(0);
                     } else if weight_prob >= 1.0 {
                         input_chunk.fill(u64::MAX);
-                        if length % 64 > 0 {
+                        if !length.is_multiple_of(64) {
                             input_chunk[words - 1] = (1_u64 << (length % 64)) - 1;
                         }
                     } else {

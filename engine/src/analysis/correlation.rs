@@ -43,7 +43,6 @@ pub fn cross_correlation(
         return (cc, lags_ms);
     }
 
-    let ni = n as isize;
     for (i, lag) in (-max_lag..=max_lag).enumerate() {
         let sum = if lag >= 0 {
             let l = lag as usize;

@@ -434,11 +434,11 @@ pub fn bernoulli_compare_batch_1024(buf: &[u8], threshold: u8, out: &mut [u64]) 
                 }
                 out[i] = word;
             }
-            return;
         }
     }
 
-    // Generic fallback: 16 scalar calls
+    // Generic fallback: 16 scalar calls (non-x86_64 architectures)
+    #[cfg(not(target_arch = "x86_64"))]
     for i in 0..16 {
         out[i] =
             crate::bitstream::simd_bernoulli_compare_exposed(&buf[i * 64..(i + 1) * 64], threshold);

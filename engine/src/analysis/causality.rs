@@ -79,7 +79,7 @@ fn solve_linear(a: &[f64], b: &[f64], n: usize) -> Vec<f64> {
 
 /// Solve A X = B where A is n×n and B is n×m. Returns X (n×m, row-major).
 fn solve_matrix(a: &[f64], b: &[f64], n: usize, m: usize) -> Vec<f64> {
-    let mut result = vec![0.0_f64; n * m];
+    let result = vec![0.0_f64; n * m];
     (0..m).into_par_iter().for_each(|col| {
         let rhs: Vec<f64> = (0..n).map(|i| b[i * m + col]).collect();
         let x = solve_linear(a, &rhs, n);

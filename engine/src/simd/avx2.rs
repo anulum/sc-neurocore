@@ -509,6 +509,9 @@ pub unsafe fn dot_f64_avx(a: &[f64], b: &[f64]) -> f64 {
 #[cfg(target_arch = "x86_64")]
 #[target_feature(enable = "avx")]
 /// Sum of f64 slice using AVX.
+///
+/// # Safety
+/// Caller must ensure AVX is available on the current CPU.
 pub unsafe fn sum_f64_avx(a: &[f64]) -> f64 {
     let mut acc0 = _mm256_setzero_pd();
     let mut acc1 = _mm256_setzero_pd();
@@ -539,6 +542,9 @@ pub unsafe fn sum_f64_avx(a: &[f64]) -> f64 {
 #[cfg(target_arch = "x86_64")]
 #[target_feature(enable = "avx2")]
 /// Compare 1024 random bytes against a threshold and return 16 u64 words.
+///
+/// # Safety
+/// Caller must ensure AVX2 is available on the current CPU.
 pub unsafe fn bernoulli_compare_batch_avx2(buf: &[u8], threshold: u8, out: &mut [u64]) {
     let v_thresh = _mm256_set1_epi8(threshold as i8);
     // Note: epi8 comparison is signed. Using the xor 0x80 trick for unsigned.
@@ -566,6 +572,9 @@ pub unsafe fn bernoulli_compare_batch_avx2(buf: &[u8], threshold: u8, out: &mut 
 #[cfg(target_arch = "x86_64")]
 #[target_feature(enable = "avx")]
 /// Maximum of f64 slice using AVX (v1).
+///
+/// # Safety
+/// Caller must ensure AVX is available on the current CPU.
 pub unsafe fn max_f64_avx(a: &[f64]) -> f64 {
     if a.is_empty() {
         return f64::NEG_INFINITY;
@@ -599,6 +608,9 @@ pub unsafe fn max_f64_avx(a: &[f64]) -> f64 {
 #[cfg(target_arch = "x86_64")]
 #[target_feature(enable = "avx")]
 /// Scale f64 slice using AVX (v1).
+///
+/// # Safety
+/// Caller must ensure AVX is available on the current CPU.
 pub unsafe fn scale_f64_avx(alpha: f64, y: &mut [f64]) {
     let valpha = _mm256_set1_pd(alpha);
     let mut chunks = y.chunks_exact_mut(16);
