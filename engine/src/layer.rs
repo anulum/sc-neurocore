@@ -71,6 +71,14 @@ impl DenseLayer {
         layer
     }
 
+    /// Read-only access to the flat packed weight buffer.
+    ///
+    /// Layout: `[neuron][input][word]`, row-major contiguous `u64`.
+    #[inline]
+    pub fn packed_weights_flat(&self) -> &[u64] {
+        &self.packed_weights_flat
+    }
+
     /// Return a single `[word]` slice for one neuron/input pair.
     #[inline]
     fn weight_slice(&self, neuron: usize, input: usize) -> &[u64] {

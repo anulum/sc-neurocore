@@ -31,6 +31,10 @@ module-name = "sc_neurocore_engine.sc_neurocore_engine"
 name = "sc_neurocore_engine"
 crate-type = ["cdylib", "rlib"]
 
+[features]
+default = []
+gpu = ["dep:wgpu", "dep:pollster", "dep:bytemuck"]
+
 [dependencies]
 pyo3 = { version = "0.28", features = ["extension-module"] }
 numpy = "0.28"
@@ -41,6 +45,9 @@ rand_distr = "0.6"
 rand_xoshiro = "0.8"
 rayon = "1.10"
 rustfft = "6.2"
+wgpu = { version = "24", optional = true }
+pollster = { version = "0.4", optional = true }
+bytemuck = { version = "1.21", features = ["derive"], optional = true }
 
 [dev-dependencies]
 criterion = { version = "0.8", features = ["html_reports"] }
@@ -64,6 +71,11 @@ harness = false
 [[bench]]
 name = "analysis_bench"
 harness = false
+
+[[bench]]
+name = "gpu_bench"
+harness = false
+required-features = ["gpu"]
 
 [profile.release]
 opt-level = 3

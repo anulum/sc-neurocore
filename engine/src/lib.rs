@@ -33,6 +33,8 @@ pub mod ei_network;
 pub mod encoder;
 pub mod fault;
 pub mod fusion;
+#[cfg(feature = "gpu")]
+pub mod gpu;
 pub mod grad;
 pub mod graph;
 pub mod ir;
@@ -462,6 +464,8 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<BitstreamEncoder>()?;
     m.add_class::<FixedPointLif>()?;
     m.add_class::<DenseLayer>()?;
+    #[cfg(feature = "gpu")]
+    m.add_class::<gpu::PyGpuDenseLayer>()?;
     m.add_class::<StdpSynapse>()?;
     m.add_class::<PySurrogateLif>()?;
     m.add_class::<PyDifferentiableDenseLayer>()?;
