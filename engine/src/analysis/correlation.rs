@@ -6,6 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Cross-correlation, synchrony, and covariance measures
 
+use rayon::prelude::*;
 use rustfft::{num_complex::Complex, FftPlanner};
 
 use super::basic::{bin_spike_train, spike_times};
