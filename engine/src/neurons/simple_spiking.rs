@@ -908,15 +908,18 @@ impl ButeraRespiratoryNeuron {
         let n_inf = 1.0 / (1.0 + (-(self.v + 29.0) / 4.0).exp());
         let m_nap = 1.0 / (1.0 + (-(self.v + 40.0) / 6.0).exp());
         let h_nap_inf = 1.0 / (1.0 + ((self.v + 48.0) / 6.0).exp());
-        let tau_n = 10.0;
-        let h_na = 1.0 / (1.0 + ((self.v + 48.0) / 4.0).exp());
-        let i_na = self.g_na * m_na.powi(3) * h_na * (self.v - self.e_na);
+        // Butera et al. 1999 Model I: tau_n = 10/cosh((V+29)/8)
+        let tau_n = (10.0 / ((self.v + 29.0) / 8.0).cosh().max(1e-12)).max(0.01);
+        // Model I uses (1-n) for fast Na inactivation, not a separate h gate
+        let i_na = self.g_na * m_na.powi(3) * (1.0 - self.n) * (self.v - self.e_na);
         let i_nap = self.g_nap * m_nap * self.h_nap * (self.v - self.e_na);
         let i_k = self.g_k * self.n.powi(4) * (self.v - self.e_k);
         let i_l = self.g_l * (self.v - self.e_l);
-        self.v += (-i_na - i_nap - i_k - i_l + current) * self.dt;
-        self.n += (n_inf - self.n) / tau_n * self.dt;
-        self.h_nap += (h_nap_inf - self.h_nap) / self.tau_h * self.dt;
+        // tau_h_nap = tau_h / cosh((V+48)/12) (Butera 1999)
+        let tau_h_eff = (self.tau_h / ((self.v + 48.0) / 12.0).cosh().max(1e-12)).max(0.1);
+        self.v = (self.v + (-i_na - i_nap - i_k - i_l + current) * self.dt).clamp(-200.0, 100.0);
+        self.n = (self.n + (n_inf - self.n) / tau_n * self.dt).clamp(0.0, 1.0);
+        self.h_nap = (self.h_nap + (h_nap_inf - self.h_nap) / tau_h_eff * self.dt).clamp(0.0, 1.0);
         if self.v >= self.v_threshold && v_prev < self.v_threshold {
             1
         } else {
