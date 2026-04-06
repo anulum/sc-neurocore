@@ -146,6 +146,21 @@ pub fn fused_xor_popcount_dispatch(a: &[u64], b: &[u64]) -> u64 {
             // SAFETY: Guarded by runtime feature detection.
             return unsafe { avx2::fused_xor_popcount_avx2(a, b) };
         }
+        if is_x86_feature_detected!("avx") {
+            let mut total = 0_u64;
+            let mut chunks_a = a.chunks_exact(16);
+            let mut chunks_b = b.chunks_exact(16);
+            for (ca, cb) in chunks_a.by_ref().zip(chunks_b.by_ref()) {
+                for i in 0..16 {
+                    total += (ca[i] ^ cb[i]).count_ones() as u64;
+                }
+            }
+            total += chunks_a.remainder().iter()
+                .zip(chunks_b.remainder().iter())
+                .map(|(&wa, &wb)| (wa ^ wb).count_ones() as u64)
+                .sum::<u64>();
+            return total;
+        }
     }
 
     #[cfg(target_arch = "aarch64")]
@@ -331,7 +346,33 @@ pub fn bernoulli_compare_batch_1024(buf: &[u8], threshold: u8, out: &mut [u64]) 
         }
     }
     
-    // Fallback: 16 scalar calls
+    
+    #[cfg(target_arch = "x86_64")]
+    {
+        // SSE2 fallback (available on all x86_64)
+        use core::arch::x86_64::*;
+        unsafe {
+            let v_thresh = _mm_set1_epi8(threshold as i8);
+            let bias = _mm_set1_epi8(i8::MIN);
+            let v_thresh_biased = _mm_xor_si128(v_thresh, bias);
+            
+            for i in 0..16 {
+                let chunk = &buf[i*64..(i+1)*64];
+                let mut word = 0_u64;
+                for j in 0..4 {
+                    let v = _mm_loadu_si128(chunk.as_ptr().add(j*16) as *const __m128i);
+                    let v_biased = _mm_xor_si128(v, bias);
+                    let m = _mm_cmpgt_epi8(v_thresh_biased, v_biased);
+                    let mask = _mm_movemask_epi8(m) as u32;
+                    word |= (mask as u64) << (j * 16);
+                }
+                out[i] = word;
+            }
+            return;
+        }
+    }
+
+    // Generic fallback: 16 scalar calls
     for i in 0..16 {
         out[i] = crate::bitstream::simd_bernoulli_compare_exposed(&buf[i*64..(i+1)*64], threshold);
     }
