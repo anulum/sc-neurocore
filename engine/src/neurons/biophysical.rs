@@ -913,20 +913,20 @@ impl PlantR15Neuron {
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
         for _ in 0..5 {
-            let am = safe_rate(0.1, 40.0, self.v, 10.0, 1.0);
-            let bm = 4.0 * (-(self.v + 65.0) / 18.0).exp();
-            let ah = 0.07 * (-(self.v + 65.0) / 20.0).exp();
-            let bh = 1.0 / (1.0 + (-(self.v + 35.0) / 10.0).exp());
+            let am = safe_rate(0.1, 50.0, self.v, 10.0, 1.0);
+            let bm = 4.0 * (-(self.v + 75.0) / 18.0).exp();
+            let ah = 0.07 * (-(self.v + 50.0) / 20.0).exp();
+            let bh = 1.0 / (1.0 + (-(self.v + 20.0) / 10.0).exp());
             let an = safe_rate(0.01, 55.0, self.v, 10.0, 0.1);
             let bn = 0.125 * (-(self.v + 65.0) / 80.0).exp();
             self.m += (am * (1.0 - self.m) - bm * self.m) * self.dt;
             self.h += (ah * (1.0 - self.h) - bh * self.h) * self.dt;
             self.n += (an * (1.0 - self.n) - bn * self.n) * self.dt;
             let m_ca = 1.0 / (1.0 + (-(self.v + 25.0) / 5.0).exp());
-            let kca_act = (self.ca / (self.ca + 0.5)).min(1.0);
+            let kca_act = self.ca / (0.5 + self.ca);
             let i_na = self.g_na * self.m.powi(3) * self.h * (self.v - self.e_na);
             let i_k = self.g_k * self.n.powi(4) * (self.v - self.e_k);
-            let i_ca = self.g_ca * m_ca * (self.v - self.e_ca);
+            let i_ca = self.g_ca * m_ca.powi(2) * (self.v - self.e_ca);
             let i_kca = self.g_kca * kca_act * (self.v - self.e_k);
             let i_l = self.g_l * (self.v - self.e_l);
             self.v += (-i_na - i_k - i_ca - i_kca - i_l + current) / self.c_m * self.dt;
