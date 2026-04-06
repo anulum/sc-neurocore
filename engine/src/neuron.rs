@@ -421,6 +421,10 @@ pub struct ExpIfNeuron {
     pub delta_t: f64,
     pub tau: f64,
     pub dt: f64,
+    /// Precomputed 1.0 / delta_t.
+    pub inv_delta_t: f64,
+    /// Precomputed dt / tau.
+    pub dt_div_tau: f64,
 }
 
 impl Default for ExpIfNeuron {
@@ -440,13 +444,15 @@ impl ExpIfNeuron {
             delta_t: 2.0,
             tau: 20.0,
             dt: 0.1,
+            inv_delta_t: 1.0 / 2.0,
+            dt_div_tau: 0.1 / 20.0,
         }
     }
 
     pub fn step(&mut self, current: f64) -> i32 {
-        let exp_arg = ((self.v - self.v_rh) / self.delta_t).clamp(-20.0, 20.0);
+        let exp_arg = ((self.v - self.v_rh) * self.inv_delta_t).clamp(-20.0, 20.0);
         let exp_term = self.delta_t * exp_arg.exp();
-        let dv = (-(self.v - self.v_rest) + exp_term + current) / self.tau * self.dt;
+        let dv = (-(self.v - self.v_rest) + exp_term + current) * self.dt_div_tau;
         self.v += dv;
 
         if self.v >= self.v_threshold {
@@ -506,6 +512,26 @@ impl LapicqueNeuron {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
+    #[test]
+    fn test_exp_if_optimisation_parity() {
+        let mut n = ExpIfNeuron::new();
+        n.v = -60.0;
+        let current = 10.0;
+        
+        // Manual calculation of original formula
+        let exp_arg = ((-60.0_f64 - (-55.0)) / 2.0).clamp(-20.0, 20.0);
+        let exp_term = 2.0 * exp_arg.exp();
+        let expected_dv = (-(-60.0 - (-65.0)) + exp_term + current) / 20.0 * 0.1;
+        
+        n.step(current);
+        let got_dv = n.v - (-60.0); // Simple check since we only did one step
+        
+        // Use a small epsilon for float parity
+        assert!((got_dv - expected_dv).abs() < 1e-15, "Logic mismatch in ExpIfNeuron: got {}, expected {}", got_dv, expected_dv);
+    }
+
     use super::{
         mask, AdExNeuron, BitstreamAverager, DendriticNeuron, ExpIfNeuron, FixedPointLif,
         HomeostaticLif, Izhikevich, LapicqueNeuron,
