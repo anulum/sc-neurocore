@@ -336,21 +336,30 @@ fn var_coefficients(trains_binned: &[Vec<f64>], order: usize) -> (Vec<f64>, Vec<
 
     // X^T X + reg
     let mut xtx = vec![0.0_f64; x_cols * x_cols];
+    xtx.par_chunks_exact_mut(x_cols)
+        .enumerate()
+        .for_each(|(i, row)| {
+            for j in 0..=i {
+                let dot = crate::simd::dot_f64_dispatch(&x_cols_data[i], &x_cols_data[j]);
+                row[j] = dot + if i == j { 1e-8 } else { 0.0 };
+            }
+        });
+    // Mirror the matrix (serial, small overhead)
     for i in 0..x_cols {
-        for j in 0..=i {
-            let dot = crate::simd::dot_f64_dispatch(&x_cols_data[i], &x_cols_data[j]);
-            xtx[i * x_cols + j] = dot + if i == j { 1e-8 } else { 0.0 };
-            xtx[j * x_cols + i] = xtx[i * x_cols + j];
+        for j in (i+1)..x_cols {
+            xtx[i * x_cols + j] = xtx[j * x_cols + i];
         }
     }
 
     // X^T Y
     let mut xty = vec![0.0_f64; x_cols * d];
-    for i in 0..x_cols {
-        for j in 0..d {
-            xty[i * d + j] = crate::simd::dot_f64_dispatch(&x_cols_data[i], &y_cols[j]);
-        }
-    }
+    xty.par_chunks_exact_mut(d)
+        .enumerate()
+        .for_each(|(i, row)| {
+            for j in 0..d {
+                row[j] = crate::simd::dot_f64_dispatch(&x_cols_data[i], &y_cols[j]);
+            }
+        });
 
     // beta = (X^T X)^{-1} X^T Y
     let beta = solve_matrix(&xtx, &xty, x_cols, d);
