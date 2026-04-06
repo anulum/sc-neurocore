@@ -46,8 +46,19 @@ fn solve_linear(a: &[f64], b: &[f64], n: usize) -> Vec<f64> {
         }
         for row in (col + 1)..n {
             let factor = aug[row * stride + col] / pivot;
-            for j in col..stride {
-                aug[row * stride + j] -= factor * aug[col * stride + j];
+            let mut j = col;
+            let r_off = row * stride;
+            let c_off = col * stride;
+            while j + 3 < stride {
+                aug[r_off + j] -= factor * aug[c_off + j];
+                aug[r_off + j + 1] -= factor * aug[c_off + j + 1];
+                aug[r_off + j + 2] -= factor * aug[c_off + j + 2];
+                aug[r_off + j + 3] -= factor * aug[c_off + j + 3];
+                j += 4;
+            }
+            while j < stride {
+                aug[r_off + j] -= factor * aug[c_off + j];
+                j += 1;
             }
         }
     }
