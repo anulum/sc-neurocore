@@ -440,14 +440,25 @@ pub unsafe fn dot_f64_avx(a: &[f64], b: &[f64]) -> f64 {
 #[target_feature(enable = "avx")]
 /// Sum of f64 slice using AVX.
 pub unsafe fn sum_f64_avx(a: &[f64]) -> f64 {
-    let mut acc = _mm256_setzero_pd();
-    let mut chunks = a.chunks_exact(4);
+    let mut acc0 = _mm256_setzero_pd();
+    let mut acc1 = _mm256_setzero_pd();
+    let mut acc2 = _mm256_setzero_pd();
+    let mut acc3 = _mm256_setzero_pd();
+    
+    let mut chunks = a.chunks_exact(16);
     for chunk in chunks.by_ref() {
-        let va = _mm256_loadu_pd(chunk.as_ptr());
-        acc = _mm256_add_pd(acc, va);
+        acc0 = _mm256_add_pd(acc0, _mm256_loadu_pd(chunk.as_ptr()));
+        acc1 = _mm256_add_pd(acc1, _mm256_loadu_pd(chunk.as_ptr().add(4)));
+        acc2 = _mm256_add_pd(acc2, _mm256_loadu_pd(chunk.as_ptr().add(8)));
+        acc3 = _mm256_add_pd(acc3, _mm256_loadu_pd(chunk.as_ptr().add(12)));
     }
+    
+    acc0 = _mm256_add_pd(acc0, acc1);
+    acc2 = _mm256_add_pd(acc2, acc3);
+    acc0 = _mm256_add_pd(acc0, acc2);
+
     let mut lanes = [0.0_f64; 4];
-    _mm256_storeu_pd(lanes.as_mut_ptr(), acc);
+    _mm256_storeu_pd(lanes.as_mut_ptr(), acc0);
     let mut sum = lanes[0] + lanes[1] + lanes[2] + lanes[3];
     for &v in chunks.remainder() {
         sum += v;
