@@ -236,12 +236,18 @@ pub fn demixed_pca(
         }
     }
 
+    cov.par_chunks_exact_mut(t)
+        .enumerate()
+        .for_each(|(i, row)| {
+            for j in i..t {
+                let dot = crate::simd::dot_f64_dispatch(&m_cols[i], &m_cols[j]);
+                row[j] = dot / n_cond_f;
+            }
+        });
+    // Mirror
     for i in 0..t {
-        for j in i..t {
-            let dot = crate::simd::dot_f64_dispatch(&m_cols[i], &m_cols[j]);
-            let val = dot / n_cond_f;
-            cov[i * t + j] = val;
-            cov[j * t + i] = val;
+        for j in (i + 1)..t {
+            cov[j * t + i] = cov[i * t + j];
         }
     }
     let (eigvals, eigvecs) = symmetric_eigen(&cov, t);
