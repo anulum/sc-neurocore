@@ -124,8 +124,17 @@ impl DenseLayer {
                 let mut rng = ChaCha8Rng::seed_from_u64(weight_seed.wrapping_add(neuron_idx as u64));
                 for (input_idx, input_chunk) in neuron_chunk.chunks_mut(words).enumerate() {
                     let weight_prob = weights[neuron_idx][input_idx];
-                    let packed = bitstream::bernoulli_packed_simd(weight_prob, length, &mut rng);
-                    input_chunk.copy_from_slice(&packed);
+                    if weight_prob <= 0.0 {
+                        input_chunk.fill(0);
+                    } else if weight_prob >= 1.0 {
+                        input_chunk.fill(u64::MAX);
+                        if length % 64 > 0 {
+                            input_chunk[words - 1] = (1_u64 << (length % 64)) - 1;
+                        }
+                    } else {
+                        let packed = bitstream::bernoulli_packed_simd(weight_prob, length, &mut rng);
+                        input_chunk.copy_from_slice(&packed);
+                    }
                 }
             });
 
