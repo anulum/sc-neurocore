@@ -80,6 +80,10 @@ ba = "ba"
 Lond = "Lond"
 californica = "californica"
 Rin = "Rin"
+ALS = "ALS"
+Archiv = "Archiv"
+Hoeks = "Hoeks"
+SOM = "SOM"
 
 [default.extend-identifiers]
 lins = "lins"
