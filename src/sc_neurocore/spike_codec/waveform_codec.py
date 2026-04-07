@@ -67,6 +67,11 @@ class WaveformCodec:
         Correlation threshold for template matching (0-1).
     quantize_bits : int
         Background signal quantization (fewer bits = more compression).
+    mode : str
+        Compression mode controlling what is preserved:
+        - ``"full"``: spike timing + waveform templates + background LFP (~137x)
+        - ``"waveform"``: spike timing + waveform templates, no background (~1700x)
+        - ``"spike"``: spike timing only, Neuralink-equivalent (~4500x)
     """
 
     HEADER_MAGIC = b"WFCX"
@@ -78,12 +83,18 @@ class WaveformCodec:
         max_templates: int = 16,
         template_threshold: float = 0.9,
         quantize_bits: int = 6,
+        mode: str = "full",
     ):
+        if mode not in ("full", "waveform", "spike"):
+            raise ValueError(
+                f"mode must be 'full', 'waveform', or 'spike', got {mode!r}"
+            )
         self.threshold_sigma = threshold_sigma
         self.snippet_samples = snippet_samples
         self.max_templates = max_templates
         self.template_threshold = template_threshold
         self.quantize_bits = quantize_bits
+        self.mode = mode
         self.spike_codec = SpikeCodec(entropy="auto")
 
     def compress(self, waveform: np.ndarray[Any, Any]) -> tuple[bytes, WaveformCompressionResult]:
@@ -120,15 +131,25 @@ class WaveformCodec:
         spike_data, _ = self.spike_codec.compress(spike_raster)
 
         # Step 6: Compress templates + template IDs + residuals
-        snippet_data = self._compress_snippets(templates, template_ids, residuals)
+        # (skipped in "spike" mode — only timing is kept)
+        snippet_data = (
+            self._compress_snippets(templates, template_ids, residuals)
+            if self.mode != "spike"
+            else b""
+        )
 
         # Step 7: Compress background (waveform minus spikes)
-        background = self._extract_background(waveform, spike_times_per_ch)
-        bg_data = self._compress_background(background)
+        # (only in "full" mode — BCI decoders rarely need LFP)
+        if self.mode == "full":
+            background = self._extract_background(waveform, spike_times_per_ch)
+            bg_data = self._compress_background(background)
+        else:
+            bg_data = b""
 
         # Pack everything
+        mode_byte = {"full": 0, "waveform": 1, "spike": 2}[self.mode]
         header = self.HEADER_MAGIC + struct.pack(
-            "!IIHHBBB",
+            "!IIHHBBBB",
             T,
             N,
             len(templates),
@@ -136,6 +157,7 @@ class WaveformCodec:
             self.snippet_samples,
             self.quantize_bits,
             len(spike_data).bit_length(),
+            mode_byte,
         )
         # Length-prefixed sections
         parts = [
