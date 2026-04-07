@@ -27,6 +27,7 @@ from sc_neurocore.bio.transcriptomic import (
 # Shared: rank-value encoding
 # ---------------------------------------------------------------------------
 
+
 class TestRankValueEncode:
     """Theodoris et al. (2023) rank-value tokenisation."""
 
@@ -66,8 +67,8 @@ class TestRankValueEncode:
 # scKGBERT — Li et al. (2025)
 # ---------------------------------------------------------------------------
 
-class TestScKGBERTInterface:
 
+class TestScKGBERTInterface:
     def test_defaults(self) -> None:
         iface = ScKGBERTInterface(n_genes=50)
         assert iface.d_model == 64
@@ -173,8 +174,8 @@ class TestScKGBERTInterface:
 # Geneformer — Theodoris et al. (2023)
 # ---------------------------------------------------------------------------
 
-class TestGeneformerInterface:
 
+class TestGeneformerInterface:
     def test_defaults(self) -> None:
         iface = GeneformerInterface(n_genes=100)
         assert iface.d_model == 256

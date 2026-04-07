@@ -79,7 +79,7 @@ class QuantumInspiredLIFNeuron:
         self.z_re += dz_re * self.dt
         self.z_im += dz_im * self.dt
 
-        prob = (self.z_re ** 2 + self.z_im ** 2) / (self.theta ** 2)
+        prob = (self.z_re**2 + self.z_im**2) / (self.theta**2)
         uniform = self._xorshift64()
 
         if uniform < min(prob, 1.0):

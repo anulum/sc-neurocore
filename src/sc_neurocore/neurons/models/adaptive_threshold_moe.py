@@ -59,13 +59,8 @@ class AdaptiveThresholdMoENeuron:
 
         Implements: V_th = mean(|x|)/k, v += x, s = round(v/V_th), v -= V_th*s.
         """
-        self._mean_abs_x = (
-            (1.0 - self.ema_alpha) * self._mean_abs_x
-            + self.ema_alpha * abs(current)
-        )
-        self.v_th = (
-            self._mean_abs_x / self.k if self._mean_abs_x > 1e-12 else 1.0
-        )
+        self._mean_abs_x = (1.0 - self.ema_alpha) * self._mean_abs_x + self.ema_alpha * abs(current)
+        self.v_th = self._mean_abs_x / self.k if self._mean_abs_x > 1e-12 else 1.0
         self.v += current
         s_int = round(self.v / self.v_th) if self.v_th > 1e-12 else 0
         if s_int != 0:
@@ -74,13 +69,10 @@ class AdaptiveThresholdMoENeuron:
 
     def step_collapsed(self, activation: float) -> int:
         """Time-collapsed single-step: s_INT = round(x / V_th)."""
-        self._mean_abs_x = (
-            (1.0 - self.ema_alpha) * self._mean_abs_x
-            + self.ema_alpha * abs(activation)
+        self._mean_abs_x = (1.0 - self.ema_alpha) * self._mean_abs_x + self.ema_alpha * abs(
+            activation
         )
-        self.v_th = (
-            self._mean_abs_x / self.k if self._mean_abs_x > 1e-12 else 1.0
-        )
+        self.v_th = self._mean_abs_x / self.k if self._mean_abs_x > 1e-12 else 1.0
         return max(round(activation / self.v_th), 0)
 
     def sparsity(self) -> float:

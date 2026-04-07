@@ -31,6 +31,7 @@ from sc_neurocore.analysis.spike_stats.neural_decoders import (
 # Shared utilities
 # ---------------------------------------------------------------------------
 
+
 class TestTokeniseSpikes:
     """Spike tokenisation used by POYO+ and POSSM."""
 
@@ -80,7 +81,6 @@ class TestTokeniseSpikes:
 
 
 class TestSinusoidalPositionEncode:
-
     def test_shape(self) -> None:
         timestamps = np.array([0.0, 1.0, 2.0])
         pe = sinusoidal_position_encode(timestamps, 16)
@@ -99,7 +99,6 @@ class TestSinusoidalPositionEncode:
 
 
 class TestScaledDotProductAttention:
-
     def test_identity_keys(self) -> None:
         n, d = 4, 8
         q = np.eye(n, d)
@@ -122,8 +121,8 @@ class TestScaledDotProductAttention:
 # POYO+ — Azabou et al. (2023)
 # ---------------------------------------------------------------------------
 
-class TestPOYODecoder:
 
+class TestPOYODecoder:
     def test_defaults(self) -> None:
         dec = POYODecoder()
         assert dec.d_model == 64
@@ -184,8 +183,8 @@ class TestPOYODecoder:
 # POSSM — Ryoo et al. (2025)
 # ---------------------------------------------------------------------------
 
-class TestPOSSMDecoder:
 
+class TestPOSSMDecoder:
     def test_defaults(self) -> None:
         dec = POSSMDecoder()
         assert dec.d_model == 64
@@ -262,8 +261,8 @@ class TestPOSSMDecoder:
 # NDT3 — Ye & Pandarinath (2025)
 # ---------------------------------------------------------------------------
 
-class TestNDT3Decoder:
 
+class TestNDT3Decoder:
     def test_defaults(self) -> None:
         dec = NDT3Decoder()
         assert dec.d_model == 64
@@ -332,8 +331,8 @@ class TestNDT3Decoder:
 # CEBRA — Schneider, Lee & Mathis (2023)
 # ---------------------------------------------------------------------------
 
-class TestCEBRAEncoder:
 
+class TestCEBRAEncoder:
     def test_defaults(self) -> None:
         enc = CEBRAEncoder()
         assert enc.d_input == 64

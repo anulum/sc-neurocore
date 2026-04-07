@@ -33,6 +33,7 @@ class TestAdaptiveThresholdMoENeuron:
     @pytest.fixture()
     def neuron(self):
         from sc_neurocore.neurons.models import AdaptiveThresholdMoENeuron
+
         return AdaptiveThresholdMoENeuron(k=4.0)
 
     def test_defaults(self, neuron):
@@ -53,6 +54,7 @@ class TestAdaptiveThresholdMoENeuron:
     def test_integer_spike_count_gt_one(self):
         """With high input and low k, spike count can exceed 1."""
         from sc_neurocore.neurons.models import AdaptiveThresholdMoENeuron
+
         n = AdaptiveThresholdMoENeuron(k=10.0, ema_alpha=0.5)
         # Warm up EMA.
         for _ in range(20):
@@ -64,6 +66,7 @@ class TestAdaptiveThresholdMoENeuron:
     def test_soft_reset_preserves_residual(self):
         """After spike, v retains the sub-threshold residual."""
         from sc_neurocore.neurons.models import AdaptiveThresholdMoENeuron
+
         n = AdaptiveThresholdMoENeuron(k=4.0, ema_alpha=1.0)
         n.step(1.0)  # sets mean_abs_x = 1.0, v_th = 0.25
         # v = 1.0, s = round(1.0/0.25) = 4, v = 1.0 - 0.25*4 = 0.0
@@ -72,6 +75,7 @@ class TestAdaptiveThresholdMoENeuron:
     def test_adaptive_threshold_tracks_input(self):
         """V_th = (1/k) * mean(|x|) tracks input magnitude."""
         from sc_neurocore.neurons.models import AdaptiveThresholdMoENeuron
+
         n = AdaptiveThresholdMoENeuron(k=4.0, ema_alpha=0.5)
         for _ in range(50):
             n.step(10.0)
@@ -103,6 +107,7 @@ class TestAdaptiveThresholdMoENeuron:
     def test_varying_input_produces_sparsity(self):
         """With varying inputs and k=1, not every step spikes."""
         from sc_neurocore.neurons.models import AdaptiveThresholdMoENeuron
+
         n = AdaptiveThresholdMoENeuron(k=1.0, ema_alpha=0.3)
         inputs = [0.0, 0.0, 5.0, 0.0, 0.0, 5.0, 0.0] * 10
         spikes = [n.step(x) for x in inputs]
@@ -119,6 +124,7 @@ class TestHybridLinearAttentionNeuron:
     @pytest.fixture()
     def neuron(self):
         from sc_neurocore.neurons.models import HybridLinearAttentionNeuron
+
         return HybridLinearAttentionNeuron(dim=16)
 
     def test_defaults(self, neuron):
@@ -167,6 +173,7 @@ class TestHybridLinearAttentionNeuron:
 
     def test_different_dims(self):
         from sc_neurocore.neurons.models import HybridLinearAttentionNeuron
+
         for dim in [4, 32, 64]:
             n = HybridLinearAttentionNeuron(dim=dim)
             assert len(n._state_kv) == dim
@@ -182,6 +189,7 @@ class TestQuantumInspiredLIFNeuron:
     @pytest.fixture()
     def neuron(self):
         from sc_neurocore.neurons.models import QuantumInspiredLIFNeuron
+
         return QuantumInspiredLIFNeuron(tau=20.0, theta=1.0, dt=0.1, seed=42)
 
     def test_defaults(self, neuron):
@@ -203,6 +211,7 @@ class TestQuantumInspiredLIFNeuron:
     def test_destructive_interference(self):
         """Opposing re/im inputs should suppress firing (key quantum property)."""
         from sc_neurocore.neurons.models import QuantumInspiredLIFNeuron
+
         # Strong excitatory input.
         n1 = QuantumInspiredLIFNeuron(tau=20.0, theta=0.5, dt=0.1, seed=42)
         spikes_exc = sum(n1.step_complex(3.0, 0.0) for _ in range(500))
@@ -214,6 +223,7 @@ class TestQuantumInspiredLIFNeuron:
     def test_deterministic_with_same_seed(self):
         """Same seed → same spike train."""
         from sc_neurocore.neurons.models import QuantumInspiredLIFNeuron
+
         results = []
         for _ in range(2):
             n = QuantumInspiredLIFNeuron(seed=12345)
@@ -224,6 +234,7 @@ class TestQuantumInspiredLIFNeuron:
     def test_different_seeds_differ(self):
         """Different seeds → different spike trains (with high probability)."""
         from sc_neurocore.neurons.models import QuantumInspiredLIFNeuron
+
         n1 = QuantumInspiredLIFNeuron(seed=1)
         n2 = QuantumInspiredLIFNeuron(seed=9999)
         t1 = [n1.step_complex(3.0, 1.0) for _ in range(200)]
@@ -240,6 +251,7 @@ class TestQuantumInspiredLIFNeuron:
     def test_firing_probability_scales_with_amplitude(self):
         """P(spike) = |z|^2/theta^2: higher input → higher rate."""
         from sc_neurocore.neurons.models import QuantumInspiredLIFNeuron
+
         rates = []
         for amp in [1.0, 3.0, 5.0]:
             n = QuantumInspiredLIFNeuron(tau=20.0, theta=1.0, dt=0.1, seed=42)
@@ -257,6 +269,7 @@ class TestDendriticNMDANeuron:
     @pytest.fixture()
     def neuron(self):
         from sc_neurocore.neurons.models import DendriticNMDANeuron
+
         return DendriticNMDANeuron()
 
     def test_defaults(self, neuron):
@@ -293,6 +306,7 @@ class TestDendriticNMDANeuron:
     def test_coincidence_detection(self):
         """NMDA requires BOTH glutamate AND depolarisation for full effect."""
         from sc_neurocore.neurons.models import DendriticNMDANeuron
+
         # Only soma current, no glutamate.
         n1 = DendriticNMDANeuron()
         for _ in range(500):
@@ -324,6 +338,7 @@ class TestMulticompartmentMCNNeuron:
     @pytest.fixture()
     def neuron(self):
         from sc_neurocore.neurons.models import MulticompartmentMCNNeuron
+
         return MulticompartmentMCNNeuron()
 
     def test_defaults_match_table_ii(self, neuron):
@@ -352,6 +367,7 @@ class TestMulticompartmentMCNNeuron:
     def test_apical_gating_modulates_firing(self):
         """High apical input (gate open) should increase firing vs no apical."""
         from sc_neurocore.neurons.models import MulticompartmentMCNNeuron
+
         # No apical: gate = sigma(0) = 0.5.
         n1 = MulticompartmentMCNNeuron()
         s1 = sum(n1.step_compartments(2.0, 0.0, 0.0) for _ in range(200))
@@ -394,6 +410,7 @@ class TestAstrocyteLIFNeuron:
     @pytest.fixture()
     def neuron(self):
         from sc_neurocore.neurons.models import AstrocyteLIFNeuron
+
         return AstrocyteLIFNeuron()
 
     def test_defaults(self, neuron):
@@ -422,6 +439,7 @@ class TestAstrocyteLIFNeuron:
     def test_gliotransmitter_threshold(self):
         """I_glio = g_glio only when Ca > Ca_thresh."""
         from sc_neurocore.neurons.models import AstrocyteLIFNeuron
+
         n = AstrocyteLIFNeuron()
         # Build up calcium with sustained pre_spikes.
         for _ in range(100):
@@ -431,6 +449,7 @@ class TestAstrocyteLIFNeuron:
     def test_glial_feedback_increases_firing(self):
         """Gliotransmitter feedback should increase spike rate vs no feedback."""
         from sc_neurocore.neurons.models import AstrocyteLIFNeuron
+
         # Strong enough current to be near threshold.
         n_no = AstrocyteLIFNeuron()
         s_no = sum(n_no.step_with_pre(14.0, pre_spike=False) for _ in range(1000))
@@ -457,11 +476,13 @@ class TestDirectionSelectiveRGC:
     @pytest.fixture()
     def on_cell(self):
         from sc_neurocore.neurons.models import DirectionSelectiveRGC
+
         return DirectionSelectiveRGC.new_on()
 
     @pytest.fixture()
     def off_cell(self):
         from sc_neurocore.neurons.models import DirectionSelectiveRGC
+
         return DirectionSelectiveRGC.new_off()
 
     def test_on_centre_flag(self, on_cell, off_cell):
@@ -487,6 +508,7 @@ class TestDirectionSelectiveRGC:
     def test_surround_inhibition_reduces_firing(self):
         """Surround illumination should reduce centre response."""
         from sc_neurocore.neurons.models import DirectionSelectiveRGC
+
         no_surr = DirectionSelectiveRGC.new_on()
         with_surr = DirectionSelectiveRGC.new_on()
         s_no = 0
@@ -523,6 +545,7 @@ class TestCochlearHairCell:
     @pytest.fixture()
     def cell(self):
         from sc_neurocore.neurons.models import CochlearHairCell
+
         return CochlearHairCell()
 
     def test_defaults(self, cell):
@@ -552,6 +575,7 @@ class TestCochlearHairCell:
     def test_positive_displacement_depolarises(self):
         """Strong positive displacement should depolarise (increase V)."""
         from sc_neurocore.neurons.models import CochlearHairCell
+
         cell = CochlearHairCell()
         v_rest = cell.v
         for _ in range(200):
@@ -562,6 +586,7 @@ class TestCochlearHairCell:
     def test_negative_displacement_stays_near_rest(self):
         """Large negative displacement: MET channels closed, V near E_L."""
         from sc_neurocore.neurons.models import CochlearHairCell
+
         cell = CochlearHairCell()
         for _ in range(500):
             cell.step(-2.0)
@@ -585,6 +610,7 @@ class TestTripletSTDP:
     @pytest.fixture()
     def synapse(self):
         from sc_neurocore.synapses import TripletSTDP
+
         return TripletSTDP(weight=0.5)
 
     def test_defaults(self, synapse):
@@ -640,11 +666,13 @@ class TestShortTermPlasticitySynapse:
     @pytest.fixture()
     def depressing(self):
         from sc_neurocore.synapses import ShortTermPlasticitySynapse
+
         return ShortTermPlasticitySynapse.new_depressing()
 
     @pytest.fixture()
     def facilitating(self):
         from sc_neurocore.synapses import ShortTermPlasticitySynapse
+
         return ShortTermPlasticitySynapse.new_facilitating()
 
     def test_depressing_defaults(self, depressing):
@@ -704,6 +732,7 @@ class TestDopamineStdpSynapse:
     @pytest.fixture()
     def synapse(self):
         from sc_neurocore.synapses import DopamineStdpSynapse
+
         return DopamineStdpSynapse(weight=0.5)
 
     def test_defaults(self, synapse):
@@ -729,7 +758,8 @@ class TestDopamineStdpSynapse:
         w0 = synapse.weight
         for i in range(200):
             synapse.step(
-                i % 10 == 0, i % 10 == 2,
+                i % 10 == 0,
+                i % 10 == 2,
                 reward=0.5 if i % 5 == 0 else 0.0,
             )
         assert synapse.weight != w0, "Reward must drive weight change"
@@ -775,6 +805,7 @@ class TestDopamineStdpSynapse:
     def test_distal_reward_problem(self):
         """Core Izhikevich (2007) result: delayed reward still modifies weight."""
         from sc_neurocore.synapses import DopamineStdpSynapse
+
         syn = DopamineStdpSynapse(weight=0.5, lr=0.01)
         # Phase 1: STDP pairing (builds eligibility, no reward).
         for i in range(50):

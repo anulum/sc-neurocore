@@ -27,6 +27,7 @@ import numpy as np
 # Shared utilities
 # ---------------------------------------------------------------------------
 
+
 def rank_value_encode(
     expression: np.ndarray,
     global_medians: np.ndarray | None = None,
@@ -65,6 +66,7 @@ def rank_value_encode(
 # scKGBERT — Li et al. (2025), Genome Biology 26:402
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ScKGBERTInterface:
     """Knowledge-enhanced foundation model for single-cell transcriptomics.
@@ -93,7 +95,9 @@ class ScKGBERTInterface:
         rng = np.random.default_rng(self.seed)
         # Gene token embeddings (shared between S-Encoder and K-Encoder)
         self._gene_embeddings = rng.normal(
-            0.0, 0.02, (self.n_genes, self.d_model),
+            0.0,
+            0.02,
+            (self.n_genes, self.d_model),
         )
         # Knowledge graph adjacency (sparse simulation of STRING PPI)
         self._kg_adjacency = np.zeros((self.n_genes, self.n_genes), dtype=np.float64)
@@ -113,7 +117,10 @@ class ScKGBERTInterface:
         self._cls_embedding = rng.normal(0.0, 0.02, self.d_model)
 
     def gaussian_attention(
-        self, queries: np.ndarray, keys: np.ndarray, values: np.ndarray,
+        self,
+        queries: np.ndarray,
+        keys: np.ndarray,
+        values: np.ndarray,
     ) -> np.ndarray:
         """Gaussian attention mechanism. Li et al. (2025).
 
@@ -123,12 +130,12 @@ class ScKGBERTInterface:
         Returns [n, d].
         """
         # Pairwise squared L2 distances: ||q_i - k_j||²
-        q_sq = (queries ** 2).sum(axis=-1, keepdims=True)
-        k_sq = (keys ** 2).sum(axis=-1, keepdims=True)
+        q_sq = (queries**2).sum(axis=-1, keepdims=True)
+        k_sq = (keys**2).sum(axis=-1, keepdims=True)
         dist_sq = q_sq + k_sq.T - 2.0 * queries @ keys.T
         dist_sq = np.maximum(dist_sq, 0.0)
         # Gaussian kernel
-        log_weights = -dist_sq / (2.0 * self.sigma ** 2)
+        log_weights = -dist_sq / (2.0 * self.sigma**2)
         log_weights -= log_weights.max(axis=-1, keepdims=True)
         weights = np.exp(log_weights)
         weights /= weights.sum(axis=-1, keepdims=True) + 1e-30
@@ -191,7 +198,10 @@ class ScKGBERTInterface:
         return (s_emb + k_emb) / 2.0
 
     def predict_cell_type(
-        self, expression: np.ndarray, prototypes: np.ndarray, labels: list[str],
+        self,
+        expression: np.ndarray,
+        prototypes: np.ndarray,
+        labels: list[str],
     ) -> str:
         """Predict cell type via nearest prototype.
 
@@ -218,7 +228,7 @@ class ScKGBERTInterface:
         k = tokens @ self._w_k
         # Gaussian attention weights
         dist_sq = ((q[:, np.newaxis, :] - k[np.newaxis, :, :]) ** 2).sum(axis=-1)
-        log_w = -dist_sq / (2.0 * self.sigma ** 2)
+        log_w = -dist_sq / (2.0 * self.sigma**2)
         log_w -= log_w.max(axis=-1, keepdims=True)
         weights = np.exp(log_w)
         weights /= weights.sum(axis=-1, keepdims=True) + 1e-30
@@ -232,6 +242,7 @@ class ScKGBERTInterface:
 # ---------------------------------------------------------------------------
 # Geneformer — Theodoris et al. (2023), Nature 619
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class GeneformerInterface:
@@ -255,7 +266,9 @@ class GeneformerInterface:
     def __post_init__(self) -> None:
         rng = np.random.default_rng(self.seed)
         self._gene_embeddings = rng.normal(
-            0.0, 0.02, (self.n_genes, self.d_model),
+            0.0,
+            0.02,
+            (self.n_genes, self.d_model),
         )
         # Multi-head self-attention weights
         self._w_q = rng.normal(0.0, 0.02, (self.d_model, self.d_model))
@@ -264,7 +277,9 @@ class GeneformerInterface:
         self._w_o = rng.normal(0.0, 0.02, (self.d_model, self.d_model))
         # MLM prediction head: project back to gene vocabulary
         self._mlm_head = rng.normal(
-            0.0, 0.02, (self.n_genes, self.d_model),
+            0.0,
+            0.02,
+            (self.n_genes, self.d_model),
         )
 
     def tokenise(
@@ -281,7 +296,9 @@ class GeneformerInterface:
         return ranked[ranked < self.n_genes]
 
     def mask_tokens(
-        self, token_ids: np.ndarray, rng_seed: int | None = None,
+        self,
+        token_ids: np.ndarray,
+        rng_seed: int | None = None,
     ) -> tuple[np.ndarray, np.ndarray]:
         """Randomly mask tokens for MLM pretraining.
 
@@ -349,7 +366,11 @@ class GeneformerInterface:
         """
         token_ids = self.tokenise(expression, global_medians)
         if len(token_ids) < 2:
-            return np.array([], dtype=bool), np.array([], dtype=np.int64), np.array([], dtype=np.int64)
+            return (
+                np.array([], dtype=bool),
+                np.array([], dtype=np.int64),
+                np.array([], dtype=np.int64),
+            )
         masked_ids, mask = self.mask_tokens(token_ids, rng_seed)
         # Build embeddings, replacing masked positions with zero
         tokens = np.zeros((len(masked_ids), self.d_model))

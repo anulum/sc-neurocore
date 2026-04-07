@@ -65,16 +65,24 @@ class ShortTermPlasticitySynapse:
     def new_depressing(cls) -> ShortTermPlasticitySynapse:
         """Create a depressing synapse (cortical pyr-pyr)."""
         return cls(
-            x=1.0, u=0.5, u_base=0.5,
-            tau_d=200.0, tau_f=20.0, amplitude=1.0,
+            x=1.0,
+            u=0.5,
+            u_base=0.5,
+            tau_d=200.0,
+            tau_f=20.0,
+            amplitude=1.0,
         )
 
     @classmethod
     def new_facilitating(cls) -> ShortTermPlasticitySynapse:
         """Create a facilitating synapse (cortical pyr-interneuron)."""
         return cls(
-            x=1.0, u=0.1, u_base=0.1,
-            tau_d=50.0, tau_f=500.0, amplitude=1.0,
+            x=1.0,
+            u=0.1,
+            u_base=0.1,
+            tau_d=50.0,
+            tau_f=500.0,
+            amplitude=1.0,
         )
 
     def step(self, pre_spike: bool) -> float:

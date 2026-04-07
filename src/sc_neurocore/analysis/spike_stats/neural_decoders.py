@@ -28,8 +28,10 @@ import numpy as np
 # Shared utilities
 # ---------------------------------------------------------------------------
 
+
 def tokenise_spikes(
-    spike_trains: list[np.ndarray], dt: float = 1.0,
+    spike_trains: list[np.ndarray],
+    dt: float = 1.0,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Convert binary spike trains to sorted (unit_id, timestamp) tokens.
 
@@ -59,7 +61,8 @@ def tokenise_spikes(
 
 
 def sinusoidal_position_encode(
-    timestamps: np.ndarray, d_model: int,
+    timestamps: np.ndarray,
+    d_model: int,
 ) -> np.ndarray:
     """Sinusoidal position encoding. Vaswani et al. (2017).
 
@@ -78,7 +81,9 @@ def sinusoidal_position_encode(
 
 
 def scaled_dot_product_attention(
-    queries: np.ndarray, keys: np.ndarray, values: np.ndarray,
+    queries: np.ndarray,
+    keys: np.ndarray,
+    values: np.ndarray,
 ) -> np.ndarray:
     """Scaled dot-product attention.
 
@@ -95,6 +100,7 @@ def scaled_dot_product_attention(
 # ---------------------------------------------------------------------------
 # POYO+ — Azabou et al. (2023), NeurIPS. arXiv:2310.16046
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class POYODecoder:
@@ -125,7 +131,9 @@ class POYODecoder:
         return self._unit_embeddings[unit_id]
 
     def encode(
-        self, spike_trains: list[np.ndarray], dt: float = 1.0,
+        self,
+        spike_trains: list[np.ndarray],
+        dt: float = 1.0,
     ) -> np.ndarray:
         """Encode population activity to latent representation.
 
@@ -140,7 +148,9 @@ class POYODecoder:
         return scaled_dot_product_attention(self._latent_queries, kv, kv)
 
     def decode(
-        self, latents: np.ndarray, output_queries: np.ndarray,
+        self,
+        latents: np.ndarray,
+        output_queries: np.ndarray,
     ) -> np.ndarray:
         """Cross-attention decode from latents.
 
@@ -159,6 +169,7 @@ class POYODecoder:
 # ---------------------------------------------------------------------------
 # POSSM — Ryoo et al. (2025), ICLR. arXiv:2506.05320
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class POSSMDecoder:
@@ -191,12 +202,8 @@ class POSSMDecoder:
         real_part = -0.5 * np.ones(self.d_state)
         imag_part = np.pi * np.arange(self.d_state, dtype=np.float64)
         self._A = real_part + 1j * imag_part
-        self._B = rng.normal(0.0, 0.02, (self.d_state, self.d_model)).astype(
-            np.complex128
-        )
-        self._C = rng.normal(0.0, 0.02, (self.d_model, self.d_state)).astype(
-            np.complex128
-        )
+        self._B = rng.normal(0.0, 0.02, (self.d_state, self.d_model)).astype(np.complex128)
+        self._C = rng.normal(0.0, 0.02, (self.d_model, self.d_state)).astype(np.complex128)
         self._D = rng.normal(0.0, 0.02, (self.d_model, self.d_model))
         self._h = np.zeros(self.d_state, dtype=np.complex128)
 
@@ -222,7 +229,9 @@ class POSSMDecoder:
         return np.real(self._C @ self._h) + self._D @ x
 
     def encode_causal(
-        self, spike_trains: list[np.ndarray], dt: float = 1.0,
+        self,
+        spike_trains: list[np.ndarray],
+        dt: float = 1.0,
     ) -> np.ndarray:
         """Causal online encoding of spike trains.
 
@@ -255,6 +264,7 @@ class POSSMDecoder:
 # NDT3 — Ye & Pandarinath (2025). bioRxiv:2025.02.02.634313
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class NDT3Decoder:
     """Autoregressive neural data transformer for motor decoding.
@@ -279,7 +289,9 @@ class NDT3Decoder:
         self._output_b = np.zeros(self.d_model)
 
     def bin_and_embed(
-        self, spike_trains: list[np.ndarray], dt: float = 1.0,
+        self,
+        spike_trains: list[np.ndarray],
+        dt: float = 1.0,
     ) -> tuple[np.ndarray, np.ndarray]:
         """Bin spike trains and project to embeddings.
 
@@ -303,12 +315,15 @@ class NDT3Decoder:
         if self._embed_w is None or self._embed_w.shape[1] != n_neurons:
             rng = np.random.default_rng(self.seed)
             self._embed_w = rng.normal(
-                0.0, 1.0 / np.sqrt(n_neurons), (self.d_model, n_neurons),
+                0.0,
+                1.0 / np.sqrt(n_neurons),
+                (self.d_model, n_neurons),
             )
             self._embed_b = np.zeros(self.d_model)
         embedded = binned @ self._embed_w.T + self._embed_b
         pe = sinusoidal_position_encode(
-            np.arange(n_bins, dtype=np.float64), self.d_model,
+            np.arange(n_bins, dtype=np.float64),
+            self.d_model,
         )
         embedded += pe
         return binned, embedded
@@ -334,7 +349,9 @@ class NDT3Decoder:
         return attended @ self._output_w.T + self._output_b
 
     def decode(
-        self, spike_trains: list[np.ndarray], dt: float = 1.0,
+        self,
+        spike_trains: list[np.ndarray],
+        dt: float = 1.0,
     ) -> np.ndarray:
         """Full decode pipeline: bin → embed → causal attention → output.
 
@@ -347,6 +364,7 @@ class NDT3Decoder:
 # ---------------------------------------------------------------------------
 # CEBRA — Schneider, Lee & Mathis (2023), Nature 604. arXiv:2204.00673
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class CEBRAEncoder:
@@ -410,7 +428,9 @@ class CEBRAEncoder:
         return a_norm @ b_norm.T
 
     def infonce_loss(
-        self, anchors: np.ndarray, positives: np.ndarray,
+        self,
+        anchors: np.ndarray,
+        positives: np.ndarray,
     ) -> float:
         """InfoNCE contrastive loss. van den Oord et al. (2018).
 
@@ -462,10 +482,20 @@ class CEBRAEncoder:
         loss = -np.mean(np.log(pos_sim / row_sums + 1e-30))
 
         cache = {
-            "anchors": anchors, "positives": positives,
-            "h1_pre": h1_pre, "h1": h1, "z1_pre": z1_pre, "n1": n1, "z_a": z_a,
-            "h2_pre": h2_pre, "h2": h2, "z2_pre": z2_pre, "n2": n2, "z_p": z_p,
-            "exp_sim": exp_sim, "row_sums": row_sums,
+            "anchors": anchors,
+            "positives": positives,
+            "h1_pre": h1_pre,
+            "h1": h1,
+            "z1_pre": z1_pre,
+            "n1": n1,
+            "z_a": z_a,
+            "h2_pre": h2_pre,
+            "h2": h2,
+            "z2_pre": z2_pre,
+            "n2": n2,
+            "z_p": z_p,
+            "exp_sim": exp_sim,
+            "row_sums": row_sums,
         }
         return float(loss), cache
 

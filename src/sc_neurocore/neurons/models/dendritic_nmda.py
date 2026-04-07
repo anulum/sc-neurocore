@@ -86,15 +86,12 @@ class DendriticNMDANeuron:
         i_nmda = self.g_nmda * glutamate * b * (self.v_dend - self.e_nmda)
 
         dv_dend = (
-            -self.v_dend - 65.0 + i_nmda
-            + self.g_coupling * (self.v_soma - self.v_dend)
+            -self.v_dend - 65.0 + i_nmda + self.g_coupling * (self.v_soma - self.v_dend)
         ) / self.tau_dend
         self.v_dend += dv_dend * self.dt
 
         i_dend_to_soma = self.g_coupling * (self.v_dend - self.v_soma)
-        dv_soma = (
-            -self.v_soma - 65.0 + i_soma + i_dend_to_soma
-        ) / self.tau_soma
+        dv_soma = (-self.v_soma - 65.0 + i_soma + i_dend_to_soma) / self.tau_soma
         self.v_soma += dv_soma * self.dt
 
         if self.v_soma >= self.theta:

@@ -71,7 +71,10 @@ class MulticompartmentMCNNeuron:
         return 1.0 / (1.0 + math.exp(-self.beta * x))
 
     def step_compartments(
-        self, x_basal: float, x_apical: float, i_soma: float,
+        self,
+        x_basal: float,
+        x_apical: float,
+        i_soma: float,
     ) -> int:
         """Step with basal input, apical input, and direct somatic input.
 
@@ -87,9 +90,7 @@ class MulticompartmentMCNNeuron:
 
         # Soma: tau * dU/dt = -U + sigma(V_a) * [g_ratio * (V_b - U) + I].
         gate = self._sigma(self.v_apical)
-        du = (
-            -self.u + gate * (self.g_ratio * (self.v_basal - self.u) + i_soma)
-        ) / self.tau
+        du = (-self.u + gate * (self.g_ratio * (self.v_basal - self.u) + i_soma)) / self.tau
         self.u += du * self.dt
 
         # Spike: S = Theta(U - V_th), reset: U <- U * (1 - S).
