@@ -327,17 +327,24 @@ class WaveformCodec:
             return b""
 
         import pywt
+
+        # Spatial decorrelation: subtract adjacent channel (exploits LFP
+        # volume conduction correlation on Neuropixels/Utah arrays)
+        if background.shape[1] > 1:
+            spatial_ref = np.empty_like(background)
+            spatial_ref[:, 0] = background[:, 0]
+            spatial_ref[:, 1:] = background[:, 1:] - background[:, :-1]
+            background = spatial_ref
+
         original_len = background.shape[0]
         coeffs = pywt.wavedec(background, "db4", axis=0)
-        # Discard high-frequency coefficients below threshold
         # Calibrated: threshold=3.0 gives SNR ≥24 dB, energy retained ≥99.7%
         threshold = 3.0
         for i in range(1, len(coeffs)):
             coeffs[i] = pywt.threshold(coeffs[i], threshold, mode="hard")
         background = pywt.waverec(coeffs, "db4", axis=0)[:original_len]
-        # Ensure shape matches original (waverec can sometimes add 1 sample)
-        
-        # Delta encoding (temporal differences)
+
+        # Temporal delta encoding
         delta = np.diff(background, axis=0, prepend=background[:1])
 
         # Quantize to quantize_bits
