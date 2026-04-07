@@ -79,6 +79,7 @@ ue = "ue"
 ba = "ba"
 Lond = "Lond"
 californica = "californica"
+Rin = "Rin"
 
 [default.extend-identifiers]
 lins = "lins"
