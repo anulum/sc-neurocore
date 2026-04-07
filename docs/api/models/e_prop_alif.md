@@ -408,3 +408,243 @@ See `tests/test_model_e_prop_alif.py`.
 10. **E-prop approximates BPTT:** The eligibility trace mechanism
     provides an online, biologically plausible alternative to
     backpropagation through time for recurrent SNN training.
+
+---
+
+## Theoretical Context
+
+### The learning problem in recurrent SNNs
+
+Training recurrent spiking neural networks is difficult because spikes
+are binary, non-differentiable events. Backpropagation through time
+(BPTT) applied to SNNs requires unrolling the entire temporal dynamics
+and back-propagating gradients through every timestep — this is
+computationally expensive, memory-intensive, and biologically
+implausible.
+
+Bellec et al. (2020) introduced **e-prop** (eligibility propagation)
+as a solution: an online learning rule that combines local eligibility
+traces with a global learning signal, approximating BPTT without
+requiring backward passes through time.
+
+### Why ALIF for e-prop
+
+The adaptive leaky integrate-and-fire (ALIF) neuron is central to
+e-prop because:
+
+1. **Adaptive threshold provides slow memory:** The adaptation variable
+   `a` decays with τ_a = 200 ms (10× slower than the membrane τ_m =
+   20 ms). This creates a slowly varying state that carries temporal
+   information forward — critical for tasks requiring memory over
+   hundreds of milliseconds.
+
+2. **Eligibility trace tracks credit assignment:** The pseudo-derivative
+   ψ measures how close the neuron is to threshold. Filtering ψ through
+   the adaptation time constant produces an eligibility trace that
+   records which synapses contributed to recent spikes. When a global
+   learning signal (reward, error) arrives, synapses with high
+   eligibility are updated — a form of three-factor plasticity.
+
+3. **Bellec et al. demonstrated:** ALIF networks trained with e-prop
+   match LSTM performance on TIMIT speech recognition (phoneme error
+   rate), delayed match-to-sample, and evidence accumulation tasks —
+   all without BPTT.
+
+### Three types of e-prop
+
+The neuron model in SC-NeuroCore computes the eligibility trace but does
+not apply weight updates (these are handled by the learning module). The
+three e-prop variants differ only in the learning signal:
+
+| Type | Learning signal | Application |
+|------|----------------|-------------|
+| e-prop symmetric | Random feedback (broadcast) | Unsupervised |
+| e-prop random | Random B matrix | Supervised |
+| e-prop adaptive | BPTT-derived feedback | Highest accuracy |
+
+All three use the same ALIF neuron with the same eligibility trace
+computation. The difference is external to the neuron.
+
+### Relation to other SC-NeuroCore models
+
+| Model | Relation to EPropALIF |
+|-------|----------------------|
+| LIF (Lapicque) | EPropALIF without adaptation (beta=0, no e_trace) |
+| AdEx | Similar adaptation but with exponential spike initiation |
+| SFA (Spike Frequency Adaptation) | Simpler adaptation (no eligibility trace) |
+| SRM0 | Kernel-based adaptation (different formalism, same effect) |
+| SuperSpike | Different surrogate gradient (sigmoid, not triangular) |
+
+---
+
+## Usage Examples
+
+### Example 1: Basic Python — ALIF with constant current
+
+```python
+from sc_neurocore.neurons.models.e_prop_alif import EPropALIFNeuron
+
+neuron = EPropALIFNeuron()
+
+# Simulate 1000 ms at I = 0.5
+spike_times = []
+for t in range(1000):
+    spike = neuron.step(0.5)
+    if spike:
+        spike_times.append(t)
+
+print(f"Fired {len(spike_times)} spikes in 1000 ms")
+# ISI should lengthen due to adaptation
+if len(spike_times) > 2:
+    isis = [b - a for a, b in zip(spike_times, spike_times[1:])]
+    print(f"First ISI: {isis[0]} ms, Last ISI: {isis[-1]} ms")
+```
+
+### Example 2: Advanced Python — eligibility trace dynamics
+
+```python
+from sc_neurocore.neurons.models.e_prop_alif import EPropALIFNeuron
+import numpy as np
+
+neuron = EPropALIFNeuron(tau_a=100.0, beta=0.1)
+
+# Track eligibility trace over time
+e_traces, voltages, thresholds = [], [], []
+for t in range(500):
+    current = 0.3 if t < 200 else 0.0
+    neuron.step(current)
+    e_traces.append(neuron.e_trace)
+    voltages.append(neuron.v)
+    thresholds.append(neuron.v_threshold_base + neuron.beta * neuron.a)
+
+# e_trace peaks near spikes (where ψ is large)
+# and decays with τ_a when neuron is far from threshold
+peak_idx = np.argmax(e_traces)
+print(f"Peak e_trace = {e_traces[peak_idx]:.4f} at t = {peak_idx} ms")
+print(f"Final e_trace = {e_traces[-1]:.6f} (decayed)")
+```
+
+### Example 3: PyO3 Rust — high-performance stepping
+
+```rust
+use sc_neurocore_engine::neurons::EPropALIFNeuron;
+
+let mut neuron = EPropALIFNeuron::new(20.0, 200.0, 1.0);
+
+// 10,000 steps at I = 0.5
+let mut spikes = 0;
+for _ in 0..10_000 {
+    spikes += neuron.step(0.5);
+}
+println!("ALIF: {spikes} spikes in 10 s, a = {:.4}", neuron.a);
+
+// Access eligibility trace
+println!("e_trace = {:.6}", neuron.e_trace);
+
+// Reset
+neuron.reset();
+assert!((neuron.v).abs() < 1e-12);
+assert!((neuron.a).abs() < 1e-12);
+```
+
+---
+
+## Technical Reference
+
+### Methods
+
+| Method | Signature | Returns | Description |
+|--------|-----------|---------|-------------|
+| `step` | `step(current: float) → int` | 0 or 1 | Advance 1 ms, return spike |
+| `reset` | `reset() → None` | — | Restore v, a, e_trace to 0 |
+
+### Python/Rust Parity
+
+| Property | Python | Rust | Match |
+|----------|--------|------|-------|
+| Membrane decay | `alpha_m * v + I` | `alpha_m * v + I` | EXACT |
+| Adaptive threshold | `θ_base + β·a` | `θ_base + β·a` | EXACT |
+| Pseudo-derivative | `max(0, 1-|v-θ|)·0.3` | `((1-(v-θ).abs())·0.3).max(0)` | EXACT |
+| Eligibility trace | `α_a·e + ψ` | `α_a·e + ψ` | EXACT |
+| Spike condition | `v ≥ threshold` | `v ≥ threshold` | EXACT |
+| Reset (spike) | `v=0, a=α_a·a+1` | `v=0, a=α_a·a+1` | EXACT |
+| Reset (no spike) | `a *= α_a` | `a *= α_a` | EXACT |
+| Parameters | tau_m=20, tau_a=200, β=0.07 | tau_m=20, tau_a=200, β=0.07 | EXACT |
+
+### Supported operations
+
+| Operation | Supported | Notes |
+|-----------|-----------|-------|
+| Population | Yes | Standard interface |
+| Projection | Yes | Standard wiring |
+| NetworkRunner | Yes | `EPropALIF` variant |
+| SpikeMonitor | Yes | Binary spike output |
+| PoissonInput | Yes | Tested |
+| PyO3 bridge | Yes | `PyEPropALIFNeuron` with v, a, e_trace accessors |
+| Model Zoo | No | Not in pre-built configs |
+
+---
+
+## Performance Benchmarks
+
+### Criterion 0.8 (Rust engine)
+
+Measured on i5-11600K @ 3.90 GHz, single-threaded, 2026-04-05.
+
+| Benchmark | Steps | Median | Per step |
+|-----------|------:|-------:|---------:|
+| `eprop_alif_10k_steps` | 10 000 | 22.6 µs | **2.3 ns** |
+
+This makes EPropALIF one of the **fastest** models in SC-NeuroCore —
+no exp() calls in step() (precomputed alphas), no sub-stepping, minimal
+arithmetic (3 multiplies, 2 additions, 1 comparison, 1 abs).
+
+### Python throughput
+
+| Metric | Value |
+|--------|------:|
+| Isolation | ~500 000 steps/s |
+| Network (10 neurons, 1 s) | ~40 000 neuron-steps/s |
+
+### Rust speedup
+
+| Metric | Python | Rust | Speedup |
+|--------|-------:|-----:|--------:|
+| Per step | ~2 µs | 2.3 ns | **~870×** |
+
+---
+
+## Citations
+
+1. Bellec, G., Scherr, F., Subramoney, A., Hajek, E., Salaj, D.,
+   Legenstein, R. & Maass, W. (2020). A solution to the learning
+   dilemma for recurrent networks of spiking neurons. *Nature
+   Communications*, 11(1), 3625.
+   DOI: [10.1038/s41467-020-17236-y](https://doi.org/10.1038/s41467-020-17236-y)
+
+2. Bellec, G., Salaj, D., Subramoney, A., Legenstein, R. & Maass, W.
+   (2018). Long short-term memory and learning-to-learn in networks of
+   spiking neurons. *Advances in Neural Information Processing Systems*
+   (NeurIPS), 31, 787–797.
+   arXiv: [1803.09574](https://arxiv.org/abs/1803.09574)
+
+3. Zenke, F. & Ganguli, S. (2018). SuperSpike: Supervised learning in
+   multilayer spiking neural networks. *Neural Computation*, 30(6),
+   1514–1541.
+   DOI: [10.1162/neco_a_01086](https://doi.org/10.1162/neco_a_01086)
+
+4. Neftci, E. O., Mostafa, H. & Zenke, F. (2019). Surrogate gradient
+   learning in spiking neural networks. *IEEE Signal Processing
+   Magazine*, 36(6), 51–63.
+   DOI: [10.1109/MSP.2019.2931595](https://doi.org/10.1109/MSP.2019.2931595)
+
+5. Gerstner, W., Kistler, W. M., Naud, R. & Paninski, L. (2014).
+   *Neuronal Dynamics: From Single Neurons to Networks and Models of
+   Cognition*. Cambridge University Press, Ch. 9 (Adaptation and firing
+   patterns).
+   DOI: [10.1017/CBO9781107447615](https://doi.org/10.1017/CBO9781107447615)
+
+6. Brea, J., Senn, W. & Pfister, J.-P. (2013). Matching recall and
+   storage in sequence learning with spiking neural networks. *Journal
+   of Neuroscience*, 33(23), 9565–9575.
+   DOI: [10.1523/JNEUROSCI.4098-12.2013](https://doi.org/10.1523/JNEUROSCI.4098-12.2013)

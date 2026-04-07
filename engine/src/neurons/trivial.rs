@@ -1023,22 +1023,30 @@ mod tests {
     #[test]
     fn qif_reset_clears_state() {
         let mut n = QuadraticIFNeuron::default();
-        for _ in 0..100 { n.step(0.5); }
+        for _ in 0..100 {
+            n.step(0.5);
+        }
         n.reset();
         assert!((n.v - n.v_reset).abs() < 1e-10);
     }
     #[test]
     fn qif_bounded() {
         let mut n = QuadraticIFNeuron::default();
-        for _ in 0..1000 { n.step(10.0); }
+        for _ in 0..1000 {
+            n.step(10.0);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
-    fn qif_nan_no_panic() { QuadraticIFNeuron::default().step(f64::NAN); }
+    fn qif_nan_no_panic() {
+        QuadraticIFNeuron::default().step(f64::NAN);
+    }
     #[test]
     fn qif_negative_no_crash() {
         let mut n = QuadraticIFNeuron::default();
-        for _ in 0..500 { n.step(-5.0); }
+        for _ in 0..500 {
+            n.step(-5.0);
+        }
         assert!(n.v.is_finite());
     }
 
@@ -1052,18 +1060,24 @@ mod tests {
     #[test]
     fn theta_reset_clears_state() {
         let mut n = ThetaNeuron::default();
-        for _ in 0..100 { n.step(0.5); }
+        for _ in 0..100 {
+            n.step(0.5);
+        }
         n.reset();
         assert!((n.theta - 0.0).abs() < 1e-10);
     }
     #[test]
     fn theta_bounded() {
         let mut n = ThetaNeuron::default();
-        for _ in 0..1000 { n.step(10.0); }
+        for _ in 0..1000 {
+            n.step(10.0);
+        }
         assert!(n.theta.is_finite());
     }
     #[test]
-    fn theta_nan_no_panic() { ThetaNeuron::default().step(f64::NAN); }
+    fn theta_nan_no_panic() {
+        ThetaNeuron::default().step(f64::NAN);
+    }
 
     // -- PerfectIntegrator --
     #[test]
@@ -1075,18 +1089,24 @@ mod tests {
     #[test]
     fn pi_reset_clears_state() {
         let mut n = PerfectIntegratorNeuron::default();
-        for _ in 0..50 { n.step(0.5); }
+        for _ in 0..50 {
+            n.step(0.5);
+        }
         n.reset();
         assert!((n.v - n.v_reset).abs() < 1e-10);
     }
     #[test]
     fn pi_bounded() {
         let mut n = PerfectIntegratorNeuron::default();
-        for _ in 0..1000 { n.step(100.0); }
+        for _ in 0..1000 {
+            n.step(100.0);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
-    fn pi_nan_no_panic() { PerfectIntegratorNeuron::default().step(f64::NAN); }
+    fn pi_nan_no_panic() {
+        PerfectIntegratorNeuron::default().step(f64::NAN);
+    }
 
     // -- GatedLIF --
     #[test]
@@ -1098,18 +1118,24 @@ mod tests {
     #[test]
     fn gated_lif_reset_clears_state() {
         let mut n = GatedLIFNeuron::default();
-        for _ in 0..20 { n.step(0.5); }
+        for _ in 0..20 {
+            n.step(0.5);
+        }
         n.reset();
         assert!((n.v - 0.0).abs() < 1e-10);
     }
     #[test]
     fn gated_lif_bounded() {
         let mut n = GatedLIFNeuron::default();
-        for _ in 0..1000 { n.step(100.0); }
+        for _ in 0..1000 {
+            n.step(100.0);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
-    fn gated_lif_nan_no_panic() { GatedLIFNeuron::default().step(f64::NAN); }
+    fn gated_lif_nan_no_panic() {
+        GatedLIFNeuron::default().step(f64::NAN);
+    }
 
     // -- NonlinearLIF --
     #[test]
@@ -1121,23 +1147,34 @@ mod tests {
     #[test]
     fn nlif_reset_clears_state() {
         let mut n = NonlinearLIFNeuron::new();
-        for _ in 0..100 { n.step(500.0); }
+        for _ in 0..100 {
+            n.step(500.0);
+        }
         n.reset();
         assert!((n.v - n.v_rest).abs() < 1e-10);
     }
     #[test]
     fn nlif_bounded() {
         let mut n = NonlinearLIFNeuron::new();
-        for _ in 0..2000 { n.step(1e4); }
+        for _ in 0..2000 {
+            n.step(1e4);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
-    fn nlif_nan_no_panic() { NonlinearLIFNeuron::new().step(f64::NAN); }
+    fn nlif_nan_no_panic() {
+        NonlinearLIFNeuron::new().step(f64::NAN);
+    }
     #[test]
     fn nlif_recovery_evolves() {
         let mut n = NonlinearLIFNeuron::new();
-        for _ in 0..2000 { n.step(500.0); }
-        assert!(n.w > 0.0, "recovery variable w should increase during spiking");
+        for _ in 0..2000 {
+            n.step(500.0);
+        }
+        assert!(
+            n.w > 0.0,
+            "recovery variable w should increase during spiking"
+        );
     }
 
     // -- SFA --
@@ -1150,7 +1187,9 @@ mod tests {
     #[test]
     fn sfa_reset_clears_state() {
         let mut n = SFANeuron::new();
-        for _ in 0..100 { n.step(30.0); }
+        for _ in 0..100 {
+            n.step(30.0);
+        }
         n.reset();
         assert!((n.v - n.v_rest).abs() < 1e-10);
         assert!((n.g_sfa - 0.0).abs() < 1e-10);
@@ -1158,11 +1197,15 @@ mod tests {
     #[test]
     fn sfa_bounded() {
         let mut n = SFANeuron::new();
-        for _ in 0..1000 { n.step(1e4); }
+        for _ in 0..1000 {
+            n.step(1e4);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
-    fn sfa_nan_no_panic() { SFANeuron::new().step(f64::NAN); }
+    fn sfa_nan_no_panic() {
+        SFANeuron::new().step(f64::NAN);
+    }
 
     // -- MAT --
     #[test]
@@ -1174,7 +1217,9 @@ mod tests {
     #[test]
     fn mat_reset_clears_state() {
         let mut n = MATNeuron::new();
-        for _ in 0..100 { n.step(30.0); }
+        for _ in 0..100 {
+            n.step(30.0);
+        }
         n.reset();
         assert!((n.v - n.v_rest).abs() < 1e-10);
         assert!((n.theta1 - 0.0).abs() < 1e-10);
@@ -1183,28 +1228,38 @@ mod tests {
     #[test]
     fn mat_bounded() {
         let mut n = MATNeuron::new();
-        for _ in 0..1000 { n.step(1e4); }
+        for _ in 0..1000 {
+            n.step(1e4);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
-    fn mat_nan_no_panic() { MATNeuron::new().step(f64::NAN); }
+    fn mat_nan_no_panic() {
+        MATNeuron::new().step(f64::NAN);
+    }
 
     // -- EscapeRate --
     #[test]
     fn escape_rate_reset_clears_state() {
         let mut n = EscapeRateNeuron::new(42);
-        for _ in 0..100 { n.step(30.0); }
+        for _ in 0..100 {
+            n.step(30.0);
+        }
         n.reset();
         assert!((n.v - n.v_rest).abs() < 1e-10);
     }
     #[test]
     fn escape_rate_bounded() {
         let mut n = EscapeRateNeuron::new(42);
-        for _ in 0..1000 { n.step(1e4); }
+        for _ in 0..1000 {
+            n.step(1e4);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
-    fn escape_rate_nan_no_panic() { EscapeRateNeuron::new(42).step(f64::NAN); }
+    fn escape_rate_nan_no_panic() {
+        EscapeRateNeuron::new(42).step(f64::NAN);
+    }
     #[test]
     fn escape_rate_seed_varies() {
         let mut n1 = EscapeRateNeuron::new(1);
@@ -1224,18 +1279,24 @@ mod tests {
     #[test]
     fn klif_reset_clears_state() {
         let mut n = KLIFNeuron::default();
-        for _ in 0..20 { n.step(0.5); }
+        for _ in 0..20 {
+            n.step(0.5);
+        }
         n.reset();
         assert!((n.v - 0.0).abs() < 1e-10);
     }
     #[test]
     fn klif_bounded() {
         let mut n = KLIFNeuron::default();
-        for _ in 0..1000 { n.step(100.0); }
+        for _ in 0..1000 {
+            n.step(100.0);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
-    fn klif_nan_no_panic() { KLIFNeuron::default().step(f64::NAN); }
+    fn klif_nan_no_panic() {
+        KLIFNeuron::default().step(f64::NAN);
+    }
 
     // -- InhibitoryLIF --
     #[test]
@@ -1247,7 +1308,9 @@ mod tests {
     #[test]
     fn ilif_reset_clears_state() {
         let mut n = InhibitoryLIFNeuron::default();
-        for _ in 0..50 { n.step(0.8); }
+        for _ in 0..50 {
+            n.step(0.8);
+        }
         n.reset();
         assert!((n.v - 0.0).abs() < 1e-10);
         assert!((n.inh_trace - 0.0).abs() < 1e-10);
@@ -1255,11 +1318,15 @@ mod tests {
     #[test]
     fn ilif_bounded() {
         let mut n = InhibitoryLIFNeuron::default();
-        for _ in 0..1000 { n.step(100.0); }
+        for _ in 0..1000 {
+            n.step(100.0);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
-    fn ilif_nan_no_panic() { InhibitoryLIFNeuron::default().step(f64::NAN); }
+    fn ilif_nan_no_panic() {
+        InhibitoryLIFNeuron::default().step(f64::NAN);
+    }
 
     // -- ComplementaryLIF --
     #[test]
@@ -1271,7 +1338,9 @@ mod tests {
     #[test]
     fn clif_reset_clears_state() {
         let mut n = ComplementaryLIFNeuron::default();
-        for _ in 0..20 { n.step(0.5); }
+        for _ in 0..20 {
+            n.step(0.5);
+        }
         n.reset();
         assert!((n.v_pos - 0.0).abs() < 1e-10);
         assert!((n.v_neg - 0.0).abs() < 1e-10);
@@ -1279,11 +1348,15 @@ mod tests {
     #[test]
     fn clif_bounded() {
         let mut n = ComplementaryLIFNeuron::default();
-        for _ in 0..1000 { n.step(100.0); }
+        for _ in 0..1000 {
+            n.step(100.0);
+        }
         assert!(n.v_pos.is_finite());
     }
     #[test]
-    fn clif_nan_no_panic() { ComplementaryLIFNeuron::default().step(f64::NAN); }
+    fn clif_nan_no_panic() {
+        ComplementaryLIFNeuron::default().step(f64::NAN);
+    }
 
     // -- ParametricLIF --
     #[test]
@@ -1295,24 +1368,32 @@ mod tests {
     #[test]
     fn plif_reset_clears_state() {
         let mut n = ParametricLIFNeuron::default();
-        for _ in 0..20 { n.step(1.5); }
+        for _ in 0..20 {
+            n.step(1.5);
+        }
         n.reset();
         assert!((n.v - 0.0).abs() < 1e-10);
     }
     #[test]
     fn plif_bounded() {
         let mut n = ParametricLIFNeuron::default();
-        for _ in 0..1000 { n.step(100.0); }
+        for _ in 0..1000 {
+            n.step(100.0);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
-    fn plif_nan_no_panic() { ParametricLIFNeuron::default().step(f64::NAN); }
+    fn plif_nan_no_panic() {
+        ParametricLIFNeuron::default().step(f64::NAN);
+    }
 
     // -- NonResettingLIF --
     #[test]
     fn nrlif_reset_clears_state() {
         let mut n = NonResettingLIFNeuron::new();
-        for _ in 0..500 { n.step(30.0); }
+        for _ in 0..500 {
+            n.step(30.0);
+        }
         n.reset();
         assert!((n.v - n.v_rest).abs() < 1e-10);
         assert!((n.theta - n.theta_rest).abs() < 1e-10);
@@ -1320,15 +1401,21 @@ mod tests {
     #[test]
     fn nrlif_bounded() {
         let mut n = NonResettingLIFNeuron::new();
-        for _ in 0..5000 { n.step(1e4); }
+        for _ in 0..5000 {
+            n.step(1e4);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
-    fn nrlif_nan_no_panic() { NonResettingLIFNeuron::new().step(f64::NAN); }
+    fn nrlif_nan_no_panic() {
+        NonResettingLIFNeuron::new().step(f64::NAN);
+    }
     #[test]
     fn nrlif_negative_no_crash() {
         let mut n = NonResettingLIFNeuron::new();
-        for _ in 0..500 { n.step(-10.0); }
+        for _ in 0..500 {
+            n.step(-10.0);
+        }
         assert!(n.v.is_finite());
     }
 
@@ -1342,23 +1429,31 @@ mod tests {
     #[test]
     fn atif_reset_clears_state() {
         let mut n = AdaptiveThresholdIFNeuron::new();
-        for _ in 0..100 { n.step(30.0); }
+        for _ in 0..100 {
+            n.step(30.0);
+        }
         n.reset();
         assert!((n.v - n.v_rest).abs() < 1e-10);
     }
     #[test]
     fn atif_bounded() {
         let mut n = AdaptiveThresholdIFNeuron::new();
-        for _ in 0..1000 { n.step(1e4); }
+        for _ in 0..1000 {
+            n.step(1e4);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
-    fn atif_nan_no_panic() { AdaptiveThresholdIFNeuron::new().step(f64::NAN); }
+    fn atif_nan_no_panic() {
+        AdaptiveThresholdIFNeuron::new().step(f64::NAN);
+    }
     #[test]
     fn atif_threshold_increases_with_spikes() {
         let mut n = AdaptiveThresholdIFNeuron::new();
         let theta_init = n.theta;
-        for _ in 0..500 { n.step(30.0); }
+        for _ in 0..500 {
+            n.step(30.0);
+        }
         assert!(n.theta > theta_init, "threshold should adapt after spikes");
     }
 
@@ -1366,18 +1461,24 @@ mod tests {
     #[test]
     fn sd_reset_clears_state() {
         let mut n = SigmaDeltaNeuron::default();
-        for _ in 0..10 { n.step(0.3); }
+        for _ in 0..10 {
+            n.step(0.3);
+        }
         n.reset();
         assert!((n.sigma - 0.0).abs() < 1e-10);
     }
     #[test]
     fn sd_bounded() {
         let mut n = SigmaDeltaNeuron::default();
-        for _ in 0..1000 { n.step(100.0); }
+        for _ in 0..1000 {
+            n.step(100.0);
+        }
         assert!(n.sigma.is_finite());
     }
     #[test]
-    fn sd_nan_no_panic() { SigmaDeltaNeuron::default().step(f64::NAN); }
+    fn sd_nan_no_panic() {
+        SigmaDeltaNeuron::default().step(f64::NAN);
+    }
 
     // -- EnergyLIF --
     #[test]
@@ -1389,23 +1490,31 @@ mod tests {
     #[test]
     fn energy_lif_reset_clears_state() {
         let mut n = EnergyLIFNeuron::new();
-        for _ in 0..100 { n.step(30.0); }
+        for _ in 0..100 {
+            n.step(30.0);
+        }
         n.reset();
         assert!((n.v - n.v_rest).abs() < 1e-10);
     }
     #[test]
     fn energy_lif_bounded() {
         let mut n = EnergyLIFNeuron::new();
-        for _ in 0..1000 { n.step(1e4); }
+        for _ in 0..1000 {
+            n.step(1e4);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
-    fn energy_lif_nan_no_panic() { EnergyLIFNeuron::new().step(f64::NAN); }
+    fn energy_lif_nan_no_panic() {
+        EnergyLIFNeuron::new().step(f64::NAN);
+    }
     #[test]
     fn energy_lif_epsilon_depletes() {
         let mut n = EnergyLIFNeuron::new();
         let e0 = n.epsilon;
-        for _ in 0..200 { n.step(30.0); }
+        for _ in 0..200 {
+            n.step(30.0);
+        }
         assert!(n.epsilon < e0, "energy should deplete during spiking");
     }
 
@@ -1419,38 +1528,53 @@ mod tests {
     #[test]
     fn iqif_reset_clears_state() {
         let mut n = IntegerQIFNeuron::default();
-        for _ in 0..100 { n.step(50); }
+        for _ in 0..100 {
+            n.step(50);
+        }
         n.reset();
         assert_eq!(n.v, 0);
     }
     #[test]
     fn iqif_bounded() {
         let mut n = IntegerQIFNeuron::default();
-        for _ in 0..1000 { n.step(10000); }
+        for _ in 0..1000 {
+            n.step(10000);
+        }
         // Integer — check no overflow panic occurred
     }
     #[test]
     fn iqif_negative_no_crash() {
         let mut n = IntegerQIFNeuron::default();
-        for _ in 0..500 { n.step(-50); }
+        for _ in 0..500 {
+            n.step(-50);
+        }
     }
 
     // -- ClosedFormContinuous --
     #[test]
     fn cfc_reset_clears_state() {
         let mut n = ClosedFormContinuousNeuron::new();
-        for _ in 0..50 { n.step(5.0); }
+        for _ in 0..50 {
+            n.step(5.0);
+        }
         n.reset();
         assert!((n.x - 0.0).abs() < 1e-10);
     }
     #[test]
     fn cfc_bounded() {
-        let mut n = ClosedFormContinuousNeuron { v_threshold: 0.9, ..ClosedFormContinuousNeuron::new() };
-        for _ in 0..1000 { n.step(100.0); }
+        let mut n = ClosedFormContinuousNeuron {
+            v_threshold: 0.9,
+            ..ClosedFormContinuousNeuron::new()
+        };
+        for _ in 0..1000 {
+            n.step(100.0);
+        }
         assert!(n.x.is_finite());
     }
     #[test]
-    fn cfc_nan_no_panic() { ClosedFormContinuousNeuron::new().step(f64::NAN); }
+    fn cfc_nan_no_panic() {
+        ClosedFormContinuousNeuron::new().step(f64::NAN);
+    }
 
     // -- StochasticLIFNeuron tests --
 
@@ -1466,7 +1590,10 @@ mod tests {
         let mut n = StochasticLIFNeuron::new(42);
         // noise_std=0 by default, so zero input => no spikes
         let total: i32 = (0..500).map(|_| n.step(0.0)).sum();
-        assert_eq!(total, 0, "StochasticLIF should be silent at zero input with no noise");
+        assert_eq!(
+            total, 0,
+            "StochasticLIF should be silent at zero input with no noise"
+        );
     }
 
     #[test]
@@ -1476,8 +1603,14 @@ mod tests {
             n.step(2.0);
         }
         n.reset();
-        assert!((n.v - n.v_rest).abs() < 1e-12, "reset must restore v to v_rest");
-        assert_eq!(n.refractory_counter, 0, "reset must clear refractory counter");
+        assert!(
+            (n.v - n.v_rest).abs() < 1e-12,
+            "reset must restore v to v_rest"
+        );
+        assert_eq!(
+            n.refractory_counter, 0,
+            "reset must clear refractory counter"
+        );
     }
 
     #[test]
@@ -1545,9 +1678,11 @@ mod tests {
                 for j in 1..=5 {
                     if i + j < spikes.len() {
                         assert_eq!(
-                            spikes[i + j], 0,
+                            spikes[i + j],
+                            0,
                             "step {} after spike at {} must be silent (refractory)",
-                            j, i
+                            j,
+                            i
                         );
                     }
                 }

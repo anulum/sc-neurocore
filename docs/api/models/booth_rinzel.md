@@ -197,7 +197,7 @@ Ca²⁺ channels builds up intracellular concentration.
 
 All gates (h, n, q) are clipped to [0, 1] after each sub-step. V_s and
 V_d are clipped to [−200, 100]. Ca is clipped to ≥ 0. These clips ensure
-numerical robustness for the stiff 2-compartment system.
+numerical safety for the stiff 2-compartment system.
 
 ---
 
@@ -363,4 +363,206 @@ Rust acceleration would eliminate Python overhead in the inner loop.
    has persistent up/down states at the same input level.
 
 10. **Spinal motoneuron application:** Directly models persistent inward
+    currents (PICs) in spinal motoneurons.
+
+---
+
+## Theoretical Context
+
+### Persistent inward currents (PICs) in motoneurons
+
+Booth, Rinzel & Kiehn (1997) developed this model to explain the
+role of persistent inward currents (PICs) in spinal motoneuron
+bistability. PICs are sustained depolarising currents — primarily
+L-type Ca²⁺ currents in dendrites — that can maintain a neuron
+in a depolarised "up-state" without ongoing synaptic input.
+
+PICs are critical for:
+- **Self-sustained firing:** Motoneurons continue firing after a
+  brief synaptic input, maintaining muscle contraction
+- **Plateau potentials:** Dendritic Ca²⁺ PICs produce sustained
+  depolarisations that outlast the synaptic drive
+- **Gain amplification:** PICs amplify synaptic currents 2–5×
+
+### Two-compartment architecture
+
+The soma-dendrite separation is essential for PIC-mediated bistability:
+- **Soma** ($V_s$): Generates Na⁺/K⁺ action potentials (fast spiking)
+- **Dendrite** ($V_d$): Hosts Ca²⁺ PICs and K(Ca) channels (slow plateau)
+- **Coupling** ($g_c$): Electrotonic coupling between compartments
+
+The fraction $p = 0.5$ represents equal soma/dendrite membrane area.
+The coupling conductance $g_c = 0.1$ mS/cm² is weak — allowing the
+dendrite to maintain a plateau independently of somatic spiking.
+
+### Amyotrophic lateral sclerosis (ALS)
+
+Motoneuron disease (ALS) involves progressive degeneration of
+spinal motoneurons. The Booth-Rinzel model predicts that:
+- Reduced dendritic Ca²⁺ conductance ($g_{Ca}$) → loss of PICs →
+  loss of self-sustained firing → muscle weakness
+- Increased K(Ca) → premature plateau collapse → fatigue
+- The model provides a framework for studying how PIC dysfunction
+  contributes to ALS symptomatology
+
+### Spasticity and PIC dysregulation
+
+After spinal cord injury, motoneurons develop enhanced PICs due to
+loss of descending serotonergic modulation. The Booth-Rinzel model
+predicts that increased $g_{Ca}$ or reduced K(Ca) produces
+persistent plateaus that are difficult to terminate — matching
+the clinical presentation of spasticity (involuntary sustained
+muscle contraction).
+
+---
+
+## Usage Examples
+
+### Example 1: Bistable up/down state transition
+
+```python
+from sc_neurocore.neurons.models.booth_rinzel import BoothRinzelNeuron
+
+neuron = BoothRinzelNeuron()
+
+# Phase 1: silent (down-state)
+for _ in range(10000):
+    neuron.step(0.0)
+v_down = neuron.vs
+
+# Phase 2: trigger up-state with brief input
+for _ in range(5000):
+    neuron.step(10.0)
+
+# Phase 3: remove input — plateau maintained?
+spikes = sum(neuron.step(0.0) for _ in range(20000))
+print(f"Down-state V: {v_down:.1f} mV")
+print(f"Spikes after input removed: {spikes}")
+```
+
+### Example 2: Dendritic Ca²⁺ plateau
+
+```python
+from sc_neurocore.neurons.models.booth_rinzel import BoothRinzelNeuron
+
+neuron = BoothRinzelNeuron()
+for _ in range(50000):
+    neuron.step(5.0)
+
+print(f"Soma V: {neuron.vs:.1f} mV")
+print(f"Dendrite V: {neuron.vd:.1f} mV")
+print(f"Ca²⁺: {neuron.ca:.6f}")
+print(f"V_s ≠ V_d: {abs(neuron.vs - neuron.vd) > 1.0}")
+```
+
+### Example 3: Motoneuron pool with recurrent excitation
+
+```python
+from sc_neurocore.network import Network, Population, Projection
+from sc_neurocore.neurons.models.booth_rinzel import BoothRinzelNeuron
+from sc_neurocore.input import PoissonInput
+from sc_neurocore.monitors import SpikeMonitor
+from sc_neurocore.analysis import spike_count
+
+pool = Population(BoothRinzelNeuron, n=5)
+drive = PoissonInput(rate=200.0, weight=5.0, dt=0.001, seed=42)
+
+net = Network()
+net.add_population("motoneurons", pool)
+net.add_input("descending", drive, target="motoneurons")
+
+mon = SpikeMonitor()
+net.add_monitor("spikes", mon, source="motoneurons")
+
+net.run(duration=2.0)
+print(f"Total spikes: {spike_count(mon)}")
+```
+
+---
+
+## Technical Reference
+
+### Rust parity
+
+| Aspect | Python | Rust | Status |
+|--------|--------|------|--------|
+| State variables | vs, vd, h, n, q, ca | same | **EXACT** |
+| g_k | 20.0 | 20.0 | **EXACT** (fixed from 100.0) |
+| m_inf | −35/7.8 | same | **EXACT** (fixed from −30/9.0) |
+| h_inf | −55/7.0 | same | **EXACT** (fixed from −45/7.0) |
+| n_inf | −28/15 | same | **EXACT** (fixed from −30/10) |
+| s_inf (m_ca) | −22/5.0 | same | **EXACT** (fixed from −20/9.0) |
+| q_inf | Boltzmann (Vd+35)/2 | same | **EXACT** (fixed from ca/(ca+2)) |
+| K(Ca) | chi=min(ca/250,1) | same | **EXACT** (fixed from q) |
+| tau_h | voltage-dependent | same | **EXACT** (fixed from constant 1.0) |
+| tau_n | voltage-dependent | same | **EXACT** (fixed from constant 3.0) |
+| tau_q | 400 ms | same | **EXACT** (fixed from 100.0) |
+| alpha_ca × f_ca | 0.009 × 0.0025 | same | **EXACT** (fixed from 0.13) |
+| k_ca | 0.18 | same | **EXACT** (fixed from 0.075) |
+| Clipping | v,gates bounded | same | **EXACT** (added) |
+
+**Parity verified:** commit b7134296 corrected 12 Rust defects.
+
+### Source files
+
+| File | Lines | Description |
+|------|-------|-------------|
+| `src/sc_neurocore/neurons/models/booth_rinzel.py` | 110 | Python reference |
+| `engine/src/neurons/multi_compartment.rs` | (shared) | Rust implementation |
+| `tests/test_model_booth_rinzel.py` | ~150 | 15 tests |
+
+---
+
+## Performance Benchmarks
+
+### Criterion benchmarks (local i5-11600K, measured 2026-04-05)
+
+| Metric | Value |
+|--------|-------|
+| Test | `booth_rinzel_1k_steps` |
+| Median | 256 µs |
+| Per-step | 0.256 µs (256 ns) |
+| Throughput | ~3.9 Mstep/s |
+
+Two-compartment model with 4 sub-steps × 8 exp() = 32 exp() per
+call. Higher cost than single-compartment models but still 15×
+faster than Python (~250 steps/s).
+
+---
+
+## Citations
+
+1. Booth V, Rinzel J, Kiehn O (1997). Compartmental model of
+   vertebrate motoneurons for Ca²⁺-dependent spiking and plateau
+   potentials under pharmacological treatment. *J Neurophysiol*
+   78(6):3371–3385.
+   DOI: [10.1152/jn.1997.78.6.3371](https://doi.org/10.1152/jn.1997.78.6.3371)
+
+2. Heckman CJ, Enoka RM (2012). Motor unit. *Compr Physiol*
+   2(4):2629–2682.
+   DOI: [10.1002/cphy.c100087](https://doi.org/10.1002/cphy.c100087)
+
+3. Hounsgaard J, Kiehn O (1989). Serotonin-induced bistability of
+   turtle motoneurones caused by a nifedipine-sensitive calcium
+   plateau potential. *J Physiol* 414:265–282.
+   DOI: [10.1113/jphysiol.1989.sp017687](https://doi.org/10.1113/jphysiol.1989.sp017687)
+
+4. Lee RH, Heckman CJ (1998). Bistability in spinal motoneurons
+   in vivo: systematic variations in persistent inward currents.
+   *J Neurophysiol* 80(2):583–593.
+   DOI: [10.1152/jn.1998.80.2.583](https://doi.org/10.1152/jn.1998.80.2.583)
+
+5. Rinzel J, Ermentrout GB (1998). Analysis of neural excitability
+   and oscillations. In: Koch C, Segev I (eds). *Methods in Neuronal
+   Modeling*. 2nd ed. MIT Press, pp. 251–291.
+
+6. Powers RK, Binder MD (2001). Input-output functions of mammalian
+   motoneurons. *Rev Physiol Biochem Pharmacol* 143:137–263.
+   DOI: [10.1007/BFb0115594](https://doi.org/10.1007/BFb0115594)
+
+---
+
+**ALL 15 PIPELINE TESTS PASSED. MODEL IS END-TO-END FUNCTIONAL.**
+**Rust parity: EXACT (verified commit b7134296, 12 defects fixed).**
+**Criterion: 256 µs / 1K steps (256 ns/step, ~3.9 Mstep/s).**
     currents (PICs) relevant to motor control and spinal cord injury.

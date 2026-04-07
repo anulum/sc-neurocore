@@ -16,31 +16,31 @@ use core::arch::x86_64::*;
 /// Caller must ensure the current CPU supports `avx2`.
 pub unsafe fn popcount_avx2(data: &[u64]) -> u64 {
     let mut total = 0_u64;
-    let mut chunks = data.chunks_exact(4);
+    let mut chunks = data.chunks_exact(16);
 
-    let m1 = _mm256_set1_epi64x(0x5555_5555_5555_5555_u64 as i64);
-    let m2 = _mm256_set1_epi64x(0x3333_3333_3333_3333_u64 as i64);
-    let m4 = _mm256_set1_epi64x(0x0f0f_0f0f_0f0f_0f0f_u64 as i64);
+    for chunk in chunks.by_ref() {
+        let v0 = _mm256_loadu_si256(chunk.as_ptr() as *const __m256i);
+        let v1 = _mm256_loadu_si256(chunk.as_ptr().add(4) as *const __m256i);
+        let v2 = _mm256_loadu_si256(chunk.as_ptr().add(8) as *const __m256i);
+        let v3 = _mm256_loadu_si256(chunk.as_ptr().add(12) as *const __m256i);
 
-    for chunk in &mut chunks {
-        let mut x = _mm256_loadu_si256(chunk.as_ptr() as *const __m256i);
-        x = _mm256_sub_epi64(x, _mm256_and_si256(_mm256_srli_epi64::<1>(x), m1));
-        x = _mm256_add_epi64(
-            _mm256_and_si256(x, m2),
-            _mm256_and_si256(_mm256_srli_epi64::<2>(x), m2),
-        );
-        x = _mm256_and_si256(_mm256_add_epi64(x, _mm256_srli_epi64::<4>(x)), m4);
+        let mut lanes = [0_u64; 16];
+        _mm256_storeu_si256(lanes.as_mut_ptr() as *mut __m256i, v0);
+        _mm256_storeu_si256(lanes.as_mut_ptr().add(4) as *mut __m256i, v1);
+        _mm256_storeu_si256(lanes.as_mut_ptr().add(8) as *mut __m256i, v2);
+        _mm256_storeu_si256(lanes.as_mut_ptr().add(12) as *mut __m256i, v3);
 
-        let mut lanes = [0_u64; 4];
-        _mm256_storeu_si256(lanes.as_mut_ptr() as *mut __m256i, x);
-        total += lanes
-            .iter()
-            .copied()
-            .map(|lane| lane.wrapping_mul(0x0101_0101_0101_0101) >> 56)
-            .sum::<u64>();
+        for &w in lanes.iter() {
+            total += w.count_ones() as u64;
+        }
     }
 
-    total + crate::bitstream::popcount_words_portable(chunks.remainder())
+    total
+        + chunks
+            .remainder()
+            .iter()
+            .map(|&w| w.count_ones() as u64)
+            .sum::<u64>()
 }
 
 #[cfg(target_arch = "x86_64")]
@@ -58,17 +58,28 @@ pub unsafe fn pack_avx2(bits: &[u8]) -> Vec<u64> {
     let full_words = length / 64;
     let zero = _mm256_setzero_si256();
 
-    for (word_idx, word) in data.iter_mut().take(full_words).enumerate() {
+    let mut chunks = data[..full_words].chunks_exact_mut(4);
+    let mut word_idx = 0;
+    for chunk in chunks.by_ref() {
         let base = word_idx * 64;
+        for i in 0..4 {
+            let b = base + i * 64;
+            let lo = _mm256_loadu_si256(bits.as_ptr().add(b) as *const __m256i);
+            let hi = _mm256_loadu_si256(bits.as_ptr().add(b + 32) as *const __m256i);
+            let lo_mask = !(_mm256_movemask_epi8(_mm256_cmpeq_epi8(lo, zero)) as u32);
+            let hi_mask = !(_mm256_movemask_epi8(_mm256_cmpeq_epi8(hi, zero)) as u32);
+            chunk[i] = ((hi_mask as u64) << 32) | (lo_mask as u64);
+        }
+        word_idx += 4;
+    }
+
+    for i in word_idx..full_words {
+        let base = i * 64;
         let lo = _mm256_loadu_si256(bits.as_ptr().add(base) as *const __m256i);
         let hi = _mm256_loadu_si256(bits.as_ptr().add(base + 32) as *const __m256i);
-
-        let lo_eq_zero = _mm256_cmpeq_epi8(lo, zero);
-        let hi_eq_zero = _mm256_cmpeq_epi8(hi, zero);
-        let lo_mask = !(_mm256_movemask_epi8(lo_eq_zero) as u32);
-        let hi_mask = !(_mm256_movemask_epi8(hi_eq_zero) as u32);
-
-        *word = ((hi_mask as u64) << 32) | (lo_mask as u64);
+        let lo_mask = !(_mm256_movemask_epi8(_mm256_cmpeq_epi8(lo, zero)) as u32);
+        let hi_mask = !(_mm256_movemask_epi8(_mm256_cmpeq_epi8(hi, zero)) as u32);
+        data[i] = ((hi_mask as u64) << 32) | (lo_mask as u64);
     }
 
     if full_words < words {
@@ -89,17 +100,33 @@ pub unsafe fn pack_avx2(bits: &[u8]) -> Vec<u64> {
 pub unsafe fn fused_and_popcount_avx2(a: &[u64], b: &[u64]) -> u64 {
     let len = a.len().min(b.len());
     let mut total = 0_u64;
-    let mut chunks_a = a[..len].chunks_exact(4);
-    let mut chunks_b = b[..len].chunks_exact(4);
+    let mut chunks_a = a[..len].chunks_exact(16);
+    let mut chunks_b = b[..len].chunks_exact(16);
 
     for (ca, cb) in chunks_a.by_ref().zip(chunks_b.by_ref()) {
-        let va = _mm256_loadu_si256(ca.as_ptr() as *const __m256i);
-        let vb = _mm256_loadu_si256(cb.as_ptr() as *const __m256i);
-        let anded = _mm256_and_si256(va, vb);
+        let va0 = _mm256_loadu_si256(ca.as_ptr() as *const __m256i);
+        let vb0 = _mm256_loadu_si256(cb.as_ptr() as *const __m256i);
+        let va1 = _mm256_loadu_si256(ca.as_ptr().add(4) as *const __m256i);
+        let vb1 = _mm256_loadu_si256(cb.as_ptr().add(4) as *const __m256i);
+        let va2 = _mm256_loadu_si256(ca.as_ptr().add(8) as *const __m256i);
+        let vb2 = _mm256_loadu_si256(cb.as_ptr().add(8) as *const __m256i);
+        let va3 = _mm256_loadu_si256(ca.as_ptr().add(12) as *const __m256i);
+        let vb3 = _mm256_loadu_si256(cb.as_ptr().add(12) as *const __m256i);
 
-        let mut lanes = [0_u64; 4];
-        _mm256_storeu_si256(lanes.as_mut_ptr() as *mut __m256i, anded);
-        total += lanes.iter().map(|w| w.count_ones() as u64).sum::<u64>();
+        let and0 = _mm256_and_si256(va0, vb0);
+        let and1 = _mm256_and_si256(va1, vb1);
+        let and2 = _mm256_and_si256(va2, vb2);
+        let and3 = _mm256_and_si256(va3, vb3);
+
+        let mut lanes = [0_u64; 16];
+        _mm256_storeu_si256(lanes.as_mut_ptr() as *mut __m256i, and0);
+        _mm256_storeu_si256(lanes.as_mut_ptr().add(4) as *mut __m256i, and1);
+        _mm256_storeu_si256(lanes.as_mut_ptr().add(8) as *mut __m256i, and2);
+        _mm256_storeu_si256(lanes.as_mut_ptr().add(12) as *mut __m256i, and3);
+
+        for &w in lanes.iter() {
+            total += w.count_ones() as u64;
+        }
     }
 
     total
@@ -120,17 +147,33 @@ pub unsafe fn fused_and_popcount_avx2(a: &[u64], b: &[u64]) -> u64 {
 pub unsafe fn fused_xor_popcount_avx2(a: &[u64], b: &[u64]) -> u64 {
     let len = a.len().min(b.len());
     let mut total = 0_u64;
-    let mut chunks_a = a[..len].chunks_exact(4);
-    let mut chunks_b = b[..len].chunks_exact(4);
+    let mut chunks_a = a[..len].chunks_exact(16);
+    let mut chunks_b = b[..len].chunks_exact(16);
 
     for (ca, cb) in chunks_a.by_ref().zip(chunks_b.by_ref()) {
-        let va = _mm256_loadu_si256(ca.as_ptr() as *const __m256i);
-        let vb = _mm256_loadu_si256(cb.as_ptr() as *const __m256i);
-        let xored = _mm256_xor_si256(va, vb);
+        let va0 = _mm256_loadu_si256(ca.as_ptr() as *const __m256i);
+        let vb0 = _mm256_loadu_si256(cb.as_ptr() as *const __m256i);
+        let va1 = _mm256_loadu_si256(ca.as_ptr().add(4) as *const __m256i);
+        let vb1 = _mm256_loadu_si256(cb.as_ptr().add(4) as *const __m256i);
+        let va2 = _mm256_loadu_si256(ca.as_ptr().add(8) as *const __m256i);
+        let vb2 = _mm256_loadu_si256(cb.as_ptr().add(8) as *const __m256i);
+        let va3 = _mm256_loadu_si256(ca.as_ptr().add(12) as *const __m256i);
+        let vb3 = _mm256_loadu_si256(cb.as_ptr().add(12) as *const __m256i);
 
-        let mut lanes = [0_u64; 4];
-        _mm256_storeu_si256(lanes.as_mut_ptr() as *mut __m256i, xored);
-        total += lanes.iter().map(|w| w.count_ones() as u64).sum::<u64>();
+        let xor0 = _mm256_xor_si256(va0, vb0);
+        let xor1 = _mm256_xor_si256(va1, vb1);
+        let xor2 = _mm256_xor_si256(va2, vb2);
+        let xor3 = _mm256_xor_si256(va3, vb3);
+
+        let mut lanes = [0_u64; 16];
+        _mm256_storeu_si256(lanes.as_mut_ptr() as *mut __m256i, xor0);
+        _mm256_storeu_si256(lanes.as_mut_ptr().add(4) as *mut __m256i, xor1);
+        _mm256_storeu_si256(lanes.as_mut_ptr().add(8) as *mut __m256i, xor2);
+        _mm256_storeu_si256(lanes.as_mut_ptr().add(12) as *mut __m256i, xor3);
+
+        for &w in lanes.iter() {
+            total += w.count_ones() as u64;
+        }
     }
 
     total
@@ -308,12 +351,18 @@ pub unsafe fn sum_f64_avx2(a: &[f64]) -> f64 {
 /// Caller must ensure the current CPU supports `avx2`.
 pub unsafe fn scale_f64_avx2(alpha: f64, y: &mut [f64]) {
     let valpha = _mm256_set1_pd(alpha);
-    let mut chunks = y.chunks_exact_mut(4);
+    let mut chunks = y.chunks_exact_mut(16);
 
     for chunk in chunks.by_ref() {
-        let vy = _mm256_loadu_pd(chunk.as_ptr());
-        let scaled = _mm256_mul_pd(vy, valpha);
-        _mm256_storeu_pd(chunk.as_mut_ptr(), scaled);
+        let v0 = _mm256_loadu_pd(chunk.as_ptr());
+        let v1 = _mm256_loadu_pd(chunk.as_ptr().add(4));
+        let v2 = _mm256_loadu_pd(chunk.as_ptr().add(8));
+        let v3 = _mm256_loadu_pd(chunk.as_ptr().add(12));
+
+        _mm256_storeu_pd(chunk.as_mut_ptr(), _mm256_mul_pd(v0, valpha));
+        _mm256_storeu_pd(chunk.as_mut_ptr().add(4), _mm256_mul_pd(v1, valpha));
+        _mm256_storeu_pd(chunk.as_mut_ptr().add(8), _mm256_mul_pd(v2, valpha));
+        _mm256_storeu_pd(chunk.as_mut_ptr().add(12), _mm256_mul_pd(v3, valpha));
     }
 
     for v in chunks.into_remainder() {
@@ -363,9 +412,20 @@ pub unsafe fn softmax_inplace_f64_avx2(scores: &mut [f64]) {
         return;
     }
     let max_val = max_f64_avx2(scores);
-    for s in scores.iter_mut() {
+    // let v_max = _mm256_set1_pd(max_val);
+
+    let mut chunks = scores.chunks_exact_mut(16);
+    for chunk in chunks.by_ref() {
+        // We still have to use scalar exp() because AVX2 does not have it in core::arch
+        // but we can unroll the subtractions and stores.
+        for i in 0..16 {
+            chunk[i] = (chunk[i] - max_val).exp();
+        }
+    }
+    for s in chunks.into_remainder() {
         *s = (*s - max_val).exp();
     }
+
     let exp_sum = sum_f64_avx2(scores);
     if exp_sum > 0.0 {
         scale_f64_avx2(1.0 / exp_sum, scores);
@@ -378,12 +438,197 @@ pub unsafe fn softmax_inplace_f64_avx2(scores: &mut [f64]) {
         return;
     }
     let max_val = max_f64_avx2(scores);
-    for s in scores.iter_mut() {
+    // let v_max = _mm256_set1_pd(max_val);
+
+    let mut chunks = scores.chunks_exact_mut(16);
+    for chunk in chunks.by_ref() {
+        // We still have to use scalar exp() because AVX2 does not have it in core::arch
+        // but we can unroll the subtractions and stores.
+        for i in 0..16 {
+            chunk[i] = (chunk[i] - max_val).exp();
+        }
+    }
+    for s in chunks.into_remainder() {
         *s = (*s - max_val).exp();
     }
+
     let exp_sum = sum_f64_avx2(scores);
     if exp_sum > 0.0 {
         scale_f64_avx2(1.0 / exp_sum, scores);
+    }
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx")]
+/// Dot product of two f64 slices using AVX (no FMA).
+///
+/// # Safety
+/// Caller must ensure the current CPU supports `avx`.
+pub unsafe fn dot_f64_avx(a: &[f64], b: &[f64]) -> f64 {
+    let len = a.len().min(b.len());
+    let mut acc0 = _mm256_setzero_pd();
+    let mut acc1 = _mm256_setzero_pd();
+    let mut acc2 = _mm256_setzero_pd();
+    let mut acc3 = _mm256_setzero_pd();
+
+    let mut chunks_a = a[..len].chunks_exact(16);
+    let mut chunks_b = b[..len].chunks_exact(16);
+
+    for (ca, cb) in chunks_a.by_ref().zip(chunks_b.by_ref()) {
+        let va0 = _mm256_loadu_pd(ca.as_ptr());
+        let vb0 = _mm256_loadu_pd(cb.as_ptr());
+        acc0 = _mm256_add_pd(acc0, _mm256_mul_pd(va0, vb0));
+
+        let va1 = _mm256_loadu_pd(ca.as_ptr().add(4));
+        let vb1 = _mm256_loadu_pd(cb.as_ptr().add(4));
+        acc1 = _mm256_add_pd(acc1, _mm256_mul_pd(va1, vb1));
+
+        let va2 = _mm256_loadu_pd(ca.as_ptr().add(8));
+        let vb2 = _mm256_loadu_pd(cb.as_ptr().add(8));
+        acc2 = _mm256_add_pd(acc2, _mm256_mul_pd(va2, vb2));
+
+        let va3 = _mm256_loadu_pd(ca.as_ptr().add(12));
+        let vb3 = _mm256_loadu_pd(cb.as_ptr().add(12));
+        acc3 = _mm256_add_pd(acc3, _mm256_mul_pd(va3, vb3));
+    }
+
+    acc0 = _mm256_add_pd(acc0, acc1);
+    acc2 = _mm256_add_pd(acc2, acc3);
+    acc0 = _mm256_add_pd(acc0, acc2);
+
+    let mut lanes = [0.0_f64; 4];
+    _mm256_storeu_pd(lanes.as_mut_ptr(), acc0);
+    let mut sum = lanes[0] + lanes[1] + lanes[2] + lanes[3];
+
+    for (&ra, &rb) in chunks_a.remainder().iter().zip(chunks_b.remainder()) {
+        sum += ra * rb;
+    }
+    sum
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx")]
+/// Sum of f64 slice using AVX.
+///
+/// # Safety
+/// Caller must ensure AVX is available on the current CPU.
+pub unsafe fn sum_f64_avx(a: &[f64]) -> f64 {
+    let mut acc0 = _mm256_setzero_pd();
+    let mut acc1 = _mm256_setzero_pd();
+    let mut acc2 = _mm256_setzero_pd();
+    let mut acc3 = _mm256_setzero_pd();
+
+    let mut chunks = a.chunks_exact(16);
+    for chunk in chunks.by_ref() {
+        acc0 = _mm256_add_pd(acc0, _mm256_loadu_pd(chunk.as_ptr()));
+        acc1 = _mm256_add_pd(acc1, _mm256_loadu_pd(chunk.as_ptr().add(4)));
+        acc2 = _mm256_add_pd(acc2, _mm256_loadu_pd(chunk.as_ptr().add(8)));
+        acc3 = _mm256_add_pd(acc3, _mm256_loadu_pd(chunk.as_ptr().add(12)));
+    }
+
+    acc0 = _mm256_add_pd(acc0, acc1);
+    acc2 = _mm256_add_pd(acc2, acc3);
+    acc0 = _mm256_add_pd(acc0, acc2);
+
+    let mut lanes = [0.0_f64; 4];
+    _mm256_storeu_pd(lanes.as_mut_ptr(), acc0);
+    let mut sum = lanes[0] + lanes[1] + lanes[2] + lanes[3];
+    for &v in chunks.remainder() {
+        sum += v;
+    }
+    sum
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx2")]
+/// Compare 1024 random bytes against a threshold and return 16 u64 words.
+///
+/// # Safety
+/// Caller must ensure AVX2 is available on the current CPU.
+pub unsafe fn bernoulli_compare_batch_avx2(buf: &[u8], threshold: u8, out: &mut [u64]) {
+    let v_thresh = _mm256_set1_epi8(threshold as i8);
+    // Note: epi8 comparison is signed. Using the xor 0x80 trick for unsigned.
+    let bias = _mm256_set1_epi8(i8::MIN);
+    let v_thresh_biased = _mm256_xor_si256(v_thresh, bias);
+
+    for i in 0..16 {
+        // Each loop iteration processes 64 bytes (2x 256-bit registers)
+        let chunk = &buf[i * 64..(i + 1) * 64];
+        let v0 = _mm256_loadu_si256(chunk.as_ptr() as *const __m256i);
+        let v1 = _mm256_loadu_si256(chunk.as_ptr().add(32) as *const __m256i);
+
+        let v0_biased = _mm256_xor_si256(v0, bias);
+        let v1_biased = _mm256_xor_si256(v1, bias);
+
+        let m0 = _mm256_cmpgt_epi8(v_thresh_biased, v0_biased);
+        let m1 = _mm256_cmpgt_epi8(v_thresh_biased, v1_biased);
+
+        let mask0 = _mm256_movemask_epi8(m0) as u32;
+        let mask1 = _mm256_movemask_epi8(m1) as u32;
+        out[i] = (mask0 as u64) | ((mask1 as u64) << 32);
+    }
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx")]
+/// Maximum of f64 slice using AVX (v1).
+///
+/// # Safety
+/// Caller must ensure AVX is available on the current CPU.
+pub unsafe fn max_f64_avx(a: &[f64]) -> f64 {
+    if a.is_empty() {
+        return f64::NEG_INFINITY;
+    }
+    let mut max_vec0 = _mm256_set1_pd(f64::NEG_INFINITY);
+    let mut max_vec1 = _mm256_set1_pd(f64::NEG_INFINITY);
+    let mut max_vec2 = _mm256_set1_pd(f64::NEG_INFINITY);
+    let mut max_vec3 = _mm256_set1_pd(f64::NEG_INFINITY);
+
+    let mut chunks = a.chunks_exact(16);
+    for chunk in chunks.by_ref() {
+        max_vec0 = _mm256_max_pd(max_vec0, _mm256_loadu_pd(chunk.as_ptr()));
+        max_vec1 = _mm256_max_pd(max_vec1, _mm256_loadu_pd(chunk.as_ptr().add(4)));
+        max_vec2 = _mm256_max_pd(max_vec2, _mm256_loadu_pd(chunk.as_ptr().add(8)));
+        max_vec3 = _mm256_max_pd(max_vec3, _mm256_loadu_pd(chunk.as_ptr().add(12)));
+    }
+
+    max_vec0 = _mm256_max_pd(max_vec0, max_vec1);
+    max_vec2 = _mm256_max_pd(max_vec2, max_vec3);
+    max_vec0 = _mm256_max_pd(max_vec0, max_vec2);
+
+    let mut lanes = [0.0_f64; 4];
+    _mm256_storeu_pd(lanes.as_mut_ptr(), max_vec0);
+    let mut m = lanes[0].max(lanes[1]).max(lanes[2].max(lanes[3]));
+    for &v in chunks.remainder() {
+        m = m.max(v);
+    }
+    m
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx")]
+/// Scale f64 slice using AVX (v1).
+///
+/// # Safety
+/// Caller must ensure AVX is available on the current CPU.
+pub unsafe fn scale_f64_avx(alpha: f64, y: &mut [f64]) {
+    let valpha = _mm256_set1_pd(alpha);
+    let mut chunks = y.chunks_exact_mut(16);
+
+    for chunk in chunks.by_ref() {
+        let v0 = _mm256_loadu_pd(chunk.as_ptr());
+        let v1 = _mm256_loadu_pd(chunk.as_ptr().add(4));
+        let v2 = _mm256_loadu_pd(chunk.as_ptr().add(8));
+        let v3 = _mm256_loadu_pd(chunk.as_ptr().add(12));
+
+        _mm256_storeu_pd(chunk.as_mut_ptr(), _mm256_mul_pd(v0, valpha));
+        _mm256_storeu_pd(chunk.as_mut_ptr().add(4), _mm256_mul_pd(v1, valpha));
+        _mm256_storeu_pd(chunk.as_mut_ptr().add(8), _mm256_mul_pd(v2, valpha));
+        _mm256_storeu_pd(chunk.as_mut_ptr().add(12), _mm256_mul_pd(v3, valpha));
+    }
+
+    for v in chunks.into_remainder() {
+        *v *= alpha;
     }
 }
 
@@ -517,5 +762,20 @@ mod tests {
                 "Mismatch for threshold={threshold} buf={buf:?}"
             );
         }
+    }
+
+    #[test]
+    fn dot_f64_avx_matches_scalar() {
+        if !is_x86_feature_detected!("avx") {
+            return;
+        }
+        let a: Vec<f64> = (0..67).map(|i| i as f64 * 0.1).collect();
+        let b: Vec<f64> = (0..67).map(|i| (i as f64 * 0.3) - 5.0).collect();
+        let expected: f64 = a.iter().zip(&b).map(|(x, y)| x * y).sum();
+        let got = unsafe { super::dot_f64_avx(&a, &b) };
+        assert!(
+            (got - expected).abs() < 1e-9,
+            "dot_avx: got {got}, expected {expected}"
+        );
     }
 }

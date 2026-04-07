@@ -400,3 +400,275 @@ State returns to initial values after `reset()`.
 2. All pipeline stages verified green
 3. No Rust binding — candidate for future Rust port
 4. Numerical stability confirmed over 20K steps
+
+---
+
+## Theoretical Context
+
+### The Spike Response Model family
+
+The Spike Response Model (SRM) was introduced by Wulfram Gerstner as a
+mathematically tractable alternative to Hodgkin-Huxley-type conductance
+models. Instead of modelling ionic currents through differential
+equations, the SRM expresses membrane potential as a superposition of
+response kernels triggered by input spikes and the neuron's own output
+spikes.
+
+The general SRM expresses voltage as:
+
+$$V_i(t) = \eta(t - \hat{t}_i) + \sum_j w_{ij} \sum_f \kappa(t - t_j^f) + \int \kappa_0(s)\, I_{ext}(t-s)\, ds$$
+
+where the first term captures the refractory response to the neuron's
+own last spike, the second sums postsynaptic responses from all
+presynaptic spikes, and the third integrates external current.
+
+### SRM0: the zeroth-order simplification
+
+SRM0 is the simplest member of the SRM hierarchy. It assumes that the
+kernels depend only on the time since the last spike of the postsynaptic
+neuron (hence "zeroth order" — no dependence on earlier spikes). This
+makes the model memoryless apart from the single most recent spike time.
+
+The SRM0 is mathematically equivalent to a leaky integrate-and-fire
+neuron with spike-frequency adaptation, but it makes the kernel structure
+explicit. This is useful for:
+
+- Analytical tractability (threshold crossing is a 1D problem)
+- Network-level mean-field analysis
+- Population density methods (Gerstner & Kistler, 2002, Ch. 6)
+- Escape-rate noise models (soft threshold → GIFPopulation)
+
+### Relation to other SC-NeuroCore models
+
+| Model | Relation to SRM0 |
+|-------|-----------------|
+| LIF (Lapicque) | SRM0 without refractory kernel (η=0) |
+| AdEx | SRM0 + exponential spike initiation + w adaptation |
+| EscapeRate | SRM0 + stochastic threshold (exp hazard) |
+| GIFPopulation | SRM0 + escape rate at population level |
+| SpikeResponseNeuron | Pure kernel-based SRM variant (Rust, see below) |
+
+### Excitability type
+
+SRM0 with the implemented parameters exhibits **Type-I excitability**:
+the f–I curve rises continuously from zero at rheobase, with no minimum
+firing frequency. This is because the effective threshold returns
+smoothly to V_threshold as η decays, allowing arbitrarily slow firing.
+
+---
+
+## Variant Implementations
+
+SC-NeuroCore provides **two distinct SRM variants**, each implementing a
+valid but mathematically different formulation of the spike response
+model:
+
+### Python: SRM0Neuron (ODE-based with η offset)
+
+- **Module:** `sc_neurocore.neurons.models.srm0`
+- **Approach:** Leaky integrator with refractory kernel as resting-potential offset
+- **Voltage:** Accumulated via forward Euler (has memory between steps)
+- **Key equation:** $dV/dt = (R \cdot I - (V - V_{rest} - \eta)) / \tau_m$
+- **Parameters:** τ_m = 20 ms, τ_η = 50 ms, η_reset = 5.0, R = 1.0
+
+### Rust: SpikeResponseNeuron (pure kernel superposition)
+
+- **Module:** `sc_neurocore_engine::neurons::SpikeResponseNeuron`
+- **Approach:** Voltage recomputed each step from kernels (memoryless)
+- **Voltage:** $V = \eta(t_{since}) + \kappa(I)$ — fresh each step
+- **Key equations:**
+  - $\eta(t) = \eta_{reset} \cdot \exp(-t / \tau_\eta)$
+  - $\kappa(I) = I \cdot (1 - \exp(-dt / \tau_\kappa))$
+- **Parameters:** τ_η = 10 ms, τ_κ = 5 ms, η_reset = −5.0
+
+### Why two variants?
+
+Both are valid SRM formulations from the literature:
+
+1. The **Python SRM0** follows Gerstner & Kistler (2002, Ch. 4.1) — an
+   ODE approximation where the refractory kernel modifies the effective
+   resting potential within a standard leaky integrator. This is closer
+   to how experimentalists think about adaptation.
+
+2. The **Rust SpikeResponse** follows Gerstner (1995) — the pure
+   kernel-based formulation where voltage is a superposition of
+   exponential response functions. This is closer to the original
+   mathematical formalism and avoids numerical drift.
+
+### Key differences
+
+| Property | Python SRM0 | Rust SpikeResponse |
+|----------|------------|-------------------|
+| Voltage dynamics | ODE accumulation | Kernel superposition |
+| Memory in V | Yes (leaky decay) | No (recomputed) |
+| τ_m (membrane) | 20.0 ms | N/A (replaced by τ_κ) |
+| τ_η (refractory) | 50.0 ms | 10.0 ms |
+| τ_κ (input) | N/A | 5.0 ms |
+| η_reset | 5.0 (negated in code) | −5.0 (pre-negated) |
+| Resistance R | 1.0 | N/A |
+| Sub-steps | 1 | 1 |
+| PyO3 binding | No | Yes |
+| NetworkRunner | No | Yes |
+| Parity | N/A — different models | N/A — different models |
+
+---
+
+## Usage Examples
+
+### Example 1: Basic Python — SRM0 with constant current
+
+```python
+from sc_neurocore.neurons.models.srm0 import SRM0Neuron
+
+neuron = SRM0Neuron()
+
+# Simulate 1000 ms at I = 5.0
+spike_times = []
+for t in range(1000):
+    spike = neuron.step(5.0)
+    if spike:
+        spike_times.append(t)
+
+print(f"Fired {len(spike_times)} spikes in 1000 ms")
+print(f"Mean ISI: {sum(b-a for a,b in zip(spike_times, spike_times[1:]))/(len(spike_times)-1):.1f} ms")
+```
+
+### Example 2: Advanced Python — refractory adaptation dynamics
+
+```python
+from sc_neurocore.neurons.models.srm0 import SRM0Neuron
+import numpy as np
+
+neuron = SRM0Neuron(tau_eta=100.0, eta_reset=10.0)
+
+# Inject brief pulse, observe η recovery
+voltages, etas = [], []
+for t in range(500):
+    current = 20.0 if t < 5 else 0.0
+    neuron.step(current)
+    state = neuron.get_state()
+    voltages.append(state["v"])
+    etas.append(state["eta"])
+
+# After spike, η decays exponentially with τ_η = 100 ms
+# Effective threshold recovery: V_rest + η → V_rest as η → 0
+print(f"η at t=10: {etas[10]:.3f}")
+print(f"η at t=100: {etas[100]:.3f}")
+print(f"η at t=300: {etas[300]:.3f}")
+```
+
+### Example 3: PyO3 Rust — SpikeResponseNeuron (kernel variant)
+
+```rust
+use sc_neurocore_engine::neurons::SpikeResponseNeuron;
+
+let mut neuron = SpikeResponseNeuron::new();
+
+// 10,000 steps at I = 2.0
+let mut spikes = 0;
+for _ in 0..10_000 {
+    spikes += neuron.step(2.0);
+}
+println!("Kernel SRM: {spikes} spikes in 10 s");
+
+// Voltage is recomputed each step — no accumulation
+println!("V = {:.4} (superposition of η + κ)", neuron.v);
+
+// Reset clears time_since_spike
+neuron.reset();
+assert!(neuron.time_since_spike > 100.0);  // far in the past
+```
+
+---
+
+## Technical Reference
+
+### Methods — Python SRM0Neuron
+
+| Method | Signature | Returns | Description |
+|--------|-----------|---------|-------------|
+| `step` | `step(current: float) → int` | 0 or 1 | Advance 1 ms, return spike |
+| `reset` | `reset() → None` | — | Restore v, η, t to initial values |
+| `get_state` | `get_state() → dict` | dict | Returns {v, eta, t} |
+
+### Methods — Rust SpikeResponseNeuron
+
+| Method | Signature | Returns | Description |
+|--------|-----------|---------|-------------|
+| `step` | `step(f64) → i32` | 0 or 1 | Advance 1 ms, return spike |
+| `reset` | `reset()` | — | Restore v, time_since_spike |
+
+### Supported operations
+
+| Operation | Python SRM0 | Rust SpikeResponse |
+|-----------|-------------|-------------------|
+| Population | Yes | Yes |
+| Projection | Yes | Yes |
+| NetworkRunner | No | Yes |
+| SpikeMonitor | Yes | Yes |
+| PoissonInput | Yes | Yes |
+| PyO3 bridge | No | Yes |
+| get_state() | Yes | Yes (via PyO3) |
+
+---
+
+## Performance Benchmarks
+
+### Python SRM0Neuron
+
+Measured on i5-11600K @ 3.90 GHz, single-threaded, 2026-04-04.
+
+| Metric | Value |
+|--------|------:|
+| Isolation throughput | ~86 000 steps/s |
+| Per step | ~11.6 µs |
+| 10K steps, I=5.0 | 371 spikes |
+| State stability (20K) | PASS |
+
+### Rust SpikeResponseNeuron
+
+| Metric | Value |
+|--------|------:|
+| Python throughput (via PyO3) | ~160 000 steps/s |
+| Per step (Python) | ~6.3 µs |
+| Criterion benchmark | Not yet measured |
+
+### Computational cost
+
+- Python SRM0: 1 exp() per step (η decay) + 1 division + arithmetic = minimal
+- Rust SpikeResponse: 2 exp() per step (η kernel + κ kernel) + arithmetic = minimal
+- Both are among the fastest spiking models in the library
+
+---
+
+## Citations
+
+1. Gerstner, W. & Kistler, W. M. (2002). *Spiking Neuron Models: Single
+   Neurons, Populations, Plasticity*. Cambridge University Press, Ch. 4.
+   DOI: [10.1017/CBO9780511815706](https://doi.org/10.1017/CBO9780511815706)
+
+2. Gerstner, W. (1995). Time structure of the activity in neural network
+   models. *Physical Review E*, 51(1), 738–758.
+   DOI: [10.1103/PhysRevE.51.738](https://doi.org/10.1103/PhysRevE.51.738)
+
+3. Gerstner, W., Kistler, W. M., Naud, R. & Paninski, L. (2014).
+   *Neuronal Dynamics: From Single Neurons to Networks and Models of
+   Cognition*. Cambridge University Press, Ch. 6.
+   DOI: [10.1017/CBO9781107447615](https://doi.org/10.1017/CBO9781107447615)
+
+4. Jolivet, R., Rauch, A., Lüscher, H.-R. & Gerstner, W. (2006).
+   Predicting spike timing of neocortical pyramidal neurons by simple
+   threshold models. *Journal of Computational Neuroscience*, 21(1),
+   35–49.
+   DOI: [10.1007/s10827-006-7074-5](https://doi.org/10.1007/s10827-006-7074-5)
+
+5. Gerstner, W. & van Hemmen, J. L. (1992). Associative memory in a
+   network of 'spiking' neurons. *Network: Computation in Neural
+   Systems*, 3(2), 139–164.
+   DOI: [10.1088/0954-898X/3/2/004](https://doi.org/10.1088/0954-898X/3/2/004)
+
+6. Pillow, J. W., Shlens, J., Paninski, L., Sher, A., Litke, A. M.,
+   Chichilnisky, E. J. & Simoncelli, E. P. (2008). Spatio-temporal
+   correlations and visual signalling in a complete neuronal population.
+   *Nature*, 454(7207), 995–999.
+   DOI: [10.1038/nature07140](https://doi.org/10.1038/nature07140)

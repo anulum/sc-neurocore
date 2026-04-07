@@ -31,6 +31,7 @@ pub struct DenseLayer {
     pub n_neurons: usize,
     /// Bitstream length per encoded scalar.
     pub length: usize,
+    pub inv_length: f64,
     /// Words per packed input stream (`ceil(length / 64)`).
     pub words_per_input: usize,
     /// Probability-domain weights in `[0, 1]`.
@@ -60,6 +61,7 @@ impl DenseLayer {
             n_inputs,
             n_neurons,
             length,
+            inv_length: 1.0 / length as f64,
             words_per_input: length.div_ceil(64),
             weights,
             packed_weights_flat: vec![],
@@ -67,6 +69,14 @@ impl DenseLayer {
         };
         layer.refresh_packed_weights();
         layer
+    }
+
+    /// Read-only access to the flat packed weight buffer.
+    ///
+    /// Layout: `[neuron][input][word]`, row-major contiguous `u64`.
+    #[inline]
+    pub fn packed_weights_flat(&self) -> &[u64] {
+        &self.packed_weights_flat
     }
 
     /// Return a single `[word]` slice for one neuron/input pair.
@@ -107,17 +117,36 @@ impl DenseLayer {
 
     /// Rebuild packed weight bitstreams from current weight matrix.
     pub fn refresh_packed_weights(&mut self) {
-        let mut rng = ChaCha8Rng::seed_from_u64(self.weight_seed);
-        let mut packed_weights_flat =
-            vec![0_u64; self.n_neurons * self.n_inputs * self.words_per_input];
+        let n_inputs = self.n_inputs;
+        let words = self.words_per_input;
+        let length = self.length;
+        let weight_seed = self.weight_seed;
+        let weights = &self.weights;
 
-        for (neuron_idx, neuron_weights) in self.weights.iter().enumerate().take(self.n_neurons) {
-            for (input_idx, weight_prob) in neuron_weights.iter().enumerate().take(self.n_inputs) {
-                let packed = bitstream::bernoulli_packed_simd(*weight_prob, self.length, &mut rng);
-                let start = (neuron_idx * self.n_inputs + input_idx) * self.words_per_input;
-                packed_weights_flat[start..start + self.words_per_input].copy_from_slice(&packed);
-            }
-        }
+        let mut packed_weights_flat = vec![0_u64; self.n_neurons * n_inputs * words];
+
+        packed_weights_flat
+            .par_chunks_mut(n_inputs * words)
+            .enumerate()
+            .for_each(|(neuron_idx, neuron_chunk)| {
+                let mut rng =
+                    ChaCha8Rng::seed_from_u64(weight_seed.wrapping_add(neuron_idx as u64));
+                for (input_idx, input_chunk) in neuron_chunk.chunks_mut(words).enumerate() {
+                    let weight_prob = weights[neuron_idx][input_idx];
+                    if weight_prob <= 0.0 {
+                        input_chunk.fill(0);
+                    } else if weight_prob >= 1.0 {
+                        input_chunk.fill(u64::MAX);
+                        if !length.is_multiple_of(64) {
+                            input_chunk[words - 1] = (1_u64 << (length % 64)) - 1;
+                        }
+                    } else {
+                        let packed =
+                            bitstream::bernoulli_packed_simd(weight_prob, length, &mut rng);
+                        input_chunk.copy_from_slice(&packed);
+                    }
+                }
+            });
 
         self.packed_weights_flat = packed_weights_flat;
     }
@@ -134,43 +163,33 @@ impl DenseLayer {
             ));
         }
 
+        let words = self.words_per_input;
         let mut rng = Xoshiro256PlusPlus::seed_from_u64(seed);
-        let mut packed_inputs = vec![Vec::<u64>::new(); self.n_inputs];
+        let mut packed_inputs_flat = vec![0_u64; self.n_inputs * words];
+
         for (idx, p) in input_values.iter().copied().enumerate() {
-            packed_inputs[idx] = bitstream::bernoulli_packed(p, self.length, &mut rng);
+            let packed = bitstream::bernoulli_packed(p, self.length, &mut rng);
+            packed_inputs_flat[idx * words..(idx + 1) * words].copy_from_slice(&packed);
         }
 
         let out: Vec<f64> = if self.n_neurons >= RAYON_NEURON_THRESHOLD {
-            (0..self.n_neurons)
-                .into_par_iter()
-                .map(|neuron_idx| {
-                    let total: u64 = packed_inputs
-                        .iter()
-                        .enumerate()
-                        .map(|(input_idx, input_words)| {
-                            simd::fused_and_popcount_dispatch(
-                                self.weight_slice(neuron_idx, input_idx),
-                                input_words,
-                            )
-                        })
-                        .sum();
-                    total as f64 / self.length as f64
+            let n_inputs = self.n_inputs;
+            self.packed_weights_flat
+                .par_chunks_exact(n_inputs * words)
+                .map(|neuron_weights| {
+                    let total =
+                        simd::fused_and_popcount_dispatch(neuron_weights, &packed_inputs_flat);
+                    total as f64 * self.inv_length
                 })
                 .collect()
         } else {
-            (0..self.n_neurons)
-                .map(|neuron_idx| {
-                    let total: u64 = packed_inputs
-                        .iter()
-                        .enumerate()
-                        .map(|(input_idx, input_words)| {
-                            simd::fused_and_popcount_dispatch(
-                                self.weight_slice(neuron_idx, input_idx),
-                                input_words,
-                            )
-                        })
-                        .sum();
-                    total as f64 / self.length as f64
+            let n_inputs = self.n_inputs;
+            self.packed_weights_flat
+                .chunks_exact(n_inputs * words)
+                .map(|neuron_weights| {
+                    let total =
+                        simd::fused_and_popcount_dispatch(neuron_weights, &packed_inputs_flat);
+                    total as f64 * self.inv_length
                 })
                 .collect()
         };
@@ -191,59 +210,51 @@ impl DenseLayer {
             ));
         }
 
-        let packed_inputs: Vec<Vec<u64>> = if self.n_inputs >= RAYON_ENCODE_THRESHOLD {
-            input_values
-                .par_iter()
+        let words = self.words_per_input;
+        let mut packed_inputs_flat = vec![0_u64; self.n_inputs * words];
+
+        if self.n_inputs >= RAYON_ENCODE_THRESHOLD {
+            packed_inputs_flat
+                .par_chunks_mut(words)
                 .enumerate()
-                .map(|(idx, &p)| {
+                .for_each(|(idx, chunk)| {
+                    let p = input_values[idx];
                     let input_seed = seed.wrapping_add(idx as u64);
                     let mut rng = Xoshiro256PlusPlus::seed_from_u64(input_seed);
-                    bitstream::bernoulli_packed_simd(p, self.length, &mut rng)
-                })
-                .collect()
+                    let packed = bitstream::bernoulli_packed_simd(p, self.length, &mut rng);
+                    chunk.copy_from_slice(&packed);
+                });
         } else {
-            input_values
-                .iter()
+            packed_inputs_flat
+                .chunks_mut(words)
                 .enumerate()
-                .map(|(idx, &p)| {
+                .for_each(|(idx, chunk)| {
+                    let p = input_values[idx];
                     let input_seed = seed.wrapping_add(idx as u64);
                     let mut rng = Xoshiro256PlusPlus::seed_from_u64(input_seed);
-                    bitstream::bernoulli_packed_simd(p, self.length, &mut rng)
-                })
-                .collect()
-        };
+                    let packed = bitstream::bernoulli_packed_simd(p, self.length, &mut rng);
+                    chunk.copy_from_slice(&packed);
+                });
+        }
 
         let out: Vec<f64> = if self.n_neurons >= RAYON_NEURON_THRESHOLD {
-            (0..self.n_neurons)
-                .into_par_iter()
-                .map(|neuron_idx| {
-                    let total: u64 = packed_inputs
-                        .iter()
-                        .enumerate()
-                        .map(|(input_idx, input_words)| {
-                            simd::fused_and_popcount_dispatch(
-                                self.weight_slice(neuron_idx, input_idx),
-                                input_words,
-                            )
-                        })
-                        .sum();
-                    total as f64 / self.length as f64
+            let n_inputs = self.n_inputs;
+            self.packed_weights_flat
+                .par_chunks_exact(n_inputs * words)
+                .map(|neuron_weights| {
+                    let total =
+                        simd::fused_and_popcount_dispatch(neuron_weights, &packed_inputs_flat);
+                    total as f64 * self.inv_length
                 })
                 .collect()
         } else {
-            (0..self.n_neurons)
-                .map(|neuron_idx| {
-                    let total: u64 = packed_inputs
-                        .iter()
-                        .enumerate()
-                        .map(|(input_idx, input_words)| {
-                            simd::fused_and_popcount_dispatch(
-                                self.weight_slice(neuron_idx, input_idx),
-                                input_words,
-                            )
-                        })
-                        .sum();
-                    total as f64 / self.length as f64
+            let n_inputs = self.n_inputs;
+            self.packed_weights_flat
+                .chunks_exact(n_inputs * words)
+                .map(|neuron_weights| {
+                    let total =
+                        simd::fused_and_popcount_dispatch(neuron_weights, &packed_inputs_flat);
+                    total as f64 * self.inv_length
                 })
                 .collect()
         };
@@ -282,7 +293,7 @@ impl DenseLayer {
                             )
                         })
                         .sum();
-                    total as f64 / self.length as f64
+                    total as f64 * self.inv_length
                 })
                 .collect()
         } else {
@@ -302,7 +313,7 @@ impl DenseLayer {
                             )
                         })
                         .sum();
-                    total as f64 / self.length as f64
+                    total as f64 * self.inv_length
                 })
                 .collect()
         };
@@ -356,22 +367,8 @@ impl DenseLayer {
                 let input_row = &inputs_flat[start..end];
                 let sample_seed = seed.wrapping_add((sample_idx as u64).wrapping_mul(1_000_000));
 
-                for (neuron_idx, out_val) in out_row.iter_mut().enumerate() {
-                    let total: u64 = input_row
-                        .iter()
-                        .enumerate()
-                        .map(|(input_idx, &p)| {
-                            let input_seed = sample_seed.wrapping_add(input_idx as u64);
-                            let mut rng = Xoshiro256PlusPlus::seed_from_u64(input_seed);
-                            bitstream::encode_and_popcount(
-                                self.weight_slice(neuron_idx, input_idx),
-                                p,
-                                self.length,
-                                &mut rng,
-                            )
-                        })
-                        .sum();
-                    *out_val = total as f64 / self.length as f64;
+                if let Ok(res) = self.forward_fast(input_row, sample_seed) {
+                    out_row.copy_from_slice(&res);
                 }
             });
 
@@ -434,7 +431,7 @@ impl DenseLayer {
                         )
                     })
                     .sum();
-                total as f64 / self.length as f64
+                total as f64 * self.inv_length
             })
             .collect();
 
@@ -486,7 +483,7 @@ impl DenseLayer {
                         )
                     })
                     .sum();
-                total as f64 / self.length as f64
+                total as f64 * self.inv_length
             })
             .collect();
 
@@ -497,7 +494,7 @@ impl DenseLayer {
     ///
     /// This mirrors `forward_fast` and exists for numpy-native Python bindings.
     pub fn forward_numpy_inner(&self, input_values: &[f64], seed: u64) -> Result<Vec<f64>, String> {
-        self.forward_fused(input_values, seed)
+        self.forward_fast(input_values, seed)
     }
 }
 
@@ -516,8 +513,8 @@ mod tests {
         assert_eq!(layer.words_per_input, words);
         assert_eq!(layer.packed_weights_flat.len(), 3 * 2 * words);
 
-        let mut rng = ChaCha8Rng::seed_from_u64(43);
         for neuron in 0..2 {
+            let mut rng = ChaCha8Rng::seed_from_u64(43 + neuron as u64);
             for input in 0..3 {
                 let expected =
                     bitstream::bernoulli_packed_simd(layer.weights[neuron][input], 130, &mut rng);

@@ -6,6 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Granger causality and directed connectivity measures
 
+use rayon::prelude::*;
 use std::f64::consts::PI;
 
 use super::basic::bin_spike_train;
@@ -46,8 +47,19 @@ fn solve_linear(a: &[f64], b: &[f64], n: usize) -> Vec<f64> {
         }
         for row in (col + 1)..n {
             let factor = aug[row * stride + col] / pivot;
-            for j in col..stride {
-                aug[row * stride + j] -= factor * aug[col * stride + j];
+            let mut j = col;
+            let r_off = row * stride;
+            let c_off = col * stride;
+            while j + 3 < stride {
+                aug[r_off + j] -= factor * aug[c_off + j];
+                aug[r_off + j + 1] -= factor * aug[c_off + j + 1];
+                aug[r_off + j + 2] -= factor * aug[c_off + j + 2];
+                aug[r_off + j + 3] -= factor * aug[c_off + j + 3];
+                j += 4;
+            }
+            while j < stride {
+                aug[r_off + j] -= factor * aug[c_off + j];
+                j += 1;
             }
         }
     }
@@ -67,14 +79,18 @@ fn solve_linear(a: &[f64], b: &[f64], n: usize) -> Vec<f64> {
 
 /// Solve A X = B where A is n×n and B is n×m. Returns X (n×m, row-major).
 fn solve_matrix(a: &[f64], b: &[f64], n: usize, m: usize) -> Vec<f64> {
-    let mut result = vec![0.0_f64; n * m];
-    for col in 0..m {
+    let result = vec![0.0_f64; n * m];
+    (0..m).into_par_iter().for_each(|col| {
         let rhs: Vec<f64> = (0..n).map(|i| b[i * m + col]).collect();
         let x = solve_linear(a, &rhs, n);
-        for i in 0..n {
-            result[i * m + col] = x[i];
+        // SAFETY: Each thread writes to unique indices based on col.
+        unsafe {
+            let ptr = result.as_ptr() as *mut f64;
+            for i in 0..n {
+                *ptr.add(i * m + col) = x[i];
+            }
         }
-    }
+    });
     result
 }
 
@@ -300,67 +316,80 @@ fn var_coefficients(trains_binned: &[Vec<f64>], order: usize) -> (Vec<f64>, Vec<
     let n_pts = t - order;
     let x_cols = order * d;
 
-    // Build y: (n_pts × d) row-major
-    let mut y = vec![0.0_f64; n_pts * d];
+    // Build y_cols: (d × n_pts) column-major
+    let mut y_cols = vec![vec![0.0_f64; n_pts]; d];
     for ch in 0..d {
         for i in 0..n_pts {
-            y[i * d + ch] = trains_binned[ch][order + i];
+            y_cols[ch][i] = trains_binned[ch][order + i];
         }
     }
 
-    // Build x: (n_pts × order*d) row-major
-    let mut x = vec![0.0_f64; n_pts * x_cols];
+    // Build x_cols_data: (x_cols × n_pts) column-major
+    let mut x_cols_data = vec![vec![0.0_f64; n_pts]; x_cols];
     for i in 0..n_pts {
         for k in 0..order {
             for ch in 0..d {
-                x[i * x_cols + k * d + ch] = trains_binned[ch][order - k - 1 + i];
+                x_cols_data[k * d + ch][i] = trains_binned[ch][order - k - 1 + i];
             }
         }
     }
 
     // X^T X + reg
     let mut xtx = vec![0.0_f64; x_cols * x_cols];
-    for i in 0..x_cols {
-        for j in 0..x_cols {
-            let mut s = 0.0;
-            for p in 0..n_pts {
-                s += x[p * x_cols + i] * x[p * x_cols + j];
+    xtx.par_chunks_exact_mut(x_cols)
+        .enumerate()
+        .for_each(|(i, row)| {
+            for j in 0..=i {
+                let dot = crate::simd::dot_f64_dispatch(&x_cols_data[i], &x_cols_data[j]);
+                row[j] = dot + if i == j { 1e-8 } else { 0.0 };
             }
-            xtx[i * x_cols + j] = s + if i == j { 1e-8 } else { 0.0 };
+        });
+    // Mirror the matrix (serial, small overhead)
+    for i in 0..x_cols {
+        for j in (i + 1)..x_cols {
+            xtx[i * x_cols + j] = xtx[j * x_cols + i];
         }
     }
 
     // X^T Y
     let mut xty = vec![0.0_f64; x_cols * d];
-    for i in 0..x_cols {
-        for j in 0..d {
-            let mut s = 0.0;
-            for p in 0..n_pts {
-                s += x[p * x_cols + i] * y[p * d + j];
+    xty.par_chunks_exact_mut(d)
+        .enumerate()
+        .for_each(|(i, row)| {
+            for j in 0..d {
+                row[j] = crate::simd::dot_f64_dispatch(&x_cols_data[i], &y_cols[j]);
             }
-            xty[i * d + j] = s;
-        }
-    }
+        });
 
     // beta = (X^T X)^{-1} X^T Y
     let beta = solve_matrix(&xtx, &xty, x_cols, d);
 
-    // Residuals = Y - X beta
+    // Residuals Sigma = (1/N) (Y - X beta)^T (Y - X beta)
     let mut sigma = vec![0.0_f64; d * d];
     let n_norm = n_pts.max(1) as f64;
-    for i in 0..d {
-        for j in 0..d {
-            let mut s = 0.0;
+
+    // Precompute residuals: res_cols = y_cols - X_cols * beta (parallel)
+    let res_cols: Vec<Vec<f64>> = (0..d)
+        .into_par_iter()
+        .map(|j| {
+            let mut res = vec![0.0_f64; n_pts];
             for p in 0..n_pts {
-                let mut ri = y[p * d + i];
-                let mut rj = y[p * d + j];
+                let mut r = y_cols[j][p];
                 for c in 0..x_cols {
-                    ri -= x[p * x_cols + c] * beta[c * d + i];
-                    rj -= x[p * x_cols + c] * beta[c * d + j];
+                    r -= x_cols_data[c][p] * beta[c * d + j];
                 }
-                s += ri * rj;
+                res[p] = r;
             }
-            sigma[i * d + j] = s / n_norm;
+            res
+        })
+        .collect();
+
+    for i in 0..d {
+        for j in 0..=i {
+            let dot = crate::simd::dot_f64_dispatch(&res_cols[i], &res_cols[j]);
+            let val = dot / n_norm;
+            sigma[i * d + j] = val;
+            sigma[j * d + i] = val;
         }
     }
 
@@ -851,7 +880,7 @@ mod tests {
         let (gc, _) = spectral_granger_causality(&trains, 5, 3, 16);
         // Diagonal entries (i==j) should be 0
         for fi in 0..16 {
-            assert_eq!(gc[0 * 16 + fi], 0.0, "GC[0,0] should be 0");
+            assert_eq!(gc[fi], 0.0, "GC[0,0] should be 0");
             assert_eq!(gc[3 * 16 + fi], 0.0, "GC[1,1] should be 0");
         }
     }
@@ -887,7 +916,7 @@ mod tests {
         let (pdc, _) = partial_directed_coherence(&trains, 5, 3, 16);
         for &v in &pdc {
             assert!(
-                v >= 0.0 && v <= 1.0 + 1e-10,
+                (0.0..=1.0 + 1e-10).contains(&v),
                 "PDC should be in [0,1], got {v}"
             );
         }
@@ -913,7 +942,7 @@ mod tests {
         let (dtf, _) = directed_transfer_function(&trains, 5, 3, 16);
         for &v in &dtf {
             assert!(
-                v >= 0.0 && v <= 1.0 + 1e-10,
+                (0.0..=1.0 + 1e-10).contains(&v),
                 "DTF should be in [0,1], got {v}"
             );
         }

@@ -6,6 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Cross-correlation, synchrony, and covariance measures
 
+use rayon::prelude::*;
 use rustfft::{num_complex::Complex, FftPlanner};
 
 use super::basic::{bin_spike_train, spike_times};
@@ -42,19 +43,14 @@ pub fn cross_correlation(
         return (cc, lags_ms);
     }
 
-    let ni = n as isize;
     for (i, lag) in (-max_lag..=max_lag).enumerate() {
-        let mut sum = 0.0;
-        if lag >= 0 {
-            for j in 0..(ni - lag) as usize {
-                sum += a[j] * b[j + lag as usize];
-            }
+        let sum = if lag >= 0 {
+            let l = lag as usize;
+            crate::simd::dot_f64_dispatch(&a[..n - l], &b[l..n])
         } else {
-            let neg = (-lag) as usize;
-            for j in neg..n {
-                sum += a[j] * b[j - neg];
-            }
-        }
+            let l = (-lag) as usize;
+            crate::simd::dot_f64_dispatch(&a[l..n], &b[..n - l])
+        };
         cc[i] = sum / norm;
     }
 
@@ -285,16 +281,19 @@ pub fn covariance_matrix(trains: &[&[i32]], bin_size: usize) -> Vec<Vec<f64>> {
         return vec![vec![var]];
     }
 
-    let mut cov = vec![vec![0.0_f64; n]; n];
     let ddof = (min_bins as f64 - 1.0).max(1.0);
-    for i in 0..n {
+    let min_bins_f = min_bins as f64;
+    let mut cov = vec![vec![0.0_f64; n]; n];
+    cov.par_iter_mut().enumerate().for_each(|(i, row)| {
         for j in i..n {
-            let c: f64 = (0..min_bins)
-                .map(|k| (mat[i][k] - means[i]) * (mat[j][k] - means[j]))
-                .sum::<f64>()
-                / ddof;
-            cov[i][j] = c;
-            cov[j][i] = c;
+            let dot = crate::simd::dot_f64_dispatch(&mat[i], &mat[j]);
+            row[j] = (dot - min_bins_f * means[i] * means[j]) / ddof;
+        }
+    });
+    // Mirror
+    for i in 0..n {
+        for j in (i + 1)..n {
+            cov[j][i] = cov[i][j];
         }
     }
     cov

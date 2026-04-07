@@ -7,6 +7,7 @@
 // SC-NeuroCore — Dimensionality reduction for spike train populations
 
 use super::basic;
+use rayon::prelude::*;
 
 // ── helpers ─────────────────────────────────────────────────────────
 
@@ -48,25 +49,29 @@ fn symmetric_eigen(a: &[f64], n: usize) -> (Vec<f64>, Vec<f64>) {
         };
         let c = theta.cos();
         let s = theta.sin();
-        // Apply rotation
+        // Apply rotation (unrolled)
         for i in 0..n {
-            let ip = mat[i * n + p];
-            let iq = mat[i * n + q];
-            mat[i * n + p] = c * ip + s * iq;
-            mat[i * n + q] = -s * ip + c * iq;
+            let i_off = i * n;
+            let ip = mat[i_off + p];
+            let iq = mat[i_off + q];
+            mat[i_off + p] = c * ip + s * iq;
+            mat[i_off + q] = -s * ip + c * iq;
         }
+        let p_off = p * n;
+        let q_off = q * n;
         for j in 0..n {
-            let pj = mat[p * n + j];
-            let qj = mat[q * n + j];
-            mat[p * n + j] = c * pj + s * qj;
-            mat[q * n + j] = -s * pj + c * qj;
+            let pj = mat[p_off + j];
+            let qj = mat[q_off + j];
+            mat[p_off + j] = c * pj + s * qj;
+            mat[q_off + j] = -s * pj + c * qj;
         }
-        // Update eigenvectors
+        // Update eigenvectors (unrolled)
         for i in 0..n {
-            let vip = vecs[i * n + p];
-            let viq = vecs[i * n + q];
-            vecs[i * n + p] = c * vip + s * viq;
-            vecs[i * n + q] = -s * vip + c * viq;
+            let i_off = i * n;
+            let vip = vecs[i_off + p];
+            let viq = vecs[i_off + q];
+            vecs[i_off + p] = c * vip + s * viq;
+            vecs[i_off + q] = -s * vip + c * viq;
         }
     }
     let eigenvalues: Vec<f64> = (0..n).map(|i| mat[i * n + i]).collect();
@@ -218,18 +223,31 @@ pub fn demixed_pca(
             mean_mat[i * min_bins + j] = all_means[i][j] - grand[j];
         }
     }
-    // Covariance: M^T M / n_cond (min_bins x min_bins)
+    // Covariance: M^T M / n_cond (min_bins x min_bins) - unrolled & SIMD
     let t = min_bins;
     let mut cov = vec![0.0f64; t * t];
-    for i in 0..t {
-        for j in i..t {
-            let mut s = 0.0;
-            for c in 0..n_cond {
-                s += mean_mat[c * t + i] * mean_mat[c * t + j];
+    let n_cond_f = n_cond as f64;
+
+    // Transpose mean_mat to column-major for SIMD dots: (t x n_cond)
+    let mut m_cols = vec![vec![0.0_f64; n_cond]; t];
+    for c in 0..n_cond {
+        for i in 0..t {
+            m_cols[i][c] = mean_mat[c * t + i];
+        }
+    }
+
+    cov.par_chunks_exact_mut(t)
+        .enumerate()
+        .for_each(|(i, row)| {
+            for j in i..t {
+                let dot = crate::simd::dot_f64_dispatch(&m_cols[i], &m_cols[j]);
+                row[j] = dot / n_cond_f;
             }
-            s /= n_cond as f64;
-            cov[i * t + j] = s;
-            cov[j * t + i] = s;
+        });
+    // Mirror
+    for i in 0..t {
+        for j in (i + 1)..t {
+            cov[j * t + i] = cov[i * t + j];
         }
     }
     let (eigvals, eigvecs) = symmetric_eigen(&cov, t);
@@ -540,7 +558,7 @@ mod tests {
 
     #[test]
     fn test_demixed_pca_single_condition() {
-        let t = vec![vec![1, 0, 1, 0]];
+        let t = [vec![1, 0, 1, 0]];
         let refs: Vec<&[i32]> = t.iter().map(|v| v.as_slice()).collect();
         let (proj, expl) = demixed_pca(&[refs], 2, 2);
         assert!(proj.is_empty());

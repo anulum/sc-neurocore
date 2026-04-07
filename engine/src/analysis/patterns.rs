@@ -8,6 +8,8 @@
 
 /// Spike directionality (Kreuz et al. 2015).
 /// Returns asymmetry in [-1, 1]. Positive: A leads B.
+use rayon::prelude::*;
+
 pub fn spike_directionality(times_a: &[f64], times_b: &[f64], t_start: f64, t_end: f64) -> f64 {
     let mut ta: Vec<f64> = times_a
         .iter()
@@ -28,19 +30,27 @@ pub fn spike_directionality(times_a: &[f64], times_b: &[f64], t_start: f64, t_en
     let mut lead_a = 0_usize;
     let mut lead_b = 0_usize;
 
+    // Ensure tb is sorted for binary search
+    let mut tb_sorted = tb.clone();
+    tb_sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
+
     for &t in &ta {
-        let mut nearest_after = f64::INFINITY;
-        let mut nearest_before = f64::INFINITY;
-        for &tb_t in &tb {
-            let diff = tb_t - t;
-            if diff > 0.0 && diff < nearest_after {
-                nearest_after = diff;
-            } else if diff < 0.0 && (-diff) < nearest_before {
-                nearest_before = -diff;
-            }
-        }
-        if nearest_after.is_finite() && nearest_before.is_finite() {
-            if nearest_before < nearest_after {
+        let idx = tb_sorted.partition_point(|&x| x < t);
+
+        let nearest_after = if idx < tb_sorted.len() {
+            Some(tb_sorted[idx] - t)
+        } else {
+            None
+        };
+
+        let nearest_before = if idx > 0 {
+            Some(t - tb_sorted[idx - 1])
+        } else {
+            None
+        };
+
+        if let (Some(nb), Some(na)) = (nearest_before, nearest_after) {
+            if nb < na {
                 lead_b += 1;
             } else {
                 lead_a += 1;
@@ -60,13 +70,24 @@ pub fn spike_directionality(times_a: &[f64], times_b: &[f64], t_start: f64, t_en
 pub fn spike_train_order(times_list: &[&[f64]], t_start: f64, t_end: f64) -> Vec<f64> {
     let n = times_list.len();
     let mut mat = vec![0.0_f64; n * n];
-    for i in 0..n {
-        for j in (i + 1)..n {
-            let d = spike_directionality(times_list[i], times_list[j], t_start, t_end);
-            mat[i * n + j] = d;
-            mat[j * n + i] = -d;
-        }
-    }
+    mat.par_chunks_exact_mut(n)
+        .enumerate()
+        .for_each(|(i, row)| {
+            for j in 0..n {
+                if i == j {
+                    continue;
+                }
+                // Note: full matrix computation simplifies parallel dispatch
+                // even though directionality is antisymmetric.
+                if j > i {
+                    let d = spike_directionality(times_list[i], times_list[j], t_start, t_end);
+                    row[j] = d;
+                } else {
+                    let d = spike_directionality(times_list[j], times_list[i], t_start, t_end);
+                    row[j] = -d;
+                }
+            }
+        });
     mat
 }
 
@@ -79,19 +100,30 @@ pub fn cubic_higher_order(binary_train: &[i32], dt: f64, max_lag: usize) -> Vec<
     let x: Vec<f64> = binary_train.iter().map(|&v| v as f64 - mean).collect();
 
     let mut c3 = vec![0.0_f64; max_lag * max_lag];
-    for t1 in 0..max_lag {
-        for t2 in 0..max_lag {
-            let valid_n = n.saturating_sub(t1.max(t2));
-            if valid_n == 0 {
-                continue;
+    c3.par_chunks_exact_mut(max_lag)
+        .enumerate()
+        .for_each(|(t1, row)| {
+            for t2 in 0..max_lag {
+                let valid_n = n.saturating_sub(t1.max(t2));
+                if valid_n == 0 {
+                    continue;
+                }
+                let mut sum = 0.0_f64;
+                let mut k = 0;
+                while k + 3 < valid_n {
+                    sum += x[k] * x[k + t1] * x[k + t2];
+                    sum += x[k + 1] * x[k + 1 + t1] * x[k + 1 + t2];
+                    sum += x[k + 2] * x[k + 2 + t1] * x[k + 2 + t2];
+                    sum += x[k + 3] * x[k + 3 + t1] * x[k + 3 + t2];
+                    k += 4;
+                }
+                while k < valid_n {
+                    sum += x[k] * x[k + t1] * x[k + t2];
+                    k += 1;
+                }
+                row[t2] = sum / valid_n as f64;
             }
-            let mut sum = 0.0_f64;
-            for k in 0..valid_n {
-                sum += x[k] * x[k + t1] * x[k + t2];
-            }
-            c3[t1 * max_lag + t2] = sum / valid_n as f64;
-        }
-    }
+        });
     c3
 }
 
@@ -141,10 +173,7 @@ mod tests {
         let tb = vec![0.15, 0.35, 0.55];
         let trains: Vec<&[f64]> = vec![&ta, &tb];
         let mat = spike_train_order(&trains, 0.0, 1.0);
-        assert!(
-            (mat[0 * 2 + 1] + mat[1 * 2 + 0]).abs() < 1e-10,
-            "antisymmetric"
-        );
+        assert!((mat[1] + mat[2]).abs() < 1e-10, "antisymmetric");
         assert_eq!(mat[0], 0.0, "diagonal = 0");
     }
 

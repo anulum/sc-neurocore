@@ -200,7 +200,7 @@ fn bench_causality(c: &mut Criterion) {
 fn bench_decoding(c: &mut Criterion) {
     let mut g = c.benchmark_group("decoding");
     let n_neurons = 20;
-    let n_trials = 50;
+    let _n_trials = 50;
     let n_directions = 8;
 
     let mut trains = Vec::new();

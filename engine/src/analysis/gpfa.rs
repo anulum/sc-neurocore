@@ -621,6 +621,6 @@ mod tests {
     fn test_gp_kernel_decay() {
         let k = gp_kernel(20, 3.0, 1.0);
         // Off-diagonal should decay with distance
-        assert!(k[0 * 20 + 1] > k[0 * 20 + 10]);
+        assert!(k[1] > k[10]);
     }
 }

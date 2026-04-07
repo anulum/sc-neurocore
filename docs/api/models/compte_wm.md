@@ -427,3 +427,176 @@ The Compte model provides a mechanistic explanation:
 
 This model is the standard reference for computational models of
 spatial working memory in PFC (>2000 citations).
+
+---
+
+## Usage Examples
+
+### Example 1: Basic Python — current-driven spiking
+
+```python
+from sc_neurocore.neurons.models.compte_wm import CompteWMNeuron
+
+neuron = CompteWMNeuron()
+
+# Drive with constant current (no spike_in → no NMDA build-up)
+spikes = []
+for t in range(10000):
+    spike = neuron.step(2.0)
+    if spike:
+        spikes.append(t)
+
+print(f"Fired {len(spikes)} spikes in 10 s")
+print(f"s_nmda = {neuron.s_nmda:.6f} (low without recurrent input)")
+```
+
+### Example 2: Advanced Python — NMDA build-up with recurrent spikes
+
+```python
+from sc_neurocore.neurons.models.compte_wm import CompteWMNeuron
+
+neuron = CompteWMNeuron()
+
+# Simulate a brief stimulus followed by self-recurrent activity
+# Phase 1: strong drive + spike_in (stimulus period)
+for t in range(200):
+    neuron.step(3.0, spike_in=True)
+
+# Phase 2: no external drive — does NMDA sustain activity?
+sustained_spikes = 0
+for t in range(5000):
+    spike = neuron.step(0.0, spike_in=False)
+    sustained_spikes += spike
+
+print(f"Sustained spikes after stimulus: {sustained_spikes}")
+print(f"s_nmda = {neuron.s_nmda:.6f} (decays with τ=100 ms)")
+print(f"Mg²⁺ block at rest: {neuron._mg_block(neuron.v):.4f}")
+```
+
+### Example 3: PyO3 Rust — high-performance stepping
+
+```rust
+use sc_neurocore_engine::neurons::CompteWMNeuron;
+
+let mut neuron = CompteWMNeuron::new();
+
+// 10,000 steps with current drive
+let mut spikes = 0;
+for _ in 0..10_000 {
+    spikes += neuron.step(2.0, false);
+}
+println!("Compte WM: {spikes} spikes, s_nmda = {:.6}", neuron.s_nmda);
+
+// Reset
+neuron.reset();
+assert!((neuron.v - (-70.0)).abs() < 1e-12);
+```
+
+---
+
+## Technical Reference
+
+### Methods
+
+| Method | Signature | Returns | Description |
+|--------|-----------|---------|-------------|
+| `step` | `step(current, spike_in=False) → int` | 0 or 1 | Advance dt ms, return spike |
+| `reset` | `reset() → None` | — | Restore all 5 state vars to initial |
+| `_mg_block` | `_mg_block(v) → float` | 0–1 | Jahr-Stevens Mg²⁺ block factor |
+
+### Python/Rust Parity
+
+| Property | Python | Rust | Match |
+|----------|--------|------|-------|
+| State variables (5) | v, s_ampa, s_nmda, x_nmda, s_gaba | identical | EXACT |
+| Parameters (21) | All f64 defaults | All f64 defaults | EXACT |
+| Exponential decays | `np.exp(-dt/τ)` | `(-dt/τ).exp()` | EXACT |
+| Mg²⁺ block | `1/(1+mg/3.57·exp(-0.062·V))` | identical | EXACT |
+| NMDA Euler | `s_nmda += (…)·dt` | `s_nmda += (…)·dt` | EXACT |
+| Voltage (Euler) | `V += (…)/C_m·dt` | `V += (…)/C_m·dt` | EXACT |
+| Spike reset + GABA | `V=V_reset, s_gaba+=1` | identical | EXACT |
+| Interface | `step(current, spike_in=False)` | `step(f64, bool)` | EXACT |
+
+### NetworkRunner limitations
+
+The `wrap_2arg_f64!` macro in network_runner.rs converts the 2-argument
+`step(current, spike_in)` to a 1-argument interface by fixing
+`spike_in = false`. This means:
+
+- **Working memory recurrence is not available through NetworkRunner**
+- For persistent activity, use the Python API directly with explicit
+  `spike_in=True` feedback
+- The NetworkRunner drives the model as a standard conductance-based
+  spiking neuron without NMDA self-excitation
+
+### Supported operations
+
+| Operation | Supported | Notes |
+|-----------|-----------|-------|
+| Population | Yes | Standard interface |
+| Projection | Yes | Wiring works, but spike_in fixed to false |
+| NetworkRunner | Partial | Current only; no spike_in recurrence |
+| SpikeMonitor | Yes | Binary spike output |
+| PoissonInput | Yes | Current-based drive |
+| PyO3 bridge | Yes | Full 2-arg step() with spike_in |
+| get_state() | Partial | Returns {v, s_nmda} only (3 vars missing) |
+
+---
+
+## Performance Benchmarks
+
+### Criterion 0.8 (Rust engine)
+
+Measured on i5-11600K @ 3.90 GHz, single-threaded, 2026-04-05.
+
+| Benchmark | Steps | Median | Per step |
+|-----------|------:|-------:|---------:|
+| `compte_wm_10k_steps` | 10 000 | 231 µs | **23.1 ns** |
+
+3 exp() calls per step (AMPA decay, x_nmda decay, Mg²⁺ block) +
+1 Euler step (NMDA) + 1 Euler step (voltage). No sub-stepping.
+
+### Python throughput
+
+| Metric | Value |
+|--------|------:|
+| Isolation | ~262 000 steps/s |
+| Network (10 neurons, 1 s) | ~220 000 neuron-steps/s |
+
+### Rust speedup
+
+| Metric | Python | Rust | Speedup |
+|--------|-------:|-----:|--------:|
+| Per step | ~3.8 µs | 23.1 ns | **~164×** |
+
+---
+
+## Citations
+
+1. Compte, A., Brunel, N., Goldman-Rakic, P. S. & Wang, X.-J. (2000).
+   Synaptic mechanisms and network dynamics underlying spatial working
+   memory in a cortical network model. *Cerebral Cortex*, 10(9),
+   910–923.
+   DOI: [10.1093/cercor/10.9.910](https://doi.org/10.1093/cercor/10.9.910)
+
+2. Wang, X.-J. (2001). Synaptic reverberation underlying mnemonic
+   persistent activity. *Trends in Neurosciences*, 24(8), 455–463.
+   DOI: [10.1016/S0166-2236(00)01868-3](https://doi.org/10.1016/S0166-2236(00)01868-3)
+
+3. Wang, X.-J. (2002). Probabilistic decision making by slow reverberation
+   in cortical circuits. *Neuron*, 36(5), 955–968.
+   DOI: [10.1016/S0896-6273(02)01092-9](https://doi.org/10.1016/S0896-6273(02)01092-9)
+
+4. Jahr, C. E. & Stevens, C. F. (1990). Voltage dependence of
+   NMDA-activated macroscopic conductances predicted by single-channel
+   kinetics. *Journal of Neuroscience*, 10(9), 3178–3182.
+   DOI: [10.1523/JNEUROSCI.10-09-03178.1990](https://doi.org/10.1523/JNEUROSCI.10-09-03178.1990)
+
+5. Goldman-Rakic, P. S. (1995). Cellular basis of working memory.
+   *Neuron*, 14(3), 477–485.
+   DOI: [10.1016/0896-6273(95)90304-6](https://doi.org/10.1016/0896-6273(95)90304-6)
+
+6. Brunel, N. & Wang, X.-J. (2001). Effects of neuromodulation in a
+   cortical network model of object working memory dominated by recurrent
+   inhibition. *Journal of Computational Neuroscience*, 11(1), 63–85.
+   DOI: [10.1023/A:1011204814320](https://doi.org/10.1023/A:1011204814320)

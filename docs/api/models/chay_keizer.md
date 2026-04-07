@@ -433,3 +433,170 @@ The model predicts that:
 
 This prediction was confirmed by simultaneous electrophysiology and
 Ca²⁺ imaging experiments (Santos et al., Diabetes 55, 2006).
+
+---
+
+## Usage Examples
+
+### Example 1: Basic Python — default behaviour (fixed point)
+
+```python
+from sc_neurocore.neurons.models.chay_keizer import ChayKeizerNeuron
+
+neuron = ChayKeizerNeuron()
+
+# Default parameters: fires ~1 transient spike, then converges
+spikes = 0
+for t in range(50000):
+    spikes += neuron.step(0.0)
+
+print(f"Spikes at I=0: {spikes}")  # ~1 (transient)
+print(f"V converged to: {neuron.v:.1f} mV")
+print(f"Ca = {neuron.ca:.4f} µM")
+```
+
+### Example 2: Advanced Python — Ca²⁺ and K(Ca) activation dynamics
+
+```python
+from sc_neurocore.neurons.models.chay_keizer import ChayKeizerNeuron
+
+neuron = ChayKeizerNeuron()
+
+# Track Ca²⁺ and K(Ca) activation over time
+voltages, calcium, kca_gates = [], [], []
+for t in range(10000):
+    neuron.step(0.0)
+    voltages.append(neuron.v)
+    calcium.append(neuron.ca)
+    kca_gates.append(neuron.ca / (neuron.ca + neuron.k_d))
+
+# At equilibrium: Ca determines K(Ca) activation
+# q_KCa = Ca/(Ca + K_d) — half-activation at Ca = K_d = 1.0 µM
+print(f"Final Ca: {calcium[-1]:.4f} µM")
+print(f"Final q_KCa: {kca_gates[-1]:.4f}")
+print(f"V range: [{min(voltages):.1f}, {max(voltages):.1f}] mV")
+```
+
+### Example 3: PyO3 Rust — high-performance stepping
+
+```rust
+use sc_neurocore_engine::neurons::ChayKeizerNeuron;
+
+let mut neuron = ChayKeizerNeuron::new();
+
+// 100,000 steps
+let mut spikes = 0;
+for _ in 0..100_000 {
+    spikes += neuron.step(0.0);
+}
+println!("ChayKeizer: {spikes} spikes, V={:.2} mV, Ca={:.4} µM",
+    neuron.v, neuron.ca);
+
+// Reset
+neuron.reset();
+assert!((neuron.v - (-50.0)).abs() < 1e-12);
+```
+
+---
+
+## Technical Reference
+
+### Methods
+
+| Method | Signature | Returns | Description |
+|--------|-----------|---------|-------------|
+| `step` | `step(current: float) → int` | 0 or 1 | Advance dt ms, return spike |
+| `reset` | `reset() → None` | — | Restore v, n, ca to initial values |
+
+### Python/Rust Parity
+
+| Property | Python | Rust | Match |
+|----------|--------|------|-------|
+| m_inf sigmoid | `1/(1+exp(clip(-(V+25)/8)))` | `1/(1+(-(V+25)/8).exp())` | NEAR (Python clips exp arg) |
+| n_inf sigmoid | `1/(1+exp(clip(-(V+18)/14)))` | `1/(1+(-(V+18)/14).exp())` | EXACT (fixed in 3606709) |
+| tau_n | `20/(1+exp(clip((V+18)/14)))` | `(20/(1+((V+18)/14).exp())).max(0.1)` | EXACT (fixed in 3606709) |
+| K(Ca) activation | `Ca/(Ca+K_d)` | `Ca/(Ca+K_d)` | EXACT |
+| Ionic currents | I_Ca, I_K, I_KCa, I_L | identical | EXACT |
+| Voltage update + clamp | `V += (…)·dt, clip(-200,200)` | identical | EXACT |
+| n-gate update | `(n_inf-n)/max(tau_n,0.1)·dt` | `(n_inf-n)/tau_n·dt` (tau_n already floored) | EXACT |
+| Ca²⁺ update | `max(0, Ca+(…)·dt)` | `(Ca+(…)·dt).max(0)` | EXACT |
+| Spike detection | Upward crossing at −20 mV | identical | EXACT |
+| Reset | v=−50, n=0.01, ca=0.1 | identical | EXACT |
+| Parameters (15) | All identical | All identical | EXACT |
+
+**Note:** Prior to commit 3606709, Rust had n_inf slope /7.0 (should be
+/14.0) and constant tau_n=20.0 (should be voltage-dependent). Both now
+match Python and the original Chay & Keizer (1983) publication.
+
+### Supported operations
+
+| Operation | Supported | Notes |
+|-----------|-----------|-------|
+| Population | Yes | Standard interface |
+| Projection | Yes | Standard wiring |
+| NetworkRunner | Yes | `ChayKeizer` variant |
+| SpikeMonitor | Yes | Binary spike output |
+| PoissonInput | Yes | Tested |
+| PyO3 bridge | Yes | `PyChayKeizerNeuron` with v, n, ca state |
+
+---
+
+## Performance Benchmarks
+
+### Criterion 0.8 (Rust engine)
+
+Measured on i5-11600K @ 3.90 GHz, single-threaded, 2026-04-05.
+
+| Benchmark | Steps | Median | Per step |
+|-----------|------:|-------:|---------:|
+| `chay_keizer_1k_steps` | 1 000 | 30.2 µs | **30.2 ns** |
+
+3 exp() calls per step (m_inf, n_inf, tau_n) + Ca²⁺ dynamics.
+No sub-stepping.
+
+### Python throughput
+
+| Metric | Value |
+|--------|------:|
+| Isolation | >5 000 steps/s |
+
+### Computational cost
+
+- 3 exp() per step (m_inf Boltzmann, n_inf Boltzmann, tau_n sigmoid)
+- 4 ionic current evaluations
+- 3 state variable updates (V, n, Ca)
+- Voltage clamping + n clamping + Ca floor
+
+---
+
+## Citations
+
+1. Chay, T. R. & Keizer, J. (1983). Minimal model for membrane
+   oscillations in the pancreatic beta-cell. *Biophysical Journal*,
+   42(2), 181–190.
+   DOI: [10.1016/S0006-3495(83)84384-7](https://doi.org/10.1016/S0006-3495(83)84384-7)
+
+2. Chay, T. R. (1985). Chaos in a three-variable model of an excitable
+   cell. *Physica D: Nonlinear Phenomena*, 16(2), 233–242.
+   DOI: [10.1016/0167-2789(85)90060-0](https://doi.org/10.1016/0167-2789(85)90060-0)
+
+3. Sherman, A., Rinzel, J. & Keizer, J. (1988). Emergence of organized
+   bursting in clusters of pancreatic beta-cells by channel sharing.
+   *Biophysical Journal*, 54(3), 411–425.
+   DOI: [10.1016/S0006-3495(88)82975-0](https://doi.org/10.1016/S0006-3495(88)82975-0)
+
+4. Keizer, J. & Magnus, G. (1989). ATP-sensitive potassium channel and
+   bursting in the pancreatic beta cell. *Biophysical Journal*, 56(2),
+   229–242.
+   DOI: [10.1016/S0006-3495(89)82669-4](https://doi.org/10.1016/S0006-3495(89)82669-4)
+
+5. Bertram, R., Butte, M. J., Kiemel, T. & Sherman, A. (1995). Topological
+   and phenomenological classification of bursting oscillations.
+   *Bulletin of Mathematical Biology*, 57(3), 413–439.
+   DOI: [10.1007/BF02460633](https://doi.org/10.1007/BF02460633)
+
+6. Santos, R. M., Rosario, L. M., Nadal, A., Garcia-Sancho, J.,
+   Soria, B. & Valdeolmillos, M. (1991). Widespread synchronous
+   [Ca²⁺]_i oscillations due to bursting electrical activity in single
+   pancreatic islets. *Pflügers Archiv*, 418(4), 417–422.
+   DOI: [10.1007/BF00550880](https://doi.org/10.1007/BF00550880)

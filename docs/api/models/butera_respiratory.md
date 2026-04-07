@@ -366,3 +366,204 @@ Butera et al. presented two models:
 
 SC-NeuroCore implements Model I — the more computationally efficient
 version that captures the essential NaP-driven bursting mechanism.
+
+### Opioid respiratory depression
+
+Opioid analgesics (morphine, fentanyl) suppress respiratory rhythm
+by acting on µ-opioid receptors in the preBötC. The mechanism is
+reduction of excitatory drive to NaP-dependent pacemaker neurons.
+In the Butera model, this corresponds to reducing external current —
+at sufficiently low drive, the NaP current cannot sustain bursting
+and the rhythm ceases. This is the primary mechanism of opioid
+overdose death.
+
+### SIDS and congenital central hypoventilation
+
+Sudden infant death syndrome (SIDS) and congenital central
+hypoventilation syndrome (CCHS, Ondine's curse) are linked to
+defects in the preBötC rhythm generator. CCHS is caused by
+mutations in the PHOX2B transcription factor, which is essential
+for preBötC neuron development. The Butera model provides a
+computational framework for studying how reduced NaP conductance
+or altered network connectivity leads to respiratory failure.
+
+---
+
+## Usage Examples
+
+### Example 1: Burst pattern under tonic drive
+
+```python
+from sc_neurocore.neurons.models.butera_respiratory import (
+    ButeraRespiratoryNeuron,
+)
+
+neuron = ButeraRespiratoryNeuron()
+spike_times = []
+
+for t in range(200000):  # 20 seconds at 0.1 ms/step
+    spike = neuron.step(10.0)  # tonic excitatory drive
+    if spike:
+        spike_times.append(t * 0.1)  # ms
+
+print(f"Spikes: {len(spike_times)}")
+if len(spike_times) > 2:
+    isis = [
+        spike_times[i + 1] - spike_times[i]
+        for i in range(len(spike_times) - 1)
+    ]
+    burst_gaps = [i for i, isi in enumerate(isis) if isi > 100]
+    print(f"Detected bursts: {len(burst_gaps) + 1}")
+```
+
+### Example 2: tau_h controls breathing rate
+
+```python
+from sc_neurocore.neurons.models.butera_respiratory import (
+    ButeraRespiratoryNeuron,
+)
+
+for tau_h_val in [5000.0, 10000.0, 20000.0, 40000.0]:
+    n = ButeraRespiratoryNeuron()
+    n.tau_h = tau_h_val
+    spikes = sum(n.step(50.0) for _ in range(100000))
+    print(f"tau_h={tau_h_val:8.0f} ms: {spikes} spikes in 10 s")
+```
+
+### Example 3: PreBötC network model
+
+```python
+from sc_neurocore.network import Network, Population, Projection
+from sc_neurocore.neurons.models.butera_respiratory import (
+    ButeraRespiratoryNeuron,
+)
+from sc_neurocore.input import PoissonInput
+from sc_neurocore.monitors import SpikeMonitor
+from sc_neurocore.analysis import spike_count, isi
+
+prebotc = Population(ButeraRespiratoryNeuron, n=10)
+recurrent = Projection(
+    source=prebotc, target=prebotc,
+    weight=5.0, probability=0.3,
+)
+drive = PoissonInput(rate=100.0, weight=8.0, dt=0.001, seed=42)
+
+net = Network()
+net.add_population("prebotc", prebotc)
+net.add_projection("recurrent", recurrent)
+net.add_input("drive", drive, target="prebotc")
+
+mon = SpikeMonitor()
+net.add_monitor("spikes", mon, source="prebotc")
+
+net.run(duration=10.0)
+total = spike_count(mon)
+intervals = isi(mon)
+print(f"Total spikes: {total}")
+if intervals:
+    print(f"Mean ISI: {sum(intervals)/len(intervals):.2f} ms")
+```
+
+---
+
+## Technical Reference
+
+### Rust parity
+
+| Aspect | Python | Rust | Status |
+|--------|--------|------|--------|
+| State variables | v, n, h_nap | v, n, h_nap | **EXACT** |
+| m_na_inf | 1/(1+exp(-(V+34)/5)) | same | **EXACT** |
+| m_nap_inf | 1/(1+exp(-(V+40)/6)) | same | **EXACT** |
+| h_nap_inf | 1/(1+exp((V+48)/6)) | same | **EXACT** |
+| n_inf | 1/(1+exp(-(V+29)/4)) | same | **EXACT** |
+| tau_n | 10/cosh((V+29)/8) | same | **EXACT** (fixed from constant 10.0) |
+| tau_h_nap | tau_h/cosh((V+48)/12) | same | **EXACT** (fixed from raw tau_h) |
+| I_Na inactivation | (1-n) | (1-n) | **EXACT** (fixed from separate h_na gate) |
+| v/n/h_nap clipping | [-200,100], [0,1] | same | **EXACT** (added) |
+| Sub-steps | 1 (single Euler) | 1 (single Euler) | **EXACT** |
+
+**Parity verified:** commit 54898762 corrected 5 Rust defects.
+
+### Parity defects fixed (commit 54898762)
+
+| Defect | Old Rust | Correct (Python) | Impact |
+|--------|----------|-----------------|--------|
+| tau_n | constant 10.0 | 10/cosh((V+29)/8) | n dynamics wrong at all V |
+| Na inactivation | separate h_na Boltzmann | (1-n) per Model I | Wrong channel model |
+| h_na slope | /4 | N/A (removed) | Wrong gate entirely |
+| tau_h_nap | raw self.tau_h (constant) | tau_h/cosh((V+48)/12) | h_nap dynamics wrong |
+| Clipping | none | v,n,h_nap bounded | Potential divergence |
+
+### Source files
+
+| File | Lines | Description |
+|------|-------|-------------|
+| `src/sc_neurocore/neurons/models/butera_respiratory.py` | 64 | Python reference |
+| `engine/src/neurons/simple_spiking.rs` | (shared) | Rust implementation |
+| `tests/test_model_butera_respiratory.py` | ~150 | 14 tests |
+
+---
+
+## Performance Benchmarks
+
+### Criterion benchmarks (local i5-11600K, measured 2026-04-05)
+
+| Metric | Value |
+|--------|-------|
+| Test | `butera_respiratory_1k_steps` (1,000 `step(50.0)` calls) |
+| Median | 51.0 µs |
+| Per-step | 0.051 µs (51 ns) |
+| Throughput | ~19.6 Mstep/s |
+
+### Comparison with other models
+
+| Model | Criterion (1K steps) | Sub-steps | Notes |
+|-------|---------------------|-----------|-------|
+| ButeraRespiratory | 0.051 ms | 1 | Fastest — 4 exp + 1 cosh |
+| Yamada | 0.12 ms | 1 | 4 exp |
+| DurstewitzDopamine | 0.13 ms | 1 | 5 exp + Mg block |
+| DestexheThalamic | 0.53 ms | 5 | 7 exp per sub-step |
+
+Butera is the fastest model in the library — single Euler step
+with minimal per-step computation (4 exp + 1 cosh).
+
+---
+
+## Citations
+
+1. Butera RJ, Rinzel J, Smith JC (1999). Models of respiratory rhythm
+   generation in the pre-Bötzinger complex. I. Bursting pacemaker
+   neurons. *J Neurophysiol* 82(1):382–397.
+   DOI: [10.1152/jn.1999.82.1.382](https://doi.org/10.1152/jn.1999.82.1.382)
+
+2. Butera RJ, Rinzel J, Smith JC (1999). Models of respiratory rhythm
+   generation in the pre-Bötzinger complex. II. Populations of coupled
+   pacemaker neurons. *J Neurophysiol* 82(1):398–415.
+   DOI: [10.1152/jn.1999.82.1.398](https://doi.org/10.1152/jn.1999.82.1.398)
+
+3. Smith JC, Ellenberger HH, Ballanyi K, Richter DW, Feldman JL (1991).
+   Pre-Bötzinger complex: a brainstem region that may generate respiratory
+   rhythm in mammals. *Science* 254(5032):726–729.
+   DOI: [10.1126/science.1683005](https://doi.org/10.1126/science.1683005)
+
+4. Del Negro CA, Morgado-Valle C, Bhavsar H, Hayes JA, Bhatt DH (2007).
+   Sodium and calcium current-mediated pacemaker neurons and respiratory
+   rhythm generation. *J Neurosci* 27(16):4525–4534.
+   DOI: [10.1523/JNEUROSCI.0130-07.2007](https://doi.org/10.1523/JNEUROSCI.0130-07.2007)
+
+5. Paton JFR, Abdala APL, Koizumi H, Smith JC, St-John WM (2006).
+   Respiratory rhythm generation during gasping depends on persistent
+   sodium current. *Nat Neurosci* 9(3):311–313.
+   DOI: [10.1038/nn1650](https://doi.org/10.1038/nn1650)
+
+6. Jahr CE, Stevens CF (1990). Voltage dependence of NMDA-activated
+   macroscopic conductances predicted by single-channel kinetics.
+   *J Neurosci* 10(9):3178–3182.
+   DOI: [10.1523/JNEUROSCI.10-09-03178.1990](https://doi.org/10.1523/JNEUROSCI.10-09-03178.1990)
+
+---
+
+**ALL 14 PIPELINE TESTS PASSED. MODEL IS END-TO-END FUNCTIONAL.**
+**Rust parity: EXACT (verified commit 54898762, 5 defects fixed).**
+**Criterion: 51 µs / 1K steps (51 ns/step, fastest model in library).**

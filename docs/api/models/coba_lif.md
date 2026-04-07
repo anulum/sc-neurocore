@@ -416,3 +416,176 @@ For large network simulations:
   matter for the phenomenon being studied
 - For E/I balance studies, COBA is preferred because inhibition
   naturally shunts near E_i, preventing pathological hyperpolarisation
+
+---
+
+## Usage Examples
+
+### Example 1: Basic Python — conductance-driven spiking
+
+```python
+from sc_neurocore.neurons.models.coba_lif import COBALIFNeuron
+
+neuron = COBALIFNeuron()
+
+# Drive with constant current
+spike_count = 0
+for t in range(10000):
+    spike = neuron.step(current=500.0)
+    spike_count += spike
+
+print(f"Spikes: {spike_count} in 10 s")
+print(f"V = {neuron.v:.1f} mV, g_e = {neuron.g_e:.4f}, g_i = {neuron.g_i:.4f}")
+```
+
+### Example 2: Advanced Python — excitatory/inhibitory conductance injection
+
+```python
+from sc_neurocore.neurons.models.coba_lif import COBALIFNeuron
+import numpy as np
+
+neuron = COBALIFNeuron()
+rng = np.random.default_rng(42)
+
+# Simulate Poisson-like E/I conductance bombardment
+voltages, spikes = [], []
+for t in range(5000):
+    # Excitatory: ~100 Hz Poisson × 0.5 nS per event
+    delta_ge = rng.poisson(0.01) * 0.5
+    # Inhibitory: ~25 Hz Poisson × 2.0 nS per event
+    delta_gi = rng.poisson(0.0025) * 2.0
+    spike = neuron.step(0.0, delta_ge=delta_ge, delta_gi=delta_gi)
+    voltages.append(neuron.v)
+    spikes.append(spike)
+
+total = sum(spikes)
+print(f"Spikes: {total}, rate: {total / 0.5:.1f} Hz")
+print(f"Mean V: {np.mean(voltages):.1f} mV (high-conductance state)")
+```
+
+### Example 3: PyO3 Rust — high-performance stepping
+
+```rust
+use sc_neurocore_engine::neurons::COBALIFNeuron;
+
+let mut neuron = COBALIFNeuron::new();
+
+// Pure current drive (delta_ge=0, delta_gi=0)
+let mut spikes = 0;
+for _ in 0..100_000 {
+    spikes += neuron.step(500.0, 0.0, 0.0);
+}
+println!("COBA LIF: {spikes} spikes in 100K steps");
+println!("V = {:.2} mV, g_e = {:.4}, g_i = {:.4}",
+    neuron.v, neuron.g_e, neuron.g_i);
+
+neuron.reset();
+assert!((neuron.v - (-65.0)).abs() < 1e-12);
+```
+
+---
+
+## Technical Reference
+
+### Methods
+
+| Method | Signature | Returns | Description |
+|--------|-----------|---------|-------------|
+| `step` | `step(current, delta_ge=0, delta_gi=0) → int` | 0 or 1 | Advance dt ms, inject conductances, return spike |
+| `reset` | `reset() → None` | — | Restore v=E_L, g_e=0, g_i=0 |
+
+### Python/Rust Parity
+
+| Property | Python | Rust | Match |
+|----------|--------|------|-------|
+| Conductance injection | `g_e += Δg_e` | `self.g_e += delta_ge` | EXACT |
+| Synaptic current | `g_e·(V-E_e) + g_i·(V-E_i)` | identical | EXACT |
+| Voltage (Euler) | `V += (-g_L·(V-E_L) - I_syn + I) / C_m · dt` | identical | EXACT |
+| g_e decay (exact exp) | `g_e *= exp(-dt/τ_e)` | `g_e *= (-dt/τ_e).exp()` | EXACT |
+| g_i decay (exact exp) | `g_i *= exp(-dt/τ_i)` | `g_i *= (-dt/τ_i).exp()` | EXACT |
+| Spike condition | `V ≥ θ` | `V ≥ θ` | EXACT |
+| Reset | `V = V_reset` | `V = V_reset` | EXACT |
+| Parameters (13) | All f64 | All f64 | EXACT |
+
+### NetworkRunner wrapper
+
+The NetworkRunner uses `wrap_3arg!` macro to adapt the 3-argument
+`step(current, delta_ge, delta_gi)` to a 1-argument interface by
+hardcoding `delta_ge=0.0, delta_gi=0.0`. This means conductance
+injection is only available through the Python API, not the
+NetworkRunner.
+
+### Supported operations
+
+| Operation | Supported | Notes |
+|-----------|-----------|-------|
+| Population | Yes | Standard interface |
+| Projection | Yes | Self-recurrent tested |
+| NetworkRunner | Yes (current only) | `WrCOBALIFCell` wrapper, Δg_e/Δg_i = 0 |
+| SpikeMonitor | Yes | Binary spike output |
+| PoissonInput | Yes | Tested at 500 Hz |
+| PyO3 bridge | Yes | Full 3-arg step() with defaults |
+| Conductance injection | Python only | Not via NetworkRunner |
+
+---
+
+## Performance Benchmarks
+
+### Criterion 0.8 (Rust engine)
+
+Measured on i5-11600K @ 3.90 GHz, single-threaded, 2026-04-05.
+
+| Benchmark | Steps | Median | Per step |
+|-----------|------:|-------:|---------:|
+| `coba_lif_10k_steps` | 10 000 | 102 µs | **10.2 ns** |
+
+2 exp() calls per step (g_e decay, g_i decay) + Euler voltage update.
+No sub-stepping.
+
+### Python throughput
+
+| Metric | Value |
+|--------|------:|
+| Isolation | ~477 000 steps/s |
+| Network (50 neurons, 0.5 s) | ~400 000 neuron-steps/s |
+
+### Rust speedup
+
+| Metric | Python | Rust | Speedup |
+|--------|-------:|-----:|--------:|
+| Per step | ~2.1 µs | 10.2 ns | **~206×** |
+
+---
+
+## Citations
+
+1. Destexhe, A., Rudolph, M. & Paré, D. (2003). The high-conductance
+   state of neocortical neurons in vivo. *Nature Reviews Neuroscience*,
+   4(9), 739–751.
+   DOI: [10.1038/nrn1198](https://doi.org/10.1038/nrn1198)
+
+2. Brette, R., Rudolph, M., Carnevale, T., Hines, M., Beeman, D.,
+   Bower, J. M., … & Destexhe, A. (2007). Simulation of networks of
+   spiking neurons: a review of tools and strategies. *Journal of
+   Computational Neuroscience*, 23(3), 349–398.
+   DOI: [10.1007/s10827-007-0038-6](https://doi.org/10.1007/s10827-007-0038-6)
+
+3. Vogels, T. P. & Abbott, L. F. (2005). Signal propagation and logic
+   gating in networks of integrate-and-fire neurons. *Journal of
+   Neuroscience*, 25(46), 10786–10795.
+   DOI: [10.1523/JNEUROSCI.3508-05.2005](https://doi.org/10.1523/JNEUROSCI.3508-05.2005)
+
+4. Brunel, N. (2000). Dynamics of sparsely connected networks of
+   excitatory and inhibitory spiking neurons. *Journal of Computational
+   Neuroscience*, 8(3), 183–208.
+   DOI: [10.1023/A:1008925309027](https://doi.org/10.1023/A:1008925309027)
+
+5. Kuhn, A., Aertsen, A. & Rotter, S. (2004). Neuronal integration of
+   synaptic input in the fluctuation-driven regime. *Journal of
+   Neuroscience*, 24(10), 2345–2356.
+   DOI: [10.1523/JNEUROSCI.3349-03.2004](https://doi.org/10.1523/JNEUROSCI.3349-03.2004)
+
+6. Rudolph, M. & Destexhe, A. (2003). A fast-conducting, stochastic
+   integrative mode for neocortical neurons in vivo. *Journal of
+   Neuroscience*, 23(6), 2466–2476.
+   DOI: [10.1523/JNEUROSCI.23-06-02466.2003](https://doi.org/10.1523/JNEUROSCI.23-06-02466.2003)

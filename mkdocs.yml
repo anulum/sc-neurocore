@@ -201,6 +201,12 @@ nav:
           - Ensembles: api/ensembles.md
           - Solvers: api/solvers.md
           - Transformers: api/transformers.md
+      - Decoders & Bio:
+          - Neural Decoders (POYO+/POSSM/NDT3/CEBRA): api/neural_decoders.md
+          - Transcriptomic (scKGBERT/Geneformer): api/transcriptomic.md
+          - GPU Backend (wgpu): api/gpu.md
+          - Dopamine STDP Synapse: api/dopamine_stdp.md
+          - Short-Term Plasticity Synapse: api/short_term_plasticity.md
       - Compiler & Export:
           - Compiler: api/compiler.md
           - Adaptive Precision: api/adaptive_precision.md

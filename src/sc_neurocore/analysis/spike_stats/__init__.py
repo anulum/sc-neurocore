@@ -131,6 +131,15 @@ from .decoding import (
     linear_discriminant_decode,
     naive_bayes_decode,
 )
+from .neural_decoders import (
+    tokenise_spikes,
+    sinusoidal_position_encode,
+    scaled_dot_product_attention,
+    POYODecoder,
+    POSSMDecoder,
+    NDT3Decoder,
+    CEBRAEncoder,
+)
 from .network import (
     functional_connectivity,
     unitary_events,
@@ -305,4 +314,11 @@ __all__ = [
     "spade_detect",
     "gpfa",
     "gpfa_transform",
+    "tokenise_spikes",
+    "sinusoidal_position_encode",
+    "scaled_dot_product_attention",
+    "POYODecoder",
+    "POSSMDecoder",
+    "NDT3Decoder",
+    "CEBRAEncoder",
 ]

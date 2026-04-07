@@ -6,7 +6,7 @@
 # SC-NeuroCore — SC Neurocore Project Config
 
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=78.0"]
 build-backend = "setuptools.build_meta"
 
 [project]

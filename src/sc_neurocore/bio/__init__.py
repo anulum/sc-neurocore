@@ -12,9 +12,17 @@ __tier__ = "research"
 from .dna_storage import DNAEncoder
 from .grn import GeneticRegulatoryLayer
 from .neuromodulation import NeuromodulatorSystem
+from .transcriptomic import (
+    rank_value_encode,
+    ScKGBERTInterface,
+    GeneformerInterface,
+)
 
 __all__ = [
     "DNAEncoder",
     "GeneticRegulatoryLayer",
     "NeuromodulatorSystem",
+    "rank_value_encode",
+    "ScKGBERTInterface",
+    "GeneformerInterface",
 ]

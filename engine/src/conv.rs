@@ -9,6 +9,7 @@
 
 use rand::{RngExt, SeedableRng};
 use rand_chacha::ChaCha8Rng;
+use rayon::prelude::*;
 
 /// Stochastic 2D convolutional layer.
 ///
@@ -76,26 +77,74 @@ impl Conv2DLayer {
 
         let mut output = vec![0.0; self.out_channels * h_out * w_out];
 
-        for oc in 0..self.out_channels {
-            let filter = &self.kernels[oc * filter_size..(oc + 1) * filter_size];
-            for i in 0..h_out {
-                for j in 0..w_out {
-                    let hs = i * self.stride;
-                    let ws = j * self.stride;
-                    let mut acc = 0.0;
-                    for c in 0..c_in {
-                        for ki in 0..k {
-                            for kj in 0..k {
-                                let val = inp[c * ph * pw + (hs + ki) * pw + (ws + kj)];
-                                let wt = filter[c * k * k + ki * k + kj];
-                                acc += val * wt; // P(A)·P(B) in probability domain
+        output
+            .par_chunks_exact_mut(h_out * w_out)
+            .enumerate()
+            .for_each(|(oc, out_plane)| {
+                let filter = &self.kernels[oc * filter_size..(oc + 1) * filter_size];
+                for i in 0..h_out {
+                    let mut j = 0;
+                    while j + 3 < w_out {
+                        let hs = i * self.stride;
+                        let mut acc0 = 0.0;
+                        let mut acc1 = 0.0;
+                        let mut acc2 = 0.0;
+                        let mut acc3 = 0.0;
+                        for c in 0..c_in {
+                            let input_offset = c * ph * pw;
+                            let filter_offset = c * k * k;
+                            for ki in 0..k {
+                                let row_off = input_offset + (hs + ki) * pw;
+                                let f_row_off = filter_offset + ki * k;
+                                let filter_row = &filter[f_row_off..f_row_off + k];
+
+                                acc0 += crate::simd::dot_f64_dispatch(
+                                    &inp[row_off + j * self.stride..row_off + j * self.stride + k],
+                                    filter_row,
+                                );
+                                acc1 += crate::simd::dot_f64_dispatch(
+                                    &inp[row_off + (j + 1) * self.stride
+                                        ..row_off + (j + 1) * self.stride + k],
+                                    filter_row,
+                                );
+                                acc2 += crate::simd::dot_f64_dispatch(
+                                    &inp[row_off + (j + 2) * self.stride
+                                        ..row_off + (j + 2) * self.stride + k],
+                                    filter_row,
+                                );
+                                acc3 += crate::simd::dot_f64_dispatch(
+                                    &inp[row_off + (j + 3) * self.stride
+                                        ..row_off + (j + 3) * self.stride + k],
+                                    filter_row,
+                                );
                             }
                         }
+                        out_plane[i * w_out + j] = acc0;
+                        out_plane[i * w_out + j + 1] = acc1;
+                        out_plane[i * w_out + j + 2] = acc2;
+                        out_plane[i * w_out + j + 3] = acc3;
+                        j += 4;
                     }
-                    output[oc * h_out * w_out + i * w_out + j] = acc;
+                    while j < w_out {
+                        let hs = i * self.stride;
+                        let ws = j * self.stride;
+                        let mut acc = 0.0;
+                        for c in 0..c_in {
+                            let input_offset = c * ph * pw;
+                            let filter_offset = c * k * k;
+                            for ki in 0..k {
+                                let inp_row = &inp[input_offset + (hs + ki) * pw + ws
+                                    ..input_offset + (hs + ki) * pw + ws + k];
+                                let filter_row =
+                                    &filter[filter_offset + ki * k..filter_offset + (ki + 1) * k];
+                                acc += crate::simd::dot_f64_dispatch(inp_row, filter_row);
+                            }
+                        }
+                        out_plane[i * w_out + j] = acc;
+                        j += 1;
+                    }
                 }
-            }
-        }
+            });
 
         (output, h_out, w_out)
     }
