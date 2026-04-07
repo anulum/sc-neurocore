@@ -318,7 +318,7 @@ mod tests {
         for t in &mut trains {
             for j in 0..n {
                 rng = rng.wrapping_mul(6364136223846793005).wrapping_add(1);
-                if rng % 50 == 0 && t[j] == 0 {
+                if rng.is_multiple_of(50) && t[j] == 0 {
                     t[j] = 1;
                 }
             }
@@ -375,7 +375,7 @@ mod tests {
             let mut t = vec![0i32; n];
             for j in 0..n {
                 rng = rng.wrapping_mul(6364136223846793005).wrapping_add(1);
-                if rng % 20 == 0 {
+                if rng.is_multiple_of(20) {
                     t[j] = 1;
                 }
             }

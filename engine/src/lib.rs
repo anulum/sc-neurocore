@@ -33,6 +33,8 @@ pub mod ei_network;
 pub mod encoder;
 pub mod fault;
 pub mod fusion;
+#[cfg(feature = "gpu")]
+pub mod gpu;
 pub mod grad;
 pub mod graph;
 pub mod ir;
@@ -462,6 +464,8 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<BitstreamEncoder>()?;
     m.add_class::<FixedPointLif>()?;
     m.add_class::<DenseLayer>()?;
+    #[cfg(feature = "gpu")]
+    m.add_class::<gpu::PyGpuDenseLayer>()?;
     m.add_class::<StdpSynapse>()?;
     m.add_class::<PySurrogateLif>()?;
     m.add_class::<PyDifferentiableDenseLayer>()?;
@@ -560,6 +564,12 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_maximum_likelihood_decode, m)?)?;
     m.add_function(wrap_pyfunction!(py_linear_discriminant_decode, m)?)?;
     m.add_function(wrap_pyfunction!(py_naive_bayes_decode, m)?)?;
+    // neural_decoders (P1)
+    m.add_function(wrap_pyfunction!(py_tokenise_spikes, m)?)?;
+    m.add_function(wrap_pyfunction!(py_sinusoidal_position_encode, m)?)?;
+    m.add_function(wrap_pyfunction!(py_scaled_dot_product_attention, m)?)?;
+    m.add_function(wrap_pyfunction!(py_gaussian_attention, m)?)?;
+    m.add_function(wrap_pyfunction!(py_infonce_loss, m)?)?;
     // network
     m.add_function(wrap_pyfunction!(py_functional_connectivity, m)?)?;
     m.add_function(wrap_pyfunction!(py_unitary_events, m)?)?;
@@ -1670,7 +1680,7 @@ impl DenseLayer {
     #[pyo3(signature = (input_values, seed=44257))]
     fn forward_fast(&self, input_values: Vec<f64>, seed: u64) -> PyResult<Vec<f64>> {
         self.inner
-            .forward_fused(&input_values, seed)
+            .forward_fast(&input_values, seed)
             .map_err(PyValueError::new_err)
     }
 
@@ -3609,6 +3619,88 @@ fn py_naive_bayes_decode(
     let lbl = labels.as_slice().unwrap();
     let tp = test_point.as_slice().unwrap();
     analysis::decoding::naive_bayes_decode(data, n_samples, n_features, lbl, tp)
+}
+
+// ── Neural decoder PyO3 wrappers (P1: neural_decoders) ─────────
+
+#[pyfunction]
+#[pyo3(signature = (trains, dt=1.0))]
+fn py_tokenise_spikes(
+    py: Python<'_>,
+    trains: Vec<PyReadonlyArray1<'_, i32>>,
+    dt: f64,
+) -> (Py<PyArray1<i64>>, Py<PyArray1<f64>>) {
+    let vecs: Vec<Vec<i32>> = trains
+        .iter()
+        .map(|t| t.as_slice().unwrap().to_vec())
+        .collect();
+    let refs: Vec<&[i32]> = vecs.iter().map(|v| v.as_slice()).collect();
+    let tokens = analysis::neural_decoders::tokenise_spikes(&refs, dt);
+    let uids: Vec<i64> = tokens.iter().map(|t| t.0 as i64).collect();
+    let times: Vec<f64> = tokens.iter().map(|t| t.1).collect();
+    (uids.into_pyarray(py).into(), times.into_pyarray(py).into())
+}
+
+#[pyfunction]
+fn py_sinusoidal_position_encode(
+    py: Python<'_>,
+    timestamps: PyReadonlyArray1<'_, f64>,
+    d_model: usize,
+) -> Py<PyArray1<f64>> {
+    let ts = timestamps.as_slice().unwrap();
+    analysis::neural_decoders::sinusoidal_position_encode(ts, d_model)
+        .into_pyarray(py)
+        .into()
+}
+
+#[pyfunction]
+fn py_scaled_dot_product_attention(
+    py: Python<'_>,
+    queries: PyReadonlyArray1<'_, f64>,
+    keys: PyReadonlyArray1<'_, f64>,
+    values: PyReadonlyArray1<'_, f64>,
+    nq: usize,
+    nk: usize,
+    d: usize,
+) -> Py<PyArray1<f64>> {
+    let q = queries.as_slice().unwrap();
+    let k = keys.as_slice().unwrap();
+    let v = values.as_slice().unwrap();
+    analysis::neural_decoders::scaled_dot_product_attention(q, k, v, nq, nk, d)
+        .into_pyarray(py)
+        .into()
+}
+
+#[pyfunction]
+fn py_gaussian_attention(
+    py: Python<'_>,
+    queries: PyReadonlyArray1<'_, f64>,
+    keys: PyReadonlyArray1<'_, f64>,
+    values: PyReadonlyArray1<'_, f64>,
+    nq: usize,
+    nk: usize,
+    d: usize,
+    sigma: f64,
+) -> Py<PyArray1<f64>> {
+    let q = queries.as_slice().unwrap();
+    let k = keys.as_slice().unwrap();
+    let v = values.as_slice().unwrap();
+    analysis::neural_decoders::gaussian_attention(q, k, v, nq, nk, d, sigma)
+        .into_pyarray(py)
+        .into()
+}
+
+#[pyfunction]
+fn py_infonce_loss(
+    anchors: PyReadonlyArray1<'_, f64>,
+    positives: PyReadonlyArray1<'_, f64>,
+    n: usize,
+    d: usize,
+    temperature: f64,
+) -> f64 {
+    let a = anchors.as_slice().unwrap();
+    let p = positives.as_slice().unwrap();
+    analysis::neural_decoders::infonce_loss(a, p, n, d, temperature)
 }
 
 // ── Network PyO3 wrappers (P0-A: spike_stats/network) ───────────

@@ -605,7 +605,7 @@ mod tests {
         // Gaussian-like amplitudes
         let amps: Vec<f64> = (0..100).map(|i| 50.0 + (i as f64 - 50.0) * 0.5).collect();
         let ac = amplitude_cutoff(&amps, 50);
-        assert!(ac >= 0.0 && ac <= 1.0);
+        assert!((0.0..=1.0).contains(&ac));
     }
 
     #[test]

@@ -149,6 +149,85 @@ Modulates neuron parameters based on Dopamine (DA), Serotonin (5HT), Norepinephr
 
 ---
 
+## Module `bio.transcriptomic`
+
+### Function `rank_value_encode(expression, global_medians=None)`
+Rank-value encoding for single-cell gene expression. Theodoris et al. (2023).
+Genes ranked by expression weighted by inverse corpus frequency.
+
+### Class `ScKGBERTInterface`
+Knowledge-enhanced foundation model for single-cell transcriptomics.
+Li et al. (2025), Genome Biology. Dual encoder: S-Encoder (sequence) +
+K-Encoder (protein–protein interaction knowledge graph from STRING).
+
+- **gaussian_attention**(queries, keys, values) — Gaussian kernel attention
+- **encode_expression**(expression) — S-Encoder cell embedding
+- **encode_with_knowledge**(expression) — dual S+K encoder
+- **predict_cell_type**(expression, prototypes, labels) — nearest-prototype classification
+- **gene_importance**(expression) — attention-based gene importance scores
+
+### Class `GeneformerInterface`
+Rank-value tokenisation and masked gene prediction.
+Theodoris et al. (2023), Nature. Multi-head self-attention + MLM.
+
+- **tokenise**(expression, global_medians) — rank-value tokenisation
+- **mask_tokens**(token_ids, rng_seed) — random masking for MLM
+- **multi_head_attention**(x) — multi-head self-attention
+- **encode_cell**(expression) — mean-pooled cell embedding
+- **predict_masked_genes**(expression) — MLM prediction
+- **gene_network_attention**(expression) — attention-derived gene interaction matrix
+
+---
+
+## Module `analysis.spike_stats.neural_decoders`
+
+### Function `tokenise_spikes(spike_trains, dt=1.0)`
+Convert binary spike trains to sorted (unit_id, timestamp) tokens.
+Used by POYO+ and POSSM (Azabou et al. 2023; Ryoo et al. 2025).
+
+### Function `sinusoidal_position_encode(timestamps, d_model)`
+Sinusoidal position encoding. Vaswani et al. (2017).
+
+### Function `scaled_dot_product_attention(queries, keys, values)`
+Scaled dot-product attention: softmax(QK^T / √d_k) V.
+
+### Class `POYODecoder`
+Population decoder via spike tokenisation and cross-attention.
+Azabou et al. (2023), NeurIPS. PerceiverIO backbone.
+
+- **encode**(spike_trains, dt) — encode to latent [n_latents, d_model]
+- **decode**(latents, output_queries) — cross-attention decode
+- **reset**() — clear cached embeddings
+
+### Class `POSSMDecoder`
+Population decoder via spike tokenisation and diagonal state-space model.
+Ryoo et al. (2025), ICLR. Causal online prediction, 9× faster than attention.
+
+- **discretise**(step_dt) — ZOH discretisation
+- **step**(x) — single causal SSM step
+- **encode_causal**(spike_trains, dt) — causal online encoding
+- **reset**() — zero hidden state
+
+### Class `NDT3Decoder`
+Autoregressive neural data transformer for motor decoding.
+Ye & Pandarinath (2025). Causal masked self-attention on binned spikes.
+
+- **bin_and_embed**(spike_trains, dt) — bin spike counts + project to embeddings
+- **predict_next**(embedded) — causal autoregressive prediction
+- **decode**(spike_trains, dt) — full pipeline
+
+### Class `CEBRAEncoder`
+Contrastive embedding encoder for neural data.
+Schneider, Lee & Mathis (2023), Nature. InfoNCE + time-contrastive learning.
+
+- **encode**(x) — 2-layer MLP + L2 normalisation
+- **cosine_similarity**(a, b) — pairwise cosine similarity
+- **infonce_loss**(anchors, positives) — InfoNCE contrastive loss
+- **fit**(data, n_steps, time_offset) — train with analytical backprop
+- **transform**(data) — embed to learned latent space
+
+---
+
 ## Module `bio.uploading`
 
 ### Class `ConnectomeEmulator`

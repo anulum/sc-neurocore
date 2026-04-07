@@ -13,6 +13,8 @@ from .triplet_stdp import TripletSTDP
 from .bcm import BCMSynapse
 from .clopath_stdp import ClopathSTDP
 from .tripartite import TripartiteSynapse
+from .short_term_plasticity import ShortTermPlasticitySynapse
+from .dopamine_stdp import DopamineStdpSynapse
 
 __all__ = [
     "BitstreamSynapse",
@@ -23,4 +25,6 @@ __all__ = [
     "BCMSynapse",
     "ClopathSTDP",
     "TripartiteSynapse",
+    "ShortTermPlasticitySynapse",
+    "DopamineStdpSynapse",
 ]

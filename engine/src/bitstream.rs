@@ -268,6 +268,9 @@ pub fn bernoulli_packed<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mut R) 
 /// same RNG state.
 pub fn bernoulli_packed_fast<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mut R) -> Vec<u64> {
     let words = length.div_ceil(64);
+    if prob <= 0.0 {
+        return vec![0_u64; words];
+    }
     if prob >= 1.0 {
         let mut data = vec![u64::MAX; words];
         let trailing = length % 64;
@@ -298,6 +301,9 @@ pub fn bernoulli_packed_fast<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mu
 /// vectorizing the threshold comparison for full 64-bit words.
 pub fn bernoulli_packed_simd<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mut R) -> Vec<u64> {
     let words = length.div_ceil(64);
+    if prob <= 0.0 {
+        return vec![0_u64; words];
+    }
     if prob >= 1.0 {
         let mut data = vec![u64::MAX; words];
         let trailing = length % 64;
@@ -309,11 +315,18 @@ pub fn bernoulli_packed_simd<R: Rng + ?Sized>(prob: f64, length: usize, rng: &mu
     let threshold = (prob.clamp(0.0, 1.0) * 256.0) as u8;
     let mut data = vec![0_u64; words];
     let full_words = length / 64;
-    let mut buf = [0_u8; 64];
+    let mut buf = [0_u8; 1024];
+    let mut chunks = data[..full_words].chunks_exact_mut(16);
 
-    for word in data.iter_mut().take(full_words) {
+    for w_chunk in chunks.by_ref() {
         rng.fill(&mut buf);
-        *word = simd_bernoulli_compare(&buf, threshold);
+        crate::simd::bernoulli_compare_batch_1024(&buf, threshold, w_chunk);
+    }
+
+    for word in chunks.into_remainder() {
+        let mut small_buf = [0_u8; 64];
+        rng.fill(&mut small_buf);
+        *word = simd_bernoulli_compare_exposed(&small_buf, threshold);
     }
 
     if full_words < words {
@@ -342,6 +355,9 @@ pub fn encode_and_popcount<R: Rng + ?Sized>(
     length: usize,
     rng: &mut R,
 ) -> u64 {
+    if prob <= 0.0 {
+        return 0;
+    }
     if prob >= 1.0 {
         // All bits set → popcount of weight words directly
         let full_words = length / 64;
@@ -359,11 +375,22 @@ pub fn encode_and_popcount<R: Rng + ?Sized>(
     let threshold = (prob.clamp(0.0, 1.0) * 256.0) as u8;
     let full_words = length / 64;
     let mut total = 0_u64;
-    let mut buf = [0_u8; 64];
+    let mut buf = [0_u8; 1024]; // 16 words worth
+    let mut chunks = weight_words[..full_words].chunks_exact(16);
 
-    for &w_word in weight_words.iter().take(full_words) {
+    let mut encoded_batch = [0_u64; 16];
+    for w_chunk in chunks.by_ref() {
         rng.fill(&mut buf);
-        let encoded = simd_bernoulli_compare(&buf, threshold);
+        crate::simd::bernoulli_compare_batch_1024(&buf, threshold, &mut encoded_batch);
+        for (i, &w_word) in w_chunk.iter().enumerate() {
+            total += (encoded_batch[i] & w_word).count_ones() as u64;
+        }
+    }
+
+    for &w_word in chunks.remainder() {
+        let mut small_buf = [0_u8; 64];
+        rng.fill(&mut small_buf);
+        let encoded = simd_bernoulli_compare_exposed(&small_buf, threshold);
         total += (encoded & w_word).count_ones() as u64;
     }
 
@@ -384,7 +411,7 @@ pub fn encode_and_popcount<R: Rng + ?Sized>(
 
 /// Compare 64 bytes against a threshold and return a packed bit mask.
 #[inline]
-fn simd_bernoulli_compare(buf: &[u8], threshold: u8) -> u64 {
+pub fn simd_bernoulli_compare_exposed(buf: &[u8], threshold: u8) -> u64 {
     debug_assert!(buf.len() >= 64, "buffer must contain at least 64 bytes");
 
     #[cfg(target_arch = "x86_64")]
@@ -424,7 +451,7 @@ pub fn encode_matrix_prob_to_packed<R: Rng + ?Sized>(
 ) -> Vec<Vec<u64>> {
     let mut packed = Vec::with_capacity(rows * cols);
     for value in values.iter().take(rows * cols) {
-        let mut row = bernoulli_packed(*value, length, rng);
+        let mut row = bernoulli_packed_simd(*value, length, rng);
         row.resize(words, 0);
         packed.push(row);
     }

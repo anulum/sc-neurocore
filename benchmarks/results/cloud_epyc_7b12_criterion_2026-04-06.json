@@ -1,0 +1,477 @@
+{
+  "source": "criterion",
+  "hardware": "GCP e2-highcpu-16 (AMD EPYC 7B12, 16 vCPU, SPOT)",
+  "date": "2026-04-06",
+  "branch": "autoresearch/perf",
+  "total_benchmarks": 156,
+  "benchmarks": {
+    "basic/bin_spike_train/100": {
+      "median_ns": 6867.3
+    },
+    "basic/bin_spike_train/10000": {
+      "median_ns": 3195.7
+    },
+    "basic/spike_times/100000": {
+      "median_ns": 89847.0
+    },
+    "basic/firing_rate/100000": {
+      "median_ns": 16180.0
+    },
+    "basic/bin_spike_train/100000": {
+      "median_ns": 29178.0
+    },
+    "rate/instantaneous_rate/100": {
+      "median_ns": 5092.8
+    },
+    "rate/instantaneous_rate/10000": {
+      "median_ns": 398530.0
+    },
+    "rate/instantaneous_rate/100000": {
+      "median_ns": 134.49
+    },
+    "variability/fano_factor/100": {
+      "median_ns": 95.559
+    },
+    "variability/cv_isi/10000": {
+      "median_ns": 7969.0
+    },
+    "variability/fano_factor/10000": {
+      "median_ns": 6372.7
+    },
+    "variability/cv_isi/100000": {
+      "median_ns": 101210.0
+    },
+    "variability/fano_factor/100000": {
+      "median_ns": 63039.0
+    },
+    "variability/sample_entropy/100": {
+      "median_ns": 42605.0
+    },
+    "variability/sample_entropy/1000": {
+      "median_ns": 4366700.0
+    },
+    "correlation/cross_correlation/100": {
+      "median_ns": 2235.2
+    },
+    "correlation/event_synchronization/100": {
+      "median_ns": 177.87
+    },
+    "correlation/cross_correlation/10000": {
+      "median_ns": 352360.0
+    },
+    "correlation/event_synchronization/10000": {
+      "median_ns": 1221.7
+    },
+    "distance/victor_purpura/100": {
+      "median_ns": 228.75
+    },
+    "distance/isi_distance/100": {
+      "median_ns": 200.37
+    },
+    "distance/van_rossum/5000": {
+      "median_ns": 341310.0
+    },
+    "distance/victor_purpura/5000": {
+      "median_ns": 358110.0
+    },
+    "distance/isi_distance/5000": {
+      "median_ns": 7564.099999999999
+    },
+    "information/mutual_information/100": {
+      "median_ns": 925.71
+    },
+    "information/transfer_entropy/100": {
+      "median_ns": 1304.0
+    },
+    "information/mutual_information/10000": {
+      "median_ns": 51763.0
+    },
+    "information/transfer_entropy/10000": {
+      "median_ns": 71446.0
+    },
+    "causality/pairwise_granger/100": {
+      "median_ns": 125.46
+    },
+    "causality/pairwise_granger/5000": {
+      "median_ns": 79416.0
+    },
+    "decoding/population_vector_decode": {
+      "median_ns": 53995.0
+    },
+    "decoding/bayesian_decode": {
+      "median_ns": 57545.0
+    },
+    "network/functional_connectivity_10n": {
+      "median_ns": 1445600.0
+    },
+    "surrogates/isi_shuffle/1000": {
+      "median_ns": 1067.0
+    },
+    "surrogates/homogeneous_poisson/1000": {
+      "median_ns": 3058.7
+    },
+    "surrogates/isi_shuffle/100000": {
+      "median_ns": 103550.0
+    },
+    "surrogates/homogeneous_poisson/100000": {
+      "median_ns": 296870.0
+    },
+    "temporal/burst_detection/1000": {
+      "median_ns": 811.74
+    },
+    "temporal/change_point_detection/1000": {
+      "median_ns": 326.75
+    },
+    "temporal/burst_detection/100000": {
+      "median_ns": 94090.0
+    },
+    "temporal/change_point_detection/100000": {
+      "median_ns": 27196.0
+    },
+    "patterns/spike_directionality_5k": {
+      "median_ns": 4987.2
+    },
+    "patterns/cubic_higher_order_5k": {
+      "median_ns": 475790.0
+    },
+    "spectral/power_spectrum/256": {
+      "median_ns": 4581.7
+    },
+    "spectral/power_spectrum/10000": {
+      "median_ns": 213530.0
+    },
+    "spectral/power_spectrum/100000": {
+      "median_ns": 80.626
+    },
+    "waveform/waveform_amplitude": {
+      "median_ns": 49.043
+    },
+    "waveform/waveform_repolarization_slope": {
+      "median_ns": 104.38
+    },
+    "waveform/waveform_halfwidth": {
+      "median_ns": 224.03
+    },
+    "waveform/waveform_pt_ratio": {
+      "median_ns": 65.939
+    },
+    "point_process/conditional_intensity/1000": {
+      "median_ns": 57039.0
+    },
+    "point_process/isi_hazard/1000": {
+      "median_ns": 1937.7
+    },
+    "point_process/conditional_intensity/100000": {
+      "median_ns": 5113400.0
+    },
+    "point_process/isi_hazard/100000": {
+      "median_ns": 104570.0
+    },
+    "statistics/significance_bootstrap_200surr": {
+      "median_ns": 1489.1000000000001
+    },
+    "stimulus/spatial_information/1000": {
+      "median_ns": 76242.0
+    },
+    "stimulus/spatial_information/50000": {
+      "median_ns": 323610.0
+    },
+    "lfp/phase_locking_value/500": {
+      "median_ns": 32360.999999999996
+    },
+    "lfp/spike_field_coherence/500": {
+      "median_ns": 14269.0
+    },
+    "lfp/phase_locking_value/10000": {
+      "median_ns": 649890.0
+    },
+    "lfp/spike_field_coherence/10000": {
+      "median_ns": 276390.0
+    },
+    "sorting_quality/isolation_distance/50": {
+      "median_ns": 6745.2
+    },
+    "sorting_quality/silhouette_score/50": {
+      "median_ns": 44934.0
+    },
+    "sorting_quality/isolation_distance/200": {
+      "median_ns": 26454.0
+    },
+    "sorting_quality/silhouette_score/200": {
+      "median_ns": 685730.0
+    },
+    "sorting_quality/isi_violation_rate_5k": {
+      "median_ns": 3412.7000000000003
+    },
+    "dimensionality/pca_10n_2000t": {
+      "median_ns": 43334.0
+    },
+    "dimensionality/factor_analysis_10n_2000t": {
+      "median_ns": 4902600.0
+    },
+    "spade/spade_3n_500t_50surr": {
+      "median_ns": 839030.0
+    },
+    "popcount_simd_dispatch_1m": {
+      "median_ns": 841010.0
+    },
+    "bernoulli_stream_pack_1024": {
+      "median_ns": 3496.7999999999997
+    },
+    "bernoulli_packed_fast_1024": {
+      "median_ns": 1094.8
+    },
+    "bernoulli_packed_simd_1024": {
+      "median_ns": 324.6
+    },
+    "bernoulli_packed_simd_xoshiro_1024": {
+      "median_ns": 211.97
+    },
+    "fused_and_popcount_scalar_16w": {
+      "median_ns": 11.923
+    },
+    "fused_and_popcount_dispatch_16w": {
+      "median_ns": 680310.0
+    },
+    "dense_forward_fast_64x32": {
+      "median_ns": 76117.0
+    },
+    "dense_forward_fast_flat_64x32_b": {
+      "median_ns": 88645.0
+    },
+    "dense_forward_fused_64x32": {
+      "median_ns": 69306.0
+    },
+    "bernoulli_encode_and_popcount_1024": {
+      "median_ns": 177.44
+    },
+    "dense_forward_batch_64x32_x100": {
+      "median_ns": 273.3
+    },
+    "dense_forward_prepacked_64x32": {
+      "median_ns": 28914.0
+    },
+    "kuramoto_100_osc_1000_steps": {
+      "median_ns": 62377.0
+    },
+    "basket_cerebellar_1k_steps": {
+      "median_ns": 431940.0
+    },
+    "ermentrout_kopell_100k_steps": {
+      "median_ns": 1599400.0
+    },
+    "graded_synapse_100k_steps": {
+      "median_ns": 2876500.0
+    },
+    "node_of_ranvier_1k_steps": {
+      "median_ns": 1142300.0
+    },
+    "myelinated_axon_1k_steps": {
+      "median_ns": 1154500.0
+    },
+    "cardiac_purkinje_1k_steps": {
+      "median_ns": 196990.0
+    },
+    "mainen_sejnowski_1k_steps": {
+      "median_ns": 1448900.0
+    },
+    "de_schutter_purkinje_1k_steps": {
+      "median_ns": 385090.0
+    },
+    "mihalas_niebur_10k_steps": {
+      "median_ns": 98885.0
+    },
+    "bertram_phantom_1k_steps": {
+      "median_ns": 42005.0
+    },
+    "hindmarsh_rose_10k_steps": {
+      "median_ns": 75036.0
+    },
+    "resonate_and_fire_10k_steps": {
+      "median_ns": 192220.0
+    },
+    "fitzhugh_rinzel_10k_steps": {
+      "median_ns": 50611.0
+    },
+    "gutkin_ermentrout_10k_steps": {
+      "median_ns": 96379.0
+    },
+    "sherman_rinzel_keizer_1k_steps": {
+      "median_ns": 30566.0
+    },
+    "butera_respiratory_1k_steps": {
+      "median_ns": 7414.1
+    },
+    "learnable_neuron_10k_steps": {
+      "median_ns": 117030.0
+    },
+    "perfect_integrator_100k_steps": {
+      "median_ns": 239820.0
+    },
+    "stochastic_lif_10k_steps": {
+      "median_ns": 281900.0
+    },
+    "inhom_poisson_100k_steps": {
+      "median_ns": 219210.0
+    },
+    "gamma_renewal_100k_steps": {
+      "median_ns": 295590.0
+    },
+    "galves_locherbach_10k_steps": {
+      "median_ns": 103020.0
+    },
+    "spike_response_10k_steps": {
+      "median_ns": 338630.0
+    },
+    "ek_population_100k_steps": {
+      "median_ns": 3634200.0
+    },
+    "larter_breakspear_100k_steps": {
+      "median_ns": 697990.0
+    },
+    "threshold_linear_100k_steps": {
+      "median_ns": 167920.0
+    },
+    "tsodyks_markram_10k_steps": {
+      "median_ns": 291240.0
+    },
+    "parallel_spiking_10k_steps": {
+      "median_ns": 53724.0
+    },
+    "fractional_lif_10k_steps": {
+      "median_ns": 36393000.0
+    },
+    "leaky_compete_fire_10k_steps": {
+      "median_ns": 312860.0
+    },
+    "multi_timescale_10k_steps": {
+      "median_ns": 62234.0
+    },
+    "attention_gated_10k_steps": {
+      "median_ns": 139750.0
+    },
+    "predictive_coding_10k_steps": {
+      "median_ns": 62637.0
+    },
+    "self_referential_10k_steps": {
+      "median_ns": 327090.0
+    },
+    "compositional_binding_10k_steps": {
+      "median_ns": 123810.0
+    },
+    "differentiable_surrogate_10k_steps": {
+      "median_ns": 28072.0
+    },
+    "continuous_attractor_10k_steps": {
+      "median_ns": 14074.0
+    },
+    "courage_nekorkin_100k_steps": {
+      "median_ns": 1063200.0
+    },
+    "outer_hair_cell_10k_steps": {
+      "median_ns": 88510.0
+    },
+    "cone_photoreceptor_10k_steps": {
+      "median_ns": 135830.0
+    },
+    "taste_receptor_10k_steps": {
+      "median_ns": 108370.0
+    },
+    "kuramoto_scaling/kuramoto_1000steps/50": {
+      "median_ns": 66364000.00000001
+    },
+    "kuramoto_scaling/kuramoto_1000steps/100": {
+      "median_ns": 88336000.0
+    },
+    "kuramoto_scaling/kuramoto_1000steps/200": {
+      "median_ns": 144850000.0
+    },
+    "kuramoto_scaling/kuramoto_1000steps/500": {
+      "median_ns": 572700000.0
+    },
+    "kuramoto_scaling/kuramoto_1000steps/1000": {
+      "median_ns": 1802800000.0
+    },
+    "gnn_scaling/gnn_forward/10x8": {
+      "median_ns": 114360.0
+    },
+    "gnn_scaling/gnn_forward/20x8": {
+      "median_ns": 75043.0
+    },
+    "gnn_scaling/gnn_forward/50x8": {
+      "median_ns": 75593.0
+    },
+    "gnn_scaling/gnn_forward/100x8": {
+      "median_ns": 115130.0
+    },
+    "gnn_scaling/gnn_forward/200x8": {
+      "median_ns": 199180.0
+    },
+    "dense_scaling/dense_fused/16x8": {
+      "median_ns": 77126.0
+    },
+    "dense_scaling/dense_fused/32x16": {
+      "median_ns": 35315.0
+    },
+    "dense_scaling/dense_fused/64x32": {
+      "median_ns": 69807.0
+    },
+    "dense_scaling/dense_fused/128x64": {
+      "median_ns": 206630.0
+    },
+    "dense_scaling/dense_fused/256x128": {
+      "median_ns": 750810.0
+    },
+    "popcount_scaling/popcount_simd/64": {
+      "median_ns": 19.99
+    },
+    "popcount_scaling/popcount_portable/64": {
+      "median_ns": 38.455
+    },
+    "popcount_scaling/popcount_simd/256": {
+      "median_ns": 84.345
+    },
+    "popcount_scaling/popcount_portable/256": {
+      "median_ns": 149.31
+    },
+    "popcount_scaling/popcount_simd/1024": {
+      "median_ns": 355.13
+    },
+    "popcount_scaling/popcount_portable/1024": {
+      "median_ns": 597.55
+    },
+    "popcount_scaling/popcount_simd/4096": {
+      "median_ns": 1448.1999999999998
+    },
+    "popcount_scaling/popcount_portable/4096": {
+      "median_ns": 2376.3999999999996
+    },
+    "popcount_scaling/popcount_simd/16384": {
+      "median_ns": 5793.1
+    },
+    "popcount_scaling/popcount_portable/16384": {
+      "median_ns": 9487.8
+    },
+    "popcount_scaling/popcount_simd/65536": {
+      "median_ns": 23500.0
+    },
+    "popcount_scaling/popcount_portable/65536": {
+      "median_ns": 38411.0
+    },
+    "lif_network_scaling/lif_sc_100steps/100": {
+      "median_ns": 26813000.0
+    },
+    "lif_network_scaling/lif_sc_100steps/500": {
+      "median_ns": 543500000.0
+    },
+    "lif_network_scaling/lif_sc_100steps/1000": {
+      "median_ns": 2089100000.0000002
+    },
+    "lif_network_scaling/lif_sc_100steps/2000": {
+      "median_ns": 8257199999.999999
+    },
+    "lif_network_scaling/lif_sc_100steps/5000": {
+      "median_ns": 51262000000.0
+    }
+  }
+}

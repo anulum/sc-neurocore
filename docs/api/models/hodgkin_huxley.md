@@ -402,3 +402,255 @@ State returns to initial values after `reset()`.
 2. All pipeline stages verified green
 3. Rust parity: EXACT
 4. Numerical stability confirmed over 20K steps
+
+---
+
+## Theoretical Context
+
+### Historical significance
+
+The Hodgkin-Huxley model (1952) is the first quantitative description of
+action potential generation based on ionic conductances. Alan Hodgkin and
+Andrew Huxley performed voltage-clamp experiments on the giant axon of
+the Atlantic squid *Loligo forbesii* at the Marine Biological Association
+laboratory in Plymouth, England. They published a series of five papers
+in the *Journal of Physiology*, with the full model in the fifth paper
+(Hodgkin & Huxley, 1952d). The work earned them the 1963 Nobel Prize in
+Physiology or Medicine (shared with John Eccles).
+
+### The experimental basis
+
+The voltage-clamp technique allowed Hodgkin and Huxley to measure ionic
+currents at fixed membrane potentials. By varying the holding potential
+and using ion substitution experiments (replacing external Na⁺ with
+choline), they separated the total current into three components:
+
+- A fast, transient inward current carried by Na⁺ ions
+- A delayed, sustained outward current carried by K⁺ ions
+- A small, voltage-independent leak current
+
+They fitted empirical equations to the kinetics of each conductance,
+arriving at the α/β formulation with m³h gating for Na⁺ and n⁴ gating
+for K⁺. The exponents (3 for m, 4 for n) were determined by fitting to
+experimental activation curves — they correspond to three independent
+m-particles and four independent n-particles, each with first-order
+kinetics.
+
+### Excitability classification
+
+The HH model exhibits **Type-II excitability** (Rinzel & Ermentrout,
+1998): firing onset is discontinuous, with a minimum frequency at
+rheobase. This arises because the bifurcation at spike onset is a
+subcritical Hopf bifurcation, not a saddle-node on invariant circle
+(SNIC) as in Type-I models. The practical consequence: the HH neuron
+cannot fire arbitrarily slowly — it jumps from silence to ~50 Hz at
+threshold.
+
+### Relation to other models in SC-NeuroCore
+
+The HH model is the ancestor of all conductance-based models in
+SC-NeuroCore:
+
+| Model | Relation to HH |
+|-------|---------------|
+| ConnorStevens | HH + A-type K⁺ current → Type-I excitability |
+| WangBuzsaki | HH simplified to 3 vars (m=m_∞) for fast interneurons |
+| TraubMiles | HH adapted for CA3 pyramidal cells + M-current |
+| MorrisLecar | Reduced 2D HH-like with Ca²⁺ instead of Na⁺ |
+| MainenSejnowski | Two-compartment HH (soma + axon hillock) |
+| GolombFS | HH + Kv3 for fast-spiking cortical interneurons |
+| Pospischil | Minimal HH tuned for 5 cortical cell types |
+| PlantR15 | HH + slow Ca²⁺/KCa for bursting (Aplysia R15) |
+
+---
+
+## Usage Examples
+
+### Example 1: Basic Python — single neuron, constant current
+
+```python
+from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
+
+neuron = HodgkinHuxleyNeuron()
+
+# Simulate 500 ms with I = 10 µA/cm²
+spikes = []
+for t in range(500):
+    spike = neuron.step(10.0)
+    if spike:
+        spikes.append(t)
+
+print(f"Fired {len(spikes)} spikes in 500 ms")
+print(f"Final state: V={neuron.v:.1f} mV, m={neuron.m:.4f}, "
+      f"h={neuron.h:.4f}, n={neuron.n:.4f}")
+```
+
+### Example 2: Advanced Python — f–I curve demonstrating Type-II onset
+
+```python
+from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
+import numpy as np
+
+currents = np.arange(0, 50, 1.0)
+rates = []
+
+for I_ext in currents:
+    neuron = HodgkinHuxleyNeuron()
+    # Discard 200 ms transient, measure 800 ms
+    for _ in range(200):
+        neuron.step(I_ext)
+    count = sum(neuron.step(I_ext) for _ in range(800))
+    rates.append(count / 0.8)  # Hz (800 ms = 0.8 s)
+
+# Type-II signature: rate jumps from 0 to finite at threshold,
+# then declines at high current (depolarisation block)
+for i, I_ext in enumerate(currents):
+    if rates[i] > 0:
+        print(f"Onset at I={I_ext:.0f}: {rates[i]:.1f} Hz")
+        break
+```
+
+### Example 3: PyO3 Rust — high-performance stepping
+
+```rust
+use sc_neurocore_engine::neurons::HodgkinHuxleyNeuron;
+
+let mut neuron = HodgkinHuxleyNeuron::new();
+
+// 10,000 steps at I = 10 µA/cm² (10 seconds biological time)
+let mut spike_count = 0;
+for _ in 0..10_000 {
+    spike_count += neuron.step(10.0);
+}
+println!("Spikes: {spike_count} in 10 s ({:.1} Hz)",
+    spike_count as f64 / 10.0);
+
+// Access state
+println!("V = {:.2} mV, m = {:.4}, h = {:.4}, n = {:.4}",
+    neuron.v, neuron.m, neuron.h, neuron.n);
+
+// Reset to initial conditions
+neuron.reset();
+assert!((neuron.v - (-65.0)).abs() < 1e-12);
+```
+
+---
+
+## Technical Reference
+
+### Methods
+
+| Method | Signature | Returns | Description |
+|--------|-----------|---------|-------------|
+| `step` | `step(current: float) → int` | 0 or 1 | Advance 1 ms (100 sub-steps), return spike |
+| `reset` | `reset() → None` | — | Restore v, m, h, n to initial values |
+
+### Python/Rust Parity
+
+| Property | Python | Rust | Match |
+|----------|--------|------|-------|
+| Rate constants (6) | Explicit methods | `safe_rate()` + inline | EXACT |
+| Integration | Forward Euler, simultaneous | Forward Euler, simultaneous | EXACT |
+| Sub-steps | `round(1.0/dt)` = 100 | `(1.0/dt) as usize` = 100 | EXACT |
+| Gate order | m, h, n before currents | m, h, n before currents | EXACT |
+| Spike detection | Upward crossing | Upward crossing | EXACT |
+| Reset | v, m, h, n to defaults | v, m, h, n to defaults | EXACT |
+| Singularity guard | `abs(d) < 1e-7` | `d.abs() < 1e-7` | EXACT |
+| Parameters (13) | All f64 defaults | All f64 defaults | EXACT |
+
+### Supported operations
+
+| Operation | Supported | Notes |
+|-----------|-----------|-------|
+| Population | Yes | `Population(HodgkinHuxleyNeuron, n=N)` |
+| Projection | Yes | Standard src→tgt wiring |
+| NetworkRunner | Yes | Variant #1 in enum |
+| SpikeMonitor | Yes | Binary spike output |
+| PoissonInput | Yes | Tested at 500 Hz, weight=10 |
+| Model Zoo | Yes | 3 architectures |
+| PyO3 bridge | Yes | 4 state vars mapped |
+| Equation compiler | No | Not an ODE-string model |
+
+---
+
+## Performance Benchmarks
+
+### Criterion 0.8 (Rust engine)
+
+Measured on i5-11600K @ 3.90 GHz, single-threaded, 2026-04-05.
+
+| Benchmark | Steps | Median | Per step | Sub-steps |
+|-----------|------:|-------:|---------:|----------:|
+| `hh_1k_steps` | 1 000 | 11.2 ms | 11.2 µs | 100 |
+
+Per sub-step: 11.2 µs / 100 = **112 ns** (dominated by 6 × exp() = 672 ns
+exp budget — the rest is arithmetic).
+
+### Python throughput
+
+Measured on i5-11600K, single-threaded.
+
+| Metric | Value |
+|--------|------:|
+| Isolation throughput | ~531 steps/s |
+| Per step | ~1.88 ms |
+
+### Rust speedup
+
+| Metric | Python | Rust | Speedup |
+|--------|-------:|-----:|--------:|
+| Per step | 1.88 ms | 11.2 µs | **168×** |
+
+### Computational cost breakdown
+
+Each `step()` call executes 100 sub-steps. Per sub-step:
+- 6 exp() evaluations (α_m, β_m, α_h, β_h, α_n, β_n)
+- 3 gate updates (m, h, n)
+- 3 current evaluations (I_Na, I_K, I_L)
+- 1 voltage update
+
+Total per step: **600 exp() + 300 multiply-adds + 400 arithmetic ops**.
+The exp() calls dominate — they account for ~70% of execution time.
+
+---
+
+## Citations
+
+1. Hodgkin, A. L. & Huxley, A. F. (1952). A quantitative description of
+   membrane current and its application to conduction and excitation in
+   nerve. *Journal of Physiology*, 117(4), 500–544.
+   DOI: [10.1113/jphysiol.1952.sp004764](https://doi.org/10.1113/jphysiol.1952.sp004764)
+
+2. Hodgkin, A. L. & Huxley, A. F. (1952). Currents carried by sodium and
+   potassium ions through the membrane of the giant axon of *Loligo*.
+   *Journal of Physiology*, 116(4), 449–472.
+   DOI: [10.1113/jphysiol.1952.sp004717](https://doi.org/10.1113/jphysiol.1952.sp004717)
+
+3. Hodgkin, A. L. & Huxley, A. F. (1952). The components of membrane
+   conductance in the giant axon of *Loligo*. *Journal of Physiology*,
+   116(4), 473–496.
+   DOI: [10.1113/jphysiol.1952.sp004718](https://doi.org/10.1113/jphysiol.1952.sp004718)
+
+4. Hodgkin, A. L. & Huxley, A. F. (1952). The dual effect of membrane
+   potential on sodium conductance in the giant axon of *Loligo*.
+   *Journal of Physiology*, 116(4), 497–506.
+   DOI: [10.1113/jphysiol.1952.sp004719](https://doi.org/10.1113/jphysiol.1952.sp004719)
+
+5. Hodgkin, A. L., Huxley, A. F. & Katz, B. (1952). Measurement of
+   current-voltage relations in the membrane of the giant axon of
+   *Loligo*. *Journal of Physiology*, 116(4), 424–448.
+   DOI: [10.1113/jphysiol.1952.sp004716](https://doi.org/10.1113/jphysiol.1952.sp004716)
+
+6. Rinzel, J. & Ermentrout, G. B. (1998). Analysis of neural excitability
+   and oscillations. In *Methods in Neuronal Modeling* (2nd ed.), Koch, C.
+   & Segev, I. (Eds.), MIT Press, pp. 251–291.
+   ISBN: 978-0-262-11231-4
+
+7. Izhikevich, E. M. (2007). *Dynamical Systems in Neuroscience: The
+   Geometry of Excitability and Bursting*. MIT Press, Chapter 2.
+   DOI: [10.7551/mitpress/2526.001.0001](https://doi.org/10.7551/mitpress/2526.001.0001)
+
+8. Dayan, P. & Abbott, L. F. (2001). *Theoretical Neuroscience:
+   Computational and Mathematical Modeling of Neural Systems*. MIT Press,
+   Chapter 5.
+   ISBN: 978-0-262-04199-7

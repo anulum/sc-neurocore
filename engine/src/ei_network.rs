@@ -213,7 +213,7 @@ mod tests {
         let r = simulate_ei(20, 5, 0.1, 0.4, 0.1, 0.4, 0.2, 10.0, 50.0, 0.1, 42);
         assert_eq!(r.n_exc, 20);
         assert_eq!(r.n_inh, 5);
-        assert!(r.rate_time.len() > 0);
+        assert!(!r.rate_time.is_empty());
         assert_eq!(r.exc_rates.len(), r.rate_time.len());
     }
 

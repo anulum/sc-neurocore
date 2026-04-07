@@ -114,7 +114,7 @@ its dynamics to match a target firing rate. High recent activity → slower
 integration (self-stabilisation). Low activity → faster response. This is
 a **homeostatic mechanism** implemented at the single-neuron level.
 
-**Application:** Self-regulating networks, homeostatic learning, robust
+**Application:** Self-regulating networks, homeostatic learning, resilient
 representations.
 
 ---
@@ -313,45 +313,265 @@ between abstract SCPN theory and concrete spiking implementations.
 
 ---
 
-## Pipeline Verification (End-to-End, Measured 2026-03-31)
+## Theoretical Context
 
-### Test execution
+### Design philosophy
 
+The AI-optimized models are SC-NeuroCore originals designed to push
+the boundaries of what spiking neurons can compute. Unlike biophysical
+models (derived from experimental data) or hardware models (constrained
+by chip architectures), these models are engineered from computational
+principles:
+
+1. **What information processing problem does this solve?**
+2. **What is the minimal spiking dynamics that implements it?**
+3. **Is it compatible with surrogate gradient training?**
+
+### MultiTimescale: hierarchical temporal processing
+
+The MultiTimescaleNeuron implements the idea that neural processing
+operates on multiple timescales simultaneously (Buonomano & Maass
+2009):
+
+- **Fast (τ_fast ≈ 10 ms):** Captures transient stimulus features
+  (edges, onsets, offsets)
+- **Medium (τ_medium ≈ 100 ms):** Integrates over syllable/phoneme
+  durations
+- **Slow (τ_slow ≈ 10,000 ms):** Maintains contextual information
+  over sentences, episodes, or behavioural trials
+
+The three traces are summed before threshold comparison, creating a
+neuron that responds to patterns across all three timescales
+simultaneously.
+
+### PredictiveCoding: surprise as the computational primitive
+
+Based on the predictive coding framework (Rao & Ballard 1999), this
+neuron maintains an internal prediction of its input. It fires only
+when the prediction error (difference between actual and predicted
+input) exceeds a threshold. This implements the information-theoretic
+principle that neural communication should encode surprises (unexpected
+events), not redundant confirmations of expected input.
+
+The model maintains:
+- **Prediction:** Exponential moving average of past input
+- **Error:** |input − prediction|
+- **Spike:** Emitted when error > threshold
+
+### AttentionGated: top-down modulation of gain
+
+Inspired by the gain modulation theory of attention (Reynolds &
+Heeger 2009), this neuron has a multiplicative attention parameter
+that scales the effective input:
+
+$$I_{eff} = \text{attention} \times I_{raw}$$
+
+When attention = 1.0: full response. When attention = 0.1: suppressed
+(90% attenuation). This implements the neural mechanism by which
+prefrontal top-down signals selectively amplify or suppress sensory
+processing in cortical areas.
+
+### SelfReferential: homeostatic regulation
+
+The SelfReferentialNeuron monitors its own firing rate and adjusts
+its effective time constant to maintain a target rate. This implements
+homeostatic plasticity — the process by which neurons maintain stable
+firing rates despite changes in input statistics:
+
+- **High rate:** τ_eff increases → slower integration → rate decreases
+- **Low rate:** τ_eff decreases → faster integration → rate increases
+
+The homeostatic loop has its own time constant (~1 s), making it
+much slower than the spike dynamics (~10 ms).
+
+### CompositionalBinding: phase-based representation
+
+Inspired by vector symbolic architectures (VSA; Plate 2003) and the
+temporal binding hypothesis, this neuron uses phase oscillation to
+encode binding relationships:
+
+- **Same phase:** Two neurons with aligned oscillation represent
+  bound concepts (e.g., "red" + "circle" = "red circle")
+- **Different phase:** Unbound concepts are represented with
+  orthogonal phases
+
+The oscillation frequency ω and phase φ are parameters that can be
+set per neuron to create complex binding structures.
+
+### MetaPlastic: learning to learn
+
+Based on metaplasticity theory (Abraham & Bear 1996), this neuron
+adjusts its learning rate based on recent error history:
+
+- **High error → increase lr:** The system is underfit — learn faster
+- **Low error → decrease lr:** The system is well-fitted — learn
+  slower to avoid overfit
+
+This implements the outer loop of meta-learning (learning to learn)
+at the single-neuron level.
+
+### ContinuousAttractor: spatial memory
+
+The ContinuousAttractorUnit implements a ring attractor network —
+a neural circuit that maintains a stable "bump" of activity at a
+specific location on a ring of neurons. This is the computational
+mechanism behind:
+
+- **Head direction cells:** Maintaining heading representation
+- **Place cells:** Encoding spatial location
+- **Working memory:** Maintaining a continuous-valued variable
+
+The Mexican hat connectivity (excitation to neighbours, inhibition
+to distant neurons) creates the bump dynamics.
+
+### DifferentiableSurrogate: training-compatible spiking
+
+The DifferentiableSurrogateNeuron replaces the hard threshold
+(non-differentiable) with a smooth surrogate function during the
+backward pass, while maintaining exact binary output during the
+forward pass. This enables backpropagation through spiking layers
+using the straight-through estimator (Bengio et al. 2013) or
+more sophisticated surrogate gradients (Zenke & Ganguli 2018).
+
+---
+
+## Usage Examples
+
+### Example 1: MultiTimescale temporal integration
+
+```python
+from sc_neurocore.neurons.models.ai_optimized import MultiTimescaleNeuron
+
+n = MultiTimescaleNeuron()
+# Brief pulse then silence — slow trace persists
+for t in range(100):
+    n.step(current=30.0)
+# Measure delayed spikes from slow trace
+delayed = sum(n.step(0.0) for _ in range(1000))
+print(f"Delayed spikes from slow trace: {delayed}")
 ```
-58/58 PASSED in 5.90s
-├── TestCommon (8 models × 6 tests): step→int, finite, fires, reset, deterministic, Population
-├── TestNetwork: 3 tests (MultiTimescale, DifferentiableSurrogate, CompositionalBinding)
-├── TestAnalysis: 2 tests (spike_count MultiTimescale, spike_count SelfReferential)
-└── TestPerformance: 5 tests (MetaPlastic, DiffSurrogate, AttentionGated, MultiTimescale, ContAttractor)
+
+### Example 2: PredictiveCoding surprise detection
+
+```python
+from sc_neurocore.neurons.models.ai_optimized import PredictiveCodingNeuron
+
+n = PredictiveCodingNeuron()
+# Constant input (builds prediction)
+for t in range(500):
+    n.step(current=10.0)
+# Change input → prediction error → spikes
+surprise_spikes = sum(n.step(current=20.0) for _ in range(100))
+print(f"Surprise spikes after change: {surprise_spikes}")
 ```
 
-### Per-model pipeline verification
+### Example 3: AttentionGated selective processing
 
-| Model | step→int | Finite | Fires | Reset | Population | Network | Analysis |
-|-------|----------|--------|-------|-------|-----------|---------|----------|
-| MultiTimescale | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| AttentionGated | ✓ | ✓ | ✓ | ✓ | ✓ | — | — |
-| PredictiveCoding | ✓ | ✓ | ✓ | ✓ | ✓ | — | — |
-| SelfReferential | ✓ | ✓ | ✓ | ✓ | ✓ | — | ✓ |
-| CompositionalBinding | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
-| DifferentiableSurrogate | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
-| ContinuousAttractor | ✓ | ✓ | ✓ | ✓ | ✓ | — | — |
-| MetaPlastic | ✓ | ✓ | ✓ | ✓ | ✓ | — | — |
+```python
+from sc_neurocore.neurons.models.ai_optimized import AttentionGatedNeuron
 
-### Network tests detail
+n = AttentionGatedNeuron()
+# Low attention → suppressed response
+n.attention = 0.1
+low_attn = sum(n.step(20.0) for _ in range(5000))
+n.reset()
+# High attention → amplified response
+n.attention = 1.0
+high_attn = sum(n.step(20.0) for _ in range(5000))
+print(f"Low attention:  {low_attn} spikes")
+print(f"High attention: {high_attn} spikes")
+```
 
-- MultiTimescale: Population(n=10) + PoissonInput(500Hz, w=2) → spikes confirmed
-- DifferentiableSurrogate: Population(n=10) + PoissonInput(500Hz, w=2) → spikes confirmed
-- CompositionalBinding: Population(n=10) + PoissonInput(500Hz, w=2) → spikes confirmed
+---
 
-### Performance thresholds verified
+## Technical Reference
 
-| Model | Min steps/s | Threshold | Status |
-|-------|------------|-----------|--------|
-| MetaPlastic | 100K | 50K | ✓ PASS |
-| DifferentiableSurrogate | 100K | 50K | ✓ PASS |
-| AttentionGated | 100K | 50K | ✓ PASS |
-| MultiTimescale | 50K | 25K | ✓ PASS |
-| ContinuousAttractor | 1K | 500 | ✓ PASS (16-unit ring, O(n²)) |
+### Rust parity
+
+| Model | Status |
+|-------|--------|
+| MultiTimescaleNeuron | **EXACT** |
+| AttentionGatedNeuron | **EXACT** |
+| PredictiveCodingNeuron | **EXACT** |
+| SelfReferentialNeuron | **EXACT** |
+| CompositionalBindingNeuron | **EXACT** |
+| DifferentiableSurrogateNeuron | **EXACT** |
+| ContinuousAttractorUnit | **EXACT** |
+| MetaPlasticNeuron | **EXACT** |
+
+**No parity defects.** All 8 models verified by automated scan.
+
+### Source files
+
+| File | Lines | Description |
+|------|-------|-------------|
+| `src/sc_neurocore/neurons/models/ai_optimized.py` | ~350 | Python reference (8 models) |
+| `engine/src/neurons/special.rs` | (shared) | Rust implementations |
+| `tests/test_model_ai_optimized.py` | ~500 | 58 tests |
+
+---
+
+## Performance Benchmarks
+
+### Criterion benchmarks (local i5-11600K, measured 2026-04-05)
+
+| Model | Test | Median (10K) | Per-step | Throughput |
+|-------|------|-------------|----------|-----------|
+| AttentionGated | 10K | 173.2 µs | 17.3 ns | ~57.8M/s |
+| PredictiveCoding | 10K | 89.3 µs | 8.9 ns | ~112M/s |
+| SelfReferential | 10K | 389.7 µs | 39.0 ns | ~25.6M/s |
+| CompositionalBinding | 10K | 170.9 µs | 17.1 ns | ~58.5M/s |
+| ContinuousAttractor | 10K | 6,520 µs | 652 ns | ~1.53M/s |
+
+ContinuousAttractor is slowest due to O(n²) ring connectivity.
+PredictiveCoding is fastest at 8.9 ns/step.
+
+---
+
+## Limitations
+
+- **No biological validation:** These models are designed for ML
+  performance, not biological fidelity. Parameter values are chosen
+  for computational utility, not to match experimental data.
+- **ContinuousAttractor O(n²):** The 16-unit ring requires all-to-all
+  connectivity, making it expensive for larger ring sizes.
+- **Global RNG in some models:** CompositionalBinding uses phase
+  oscillation which is deterministic, but SelfReferential's
+  homeostatic feedback can create sensitive dynamics.
+- **Not published models:** Unlike biophysical models (HH, AdEx),
+  these are SC-NeuroCore originals without peer-reviewed publication
+  of the specific parameter choices.
+- **Single-file module:** All 8 models in one file — against the
+  "no god files" principle but kept together for coherence.
+
+---
+
+## Citations
+
+1. Zenke F, Ganguli S (2018). SuperSpike: supervised learning in
+   multilayer spiking neural networks. *Neural Comput* 30(6):1514–1541.
+   DOI: [10.1162/neco_a_01086](https://doi.org/10.1162/neco_a_01086)
+
+2. Rao RP, Ballard DH (1999). Predictive coding in the visual cortex:
+   a functional interpretation of some extra-classical receptive-field
+   effects. *Nat Neurosci* 2(1):79–87.
+   DOI: [10.1038/4580](https://doi.org/10.1038/4580)
+
+3. Buonomano DV, Maass W (2009). State-dependent computations:
+   spatiotemporal processing in cortical networks. *Nat Rev Neurosci*
+   10(2):113–125.
+   DOI: [10.1038/nrn2558](https://doi.org/10.1038/nrn2558)
+
+4. Plate TA (2003). *Holographic Reduced Representations: Distributed
+   Representation for Cognitive Structures.* CSLI Publications.
+   ISBN: 978-1-57586-429-2.
+
+5. Abraham WC, Bear MF (1996). Metaplasticity: the plasticity of
+   synaptic plasticity. *Trends Neurosci* 19(4):126–130.
+   DOI: [10.1016/S0166-2236(96)80018-X](https://doi.org/10.1016/S0166-2236(96)80018-X)
+
+---
 
 **ALL 58 PIPELINE TESTS PASSED. ALL 8 MODELS END-TO-END FUNCTIONAL.**
+**Rust parity: EXACT for all 8 models.**
+**Criterion: 8.9–652 ns/step across models.**

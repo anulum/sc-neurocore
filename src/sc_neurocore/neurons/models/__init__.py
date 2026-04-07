@@ -7,18 +7,20 @@
 
 """Individual neuron model files — one class per file.
 
-All 122 models are lazy-loaded on first access to keep import fast.
+All 130 models are lazy-loaded on first access to keep import fast.
 ``from sc_neurocore.neurons.models import HodgkinHuxleyNeuron`` loads
-only that one file, not all 109.
+only that one file.
 """
 
 _CLASS_TO_MODULE = {
     "AdExNeuron": "adex",
     "AdaptiveThresholdIFNeuron": "adaptive_threshold_if",
+    "AdaptiveThresholdMoENeuron": "adaptive_threshold_moe",
     "AkidaNeuron": "akida_neuron",
     "AlphaNeuron": "alpha",
     "AmariNeuralField": "amari_field",
     "ArcaneNeuron": "arcane_neuron",
+    "AstrocyteLIFNeuron": "astrocyte_lif",
     "AstrocyteModel": "astrocyte",
     "AstrocyteNeuron": "astrocyte_adapter",
     "AttentionGatedNeuron": "ai_optimized",
@@ -29,6 +31,7 @@ _CLASS_TO_MODULE = {
     "BrainScaleSAdExNeuron": "brainscales_adex",
     "ButeraRespiratoryNeuron": "butera_respiratory",
     "COBALIFNeuron": "coba_lif",
+    "CochlearHairCell": "cochlear_hair_cell",
     "CazellesMapNeuron": "cazelles_map",
     "ChayKeizerNeuron": "chay_keizer",
     "ChayNeuron": "chay",
@@ -42,7 +45,9 @@ _CLASS_TO_MODULE = {
     "CourageNekorkinMapNeuron": "courage_nekorkin_map",
     "DPINeuron": "dpi_neuron",
     "DeSchutterPurkinjeNeuron": "de_schutter_purkinje",
+    "DendriticNMDANeuron": "dendritic_nmda",
     "DendrifyNeuron": "dendrify",
+    "DirectionSelectiveRGC": "direction_selective_rgc",
     "DestexheThalamicNeuron": "destexhe_thalamic",
     "DifferentiableSurrogateNeuron": "ai_optimized",
     "DurstewitzDopamineNeuron": "durstewitz_dopamine",
@@ -63,6 +68,7 @@ _CLASS_TO_MODULE = {
     "GolombFSNeuron": "golomb_fs",
     "GutkinErmentroutNeuron": "gutkin_ermentrout",
     "HayL5PyramidalNeuron": "hay_l5",
+    "HybridLinearAttentionNeuron": "hybrid_linear_attention",
     "HillTononiNeuron": "hill_tononi",
     "HindmarshRoseNeuron": "hindmarsh_rose",
     "HodgkinHuxleyNeuron": "hodgkin_huxley",
@@ -90,6 +96,7 @@ _CLASS_TO_MODULE = {
     "MihalasNieburNeuron": "mihalas_niebur",
     "MorrisLecarNeuron": "morris_lecar",
     "MultiTimescaleNeuron": "ai_optimized",
+    "MulticompartmentMCNNeuron": "multicompartment_mcn",
     "NeuroGridNeuron": "neurogrid",
     "NonResettingLIFNeuron": "non_resetting_lif",
     "NonlinearLIFNeuron": "nlif",
@@ -104,6 +111,7 @@ _CLASS_TO_MODULE = {
     "PredictiveCodingNeuron": "ai_optimized",
     "PrescottNeuron": "prescott",
     "QuadraticIFNeuron": "quadratic_if",
+    "QuantumInspiredLIFNeuron": "quantum_inspired_lif",
     "RallCableNeuron": "rall_cable",
     "ResonateAndFireNeuron": "resonate_and_fire",
     "RulkovMapNeuron": "rulkov_map",

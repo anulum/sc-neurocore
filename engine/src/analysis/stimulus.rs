@@ -405,7 +405,7 @@ mod tests {
             .max_by(|a, b| a.1.partial_cmp(b.1).unwrap())
             .unwrap()
             .0;
-        assert!(peak_idx >= 4 && peak_idx <= 6);
+        assert!((4..=6).contains(&peak_idx));
     }
 
     #[test]

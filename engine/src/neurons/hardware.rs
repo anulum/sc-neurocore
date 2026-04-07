@@ -534,7 +534,9 @@ mod tests {
     #[test]
     fn loihi_cuba_reset() {
         let mut n = LoihiCUBANeuron::new();
-        for _ in 0..50 { n.step(100); }
+        for _ in 0..50 {
+            n.step(100);
+        }
         n.reset();
         assert_eq!(n.v, 0);
         assert_eq!(n.u, 0);
@@ -542,7 +544,9 @@ mod tests {
     #[test]
     fn loihi_cuba_bounded() {
         let mut n = LoihiCUBANeuron::new();
-        for _ in 0..1000 { n.step(10000); }
+        for _ in 0..1000 {
+            n.step(10000);
+        }
     }
 
     // -- Loihi2 --
@@ -555,14 +559,21 @@ mod tests {
     #[test]
     fn loihi2_reset() {
         let mut n = Loihi2Neuron::new();
-        for _ in 0..50 { n.step(200); }
+        for _ in 0..50 {
+            n.step(200);
+        }
         n.reset();
         assert_eq!(n.s1, 0);
     }
     #[test]
     fn loihi2_bounded() {
-        let mut n = Loihi2Neuron { tau3: 8, ..Loihi2Neuron::new() };
-        for _ in 0..1000 { n.step(10000); }
+        let mut n = Loihi2Neuron {
+            tau3: 8,
+            ..Loihi2Neuron::new()
+        };
+        for _ in 0..1000 {
+            n.step(10000);
+        }
     }
 
     // -- TrueNorth --
@@ -575,7 +586,9 @@ mod tests {
     #[test]
     fn truenorth_reset() {
         let mut n = TrueNorthNeuron::default();
-        for _ in 0..10 { n.step(50); }
+        for _ in 0..10 {
+            n.step(50);
+        }
         n.reset();
         assert_eq!(n.v, 0);
     }
@@ -590,18 +603,24 @@ mod tests {
     #[test]
     fn brainscales_reset() {
         let mut n = BrainScaleSAdExNeuron::new();
-        for _ in 0..100 { n.step(500.0); }
+        for _ in 0..100 {
+            n.step(500.0);
+        }
         n.reset();
         assert!((n.v - n.v_rest).abs() < 1e-10);
     }
     #[test]
     fn brainscales_bounded() {
         let mut n = BrainScaleSAdExNeuron::new();
-        for _ in 0..2000 { n.step(1e4); }
+        for _ in 0..2000 {
+            n.step(1e4);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
-    fn brainscales_nan_no_panic() { BrainScaleSAdExNeuron::new().step(f64::NAN); }
+    fn brainscales_nan_no_panic() {
+        BrainScaleSAdExNeuron::new().step(f64::NAN);
+    }
 
     // -- SpiNNakerLIF --
     #[test]
@@ -613,18 +632,24 @@ mod tests {
     #[test]
     fn spinnaker_reset() {
         let mut n = SpiNNakerLIFNeuron::new();
-        for _ in 0..50 { n.step(30.0); }
+        for _ in 0..50 {
+            n.step(30.0);
+        }
         n.reset();
         assert!((n.v - n.v_rest).abs() < 1e-10);
     }
     #[test]
     fn spinnaker_bounded() {
         let mut n = SpiNNakerLIFNeuron::new();
-        for _ in 0..1000 { n.step(1e4); }
+        for _ in 0..1000 {
+            n.step(1e4);
+        }
         assert!(n.v.is_finite());
     }
     #[test]
-    fn spinnaker_nan_no_panic() { SpiNNakerLIFNeuron::new().step(f64::NAN); }
+    fn spinnaker_nan_no_panic() {
+        SpiNNakerLIFNeuron::new().step(f64::NAN);
+    }
 
     // -- SpiNNaker2 --
     #[test]
@@ -636,13 +661,17 @@ mod tests {
     #[test]
     fn spinnaker2_reset() {
         let mut n = SpiNNaker2Neuron::new();
-        for _ in 0..50 { n.step(100); }
+        for _ in 0..50 {
+            n.step(100);
+        }
         n.reset();
     }
     #[test]
     fn spinnaker2_bounded() {
         let mut n = SpiNNaker2Neuron::new();
-        for _ in 0..1000 { n.step(10000); }
+        for _ in 0..1000 {
+            n.step(10000);
+        }
     }
 
     // -- DPI --
@@ -655,11 +684,15 @@ mod tests {
     #[test]
     fn dpi_reset() {
         let mut n = DPINeuron::new();
-        for _ in 0..50 { n.step(1.0); }
+        for _ in 0..50 {
+            n.step(1.0);
+        }
         n.reset();
     }
     #[test]
-    fn dpi_nan_no_panic() { DPINeuron::new().step(f64::NAN); }
+    fn dpi_nan_no_panic() {
+        DPINeuron::new().step(f64::NAN);
+    }
 
     // -- Akida --
     #[test]
@@ -671,11 +704,15 @@ mod tests {
     #[test]
     fn akida_reset() {
         let mut n = AkidaNeuron::default();
-        for _ in 0..10 { n.step(50.0); }
+        for _ in 0..10 {
+            n.step(50.0);
+        }
         n.reset();
     }
     #[test]
-    fn akida_nan_no_panic() { AkidaNeuron::default().step(f64::NAN); }
+    fn akida_nan_no_panic() {
+        AkidaNeuron::default().step(f64::NAN);
+    }
 
     // -- NeuroGrid --
     #[test]
@@ -687,16 +724,22 @@ mod tests {
     #[test]
     fn neurogrid_reset() {
         let mut n = NeuroGridNeuron::new();
-        for _ in 0..100 { n.step(500.0); }
+        for _ in 0..100 {
+            n.step(500.0);
+        }
         n.reset();
         assert!((n.v_s - (-65.0)).abs() < 1e-10);
     }
     #[test]
     fn neurogrid_bounded() {
         let mut n = NeuroGridNeuron::new();
-        for _ in 0..2000 { n.step(1e4); }
+        for _ in 0..2000 {
+            n.step(1e4);
+        }
         assert!(n.v_s.is_finite());
     }
     #[test]
-    fn neurogrid_nan_no_panic() { NeuroGridNeuron::new().step(f64::NAN); }
+    fn neurogrid_nan_no_panic() {
+        NeuroGridNeuron::new().step(f64::NAN);
+    }
 }

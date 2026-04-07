@@ -56,3 +56,4 @@ Full 7-point checklist audit of all 173 Rust neuron structs. 4 phases, tracked.
 ---
 
 *Last updated: 2026-04-05T1509 by Arcane Sapience*
+| 2026-04-06 | research_attention_residuals_2026-04-06.md | AttnRes (Kimi/Moonshot) adaptation proposal | PROPOSAL | Claude |

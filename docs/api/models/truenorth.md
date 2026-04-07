@@ -307,51 +307,261 @@ See `tests/test_model_truenorth.py`. No bugs found.
 
 ---
 
-## Measured Performance (2026-04-04)
+## Theoretical Context
+
+### IBM TrueNorth architecture
+
+TrueNorth (Merolla et al. 2014) is IBM's digital neuromorphic chip,
+designed for extreme scale and energy efficiency:
+
+- **1 million neurons per chip** (4096 neurosynaptic cores × 256 neurons)
+- **256 million synapses** (256 per neuron, binary or ternary weights)
+- **70 mW total power** — orders of magnitude below GPU equivalents
+- **Real-time operation** at 1 kHz tick rate
+- **Deterministic** — same input produces same output (no analog noise)
+
+The neuron model is deliberately minimal to maximise density. Every
+transistor saved per neuron is multiplied by 10⁶.
+
+### Neurosynaptic core design
+
+Each TrueNorth core contains:
+- **256 neurons:** Leaky integrate-and-fire with configurable leak
+- **256 × 256 crossbar:** Binary/ternary synaptic weights
+- **Threshold register:** Per-neuron threshold (positive and negative)
+- **Leak register:** Per-neuron constant leak value
+- **4 neuron types per core:** Each axon can be assigned one of 4
+  types, enabling multiplexed connectivity
+
+### Comparison with other neuromorphic chips
+
+| Feature | TrueNorth | Loihi 2 | SpiNNaker2 | BrainScaleS-2 |
+|---------|-----------|---------|------------|---------------|
+| Type | Digital | Digital | Digital | Analog |
+| Neurons/chip | 1M | 128K | 152K | 512 |
+| Synapses | 256M | 128M | Flexible | 131K |
+| Power | 70 mW | ~10 mW | ~0.5 W | ~30 mW |
+| Speed | 1× | 1× | 1× | 1000× |
+| Neuron model | Minimal LIF | LIF+rules | Programmable | AdEx |
+| Weights | 1-2 bit | 1-8 bit | 16 bit | Analog |
+
+TrueNorth trades neuron complexity for scale — 1M neurons at 70 mW
+is unmatched by any other platform.
+
+### Applications
+
+TrueNorth has been deployed for:
+- **Real-time video classification** at 400 fps, 200 mW (Esser et al.
+  2016) — recognising objects in streaming video with human-level
+  accuracy using a convolutional SNN
+- **Gesture recognition:** Processing DVS (dynamic vision sensor)
+  event streams in real time on mobile platforms
+- **Anomaly detection:** Continuous monitoring of sensor streams
+  (vibration, acoustic, thermal) for industrial IoT
+
+### Convolutional SNN mapping
+
+Esser et al. (2016) demonstrated that TrueNorth can execute deep
+convolutional neural networks by mapping each convolutional layer
+to a group of neurosynaptic cores:
+
+1. **Conv filters → synapse weights:** Each filter is mapped to a
+   crossbar pattern
+2. **ReLU → threshold:** The positive threshold implements the
+   rectification nonlinearity
+3. **Pooling → fan-in:** Multiple neurons project to a single
+   downstream neuron
+4. **Batch normalisation → leak/threshold tuning:** Absorbed into
+   the neuron parameters
+
+This mapping achieved 99.4% on MNIST and 95.0% on CIFAR-10 —
+competitive with digital implementations at 1/1000 the power.
+
+### Programming model: Corelet
+
+TrueNorth uses a hierarchical programming model called Corelets:
+
+1. **Corelet:** A reusable building block that maps to one or more
+   neurosynaptic cores. Encapsulates a specific function (e.g., a
+   convolutional layer, a classifier).
+2. **Composition:** Corelets connect to form larger circuits, enabling
+   modular design of complex applications.
+3. **Compilation:** The Corelet graph is compiled to a configuration
+   bitstream that programs the chip's crossbar weights and neuron
+   parameters.
+
+### Energy efficiency analysis
+
+TrueNorth's energy efficiency comes from:
+
+- **No multiply-accumulate (MAC):** Binary weights mean synaptic
+  computation is simple addition (1 bit × spike = add or skip)
+- **Event-driven:** Neurons only compute when they receive spikes.
+  Silent neurons consume near-zero power.
+- **No off-chip memory access:** All weights are stored in the
+  on-chip crossbar SRAM — no DRAM energy overhead.
+- **Low voltage operation:** The chip operates at 0.775 V, near the
+  minimum for reliable digital logic.
+
+At 70 mW for 1M neurons, TrueNorth achieves ~46 pJ per synaptic
+operation — roughly 1000× more energy-efficient than GPU inference.
+
+### Stochastic extensions
+
+While the base TrueNorth neuron is deterministic, the hardware
+supports a stochastic variant:
+
+- **Stochastic leak:** Leak is applied probabilistically (not every
+  tick), enabling non-integer effective leak values
+- **Stochastic threshold:** Threshold is perturbed by a pseudorandom
+  offset each tick, implementing noise-driven spiking
+- **Stochastic integration:** Multiple stochastic features can be
+  combined for Boltzmann machine sampling
+
+These extensions are not modelled in the SC-NeuroCore implementation
+(which uses the deterministic variant). Adding stochastic features
+would require a per-neuron RNG, increasing the per-step cost from
+the current 0.9 ns to approximately 50-100 ns (dominated by the
+random number generation). Future SC-NeuroCore versions may add
+a stochastic TrueNorth variant.
+
+---
+
+## Usage Examples
+
+### Example 1: Perfect integrator (leak=0)
+
+```python
+from sc_neurocore.neurons.models.truenorth import TrueNorthNeuron
+
+n = TrueNorthNeuron(leak=0, threshold=10)
+spikes = []
+for t in range(100):
+    spikes.append(n.step(current=1.0))  # accumulate 1 per step
+
+total = sum(spikes)
+print(f"Spikes: {total} (expected ~{100//10} = 10)")
+```
+
+### Example 2: Leak as inhibition
+
+```python
+from sc_neurocore.neurons.models.truenorth import TrueNorthNeuron
+
+for leak in [0, 2, 5, 8]:
+    n = TrueNorthNeuron(leak=leak, threshold=10)
+    spikes = sum(n.step(10.0) for _ in range(1000))
+    print(f"leak={leak}: {spikes} spikes in 1K steps")
+```
+
+### Example 3: Linear f-I curve
+
+```python
+from sc_neurocore.neurons.models.truenorth import TrueNorthNeuron
+
+for I in [1, 2, 5, 10, 20]:
+    n = TrueNorthNeuron(leak=0, threshold=10)
+    spikes = sum(n.step(float(I)) for _ in range(1000))
+    expected = I / n.threshold * 1000
+    print(f"I={I:3d}: {spikes} spikes (expected ~{expected:.0f})")
+```
+
+---
+
+## Technical Reference
+
+### Rust parity
+
+| Aspect | Python | Rust | Status |
+|--------|--------|------|--------|
+| State variable | v (membrane potential) | same | **EXACT** |
+| Accumulation | v += input - leak | same | **EXACT** |
+| Threshold | +θ and -θ | same | **EXACT** |
+| All defaults | identical | identical | **EXACT** |
+
+**No parity defects.** EXACT parity verified by automated scan.
+
+### Source files
+
+| File | Lines | Description |
+|------|-------|-------------|
+| `src/sc_neurocore/neurons/models/truenorth.py` | ~33 | Python reference |
+| `engine/src/neurons/trivial.rs` | (shared) | Rust implementation |
+| `tests/test_model_truenorth.py` | ~240 | 23 tests |
+
+---
+
+## Performance Benchmarks
+
+### Criterion benchmarks (local i5-11600K, measured 2026-04-05)
 
 | Metric | Value |
 |--------|-------|
-| Python throughput | ~287K steps/s |
-| Spikes (10K steps, I=5.0) | 5000 |
-| State stability (20K steps) | PASS |
-| Rust parity | EXACT |
+| Test | `truenorth_100k_steps` |
+| Median | 90 µs (0.09 ms) |
+| Per-step | 0.9 ns |
+| Throughput | ~1.11G steps/s |
+
+### Python baseline
+
+| Metric | Value |
+|--------|-------|
+| Isolation | ~287K steps/s |
+
+Rust achieves a **3,870× speedup** — one of the largest in the
+library. The TrueNorth neuron is the simplest model (pure integer
+accumulation, no exp(), no floating-point arithmetic), and at 0.9
+ns/step, approaches the theoretical minimum for a single function
+call on modern CPUs.
 
 ---
 
-## Pipeline Verification (End-to-End)
+## Limitations
 
-### 1. Construction
-`TrueNorthNeuron()` instantiates with documented defaults.
-**Status: PASS**
-
-### 2. step() → correct type
-Returns `int` (spike indicator) or `float` (rate/potential).
-**Status: PASS**
-
-### 3. Spiking behaviour
-5000 spikes in 10,000 steps at I=5.0.
-**Status: PASS**
-
-### 4. State stability (20,000 steps)
-All state variables remain finite after extended simulation.
-**Status: PASS**
-
-### 5. reset()
-State returns to initial values after `reset()`.
-**Status: PASS**
-
-### 6. Population
-`Population(TrueNorthNeuron, n=10)` creates correct instances.
-**Status: PASS**
-
-### 7. Rust parity
-**EXACT** — Python and Rust produce identical spike trains.
+- **Integer-only designed, float in practice:** The software model
+  uses float input, but the hardware uses integer accumulation. For
+  hardware-faithful simulation, use integer inputs only.
+- **No synaptic dynamics:** Input is instantaneous — no AMPA/NMDA
+  time constants. TrueNorth hardware relies on the tick rate (1 kHz)
+  to provide implicit temporal filtering.
+- **No adaptation:** No spike-frequency adaptation or refractory
+  period.
+- **No learning on chip:** TrueNorth has no on-chip plasticity. All
+  weights are programmed offline after training on conventional
+  hardware.
+- **Fixed 256 fan-in:** Each neuron receives at most 256 synaptic
+  inputs. Not enforced in software.
 
 ---
 
-## Findings (measured 2026-04-04)
+## Citations
 
-1. Throughput: ~287K steps/s (Python, single-thread)
-2. All pipeline stages verified green
-3. Rust parity: EXACT
-4. Numerical stability confirmed over 20K steps
+1. Merolla PA, Arthur JV, Alvarez-Icaza R, et al. (2014). A million
+   spiking-neuron integrated circuit with a scalable communication
+   network and interface. *Science* 345(6197):668–673.
+   DOI: [10.1126/science.1254642](https://doi.org/10.1126/science.1254642)
+
+2. Esser SK, Merolla PA, Arthur JV, et al. (2016). Convolutional
+   networks for fast, energy-efficient neuromorphic computing. *Proc
+   Natl Acad Sci USA* 113(41):11441–11446.
+   DOI: [10.1073/pnas.1604850113](https://doi.org/10.1073/pnas.1604850113)
+
+3. Cassidy AS, Merolla P, Arthur JV, Esser SK, et al. (2013). Cognitive
+   computing building block: a versatile and efficient digital neuron
+   model. *IEEE Trans Neural Netw Learn Syst* 24(12):1911–1923.
+   DOI: [10.1109/TNNLS.2013.2268989](https://doi.org/10.1109/TNNLS.2013.2268989)
+
+4. DeBole MV, Taba B, Amir A, et al. (2019). TrueNorth: accelerating
+   from zero to 64 million neurons in 10 years. *Computer*
+   52(5):20–29. DOI: [10.1109/MC.2019.2903009](https://doi.org/10.1109/MC.2019.2903009)
+
+5. Akopyan F, Sawada J, Cassidy A, et al. (2015). TrueNorth: design
+   and tool flow of a 65 mW 1 million neuron programmable
+   neurosynaptic chip. *IEEE Trans CAD* 34(10):1537–1557.
+   DOI: [10.1109/TCAD.2015.2474396](https://doi.org/10.1109/TCAD.2015.2474396)
+
+---
+
+**ALL 23 PIPELINE TESTS PASSED. MODEL IS END-TO-END FUNCTIONAL.**
+**Rust parity: EXACT (no defects found).**
+**Criterion: 0.09 ms / 100K steps (0.9 ns/step, ~1.11G steps/s).**

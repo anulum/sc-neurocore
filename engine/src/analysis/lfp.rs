@@ -202,7 +202,7 @@ mod tests {
         let (sfc, freqs) = spike_field_coherence(&train, &lfp, 0.001);
         assert_eq!(sfc.len(), n / 2 + 1);
         assert_eq!(freqs.len(), sfc.len());
-        assert!(sfc.iter().all(|&v| v >= 0.0 && v <= 1.0 + 1e-10));
+        assert!(sfc.iter().all(|&v| (0.0..=1.0 + 1e-10).contains(&v)));
     }
 
     #[test]
@@ -245,7 +245,7 @@ mod tests {
         let mut rng = 42u64;
         for i in 0..n {
             rng = rng.wrapping_mul(6364136223846793005).wrapping_add(1);
-            if rng % 20 == 0 {
+            if rng.is_multiple_of(20) {
                 train[i] = 1;
             }
         }

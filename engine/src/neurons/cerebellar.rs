@@ -1187,10 +1187,7 @@ mod tests {
     fn golgi_spontaneous_firing() {
         // Golgi cells are spontaneously active due to depolarised leak
         let mut n = GolgiCell::new();
-        let mut spikes = 0;
-        for _ in 0..20_000 {
-            spikes += n.step(0.0);
-        }
+        let _spikes: i32 = (0..20_000).map(|_| n.step(0.0)).sum();
         // With e_l = -60 and v_t = -56.2, may or may not spontaneously fire
         // The key property is that they fire easily with minimal input
         let mut n2 = GolgiCell::new();
@@ -1325,7 +1322,7 @@ mod tests {
             ("c_n", n.c_n),
             ("r", n.r),
         ] {
-            assert!(val >= 0.0 && val <= 1.0, "{name} out of bounds: {val}");
+            assert!((0.0..=1.0).contains(&val), "{name} out of bounds: {val}");
         }
         assert!(n.ca >= 0.0, "Ca²⁺ must be non-negative: {}", n.ca);
     }
@@ -1513,7 +1510,7 @@ mod tests {
             spikes_late += n.step(input);
         }
         // No AHP → minimal adaptation
-        let diff = (spikes_early as i32 - spikes_late as i32).abs();
+        let diff = (spikes_early - spikes_late).abs();
         assert!(
             diff < 20,
             "FS should have minimal adaptation: early={spikes_early}, late={spikes_late}"
@@ -1535,6 +1532,10 @@ mod tests {
         }
         // Kv3.1 should enable higher frequency (more spikes at same input)
         assert!(spikes_kv3 > 0, "With Kv3.1 must fire, got {spikes_kv3}");
+        assert!(
+            spikes_no >= 0,
+            "No-Kv3.1 baseline must not panic, got {spikes_no}"
+        );
     }
 
     #[test]
@@ -1794,11 +1795,9 @@ mod tests {
             n.step(10.0);
         }
         // Count spikes after input removal
-        let mut post_spikes = 0;
-        for _ in 0..500 {
-            post_spikes += n.step(0.0);
-        }
+        let post_spikes: i32 = (0..500).map(|_| n.step(0.0)).sum();
         // May or may not spike depending on persistent level — just test it doesn't crash
+        assert!(post_spikes >= 0, "post_spikes must be non-negative");
         assert!(n.v.is_finite());
     }
 
@@ -1985,7 +1984,7 @@ mod tests {
             n.step(10.0);
         }
         for (name, val) in [("h", n.h), ("n", n.n), ("p", n.p), ("s", n.s), ("r", n.r)] {
-            assert!(val >= 0.0 && val <= 1.0, "{name} out of bounds: {val}");
+            assert!((0.0..=1.0).contains(&val), "{name} out of bounds: {val}");
         }
         assert!(n.ca >= 0.0, "Ca²⁺ must be non-negative: {}", n.ca);
     }
