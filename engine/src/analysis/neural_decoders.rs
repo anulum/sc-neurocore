@@ -228,8 +228,7 @@ pub fn ssm_step_diagonal(
         let mut ch_re = 0.0;
         for s in 0..d_state {
             // Re(C[m,s] * h[s]) = C_re*h_re - C_im*h_im
-            ch_re +=
-                c_re[m * d_state + s] * h_re[s] - c_im[m * d_state + s] * h_im[s];
+            ch_re += c_re[m * d_state + s] * h_re[s] - c_im[m * d_state + s] * h_im[s];
         }
         let mut dx = 0.0;
         for m2 in 0..d_model {
@@ -380,8 +379,8 @@ mod tests {
         let mut h_im = vec![0.0; 2];
         let x = vec![1.0, 0.0, 0.0];
         let y = ssm_step_diagonal(
-            &a_re, &a_im, &b_re, &b_im, &c_re, &c_im, &d_mat,
-            &mut h_re, &mut h_im, &x, d_state, d_model,
+            &a_re, &a_im, &b_re, &b_im, &c_re, &c_im, &d_mat, &mut h_re, &mut h_im, &x, d_state,
+            d_model,
         );
         assert_eq!(y.len(), 3);
     }
@@ -393,8 +392,18 @@ mod tests {
         let mut h_re = vec![0.0];
         let mut h_im = vec![0.0];
         ssm_step_diagonal(
-            &[0.9], &[0.0], &[1.0], &[0.0], &[1.0], &[0.0], &[0.0],
-            &mut h_re, &mut h_im, &[1.0], d_state, d_model,
+            &[0.9],
+            &[0.0],
+            &[1.0],
+            &[0.0],
+            &[1.0],
+            &[0.0],
+            &[0.0],
+            &mut h_re,
+            &mut h_im,
+            &[1.0],
+            d_state,
+            d_model,
         );
         // h_re should be 0.9 * 0 + 1.0 * 1.0 = 1.0
         assert!((h_re[0] - 1.0).abs() < 1e-10);

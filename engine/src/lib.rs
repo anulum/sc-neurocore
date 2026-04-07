@@ -3638,10 +3638,7 @@ fn py_tokenise_spikes(
     let tokens = analysis::neural_decoders::tokenise_spikes(&refs, dt);
     let uids: Vec<i64> = tokens.iter().map(|t| t.0 as i64).collect();
     let times: Vec<f64> = tokens.iter().map(|t| t.1).collect();
-    (
-        uids.into_pyarray(py).into(),
-        times.into_pyarray(py).into(),
-    )
+    (uids.into_pyarray(py).into(), times.into_pyarray(py).into())
 }
 
 #[pyfunction]
