@@ -56,6 +56,225 @@ py_neuron_default!("MetaPlasticNeuron", PyMetaPlasticNeuron, neurons::MetaPlasti
 
 py_neuron_default!("ArcaneNeuron", PyArcaneNeuron, neurons::ArcaneNeuron, state v_fast, state v_work, state v_deep);
 
+// Gap models: AdaptiveThresholdMoENeuron (step returns i32 spike count, not binary)
+py_neuron_default!("RustAdaptiveThresholdMoENeuron", PyAdaptiveThresholdMoENeuron, neurons::AdaptiveThresholdMoENeuron, state v, state v_th);
+
+// Gap models: CochlearHairCell (step(displacement) -> i32)
+py_neuron_default!("RustCochlearHairCell", PyCochlearHairCell, neurons::CochlearHairCell, state v, state glutamate_release);
+
+// Gap models: HybridLinearAttentionNeuron (needs dim param)
+#[pyclass(name = "RustHybridLinearAttentionNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[derive(Clone)]
+pub struct PyHybridLinearAttentionNeuron { inner: neurons::HybridLinearAttentionNeuron }
+
+#[pymethods]
+impl PyHybridLinearAttentionNeuron {
+    #[new]
+    #[pyo3(signature = (dim=16))]
+    fn new(dim: usize) -> Self { Self { inner: neurons::HybridLinearAttentionNeuron::new(dim) } }
+    fn step(&mut self, current: f64) -> i32 { self.inner.step(current) }
+    fn step_qkv(&mut self, query: f64, key: f64, value: f64) -> f64 { self.inner.step_qkv(query, key, value) }
+    fn reset(&mut self) { self.inner.reset(); }
+    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let d = PyDict::new(py);
+        d.set_item("v", self.inner.v)?;
+        Ok(d.into_any().unbind())
+    }
+}
+
+// Gap models: QuantumInspiredLIFNeuron (step_complex)
+#[pyclass(name = "RustQuantumInspiredLIFNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[derive(Clone)]
+pub struct PyQuantumInspiredLIFNeuron { inner: neurons::QuantumInspiredLIFNeuron }
+
+#[pymethods]
+impl PyQuantumInspiredLIFNeuron {
+    #[new]
+    fn new() -> Self { Self { inner: neurons::QuantumInspiredLIFNeuron::new() } }
+    fn step(&mut self, current: f64) -> i32 { self.inner.step(current) }
+    fn step_complex(&mut self, i_re: f64, i_im: f64) -> i32 { self.inner.step_complex(i_re, i_im) }
+    fn reset(&mut self) { self.inner.reset(); }
+    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let d = PyDict::new(py);
+        d.set_item("z_re", self.inner.z_re)?;
+        d.set_item("z_im", self.inner.z_im)?;
+        Ok(d.into_any().unbind())
+    }
+}
+
+// Gap models: DendriticNMDANeuron (step(i_soma, glutamate))
+#[pyclass(name = "RustDendriticNMDANeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[derive(Clone)]
+pub struct PyDendriticNMDANeuron { inner: neurons::DendriticNMDANeuron }
+
+#[pymethods]
+impl PyDendriticNMDANeuron {
+    #[new]
+    fn new() -> Self { Self { inner: neurons::DendriticNMDANeuron::new() } }
+    fn step(&mut self, i_soma: f64, glutamate: f64) -> i32 { self.inner.step(i_soma, glutamate) }
+    fn reset(&mut self) { self.inner.reset(); }
+    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let d = PyDict::new(py);
+        d.set_item("v_soma", self.inner.v_soma)?;
+        d.set_item("v_dend", self.inner.v_dend)?;
+        Ok(d.into_any().unbind())
+    }
+}
+
+// Gap models: MulticompartmentMCNNeuron (step_compartments(x_b, x_a, I))
+#[pyclass(name = "RustMulticompartmentMCNNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[derive(Clone)]
+pub struct PyMulticompartmentMCNNeuron { inner: neurons::MulticompartmentMCNNeuron }
+
+#[pymethods]
+impl PyMulticompartmentMCNNeuron {
+    #[new]
+    fn new() -> Self { Self { inner: neurons::MulticompartmentMCNNeuron::new() } }
+    fn step(&mut self, current: f64) -> i32 { self.inner.step(current) }
+    fn step_compartments(&mut self, x_basal: f64, x_apical: f64, i_soma: f64) -> i32 {
+        self.inner.step_compartments(x_basal, x_apical, i_soma)
+    }
+    fn reset(&mut self) { self.inner.reset(); }
+    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let d = PyDict::new(py);
+        d.set_item("u", self.inner.u)?;
+        d.set_item("v_basal", self.inner.v_basal)?;
+        d.set_item("v_apical", self.inner.v_apical)?;
+        Ok(d.into_any().unbind())
+    }
+}
+
+// Gap models: AstrocyteLIFNeuron (step_with_pre(i_ext, pre_spike))
+#[pyclass(name = "RustAstrocyteLIFNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[derive(Clone)]
+pub struct PyAstrocyteLIFNeuron { inner: neurons::AstrocyteLIFNeuron }
+
+#[pymethods]
+impl PyAstrocyteLIFNeuron {
+    #[new]
+    fn new() -> Self { Self { inner: neurons::AstrocyteLIFNeuron::new() } }
+    fn step(&mut self, current: f64) -> i32 { self.inner.step(current) }
+    fn step_with_pre(&mut self, i_ext: f64, pre_spike: bool) -> i32 {
+        self.inner.step_with_pre(i_ext, pre_spike)
+    }
+    fn reset(&mut self) { self.inner.reset(); }
+    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let d = PyDict::new(py);
+        d.set_item("v", self.inner.v)?;
+        d.set_item("ca", self.inner.ca)?;
+        Ok(d.into_any().unbind())
+    }
+}
+
+// Gap models: DirectionSelectiveRGC (step_rf(intensity, surround))
+#[pyclass(name = "RustDirectionSelectiveRGC", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[derive(Clone)]
+pub struct PyDirectionSelectiveRGC { inner: neurons::DirectionSelectiveRGC }
+
+#[pymethods]
+impl PyDirectionSelectiveRGC {
+    #[new]
+    #[pyo3(signature = (is_on=true))]
+    fn new(is_on: bool) -> Self {
+        Self { inner: if is_on { neurons::DirectionSelectiveRGC::new_on() } else { neurons::DirectionSelectiveRGC::new_off() } }
+    }
+    fn step(&mut self, current: f64) -> i32 { self.inner.step(current) }
+    fn step_rf(&mut self, intensity: f64, surround_mean: f64) -> i32 {
+        self.inner.step_rf(intensity, surround_mean)
+    }
+    fn reset(&mut self) { self.inner.reset(); }
+    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let d = PyDict::new(py);
+        d.set_item("v", self.inner.v)?;
+        d.set_item("is_on_centre", self.inner.is_on_centre)?;
+        Ok(d.into_any().unbind())
+    }
+}
+
+// Gap synapse models: TripletStdpSynapse
+#[pyclass(name = "RustTripletStdpSynapse", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[derive(Clone)]
+pub struct PyTripletStdpSynapse { inner: crate::synapses::TripletStdpSynapse }
+
+#[pymethods]
+impl PyTripletStdpSynapse {
+    #[new]
+    #[pyo3(signature = (weight=0.5, w_min=0.0, w_max=1.0))]
+    fn new(weight: f64, w_min: f64, w_max: f64) -> Self {
+        Self { inner: crate::synapses::TripletStdpSynapse::new(weight, w_min, w_max) }
+    }
+    fn step(&mut self, pre_spike: bool, post_spike: bool) {
+        self.inner.step(pre_spike, post_spike);
+    }
+    #[getter]
+    fn weight(&self) -> f64 { self.inner.weight }
+    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let d = PyDict::new(py);
+        d.set_item("weight", self.inner.weight)?;
+        d.set_item("r1", self.inner.r1)?;
+        d.set_item("o1", self.inner.o1)?;
+        d.set_item("r2", self.inner.r2)?;
+        d.set_item("o2", self.inner.o2)?;
+        Ok(d.into_any().unbind())
+    }
+}
+
+// Gap synapse models: ShortTermPlasticitySynapse
+#[pyclass(name = "RustShortTermPlasticitySynapse", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[derive(Clone)]
+pub struct PyShortTermPlasticitySynapse { inner: crate::synapses::ShortTermPlasticitySynapse }
+
+#[pymethods]
+impl PyShortTermPlasticitySynapse {
+    #[new]
+    fn new() -> Self { Self { inner: crate::synapses::ShortTermPlasticitySynapse::new_depressing() } }
+    #[staticmethod]
+    fn depressing() -> Self { Self { inner: crate::synapses::ShortTermPlasticitySynapse::new_depressing() } }
+    #[staticmethod]
+    fn facilitating() -> Self { Self { inner: crate::synapses::ShortTermPlasticitySynapse::new_facilitating() } }
+    fn step(&mut self, pre_spike: bool) -> f64 { self.inner.step(pre_spike) }
+    fn reset(&mut self) { self.inner.reset(); }
+    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let d = PyDict::new(py);
+        d.set_item("x", self.inner.x)?;
+        d.set_item("u", self.inner.u)?;
+        Ok(d.into_any().unbind())
+    }
+}
+
+// Gap synapse models: DopamineStdpSynapse
+#[pyclass(name = "RustDopamineStdpSynapse", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[derive(Clone)]
+pub struct PyDopamineStdpSynapse { inner: crate::synapses::DopamineStdpSynapse }
+
+#[pymethods]
+impl PyDopamineStdpSynapse {
+    #[new]
+    #[pyo3(signature = (weight=0.5, w_min=0.0, w_max=1.0))]
+    fn new(weight: f64, w_min: f64, w_max: f64) -> Self {
+        Self { inner: crate::synapses::DopamineStdpSynapse::new(weight, w_min, w_max) }
+    }
+    fn step(&mut self, pre_spike: bool, post_spike: bool, reward: f64) {
+        self.inner.step(pre_spike, post_spike, reward);
+    }
+    fn reset(&mut self) { self.inner.reset(); }
+    #[getter]
+    fn weight(&self) -> f64 { self.inner.weight }
+    #[getter]
+    fn dopamine(&self) -> f64 { self.inner.dopamine }
+    #[getter]
+    fn eligibility(&self) -> f64 { self.inner.eligibility }
+    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let d = PyDict::new(py);
+        d.set_item("weight", self.inner.weight)?;
+        d.set_item("eligibility", self.inner.eligibility)?;
+        d.set_item("dopamine", self.inner.dopamine)?;
+        d.set_item("trace_pre", self.inner.trace_pre)?;
+        d.set_item("trace_post", self.inner.trace_post)?;
+        Ok(d.into_any().unbind())
+    }
+}
+
 // ContinuousAttractorNeuron needs n_units param
 #[pyclass(
     name = "RustContinuousAttractorNeuron",
@@ -1615,6 +1834,10 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyDifferentiableSurrogateNeuron>()?;
     m.add_class::<PyContinuousAttractorNeuron>()?;
     m.add_class::<PyMetaPlasticNeuron>()?;
+    // gap models (ai_optimized)
+    m.add_class::<PyAdaptiveThresholdMoENeuron>()?;
+    m.add_class::<PyHybridLinearAttentionNeuron>()?;
+    m.add_class::<PyQuantumInspiredLIFNeuron>()?;
     // trivial
     m.add_class::<PyQuadraticIFNeuron>()?;
     m.add_class::<PyThetaNeuron>()?;
@@ -1695,6 +1918,10 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyBoothRinzelNeuron>()?;
     m.add_class::<PyDendrifyNeuron>()?;
     m.add_class::<PyTwoCompartmentLIFNeuron>()?;
+    // gap models (multi_compartment)
+    m.add_class::<PyDendriticNMDANeuron>()?;
+    m.add_class::<PyMulticompartmentMCNNeuron>()?;
+    m.add_class::<PyAstrocyteLIFNeuron>()?;
     // special
     m.add_class::<PyPoissonNeuron>()?;
     m.add_class::<PyInhomogeneousPoissonNeuron>()?;
@@ -1761,6 +1988,9 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyNociceptor>()?;
     m.add_class::<PyOlfactoryReceptorNeuron>()?;
     m.add_class::<PyTasteReceptorCell>()?;
+    // gap models (sensory)
+    m.add_class::<PyDirectionSelectiveRGC>()?;
+    m.add_class::<PyCochlearHairCell>()?;
     // cerebellar
     m.add_class::<PyGranuleCell>()?;
     m.add_class::<PyGolgiCell>()?;
@@ -1790,6 +2020,10 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyCardiacPurkinjeFibre>()?;
     m.add_class::<PySmoothMuscleCell>()?;
     m.add_class::<PyEndocrineBetaCell>()?;
+    // gap synapse models
+    m.add_class::<PyTripletStdpSynapse>()?;
+    m.add_class::<PyShortTermPlasticitySynapse>()?;
+    m.add_class::<PyDopamineStdpSynapse>()?;
     Ok(())
 }
 
