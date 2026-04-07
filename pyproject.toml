@@ -6,7 +6,7 @@
 # SC-NeuroCore — SC Neurocore Project Config
 
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=78.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -16,7 +16,7 @@ description = "Stochastic Computing SNN framework: NumPy + Rust SIMD + FPGA RTL.
 authors = [
   { name = "Miroslav Sotek", email = "protoscience@anulum.li" }
 ]
-license = { text = "AGPL-3.0-or-later" }
+license = "AGPL-3.0-or-later"
 license-files = ["LICENSE"]
 readme = "README.md"
 requires-python = ">=3.10"
