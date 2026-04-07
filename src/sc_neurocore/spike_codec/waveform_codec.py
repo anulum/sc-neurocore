@@ -281,7 +281,14 @@ class WaveformCodec:
         residuals: list[np.ndarray[Any, Any]],
     ) -> bytes:
         """Compress templates + IDs + quantised residuals."""
-        import zstandard as zstd
+        try:
+            import zstandard as zstd
+
+            _zstd_compress = lambda data: zstd.ZstdCompressor(level=19).compress(data)
+        except ImportError:
+            import zlib
+
+            _zstd_compress = lambda data: zlib.compress(data, 9)
 
         parts = []
 
@@ -313,7 +320,7 @@ class WaveformCodec:
             if len(flat) % 2:
                 flat = np.append(flat, np.uint8(8))  # pad with zero
             packed = (flat[0::2] << 4) | flat[1::2]
-            compressed = zstd.ZstdCompressor(level=19).compress(packed.tobytes())
+            compressed = _zstd_compress(packed.tobytes())
             parts.append(struct.pack("!fI", float(res_max), len(flat)))
             parts.append(compressed)
         else:
@@ -348,8 +355,6 @@ class WaveformCodec:
         if background.size == 0:
             return b""
 
-        import pywt
-
         # Spatial decorrelation: subtract adjacent channel (exploits LFP
         # volume conduction correlation on Neuropixels/Utah arrays)
         if background.shape[1] > 1:
@@ -358,13 +363,18 @@ class WaveformCodec:
             spatial_ref[:, 1:] = background[:, 1:] - background[:, :-1]
             background = spatial_ref
 
-        original_len = background.shape[0]
-        coeffs = pywt.wavedec(background, "db4", axis=0)
-        # Calibrated: threshold=3.0 gives SNR ≥24 dB, energy retained ≥99.7%
-        threshold = 3.0
-        for i in range(1, len(coeffs)):
-            coeffs[i] = pywt.threshold(coeffs[i], threshold, mode="hard")
-        background = pywt.waverec(coeffs, "db4", axis=0)[:original_len]
+        # Wavelet denoising (optional — requires PyWavelets)
+        try:
+            import pywt
+
+            original_len = background.shape[0]
+            coeffs = pywt.wavedec(background, "db4", axis=0)
+            # Calibrated: threshold=3.0 gives SNR ≥24 dB, energy retained ≥99.7%
+            for i in range(1, len(coeffs)):
+                coeffs[i] = pywt.threshold(coeffs[i], 3.0, mode="hard")
+            background = pywt.waverec(coeffs, "db4", axis=0)[:original_len]
+        except ImportError:
+            pass  # Skip wavelet denoising if PyWavelets not installed
 
         # Temporal delta encoding
         delta = np.diff(background, axis=0, prepend=background[:1])
@@ -376,10 +386,14 @@ class WaveformCodec:
             np.round(delta / dmax * (levels // 2)), -(levels // 2), levels // 2 - 1
         ).astype(np.int8)
 
-        import zstandard as zstd
-
         raw_bytes = quantized.tobytes()
-        compressor = zstd.ZstdCompressor(level=19)
-        compressed = compressor.compress(raw_bytes)
+        try:
+            import zstandard as zstd
+
+            compressed = zstd.ZstdCompressor(level=19).compress(raw_bytes)
+        except ImportError:
+            import zlib
+
+            compressed = zlib.compress(raw_bytes, 9)
         header = struct.pack("!IIf", background.shape[0], background.shape[1], float(dmax))
         return header + compressed
