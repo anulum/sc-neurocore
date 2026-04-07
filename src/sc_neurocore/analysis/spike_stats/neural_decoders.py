@@ -320,6 +320,7 @@ class NDT3Decoder:
                 (self.d_model, n_neurons),
             )
             self._embed_b = np.zeros(self.d_model)
+        assert self._embed_w is not None and self._embed_b is not None
         embedded = binned @ self._embed_w.T + self._embed_b
         pe = sinusoidal_position_encode(
             np.arange(n_bins, dtype=np.float64),
