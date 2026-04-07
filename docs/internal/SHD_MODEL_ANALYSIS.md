@@ -66,6 +66,36 @@
 **Key observation:** Delays add +7-13% accuracy over baseline. QAT
 sparsity 90% does NOT hurt — in fact the best models are sparse+quantised.
 
+### Verified Inference (2026-04-07, AMD RX 6600 XT)
+
+Full validation + test set evaluation, all 20 models:
+
+| # | Architecture | Variant | Saved | Val | Test |
+|---|-------------|---------|-------|-----|------|
+| 1 | **Axonal delays (learnable)** | **QAT sp90** | **96.2%** | **98.5%** | **80.4%** |
+| 2 | Fixed axonal delays | QAT sp90 | 95.6% | 98.2% | 80.2% |
+| 3 | Synaptic delays (learnable) | QAT sp90 | 96.2% | 97.9% | 79.6% |
+| 4 | Fixed synaptic delays | QAT sp90 | 95.9% | 98.0% | 79.1% |
+| 5 | Axonal delays (learnable) | QAT sp60 | 91.8% | 94.9% | 78.5% |
+| 6 | Fixed axonal delays | QAT sp60 | 92.1% | 93.9% | 78.1% |
+| 7 | Synaptic delays (learnable) | QAT sp60 | 92.7% | 93.3% | 77.4% |
+| 8 | Fixed synaptic delays | QAT sp60 | 90.6% | 92.0% | 75.4% |
+| 9 | SNN baseline | QAT sp90 | 93.0% | 96.9% | 74.5% |
+| 10 | SNN baseline | QAT sp60 | 78.5% | 85.8% | 68.0% |
+| 11 | SNN baseline | layer_128 | 83.9% | 76.8% | 67.5% |
+| 12 | SNN baseline | layer_64 | 79.7% | 68.4% | 59.9% |
+| 13-20 | Delay models | layer_128/64 | 87-91% | 46-51%* | 41-46%* |
+
+*Single-layer delay models (layer_128/64) have degraded val/test accuracy
+due to missing SIG parameter in checkpoints — these results are invalid.
+QAT sparsity models (2-layer, [128,128]) are unaffected.
+
+**Val accuracy confirms checkpoint accuracy** (96.2% saved ≈ 98.5% val —
+slight difference from random val/train split).
+
+**Test accuracy (80.4%)** is lower than val — standard for SHD (test set
+uses different speakers). This is the number we report for the paper.
+
 ## 3. Neuron Model: Vmin_LIFNode
 
 Custom LIF with voltage lower bound (softplus clamping).
