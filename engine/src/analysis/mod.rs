@@ -16,6 +16,7 @@ pub mod gpfa;
 pub mod information;
 pub mod lfp;
 pub mod network;
+pub mod neural_decoders;
 pub mod patterns;
 pub mod point_process;
 pub mod rate;
