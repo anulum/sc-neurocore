@@ -125,8 +125,15 @@ def preprocess_hdl() -> list[Path]:
 
 
 def _build_yosys_commands(module: str, sources: list[Path]) -> str:
-    """Generate inline Yosys commands."""
-    cmds = [f"read_verilog {f}" for f in sources]
+    """Generate inline Yosys commands.
+
+    `-DSYNTHESIS` disables simulation-only `$readmemh` initial blocks
+    (e.g. in `sc_dense_int8_sparse.v`) that reference weight hex files
+    that only exist inside cosim temp directories. Real FPGA builds
+    write the weight ROM through AXI at boot time, so skipping the
+    init during resource-count synthesis does not affect results.
+    """
+    cmds = [f"read_verilog -DSYNTHESIS {f}" for f in sources]
     cmds.append(f"synth_xilinx -top {module} -flatten")
     cmds.append("stat")
     return "; ".join(cmds)

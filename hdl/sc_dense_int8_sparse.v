@@ -61,8 +61,16 @@ module sc_dense_int8_sparse #(
     // ------------------------------------------------------------------
     reg [7:0] weights [0:OUT_FEATURES*IN_FEATURES-1];
 
+    // Weight initialisation: only performed during simulation. Synthesis
+    // tools (yosys, Vivado) define `SYNTHESIS` so the `$readmemh` call is
+    // skipped — the weight ROM becomes an uninitialised BRAM/LUT that the
+    // real bitstream writes through AXI at boot time. The default
+    // WEIGHT_FILE = "weights.hex" is only meaningful to simulation
+    // testbenches that stage the file into their temporary work dir.
     initial begin
+`ifndef SYNTHESIS
         $readmemh(WEIGHT_FILE, weights);
+`endif
     end
 
     // ------------------------------------------------------------------
