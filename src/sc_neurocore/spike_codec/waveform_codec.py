@@ -86,9 +86,7 @@ class WaveformCodec:
         mode: str = "full",
     ):
         if mode not in ("full", "waveform", "spike"):
-            raise ValueError(
-                f"mode must be 'full', 'waveform', or 'spike', got {mode!r}"
-            )
+            raise ValueError(f"mode must be 'full', 'waveform', or 'spike', got {mode!r}")
         self.threshold_sigma = threshold_sigma
         self.snippet_samples = snippet_samples
         self.max_templates = max_templates
@@ -284,11 +282,13 @@ class WaveformCodec:
         try:
             import zstandard as zstd
 
-            _zstd_compress = lambda data: zstd.ZstdCompressor(level=19).compress(data)
+            def _zstd_compress(data: bytes) -> bytes:
+                return zstd.ZstdCompressor(level=19).compress(data)
         except ImportError:
             import zlib
 
-            _zstd_compress = lambda data: zlib.compress(data, 9)
+            def _zstd_compress(data: bytes) -> bytes:
+                return zlib.compress(data, 9)
 
         parts = []
 
@@ -312,9 +312,7 @@ class WaveformCodec:
         if residuals:
             all_res = np.array(residuals)
             res_max = max(np.abs(all_res).max(), 1e-6)
-            quantized = np.clip(
-                np.round(all_res / res_max * 7), -7, 7
-            ).astype(np.int8)
+            quantized = np.clip(np.round(all_res / res_max * 7), -7, 7).astype(np.int8)
             # Nibble-pack: two int4 values per byte
             flat = (quantized.flatten() + 8).astype(np.uint8)  # shift to 0-15
             if len(flat) % 2:
