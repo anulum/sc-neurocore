@@ -15,6 +15,10 @@ on:
   push:
     branches-ignore:
       - "dependabot/**"
+    # Path filter kept for direct-to-branch pushes to save CI minutes on
+    # docs-only or asset-only commits. Pull requests are NOT filtered
+    # (see below) so the required status checks in branch protection
+    # always report a concrete SUCCESS / FAILURE.
     paths:
       - ".github/workflows/**"
       - "bridge/**"
@@ -25,17 +29,12 @@ on:
       - "hdl/**"
       - "pyproject.toml"
       - "requirements/**"
+  # Pull requests run CI unconditionally. Branch protection requires
+  # these status checks (`lint`, `test (3.10-3.14)`, `test-training`,
+  # `spdx-guard`, `pre-commit`, `build`) to report SUCCESS before
+  # merge — a path filter here would leave frontend-only / deps-only
+  # PRs with eternally "pending" contexts and permanently unmergeable.
   pull_request:
-    paths:
-      - ".github/workflows/**"
-      - "bridge/**"
-      - "engine/**"
-      - "src/**"
-      - "tests/**"
-      - "tools/**"
-      - "hdl/**"
-      - "pyproject.toml"
-      - "requirements/**"
 
 concurrency:
   group: ci-${{ github.ref }}
