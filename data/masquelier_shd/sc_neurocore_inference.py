@@ -23,6 +23,7 @@ Neuron dynamics (Vmin_LIF, decay_input=False, hard reset):
     v = v_reset * spike + (1 - spike) * v
     v = v_inf + softplus(v - v_inf, beta=beta_v_inf)
 """
+
 from __future__ import annotations
 
 import json
@@ -72,9 +73,7 @@ class VminLIF:
         self.v = self.v_reset * spike + (1.0 - spike) * self.v
 
         # Voltage floor (softplus clamp)
-        self.v = self.v_inf + softplus(
-            self.v - self.v_inf, beta=self.beta_v_inf
-        )
+        self.v = self.v_inf + softplus(self.v - self.v_inf, beta=self.beta_v_inf)
 
         return spike
 
@@ -246,10 +245,10 @@ def compare_with_spikingjelly(export_dir: str, n_samples: int = 10) -> None:
             total += 1
 
     print(f"\n=== SC-NeuroCore vs SpikingJelly comparison ({total} samples) ===")
-    print(f"  SpikingJelly accuracy: {100*sj_correct/total:.1f}%")
-    print(f"  SC-NeuroCore accuracy: {100*sc_correct/total:.1f}%")
-    print(f"  Prediction match: {100*match/total:.1f}%")
-    print(f"  (Match means both models predict the same class, regardless of correctness)")
+    print(f"  SpikingJelly accuracy: {100 * sj_correct / total:.1f}%")
+    print(f"  SC-NeuroCore accuracy: {100 * sc_correct / total:.1f}%")
+    print(f"  Prediction match: {100 * match / total:.1f}%")
+    print("  (Match means both models predict the same class, regardless of correctness)")
 
 
 if __name__ == "__main__":
@@ -259,8 +258,12 @@ if __name__ == "__main__":
     model = SHDModel(export_dir)
     print(f"Model loaded: {model.config['architecture']}/{model.config['variant']}")
     print(f"Weights: w1={model.w1.shape}, w2={model.w2.shape}, w3={model.w3.shape}")
-    print(f"Delays: d1={len(model.delay1_offsets)} [{model.delay1_offsets.min()},{model.delay1_offsets.max()}]")
-    print(f"        d2={len(model.delay2_offsets)} [{model.delay2_offsets.min()},{model.delay2_offsets.max()}]")
+    print(
+        f"Delays: d1={len(model.delay1_offsets)} [{model.delay1_offsets.min()},{model.delay1_offsets.max()}]"
+    )
+    print(
+        f"        d2={len(model.delay2_offsets)} [{model.delay2_offsets.min()},{model.delay2_offsets.max()}]"
+    )
 
     # Test with random input
     T = 100

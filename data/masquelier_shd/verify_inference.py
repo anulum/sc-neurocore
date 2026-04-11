@@ -4,30 +4,37 @@
 Standalone script — no SC-NeuroCore dependency, just torch + spikingjelly + DCLS.
 Run from neuromorphic_training-main/ directory.
 """
-import sys, os, json, torch
-import numpy as np
+
+import sys
+import os
+import json
+import torch
 
 os.environ["WANDB_MODE"] = "disabled"
 
 # Add model source
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'neuromorphic_training-main'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "neuromorphic_training-main"))
 
 from configs.config_SHD import Config
 from src.SHD.snn import (
-    SNN, SNN_synaptic_feedforward_delays, SNN_fixed_synaptic_feedforward_delays,
-    SNN_axonal_feedforward_delays, SNN_fixed_axonal_feedforward_delays,
+    SNN,
+    SNN_synaptic_feedforward_delays,
+    SNN_fixed_synaptic_feedforward_delays,
+    SNN_axonal_feedforward_delays,
+    SNN_fixed_axonal_feedforward_delays,
 )
 from src.datasets import load_dataset
 from src.utils import seed_everything
 from spikingjelly.activation_based import functional
 
 MODEL_CLASSES = {
-    'SNN': SNN,
-    'SNN_synaptic_feedforward_delays': SNN_synaptic_feedforward_delays,
-    'SNN_fixed_synaptic_feedforward_delays': SNN_fixed_synaptic_feedforward_delays,
-    'SNN_axonal_feedforward_delays': SNN_axonal_feedforward_delays,
-    'SNN_fixed_axonal_feedforward_delays': SNN_fixed_axonal_feedforward_delays,
+    "SNN": SNN,
+    "SNN_synaptic_feedforward_delays": SNN_synaptic_feedforward_delays,
+    "SNN_fixed_synaptic_feedforward_delays": SNN_fixed_synaptic_feedforward_delays,
+    "SNN_axonal_feedforward_delays": SNN_axonal_feedforward_delays,
+    "SNN_fixed_axonal_feedforward_delays": SNN_fixed_axonal_feedforward_delays,
 }
+
 
 def evaluate(model, loader, device, config):
     model.eval()
@@ -71,10 +78,12 @@ if __name__ == "__main__":
     # Load dataset
     print("Loading SHD dataset...")
     train_loader, valid_loader, test_loader = load_dataset(config)
-    print(f"  Train: {len(train_loader.dataset)}, Valid: {len(valid_loader.dataset)}, Test: {len(test_loader.dataset)}")
+    print(
+        f"  Train: {len(train_loader.dataset)}, Valid: {len(valid_loader.dataset)}, Test: {len(test_loader.dataset)}"
+    )
 
     # Evaluate all models
-    base = os.path.join(os.path.dirname(__file__), 'neuromorphic_training-main', 'exp', 'SHD')
+    base = os.path.join(os.path.dirname(__file__), "neuromorphic_training-main", "exp", "SHD")
     results = []
 
     for arch_name in sorted(os.listdir(base)):
@@ -86,15 +95,15 @@ if __name__ == "__main__":
             continue
 
         for variant in sorted(os.listdir(arch_path)):
-            ckpt_path = os.path.join(arch_path, variant, 'best.pth')
+            ckpt_path = os.path.join(arch_path, variant, "best.pth")
             if not os.path.isfile(ckpt_path):
                 continue
 
             # Adjust hidden_layers based on variant name
             # layer_64/layer_128 = single hidden layer; quantized_sparsity = two hidden [128,128]
-            if 'layer_64' in variant:
+            if "layer_64" in variant:
                 config.hidden_layers = [64]
-            elif 'layer_128' in variant:
+            elif "layer_128" in variant:
                 config.hidden_layers = [128]
             else:
                 config.hidden_layers = [128, 128]
@@ -102,13 +111,13 @@ if __name__ == "__main__":
             print(f"\n=== {arch_name}/{variant} (hidden={config.hidden_layers}) ===")
             model = model_cls(config).to(device)
             ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
-            missing, unexpected = model.load_state_dict(ckpt['net'], strict=False)
+            missing, unexpected = model.load_state_dict(ckpt["net"], strict=False)
             if missing:
                 print(f"  WARNING: missing keys: {missing}")
             if unexpected:
                 print(f"  WARNING: unexpected keys: {unexpected}")
-            saved_acc = ckpt.get('acc', 0)
-            saved_epoch = ckpt.get('epoch', -1)
+            saved_acc = ckpt.get("acc", 0)
+            saved_epoch = ckpt.get("epoch", -1)
 
             # Validation set (same split as training)
             val_acc, val_loss = evaluate(model, valid_loader, device, config)
@@ -119,25 +128,29 @@ if __name__ == "__main__":
             print(f"  Valid: {val_acc:.2f}% (loss {val_loss:.4f})")
             print(f"  Test:  {test_acc:.2f}% (loss {test_loss:.4f})")
 
-            results.append({
-                'architecture': arch_name,
-                'variant': variant,
-                'saved_acc': saved_acc,
-                'saved_epoch': saved_epoch,
-                'val_acc': val_acc,
-                'val_loss': val_loss,
-                'test_acc': test_acc,
-                'test_loss': test_loss,
-            })
+            results.append(
+                {
+                    "architecture": arch_name,
+                    "variant": variant,
+                    "saved_acc": saved_acc,
+                    "saved_epoch": saved_epoch,
+                    "val_acc": val_acc,
+                    "val_loss": val_loss,
+                    "test_acc": test_acc,
+                    "test_loss": test_loss,
+                }
+            )
 
     # Save results
-    out_path = os.path.join(os.path.dirname(__file__), 'inference_results.json')
-    with open(out_path, 'w') as f:
+    out_path = os.path.join(os.path.dirname(__file__), "inference_results.json")
+    with open(out_path, "w") as f:
         json.dump(results, f, indent=2)
     print(f"\n\nResults saved to {out_path}")
 
     # Summary table
     print(f"\n{'Architecture':<45} {'Variant':<25} {'Saved':>6} {'Val':>6} {'Test':>6}")
     print("-" * 95)
-    for r in sorted(results, key=lambda x: -x['test_acc']):
-        print(f"{r['architecture']:<45} {r['variant']:<25} {r['saved_acc']:>5.1f}% {r['val_acc']:>5.1f}% {r['test_acc']:>5.1f}%")
+    for r in sorted(results, key=lambda x: -x["test_acc"]):
+        print(
+            f"{r['architecture']:<45} {r['variant']:<25} {r['saved_acc']:>5.1f}% {r['val_acc']:>5.1f}% {r['test_acc']:>5.1f}%"
+        )
