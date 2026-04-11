@@ -94,3 +94,6 @@ data/
 # Claude Code local config — never commit
 CLAUDE.md
 .claude/
+
+# AutoResearch sandbox — Gemini working copies, never committed
+.autoresearch-gemini/
