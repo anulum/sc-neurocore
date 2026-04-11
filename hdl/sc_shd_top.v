@@ -100,9 +100,15 @@ module sc_shd_top (
     reg [7:0] delays_l1_mem [0:N_INPUT-1];
     reg [7:0] delays_l2_mem [0:N_HIDDEN-1];
 
+    // Delay initialisation: only performed during simulation. Synthesis
+    // tools (yosys, Vivado) define `SYNTHESIS` so the `$readmemh` calls
+    // are skipped — the delay tables become uninitialised memories that
+    // the real bitstream writes through AXI at boot time.
     initial begin
+`ifndef SYNTHESIS
         $readmemh("delays_layer1.hex", delays_l1_mem);
         $readmemh("delays_layer2.hex", delays_l2_mem);
+`endif
     end
 
     // ------------------------------------------------------------------
