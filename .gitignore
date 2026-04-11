@@ -91,9 +91,19 @@ site/
 # Downloaded datasets
 data/
 
+# Experimental / speculative code (AI-generated, not production)
+experimental/
+
+# Hardware tests (PYNQ board-specific, not part of CI)
+hardware_tests/
+
 # Claude Code local config — never commit
 CLAUDE.md
 .claude/
+
+# Local backups — never committed
+BACKUP/
+ARCHIVE/
 
 # AutoResearch sandbox — Gemini working copies, never committed
 .autoresearch-gemini/
