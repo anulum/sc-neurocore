@@ -1,0 +1,20 @@
+{
+  "architecture": "SNN_axonal_feedforward_delays",
+  "variant": "quantized_sparsity_90",
+  "accuracy": 96.23472775731769,
+  "epoch": 146,
+  "input_size": 140,
+  "hidden_layers": [
+    128,
+    128
+  ],
+  "output_size": 20,
+  "tau": 4.0,
+  "v_threshold": 1.0,
+  "v_reset": 0.0,
+  "v_inf": -5.0,
+  "beta_v_inf": 1.0,
+  "decay_input": false,
+  "max_delay": 31,
+  "timestep_ms": 2.0
+}
