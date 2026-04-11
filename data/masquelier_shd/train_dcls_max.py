@@ -161,8 +161,21 @@ def set_sigma(model: torch.nn.Module, sigma: float) -> None:
 
 if __name__ == "__main__":
     config = Config()
-    config.lambda_delay = 0.01  # Default penalty weight for integer delay regulariser
+    # Sweep parameters from environment (defaults match the published
+    # 75.21% baseline so legacy invocations behave unchanged):
+    #   SHD_LAMBDA_DELAY  — integer-delay regulariser weight (default 0.01)
+    #   SHD_EPOCHS        — total epochs override (default = config.epochs)
+    #   SHD_OUTPUT_SUBDIR — per-run output subdirectory under
+    #                       exp/SHD/SNN_axonal_feedforward_delays/
+    config.lambda_delay = float(os.environ.get("SHD_LAMBDA_DELAY", "0.01"))
+    if os.environ.get("SHD_EPOCHS"):
+        config.epochs = int(os.environ["SHD_EPOCHS"])
+    out_subdir = os.environ.get("SHD_OUTPUT_SUBDIR", "dcls_max")
     config.hidden_layers = [128, 128]
+
+    print(f"SHD_LAMBDA_DELAY = {config.lambda_delay}")
+    print(f"SHD_EPOCHS       = {config.epochs}")
+    print(f"SHD_OUTPUT_SUBDIR= {out_subdir}")
 
     # === KEY CHANGE: DCLS max (triangular with scheduled SIG) ===
     config.DCLSversion = "max"
@@ -175,7 +188,7 @@ if __name__ == "__main__":
     if device.type == "cuda":
         print(f"GPU: {torch.cuda.get_device_name(0)}")
 
-    out_dir = os.path.join("exp", "SHD", "SNN_axonal_feedforward_delays", "dcls_max")
+    out_dir = os.path.join("exp", "SHD", "SNN_axonal_feedforward_delays", out_subdir)
     os.makedirs(out_dir, exist_ok=True)
 
     train_loader, valid_loader, test_loader = load_dataset(config)
