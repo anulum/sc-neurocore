@@ -28,6 +28,18 @@ import os
 import sys
 import time
 
+# Ensure training code is on path regardless of cwd
+_script_dir = os.path.dirname(os.path.abspath(__file__))
+_training_dir = os.path.join(_script_dir, "neuromorphic_training-main")
+if os.path.isdir(_training_dir):
+    # Local: script is in masquelier_shd/, code is in neuromorphic_training-main/
+    sys.path.insert(0, _training_dir)
+    os.chdir(_training_dir)
+elif os.path.isfile(os.path.join(_script_dir, "configs", "config_SHD.py")):
+    # Cloud: flat structure, configs/src/exp alongside script
+    sys.path.insert(0, _script_dir)
+    os.chdir(_script_dir)
+
 import numpy as np
 import torch
 
@@ -36,7 +48,7 @@ os.environ["WANDB_MODE"] = "disabled"
 from configs.config_SHD import Config
 from spikingjelly.activation_based import functional
 from src.datasets import load_dataset
-from src.modules import apply_sparsity_mask, dcls_module
+from src.modules import dcls_module
 from src.SHD.snn import SNN_axonal_feedforward_delays
 from src.utils import seed_everything
 
@@ -164,8 +176,14 @@ if __name__ == "__main__":
     # Round delays to integers (starting point for sharpening)
     model.round_pos()
 
-    # Re-apply sparsity mask (maintain 90% sparsity)
-    apply_sparsity_mask(model, config.weight_sparsity_mask)
+    # NOTE: Do NOT call apply_sparsity_mask() — it generates a NEW random mask
+    # that destroys the checkpoint's learned sparsity pattern (85% → 2% accuracy).
+    # The checkpoint already has 90% sparsity baked in (zero weights stay zero).
+    # We preserve sparsity by freezing zero weights via gradient hooks.
+    for m in model.modules():
+        if isinstance(m, torch.nn.Linear) and m.weight.requires_grad:
+            mask = (m.weight.data != 0).float()
+            m.weight.register_hook(lambda grad, mask=mask: grad * mask)
 
     # Optimiser: separate LR for weights and delay positions
     weight_params = []
@@ -178,13 +196,21 @@ if __name__ == "__main__":
         else:
             weight_params.append(p)
 
+    # NOTE: LR 1e-3 destroyed the model from epoch 0 (85% → 4.5%).
+    # Fine-tuning a converged checkpoint needs much lower LR.
+    # Phase 1: freeze weights, only train delays at 1e-4
+    # Phase 2+3: unfreeze weights at 1e-5, delays at 1e-4
     optimizer = torch.optim.AdamW(
         [
-            {"params": weight_params, "lr": 1e-3},
-            {"params": delay_params, "lr": 1e-3},
+            {"params": weight_params, "lr": 1e-5},
+            {"params": delay_params, "lr": 1e-4},
         ],
         weight_decay=config.weight_decay,
     )
+
+    # Freeze weights during Phase 1 — only delays adapt to rounding
+    for p in weight_params:
+        p.requires_grad = False
 
     criterion = torch.nn.CrossEntropyLoss()
 
@@ -203,6 +229,12 @@ if __name__ == "__main__":
     for epoch in range(total_epochs):
         sig = get_sig_schedule(epoch, total_epochs)
         set_sig(model, sig)
+
+        # Unfreeze weights at Phase 2 start
+        if epoch == 50:
+            for p in weight_params:
+                p.requires_grad = True
+            print("  >>> Phase 2: weights unfrozen, LR=1e-5")
 
         t0 = time.perf_counter()
         train_loss, train_acc = train_epoch(model, train_loader, optimizer, criterion, device, config)
