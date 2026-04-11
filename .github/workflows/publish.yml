@@ -34,7 +34,7 @@ jobs:
           python-version: "3.12"
       - run: pip install --require-hashes -r requirements/build.txt
       - run: python -m build
-      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: python-dist
           path: dist/sc_neurocore-*
@@ -51,7 +51,7 @@ jobs:
         with:
           name: python-dist
           path: dist/
-      - uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # release/v1
+      - uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
         with:
           packages-dir: dist/
 
@@ -74,7 +74,7 @@ jobs:
         run: |
           cd bridge
           maturin build --release --out ../dist-engine/
-      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: engine-wheel-${{ matrix.os }}-py${{ matrix.python-version }}
           path: dist-engine/*.whl
@@ -89,7 +89,7 @@ jobs:
           pattern: engine-wheel-*
           merge-multiple: true
           path: dist-engine/
-      - uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # release/v1
+      - uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
         with:
           packages-dir: dist-engine/
           password: ${{ secrets.PYPI_ENGINE_TOKEN }}
