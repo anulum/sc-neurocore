@@ -104,3 +104,6 @@ CLAUDE.md
 # Local backups — never committed
 BACKUP/
 ARCHIVE/
+
+# AutoResearch sandbox — Gemini working copies, never committed
+.autoresearch-gemini/
