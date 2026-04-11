@@ -59,6 +59,21 @@ _SV_MODULES = frozenset(
     }
 )
 
+# SHD-specific modules with $readmemh initialisation from external weight /
+# delay hex files. These are not part of the general SC-NeuroCore core and
+# are synthesised through a dedicated Vivado flow that stages the hex files
+# alongside the bitstream build; including them in the general yosys
+# resource counter fails at parse time because the hex files are not
+# available in the repository root.
+_SHD_MODULES = frozenset(
+    {
+        "sc_vmin_lif_neuron",
+        "sc_axonal_delay",
+        "sc_dense_int8_sparse",
+        "sc_shd_top",
+    }
+)
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -104,9 +119,19 @@ def parse_stat_output(text: str) -> dict[str, int]:
 
 
 def preprocess_hdl() -> list[Path]:
-    """Collect HDL sources. Preprocesses through sv2v when available."""
+    """Collect HDL sources. Preprocesses through sv2v when available.
+
+    Testbenches (`tb_*.v`) and SHD-specific modules (see `_SHD_MODULES`)
+    are excluded — the SHD modules use `$readmemh` to load external
+    weight / delay hex files that are staged into cosim temp directories,
+    not into the repo root where this tool runs.
+    """
     hdl_dir = REPO_ROOT / "hdl"
-    all_v = sorted(f for f in hdl_dir.glob("*.v") if not f.name.startswith("tb_"))
+    all_v = sorted(
+        f
+        for f in hdl_dir.glob("*.v")
+        if not f.name.startswith("tb_") and f.stem not in _SHD_MODULES
+    )
 
     sv2v = shutil.which("sv2v")
     if sv2v:
@@ -125,8 +150,15 @@ def preprocess_hdl() -> list[Path]:
 
 
 def _build_yosys_commands(module: str, sources: list[Path]) -> str:
-    """Generate inline Yosys commands."""
-    cmds = [f"read_verilog {f}" for f in sources]
+    """Generate inline Yosys commands.
+
+    `-DSYNTHESIS` disables simulation-only `$readmemh` initial blocks
+    (e.g. in `sc_dense_int8_sparse.v`) that reference weight hex files
+    that only exist inside cosim temp directories. Real FPGA builds
+    write the weight ROM through AXI at boot time, so skipping the
+    init during resource-count synthesis does not affect results.
+    """
+    cmds = [f"read_verilog -DSYNTHESIS {f}" for f in sources]
     cmds.append(f"synth_xilinx -top {module} -flatten")
     cmds.append("stat")
     return "; ".join(cmds)
