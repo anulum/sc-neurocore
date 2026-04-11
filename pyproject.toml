@@ -75,6 +75,7 @@ mpi = ["mpi4py>=3.0"]
 lava = ["lava-nc"]
 studio = ["fastapi>=0.100", "uvicorn[standard]>=0.20"]
 docs = ["mkdocs>=1.6", "mkdocs-material>=9.5", "mkdocstrings[python]>=0.25"]
+compression = ["PyWavelets>=1.4", "zstandard>=0.22"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -196,7 +197,7 @@ warn_unused_ignores = false
 warn_return_any = false
 disallow_any_generics = false
 [[tool.mypy.overrides]]
-module = ['cupy.*', 'cupyx.*', 'mpi4py.*', 'numba.*', 'matplotlib.*', 'scipy.*', 'networkx.*', 'onnx.*', 'torch.*', 'torchvision.*', 'gym.*', 'flask.*', 'scpn_evo2_real_interface.*', 'scpn_opentrions_verify.*', 'scpn_cross_layer_integration_L1_L7.*', 'jax.*', 'qiskit.*', 'pennylane.*', 'qiskit_aer.*', 'fastapi.*', 'uvicorn.*', 'starlette.*', 'pydantic.*', 'nir.*', 'h5py.*', 'sc_neurocore_engine.*', 'tonic.*', 'lava.*', 'wandb.*', 'yaml.*', 'serial.*', 'usb.*']
+module = ['cupy.*', 'cupyx.*', 'mpi4py.*', 'numba.*', 'matplotlib.*', 'scipy.*', 'networkx.*', 'onnx.*', 'torch.*', 'torchvision.*', 'gym.*', 'flask.*', 'scpn_evo2_real_interface.*', 'scpn_opentrions_verify.*', 'scpn_cross_layer_integration_L1_L7.*', 'jax.*', 'qiskit.*', 'pennylane.*', 'qiskit_aer.*', 'fastapi.*', 'uvicorn.*', 'starlette.*', 'pydantic.*', 'nir.*', 'h5py.*', 'sc_neurocore_engine.*', 'tonic.*', 'lava.*', 'wandb.*', 'yaml.*', 'serial.*', 'usb.*', 'zstandard.*', 'pywt.*']
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
