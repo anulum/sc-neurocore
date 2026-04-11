@@ -3,7 +3,7 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Top-level SHD inference network (Masquelier model)
+// SC-NeuroCore — Top-level SHD inference network (Masquelier model, pipelined)
 //
 // End-to-end Q8.8 fixed-point implementation of the Masquelier SHD speech
 // recognition SNN, hardcoded to the network geometry of the released
@@ -16,19 +16,46 @@
 // Each `dcls_module` in the original PyTorch model uses asymmetric padding
 // (left=30, right=15), so the OUTPUT time axis grows by 15 cycles past
 // each axonal delay layer (T -> T+15 -> T+30). To match this exactly we
-// run the network for `T_orig + 30` clock cycles per inference and mask
-// the layer-1 spike output to zero from cycle `T_orig + 15` onwards
+// run the network for `T_orig + 30` logical iterations per inference and
+// mask the layer-1 spike output to zero from iter `T_orig + 15` onwards
 // (the equivalent of the dcls_l2 right-padding zeros that PyTorch sees).
 //
-// The full datapath is combinational from spike_in -> dense3_out_comb
-// within a single clock cycle: every layer exposes a `_comb` port that
-// taps the same combinational expression as the registered output of the
-// stand-alone modules. The only sequential elements are the axonal-delay
-// circular buffers, the Vmin_LIF membrane voltage registers, the cycle
-// counter and the per-class output accumulator. This makes one clock
-// equal to one full network step, which mirrors
-// tools/shd_q88_reference.py::run_inference_q88 cycle-by-cycle and lets
-// the cosim assert bit-true equality of `output_v_sum` between the two.
+// Pipelining
+// ----------
+//
+// The chain is broken by three pipeline registers — one after each dense
+// layer — giving a 3-cycle latency from input to accumulator. The
+// registers are the existing `sc_dense_int8_sparse` registered output
+// ports (`out_q88_packed`); the combinational taps (`out_q88_packed_comb`)
+// used by the older single-cycle variant are no longer wired.
+//
+//   clock C   | Stage 0 iter | Stage 1 iter | Stage 2 iter | accumulator
+//   ----------+--------------+--------------+--------------+-------------
+//   0 (start) | 0            | (reset)      | (reset)      | (reset)
+//   1         | 1            | 0            | (reset)      | (reset)
+//   2         | 2            | 1            | 0            | (reset)
+//   3         | 3            | 2            | 1            | iter 0
+//   ...       | ...          | ...          | ...          | ...
+//   T2+2      | T2+2         | T2+1         | T2           | iter T2-1
+//
+// Where T2 = T_orig + 30. Total clocks per inference = T2 + 3.
+//
+// Stateful cells in stages 1/2 (vmin_lif_l1, axon_delay_l2, vmin_lif_l2)
+// must NOT update their state during the pipeline-fill clocks (0/1/2)
+// because their combinational inputs carry reset-zero filler data, not a
+// valid iteration. We hold them in async reset via a gated rst_n signal:
+//
+//   rst_n_stage1 = rst_n & pipe1_active   // high from clock 1 onwards
+//   rst_n_stage2 = rst_n & pipe2_active   // high from clock 2 onwards
+//
+// The `pipe{1,2,3}_active` registers are zero at start, then shift in a 1
+// each subsequent clock so stage N is valid from clock N. The accumulator
+// uses `pipe3_active` as an explicit enable rather than a reset gate.
+//
+// The pipeline-register approach is bit-true against the combinational
+// predecessor (and against `tools/shd_q88_reference.py::run_inference_q88`)
+// because each iter's compute happens with exactly the same operands as
+// the unpipelined version; only the TIMING shifts by the pipeline depth.
 //
 // Weights, delays and scales come from the artifact files emitted by
 // tools/extract_shd_weights.py. The cosim Python harness writes them
@@ -72,21 +99,39 @@ module sc_shd_top (
     localparam integer MAX_DELAY = 31;
     localparam integer DELAY_PTR_WIDTH = 5;
     localparam integer DELAY_HALF = (MAX_DELAY - 1) / 2;  // 15
+    localparam integer PIPELINE_DEPTH = 3;                // dense1 + dense2 + dense3 regs
 
     // ------------------------------------------------------------------
-    // Cycle counter and gating signals
+    // Cycle counter and pipeline stage valids
     // ------------------------------------------------------------------
-    // `cycle` represents the iteration index of the iter being processed
-    // AT the current posedge — equivalently, the value of Python's loop
-    // counter t inside run_inference_q88. The reset/start branch sets it
-    // so that this invariant holds from the very first posedge onwards
-    // (start latches the iter-0 contribution and immediately increments
-    // cycle to 1 = the next iter). All combinational gating signals use
-    // `cycle` directly to mirror Python's `if t < ...` checks.
+    // `cycle` counts the number of clocks since the start strobe, inclusive.
+    // Clock 0 is the start posedge (stage 0 processes iter 0), clock T2+2
+    // is the last accumulator update (iter T2-1 reaches the accumulator).
+    // `pipe{1,2,3}_active` enable stateful cells in later stages only after
+    // enough clocks have passed to fill the pipeline up to that stage.
     reg  [15:0] cycle;
-    wire        in_input_window  = (cycle < t_orig);                       // t < T
-    wire        in_l1_window     = (cycle < (t_orig + DELAY_HALF));        // t < T+15
-    wire        end_of_inference = (cycle == (t_orig + 2*DELAY_HALF - 1)); // t == T+29
+    reg         pipe1_active;   // stage 1 (vmin_lif_l1, axon_delay_l2) valid from clock 1
+    reg         pipe2_active;   // stage 2 (vmin_lif_l2) valid from clock 2
+    reg         pipe3_active;   // stage 3 (accumulator) valid from clock 3
+
+    wire rst_n_stage1 = rst_n & pipe1_active;
+    wire rst_n_stage2 = rst_n & pipe2_active;
+
+    // Gating signals. Each stage reads its own iter index; since the
+    // pipeline shifts iter C at stage 0 to iter (C-N) at stage N, and
+    // `cycle` IS the clock index of stage 0 at this posedge, we can
+    // compute the gate for each stage off `cycle` directly.
+    //
+    //   stage 0 gate: `in_input_window = cycle < t_orig`
+    //                 (input feed runs only while iter index < T_orig)
+    //
+    //   stage 1 gate: `in_l1_window = cycle < (t_orig + DELAY_HALF + 1)`
+    //                 stage 1 processes iter (cycle-1); the Python reference
+    //                 masks stage-1 output for iters >= T_orig + DELAY_HALF
+    //                 so the Verilog gate is (cycle-1) < T_orig+15 ⇒
+    //                 cycle < T_orig + 16.
+    wire in_input_window = (cycle < t_orig);
+    wire in_l1_window    = (cycle < (t_orig + DELAY_HALF + 1));
 
     wire [N_INPUT-1:0] spike_in_gated = in_input_window
         ? spike_in
@@ -113,6 +158,7 @@ module sc_shd_top (
 
     // ------------------------------------------------------------------
     // Layer 1 axonal delays — 140 instances, one per input neuron
+    // (stage 0 — always active, not gated by pipeline valid)
     // ------------------------------------------------------------------
     wire [N_INPUT-1:0] delayed_l1;
 
@@ -137,9 +183,9 @@ module sc_shd_top (
     endgenerate
 
     // ------------------------------------------------------------------
-    // Layer 1 dense (140 -> 128)
+    // Layer 1 dense (140 -> 128) — REGISTERED output (pipeline stage 0 -> 1)
     // ------------------------------------------------------------------
-    wire [N_HIDDEN*16-1:0] dense1_out_comb;
+    wire [N_HIDDEN*16-1:0] dense1_out_reg;
 
     sc_dense_int8_sparse #(
         .IN_FEATURES (N_INPUT),
@@ -150,21 +196,21 @@ module sc_shd_top (
         .rst_n               (rst_n),
         .scale_q16_16        (scale_l1_q16_16),
         .spikes_in           (delayed_l1),
-        .out_q88_packed      (/* unused */),
-        .out_q88_packed_comb (dense1_out_comb)
+        .out_q88_packed      (dense1_out_reg),    // registered → pipeline reg
+        .out_q88_packed_comb (/* unused */)
     );
 
     // ------------------------------------------------------------------
-    // Layer 1 Vmin_LIF — 128 instances
+    // Layer 1 Vmin_LIF — 128 instances (stage 1, gated by pipe1_active)
     // ------------------------------------------------------------------
     wire [N_HIDDEN-1:0] spikes_l1;
 
     generate
         for (gi = 0; gi < N_HIDDEN; gi = gi + 1) begin: l1_vmin
-            wire signed [15:0] x = $signed(dense1_out_comb[16*gi +: 16]);
+            wire signed [15:0] x = $signed(dense1_out_reg[16*gi +: 16]);
             sc_vmin_lif_neuron inst (
                 .clk        (clk),
-                .rst_n      (rst_n),
+                .rst_n      (rst_n_stage1),
                 .x_in       (x),
                 .spike      (/* unused */),
                 .v_out      (/* unused */),
@@ -174,13 +220,15 @@ module sc_shd_top (
         end
     endgenerate
 
-    // Mask layer-1 spikes after T+15 (mirrors dcls_l2 right-padding zeros)
+    // Mask layer-1 spikes after T+15 (mirrors dcls_l2 right-padding zeros).
+    // The gate uses the pipelined `in_l1_window` definition — cycle < T+16
+    // — because stage 1 processes iter (cycle-1) at this posedge.
     wire [N_HIDDEN-1:0] spikes_l1_masked = in_l1_window
         ? spikes_l1
         : {N_HIDDEN{1'b0}};
 
     // ------------------------------------------------------------------
-    // Layer 2 axonal delays — 128 instances
+    // Layer 2 axonal delays — 128 instances (stage 1, gated by pipe1_active)
     // ------------------------------------------------------------------
     wire [N_HIDDEN-1:0] delayed_l2;
 
@@ -195,7 +243,7 @@ module sc_shd_top (
                 .PTR_WIDTH(DELAY_PTR_WIDTH)
             ) inst (
                 .clk        (clk),
-                .rst_n      (rst_n),
+                .rst_n      (rst_n_stage1),
                 .spike_in   (spikes_l1_masked[gi]),
                 .read_offset(ro),
                 .spike_out  (delayed_l2[gi])
@@ -204,9 +252,9 @@ module sc_shd_top (
     endgenerate
 
     // ------------------------------------------------------------------
-    // Layer 2 dense (128 -> 128)
+    // Layer 2 dense (128 -> 128) — REGISTERED output (pipeline stage 1 -> 2)
     // ------------------------------------------------------------------
-    wire [N_HIDDEN*16-1:0] dense2_out_comb;
+    wire [N_HIDDEN*16-1:0] dense2_out_reg;
 
     sc_dense_int8_sparse #(
         .IN_FEATURES (N_HIDDEN),
@@ -217,21 +265,21 @@ module sc_shd_top (
         .rst_n               (rst_n),
         .scale_q16_16        (scale_l2_q16_16),
         .spikes_in           (delayed_l2),
-        .out_q88_packed      (/* unused */),
-        .out_q88_packed_comb (dense2_out_comb)
+        .out_q88_packed      (dense2_out_reg),
+        .out_q88_packed_comb (/* unused */)
     );
 
     // ------------------------------------------------------------------
-    // Layer 2 Vmin_LIF — 128 instances
+    // Layer 2 Vmin_LIF — 128 instances (stage 2, gated by pipe2_active)
     // ------------------------------------------------------------------
     wire [N_HIDDEN-1:0] spikes_l2;
 
     generate
         for (gi = 0; gi < N_HIDDEN; gi = gi + 1) begin: l2_vmin
-            wire signed [15:0] x = $signed(dense2_out_comb[16*gi +: 16]);
+            wire signed [15:0] x = $signed(dense2_out_reg[16*gi +: 16]);
             sc_vmin_lif_neuron inst (
                 .clk        (clk),
-                .rst_n      (rst_n),
+                .rst_n      (rst_n_stage2),
                 .x_in       (x),
                 .spike      (/* unused */),
                 .v_out      (/* unused */),
@@ -242,9 +290,9 @@ module sc_shd_top (
     endgenerate
 
     // ------------------------------------------------------------------
-    // Layer 3 readout dense (128 -> 20) — no Vmin, voltages summed.
+    // Layer 3 readout dense (128 -> 20) — REGISTERED output (pipeline stage 2 -> 3)
     // ------------------------------------------------------------------
-    wire [N_OUTPUT*16-1:0] dense3_out_comb;
+    wire [N_OUTPUT*16-1:0] dense3_out_reg;
 
     sc_dense_int8_sparse #(
         .IN_FEATURES (N_HIDDEN),
@@ -255,49 +303,64 @@ module sc_shd_top (
         .rst_n               (rst_n),
         .scale_q16_16        (scale_l3_q16_16),
         .spikes_in           (spikes_l2),
-        .out_q88_packed      (/* unused */),
-        .out_q88_packed_comb (dense3_out_comb)
+        .out_q88_packed      (dense3_out_reg),
+        .out_q88_packed_comb (/* unused */)
     );
 
     // ------------------------------------------------------------------
-    // 20-class voltage accumulator — sums dense3_out_comb every cycle
-    // while `running == 1`. The result is exposed as a packed signed
-    // 32-bit bus so the testbench can read it word-by-word for cosim.
+    // 20-class voltage accumulator and pipeline valid bookkeeping.
+    //
+    // At the start posedge, cycle jumps to 1 and running<=1; pipeline
+    // valids stay 0. Each subsequent clock the valids shift in a 1 so
+    // stage N becomes active one clock later than stage N-1. The
+    // accumulator updates whenever `pipe3_active` is set (from clock 3),
+    // and the `end_of_inference` condition stops the run after the last
+    // iter (T2-1) has reached the accumulator at cycle = T2 + 2.
     // ------------------------------------------------------------------
     integer ai;
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            cycle               <= 16'd0;
             running             <= 1'b0;
             done                <= 1'b0;
-            output_v_sum_packed <= {(20*32){1'b0}};
+            cycle               <= 16'd0;
+            pipe1_active        <= 1'b0;
+            pipe2_active        <= 1'b0;
+            pipe3_active        <= 1'b0;
+            output_v_sum_packed <= {(N_OUTPUT*32){1'b0}};
         end else begin
             done <= 1'b0;
-            if (start) begin
-                // Start-cycle: this is iter 0 — combinational chain has
-                // already produced dense3_out_comb for it. Seed the
-                // accumulator with that contribution and advance `cycle`
-                // so the NEXT posedge sees `cycle = 1` (= iter 1 about
-                // to be processed). Python's run_inference_q88 includes
-                // the first iter in its sum the same way.
-                cycle   <= 16'd1;
-                running <= 1'b1;
-                for (ai = 0; ai < N_OUTPUT; ai = ai + 1) begin
-                    output_v_sum_packed[32*ai +: 32] <=
-                        $signed({{16{dense3_out_comb[16*ai+15]}},
-                                  dense3_out_comb[16*ai +: 16]});
-                end
+            if (!running && start) begin
+                // At end of the start posedge we want stage 1 to come out
+                // of reset immediately so clock 1 can process iter 0 (the
+                // value dense1 just latched into `dense1_out_reg`). Setting
+                // `pipe1_active <= 1` here yields POST=1 so rst_n_stage1
+                // is high by PRE of clock 1. Stages 2/3 keep their 1-clock
+                // shift behind stage 1 via the running branch below.
+                running             <= 1'b1;
+                cycle               <= 16'd1;
+                pipe1_active        <= 1'b1;    // active from PRE of clock 1
+                pipe2_active        <= 1'b0;
+                pipe3_active        <= 1'b0;
+                output_v_sum_packed <= {(N_OUTPUT*32){1'b0}};
             end else if (running) begin
-                for (ai = 0; ai < N_OUTPUT; ai = ai + 1) begin
-                    output_v_sum_packed[32*ai +: 32] <=
-                        $signed(output_v_sum_packed[32*ai +: 32])
-                        + $signed({{16{dense3_out_comb[16*ai+15]}},
-                                   dense3_out_comb[16*ai +: 16]});
+                pipe1_active <= 1'b1;            // latched high, stays
+                pipe2_active <= pipe1_active;    // high from PRE of clock 2
+                pipe3_active <= pipe2_active;    // high from PRE of clock 3
+
+                if (pipe3_active) begin
+                    for (ai = 0; ai < N_OUTPUT; ai = ai + 1) begin
+                        output_v_sum_packed[32*ai +: 32] <=
+                            $signed(output_v_sum_packed[32*ai +: 32])
+                            + $signed({{16{dense3_out_reg[16*ai+15]}},
+                                       dense3_out_reg[16*ai +: 16]});
+                    end
                 end
-                cycle <= cycle + 16'd1;
-                if (end_of_inference) begin
+
+                if (cycle == (t_orig + 2*DELAY_HALF + 2)) begin
                     running <= 1'b0;
                     done    <= 1'b1;
+                end else begin
+                    cycle <= cycle + 16'd1;
                 end
             end
         end
