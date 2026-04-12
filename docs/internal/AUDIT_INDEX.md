@@ -57,3 +57,24 @@ Full 7-point checklist audit of all 173 Rust neuron structs. 4 phases, tracked.
 
 *Last updated: 2026-04-05T1509 by Arcane Sapience*
 | 2026-04-06 | research_attention_residuals_2026-04-06.md | AttnRes (Kimi/Moonshot) adaptation proposal | PROPOSAL | Claude |
+
+---
+
+## audit_security_report.md + bandit_2026-04-12.json (Gemini B3, audited by Arcane Sapience)
+
+Bandit scan: 9079 total findings, **14 MEDIUM** triaged 2026-04-12.
+
+| # | File | Lines | Finding | Verdict | Reason |
+|---|------|-------|---------|---------|--------|
+| 1 | equation_builder.py | 209,226,243,247 | `eval()` | ACCEPT RISK | Sandboxed (`__builtins__: {}`), internal ODE equations only |
+| 2 | studio/analysis.py | 144,145 | `eval()` | ACCEPT RISK | Same sandboxed pattern, phase plane analysis |
+| 3 | test_holonomic_jax_compiler_edges.py | 647 | temp file | FALSE POSITIVE | Tests path escape protection |
+| 4 | test_serve_server.py | 104,119,174 | urlopen | FALSE POSITIVE | Localhost test server |
+| 5 | test_studio_synthesis.py | 110 | temp file | FALSE POSITIVE | Tests error handling |
+| 6 | cosim_q88_vs_pytorch.py | 100 | `torch.load(weights_only=False)` | ACCEPT RISK | Own checkpoints with metadata |
+| 7 | cosim_q88_vs_pytorch.py | 116 | HF load_dataset no revision | ACCEPT RISK | SHD dataset, deterministic |
+| 8 | extract_shd_weights.py | 160 | `torch.load(weights_only=False)` | ACCEPT RISK | Own checkpoints |
+
+**Summary:** 0 FAIL, 5 FALSE POSITIVE, 8 ACCEPT RISK. No immediate fixes required.
+
+*Triaged: 2026-04-12 by Arcane Sapience*
