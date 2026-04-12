@@ -118,10 +118,16 @@ module tb_sc_shd_top;
         start    = 1'b1;
         @(posedge clk);
 
-        // Drop start, drive remaining samples while `running == 1`.
+        // Drop start, drive remaining samples while `running == 1`. The
+        // upper bound `t_in + 33` covers:
+        //   - t_in - 1 remaining real samples (iters 1 .. t_in-1)
+        //   - 30 zero-pad iters for the two DCLS asymmetric-padding tails
+        //   - 3 extra drain clocks for the 3-stage pipeline (see sc_shd_top.v)
+        // The DUT asserts `done` at cycle == t_orig + 2*DELAY_HALF + 2 which
+        // falls inside this loop for every valid T.
         @(negedge clk);
         start = 1'b0;
-        for (i = 1; i < t_in + 30; i = i + 1) begin
+        for (i = 1; i < t_in + 33; i = i + 1) begin
             if (i < t_in)
                 spike_in = stim_mem[i];
             else
