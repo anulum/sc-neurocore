@@ -24,6 +24,7 @@ import numpy as np
 # --- PYNQ setup ---
 try:
     from pynq import Overlay
+
     overlay = Overlay("/home/xilinx/sc_shd.bit")
     mmio = overlay.sc_shd_axi_wrapper_0.mmio
     print("FPGA overlay loaded successfully")
@@ -41,8 +42,9 @@ SCALE_L2_Q16_16 = 0x00010000  # placeholder — replace with actual
 SCALE_L3_Q16_16 = 0x00010000  # placeholder — replace with actual
 
 
-def generate_synthetic_spike_raster(t_steps: int = 250, n_channels: int = 140,
-                                     rate: float = 0.05) -> np.ndarray:
+def generate_synthetic_spike_raster(
+    t_steps: int = 250, n_channels: int = 140, rate: float = 0.05
+) -> np.ndarray:
     """Generate a random spike raster for testing.
 
     Parameters
@@ -74,8 +76,7 @@ def main():
 
     # Set scales
     accel.set_scales(SCALE_L1_Q16_16, SCALE_L2_Q16_16, SCALE_L3_Q16_16)
-    print(f"Scales set: L1={SCALE_L1_Q16_16:#x}, L2={SCALE_L2_Q16_16:#x}, "
-          f"L3={SCALE_L3_Q16_16:#x}")
+    print(f"Scales set: L1={SCALE_L1_Q16_16:#x}, L2={SCALE_L2_Q16_16:#x}, L3={SCALE_L3_Q16_16:#x}")
 
     # Generate test data (replace with real SHD data for accuracy eval)
     spike_raster = generate_synthetic_spike_raster(t_steps=250)
