@@ -211,9 +211,7 @@ class TestWaveformCodecMode:
             # mode_byte is last byte of the fixed header (offset 19)
             assert data[:4] == b"WFCX", f"magic mismatch for mode={mode}"
             mode_byte = struct.unpack("B", data[19:20])[0]
-            assert mode_byte == expected, (
-                f"mode={mode}: expected byte {expected}, got {mode_byte}"
-            )
+            assert mode_byte == expected, f"mode={mode}: expected byte {expected}, got {mode_byte}"
 
     def test_mode_stored_on_instance(self):
         """Mode is accessible as an attribute after construction."""

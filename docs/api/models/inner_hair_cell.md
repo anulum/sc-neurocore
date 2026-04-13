@@ -332,13 +332,13 @@ Starting from rest ($V = -60$ mV, $[Ca] = 0.05$ uM, $q = 8$, $c = 0$, $w = 0$):
 - $p_{open} = 1/(1+\exp(-(50-50)/10)) = 0.5$
 - $I_{MET} = 10 \times 0.5 \times (0 - (-60)) = 300$ (normalised units)
 - $dV/dt = (-(-60-(-60)) + 300) / 0.5 = 600$ mV/ms
-- $V(0.025) = -60 + 600 \times 0.025 = -45$ mV
+- V at t=0.025 ms: $-60 + 600 \times 0.025 = -45$ mV
 
 **t = 0.025 ms:** First sub-step complete.
 - $m_{Ca}(-45) = 1/(1+\exp(-(-45-(-35))/8)) = 1/(1+\exp(10/8)) = 0.222$
 - $ca_{entry} = 0.5 \times 0.222^2 = 0.0247$
 - $d[Ca]/dt = -0.05/1.0 + 0.0247 = -0.0253$
-- $[Ca](0.025) = 0.05 + (-0.0253) \times 0.025 = 0.0494$ uM
+- Ca at t=0.025 ms: $0.05 + (-0.0253) \times 0.025 = 0.0494$ uM
 
 **t = 0.5 ms (20 steps):** Near steady-state for V.
 - $V \approx -20$ mV (depolarised plateau)

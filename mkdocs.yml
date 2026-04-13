@@ -5,6 +5,12 @@ site_url: https://anulum.github.io/sc-neurocore/
 repo_url: https://github.com/anulum/sc-neurocore
 repo_name: sc-neurocore
 
+validation:
+  anchors: ignore
+  links:
+    anchors: ignore
+    unrecognized_links: ignore
+
 theme:
   name: material
   logo: assets/anulum_logo.png
