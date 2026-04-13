@@ -35,11 +35,12 @@ except ImportError:
 # --- Import driver ---
 from sc_shd_driver import SHDAccelerator
 
-# --- Q16.16 scales from trained checkpoint ---
-# These values come from tools/export_shd_weights.py
-SCALE_L1_Q16_16 = 0x00010000  # placeholder — replace with actual
-SCALE_L2_Q16_16 = 0x00010000  # placeholder — replace with actual
-SCALE_L3_Q16_16 = 0x00010000  # placeholder — replace with actual
+# --- Q16.16 scales from trained dcls_max checkpoint ---
+# Source: data/masquelier_shd/fpga_artifacts/dcls_max/scales.json
+# Computed as: round(float_scale * 65536)
+SCALE_L1_Q16_16 = 0x00000751  # 0.028572 (layer1_input_to_h1)
+SCALE_L2_Q16_16 = 0x000007B0  # 0.030024 (layer2_h1_to_h2)
+SCALE_L3_Q16_16 = 0x0000011B  # 0.004320 (layer3_h2_output)
 
 
 def generate_synthetic_spike_raster(
