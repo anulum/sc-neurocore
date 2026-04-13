@@ -1,7 +1,13 @@
 # SC-NeuroCore Benchmarks
 
-Performance measurements for sc-neurocore v3.13.3. All Python numbers are
-CPU-only (NumPy backend). Rust numbers use Criterion with AVX-512 SIMD.
+Performance measurements for sc-neurocore v3.13.3 (core engine benchmarks)
+and v3.14.0 (FPGA synthesis). All Python numbers are CPU-only (NumPy
+backend). Rust numbers use Criterion with AVX-512 SIMD. Core engine
+performance is unchanged between v3.13.3 and v3.14.0.
+
+> **v3.14.0 additions:** SHD FPGA synthesis on Zynq XC7Z020 — 1 317 LUT
+> (2.5%), 848 FF (0.8%), WNS +4.048 ns at 100 MHz. See
+> `hdl/reports/vivado_util_xc7z020_100mhz.rpt` for full Vivado report.
 
 ---
 
