@@ -43,8 +43,8 @@ class GammaMotorNeuron:
         inp = self.gain * max(0.0, drive) - self.adapt
         self.v += (-(self.v - self.v_rest) + inp) / self.tau * self.dt
         self.adapt += (
-            self.a_adapt * (self.v - self.v_rest) - self.adapt
-        ) / self.tau_adapt * self.dt
+            (self.a_adapt * (self.v - self.v_rest) - self.adapt) / self.tau_adapt * self.dt
+        )
 
         if self.v >= self.v_threshold:
             self.v = self.v_reset

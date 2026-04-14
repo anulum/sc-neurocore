@@ -117,32 +117,34 @@ class GolgiCell:
             tau_r = 50.0 + 200.0 / max(0.01, 1.0 + ((v + 80.0) / 20.0) ** 2)
             self.r += dt_sub * (r_inf - self.r) / tau_r
 
-            for attr in ('m', 'h', 'p_na', 'n', 'a', 'b', 'w', 'm_t', 's', 'c_n', 'r'):
+            for attr in ("m", "h", "p_na", "n", "a", "b", "w", "m_t", "s", "c_n", "r"):
                 setattr(self, attr, max(0.0, min(1.0, getattr(self, attr))))
 
-            i_cat = self.g_cat * self.m_t ** 2 * self.s * (v - self.e_ca)
-            i_can = self.g_can * self.c_n ** 2 * (v - self.e_ca)
+            i_cat = self.g_cat * self.m_t**2 * self.s * (v - self.e_ca)
+            i_can = self.g_can * self.c_n**2 * (v - self.e_ca)
             ca_entry = -(i_cat + i_can) * 0.001 if (i_cat + i_can) < 0.0 else 0.0
             self.ca += dt_sub * (ca_entry - self.ca / self.tau_ca)
             self.ca = max(0.0, self.ca)
 
-            ca2 = self.ca ** 2
-            kd2 = self.kd_bk ** 2
+            ca2 = self.ca**2
+            kd2 = self.kd_bk**2
             bk_v = _boltz(v, 100.0 - 120.0 * ca2 / (ca2 + kd2), 15.0)
-            sk_inf = ca2 / (ca2 + self.kd_sk ** 2)
+            sk_inf = ca2 / (ca2 + self.kd_sk**2)
 
-            i_na_t = self.g_na_t * self.m ** 3 * self.h * (v - self.e_na)
+            i_na_t = self.g_na_t * self.m**3 * self.h * (v - self.e_na)
             i_na_p = self.g_na_p * self.p_na * (v - self.e_na)
-            i_kdr = self.g_kdr * self.n ** 4 * (v - self.e_k)
-            i_ka = self.g_ka * self.a ** 3 * self.b * (v - self.e_k)
+            i_kdr = self.g_kdr * self.n**4 * (v - self.e_k)
+            i_ka = self.g_ka * self.a**3 * self.b * (v - self.e_k)
             i_km = self.g_km * self.w * (v - self.e_k)
             i_bk = self.g_bk * bk_v * (v - self.e_k)
             i_sk = self.g_sk * sk_inf * (v - self.e_k)
             i_h = self.g_h * self.r * (v - self.e_h)
             i_l = self.g_l * (v - self.e_l)
 
-            dv_val = (-(i_na_t + i_na_p + i_kdr + i_ka + i_km + i_cat + i_can
-                        + i_bk + i_sk + i_h + i_l) + inp) / self.c_m
+            dv_val = (
+                -(i_na_t + i_na_p + i_kdr + i_ka + i_km + i_cat + i_can + i_bk + i_sk + i_h + i_l)
+                + inp
+            ) / self.c_m
             self.v += dt_sub * dv_val
 
         self.v = max(-100.0, min(60.0, self.v))

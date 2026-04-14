@@ -85,13 +85,12 @@ class AlphaMotorNeuron:
             self.ca = max(0.0, self.ca)
 
             self.ca_buf += (
-                (ca_influx + ca_spike) * (1.0 - self.buf_ratio)
-                - self.ca_buf / (self.tau_ca * 5.0)
+                (ca_influx + ca_spike) * (1.0 - self.buf_ratio) - self.ca_buf / (self.tau_ca * 5.0)
             ) * self.dt
             self.ca_buf = max(0.0, self.ca_buf)
 
             ca_total = self.ca + self.ca_buf * 0.01
-            ahp_inf = ca_total ** 2 / (ca_total ** 2 + 0.25)
+            ahp_inf = ca_total**2 / (ca_total**2 + 0.25)
 
             i_na = self.g_na * m_inf**3 * self.h * (self.v - self.e_na)
             i_k = self.g_k * self.n**4 * (self.v - self.e_k)

@@ -89,16 +89,16 @@ class DCNNeuron:
             self.s += sub_dt * (s_inf - self.s) / tau_s
             self.r += sub_dt * (r_inf - self.r) / tau_r
 
-            i_t = self.g_t * m_t_inf ** 2 * self.s * (v - self.e_ca)
+            i_t = self.g_t * m_t_inf**2 * self.s * (v - self.e_ca)
             ca_entry = -i_t * 0.001 if i_t < 0.0 else 0.0
             self.ca += sub_dt * (ca_entry - self.ca / self.tau_ca)
             self.ca = max(0.0, self.ca)
 
-            ahp_inf = self.ca ** 2 / (self.ca ** 2 + self.kd_ahp ** 2)
+            ahp_inf = self.ca**2 / (self.ca**2 + self.kd_ahp**2)
 
-            i_na = self.g_na * m_inf ** 3 * self.h * (v - self.e_na)
+            i_na = self.g_na * m_inf**3 * self.h * (v - self.e_na)
             i_nap = self.g_nap * self.p * (v - self.e_na)
-            i_k = self.g_k * self.n ** 4 * (v - self.e_k)
+            i_k = self.g_k * self.n**4 * (v - self.e_k)
             i_ahp = self.g_ahp * ahp_inf * (v - self.e_k)
             i_h = self.g_h * self.r * (v - self.e_h)
             i_l = self.g_l * (v - self.e_l)

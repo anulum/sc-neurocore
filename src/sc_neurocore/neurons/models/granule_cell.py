@@ -96,19 +96,19 @@ class GranuleCell:
             tau_r = 50.0 + 200.0 / max(0.01, 1.0 + ((v + 80.0) / 20.0) ** 2)
             self.r += dt_sub * (r_inf - self.r) / tau_r
 
-            for attr in ('m', 'h', 'n', 'a', 'b', 'm_t', 's', 'r'):
+            for attr in ("m", "h", "n", "a", "b", "m_t", "s", "r"):
                 setattr(self, attr, max(0.0, min(1.0, getattr(self, attr))))
 
-            i_ca_t = self.g_t * self.m_t ** 2 * self.s * (v - self.e_ca)
+            i_ca_t = self.g_t * self.m_t**2 * self.s * (v - self.e_ca)
             ca_entry = -i_ca_t * 0.001 if i_ca_t < 0.0 else 0.0
             self.ca += dt_sub * (-self.ca / self.tau_ca + ca_entry)
             self.ca = max(0.0, self.ca)
 
-            kca_inf = self.ca ** 2 / (self.ca ** 2 + self.kd_kca ** 2)
+            kca_inf = self.ca**2 / (self.ca**2 + self.kd_kca**2)
 
-            i_na = self.g_na * self.m ** 3 * self.h * (v - self.e_na)
-            i_kdr = self.g_kdr * self.n ** 4 * (v - self.e_k)
-            i_ka = self.g_ka * self.a ** 3 * self.b * (v - self.e_k)
+            i_na = self.g_na * self.m**3 * self.h * (v - self.e_na)
+            i_kdr = self.g_kdr * self.n**4 * (v - self.e_k)
+            i_ka = self.g_ka * self.a**3 * self.b * (v - self.e_k)
             i_kca = self.g_kca * kca_inf * (v - self.e_k)
             i_h = self.g_h * self.r * (v - self.e_h)
             i_l = self.g_l * (v - self.e_l)
