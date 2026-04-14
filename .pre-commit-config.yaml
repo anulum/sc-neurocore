@@ -28,3 +28,5 @@ repos:
     hooks:
       - id: typos
         args: ['--config', '.typos.toml']
+        types_or: [python, rust]
+        files: '^(src|tests|engine|bridge|hdl|tools)/'
