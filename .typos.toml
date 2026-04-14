@@ -20,6 +20,11 @@ extend-exclude = [
 ]
 
 [default.extend-words]
-# Author names in references that typos flags incorrectly
+# Author names in references
 Yau = "Yau"       # King-Wai Yau (retinal physiologist)
-anf = "anf"       # Auditory Nerve Fibre (variable name in IHC model)
+# Neuroscience terms
+anf = "anf"       # Auditory Nerve Fibre (variable name)
+Shal = "Shal"     # Kv4.x (Shal/Shaker) K+ channel gene family
+VOR = "VOR"       # Vestibulo-Ocular Reflex
+# Code identifiers
+systemc = "systemc"  # SystemC (hardware description language)
