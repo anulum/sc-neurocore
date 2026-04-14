@@ -57,7 +57,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### CI & Dependencies
 - ruff 0.15.9, mkdocs strict mode with anchor validation
-- .typos.toml Yau exception, .gitignore vivado logs
+- .typos.toml author name exception, .gitignore vivado logs
 - Dependabot PR #61 (ruff) merged
 
 ## [3.14.0] - 2026-04-13
