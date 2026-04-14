@@ -142,7 +142,7 @@ commercial licenses for proprietary integration.
 <h3>Community</h3>
 <div class="pricing-price">Free</div>
 <div class="pricing-period">Open Source — AGPL-3.0</div>
-<div class="pricing-savings">&nbsp;</div>
+<div class="pricing-savings"> </div>
 <ul class="pricing-features">
 <li>173 neuron models (113 biophysical + 9 AI-optimized)</li>
 <li>Rust SIMD engine (113 Gbit/s AVX-512)</li>
@@ -376,7 +376,7 @@ Enterprise). All prices in CHF. EUR and GBP accepted at daily exchange rate.
 <p style="text-align: center; margin-top: 3rem;">
 <strong>Ready to deploy neuromorphic AI on silicon?</strong><br>
 <a href="https://polar.sh/checkout/polar_c_KhZxFeUlgfnriOpNWcUAMs39o7102otpmSO1l2ZRpZG" class="pricing-btn pricing-btn-primary" style="margin-top: 1rem;">Get Started — CHF 490/yr</a>
-&nbsp;&nbsp;
+  
 <a href="mailto:protoscience@anulum.li?subject=SC-NeuroCore%20Inquiry" class="pricing-btn pricing-btn-outline" style="margin-top: 1rem;">Talk to Us</a>
 </p>
 
