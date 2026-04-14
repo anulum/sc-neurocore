@@ -112,3 +112,6 @@ ARCHIVE/
 vivado.jou
 vivado.log
 vivado*.backup.*
+
+# Internal coordination (incidents, sessions)
+.coordination/

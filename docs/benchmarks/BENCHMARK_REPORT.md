@@ -6,8 +6,8 @@ Commercial Licensing: Available
 
 # SC-NeuroCore v3 Benchmark Report
 
-**Version**: 3.13.3
-**Date**: 2026-03-15
+**Version**: 3.14.0
+**Date**: 2026-04-13 (core engine benchmarks from 2026-03-15, FPGA added)
 **Previous**: 3.6.0 (2026-02-10)
 **SIMD Tier**: avx512-vpopcntdq
 

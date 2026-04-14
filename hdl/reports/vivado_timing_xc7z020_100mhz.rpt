@@ -29,11 +29,11 @@ Timing Summary Report
   Merge Timing Exceptions                    :  Yes
   Inter-SLR Compensation                     :  Conservative
 
-  Corner  Analyze    Analyze    
-  Name    Max Paths  Min Paths  
-  ------  ---------  ---------  
-  Slow    Yes        Yes        
-  Fast    Yes        Yes        
+  Corner  Analyze    Analyze
+  Name    Max Paths  Min Paths
+  ------  ---------  ---------
+  Slow    Yes        Yes
+  Fast    Yes        Yes
 
 
 ------------------------------------------------------------------------------------------------
@@ -136,9 +136,9 @@ Table of Contents
 | ---------------------
 ------------------------------------------------------------------------------------------------
 
-    WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
-    -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
-      4.048        0.000                      0                 2636        0.179        0.000                      0                 2636        4.500        0.000                       0                   670  
+    WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints
+    -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------
+      4.048        0.000                      0                 2636        0.179        0.000                      0                 2636        4.500        0.000                       0                   670
 
 
 All user specified timing constraints are met.
@@ -151,7 +151,7 @@ All user specified timing constraints are met.
 
 Clock  Waveform(ns)       Period(ns)      Frequency(MHz)
 -----  ------------       ----------      --------------
-clk    {0.000 5.000}      10.000          100.000         
+clk    {0.000 5.000}      10.000          100.000
 
 
 ------------------------------------------------------------------------------------------------
@@ -159,9 +159,9 @@ clk    {0.000 5.000}      10.000          100.000
 | -----------------
 ------------------------------------------------------------------------------------------------
 
-Clock             WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
------             -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
-clk                 4.048        0.000                      0                 1966        0.179        0.000                      0                 1966        4.500        0.000                       0                   670  
+Clock             WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints
+-----             -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------
+clk                 4.048        0.000                      0                 1966        0.179        0.000                      0                 1966        4.500        0.000                       0                   670
 
 
 ------------------------------------------------------------------------------------------------
@@ -169,8 +169,8 @@ clk                 4.048        0.000                      0                 19
 | -----------------
 ------------------------------------------------------------------------------------------------
 
-From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
-----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints
+----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------
 
 
 ------------------------------------------------------------------------------------------------
@@ -178,9 +178,9 @@ From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS
 | -----------------------
 ------------------------------------------------------------------------------------------------
 
-Path Group         From Clock         To Clock               WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
-----------         ----------         --------               -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
-**async_default**  clk                clk                      6.557        0.000                      0                  670        0.941        0.000                      0                  670  
+Path Group         From Clock         To Clock               WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints
+----------         ----------         --------               -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------
+**async_default**  clk                clk                      6.557        0.000                      0                  670        0.941        0.000                      0                  670
 
 
 ------------------------------------------------------------------------------------------------
@@ -213,7 +213,7 @@ Slack (MET) :             4.048ns  (required time - arrival time)
   Logic Levels:           7  (CARRY4=4 LUT1=1 LUT3=1 LUT6=1)
   Input Delay:            2.000ns
   Clock Path Skew:        0.924ns (DCD - SCD + CPR)
-    Destination Clock Delay (DCD):    0.924ns = ( 10.924 - 10.000 ) 
+    Destination Clock Delay (DCD):    0.924ns = ( 10.924 - 10.000 )
     Source Clock Delay      (SCD):    0.000ns
     Clock Pessimism Removal (CPR):    0.000ns
   Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
@@ -224,8 +224,8 @@ Slack (MET) :             4.048ns  (required time - arrival time)
 
     Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
   -------------------------------------------------------------------    -------------------
-                         (clock clk rise edge)        0.000     0.000 r  
-                         input delay                  2.000     2.000    
+                         (clock clk rise edge)        0.000     0.000 r
+                         input delay                  2.000     2.000
                                                       0.000     2.000 f  t_orig[5] (IN)
                          net (fo=1, unset)            0.973     2.973    t_orig[5]
                          LUT1 (Prop_lut1_I0_O)        0.124     3.097 r  running_rep_i_15/O
@@ -249,18 +249,18 @@ Slack (MET) :             4.048ns  (required time - arrival time)
                          FDCE                                         r  cycle_reg[0]/CE
   -------------------------------------------------------------------    -------------------
 
-                         (clock clk rise edge)       10.000    10.000 r  
+                         (clock clk rise edge)       10.000    10.000 r
                                                       0.000    10.000 r  clk (IN)
                          net (fo=669, unset)          0.924    10.924    clk
                          FDCE                                         r  cycle_reg[0]/C
-                         clock pessimism              0.000    10.924    
-                         clock uncertainty           -0.035    10.889    
+                         clock pessimism              0.000    10.924
+                         clock uncertainty           -0.035    10.889
                          FDCE (Setup_fdce_C_CE)      -0.169    10.720    cycle_reg[0]
   -------------------------------------------------------------------
-                         required time                         10.720    
-                         arrival time                          -6.672    
+                         required time                         10.720
+                         arrival time                          -6.672
   -------------------------------------------------------------------
-                         slack                                  4.048    
+                         slack                                  4.048
 
 
 
@@ -291,8 +291,8 @@ Slack (MET) :             0.179ns  (arrival time - required time)
 
     Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
   -------------------------------------------------------------------    -------------------
-                         (clock clk rise edge)        0.000     0.000 r  
-                         input delay                  0.500     0.500    
+                         (clock clk rise edge)        0.000     0.000 r
+                         input delay                  0.500     0.500
                                                       0.000     0.500 f  start (IN)
                          net (fo=661, unset)          0.924     1.424    start
                          LUT3 (Prop_lut3_I2_O)        0.093     1.517 r  pipe3_active_i_2/O
@@ -300,18 +300,18 @@ Slack (MET) :             0.179ns  (arrival time - required time)
                          FDCE                                         r  pipe3_active_reg/D
   -------------------------------------------------------------------    -------------------
 
-                         (clock clk rise edge)        0.000     0.000 r  
+                         (clock clk rise edge)        0.000     0.000 r
                                                       0.000     0.000 r  clk (IN)
                          net (fo=669, unset)          0.973     0.973    clk
                          FDCE                                         r  pipe3_active_reg/C
-                         clock pessimism              0.000     0.973    
-                         clock uncertainty            0.035     1.008    
+                         clock pessimism              0.000     0.973
+                         clock uncertainty            0.035     1.008
                          FDCE (Hold_fdce_C_D)         0.330     1.338    pipe3_active_reg
   -------------------------------------------------------------------
-                         required time                         -1.338    
-                         arrival time                           1.517    
+                         required time                         -1.338
+                         arrival time                           1.517
   -------------------------------------------------------------------
-                         slack                                  0.179    
+                         slack                                  0.179
 
 
 
@@ -355,7 +355,7 @@ Slack (MET) :             6.557ns  (required time - arrival time)
   Logic Levels:           1  (LUT1=1)
   Input Delay:            2.000ns
   Clock Path Skew:        0.924ns (DCD - SCD + CPR)
-    Destination Clock Delay (DCD):    0.924ns = ( 10.924 - 10.000 ) 
+    Destination Clock Delay (DCD):    0.924ns = ( 10.924 - 10.000 )
     Source Clock Delay      (SCD):    0.000ns
     Clock Pessimism Removal (CPR):    0.000ns
   Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
@@ -366,8 +366,8 @@ Slack (MET) :             6.557ns  (required time - arrival time)
 
     Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
   -------------------------------------------------------------------    -------------------
-                         (clock clk rise edge)        0.000     0.000 r  
-                         input delay                  2.000     2.000    
+                         (clock clk rise edge)        0.000     0.000 r
+                         input delay                  2.000     2.000
                                                       0.000     2.000 r  rst_n (IN)
                          net (fo=0)                   0.973     2.973    dense3/rst_n
                          LUT1 (Prop_lut1_I0_O)        0.124     3.097 f  dense3/running_rep_i_2/O
@@ -375,18 +375,18 @@ Slack (MET) :             6.557ns  (required time - arrival time)
                          FDCE                                         f  cycle_reg[0]/CLR
   -------------------------------------------------------------------    -------------------
 
-                         (clock clk rise edge)       10.000    10.000 r  
+                         (clock clk rise edge)       10.000    10.000 r
                                                       0.000    10.000 r  clk (IN)
                          net (fo=669, unset)          0.924    10.924    clk
                          FDCE                                         r  cycle_reg[0]/C
-                         clock pessimism              0.000    10.924    
-                         clock uncertainty           -0.035    10.889    
+                         clock pessimism              0.000    10.924
+                         clock uncertainty           -0.035    10.889
                          FDCE (Recov_fdce_C_CLR)     -0.319    10.570    cycle_reg[0]
   -------------------------------------------------------------------
-                         required time                         10.570    
-                         arrival time                          -4.013    
+                         required time                         10.570
+                         arrival time                          -4.013
   -------------------------------------------------------------------
-                         slack                                  6.557    
+                         slack                                  6.557
 
 
 
@@ -417,8 +417,8 @@ Slack (MET) :             0.941ns  (arrival time - required time)
 
     Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
   -------------------------------------------------------------------    -------------------
-                         (clock clk rise edge)        0.000     0.000 r  
-                         input delay                  0.500     0.500    
+                         (clock clk rise edge)        0.000     0.000 r
+                         input delay                  0.500     0.500
                                                       0.000     0.500 r  rst_n (IN)
                          net (fo=0)                   0.410     0.910    dense3/rst_n
                          LUT1 (Prop_lut1_I0_O)        0.045     0.955 f  dense3/running_rep_i_2/O
@@ -426,18 +426,18 @@ Slack (MET) :             0.941ns  (arrival time - required time)
                          FDCE                                         f  cycle_reg[0]/CLR
   -------------------------------------------------------------------    -------------------
 
-                         (clock clk rise edge)        0.000     0.000 r  
+                         (clock clk rise edge)        0.000     0.000 r
                                                       0.000     0.000 r  clk (IN)
                          net (fo=669, unset)          0.432     0.432    clk
                          FDCE                                         r  cycle_reg[0]/C
-                         clock pessimism              0.000     0.432    
-                         clock uncertainty            0.035     0.467    
+                         clock pessimism              0.000     0.432
+                         clock uncertainty            0.035     0.467
                          FDCE (Remov_fdce_C_CLR)     -0.067     0.400    cycle_reg[0]
   -------------------------------------------------------------------
-                         required time                         -0.400    
-                         arrival time                           1.341    
+                         required time                         -0.400
+                         arrival time                           1.341
   -------------------------------------------------------------------
-                         slack                                  0.941    
+                         slack                                  0.941
 
 
 

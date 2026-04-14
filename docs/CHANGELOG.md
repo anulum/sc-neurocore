@@ -4,6 +4,64 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### SHD FPGA Deployment
+- Complete train → quantise → synthesise → bitstream pipeline for SHD speech classification
+- 75.2% test accuracy on DCLS max model (0% rounding drop, FPGA-deployable)
+- 18 Vertex AI T4 training runs: baseline + lambda sweep (5) + sigma=0 (2) + L1 pruning (2)
+- Lambda regulariser has no detectable effect — sigma-annealing alone gives 0% rounding drop
+- Sigma→0 correction tested: 69.1% (worse than sigma=0.23 baseline)
+- L1 magnitude pruning tested: 46–51% (90% one-shot too destructive)
+
+### Vivado Synthesis (Zynq XC7Z020, PYNQ-Z2)
+- Vivado v2025.2 synthesis: 1 317 LUT (2.5%), 848 FF (0.8%), 0 BRAM, 0 DSP
+- WNS +4.048 ns at 100 MHz (~168 MHz achievable), 0 violations across 2 636 endpoints
+- Bitstream generated via block design (Zynq PS + AXI-Lite)
+- PYNQ deployment package: sc_shd_driver.py, demo_shd_fpga.py, .bit, .hwh (98 KB ZIP)
+- Synthesis reports committed to hdl/reports/
+
+### New HDL Modules
+- `sc_shd_top.v`: 3-stage pipelined SHD inference core (AxDelay → Dense → Vmin_LIF)
+- `sc_shd_axi_wrapper.v`: AXI4-Lite slave for Zynq PS ↔ PL communication
+- `sc_vmin_lif_neuron.v`: Vmin LIF neuron with JIT eval order (Q8.8 fixed-point)
+- `sc_axonal_delay.v`: circular buffer axonal delay module
+- `sc_dense_int8_sparse.v`: CSR sparse int8 matrix-vector multiply
+- `vmin_lif_lut.vh`: 256-entry softplus lookup table
+- Total HDL modules: 25 (was 19), 5 455 lines
+
+### GPU Compute Backend
+- wgpu feature-gated backend for DenseLayer stochastic computing
+- Philox 4x32-10 GPU-native RNG (no PCIe bandwidth bottleneck)
+- Two-kernel architecture: encode (Bernoulli sampling) + accumulate (AND+popcount)
+- Cross-platform via Vulkan (AMD RDNA2, NVIDIA, Metal, DX12)
+- PyO3 GpuDenseLayer class with forward_fast() and forward_batch_numpy()
+
+### FPGA Tooling
+- Q8.8 reference simulator (tools/shd_q88_reference.py) with bit-true guarantees
+- Weight extraction pipeline (tools/extract_shd_weights.py): int8 weights, integer delays, Q16.16 scales
+- Co-simulation harness (tools/cosim_q88_vs_pytorch.py): per-sample PyTorch ↔ Q8.8 comparison
+- Softplus LUT generator (tools/gen_vmin_lif_lut.py)
+- Vivado block design Tcl script (hdl/pynq/create_block_design.tcl)
+- PYNQ-Z2 timing constraints (hdl/constraints/pynq_z2.xdc)
+
+### Model Documentation
+- 38/122 model doc pages upgraded to 567+ lines (verified against Rust source)
+- 84 remaining (in progress)
+
+### WaveformCodec
+- Mode parameter (background/snippet) with 13 multi-angle tests
+- SPDX header fix
+
+### Collaboration
+- Joint work with T. Masquelier, A. Queant, B. Cottereau (CNRS/CerCo) on SHD FPGA
+- 21-message correspondence, email with full sweep results + bitstream sent
+
+### CI & Dependencies
+- ruff 0.15.9, mkdocs strict mode with anchor validation
+- .typos.toml author name exception, .gitignore vivado logs
+- Dependabot PR #61 (ruff) merged
+
+## [3.14.0] - 2026-04-13
+
 ### NIR Bridge
 - Roundtrip tests for all 18/18 NIR primitives (was 7/18)
 - Auto-broadcast scalar neuron params to input size (Norse/snnTorch export 0-dim tensors)

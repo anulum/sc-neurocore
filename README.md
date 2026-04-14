@@ -27,17 +27,17 @@ Commercial Licensing: Available
 [![REUSE](https://img.shields.io/badge/REUSE-compliant-green)](https://reuse.software/)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)
 
-> **Active Development** — SC-NeuroCore is under intensive development. The core engine, all 178 neuron models, and the full simulation pipeline (Population → Projection → Network → SpikeMonitor → Analysis) are fully functional, tested (8 974 passing tests — 7 425 Python + 1 549 Rust), and production-deployable. We are currently completing comprehensive per-model documentation and end-to-end pipeline benchmarking across the entire model library. APIs may evolve as this work progresses.
+> **Active Development** — SC-NeuroCore is under intensive development. The core engine, all 173 neuron models, and the full simulation pipeline (Population → Projection → Network → SpikeMonitor → Analysis) are fully functional, tested (8 974 passing tests — 7 425 Python + 1 549 Rust), and production-deployable. We are currently completing comprehensive per-model documentation and end-to-end pipeline benchmarking across the entire model library. APIs may evolve as this work progresses.
 
 **Version:** 3.14.0
-**Status:** 178 Neuron Models (169 Bio + 9 AI) | 99.49% MNIST (ConvSNN) | 7 425 Python tests passing + 1 549 Rust tests | 100% Core Coverage | 178 Rust Neuron Models (PyO3) | 160-Model NetworkRunner | 132-Function Analysis Toolkit | wgpu GPU Backend | 29 Notebooks
+**Status:** 173 Neuron Models (164 Bio + 9 AI) | 99.49% MNIST (ConvSNN) | 7 425 Python tests passing + 1 549 Rust tests | 100% Core Coverage | 173 Rust Neuron Models (PyO3) | 160-Model NetworkRunner | 132-Function Analysis Toolkit | wgpu GPU Backend | 29 Notebooks
 
 <p align="center">
   <img src="docs/assets/spike_raster.png" width="800" alt="LIF spike raster — 5 neurons, sinusoidal input">
 </p>
 
 SC-NeuroCore is an open-source stochastic computing SNN framework
-with FPGA synthesis. 178 neuron models (169 biophysical + 9 AI-optimised) spanning
+with FPGA synthesis. 173 neuron models (164 biophysical + 9 AI-optimised) spanning
 82 years of computational neuroscience (McCulloch-Pitts 1943 through
 ArcaneNeuron 2026) run inside a deterministic stochastic computing engine
 with bit-true Verilog RTL co-simulation, FPGA synthesis via an IR compiler
@@ -45,7 +45,7 @@ with bit-true Verilog RTL co-simulation, FPGA synthesis via an IR compiler
 that turns arbitrary ODE strings into synthesizable Q8.8 fixed-point RTL,
 formal verification (7 SymbiYosys
 modules, 72 properties), a Rust SIMD engine **39–202× faster than Brian2**
-(27.7 billion synaptic events/s at 100K neurons, 178 Rust neuron models
+(27.7 billion synaptic events/s at 100K neurons, 173 Rust neuron models
 with PyO3 bindings, 160-model NetworkRunner with Rayon-parallel populations),
 wgpu compute shader GPU backend (21× on GTX 1060, cross-platform Vulkan/Metal/DX12),
 CuPy GPU acceleration, JAX JIT training,
@@ -90,8 +90,8 @@ neuromorphic inter-chip routing, and real-time closed-loop telemetry.
 | Surrogate gradient training | **6 surrogates, 12 cells** | Yes | Yes | Yes | — |
 | PyTorch `nn.Module` SNN | **Yes** (+ SC weight export) | Yes | Yes | — | — |
 | GPU acceleration | **wgpu + PyTorch + CuPy** | PyTorch | PyTorch | — | — |
-| Neuron model library | **178** | 11 | 6 | 3 | ~5 builtin |
-| Rust neuron models (PyO3) | **178** | — | — | — | — |
+| Neuron model library | **173** | 11 | 6 | 3 | ~5 builtin |
+| Rust neuron models (PyO3) | **173** | — | — | — | — |
 | NetworkRunner (fused loop) | **160 models** | — | — | — | — |
 | Network simulation engine | **3 backends** | PyTorch | PyTorch | Lava | C++ codegen |
 | MPI distributed simulation | **Yes** | — | — | — | — |
@@ -626,7 +626,7 @@ pip install -r requirements.txt       # runtime only
 pip install -r requirements-dev.txt   # runtime + dev tools
 ```
 
-## Rust Engine (178 Neuron Models, 1 549 Tests)
+## Rust Engine (173 Neuron Models, 1 549 Tests)
 
 The `sc_neurocore_engine` crate provides 173 Rust neuron models callable
 from Python via PyO3 bindings (including ArcaneNeuron), a 160-model
@@ -662,7 +662,7 @@ If you use SC-NeuroCore in your research, please cite:
 @software{sotek2026scneurocore,
   author    = {Šotek, Miroslav},
   title     = {SC-NeuroCore: A Deterministic Stochastic Computing Framework for Neuromorphic Hardware Design},
-  version   = {3.13.3},
+  version   = {3.14.0},
   year      = {2026},
   doi       = {10.5281/zenodo.18906614},
   url       = {https://github.com/anulum/sc-neurocore},

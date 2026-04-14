@@ -1,6 +1,6 @@
 # Roadmap
 
-> Last updated: 2026-03-23 (v3.13.3). Priorities may shift based on
+> Last updated: 2026-04-13 (v3.14.0). Priorities may shift based on
 > validation results and community feedback.
 
 ## v3.8 — Hardening & Edge AI Readiness ✓
@@ -134,15 +134,66 @@ New in this release:
 - **Hardware**: AXI-Stream interface, DMA controller, parameterized AXI-Lite, CDC primitives
 - **Deep audit**: 15 bugs + 7 concerns fixed across 942 files
 
-## v4.0 — Physical FPGA & Production (target: Q3 2026)
+## v3.14 — SHD FPGA Deployment + GPU Backend ✓ (current)
 
-### FPGA deployment proof (P0 blocker)
+### ~~SHD end-to-end FPGA pipeline~~ ✓
 
-- Deploy MNIST classifier on Artix-7 100T or Zynq 7020
-- Measure: LUT count, BRAM, DSP, Fmax, dynamic power, latency
-- End-to-end: Python → Rust IR → Verilog → bitstream → silicon
-- Latency target: < 1 µs neuron update
-- Deterministic replay: FPGA output matches Python bit-for-bit
+Complete train → quantise → synthesise → bitstream flow for Spiking
+Heidelberg Digits (SHD) speech classification on Zynq XC7Z020 (PYNQ-Z2):
+
+- **Training:** DCLS max (Hammouamri 2024) on Vertex AI T4, 18 runs total
+  (baseline + lambda sweep + sigma=0 + L1 pruning)
+- **Best result:** 75.2% test accuracy, 0% rounding drop (FPGA-deployable)
+- **Verilog:** 5 new modules (sc_shd_top, sc_vmin_lif_neuron, sc_axonal_delay,
+  sc_dense_int8_sparse, sc_shd_axi_wrapper) — 25 total HDL modules, 5 455 lines
+- **Vivado synthesis:** 1 317 LUT (2.5%), 848 FF (0.8%), 0 BRAM, 0 DSP,
+  WNS +4.048 ns at 100 MHz (~168 MHz achievable)
+- **Bitstream generated** via Vivado v2025.2 (Zynq PS + AXI-Lite block design)
+- **PYNQ deployment package:** driver, demo, .bit, .hwh (98 KB ZIP)
+- **Q8.8 co-simulation:** bit-true Python reference matches Verilog, 4% gap vs PyTorch
+- **Collaboration:** Joint work with T. Masquelier, A. Queant, B. Cottereau (CNRS/CerCo)
+
+### ~~GPU compute backend (wgpu)~~ ✓
+
+Feature-gated wgpu backend for DenseLayer stochastic computing:
+
+- Philox 4x32-10 GPU-native RNG (no PCIe bandwidth bottleneck)
+- Two-kernel architecture: encode (Bernoulli sampling) + accumulate (AND+popcount)
+- Cross-platform via Vulkan (AMD RDNA2, NVIDIA, Metal, DX12)
+- PyO3 GpuDenseLayer class with forward_fast() and forward_batch_numpy()
+
+### ~~Model documentation upgrade~~ in progress
+
+Per-model documentation pages (567+ lines each) with equations, parameters,
+defaults, benchmarks — all verified against Rust source. 38/122 complete,
+84 remaining.
+
+### ~~WaveformCodec~~ ✓
+
+Neural data compression for BCI: 24x reduction on Neuralink-scale data,
+Rust + Verilog paths, bit-true guarantees, mode parameter (background/snippet).
+
+### ~~CI fixes and dependency updates~~ ✓
+
+ruff 0.15.9, mkdocs strict mode, typos exceptions, Vivado gitignore,
+dependabot PRs merged.
+
+## v4.0 — Physical FPGA Demos + Production (target: Q3 2026)
+
+### FPGA deployment proof ~~(P0 blocker)~~ PARTIALLY DONE
+
+- ~~Deploy on Zynq 7020~~ ✓ (SHD bitstream generated, 2.5% LUT)
+- ~~Measure: LUT count, BRAM, DSP, Fmax~~ ✓ (Vivado reports committed)
+- Verify on physical PYNQ-Z2 board (on order)
+- Measure dynamic power on silicon
+- Deploy MNIST classifier as second demo
+- Latency target: < 1 us neuron update (achieved: 2.83 us per 250-step sample)
+
+### Per-model documentation (P1)
+
+- Complete remaining 84 model doc pages (567+ lines each)
+- Auto-generate benchmark tables from existing pipeline results
+- Publish per-model Verilog mapping status
 
 ### JOSS submission & review
 
@@ -152,8 +203,7 @@ New in this release:
 ### Wheel trimming
 
 - Remove frontier/speculative tiers from `pip install sc-neurocore`
-- Keep generative, world_model, analysis, audio, dashboard, viz, swarm
-  as source-only installs
+- Add `pip install sc-neurocore[core]` install flag
 - Fewer modules = stronger signal for core SC+SNN+FPGA story
 
 ### ~~Sparse weight matrices~~ ✓
@@ -162,44 +212,23 @@ CuPy CSR path added in `vectorized_layer.py` for N>1K networks.
 
 ### ~~JAX JIT compilation~~ ✓
 
-`jax_forward_pass` + `jax_surrogate_gradient_step` added. GPU
-acceleration benchmarks vs NumPy baseline.
+`jax_forward_pass` + `jax_surrogate_gradient_step` added.
 
 ### ~~Tool Qualification Kit (TQK)~~ ✓
 
-FMEA + traceability matrix created in `docs/safety/`. Safety manual
-and requirements-to-tests-to-formal-proofs mapping complete.
+FMEA + traceability matrix in `docs/safety/`.
 
 ### ~~Network simulation engine~~ ✓
 
-Population-Projection-Network architecture with Python, Rust, and MPI
-backends. 6 topology generators. Moved from v4.0 to v3.12.
-
-### ~~MPI distributed simulation~~ ✓
-
-Billion-neuron scale via mpi4py. Moved from v4.0 to v3.12.
+Population-Projection-Network with Python, Rust, MPI backends. Moved to v3.12.
 
 ### ~~Pre-trained model zoo~~ ✓
 
-10 configurations + 3 pre-trained weight sets. Moved from v4.0 to v3.12.
+10 configurations + 3 pre-trained weight sets. Moved to v3.12.
 
 ### ~~conda-forge recipe~~ ✓
 
-Recipe ready for conda-forge distribution. Moved from v4.1 to v3.12.
-
-### ~~ArcaneNeuron + AI-optimized models~~ ✓
-
-9 novel neuron models for AI workloads. ArcaneNeuron: 5-compartment
-self-referential cognition. 8 additional: MultiTimescale, AttentionGated,
-PredictiveCoding, SelfReferential, CompositionalBinding,
-DifferentiableSurrogate, ContinuousAttractor, MetaPlastic. Rust Arcane
-in NetworkRunner (111 models total).
-
-### ~~Identity substrate~~ ✓
-
-Persistent spiking network (HH + WB + HR) with STDP, LSH trace encoder,
-PCA state decoder, Lazarus checkpoint save/restore/merge, L16 Director
-controller for cybernetic self-regulation.
+Recipe ready for distribution. Moved to v3.12.
 
 ## v4.1 — Community & Ecosystem (target: Q4 2026)
 

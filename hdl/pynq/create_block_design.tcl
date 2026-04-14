@@ -21,6 +21,9 @@ add_files -norecurse [list \
 ]
 add_files -fileset constrs_1 -norecurse ${hdl_dir}/constraints/pynq_z2.xdc
 
+# IMPORTANT: update compile order so Vivado discovers module hierarchy
+update_compile_order -fileset sources_1
+
 # Create block design
 create_bd_design "system"
 
@@ -32,36 +35,18 @@ set_property -dict [list \
     CONFIG.PCW_USE_M_AXI_GP0 {1} \
 ] [get_bd_cells ps7_0]
 
-# Add AXI interconnect
-create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:2.1 axi_ic_0
-set_property CONFIG.NUM_MI {1} [get_bd_cells axi_ic_0]
-
-# Add sc_shd_axi_wrapper as RTL module
+# Add sc_shd_axi_wrapper as RTL module reference
+# Vivado must first see the module in the compile order (done above)
 create_bd_cell -type module -reference sc_shd_axi_wrapper sc_shd_0
 
-# Connect clocks and resets
-connect_bd_net [get_bd_pins ps7_0/FCLK_CLK0] \
-    [get_bd_pins sc_shd_0/S_AXI_ACLK] \
-    [get_bd_pins axi_ic_0/ACLK] \
-    [get_bd_pins axi_ic_0/S00_ACLK] \
-    [get_bd_pins axi_ic_0/M00_ACLK]
-
-connect_bd_net [get_bd_pins ps7_0/FCLK_RESET0_N] \
-    [get_bd_pins sc_shd_0/S_AXI_ARESETN] \
-    [get_bd_pins axi_ic_0/ARESETN] \
-    [get_bd_pins axi_ic_0/S00_ARESETN] \
-    [get_bd_pins axi_ic_0/M00_ARESETN]
-
-# Connect AXI interfaces
-connect_bd_intf_net [get_bd_intf_pins ps7_0/M_AXI_GP0] \
-    [get_bd_intf_pins axi_ic_0/S00_AXI]
-connect_bd_intf_net [get_bd_intf_pins axi_ic_0/M00_AXI] \
+# Use connection automation for AXI (handles interconnect + addresses)
+apply_bd_automation -rule xilinx.com:bd_rule:processing_system7 \
+    -config {make_external "FIXED_IO, DDR" apply_board_preset "1"} \
+    [get_bd_cells ps7_0]
+apply_bd_automation -rule xilinx.com:bd_rule:axi4 \
+    -config {Clk_master "/ps7_0/FCLK_CLK0" Clk_slave "Auto" \
+             Master "/ps7_0/M_AXI_GP0" intc_ip "New AXI Interconnect"} \
     [get_bd_intf_pins sc_shd_0/S_AXI]
-
-# Assign address — 256 bytes at 0x43C0_0000
-assign_bd_address -target_address_space /ps7_0/Data \
-    [get_bd_addr_segs sc_shd_0/S_AXI/reg0] \
-    -range 256 -offset 0x43C00000
 
 # Validate and save
 validate_bd_design
@@ -69,7 +54,8 @@ save_bd_design
 
 # Generate wrapper
 make_wrapper -files [get_files system.bd] -top
-add_files -norecurse vivado_project/${project_name}.gen/sources_1/bd/system/hdl/system_wrapper.v
+set wrapper_file [glob vivado_project/${project_name}.gen/sources_1/bd/system/hdl/system_wrapper.v]
+add_files -norecurse ${wrapper_file}
 update_compile_order -fileset sources_1
 
 # Run synthesis + implementation + bitstream
