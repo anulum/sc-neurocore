@@ -4,7 +4,9 @@ repos:
     rev: cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b  # v5.0.0
     hooks:
       - id: trailing-whitespace
+        exclude: '\.rpt$'
       - id: end-of-file-fixer
+        exclude: '\.rpt$'
       - id: check-yaml
         args: [--unsafe]
         exclude: "^conda/"
