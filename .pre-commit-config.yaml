@@ -19,7 +19,9 @@ repos:
     rev: c60c980e561ed3e73101667fe8365c609d19a438  # v0.15.9
     hooks:
       - id: ruff
+        exclude: '^data/'
       - id: ruff-format
+        exclude: '^data/'
 
   - repo: https://github.com/crate-ci/typos
     rev: d11834eeac776f87614aef80119b38800a9a2bac  # v1.29.5
