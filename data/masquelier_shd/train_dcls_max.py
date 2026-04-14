@@ -198,8 +198,8 @@ def integer_delay_penalty(model: torch.nn.Module) -> torch.Tensor:
     return penalty
 
 
-SIG_INIT = 15.0  # initial sigma — matches siginit in original config
-SIG_FINAL = 0.23  # final sigma — narrow enough to behave as integer delay
+SIG_INIT = float(os.environ.get("SHD_SIGMA_INIT", "15.0"))
+SIG_FINAL = float(os.environ.get("SHD_SIGMA_FINAL", "0.0"))  # Tim: sigma must end at 0
 # 0.23 is below 0.5 so rounding has at most 0.5/0.23 ratio of neighbour overlap
 
 
