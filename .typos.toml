@@ -1,0 +1,32 @@
+[files]
+extend-exclude = [
+    "Cargo.lock",
+    "*.rpt",
+    "vivado_project/",
+    "sc_shd_pynq/",
+    "sc-neurocore/",
+    "site/",
+    "*.xpr",
+    "*.xdc",
+    "docs/api/models/",
+    "docs/internal/",
+    "docs/tutorials/",
+    "docs/guides/",
+    "docs/research/",
+    "docs/reports/",
+    "docs/benchmarks/",
+    "notebooks/",
+    "studio/",
+]
+
+[default.extend-words]
+# Author names in references
+Yau = "Yau"       # King-Wai Yau (retinal physiologist)
+# Neuroscience terms
+anf = "anf"       # Auditory Nerve Fibre (variable name)
+Shal = "Shal"     # Kv4.x (Shal/Shaker) K+ channel gene family
+VOR = "VOR"       # Vestibulo-Ocular Reflex
+# Code identifiers
+systemc = "systemc"  # SystemC (hardware description language)
+# Cargo.lock / third-party crate descriptions
+THS = "THS"          # abbreviation in rand crate docs

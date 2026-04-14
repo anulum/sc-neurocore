@@ -4,7 +4,9 @@ repos:
     rev: cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b  # v5.0.0
     hooks:
       - id: trailing-whitespace
+        exclude: '\.rpt$'
       - id: end-of-file-fixer
+        exclude: '\.rpt$'
       - id: check-yaml
         args: [--unsafe]
         exclude: "^conda/"
@@ -14,12 +16,17 @@ repos:
         args: [--maxkb=500]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 4924b0e01e032fea073ad04a1c5cfa7e4add0afb  # v0.15.6
+    rev: c60c980e561ed3e73101667fe8365c609d19a438  # v0.15.9
     hooks:
       - id: ruff
+        exclude: '^data/'
       - id: ruff-format
+        exclude: '^data/'
 
   - repo: https://github.com/crate-ci/typos
     rev: d11834eeac776f87614aef80119b38800a9a2bac  # v1.29.5
     hooks:
       - id: typos
+        args: ['--config', '.typos.toml']
+        types_or: [python, rust]
+        files: '^(src|tests|engine|bridge|hdl|tools)/'

@@ -20,7 +20,27 @@ Comparison with prior approaches:
   - v1 (SUCCESS, 72.5%): pure tent kernel with fixed width=1, no sharpening needed
   - max (THIS): from-scratch training with sigma annealing, expected > v1
 
+L1 sparsity mode (Tim Masquelier suggestion #3, 2026-04-09):
+  Instead of random mask at init, train dense with L1 weight regularisation,
+  then magnitude-prune and fine-tune. Set SHD_L1_WEIGHT > 0 to enable.
+  See: Han et al. (2015) "Learning both Weights and Connections".
+
 Run: python3 train_dcls_max.py
+Env:
+  SHD_LAMBDA_DELAY    — integer-delay regulariser weight (default 0.01)
+  SHD_L1_WEIGHT       — L1 weight regularisation coefficient (default 0.0 = off)
+  SHD_PRUNE_SPARSITY  — target sparsity for magnitude pruning (default 0.9)
+  SHD_PRUNE_EPSILON   — abs threshold for epsilon pruning (default 0.01)
+  SHD_FINETUNE_EPOCHS — epochs after pruning (default 20)
+  SHD_EPOCHS          — total main-phase epochs (default = config.epochs)
+  SHD_SIGMA_INIT      — cosine schedule start (default 15.0)
+  SHD_SIGMA_FINAL     — cosine schedule end (default 0.23)
+  SHD_OUTPUT_SUBDIR   — output subdirectory name
+
+Tim Masquelier corrections (email [22/22], 2026-04-13):
+  1. Delays are rounded inplace after each epoch (like Alexandre's code)
+  2. Best checkpoint selected by FPGA-relevant val accuracy (sigma=0, rounded delays)
+  3. Pruning uses epsilon threshold instead of fixed percentage
 """
 
 import csv
@@ -83,11 +103,92 @@ def magnitude_prune(model: torch.nn.Module, sparsity_list: list):
         m.weight.register_hook(make_hook(mask))
 
 
+def round_delays_inplace(model: torch.nn.Module) -> None:
+    """Round all DCLS delay parameters to nearest integer, inplace.
+
+    Tim Masquelier email [22/22], 2026-04-13: Alexandre's training code
+    rounds delays inplace after each epoch. This is why the integer-delay
+    regulariser had no effect — delays were already integer after every step.
+    """
+    with torch.no_grad():
+        for m in model.modules():
+            if isinstance(m, dcls_module) and hasattr(m, "P"):
+                m.P.data.round_()
+
+
+def fpga_val_accuracy(
+    model: torch.nn.Module, valid_loader, device, config, epoch: int,
+) -> float:
+    """Evaluate validation accuracy with rounded integer delays.
+
+    Tim Masquelier email [22/22], 2026-04-13: "it makes no sense to select
+    the best checkpoint based on the validation accuracy computed with
+    vgauss or vmax with SIG>0 and non-integer delays. After each epoch,
+    you need to temporarily switch to v1 (or vmax SIG=0) and round the
+    delays just to estimate the validation accuracy."
+
+    This function saves delay state, rounds delays, evaluates, and restores.
+    """
+    # Save original delay values
+    saved_delays = {}
+    for name, m in model.named_modules():
+        if isinstance(m, dcls_module) and hasattr(m, "P"):
+            saved_delays[name] = m.P.data.clone()
+            m.P.data.round_()
+
+    # Save and set sigma to 0 (v1-equivalent evaluation)
+    saved_sigmas = {}
+    for name, m in model.named_modules():
+        if isinstance(m, dcls_module) and hasattr(m, "SIG"):
+            saved_sigmas[name] = m.SIG.data.clone()
+            m.SIG.data.fill_(0.0)
+
+    val_acc, _ = test(valid_loader, model, epoch, device, config)
+
+    # Restore original delays and sigmas
+    for name, m in model.named_modules():
+        if isinstance(m, dcls_module) and hasattr(m, "P"):
+            if name in saved_delays:
+                m.P.data.copy_(saved_delays[name])
+        if isinstance(m, dcls_module) and hasattr(m, "SIG"):
+            if name in saved_sigmas:
+                m.SIG.data.copy_(saved_sigmas[name])
+
+    return val_acc
+
+
+def epsilon_prune(model: torch.nn.Module, epsilon: float = 0.01):
+    """Prune weights with absolute value below epsilon.
+
+    Tim Masquelier email [22/22], 2026-04-13: "instead of discarding a
+    fixed % of the weights, I would discard those that are inferior to
+    some epsilon (in absolute value). And it's a good idea to do so
+    iteratively, until reaching 90% sparsity."
+    """
+    total_params = 0
+    pruned_params = 0
+    for m in model.modules():
+        if isinstance(m, (torch.nn.Linear, dcls_module)) and m.weight.requires_grad:
+            mask = m.weight.data.abs() >= epsilon
+            m.weight.data *= mask.float()
+            total_params += m.weight.numel()
+            pruned_params += (~mask).sum().item()
+
+            def make_hook(mask_t):
+                return lambda grad: grad * mask_t.float()
+            m.weight.register_hook(make_hook(mask))
+
+    sparsity = pruned_params / max(1, total_params)
+    print(f"  epsilon_prune(eps={epsilon}): {pruned_params}/{total_params} "
+          f"pruned ({sparsity:.1%} sparsity)")
+    return sparsity
+
+
 def integer_delay_penalty(model: torch.nn.Module) -> torch.Tensor:
     """Sum quadratic penalty (P - round(P))^2 over all DCLS delay parameters.
 
     Motivated by DelRec (2025) and Khalfaoui-Hassani et al. (ICLR 2024),
-    this pushes learnable delays toward integer values to minimize rounding
+    this pushes learnable delays toward integer values to minimise rounding
     error for FPGA deployment.
     """
     penalty = 0.0
@@ -97,8 +198,8 @@ def integer_delay_penalty(model: torch.nn.Module) -> torch.Tensor:
     return penalty
 
 
-SIG_INIT = 15.0  # initial sigma — matches siginit in original config
-SIG_FINAL = 0.23  # final sigma — narrow enough to behave as integer delay
+SIG_INIT = float(os.environ.get("SHD_SIGMA_INIT", "15.0"))
+SIG_FINAL = float(os.environ.get("SHD_SIGMA_FINAL", "0.0"))  # Tim: sigma must end at 0
 # 0.23 is below 0.5 so rounding has at most 0.5/0.23 ratio of neighbour overlap
 
 
@@ -108,8 +209,25 @@ def get_sigma_schedule(epoch: int, total_epochs: int) -> float:
     return SIG_FINAL + (SIG_INIT - SIG_FINAL) * 0.5 * (1.0 + math.cos(math.pi * progress))
 
 
-def train_with_regulariser(train_loader, model, optimizer, epoch, device, config, lambda_delay=0.0):
-    """Custom training loop that adds the integer delay regulariser."""
+def l1_weight_penalty(model: torch.nn.Module) -> torch.Tensor:
+    """Sum of absolute weight values across all learnable Linear/DCLS layers.
+
+    Encourages weight sparsity during training — the network learns which
+    connections are unimportant and drives them toward zero.
+    Reference: Han et al. (2015) "Learning both Weights and Connections".
+    """
+    penalty = torch.tensor(0.0, device=next(model.parameters()).device)
+    for m in model.modules():
+        if isinstance(m, (torch.nn.Linear, dcls_module)) and m.weight.requires_grad:
+            penalty = penalty + m.weight.abs().sum()
+    return penalty
+
+
+def train_with_regulariser(
+    train_loader, model, optimizer, epoch, device, config,
+    lambda_delay=0.0, l1_weight=0.0,
+):
+    """Custom training loop with integer delay regulariser and L1 weight penalty."""
     from src.SHD.trainer import (
         reset_states,
         calc_loss_SHD,
@@ -134,6 +252,8 @@ def train_with_regulariser(train_loader, model, optimizer, epoch, device, config
             loss += config.spike_penalty * get_spike_cost(model)
         if lambda_delay > 0:
             loss += lambda_delay * integer_delay_penalty(model)
+        if l1_weight > 0:
+            loss += l1_weight * l1_weight_penalty(model)
         train_loss += loss.item()
         accuracy += calc_metric_SHD(outputs, targets)
         for opt in optimizer:
@@ -168,14 +288,23 @@ if __name__ == "__main__":
     #   SHD_OUTPUT_SUBDIR — per-run output subdirectory under
     #                       exp/SHD/SNN_axonal_feedforward_delays/
     config.lambda_delay = float(os.environ.get("SHD_LAMBDA_DELAY", "0.01"))
+    config.l1_weight = float(os.environ.get("SHD_L1_WEIGHT", "0.0"))
+    config.prune_sparsity = float(os.environ.get("SHD_PRUNE_SPARSITY", "0.9"))
+    config.finetune_epochs = int(os.environ.get("SHD_FINETUNE_EPOCHS", "20"))
     if os.environ.get("SHD_EPOCHS"):
         config.epochs = int(os.environ["SHD_EPOCHS"])
     out_subdir = os.environ.get("SHD_OUTPUT_SUBDIR", "dcls_max")
     config.hidden_layers = [128, 128]
 
-    print(f"SHD_LAMBDA_DELAY = {config.lambda_delay}")
-    print(f"SHD_EPOCHS       = {config.epochs}")
-    print(f"SHD_OUTPUT_SUBDIR= {out_subdir}")
+    l1_mode = config.l1_weight > 0
+
+    print(f"SHD_LAMBDA_DELAY   = {config.lambda_delay}")
+    print(f"SHD_L1_WEIGHT      = {config.l1_weight}")
+    print(f"SHD_PRUNE_SPARSITY = {config.prune_sparsity}")
+    print(f"SHD_FINETUNE_EPOCHS= {config.finetune_epochs}")
+    print(f"SHD_EPOCHS         = {config.epochs}")
+    print(f"SHD_OUTPUT_SUBDIR  = {out_subdir}")
+    print(f"L1 sparsity mode   = {l1_mode}")
 
     # === KEY CHANGE: DCLS max (triangular with scheduled SIG) ===
     config.DCLSversion = "max"
@@ -198,9 +327,13 @@ if __name__ == "__main__":
     )
 
     model = SNN_axonal_feedforward_delays(config).to(device)
-    magnitude_prune(model, config.weight_sparsity_mask)
+    if l1_mode:
+        # L1 mode: train DENSE first — no mask at init. Pruning happens after training.
+        print("L1 sparsity mode: skipping initial mask, training dense weights")
+    else:
+        magnitude_prune(model, config.weight_sparsity_mask)
 
-    # Initialize SIG on all DCLS layers (snn.py only does this for 'gauss' version)
+    # Initialise SIG on all DCLS layers (snn.py only does this for 'gauss' version)
     set_sigma(model, SIG_INIT)
     for m in model.modules():
         if isinstance(m, dcls_module) and hasattr(m, "SIG"):
@@ -254,6 +387,7 @@ if __name__ == "__main__":
             device,
             config,
             lambda_delay=getattr(config, "lambda_delay", 0.01),
+            l1_weight=getattr(config, "l1_weight", 0.0),
         )
         val_acc, val_loss = test(valid_loader, model, epoch, device, config)
 
@@ -291,12 +425,115 @@ if __name__ == "__main__":
                 ]
             )
 
-        state = {"net": model.state_dict(), "acc": val_acc, "epoch": epoch, "sigma": sigma}
+        # Tim [22/22]: round delays inplace after each epoch (like Alexandre's code)
+        round_delays_inplace(model)
+
+        # Tim [22/22]: evaluate with rounded delays at sigma=0 for FPGA-relevant accuracy
+        fpga_val = fpga_val_accuracy(model, valid_loader, device, config, epoch)
+
+        state = {
+            "net": model.state_dict(), "acc": val_acc, "fpga_val_acc": fpga_val,
+            "epoch": epoch, "sigma": sigma,
+        }
         torch.save(state, os.path.join(out_dir, "last.pth"))
 
-        if val_acc >= best_val_acc:
-            best_val_acc = val_acc
+        if fpga_val >= best_val_acc:
+            best_val_acc = fpga_val
             torch.save(state, os.path.join(out_dir, "best.pth"))
+
+    # === L1 POST-TRAINING: magnitude prune + fine-tune ===
+    # Tim Masquelier suggestion #3 (2026-04-09): instead of random mask at init,
+    # train dense with L1 → prune by magnitude → fine-tune surviving weights.
+    # Reference: Han et al. (2015) "Learning both Weights and Connections".
+    if l1_mode:
+        print(f"\n=== L1 Post-Training: Pruning at {config.prune_sparsity:.0%} sparsity ===")
+
+        # Report weight distribution before pruning
+        for name, m in model.named_modules():
+            if isinstance(m, (torch.nn.Linear, dcls_module)) and m.weight.requires_grad:
+                w = m.weight.data
+                nz = (w != 0).sum().item()
+                total = w.numel()
+                near_zero = (w.abs() < 0.01).sum().item()
+                print(f"  {name}: {nz}/{total} non-zero, {near_zero} near-zero (<0.01)")
+
+        # Magnitude prune: keep top (1-sparsity) fraction per layer
+        sparsity_list = [0.0]  # first layer (input→hidden1): no pruning
+        for _ in range(len(config.weight_sparsity_mask) - 1):
+            sparsity_list.append(config.prune_sparsity)
+        magnitude_prune(model, sparsity_list)
+
+        # Report after pruning
+        total_params = sum(
+            m.weight.numel()
+            for m in model.modules()
+            if isinstance(m, (torch.nn.Linear, dcls_module)) and m.weight.requires_grad
+        )
+        nonzero_params = sum(
+            (m.weight.data != 0).sum().item()
+            for m in model.modules()
+            if isinstance(m, (torch.nn.Linear, dcls_module)) and m.weight.requires_grad
+        )
+        print(f"After pruning: {nonzero_params}/{total_params} non-zero ({100*nonzero_params/total_params:.1f}%)")
+
+        # Evaluate immediately after pruning (before fine-tune)
+        prune_test, _ = test(test_loader, model, 0, device, config)
+        print(f"Test accuracy after pruning (before fine-tune): {prune_test:.2f}%")
+
+        # Fine-tune: train with L1 disabled, pruned weights stay zero via hooks
+        print(f"\n=== L1 Fine-Tune Phase: {config.finetune_epochs} epochs ===")
+        # Reset optimiser for fine-tune (fresh momentum)
+        ft_optimizer, ft_scheduler = init_optim_sche(model, config)
+
+        for ft_epoch in range(config.finetune_epochs):
+            # Sigma stays at SIG_FINAL during fine-tune
+            set_sigma(model, SIG_FINAL)
+            t0 = time.perf_counter()
+
+            ft_train_acc, ft_train_loss = train_with_regulariser(
+                train_loader, model, ft_optimizer, ft_epoch, device, config,
+                lambda_delay=getattr(config, "lambda_delay", 0.01),
+                l1_weight=0.0,  # L1 off during fine-tune
+            )
+            ft_val_acc, ft_val_loss = test(valid_loader, model, ft_epoch, device, config)
+
+            for sc in ft_scheduler:
+                sc.step()
+
+            elapsed = time.perf_counter() - t0
+
+            if ft_epoch % 5 == 0 or ft_epoch == config.finetune_epochs - 1:
+                ft_test_acc, _ = test(test_loader, model, ft_epoch, device, config)
+            else:
+                ft_test_acc = -1.0
+
+            print(
+                f"  FT {ft_epoch:>3} {ft_train_acc:>7.1f}% {ft_val_acc:>7.1f}% "
+                f"{ft_test_acc:>7.1f}% {elapsed:>5.0f}s"
+            )
+
+            with open(log_path, "a", newline="") as f:
+                csv.writer(f).writerow([
+                    f"ft_{ft_epoch}", f"{SIG_FINAL:.4f}",
+                    f"{ft_train_acc:.2f}", f"{ft_train_loss:.4f}",
+                    f"{ft_val_acc:.2f}", f"{ft_val_loss:.4f}",
+                    f"{ft_test_acc:.2f}", "0.0",
+                    f"{ft_optimizer[0].param_groups[0]['lr']:.2e}",
+                    f"{ft_optimizer[1].param_groups[0]['lr']:.2e}",
+                    f"{elapsed:.1f}",
+                ])
+
+            state = {
+                "net": model.state_dict(), "acc": ft_val_acc,
+                "epoch": config.epochs + ft_epoch, "sigma": SIG_FINAL,
+                "l1_mode": True, "prune_sparsity": config.prune_sparsity,
+                "finetune_epoch": ft_epoch,
+            }
+            torch.save(state, os.path.join(out_dir, "last.pth"))
+
+            if ft_val_acc >= best_val_acc:
+                best_val_acc = ft_val_acc
+                torch.save(state, os.path.join(out_dir, "best.pth"))
 
     # === Final evaluation ===
     # We evaluate TWO checkpoints:
@@ -370,31 +607,41 @@ if __name__ == "__main__":
     test_after = last_after
     drop = test_before - test_after
 
+    config_data = {
+        "dcls_version": "max",
+        "reference": "Hammouamri 2024 arxiv 2306.00817",
+        "sigma_schedule": "cosine",
+        "sigma_init": SIG_INIT,
+        "sigma_final": SIG_FINAL,
+        "lambda_delay": getattr(config, "lambda_delay", 0.01),
+        "best_val_acc": best_val_acc,
+        "best_native_sigma": best_native_sigma,
+        "best_test_at_native_sigma": best_before,
+        "last_epoch": last_epoch,
+        "last_test_at_sig_final_before_round": test_before,
+        "last_test_at_sig_final_after_round": test_after,
+        "rounding_drop": drop,
+        "fpga_deployable_test_acc": test_after,
+        "comparison": {
+            "vgauss_original": 80.4,
+            "vgauss_rounded": 58.6,
+            "v1_test": 72.5,
+            "max_best_at_native_sigma": best_before,
+            "max_last_before_rounding": test_before,
+            "max_last_after_rounding": test_after,
+        },
+    }
+    if l1_mode:
+        config_data["l1_sparsity"] = {
+            "l1_weight": config.l1_weight,
+            "prune_sparsity": config.prune_sparsity,
+            "finetune_epochs": config.finetune_epochs,
+            "method": "Han et al. 2015 — L1 + magnitude prune + fine-tune",
+        }
+
     with open(os.path.join(out_dir, "config.json"), "w") as f:
         json.dump(
-            {
-                "dcls_version": "max",
-                "reference": "Hammouamri 2024 arxiv 2306.00817",
-                "sigma_schedule": "cosine",
-                "sigma_init": SIG_INIT,
-                "sigma_final": SIG_FINAL,
-                "best_val_acc": best_val_acc,
-                "best_native_sigma": best_native_sigma,
-                "best_test_at_native_sigma": best_before,
-                "last_epoch": last_epoch,
-                "last_test_at_sig_final_before_round": test_before,
-                "last_test_at_sig_final_after_round": test_after,
-                "rounding_drop": drop,
-                "fpga_deployable_test_acc": test_after,
-                "comparison": {
-                    "vgauss_original": 80.4,
-                    "vgauss_rounded": 58.6,
-                    "v1_test": 72.5,
-                    "max_best_at_native_sigma": best_before,
-                    "max_last_before_rounding": test_before,
-                    "max_last_after_rounding": test_after,
-                },
-            },
+            config_data,
             f,
             indent=2,
         )

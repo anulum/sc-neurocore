@@ -107,3 +107,11 @@ ARCHIVE/
 
 # AutoResearch sandbox — Gemini working copies, never committed
 .autoresearch-gemini/
+
+# Vivado
+vivado.jou
+vivado.log
+vivado*.backup.*
+
+# Internal coordination (incidents, sessions)
+.coordination/
