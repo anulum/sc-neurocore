@@ -1,6 +1,25 @@
 [files]
-extend-exclude = ["Cargo.lock"]
+extend-exclude = [
+    "Cargo.lock",
+    "*.rpt",
+    "vivado_project/",
+    "sc_shd_pynq/",
+    "sc-neurocore/",
+    "site/",
+    "*.xpr",
+    "*.xdc",
+    "docs/api/models/",
+    "docs/internal/",
+    "docs/tutorials/",
+    "docs/guides/",
+    "docs/research/",
+    "docs/reports/",
+    "docs/benchmarks/",
+    "notebooks/",
+    "studio/",
+]
 
 [default.extend-words]
 # Author names in references that typos flags incorrectly
 Yau = "Yau"       # King-Wai Yau (retinal physiologist)
+anf = "anf"       # Auditory Nerve Fibre (variable name in IHC model)
