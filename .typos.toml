@@ -1,3 +1,6 @@
+[files]
+extend-exclude = ["Cargo.lock"]
+
 [default.extend-words]
 # Author names in references that typos flags incorrectly
 Yau = "Yau"       # King-Wai Yau (retinal physiologist)
