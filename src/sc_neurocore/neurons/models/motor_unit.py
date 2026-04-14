@@ -48,16 +48,19 @@ class MotorUnit:
     def fast(cls) -> MotorUnit:
         """Fast motor unit (type FF): large, fatigable, high force."""
         return cls(
-            tau_m=6.0, tau_adapt=50.0, a_adapt=0.1,
-            twitch_amp=0.3, tau_twitch=30.0,
+            tau_m=6.0,
+            tau_adapt=50.0,
+            a_adapt=0.1,
+            twitch_amp=0.3,
+            tau_twitch=30.0,
         )
 
     def step(self, drive: float = 0.0) -> int:
         inp = self.gain * max(0.0, drive) - self.adapt
         self.v += (-(self.v - self.v_rest) + inp) / self.tau_m * self.dt
         self.adapt += (
-            self.a_adapt * (self.v - self.v_rest) - self.adapt
-        ) / self.tau_adapt * self.dt
+            (self.a_adapt * (self.v - self.v_rest) - self.adapt) / self.tau_adapt * self.dt
+        )
 
         self.force *= math.exp(-self.dt / self.tau_twitch)
 

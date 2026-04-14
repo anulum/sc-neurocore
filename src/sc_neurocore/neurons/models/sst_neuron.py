@@ -58,7 +58,9 @@ class SSTNeuron:
             beta_h = 4.0 / (1.0 + math.exp(-(dv - 40.0) / 5.0))
             # K+ gating
             x_n = dv - 15.0
-            alpha_n = 0.032 * 5.0 if abs(x_n) < 1e-6 else -0.032 * x_n / (math.exp(-x_n / 5.0) - 1.0)
+            alpha_n = (
+                0.032 * 5.0 if abs(x_n) < 1e-6 else -0.032 * x_n / (math.exp(-x_n / 5.0) - 1.0)
+            )
             beta_n = 0.5 * math.exp(-(dv - 10.0) / 40.0)
 
             self.m += (alpha_m * (1.0 - self.m) - beta_m * self.m) * self.dt
@@ -67,7 +69,9 @@ class SSTNeuron:
 
             # M-current
             p_inf = 1.0 / (1.0 + math.exp(-(self.v + 35.0) / 10.0))
-            tau_p = 400.0 / (3.3 * math.exp((self.v + 35.0) / 20.0) + math.exp(-(self.v + 35.0) / 20.0))
+            tau_p = 400.0 / (
+                3.3 * math.exp((self.v + 35.0) / 20.0) + math.exp(-(self.v + 35.0) / 20.0)
+            )
             self.p += (p_inf - self.p) / tau_p * self.dt
 
             # T-type Ca²⁺
@@ -78,7 +82,9 @@ class SSTNeuron:
 
             # Ih
             r_inf = 1.0 / (1.0 + math.exp((self.v + 80.0) / 10.0))
-            tau_r = 100.0 + 500.0 / (math.exp(-(self.v + 70.0) / 20.0) + math.exp((self.v + 70.0) / 20.0))
+            tau_r = 100.0 + 500.0 / (
+                math.exp(-(self.v + 70.0) / 20.0) + math.exp((self.v + 70.0) / 20.0)
+            )
             self.r += (r_inf - self.r) / tau_r * self.dt
 
             i_na = self.g_na * self.m**3 * self.h * (self.v - self.e_na)

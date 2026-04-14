@@ -54,7 +54,9 @@ class UpperMotorNeuron:
             alpha_h = 0.128 * math.exp(-(dv - 17.0) / 18.0)
             beta_h = 4.0 / (1.0 + math.exp(-(dv - 40.0) / 5.0))
             x_n = dv - 15.0
-            alpha_n = 0.032 * 5.0 if abs(x_n) < 1e-6 else -0.032 * x_n / (math.exp(-x_n / 5.0) - 1.0)
+            alpha_n = (
+                0.032 * 5.0 if abs(x_n) < 1e-6 else -0.032 * x_n / (math.exp(-x_n / 5.0) - 1.0)
+            )
             beta_n = 0.5 * math.exp(-(dv - 10.0) / 40.0)
 
             self.m += (alpha_m * (1.0 - self.m) - beta_m * self.m) * self.dt
@@ -62,7 +64,9 @@ class UpperMotorNeuron:
             self.n += (alpha_n * (1.0 - self.n) - beta_n * self.n) * self.dt
 
             p_inf = 1.0 / (1.0 + math.exp(-(self.v + 35.0) / 10.0))
-            tau_p = 400.0 / (3.3 * math.exp((self.v + 35.0) / 20.0) + math.exp(-(self.v + 35.0) / 20.0))
+            tau_p = 400.0 / (
+                3.3 * math.exp((self.v + 35.0) / 20.0) + math.exp(-(self.v + 35.0) / 20.0)
+            )
             self.p += (p_inf - self.p) / tau_p * self.dt
 
             s_inf = 1.0 / (1.0 + math.exp(-(self.v + 20.0) / 5.0))

@@ -36,12 +36,7 @@ class ErmentroutKopellMapNeuron:
         d_theta = (1.0 - math.cos(self.theta)) + (1.0 + math.cos(self.theta)) * inp
         self.theta += self.dt * d_theta
 
-        fired = (
-            1
-            if self.theta >= self.theta_threshold
-            and theta_prev < self.theta_threshold
-            else 0
-        )
+        fired = 1 if self.theta >= self.theta_threshold and theta_prev < self.theta_threshold else 0
 
         two_pi = 2.0 * math.pi
         if self.theta >= two_pi:

@@ -77,12 +77,8 @@ class SKNeuron:
 
             self.ca += sub_dt * (-self.ca / self.tau_ca)
 
-            self.h += sub_dt * self.phi * (
-                alpha_h * (1.0 - self.h) - beta_h * self.h
-            )
-            self.n += sub_dt * self.phi * (
-                alpha_n * (1.0 - self.n) - beta_n * self.n
-            )
+            self.h += sub_dt * self.phi * (alpha_h * (1.0 - self.h) - beta_h * self.h)
+            self.n += sub_dt * self.phi * (alpha_n * (1.0 - self.n) - beta_n * self.n)
 
             i_na = self.g_na * m_inf**3 * self.h * (v - self.e_na)
             i_k = self.g_k * self.n**4 * (v - self.e_k)
