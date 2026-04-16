@@ -41,6 +41,7 @@ _sdc_rust = None
 if not _os.environ.get("SC_NEUROCORE_NO_RUST"):
     try:
         from sc_neurocore.stochastic_doctor import stochastic_doctor_core as _sdc_rust
+
         _HAS_PYO3 = True
     except ImportError:
         pass
@@ -54,8 +55,10 @@ _libdoctor = None
 # Data types
 # ---------------------------------------------------------------------------
 
+
 class AuditSeverity(Enum):
     """Audit finding severity levels."""
+
     OK = "OK"
     WARNING = "WARNING"
     CRITICAL = "CRITICAL"
@@ -64,6 +67,7 @@ class AuditSeverity(Enum):
 @dataclass
 class BitstreamAuditFinding:
     """Single finding from a bitstream audit."""
+
     category: str
     severity: AuditSeverity
     message: str
@@ -77,6 +81,7 @@ class BitstreamAuditReport:
 
     JSON-serializable via ``to_json()`` for pipeline integration.
     """
+
     layer: str
     stream_length: int
     num_neurons: int
@@ -91,9 +96,7 @@ class BitstreamAuditReport:
         """Serialize to a plain dict (JSON-compatible)."""
         d = asdict(self)
         d["status"] = self.status.value
-        d["findings"] = [
-            {**asdict(f), "severity": f.severity.value} for f in self.findings
-        ]
+        d["findings"] = [{**asdict(f), "severity": f.severity.value} for f in self.findings]
         return d
 
     def to_json(self, indent: int = 2) -> str:
@@ -104,6 +107,7 @@ class BitstreamAuditReport:
 # ---------------------------------------------------------------------------
 # SCC computation
 # ---------------------------------------------------------------------------
+
 
 def _scc_python(a: np.ndarray, b: np.ndarray) -> float:
     """Pure Python SCC (fallback when Rust core unavailable)."""
@@ -138,6 +142,7 @@ def compute_scc(a: np.ndarray, b: np.ndarray) -> float:
 # ---------------------------------------------------------------------------
 # Drift detector
 # ---------------------------------------------------------------------------
+
 
 class DriftDetector:
     """Exponential moving average drift detector for SCC monitoring.
@@ -182,6 +187,7 @@ class DriftDetector:
 # ---------------------------------------------------------------------------
 # Main Doctor class
 # ---------------------------------------------------------------------------
+
 
 class StochasticDoctor:
     """Bitstream-level stochastic diagnostics engine.
@@ -245,14 +251,12 @@ class StochasticDoctor:
         n = len(bs)
         hist = np.zeros(word_size + 1, dtype=np.int64)
         for start in range(0, n, word_size):
-            chunk = bs[start:start + word_size]
+            chunk = bs[start : start + word_size]
             pc = int(np.sum(chunk))
             hist[pc] += 1
         return hist
 
-    def audit_layer(
-        self, layer_id: str, bitstreams: np.ndarray
-    ) -> BitstreamAuditReport:
+    def audit_layer(self, layer_id: str, bitstreams: np.ndarray) -> BitstreamAuditReport:
         """Audit a full layer of bitstreams.
 
         Parameters
@@ -296,22 +300,26 @@ class StochasticDoctor:
 
                 if abs_scc > self.critical_threshold:
                     hot_pairs.append((i, j, scc_val))
-                    report.findings.append(BitstreamAuditFinding(
-                        category="critical_correlation",
-                        severity=AuditSeverity.CRITICAL,
-                        message=f"Neurons ({i},{j}): SCC={scc_val:.4f} exceeds critical threshold",
-                        metric=scc_val,
-                        neuron_pair=(i, j),
-                    ))
+                    report.findings.append(
+                        BitstreamAuditFinding(
+                            category="critical_correlation",
+                            severity=AuditSeverity.CRITICAL,
+                            message=f"Neurons ({i},{j}): SCC={scc_val:.4f} exceeds critical threshold",
+                            metric=scc_val,
+                            neuron_pair=(i, j),
+                        )
+                    )
                 elif abs_scc > self.correlation_threshold:
                     hot_pairs.append((i, j, scc_val))
-                    report.findings.append(BitstreamAuditFinding(
-                        category="high_correlation",
-                        severity=AuditSeverity.WARNING,
-                        message=f"Neurons ({i},{j}): SCC={scc_val:.4f} exceeds warning threshold",
-                        metric=scc_val,
-                        neuron_pair=(i, j),
-                    ))
+                    report.findings.append(
+                        BitstreamAuditFinding(
+                            category="high_correlation",
+                            severity=AuditSeverity.WARNING,
+                            message=f"Neurons ({i},{j}): SCC={scc_val:.4f} exceeds warning threshold",
+                            metric=scc_val,
+                            neuron_pair=(i, j),
+                        )
+                    )
 
         report.max_correlation = max_corr
         report.hot_neurons = hot_pairs
