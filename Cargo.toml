@@ -5,8 +5,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 
 [workspace]
-members = [
-    "engine",
+members = ["engine"]
+exclude = [
     "crates/tinysc_riscv",
     "crates/core_engine",
     "crates/autonomous_learning",
