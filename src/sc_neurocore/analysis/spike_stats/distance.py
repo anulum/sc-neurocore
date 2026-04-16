@@ -27,9 +27,11 @@ _ssc = None
 if not _os.environ.get("SC_NEUROCORE_NO_RUST"):
     try:
         from sc_neurocore.analysis.spike_stats import spike_stats_core as _ssc
+
         _HAS_RUST = True
     except ImportError:
         pass
+
 
 def van_rossum_distance(
     train_a: np.ndarray[Any, Any],
@@ -104,8 +106,12 @@ def spike_distance(
     t_end: float = 1.0,
 ) -> float:
     """SPIKE-distance. Kreuz et al. 2013."""
-    a = np.ascontiguousarray(np.sort(times_a[(times_a >= t_start) & (times_a <= t_end)]), dtype=np.float64)
-    b = np.ascontiguousarray(np.sort(times_b[(times_b >= t_start) & (times_b <= t_end)]), dtype=np.float64)
+    a = np.ascontiguousarray(
+        np.sort(times_a[(times_a >= t_start) & (times_a <= t_end)]), dtype=np.float64
+    )
+    b = np.ascontiguousarray(
+        np.sort(times_b[(times_b >= t_start) & (times_b <= t_end)]), dtype=np.float64
+    )
     if _HAS_RUST and _ssc is not None:
         return float(_ssc.py_spike_distance(a, b, t_start, t_end))
     if a.size == 0 and b.size == 0:
@@ -148,8 +154,12 @@ def spike_sync(
     t_end: float = 1.0,
 ) -> float:
     """SPIKE-synchronization. Kreuz et al. 2015."""
-    a = np.ascontiguousarray(np.sort(times_a[(times_a >= t_start) & (times_a <= t_end)]), dtype=np.float64)
-    b = np.ascontiguousarray(np.sort(times_b[(times_b >= t_start) & (times_b <= t_end)]), dtype=np.float64)
+    a = np.ascontiguousarray(
+        np.sort(times_a[(times_a >= t_start) & (times_a <= t_end)]), dtype=np.float64
+    )
+    b = np.ascontiguousarray(
+        np.sort(times_b[(times_b >= t_start) & (times_b <= t_end)]), dtype=np.float64
+    )
     if _HAS_RUST and _ssc is not None:
         return float(_ssc.py_spike_sync(a, b, t_start, t_end))
     if a.size == 0 or b.size == 0:

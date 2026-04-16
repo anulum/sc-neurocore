@@ -26,6 +26,7 @@ _ssc = None
 if not _os.environ.get("SC_NEUROCORE_NO_RUST"):
     try:
         from sc_neurocore.analysis.spike_stats import spike_stats_core as _ssc
+
         _HAS_RUST = True
     except ImportError:
         pass

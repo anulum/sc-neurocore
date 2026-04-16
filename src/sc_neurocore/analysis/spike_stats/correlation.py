@@ -26,6 +26,7 @@ _ssc = None
 if not _os.environ.get("SC_NEUROCORE_NO_RUST"):
     try:
         from sc_neurocore.analysis.spike_stats import spike_stats_core as _ssc
+
         _HAS_RUST = True
     except ImportError:
         pass
@@ -85,11 +86,13 @@ def event_synchronization(
         return 0.0
     tau = tau_ms / 1000.0
     if _HAS_RUST and _ssc is not None:
-        return float(_ssc.py_event_synchronization(
-            np.ascontiguousarray(ta, dtype=np.float64),
-            np.ascontiguousarray(tb, dtype=np.float64),
-            tau,
-        ))
+        return float(
+            _ssc.py_event_synchronization(
+                np.ascontiguousarray(ta, dtype=np.float64),
+                np.ascontiguousarray(tb, dtype=np.float64),
+                tau,
+            )
+        )
     count = 0
     for i in range(na):
         for j in range(nb):

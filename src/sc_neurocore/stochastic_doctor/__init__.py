@@ -11,5 +11,3 @@ Tier: research.
 """
 
 __tier__ = "research"
-
-
