@@ -9,6 +9,7 @@
 
 from __future__ import annotations
 
+import os as _os
 from typing import Any, Callable
 
 import numpy as np
@@ -16,6 +17,19 @@ import numpy as np
 from .basic import isi
 from .rate import instantaneous_rate
 
+# ---------------------------------------------------------------------------
+# Rust Acceleration
+# ---------------------------------------------------------------------------
+
+_HAS_RUST = False
+_ssc = None
+
+if not _os.environ.get("SC_NEUROCORE_NO_RUST"):
+    try:
+        from sc_neurocore.analysis.spike_stats import spike_stats_core as _ssc
+        _HAS_RUST = True
+    except ImportError:
+        pass
 
 def van_rossum_distance(
     train_a: np.ndarray[Any, Any],
@@ -24,23 +38,28 @@ def van_rossum_distance(
     tau_ms: float = 10.0,
 ) -> float:
     """Van Rossum 2001 -- exponential-kernel spike train distance."""
+    a = np.ascontiguousarray(train_a, dtype=np.float64)
+    b = np.ascontiguousarray(train_b, dtype=np.float64)
+    if _HAS_RUST and _ssc is not None:
+        return float(_ssc.py_van_rossum_distance(a, b, dt, tau_ms))
     tau = tau_ms / 1000.0
-    n = min(train_a.size, train_b.size)
+    n = min(a.size, b.size)
     t = np.arange(n) * dt
     decay = np.exp(-t / tau) if tau > 0 else np.zeros(n)
-    fa = np.convolve(train_a[:n].astype(np.float64), decay[:n], mode="full")[:n]
-    fb = np.convolve(train_b[:n].astype(np.float64), decay[:n], mode="full")[:n]
+    fa = np.convolve(a[:n], decay[:n], mode="full")[:n]
+    fb = np.convolve(b[:n], decay[:n], mode="full")[:n]
     return float(np.sqrt(np.sum((fa - fb) ** 2) * dt / tau))
 
 
 def victor_purpura_distance(
     times_a: np.ndarray[Any, Any], times_b: np.ndarray[Any, Any], cost_per_s: float = 1000.0
 ) -> float:
-    """Victor-Purpura 1996 -- edit distance between spike time arrays.
-
-    cost_per_s: cost of shifting a spike by 1 second (q parameter).
-    """
-    na, nb = len(times_a), len(times_b)
+    """Victor-Purpura 1996 -- edit distance between spike time arrays."""
+    a = np.ascontiguousarray(times_a, dtype=np.float64)
+    b = np.ascontiguousarray(times_b, dtype=np.float64)
+    if _HAS_RUST and _ssc is not None:
+        return float(_ssc.py_victor_purpura_distance(a, b, cost_per_s))
+    na, nb = len(a), len(b)
     if na == 0:
         return float(nb)
     if nb == 0:
@@ -52,7 +71,7 @@ def victor_purpura_distance(
         d[0, j] = float(j)
     for i in range(1, na + 1):
         for j in range(1, nb + 1):
-            shift_cost = cost_per_s * abs(times_a[i - 1] - times_b[j - 1])
+            shift_cost = cost_per_s * abs(a[i - 1] - b[j - 1])
             d[i, j] = min(d[i - 1, j] + 1, d[i, j - 1] + 1, d[i - 1, j - 1] + shift_cost)
     return float(d[na, nb])
 
@@ -84,27 +103,25 @@ def spike_distance(
     t_start: float = 0.0,
     t_end: float = 1.0,
 ) -> float:
-    """SPIKE-distance. Kreuz et al. 2013.
-
-    Time-resolved distance based on nearest-neighbour spike differences.
-    Returns mean SPIKE-distance over [t_start, t_end].
-    """
-    ta = np.sort(times_a[(times_a >= t_start) & (times_a <= t_end)])
-    tb = np.sort(times_b[(times_b >= t_start) & (times_b <= t_end)])
-    if ta.size == 0 and tb.size == 0:
+    """SPIKE-distance. Kreuz et al. 2013."""
+    a = np.ascontiguousarray(np.sort(times_a[(times_a >= t_start) & (times_a <= t_end)]), dtype=np.float64)
+    b = np.ascontiguousarray(np.sort(times_b[(times_b >= t_start) & (times_b <= t_end)]), dtype=np.float64)
+    if _HAS_RUST and _ssc is not None:
+        return float(_ssc.py_spike_distance(a, b, t_start, t_end))
+    if a.size == 0 and b.size == 0:
         return 0.0
-    if ta.size == 0 or tb.size == 0:
+    if a.size == 0 or b.size == 0:
         return 1.0
     n_eval = 100
     eval_times = np.linspace(t_start, t_end, n_eval)
     s_vals = np.zeros(n_eval)
     for k, t in enumerate(eval_times):
-        idx_a = np.searchsorted(ta, t, side="right")
-        idx_b = np.searchsorted(tb, t, side="right")
-        prev_a = ta[max(0, idx_a - 1)] if ta.size > 0 else t_start
-        next_a = ta[min(idx_a, ta.size - 1)] if ta.size > 0 else t_end
-        prev_b = tb[max(0, idx_b - 1)] if tb.size > 0 else t_start
-        next_b = tb[min(idx_b, tb.size - 1)] if tb.size > 0 else t_end
+        idx_a = np.searchsorted(a, t, side="right")
+        idx_b = np.searchsorted(b, t, side="right")
+        prev_a = a[max(0, idx_a - 1)] if a.size > 0 else t_start
+        next_a = a[min(idx_a, a.size - 1)] if a.size > 0 else t_end
+        prev_b = b[max(0, idx_b - 1)] if b.size > 0 else t_start
+        next_b = b[min(idx_b, b.size - 1)] if b.size > 0 else t_end
         isi_a = max(next_a - prev_a, 1e-30)
         isi_b = max(next_b - prev_b, 1e-30)
         da = min(abs(t - prev_a), abs(t - next_a))
@@ -130,29 +147,28 @@ def spike_sync(
     t_start: float = 0.0,
     t_end: float = 1.0,
 ) -> float:
-    """SPIKE-synchronization. Kreuz et al. 2015.
-
-    Coincidence-based measure, normalized to [0, 1].
-    """
-    ta = np.sort(times_a[(times_a >= t_start) & (times_a <= t_end)])
-    tb = np.sort(times_b[(times_b >= t_start) & (times_b <= t_end)])
-    if ta.size == 0 or tb.size == 0:
+    """SPIKE-synchronization. Kreuz et al. 2015."""
+    a = np.ascontiguousarray(np.sort(times_a[(times_a >= t_start) & (times_a <= t_end)]), dtype=np.float64)
+    b = np.ascontiguousarray(np.sort(times_b[(times_b >= t_start) & (times_b <= t_end)]), dtype=np.float64)
+    if _HAS_RUST and _ssc is not None:
+        return float(_ssc.py_spike_sync(a, b, t_start, t_end))
+    if a.size == 0 or b.size == 0:
         return 0.0
     total_coincidences = 0
-    total_possible = ta.size + tb.size
-    for i in range(ta.size):
-        diffs = np.abs(tb - ta[i])
+    total_possible = a.size + b.size
+    for i in range(a.size):
+        diffs = np.abs(b - a[i])
         j = int(np.argmin(diffs))
-        isi_a = _local_isi(ta, i)
-        isi_b = _local_isi(tb, j)
+        isi_a = _local_isi(a, i)
+        isi_b = _local_isi(b, j)
         tau = min(isi_a, isi_b) / 2.0
         if tau > 0 and diffs[j] < tau:
             total_coincidences += 1
-    for j in range(tb.size):
-        diffs = np.abs(ta - tb[j])
+    for j in range(b.size):
+        diffs = np.abs(a - b[j])
         i = int(np.argmin(diffs))
-        isi_a = _local_isi(ta, i)
-        isi_b = _local_isi(tb, j)
+        isi_a = _local_isi(a, i)
+        isi_b = _local_isi(b, j)
         tau = min(isi_a, isi_b) / 2.0
         if tau > 0 and diffs[i] < tau:
             total_coincidences += 1
@@ -266,16 +282,20 @@ def schreiber_similarity(
 def hunter_milton_similarity(
     times_a: np.ndarray[Any, Any], times_b: np.ndarray[Any, Any], dt_max: float = 0.01
 ) -> float:
-    """Hunter-Milton 2003 similarity. Fraction of spikes with nearest-neighbour < dt_max."""
-    if times_a.size == 0 or times_b.size == 0:
+    """Hunter-Milton 2003 similarity."""
+    a = np.ascontiguousarray(times_a, dtype=np.float64)
+    b = np.ascontiguousarray(times_b, dtype=np.float64)
+    if _HAS_RUST and _ssc is not None:
+        return float(_ssc.py_hunter_milton(a, b, dt_max))
+    if a.size == 0 or b.size == 0:
         return 0.0
     count = 0
-    total = times_a.size + times_b.size
-    for t in times_a:
-        if np.min(np.abs(times_b - t)) < dt_max:
+    total = a.size + b.size
+    for t in a:
+        if np.min(np.abs(b - t)) < dt_max:
             count += 1
-    for t in times_b:
-        if np.min(np.abs(times_a - t)) < dt_max:
+    for t in b:
+        if np.min(np.abs(a - t)) < dt_max:
             count += 1
     return float(count / total)
 
@@ -303,7 +323,12 @@ def earth_movers_distance(
 def multi_neuron_victor_purpura(
     spike_times_list: list[np.ndarray[Any, Any]], cost_per_s: float = 1000.0
 ) -> np.ndarray[Any, Any]:
-    """All-pairs Victor-Purpura distance matrix for multiple neurons."""
+    """All-pairs Victor-Purpura distance matrix."""
+    if _HAS_RUST and _ssc is not None:
+        arrs = [np.ascontiguousarray(s, dtype=np.float64) for s in spike_times_list]
+        flat = _ssc.py_multi_neuron_vp(arrs, cost_per_s)
+        n = len(spike_times_list)
+        return np.asarray(flat).reshape(n, n)
     n = len(spike_times_list)
     mat = np.zeros((n, n))
     for i in range(n):

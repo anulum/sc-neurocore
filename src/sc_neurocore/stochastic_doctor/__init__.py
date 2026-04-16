@@ -3,15 +3,13 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — sc_neurocore.stochastic_doctor -- Bitstream health diagnostics and correlation analysis
 
-[workspace]
-members = [
-    "engine",
-    "crates/tinysc_riscv",
-    "crates/core_engine",
-    "crates/autonomous_learning",
-    "crates/neuro_symbolic",
-    "crates/stochastic_doctor_core",
-    "crates/spike_stats_core",
-]
-resolver = "2"
+"""sc_neurocore.stochastic_doctor -- Bitstream health diagnostics and correlation analysis.
+
+Tier: research.
+"""
+
+__tier__ = "research"
+
+

@@ -9,11 +9,26 @@
 
 from __future__ import annotations
 
+import os as _os
 from typing import Any
 
 import numpy as np
 
 from .basic import spike_times, bin_spike_train
+
+# ---------------------------------------------------------------------------
+# Rust Acceleration
+# ---------------------------------------------------------------------------
+
+_HAS_RUST = False
+_ssc = None
+
+if not _os.environ.get("SC_NEUROCORE_NO_RUST"):
+    try:
+        from sc_neurocore.analysis.spike_stats import spike_stats_core as _ssc
+        _HAS_RUST = True
+    except ImportError:
+        pass
 
 
 def cross_correlation(
@@ -62,17 +77,19 @@ def event_synchronization(
     dt: float = 0.001,
     tau_ms: float = 5.0,
 ) -> float:
-    """Quian Quiroga et al. 2002 -- event synchronization.
-
-    Returns synchrony score in [0, 1]. Based on coincidence counting
-    within adaptive windows.
-    """
+    """Quian Quiroga et al. 2002 -- event synchronization."""
     ta = spike_times(train_a, dt)
     tb = spike_times(train_b, dt)
     na, nb = ta.size, tb.size
     if na == 0 or nb == 0:
         return 0.0
     tau = tau_ms / 1000.0
+    if _HAS_RUST and _ssc is not None:
+        return float(_ssc.py_event_synchronization(
+            np.ascontiguousarray(ta, dtype=np.float64),
+            np.ascontiguousarray(tb, dtype=np.float64),
+            tau,
+        ))
     count = 0
     for i in range(na):
         for j in range(nb):

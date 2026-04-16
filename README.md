@@ -27,10 +27,10 @@ Commercial Licensing: Available
 [![REUSE](https://img.shields.io/badge/REUSE-compliant-green)](https://reuse.software/)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)
 
-> **Active Development** — SC-NeuroCore is under intensive development. The core engine, all 173 neuron models, and the full simulation pipeline (Population → Projection → Network → SpikeMonitor → Analysis) are fully functional, tested (8 974 passing tests — 7 425 Python + 1 549 Rust), and production-deployable. We are currently completing comprehensive per-model documentation and end-to-end pipeline benchmarking across the entire model library. APIs may evolve as this work progresses.
+> **Active Development** — SC-NeuroCore is under intensive development. The core engine, all 173 neuron models, the full simulation pipeline (Population → Projection → Network → SpikeMonitor → Analysis), and 19 industrialized modules (safety certification, ASIC flow, evolutionary substrate, hypervisor, chiplet generator, and more) are fully functional, tested (10 315 passing tests — 8 598 Python + 1 717 Rust), and production-deployable. We are currently completing comprehensive per-model documentation and end-to-end pipeline benchmarking across the entire model library. APIs may evolve as this work progresses.
 
 **Version:** 3.14.0
-**Status:** 173 Neuron Models (164 Bio + 9 AI) | 99.49% MNIST (ConvSNN) | 7 425 Python tests passing + 1 549 Rust tests | 100% Core Coverage | 173 Rust Neuron Models (PyO3) | 160-Model NetworkRunner | 132-Function Analysis Toolkit | wgpu GPU Backend | 29 Notebooks
+**Status:** 173 Neuron Models (164 Bio + 9 AI) | 99.49% MNIST (ConvSNN) | 8 598 Python tests passing + 1 717 Rust tests | 100% Core Coverage | 173 Rust Neuron Models (PyO3) | 160-Model NetworkRunner | 132-Function Analysis Toolkit | wgpu GPU Backend | 19 Industrial Modules | 6 Rust Crates | 29 Notebooks
 
 <p align="center">
   <img src="docs/assets/spike_raster.png" width="800" alt="LIF spike raster — 5 neurons, sinusoidal input">
@@ -75,8 +75,13 @@ and a 6-codec neural data compression library (ISI, predictive, delta, streaming
 AER) with a unified API and auto-recommendation engine — targeting BCI
 implants (Neuralink-scale 1024+ channels), neural probes (Neuropixels),
 neuromorphic inter-chip routing, and real-time closed-loop telemetry.
-7 425 Python tests passing and 1 549 Rust tests.
+8 598 Python tests passing and 1 717 Rust tests (across 6 crates).
 13 CI workflows guard every push. conda-forge recipe ready.
+19 industrialized modules: IEC 61508 safety certification, multi-PDK ASIC flow,
+fault injection, UVM testbench generation, multi-tenant hypervisor, digital twin sync,
+spintronic/memristor/chiplet mapping, evolutionary substrate with FPGA deployment,
+meta-plasticity, bioware interface, federated learning, BCI studio,
+explainability, neuro-symbolic predictive coding, stochastic doctor, and model zoo.
 
 ## Feature Comparison
 
@@ -124,6 +129,13 @@ neuromorphic inter-chip routing, and real-time closed-loop telemetry.
 | Raw waveform compression (24x) | **Yes** | — | — | — | — |
 | Spike codec library (6 codecs) | **Yes** | — | — | — | — |
 | Visual SNN Design Studio | **Yes (web IDE)** | Basic GUI | Jupyter | — | — |
+| IEC 61508 safety certification | **Yes** | — | — | — | — |
+| Multi-PDK ASIC flow | **Yes** | — | — | — | — |
+| Evolutionary substrate (FPGA) | **Yes** | — | — | — | — |
+| Multi-tenant hypervisor | **Yes** | — | — | — | — |
+| Chiplet/memristor/spintronic | **Yes** | — | — | — | — |
+| BCI closed-loop control | **Yes** | — | — | — | — |
+| Federated SC learning | **Yes** | — | — | — | — |
 | conda-forge recipe | **Ready** | Yes | — | — | Yes |
 | PyPI package | Yes | Yes | Yes | Yes | Yes |
 | License | AGPL-3.0 | MIT | LGPL-3.0 | BSD-3 | CeCILL-2.1 |
@@ -348,9 +360,10 @@ Research and Frontier modules are available from source (`pip install -e ".[dev]
 |------|---------|:--------------:|--------|
 | **Core** | neurons, synapses, layers, sources, utils, recorders, accel, compiler, hdl_gen, hardware, cli, exceptions | Yes | Production-ready. 100% coverage. |
 | **Simulation** | hdc, solvers, transformers, learning, graphs, ensembles, export, pipeline, profiling, models, math, spatial, verification, security | Yes | Stable. Import explicitly. |
+| **Industrial** | safety_cert, asic_flow, fault_injection, uvm_gen, hypervisor, digital_twin, chiplet, spintronic, memristor, analog_bridge | No | 1,173 tests. Available from source. |
+| **Frontier** | evo_substrate, meta_plasticity, bioware, federated, bci_studio, explainability, neuro_symbolic, stochastic_doctor, model_zoo | No | 1,173 tests. Available from source. |
 | **Domain bridges** | quantum (Qiskit/PennyLane), adapters/holonomic (JAX), scpn (Petri nets) | Yes | Requires `pip install sc-neurocore[quantum]` or `[jax]` |
 | **Research** | robotics, physics, bio, optics, chaos, sleep, interfaces | No | Tested. Available from source. |
-| **Frontier** | generative, world_model, analysis, audio, dashboard, viz, swarm | No | Experimental. Available from source. |
 | **Speculative** | `research/` (eschaton, exotic, meta, post_silicon, transcendent) | No | Theoretical. See `research/README.md`. |
 
 ### Architecture Diagram
@@ -626,7 +639,7 @@ pip install -r requirements.txt       # runtime only
 pip install -r requirements-dev.txt   # runtime + dev tools
 ```
 
-## Rust Engine (173 Neuron Models, 1 549 Tests)
+## Rust Engine (173 Neuron Models, 1 717 Tests across 6 Crates)
 
 The `sc_neurocore_engine` crate provides 173 Rust neuron models callable
 from Python via PyO3 bindings (including ArcaneNeuron), a 160-model
@@ -634,7 +647,16 @@ NetworkRunner with Rayon-parallel population simulation (100K+ neurons),
 and SIMD-accelerated primitives with dispatch across five ISAs (AVX-512,
 AVX2, NEON, SVE, RISC-V V).
 
-1 549 Rust tests across the engine crate.
+1 717 Rust tests across 6 workspace crates:
+
+| Crate | Tests | Purpose |
+|-------|------:|---------|
+| `sc_neurocore_engine` | 1,549 | PyO3 SIMD engine, 173 neuron models, NetworkRunner |
+| `tinysc_riscv` | 83 | RISC-V SC instruction set simulator |
+| `core_engine` | 22 | SC arithmetic core (standalone) |
+| `autonomous_learning` | 12 | Self-modifying plasticity rules |
+| `neuro_symbolic` | 28 | Hyperdimensional computing + predictive coding |
+| `stochastic_doctor_core` | 23 | Bitstream diagnostics engine |
 
 | Category | Scope |
 |----------|-------|
