@@ -22,7 +22,13 @@ sc-neurocore/
 │   │   ├── gpu/            wgpu compute shader backend (feature-gated)
 │   │   ├── simd/           AVX2 / AVX-512 / NEON / SVE / portable fallback
 │   │   └── scpn/           Kuramoto phase solver + metrics
-│   ├── tests/              Rust unit + integration tests
+│   ├── tests/              Rust unit + integration tests (1,549)
+├── crates/                 Research Rust crates (168 tests)
+│   ├── tinysc_riscv/       RISC-V SC instruction set simulator
+│   ├── core_engine/        SC arithmetic core
+│   ├── autonomous_learning/ Self-modifying plasticity rules
+│   ├── neuro_symbolic/     Hyperdimensional computing + predictive coding
+│   └── stochastic_doctor_core/ Bitstream diagnostics engine
 │   └── benches/            Criterion benchmarks (incl. gpu_bench.rs)
 │
 ├── bridge/                 PyO3 Python ↔ Rust bridge (maturin build)
@@ -60,7 +66,7 @@ sc-neurocore/
 │   ├── cli/                Command-line interface (info, deploy, benchmark)
 │   └── ...                 Additional research modules
 │
-├── tests/                  Python test suite (7 400+ tests, 100% coverage)
+├── tests/                  Python test suite (8 598+ tests, 100% core coverage)
 │
 ├── hdl/                    Verilog RTL — 25 modules, 5 455 lines
 │   ├── sc_neurocore_top.v  AXI-Lite top-level wrapper (generic SC network)

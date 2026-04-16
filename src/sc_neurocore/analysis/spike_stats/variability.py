@@ -9,11 +9,26 @@
 
 from __future__ import annotations
 
+import os as _os
 from typing import Any
 
 import numpy as np
 
 from .basic import isi, spike_times
+
+# ---------------------------------------------------------------------------
+# Rust Acceleration
+# ---------------------------------------------------------------------------
+
+_HAS_RUST = False
+_ssc = None
+
+if not _os.environ.get("SC_NEUROCORE_NO_RUST"):
+    try:
+        from sc_neurocore.analysis.spike_stats import spike_stats_core as _ssc
+        _HAS_RUST = True
+    except ImportError:
+        pass
 
 
 def cv_isi(binary_train: np.ndarray[Any, Any], dt: float = 0.001) -> float:
@@ -124,14 +139,14 @@ def isi_entropy(binary_train: np.ndarray[Any, Any], dt: float = 0.001, bins: int
 
 
 def lempel_ziv_complexity(binary_train: np.ndarray[Any, Any]) -> float:
-    """Lempel-Ziv 1976 complexity. Normalized by N/log2(N).
-
-    Counts distinct substrings in the binary sequence.
-    """
+    """Lempel-Ziv 1976 complexity. Normalized by N/log2(N)."""
     n = binary_train.size
     if n == 0:
         return 0.0
-    s = (binary_train > 0).astype(np.int8)
+    s = (binary_train > 0).astype(np.uint8)
+    if _HAS_RUST and _ssc is not None:
+        return float(_ssc.py_lempel_ziv_complexity(np.ascontiguousarray(s)))
+    s = s.astype(np.int8)
     complexity = 1
     l = 1
     k = 1
@@ -156,10 +171,7 @@ def lempel_ziv_complexity(binary_train: np.ndarray[Any, Any]) -> float:
 def approximate_entropy(
     binary_train: np.ndarray[Any, Any], m: int = 2, r_factor: float = 0.2
 ) -> float:
-    """Approximate entropy (ApEn). Pincus 1991.
-
-    m: embedding dimension. r_factor: tolerance as fraction of std.
-    """
+    """Approximate entropy (ApEn). Pincus 1991."""
     x = binary_train.astype(np.float64)
     n = x.size
     if n < m + 2:
@@ -167,6 +179,8 @@ def approximate_entropy(
     r = r_factor * x.std()
     if r <= 0:
         r = 0.01
+    if _HAS_RUST and _ssc is not None:
+        return float(_ssc.py_approximate_entropy(np.ascontiguousarray(x), m, r))
 
     def _phi(dim: int) -> float:
         if n - dim + 1 < 1:
@@ -183,10 +197,7 @@ def approximate_entropy(
 
 
 def sample_entropy(binary_train: np.ndarray[Any, Any], m: int = 2, r_factor: float = 0.2) -> float:
-    """Sample entropy (SampEn). Richman & Moorman 2000.
-
-    Unlike ApEn, excludes self-matches. Lower bias for short series.
-    """
+    """Sample entropy (SampEn). Richman & Moorman 2000."""
     x = binary_train.astype(np.float64)
     n = x.size
     if n < m + 2:
@@ -194,6 +205,8 @@ def sample_entropy(binary_train: np.ndarray[Any, Any], m: int = 2, r_factor: flo
     r = r_factor * x.std()
     if r <= 0:
         r = 0.01
+    if _HAS_RUST and _ssc is not None:
+        return float(_ssc.py_sample_entropy(np.ascontiguousarray(x), m, r))
 
     def _count_matches(dim: int) -> int:
         templates = np.array([x[i : i + dim] for i in range(n - dim)])
@@ -213,14 +226,13 @@ def sample_entropy(binary_train: np.ndarray[Any, Any], m: int = 2, r_factor: flo
 def permutation_entropy(
     binary_train: np.ndarray[Any, Any], order: int = 3, delay: int = 1
 ) -> float:
-    """Bandt-Pompe permutation entropy. Bandt & Pompe 2002.
-
-    Normalized to [0, 1]. Uses ordinal patterns of given order and delay.
-    """
+    """Bandt-Pompe permutation entropy. Bandt & Pompe 2002."""
     x = binary_train.astype(np.float64)
     n = x.size
     if n < order * delay:
         return float("nan")
+    if _HAS_RUST and _ssc is not None:
+        return float(_ssc.py_permutation_entropy(np.ascontiguousarray(x), order, delay))
     n_patterns = n - (order - 1) * delay
     if n_patterns < 1:
         return float("nan")

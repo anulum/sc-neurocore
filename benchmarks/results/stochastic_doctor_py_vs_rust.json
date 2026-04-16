@@ -1,0 +1,128 @@
+{
+  "module": "stochastic_doctor",
+  "date": "2026-04-16",
+  "cpu": "x86_64",
+  "python_version": "3.12.3",
+  "pyo3_available": true,
+  "scc": [
+    {
+      "function": "scc_bytes",
+      "input_size": 100,
+      "python_seconds": 1.171e-05,
+      "rust_seconds": 3.3e-07,
+      "speedup": "35.5x"
+    },
+    {
+      "function": "scc_bytes",
+      "input_size": 1000,
+      "python_seconds": 2.851e-05,
+      "rust_seconds": 9e-07,
+      "speedup": "31.5x"
+    },
+    {
+      "function": "scc_bytes",
+      "input_size": 10000,
+      "python_seconds": 4.25e-05,
+      "rust_seconds": 4.64e-06,
+      "speedup": "9.2x"
+    },
+    {
+      "function": "scc_bytes",
+      "input_size": 100000,
+      "python_seconds": 0.00012784,
+      "rust_seconds": 4.017e-05,
+      "speedup": "3.2x"
+    },
+    {
+      "function": "scc_bytes",
+      "input_size": 1000000,
+      "python_seconds": 0.00129659,
+      "rust_seconds": 0.000369,
+      "speedup": "3.5x"
+    }
+  ],
+  "batch_scc": [
+    {
+      "function": "scc_batch",
+      "num_neurons": 4,
+      "stream_length": 2048,
+      "pairs": 6,
+      "python_seconds": 7.8e-05,
+      "rust_seconds": 5e-06,
+      "speedup": "15.3x"
+    },
+    {
+      "function": "scc_batch",
+      "num_neurons": 8,
+      "stream_length": 2048,
+      "pairs": 28,
+      "python_seconds": 0.000355,
+      "rust_seconds": 2.2e-05,
+      "speedup": "16.1x"
+    },
+    {
+      "function": "scc_batch",
+      "num_neurons": 16,
+      "stream_length": 2048,
+      "pairs": 120,
+      "python_seconds": 0.00163,
+      "rust_seconds": 0.000103,
+      "speedup": "15.8x"
+    },
+    {
+      "function": "scc_batch",
+      "num_neurons": 32,
+      "stream_length": 2048,
+      "pairs": 496,
+      "python_seconds": 0.006965,
+      "rust_seconds": 0.000454,
+      "speedup": "15.3x"
+    },
+    {
+      "function": "scc_batch",
+      "num_neurons": 64,
+      "stream_length": 2048,
+      "pairs": 2016,
+      "python_seconds": 0.026755,
+      "rust_seconds": 0.001494,
+      "speedup": "17.9x"
+    }
+  ],
+  "precision": [
+    {
+      "function": "precision_bytes",
+      "input_size": 100,
+      "python_seconds": 3.05e-06,
+      "rust_seconds": 2.2e-07,
+      "speedup": "13.6x"
+    },
+    {
+      "function": "precision_bytes",
+      "input_size": 1000,
+      "python_seconds": 3.57e-06,
+      "rust_seconds": 2.9e-07,
+      "speedup": "12.4x"
+    },
+    {
+      "function": "precision_bytes",
+      "input_size": 10000,
+      "python_seconds": 7.03e-06,
+      "rust_seconds": 8.3e-07,
+      "speedup": "8.5x"
+    },
+    {
+      "function": "precision_bytes",
+      "input_size": 100000,
+      "python_seconds": 3.202e-05,
+      "rust_seconds": 6.76e-06,
+      "speedup": "4.7x"
+    },
+    {
+      "function": "precision_bytes",
+      "input_size": 1000000,
+      "python_seconds": 0.00030446,
+      "rust_seconds": 6.142e-05,
+      "speedup": "5.0x"
+    }
+  ]
+}

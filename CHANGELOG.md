@@ -4,6 +4,58 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Cross-Language Acceleration — Spike Stats (2026-04-16)
+- **Crate** `spike_stats_core` (v0.1.0): 16 functions, 28 Rust tests, PyO3 + Criterion
+- **Distance** (7 fns): `victor_purpura_distance` **181×**, `spike_sync` **31×**, `hunter_milton` **27×**, `van_rossum`, `spike_distance`, `earth_movers_distance`, `multi_neuron_victor_purpura` **160×**
+- **Correlation** (5 fns): `cross_correlation`, `event_synchronization`, `spike_time_tiling_coefficient`, `coincidence_index`
+- **Variability** (4 fns): `approximate_entropy` **73×**, `sample_entropy` **78×**, `lempel_ziv_complexity` **69×**, `permutation_entropy` **65×**
+- 99/99 Python tests pass on both Rust and Python fallback paths
+- Python dispatch wired in: `distance.py`, `correlation.py`, `variability.py`
+
+### Cross-Language Acceleration —  Stochastic Doctor (2026-04-16)
+- **PyO3 bindings** for `stochastic_doctor_core` crate: `py_scc_bytes`, `py_scc_batch`, `py_precision_bytes`, `py_histogram`, `PyDriftDetector`
+- Replaced legacy `ctypes.CDLL` with PyO3 import pattern (primary), Python fallback (secondary)
+- `SC_NEUROCORE_NO_RUST=1` env var forces Python path
+- 16/16 Python tests pass on both Rust and Python paths
+- 23 Rust tests pass
+- **Benchmarks** (SCC single-pair): 35× at N=100, 3.5× at N=1M
+- **Benchmarks** (batch SCC N×N): 15–18× for 4–64 neuron layers
+- **Benchmarks** (precision): 5–14× across all sizes
+- Criterion benchmarks: `crates/stochastic_doctor_core/benches/doctor_bench.rs`
+- Python benchmark: `benchmarks/stochastic_doctor_benchmark.py`
+- Results: `benchmarks/results/stochastic_doctor_py_vs_rust.json`
+- API docs updated with full benchmark tables: `docs/api/stochastic_doctor.md`
+
+### Module Integration — 19 Industrialized Modules (2026-04-16)
+- **Industrial tier:** safety_cert (IEC 61508/ISO 26262, 81 tests), asic_flow (multi-PDK, 67 tests), fault_injection (radiation-grade, 22 tests), uvm_gen (UVM testbench, 71 tests)
+- **Exascale tier:** hypervisor (multi-tenant, 78 tests), digital_twin/twinsync (time-warp sync, 72 tests)
+- **Substrates tier:** spintronic (MTJ mapper, 66 tests), chiplet (UCIe/BoW, 94 tests), memristor (crossbar, 70 tests), analog_bridge (SC-to-analog, 27 tests)
+- **Frontiers tier:** evo_substrate (self-replicating evolution, 91 tests), meta_plasticity (self-modifying rules, 72 tests), bioware (organoid interface, 79 tests), federated (DP-SGD, 93 tests), bci_studio (closed-loop BCI, 32 tests)
+- **Unification tier:** explainability (causal attribution, 71 tests), neuro_symbolic (predictive coding, 34 tests), stochastic_doctor (bitstream diagnostics, 16 tests), model_zoo (auto-Verilog, 37 tests)
+- All modules: SPDX dual-license headers, `__tier__` classification, `__init__.py` with docstrings
+- 19 MkDocs API doc pages with `mkdocstrings` directives
+- Updated `mkdocs.yml` nav with 5 new categories (Industrial, Substrates, Exascale, Frontiers, Unification)
+- Integration reference: `docs/MODULE_INTEGRATION.md`
+- Total: **1,173 new Python tests** from integrated modules
+
+### Rust Workspace — 5 Research Crates Integrated (2026-04-16)
+- Created `crates/` directory for research Rust crates
+- Integrated: tinysc_riscv (83 tests), core_engine (22 tests), autonomous_learning (12 tests), neuro_symbolic (28 tests), stochastic_doctor_core (23 tests)
+- Root `Cargo.toml` workspace now has 6 members (engine + 5 research crates)
+- Engine (`sc_neurocore_engine`, 1,549 tests) verified undamaged after workspace expansion
+- Total: **1,717 Rust tests** across 6 crates
+
+### Evolutionary Substrate — (2026-04-16)
+- `FormalSafetyGuard`: pre-deployment safety validation
+- `CPPNGenome`: Compositional Pattern Producing Network developmental encoding
+- `IslandModel`: multi-deme evolution with migration
+- `NoveltyArchive`: k-NN behavioural novelty search
+- `HWFitnessCollector`: FPGA execution feedback for hardware-in-loop fitness
+- `ParetoFront`: NSGA-II style non-dominated sorting
+- `TournamentSelector`, `AgeRegulator`, `BloatPenalizer`, `ExtinctionDetector`, `CoevolutionArena`
+- `EvoStatisticsTracker`, `ComplexityTracker`, `genome_diff()`, `shared_fitness()`
+- Module grew from 657 to 1,400 LOC, 42 to 91 tests
+
 ### Foundation-Model Neural Decoders (2026-04-07)
 - **POYODecoder**: spike tokenisation + cross-attention (Azabou et al. 2023 NeurIPS)
 - **POSSMDecoder**: diagonal SSM with HiPPO-LegS init (Ryoo et al. 2025 ICLR)
@@ -37,7 +89,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Purged 52 resolved failed/cancelled CI runs
 - Closed superseded dependabot PRs #53, #55
 
-### Neuron Models — Phase 3G-3H (12 new models, 2026-04-04/05)
+### Neuron Models — (12 new models, 2026-04-04/05)
 - **TUMNetwork**: rate model with short-term plasticity (depression + facilitation), 3 ODEs
 - **ElBoustaniNetwork**: E/I + NMDA bistability, 3 ODEs
 - **GradedSynapseNeuron**: non-spiking, passive RC + sigmoid release
@@ -112,7 +164,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - `test_tensor_stream.py`: TensorStream prob↔bitstream↔quantum roundtrips, Born rule, normalisation, p=0/1 edge cases, invalid conversion raises
 - `test_quantum_hybrid.py`: QuantumStochasticLayer cos²(θ/2) transfer, p=0→1, p=1→0, monotonic decreasing, multi-qubit independence
 
-### Model Validation (Phase 1)
+### Model Validation
 - LIF f-I curve: 29/29 tests, <5% error vs analytical solution
 - Izhikevich 20 firing patterns: all from Izhikevich (2003) Table 1 validated
 - Hodgkin-Huxley 1952: AP peak 40.6mV, spike width 1.46ms, AHP -75.1mV

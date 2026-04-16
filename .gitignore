@@ -115,3 +115,9 @@ vivado*.backup.*
 
 # Internal coordination (incidents, sessions)
 .coordination/
+
+# Gemini Internal
+docs/internal/gemini/
+
+# VISION 2030 Development
+VISION2030/

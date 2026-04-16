@@ -9,11 +9,26 @@
 
 from __future__ import annotations
 
+import os as _os
 from typing import Any, Callable
 
 import numpy as np
 
 from .basic import bin_spike_train
+
+# ---------------------------------------------------------------------------
+# Rust Acceleration
+# ---------------------------------------------------------------------------
+
+_HAS_RUST = False
+_ssc = None
+
+if not _os.environ.get("SC_NEUROCORE_NO_RUST"):
+    try:
+        from sc_neurocore.analysis.spike_stats import spike_stats_core as _ssc
+        _HAS_RUST = True
+    except ImportError:
+        pass
 
 
 def mutual_information(
@@ -79,14 +94,13 @@ def transfer_entropy(
 def spike_train_entropy(
     binary_train: np.ndarray[Any, Any], bin_size: int = 10, word_length: int = 4
 ) -> float:
-    """Spike train entropy via binary word analysis. Strong et al. 1998.
-
-    Bins the train, constructs binary words of given length, computes Shannon entropy (bits).
-    """
-    binned = (bin_spike_train(binary_train, bin_size) > 0).astype(np.int8)
+    """Spike train entropy via binary word analysis. Strong et al. 1998."""
+    binned = (bin_spike_train(binary_train, bin_size) > 0).astype(np.uint8)
     n = binned.size
     if n < word_length:
         return float("nan")
+    if _HAS_RUST and _ssc is not None:
+        return float(_ssc.py_spike_train_entropy(np.ascontiguousarray(binned), word_length))
     n_words = n - word_length + 1
     words = np.zeros(n_words, dtype=np.int64)
     for i in range(n_words):
@@ -151,16 +165,17 @@ def stimulus_specific_information(
 
 
 def kozachenko_leonenko_mi(x: np.ndarray[Any, Any], y: np.ndarray[Any, Any], k: int = 3) -> float:
-    """Kozachenko-Leonenko k-NN mutual information estimator. Kraskov et al. 2004.
-
-    x, y: 1D arrays of same length. Returns MI in nats.
-    """
+    """Kozachenko-Leonenko k-NN mutual information estimator. Kraskov et al. 2004."""
     n = min(x.size, y.size)
     if n < k + 1:
         return 0.0
-    x = x[:n].astype(np.float64).reshape(-1, 1)
-    y = y[:n].astype(np.float64).reshape(-1, 1)
-    xy = np.hstack([x, y])
+    xf = np.ascontiguousarray(x[:n], dtype=np.float64)
+    yf = np.ascontiguousarray(y[:n], dtype=np.float64)
+    if _HAS_RUST and _ssc is not None:
+        return float(_ssc.py_kozachenko_leonenko_mi(xf, yf, k))
+    xf = xf.reshape(-1, 1)
+    yf = yf.reshape(-1, 1)
+    xy = np.hstack([xf, yf])
 
     from scipy.special import digamma
 
@@ -175,8 +190,8 @@ def kozachenko_leonenko_mi(x: np.ndarray[Any, Any], y: np.ndarray[Any, Any], k: 
     ny_sum = 0.0
     for i in range(n):
         eps = _kth_dist(xy, i, k)
-        nx = np.sum(np.abs(x - x[i]).ravel() < eps) - 1
-        ny = np.sum(np.abs(y - y[i]).ravel() < eps) - 1
+        nx = np.sum(np.abs(xf - xf[i]).ravel() < eps) - 1
+        ny = np.sum(np.abs(yf - yf[i]).ravel() < eps) - 1
         nx_sum += digamma(nx + 1)
         ny_sum += digamma(ny + 1)
     return float(max(0.0, psi_k + psi_n - nx_sum / n - ny_sum / n))
