@@ -14,7 +14,6 @@ multiple input sizes. Outputs JSON results to benchmarks/results/.
 from __future__ import annotations
 
 import json
-import os
 import platform
 import sys
 import time
@@ -26,7 +25,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from sc_neurocore.stochastic_doctor.diagnostics import (
     _scc_python,
-    compute_scc,
     StochasticDoctor,
     _HAS_PYO3,
     _sdc_rust,
@@ -74,7 +72,11 @@ def benchmark_scc(sizes: list[int]) -> list[dict]:
             "speedup": f"{speedup:.1f}x",
         }
         results.append(entry)
-        print(f"  SCC  N={n:>8d}  Python={t_py:.6f}s  Rust={t_rust:.6f}s  → {speedup:.1f}×" if t_rust else f"  SCC  N={n:>8d}  Python={t_py:.6f}s  (no Rust)")
+        print(
+            f"  SCC  N={n:>8d}  Python={t_py:.6f}s  Rust={t_rust:.6f}s  → {speedup:.1f}×"
+            if t_rust
+            else f"  SCC  N={n:>8d}  Python={t_py:.6f}s  (no Rust)"
+        )
     return results
 
 
@@ -114,7 +116,11 @@ def benchmark_batch_scc(neuron_counts: list[int], stream_len: int = 2048) -> lis
             "speedup": f"{speedup:.1f}x",
         }
         results.append(entry)
-        label = f"  Batch  N={n:>3d} ({pairs:>5d} pairs)  Python={t_py:.4f}s  Rust={t_rust:.4f}s  → {speedup:.1f}×" if t_rust else f"  Batch  N={n:>3d}  Python={t_py:.4f}s"
+        label = (
+            f"  Batch  N={n:>3d} ({pairs:>5d} pairs)  Python={t_py:.4f}s  Rust={t_rust:.4f}s  → {speedup:.1f}×"
+            if t_rust
+            else f"  Batch  N={n:>3d}  Python={t_py:.4f}s"
+        )
         print(label)
     return results
 
@@ -150,7 +156,11 @@ def benchmark_precision(sizes: list[int]) -> list[dict]:
             "speedup": f"{speedup:.1f}x",
         }
         results.append(entry)
-        print(f"  Prec  N={n:>8d}  Python={t_py:.6f}s  Rust={t_rust:.6f}s  → {speedup:.1f}×" if t_rust else f"  Prec  N={n:>8d}  Python={t_py:.6f}s")
+        print(
+            f"  Prec  N={n:>8d}  Python={t_py:.6f}s  Rust={t_rust:.6f}s  → {speedup:.1f}×"
+            if t_rust
+            else f"  Prec  N={n:>8d}  Python={t_py:.6f}s"
+        )
     return results
 
 
