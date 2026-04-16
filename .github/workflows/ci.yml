@@ -22,11 +22,13 @@ on:
     paths:
       - ".github/workflows/**"
       - "bridge/**"
+      - "crates/**"
       - "engine/**"
       - "src/**"
       - "tests/**"
       - "tools/**"
       - "hdl/**"
+      - "Cargo.toml"
       - "pyproject.toml"
       - "requirements/**"
   # Pull requests run CI unconditionally. Branch protection requires
