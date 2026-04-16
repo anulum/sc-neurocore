@@ -40,7 +40,7 @@ _sdc_rust = None
 
 if not _os.environ.get("SC_NEUROCORE_NO_RUST"):
     try:
-        from sc_neurocore.stochastic_doctor import stochastic_doctor_core as _sdc_rust
+        from sc_neurocore.stochastic_doctor import stochastic_doctor_core as _sdc_rust  # type: ignore[attr-defined,no-redef]
 
         _HAS_PYO3 = True
     except ImportError:
