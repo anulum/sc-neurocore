@@ -1,9 +1,9 @@
 # SC-NEUROCORE — Module Integration Reference
 
-> **Status:** Integrated  
-> **Date:** 2026-04-16  
-> **Tests:** 1,173 passing across 19 modules  
-> **Languages:** Python, Go, Rust, SystemVerilog  
+> **Status:** Integrated
+> **Date:** 2026-04-16
+> **Tests:** 1,173 passing across 19 modules
+> **Languages:** Python, Go, Rust, SystemVerilog
 > **Co-Authored-By:** Arcane Sapience <protoscience@anulum.li>
 
 ---
