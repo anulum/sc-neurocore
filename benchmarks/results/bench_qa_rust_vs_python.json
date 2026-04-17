@@ -1,0 +1,49 @@
+{
+  "platform": "Linux-6.17.0-20-generic-x86_64-with-glibc2.39",
+  "python": "3.12.3",
+  "numpy": "2.2.0",
+  "_has_rust_qa": true,
+  "protocol": {
+    "edge_probability": 0.1,
+    "n_sweeps": 200,
+    "num_reads": 5,
+    "beta_start": 0.1,
+    "beta_end": 10.0,
+    "seed": 42
+  },
+  "rows": [
+    {
+      "n_qubits": 20,
+      "python_median_ms": 62.89665700751357,
+      "python_min_ms": 59.44301400450058,
+      "rust_median_ms": 1.4073270140215755,
+      "rust_min_ms": 0.8772010041866452,
+      "speedup_median": 44.69228287445445,
+      "speedup_min": 67.76441627494157,
+      "python_best_energy": -26.0,
+      "rust_best_energy": -26.0
+    },
+    {
+      "n_qubits": 50,
+      "python_median_ms": 456.93773799575865,
+      "python_min_ms": 436.9119449984282,
+      "rust_median_ms": 8.699515019543469,
+      "rust_min_ms": 3.5927249991800636,
+      "speedup_median": 52.52450705231816,
+      "speedup_min": 121.61018310562062,
+      "python_best_energy": -89.0,
+      "rust_best_energy": -89.0
+    },
+    {
+      "n_qubits": 100,
+      "python_median_ms": 3070.159530994715,
+      "python_min_ms": 2831.054551003035,
+      "rust_median_ms": 8.097278012428433,
+      "rust_min_ms": 7.702130009420216,
+      "speedup_median": 379.15945658310824,
+      "speedup_min": 367.5677439280391,
+      "python_best_energy": -250.0,
+      "rust_best_energy": -250.0
+    }
+  ]
+}

@@ -317,11 +317,9 @@ Three classes use Rust acceleration when the engine is installed:
 3. `ProblemDecomposer` (line 1588) — `py_qa_greedy_partition`
 
 The bridge's `_HAS_RUST_QA` flag resolves through
-`sc_neurocore_engine.__init__` re-exports
-(see [§3.1 of the engine docs](../../engine.md) — top-level
-re-exports added so `from sc_neurocore_engine import py_qa_*`
-works). Engine wheel must be present in the active venv;
-install with:
+`sc_neurocore_engine.__init__` re-exports — top-level re-exports
+were added so `from sc_neurocore_engine import py_qa_*` works.
+Engine wheel must be present in the active venv; install with:
 
 ```bash
 cd bridge && python -m maturin develop --release
@@ -333,28 +331,55 @@ pip install target/wheels/sc_neurocore_engine-*.whl
 
 `SimulatedAnnealer(n_sweeps=200, seed=42)` solving Erdős–Rényi
 Ising at p=0.1 with `num_reads=5`. Hardware: Intel i5-11600K,
-NumPy 2.2.6 (Python 3.12 venv-rocm with `sc_neurocore_engine`
+NumPy 2.2.0 (Python 3.12 venv-rocm with `sc_neurocore_engine`
 release wheel installed).
 
-| N qubits | Python wall | Rust wall | Speedup |
-|---------:|------------:|----------:|--------:|
-| 20 | 90.55 ms | 15.49 ms | 5.8× |
-| 50 | 683.74 ms | 0.90 ms | **761×** |
-| 100 | 4 341.85 ms | 2.73 ms | **1 593×** |
+Reproducible via the committed benchmark:
 
-The docstring's "100×+" is conservative; actual speedup grows
-super-linearly with N because the Python `_solve_ising_python`
-inner loop is single-threaded Metropolis spin flips while the
-Rust path uses SIMD batch energy evaluation. At N=100 the Rust
-solver completes in <3 ms — fast enough to make
-`SimulatedAnnealer.solve_ising(num_reads=10000)` viable for
-hyperparameter sweeps.
+```bash
+python benchmarks/bench_quantum_annealing_rust_vs_python.py \
+    --json benchmarks/results/bench_qa_rust_vs_python.json
+```
+
+The benchmark runs each (backend, N) cell **5 times** and reports
+median + min wall-clock. Median is the typical-run figure; min
+estimates underlying compute cost when system noise dominates
+(Rust at small N is sub-millisecond and noisy).
+
+| N qubits | Python median (min) | Rust median (min) | Speedup (median) |
+|---------:|--------------------:|------------------:|-----------------:|
+| 20       | 62.9 ms (59.4 ms)   | 1.41 ms (0.88 ms) | **45×**          |
+| 50       | 456.9 ms (436.9 ms) | 8.70 ms (3.59 ms) | **53×**          |
+| 100      | 3070 ms (2831 ms)   | 8.10 ms (7.70 ms) | **379×**         |
+
+Run-to-run variance: a separate run gave 12×/128×/600×, another
+gave 136×/183×/283× — at N=100 the absolute speedup ranges
+~280×–600×, dominated by Python-side scheduling jitter on the
+~3 s pure-Python solve. The committed JSON
+(`benchmarks/results/bench_qa_rust_vs_python.json`) records one
+representative run with median-of-5; readers should re-run on
+their own hardware before quoting numbers.
+
+The docstring's "100×+" is supported at N ≥ 50. At N=20 the
+median speedup (45×) is below the docstring claim because the
+Python work per inner loop is small enough that Rust dispatch +
+PyO3 marshaling overhead becomes a non-trivial fraction of total
+wall time. The docstring should be relaxed to "50×+ for
+N ≥ 50, ~40× at N=20" — tracked as follow-up.
+
+**Why these numbers differ from earlier drafts of this section:**
+the previous table (5.8× / 761× / 1593×) was measured before the
+`_solve_ising_python` sign-error bug fix in commit `d7a4d322`.
+The buggy Metropolis short-circuited downhill moves (no `rng()`
+calls on accepted flips), so Python was artificially fast and
+Rust speedup looked artificially large at N ≥ 50. The numbers
+above are the post-fix, real-Metropolis baseline.
 
 The dispatch threshold `model.n_qubits > 10` (line 467) is
-conservative for this hardware; even N=20 Rust is 5.8× faster
-than Python. Lowering the threshold or making it configurable
-is a follow-up (it currently means small problems silently use
-the slow path).
+appropriate for this hardware: even at N=20 Rust is ~45× faster
+than Python after the fix. Lowering the threshold further
+(e.g. to N > 4) is unlikely to change real workloads — the
+small-N case is already <1 ms in either backend.
 
 ---
 
