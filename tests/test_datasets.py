@@ -124,9 +124,9 @@ class TestLatencyEncodeStrict:
         spikes = latency_encode(np.array([1.5, 0.0]), T=10, tau=5.0, strict=False)
         assert spikes.shape == (10, 2)
         # value=1.5 → spike_time = 5*(1-1.5) = -2.5 → clipped to 0
-        assert spikes[0, 0] == True  # noqa: E712
+        assert bool(spikes[0, 0])
         # value=0 → spike_time = 5 → fires at index 5
-        assert spikes[5, 1] == True  # noqa: E712
+        assert bool(spikes[5, 1])
 
     def test_strict_default_accepts_boundary_values(self):
         spikes = latency_encode(np.array([0.0, 1.0]), T=10, tau=5.0)
