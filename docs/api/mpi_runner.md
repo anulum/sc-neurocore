@@ -2,10 +2,12 @@
 
 **Module:** `sc_neurocore.network.mpi_runner`
 **Source:** `src/sc_neurocore/network/mpi_runner.py` — 191 LOC
-**Status (v3.14.0):** code path complete; 6 mocked-mpi4py tests pass; real
-multi-rank semantics with `mpirun -n 2` are not yet exercised (task #17);
-spike gating, FIM feedback, and per-rank Rust dispatch are not implemented
-in this runner.
+**Status (v3.14.0):** code path complete; 8 mocked-mpi4py tests pass
+(2 added by task #19 verifying the new fail-fast guards); real
+multi-rank semantics with `mpirun -n 2` are not yet exercised (task #17).
+Spike gating and FIM feedback are now refused by the dispatcher with
+`NotImplementedError` (was: silently ignored). Per-rank Rust dispatch
+is not implemented in this runner.
 
 `MPIRunner` provides distributed execution of a `Network` across MPI ranks.
 It partitions populations round-robin, identifies cross-rank projections,
@@ -32,7 +34,8 @@ Do **not** use MPI when:
 - The Rust backend is applicable — single-process Rust is far cheaper than
   multi-process Python with cross-rank communication.
 - Spike gating or FIM feedback (`fim_lambda > 0`) is needed — neither is
-  implemented in `MPIRunner` today.
+  implemented in `MPIRunner` today; `Network._run_mpi` raises
+  `NotImplementedError` rather than silently ignoring the flag.
 - Per-rank Rust acceleration is needed — `MPIRunner._step_local` always
   calls `Population.step_all`, which is the Python loop.
 
@@ -371,7 +374,7 @@ There are no orphan helpers — every defined method is reachable from
 
 ```bash
 PYTHONPATH=src python3 -m pytest tests/test_mpi_runner.py -v
-# 6 passed in 1.72s (verified 2026-04-17)
+# 8 passed in 0.85s (verified 2026-04-17)
 ```
 
 Test coverage:
@@ -384,8 +387,10 @@ Test coverage:
 | `test_single_rank_matches_python` | end-to-end MPI run (size=1, mocked Allgather) produces same spike count as `backend="python"` |
 | `test_cross_rank_projection_identification` | projection from rank-0-owned A to rank-1-owned B is classified as cross-rank |
 | `test_exchange_spikes_mock` | header pack + unpack round-trip preserves both populations' spike vectors |
+| `test_run_mpi_raises_on_spike_gating` | `Network.run(backend="mpi", spike_gating=True)` raises NotImplementedError |
+| `test_run_mpi_raises_on_fim_lambda` | `Network.run(backend="mpi")` on a network with `fim_lambda > 0` raises NotImplementedError |
 
-All six tests **mock** `mpi4py` via `unittest.mock.MagicMock` and
+All eight tests **mock** `mpi4py` via `unittest.mock.MagicMock` and
 `patch("sc_neurocore.network.mpi_runner.MPI", ...)`. This validates the
 code paths but does not exercise:
 
@@ -421,7 +426,7 @@ load-balance ratio (slowest rank wall ÷ fastest rank wall).
 | # | Dimension | Status | Detail |
 |---|-----------|--------|--------|
 | 1 | Pipeline wiring | ✅ PASS | `Network._run_mpi` → `MPIRunner.run` complete; every public method reachable |
-| 2 | Multi-angle tests | ⚠️ WARN | 6 mocked tests pass; real multi-rank not exercised (task #17) |
+| 2 | Multi-angle tests | ⚠️ WARN | 8 mocked-mpi4py tests pass (6 original + 2 fail-fast guards added by task #19); real multi-rank not exercised (task #17) |
 | 3 | Rust path | ⚠️ WARN | `_step_local` always calls `Population.step_all` (Python loop) — per-rank Rust dispatch is not implemented |
 | 4 | Benchmarks | ❌ FAIL | None — `mpi4py` absent in this env. Document as gap rather than fabricate numbers (§11) |
 | 5 | Performance docs | ⚠️ WARN | Bandwidth model documented (§6.4) but not validated empirically |
@@ -437,27 +442,29 @@ WARN #3 (per-rank Rust) is a separate enhancement.
 
 ## 13. Known issues & limitations
 
-### 13.1 No spike gating in `_step_local`
+### 13.1 spike_gating refused (was: silently ignored)
 
-`Network.run(spike_gating=True)` is silently ignored when `backend="mpi"`.
-The `_step_local` loop calls `pop.step_all(currents)` without forwarding
-the gating flag (`mpi_runner.py:142`). Sparse-firing networks therefore
-pay full per-step cost on every rank.
+`Network.run(spike_gating=True, backend="mpi")` now raises
+`NotImplementedError` (validated in `Network._run_mpi` before
+`MPIRunner` is constructed). Sparse-firing networks must use
+`backend="python"` to benefit from gating. The runner itself still
+calls `pop.step_all(currents)` without the flag — fail-fast at the
+dispatcher prevents silent wrong results.
 
-### 13.2 No FIM feedback
+### 13.2 FIM feedback refused (was: silently ignored)
 
-`Network._apply_fim` is invoked only in `_run_python`. `MPIRunner.run`
-does not call it. Networks built with `fim_lambda > 0` and run via MPI
-silently lose the synchronisation feedback. Consider raising in
-`Network._run_mpi` if `network.fim_lambda > 0`.
+`Network.run(backend="mpi")` on a network constructed with
+`fim_lambda > 0` raises `NotImplementedError`. `MPIRunner.run` does
+not call `Network._apply_fim`; refusing the run is preferred over
+silently dropping the synchronisation feedback. Use `backend="python"`.
 
 ### 13.3 No per-rank Rust dispatch
 
-The class docstring claims "Works with both Python and Rust backends
-per-rank: if the Rust engine is available and all local populations are
-supported, the rank uses Rust for its local step." This is **aspirational**
-in v3.14.0 — `_step_local` never branches on `_can_use_rust`. Either
-implement the branch or delete the misleading docstring.
+The class docstring previously claimed "Works with both Python and Rust
+backends per-rank". The corrected docstring (since task #19) states the
+actual behaviour: `_step_local` always calls `Population.step_all`
+(pure-Python). The Rust fast-path is only available via
+`backend="auto"` / `backend="rust"` on a single process.
 
 ### 13.4 Monitoring on rank 0 only
 
