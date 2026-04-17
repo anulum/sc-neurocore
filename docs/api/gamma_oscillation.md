@@ -12,14 +12,15 @@ the empirical dynamics of the current code, and a non-determinism bug
 that makes the same parameters produce different output on every call.
 A fidelity-restoration follow-up is tracked as task #11.
 
-> **Honesty notice.** Read [§4 Gap Analysis](#4-gap-analysis-vs-cited-papers),
-> [§5 Empirical Dynamics](#5-empirical-dynamics-of-the-current-implementation),
-> and [§6 Non-Determinism Bug](#6-non-determinism-bug) before relying on
-> this code for anything that claims to model gamma oscillations. The
-> current implementation produces gamma-band peaks only inside a narrow
-> parameter window, fires inhibitory neurons at unphysiological 700+ Hz
-> rates, and gives different results on identical inputs because two
-> internal RNG calls are not seeded.
+> **Honesty notice.** Read [§4 Gap Analysis](#4-gap-analysis-vs-cited-papers)
+> and [§5 Empirical Dynamics](#5-empirical-dynamics-of-the-current-implementation)
+> before relying on this code for anything that claims to model gamma
+> oscillations. The current implementation produces gamma-band peaks
+> only inside a narrow parameter window and fires inhibitory neurons at
+> unphysiological 700+ Hz rates because there is no refractory period.
+> The non-determinism bug previously documented in §6 was **fixed**
+> by task #22 (per-instance RNG via `seed` parameter); the section
+> below now describes the fix and the regression tests.
 
 ---
 
@@ -194,7 +195,7 @@ the rationale for the type ignore is undocumented; mirrors `cli.py:298`).
 | Drive | tonic depolarisation via mGluR | tonic input | scalar `drive` argument to `step` | qualitatively similar |
 | Frequency emergence | from `τ_GABA` and synaptic strength | from `τ_GABA`, K_E/I, drive | from `tau_e` / `tau_i` ratio + handweighted | wrong knob |
 | Robustness | gamma over 30–80 Hz physiological window | gamma robust over wide drive range | gamma exists in a narrow drive window only (§5.2) | fragile |
-| RNG | per-simulation seeding | per-simulation seeding | unseeded `np.random.normal/uniform` | non-deterministic (§6) |
+| RNG | per-simulation seeding | per-simulation seeding | per-instance `np.random.default_rng(seed)` (§6) | aligned (since task #22) |
 
 **Net:** the implementation is a mean-field-rate model that uses
 population-fraction-above-threshold as a proxy for "rate × scalar
@@ -277,14 +278,16 @@ linearly (no `n²` matvec because there is no real connectivity).
 
 ---
 
-## 6. Non-determinism bug
+## 6. Determinism (was: non-determinism bug, now fixed)
 
-`PINGCircuit.__init__` does **not** accept a `seed` argument. The
-constructor's `__post_init__` and `step` both call `np.random.uniform`
-or `np.random.normal` without a per-instance RNG. Two instances built
-with identical parameters produce different output on every run.
+### 6.1 Original bug (v3.14.0)
 
-Demonstration (5 runs, identical config, FFT peak frequency reported):
+The pre-fix `PINGCircuit` did not accept a `seed` argument. Its
+`__post_init__` and `step` called `np.random.uniform` / `np.random.normal`
+on the global NumPy RNG, so two instances built with identical
+parameters produced different output every run.
+
+Measured before the fix (5 runs, identical config, FFT peak frequency):
 
 | Run | Total E spikes | Peak (Hz) |
 |----:|---------------:|----------:|
@@ -294,18 +297,42 @@ Demonstration (5 runs, identical config, FFT peak frequency reported):
 | 3 | 816 | 95.0 |
 | 4 | 819 | 85.0 |
 
-Total spike count varies by **78 %** between runs (531 ↔ 951). Peak
-frequency varies between **5 Hz and 95 Hz**. Two of five runs land in
-the gamma band; the rest do not. There is no way to reproduce a result
-without globally seeding NumPy before construction.
+Spike-count spread across runs: **78 %** (531 ↔ 951). Peak-frequency
+spread: **5 Hz to 95 Hz**. Two of five runs landed in the gamma band;
+the rest did not. The only workaround was to globally seed NumPy
+before each construction.
 
-Fix: add a `seed: int = 42` parameter to the dataclass; construct
-`self._rng = np.random.default_rng(seed)` in `__post_init__`; replace
-every `np.random.normal(...)` / `np.random.uniform(...)` call (in
-`__post_init__`, `step`, and `reset_state`) with the corresponding
-`self._rng` method. Tracked as task #22 (kept separate from task #11
-because it is a one-line surface change, independent of the larger
-fidelity restoration).
+### 6.2 Fix (task #22)
+
+`PINGCircuit` now accepts `seed: int = 42`. The constructor builds a
+per-instance generator `self._rng = np.random.default_rng(self.seed)`,
+and every random draw in `__post_init__`, `step`, and `reset_state`
+uses that generator instead of the global RNG.
+
+### 6.3 Determinism contract
+
+- Two `PINGCircuit(seed=k)` instances with identical other parameters
+  produce **bitwise-identical** spike trains for any sequence of
+  `step(...)` calls.
+- The contract is independent of the global NumPy RNG state — calling
+  `np.random.seed(...)` between or before constructions has no effect
+  on `PINGCircuit` output.
+- `reset_state()` advances the per-instance RNG. To return to the
+  pre-step initial state, construct a fresh `PINGCircuit` with the same
+  seed instead of calling `reset_state`.
+
+### 6.4 Regression tests
+
+`tests/test_gamma_oscillation.py::TestPINGCircuitDeterminism` covers:
+
+| Test | What it asserts |
+|------|-----------------|
+| `test_init_voltages_match_for_same_seed` | identical `v_e` / `v_i` on construction |
+| `test_init_voltages_differ_for_different_seeds` | distinct seeds → distinct init voltages |
+| `test_step_sequence_identical_for_same_seed` | 500 steps × 2 instances → identical spike vectors at every step |
+| `test_global_numpy_seed_does_not_leak_in` | switching the global NumPy seed between two same-seed instances does not change their output |
+| `test_total_spike_count_constant_across_runs` | the v3.14.0 78 % spread is gone — five identical-seed runs produce the **same** total spike count |
+| `test_reset_state_uses_per_instance_rng` | `reset_state` does not call the global RNG |
 
 ---
 
@@ -364,7 +391,7 @@ What the tests **do not** verify:
 | 4 | Benchmarks | ✅ PASS | §5 measured here; gap to paper documented |
 | 5 | Performance docs | ✅ PASS | §5.3 |
 | 6 | Documentation page | ✅ PASS | this page |
-| 7 | Rules followed | ❌ FAIL | **Cited-publication fidelity violation** — module docstring cites Whittington 1995 + Börgers & Kopell 2003 but implementation is a mean-field-rate model (§4). Plus **non-determinism bug** (§6) violates reproducibility. Plus undocumented `# type: ignore[arg-type]` on lines 66-67. Tasks #11 (fidelity) and #22 (non-determinism) track the fixes. SPDX header ✅ otherwise |
+| 7 | Rules followed | ❌ FAIL | **Cited-publication fidelity violation** — module docstring cites Whittington 1995 + Börgers & Kopell 2003 but implementation is a mean-field-rate model (§4). Task #11 tracks the restoration. Non-determinism bug (was §6, FAIL in v3.14.0) is fixed by task #22; the previous `# type: ignore[arg-type]` lines are removed in the same change. SPDX header ✅ otherwise |
 
 Net: **2 WARN, 2 FAIL.** Same shape as `cortical_column.md` audit —
 fidelity violation is the headline.
@@ -380,10 +407,10 @@ tracked as follow-ups under task #11.
    PING with conductance-based synapses, sparse random connectivity,
    τ_GABA-set frequency (Whittington/Börgers) **or** remove the
    citations and rename the class to something less load-bearing
-   (e.g. `EIRateOscillator`).
-2. **Non-determinism bug** — §6. Add `seed` parameter to the dataclass,
-   plumb through `np.random.default_rng(seed)`. This is independent of
-   the fidelity fix and should be done first.
+   (e.g. `EIRateOscillator`). Tracked: task #11.
+2. **Non-determinism bug — FIXED by task #22.** `seed` parameter,
+   per-instance `np.random.default_rng(seed)`, regression tests in
+   place. See §6.
 3. **Inhibitory population fires at unphysiological rates** — 372 Hz
    in the "successful" gamma case, 700–1700 Hz in others. The model has
    no refractory period; even nominal LIF cells should clip at
@@ -392,11 +419,7 @@ tracked as follow-ups under task #11.
    (§5.2). This is the opposite of Whittington/Börgers PING, which is
    stable over orders-of-magnitude drive changes. Caused directly by
    the mean-field approximation replacing the τ_GABA mechanism.
-5. **`# type: ignore[arg-type]` on dataclass field defaults**
-   (`gamma_oscillation.py:66-67`) without rationale. Mirror of
-   `cli.py:298`. Either type-correctly (e.g. `Optional[np.ndarray]`)
-   or annotate the reason.
-6. **No `run(...)` convenience method** — users must build their own
+5. **No `run(...)` convenience method** — users must build their own
    spike-recording loop. `cortical_column.py` has one; `PINGCircuit`
    does not. Add for consistency.
 

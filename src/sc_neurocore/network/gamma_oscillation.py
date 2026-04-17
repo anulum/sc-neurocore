@@ -52,6 +52,10 @@ class PINGCircuit:
         Spike threshold. Default 1.0.
     reset : float
         Reset voltage. Default 0.0.
+    seed : int
+        Per-instance RNG seed. Two PINGCircuit instances built with the
+        same seed and identical other parameters produce identical
+        spike trains. Default 42.
     """
 
     n_excitatory: int = 80
@@ -63,14 +67,16 @@ class PINGCircuit:
     w_ee: float = 0.1
     threshold: float = 1.0
     reset: float = 0.0
-    v_e: np.ndarray = field(default=None)  # type: ignore[arg-type]
-    v_i: np.ndarray = field(default=None)  # type: ignore[arg-type]
+    seed: int = 42
+    v_e: np.ndarray | None = field(default=None)
+    v_i: np.ndarray | None = field(default=None)
 
     def __post_init__(self) -> None:
+        self._rng = np.random.default_rng(self.seed)
         if self.v_e is None:
-            self.v_e = np.random.uniform(0, 0.5, self.n_excitatory)
+            self.v_e = self._rng.uniform(0, 0.5, self.n_excitatory)
         if self.v_i is None:
-            self.v_i = np.random.uniform(0, 0.5, self.n_inhibitory)
+            self.v_i = self._rng.uniform(0, 0.5, self.n_inhibitory)
 
     def step(self, drive: float = 5.0, dt: float = 0.1) -> tuple[np.ndarray, np.ndarray]:
         """Advance one timestep.
@@ -86,6 +92,9 @@ class PINGCircuit:
         -------
         (spikes_e, spikes_i): boolean arrays of shape (n_e,) and (n_i,)
         """
+        # __post_init__ guarantees v_e and v_i are populated arrays.
+        assert self.v_e is not None and self.v_i is not None
+
         # Compute population firing rates
         rate_e = np.mean(self.v_e > self.threshold * 0.8)
         rate_i = np.mean(self.v_i > self.threshold * 0.8)
@@ -95,14 +104,14 @@ class PINGCircuit:
             drive + self.w_ee * rate_e * self.n_excitatory - self.w_ie * rate_i * self.n_inhibitory
         )
         dv_e = (-self.v_e + np.maximum(i_e, 0.0)) * (dt / self.tau_e)
-        # Add noise for heterogeneity
-        dv_e += np.random.normal(0, 0.05, self.n_excitatory) * np.sqrt(dt)
+        # Heterogeneity noise drawn from the per-instance RNG (deterministic given seed)
+        dv_e += self._rng.normal(0, 0.05, self.n_excitatory) * np.sqrt(dt)
         self.v_e += dv_e
 
         # Inhibitory neurons: driven by excitatory population
         i_i = self.w_ei * rate_e * self.n_excitatory
         dv_i = (-self.v_i + np.maximum(i_i, 0.0)) * (dt / self.tau_i)
-        dv_i += np.random.normal(0, 0.05, self.n_inhibitory) * np.sqrt(dt)
+        dv_i += self._rng.normal(0, 0.05, self.n_inhibitory) * np.sqrt(dt)
         self.v_i += dv_i
 
         # Detect spikes
@@ -116,5 +125,11 @@ class PINGCircuit:
         return spikes_e, spikes_i
 
     def reset_state(self) -> None:
-        self.v_e = np.random.uniform(0, 0.5, self.n_excitatory)
-        self.v_i = np.random.uniform(0, 0.5, self.n_inhibitory)
+        """Re-randomise membrane voltages from the per-instance RNG.
+
+        Note: reset_state advances the RNG, so calling it does not return
+        the network to its t=0 state. To reproduce a run from scratch,
+        construct a fresh PINGCircuit with the same seed.
+        """
+        self.v_e = self._rng.uniform(0, 0.5, self.n_excitatory)
+        self.v_i = self._rng.uniform(0, 0.5, self.n_inhibitory)
