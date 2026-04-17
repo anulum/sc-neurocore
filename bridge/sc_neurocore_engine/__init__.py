@@ -444,3 +444,23 @@ try:
     _lgssm_rust_available = True
 except ImportError:
     _lgssm_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
+        py_inject_bitflip_u8,
+        py_inject_stuck_at_0_u8,
+        py_inject_stuck_at_1_u8,
+        py_inject_dropout_u8,
+        py_inject_gaussian_u8,
+    )
+
+    __all__ += [
+        "py_inject_bitflip_u8",
+        "py_inject_stuck_at_0_u8",
+        "py_inject_stuck_at_1_u8",
+        "py_inject_dropout_u8",
+        "py_inject_gaussian_u8",
+    ]
+    _fault_inject_rust_available = True
+except ImportError:
+    _fault_inject_rust_available = False
