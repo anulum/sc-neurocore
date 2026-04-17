@@ -89,13 +89,116 @@ The two are mathematically equivalent
 (`s_i = 2*x_i - 1, x_i ∈ {0,1}`, `s_i ∈ {-1,+1}`); the
 representation choice depends on the downstream solver.
 
-`SCBitstreamQUBO` (line 1259) is a specialised QUBO compiler that
-encodes raw SC bitstreams as binary variables — useful when the
-problem is bitstream-level rather than network-level.
+### 3.1 `SCBitstreamQUBO` — three task-specific encodings
 
-`SCPrecisionEncoder` (line 1473) supports `binary` (1-hot per bit)
-or `unary` (thermometer) encoding of analog values into multiple
-qubits. Default 8 bits per value.
+```python
+class SCBitstreamQUBO:
+    def __init__(self, penalty: float = 5.0): ...
+
+    def weight_optimization(target_output, candidate_weights, n_bits=8) -> QUBOModel: ...
+    def pruning(adjacency, importance_scores, max_connections) -> QUBOModel: ...
+```
+
+A specialised QUBO compiler that targets two SC optimisation
+patterns common in research:
+
+#### Weight optimisation
+
+Find binary vector `x ∈ {0, 1}ⁿ` minimising `||target − W @ x||²`.
+
+The QUBO formulation expands the squared error:
+```
+   ||y − Wx||² = xᵀ(WᵀW)x − 2yᵀWx + yᵀy
+```
+- Off-diagonal `Q[i,j] = (WᵀW)[i,j] + (WᵀW)[j,i]` (full
+  upper-triangular)
+- Diagonal `Q[i,i] = (WᵀW)[i,i] − 2(Wᵀy)[i]`
+- Constant `offset = yᵀy` (so the model's true energy is
+  `xᵀQx + offset`)
+
+`n = min(WᵀW.shape[0], n_bits)` so callers can bound the qubit
+count even when the candidate matrix is wider than the budget.
+Returned `QUBOModel.source = "sc_weight_optimization"`.
+
+#### Pruning
+
+Select `max_connections` edges from the existing connectivity that
+maximise the sum of importance scores while honouring the
+cardinality constraint exactly:
+```
+   maximise   Σ importance[i,j] · x[edge(i,j)]
+   subject to Σ x = max_connections
+```
+
+The encoder creates one binary variable per non-zero off-diagonal
+edge of the adjacency, applies `penalty · (Σx − K)²` to enforce
+the constraint, and returns a QUBO whose ground state is the
+chosen edge subset.
+
+Note: the cardinality penalty is the standard QUBO trick — it adds
+`penalty · (1 − 2K)` to every diagonal and `2 · penalty` to every
+off-diagonal pair. With the default `penalty = 5.0`, callers
+should rescale if the importance-score magnitudes are very
+different from unity.
+
+### 3.2 `SCPrecisionEncoder` — three encodings of `[0, 1]` values
+
+```python
+class SCPrecisionEncoder:
+    def __init__(self, encoding: str = "binary", n_bits: int = 8): ...
+
+    def encode(sc_value: float) -> dict[int, int]: ...
+    def decode(qubits: dict[int, int]) -> float: ...
+    def encode_array(values: np.ndarray) -> dict[int, int]: ...
+
+    @property
+    def n_levels(self) -> int: ...
+    def qubits_needed(n_sc_values: int) -> int: ...
+```
+
+Maps continuous SC probabilities in `[0, 1]` to fixed-length qubit
+configurations. Three encodings, each with different qubit-vs-precision
+trade-offs:
+
+| Encoding | Qubits per value | Levels | Good for |
+|----------|-----------------:|-------:|----------|
+| `binary` | `n_bits` | `2^n_bits` | dense precision (8 bits → 256 levels) |
+| `unary` (thermometer) | `n_bits` | `n_bits + 1` | robust to single-bit errors |
+| `one_hot` | `n_bits` | `n_bits` | categorical, no inter-bit coupling |
+
+`encode(v)` clamps `v` to `[0, 1]`, scales to the encoding's level
+count, and returns a `{qubit_idx: 0|1}` dict for one value.
+`encode_array(values)` packs an N-element array into a single global
+dict by offsetting qubit indices by `idx * n_bits`. `decode(qubits)`
+reverses the mapping per encoding (binary positional sum, unary
+count of 1s, one-hot index of the 1-bit).
+
+Round-trip accuracy:
+- binary: `|encode(v) − decode(...)| ≤ 1 / (2^n_bits − 1)` (e.g.
+  `≤ 1/255 ≈ 0.004` at `n_bits=8`)
+- unary: `≤ 1 / n_bits`
+- one_hot: `≤ 1 / (n_bits − 1)`
+
+`n_levels` exposes the level count; `qubits_needed(n_sc_values)`
+returns `n_sc_values * n_bits` so callers can size `IsingModel` /
+`QUBOModel` correctly before encoding.
+
+Construction with an unknown encoding string raises `ValueError`.
+
+### 3.3 When to use which compiler
+
+| Problem | Use |
+|---------|-----|
+| "I have an SC network adjacency, give me an Ising model for D-Wave." | `SCToIsing(adjacency)` |
+| "Same, but I want the QUBO form." | `SCToQUBO(adjacency)` |
+| "I want to find binary weights that match a target output." | `SCBitstreamQUBO.weight_optimization(...)` |
+| "I want to prune to exactly K edges by importance." | `SCBitstreamQUBO.pruning(adj, importance, K)` |
+| "I have continuous values; help me encode them into qubits." | `SCPrecisionEncoder(encoding=..., n_bits=...).encode_array(...)` |
+
+The four classes do not chain by default — each produces its own
+`IsingModel` or `QUBOModel` (or a per-value qubit dict for the
+encoder). Combining them (e.g. encode-then-prune) requires
+caller-side qubit-index bookkeeping.
 
 ---
 
@@ -313,12 +416,18 @@ See §6. Headline issue. Install engine wheel, run benchmark
 matrix, update §7 with the comparison. Until then the "100×"
 docstring claim is aspirational.
 
-### 11.2 `SCBitstreamQUBO` and `SCPrecisionEncoder` are advanced — undocumented in this page
+### 11.2 `SCBitstreamQUBO` and `SCPrecisionEncoder` (DOCUMENTED by task #50)
 
-The two specialised compilers (lines 1259, 1473) handle bitstream-
-level QUBO and multi-bit precision encoding. They have separate
-APIs and use cases that warrant their own subsection or sister
-page. Tracked as task #50.
+Both classes now have dedicated subsections under §3:
+- §3.1 covers `SCBitstreamQUBO.weight_optimization` and `.pruning`
+  with the QUBO derivation, cardinality penalty pattern, and
+  `source` field outputs.
+- §3.2 covers `SCPrecisionEncoder` with the three encodings
+  (binary / unary / one_hot), per-encoding qubit-vs-level
+  trade-off table, and round-trip accuracy bounds.
+- §3.3 is a "when to use which compiler" table covering all four
+  compilers in this bridge (SCToIsing, SCToQUBO, SCBitstreamQUBO,
+  SCPrecisionEncoder).
 
 ### 11.3 No D-Wave hardware-parity test
 
