@@ -198,6 +198,7 @@ nav:
       - Network Simulation Engine: api/network.md
       - Monitors &amp; Stimulus Sources: api/monitor.md
       - MPI Distributed Runner: api/mpi_runner.md
+      - Cortical Column Microcircuit: api/cortical_column.md
       - Core:
           - Neuron Model Catalogue: api/neuron_models.md
           - Neurons: api/neurons.md
