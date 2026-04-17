@@ -386,3 +386,51 @@ __all__ = [
     *(_AI_MODELS if _ai_available else []),
     *(["py_simulate_ei_network", "py_batch_simulate"] if _studio_rust_available else []),
 ]
+
+
+# ─── Bridges Rust acceleration paths ──────────────────────────────────
+# The bridges/ Python modules (quantum_annealing, dna_mapper, photonic_noc)
+# probe these names with `try: from sc_neurocore_engine import py_qa_*`.
+# Re-exporting them at this top-level lets the bridges' _HAS_RUST_*
+# flags resolve to True when the engine wheel is installed.
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
+        py_qa_batch_ising_energy,
+        py_qa_gauge_transform,
+        py_qa_generate_gauges,
+        py_qa_greedy_partition,
+        py_qa_ising_energy,
+        py_qa_simulated_annealing,
+    )
+
+    __all__ += [
+        "py_qa_batch_ising_energy",
+        "py_qa_gauge_transform",
+        "py_qa_generate_gauges",
+        "py_qa_greedy_partition",
+        "py_qa_ising_energy",
+        "py_qa_simulated_annealing",
+    ]
+    _qa_rust_available = True
+except ImportError:
+    _qa_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
+        py_dna_check_cross_hybridization,
+        py_dna_design_orthogonal_set,
+        py_dna_design_sequence,
+        py_dna_detect_hairpins,
+        py_dna_simulate_kinetics,
+    )
+
+    __all__ += [
+        "py_dna_check_cross_hybridization",
+        "py_dna_design_orthogonal_set",
+        "py_dna_design_sequence",
+        "py_dna_detect_hairpins",
+        "py_dna_simulate_kinetics",
+    ]
+    _dna_rust_available = True
+except ImportError:
+    _dna_rust_available = False
