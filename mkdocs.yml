@@ -209,6 +209,7 @@ nav:
       - Speculative Bridges:
           - DNA Mapper: api/bridges/dna_mapper.md
           - Photonic NoC: api/bridges/photonic_noc.md
+          - Quantum Annealing: api/bridges/quantum_annealing.md
       - Core:
           - Neuron Model Catalogue: api/neuron_models.md
           - Neurons: api/neurons.md
