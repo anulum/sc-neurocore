@@ -200,6 +200,7 @@ nav:
       - MPI Distributed Runner: api/mpi_runner.md
       - Cortical Column Microcircuit: api/cortical_column.md
       - Gamma Oscillation (PING): api/gamma_oscillation.md
+      - Neuromorphic Swarm Control: api/swarm.md
       - Core:
           - Neuron Model Catalogue: api/neuron_models.md
           - Neurons: api/neurons.md
