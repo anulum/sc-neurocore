@@ -117,20 +117,23 @@ with `k = max(degree_mean, 1)` and divide-by-zero guards for small
 graphs. Sigma > 1 indicates small-world structure (high clustering
 relative to random, with comparable path length).
 
-### 3.2 Sampled BFS for `avg_path_length`
+### 3.2 Sampled BFS for `avg_path_length` (CONFIGURABLE since task #41)
 
-`_avg_path_length` (line 118) samples up to **100 source nodes**
-rather than running an all-pairs BFS:
+`_avg_path_length` samples up to `self.n_path_samples` source
+nodes rather than running an all-pairs BFS:
 
 ```python
-for src in range(min(self.N, 100)):
+cap = self.n_path_samples if self.n_path_samples > 0 else self.N
+for src in range(min(self.N, cap)):
     dist = self._bfs(A, src)
     ...
 ```
 
-For N > 100 this is an approximation, not a full
-all-pairs-shortest-path. The constant 100 is hard-coded and not
-exposed as a parameter. Tracked as task #41.
+The constructor accepts `n_path_samples: int = 100`. For
+`N <= n_path_samples` the result is the true all-pairs average;
+for larger graphs it samples the first `n_path_samples` source
+nodes deterministically. Pass `n_path_samples=0` to disable the
+cap and force full all-pairs (expensive at N >> 100).
 
 ### 3.3 Directed-graph handling
 
@@ -189,7 +192,7 @@ before constructing the analyser.
 | 4 | Benchmarks | ✅ PASS | §4 measured this session |
 | 5 | Performance docs | ✅ PASS | §4 |
 | 6 | Documentation page | ✅ PASS | This page (upgraded from a 21-line stub) |
-| 7 | Rules followed | ⚠️ WARN | SPDX header ✅. **`modularity` field declared but never populated** (§6.1 below). **`avg_path_length` is sampled at 100 sources without a parameter to control it** (§3.2). British English clean. No `# noqa`, no `# type: ignore`. |
+| 7 | Rules followed | ⚠️ WARN | SPDX header ✅. **`modularity` field declared but never populated** (§6.1 below) — task #42 still open. `avg_path_length` sample cap is now exposed via the `n_path_samples` constructor argument (closes task #41). British English clean. No `# noqa`, no `# type: ignore`. |
 
 Net: **1 WARN, 1 FAIL.**
 
@@ -209,19 +212,13 @@ Louvain) computation, or remove the field. Tracked as task #42.
 
 See §6.1. Headline issue for callers who depend on the field.
 
-### 7.2 `avg_path_length` capped at 100 BFS sources (task #41)
+### 7.2 `avg_path_length` sample cap (FIXED by task #41)
 
-For N > 100 the computation is a **sample mean over 100 source
-nodes**, not the full all-pairs average. The cap is hard-coded at
-`analyzer.py:123`:
-
-```python
-for src in range(min(self.N, 100)):  # sample for large graphs
-```
-
-Either expose a `n_path_samples` parameter, document the
-approximation in the docstring, or switch to a faster algorithm
-(Brandes 2001 for centrality + path length).
+The cap is now exposed as a constructor argument
+(`n_path_samples: int = 100`). Pass `n_path_samples=0` for full
+all-pairs (expensive at N >> 100), or any other positive integer
+to override the default. See §3.2 and the regression class
+`tests/test_graph_topology.py::TestPathSampleCap`.
 
 ### 7.3 Naming overlap with `sc_neurocore.network.topology`
 
