@@ -434,3 +434,13 @@ try:
     _dna_rust_available = True
 except ImportError:
     _dna_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
+        py_lgssm_kalman_filter,
+    )
+
+    __all__ += ["py_lgssm_kalman_filter"]
+    _lgssm_rust_available = True
+except ImportError:
+    _lgssm_rust_available = False

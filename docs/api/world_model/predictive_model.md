@@ -148,8 +148,8 @@ Mojo + Python fallback). Current state:
 
 | Backend | Status | Tracking |
 |---|---|---|
-| **python** (NumPy `linalg.solve`) | ✅ implemented (this commit) | this module |
-| **rust** (PyO3 + `ndarray-linalg` LAPACK) | ⏳ followup | task #67 |
+| **python** (NumPy `linalg.solve`) | ✅ implemented | this module |
+| **rust** (PyO3 + `ndarray` Cholesky) | ✅ implemented | `engine/src/lgssm.rs` (this commit) |
 | **julia** (JuliaCall + `KalmanFilters.jl`) | ⏳ followup | task #68 |
 | **mojo** (GPU Kalman via Mojo) | ⏳ blocked | task #69 (Mojo not pip-distributable yet) |
 | **go** (gonum + cgo) | ⏳ followup | task #70 |
@@ -175,11 +175,25 @@ Workload: 4-D state, 3-D obs, T=200 sequence sampled from the
 true model. Median + min over 5 repeats. Hardware: Linux 6.17
 x86_64, NumPy 2.2.0, Python 3.12.3.
 
-| Workload | Backend | Median | Min |
-|---|---|---:|---:|
-| Forward Kalman filter | python | 9.05 ms | 8.37 ms |
-| RTS smoother | python | 5.25 ms | 3.74 ms |
-| EM (10 iters) | python | 171.9 ms | 160.5 ms |
+| Workload | Backend | Median | Min | Speedup vs Python |
+|---|---|---:|---:|---:|
+| Forward Kalman filter | python | 15.88 ms | 11.63 ms | 1.0× |
+| Forward Kalman filter | **rust** | **1.10 ms** | **1.00 ms** | **14.4×** |
+| RTS smoother | python | 4.31 ms | 3.16 ms | 1.0× |
+| EM (10 iters) | python | 119.1 ms | 68.3 ms | 1.0× |
+
+Both backends produce **identical log-likelihood** to ≤ 1e-9
+absolute tolerance (verified by
+`test_rust_parity_log_likelihood_matches_python`); the same
+holds for filtered means and covariances. The Rust speedup is
+14.4× on the (T=200, d=4, p=3) workload because the Python
+path is dominated by per-step NumPy overhead at small
+matrix sizes; Rust's Cholesky-based PSD inversion in pure
+ndarray avoids the overhead.
+
+The RTS smoother and EM learner currently dispatch only to the
+Python path; followups #67 (extend Rust to RTS + EM) and
+#68/#69/#70 (Julia / Mojo / Go) track the rest.
 
 Captured run in
 `benchmarks/results/bench_predictive_model.json`.
@@ -210,7 +224,7 @@ tests/test_interfaces_generative_worldmodel.py::TestSCPlanner --no-cov`
 |---|-----------|--------|--------|
 | 1 | Pipeline wiring | ✅ PASS | `world_model/__init__` re-exports preserved; SCPlanner consumer still passes |
 | 2 | Multi-angle tests | ✅ PASS | 31 tests across 3 files; PSD invariance, EM monotonicity, identifiability caveat |
-| 3 | Acceleration path | ⚠️ WARN | python only; rust/julia/mojo/go tracked as #67-#70 |
+| 3 | Acceleration path | ⚠️ WARN | python + **rust** (Kalman filter only); julia/mojo/go tracked as #68-#70 |
 | 4 | Benchmarks | ✅ PASS | `benchmarks/bench_predictive_model.py` committed; multi-backend harness handles unavailable backends gracefully |
 | 5 | Performance docs | ✅ PASS | §8 with measured numbers |
 | 6 | Documentation page | ✅ PASS | This page |
