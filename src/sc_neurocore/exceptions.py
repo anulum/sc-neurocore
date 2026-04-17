@@ -33,50 +33,106 @@ class SCEncodingError(SCNeuroError, ValueError):
 
 
 class SCConfigError(SCNeuroError, ValueError):
-    """Invalid configuration parameter (layer size, threshold, etc.)."""
+    """Invalid configuration parameter (layer size, threshold, etc.).
+
+    Reserved for future use — v3.14.0 callers raise plain
+    ``ValueError`` for configuration errors. Migration tracked
+    under task #36.
+    """
 
 
 class SCWeightError(SCNeuroError, ValueError):
-    """Weight value or shape mismatch."""
+    """Weight value or shape mismatch.
+
+    Reserved for future use — v3.14.0 weight loaders raise plain
+    ``ValueError`` or ``KeyError`` for shape/value errors.
+    Migration tracked under task #36.
+    """
 
 
 class SCCompilerError(SCNeuroError, ValueError):
-    """Compiler pipeline configuration or target error."""
+    """Compiler pipeline configuration or target error.
+
+    Raised by ``sc_neurocore.compiler.pipeline`` for unknown FPGA
+    target, invalid output names, and path-escape detection.
+    """
 
 
 # --- Runtime exceptions ---
 
 
 class SCDependencyError(SCNeuroError, RuntimeError):
-    """Optional dependency (JAX, Torch, PennyLane, Qiskit) not installed."""
+    """Optional dependency (JAX, Torch, PennyLane, Qiskit) not installed.
+
+    Raised by JAX backend, quantum hardware bridge, learning
+    callbacks (W&B, TensorBoard) and similar feature-gated paths.
+    """
 
 
 class SCHardwareError(SCNeuroError, RuntimeError):
-    """FPGA/hardware driver or bitstream error."""
+    """FPGA/hardware driver or bitstream error.
+
+    Raised by the PYNQ driver (missing IP block) and by Verilog
+    export when the model is not in the LIF whitelist.
+    """
 
 
 # --- Existing specific exceptions ---
 
 
 class BitstreamOverflowError(SCEncodingError):
-    """Bitstream length exceeds the maximum supported width."""
+    """Bitstream length exceeds the maximum supported width.
+
+    Reserved for future use — v3.14.0 bitstream encoders saturate
+    silently or raise plain ``ValueError`` for related issues
+    (e.g. the recent Q8.8 dt-underflow guard). Migration tracked
+    under task #36.
+    """
 
 
 class SeedCollisionError(SCNeuroError):
-    """Two encoders received the same LFSR seed, breaking decorrelation."""
+    """Two encoders received the same LFSR seed, breaking decorrelation.
+
+    Reserved for future use — v3.14.0 the encoder API does not
+    detect seed collisions. Implementing this would require a
+    global seed registry across all encoders. Tracked under
+    task #36.
+    """
 
 
 class BitwidthMismatchError(SCNeuroError):
-    """Operands have incompatible fixed-point widths."""
+    """Operands have incompatible fixed-point widths.
+
+    Reserved for future use — v3.14.0 the compiler hard-codes
+    Q8.8 throughout, so multi-width layouts are not supported.
+    This exception will fire once the compiler accepts mixed
+    widths. Tracked under task #36.
+    """
 
 
 class CoverageGateError(SCNeuroError):
-    """Test coverage fell below the required threshold."""
+    """Test coverage fell below the required threshold.
+
+    Reserved for future use — v3.14.0 coverage gating lives in
+    CI workflow YAML, not in Python code. The exception is here
+    so coverage-aware tooling has a stable raise target.
+    Tracked under task #36.
+    """
 
 
 class HardwareSimMismatchError(SCHardwareError):
-    """Python golden model and Verilog RTL produced different results."""
+    """Python golden model and Verilog RTL produced different results.
+
+    Reserved for future use — v3.14.0 the cosim suite raises
+    plain ``AssertionError`` from pytest assertions instead of
+    this typed exception. Migration tracked under task #36.
+    """
 
 
 class IRCompilationError(SCCompilerError):
-    """IR graph failed verification or code generation."""
+    """IR graph failed verification or code generation.
+
+    Reserved for future use — v3.14.0 the compiler raises the
+    parent ``SCCompilerError`` (line 90 of pipeline.py)
+    rather than this leaf type. Migration tracked under task #36.
+    """
