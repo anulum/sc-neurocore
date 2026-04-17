@@ -202,6 +202,7 @@ nav:
       - Gamma Oscillation (PING): api/gamma_oscillation.md
       - Neuromorphic Swarm Control: api/swarm.md
       - Neuromorphic Datasets: api/datasets.md
+      - Hardware Drivers: api/drivers.md
       - Core:
           - Neuron Model Catalogue: api/neuron_models.md
           - Neurons: api/neurons.md
