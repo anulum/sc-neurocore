@@ -177,3 +177,168 @@ def test_studio_command_via_main(capsys):
         rc = _run_main("studio")
     assert rc == 0
     m_studio.assert_called_once_with(8001)
+
+
+# ---------------------------------------------------------------------------
+# Deploy command
+# ---------------------------------------------------------------------------
+
+
+class TestDeployCommand:
+    """Tests for `sc-neurocore deploy ...` and the underlying _cmd_deploy."""
+
+    def test_deploy_without_model_arg_returns_1(self, capsys):
+        """`sc-neurocore deploy` with no model argument prints usage and exits 1."""
+        rc = _run_main("deploy")
+        assert rc == 1
+        out = capsys.readouterr().out
+        assert "deploy requires a model file" in out
+
+    def test_deploy_unsupported_extension_returns_1(self, capsys, tmp_path):
+        """A model with an unsupported extension exits 1 with a clear message."""
+        from sc_neurocore.cli import _cmd_deploy
+
+        bogus = tmp_path / "model.onnx"
+        bogus.write_bytes(b"\x00")
+        rc = _cmd_deploy(str(bogus), "ice40", str(tmp_path / "out"), dt=1.0, bitstream_length=256)
+        assert rc == 1
+        assert "unsupported file format" in capsys.readouterr().out
+
+    def test_deploy_pytorch_writes_verilog_and_hdl_dir(self, tmp_path, capsys):
+        """A `.pt` checkpoint with two Linear layers compiles to a Verilog project."""
+        torch = pytest.importorskip("torch")
+
+        from sc_neurocore.cli import _cmd_deploy
+
+        # Build a minimal 2-layer Linear stack and save its state_dict
+        model = torch.nn.Sequential(
+            torch.nn.Linear(4, 8),
+            torch.nn.ReLU(),
+            torch.nn.Linear(8, 2),
+        )
+        ckpt = tmp_path / "tiny.pt"
+        torch.save(model.state_dict(), ckpt)
+
+        out_dir = tmp_path / "deploy_out"
+        rc = _cmd_deploy(str(ckpt), "ice40", str(out_dir), dt=1.0, bitstream_length=64)
+        assert rc == 0
+
+        # Generated SystemVerilog
+        sv = out_dir / "sc_deploy_lif.sv"
+        assert sv.exists() and sv.stat().st_size > 0
+
+        # Makefile (Yosys flow → ice40)
+        assert (out_dir / "Makefile").exists()
+
+        # README in the deploy dir
+        readme = (out_dir / "README.md").read_text()
+        assert "ice40" in readme
+
+    def test_deploy_emits_vivado_tcl_for_artix7(self, tmp_path):
+        """artix7 target should emit a project.tcl, not a Makefile."""
+        torch = pytest.importorskip("torch")
+
+        from sc_neurocore.cli import _cmd_deploy
+
+        model = torch.nn.Sequential(torch.nn.Linear(4, 4))
+        ckpt = tmp_path / "tiny.pt"
+        torch.save(model.state_dict(), ckpt)
+
+        out_dir = tmp_path / "vivado_out"
+        rc = _cmd_deploy(str(ckpt), "artix7", str(out_dir), dt=1.0, bitstream_length=64)
+        assert rc == 0
+        assert (out_dir / "project.tcl").exists()
+        assert not (out_dir / "Makefile").exists()
+        # README mentions artix7
+        assert "artix7" in (out_dir / "README.md").read_text()
+
+    def test_deploy_via_main_dispatcher(self, tmp_path):
+        """`sc-neurocore deploy model.pt --target ice40 -o ...` end-to-end via main()."""
+        torch = pytest.importorskip("torch")
+
+        model = torch.nn.Sequential(torch.nn.Linear(2, 2))
+        ckpt = tmp_path / "m.pt"
+        torch.save(model.state_dict(), ckpt)
+
+        out = tmp_path / "deployed"
+        rc = _run_main("deploy", str(ckpt), "--target", "ice40", "-o", str(out))
+        assert rc == 0
+        assert (out / "sc_deploy_lif.sv").exists()
+
+
+# ---------------------------------------------------------------------------
+# Serve command
+# ---------------------------------------------------------------------------
+
+
+class TestServeCommand:
+    """Tests for `sc-neurocore serve ...` and the underlying _cmd_serve."""
+
+    def test_serve_without_model_arg_returns_1(self, capsys):
+        """`sc-neurocore serve` with no model argument prints usage and exits 1."""
+        rc = _run_main("serve")
+        assert rc == 1
+        out = capsys.readouterr().out
+        assert "serve requires a model file" in out
+
+    def test_serve_rejects_non_nir_extension(self, capsys):
+        """`.pt` and other extensions are not yet supported by serve; exit 1."""
+        from sc_neurocore.cli import _cmd_serve
+
+        rc = _cmd_serve("model.pt", port=8001, dt=1.0)
+        assert rc == 1
+        assert "supports .nir files only" in capsys.readouterr().out
+
+    def test_serve_loads_nir_and_blocks_in_server(self, tmp_path, capsys):
+        """Successful path: read NIR, build Network, start blocking SpikeServer."""
+        from sc_neurocore.cli import _cmd_serve
+
+        nir_path = tmp_path / "model.nir"
+        nir_path.write_bytes(b"")  # contents are mocked away
+
+        # Fake graph and Network — we only need topo_order length
+        fake_graph = mock.MagicMock()
+        fake_network = mock.MagicMock()
+        fake_network.topo_order = ["a", "b", "c"]
+
+        # Build a fake SpikeServer that records start() and returns immediately.
+        fake_server_instance = mock.MagicMock()
+        fake_server_cls = mock.MagicMock(return_value=fake_server_instance)
+
+        # Patch the lazy imports inside _cmd_serve via sys.modules
+        fake_nir = _fake_module("nir", read=mock.MagicMock(return_value=fake_graph))
+        fake_bridge = _fake_module(
+            "sc_neurocore.nir_bridge",
+            from_nir=mock.MagicMock(return_value=fake_network),
+        )
+        fake_serve_mod = _fake_module(
+            "sc_neurocore.serve",
+            SpikeServer=fake_server_cls,
+        )
+
+        with mock.patch.dict(
+            "sys.modules",
+            {
+                "nir": fake_nir,
+                "sc_neurocore.nir_bridge": fake_bridge,
+                "sc_neurocore.serve": fake_serve_mod,
+            },
+        ):
+            rc = _cmd_serve(str(nir_path), port=8123, dt=1.0)
+
+        assert rc == 0
+        # SpikeServer was constructed with the fake network and the given port
+        fake_server_cls.assert_called_once_with(fake_network, port=8123)
+        # And started in blocking mode
+        fake_server_instance.start.assert_called_once_with(blocking=True)
+        # Confirmation print mentions the node count
+        assert "Loaded NIR graph with 3 nodes" in capsys.readouterr().out
+
+    def test_serve_via_main_dispatcher_routes_to_cmd_serve(self, tmp_path):
+        """`sc-neurocore serve model.nir --port N` reaches _cmd_serve with the right args."""
+        nir_path = tmp_path / "x.nir"
+        nir_path.write_bytes(b"")
+        with mock.patch("sc_neurocore.cli._cmd_serve", return_value=0) as m_serve:
+            rc = _run_main("serve", str(nir_path), "--port", "9000", "--dt", "1.0")
+        assert rc == 0
+        m_serve.assert_called_once_with(str(nir_path), 9000, 1.0)
