@@ -342,6 +342,22 @@ def compile_to_verilog(
         Synthesizable Verilog source code.
     """
     q = Q88(data_width=data_width, fraction=fraction)
+
+    # Reject dt that quantises to zero in the chosen fixed-point format.
+    # Without this guard the compiler silently emits Verilog where every
+    # dv update is multiplied by 0, producing a frozen membrane voltage.
+    if neuron.dt != 0.0:
+        dt_quantised = int(round(neuron.dt * (1 << fraction)))
+        if dt_quantised == 0:
+            min_representable = 1.0 / (1 << fraction)
+            raise ValueError(
+                f"dt={neuron.dt} underflows in Q{data_width - fraction}.{fraction}: "
+                f"smallest representable non-zero value is {min_representable} "
+                f"(neuron.dt * 2**{fraction} = {neuron.dt * (1 << fraction)} → 0). "
+                f"Use dt >= {min_representable} (e.g. dt=1.0 for 1-step intervals), "
+                f"or pass a wider fraction (e.g. Q4.12 via fraction=12) to the compiler."
+            )
+
     state_vars = set(neuron.equations.keys())
 
     # Build parameter map: Python name → Verilog parameter name

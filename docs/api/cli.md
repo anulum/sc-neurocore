@@ -129,9 +129,9 @@ The generated `lif_demo.v` is 45 lines (Q8.8 fixed-point, 16-bit signed
 parameters) and synthesises with Yosys for ICE40/ECP5 targets when
 `--synthesize` is passed.
 
-> **Default `--dt 0.001` produces dead Verilog.** See
-> [Section 9](#9-known-issues). Use `--dt 1.0` while the bug is open
-> (followup task tracked in session log).
+> **Default changed to `--dt 1.0`.** See [Section 9](#9-known-issues)
+> for the history. The compiler now rejects values that quantise to 0
+> in Q8.8 with an actionable `ValueError`.
 
 ### 2.5 `deploy`
 
@@ -166,7 +166,7 @@ Loads a `.nir` graph and starts `sc_neurocore.serve.SpikeServer` in blocking
 mode on the configured port. Other formats are rejected with exit code 1.
 
 ```bash
-sc-neurocore serve model.nir --port 8001 --dt 0.001
+sc-neurocore serve model.nir --port 8001 --dt 1.0
 ```
 
 ### 2.7 `studio`
@@ -413,30 +413,58 @@ helpers.
 
 ## 9. Known Issues
 
-### 9.1 `--dt 0.001` (default) silently produces dead Verilog
+### 9.1 `--dt 0.001` (was: silent dead Verilog, now: fail-fast)
 
 **Discovered:** 2026-04-17 while writing this doc.
-**Severity:** HIGH — silent correctness bug.
-**Reproduce:**
+**Severity:** HIGH — silent correctness bug in v3.14.0.
+**Status:** **fixed** by task #7. The compiler now raises `ValueError`
+on Q8.8 dt underflow and the CLI default has been changed from
+`--dt 0.001` to `--dt 1.0`.
+
+**Original behaviour (v3.14.0):** `--dt 0.001` (1 ms) was encoded into
+Q8.8 fixed-point as `0.001 * 256 = 0.256`, which truncated to `0`. The
+generated Verilog multiplied the `dv` update by zero on every cycle, so
+the membrane voltage never changed. The bug was silent — no warning, no
+error.
+
+**Current behaviour:**
+
+- The CLI default is `--dt 1.0` (one timestep per Q8.8 LSB → `16'sd256`
+  in the generated multiplier).
+- Any `dt` that quantises to 0 in the chosen fixed-point format raises
+  `ValueError` from `compile_to_verilog` with an actionable message:
+  ```
+  ValueError: dt=0.001 underflows in Q8.8: smallest representable
+  non-zero value is 0.00390625 (neuron.dt * 2**8 = 0.256 → 0).
+  Use dt >= 0.00390625 (e.g. dt=1.0 for 1-step intervals), or pass
+  a wider fraction (e.g. Q4.12 via fraction=12) to the compiler.
+  ```
+- `dt=0.0` is still accepted (degenerate but legal — produces a
+  non-advancing model, useful for certain test patterns).
+- The `fraction` argument to `compile_to_verilog` lets callers widen the
+  fixed-point format (e.g. `fraction=12` for Q4.12 accepts `dt=0.001`).
+
+**Reproduce the new behaviour:**
 
 ```bash
+# default dt=1.0 succeeds
 sc-neurocore compile "dv/dt=-(v-E_L)/tau_m" \
     --threshold "v>-50" --reset "v=-65" \
     --params "tau_m=10,E_L=-65" --init "v=-65"
-# (no --dt, default 0.001)
 grep _dt_mul_v build/sc_equation_neuron.v
-# wire signed [31:0] _dt_mul_v = (...) * 16'sd0;   ← dt rounded to 0
+# wire signed [31:0] _dt_mul_v = (...) * 16'sd256;   ← non-zero
+
+# explicit dt=0.001 raises with actionable message
+sc-neurocore compile "dv/dt=-v/tau" \
+    --threshold "v>-50" --reset "v=-65" \
+    --params "tau=10" --init "v=-65" --dt 0.001
+# ValueError: dt=0.001 underflows in Q8.8: ...
 ```
 
-**Root cause:** the default `--dt 0.001` (1 ms) is encoded into Q8.8
-fixed-point as `0.001 * 256 = 0.256`, which truncates to `0`. The generated
-Verilog multiplies the `dv` update by zero on every cycle, so the membrane
-voltage never changes.
-
-**Workaround:** pass `--dt 1.0` (or any value ≥ `1/256 ≈ 0.0039`) until the
-underlying compiler either auto-scales `dt` or warns on Q8.8 underflow.
-
-**Tracking:** session task #7 (`FOLLOW-UP: fix CLI dt=0.001 Q8.8 underflow`).
+Regression tests: `tests/test_equation_compiler.py::TestDtUnderflowGuard`
+(7 cases covering raise, message content, boundary at `1/256`,
+`dt=0.0` legality, wider-fraction acceptance, CLI default success,
+CLI explicit-dt raise).
 
 ### 9.2 `compile` / `deploy` / `serve` lack dedicated tests
 
@@ -509,15 +537,16 @@ Multi-angle dimensions **missing**:
 | # | Dimension | Status | Detail |
 |---|-----------|--------|--------|
 | 1 | Pipeline wiring | ✅ PASS | Console script registered; every `_cmd_*` reaches a downstream public symbol |
-| 2 | Multi-angle tests | ⚠️ WARN | 14 tests pass; no coverage for `compile`/`deploy`/`serve` (task #8) |
+| 2 | Multi-angle tests | ⚠️ WARN | 14 cli tests + 7 dt-underflow tests in `test_equation_compiler.py::TestDtUnderflowGuard` pass; no end-to-end coverage for `_cmd_deploy`/`_cmd_serve` (task #8) |
 | 3 | Rust path | N/A | Dispatch-only; engine is queried for status only |
 | 4 | Benchmarks | N/A | CLI cold-start measured (Section 7); no pytest-benchmark suite for the dispatcher itself |
 | 5 | Performance docs | ✅ PASS | Section 7 (this page) with measured numbers |
 | 6 | Documentation page | ✅ PASS | This page |
 | 7 | Rules followed | ⚠️ WARN | SPDX header present; one undocumented `# type: ignore` (line 298) — see §9.3 |
 
-Net status: **2 WARN, 0 FAIL.** Outstanding follow-ups tracked as session
-tasks #7 and #8.
+Net status: **2 WARN, 0 FAIL.** Outstanding follow-up: task #8
+(end-to-end tests for `_cmd_deploy` and `_cmd_serve`). Task #7 (the
+dt underflow bug) is now closed by this commit.
 
 ---
 

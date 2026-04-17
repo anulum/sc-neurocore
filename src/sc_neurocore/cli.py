@@ -35,7 +35,14 @@ def main() -> int:
     )
     parser.add_argument("--output", "-o", default="build", help="Output directory for deploy")
     parser.add_argument(
-        "--dt", type=float, default=0.001, help="Simulation timestep for NIR import"
+        "--dt",
+        type=float,
+        default=1.0,
+        help=(
+            "Simulation timestep. NIR import uses this verbatim; equation "
+            "compilation uses it as the dv multiplier and rejects values "
+            "that quantise to 0 in Q8.8 (i.e. dt < ~0.004)."
+        ),
     )
     parser.add_argument("--T", type=int, default=256, help="Bitstream length for SC layers")
     parser.add_argument("--port", type=int, default=8001, help="Port for serve command")
