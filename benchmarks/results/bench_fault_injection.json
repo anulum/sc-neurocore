@@ -1,45 +1,95 @@
 {
   "platform": "Linux-6.17.0-20-generic-x86_64-with-glibc2.39",
   "python": "3.12.3",
-  "numpy": "2.2.0",
+  "numpy": "2.2.6",
   "n_bits": 1000000,
   "n_repeats": 5,
   "ber": 0.001,
+  "gaussian_sigma": 0.5,
+  "backends": {
+    "python": {
+      "available": true
+    },
+    "rust": {
+      "available": true
+    },
+    "julia": {
+      "available": true
+    },
+    "go": {
+      "available": true
+    },
+    "mojo": {
+      "available": true,
+      "exempt": true,
+      "reason": "Mojo 0.26 public toolchain lacks stable @export for parametric UnsafePointer args; port blocked pending upstream API stability. See follow-up #69."
+    }
+  },
   "rows": [
     {
       "fault_model": "BIT_FLIP",
-      "n_bits": 1000000,
       "ber": 0.001,
-      "median_ms": 6.84615402133204,
-      "min_ms": 5.652082996675745
+      "python_ms": 16.082376008853316,
+      "python_n_affected": 936,
+      "rust_ms": 3.2253819808829576,
+      "rust_n_affected": 1033,
+      "julia_ms": 6.179438991239294,
+      "julia_n_affected": 985,
+      "go_ms": 8.288996003102511,
+      "go_n_affected": 952,
+      "parity_ok": true
     },
     {
       "fault_model": "STUCK_AT_0",
-      "n_bits": 1000000,
       "ber": 0.001,
-      "median_ms": 16.083673981484026,
-      "min_ms": 13.809661992127076
+      "python_ms": 5.581561999861151,
+      "python_n_affected": 449,
+      "rust_ms": 2.023340988671407,
+      "rust_n_affected": 526,
+      "julia_ms": 5.359563016099855,
+      "julia_n_affected": 467,
+      "go_ms": 8.68330302182585,
+      "go_n_affected": 500,
+      "parity_ok": true
     },
     {
       "fault_model": "STUCK_AT_1",
-      "n_bits": 1000000,
       "ber": 0.001,
-      "median_ms": 12.397701997542754,
-      "min_ms": 11.648537998553365
-    },
-    {
-      "fault_model": "GAUSSIAN_NOISE",
-      "n_bits": 1000000,
-      "ber": 0.001,
-      "median_ms": 63.382004998857155,
-      "min_ms": 59.30747100501321
+      "python_ms": 13.791361008770764,
+      "python_n_affected": 487,
+      "rust_ms": 2.409884997177869,
+      "rust_n_affected": 507,
+      "julia_ms": 4.1945879929699,
+      "julia_n_affected": 518,
+      "go_ms": 10.047184012364596,
+      "go_n_affected": 452,
+      "parity_ok": true
     },
     {
       "fault_model": "DROPOUT",
-      "n_bits": 1000000,
       "ber": 0.001,
-      "median_ms": 15.82746798521839,
-      "min_ms": 11.948508996283635
+      "python_ms": 10.308665019692853,
+      "python_n_affected": 449,
+      "rust_ms": 2.014961006352678,
+      "rust_n_affected": 526,
+      "julia_ms": 3.6336650082375854,
+      "julia_n_affected": 467,
+      "go_ms": 9.44682999397628,
+      "go_n_affected": 500,
+      "parity_ok": true
+    },
+    {
+      "fault_model": "GAUSSIAN_NOISE",
+      "ber": 0.5,
+      "python_ms": 44.52093699364923,
+      "python_n_affected": 158731,
+      "rust_ms": 6.96584300021641,
+      "rust_n_affected": 158137,
+      "julia_ms": 8.04174700169824,
+      "julia_n_affected": 158747,
+      "go_ms": 18.772757990518585,
+      "go_n_affected": 159040,
+      "parity_ok": true
     }
   ]
 }
