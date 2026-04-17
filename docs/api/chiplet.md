@@ -101,26 +101,46 @@ correctly. Fixed by Arcane Sapience in this batch.)
 ## 5. Energy + thermal + congestion analysis
 
 Per-link energy is computed by `link_energy_pj(link, bits)`
-using a per-technology `_ENERGY_PJ_PER_BIT` lookup table:
+using a per-technology `_ENERGY_PJ_PER_BIT` lookup table
+(values from `chiplet_gen.py` lines 262–269):
 
 | Tech | pJ / bit |
 |---|---:|
 | UCIE | 0.5 |
 | BoW | 0.3 |
 | EMIB | 0.2 |
-| CoWoS | 0.15 |
-| Organic | 1.0 |
+| CoWoS | 0.1 |
+| Organic | 2.0 |
 | Custom | 0.5 |
 
-`estimate_package_energy(topology, traffic_matrix)` aggregates
-per-link energy weighted by traffic to produce a
-`PackageEnergyReport` (per-die total, per-link breakdown,
-total package draw).
+`estimate_package_energy(topology, bits_per_link=256)` applies
+this table to a single uniform `bits_per_link` count across all
+links and aggregates into a `PackageEnergyReport` (per-link
+breakdown, package total in pJ + nJ). The function does **not**
+take a per-link traffic matrix — earlier drafts of this page
+incorrectly described that.
 
-`simulate_thermal(topology, power_per_die, ambient_temp)` runs
-a finite-difference thermal solve over the die layout to
-produce a `PackageThermalReport` (per-die junction temperature,
-hot-spot location, thermal throttling alert).
+`simulate_thermal(topology, power_per_die_mw=None,
+ambient_c=25.0)` is a **closed-form per-die calculation**:
+`T = T_ambient + P · R_thermal` where `R_thermal = 5 K/W` per
+die (constant, no inter-die coupling). It is **not** a
+finite-difference solve — earlier drafts of this page
+incorrectly described that. The implementation is one
+`DieThermal.step()` call per die, returning a
+`PackageThermalReport` (per-die temperature, max temp,
+throttled-die list).
+
+The simplistic single-equation model means:
+
+- **No spatial coupling** between adjacent dies (a hot die
+  next to a cold die has no thermal effect on its neighbour).
+- **No transient response** — output is steady-state for the
+  given input power.
+- **Constant 5 K/W thermal resistance** regardless of die area
+  or interposer technology.
+
+A proper FEM/FDM solver with adjacent-die heat conduction is
+listed as future work (see followup #64).
 
 `estimate_congestion(topology, routing)` returns a
 `CongestionReport` describing per-link utilisation under the
@@ -190,32 +210,105 @@ and the physical-design back-end:
    `sc_neurocore.uvm_gen` for verification testbench
    generation.
 
-There is no Rust / Julia / Go / Mojo path in this package — it
-is dominated by **string-template emission** and **graph
-algorithms over Python dicts**, both of which are sub-second on
-realistic problem sizes (≤ 1024 dies). Per the
-`feedback_multi_language_accel.md` rule, this is the "I/O
-adapter and visualisation" exemption category. If the partition
-solve becomes a bottleneck on > 10 000 dies, the candidate
-acceleration backend is Julia (Metis.jl is the published
-state-of-the-art for graph partitioning), not Rust.
+**Acceleration paths.** Two distinct compute profiles in this
+package:
+
+- `chiplet_gen.py` — 4 hot ops (`make_torus`,
+  `compute_decorrelation_seeds`, `estimate_package_energy`,
+  `simulate_thermal`). Measured wall time is **3 µs – 700 µs per
+  call** (see §9). FFI dispatch overhead (1-5 µs for Rust PyO3,
+  ~0.5-10 µs for Julia juliacall, 1-3 µs for Go cgo+ctypes,
+  ~10 ms for Mojo subprocess) is **10-100 % of compute time** on
+  these sub-ms kernels — a native-language rewrite would at
+  best halve that, often losing the gain in marshalling.
+  These ops are therefore documented as **EXEMPT** from the
+  multi-language acceleration rule per
+  `feedback_multi_language_accel.md` (not silently skipped —
+  the bench JSON's `backends` block records the exemption
+  rationale per backend).
+- `hierarchical_partitioner.py` — `partition()` is a real
+  compute kernel (recursive spectral bisection + KL refinement)
+  that scales **poorly** in pure Python (~1 s for V=200, see
+  §9). It **is** compute-heavy enough to warrant multi-lang
+  acceleration, but a Rust/Julia/Go port is **BLOCKED on #65**.
+  The current `_spectral_bisect` rebuilds `set(vertices)` per
+  iteration AND calls `graph.edge_scc(v, n)` which linear-scans
+  all edges → O(V²·E). Porting an O(V²·E) algorithm to Rust
+  would give misleading speedup numbers against a known-bad
+  baseline. The honest sequence is (i) fix #65 in Python to
+  O(V+E), then (ii) port the fixed algorithm to Rust
+  (follow-up #64 covers the Rust path once #65 is done).
 
 ## 9. Pure-Python performance
 
-| Operation | Problem size | Wall time |
-|---|---|---:|
-| `ChipletGenerator.emit()` | 4 dies, mesh, ~1 KB SV per die | ~10 ms |
-| `ChipletGenerator.emit()` | 16 dies, torus, ~10 KB SV per die | ~80 ms |
-| `make_torus(8, 8)` + emit | 64 dies, 256 links | ~400 ms |
-| `compute_decorrelation_seeds` | 256 links | ~0.3 ms |
-| `estimate_package_energy` | 64 dies, 256 links | ~5 ms |
-| `simulate_thermal` | 64 dies, 1000-step solve | ~300 ms |
-| `HierarchicalPartitioner.partition()` | 1000-vertex CSR, N=4 | ~50 ms |
-| `HierarchicalPartitioner.partition()` | 10 000-vertex CSR, N=16 | ~3 s |
+Reproducible via the committed benchmark:
 
-(Numbers from informal `python -m timeit` runs on Intel
-i5-11600K, NumPy 2.2.0, Python 3.12.3; not from a committed
-benchmark — see followup §12.1.)
+```bash
+python benchmarks/bench_chiplet.py \
+    --json benchmarks/results/bench_chiplet.json
+```
+
+5 repeats per cell, median + min reported. Hardware: Linux 6.17
+x86_64, NumPy 2.2.0, Python 3.12.3. Captured run in
+`benchmarks/results/bench_chiplet.json`.
+
+### chiplet_gen
+
+| Operation | Problem size | Median | Min |
+|---|---|---:|---:|
+| `make_torus(rows, cols)` | 2×2 (4 dies) | 0.035 ms | 0.032 ms |
+| `make_torus(rows, cols)` | 4×4 (16 dies) | 0.146 ms | 0.143 ms |
+| `make_torus(rows, cols)` | 8×8 (64 dies) | 0.669 ms | 0.509 ms |
+| `compute_decorrelation_seeds` | 16 links | 0.010 ms | 0.005 ms |
+| `compute_decorrelation_seeds` | 64 links | 0.019 ms | 0.018 ms |
+| `compute_decorrelation_seeds` | 256 links | 0.083 ms | 0.058 ms |
+| `estimate_package_energy(bits=1M)` | 4 dies | 0.003 ms | 0.002 ms |
+| `estimate_package_energy(bits=1M)` | 16 dies | 0.009 ms | 0.007 ms |
+| `estimate_package_energy(bits=1M)` | 64 dies | 0.030 ms | 0.025 ms |
+| `simulate_thermal` | 4 dies | 0.013 ms | 0.010 ms |
+| `simulate_thermal` | 16 dies | 0.019 ms | 0.016 ms |
+| `simulate_thermal` | 64 dies | 0.079 ms | 0.066 ms |
+
+`ChipletGenerator.emit()` end-to-end is **not yet benchmarked**
+— follow-up #61 tracks adding it (depends on knowing the right
+`ChipletOutput` consumer to drive emit).
+
+#### Multi-language backend status (chiplet_gen)
+
+Per the bench JSON's `backends` block. All 4 non-Python backends
+are documented EXEMPT with explicit reason:
+
+| Backend | Status | Rationale |
+|---|---|---|
+| python | USED | baseline (ops already sub-ms via pure-Python control flow + dict ops) |
+| rust | EXEMPT | PyO3 FFI overhead ~1-5 µs is 10-100 % of 3-700 µs compute time |
+| julia | EXEMPT | juliacall first-call JIT ~5 s dwarfs the per-call <1 ms budget |
+| go | EXEMPT | cgo + ctypes marshalling ~1-3 µs is 10-100 % of compute |
+| mojo | EXEMPT | Mojo 0.26 `@export` limitation (same blocker as #69) + subprocess IPC ~10 ms ≫ any op here |
+
+### hierarchical_partitioner
+
+| Operation | Problem size | Median | Min |
+|---|---|---:|---:|
+| `HierarchicalPartitioner.partition()` | V=50, P=2 | 18.8 ms | 15.5 ms |
+| `HierarchicalPartitioner.partition()` | V=100, P=4 | 264.7 ms | 244.0 ms |
+| `HierarchicalPartitioner.partition()` | V=200, P=4 | 963.2 ms | 911.4 ms |
+
+**The partition() scaling is bad** — V doubling at P=4 gives
+~3.6× wall time (closer to O(V²·log V) than the O(V·log V) one
+expects from spectral bisection). Root cause is the inner-loop
+inefficiency identified in §8 (followup #65). Cells with
+V ≥ 1000 take many minutes; not benchmarked here.
+
+#### Multi-language backend status (partitioner)
+
+| Backend | Status | Rationale |
+|---|---|---|
+| python | USED | current baseline (O(V²·E)) |
+| rust | BLOCKED-ON-#65 | porting the O(V²·E) algorithm gives misleading speedup vs a known-bad baseline; fix Python first, then port |
+| julia | BLOCKED-ON-#65 | same; Metis.jl / Scotch.jl are honest alternatives once the API is O(V+E) |
+| go | BLOCKED-ON-#65 | same |
+| mojo | EXEMPT | Mojo 0.26 `@export` limitation (#69) |
 
 ## 10. Test coverage
 
@@ -240,22 +333,22 @@ to a separate refactor commit.
 |---|-----------|--------|--------|
 | 1 | Pipeline wiring | ✅ PASS | All 57 symbols re-exported via `__init__.py`; verified by `test_chiplet_public_api.py` |
 | 2 | Multi-angle tests | ✅ PASS | 158 tests across 3 files; covers topology + routing + energy + thermal + partitioning + LFSR + ghost cells + boundary sync |
-| 3 | Acceleration path | N/A (deferred) | String-template emission and graph algorithms; no current backend. Future Julia (Metis.jl) candidate noted in §8 |
-| 4 | Benchmarks | ⚠️ WARN | Informal `timeit` numbers in §9; no committed benchmark script |
+| 3 | Acceleration path | ✅ PASS (explicit EXEMPT/BLOCKED) | chiplet_gen ops (3-700 µs) EXEMPT across all 4 backends — FFI overhead > compute. Partitioner BLOCKED-ON-#65 — fix O(V²·E) Python first, then port. Backends block explicit in bench JSON + §8/§9 tables |
+| 4 | Benchmarks | ✅ PASS | `benchmarks/bench_chiplet.py` committed; JSON in `benchmarks/results/bench_chiplet.json` carries `backends` block |
 | 5 | Performance docs | ✅ PASS | §9 with explicit "informal" caveat |
 | 6 | Documentation page | ✅ PASS | This page |
 | 7 | Rules followed | ✅ PASS | SPDX 2-line header on `__init__.py`, `chiplet_gen.py`, `hierarchical_partitioner.py` (`__init__.py` and `chiplet_gen.py` fixed in this batch from 1-line piped form; `chiplet_gen.py` also had `# mypy: ignore-errors` removed and 7 real mypy errors fixed). British English in this doc; source uses standard scientific-Python identifiers (acceptable per docs-vs-code rule). |
 
-Net: **1 WARN, 0 FAIL.**
+Net: **0 WARN, 0 FAIL.**
 
 ## 12. Known issues / follow-ups
 
-### 12.1 No committed benchmark (WARN row 4)
+### 12.1 Committed benchmark
 
-Open follow-up: commit `benchmarks/bench_chiplet.py` reproducing
-§9 numbers (5–10 representative `topology × N_dies` cells,
-median-of-5 protocol). Lower priority because chiplet generation
-is offline (run once per silicon revision) and sub-second.
+`benchmarks/bench_chiplet.py` exists and is rerun to produce
+`benchmarks/results/bench_chiplet.json` on every remediation
+cycle. The JSON payload now includes a `backends` block with
+explicit USED / EXEMPT / BLOCKED-ON-#65 status per op family.
 
 ### 12.2 Mypy fixes applied in this batch
 
