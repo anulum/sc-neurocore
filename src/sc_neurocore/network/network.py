@@ -114,6 +114,19 @@ class Network:
         return self._run_python(duration, dt, progress)
 
     def _run_mpi(self, duration: float, dt: float) -> None:
+        # MPIRunner does not honour spike_gating or fim_lambda; refuse
+        # rather than silently producing wrong results.
+        if self._spike_gating:
+            raise NotImplementedError(
+                "spike_gating is not supported by the MPI backend; "
+                "use backend='python' or rebuild without spike_gating"
+            )
+        if self.fim_lambda > 0:
+            raise NotImplementedError(
+                "fim_lambda > 0 (FIM feedback) is not supported by the MPI backend; "
+                "use backend='python'"
+            )
+
         from .mpi_runner import MPIRunner
 
         n_steps = int(round(duration / dt))

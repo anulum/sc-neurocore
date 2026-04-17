@@ -39,15 +39,19 @@ def _require_mpi() -> None:
 
 
 class MPIRunner:
-    """MPI-distributed network simulation for billion-neuron scale.
+    """MPI-distributed network simulation.
 
     Partitions populations across MPI ranks via round-robin assignment.
     Each rank steps only its local populations; spikes propagate via
     ``MPI_Allgatherv`` every timestep.
 
-    Works with both Python and Rust backends per-rank: if the Rust
-    engine is available and all local populations are supported, the
-    rank uses Rust for its local step.
+    Each rank steps its local populations through ``Population.step_all``
+    (pure-Python). Per-rank Rust dispatch is not implemented in
+    v3.14.0; the network's ``backend='auto'`` Rust fast-path is the
+    Python alternative when MPI is not needed. ``spike_gating`` and
+    ``fim_lambda`` are likewise unsupported by this runner — the
+    ``Network._run_mpi`` dispatcher raises ``NotImplementedError``
+    when either is requested with ``backend='mpi'``.
     """
 
     def __init__(self, network: Network) -> None:

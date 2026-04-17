@@ -157,3 +157,21 @@ def test_exchange_spikes_mock():
     assert 1 in result
     np.testing.assert_array_equal(result[0], [1, 0, 1, 0])
     np.testing.assert_array_equal(result[1], [0, 1, 0])
+
+
+def test_run_mpi_raises_on_spike_gating():
+    """Network.run(backend='mpi', spike_gating=True) must refuse — MPIRunner does not honour the flag."""
+    net = _make_network()
+    with pytest.raises(NotImplementedError, match="spike_gating is not supported by the MPI backend"):
+        net.run(0.005, dt=0.001, backend="mpi", spike_gating=True)
+
+
+def test_run_mpi_raises_on_fim_lambda():
+    """Network.run(backend='mpi') must refuse when fim_lambda > 0 — MPIRunner does not call _apply_fim."""
+    from sc_neurocore.network import Network, Population, Projection
+
+    pop = Population("LapicqueNeuron", 4, label="A")
+    proj = Projection(pop, pop, weight=1.0, probability=0.5)
+    net = Network(pop, proj, seed=42, fim_lambda=0.5)
+    with pytest.raises(NotImplementedError, match="fim_lambda > 0 .* is not supported by the MPI backend"):
+        net.run(0.005, dt=0.001, backend="mpi")

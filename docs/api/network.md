@@ -411,7 +411,7 @@ per-rank stepping, but currently dispatches via `Population.step_all`
 - 191 LOC, including a custom spike packing protocol
   (`pop_index | n | spike_data` packed as `int8` blob) and `Allgather` +
   `Allgatherv` choreography.
-- `tests/test_mpi_runner.py` (159 lines, 6 tests) covers MPIRunner via
+- `tests/test_mpi_runner.py` (177 lines, 8 tests) covers MPIRunner via
   mocked `mpi4py` — partition correctness, RuntimeError when mpi4py is
   absent, single-rank end-to-end equivalence with the Python backend,
   cross-rank vs local projection routing, spike-exchange round-trip.
@@ -487,7 +487,7 @@ runtime check. There are no orphan helpers.
 | # | Dimension | Status | Detail |
 |---|-----------|--------|--------|
 | 1 | Pipeline wiring | ✅ PASS | All 18 public symbols wired; backend dispatcher complete |
-| 2 | Multi-angle tests | ⚠️ WARN | 87 tests pass across 8 test files (network_basic 345L, network_coverage 355L, monitors_stimulus 164L, cortical_column 98+132L, gamma_oscillation 63L, topology 94+200L). MPIRunner adds 6 mocked-mpi4py tests (`test_mpi_runner.py`); real multi-rank coverage missing (task #17). `export.py` not directly covered. |
+| 2 | Multi-angle tests | ⚠️ WARN | 87 tests pass across 8 test files (network_basic 345L, network_coverage 355L, monitors_stimulus 164L, cortical_column 98+132L, gamma_oscillation 63L, topology 94+200L). MPIRunner adds 8 mocked-mpi4py tests (`test_mpi_runner.py`); real multi-rank coverage missing (task #17). `export.py` not directly covered. |
 | 3 | Rust path | ⚠️ WARN | `Network._run_rust` exists and tested logically; **engine wheel not installed in this environment** so empirical Rust numbers in §11 are not available. `topology.py`, `_csr_matvec`/`_csr_delayed_matvec`, `update_plasticity` are pure Python — task #13 tracks the Rustification. |
 | 4 | Benchmarks | ✅ PASS | §6.1, §11, §11.1 measured this session. `benchmarks/sc_network_benchmark.py` exists (306 lines) but covers SC pipeline (encode/MAC/decode), not network orchestration — that gap is now filled by §11. |
 | 5 | Performance docs | ✅ PASS | §11 + §6.1 + §11.1 |
@@ -528,7 +528,7 @@ takes a Python-side CSR tuple. Task #13 tracks closing this gap.
 
 ### 14.3 MPIRunner real multi-rank coverage missing
 
-`tests/test_mpi_runner.py` covers 6 paths via mocked `mpi4py`. The
+`tests/test_mpi_runner.py` covers 8 paths via mocked `mpi4py`. The
 custom spike-packing protocol and `Allgatherv` choreography are not
 exercised against real mpi4py + `mpirun -n 2`; a regression in real-MPI
 buffer ordering or datatype matching would not be caught. Task #17
@@ -579,7 +579,7 @@ What the existing tests cover:
 
 What the existing tests do **not** cover:
 
-- `MPIRunner` real multi-rank semantics — 6 mocked-mpi4py tests exist; real `mpirun -n 2` coverage missing (task #17)
+- `MPIRunner` real multi-rank semantics — 8 mocked-mpi4py tests exist; real `mpirun -n 2` coverage missing (task #17)
 - `export_verilog` — no direct test; covered transitively by FPGA flow
   smoke tests at most
 - Performance regressions — no `pytest-benchmark` cases for the network
