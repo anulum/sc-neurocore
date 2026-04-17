@@ -194,6 +194,7 @@ nav:
       - Synthesis Results: hardware/SYNTHESIS_RESULTS.md
   - API Reference:
       - Full Reference: api/API_REFERENCE.md
+      - Command-Line Interface: api/cli.md
       - Core:
           - Neuron Model Catalogue: api/neuron_models.md
           - Neurons: api/neurons.md
