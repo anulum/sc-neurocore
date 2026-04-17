@@ -10,13 +10,19 @@
 import pytest
 
 from sc_neurocore.exceptions import (
-    SCNeuroError,
     BitstreamOverflowError,
-    SeedCollisionError,
     BitwidthMismatchError,
     CoverageGateError,
     HardwareSimMismatchError,
     IRCompilationError,
+    SCCompilerError,
+    SCConfigError,
+    SCDependencyError,
+    SCEncodingError,
+    SCHardwareError,
+    SCNeuroError,
+    SCWeightError,
+    SeedCollisionError,
 )
 
 
@@ -46,16 +52,6 @@ def test_raise_and_catch():
 # "reserved for future use" marker classes so they're at least
 # constructable + catchable).
 # ---------------------------------------------------------------------------
-
-
-from sc_neurocore.exceptions import (  # noqa: E402
-    SCCompilerError,
-    SCConfigError,
-    SCDependencyError,
-    SCEncodingError,
-    SCHardwareError,
-    SCWeightError,
-)
 
 
 @pytest.mark.parametrize(
