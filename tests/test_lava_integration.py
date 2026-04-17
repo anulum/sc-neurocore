@@ -24,6 +24,45 @@ except ImportError:
 REASON = "lava-nc not installed"
 
 
+def test_integrations_init_reexports_helpers():
+    """`from sc_neurocore.integrations import X` works without lava-nc.
+
+    Closes task #33: __init__ now re-exports the 5 always-importable
+    symbols (HAS_LAVA, LoihiNetworkConfig, SCtoLavaConverter,
+    export_weights_loihi, loihi_threshold_from_sc).
+    """
+    from sc_neurocore.integrations import (
+        HAS_LAVA as INIT_HAS_LAVA,
+        LoihiNetworkConfig,
+        SCtoLavaConverter,
+        export_weights_loihi,
+        loihi_threshold_from_sc,
+    )
+
+    assert isinstance(INIT_HAS_LAVA, bool)
+    assert callable(export_weights_loihi)
+    assert callable(loihi_threshold_from_sc)
+    # SCtoLavaConverter is a class; LoihiNetworkConfig is a dataclass
+    assert isinstance(SCtoLavaConverter, type)
+    assert hasattr(LoihiNetworkConfig, "__dataclass_fields__")
+
+
+def test_integrations_init_lava_classes_only_when_has_lava():
+    """SCDenseProcess / PySCDenseModel are exposed only when HAS_LAVA."""
+    import sc_neurocore.integrations as integrations_pkg
+
+    if integrations_pkg.HAS_LAVA:
+        assert "SCDenseProcess" in integrations_pkg.__all__
+        assert "PySCDenseModel" in integrations_pkg.__all__
+        assert hasattr(integrations_pkg, "SCDenseProcess")
+        assert hasattr(integrations_pkg, "PySCDenseModel")
+    else:
+        # Without lava-nc the class names must be absent from the package
+        assert "SCDenseProcess" not in integrations_pkg.__all__
+        assert "PySCDenseModel" not in integrations_pkg.__all__
+        assert not hasattr(integrations_pkg, "SCDenseProcess")
+
+
 @pytest.mark.skipif(not HAS_LAVA, reason=REASON)
 def test_lava_import():
     """Verify lava-nc can be imported."""

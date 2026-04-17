@@ -16,19 +16,28 @@ Brian2) are not implemented in v3.14.0.
 
 ## 1. Public surface
 
-`sc_neurocore.integrations.__init__` is **a docstring-only file** — it
-declares the package purpose ("Framework integrations (Lava/Loihi,
-etc.)") but does not re-export anything. To use the bridge, import
-from the submodule directly:
+`sc_neurocore.integrations.__init__` re-exports the 5 always-importable
+symbols from `lava_bridge.py` plus, conditionally, the 2 Lava-only
+classes:
 
 ```python
-from sc_neurocore.integrations.lava_bridge import (
+# Always works (lava-nc not required)
+from sc_neurocore.integrations import (
+    HAS_LAVA,
+    LoihiNetworkConfig,
     SCtoLavaConverter,
     export_weights_loihi,
     loihi_threshold_from_sc,
-    LoihiNetworkConfig,
 )
+
+# Only when HAS_LAVA is True
+if HAS_LAVA:
+    from sc_neurocore.integrations import SCDenseProcess, PySCDenseModel
 ```
+
+The submodule path
+`from sc_neurocore.integrations.lava_bridge import ...` continues
+to work. Closes task #33.
 
 The module-level `HAS_LAVA: bool` flag in `lava_bridge.py` is `True`
 when the `lava-nc` library is importable. When `HAS_LAVA is False`,
@@ -80,23 +89,31 @@ tests skip.
 
 ---
 
-## 3. Honesty notice — `LoihiDenseProcess` does not exist
+## 3. Docstring + re-exports (FIXED by task #33)
 
-`lava_bridge.py:15-18` says:
+The earlier `lava_bridge.py` module-docstring usage example
+imported a non-existent `LoihiDenseProcess`. The class has always
+been called `SCDenseProcess`, paired with `PySCDenseModel`. The
+docstring is now corrected:
 
-> Usage:
->     from sc_neurocore.integrations.lava_bridge import (
->         SCtoLavaConverter, export_weights_loihi, LoihiDenseProcess,
->     )
+```python
+from sc_neurocore.integrations.lava_bridge import (
+    SCtoLavaConverter, export_weights_loihi, SCDenseProcess,
+)
+```
 
-The actual class name in the source is **`SCDenseProcess`** (line
-121), not `LoihiDenseProcess`. The example as written raises
-`ImportError`. Either rename the class to `LoihiDenseProcess` (the
-intent is clearer) or fix the docstring. Tracked as task #33.
+Plus the package `__init__.py` now re-exports the 5 always-importable
+symbols (so `from sc_neurocore.integrations import X` works for the
+helpers without `lava-nc`) and conditionally exposes `SCDenseProcess`
++ `PySCDenseModel` only when `HAS_LAVA` is True. See §1 for the
+import patterns.
 
-The companion `PySCDenseModel` class also follows the
-`SC*` prefix pattern — these names should probably stay paired.
-Recommended fix: update the docstring to `SCDenseProcess`.
+Regression coverage:
+`tests/test_lava_integration.py::test_integrations_init_reexports_helpers`
+asserts the 5 always-importable names; the companion
+`test_integrations_init_lava_classes_only_when_has_lava` verifies
+the `SCDenseProcess` / `PySCDenseModel` exposure flips with
+`HAS_LAVA`.
 
 ---
 
@@ -275,53 +292,34 @@ of task #33.
 
 | # | Dimension | Status | Detail |
 |---|-----------|--------|--------|
-| 1 | Pipeline wiring | ⚠️ WARN | `lava_bridge.py` internals wire correctly, but `__init__.py` exports nothing — see §1 |
+| 1 | Pipeline wiring | ✅ PASS | `lava_bridge.py` internals wire correctly; `__init__.py` re-exports 5 always-importable symbols + 2 conditional Lava classes (closes task #33; see §1) |
 | 2 | Multi-angle tests | ⚠️ WARN | 3 tests defined but **all skip** without `lava-nc` (Python 3.10 only). No tests cover `export_weights_loihi` / `loihi_threshold_from_sc` / `SCtoLavaConverter` independently of Lava. |
 | 3 | Rust path | N/A | I/O + integer quantisation; downstream Lava is the compute layer |
 | 4 | Benchmarks | ❌ FAIL | None — `lava-nc` unavailable in this env. Not fabricated. |
 | 5 | Performance docs | ⚠️ WARN | §7 is honest but empty. |
 | 6 | Documentation page | ✅ PASS | This page |
-| 7 | Rules followed | ⚠️ WARN | SPDX header on every file ✅. **`LoihiDenseProcess` in usage docstring does not exist** (§3). **`__init__.py` re-exports nothing**. **3+ undocumented `# type: ignore` markers** (lines 87, 101, 121, 135). |
+| 7 | Rules followed | ⚠️ WARN | SPDX header on every file ✅. Docstring + `__init__` re-exports FIXED by task #33 (§3, §10.1, §10.2). **3+ undocumented `# type: ignore` markers** (lines 87, 101, 121, 135) — still open. |
 
-Net: **4 WARN, 1 FAIL.** Most of the WARNs trace back to the `lava-nc`
+Net: **3 WARN, 1 FAIL.** Three WARNs trace back to the `lava-nc`
 Python-version constraint; the FAIL is the inability to benchmark
-without it.
+without it. Task #33 closed in this session.
 
 ---
 
 ## 10. Known issues
 
-### 10.1 `LoihiDenseProcess` referenced in docstring but undefined
+### 10.1 `LoihiDenseProcess` docstring (FIXED by task #33)
 
-See §3. Fix: update docstring to `SCDenseProcess`, or rename the
-class. Tracked as task #33.
+The earlier docstring referenced a non-existent class. Now
+corrected to `SCDenseProcess`. See §3.
 
-### 10.2 `__init__.py` re-exports nothing
+### 10.2 `__init__.py` re-exports (FIXED by task #33)
 
-See §1. Add explicit re-exports:
-
-```python
-from .lava_bridge import (
-    HAS_LAVA,
-    LoihiNetworkConfig,
-    SCtoLavaConverter,
-    export_weights_loihi,
-    loihi_threshold_from_sc,
-)
-
-__all__ = [
-    "HAS_LAVA",
-    "LoihiNetworkConfig",
-    "SCtoLavaConverter",
-    "export_weights_loihi",
-    "loihi_threshold_from_sc",
-]
-```
-
-`SCDenseProcess` and `PySCDenseModel` cannot go in `__all__`
-unconditionally because they are only defined when `HAS_LAVA is True`.
-Either add them conditionally or document the
-`from .lava_bridge import SCDenseProcess` pattern. Same task #33.
+`integrations/__init__.py` now re-exports 5 always-importable
+symbols (`HAS_LAVA`, `LoihiNetworkConfig`, `SCtoLavaConverter`,
+`export_weights_loihi`, `loihi_threshold_from_sc`) and
+conditionally adds `SCDenseProcess` + `PySCDenseModel` to
+`__all__` only when `HAS_LAVA is True`. See §1.
 
 ### 10.3 `PySCDenseModel.run_spk` is not a verified Loihi 2 parity model
 
