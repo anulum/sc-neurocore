@@ -408,7 +408,7 @@ per-rank stepping, but currently dispatches via `Population.step_all`
 
 ### 10.1 Status
 
-- 191 LOC, including a non-trivial spike packing protocol
+- 191 LOC, including a custom spike packing protocol
   (`pop_index | n | spike_data` packed as `int8` blob) and `Allgather` +
   `Allgatherv` choreography.
 - `tests/test_mpi_runner.py` (159 lines, 6 tests) covers MPIRunner via
@@ -526,11 +526,13 @@ cost. The Rust engine has `NetworkRunner` for the network loop but no
 counterpart for the topology generators, and the `add_projection` call
 takes a Python-side CSR tuple. Task #13 tracks closing this gap.
 
-### 14.3 MPIRunner has zero tests
+### 14.3 MPIRunner real multi-rank coverage missing
 
-Task #12. The 191-line implementation includes non-trivial spike packing
-and `Allgatherv` choreography; absence of tests means any silent regression
-in mpi4py interaction goes undetected.
+`tests/test_mpi_runner.py` covers 6 paths via mocked `mpi4py`. The
+custom spike-packing protocol and `Allgatherv` choreography are not
+exercised against real mpi4py + `mpirun -n 2`; a regression in real-MPI
+buffer ordering or datatype matching would not be caught. Task #17
+tracks adding a `pytest-mpi`-style real test.
 
 ### 14.4 American spellings in source docstrings
 
@@ -577,7 +579,7 @@ What the existing tests cover:
 
 What the existing tests do **not** cover:
 
-- `MPIRunner` — 0 tests (task #12)
+- `MPIRunner` real multi-rank semantics — 6 mocked-mpi4py tests exist; real `mpirun -n 2` coverage missing (task #17)
 - `export_verilog` — no direct test; covered transitively by FPGA flow
   smoke tests at most
 - Performance regressions — no `pytest-benchmark` cases for the network
