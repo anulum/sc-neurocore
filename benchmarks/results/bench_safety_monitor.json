@@ -1,0 +1,26 @@
+{
+  "platform": "Linux-6.17.0-20-generic-x86_64-with-glibc2.39",
+  "python": "3.12.3",
+  "iterations_per_scenario": 100000,
+  "n_repeats": 5,
+  "rows": [
+    {
+      "scenario": "no violation (defaults)",
+      "median_ns_per_call": 352.91396,
+      "min_ns_per_call": 308.95057,
+      "median_us_per_call": 0.35291395999999997
+    },
+    {
+      "scenario": "overcurrent (P1)",
+      "median_ns_per_call": 485.67885,
+      "min_ns_per_call": 449.04902,
+      "median_us_per_call": 0.48567885
+    },
+    {
+      "scenario": "all 6 violations",
+      "median_ns_per_call": 776.00733,
+      "min_ns_per_call": 720.17816,
+      "median_us_per_call": 0.77600733
+    }
+  ]
+}
