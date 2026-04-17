@@ -1,0 +1,126 @@
+{
+  "platform": "Linux-6.17.0-20-generic-x86_64-with-glibc2.39",
+  "python": "3.12.3",
+  "numpy": "2.2.0",
+  "n_repeats": 5,
+  "workload": {
+    "state_dim": 4,
+    "obs_dim": 3,
+    "T": 200
+  },
+  "backends": {
+    "python": {
+      "available": true,
+      "reason": ""
+    },
+    "rust": {
+      "available": false,
+      "reason": "py_lgssm_kalman_filter not exported from sc_neurocore_engine \u2014 Rust backend not yet implemented (followup #67)"
+    },
+    "julia": {
+      "available": false,
+      "reason": "juliacall not installed (followup #68)"
+    },
+    "mojo": {
+      "available": false,
+      "reason": "Mojo backend not installed in this venv (followup #69); Mojo is in private preview and not yet pip-distributable."
+    },
+    "go": {
+      "available": false,
+      "reason": "Go backend not implemented (followup #70); would require a cgo-compiled gonum Kalman shared library."
+    }
+  },
+  "rows": [
+    {
+      "workload": "kalman_filter",
+      "backend": "python",
+      "median_ms": 12.069989024894312,
+      "min_ms": 9.956396999768913,
+      "log_likelihood": -288.06006407439685
+    },
+    {
+      "workload": "kalman_filter",
+      "backend": "rust",
+      "skipped": true,
+      "unavailable_reason": "py_lgssm_kalman_filter not exported from sc_neurocore_engine \u2014 Rust backend not yet implemented (followup #67)"
+    },
+    {
+      "workload": "kalman_filter",
+      "backend": "julia",
+      "skipped": true,
+      "unavailable_reason": "juliacall not installed (followup #68)"
+    },
+    {
+      "workload": "kalman_filter",
+      "backend": "mojo",
+      "skipped": true,
+      "unavailable_reason": "Mojo backend not installed in this venv (followup #69); Mojo is in private preview and not yet pip-distributable."
+    },
+    {
+      "workload": "kalman_filter",
+      "backend": "go",
+      "skipped": true,
+      "unavailable_reason": "Go backend not implemented (followup #70); would require a cgo-compiled gonum Kalman shared library."
+    },
+    {
+      "workload": "rts_smoother",
+      "backend": "python",
+      "median_ms": 4.122141021071002,
+      "min_ms": 3.4430010127834976
+    },
+    {
+      "workload": "rts_smoother",
+      "backend": "rust",
+      "skipped": true,
+      "unavailable_reason": "py_lgssm_kalman_filter not exported from sc_neurocore_engine \u2014 Rust backend not yet implemented (followup #67)"
+    },
+    {
+      "workload": "rts_smoother",
+      "backend": "julia",
+      "skipped": true,
+      "unavailable_reason": "juliacall not installed (followup #68)"
+    },
+    {
+      "workload": "rts_smoother",
+      "backend": "mojo",
+      "skipped": true,
+      "unavailable_reason": "Mojo backend not installed in this venv (followup #69); Mojo is in private preview and not yet pip-distributable."
+    },
+    {
+      "workload": "rts_smoother",
+      "backend": "go",
+      "skipped": true,
+      "unavailable_reason": "Go backend not implemented (followup #70); would require a cgo-compiled gonum Kalman shared library."
+    },
+    {
+      "workload": "em_10iters",
+      "backend": "python",
+      "median_ms": 260.2593050105497,
+      "min_ms": 195.29585100826807
+    },
+    {
+      "workload": "em_10iters",
+      "backend": "rust",
+      "skipped": true,
+      "unavailable_reason": "py_lgssm_kalman_filter not exported from sc_neurocore_engine \u2014 Rust backend not yet implemented (followup #67)"
+    },
+    {
+      "workload": "em_10iters",
+      "backend": "julia",
+      "skipped": true,
+      "unavailable_reason": "juliacall not installed (followup #68)"
+    },
+    {
+      "workload": "em_10iters",
+      "backend": "mojo",
+      "skipped": true,
+      "unavailable_reason": "Mojo backend not installed in this venv (followup #69); Mojo is in private preview and not yet pip-distributable."
+    },
+    {
+      "workload": "em_10iters",
+      "backend": "go",
+      "skipped": true,
+      "unavailable_reason": "Go backend not implemented (followup #70); would require a cgo-compiled gonum Kalman shared library."
+    }
+  ]
+}

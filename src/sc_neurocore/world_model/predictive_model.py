@@ -1,64 +1,549 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later | Commercial license available
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
 # © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — A stochastic predictive world model
+# SC-NeuroCore — Linear Gaussian State-Space Model with Kalman + RTS + EM
+
+"""Probabilistic predictive world model: linear Gaussian state-space.
+
+Implementation references:
+  Kalman, R.E. (1960). "A New Approach to Linear Filtering and
+    Prediction Problems." J. Basic Engineering 82(1): 35-45.
+  Rauch, H.E., Tung, F. & Striebel, C.T. (1965). "Maximum
+    likelihood estimates of linear dynamic systems." AIAA J 3(8):
+    1445-1450.  (the RTS smoother)
+  Shumway, R.H. & Stoffer, D.S. (1982). "An approach to time
+    series smoothing and forecasting using the EM algorithm."
+    J Time Series Analysis 3(4): 253-264.
+  Bishop, C.M. (2006). *Pattern Recognition and Machine Learning*,
+    Springer. §13.3 (linear dynamical systems).
+  Murphy, K.P. (2023). *Probabilistic Machine Learning: Advanced
+    Topics*, MIT Press. §29 (state-space models).
+
+The previous implementation was a deterministic linear matmul
+on a randomly-initialised matrix that called itself "stochastic"
+and admitted "(simplified)" in a comment — that was a placeholder
+masquerading as a world model. Replaced 2026-04-17 per
+`feedback_sophisticated_from_start.md`.
+
+Model
+-----
+
+Latent state x_t ∈ R^d, observation y_t ∈ R^p, control u_t ∈ R^m:
+
+    x_{t+1} = A · x_t + B · u_t + w_t,    w_t ~ N(0, Q)
+    y_t     = C · x_t + D · u_t + v_t,    v_t ~ N(0, R)
+
+with prior x_0 ~ N(μ_0, Σ_0). All parameters {A, B, C, D, Q, R,
+μ_0, Σ_0} are estimable from data via the EM algorithm
+(Shumway & Stoffer 1982). When parameters are known, the Kalman
+filter (forward pass) computes p(x_t | y_{1:t}, u_{1:t}) and the
+RTS smoother (backward pass) computes p(x_t | y_{1:T}, u_{1:T}).
+
+This module provides:
+  - `LinearGaussianSSM` — the model + parameters
+  - `KalmanFilter` — forward filtering + log-likelihood
+  - `RTSSmoother` — backward smoothing
+  - `EMLearner` — parameter estimation via EM
+  - `PredictiveWorldModel` — backwards-compatible thin wrapper
+    on the above (the legacy class name)
+"""
 
 from __future__ import annotations
-from typing import Any
-from dataclasses import dataclass
+
+from dataclasses import dataclass, field
+from typing import Optional, Tuple
+
 import numpy as np
+
+
+# ───────────────────────── model parameters ─────────────────────────
+
+
+@dataclass
+class LinearGaussianSSM:
+    """Parameters of a discrete-time linear Gaussian state-space model.
+
+    All matrices are NumPy arrays of dtype float64. Shapes:
+
+    - ``A``: (d, d) state transition
+    - ``B``: (d, m) control input
+    - ``C``: (p, d) observation
+    - ``D``: (p, m) feed-through
+    - ``Q``: (d, d) process noise covariance (PSD)
+    - ``R``: (p, p) observation noise covariance (PSD)
+    - ``mu_0``: (d,) prior mean
+    - ``Sigma_0``: (d, d) prior covariance
+    """
+
+    A: np.ndarray
+    B: np.ndarray
+    C: np.ndarray
+    D: np.ndarray
+    Q: np.ndarray
+    R: np.ndarray
+    mu_0: np.ndarray
+    Sigma_0: np.ndarray
+
+    @property
+    def state_dim(self) -> int:
+        return int(self.A.shape[0])
+
+    @property
+    def obs_dim(self) -> int:
+        return int(self.C.shape[0])
+
+    @property
+    def control_dim(self) -> int:
+        return int(self.B.shape[1])
+
+    def __post_init__(self) -> None:
+        d = self.state_dim
+        p = self.obs_dim
+        m = self.control_dim
+        if self.A.shape != (d, d):
+            raise ValueError(f"A must be ({d},{d}), got {self.A.shape}")
+        if self.B.shape != (d, m):
+            raise ValueError(f"B must be ({d},{m}), got {self.B.shape}")
+        if self.C.shape != (p, d):
+            raise ValueError(f"C must be ({p},{d}), got {self.C.shape}")
+        if self.D.shape != (p, m):
+            raise ValueError(f"D must be ({p},{m}), got {self.D.shape}")
+        if self.Q.shape != (d, d):
+            raise ValueError(f"Q must be ({d},{d}), got {self.Q.shape}")
+        if self.R.shape != (p, p):
+            raise ValueError(f"R must be ({p},{p}), got {self.R.shape}")
+        if self.mu_0.shape != (d,):
+            raise ValueError(f"mu_0 must be ({d},), got {self.mu_0.shape}")
+        if self.Sigma_0.shape != (d, d):
+            raise ValueError(f"Sigma_0 must be ({d},{d}), got {self.Sigma_0.shape}")
+        # PSD checks (loose — accept symmetry + non-negative diag)
+        for name, M in (("Q", self.Q), ("R", self.R), ("Sigma_0", self.Sigma_0)):
+            if not np.allclose(M, M.T, atol=1e-9):
+                raise ValueError(f"{name} must be symmetric")
+            if np.any(np.diag(M) < -1e-9):
+                raise ValueError(f"{name} has negative diagonal entry")
+
+    @classmethod
+    def random(
+        cls,
+        state_dim: int,
+        obs_dim: int,
+        control_dim: int = 0,
+        seed: int = 42,
+    ) -> LinearGaussianSSM:
+        """Construct a stable random LGSSM for smoke tests / initialisation."""
+        rng = np.random.default_rng(seed)
+        d, p, m = state_dim, obs_dim, max(control_dim, 1)
+        # Stable A: spectral radius < 1
+        raw = rng.standard_normal((d, d)) * 0.5
+        eigmax = float(np.max(np.abs(np.linalg.eigvals(raw))))
+        A = raw * (0.95 / max(eigmax, 1e-12))
+        B = rng.standard_normal((d, control_dim)) if control_dim > 0 else np.zeros((d, 0))
+        C = rng.standard_normal((p, d)) * 0.5
+        D = rng.standard_normal((p, control_dim)) if control_dim > 0 else np.zeros((p, 0))
+        Q = np.eye(d) * 0.1
+        R = np.eye(p) * 0.1
+        mu_0 = np.zeros(d)
+        Sigma_0 = np.eye(d)
+        return cls(A=A, B=B, C=C, D=D, Q=Q, R=R, mu_0=mu_0, Sigma_0=Sigma_0)
+
+
+# ───────────────────────── Kalman filter ─────────────────────────
+
+
+@dataclass
+class FilterResult:
+    """Output of `KalmanFilter.filter()`.
+
+    Attributes
+    ----------
+    means : np.ndarray, shape (T, d)
+        Filtered means E[x_t | y_{1:t}, u_{1:t}].
+    covariances : np.ndarray, shape (T, d, d)
+        Filtered covariances Cov[x_t | y_{1:t}, u_{1:t}].
+    pred_means : np.ndarray, shape (T, d)
+        One-step-ahead predicted means E[x_t | y_{1:t-1}, u_{1:t-1}].
+    pred_covariances : np.ndarray, shape (T, d, d)
+        One-step-ahead predicted covariances.
+    log_likelihood : float
+        Log p(y_{1:T} | u_{1:T}) under the model — used by EM.
+    """
+
+    means: np.ndarray
+    covariances: np.ndarray
+    pred_means: np.ndarray
+    pred_covariances: np.ndarray
+    log_likelihood: float
+
+
+class KalmanFilter:
+    """Forward Kalman filter for `LinearGaussianSSM`.
+
+    Computes the filtering distribution p(x_t | y_{1:t}, u_{1:t})
+    for a fully-observed sequence of observations + (optional)
+    controls. Algorithm: standard Kalman update equations
+    (Bishop 2006 §13.3.1).
+    """
+
+    def __init__(self, model: LinearGaussianSSM) -> None:
+        self.model = model
+
+    def filter(
+        self,
+        observations: np.ndarray,
+        controls: Optional[np.ndarray] = None,
+    ) -> FilterResult:
+        """Run forward filtering on a sequence.
+
+        Parameters
+        ----------
+        observations : np.ndarray, shape (T, p)
+            Observation sequence.
+        controls : np.ndarray, shape (T, m), optional
+            Control input sequence. Required iff `model.control_dim > 0`.
+
+        Returns
+        -------
+        FilterResult
+        """
+        T, p = observations.shape
+        if p != self.model.obs_dim:
+            raise ValueError(f"obs dim {p} ≠ model.obs_dim {self.model.obs_dim}")
+        m = self.model.control_dim
+        if m > 0:
+            if controls is None or controls.shape != (T, m):
+                raise ValueError(f"controls must have shape ({T},{m})")
+        else:
+            controls = np.zeros((T, 0)) if controls is None else controls
+
+        d = self.model.state_dim
+        A, B, C, D = self.model.A, self.model.B, self.model.C, self.model.D
+        Q, R = self.model.Q, self.model.R
+
+        means = np.zeros((T, d))
+        covs = np.zeros((T, d, d))
+        pred_means = np.zeros((T, d))
+        pred_covs = np.zeros((T, d, d))
+
+        # Initial prediction (from prior)
+        x_pred = self.model.mu_0.copy()
+        P_pred = self.model.Sigma_0.copy()
+
+        log_lik = 0.0
+        for t in range(T):
+            pred_means[t] = x_pred
+            pred_covs[t] = P_pred
+
+            y_t = observations[t]
+            u_t = controls[t] if m > 0 else None
+
+            # Innovation (residual)
+            y_hat = C @ x_pred + (D @ u_t if m > 0 else 0.0)
+            innov = y_t - y_hat
+            S = C @ P_pred @ C.T + R  # innovation covariance
+
+            # Log-likelihood contribution: log N(y_t | y_hat, S)
+            sign, logdet = np.linalg.slogdet(S)
+            if sign <= 0:
+                # Should not happen for PSD R; defensive only.
+                raise np.linalg.LinAlgError("non-PSD innovation covariance")
+            S_inv_innov = np.linalg.solve(S, innov)
+            log_lik += -0.5 * (
+                p * np.log(2 * np.pi) + logdet + float(innov @ S_inv_innov)
+            )
+
+            # Kalman gain
+            K = P_pred @ C.T @ np.linalg.inv(S)
+
+            # Update (filtered estimate)
+            x_filt = x_pred + K @ innov
+            # Joseph form for numerical stability of P_filt:
+            #   (I - K C) P_pred (I - K C)^T + K R K^T
+            I = np.eye(d)
+            P_filt = (I - K @ C) @ P_pred @ (I - K @ C).T + K @ R @ K.T
+
+            means[t] = x_filt
+            covs[t] = P_filt
+
+            # Predict next
+            x_pred = A @ x_filt + (B @ u_t if m > 0 else 0.0)
+            P_pred = A @ P_filt @ A.T + Q
+
+        return FilterResult(
+            means=means,
+            covariances=covs,
+            pred_means=pred_means,
+            pred_covariances=pred_covs,
+            log_likelihood=log_lik,
+        )
+
+
+# ───────────────────────── RTS smoother ─────────────────────────
+
+
+@dataclass
+class SmoothResult:
+    """Output of `RTSSmoother.smooth()`.
+
+    Attributes
+    ----------
+    means : np.ndarray, shape (T, d)
+        Smoothed means E[x_t | y_{1:T}, u_{1:T}].
+    covariances : np.ndarray, shape (T, d, d)
+        Smoothed covariances Cov[x_t | y_{1:T}, u_{1:T}].
+    cross_covariances : np.ndarray, shape (T-1, d, d)
+        Lag-1 smoothed cross-covariances Cov[x_t, x_{t+1} | y_{1:T}].
+        Required by the EM M-step.
+    """
+
+    means: np.ndarray
+    covariances: np.ndarray
+    cross_covariances: np.ndarray
+
+
+class RTSSmoother:
+    """Rauch-Tung-Striebel backward smoother (1965).
+
+    Consumes a `FilterResult` (forward pass) and produces the
+    smoothing distribution p(x_t | y_{1:T}, u_{1:T}) for every t.
+    """
+
+    def __init__(self, model: LinearGaussianSSM) -> None:
+        self.model = model
+
+    def smooth(self, filter_result: FilterResult) -> SmoothResult:
+        T, d = filter_result.means.shape
+        A = self.model.A
+
+        smoothed_means = filter_result.means.copy()
+        smoothed_covs = filter_result.covariances.copy()
+        cross_covs = np.zeros((T - 1, d, d))
+
+        for t in range(T - 2, -1, -1):
+            P_pred_next = filter_result.pred_covariances[t + 1]
+            # RTS gain
+            J = filter_result.covariances[t] @ A.T @ np.linalg.inv(P_pred_next)
+            smoothed_means[t] = filter_result.means[t] + J @ (
+                smoothed_means[t + 1] - filter_result.pred_means[t + 1]
+            )
+            smoothed_covs[t] = filter_result.covariances[t] + J @ (
+                smoothed_covs[t + 1] - P_pred_next
+            ) @ J.T
+            # Lag-1 smoothed covariance: Cov(x_t, x_{t+1} | y_{1:T})
+            cross_covs[t] = J @ smoothed_covs[t + 1]
+
+        return SmoothResult(
+            means=smoothed_means,
+            covariances=smoothed_covs,
+            cross_covariances=cross_covs,
+        )
+
+
+# ───────────────────────── EM learner ─────────────────────────
+
+
+class EMLearner:
+    """Expectation-Maximisation parameter estimator for LGSSM.
+
+    Reference: Shumway & Stoffer (1982), Bishop (2006) §13.3.2.
+
+    Per iteration:
+      E-step: run Kalman filter + RTS smoother → posterior means,
+              covariances, cross-covariances.
+      M-step: closed-form update for {A, C, Q, R, mu_0, Sigma_0}
+              from the smoothed posterior. (B and D are treated
+              as known; estimating them simultaneously requires
+              a more involved derivation.)
+
+    Convergence: log-likelihood is monotone non-decreasing
+    across iterations under exact arithmetic.
+    """
+
+    def __init__(
+        self,
+        max_iter: int = 50,
+        tol: float = 1e-4,
+    ) -> None:
+        self.max_iter = max_iter
+        self.tol = tol
+        self.log_likelihood_history: list[float] = []
+
+    def fit(
+        self,
+        observations: np.ndarray,
+        initial_model: LinearGaussianSSM,
+        controls: Optional[np.ndarray] = None,
+    ) -> LinearGaussianSSM:
+        """Estimate model parameters from a single observation sequence."""
+        T, p = observations.shape
+        d = initial_model.state_dim
+        m = initial_model.control_dim
+        model = initial_model
+        prev_ll = -np.inf
+        self.log_likelihood_history = []
+
+        for it in range(self.max_iter):
+            # E-step
+            kf = KalmanFilter(model)
+            fr = kf.filter(observations, controls=controls)
+            sr = RTSSmoother(model).smooth(fr)
+            self.log_likelihood_history.append(fr.log_likelihood)
+
+            # M-step (B and D held fixed)
+            # Sufficient statistics
+            x = sr.means          # (T, d)
+            P = sr.covariances    # (T, d, d)
+            P_lag = sr.cross_covariances  # (T-1, d, d)
+
+            # E[x_t x_t^T] = P_t + x_t x_t^T
+            Exx = P + np.einsum("ti,tj->tij", x, x)
+            # E[x_{t+1} x_t^T] = P_lag_t + x_{t+1} x_t^T
+            Ex1x = P_lag + np.einsum("ti,tj->tij", x[1:], x[:-1])
+
+            # A_new = (Σ_{t=1..T-1} E[x_{t+1} x_t^T]) ·
+            #         (Σ_{t=0..T-2} E[x_t x_t^T])^{-1}
+            num = Ex1x.sum(axis=0)
+            den = Exx[:-1].sum(axis=0)
+            A_new = num @ np.linalg.inv(den)
+
+            # Q_new = (1/(T-1)) Σ_{t=1..T-1} (E[x_t x_t^T]
+            #         - A E[x_t x_{t-1}^T]^T - E[x_t x_{t-1}^T] A^T
+            #         + A E[x_{t-1} x_{t-1}^T] A^T)
+            Q_acc = np.zeros((d, d))
+            for t in range(T - 1):
+                Q_acc += (
+                    Exx[t + 1]
+                    - A_new @ Ex1x[t].T
+                    - Ex1x[t] @ A_new.T
+                    + A_new @ Exx[t] @ A_new.T
+                )
+            Q_new = Q_acc / (T - 1)
+            Q_new = 0.5 * (Q_new + Q_new.T)  # symmetrise
+
+            # C_new = (Σ_t y_t x_t^T) (Σ_t E[x_t x_t^T])^{-1}
+            num_C = np.einsum("ti,tj->ij", observations, x)
+            den_C = Exx.sum(axis=0)
+            C_new = num_C @ np.linalg.inv(den_C)
+
+            # R_new = (1/T) Σ_t (y_t y_t^T - C y_t x_t^T x_t y_t^T C^T
+            #         + ... )  collapsed:
+            #         (1/T) Σ_t (y_t - C x_t)(y_t - C x_t)^T
+            #         + C (Σ_t P_t) C^T
+            R_new = np.zeros((p, p))
+            residuals = observations - x @ C_new.T
+            R_new = residuals.T @ residuals
+            for t in range(T):
+                R_new += C_new @ P[t] @ C_new.T
+            R_new /= T
+            R_new = 0.5 * (R_new + R_new.T)
+
+            # μ_0, Σ_0 from smoothed first state
+            mu_0_new = sr.means[0].copy()
+            Sigma_0_new = sr.covariances[0].copy()
+
+            # Update model
+            model = LinearGaussianSSM(
+                A=A_new, B=model.B, C=C_new, D=model.D,
+                Q=Q_new, R=R_new, mu_0=mu_0_new, Sigma_0=Sigma_0_new,
+            )
+
+            if abs(fr.log_likelihood - prev_ll) < self.tol:
+                break
+            prev_ll = fr.log_likelihood
+
+        return model
+
+
+# ───────────────────────── legacy wrapper ─────────────────────────
 
 
 @dataclass
 class PredictiveWorldModel:
-    """
-    A stochastic predictive world model.
-    Predicts state_next = f(state_curr, action).
+    """Probabilistic predictive world model based on a Linear Gaussian SSM.
+
+    The legacy 65-LOC `predict_next_state` / `forecast` API is
+    preserved as a thin wrapper on the proper `LinearGaussianSSM`
+    + `KalmanFilter` infrastructure above. The previous
+    deterministic linear matmul + clip placeholder was replaced
+    2026-04-17 per `feedback_sophisticated_from_start.md`.
     """
 
     state_dim: int
     action_dim: int
+    seed: int = 42
 
     def __post_init__(self) -> None:
-        # Internal transition weights (simplified)
-        self.transition_matrix = np.random.uniform(
-            0, 1, (self.state_dim, self.state_dim + self.action_dim)
+        self.model: LinearGaussianSSM = LinearGaussianSSM.random(
+            state_dim=self.state_dim,
+            obs_dim=self.state_dim,         # observe the state directly
+            control_dim=self.action_dim,
+            seed=self.seed,
         )
-        # Normalize rows to represent probabilities
-        row_sums = self.transition_matrix.sum(axis=1)
-        self.transition_matrix /= row_sums[:, np.newaxis]
+        # Filtered posterior moments — updated by `predict_next_state`.
+        self._mu: np.ndarray = self.model.mu_0.copy()
+        self._Sigma: np.ndarray = self.model.Sigma_0.copy()
+
+    def reset(self) -> None:
+        self._mu = self.model.mu_0.copy()
+        self._Sigma = self.model.Sigma_0.copy()
 
     def predict_next_state(
-        self, current_state: np.ndarray[Any, Any], action: np.ndarray[Any, Any]
-    ) -> np.ndarray[Any, Any]:
-        """
-        Predicts the next state given current state and action.
-        Inputs:
-            current_state: (state_dim,) array of probabilities.
-            action: (action_dim,) array of probabilities.
-        Returns:
-            next_state: (state_dim,) predicted probabilities.
-        """
-        # Concatenate state and action
-        combined_input = np.concatenate([current_state, action])
+        self,
+        current_state: np.ndarray,
+        action: np.ndarray,
+    ) -> np.ndarray:
+        """Predict E[x_{t+1} | x_t, u_t] under the SSM dynamics.
 
-        # Linear transition in probability domain
-        next_state = np.dot(self.transition_matrix, combined_input)
+        Returns the deterministic mean prediction; for a full
+        probabilistic forecast use `predict_next_state_with_cov`.
+        """
+        u = action.astype(np.float64)
+        if u.shape == ():
+            u = u[np.newaxis]
+        return self.model.A @ current_state + (
+            self.model.B @ u if self.model.control_dim > 0 else 0.0
+        )
 
-        # Clip to ensure valid probabilities
-        return np.clip(next_state, 0, 1)
+    def predict_next_state_with_cov(
+        self,
+        current_state: np.ndarray,
+        current_cov: np.ndarray,
+        action: np.ndarray,
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """Predict mean + covariance of x_{t+1} given (x_t, Σ_t, u_t)."""
+        mu_next = self.predict_next_state(current_state, action)
+        Sigma_next = self.model.A @ current_cov @ self.model.A.T + self.model.Q
+        return mu_next, Sigma_next
 
     def forecast(
-        self, initial_state: np.ndarray[Any, Any], actions: list[np.ndarray[Any, Any]]
-    ) -> list[np.ndarray[Any, Any]]:
-        """
-        Forecast multiple steps ahead given a sequence of actions.
-        """
-        trajectory = []
-        curr_state = initial_state
-        for act in actions:
-            curr_state = self.predict_next_state(curr_state, act)
-            trajectory.append(curr_state)
-        return trajectory
+        self,
+        initial_state: np.ndarray,
+        actions: list[np.ndarray],
+    ) -> list[np.ndarray]:
+        """Multi-step deterministic forecast (mean trajectory)."""
+        traj: list[np.ndarray] = []
+        x = initial_state.astype(np.float64)
+        for a in actions:
+            x = self.predict_next_state(x, np.asarray(a, dtype=np.float64))
+            traj.append(x.copy())
+        return traj
+
+    def forecast_with_cov(
+        self,
+        initial_state: np.ndarray,
+        initial_cov: np.ndarray,
+        actions: list[np.ndarray],
+    ) -> list[Tuple[np.ndarray, np.ndarray]]:
+        """Multi-step probabilistic forecast (mean + cov trajectory)."""
+        traj: list[Tuple[np.ndarray, np.ndarray]] = []
+        x = initial_state.astype(np.float64)
+        P = initial_cov.astype(np.float64)
+        for a in actions:
+            x, P = self.predict_next_state_with_cov(
+                x, P, np.asarray(a, dtype=np.float64),
+            )
+            traj.append((x.copy(), P.copy()))
+        return traj

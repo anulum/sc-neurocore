@@ -12,30 +12,44 @@ from sc_neurocore.world_model.planner import SCPlanner
 
 
 class TestPredictiveWorldModel:
-    def test_construction(self):
-        m = PredictiveWorldModel(state_dim=4, action_dim=2)
-        assert m.transition_matrix.shape == (4, 6)
+    """Tests against the new sophisticated LGSSM-backed wrapper.
 
-    def test_transition_matrix_row_normalized(self):
-        m = PredictiveWorldModel(state_dim=4, action_dim=2)
-        row_sums = m.transition_matrix.sum(axis=1)
-        np.testing.assert_allclose(row_sums, 1.0, atol=1e-10)
+    Two prior tests (transition_matrix shape + row-normalisation)
+    enforced the `transition_matrix` placeholder design which was
+    replaced by a proper Linear Gaussian SSM. They are removed —
+    they were testing the wrong thing.
 
-    def test_predict_next_state_shape(self):
+    Two more (`test_predict_next_state_bounded`) enforced the
+    clip-to-[0,1] hack that was hiding the deterministic-linear
+    placeholder. Predictions can take any real value depending on
+    the SSM dynamics, so the bounded-output assertion is also
+    removed.
+    """
+
+    def test_construction_exposes_lgssm(self) -> None:
+        """The wrapper holds a proper LinearGaussianSSM."""
+        m = PredictiveWorldModel(state_dim=4, action_dim=2)
+        assert m.model.state_dim == 4
+        assert m.model.control_dim == 2
+        assert m.model.obs_dim == 4
+
+    def test_predict_next_state_shape(self) -> None:
         m = PredictiveWorldModel(state_dim=4, action_dim=2)
         s = np.array([0.5, 0.3, 0.8, 0.1])
         a = np.array([0.5, 0.5])
         ns = m.predict_next_state(s, a)
         assert ns.shape == (4,)
 
-    def test_predict_next_state_bounded(self):
+    def test_predict_next_state_obeys_ssm_dynamics(self) -> None:
+        """Output must equal A·x + B·u (deterministic mean prediction)."""
         m = PredictiveWorldModel(state_dim=4, action_dim=2)
         s = np.array([0.5, 0.3, 0.8, 0.1])
         a = np.array([1.0, 1.0])
         ns = m.predict_next_state(s, a)
-        assert np.all(ns >= 0) and np.all(ns <= 1)
+        expected = m.model.A @ s + m.model.B @ a
+        np.testing.assert_allclose(ns, expected, atol=1e-12)
 
-    def test_forecast_sequence(self):
+    def test_forecast_sequence(self) -> None:
         m = PredictiveWorldModel(state_dim=3, action_dim=1)
         s0 = np.array([0.5, 0.5, 0.5])
         actions = [np.array([0.5])] * 5
