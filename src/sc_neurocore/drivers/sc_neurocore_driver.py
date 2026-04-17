@@ -29,11 +29,31 @@ class SC_NeuroCore_Driver:
     unless explicitly in 'EMULATION' mode.
     """
 
-    def __init__(self, bitstream_path: str = "sc_neurocore.bit", mode: str = "HARDWARE") -> None:
+    def __init__(
+        self,
+        bitstream_path: str = "sc_neurocore.bit",
+        mode: str = "HARDWARE",
+        seed: int = 42,
+    ) -> None:
+        """Construct a driver in HARDWARE or EMULATION mode.
+
+        Parameters
+        ----------
+        bitstream_path : str
+            Path to the ``.bit`` file for HARDWARE mode.
+        mode : str
+            ``'HARDWARE'`` or ``'EMULATION'``.
+        seed : int
+            Per-instance RNG seed used by EMULATION ``run_step`` so
+            successive calls are deterministic given the same seed.
+            Two drivers built with the same seed produce identical
+            output sequences.
+        """
         self.mode = mode
         self.overlay = None
         self.dma = None
         self.bitstream_path = bitstream_path
+        self._rng = np.random.default_rng(seed)
 
         if self.mode == "HARDWARE":
             self._connect_to_fpga()
@@ -102,10 +122,15 @@ class SC_NeuroCore_Driver:
     def run_step(self, input_vector: object) -> np.ndarray:
         """
         Executes one integration step on the FPGA.
+
+        EMULATION mode returns a 16-element pseudo-random vector from
+        the per-instance RNG seeded in ``__init__``. Two drivers built
+        with the same seed produce identical sequences. HARDWARE mode
+        is not yet implemented (DMA transfer requires PYNQ overlay).
         """
         if self.mode == "EMULATION":
-            # Simple mock function
-            return np.random.rand(16)
+            # Deterministic mock — uses per-instance RNG, not global numpy.
+            return self._rng.random(16)
 
         raise NotImplementedError(
             "HARDWARE DMA transfer requires PYNQ overlay. Use mode='EMULATION' for development."
