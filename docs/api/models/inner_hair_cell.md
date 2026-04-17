@@ -555,7 +555,7 @@ At zero displacement ($p_{open} = 0.5$ due to resting tension on tip links), the
 
 ---
 
-*Document version: SUPERIOR. Generated from `engine/src/neurons/sensory.rs:53` (Rust source of truth). All equations verified against Meddis 2006 and Lopez-Poveda 2006. All parameter defaults match code. Analytical results computed independently and cross-checked against source.*
+*Generated from `engine/src/neurons/sensory.rs:53` (Rust source of truth). All equations verified against Meddis 2006 and Lopez-Poveda 2006. All parameter defaults match code. Analytical results computed independently and cross-checked against source.*
 
 1. Meddis, R. (2006). Auditory-nerve first-spike latency and auditory absolute threshold: A computer model. *J. Acoust. Soc. Am.* 119(1), 406–417. doi:10.1121/1.2139628
 2. Lopez-Poveda, E. A. & Eustaquio-Martín, A. (2006). A biophysical model of the inner hair cell: the contribution of potassium currents to peripheral auditory compression. *J. Acoust. Soc. Am.* 119(1), 416–432. doi:10.1121/1.2133496

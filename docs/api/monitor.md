@@ -347,7 +347,7 @@ into the simulation loop; none are orphan helpers.
 | 3 | Rust path | N/A | Pure-Python data containers; `record_event` is the only Rust ingestion point and trivial |
 | 4 | Benchmarks | ✅ PASS | §8 measured this session; 3-run median per config |
 | 5 | Performance docs | ✅ PASS | §8 + §8.1 |
-| 6 | Elite docs | ✅ PASS | This page |
+| 6 | Documentation page | ✅ PASS | This page |
 | 7 | Rules followed | ✅ PASS | SPDX headers ✅; no `# noqa`; no `# type: ignore`; British English in this doc |
 
 Net: **0 WARN, 0 FAIL.** This is the cleanest module audited so far in

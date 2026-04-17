@@ -479,7 +479,7 @@ After equilibration to true rest, $n \to n_\infty$ and currents balance.
 | 2026-04-04 | Rust port, EXACT parity verified | — |
 | 2026-04-05 | Multi-angle Rust tests (7 tests) | `328cd4e` |
 | 2026-04-05 | Criterion benchmark: 686 ns/step | `71bd1ec` |
-| 2026-04-05 | Doc upgrade to SUPERIOR | — |
+| 2026-04-05 | Doc expanded with verification + benchmarks | — |
 
 ---
 

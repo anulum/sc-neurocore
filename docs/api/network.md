@@ -411,9 +411,12 @@ per-rank stepping, but currently dispatches via `Population.step_all`
 - 191 LOC, including a non-trivial spike packing protocol
   (`pop_index | n | spike_data` packed as `int8` blob) and `Allgather` +
   `Allgatherv` choreography.
-- **Zero dedicated tests** — `tests/test_network_*.py` does not import
-  `MPIRunner`. The rule "STRONG minimum" (every module gets multi-angle
-  tests) is currently violated. Tracked as session task #12.
+- `tests/test_mpi_runner.py` (159 lines, 6 tests) covers MPIRunner via
+  mocked `mpi4py` — partition correctness, RuntimeError when mpi4py is
+  absent, single-rank end-to-end equivalence with the Python backend,
+  cross-rank vs local projection routing, spike-exchange round-trip.
+  **Real multi-rank semantics with `mpirun -n 2` are NOT exercised**;
+  task #17 tracks adding a `pytest-mpi`-style real test.
 - Does not implement spike gating, FIM feedback, or per-rank
   Rust dispatch.
 
@@ -484,11 +487,11 @@ runtime check. There are no orphan helpers.
 | # | Dimension | Status | Detail |
 |---|-----------|--------|--------|
 | 1 | Pipeline wiring | ✅ PASS | All 18 public symbols wired; backend dispatcher complete |
-| 2 | Multi-angle tests | ⚠️ WARN | 87 tests pass across 8 test files (network_basic 345L, network_coverage 355L, monitors_stimulus 164L, cortical_column 98+132L, gamma_oscillation 63L, topology 94+200L). **`MPIRunner` has zero tests** (task #12). `export.py` not directly covered. |
+| 2 | Multi-angle tests | ⚠️ WARN | 87 tests pass across 8 test files (network_basic 345L, network_coverage 355L, monitors_stimulus 164L, cortical_column 98+132L, gamma_oscillation 63L, topology 94+200L). MPIRunner adds 6 mocked-mpi4py tests (`test_mpi_runner.py`); real multi-rank coverage missing (task #17). `export.py` not directly covered. |
 | 3 | Rust path | ⚠️ WARN | `Network._run_rust` exists and tested logically; **engine wheel not installed in this environment** so empirical Rust numbers in §11 are not available. `topology.py`, `_csr_matvec`/`_csr_delayed_matvec`, `update_plasticity` are pure Python — task #13 tracks the Rustification. |
 | 4 | Benchmarks | ✅ PASS | §6.1, §11, §11.1 measured this session. `benchmarks/sc_network_benchmark.py` exists (306 lines) but covers SC pipeline (encode/MAC/decode), not network orchestration — that gap is now filled by §11. |
 | 5 | Performance docs | ✅ PASS | §11 + §6.1 + §11.1 |
-| 6 | Elite docs | ✅ PASS | This page |
+| 6 | Documentation page | ✅ PASS | This page |
 | 7 | Rules followed | ⚠️ WARN | SPDX headers on every source file ✅. `gamma_oscillation.py:66-67` has `# type: ignore[arg-type]` without rationale (mirrors `cli.py:298`). British English in docstrings is mixed (`vectorized`, `synchronization` appear); see §14. |
 
 Net: **3 WARN, 0 FAIL.** Tracked follow-ups: tasks #10–#13.

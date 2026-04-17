@@ -564,4 +564,4 @@ Brunel's contribution was to provide a complete phase diagram of all dynamical r
 
 ---
 
-*Document version: SUPERIOR. Generated from `engine/src/neurons/population.rs:126` (Rust source of truth). All equations verified against source code. Analytical fixed points computed independently and cross-checked. Benchmark from `cargo bench`.*
+*Generated from `engine/src/neurons/population.rs:126` (Rust source of truth). All equations verified against source code. Analytical fixed points computed independently and cross-checked. Benchmark from `cargo bench`.*

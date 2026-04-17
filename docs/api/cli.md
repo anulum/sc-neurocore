@@ -513,7 +513,7 @@ Multi-angle dimensions **missing**:
 | 3 | Rust path | N/A | Dispatch-only; engine is queried for status only |
 | 4 | Benchmarks | N/A | CLI cold-start measured (Section 7); no pytest-benchmark suite for the dispatcher itself |
 | 5 | Performance docs | ✅ PASS | Section 7 (this page) with measured numbers |
-| 6 | Elite docs | ✅ PASS | This page |
+| 6 | Documentation page | ✅ PASS | This page |
 | 7 | Rules followed | ⚠️ WARN | SPDX header present; one undocumented `# type: ignore` (line 298) — see §9.3 |
 
 Net status: **2 WARN, 0 FAIL.** Outstanding follow-ups tracked as session

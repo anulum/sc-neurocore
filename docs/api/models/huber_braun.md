@@ -519,7 +519,7 @@ resonance) but not the quantitative spike shapes (no fast AP mechanism).
 | 2026-04-04 | Rust port via NeuronVariant | — |
 | 2026-04-05 | Multi-angle Rust tests (6 tests) | `328cd4e` |
 | 2026-04-05 | Criterion benchmark: 71.4 ns/step | `71bd1ec` |
-| 2026-04-05 | Doc upgrade toward SUPERIOR | `4bfc1a9` |
+| 2026-04-05 | Doc expanded with verification + benchmarks | `4bfc1a9` |
 
 ---
 

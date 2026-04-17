@@ -441,7 +441,7 @@ arrays.
 | 2026-04-04 | Rust port | — |
 | 2026-04-05 | Multi-angle Rust tests (7 tests) | `328cd4e` |
 | 2026-04-05 | Criterion benchmark: 12.3 ns/step | `71bd1ec` |
-| 2026-04-05 | Doc upgrade to SUPERIOR | — |
+| 2026-04-05 | Doc expanded with verification + benchmarks | — |
 
 ---
 
