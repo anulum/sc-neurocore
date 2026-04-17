@@ -248,12 +248,15 @@ all-pairs (expensive at N >> 100), or any other positive integer
 to override the default. See §3.2 and the regression class
 `tests/test_graph_topology.py::TestPathSampleCap`.
 
-### 7.3 Naming overlap with `sc_neurocore.network.topology`
+### 7.3 Naming overlap with `sc_neurocore.network.topology` (FIXED by task #40)
 
-Two unrelated modules share the name. New users encountering both
-in the auto-API may not realise they do different things. Tracked
-as task #40 (rename one, or add a doc-level Sphinx cross-reference
-that can't be missed).
+Both module docstrings now carry a prominent disambiguation block
+that names the other module, lists its role, and links to the
+relevant doc page. New users running `help(sc_neurocore.topology)`
+or `help(sc_neurocore.network.topology)` see the cross-reference
+before any other content. A rename was considered but rejected
+because both names are public API and renaming either would
+break callers.
 
 ### 7.4 Directed-graph metrics use undirected projection
 
