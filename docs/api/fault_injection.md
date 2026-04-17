@@ -144,14 +144,12 @@ is post-simulation analysis. The typical workflow:
    `sc_neurocore.safety_cert.EvidenceBag` for inclusion in the
    certification package.
 
-Multi-language kernels are now wired into the bench harness at
-`benchmarks/bench_fault_injection.py` — Rust (PyO3), Julia
-(`juliacall`), and Go (`ctypes` + c-shared) each expose the
+Multi-language kernels are wired into the bench harness at
+`benchmarks/bench_fault_injection.py`. All 5 backends (Python,
+Rust via PyO3, Julia via `juliacall`, Go via `ctypes` + c-shared,
+Mojo via `ctypes` + `mojo build --emit shared-lib`) expose the
 same 5 fault-model entry points with the same in/out contract
-as the pure-Python `FaultInjector.inject`. Mojo is exempted
-(see §7 backends table) because the current public Mojo 0.26
-toolchain lacks a stable `@export` for parametric
-`UnsafePointer` args (follow-up #69).
+as the pure-Python `FaultInjector.inject`.
 
 Kernel sources:
 
@@ -161,11 +159,13 @@ Kernel sources:
 | Rust | `py_inject_{model}_u8` | `engine/src/fault.rs` + `engine/src/lib.rs` |
 | Julia | `FaultInjectionAccel.inject_{model}` | `src/sc_neurocore/accel/julia/fault_injection/fault_injection.jl` |
 | Go | `inject_{model}_c` | `src/sc_neurocore/accel/go/fault_injection/fault.go` |
+| Mojo | `inject_{model}_c` | `src/sc_neurocore/accel/mojo/fault_injection/fault.mojo` |
 
 RNG parity is **statistical, not bitwise** — each backend uses
 a different PRNG (NumPy PCG64 / Rust Xoshiro256++ / Julia
-Xoshiro / Go ChaCha8). The bench harness verifies that fault
-counts lie within 4σ of Binomial(n, ber) on a 1 Mbit stream.
+Xoshiro / Go ChaCha8 / Mojo SplitMix64-style LCG). The bench
+harness verifies that fault counts lie within 4σ of
+Binomial(n, ber) on a 1 Mbit stream.
 
 ## 7. Multi-backend performance
 
@@ -183,31 +183,34 @@ median reported. Hardware: Linux 6.17 x86_64, NumPy 2.2.6,
 Python 3.12.3. Captured run in
 `benchmarks/results/bench_fault_injection.json`.
 
-| Fault model | Python | Rust | Julia | Go | Fastest |
-|---|---:|---:|---:|---:|:---|
-| `BIT_FLIP` | 16.08 ms | **3.23 ms** | 6.18 ms | 8.29 ms | Rust 5.0× |
-| `STUCK_AT_0` | 5.58 ms | **2.02 ms** | 5.36 ms | 8.68 ms | Rust 2.8× |
-| `STUCK_AT_1` | 13.79 ms | **2.41 ms** | 4.19 ms | 10.05 ms | Rust 5.7× |
-| `DROPOUT` | 10.31 ms | **2.01 ms** | 3.63 ms | 9.45 ms | Rust 5.1× |
-| `GAUSSIAN_NOISE` | 44.52 ms | **6.97 ms** | 8.04 ms | 18.77 ms | Rust 6.4× |
+| Fault model | Python | Rust | Julia | Go | Mojo | Fastest |
+|---|---:|---:|---:|---:|---:|:---|
+| `BIT_FLIP` | 3.52 ms | 1.51 ms | 2.74 ms | 6.64 ms | **1.28 ms** | Mojo 2.7× |
+| `STUCK_AT_0` | 7.98 ms | 1.58 ms | 2.54 ms | 5.08 ms | **1.05 ms** | Mojo 7.6× |
+| `STUCK_AT_1` | 3.78 ms | 1.44 ms | 2.00 ms | 6.10 ms | **0.98 ms** | Mojo 3.9× |
+| `DROPOUT` | 7.86 ms | 1.36 ms | 2.58 ms | 5.10 ms | **0.96 ms** | Mojo 8.2× |
+| `GAUSSIAN_NOISE` | 22.12 ms | 4.48 ms | **3.88 ms** | 11.94 ms | 19.54 ms | Julia 5.7× |
 
-Rust is fastest across the board (2.8–6.4× over NumPy),
-because the tight per-byte loop compiles to straight-line
-SIMD-friendly code without the temporary ~8 MB float64 mask
-array NumPy allocates inside `rng.random(n) < ber`. Julia is
-within ~2× of Rust at no FFI cost after JIT warm-up. Go trails
-because `math/rand/v2.ChaCha8` is ~2–3× slower than Xoshiro at
-scalar draw; the wider safety margin of ChaCha8 is the tradeoff.
+Mojo wins 4/5 boolean kernels (2.7–8.2× over NumPy) — the LLVM
+backend behind `mojo build --emit shared-lib` produces tight
+per-byte loops that beat both Rust's `Xoshiro256++` and NumPy's
+batch path. Rust is consistently 2nd. Julia takes Gaussian
+because its `randn` is implemented via Ziggurat in optimised
+Julia, while the current Mojo kernel uses a naïve Box-Muller
+that allocates two uniforms per sample and computes
+`sqrt(log)`. Go trails on `math/rand/v2.ChaCha8` (the safety
+margin of ChaCha8 vs Xoshiro is the tradeoff).
 
-Backends (from JSON output):
+Backends (from JSON output, fastest-first ordering per the
+multi-language fallback rule):
 
 | Backend | Status | Reason |
 |---|---|---|
-| python | USED | baseline (NumPy PCG64) |
-| rust | USED | fastest; via PyO3 byte-level kernels |
-| julia | USED | via juliacall + Xoshiro |
+| mojo | USED — fastest on 4/5 boolean ops | via `mojo build --emit shared-lib` + ctypes; raw-Int-addr workaround for @export parametric restriction |
+| rust | USED | via PyO3 byte-level kernels; fastest on no individual op but never worse than 2nd |
+| julia | USED — fastest on Gaussian | via juliacall + Xoshiro; Ziggurat randn beats Mojo's naïve Box-Muller |
 | go | USED | via ctypes + ChaCha8 c-shared lib |
-| mojo | EXEMPT | Mojo 0.26 `@export` limitation (#69) |
+| python | USED | baseline (NumPy PCG64); the floor of the chain |
 
 `GAUSSIAN_NOISE` is ~2–3× slower than boolean models across
 all backends because it runs a normal draw, a clamp, and a
@@ -239,7 +242,7 @@ skips, no failures.
 |---|-----------|--------|--------|
 | 1 | Pipeline wiring | ✅ PASS | All 6 symbols re-exported via `__init__.py`; verified by `test_fault_injection_public_api.py` |
 | 2 | Multi-angle tests | ✅ PASS | 29 tests across 2 files; covers fault models × radiation profiles × benchmark sweep |
-| 3 | Acceleration path | ✅ PASS | Rust (PyO3) + Julia (juliacall) + Go (ctypes) kernels wired into bench harness; 2.8–6.4× over NumPy (§7). Mojo exempted per #69 |
+| 3 | Acceleration path | ✅ PASS | All 5 backends wired (Python + Rust + Julia + Go + Mojo). Mojo fastest on 4/5 ops (closes #69 for fault_injection) |
 | 4 | Benchmarks | ✅ PASS | `benchmarks/bench_fault_injection.py` committed; JSON in `benchmarks/results/` |
 | 5 | Performance docs | ✅ PASS | §7 with measured numbers from the benchmark |
 | 6 | Documentation page | ✅ PASS | This page |

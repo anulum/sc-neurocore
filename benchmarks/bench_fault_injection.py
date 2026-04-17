@@ -139,16 +139,28 @@ def probe_go() -> dict:
 
 
 def probe_mojo() -> dict:
+    import ctypes
     mojo_bin = Path.home() / ".pixi/bin/mojo"
     if not mojo_bin.is_file():
         return {"available": False, "reason": "mojo toolchain not at ~/.pixi/bin/mojo"}
-    return {
-        "available": True,
-        "exempt": True,
-        "reason": ("Mojo 0.26 public toolchain lacks stable @export for "
-                   "parametric UnsafePointer args; port blocked pending "
-                   "upstream API stability. See follow-up #69."),
-    }
+    so_path = REPO_ROOT / "src/sc_neurocore/accel/mojo/fault_injection/libfault.so"
+    if not so_path.is_file():
+        return {"available": False, "reason": f"{so_path} missing — build via: "
+                f"mojo build --emit shared-lib -o libfault.so fault.mojo"}
+    try:
+        lib = ctypes.CDLL(str(so_path))
+    except OSError as exc:
+        return {"available": False, "reason": f"ctypes CDLL failed: {exc}"}
+    sigs = ("inject_bitflip_c", "inject_stuck_at_0_c", "inject_stuck_at_1_c",
+            "inject_dropout_c", "inject_gaussian_c")
+    missing = [s for s in sigs if not hasattr(lib, s)]
+    if missing:
+        return {"available": False, "reason": f"mojo symbols missing: {missing}"}
+    for name in sigs:
+        fn = getattr(lib, name)
+        fn.argtypes = [ctypes.c_int64, ctypes.c_int64, ctypes.c_double, ctypes.c_uint64]
+        fn.restype = ctypes.c_uint64
+    return {"available": True, "lib": lib}
 
 
 # ─────────────────────────── Runners ─────────────────────────────────
@@ -223,6 +235,28 @@ def _run_go(lib, sym: str, ber: float, rng_seed: int) -> tuple[float, int]:
     return times[len(times) // 2], n_last
 
 
+def _run_mojo(lib, sym: str, ber: float, rng_seed: int) -> tuple[float, int]:
+    """Mojo kernel via ctypes — accepts raw Int address (per
+    feedback_mojo_026_ffi_pattern.md), returns u64 affected count."""
+    import ctypes
+    fn = getattr(lib, f"inject_{sym}_c")
+    bs_src = np.random.default_rng(rng_seed).integers(0, 2, N_BITS, dtype=np.uint8)
+    bs = bs_src.copy()
+    fn(bs.ctypes.data, ctypes.c_int64(N_BITS),
+       ctypes.c_double(ber), ctypes.c_uint64(rng_seed))  # warm
+    times: list[float] = []
+    n_last = 0
+    for _ in range(N_REPEATS):
+        bs = bs_src.copy()
+        t0 = time.perf_counter()
+        n = fn(bs.ctypes.data, ctypes.c_int64(N_BITS),
+               ctypes.c_double(ber), ctypes.c_uint64(rng_seed))
+        times.append((time.perf_counter() - t0) * 1000.0)
+        n_last = int(n)
+    times.sort()
+    return times[len(times) // 2], n_last
+
+
 # ─────────────────────────── Parity check ────────────────────────────
 
 def _statistical_parity_ok(model_name: str, ber: float, n: int) -> bool:
@@ -277,8 +311,8 @@ def main(argv: list[str]) -> int:
 
     print()
     print(f"{'model':<16} {'python ms':>10} {'rust ms':>10} "
-          f"{'julia ms':>10} {'go ms':>10}  {'parity':>8}")
-    print(f"{'-'*16} {'-'*10} {'-'*10} {'-'*10} {'-'*10}  {'-'*8}")
+          f"{'julia ms':>10} {'go ms':>10} {'mojo ms':>10}  {'parity':>8}")
+    print(f"{'-'*16} {'-'*10} {'-'*10} {'-'*10} {'-'*10} {'-'*10}  {'-'*8}")
 
     rows: list[dict[str, object]] = []
     for display_name, mdl, ber, sym in FAULT_MODELS:
@@ -314,10 +348,19 @@ def main(argv: list[str]) -> int:
             go_ms = None
             go_n = None
             row["go_ms"] = None
+        # mojo
+        if backends["mojo"]["available"]:
+            mo_ms, mo_n = _run_mojo(backends["mojo"]["lib"], sym, ber, rng_seed=42)
+            row["mojo_ms"] = mo_ms
+            row["mojo_n_affected"] = mo_n
+        else:
+            mo_ms = None
+            mo_n = None
+            row["mojo_ms"] = None
 
         parity_ok = all(
             _statistical_parity_ok(display_name, ber, n)
-            for n in [py_n, ru_n, ju_n, go_n] if n is not None
+            for n in [py_n, ru_n, ju_n, go_n, mo_n] if n is not None
         )
         row["parity_ok"] = parity_ok
 
@@ -325,7 +368,8 @@ def main(argv: list[str]) -> int:
             return f"{v:>10.2f}" if v is not None else f"{'-':>10}"
 
         print(f"{display_name:<16} {fmt(py_ms)} {fmt(ru_ms)} "
-              f"{fmt(ju_ms)} {fmt(go_ms)}  {'ok' if parity_ok else 'FAIL':>8}")
+              f"{fmt(ju_ms)} {fmt(go_ms)} {fmt(mo_ms)}  "
+              f"{'ok' if parity_ok else 'FAIL':>8}")
         rows.append(row)
 
     if args.json is not None:
