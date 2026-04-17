@@ -72,6 +72,68 @@ _julia_module = None
 _HAS_JULIA_LGSSM = False
 
 
+# Detect Go acceleration backend (lazy — load shared library on first use)
+_go_lib = None
+_HAS_GO_LGSSM = False
+
+
+def _ensure_go_loaded() -> bool:
+    """Lazy-load the Go LGSSM shared library on first request.
+
+    The .so is built once via:
+      cd src/sc_neurocore/accel/go/lgssm
+      go build -buildmode=c-shared -o liblgssm.so lgssm.go
+
+    Returns True if the .so loads + has the expected symbol;
+    False otherwise (with reason logged into the caller's
+    `unavailable_reason` channel).
+    """
+    global _go_lib, _HAS_GO_LGSSM
+    if _go_lib is not None:
+        return True
+    import ctypes
+    import os as _os
+    so_path = _os.path.join(
+        _os.path.dirname(_os.path.dirname(__file__)),
+        "accel", "go", "lgssm", "liblgssm.so",
+    )
+    if not _os.path.isfile(so_path):
+        return False
+    try:
+        lib = ctypes.CDLL(so_path)
+    except OSError:
+        return False
+    fn = getattr(lib, "kalman_filter_c", None)
+    if fn is None:
+        return False
+    # Configure C signature: 18 pointers/int args, void return.
+    fn.argtypes = [
+        ctypes.POINTER(ctypes.c_double),  # obs
+        ctypes.POINTER(ctypes.c_double),  # ctl
+        ctypes.POINTER(ctypes.c_double),  # A
+        ctypes.POINTER(ctypes.c_double),  # B
+        ctypes.POINTER(ctypes.c_double),  # C
+        ctypes.POINTER(ctypes.c_double),  # D
+        ctypes.POINTER(ctypes.c_double),  # Q
+        ctypes.POINTER(ctypes.c_double),  # R
+        ctypes.POINTER(ctypes.c_double),  # mu_0
+        ctypes.POINTER(ctypes.c_double),  # Sigma_0
+        ctypes.c_int,                     # T
+        ctypes.c_int,                     # p
+        ctypes.c_int,                     # m
+        ctypes.c_int,                     # d
+        ctypes.POINTER(ctypes.c_double),  # means_out
+        ctypes.POINTER(ctypes.c_double),  # covs_out
+        ctypes.POINTER(ctypes.c_double),  # pred_means_out
+        ctypes.POINTER(ctypes.c_double),  # pred_covs_out
+        ctypes.POINTER(ctypes.c_double),  # log_lik_out
+    ]
+    fn.restype = None
+    _go_lib = lib
+    _HAS_GO_LGSSM = True
+    return True
+
+
 def _ensure_julia_loaded() -> bool:
     """Lazy-load the Julia LGSSM module on first request.
 
@@ -249,14 +311,15 @@ class KalmanFilter:
             Observation sequence.
         controls : np.ndarray, shape (T, m), optional
             Control input sequence. Required iff `model.control_dim > 0`.
-        backend : {"auto", "rust", "julia", "python"}
+        backend : {"auto", "rust", "julia", "go", "python"}
             Acceleration backend selector.
-            - "auto" picks Rust > Julia > Python in priority order
-              (Rust if `sc_neurocore_engine` wheel is built, else
-              Julia if `juliacall` is installed, else Python).
-            - "rust" / "julia" / "python" force the named backend
-              (raises RuntimeError if the named backend is not
-              available).
+            - "auto" picks Rust > Julia > Go > Python in priority
+              order (Rust if `sc_neurocore_engine` wheel is built,
+              else Julia if `juliacall` is installed, else Go if
+              `liblgssm.so` is built, else Python).
+            - "rust" / "julia" / "go" / "python" force the named
+              backend (raises RuntimeError if the named backend
+              is not available).
 
         Returns
         -------
@@ -273,9 +336,9 @@ class KalmanFilter:
             controls = np.zeros((T, 0)) if controls is None else controls
 
         # Backend dispatch
-        if backend not in ("auto", "rust", "julia", "python"):
+        if backend not in ("auto", "rust", "julia", "go", "python"):
             raise ValueError(
-                f"backend must be auto/rust/julia/python, got {backend!r}"
+                f"backend must be auto/rust/julia/go/python, got {backend!r}"
             )
         if backend == "rust" and not _HAS_RUST_LGSSM:
             raise RuntimeError(
@@ -288,10 +351,18 @@ class KalmanFilter:
                 "predictive_model.jl module is not available; "
                 "install juliacall (pip install juliacall)."
             )
+        if backend == "go" and not _ensure_go_loaded():
+            raise RuntimeError(
+                "Go LGSSM backend requested but liblgssm.so is not "
+                "built; run `cd src/sc_neurocore/accel/go/lgssm && "
+                "go build -buildmode=c-shared -o liblgssm.so lgssm.go`."
+            )
         if (backend == "auto" and _HAS_RUST_LGSSM) or backend == "rust":
             return self._filter_rust(observations, controls)
         if backend == "julia":
             return self._filter_julia(observations, controls)
+        if backend == "go":
+            return self._filter_go(observations, controls)
 
         d = self.model.state_dim
         A, B, C, D = self.model.A, self.model.B, self.model.C, self.model.D
@@ -435,6 +506,72 @@ class KalmanFilter:
             pred_means=np.asarray(result.pred_means, dtype=np.float64),
             pred_covariances=np.asarray(result.pred_covs, dtype=np.float64),
             log_likelihood=float(result.log_lik),
+        )
+
+    def _filter_go(
+        self,
+        observations: np.ndarray,
+        controls: np.ndarray,
+    ) -> FilterResult:
+        """Forward-pass dispatch to the Go LGSSM Kalman filter.
+
+        Calls the C-ABI `kalman_filter_c` function exported by the
+        Go shared library `accel/go/lgssm/liblgssm.so`. Buffers are
+        passed as numpy arrays; the Go side fills `means_out`,
+        `covs_out`, `pred_means_out`, `pred_covs_out`, and a
+        single-element `log_lik_out`.
+        """
+        if _go_lib is None:
+            raise RuntimeError("Go shared library not loaded; cannot dispatch")
+
+        import ctypes
+        T, p = observations.shape
+        d = self.model.state_dim
+        m = self.model.control_dim
+
+        # Input buffers (must remain alive — keep Python refs)
+        obs_arr = np.ascontiguousarray(observations, dtype=np.float64)
+        ctl_arr = np.ascontiguousarray(controls, dtype=np.float64)
+        a_arr = np.ascontiguousarray(self.model.A, dtype=np.float64)
+        b_arr = np.ascontiguousarray(self.model.B, dtype=np.float64)
+        c_arr = np.ascontiguousarray(self.model.C, dtype=np.float64)
+        d_arr = np.ascontiguousarray(self.model.D, dtype=np.float64)
+        q_arr = np.ascontiguousarray(self.model.Q, dtype=np.float64)
+        r_arr = np.ascontiguousarray(self.model.R, dtype=np.float64)
+        mu0_arr = np.ascontiguousarray(self.model.mu_0, dtype=np.float64)
+        sigma0_arr = np.ascontiguousarray(self.model.Sigma_0, dtype=np.float64)
+
+        # Output buffers
+        means_out = np.zeros((T, d), dtype=np.float64, order="C")
+        covs_out = np.zeros((T, d, d), dtype=np.float64, order="C")
+        pred_means_out = np.zeros((T, d), dtype=np.float64, order="C")
+        pred_covs_out = np.zeros((T, d, d), dtype=np.float64, order="C")
+        log_lik_out = np.zeros(1, dtype=np.float64, order="C")
+
+        _go_lib.kalman_filter_c(
+            obs_arr.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            ctl_arr.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            a_arr.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            b_arr.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            c_arr.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            d_arr.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            q_arr.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            r_arr.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            mu0_arr.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            sigma0_arr.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            ctypes.c_int(T), ctypes.c_int(p), ctypes.c_int(m), ctypes.c_int(d),
+            means_out.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            covs_out.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            pred_means_out.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            pred_covs_out.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            log_lik_out.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+        )
+        return FilterResult(
+            means=means_out,
+            covariances=covs_out,
+            pred_means=pred_means_out,
+            pred_covariances=pred_covs_out,
+            log_likelihood=float(log_lik_out[0]),
         )
 
 
