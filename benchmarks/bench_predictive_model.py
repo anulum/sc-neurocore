@@ -93,17 +93,43 @@ def _probe_julia() -> tuple[bool, str]:
 
 
 def _probe_mojo() -> tuple[bool, str]:
-    return False, (
-        "Mojo backend not installed in this venv (followup #69); "
-        "Mojo is in private preview and not yet pip-distributable."
+    """Detect the Mojo LGSSM backend (pixi-installed Mojo + .mojo kernel).
+
+    Mojo lives at `~/.pixi/bin/mojo` on this workstation, not on PATH.
+    The kernel must be at `accel/mojo/kernels/predictive_model.mojo`.
+    """
+    import os as _os
+    mojo_bin = _os.path.expanduser("~/.pixi/bin/mojo")
+    if not _os.path.isfile(mojo_bin):
+        return False, "mojo binary not at ~/.pixi/bin/mojo"
+    kernel = _os.path.join(
+        _os.path.dirname(_os.path.dirname(__file__)),
+        "src", "sc_neurocore", "accel", "mojo", "kernels",
+        "predictive_model.mojo",
     )
+    if not _os.path.isfile(kernel):
+        return False, (
+            "mojo binary present at ~/.pixi/bin/mojo but kernel "
+            "accel/mojo/kernels/predictive_model.mojo is missing "
+            "(followup #69)"
+        )
+    return True, ""
 
 
 def _probe_go() -> tuple[bool, str]:
-    return False, (
-        "Go backend not implemented (followup #70); would require "
-        "a cgo-compiled gonum Kalman shared library."
+    """Detect the Go LGSSM backend (compiled liblgssm.so)."""
+    import os as _os
+    so = _os.path.join(
+        _os.path.dirname(_os.path.dirname(__file__)),
+        "src", "sc_neurocore", "accel", "go", "lgssm", "liblgssm.so",
     )
+    if not _os.path.isfile(so):
+        return False, (
+            "accel/go/lgssm/liblgssm.so not built — run "
+            "`cd src/sc_neurocore/accel/go/lgssm && go build "
+            "-buildmode=c-shared -o liblgssm.so lgssm.go`"
+        )
+    return True, ""
 
 
 # ───────────────────────── workload ─────────────────────────
@@ -183,6 +209,23 @@ def bench_julia_kalman(
     return times_ms[len(times_ms) // 2], times_ms[0], last_ll
 
 
+def bench_go_kalman(
+    model: LinearGaussianSSM, obs: np.ndarray,
+) -> tuple[float, float, float]:
+    """Return (median_ms, min_ms, log_likelihood) for the Go backend."""
+    kf = KalmanFilter(model)
+    times_ms: list[float] = []
+    last_ll = 0.0
+    kf.filter(obs, backend="go")  # warm-up
+    for _ in range(N_REPEATS):
+        t0 = time.perf_counter()
+        fr = kf.filter(obs, backend="go")
+        times_ms.append((time.perf_counter() - t0) * 1000.0)
+        last_ll = fr.log_likelihood
+    times_ms.sort()
+    return times_ms[len(times_ms) // 2], times_ms[0], last_ll
+
+
 def bench_python_rts(
     model: LinearGaussianSSM, obs: np.ndarray,
 ) -> tuple[float, float]:
@@ -253,6 +296,7 @@ def main(argv: list[str]) -> int:
         "python": bench_python_kalman,
         "rust": bench_rust_kalman,
         "julia": bench_julia_kalman,
+        "go": bench_go_kalman,
     }
 
     print(f"## Forward Kalman filter")

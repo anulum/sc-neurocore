@@ -22,53 +22,54 @@
       "reason": ""
     },
     "mojo": {
-      "available": false,
-      "reason": "Mojo backend not installed in this venv (followup #69); Mojo is in private preview and not yet pip-distributable."
+      "available": true,
+      "reason": ""
     },
     "go": {
-      "available": false,
-      "reason": "Go backend not implemented (followup #70); would require a cgo-compiled gonum Kalman shared library."
+      "available": true,
+      "reason": ""
     }
   },
   "rows": [
     {
       "workload": "kalman_filter",
       "backend": "python",
-      "median_ms": 16.769503010436893,
-      "min_ms": 14.49895798577927,
+      "median_ms": 19.03493600548245,
+      "min_ms": 9.137335000559688,
       "log_likelihood": -288.06006407439685
     },
     {
       "workload": "kalman_filter",
       "backend": "rust",
-      "median_ms": 3.196311998181045,
-      "min_ms": 2.4885120219551027,
+      "median_ms": 2.543876995332539,
+      "min_ms": 1.800981000997126,
       "log_likelihood": -288.06006407439685
     },
     {
       "workload": "kalman_filter",
       "backend": "julia",
-      "median_ms": 1.8126509967260063,
-      "min_ms": 1.715626014629379,
+      "median_ms": 1.6639150271657854,
+      "min_ms": 1.5833950019441545,
       "log_likelihood": -288.0600640743968
     },
     {
       "workload": "kalman_filter",
       "backend": "mojo",
       "skipped": true,
-      "unavailable_reason": "Mojo backend not installed in this venv (followup #69); Mojo is in private preview and not yet pip-distributable."
+      "unavailable_reason": ""
     },
     {
       "workload": "kalman_filter",
       "backend": "go",
-      "skipped": true,
-      "unavailable_reason": "Go backend not implemented (followup #70); would require a cgo-compiled gonum Kalman shared library."
+      "median_ms": 0.8284839859697968,
+      "min_ms": 0.7976719934958965,
+      "log_likelihood": -288.0600640743968
     },
     {
       "workload": "rts_smoother",
       "backend": "python",
-      "median_ms": 10.098758997628465,
-      "min_ms": 9.583721024682745
+      "median_ms": 3.7279250100255013,
+      "min_ms": 3.045921999728307
     },
     {
       "workload": "rts_smoother",
@@ -86,19 +87,19 @@
       "workload": "rts_smoother",
       "backend": "mojo",
       "skipped": true,
-      "unavailable_reason": "Mojo backend not installed in this venv (followup #69); Mojo is in private preview and not yet pip-distributable."
+      "unavailable_reason": ""
     },
     {
       "workload": "rts_smoother",
       "backend": "go",
       "skipped": true,
-      "unavailable_reason": "Go backend not implemented (followup #70); would require a cgo-compiled gonum Kalman shared library."
+      "unavailable_reason": ""
     },
     {
       "workload": "em_10iters",
       "backend": "python",
-      "median_ms": 134.2559599725064,
-      "min_ms": 103.12957401038148
+      "median_ms": 112.15191698283888,
+      "min_ms": 86.52159001212567
     },
     {
       "workload": "em_10iters",
@@ -116,13 +117,13 @@
       "workload": "em_10iters",
       "backend": "mojo",
       "skipped": true,
-      "unavailable_reason": "Mojo backend not installed in this venv (followup #69); Mojo is in private preview and not yet pip-distributable."
+      "unavailable_reason": ""
     },
     {
       "workload": "em_10iters",
       "backend": "go",
       "skipped": true,
-      "unavailable_reason": "Go backend not implemented (followup #70); would require a cgo-compiled gonum Kalman shared library."
+      "unavailable_reason": ""
     }
   ]
 }

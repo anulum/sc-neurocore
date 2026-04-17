@@ -533,3 +533,93 @@ def test_julia_backend_unavailable_raises_when_explicitly_requested() -> None:
     obs = np.zeros((5, 1))
     with pytest.raises(RuntimeError, match="Julia LGSSM backend"):
         KalmanFilter(model).filter(obs, backend="julia")
+
+
+# ───────────────────────── Go ↔ Python parity ─────────────────────────
+
+
+def _go_available() -> bool:
+    """Check liblgssm.so is present without forcing the load."""
+    import os as _os
+    so_path = _os.path.join(
+        _os.path.dirname(_os.path.dirname(_os.path.dirname(__file__))),
+        "src", "sc_neurocore", "accel", "go", "lgssm", "liblgssm.so",
+    )
+    return _os.path.isfile(so_path)
+
+
+@pytest.mark.skipif(
+    not _go_available(),
+    reason="Go shared lib (accel/go/lgssm/liblgssm.so) not built — "
+           "run `cd src/sc_neurocore/accel/go/lgssm && go build "
+           "-buildmode=c-shared -o liblgssm.so lgssm.go`",
+)
+def test_go_parity_means_match_python() -> None:
+    """Go filtered means must match Python to atol=1e-9."""
+    rng = np.random.default_rng(301)
+    model = LinearGaussianSSM.random(state_dim=4, obs_dim=3, control_dim=0, seed=301)
+    obs = rng.standard_normal((50, 3))
+
+    py = KalmanFilter(model).filter(obs, backend="python")
+    go = KalmanFilter(model).filter(obs, backend="go")
+
+    np.testing.assert_allclose(go.means, py.means, atol=1e-9)
+
+
+@pytest.mark.skipif(not _go_available(), reason="Go LGSSM backend unavailable")
+def test_go_parity_covariances_match_python() -> None:
+    rng = np.random.default_rng(302)
+    model = LinearGaussianSSM.random(state_dim=3, obs_dim=2, control_dim=0, seed=302)
+    obs = rng.standard_normal((30, 2))
+
+    py = KalmanFilter(model).filter(obs, backend="python")
+    go = KalmanFilter(model).filter(obs, backend="go")
+
+    np.testing.assert_allclose(go.covariances, py.covariances, atol=1e-9)
+
+
+@pytest.mark.skipif(not _go_available(), reason="Go LGSSM backend unavailable")
+def test_go_parity_log_likelihood_matches_python() -> None:
+    rng = np.random.default_rng(303)
+    model = LinearGaussianSSM.random(state_dim=2, obs_dim=2, control_dim=0, seed=303)
+    obs = rng.standard_normal((100, 2))
+
+    py_ll = KalmanFilter(model).filter(obs, backend="python").log_likelihood
+    go_ll = KalmanFilter(model).filter(obs, backend="go").log_likelihood
+
+    assert abs(go_ll - py_ll) < 1e-9, (
+        f"log-likelihood mismatch: python={py_ll}, go={go_ll}"
+    )
+
+
+@pytest.mark.skipif(not _go_available(), reason="Go LGSSM backend unavailable")
+def test_four_backend_parity_when_all_available() -> None:
+    """Python = Rust = Julia = Go must agree to atol=1e-9 when all built."""
+    rng = np.random.default_rng(304)
+    model = LinearGaussianSSM.random(state_dim=3, obs_dim=2, control_dim=0, seed=304)
+    obs = rng.standard_normal((40, 2))
+
+    py = KalmanFilter(model).filter(obs, backend="python")
+    go = KalmanFilter(model).filter(obs, backend="go")
+    np.testing.assert_allclose(go.log_likelihood, py.log_likelihood, atol=1e-9)
+    np.testing.assert_allclose(go.means, py.means, atol=1e-9)
+
+    if _HAS_RUST_LGSSM:
+        ru = KalmanFilter(model).filter(obs, backend="rust")
+        np.testing.assert_allclose(go.means, ru.means, atol=1e-9)
+        np.testing.assert_allclose(go.log_likelihood, ru.log_likelihood, atol=1e-9)
+
+    if _julia_available():
+        ju = KalmanFilter(model).filter(obs, backend="julia")
+        np.testing.assert_allclose(go.means, ju.means, atol=1e-9)
+        np.testing.assert_allclose(go.log_likelihood, ju.log_likelihood, atol=1e-9)
+
+
+def test_go_backend_unavailable_raises_when_explicitly_requested() -> None:
+    """If backend='go' is requested but unavailable, raise RuntimeError."""
+    if _go_available():
+        pytest.skip("Go backend IS available — cannot test the unavailable path")
+    model = LinearGaussianSSM.random(state_dim=2, obs_dim=1, seed=1)
+    obs = np.zeros((5, 1))
+    with pytest.raises(RuntimeError, match="Go LGSSM backend"):
+        KalmanFilter(model).filter(obs, backend="go")
