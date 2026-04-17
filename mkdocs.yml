@@ -203,6 +203,7 @@ nav:
       - Neuromorphic Swarm Control: api/swarm.md
       - Neuromorphic Datasets: api/datasets.md
       - Hardware Drivers: api/drivers.md
+      - Framework Integrations (Lava/Loihi): api/integrations.md
       - Core:
           - Neuron Model Catalogue: api/neuron_models.md
           - Neurons: api/neurons.md
