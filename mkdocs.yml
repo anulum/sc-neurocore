@@ -201,6 +201,7 @@ nav:
       - Cortical Column Microcircuit: api/cortical_column.md
       - Gamma Oscillation (PING): api/gamma_oscillation.md
       - Neuromorphic Swarm Control: api/swarm.md
+      - Neuromorphic Datasets: api/datasets.md
       - Core:
           - Neuron Model Catalogue: api/neuron_models.md
           - Neurons: api/neurons.md
