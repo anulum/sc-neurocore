@@ -568,4 +568,4 @@ The map neuron occupies a middle ground: more capable than LIF (adaptation), che
 
 ---
 
-*Document version: SUPERIOR. Generated from `engine/src/neurons/maps.rs:378` (Rust source of truth). All equations verified against source code. Numerical examples computed step-by-step and cross-checked against running the model. Benchmark from `cargo bench`.*
+*Generated from `engine/src/neurons/maps.rs:378` (Rust source of truth). All equations verified against source code. Numerical examples computed step-by-step and cross-checked against running the model. Benchmark from `cargo bench`.*
