@@ -5,7 +5,27 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Connectivity generators returning CSR arrays
 
-"""Connectivity generators returning CSR (indptr, indices, data) tuples."""
+"""Connectivity generators returning CSR (indptr, indices, data) tuples.
+
+Builds adjacency matrices from a chosen topology family + parameters.
+Six generators: ``random_connectivity`` (Erdős–Rényi),
+``small_world`` (Watts–Strogatz), ``scale_free`` (Barabási–Albert),
+``ring_topology``, ``grid_topology``, ``all_to_all``.
+
+NOT to be confused with :mod:`sc_neurocore.topology`, which is a
+different module that **measures** graph metrics (clustering,
+modularity, small-world σ, hubs) on an existing adjacency matrix.
+The two share the word "topology" but have disjoint roles:
+
+- ``sc_neurocore.network.topology`` (this module) — produce graph
+- ``sc_neurocore.topology`` — measure existing graph
+
+Use this module to feed :class:`sc_neurocore.network.Projection`;
+use the other to analyse the resulting connectivity.
+
+See :doc:`docs/api/network` §6 for the generator catalogue and
+:doc:`docs/api/graph_topology` for the analyser.
+"""
 
 from __future__ import annotations
 
