@@ -195,6 +195,7 @@ nav:
   - API Reference:
       - Full Reference: api/API_REFERENCE.md
       - Command-Line Interface: api/cli.md
+      - Network Simulation Engine: api/network.md
       - Core:
           - Neuron Model Catalogue: api/neuron_models.md
           - Neurons: api/neurons.md
