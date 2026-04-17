@@ -534,12 +534,15 @@ class SimulatedAnnealer:
                 )
 
                 for qubit in range(n):
-                    de = 2.0 * spins[qubit] * model.h.get(qubit, 0.0)
+                    # ΔE for flipping s_q → -s_q is
+                    #   ΔE = −2·s_q·(h_q + Σ_k J_qk·s_k).
+                    local_field = model.h.get(qubit, 0.0)
                     for (i, j), jij in model.J.items():
                         if i == qubit:
-                            de += 2.0 * jij * spins[qubit] * spins.get(j, 1)
+                            local_field += jij * spins.get(j, 1)
                         elif j == qubit:
-                            de += 2.0 * jij * spins.get(i, 1) * spins[qubit]
+                            local_field += jij * spins.get(i, 1)
+                    de = -2.0 * spins[qubit] * local_field
 
                     if de < 0 or self._rng.random() < math.exp(-beta * de):
                         spins[qubit] *= -1
