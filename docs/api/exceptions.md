@@ -130,10 +130,12 @@ Raised by `compiler/pipeline.py` when:
 
 ---
 
-## 4. The other 9 classes — declared but unused
+## 4. The other 9 classes — reserved for future use (DOCUMENTED by task #36)
 
 These classes exist in `exceptions.py` but no `raise` site in `src/`
-calls them in v3.14.0:
+calls them in v3.14.0. As of task #36 each carries a class
+docstring explicitly marking it as "Reserved for future use" and
+naming what currently raises in its place:
 
 - `SCNeuroError` — base; expected to be raised only by subclasses,
   but tests in `tests/test_exceptions.py::test_raise_and_catch` use
@@ -197,45 +199,47 @@ classes are exercised via downstream module tests.
 | # | Dimension | Status | Detail |
 |---|-----------|--------|--------|
 | 1 | Pipeline wiring | ✅ PASS | Flat module export; 4 classes raised across 24 sites |
-| 2 | Multi-angle tests | ⚠️ WARN | 7 tests pass: 6-way parameterised `issubclass(SCNeuroError)` check + one `raise/catch` round-trip. **Tests do not cover the 4 broad domain exceptions independently** (SCEncodingError / SCConfigError / SCWeightError / SCCompilerError), nor the `RuntimeError` mix-in for SCDependencyError / SCHardwareError. |
+| 2 | Multi-angle tests | ✅ PASS | 21 tests pass (closes the gap noted in this row): 6-way parameterised `issubclass(SCNeuroError)` check + raise/catch round-trip + 4-way ValueError mix-in (SCEncodingError/SCConfigError/SCWeightError/SCCompilerError) + 2-way RuntimeError mix-in (SCDependencyError/SCHardwareError) + 8-way "reserved for future use" constructable+catchable check. |
 | 3 | Rust path | N/A | Pure-Python class declarations; no compute |
 | 4 | Benchmarks | N/A | Same |
 | 5 | Performance docs | N/A | Same |
 | 6 | Documentation page | ✅ PASS | This page |
-| 7 | Rules followed | ⚠️ WARN | SPDX header ✅. **9 of 13 classes have zero raise sites** — declared vocabulary without enforcement (§4). British English clean. No `# noqa`, no `# type: ignore`. |
+| 7 | Rules followed | ✅ PASS | SPDX header ✅. 9 of 13 classes still have zero raise sites in src/ but each now carries an explicit "Reserved for future use" docstring naming what currently raises in its place (closes task #36; §4). British English clean. No `# noqa`, no `# type: ignore`. |
 
-Net: **2 WARN, 0 FAIL.** Both WARNs trace to "the vocabulary is
-larger than the enforcement" — fix is to either raise the typed
-exceptions or document the reserved-for-future status.
+Net: **0 WARN, 0 FAIL.** Both former WARNs closed in this
+session — the test gap is filled by 14 new parametrised cases,
+and the documentation gap is filled by per-class "Reserved for
+future use" docstrings.
 
 ---
 
 ## 7. Known issues
 
-### 7.1 Nine declared exceptions are never raised (task #36)
+### 7.1 Nine declared exceptions are never raised (PARTIALLY CLOSED by task #36)
 
-See §4. Three options for resolution:
-1. Migrate plain `ValueError` / `AssertionError` raises to the
-   typed exceptions throughout `src/`.
-2. Add a "Reserved for future use" line to the docstring of each
-   unused class.
-3. Delete the unused ones until they have a raise site.
+See §4. Each of the 9 reserved classes now carries a
+"Reserved for future use" docstring naming what currently raises
+in its place. Callers who write `except SeedCollisionError`
+expecting it to fire still get nothing in v3.14.0 — the
+documentation now warns them honestly rather than implying
+enforcement that does not exist.
 
-The current state misleads callers who write
-`except SeedCollisionError` expecting it to fire — it never will in
-v3.14.0.
+The full migration (option 1: replace plain `ValueError` /
+`AssertionError` raises with typed exceptions across `src/`)
+remains future work; 12-15 files would need editing.
 
-### 7.2 No tests for `ValueError` / `RuntimeError` mix-in contract
+### 7.2 ValueError / RuntimeError mix-in contract (FIXED by task #36)
 
-`SCEncodingError` is a `ValueError` so legacy code catching
-`ValueError` still works. No test asserts this. A one-line addition:
-
-```python
-def test_encoding_is_valueerror():
-    assert issubclass(SCEncodingError, ValueError)
-```
-
-would lock the contract.
+`tests/test_exceptions.py::test_value_error_mixin` (4 cases)
+asserts `issubclass(X, ValueError)` plus
+`raise X("probe") → catchable as both ValueError and SCNeuroError`
+for the 4 broad domain exceptions. The companion
+`test_runtime_error_mixin` (2 cases) does the same for
+`SCDependencyError` and `SCHardwareError`. Plus
+`test_reserved_classes_are_constructable_and_catchable` (8 cases)
+exercises all "reserved for future use" classes so the test
+suite at least asserts they instantiate and propagate up the
+hierarchy.
 
 ### 7.3 `SCCompilerError` raise messages embed `repr` of user input
 
