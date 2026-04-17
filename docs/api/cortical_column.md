@@ -213,10 +213,12 @@ into `(steps, n_per_layer)` arrays.
 | External drive | thalamus + cortico-cortical | per-population Poisson, rates from Table 5 | only thalamic input to L4 | no background |
 | Verified output | qualitative pathway diagram | Table 4 firing rates (0.86–8.27 Hz) | sweep below | rates are 30×–1000× the paper |
 
-**Net:** the implementation is best described as a *5-population
-feedforward sketch loosely inspired by* the canonical microcircuit, not
-as a reproduction of either paper. Removing the Potjans citation from
-the module docstring or restoring fidelity is tracked as task #10.
+**Net:** the implementation is a 5-population feedforward circuit with
+hand-picked weights — covering ~30 % of the Potjans 2014 specification
+and none of its synaptic kinetics (no PSP kernel, no conduction delays,
+no refractory period, no Poisson background). It is not a reproduction
+of either cited paper. Removing the Potjans citation from the module
+docstring or restoring fidelity is tracked as task #10.
 
 ---
 

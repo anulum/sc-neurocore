@@ -350,8 +350,7 @@ into the simulation loop; none are orphan helpers.
 | 6 | Documentation page | ✅ PASS | This page |
 | 7 | Rules followed | ✅ PASS | SPDX headers ✅; no `# noqa`; no `# type: ignore`; British English in this doc |
 
-Net: **0 WARN, 0 FAIL.** This is the cleanest module audited so far in
-the P0 sweep.
+Net: **0 WARN, 0 FAIL.**
 
 ---
 
@@ -385,8 +384,8 @@ the run to a multiple of `bin_ms`, or accept that `len(rm.rate)` is
 when the Rust engine wheel is installed. With the wheel absent (current
 environment), no test verifies the decode of the `u64 = nid<<32 | t`
 packed events. Tracked alongside MPIRunner tests as part of the broader
-testing gap (task #12 covers MPIRunner; consider extending to
-`record_event`).
+testing gap (task #17 adds real `mpirun` MPIRunner coverage; consider
+extending the same test scope to `record_event`).
 
 ---
 

@@ -364,7 +364,7 @@ What the tests **do not** verify:
 | 4 | Benchmarks | ✅ PASS | §5 measured here; gap to paper documented |
 | 5 | Performance docs | ✅ PASS | §5.3 |
 | 6 | Documentation page | ✅ PASS | this page |
-| 7 | Rules followed | ❌ FAIL | **Cited-publication fidelity violation** — module docstring cites Whittington 1995 + Börgers & Kopell 2003 but implementation is mean-field-rate caricature (§4). Plus **non-determinism bug** (§6) violates reproducibility. Plus undocumented `# type: ignore[arg-type]` on lines 66-67. Task #11 tracks the restoration. SPDX header ✅ otherwise |
+| 7 | Rules followed | ❌ FAIL | **Cited-publication fidelity violation** — module docstring cites Whittington 1995 + Börgers & Kopell 2003 but implementation is a mean-field-rate model (§4). Plus **non-determinism bug** (§6) violates reproducibility. Plus undocumented `# type: ignore[arg-type]` on lines 66-67. Tasks #11 (fidelity) and #22 (non-determinism) track the fixes. SPDX header ✅ otherwise |
 
 Net: **2 WARN, 2 FAIL.** Same shape as `cortical_column.md` audit —
 fidelity violation is the headline.
