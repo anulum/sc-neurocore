@@ -60,6 +60,51 @@ def test_driver_invalid_mode():
         driver = SC_NeuroCore_Driver(mode="INVALID")
 
 
+# ---------------------------------------------------------------------------
+# EMULATION run_step determinism (task #29 fix verification)
+# ---------------------------------------------------------------------------
+
+
+class TestRunStepDeterminism:
+    """Two drivers built with the same seed produce identical run_step output."""
+
+    def test_run_step_same_seed_identical_first_call(self):
+        a = SC_NeuroCore_Driver(mode="EMULATION", seed=123)
+        b = SC_NeuroCore_Driver(mode="EMULATION", seed=123)
+        np.testing.assert_array_equal(a.run_step(None), b.run_step(None))
+
+    def test_run_step_same_seed_identical_sequence(self):
+        a = SC_NeuroCore_Driver(mode="EMULATION", seed=99)
+        b = SC_NeuroCore_Driver(mode="EMULATION", seed=99)
+        for _ in range(50):
+            np.testing.assert_array_equal(a.run_step(None), b.run_step(None))
+
+    def test_run_step_different_seeds_differ(self):
+        a = SC_NeuroCore_Driver(mode="EMULATION", seed=1)
+        b = SC_NeuroCore_Driver(mode="EMULATION", seed=2)
+        out_a = a.run_step(None)
+        out_b = b.run_step(None)
+        # Two distinct seeds: shape matches, values differ
+        assert out_a.shape == out_b.shape == (16,)
+        assert not np.array_equal(out_a, out_b)
+
+    def test_run_step_global_numpy_seed_does_not_leak(self):
+        """np.random.seed(...) between constructions must not affect output."""
+        np.random.seed(0)
+        a = SC_NeuroCore_Driver(mode="EMULATION", seed=42)
+        out_a = a.run_step(None)
+
+        np.random.seed(99999)
+        b = SC_NeuroCore_Driver(mode="EMULATION", seed=42)
+        out_b = b.run_step(None)
+        np.testing.assert_array_equal(out_a, out_b)
+
+    def test_run_step_default_seed_is_42(self):
+        a = SC_NeuroCore_Driver(mode="EMULATION")
+        b = SC_NeuroCore_Driver(mode="EMULATION", seed=42)
+        np.testing.assert_array_equal(a.run_step(None), b.run_step(None))
+
+
 if __name__ == "__main__":
     test_driver_emulation_mode()
     test_driver_write_layer_params()

@@ -82,10 +82,11 @@ flagging if FPGA register IPs are migrated to Q8.8 in the future.
 In HARDWARE mode raises `NotImplementedError` ("DMA transfer requires
 PYNQ overlay") — i.e. no real DMA path is wired yet.
 
-In EMULATION mode returns `np.random.rand(16)` — uses the **global**
-NumPy RNG, so successive calls produce different results without a
-seed mechanism. Same anti-pattern as the original `PINGCircuit` bug
-(now fixed by task #22). Tracked as task #29.
+In EMULATION mode returns `self._rng.random(16)` — uses the
+**per-instance** RNG seeded in `__init__` (default `seed=42`).
+Two drivers built with the same seed produce identical output
+sequences. Fixed by task #29; see §8.2 for the regression-test
+breakdown.
 
 ### 2.3 Module-level test entry point
 
@@ -246,11 +247,14 @@ imports only `SC_NeuroCore_Driver`. Tracked as part of task #30.
 | 4 | Benchmarks | N/A | Hardware register writes / mock RNG; no meaningful benchmark |
 | 5 | Performance docs | N/A | Same as above |
 | 6 | Documentation page | ✅ PASS | This page |
-| 7 | Rules followed | ❌ FAIL | **`PhysicalTwinBridge` misrepresents itself as a hardware bridge** (§3). **`run_step(EMULATION)` uses unseeded global RNG** (same anti-pattern as the pre-fix `PINGCircuit`). **`verify_hardware_link.py` reaches outside the project tree via `sys.path.append`**. **3 undocumented `# type: ignore` / `# noqa` markers**. SPDX header on every file ✅. |
+| 7 | Rules followed | ❌ FAIL | **`PhysicalTwinBridge` misrepresents itself as a hardware bridge** (§3). **`run_step(EMULATION)` global-RNG anti-pattern FIXED by task #29** — driver now accepts `seed` parameter and uses per-instance RNG. **`verify_hardware_link.py` reaches outside the project tree via `sys.path.append`**. **3 undocumented `# type: ignore` / `# noqa` markers**. SPDX header on every file ✅. |
 
 Net: **1 WARN, 1 FAIL.** The FAIL is honesty-driven, not
 correctness-driven for the FPGA driver itself — but the
 `PhysicalTwinBridge` claim is severe enough to fail the rule.
+Task #29 closed in this session; the remaining FAIL items
+(`PhysicalTwinBridge` mock, sys.path.append, type:ignore) stay
+open under tasks #30 / #31.
 
 ---
 
@@ -260,11 +264,19 @@ correctness-driven for the FPGA driver itself — but the
 
 See §3. Highest-priority fix in this module. Tracked as task #30.
 
-### 8.2 `run_step` EMULATION uses global numpy RNG
+### 8.2 `run_step` EMULATION RNG (FIXED by task #29)
 
-`sc_neurocore_driver.py:108` returns `np.random.rand(16)`. Successive
-calls produce different results with no seed mechanism. Mirror of
-the PINGCircuit bug (now fixed by task #22). Tracked as task #29.
+`SC_NeuroCore_Driver.__init__` now accepts `seed: int = 42` and
+constructs `self._rng = np.random.default_rng(seed)`. The
+EMULATION `run_step` returns `self._rng.random(16)` instead of
+`np.random.rand(16)`, so two drivers built with the same seed
+produce bitwise-identical output sequences regardless of the
+global numpy RNG state.
+
+Regression coverage:
+`tests/test_pynq_driver.py::TestRunStepDeterminism` (5 tests):
+same-seed first call, same-seed 50-step sequence, distinct seeds
+differ, global numpy seed does not leak in, default seed is 42.
 
 ### 8.3 `verify_hardware_link.py` `sys.path.append` outside project
 
