@@ -20,9 +20,25 @@ The core workhorse. Predicts multi-channel spike patterns from recent history us
 - `predict_and_xor_world_model(spikes, n_channels, ...)` → (errors, correct_count) — Encoder
 - `xor_and_recover_world_model(errors, n_channels, ...)` → spikes — Decoder
 
-## PredictiveWorldModel — State Transitions
+## PredictiveWorldModel — Linear Gaussian State-Space
 
-Linear transition model: `state_next = clip(T @ [state; action], 0, 1)` where T is a row-normalized transition matrix. Provides `predict_next_state()` and `forecast()` for multi-step rollouts.
+Probabilistic predictive model implemented as a **Linear
+Gaussian State-Space Model (LGSSM)** with Kalman filter
+(forward), RTS smoother (backward), and EM parameter learner.
+References: Kalman 1960, Rauch-Tung-Striebel 1965, Shumway &
+Stoffer 1982, Bishop 2006 §13.3.
+
+Provides `predict_next_state()` (deterministic mean),
+`predict_next_state_with_cov()` (mean + covariance),
+`forecast()` / `forecast_with_cov()` for multi-step rollouts.
+
+The previous "linear transition matrix + clip-to-[0,1]"
+implementation was a placeholder masquerading as a world
+model and was replaced 2026-04-17 per
+`feedback_sophisticated_from_start.md`. See [Predictive Model
+detailed page](world_model/predictive_model.md) for the full
+LGSSM + Kalman + RTS + EM derivations, performance numbers,
+and the multi-language backend status.
 
 ## SCPlanner — Greedy Action Selection
 

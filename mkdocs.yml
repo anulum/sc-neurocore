@@ -347,7 +347,9 @@ nav:
           - Spike GNN: api/spike_gnn.md
           - Symbolic: api/symbolic.md
           - Temporal Hierarchy: api/temporal_hierarchy.md
-          - World Model: api/world_model.md
+          - World Model:
+              - Overview: api/world_model.md
+              - Predictive Model (LGSSM): api/world_model/predictive_model.md
       - Industrial:
           - Safety Certification: api/safety_cert.md
           - ASIC Flow: api/asic_flow.md
