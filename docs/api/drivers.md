@@ -172,26 +172,26 @@ that runs three sequential checks:
 | 2/3 | Evo 2 genomic interface | `sys.path.append(...) → from scpn_evo2_real_interface import Evo2RealInterface` then `evo.connect()` | `ImportError` → "module not found"; `OSError`/`ConnectionError` → "Server unreachable" |
 | 3/3 | Opentrons OT-2 robot | `from scpn_opentrions_verify import OpentronsVerifier` then `ot2.ping()` | `ImportError` → "module not found"; `OSError` → "ERROR" |
 
-### 4.1 Cross-repo `sys.path.append` is fragile
+### 4.1 Cross-repo `sys.path.append` removed (FIXED by task #31)
 
-`verify_hardware_link.py:37-43` reaches **outside the project tree**:
+The previous version mutated `sys.path` to reach into a sibling
+`SCPN-CODEBASE/HolonomicAtlas/src/interfaces/` directory. That
+behaviour was fragile (it assumed the GOTM monorepo layout) and
+violated the principle that library code shouldn't manipulate
+import paths.
 
-```python
-sys.path.append(
-    str(
-        Path(__file__).resolve().parent
-        / "../../../SCPN-CODEBASE/HolonomicAtlas/src/interfaces"
-    )
-)
-from scpn_evo2_real_interface import Evo2RealInterface
-```
+`verify_link()` now imports `scpn_evo2_real_interface` and
+`scpn_opentrions_verify` via standard `PYTHONPATH` resolution.
+If the modules are not on the path the probe reports
+`"FAILURE: <module> not on PYTHONPATH"` cleanly without changing
+import state. The probe also accepts `extras: bool = True`
+(default) — pass `extras=False` to skip both sibling-repo probes
+and check only the FPGA subsystem.
 
-This assumes the layout
-`/path/to/sc-neurocore/src/sc_neurocore/drivers/...` next to a
-sibling `SCPN-CODEBASE/HolonomicAtlas/src/interfaces/` directory.
-Outside the GOTM monorepo that path will not exist — the import
-falls through to the `ImportError` branch and prints "FAILURE:
-Interface module not found in path." Tracked as task #31.
+Regression coverage:
+`tests/test_pynq_driver.py::TestVerifyHardwareLink` (4 tests):
+extras=False FPGA-only output, extras=True full output, default
+is True, `verify_link` does not mutate `sys.path`.
 
 ### 4.2 Module-level test entry point
 
@@ -278,13 +278,12 @@ Regression coverage:
 same-seed first call, same-seed 50-step sequence, distinct seeds
 differ, global numpy seed does not leak in, default seed is 42.
 
-### 8.3 `verify_hardware_link.py` `sys.path.append` outside project
+### 8.3 `verify_hardware_link.py` `sys.path.append` (FIXED by task #31)
 
-See §4.1. Either (a) move the Evo 2 / Opentrons probes into a
-dedicated optional extra (e.g. `pip install
-sc-neurocore-engine[diagnostics]`), or (b) document the GOTM-monorepo
-assumption in the function docstring, or (c) remove these checks
-from the public API. Tracked as task #31.
+`verify_link()` no longer mutates `sys.path`. It accepts an
+`extras: bool = True` parameter — pass `extras=False` to skip
+the two sibling-repo probes and check only the FPGA subsystem.
+See §4.1.
 
 ### 8.4 `# type: ignore` markers without rationale
 

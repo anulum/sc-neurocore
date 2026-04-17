@@ -105,6 +105,61 @@ class TestRunStepDeterminism:
         np.testing.assert_array_equal(a.run_step(None), b.run_step(None))
 
 
+class TestVerifyHardwareLink:
+    """verify_link CLI smoke tests (closes task #31)."""
+
+    def test_extras_false_fpga_only(self, capsys):
+        """extras=False skips Evo 2 + Opentrons probes."""
+        from sc_neurocore.drivers.verify_hardware_link import verify_link
+
+        verify_link(extras=False)
+        out = capsys.readouterr().out
+        assert "[1/1]" in out
+        assert "FPGA only" in out
+        # Evo 2 + Opentrons headers must be absent
+        assert "[2/" not in out
+        assert "[3/" not in out
+        assert "Genomic" not in out
+        assert "Robotics" not in out
+
+    def test_extras_true_runs_all_three_probes(self, capsys):
+        """extras=True (default) runs all three probes including the
+        sibling-repo imports.
+
+        On environments where the sibling modules are absent (the
+        common case outside the GOTM monorepo), the probes report
+        "FAILURE: <module> not on PYTHONPATH" cleanly without
+        manipulating sys.path.
+        """
+        from sc_neurocore.drivers.verify_hardware_link import verify_link
+
+        verify_link(extras=True)
+        out = capsys.readouterr().out
+        assert "[1/3]" in out
+        assert "[2/3]" in out
+        assert "[3/3]" in out
+        assert "Genomic" in out
+        assert "Robotics" in out
+
+    def test_extras_default_is_true(self, capsys):
+        from sc_neurocore.drivers.verify_hardware_link import verify_link
+
+        verify_link()  # default
+        out = capsys.readouterr().out
+        assert "[3/3]" in out
+
+    def test_no_sys_path_mutation(self):
+        """verify_link must not mutate sys.path (closes the cross-repo bug)."""
+        import sys
+
+        from sc_neurocore.drivers.verify_hardware_link import verify_link
+
+        before = list(sys.path)
+        verify_link(extras=True)
+        after = list(sys.path)
+        assert before == after, "verify_link mutated sys.path"
+
+
 if __name__ == "__main__":
     test_driver_emulation_mode()
     test_driver_write_layer_params()
