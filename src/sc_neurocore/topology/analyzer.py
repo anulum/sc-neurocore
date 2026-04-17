@@ -49,7 +49,7 @@ class TopologyReport:
 
 
 class TopologyAnalyzer:
-    """Analyze SNN connectivity structure.
+    """Analyse SNN connectivity structure.
 
     Parameters
     ----------
@@ -57,13 +57,26 @@ class TopologyAnalyzer:
         Binary adjacency matrix or weight matrix (nonzero = edge).
     directed : bool
         If True, treat as directed graph.
+    n_path_samples : int
+        Maximum number of source nodes used by ``_avg_path_length``.
+        For ``N <= n_path_samples`` the result is the true all-pairs
+        average; for larger graphs it is a sample mean over the first
+        ``n_path_samples`` nodes (deterministic, not randomised).
+        Default 100. Set to 0 or a very large value to force full
+        all-pairs (expensive at N >> 100).
     """
 
-    def __init__(self, adjacency: np.ndarray, directed: bool = False):
+    def __init__(
+        self,
+        adjacency: np.ndarray,
+        directed: bool = False,
+        n_path_samples: int = 100,
+    ):
         self.adj = (np.abs(adjacency) > 1e-10).astype(np.float64)
         np.fill_diagonal(self.adj, 0)
         self.directed = directed
         self.N = self.adj.shape[0]
+        self.n_path_samples = n_path_samples
 
     def analyze(self) -> TopologyReport:
         """Run full topology analysis."""
@@ -116,11 +129,19 @@ class TopologyAnalyzer:
         return float(np.mean(coeffs)) if coeffs else 0.0
 
     def _avg_path_length(self) -> float:
-        """Average shortest path length via BFS."""
+        """Average shortest path length via BFS.
+
+        For ``N <= self.n_path_samples`` this is the true all-pairs
+        average. For larger graphs it samples the first
+        ``self.n_path_samples`` source nodes (deterministic, not
+        randomised) — caller controls the trade-off via the
+        constructor argument.
+        """
         A = self.adj if not self.directed else np.maximum(self.adj, self.adj.T)
+        cap = self.n_path_samples if self.n_path_samples > 0 else self.N
         total = 0.0
         count = 0
-        for src in range(min(self.N, 100)):  # sample for large graphs
+        for src in range(min(self.N, cap)):
             dist = self._bfs(A, src)
             reachable = dist[dist > 0]
             if len(reachable) > 0:
