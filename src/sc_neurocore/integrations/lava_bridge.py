@@ -14,8 +14,14 @@ Requires: pip install lava-nc (optional dependency)
 
 Usage:
     from sc_neurocore.integrations.lava_bridge import (
-        SCtoLavaConverter, export_weights_loihi, LoihiDenseProcess,
+        SCtoLavaConverter, export_weights_loihi, SCDenseProcess,
     )
+
+The two Lava classes (``SCDenseProcess`` and ``PySCDenseModel``)
+are only defined when ``HAS_LAVA`` is True; otherwise they are
+absent from the module namespace. Helpers (the converter and the
+weight/threshold encoders plus ``LoihiNetworkConfig``) are always
+importable.
 """
 
 from __future__ import annotations
