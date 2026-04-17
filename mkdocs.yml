@@ -206,6 +206,9 @@ nav:
       - Framework Integrations (Lava/Loihi): api/integrations.md
       - Exception Hierarchy: api/exceptions.md
       - Named Constants: api/constants.md
+      - Speculative Bridges:
+          - DNA Mapper: api/bridges/dna_mapper.md
+          - Photonic NoC: api/bridges/photonic_noc.md
       - Core:
           - Neuron Model Catalogue: api/neuron_models.md
           - Neurons: api/neurons.md
