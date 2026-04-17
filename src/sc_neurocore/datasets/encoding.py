@@ -46,25 +46,46 @@ def latency_encode(
     values: npt.ArrayLike,
     T: int,
     tau: float = 5.0,
+    strict: bool = True,
 ) -> np.ndarray:
-    """Convert normalized values [0, 1] to first-spike-time encoded trains.
+    """Convert normalised values in [0, 1] to first-spike-time trains.
 
     Higher values spike earlier. Each neuron fires exactly once.
 
     Parameters
     ----------
     values : array_like, shape (N,)
-        Input values in [0, 1].
+        Input values, expected in ``[0, 1]``.
     T : int
         Number of timesteps.
     tau : float
         Time constant controlling the spike-time spread.
+    strict : bool
+        If True (default), raise ``ValueError`` when any value lies
+        outside ``[0, 1]``. If False, silently clip the resulting
+        spike times to ``[0, T-1]`` (the legacy behaviour). The
+        clip happens regardless of ``strict``; this flag controls
+        only whether the function raises before clipping.
 
     Returns
     -------
     spikes : ndarray, shape (T, N), dtype bool
+
+    Raises
+    ------
+    ValueError
+        If ``strict=True`` (default) and any element of ``values``
+        is outside ``[0, 1]``.
     """
     values = np.asarray(values, dtype=np.float64)
+    if strict and (values.min() < 0.0 or values.max() > 1.0):
+        bad_min = float(values.min())
+        bad_max = float(values.max())
+        raise ValueError(
+            f"latency_encode: values must be in [0, 1] when strict=True; "
+            f"got min={bad_min}, max={bad_max}. Pass strict=False to "
+            f"accept the legacy silent-clip behaviour."
+        )
     # spike_time = tau * (1 - value); higher value => earlier spike
     spike_times = np.clip(tau * (1.0 - values), 0, T - 1).astype(int)
     spikes = np.zeros((T, values.shape[0]), dtype=bool)
