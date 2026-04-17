@@ -13,5 +13,10 @@ exclude = [
     "crates/neuro_symbolic",
     "crates/stochastic_doctor_core",
     "crates/spike_stats_core",
+    "VISION2030/phase2_edge/tinysc_riscv",
+    "VISION2030/phase2_edge/dynamic_adaptation",
+    "VISION2030/phase6_unification/autonomous_learning",
+    "VISION2030/phase6_unification/core_engine",
+    "VISION2030/phase1_industrial/rust_safety",
 ]
 resolver = "2"

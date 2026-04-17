@@ -28,6 +28,11 @@ pub mod brunel;
 pub mod connectome;
 pub mod conv;
 pub mod cordiv;
+pub mod dna;
+pub mod quantum;
+pub mod photonic;
+pub mod optimizer;
+pub mod evo;
 pub mod cortical_column;
 pub mod ei_network;
 pub mod encoder;
@@ -637,6 +642,35 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_gpfa_transform, m)?)?;
     // spade
     m.add_function(wrap_pyfunction!(py_spade_detect, m)?)?;
+    // dna
+    m.add_function(wrap_pyfunction!(py_dna_design_sequence, m)?)?;
+    m.add_function(wrap_pyfunction!(py_dna_design_orthogonal_set, m)?)?;
+    m.add_function(wrap_pyfunction!(py_dna_check_cross_hybridization, m)?)?;
+    m.add_function(wrap_pyfunction!(py_dna_simulate_kinetics, m)?)?;
+    m.add_function(wrap_pyfunction!(py_dna_detect_hairpins, m)?)?;
+    // Quantum annealing acceleration
+    m.add_function(wrap_pyfunction!(py_qa_ising_energy, m)?)?;
+    m.add_function(wrap_pyfunction!(py_qa_batch_ising_energy, m)?)?;
+    m.add_function(wrap_pyfunction!(py_qa_simulated_annealing, m)?)?;
+    m.add_function(wrap_pyfunction!(py_qa_gauge_transform, m)?)?;
+    m.add_function(wrap_pyfunction!(py_qa_generate_gauges, m)?)?;
+    m.add_function(wrap_pyfunction!(py_qa_greedy_partition, m)?)?;
+    // Photonic NoC acceleration
+    m.add_function(wrap_pyfunction!(py_ph_route_waveguides, m)?)?;
+    m.add_function(wrap_pyfunction!(py_ph_mzi_transfer_matrix, m)?)?;
+    m.add_function(wrap_pyfunction!(py_ph_cascade_mzi, m)?)?;
+    m.add_function(wrap_pyfunction!(py_ph_analyze_crosstalk, m)?)?;
+    m.add_function(wrap_pyfunction!(py_ph_analyze_power_budget, m)?)?;
+    // SC-Optimizer acceleration
+    m.add_function(wrap_pyfunction!(py_opt_sa_search, m)?)?;
+    m.add_function(wrap_pyfunction!(py_opt_extract_pareto, m)?)?;
+    // Evolutionary substrate acceleration
+    m.add_function(wrap_pyfunction!(py_evo_batch_mutate, m)?)?;
+    m.add_function(wrap_pyfunction!(py_evo_batch_fitness, m)?)?;
+    m.add_function(wrap_pyfunction!(py_evo_batch_crossover, m)?)?;
+    m.add_function(wrap_pyfunction!(py_evo_diversity, m)?)?;
+    m.add_function(wrap_pyfunction!(py_evo_novelty, m)?)?;
+    m.add_function(wrap_pyfunction!(py_evo_tournament, m)?)?;
     Ok(())
 }
 
@@ -4524,4 +4558,557 @@ fn py_spade_detect<'py>(
         dicts.push(dict);
     }
     Ok(dicts)
+}
+
+// ── DNA acceleration PyO3 wrappers ───────────────────────────────────
+
+#[pyfunction]
+fn py_dna_design_sequence(_py: Python<'_>, length: usize, seed: u64) -> String {
+    String::from_utf8(dna::design_sequence(length, seed)).unwrap_or_default()
+}
+
+#[pyfunction]
+fn py_dna_design_orthogonal_set(
+    _py: Python<'_>,
+    count: usize,
+    length: usize,
+    seed: u64,
+) -> Vec<String> {
+    dna::design_orthogonal_set(count, length, seed)
+        .into_iter()
+        .map(|s| String::from_utf8(s).unwrap_or_default())
+        .collect()
+}
+
+#[pyfunction]
+fn py_dna_check_cross_hybridization<'py>(
+    py: Python<'py>,
+    sequences: Vec<String>,
+    threshold: usize,
+) -> PyResult<Py<PyAny>> {
+    let seqs: Vec<Vec<u8>> = sequences.into_iter().map(|s| s.into_bytes()).collect();
+    let flags = dna::check_cross_hybridization(&seqs, threshold);
+    let result: Vec<Py<PyAny>> = flags
+        .into_iter()
+        .map(|(i, j, score)| {
+            let d = PyDict::new(py);
+            d.set_item("strand_a", i).unwrap();
+            d.set_item("strand_b", j).unwrap();
+            d.set_item("score", score).unwrap();
+            d.into_any().unbind()
+        })
+        .collect();
+    Ok(result.into_pyobject(py)?.into())
+}
+
+#[pyfunction]
+#[pyo3(signature = (
+    gate_types, gate_inputs, gate_outputs, gate_thresholds, gate_leaks,
+    input_names, input_concs, duration_s=1800.0, dt=1.0,
+    k_hyb=3e5, k_disp=1.0, temperature_c=37.0, use_rk4=true
+))]
+#[allow(clippy::too_many_arguments)]
+fn py_dna_simulate_kinetics<'py>(
+    py: Python<'py>,
+    gate_types: Vec<String>,
+    gate_inputs: Vec<Vec<String>>,
+    gate_outputs: Vec<String>,
+    gate_thresholds: Vec<f64>,
+    gate_leaks: Vec<f64>,
+    input_names: Vec<String>,
+    input_concs: Vec<f64>,
+    duration_s: f64,
+    dt: f64,
+    k_hyb: f64,
+    k_disp: f64,
+    temperature_c: f64,
+    use_rk4: bool,
+) -> PyResult<Py<PyAny>> {
+    let gates: Vec<dna::DnaGateSpec> = gate_types
+        .iter()
+        .zip(gate_inputs.iter())
+        .zip(gate_outputs.iter())
+        .zip(gate_thresholds.iter())
+        .zip(gate_leaks.iter())
+        .map(|((((gt, gi), go), th), lk)| {
+            let gate_type = match gt.to_uppercase().as_str() {
+                "AND" => dna::DnaGateType::And,
+                "OR" => dna::DnaGateType::Or,
+                "NOT" => dna::DnaGateType::Not,
+                "THRESHOLD" => dna::DnaGateType::Threshold,
+                "MUX" => dna::DnaGateType::Mux,
+                "AMPLIFIER" => dna::DnaGateType::Amplifier,
+                "BUFFER" => dna::DnaGateType::Buffer,
+                "NAND" => dna::DnaGateType::Nand,
+                "XOR" => dna::DnaGateType::Xor,
+                _ => dna::DnaGateType::And,
+            };
+            dna::DnaGateSpec {
+                gate_type,
+                input_names: gi.clone(),
+                output_name: go.clone(),
+                threshold: *th,
+                leak_rate: *lk,
+            }
+        })
+        .collect();
+
+    let mut inputs = std::collections::HashMap::new();
+    for (name, conc) in input_names.into_iter().zip(input_concs) {
+        inputs.insert(name, conc);
+    }
+
+    let config = dna::KineticConfig {
+        k_hyb,
+        k_disp,
+        temperature_c,
+        max_conc: 200.0,
+        use_rk4,
+    };
+
+    let result = dna::simulate_kinetics(&gates, &inputs, duration_s, dt, &config);
+
+    let dict = PyDict::new(py);
+    for (key, trace) in result {
+        dict.set_item(key, trace.into_pyarray(py))?;
+    }
+    Ok(dict.into_any().unbind())
+}
+
+#[pyfunction]
+#[pyo3(signature = (sequence, min_stem=4, min_loop=3))]
+fn py_dna_detect_hairpins(
+    _py: Python<'_>,
+    sequence: &str,
+    min_stem: usize,
+    min_loop: usize,
+) -> Vec<(usize, usize, usize)> {
+    dna::detect_hairpins(sequence.as_bytes(), min_stem, min_loop)
+}
+
+// ── Quantum Annealing PyO3 Wrappers ──────────────────────────────────
+
+/// Compute Ising energy for a spin configuration.
+///
+/// Args:
+///     h_indices, h_values: linear biases (parallel arrays)
+///     j_i, j_j, j_values: quadratic couplings (parallel arrays)
+///     spins: spin configuration (+1/-1)
+///     offset: constant energy offset
+#[pyfunction]
+#[pyo3(signature = (h_indices, h_values, j_i, j_j, j_values, spins, offset=0.0))]
+fn py_qa_ising_energy(
+    _py: Python<'_>,
+    h_indices: Vec<usize>,
+    h_values: Vec<f64>,
+    j_i: Vec<usize>,
+    j_j: Vec<usize>,
+    j_values: Vec<f64>,
+    spins: Vec<i8>,
+    offset: f64,
+) -> f64 {
+    let h: Vec<(usize, f64)> = h_indices.into_iter().zip(h_values).collect();
+    let j: Vec<((usize, usize), f64)> = j_i
+        .into_iter()
+        .zip(j_j)
+        .zip(j_values)
+        .map(|((i, j), v)| ((i, j), v))
+        .collect();
+    quantum::ising_energy(&h, &j, &spins, offset)
+}
+
+/// Batch compute Ising energies for many configurations.
+#[pyfunction]
+#[pyo3(signature = (h_indices, h_values, j_i, j_j, j_values, configs, offset=0.0))]
+fn py_qa_batch_ising_energy(
+    _py: Python<'_>,
+    h_indices: Vec<usize>,
+    h_values: Vec<f64>,
+    j_i: Vec<usize>,
+    j_j: Vec<usize>,
+    j_values: Vec<f64>,
+    configs: Vec<Vec<i8>>,
+    offset: f64,
+) -> Vec<f64> {
+    let h: Vec<(usize, f64)> = h_indices.into_iter().zip(h_values).collect();
+    let j: Vec<((usize, usize), f64)> = j_i
+        .into_iter()
+        .zip(j_j)
+        .zip(j_values)
+        .map(|((i, j), v)| ((i, j), v))
+        .collect();
+    quantum::batch_ising_energy(&h, &j, &configs, offset)
+}
+
+/// Run simulated annealing on an Ising model (Rust-accelerated).
+///
+/// Returns dict with best_spins, best_energy, energies, samples.
+#[pyfunction]
+#[pyo3(signature = (h_indices, h_values, j_i, j_j, j_values, n_qubits, offset=0.0, n_sweeps=1000, num_reads=10, beta_start=0.1, beta_end=10.0, seed=42))]
+fn py_qa_simulated_annealing<'py>(
+    py: Python<'py>,
+    h_indices: Vec<usize>,
+    h_values: Vec<f64>,
+    j_i: Vec<usize>,
+    j_j: Vec<usize>,
+    j_values: Vec<f64>,
+    n_qubits: usize,
+    offset: f64,
+    n_sweeps: usize,
+    num_reads: usize,
+    beta_start: f64,
+    beta_end: f64,
+    seed: u64,
+) -> PyResult<Py<PyAny>> {
+    let h: Vec<(usize, f64)> = h_indices.into_iter().zip(h_values).collect();
+    let j: Vec<((usize, usize), f64)> = j_i
+        .into_iter()
+        .zip(j_j)
+        .zip(j_values)
+        .map(|((i, j), v)| ((i, j), v))
+        .collect();
+
+    let (best_spins, best_energy, all_energies, all_samples) =
+        quantum::simulated_annealing(&h, &j, n_qubits, offset, n_sweeps, num_reads, beta_start, beta_end, seed);
+
+    let dict = PyDict::new(py);
+    dict.set_item("best_spins", best_spins)?;
+    dict.set_item("best_energy", best_energy)?;
+    dict.set_item("energies", all_energies)?;
+    dict.set_item("samples", all_samples)?;
+    dict.set_item("n_sweeps", n_sweeps)?;
+    dict.set_item("num_reads", num_reads)?;
+    dict.set_item("backend", "rust")?;
+    Ok(dict.into_any().unbind())
+}
+
+/// Apply gauge transform to Ising biases and couplings.
+#[pyfunction]
+fn py_qa_gauge_transform(
+    _py: Python<'_>,
+    h_indices: Vec<usize>,
+    h_values: Vec<f64>,
+    j_i: Vec<usize>,
+    j_j: Vec<usize>,
+    j_values: Vec<f64>,
+    gauge: Vec<i8>,
+) -> (Vec<(usize, f64)>, Vec<((usize, usize), f64)>) {
+    let h: Vec<(usize, f64)> = h_indices.into_iter().zip(h_values).collect();
+    let j: Vec<((usize, usize), f64)> = j_i
+        .into_iter()
+        .zip(j_j)
+        .zip(j_values)
+        .map(|((i, j), v)| ((i, j), v))
+        .collect();
+    quantum::gauge_transform(&h, &j, &gauge)
+}
+
+/// Generate random gauge vectors.
+#[pyfunction]
+#[pyo3(signature = (n_qubits, n_gauges=10, seed=42))]
+fn py_qa_generate_gauges(
+    _py: Python<'_>,
+    n_qubits: usize,
+    n_gauges: usize,
+    seed: u64,
+) -> Vec<Vec<i8>> {
+    quantum::generate_gauges(n_qubits, n_gauges, seed)
+}
+
+/// Greedy graph partitioning for problem decomposition.
+#[pyfunction]
+#[pyo3(signature = (n_qubits, j_i, j_j, j_values, max_partition_size=64))]
+fn py_qa_greedy_partition(
+    _py: Python<'_>,
+    n_qubits: usize,
+    j_i: Vec<usize>,
+    j_j: Vec<usize>,
+    j_values: Vec<f64>,
+    max_partition_size: usize,
+) -> Vec<Vec<usize>> {
+    let j: Vec<((usize, usize), f64)> = j_i
+        .into_iter()
+        .zip(j_j)
+        .zip(j_values)
+        .map(|((i, j), v)| ((i, j), v))
+        .collect();
+    quantum::greedy_partition(n_qubits, &j, max_partition_size)
+}
+
+// ── Photonic NoC PyO3 Wrappers ───────────────────────────────────────
+
+/// Route waveguides on a mesh topology (Rust-accelerated).
+#[pyfunction]
+#[pyo3(signature = (adjacency_flat, n, pitch_um=250.0, loss_db_per_cm=2.0))]
+fn py_ph_route_waveguides<'py>(
+    py: Python<'py>,
+    adjacency_flat: Vec<f64>,
+    n: usize,
+    pitch_um: f64,
+    loss_db_per_cm: f64,
+) -> PyResult<Py<PyAny>> {
+    let result = photonic::route_waveguides(&adjacency_flat, n, pitch_um, loss_db_per_cm);
+
+    let dict = PyDict::new(py);
+    let sources: Vec<usize> = result.iter().map(|r| r.source).collect();
+    let targets: Vec<usize> = result.iter().map(|r| r.target).collect();
+    let lengths: Vec<f64> = result.iter().map(|r| r.length_um).collect();
+    let losses: Vec<f64> = result.iter().map(|r| r.loss_db).collect();
+    let crossings: Vec<usize> = result.iter().map(|r| r.n_crossings).collect();
+
+    dict.set_item("sources", sources)?;
+    dict.set_item("targets", targets)?;
+    dict.set_item("lengths_um", lengths)?;
+    dict.set_item("losses_db", losses)?;
+    dict.set_item("crossings", crossings)?;
+    dict.set_item("n_segments", result.len())?;
+    dict.set_item("backend", "rust")?;
+    Ok(dict.into_any().unbind())
+}
+
+/// Compute MZI 2×2 transfer matrix for a given phase.
+#[pyfunction]
+fn py_ph_mzi_transfer_matrix(
+    _py: Python<'_>,
+    phase_rad: f64,
+) -> Vec<f64> {
+    photonic::mzi_transfer_matrix(phase_rad).to_vec()
+}
+
+/// Cascade multiple MZI stages via matrix multiplication.
+#[pyfunction]
+fn py_ph_cascade_mzi(
+    _py: Python<'_>,
+    phases: Vec<f64>,
+) -> Vec<f64> {
+    photonic::cascade_mzi(&phases).to_vec()
+}
+
+/// Analyze WDM crosstalk (Rust-accelerated).
+#[pyfunction]
+#[pyo3(signature = (channel_ids, wavelengths, bandwidths, powers, adjacent_xt_db=-25.0))]
+fn py_ph_analyze_crosstalk<'py>(
+    py: Python<'py>,
+    channel_ids: Vec<usize>,
+    wavelengths: Vec<f64>,
+    bandwidths: Vec<f64>,
+    powers: Vec<f64>,
+    adjacent_xt_db: f64,
+) -> PyResult<Py<PyAny>> {
+    let channels: Vec<(usize, f64, f64, f64)> = channel_ids
+        .into_iter()
+        .zip(wavelengths)
+        .zip(bandwidths)
+        .zip(powers)
+        .map(|(((id, wl), bw), p)| (id, wl, bw, p))
+        .collect();
+
+    let result = photonic::analyze_crosstalk(&channels, adjacent_xt_db);
+
+    let dict = PyDict::new(py);
+    let ids: Vec<usize> = result.iter().map(|r| r.channel_id).collect();
+    let xts: Vec<f64> = result.iter().map(|r| r.crosstalk_db).collect();
+    let osnrs: Vec<f64> = result.iter().map(|r| r.osnr_db).collect();
+    let adjs: Vec<usize> = result.iter().map(|r| r.n_adjacent).collect();
+
+    dict.set_item("channel_ids", ids)?;
+    dict.set_item("crosstalk_db", xts)?;
+    dict.set_item("osnr_db", osnrs)?;
+    dict.set_item("n_adjacent", adjs)?;
+    dict.set_item("backend", "rust")?;
+    Ok(dict.into_any().unbind())
+}
+
+/// Analyze optical power budget (Rust-accelerated).
+#[pyfunction]
+#[pyo3(signature = (wg_sources, wg_targets, wg_losses, laser_power_dbm=0.0, detector_sensitivity_dbm=-20.0))]
+fn py_ph_analyze_power_budget<'py>(
+    py: Python<'py>,
+    wg_sources: Vec<usize>,
+    wg_targets: Vec<usize>,
+    wg_losses: Vec<f64>,
+    laser_power_dbm: f64,
+    detector_sensitivity_dbm: f64,
+) -> PyResult<Py<PyAny>> {
+    let wgs: Vec<(usize, usize, f64)> = wg_sources
+        .into_iter()
+        .zip(wg_targets)
+        .zip(wg_losses)
+        .map(|((s, t), l)| (s, t, l))
+        .collect();
+
+    let result = photonic::analyze_power_budget(
+        &wgs, &[], laser_power_dbm, detector_sensitivity_dbm,
+    );
+
+    let dict = PyDict::new(py);
+    let margins: Vec<f64> = result.iter().map(|r| r.margin_db).collect();
+    let passed: Vec<bool> = result.iter().map(|r| r.passed).collect();
+    let total_losses: Vec<f64> = result.iter().map(|r| r.total_loss_db).collect();
+
+    dict.set_item("margins_db", margins)?;
+    dict.set_item("passed", passed)?;
+    dict.set_item("total_losses_db", total_losses)?;
+    dict.set_item("n_paths", result.len())?;
+    dict.set_item("backend", "rust")?;
+    Ok(dict.into_any().unbind())
+}
+
+// ── SC-Optimizer PyO3 Wrappers ───────────────────────────────────────
+
+/// Run SA design-space search (Rust-accelerated).
+///
+/// mac_counts: per-layer MAC counts
+/// weights: per-layer scoring weights
+/// Returns dict with best config indices, score, pareto data
+#[pyfunction]
+#[pyo3(signature = (mac_counts, weights, max_luts, max_power, max_latency=0, t_init=1.0, t_min=0.001, alpha=0.95, max_iter=2000, seed=42))]
+fn py_opt_sa_search<'py>(
+    py: Python<'py>,
+    mac_counts: Vec<i64>,
+    weights: Vec<f64>,
+    max_luts: i64,
+    max_power: f64,
+    max_latency: i64,
+    t_init: f64,
+    t_min: f64,
+    alpha: f64,
+    max_iter: usize,
+    seed: u64,
+) -> PyResult<Py<PyAny>> {
+    let candidates: Vec<Vec<optimizer::Candidate>> = mac_counts
+        .iter()
+        .map(|&mc| optimizer::generate_candidates(mc))
+        .collect();
+
+    let result = optimizer::simulated_annealing(
+        &candidates, &weights,
+        max_luts, max_power, max_latency,
+        t_init, t_min, alpha, max_iter, seed,
+    );
+
+    let dict = PyDict::new(py);
+    match result {
+        Some(r) => {
+            // Extract details before moving best_config
+            let mut luts_list = Vec::new();
+            let mut power_list = Vec::new();
+            let mut acc_list = Vec::new();
+            for (i, &idx) in r.best_config.iter().enumerate() {
+                let c = &candidates[i][idx];
+                luts_list.push(c.luts);
+                power_list.push(c.power);
+                acc_list.push(c.accuracy);
+            }
+
+            dict.set_item("best_config", r.best_config)?;
+            dict.set_item("best_score", r.best_score)?;
+            dict.set_item("pareto_luts", r.pareto_luts)?;
+            dict.set_item("pareto_power", r.pareto_power)?;
+            dict.set_item("pareto_score", r.pareto_score)?;
+            dict.set_item("feasible", true)?;
+            dict.set_item("layer_luts", luts_list)?;
+            dict.set_item("layer_power", power_list)?;
+            dict.set_item("layer_accuracy", acc_list)?;
+        }
+        None => {
+            dict.set_item("feasible", false)?;
+        }
+    }
+    dict.set_item("backend", "rust")?;
+    Ok(dict.into_any().unbind())
+}
+
+/// Extract Pareto frontier from (luts, power, score) arrays.
+#[pyfunction]
+fn py_opt_extract_pareto<'py>(
+    py: Python<'py>,
+    luts: Vec<i64>,
+    power: Vec<f64>,
+    score: Vec<f64>,
+) -> PyResult<Py<PyAny>> {
+    let indices = optimizer::extract_pareto(&luts, &power, &score);
+    let dict = PyDict::new(py);
+    let p_luts: Vec<i64> = indices.iter().map(|&i| luts[i]).collect();
+    let p_power: Vec<f64> = indices.iter().map(|&i| power[i]).collect();
+    let p_score: Vec<f64> = indices.iter().map(|&i| score[i]).collect();
+    dict.set_item("indices", indices)?;
+    dict.set_item("luts", p_luts)?;
+    dict.set_item("power", p_power)?;
+    dict.set_item("score", p_score)?;
+    dict.set_item("backend", "rust")?;
+    Ok(dict.into_any().unbind())
+}
+
+// ── Evolutionary Substrate PyO3 Wrappers ─────────────────────────────
+
+/// Batch-mutate population weights (Rust-accelerated).
+#[pyfunction]
+#[pyo3(signature = (genomes, mutation_rate=0.1, mutation_scale=0.1, seed=42))]
+fn py_evo_batch_mutate(
+    _py: Python<'_>,
+    mut genomes: Vec<Vec<f64>>,
+    mutation_rate: f64,
+    mutation_scale: f64,
+    seed: u64,
+) -> Vec<Vec<f64>> {
+    evo::batch_mutate_weights(&mut genomes, mutation_rate, mutation_scale, seed);
+    genomes
+}
+
+/// Batch fitness evaluation (Rust-accelerated).
+#[pyfunction]
+fn py_evo_batch_fitness(
+    _py: Python<'_>,
+    genomes: Vec<Vec<f64>>,
+    inputs: Vec<f64>,
+    target: f64,
+) -> Vec<f64> {
+    evo::batch_evaluate_fitness(&genomes, &inputs, target)
+}
+
+/// Batch uniform crossover (Rust-accelerated).
+#[pyfunction]
+#[pyo3(signature = (parents_a, parents_b, seed=42))]
+fn py_evo_batch_crossover(
+    _py: Python<'_>,
+    parents_a: Vec<Vec<f64>>,
+    parents_b: Vec<Vec<f64>>,
+    seed: u64,
+) -> Vec<Vec<f64>> {
+    evo::batch_crossover(&parents_a, &parents_b, seed)
+}
+
+/// Population diversity (mean pairwise L2 distance).
+#[pyfunction]
+fn py_evo_diversity(
+    _py: Python<'_>,
+    genomes: Vec<Vec<f64>>,
+) -> f64 {
+    evo::population_diversity(&genomes)
+}
+
+/// Novelty scores against archive.
+#[pyfunction]
+#[pyo3(signature = (genomes, archive, k_nearest=5))]
+fn py_evo_novelty(
+    _py: Python<'_>,
+    genomes: Vec<Vec<f64>>,
+    archive: Vec<Vec<f64>>,
+    k_nearest: usize,
+) -> Vec<f64> {
+    evo::novelty_scores(&genomes, &archive, k_nearest)
+}
+
+/// Tournament selection.
+#[pyfunction]
+#[pyo3(signature = (fitness, n_select, tournament_size=3, seed=42))]
+fn py_evo_tournament(
+    _py: Python<'_>,
+    fitness: Vec<f64>,
+    n_select: usize,
+    tournament_size: usize,
+    seed: u64,
+) -> Vec<usize> {
+    evo::tournament_select(&fitness, n_select, tournament_size, seed)
 }
