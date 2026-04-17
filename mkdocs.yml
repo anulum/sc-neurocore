@@ -204,6 +204,7 @@ nav:
       - Neuromorphic Datasets: api/datasets.md
       - Hardware Drivers: api/drivers.md
       - Framework Integrations (Lava/Loihi): api/integrations.md
+      - Exception Hierarchy: api/exceptions.md
       - Core:
           - Neuron Model Catalogue: api/neuron_models.md
           - Neurons: api/neurons.md
