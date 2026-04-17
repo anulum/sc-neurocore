@@ -9,6 +9,7 @@
 import sys
 import os
 
+import numpy as np
 
 sys.path.insert(
     0, os.path.join(os.path.dirname(__file__), "..", "..", "src", "sc_neurocore", "chiplet")
@@ -517,33 +518,151 @@ class TestCDCConfig:
 
 
 class TestThermalModel:
-    def test_die_thermal_step(self):
-        dt = DieThermal(die_id=0, power_mw=200.0, thermal_resistance_k_per_w=5.0)
-        temp = dt.step(ambient_c=25.0)
-        assert temp == 26.0  # 25 + (0.2W * 5 K/W)
+    """Conductance-matrix thermal solver tests.
 
-    def test_throttled(self):
-        dt = DieThermal(die_id=0, power_mw=50000.0, max_temperature_c=105.0)
-        dt.step(ambient_c=25.0)
-        assert dt.is_throttled
+    The previous DieThermal.step() single-equation API was replaced
+    2026-04-17 with a HotSpot-style package-level solver
+    (`feedback_sophisticated_from_start.md`). These tests exercise
+    the new solver's physics invariants.
+    """
 
-    def test_not_throttled(self):
-        dt = DieThermal(die_id=0, power_mw=100.0)
-        dt.step(ambient_c=25.0)
-        assert not dt.is_throttled
+    def test_single_die_no_neighbours_obeys_ohm_law(self):
+        """1-die package with no links: T = T_amb + P · R_amb.
 
-    def test_package_thermal(self):
+        With the default DieThermal r_to_ambient_k_per_w = 1.5 and
+        100 mW power, expected T = 25 + 0.1 W · 1.5 K/W = 25.15 °C.
+        """
+        topo = ChipletTopology()
+        topo.add_die(ChipletDie(die_id=0))
+        report = simulate_thermal(topo, power_per_die_mw={0: 100.0}, ambient_c=25.0)
+        assert abs(report.die_temps[0] - 25.15) < 1e-6
+
+    def test_two_die_with_link_couples_temperatures(self):
+        """Two coupled dies: hot-die's heat flows to cold-die through the link.
+
+        Without coupling, die 0 (10 W) would be hot and die 1 (0 W)
+        would be at ambient. WITH coupling, die 1 is heated by the
+        bond, and die 0 is cooled. The conductance-matrix solver
+        captures this — a single-equation model would not.
+        """
+        topo = ChipletTopology()
+        topo.add_die(ChipletDie(die_id=0))
+        topo.add_die(ChipletDie(die_id=1))
+        topo.add_link(InterposerLink.from_tech(0, 1, InterposerTech.UCIE))
+        report = simulate_thermal(
+            topo,
+            power_per_die_mw={0: 10_000.0, 1: 0.0},  # 10 W vs 0 W
+            ambient_c=25.0,
+        )
+        t0, t1 = report.die_temps[0], report.die_temps[1]
+        # Die 1 (zero power) MUST be heated above ambient by conduction.
+        assert t1 > 25.0 + 1e-3, f"die 1 not heated by neighbour: T1={t1}"
+        # Die 0 MUST be cooler than the no-coupling case (T0_solo).
+        # Solo: T0_solo = 25 + 10 W · 1.5 K/W = 40 °C
+        # Coupled: should be < 40.
+        assert t0 < 40.0, f"die 0 not cooled by coupling: T0={t0}"
+        # Energy conservation: total heat dissipated == ambient flux out.
+        # Σ (T_i - T_amb) / R_amb,i  ==  Σ P_i  (steady state, K · W/K = W)
+        # With identical R_amb = 1.5 K/W:
+        outflow_w = ((t0 - 25.0) + (t1 - 25.0)) / 1.5
+        assert abs(outflow_w - 10.0) < 1e-6, f"power balance broken: {outflow_w} W out vs 10 W in"
+
+    def test_throttled_flag_set_when_steady_state_above_max(self):
+        """High power → die exceeds max_temperature_c → throttled."""
+        topo = ChipletTopology()
+        topo.add_die(ChipletDie(die_id=0))
+        report = simulate_thermal(
+            topo,
+            power_per_die_mw={0: 100_000.0},  # 100 W → way above limit
+            ambient_c=25.0,
+        )
+        assert 0 in report.throttled_dies
+        assert report.die_temps[0] > 100.0
+
+    def test_not_throttled_at_low_power(self):
+        topo = ChipletTopology()
+        topo.add_die(ChipletDie(die_id=0))
+        report = simulate_thermal(topo, power_per_die_mw={0: 100.0}, ambient_c=25.0)
+        assert 0 not in report.throttled_dies
+
+    def test_conductance_matrix_is_symmetric(self):
+        """Off-diagonal G must be symmetric — heat flow direction-independent."""
         topo = ChipletTopology.ring(4)
         report = simulate_thermal(topo)
-        assert isinstance(report, PackageThermalReport)
-        assert len(report.die_temps) == 4
-        assert report.max_temp > 25.0
+        G = report.conductance_matrix
+        assert G is not None
+        np.testing.assert_allclose(G, G.T, atol=1e-12)
 
-    def test_high_power_throttling(self):
+    def test_conductance_matrix_zero_diagonal(self):
+        """Off-diagonal storage MUST have zero on the diagonal — the
+        diagonal effective conductance lives in the solver's local
+        `diag` variable, not in `G_off`.
+        """
+        topo = ChipletTopology.ring(4)
+        report = simulate_thermal(topo)
+        G = report.conductance_matrix
+        np.testing.assert_array_equal(np.diag(G), np.zeros(4))
+
+    def test_higher_R_link_couples_less_strongly(self):
+        """ORGANIC bond (8 K/W) should couple less than CoWoS (0.3 K/W).
+
+        With the same power profile, the cold die heats up MORE on
+        the low-R bond (better heat spreading from hot neighbour).
+        """
+        # Hot die @ 10 W, cold die @ 0 W
+        powers = {0: 10_000.0, 1: 0.0}
+
+        topo_lo = ChipletTopology()
+        topo_lo.add_die(ChipletDie(die_id=0))
+        topo_lo.add_die(ChipletDie(die_id=1))
+        topo_lo.add_link(InterposerLink.from_tech(0, 1, InterposerTech.COWOS))
+        rep_lo = simulate_thermal(topo_lo, power_per_die_mw=powers)
+
+        topo_hi = ChipletTopology()
+        topo_hi.add_die(ChipletDie(die_id=0))
+        topo_hi.add_die(ChipletDie(die_id=1))
+        topo_hi.add_link(InterposerLink.from_tech(0, 1, InterposerTech.ORGANIC))
+        rep_hi = simulate_thermal(topo_hi, power_per_die_mw=powers)
+
+        # Cold die under low-R bond heats up MORE than under high-R bond.
+        assert rep_lo.die_temps[1] > rep_hi.die_temps[1], (
+            f"COWOS coupling should heat die 1 more than ORGANIC: "
+            f"COWOS={rep_lo.die_temps[1]:.2f} ORGANIC={rep_hi.die_temps[1]:.2f}"
+        )
+
+    def test_transient_converges_to_steady_state(self):
+        """T(t→∞) of the implicit-Euler integrator → steady-state solution.
+
+        After enough thermal time constants the transient must
+        approach the directly-solved steady state to high precision.
+        """
+        topo = ChipletTopology.ring(4)
+        powers = {i: 500.0 for i in range(4)}  # 0.5 W each
+        rep = simulate_thermal(
+            topo,
+            power_per_die_mw=powers,
+            transient_steps=2000,        # 2 s with default dt=1 ms
+            transient_dt_s=1e-3,
+        )
+        # Final transient temperatures should match steady state to <0.01 °C.
+        final = rep.transient_temps[-1]
+        steady = np.array([rep.die_temps[d.die_id] for d in topo.dies])
+        np.testing.assert_allclose(final, steady, atol=0.01)
+
+    def test_transient_starts_at_ambient(self):
+        """First time step starts from ambient (cold-boot transient)."""
         topo = ChipletTopology.ring(2)
-        report = simulate_thermal(topo, power_per_die_mw={0: 100000.0, 1: 100.0})
-        assert 0 in report.throttled_dies
-        assert 1 not in report.throttled_dies
+        rep = simulate_thermal(
+            topo,
+            power_per_die_mw={0: 100.0, 1: 100.0},
+            ambient_c=20.0,
+            transient_steps=10,
+        )
+        # First step should be only slightly above ambient.
+        first = rep.transient_temps[0]
+        assert all(20.0 < t < 25.0 for t in first), (
+            f"first transient step not near ambient: {first}"
+        )
 
 
 # ── Adaptive Routing Tests ───────────────────────────────────────────

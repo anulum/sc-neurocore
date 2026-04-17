@@ -35,6 +35,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
+import numpy as np
+
 
 # ── Interposer Technology ────────────────────────────────────────────
 
@@ -845,54 +847,284 @@ def compute_cdc_configs(topology: ChipletTopology) -> Dict[Tuple[int, int], CDCC
     return configs
 
 
-# ── Thermal Model (Gap 3) ────────────────────────────────────────────
+# ── Thermal Model — HotSpot-style conductance-matrix solver ──────────
+#
+# Implementation reference:
+#   Skadron, K. et al. "HotSpot: A Compact Thermal Modeling
+#   Methodology for Early-Stage VLSI Design." IEEE Trans. on
+#   VLSI Systems, 2006.
+#   https://lava.cs.virginia.edu/HotSpot/
+#
+# Plus the inter-chiplet thermal coupling model from:
+#   Coskun, A. et al. "Cross-Layer Thermal Modeling and
+#   Management for 3D Stacked Multi-Chip Modules." DATE 2013.
+#
+# The lumped-element placeholder previously here (T = T_amb + P·R)
+# was replaced 2026-04-17 per `feedback_sophisticated_from_start.md`.
+
+
+# Per-interposer-technology thermal resistance (K/W) for the
+# die-to-die bond. Values are representative orders of magnitude
+# from published vendor data; refine with PDK-specific values
+# when designing for a real package.
+_R_THERMAL_K_PER_W: Dict[InterposerTech, float] = {
+    InterposerTech.UCIE: 0.8,      # silicon interposer, fine-pitch microbumps
+    InterposerTech.BOW: 3.0,       # organic substrate
+    InterposerTech.EMIB: 0.5,      # silicon bridge, high conductivity
+    InterposerTech.COWOS: 0.3,     # bulk silicon interposer, very low R
+    InterposerTech.ORGANIC: 8.0,   # organic only, high R
+    InterposerTech.CUSTOM: 1.0,    # placeholder default
+}
 
 
 @dataclass
 class DieThermal:
-    """Thermal state for one die."""
+    """Per-die thermal properties: power source, capacity, ambient path.
+
+    `power_mw` and `temperature_c` are runtime state; the rest are
+    geometry / packaging properties. The dataclass holds the data
+    consumed by the package-level conductance-matrix solver below.
+    """
 
     die_id: int
     temperature_c: float = 25.0
     power_mw: float = 100.0
-    thermal_resistance_k_per_w: float = 5.0
+
+    # Per-die thermal capacity (J/K). For a 10×10 mm² × 500 µm
+    # silicon die with c_p,Si = 1.65 J/(cm³·K), C ≈ 0.083 J/K.
+    heat_capacity_j_per_k: float = 0.083
+
+    # Junction-to-ambient resistance (K/W). Models the path from
+    # the die through the heat spreader / heat sink to the
+    # ambient air. Default 1.5 K/W is representative of an
+    # actively cooled BGA package.
+    r_to_ambient_k_per_w: float = 1.5
+
+    # Spreading resistance from the bond pad to the die centre
+    # (K/W). Adds in series to the inter-die bond resistance to
+    # form the effective coupling resistance.
+    r_spread_k_per_w: float = 0.2
+
     max_temperature_c: float = 105.0
 
     @property
     def is_throttled(self) -> bool:
         return self.temperature_c >= self.max_temperature_c
 
-    def step(self, ambient_c: float = 25.0) -> float:
-        """One thermal step: T = T_ambient + P * R_th."""
-        self.temperature_c = ambient_c + (self.power_mw / 1000.0) * self.thermal_resistance_k_per_w
-        return self.temperature_c
-
 
 @dataclass
 class PackageThermalReport:
-    """Thermal report for the full package."""
+    """Steady-state + transient thermal report for the full package."""
 
+    # Steady-state per-die temperatures (°C)
     die_temps: Dict[int, float] = field(default_factory=dict)
+    # Max per-die temperature across the package
     max_temp: float = 0.0
+    # Dies whose steady-state temperature exceeds the throttle limit
     throttled_dies: List[int] = field(default_factory=list)
+    # Transient time-series — populated only if `transient_steps>0`
+    # was passed to `simulate_thermal`. Shape: (n_steps, n_dies).
+    transient_temps: Optional[np.ndarray] = None
+    transient_times_s: Optional[np.ndarray] = None
+    # Conductance matrix actually used (for inspection / debugging).
+    # Shape: (n_dies, n_dies).
+    conductance_matrix: Optional[np.ndarray] = None
+
+
+def _build_conductance_matrix(
+    topology: ChipletTopology,
+    die_state: Dict[int, DieThermal],
+) -> Tuple[np.ndarray, np.ndarray, List[int]]:
+    """Build (G, g_amb, die_id_order) for the thermal network.
+
+    G is the off-diagonal conductance matrix (W/K) for inter-die
+    couplings. g_amb is the per-die conductance to ambient.
+    die_id_order is the row → die_id mapping used by the solver.
+
+    For each link (i, j) in `topology.links` with technology
+    `tech`, the bond resistance is
+        R_bond(i,j) = R_THERMAL[tech] + R_spread(i) + R_spread(j)
+    so the off-diagonal conductance is
+        G[i,j] = G[j,i] = 1 / R_bond(i,j)
+
+    Per-die ambient conductance:
+        g_amb[i] = 1 / R_to_ambient(i)
+    """
+    die_id_order = [die.die_id for die in topology.dies]
+    n = len(die_id_order)
+    idx_of = {did: k for k, did in enumerate(die_id_order)}
+
+    G = np.zeros((n, n), dtype=np.float64)
+    g_amb = np.zeros(n, dtype=np.float64)
+
+    for did in die_id_order:
+        g_amb[idx_of[did]] = 1.0 / die_state[did].r_to_ambient_k_per_w
+
+    for link in topology.links:
+        i = idx_of.get(link.src_die)
+        j = idx_of.get(link.dst_die)
+        if i is None or j is None or i == j:
+            continue
+        r_bond = (
+            _R_THERMAL_K_PER_W.get(link.technology, 1.0)
+            + die_state[link.src_die].r_spread_k_per_w
+            + die_state[link.dst_die].r_spread_k_per_w
+        )
+        g_link = 1.0 / r_bond
+        # Symmetric: heat flows both ways across the bond
+        G[i, j] += g_link
+        G[j, i] += g_link
+
+    return G, g_amb, die_id_order
+
+
+def _solve_steady_state(
+    G_off: np.ndarray,
+    g_amb: np.ndarray,
+    p_w: np.ndarray,
+    t_amb_c: float,
+) -> np.ndarray:
+    """Solve `(D - G_off) · T = P + g_amb · T_amb` for T.
+
+    where D is the diagonal of row-sums (Kirchhoff's current law
+    for the thermal network).
+
+    Returns the per-die steady-state temperature in °C.
+    """
+    n = G_off.shape[0]
+    # Diagonal of effective conductance matrix:
+    #   each die's diagonal entry = sum of off-diag conductances + g_amb
+    diag = G_off.sum(axis=1) + g_amb
+    A = np.diag(diag) - G_off
+    b = p_w + g_amb * t_amb_c
+    return np.linalg.solve(A, b)
+
+
+def _solve_transient(
+    G_off: np.ndarray,
+    g_amb: np.ndarray,
+    capacities: np.ndarray,
+    p_w: np.ndarray,
+    t_amb_c: float,
+    initial_t_c: np.ndarray,
+    dt_s: float,
+    n_steps: int,
+) -> np.ndarray:
+    """Implicit-Euler integration of `C · dT/dt = -A · T + b`.
+
+    A and b are the same matrices as in `_solve_steady_state`.
+    Implicit Euler is unconditionally stable for the stiff
+    thermal system and converges to the steady-state solution
+    as t → ∞.
+
+    Per step: `(C/dt + A) · T_new = C/dt · T_old + b`.
+
+    Returns array of shape (n_steps, n_dies) with the temperature
+    trajectory.
+    """
+    n = G_off.shape[0]
+    diag = G_off.sum(axis=1) + g_amb
+    A = np.diag(diag) - G_off
+    b = p_w + g_amb * t_amb_c
+
+    C_over_dt = np.diag(capacities / dt_s)
+    M = C_over_dt + A
+
+    T = initial_t_c.copy()
+    out = np.empty((n_steps, n), dtype=np.float64)
+    for k in range(n_steps):
+        rhs = (capacities / dt_s) * T + b
+        T = np.linalg.solve(M, rhs)
+        out[k] = T
+    return out
 
 
 def simulate_thermal(
     topology: ChipletTopology,
     power_per_die_mw: Optional[Dict[int, float]] = None,
     ambient_c: float = 25.0,
+    *,
+    die_state: Optional[Dict[int, DieThermal]] = None,
+    transient_steps: int = 0,
+    transient_dt_s: float = 1e-3,
 ) -> PackageThermalReport:
-    """Estimate die temperatures for a chiplet package."""
-    report = PackageThermalReport()
+    """Solve the full chiplet thermal network.
+
+    Builds a per-die conductance matrix from `topology.links` (using
+    per-technology thermal resistance) plus a per-die ambient path.
+    The steady-state temperature is the solution to a linear system;
+    a transient response can also be requested with implicit-Euler
+    time-stepping.
+
+    Parameters
+    ----------
+    topology : ChipletTopology
+        Dies + interposer links.
+    power_per_die_mw : dict, optional
+        Per-die power dissipation in mW. Defaults to 100 mW per
+        die when missing.
+    ambient_c : float
+        Ambient air temperature in °C (default 25).
+    die_state : dict, optional
+        Per-die thermal property overrides. When omitted, defaults
+        from `DieThermal` are used (10×10 mm² silicon die, 1.5 K/W
+        junction-to-ambient).
+    transient_steps : int
+        If > 0, also compute a transient response of this many
+        steps. The trajectory and time array are placed in the
+        returned report.
+    transient_dt_s : float
+        Time step (s) for transient integration. Default 1 ms is
+        appropriate for ~0.08 J/K dies under ~0.1 W loading
+        (thermal time constant ~0.1 s).
+    """
+    # Materialise per-die state (apply defaults / overrides).
+    state: Dict[int, DieThermal] = {}
     for die in topology.dies:
-        p = power_per_die_mw.get(die.die_id, 100.0) if power_per_die_mw else 100.0
-        dt = DieThermal(die_id=die.die_id, power_mw=p)
-        temp = dt.step(ambient_c)
-        report.die_temps[die.die_id] = temp
-        if temp > report.max_temp:
-            report.max_temp = temp
-        if dt.is_throttled:
-            report.throttled_dies.append(die.die_id)
+        if die_state is not None and die.die_id in die_state:
+            ds = die_state[die.die_id]
+        else:
+            ds = DieThermal(die_id=die.die_id)
+        # Apply per-die power override
+        p_mw = (power_per_die_mw.get(die.die_id, 100.0)
+                if power_per_die_mw else 100.0)
+        ds.power_mw = p_mw
+        state[die.die_id] = ds
+
+    G_off, g_amb, die_id_order = _build_conductance_matrix(topology, state)
+    n = len(die_id_order)
+    p_w = np.array([state[d].power_mw / 1000.0 for d in die_id_order], dtype=np.float64)
+
+    t_steady = _solve_steady_state(G_off, g_amb, p_w, ambient_c)
+
+    # Update state + report
+    for k, did in enumerate(die_id_order):
+        state[did].temperature_c = float(t_steady[k])
+
+    report = PackageThermalReport()
+    report.conductance_matrix = G_off
+    for k, did in enumerate(die_id_order):
+        t = float(t_steady[k])
+        report.die_temps[did] = t
+        if t > report.max_temp:
+            report.max_temp = t
+        if state[did].is_throttled:
+            report.throttled_dies.append(did)
+
+    if transient_steps > 0:
+        capacities = np.array(
+            [state[d].heat_capacity_j_per_k for d in die_id_order],
+            dtype=np.float64,
+        )
+        # Start from ambient (cold-boot transient).
+        initial_t = np.full(n, ambient_c, dtype=np.float64)
+        traj = _solve_transient(
+            G_off, g_amb, capacities, p_w, ambient_c,
+            initial_t, transient_dt_s, transient_steps,
+        )
+        report.transient_temps = traj
+        report.transient_times_s = np.arange(1, transient_steps + 1) * transient_dt_s
+
     return report
 
 

@@ -176,24 +176,29 @@ work.
 
 ## 7. Pure-Python performance
 
-Single-call `SafetyMonitor.check()` wall time on Intel i5-11600K,
-Python 3.12.3:
+Reproducible via the committed benchmark:
 
-| Scenario | Mean | p99 |
+```bash
+python benchmarks/bench_safety_monitor.py \
+    --json benchmarks/results/bench_safety_monitor.json
+```
+
+100 000 iterations × 5 repeats per scenario, median + min over
+the 5 repeats reported. Hardware: Linux 6.17 x86_64,
+Python 3.12.3, NumPy 2.2.0. Captured run in
+`benchmarks/results/bench_safety_monitor.json`.
+
+| Scenario | Median | Min |
 |---|---:|---:|
-| All-defaults check (no violation) | ~0.7 µs | ~1.2 µs |
-| Triggered overcurrent | ~0.9 µs | ~1.5 µs |
-| All 6 violations | ~1.1 µs | ~1.8 µs |
+| All-defaults check (no violation) | 353 ns | 309 ns |
+| Triggered overcurrent (P1) | 486 ns | 449 ns |
+| All 6 violations | 776 ns | 720 ns |
 
-(Numbers from informal `python -m timeit` runs; not from a
-committed benchmark — the monitor's perf is fast enough that a
-formal benchmark wouldn't change any decision.)
-
-`CertificationGenerator.build_package()` for a typical SC-NeuroCore
-network of 10 populations + 50 projections + 6 safety properties
-+ ~100 requirement / failure-mode rows takes ~50 ms in pure
-Python (dominated by SHA-256 over the canonicalised JSON, not by
-template rendering).
+`CertificationGenerator.build_package()` is **not yet
+benchmarked** — follow-up #61 tracks adding it to
+`benchmarks/bench_safety_monitor.py`. The dominant cost is
+expected to be SHA-256 over the canonicalised JSON, not
+template rendering, but no measurement has been made yet.
 
 ## 8. Test coverage
 
@@ -220,8 +225,8 @@ documented-enum-membership checks.
 | 1 | Pipeline wiring | ✅ PASS | All 34 symbols re-exported via `__init__.py`; verified by `test_safety_cert_public_api.py` |
 | 2 | Multi-angle tests | ✅ PASS | 95 tests across 2 files; sticky-flag, reset, enum-grading, hash determinism, CCF, HFT, IEC 62304 |
 | 3 | Acceleration path | N/A | Not a compute module (document generator + ~µs runtime check). Per `feedback_multi_language_accel.md` exemption for I/O adapters and visualisation. |
-| 4 | Benchmarks | ⚠️ WARN | Informal `timeit` numbers in §7; no committed benchmark script (see followup) |
-| 5 | Performance docs | ✅ PASS | §7 with explicit "informal" caveat |
+| 4 | Benchmarks | ⚠️ WARN | `benchmarks/bench_safety_monitor.py` committed for `SafetyMonitor.check()` (3 scenarios, JSON in `benchmarks/results/`); `CertificationGenerator.build_package()` not yet benchmarked (followup #61) |
+| 5 | Performance docs | ✅ PASS | §7 with measured numbers from the benchmark for `check()`; honest "not yet benchmarked" for `build_package()` |
 | 6 | Documentation page | ✅ PASS | This page |
 | 7 | Rules followed | ✅ PASS | SPDX 2-line header on `__init__.py`, `safety_cert.py`, `safety_monitor.py` (fixed in this batch — `safety_cert.py` had `# mypy: ignore-errors` and 1-line piped SPDX both removed). British English in this doc; source uses standard scientific-Python identifiers (acceptable per docs-vs-code rule). |
 

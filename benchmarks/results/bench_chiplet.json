@@ -1,0 +1,98 @@
+{
+  "platform": "Linux-6.17.0-20-generic-x86_64-with-glibc2.39",
+  "python": "3.12.3",
+  "numpy": "2.2.0",
+  "n_repeats": 5,
+  "rows": [
+    {
+      "suite": "chiplet_gen",
+      "op": "make_torus(2, 2)",
+      "median_ms": 0.034819007851183414,
+      "min_ms": 0.03222597297281027
+    },
+    {
+      "suite": "chiplet_gen",
+      "op": "make_torus(4, 4)",
+      "median_ms": 0.14606700278818607,
+      "min_ms": 0.14267998631112278
+    },
+    {
+      "suite": "chiplet_gen",
+      "op": "make_torus(8, 8)",
+      "median_ms": 0.6687889981549233,
+      "min_ms": 0.5085500015411526
+    },
+    {
+      "suite": "chiplet_gen",
+      "op": "compute_decorrelation_seeds (n_links=16)",
+      "median_ms": 0.009621988283470273,
+      "min_ms": 0.005262991180643439
+    },
+    {
+      "suite": "chiplet_gen",
+      "op": "compute_decorrelation_seeds (n_links=64)",
+      "median_ms": 0.019266008166596293,
+      "min_ms": 0.01836198498494923
+    },
+    {
+      "suite": "chiplet_gen",
+      "op": "compute_decorrelation_seeds (n_links=256)",
+      "median_ms": 0.0826600007712841,
+      "min_ms": 0.057788973208516836
+    },
+    {
+      "suite": "chiplet_gen",
+      "op": "estimate_package_energy (n_dies=4)",
+      "median_ms": 0.0026510097086429596,
+      "min_ms": 0.0023850006982684135
+    },
+    {
+      "suite": "chiplet_gen",
+      "op": "estimate_package_energy (n_dies=16)",
+      "median_ms": 0.009302020771428943,
+      "min_ms": 0.006663991371169686
+    },
+    {
+      "suite": "chiplet_gen",
+      "op": "estimate_package_energy (n_dies=64)",
+      "median_ms": 0.029749993700534105,
+      "min_ms": 0.025457004085183144
+    },
+    {
+      "suite": "chiplet_gen",
+      "op": "simulate_thermal (n_dies=4)",
+      "median_ms": 0.012670992873609066,
+      "min_ms": 0.009979004971683025
+    },
+    {
+      "suite": "chiplet_gen",
+      "op": "simulate_thermal (n_dies=16)",
+      "median_ms": 0.019257975509390235,
+      "min_ms": 0.016188016161322594
+    },
+    {
+      "suite": "chiplet_gen",
+      "op": "simulate_thermal (n_dies=64)",
+      "median_ms": 0.07931498112156987,
+      "min_ms": 0.0660539953969419
+    },
+    {
+      "suite": "partitioner",
+      "op": "partition (V=50, P=2)",
+      "median_ms": 18.80102598806843,
+      "min_ms": 15.486140007851645
+    },
+    {
+      "suite": "partitioner",
+      "op": "partition (V=100, P=4)",
+      "median_ms": 264.6730649867095,
+      "min_ms": 243.96447598701343
+    },
+    {
+      "suite": "partitioner",
+      "op": "partition (V=200, P=4)",
+      "median_ms": 963.2265239779372,
+      "min_ms": 911.3735010032542
+    }
+  ]
+}

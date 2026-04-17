@@ -153,23 +153,39 @@ backend (the inner loop is already a single BLAS-level call).
 
 ## 7. Pure-Python performance
 
-Single `inject()` call wall time on Intel i5-11600K, NumPy
-2.2.0 (Python 3.12.3) for tensor of shape (1000, 1000) at LEO
-BER (1e-7):
+Reproducible via the committed benchmark:
 
-| Fault model | Mean | p99 |
+```bash
+python benchmarks/bench_fault_injection.py \
+    --json benchmarks/results/bench_fault_injection.json
+```
+
+Per-call wall time on a **1 Mbit boolean bitstream** (the
+representative SC-bitstream size) at BER 1e-3 (raised from
+LEO 1e-7 so the fault count per call is non-zero and stable).
+5 repeats per cell, median + min reported. Hardware: Linux 6.17
+x86_64, NumPy 2.2.0, Python 3.12.3. Captured run in
+`benchmarks/results/bench_fault_injection.json`.
+
+| Fault model | Median | Min |
 |---|---:|---:|
-| `BIT_FLIP` | ~0.4 ms | ~0.7 ms |
-| `STUCK_AT_0` | ~0.4 ms | ~0.7 ms |
-| `STUCK_AT_1` | ~0.4 ms | ~0.7 ms |
-| `GAUSSIAN_NOISE` | ~3.2 ms | ~4.5 ms |
-| `DROPOUT` | ~1.1 ms | ~1.5 ms |
+| `BIT_FLIP` | 6.85 ms | 5.65 ms |
+| `STUCK_AT_0` | 16.08 ms | 13.81 ms |
+| `STUCK_AT_1` | 12.40 ms | 11.65 ms |
+| `GAUSSIAN_NOISE` | 63.38 ms | 59.31 ms |
+| `DROPOUT` | 15.83 ms | 11.95 ms |
 
-(Numbers from informal `python -m timeit` runs; not from a
-committed benchmark — see followup §10.1.)
+`GAUSSIAN_NOISE` is ~10× slower because it runs `rng.normal`
+(continuous-valued) followed by clipping and threshold —
+`BIT_FLIP` and the stuck-at variants are simple boolean masks.
 
-`ResilienceBenchmark.run()` for 1000 trials × 4 profiles on the
-above tensor takes ~3 s wall (~750 µs per trial amortised).
+The actual API is `inject(bitstream, model, ber)` — a 1D
+boolean array, NOT a 2D tensor. Earlier drafts of this page
+incorrectly described per-bit vs per-element semantics; the
+implementation is uniformly per-element on a flat bitstream.
+
+`ResilienceBenchmark.run()` is **not yet benchmarked** —
+follow-up #61 tracks adding it.
 
 ## 8. Test coverage
 
@@ -190,12 +206,12 @@ skips, no failures.
 | 1 | Pipeline wiring | ✅ PASS | All 6 symbols re-exported via `__init__.py`; verified by `test_fault_injection_public_api.py` |
 | 2 | Multi-angle tests | ✅ PASS | 29 tests across 2 files; covers fault models × radiation profiles × benchmark sweep |
 | 3 | Acceleration path | N/A | Vectorised NumPy hot path; per `feedback_multi_language_accel.md` no separate language backend needed |
-| 4 | Benchmarks | ⚠️ WARN | Informal `timeit` numbers in §7; no committed benchmark script |
-| 5 | Performance docs | ✅ PASS | §7 with explicit "informal" caveat |
+| 4 | Benchmarks | ✅ PASS | `benchmarks/bench_fault_injection.py` committed; JSON in `benchmarks/results/` |
+| 5 | Performance docs | ✅ PASS | §7 with measured numbers from the benchmark |
 | 6 | Documentation page | ✅ PASS | This page |
 | 7 | Rules followed | ✅ PASS | SPDX 2-line header on `__init__.py` and `fault_injection.py` (`__init__.py` fixed in this batch from 1-line piped form). British English in this doc; source uses standard scientific-Python identifiers (acceptable per docs-vs-code rule). |
 
-Net: **1 WARN, 0 FAIL.**
+Net: **0 WARN, 0 FAIL.**
 
 ## 10. Known issues / follow-ups
 

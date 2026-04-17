@@ -1,0 +1,45 @@
+{
+  "platform": "Linux-6.17.0-20-generic-x86_64-with-glibc2.39",
+  "python": "3.12.3",
+  "numpy": "2.2.0",
+  "n_bits": 1000000,
+  "n_repeats": 5,
+  "ber": 0.001,
+  "rows": [
+    {
+      "fault_model": "BIT_FLIP",
+      "n_bits": 1000000,
+      "ber": 0.001,
+      "median_ms": 6.84615402133204,
+      "min_ms": 5.652082996675745
+    },
+    {
+      "fault_model": "STUCK_AT_0",
+      "n_bits": 1000000,
+      "ber": 0.001,
+      "median_ms": 16.083673981484026,
+      "min_ms": 13.809661992127076
+    },
+    {
+      "fault_model": "STUCK_AT_1",
+      "n_bits": 1000000,
+      "ber": 0.001,
+      "median_ms": 12.397701997542754,
+      "min_ms": 11.648537998553365
+    },
+    {
+      "fault_model": "GAUSSIAN_NOISE",
+      "n_bits": 1000000,
+      "ber": 0.001,
+      "median_ms": 63.382004998857155,
+      "min_ms": 59.30747100501321
+    },
+    {
+      "fault_model": "DROPOUT",
+      "n_bits": 1000000,
+      "ber": 0.001,
+      "median_ms": 15.82746798521839,
+      "min_ms": 11.948508996283635
+    }
+  ]
+}
