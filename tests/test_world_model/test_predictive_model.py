@@ -351,3 +351,87 @@ def test_reset_restores_prior() -> None:
     m.reset()
     np.testing.assert_array_equal(m._mu, m.model.mu_0)
     np.testing.assert_array_equal(m._Sigma, m.model.Sigma_0)
+
+
+# ───────────────────────── Rust ↔ Python parity ─────────────────────────
+
+# These tests skip if the Rust LGSSM backend is not present in
+# the engine wheel (e.g. a fresh checkout without
+# `cd bridge && maturin develop --release`).
+
+from sc_neurocore.world_model.predictive_model import _HAS_RUST_LGSSM
+
+
+@pytest.mark.skipif(
+    not _HAS_RUST_LGSSM,
+    reason="Rust LGSSM backend not built (run `cd bridge && maturin develop --release`)",
+)
+def test_rust_parity_means_match_python_to_float64() -> None:
+    """Rust filtered means must match Python to within float64 round-off.
+
+    This is the parity contract — any divergence indicates a bug
+    in the Rust implementation (sign flip, wrong matrix order,
+    indexing error, etc.).
+    """
+    rng = np.random.default_rng(101)
+    model = LinearGaussianSSM.random(state_dim=4, obs_dim=3, control_dim=0, seed=101)
+    obs = rng.standard_normal((50, 3))
+
+    py_result = KalmanFilter(model).filter(obs, backend="python")
+    ru_result = KalmanFilter(model).filter(obs, backend="rust")
+
+    np.testing.assert_allclose(ru_result.means, py_result.means, atol=1e-9)
+
+
+@pytest.mark.skipif(not _HAS_RUST_LGSSM, reason="Rust LGSSM backend not built")
+def test_rust_parity_covariances_match_python() -> None:
+    rng = np.random.default_rng(102)
+    model = LinearGaussianSSM.random(state_dim=3, obs_dim=2, control_dim=0, seed=102)
+    obs = rng.standard_normal((30, 2))
+
+    py_result = KalmanFilter(model).filter(obs, backend="python")
+    ru_result = KalmanFilter(model).filter(obs, backend="rust")
+
+    np.testing.assert_allclose(
+        ru_result.covariances, py_result.covariances, atol=1e-9,
+    )
+
+
+@pytest.mark.skipif(not _HAS_RUST_LGSSM, reason="Rust LGSSM backend not built")
+def test_rust_parity_log_likelihood_matches_python() -> None:
+    rng = np.random.default_rng(103)
+    model = LinearGaussianSSM.random(state_dim=2, obs_dim=2, control_dim=0, seed=103)
+    obs = rng.standard_normal((100, 2))
+
+    py_ll = KalmanFilter(model).filter(obs, backend="python").log_likelihood
+    ru_ll = KalmanFilter(model).filter(obs, backend="rust").log_likelihood
+
+    assert abs(ru_ll - py_ll) < 1e-9, (
+        f"log-likelihood mismatch: python={py_ll}, rust={ru_ll}"
+    )
+
+
+@pytest.mark.skipif(not _HAS_RUST_LGSSM, reason="Rust LGSSM backend not built")
+def test_rust_backend_explicit_request_works() -> None:
+    """`backend='rust'` must dispatch to the Rust path successfully."""
+    model = LinearGaussianSSM.random(state_dim=2, obs_dim=1, seed=1)
+    obs = np.zeros((10, 1))
+    fr = KalmanFilter(model).filter(obs, backend="rust")
+    assert fr.means.shape == (10, 2)
+
+
+def test_rust_backend_unavailable_raises_when_explicitly_requested() -> None:
+    """If backend='rust' is requested but unavailable, raise RuntimeError."""
+    if _HAS_RUST_LGSSM:
+        pytest.skip("Rust backend IS available — cannot test the unavailable path")
+    model = LinearGaussianSSM.random(state_dim=2, obs_dim=1, seed=1)
+    obs = np.zeros((5, 1))
+    with pytest.raises(RuntimeError, match="Rust LGSSM backend"):
+        KalmanFilter(model).filter(obs, backend="rust")
+
+
+def test_invalid_backend_raises() -> None:
+    model = LinearGaussianSSM.random(state_dim=2, obs_dim=1, seed=1)
+    obs = np.zeros((5, 1))
+    with pytest.raises(ValueError, match="backend must be"):
+        KalmanFilter(model).filter(obs, backend="cuda")

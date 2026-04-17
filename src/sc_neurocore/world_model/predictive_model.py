@@ -58,6 +58,14 @@ from typing import Optional, Tuple
 
 import numpy as np
 
+# Detect Rust acceleration backend
+try:
+    from sc_neurocore_engine import py_lgssm_kalman_filter as _rust_kalman_filter
+    _HAS_RUST_LGSSM = True
+except (ImportError, AttributeError):
+    _rust_kalman_filter = None
+    _HAS_RUST_LGSSM = False
+
 
 # ───────────────────────── model parameters ─────────────────────────
 
@@ -195,6 +203,7 @@ class KalmanFilter:
         self,
         observations: np.ndarray,
         controls: Optional[np.ndarray] = None,
+        backend: str = "auto",
     ) -> FilterResult:
         """Run forward filtering on a sequence.
 
@@ -204,6 +213,11 @@ class KalmanFilter:
             Observation sequence.
         controls : np.ndarray, shape (T, m), optional
             Control input sequence. Required iff `model.control_dim > 0`.
+        backend : {"auto", "rust", "python"}
+            Acceleration backend selector. "auto" picks Rust if the
+            engine wheel exposes `py_lgssm_kalman_filter`, else
+            Python. "rust" forces Rust (raises if unavailable);
+            "python" forces the pure-NumPy implementation.
 
         Returns
         -------
@@ -218,6 +232,17 @@ class KalmanFilter:
                 raise ValueError(f"controls must have shape ({T},{m})")
         else:
             controls = np.zeros((T, 0)) if controls is None else controls
+
+        # Backend dispatch
+        if backend not in ("auto", "rust", "python"):
+            raise ValueError(f"backend must be auto/rust/python, got {backend!r}")
+        if backend == "rust" and not _HAS_RUST_LGSSM:
+            raise RuntimeError(
+                "Rust LGSSM backend requested but py_lgssm_kalman_filter "
+                "is not available; install sc_neurocore_engine wheel."
+            )
+        if (backend == "auto" and _HAS_RUST_LGSSM) or backend == "rust":
+            return self._filter_rust(observations, controls)
 
         d = self.model.state_dim
         A, B, C, D = self.model.A, self.model.B, self.model.C, self.model.D
@@ -278,6 +303,53 @@ class KalmanFilter:
             pred_means=pred_means,
             pred_covariances=pred_covs,
             log_likelihood=log_lik,
+        )
+
+    def _filter_rust(
+        self,
+        observations: np.ndarray,
+        controls: np.ndarray,
+    ) -> FilterResult:
+        """Forward-pass dispatch to the Rust LGSSM Kalman filter.
+
+        Marshals all matrices as flat row-major Vec<f64> across the
+        PyO3 boundary; the Rust side reconstructs ndarray::Array2
+        via `Array2::from_shape_vec`. Result identical to the Python
+        path within float64 round-off (verified by the parity test
+        in tests/test_world_model/test_predictive_model.py).
+        """
+        if _rust_kalman_filter is None:
+            raise RuntimeError("Rust backend probed False; cannot dispatch")
+
+        T, p = observations.shape
+        m = self.model.control_dim
+        d = self.model.state_dim
+        A, B, C, D = self.model.A, self.model.B, self.model.C, self.model.D
+        Q, R = self.model.Q, self.model.R
+
+        # Flatten to row-major Vec<f64> for the PyO3 marshalling.
+        result = _rust_kalman_filter(
+            obs_flat=observations.astype(np.float64).ravel(order="C").tolist(),
+            controls_flat=controls.astype(np.float64).ravel(order="C").tolist(),
+            t_len=T,
+            p_dim=p,
+            m_dim=m,
+            a_flat=A.ravel(order="C").tolist(),
+            b_flat=B.ravel(order="C").tolist(),
+            c_flat=C.ravel(order="C").tolist(),
+            d_flat=D.ravel(order="C").tolist(),
+            q_flat=Q.ravel(order="C").tolist(),
+            r_flat=R.ravel(order="C").tolist(),
+            mu_0=self.model.mu_0.tolist(),
+            sigma_0_flat=self.model.Sigma_0.ravel(order="C").tolist(),
+            d_dim=d,
+        )
+        return FilterResult(
+            means=np.array(result["means"], dtype=np.float64),
+            covariances=np.array(result["covariances"], dtype=np.float64),
+            pred_means=np.array(result["pred_means"], dtype=np.float64),
+            pred_covariances=np.array(result["pred_covariances"], dtype=np.float64),
+            log_likelihood=float(result["log_likelihood"]),
         )
 
 

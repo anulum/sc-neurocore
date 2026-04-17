@@ -14,8 +14,8 @@
       "reason": ""
     },
     "rust": {
-      "available": false,
-      "reason": "py_lgssm_kalman_filter not exported from sc_neurocore_engine \u2014 Rust backend not yet implemented (followup #67)"
+      "available": true,
+      "reason": ""
     },
     "julia": {
       "available": false,
@@ -34,15 +34,16 @@
     {
       "workload": "kalman_filter",
       "backend": "python",
-      "median_ms": 12.069989024894312,
-      "min_ms": 9.956396999768913,
+      "median_ms": 15.882720006629825,
+      "min_ms": 11.626361985690892,
       "log_likelihood": -288.06006407439685
     },
     {
       "workload": "kalman_filter",
       "backend": "rust",
-      "skipped": true,
-      "unavailable_reason": "py_lgssm_kalman_filter not exported from sc_neurocore_engine \u2014 Rust backend not yet implemented (followup #67)"
+      "median_ms": 1.0976889752782881,
+      "min_ms": 1.0017699969466776,
+      "log_likelihood": -288.06006407439685
     },
     {
       "workload": "kalman_filter",
@@ -65,14 +66,14 @@
     {
       "workload": "rts_smoother",
       "backend": "python",
-      "median_ms": 4.122141021071002,
-      "min_ms": 3.4430010127834976
+      "median_ms": 4.312467004638165,
+      "min_ms": 3.160799009492621
     },
     {
       "workload": "rts_smoother",
       "backend": "rust",
       "skipped": true,
-      "unavailable_reason": "py_lgssm_kalman_filter not exported from sc_neurocore_engine \u2014 Rust backend not yet implemented (followup #67)"
+      "unavailable_reason": ""
     },
     {
       "workload": "rts_smoother",
@@ -95,14 +96,14 @@
     {
       "workload": "em_10iters",
       "backend": "python",
-      "median_ms": 260.2593050105497,
-      "min_ms": 195.29585100826807
+      "median_ms": 119.07841698848642,
+      "min_ms": 68.31001400132664
     },
     {
       "workload": "em_10iters",
       "backend": "rust",
       "skipped": true,
-      "unavailable_reason": "py_lgssm_kalman_filter not exported from sc_neurocore_engine \u2014 Rust backend not yet implemented (followup #67)"
+      "unavailable_reason": ""
     },
     {
       "workload": "em_10iters",

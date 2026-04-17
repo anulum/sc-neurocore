@@ -130,14 +130,31 @@ def _build_workload(seed: int = 42) -> tuple[LinearGaussianSSM, np.ndarray]:
 def bench_python_kalman(
     model: LinearGaussianSSM, obs: np.ndarray,
 ) -> tuple[float, float, float]:
-    """Return (median_ms, min_ms, log_likelihood)."""
+    """Return (median_ms, min_ms, log_likelihood) for the Python backend."""
     kf = KalmanFilter(model)
     times_ms: list[float] = []
     last_ll = 0.0
-    kf.filter(obs)  # warm-up
+    kf.filter(obs, backend="python")  # warm-up
     for _ in range(N_REPEATS):
         t0 = time.perf_counter()
-        fr = kf.filter(obs)
+        fr = kf.filter(obs, backend="python")
+        times_ms.append((time.perf_counter() - t0) * 1000.0)
+        last_ll = fr.log_likelihood
+    times_ms.sort()
+    return times_ms[len(times_ms) // 2], times_ms[0], last_ll
+
+
+def bench_rust_kalman(
+    model: LinearGaussianSSM, obs: np.ndarray,
+) -> tuple[float, float, float]:
+    """Return (median_ms, min_ms, log_likelihood) for the Rust backend."""
+    kf = KalmanFilter(model)
+    times_ms: list[float] = []
+    last_ll = 0.0
+    kf.filter(obs, backend="rust")  # warm-up
+    for _ in range(N_REPEATS):
+        t0 = time.perf_counter()
+        fr = kf.filter(obs, backend="rust")
         times_ms.append((time.perf_counter() - t0) * 1000.0)
         last_ll = fr.log_likelihood
     times_ms.sort()
@@ -210,12 +227,18 @@ def main(argv: list[str]) -> int:
 
     rows: list[dict[str, object]] = []
 
+    kalman_runners = {
+        "python": bench_python_kalman,
+        "rust": bench_rust_kalman,
+    }
+
     print(f"## Forward Kalman filter")
     print(f"{'backend':<10}  {'median ms':>12}  {'min ms':>12}  {'log_lik':>14}")
     print(f"{'-'*10}  {'-'*12}  {'-'*12}  {'-'*14}")
     for name, (avail, reason) in backends.items():
-        if name == "python" and avail:
-            med, mn, ll = bench_python_kalman(model, obs)
+        runner = kalman_runners.get(name)
+        if avail and runner is not None:
+            med, mn, ll = runner(model, obs)
             print(f"{name:<10}  {med:>12.3f}  {mn:>12.3f}  {ll:>14.4f}")
             rows.append({
                 "workload": "kalman_filter", "backend": name,
