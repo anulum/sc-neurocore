@@ -466,16 +466,22 @@ Regression tests: `tests/test_equation_compiler.py::TestDtUnderflowGuard`
 `dt=0.0` legality, wider-fraction acceptance, CLI default success,
 CLI explicit-dt raise).
 
-### 9.2 `compile` / `deploy` / `serve` lack dedicated tests
+### 9.2 `compile` / `deploy` / `serve` test coverage (closed: task #8)
 
-`tests/test_cli.py` covers `info`, `--version`, `--help`,
-`benchmark`/`preflight` (subprocess delegation), and `studio` (with and
-without FastAPI). The three highest-value commands — `compile`, `deploy`,
-`serve` — are exercised only indirectly through their downstream modules.
-Per the `feedback_test_sophistication` rule (STRONG minimum), each of these
-needs dedicated multi-angle CLI tests.
+`tests/test_cli.py` now covers all three commands:
 
-**Tracking:** session task #8.
+- **deploy** (`TestDeployCommand`, 5 tests): missing-arg exit code,
+  unsupported extension exit code, full PyTorch happy path (writes
+  `sc_deploy_lif.sv` + `Makefile`), Vivado target emits `project.tcl`,
+  end-to-end via `main()`. The 3 PyTorch-using tests skip cleanly
+  when torch is not installed (CI has torch).
+- **serve** (`TestServeCommand`, 4 tests): missing-arg exit code, non-`.nir`
+  rejection, full happy path with mocked `nir.read` + `from_nir` +
+  `SpikeServer`, dispatch via `main()`.
+- **compile** end-to-end coverage was already in
+  `tests/test_equation_compiler.py::TestCompileCLI`; the new
+  `TestDtUnderflowGuard` adds 2 more CLI cases (default-dt success,
+  explicit-dt-0.001 raise).
 
 ### 9.3 `# type: ignore[arg-type]` without comment
 
@@ -537,16 +543,16 @@ Multi-angle dimensions **missing**:
 | # | Dimension | Status | Detail |
 |---|-----------|--------|--------|
 | 1 | Pipeline wiring | ✅ PASS | Console script registered; every `_cmd_*` reaches a downstream public symbol |
-| 2 | Multi-angle tests | ⚠️ WARN | 14 cli tests + 7 dt-underflow tests in `test_equation_compiler.py::TestDtUnderflowGuard` pass; no end-to-end coverage for `_cmd_deploy`/`_cmd_serve` (task #8) |
+| 2 | Multi-angle tests | ✅ PASS | 23 cli tests (14 originals + 5 deploy + 4 serve, 3 deploy tests skip without torch) plus 7 dt-underflow tests in `test_equation_compiler.py::TestDtUnderflowGuard`. Tasks #7 and #8 both closed. |
 | 3 | Rust path | N/A | Dispatch-only; engine is queried for status only |
 | 4 | Benchmarks | N/A | CLI cold-start measured (Section 7); no pytest-benchmark suite for the dispatcher itself |
 | 5 | Performance docs | ✅ PASS | Section 7 (this page) with measured numbers |
 | 6 | Documentation page | ✅ PASS | This page |
 | 7 | Rules followed | ⚠️ WARN | SPDX header present; one undocumented `# type: ignore` (line 298) — see §9.3 |
 
-Net status: **2 WARN, 0 FAIL.** Outstanding follow-up: task #8
-(end-to-end tests for `_cmd_deploy` and `_cmd_serve`). Task #7 (the
-dt underflow bug) is now closed by this commit.
+Net status: **1 WARN, 0 FAIL.** The remaining WARN is the documented
+`# type: ignore[arg-type]` on `cli.py:298` (§9.3) — minor and not
+behavioural. Tasks #7 and #8 are both closed.
 
 ---
 
