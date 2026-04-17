@@ -160,7 +160,7 @@ Same wording issue as
 [`PoissonInput` in `network/stimulus.py`](network.md#7-stimulus-sources).
 Either rename to `bernoulli_encode` or replace the `< scaled` line
 with `rng.poisson(scaled, size)` and accept fractional spike counts.
-Tracked as task #27.
+Tracked as task #26.
 
 ### 3.2 `latency_encode` (first-spike-time)
 
@@ -180,7 +180,7 @@ The clamp is silent: a value of `1.5` becomes `0` (spike at t=0),
 and a value of `-0.5` becomes `min(7.5, T-1)`. The docstring says
 "values in `[0, 1]`" but the function does not raise on out-of-range
 input — it just clips the spike time. Document the contract or add
-a guard. Tracked as task #28.
+a guard. Tracked as task #27.
 
 `tau = 5.0` (default) means the latest possible spike (for v=0) is at
 timestep 5. For larger `T`, most timesteps are silent.
@@ -268,7 +268,7 @@ issues, not behavioural bugs. Tasks #27 and #28 track them.
 
 ## 7. Known issues
 
-### 7.1 `poisson_encode` is Bernoulli (task #27)
+### 7.1 `poisson_encode` is Bernoulli (task #26)
 
 For low rates this is fine; for high rates it under-counts. Either
 rename to `bernoulli_encode` (preferred — the function does not
@@ -276,7 +276,7 @@ implement what the name claims) or replace the body with an actual
 Poisson draw and accept fractional spike counts (wider behaviour
 change).
 
-### 7.2 `latency_encode` silently clips out-of-range input (task #28)
+### 7.2 `latency_encode` silently clips out-of-range input (task #27)
 
 The docstring promises `values in [0, 1]` but the function clips
 both spike-time and (implicitly via the math) the input. Either
