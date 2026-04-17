@@ -67,6 +67,42 @@ except (ImportError, AttributeError):
     _HAS_RUST_LGSSM = False
 
 
+# Detect Julia acceleration backend (lazy — Julia startup is ~5 s)
+_julia_module = None
+_HAS_JULIA_LGSSM = False
+
+
+def _ensure_julia_loaded() -> bool:
+    """Lazy-load the Julia LGSSM module on first request.
+
+    Returns True if Julia + the .jl module are available; False otherwise.
+    Caches the loaded module in `_julia_module` for subsequent calls.
+    Julia startup latency is ~5 s — never paid unless `backend='julia'`
+    is explicitly requested.
+    """
+    global _julia_module, _HAS_JULIA_LGSSM
+    if _julia_module is not None:
+        return True
+    import importlib
+    import importlib.util
+    import os as _os
+    spec = importlib.util.find_spec("juliacall")
+    if spec is None:
+        return False
+    juliacall = importlib.import_module("juliacall")
+    jl = juliacall.Main
+    jl_path = _os.path.join(
+        _os.path.dirname(_os.path.dirname(__file__)),
+        "accel", "julia", "world_model", "predictive_model.jl",
+    )
+    if not _os.path.isfile(jl_path):
+        return False
+    jl.include(jl_path)
+    _julia_module = jl.PredictiveModelAccel
+    _HAS_JULIA_LGSSM = True
+    return True
+
+
 # ───────────────────────── model parameters ─────────────────────────
 
 
@@ -213,11 +249,14 @@ class KalmanFilter:
             Observation sequence.
         controls : np.ndarray, shape (T, m), optional
             Control input sequence. Required iff `model.control_dim > 0`.
-        backend : {"auto", "rust", "python"}
-            Acceleration backend selector. "auto" picks Rust if the
-            engine wheel exposes `py_lgssm_kalman_filter`, else
-            Python. "rust" forces Rust (raises if unavailable);
-            "python" forces the pure-NumPy implementation.
+        backend : {"auto", "rust", "julia", "python"}
+            Acceleration backend selector.
+            - "auto" picks Rust > Julia > Python in priority order
+              (Rust if `sc_neurocore_engine` wheel is built, else
+              Julia if `juliacall` is installed, else Python).
+            - "rust" / "julia" / "python" force the named backend
+              (raises RuntimeError if the named backend is not
+              available).
 
         Returns
         -------
@@ -234,15 +273,25 @@ class KalmanFilter:
             controls = np.zeros((T, 0)) if controls is None else controls
 
         # Backend dispatch
-        if backend not in ("auto", "rust", "python"):
-            raise ValueError(f"backend must be auto/rust/python, got {backend!r}")
+        if backend not in ("auto", "rust", "julia", "python"):
+            raise ValueError(
+                f"backend must be auto/rust/julia/python, got {backend!r}"
+            )
         if backend == "rust" and not _HAS_RUST_LGSSM:
             raise RuntimeError(
                 "Rust LGSSM backend requested but py_lgssm_kalman_filter "
                 "is not available; install sc_neurocore_engine wheel."
             )
+        if backend == "julia" and not _ensure_julia_loaded():
+            raise RuntimeError(
+                "Julia LGSSM backend requested but juliacall + the "
+                "predictive_model.jl module is not available; "
+                "install juliacall (pip install juliacall)."
+            )
         if (backend == "auto" and _HAS_RUST_LGSSM) or backend == "rust":
             return self._filter_rust(observations, controls)
+        if backend == "julia":
+            return self._filter_julia(observations, controls)
 
         d = self.model.state_dim
         A, B, C, D = self.model.A, self.model.B, self.model.C, self.model.D
@@ -350,6 +399,42 @@ class KalmanFilter:
             pred_means=np.array(result["pred_means"], dtype=np.float64),
             pred_covariances=np.array(result["pred_covariances"], dtype=np.float64),
             log_likelihood=float(result["log_likelihood"]),
+        )
+
+    def _filter_julia(
+        self,
+        observations: np.ndarray,
+        controls: np.ndarray,
+    ) -> FilterResult:
+        """Forward-pass dispatch to the Julia LGSSM Kalman filter.
+
+        Calls the `kalman_filter` function from
+        `accel/julia/world_model/predictive_model.jl` via juliacall.
+        Result identical to Python + Rust paths within float64
+        round-off (verified by parity tests).
+        """
+        if _julia_module is None:
+            raise RuntimeError("Julia module not loaded; cannot dispatch")
+
+        result = _julia_module.kalman_filter(
+            np.ascontiguousarray(observations, dtype=np.float64),
+            np.ascontiguousarray(controls, dtype=np.float64),
+            np.ascontiguousarray(self.model.A, dtype=np.float64),
+            np.ascontiguousarray(self.model.B, dtype=np.float64),
+            np.ascontiguousarray(self.model.C, dtype=np.float64),
+            np.ascontiguousarray(self.model.D, dtype=np.float64),
+            np.ascontiguousarray(self.model.Q, dtype=np.float64),
+            np.ascontiguousarray(self.model.R, dtype=np.float64),
+            np.ascontiguousarray(self.model.mu_0, dtype=np.float64),
+            np.ascontiguousarray(self.model.Sigma_0, dtype=np.float64),
+        )
+        # juliacall returns NamedTuple → convert fields to NumPy
+        return FilterResult(
+            means=np.asarray(result.means, dtype=np.float64),
+            covariances=np.asarray(result.covariances, dtype=np.float64),
+            pred_means=np.asarray(result.pred_means, dtype=np.float64),
+            pred_covariances=np.asarray(result.pred_covs, dtype=np.float64),
+            log_likelihood=float(result.log_lik),
         )
 
 

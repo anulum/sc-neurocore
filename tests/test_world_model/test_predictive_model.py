@@ -435,3 +435,101 @@ def test_invalid_backend_raises() -> None:
     obs = np.zeros((5, 1))
     with pytest.raises(ValueError, match="backend must be"):
         KalmanFilter(model).filter(obs, backend="cuda")
+
+
+# ───────────────────────── Julia ↔ Python parity ─────────────────────────
+
+# These tests trigger Julia startup (~5 s on first call). They
+# skip cleanly when juliacall is not installed or the .jl module
+# is missing.
+
+import importlib.util as _il_util
+
+
+def _julia_available() -> bool:
+    """Avoid importing juliacall at module-load (5 s startup)."""
+    if _il_util.find_spec("juliacall") is None:
+        return False
+    import os as _os
+    jl_path = _os.path.join(
+        _os.path.dirname(_os.path.dirname(_os.path.dirname(__file__))),
+        "src", "sc_neurocore", "accel", "julia", "world_model",
+        "predictive_model.jl",
+    )
+    return _os.path.isfile(jl_path)
+
+
+@pytest.mark.skipif(
+    not _julia_available(),
+    reason="juliacall not installed or accel/julia/world_model/predictive_model.jl missing",
+)
+def test_julia_parity_means_match_python() -> None:
+    """Julia filtered means must match Python to atol=1e-9.
+
+    Same parity contract as Rust: `JuliaLGSSMKalmanFilter ==
+    PythonLGSSMKalmanFilter` to within float64 round-off.
+    """
+    rng = np.random.default_rng(201)
+    model = LinearGaussianSSM.random(state_dim=4, obs_dim=3, control_dim=0, seed=201)
+    obs = rng.standard_normal((50, 3))
+
+    py = KalmanFilter(model).filter(obs, backend="python")
+    ju = KalmanFilter(model).filter(obs, backend="julia")
+
+    np.testing.assert_allclose(ju.means, py.means, atol=1e-9)
+
+
+@pytest.mark.skipif(not _julia_available(), reason="Julia LGSSM backend unavailable")
+def test_julia_parity_covariances_match_python() -> None:
+    rng = np.random.default_rng(202)
+    model = LinearGaussianSSM.random(state_dim=3, obs_dim=2, control_dim=0, seed=202)
+    obs = rng.standard_normal((30, 2))
+
+    py = KalmanFilter(model).filter(obs, backend="python")
+    ju = KalmanFilter(model).filter(obs, backend="julia")
+
+    np.testing.assert_allclose(ju.covariances, py.covariances, atol=1e-9)
+
+
+@pytest.mark.skipif(not _julia_available(), reason="Julia LGSSM backend unavailable")
+def test_julia_parity_log_likelihood_matches_python() -> None:
+    rng = np.random.default_rng(203)
+    model = LinearGaussianSSM.random(state_dim=2, obs_dim=2, control_dim=0, seed=203)
+    obs = rng.standard_normal((100, 2))
+
+    py_ll = KalmanFilter(model).filter(obs, backend="python").log_likelihood
+    ju_ll = KalmanFilter(model).filter(obs, backend="julia").log_likelihood
+
+    assert abs(ju_ll - py_ll) < 1e-9, (
+        f"log-likelihood mismatch: python={py_ll}, julia={ju_ll}"
+    )
+
+
+@pytest.mark.skipif(not _julia_available(), reason="Julia LGSSM backend unavailable")
+def test_three_backend_parity_when_all_available() -> None:
+    """Python = Rust = Julia results must agree to atol=1e-9."""
+    rng = np.random.default_rng(204)
+    model = LinearGaussianSSM.random(state_dim=3, obs_dim=2, control_dim=0, seed=204)
+    obs = rng.standard_normal((40, 2))
+
+    py = KalmanFilter(model).filter(obs, backend="python")
+    ju = KalmanFilter(model).filter(obs, backend="julia")
+
+    np.testing.assert_allclose(ju.log_likelihood, py.log_likelihood, atol=1e-9)
+    np.testing.assert_allclose(ju.means, py.means, atol=1e-9)
+
+    if _HAS_RUST_LGSSM:
+        ru = KalmanFilter(model).filter(obs, backend="rust")
+        np.testing.assert_allclose(ru.log_likelihood, py.log_likelihood, atol=1e-9)
+        np.testing.assert_allclose(ru.means, py.means, atol=1e-9)
+        np.testing.assert_allclose(ru.means, ju.means, atol=1e-9)
+
+
+def test_julia_backend_unavailable_raises_when_explicitly_requested() -> None:
+    """If backend='julia' is requested but unavailable, raise RuntimeError."""
+    if _julia_available():
+        pytest.skip("Julia backend IS available — cannot test the unavailable path")
+    model = LinearGaussianSSM.random(state_dim=2, obs_dim=1, seed=1)
+    obs = np.zeros((5, 1))
+    with pytest.raises(RuntimeError, match="Julia LGSSM backend"):
+        KalmanFilter(model).filter(obs, backend="julia")

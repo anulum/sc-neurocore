@@ -81,15 +81,15 @@ def _probe_rust() -> tuple[bool, str]:
 def _probe_julia() -> tuple[bool, str]:
     """Detect the Julia LGSSM backend (JuliaCall + a working .jl module)."""
     if importlib.util.find_spec("juliacall") is None:
-        return False, "juliacall not installed (followup #68)"
-    # JuliaCall is present, but we deleted the placeholder
-    # accel/julia/world_model/predictive_model.jl in the same commit
-    # (it was non-functional Python-syntax-in-a-Julia-module). Real
-    # implementation tracked as #68.
-    return False, (
-        "Julia backend deleted (was non-functional placeholder); "
-        "real implementation tracked as #68"
-    )
+        return False, "juliacall not installed (pip install juliacall)"
+    # Probe by lazy-loading via the same code path the dispatcher uses.
+    from sc_neurocore.world_model.predictive_model import _ensure_julia_loaded
+    if not _ensure_julia_loaded():
+        return False, (
+            "juliacall installed but accel/julia/world_model/"
+            "predictive_model.jl is missing"
+        )
+    return True, ""
 
 
 def _probe_mojo() -> tuple[bool, str]:
@@ -155,6 +155,28 @@ def bench_rust_kalman(
     for _ in range(N_REPEATS):
         t0 = time.perf_counter()
         fr = kf.filter(obs, backend="rust")
+        times_ms.append((time.perf_counter() - t0) * 1000.0)
+        last_ll = fr.log_likelihood
+    times_ms.sort()
+    return times_ms[len(times_ms) // 2], times_ms[0], last_ll
+
+
+def bench_julia_kalman(
+    model: LinearGaussianSSM, obs: np.ndarray,
+) -> tuple[float, float, float]:
+    """Return (median_ms, min_ms, log_likelihood) for the Julia backend.
+
+    The first call to the Julia path triggers JIT compilation (~5 s
+    on first invocation). The warm-up call below absorbs that cost
+    so the timed loop measures steady-state per-call latency.
+    """
+    kf = KalmanFilter(model)
+    times_ms: list[float] = []
+    last_ll = 0.0
+    kf.filter(obs, backend="julia")  # warm-up (JIT)
+    for _ in range(N_REPEATS):
+        t0 = time.perf_counter()
+        fr = kf.filter(obs, backend="julia")
         times_ms.append((time.perf_counter() - t0) * 1000.0)
         last_ll = fr.log_likelihood
     times_ms.sort()
@@ -230,6 +252,7 @@ def main(argv: list[str]) -> int:
     kalman_runners = {
         "python": bench_python_kalman,
         "rust": bench_rust_kalman,
+        "julia": bench_julia_kalman,
     }
 
     print(f"## Forward Kalman filter")
