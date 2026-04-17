@@ -110,8 +110,79 @@ class TopologyAnalyzer:
             report.small_world_sigma = 0.0
 
         report.assortativity = self._assortativity(degrees)
+        report.modularity = self._modularity()
 
         return report
+
+    def _modularity(self, communities: list[int] | None = None) -> float:
+        """Newman's modularity Q for the (undirected projection) graph.
+
+        Q = (1 / 2m) · Σ_ij [A_ij - (k_i · k_j) / 2m] · δ(c_i, c_j)
+
+        See Newman M. E. J. "Modularity and community structure in
+        networks." *PNAS* 103(23):8577-8582 (2006).
+
+        When ``communities`` is ``None`` (default), the partition is
+        the set of connected components (each component is its own
+        community). For a single-component graph Q = 0; for a graph
+        with separated cliques Q approaches its theoretical maximum
+        of ~1 - 1/k for k components of equal size.
+
+        Parameters
+        ----------
+        communities : list[int] or None
+            Optional per-node community label. Length must equal
+            ``self.N``. If None, connected components are used.
+
+        Returns
+        -------
+        float
+            Modularity Q in roughly [-0.5, 1.0]. Higher = stronger
+            community structure.
+        """
+        A = self.adj if not self.directed else np.maximum(self.adj, self.adj.T)
+
+        # Validate caller-supplied partition length BEFORE the empty-graph
+        # short-circuit so misuse fails fast even on edgeless inputs.
+        if communities is not None and len(communities) != self.N:
+            raise ValueError(
+                f"communities length {len(communities)} != N={self.N}"
+            )
+
+        m2 = float(A.sum())  # 2m for undirected
+        if m2 < 1.0:
+            return 0.0
+
+        if communities is None:
+            communities = self._connected_components(A)
+
+        degrees = A.sum(axis=1)
+        comm = np.asarray(communities, dtype=np.int64)
+        # Sum (A_ij - k_i k_j / 2m) over same-community pairs
+        same_community = comm[:, None] == comm[None, :]
+        expected = np.outer(degrees, degrees) / m2
+        q = float((A - expected)[same_community].sum() / m2)
+        return q
+
+    @staticmethod
+    def _connected_components(A: np.ndarray) -> list[int]:
+        """Label each node with its connected-component index (BFS)."""
+        N = A.shape[0]
+        labels = [-1] * N
+        next_label = 0
+        for src in range(N):
+            if labels[src] != -1:
+                continue
+            queue = [src]
+            labels[src] = next_label
+            while queue:
+                node = queue.pop(0)
+                for nbr in np.where(A[node] > 0)[0]:
+                    if labels[nbr] == -1:
+                        labels[nbr] = next_label
+                        queue.append(int(nbr))
+            next_label += 1
+        return labels
 
     def _clustering(self) -> float:
         """Local clustering coefficient averaged over nodes."""

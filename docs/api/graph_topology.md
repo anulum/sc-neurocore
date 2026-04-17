@@ -69,9 +69,10 @@ A POD struct populated by `TopologyAnalyzer.analyze()`. The
 `summary()` method returns a 4-line human-readable banner that
 includes the small-world flag (sigma > 1 → "YES").
 
-**Note:** `modularity` is declared on the dataclass but
-`TopologyAnalyzer.analyze()` does **not** compute it — the field
-stays at its default `0.0`. See §6.1 honesty notice.
+**Note:** As of task #42, `modularity` is now populated by
+`TopologyAnalyzer.analyze()` via Newman's Q with a connected-
+components partition. See §6.1 for the formula and §3.1 for the
+algorithm row.
 
 ---
 
@@ -107,7 +108,7 @@ analysis.
 | `hub_neurons` | top-5 by degree, `np.argsort(-degrees)[:5]` | O(N log N) |
 | `small_world_sigma` | `(C/C_rand) / (L/L_rand)` per Humphries & Gurney 2008 | O(1) after C and L |
 | `assortativity` | `np.corrcoef` over edge endpoints' degrees | O(E) |
-| `modularity` | **NOT computed** — field stays at default 0.0 | — |
+| `modularity` | Newman 2006 Q with connected-components partition | O(N²) for the dense matrix step |
 
 `C_rand` and `L_rand` are the Erdős–Rényi expected values:
 - `C_rand ≈ k / N`
@@ -192,25 +193,52 @@ before constructing the analyser.
 | 4 | Benchmarks | ✅ PASS | §4 measured this session |
 | 5 | Performance docs | ✅ PASS | §4 |
 | 6 | Documentation page | ✅ PASS | This page (upgraded from a 21-line stub) |
-| 7 | Rules followed | ⚠️ WARN | SPDX header ✅. **`modularity` field declared but never populated** (§6.1 below) — task #42 still open. `avg_path_length` sample cap is now exposed via the `n_path_samples` constructor argument (closes task #41). British English clean. No `# noqa`, no `# type: ignore`. |
+| 7 | Rules followed | ✅ PASS | SPDX header ✅. `modularity` field now populated by Newman 2006 Q with connected-components partition (closes task #42, see §6.1). `avg_path_length` sample cap is exposed via the `n_path_samples` constructor argument (closes task #41, see §3.2). British English clean. No `# noqa`, no `# type: ignore`. |
 
-Net: **1 WARN, 1 FAIL.**
+Net: **0 WARN, 1 FAIL.** Tasks #41 and #42 both closed in this
+session; the remaining FAIL is the absence of a Rust path
+(rolled into the broader Rustification effort, task #13).
 
-### 6.1 `modularity` field is dead
+### 6.1 `modularity` (FIXED by task #42)
 
-`TopologyReport.modularity` defaults to `0.0` and is never assigned
-anywhere in `analyze()`. Callers reading `report.modularity` get
-`0.0` for every graph — including graphs with obvious community
-structure. Either implement the Newman–Girvan modularity (or
-Louvain) computation, or remove the field. Tracked as task #42.
+`TopologyAnalyzer.analyze()` now populates the field via Newman's Q:
+
+```
+Q = (1 / 2m) · Σ_ij [A_ij − (k_i · k_j) / 2m] · δ(c_i, c_j)
+```
+
+By default the partition is the connected components of the
+(undirected projection of the) graph — each component is its own
+community. Users can pass an explicit per-node partition to
+`TopologyAnalyzer._modularity(communities=[...])` to score any
+candidate split. Reference:
+Newman M. E. J. "Modularity and community structure in networks."
+*PNAS* 103(23):8577-8582 (2006).
+
+Verified expected values on hand-crafted graphs:
+- single complete graph K₅ → Q = 0.0 (no community structure)
+- two disjoint K₅ cliques → Q = 0.5 (Newman 2006 example)
+- three equal disjoint cliques → Q = 2/3 (theoretical maximum 1 − 1/k)
+- empty graph → Q = 0.0
+- correct vs wrong vs singleton partitions on the same graph
+  ranked correct > wrong > singleton
+
+Algorithm cost is O(N²) for the dense `(A − expected)` step;
+acceptable for N ≤ 10³, slow above. The connected-components
+labeller is a Python BFS (also O(N²) worst case).
+
+Regression: `tests/test_graph_topology.py::TestModularity` (6
+tests).
 
 ---
 
 ## 7. Known issues
 
-### 7.1 `modularity` declared but never computed (task #42)
+### 7.1 `modularity` (FIXED by task #42)
 
-See §6.1. Headline issue for callers who depend on the field.
+See §6.1. Field now populated by Newman's Q with connected-
+components partition, with caller-overridable communities and 6
+regression tests.
 
 ### 7.2 `avg_path_length` sample cap (FIXED by task #41)
 
