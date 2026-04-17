@@ -135,15 +135,22 @@ op maps to a phase-shift angle and arm count.
 - `compile_gate(op, inputs, output, name) -> MZIGate`
 - `compile_network(specs: list[dict]) -> list[MZIGate]`
 
-### 4.3 `WDMAssigner` (lines 384-439)
+### 4.3 `WDMAssigner` (lines 384-455)
 
 DWDM-style wavelength assignment. Each signal name receives its
 own channel at `1550.0 + ch_id * channel_spacing_nm`. Default
-spacing is 0.8 nm (DWDM standard) and the assigner caps at 96
-channels (the C-band practical limit at 0.4 nm spacing; the
-default 0.8 nm gives ~50 usable channels).
+spacing is 0.8 nm (100 GHz DWDM).
 
-- `assign(signal_names: list[str]) -> list[WDMChannel]`
+The assigner now caps at `max_channels: int = 96` (default
+follows the ITU-T G.694.1 DWDM C-band grid at 50 GHz spacing).
+At the default 0.8 nm spacing the physical C-band only fits ~44
+channels, so the cap is conservative; pass `max_channels=0` to
+disable for multi-band (C+L+S) extensions, or a larger value for
+specific-foundry layouts. `assign()` raises `ValueError` when
+`len(signal_names) > max_channels` and the cap is non-zero.
+Closes task #47.
+
+- `assign(signal_names: list[str], power_dbm: float = ...) -> list[WDMChannel]`
 
 ### 4.4 `PowerBudgetAnalyzer` (lines 440-509)
 
@@ -290,13 +297,17 @@ large designs that stack waveguides via grating couplers or
 through-substrate vias, the routing model needs extension. Not
 critical at the v3.14.0 scale.
 
-### 9.5 `WDMAssigner` caps at 96 channels silently
+### 9.5 `WDMAssigner` cap (FIXED by task #47)
 
-For designs with >96 distinct signal names, the assigner currently
-wraps or rejects (depending on path); the behaviour is not
-explicitly tested. The C-band physical limit is ~96 channels at
-0.4 nm spacing; multi-band (C+L+S) designs would need an extension.
-Tracked as task #47.
+`WDMAssigner.__init__` now accepts `max_channels: int = 96`
+(default follows ITU-T G.694.1 DWDM C-band grid at 50 GHz
+spacing). `assign()` raises `ValueError` when
+`len(signal_names) > max_channels` and the cap is non-zero.
+Pass `max_channels=0` to disable for multi-band (C+L+S) designs.
+Regression coverage:
+`tests/test_bridges/test_photonic_noc.py::TestWDMAssigner` — 5
+new cases (default cap=96, at-cap succeeds, above-cap raises,
+explicit smaller cap raises, cap=0 disables).
 
 ---
 
