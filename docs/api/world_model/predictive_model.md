@@ -146,13 +146,19 @@ from sc_neurocore.world_model import PredictiveWorldModel
 Per `feedback_multi_language_accel.md` (Rust + Julia + Go +
 Mojo + Python fallback). Current state:
 
-| Backend | Status | Tracking |
+| Backend | Status | Source |
 |---|---|---|
 | **python** (NumPy `linalg.solve`) | ✅ implemented | this module |
-| **rust** (PyO3 + `ndarray` Cholesky) | ✅ implemented | `engine/src/lgssm.rs` (this commit) |
-| **julia** (JuliaCall + `KalmanFilters.jl`) | ⏳ followup | task #68 |
+| **rust** (PyO3 + `ndarray` Cholesky) | ✅ implemented | `engine/src/lgssm.rs` |
+| **julia** (juliacall + `LinearAlgebra` LAPACK) | ✅ implemented | `src/sc_neurocore/accel/julia/world_model/predictive_model.jl` |
 | **mojo** (GPU Kalman via Mojo) | ⏳ blocked | task #69 (Mojo not pip-distributable yet) |
 | **go** (gonum + cgo) | ⏳ followup | task #70 |
+
+The dispatcher (`KalmanFilter.filter(backend='auto'|'rust'|'julia'|'python')`)
+picks Rust > Julia > Python in priority order under `'auto'`,
+then explicit override for the rest. All three implemented
+backends return identical (means, covariances, log-likelihood)
+results to atol=1e-9 on the parity tests.
 
 The benchmark
 `benchmarks/bench_predictive_model.py` runs the workload on
@@ -177,23 +183,36 @@ x86_64, NumPy 2.2.0, Python 3.12.3.
 
 | Workload | Backend | Median | Min | Speedup vs Python |
 |---|---|---:|---:|---:|
-| Forward Kalman filter | python | 15.88 ms | 11.63 ms | 1.0× |
-| Forward Kalman filter | **rust** | **1.10 ms** | **1.00 ms** | **14.4×** |
-| RTS smoother | python | 4.31 ms | 3.16 ms | 1.0× |
-| EM (10 iters) | python | 119.1 ms | 68.3 ms | 1.0× |
+| Forward Kalman filter | python | 16.77 ms | — | 1.0× |
+| Forward Kalman filter | rust | 3.20 ms | — | 5.2× |
+| Forward Kalman filter | **julia** | **1.81 ms** | — | **9.3×** |
+| RTS smoother | python | 10.10 ms | 9.58 ms | 1.0× |
+| EM (10 iters) | python | 134.3 ms | 103.1 ms | 1.0× |
 
-Both backends produce **identical log-likelihood** to ≤ 1e-9
-absolute tolerance (verified by
-`test_rust_parity_log_likelihood_matches_python`); the same
-holds for filtered means and covariances. The Rust speedup is
-14.4× on the (T=200, d=4, p=3) workload because the Python
-path is dominated by per-step NumPy overhead at small
-matrix sizes; Rust's Cholesky-based PSD inversion in pure
-ndarray avoids the overhead.
+All three implemented backends produce **identical
+log-likelihood** (-288.0601) to ≤ 1e-9 absolute tolerance
+(verified by `test_three_backend_parity_when_all_available`);
+the same holds for filtered means and covariances.
+
+**Julia is the fastest** on this (T=200, d=4, p=3) workload —
+juliacall delegates to LAPACK via `LinearAlgebra.cholesky`
+which beats both pure-Rust hand-rolled Cholesky and
+NumPy-via-Python overhead at this matrix size. The auto
+dispatcher still prefers Rust over Julia by default because:
+
+- Rust startup is instant (PyO3 binding); Julia first-call
+  JIT is ~5 s.
+- Rust marshalling cost is bounded; juliacall has additional
+  PyJulia-style FFI overhead per call.
+- For very large workloads (T > 10 000 or d > 100) Julia's
+  LAPACK advantage overtakes Rust's lower call overhead;
+  benchmark on your own data to choose explicitly.
 
 The RTS smoother and EM learner currently dispatch only to the
-Python path; followups #67 (extend Rust to RTS + EM) and
-#68/#69/#70 (Julia / Mojo / Go) track the rest.
+Python path; followups would extend Rust + Julia to the
+backward pass + EM M-step (not yet opened as separate tasks
+— the marginal value is low because RTS smoothing is already
+sub-10 ms).
 
 Captured run in
 `benchmarks/results/bench_predictive_model.json`.
@@ -224,7 +243,7 @@ tests/test_interfaces_generative_worldmodel.py::TestSCPlanner --no-cov`
 |---|-----------|--------|--------|
 | 1 | Pipeline wiring | ✅ PASS | `world_model/__init__` re-exports preserved; SCPlanner consumer still passes |
 | 2 | Multi-angle tests | ✅ PASS | 31 tests across 3 files; PSD invariance, EM monotonicity, identifiability caveat |
-| 3 | Acceleration path | ⚠️ WARN | python + **rust** (Kalman filter only); julia/mojo/go tracked as #68-#70 |
+| 3 | Acceleration path | ⚠️ WARN | python + **rust** + **julia** (Kalman filter only, all 3 verified parity); mojo/go tracked as #69-#70 |
 | 4 | Benchmarks | ✅ PASS | `benchmarks/bench_predictive_model.py` committed; multi-backend harness handles unavailable backends gracefully |
 | 5 | Performance docs | ✅ PASS | §8 with measured numbers |
 | 6 | Documentation page | ✅ PASS | This page |

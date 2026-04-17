@@ -18,8 +18,8 @@
       "reason": ""
     },
     "julia": {
-      "available": false,
-      "reason": "juliacall not installed (followup #68)"
+      "available": true,
+      "reason": ""
     },
     "mojo": {
       "available": false,
@@ -34,22 +34,23 @@
     {
       "workload": "kalman_filter",
       "backend": "python",
-      "median_ms": 15.882720006629825,
-      "min_ms": 11.626361985690892,
+      "median_ms": 16.769503010436893,
+      "min_ms": 14.49895798577927,
       "log_likelihood": -288.06006407439685
     },
     {
       "workload": "kalman_filter",
       "backend": "rust",
-      "median_ms": 1.0976889752782881,
-      "min_ms": 1.0017699969466776,
+      "median_ms": 3.196311998181045,
+      "min_ms": 2.4885120219551027,
       "log_likelihood": -288.06006407439685
     },
     {
       "workload": "kalman_filter",
       "backend": "julia",
-      "skipped": true,
-      "unavailable_reason": "juliacall not installed (followup #68)"
+      "median_ms": 1.8126509967260063,
+      "min_ms": 1.715626014629379,
+      "log_likelihood": -288.0600640743968
     },
     {
       "workload": "kalman_filter",
@@ -66,8 +67,8 @@
     {
       "workload": "rts_smoother",
       "backend": "python",
-      "median_ms": 4.312467004638165,
-      "min_ms": 3.160799009492621
+      "median_ms": 10.098758997628465,
+      "min_ms": 9.583721024682745
     },
     {
       "workload": "rts_smoother",
@@ -79,7 +80,7 @@
       "workload": "rts_smoother",
       "backend": "julia",
       "skipped": true,
-      "unavailable_reason": "juliacall not installed (followup #68)"
+      "unavailable_reason": ""
     },
     {
       "workload": "rts_smoother",
@@ -96,8 +97,8 @@
     {
       "workload": "em_10iters",
       "backend": "python",
-      "median_ms": 119.07841698848642,
-      "min_ms": 68.31001400132664
+      "median_ms": 134.2559599725064,
+      "min_ms": 103.12957401038148
     },
     {
       "workload": "em_10iters",
@@ -109,7 +110,7 @@
       "workload": "em_10iters",
       "backend": "julia",
       "skipped": true,
-      "unavailable_reason": "juliacall not installed (followup #68)"
+      "unavailable_reason": ""
     },
     {
       "workload": "em_10iters",
