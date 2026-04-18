@@ -464,3 +464,10 @@ try:
     _fault_inject_rust_available = True
 except ImportError:
     _fault_inject_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import py_kl_refine
+    __all__ += ["py_kl_refine"]
+    _kl_refine_rust_available = True
+except ImportError:
+    _kl_refine_rust_available = False

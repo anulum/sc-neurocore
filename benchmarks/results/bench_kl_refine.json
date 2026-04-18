@@ -1,0 +1,66 @@
+{
+  "platform": "Linux-6.17.0-20-generic-x86_64-with-glibc2.39",
+  "python": "3.12.3",
+  "numpy": "2.2.6",
+  "n_parts": 4,
+  "kl_iterations": 3,
+  "n_repeats": 5,
+  "backends": {
+    "python": {
+      "available": true
+    },
+    "rust": {
+      "available": true
+    },
+    "julia": {
+      "available": false,
+      "reason": "kl_refine.jl not yet implemented"
+    },
+    "go": {
+      "available": false,
+      "reason": "libpartition.so not yet built"
+    },
+    "mojo": {
+      "available": false,
+      "reason": "libpartition.so not yet built"
+    }
+  },
+  "rows": [
+    {
+      "V": 100,
+      "python_ms": 4.8195699928328395,
+      "rust_ms": 0.03774100332520902,
+      "julia_ms": null,
+      "go_ms": null,
+      "mojo_ms": null,
+      "parity_ok": true
+    },
+    {
+      "V": 200,
+      "python_ms": 22.374157997546718,
+      "rust_ms": 0.05295401206240058,
+      "julia_ms": null,
+      "go_ms": null,
+      "mojo_ms": null,
+      "parity_ok": true
+    },
+    {
+      "V": 500,
+      "python_ms": 82.27722698939033,
+      "rust_ms": 0.18115999409928918,
+      "julia_ms": null,
+      "go_ms": null,
+      "mojo_ms": null,
+      "parity_ok": true
+    },
+    {
+      "V": 1000,
+      "python_ms": 122.14780002250336,
+      "rust_ms": 0.220457004616037,
+      "julia_ms": null,
+      "go_ms": null,
+      "mojo_ms": null,
+      "parity_ok": true
+    }
+  ]
+}
