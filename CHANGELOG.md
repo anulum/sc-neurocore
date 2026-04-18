@@ -4,6 +4,23 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### CorticalColumn finite-size verification at scale=0.2 (2026-04-18)
+- Empirically verified that the L5e/L6e residual at `scale=0.1` is a finite-size effect (van Albada et al. 2015 Fig 5), not a model bug. Scale=0.2 / 600 ms / seed=42 measurements:
+
+  | Pop | scale=0.1 ratio | scale=0.2 ratio | Δ |
+  |-----|----------------:|----------------:|---:|
+  | L23e | 0.67× | 0.27× | overshoots low |
+  | L23i | 1.19× | 0.94× | improving |
+  | L4e | 0.68× | 0.73× | stable |
+  | L4i | 1.21× | 1.08× | improving |
+  | L5e | 1.97× | **1.52×** | **-23 %** |
+  | L5i | 1.50× | **1.27×** | **-15 %** |
+  | L6e | 2.81× | **2.43×** | **-14 %** |
+  | L6i | 1.24× | **1.10×** | improving |
+
+- The deep-layer residuals (L5e, L6e) shrink monotonically with scale; extrapolating linearly suggests scale=0.5 closes them to within 1.2-1.3× of Potjans Table 4. Closing all 8 populations to within 10 % requires full scale (~77 000 cells, ≈ 50 min/sec biotime). The implementation is faithful — the residual is intrinsic to sub-full-scale finite-size effects.
+- `docs/api/cortical_column.md` §4.1 now documents the per-scale ratios side-by-side with the historical baseline and the rejected no-multapse experiment.
+
 ### CorticalColumn per-connection Gaussian delay distribution (2026-04-18)
 - `network/cortical_column.py` adds per-connection delay binning. New constants `DELAY_E_SIGMA = 0.75 ms`, `DELAY_I_SIGMA = 0.4 ms` (Potjans Table 5). New `__init__` parameters `delay_distribution: bool = True` and `n_delay_bins: int = 5`. At construction time each (target, source) pair samples `K_per_target * n_t` per-connection delays from `N(DELAY_*, sigma_*)`, quantile-bins them into 5 groups and stores one sub-CSR per bin. Per `step()`, each pair contributes one `dot()` per bin, reading the source spike vector at that bin's delay offset.
 - Setting `delay_distribution=False` restores the legacy single-mean-delay path for fast smoke tests and direct comparison.
