@@ -142,8 +142,13 @@ def nullclines_2d(
             env[v1] = float(Y[i, j])
             env["I"] = 0.0
             try:
-                dv0[i, j] = float(eval(compiled_eq0, {"__builtins__": {}}, env))
-                dv1[i, j] = float(eval(compiled_eq1, {"__builtins__": {}}, env))
+                # nosec B307: `compiled_eq0/1` come from
+                # `EquationNeuron._compiled_eqs`, which has already
+                # passed the AST whitelist in `_validate_expr` (no
+                # imports, no attribute escapes). Empty `__builtins__`
+                # blocks the residual escape vectors.
+                dv0[i, j] = float(eval(compiled_eq0, {"__builtins__": {}}, env))  # nosec B307
+                dv1[i, j] = float(eval(compiled_eq1, {"__builtins__": {}}, env))  # nosec B307
             except (ValueError, ZeroDivisionError, OverflowError):
                 pass
 
