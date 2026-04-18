@@ -4,6 +4,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### CorticalColumn Rust per-row-parallel CSR spmv kernel (2026-04-18)
+- New `engine/src/cortical_inject.rs`: rayon-parallel CSR sparse mat-vec add (`y += W @ x`) with row-chunking (`CHUNK_SIZE = 512`) so each task sees ~250 µs of work — well above rayon's per-iteration scheduler break-even point. 4 unit tests.
+- PyO3 wrapper `sc_neurocore_engine.py_parallel_csr_spmv_add` re-exported via `bridge/sc_neurocore_engine/__init__.py`.
+- `CorticalColumn._inject_block(dt)` now dispatches to the Rust kernel automatically when available (auto-detected via `_HAS_RUST_CSR_SPMV`). Bit-identical results vs scipy single-threaded — per-row reductions are local so parallel order does not affect output.
+- Pre-extracted `(indptr, indices, data)` triples per block at construction (`_block_e_arrays`, `_block_i_arrays`) to dodge per-step `np.ascontiguousarray` cast overhead that otherwise eats the per-call Rust speedup.
+- **Honest perf finding**: Rust kernel measures 18.9 ms vs scipy 33 ms standalone (1.75× per call). In the full simulation pipeline at scale=0.1 / 600 ms, however, Rust takes **460 s** vs scipy **290 s** (per-pair) — a 1.6× regression. scipy's CSR mat-vec is already well-tuned for the in-pipeline access pattern (cache-warm matrices, sparse spike vectors); per-call Rust overhead + the surrounding Python concat / count_nonzero / slice work dominates.
+- The Rust kernel is preserved as the **right primitive** for the future block-CSR / GPU / multi-node scale-up regime (where per-call FFI overhead shrinks relative to per-call work). Default per-pair scipy path is already the fastest Python-side measurement; Rust is opt-in via `use_block_csr=True`.
+
 ### CorticalColumn block-CSR opt-in path (2026-04-18)
 - Added stacked block-CSR matrices keyed by `(source-type, global-bin-idx)` so the per-step inner loop can collapse from `n_pairs × n_delay_bins` (≈ 320 sparse mat-vecs) to `2 × n_delay_bins` (≈ 10). Bin centres are global, derived from theoretical Gaussian quantiles via `scipy.stats.norm.ppf`.
 - New `CorticalColumn` parameter `use_block_csr: bool = False`. When True, the construction builds block matrices alongside the per-pair representation; `step()` dispatches to `_inject_block(dt)`.
