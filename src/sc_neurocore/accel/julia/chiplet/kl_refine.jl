@@ -50,6 +50,8 @@ function kl_refine(
     adj_scc_abs::AbstractVector{<:Real},
     vertex_weights::AbstractVector{<:Real},
     part_map::AbstractVector{<:Integer},
+    parts_concat::AbstractVector{<:Integer},
+    parts_offsets::AbstractVector{<:Integer},
     n_parts::Integer,
     kl_iterations::Integer,
     correlation_penalty::Real,
@@ -57,12 +59,14 @@ function kl_refine(
     n_parts_i = Int(n_parts)
     pm = Vector{Int32}(part_map)  # local copy, 0-indexed
 
-    # Build per-partition vertex lists from the initial part_map.
+    # Seed per-partition vertex lists from the input concat array so
+    # iteration order matches Python's `for v in list(part)`.
     parts = [Int32[] for _ in 1:n_parts_i]
-    for v in 0:length(pm)-1
-        p = Int(pm[v+1])
-        if 0 <= p < n_parts_i
-            push!(parts[p+1], Int32(v))
+    for i in 1:n_parts_i
+        lo = Int(parts_offsets[i]) + 1
+        hi = Int(parts_offsets[i+1])
+        for k in lo:hi
+            push!(parts[i], Int32(parts_concat[k]))
         end
     end
 

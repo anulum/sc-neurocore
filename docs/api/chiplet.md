@@ -295,6 +295,45 @@ are documented EXEMPT with explicit reason:
 | `HierarchicalPartitioner.partition()` | V=200, P=4 | 12.7 ms | 10.2 ms |
 | `HierarchicalPartitioner.partition()` | V=1000, P=4 | ~99 ms | — |
 
+#### KL refine multi-language backends
+
+The KL refinement step (the post-#65 hot path) is wired through
+`HierarchicalPartitioner(refine_backend="auto"|"rust"|"julia"|
+"go"|"mojo"|"python")`. All 4 native backends share the same
+CSR-flat ABI (offsets, neighbours, scc_abs, vertex_weights,
+part_map, parts_concat, parts_offsets) and produce **bit-exact
+identical** vertex→partition assignments to the Python reference
+(verified end-to-end by
+`tests/test_chiplet/test_hierarchical_partitioner_perf.py
+::TestAllBackendsParityViaDispatcher` on V=100 with kl_iters=3).
+
+Reproducible via `benchmarks/bench_kl_refine.py`. Measured
+wall-clock on Linux 6.17 x86_64, n_parts=4, kl_iters=3,
+repeats=5, seed=42:
+
+| V | python | rust | julia | go | mojo | fastest |
+|---:|---:|---:|---:|---:|---:|:---|
+| 100 | 6.65 | **0.04** | 0.12 | 0.50 | **0.03** | Mojo (222×) |
+| 200 | 8.74 | 0.04 | 0.07 | 0.55 | **0.04** | Mojo (218×) |
+| 500 | 24.50 | **0.10** | 0.17 | 0.93 | **0.10** | Rust = Mojo (245×) |
+| 1000 | 70.25 | 0.29 | 0.26 | 0.68 | **0.20** | Mojo (351×) |
+
+Mojo and Rust trade wins; Julia is within 30 % at the larger
+sizes; Go is consistently slowest of the four native backends
+because cgo + the Go runtime barrier add per-call overhead that
+the small kernel can't amortise. **None of these orderings would
+have been visible without the per-backend benchmark — empirical
+proof, not pre-pick** (per
+`feedback_multilang_workflow_canonical`).
+
+The CSR encoding's `parts_concat + parts_offsets` arrays carry
+the per-partition vertex insertion order from `_recursive_bisect`
+into every native kernel, so the KL iteration order matches
+Python's `for v in list(part)` exactly. Without those arrays,
+the native backends rebuilt parts[] from `part_map` alone (in
+vertex-id order) which gave 5/100 vertex disagreement at V=100;
+load-bearing detail locked by the dispatcher tests above.
+
 **Two compounding fixes** brought V=200 from the original 963 ms
 down to **12.7 ms** (76× wall-clock) on the same hardware
 (Linux 6.17 x86_64, NumPy 2.2.6, Python 3.12.3):
@@ -324,11 +363,11 @@ parity, sub-1s gate at V=200, doubling-ratio < 5× scaling).
 
 | Backend | Status | Rationale |
 |---|---|---|
-| python | USED | current baseline (O(V·avg_degree) post-#65 fix) |
-| rust | PENDING-#64 | #65 perf bug fixed → port now meaningful; `engine/src/lgssm.rs` style PyO3 wrapper |
-| julia | PENDING-#64 | as above; Metis.jl / Scotch.jl candidates |
-| go | PENDING-#64 | as above; cgo + ctypes pattern proven on LGSSM (#70) |
-| mojo | PENDING-#64 | as above; @export raw-Int-addr pattern proven on LGSSM (#69) |
+| python | USED | baseline (O(V·avg_degree) post-#65 fix) |
+| rust | **USED** | `engine/src/partition.rs` via PyO3 — Rust = Mojo wins at V=500 |
+| julia | **USED** | `accel/julia/chiplet/kl_refine.jl` via juliacall — within 30 % of Rust/Mojo |
+| go | **USED** | `accel/go/partition/partition.go` via cgo — slowest of 4 (per-call overhead) |
+| mojo | **USED — fastest at V=100/200/1000** | `accel/mojo/partition/partition.mojo` via shared-lib + raw-Int-addr |
 
 ## 10. Test coverage
 

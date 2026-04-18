@@ -36,24 +36,28 @@ pub fn kl_refine(
     adj_scc_abs: &[f64],
     vertex_weights: &[f64],
     part_map: &mut [i32],
+    parts_concat: &[i32],
+    parts_offsets: &[i64],
     n_parts: i32,
     kl_iterations: i32,
     correlation_penalty: f64,
 ) -> u64 {
     let n_parts_us = n_parts as usize;
 
-    // Maintain explicit per-partition vertex lists so the iteration
-    // order EXACTLY mirrors Python's
+    // Seed per-partition vertex lists from the input concat array so
+    // the iteration order EXACTLY mirrors Python's
     //     for i, part in enumerate(partitions):
     //         for v in list(part):    # snapshot of part NOW
     // — this ordering is load-bearing for the algorithm output (the
     // KL move order picks ties differently if vertex visit order
-    // differs; the Python reference is the ground truth).
+    // differs; the Python reference is the ground truth). Building
+    // these from part_map alone (vertex-id order) gave 5/100
+    // disagreement at V=100 — see commit notes.
     let mut parts: Vec<Vec<i32>> = vec![Vec::new(); n_parts_us];
-    for (v, &p) in part_map.iter().enumerate() {
-        if (0..n_parts).contains(&p) {
-            parts[p as usize].push(v as i32);
-        }
+    for i in 0..n_parts_us {
+        let lo = parts_offsets[i] as usize;
+        let hi = parts_offsets[i + 1] as usize;
+        parts[i].extend_from_slice(&parts_concat[lo..hi]);
     }
 
     let mut weight_to: Vec<f64> = vec![0.0; n_parts_us];
@@ -142,52 +146,51 @@ mod tests {
     #[test]
     fn empty_graph_zero_moves() {
         let part: &mut [i32] = &mut [];
-        let n = kl_refine(&[0], &[], &[], &[], part, 2, 5, 0.5);
+        // n_parts=2 → parts_offsets needs P+1=3 entries
+        let n = kl_refine(&[0], &[], &[], &[], part, &[], &[0, 0, 0], 2, 5, 0.5);
         assert_eq!(n, 0);
     }
 
     #[test]
     fn single_partition_no_moves() {
-        // 4 vertices, all in partition 0, n_parts=1 → no candidates
         let mut pm = vec![0i32, 0, 0, 0];
         let offsets = vec![0i64, 1, 2, 3, 4];
         let neighbours = vec![1i32, 0, 3, 2];
         let scc = vec![0.1, 0.1, 0.1, 0.1];
         let vw = vec![1.0; 4];
-        let n = kl_refine(&offsets, &neighbours, &scc, &vw, &mut pm, 1, 5, 0.5);
+        let parts_concat = vec![0i32, 1, 2, 3];
+        let parts_offsets = vec![0i64, 4];
+        let n = kl_refine(&offsets, &neighbours, &scc, &vw, &mut pm,
+                          &parts_concat, &parts_offsets, 1, 5, 0.5);
         assert_eq!(n, 0);
         assert_eq!(pm, vec![0, 0, 0, 0]);
     }
 
     #[test]
     fn two_partitions_isolated_swap() {
-        // 4 vertices: edges (0-1), (2-3).
-        // Initial: [0=A, 1=B, 2=A, 3=B] — mismatched pairs.
-        // Expected: vertex 1 wants partition A (its only neighbour 0
-        // is in A), vertex 2 wants partition B (neighbour 3 in B), etc.
         let offsets = vec![0i64, 1, 2, 3, 4];
         let neighbours = vec![1i32, 0, 3, 2];
         let scc = vec![0.5, 0.5, 0.5, 0.5];
         let vw = vec![1.0; 4];
         let mut pm = vec![0i32, 1, 0, 1];
-        let n = kl_refine(&offsets, &neighbours, &scc, &vw, &mut pm, 2, 5, 0.5);
-        // After refinement at least one move must happen and both
-        // edges should end up intra-partition.
+        let parts_concat = vec![0i32, 2, 1, 3];
+        let parts_offsets = vec![0i64, 2, 4];
+        let n = kl_refine(&offsets, &neighbours, &scc, &vw, &mut pm,
+                          &parts_concat, &parts_offsets, 2, 5, 0.5);
         assert!(n > 0);
-        // Cost AFTER must be lower-or-equal than cost BEFORE
-        // (algorithm is hill-climbing on negative-gradient cost).
     }
 
     #[test]
     fn part_size_one_vertex_pinned() {
-        // Vertex 0 alone in partition 0 — must NOT be moved even if
-        // its edges all go to partition 1 (the `len(part) <= 1` guard).
         let offsets = vec![0i64, 2, 3, 4];
         let neighbours = vec![1i32, 2, 0, 0];
         let scc = vec![0.1, 0.1, 0.1, 0.1];
         let vw = vec![1.0; 3];
         let mut pm = vec![0i32, 1, 1];
-        let _ = kl_refine(&offsets, &neighbours, &scc, &vw, &mut pm, 2, 5, 0.5);
+        let parts_concat = vec![0i32, 1, 2];
+        let parts_offsets = vec![0i64, 1, 3];
+        let _ = kl_refine(&offsets, &neighbours, &scc, &vw, &mut pm,
+                          &parts_concat, &parts_offsets, 2, 5, 0.5);
         assert_eq!(pm[0], 0, "lone-vertex partition must stay populated");
     }
 }

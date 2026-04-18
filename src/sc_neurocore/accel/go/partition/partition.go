@@ -48,18 +48,19 @@ func wrapF64(p *C.double, n int) []float64 {
 func klRefine(
 	adjOffsets []int64, adjNeighbours []int32, adjScc []float64,
 	vertexWeights []float64, partMap []int32,
+	partsConcat []int32, partsOffsets []int64,
 	nParts int32, klIter int32, corrPenalty float64,
 ) uint64 {
 	nP := int(nParts)
-	V := len(vertexWeights)
 
-	// Build per-partition vertex lists.
+	// Seed per-partition vertex lists from input concat to preserve
+	// Python's `for v in list(part)` iteration order.
 	parts := make([][]int32, nP)
-	for v := 0; v < V; v++ {
-		p := int(partMap[v])
-		if p >= 0 && p < nP {
-			parts[p] = append(parts[p], int32(v))
-		}
+	for i := 0; i < nP; i++ {
+		lo := int(partsOffsets[i])
+		hi := int(partsOffsets[i+1])
+		parts[i] = make([]int32, hi-lo)
+		copy(parts[i], partsConcat[lo:hi])
 	}
 
 	weightTo := make([]float64, nP)
@@ -141,6 +142,8 @@ func kl_refine_c(
 	adjSccPtr *C.double,
 	vertexWeightsPtr *C.double,
 	partMapPtr *C.int32_t,
+	partsConcatPtr *C.int32_t,
+	partsOffsetsPtr *C.int64_t,
 	vTotal C.int64_t,
 	eTotal C.int64_t,
 	nParts C.int32_t,
@@ -149,12 +152,15 @@ func kl_refine_c(
 ) C.uint64_t {
 	V := int(vTotal)
 	E := int(eTotal)
+	nP := int(nParts)
 	moves := klRefine(
 		wrapI64(adjOffsetsPtr, V+1),
 		wrapI32(adjNeighboursPtr, E),
 		wrapF64(adjSccPtr, E),
 		wrapF64(vertexWeightsPtr, V),
 		wrapI32(partMapPtr, V),
+		wrapI32(partsConcatPtr, V),
+		wrapI64(partsOffsetsPtr, nP+1),
 		int32(nParts), int32(klIterations), float64(correlationPenalty),
 	)
 	return C.uint64_t(moves)
