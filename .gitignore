@@ -121,3 +121,7 @@ docs/internal/gemini/
 
 # VISION 2030 Development
 VISION2030/
+
+# Agent metadata (per `feedback_agent_metadata_gitignore`)
+.agent_metadata.json
+
