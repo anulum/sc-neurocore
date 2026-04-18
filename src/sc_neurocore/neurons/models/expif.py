@@ -14,7 +14,10 @@ import numpy as np
 
 @dataclass
 class ExpIFNeuron:
-    """Exponential IF (no adaptation). Fourcaud-Trocmé et al. 2003."""
+    """Exponential IF (no adaptation). Fourcaud-Trocmé et al. 2003.
+
+    Reference: Fourcaud-Trocmé, N. et al. (2003). J. Neurosci. 23:11628–11640.
+    """
 
     v: float = -65.0
     v_rest: float = -65.0

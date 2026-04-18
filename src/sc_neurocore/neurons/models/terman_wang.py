@@ -21,6 +21,8 @@ class TermanWangOscillator:
 
     f(v) = 3*v - v^3 + 2                (cubic nullcline)
     g(v) = alpha * (1 + tanh(v/beta))    (sigmoid recovery)
+
+    Reference: Terman, D. & Wang, D.L. (1995). Neural Comput. 7:507–517.
     """
 
     v: float = -1.5

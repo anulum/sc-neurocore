@@ -19,6 +19,8 @@ class TsodyksMarkramNeuron:
     dx/dt = (1 - x)/tau_d - u*x*delta(spike_in)
     du/dt = (U - u)/tau_f + U*(1-u)*delta(spike_in)
     I_syn = A * u * x on presynaptic spike
+
+    Reference: Tsodyks, M. et al. (1998). Neural Comput. 10:821–835.
     """
 
     v: float = -65.0

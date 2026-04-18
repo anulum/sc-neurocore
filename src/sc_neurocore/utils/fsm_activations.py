@@ -7,13 +7,14 @@
 # SC-NeuroCore — Base class for FSM-based stochastic activation functions
 
 from __future__ import annotations
+from abc import ABC, abstractmethod
 from typing import Any
 import numpy as np
 from dataclasses import dataclass
 
 
 @dataclass
-class FSMActivation:
+class FSMActivation(ABC):
     """
     Base class for FSM-based stochastic activation functions.
 
@@ -28,8 +29,8 @@ class FSMActivation:
     def __post_init__(self) -> None:
         self.state = self.initial_state
 
-    def step(self, bit: int) -> int:
-        raise NotImplementedError
+    @abstractmethod
+    def step(self, bit: int) -> int: ...
 
     def process(self, bitstream: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         output = np.zeros_like(bitstream)

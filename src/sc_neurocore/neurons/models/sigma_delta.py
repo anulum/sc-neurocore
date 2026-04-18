@@ -13,7 +13,10 @@ from dataclasses import dataclass
 
 @dataclass
 class SigmaDeltaNeuron:
-    """Yoon 2017 — event-driven sigma-delta encoding."""
+    """Yoon 2017 — event-driven sigma-delta encoding.
+
+    Reference: Yoon, Y.J. (2016). LIF and simplified SRM as APSDM. arXiv:1605.02226.
+    """
 
     sigma: float = 0.0
     v_threshold: float = 1.0

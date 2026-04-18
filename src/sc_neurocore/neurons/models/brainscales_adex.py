@@ -14,7 +14,10 @@ import numpy as np
 
 @dataclass
 class BrainScaleSAdExNeuron:
-    """BrainScaleS-2 — analog AdEx (1000x real-time). Schemmel 2010."""
+    """BrainScaleS-2 — analog AdEx (1000x real-time). Schemmel 2010.
+
+    Reference: Schemmel, J. et al. (2010). Proc. ISCAS 2010: 1947–1950.
+    """
 
     v: float = -65.0
     w: float = 0.0

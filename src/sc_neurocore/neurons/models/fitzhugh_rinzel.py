@@ -13,7 +13,10 @@ from dataclasses import dataclass
 
 @dataclass
 class FitzHughRinzelNeuron:
-    """FitzHugh 1976 / Rinzel 1987 — FHN + slow variable for bursting."""
+    """FitzHugh 1976 / Rinzel 1987 — FHN + slow variable for bursting.
+
+    Reference: Rinzel, J. (1987). In: Mathematical Topics in Population Biology. Springer, pp. 267–281.
+    """
 
     v: float = -1.0
     w: float = -0.5

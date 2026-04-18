@@ -14,7 +14,10 @@ import numpy as np
 
 @dataclass
 class StochasticIFNeuron:
-    """Brunel & Hakim 1999 — Ornstein-Uhlenbeck driven IF."""
+    """Brunel & Hakim 1999 — Ornstein-Uhlenbeck driven IF.
+
+    Reference: Tuckwell, H.C. (1988). Introduction to Theoretical Neurobiology, Vol. 2. Cambridge Univ. Press.
+    """
 
     v: float = -70.0
     v_rest: float = -70.0

@@ -18,6 +18,8 @@ class ChayKeizerNeuron:
 
     3 ODEs: V, n (delayed rectifier K), Ca (intracellular).
     I_Ca fast, I_K delayed rectifier, I_K(Ca) slow.
+
+    Reference: Chay, T.R. & Keizer, J. (1983). Biophys. J. 42:181–190.
     """
 
     v: float = -50.0

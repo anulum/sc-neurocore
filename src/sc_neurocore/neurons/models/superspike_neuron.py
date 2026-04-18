@@ -18,6 +18,8 @@ class SuperSpikeNeuron:
 
     Uses Van Rossum filtered eligibility traces and a smooth surrogate
     gradient sigma'(V) = 1/(beta * |V - V_th| + 1)^2.
+
+    Reference: Zenke, F. & Ganguli, S. (2018). Neural Comput. 30:1514–1541.
     """
 
     v: float = 0.0

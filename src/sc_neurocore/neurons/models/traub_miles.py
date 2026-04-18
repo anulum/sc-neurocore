@@ -14,7 +14,10 @@ import numpy as np
 
 @dataclass
 class TraubMilesNeuron:
-    """Traub & Miles 1991 — reduced hippocampal CA3 pyramidal."""
+    """Traub & Miles 1991 — reduced hippocampal CA3 pyramidal.
+
+    Reference: Traub, R.D. & Miles, R. (1991). Neuronal Networks of the Hippocampus. Cambridge Univ. Press.
+    """
 
     v: float = -67.0
     m: float = 0.05

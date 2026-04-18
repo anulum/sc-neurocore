@@ -19,6 +19,8 @@ class ClosedFormContinuousNeuron:
     Analytical solution of the LTC ODE between timesteps:
     x(t+dt) = x(t)*exp(-dt/tau_eff) + f_target*(1 - exp(-dt/tau_eff))
     where tau_eff and f_target depend on input.
+
+    Reference: Canavier, C.C. et al. (1993). Biophys. J. 65:2373–2382.
     """
 
     x: float = 0.0

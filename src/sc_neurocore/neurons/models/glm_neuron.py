@@ -24,6 +24,8 @@ class GLMNeuron:
 
     k: stimulus filter (length n_k)
     h: post-spike filter (length n_h), typically negative (refractoriness)
+
+    Reference: Pillow, J.W. et al. (2008). Nature 454:1058–1062.
     """
 
     n_k: int = 10

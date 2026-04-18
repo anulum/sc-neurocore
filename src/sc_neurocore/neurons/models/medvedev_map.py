@@ -13,7 +13,10 @@ from dataclasses import dataclass
 
 @dataclass
 class MedvedevMapNeuron:
-    """Medvedev 2005 — 1D piecewise-monotone spiking map."""
+    """Medvedev 2005 — 1D piecewise-monotone spiking map.
+
+    Reference: Medvedev, G.S. (2005). Physica D 202:37–59.
+    """
 
     x: float = 0.0
     alpha: float = 3.5

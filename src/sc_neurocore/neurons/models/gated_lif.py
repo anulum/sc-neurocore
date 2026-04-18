@@ -13,7 +13,10 @@ from dataclasses import dataclass
 
 @dataclass
 class GatedLIFNeuron:
-    """Yao et al. 2022 NeurIPS — LIF with learnable gates."""
+    """Yao et al. 2022 NeurIPS — LIF with learnable gates.
+
+    Reference: Yao, M. et al. (2022). Proc. NeurIPS 35:19606–19618.
+    """
 
     v: float = 0.0
     gate_v: float = 0.9

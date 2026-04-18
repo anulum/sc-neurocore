@@ -21,6 +21,8 @@ class IbarzTanakaMapNeuron:
     f(x) = alpha/(1-x)       if x <= 0
          = alpha + beta*x     if 0 < x < alpha+beta (spiking)
     Reset x -> x_reset when x >= x_threshold.
+
+    Reference: Ibarz, B. et al. (2011). Phys. Rep. 501:1–74.
     """
 
     x: float = -1.0

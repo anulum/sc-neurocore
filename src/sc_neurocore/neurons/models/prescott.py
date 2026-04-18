@@ -14,7 +14,10 @@ import numpy as np
 
 @dataclass
 class PrescottNeuron:
-    """Prescott 2008 — Type I/II/III excitability via M-current tuning."""
+    """Prescott 2008 — Type I/II/III excitability via M-current tuning.
+
+    Reference: Prescott, S.A. et al. (2008). PLoS Comput. Biol. 4:e1000198.
+    """
 
     v: float = -65.0
     w: float = 0.0

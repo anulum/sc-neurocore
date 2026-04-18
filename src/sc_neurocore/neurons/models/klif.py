@@ -18,6 +18,8 @@ class KLIFNeuron:
 
     V[t+1] = alpha * V[t] + k * I; spike when V >= threshold.
     The scaling factor k is a trainable parameter for SNN backprop.
+
+    Reference: Eshraghian, J.K. et al. (2021). Proc. IEEE 109:935–950.
     """
 
     v: float = 0.0

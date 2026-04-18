@@ -19,6 +19,8 @@ class COBALIFNeuron:
     C dV/dt = -g_L(V - E_L) - g_e(V - E_e) - g_i(V - E_i) + I
     dg_e/dt = -g_e / tau_e
     dg_i/dt = -g_i / tau_i
+
+    Reference: Brunel, N. (2000). J. Comput. Neurosci. 8:183–208.
     """
 
     v: float = -65.0

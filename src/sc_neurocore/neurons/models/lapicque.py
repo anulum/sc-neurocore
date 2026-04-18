@@ -16,6 +16,8 @@ class LapicqueNeuron:
     """Lapicque 1907 — classical RC integrate-and-fire.
 
     tau * dv/dt = -(v - v_rest) + R * I
+
+    Reference: Lapicque, L. (1907). J. Physiol. Pathol. Gén. 9:620–635.
     """
 
     v: float = 0.0

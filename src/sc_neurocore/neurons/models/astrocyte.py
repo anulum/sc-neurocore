@@ -18,6 +18,8 @@ class AstrocyteModel:
 
     3 ODEs: Ca (cytosolic), h (IP3R de-inactivation), IP3.
     Ca release from ER through IP3 receptor + SERCA pump + leak.
+
+    Reference: Postnov, D.E. et al. (2009). Neural Comput. 21:2746–2782.
     """
 
     ca: float = 0.05  # uM, cytosolic Ca

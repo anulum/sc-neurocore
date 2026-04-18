@@ -17,6 +17,8 @@ class DeSchutterPurkinjeNeuron:
     """De Schutter & Bower 1994 — cerebellar Purkinje cell (simplified).
 
     5 gating variables: h_Na, n_K, m_CaP, h_CaP, q_KCa.
+
+    Reference: De Schutter, E. & Bower, J.M. (1994). J. Neurophysiol. 71:375–400.
     """
 
     v: float = -68.0

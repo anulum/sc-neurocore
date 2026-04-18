@@ -18,6 +18,8 @@ class Loihi2Neuron:
     State variables (s1, s2, s3) with configurable decay, threshold,
     and cross-coupling. Generalises CUBA, COBA, and Izhikevich on-chip.
     All integer arithmetic with configurable bit-shift decays.
+
+    Reference: Intel Corp. (2021). Loihi 2 Neuromorphic Processor Technical Brief.
     """
 
     s1: int = 0  # primary state (membrane potential analogue)

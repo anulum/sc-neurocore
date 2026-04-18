@@ -19,6 +19,8 @@ class LiquidTimeConstantNeuron:
     dx/dt = -(1/tau(x,I)) * x + (1/tau(x,I)) * f(x,I)
     where tau depends on input, making the neuron's time constant
     adaptive and input-driven.
+
+    Reference: Hasani, R. et al. (2021). Proc. AAAI Conf. Artif. Intell. 35(9):7657–7666.
     """
 
     x: float = 0.0

@@ -14,7 +14,10 @@ import numpy as np
 
 @dataclass
 class ButeraRespiratoryNeuron:
-    """Butera, Rinzel & Smith 1999 — pre-Botzinger respiratory neuron."""
+    """Butera, Rinzel & Smith 1999 — pre-Botzinger respiratory neuron.
+
+    Reference: Butera, R.J. et al. (1999). J. Neurophysiol. 82:382–397.
+    """
 
     v: float = -50.0
     n: float = 0.01

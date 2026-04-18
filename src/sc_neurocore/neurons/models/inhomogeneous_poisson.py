@@ -14,7 +14,10 @@ import numpy as np
 
 @dataclass
 class InhomogeneousPoissonNeuron:
-    """Cox 1955 — doubly stochastic Poisson (time-varying rate)."""
+    """Cox 1955 — doubly stochastic Poisson (time-varying rate).
+
+    Reference: Gerstner, W. et al. (2014). Neuronal Dynamics. Cambridge Univ. Press, §7.3.
+    """
 
     dt_ms: float = 1.0
 

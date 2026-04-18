@@ -13,7 +13,10 @@ from dataclasses import dataclass, field
 
 @dataclass
 class LeakyCompeteFireNeuron:
-    """Oster, Douglas & Liu 2009 — winner-take-all with lateral inhibition."""
+    """Oster, Douglas & Liu 2009 — winner-take-all with lateral inhibition.
+
+    Reference: Oster, M. et al. (2009). Neural Comput. 21(9):2437–2465.
+    """
 
     n_units: int = 4
     v: list[float] = field(default_factory=lambda: [0.0] * 4)

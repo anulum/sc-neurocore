@@ -26,6 +26,8 @@ class MultiTimescaleNeuron:
 
     Spike when v_fast >= theta_eff. The slow compartment accumulates
     context over seconds, modulating excitability.
+
+    Reference: Custom SC-NeuroCore model — no external publication.
     """
 
     v_fast: float = 0.0

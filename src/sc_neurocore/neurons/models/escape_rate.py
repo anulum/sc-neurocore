@@ -16,7 +16,10 @@ from sc_neurocore.utils.numerics import safe_exp
 
 @dataclass
 class EscapeRateNeuron:
-    """Gerstner 2000 — stochastic threshold (escape noise model)."""
+    """Gerstner 2000 — stochastic threshold (escape noise model).
+
+    Reference: Gerstner, W. (2000). Neural Comput. 12:43–89.
+    """
 
     v: float = -70.0
     v_rest: float = -70.0

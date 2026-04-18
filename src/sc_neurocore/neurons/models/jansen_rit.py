@@ -19,6 +19,8 @@ class JansenRitUnit:
     """Jansen & Rit 1995 — neural mass model for EEG generation.
 
     6 ODEs: 3 populations (pyramidal, excitatory, inhibitory) x 2 states.
+
+    Reference: Jansen, B.H. & Rit, V.G. (1995). Biol. Cybern. 73:357–366.
     """
 
     y0: float = 0.0

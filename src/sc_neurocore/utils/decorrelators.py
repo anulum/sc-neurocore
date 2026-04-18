@@ -6,6 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Base class for bitstream decorrelators
 
+from abc import ABC, abstractmethod
 from typing import Any, Optional
 import numpy as np
 from dataclasses import dataclass
@@ -13,13 +14,13 @@ from .rng import RNG
 
 
 @dataclass
-class Decorrelator:
+class Decorrelator(ABC):
     """
     Base class for bitstream decorrelators.
     """
 
-    def process(self, bitstream: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
-        raise NotImplementedError
+    @abstractmethod
+    def process(self, bitstream: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]: ...
 
 
 @dataclass

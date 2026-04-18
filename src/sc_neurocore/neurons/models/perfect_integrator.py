@@ -16,6 +16,8 @@ class PerfectIntegratorNeuron:
     """Non-leaky integrate-and-fire. Lapicque 1907 (no leak).
 
     dV/dt = I / C
+
+    Reference: Gerstner, W. et al. (2014). Neuronal Dynamics. Cambridge Univ. Press, §1.3.
     """
 
     v: float = 0.0

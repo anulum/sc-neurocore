@@ -15,7 +15,9 @@ import numpy as np
 
 @dataclass
 class SRM0Neuron:
-    """Spike Response Model, zeroth order (Gerstner & Kistler 2002).
+    """Spike Response Model, zeroth order.
+
+    Reference: Gerstner, W. & Kistler, W.M. (2002). Spiking Neuron Models. Cambridge Univ. Press.
 
     v(t) = eta(t - t_hat) + integral(kappa(t - s) * I(s) ds)
 

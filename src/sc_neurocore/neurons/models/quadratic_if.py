@@ -17,6 +17,8 @@ class QuadraticIFNeuron:
 
     dv/dt = v² + I
     Reset when v >= v_peak.
+
+    Reference: Latham, P.E. et al. (2000). J. Neurophysiol. 83:808–827.
     """
 
     v: float = -1.0

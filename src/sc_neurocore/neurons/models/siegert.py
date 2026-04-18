@@ -20,6 +20,8 @@ class SiegertTransferFunction:
     Gaussian white noise: r = [tau_rp + tau_m * sqrt(pi) *
     integral(exp(u^2)*(1+erf(u)), u_reset..u_thresh)]^{-1}
     Uses Gauss-Hermite quadrature approximation.
+
+    Reference: Siegert, A.J.F. (1951). Phys. Rev. 81:617–623.
     """
 
     tau_m: float = 20.0  # ms, membrane time constant

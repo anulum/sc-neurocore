@@ -18,6 +18,8 @@ class AkidaNeuron:
     Membrane integrates weighted spikes with rank-order decay:
     V += weight * modulation^rank
     Spike when V >= threshold. No leak between events.
+
+    Reference: BrainChip Inc. (2021). Akida Neuromorphic Processor Reference Manual.
     """
 
     v: int = 0

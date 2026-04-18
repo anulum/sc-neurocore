@@ -19,6 +19,8 @@ class EPropALIFNeuron:
     Adaptive LIF: threshold increases after each spike and decays.
     Eligibility trace e_t tracks how synaptic weight changes affect
     future spiking, enabling three-factor learning.
+
+    Reference: Bellec, G. et al. (2020). Nat. Commun. 11:3625.
     """
 
     v: float = 0.0

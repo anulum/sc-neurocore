@@ -14,7 +14,10 @@ import numpy as np
 
 @dataclass
 class ShermanRinzelKeizerNeuron:
-    """Sherman, Rinzel & Keizer 1988 — pancreatic beta cell (reduced)."""
+    """Sherman, Rinzel & Keizer 1988 — pancreatic beta cell (reduced).
+
+    Reference: Sherman, A. et al. (1988). Biophys. J. 54:411–425.
+    """
 
     v: float = -50.0
     n: float = 0.1

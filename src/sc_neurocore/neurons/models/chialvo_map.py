@@ -19,6 +19,8 @@ class ChialvoMapNeuron:
 
     x[n+1] = x²·exp(y-x) + k + I
     y[n+1] = a·y - b·x + c
+
+    Reference: Chialvo, D.R. (1995). Chaos, Solitons & Fractals 5:461–479.
     """
 
     x: float = 0.0

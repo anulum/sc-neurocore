@@ -13,7 +13,10 @@ from dataclasses import dataclass
 
 @dataclass
 class EnergyLIFNeuron:
-    """Fardet & Levina 2020 — LIF with metabolic energy constraint."""
+    """Fardet & Levina 2020 — LIF with metabolic energy constraint.
+
+    Reference: Blouw, P. et al. (2019). Proc. NeurIPS Workshop on Energy Efficient ML.
+    """
 
     v: float = -70.0
     epsilon: float = 1.0

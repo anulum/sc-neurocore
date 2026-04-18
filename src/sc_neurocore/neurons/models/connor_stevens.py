@@ -17,6 +17,8 @@ class ConnorStevensNeuron:
     """Connor-Stevens 1977 — A-type potassium current, Type-I excitability.
 
     4 ODEs: v, m (Na activation), h (Na inactivation), n (K), a (A-type), b (A-type inactivation).
+
+    Reference: Connor, J.A. & Stevens, C.F. (1971). J. Physiol. 213:31–53.
     """
 
     v: float = -68.0

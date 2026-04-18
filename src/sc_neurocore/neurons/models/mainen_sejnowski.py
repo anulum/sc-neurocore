@@ -24,6 +24,8 @@ class MainenSejnowskiNeuron:
     Axon initiates spike via fast Na kinetics; soma follows passively.
     C_s dV_s/dt = -g_L(V_s - E_L) + gc(V_a - V_s) + I
     C_a dV_a/dt = -I_Na - I_K + gc(V_s - V_a)
+
+    Reference: Mainen, Z.F. & Sejnowski, T.J. (1996). Nature 382:363–366.
     """
 
     vs: float = -65.0

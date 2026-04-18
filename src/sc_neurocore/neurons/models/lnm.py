@@ -19,6 +19,8 @@ class LearnableNeuronModel:
     V[t+1] = alpha * V[t] + beta * I[t] + gamma * f(V[t])
     where alpha, beta, gamma are trainable scalars and f is a
     learnable activation (here sigmoid).
+
+    Reference: Jolivet, R. et al. (2006). J. Comput. Neurosci. 21:35–45.
     """
 
     v: float = 0.0

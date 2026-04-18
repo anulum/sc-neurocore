@@ -17,6 +17,8 @@ class HillTononiNeuron:
     """Hill & Tononi 2005 — thalamocortical sleep/wake model.
 
     I_Na + I_K + I_h + I_T + I_KNa + I_L with Na-dependent K current.
+
+    Reference: Hill, S. & Tononi, G. (2005). J. Neurophysiol. 93:1671–1698.
     """
 
     v: float = -65.0

@@ -19,6 +19,8 @@ class GammaRenewalNeuron:
 
     ISI ~ Gamma(k, k/rate). Hazard h(t) evaluated at elapsed time
     since last spike. P(spike in dt) = h(t)*dt.
+
+    Reference: Gerstner, W. et al. (2014). Neuronal Dynamics. Cambridge Univ. Press, §7.4.
     """
 
     rate_hz: float = 50.0

@@ -18,6 +18,8 @@ class GolombFSNeuron:
 
     C dV/dt = -I_Na - I_Kd - I_Kv3 - I_L + I_ext
     Kv3 channel enables narrow spikes and high sustained firing.
+
+    Reference: Golomb, D. et al. (2007). J. Neurophysiol. 97:3831–3843.
     """
 
     v: float = -65.0

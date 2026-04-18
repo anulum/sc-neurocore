@@ -19,6 +19,8 @@ class RallCableNeuron:
     Each compartment: C dV_i/dt = -g_L(V_i - E_L) + g_a(V_{i-1} - 2V_i + V_{i+1})
     Soma is compartment 0; input injected at distal end (N-1).
     Spike detection at soma.
+
+    Reference: Rall, W. (1959). Exp. Neurol. 1:491–527.
     """
 
     n_comp: int = 5

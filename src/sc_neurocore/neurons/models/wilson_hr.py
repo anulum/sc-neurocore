@@ -19,6 +19,8 @@ class WilsonHRNeuron:
     dR/dt = (-R + 1.35*V + 1.03) / tau_R
 
     V in dimensionless units, spike at V > V_peak.
+
+    Reference: Wilson, H.R. (1999). Spikes, Decisions, and Actions. Oxford Univ. Press.
     """
 
     v: float = -0.7
