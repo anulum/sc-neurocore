@@ -16,10 +16,9 @@ SCC and migrates neurons to minimise boundary correlation.
 """
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
@@ -143,7 +142,9 @@ def _ensure_julia_kl_refine_loaded() -> bool:
     if _julia_kl_refine is not None:
         return True
     try:
-        from juliacall import Main as _jl  # type: ignore[import-not-found]
+        from juliacall import (  # type: ignore[import-not-found,import-untyped]
+            Main as _jl,
+        )
     except ImportError:
         return False
     import os as _os
