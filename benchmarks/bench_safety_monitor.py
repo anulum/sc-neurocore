@@ -44,7 +44,6 @@ from __future__ import annotations
 import argparse
 import json
 import platform
-import statistics
 import sys
 import time
 from pathlib import Path
@@ -123,7 +122,7 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--json", type=Path, default=None)
     args = parser.parse_args(argv)
 
-    print(f"# SafetyMonitor.check() benchmark")
+    print("# SafetyMonitor.check() benchmark")
     print(f"# Iterations per scenario: {CHECK_ITERATIONS}, repeats: {N_REPEATS}")
     print(f"# Python: {platform.python_version()}, platform: {platform.platform()}")
     print()
@@ -194,7 +193,7 @@ def main(argv: list[str]) -> int:
     }
 
     print()
-    print(f"# Multi-language backend status (per feedback_multi_language_accel.md)")
+    print("# Multi-language backend status (per feedback_multi_language_accel.md)")
     for name, info in backends_status.items():
         tag = "USED" if info["used"] else "EXEMPT"
         print(f"  {name:<8} {tag:<8}  {info['exemption'] or '-'}")

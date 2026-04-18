@@ -24,8 +24,6 @@ The defensive guards covered here:
 
 from __future__ import annotations
 
-import numpy as np
-import pytest
 
 from sc_neurocore.chiplet import (
     ChipletDie,
