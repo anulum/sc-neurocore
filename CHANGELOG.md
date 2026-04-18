@@ -4,6 +4,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### PINGCircuit scale-invariant weight normalisation (2026-04-18)
+- `network/gamma_oscillation.py`: per-spike conductance contributions are now divided by source population size at construction (`_w_*_eff = w_* · default_size / actual_size`). The default `(80, 20)` published weights stay bit-identical; larger circuits no longer drift out of the 30-80 Hz band. `bench_gamma_oscillation.py` now reports 40.0 / 41.2 / 41.2 Hz across `(80,20) / (400,100) / (4000,1000)` — all in band — vs 40.0 / 103.8 / 76.2 before the fix. All 19 PINGCircuit tests still pass (default weights and behaviour unchanged at `(80, 20)`).
+
 ### Honest benchmark scripts for network/ models (2026-04-18)
 - `benchmarks/bench_cortical_column.py`: 3-config wall-clock + per-population firing rates + Potjans Table 4 ratios for `CorticalColumn`. Replaces hand-measured numbers in `docs/api/cortical_column.md` with reproducible JSON output at `benchmarks/results/bench_cortical_column.json`. Honest BLOCKED status reported per backend (Rust/Julia/Go/Mojo) per `feedback_no_fabricated_benchmarks` and `feedback_module_standard_attnres`.
 - `benchmarks/bench_gamma_oscillation.py`: 3-workload `step()` wall-clock + dominant gamma frequency check (must lie in 30-80 Hz) for `PINGCircuit`. JSON output at `benchmarks/results/bench_gamma_oscillation.json`. Documents the per-cell LIF + 4 conductance decays as a clean Rust + Mojo target (BLOCKED, tracked under multilang policy). Bench surfaces a real fidelity edge case at `n_e=400, n_i=100` (f_dom=103.8 Hz, outside published 30-80 Hz band) that the default-configuration test does not catch.

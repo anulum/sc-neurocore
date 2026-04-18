@@ -155,6 +155,18 @@ class PINGCircuit:
         if self.n_excitatory <= 0 or self.n_inhibitory <= 0:
             raise ValueError("PINGCircuit needs at least 1 E and 1 I neuron")
         self._rng = np.random.default_rng(self.seed)
+        # Normalise per-spike conductance contributions so the
+        # per-target drive is invariant under changes to
+        # `n_excitatory` / `n_inhibitory`. Default weights `w_*`
+        # were tuned for the canonical 80 / 20 PING circuit; without
+        # this normalisation a 400 / 100 circuit receives 5× more
+        # drive per spike and the dominant frequency drifts out of
+        # the published 30-80 Hz band (verified by
+        # `benchmarks/bench_gamma_oscillation.py`).
+        self._w_ee_eff = self.w_ee * (80.0 / self.n_excitatory)
+        self._w_ei_eff = self.w_ei * (80.0 / self.n_excitatory)
+        self._w_ie_eff = self.w_ie * (20.0 / self.n_inhibitory)
+        self._w_ii_eff = self.w_ii * (20.0 / self.n_inhibitory)
         # Initial V drawn near E_L with small jitter, so spike onset
         # is asynchronous (matches Whittington 1995 burn-in).
         self.v_e = self.e_l + self._rng.uniform(-2.0, 2.0, self.n_excitatory)
@@ -244,15 +256,17 @@ class PINGCircuit:
         n_e_spikes = int(np.count_nonzero(spikes_e))
         n_i_spikes = int(np.count_nonzero(spikes_i))
         if n_e_spikes > 0:
-            # Each E spike contributes w_ee to every E cell and w_ei
-            # to every I cell. Mean-field all-to-all coupling — this
-            # matches the published model's "fully connected
-            # subnetwork" assumption in Börgers-Kopell §2.
-            self.g_ampa_e += self.w_ee * n_e_spikes
-            self.g_ampa_i += self.w_ei * n_e_spikes
+            # Each E spike contributes the per-source-normalised
+            # `_w_*_eff` to every post-synaptic cell. Mean-field
+            # all-to-all coupling matches Börgers-Kopell §2 "fully
+            # connected subnetwork"; the 80/20 normalisation in
+            # `__post_init__` keeps the published default weights
+            # gamma-band-correct at any `n_excitatory` / `n_inhibitory`.
+            self.g_ampa_e += self._w_ee_eff * n_e_spikes
+            self.g_ampa_i += self._w_ei_eff * n_e_spikes
         if n_i_spikes > 0:
-            self.g_gaba_e += self.w_ie * n_i_spikes
-            self.g_gaba_i += self.w_ii * n_i_spikes
+            self.g_gaba_e += self._w_ie_eff * n_i_spikes
+            self.g_gaba_i += self._w_ii_eff * n_i_spikes
 
         return spikes_e.copy(), spikes_i.copy()
 
