@@ -244,6 +244,28 @@ class TestPublishedFidelity:
         assert isinstance(rate, np.ndarray)
         assert rate.size == 0
 
+    def test_scale_invariant_dominant_frequency(self):
+        """A 5× larger circuit must stay in the published 30-80 Hz band.
+
+        Pins the per-spike conductance normalisation in `__post_init__`.
+        Without it the dominant frequency drifts to ~100 Hz at 400/100
+        cells (verified by `benchmarks/bench_gamma_oscillation.py`
+        before the fix).
+        """
+        ping = PINGCircuit(n_excitatory=400, n_inhibitory=100, seed=42)
+        for _ in range(2000):  # 200 ms burn-in
+            ping.step(dt=0.1)
+        spikes = []
+        for _ in range(8000):  # 800 ms analysis window
+            se, _ = ping.step(dt=0.1)
+            spikes.append(se)
+        freq = ping.dominant_frequency(spikes, dt=0.1, bin_ms=1.0)
+        assert 30.0 <= freq <= 80.0, (
+            f"5x circuit dominant frequency {freq:.1f} Hz outside the "
+            "published 30-80 Hz band — per-spike weight normalisation "
+            "in __post_init__ has regressed"
+        )
+
     def test_dominant_frequency_band_outside_nyquist(self):
         """If [f_min, f_max] excludes every FFT bin, return 0.0."""
         ping = PINGCircuit(seed=3)
