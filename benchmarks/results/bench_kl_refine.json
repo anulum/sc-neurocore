@@ -16,8 +16,7 @@
       "available": true
     },
     "go": {
-      "available": false,
-      "reason": "libpartition.so not yet built"
+      "available": true
     },
     "mojo": {
       "available": false,
@@ -27,37 +26,37 @@
   "rows": [
     {
       "V": 100,
-      "python_ms": 9.260131017072126,
-      "rust_ms": 0.03519700840115547,
-      "julia_ms": 0.35438398481346667,
-      "go_ms": null,
+      "python_ms": 5.44454000191763,
+      "rust_ms": 0.04418898606672883,
+      "julia_ms": 0.5673079867847264,
+      "go_ms": 0.6977019947953522,
       "mojo_ms": null,
       "parity_ok": true
     },
     {
       "V": 200,
-      "python_ms": 8.729388006031513,
-      "rust_ms": 0.044204003643244505,
-      "julia_ms": 0.059004989452660084,
-      "go_ms": null,
+      "python_ms": 12.53220799844712,
+      "rust_ms": 0.049785972805693746,
+      "julia_ms": 0.10285401367582381,
+      "go_ms": 1.1624479957390577,
       "mojo_ms": null,
       "parity_ok": true
     },
     {
       "V": 500,
-      "python_ms": 36.653420014772564,
-      "rust_ms": 0.11805299436673522,
-      "julia_ms": 0.13073699665255845,
-      "go_ms": null,
+      "python_ms": 58.62198199611157,
+      "rust_ms": 0.15797201194800436,
+      "julia_ms": 0.16941400826908648,
+      "go_ms": 1.3907930115237832,
       "mojo_ms": null,
       "parity_ok": true
     },
     {
       "V": 1000,
-      "python_ms": 100.00337898964062,
-      "rust_ms": 0.25321199791505933,
-      "julia_ms": 0.33074201201088727,
-      "go_ms": null,
+      "python_ms": 126.32145101088099,
+      "rust_ms": 0.30301898368634284,
+      "julia_ms": 0.23773001157678664,
+      "go_ms": 1.2568279926199466,
       "mojo_ms": null,
       "parity_ok": true
     }
