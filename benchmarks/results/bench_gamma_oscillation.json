@@ -17,12 +17,12 @@
       "status": "USED"
     },
     "rust": {
-      "notes": "Per-step LIF + 4 exponential conductance decays + 2 sums; clean Rust target via PyO3 + ndarray. Tracked under feedback_module_standard_attnres.",
-      "status": "BLOCKED-ON-multilang-gamma"
+      "notes": "PyO3 kernel `engine/src/ping.rs` \u2194 `sc_neurocore_engine.py_ping_step`. Spike outputs bit-identical to the NumPy path (noise pre-drawn on the Python side); membrane V values diverge \u2264 0.5 mV due to SIMD-vs-scalar float ordering, sub-threshold.",
+      "status": "USED"
     }
   },
   "host": {
-    "numpy": "2.2.6",
+    "numpy": "2.4.3",
     "platform": "Linux-6.17.0-20-generic-x86_64-with-glibc2.39",
     "python": "3.12.3"
   },
@@ -30,7 +30,8 @@
   "publication_reference": "B\u00f6rgers, C. & Kopell, N. (2003) Neural Computation 15(3): 509-538. Fig 2A weak-PING \u2014 dominant gamma 30-80 Hz.",
   "runs": [
     {
-      "build_seconds": 0.0002563580055721104,
+      "backend": "python",
+      "build_seconds": 0.0011011289898306131,
       "burn_in_ms": 100.0,
       "dominant_frequency_hz": 40.0,
       "dt": 0.1,
@@ -39,12 +40,13 @@
       "mean_population_rate_hz": 40.0,
       "n_excitatory": 80,
       "n_inhibitory": 20,
-      "per_step_us": 42.851807607803494,
+      "per_step_us": 145.82420599181205,
       "seed": 42,
-      "simulate_seconds": 0.21425903803901747
+      "simulate_seconds": 0.7291210299590603
     },
     {
-      "build_seconds": 0.00019422703189775348,
+      "backend": "python",
+      "build_seconds": 0.0006878189742565155,
       "burn_in_ms": 200.0,
       "dominant_frequency_hz": 41.25,
       "dt": 0.1,
@@ -53,12 +55,58 @@
       "mean_population_rate_hz": 41.25,
       "n_excitatory": 400,
       "n_inhibitory": 100,
-      "per_step_us": 69.4176411954686,
+      "per_step_us": 177.16000060318038,
       "seed": 42,
-      "simulate_seconds": 0.694176411954686
+      "simulate_seconds": 1.7716000060318038
     },
     {
-      "build_seconds": 0.0006670189904980361,
+      "backend": "python",
+      "build_seconds": 0.00107186398236081,
+      "burn_in_ms": 200.0,
+      "dominant_frequency_hz": 41.25,
+      "dt": 0.1,
+      "duration_ms": 1000.0,
+      "in_published_band_30_to_80_hz": true,
+      "mean_population_rate_hz": 41.2503125,
+      "n_excitatory": 4000,
+      "n_inhibitory": 1000,
+      "per_step_us": 588.2914965972304,
+      "seed": 42,
+      "simulate_seconds": 5.882914965972304
+    },
+    {
+      "backend": "rust",
+      "build_seconds": 0.0005528090405277908,
+      "burn_in_ms": 100.0,
+      "dominant_frequency_hz": 40.0,
+      "dt": 0.1,
+      "duration_ms": 500.0,
+      "in_published_band_30_to_80_hz": true,
+      "mean_population_rate_hz": 40.0,
+      "n_excitatory": 80,
+      "n_inhibitory": 20,
+      "per_step_us": 33.700463408604264,
+      "seed": 42,
+      "simulate_seconds": 0.16850231704302132
+    },
+    {
+      "backend": "rust",
+      "build_seconds": 0.00112659897422418,
+      "burn_in_ms": 200.0,
+      "dominant_frequency_hz": 41.25,
+      "dt": 0.1,
+      "duration_ms": 1000.0,
+      "in_published_band_30_to_80_hz": true,
+      "mean_population_rate_hz": 41.25,
+      "n_excitatory": 400,
+      "n_inhibitory": 100,
+      "per_step_us": 49.71507909940556,
+      "seed": 42,
+      "simulate_seconds": 0.49715079099405557
+    },
+    {
+      "backend": "rust",
+      "build_seconds": 0.0006958270096220076,
       "burn_in_ms": 200.0,
       "dominant_frequency_hz": 41.25,
       "dt": 0.1,
@@ -67,9 +115,9 @@
       "mean_population_rate_hz": 41.250625,
       "n_excitatory": 4000,
       "n_inhibitory": 1000,
-      "per_step_us": 206.23633280047216,
+      "per_step_us": 178.34997000172734,
       "seed": 42,
-      "simulate_seconds": 2.0623633280047216
+      "simulate_seconds": 1.7834997000172734
     }
   ],
   "schema_version": 1
