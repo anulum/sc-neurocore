@@ -289,8 +289,8 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--json", type=Path, default=None)
     args = parser.parse_args(argv)
 
-    print(f"# LGSSM Kalman / RTS / EM benchmark")
-    print(f"# Workload: 4-D state, 3-D obs, T=200")
+    print("# LGSSM Kalman / RTS / EM benchmark")
+    print("# Workload: 4-D state, 3-D obs, T=200")
     print(f"# Repeats per cell: {N_REPEATS}")
     print(f"# Python: {platform.python_version()}, NumPy: {np.__version__}")
     print(f"# platform: {platform.platform()}")
@@ -323,7 +323,7 @@ def main(argv: list[str]) -> int:
         "mojo": bench_mojo_kalman,
     }
 
-    print(f"## Forward Kalman filter")
+    print("## Forward Kalman filter")
     print(f"{'backend':<10}  {'median ms':>12}  {'min ms':>12}  {'log_lik':>14}")
     print(f"{'-'*10}  {'-'*12}  {'-'*12}  {'-'*14}")
     for name, (avail, reason) in backends.items():
@@ -343,7 +343,7 @@ def main(argv: list[str]) -> int:
             })
 
     print()
-    print(f"## RTS smoother (backward pass)")
+    print("## RTS smoother (backward pass)")
     print(f"{'backend':<10}  {'median ms':>12}  {'min ms':>12}")
     print(f"{'-'*10}  {'-'*12}  {'-'*12}")
     for name, (avail, reason) in backends.items():
@@ -362,7 +362,7 @@ def main(argv: list[str]) -> int:
             })
 
     print()
-    print(f"## EM learner (10 iterations)")
+    print("## EM learner (10 iterations)")
     print(f"{'backend':<10}  {'median ms':>12}  {'min ms':>12}")
     print(f"{'-'*10}  {'-'*12}  {'-'*12}")
     init_model = LinearGaussianSSM.random(state_dim=4, obs_dim=3, seed=99)

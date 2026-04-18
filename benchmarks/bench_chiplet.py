@@ -162,13 +162,13 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--json", type=Path, default=None)
     args = parser.parse_args(argv)
 
-    print(f"# Chiplet benchmark")
+    print("# Chiplet benchmark")
     print(f"# Repeats per cell: {N_REPEATS}")
     print(f"# Python: {platform.python_version()}, NumPy: {np.__version__}")
     print(f"# platform: {platform.platform()}")
     print()
 
-    print(f"## chiplet_gen")
+    print("## chiplet_gen")
     print(f"{'operation':<40}  {'median ms':>12}  {'min ms':>12}")
     print(f"{'-'*40}  {'-'*12}  {'-'*12}")
 
@@ -206,11 +206,11 @@ def main(argv: list[str]) -> int:
             rows.append({"suite": "chiplet_gen", "op": label, "skipped": str(exc)})
 
     print()
-    print(f"## hierarchical_partitioner")
-    print(f"# Two perf fixes applied (#65 edge cache + #64-prep")
-    print(f"# vector cost): V=200 now ~13 ms (was ~700 ms), V=1000")
-    print(f"# ~99 ms (was many minutes). #64 multi-lang port now")
-    print(f"# marginal (1-3 µs FFI vs 99 ms compute) — see backends.")
+    print("## hierarchical_partitioner")
+    print("# Two perf fixes applied (#65 edge cache + #64-prep")
+    print("# vector cost): V=200 now ~13 ms (was ~700 ms), V=1000")
+    print("# ~99 ms (was many minutes). #64 multi-lang port now")
+    print("# marginal (1-3 µs FFI vs 99 ms compute) — see backends.")
     print(f"{'operation':<40}  {'median ms':>12}  {'min ms':>12}")
     print(f"{'-'*40}  {'-'*12}  {'-'*12}")
     for n_v, n_p in [(50, 2), (100, 4), (200, 4)]:
