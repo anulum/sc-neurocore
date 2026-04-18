@@ -33,6 +33,7 @@ These tests pin:
 from __future__ import annotations
 
 import time
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -305,6 +306,447 @@ class TestAllBackendsParityViaDispatcher:
             f"{backend} dispatcher disagrees with Python on "
             f"{sum(1 for v in pm_py if pm_py[v] != pm_x.get(v))} vertex assignments"
         )
+
+
+class TestDispatcherMissingToolErrors:
+    """The dispatcher must raise informative `RuntimeError` (with the
+    exact build/install command) when a backend is requested but the
+    underlying tool/.so is unavailable. These error paths are the
+    user's only signal that a backend isn't wired."""
+
+    def test_rust_missing_raises(self, monkeypatch) -> None:
+        from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+        monkeypatch.setattr(hp_mod, "_HAS_RUST_KL_REFINE", False)
+        monkeypatch.setattr(hp_mod, "_rust_kl_refine", None)
+        hp = HierarchicalPartitioner(num_partitions=2, refine_backend="rust")
+        g = _build_graph(20, seed=1)
+        with pytest.raises(RuntimeError, match="Rust KL refine requested"):
+            hp.partition(g)
+
+    def test_julia_missing_raises(self, monkeypatch) -> None:
+        from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+        monkeypatch.setattr(hp_mod, "_julia_kl_refine", None)
+        monkeypatch.setattr(hp_mod, "_HAS_JULIA_KL_REFINE", False)
+        monkeypatch.setattr(
+            hp_mod, "_ensure_julia_kl_refine_loaded", lambda: False,
+        )
+        hp = HierarchicalPartitioner(num_partitions=2, refine_backend="julia")
+        g = _build_graph(20, seed=1)
+        with pytest.raises(RuntimeError, match="Julia KL refine requested"):
+            hp.partition(g)
+
+    def test_go_missing_raises(self, monkeypatch) -> None:
+        from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+        monkeypatch.setattr(hp_mod, "_go_kl_refine_lib", None)
+        monkeypatch.setattr(hp_mod, "_HAS_GO_KL_REFINE", False)
+        monkeypatch.setattr(
+            hp_mod, "_ensure_go_kl_refine_loaded", lambda: False,
+        )
+        hp = HierarchicalPartitioner(num_partitions=2, refine_backend="go")
+        g = _build_graph(20, seed=1)
+        with pytest.raises(RuntimeError, match="Go KL refine requested"):
+            hp.partition(g)
+
+    def test_mojo_missing_raises(self, monkeypatch) -> None:
+        from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+        monkeypatch.setattr(hp_mod, "_mojo_kl_refine_lib", None)
+        monkeypatch.setattr(hp_mod, "_HAS_MOJO_KL_REFINE", False)
+        monkeypatch.setattr(
+            hp_mod, "_ensure_mojo_kl_refine_loaded", lambda: False,
+        )
+        hp = HierarchicalPartitioner(num_partitions=2, refine_backend="mojo")
+        g = _build_graph(20, seed=1)
+        with pytest.raises(RuntimeError, match="Mojo KL refine requested"):
+            hp.partition(g)
+
+    def test_refine_rust_direct_call_without_backend_raises(
+        self, monkeypatch,
+    ) -> None:
+        """The `_refine_rust` helper has its own `_rust_kl_refine is None`
+        guard for callers that bypass the dispatcher."""
+        from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+        monkeypatch.setattr(hp_mod, "_rust_kl_refine", None)
+        hp = HierarchicalPartitioner(num_partitions=2, refine_backend="python")
+        g = _build_graph(20, seed=1)
+        with pytest.raises(RuntimeError, match="Rust KL refine backend"):
+            hp._refine_rust([list(range(20))], g.adjacency(), g)
+
+    def test_refine_julia_direct_call_without_backend_raises(self) -> None:
+        from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+        # Save and clear the loaded handle to simulate "not loaded".
+        saved = hp_mod._julia_kl_refine
+        hp_mod._julia_kl_refine = None
+        try:
+            hp = HierarchicalPartitioner(num_partitions=2,
+                                          refine_backend="python")
+            g = _build_graph(20, seed=1)
+            with pytest.raises(RuntimeError, match="Julia KL refine backend"):
+                hp._refine_julia([list(range(20))], g.adjacency(), g)
+        finally:
+            hp_mod._julia_kl_refine = saved
+
+    def test_refine_go_direct_call_without_lib_raises(self) -> None:
+        from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+        saved = hp_mod._go_kl_refine_lib
+        hp_mod._go_kl_refine_lib = None
+        try:
+            hp = HierarchicalPartitioner(num_partitions=2,
+                                          refine_backend="python")
+            g = _build_graph(20, seed=1)
+            with pytest.raises(RuntimeError, match="Go KL refine"):
+                hp._refine_go([list(range(20))], g.adjacency(), g)
+        finally:
+            hp_mod._go_kl_refine_lib = saved
+
+    def test_refine_mojo_direct_call_without_lib_raises(self) -> None:
+        from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+        saved = hp_mod._mojo_kl_refine_lib
+        hp_mod._mojo_kl_refine_lib = None
+        try:
+            hp = HierarchicalPartitioner(num_partitions=2,
+                                          refine_backend="python")
+            g = _build_graph(20, seed=1)
+            with pytest.raises(RuntimeError, match="Mojo KL refine"):
+                hp._refine_mojo([list(range(20))], g.adjacency(), g)
+        finally:
+            hp_mod._mojo_kl_refine_lib = saved
+
+
+class TestCsrGraphAccessors:
+    """`CSRGraph.edge_conn` and `LFSRSeedAllocator` zero-seed clamp
+    are used by external callers but were uncovered by the existing
+    suite — pin them here."""
+
+    def test_edge_conn_returns_correct_slice(self) -> None:
+        from sc_neurocore.chiplet.hierarchical_partitioner import CSRGraph
+        edges = [
+            CorrelationEdge(u=0, v=1, conn_weight=1.5, scc_weight=0.2),
+            CorrelationEdge(u=1, v=2, conn_weight=2.5, scc_weight=0.3),
+        ]
+        csr = CSRGraph.from_edge_list(3, edges, None)
+        # edge_conn returns a slice of conn_weights for vertex v's edges.
+        conn0 = csr.edge_conn(0)
+        assert len(conn0) == 1
+        assert conn0[0] == 1.5
+
+    def test_lfsr_seed_clamps_zero_to_one(self) -> None:
+        from sc_neurocore.chiplet.hierarchical_partitioner import (
+            LFSRSeedAllocator,
+        )
+        # Pick a base_seed and num_partitions that produce a 0 seed
+        # for some i — the allocator must clamp it to 1.
+        # base_seed=0xFFFF, spacing=65535//5 = 13107; one of the
+        # combinations will hit `& 0xFFFF == 0` after addition.
+        alloc = LFSRSeedAllocator(base_seed=0)
+        # i=0 → 0 + 1*spacing = 13107; i=4 → 0 + 5*spacing = 65535
+        # None of these are zero. Try base that wraps to zero:
+        # 0xFFFF + 1*1 = 0x10000 → masked to 0
+        alloc = LFSRSeedAllocator(base_seed=0xFFFF)
+        seeds = alloc.allocate(num_partitions=65535)  # spacing=1
+        # Some seed would be 0 without the clamp; verify none are zero.
+        assert all(s != 0 for s in seeds)
+
+
+class TestPartitionEarlyReturns:
+    """`partition()` and `_recursive_bisect` have early-return paths
+    for tiny inputs that pytest --cov flagged uncovered."""
+
+    def test_partition_with_fewer_vertices_than_partitions_pads(self) -> None:
+        # n_v=3 < num_partitions=5 → return [[v] for v in vertices]
+        # then pad with empty partitions.
+        g = _build_graph(3, avg_degree=1, seed=11)
+        hp = HierarchicalPartitioner(num_partitions=5)
+        parts, seeds = hp.partition(g)
+        assert len(parts) == 5
+        assert sum(len(p) for p in parts) == 3
+        # Two empty partitions
+        assert sum(1 for p in parts if not p) == 2
+        assert len(seeds) == 5
+
+    def test_recursive_bisect_k_one_returns_input(self) -> None:
+        hp = HierarchicalPartitioner(num_partitions=1)
+        g = _build_graph(10, seed=2)
+        parts, seeds = hp.partition(g)
+        assert len(parts) == 1
+        assert sorted(parts[0]) == list(range(10))
+
+    def test_spectral_bisect_single_vertex(self) -> None:
+        # _spectral_bisect: `if len(vertices) <= 1: return vertices, []`
+        hp = HierarchicalPartitioner(num_partitions=2)
+        g = _build_graph(5, seed=2)
+        adj = g.adjacency()
+        a, b = hp._spectral_bisect([0], adj, g)
+        assert a == [0] and b == []
+
+    def test_recursive_bisect_direct_k_one(self) -> None:
+        # `_recursive_bisect(_, _, _, k=1)` is reachable internally
+        # only via the recursion when k splits to 1; we exercise it
+        # directly to cover the early-return branch.
+        hp = HierarchicalPartitioner(num_partitions=4)
+        g = _build_graph(8, seed=2)
+        adj = g.adjacency()
+        # k=1 → returns the input unchanged
+        out = hp._recursive_bisect([0, 1, 2, 3], adj, g, k=1)
+        assert out == [[0, 1, 2, 3]]
+        # vertices length 1 → also early return
+        out = hp._recursive_bisect([5], adj, g, k=2)
+        assert out == [[5]]
+
+
+class TestProbeFailureBranches:
+    """Force every lazy-load probe through its failure branches via
+    monkeypatch — these are the user's signal that a backend is
+    misconfigured at runtime, so they must be tested even though
+    they need cooperative mocking to reach."""
+
+    def _reset_probes(self, hp_mod) -> None:
+        hp_mod._julia_kl_refine = None
+        hp_mod._HAS_JULIA_KL_REFINE = False
+        hp_mod._go_kl_refine_lib = None
+        hp_mod._HAS_GO_KL_REFINE = False
+        hp_mod._mojo_kl_refine_lib = None
+        hp_mod._HAS_MOJO_KL_REFINE = False
+
+    def test_julia_probe_returns_false_when_juliacall_missing(
+        self, monkeypatch,
+    ) -> None:
+        from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+        saved_jl = hp_mod._julia_kl_refine
+        saved_has = hp_mod._HAS_JULIA_KL_REFINE
+        try:
+            self._reset_probes(hp_mod)
+            # Make `from juliacall import Main` fail.
+            import builtins
+            real_import = builtins.__import__
+
+            def fail_import(name, *a, **k):
+                if name == "juliacall":
+                    raise ImportError("simulated missing juliacall")
+                return real_import(name, *a, **k)
+            monkeypatch.setattr(builtins, "__import__", fail_import)
+            assert hp_mod._ensure_julia_kl_refine_loaded() is False
+        finally:
+            hp_mod._julia_kl_refine = saved_jl
+            hp_mod._HAS_JULIA_KL_REFINE = saved_has
+
+    def test_julia_probe_returns_false_when_jl_file_missing(
+        self, monkeypatch,
+    ) -> None:
+        from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+        saved_jl = hp_mod._julia_kl_refine
+        saved_has = hp_mod._HAS_JULIA_KL_REFINE
+        try:
+            self._reset_probes(hp_mod)
+            # Force os.path.isfile to return False for the .jl path.
+            import os as _os_mod
+            real_isfile = _os_mod.path.isfile
+
+            def selective_isfile(p):
+                if p.endswith("kl_refine.jl"):
+                    return False
+                return real_isfile(p)
+            monkeypatch.setattr(_os_mod.path, "isfile", selective_isfile)
+            assert hp_mod._ensure_julia_kl_refine_loaded() is False
+        finally:
+            hp_mod._julia_kl_refine = saved_jl
+            hp_mod._HAS_JULIA_KL_REFINE = saved_has
+
+    def test_julia_probe_returns_false_when_include_raises(
+        self, monkeypatch,
+    ) -> None:
+        """Cover the `except Exception: return False` branch in
+        `_ensure_julia_kl_refine_loaded` by feeding a syntactically
+        broken .jl file into the include path. The probe catches
+        the parser error and returns False.
+        """
+        from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+        try:
+            import juliacall  # noqa: F401
+        except ImportError:
+            pytest.skip("juliacall not installed")
+
+        import os as _os_mod
+        saved_jl = hp_mod._julia_kl_refine
+        saved_has = hp_mod._HAS_JULIA_KL_REFINE
+        try:
+            self._reset_probes(hp_mod)
+            real_isfile = _os_mod.path.isfile
+            real_dirname = _os_mod.path.dirname
+
+            broken_jl = (Path(__file__).parent / "broken.jl")
+            broken_jl.write_text("THIS IS NOT VALID JULIA\n")
+
+            def stub_isfile(p):
+                if p.endswith("kl_refine.jl"):
+                    return True  # let probe think the file exists
+                return real_isfile(p)
+
+            def stub_join(*parts):
+                if parts and parts[-1] == "kl_refine.jl":
+                    return str(broken_jl)
+                return _os_mod.path.join(*parts)
+
+            monkeypatch.setattr(_os_mod.path, "isfile", stub_isfile)
+            monkeypatch.setattr(_os_mod.path, "join", stub_join)
+            try:
+                assert hp_mod._ensure_julia_kl_refine_loaded() is False
+            finally:
+                broken_jl.unlink(missing_ok=True)
+        finally:
+            hp_mod._julia_kl_refine = saved_jl
+            hp_mod._HAS_JULIA_KL_REFINE = saved_has
+
+    def test_go_probe_returns_false_when_so_missing(self, monkeypatch) -> None:
+        from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+        saved_lib = hp_mod._go_kl_refine_lib
+        saved_has = hp_mod._HAS_GO_KL_REFINE
+        try:
+            self._reset_probes(hp_mod)
+            import os as _os_mod
+            real_isfile = _os_mod.path.isfile
+            monkeypatch.setattr(
+                _os_mod.path, "isfile",
+                lambda p: False if "go/partition/libpartition.so" in p else real_isfile(p),
+            )
+            assert hp_mod._ensure_go_kl_refine_loaded() is False
+        finally:
+            hp_mod._go_kl_refine_lib = saved_lib
+            hp_mod._HAS_GO_KL_REFINE = saved_has
+
+    def test_go_probe_returns_false_when_cdll_raises(
+        self, monkeypatch,
+    ) -> None:
+        from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+        saved_lib = hp_mod._go_kl_refine_lib
+        saved_has = hp_mod._HAS_GO_KL_REFINE
+        try:
+            self._reset_probes(hp_mod)
+            import ctypes
+            real_cdll = ctypes.CDLL
+
+            class FailingCDLL:
+                def __init__(self, *a, **k):
+                    raise OSError("simulated CDLL failure")
+
+            monkeypatch.setattr(ctypes, "CDLL", FailingCDLL)
+            assert hp_mod._ensure_go_kl_refine_loaded() is False
+            monkeypatch.setattr(ctypes, "CDLL", real_cdll)
+        finally:
+            hp_mod._go_kl_refine_lib = saved_lib
+            hp_mod._HAS_GO_KL_REFINE = saved_has
+
+    def test_go_probe_returns_false_when_symbol_missing(
+        self, monkeypatch,
+    ) -> None:
+        from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+        saved_lib = hp_mod._go_kl_refine_lib
+        saved_has = hp_mod._HAS_GO_KL_REFINE
+        try:
+            self._reset_probes(hp_mod)
+            import ctypes
+
+            class EmptyLib:
+                pass
+
+            real_cdll = ctypes.CDLL
+            monkeypatch.setattr(ctypes, "CDLL", lambda p: EmptyLib())
+            assert hp_mod._ensure_go_kl_refine_loaded() is False
+            monkeypatch.setattr(ctypes, "CDLL", real_cdll)
+        finally:
+            hp_mod._go_kl_refine_lib = saved_lib
+            hp_mod._HAS_GO_KL_REFINE = saved_has
+
+    def test_mojo_probe_returns_false_when_so_missing(
+        self, monkeypatch,
+    ) -> None:
+        from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+        saved_lib = hp_mod._mojo_kl_refine_lib
+        saved_has = hp_mod._HAS_MOJO_KL_REFINE
+        try:
+            self._reset_probes(hp_mod)
+            import os as _os_mod
+            real_isfile = _os_mod.path.isfile
+            monkeypatch.setattr(
+                _os_mod.path, "isfile",
+                lambda p: False if "mojo/partition/libpartition.so" in p else real_isfile(p),
+            )
+            assert hp_mod._ensure_mojo_kl_refine_loaded() is False
+        finally:
+            hp_mod._mojo_kl_refine_lib = saved_lib
+            hp_mod._HAS_MOJO_KL_REFINE = saved_has
+
+    def test_mojo_probe_returns_false_when_cdll_raises(
+        self, monkeypatch,
+    ) -> None:
+        from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+        saved_lib = hp_mod._mojo_kl_refine_lib
+        saved_has = hp_mod._HAS_MOJO_KL_REFINE
+        try:
+            self._reset_probes(hp_mod)
+            import ctypes
+
+            class FailingCDLL:
+                def __init__(self, *a, **k):
+                    raise OSError("simulated mojo CDLL failure")
+
+            real_cdll = ctypes.CDLL
+            monkeypatch.setattr(ctypes, "CDLL", FailingCDLL)
+            assert hp_mod._ensure_mojo_kl_refine_loaded() is False
+            monkeypatch.setattr(ctypes, "CDLL", real_cdll)
+        finally:
+            hp_mod._mojo_kl_refine_lib = saved_lib
+            hp_mod._HAS_MOJO_KL_REFINE = saved_has
+
+    def test_mojo_probe_returns_false_when_symbol_missing(
+        self, monkeypatch,
+    ) -> None:
+        from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+        saved_lib = hp_mod._mojo_kl_refine_lib
+        saved_has = hp_mod._HAS_MOJO_KL_REFINE
+        try:
+            self._reset_probes(hp_mod)
+            import ctypes
+
+            class EmptyLib:
+                pass
+
+            real_cdll = ctypes.CDLL
+            monkeypatch.setattr(ctypes, "CDLL", lambda p: EmptyLib())
+            assert hp_mod._ensure_mojo_kl_refine_loaded() is False
+            monkeypatch.setattr(ctypes, "CDLL", real_cdll)
+        finally:
+            hp_mod._mojo_kl_refine_lib = saved_lib
+            hp_mod._HAS_MOJO_KL_REFINE = saved_has
+
+
+class TestProbeReturnsTrueOnSecondCall:
+    """Each `_ensure_*_loaded` probe must short-circuit return True
+    when called again — covers the `if X is not None: return True`
+    branch. We force-load (first call) then assert (second call) so
+    the test does not depend on the order of unrelated tests."""
+
+    def test_julia_probe_second_call_short_circuits(self) -> None:
+        from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+        try:
+            import juliacall  # noqa: F401
+        except ImportError:
+            pytest.skip("juliacall not installed")
+        if not hp_mod._ensure_julia_kl_refine_loaded():
+            pytest.skip("Julia kl_refine.jl not loadable")
+        # Now julia is loaded — second call must short-circuit.
+        assert hp_mod._ensure_julia_kl_refine_loaded() is True
+
+    def test_go_probe_second_call_short_circuits(self) -> None:
+        from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+        if not hp_mod._ensure_go_kl_refine_loaded():
+            pytest.skip("Go libpartition.so not built")
+        assert hp_mod._ensure_go_kl_refine_loaded() is True
+
+    def test_mojo_probe_second_call_short_circuits(self) -> None:
+        from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+        if not hp_mod._ensure_mojo_kl_refine_loaded():
+            pytest.skip("Mojo libpartition.so not built")
+        assert hp_mod._ensure_mojo_kl_refine_loaded() is True
 
 
 class TestRefineBackendValidation:
