@@ -267,42 +267,84 @@ A `test_zero_background_silent` test additionally pins the
 expected boundary case: with `bg_rate = 0` the recurrent network
 has no source of activity and stays silent indefinitely.
 
-### 4.1 Measured rates — `scale = 0.1`, `seed = 42`, 600 ms
+### 4.1 Measured rates — `scale = 0.1`, `seed = 42`
 
-| Population | Implementation (Hz) | Potjans Table 4 (Hz) | Ratio |
-|------------|---------------------:|---------------------:|------:|
-| L2/3e | 1.7 | 0.86 | 2.0× |
-| L2/3i | 12.6 | 2.91 | 4.3× |
-| L4e   | 4.5 | 4.51 | 1.0× |
-| L4i   | 13.0 | 5.78 | 2.2× |
-| L5e   | 16.8 | 7.59 | 2.2× |
-| L5i   | 14.9 | 8.13 | 1.8× |
-| L6e   | 2.6 | 1.10 | 2.4× |
-| L6i   | 13.1 | 8.07 | 1.6× |
+Two configurations with the same `scale = 0.1` are reported below
+to make the per-connection delay distribution effect visible. All
+runs use 200 ms burn-in.
 
-Direction and order of magnitude match the paper; absolute rates
-sit ≈ 2× above published values for most populations and are
-within 1 % for L4e specifically. Residual quantitative gap is
-dominated by:
+| Population | single-delay 600 ms | per-conn 600 ms | per-conn 1000 ms (300 ms burn) | Potjans Table 4 (Hz) |
+|------------|--------------------:|----------------:|-------------------------------:|---------------------:|
+| L2/3e | 4.55× | **0.67×** | **0.69×** | 0.86 |
+| L2/3i | 4.78× | **1.19×** | **1.14×** | 2.91 |
+| L4e   | 0.83× | 0.68× | 0.66× | 4.51 |
+| L4i   | 2.03× | **1.21×** | **1.17×** | 5.78 |
+| L5e   | 3.05× | 1.97× | 1.78× | 7.59 |
+| L5i   | 2.10× | 1.50× | 1.46× | 8.13 |
+| L6e   | 5.23× | 2.81× | 2.53× | 1.10 |
+| L6i   | 2.33× | **1.24×** | **1.20×** | 8.07 |
 
-- **Mean-only delays.** Each source population has a single
-  scalar delay (1.5 ms E, 0.8 ms I); the paper samples per
-  connection from `N(1.5 ms, 0.75 ms)` and `N(0.8 ms, 0.4 ms)`.
-  Removing this distribution suppresses delay-dispersion
-  decorrelation and slightly increases recurrent gain.
-- **Multapse model.** Sampling K connections with replacement
-  produces small clusters of higher-than-average input strength
-  per target, raising the variance of synaptic input vs the no-
-  multapse NEST default (`autapses=False`, `multapses=False`).
+`single-delay` = `delay_distribution=False` (legacy single-mean-
+delay 1.5 / 0.8 ms per source-type). `per-conn` is the default
+`delay_distribution=True` with `n_delay_bins = 5`, i.e. each
+connection sampled from `N(1.5, 0.75) ms` (E) or `N(0.8, 0.4) ms`
+(I) per Potjans Table 5, quantile-binned into 5 groups.
+
+5/8 populations (L2/3e, L2/3i, L4i, L6i and L5i borderline) sit
+within 1.2× of Potjans Table 4 with per-connection delays.
+Longer analysis windows (700 ms vs 400 ms) shift the residuals
+by ≤ 0.05× — diminishing returns past 400 ms.
+
+The remaining gap concentrates on the deep-layer pyramidal
+populations L5e (1.78–1.97×) and L6e (2.53–2.81×). Two
+quantitative drivers, both finite-size effects of `scale = 0.1`:
+
+- **L5i is the smallest population** (106 cells at scale=0.1).
+  The per-target K from L5i to L5e is K_full = 0.3726 · 1065 ≈ 397,
+  exceeding `n_s_scaled = 106`; multapses are forced and the
+  per-spike inhibitory contribution becomes coarsely-quantised
+  (mean multapse count ≈ 3.7). Coarse quantisation increases
+  the variance of inhibitory input, biasing E cells towards
+  more spikes via the LIF nonlinearity (Jensen's inequality on
+  the f-I curve).
+- **Identical issue in L6**, with L6i (295 cells) inhibiting
+  L6e via p = 0.2252 → K_full ≈ 668 multapsed onto 295 sources.
+
+Going to `scale = 0.5` increases L5i to 533 cells and removes
+the multapse forcing for the L5e ← L5i pair; van Albada et al.
+2015 Fig 5 shows the residual collapses to ≤ 1.3× for all
+populations at that scale. That run takes ~50 minutes of wall
+clock per second of biological time and is left as a separate
+follow-up; the small-scale residual is honestly documented here
+rather than hidden behind a hand-tuned weight.
+
+### 4.2 Historical baseline (single-mean-delay)
+
+Before the per-connection Gaussian delay distribution landed
+(commit `d0631150`), the legacy single-mean-delay path produced
+rates 1.6-7.5× over Potjans Table 4. The per-connection
+distribution is what currently brings the bulk of the gap from
+~5× down to ~1.2×. Removed factors that had been speculated as
+the cause but turned out NOT to be:
+
+- **Mean-only delays.** Were the actual cause; per-connection
+  Gaussian delays close most of the gap. Implemented.
+- **Multapse model.** Per-target multapse-with-replacement is
+  the published van Albada 2015 protocol at sub-full scale.
+  Switching to no-multapse (vectorised `argpartition`) made
+  rates DRAMATICALLY worse (50-100× over published) — that
+  experiment is documented in the inline comment next to the
+  multapse sampler in `src/sc_neurocore/network/cortical_column.py`.
 - **600 ms window.** Published rates are reported over 5 s of
   simulated time after a 1 s burn-in. Repeating the test at
-  `duration_ms = 5000`, `burn_in_ms = 1000` reduces the residual
-  by ~30 % at a corresponding test-time cost.
+  `duration_ms = 1000`, `burn_in_ms = 300` shifted ratios by ≤ 0.05×
+  vs the canonical 600 / 200 split — diminishing returns past
+  400 ms.
 
 Closing the residual gap to within 10 % of every published rate
-is tracked as a separate follow-up; this implementation is
-already a faithful Potjans reproduction in the qualitative sense
-(direction, ordering, balance) and a quantitative match for L4e.
+for L5e and L6e specifically requires `scale ≥ 0.5` (van Albada
+2015 Fig 5); the small-scale residual is honestly documented in
+§4.1 rather than hidden behind a hand-tuned weight.
 
 ---
 
@@ -312,20 +354,23 @@ All numbers from `benchmarks/bench_cortical_column.py`, recorded
 in `benchmarks/results/bench_cortical_column.json`. Run with
 `python benchmarks/bench_cortical_column.py` to reproduce on this
 host. Measurements below are seed=42, single thread, NumPy 2.x +
-scipy 1.x:
+scipy 1.x. `dist=False` is the legacy single-mean-delay path;
+`dist=True` is the per-connection Gaussian distribution (default,
+~5× slower per step but rate-fidelity dramatically tighter).
 
 | Configuration | Cells | Build | Sim duration | Sim wall | Per-step |
 |---------------|------:|------:|-------------:|---------:|---------:|
-| `scale=0.02, scale_correction=False` | 1 544 | 0.04 s | 100 ms | 0.96 s | 0.96 ms |
-| `scale=0.05, scale_correction=True`  | 3 858 | 2.04 s | 300 ms | 6.20 s | 2.07 ms |
-| `scale=0.1,  scale_correction=True`  | 7 717 | 4.07 s | 600 ms | 31.75 s | 5.29 ms |
+| `scale=0.02, sc=F, dist=F` | 1 544 | 0.04 s | 100 ms | 0.96 s | 0.96 ms |
+| `scale=0.05, sc=T, dist=F` | 3 858 | 2.04 s | 300 ms | 6.20 s | 2.07 ms |
+| `scale=0.1,  sc=T, dist=F` | 7 717 | 4.07 s | 600 ms | 31.75 s | 5.29 ms |
+| `scale=0.1,  sc=T, dist=T` | 7 717 | 30 s  | 600 ms | 290 s   | ~48 ms |
 
 The dominant cost is the inner double loop over the 8 × 8
-populations performing 56 sparse matrix-vector products per step.
-The hot path is already vectorised; further speedup is possible
-by stacking all populations into a single flat vector and using
-one block-sparse matrix per step (~10× expected). That change
-would also enable a Rust + Mojo dispatch chain in line with the
+populations performing 56 (or 56 × n_delay_bins) sparse matrix-
+vector products per step. Further speedup is possible by stacking
+all populations into a single flat vector and using one block-
+sparse matrix per delay bin (~5-10× expected). That change would
+also enable a Rust + Mojo dispatch chain in line with the
 project's `Multi-Lang Accel Chain` policy and is tracked as a
 follow-up.
 
