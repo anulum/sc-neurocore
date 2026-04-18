@@ -44,6 +44,8 @@ fn kl_refine_c(
     adj_scc_abs_addr: Int,
     vertex_weights_addr: Int,
     part_map_addr: Int,
+    parts_concat_addr: Int,
+    parts_offsets_addr: Int,
     v_total: Int,
     e_total: Int,
     n_parts: Int32,
@@ -55,14 +57,14 @@ fn kl_refine_c(
     var adj_scc_abs = _ptr_f64(adj_scc_abs_addr)
     var vertex_weights = _ptr_f64(vertex_weights_addr)
     var part_map = _ptr_i32(part_map_addr)
+    var parts_concat = _ptr_i32(parts_concat_addr)
+    var parts_offsets = _ptr_i64(parts_offsets_addr)
 
     var n_parts_i = Int(n_parts)
     var V = v_total
 
-    # Per-partition vertex lists. We use parallel flat int32 arrays:
-    # `parts_buf[p*V + k]` = k-th vertex in partition p; `parts_len[p]`
-    # = number of vertices currently in partition p. This avoids
-    # heap-of-heaps and keeps the @export boundary scalar-only.
+    # Seed per-partition vertex lists from input concat to preserve
+    # Python's `for v in list(part)` iteration order.
     var raw_buf = alloc[Int32](V * n_parts_i)
     var parts_buf = UnsafePointer[Int32, MutAnyOrigin](unsafe_from_address=Int(raw_buf))
     var raw_len = alloc[Int64](n_parts_i)
@@ -73,13 +75,11 @@ fn kl_refine_c(
     var weight_to = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=Int(raw_wt))
 
     for p in range(n_parts_i):
-        parts_len[p] = 0
-    for v in range(V):
-        var p = Int(part_map[v])
-        if 0 <= p and p < n_parts_i:
-            var idx = Int(parts_len[p])
-            parts_buf[p * V + idx] = Int32(v)
-            parts_len[p] = idx + 1
+        var lo = Int(parts_offsets[p])
+        var hi = Int(parts_offsets[p + 1])
+        parts_len[p] = Int64(hi - lo)
+        for k in range(lo, hi):
+            parts_buf[p * V + (k - lo)] = parts_concat[k]
 
     var total_moves: UInt64 = 0
     var cp = correlation_penalty

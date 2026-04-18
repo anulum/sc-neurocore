@@ -127,6 +127,8 @@ def probe_go() -> dict:
         ctypes.POINTER(ctypes.c_double),   # adj_scc_abs
         ctypes.POINTER(ctypes.c_double),   # vertex_weights
         ctypes.POINTER(ctypes.c_int32),    # part_map (mut)
+        ctypes.POINTER(ctypes.c_int32),    # parts_concat
+        ctypes.POINTER(ctypes.c_int64),    # parts_offsets
         ctypes.c_int64,                    # v_total
         ctypes.c_int64,                    # e_total
         ctypes.c_int32,                    # n_parts
@@ -154,8 +156,9 @@ def probe_mojo() -> dict:
     fn = lib.kl_refine_c
     fn.argtypes = [
         ctypes.c_int64, ctypes.c_int64, ctypes.c_int64, ctypes.c_int64,
-        ctypes.c_int64, ctypes.c_int64, ctypes.c_int64, ctypes.c_int32,
-        ctypes.c_int32, ctypes.c_double,
+        ctypes.c_int64, ctypes.c_int64, ctypes.c_int64,
+        ctypes.c_int64, ctypes.c_int64,
+        ctypes.c_int32, ctypes.c_int32, ctypes.c_double,
     ]
     fn.restype = ctypes.c_uint64
     return {"available": True, "lib": lib}
@@ -189,33 +192,32 @@ def _run_python(graph, init):
 
 
 def _run_rust(graph, init, kernel):
-    offsets, neighbours, scc_abs, vw, pm0 = _encode(graph, init)
-    kernel(offsets, neighbours, scc_abs, vw, pm0, N_PARTS, KL_ITERATIONS, 2.0)  # warm
+    offsets, neighbours, scc_abs, vw, pm0, pc, po = _encode(graph, init)
+    kernel(offsets, neighbours, scc_abs, vw, pm0, pc, po,
+           N_PARTS, KL_ITERATIONS, 2.0)  # warm
     times: list[float] = []
     pm = None
     for _ in range(N_REPEATS):
         t0 = time.perf_counter()
-        pm, _moves = kernel(offsets, neighbours, scc_abs, vw, pm0, N_PARTS,
-                             KL_ITERATIONS, 2.0)
+        pm, _moves = kernel(offsets, neighbours, scc_abs, vw, pm0, pc, po,
+                             N_PARTS, KL_ITERATIONS, 2.0)
         times.append((time.perf_counter() - t0) * 1000.0)
     times.sort()
     return times[len(times) // 2], pm
 
 
 def _run_julia(graph, init, kernel):
-    offsets, neighbours, scc_abs, vw, pm0 = _encode(graph, init)
-    pm0_jl = pm0.copy()
-    kernel(offsets, neighbours, scc_abs, vw, pm0_jl, N_PARTS,
-           KL_ITERATIONS, 2.0)  # warm
+    offsets, neighbours, scc_abs, vw, pm0, pc, po = _encode(graph, init)
+    kernel(offsets, neighbours, scc_abs, vw, pm0.copy(), pc, po,
+           N_PARTS, KL_ITERATIONS, 2.0)  # warm
     times: list[float] = []
     pm = None
     for _ in range(N_REPEATS):
         pm0_jl = pm0.copy()
         t0 = time.perf_counter()
-        pm = kernel(offsets, neighbours, scc_abs, vw, pm0_jl, N_PARTS,
-                     KL_ITERATIONS, 2.0)
+        pm = kernel(offsets, neighbours, scc_abs, vw, pm0_jl, pc, po,
+                     N_PARTS, KL_ITERATIONS, 2.0)
         times.append((time.perf_counter() - t0) * 1000.0)
-        # juliacall gives back a Julia Vector{Int32} — convert
         pm = np.asarray(pm, dtype=np.int32)
     times.sort()
     return times[len(times) // 2], pm
@@ -223,7 +225,7 @@ def _run_julia(graph, init, kernel):
 
 def _run_go(graph, init, lib):
     import ctypes
-    offsets, neighbours, scc_abs, vw, pm0 = _encode(graph, init)
+    offsets, neighbours, scc_abs, vw, pm0, pc, po = _encode(graph, init)
     V, E = vw.size, scc_abs.size
     fn = lib.kl_refine_c
     pm = pm0.copy()
@@ -232,6 +234,8 @@ def _run_go(graph, init, lib):
        scc_abs.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
        vw.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
        pm.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
+       pc.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
+       po.ctypes.data_as(ctypes.POINTER(ctypes.c_int64)),
        V, E, N_PARTS, KL_ITERATIONS, 2.0)  # warm
     times: list[float] = []
     for _ in range(N_REPEATS):
@@ -242,6 +246,8 @@ def _run_go(graph, init, lib):
            scc_abs.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
            vw.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
            pm.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
+           pc.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
+           po.ctypes.data_as(ctypes.POINTER(ctypes.c_int64)),
            V, E, N_PARTS, KL_ITERATIONS, 2.0)
         times.append((time.perf_counter() - t0) * 1000.0)
     times.sort()
@@ -249,19 +255,22 @@ def _run_go(graph, init, lib):
 
 
 def _run_mojo(graph, init, lib):
-    import ctypes
-    offsets, neighbours, scc_abs, vw, pm0 = _encode(graph, init)
+    offsets, neighbours, scc_abs, vw, pm0, pc, po = _encode(graph, init)
     V, E = vw.size, scc_abs.size
     fn = lib.kl_refine_c
     pm = pm0.copy()
     fn(offsets.ctypes.data, neighbours.ctypes.data, scc_abs.ctypes.data,
-       vw.ctypes.data, pm.ctypes.data, V, E, N_PARTS, KL_ITERATIONS, 2.0)  # warm
+       vw.ctypes.data, pm.ctypes.data,
+       pc.ctypes.data, po.ctypes.data,
+       V, E, N_PARTS, KL_ITERATIONS, 2.0)  # warm
     times: list[float] = []
     for _ in range(N_REPEATS):
         pm = pm0.copy()
         t0 = time.perf_counter()
         fn(offsets.ctypes.data, neighbours.ctypes.data, scc_abs.ctypes.data,
-           vw.ctypes.data, pm.ctypes.data, V, E, N_PARTS, KL_ITERATIONS, 2.0)
+           vw.ctypes.data, pm.ctypes.data,
+           pc.ctypes.data, po.ctypes.data,
+           V, E, N_PARTS, KL_ITERATIONS, 2.0)
         times.append((time.perf_counter() - t0) * 1000.0)
     times.sort()
     return times[len(times) // 2], pm

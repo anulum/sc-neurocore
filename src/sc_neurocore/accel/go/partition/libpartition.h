@@ -79,7 +79,7 @@ typedef struct { void *data; GoInt len; GoInt cap; } GoSlice;
 extern "C" {
 #endif
 
-extern uint64_t kl_refine_c(int64_t* adjOffsetsPtr, int32_t* adjNeighboursPtr, double* adjSccPtr, double* vertexWeightsPtr, int32_t* partMapPtr, int64_t vTotal, int64_t eTotal, int32_t nParts, int32_t klIterations, double correlationPenalty);
+extern uint64_t kl_refine_c(int64_t* adjOffsetsPtr, int32_t* adjNeighboursPtr, double* adjSccPtr, double* vertexWeightsPtr, int32_t* partMapPtr, int32_t* partsConcatPtr, int64_t* partsOffsetsPtr, int64_t vTotal, int64_t eTotal, int32_t nParts, int32_t klIterations, double correlationPenalty);
 
 #ifdef __cplusplus
 }

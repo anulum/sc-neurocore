@@ -113,17 +113,123 @@ class CorrelationEdge:
     scc_weight: float = 0.0
 
 
-# ── Lazy Rust backend probe (KL refine) ──
-# `engine/src/partition.rs` exposes `kl_refine` with a CSR-flat ABI.
-# When the wheel is installed and the symbol is present, the
-# `_refine_rust` dispatcher uses it; otherwise we fall back to pure
-# Python (always available).
+# ── Lazy multi-language backend probes (KL refine) ──
+# All 4 native backends share the same CSR-flat ABI (offsets,
+# neighbours, scc_abs, vertex_weights, part_map, n_parts,
+# kl_iterations, correlation_penalty). Rust is eager (PyO3
+# wheel); Julia/Go/Mojo are lazily loaded on first request.
+# Per `feedback_no_blocked_without_probing.md`, all 4 are wired
+# even when the kernel is not yet built — the dispatcher returns
+# a clear error if the user asks for a missing backend.
 try:
     from sc_neurocore_engine import py_kl_refine as _rust_kl_refine
     _HAS_RUST_KL_REFINE = True
 except (ImportError, AttributeError):
     _rust_kl_refine = None
     _HAS_RUST_KL_REFINE = False
+
+
+_julia_kl_refine = None
+_HAS_JULIA_KL_REFINE = False
+_go_kl_refine_lib = None
+_HAS_GO_KL_REFINE = False
+_mojo_kl_refine_lib = None
+_HAS_MOJO_KL_REFINE = False
+
+
+def _ensure_julia_kl_refine_loaded() -> bool:
+    """Lazy-load the Julia KL refine module on first use."""
+    global _julia_kl_refine, _HAS_JULIA_KL_REFINE
+    if _julia_kl_refine is not None:
+        return True
+    try:
+        from juliacall import Main as _jl  # type: ignore[import-not-found]
+    except ImportError:
+        return False
+    import os as _os
+    jl_path = _os.path.join(
+        _os.path.dirname(_os.path.dirname(__file__)),
+        "accel", "julia", "chiplet", "kl_refine.jl",
+    )
+    if not _os.path.isfile(jl_path):
+        return False
+    try:
+        _jl.include(jl_path)
+        _julia_kl_refine = _jl.KLRefineAccel.kl_refine
+    except Exception:
+        return False
+    _HAS_JULIA_KL_REFINE = True
+    return True
+
+
+def _ensure_go_kl_refine_loaded() -> bool:
+    """Lazy-load the Go KL refine shared library on first use."""
+    global _go_kl_refine_lib, _HAS_GO_KL_REFINE
+    if _go_kl_refine_lib is not None:
+        return True
+    import ctypes
+    import os as _os
+    so_path = _os.path.join(
+        _os.path.dirname(_os.path.dirname(__file__)),
+        "accel", "go", "partition", "libpartition.so",
+    )
+    if not _os.path.isfile(so_path):
+        return False
+    try:
+        lib = ctypes.CDLL(so_path)
+    except OSError:
+        return False
+    fn = getattr(lib, "kl_refine_c", None)
+    if fn is None:
+        return False
+    fn.argtypes = [
+        ctypes.POINTER(ctypes.c_int64),    # adj_offsets
+        ctypes.POINTER(ctypes.c_int32),    # adj_neighbours
+        ctypes.POINTER(ctypes.c_double),   # adj_scc_abs
+        ctypes.POINTER(ctypes.c_double),   # vertex_weights
+        ctypes.POINTER(ctypes.c_int32),    # part_map (mut)
+        ctypes.POINTER(ctypes.c_int32),    # parts_concat
+        ctypes.POINTER(ctypes.c_int64),    # parts_offsets
+        ctypes.c_int64, ctypes.c_int64,
+        ctypes.c_int32, ctypes.c_int32, ctypes.c_double,
+    ]
+    fn.restype = ctypes.c_uint64
+    _go_kl_refine_lib = lib
+    _HAS_GO_KL_REFINE = True
+    return True
+
+
+def _ensure_mojo_kl_refine_loaded() -> bool:
+    """Lazy-load the Mojo KL refine shared library on first use."""
+    global _mojo_kl_refine_lib, _HAS_MOJO_KL_REFINE
+    if _mojo_kl_refine_lib is not None:
+        return True
+    import ctypes
+    import os as _os
+    so_path = _os.path.join(
+        _os.path.dirname(_os.path.dirname(__file__)),
+        "accel", "mojo", "partition", "libpartition.so",
+    )
+    if not _os.path.isfile(so_path):
+        return False
+    try:
+        lib = ctypes.CDLL(so_path)
+    except OSError:
+        return False
+    fn = getattr(lib, "kl_refine_c", None)
+    if fn is None:
+        return False
+    # Mojo @export takes raw Int addresses (no parametric pointers).
+    fn.argtypes = [
+        ctypes.c_int64, ctypes.c_int64, ctypes.c_int64, ctypes.c_int64,
+        ctypes.c_int64, ctypes.c_int64, ctypes.c_int64,
+        ctypes.c_int64, ctypes.c_int64,
+        ctypes.c_int32, ctypes.c_int32, ctypes.c_double,
+    ]
+    fn.restype = ctypes.c_uint64
+    _mojo_kl_refine_lib = lib
+    _HAS_MOJO_KL_REFINE = True
+    return True
 
 
 @dataclass
@@ -220,11 +326,15 @@ class HierarchicalPartitioner:
         self.seed_allocator = LFSRSeedAllocator()
         self.rng = np.random.default_rng(seed)
         # KL refine backend: "auto" picks Rust when wired, else
-        # Python; explicit values "rust" / "python" override (more
-        # backends added one-commit-per-language under #64).
-        if refine_backend not in ("auto", "rust", "python"):
+        # Python; explicit values pick that specific backend.
+        # Empirical fastest-pick (per `feedback_fallback_chain_ordering`):
+        # Rust and Mojo trade wins on this kernel; Julia is within
+        # 30 %; Go trails because of cgo overhead. See
+        # `benchmarks/results/bench_kl_refine.json`.
+        valid = ("auto", "rust", "julia", "go", "mojo", "python")
+        if refine_backend not in valid:
             raise ValueError(
-                f"refine_backend must be auto/rust/python, got {refine_backend!r}"
+                f"refine_backend must be one of {valid}, got {refine_backend!r}"
             )
         self.refine_backend = refine_backend
 
@@ -264,8 +374,32 @@ class HierarchicalPartitioner:
                 "Rust KL refine requested but py_kl_refine not available; "
                 "install sc_neurocore_engine wheel."
             )
+        if backend == "julia" and not _ensure_julia_kl_refine_loaded():
+            raise RuntimeError(
+                "Julia KL refine requested but juliacall + "
+                "accel/julia/chiplet/kl_refine.jl is not available; "
+                "install juliacall (pip install juliacall)."
+            )
+        if backend == "go" and not _ensure_go_kl_refine_loaded():
+            raise RuntimeError(
+                "Go KL refine requested but libpartition.so is not "
+                "built; run `cd src/sc_neurocore/accel/go/partition && "
+                "go build -buildmode=c-shared -o libpartition.so partition.go`."
+            )
+        if backend == "mojo" and not _ensure_mojo_kl_refine_loaded():
+            raise RuntimeError(
+                "Mojo KL refine requested but libpartition.so is not "
+                "built; run `cd src/sc_neurocore/accel/mojo/partition && "
+                "mojo build --emit shared-lib -o libpartition.so partition.mojo`."
+            )
         if (backend == "auto" and _HAS_RUST_KL_REFINE) or backend == "rust":
             return self._refine_rust(partitions, adj, graph)
+        if backend == "julia":
+            return self._refine_julia(partitions, adj, graph)
+        if backend == "go":
+            return self._refine_go(partitions, adj, graph)
+        if backend == "mojo":
+            return self._refine_mojo(partitions, adj, graph)
         return self._refine(partitions, adj, graph)
 
     def _recursive_bisect(
@@ -374,7 +508,10 @@ class HierarchicalPartitioner:
         partitions: List[List[int]],
         adj: Dict[int, List[int]],
         graph: CorrelationAwareGraph,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    ) -> Tuple[
+        np.ndarray, np.ndarray, np.ndarray, np.ndarray,
+        np.ndarray, np.ndarray, np.ndarray,
+    ]:
         """Pack the per-partition state into the flat CSR-style buffers
         every multi-language KL refine kernel expects:
           - adj_offsets:    int64[V+1]
@@ -382,6 +519,11 @@ class HierarchicalPartitioner:
           - adj_scc_abs:    float64[E_total]
           - vertex_weights: float64[V]
           - part_map:       int32[V]
+          - parts_concat:   int32[V] — vertices grouped by partition,
+            preserving input per-part insertion order (load-bearing
+            for KL parity with Python; rebuilding from part_map alone
+            loses this order and the KL moves diverge).
+          - parts_offsets:  int64[P+1] — row pointers into parts_concat
         Edge cache is warmed once so the per-edge `edge_scc` lookup is
         O(1) here too (no point re-paying the O(E) scan).
         """
@@ -403,10 +545,32 @@ class HierarchicalPartitioner:
             dtype=np.float64,
         )
         part_map = np.full(V, -1, dtype=np.int32)
+        n_parts = len(partitions)
+        parts_offsets = np.zeros(n_parts + 1, dtype=np.int64)
         for i, part in enumerate(partitions):
+            parts_offsets[i + 1] = parts_offsets[i] + len(part)
             for v in part:
                 part_map[v] = i
-        return offsets, neighbours, scc_abs, vw, part_map
+        parts_concat = np.zeros(int(parts_offsets[-1]), dtype=np.int32)
+        for i, part in enumerate(partitions):
+            base = int(parts_offsets[i])
+            for k, v in enumerate(part):
+                parts_concat[base + k] = v
+        return (
+            offsets, neighbours, scc_abs, vw, part_map,
+            parts_concat, parts_offsets,
+        )
+
+    def _decode_part_map(
+        self, part_map: np.ndarray, n_parts: int,
+    ) -> List[List[int]]:
+        """Decode flat part_map[V] back into List[List[int]]."""
+        out: List[List[int]] = [[] for _ in range(n_parts)]
+        for v_int, p in enumerate(part_map):
+            ip = int(p)
+            if 0 <= ip < n_parts:
+                out[ip].append(v_int)
+        return out
 
     def _refine_rust(
         self,
@@ -420,21 +584,90 @@ class HierarchicalPartitioner:
                 "Rust KL refine backend requested but py_kl_refine is "
                 "not available; install sc_neurocore_engine wheel."
             )
-        offsets, neighbours, scc_abs, vw, pm0 = self._encode_csr(
+        offsets, neighbours, scc_abs, vw, pm0, pc, po = self._encode_csr(
             partitions, adj, graph,
         )
         n_parts = len(partitions)
         new_pm, _moves = _rust_kl_refine(
-            offsets, neighbours, scc_abs, vw, pm0,
+            offsets, neighbours, scc_abs, vw, pm0, pc, po,
             n_parts, int(self.kl_iterations), float(self.correlation_penalty),
         )
-        # Decode part_map back into List[List[int]] preserving partition
-        # index order so callers' downstream code is unchanged.
-        out: List[List[int]] = [[] for _ in range(n_parts)]
-        for v_int, p in enumerate(new_pm):
-            if 0 <= int(p) < n_parts:
-                out[int(p)].append(v_int)
-        return out
+        return self._decode_part_map(new_pm, n_parts)
+
+    def _refine_julia(
+        self,
+        partitions: List[List[int]],
+        adj: Dict[int, List[int]],
+        graph: CorrelationAwareGraph,
+    ) -> List[List[int]]:
+        """Julia dispatch — bit-exact parity with Python + Rust."""
+        if _julia_kl_refine is None:
+            raise RuntimeError(
+                "Julia KL refine backend not loaded — call "
+                "_ensure_julia_kl_refine_loaded() first."
+            )
+        offsets, neighbours, scc_abs, vw, pm0, pc, po = self._encode_csr(
+            partitions, adj, graph,
+        )
+        n_parts = len(partitions)
+        new_pm = _julia_kl_refine(
+            offsets, neighbours, scc_abs, vw, pm0.copy(), pc, po,
+            n_parts, int(self.kl_iterations), float(self.correlation_penalty),
+        )
+        return self._decode_part_map(np.asarray(new_pm, dtype=np.int32), n_parts)
+
+    def _refine_go(
+        self,
+        partitions: List[List[int]],
+        adj: Dict[int, List[int]],
+        graph: CorrelationAwareGraph,
+    ) -> List[List[int]]:
+        """Go dispatch via cgo + ctypes — bit-exact parity."""
+        if _go_kl_refine_lib is None:
+            raise RuntimeError("Go KL refine .so not loaded")
+        import ctypes
+        offsets, neighbours, scc_abs, vw, pm0, pc, po = self._encode_csr(
+            partitions, adj, graph,
+        )
+        n_parts = len(partitions)
+        pm = pm0.copy()
+        _go_kl_refine_lib.kl_refine_c(
+            offsets.ctypes.data_as(ctypes.POINTER(ctypes.c_int64)),
+            neighbours.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
+            scc_abs.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            vw.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            pm.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
+            pc.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
+            po.ctypes.data_as(ctypes.POINTER(ctypes.c_int64)),
+            ctypes.c_int64(vw.size), ctypes.c_int64(scc_abs.size),
+            ctypes.c_int32(n_parts), ctypes.c_int32(self.kl_iterations),
+            ctypes.c_double(self.correlation_penalty),
+        )
+        return self._decode_part_map(pm, n_parts)
+
+    def _refine_mojo(
+        self,
+        partitions: List[List[int]],
+        adj: Dict[int, List[int]],
+        graph: CorrelationAwareGraph,
+    ) -> List[List[int]]:
+        """Mojo dispatch via raw-Int-addr ctypes — bit-exact parity."""
+        if _mojo_kl_refine_lib is None:
+            raise RuntimeError("Mojo KL refine .so not loaded")
+        offsets, neighbours, scc_abs, vw, pm0, pc, po = self._encode_csr(
+            partitions, adj, graph,
+        )
+        n_parts = len(partitions)
+        pm = pm0.copy()
+        _mojo_kl_refine_lib.kl_refine_c(
+            offsets.ctypes.data, neighbours.ctypes.data,
+            scc_abs.ctypes.data, vw.ctypes.data, pm.ctypes.data,
+            pc.ctypes.data, po.ctypes.data,
+            vw.size, scc_abs.size,
+            n_parts, int(self.kl_iterations),
+            float(self.correlation_penalty),
+        )
+        return self._decode_part_map(pm, n_parts)
 
     def _refine(
         self,

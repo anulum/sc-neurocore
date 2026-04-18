@@ -5298,8 +5298,10 @@ fn py_inject_gaussian_u8<'py>(
 #[pyfunction]
 #[pyo3(signature = (
     adj_offsets, adj_neighbours, adj_scc_abs, vertex_weights,
-    part_map, n_parts, kl_iterations, correlation_penalty,
+    part_map, parts_concat, parts_offsets,
+    n_parts, kl_iterations, correlation_penalty,
 ))]
+#[allow(clippy::too_many_arguments)]
 fn py_kl_refine<'py>(
     py: Python<'py>,
     adj_offsets: PyReadonlyArray1<'_, i64>,
@@ -5307,6 +5309,8 @@ fn py_kl_refine<'py>(
     adj_scc_abs: PyReadonlyArray1<'_, f64>,
     vertex_weights: PyReadonlyArray1<'_, f64>,
     part_map: PyReadonlyArray1<'_, i32>,
+    parts_concat: PyReadonlyArray1<'_, i32>,
+    parts_offsets: PyReadonlyArray1<'_, i64>,
     n_parts: i32,
     kl_iterations: i32,
     correlation_penalty: f64,
@@ -5318,6 +5322,8 @@ fn py_kl_refine<'py>(
         adj_scc_abs.as_slice()?,
         vertex_weights.as_slice()?,
         &mut pm,
+        parts_concat.as_slice()?,
+        parts_offsets.as_slice()?,
         n_parts,
         kl_iterations,
         correlation_penalty,
