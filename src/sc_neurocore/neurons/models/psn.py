@@ -19,6 +19,8 @@ class ParallelSpikingNeuron:
     Applies a learned 1D convolution kernel over an internal buffer,
     enabling non-causal temporal aggregation during training.
     At each step: score = sum(kernel * buffer); spike if score >= threshold.
+
+    Reference: Comsa, I.-M. et al. (2020). Proc. ICLR 2020.
     """
 
     kernel_size: int = 8

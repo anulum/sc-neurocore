@@ -20,6 +20,8 @@ class BoothRinzelNeuron:
     C dVd/dt = -I_Ca(Vd) - I_KCa(Vd) - I_L(Vd) - gc*(Vd - Vs)/(1-p)
     dq/dt   = (q_inf(Vd) - q) / tau_q
     dCa/dt  = -f * (alpha_Ca * I_Ca + k_Ca * Ca)
+
+    Reference: Booth, V. & Rinzel, J. (1995). J. Neurophysiol. 73:1934–1945.
     """
 
     vs: float = -65.0

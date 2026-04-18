@@ -16,6 +16,8 @@ class McCullochPittsNeuron:
     """McCulloch & Pitts 1943 — binary threshold neuron.
 
     y = 1 if sum(w_i * x_i) >= theta, else 0.
+
+    Reference: McCulloch, W.S. & Pitts, W. (1943). Bull. Math. Biophys. 5:115–133.
     """
 
     theta: float = 1.0

@@ -19,6 +19,8 @@ class AdExNeuron:
     dv/dt = -(v - v_rest)/tau + delta_T * exp((v - v_rh)/delta_T) / tau - w/C + I/C
     dw/dt = (a * (v - v_rest) - w) / tau_w
     if v >= v_threshold: v = v_reset, w += b
+
+    Reference: Brette, R. & Gerstner, W. (2005). J. Neurophysiol. 94:3637–3642.
     """
 
     v: float = -65.0

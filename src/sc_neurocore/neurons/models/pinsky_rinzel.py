@@ -18,6 +18,8 @@ class PinskyRinzelNeuron:
 
     Soma (fast Na/K) coupled to dendrite (Ca/KAHP) via gc.
     Minimal model for burst generation in cortical pyramidal cells.
+
+    Reference: Pinsky, P.F. & Rinzel, J. (1994). J. Comput. Neurosci. 1:39–60.
     """
 
     v_s: float = -60.0

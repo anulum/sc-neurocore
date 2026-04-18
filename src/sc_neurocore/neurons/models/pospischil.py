@@ -20,6 +20,8 @@ class PospischilNeuron:
     I_M (slow K+) provides adaptation; its conductance distinguishes:
       RS (g_m=0.07), FS (g_m=0), IB (g_m=0.03), LTS (g_m=0.03+I_T).
     Default parameters: RS cortical pyramidal.
+
+    Reference: Pospischil, M. et al. (2008). Biol. Cybern. 99:427–441.
     """
 
     v: float = -70.0

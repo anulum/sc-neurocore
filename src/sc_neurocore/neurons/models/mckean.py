@@ -21,6 +21,8 @@ class McKeanNeuron:
     f(v) = -v          if v < a/2
          = v - a       if a/2 <= v < (1+a)/2
          = 1 - v       if v >= (1+a)/2
+
+    Reference: McKean, H.P. (1970). Adv. Math. 4:209–223.
     """
 
     v: float = 0.0

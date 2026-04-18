@@ -18,6 +18,8 @@ class GIFPopulationNeuron:
 
     Stochastic threshold: P(spike|V) = lambda_0 * exp((V - theta) / delta_v).
     Adaptation currents eta decay after each spike.
+
+    Reference: Mensi, S. et al. (2012). J. Neurophysiol. 107:1756–1775.
     """
 
     v: float = -65.0

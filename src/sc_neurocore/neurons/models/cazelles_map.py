@@ -22,6 +22,8 @@ class CazellesMapNeuron:
     f(x) = a*x*(1 - x)    (logistic-like fast dynamics)
 
     Bursting arises from slow y modulation of fast x.
+
+    Reference: Cazelles, B., Courbage, M. & Rabinovich, M. (2001). Europhys. Lett. 56(4):504–509.
     """
 
     x: float = 0.1

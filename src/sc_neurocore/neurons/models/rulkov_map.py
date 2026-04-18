@@ -18,6 +18,8 @@ class RulkovMapNeuron:
     x[n+1] = f(x[n], y[n]) + I
     y[n+1] = y[n] - μ(x[n] + 1) + μσ
     Fast iteration, exhibits spiking and bursting.
+
+    Reference: Rulkov, N.F. (2002). Phys. Rev. E 65:041922.
     """
 
     x: float = -1.0

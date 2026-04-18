@@ -19,6 +19,8 @@ class DPINeuron:
     tau dI_mem/dt = -I_mem + I_syn + I_leak
     Spike when I_mem >= I_threshold, reset to I_reset.
     All variables in current domain (nA), mirroring transistor currents.
+
+    Reference: Chicca, E. et al. (2014). Proc. IEEE 102:1367–1388.
     """
 
     i_mem: float = 0.0

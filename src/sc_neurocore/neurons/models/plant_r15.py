@@ -21,6 +21,8 @@ class PlantR15Neuron:
     dh/dt  = (h_inf(V) - h) / tau_h(V)
     dn/dt  = (n_inf(V) - n) / tau_n(V)
     dCa/dt = -k_Ca * I_Ca - Ca / tau_Ca
+
+    Reference: Plant, R.E. & Kim, M. (1976). Biophys. J. 16:227–244.
     """
 
     v: float = -50.0

@@ -16,6 +16,8 @@ class AlphaNeuron:
     """Alpha-synapse neuron. Rall 1967.
 
     Dual excitatory/inhibitory synaptic currents with alpha-function kinetics.
+
+    Reference: Gerstner, W. & Kistler, W.M. (2002). Spiking Neuron Models. Cambridge Univ. Press, §4.1.
     """
 
     v: float = 0.0

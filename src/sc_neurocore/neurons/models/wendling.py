@@ -21,6 +21,8 @@ class WendlingNeuron:
     10 ODEs: 4 populations (pyramidal, excitatory, fast inhibitory, slow
     inhibitory) x 2 states each + 2 for slow inhibitory PSP.
     Reproduces epileptiform EEG patterns.
+
+    Reference: Wendling, F. et al. (2002). Biol. Cybern. 86:97–108.
     """
 
     y0: float = 0.0

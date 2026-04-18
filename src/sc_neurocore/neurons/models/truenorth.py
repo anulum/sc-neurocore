@@ -13,7 +13,10 @@ from dataclasses import dataclass
 
 @dataclass
 class TrueNorthNeuron:
-    """Merolla 2014 — IBM TrueNorth digital neuron."""
+    """Merolla 2014 — IBM TrueNorth digital neuron.
+
+    Reference: Merolla, P.A. et al. (2014). Science 345:668–673.
+    """
 
     v: int = 0
     leak: int = 0

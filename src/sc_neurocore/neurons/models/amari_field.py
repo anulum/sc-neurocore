@@ -22,6 +22,8 @@ class AmariNeuralField:
     tau du_i/dt = -u_i + sum_j w(|i-j|) f(u_j) * dx + I_i
     w(x) = A * exp(-a*|x|) - B * exp(-b*|x|)    (Mexican hat)
     f(u) = max(0, u)                              (Heaviside-linear)
+
+    Reference: Amari, S. (1977). Biol. Cybern. 27:77–87.
     """
 
     n: int = 64

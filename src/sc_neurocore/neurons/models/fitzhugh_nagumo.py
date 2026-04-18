@@ -17,6 +17,8 @@ class FitzHughNagumoNeuron:
 
     dv/dt = v - v³/3 - w + I
     dw/dt = ε(v + a - bw)
+
+    Reference: FitzHugh, R. (1961). Biophys. J. 1:445–466.
     """
 
     v: float = -1.0

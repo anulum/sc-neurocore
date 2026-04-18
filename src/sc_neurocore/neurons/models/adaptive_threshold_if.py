@@ -18,6 +18,8 @@ class AdaptiveThresholdIFNeuron:
     C dV/dt = -g_L(V - V_rest) + I
     dtheta/dt = -(theta - theta_rest) / tau_theta
     On spike: V -> V_reset, theta += delta_theta
+
+    Reference: Platkiewicz, J. & Brette, R. (2010). J. Neurosci. 30:6891–6902.
     """
 
     v: float = -65.0

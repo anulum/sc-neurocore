@@ -17,6 +17,8 @@ class PoissonNeuron:
     """Poisson spike generator — stochastic firing at rate λ.
 
     P(spike in dt) = λ · dt. Essential for input layer generation.
+
+    Reference: Gerstner, W. et al. (2014). Neuronal Dynamics. Cambridge Univ. Press, §7.2.
     """
 
     rate_hz: float = 100.0

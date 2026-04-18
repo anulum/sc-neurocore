@@ -17,6 +17,8 @@ class NonlinearLIFNeuron:
 
     C dV/dt = a*(V - V_rest)*(V - V_crit) - w + I
     dw/dt = (b*(V - V_rest) - w) / tau_w
+
+    Reference: Brette, R. (2004). Neural Comput. 16:2263–2278.
     """
 
     v: float = -65.0

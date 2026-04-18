@@ -17,6 +17,8 @@ class AvRonCardiacNeuron:
     """Av-Ron, Parnas & Segel 1993 — cardiac ganglion Type III bursting.
 
     Reduced HH-type with slow inactivation producing plateau bursts.
+
+    Reference: Av-Ron, E. et al. (1991). Biol. Cybern. 65:487–500.
     """
 
     v: float = -60.0

@@ -21,6 +21,8 @@ class WilsonCowanUnit:
     τ_e dE/dt = -E + S(w_ee·E - w_ei·I + I_ext)
     τ_i dI/dt = -I + S(w_ie·E - w_ii·I)
     S(x) = 1/(1 + exp(-a(x-θ))) - 1/(1 + exp(aθ))
+
+    Reference: Wilson, H.R. & Cowan, J.D. (1972). Biophys. J. 12:1–24.
     """
 
     e: float = 0.1

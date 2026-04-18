@@ -19,6 +19,8 @@ class FractionalLIFNeuron:
     D^α v(t) = -(v - v_rest) + R·I, where 0 < α ≤ 1.
     α < 1 introduces memory (power-law decay instead of exponential).
     Lundstrom et al. 2008.
+
+    Reference: Teka, W. et al. (2014). PLoS Comput. Biol. 10:e1003526.
     """
 
     v: float = 0.0

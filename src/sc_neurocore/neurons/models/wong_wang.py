@@ -16,7 +16,10 @@ import numpy as np
 
 @dataclass
 class WongWangUnit:
-    """Wong & Wang 2006 — reduced decision-making attractor model."""
+    """Wong & Wang 2006 — reduced decision-making attractor model.
+
+    Reference: Wong, K.-F. & Wang, X.-J. (2006). J. Neurosci. 26:1314–1328.
+    """
 
     s1: float = 0.1
     s2: float = 0.1

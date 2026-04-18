@@ -19,6 +19,8 @@ class ParametricLIFNeuron:
     V(t+1) = alpha * V(t) * (1 - spike(t)) + I(t)
     alpha  = sigmoid(a)    (learnable parameter)
     spike  = Theta(V - threshold)
+
+    Reference: Fang, W. et al. (2021). Proc. AAAI Conf. Artif. Intell. 35(3):2661–2669.
     """
 
     v: float = 0.0

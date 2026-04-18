@@ -18,7 +18,7 @@ import numpy as np
 class BrunelWangNeuron:
     """LIF neuron with NMDA, AMPA, and GABA synaptic currents.
 
-    Brunel, N. & Wang, X.J. (2001). Effects of neuromodulation in a
+    Reference: Brunel, N. & Wang, X.J. (2001). Effects of neuromodulation in a
     cortical network model of object working memory dominated by
     recurrent inhibition. J Comput Neurosci 11:63-85.
 

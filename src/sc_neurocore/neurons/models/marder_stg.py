@@ -18,6 +18,8 @@ class MarderSTGNeuron:
 
     7 currents: I_Na, I_CaT, I_CaS, I_A, I_KCa, I_Kd, I_H, I_L.
     LP-like model from the pyloric CPG.
+
+    Reference: Marder, E. & Calabrese, R.L. (1996). Physiol. Rev. 76:687–717.
     """
 
     v: float = -60.0

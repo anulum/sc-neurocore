@@ -19,6 +19,8 @@ not spikes. This adapter converts it to the Population neuron interface:
     from sc_neurocore.network.population import Population
 
     pop = Population(AstrocyteNeuron, n=10, params={"ca_threshold": 0.3})
+
+Reference: De Pittà, M. et al. (2011). J. Biol. Phys. 37:195–230.
 """
 
 from __future__ import annotations

@@ -20,6 +20,8 @@ class NonResettingLIFNeuron:
     dtheta/dt  = -(theta - theta_rest) / tau_theta
 
     Kobayashi et al. 2009, Jolivet et al. 2004.
+
+    Reference: Gerstner, W. et al. (2014). Neuronal Dynamics. Cambridge Univ. Press, §1.3.
     """
 
     v: float = -65.0

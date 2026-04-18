@@ -17,7 +17,7 @@ SpikePredictor instances. Both see the same spike history (encoder uses
 actual spikes, decoder recovers actual spikes via XOR then updates).
 Deterministic: same history → same prediction → lossless roundtrip.
 
-This is the learnable version of the stub PredictiveWorldModel.
+This is the learnable version of PredictiveWorldModel (LGSSM).
 """
 
 from __future__ import annotations

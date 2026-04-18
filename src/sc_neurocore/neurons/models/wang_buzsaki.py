@@ -18,6 +18,8 @@ class WangBuzsakiNeuron:
 
     3 ODEs. Simplified HH with only Na + K delayed rectifier.
     Designed for gamma (30-80 Hz) oscillation modelling.
+
+    Reference: Wang, X.-J. & Buzsáki, G. (1996). J. Neurosci. 16:6402–6413.
     """
 
     v: float = -65.0

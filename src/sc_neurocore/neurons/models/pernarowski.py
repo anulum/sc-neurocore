@@ -17,6 +17,8 @@ class PernarowskiNeuron:
 
     3 ODEs (V, w, z) with two slow variables. Captures square-wave
     and parabolic bursting depending on parameters.
+
+    Reference: Pernarowski, M. (1994). SIAM J. Appl. Math. 54:814–832.
     """
 
     v: float = -1.0

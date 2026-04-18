@@ -13,7 +13,10 @@ from dataclasses import dataclass
 
 @dataclass
 class SpiNNakerLIFNeuron:
-    """SpiNNaker LIF — ARM Cortex-M4 digital. Furber 2014."""
+    """SpiNNaker LIF — ARM Cortex-M4 digital. Furber 2014.
+
+    Reference: Furber, S.B. et al. (2014). Proc. IEEE 102:652–665.
+    """
 
     v: float = -70.0
     v_rest: float = -70.0

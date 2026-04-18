@@ -20,6 +20,8 @@ class HodgkinHuxleyNeuron:
     dm/dt = α_m(1-m) - β_m·m
     dh/dt = α_h(1-h) - β_h·h
     dn/dt = α_n(1-n) - β_n·n
+
+    Reference: Hodgkin, A.L. & Huxley, A.F. (1952). J. Physiol. 117:500–544.
     """
 
     v: float = -65.0

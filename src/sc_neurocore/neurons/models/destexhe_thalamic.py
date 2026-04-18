@@ -17,6 +17,8 @@ class DestexheThalamicNeuron:
     """Destexhe 1993 — thalamocortical relay with T-current and I_h.
 
     6 ODEs: V, m_Na, h_Na, n_K, m_T, h_T (+ optional h-current).
+
+    Reference: Destexhe, A. et al. (1996). J. Comput. Neurosci. 3:19–46.
     """
 
     v: float = -65.0

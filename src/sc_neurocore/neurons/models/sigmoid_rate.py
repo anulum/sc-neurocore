@@ -17,6 +17,8 @@ class SigmoidRateNeuron:
     """Continuous rate model with sigmoidal transfer. Wilson & Cowan 1972 style.
 
     tau dr/dt = -r + sigma(beta * (input - theta))
+
+    Reference: Wilson, H.R. & Cowan, J.D. (1972). Biophys. J. 12:1–24.
     """
 
     r: float = 0.0

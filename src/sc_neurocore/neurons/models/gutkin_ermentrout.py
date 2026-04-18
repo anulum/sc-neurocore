@@ -14,7 +14,10 @@ import numpy as np
 
 @dataclass
 class GutkinErmentroutNeuron:
-    """Gutkin & Ermentrout 1998 — persistent Na + K minimal conductance."""
+    """Gutkin & Ermentrout 1998 — persistent Na + K minimal conductance.
+
+    Reference: Gutkin, B.S. & Ermentrout, G.B. (1998). Neural Comput. 10:1047–1065.
+    """
 
     v: float = -65.0
     n: float = 0.1

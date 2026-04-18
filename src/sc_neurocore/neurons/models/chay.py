@@ -14,7 +14,10 @@ import numpy as np
 
 @dataclass
 class ChayNeuron:
-    """Chay 1985 — pancreatic beta cell burster."""
+    """Chay 1985 — pancreatic beta cell burster.
+
+    Reference: Chay, T.R. (1985). Physica D 16:233–242.
+    """
 
     v: float = -50.0
     n: float = 0.1

@@ -14,7 +14,10 @@ import numpy as np
 
 @dataclass
 class ErmentroutKopellPopulation:
-    """Montbrio, Pazo & Roxin 2015 — exact mean-field of QIF/theta network."""
+    """Montbrio, Pazo & Roxin 2015 — exact mean-field of QIF/theta network.
+
+    Reference: Ermentrout, G.B. & Kopell, N. (1986). SIAM J. Appl. Math. 46:233–253.
+    """
 
     r: float = 0.1
     v: float = -2.0

@@ -18,6 +18,8 @@ class GLIFNeuron:
 
     Teeter et al. 2018, Nat Comm. Level 5: LIF + reset rules +
     instantaneous threshold + threshold adaptation + after-spike currents.
+
+    Reference: Teeter, C. et al. (2018). Nat. Commun. 9:709.
     """
 
     v: float = -70.0

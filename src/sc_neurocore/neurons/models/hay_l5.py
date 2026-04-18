@@ -21,6 +21,8 @@ class HayL5PyramidalNeuron:
     Reproduces BAC firing (backpropagation-activated calcium spike).
 
     Original: Hay, Hill, Schurmann, Markram & Segev, PLoS Comput Biol 7(7), 2011.
+
+    Reference: Hay, E. et al. (2011). PLoS Comput. Biol. 7:e1002107.
     """
 
     # Soma

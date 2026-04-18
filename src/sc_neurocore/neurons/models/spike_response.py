@@ -19,6 +19,8 @@ class SpikeResponseNeuron:
     v(t) = η(t - t_last) + Σ κ(t - t_in) · w
     Spike when v(t) ≥ threshold.
     Gerstner 1995.
+
+    Reference: Gerstner, W. (1995). Neural Comput. 7:1049–1071.
     """
 
     v: float = 0.0

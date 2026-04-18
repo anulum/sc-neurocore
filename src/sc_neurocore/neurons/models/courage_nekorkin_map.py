@@ -13,7 +13,10 @@ from dataclasses import dataclass
 
 @dataclass
 class CourageNekorkinMapNeuron:
-    """Courbage, Nekorkin & Vdovin 2007 — piecewise-linear Lorenz-type map."""
+    """Courbage, Nekorkin & Vdovin 2007 — piecewise-linear Lorenz-type map.
+
+    Reference: Courbage, M., Nekorkin, V.I. & Vdovin, L.V. (2007). Chaos 17:043109.
+    """
 
     x: float = 0.0
     y: float = 0.0

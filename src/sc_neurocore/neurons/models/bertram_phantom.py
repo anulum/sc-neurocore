@@ -22,6 +22,8 @@ class BertramPhantomBurster:
 
     Two slow variables (s1, s2) with different timescales produce
     bursting via a phantom slow manifold.
+
+    Reference: Bertram, R. et al. (1995). Biophys. J. 68:2323–2332.
     """
 
     v: float = -50.0

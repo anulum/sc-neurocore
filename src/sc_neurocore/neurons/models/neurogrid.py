@@ -19,6 +19,8 @@ class NeuroGridNeuron:
     Soma (v_s) and dendrite (v_d) coupled by conductance g_c.
     Soma is LIF with exponential spike initiation.
     Dendrite integrates synaptic input.
+
+    Reference: Benjamin, B.V. et al. (2014). Proc. IEEE 102:699–716.
     """
 
     v_s: float = -65.0

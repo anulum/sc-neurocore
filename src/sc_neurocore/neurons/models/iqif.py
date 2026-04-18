@@ -16,6 +16,8 @@ class IntegerQIFNeuron:
     """Lo et al. 2021 — fixed-point quadratic integrate-and-fire.
 
     V[t+1] = V[t] + (V[t]^2 >> k) + I, all integer arithmetic.
+
+    Reference: Izhikevich, E.M. (2007). Dynamical Systems in Neuroscience. MIT Press, §4.1.
     """
 
     v: int = 0

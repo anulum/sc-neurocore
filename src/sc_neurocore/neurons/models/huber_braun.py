@@ -17,6 +17,8 @@ class HuberBraunNeuron:
     """Braun, Huber et al. 1998 — cold receptor, temperature-dependent.
 
     4 ODEs: V, a_sd (slow depolarizing), a_sr (slow repolarizing), a_r.
+
+    Reference: Braun, H.A. et al. (1998). Int. J. Bifurcation Chaos 8:881–889.
     """
 
     v: float = -50.0

@@ -17,6 +17,8 @@ class SpiNNaker2Neuron:
 
     Fixed-point LIF on M4F with exponential decay via integer multiply-shift.
     Includes refractory counter and configurable precision.
+
+    Reference: Mayr, C. et al. (2019). Proc. DATE 2019: 1547–1552.
     """
 
     v: int = 0

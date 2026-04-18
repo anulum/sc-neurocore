@@ -21,6 +21,8 @@ class BendaHerzNeuron:
     f = f_onset(I - A)          instantaneous f-I curve
     dA/dt = -A/tau_a + delta_a * f
     f_onset(x) = f_max / (1 + exp(-beta*(x - I_half)))
+
+    Reference: Benda, J. & Herz, A.V.M. (2003). Neural Comput. 15:2523–2564.
     """
 
     a: float = 0.0

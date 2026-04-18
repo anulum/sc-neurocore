@@ -18,6 +18,8 @@ class InhibitoryLIFNeuron:
 
     After spiking, a decaying inhibitory trace suppresses the membrane
     for a learned duration, shaping temporal coding.
+
+    Reference: Fourcaud-Trocmé, N. et al. (2003). J. Neurosci. 23:11628–11640.
     """
 
     v: float = 0.0

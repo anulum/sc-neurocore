@@ -237,13 +237,12 @@ class TestSCTrainingLoop:
         labels = np.array([0, 1, 0, 1, 0])
         ds = MultimodalDataset(data=data, labels=labels)
 
-        # Need a fusion layer — use a simple mock
         class MockFusion:
             def train_step(self, batch):
-                pass
+                return None
 
-        with pytest.raises(NotImplementedError):
-            SCTrainingLoop.train_multimodal_fusion(MockFusion(), ds, epochs=1)
+        # Real implementation — should complete without raising
+        SCTrainingLoop.train_multimodal_fusion(MockFusion(), ds, epochs=1)
 
 
 # ── models ───────────────────────────────────────────────────────────

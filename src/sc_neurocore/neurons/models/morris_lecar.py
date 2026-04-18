@@ -20,6 +20,8 @@ class MorrisLecarNeuron:
 
     C dv/dt = -g_Ca m_∞(v)(v-E_Ca) - g_K w(v-E_K) - g_L(v-E_L) + I
     dw/dt = λ(v)(w_∞(v) - w)
+
+    Reference: Morris, C. & Lecar, H. (1981). Biophys. J. 35:193–213.
     """
 
     v: float = -60.0

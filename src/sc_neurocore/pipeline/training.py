@@ -55,7 +55,20 @@ class SCTrainingLoop:
 
     @staticmethod
     def train_multimodal_fusion(fusion_layer: object, dataset: object, epochs: int = 5) -> None:
+        """Train weights in a multimodal fusion layer via per-sample updates.
+
+        Iterates over the dataset for ``epochs`` rounds, calling
+        ``fusion_layer.train_step(sample)`` on each sample returned by
+        ``dataset.get_sample(i)``.  The fusion layer is responsible for
+        its own weight update rule (Hebbian, LMS, etc.).
         """
-        Stub for training weights in a fusion layer.
-        """
-        raise NotImplementedError("multimodal fusion training not implemented")
+        n_samples = getattr(dataset, "n_samples", len(getattr(dataset, "labels", [])))
+        for epoch in range(epochs):
+            total_loss = 0.0
+            for i in range(n_samples):
+                sample = dataset.get_sample(i)  # type: ignore[union-attr]
+                output = fusion_layer.train_step(sample)  # type: ignore[union-attr]
+                if output is not None:
+                    total_loss += float(np.sum(np.abs(output)))
+            avg_loss = total_loss / max(n_samples, 1)
+            logger.info("Fusion Epoch %d/%d: avg_loss=%.4f", epoch + 1, epochs, avg_loss)

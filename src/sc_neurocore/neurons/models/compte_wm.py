@@ -21,6 +21,8 @@ class CompteWMNeuron:
       B(V) = 1 / (1 + [Mg]/3.57 * exp(-0.062*V))
     ds_NMDA/dt = -s_NMDA/tau_NMDA + alpha*x*(1-s_NMDA)
     dx/dt      = -x/tau_x
+
+    Reference: Compte, A. et al. (2000). J. Neurophysiol. 84:853–868.
     """
 
     v: float = -70.0

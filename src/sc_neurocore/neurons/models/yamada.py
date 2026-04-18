@@ -18,6 +18,8 @@ class YamadaNeuron:
 
     3 ODEs: V, n (fast K recovery), q (slow variable for bursting).
     Exhibits square-wave bursting via slow modulation of a Hopf bifurcation.
+
+    Reference: Yamada, W.M. et al. (1989). In: Methods in Neuronal Modeling. MIT Press, pp. 97–133.
     """
 
     v: float = -60.0

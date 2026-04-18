@@ -14,7 +14,10 @@ import numpy as np
 
 @dataclass
 class MATNeuron:
-    """Kobayashi 2009 — Multi-timescale Adaptive Threshold."""
+    """Kobayashi 2009 — Multi-timescale Adaptive Threshold.
+
+    Reference: Kobayashi, R. et al. (2009). Front. Comput. Neurosci. 3:9.
+    """
 
     v: float = -70.0
     theta1: float = 0.0

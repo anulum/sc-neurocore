@@ -21,6 +21,8 @@ class GalvesLocherbachNeuron:
     P(spike at t | history) = φ(V(t))
     V(t) = Σ w_j · spike_j(past) · decay + leak
     Purely probabilistic, no ODE.
+
+    Reference: Galves, A. & Löcherbach, E. (2013). J. Stat. Phys. 151:896–921.
     """
 
     v: float = 0.0

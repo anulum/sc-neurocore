@@ -17,6 +17,8 @@ class MihalasNieburNeuron:
 
     Mihalas & Niebur 2009. Multiple internal thresholds and
     adaptation currents enable tonic/phasic/burst/accommodation patterns.
+
+    Reference: Mihalas, S. & Niebur, E. (2009). Neural Comput. 21:704–718.
     """
 
     v: float = 0.0

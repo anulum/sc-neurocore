@@ -18,6 +18,8 @@ class HindmarshRoseNeuron:
     dx/dt = y - x³ + bx² - z + I
     dy/dt = 1 - 5x² - y
     dz/dt = r(s(x - x_rest) - z)
+
+    Reference: Hindmarsh, J.L. & Rose, R.M. (1984). Proc. R. Soc. Lond. B 221:87–102.
     """
 
     x: float = -1.6

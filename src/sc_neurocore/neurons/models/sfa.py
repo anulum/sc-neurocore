@@ -14,7 +14,10 @@ import numpy as np
 
 @dataclass
 class SFANeuron:
-    """Benda & Herz 2003 — Spike Frequency Adaptation IF."""
+    """Benda & Herz 2003 — Spike Frequency Adaptation IF.
+
+    Reference: Benda, J. & Herz, A.V.M. (2003). Neural Comput. 15:2523–2564.
+    """
 
     v: float = -70.0
     g_sfa: float = 0.0

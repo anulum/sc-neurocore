@@ -16,6 +16,8 @@ class ThresholdLinearRateNeuron:
     """Threshold-linear (ReLU) rate neuron. Dayan & Abbott 2001.
 
     r = gain * max(0, input - theta)
+
+    Reference: Gerstner, W. et al. (2014). Neuronal Dynamics. Cambridge Univ. Press, §15.2.
     """
 
     r: float = 0.0

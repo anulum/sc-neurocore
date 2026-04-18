@@ -18,6 +18,8 @@ class DurstewitzDopamineNeuron:
 
     D1 agonism enhances NMDA (g_nmda_scale), reduces Na window current
     (v_shift_na), and enhances K (g_k_scale), stabilising up-states.
+
+    Reference: Durstewitz, D. et al. (2000). J. Neurophysiol. 83:1733–1750.
     """
 
     v: float = -65.0

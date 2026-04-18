@@ -13,7 +13,10 @@ from dataclasses import dataclass
 
 @dataclass
 class LoihiCUBANeuron:
-    """Loihi CUBA LIF — Intel Loihi fixed-point neuron. Davies 2018."""
+    """Loihi CUBA LIF — Intel Loihi fixed-point neuron. Davies 2018.
+
+    Reference: Davies, M. et al. (2018). IEEE Micro 38:82–99.
+    """
 
     v: int = 0
     u: int = 0

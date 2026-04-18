@@ -21,6 +21,8 @@ class LarterBreakspearNeuron:
     3 ODEs per node. Combines Wilson-Cowan population dynamics with
     conductance-based ion channel kinetics for whole-brain modelling.
     Used in The Virtual Brain (TVB) simulator.
+
+    Reference: Larter, R. et al. (1999). Chaos 9:795–804.; Breakspear, M. et al. (2003). Cereb. Cortex 13:189–202.
     """
 
     v: float = -0.5

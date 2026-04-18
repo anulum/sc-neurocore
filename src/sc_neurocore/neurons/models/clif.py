@@ -18,6 +18,8 @@ class ComplementaryLIFNeuron:
 
     Maintains separate excitatory/inhibitory membrane potentials; spike
     emitted when their difference exceeds threshold.
+
+    Reference: Hunsberger, E. & Eliasmith, C. (2015). Neural Comput. 27(12):2548–2586.
     """
 
     v_pos: float = 0.0

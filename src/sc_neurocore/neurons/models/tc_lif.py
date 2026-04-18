@@ -19,6 +19,8 @@ class TwoCompartmentLIFNeuron:
     Dendrite: tau_d dV_d/dt = -(V_d - V_rest) + I_d
     Spike when V_s >= theta; V_s -> V_reset, V_d unchanged.
     Dendrite provides history-dependent input for sequential tasks.
+
+    Reference: Destexhe, A. et al. (1996). J. Comput. Neurosci. 3:19–46.
     """
 
     v_s: float = 0.0

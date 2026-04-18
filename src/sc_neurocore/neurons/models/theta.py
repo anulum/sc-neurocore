@@ -19,6 +19,8 @@ class ThetaNeuron:
     dθ/dt = (1 - cos θ) + (1 + cos θ) · I
     Spike when θ crosses π.
     Ermentrout & Kopell 1986.
+
+    Reference: Ermentrout, G.B. & Kopell, N. (1986). SIAM J. Appl. Math. 46:233–253.
     """
 
     theta: float = 0.0

@@ -18,6 +18,8 @@ class DendrifyNeuron:
     Soma: standard LIF with reset.
     Dendrite: has a dendritic spike mechanism (NMDA-like) that produces
     a supralinear calcium plateau when input exceeds d_threshold.
+
+    Reference: Pagkalos, M. et al. (2023). Nat. Commun. 14:3234.
     """
 
     v_s: float = -65.0
