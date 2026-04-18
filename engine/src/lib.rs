@@ -38,6 +38,7 @@ pub mod cortical_column;
 pub mod ei_network;
 pub mod encoder;
 pub mod fault;
+pub mod partition;
 pub mod fusion;
 #[cfg(feature = "gpu")]
 pub mod gpu;
@@ -680,6 +681,8 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_inject_stuck_at_1_u8, m)?)?;
     m.add_function(wrap_pyfunction!(py_inject_dropout_u8, m)?)?;
     m.add_function(wrap_pyfunction!(py_inject_gaussian_u8, m)?)?;
+    // Hierarchical partitioner KL refine
+    m.add_function(wrap_pyfunction!(py_kl_refine, m)?)?;
     Ok(())
 }
 
@@ -5284,4 +5287,40 @@ fn py_inject_gaussian_u8<'py>(
     let mut buf = bitstream.as_slice()?.to_vec();
     let n = fault::inject_gaussian_u8(&mut buf, ber, seed);
     Ok((buf.into_pyarray(py).into(), n))
+}
+
+// ── Hierarchical partitioner — KL refine (PyO3) ──
+//
+// Caller passes flat numpy arrays (CSR adjacency + flat scc weights +
+// flat vertex_weights + initial part_map). The kernel mutates a copy
+// of part_map in-place and returns (new_part_map, num_moves).
+
+#[pyfunction]
+#[pyo3(signature = (
+    adj_offsets, adj_neighbours, adj_scc_abs, vertex_weights,
+    part_map, n_parts, kl_iterations, correlation_penalty,
+))]
+fn py_kl_refine<'py>(
+    py: Python<'py>,
+    adj_offsets: PyReadonlyArray1<'_, i64>,
+    adj_neighbours: PyReadonlyArray1<'_, i32>,
+    adj_scc_abs: PyReadonlyArray1<'_, f64>,
+    vertex_weights: PyReadonlyArray1<'_, f64>,
+    part_map: PyReadonlyArray1<'_, i32>,
+    n_parts: i32,
+    kl_iterations: i32,
+    correlation_penalty: f64,
+) -> PyResult<(Py<PyArray1<i32>>, u64)> {
+    let mut pm = part_map.as_slice()?.to_vec();
+    let moves = partition::kl_refine(
+        adj_offsets.as_slice()?,
+        adj_neighbours.as_slice()?,
+        adj_scc_abs.as_slice()?,
+        vertex_weights.as_slice()?,
+        &mut pm,
+        n_parts,
+        kl_iterations,
+        correlation_penalty,
+    );
+    Ok((pm.into_pyarray(py).into(), moves))
 }

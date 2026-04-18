@@ -113,6 +113,19 @@ class CorrelationEdge:
     scc_weight: float = 0.0
 
 
+# ── Lazy Rust backend probe (KL refine) ──
+# `engine/src/partition.rs` exposes `kl_refine` with a CSR-flat ABI.
+# When the wheel is installed and the symbol is present, the
+# `_refine_rust` dispatcher uses it; otherwise we fall back to pure
+# Python (always available).
+try:
+    from sc_neurocore_engine import py_kl_refine as _rust_kl_refine
+    _HAS_RUST_KL_REFINE = True
+except (ImportError, AttributeError):
+    _rust_kl_refine = None
+    _HAS_RUST_KL_REFINE = False
+
+
 @dataclass
 class CorrelationAwareGraph:
     """Adjacency representation with per-edge SCC weights.
@@ -198,6 +211,7 @@ class HierarchicalPartitioner:
         kl_iterations: int = 10,
         correlation_penalty: float = 2.0,
         seed: int = 42,
+        refine_backend: str = "auto",
     ):
         self.num_partitions = num_partitions
         self.coarsen_threshold = coarsen_threshold
@@ -205,6 +219,14 @@ class HierarchicalPartitioner:
         self.correlation_penalty = correlation_penalty
         self.seed_allocator = LFSRSeedAllocator()
         self.rng = np.random.default_rng(seed)
+        # KL refine backend: "auto" picks Rust when wired, else
+        # Python; explicit values "rust" / "python" override (more
+        # backends added one-commit-per-language under #64).
+        if refine_backend not in ("auto", "rust", "python"):
+            raise ValueError(
+                f"refine_backend must be auto/rust/python, got {refine_backend!r}"
+            )
+        self.refine_backend = refine_backend
 
     def partition(
         self, graph: CorrelationAwareGraph
@@ -225,9 +247,26 @@ class HierarchicalPartitioner:
 
         adj = graph.adjacency()
         partitions = self._recursive_bisect(vertices, adj, graph, self.num_partitions)
-        partitions = self._refine(partitions, adj, graph)
+        partitions = self._dispatch_refine(partitions, adj, graph)
         seeds = self.seed_allocator.allocate(len(partitions))
         return partitions, seeds
+
+    def _dispatch_refine(
+        self,
+        partitions: List[List[int]],
+        adj: Dict[int, List[int]],
+        graph: CorrelationAwareGraph,
+    ) -> List[List[int]]:
+        """Backend dispatch for the KL refinement step."""
+        backend = self.refine_backend
+        if backend == "rust" and not _HAS_RUST_KL_REFINE:
+            raise RuntimeError(
+                "Rust KL refine requested but py_kl_refine not available; "
+                "install sc_neurocore_engine wheel."
+            )
+        if (backend == "auto" and _HAS_RUST_KL_REFINE) or backend == "rust":
+            return self._refine_rust(partitions, adj, graph)
+        return self._refine(partitions, adj, graph)
 
     def _recursive_bisect(
         self,
@@ -329,6 +368,73 @@ class HierarchicalPartitioner:
         sorted_v = sorted(vertices, key=lambda v: scores.get(v, 0))
         mid = len(sorted_v) // 2
         return sorted_v[:mid], sorted_v[mid:]
+
+    def _encode_csr(
+        self,
+        partitions: List[List[int]],
+        adj: Dict[int, List[int]],
+        graph: CorrelationAwareGraph,
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """Pack the per-partition state into the flat CSR-style buffers
+        every multi-language KL refine kernel expects:
+          - adj_offsets:    int64[V+1]
+          - adj_neighbours: int32[E_total]
+          - adj_scc_abs:    float64[E_total]
+          - vertex_weights: float64[V]
+          - part_map:       int32[V]
+        Edge cache is warmed once so the per-edge `edge_scc` lookup is
+        O(1) here too (no point re-paying the O(E) scan).
+        """
+        V = graph.num_vertices
+        graph._ensure_edge_cache()
+        offsets = np.zeros(V + 1, dtype=np.int64)
+        for v in range(V):
+            offsets[v + 1] = offsets[v] + len(adj.get(v, []))
+        n_edges = int(offsets[-1])
+        neighbours = np.zeros(n_edges, dtype=np.int32)
+        scc_abs = np.zeros(n_edges, dtype=np.float64)
+        for v in range(V):
+            base = int(offsets[v])
+            for k, n in enumerate(adj.get(v, [])):
+                neighbours[base + k] = n
+                scc_abs[base + k] = abs(graph.edge_scc(v, n))
+        vw = np.array(
+            [graph.vertex_weights.get(v, 1.0) for v in range(V)],
+            dtype=np.float64,
+        )
+        part_map = np.full(V, -1, dtype=np.int32)
+        for i, part in enumerate(partitions):
+            for v in part:
+                part_map[v] = i
+        return offsets, neighbours, scc_abs, vw, part_map
+
+    def _refine_rust(
+        self,
+        partitions: List[List[int]],
+        adj: Dict[int, List[int]],
+        graph: CorrelationAwareGraph,
+    ) -> List[List[int]]:
+        """Rust dispatch for `_refine` — bit-exact parity with Python."""
+        if _rust_kl_refine is None:
+            raise RuntimeError(
+                "Rust KL refine backend requested but py_kl_refine is "
+                "not available; install sc_neurocore_engine wheel."
+            )
+        offsets, neighbours, scc_abs, vw, pm0 = self._encode_csr(
+            partitions, adj, graph,
+        )
+        n_parts = len(partitions)
+        new_pm, _moves = _rust_kl_refine(
+            offsets, neighbours, scc_abs, vw, pm0,
+            n_parts, int(self.kl_iterations), float(self.correlation_penalty),
+        )
+        # Decode part_map back into List[List[int]] preserving partition
+        # index order so callers' downstream code is unchanged.
+        out: List[List[int]] = [[] for _ in range(n_parts)]
+        for v_int, p in enumerate(new_pm):
+            if 0 <= int(p) < n_parts:
+                out[int(p)].append(v_int)
+        return out
 
     def _refine(
         self,
