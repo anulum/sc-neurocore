@@ -4,96 +4,288 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Tests for canonical cortical microcircuit
+# SC-NeuroCore — Tests for Potjans & Diesmann 2014 cortical microcircuit
 
-"""Tests for CorticalColumn (Douglas & Martin 2004)."""
+"""Tests for the 8-population cortical microcircuit.
+
+Smoke and determinism tests use `scale=0.02` with
+`scale_correction=False` so that they finish in under ~5 s. Fidelity
+tests against Potjans Table 4 require the published lower-bound
+`scale=0.1` with full-scale in-degree preservation; those tests run
+~25 s and are isolated to the `TestPublishedFidelity` class so they
+can be filtered with `pytest -k 'not Fidelity'` for fast iteration.
+"""
 
 import numpy as np
+import pytest
 
-from sc_neurocore.network.cortical_column import CorticalColumn
+from sc_neurocore.network.cortical_column import (
+    CONN_PROBS,
+    CorticalColumn,
+    FULL_SIZES,
+    K_BG,
+    POPULATIONS,
+)
+
+
+# ── Smoke / property tests ───────────────────────────────────────────
 
 
 class TestCorticalColumn:
-    def test_step_output_keys(self):
-        col = CorticalColumn(n_per_layer=10, seed=42)
-        spikes = col.step(np.ones(10))
-        assert set(spikes.keys()) == {"l23_exc", "l23_inh", "l4", "l5", "l6"}
+    def test_creates_with_defaults(self):
+        col = CorticalColumn(scale=0.02, scale_correction=False, seed=42)
+        assert set(col.sizes.keys()) == set(POPULATIONS)
+        assert col.n_total == sum(col.sizes.values())
+        # Default scale=0.1 → ~7717 cells; here at 0.02 → ~1544.
+        assert 1000 < col.n_total < 2000
 
-    def test_step_output_shapes(self):
-        n = 8
-        col = CorticalColumn(n_per_layer=n, seed=42)
-        spikes = col.step(np.ones(n))
-        for layer_spikes in spikes.values():
-            assert layer_spikes.shape == (n,)
+    def test_invalid_scale_raises(self):
+        with pytest.raises(ValueError, match="scale"):
+            CorticalColumn(scale=0.0)
+        with pytest.raises(ValueError, match="scale"):
+            CorticalColumn(scale=1.5)
 
-    def test_spikes_are_binary(self):
-        col = CorticalColumn(n_per_layer=10, seed=42)
-        for _ in range(20):
-            spikes = col.step(np.ones(10) * 5.0)
-        for layer_spikes in spikes.values():
-            assert set(np.unique(layer_spikes)).issubset({0.0, 1.0})
+    def test_full_scale_sizes(self):
+        # At scale=1.0, sizes should match Potjans Table 5 exactly.
+        col = CorticalColumn(scale=1.0, scale_correction=False, seed=42)
+        for pop, expected in FULL_SIZES.items():
+            assert col.sizes[pop] == expected
 
-    def test_thalamic_input_drives_l4(self):
-        """Strong thalamic input should produce L4 spikes."""
-        col = CorticalColumn(n_per_layer=10, w_exc=0.5, seed=42)
-        total_l4 = 0.0
-        for _ in range(50):
-            spikes = col.step(np.ones(10) * 10.0)
-            total_l4 += spikes["l4"].sum()
-        assert total_l4 > 0
+    def test_step_returns_per_pop_spike_dict(self):
+        col = CorticalColumn(scale=0.02, scale_correction=False, seed=42)
+        spikes = col.step(dt=0.1)
+        assert set(spikes.keys()) == set(POPULATIONS)
+        for p, sp in spikes.items():
+            assert sp.shape == (col.sizes[p],)
+            assert sp.dtype == bool
 
-    def test_activity_propagates_to_l5(self):
-        """Activity should propagate from L4 → L2/3 → L5."""
-        col = CorticalColumn(n_per_layer=20, w_exc=1.0, threshold=0.5, seed=42)
-        total_l5 = 0.0
-        for _ in range(200):
-            spikes = col.step(np.ones(20) * 20.0)
-            total_l5 += spikes["l5"].sum()
-        assert total_l5 > 0
+    def test_simulate_returns_rasters(self):
+        col = CorticalColumn(scale=0.02, scale_correction=False, seed=42)
+        rasters = col.simulate(duration_ms=20.0, dt=0.1)
+        for p in POPULATIONS:
+            assert rasters[p].shape == (200, col.sizes[p])
+            assert rasters[p].dtype == bool
 
-    def test_inhibition_reduces_excitation(self):
-        """L2/3 inhibitory activity should suppress L2/3 excitatory."""
-        col_strong_inh = CorticalColumn(n_per_layer=10, w_inh=-0.5, w_exc=0.2, seed=42)
-        col_weak_inh = CorticalColumn(n_per_layer=10, w_inh=-0.01, w_exc=0.2, seed=42)
+    def test_simulate_zero_steps_raises(self):
+        col = CorticalColumn(scale=0.02, scale_correction=False, seed=42)
+        with pytest.raises(ValueError, match="duration_ms / dt"):
+            col.simulate(duration_ms=0.0, dt=0.1)
 
-        exc_strong = 0.0
-        exc_weak = 0.0
-        inp = np.ones(10) * 5.0
-        for _ in range(50):
-            s1 = col_strong_inh.step(inp)
-            s2 = col_weak_inh.step(inp)
-            exc_strong += s1["l23_exc"].sum()
-            exc_weak += s2["l23_exc"].sum()
-        # Stronger inhibition → fewer excitatory spikes (or equal)
-        assert exc_strong <= exc_weak + 5  # small tolerance
+    def test_dt_change_mid_run_raises(self):
+        col = CorticalColumn(scale=0.02, scale_correction=False, seed=42)
+        col.step(dt=0.1)
+        with pytest.raises(ValueError, match="dt changed mid-run"):
+            col.step(dt=0.2)
 
-    def test_run_output_shapes(self):
-        col = CorticalColumn(n_per_layer=5, seed=42)
-        results = col.run(np.ones(5) * 3.0, steps=20)
-        for layer_data in results.values():
-            assert layer_data.shape == (20, 5)
+    def test_no_background_no_spikes(self):
+        # Cut both the background drive and let the network alone:
+        # nothing should fire because there is no feedforward input.
+        col = CorticalColumn(
+            scale=0.02, scale_correction=False, bg_rate=0.0, seed=42,
+        )
+        rasters = col.simulate(duration_ms=100.0, dt=0.1)
+        total = sum(int(np.count_nonzero(rasters[p])) for p in POPULATIONS)
+        assert total == 0
 
-    def test_reset(self):
-        col = CorticalColumn(n_per_layer=5, seed=42)
-        col.run(np.ones(5) * 10.0, steps=20)
-        col.reset()
-        assert np.all(col.v_l4 == 0)
-        assert np.all(col.v_l5 == 0)
-        assert np.all(col.v_l23_exc == 0)
+    def test_reset_state_clears_voltages_and_buffers(self):
+        col = CorticalColumn(
+            scale=0.02, scale_correction=False, bg_rate=0.0, seed=42,
+        )
+        col.simulate(duration_ms=20.0, dt=0.1)
+        col.reset_state()
+        for p in POPULATIONS:
+            assert np.all(col.i_syn[p] == 0.0)
+            assert np.all(col.refrac[p] == 0.0)
+        # dt is dropped so the next step can pick a new dt without raising.
+        col.step(dt=0.05)
 
-    def test_no_input_no_spikes(self):
-        """Zero input should produce no spikes."""
-        col = CorticalColumn(n_per_layer=5, seed=42)
-        spikes = col.step(np.zeros(5))
-        for layer_spikes in spikes.values():
-            assert layer_spikes.sum() == 0
+    def test_population_rates_drops_burn_in(self):
+        col = CorticalColumn(
+            scale=0.02, scale_correction=False, bg_rate=0.0, seed=42,
+        )
+        rasters = col.simulate(duration_ms=200.0, dt=0.1)
+        rates = col.population_rates(rasters, dt=0.1, burn_in_ms=100.0)
+        for r in rates.values():
+            assert r == 0.0
 
-    def test_deterministic_with_seed(self):
-        """Same seed → same output."""
-        inp = np.ones(5) * 5.0
-        col_a = CorticalColumn(n_per_layer=5, seed=99)
-        col_b = CorticalColumn(n_per_layer=5, seed=99)
-        r_a = col_a.run(inp, steps=10)
-        r_b = col_b.run(inp, steps=10)
-        for k in r_a:
-            np.testing.assert_array_equal(r_a[k], r_b[k])
+    def test_population_rates_burn_in_eats_entire_run(self):
+        # When `burn_in_ms` ≥ recorded duration, every per-population
+        # slice is empty and the helper must return 0.0 instead of
+        # crashing on `arr.shape[1]`.
+        col = CorticalColumn(
+            scale=0.02, scale_correction=False, bg_rate=0.0, seed=42,
+        )
+        rasters = col.simulate(duration_ms=20.0, dt=0.1)
+        rates = col.population_rates(rasters, dt=0.1, burn_in_ms=200.0)
+        assert all(r == 0.0 for r in rates.values())
+
+    def test_repr_is_one_line_summary(self):
+        col = CorticalColumn(scale=0.02, scale_correction=False, seed=42)
+        s = repr(col)
+        assert s.startswith("CorticalColumn(")
+        assert "scale=0.02" in s
+        assert "n_total=" in s
+        assert "\n" not in s
+
+    def test_population_names_property(self):
+        col = CorticalColumn(scale=0.02, scale_correction=False, seed=42)
+        assert tuple(col.population_names) == POPULATIONS
+
+    def test_total_indegree_matches_potjans_table5(self):
+        # With scale_correction=True the per-target indegree should
+        # match the FULL-SCALE in-degree per Potjans Table 5
+        # (≈ Σ_s p[t,s] · N_s_full). We allow a 5 % tolerance for
+        # multapse rounding noise across seeds.
+        col = CorticalColumn(scale=0.1, scale_correction=True, seed=42)
+        for ti, target in enumerate(POPULATIONS):
+            expected = sum(
+                CONN_PROBS[ti, sj] * FULL_SIZES[POPULATIONS[sj]]
+                for sj in range(len(POPULATIONS))
+            )
+            measured = col.total_indegree(target)
+            assert abs(measured - expected) / expected < 0.05, (
+                f"{target}: measured {measured} vs expected {expected:.0f}"
+            )
+
+
+# ── Determinism ──────────────────────────────────────────────────────
+
+
+class TestDeterminism:
+    def test_same_seed_same_state(self):
+        a = CorticalColumn(scale=0.02, scale_correction=False, seed=99)
+        b = CorticalColumn(scale=0.02, scale_correction=False, seed=99)
+        for p in POPULATIONS:
+            np.testing.assert_array_equal(a.v[p], b.v[p])
+
+    def test_same_seed_same_rasters(self):
+        a = CorticalColumn(scale=0.02, scale_correction=False, seed=7)
+        b = CorticalColumn(scale=0.02, scale_correction=False, seed=7)
+        ra = a.simulate(duration_ms=20.0, dt=0.1)
+        rb = b.simulate(duration_ms=20.0, dt=0.1)
+        for p in POPULATIONS:
+            np.testing.assert_array_equal(ra[p], rb[p])
+
+    def test_different_seed_different_state(self):
+        a = CorticalColumn(scale=0.02, scale_correction=False, seed=1)
+        b = CorticalColumn(scale=0.02, scale_correction=False, seed=2)
+        # At least one population must have different initial voltages.
+        differs = any(
+            not np.array_equal(a.v[p], b.v[p]) for p in POPULATIONS
+        )
+        assert differs
+
+    def test_global_numpy_seed_does_not_leak(self):
+        np.random.seed(0)
+        a = CorticalColumn(scale=0.02, scale_correction=False, seed=42)
+        ra = a.simulate(duration_ms=10.0, dt=0.1)
+        np.random.seed(99999)
+        b = CorticalColumn(scale=0.02, scale_correction=False, seed=42)
+        rb = b.simulate(duration_ms=10.0, dt=0.1)
+        for p in POPULATIONS:
+            np.testing.assert_array_equal(ra[p], rb[p])
+
+
+# ── Connectivity & weights ───────────────────────────────────────────
+
+
+class TestConnectivity:
+    def test_populations_constant_matches_table5(self):
+        # Order is significant — many tests / docs rely on it.
+        assert POPULATIONS == (
+            "L23e", "L23i", "L4e", "L4i", "L5e", "L5i", "L6e", "L6i",
+        )
+
+    def test_conn_probs_shape_and_known_entries(self):
+        assert CONN_PROBS.shape == (8, 8)
+        # Spot-check a couple of entries from Potjans Table 5.
+        # L23e ← L23e (recurrent superficial-pyramidal): 0.1009
+        assert CONN_PROBS[0, 0] == pytest.approx(0.1009)
+        # L5e ← L5i (deep-layer reciprocal inhibition): 0.3726
+        assert CONN_PROBS[4, 5] == pytest.approx(0.3726)
+        # L4i ← L23i: zero per Binzegger
+        assert CONN_PROBS[3, 1] == pytest.approx(0.0029)
+
+    def test_k_bg_table5(self):
+        # Background in-degree per cell from Potjans Table 5.
+        assert K_BG["L23e"] == 1600
+        assert K_BG["L6e"] == 2900  # Largest of the 8.
+
+    def test_l4_to_l23e_weight_is_doubled(self):
+        # Per Potjans, the L4e → L2/3e edge is boosted to 2 · w_e.
+        col = CorticalColumn(scale=0.02, scale_correction=False, seed=42)
+        assert col.w_l4_to_l23e == 2.0 * col.w_e
+
+    def test_inhibitory_weight_uses_g_inh(self):
+        col = CorticalColumn(
+            scale=0.02, scale_correction=False, g_inh=4.0, seed=42,
+        )
+        assert col.w_i == pytest.approx(-4.0 * col.w_e)
+
+    def test_sparse_adjacency_built_for_every_nonzero_pair(self):
+        col = CorticalColumn(scale=0.02, scale_correction=False, seed=42)
+        nonzero_pairs = {
+            (POPULATIONS[i], POPULATIONS[j])
+            for i in range(8) for j in range(8)
+            if CONN_PROBS[i, j] > 0.0
+        }
+        assert set(col._W.keys()) == nonzero_pairs
+
+
+# ── Published fidelity (Potjans 2014 Table 4) ────────────────────────
+
+
+class TestPublishedFidelity:
+    """Pin the qualitative features of the asynchronous-irregular state.
+
+    These tests run the model at the published lower-bound
+    `scale=0.1` with full-scale in-degree preservation. Each takes
+    ~25 s on a modern CPU.
+    """
+
+    @pytest.fixture(scope="class")
+    def rasters(self):
+        col = CorticalColumn(scale=0.1, scale_correction=True, seed=42)
+        return col, col.simulate(duration_ms=600.0, dt=0.1)
+
+    def test_no_population_silent(self, rasters):
+        col, r = rasters
+        rates = col.population_rates(r, dt=0.1, burn_in_ms=200.0)
+        for p, rate in rates.items():
+            assert rate > 0.1, f"{p} silent at {rate:.3f} Hz"
+
+    def test_no_population_at_refractory_ceiling(self, rasters):
+        # T_ref = 2 ms → max sustainable rate ≈ 500 Hz. Asynchronous-
+        # irregular Potjans rates should sit well below 80 Hz.
+        col, r = rasters
+        rates = col.population_rates(r, dt=0.1, burn_in_ms=200.0)
+        for p, rate in rates.items():
+            assert rate < 80.0, f"{p} saturated at {rate:.1f} Hz"
+
+    def test_inhibitory_faster_than_excitatory_overall(self, rasters):
+        col, r = rasters
+        rates = col.population_rates(r, dt=0.1, burn_in_ms=200.0)
+        e_mean = np.mean([rates[p] for p in POPULATIONS if not p.endswith("i")])
+        i_mean = np.mean([rates[p] for p in POPULATIONS if p.endswith("i")])
+        assert i_mean > e_mean, (
+            f"Potjans E/I asymmetry violated: E={e_mean:.2f} I={i_mean:.2f}"
+        )
+
+    def test_l4e_in_published_band(self, rasters):
+        # L4e is the main thalamic-input layer in Potjans; its rate
+        # is one of the most reproducible (4.51 Hz published).
+        col, r = rasters
+        rates = col.population_rates(r, dt=0.1, burn_in_ms=200.0)
+        assert 1.0 < rates["L4e"] < 15.0, (
+            f"L4e rate {rates['L4e']:.2f} Hz outside [1, 15] sanity band"
+        )
+
+    def test_zero_background_silent(self):
+        # Sanity: with bg_rate = 0 the recurrent network has nothing
+        # to bootstrap and stays silent indefinitely.
+        col = CorticalColumn(
+            scale=0.05, scale_correction=True, bg_rate=0.0, seed=42,
+        )
+        r = col.simulate(duration_ms=100.0, dt=0.1)
+        rates = col.population_rates(r, dt=0.1, burn_in_ms=20.0)
+        assert max(rates.values()) == 0.0

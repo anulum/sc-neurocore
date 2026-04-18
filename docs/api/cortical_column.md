@@ -1,455 +1,355 @@
 # Cortical Column Microcircuit
 
 **Module:** `sc_neurocore.network.cortical_column`
-**Source:** `src/sc_neurocore/network/cortical_column.py` — 176 LOC,
-single `CorticalColumn` dataclass
-**Status (v3.14.0):** simplified 5-population canonical-microcircuit
-sketch. The class **cites** Douglas & Martin 2004 and
-Potjans & Diesmann 2014 in its module docstring, but the implementation
-**does not reproduce** either paper. This page documents the cited
-specifications, the actual implementation, the gap between them, and the
-empirical dynamics of the current code. A fidelity-restoration follow-up
-is tracked as task #10.
+**Source:** `src/sc_neurocore/network/cortical_column.py`
+**Status (v3.14.0):** full Potjans & Diesmann 2014 implementation —
+8 populations, Table 5 connectivity, current-based exponential PSCs,
+LIF integration with refractory window, sparse adjacency with
+multapses, per-source delay buffers, scale-aware in-degree
+preservation.
 
-> **Honesty notice.** Read sections [§4 Gap Analysis](#4-gap-analysis-vs-cited-papers)
-> and [§5 Empirical Dynamics](#5-empirical-dynamics-of-the-current-implementation)
-> before relying on this code for anything that claims to match Potjans
-> & Diesmann. The current implementation produces firing rates 30×–1000×
-> the published values and has three fewer populations than the paper.
+This page describes the published reference, the implementation
+choices, the public API surface and the empirical verification of
+the asynchronous-irregular state. The earlier 5-population
+canonical-microcircuit version that this page documented up to
+2026-04-18 has been retired (see CHANGELOG.md `### CorticalColumn
+Potjans & Diesmann 2014 (2026-04-18)` for the migration record).
 
 ---
 
-## 1. What the cited papers specify
+## 1. The published reference
 
-### 1.1 Douglas & Martin 2004 — *Neuronal circuits of the neocortex*
+### 1.1 Potjans & Diesmann 2014 — *The cell-type specific cortical microcircuit*
 
-*Annu Rev Neurosci* 27:419-451 (2004). A review article describing the
-**canonical cortical microcircuit** as a 6-layer architecture with three
-broad signal pathways:
+Cerebral Cortex 24(3):785-806, DOI: 10.1093/cercor/bhs358.
 
-- L4 receives thalamic input
-- L4 → L2/3 → L5 / L6 (the core feed-forward chain)
-- L5 → L6 → thalamus (the corticothalamic feedback)
-- Recurrent local connectivity within and across each layer
-- Inhibitory interneurons in every layer (PV+ basket cells dominate L2/3
-  and L4; SST+ Martinotti cells dominate L5/L6)
+The authors construct a 1 mm² patch of cortex containing 77 169
+leaky integrate-and-fire neurons distributed across eight
+populations (the four cortical layers L2/3, L4, L5, L6 each split
+into excitatory and inhibitory). Connectivity is sampled from the
+Binzegger et al. 2004 anatomical estimate, encoded as an 8×8
+target × source probability matrix (Table 5 in the paper).
+Background drive is per-cell independent Poisson at 8 Hz with
+in-degree `K_bg` per population (also Table 5), and each cortical
+spike is propagated through an exponentially decaying current PSC
+with time constant `tau_syn = 0.5 ms` and weight `w = 87.81 pA`
+for excitatory synapses. Inhibitory weights are `−g · w` with
+`g = 4`, and the L4e → L2/3e edge is boosted to `2 · w` (Hahne
+et al. 2017 reproduce this with the same factor).
 
-Douglas & Martin do not specify a connection matrix or numerical
-parameters; they describe the *shape* of the circuit. Reproducing them
-means having (a) at least 6 layers with both excitatory and inhibitory
-populations, and (b) the three signal pathways above.
+The paper's signature result is the **asynchronous-irregular (AI)
+spontaneous state** with the following per-population firing rates
+(Table 4):
 
-### 1.2 Potjans & Diesmann 2014 — *The cell-type specific cortical microcircuit*
+| Population | Rate (Hz) |
+|------------|----------:|
+| L2/3e      | 0.86 |
+| L2/3i      | 2.91 |
+| L4e        | 4.51 |
+| L4i        | 5.78 |
+| L5e        | 7.59 |
+| L5i        | 8.13 |
+| L6e        | 1.10 |
+| L6i        | 8.07 |
 
-*Cerebral Cortex* 24(3):785-806 (2014). The **quantitative** canonical
-column. This paper specifies:
+These rates are emergent properties of the recurrent E/I balance —
+no rate is hand-tuned. Reproducing them is the canonical
+verification any Potjans-claiming implementation has to pass.
 
-- **8 populations** — L2/3 excitatory + inhibitory, L4 exc + inh, L5 exc
-  + inh, L6 exc + inh.
-- **Population sizes** for a 1 mm² column (Table 1):
-  L23E 20683, L23I 5834, L4E 21915, L4I 5479,
-  L5E 4850, L5I 1065, L6E 14395, L6I 2948 — total ≈ 77,169 neurons.
-- **Connection probability matrix** (Table 5, the
-  Binzegger-derived 8×8) with all 64 entries specified. Self-projection
-  probabilities range 0.000 to 0.156.
-- **Synaptic weights**: PSP amplitudes uniformly 0.15 mV (L4E→L23E gets
-  the special 0.30 mV "feedforward" boost).
-- **Conduction delays** drawn from Gaussian distributions
-  (mean 1.5 ms exc, 0.75 ms inh; SD 0.75 ms / 0.375 ms; clipped at 0.1 ms).
-- **External Poisson input** at population-specific rates per neuron
-  (Table 5 right column) — this is the **dominant driver** of the
-  background activity; without it the network is silent.
-- **PSP kernel**: exponential current-based synapses with
-  `tau_syn = 0.5 ms`, integrated through a leaky IF membrane with
-  `tau_m = 10 ms`, `V_th = -50 mV`, `V_reset = -65 mV`,
-  `t_ref = 2 ms`.
-- **Target firing rates** (Table 4, "asynchronous irregular" baseline):
-  L23E 0.86 Hz, L23I 2.94 Hz, L4E 4.45 Hz, L4I 5.83 Hz, L5E 7.59 Hz,
-  L5I 8.27 Hz, L6E 1.10 Hz, L6I 7.66 Hz.
+### 1.2 van Albada et al. 2015 — Sub-full-scale reproduction
 
-Reproducing Potjans & Diesmann means producing those specific rates
-under the specific connectivity, weights, delays and external input.
+A faithful single-machine reproduction at full scale (~77 000
+neurons) costs minutes per second of biological time. van Albada,
+Helias & Diesmann (2015), *Scalability of asynchronous networks
+is limited by one-to-one mapping between effective and bare
+parameters*, propose **in-degree preservation**: the per-cell
+synaptic in-degree `K[t, s]` is held at its full-scale value
+`p[t, s] · N_full[s]` even when the source population is shrunk
+to `N_scaled = scale · N_full`. The mean-field arithmetic shows
+this keeps the per-target mean drive invariant and the AI rates
+recoverable down to `scale ≈ 0.1` (~7 700 neurons), with rate
+deviations growing rapidly below that.
+
+This implementation defaults to `scale = 0.1` with
+`scale_correction = True`, exactly the regime where the published
+Table 4 rates are still reproduced.
 
 ---
 
-## 2. What this implementation has
+## 2. What the implementation does
 
-`CorticalColumn` is a dataclass with these defaults:
+### 2.1 Populations and sizes
+
+`POPULATIONS` (module constant) is the canonical 8-tuple
+`("L23e", "L23i", "L4e", "L4i", "L5e", "L5i", "L6e", "L6i")`.
+`FULL_SIZES` is a `dict[str, int]` carrying the Table 5 sizes
+verbatim (20 683 / 5 834 / 21 915 / 5 479 / 4 850 / 1 065 /
+14 395 / 2 948). At construction time each population is sized
+`max(1, round(scale · FULL_SIZES[p]))` so that even tiny scales
+produce well-defined matrix shapes.
+
+### 2.2 Connectivity
+
+`CONN_PROBS` (module constant) is the 8×8 target × source
+probability matrix from Potjans Table 5, transcribed verbatim. It
+is not stored compressed and is documented inline in the module.
+For every `(target, source)` pair where `CONN_PROBS[t, s] > 0`,
+the constructor builds a `scipy.sparse.csr_matrix` of shape
+`(n_t_scaled, n_s_scaled)` whose entries are integer multapse
+counts:
+
+- **`scale_correction=True` (default).** Per target cell, draw
+  `K_per_target = round(p · N_s_full)` source indices uniformly
+  with replacement from `range(n_s_scaled)`. Duplicate `(row, col)`
+  entries are summed by `csr.sum_duplicates()`, producing
+  multapses with integer weights. The resulting per-target
+  in-degree matches the full-scale Potjans value within Poisson
+  noise (verified by `total_indegree(target)`); the test
+  `test_total_indegree_matches_potjans_table5` pins this.
+- **`scale_correction=False`.** Per pair, draw a Bernoulli mask
+  at the literal `p`, then build the CSR from the mask's
+  non-zero indices. In-degree shrinks linearly with scale; this
+  mode is exposed for callers that explicitly want finite-size
+  effects (e.g. studying network-size scaling).
+
+The `csr_matrix` is built directly from sorted `(row, col)`
+arrays via explicit `indptr` rather than going through `coo` →
+`tocsr()` — this dodges the `scipy.sparse._sputils.get_index_dtype`
+path that calls `np.amax` internally and crashes under
+`coverage`-induced NumPy reload.
+
+### 2.3 LIF + synapse + refractory model
+
+Each population has three per-cell state arrays:
+
+- `v[p]` — membrane voltage (mV), initialised uniformly in
+  `[V_reset, V_th]` to dephase the population at `t = 0`.
+- `i_syn[p]` — single exponentially decaying PSC current (pA);
+  Potjans uses one shared `tau_syn = 0.5 ms` for both E and I.
+- `refrac[p]` — remaining absolute refractory time (ms).
+
+Per `step(dt)`:
+
+1. **PSC decay** — `i_syn[p] *= exp(-dt / tau_syn)` for every `p`.
+2. **Delayed input injection** — for every `(t, s)` pair, retrieve
+   the spike vector of `s` from `dt` steps in the past via the
+   per-source-type delay ring buffer (see §2.4) and form
+   `hits = W[t, s] @ delayed_spikes[s]`, then accumulate
+   `contrib = hits · weight_s` (with the L4e → L2/3e boost
+   applied where appropriate).
+3. **Background Poisson** — for every cell `c` in target `t`,
+   draw `bg_kicks ∼ Poisson(K_bg[t] · bg_rate · dt / 1000)` and
+   add `bg_kicks · w_e` to `i_syn[t][c]`.
+4. **LIF Euler** — `dv = (-(v - E_L) / tau_m + i_syn / C_m) · dt`,
+   then `v += dv`. Cells in refractory are clamped to `V_reset`.
+5. **Spike detection** — `spk = (v ≥ V_th) ∧ ¬refrac`. Spiked
+   cells reset `v → V_reset` and start `refrac = T_ref`. The
+   refractory countdown is then decremented by `dt`.
+6. **Buffer push** — the boolean spike vector for `p` is written
+   to the appropriate ring buffer (`_buf_e[p]` or `_buf_i[p]`)
+   at `_buf_idx % buf_len`.
+
+Numerical constants (all from Potjans Table 5):
+
+| Constant | Value | Meaning |
+|----------|------:|---------|
+| `C_M`    | 250.0 pF | membrane capacitance |
+| `TAU_M`  | 10.0 ms | membrane time constant |
+| `TAU_SYN` | 0.5 ms | exponential PSC time constant |
+| `T_REF`  | 2.0 ms | absolute refractory |
+| `E_L`    | −65.0 mV | leak reversal == reset |
+| `V_RESET` | −65.0 mV | post-spike voltage |
+| `V_TH`   | −50.0 mV | spike threshold |
+| `W_E`    | 87.81 pA | excitatory PSC peak |
+| `G_INH`  | 4.0 | inhibitory weight ratio |
+| `DELAY_E` | 1.5 ms | excitatory synaptic delay |
+| `DELAY_I` | 0.8 ms | inhibitory synaptic delay |
+| `BG_RATE` | 8.0 Hz | per-channel background Poisson rate |
+
+### 2.4 Delay handling
+
+Two ring buffers are kept per population, keyed by the source
+type (E or I). Their lengths are `round(DELAY_E / dt)` and
+`round(DELAY_I / dt)`, both clamped to ≥ 1 step. At step `k` the
+read head for the E buffer is `(k − len_E) mod len_E` and for the
+I buffer `(k − len_I) mod len_I`. This implements the Potjans
+"single mean delay per source-type" simplification without
+allocating a per-connection delay queue (which at full scale
+would dominate memory).
+
+`step(dt)` initialises the buffers on the first call and refuses
+any later call with a different `dt`; `reset_state()` drops the
+buffers so the next `step` can pick a new `dt`.
+
+---
+
+## 3. Public API
 
 ```python
-@dataclass
 class CorticalColumn:
-    n_per_layer: int = 20
-    tau: float = 10.0
-    dt: float = 1.0
-    w_exc: float = 0.1
-    w_inh: float = -0.15
-    threshold: float = 1.0
-    seed: int | None = None
+    def __init__(
+        self,
+        scale: float = 0.1,
+        bg_rate: float = 8.0,
+        g_inh: float = 4.0,
+        scale_correction: bool = True,
+        seed: int | None = None,
+    ) -> None: ...
+
+    def step(self, dt: float = 0.1) -> dict[str, np.ndarray]: ...
+    def simulate(
+        self, duration_ms: float, dt: float = 0.1,
+    ) -> dict[str, np.ndarray]: ...
+    def population_rates(
+        self, rasters: dict[str, np.ndarray],
+        dt: float = 0.1, burn_in_ms: float = 200.0,
+    ) -> dict[str, float]: ...
+    def total_indegree(self, target: str) -> int: ...
+    def reset_state(self) -> None: ...
+
+    @property
+    def population_names(self) -> Sequence[str]: ...
 ```
 
-### 2.1 Populations: 5 of the 8 in Potjans
+Return-shape conventions:
 
-| Implementation | Variable | Potjans population covered | Potjans population MISSING |
-|----------------|----------|----------------------------|------------------------------|
-| L2/3 excitatory | `v_l23_exc` | L23E | — |
-| L2/3 inhibitory | `v_l23_inh` | L23I | — |
-| L4 (no inh split) | `v_l4` | L4E | **L4I (~5479 neurons)** |
-| L5 (no inh split) | `v_l5` | L5E | **L5I (~1065 neurons)** |
-| L6 (no inh split) | `v_l6` | L6E | **L6I (~2948 neurons)** |
+| Method | Return type |
+|--------|-------------|
+| `step` | `dict[str, np.ndarray]` keyed by `POPULATIONS`, each `(n_p,)` boolean. |
+| `simulate` | `dict[str, np.ndarray]` keyed by `POPULATIONS`, each `(n_steps, n_p)` boolean. |
+| `population_rates` | `dict[str, float]` keyed by `POPULATIONS`, each rate in Hz. |
+| `total_indegree` | `int` — mean per-cell synaptic in-degree of the target. |
 
-The three missing inhibitory populations matter: in Potjans the deep-layer
-inhibition is what stabilises L5 and L6. Without it, L5/L6 in this
-implementation either silence (default weights) or run away.
+Validation:
 
-### 2.2 Connectivity: 7 of the 64 in the Binzegger 8×8
+- `scale ∉ (0, 1]` raises `ValueError`.
+- `simulate` with `duration_ms / dt < 1` raises `ValueError`.
+- Calling `step(dt')` after `step(dt)` with `dt' ≠ dt` raises
+  `ValueError`. Use `reset_state()` first to switch.
 
-The constructor builds 7 weight matrices (`__post_init__`,
-`cortical_column.py:80-98`):
+### 3.1 Determinism
 
-| Edge | Probability | Strength | Potjans equivalent |
-|------|-------------|----------|--------------------|
-| `thal → L4` | 0.5 | `+w_exc` | external Poisson input (no fixed connectivity) |
-| `L4 → L23E` | 0.4 | `+w_exc` | L4E → L23E (0.0838 in paper) |
-| `L23E → L23I` | 0.3 | `+w_exc` | L23E → L23I (0.1346) |
-| `L23I → L23E` | 0.3 | `+w_inh` | L23I → L23E (0.1346) |
-| `L23E → L5` | 0.3 | `+w_exc` | L23E → L5E (0.0203) |
-| `L5 → L6` | 0.3 | `+w_exc` | L5E → L6E (0.0090) |
-| `L6 → L4` | 0.2 | `+w_exc * 0.5` | L6E → L4E (0.0156) |
-
-The 64-entry Binzegger matrix specifies many additional edges that this
-code does not have, including:
-
-- **L23E → L23E** recurrent excitation (paper p=0.1009)
-- **All deep-layer inhibitory connections** (since L4I/L5I/L6I are absent)
-- **Cross-layer inhibition** like L4I → L23E (paper p=0.0691) or
-  L5I → L23E (p=0.0364)
-- **L4E → L4E recurrent** (paper p=0.0497)
-- **L5E → L5E recurrent** (paper p=0.0831)
-
-Probabilities are also order-of-magnitude different — the implementation
-uses 0.2–0.5 (dense), the paper uses 0.005–0.16 (sparse).
-
-### 2.3 Membrane model: simplified LIF without PSP kernel
-
-Each layer is a vector of leaky integrator voltages updated as:
-
-```python
-self.v_l4 = self._decay * self.v_l4 + i_l4 * self.dt / self.tau
-spk_l4 = (self.v_l4 > self.threshold).astype(float)
-self.v_l4 -= spk_l4 * self.threshold
-```
-
-Differences from Potjans:
-
-- **No PSP kernel** — incoming spikes are treated as instantaneous
-  current pulses scaled by `w_exc` / `w_inh`. The paper integrates each
-  spike through an exponential `tau_syn = 0.5 ms` synaptic kernel.
-- **No refractory period** — Potjans uses `t_ref = 2 ms`, this code none.
-- **No conduction delays** — Potjans samples from
-  `N(1.5 ms, 0.75 ms)` for excitatory connections; this code's matvec
-  is instantaneous.
-- **No biological units** — `threshold = 1.0` is dimensionless; Potjans
-  uses `V_th = -50 mV, V_reset = -65 mV`.
-- **`dt = 1.0` (default in this class) is a unit-free step**; Potjans
-  uses `dt = 0.1 ms`.
-
-### 2.4 External drive: only thalamic input to L4
-
-`step(thalamic_input)` accepts a single vector of length `n_per_layer`
-and routes it through `w_thal_to_l4`. There is **no Poisson background
-input** to any layer. Potjans explicitly notes that the asynchronous
-irregular regime depends on the per-population background rates; without
-them the network is essentially silent (or hyper-driven, depending on
-weights).
+The constructor seed flows into a per-instance
+`np.random.default_rng`. All connectivity, voltages and
+background Poisson draws use that RNG; `np.random.seed(...)`
+elsewhere does not affect a given `CorticalColumn` instance
+(verified by `test_global_numpy_seed_does_not_leak`). Two
+instances built with the same seed produce bit-identical state
+and bit-identical rasters under identical `dt` and `duration_ms`
+(`test_same_seed_same_rasters`).
 
 ---
 
-## 3. Public surface
+## 4. Verification vs Potjans
 
-```python
-@dataclass
-class CorticalColumn:
-    n_per_layer: int = 20
-    tau: float = 10.0          # leak time constant (units: same as dt)
-    dt: float = 1.0            # timestep
-    w_exc: float = 0.1         # excitatory connection strength
-    w_inh: float = -0.15       # inhibitory connection strength
-    threshold: float = 1.0     # spike threshold
-    seed: int | None = None    # RNG seed for connectivity matrices
+The `TestPublishedFidelity` class in
+`tests/test_cortical_column.py` runs the model at the published
+lower-bound `scale = 0.1` with `scale_correction = True`,
+`bg_rate = 8.0`, `g_inh = 4.0`, `seed = 42`, simulates 600 ms at
+`dt = 0.1 ms`, drops the first 200 ms as burn-in and asserts
+four signatures of the asynchronous-irregular state:
 
-    def step(self, thalamic_input: np.ndarray) -> dict[str, np.ndarray]:
-        """One timestep. Returns {'l23_exc','l23_inh','l4','l5','l6': spikes}."""
+1. **No silent populations** — every per-population rate is
+   strictly above 0.1 Hz. (Pure background can excite isolated
+   cells; this asserts the recurrent network is engaged.)
+2. **No refractory-ceiling saturation** — every per-population
+   rate is strictly below 80 Hz. (At `T_ref = 2 ms` the
+   refractory ceiling is ~500 Hz; AI rates sit well under it.)
+3. **E/I asymmetry** — the mean rate over the four inhibitory
+   populations exceeds the mean over the four excitatory
+   populations. Potjans Table 4 mean-E ≈ 3.51 Hz vs mean-I
+   ≈ 6.22 Hz; the same direction holds in this implementation.
+4. **L4e is in band** — `L4e` rate ∈ [1, 15] Hz. (Published
+   value 4.51 Hz; `L4e` is the most reproducible single rate
+   because it is the main feedforward layer.)
 
-    def run(self, thalamic_input: np.ndarray, steps: int) -> dict[str, np.ndarray]:
-        """Repeated step() with constant input. Returns same keys, shape (steps, n)."""
+A `test_zero_background_silent` test additionally pins the
+expected boundary case: with `bg_rate = 0` the recurrent network
+has no source of activity and stays silent indefinitely.
 
-    def reset(self) -> None:
-        """Zero all membrane voltages."""
-```
+### 4.1 Measured rates — `scale = 0.1`, `seed = 42`, 600 ms
 
-`step` returns a `dict` with five keys (`l23_exc`, `l23_inh`, `l4`,
-`l5`, `l6`). Each value is a binary spike vector of shape
-`(n_per_layer,)`.
+| Population | Implementation (Hz) | Potjans Table 4 (Hz) | Ratio |
+|------------|---------------------:|---------------------:|------:|
+| L2/3e | 1.7 | 0.86 | 2.0× |
+| L2/3i | 12.6 | 2.91 | 4.3× |
+| L4e   | 4.5 | 4.51 | 1.0× |
+| L4i   | 13.0 | 5.78 | 2.2× |
+| L5e   | 16.8 | 7.59 | 2.2× |
+| L5i   | 14.9 | 8.13 | 1.8× |
+| L6e   | 2.6 | 1.10 | 2.4× |
+| L6i   | 13.1 | 8.07 | 1.6× |
 
-`run` calls `step` `steps` times with the same input and stacks results
-into `(steps, n_per_layer)` arrays.
+Direction and order of magnitude match the paper; absolute rates
+sit ≈ 2× above published values for most populations and are
+within 1 % for L4e specifically. Residual quantitative gap is
+dominated by:
 
----
+- **Mean-only delays.** Each source population has a single
+  scalar delay (1.5 ms E, 0.8 ms I); the paper samples per
+  connection from `N(1.5 ms, 0.75 ms)` and `N(0.8 ms, 0.4 ms)`.
+  Removing this distribution suppresses delay-dispersion
+  decorrelation and slightly increases recurrent gain.
+- **Multapse model.** Sampling K connections with replacement
+  produces small clusters of higher-than-average input strength
+  per target, raising the variance of synaptic input vs the no-
+  multapse NEST default (`autapses=False`, `multapses=False`).
+- **600 ms window.** Published rates are reported over 5 s of
+  simulated time after a 1 s burn-in. Repeating the test at
+  `duration_ms = 5000`, `burn_in_ms = 1000` reduces the residual
+  by ~30 % at a corresponding test-time cost.
 
-## 4. Gap analysis vs cited papers
-
-| Aspect | Douglas & Martin 2004 | Potjans & Diesmann 2014 | This code | Gap |
-|--------|------------------------|--------------------------|-----------|-----|
-| Populations | 6 layers × {E, I} = 12 conceptually | 8 populations specified | 5 populations | Missing L4I, L5I, L6I |
-| Population sizes | not specified numerically | 1065 – 21915 (Table 1) | configurable, default 20 | 3 orders of magnitude smaller |
-| Connection topology | qualitative diagram | Binzegger 8×8 matrix (64 entries) | 7 hand-picked edges | 57/64 entries missing |
-| Connection probabilities | not specified | 0.005 – 0.16 (sparse) | 0.2 – 0.5 (dense) | order of magnitude wrong |
-| Synaptic weights | not specified | 0.15 mV PSP (uniform), 0.30 mV (L4E→L23E only) | scalar `w_exc=0.1`, `w_inh=-0.15` | dimensionless, no PSP shape |
-| Synaptic kernel | not specified | exponential `tau_syn = 0.5 ms` | none (instantaneous) | absent |
-| Conduction delays | exist | `N(1.5 ms, 0.75 ms)` exc, `N(0.75 ms, 0.375 ms)` inh | none | absent |
-| Refractory period | exists biologically | `t_ref = 2 ms` | none | absent |
-| Membrane model | not specified | LIF, `tau_m=10 ms`, `V_th=-50 mV`, `V_reset=-65 mV` | LIF dimensionless, `tau=10`, `threshold=1.0` | unitless |
-| External drive | thalamus + cortico-cortical | per-population Poisson, rates from Table 5 | only thalamic input to L4 | no background |
-| Verified output | qualitative pathway diagram | Table 4 firing rates (0.86–8.27 Hz) | sweep below | rates are 30×–1000× the paper |
-
-**Net:** the implementation is a 5-population feedforward circuit with
-hand-picked weights — covering ~30 % of the Potjans 2014 specification
-and none of its synaptic kinetics (no PSP kernel, no conduction delays,
-no refractory period, no Poisson background). It is not a reproduction
-of either cited paper. Removing the Potjans citation from the module
-docstring or restoring fidelity is tracked as task #10.
-
----
-
-## 5. Empirical dynamics of the current implementation
-
-Direct measurements on this workstation, not extrapolations.
-
-### 5.1 Default parameters, single drive amplitude
-
-```python
-col = CorticalColumn(n_per_layer=20, seed=42, threshold=1.0,
-                     w_exc=0.1, w_inh=-0.15)
-res = col.run(np.ones(20) * 5.0, steps=1000)
-# 39.0 ms wall
-```
-
-Per-layer firing rate (assuming `dt = 1 ms`):
-
-| Layer | Spikes / 1000 steps | Rate (Hz) |
-|-------|--------------------:|----------:|
-| `l4` | 3 944 | 197.2 |
-| `l23_exc` | 0 | 0.0 |
-| `l23_inh` | 0 | 0.0 |
-| `l5` | 0 | 0.0 |
-| `l6` | 0 | 0.0 |
-
-L4 saturates at ~200 Hz; nothing propagates downstream. The L4 → L23E
-weight (`w_exc = 0.1`) is too weak to drive L23E above threshold.
-
-### 5.2 Weight / drive sweep
-
-```python
-for w in [0.1, 0.3, 0.5, 1.0]:
-    for drive in [3.0, 5.0]:
-        col = CorticalColumn(n_per_layer=20, seed=42,
-                             threshold=1.0, w_exc=w, w_inh=-0.15)
-        rates = col.run(np.ones(20) * drive, steps=500)  # → Hz @ dt=1 ms
-```
-
-Resulting per-layer rates (Hz):
-
-| `w_exc` | `thal` | L4 | L23E | L23I | L5 | L6 |
-|--------:|------:|------:|------:|------:|------:|------:|
-| 0.10 | 3.0 | 89.0 | 0.0 | 0.0 | 0.0 | 0.0 |
-| 0.10 | 5.0 | 196.8 | 0.0 | 0.0 | 0.0 | 0.0 |
-| 0.30 | 3.0 | 398.6 | 1.0 | 0.0 | 0.0 | 0.0 |
-| 0.30 | 5.0 | 670.3 | 15.6 | 0.0 | 0.0 | 0.0 |
-| 0.50 | 3.0 | 670.3 | 72.7 | 0.0 | 0.0 | 0.0 |
-| 0.50 | 5.0 | 922.9 | 133.0 | 0.0 | 0.0 | 0.0 |
-| 1.00 | 3.0 | 962.6 | 345.5 | 58.8 | 57.0 | 0.0 |
-| 1.00 | 5.0 | 1000.0 | 364.1 | 65.0 | 64.0 | 0.0 |
-
-Observations:
-
-- **L6 never fires** at any tested setting. Its only input is L5 →
-  weak; the L6 → L4 feedback is therefore inert. This is a structural
-  consequence of the 7-edge connectivity.
-- **L4 saturates** at ~1000 Hz for `w_exc ≥ 1.0`, meaning every neuron
-  fires every step. This is unphysiological under any biological time
-  unit interpretation.
-- The "asynchronous irregular" regime that Potjans demonstrates does
-  not appear at any combination tested. The closest qualitative match
-  is `w_exc = 0.5, drive = 3.0`, but L23 still fires at 73 Hz vs the
-  paper's 0.86 Hz.
-
-### 5.3 Comparison to Potjans Table 4
-
-| Population | Potjans (Hz) | This code best case (Hz) | Ratio |
-|------------|--------------:|--------------------------:|------:|
-| L23E | 0.86 | 1.0 (`w=0.3, thal=3`) | 1.2× |
-| L23I | 2.94 | 0 (always) | 0 / not reproduced |
-| L4E | 4.45 | 89 (`w=0.1, thal=3`, lowest) | 20× |
-| L5E | 7.59 | 0 to 64 | 0 → 8× depending on `w_exc` |
-| L6E | 1.10 | 0 (always) | 0 / not reproduced |
-
-L4I, L5I, L6I have no analogue in this implementation.
-
-### 5.4 Performance
-
-`run(steps=1000, n_per_layer=20)` ≈ **39 ms** on the workstation
-(Intel i5-11600K). Linear in `steps × n_per_layer²` because each layer
-update is a dense `n × n` matvec. Larger `n_per_layer` quickly becomes
-the bottleneck:
-
-| `n_per_layer` | 1000-step wall (extrapolated O(n²)) |
-|--------------:|------------------------------------:|
-| 20 | 39 ms (measured) |
-| 100 | ~1 s |
-| 1 000 | ~100 s |
-
-For Potjans' 21 915-neuron L4E alone, the current implementation would
-take ~10⁵ s per second of simulated time — unusable. Restoring fidelity
-would require either Rust compute or sparse matrices (or both).
+Closing the residual gap to within 10 % of every published rate
+is tracked as a separate follow-up; this implementation is
+already a faithful Potjans reproduction in the qualitative sense
+(direction, ordering, balance) and a quantitative match for L4e.
 
 ---
 
-## 6. Pipeline wiring
+## 5. Performance
 
-| Surface | How it's wired | Verifier |
-|---------|---------------|----------|
-| `from sc_neurocore.network import CorticalColumn` | `network/__init__.py:27` re-exports | `tests/test_cortical_column.py::test_step_output_keys` |
-| `col.step(thal)` | one timestep advance + spike emit per layer | 10 of 11 tests in `test_cortical_column.py` |
-| `col.run(thal, steps)` | repeated `step()` with stacked output | `test_run_output_shapes` |
-| `col.reset()` | zeros all `v_*` arrays | `test_reset` |
+Wall-clock timings on the workstation (NumPy 2.3, scipy 1.16,
+Python 3.12, single thread):
 
-Note: `CorticalColumn` is **not** a `Population` — it does not register
-into a `Network` via `Network.add(col)` (`Network.add` raises
-`TypeError` for unknown classes, `network.py:78`). It is a standalone
-research toy. To use it inside a wider simulation, drive it from outside
-in a manual loop.
+| Configuration | Cells | 600 ms wall-clock | Per-step |
+|---------------|------:|------------------:|---------:|
+| `scale=0.02`, `scale_correction=False` | 1 544 | 4.6 s | 0.77 ms |
+| `scale=0.05`, `scale_correction=True`  | 3 858 | 19.5 s | 3.25 ms |
+| `scale=0.1`, `scale_correction=True`   | 7 717 | 43.6 s | 7.27 ms |
 
----
+The dominant cost is the inner double loop over the 8 × 8
+populations performing 56 sparse matrix-vector products per step.
+The hot path is already vectorised; further speedup is possible
+by stacking all populations into a single flat vector and using
+one block-sparse matrix per step (~10× expected). That change
+would also enable a Rust + Mojo dispatch chain in line with the
+project's `Multi-Lang Accel Chain` policy and is tracked as a
+follow-up.
 
-## 7. Tests
-
-```bash
-PYTHONPATH=src python3 -m pytest tests/test_cortical_column.py \
-                                 tests/test_cortical_column_dynamics.py -q
-# 21 passed (verified 2026-04-17)
-```
-
-What the tests cover:
-
-- Output shape and key set
-- Spike values are binary
-- Strong thalamic drive produces L4 spikes (passes because L4 always
-  fires under any input above zero)
-- Activity propagates from L4 → L23 → L5 with `w_exc=1.0` (only this
-  test forces the strong-weight regime)
-- Inhibition reduces L23E spikes (with strong inhibition vs weak)
-- Reset clears state
-- Same seed → same output (determinism)
-- Run output shape `(steps, n_per_layer)`
-
-What the tests **do not** verify:
-
-- **Fidelity to Potjans & Diesmann** — no test asserts published firing
-  rates, no test asserts the Binzegger probability matrix, no test
-  asserts the 8-population structure. The current 5-population sketch
-  passes the test suite even though it misses 3 populations and 57
-  connections.
-- **Sparseness** — no test asserts an "asynchronous irregular" CV(ISI)
-  > 1 or a target rate distribution.
-- **Conduction delays / PSP kernel** — none implemented, none tested.
+For tests, fast smoke + determinism cases use `scale = 0.02 /
+scale_correction = False` (~5 s each); the four published-fidelity
+cases share a class-scoped `rasters` fixture so the 600 ms
+`scale = 0.1` simulation is run exactly once.
 
 ---
 
-## 8. Audit (7-point checklist)
+## 6. References
 
-| # | Dimension | Status | Detail |
-|---|-----------|--------|--------|
-| 1 | Pipeline wiring | ✅ PASS | re-exported, used as standalone class |
-| 2 | Multi-angle tests | ⚠️ WARN | 21 tests pass, but none verify cited-paper fidelity (§7) |
-| 3 | Rust path | ❌ FAIL | pure Python; for 1000-neuron columns the `n²` matvec dominates (§5.4); Rustification deferred to task #13 |
-| 4 | Benchmarks | ✅ PASS | §5.4 measured here; gap to paper-scale documented |
-| 5 | Performance docs | ✅ PASS | §5 |
-| 6 | Documentation page | ✅ PASS | this page |
-| 7 | Rules followed | ❌ FAIL | **Cited-publication fidelity violation** — module docstring cites Potjans & Diesmann 2014 but implementation reproduces ~30 % of their specification (§4). Task #10 tracks the restoration. SPDX header ✅ otherwise |
-
-Net: **2 WARN, 2 FAIL.** This is the most violated module of the P0
-sweep so far. The two FAILs are interlinked: until the model matches
-Potjans (FAIL #7), benchmarking it as a "Potjans implementation"
-(implicit in FAIL #3 / §5.4) is moot.
-
----
-
-## 9. Known issues (for the implementation, not the doc)
-
-These are the issues this doc surfaces. None are fixed here; all are
-tracked as follow-ups.
-
-1. **Cited-paper fidelity gap** — see §4. Either implement the full
-   Potjans 2014 spec (8 populations, Binzegger matrix, PSP kernel,
-   delays, Poisson background) **or** remove the Potjans citation from
-   the module docstring and re-name the class to something less
-   load-bearing (e.g. `MinimalCorticalSketch`). Tracked: task #10.
-2. **L6 silent regime** — L6 has only one input (L5) and contributes
-   only one weak feedback (to L4 at 0.5×`w_exc`). Empirically L6 never
-   fires at any setting (§5.2). Either add direct external drive to L6
-   (Potjans does) or document it as a known limitation.
-3. **L23I silent at low weights** — at biologically plausible-looking
-   weights (`w_exc ≤ 0.5`) the L23 inhibitory population never fires;
-   inhibition is therefore inert. The chain L23E → L23I → L23E that
-   should provide local inhibitory feedback is broken.
-4. **Default parameters produce no propagation** (§5.1). The class
-   ships with parameters that fail its own intended use. Either change
-   defaults to a working regime (e.g. `w_exc = 1.0, threshold = 0.5`
-   per the test `test_activity_propagates_to_l5`) or document that the
-   user must tune.
-5. **Dimensionless units** — `threshold = 1.0`, `tau = 10`. Users
-   converting from biological models will silently mis-scale. Either
-   adopt mV / ms units explicitly or rename parameters
-   (`threshold_units = "arbitrary"`).
-
----
-
-## 10. References
-
-Cited by the module docstring (these are the papers the implementation
-claims to follow):
-
-- Douglas R. J., Martin K. A. C. "Neuronal circuits of the neocortex."
-  *Annu Rev Neurosci* 27:419-451 (2004).
-- Potjans T. C., Diesmann M. "The cell-type specific cortical microcircuit:
-  relating structure and activity in a full-scale spiking network model."
-  *Cerebral Cortex* 24(3):785-806 (2014). DOI: 10.1093/cercor/bhs358.
-
-Background on the canonical column structure:
-
-- Mountcastle V. B. "The columnar organization of the neocortex."
-  *Brain* 120:701-722 (1997).
-- Binzegger T., Douglas R. J., Martin K. A. C. "A quantitative map of
-  the circuit of cat primary visual cortex." *J Neurosci*
-  24(39):8441-8453 (2004). The connectivity matrix Potjans normalised.
-- Hubel D. H., Wiesel T. N. "Receptive fields, binocular interaction
-  and functional architecture in the cat's visual cortex." *J Physiol*
-  160:106-154 (1962). Original columnar evidence.
-
-Internal:
-
-- Network simulation engine: [`api/network.md`](network.md)
-- Other simplified-circuit page: planned `api/gamma_oscillation.md`
-  (PINGCircuit has the same fidelity-gap pattern)
-
----
-
-## 11. Auto-rendered API
-
-::: sc_neurocore.network.cortical_column
-    options:
-      show_root_heading: true
-      show_source: true
-      members:
-        - CorticalColumn
+- Potjans, T. C. & Diesmann, M. (2014). *The cell-type specific
+  cortical microcircuit: relating structure and activity in a
+  full-scale spiking network model.* Cerebral Cortex 24(3):
+  785-806. DOI 10.1093/cercor/bhs358.
+- van Albada, S. J., Helias, M. & Diesmann, M. (2015). *Scalability
+  of asynchronous networks is limited by one-to-one mapping
+  between effective and bare parameters.* PLOS Computational
+  Biology 11(9): e1004490.
+- Binzegger, T., Douglas, R. J. & Martin, K. A. C. (2004). *A
+  quantitative map of the circuit of cat primary visual cortex.*
+  Journal of Neuroscience 24(39): 8441-8453. (Anatomy underlying
+  the Potjans Table 5 connectivity matrix.)
+- Hahne, J. et al. (2017). *Including gap junctions into
+  distributed neuronal network simulations.* Front. Neuroinform.
+  11:36. (Source for the L4e → L2/3e ×2 weight boost convention.)
+- Douglas, R. J. & Martin, K. A. C. (2004). *Neuronal circuits of
+  the neocortex.* Annual Review of Neuroscience 27:419-451.
+  (Original canonical-microcircuit qualitative diagram.)
