@@ -1,0 +1,32 @@
+[
+  {
+    "n_words": 64,
+    "numpy_us": 8.95,
+    "rust_us": 5.59,
+    "speedup": 1.6
+  },
+  {
+    "n_words": 256,
+    "numpy_us": 10.55,
+    "rust_us": 21.07,
+    "speedup": 0.5
+  },
+  {
+    "n_words": 1024,
+    "numpy_us": 25.94,
+    "rust_us": 94.69,
+    "speedup": 0.3
+  },
+  {
+    "n_words": 4096,
+    "numpy_us": 24.38,
+    "rust_us": 354.05,
+    "speedup": 0.1
+  },
+  {
+    "n_words": 16384,
+    "numpy_us": 146.35,
+    "rust_us": 1431.39,
+    "speedup": 0.1
+  }
+]

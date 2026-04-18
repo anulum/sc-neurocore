@@ -1,0 +1,302 @@
+{
+  "timestamp": "2026-04-17T05:17:48",
+  "rust_available": true,
+  "benchmarks": [
+    {
+      "name": "SA Optimizer (5L \u00d7 500 iter)",
+      "n": 5,
+      "python_ms": 0.923,
+      "rust_ms": 0.145,
+      "speedup": 6.4,
+      "has_rust": true
+    },
+    {
+      "name": "SA Optimizer (20L \u00d7 1000 iter)",
+      "n": 20,
+      "python_ms": 5.798,
+      "rust_ms": 0.159,
+      "speedup": 36.4,
+      "has_rust": true
+    },
+    {
+      "name": "SA Optimizer (50L \u00d7 2000 iter)",
+      "n": 50,
+      "python_ms": 13.525,
+      "rust_ms": 0.42,
+      "speedup": 32.2,
+      "has_rust": true
+    },
+    {
+      "name": "Batch Mutate (pop=50\u00d7100)",
+      "n": 50,
+      "python_ms": 10.002,
+      "rust_ms": 0.422,
+      "speedup": 23.7,
+      "has_rust": true
+    },
+    {
+      "name": "Tournament Select (pop=50, k=3)",
+      "n": 50,
+      "python_ms": 2.341,
+      "rust_ms": 0.004,
+      "speedup": 593.2,
+      "has_rust": true
+    },
+    {
+      "name": "Population Diversity (n=50\u00d7100)",
+      "n": 50,
+      "python_ms": 19.866,
+      "rust_ms": 0.35,
+      "speedup": 56.7,
+      "has_rust": true
+    },
+    {
+      "name": "Batch Crossover (n=25\u00d7100)",
+      "n": 25,
+      "python_ms": 0.021,
+      "rust_ms": 0.273,
+      "speedup": 0.1,
+      "has_rust": true
+    },
+    {
+      "name": "Batch Mutate (pop=200\u00d7100)",
+      "n": 200,
+      "python_ms": 16.963,
+      "rust_ms": 0.5,
+      "speedup": 34.0,
+      "has_rust": true
+    },
+    {
+      "name": "Tournament Select (pop=200, k=3)",
+      "n": 200,
+      "python_ms": 1.583,
+      "rust_ms": 0.004,
+      "speedup": 411.8,
+      "has_rust": true
+    },
+    {
+      "name": "Population Diversity (n=50\u00d7100)",
+      "n": 50,
+      "python_ms": 11.23,
+      "rust_ms": 0.146,
+      "speedup": 77.0,
+      "has_rust": true
+    },
+    {
+      "name": "Batch Crossover (n=100\u00d7100)",
+      "n": 100,
+      "python_ms": 0.063,
+      "rust_ms": 0.449,
+      "speedup": 0.1,
+      "has_rust": true
+    },
+    {
+      "name": "Batch Mutate (pop=1000\u00d7100)",
+      "n": 1000,
+      "python_ms": 88.087,
+      "rust_ms": 6.64,
+      "speedup": 13.3,
+      "has_rust": true
+    },
+    {
+      "name": "Tournament Select (pop=1000, k=3)",
+      "n": 1000,
+      "python_ms": 9.808,
+      "rust_ms": 0.027,
+      "speedup": 359.6,
+      "has_rust": true
+    },
+    {
+      "name": "Population Diversity (n=50\u00d7100)",
+      "n": 50,
+      "python_ms": 11.749,
+      "rust_ms": 0.143,
+      "speedup": 82.0,
+      "has_rust": true
+    },
+    {
+      "name": "Batch Crossover (n=500\u00d7100)",
+      "n": 500,
+      "python_ms": 0.534,
+      "rust_ms": 2.178,
+      "speedup": 0.2,
+      "has_rust": true
+    },
+    {
+      "name": "NAS Search (pop=20, gens=10)",
+      "n": 200,
+      "python_ms": 21.509,
+      "rust_ms": 21.509,
+      "speedup": 1.0,
+      "has_rust": false
+    },
+    {
+      "name": "NAS Search (pop=50, gens=25)",
+      "n": 1250,
+      "python_ms": 102.508,
+      "rust_ms": 102.508,
+      "speedup": 1.0,
+      "has_rust": false
+    },
+    {
+      "name": "NAS Search (pop=100, gens=50)",
+      "n": 5000,
+      "python_ms": 441.813,
+      "rust_ms": 441.813,
+      "speedup": 1.0,
+      "has_rust": false
+    },
+    {
+      "name": "1D FDTD (500 cells \u00d7 100 steps)",
+      "n": 500,
+      "python_ms": 0.393,
+      "rust_ms": 0.393,
+      "speedup": 1.0,
+      "has_rust": false
+    },
+    {
+      "name": "1D FDTD (1000 cells \u00d7 100 steps)",
+      "n": 1000,
+      "python_ms": 0.496,
+      "rust_ms": 0.496,
+      "speedup": 1.0,
+      "has_rust": false
+    },
+    {
+      "name": "1D FDTD (2000 cells \u00d7 100 steps)",
+      "n": 2000,
+      "python_ms": 0.652,
+      "rust_ms": 0.652,
+      "speedup": 1.0,
+      "has_rust": false
+    },
+    {
+      "name": "2D FDTD (100\u00d750 \u00d7 50 steps)",
+      "n": 5000,
+      "python_ms": 2.63,
+      "rust_ms": 2.63,
+      "speedup": 1.0,
+      "has_rust": false
+    },
+    {
+      "name": "2D FDTD (200\u00d7100 \u00d7 50 steps)",
+      "n": 20000,
+      "python_ms": 8.342,
+      "rust_ms": 8.342,
+      "speedup": 1.0,
+      "has_rust": false
+    },
+    {
+      "name": "Photonic Compile (256-bit + FDTD)",
+      "n": 256,
+      "python_ms": 0.505,
+      "rust_ms": 0.505,
+      "speedup": 1.0,
+      "has_rust": false
+    },
+    {
+      "name": "Crosstalk (10 WGs, Python)",
+      "n": 10,
+      "python_ms": 0.023,
+      "rust_ms": 0.023,
+      "speedup": 1.0,
+      "has_rust": false
+    },
+    {
+      "name": "Crosstalk (50 WGs, Rust)",
+      "n": 50,
+      "python_ms": 0.026,
+      "rust_ms": 0.026,
+      "speedup": 1.0,
+      "has_rust": false
+    },
+    {
+      "name": "Crosstalk (200 WGs, Rust)",
+      "n": 200,
+      "python_ms": 0.057,
+      "rust_ms": 0.057,
+      "speedup": 1.0,
+      "has_rust": false
+    },
+    {
+      "name": "Adaptive Loop (50 steps)",
+      "n": 50,
+      "python_ms": 7.183,
+      "rust_ms": 7.183,
+      "speedup": 1.0,
+      "has_rust": false
+    },
+    {
+      "name": "Adaptive Loop (200 steps)",
+      "n": 200,
+      "python_ms": 26.642,
+      "rust_ms": 26.642,
+      "speedup": 1.0,
+      "has_rust": false
+    },
+    {
+      "name": "Adaptive Loop (500 steps)",
+      "n": 500,
+      "python_ms": 79.89,
+      "rust_ms": 79.89,
+      "speedup": 1.0,
+      "has_rust": false
+    },
+    {
+      "name": "Unified Energy Report",
+      "n": 1,
+      "python_ms": 0.004,
+      "rust_ms": 0.004,
+      "speedup": 1.0,
+      "has_rust": false
+    },
+    {
+      "name": "QA Ising SA (20Q \u00d7 500sw \u00d7 3 reads)",
+      "n": 20,
+      "python_ms": 294.943,
+      "rust_ms": 0.631,
+      "speedup": 467.4,
+      "has_rust": true
+    },
+    {
+      "name": "QA Ising SA (50Q \u00d7 500sw \u00d7 3 reads)",
+      "n": 50,
+      "python_ms": 4270.253,
+      "rust_ms": 2.994,
+      "speedup": 1426.1,
+      "has_rust": true
+    },
+    {
+      "name": "QA Ising SA (100Q \u00d7 500sw \u00d7 3 reads)",
+      "n": 100,
+      "python_ms": 23106.566,
+      "rust_ms": 9.621,
+      "speedup": 2401.7,
+      "has_rust": true
+    },
+    {
+      "name": "Pipeline: E2E Small (10\u00d75)",
+      "n": 1,
+      "python_ms": 11.671,
+      "rust_ms": 11.671,
+      "speedup": 1.0,
+      "has_rust": false
+    },
+    {
+      "name": "Pipeline: E2E Medium (30\u00d715)",
+      "n": 1,
+      "python_ms": 51.893,
+      "rust_ms": 51.893,
+      "speedup": 1.0,
+      "has_rust": false
+    },
+    {
+      "name": "Pipeline: E2E Large (50\u00d725)",
+      "n": 1,
+      "python_ms": 173.84,
+      "rust_ms": 173.84,
+      "speedup": 1.0,
+      "has_rust": false
+    }
+  ]
+}
