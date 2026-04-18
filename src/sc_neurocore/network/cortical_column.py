@@ -96,6 +96,32 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
 
+# Optional Rust per-row-parallel CSR spmv kernel — built from
+# `engine/src/cortical_inject.rs` and exposed by
+# `sc_neurocore_engine.py_parallel_csr_spmv_add`. When available
+# AND `use_block_csr=True`, `_inject_block(dt)` swaps each
+# scipy single-threaded `csr.dot(x)` for the rayon-parallel Rust
+# version. Bit-identical results because per-row reductions are
+# local. Imported via the engine submodule directly (the
+# `bridge/sc_neurocore_engine` Python wrapper that pytest places
+# earlier on `sys.path` does not re-export every Rust symbol).
+_rust_csr_spmv_add = None
+_HAS_RUST_CSR_SPMV = False
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (  # type: ignore[import-not-found]
+        py_parallel_csr_spmv_add as _rust_csr_spmv_add,
+    )
+    _HAS_RUST_CSR_SPMV = True
+except (ImportError, AttributeError):
+    try:
+        from sc_neurocore_engine import (  # type: ignore[no-redef]
+            py_parallel_csr_spmv_add as _rust_csr_spmv_add,
+        )
+        _HAS_RUST_CSR_SPMV = True
+    except (ImportError, AttributeError):
+        pass
+
+
 # ── Population ordering and per-population sizes (Potjans Table 5) ──
 
 POPULATIONS: tuple[str, ...] = (
@@ -513,13 +539,37 @@ class CorticalColumn:
         # collapses to one mat-vec per (source-type, bin).
         self._block_e: list[sparse.csr_matrix] = []
         self._block_i: list[sparse.csr_matrix] = []
+        # Pre-extracted (indptr, indices, data) triples per block, all
+        # in the dtypes the Rust kernel requires (int32 / int32 /
+        # float64). Avoiding `np.ascontiguousarray` in the per-step
+        # inner loop is what lets the Rust path actually beat scipy
+        # — measured 2026-04-18, the per-call cast overhead alone
+        # was eating the per-call speedup.
+        self._block_e_arrays: list[
+            tuple[np.ndarray, np.ndarray, np.ndarray]
+        ] = []
+        self._block_i_arrays: list[
+            tuple[np.ndarray, np.ndarray, np.ndarray]
+        ] = []
         if delay_distribution and use_block_csr:
             for b in range(self.n_delay_bins):
-                self._block_e.append(self._stack_block(
+                blk_e = self._stack_block(
                     block_e_acc[b], self.n_total, self._n_total_e,
+                )
+                self._block_e.append(blk_e)
+                self._block_e_arrays.append((
+                    np.ascontiguousarray(blk_e.indptr, dtype=np.int32),
+                    np.ascontiguousarray(blk_e.indices, dtype=np.int32),
+                    np.ascontiguousarray(blk_e.data, dtype=np.float64),
                 ))
-                self._block_i.append(self._stack_block(
+                blk_i = self._stack_block(
                     block_i_acc[b], self.n_total, self._n_total_i,
+                )
+                self._block_i.append(blk_i)
+                self._block_i_arrays.append((
+                    np.ascontiguousarray(blk_i.indptr, dtype=np.int32),
+                    np.ascontiguousarray(blk_i.indices, dtype=np.int32),
+                    np.ascontiguousarray(blk_i.data, dtype=np.float64),
                 ))
 
         # Per-population state arrays.
@@ -670,6 +720,12 @@ class CorticalColumn:
         the per-target weighted contribution (already in the global
         target order); we slice it into per-population chunks and
         add to `i_syn`.
+
+        When the Rust per-row-parallel kernel is available it
+        replaces scipy's single-threaded `csr.dot(x)` in place.
+        Bit-identical results (per-row reductions are local) but
+        rayon-parallel across cores — the only path that scales to
+        scale=0.5 / full-scale runs in human time.
         """
         contrib_concat = np.zeros(self.n_total, dtype=np.float64)
         e_pops = [p for p in POPULATIONS if not _is_inhibitory(p)]
@@ -685,7 +741,10 @@ class CorticalColumn:
             ]).astype(np.float64)
             if np.count_nonzero(spike_concat) == 0:
                 continue
-            contrib_concat += block.dot(spike_concat)
+            self._spmv_into(
+                block, spike_concat, contrib_concat,
+                arrays=self._block_e_arrays[b],
+            )
 
         for b, d_steps in enumerate(self._global_i_bin_steps):
             block = self._block_i[b]
@@ -697,7 +756,10 @@ class CorticalColumn:
             ]).astype(np.float64)
             if np.count_nonzero(spike_concat) == 0:
                 continue
-            contrib_concat += block.dot(spike_concat)
+            self._spmv_into(
+                block, spike_concat, contrib_concat,
+                arrays=self._block_i_arrays[b],
+            )
 
         # Slice back into per-target-pop chunks and add background.
         for target in POPULATIONS:
@@ -709,6 +771,33 @@ class CorticalColumn:
                 bg_kicks = self._rng.poisson(lam, size=n_t)
                 chunk = chunk + bg_kicks * self.w_e
             self.i_syn[target] += chunk
+
+    @staticmethod
+    def _spmv_into(
+        block: sparse.csr_matrix,
+        x: np.ndarray,
+        y: np.ndarray,
+        arrays: tuple[np.ndarray, np.ndarray, np.ndarray] | None = None,
+    ) -> None:
+        """`y += block @ x`. Uses the Rust rayon-parallel kernel
+        when available, falls back to scipy single-threaded.
+
+        `arrays` is the dtype-checked `(indptr, indices, data)` triple
+        precomputed at construction so the per-step inner loop avoids
+        the per-call cast overhead that otherwise eats the per-call
+        Rust speedup. Falls back to deriving from `block` if not
+        supplied (slow path used by the parity sanity tests)."""
+        if _HAS_RUST_CSR_SPMV and _rust_csr_spmv_add is not None:
+            if arrays is None:
+                arrays = (
+                    np.ascontiguousarray(block.indptr, dtype=np.int32),
+                    np.ascontiguousarray(block.indices, dtype=np.int32),
+                    np.ascontiguousarray(block.data, dtype=np.float64),
+                )
+            indptr, indices, data = arrays
+            _rust_csr_spmv_add(indptr, indices, data, x, y)
+        else:
+            y += block.dot(x)
 
     def _inject_per_pair(self, dt: float) -> None:
         """Legacy per-pair injection: one mat-vec per (pair, bin)."""

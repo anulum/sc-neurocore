@@ -50,6 +50,7 @@ pub mod optimizer;
 pub mod partition;
 pub mod phi;
 pub mod ping;
+pub mod cortical_inject;
 pub mod photonic;
 pub mod predictive_coding;
 pub mod pyo3_neurons;
@@ -687,6 +688,8 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_kl_refine, m)?)?;
     // PINGCircuit per-step kernel
     m.add_function(wrap_pyfunction!(py_ping_step, m)?)?;
+    // CorticalColumn block-CSR per-row-parallel spmv
+    m.add_function(wrap_pyfunction!(py_parallel_csr_spmv_add, m)?)?;
     Ok(())
 }
 
@@ -5405,4 +5408,33 @@ fn py_ping_step<'py>(
         tau_ampa, tau_gaba, sigma_e, sigma_i, dt,
     );
     Ok((ne, ni))
+}
+
+// ── CorticalColumn block-CSR spmv (per-row-parallel) ────────────────
+//
+// `y += W @ x` where `W` is a CSR matrix described by
+// `(indptr, indices, data)`. Rows are processed in parallel via
+// rayon — bit-identical to scipy single-threaded for matching
+// inputs because the per-row reduction is local. Used by
+// `CorticalColumn._inject_block(dt)` once per `(source-type, bin)`
+// pair, replacing scipy's single-threaded csr_matvec for that step.
+
+#[pyfunction]
+#[pyo3(signature = (indptr, indices, data, x, y))]
+fn py_parallel_csr_spmv_add(
+    indptr: PyReadonlyArray1<'_, i32>,
+    indices: PyReadonlyArray1<'_, i32>,
+    data: PyReadonlyArray1<'_, f64>,
+    x: PyReadonlyArray1<'_, f64>,
+    y: PyReadwriteArray1<'_, f64>,
+) -> PyResult<()> {
+    let mut y = y;
+    cortical_inject::parallel_csr_spmv_add(
+        indptr.as_slice()?,
+        indices.as_slice()?,
+        data.as_slice()?,
+        x.as_slice()?,
+        y.as_slice_mut()?,
+    );
+    Ok(())
 }

@@ -479,3 +479,12 @@ try:
     _ping_step_rust_available = True
 except ImportError:
     _ping_step_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
+        py_parallel_csr_spmv_add,
+    )
+    __all__ += ["py_parallel_csr_spmv_add"]
+    _parallel_csr_spmv_rust_available = True
+except ImportError:
+    _parallel_csr_spmv_rust_available = False
