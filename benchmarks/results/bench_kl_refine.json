@@ -13,8 +13,7 @@
       "available": true
     },
     "julia": {
-      "available": false,
-      "reason": "kl_refine.jl not yet implemented"
+      "available": true
     },
     "go": {
       "available": false,
@@ -28,36 +27,36 @@
   "rows": [
     {
       "V": 100,
-      "python_ms": 4.8195699928328395,
-      "rust_ms": 0.03774100332520902,
-      "julia_ms": null,
+      "python_ms": 9.260131017072126,
+      "rust_ms": 0.03519700840115547,
+      "julia_ms": 0.35438398481346667,
       "go_ms": null,
       "mojo_ms": null,
       "parity_ok": true
     },
     {
       "V": 200,
-      "python_ms": 22.374157997546718,
-      "rust_ms": 0.05295401206240058,
-      "julia_ms": null,
+      "python_ms": 8.729388006031513,
+      "rust_ms": 0.044204003643244505,
+      "julia_ms": 0.059004989452660084,
       "go_ms": null,
       "mojo_ms": null,
       "parity_ok": true
     },
     {
       "V": 500,
-      "python_ms": 82.27722698939033,
-      "rust_ms": 0.18115999409928918,
-      "julia_ms": null,
+      "python_ms": 36.653420014772564,
+      "rust_ms": 0.11805299436673522,
+      "julia_ms": 0.13073699665255845,
       "go_ms": null,
       "mojo_ms": null,
       "parity_ok": true
     },
     {
       "V": 1000,
-      "python_ms": 122.14780002250336,
-      "rust_ms": 0.220457004616037,
-      "julia_ms": null,
+      "python_ms": 100.00337898964062,
+      "rust_ms": 0.25321199791505933,
+      "julia_ms": 0.33074201201088727,
       "go_ms": null,
       "mojo_ms": null,
       "parity_ok": true
