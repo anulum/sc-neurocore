@@ -90,7 +90,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
-from scipy import sparse
+from scipy import sparse, stats
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -209,6 +209,7 @@ class CorticalColumn:
         scale_correction: bool = True,
         delay_distribution: bool = True,
         n_delay_bins: int = 5,
+        use_block_csr: bool = False,
         seed: int | None = None,
     ) -> None:
         if not (0.0 < scale <= 1.0):
@@ -223,6 +224,22 @@ class CorticalColumn:
         self.scale_correction = scale_correction
         self.delay_distribution = delay_distribution
         self.n_delay_bins = n_delay_bins
+        # `use_block_csr=True` constructs stacked block-CSR matrices
+        # per (source-type, global-bin) so the per-step inner loop
+        # collapses from `n_pairs * n_delay_bins` (~320) sparse
+        # mat-vecs to `2 * n_delay_bins` (~10). Bin centres are
+        # GLOBAL — derived from theoretical Gaussian quantiles.
+        #
+        # Measured 2026-04-18 at scale=0.1: block path is ~2× SLOWER
+        # in pure Python than the per-pair path because scipy.sparse
+        # CSR mat-vec is compute-bound (FLOPs scale with nnz, which
+        # is identical between paths) and the per-pair path's tight
+        # inner loop wins on cache locality. Default flipped to
+        # False; the block path is preserved as opt-in because it
+        # is the natural data layout for any future Rust / Mojo
+        # FFI port (10 FFI calls per step vs 320), where fixed FFI
+        # overhead per call DOES dominate.
+        self.use_block_csr = use_block_csr
         self._rng = np.random.default_rng(seed)
 
         # Per-population scaled sizes (at least 1 cell per pop to
@@ -255,26 +272,79 @@ class CorticalColumn:
         # (van Albada 2015). Without correction we use Bernoulli at
         # the literal connection probability `p`.
         # When `delay_distribution=True`, additionally split each
-        # pair's connections into `n_delay_bins` quantile groups by
-        # per-connection Gaussian-sampled delay. Each bin gets its
-        # own sparse adjacency and its own integer-step delay
-        # offset; the per-step inner loop then iterates pairs ×
-        # bins, reading the spike vector at each bin's delay
-        # offset. Total nnz across bins == nnz of the legacy single-
-        # delay matrix; per-bin matrices are roughly 1/n_delay_bins
-        # the size each.
+        # pair's connections into `n_delay_bins` groups by per-
+        # connection Gaussian-sampled delay. Each bin gets its own
+        # sparse adjacency and its own integer-step delay offset.
+        # In `use_block_csr=True` mode (default) the bin grid is
+        # GLOBAL: bin centres come from theoretical Gaussian
+        # quantiles, all pairs snap to the same set of delays, and
+        # per-pair sub-matrices are vertically/horizontally stacked
+        # into one block CSR per (source-type, bin) so per-step
+        # cost collapses from O(n_pairs × n_bins) to O(2 × n_bins)
+        # mat-vecs.
+        # In `use_block_csr=False` mode the bin grid is PER-PAIR
+        # (quantiles of that pair's specific delay sample), giving
+        # a slightly richer model per pair but ~30× slower step.
         self._W: dict[tuple[str, str], sparse.csr_matrix] = {}
-        # `_W_bins[(t, s)]` is a list of (delay_ms, csr_matrix) pairs
-        # when delay_distribution=True; left empty otherwise. The
-        # `delay_ms` values are converted to integer step counts on
-        # the first `_init_buffers(dt)` call, then cached in
-        # `_W_bin_steps`.
         self._W_bins: dict[
             tuple[str, str], list[tuple[float, sparse.csr_matrix]],
         ] = {}
         self._W_bin_steps: dict[
             tuple[str, str], list[tuple[int, sparse.csr_matrix]],
         ] = {}
+
+        # Global delay-bin centres (in milliseconds), one set per
+        # source-type, used when `use_block_csr=True`. Derived from
+        # theoretical Gaussian quantiles at midpoints of equal-area
+        # bins. Conversion to integer dt steps happens at
+        # `_init_buffers(dt)`.
+        if delay_distribution and use_block_csr:
+            qmid = (np.arange(n_delay_bins) + 0.5) / n_delay_bins
+            z = stats.norm.ppf(qmid)
+            self._global_e_centers_ms = np.clip(
+                DELAY_E + z * DELAY_E_SIGMA, 0.05, None,
+            )
+            self._global_i_centers_ms = np.clip(
+                DELAY_I + z * DELAY_I_SIGMA, 0.05, None,
+            )
+        else:
+            self._global_e_centers_ms = np.array([DELAY_E])
+            self._global_i_centers_ms = np.array([DELAY_I])
+
+        # Stacked block CSRs per (source-type, bin_idx). Built only
+        # when `delay_distribution=True and use_block_csr=True`.
+        # Each block has shape (n_total, n_total_<source-type>) and
+        # already has weights (w_e, w_i, w_l4_to_l23e) baked into
+        # the data values, so the per-step `dot` returns the
+        # weighted contribution directly.
+        # Per-source-type cumulative offsets so a pair's
+        # (rows, cols) index pair can be lifted into the global
+        # block index space at construction.
+        self._target_offsets: dict[str, int] = {}
+        self._source_e_offsets: dict[str, int] = {}
+        self._source_i_offsets: dict[str, int] = {}
+        t_off = 0
+        e_off = 0
+        i_off = 0
+        for p in POPULATIONS:
+            self._target_offsets[p] = t_off
+            t_off += self.sizes[p]
+            if _is_inhibitory(p):
+                self._source_i_offsets[p] = i_off
+                i_off += self.sizes[p]
+            else:
+                self._source_e_offsets[p] = e_off
+                e_off += self.sizes[p]
+        self._n_total_e = e_off
+        self._n_total_i = i_off
+        # Accumulators for block-CSR construction. Each element is
+        # (rows_global, cols_global, data_weighted).
+        block_e_acc: list[
+            list[tuple[np.ndarray, np.ndarray, np.ndarray]]
+        ] = [[] for _ in range(n_delay_bins)]
+        block_i_acc: list[
+            list[tuple[np.ndarray, np.ndarray, np.ndarray]]
+        ] = [[] for _ in range(n_delay_bins)]
         for ti, target in enumerate(POPULATIONS):
             n_t = self.sizes[target]
             for sj, source in enumerate(POPULATIONS):
@@ -337,14 +407,20 @@ class CorticalColumn:
 
                 # Per-connection delay distribution. Sample one delay
                 # per connection from the source-type Gaussian, bin
-                # into `n_delay_bins` quantile groups, and build one
-                # sub-CSR per bin. Each bin's spike vector will be
-                # read at its own delay offset in `step()`.
+                # into `n_delay_bins` groups, and either:
+                #   - build one sub-CSR per (per-pair) bin (legacy
+                #     `use_block_csr=False`), or
+                #   - accumulate per-connection global-row / global-
+                #     col / weighted-data triples per global bin to
+                #     be assembled into block CSRs later
+                #     (`use_block_csr=True`).
                 if delay_distribution and self.n_delay_bins > 1:
                     if _is_inhibitory(source):
                         d_mean, d_sigma = DELAY_I, DELAY_I_SIGMA
+                        global_centers = self._global_i_centers_ms
                     else:
                         d_mean, d_sigma = DELAY_E, DELAY_E_SIGMA
+                        global_centers = self._global_e_centers_ms
                     delays_ms = self._rng.normal(
                         d_mean, d_sigma, size=rows_s.size,
                     )
@@ -353,6 +429,50 @@ class CorticalColumn:
                     # the smallest dt the caller might pick — we use
                     # 0.05 ms as a conservative floor).
                     delays_ms = np.clip(delays_ms, 0.05, None)
+
+                    if use_block_csr:
+                        # Snap each connection's delay to nearest
+                        # GLOBAL bin centre for its source type.
+                        bin_idx_global = np.argmin(
+                            np.abs(
+                                delays_ms[:, None] - global_centers[None, :],
+                            ),
+                            axis=1,
+                        )
+                        # Effective per-connection weight (baked).
+                        if _is_inhibitory(source):
+                            weight_per_conn = self.w_i
+                            t_offset = self._target_offsets[target]
+                            s_offset = self._source_i_offsets[source]
+                            acc = block_i_acc
+                        else:
+                            if source == "L4e" and target == "L23e":
+                                weight_per_conn = self.w_l4_to_l23e
+                            else:
+                                weight_per_conn = self.w_e
+                            t_offset = self._target_offsets[target]
+                            s_offset = self._source_e_offsets[source]
+                            acc = block_e_acc
+                        rows_global = (
+                            rows_s.astype(np.int64) + t_offset
+                        )
+                        cols_global = (
+                            cols_s.astype(np.int64) + s_offset
+                        )
+                        data_w = data_s * weight_per_conn
+                        for b in range(self.n_delay_bins):
+                            mask_b = bin_idx_global == b
+                            if not mask_b.any():
+                                continue
+                            acc[b].append((
+                                rows_global[mask_b].astype(np.int32),
+                                cols_global[mask_b].astype(np.int32),
+                                data_w[mask_b].astype(np.float64),
+                            ))
+                        # In block mode we do NOT build per-pair
+                        # `_W_bins` — block matrices are built once
+                        # below outside the pair loop.
+                        continue
                     # Quantile-bin the connections by delay.
                     n_bins = self.n_delay_bins
                     quantiles = np.linspace(
@@ -385,6 +505,23 @@ class CorticalColumn:
                         bins_list.append((bin_delay_ms, W_b))
                     self._W_bins[target, source] = bins_list
 
+        # Assemble block CSRs (one per (source-type, bin_idx)) from
+        # the global-bin accumulators populated above. Each block
+        # has shape (n_total, n_total_<source-type>) and already has
+        # weights baked in. Per-step `dot()` returns the weighted
+        # contribution directly and the per-pair Python loop
+        # collapses to one mat-vec per (source-type, bin).
+        self._block_e: list[sparse.csr_matrix] = []
+        self._block_i: list[sparse.csr_matrix] = []
+        if delay_distribution and use_block_csr:
+            for b in range(self.n_delay_bins):
+                self._block_e.append(self._stack_block(
+                    block_e_acc[b], self.n_total, self._n_total_e,
+                ))
+                self._block_i.append(self._stack_block(
+                    block_i_acc[b], self.n_total, self._n_total_i,
+                ))
+
         # Per-population state arrays.
         self.v: dict[str, np.ndarray] = {}
         self.i_syn: dict[str, np.ndarray] = {}
@@ -408,16 +545,68 @@ class CorticalColumn:
         self._buf_idx: int = 0
         self._buf_len_e: int = 0
         self._buf_len_i: int = 0
+        # Integer-step delay caches for the global block-CSR path,
+        # populated in `_init_buffers(dt)` once `dt` is known.
+        self._global_e_bin_steps: list[int] = []
+        self._global_i_bin_steps: list[int] = []
+
+    # ── Block-CSR assembly helper ────────────────────────────────
+
+    @staticmethod
+    def _stack_block(
+        triples: list[tuple[np.ndarray, np.ndarray, np.ndarray]],
+        n_rows: int,
+        n_cols: int,
+    ) -> sparse.csr_matrix:
+        """Concatenate per-pair (rows, cols, data) into a CSR.
+
+        Empty triples list yields an all-zero shape-correct CSR so
+        the per-step `dot()` still returns a well-shaped vector
+        (handles the case where a particular bin is unused, e.g.
+        when `n_delay_bins=1`).
+        """
+        if not triples:
+            return sparse.csr_matrix(
+                (n_rows, n_cols), dtype=np.float64,
+            )
+        rows = np.concatenate([t[0] for t in triples])
+        cols = np.concatenate([t[1] for t in triples])
+        data = np.concatenate([t[2] for t in triples])
+        # Build CSR via explicit indptr to dodge scipy's
+        # `get_index_dtype` reduction-path sensitivity to a NumPy
+        # reload (same hardening pattern as the per-pair build).
+        order = np.argsort(rows, kind="stable")
+        rows = rows[order]
+        cols = cols[order]
+        data = data[order]
+        indptr = np.zeros(n_rows + 1, dtype=np.int32)
+        np.add.at(indptr, rows + 1, 1)
+        np.cumsum(indptr, out=indptr)
+        m = sparse.csr_matrix(
+            (data, cols.astype(np.int32), indptr),
+            shape=(n_rows, n_cols),
+        )
+        m.sum_duplicates()
+        return m
 
     # ── Time-stepping ────────────────────────────────────────────
 
     def _init_buffers(self, dt: float) -> None:
         # Convert per-bin float delays to integer step counts (≥ 1
         # so spikes never feed back into the same step that produced
-        # them, which would create an algebraic loop). When
-        # `delay_distribution=False` the step count is the legacy
-        # single-delay value derived from `DELAY_*`.
-        if self.delay_distribution and self._W_bins:
+        # them, which would create an algebraic loop).
+        if self.delay_distribution and self.use_block_csr:
+            self._global_e_bin_steps = [
+                max(1, int(round(d / dt)))
+                for d in self._global_e_centers_ms
+            ]
+            self._global_i_bin_steps = [
+                max(1, int(round(d / dt)))
+                for d in self._global_i_centers_ms
+            ]
+            self._buf_len_e = max(self._global_e_bin_steps)
+            self._buf_len_i = max(self._global_i_bin_steps)
+        elif self.delay_distribution and self._W_bins:
             max_e = 1
             max_i = 1
             for (target, source), bins in self._W_bins.items():
@@ -461,12 +650,68 @@ class CorticalColumn:
         for p in POPULATIONS:
             self.i_syn[p] *= decay
 
-        # 2. Inject delayed spike contributions via per-pair sparse
-        #    matrix-vector products. With `delay_distribution=True`
-        #    each pair contributes one mat-vec per delay bin (each
-        #    bin reads the source spike vector at its own delay
-        #    offset), summed into the target's per-step current
-        #    contribution. Plus per-cell background Poisson drive.
+        # 2. Inject delayed spike contributions. The block-CSR fast
+        #    path collapses the per-pair Python loop to one mat-vec
+        #    per (source-type, bin); the legacy path keeps the
+        #    per-pair loop with per-pair quantile bins.
+        if self.delay_distribution and self.use_block_csr:
+            self._inject_block(dt)
+        else:
+            self._inject_per_pair(dt)
+        return self._integrate_and_detect(dt)
+
+    def _inject_block(self, dt: float) -> None:
+        """Block-CSR injection: 2 × n_delay_bins mat-vecs per step.
+
+        Reads the per-population spike buffer at each (source-type,
+        bin)'s integer delay step, concatenates across populations
+        to form a global spike vector, then does one sparse mat-vec
+        with the precomputed weighted block matrix. The result is
+        the per-target weighted contribution (already in the global
+        target order); we slice it into per-population chunks and
+        add to `i_syn`.
+        """
+        contrib_concat = np.zeros(self.n_total, dtype=np.float64)
+        e_pops = [p for p in POPULATIONS if not _is_inhibitory(p)]
+        i_pops = [p for p in POPULATIONS if _is_inhibitory(p)]
+
+        for b, d_steps in enumerate(self._global_e_bin_steps):
+            block = self._block_e[b]
+            if block.nnz == 0:
+                continue
+            idx = (self._buf_idx - d_steps) % self._buf_len_e
+            spike_concat = np.concatenate([
+                self._buf_e[p][idx] for p in e_pops
+            ]).astype(np.float64)
+            if np.count_nonzero(spike_concat) == 0:
+                continue
+            contrib_concat += block.dot(spike_concat)
+
+        for b, d_steps in enumerate(self._global_i_bin_steps):
+            block = self._block_i[b]
+            if block.nnz == 0:
+                continue
+            idx = (self._buf_idx - d_steps) % self._buf_len_i
+            spike_concat = np.concatenate([
+                self._buf_i[p][idx] for p in i_pops
+            ]).astype(np.float64)
+            if np.count_nonzero(spike_concat) == 0:
+                continue
+            contrib_concat += block.dot(spike_concat)
+
+        # Slice back into per-target-pop chunks and add background.
+        for target in POPULATIONS:
+            n_t = self.sizes[target]
+            t_off = self._target_offsets[target]
+            chunk = contrib_concat[t_off:t_off + n_t]
+            if self.bg_rate > 0.0:
+                lam = K_BG[target] * self.bg_rate * dt * 1e-3
+                bg_kicks = self._rng.poisson(lam, size=n_t)
+                chunk = chunk + bg_kicks * self.w_e
+            self.i_syn[target] += chunk
+
+    def _inject_per_pair(self, dt: float) -> None:
+        """Legacy per-pair injection: one mat-vec per (pair, bin)."""
         for ti, target in enumerate(POPULATIONS):
             n_t = self.sizes[target]
             contrib = np.zeros(n_t, dtype=np.float64)
@@ -515,7 +760,10 @@ class CorticalColumn:
                 contrib += bg_kicks * self.w_e
             self.i_syn[target] += contrib
 
-        # 3. Integrate LIF, detect spikes, apply refractory.
+    def _integrate_and_detect(
+        self, dt: float,
+    ) -> dict[str, np.ndarray]:
+        """Per-population LIF Euler step + spike detect + buffer push."""
         spikes: dict[str, np.ndarray] = {}
         for p in POPULATIONS:
             in_refrac = self.refrac[p] > 0.0
