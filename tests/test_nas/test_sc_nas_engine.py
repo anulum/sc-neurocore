@@ -1,0 +1,342 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — SC-NAS Engine Tests
+
+
+from sc_neurocore.nas.sc_nas_engine import (
+    DecorrelationStrategy,
+    EvolutionaryNAS,
+    FPGAResourceBudget,
+    LayerConfig,
+    NASObjective,
+    NASVerilogEmitter,
+    NeuronType,
+    SCCandidate,
+    SCFitnessEvaluator,
+    pareto_front,
+    run_nas,
+)
+
+
+# ── LayerConfig Tests ────────────────────────────────────────────────
+
+class TestLayerConfig:
+    def test_lut_cost_increases_with_neurons(self):
+        a = LayerConfig(32, NeuronType.LIF, 256, DecorrelationStrategy.LFSR)
+        b = LayerConfig(64, NeuronType.LIF, 256, DecorrelationStrategy.LFSR)
+        assert b.lut_cost > a.lut_cost
+
+    def test_ff_cost_increases_with_bitstream_length(self):
+        a = LayerConfig(32, NeuronType.LIF, 128, DecorrelationStrategy.LFSR)
+        b = LayerConfig(32, NeuronType.LIF, 1024, DecorrelationStrategy.LFSR)
+        assert b.ff_cost > a.ff_cost
+
+    def test_power_scales_with_length(self):
+        a = LayerConfig(32, NeuronType.LIF, 256, DecorrelationStrategy.LFSR)
+        b = LayerConfig(32, NeuronType.LIF, 512, DecorrelationStrategy.LFSR)
+        assert b.power_cost > a.power_cost
+
+    def test_hh_costlier_than_lif(self):
+        lif = LayerConfig(32, NeuronType.LIF, 256, DecorrelationStrategy.LFSR)
+        hh = LayerConfig(32, NeuronType.HH, 256, DecorrelationStrategy.LFSR)
+        assert hh.lut_cost > lif.lut_cost
+        assert hh.power_cost > lif.power_cost
+
+    def test_neuron_type_ordering(self):
+        costs = {}
+        for nt in NeuronType:
+            l = LayerConfig(32, nt, 256, DecorrelationStrategy.LFSR)
+            costs[nt] = l.lut_cost
+        assert costs[NeuronType.LIF] < costs[NeuronType.IZHIKEVICH]
+        assert costs[NeuronType.IZHIKEVICH] < costs[NeuronType.ADEX]
+        assert costs[NeuronType.ADEX] < costs[NeuronType.HH]
+
+    def test_dsp_cost(self):
+        lif = LayerConfig(32, NeuronType.LIF, 256, DecorrelationStrategy.LFSR)
+        hh = LayerConfig(32, NeuronType.HH, 256, DecorrelationStrategy.LFSR)
+        assert lif.dsp_cost == 0
+        assert hh.dsp_cost == 32 * 4
+
+    def test_bram_cost(self):
+        l = LayerConfig(64, NeuronType.LIF, 1024, DecorrelationStrategy.LFSR)
+        expected = (64 * 1024) / 8192.0
+        assert abs(l.bram_cost_kb - expected) < 0.01
+
+
+# ── SCCandidate Tests ────────────────────────────────────────────────
+
+class TestSCCandidate:
+    def test_evaluate_resources(self):
+        c = SCCandidate(layers=[
+            LayerConfig(32, NeuronType.LIF, 256, DecorrelationStrategy.LFSR),
+            LayerConfig(64, NeuronType.ADEX, 512, DecorrelationStrategy.SOBOL),
+        ])
+        c.evaluate_resources()
+        assert c.total_luts > 0
+        assert c.total_ffs > 0
+        assert c.total_dsp > 0
+        assert c.total_bram_kb > 0
+        assert c.total_power_mw > 0
+
+    def test_meets_budget_within_limits(self):
+        c = SCCandidate(layers=[
+            LayerConfig(16, NeuronType.LIF, 64, DecorrelationStrategy.LFSR),
+        ])
+        budget = FPGAResourceBudget(max_luts=1_000_000)
+        assert c.meets_budget(budget)
+
+    def test_exceeds_budget(self):
+        c = SCCandidate(layers=[
+            LayerConfig(256, NeuronType.HH, 4096, DecorrelationStrategy.HYBRID),
+        ] * 10)
+        budget = FPGAResourceBudget(max_luts=100)
+        assert not c.meets_budget(budget)
+
+    def test_fingerprint_deterministic(self):
+        c = SCCandidate(layers=[
+            LayerConfig(32, NeuronType.LIF, 256, DecorrelationStrategy.LFSR),
+        ])
+        assert c.fingerprint == c.fingerprint
+
+    def test_fingerprint_differs_for_different_configs(self):
+        a = SCCandidate(layers=[
+            LayerConfig(32, NeuronType.LIF, 256, DecorrelationStrategy.LFSR),
+        ])
+        b = SCCandidate(layers=[
+            LayerConfig(64, NeuronType.ADEX, 512, DecorrelationStrategy.SOBOL),
+        ])
+        assert a.fingerprint != b.fingerprint
+
+    def test_dsp_budget_check(self):
+        c = SCCandidate(layers=[
+            LayerConfig(256, NeuronType.HH, 256, DecorrelationStrategy.LFSR),
+        ])
+        budget = FPGAResourceBudget(max_dsp=10)
+        assert not c.meets_budget(budget)
+
+
+# ── Fitness Evaluator Tests ──────────────────────────────────────────
+
+class TestSCFitnessEvaluator:
+    def test_longer_bitstreams_higher_accuracy(self):
+        ev = SCFitnessEvaluator(seed=42)
+        short = SCCandidate(layers=[
+            LayerConfig(32, NeuronType.LIF, 64, DecorrelationStrategy.LFSR),
+        ])
+        long = SCCandidate(layers=[
+            LayerConfig(32, NeuronType.LIF, 4096, DecorrelationStrategy.LFSR),
+        ])
+        acc_short = ev.evaluate(short)
+        acc_long = ev.evaluate(long)
+        assert acc_long > acc_short
+
+    def test_sobol_decorrelation_bonus(self):
+        ev = SCFitnessEvaluator(seed=42)
+        lfsr = SCCandidate(layers=[
+            LayerConfig(32, NeuronType.LIF, 256, DecorrelationStrategy.LFSR),
+        ])
+        sobol = SCCandidate(layers=[
+            LayerConfig(32, NeuronType.LIF, 256, DecorrelationStrategy.SOBOL),
+        ])
+        assert ev.evaluate(sobol) > ev.evaluate(lfsr)
+
+    def test_accuracy_bounded_0_1(self):
+        ev = SCFitnessEvaluator(seed=42)
+        c = SCCandidate(layers=[
+            LayerConfig(32, NeuronType.LIF, 128, DecorrelationStrategy.LFSR),
+        ])
+        acc = ev.evaluate(c)
+        assert 0.0 <= acc <= 1.0
+
+
+# ── Pareto Front Tests ───────────────────────────────────────────────
+
+class TestParetoFront:
+    def test_empty_input(self):
+        assert pareto_front([]) == []
+
+    def test_single_candidate(self):
+        c = SCCandidate(
+            layers=[LayerConfig(32, NeuronType.LIF, 256, DecorrelationStrategy.LFSR)],
+            accuracy=0.9, total_luts=1000,
+        )
+        front = pareto_front([c])
+        assert len(front) == 1
+
+    def test_dominated_candidate_excluded(self):
+        a = SCCandidate(layers=[], accuracy=0.95, total_luts=500, total_power_mw=10)
+        b = SCCandidate(layers=[], accuracy=0.90, total_luts=600, total_power_mw=15)
+        front = pareto_front([a, b])
+        assert len(front) == 1
+        assert front[0] is a
+
+    def test_non_dominated_both_kept(self):
+        a = SCCandidate(layers=[], accuracy=0.95, total_luts=1000, total_power_mw=20)
+        b = SCCandidate(layers=[], accuracy=0.90, total_luts=500, total_power_mw=10)
+        front = pareto_front([a, b])
+        assert len(front) == 2
+
+    def test_crowding_distance_assigned(self):
+        candidates = [
+            SCCandidate(layers=[], accuracy=0.90, total_luts=100, total_power_mw=5),
+            SCCandidate(layers=[], accuracy=0.93, total_luts=200, total_power_mw=10),
+            SCCandidate(layers=[], accuracy=0.96, total_luts=300, total_power_mw=15),
+            SCCandidate(layers=[], accuracy=0.99, total_luts=400, total_power_mw=20),
+        ]
+        front = pareto_front(candidates)
+        assert any(c.crowding_distance == float("inf") for c in front)
+
+    def test_crowding_distance_interior(self):
+        candidates = [
+            SCCandidate(layers=[], accuracy=0.90, total_luts=100, total_power_mw=5),
+            SCCandidate(layers=[], accuracy=0.93, total_luts=200, total_power_mw=10),
+            SCCandidate(layers=[], accuracy=0.96, total_luts=300, total_power_mw=15),
+            SCCandidate(layers=[], accuracy=0.99, total_luts=400, total_power_mw=20),
+        ]
+        front = pareto_front(candidates)
+        interior = [c for c in front if c.crowding_distance != float("inf")]
+        for c in interior:
+            assert c.crowding_distance > 0
+
+
+# ── Evolutionary NAS Tests ───────────────────────────────────────────
+
+class TestEvolutionaryNAS:
+    def test_search_returns_non_empty_front(self):
+        report = run_nas(population_size=10, num_generations=5, seed=42)
+        assert len(report.pareto_front) > 0
+
+    def test_search_history_recorded(self):
+        report = run_nas(population_size=10, num_generations=5, seed=42)
+        assert len(report.search_history) == 5
+
+    def test_best_accuracy_positive(self):
+        report = run_nas(population_size=10, num_generations=10, seed=42)
+        assert report.best_accuracy > 0.0
+
+    def test_most_efficient_exists(self):
+        report = run_nas(population_size=10, num_generations=5, seed=42)
+        assert report.most_efficient is not None
+
+    def test_budget_constraint_respected(self):
+        budget = FPGAResourceBudget(max_luts=10_000_000)
+        report = run_nas(budget=budget, population_size=10, num_generations=5, seed=42)
+        for c in report.pareto_front:
+            assert c.total_luts <= budget.max_luts
+
+    def test_summary_format(self):
+        report = run_nas(population_size=10, num_generations=3, seed=42)
+        s = report.summary()
+        assert "SC-NAS Report" in s
+        assert "Pareto front size" in s
+
+    def test_wall_time_recorded(self):
+        report = run_nas(population_size=10, num_generations=3, seed=42)
+        assert report.wall_time_s > 0.0
+
+    def test_mutation_preserves_min_layers(self):
+        nas = EvolutionaryNAS(NASObjective(), FPGAResourceBudget(), seed=42)
+        for _ in range(50):
+            parent = nas._random_candidate()
+            child = nas._mutate(parent, 1)
+            assert len(child.layers) >= 2
+
+    def test_crossover_produces_valid_candidate(self):
+        nas = EvolutionaryNAS(NASObjective(), FPGAResourceBudget(), seed=42)
+        a = nas._random_candidate()
+        b = nas._random_candidate()
+        child = nas._crossover(a, b, 1)
+        assert len(child.layers) >= 1
+        child.evaluate_resources()
+        assert child.total_luts > 0
+
+    def test_convergence_early_stop(self):
+        report = run_nas(
+            population_size=10, num_generations=100,
+            seed=42, convergence_patience=3,
+        )
+        assert len(report.search_history) < 100
+
+    def test_history_has_dsp_bram(self):
+        report = run_nas(population_size=10, num_generations=3, seed=42)
+        assert "best_dsp" in report.search_history[0]
+        assert "best_bram_kb" in report.search_history[0]
+
+    def test_neuron_count_mutation(self):
+        nas = EvolutionaryNAS(NASObjective(), FPGAResourceBudget(), seed=42)
+        parent = nas._random_candidate()
+        original_neurons = [l.neurons for l in parent.layers]
+        mutated_any = False
+        for _ in range(50):
+            child = nas._mutate(parent, 1)
+            if any(c.neurons != o for c, o in zip(child.layers, original_neurons)
+                   if len(child.layers) == len(parent.layers)):
+                mutated_any = True
+                break
+        # With 50 tries and 1/6 chance of neuron_count mutation, extremely likely
+        assert mutated_any
+
+
+# ── NAS Verilog Emitter Tests ────────────────────────────────────────
+
+class TestNASVerilogEmitter:
+    def _make_candidate(self):
+        c = SCCandidate(layers=[
+            LayerConfig(32, NeuronType.LIF, 256, DecorrelationStrategy.LFSR),
+            LayerConfig(64, NeuronType.IZHIKEVICH, 512, DecorrelationStrategy.SOBOL),
+        ], accuracy=0.95)
+        c.evaluate_resources()
+        return c
+
+    def test_emit_contains_module(self):
+        c = self._make_candidate()
+        v = NASVerilogEmitter.emit(c)
+        assert "module sc_nas_network" in v
+        assert "endmodule" in v
+
+    def test_emit_has_parameters(self):
+        c = self._make_candidate()
+        v = NASVerilogEmitter.emit(c)
+        assert "L0_NEURONS    = 32" in v
+        assert "L1_NEURONS    = 64" in v
+        assert "L0_BITSTREAM  = 256" in v
+
+    def test_emit_has_neuron_modules(self):
+        c = self._make_candidate()
+        v = NASVerilogEmitter.emit(c)
+        assert "sc_lif_neuron" in v
+        assert "sc_izhikevich_neuron" in v
+
+    def test_emit_has_resource_comment(self):
+        c = self._make_candidate()
+        v = NASVerilogEmitter.emit(c)
+        assert "LUTs" in v
+        assert "DSPs" in v
+        assert "BRAM" in v
+
+    def test_emit_custom_name(self):
+        c = self._make_candidate()
+        v = NASVerilogEmitter.emit(c, module_name="my_net")
+        assert "module my_net" in v
+
+    def test_emit_pareto(self):
+        c1 = self._make_candidate()
+        c2 = self._make_candidate()
+        result = NASVerilogEmitter.emit_pareto([c1, c2])
+        assert len(result) == 2
+        assert "sc_nas_pareto_0" in result
+        assert "sc_nas_pareto_1" in result
+
+    def test_emit_all_neuron_types(self):
+        for nt in NeuronType:
+            c = SCCandidate(layers=[
+                LayerConfig(16, nt, 128, DecorrelationStrategy.LFSR),
+            ], accuracy=0.8)
+            c.evaluate_resources()
+            v = NASVerilogEmitter.emit(c)
+            assert "module" in v
+            assert "endmodule" in v
