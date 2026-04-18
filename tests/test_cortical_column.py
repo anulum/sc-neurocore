@@ -238,12 +238,12 @@ class TestConnectivity:
         """Opt-in `use_block_csr=True` builds 2 × n_delay_bins block
         matrices and produces biologically plausible rates.
 
-        Per `__init__` doc, the block path is preserved as a
-        future-FFI data layout — measured in pure Python it is
-        ≈ 2× slower than the per-pair path because scipy CSR
-        mat-vec is compute-bound, not call-overhead-bound. Default
-        is `use_block_csr=False`. This test exercises the opt-in
-        path so it does not silently rot, and asserts shapes.
+        With the batched Rust kernel, the block path is now ON PAR
+        with the per-pair scipy path at scale=0.1 (287 s vs 290 s
+        for 600 ms; commit `8595c639` measurement). At scale ≥ 0.5
+        the per-call sparse work grows linearly while FFI overhead
+        stays constant — block path expected to win materially
+        from scale=0.5 upward.
         """
         col = CorticalColumn(
             scale=0.02, scale_correction=False,
@@ -258,6 +258,14 @@ class TestConnectivity:
         for b in col._block_i:
             assert b.shape[0] == col.n_total
             assert b.shape[1] == col._n_total_i
+        # Pre-extracted (indptr, indices, data) in Rust dtypes —
+        # this is what the batched multi-spmv FFI consumes.
+        assert len(col._block_e_arrays) == 5
+        assert len(col._block_i_arrays) == 5
+        for indptr, indices, data in col._block_e_arrays:
+            assert indptr.dtype == np.int32
+            assert indices.dtype == np.int32
+            assert data.dtype == np.float64
         # Smoke: a few steps complete without raising and emit
         # the expected shape outputs.
         for _ in range(50):
