@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Neuro-Symbolic HDC/VSA
+
+[package]
+name = "neuro_symbolic"
+version = "0.2.0"
+edition = "2021"
+authors = ["Miroslav Sotek <protoscience@anulum.li>"]
+description = "SC-NeuroCore: Hyperdimensional Computing / VSA with associative memory"
+license = "AGPL-3.0-or-later"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+rand = "0.10"
+rand_chacha = "0.10"
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "hdc_bench"
+harness = false
