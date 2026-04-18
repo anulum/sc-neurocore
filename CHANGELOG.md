@@ -4,6 +4,60 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Chiplet Partitioner — Multi-Language KL Refine (2026-04-18)
+- **Perf:** `HierarchicalPartitioner.partition` V=200 went from 963 ms (pre-#65) → 12.7 ms (Python post-fix) → 0.04 ms (Mojo). Total wall-clock improvement at V=200: 24,000× across the chain.
+- **#65 fix:** `CorrelationAwareGraph` now caches `(min, max) → edge` lookup → O(1); `_spectral_bisect` hoists `set(vertices)` out of the inner loop. 22-29× speedup at V=50/100/200.
+- **#64-prep refine fix:** `_per_partition_cost(v, n_parts, ...)` returns the full length-P cost vector in ONE neighbour scan (was P redundant scans). Additional 2-9× over #65; bit-identical canonical output.
+- **#74 multi-language KL refine:** Rust (`engine/src/partition.rs`), Julia (`accel/julia/chiplet/kl_refine.jl`), Go (`accel/go/partition/partition.go`), Mojo (`accel/mojo/partition/partition.mojo`) all wired into `HierarchicalPartitioner(refine_backend=...)`. Bit-exact `part_map` parity verified end-to-end via dispatcher tests on V=100. Empirical fastest-pick at V=1000: Mojo 0.20 ms (351×), Julia 0.26 ms (270×), Rust 0.29 ms (242×), Go 0.68 ms (103×), Python 70 ms.
+- **Bench harness:** `benchmarks/bench_kl_refine.py` runs 5 backends with parity check; results in `benchmarks/results/bench_kl_refine.json`.
+- **Tests:** 218 chiplet tests (39 new this batch); coverage 99.58 % on the chiplet package, with `chiplet_gen.py` at 100 % and `hierarchical_partitioner.py` at 99 %.
+
+### LGSSM Multi-Language Acceleration (2026-04-17)
+- **Mojo LGSSM Kalman filter** (`accel/mojo/world_model/lgssm.mojo`): hand-rolled matmul + Cholesky + triangular solve via `mojo build --emit shared-lib`. **46× over Python, 8× over Rust** at T=200 d=4 p=3 workload. Closes #69.
+- **Go LGSSM** (`accel/go/lgssm/lgssm.go`): cgo + ctypes shared lib, hand-rolled Cholesky. Closes #70.
+- **Julia LGSSM** (`accel/julia/world_model/predictive_model.jl`): juliacall + LinearAlgebra LAPACK. Closes #68.
+- **Rust LGSSM** (`engine/src/lgssm.rs`): PyO3 + ndarray Cholesky. Closes #67.
+- All 4 backends dispatched via `KalmanFilter.filter(backend='auto'|'rust'|'julia'|'go'|'mojo'|'python')`; bit-exact parity vs Python at atol≤1e-9 on means/covs, ≤1e-7 on log-likelihood.
+- **Mojo 0.26 FFI pattern proven:** raw `Int` address via `arr.ctypes.data` + `UnsafePointer[T, MutAnyOrigin](unsafe_from_address=addr)` reconstruction inside the `@export` body works around the parametric-signature restriction. Same pattern reused for fault_injection + KL refine.
+
+### Fault Injection Multi-Language (2026-04-17)
+- **Rust + Julia + Go + Mojo** kernels for the 5 fault models (`bitflip`, `stuck_at_0/1`, `dropout`, `gaussian`). Mojo wins 4/5 boolean kernels (2.7-8.2× over NumPy); Julia wins Gaussian via Ziggurat randn. Bench harness with 4σ Binomial parity at `benchmarks/bench_kl_refine.py`-style 5-backend layout.
+
+### Bench Harness Honest Exemptions (2026-04-17)
+- `bench_safety_monitor.py` + `bench_chiplet.py` now emit a `backends` block in the JSON output documenting USED / EXEMPT / BLOCKED-ON-#X status per backend per op, with explicit FFI-vs-compute math instead of silent skipping.
+
+### Cross-Module Integration — (2026-04-16)
+- **Shared Core Types** `core/types.py`: unified `HardwareBudget`, `ResourceReport`, `LayerSpec`, `estimate_network()` — single source of truth for Optimizer↔NAS↔Runtime
+- **Closed-Loop Adaptive Controller** `control/adaptive_loop.py`: Runtime drift detection → SA re-optimisation → new `RuntimeConfig`, configurable cooldown/threshold
+- **Unified Energy Reporter** `energy_accounting/unified_reporter.py`: bridges `CarbonModel` + `ThermalModel` + ASIC power into single `analyze()` call
+- **End-to-End Export Pipeline** `export/pipeline.py`: Model Zoo → ONNX → TVM Relay → MLIR/SSA → SystemVerilog in one `run()` call
+- **Rust Wiring**: `sc_optimizer.py` → `optimizer.rs` SA engine, `sc_nas_engine.py` → `evo.rs` tournament selection, `photonic_emitter.py` → `photonic.rs` crosstalk analysis
+- **Package Exports**: Updated `core/__init__.py`, `control/__init__.py`, `export/__init__.py` with new module exports
+- **Integration Tests**: 20 new tests in `tests/test_integration/test_cross_module.py` covering all 5 actions
+- **Maturin**: Rebuilt `sc_neurocore_engine` v3.14.0 with all Rust bindings
+- **Total**: 10,592 tests (8,895 Python + 1,697 Rust) — ALL GREEN
+
+### Extended Rust Wiring — QA & DNA Bridges (2026-04-17)
+- **Quantum Annealing**: `bridges/quantum_annealing.py` → `py_qa_simulated_annealing` (**2,402×** at 100 qubits)
+  - `IsingModel.energy()` → `py_qa_ising_energy` (Rust path for n>20 qubits)
+  - `SimulatedAnnealer.solve_ising()` → `py_qa_simulated_annealing` (467× at 20Q → **2,402×** at 100Q)
+  - `EnergyLandscape.analyze()` → `py_qa_batch_ising_energy` (batch energy for >100 samples)
+- **DNA Mapper**: `bridges/dna_mapper.py` — Rust engine loaded (`_HAS_RUST_DNA`)
+  - Imported: `py_dna_design_sequence`, `py_dna_detect_hairpins`, `py_dna_check_cross_hybridization`, `py_dna_simulate_kinetics`, `py_dna_design_orthogonal_set`
+- **Photonic**: Fixed `py_ph_analyze_crosstalk` API (channel_ids, wavelengths, bandwidths, powers)
+
+### Python vs Rust Benchmarks — Integration Hot Paths (2026-04-16)
+- **SA Optimizer**: 7× (5 layers) → 36× (20 layers) → **47× (50 layers)**
+- **Tournament Selection**: **337–394×** (amortised per-round overhead elimination)
+- **Batch Mutate**: 17–21× across population sizes 50–1000
+- **Population Diversity**: 34–**90×** (O(N²) SIMD pairwise distance)
+- **Mean Rust speedup**: **334.6×** across all hot paths (incl. QA)
+- **Peak QA**: 467× (20Q) → 1,426× (50Q) → **2,402× (100Q)**
+- **E2E Pipeline**: NAS→Optimizer→Energy→Verilog in **13.7ms** (small) to **116ms** (large)
+- Criterion (Rust-native): spike_times=83ns, firing_rate=13ns, ISI=96ns, van_rossum=1.2µs (N=100)
+- Results: `benchmarks/results/py_vs_rust_integration.json`
+- Script: `benchmarks/py_vs_rust_benchmark.py`
+
 ### Cross-Language Acceleration — Spike Stats (2026-04-16)
 - **Crate** `spike_stats_core` (v0.1.0): 16 functions, 28 Rust tests, PyO3 + Criterion
 - **Distance** (7 fns): `victor_purpura_distance` **181×**, `spike_sync` **31×**, `hunter_milton` **27×**, `van_rossum`, `spike_distance`, `earth_movers_distance`, `multi_neuron_victor_purpura` **160×**
