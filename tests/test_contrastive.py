@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later | Commercial license available
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
 from __future__ import annotations
 import numpy as np
 from sc_neurocore.contrastive import SpikeContrastiveLoss, CSDPRule

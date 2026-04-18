@@ -2,7 +2,7 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
 // Company: Anulum Institute
-// Engineer: Gemini Protocol (SCPN Sector B)
+// Engineer: Arcane Sapience (SCPN Sector B)
 //
 // Create Date: 01/21/2026
 // Design Name: SC-Neurocore
