@@ -28,17 +28,12 @@ pub mod brunel;
 pub mod connectome;
 pub mod conv;
 pub mod cordiv;
-pub mod dna;
-pub mod quantum;
-pub mod photonic;
-pub mod optimizer;
-pub mod evo;
-pub mod lgssm;
 pub mod cortical_column;
+pub mod dna;
 pub mod ei_network;
 pub mod encoder;
+pub mod evo;
 pub mod fault;
-pub mod partition;
 pub mod fusion;
 #[cfg(feature = "gpu")]
 pub mod gpu;
@@ -46,12 +41,17 @@ pub mod grad;
 pub mod graph;
 pub mod ir;
 pub mod layer;
+pub mod lgssm;
 pub mod network_runner;
 pub mod neuron;
 pub mod neurons;
+pub mod optimizer;
+pub mod partition;
 pub mod phi;
+pub mod photonic;
 pub mod predictive_coding;
 pub mod pyo3_neurons;
+pub mod quantum;
 pub mod rall_dendrite;
 pub mod recorder;
 pub mod recurrent;
@@ -4780,8 +4780,9 @@ fn py_qa_simulated_annealing<'py>(
         .map(|((i, j), v)| ((i, j), v))
         .collect();
 
-    let (best_spins, best_energy, all_energies, all_samples) =
-        quantum::simulated_annealing(&h, &j, n_qubits, offset, n_sweeps, num_reads, beta_start, beta_end, seed);
+    let (best_spins, best_energy, all_energies, all_samples) = quantum::simulated_annealing(
+        &h, &j, n_qubits, offset, n_sweeps, num_reads, beta_start, beta_end, seed,
+    );
 
     let dict = PyDict::new(py);
     dict.set_item("best_spins", best_spins)?;
@@ -4880,19 +4881,13 @@ fn py_ph_route_waveguides<'py>(
 
 /// Compute MZI 2×2 transfer matrix for a given phase.
 #[pyfunction]
-fn py_ph_mzi_transfer_matrix(
-    _py: Python<'_>,
-    phase_rad: f64,
-) -> Vec<f64> {
+fn py_ph_mzi_transfer_matrix(_py: Python<'_>, phase_rad: f64) -> Vec<f64> {
     photonic::mzi_transfer_matrix(phase_rad).to_vec()
 }
 
 /// Cascade multiple MZI stages via matrix multiplication.
 #[pyfunction]
-fn py_ph_cascade_mzi(
-    _py: Python<'_>,
-    phases: Vec<f64>,
-) -> Vec<f64> {
+fn py_ph_cascade_mzi(_py: Python<'_>, phases: Vec<f64>) -> Vec<f64> {
     photonic::cascade_mzi(&phases).to_vec()
 }
 
@@ -4949,9 +4944,8 @@ fn py_ph_analyze_power_budget<'py>(
         .map(|((s, t), l)| (s, t, l))
         .collect();
 
-    let result = photonic::analyze_power_budget(
-        &wgs, &[], laser_power_dbm, detector_sensitivity_dbm,
-    );
+    let result =
+        photonic::analyze_power_budget(&wgs, &[], laser_power_dbm, detector_sensitivity_dbm);
 
     let dict = PyDict::new(py);
     let margins: Vec<f64> = result.iter().map(|r| r.margin_db).collect();
@@ -4994,9 +4988,16 @@ fn py_opt_sa_search<'py>(
         .collect();
 
     let result = optimizer::simulated_annealing(
-        &candidates, &weights,
-        max_luts, max_power, max_latency,
-        t_init, t_min, alpha, max_iter, seed,
+        &candidates,
+        &weights,
+        max_luts,
+        max_power,
+        max_latency,
+        t_init,
+        t_min,
+        alpha,
+        max_iter,
+        seed,
     );
 
     let dict = PyDict::new(py);
@@ -5093,10 +5094,7 @@ fn py_evo_batch_crossover(
 
 /// Population diversity (mean pairwise L2 distance).
 #[pyfunction]
-fn py_evo_diversity(
-    _py: Python<'_>,
-    genomes: Vec<Vec<f64>>,
-) -> f64 {
+fn py_evo_diversity(_py: Python<'_>, genomes: Vec<Vec<f64>>) -> f64 {
     evo::population_diversity(&genomes)
 }
 
@@ -5184,10 +5182,16 @@ fn py_lgssm_kalman_filter<'py>(
     let sigma_0 = to_2d(&sigma_0_flat, d_dim, d_dim);
 
     let result = lgssm::kalman_filter(
-        obs.view(), controls.view(),
-        a.view(), b.view(), c.view(), d.view(),
-        q.view(), r.view(),
-        mu_0_arr.view(), sigma_0.view(),
+        obs.view(),
+        controls.view(),
+        a.view(),
+        b.view(),
+        c.view(),
+        d.view(),
+        q.view(),
+        r.view(),
+        mu_0_arr.view(),
+        sigma_0.view(),
     );
 
     // Convert to Python-friendly nested Vec
@@ -5207,7 +5211,11 @@ fn py_lgssm_kalman_filter<'py>(
     let pred_covs: Vec<Vec<Vec<f64>>> = (0..t_len)
         .map(|t| {
             (0..d_dim)
-                .map(|i| (0..d_dim).map(|j| result.pred_covariances[(t, i, j)]).collect())
+                .map(|i| {
+                    (0..d_dim)
+                        .map(|j| result.pred_covariances[(t, i, j)])
+                        .collect()
+                })
                 .collect()
         })
         .collect();

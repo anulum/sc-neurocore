@@ -208,7 +208,10 @@ mod tests {
         let sigma = (n as f64 * ber * (1.0 - ber)).sqrt();
         let lo = (mean - 4.0 * sigma) as u64;
         let hi = (mean + 4.0 * sigma) as u64;
-        assert!(flipped >= lo && flipped <= hi, "flipped={flipped} not in [{lo},{hi}]");
+        assert!(
+            flipped >= lo && flipped <= hi,
+            "flipped={flipped} not in [{lo},{hi}]"
+        );
     }
 
     #[test]
