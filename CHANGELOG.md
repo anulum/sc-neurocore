@@ -4,14 +4,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
-### Repo Hygiene Sweep (2026-04-18)
-- **#60 SPDX header format closed:** 2728 source files (943 .py + 573 .jl + 531 .rs + 235 .go + 446 .mojo) converted from the wrong piped 1-line `# SPDX-License-Identifier: AGPL-3.0-or-later | Commercial license available` to the correct 2-line form via `tools/spdx_fix.py` (idempotent). Tracked source has zero piped-form occurrences.
-- **#57 partial — AG identity leak:** `src/sc_neurocore/hardware/microtubule_neuron.v` Engineer attribution updated to `Arcane Sapience` per the 2026-04-17 broadcast on agent-name hygiene.
-- **Cargo clippy 20 → 0:** unused imports + clamp-pattern + type-complexity allow-attributes with comments; `cargo clippy --release --lib` now clean (sole remaining warning is a non-actionable workspace-profile structural notice in Cargo.toml).
-- **Coverage chiplet 95 % → 100 %:** new test files `test_hierarchical_partitioner_perf.py` (33 cases) and `test_chiplet_gen_edge_cases.py` (13 cases) cover every defensive guard, lazy-load probe failure branch, dispatcher missing-tool error path, LFSR seed clamp, CDC zero-divisor, BFS visited+queue paths, and the `MigrationPlanner.recommend_migrations` `max_recommendations` break.
-- **#58 OOM — `tools/run_full_cov.sh`:** batched per-directory `--cov-append` runner that exits each pytest process between batches so the OS reclaims memory; full sweep now completes (43.81 % cumulative coverage on first run, no OOM). The 99 % gate would need substantial test additions across all packages — that's tracked under #54, not blocked by infrastructure any more.
-- **`.agent_metadata.json` gitignored:** per `feedback_agent_metadata_gitignore`, never committed.
-- **Ruff F541/F401 + rustfmt clean:** all touched Python + Rust files pass.
+### Repository hygiene (2026-04-18)
+- SPDX header format converted from 1-line piped to 2-line form across 2728 source files (.py / .jl / .rs / .go / .mojo). Closes #60.
+- `microtubule_neuron.v` Engineer attribution: `Arcane Sapience`.
+- `cargo clippy --release --lib`: 20 in-source warnings → 0.
+- Bandit HIGH severity in `nas/sc_nas_engine.py:169` → 0 (`hashlib.md5(..., usedforsecurity=False)`).
+- Chiplet package coverage 95 % → 100 % (`test_hierarchical_partitioner_perf.py`, `test_chiplet_gen_edge_cases.py`).
+- `tools/run_full_cov.sh`: batched per-directory `--cov-append` runner. First full sweep completes at 43.81 % cumulative coverage; no OOM. Closes #58.
+- `.gitignore`: `.agent_metadata.json`.
+- `ruff`, `rustfmt`: clean across all touched files.
 
 ### Chiplet Partitioner — Multi-Language KL Refine (2026-04-18)
 - **Perf:** `HierarchicalPartitioner.partition` V=200 went from 963 ms (pre-#65) → 12.7 ms (Python post-fix) → 0.04 ms (Mojo). Total wall-clock improvement at V=200: 24,000× across the chain.
