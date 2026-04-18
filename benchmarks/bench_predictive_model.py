@@ -12,13 +12,17 @@
 Multi-language acceleration chain (per `feedback_multi_language_accel.md`):
 
 - **python**: pure-NumPy implementation (always available).
-- **rust**: PyO3 wrapper around a Rust Kalman implementation
-  (followup #67 — backend not yet committed; the harness will
-  report it as `(unavailable)` until then).
-- **julia**: JuliaCall + a Kalman implementation in Julia
-  (followup #68 — same).
-- **mojo**: GPU Kalman via Mojo (followup #69 — same).
-- **go**: gonum Kalman + cgo binding (followup #70 — same).
+- **rust**: PyO3 wrapper around `engine/src/lgssm.rs` (Cholesky-
+  based Kalman). #67 closed.
+- **julia**: juliacall + `accel/julia/world_model/predictive_model.jl`
+  (LinearAlgebra LAPACK). #68 closed.
+- **go**: cgo + `accel/go/lgssm/lgssm.go` shared library
+  (hand-rolled Cholesky in pure Go). #70 closed.
+- **mojo**: ctypes + `accel/mojo/world_model/lgssm.mojo` shared
+  library (hand-rolled matmul/Cholesky in Mojo, raw-Int address
+  workaround for @export's parametric restriction per
+  `feedback_mojo_026_ffi_pattern`). #69 closed; on this workload
+  Mojo is the **fastest backend** at 46× over Python.
 
 The benchmark harness runs the same workload on every available
 backend, captures wall-clock + log-likelihood, and writes a JSON
