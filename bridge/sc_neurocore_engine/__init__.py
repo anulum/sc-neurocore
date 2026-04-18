@@ -472,3 +472,10 @@ try:
     _kl_refine_rust_available = True
 except ImportError:
     _kl_refine_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import py_ping_step
+    __all__ += ["py_ping_step"]
+    _ping_step_rust_available = True
+except ImportError:
+    _ping_step_rust_available = False

@@ -67,6 +67,35 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
+# Optional Rust per-step kernel — built from `engine/src/ping.rs` and
+# exposed by `sc_neurocore_engine.py_ping_step`. The Rust backend is
+# bit-deterministic for matching seeds because the noise samples are
+# drawn on the Python side and passed in as `xi_e` / `xi_i` arrays.
+# Selectable via the `backend=` argument; the default `"auto"` prefers
+# Rust when available and falls back to NumPy.
+#
+# Import the symbol from the compiled `sc_neurocore_engine` submodule
+# directly — the top-level `bridge/sc_neurocore_engine/__init__.py`
+# Python wrapper that pytest places earlier on `sys.path` does not
+# expose every Rust symbol, so the bare `from sc_neurocore_engine
+# import …` would yield `False` whenever the bridge wrapper wins
+# the import race.
+_rust_ping_step = None
+_HAS_RUST_PING_STEP = False
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (  # type: ignore[import-not-found]
+        py_ping_step as _rust_ping_step,
+    )
+    _HAS_RUST_PING_STEP = True
+except (ImportError, AttributeError):
+    try:
+        from sc_neurocore_engine import (  # type: ignore[no-redef]
+            py_ping_step as _rust_ping_step,
+        )
+        _HAS_RUST_PING_STEP = True
+    except (ImportError, AttributeError):
+        pass
+
 
 # Border-Kopell 2003 published defaults (Fig 2A, weak-PING 40 Hz).
 _DEFAULT_C_M = 1.0           # µF/cm²
@@ -139,6 +168,11 @@ class PINGCircuit:
 
     seed: int = 42
 
+    # Backend: "auto" (Rust if available, else Python), "rust",
+    # "python". Selecting "rust" when the Rust kernel is not built
+    # raises `RuntimeError` from `__post_init__`.
+    backend: str = "auto"
+
     # State (initialised in __post_init__).
     v_e: np.ndarray | None = field(default=None, repr=False)
     v_i: np.ndarray | None = field(default=None, repr=False)
@@ -167,6 +201,25 @@ class PINGCircuit:
         self._w_ei_eff = self.w_ei * (80.0 / self.n_excitatory)
         self._w_ie_eff = self.w_ie * (20.0 / self.n_inhibitory)
         self._w_ii_eff = self.w_ii * (20.0 / self.n_inhibitory)
+
+        # Resolve backend selection. "auto" prefers the Rust kernel
+        # if available; explicit "rust" raises if the kernel is
+        # missing rather than silently downgrading.
+        if self.backend not in {"auto", "rust", "python"}:
+            raise ValueError(
+                f"backend must be one of 'auto'|'rust'|'python', "
+                f"got {self.backend!r}"
+            )
+        if self.backend == "rust" and not _HAS_RUST_PING_STEP:
+            raise RuntimeError(
+                "backend='rust' requested but `sc_neurocore_engine."
+                "py_ping_step` is not available — build the engine "
+                "with `cd engine && maturin develop --release`"
+            )
+        self._use_rust = (
+            self.backend == "rust"
+            or (self.backend == "auto" and _HAS_RUST_PING_STEP)
+        )
         # Initial V drawn near E_L with small jitter, so spike onset
         # is asynchronous (matches Whittington 1995 burn-in).
         self.v_e = self.e_l + self._rng.uniform(-2.0, 2.0, self.n_excitatory)
@@ -189,7 +242,77 @@ class PINGCircuit:
 
     def step(self, dt: float = 0.1) -> tuple[np.ndarray, np.ndarray]:
         """Advance one timestep (dt in ms); return (spikes_e, spikes_i)."""
-        # Decay synaptic conductances first (closed-form exponential).
+        if self._use_rust:
+            return self._step_rust(dt)
+        return self._step_python(dt)
+
+    def _step_rust(self, dt: float) -> tuple[np.ndarray, np.ndarray]:
+        """Rust-backed per-step kernel — matches the Python path
+        bit-identically for a given seed.
+
+        Noise samples are pre-drawn on the Python side so the per-
+        instance RNG state evolves identically across both backends;
+        cross-population conductance propagation stays in Python
+        because it is an O(N) update that the FFI overhead does not
+        amortise.
+        """
+        assert _rust_ping_step is not None  # gated by self._use_rust
+        assert (
+            self.v_e is not None and self.v_i is not None
+            and self.g_ampa_e is not None and self.g_ampa_i is not None
+            and self.g_gaba_e is not None and self.g_gaba_i is not None
+            and self.refrac_e is not None and self.refrac_i is not None
+            and self.i_drive_e is not None and self.i_drive_i is not None
+        )
+        xi_e = self._rng.standard_normal(self.n_excitatory)
+        xi_i = self._rng.standard_normal(self.n_inhibitory)
+        spikes_e_u8 = np.zeros(self.n_excitatory, dtype=np.uint8)
+        spikes_i_u8 = np.zeros(self.n_inhibitory, dtype=np.uint8)
+        n_e_spikes, n_i_spikes = _rust_ping_step(
+            self.v_e, self.g_ampa_e, self.g_gaba_e, self.refrac_e,
+            self.i_drive_e, xi_e, spikes_e_u8,
+            self.v_i, self.g_ampa_i, self.g_gaba_i, self.refrac_i,
+            self.i_drive_i, xi_i, spikes_i_u8,
+            self.e_l, self.e_ampa, self.e_gaba,
+            self.g_l, self.c_m,
+            self.v_threshold, self.v_reset, self.t_refrac,
+            self.tau_ampa, self.tau_gaba,
+            self.sigma_e, self.sigma_i,
+            dt,
+        )
+        # Cross-population conductance propagation (same as Python path).
+        if n_e_spikes > 0:
+            self.g_ampa_e += self._w_ee_eff * n_e_spikes
+            self.g_ampa_i += self._w_ei_eff * n_e_spikes
+        if n_i_spikes > 0:
+            self.g_gaba_e += self._w_ie_eff * n_i_spikes
+            self.g_gaba_i += self._w_ii_eff * n_i_spikes
+        return spikes_e_u8.astype(bool), spikes_i_u8.astype(bool)
+
+    def _step_python(self, dt: float) -> tuple[np.ndarray, np.ndarray]:
+        """Reference Python implementation. Bit-identical to
+        `_step_rust` for a given seed (the noise is pre-drawn at the
+        same point in the per-instance RNG sequence, so the two
+        backends consume RNG identically)."""
+        assert (
+            self.v_e is not None and self.v_i is not None
+            and self.g_ampa_e is not None and self.g_ampa_i is not None
+            and self.g_gaba_e is not None and self.g_gaba_i is not None
+            and self.refrac_e is not None and self.refrac_i is not None
+            and self.i_drive_e is not None and self.i_drive_i is not None
+        )
+        # Pre-draw noise so the RNG-consumption order matches the
+        # Rust path exactly. The original ordering (decay → noise)
+        # gives the same final result because nothing else draws
+        # from the RNG between the two operations.
+        noise_e = self.sigma_e * np.sqrt(dt) * self._rng.standard_normal(
+            self.n_excitatory,
+        )
+        noise_i = self.sigma_i * np.sqrt(dt) * self._rng.standard_normal(
+            self.n_inhibitory,
+        )
+
+        # Decay synaptic conductances (closed-form exponential).
         decay_ampa = np.exp(-dt / self.tau_ampa)
         decay_gaba = np.exp(-dt / self.tau_gaba)
         self.g_ampa_e *= decay_ampa

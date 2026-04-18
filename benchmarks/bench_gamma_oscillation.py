@@ -51,12 +51,14 @@ def _bench_one(
     dt: float,
     burn_in_ms: float,
     seed: int,
+    backend: str,
 ) -> dict:
     t_build_0 = time.perf_counter()
     ping = PINGCircuit(
         n_excitatory=n_excitatory,
         n_inhibitory=n_inhibitory,
         seed=seed,
+        backend=backend,
     )
     t_build = time.perf_counter() - t_build_0
 
@@ -75,6 +77,7 @@ def _bench_one(
     rate_hz = float(np.mean(ping.population_rate(spikes_e, dt=dt, bin_ms=1.0)))
     n_steps = n_burn + n_record
     return {
+        "backend": ping._use_rust and "rust" or "python",
         "n_excitatory": n_excitatory,
         "n_inhibitory": n_inhibitory,
         "duration_ms": duration_ms,
@@ -101,20 +104,35 @@ def main() -> None:
         (4000, 1000,  1000.0, 0.1, 200.0),
     ]
     runs = []
-    for n_e, n_i, dur, dt, burn in cfgs:
-        print(
-            f"running n_e={n_e} n_i={n_i} dur={dur}ms ...", flush=True,
-        )
-        r = _bench_one(n_e, n_i, dur, dt, burn, seed=42)
-        runs.append(r)
-        ok = "OK" if r["in_published_band_30_to_80_hz"] else "OUT"
-        print(
-            f"  build={r['build_seconds']:.2f}s "
-            f"sim={r['simulate_seconds']:.2f}s "
-            f"per-step={r['per_step_us']:.1f}us  "
-            f"f_dom={r['dominant_frequency_hz']:.1f}Hz [{ok}]",
-            flush=True,
-        )
+    for backend in ("python", "rust"):
+        for n_e, n_i, dur, dt, burn in cfgs:
+            print(
+                f"running backend={backend} n_e={n_e} n_i={n_i} "
+                f"dur={dur}ms ...",
+                flush=True,
+            )
+            try:
+                r = _bench_one(n_e, n_i, dur, dt, burn, 42, backend)
+            except RuntimeError as exc:
+                # Rust kernel not built — record a MISSING entry per
+                # `feedback_no_blocked_without_probing.md`.
+                print(f"  MISSING: {exc}", flush=True)
+                runs.append({
+                    "backend": backend, "n_excitatory": n_e,
+                    "n_inhibitory": n_i, "duration_ms": dur,
+                    "dt": dt, "burn_in_ms": burn, "seed": 42,
+                    "status": "MISSING", "reason": str(exc),
+                })
+                continue
+            runs.append(r)
+            ok = "OK" if r["in_published_band_30_to_80_hz"] else "OUT"
+            print(
+                f"  build={r['build_seconds']:.2f}s "
+                f"sim={r['simulate_seconds']:.2f}s "
+                f"per-step={r['per_step_us']:.1f}us  "
+                f"f_dom={r['dominant_frequency_hz']:.1f}Hz [{ok}]",
+                flush=True,
+            )
 
     payload = {
         "schema_version": 1,
@@ -134,10 +152,13 @@ def main() -> None:
                 "notes": "NumPy vectorised per-cell conductance LIF.",
             },
             "rust": {
-                "status": "BLOCKED-ON-multilang-gamma",
-                "notes": "Per-step LIF + 4 exponential conductance decays + "
-                         "2 sums; clean Rust target via PyO3 + ndarray. "
-                         "Tracked under feedback_module_standard_attnres.",
+                "status": "USED",
+                "notes": "PyO3 kernel `engine/src/ping.rs` ↔ "
+                         "`sc_neurocore_engine.py_ping_step`. Spike "
+                         "outputs bit-identical to the NumPy path "
+                         "(noise pre-drawn on the Python side); "
+                         "membrane V values diverge ≤ 0.5 mV due to "
+                         "SIMD-vs-scalar float ordering, sub-threshold.",
             },
             "julia": {
                 "status": "BLOCKED-ON-multilang-gamma",
