@@ -22,8 +22,9 @@ iterations × 5 repeats per scenario; median + min reported.
 
 `SafetyMonitor.check()` runs in 350-780 ns (≤ 1 µs) on this
 hardware. Any FFI dispatch path (Rust PyO3, Julia juliacall,
-Go cgo, Mojo subprocess) adds 1-10 µs of marshalling overhead
-per call — that is **larger than the entire compute time**.
+Go cgo+ctypes, Mojo `mojo build --emit shared-lib` + ctypes)
+adds 1-10 µs of marshalling overhead per call — that is
+**larger than the entire compute time**.
 Multi-language acceleration is therefore counter-productive
 for this op and is documented as an honest exemption in the
 `backends` block below, NOT silently skipped.

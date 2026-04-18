@@ -218,7 +218,8 @@ package:
   `simulate_thermal`). Measured wall time is **3 µs – 700 µs per
   call** (see §9). FFI dispatch overhead (1-5 µs for Rust PyO3,
   ~0.5-10 µs for Julia juliacall, 1-3 µs for Go cgo+ctypes,
-  ~10 ms for Mojo subprocess) is **10-100 % of compute time** on
+  1-3 µs for Mojo `--emit shared-lib` + ctypes) is
+  **10-100 % of compute time** on
   these sub-ms kernels — a native-language rewrite would at
   best halve that, often losing the gain in marshalling.
   These ops are therefore documented as **EXEMPT** from the

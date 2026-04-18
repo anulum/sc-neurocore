@@ -23,11 +23,13 @@ Median + min over 5 repeats reported per cell.
 
 *chiplet_gen* ops (`make_torus`, `compute_decorrelation_seeds`,
 `estimate_package_energy`, `simulate_thermal`) all run at 3 µs –
-700 µs per call. FFI dispatch overhead (1-10 µs for Rust/Julia/Go,
-~10 ms for Mojo subprocess) is 10-100 % of the op's total wall time
-for sub-ms kernels — a native-language rewrite would at best halve
-that, often losing the gain in marshalling. These ops are therefore
-documented as EXEMPT rather than silently skipped.
+700 µs per call. FFI dispatch overhead (~1-5 µs for Rust PyO3,
+~0.5-10 µs for Julia juliacall, ~1-3 µs for Go cgo+ctypes,
+~1-3 µs for Mojo `mojo build --emit shared-lib` + ctypes) is
+10-100 % of the op's total wall time for sub-ms kernels — a
+native-language rewrite would at best halve that, often losing
+the gain in marshalling. These ops are therefore documented as
+EXEMPT rather than silently skipped.
 
 *HierarchicalPartitioner.partition* IS compute-heavy (23 ms – 963 ms)
 and would benefit from Rust/Julia/Go, BUT is blocked on the
