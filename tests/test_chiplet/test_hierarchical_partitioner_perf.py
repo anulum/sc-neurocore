@@ -145,6 +145,33 @@ class TestPartitionDeterministicOutput:
             )
 
 
+class TestPerPartitionCostMatchesBoundaryCost:
+    """The new vector API `_per_partition_cost(v, P)` must agree
+    with calling the legacy single-target `_boundary_cost(v, p)` for
+    every p in 0..P. Otherwise the KL refine algorithm changes
+    behaviour and the perf "win" is actually a regression."""
+
+    def test_vector_matches_per_target_calls(self) -> None:
+        # Build a small graph with realistic structure.
+        g = _build_graph(20, avg_degree=5, seed=11)
+        adj = g.adjacency()
+        # Hand-construct a 3-partition split.
+        partitions = [list(range(0, 7)), list(range(7, 14)), list(range(14, 20))]
+        part_map: dict[int, int] = {}
+        for i, part in enumerate(partitions):
+            for v in part:
+                part_map[v] = i
+        hp = HierarchicalPartitioner(num_partitions=3)
+        n_parts = len(partitions)
+        for v in range(20):
+            vec = hp._per_partition_cost(v, n_parts, part_map, adj, g)
+            for p in range(n_parts):
+                legacy = hp._boundary_cost(v, p, part_map, adj, g)
+                assert vec[p] == pytest.approx(legacy, abs=1e-12), (
+                    f"vector[{p}]={vec[p]} != legacy={legacy} for v={v}"
+                )
+
+
 class TestPartitionScalingIsLinearish:
     """The wall-clock should NOT grow quadratically with V any more.
     We accept a generous slack — exact ms differs by hardware — but

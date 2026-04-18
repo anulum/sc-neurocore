@@ -290,21 +290,35 @@ are documented EXEMPT with explicit reason:
 
 | Operation | Problem size | Median | Min |
 |---|---|---:|---:|
-| `HierarchicalPartitioner.partition()` | V=50, P=2 | 2.6 ms | 2.4 ms |
-| `HierarchicalPartitioner.partition()` | V=100, P=4 | 15.4 ms | 13.6 ms |
-| `HierarchicalPartitioner.partition()` | V=200, P=4 | 25.3 ms | 24.0 ms |
+| `HierarchicalPartitioner.partition()` | V=50, P=2 | 3.1 ms | 3.1 ms |
+| `HierarchicalPartitioner.partition()` | V=100, P=4 | 10.8 ms | 7.2 ms |
+| `HierarchicalPartitioner.partition()` | V=200, P=4 | 12.7 ms | 10.2 ms |
+| `HierarchicalPartitioner.partition()` | V=1000, P=4 | ~99 ms | — |
 
-**Post-#65 fix the scaling is near-linear.** V=200 ran in
-**25 ms** vs **963 ms before the fix** — a 38× wall-clock
-improvement on the same hardware (Linux 6.17 x86_64, NumPy
-2.2.6, Python 3.12.3). V=1000 partitions in ~440 ms (was
-"many minutes" pre-fix). The fix caches `(min, max) → edge`
-in `CorrelationAwareGraph` (O(1) lookup instead of O(E) linear
-scan) and hoists `set(vertices)` out of the inner spectral
-loop in `_spectral_bisect`. Canonical partition output is
-identical pre/post fix (regression-tested by
-`tests/test_chiplet/test_hierarchical_partitioner_perf.py`,
-8 tests including doubling-ratio < 5× scaling check).
+**Two compounding fixes** brought V=200 from the original 963 ms
+down to **12.7 ms** (76× wall-clock) on the same hardware
+(Linux 6.17 x86_64, NumPy 2.2.6, Python 3.12.3):
+
+1. **#65 — O(1) edge cache + hoisted `set(vertices)`** in
+   `CorrelationAwareGraph` and `_spectral_bisect`. Edge lookups
+   went from O(E) per call to O(1); per-vertex membership checks
+   went from O(V) to O(1).
+2. **#64-prep — single-pass per-partition cost vector** in
+   `_refine`. The original implementation called
+   `_boundary_cost(v, j, ...)` once per (vertex, target) pair
+   → O(P) redundant scans of the vertex's neighbours per KL
+   iteration. New helper `_per_partition_cost(v, n_parts, ...)`
+   returns the full length-P cost vector in ONE neighbour
+   scan; the inner KL loop just indexes into it. Algorithmic
+   parity vs the legacy `_boundary_cost(v, p)` is locked by
+   `TestPerPartitionCostMatchesBoundaryCost`.
+
+V=1000 partitions in ~99 ms (was "many minutes" pre-fix).
+Canonical partition output is bit-identical pre/post both
+fixes — regression-tested by
+`tests/test_chiplet/test_hierarchical_partitioner_perf.py`
+(9 tests: edge-cache correctness + lifecycle, vector-vs-legacy
+parity, sub-1s gate at V=200, doubling-ratio < 5× scaling).
 
 #### Multi-language backend status (partitioner)
 
