@@ -65,6 +65,53 @@ pub fn parallel_csr_spmv_add(
     );
 }
 
+/// Batched per-row-parallel CSR spmv add: `y += sum_b W_b @ x_b`
+/// across `n_blocks` (matrix, vector) pairs, all sharing the same
+/// row dimension. Used by `CorticalColumn._inject_block(dt)` to do
+/// `2 × n_delay_bins` (= 10) spmv calls in one FFI call instead of
+/// 10 separate FFI calls per step. The per-row reduction is local
+/// so chunking still parallelises cleanly.
+///
+/// Layout: each block's slice into the flat `indptrs / indices /
+/// data` arrays is given by `block_offsets`. Spike vectors are
+/// flat-concatenated `xs` indexed by `x_offsets`.
+#[allow(clippy::too_many_arguments)]
+pub fn parallel_csr_multi_spmv_add(
+    indptr_blocks: &[&[i32]],
+    indices_blocks: &[&[i32]],
+    data_blocks: &[&[f64]],
+    x_blocks: &[&[f64]],
+    y: &mut [f64],
+) {
+    let n_blocks = indptr_blocks.len();
+    debug_assert_eq!(n_blocks, indices_blocks.len());
+    debug_assert_eq!(n_blocks, data_blocks.len());
+    debug_assert_eq!(n_blocks, x_blocks.len());
+
+    y.par_chunks_mut(CHUNK_SIZE).enumerate().for_each(
+        |(chunk_idx, chunk)| {
+            let row_start = chunk_idx * CHUNK_SIZE;
+            for (i, yi) in chunk.iter_mut().enumerate() {
+                let r = row_start + i;
+                let mut sum: f64 = 0.0;
+                for b in 0..n_blocks {
+                    let indptr = indptr_blocks[b];
+                    let indices = indices_blocks[b];
+                    let data = data_blocks[b];
+                    let x = x_blocks[b];
+                    let start = indptr[r] as usize;
+                    let end = indptr[r + 1] as usize;
+                    for k in start..end {
+                        let col = indices[k] as usize;
+                        sum += data[k] * x[col];
+                    }
+                }
+                *yi += sum;
+            }
+        },
+    );
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -120,5 +167,43 @@ mod tests {
         for i in 0..n {
             assert_eq!(y[i], (i as f64) + 1.0);
         }
+    }
+
+    /// Batched multi-spmv equals sequential single-spmv, accumulated.
+    #[test]
+    fn test_multi_spmv_matches_sequential() {
+        // 3 blocks, each 4×3 with different sparsity patterns
+        let indptr0: Vec<i32> = vec![0, 1, 2, 3, 4];
+        let indices0: Vec<i32> = vec![0, 1, 2, 0];
+        let data0: Vec<f64> = vec![1.0, 2.0, 3.0, 4.0];
+        let x0: Vec<f64> = vec![10.0, 20.0, 30.0];
+
+        let indptr1: Vec<i32> = vec![0, 0, 1, 1, 2];
+        let indices1: Vec<i32> = vec![1, 2];
+        let data1: Vec<f64> = vec![5.0, 6.0];
+        let x1: Vec<f64> = vec![100.0, 200.0, 300.0];
+
+        let indptr2: Vec<i32> = vec![0, 1, 1, 2, 3];
+        let indices2: Vec<i32> = vec![2, 0, 1];
+        let data2: Vec<f64> = vec![7.0, 8.0, 9.0];
+        let x2: Vec<f64> = vec![1000.0, 2000.0, 3000.0];
+
+        // Sequential reference
+        let mut y_seq = vec![0.0_f64; 4];
+        parallel_csr_spmv_add(&indptr0, &indices0, &data0, &x0, &mut y_seq);
+        parallel_csr_spmv_add(&indptr1, &indices1, &data1, &x1, &mut y_seq);
+        parallel_csr_spmv_add(&indptr2, &indices2, &data2, &x2, &mut y_seq);
+
+        // Batched
+        let mut y_batched = vec![0.0_f64; 4];
+        let indptrs: Vec<&[i32]> = vec![&indptr0, &indptr1, &indptr2];
+        let indices_b: Vec<&[i32]> = vec![&indices0, &indices1, &indices2];
+        let data_b: Vec<&[f64]> = vec![&data0, &data1, &data2];
+        let xs: Vec<&[f64]> = vec![&x0, &x1, &x2];
+        parallel_csr_multi_spmv_add(
+            &indptrs, &indices_b, &data_b, &xs, &mut y_batched,
+        );
+
+        assert_eq!(y_seq, y_batched);
     }
 }

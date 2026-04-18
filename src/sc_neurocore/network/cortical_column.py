@@ -106,7 +106,9 @@ if TYPE_CHECKING:
 # `bridge/sc_neurocore_engine` Python wrapper that pytest places
 # earlier on `sys.path` does not re-export every Rust symbol).
 _rust_csr_spmv_add = None
+_rust_csr_multi_spmv_add = None
 _HAS_RUST_CSR_SPMV = False
+_HAS_RUST_CSR_MULTI_SPMV = False
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (  # type: ignore[import-not-found]
         py_parallel_csr_spmv_add as _rust_csr_spmv_add,
@@ -118,6 +120,19 @@ except (ImportError, AttributeError):
             py_parallel_csr_spmv_add as _rust_csr_spmv_add,
         )
         _HAS_RUST_CSR_SPMV = True
+    except (ImportError, AttributeError):
+        pass
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (  # type: ignore[import-not-found]
+        py_parallel_csr_multi_spmv_add as _rust_csr_multi_spmv_add,
+    )
+    _HAS_RUST_CSR_MULTI_SPMV = True
+except (ImportError, AttributeError):
+    try:
+        from sc_neurocore_engine import (  # type: ignore[no-redef]
+            py_parallel_csr_multi_spmv_add as _rust_csr_multi_spmv_add,
+        )
+        _HAS_RUST_CSR_MULTI_SPMV = True
     except (ImportError, AttributeError):
         pass
 
@@ -711,25 +726,21 @@ class CorticalColumn:
         return self._integrate_and_detect(dt)
 
     def _inject_block(self, dt: float) -> None:
-        """Block-CSR injection: 2 × n_delay_bins mat-vecs per step.
-
-        Reads the per-population spike buffer at each (source-type,
-        bin)'s integer delay step, concatenates across populations
-        to form a global spike vector, then does one sparse mat-vec
-        with the precomputed weighted block matrix. The result is
-        the per-target weighted contribution (already in the global
-        target order); we slice it into per-population chunks and
-        add to `i_syn`.
-
-        When the Rust per-row-parallel kernel is available it
-        replaces scipy's single-threaded `csr.dot(x)` in place.
-        Bit-identical results (per-row reductions are local) but
-        rayon-parallel across cores — the only path that scales to
-        scale=0.5 / full-scale runs in human time.
+        """Block-CSR injection. With the batched Rust kernel
+        available, ONE FFI call per step does all `2 × n_delay_bins`
+        spmv at once; otherwise falls back to per-block scipy /
+        single-Rust calls.
         """
         contrib_concat = np.zeros(self.n_total, dtype=np.float64)
         e_pops = [p for p in POPULATIONS if not _is_inhibitory(p)]
         i_pops = [p for p in POPULATIONS if _is_inhibitory(p)]
+
+        # Gather spike vectors per bin, dropping empty bins so the
+        # batched call only ever sees non-trivial work.
+        indptrs: list[np.ndarray] = []
+        indices_list: list[np.ndarray] = []
+        data_list: list[np.ndarray] = []
+        xs: list[np.ndarray] = []
 
         for b, d_steps in enumerate(self._global_e_bin_steps):
             block = self._block_e[b]
@@ -741,10 +752,11 @@ class CorticalColumn:
             ]).astype(np.float64)
             if np.count_nonzero(spike_concat) == 0:
                 continue
-            self._spmv_into(
-                block, spike_concat, contrib_concat,
-                arrays=self._block_e_arrays[b],
-            )
+            indptr_b, indices_b, data_b = self._block_e_arrays[b]
+            indptrs.append(indptr_b)
+            indices_list.append(indices_b)
+            data_list.append(data_b)
+            xs.append(spike_concat)
 
         for b, d_steps in enumerate(self._global_i_bin_steps):
             block = self._block_i[b]
@@ -756,10 +768,44 @@ class CorticalColumn:
             ]).astype(np.float64)
             if np.count_nonzero(spike_concat) == 0:
                 continue
-            self._spmv_into(
-                block, spike_concat, contrib_concat,
-                arrays=self._block_i_arrays[b],
-            )
+            indptr_b, indices_b, data_b = self._block_i_arrays[b]
+            indptrs.append(indptr_b)
+            indices_list.append(indices_b)
+            data_list.append(data_b)
+            xs.append(spike_concat)
+
+        if indptrs:
+            if (
+                _HAS_RUST_CSR_MULTI_SPMV
+                and _rust_csr_multi_spmv_add is not None
+            ):
+                # ONE batched FFI call replaces the up-to-10
+                # per-bin calls. Rust loops internally and shares
+                # the rayon thread pool across all bins.
+                _rust_csr_multi_spmv_add(
+                    indptrs, indices_list, data_list, xs,
+                    contrib_concat,
+                )
+            else:
+                for indptr_b, indices_b, data_b, x_b in zip(
+                    indptrs, indices_list, data_list, xs,
+                    strict=True,
+                ):
+                    if (
+                        _HAS_RUST_CSR_SPMV
+                        and _rust_csr_spmv_add is not None
+                    ):
+                        _rust_csr_spmv_add(
+                            indptr_b, indices_b, data_b, x_b,
+                            contrib_concat,
+                        )
+                    else:
+                        # Pure-scipy fallback: build a temp CSR view
+                        # and use scipy dot.
+                        contrib_concat += sparse.csr_matrix(
+                            (data_b, indices_b, indptr_b),
+                            shape=(self.n_total, x_b.size),
+                        ).dot(x_b)
 
         # Slice back into per-target-pop chunks and add background.
         for target in POPULATIONS:
