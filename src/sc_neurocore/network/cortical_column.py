@@ -155,9 +155,14 @@ W_E = 87.81        # pA
 G_INH = 4.0
 W_I = -G_INH * W_E
 
-# Synaptic delays (ms). Single mean per source-type.
+# Synaptic delays (ms). Per Potjans Table 5: per-connection
+# Gaussian distributions. Mean + std per source-type. The mean
+# values (1.5 / 0.8 ms) are also the legacy "single delay" values
+# used when `delay_distribution=False`.
 DELAY_E = 1.5
+DELAY_E_SIGMA = 0.75
 DELAY_I = 0.8
+DELAY_I_SIGMA = 0.4
 
 # Background Poisson rate per channel (Hz).
 BG_RATE = 8.0
@@ -202,14 +207,22 @@ class CorticalColumn:
         bg_rate: float = BG_RATE,
         g_inh: float = G_INH,
         scale_correction: bool = True,
+        delay_distribution: bool = True,
+        n_delay_bins: int = 5,
         seed: int | None = None,
     ) -> None:
         if not (0.0 < scale <= 1.0):
             raise ValueError(f"scale must be in (0, 1], got {scale}")
+        if n_delay_bins < 1:
+            raise ValueError(
+                f"n_delay_bins must be ≥ 1, got {n_delay_bins}",
+            )
         self.scale = scale
         self.bg_rate = bg_rate
         self.g_inh = g_inh
         self.scale_correction = scale_correction
+        self.delay_distribution = delay_distribution
+        self.n_delay_bins = n_delay_bins
         self._rng = np.random.default_rng(seed)
 
         # Per-population scaled sizes (at least 1 cell per pop to
@@ -241,7 +254,27 @@ class CorticalColumn:
         # uniformly from the smaller scaled source population
         # (van Albada 2015). Without correction we use Bernoulli at
         # the literal connection probability `p`.
+        # When `delay_distribution=True`, additionally split each
+        # pair's connections into `n_delay_bins` quantile groups by
+        # per-connection Gaussian-sampled delay. Each bin gets its
+        # own sparse adjacency and its own integer-step delay
+        # offset; the per-step inner loop then iterates pairs ×
+        # bins, reading the spike vector at each bin's delay
+        # offset. Total nnz across bins == nnz of the legacy single-
+        # delay matrix; per-bin matrices are roughly 1/n_delay_bins
+        # the size each.
         self._W: dict[tuple[str, str], sparse.csr_matrix] = {}
+        # `_W_bins[(t, s)]` is a list of (delay_ms, csr_matrix) pairs
+        # when delay_distribution=True; left empty otherwise. The
+        # `delay_ms` values are converted to integer step counts on
+        # the first `_init_buffers(dt)` call, then cached in
+        # `_W_bin_steps`.
+        self._W_bins: dict[
+            tuple[str, str], list[tuple[float, sparse.csr_matrix]],
+        ] = {}
+        self._W_bin_steps: dict[
+            tuple[str, str], list[tuple[int, sparse.csr_matrix]],
+        ] = {}
         for ti, target in enumerate(POPULATIONS):
             n_t = self.sizes[target]
             for sj, source in enumerate(POPULATIONS):
@@ -302,6 +335,56 @@ class CorticalColumn:
                 W.sum_duplicates()
                 self._W[target, source] = W
 
+                # Per-connection delay distribution. Sample one delay
+                # per connection from the source-type Gaussian, bin
+                # into `n_delay_bins` quantile groups, and build one
+                # sub-CSR per bin. Each bin's spike vector will be
+                # read at its own delay offset in `step()`.
+                if delay_distribution and self.n_delay_bins > 1:
+                    if _is_inhibitory(source):
+                        d_mean, d_sigma = DELAY_I, DELAY_I_SIGMA
+                    else:
+                        d_mean, d_sigma = DELAY_E, DELAY_E_SIGMA
+                    delays_ms = self._rng.normal(
+                        d_mean, d_sigma, size=rows_s.size,
+                    )
+                    # Strictly positive; clip to avoid same-step
+                    # algebraic loops (delay must be ≥ 1 dt step at
+                    # the smallest dt the caller might pick — we use
+                    # 0.05 ms as a conservative floor).
+                    delays_ms = np.clip(delays_ms, 0.05, None)
+                    # Quantile-bin the connections by delay.
+                    n_bins = self.n_delay_bins
+                    quantiles = np.linspace(
+                        0.0, 1.0, n_bins + 1,
+                    )[1:-1]
+                    cuts = np.quantile(delays_ms, quantiles)
+                    bin_idx = np.searchsorted(cuts, delays_ms)
+                    bins_list: list[tuple[int, sparse.csr_matrix]] = []
+                    for b in range(n_bins):
+                        mask = bin_idx == b
+                        if not mask.any():
+                            continue
+                        # Bin's representative delay (mean over its
+                        # member connections, in milliseconds).
+                        bin_delay_ms = float(delays_ms[mask].mean())
+                        # Build sub-CSR from the bin's rows / cols.
+                        rows_b = rows_s[mask]
+                        cols_b = cols_s[mask]
+                        data_b = data_s[mask]
+                        indptr_b = np.zeros(n_t + 1, dtype=np.int32)
+                        np.add.at(indptr_b, rows_b + 1, 1)
+                        np.cumsum(indptr_b, out=indptr_b)
+                        # Re-sort cols within each row so sum_duplicates
+                        # produces a canonical CSR.
+                        W_b = sparse.csr_matrix(
+                            (data_b, cols_b, indptr_b),
+                            shape=(n_t, n_s),
+                        )
+                        W_b.sum_duplicates()
+                        bins_list.append((bin_delay_ms, W_b))
+                    self._W_bins[target, source] = bins_list
+
         # Per-population state arrays.
         self.v: dict[str, np.ndarray] = {}
         self.i_syn: dict[str, np.ndarray] = {}
@@ -329,11 +412,29 @@ class CorticalColumn:
     # ── Time-stepping ────────────────────────────────────────────
 
     def _init_buffers(self, dt: float) -> None:
-        # Round delays to whole steps; minimum one step so that
-        # spikes never feed back into the same step that produced
-        # them (which would create an algebraic loop).
-        self._buf_len_e = max(1, int(round(DELAY_E / dt)))
-        self._buf_len_i = max(1, int(round(DELAY_I / dt)))
+        # Convert per-bin float delays to integer step counts (≥ 1
+        # so spikes never feed back into the same step that produced
+        # them, which would create an algebraic loop). When
+        # `delay_distribution=False` the step count is the legacy
+        # single-delay value derived from `DELAY_*`.
+        if self.delay_distribution and self._W_bins:
+            max_e = 1
+            max_i = 1
+            for (target, source), bins in self._W_bins.items():
+                steps_bins: list[tuple[int, sparse.csr_matrix]] = []
+                for delay_ms, W_b in bins:
+                    d_steps = max(1, int(round(delay_ms / dt)))
+                    steps_bins.append((d_steps, W_b))
+                    if _is_inhibitory(source):
+                        max_i = max(max_i, d_steps)
+                    else:
+                        max_e = max(max_e, d_steps)
+                self._W_bin_steps[target, source] = steps_bins
+            self._buf_len_e = max_e
+            self._buf_len_i = max_i
+        else:
+            self._buf_len_e = max(1, int(round(DELAY_E / dt)))
+            self._buf_len_i = max(1, int(round(DELAY_I / dt)))
         for p in POPULATIONS:
             n_p = self.sizes[p]
             self._buf_e[p] = np.zeros((self._buf_len_e, n_p), dtype=np.int32)
@@ -361,11 +462,11 @@ class CorticalColumn:
             self.i_syn[p] *= decay
 
         # 2. Inject delayed spike contributions via per-pair sparse
-        #    matrix-vector products (proper Potjans-style per-cell
-        #    independent connectivity, not mean-field), plus per-cell
-        #    background Poisson drive.
-        idx_e = (self._buf_idx - self._buf_len_e) % self._buf_len_e
-        idx_i = (self._buf_idx - self._buf_len_i) % self._buf_len_i
+        #    matrix-vector products. With `delay_distribution=True`
+        #    each pair contributes one mat-vec per delay bin (each
+        #    bin reads the source spike vector at its own delay
+        #    offset), summed into the target's per-step current
+        #    contribution. Plus per-cell background Poisson drive.
         for ti, target in enumerate(POPULATIONS):
             n_t = self.sizes[target]
             contrib = np.zeros(n_t, dtype=np.float64)
@@ -374,25 +475,38 @@ class CorticalColumn:
                 if key not in self._W:
                     continue
                 if _is_inhibitory(source):
-                    src_spikes = self._buf_i[source][idx_i]
                     weight = self.w_i
+                    buf = self._buf_i
+                    buf_len = self._buf_len_i
                 else:
-                    src_spikes = self._buf_e[source][idx_e]
+                    buf = self._buf_e
+                    buf_len = self._buf_len_e
                     # L4e → L2/3e is boosted; everything else is w_e.
                     if source == "L4e" and target == "L23e":
                         weight = self.w_l4_to_l23e
                     else:
                         weight = self.w_e
-                # `np.count_nonzero` instead of `.any()` to dodge
-                # the `_NoValue` sentinel reduction path that breaks
-                # when NumPy is reloaded under coverage instrumentation.
-                if np.count_nonzero(src_spikes) == 0:
-                    continue
-                # Per-cell input = (W @ spike_vec) * weight. The
-                # sparse multiply yields per-target multapse-summed
-                # incoming spike counts.
-                hits = self._W[key].dot(src_spikes.astype(np.float32))
-                contrib += hits * weight
+                if self.delay_distribution and key in self._W_bin_steps:
+                    # Per-bin delayed mat-vec.
+                    for d_steps, W_b in self._W_bin_steps[key]:
+                        idx = (self._buf_idx - d_steps) % buf_len
+                        src_spikes = buf[source][idx]
+                        # `np.count_nonzero` instead of `.any()` to
+                        # dodge the `_NoValue` sentinel reduction path
+                        # under coverage NumPy reload.
+                        if np.count_nonzero(src_spikes) == 0:
+                            continue
+                        hits = W_b.dot(src_spikes.astype(np.float32))
+                        contrib += hits * weight
+                else:
+                    # Single-delay legacy path.
+                    d_steps = buf_len
+                    idx = (self._buf_idx - d_steps) % buf_len
+                    src_spikes = buf[source][idx]
+                    if np.count_nonzero(src_spikes) == 0:
+                        continue
+                    hits = self._W[key].dot(src_spikes.astype(np.float32))
+                    contrib += hits * weight
             # Background Poisson channels (excitatory, w_e). Each cell
             # gets K_bg independent Poisson channels each at bg_rate.
             if self.bg_rate > 0.0:
@@ -509,13 +623,15 @@ class CorticalColumn:
             self.v[p] = self._rng.uniform(V_RESET, V_TH, size=n_p)
             self.i_syn[p][:] = 0.0
             self.refrac[p][:] = 0.0
-        # Drop delay buffers — caller may pick a different dt.
+        # Drop delay buffers and per-bin step caches — caller may
+        # pick a different dt, and the bin step counts are dt-derived.
         self._dt = None
         self._buf_e.clear()
         self._buf_i.clear()
         self._buf_idx = 0
         self._buf_len_e = 0
         self._buf_len_i = 0
+        self._W_bin_steps.clear()
 
     # ── Introspection ────────────────────────────────────────────
 

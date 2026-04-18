@@ -72,11 +72,13 @@ def _bench_one(
     dt: float,
     burn_in_ms: float,
     seed: int,
+    delay_distribution: bool = True,
 ) -> dict:
     """Build, simulate, measure wall-clock and per-pop rates."""
     t_build_0 = time.perf_counter()
     col = CorticalColumn(
         scale=scale, scale_correction=scale_correction, seed=seed,
+        delay_distribution=delay_distribution,
     )
     t_build = time.perf_counter() - t_build_0
 
@@ -91,6 +93,7 @@ def _bench_one(
     return {
         "scale": scale,
         "scale_correction": scale_correction,
+        "delay_distribution": delay_distribution,
         "duration_ms": duration_ms,
         "dt": dt,
         "burn_in_ms": burn_in_ms,
@@ -114,17 +117,22 @@ def main() -> None:
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     cfgs = [
-        # (scale, scale_correction, duration_ms, dt, burn_in_ms)
-        (0.02, False, 100.0, 0.1,  20.0),
-        (0.05, True,  300.0, 0.1, 100.0),
-        (0.10, True,  600.0, 0.1, 200.0),
+        # (scale, scale_correction, duration_ms, dt, burn_in_ms,
+        #  delay_distribution)
+        (0.02, False, 100.0, 0.1,  20.0, False),
+        (0.05, True,  300.0, 0.1, 100.0, False),
+        (0.10, True,  600.0, 0.1, 200.0, False),
+        # Per-connection Gaussian delays — slower (5x more sparse
+        # mat-vecs per step) but rate-fidelity dramatically tighter.
+        (0.10, True,  600.0, 0.1, 200.0, True),
     ]
     runs = []
-    for scale, sc, dur, dt, burn in cfgs:
+    for scale, sc, dur, dt, burn, dd in cfgs:
         print(
-            f"running scale={scale} corr={sc} dur={dur}ms ...", flush=True,
+            f"running scale={scale} corr={sc} dist={dd} dur={dur}ms ...",
+            flush=True,
         )
-        r = _bench_one(scale, sc, dur, dt, burn, seed=42)
+        r = _bench_one(scale, sc, dur, dt, burn, 42, dd)
         runs.append(r)
         print(
             f"  build={r['build_seconds']:.2f}s "

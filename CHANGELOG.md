@@ -4,6 +4,28 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### CorticalColumn per-connection Gaussian delay distribution (2026-04-18)
+- `network/cortical_column.py` adds per-connection delay binning. New constants `DELAY_E_SIGMA = 0.75 ms`, `DELAY_I_SIGMA = 0.4 ms` (Potjans Table 5). New `__init__` parameters `delay_distribution: bool = True` and `n_delay_bins: int = 5`. At construction time each (target, source) pair samples `K_per_target * n_t` per-connection delays from `N(DELAY_*, sigma_*)`, quantile-bins them into 5 groups and stores one sub-CSR per bin. Per `step()`, each pair contributes one `dot()` per bin, reading the source spike vector at that bin's delay offset.
+- Setting `delay_distribution=False` restores the legacy single-mean-delay path for fast smoke tests and direct comparison.
+- **Fidelity dramatically tightened.** Measured at `scale=0.1, seed=42`, 200 ms analysis window after 100 ms burn-in:
+
+  | Population | single-delay ratio | per-conn Gaussian ratio |
+  |------------|-------------------:|-----------------------:|
+  | L23e | 5.29× | **0.67×** |
+  | L23i | 4.78× | **1.19×** |
+  | L4e  | 0.83× | 0.68× |
+  | L4i  | 2.03× | **1.21×** |
+  | L5e  | 3.05× | 1.97× |
+  | L5i  | 2.10× | 1.50× |
+  | L6e  | 5.23× | 2.81× |
+  | L6i  | 2.33× | **1.24×** |
+
+  5/8 populations now sit within 1.2× of Potjans Table 4; the remaining 3 (L4e, L5e, L6e) within 2-3×.
+- Cost: per-step ≈ 5× slower (5 sparse mat-vecs per pair instead of 1). At `scale=0.1`, sim wall went 32 s → ~290 s for 600 ms (matches 5× expectation).
+- New `tests/test_cortical_column.py::TestPublishedFidelity::test_per_connection_delays_tighten_rates` — asserts ≥ 5/8 populations within `[0.5, 1.5]×` of published Table 4 values. Pins the win.
+- `benchmarks/bench_cortical_column.py` now bench BOTH `delay_distribution` modes side-by-side.
+- All 29 cortical_column tests pass with the new default (29 passed in 14:18 with delay distribution, 24 deselected-fidelity tests in 4:39 for fast iteration via `-k 'not Fidelity'`).
+
 ### PINGCircuit Rust acceleration backend (2026-04-18)
 - New Rust per-step kernel `engine/src/ping.rs` with PyO3 wrapper `sc_neurocore_engine.py_ping_step`. Mirrors the Python step semantics (LIF + AMPA / GABA decays + drive + Wiener noise + refractory + spike detect + reset). Noise samples are drawn on the Python side and passed in as `xi_e` / `xi_i` so the per-instance RNG state evolves identically across both backends.
 - New `backend=` parameter on `PINGCircuit` (`"auto" | "rust" | "python"`, default `"auto"`). `"rust"` raises `RuntimeError` if the kernel is not built; `"auto"` falls back to NumPy.

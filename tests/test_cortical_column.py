@@ -33,7 +33,7 @@ from sc_neurocore.network.cortical_column import (
 
 class TestCorticalColumn:
     def test_creates_with_defaults(self):
-        col = CorticalColumn(scale=0.02, scale_correction=False, seed=42)
+        col = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=42)
         assert set(col.sizes.keys()) == set(POPULATIONS)
         assert col.n_total == sum(col.sizes.values())
         # Default scale=0.1 → ~7717 cells; here at 0.02 → ~1544.
@@ -52,7 +52,7 @@ class TestCorticalColumn:
             assert col.sizes[pop] == expected
 
     def test_step_returns_per_pop_spike_dict(self):
-        col = CorticalColumn(scale=0.02, scale_correction=False, seed=42)
+        col = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=42)
         spikes = col.step(dt=0.1)
         assert set(spikes.keys()) == set(POPULATIONS)
         for p, sp in spikes.items():
@@ -60,19 +60,19 @@ class TestCorticalColumn:
             assert sp.dtype == bool
 
     def test_simulate_returns_rasters(self):
-        col = CorticalColumn(scale=0.02, scale_correction=False, seed=42)
+        col = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=42)
         rasters = col.simulate(duration_ms=20.0, dt=0.1)
         for p in POPULATIONS:
             assert rasters[p].shape == (200, col.sizes[p])
             assert rasters[p].dtype == bool
 
     def test_simulate_zero_steps_raises(self):
-        col = CorticalColumn(scale=0.02, scale_correction=False, seed=42)
+        col = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=42)
         with pytest.raises(ValueError, match="duration_ms / dt"):
             col.simulate(duration_ms=0.0, dt=0.1)
 
     def test_dt_change_mid_run_raises(self):
-        col = CorticalColumn(scale=0.02, scale_correction=False, seed=42)
+        col = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=42)
         col.step(dt=0.1)
         with pytest.raises(ValueError, match="dt changed mid-run"):
             col.step(dt=0.2)
@@ -120,7 +120,7 @@ class TestCorticalColumn:
         assert all(r == 0.0 for r in rates.values())
 
     def test_repr_is_one_line_summary(self):
-        col = CorticalColumn(scale=0.02, scale_correction=False, seed=42)
+        col = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=42)
         s = repr(col)
         assert s.startswith("CorticalColumn(")
         assert "scale=0.02" in s
@@ -128,7 +128,7 @@ class TestCorticalColumn:
         assert "\n" not in s
 
     def test_population_names_property(self):
-        col = CorticalColumn(scale=0.02, scale_correction=False, seed=42)
+        col = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=42)
         assert tuple(col.population_names) == POPULATIONS
 
     def test_total_indegree_matches_potjans_table5(self):
@@ -136,7 +136,10 @@ class TestCorticalColumn:
         # match the FULL-SCALE in-degree per Potjans Table 5
         # (≈ Σ_s p[t,s] · N_s_full). We allow a 5 % tolerance for
         # multapse rounding noise across seeds.
-        col = CorticalColumn(scale=0.1, scale_correction=True, seed=42)
+        col = CorticalColumn(
+            scale=0.1, scale_correction=True,
+            delay_distribution=False, seed=42,
+        )
         for ti, target in enumerate(POPULATIONS):
             expected = sum(
                 CONN_PROBS[ti, sj] * FULL_SIZES[POPULATIONS[sj]]
@@ -153,22 +156,22 @@ class TestCorticalColumn:
 
 class TestDeterminism:
     def test_same_seed_same_state(self):
-        a = CorticalColumn(scale=0.02, scale_correction=False, seed=99)
-        b = CorticalColumn(scale=0.02, scale_correction=False, seed=99)
+        a = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=99)
+        b = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=99)
         for p in POPULATIONS:
             np.testing.assert_array_equal(a.v[p], b.v[p])
 
     def test_same_seed_same_rasters(self):
-        a = CorticalColumn(scale=0.02, scale_correction=False, seed=7)
-        b = CorticalColumn(scale=0.02, scale_correction=False, seed=7)
+        a = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=7)
+        b = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=7)
         ra = a.simulate(duration_ms=20.0, dt=0.1)
         rb = b.simulate(duration_ms=20.0, dt=0.1)
         for p in POPULATIONS:
             np.testing.assert_array_equal(ra[p], rb[p])
 
     def test_different_seed_different_state(self):
-        a = CorticalColumn(scale=0.02, scale_correction=False, seed=1)
-        b = CorticalColumn(scale=0.02, scale_correction=False, seed=2)
+        a = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=1)
+        b = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=2)
         # At least one population must have different initial voltages.
         differs = any(
             not np.array_equal(a.v[p], b.v[p]) for p in POPULATIONS
@@ -177,10 +180,10 @@ class TestDeterminism:
 
     def test_global_numpy_seed_does_not_leak(self):
         np.random.seed(0)
-        a = CorticalColumn(scale=0.02, scale_correction=False, seed=42)
+        a = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=42)
         ra = a.simulate(duration_ms=10.0, dt=0.1)
         np.random.seed(99999)
-        b = CorticalColumn(scale=0.02, scale_correction=False, seed=42)
+        b = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=42)
         rb = b.simulate(duration_ms=10.0, dt=0.1)
         for p in POPULATIONS:
             np.testing.assert_array_equal(ra[p], rb[p])
@@ -213,7 +216,7 @@ class TestConnectivity:
 
     def test_l4_to_l23e_weight_is_doubled(self):
         # Per Potjans, the L4e → L2/3e edge is boosted to 2 · w_e.
-        col = CorticalColumn(scale=0.02, scale_correction=False, seed=42)
+        col = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=42)
         assert col.w_l4_to_l23e == 2.0 * col.w_e
 
     def test_inhibitory_weight_uses_g_inh(self):
@@ -223,7 +226,7 @@ class TestConnectivity:
         assert col.w_i == pytest.approx(-4.0 * col.w_e)
 
     def test_sparse_adjacency_built_for_every_nonzero_pair(self):
-        col = CorticalColumn(scale=0.02, scale_correction=False, seed=42)
+        col = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=42)
         nonzero_pairs = {
             (POPULATIONS[i], POPULATIONS[j])
             for i in range(8) for j in range(8)
@@ -278,6 +281,34 @@ class TestPublishedFidelity:
         rates = col.population_rates(r, dt=0.1, burn_in_ms=200.0)
         assert 1.0 < rates["L4e"] < 15.0, (
             f"L4e rate {rates['L4e']:.2f} Hz outside [1, 15] sanity band"
+        )
+
+    def test_per_connection_delays_tighten_rates(self, rasters):
+        """With per-connection Gaussian delays (default), at least 5
+        of 8 populations should sit within 1.5× of Potjans Table 4.
+
+        This is the verification that `delay_distribution=True` is
+        actually doing what it claims — the single-mean-delay path
+        gives 2-7× ratios for most populations; per-connection
+        Gaussian delays bring the typical ratio down to 1.2-2× by
+        breaking the recurrent population synchrony that the single-
+        delay path produces.
+        """
+        published = {
+            "L23e": 0.86, "L23i": 2.91, "L4e": 4.51, "L4i": 5.78,
+            "L5e": 7.59, "L5i": 8.13, "L6e": 1.10, "L6i": 8.07,
+        }
+        col, r = rasters
+        rates = col.population_rates(r, dt=0.1, burn_in_ms=200.0)
+        within_band = 0
+        for p, ref in published.items():
+            ratio = rates[p] / ref
+            if 0.5 <= ratio <= 1.5:
+                within_band += 1
+        assert within_band >= 5, (
+            f"only {within_band}/8 populations within [0.5, 1.5]× of "
+            f"Potjans Table 4 — per-connection delay distribution may "
+            f"have regressed (rates={rates})"
         )
 
     def test_zero_background_silent(self):
