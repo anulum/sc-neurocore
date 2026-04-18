@@ -160,6 +160,7 @@ pub fn simulated_annealing(
 /// Apply a gauge transform to Ising biases and couplings.
 ///
 /// h'_i = g_i · h_i, J'_ij = g_i · g_j · J_ij
+#[allow(clippy::type_complexity)] // tuple shape mirrors Python's QUBO format
 pub fn gauge_transform(
     h: &[(usize, f64)],
     j: &[((usize, usize), f64)],

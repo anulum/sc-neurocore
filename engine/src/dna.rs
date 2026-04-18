@@ -16,7 +16,6 @@
 
 use rayon::prelude::*;
 use rand::SeedableRng;
-use rand::Rng;
 use rand::RngExt;
 use rand_xoshiro::Xoshiro256PlusPlus;
 use std::collections::HashMap;
@@ -27,6 +26,7 @@ const ALPHABET: [u8; 4] = [b'A', b'C', b'G', b'T'];
 const GC_LOW: f64 = 0.40;
 const GC_HIGH: f64 = 0.60;
 const MAX_HOMOPOLYMER: usize = 3;
+#[allow(dead_code)] // reserved for strand-displacement toehold heuristic
 const DEFAULT_TOEHOLD: usize = 7;
 const R_GAS: f64 = 1.987e-3; // kcal/(mol·K)
 
@@ -56,7 +56,7 @@ pub fn design_sequence(length: usize, seed: u64) -> Vec<u8> {
         // GC check at end
         if seq.len() == length {
             let gc = gc_content(&seq);
-            if gc < GC_LOW || gc > GC_HIGH {
+            if !(GC_LOW..=GC_HIGH).contains(&gc) {
                 seq.clear();
             }
         }

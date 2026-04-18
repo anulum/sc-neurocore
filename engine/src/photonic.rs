@@ -19,6 +19,7 @@ use rayon::prelude::*;
 // ── Constants ────────────────────────────────────────────────────────
 
 const CROSSING_LOSS_DB: f64 = 0.08;
+#[allow(dead_code)] // reserved for future MZI loss accounting
 const MZI_INSERTION_LOSS_DB: f64 = 0.5;
 
 // ── Waveguide routing ────────────────────────────────────────────────
@@ -58,8 +59,8 @@ pub fn route_waveguides(
 
             let (ri, ci) = (i / grid_size, i % grid_size);
             let (rj, cj) = (j / grid_size, j % grid_size);
-            let manhattan = ((ri as isize - rj as isize).unsigned_abs()
-                + (ci as isize - cj as isize).unsigned_abs()) as usize;
+            let manhattan = (ri as isize - rj as isize).unsigned_abs()
+                + (ci as isize - cj as isize).unsigned_abs();
 
             let length_um = manhattan as f64 * pitch_um;
             let mut loss = length_um * 1e-4 * loss_db_per_cm;
