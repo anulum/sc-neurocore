@@ -690,6 +690,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_ping_step, m)?)?;
     // CorticalColumn block-CSR per-row-parallel spmv
     m.add_function(wrap_pyfunction!(py_parallel_csr_spmv_add, m)?)?;
+    m.add_function(wrap_pyfunction!(py_parallel_csr_multi_spmv_add, m)?)?;
     Ok(())
 }
 
@@ -5434,6 +5435,39 @@ fn py_parallel_csr_spmv_add(
         indices.as_slice()?,
         data.as_slice()?,
         x.as_slice()?,
+        y.as_slice_mut()?,
+    );
+    Ok(())
+}
+
+// Batched multi-spmv. The Python side passes lists of numpy arrays
+// (one per block) for indptrs / indices / data / xs and a single
+// mutable output. ONE FFI call per step replaces N (= n_delay_bins
+// for E + same for I, typically 10) per-block calls. At scale=0.1
+// the per-call savings amortise over a 600 ms simulation.
+#[pyfunction]
+#[pyo3(signature = (indptrs, indices_list, data_list, xs, y))]
+fn py_parallel_csr_multi_spmv_add(
+    indptrs: Vec<PyReadonlyArray1<'_, i32>>,
+    indices_list: Vec<PyReadonlyArray1<'_, i32>>,
+    data_list: Vec<PyReadonlyArray1<'_, f64>>,
+    xs: Vec<PyReadonlyArray1<'_, f64>>,
+    y: PyReadwriteArray1<'_, f64>,
+) -> PyResult<()> {
+    let mut y = y;
+    let indptr_slices: Vec<&[i32]> = indptrs
+        .iter().map(|a| a.as_slice()).collect::<Result<_, _>>()?;
+    let indices_slices: Vec<&[i32]> = indices_list
+        .iter().map(|a| a.as_slice()).collect::<Result<_, _>>()?;
+    let data_slices: Vec<&[f64]> = data_list
+        .iter().map(|a| a.as_slice()).collect::<Result<_, _>>()?;
+    let x_slices: Vec<&[f64]> = xs
+        .iter().map(|a| a.as_slice()).collect::<Result<_, _>>()?;
+    cortical_inject::parallel_csr_multi_spmv_add(
+        &indptr_slices,
+        &indices_slices,
+        &data_slices,
+        &x_slices,
         y.as_slice_mut()?,
     );
     Ok(())
