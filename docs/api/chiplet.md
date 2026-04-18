@@ -284,7 +284,7 @@ are documented EXEMPT with explicit reason:
 | rust | EXEMPT | PyO3 FFI overhead ~1-5 µs is 10-100 % of 3-700 µs compute time |
 | julia | EXEMPT | juliacall first-call JIT ~5 s dwarfs the per-call <1 ms budget |
 | go | EXEMPT | cgo + ctypes marshalling ~1-3 µs is 10-100 % of compute |
-| mojo | EXEMPT | Mojo 0.26 `@export` limitation (same blocker as #69) + subprocess IPC ~10 ms ≫ any op here |
+| mojo | EXEMPT | Mojo 0.26 `mojo build --emit shared-lib` + ctypes proven (closes #69 for LGSSM); for chiplet_gen the ~1-3 µs ctypes FFI is still 10-100 % of 3-700 µs compute, same exemption as Rust |
 
 ### hierarchical_partitioner
 
@@ -308,7 +308,7 @@ V ≥ 1000 take many minutes; not benchmarked here.
 | rust | BLOCKED-ON-#65 | porting the O(V²·E) algorithm gives misleading speedup vs a known-bad baseline; fix Python first, then port |
 | julia | BLOCKED-ON-#65 | same; Metis.jl / Scotch.jl are honest alternatives once the API is O(V+E) |
 | go | BLOCKED-ON-#65 | same |
-| mojo | EXEMPT | Mojo 0.26 `@export` limitation (#69) |
+| mojo | BLOCKED-ON-#65 | Mojo FFI proven (#69 closed) but the same O(V²·E) blocker applies — port the fixed Python first |
 
 ## 10. Test coverage
 

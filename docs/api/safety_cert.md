@@ -164,15 +164,18 @@ path; it is a post-simulation analysis layer. Typical workflow:
 5. `CrossStandardMapper` produces the standards-mapping appendix
    for multi-jurisdiction submission.
 
-There is no Rust / Julia / Go / Mojo path in this package — these
-are document generators, not compute kernels. Per the
-`feedback_multi_language_accel.md` rule, "I/O adapters and
-visualisation wrappers" are exempt from the multi-language
-acceleration requirement. The `SafetyMonitor` runtime check is
-fast enough as pure Python (one comparison per property, six
-properties per call); a multi-language acceleration path was
-considered and rejected as over-engineering for sub-microsecond
-work.
+No Rust / Julia / Go / Mojo backend is wired for this package
+— the `Certification*` classes are document generators (not
+compute kernels), and `SafetyMonitor.check()` runs in 519-922 ns
+(see §7), where any FFI dispatch path adds 1-10 µs of marshalling
+overhead per call — larger than the entire compute time. Per
+`feedback_multi_language_accel.md`, the four non-Python backends
+are documented EXEMPT (not silently skipped) in the bench JSON's
+`backends` block. All four toolchains (Rust PyO3, Julia juliacall,
+Go cgo+ctypes, Mojo `--emit shared-lib` + ctypes) ARE installed
+and proven on heavier ops in this codebase (LGSSM Kalman, fault
+injection); the exemption here is a per-op cost-benefit decision,
+not a tool-availability claim.
 
 ## 7. Pure-Python performance
 

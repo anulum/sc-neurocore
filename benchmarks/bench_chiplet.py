@@ -265,10 +265,11 @@ def main(argv: list[str]) -> int:
             "available": True,
             "used": False,
             "exemption": (
-                "Mojo 0.26 public toolchain lacks stable @export for "
-                "parametric UnsafePointer args (same blocker as #69). "
-                "Subprocess IPC alternative is ~10 ms, worse than "
-                "every op in this bench."
+                "Mojo 0.26 `mojo build --emit shared-lib` + ctypes FFI "
+                "works (proven on LGSSM Kalman, #69 closed). chiplet_gen "
+                "ops still EXEMPT for the same FFI-overhead reason as "
+                "Rust/Julia/Go (1-3 µs FFI vs 3-700 µs compute is "
+                "10-100% overhead). Partition BLOCKED-ON-#65."
             ),
         },
     }
