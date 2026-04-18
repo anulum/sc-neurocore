@@ -30,12 +30,12 @@
   "publication_reference": "Potjans & Diesmann (2014) Cerebral Cortex 24(3):785-806, DOI 10.1093/cercor/bhs358 \u2014 Table 4 firing rates.",
   "runs": [
     {
-      "build_seconds": 0.04311697103548795,
+      "build_seconds": 0.03536236099898815,
       "burn_in_ms": 20.0,
       "dt": 0.1,
       "duration_ms": 100.0,
       "n_total": 1544,
-      "per_step_ms": 0.9583493969985284,
+      "per_step_ms": 0.9414202669868246,
       "potjans_table4_hz": {
         "L23e": 0.86,
         "L23i": 2.91,
@@ -69,7 +69,7 @@
       "scale": 0.02,
       "scale_correction": false,
       "seed": 42,
-      "simulate_seconds": 0.9583493969985284,
+      "simulate_seconds": 0.9414202669868246,
       "sizes": {
         "L23e": 414,
         "L23i": 117,
@@ -82,12 +82,12 @@
       }
     },
     {
-      "build_seconds": 2.0431200219900347,
+      "build_seconds": 2.492716786044184,
       "burn_in_ms": 100.0,
       "dt": 0.1,
       "duration_ms": 300.0,
       "n_total": 3858,
-      "per_step_ms": 2.0677625343281156,
+      "per_step_ms": 2.6014616299847453,
       "potjans_table4_hz": {
         "L23e": 0.86,
         "L23i": 2.91,
@@ -121,7 +121,7 @@
       "scale": 0.05,
       "scale_correction": true,
       "seed": 42,
-      "simulate_seconds": 6.2032876029843464,
+      "simulate_seconds": 7.804384889954235,
       "sizes": {
         "L23e": 1034,
         "L23i": 292,
@@ -134,12 +134,12 @@
       }
     },
     {
-      "build_seconds": 4.073547651001718,
+      "build_seconds": 4.084245636011474,
       "burn_in_ms": 200.0,
       "dt": 0.1,
       "duration_ms": 600.0,
       "n_total": 7717,
-      "per_step_ms": 5.290893505841572,
+      "per_step_ms": 8.216336593827387,
       "potjans_table4_hz": {
         "L23e": 0.86,
         "L23i": 2.91,
@@ -173,7 +173,7 @@
       "scale": 0.1,
       "scale_correction": true,
       "seed": 42,
-      "simulate_seconds": 31.745361035049427,
+      "simulate_seconds": 49.29801956296433,
       "sizes": {
         "L23e": 2068,
         "L23i": 583,

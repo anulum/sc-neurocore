@@ -250,10 +250,21 @@ class CorticalColumn:
                     continue
                 n_s = self.sizes[source]
                 if scale_correction:
-                    # Per-target indegree fixed at the full-scale
-                    # value; sample with replacement from the
-                    # scaled source population (multapses allowed,
-                    # matching NEST's default for Potjans).
+                    # Per-target in-degree fixed at the full-scale
+                    # value; sample with replacement from the scaled
+                    # source population. Multapses are intentionally
+                    # ALLOWED — measured 2026-04-18 with a vectorised
+                    # `argpartition` no-multapse alternative produced
+                    # catastrophic rate inflation at scale=0.1
+                    # (E populations 50-100× over published Table 4
+                    # vs ~2× over with multapses). The mean per-target
+                    # weight is identical between the two approaches,
+                    # but the no-multapse variant amplifies population
+                    # synchrony in the heavy-recurrent regime where
+                    # K approaches N_s. Multapse-with-replacement is
+                    # the regime that van Albada 2015 actually
+                    # validates; it is also what NEST uses by
+                    # default at sub-full scale.
                     k_per_target = max(
                         1, int(round(p * FULL_SIZES[source])),
                     )
