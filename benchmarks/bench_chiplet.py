@@ -31,14 +31,12 @@ native-language rewrite would at best halve that, often losing
 the gain in marshalling. These ops are therefore documented as
 EXEMPT rather than silently skipped.
 
-*HierarchicalPartitioner.partition* IS compute-heavy (23 ms – 963 ms)
-and would benefit from Rust/Julia/Go, BUT is blocked on the
-`_spectral_bisect` O(V²·E) bug (follow-up #65): any multi-lang port
-inherits the same quadratic scan and gives misleading "speedup"
-numbers against a known-bad baseline. The honest sequence is
-(i) fix #65 in Python first, then (ii) port the O(V+E)
-implementation to Rust. Until then, `backends` below reports
-`BLOCKED-ON-#65` for this op.
+*HierarchicalPartitioner.partition* IS compute-heavy (2.6 ms – 25 ms
+post-#65 fix; was 23-963 ms before the O(V²·E) bug was patched).
+Multi-language ports are now meaningful — see follow-up #64 for the
+Rust + Julia + Go + Mojo backends. The current bench reports
+`PENDING-#64` for those backends to flag the open work without
+silently skipping.
 
 Usage:
     python benchmarks/bench_chiplet.py
@@ -209,8 +207,9 @@ def main(argv: list[str]) -> int:
 
     print()
     print(f"## hierarchical_partitioner")
-    print(f"# Note: cells > V=200 take many minutes due to O(V**2 * E)")
-    print(f"# scan in _spectral_bisect (followup: optimise + Rust path).")
+    print(f"# Note: O(V**2 * E) bug in _spectral_bisect is FIXED (#65).")
+    print(f"# V=200 partition now ~25 ms (was ~700 ms). #64 tracks the")
+    print(f"# Rust + Julia + Go + Mojo ports of the now-fast algorithm.")
     print(f"{'operation':<40}  {'median ms':>12}  {'min ms':>12}")
     print(f"{'-'*40}  {'-'*12}  {'-'*12}")
     for n_v, n_p in [(50, 2), (100, 4), (200, 4)]:
@@ -240,10 +239,10 @@ def main(argv: list[str]) -> int:
             "used": False,
             "exemption": (
                 "chiplet_gen ops are 3-700 µs; PyO3 FFI overhead "
-                "(~1-5 µs) is 10-100% of compute. "
-                "HierarchicalPartitioner.partition is compute-heavy "
-                "but blocked on #65 — porting an O(V²·E) algorithm "
-                "gives misleading speedup numbers."
+                "(~1-5 µs) is 10-100% of compute → EXEMPT. "
+                "HierarchicalPartitioner.partition was BLOCKED on the "
+                "O(V²·E) bug; #65 is now fixed (partition runs in "
+                "2.6-25 ms). Multi-lang ports are tracked under #64."
             ),
         },
         "julia": {
@@ -271,7 +270,8 @@ def main(argv: list[str]) -> int:
                 "works (proven on LGSSM Kalman, #69 closed). chiplet_gen "
                 "ops still EXEMPT for the same FFI-overhead reason as "
                 "Rust/Julia/Go (1-3 µs FFI vs 3-700 µs compute is "
-                "10-100% overhead). Partition BLOCKED-ON-#65."
+                "10-100% overhead). Partition multi-lang port now "
+                "tracked under #64 (O(V²·E) bug fixed in #65)."
             ),
         },
     }

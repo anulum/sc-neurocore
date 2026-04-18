@@ -228,17 +228,16 @@ package:
   the bench JSON's `backends` block records the exemption
   rationale per backend).
 - `hierarchical_partitioner.py` — `partition()` is a real
-  compute kernel (recursive spectral bisection + KL refinement)
-  that scales **poorly** in pure Python (~1 s for V=200, see
-  §9). It **is** compute-heavy enough to warrant multi-lang
-  acceleration, but a Rust/Julia/Go port is **BLOCKED on #65**.
-  The current `_spectral_bisect` rebuilds `set(vertices)` per
-  iteration AND calls `graph.edge_scc(v, n)` which linear-scans
-  all edges → O(V²·E). Porting an O(V²·E) algorithm to Rust
-  would give misleading speedup numbers against a known-bad
-  baseline. The honest sequence is (i) fix #65 in Python to
-  O(V+E), then (ii) port the fixed algorithm to Rust
-  (follow-up #64 covers the Rust path once #65 is done).
+  compute kernel (recursive spectral bisection + KL refinement).
+  Pre-#65 it was O(V²·E) (~700 ms for V=200); the #65 fix now
+  caches edge lookups in `CorrelationAwareGraph` (`(min, max) →
+  edge` dict, O(1) lookup) and hoists `set(vertices)` out of
+  the inner loop in `_spectral_bisect`. Post-fix the partition
+  runs in 2.6 ms (V=50) → 25 ms (V=200), a 22-29× speedup with
+  identical canonical output (regression test:
+  `test_hierarchical_partitioner_perf.py`). Multi-language
+  Rust/Julia/Go/Mojo ports of the now-fast algorithm are
+  tracked under follow-up #64.
 
 ## 9. Pure-Python performance
 
@@ -291,25 +290,31 @@ are documented EXEMPT with explicit reason:
 
 | Operation | Problem size | Median | Min |
 |---|---|---:|---:|
-| `HierarchicalPartitioner.partition()` | V=50, P=2 | 18.8 ms | 15.5 ms |
-| `HierarchicalPartitioner.partition()` | V=100, P=4 | 264.7 ms | 244.0 ms |
-| `HierarchicalPartitioner.partition()` | V=200, P=4 | 963.2 ms | 911.4 ms |
+| `HierarchicalPartitioner.partition()` | V=50, P=2 | 2.6 ms | 2.4 ms |
+| `HierarchicalPartitioner.partition()` | V=100, P=4 | 15.4 ms | 13.6 ms |
+| `HierarchicalPartitioner.partition()` | V=200, P=4 | 25.3 ms | 24.0 ms |
 
-**The partition() scaling is bad** — V doubling at P=4 gives
-~3.6× wall time (closer to O(V²·log V) than the O(V·log V) one
-expects from spectral bisection). Root cause is the inner-loop
-inefficiency identified in §8 (followup #65). Cells with
-V ≥ 1000 take many minutes; not benchmarked here.
+**Post-#65 fix the scaling is near-linear.** V=200 ran in
+**25 ms** vs **963 ms before the fix** — a 38× wall-clock
+improvement on the same hardware (Linux 6.17 x86_64, NumPy
+2.2.6, Python 3.12.3). V=1000 partitions in ~440 ms (was
+"many minutes" pre-fix). The fix caches `(min, max) → edge`
+in `CorrelationAwareGraph` (O(1) lookup instead of O(E) linear
+scan) and hoists `set(vertices)` out of the inner spectral
+loop in `_spectral_bisect`. Canonical partition output is
+identical pre/post fix (regression-tested by
+`tests/test_chiplet/test_hierarchical_partitioner_perf.py`,
+8 tests including doubling-ratio < 5× scaling check).
 
 #### Multi-language backend status (partitioner)
 
 | Backend | Status | Rationale |
 |---|---|---|
-| python | USED | current baseline (O(V²·E)) |
-| rust | BLOCKED-ON-#65 | porting the O(V²·E) algorithm gives misleading speedup vs a known-bad baseline; fix Python first, then port |
-| julia | BLOCKED-ON-#65 | same; Metis.jl / Scotch.jl are honest alternatives once the API is O(V+E) |
-| go | BLOCKED-ON-#65 | same |
-| mojo | BLOCKED-ON-#65 | Mojo FFI proven (#69 closed) but the same O(V²·E) blocker applies — port the fixed Python first |
+| python | USED | current baseline (O(V·avg_degree) post-#65 fix) |
+| rust | PENDING-#64 | #65 perf bug fixed → port now meaningful; `engine/src/lgssm.rs` style PyO3 wrapper |
+| julia | PENDING-#64 | as above; Metis.jl / Scotch.jl candidates |
+| go | PENDING-#64 | as above; cgo + ctypes pattern proven on LGSSM (#70) |
+| mojo | PENDING-#64 | as above; @export raw-Int-addr pattern proven on LGSSM (#69) |
 
 ## 10. Test coverage
 

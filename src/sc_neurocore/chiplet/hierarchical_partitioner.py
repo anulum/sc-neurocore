@@ -115,10 +115,27 @@ class CorrelationEdge:
 
 @dataclass
 class CorrelationAwareGraph:
-    """Adjacency representation with per-edge SCC weights."""
+    """Adjacency representation with per-edge SCC weights.
+
+    Edge lookups (`edge_weight`, `edge_scc`) are O(1) via a cached
+    `(min_uv, max_uv) → CorrelationEdge` dict, lazily built on first
+    access. Was O(E) per call (linear scan), which made the
+    partitioner O(V²·E) on V vertices — see commit notes for #65.
+    """
     num_vertices: int
     edges: List[CorrelationEdge] = field(default_factory=list)
     vertex_weights: Dict[int, float] = field(default_factory=dict)
+    # Lazy O(1) lookup; rebuilt if the caller mutates `edges`.
+    _edge_cache: Optional[Dict[Tuple[int, int], CorrelationEdge]] = field(
+        default=None, repr=False, compare=False,
+    )
+
+    def _ensure_edge_cache(self) -> Dict[Tuple[int, int], CorrelationEdge]:
+        cache = self._edge_cache
+        if cache is None or len(cache) != len(self.edges):
+            cache = {(min(e.u, e.v), max(e.u, e.v)): e for e in self.edges}
+            self._edge_cache = cache
+        return cache
 
     def adjacency(self) -> Dict[int, List[int]]:
         adj: Dict[int, List[int]] = {i: [] for i in range(self.num_vertices)}
@@ -128,16 +145,12 @@ class CorrelationAwareGraph:
         return adj
 
     def edge_weight(self, u: int, v: int) -> float:
-        for e in self.edges:
-            if (e.u == u and e.v == v) or (e.u == v and e.v == u):
-                return e.conn_weight
-        return 0.0
+        e = self._ensure_edge_cache().get((min(u, v), max(u, v)))
+        return e.conn_weight if e is not None else 0.0
 
     def edge_scc(self, u: int, v: int) -> float:
-        for e in self.edges:
-            if (e.u == u and e.v == v) or (e.u == v and e.v == u):
-                return e.scc_weight
-        return 0.0
+        e = self._ensure_edge_cache().get((min(u, v), max(u, v)))
+        return e.scc_weight if e is not None else 0.0
 
     @property
     def num_edges(self) -> int:
@@ -291,16 +304,25 @@ class HierarchicalPartitioner:
         adj: Dict[int, List[int]],
         graph: CorrelationAwareGraph,
     ) -> Tuple[List[int], List[int]]:
-        """Spectral-heuristic bisection with correlation penalty."""
+        """Spectral-heuristic bisection with correlation penalty.
+
+        Performance fix (#65): hoist `set(vertices)` out of the inner
+        loop (was rebuilt V times → O(V²)) and rely on the O(1) edge
+        cache in `CorrelationAwareGraph._ensure_edge_cache`. Combined
+        complexity drops from O(V²·E) to O(V·avg_degree).
+        """
         if len(vertices) <= 1:
             return vertices, []
 
+        vset = set(vertices)
+        graph._ensure_edge_cache()  # warm O(1) lookup once
         scores: Dict[int, float] = {}
         for v in vertices:
-            degree = len([n for n in adj.get(v, []) if n in set(vertices)])
+            in_part_neighbours = [n for n in adj.get(v, []) if n in vset]
+            degree = len(in_part_neighbours)
             scc_sum = sum(
                 abs(graph.edge_scc(v, n)) * self.correlation_penalty
-                for n in adj.get(v, []) if n in set(vertices)
+                for n in in_part_neighbours
             )
             scores[v] = degree - scc_sum
 

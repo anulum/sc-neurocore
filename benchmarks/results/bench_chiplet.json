@@ -7,92 +7,92 @@
     {
       "suite": "chiplet_gen",
       "op": "make_torus(2, 2)",
-      "median_ms": 0.021212996216490865,
-      "min_ms": 0.019603990949690342
+      "median_ms": 0.020979001419618726,
+      "min_ms": 0.018906983314082026
     },
     {
       "suite": "chiplet_gen",
       "op": "make_torus(4, 4)",
-      "median_ms": 0.07938701310195029,
-      "min_ms": 0.07619199459441006
+      "median_ms": 0.10578101500868797,
+      "min_ms": 0.07976498454809189
     },
     {
       "suite": "chiplet_gen",
       "op": "make_torus(8, 8)",
-      "median_ms": 0.31791700166650116,
-      "min_ms": 0.3018830029759556
+      "median_ms": 0.33697602339088917,
+      "min_ms": 0.30951201915740967
     },
     {
       "suite": "chiplet_gen",
       "op": "compute_decorrelation_seeds (n_links=16)",
-      "median_ms": 0.003502005711197853,
-      "min_ms": 0.0032850075513124466
+      "median_ms": 0.0035130069591104984,
+      "min_ms": 0.0033449905458837748
     },
     {
       "suite": "chiplet_gen",
       "op": "compute_decorrelation_seeds (n_links=64)",
-      "median_ms": 0.013040000339969993,
-      "min_ms": 0.012303993571549654
+      "median_ms": 0.012603995855897665,
+      "min_ms": 0.01255699316971004
     },
     {
       "suite": "chiplet_gen",
       "op": "compute_decorrelation_seeds (n_links=256)",
-      "median_ms": 0.04856599844060838,
-      "min_ms": 0.048138987040147185
+      "median_ms": 0.05250400863587856,
+      "min_ms": 0.049408990889787674
     },
     {
       "suite": "chiplet_gen",
       "op": "estimate_package_energy (n_dies=4)",
-      "median_ms": 0.0014560064300894737,
-      "min_ms": 0.00123301288112998
+      "median_ms": 0.002468004822731018,
+      "min_ms": 0.0013450044207274914
     },
     {
       "suite": "chiplet_gen",
       "op": "estimate_package_energy (n_dies=16)",
-      "median_ms": 0.004494009772315621,
-      "min_ms": 0.004261004505679011
+      "median_ms": 0.0048749789129942656,
+      "min_ms": 0.004603003617376089
     },
     {
       "suite": "chiplet_gen",
       "op": "estimate_package_energy (n_dies=64)",
-      "median_ms": 0.01711401273496449,
-      "min_ms": 0.01708799391053617
+      "median_ms": 0.019341998267918825,
+      "min_ms": 0.01826300285756588
     },
     {
       "suite": "chiplet_gen",
       "op": "simulate_thermal (n_dies=4)",
-      "median_ms": 0.02467498416081071,
-      "min_ms": 0.022707012249156833
+      "median_ms": 0.03272297908551991,
+      "min_ms": 0.026074994821101427
     },
     {
       "suite": "chiplet_gen",
       "op": "simulate_thermal (n_dies=16)",
-      "median_ms": 0.04610500764101744,
-      "min_ms": 0.04227200406603515
+      "median_ms": 0.11516900849528611,
+      "min_ms": 0.10482998914085329
     },
     {
       "suite": "chiplet_gen",
       "op": "simulate_thermal (n_dies=64)",
-      "median_ms": 0.15029101632535458,
-      "min_ms": 0.14555401867255569
+      "median_ms": 0.40146399987861514,
+      "min_ms": 0.3949289966840297
     },
     {
       "suite": "partitioner",
       "op": "partition (V=50, P=2)",
-      "median_ms": 16.358774999389425,
-      "min_ms": 14.33637598529458
+      "median_ms": 2.637490979395807,
+      "min_ms": 2.3676889832131565
     },
     {
       "suite": "partitioner",
       "op": "partition (V=100, P=4)",
-      "median_ms": 316.6581919940654,
-      "min_ms": 279.45018201717176
+      "median_ms": 15.355007984908298,
+      "min_ms": 13.57706097769551
     },
     {
       "suite": "partitioner",
       "op": "partition (V=200, P=4)",
-      "median_ms": 949.1469520144165,
-      "min_ms": 923.2131389726419
+      "median_ms": 25.33070300705731,
+      "min_ms": 24.035701993852854
     }
   ],
   "backends": {
