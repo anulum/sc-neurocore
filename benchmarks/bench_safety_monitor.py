@@ -183,9 +183,11 @@ def main(argv: list[str]) -> int:
             "available": True,
             "used": False,
             "exemption": (
-                "Mojo 0.26.2 installed at ~/.pixi/bin/mojo; subprocess "
-                "IPC overhead (~5-15 ms) is 4 orders of magnitude "
-                "larger than compute time. Exemption applies."
+                "Mojo 0.26.2 installed; `mojo build --emit shared-lib` "
+                "+ ctypes FFI works (proven on LGSSM Kalman, see #69) "
+                "but ctypes call overhead (~1-3 µs) still exceeds "
+                "compute time (~0.5-0.9 µs). Exemption applies on "
+                "the same FFI-cost grounds as Rust/Julia/Go."
             ),
         },
     }

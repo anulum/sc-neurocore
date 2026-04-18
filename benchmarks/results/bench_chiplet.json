@@ -7,92 +7,92 @@
     {
       "suite": "chiplet_gen",
       "op": "make_torus(2, 2)",
-      "median_ms": 0.025551998987793922,
-      "min_ms": 0.023028987925499678
+      "median_ms": 0.021212996216490865,
+      "min_ms": 0.019603990949690342
     },
     {
       "suite": "chiplet_gen",
       "op": "make_torus(4, 4)",
-      "median_ms": 0.0915669952519238,
-      "min_ms": 0.08338899351656437
+      "median_ms": 0.07938701310195029,
+      "min_ms": 0.07619199459441006
     },
     {
       "suite": "chiplet_gen",
       "op": "make_torus(8, 8)",
-      "median_ms": 0.36306699621491134,
-      "min_ms": 0.3373079816810787
+      "median_ms": 0.31791700166650116,
+      "min_ms": 0.3018830029759556
     },
     {
       "suite": "chiplet_gen",
       "op": "compute_decorrelation_seeds (n_links=16)",
-      "median_ms": 0.006992020644247532,
-      "min_ms": 0.005215988494455814
+      "median_ms": 0.003502005711197853,
+      "min_ms": 0.0032850075513124466
     },
     {
       "suite": "chiplet_gen",
       "op": "compute_decorrelation_seeds (n_links=64)",
-      "median_ms": 0.02667098306119442,
-      "min_ms": 0.022172986064106226
+      "median_ms": 0.013040000339969993,
+      "min_ms": 0.012303993571549654
     },
     {
       "suite": "chiplet_gen",
       "op": "compute_decorrelation_seeds (n_links=256)",
-      "median_ms": 0.08126400643959641,
-      "min_ms": 0.07905400707386434
+      "median_ms": 0.04856599844060838,
+      "min_ms": 0.048138987040147185
     },
     {
       "suite": "chiplet_gen",
       "op": "estimate_package_energy (n_dies=4)",
-      "median_ms": 0.005296984454616904,
-      "min_ms": 0.0034339900594204664
+      "median_ms": 0.0014560064300894737,
+      "min_ms": 0.00123301288112998
     },
     {
       "suite": "chiplet_gen",
       "op": "estimate_package_energy (n_dies=16)",
-      "median_ms": 0.008603004971519113,
-      "min_ms": 0.007794005796313286
+      "median_ms": 0.004494009772315621,
+      "min_ms": 0.004261004505679011
     },
     {
       "suite": "chiplet_gen",
       "op": "estimate_package_energy (n_dies=64)",
-      "median_ms": 0.03046100027859211,
-      "min_ms": 0.026216002879664302
+      "median_ms": 0.01711401273496449,
+      "min_ms": 0.01708799391053617
     },
     {
       "suite": "chiplet_gen",
       "op": "simulate_thermal (n_dies=4)",
-      "median_ms": 0.06938399747014046,
-      "min_ms": 0.06362400017678738
+      "median_ms": 0.02467498416081071,
+      "min_ms": 0.022707012249156833
     },
     {
       "suite": "chiplet_gen",
       "op": "simulate_thermal (n_dies=16)",
-      "median_ms": 0.10710099013522267,
-      "min_ms": 0.10121098603121936
+      "median_ms": 0.04610500764101744,
+      "min_ms": 0.04227200406603515
     },
     {
       "suite": "chiplet_gen",
       "op": "simulate_thermal (n_dies=64)",
-      "median_ms": 0.3978770109824836,
-      "min_ms": 0.37400898872874677
+      "median_ms": 0.15029101632535458,
+      "min_ms": 0.14555401867255569
     },
     {
       "suite": "partitioner",
       "op": "partition (V=50, P=2)",
-      "median_ms": 17.385345010552555,
-      "min_ms": 16.852795000886545
+      "median_ms": 16.358774999389425,
+      "min_ms": 14.33637598529458
     },
     {
       "suite": "partitioner",
       "op": "partition (V=100, P=4)",
-      "median_ms": 231.66365700308233,
-      "min_ms": 196.84558699373156
+      "median_ms": 316.6581919940654,
+      "min_ms": 279.45018201717176
     },
     {
       "suite": "partitioner",
       "op": "partition (V=200, P=4)",
-      "median_ms": 732.7606470207684,
-      "min_ms": 707.2755359986331
+      "median_ms": 949.1469520144165,
+      "min_ms": 923.2131389726419
     }
   ],
   "backends": {
@@ -119,7 +119,7 @@
     "mojo": {
       "available": true,
       "used": false,
-      "exemption": "Mojo 0.26 public toolchain lacks stable @export for parametric UnsafePointer args (same blocker as #69). Subprocess IPC alternative is ~10 ms, worse than every op in this bench."
+      "exemption": "Mojo 0.26 `mojo build --emit shared-lib` + ctypes FFI works (proven on LGSSM Kalman, #69 closed). chiplet_gen ops still EXEMPT for the same FFI-overhead reason as Rust/Julia/Go (1-3 \u00b5s FFI vs 3-700 \u00b5s compute is 10-100% overhead). Partition BLOCKED-ON-#65."
     }
   }
 }
