@@ -207,7 +207,13 @@ class EquationNeuron:
         if self.method == "euler":
             derivatives = {}
             for var, code in self._compiled_eqs.items():
-                derivatives[var] = float(eval(code, {"__builtins__": {}}, env))
+                # nosec B307: `code` is a compiled expression that has
+                # already passed `_validate_expr`'s AST whitelist (no
+                # imports, no attribute access into builtins, only the
+                # whitelisted maths/comparison nodes). The `eval` env
+                # has empty `__builtins__` so even reaching `eval` /
+                # `exec` / `__import__` is impossible.
+                derivatives[var] = float(eval(code, {"__builtins__": {}}, env))  # nosec B307
             for var in self.equations:
                 self.state[var] += derivatives[var] * self.dt
 
@@ -224,7 +230,10 @@ class EquationNeuron:
                 e.update(kwargs)
                 e["xi"] = xi_sample
                 return {
-                    var: float(eval(code, {"__builtins__": {}}, e))
+                    # nosec B307: AST-whitelisted compiled equation
+                    # (see euler branch comment above for full sandbox
+                    # rationale).
+                    var: float(eval(code, {"__builtins__": {}}, e))  # nosec B307
                     for var, code in self._compiled_eqs.items()
                 }
 
@@ -241,11 +250,13 @@ class EquationNeuron:
         spike = 0
         if self._compiled_threshold:
             env_post = self._build_env(**kwargs)
-            if eval(self._compiled_threshold, {"__builtins__": {}}, env_post):
+            # nosec B307: AST-whitelisted compiled threshold expression.
+            if eval(self._compiled_threshold, {"__builtins__": {}}, env_post):  # nosec B307
                 spike = 1
                 reset_env = self._build_env(**kwargs)
                 for var, code in self._compiled_reset.items():
-                    self.state[var] = float(eval(code, {"__builtins__": {}}, reset_env))
+                    # nosec B307: AST-whitelisted compiled reset rule.
+                    self.state[var] = float(eval(code, {"__builtins__": {}}, reset_env))  # nosec B307
 
         return spike
 
