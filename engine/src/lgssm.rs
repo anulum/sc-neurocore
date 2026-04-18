@@ -94,7 +94,7 @@ pub fn kalman_filter(
         let innov = &y_t - &y_hat;
 
         // Innovation covariance: S = C P_pred C^T + R
-        let s_mat = c.dot(&p_pred).dot(&c.t()) + &r;
+        let s_mat = c.dot(&p_pred).dot(&c.t()) + r;
 
         // Solve S z = innov using Gaussian elimination (small p)
         let s_inv = invert_psd_matrix(&s_mat);
@@ -127,7 +127,7 @@ pub fn kalman_filter(
             let u_t = controls.slice(s![t, ..]);
             x_next = x_next + b.dot(&u_t);
         }
-        let p_next = a.dot(&p_filt).dot(&a.t()) + &q;
+        let p_next = a.dot(&p_filt).dot(&a.t()) + q;
         x_pred = x_next;
         p_pred = p_next;
     }
