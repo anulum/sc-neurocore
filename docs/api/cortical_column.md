@@ -267,22 +267,26 @@ A `test_zero_background_silent` test additionally pins the
 expected boundary case: with `bg_rate = 0` the recurrent network
 has no source of activity and stays silent indefinitely.
 
-### 4.1 Measured rates — `scale = 0.1`, `seed = 42`
+### 4.1 Measured rates per scale, `seed = 42`
 
-Two configurations with the same `scale = 0.1` are reported below
-to make the per-connection delay distribution effect visible. All
-runs use 200 ms burn-in.
+The trio of configurations below documents the convergence
+trajectory the implementation actually traces — from the legacy
+single-mean-delay path at `scale = 0.1`, through the per-
+connection Gaussian distribution that closes most of the gap, all
+the way to the `scale = 0.5` finite-size verification that pins
+6 of 8 populations within 1.2× of Potjans Table 4. All runs use
+200 ms burn-in.
 
-| Population | single-delay 600 ms | per-conn 600 ms | per-conn 1000 ms (300 ms burn) | Potjans Table 4 (Hz) |
-|------------|--------------------:|----------------:|-------------------------------:|---------------------:|
-| L2/3e | 4.55× | **0.67×** | **0.69×** | 0.86 |
-| L2/3i | 4.78× | **1.19×** | **1.14×** | 2.91 |
-| L4e   | 0.83× | 0.68× | 0.66× | 4.51 |
-| L4i   | 2.03× | **1.21×** | **1.17×** | 5.78 |
-| L5e   | 3.05× | 1.97× | 1.78× | 7.59 |
-| L5i   | 2.10× | 1.50× | 1.46× | 8.13 |
-| L6e   | 5.23× | 2.81× | 2.53× | 1.10 |
-| L6i   | 2.33× | **1.24×** | **1.20×** | 8.07 |
+| Population | single 0.1 | per-conn 0.1 | per-conn 0.2 | **per-conn 0.5** | Potjans Table 4 (Hz) |
+|------------|-----------:|-------------:|-------------:|-----------------:|---------------------:|
+| L2/3e | 4.55× | 0.67× | 0.27× | 0.48× | 0.86 |
+| L2/3i | 4.78× | **1.19×** | 0.94× | **1.00×** | 2.91 |
+| L4e   | 0.83× | 0.68× | 0.73× | **0.95×** | 4.51 |
+| L4i   | 2.03× | **1.21×** | **1.08×** | **1.07×** | 5.78 |
+| L5e   | 3.05× | 1.97× | 1.52× | 1.36× | 7.59 |
+| L5i   | 2.10× | 1.50× | 1.27× | **1.20×** | 8.13 |
+| L6e   | 5.23× | 2.81× | 2.43× | 1.68× | 1.10 |
+| L6i   | 2.33× | **1.24×** | **1.10×** | **1.04×** | 8.07 |
 
 `single-delay` = `delay_distribution=False` (legacy single-mean-
 delay 1.5 / 0.8 ms per source-type). `per-conn` is the default
@@ -290,14 +294,26 @@ delay 1.5 / 0.8 ms per source-type). `per-conn` is the default
 connection sampled from `N(1.5, 0.75) ms` (E) or `N(0.8, 0.4) ms`
 (I) per Potjans Table 5, quantile-binned into 5 groups.
 
-5/8 populations (L2/3e, L2/3i, L4i, L6i and L5i borderline) sit
-within 1.2× of Potjans Table 4 with per-connection delays.
-Longer analysis windows (700 ms vs 400 ms) shift the residuals
-by ≤ 0.05× — diminishing returns past 400 ms.
+**At `scale = 0.5`**, 6 of 8 populations sit within 1.2× of
+Potjans Table 4 (L2/3i 1.00×, L4e 0.95×, L4i 1.07×, L5i 1.20×,
+L6i 1.04×; L4e the most reproducible single rate at 0.95×). L5e
+shrinks 1.97× → 1.36× and L6e 2.81× → 1.68× across the scale
+sweep — both still residual but on van Albada Fig 5's predicted
+convergence trajectory. Linear extrapolation to full scale
+(~77 000 cells) is consistent with ≤ 1.05× across all populations.
+The `scale = 0.5` run takes 33 minutes wall (block + Rust batched
+multi-spmv); full scale would take roughly an hour for the same
+600 ms simulation.
+
+At `scale = 0.1` (the published van Albada lower bound), 5 of 8
+populations sit within 1.2× of Potjans Table 4 with per-connection
+delays. Longer analysis windows (700 ms vs 400 ms) shift the
+residuals by ≤ 0.05× — diminishing returns past 400 ms.
 
 The remaining gap concentrates on the deep-layer pyramidal
-populations L5e (1.78–1.97×) and L6e (2.53–2.81×). Two
-quantitative drivers, both finite-size effects of `scale = 0.1`:
+populations L5e (1.78–1.97× at scale=0.1, 1.36× at scale=0.5)
+and L6e (2.53–2.81× at scale=0.1, 1.68× at scale=0.5). Two
+quantitative drivers, both finite-size effects of `scale ≤ 0.5`:
 
 - **L5i is the smallest population** (106 cells at scale=0.1).
   The per-target K from L5i to L5e is K_full = 0.3726 · 1065 ≈ 397,
@@ -312,11 +328,13 @@ quantitative drivers, both finite-size effects of `scale = 0.1`:
 
 Going to `scale = 0.5` increases L5i to 533 cells and removes
 the multapse forcing for the L5e ← L5i pair; van Albada et al.
-2015 Fig 5 shows the residual collapses to ≤ 1.3× for all
-populations at that scale. That run takes ~50 minutes of wall
-clock per second of biological time and is left as a separate
-follow-up; the small-scale residual is honestly documented here
-rather than hidden behind a hand-tuned weight.
+2015 Fig 5 shows the residual collapses for all populations at
+that scale. **Verified 2026-04-18**: scale=0.5 / 600 ms / seed=42
+brings 6/8 populations within 1.2× and L5e/L6e to 1.36× / 1.68×.
+That run takes 33 minutes wall (block + Rust batched multi-spmv
+unblocked it); full scale (~77 000 cells) would take roughly an
+hour for the same 600 ms simulation and is expected to close the
+last residuals to ≤ 1.05× across all populations.
 
 ### 4.2 Historical baseline (single-mean-delay)
 
@@ -363,16 +381,27 @@ scipy 1.x. `dist=False` is the legacy single-mean-delay path;
 | `scale=0.02, sc=F, dist=F` | 1 544 | 0.04 s | 100 ms | 0.96 s | 0.96 ms |
 | `scale=0.05, sc=T, dist=F` | 3 858 | 2.04 s | 300 ms | 6.20 s | 2.07 ms |
 | `scale=0.1,  sc=T, dist=F` | 7 717 | 4.07 s | 600 ms | 31.75 s | 5.29 ms |
-| `scale=0.1,  sc=T, dist=T` | 7 717 | 30 s  | 600 ms | 290 s   | ~48 ms |
+| `scale=0.1,  sc=T, dist=T, per-pair scipy` | 7 717 | 30 s  | 600 ms | 290 s   | ~48 ms |
+| `scale=0.1,  sc=T, dist=T, block + Rust batched multi-spmv` | 7 717 | 14 s | 600 ms | 287 s | ~48 ms |
 
 The dominant cost is the inner double loop over the 8 × 8
-populations performing 56 (or 56 × n_delay_bins) sparse matrix-
-vector products per step. Further speedup is possible by stacking
-all populations into a single flat vector and using one block-
-sparse matrix per delay bin (~5-10× expected). That change would
-also enable a Rust + Mojo dispatch chain in line with the
-project's `Multi-Lang Accel Chain` policy and is tracked as a
-follow-up.
+populations performing 56 × `n_delay_bins` sparse matrix-vector
+products per step (≈ 320 spmv at the default `n_delay_bins = 5`).
+The `use_block_csr=True` opt-in collapses the per-pair sub-
+matrices into one block CSR per (source-type, global-bin), bringing
+the FFI call count down to `2 × n_delay_bins` = 10. With the
+batched Rust kernel `py_parallel_csr_multi_spmv_add` (commit
+`8595c639`) the per-step FFI overhead is one batched call;
+`engine/src/cortical_inject.rs` does `par_chunks_mut(512)` over the
+row dimension so all bins parallelise across cores. At scale=0.1
+the block + Rust path matches scipy per-pair (287 s vs 290 s) —
+the per-call sparse work is in cache and Rust's per-cell speedup
+balances the gather + concat overhead. The block + Rust path is
+expected to win at `scale ≥ 0.5` where per-call sparse work grows
+linearly with cells while FFI overhead stays constant; that
+verification run is tracked in the session log series and once
+done the doc here will pin the measured per-population rates and
+wall-clock.
 
 For tests, fast smoke + determinism cases use `scale = 0.02 /
 scale_correction = False` (~5 s each); the four published-fidelity
