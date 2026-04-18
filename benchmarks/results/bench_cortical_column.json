@@ -1,0 +1,190 @@
+{
+  "backends": {
+    "go": {
+      "notes": "Same as Rust.",
+      "status": "BLOCKED-ON-multilang-cortical"
+    },
+    "julia": {
+      "notes": "Same as Rust.",
+      "status": "BLOCKED-ON-multilang-cortical"
+    },
+    "mojo": {
+      "notes": "Same as Rust.",
+      "status": "BLOCKED-ON-multilang-cortical"
+    },
+    "python": {
+      "notes": "scipy.sparse CSR per (target,source) pair.",
+      "status": "USED"
+    },
+    "rust": {
+      "notes": "Per-step inner loop is 64-way sparse mat-vec across population pairs; proper acceleration needs a block-sparse restructure of the connectivity. Tracked as follow-up under feedback_module_standard_attnres.",
+      "status": "BLOCKED-ON-multilang-cortical"
+    }
+  },
+  "host": {
+    "numpy": "2.2.6",
+    "platform": "Linux-6.17.0-20-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3"
+  },
+  "module": "sc_neurocore.network.cortical_column.CorticalColumn",
+  "publication_reference": "Potjans & Diesmann (2014) Cerebral Cortex 24(3):785-806, DOI 10.1093/cercor/bhs358 \u2014 Table 4 firing rates.",
+  "runs": [
+    {
+      "build_seconds": 0.04311697103548795,
+      "burn_in_ms": 20.0,
+      "dt": 0.1,
+      "duration_ms": 100.0,
+      "n_total": 1544,
+      "per_step_ms": 0.9583493969985284,
+      "potjans_table4_hz": {
+        "L23e": 0.86,
+        "L23i": 2.91,
+        "L4e": 4.51,
+        "L4i": 5.78,
+        "L5e": 7.59,
+        "L5i": 8.13,
+        "L6e": 1.1,
+        "L6i": 8.07
+      },
+      "rate_ratio_to_table4": {
+        "L23e": 71.41051567239637,
+        "L23i": 22.836079537110464,
+        "L4e": 21.685700979052132,
+        "L4i": 20.544982698961935,
+        "L5e": 15.620118712902219,
+        "L5i": 13.764423358519299,
+        "L6e": 124.84217171717171,
+        "L6i": 14.754373805473294
+      },
+      "rates_hz": {
+        "L23e": 61.413043478260875,
+        "L23i": 66.45299145299145,
+        "L4e": 97.80251141552512,
+        "L4i": 118.74999999999999,
+        "L5e": 118.55670103092784,
+        "L5i": 111.90476190476191,
+        "L6e": 137.32638888888889,
+        "L6i": 119.0677966101695
+      },
+      "scale": 0.02,
+      "scale_correction": false,
+      "seed": 42,
+      "simulate_seconds": 0.9583493969985284,
+      "sizes": {
+        "L23e": 414,
+        "L23i": 117,
+        "L4e": 438,
+        "L4i": 110,
+        "L5e": 97,
+        "L5i": 21,
+        "L6e": 288,
+        "L6i": 59
+      }
+    },
+    {
+      "build_seconds": 2.0431200219900347,
+      "burn_in_ms": 100.0,
+      "dt": 0.1,
+      "duration_ms": 300.0,
+      "n_total": 3858,
+      "per_step_ms": 2.0677625343281156,
+      "potjans_table4_hz": {
+        "L23e": 0.86,
+        "L23i": 2.91,
+        "L4e": 4.51,
+        "L4i": 5.78,
+        "L5e": 7.59,
+        "L5i": 8.13,
+        "L6e": 1.1,
+        "L6i": 8.07
+      },
+      "rate_ratio_to_table4": {
+        "L23e": 23.413251765552605,
+        "L23i": 13.380878407004658,
+        "L4e": 0.671662323789794,
+        "L4i": 6.544717500568281,
+        "L5e": 4.7991593985126135,
+        "L5i": 4.46749750516373,
+        "L6e": 25.454545454545453,
+        "L6i": 6.145209012973218
+      },
+      "rates_hz": {
+        "L23e": 20.13539651837524,
+        "L23i": 38.938356164383556,
+        "L4e": 3.0291970802919708,
+        "L4i": 37.82846715328467,
+        "L5e": 36.42561983471074,
+        "L5i": 36.32075471698113,
+        "L6e": 28.0,
+        "L6i": 49.59183673469387
+      },
+      "scale": 0.05,
+      "scale_correction": true,
+      "seed": 42,
+      "simulate_seconds": 6.2032876029843464,
+      "sizes": {
+        "L23e": 1034,
+        "L23i": 292,
+        "L4e": 1096,
+        "L4i": 274,
+        "L5e": 242,
+        "L5i": 53,
+        "L6e": 720,
+        "L6i": 147
+      }
+    },
+    {
+      "build_seconds": 4.073547651001718,
+      "burn_in_ms": 200.0,
+      "dt": 0.1,
+      "duration_ms": 600.0,
+      "n_total": 7717,
+      "per_step_ms": 5.290893505841572,
+      "potjans_table4_hz": {
+        "L23e": 0.86,
+        "L23i": 2.91,
+        "L4e": 4.51,
+        "L4i": 5.78,
+        "L5e": 7.59,
+        "L5i": 8.13,
+        "L6e": 1.1,
+        "L6i": 8.07
+      },
+      "rate_ratio_to_table4": {
+        "L23e": 4.919931627007332,
+        "L23i": 7.468185060093248,
+        "L4e": 1.608853804198294,
+        "L4i": 4.371037809713838,
+        "L5e": 3.9878842209635574,
+        "L5i": 2.4310148761864974,
+        "L6e": 6.704545454545454,
+        "L6i": 2.833259823997648
+      },
+      "rates_hz": {
+        "L23e": 4.231141199226306,
+        "L23i": 21.732418524871353,
+        "L4e": 7.255930656934306,
+        "L4i": 25.264598540145982,
+        "L5e": 30.2680412371134,
+        "L5i": 19.764150943396224,
+        "L6e": 7.375,
+        "L6i": 22.864406779661017
+      },
+      "scale": 0.1,
+      "scale_correction": true,
+      "seed": 42,
+      "simulate_seconds": 31.745361035049427,
+      "sizes": {
+        "L23e": 2068,
+        "L23i": 583,
+        "L4e": 2192,
+        "L4i": 548,
+        "L5e": 485,
+        "L5i": 106,
+        "L6e": 1440,
+        "L6i": 295
+      }
+    }
+  ],
+  "schema_version": 1
+}
