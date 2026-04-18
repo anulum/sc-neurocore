@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: AGPL-3.0-or-later | Commercial license available
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
 # SC-NeuroCore — Switching activity comparison: clock-driven vs event-driven LIF
 #
 # Measures register toggle counts (proxy for dynamic power) for both neuron

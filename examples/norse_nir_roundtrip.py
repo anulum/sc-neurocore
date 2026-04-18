@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: AGPL-3.0-or-later | Commercial license available
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
 # SC-NeuroCore -- Norse -> NIR -> SC-NeuroCore roundtrip
 #
 # Usage:

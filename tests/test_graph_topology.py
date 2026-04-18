@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later | Commercial license available
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
 # Tests for sc_neurocore.topology (graph connectivity analysis)
 from __future__ import annotations
 import numpy as np

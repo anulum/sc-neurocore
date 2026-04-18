@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later | Commercial license available
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
 # SC-NeuroCore — Tests for PyTorch surrogate gradient training stack
 
 from __future__ import annotations
