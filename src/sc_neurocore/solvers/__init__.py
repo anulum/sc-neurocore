@@ -4,14 +4,48 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — sc_neurocore.solvers -- Tier: research (experimental /
+# SC-NeuroCore — sc_neurocore.solvers -- Tier: core (production)
 
-"""sc_neurocore.solvers -- Tier: research (experimental / research)."""
+"""sc_neurocore.solvers — ODE integration and combinatorial solvers.
 
-__tier__ = "research"
+Includes:
+- Fixed-step ODE solvers: Euler, Heun, RK4
+- Adaptive ODE solver: Dormand-Prince RK45
+- Exponential integrator for linear ODEs
+- Exact event-driven LIF solver
+- Symplectic integrators: Störmer-Verlet, Leapfrog
+- Implicit solvers: Backward Euler, Trapezoidal (Crank-Nicolson)
+- Combinatorial: Stochastic Ising Graph
+"""
+
+__tier__ = "core"
 
 from .ising import StochasticIsingGraph
+from .ode import (
+    ODESolver,
+    EulerSolver,
+    HeunSolver,
+    RK4Solver,
+    DormandPrinceSolver,
+    ExponentialEuler,
+    get_solver,
+)
+from .exact_lif import ExactLIFSolver
+from .symplectic import StormerVerlet, LeapfrogSolver
+from .stiff import ImplicitEuler, TrapezoidalRule
 
 __all__ = [
     "StochasticIsingGraph",
+    "ODESolver",
+    "EulerSolver",
+    "HeunSolver",
+    "RK4Solver",
+    "DormandPrinceSolver",
+    "ExponentialEuler",
+    "ExactLIFSolver",
+    "StormerVerlet",
+    "LeapfrogSolver",
+    "ImplicitEuler",
+    "TrapezoidalRule",
+    "get_solver",
 ]
