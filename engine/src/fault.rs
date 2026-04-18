@@ -8,7 +8,7 @@
 
 //! Hardware fault injection for robustness testing.
 
-use rand::{Rng, RngExt, SeedableRng};
+use rand::{RngExt, SeedableRng};
 use rand_distr::{Distribution, Normal};
 use rand_xoshiro::Xoshiro256PlusPlus;
 

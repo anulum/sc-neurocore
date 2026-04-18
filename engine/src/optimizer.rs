@@ -81,7 +81,7 @@ pub fn estimate_resources(mac_count: i64, length: u32, decorr: u8, mode: u8) -> 
 
     Candidate {
         bitstream_length: length, decorrelator: decorr, mode, luts, power,
-        accuracy: accuracy.max(0.1).min(1.0), latency: length as i64,
+        accuracy: accuracy.clamp(0.1, 1.0), latency: length as i64,
     }
 }
 
@@ -187,7 +187,7 @@ pub fn simulated_annealing(
         })
         .collect();
 
-    if !is_feasible(&candidates, &current, max_luts, max_power, max_latency) {
+    if !is_feasible(candidates, &current, max_luts, max_power, max_latency) {
         return None;
     }
 
@@ -218,7 +218,7 @@ pub fn simulated_annealing(
         let old = current[layer];
         current[layer] = cand_idx;
 
-        if !is_feasible(&candidates, &current, max_luts, max_power, max_latency) {
+        if !is_feasible(candidates, &current, max_luts, max_power, max_latency) {
             current[layer] = old;
             t *= alpha;
             continue;
@@ -293,11 +293,10 @@ pub fn extract_pareto(
         .filter(|&i| {
             for j in 0..n {
                 if j == i { continue; }
-                if luts[j] <= luts[i] && power[j] <= power[i] && score[j] >= score[i] {
-                    if luts[j] < luts[i] || power[j] < power[i] || score[j] > score[i] {
+                if luts[j] <= luts[i] && power[j] <= power[i] && score[j] >= score[i]
+                    && (luts[j] < luts[i] || power[j] < power[i] || score[j] > score[i]) {
                         return false;
                     }
-                }
             }
             true
         })

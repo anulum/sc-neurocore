@@ -4725,7 +4725,6 @@ fn py_qa_ising_energy(
         .into_iter()
         .zip(j_j)
         .zip(j_values)
-        .map(|((i, j), v)| ((i, j), v))
         .collect();
     quantum::ising_energy(&h, &j, &spins, offset)
 }
@@ -4748,7 +4747,6 @@ fn py_qa_batch_ising_energy(
         .into_iter()
         .zip(j_j)
         .zip(j_values)
-        .map(|((i, j), v)| ((i, j), v))
         .collect();
     quantum::batch_ising_energy(&h, &j, &configs, offset)
 }
@@ -4778,7 +4776,6 @@ fn py_qa_simulated_annealing<'py>(
         .into_iter()
         .zip(j_j)
         .zip(j_values)
-        .map(|((i, j), v)| ((i, j), v))
         .collect();
 
     let (best_spins, best_energy, all_energies, all_samples) = quantum::simulated_annealing(
@@ -4798,6 +4795,7 @@ fn py_qa_simulated_annealing<'py>(
 
 /// Apply gauge transform to Ising biases and couplings.
 #[pyfunction]
+#[allow(clippy::type_complexity)] // tuple shape mirrors Python's QUBO format
 fn py_qa_gauge_transform(
     _py: Python<'_>,
     h_indices: Vec<usize>,
@@ -4812,7 +4810,6 @@ fn py_qa_gauge_transform(
         .into_iter()
         .zip(j_j)
         .zip(j_values)
-        .map(|((i, j), v)| ((i, j), v))
         .collect();
     quantum::gauge_transform(&h, &j, &gauge)
 }
@@ -4844,7 +4841,6 @@ fn py_qa_greedy_partition(
         .into_iter()
         .zip(j_j)
         .zip(j_values)
-        .map(|((i, j), v)| ((i, j), v))
         .collect();
     quantum::greedy_partition(n_qubits, &j, max_partition_size)
 }
