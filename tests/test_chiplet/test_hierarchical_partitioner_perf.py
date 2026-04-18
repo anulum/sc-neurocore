@@ -749,6 +749,67 @@ class TestProbeReturnsTrueOnSecondCall:
         assert hp_mod._ensure_mojo_kl_refine_loaded() is True
 
 
+class TestImportFallback:
+    """Cover the module-level `try: from sc_neurocore_engine import
+    py_kl_refine ... except (ImportError, AttributeError)` branch by
+    reloading the module with the engine masked out of sys.modules."""
+
+    def test_engine_missing_sets_rust_kl_refine_none(self) -> None:
+        import importlib
+        import sys
+        from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+        # Save current state for restoration.
+        saved_engine = sys.modules.get("sc_neurocore_engine")
+        try:
+            # Mask the engine module so the next import fails.
+            sys.modules["sc_neurocore_engine"] = None  # type: ignore[assignment]
+            reloaded = importlib.reload(hp_mod)
+            assert reloaded._HAS_RUST_KL_REFINE is False
+            assert reloaded._rust_kl_refine is None
+        finally:
+            # Restore engine + reload module so subsequent tests see real engine.
+            if saved_engine is not None:
+                sys.modules["sc_neurocore_engine"] = saved_engine
+            else:
+                sys.modules.pop("sc_neurocore_engine", None)
+            importlib.reload(hp_mod)
+
+
+class TestPreExistingEdgeCases:
+    """Two pre-existing edge-case lines (calculate_imbalance_ratio
+    `ideal == 0` and MigrationPlanner `recs >= max_recommendations`)
+    were uncovered by the original suite. Pin them so the chiplet
+    package reaches 100 % coverage."""
+
+    def test_imbalance_ratio_with_zero_ideal(self) -> None:
+        from sc_neurocore.chiplet.hierarchical_partitioner import (
+            calculate_imbalance_ratio,
+        )
+        # Empty partition list → ideal=0/0 short-circuits at line 895 (`not sizes`),
+        # but [empty, empty] gives total=0, ideal=0 → triggers line 899/900.
+        result = calculate_imbalance_ratio([[], []])
+        assert result == 0.0
+
+    def test_load_balancer_respects_max_recommendations(self) -> None:
+        from sc_neurocore.chiplet.hierarchical_partitioner import (
+            CorrelationLoadBalancer,
+        )
+        # Strong imbalance + many cross-partition edges → planner
+        # produces multiple candidates; cap at 1 → forces the
+        # `len(recs) >= max_recommendations` break (line 1116).
+        edges = [
+            CorrelationEdge(u=v, v=20, conn_weight=1.0, scc_weight=0.5)
+            for v in range(20)
+        ]
+        g = CorrelationAwareGraph(num_vertices=21, edges=edges)
+        partitions = [list(range(20)), [20]]
+        planner = CorrelationLoadBalancer(imbalance_threshold=0.05)
+        recs = planner.recommend_migrations(
+            g, partitions, max_recommendations=1,
+        )
+        assert len(recs) <= 1
+
+
 class TestRefineBackendValidation:
     """The constructor must reject unknown backend names cleanly,
     and missing-tool errors at dispatch time must be informative."""
