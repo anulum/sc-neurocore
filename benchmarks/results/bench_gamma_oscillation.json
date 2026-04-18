@@ -30,7 +30,7 @@
   "publication_reference": "B\u00f6rgers, C. & Kopell, N. (2003) Neural Computation 15(3): 509-538. Fig 2A weak-PING \u2014 dominant gamma 30-80 Hz.",
   "runs": [
     {
-      "build_seconds": 0.0014455759664997458,
+      "build_seconds": 0.0002563580055721104,
       "burn_in_ms": 100.0,
       "dominant_frequency_hz": 40.0,
       "dt": 0.1,
@@ -39,37 +39,37 @@
       "mean_population_rate_hz": 40.0,
       "n_excitatory": 80,
       "n_inhibitory": 20,
-      "per_step_us": 92.74668419966474,
+      "per_step_us": 42.851807607803494,
       "seed": 42,
-      "simulate_seconds": 0.4637334209983237
+      "simulate_seconds": 0.21425903803901747
     },
     {
-      "build_seconds": 0.0021779719972983003,
+      "build_seconds": 0.00019422703189775348,
       "burn_in_ms": 200.0,
-      "dominant_frequency_hz": 103.75,
-      "dt": 0.1,
-      "duration_ms": 1000.0,
-      "in_published_band_30_to_80_hz": false,
-      "mean_population_rate_hz": 26.25,
-      "n_excitatory": 400,
-      "n_inhibitory": 100,
-      "per_step_us": 85.61804639757611,
-      "seed": 42,
-      "simulate_seconds": 0.8561804639757611
-    },
-    {
-      "build_seconds": 0.00026279198937118053,
-      "burn_in_ms": 200.0,
-      "dominant_frequency_hz": 76.25,
+      "dominant_frequency_hz": 41.25,
       "dt": 0.1,
       "duration_ms": 1000.0,
       "in_published_band_30_to_80_hz": true,
-      "mean_population_rate_hz": 16.25,
+      "mean_population_rate_hz": 41.25,
+      "n_excitatory": 400,
+      "n_inhibitory": 100,
+      "per_step_us": 69.4176411954686,
+      "seed": 42,
+      "simulate_seconds": 0.694176411954686
+    },
+    {
+      "build_seconds": 0.0006670189904980361,
+      "burn_in_ms": 200.0,
+      "dominant_frequency_hz": 41.25,
+      "dt": 0.1,
+      "duration_ms": 1000.0,
+      "in_published_band_30_to_80_hz": true,
+      "mean_population_rate_hz": 41.250625,
       "n_excitatory": 4000,
       "n_inhibitory": 1000,
-      "per_step_us": 211.6167544038035,
+      "per_step_us": 206.23633280047216,
       "seed": 42,
-      "simulate_seconds": 2.116167544038035
+      "simulate_seconds": 2.0623633280047216
     }
   ],
   "schema_version": 1
