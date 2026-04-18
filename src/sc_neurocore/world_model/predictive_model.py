@@ -77,6 +77,50 @@ _go_lib = None
 _HAS_GO_LGSSM = False
 
 
+# Detect Mojo acceleration backend (lazy — load shared library on first use)
+_mojo_lib = None
+_HAS_MOJO_LGSSM = False
+
+
+def _ensure_mojo_loaded() -> bool:
+    """Lazy-load the Mojo LGSSM shared library on first request.
+
+    Built once via:
+      cd src/sc_neurocore/accel/mojo/world_model
+      mojo build --emit shared-lib -o liblgssm.so lgssm.mojo
+
+    Per `feedback_mojo_026_ffi_pattern.md`, the @export signature
+    accepts only non-parametric types — we pass every matrix as a
+    raw `int64` address (numpy `arr.ctypes.data`) and the Mojo
+    side reconstructs `UnsafePointer[Float64, MutAnyOrigin]`
+    inside the function.
+    """
+    global _mojo_lib, _HAS_MOJO_LGSSM
+    if _mojo_lib is not None:
+        return True
+    import ctypes
+    import os as _os
+    so_path = _os.path.join(
+        _os.path.dirname(_os.path.dirname(__file__)),
+        "accel", "mojo", "world_model", "liblgssm.so",
+    )
+    if not _os.path.isfile(so_path):
+        return False
+    try:
+        lib = ctypes.CDLL(so_path)
+    except OSError:
+        return False
+    fn = getattr(lib, "kalman_filter_c", None)
+    if fn is None:
+        return False
+    # 19 args: 10 input addresses + 4 size scalars + 5 output addresses
+    fn.argtypes = [ctypes.c_int64] * 19
+    fn.restype = None
+    _mojo_lib = lib
+    _HAS_MOJO_LGSSM = True
+    return True
+
+
 def _ensure_go_loaded() -> bool:
     """Lazy-load the Go LGSSM shared library on first request.
 
@@ -336,9 +380,9 @@ class KalmanFilter:
             controls = np.zeros((T, 0)) if controls is None else controls
 
         # Backend dispatch
-        if backend not in ("auto", "rust", "julia", "go", "python"):
+        if backend not in ("auto", "rust", "julia", "go", "mojo", "python"):
             raise ValueError(
-                f"backend must be auto/rust/julia/go/python, got {backend!r}"
+                f"backend must be auto/rust/julia/go/mojo/python, got {backend!r}"
             )
         if backend == "rust" and not _HAS_RUST_LGSSM:
             raise RuntimeError(
@@ -357,12 +401,20 @@ class KalmanFilter:
                 "built; run `cd src/sc_neurocore/accel/go/lgssm && "
                 "go build -buildmode=c-shared -o liblgssm.so lgssm.go`."
             )
+        if backend == "mojo" and not _ensure_mojo_loaded():
+            raise RuntimeError(
+                "Mojo LGSSM backend requested but liblgssm.so is not "
+                "built; run `cd src/sc_neurocore/accel/mojo/world_model "
+                "&& mojo build --emit shared-lib -o liblgssm.so lgssm.mojo`."
+            )
         if (backend == "auto" and _HAS_RUST_LGSSM) or backend == "rust":
             return self._filter_rust(observations, controls)
         if backend == "julia":
             return self._filter_julia(observations, controls)
         if backend == "go":
             return self._filter_go(observations, controls)
+        if backend == "mojo":
+            return self._filter_mojo(observations, controls)
 
         d = self.model.state_dim
         A, B, C, D = self.model.A, self.model.B, self.model.C, self.model.D
@@ -565,6 +617,63 @@ class KalmanFilter:
             pred_means_out.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
             pred_covs_out.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
             log_lik_out.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+        )
+        return FilterResult(
+            means=means_out,
+            covariances=covs_out,
+            pred_means=pred_means_out,
+            pred_covariances=pred_covs_out,
+            log_likelihood=float(log_lik_out[0]),
+        )
+
+    def _filter_mojo(
+        self,
+        observations: np.ndarray,
+        controls: np.ndarray,
+    ) -> FilterResult:
+        """Forward-pass dispatch to the Mojo LGSSM Kalman filter.
+
+        Calls the C-ABI `kalman_filter_c` function exported by the
+        Mojo shared library `accel/mojo/world_model/liblgssm.so`.
+        Per `feedback_mojo_026_ffi_pattern.md`, every matrix is
+        passed as a raw int64 address (no parametric pointer types
+        in the @export signature); the Mojo side reconstructs
+        `UnsafePointer[Float64, MutAnyOrigin]` inside.
+        """
+        if _mojo_lib is None:
+            raise RuntimeError("Mojo shared library not loaded; cannot dispatch")
+
+        T, p = observations.shape
+        d = self.model.state_dim
+        m = self.model.control_dim
+
+        obs_arr = np.ascontiguousarray(observations, dtype=np.float64)
+        ctl_arr = np.ascontiguousarray(controls, dtype=np.float64)
+        a_arr = np.ascontiguousarray(self.model.A, dtype=np.float64)
+        b_arr = np.ascontiguousarray(self.model.B, dtype=np.float64)
+        c_arr = np.ascontiguousarray(self.model.C, dtype=np.float64)
+        d_arr = np.ascontiguousarray(self.model.D, dtype=np.float64)
+        q_arr = np.ascontiguousarray(self.model.Q, dtype=np.float64)
+        r_arr = np.ascontiguousarray(self.model.R, dtype=np.float64)
+        mu0_arr = np.ascontiguousarray(self.model.mu_0, dtype=np.float64)
+        sigma0_arr = np.ascontiguousarray(self.model.Sigma_0, dtype=np.float64)
+
+        means_out = np.zeros((T, d), dtype=np.float64, order="C")
+        covs_out = np.zeros((T, d, d), dtype=np.float64, order="C")
+        pred_means_out = np.zeros((T, d), dtype=np.float64, order="C")
+        pred_covs_out = np.zeros((T, d, d), dtype=np.float64, order="C")
+        log_lik_out = np.zeros(1, dtype=np.float64, order="C")
+
+        _mojo_lib.kalman_filter_c(
+            obs_arr.ctypes.data, ctl_arr.ctypes.data,
+            a_arr.ctypes.data, b_arr.ctypes.data,
+            c_arr.ctypes.data, d_arr.ctypes.data,
+            q_arr.ctypes.data, r_arr.ctypes.data,
+            mu0_arr.ctypes.data, sigma0_arr.ctypes.data,
+            T, p, m, d,
+            means_out.ctypes.data, covs_out.ctypes.data,
+            pred_means_out.ctypes.data, pred_covs_out.ctypes.data,
+            log_lik_out.ctypes.data,
         )
         return FilterResult(
             means=means_out,
