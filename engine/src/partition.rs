@@ -122,7 +122,10 @@ pub fn kl_refine(
                 if best_target != (i as i32) && best_gain > 0.0 {
                     // Remove v from parts[i] (linear scan, O(|part_i|)
                     // — same complexity as Python's list.remove).
-                    let pos = parts[i].iter().position(|&x| x == v_i32).expect("v in parts[i]");
+                    let pos = parts[i]
+                        .iter()
+                        .position(|&x| x == v_i32)
+                        .expect("v in parts[i]");
                     parts[i].remove(pos);
                     parts[best_target as usize].push(v_i32);
                     part_map[v] = best_target;
@@ -160,8 +163,18 @@ mod tests {
         let vw = vec![1.0; 4];
         let parts_concat = vec![0i32, 1, 2, 3];
         let parts_offsets = vec![0i64, 4];
-        let n = kl_refine(&offsets, &neighbours, &scc, &vw, &mut pm,
-                          &parts_concat, &parts_offsets, 1, 5, 0.5);
+        let n = kl_refine(
+            &offsets,
+            &neighbours,
+            &scc,
+            &vw,
+            &mut pm,
+            &parts_concat,
+            &parts_offsets,
+            1,
+            5,
+            0.5,
+        );
         assert_eq!(n, 0);
         assert_eq!(pm, vec![0, 0, 0, 0]);
     }
@@ -175,8 +188,18 @@ mod tests {
         let mut pm = vec![0i32, 1, 0, 1];
         let parts_concat = vec![0i32, 2, 1, 3];
         let parts_offsets = vec![0i64, 2, 4];
-        let n = kl_refine(&offsets, &neighbours, &scc, &vw, &mut pm,
-                          &parts_concat, &parts_offsets, 2, 5, 0.5);
+        let n = kl_refine(
+            &offsets,
+            &neighbours,
+            &scc,
+            &vw,
+            &mut pm,
+            &parts_concat,
+            &parts_offsets,
+            2,
+            5,
+            0.5,
+        );
         assert!(n > 0);
     }
 
@@ -189,8 +212,18 @@ mod tests {
         let mut pm = vec![0i32, 1, 1];
         let parts_concat = vec![0i32, 1, 2];
         let parts_offsets = vec![0i64, 1, 3];
-        let _ = kl_refine(&offsets, &neighbours, &scc, &vw, &mut pm,
-                          &parts_concat, &parts_offsets, 2, 5, 0.5);
+        let _ = kl_refine(
+            &offsets,
+            &neighbours,
+            &scc,
+            &vw,
+            &mut pm,
+            &parts_concat,
+            &parts_offsets,
+            2,
+            5,
+            0.5,
+        );
         assert_eq!(pm[0], 0, "lone-vertex partition must stay populated");
     }
 }
