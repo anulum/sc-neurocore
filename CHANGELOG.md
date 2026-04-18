@@ -4,6 +4,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### CorticalColumn block-CSR opt-in path (2026-04-18)
+- Added stacked block-CSR matrices keyed by `(source-type, global-bin-idx)` so the per-step inner loop can collapse from `n_pairs × n_delay_bins` (≈ 320 sparse mat-vecs) to `2 × n_delay_bins` (≈ 10). Bin centres are global, derived from theoretical Gaussian quantiles via `scipy.stats.norm.ppf`.
+- New `CorticalColumn` parameter `use_block_csr: bool = False`. When True, the construction builds block matrices alongside the per-pair representation; `step()` dispatches to `_inject_block(dt)`.
+- **Honest perf finding**: at `scale=0.1`, 300 ms sim, the block path measures 306 s vs ~145 s for the legacy per-pair path (≈ 2× SLOWER). scipy.sparse CSR mat-vec is compute-bound (FLOPs scale with `nnz`, identical between paths), and the per-pair tight inner loop wins on cache locality. The block path is preserved as an opt-in because it is the natural data layout for any future Rust / Mojo FFI port (10 FFI calls vs 320, where call overhead DOES dominate).
+- Default flipped to `use_block_csr=False` so the as-shipped Python path stays on the fastest measured backend.
+- New `tests/test_cortical_column.py::TestConnectivity::test_block_csr_path_builds_and_runs` exercises the opt-in path so it does not silently rot.
+
 ### CorticalColumn finite-size verification at scale=0.2 (2026-04-18)
 - Empirically verified that the L5e/L6e residual at `scale=0.1` is a finite-size effect (van Albada et al. 2015 Fig 5), not a model bug. Scale=0.2 / 600 ms / seed=42 measurements:
 
