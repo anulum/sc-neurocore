@@ -308,14 +308,17 @@ already a faithful Potjans reproduction in the qualitative sense
 
 ## 5. Performance
 
-Wall-clock timings on the workstation (NumPy 2.3, scipy 1.16,
-Python 3.12, single thread):
+All numbers from `benchmarks/bench_cortical_column.py`, recorded
+in `benchmarks/results/bench_cortical_column.json`. Run with
+`python benchmarks/bench_cortical_column.py` to reproduce on this
+host. Measurements below are seed=42, single thread, NumPy 2.x +
+scipy 1.x:
 
-| Configuration | Cells | 600 ms wall-clock | Per-step |
-|---------------|------:|------------------:|---------:|
-| `scale=0.02`, `scale_correction=False` | 1 544 | 4.6 s | 0.77 ms |
-| `scale=0.05`, `scale_correction=True`  | 3 858 | 19.5 s | 3.25 ms |
-| `scale=0.1`, `scale_correction=True`   | 7 717 | 43.6 s | 7.27 ms |
+| Configuration | Cells | Build | Sim duration | Sim wall | Per-step |
+|---------------|------:|------:|-------------:|---------:|---------:|
+| `scale=0.02, scale_correction=False` | 1 544 | 0.04 s | 100 ms | 0.96 s | 0.96 ms |
+| `scale=0.05, scale_correction=True`  | 3 858 | 2.04 s | 300 ms | 6.20 s | 2.07 ms |
+| `scale=0.1,  scale_correction=True`  | 7 717 | 4.07 s | 600 ms | 31.75 s | 5.29 ms |
 
 The dominant cost is the inner double loop over the 8 × 8
 populations performing 56 sparse matrix-vector products per step.

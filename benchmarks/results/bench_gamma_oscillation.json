@@ -1,0 +1,76 @@
+{
+  "backends": {
+    "go": {
+      "notes": "Same as Rust.",
+      "status": "BLOCKED-ON-multilang-gamma"
+    },
+    "julia": {
+      "notes": "Same as Rust.",
+      "status": "BLOCKED-ON-multilang-gamma"
+    },
+    "mojo": {
+      "notes": "Same as Rust; trivially fits the Mojo @export raw-Int FFI pattern documented in feedback_mojo_026_ffi_pattern.",
+      "status": "BLOCKED-ON-multilang-gamma"
+    },
+    "python": {
+      "notes": "NumPy vectorised per-cell conductance LIF.",
+      "status": "USED"
+    },
+    "rust": {
+      "notes": "Per-step LIF + 4 exponential conductance decays + 2 sums; clean Rust target via PyO3 + ndarray. Tracked under feedback_module_standard_attnres.",
+      "status": "BLOCKED-ON-multilang-gamma"
+    }
+  },
+  "host": {
+    "numpy": "2.2.6",
+    "platform": "Linux-6.17.0-20-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3"
+  },
+  "module": "sc_neurocore.network.gamma_oscillation.PINGCircuit",
+  "publication_reference": "B\u00f6rgers, C. & Kopell, N. (2003) Neural Computation 15(3): 509-538. Fig 2A weak-PING \u2014 dominant gamma 30-80 Hz.",
+  "runs": [
+    {
+      "build_seconds": 0.0014455759664997458,
+      "burn_in_ms": 100.0,
+      "dominant_frequency_hz": 40.0,
+      "dt": 0.1,
+      "duration_ms": 500.0,
+      "in_published_band_30_to_80_hz": true,
+      "mean_population_rate_hz": 40.0,
+      "n_excitatory": 80,
+      "n_inhibitory": 20,
+      "per_step_us": 92.74668419966474,
+      "seed": 42,
+      "simulate_seconds": 0.4637334209983237
+    },
+    {
+      "build_seconds": 0.0021779719972983003,
+      "burn_in_ms": 200.0,
+      "dominant_frequency_hz": 103.75,
+      "dt": 0.1,
+      "duration_ms": 1000.0,
+      "in_published_band_30_to_80_hz": false,
+      "mean_population_rate_hz": 26.25,
+      "n_excitatory": 400,
+      "n_inhibitory": 100,
+      "per_step_us": 85.61804639757611,
+      "seed": 42,
+      "simulate_seconds": 0.8561804639757611
+    },
+    {
+      "build_seconds": 0.00026279198937118053,
+      "burn_in_ms": 200.0,
+      "dominant_frequency_hz": 76.25,
+      "dt": 0.1,
+      "duration_ms": 1000.0,
+      "in_published_band_30_to_80_hz": true,
+      "mean_population_rate_hz": 16.25,
+      "n_excitatory": 4000,
+      "n_inhibitory": 1000,
+      "per_step_us": 211.6167544038035,
+      "seed": 42,
+      "simulate_seconds": 2.116167544038035
+    }
+  ],
+  "schema_version": 1
+}
