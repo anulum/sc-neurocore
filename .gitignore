@@ -125,3 +125,10 @@ VISION2030/
 # Agent metadata (per `feedback_agent_metadata_gitignore`)
 .agent_metadata.json
 
+# Per-run network export artifacts (left by interactive scripts)
+network_schema.json
+network_schema.json_layer_*_weights.npy
+
+# Stale lowercase-name symlink to this repo root (deleted on cleanup)
+sc-neurocore
+
