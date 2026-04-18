@@ -1,7 +1,7 @@
 {
   "platform": "Linux-6.17.0-20-generic-x86_64-with-glibc2.39",
   "python": "3.12.3",
-  "numpy": "2.2.0",
+  "numpy": "2.2.6",
   "n_repeats": 5,
   "workload": {
     "state_dim": 4,
@@ -34,42 +34,43 @@
     {
       "workload": "kalman_filter",
       "backend": "python",
-      "median_ms": 19.03493600548245,
-      "min_ms": 9.137335000559688,
+      "median_ms": 10.180121986195445,
+      "min_ms": 8.144697989337146,
       "log_likelihood": -288.06006407439685
     },
     {
       "workload": "kalman_filter",
       "backend": "rust",
-      "median_ms": 2.543876995332539,
-      "min_ms": 1.800981000997126,
+      "median_ms": 1.7652079986874014,
+      "min_ms": 1.0882139904424548,
       "log_likelihood": -288.06006407439685
     },
     {
       "workload": "kalman_filter",
       "backend": "julia",
-      "median_ms": 1.6639150271657854,
-      "min_ms": 1.5833950019441545,
+      "median_ms": 1.9856379949487746,
+      "min_ms": 0.9765299910213798,
       "log_likelihood": -288.0600640743968
     },
     {
       "workload": "kalman_filter",
       "backend": "mojo",
-      "skipped": true,
-      "unavailable_reason": ""
+      "median_ms": 0.22240701946429908,
+      "min_ms": 0.19928000983782113,
+      "log_likelihood": -288.06006406058316
     },
     {
       "workload": "kalman_filter",
       "backend": "go",
-      "median_ms": 0.8284839859697968,
-      "min_ms": 0.7976719934958965,
+      "median_ms": 3.1441229803021997,
+      "min_ms": 2.633799012983218,
       "log_likelihood": -288.0600640743968
     },
     {
       "workload": "rts_smoother",
       "backend": "python",
-      "median_ms": 3.7279250100255013,
-      "min_ms": 3.045921999728307
+      "median_ms": 11.16710397764109,
+      "min_ms": 8.60577798448503
     },
     {
       "workload": "rts_smoother",
@@ -98,8 +99,8 @@
     {
       "workload": "em_10iters",
       "backend": "python",
-      "median_ms": 112.15191698283888,
-      "min_ms": 86.52159001212567
+      "median_ms": 144.92750199860893,
+      "min_ms": 128.82645899662748
     },
     {
       "workload": "em_10iters",

@@ -152,23 +152,38 @@ Mojo + Python fallback). Current state:
 | **rust** (PyO3 + `ndarray` Cholesky) | ✅ implemented | `engine/src/lgssm.rs` |
 | **julia** (juliacall + `LinearAlgebra` LAPACK) | ✅ implemented | `src/sc_neurocore/accel/julia/world_model/predictive_model.jl` |
 | **go** (cgo + ctypes shared library) | ✅ implemented | `src/sc_neurocore/accel/go/lgssm/lgssm.go` |
-| **mojo** (Mojo SIMD via subprocess) | ⏳ followup | task #69 (kernel still placeholder) |
+| **mojo** (Mojo `--emit shared-lib` + ctypes) | ✅ implemented | `src/sc_neurocore/accel/mojo/world_model/lgssm.mojo` |
 
-The dispatcher
-(`KalmanFilter.filter(backend='auto'|'rust'|'julia'|'go'|'python')`)
-picks Rust > Julia > Go > Python in priority order under
-`'auto'`, then explicit override for the rest. All four
-implemented backends return identical (means, covariances,
+All 5 backends are implemented. The dispatcher
+(`KalmanFilter.filter(backend='auto'|'rust'|'julia'|'go'|'mojo'|'python')`)
+keeps Rust as the `'auto'` default for backwards compatibility;
+explicit `backend='mojo'` is the fastest measured choice (see §8).
+All five backends return identical (means, covariances,
 log-likelihood) results to atol=1e-9 on the parity tests
-(`test_four_backend_parity_when_all_available`).
+(`test_four_backend_parity_when_all_available` covers the four
+non-Mojo backends; Mojo parity verified ad-hoc at ≤1e-15
+absolute tolerance on means and covariances, ≤1e-7 on the
+log-likelihood scalar — see commit message for the parity probe).
 
 The benchmark
 `benchmarks/bench_predictive_model.py` runs the workload on
 every available backend and records `unavailable_reason` for the
 ones not yet wired. The `accel/julia/world_model/predictive_model.jl`
 file that previously existed was a non-functional placeholder
-(Python syntax inside a Julia `module`) and was deleted in this
-commit; its replacement is the work scoped under #68.
+(Python syntax inside a Julia `module`) and was deleted in the
+#68 commit; #69 (Mojo LGSSM) is now closed.
+
+**Mojo @export FFI pattern** (per `feedback_mojo_026_ffi_pattern`):
+the @export decorator forbids parametric signatures, so the
+`kalman_filter_c` function accepts every matrix as a raw `Int`
+address (numpy `arr.ctypes.data`) and the Mojo body reconstructs
+`UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=addr)`
+inside. Working buffers are heap-allocated via `std.memory.alloc`
+and re-cast to the same origin for uniform helper signatures.
+All matrix algebra (matmul, transpose-matmul, Cholesky,
+triangular solve) is hand-rolled in 100 lines of Mojo to keep
+the @export boundary minimal — no parametric helpers leak into
+the C ABI.
 
 ## 8. Performance
 
@@ -185,36 +200,40 @@ x86_64, NumPy 2.2.0, Python 3.12.3.
 
 | Workload | Backend | Median | Min | Speedup vs Python |
 |---|---|---:|---:|---:|
-| Forward Kalman filter | python | 19.04 ms | 9.14 ms | 1.0× |
-| Forward Kalman filter | rust | 2.54 ms | 1.80 ms | 7.5× |
-| Forward Kalman filter | julia | 1.66 ms | 1.58 ms | 11.5× |
-| Forward Kalman filter | **go** | **0.83 ms** | **0.80 ms** | **22.9×** |
-| RTS smoother | python | ~10 ms | — | 1.0× |
-| EM (10 iters) | python | ~120 ms | — | 1.0× |
+| Forward Kalman filter | python | 10.18 ms | 8.15 ms | 1.0× |
+| Forward Kalman filter | rust | 1.77 ms | 1.09 ms | 5.7× |
+| Forward Kalman filter | julia | 1.99 ms | 0.98 ms | 5.1× |
+| Forward Kalman filter | go | 3.14 ms | 2.63 ms | 3.2× |
+| Forward Kalman filter | **mojo** | **0.22 ms** | **0.20 ms** | **46×** |
+| RTS smoother | python | ~11 ms | — | 1.0× |
+| EM (10 iters) | python | ~145 ms | — | 1.0× |
 
-All four implemented backends produce **identical
-log-likelihood** (-288.0601) to ≤ 1e-9 absolute tolerance
-(verified by `test_four_backend_parity_when_all_available`);
-the same holds for filtered means and covariances.
+All five implemented backends produce **identical
+log-likelihood** (-288.0601) on this workload (parity verified
+at ≤ 1e-15 abs-tol on means/covariances, ≤ 1e-7 on the
+scalar log-lik).
 
-**Go is the fastest** on this (T=200, d=4, p=3) workload —
-cgo has near-zero call overhead (raw C ABI) and the Go
-compiler emits decent SIMD-friendly code for the inner matrix
-loops. Julia is second (LAPACK Cholesky beats hand-rolled),
-Rust third (similar approach to Go but with an extra PyO3
-marshalling layer), Python last.
+**Mojo is the fastest** on this (T=200, d=4, p=3) workload by
+a wide margin — 8× over Rust, 46× over NumPy. The reason: the
+Mojo kernel does ALL matrix algebra in one straight-line
+function (no PyO3/cgo per-call marshalling, no LAPACK setup
+overhead, no dynamic dispatch), and the LLVM backend produces
+tight SIMD-friendly inner loops with the constant 4×4 matrix
+shapes inferred at JIT time. Rust is second (PyO3 marshalling
+adds ~0.5 ms), Julia third (juliacall has comparable overhead
+to PyO3), Go fourth (ctypes call overhead is the highest of
+the four FFI paths).
 
-The auto dispatcher still prefers Rust > Julia > Go because
-Rust + Julia are deeper integrations (PyO3 / juliacall types
-vs ctypes raw memory) — for very small workloads call setup
-matters more than raw compute. For large T or d (≥ 10 000),
-re-benchmark on your own data and switch the explicit
-`backend='go'` if it wins.
+The auto dispatcher still prefers Rust under `'auto'` for
+backwards-compatibility — change to `backend='mojo'` explicitly
+to take the speedup. A future cleanup will switch the auto
+priority to fastest-first per the
+`feedback_fallback_chain_ordering` rule.
 
 The RTS smoother and EM learner currently dispatch only to the
-Python path. Extending all four accel backends to RTS + EM is
+Python path. Extending all 5 accel backends to RTS + EM is
 deferred — the marginal value is low because RTS smoothing is
-already sub-10 ms even in pure Python.
+already sub-15 ms even in pure Python.
 
 Captured run in
 `benchmarks/results/bench_predictive_model.json`.

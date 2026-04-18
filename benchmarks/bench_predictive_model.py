@@ -93,25 +93,27 @@ def _probe_julia() -> tuple[bool, str]:
 
 
 def _probe_mojo() -> tuple[bool, str]:
-    """Detect the Mojo LGSSM backend (pixi-installed Mojo + .mojo kernel).
+    """Detect the Mojo LGSSM backend.
 
-    Mojo lives at `~/.pixi/bin/mojo` on this workstation, not on PATH.
-    The kernel must be at `accel/mojo/kernels/predictive_model.mojo`.
+    Requires (a) the pixi-installed Mojo at `~/.pixi/bin/mojo` and
+    (b) the compiled `accel/mojo/world_model/liblgssm.so`. Build via:
+      cd src/sc_neurocore/accel/mojo/world_model
+      mojo build --emit shared-lib -o liblgssm.so lgssm.mojo
     """
     import os as _os
     mojo_bin = _os.path.expanduser("~/.pixi/bin/mojo")
     if not _os.path.isfile(mojo_bin):
         return False, "mojo binary not at ~/.pixi/bin/mojo"
-    kernel = _os.path.join(
+    so = _os.path.join(
         _os.path.dirname(_os.path.dirname(__file__)),
-        "src", "sc_neurocore", "accel", "mojo", "kernels",
-        "predictive_model.mojo",
+        "src", "sc_neurocore", "accel", "mojo", "world_model",
+        "liblgssm.so",
     )
-    if not _os.path.isfile(kernel):
+    if not _os.path.isfile(so):
         return False, (
-            "mojo binary present at ~/.pixi/bin/mojo but kernel "
-            "accel/mojo/kernels/predictive_model.mojo is missing "
-            "(followup #69)"
+            "accel/mojo/world_model/liblgssm.so not built — run "
+            "`cd src/sc_neurocore/accel/mojo/world_model && mojo "
+            "build --emit shared-lib -o liblgssm.so lgssm.mojo`"
         )
     return True, ""
 
@@ -226,6 +228,23 @@ def bench_go_kalman(
     return times_ms[len(times_ms) // 2], times_ms[0], last_ll
 
 
+def bench_mojo_kalman(
+    model: LinearGaussianSSM, obs: np.ndarray,
+) -> tuple[float, float, float]:
+    """Return (median_ms, min_ms, log_likelihood) for the Mojo backend."""
+    kf = KalmanFilter(model)
+    times_ms: list[float] = []
+    last_ll = 0.0
+    kf.filter(obs, backend="mojo")  # warm-up
+    for _ in range(N_REPEATS):
+        t0 = time.perf_counter()
+        fr = kf.filter(obs, backend="mojo")
+        times_ms.append((time.perf_counter() - t0) * 1000.0)
+        last_ll = fr.log_likelihood
+    times_ms.sort()
+    return times_ms[len(times_ms) // 2], times_ms[0], last_ll
+
+
 def bench_python_rts(
     model: LinearGaussianSSM, obs: np.ndarray,
 ) -> tuple[float, float]:
@@ -297,6 +316,7 @@ def main(argv: list[str]) -> int:
         "rust": bench_rust_kalman,
         "julia": bench_julia_kalman,
         "go": bench_go_kalman,
+        "mojo": bench_mojo_kalman,
     }
 
     print(f"## Forward Kalman filter")
