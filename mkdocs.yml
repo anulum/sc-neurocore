@@ -422,6 +422,7 @@ copyright: >
 markdown_extensions:
   - pymdownx.highlight:
       guess_lang: false
+      auto_title: true
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
