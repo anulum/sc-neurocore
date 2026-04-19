@@ -19,7 +19,7 @@ class TestHardwareInit:
     def test_import(self):
         import sc_neurocore.hardware
 
-        assert sc_neurocore.hardware.__tier__ == "research"
+        assert sc_neurocore.hardware.__tier__ == "core"
 
 
 # ── verification/safety.py — uncovered branches ─────────────────────

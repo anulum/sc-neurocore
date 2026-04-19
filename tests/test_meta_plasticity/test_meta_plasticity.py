@@ -6,12 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Self-Evolving Meta-Plasticity Tests
 
-import sys
-import os
-
 import numpy as np
-
-sys.path.insert(0, os.path.dirname(__file__))
 
 from sc_neurocore.meta_plasticity.meta_plasticity import (
     CheckpointStore,

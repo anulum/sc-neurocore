@@ -6,18 +6,12 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Neuromorphic Hypervisor Tests
 
-import sys
-import os
+from typing import List
 
 import numpy as np
 import pytest
-from typing import List
 
-sys.path.insert(
-    0, os.path.join(os.path.dirname(__file__), "..", "..", "src", "sc_neurocore", "hypervisor")
-)
-
-from hypervisor import (
+from sc_neurocore.hypervisor.hypervisor import (
     AuditEntry,
     AuditEventType,
     BandwidthMeter,
