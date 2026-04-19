@@ -9,8 +9,16 @@
 from __future__ import annotations
 
 import unittest
-import torch
-from sc_neurocore.nas.darts_sc_nas import BitstreamCandidate, SCMixedOp, SCNASNetwork
+
+import pytest
+
+torch = pytest.importorskip("torch", reason="torch not installed; DARTS tests require it")
+
+from sc_neurocore.nas.darts_sc_nas import (  # noqa: E402
+    BitstreamCandidate,
+    SCMixedOp,
+    SCNASNetwork,
+)
 
 
 class TestBitstreamCandidate(unittest.TestCase):
