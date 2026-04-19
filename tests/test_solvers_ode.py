@@ -167,8 +167,10 @@ class TestExponentialEuler:
         tau = 20.0
         v_rest = -65.0
         solver = ExponentialEuler(tau=tau, y_rest=v_rest, r_m=1.0)
+
         def current_fn(t, y):
             return np.array([10.0])
+
         y = np.array([v_rest])
         dt = 5.0
         y_new, _ = solver.step(current_fn, y, 0.0, dt)

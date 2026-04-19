@@ -23,7 +23,6 @@ import math
 from dataclasses import dataclass
 
 
-
 @dataclass
 class ExactLIFSolver:
     """Event-driven exact integration for LIF neurons.
