@@ -131,4 +131,3 @@ network_schema.json_layer_*_weights.npy
 
 # Stale lowercase-name symlink to this repo root (deleted on cleanup)
 sc-neurocore
-
