@@ -31,6 +31,7 @@ except ImportError:
 
 _KERNEL_DIR = Path(__file__).resolve().parent
 _WONG_WANG_LOADED = False
+_WILSON_COWAN_LOADED = False
 
 
 def _ensure_wong_wang_loaded() -> Any:
@@ -45,6 +46,20 @@ def _ensure_wong_wang_loaded() -> Any:
         _jl.include(str(jl_path))
         _WONG_WANG_LOADED = True
     return _jl.WongWangAccel
+
+
+def _ensure_wilson_cowan_loaded() -> Any:
+    """Include `wilson_cowan.jl` into Julia Main on first use; return the module."""
+    global _WILSON_COWAN_LOADED
+    if _jl is None:
+        raise ImportError("juliacall not available; install the `julia` extra")
+    if not _WILSON_COWAN_LOADED:
+        jl_path = _KERNEL_DIR / "wilson_cowan.jl"
+        if not jl_path.is_file():
+            raise FileNotFoundError(f"wilson_cowan.jl missing at {jl_path}")
+        _jl.include(str(jl_path))
+        _WILSON_COWAN_LOADED = True
+    return _jl.WilsonCowanAccel
 
 
 def simulate_wong_wang(
@@ -103,4 +118,51 @@ def simulate_wong_wang(
         "r2": r2_out,
         "s1_final": float(s1_final),
         "s2_final": float(s2_final),
+    }
+
+
+def simulate_wilson_cowan(
+    e_init: float,
+    i_init: float,
+    w_ee: float,
+    w_ei: float,
+    w_ie: float,
+    w_ii: float,
+    tau_e: float,
+    tau_i: float,
+    a: float,
+    theta: float,
+    dt: float,
+    ext_input,
+):
+    """Julia-accelerated batch Wilson-Cowan simulator; parity with
+    ``sc_neurocore_engine.py_wilson_cowan_simulate``. Returns a dict
+    with per-step ``e``/``i`` arrays + final scalars.
+    """
+    mod = _ensure_wilson_cowan_loaded()
+    ext_input = np.asarray(ext_input, dtype=np.float64)
+    n = ext_input.size
+    e_out = np.empty(n, dtype=np.float64)
+    i_out = np.empty(n, dtype=np.float64)
+    e_final, i_final = mod.simulate_wilson_cowan_b(
+        e_init,
+        i_init,
+        w_ee,
+        w_ei,
+        w_ie,
+        w_ii,
+        tau_e,
+        tau_i,
+        a,
+        theta,
+        dt,
+        ext_input,
+        e_out,
+        i_out,
+    )
+    return {
+        "e": e_out,
+        "i": i_out,
+        "e_final": float(e_final),
+        "i_final": float(i_final),
     }
