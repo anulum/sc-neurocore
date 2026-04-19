@@ -30,6 +30,7 @@ VOR = "VOR"       # Vestibulo-Ocular Reflex
 # Code identifiers
 systemc = "systemc"  # SystemC (hardware description language)
 lik = "lik"       # abbreviation for "likelihood" (log_lik, lik_out, etc.)
+aci = "aci"       # variable name: AdaptiveCheckpointInterval instance
 # Hardware / reliability acronyms
 DED = "DED"       # Double-Error-Detection (SEC-DED ECC)
 # Cargo.lock / third-party crate descriptions
