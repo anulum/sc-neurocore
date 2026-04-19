@@ -30,11 +30,13 @@ class TestFrontiers(unittest.TestCase):
         self.assertTrue(np.all(grn.protein_levels > initial_p))
 
     def test_physics_heat(self):
-        solver = StochasticHeatSolver(length=10, num_walkers=100, alpha=0.1)
+        solver = StochasticHeatSolver(length=10, num_walkers=100, diffusivity=0.1)
+        solver.set_initial_distribution(lambda x: np.ones_like(x))
         solver.step()
-        prof = solver.get_temperature_profile()
+        prof = solver.get_density(n_bins=10)
         self.assertEqual(len(prof), 10)
-        self.assertAlmostEqual(np.sum(prof), 1.0)
+        bin_width = solver.length / 10
+        self.assertAlmostEqual(float(np.sum(prof) * bin_width), 1.0)
 
     def test_robotics_cpg(self):
         cpg = StochasticCPG()

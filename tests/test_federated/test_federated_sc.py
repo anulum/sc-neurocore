@@ -6,16 +6,9 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Federated SC Learning Tests
 
-import sys
-import os
-
 import numpy as np
 
-sys.path.insert(
-    0, os.path.join(os.path.dirname(__file__), "..", "..", "src", "sc_neurocore", "federated")
-)
-
-from federated_sc import (
+from sc_neurocore.federated.federated_sc import (
     AdaptiveEpsilonScheduler,
     AuditLog,
     CommitmentScheme,

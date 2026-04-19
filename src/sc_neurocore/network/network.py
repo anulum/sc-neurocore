@@ -58,6 +58,7 @@ class Network:
         self.stimuli: list[TimedArray | PoissonInput | StepCurrent] = []
         self.seed = seed
         self.fim_lambda = fim_lambda
+        self._spike_gating = False
         for obj in objects:
             self.add(obj)
 

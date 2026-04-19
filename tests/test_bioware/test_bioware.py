@@ -6,17 +6,10 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Bio-Hybrid Wetware Interface Tests
 
-import sys
-import os
-
 import numpy as np
 import pytest
 
-sys.path.insert(
-    0, os.path.join(os.path.dirname(__file__), "..", "..", "src", "sc_neurocore", "bioware")
-)
-
-from bioware import (
+from sc_neurocore.bioware.bioware import (
     AEREvent,
     AERToSCConverter,
     ArtifactRejector,

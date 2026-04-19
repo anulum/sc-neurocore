@@ -6,15 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — OpenROAD ASIC Tape-Out Flow Tests
 
-import sys
-import os
-
-
-sys.path.insert(
-    0, os.path.join(os.path.dirname(__file__), "..", "..", "src", "sc_neurocore", "asic_flow")
-)
-
-from asic_flow import (
+from sc_neurocore.asic_flow.asic_flow import (
     ASICFlowGenerator,
     ASICFlowOutput,
     BlockConfig,

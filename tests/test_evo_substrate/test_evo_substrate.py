@@ -6,17 +6,10 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Evolutionary Substrate Tests
 
-import sys
-import os
-
 import numpy as np
 import pytest
 
-sys.path.insert(
-    0, os.path.join(os.path.dirname(__file__), "..", "..", "src", "sc_neurocore", "evo_substrate")
-)
-
-from evo_substrate import (
+from sc_neurocore.evo_substrate.evo_substrate import (
     AgeRegulator,
     BloatPenalizer,
     CPPNGenome,

@@ -6,23 +6,9 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Predictive Coding Tests
 
-import sys
-import os
-
-sys.path.insert(
-    0,
-    os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "..",
-        "..",
-        "src",
-        "sc_neurocore",
-        "neuro_symbolic",
-    ),
-)
 import numpy as np
 
-from predictive_coding import (
+from sc_neurocore.neuro_symbolic.predictive_coding import (
     HYPERVECTOR_DIM,
     Hypervector,
     PredictiveCodingLayer,

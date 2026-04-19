@@ -6,19 +6,10 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Memristor Mapper Tests
 
-import sys
-import os
-
-sys.path.insert(
-    0,
-    os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "..", "..", "src", "sc_neurocore", "memristor"
-    ),
-)
 import numpy as np
 import pytest
 
-from memristor_mapper import (
+from sc_neurocore.memristor.memristor_mapper import (
     AgingSimulator,
     CompensationLUT,
     CompensationStrategy,

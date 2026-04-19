@@ -48,14 +48,20 @@ def test_verify_link_handles_missing_opentrons(capsys):
     assert "Checking Robotics Link" in captured.out
 
 
-def test_sys_path_append_uses_pathlib():
-    """A4 audit: verify that path construction uses pathlib, not string concat."""
+def test_no_sys_path_mutation():
+    """Issue #31 fix: verify the module no longer mutates sys.path.
+
+    The original audit required Path-based construction; the fix went
+    further and removed sys.path manipulation entirely (callers now rely
+    on PYTHONPATH for the optional extras-repo probes).
+    """
     source = importlib.util.find_spec("sc_neurocore.drivers.verify_hardware_link")
     assert source is not None
     src_path = Path(source.origin)
     assert src_path.exists()
     content = src_path.read_text(encoding="utf-8")
-    assert "Path(__file__)" in content
+    assert "sys.path.insert" not in content
+    assert "sys.path.append" not in content
 
 
 def test_module_level_logger_exists():

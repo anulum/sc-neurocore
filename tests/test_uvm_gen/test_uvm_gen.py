@@ -6,18 +6,9 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — UVM Generator Tests
 
-import sys
-import os
-
-sys.path.insert(
-    0,
-    os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "..", "..", "src", "sc_neurocore", "uvm_gen"
-    ),
-)
 import pytest
 
-from uvm_gen import (
+from sc_neurocore.uvm_gen.uvm_gen import (
     CoverageSpec,
     ModulePort,
     PortDirection,
