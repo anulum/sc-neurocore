@@ -228,7 +228,7 @@ mod tests {
         batch_mutate_weights(&mut pop, 1.0, 1.0, 42);
         for g in &pop {
             for &w in g {
-                assert!(w >= -10.0 && w <= 10.0);
+                assert!((-10.0..=10.0).contains(&w));
             }
         }
     }
@@ -256,8 +256,8 @@ mod tests {
         let a = vec![vec![0.0; 100]];
         let b = vec![vec![1.0; 100]];
         let children = batch_crossover(&a, &b, 42);
-        let has_zero = children[0].iter().any(|&v| v == 0.0);
-        let has_one = children[0].iter().any(|&v| v == 1.0);
+        let has_zero = children[0].contains(&0.0);
+        let has_one = children[0].contains(&1.0);
         assert!(has_zero && has_one);
     }
 
