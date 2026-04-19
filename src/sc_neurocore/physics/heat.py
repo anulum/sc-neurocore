@@ -37,7 +37,7 @@ not Feynman-Kac and was replaced 2026-04-17 per
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 import numpy as np
 
@@ -162,7 +162,7 @@ class FeynmanKacHeatSolver:
 
     def evolve_to(self, T: float) -> None:
         """Step walkers from current time to ``T`` (T > current t)."""
-        if T < self._t:
+        if self._t > T:
             raise ValueError(f"T={T} < current t={self._t}; cannot run backwards")
         n = int(round((T - self._t) / self.dt))
         if n > 0:

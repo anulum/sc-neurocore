@@ -7,7 +7,6 @@
 # SC-NeuroCore — Predictive Coding Tests
 
 import numpy as np
-import pytest
 
 from predictive_coding import (
     HYPERVECTOR_DIM,

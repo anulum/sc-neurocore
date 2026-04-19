@@ -53,8 +53,8 @@ def _model_to_rust_args(
     """Convert IsingModel to Rust function arguments."""
     h_indices = list(model.h.keys())
     h_values = list(model.h.values())
-    j_i = [k[0] for k in model.J.keys()]
-    j_j = [k[1] for k in model.J.keys()]
+    j_i = [k[0] for k in model.J]
+    j_j = [k[1] for k in model.J]
     j_values = list(model.J.values())
     return {
         "h_indices": h_indices,

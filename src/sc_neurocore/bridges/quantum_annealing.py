@@ -80,12 +80,18 @@ try:
         py_qa_ising_energy as _rust_ising_energy,
         py_qa_simulated_annealing as _rust_sa,
         py_qa_batch_ising_energy as _rust_batch_energy,
-        py_qa_gauge_transform as _rust_gauge,
-        py_qa_generate_gauges as _rust_gen_gauges,
-        py_qa_greedy_partition as _rust_partition,
     )
+    import sc_neurocore_engine as _sne
 
-    _HAS_RUST_QA = True
+    _HAS_RUST_QA = all(
+        hasattr(_sne, _name)
+        for _name in (
+            "py_qa_gauge_transform",
+            "py_qa_generate_gauges",
+            "py_qa_greedy_partition",
+        )
+    )
+    del _sne
 except ImportError:
     _HAS_RUST_QA = False
 

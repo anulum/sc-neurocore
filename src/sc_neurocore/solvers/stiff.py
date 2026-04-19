@@ -15,10 +15,8 @@ steps; implicit methods remain stable with larger steps.
 
 from __future__ import annotations
 
-from typing import Callable
 
 import numpy as np
-from numpy.typing import NDArray
 
 from .ode import ODESolver
 

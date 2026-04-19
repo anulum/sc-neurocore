@@ -77,7 +77,7 @@ def benchmark():
         total_pwr = sum(c.power_used for c in current_config.values())
         avg_acc = sum(c.accuracy_score for c in current_config.values()) / len(current_config)
 
-        print(f"Network Depth: 50 layers")
+        print("Network Depth: 50 layers")
         print(f"Optimization Time: {(end - start) * 1000:.4f} ms")
         print(f"Final Configuration: {total_luts} LUTs, {total_pwr:.1f} mW, Avg Acc: {avg_acc:.4f}")
     else:
