@@ -68,18 +68,15 @@ pub fn batch_mutate_weights(
     mutation_scale: f64,
     seed: u64,
 ) {
-    genomes
-        .par_iter_mut()
-        .enumerate()
-        .for_each(|(i, genome)| {
-            let mut rng = Xoshiro256pp::new(seed.wrapping_add(i as u64));
-            for w in genome.iter_mut() {
-                if rng.next_f64() < mutation_rate {
-                    *w += rng.next_gaussian() * mutation_scale;
-                    *w = w.clamp(-10.0, 10.0);
-                }
+    genomes.par_iter_mut().enumerate().for_each(|(i, genome)| {
+        let mut rng = Xoshiro256pp::new(seed.wrapping_add(i as u64));
+        for w in genome.iter_mut() {
+            if rng.next_f64() < mutation_rate {
+                *w += rng.next_gaussian() * mutation_scale;
+                *w = w.clamp(-10.0, 10.0);
             }
-        });
+        }
+    });
 }
 
 // ── Batch fitness evaluation ─────────────────────────────────────────
@@ -88,19 +85,11 @@ pub fn batch_mutate_weights(
 ///
 /// Fitness = -MSE(genome_weights, target_outputs) for each genome
 /// applied to a simple linear evaluation: output = sum(w_i * input_i).
-pub fn batch_evaluate_fitness(
-    genomes: &[Vec<f64>],
-    inputs: &[f64],
-    target: f64,
-) -> Vec<f64> {
+pub fn batch_evaluate_fitness(genomes: &[Vec<f64>], inputs: &[f64], target: f64) -> Vec<f64> {
     genomes
         .par_iter()
         .map(|genome| {
-            let output: f64 = genome
-                .iter()
-                .zip(inputs.iter())
-                .map(|(w, x)| w * x)
-                .sum();
+            let output: f64 = genome.iter().zip(inputs.iter()).map(|(w, x)| w * x).sum();
             let error = output - target;
             -(error * error) // negative MSE as fitness
         })
@@ -110,11 +99,7 @@ pub fn batch_evaluate_fitness(
 // ── Crossover ────────────────────────────────────────────────────────
 
 /// Uniform crossover between two parent genomes (parallelized batch).
-pub fn batch_crossover(
-    parents_a: &[Vec<f64>],
-    parents_b: &[Vec<f64>],
-    seed: u64,
-) -> Vec<Vec<f64>> {
+pub fn batch_crossover(parents_a: &[Vec<f64>], parents_b: &[Vec<f64>], seed: u64) -> Vec<Vec<f64>> {
     parents_a
         .par_iter()
         .zip(parents_b.par_iter())
@@ -164,11 +149,7 @@ pub fn population_diversity(genomes: &[Vec<f64>]) -> f64 {
 }
 
 /// Compute novelty score for each genome against an archive.
-pub fn novelty_scores(
-    genomes: &[Vec<f64>],
-    archive: &[Vec<f64>],
-    k_nearest: usize,
-) -> Vec<f64> {
+pub fn novelty_scores(genomes: &[Vec<f64>], archive: &[Vec<f64>], k_nearest: usize) -> Vec<f64> {
     let combined: Vec<&Vec<f64>> = archive.iter().chain(genomes.iter()).collect();
 
     genomes

@@ -47,8 +47,9 @@ pub fn parallel_csr_spmv_add(
     x: &[f64],
     y: &mut [f64],
 ) {
-    y.par_chunks_mut(CHUNK_SIZE).enumerate().for_each(
-        |(chunk_idx, chunk)| {
+    y.par_chunks_mut(CHUNK_SIZE)
+        .enumerate()
+        .for_each(|(chunk_idx, chunk)| {
             let row_start = chunk_idx * CHUNK_SIZE;
             for (i, yi) in chunk.iter_mut().enumerate() {
                 let r = row_start + i;
@@ -61,8 +62,7 @@ pub fn parallel_csr_spmv_add(
                 }
                 *yi += sum;
             }
-        },
-    );
+        });
 }
 
 /// Batched per-row-parallel CSR spmv add: `y += sum_b W_b @ x_b`
@@ -88,8 +88,9 @@ pub fn parallel_csr_multi_spmv_add(
     debug_assert_eq!(n_blocks, data_blocks.len());
     debug_assert_eq!(n_blocks, x_blocks.len());
 
-    y.par_chunks_mut(CHUNK_SIZE).enumerate().for_each(
-        |(chunk_idx, chunk)| {
+    y.par_chunks_mut(CHUNK_SIZE)
+        .enumerate()
+        .for_each(|(chunk_idx, chunk)| {
             let row_start = chunk_idx * CHUNK_SIZE;
             for (i, yi) in chunk.iter_mut().enumerate() {
                 let r = row_start + i;
@@ -108,8 +109,7 @@ pub fn parallel_csr_multi_spmv_add(
                 }
                 *yi += sum;
             }
-        },
-    );
+        });
 }
 
 #[cfg(test)]
@@ -200,9 +200,7 @@ mod tests {
         let indices_b: Vec<&[i32]> = vec![&indices0, &indices1, &indices2];
         let data_b: Vec<&[f64]> = vec![&data0, &data1, &data2];
         let xs: Vec<&[f64]> = vec![&x0, &x1, &x2];
-        parallel_csr_multi_spmv_add(
-            &indptrs, &indices_b, &data_b, &xs, &mut y_batched,
-        );
+        parallel_csr_multi_spmv_add(&indptrs, &indices_b, &data_b, &xs, &mut y_batched);
 
         assert_eq!(y_seq, y_batched);
     }

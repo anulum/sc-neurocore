@@ -174,12 +174,33 @@ mod tests {
         let mut spk_i = vec![0_u8; n_i];
 
         let (ne, ni) = step_kernel(
-            &mut v_e, &mut g_ampa_e, &mut g_gaba_e, &mut refrac_e,
-            &i_drive_e, &xi_e, &mut spk_e,
-            &mut v_i, &mut g_ampa_i, &mut g_gaba_i, &mut refrac_i,
-            &i_drive_i, &xi_i, &mut spk_i,
-            -67.0, 0.0, -80.0, 0.05, 1.0, -52.0, -67.0, 2.0,
-            5.0, 5.0, 0.0, 0.0, 0.1,
+            &mut v_e,
+            &mut g_ampa_e,
+            &mut g_gaba_e,
+            &mut refrac_e,
+            &i_drive_e,
+            &xi_e,
+            &mut spk_e,
+            &mut v_i,
+            &mut g_ampa_i,
+            &mut g_gaba_i,
+            &mut refrac_i,
+            &i_drive_i,
+            &xi_i,
+            &mut spk_i,
+            -67.0,
+            0.0,
+            -80.0,
+            0.05,
+            1.0,
+            -52.0,
+            -67.0,
+            2.0,
+            5.0,
+            5.0,
+            0.0,
+            0.0,
+            0.1,
         );
         assert_eq!(ne, 0);
         assert_eq!(ni, 0);
@@ -203,7 +224,7 @@ mod tests {
         let mut g_gaba_i = vec![0.0; n_i];
         let mut refrac_e = vec![0.0; n_e];
         let mut refrac_i = vec![0.0; n_i];
-        let i_drive_e = vec![5.0; n_e];     // µA/cm² — supra-threshold
+        let i_drive_e = vec![5.0; n_e]; // µA/cm² — supra-threshold
         let i_drive_i = vec![0.0; n_i];
         let xi_e = vec![0.0; n_e];
         let xi_i = vec![0.0; n_i];
@@ -214,12 +235,33 @@ mod tests {
             let mut spk_e = vec![0_u8; n_e];
             let mut spk_i = vec![0_u8; n_i];
             let (ne, _ni) = step_kernel(
-                &mut v_e, &mut g_ampa_e, &mut g_gaba_e, &mut refrac_e,
-                &i_drive_e, &xi_e, &mut spk_e,
-                &mut v_i, &mut g_ampa_i, &mut g_gaba_i, &mut refrac_i,
-                &i_drive_i, &xi_i, &mut spk_i,
-                -67.0, 0.0, -80.0, 0.05, 1.0, -52.0, -67.0, 2.0,
-                5.0, 5.0, 0.0, 0.0, 0.1,
+                &mut v_e,
+                &mut g_ampa_e,
+                &mut g_gaba_e,
+                &mut refrac_e,
+                &i_drive_e,
+                &xi_e,
+                &mut spk_e,
+                &mut v_i,
+                &mut g_ampa_i,
+                &mut g_gaba_i,
+                &mut refrac_i,
+                &i_drive_i,
+                &xi_i,
+                &mut spk_i,
+                -67.0,
+                0.0,
+                -80.0,
+                0.05,
+                1.0,
+                -52.0,
+                -67.0,
+                2.0,
+                5.0,
+                5.0,
+                0.0,
+                0.0,
+                0.1,
             );
             if ne > 0 {
                 if last_spike_step >= 0 {
@@ -239,41 +281,105 @@ mod tests {
     fn test_deterministic_for_same_inputs() {
         let n_e = 8;
         let n_i = 4;
-        let mk = || (
-            vec![-65.0_f64; n_e], vec![-65.0_f64; n_i],
-            vec![0.5_f64; n_e],   vec![0.5_f64; n_i],
-            vec![0.3_f64; n_e],   vec![0.3_f64; n_i],
-            vec![0.0_f64; n_e],   vec![0.0_f64; n_i],
-        );
+        let mk = || {
+            (
+                vec![-65.0_f64; n_e],
+                vec![-65.0_f64; n_i],
+                vec![0.5_f64; n_e],
+                vec![0.5_f64; n_i],
+                vec![0.3_f64; n_e],
+                vec![0.3_f64; n_i],
+                vec![0.0_f64; n_e],
+                vec![0.0_f64; n_i],
+            )
+        };
         let xi_e = vec![0.1_f64; n_e];
         let xi_i = vec![-0.1_f64; n_i];
         let i_drive_e = vec![1.0; n_e];
         let i_drive_i = vec![0.5; n_i];
 
-        let (mut v_e_a, mut v_i_a, mut ga_e_a, mut ga_i_a, mut gg_e_a,
-             mut gg_i_a, mut rf_e_a, mut rf_i_a) = mk();
-        let (mut v_e_b, mut v_i_b, mut ga_e_b, mut ga_i_b, mut gg_e_b,
-             mut gg_i_b, mut rf_e_b, mut rf_i_b) = mk();
+        let (
+            mut v_e_a,
+            mut v_i_a,
+            mut ga_e_a,
+            mut ga_i_a,
+            mut gg_e_a,
+            mut gg_i_a,
+            mut rf_e_a,
+            mut rf_i_a,
+        ) = mk();
+        let (
+            mut v_e_b,
+            mut v_i_b,
+            mut ga_e_b,
+            mut ga_i_b,
+            mut gg_e_b,
+            mut gg_i_b,
+            mut rf_e_b,
+            mut rf_i_b,
+        ) = mk();
         let mut spk_e_a = vec![0_u8; n_e];
         let mut spk_i_a = vec![0_u8; n_i];
         let mut spk_e_b = vec![0_u8; n_e];
         let mut spk_i_b = vec![0_u8; n_i];
 
         let _ = step_kernel(
-            &mut v_e_a, &mut ga_e_a, &mut gg_e_a, &mut rf_e_a,
-            &i_drive_e, &xi_e, &mut spk_e_a,
-            &mut v_i_a, &mut ga_i_a, &mut gg_i_a, &mut rf_i_a,
-            &i_drive_i, &xi_i, &mut spk_i_a,
-            -67.0, 0.0, -80.0, 0.05, 1.0, -52.0, -67.0, 2.0,
-            5.0, 5.0, 0.1, 0.05, 0.1,
+            &mut v_e_a,
+            &mut ga_e_a,
+            &mut gg_e_a,
+            &mut rf_e_a,
+            &i_drive_e,
+            &xi_e,
+            &mut spk_e_a,
+            &mut v_i_a,
+            &mut ga_i_a,
+            &mut gg_i_a,
+            &mut rf_i_a,
+            &i_drive_i,
+            &xi_i,
+            &mut spk_i_a,
+            -67.0,
+            0.0,
+            -80.0,
+            0.05,
+            1.0,
+            -52.0,
+            -67.0,
+            2.0,
+            5.0,
+            5.0,
+            0.1,
+            0.05,
+            0.1,
         );
         let _ = step_kernel(
-            &mut v_e_b, &mut ga_e_b, &mut gg_e_b, &mut rf_e_b,
-            &i_drive_e, &xi_e, &mut spk_e_b,
-            &mut v_i_b, &mut ga_i_b, &mut gg_i_b, &mut rf_i_b,
-            &i_drive_i, &xi_i, &mut spk_i_b,
-            -67.0, 0.0, -80.0, 0.05, 1.0, -52.0, -67.0, 2.0,
-            5.0, 5.0, 0.1, 0.05, 0.1,
+            &mut v_e_b,
+            &mut ga_e_b,
+            &mut gg_e_b,
+            &mut rf_e_b,
+            &i_drive_e,
+            &xi_e,
+            &mut spk_e_b,
+            &mut v_i_b,
+            &mut ga_i_b,
+            &mut gg_i_b,
+            &mut rf_i_b,
+            &i_drive_i,
+            &xi_i,
+            &mut spk_i_b,
+            -67.0,
+            0.0,
+            -80.0,
+            0.05,
+            1.0,
+            -52.0,
+            -67.0,
+            2.0,
+            5.0,
+            5.0,
+            0.1,
+            0.05,
+            0.1,
         );
 
         assert_eq!(v_e_a, v_e_b);

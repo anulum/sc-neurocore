@@ -31,10 +31,10 @@ use ndarray::{s, Array1, Array2, Array3, ArrayView1, ArrayView2};
 
 /// Result of the Kalman filter forward pass.
 pub struct KalmanResult {
-    pub means: Array2<f64>,           // (T, d) filtered means
-    pub covariances: Array3<f64>,     // (T, d, d) filtered covariances
-    pub pred_means: Array2<f64>,      // (T, d) predicted means
-    pub pred_covariances: Array3<f64>,// (T, d, d) predicted covariances
+    pub means: Array2<f64>,            // (T, d) filtered means
+    pub covariances: Array3<f64>,      // (T, d, d) filtered covariances
+    pub pred_means: Array2<f64>,       // (T, d) predicted means
+    pub pred_covariances: Array3<f64>, // (T, d, d) predicted covariances
     pub log_likelihood: f64,
 }
 
@@ -48,16 +48,16 @@ pub struct KalmanResult {
 /// Panics if dimensions are inconsistent. The caller (PyO3
 /// wrapper) validates shapes before invoking.
 pub fn kalman_filter(
-    observations: ArrayView2<f64>,        // (T, p)
-    controls: ArrayView2<f64>,            // (T, m) or (T, 0)
-    a: ArrayView2<f64>,                   // (d, d)
-    b: ArrayView2<f64>,                   // (d, m) or (d, 0)
-    c: ArrayView2<f64>,                   // (p, d)
-    d: ArrayView2<f64>,                   // (p, m) or (p, 0)
-    q: ArrayView2<f64>,                   // (d, d)
-    r: ArrayView2<f64>,                   // (p, p)
-    mu_0: ArrayView1<f64>,                // (d,)
-    sigma_0: ArrayView2<f64>,             // (d, d)
+    observations: ArrayView2<f64>, // (T, p)
+    controls: ArrayView2<f64>,     // (T, m) or (T, 0)
+    a: ArrayView2<f64>,            // (d, d)
+    b: ArrayView2<f64>,            // (d, m) or (d, 0)
+    c: ArrayView2<f64>,            // (p, d)
+    d: ArrayView2<f64>,            // (p, m) or (p, 0)
+    q: ArrayView2<f64>,            // (d, d)
+    r: ArrayView2<f64>,            // (p, p)
+    mu_0: ArrayView1<f64>,         // (d,)
+    sigma_0: ArrayView2<f64>,      // (d, d)
 ) -> KalmanResult {
     let t_len = observations.nrows();
     let p_dim = observations.ncols();
@@ -103,8 +103,7 @@ pub fn kalman_filter(
         // Log-determinant of S via LU/Cholesky-style recursion
         let logdet_s = log_det_psd(&s_mat);
         let quad_form = innov.dot(&s_inv_innov);
-        log_lik +=
-            -0.5 * (p_dim as f64 * two_pi_log + logdet_s + quad_form);
+        log_lik += -0.5 * (p_dim as f64 * two_pi_log + logdet_s + quad_form);
 
         // Kalman gain: K = P_pred C^T S^{-1}
         let k_gain = p_pred.dot(&c.t()).dot(&s_inv);
@@ -115,8 +114,7 @@ pub fn kalman_filter(
         // Joseph form for filtered covariance:
         //   P_filt = (I - K C) P_pred (I - K C)^T + K R K^T
         let i_minus_kc = &i_d - &k_gain.dot(&c);
-        let p_filt =
-            i_minus_kc.dot(&p_pred).dot(&i_minus_kc.t()) + k_gain.dot(&r).dot(&k_gain.t());
+        let p_filt = i_minus_kc.dot(&p_pred).dot(&i_minus_kc.t()) + k_gain.dot(&r).dot(&k_gain.t());
 
         means.slice_mut(s![t, ..]).assign(&x_filt);
         covs.slice_mut(s![t, .., ..]).assign(&p_filt);
@@ -269,10 +267,16 @@ mod tests {
         let controls = Array2::<f64>::zeros((1, 0));
 
         let result = kalman_filter(
-            obs.view(), controls.view(),
-            a.view(), b.view(), c.view(), d.view(),
-            q.view(), r_mat.view(),
-            mu_0.view(), sigma_0.view(),
+            obs.view(),
+            controls.view(),
+            a.view(),
+            b.view(),
+            c.view(),
+            d.view(),
+            q.view(),
+            r_mat.view(),
+            mu_0.view(),
+            sigma_0.view(),
         );
 
         assert!((result.means[(0, 0)] - 0.5).abs() < 1e-12);
@@ -292,16 +296,30 @@ mod tests {
         let sigma_0 = array![[1.0, 0.0], [0.0, 1.0]];
 
         let obs = array![
-            [0.1], [0.2], [0.15], [0.18], [0.22],
-            [0.25], [0.21], [0.24], [0.27], [0.26],
+            [0.1],
+            [0.2],
+            [0.15],
+            [0.18],
+            [0.22],
+            [0.25],
+            [0.21],
+            [0.24],
+            [0.27],
+            [0.26],
         ];
         let controls = Array2::<f64>::zeros((10, 0));
 
         let result = kalman_filter(
-            obs.view(), controls.view(),
-            a.view(), b.view(), c.view(), d.view(),
-            q.view(), r_mat.view(),
-            mu_0.view(), sigma_0.view(),
+            obs.view(),
+            controls.view(),
+            a.view(),
+            b.view(),
+            c.view(),
+            d.view(),
+            q.view(),
+            r_mat.view(),
+            mu_0.view(),
+            sigma_0.view(),
         );
 
         assert!(result.log_likelihood.is_finite());
