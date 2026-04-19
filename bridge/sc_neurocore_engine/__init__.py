@@ -500,3 +500,11 @@ try:
     _wong_wang_rust_available = True
 except ImportError:
     _wong_wang_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import py_wilson_cowan_simulate
+
+    __all__ += ["py_wilson_cowan_simulate"]
+    _wilson_cowan_rust_available = True
+except ImportError:
+    _wilson_cowan_rust_available = False
