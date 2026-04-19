@@ -29,7 +29,6 @@ from sc_neurocore.bridges.dna_mapper import (
     CrossHybridizationChecker,
     GF4ErrorCorrection,
     KineticSimulator,
-    NoiseModel,
     estimate_cost,
     generate_protocol,
 )

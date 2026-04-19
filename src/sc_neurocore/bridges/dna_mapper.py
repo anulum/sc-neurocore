@@ -67,15 +67,19 @@ except ImportError:
     _HAS_NUPACK = False
 
 try:
-    from sc_neurocore_engine import (
-        py_dna_design_sequence as _rust_design_seq,
-        py_dna_detect_hairpins as _rust_detect_hairpins,
-        py_dna_check_cross_hybridization as _rust_cross_hyb,
-        py_dna_simulate_kinetics as _rust_kinetics,
-        py_dna_design_orthogonal_set as _rust_orthogonal,
-    )
+    import sc_neurocore_engine as _sne
 
-    _HAS_RUST_DNA = True
+    _HAS_RUST_DNA = all(
+        hasattr(_sne, _name)
+        for _name in (
+            "py_dna_design_sequence",
+            "py_dna_detect_hairpins",
+            "py_dna_check_cross_hybridization",
+            "py_dna_simulate_kinetics",
+            "py_dna_design_orthogonal_set",
+        )
+    )
+    del _sne
 except ImportError:
     _HAS_RUST_DNA = False
 

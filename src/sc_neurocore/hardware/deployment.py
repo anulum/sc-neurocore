@@ -14,7 +14,6 @@ blobs, placement tables, and validation metadata.
 
 from __future__ import annotations
 
-import json
 import struct
 from dataclasses import dataclass, field
 from typing import Any
@@ -113,7 +112,7 @@ class Deployer:
         """Human-readable deployment summary."""
         m = package.metadata
         lines = [
-            f"=== Deployment Summary ===",
+            "=== Deployment Summary ===",
             f"Device:      {m.get('device_family', 'unknown')}",
             f"Neurons:     {m.get('n_neurons', 0)}",
             f"Synapses:    {m.get('n_synapses', 0)}",

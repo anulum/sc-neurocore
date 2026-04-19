@@ -141,7 +141,7 @@ def run(sizes: list[int]) -> list[dict[str, object]]:
     print(f"# Python: {platform.python_version()}, NumPy: {np.__version__}")
     print(f"# _HAS_RUST_QA = {_HAS_RUST_QA}")
     print()
-    print(f"# Each cell: median (min) over 5 repeats")
+    print("# Each cell: median (min) over 5 repeats")
     print()
     print(
         f"{'N':>5}  {'py_med_ms':>12}  {'rust_med_ms':>14}  "

@@ -60,19 +60,25 @@ results: List[BenchResult] = []
 
 try:
     from sc_neurocore_engine import (
-        py_opt_sa_search,
-        py_opt_extract_pareto,
         py_evo_batch_mutate,
-        py_evo_batch_fitness,
         py_evo_batch_crossover,
         py_evo_diversity,
-        py_evo_novelty,
         py_evo_tournament,
-        py_ph_analyze_crosstalk,
-        py_ph_route_waveguides,
     )
+    import sc_neurocore_engine as _sne
 
-    HAS_RUST = True
+    HAS_RUST = all(
+        hasattr(_sne, _name)
+        for _name in (
+            "py_opt_sa_search",
+            "py_opt_extract_pareto",
+            "py_evo_batch_fitness",
+            "py_evo_novelty",
+            "py_ph_analyze_crosstalk",
+            "py_ph_route_waveguides",
+        )
+    )
+    del _sne
     print("✓ Rust engine (sc_neurocore_engine) loaded\n")
 except ImportError as e:
     HAS_RUST = False
@@ -267,9 +273,6 @@ from sc_neurocore.optics.photonic_emitter import (
     FDTDSolver,
     FDTD2DSolver,
     CrosstalkModel,
-    WaveguidePair,
-    BitstreamToOptical,
-    PhotonicTarget,
     PhotonicCompiler,
 )
 
@@ -364,7 +367,6 @@ print("=" * 70)
 from sc_neurocore.bridges.quantum_annealing import (
     SCToIsing,
     SimulatedAnnealer,
-    EnergyLandscape,
 )
 
 qa_compiler = SCToIsing()
@@ -508,4 +510,4 @@ out = {
 os.makedirs("benchmarks/results", exist_ok=True)
 with open("benchmarks/results/py_vs_rust_integration.json", "w") as f:
     json.dump(out, f, indent=2)
-print(f"\n  Results saved → benchmarks/results/py_vs_rust_integration.json")
+print("\n  Results saved → benchmarks/results/py_vs_rust_integration.json")
