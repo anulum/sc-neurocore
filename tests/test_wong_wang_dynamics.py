@@ -293,9 +293,7 @@ class TestWinnerPersistence:
         for _ in range(20_000):
             u.step(0.0, 0.0)
         # s1 still dominates, though may relax slightly toward attractor
-        assert u.s1 > u.s2, (
-            f"winner must persist after stim off: s1={u.s1}, s2={u.s2}"
-        )
+        assert u.s1 > u.s2, f"winner must persist after stim off: s1={u.s1}, s2={u.s2}"
         assert abs(u.s1 - s1_lock) < 0.4, (
             f"winner should not dramatically reverse: {s1_lock} → {u.s1}"
         )
@@ -389,10 +387,10 @@ class TestExtremeParamParity:
     @pytest.mark.parametrize(
         "sigma,dt,tau_s",
         [
-            (0.2, 0.001, 0.1),   # very noisy
+            (0.2, 0.001, 0.1),  # very noisy
             (0.0, 0.0001, 0.1),  # no noise, tiny dt
-            (0.02, 0.001, 0.02), # fast NMDA
-            (0.02, 0.01, 0.1),   # coarse dt
+            (0.02, 0.001, 0.02),  # fast NMDA
+            (0.02, 0.01, 0.1),  # coarse dt
         ],
     )
     def test_parity_under_extreme_params(self, sigma, dt, tau_s):
@@ -408,8 +406,18 @@ class TestExtremeParamParity:
         np.random.seed(13)
         xi = np.random.randn(2 * n).astype(np.float64)
         out = self.rust(
-            0.1, 0.1, tau_s, 0.641, 0.2609, 0.0497, 0.3255, sigma, dt,
-            np.full(n, 0.1), np.zeros(n), xi,
+            0.1,
+            0.1,
+            tau_s,
+            0.641,
+            0.2609,
+            0.0497,
+            0.3255,
+            sigma,
+            dt,
+            np.full(n, 0.1),
+            np.zeros(n),
+            xi,
         )
         assert np.allclose(s1_py, out["s1"], atol=1e-12, rtol=0), (
             f"sigma={sigma} dt={dt} tau_s={tau_s}: s1 drift"
@@ -430,8 +438,18 @@ class TestEdgeCases:
     def test_zero_length_workload_is_no_op(self):
         """Empty stim arrays should return empty traces and keep init state."""
         out = self.rust(
-            0.1, 0.2, 0.1, 0.641, 0.2609, 0.0497, 0.3255, 0.02, 0.001,
-            np.zeros(0), np.zeros(0), np.zeros(0),
+            0.1,
+            0.2,
+            0.1,
+            0.641,
+            0.2609,
+            0.0497,
+            0.3255,
+            0.02,
+            0.001,
+            np.zeros(0),
+            np.zeros(0),
+            np.zeros(0),
         )
         assert out["s1"].shape == (0,)
         assert out["s2"].shape == (0,)
@@ -441,8 +459,17 @@ class TestEdgeCases:
     def test_single_step_call(self):
         """n=1 is a legitimate workload; must not special-case."""
         out = self.rust(
-            0.1, 0.1, 0.1, 0.641, 0.2609, 0.0497, 0.3255, 0.0, 0.001,
-            np.array([0.1]), np.array([0.0]),
+            0.1,
+            0.1,
+            0.1,
+            0.641,
+            0.2609,
+            0.0497,
+            0.3255,
+            0.0,
+            0.001,
+            np.array([0.1]),
+            np.array([0.0]),
             np.array([0.0, 0.0]),
         )
         assert out["s1"].shape == (1,)
@@ -452,8 +479,132 @@ class TestEdgeCases:
         """Starting at s=0 or s=1 boundary; clip must not mis-behave."""
         for s1_init in (0.0, 1.0):
             out = self.rust(
-                s1_init, 0.5, 0.1, 0.641, 0.2609, 0.0497, 0.3255, 0.0, 0.001,
-                np.full(100, 0.1), np.zeros(100),
+                s1_init,
+                0.5,
+                0.1,
+                0.641,
+                0.2609,
+                0.0497,
+                0.3255,
+                0.0,
+                0.001,
+                np.full(100, 0.1),
+                np.zeros(100),
                 np.zeros(200),
             )
             assert 0.0 <= out["s1"].min() <= out["s1"].max() <= 1.0
+
+
+# ── 13. Long-run numerical stability ─────────────────────────────────
+
+
+class TestLongRunStability:
+    """`feedback_module_standard_attnres` requires algorithm / parity /
+    **stability** tests; this section provides the third leg. Rust
+    simulator is used so 1 M-step sweeps fit in the test budget."""
+
+    rust = pytest.importorskip(
+        "sc_neurocore_engine", reason="Rust engine required"
+    ).py_wong_wang_simulate
+
+    @pytest.mark.parametrize(
+        "stim_level,sigma",
+        [
+            (0.0, 0.0),  # quiescent, deterministic
+            (0.1, 0.02),  # nominal, noisy
+            (0.3, 0.08),  # strong drive, high noise
+        ],
+    )
+    def test_no_nan_no_inf_over_1M_steps(self, stim_level, sigma):
+        """1 M-step run must stay finite and within [0, 1] for s1/s2."""
+        n = 1_000_000
+        stim1 = np.full(n, stim_level, dtype=np.float64)
+        stim2 = np.zeros(n, dtype=np.float64)
+        np.random.seed(42)
+        xi = np.random.randn(2 * n).astype(np.float64)
+        out = self.rust(
+            0.1,
+            0.1,
+            0.1,
+            0.641,
+            0.2609,
+            0.0497,
+            0.3255,
+            sigma,
+            0.001,
+            stim1,
+            stim2,
+            xi,
+        )
+        s1, s2 = out["s1"], out["s2"]
+        assert np.isfinite(s1).all(), f"s1 non-finite at stim={stim_level}, σ={sigma}"
+        assert np.isfinite(s2).all(), f"s2 non-finite at stim={stim_level}, σ={sigma}"
+        # Published Wong-Wang state range is strictly [0, 1] due to explicit clip.
+        assert s1.min() >= 0.0, f"s1 clipped floor broken at stim={stim_level}: min={s1.min()}"
+        assert s1.max() <= 1.0, f"s1 clipped ceiling broken at stim={stim_level}: max={s1.max()}"
+        assert 0.0 <= s2.min() <= s2.max() <= 1.0
+
+    def test_deterministic_fixed_point_settles_under_constant_stim(self):
+        """Under constant biased drive (σ=0), 1 M steps must reach a
+        fixed point; trailing 100 k should have near-zero variance."""
+        n = 1_000_000
+        stim1 = np.full(n, 0.2, dtype=np.float64)
+        stim2 = np.zeros(n, dtype=np.float64)
+        xi = np.zeros(2 * n, dtype=np.float64)
+        out = self.rust(
+            0.1,
+            0.1,
+            0.1,
+            0.641,
+            0.2609,
+            0.0497,
+            0.3255,
+            0.0,
+            0.001,
+            stim1,
+            stim2,
+            xi,
+        )
+        tail_std = float(np.std(out["s1"][-100_000:]))
+        assert tail_std < 1e-6, (
+            f"Deterministic run should reach fixed point; s1 tail std = {tail_std:.2e}"
+        )
+
+    def test_state_function_of_inputs_only(self):
+        """Two independent 500 k-step runs from identical init + stim + xi
+        must produce bit-identical final states."""
+        n = 500_000
+        stim1 = np.full(n, 0.15, dtype=np.float64)
+        stim2 = np.zeros(n, dtype=np.float64)
+        np.random.seed(7)
+        xi = np.random.randn(2 * n).astype(np.float64)
+        out_a = self.rust(
+            0.1,
+            0.1,
+            0.1,
+            0.641,
+            0.2609,
+            0.0497,
+            0.3255,
+            0.02,
+            0.001,
+            stim1,
+            stim2,
+            xi,
+        )
+        out_b = self.rust(
+            0.1,
+            0.1,
+            0.1,
+            0.641,
+            0.2609,
+            0.0497,
+            0.3255,
+            0.02,
+            0.001,
+            stim1,
+            stim2,
+            xi,
+        )
+        assert out_a["s1_final"] == out_b["s1_final"]
+        assert out_a["s2_final"] == out_b["s2_final"]

@@ -22,10 +22,12 @@ from __future__ import annotations
 
 import ctypes
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
 _LIB_PATH = Path(__file__).resolve().parent / "libwilson_cowan.so"
+_lib: ctypes.CDLL | None
 
 try:
     _lib = ctypes.CDLL(str(_LIB_PATH))
@@ -67,8 +69,8 @@ def simulate_wilson_cowan(
     a: float,
     theta: float,
     dt: float,
-    ext_input,
-):
+    ext_input: np.ndarray | list[float],
+) -> dict[str, Any]:
     """Go-accelerated Wilson-Cowan N-step simulator."""
     if _lib is None:
         raise ImportError(
