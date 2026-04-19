@@ -474,48 +474,61 @@ print(f"Total events: {spike_count(mon)}")
 
 ---
 
-## Technical Reference
+## Multi-language acceleration chain
 
-### Rust parity
+### Kernel sources
 
-| Aspect | Python | Rust | Status |
-|--------|--------|------|--------|
-| State variables | s (NMDA activity) | same | **EXACT** |
-| Transfer function H(x) | same formula | same | **EXACT** |
-| NMDA dynamics | tau_s, gamma | same | **EXACT** |
-| All defaults | identical | identical | **EXACT** |
+| Backend | Source file | Binding |
+|---------|-------------|---------|
+| Python primary | `src/sc_neurocore/neurons/models/wong_wang.py` | — (reference) |
+| Rust (PyO3)    | `engine/src/wong_wang.rs`                      | `sc_neurocore_engine.py_wong_wang_simulate` |
+| Julia (juliacall) | `src/sc_neurocore/accel/julia/neurons/wong_wang.jl` | `sc_neurocore.accel.julia.neurons.simulate_wong_wang` |
+| Go (cgo)       | `src/sc_neurocore/accel/go/wong_wang/wong_wang.go` | `sc_neurocore.accel.go.wong_wang.simulate_wong_wang` |
+| Mojo (FFI)     | `src/sc_neurocore/accel/mojo/wong_wang/wong_wang.mojo` | `sc_neurocore.accel.mojo.wong_wang.simulate_wong_wang` |
 
-**No parity defects.** EXACT parity verified by automated scan.
+The Python primary draws two `np.random.randn()` samples per step;
+every accelerated backend takes the same `2 * n_steps` draws as a
+pre-allocated `xi` buffer, so trajectories compare bit-exact for
+matching seeds.
 
-### Source files
+### Multi-backend performance
 
-| File | Lines | Description |
-|------|-------|-------------|
-| `src/sc_neurocore/neurons/models/wong_wang.py` | ~60 | Python reference |
-| `engine/src/neurons/special.rs` | (shared) | Rust implementation |
-| `tests/test_model_wong_wang.py` | ~200 | 20 tests |
+Measured on local i5-11600K, `N = 100 000` steps, `benchmarks/
+bench_wong_wang.py`. Numbers trace back to
+`benchmarks/results/bench_wong_wang.json` committed alongside the
+implementation.
 
----
+| Backend | Steps/s | Wall (ms) | Speedup vs Python | Parity vs Rust |
+|---------|--------:|----------:|------------------:|---------------:|
+| Python primary |    234 647 |  426.17 |   1.00× | — |
+| Rust PyO3      | 31 445 275 |    3.18 | 134.0× | reference |
+| Julia (warm)   | 28 121 018 |    3.56 | 119.8× | Δ = 0 (bit-exact) |
+| Go cgo         | 23 332 251 |    4.29 |  99.4× | Δ ≈ 7e-18 (denormal round-off) |
+| Mojo           | 28 979 233 |    3.45 | 123.5× | Δ ≈ 6e-14 (libm vs f64::exp) |
 
-## Performance Benchmarks
+Julia cold start incurs a one-time ~5-10 s JIT warm-up that is
+excluded from the table (the bench harness performs a 1 000-step
+warm-up before the timed run). Mojo's larger parity delta comes
+from the system libm's `exp()` vs Rust std's `f64::exp`; both are
+IEEE-compliant but differ in the last ulp on some inputs.
 
-### Criterion benchmarks (local i5-11600K, measured 2026-04-05)
+### Backends
 
-| Metric | Value |
-|--------|-------|
-| Test | `wong_wang_1k_steps` |
-| Median | 27,844 µs (27.8 ms) |
-| Per-step | 27.8 µs |
-| Throughput | ~36K steps/s |
+| Backend | Status | Rationale |
+|---------|--------|-----------|
+| Rust PyO3 | **USED** | default `auto` path; narrowly fastest and zero parity drift |
+| Julia     | USED   | warm path ties Rust; preferred when juliacall is already hot |
+| Go cgo    | USED   | bit-exact with Rust, slightly higher FFI overhead |
+| Mojo FFI  | USED   | competitive with Rust on warm calls; toleratable drift |
 
-### Python baseline
+### Tests
 
-| Metric | Value |
-|--------|-------|
-| Isolation | ~29K steps/s |
-
-The relatively high Rust per-step cost is due to the
-transfer function computation and noise generation.
+| Backend | File | Tests | What is verified |
+|---------|------|------:|------------------|
+| Rust    | `tests/test_wong_wang_parity.py` (+ `engine/src/wong_wang.rs::tests`) | 14 | φ singularity, monotonicity, zero-noise symmetry, biased-stim winner, xi-length panic; Python↔Rust bit-exact across 5 seeds; final-state match; input-validation |
+| Julia   | `tests/test_wong_wang_julia_parity.py` | 6 | Python↔Julia bit-exact (quiescent, biased, 5-seed sweep); Rust↔Julia cross-parity under shared xi; input-validation |
+| Go      | `tests/test_wong_wang_go_parity.py`   | 5 | Python↔Go bit-exact; Rust↔Go cross-parity; input-validation |
+| Mojo    | `tests/test_wong_wang_mojo_parity.py` | 4 | Python↔Mojo within libm ulp drift; Rust↔Mojo within libm ulp drift; input-validation |
 
 ---
 
@@ -547,13 +560,6 @@ transfer function computation and noise generation.
    intraparietal area during a combined visual discrimination reaction
    time task. *J Neurosci* 22(21):9475–9489.
    DOI: [10.1523/JNEUROSCI.22-21-09475.2002](https://doi.org/10.1523/JNEUROSCI.22-21-09475.2002)
-
----
-
-**ALL 20 PIPELINE TESTS PASSED. MODEL IS END-TO-END FUNCTIONAL.**
-**Rust parity: EXACT (no defects found).**
-**Criterion: 27.8 ms / 1K steps (27.8 µs/step, ~36K steps/s).**
-4. Numerical stability confirmed over 20K steps
 
 ---
 
