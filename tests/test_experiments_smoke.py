@@ -50,10 +50,23 @@ EXPERIMENT_MODULES = [
 ]
 
 
+# Modules that depend on optional / external packages — skip cleanly when absent.
+_OPTIONAL_MODULE_DEPS = {
+    "demo_pattern_pca": ("matplotlib",),
+    "demo_param_sweep": ("matplotlib",),
+    "learning_demo": ("matplotlib",),
+    "l7_symbolic_coupling": ("scpn_cross_layer_integration_L1_L7",),
+    "tcbo_demo_engine": ("scpn_tcbo",),
+}
+
+
 @pytest.mark.parametrize("module_name", EXPERIMENT_MODULES)
 def test_import(module_name):
     """Every experiment module must be importable."""
     import importlib
+
+    for dep in _OPTIONAL_MODULE_DEPS.get(module_name, ()):
+        pytest.importorskip(dep, reason=f"{module_name} requires {dep} (optional/external)")
 
     mod = importlib.import_module(f"sc_neurocore.experiments.{module_name}")
     assert mod is not None
@@ -107,6 +120,7 @@ class TestExperimentExecution:
         assert result is None or result is not None
 
     def test_learning_demo(self):
+        pytest.importorskip("matplotlib", reason="learning_demo draws plots")
         from sc_neurocore.experiments.learning_demo import run_learning_experiment
 
         result = run_learning_experiment()
