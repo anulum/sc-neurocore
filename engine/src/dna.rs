@@ -14,10 +14,10 @@
 //! 2. **Cross-hybridization** — O(n²) pairwise alignment scoring (rayon-parallelized)
 //! 3. **Kinetic simulation** — RK4 mass-action integrator with Arrhenius scaling
 
-use rayon::prelude::*;
-use rand::SeedableRng;
 use rand::RngExt;
+use rand::SeedableRng;
 use rand_xoshiro::Xoshiro256PlusPlus;
+use rayon::prelude::*;
 use std::collections::HashMap;
 
 // ── Constants ────────────────────────────────────────────────────────
@@ -227,11 +227,7 @@ fn arrhenius_scale(k_ref: f64, temperature_c: f64, ea_kcal: f64) -> f64 {
 }
 
 /// Compute effective rate constant for a gate.
-fn compute_k_eff(
-    gate: &DnaGateSpec,
-    inputs: &HashMap<String, f64>,
-    config: &KineticConfig,
-) -> f64 {
+fn compute_k_eff(gate: &DnaGateSpec, inputs: &HashMap<String, f64>, config: &KineticConfig) -> f64 {
     let k_hyb = arrhenius_scale(config.k_hyb, config.temperature_c, 15.0);
     let k_disp = arrhenius_scale(config.k_disp, config.temperature_c, 15.0);
 
@@ -333,11 +329,7 @@ pub fn simulate_kinetics(
 // ── Hairpin Detection ────────────────────────────────────────────────
 
 /// Detect hairpins in a sequence. Returns vec of (stem_start, stem_len, loop_len).
-pub fn detect_hairpins(
-    seq: &[u8],
-    min_stem: usize,
-    min_loop: usize,
-) -> Vec<(usize, usize, usize)> {
+pub fn detect_hairpins(seq: &[u8], min_stem: usize, min_loop: usize) -> Vec<(usize, usize, usize)> {
     let n = seq.len();
     let mut hairpins = Vec::new();
 
@@ -434,13 +426,7 @@ mod tests {
         inputs.insert("A".to_string(), 200.0);
         inputs.insert("B".to_string(), 200.0);
 
-        let result = simulate_kinetics(
-            &gates,
-            &inputs,
-            1800.0,
-            1.0,
-            &KineticConfig::default(),
-        );
+        let result = simulate_kinetics(&gates, &inputs, 1800.0, 1.0, &KineticConfig::default());
         let c = result.get("C").unwrap();
         assert!(c.last().unwrap() > &50.0);
     }

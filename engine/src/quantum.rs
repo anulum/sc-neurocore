@@ -69,7 +69,10 @@ fn delta_energy(
     qubit: usize,
 ) -> f64 {
     let s = spins[qubit] as f64;
-    let h_q = h.iter().find(|&&(i, _)| i == qubit).map_or(0.0, |&(_, hi)| hi);
+    let h_q = h
+        .iter()
+        .find(|&&(i, _)| i == qubit)
+        .map_or(0.0, |&(_, hi)| hi);
     let mut local_field = h_q;
 
     for &(other, jij) in &j_by_qubit[qubit] {
@@ -169,7 +172,11 @@ pub fn gauge_transform(
     let h_new: Vec<(usize, f64)> = h
         .iter()
         .map(|&(i, hi)| {
-            let g = if i < gauge.len() { gauge[i] as f64 } else { 1.0 };
+            let g = if i < gauge.len() {
+                gauge[i] as f64
+            } else {
+                1.0
+            };
             (i, g * hi)
         })
         .collect();
@@ -177,8 +184,16 @@ pub fn gauge_transform(
     let j_new: Vec<((usize, usize), f64)> = j
         .iter()
         .map(|&((i, j_idx), jij)| {
-            let gi = if i < gauge.len() { gauge[i] as f64 } else { 1.0 };
-            let gj = if j_idx < gauge.len() { gauge[j_idx] as f64 } else { 1.0 };
+            let gi = if i < gauge.len() {
+                gauge[i] as f64
+            } else {
+                1.0
+            };
+            let gj = if j_idx < gauge.len() {
+                gauge[j_idx] as f64
+            } else {
+                1.0
+            };
             ((i, j_idx), gi * gj * jij)
         })
         .collect();
@@ -242,9 +257,7 @@ pub fn greedy_partition(
                 }
             }
 
-            let chosen = best.unwrap_or_else(|| {
-                remaining.iter().position(|&r| r).unwrap()
-            });
+            let chosen = best.unwrap_or_else(|| remaining.iter().position(|&r| r).unwrap());
 
             partition.push(chosen);
             remaining[chosen] = false;
@@ -406,8 +419,7 @@ mod tests {
     fn test_sa_returns_correct_counts() {
         let h = vec![(0, 0.0)];
         let j = vec![];
-        let (_, _, energies, samples) =
-            simulated_annealing(&h, &j, 1, 0.0, 100, 5, 0.1, 5.0, 42);
+        let (_, _, energies, samples) = simulated_annealing(&h, &j, 1, 0.0, 100, 5, 0.1, 5.0, 42);
         assert_eq!(energies.len(), 5);
         assert_eq!(samples.len(), 5);
     }
@@ -444,12 +456,7 @@ mod tests {
 
     #[test]
     fn test_greedy_partition_forced_split() {
-        let j = vec![
-            ((0, 1), -1.0),
-            ((1, 2), 0.5),
-            ((2, 3), 0.8),
-            ((3, 4), 0.3),
-        ];
+        let j = vec![((0, 1), -1.0), ((1, 2), 0.5), ((2, 3), 0.8), ((3, 4), 0.3)];
         let parts = greedy_partition(5, &j, 2);
         assert!(parts.len() >= 3);
         for p in &parts {

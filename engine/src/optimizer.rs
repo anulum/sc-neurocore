@@ -56,14 +56,25 @@ pub fn estimate_resources(mac_count: i64, length: u32, decorr: u8, mode: u8) -> 
         let mut accuracy = 0.95_f64;
 
         match decorr {
-            2 => { luts += (sc_macs as f64 * 15.0) as i64; accuracy = 0.97; }
-            1 => { luts += 16; accuracy = 0.96; }
+            2 => {
+                luts += (sc_macs as f64 * 15.0) as i64;
+                accuracy = 0.97;
+            }
+            1 => {
+                luts += 16;
+                accuracy = 0.96;
+            }
             _ => {}
         }
 
         return Candidate {
-            bitstream_length: length, decorrelator: decorr, mode, luts, power,
-            accuracy: accuracy.min(1.0), latency: length as i64,
+            bitstream_length: length,
+            decorrelator: decorr,
+            mode,
+            luts,
+            power,
+            accuracy: accuracy.min(1.0),
+            latency: length as i64,
         };
     }
 
@@ -72,16 +83,33 @@ pub fn estimate_resources(mac_count: i64, length: u32, decorr: u8, mode: u8) -> 
     let power = mac_count as f64 * 0.01 * (len / 256.0);
 
     let accuracy = match decorr {
-        2 => { luts += mac_count * 15; 1.0 - 1.0 / len }      // Sobol
-        3 => { luts += mac_count * 12; 1.0 - 1.2 / len }      // Halton
-        4 => { luts += mac_count * 8;  1.0 - 1.5 / len }      // SCC
-        1 => { luts += 16;             1.0 - 1.0 / len.sqrt() } // LFSR
-        _ => { 1.0 - 2.0 / len.sqrt() }                        // None
+        2 => {
+            luts += mac_count * 15;
+            1.0 - 1.0 / len
+        } // Sobol
+        3 => {
+            luts += mac_count * 12;
+            1.0 - 1.2 / len
+        } // Halton
+        4 => {
+            luts += mac_count * 8;
+            1.0 - 1.5 / len
+        } // SCC
+        1 => {
+            luts += 16;
+            1.0 - 1.0 / len.sqrt()
+        } // LFSR
+        _ => 1.0 - 2.0 / len.sqrt(), // None
     };
 
     Candidate {
-        bitstream_length: length, decorrelator: decorr, mode, luts, power,
-        accuracy: accuracy.clamp(0.1, 1.0), latency: length as i64,
+        bitstream_length: length,
+        decorrelator: decorr,
+        mode,
+        luts,
+        power,
+        accuracy: accuracy.clamp(0.1, 1.0),
+        latency: length as i64,
     }
 }
 
@@ -148,7 +176,7 @@ impl Xoshiro256pp {
 /// SA result.
 #[derive(Clone, Debug)]
 pub struct SAResult {
-    pub best_config: Vec<usize>,  // index into candidates per layer
+    pub best_config: Vec<usize>, // index into candidates per layer
     pub best_score: f64,
     pub pareto_luts: Vec<i64>,
     pub pareto_power: Vec<f64>,
@@ -210,7 +238,9 @@ pub fn simulated_annealing(
     let mut pareto_score = Vec::new();
 
     for _ in 0..max_iter {
-        if t <= t_min { break; }
+        if t <= t_min {
+            break;
+        }
 
         let layer = rng.next_usize(n);
         let cand_idx = rng.next_usize(candidates[layer].len());
@@ -271,32 +301,38 @@ fn is_feasible(
         let c = &candidates[i][config[i]];
         total_luts += c.luts;
         total_power += c.power;
-        if c.latency > max_lat { max_lat = c.latency; }
+        if c.latency > max_lat {
+            max_lat = c.latency;
+        }
     }
-    total_luts <= max_luts && total_power <= max_power
+    total_luts <= max_luts
+        && total_power <= max_power
         && (max_latency <= 0 || max_lat <= max_latency)
 }
 
 // ── Pareto extraction ────────────────────────────────────────────────
 
 /// Extract non-dominated Pareto frontier (parallelized for large N).
-pub fn extract_pareto(
-    luts: &[i64],
-    power: &[f64],
-    score: &[f64],
-) -> Vec<usize> {
+pub fn extract_pareto(luts: &[i64], power: &[f64], score: &[f64]) -> Vec<usize> {
     let n = luts.len();
-    if n == 0 { return vec![]; }
+    if n == 0 {
+        return vec![];
+    }
 
     let indices: Vec<usize> = (0..n)
         .into_par_iter()
         .filter(|&i| {
             for j in 0..n {
-                if j == i { continue; }
-                if luts[j] <= luts[i] && power[j] <= power[i] && score[j] >= score[i]
-                    && (luts[j] < luts[i] || power[j] < power[i] || score[j] > score[i]) {
-                        return false;
-                    }
+                if j == i {
+                    continue;
+                }
+                if luts[j] <= luts[i]
+                    && power[j] <= power[i]
+                    && score[j] >= score[i]
+                    && (luts[j] < luts[i] || power[j] < power[i] || score[j] > score[i])
+                {
+                    return false;
+                }
             }
             true
         })
@@ -341,13 +377,10 @@ mod tests {
 
     #[test]
     fn test_sa_finds_solution() {
-        let cands: Vec<Vec<Candidate>> = (0..3)
-            .map(|_| generate_candidates(10))
-            .collect();
+        let cands: Vec<Vec<Candidate>> = (0..3).map(|_| generate_candidates(10)).collect();
         let weights = vec![1.0, 1.0, 2.0];
         let result = simulated_annealing(
-            &cands, &weights, 100_000, 1000.0, 0,
-            1.0, 0.001, 0.95, 500, 42,
+            &cands, &weights, 100_000, 1000.0, 0, 1.0, 0.001, 0.95, 500, 42,
         );
         assert!(result.is_some());
         let r = result.unwrap();
@@ -356,14 +389,10 @@ mod tests {
 
     #[test]
     fn test_sa_infeasible() {
-        let cands: Vec<Vec<Candidate>> = (0..3)
-            .map(|_| generate_candidates(10))
-            .collect();
+        let cands: Vec<Vec<Candidate>> = (0..3).map(|_| generate_candidates(10)).collect();
         let weights = vec![1.0, 1.0, 1.0];
         // Budget too tight for even cheapest
-        let result = simulated_annealing(
-            &cands, &weights, 1, 0.001, 0, 1.0, 0.001, 0.95, 100, 42,
-        );
+        let result = simulated_annealing(&cands, &weights, 1, 0.001, 0, 1.0, 0.001, 0.95, 100, 42);
         assert!(result.is_none());
     }
 
@@ -376,22 +405,14 @@ mod tests {
     #[test]
     fn test_pareto_dominated() {
         // Point 1 dominates point 0 (lower luts+power, higher score)
-        let indices = extract_pareto(
-            &[200, 100],
-            &[2.0, 1.0],
-            &[0.8, 0.9],
-        );
+        let indices = extract_pareto(&[200, 100], &[2.0, 1.0], &[0.8, 0.9]);
         assert_eq!(indices, vec![1]);
     }
 
     #[test]
     fn test_pareto_both_nondominated() {
         // Neither dominates: lower luts but lower score
-        let indices = extract_pareto(
-            &[100, 200],
-            &[1.0, 2.0],
-            &[0.8, 0.95],
-        );
+        let indices = extract_pareto(&[100, 200], &[1.0, 2.0], &[0.8, 0.95]);
         assert_eq!(indices.len(), 2);
     }
 

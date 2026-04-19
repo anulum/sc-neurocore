@@ -30,6 +30,7 @@ pub mod connectome;
 pub mod conv;
 pub mod cordiv;
 pub mod cortical_column;
+pub mod cortical_inject;
 pub mod dna;
 pub mod ei_network;
 pub mod encoder;
@@ -49,9 +50,8 @@ pub mod neurons;
 pub mod optimizer;
 pub mod partition;
 pub mod phi;
-pub mod ping;
-pub mod cortical_inject;
 pub mod photonic;
+pub mod ping;
 pub mod predictive_coding;
 pub mod pyo3_neurons;
 pub mod quantum;
@@ -4728,11 +4728,7 @@ fn py_qa_ising_energy(
     offset: f64,
 ) -> f64 {
     let h: Vec<(usize, f64)> = h_indices.into_iter().zip(h_values).collect();
-    let j: Vec<((usize, usize), f64)> = j_i
-        .into_iter()
-        .zip(j_j)
-        .zip(j_values)
-        .collect();
+    let j: Vec<((usize, usize), f64)> = j_i.into_iter().zip(j_j).zip(j_values).collect();
     quantum::ising_energy(&h, &j, &spins, offset)
 }
 
@@ -4750,11 +4746,7 @@ fn py_qa_batch_ising_energy(
     offset: f64,
 ) -> Vec<f64> {
     let h: Vec<(usize, f64)> = h_indices.into_iter().zip(h_values).collect();
-    let j: Vec<((usize, usize), f64)> = j_i
-        .into_iter()
-        .zip(j_j)
-        .zip(j_values)
-        .collect();
+    let j: Vec<((usize, usize), f64)> = j_i.into_iter().zip(j_j).zip(j_values).collect();
     quantum::batch_ising_energy(&h, &j, &configs, offset)
 }
 
@@ -4779,11 +4771,7 @@ fn py_qa_simulated_annealing<'py>(
     seed: u64,
 ) -> PyResult<Py<PyAny>> {
     let h: Vec<(usize, f64)> = h_indices.into_iter().zip(h_values).collect();
-    let j: Vec<((usize, usize), f64)> = j_i
-        .into_iter()
-        .zip(j_j)
-        .zip(j_values)
-        .collect();
+    let j: Vec<((usize, usize), f64)> = j_i.into_iter().zip(j_j).zip(j_values).collect();
 
     let (best_spins, best_energy, all_energies, all_samples) = quantum::simulated_annealing(
         &h, &j, n_qubits, offset, n_sweeps, num_reads, beta_start, beta_end, seed,
@@ -4813,11 +4801,7 @@ fn py_qa_gauge_transform(
     gauge: Vec<i8>,
 ) -> (Vec<(usize, f64)>, Vec<((usize, usize), f64)>) {
     let h: Vec<(usize, f64)> = h_indices.into_iter().zip(h_values).collect();
-    let j: Vec<((usize, usize), f64)> = j_i
-        .into_iter()
-        .zip(j_j)
-        .zip(j_values)
-        .collect();
+    let j: Vec<((usize, usize), f64)> = j_i.into_iter().zip(j_j).zip(j_values).collect();
     quantum::gauge_transform(&h, &j, &gauge)
 }
 
@@ -4844,11 +4828,7 @@ fn py_qa_greedy_partition(
     j_values: Vec<f64>,
     max_partition_size: usize,
 ) -> Vec<Vec<usize>> {
-    let j: Vec<((usize, usize), f64)> = j_i
-        .into_iter()
-        .zip(j_j)
-        .zip(j_values)
-        .collect();
+    let j: Vec<((usize, usize), f64)> = j_i.into_iter().zip(j_j).zip(j_values).collect();
     quantum::greedy_partition(n_qubits, &j, max_partition_size)
 }
 
@@ -5379,11 +5359,18 @@ fn py_ping_step<'py>(
     i_drive_i: PyReadonlyArray1<'_, f64>,
     xi_i: PyReadonlyArray1<'_, f64>,
     spikes_i_out: PyReadwriteArray1<'_, u8>,
-    e_l: f64, e_ampa: f64, e_gaba: f64,
-    g_l: f64, c_m: f64,
-    v_threshold: f64, v_reset: f64, t_refrac: f64,
-    tau_ampa: f64, tau_gaba: f64,
-    sigma_e: f64, sigma_i: f64,
+    e_l: f64,
+    e_ampa: f64,
+    e_gaba: f64,
+    g_l: f64,
+    c_m: f64,
+    v_threshold: f64,
+    v_reset: f64,
+    t_refrac: f64,
+    tau_ampa: f64,
+    tau_gaba: f64,
+    sigma_e: f64,
+    sigma_i: f64,
     dt: f64,
 ) -> PyResult<(u32, u32)> {
     let mut v_e = v_e;
@@ -5397,16 +5384,33 @@ fn py_ping_step<'py>(
     let mut refrac_i = refrac_i;
     let mut spikes_i_out = spikes_i_out;
     let (ne, ni) = ping::step_kernel(
-        v_e.as_slice_mut()?, g_ampa_e.as_slice_mut()?,
-        g_gaba_e.as_slice_mut()?, refrac_e.as_slice_mut()?,
-        i_drive_e.as_slice()?, xi_e.as_slice()?,
+        v_e.as_slice_mut()?,
+        g_ampa_e.as_slice_mut()?,
+        g_gaba_e.as_slice_mut()?,
+        refrac_e.as_slice_mut()?,
+        i_drive_e.as_slice()?,
+        xi_e.as_slice()?,
         spikes_e_out.as_slice_mut()?,
-        v_i.as_slice_mut()?, g_ampa_i.as_slice_mut()?,
-        g_gaba_i.as_slice_mut()?, refrac_i.as_slice_mut()?,
-        i_drive_i.as_slice()?, xi_i.as_slice()?,
+        v_i.as_slice_mut()?,
+        g_ampa_i.as_slice_mut()?,
+        g_gaba_i.as_slice_mut()?,
+        refrac_i.as_slice_mut()?,
+        i_drive_i.as_slice()?,
+        xi_i.as_slice()?,
         spikes_i_out.as_slice_mut()?,
-        e_l, e_ampa, e_gaba, g_l, c_m, v_threshold, v_reset, t_refrac,
-        tau_ampa, tau_gaba, sigma_e, sigma_i, dt,
+        e_l,
+        e_ampa,
+        e_gaba,
+        g_l,
+        c_m,
+        v_threshold,
+        v_reset,
+        t_refrac,
+        tau_ampa,
+        tau_gaba,
+        sigma_e,
+        sigma_i,
+        dt,
     );
     Ok((ne, ni))
 }
@@ -5456,13 +5460,18 @@ fn py_parallel_csr_multi_spmv_add(
 ) -> PyResult<()> {
     let mut y = y;
     let indptr_slices: Vec<&[i32]> = indptrs
-        .iter().map(|a| a.as_slice()).collect::<Result<_, _>>()?;
+        .iter()
+        .map(|a| a.as_slice())
+        .collect::<Result<_, _>>()?;
     let indices_slices: Vec<&[i32]> = indices_list
-        .iter().map(|a| a.as_slice()).collect::<Result<_, _>>()?;
+        .iter()
+        .map(|a| a.as_slice())
+        .collect::<Result<_, _>>()?;
     let data_slices: Vec<&[f64]> = data_list
-        .iter().map(|a| a.as_slice()).collect::<Result<_, _>>()?;
-    let x_slices: Vec<&[f64]> = xs
-        .iter().map(|a| a.as_slice()).collect::<Result<_, _>>()?;
+        .iter()
+        .map(|a| a.as_slice())
+        .collect::<Result<_, _>>()?;
+    let x_slices: Vec<&[f64]> = xs.iter().map(|a| a.as_slice()).collect::<Result<_, _>>()?;
     cortical_inject::parallel_csr_multi_spmv_add(
         &indptr_slices,
         &indices_slices,
