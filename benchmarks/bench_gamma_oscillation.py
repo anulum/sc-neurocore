@@ -99,16 +99,15 @@ def main() -> None:
 
     cfgs = [
         # (n_e, n_i, duration_ms, dt, burn_in_ms)
-        (80,    20,    500.0, 0.1, 100.0),
-        (400,   100,  1000.0, 0.1, 200.0),
-        (4000, 1000,  1000.0, 0.1, 200.0),
+        (80, 20, 500.0, 0.1, 100.0),
+        (400, 100, 1000.0, 0.1, 200.0),
+        (4000, 1000, 1000.0, 0.1, 200.0),
     ]
     runs = []
     for backend in ("python", "rust"):
         for n_e, n_i, dur, dt, burn in cfgs:
             print(
-                f"running backend={backend} n_e={n_e} n_i={n_i} "
-                f"dur={dur}ms ...",
+                f"running backend={backend} n_e={n_e} n_i={n_i} dur={dur}ms ...",
                 flush=True,
             )
             try:
@@ -117,12 +116,19 @@ def main() -> None:
                 # Rust kernel not built — record a MISSING entry per
                 # `feedback_no_blocked_without_probing.md`.
                 print(f"  MISSING: {exc}", flush=True)
-                runs.append({
-                    "backend": backend, "n_excitatory": n_e,
-                    "n_inhibitory": n_i, "duration_ms": dur,
-                    "dt": dt, "burn_in_ms": burn, "seed": 42,
-                    "status": "MISSING", "reason": str(exc),
-                })
+                runs.append(
+                    {
+                        "backend": backend,
+                        "n_excitatory": n_e,
+                        "n_inhibitory": n_i,
+                        "duration_ms": dur,
+                        "dt": dt,
+                        "burn_in_ms": burn,
+                        "seed": 42,
+                        "status": "MISSING",
+                        "reason": str(exc),
+                    }
+                )
                 continue
             runs.append(r)
             ok = "OK" if r["in_published_band_30_to_80_hz"] else "OUT"
@@ -154,11 +160,11 @@ def main() -> None:
             "rust": {
                 "status": "USED",
                 "notes": "PyO3 kernel `engine/src/ping.rs` ↔ "
-                         "`sc_neurocore_engine.py_ping_step`. Spike "
-                         "outputs bit-identical to the NumPy path "
-                         "(noise pre-drawn on the Python side); "
-                         "membrane V values diverge ≤ 0.5 mV due to "
-                         "SIMD-vs-scalar float ordering, sub-threshold.",
+                "`sc_neurocore_engine.py_ping_step`. Spike "
+                "outputs bit-identical to the NumPy path "
+                "(noise pre-drawn on the Python side); "
+                "membrane V values diverge ≤ 0.5 mV due to "
+                "SIMD-vs-scalar float ordering, sub-threshold.",
             },
             "julia": {
                 "status": "BLOCKED-ON-multilang-gamma",
@@ -171,8 +177,8 @@ def main() -> None:
             "mojo": {
                 "status": "BLOCKED-ON-multilang-gamma",
                 "notes": "Same as Rust; trivially fits the Mojo "
-                         "@export raw-Int FFI pattern documented in "
-                         "feedback_mojo_026_ffi_pattern.",
+                "@export raw-Int FFI pattern documented in "
+                "feedback_mojo_026_ffi_pattern.",
             },
         },
         "runs": runs,

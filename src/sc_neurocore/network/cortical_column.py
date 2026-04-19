@@ -113,12 +113,14 @@ try:
     from sc_neurocore_engine.sc_neurocore_engine import (  # type: ignore[import-not-found]
         py_parallel_csr_spmv_add as _rust_csr_spmv_add,
     )
+
     _HAS_RUST_CSR_SPMV = True
 except (ImportError, AttributeError):
     try:
         from sc_neurocore_engine import (  # type: ignore[no-redef]
             py_parallel_csr_spmv_add as _rust_csr_spmv_add,
         )
+
         _HAS_RUST_CSR_SPMV = True
     except (ImportError, AttributeError):
         pass
@@ -126,12 +128,14 @@ try:
     from sc_neurocore_engine.sc_neurocore_engine import (  # type: ignore[import-not-found]
         py_parallel_csr_multi_spmv_add as _rust_csr_multi_spmv_add,
     )
+
     _HAS_RUST_CSR_MULTI_SPMV = True
 except (ImportError, AttributeError):
     try:
         from sc_neurocore_engine import (  # type: ignore[no-redef]
             py_parallel_csr_multi_spmv_add as _rust_csr_multi_spmv_add,
         )
+
         _HAS_RUST_CSR_MULTI_SPMV = True
     except (ImportError, AttributeError):
         pass
@@ -140,24 +144,39 @@ except (ImportError, AttributeError):
 # ── Population ordering and per-population sizes (Potjans Table 5) ──
 
 POPULATIONS: tuple[str, ...] = (
-    "L23e", "L23i", "L4e", "L4i", "L5e", "L5i", "L6e", "L6i",
+    "L23e",
+    "L23i",
+    "L4e",
+    "L4i",
+    "L5e",
+    "L5i",
+    "L6e",
+    "L6i",
 )
 N_POPS = len(POPULATIONS)
 
 FULL_SIZES: dict[str, int] = {
-    "L23e": 20683, "L23i":  5834,
-    "L4e":  21915, "L4i":   5479,
-    "L5e":   4850, "L5i":   1065,
-    "L6e":  14395, "L6i":   2948,
+    "L23e": 20683,
+    "L23i": 5834,
+    "L4e": 21915,
+    "L4i": 5479,
+    "L5e": 4850,
+    "L5i": 1065,
+    "L6e": 14395,
+    "L6i": 2948,
 }
 
 # K_bg: number of independent background-Poisson channels per cell.
 # Source: Potjans & Diesmann 2014 Table 5 column "k_ext".
 K_BG: dict[str, int] = {
-    "L23e": 1600, "L23i": 1500,
-    "L4e":  2100, "L4i":  1900,
-    "L5e":  2000, "L5i":  1900,
-    "L6e":  2900, "L6i":  2100,
+    "L23e": 1600,
+    "L23i": 1500,
+    "L4e": 2100,
+    "L4i": 1900,
+    "L5e": 2000,
+    "L5i": 1900,
+    "L6e": 2900,
+    "L6i": 2100,
 }
 
 # Connection-probability matrix. Rows = TARGET, columns = SOURCE.
@@ -166,33 +185,36 @@ K_BG: dict[str, int] = {
 # table are 0.
 #
 # Row order follows POPULATIONS; column order follows POPULATIONS.
-CONN_PROBS: np.ndarray = np.array([
-    # src:  L23e    L23i    L4e     L4i     L5e     L5i     L6e     L6i
-    [0.1009, 0.1689, 0.0437, 0.0818, 0.0323, 0.0000, 0.0076, 0.0000],  # L23e
-    [0.1346, 0.1371, 0.0316, 0.0515, 0.0755, 0.0000, 0.0042, 0.0000],  # L23i
-    [0.0077, 0.0059, 0.0497, 0.1350, 0.0067, 0.0003, 0.0453, 0.0000],  # L4e
-    [0.0691, 0.0029, 0.0794, 0.1597, 0.0033, 0.0000, 0.1057, 0.0000],  # L4i
-    [0.1004, 0.0622, 0.0505, 0.0057, 0.0831, 0.3726, 0.0204, 0.0000],  # L5e
-    [0.0548, 0.0269, 0.0257, 0.0022, 0.0598, 0.3158, 0.0086, 0.0000],  # L5i
-    [0.0156, 0.0066, 0.0211, 0.0166, 0.0572, 0.0197, 0.0396, 0.2252],  # L6e
-    [0.0364, 0.0010, 0.0034, 0.0005, 0.0277, 0.0080, 0.0658, 0.1443],  # L6i
-], dtype=np.float64)
+CONN_PROBS: np.ndarray = np.array(
+    [
+        # src:  L23e    L23i    L4e     L4i     L5e     L5i     L6e     L6i
+        [0.1009, 0.1689, 0.0437, 0.0818, 0.0323, 0.0000, 0.0076, 0.0000],  # L23e
+        [0.1346, 0.1371, 0.0316, 0.0515, 0.0755, 0.0000, 0.0042, 0.0000],  # L23i
+        [0.0077, 0.0059, 0.0497, 0.1350, 0.0067, 0.0003, 0.0453, 0.0000],  # L4e
+        [0.0691, 0.0029, 0.0794, 0.1597, 0.0033, 0.0000, 0.1057, 0.0000],  # L4i
+        [0.1004, 0.0622, 0.0505, 0.0057, 0.0831, 0.3726, 0.0204, 0.0000],  # L5e
+        [0.0548, 0.0269, 0.0257, 0.0022, 0.0598, 0.3158, 0.0086, 0.0000],  # L5i
+        [0.0156, 0.0066, 0.0211, 0.0166, 0.0572, 0.0197, 0.0396, 0.2252],  # L6e
+        [0.0364, 0.0010, 0.0034, 0.0005, 0.0277, 0.0080, 0.0658, 0.1443],  # L6i
+    ],
+    dtype=np.float64,
+)
 
 
 # ── LIF + synapse + delay parameters (Potjans Table 5) ──────────────
 
-C_M = 250.0        # pF — membrane capacitance
-TAU_M = 10.0       # ms — membrane time constant
-TAU_SYN = 0.5      # ms — exponential PSC decay
-T_REF = 2.0        # ms — absolute refractory
-E_L = -65.0        # mV — leak reversal == reset
-V_RESET = -65.0    # mV
-V_TH = -50.0       # mV — spike threshold
+C_M = 250.0  # pF — membrane capacitance
+TAU_M = 10.0  # ms — membrane time constant
+TAU_SYN = 0.5  # ms — exponential PSC decay
+T_REF = 2.0  # ms — absolute refractory
+E_L = -65.0  # mV — leak reversal == reset
+V_RESET = -65.0  # mV
+V_TH = -50.0  # mV — spike threshold
 
 # Synaptic weights (PSC peak amplitudes, pA). Excitatory mean is
 # w; inhibitory weights are −g·w. The L4e → L23e edge is boosted
 # to 2·w per Potjans 2014.
-W_E = 87.81        # pA
+W_E = 87.81  # pA
 G_INH = 4.0
 W_I = -G_INH * W_E
 
@@ -286,8 +308,7 @@ class CorticalColumn:
         # Per-population scaled sizes (at least 1 cell per pop to
         # keep matrix shapes well-defined at very low scale).
         self.sizes: dict[str, int] = {
-            p: max(1, int(round(FULL_SIZES[p] * scale)))
-            for p in POPULATIONS
+            p: max(1, int(round(FULL_SIZES[p] * scale))) for p in POPULATIONS
         }
         self.n_total = sum(self.sizes.values())
 
@@ -328,10 +349,12 @@ class CorticalColumn:
         # a slightly richer model per pair but ~30× slower step.
         self._W: dict[tuple[str, str], sparse.csr_matrix] = {}
         self._W_bins: dict[
-            tuple[str, str], list[tuple[float, sparse.csr_matrix]],
+            tuple[str, str],
+            list[tuple[float, sparse.csr_matrix]],
         ] = {}
         self._W_bin_steps: dict[
-            tuple[str, str], list[tuple[int, sparse.csr_matrix]],
+            tuple[str, str],
+            list[tuple[int, sparse.csr_matrix]],
         ] = {}
 
         # Global delay-bin centres (in milliseconds), one set per
@@ -343,10 +366,14 @@ class CorticalColumn:
             qmid = (np.arange(n_delay_bins) + 0.5) / n_delay_bins
             z = stats.norm.ppf(qmid)
             self._global_e_centers_ms = np.clip(
-                DELAY_E + z * DELAY_E_SIGMA, 0.05, None,
+                DELAY_E + z * DELAY_E_SIGMA,
+                0.05,
+                None,
             )
             self._global_i_centers_ms = np.clip(
-                DELAY_I + z * DELAY_I_SIGMA, 0.05, None,
+                DELAY_I + z * DELAY_I_SIGMA,
+                0.05,
+                None,
             )
         else:
             self._global_e_centers_ms = np.array([DELAY_E])
@@ -380,12 +407,12 @@ class CorticalColumn:
         self._n_total_i = i_off
         # Accumulators for block-CSR construction. Each element is
         # (rows_global, cols_global, data_weighted).
-        block_e_acc: list[
-            list[tuple[np.ndarray, np.ndarray, np.ndarray]]
-        ] = [[] for _ in range(n_delay_bins)]
-        block_i_acc: list[
-            list[tuple[np.ndarray, np.ndarray, np.ndarray]]
-        ] = [[] for _ in range(n_delay_bins)]
+        block_e_acc: list[list[tuple[np.ndarray, np.ndarray, np.ndarray]]] = [
+            [] for _ in range(n_delay_bins)
+        ]
+        block_i_acc: list[list[tuple[np.ndarray, np.ndarray, np.ndarray]]] = [
+            [] for _ in range(n_delay_bins)
+        ]
         for ti, target in enumerate(POPULATIONS):
             n_t = self.sizes[target]
             for sj, source in enumerate(POPULATIONS):
@@ -410,13 +437,18 @@ class CorticalColumn:
                     # validates; it is also what NEST uses by
                     # default at sub-full scale.
                     k_per_target = max(
-                        1, int(round(p * FULL_SIZES[source])),
+                        1,
+                        int(round(p * FULL_SIZES[source])),
                     )
                     rows = np.repeat(
-                        np.arange(n_t, dtype=np.int32), k_per_target,
+                        np.arange(n_t, dtype=np.int32),
+                        k_per_target,
                     )
                     cols = self._rng.integers(
-                        0, n_s, size=n_t * k_per_target, dtype=np.int32,
+                        0,
+                        n_s,
+                        size=n_t * k_per_target,
+                        dtype=np.int32,
                     )
                     data = np.ones(n_t * k_per_target, dtype=np.float32)
                 else:
@@ -438,7 +470,8 @@ class CorticalColumn:
                 np.add.at(indptr, rows_s + 1, 1)
                 np.cumsum(indptr, out=indptr)
                 W = sparse.csr_matrix(
-                    (data_s, cols_s, indptr), shape=(n_t, n_s),
+                    (data_s, cols_s, indptr),
+                    shape=(n_t, n_s),
                 )
                 # Multapses (duplicate (row, col) pairs) are summed
                 # into a single CSR entry by sum_duplicates, giving
@@ -463,7 +496,9 @@ class CorticalColumn:
                         d_mean, d_sigma = DELAY_E, DELAY_E_SIGMA
                         global_centers = self._global_e_centers_ms
                     delays_ms = self._rng.normal(
-                        d_mean, d_sigma, size=rows_s.size,
+                        d_mean,
+                        d_sigma,
+                        size=rows_s.size,
                     )
                     # Strictly positive; clip to avoid same-step
                     # algebraic loops (delay must be ≥ 1 dt step at
@@ -494,22 +529,20 @@ class CorticalColumn:
                             t_offset = self._target_offsets[target]
                             s_offset = self._source_e_offsets[source]
                             acc = block_e_acc
-                        rows_global = (
-                            rows_s.astype(np.int64) + t_offset
-                        )
-                        cols_global = (
-                            cols_s.astype(np.int64) + s_offset
-                        )
+                        rows_global = rows_s.astype(np.int64) + t_offset
+                        cols_global = cols_s.astype(np.int64) + s_offset
                         data_w = data_s * weight_per_conn
                         for b in range(self.n_delay_bins):
                             mask_b = bin_idx_global == b
                             if not mask_b.any():
                                 continue
-                            acc[b].append((
-                                rows_global[mask_b].astype(np.int32),
-                                cols_global[mask_b].astype(np.int32),
-                                data_w[mask_b].astype(np.float64),
-                            ))
+                            acc[b].append(
+                                (
+                                    rows_global[mask_b].astype(np.int32),
+                                    cols_global[mask_b].astype(np.int32),
+                                    data_w[mask_b].astype(np.float64),
+                                )
+                            )
                         # In block mode we do NOT build per-pair
                         # `_W_bins` — block matrices are built once
                         # below outside the pair loop.
@@ -517,7 +550,9 @@ class CorticalColumn:
                     # Quantile-bin the connections by delay.
                     n_bins = self.n_delay_bins
                     quantiles = np.linspace(
-                        0.0, 1.0, n_bins + 1,
+                        0.0,
+                        1.0,
+                        n_bins + 1,
                     )[1:-1]
                     cuts = np.quantile(delays_ms, quantiles)
                     bin_idx = np.searchsorted(cuts, delays_ms)
@@ -560,32 +595,36 @@ class CorticalColumn:
         # inner loop is what lets the Rust path actually beat scipy
         # — measured 2026-04-18, the per-call cast overhead alone
         # was eating the per-call speedup.
-        self._block_e_arrays: list[
-            tuple[np.ndarray, np.ndarray, np.ndarray]
-        ] = []
-        self._block_i_arrays: list[
-            tuple[np.ndarray, np.ndarray, np.ndarray]
-        ] = []
+        self._block_e_arrays: list[tuple[np.ndarray, np.ndarray, np.ndarray]] = []
+        self._block_i_arrays: list[tuple[np.ndarray, np.ndarray, np.ndarray]] = []
         if delay_distribution and use_block_csr:
             for b in range(self.n_delay_bins):
                 blk_e = self._stack_block(
-                    block_e_acc[b], self.n_total, self._n_total_e,
+                    block_e_acc[b],
+                    self.n_total,
+                    self._n_total_e,
                 )
                 self._block_e.append(blk_e)
-                self._block_e_arrays.append((
-                    np.ascontiguousarray(blk_e.indptr, dtype=np.int32),
-                    np.ascontiguousarray(blk_e.indices, dtype=np.int32),
-                    np.ascontiguousarray(blk_e.data, dtype=np.float64),
-                ))
+                self._block_e_arrays.append(
+                    (
+                        np.ascontiguousarray(blk_e.indptr, dtype=np.int32),
+                        np.ascontiguousarray(blk_e.indices, dtype=np.int32),
+                        np.ascontiguousarray(blk_e.data, dtype=np.float64),
+                    )
+                )
                 blk_i = self._stack_block(
-                    block_i_acc[b], self.n_total, self._n_total_i,
+                    block_i_acc[b],
+                    self.n_total,
+                    self._n_total_i,
                 )
                 self._block_i.append(blk_i)
-                self._block_i_arrays.append((
-                    np.ascontiguousarray(blk_i.indptr, dtype=np.int32),
-                    np.ascontiguousarray(blk_i.indices, dtype=np.int32),
-                    np.ascontiguousarray(blk_i.data, dtype=np.float64),
-                ))
+                self._block_i_arrays.append(
+                    (
+                        np.ascontiguousarray(blk_i.indptr, dtype=np.int32),
+                        np.ascontiguousarray(blk_i.indices, dtype=np.int32),
+                        np.ascontiguousarray(blk_i.data, dtype=np.float64),
+                    )
+                )
 
         # Per-population state arrays.
         self.v: dict[str, np.ndarray] = {}
@@ -632,7 +671,8 @@ class CorticalColumn:
         """
         if not triples:
             return sparse.csr_matrix(
-                (n_rows, n_cols), dtype=np.float64,
+                (n_rows, n_cols),
+                dtype=np.float64,
             )
         rows = np.concatenate([t[0] for t in triples])
         cols = np.concatenate([t[1] for t in triples])
@@ -662,12 +702,10 @@ class CorticalColumn:
         # them, which would create an algebraic loop).
         if self.delay_distribution and self.use_block_csr:
             self._global_e_bin_steps = [
-                max(1, int(round(d / dt)))
-                for d in self._global_e_centers_ms
+                max(1, int(round(d / dt))) for d in self._global_e_centers_ms
             ]
             self._global_i_bin_steps = [
-                max(1, int(round(d / dt)))
-                for d in self._global_i_centers_ms
+                max(1, int(round(d / dt))) for d in self._global_i_centers_ms
             ]
             self._buf_len_e = max(self._global_e_bin_steps)
             self._buf_len_i = max(self._global_i_bin_steps)
@@ -747,9 +785,7 @@ class CorticalColumn:
             if block.nnz == 0:
                 continue
             idx = (self._buf_idx - d_steps) % self._buf_len_e
-            spike_concat = np.concatenate([
-                self._buf_e[p][idx] for p in e_pops
-            ]).astype(np.float64)
+            spike_concat = np.concatenate([self._buf_e[p][idx] for p in e_pops]).astype(np.float64)
             if np.count_nonzero(spike_concat) == 0:
                 continue
             indptr_b, indices_b, data_b = self._block_e_arrays[b]
@@ -763,9 +799,7 @@ class CorticalColumn:
             if block.nnz == 0:
                 continue
             idx = (self._buf_idx - d_steps) % self._buf_len_i
-            spike_concat = np.concatenate([
-                self._buf_i[p][idx] for p in i_pops
-            ]).astype(np.float64)
+            spike_concat = np.concatenate([self._buf_i[p][idx] for p in i_pops]).astype(np.float64)
             if np.count_nonzero(spike_concat) == 0:
                 continue
             indptr_b, indices_b, data_b = self._block_i_arrays[b]
@@ -775,28 +809,31 @@ class CorticalColumn:
             xs.append(spike_concat)
 
         if indptrs:
-            if (
-                _HAS_RUST_CSR_MULTI_SPMV
-                and _rust_csr_multi_spmv_add is not None
-            ):
+            if _HAS_RUST_CSR_MULTI_SPMV and _rust_csr_multi_spmv_add is not None:
                 # ONE batched FFI call replaces the up-to-10
                 # per-bin calls. Rust loops internally and shares
                 # the rayon thread pool across all bins.
                 _rust_csr_multi_spmv_add(
-                    indptrs, indices_list, data_list, xs,
+                    indptrs,
+                    indices_list,
+                    data_list,
+                    xs,
                     contrib_concat,
                 )
             else:
                 for indptr_b, indices_b, data_b, x_b in zip(
-                    indptrs, indices_list, data_list, xs,
+                    indptrs,
+                    indices_list,
+                    data_list,
+                    xs,
                     strict=True,
                 ):
-                    if (
-                        _HAS_RUST_CSR_SPMV
-                        and _rust_csr_spmv_add is not None
-                    ):
+                    if _HAS_RUST_CSR_SPMV and _rust_csr_spmv_add is not None:
                         _rust_csr_spmv_add(
-                            indptr_b, indices_b, data_b, x_b,
+                            indptr_b,
+                            indices_b,
+                            data_b,
+                            x_b,
                             contrib_concat,
                         )
                     else:
@@ -811,7 +848,7 @@ class CorticalColumn:
         for target in POPULATIONS:
             n_t = self.sizes[target]
             t_off = self._target_offsets[target]
-            chunk = contrib_concat[t_off:t_off + n_t]
+            chunk = contrib_concat[t_off : t_off + n_t]
             if self.bg_rate > 0.0:
                 lam = K_BG[target] * self.bg_rate * dt * 1e-3
                 bg_kicks = self._rng.poisson(lam, size=n_t)
@@ -896,7 +933,8 @@ class CorticalColumn:
             self.i_syn[target] += contrib
 
     def _integrate_and_detect(
-        self, dt: float,
+        self,
+        dt: float,
     ) -> dict[str, np.ndarray]:
         """Per-population LIF Euler step + spike detect + buffer push."""
         spikes: dict[str, np.ndarray] = {}
@@ -918,19 +956,17 @@ class CorticalColumn:
 
             # Push into per-source-type delay buffer.
             if _is_inhibitory(p):
-                self._buf_i[p][self._buf_idx % self._buf_len_i] = (
-                    spk.astype(np.int32)
-                )
+                self._buf_i[p][self._buf_idx % self._buf_len_i] = spk.astype(np.int32)
             else:
-                self._buf_e[p][self._buf_idx % self._buf_len_e] = (
-                    spk.astype(np.int32)
-                )
+                self._buf_e[p][self._buf_idx % self._buf_len_e] = spk.astype(np.int32)
 
         self._buf_idx += 1
         return spikes
 
     def simulate(
-        self, duration_ms: float, dt: float = 0.1,
+        self,
+        duration_ms: float,
+        dt: float = 0.1,
     ) -> dict[str, np.ndarray]:
         """Run the network for `duration_ms` ms.
 
@@ -945,9 +981,7 @@ class CorticalColumn:
             spikes = self.step(dt=dt)
             for p in POPULATIONS:
                 rasters[p].append(spikes[p])
-        return {
-            p: np.asarray(rasters[p], dtype=bool) for p in POPULATIONS
-        }
+        return {p: np.asarray(rasters[p], dtype=bool) for p in POPULATIONS}
 
     # ── Analysis helpers ─────────────────────────────────────────
 

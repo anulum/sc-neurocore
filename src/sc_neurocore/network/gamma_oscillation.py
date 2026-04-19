@@ -86,28 +86,30 @@ try:
     from sc_neurocore_engine.sc_neurocore_engine import (  # type: ignore[import-not-found]
         py_ping_step as _rust_ping_step,
     )
+
     _HAS_RUST_PING_STEP = True
 except (ImportError, AttributeError):
     try:
         from sc_neurocore_engine import (  # type: ignore[no-redef]
             py_ping_step as _rust_ping_step,
         )
+
         _HAS_RUST_PING_STEP = True
     except (ImportError, AttributeError):
         pass
 
 
 # Border-Kopell 2003 published defaults (Fig 2A, weak-PING 40 Hz).
-_DEFAULT_C_M = 1.0           # µF/cm²
-_DEFAULT_G_L = 0.1           # mS/cm²
-_DEFAULT_E_L = -67.0         # mV
-_DEFAULT_E_AMPA = 0.0        # mV
-_DEFAULT_E_GABA = -80.0      # mV
-_DEFAULT_V_THRESH = -52.0    # mV
-_DEFAULT_V_RESET = -67.0     # mV
-_DEFAULT_T_REFRAC = 2.0      # ms
-_DEFAULT_TAU_AMPA = 3.0      # ms
-_DEFAULT_TAU_GABA = 9.0      # ms
+_DEFAULT_C_M = 1.0  # µF/cm²
+_DEFAULT_G_L = 0.1  # mS/cm²
+_DEFAULT_E_L = -67.0  # mV
+_DEFAULT_E_AMPA = 0.0  # mV
+_DEFAULT_E_GABA = -80.0  # mV
+_DEFAULT_V_THRESH = -52.0  # mV
+_DEFAULT_V_RESET = -67.0  # mV
+_DEFAULT_T_REFRAC = 2.0  # ms
+_DEFAULT_TAU_AMPA = 3.0  # ms
+_DEFAULT_TAU_GABA = 9.0  # ms
 
 
 @dataclass
@@ -147,10 +149,10 @@ class PINGCircuit:
     # the published per-synapse values because every pre-synaptic
     # spike here contributes to every post-synaptic cell (the
     # cumulative burst conductance scales with N_pre).
-    w_ee: float = 0.0006        # E → E (recurrent excitation)
-    w_ei: float = 0.003         # E → I (gain loop forward)
-    w_ie: float = 0.005         # I → E (gain loop feedback)
-    w_ii: float = 0.01          # I → I (lateral inhibition)
+    w_ee: float = 0.0006  # E → E (recurrent excitation)
+    w_ei: float = 0.003  # E → I (gain loop forward)
+    w_ie: float = 0.005  # I → E (gain loop feedback)
+    w_ii: float = 0.01  # I → I (lateral inhibition)
 
     # External drive (µA/cm²): per-neuron Gaussian heterogeneity
     # around the mean. Setting `i_drive_e_mean` ≈ 1.4 puts E cells
@@ -206,20 +208,14 @@ class PINGCircuit:
         # if available; explicit "rust" raises if the kernel is
         # missing rather than silently downgrading.
         if self.backend not in {"auto", "rust", "python"}:
-            raise ValueError(
-                f"backend must be one of 'auto'|'rust'|'python', "
-                f"got {self.backend!r}"
-            )
+            raise ValueError(f"backend must be one of 'auto'|'rust'|'python', got {self.backend!r}")
         if self.backend == "rust" and not _HAS_RUST_PING_STEP:
             raise RuntimeError(
                 "backend='rust' requested but `sc_neurocore_engine."
                 "py_ping_step` is not available — build the engine "
                 "with `cd engine && maturin develop --release`"
             )
-        self._use_rust = (
-            self.backend == "rust"
-            or (self.backend == "auto" and _HAS_RUST_PING_STEP)
-        )
+        self._use_rust = self.backend == "rust" or (self.backend == "auto" and _HAS_RUST_PING_STEP)
         # Initial V drawn near E_L with small jitter, so spike onset
         # is asynchronous (matches Whittington 1995 burn-in).
         self.v_e = self.e_l + self._rng.uniform(-2.0, 2.0, self.n_excitatory)
@@ -232,10 +228,14 @@ class PINGCircuit:
         self.refrac_i = np.zeros(self.n_inhibitory, dtype=np.float64)
         # Per-neuron heterogeneous drive (constant for the run).
         self.i_drive_e = self._rng.normal(
-            self.i_drive_e_mean, self.i_drive_e_sigma, self.n_excitatory,
+            self.i_drive_e_mean,
+            self.i_drive_e_sigma,
+            self.n_excitatory,
         )
         self.i_drive_i = self._rng.normal(
-            self.i_drive_i_mean, self.i_drive_i_sigma, self.n_inhibitory,
+            self.i_drive_i_mean,
+            self.i_drive_i_sigma,
+            self.n_inhibitory,
         )
 
     # ── Single timestep ──────────────────────────────────────────
@@ -258,26 +258,48 @@ class PINGCircuit:
         """
         assert _rust_ping_step is not None  # gated by self._use_rust
         assert (
-            self.v_e is not None and self.v_i is not None
-            and self.g_ampa_e is not None and self.g_ampa_i is not None
-            and self.g_gaba_e is not None and self.g_gaba_i is not None
-            and self.refrac_e is not None and self.refrac_i is not None
-            and self.i_drive_e is not None and self.i_drive_i is not None
+            self.v_e is not None
+            and self.v_i is not None
+            and self.g_ampa_e is not None
+            and self.g_ampa_i is not None
+            and self.g_gaba_e is not None
+            and self.g_gaba_i is not None
+            and self.refrac_e is not None
+            and self.refrac_i is not None
+            and self.i_drive_e is not None
+            and self.i_drive_i is not None
         )
         xi_e = self._rng.standard_normal(self.n_excitatory)
         xi_i = self._rng.standard_normal(self.n_inhibitory)
         spikes_e_u8 = np.zeros(self.n_excitatory, dtype=np.uint8)
         spikes_i_u8 = np.zeros(self.n_inhibitory, dtype=np.uint8)
         n_e_spikes, n_i_spikes = _rust_ping_step(
-            self.v_e, self.g_ampa_e, self.g_gaba_e, self.refrac_e,
-            self.i_drive_e, xi_e, spikes_e_u8,
-            self.v_i, self.g_ampa_i, self.g_gaba_i, self.refrac_i,
-            self.i_drive_i, xi_i, spikes_i_u8,
-            self.e_l, self.e_ampa, self.e_gaba,
-            self.g_l, self.c_m,
-            self.v_threshold, self.v_reset, self.t_refrac,
-            self.tau_ampa, self.tau_gaba,
-            self.sigma_e, self.sigma_i,
+            self.v_e,
+            self.g_ampa_e,
+            self.g_gaba_e,
+            self.refrac_e,
+            self.i_drive_e,
+            xi_e,
+            spikes_e_u8,
+            self.v_i,
+            self.g_ampa_i,
+            self.g_gaba_i,
+            self.refrac_i,
+            self.i_drive_i,
+            xi_i,
+            spikes_i_u8,
+            self.e_l,
+            self.e_ampa,
+            self.e_gaba,
+            self.g_l,
+            self.c_m,
+            self.v_threshold,
+            self.v_reset,
+            self.t_refrac,
+            self.tau_ampa,
+            self.tau_gaba,
+            self.sigma_e,
+            self.sigma_i,
             dt,
         )
         # Cross-population conductance propagation (same as Python path).
@@ -295,21 +317,34 @@ class PINGCircuit:
         same point in the per-instance RNG sequence, so the two
         backends consume RNG identically)."""
         assert (
-            self.v_e is not None and self.v_i is not None
-            and self.g_ampa_e is not None and self.g_ampa_i is not None
-            and self.g_gaba_e is not None and self.g_gaba_i is not None
-            and self.refrac_e is not None and self.refrac_i is not None
-            and self.i_drive_e is not None and self.i_drive_i is not None
+            self.v_e is not None
+            and self.v_i is not None
+            and self.g_ampa_e is not None
+            and self.g_ampa_i is not None
+            and self.g_gaba_e is not None
+            and self.g_gaba_i is not None
+            and self.refrac_e is not None
+            and self.refrac_i is not None
+            and self.i_drive_e is not None
+            and self.i_drive_i is not None
         )
         # Pre-draw noise so the RNG-consumption order matches the
         # Rust path exactly. The original ordering (decay → noise)
         # gives the same final result because nothing else draws
         # from the RNG between the two operations.
-        noise_e = self.sigma_e * np.sqrt(dt) * self._rng.standard_normal(
-            self.n_excitatory,
+        noise_e = (
+            self.sigma_e
+            * np.sqrt(dt)
+            * self._rng.standard_normal(
+                self.n_excitatory,
+            )
         )
-        noise_i = self.sigma_i * np.sqrt(dt) * self._rng.standard_normal(
-            self.n_inhibitory,
+        noise_i = (
+            self.sigma_i
+            * np.sqrt(dt)
+            * self._rng.standard_normal(
+                self.n_inhibitory,
+            )
         )
 
         # Decay synaptic conductances (closed-form exponential).
@@ -336,22 +371,26 @@ class PINGCircuit:
         )
 
         # Stochastic membrane noise (Wiener increment).
-        noise_e = self.sigma_e * np.sqrt(dt) * self._rng.standard_normal(
-            self.n_excitatory,
+        noise_e = (
+            self.sigma_e
+            * np.sqrt(dt)
+            * self._rng.standard_normal(
+                self.n_excitatory,
+            )
         )
-        noise_i = self.sigma_i * np.sqrt(dt) * self._rng.standard_normal(
-            self.n_inhibitory,
+        noise_i = (
+            self.sigma_i
+            * np.sqrt(dt)
+            * self._rng.standard_normal(
+                self.n_inhibitory,
+            )
         )
 
         # Update voltages — only for non-refractory neurons.
         not_refrac_e = self.refrac_e <= 0.0
         not_refrac_i = self.refrac_i <= 0.0
-        self.v_e[not_refrac_e] += (
-            (i_e[not_refrac_e] / self.c_m) * dt + noise_e[not_refrac_e]
-        )
-        self.v_i[not_refrac_i] += (
-            (i_i[not_refrac_i] / self.c_m) * dt + noise_i[not_refrac_i]
-        )
+        self.v_e[not_refrac_e] += (i_e[not_refrac_e] / self.c_m) * dt + noise_e[not_refrac_e]
+        self.v_i[not_refrac_i] += (i_i[not_refrac_i] / self.c_m) * dt + noise_i[not_refrac_i]
 
         # Decrement refractory countdown.
         self.refrac_e = np.maximum(self.refrac_e - dt, 0.0)
@@ -420,7 +459,9 @@ class PINGCircuit:
 
     @staticmethod
     def population_rate(
-        spike_log: list[np.ndarray], dt: float, bin_ms: float = 1.0,
+        spike_log: list[np.ndarray],
+        dt: float,
+        bin_ms: float = 1.0,
     ) -> np.ndarray:
         """Bin per-step spike booleans into a population rate (Hz).
 
@@ -437,9 +478,7 @@ class PINGCircuit:
         for b in range(n_bins):
             lo = b * steps_per_bin
             hi = lo + steps_per_bin
-            spikes_in_bin = sum(
-                int(np.count_nonzero(s)) for s in spike_log[lo:hi]
-            )
+            spikes_in_bin = sum(int(np.count_nonzero(s)) for s in spike_log[lo:hi])
             # Convert to firing rate (Hz): spikes per neuron per second.
             rate[b] = spikes_in_bin / (n_neurons * (bin_ms / 1000.0))
         return rate

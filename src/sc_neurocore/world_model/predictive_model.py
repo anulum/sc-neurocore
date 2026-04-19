@@ -61,6 +61,7 @@ import numpy as np
 # Detect Rust acceleration backend
 try:
     from sc_neurocore_engine import py_lgssm_kalman_filter as _rust_kalman_filter
+
     _HAS_RUST_LGSSM = True
 except (ImportError, AttributeError):
     _rust_kalman_filter = None
@@ -100,9 +101,13 @@ def _ensure_mojo_loaded() -> bool:
         return True
     import ctypes
     import os as _os
+
     so_path = _os.path.join(
         _os.path.dirname(_os.path.dirname(__file__)),
-        "accel", "mojo", "world_model", "liblgssm.so",
+        "accel",
+        "mojo",
+        "world_model",
+        "liblgssm.so",
     )
     if not _os.path.isfile(so_path):
         return False
@@ -137,9 +142,13 @@ def _ensure_go_loaded() -> bool:
         return True
     import ctypes
     import os as _os
+
     so_path = _os.path.join(
         _os.path.dirname(_os.path.dirname(__file__)),
-        "accel", "go", "lgssm", "liblgssm.so",
+        "accel",
+        "go",
+        "lgssm",
+        "liblgssm.so",
     )
     if not _os.path.isfile(so_path):
         return False
@@ -162,10 +171,10 @@ def _ensure_go_loaded() -> bool:
         ctypes.POINTER(ctypes.c_double),  # R
         ctypes.POINTER(ctypes.c_double),  # mu_0
         ctypes.POINTER(ctypes.c_double),  # Sigma_0
-        ctypes.c_int,                     # T
-        ctypes.c_int,                     # p
-        ctypes.c_int,                     # m
-        ctypes.c_int,                     # d
+        ctypes.c_int,  # T
+        ctypes.c_int,  # p
+        ctypes.c_int,  # m
+        ctypes.c_int,  # d
         ctypes.POINTER(ctypes.c_double),  # means_out
         ctypes.POINTER(ctypes.c_double),  # covs_out
         ctypes.POINTER(ctypes.c_double),  # pred_means_out
@@ -192,6 +201,7 @@ def _ensure_julia_loaded() -> bool:
     import importlib
     import importlib.util
     import os as _os
+
     spec = importlib.util.find_spec("juliacall")
     if spec is None:
         return False
@@ -199,7 +209,10 @@ def _ensure_julia_loaded() -> bool:
     jl = juliacall.Main
     jl_path = _os.path.join(
         _os.path.dirname(_os.path.dirname(__file__)),
-        "accel", "julia", "world_model", "predictive_model.jl",
+        "accel",
+        "julia",
+        "world_model",
+        "predictive_model.jl",
     )
     if not _os.path.isfile(jl_path):
         return False
@@ -381,9 +394,7 @@ class KalmanFilter:
 
         # Backend dispatch
         if backend not in ("auto", "rust", "julia", "go", "mojo", "python"):
-            raise ValueError(
-                f"backend must be auto/rust/julia/go/mojo/python, got {backend!r}"
-            )
+            raise ValueError(f"backend must be auto/rust/julia/go/mojo/python, got {backend!r}")
         if backend == "rust" and not _HAS_RUST_LGSSM:
             raise RuntimeError(
                 "Rust LGSSM backend requested but py_lgssm_kalman_filter "
@@ -448,9 +459,7 @@ class KalmanFilter:
                 # Should not happen for PSD R; defensive only.
                 raise np.linalg.LinAlgError("non-PSD innovation covariance")
             S_inv_innov = np.linalg.solve(S, innov)
-            log_lik += -0.5 * (
-                p * np.log(2 * np.pi) + logdet + float(innov @ S_inv_innov)
-            )
+            log_lik += -0.5 * (p * np.log(2 * np.pi) + logdet + float(innov @ S_inv_innov))
 
             # Kalman gain
             K = P_pred @ C.T @ np.linalg.inv(S)
@@ -577,6 +586,7 @@ class KalmanFilter:
             raise RuntimeError("Go shared library not loaded; cannot dispatch")
 
         import ctypes
+
         T, p = observations.shape
         d = self.model.state_dim
         m = self.model.control_dim
@@ -611,7 +621,10 @@ class KalmanFilter:
             r_arr.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
             mu0_arr.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
             sigma0_arr.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-            ctypes.c_int(T), ctypes.c_int(p), ctypes.c_int(m), ctypes.c_int(d),
+            ctypes.c_int(T),
+            ctypes.c_int(p),
+            ctypes.c_int(m),
+            ctypes.c_int(d),
             means_out.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
             covs_out.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
             pred_means_out.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
@@ -665,14 +678,24 @@ class KalmanFilter:
         log_lik_out = np.zeros(1, dtype=np.float64, order="C")
 
         _mojo_lib.kalman_filter_c(
-            obs_arr.ctypes.data, ctl_arr.ctypes.data,
-            a_arr.ctypes.data, b_arr.ctypes.data,
-            c_arr.ctypes.data, d_arr.ctypes.data,
-            q_arr.ctypes.data, r_arr.ctypes.data,
-            mu0_arr.ctypes.data, sigma0_arr.ctypes.data,
-            T, p, m, d,
-            means_out.ctypes.data, covs_out.ctypes.data,
-            pred_means_out.ctypes.data, pred_covs_out.ctypes.data,
+            obs_arr.ctypes.data,
+            ctl_arr.ctypes.data,
+            a_arr.ctypes.data,
+            b_arr.ctypes.data,
+            c_arr.ctypes.data,
+            d_arr.ctypes.data,
+            q_arr.ctypes.data,
+            r_arr.ctypes.data,
+            mu0_arr.ctypes.data,
+            sigma0_arr.ctypes.data,
+            T,
+            p,
+            m,
+            d,
+            means_out.ctypes.data,
+            covs_out.ctypes.data,
+            pred_means_out.ctypes.data,
+            pred_covs_out.ctypes.data,
             log_lik_out.ctypes.data,
         )
         return FilterResult(
@@ -732,9 +755,9 @@ class RTSSmoother:
             smoothed_means[t] = filter_result.means[t] + J @ (
                 smoothed_means[t + 1] - filter_result.pred_means[t + 1]
             )
-            smoothed_covs[t] = filter_result.covariances[t] + J @ (
-                smoothed_covs[t + 1] - P_pred_next
-            ) @ J.T
+            smoothed_covs[t] = (
+                filter_result.covariances[t] + J @ (smoothed_covs[t + 1] - P_pred_next) @ J.T
+            )
             # Lag-1 smoothed covariance: Cov(x_t, x_{t+1} | y_{1:T})
             cross_covs[t] = J @ smoothed_covs[t + 1]
 
@@ -797,8 +820,8 @@ class EMLearner:
 
             # M-step (B and D held fixed)
             # Sufficient statistics
-            x = sr.means          # (T, d)
-            P = sr.covariances    # (T, d, d)
+            x = sr.means  # (T, d)
+            P = sr.covariances  # (T, d, d)
             P_lag = sr.cross_covariances  # (T-1, d, d)
 
             # E[x_t x_t^T] = P_t + x_t x_t^T
@@ -818,10 +841,7 @@ class EMLearner:
             Q_acc = np.zeros((d, d))
             for t in range(T - 1):
                 Q_acc += (
-                    Exx[t + 1]
-                    - A_new @ Ex1x[t].T
-                    - Ex1x[t] @ A_new.T
-                    + A_new @ Exx[t] @ A_new.T
+                    Exx[t + 1] - A_new @ Ex1x[t].T - Ex1x[t] @ A_new.T + A_new @ Exx[t] @ A_new.T
                 )
             Q_new = Q_acc / (T - 1)
             Q_new = 0.5 * (Q_new + Q_new.T)  # symmetrise
@@ -849,8 +869,14 @@ class EMLearner:
 
             # Update model
             model = LinearGaussianSSM(
-                A=A_new, B=model.B, C=C_new, D=model.D,
-                Q=Q_new, R=R_new, mu_0=mu_0_new, Sigma_0=Sigma_0_new,
+                A=A_new,
+                B=model.B,
+                C=C_new,
+                D=model.D,
+                Q=Q_new,
+                R=R_new,
+                mu_0=mu_0_new,
+                Sigma_0=Sigma_0_new,
             )
 
             if abs(fr.log_likelihood - prev_ll) < self.tol:
@@ -881,7 +907,7 @@ class PredictiveWorldModel:
     def __post_init__(self) -> None:
         self.model: LinearGaussianSSM = LinearGaussianSSM.random(
             state_dim=self.state_dim,
-            obs_dim=self.state_dim,         # observe the state directly
+            obs_dim=self.state_dim,  # observe the state directly
             control_dim=self.action_dim,
             seed=self.seed,
         )
@@ -946,7 +972,9 @@ class PredictiveWorldModel:
         P = initial_cov.astype(np.float64)
         for a in actions:
             x, P = self.predict_next_state_with_cov(
-                x, P, np.asarray(a, dtype=np.float64),
+                x,
+                P,
+                np.asarray(a, dtype=np.float64),
             )
             traj.append((x.copy(), P.copy()))
         return traj

@@ -822,17 +822,24 @@ class TestDtUnderflowGuard:
                     "sc-neurocore",
                     "compile",
                     "dv/dt = -v/tau",
-                    "--threshold", "v > -50",
-                    "--reset", "v = -65",
-                    "--params", "tau=10",
-                    "--init", "v=-65",
-                    "-o", out,
-                    "--module-name", "lif_default_dt",
+                    "--threshold",
+                    "v > -50",
+                    "--reset",
+                    "v = -65",
+                    "--params",
+                    "tau=10",
+                    "--init",
+                    "v=-65",
+                    "-o",
+                    out,
+                    "--module-name",
+                    "lif_default_dt",
                 ],
             ):
                 ret = main()
             assert ret == 0
             import os
+
             with open(os.path.join(out, "lif_default_dt.v")) as f:
                 verilog = f.read()
             # Default dt=1.0 → 16'sd256 in Q8.8
@@ -847,18 +854,28 @@ class TestDtUnderflowGuard:
 
         from sc_neurocore.cli import main
 
-        with tempfile.TemporaryDirectory() as out, patch(
-            "sys.argv",
-            [
-                "sc-neurocore",
-                "compile",
-                "dv/dt = -v/tau",
-                "--threshold", "v > -50",
-                "--reset", "v = -65",
-                "--params", "tau=10",
-                "--init", "v=-65",
-                "--dt", "0.001",
-                "-o", out,
-            ],
-        ), pytest.raises(ValueError, match="underflows in Q8.8"):
+        with (
+            tempfile.TemporaryDirectory() as out,
+            patch(
+                "sys.argv",
+                [
+                    "sc-neurocore",
+                    "compile",
+                    "dv/dt = -v/tau",
+                    "--threshold",
+                    "v > -50",
+                    "--reset",
+                    "v = -65",
+                    "--params",
+                    "tau=10",
+                    "--init",
+                    "v=-65",
+                    "--dt",
+                    "0.001",
+                    "-o",
+                    out,
+                ],
+            ),
+            pytest.raises(ValueError, match="underflows in Q8.8"),
+        ):
             main()

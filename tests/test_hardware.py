@@ -34,8 +34,8 @@ from sc_neurocore.hardware import (
 # Device Catalog
 # ---------------------------------------------------------------------------
 
-class TestDeviceCatalog:
 
+class TestDeviceCatalog:
     def test_all_families_have_specs(self):
         for family in DeviceFamily:
             assert family in DEVICE_CATALOG, f"{family.name} missing from catalog"
@@ -77,8 +77,8 @@ class TestDeviceCatalog:
 # Resource Estimator
 # ---------------------------------------------------------------------------
 
-class TestResourceEstimator:
 
+class TestResourceEstimator:
     def _make_adj(self, n, density=0.1, seed=42):
         rng = np.random.default_rng(seed)
         adj = (rng.random((n, n)) < density).astype(float)
@@ -109,7 +109,9 @@ class TestResourceEstimator:
     def test_compare_devices(self):
         adj = self._make_adj(100, density=0.05)
         estimator = ResourceEstimator()
-        devices = [get_device(f) for f in [DeviceFamily.LOIHI, DeviceFamily.SPINNAKER, DeviceFamily.AKIDA]]
+        devices = [
+            get_device(f) for f in [DeviceFamily.LOIHI, DeviceFamily.SPINNAKER, DeviceFamily.AKIDA]
+        ]
         results = estimator.compare(adj, devices)
         assert len(results) == 3
         assert all(isinstance(r, ResourceEstimate) for r in results)
@@ -131,8 +133,8 @@ class TestResourceEstimator:
 # Constraint Checker
 # ---------------------------------------------------------------------------
 
-class TestConstraintChecker:
 
+class TestConstraintChecker:
     def test_no_violations_small_network(self):
         adj = np.zeros((5, 5))
         adj[0, 1] = 1.0
@@ -199,8 +201,8 @@ class TestConstraintChecker:
 # Mapper
 # ---------------------------------------------------------------------------
 
-class TestMapper:
 
+class TestMapper:
     def _make_adj(self, n=20, density=0.1, seed=42):
         rng = np.random.default_rng(seed)
         adj = (rng.random((n, n)) < density).astype(float)
@@ -233,9 +235,15 @@ class TestMapper:
         mapper = Mapper()
         # Use FPGA with small cores to force splitting
         device = DeviceSpec(
-            family=DeviceFamily.FPGA_GENERIC, cores=10, neurons_per_core=10,
-            synapses_per_core=1000, axons_per_core=100, tick_ns=100,
-            precision_bits=16, supports_learning=True, power_per_core_mw=1.0,
+            family=DeviceFamily.FPGA_GENERIC,
+            cores=10,
+            neurons_per_core=10,
+            synapses_per_core=1000,
+            axons_per_core=100,
+            tick_ns=100,
+            precision_bits=16,
+            supports_learning=True,
+            power_per_core_mw=1.0,
         )
         placements = mapper.map_locality(adj, device)
         assert len(placements) == n
@@ -257,8 +265,8 @@ class TestMapper:
 # Deployer
 # ---------------------------------------------------------------------------
 
-class TestDeployer:
 
+class TestDeployer:
     def _pipeline(self, n=20, family=DeviceFamily.LOIHI):
         rng = np.random.default_rng(42)
         adj = (rng.random((n, n)) > 0.8).astype(float) * rng.random((n, n))
@@ -317,8 +325,8 @@ class TestDeployer:
 # Benchmarks
 # ---------------------------------------------------------------------------
 
-class TestHardwareBenchmark:
 
+class TestHardwareBenchmark:
     def test_map_10k_neurons(self):
         """Map 10,000 neurons to Loihi in < 2 seconds."""
         rng = np.random.default_rng(42)

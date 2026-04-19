@@ -146,9 +146,7 @@ class TopologyAnalyzer:
         # Validate caller-supplied partition length BEFORE the empty-graph
         # short-circuit so misuse fails fast even on edgeless inputs.
         if communities is not None and len(communities) != self.N:
-            raise ValueError(
-                f"communities length {len(communities)} != N={self.N}"
-            )
+            raise ValueError(f"communities length {len(communities)} != N={self.N}")
 
         m2 = float(A.sum())  # 2m for undirected
         if m2 < 1.0:

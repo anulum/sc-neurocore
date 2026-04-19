@@ -69,12 +69,18 @@ def test_diffusivity_drives_spread() -> None:
     n_steps = 50
 
     s_lo = FeynmanKacHeatSolver(
-        length=10.0, diffusivity=0.1, num_walkers=10_000,
-        dt=final_t / n_steps, seed=42,
+        length=10.0,
+        diffusivity=0.1,
+        num_walkers=10_000,
+        dt=final_t / n_steps,
+        seed=42,
     )
     s_hi = FeynmanKacHeatSolver(
-        length=10.0, diffusivity=1.0, num_walkers=10_000,
-        dt=final_t / n_steps, seed=42,
+        length=10.0,
+        diffusivity=1.0,
+        num_walkers=10_000,
+        dt=final_t / n_steps,
+        seed=42,
     )
     # Start both at the centre to avoid early-reflection bias
     s_lo.set_initial_delta(5.0)
@@ -99,15 +105,18 @@ def test_free_brownian_variance_matches_analytic() -> None:
     final_t = 0.01  # so 2αT = 0.01 ≪ L²/4 = 25
     n_steps = 100
     s = FeynmanKacHeatSolver(
-        length=10.0, diffusivity=alpha, num_walkers=20_000,
-        dt=final_t / n_steps, seed=99,
+        length=10.0,
+        diffusivity=alpha,
+        num_walkers=20_000,
+        dt=final_t / n_steps,
+        seed=99,
     )
     s.set_initial_delta(5.0)  # start at centre
     s.step(n_steps)
 
     # Variance of the position about the start
     centred = s.walkers - 5.0
-    measured_var = float(np.mean(centred ** 2))
+    measured_var = float(np.mean(centred**2))
     expected_var = 2.0 * alpha * final_t  # = 0.01
 
     rel_err = abs(measured_var - expected_var) / expected_var
@@ -120,8 +129,11 @@ def test_free_brownian_variance_matches_analytic() -> None:
 def test_reflective_boundaries_keep_walkers_in_domain() -> None:
     """No walker should leak outside [0, L] regardless of step count."""
     s = FeynmanKacHeatSolver(
-        length=1.0, diffusivity=10.0, num_walkers=2_000,
-        dt=1e-3, seed=2026,
+        length=1.0,
+        diffusivity=10.0,
+        num_walkers=2_000,
+        dt=1e-3,
+        seed=2026,
     )
     s.set_initial_delta(0.5)
     s.step(500)
@@ -137,8 +149,11 @@ def test_long_time_converges_to_uniform_on_reflective_domain() -> None:
     """
     L = 1.0
     s = FeynmanKacHeatSolver(
-        length=L, diffusivity=1.0, num_walkers=20_000,
-        dt=1e-3, seed=11,
+        length=L,
+        diffusivity=1.0,
+        num_walkers=20_000,
+        dt=1e-3,
+        seed=11,
     )
     s.set_initial_delta(0.5)
     s.step(2_000)  # 2 sec; mixing time ~ L²/π²α = 0.1 s
@@ -147,8 +162,7 @@ def test_long_time_converges_to_uniform_on_reflective_domain() -> None:
     target = 1.0 / L  # uniform density
     rel_err = float(np.max(np.abs(density - target)) / target)
     assert rel_err < 0.10, (
-        f"density not uniform after long time: max rel-err {rel_err:.4f}, "
-        f"density={density}"
+        f"density not uniform after long time: max rel-err {rel_err:.4f}, density={density}"
     )
 
 
@@ -157,8 +171,8 @@ def test_expectation_matches_initial_value_at_t_zero() -> None:
     s = FeynmanKacHeatSolver(num_walkers=1000, seed=3)
     s.set_initial_delta(0.42)
     # f(x) = x² → E[X_0²] = 0.42² = 0.1764
-    e = s.expectation(lambda x: x ** 2)
-    assert abs(e - 0.42 ** 2) < 1e-9
+    e = s.expectation(lambda x: x**2)
+    assert abs(e - 0.42**2) < 1e-9
 
 
 def test_set_initial_distribution_zero_density_raises() -> None:
@@ -175,9 +189,7 @@ def test_set_initial_distribution_uniform_is_uniform() -> None:
     density = s.get_density(n_bins=20)
     target = 1.0 / 2.0
     rel_err = float(np.max(np.abs(density - target)) / target)
-    assert rel_err < 0.05, (
-        f"uniform initial sampling off: max rel-err {rel_err:.4f}"
-    )
+    assert rel_err < 0.05, f"uniform initial sampling off: max rel-err {rel_err:.4f}"
 
 
 def test_evolve_to_advances_clock() -> None:

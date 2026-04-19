@@ -99,10 +99,22 @@ class DormandPrinceSolver(ODESolver):
     _b31, _b32 = 3.0 / 40.0, 9.0 / 40.0
     _b41, _b42, _b43 = 44.0 / 45.0, -56.0 / 15.0, 32.0 / 9.0
     _b51, _b52, _b53, _b54 = 19372.0 / 6561.0, -25360.0 / 2187.0, 64448.0 / 6561.0, -212.0 / 729.0
-    _b61, _b62, _b63, _b64, _b65 = 9017.0 / 3168.0, -355.0 / 33.0, 46732.0 / 5247.0, 49.0 / 176.0, -5103.0 / 18656.0
+    _b61, _b62, _b63, _b64, _b65 = (
+        9017.0 / 3168.0,
+        -355.0 / 33.0,
+        46732.0 / 5247.0,
+        49.0 / 176.0,
+        -5103.0 / 18656.0,
+    )
 
     # 5th-order weights
-    _c1, _c3, _c4, _c5, _c6 = 35.0 / 384.0, 500.0 / 1113.0, 125.0 / 192.0, -2187.0 / 6784.0, 11.0 / 84.0
+    _c1, _c3, _c4, _c5, _c6 = (
+        35.0 / 384.0,
+        500.0 / 1113.0,
+        125.0 / 192.0,
+        -2187.0 / 6784.0,
+        11.0 / 84.0,
+    )
 
     # Error weights (5th - 4th)
     _e1 = 71.0 / 57600.0
@@ -112,7 +124,14 @@ class DormandPrinceSolver(ODESolver):
     _e6 = 22.0 / 525.0
     _e7 = -1.0 / 40.0
 
-    def __init__(self, atol: float = 1e-8, rtol: float = 1e-6, max_factor: float = 5.0, min_factor: float = 0.2, safety: float = 0.9):
+    def __init__(
+        self,
+        atol: float = 1e-8,
+        rtol: float = 1e-6,
+        max_factor: float = 5.0,
+        min_factor: float = 0.2,
+        safety: float = 0.9,
+    ):
         self.atol = atol
         self.rtol = rtol
         self.max_factor = max_factor
@@ -125,14 +144,37 @@ class DormandPrinceSolver(ODESolver):
             k2 = f(t + self._a2 * dt, y + dt * self._b21 * k1)
             k3 = f(t + self._a3 * dt, y + dt * (self._b31 * k1 + self._b32 * k2))
             k4 = f(t + self._a4 * dt, y + dt * (self._b41 * k1 + self._b42 * k2 + self._b43 * k3))
-            k5 = f(t + self._a5 * dt, y + dt * (self._b51 * k1 + self._b52 * k2 + self._b53 * k3 + self._b54 * k4))
-            k6 = f(t + dt, y + dt * (self._b61 * k1 + self._b62 * k2 + self._b63 * k3 + self._b64 * k4 + self._b65 * k5))
+            k5 = f(
+                t + self._a5 * dt,
+                y + dt * (self._b51 * k1 + self._b52 * k2 + self._b53 * k3 + self._b54 * k4),
+            )
+            k6 = f(
+                t + dt,
+                y
+                + dt
+                * (
+                    self._b61 * k1
+                    + self._b62 * k2
+                    + self._b63 * k3
+                    + self._b64 * k4
+                    + self._b65 * k5
+                ),
+            )
 
-            y5 = y + dt * (self._c1 * k1 + self._c3 * k3 + self._c4 * k4 + self._c5 * k5 + self._c6 * k6)
+            y5 = y + dt * (
+                self._c1 * k1 + self._c3 * k3 + self._c4 * k4 + self._c5 * k5 + self._c6 * k6
+            )
 
             # Error estimate
             k7 = f(t + dt, y5)
-            err = dt * (self._e1 * k1 + self._e3 * k3 + self._e4 * k4 + self._e5 * k5 + self._e6 * k6 + self._e7 * k7)
+            err = dt * (
+                self._e1 * k1
+                + self._e3 * k3
+                + self._e4 * k4
+                + self._e5 * k5
+                + self._e6 * k6
+                + self._e7 * k7
+            )
 
             scale = self.atol + self.rtol * np.maximum(np.abs(y), np.abs(y5))
             err_norm = np.sqrt(np.mean((err / scale) ** 2))
@@ -141,7 +183,9 @@ class DormandPrinceSolver(ODESolver):
                 if err_norm == 0.0:
                     factor = self.max_factor
                 else:
-                    factor = min(self.max_factor, max(self.min_factor, self.safety * err_norm ** (-0.2)))
+                    factor = min(
+                        self.max_factor, max(self.min_factor, self.safety * err_norm ** (-0.2))
+                    )
                 dt_next = dt * factor
                 return y5, dt, dt_next
             else:

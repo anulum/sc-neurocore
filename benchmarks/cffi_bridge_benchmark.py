@@ -59,16 +59,20 @@ def main():
         speedup = r_np["mean_us"] / max(r_rs["mean_us"], 0.01)
         assert r_np["result"] == r_rs["result"], f"Mismatch at {n_words}w!"
 
-        print(f"  {n_words:>6} words | NumPy: {r_np['mean_us']:>10.2f} µs | "
-              f"Rust: {r_rs['mean_us']:>10.2f} µs | "
-              f"Speedup: {speedup:>6.1f}×")
+        print(
+            f"  {n_words:>6} words | NumPy: {r_np['mean_us']:>10.2f} µs | "
+            f"Rust: {r_rs['mean_us']:>10.2f} µs | "
+            f"Speedup: {speedup:>6.1f}×"
+        )
 
-        results.append({
-            "n_words": n_words,
-            "numpy_us": r_np["mean_us"],
-            "rust_us": r_rs["mean_us"],
-            "speedup": round(speedup, 1),
-        })
+        results.append(
+            {
+                "n_words": n_words,
+                "numpy_us": r_np["mean_us"],
+                "rust_us": r_rs["mean_us"],
+                "speedup": round(speedup, 1),
+            }
+        )
 
     out_path = "benchmarks/results/cffi_bridge_benchmark.json"
     with open(out_path, "w") as f:

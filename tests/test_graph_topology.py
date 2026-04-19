@@ -131,5 +131,6 @@ class TestModularity:
     def test_modularity_partition_length_mismatch_raises(self):
         a = TopologyAnalyzer(np.zeros((5, 5)))
         import pytest
+
         with pytest.raises(ValueError, match="length"):
             a._modularity(communities=[0, 1, 2])  # length 3 != N=5

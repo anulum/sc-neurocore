@@ -23,6 +23,7 @@ from predictive_coding import (
 
 # ── Hypervector Tests ────────────────────────────────────────────────
 
+
 class TestHypervector:
     def test_zeros_popcount(self):
         hv = Hypervector.zeros()
@@ -97,6 +98,7 @@ class TestHypervector:
 
 # ── Symbol Encoder Tests ─────────────────────────────────────────────
 
+
 class TestSymbolEncoder:
     def test_deterministic(self):
         enc1 = SymbolEncoder(42)
@@ -132,6 +134,7 @@ class TestSymbolEncoder:
 
 
 # ── Predictive Coding Layer Tests ────────────────────────────────────
+
 
 class TestPredictiveCodingLayer:
     def test_predict_shape(self):
@@ -173,6 +176,7 @@ class TestPredictiveCodingLayer:
 
 # ── Reasoning Trace Tests ────────────────────────────────────────────
 
+
 class TestReasoningTrace:
     def test_empty_trace(self):
         trace = ReasoningTrace()
@@ -206,6 +210,7 @@ class TestReasoningTrace:
 
 
 # ── Verifiable Inference Tests ───────────────────────────────────────
+
 
 class TestVerifiableInference:
     def _make_engine(self, symbols=("cat", "dog", "bird")):

@@ -641,7 +641,7 @@ class TestThermalModel:
         rep = simulate_thermal(
             topo,
             power_per_die_mw=powers,
-            transient_steps=2000,        # 2 s with default dt=1 ms
+            transient_steps=2000,  # 2 s with default dt=1 ms
             transient_dt_s=1e-3,
         )
         # Final transient temperatures should match steady state to <0.01 °C.

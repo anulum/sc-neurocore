@@ -51,9 +51,12 @@ class TestPINGCircuit:
 
     def test_no_drive_no_spikes(self):
         ping = PINGCircuit(
-            i_drive_e_mean=0.0, i_drive_e_sigma=0.0,
-            i_drive_i_mean=0.0, i_drive_i_sigma=0.0,
-            sigma_e=0.0, sigma_i=0.0,
+            i_drive_e_mean=0.0,
+            i_drive_e_sigma=0.0,
+            i_drive_i_mean=0.0,
+            i_drive_i_sigma=0.0,
+            sigma_e=0.0,
+            sigma_i=0.0,
         )
         total = 0
         for _ in range(1000):
@@ -76,8 +79,7 @@ class TestPINGCircuit:
             se2, _ = ping_weak.step(dt=0.1)
             e_weak += int(np.count_nonzero(se2))
         assert e_strong < e_weak, (
-            f"stronger inhibition should suppress (e_strong={e_strong}, "
-            f"e_weak={e_weak})"
+            f"stronger inhibition should suppress (e_strong={e_strong}, e_weak={e_weak})"
         )
 
     def test_reset_returns_v_near_e_l(self):
@@ -110,9 +112,7 @@ class TestPINGCircuitDeterminism:
     def test_init_voltages_differ_for_different_seeds(self):
         a = PINGCircuit(seed=1)
         b = PINGCircuit(seed=2)
-        differ = (not np.array_equal(a.v_e, b.v_e)) or (
-            not np.array_equal(a.v_i, b.v_i)
-        )
+        differ = (not np.array_equal(a.v_e, b.v_e)) or (not np.array_equal(a.v_i, b.v_i))
         assert differ
 
     def test_step_sequence_identical_for_same_seed(self):
@@ -149,9 +149,7 @@ class TestPINGCircuitDeterminism:
                 se, si = ping.step(dt=0.1)
                 total += int(np.count_nonzero(se)) + int(np.count_nonzero(si))
             counts.append(total)
-        assert len(set(counts)) == 1, (
-            f"non-deterministic: spike totals = {counts}"
-        )
+        assert len(set(counts)) == 1, f"non-deterministic: spike totals = {counts}"
 
     def test_reset_state_uses_per_instance_rng(self):
         ping = PINGCircuit(seed=42)
@@ -196,9 +194,12 @@ class TestPublishedFidelity:
     def test_e_drive_zero_disengages_gain_loop(self):
         """No E drive → no spikes → no E→I AMPA → no I spikes."""
         ping = PINGCircuit(
-            i_drive_e_mean=0.0, i_drive_e_sigma=0.0,
-            i_drive_i_mean=0.0, i_drive_i_sigma=0.0,
-            sigma_e=0.0, sigma_i=0.0,
+            i_drive_e_mean=0.0,
+            i_drive_e_sigma=0.0,
+            i_drive_i_mean=0.0,
+            i_drive_i_sigma=0.0,
+            sigma_e=0.0,
+            sigma_i=0.0,
             seed=11,
         )
         e_count, i_count = 0, 0
@@ -236,7 +237,10 @@ class TestPublishedFidelity:
     def test_dominant_frequency_handles_silence(self):
         """All-silent log → returns 0.0 instead of NaN/raise."""
         ping = PINGCircuit(
-            i_drive_e_mean=0.0, i_drive_e_sigma=0.0, sigma_e=0.0, sigma_i=0.0,
+            i_drive_e_mean=0.0,
+            i_drive_e_sigma=0.0,
+            sigma_e=0.0,
+            sigma_i=0.0,
         )
         spikes = [np.zeros(80, dtype=bool) for _ in range(1000)]
         assert ping.dominant_frequency(spikes, dt=0.1) == 0.0
@@ -279,7 +283,11 @@ class TestPublishedFidelity:
             spikes.append(se)
         # bin_ms=1 → Nyquist 500 Hz; demand a band well above Nyquist.
         freq = ping.dominant_frequency(
-            spikes, dt=0.1, bin_ms=1.0, f_min=600.0, f_max=900.0,
+            spikes,
+            dt=0.1,
+            bin_ms=1.0,
+            f_min=600.0,
+            f_max=900.0,
         )
         assert freq == 0.0
 
@@ -306,14 +314,21 @@ class TestPythonRustParity:
     """
 
     @pytest.mark.parametrize(
-        "n_e,n_i", [(80, 20), (400, 100), (1000, 250)],
+        "n_e,n_i",
+        [(80, 20), (400, 100), (1000, 250)],
     )
     def test_population_rates_match(self, n_e, n_i):
         ping_py = PINGCircuit(
-            n_excitatory=n_e, n_inhibitory=n_i, seed=42, backend="python",
+            n_excitatory=n_e,
+            n_inhibitory=n_i,
+            seed=42,
+            backend="python",
         )
         ping_rs = PINGCircuit(
-            n_excitatory=n_e, n_inhibitory=n_i, seed=42, backend="rust",
+            n_excitatory=n_e,
+            n_inhibitory=n_i,
+            seed=42,
+            backend="rust",
         )
         # 100 ms burn-in to settle the per-instance transient.
         for _ in range(1000):
@@ -343,10 +358,16 @@ class TestPythonRustParity:
     def test_dominant_frequency_matches_across_backends(self):
         """The published 30-80 Hz peak must reproduce on both backends."""
         ping_py = PINGCircuit(
-            n_excitatory=400, n_inhibitory=100, seed=42, backend="python",
+            n_excitatory=400,
+            n_inhibitory=100,
+            seed=42,
+            backend="python",
         )
         ping_rs = PINGCircuit(
-            n_excitatory=400, n_inhibitory=100, seed=42, backend="rust",
+            n_excitatory=400,
+            n_inhibitory=100,
+            seed=42,
+            backend="rust",
         )
         for _ in range(2000):  # 200 ms burn-in
             ping_py.step(dt=0.1)
@@ -367,7 +388,10 @@ class TestPythonRustParity:
 
     def test_explicit_rust_request_works(self):
         ping = PINGCircuit(
-            n_excitatory=10, n_inhibitory=4, seed=1, backend="rust",
+            n_excitatory=10,
+            n_inhibitory=4,
+            seed=1,
+            backend="rust",
         )
         assert ping._use_rust is True
         ping.step(dt=0.1)

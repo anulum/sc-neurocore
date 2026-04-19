@@ -24,6 +24,7 @@ References
   Neuroscience 2(1), 1999.
 - Kanerva, "Hyperdimensional Computing", Cognitive Computation 1(2), 2009.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -41,6 +42,7 @@ HYPERVECTOR_DIM = 10_000
 
 class BindOp(Enum):
     """Supported HDC binding operations."""
+
     XOR = "xor"
     MULTIPLY = "multiply"
 
@@ -48,6 +50,7 @@ class BindOp(Enum):
 @dataclass
 class ReasoningStep:
     """Single step in a symbolic reasoning trace."""
+
     symbol: str
     operation: str
     similarity: float
@@ -63,6 +66,7 @@ class ReasoningTrace:
     similarity score to the best match, and a confidence metric derived
     from the Hamming margin between the best and second-best candidates.
     """
+
     steps: List[ReasoningStep] = field(default_factory=list)
     start_ns: int = 0
     end_ns: int = 0
@@ -74,13 +78,15 @@ class ReasoningTrace:
         similarity: float,
         confidence: float,
     ) -> None:
-        self.steps.append(ReasoningStep(
-            symbol=symbol,
-            operation=operation,
-            similarity=similarity,
-            confidence=confidence,
-            timestamp_ns=time.perf_counter_ns(),
-        ))
+        self.steps.append(
+            ReasoningStep(
+                symbol=symbol,
+                operation=operation,
+                similarity=similarity,
+                confidence=confidence,
+                timestamp_ns=time.perf_counter_ns(),
+            )
+        )
 
     @property
     def length(self) -> int:
@@ -227,10 +233,8 @@ class SymbolEncoder:
         if n == 0:
             raise ValueError("cannot encode empty sequence")
         if n == 1:
-            return Hypervector(self.encode(symbols[0]).data.copy(),
-                               self.encode(symbols[0]).length)
-        result = Hypervector(self.encode(symbols[-1]).data.copy(),
-                             self.encode(symbols[-1]).length)
+            return Hypervector(self.encode(symbols[0]).data.copy(), self.encode(symbols[0]).length)
+        result = Hypervector(self.encode(symbols[-1]).data.copy(), self.encode(symbols[-1]).length)
         for shift, sym in enumerate(reversed(symbols[:-1]), start=1):
             component = self.encode(sym).permute(shift)
             result = result.bind(component)
@@ -302,7 +306,7 @@ class PredictiveCodingLayer:
         mae = float(np.mean(np.abs(error)))
 
         h = hidden if hidden is not None else self.mu
-        self.W_td += self.lr * np.outer(h, error)[:self.hidden_dim, :self.input_dim]
+        self.W_td += self.lr * np.outer(h, error)[: self.hidden_dim, : self.input_dim]
         self.mu += self.lr * (self.W_bu @ error)
         return mae
 

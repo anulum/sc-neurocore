@@ -88,10 +88,10 @@ def _probe_julia() -> tuple[bool, str]:
         return False, "juliacall not installed (pip install juliacall)"
     # Probe by lazy-loading via the same code path the dispatcher uses.
     from sc_neurocore.world_model.predictive_model import _ensure_julia_loaded
+
     if not _ensure_julia_loaded():
         return False, (
-            "juliacall installed but accel/julia/world_model/"
-            "predictive_model.jl is missing"
+            "juliacall installed but accel/julia/world_model/predictive_model.jl is missing"
         )
     return True, ""
 
@@ -105,12 +105,17 @@ def _probe_mojo() -> tuple[bool, str]:
       mojo build --emit shared-lib -o liblgssm.so lgssm.mojo
     """
     import os as _os
+
     mojo_bin = _os.path.expanduser("~/.pixi/bin/mojo")
     if not _os.path.isfile(mojo_bin):
         return False, "mojo binary not at ~/.pixi/bin/mojo"
     so = _os.path.join(
         _os.path.dirname(_os.path.dirname(__file__)),
-        "src", "sc_neurocore", "accel", "mojo", "world_model",
+        "src",
+        "sc_neurocore",
+        "accel",
+        "mojo",
+        "world_model",
         "liblgssm.so",
     )
     if not _os.path.isfile(so):
@@ -125,9 +130,15 @@ def _probe_mojo() -> tuple[bool, str]:
 def _probe_go() -> tuple[bool, str]:
     """Detect the Go LGSSM backend (compiled liblgssm.so)."""
     import os as _os
+
     so = _os.path.join(
         _os.path.dirname(_os.path.dirname(__file__)),
-        "src", "sc_neurocore", "accel", "go", "lgssm", "liblgssm.so",
+        "src",
+        "sc_neurocore",
+        "accel",
+        "go",
+        "lgssm",
+        "liblgssm.so",
     )
     if not _os.path.isfile(so):
         return False, (
@@ -160,7 +171,8 @@ def _build_workload(seed: int = 42) -> tuple[LinearGaussianSSM, np.ndarray]:
 
 
 def bench_python_kalman(
-    model: LinearGaussianSSM, obs: np.ndarray,
+    model: LinearGaussianSSM,
+    obs: np.ndarray,
 ) -> tuple[float, float, float]:
     """Return (median_ms, min_ms, log_likelihood) for the Python backend."""
     kf = KalmanFilter(model)
@@ -177,7 +189,8 @@ def bench_python_kalman(
 
 
 def bench_rust_kalman(
-    model: LinearGaussianSSM, obs: np.ndarray,
+    model: LinearGaussianSSM,
+    obs: np.ndarray,
 ) -> tuple[float, float, float]:
     """Return (median_ms, min_ms, log_likelihood) for the Rust backend."""
     kf = KalmanFilter(model)
@@ -194,7 +207,8 @@ def bench_rust_kalman(
 
 
 def bench_julia_kalman(
-    model: LinearGaussianSSM, obs: np.ndarray,
+    model: LinearGaussianSSM,
+    obs: np.ndarray,
 ) -> tuple[float, float, float]:
     """Return (median_ms, min_ms, log_likelihood) for the Julia backend.
 
@@ -216,7 +230,8 @@ def bench_julia_kalman(
 
 
 def bench_go_kalman(
-    model: LinearGaussianSSM, obs: np.ndarray,
+    model: LinearGaussianSSM,
+    obs: np.ndarray,
 ) -> tuple[float, float, float]:
     """Return (median_ms, min_ms, log_likelihood) for the Go backend."""
     kf = KalmanFilter(model)
@@ -233,7 +248,8 @@ def bench_go_kalman(
 
 
 def bench_mojo_kalman(
-    model: LinearGaussianSSM, obs: np.ndarray,
+    model: LinearGaussianSSM,
+    obs: np.ndarray,
 ) -> tuple[float, float, float]:
     """Return (median_ms, min_ms, log_likelihood) for the Mojo backend."""
     kf = KalmanFilter(model)
@@ -250,7 +266,8 @@ def bench_mojo_kalman(
 
 
 def bench_python_rts(
-    model: LinearGaussianSSM, obs: np.ndarray,
+    model: LinearGaussianSSM,
+    obs: np.ndarray,
 ) -> tuple[float, float]:
     kf = KalmanFilter(model)
     fr = kf.filter(obs)
@@ -266,7 +283,8 @@ def bench_python_rts(
 
 
 def bench_python_em(
-    init_model: LinearGaussianSSM, obs: np.ndarray,
+    init_model: LinearGaussianSSM,
+    obs: np.ndarray,
 ) -> tuple[float, float]:
     learner = EMLearner(max_iter=10, tol=0.0)
     times_ms: list[float] = []
@@ -305,7 +323,7 @@ def main(argv: list[str]) -> int:
     }
 
     print(f"{'backend':<10}  {'available':<10}  reason / status")
-    print(f"{'-'*10}  {'-'*10}  {'-'*60}")
+    print(f"{'-' * 10}  {'-' * 10}  {'-' * 60}")
     for name, (avail, reason) in backends.items():
         marker = "yes" if avail else "no"
         print(f"{name:<10}  {marker:<10}  {reason}")
@@ -325,61 +343,86 @@ def main(argv: list[str]) -> int:
 
     print("## Forward Kalman filter")
     print(f"{'backend':<10}  {'median ms':>12}  {'min ms':>12}  {'log_lik':>14}")
-    print(f"{'-'*10}  {'-'*12}  {'-'*12}  {'-'*14}")
+    print(f"{'-' * 10}  {'-' * 12}  {'-' * 12}  {'-' * 14}")
     for name, (avail, reason) in backends.items():
         runner = kalman_runners.get(name)
         if avail and runner is not None:
             med, mn, ll = runner(model, obs)
             print(f"{name:<10}  {med:>12.3f}  {mn:>12.3f}  {ll:>14.4f}")
-            rows.append({
-                "workload": "kalman_filter", "backend": name,
-                "median_ms": med, "min_ms": mn, "log_likelihood": ll,
-            })
+            rows.append(
+                {
+                    "workload": "kalman_filter",
+                    "backend": name,
+                    "median_ms": med,
+                    "min_ms": mn,
+                    "log_likelihood": ll,
+                }
+            )
         else:
             print(f"{name:<10}  {'(skip)':>12}  {'(skip)':>12}  {'-':>14}")
-            rows.append({
-                "workload": "kalman_filter", "backend": name,
-                "skipped": True, "unavailable_reason": reason,
-            })
+            rows.append(
+                {
+                    "workload": "kalman_filter",
+                    "backend": name,
+                    "skipped": True,
+                    "unavailable_reason": reason,
+                }
+            )
 
     print()
     print("## RTS smoother (backward pass)")
     print(f"{'backend':<10}  {'median ms':>12}  {'min ms':>12}")
-    print(f"{'-'*10}  {'-'*12}  {'-'*12}")
+    print(f"{'-' * 10}  {'-' * 12}  {'-' * 12}")
     for name, (avail, reason) in backends.items():
         if name == "python" and avail:
             med, mn = bench_python_rts(model, obs)
             print(f"{name:<10}  {med:>12.3f}  {mn:>12.3f}")
-            rows.append({
-                "workload": "rts_smoother", "backend": name,
-                "median_ms": med, "min_ms": mn,
-            })
+            rows.append(
+                {
+                    "workload": "rts_smoother",
+                    "backend": name,
+                    "median_ms": med,
+                    "min_ms": mn,
+                }
+            )
         else:
             print(f"{name:<10}  {'(skip)':>12}  {'(skip)':>12}")
-            rows.append({
-                "workload": "rts_smoother", "backend": name,
-                "skipped": True, "unavailable_reason": reason,
-            })
+            rows.append(
+                {
+                    "workload": "rts_smoother",
+                    "backend": name,
+                    "skipped": True,
+                    "unavailable_reason": reason,
+                }
+            )
 
     print()
     print("## EM learner (10 iterations)")
     print(f"{'backend':<10}  {'median ms':>12}  {'min ms':>12}")
-    print(f"{'-'*10}  {'-'*12}  {'-'*12}")
+    print(f"{'-' * 10}  {'-' * 12}  {'-' * 12}")
     init_model = LinearGaussianSSM.random(state_dim=4, obs_dim=3, seed=99)
     for name, (avail, reason) in backends.items():
         if name == "python" and avail:
             med, mn = bench_python_em(init_model, obs)
             print(f"{name:<10}  {med:>12.3f}  {mn:>12.3f}")
-            rows.append({
-                "workload": "em_10iters", "backend": name,
-                "median_ms": med, "min_ms": mn,
-            })
+            rows.append(
+                {
+                    "workload": "em_10iters",
+                    "backend": name,
+                    "median_ms": med,
+                    "min_ms": mn,
+                }
+            )
         else:
             print(f"{name:<10}  {'(skip)':>12}  {'(skip)':>12}")
-            rows.append({
-                "workload": "em_10iters", "backend": name,
-                "skipped": True, "unavailable_reason": reason,
-            })
+            rows.append(
+                {
+                    "workload": "em_10iters",
+                    "backend": name,
+                    "skipped": True,
+                    "unavailable_reason": reason,
+                }
+            )
 
     if args.json is not None:
         args.json.parent.mkdir(parents=True, exist_ok=True)

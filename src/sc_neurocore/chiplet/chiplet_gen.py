@@ -868,12 +868,12 @@ def compute_cdc_configs(topology: ChipletTopology) -> Dict[Tuple[int, int], CDCC
 # from published vendor data; refine with PDK-specific values
 # when designing for a real package.
 _R_THERMAL_K_PER_W: Dict[InterposerTech, float] = {
-    InterposerTech.UCIE: 0.8,      # silicon interposer, fine-pitch microbumps
-    InterposerTech.BOW: 3.0,       # organic substrate
-    InterposerTech.EMIB: 0.5,      # silicon bridge, high conductivity
-    InterposerTech.COWOS: 0.3,     # bulk silicon interposer, very low R
-    InterposerTech.ORGANIC: 8.0,   # organic only, high R
-    InterposerTech.CUSTOM: 1.0,    # placeholder default
+    InterposerTech.UCIE: 0.8,  # silicon interposer, fine-pitch microbumps
+    InterposerTech.BOW: 3.0,  # organic substrate
+    InterposerTech.EMIB: 0.5,  # silicon bridge, high conductivity
+    InterposerTech.COWOS: 0.3,  # bulk silicon interposer, very low R
+    InterposerTech.ORGANIC: 8.0,  # organic only, high R
+    InterposerTech.CUSTOM: 1.0,  # placeholder default
 }
 
 
@@ -1086,8 +1086,7 @@ def simulate_thermal(
         else:
             ds = DieThermal(die_id=die.die_id)
         # Apply per-die power override
-        p_mw = (power_per_die_mw.get(die.die_id, 100.0)
-                if power_per_die_mw else 100.0)
+        p_mw = power_per_die_mw.get(die.die_id, 100.0) if power_per_die_mw else 100.0
         ds.power_mw = p_mw
         state[die.die_id] = ds
 
@@ -1119,8 +1118,14 @@ def simulate_thermal(
         # Start from ambient (cold-boot transient).
         initial_t = np.full(n, ambient_c, dtype=np.float64)
         traj = _solve_transient(
-            G_off, g_amb, capacities, p_w, ambient_c,
-            initial_t, transient_dt_s, transient_steps,
+            G_off,
+            g_amb,
+            capacities,
+            p_w,
+            ambient_c,
+            initial_t,
+            transient_dt_s,
+            transient_steps,
         )
         report.transient_temps = traj
         report.transient_times_s = np.arange(1, transient_steps + 1) * transient_dt_s

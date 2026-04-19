@@ -81,9 +81,12 @@ class TestEdgeCacheCorrectness:
             assert g.edge_weight(e.v, e.u) == pytest.approx(e.conn_weight)
 
     def test_absent_pair_returns_zero(self) -> None:
-        g = CorrelationAwareGraph(num_vertices=10, edges=[
-            CorrelationEdge(u=0, v=1, conn_weight=1.0, scc_weight=0.5),
-        ])
+        g = CorrelationAwareGraph(
+            num_vertices=10,
+            edges=[
+                CorrelationEdge(u=0, v=1, conn_weight=1.0, scc_weight=0.5),
+            ],
+        )
         # (5, 6) is not an edge → both lookups must return 0.0
         assert g.edge_scc(5, 6) == 0.0
         assert g.edge_weight(5, 6) == 0.0
@@ -110,10 +113,13 @@ class TestEdgeCacheLifecycle:
     def test_cache_rebuilds_after_edge_append(self) -> None:
         # Use a clean 4-vertex graph with no duplicate or symmetric
         # edges so the cache size equals len(edges) by construction.
-        g = CorrelationAwareGraph(num_vertices=4, edges=[
-            CorrelationEdge(u=0, v=1, conn_weight=1.0, scc_weight=0.1),
-            CorrelationEdge(u=1, v=2, conn_weight=1.0, scc_weight=0.1),
-        ])
+        g = CorrelationAwareGraph(
+            num_vertices=4,
+            edges=[
+                CorrelationEdge(u=0, v=1, conn_weight=1.0, scc_weight=0.1),
+                CorrelationEdge(u=1, v=2, conn_weight=1.0, scc_weight=0.1),
+            ],
+        )
         _ = g.edge_scc(0, 1)
         before = g._edge_cache
         assert before is not None
@@ -141,8 +147,7 @@ class TestPartitionDeterministicOutput:
             partitions, _seeds = hp.partition(g)
             sizes = sorted(len(p) for p in partitions)
             assert sizes == expected_sizes, (
-                f"V={n_v} partition sizes drifted: got {sizes}, "
-                f"expected {expected_sizes}"
+                f"V={n_v} partition sizes drifted: got {sizes}, expected {expected_sizes}"
             )
 
 
@@ -191,21 +196,20 @@ class TestRustRefineParityAndPerf:
             g = _build_graph(n_v, avg_degree=8, seed=42)
             adj = g.adjacency()
             n_parts = 4
-            init = [
-                [v for v in range(g.num_vertices) if v % n_parts == i]
-                for i in range(n_parts)
-            ]
+            init = [[v for v in range(g.num_vertices) if v % n_parts == i] for i in range(n_parts)]
 
             # Python reference
-            hp_py = HierarchicalPartitioner(num_partitions=n_parts, kl_iterations=3,
-                                             refine_backend="python")
+            hp_py = HierarchicalPartitioner(
+                num_partitions=n_parts, kl_iterations=3, refine_backend="python"
+            )
             parts_py = copy.deepcopy(init)
             hp_py._refine(parts_py, adj, g)
             pm_py = {v: i for i, p in enumerate(parts_py) for v in p}
 
             # Rust dispatch
-            hp_rs = HierarchicalPartitioner(num_partitions=n_parts, kl_iterations=3,
-                                             refine_backend="rust")
+            hp_rs = HierarchicalPartitioner(
+                num_partitions=n_parts, kl_iterations=3, refine_backend="rust"
+            )
             parts_rs = hp_rs._refine_rust(copy.deepcopy(init), adj, g)
             pm_rs = {v: i for i, p in enumerate(parts_rs) for v in p}
 
@@ -225,16 +229,17 @@ class TestRustRefineParityAndPerf:
         g = _build_graph(500, avg_degree=8, seed=42)
         adj = g.adjacency()
         n_parts = 4
-        init = [
-            [v for v in range(g.num_vertices) if v % n_parts == i]
-            for i in range(n_parts)
-        ]
+        init = [[v for v in range(g.num_vertices) if v % n_parts == i] for i in range(n_parts)]
 
         hp_py = HierarchicalPartitioner(
-            num_partitions=n_parts, kl_iterations=3, refine_backend="python",
+            num_partitions=n_parts,
+            kl_iterations=3,
+            refine_backend="python",
         )
         hp_rs = HierarchicalPartitioner(
-            num_partitions=n_parts, kl_iterations=3, refine_backend="rust",
+            num_partitions=n_parts,
+            kl_iterations=3,
+            refine_backend="rust",
         )
         # warm
         hp_py._refine(copy.deepcopy(init), adj, g)
@@ -250,8 +255,8 @@ class TestRustRefineParityAndPerf:
         # Generous floor: Rust should be at least 2× the Python time
         # at V=500 (measured ~250× on the dev box; CI runners noisier).
         assert t_rs * 2.0 < t_py, (
-            f"Rust refine ({t_rs*1000:.2f} ms) not >2× faster than "
-            f"Python ({t_py*1000:.2f} ms) at V=500 — perf regression?"
+            f"Rust refine ({t_rs * 1000:.2f} ms) not >2× faster than "
+            f"Python ({t_py * 1000:.2f} ms) at V=500 — perf regression?"
         )
 
 
@@ -268,14 +273,17 @@ class TestAllBackendsParityViaDispatcher:
     @pytest.mark.parametrize(
         "backend,probe_fn,probe_arg",
         [
-            ("rust",  lambda: __import__("sc_neurocore_engine"), None),
+            ("rust", lambda: __import__("sc_neurocore_engine"), None),
             ("julia", lambda: __import__("juliacall"), None),
-            ("go",    lambda: None, "go_so"),
-            ("mojo",  lambda: None, "mojo_so"),
+            ("go", lambda: None, "go_so"),
+            ("mojo", lambda: None, "mojo_so"),
         ],
     )
     def test_dispatcher_backend_matches_python(
-        self, backend: str, probe_fn, probe_arg,
+        self,
+        backend: str,
+        probe_fn,
+        probe_arg,
     ) -> None:
         # Skip if the backend toolchain or built artefact is missing.
         try:
@@ -284,9 +292,12 @@ class TestAllBackendsParityViaDispatcher:
             pytest.skip(f"{backend}: prerequisite missing")
         if probe_arg in ("go_so", "mojo_so"):
             from pathlib import Path
+
             so = Path(__file__).resolve().parents[2] / (
-                "src/sc_neurocore/accel/" + (
-                    "go/partition/libpartition.so" if probe_arg == "go_so"
+                "src/sc_neurocore/accel/"
+                + (
+                    "go/partition/libpartition.so"
+                    if probe_arg == "go_so"
                     else "mojo/partition/libpartition.so"
                 )
             )
@@ -294,10 +305,8 @@ class TestAllBackendsParityViaDispatcher:
                 pytest.skip(f"{backend}: {so.name} not built")
 
         g = _build_graph(100, avg_degree=8, seed=42)
-        hp_py = HierarchicalPartitioner(num_partitions=4, kl_iterations=3,
-                                         refine_backend="python")
-        hp_x = HierarchicalPartitioner(num_partitions=4, kl_iterations=3,
-                                        refine_backend=backend)
+        hp_py = HierarchicalPartitioner(num_partitions=4, kl_iterations=3, refine_backend="python")
+        hp_x = HierarchicalPartitioner(num_partitions=4, kl_iterations=3, refine_backend=backend)
         parts_py, _ = hp_py.partition(g)
         parts_x, _ = hp_x.partition(g)
         pm_py = {v: i for i, p in enumerate(parts_py) for v in p}
@@ -316,6 +325,7 @@ class TestDispatcherMissingToolErrors:
 
     def test_rust_missing_raises(self, monkeypatch) -> None:
         from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+
         monkeypatch.setattr(hp_mod, "_HAS_RUST_KL_REFINE", False)
         monkeypatch.setattr(hp_mod, "_rust_kl_refine", None)
         hp = HierarchicalPartitioner(num_partitions=2, refine_backend="rust")
@@ -325,10 +335,13 @@ class TestDispatcherMissingToolErrors:
 
     def test_julia_missing_raises(self, monkeypatch) -> None:
         from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+
         monkeypatch.setattr(hp_mod, "_julia_kl_refine", None)
         monkeypatch.setattr(hp_mod, "_HAS_JULIA_KL_REFINE", False)
         monkeypatch.setattr(
-            hp_mod, "_ensure_julia_kl_refine_loaded", lambda: False,
+            hp_mod,
+            "_ensure_julia_kl_refine_loaded",
+            lambda: False,
         )
         hp = HierarchicalPartitioner(num_partitions=2, refine_backend="julia")
         g = _build_graph(20, seed=1)
@@ -337,10 +350,13 @@ class TestDispatcherMissingToolErrors:
 
     def test_go_missing_raises(self, monkeypatch) -> None:
         from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+
         monkeypatch.setattr(hp_mod, "_go_kl_refine_lib", None)
         monkeypatch.setattr(hp_mod, "_HAS_GO_KL_REFINE", False)
         monkeypatch.setattr(
-            hp_mod, "_ensure_go_kl_refine_loaded", lambda: False,
+            hp_mod,
+            "_ensure_go_kl_refine_loaded",
+            lambda: False,
         )
         hp = HierarchicalPartitioner(num_partitions=2, refine_backend="go")
         g = _build_graph(20, seed=1)
@@ -349,10 +365,13 @@ class TestDispatcherMissingToolErrors:
 
     def test_mojo_missing_raises(self, monkeypatch) -> None:
         from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+
         monkeypatch.setattr(hp_mod, "_mojo_kl_refine_lib", None)
         monkeypatch.setattr(hp_mod, "_HAS_MOJO_KL_REFINE", False)
         monkeypatch.setattr(
-            hp_mod, "_ensure_mojo_kl_refine_loaded", lambda: False,
+            hp_mod,
+            "_ensure_mojo_kl_refine_loaded",
+            lambda: False,
         )
         hp = HierarchicalPartitioner(num_partitions=2, refine_backend="mojo")
         g = _build_graph(20, seed=1)
@@ -360,11 +379,13 @@ class TestDispatcherMissingToolErrors:
             hp.partition(g)
 
     def test_refine_rust_direct_call_without_backend_raises(
-        self, monkeypatch,
+        self,
+        monkeypatch,
     ) -> None:
         """The `_refine_rust` helper has its own `_rust_kl_refine is None`
         guard for callers that bypass the dispatcher."""
         from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+
         monkeypatch.setattr(hp_mod, "_rust_kl_refine", None)
         hp = HierarchicalPartitioner(num_partitions=2, refine_backend="python")
         g = _build_graph(20, seed=1)
@@ -373,12 +394,12 @@ class TestDispatcherMissingToolErrors:
 
     def test_refine_julia_direct_call_without_backend_raises(self) -> None:
         from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+
         # Save and clear the loaded handle to simulate "not loaded".
         saved = hp_mod._julia_kl_refine
         hp_mod._julia_kl_refine = None
         try:
-            hp = HierarchicalPartitioner(num_partitions=2,
-                                          refine_backend="python")
+            hp = HierarchicalPartitioner(num_partitions=2, refine_backend="python")
             g = _build_graph(20, seed=1)
             with pytest.raises(RuntimeError, match="Julia KL refine backend"):
                 hp._refine_julia([list(range(20))], g.adjacency(), g)
@@ -387,11 +408,11 @@ class TestDispatcherMissingToolErrors:
 
     def test_refine_go_direct_call_without_lib_raises(self) -> None:
         from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+
         saved = hp_mod._go_kl_refine_lib
         hp_mod._go_kl_refine_lib = None
         try:
-            hp = HierarchicalPartitioner(num_partitions=2,
-                                          refine_backend="python")
+            hp = HierarchicalPartitioner(num_partitions=2, refine_backend="python")
             g = _build_graph(20, seed=1)
             with pytest.raises(RuntimeError, match="Go KL refine"):
                 hp._refine_go([list(range(20))], g.adjacency(), g)
@@ -400,11 +421,11 @@ class TestDispatcherMissingToolErrors:
 
     def test_refine_mojo_direct_call_without_lib_raises(self) -> None:
         from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+
         saved = hp_mod._mojo_kl_refine_lib
         hp_mod._mojo_kl_refine_lib = None
         try:
-            hp = HierarchicalPartitioner(num_partitions=2,
-                                          refine_backend="python")
+            hp = HierarchicalPartitioner(num_partitions=2, refine_backend="python")
             g = _build_graph(20, seed=1)
             with pytest.raises(RuntimeError, match="Mojo KL refine"):
                 hp._refine_mojo([list(range(20))], g.adjacency(), g)
@@ -419,6 +440,7 @@ class TestCsrGraphAccessors:
 
     def test_edge_conn_returns_correct_slice(self) -> None:
         from sc_neurocore.chiplet.hierarchical_partitioner import CSRGraph
+
         edges = [
             CorrelationEdge(u=0, v=1, conn_weight=1.5, scc_weight=0.2),
             CorrelationEdge(u=1, v=2, conn_weight=2.5, scc_weight=0.3),
@@ -433,6 +455,7 @@ class TestCsrGraphAccessors:
         from sc_neurocore.chiplet.hierarchical_partitioner import (
             LFSRSeedAllocator,
         )
+
         # Pick a base_seed and num_partitions that produce a 0 seed
         # for some i — the allocator must clamp it to 1.
         # base_seed=0xFFFF, spacing=65535//5 = 13107; one of the
@@ -508,21 +531,25 @@ class TestProbeFailureBranches:
         hp_mod._HAS_MOJO_KL_REFINE = False
 
     def test_julia_probe_returns_false_when_juliacall_missing(
-        self, monkeypatch,
+        self,
+        monkeypatch,
     ) -> None:
         from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+
         saved_jl = hp_mod._julia_kl_refine
         saved_has = hp_mod._HAS_JULIA_KL_REFINE
         try:
             self._reset_probes(hp_mod)
             # Make `from juliacall import Main` fail.
             import builtins
+
             real_import = builtins.__import__
 
             def fail_import(name, *a, **k):
                 if name == "juliacall":
                     raise ImportError("simulated missing juliacall")
                 return real_import(name, *a, **k)
+
             monkeypatch.setattr(builtins, "__import__", fail_import)
             assert hp_mod._ensure_julia_kl_refine_loaded() is False
         finally:
@@ -530,21 +557,25 @@ class TestProbeFailureBranches:
             hp_mod._HAS_JULIA_KL_REFINE = saved_has
 
     def test_julia_probe_returns_false_when_jl_file_missing(
-        self, monkeypatch,
+        self,
+        monkeypatch,
     ) -> None:
         from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+
         saved_jl = hp_mod._julia_kl_refine
         saved_has = hp_mod._HAS_JULIA_KL_REFINE
         try:
             self._reset_probes(hp_mod)
             # Force os.path.isfile to return False for the .jl path.
             import os as _os_mod
+
             real_isfile = _os_mod.path.isfile
 
             def selective_isfile(p):
                 if p.endswith("kl_refine.jl"):
                     return False
                 return real_isfile(p)
+
             monkeypatch.setattr(_os_mod.path, "isfile", selective_isfile)
             assert hp_mod._ensure_julia_kl_refine_loaded() is False
         finally:
@@ -552,7 +583,8 @@ class TestProbeFailureBranches:
             hp_mod._HAS_JULIA_KL_REFINE = saved_has
 
     def test_julia_probe_returns_false_when_include_raises(
-        self, monkeypatch,
+        self,
+        monkeypatch,
     ) -> None:
         """Cover the `except Exception: return False` branch in
         `_ensure_julia_kl_refine_loaded` by feeding a syntactically
@@ -560,12 +592,14 @@ class TestProbeFailureBranches:
         the parser error and returns False.
         """
         from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+
         try:
             import juliacall  # noqa: F401
         except ImportError:
             pytest.skip("juliacall not installed")
 
         import os as _os_mod
+
         saved_jl = hp_mod._julia_kl_refine
         saved_has = hp_mod._HAS_JULIA_KL_REFINE
         try:
@@ -573,7 +607,7 @@ class TestProbeFailureBranches:
             real_isfile = _os_mod.path.isfile
             real_dirname = _os_mod.path.dirname
 
-            broken_jl = (Path(__file__).parent / "broken.jl")
+            broken_jl = Path(__file__).parent / "broken.jl"
             broken_jl.write_text("THIS IS NOT VALID JULIA\n")
 
             def stub_isfile(p):
@@ -598,14 +632,17 @@ class TestProbeFailureBranches:
 
     def test_go_probe_returns_false_when_so_missing(self, monkeypatch) -> None:
         from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+
         saved_lib = hp_mod._go_kl_refine_lib
         saved_has = hp_mod._HAS_GO_KL_REFINE
         try:
             self._reset_probes(hp_mod)
             import os as _os_mod
+
             real_isfile = _os_mod.path.isfile
             monkeypatch.setattr(
-                _os_mod.path, "isfile",
+                _os_mod.path,
+                "isfile",
                 lambda p: False if "go/partition/libpartition.so" in p else real_isfile(p),
             )
             assert hp_mod._ensure_go_kl_refine_loaded() is False
@@ -614,14 +651,17 @@ class TestProbeFailureBranches:
             hp_mod._HAS_GO_KL_REFINE = saved_has
 
     def test_go_probe_returns_false_when_cdll_raises(
-        self, monkeypatch,
+        self,
+        monkeypatch,
     ) -> None:
         from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+
         saved_lib = hp_mod._go_kl_refine_lib
         saved_has = hp_mod._HAS_GO_KL_REFINE
         try:
             self._reset_probes(hp_mod)
             import ctypes
+
             real_cdll = ctypes.CDLL
 
             class FailingCDLL:
@@ -636,9 +676,11 @@ class TestProbeFailureBranches:
             hp_mod._HAS_GO_KL_REFINE = saved_has
 
     def test_go_probe_returns_false_when_symbol_missing(
-        self, monkeypatch,
+        self,
+        monkeypatch,
     ) -> None:
         from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+
         saved_lib = hp_mod._go_kl_refine_lib
         saved_has = hp_mod._HAS_GO_KL_REFINE
         try:
@@ -657,17 +699,21 @@ class TestProbeFailureBranches:
             hp_mod._HAS_GO_KL_REFINE = saved_has
 
     def test_mojo_probe_returns_false_when_so_missing(
-        self, monkeypatch,
+        self,
+        monkeypatch,
     ) -> None:
         from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+
         saved_lib = hp_mod._mojo_kl_refine_lib
         saved_has = hp_mod._HAS_MOJO_KL_REFINE
         try:
             self._reset_probes(hp_mod)
             import os as _os_mod
+
             real_isfile = _os_mod.path.isfile
             monkeypatch.setattr(
-                _os_mod.path, "isfile",
+                _os_mod.path,
+                "isfile",
                 lambda p: False if "mojo/partition/libpartition.so" in p else real_isfile(p),
             )
             assert hp_mod._ensure_mojo_kl_refine_loaded() is False
@@ -676,9 +722,11 @@ class TestProbeFailureBranches:
             hp_mod._HAS_MOJO_KL_REFINE = saved_has
 
     def test_mojo_probe_returns_false_when_cdll_raises(
-        self, monkeypatch,
+        self,
+        monkeypatch,
     ) -> None:
         from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+
         saved_lib = hp_mod._mojo_kl_refine_lib
         saved_has = hp_mod._HAS_MOJO_KL_REFINE
         try:
@@ -698,9 +746,11 @@ class TestProbeFailureBranches:
             hp_mod._HAS_MOJO_KL_REFINE = saved_has
 
     def test_mojo_probe_returns_false_when_symbol_missing(
-        self, monkeypatch,
+        self,
+        monkeypatch,
     ) -> None:
         from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+
         saved_lib = hp_mod._mojo_kl_refine_lib
         saved_has = hp_mod._HAS_MOJO_KL_REFINE
         try:
@@ -727,6 +777,7 @@ class TestProbeReturnsTrueOnSecondCall:
 
     def test_julia_probe_second_call_short_circuits(self) -> None:
         from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+
         try:
             import juliacall  # noqa: F401
         except ImportError:
@@ -738,12 +789,14 @@ class TestProbeReturnsTrueOnSecondCall:
 
     def test_go_probe_second_call_short_circuits(self) -> None:
         from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+
         if not hp_mod._ensure_go_kl_refine_loaded():
             pytest.skip("Go libpartition.so not built")
         assert hp_mod._ensure_go_kl_refine_loaded() is True
 
     def test_mojo_probe_second_call_short_circuits(self) -> None:
         from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+
         if not hp_mod._ensure_mojo_kl_refine_loaded():
             pytest.skip("Mojo libpartition.so not built")
         assert hp_mod._ensure_mojo_kl_refine_loaded() is True
@@ -758,6 +811,7 @@ class TestImportFallback:
         import importlib
         import sys
         from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
+
         # Save current state for restoration.
         saved_engine = sys.modules.get("sc_neurocore_engine")
         try:
@@ -785,6 +839,7 @@ class TestPreExistingEdgeCases:
         from sc_neurocore.chiplet.hierarchical_partitioner import (
             calculate_imbalance_ratio,
         )
+
         # Empty partition list → ideal=0/0 short-circuits at line 895 (`not sizes`),
         # but [empty, empty] gives total=0, ideal=0 → triggers line 899/900.
         result = calculate_imbalance_ratio([[], []])
@@ -794,18 +849,18 @@ class TestPreExistingEdgeCases:
         from sc_neurocore.chiplet.hierarchical_partitioner import (
             CorrelationLoadBalancer,
         )
+
         # Strong imbalance + many cross-partition edges → planner
         # produces multiple candidates; cap at 1 → forces the
         # `len(recs) >= max_recommendations` break (line 1116).
-        edges = [
-            CorrelationEdge(u=v, v=20, conn_weight=1.0, scc_weight=0.5)
-            for v in range(20)
-        ]
+        edges = [CorrelationEdge(u=v, v=20, conn_weight=1.0, scc_weight=0.5) for v in range(20)]
         g = CorrelationAwareGraph(num_vertices=21, edges=edges)
         partitions = [list(range(20)), [20]]
         planner = CorrelationLoadBalancer(imbalance_threshold=0.05)
         recs = planner.recommend_migrations(
-            g, partitions, max_recommendations=1,
+            g,
+            partitions,
+            max_recommendations=1,
         )
         assert len(recs) <= 1
 

@@ -33,6 +33,7 @@ class Violation:
         limit: Maximum allowed value.
         message: Human-readable description.
     """
+
     neuron_id: int
     constraint: str
     value: float
@@ -46,6 +47,7 @@ class HardwareConstraints:
 
     Derived from a ``DeviceSpec``, or specified manually.
     """
+
     max_fan_in: int = 256
     max_fan_out: int = 4096
     weight_bits: int = 8
@@ -90,25 +92,29 @@ class ConstraintChecker:
         fan_in = binary.sum(axis=0)
         for j in range(n):
             if fan_in[j] > constraints.max_fan_in:
-                violations.append(Violation(
-                    neuron_id=j,
-                    constraint="fan_in",
-                    value=float(fan_in[j]),
-                    limit=float(constraints.max_fan_in),
-                    message=f"Neuron {j}: fan-in {fan_in[j]} > {constraints.max_fan_in}",
-                ))
+                violations.append(
+                    Violation(
+                        neuron_id=j,
+                        constraint="fan_in",
+                        value=float(fan_in[j]),
+                        limit=float(constraints.max_fan_in),
+                        message=f"Neuron {j}: fan-in {fan_in[j]} > {constraints.max_fan_in}",
+                    )
+                )
 
         # Fan-out: row sum
         fan_out = binary.sum(axis=1)
         for i in range(n):
             if fan_out[i] > constraints.max_fan_out:
-                violations.append(Violation(
-                    neuron_id=i,
-                    constraint="fan_out",
-                    value=float(fan_out[i]),
-                    limit=float(constraints.max_fan_out),
-                    message=f"Neuron {i}: fan-out {fan_out[i]} > {constraints.max_fan_out}",
-                ))
+                violations.append(
+                    Violation(
+                        neuron_id=i,
+                        constraint="fan_out",
+                        value=float(fan_out[i]),
+                        limit=float(constraints.max_fan_out),
+                        message=f"Neuron {i}: fan-out {fan_out[i]} > {constraints.max_fan_out}",
+                    )
+                )
 
         # Weight precision
         if weights is not None:
@@ -119,13 +125,15 @@ class ConstraintChecker:
                 quantized = np.round(weights * scale) / scale
                 rel_error = np.max(np.abs(weights - quantized)) / max_abs
                 if rel_error > 0.1:
-                    violations.append(Violation(
-                        neuron_id=-1,
-                        constraint="weight_precision",
-                        value=float(rel_error),
-                        limit=0.1,
-                        message=f"Weight quantization error {rel_error:.3f} > 10% with {constraints.weight_bits}-bit precision",
-                    ))
+                    violations.append(
+                        Violation(
+                            neuron_id=-1,
+                            constraint="weight_precision",
+                            value=float(rel_error),
+                            limit=0.1,
+                            message=f"Weight quantization error {rel_error:.3f} > 10% with {constraints.weight_bits}-bit precision",
+                        )
+                    )
 
         # Delay bounds
         if delays is not None:
@@ -133,13 +141,15 @@ class ConstraintChecker:
             if max_delay > constraints.max_delay_ticks:
                 offenders = np.argwhere(delays > constraints.max_delay_ticks)
                 for idx in offenders[:10]:  # report first 10
-                    violations.append(Violation(
-                        neuron_id=int(idx[0]),
-                        constraint="delay",
-                        value=float(delays[idx[0], idx[1]]),
-                        limit=float(constraints.max_delay_ticks),
-                        message=f"Synapse ({idx[0]},{idx[1]}): delay {delays[idx[0], idx[1]]} > {constraints.max_delay_ticks}",
-                    ))
+                    violations.append(
+                        Violation(
+                            neuron_id=int(idx[0]),
+                            constraint="delay",
+                            value=float(delays[idx[0], idx[1]]),
+                            limit=float(constraints.max_delay_ticks),
+                            message=f"Synapse ({idx[0]},{idx[1]}): delay {delays[idx[0], idx[1]]} > {constraints.max_delay_ticks}",
+                        )
+                    )
 
         return violations
 
@@ -160,7 +170,7 @@ class ConstraintChecker:
             incoming = np.nonzero(adj[:, j])[0]
             if len(incoming) > constraints.max_fan_in:
                 strengths = np.abs(adj[incoming, j])
-                keep_idx = np.argsort(strengths)[-constraints.max_fan_in:]
+                keep_idx = np.argsort(strengths)[-constraints.max_fan_in :]
                 prune_idx = np.setdiff1d(np.arange(len(incoming)), keep_idx)
                 for pi in prune_idx:
                     adj[incoming[pi], j] = 0.0
@@ -170,7 +180,7 @@ class ConstraintChecker:
             outgoing = np.nonzero(adj[i, :])[0]
             if len(outgoing) > constraints.max_fan_out:
                 strengths = np.abs(adj[i, outgoing])
-                keep_idx = np.argsort(strengths)[-constraints.max_fan_out:]
+                keep_idx = np.argsort(strengths)[-constraints.max_fan_out :]
                 prune_idx = np.setdiff1d(np.arange(len(outgoing)), keep_idx)
                 for pi in prune_idx:
                     adj[i, outgoing[pi]] = 0.0

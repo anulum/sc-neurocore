@@ -36,6 +36,7 @@ class ResourceEstimate:
         latency_us: Estimated single-tick latency (µs).
         fits: Whether the network fits on the target device.
     """
+
     cores_needed: int
     neurons_mapped: int
     synapses_mapped: int
@@ -69,7 +70,9 @@ class ResourceEstimator:
         cores_from_neurons = math.ceil(n_neurons / device.neurons_per_core)
 
         # Core count from synapse packing
-        cores_from_synapses = math.ceil(n_synapses / device.synapses_per_core) if device.synapses_per_core > 0 else 1
+        cores_from_synapses = (
+            math.ceil(n_synapses / device.synapses_per_core) if device.synapses_per_core > 0 else 1
+        )
 
         cores_needed = max(cores_from_neurons, cores_from_synapses, 1)
 
