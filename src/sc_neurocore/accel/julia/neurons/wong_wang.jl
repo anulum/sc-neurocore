@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Julia batch kernel for Wong-Wang 2006 decision unit
+# SC-NeuroCore — Julia N-step simulator for Wong-Wang 2006 decision unit
 
 """
 Batch parity with `WongWangUnit.step` in

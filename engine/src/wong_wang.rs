@@ -4,7 +4,7 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Rust batch kernel for the Wong-Wang 2006 decision unit
+// SC-NeuroCore — Rust N-step simulator for the Wong-Wang 2006 decision unit
 
 //! Batch parity with `WongWangUnit.step` in
 //! `src/sc_neurocore/neurons/models/wong_wang.py` (Wong & Wang 2006,
@@ -19,7 +19,7 @@
 //!   4. clamp `s_k` into `[0, 1]`.
 //!
 //! The Python primary draws `np.random.randn()` twice per step; the
-//! Rust batch takes `xi` pre-drawn from the Python RNG so trajectories
+//! Rust simulator takes `xi` pre-drawn from the Python RNG so trajectories
 //! are bit-exact for matching seeds. This mirrors the ping.rs +
 //! PINGCircuit pattern: Python owns the RNG, Rust owns the inner loop.
 

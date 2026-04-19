@@ -4,9 +4,9 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Parity: Python primary vs Julia batch (Wong-Wang)
+# SC-NeuroCore — Parity: Python primary vs Julia simulator (Wong-Wang)
 
-"""Bit-exact parity between the Python primary and the Julia batch.
+"""Bit-exact parity between the Python primary and the Julia simulator.
 
 The Julia accel kernel consumes the exact same 2-samples-per-step RNG
 order as Python's inline `np.random.randn()` pairs, so trajectories are
@@ -67,7 +67,7 @@ def _run_julia(n_steps: int, stim1: np.ndarray, stim2: np.ndarray, seed: int):
 
 
 class TestPythonJuliaParity:
-    """Julia batch trajectory must match Python primary at f64 round-off."""
+    """Julia simulator trajectory must match Python primary at f64 round-off."""
 
     def test_parity_quiescent(self):
         n = 5_000
