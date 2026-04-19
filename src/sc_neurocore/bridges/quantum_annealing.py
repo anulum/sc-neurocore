@@ -84,6 +84,7 @@ try:
         py_qa_generate_gauges as _rust_gen_gauges,
         py_qa_greedy_partition as _rust_partition,
     )
+
     _HAS_RUST_QA = True
 except ImportError:
     _HAS_RUST_QA = False
@@ -184,8 +185,13 @@ class IsingModel:
             j_values = list(self.J.values())
             spin_arr = [spins.get(i, 1) for i in range(self.n_qubits)]
             return _rust_ising_energy(
-                h_indices, h_values, j_i, j_j, j_values,
-                spin_arr, self.offset,
+                h_indices,
+                h_values,
+                j_i,
+                j_j,
+                j_values,
+                spin_arr,
+                self.offset,
             )
         e = self.offset
         for i, hi in self.h.items():
@@ -710,10 +716,7 @@ class EnergyLandscape:
             j_i = [k[0] for k in model.J]
             j_j = [k[1] for k in model.J]
             j_values = list(model.J.values())
-            spin_matrix = [
-                [s.get(i, 1) for i in range(model.n_qubits)]
-                for s in samples
-            ]
+            spin_matrix = [[s.get(i, 1) for i in range(model.n_qubits)] for s in samples]
             energies = _rust_batch_energy(
                 [int(x) for x in h_indices],
                 [float(x) for x in h_values],

@@ -134,16 +134,20 @@ def time_solver(
 
 def run(sizes: list[int]) -> list[dict[str, object]]:
     rows: list[dict[str, object]] = []
-    print(f"# QA Rust vs Python — sizes={sizes}, edge_p={EDGE_PROBABILITY}, "
-          f"sweeps={N_SWEEPS}, reads={NUM_READS}, seed={SEED}")
+    print(
+        f"# QA Rust vs Python — sizes={sizes}, edge_p={EDGE_PROBABILITY}, "
+        f"sweeps={N_SWEEPS}, reads={NUM_READS}, seed={SEED}"
+    )
     print(f"# Python: {platform.python_version()}, NumPy: {np.__version__}")
     print(f"# _HAS_RUST_QA = {_HAS_RUST_QA}")
     print()
     print(f"# Each cell: median (min) over 5 repeats")
     print()
-    print(f"{'N':>5}  {'py_med_ms':>12}  {'rust_med_ms':>14}  "
-          f"{'speedup_med':>12}  {'py_E':>10}  {'rust_E':>10}")
-    print(f"{'-'*5}  {'-'*12}  {'-'*14}  {'-'*12}  {'-'*10}  {'-'*10}")
+    print(
+        f"{'N':>5}  {'py_med_ms':>12}  {'rust_med_ms':>14}  "
+        f"{'speedup_med':>12}  {'py_E':>10}  {'rust_E':>10}"
+    )
+    print(f"{'-' * 5}  {'-' * 12}  {'-' * 14}  {'-' * 12}  {'-' * 10}  {'-' * 10}")
 
     for n in sizes:
         model = build_random_ising(n, EDGE_PROBABILITY, SEED)
@@ -167,20 +171,24 @@ def run(sizes: list[int]) -> list[dict[str, object]]:
             speedup_repr = f"{'-':>12}"
             rust_e_repr = f"{'-':>10}"
 
-        print(f"{n:>5d}  {py_med:>9.2f}({py_min:.1f})  {rust_repr}  "
-              f"{speedup_repr}  {py_e:>10.2f}  {rust_e_repr}")
+        print(
+            f"{n:>5d}  {py_med:>9.2f}({py_min:.1f})  {rust_repr}  "
+            f"{speedup_repr}  {py_e:>10.2f}  {rust_e_repr}"
+        )
 
-        rows.append({
-            "n_qubits": n,
-            "python_median_ms": py_med,
-            "python_min_ms": py_min,
-            "rust_median_ms": rust_med,
-            "rust_min_ms": rust_min,
-            "speedup_median": speedup_med,
-            "speedup_min": speedup_min,
-            "python_best_energy": py_e,
-            "rust_best_energy": rust_e if _HAS_RUST_QA else None,
-        })
+        rows.append(
+            {
+                "n_qubits": n,
+                "python_median_ms": py_med,
+                "python_min_ms": py_min,
+                "rust_median_ms": rust_med,
+                "rust_min_ms": rust_min,
+                "speedup_median": speedup_med,
+                "speedup_min": speedup_min,
+                "python_best_energy": py_e,
+                "rust_best_energy": rust_e if _HAS_RUST_QA else None,
+            }
+        )
 
     return rows
 

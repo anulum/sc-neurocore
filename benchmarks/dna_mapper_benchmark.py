@@ -84,8 +84,10 @@ def bench_compilation():
         r["total_strands"] = design.total_strands
         r["total_nucleotides"] = design.total_nucleotides
         results.append(r)
-        print(f"  compile {n_gates:3d} gates: {r['mean_s']*1000:.1f} ms "
-              f"({r['total_strands']} strands, {r['total_nucleotides']} nt)")
+        print(
+            f"  compile {n_gates:3d} gates: {r['mean_s'] * 1000:.1f} ms "
+            f"({r['total_strands']} strands, {r['total_nucleotides']} nt)"
+        )
 
     return results
 
@@ -102,6 +104,7 @@ def bench_simulation():
     results = []
 
     for duration in [100, 1000, 3600, 7200]:
+
         def sim_fn(d=duration):
             return sim.simulate(design, {"A": 200.0, "B": 200.0}, duration_s=float(d))
 
@@ -109,7 +112,7 @@ def bench_simulation():
         r["duration_s"] = duration
         r.pop("result")
         results.append(r)
-        print(f"  simulate {duration:5d}s: {r['mean_s']*1000:.1f} ms")
+        print(f"  simulate {duration:5d}s: {r['mean_s'] * 1000:.1f} ms")
 
     return results
 
@@ -138,8 +141,10 @@ def bench_error_correction():
         r2["seq_length"] = seq_len
         r2.pop("result")
         results.append(r2)
-        print(f"  EC {seq_len:5d} nt: encode {r['mean_s']*1e6:.0f} µs, "
-              f"decode {r2['mean_s']*1e6:.0f} µs")
+        print(
+            f"  EC {seq_len:5d} nt: encode {r['mean_s'] * 1e6:.0f} µs, "
+            f"decode {r2['mean_s'] * 1e6:.0f} µs"
+        )
 
     return results
 
@@ -167,8 +172,10 @@ def bench_cross_hybridization():
         flags = r.pop("result")
         r["n_flags"] = len(flags)
         results.append(r)
-        print(f"  X-hyb {n_gates:3d} gates ({design.total_strands} strands): "
-              f"{r['mean_s']*1000:.1f} ms, {r['n_flags']} flags")
+        print(
+            f"  X-hyb {n_gates:3d} gates ({design.total_strands} strands): "
+            f"{r['mean_s'] * 1000:.1f} ms, {r['n_flags']} flags"
+        )
 
     return results
 
@@ -188,14 +195,12 @@ def bench_cost_and_protocol():
     r1 = _bench(lambda: estimate_cost(design), "cost_estimation", n_runs=50)
     cost = r1.pop("result")
     r1["total_cost_usd"] = cost["total_cost_usd"]
-    print(f"  Cost estimation: {r1['mean_s']*1e6:.0f} µs "
-          f"(${cost['total_cost_usd']:.2f})")
+    print(f"  Cost estimation: {r1['mean_s'] * 1e6:.0f} µs (${cost['total_cost_usd']:.2f})")
 
     r2 = _bench(lambda: generate_protocol(design), "protocol_gen", n_runs=50)
     protocol = r2.pop("result")
     r2["protocol_lines"] = len(protocol.split("\n"))
-    print(f"  Protocol gen:    {r2['mean_s']*1e6:.0f} µs "
-          f"({r2['protocol_lines']} lines)")
+    print(f"  Protocol gen:    {r2['mean_s'] * 1e6:.0f} µs ({r2['protocol_lines']} lines)")
 
     return [r1, r2]
 

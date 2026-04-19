@@ -179,9 +179,7 @@ class FeynmanKacHeatSolver:
         """
         if self.walkers.size == 0:
             raise RuntimeError("walkers not initialised")
-        counts, _ = np.histogram(
-            self.walkers, bins=n_bins, range=(0.0, self.length)
-        )
+        counts, _ = np.histogram(self.walkers, bins=n_bins, range=(0.0, self.length))
         bin_width = self.length / n_bins
         return counts.astype(np.float64) / (self.walkers.size * bin_width)
 

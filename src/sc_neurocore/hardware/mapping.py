@@ -24,6 +24,7 @@ from .device import DeviceSpec
 @dataclass
 class NeuronPlacement:
     """Placement of a single neuron on hardware."""
+
     neuron_id: int
     core_id: int
     local_id: int  # position within the core
@@ -62,6 +63,7 @@ class Mapper:
         Neurons are assigned round-robin to minimize load imbalance.
         """
         import math
+
         n = adjacency.shape[0]
         npc = device.neurons_per_core
         n_cores = math.ceil(n / npc)
@@ -72,11 +74,13 @@ class Mapper:
 
         for i in range(n):
             core = i % n_cores
-            placements.append(NeuronPlacement(
-                neuron_id=i,
-                core_id=core,
-                local_id=core_counts[core],
-            ))
+            placements.append(
+                NeuronPlacement(
+                    neuron_id=i,
+                    core_id=core,
+                    local_id=core_counts[core],
+                )
+            )
             core_counts[core] += 1
 
         return placements
@@ -92,6 +96,7 @@ class Mapper:
         neuron, pack its neighbors into the same core until full.
         """
         import math
+
         n = adjacency.shape[0]
         npc = device.neurons_per_core
         n_cores = math.ceil(n / npc)

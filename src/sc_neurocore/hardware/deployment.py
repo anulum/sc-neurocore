@@ -35,6 +35,7 @@ class DeploymentPackage:
         config_blob: Binary configuration data for the target.
         metadata: Additional deployment metadata.
     """
+
     device: DeviceSpec
     placements: list[NeuronPlacement]
     config_blob: bytes

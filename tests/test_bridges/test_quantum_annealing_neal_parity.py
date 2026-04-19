@@ -130,7 +130,10 @@ def test_planted_ground_state_recovered(n: int, seed: int) -> None:
     planted_energy = model.energy(planted)
 
     neal_best, _, _ = _neal_best_energy(
-        model, num_reads=20, seed=seed, sweeps=500,
+        model,
+        num_reads=20,
+        seed=seed,
+        sweeps=500,
     )
     sa = SimulatedAnnealer(n_sweeps=500, beta_start=0.1, beta_end=10.0, seed=seed)
     ours = sa.solve_ising(model, num_reads=20)
@@ -161,7 +164,10 @@ def test_random_ising_best_energy_within_tolerance(n: int, seed: int) -> None:
     model = IsingModel(h=h, J=J, offset=0.0, n_qubits=n, source="random_pm1")
 
     neal_best, _, _ = _neal_best_energy(
-        model, num_reads=50, seed=seed, sweeps=1000,
+        model,
+        num_reads=50,
+        seed=seed,
+        sweeps=1000,
     )
     sa = SimulatedAnnealer(n_sweeps=1000, beta_start=0.1, beta_end=10.0, seed=seed)
     ours = sa.solve_ising(model, num_reads=50)
@@ -173,13 +179,11 @@ def test_random_ising_best_energy_within_tolerance(n: int, seed: int) -> None:
     # tolerance is "we are not much higher than neal".
     if neal_best < 0:
         assert ours["best_energy"] <= neal_best * 0.90, (
-            f"our SA performs worse than neal on n={n}: "
-            f"ours={ours['best_energy']} neal={neal_best}"
+            f"our SA performs worse than neal on n={n}: ours={ours['best_energy']} neal={neal_best}"
         )
     else:
         assert ours["best_energy"] <= neal_best + 0.5, (
-            f"our SA performs worse than neal on n={n}: "
-            f"ours={ours['best_energy']} neal={neal_best}"
+            f"our SA performs worse than neal on n={n}: ours={ours['best_energy']} neal={neal_best}"
         )
 
 
@@ -208,7 +212,10 @@ def test_returned_spin_assignment_is_valid_for_neal_best() -> None:
     """
     model, _ = _build_planted_ising(n=20, p=0.25, coupling=1.0, seed=999)
     neal_best, neal_spins, _ = _neal_best_energy(
-        model, num_reads=10, seed=999, sweeps=300,
+        model,
+        num_reads=10,
+        seed=999,
+        sweeps=300,
     )
     recomputed = model.energy(neal_spins)
     assert recomputed == pytest.approx(neal_best, abs=1e-9), (

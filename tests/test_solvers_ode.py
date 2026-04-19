@@ -33,6 +33,7 @@ from sc_neurocore.solvers import (
 # Known test ODEs
 # ---------------------------------------------------------------------------
 
+
 def decay_ode(t, y):
     """dy/dt = -y. Solution: y(t) = y0 * exp(-t)."""
     return -y
@@ -54,8 +55,8 @@ def harmonic_oscillator(t, y):
 # Euler Solver
 # ---------------------------------------------------------------------------
 
-class TestEulerSolver:
 
+class TestEulerSolver:
     def test_decay_direction(self):
         solver = EulerSolver()
         y = np.array([1.0])
@@ -81,7 +82,6 @@ class TestEulerSolver:
 
 
 class TestHeunSolver:
-
     def test_convergence_order_2(self):
         y0 = np.array([1.0])
         t_end = 1.0
@@ -99,7 +99,6 @@ class TestHeunSolver:
 
 
 class TestRK4Solver:
-
     def test_convergence_order_4(self):
         y0 = np.array([1.0])
         t_end = 1.0
@@ -138,8 +137,8 @@ class TestRK4Solver:
 # Dormand-Prince Adaptive
 # ---------------------------------------------------------------------------
 
-class TestDormandPrinceSolver:
 
+class TestDormandPrinceSolver:
     def test_adaptive_reaches_solution(self):
         solver = DormandPrinceSolver(atol=1e-8, rtol=1e-6)
         ts, ys = solver.integrate(decay_ode, np.array([1.0]), (0.0, 1.0))
@@ -161,8 +160,8 @@ class TestDormandPrinceSolver:
 # Exponential Euler
 # ---------------------------------------------------------------------------
 
-class TestExponentialEuler:
 
+class TestExponentialEuler:
     def test_exact_for_constant_current(self):
         """ExponentialEuler is exact for linear LIF with constant I."""
         tau = 20.0
@@ -180,8 +179,8 @@ class TestExponentialEuler:
 # Exact LIF Solver
 # ---------------------------------------------------------------------------
 
-class TestExactLIFSolver:
 
+class TestExactLIFSolver:
     def test_spike_time_matches_analytical(self):
         solver = ExactLIFSolver(tau=10.0, v_rest=-65.0, v_thresh=-50.0, r_m=1.0)
         # V_inf = -65 + 20 = -45 (above threshold)
@@ -220,14 +219,14 @@ class TestExactLIFSolver:
 # Symplectic Solvers
 # ---------------------------------------------------------------------------
 
-class TestSymplecticSolvers:
 
+class TestSymplecticSolvers:
     def _run_oscillator(self, solver, n_steps=10000, dt=0.01):
         y = np.array([1.0, 0.0])  # q=1, p=0
         energies = []
         for _ in range(n_steps):
             y, _ = solver.step(harmonic_oscillator, y, 0.0, dt)
-            energies.append(0.5 * (y[0]**2 + y[1]**2))
+            energies.append(0.5 * (y[0] ** 2 + y[1] ** 2))
         return energies
 
     def test_verlet_energy_conservation(self):
@@ -243,8 +242,8 @@ class TestSymplecticSolvers:
 # Implicit / Stiff Solvers
 # ---------------------------------------------------------------------------
 
-class TestImplicitSolvers:
 
+class TestImplicitSolvers:
     def test_implicit_euler_stable_for_stiff(self):
         solver = ImplicitEuler(max_iterations=50)
         y = np.array([1.0])
@@ -284,8 +283,8 @@ class TestImplicitSolvers:
 # Factory
 # ---------------------------------------------------------------------------
 
-class TestFactory:
 
+class TestFactory:
     @pytest.mark.parametrize("name", ["euler", "heun", "rk4"])
     def test_get_solver(self, name):
         solver = get_solver(name)
@@ -305,8 +304,8 @@ class TestFactory:
 # Benchmarks
 # ---------------------------------------------------------------------------
 
-class TestSolverBenchmark:
 
+class TestSolverBenchmark:
     def test_rk4_throughput(self):
         """100k RK4 steps in < 5s."""
         solver = RK4Solver()

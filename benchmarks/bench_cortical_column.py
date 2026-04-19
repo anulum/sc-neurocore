@@ -58,10 +58,14 @@ from sc_neurocore.network.cortical_column import (  # noqa: E402  — sys.path i
 # implementation matches L4e exactly but sits 2-4× above the
 # others).
 POTJANS_TABLE4_HZ: dict[str, float] = {
-    "L23e": 0.86, "L23i": 2.91,
-    "L4e":  4.51, "L4i":  5.78,
-    "L5e":  7.59, "L5i":  8.13,
-    "L6e":  1.10, "L6i":  8.07,
+    "L23e": 0.86,
+    "L23i": 2.91,
+    "L4e": 4.51,
+    "L4i": 5.78,
+    "L5e": 7.59,
+    "L5i": 8.13,
+    "L6e": 1.10,
+    "L6i": 8.07,
 }
 
 
@@ -77,7 +81,9 @@ def _bench_one(
     """Build, simulate, measure wall-clock and per-pop rates."""
     t_build_0 = time.perf_counter()
     col = CorticalColumn(
-        scale=scale, scale_correction=scale_correction, seed=seed,
+        scale=scale,
+        scale_correction=scale_correction,
+        seed=seed,
         delay_distribution=delay_distribution,
     )
     t_build = time.perf_counter() - t_build_0
@@ -87,7 +93,9 @@ def _bench_one(
     t_sim = time.perf_counter() - t_sim_0
 
     rates = col.population_rates(
-        rasters, dt=dt, burn_in_ms=burn_in_ms,
+        rasters,
+        dt=dt,
+        burn_in_ms=burn_in_ms,
     )
     n_steps = int(round(duration_ms / dt))
     return {
@@ -119,12 +127,12 @@ def main() -> None:
     cfgs = [
         # (scale, scale_correction, duration_ms, dt, burn_in_ms,
         #  delay_distribution)
-        (0.02, False, 100.0, 0.1,  20.0, False),
-        (0.05, True,  300.0, 0.1, 100.0, False),
-        (0.10, True,  600.0, 0.1, 200.0, False),
+        (0.02, False, 100.0, 0.1, 20.0, False),
+        (0.05, True, 300.0, 0.1, 100.0, False),
+        (0.10, True, 600.0, 0.1, 200.0, False),
         # Per-connection Gaussian delays — slower (5x more sparse
         # mat-vecs per step) but rate-fidelity dramatically tighter.
-        (0.10, True,  600.0, 0.1, 200.0, True),
+        (0.10, True, 600.0, 0.1, 200.0, True),
     ]
     runs = []
     for scale, sc, dur, dt, burn, dd in cfgs:
@@ -161,10 +169,10 @@ def main() -> None:
             "rust": {
                 "status": "BLOCKED-ON-multilang-cortical",
                 "notes": "Per-step inner loop is 64-way sparse mat-vec "
-                         "across population pairs; proper acceleration "
-                         "needs a block-sparse restructure of the "
-                         "connectivity. Tracked as follow-up under "
-                         "feedback_module_standard_attnres.",
+                "across population pairs; proper acceleration "
+                "needs a block-sparse restructure of the "
+                "connectivity. Tracked as follow-up under "
+                "feedback_module_standard_attnres.",
             },
             "julia": {
                 "status": "BLOCKED-ON-multilang-cortical",

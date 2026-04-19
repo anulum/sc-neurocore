@@ -96,7 +96,9 @@ def _build_topology(n_dies: int) -> ChipletTopology:
 
 
 def _build_correlation_graph(
-    n_vertices: int, avg_degree: int = 8, seed: int = 42,
+    n_vertices: int,
+    avg_degree: int = 8,
+    seed: int = 42,
 ) -> CorrelationAwareGraph:
     """Build a correlation-aware graph with random sparse connectivity."""
     rng = np.random.default_rng(seed)
@@ -170,14 +172,16 @@ def main(argv: list[str]) -> int:
 
     print("## chiplet_gen")
     print(f"{'operation':<40}  {'median ms':>12}  {'min ms':>12}")
-    print(f"{'-'*40}  {'-'*12}  {'-'*12}")
+    print(f"{'-' * 40}  {'-' * 12}  {'-' * 12}")
 
     rows: list[dict[str, object]] = []
 
     # Note: make_torus signature is (rows, cols) — we sweep small grids.
-    for label, (r, c) in [("make_torus(2, 2)", (2, 2)),
-                          ("make_torus(4, 4)", (4, 4)),
-                          ("make_torus(8, 8)", (8, 8))]:
+    for label, (r, c) in [
+        ("make_torus(2, 2)", (2, 2)),
+        ("make_torus(4, 4)", (4, 4)),
+        ("make_torus(8, 8)", (8, 8)),
+    ]:
         med, mn = bench_make_torus(r, c)
         print(f"{label:<40}  {med:>12.3f}  {mn:>12.3f}")
         rows.append({"suite": "chiplet_gen", "op": label, "median_ms": med, "min_ms": mn})
@@ -212,7 +216,7 @@ def main(argv: list[str]) -> int:
     print("# ~99 ms (was many minutes). #64 multi-lang port now")
     print("# marginal (1-3 µs FFI vs 99 ms compute) — see backends.")
     print(f"{'operation':<40}  {'median ms':>12}  {'min ms':>12}")
-    print(f"{'-'*40}  {'-'*12}  {'-'*12}")
+    print(f"{'-' * 40}  {'-' * 12}  {'-' * 12}")
     for n_v, n_p in [(50, 2), (100, 4), (200, 4)]:
         try:
             med, mn = bench_partition(n_v, n_p)
@@ -259,8 +263,7 @@ def main(argv: list[str]) -> int:
             "available": True,
             "used": False,
             "exemption": (
-                "Same rationale as Rust. Go cgo handover + ctypes "
-                "marshalling is ~1-3 µs per call."
+                "Same rationale as Rust. Go cgo handover + ctypes marshalling is ~1-3 µs per call."
             ),
         },
         "mojo": {

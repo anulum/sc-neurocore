@@ -14,6 +14,7 @@ Assigns independent LFSR seeds per partition to prevent cross-node
 correlation blow-up.  Includes a load balancer that monitors inter-partition
 SCC and migrates neurons to minimise boundary correlation.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -25,6 +26,7 @@ import numpy as np
 
 # ── Hierarchy Levels ─────────────────────────────────────────────────
 
+
 class HierarchyLevel(Enum):
     RACK = "rack"
     NODE = "node"
@@ -34,17 +36,19 @@ class HierarchyLevel(Enum):
 
 # ── CSR Sparse Graph ─────────────────────────────────────────────────
 
+
 @dataclass
 class CSRGraph:
     """Compressed Sparse Row graph for billion-neuron scale.
 
     O(1) adjacency access per vertex, O(E) total memory.
     """
+
     num_vertices: int
-    indptr: np.ndarray    # shape (num_vertices + 1,)
-    indices: np.ndarray   # shape (nnz,)
-    conn_weights: np.ndarray   # shape (nnz,)
-    scc_weights: np.ndarray    # shape (nnz,)
+    indptr: np.ndarray  # shape (num_vertices + 1,)
+    indices: np.ndarray  # shape (nnz,)
+    conn_weights: np.ndarray  # shape (nnz,)
+    scc_weights: np.ndarray  # shape (nnz,)
     vertex_weights: np.ndarray  # shape (num_vertices,)
 
     @classmethod
@@ -87,16 +91,16 @@ class CSRGraph:
         )
 
     def neighbors(self, v: int) -> np.ndarray:
-        return self.indices[self.indptr[v]:self.indptr[v + 1]]
+        return self.indices[self.indptr[v] : self.indptr[v + 1]]
 
     def degree(self, v: int) -> int:
         return int(self.indptr[v + 1] - self.indptr[v])
 
     def edge_conn(self, v: int) -> np.ndarray:
-        return self.conn_weights[self.indptr[v]:self.indptr[v + 1]]
+        return self.conn_weights[self.indptr[v] : self.indptr[v + 1]]
 
     def edge_scc(self, v: int) -> np.ndarray:
-        return self.scc_weights[self.indptr[v]:self.indptr[v + 1]]
+        return self.scc_weights[self.indptr[v] : self.indptr[v + 1]]
 
     @property
     def num_edges(self) -> int:
@@ -106,6 +110,7 @@ class CSRGraph:
 @dataclass
 class CorrelationEdge:
     """An edge with both connection weight and SC correlation weight."""
+
     u: int
     v: int
     conn_weight: float = 1.0
@@ -122,6 +127,7 @@ class CorrelationEdge:
 # a clear error if the user asks for a missing backend.
 try:
     from sc_neurocore_engine import py_kl_refine as _rust_kl_refine
+
     _HAS_RUST_KL_REFINE = True
 except (ImportError, AttributeError):
     _rust_kl_refine = None
@@ -148,9 +154,13 @@ def _ensure_julia_kl_refine_loaded() -> bool:
     except ImportError:
         return False
     import os as _os
+
     jl_path = _os.path.join(
         _os.path.dirname(_os.path.dirname(__file__)),
-        "accel", "julia", "chiplet", "kl_refine.jl",
+        "accel",
+        "julia",
+        "chiplet",
+        "kl_refine.jl",
     )
     if not _os.path.isfile(jl_path):
         return False
@@ -170,9 +180,13 @@ def _ensure_go_kl_refine_loaded() -> bool:
         return True
     import ctypes
     import os as _os
+
     so_path = _os.path.join(
         _os.path.dirname(_os.path.dirname(__file__)),
-        "accel", "go", "partition", "libpartition.so",
+        "accel",
+        "go",
+        "partition",
+        "libpartition.so",
     )
     if not _os.path.isfile(so_path):
         return False
@@ -184,15 +198,18 @@ def _ensure_go_kl_refine_loaded() -> bool:
     if fn is None:
         return False
     fn.argtypes = [
-        ctypes.POINTER(ctypes.c_int64),    # adj_offsets
-        ctypes.POINTER(ctypes.c_int32),    # adj_neighbours
-        ctypes.POINTER(ctypes.c_double),   # adj_scc_abs
-        ctypes.POINTER(ctypes.c_double),   # vertex_weights
-        ctypes.POINTER(ctypes.c_int32),    # part_map (mut)
-        ctypes.POINTER(ctypes.c_int32),    # parts_concat
-        ctypes.POINTER(ctypes.c_int64),    # parts_offsets
-        ctypes.c_int64, ctypes.c_int64,
-        ctypes.c_int32, ctypes.c_int32, ctypes.c_double,
+        ctypes.POINTER(ctypes.c_int64),  # adj_offsets
+        ctypes.POINTER(ctypes.c_int32),  # adj_neighbours
+        ctypes.POINTER(ctypes.c_double),  # adj_scc_abs
+        ctypes.POINTER(ctypes.c_double),  # vertex_weights
+        ctypes.POINTER(ctypes.c_int32),  # part_map (mut)
+        ctypes.POINTER(ctypes.c_int32),  # parts_concat
+        ctypes.POINTER(ctypes.c_int64),  # parts_offsets
+        ctypes.c_int64,
+        ctypes.c_int64,
+        ctypes.c_int32,
+        ctypes.c_int32,
+        ctypes.c_double,
     ]
     fn.restype = ctypes.c_uint64
     _go_kl_refine_lib = lib
@@ -207,9 +224,13 @@ def _ensure_mojo_kl_refine_loaded() -> bool:
         return True
     import ctypes
     import os as _os
+
     so_path = _os.path.join(
         _os.path.dirname(_os.path.dirname(__file__)),
-        "accel", "mojo", "partition", "libpartition.so",
+        "accel",
+        "mojo",
+        "partition",
+        "libpartition.so",
     )
     if not _os.path.isfile(so_path):
         return False
@@ -222,10 +243,18 @@ def _ensure_mojo_kl_refine_loaded() -> bool:
         return False
     # Mojo @export takes raw Int addresses (no parametric pointers).
     fn.argtypes = [
-        ctypes.c_int64, ctypes.c_int64, ctypes.c_int64, ctypes.c_int64,
-        ctypes.c_int64, ctypes.c_int64, ctypes.c_int64,
-        ctypes.c_int64, ctypes.c_int64,
-        ctypes.c_int32, ctypes.c_int32, ctypes.c_double,
+        ctypes.c_int64,
+        ctypes.c_int64,
+        ctypes.c_int64,
+        ctypes.c_int64,
+        ctypes.c_int64,
+        ctypes.c_int64,
+        ctypes.c_int64,
+        ctypes.c_int64,
+        ctypes.c_int64,
+        ctypes.c_int32,
+        ctypes.c_int32,
+        ctypes.c_double,
     ]
     fn.restype = ctypes.c_uint64
     _mojo_kl_refine_lib = lib
@@ -242,12 +271,15 @@ class CorrelationAwareGraph:
     access. Was O(E) per call (linear scan), which made the
     partitioner O(V²·E) on V vertices — see commit notes for #65.
     """
+
     num_vertices: int
     edges: List[CorrelationEdge] = field(default_factory=list)
     vertex_weights: Dict[int, float] = field(default_factory=dict)
     # Lazy O(1) lookup; rebuilt if the caller mutates `edges`.
     _edge_cache: Optional[Dict[Tuple[int, int], CorrelationEdge]] = field(
-        default=None, repr=False, compare=False,
+        default=None,
+        repr=False,
+        compare=False,
     )
 
     def _ensure_edge_cache(self) -> Dict[Tuple[int, int], CorrelationEdge]:
@@ -279,7 +311,9 @@ class CorrelationAwareGraph:
     def to_csr(self) -> CSRGraph:
         """Convert to CSR representation."""
         return CSRGraph.from_edge_list(
-            self.num_vertices, self.edges, self.vertex_weights or None,
+            self.num_vertices,
+            self.edges,
+            self.vertex_weights or None,
         )
 
 
@@ -334,14 +368,10 @@ class HierarchicalPartitioner:
         # `benchmarks/results/bench_kl_refine.json`.
         valid = ("auto", "rust", "julia", "go", "mojo", "python")
         if refine_backend not in valid:
-            raise ValueError(
-                f"refine_backend must be one of {valid}, got {refine_backend!r}"
-            )
+            raise ValueError(f"refine_backend must be one of {valid}, got {refine_backend!r}")
         self.refine_backend = refine_backend
 
-    def partition(
-        self, graph: CorrelationAwareGraph
-    ) -> Tuple[List[List[int]], List[int]]:
+    def partition(self, graph: CorrelationAwareGraph) -> Tuple[List[List[int]], List[int]]:
         """Partition the graph. Returns (partitions, seeds)."""
         vertices = list(range(graph.num_vertices))
         if self.num_partitions <= 1:
@@ -463,9 +493,7 @@ class HierarchicalPartitioner:
 
         return coarsened, mapping
 
-    def _uncoarsen(
-        self, partition: List[int], mapping: Dict[int, List[int]]
-    ) -> List[int]:
+    def _uncoarsen(self, partition: List[int], mapping: Dict[int, List[int]]) -> List[int]:
         """Expand coarsened partition back to original vertices."""
         result = []
         for v in partition:
@@ -495,8 +523,7 @@ class HierarchicalPartitioner:
             in_part_neighbours = [n for n in adj.get(v, []) if n in vset]
             degree = len(in_part_neighbours)
             scc_sum = sum(
-                abs(graph.edge_scc(v, n)) * self.correlation_penalty
-                for n in in_part_neighbours
+                abs(graph.edge_scc(v, n)) * self.correlation_penalty for n in in_part_neighbours
             )
             scores[v] = degree - scc_sum
 
@@ -510,8 +537,13 @@ class HierarchicalPartitioner:
         adj: Dict[int, List[int]],
         graph: CorrelationAwareGraph,
     ) -> Tuple[
-        np.ndarray, np.ndarray, np.ndarray, np.ndarray,
-        np.ndarray, np.ndarray, np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
     ]:
         """Pack the per-partition state into the flat CSR-style buffers
         every multi-language KL refine kernel expects:
@@ -558,12 +590,19 @@ class HierarchicalPartitioner:
             for k, v in enumerate(part):
                 parts_concat[base + k] = v
         return (
-            offsets, neighbours, scc_abs, vw, part_map,
-            parts_concat, parts_offsets,
+            offsets,
+            neighbours,
+            scc_abs,
+            vw,
+            part_map,
+            parts_concat,
+            parts_offsets,
         )
 
     def _decode_part_map(
-        self, part_map: np.ndarray, n_parts: int,
+        self,
+        part_map: np.ndarray,
+        n_parts: int,
     ) -> List[List[int]]:
         """Decode flat part_map[V] back into List[List[int]]."""
         out: List[List[int]] = [[] for _ in range(n_parts)]
@@ -586,12 +625,22 @@ class HierarchicalPartitioner:
                 "not available; install sc_neurocore_engine wheel."
             )
         offsets, neighbours, scc_abs, vw, pm0, pc, po = self._encode_csr(
-            partitions, adj, graph,
+            partitions,
+            adj,
+            graph,
         )
         n_parts = len(partitions)
         new_pm, _moves = _rust_kl_refine(
-            offsets, neighbours, scc_abs, vw, pm0, pc, po,
-            n_parts, int(self.kl_iterations), float(self.correlation_penalty),
+            offsets,
+            neighbours,
+            scc_abs,
+            vw,
+            pm0,
+            pc,
+            po,
+            n_parts,
+            int(self.kl_iterations),
+            float(self.correlation_penalty),
         )
         return self._decode_part_map(new_pm, n_parts)
 
@@ -604,16 +653,25 @@ class HierarchicalPartitioner:
         """Julia dispatch — bit-exact parity with Python + Rust."""
         if _julia_kl_refine is None:
             raise RuntimeError(
-                "Julia KL refine backend not loaded — call "
-                "_ensure_julia_kl_refine_loaded() first."
+                "Julia KL refine backend not loaded — call _ensure_julia_kl_refine_loaded() first."
             )
         offsets, neighbours, scc_abs, vw, pm0, pc, po = self._encode_csr(
-            partitions, adj, graph,
+            partitions,
+            adj,
+            graph,
         )
         n_parts = len(partitions)
         new_pm = _julia_kl_refine(
-            offsets, neighbours, scc_abs, vw, pm0.copy(), pc, po,
-            n_parts, int(self.kl_iterations), float(self.correlation_penalty),
+            offsets,
+            neighbours,
+            scc_abs,
+            vw,
+            pm0.copy(),
+            pc,
+            po,
+            n_parts,
+            int(self.kl_iterations),
+            float(self.correlation_penalty),
         )
         return self._decode_part_map(np.asarray(new_pm, dtype=np.int32), n_parts)
 
@@ -627,8 +685,11 @@ class HierarchicalPartitioner:
         if _go_kl_refine_lib is None:
             raise RuntimeError("Go KL refine .so not loaded")
         import ctypes
+
         offsets, neighbours, scc_abs, vw, pm0, pc, po = self._encode_csr(
-            partitions, adj, graph,
+            partitions,
+            adj,
+            graph,
         )
         n_parts = len(partitions)
         pm = pm0.copy()
@@ -640,8 +701,10 @@ class HierarchicalPartitioner:
             pm.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
             pc.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
             po.ctypes.data_as(ctypes.POINTER(ctypes.c_int64)),
-            ctypes.c_int64(vw.size), ctypes.c_int64(scc_abs.size),
-            ctypes.c_int32(n_parts), ctypes.c_int32(self.kl_iterations),
+            ctypes.c_int64(vw.size),
+            ctypes.c_int64(scc_abs.size),
+            ctypes.c_int32(n_parts),
+            ctypes.c_int32(self.kl_iterations),
             ctypes.c_double(self.correlation_penalty),
         )
         return self._decode_part_map(pm, n_parts)
@@ -656,16 +719,24 @@ class HierarchicalPartitioner:
         if _mojo_kl_refine_lib is None:
             raise RuntimeError("Mojo KL refine .so not loaded")
         offsets, neighbours, scc_abs, vw, pm0, pc, po = self._encode_csr(
-            partitions, adj, graph,
+            partitions,
+            adj,
+            graph,
         )
         n_parts = len(partitions)
         pm = pm0.copy()
         _mojo_kl_refine_lib.kl_refine_c(
-            offsets.ctypes.data, neighbours.ctypes.data,
-            scc_abs.ctypes.data, vw.ctypes.data, pm.ctypes.data,
-            pc.ctypes.data, po.ctypes.data,
-            vw.size, scc_abs.size,
-            n_parts, int(self.kl_iterations),
+            offsets.ctypes.data,
+            neighbours.ctypes.data,
+            scc_abs.ctypes.data,
+            vw.ctypes.data,
+            pm.ctypes.data,
+            pc.ctypes.data,
+            po.ctypes.data,
+            vw.size,
+            scc_abs.size,
+            n_parts,
+            int(self.kl_iterations),
             float(self.correlation_penalty),
         )
         return self._decode_part_map(pm, n_parts)
@@ -701,7 +772,11 @@ class HierarchicalPartitioner:
                     if len(part) <= 1:
                         continue
                     costs = self._per_partition_cost(
-                        v, n_parts, part_map, adj, graph,
+                        v,
+                        n_parts,
+                        part_map,
+                        adj,
+                        graph,
                     )
                     current_cost = costs[i]
                     best_target = i
@@ -744,9 +819,7 @@ class HierarchicalPartitioner:
         weight_to: List[float] = [0.0] * n_parts
         total_weight = 0.0
         for n in adj.get(v, []):
-            contribution = vw * (
-                1.0 + abs(graph.edge_scc(v, n)) * self.correlation_penalty
-            )
+            contribution = vw * (1.0 + abs(graph.edge_scc(v, n)) * self.correlation_penalty)
             total_weight += contribution
             tgt = part_map.get(n, -1)
             if 0 <= tgt < n_parts:
@@ -827,6 +900,7 @@ class HierarchicalPartitioner:
 
 # ── Metrics ──────────────────────────────────────────────────────────
 
+
 def _build_part_map(partitions: List[List[int]]) -> Dict[int, int]:
     part_map: Dict[int, int] = {}
     for i, part in enumerate(partitions):
@@ -868,8 +942,7 @@ def calculate_mean_boundary_scc(
     """Mean SCC on boundary edges."""
     part_map = _build_part_map(partitions)
     sccs = [
-        abs(e.scc_weight) for e in graph.edges
-        if part_map.get(e.u, -1) != part_map.get(e.v, -1)
+        abs(e.scc_weight) for e in graph.edges if part_map.get(e.u, -1) != part_map.get(e.v, -1)
     ]
     return float(np.mean(sccs)) if sccs else 0.0
 
@@ -881,8 +954,7 @@ def calculate_total_boundary_scc(
     """Total SCC on boundary edges."""
     part_map = _build_part_map(partitions)
     return sum(
-        abs(e.scc_weight) for e in graph.edges
-        if part_map.get(e.u, -1) != part_map.get(e.v, -1)
+        abs(e.scc_weight) for e in graph.edges if part_map.get(e.u, -1) != part_map.get(e.v, -1)
     )
 
 
@@ -924,6 +996,7 @@ def calculate_comm_volume(
 
 # ── Ghost/Halo Cell Manager ──────────────────────────────────────────
 
+
 class GhostCellManager:
     """Computes halo/ghost regions for boundary communication.
 
@@ -959,9 +1032,11 @@ class GhostCellManager:
 
 # ── Boundary Sync Protocol ───────────────────────────────────────────
 
+
 @dataclass
 class BoundarySyncConfig:
     """Configuration for boundary synchronization."""
+
     decorrelation_buffer_bits: int = 32
     sync_interval_timesteps: int = 1
     max_boundary_scc_budget: float = 0.1
@@ -1024,9 +1099,11 @@ class BoundarySyncProtocol:
 
 # ── Correlation-Aware Load Balancer ──────────────────────────────────
 
+
 @dataclass
 class LoadMetrics:
     """Per-partition load metrics."""
+
     partition_id: int
     vertex_count: int
     weight_sum: float
@@ -1037,6 +1114,7 @@ class LoadMetrics:
 @dataclass
 class MigrationRecommendation:
     """Recommendation to migrate a vertex between partitions."""
+
     vertex: int
     from_partition: int
     to_partition: int
@@ -1073,17 +1151,19 @@ class CorrelationLoadBalancer:
             bscc = 0.0
             for v in part:
                 for e in graph.edges:
-                    if (e.u == v or e.v == v):
+                    if e.u == v or e.v == v:
                         other = e.v if e.u == v else e.u
                         if part_map.get(other, i) != i:
                             bscc += abs(e.scc_weight)
-            metrics.append(LoadMetrics(
-                partition_id=i,
-                vertex_count=len(part),
-                weight_sum=weight_sum,
-                boundary_scc_sum=bscc,
-                ghost_count=len(halos.get(i, set())),
-            ))
+            metrics.append(
+                LoadMetrics(
+                    partition_id=i,
+                    vertex_count=len(part),
+                    weight_sum=weight_sum,
+                    boundary_scc_sum=bscc,
+                    ghost_count=len(halos.get(i, set())),
+                )
+            )
         return metrics
 
     def recommend_migrations(
@@ -1101,7 +1181,9 @@ class CorrelationLoadBalancer:
         sizes = [m.vertex_count for m in metrics]
         avg = sum(sizes) / len(sizes) if sizes else 1
         overloaded = [m for m in metrics if m.vertex_count > avg * (1 + self.imbalance_threshold)]
-        underloaded = [m for m in metrics if m.vertex_count < avg * (1 - self.imbalance_threshold * 0.5)]
+        underloaded = [
+            m for m in metrics if m.vertex_count < avg * (1 - self.imbalance_threshold * 0.5)
+        ]
 
         if not overloaded or not underloaded:
             return []
@@ -1115,14 +1197,17 @@ class CorrelationLoadBalancer:
                 if len(recs) >= max_recommendations:
                     break
                 boundary_neighbors = [
-                    part_map[n] for n in adj.get(v, []) if part_map.get(n, -1) != over_m.partition_id
+                    part_map[n]
+                    for n in adj.get(v, [])
+                    if part_map.get(n, -1) != over_m.partition_id
                 ]
                 if not boundary_neighbors:
                     continue
                 best_target = max(set(boundary_neighbors), key=boundary_neighbors.count)
                 if any(m.partition_id == best_target for m in underloaded):
                     scc_cost = sum(
-                        abs(graph.edge_scc(v, n)) for n in adj.get(v, [])
+                        abs(graph.edge_scc(v, n))
+                        for n in adj.get(v, [])
                         if part_map.get(n, -1) != over_m.partition_id
                     )
                     gain = 1.0 - scc_cost * self.scc_weight
@@ -1135,6 +1220,7 @@ class CorrelationLoadBalancer:
 
 
 # ── Rank Mapper ──────────────────────────────────────────────────────
+
 
 class RankMapper:
     """Maps partitions to MPI ranks with topology awareness."""
@@ -1185,9 +1271,11 @@ class RankMapper:
 
 # ── Partition Report ─────────────────────────────────────────────────
 
+
 @dataclass
 class PartitionReport:
     """Report from a partitioning run."""
+
     num_partitions: int
     partition_sizes: List[int]
     edge_cut: int

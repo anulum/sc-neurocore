@@ -99,13 +99,13 @@ def bench_check_all_violations() -> tuple[float, float]:
     def f() -> None:
         # Trigger every property in one call
         mon.check(
-            current=limits.max_current + 1,           # P1
-            voltage=limits.max_voltage + 1,           # P1
-            coherence=0,                              # P1 + P2 (drops below prev)
-            popcount_k=limits.sc_denom + 1,           # P3
-            sc_add_result=limits.sc_denom + 1,        # P4
-            membrane=limits.lif_v_max + 1,            # P5
-            scc_numerator=999_999,                    # P6
+            current=limits.max_current + 1,  # P1
+            voltage=limits.max_voltage + 1,  # P1
+            coherence=0,  # P1 + P2 (drops below prev)
+            popcount_k=limits.sc_denom + 1,  # P3
+            sc_add_result=limits.sc_denom + 1,  # P4
+            membrane=limits.lif_v_max + 1,  # P5
+            scc_numerator=999_999,  # P6
             scc_denominator=1,
         )
         mon.reset()
@@ -116,9 +116,7 @@ def bench_check_all_violations() -> tuple[float, float]:
 
 
 def main(argv: list[str]) -> int:
-    parser = argparse.ArgumentParser(
-        description="SafetyMonitor.check() wall-clock benchmark."
-    )
+    parser = argparse.ArgumentParser(description="SafetyMonitor.check() wall-clock benchmark.")
     parser.add_argument("--json", type=Path, default=None)
     args = parser.parse_args(argv)
 
@@ -127,7 +125,7 @@ def main(argv: list[str]) -> int:
     print(f"# Python: {platform.python_version()}, platform: {platform.platform()}")
     print()
     print(f"{'scenario':<32}  {'median ns':>12}  {'min ns':>12}")
-    print(f"{'-'*32}  {'-'*12}  {'-'*12}")
+    print(f"{'-' * 32}  {'-' * 12}  {'-' * 12}")
 
     scenarios = {
         "no violation (defaults)": bench_check_no_violation,
@@ -139,12 +137,14 @@ def main(argv: list[str]) -> int:
     for name, fn in scenarios.items():
         median_ns, min_ns = fn()
         print(f"{name:<32}  {median_ns:>12.1f}  {min_ns:>12.1f}")
-        rows.append({
-            "scenario": name,
-            "median_ns_per_call": median_ns,
-            "min_ns_per_call": min_ns,
-            "median_us_per_call": median_ns / 1000.0,
-        })
+        rows.append(
+            {
+                "scenario": name,
+                "median_ns_per_call": median_ns,
+                "min_ns_per_call": min_ns,
+                "median_us_per_call": median_ns / 1000.0,
+            }
+        )
 
     # Multi-language backend status — all EXEMPT from acceleration
     # because SafetyMonitor.check() is sub-microsecond and FFI
@@ -175,8 +175,7 @@ def main(argv: list[str]) -> int:
             "available": True,
             "used": False,
             "exemption": (
-                "FFI overhead (~1-3 µs via cgo + ctypes) exceeds "
-                "compute time. Exemption applies."
+                "FFI overhead (~1-3 µs via cgo + ctypes) exceeds compute time. Exemption applies."
             ),
         },
         "mojo": {

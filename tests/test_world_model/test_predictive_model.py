@@ -71,9 +71,14 @@ def test_lgssm_validates_shapes() -> None:
     """
     with pytest.raises(ValueError, match="C must be"):
         LinearGaussianSSM(
-            A=np.eye(3), B=np.zeros((3, 0)), C=np.eye(2),
-            D=np.zeros((2, 0)), Q=np.eye(3), R=np.eye(2),
-            mu_0=np.zeros(3), Sigma_0=np.eye(3),
+            A=np.eye(3),
+            B=np.zeros((3, 0)),
+            C=np.eye(2),
+            D=np.zeros((2, 0)),
+            Q=np.eye(3),
+            R=np.eye(2),
+            mu_0=np.zeros(3),
+            Sigma_0=np.eye(3),
         )
 
 
@@ -81,9 +86,14 @@ def test_lgssm_rejects_non_symmetric_covariance() -> None:
     Q = np.array([[1.0, 0.5], [-0.5, 1.0]])  # not symmetric
     with pytest.raises(ValueError, match="must be symmetric"):
         LinearGaussianSSM(
-            A=np.eye(2), B=np.zeros((2, 0)), C=np.eye(2),
-            D=np.zeros((2, 0)), Q=Q, R=np.eye(2),
-            mu_0=np.zeros(2), Sigma_0=np.eye(2),
+            A=np.eye(2),
+            B=np.zeros((2, 0)),
+            C=np.eye(2),
+            D=np.zeros((2, 0)),
+            Q=Q,
+            R=np.eye(2),
+            mu_0=np.zeros(2),
+            Sigma_0=np.eye(2),
         )
 
 
@@ -255,9 +265,7 @@ def test_em_log_likelihood_monotone_non_decreasing() -> None:
     # Allow tiny round-off (1e-6 absolute) — EM is monotone in exact
     # arithmetic but float rounding can shave a fraction off.
     diffs = np.diff(history)
-    assert np.all(diffs > -1e-6), (
-        f"EM log-lik not monotone: history={history}"
-    )
+    assert np.all(diffs > -1e-6), f"EM log-lik not monotone: history={history}"
 
 
 def test_em_improves_held_out_log_likelihood() -> None:
@@ -298,8 +306,7 @@ def test_em_improves_held_out_log_likelihood() -> None:
     learned_ll = KalmanFilter(learned).filter(obs_test).log_likelihood
 
     assert learned_ll > init_ll, (
-        f"EM did not improve test log-likelihood: "
-        f"init={init_ll:.2f}, learned={learned_ll:.2f}"
+        f"EM did not improve test log-likelihood: init={init_ll:.2f}, learned={learned_ll:.2f}"
     )
 
 
@@ -327,7 +334,9 @@ def test_predict_with_cov_grows_uncertainty() -> None:
     m = PredictiveWorldModel(state_dim=2, action_dim=1, seed=1)
     Sigma_0 = np.eye(2) * 0.01
     _, Sigma_1 = m.predict_next_state_with_cov(
-        np.zeros(2), Sigma_0, np.zeros(1),
+        np.zeros(2),
+        Sigma_0,
+        np.zeros(1),
     )
     # trace(Sigma_1) > trace(Sigma_0) under non-zero Q
     assert np.trace(Sigma_1) > np.trace(Sigma_0)
@@ -393,7 +402,9 @@ def test_rust_parity_covariances_match_python() -> None:
     ru_result = KalmanFilter(model).filter(obs, backend="rust")
 
     np.testing.assert_allclose(
-        ru_result.covariances, py_result.covariances, atol=1e-9,
+        ru_result.covariances,
+        py_result.covariances,
+        atol=1e-9,
     )
 
 
@@ -406,9 +417,7 @@ def test_rust_parity_log_likelihood_matches_python() -> None:
     py_ll = KalmanFilter(model).filter(obs, backend="python").log_likelihood
     ru_ll = KalmanFilter(model).filter(obs, backend="rust").log_likelihood
 
-    assert abs(ru_ll - py_ll) < 1e-9, (
-        f"log-likelihood mismatch: python={py_ll}, rust={ru_ll}"
-    )
+    assert abs(ru_ll - py_ll) < 1e-9, f"log-likelihood mismatch: python={py_ll}, rust={ru_ll}"
 
 
 @pytest.mark.skipif(not _HAS_RUST_LGSSM, reason="Rust LGSSM backend not built")
@@ -451,9 +460,14 @@ def _julia_available() -> bool:
     if _il_util.find_spec("juliacall") is None:
         return False
     import os as _os
+
     jl_path = _os.path.join(
         _os.path.dirname(_os.path.dirname(_os.path.dirname(__file__))),
-        "src", "sc_neurocore", "accel", "julia", "world_model",
+        "src",
+        "sc_neurocore",
+        "accel",
+        "julia",
+        "world_model",
         "predictive_model.jl",
     )
     return _os.path.isfile(jl_path)
@@ -500,9 +514,7 @@ def test_julia_parity_log_likelihood_matches_python() -> None:
     py_ll = KalmanFilter(model).filter(obs, backend="python").log_likelihood
     ju_ll = KalmanFilter(model).filter(obs, backend="julia").log_likelihood
 
-    assert abs(ju_ll - py_ll) < 1e-9, (
-        f"log-likelihood mismatch: python={py_ll}, julia={ju_ll}"
-    )
+    assert abs(ju_ll - py_ll) < 1e-9, f"log-likelihood mismatch: python={py_ll}, julia={ju_ll}"
 
 
 @pytest.mark.skipif(not _julia_available(), reason="Julia LGSSM backend unavailable")
@@ -541,9 +553,15 @@ def test_julia_backend_unavailable_raises_when_explicitly_requested() -> None:
 def _go_available() -> bool:
     """Check liblgssm.so is present without forcing the load."""
     import os as _os
+
     so_path = _os.path.join(
         _os.path.dirname(_os.path.dirname(_os.path.dirname(__file__))),
-        "src", "sc_neurocore", "accel", "go", "lgssm", "liblgssm.so",
+        "src",
+        "sc_neurocore",
+        "accel",
+        "go",
+        "lgssm",
+        "liblgssm.so",
     )
     return _os.path.isfile(so_path)
 
@@ -551,8 +569,8 @@ def _go_available() -> bool:
 @pytest.mark.skipif(
     not _go_available(),
     reason="Go shared lib (accel/go/lgssm/liblgssm.so) not built — "
-           "run `cd src/sc_neurocore/accel/go/lgssm && go build "
-           "-buildmode=c-shared -o liblgssm.so lgssm.go`",
+    "run `cd src/sc_neurocore/accel/go/lgssm && go build "
+    "-buildmode=c-shared -o liblgssm.so lgssm.go`",
 )
 def test_go_parity_means_match_python() -> None:
     """Go filtered means must match Python to atol=1e-9."""
@@ -587,9 +605,7 @@ def test_go_parity_log_likelihood_matches_python() -> None:
     py_ll = KalmanFilter(model).filter(obs, backend="python").log_likelihood
     go_ll = KalmanFilter(model).filter(obs, backend="go").log_likelihood
 
-    assert abs(go_ll - py_ll) < 1e-9, (
-        f"log-likelihood mismatch: python={py_ll}, go={go_ll}"
-    )
+    assert abs(go_ll - py_ll) < 1e-9, f"log-likelihood mismatch: python={py_ll}, go={go_ll}"
 
 
 @pytest.mark.skipif(not _go_available(), reason="Go LGSSM backend unavailable")

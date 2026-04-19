@@ -132,13 +132,13 @@ def test_qa_simulated_annealing_returns_dict_keys() -> None:
         j_i,
         j_j,
         j_values,
-        4,    # n_qubits
+        4,  # n_qubits
         0.0,  # offset
         100,  # n_sweeps
-        2,    # num_reads
+        2,  # num_reads
         0.1,  # beta_start
         5.0,  # beta_end
-        42,   # seed
+        42,  # seed
     )
     assert isinstance(result, dict)
     for key in ("best_spins", "best_energy"):
@@ -157,9 +157,7 @@ def test_qa_simulated_annealing_returns_dict_keys() -> None:
 def test_dna_symbol_importable_from_toplevel(sym: str) -> None:
     """`from sc_neurocore_engine import py_dna_*` must resolve."""
     obj = getattr(_engine, sym, None)
-    assert obj is not None, (
-        f"{sym} not re-exported from sc_neurocore_engine.__init__"
-    )
+    assert obj is not None, f"{sym} not re-exported from sc_neurocore_engine.__init__"
 
 
 @pytest.mark.skipif(not _has_inner_dna(), reason="engine wheel built without DNA bindings")
@@ -188,6 +186,7 @@ def test_dna_rust_available_flag_true() -> None:
 def test_bridges_quantum_annealing_HAS_RUST_QA_lit() -> None:
     """Downstream consumer: bridges.quantum_annealing._HAS_RUST_QA must flip True."""
     from sc_neurocore.bridges.quantum_annealing import _HAS_RUST_QA
+
     assert _HAS_RUST_QA is True
 
 
@@ -195,4 +194,5 @@ def test_bridges_quantum_annealing_HAS_RUST_QA_lit() -> None:
 def test_bridges_dna_mapper_HAS_RUST_DNA_lit() -> None:
     """Downstream consumer: bridges.dna_mapper._HAS_RUST_DNA must flip True."""
     from sc_neurocore.bridges.dna_mapper import _HAS_RUST_DNA
+
     assert _HAS_RUST_DNA is True

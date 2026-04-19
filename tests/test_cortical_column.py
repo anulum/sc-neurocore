@@ -81,7 +81,10 @@ class TestCorticalColumn:
         # Cut both the background drive and let the network alone:
         # nothing should fire because there is no feedforward input.
         col = CorticalColumn(
-            scale=0.02, scale_correction=False, bg_rate=0.0, seed=42,
+            scale=0.02,
+            scale_correction=False,
+            bg_rate=0.0,
+            seed=42,
         )
         rasters = col.simulate(duration_ms=100.0, dt=0.1)
         total = sum(int(np.count_nonzero(rasters[p])) for p in POPULATIONS)
@@ -89,7 +92,10 @@ class TestCorticalColumn:
 
     def test_reset_state_clears_voltages_and_buffers(self):
         col = CorticalColumn(
-            scale=0.02, scale_correction=False, bg_rate=0.0, seed=42,
+            scale=0.02,
+            scale_correction=False,
+            bg_rate=0.0,
+            seed=42,
         )
         col.simulate(duration_ms=20.0, dt=0.1)
         col.reset_state()
@@ -101,7 +107,10 @@ class TestCorticalColumn:
 
     def test_population_rates_drops_burn_in(self):
         col = CorticalColumn(
-            scale=0.02, scale_correction=False, bg_rate=0.0, seed=42,
+            scale=0.02,
+            scale_correction=False,
+            bg_rate=0.0,
+            seed=42,
         )
         rasters = col.simulate(duration_ms=200.0, dt=0.1)
         rates = col.population_rates(rasters, dt=0.1, burn_in_ms=100.0)
@@ -113,7 +122,10 @@ class TestCorticalColumn:
         # slice is empty and the helper must return 0.0 instead of
         # crashing on `arr.shape[1]`.
         col = CorticalColumn(
-            scale=0.02, scale_correction=False, bg_rate=0.0, seed=42,
+            scale=0.02,
+            scale_correction=False,
+            bg_rate=0.0,
+            seed=42,
         )
         rasters = col.simulate(duration_ms=20.0, dt=0.1)
         rates = col.population_rates(rasters, dt=0.1, burn_in_ms=200.0)
@@ -137,13 +149,14 @@ class TestCorticalColumn:
         # (≈ Σ_s p[t,s] · N_s_full). We allow a 5 % tolerance for
         # multapse rounding noise across seeds.
         col = CorticalColumn(
-            scale=0.1, scale_correction=True,
-            delay_distribution=False, seed=42,
+            scale=0.1,
+            scale_correction=True,
+            delay_distribution=False,
+            seed=42,
         )
         for ti, target in enumerate(POPULATIONS):
             expected = sum(
-                CONN_PROBS[ti, sj] * FULL_SIZES[POPULATIONS[sj]]
-                for sj in range(len(POPULATIONS))
+                CONN_PROBS[ti, sj] * FULL_SIZES[POPULATIONS[sj]] for sj in range(len(POPULATIONS))
             )
             measured = col.total_indegree(target)
             assert abs(measured - expected) / expected < 0.05, (
@@ -173,9 +186,7 @@ class TestDeterminism:
         a = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=1)
         b = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=2)
         # At least one population must have different initial voltages.
-        differs = any(
-            not np.array_equal(a.v[p], b.v[p]) for p in POPULATIONS
-        )
+        differs = any(not np.array_equal(a.v[p], b.v[p]) for p in POPULATIONS)
         assert differs
 
     def test_global_numpy_seed_does_not_leak(self):
@@ -196,7 +207,14 @@ class TestConnectivity:
     def test_populations_constant_matches_table5(self):
         # Order is significant — many tests / docs rely on it.
         assert POPULATIONS == (
-            "L23e", "L23i", "L4e", "L4i", "L5e", "L5i", "L6e", "L6i",
+            "L23e",
+            "L23i",
+            "L4e",
+            "L4i",
+            "L5e",
+            "L5i",
+            "L6e",
+            "L6i",
         )
 
     def test_conn_probs_shape_and_known_entries(self):
@@ -221,7 +239,10 @@ class TestConnectivity:
 
     def test_inhibitory_weight_uses_g_inh(self):
         col = CorticalColumn(
-            scale=0.02, scale_correction=False, g_inh=4.0, seed=42,
+            scale=0.02,
+            scale_correction=False,
+            g_inh=4.0,
+            seed=42,
         )
         assert col.w_i == pytest.approx(-4.0 * col.w_e)
 
@@ -229,7 +250,8 @@ class TestConnectivity:
         col = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=42)
         nonzero_pairs = {
             (POPULATIONS[i], POPULATIONS[j])
-            for i in range(8) for j in range(8)
+            for i in range(8)
+            for j in range(8)
             if CONN_PROBS[i, j] > 0.0
         }
         assert set(col._W.keys()) == nonzero_pairs
@@ -246,9 +268,12 @@ class TestConnectivity:
         from scale=0.5 upward.
         """
         col = CorticalColumn(
-            scale=0.02, scale_correction=False,
-            delay_distribution=True, n_delay_bins=5,
-            use_block_csr=True, seed=42,
+            scale=0.02,
+            scale_correction=False,
+            delay_distribution=True,
+            n_delay_bins=5,
+            use_block_csr=True,
+            seed=42,
         )
         assert len(col._block_e) == 5
         assert len(col._block_i) == 5
@@ -310,9 +335,7 @@ class TestPublishedFidelity:
         rates = col.population_rates(r, dt=0.1, burn_in_ms=200.0)
         e_mean = np.mean([rates[p] for p in POPULATIONS if not p.endswith("i")])
         i_mean = np.mean([rates[p] for p in POPULATIONS if p.endswith("i")])
-        assert i_mean > e_mean, (
-            f"Potjans E/I asymmetry violated: E={e_mean:.2f} I={i_mean:.2f}"
-        )
+        assert i_mean > e_mean, f"Potjans E/I asymmetry violated: E={e_mean:.2f} I={i_mean:.2f}"
 
     def test_l4e_in_published_band(self, rasters):
         # L4e is the main thalamic-input layer in Potjans; its rate
@@ -335,8 +358,14 @@ class TestPublishedFidelity:
         delay path produces.
         """
         published = {
-            "L23e": 0.86, "L23i": 2.91, "L4e": 4.51, "L4i": 5.78,
-            "L5e": 7.59, "L5i": 8.13, "L6e": 1.10, "L6i": 8.07,
+            "L23e": 0.86,
+            "L23i": 2.91,
+            "L4e": 4.51,
+            "L4i": 5.78,
+            "L5e": 7.59,
+            "L5i": 8.13,
+            "L6e": 1.10,
+            "L6i": 8.07,
         }
         col, r = rasters
         rates = col.population_rates(r, dt=0.1, burn_in_ms=200.0)
@@ -355,7 +384,10 @@ class TestPublishedFidelity:
         # Sanity: with bg_rate = 0 the recurrent network has nothing
         # to bootstrap and stays silent indefinitely.
         col = CorticalColumn(
-            scale=0.05, scale_correction=True, bg_rate=0.0, seed=42,
+            scale=0.05,
+            scale_correction=True,
+            bg_rate=0.0,
+            seed=42,
         )
         r = col.simulate(duration_ms=100.0, dt=0.1)
         rates = col.population_rates(r, dt=0.1, burn_in_ms=20.0)

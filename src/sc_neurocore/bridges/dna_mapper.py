@@ -74,6 +74,7 @@ try:
         py_dna_simulate_kinetics as _rust_kinetics,
         py_dna_design_orthogonal_set as _rust_orthogonal,
     )
+
     _HAS_RUST_DNA = True
 except ImportError:
     _HAS_RUST_DNA = False

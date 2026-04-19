@@ -16,6 +16,7 @@ model zoo ``VerilogGenerator``.
 No external dependencies beyond NumPy — the evaluator uses pure-Python
 SC simulation (bitstream variance model), so ``torch`` is NOT required.
 """
+
 from __future__ import annotations
 
 import copy
@@ -30,6 +31,7 @@ import numpy as np
 
 try:
     from sc_neurocore_engine import py_evo_tournament
+
     _HAS_RUST_EVO = True
 except ImportError:
     _HAS_RUST_EVO = False
@@ -67,6 +69,7 @@ NEURON_DSP_COST: Dict[NeuronType, int] = {
 @dataclass
 class FPGAResourceBudget:
     """Hardware resource constraints for the target FPGA."""
+
     max_luts: int = 500_000
     max_ffs: int = 500_000
     max_bram_kb: int = 2048
@@ -85,12 +88,11 @@ class FPGAResourceBudget:
 @dataclass
 class NASObjective:
     """Search objectives and constraints."""
+
     min_accuracy: float = 0.90
     min_bitstream_length: int = 64
     max_bitstream_length: int = 4096
-    allowed_neuron_types: List[NeuronType] = field(
-        default_factory=lambda: list(NeuronType)
-    )
+    allowed_neuron_types: List[NeuronType] = field(default_factory=lambda: list(NeuronType))
     allowed_decorrelators: List[DecorrelationStrategy] = field(
         default_factory=lambda: list(DecorrelationStrategy)
     )
@@ -99,6 +101,7 @@ class NASObjective:
 @dataclass
 class LayerConfig:
     """Configuration for a single network layer."""
+
     neurons: int
     neuron_type: NeuronType
     bitstream_length: int
@@ -134,6 +137,7 @@ class LayerConfig:
 @dataclass
 class SCCandidate:
     """A candidate SC network architecture."""
+
     layers: List[LayerConfig]
     fitness: float = 0.0
     accuracy: float = 0.0
@@ -154,11 +158,13 @@ class SCCandidate:
 
     def meets_budget(self, budget: FPGAResourceBudget) -> bool:
         self.evaluate_resources()
-        return (self.total_luts <= budget.max_luts and
-                self.total_ffs <= budget.max_ffs and
-                self.total_dsp <= budget.max_dsp and
-                self.total_bram_kb <= budget.max_bram_kb and
-                self.total_power_mw <= budget.max_power_mw)
+        return (
+            self.total_luts <= budget.max_luts
+            and self.total_ffs <= budget.max_ffs
+            and self.total_dsp <= budget.max_dsp
+            and self.total_bram_kb <= budget.max_bram_kb
+            and self.total_power_mw <= budget.max_power_mw
+        )
 
     @property
     def fingerprint(self) -> str:
@@ -173,6 +179,7 @@ class SCCandidate:
 
 
 # ── Fitness Evaluator ────────────────────────────────────────────────
+
 
 class SCFitnessEvaluator:
     """Pure-Python SC simulation fitness evaluator.
@@ -205,6 +212,7 @@ class SCFitnessEvaluator:
 
 
 # ── Pareto Front ─────────────────────────────────────────────────────
+
 
 def pareto_front(
     candidates: List[SCCandidate],
@@ -265,6 +273,7 @@ def _assign_crowding_distance(front: List[SCCandidate]) -> None:
 
 # ── Evolutionary NAS ─────────────────────────────────────────────────
 
+
 class EvolutionaryNAS:
     """µ+λ evolutionary search with tournament selection."""
 
@@ -316,7 +325,7 @@ class EvolutionaryNAS:
             new_len = int(c.layers[idx].bitstream_length * factor)
             c.layers[idx].bitstream_length = max(
                 self.objective.min_bitstream_length,
-                min(self.objective.max_bitstream_length, new_len)
+                min(self.objective.max_bitstream_length, new_len),
             )
         elif action == "neuron" and c.layers:
             idx = int(self.rng.integers(0, len(c.layers)))
@@ -341,9 +350,7 @@ class EvolutionaryNAS:
         min_len = min(len(a.layers), len(b.layers))
         layers = []
         for i in range(min_len):
-            layers.append(copy.deepcopy(
-                a.layers[i] if self.rng.random() < 0.5 else b.layers[i]
-            ))
+            layers.append(copy.deepcopy(a.layers[i] if self.rng.random() < 0.5 else b.layers[i]))
         c = SCCandidate(layers=layers, generation=gen)
         c.evaluate_resources()
         return c
@@ -387,19 +394,21 @@ class EvolutionaryNAS:
 
             combined = population + offspring
             combined.sort(key=lambda c: c.fitness, reverse=True)
-            population = combined[:self.pop_size]
+            population = combined[: self.pop_size]
 
             best = population[0]
-            self.history.append({
-                "generation": gen,
-                "best_fitness": best.fitness,
-                "best_accuracy": best.accuracy,
-                "best_luts": best.total_luts,
-                "best_dsp": best.total_dsp,
-                "best_bram_kb": best.total_bram_kb,
-                "best_power": best.total_power_mw,
-                "pop_size": len(population),
-            })
+            self.history.append(
+                {
+                    "generation": gen,
+                    "best_fitness": best.fitness,
+                    "best_accuracy": best.accuracy,
+                    "best_luts": best.total_luts,
+                    "best_dsp": best.total_dsp,
+                    "best_bram_kb": best.total_bram_kb,
+                    "best_power": best.total_power_mw,
+                    "pop_size": len(population),
+                }
+            )
 
             # Convergence detection
             if self.convergence_patience > 0:
@@ -416,9 +425,11 @@ class EvolutionaryNAS:
 
 # ── NAS Report ───────────────────────────────────────────────────────
 
+
 @dataclass
 class NASReport:
     """Summary report from an SC-NAS search."""
+
     pareto_front: List[SCCandidate]
     search_history: List[Dict[str, Any]]
     wall_time_s: float = 0.0
@@ -460,7 +471,11 @@ def run_nas(
     obj = objective or NASObjective()
     bgt = budget or FPGAResourceBudget()
     engine = EvolutionaryNAS(
-        obj, bgt, population_size, num_generations, seed=seed,
+        obj,
+        bgt,
+        population_size,
+        num_generations,
+        seed=seed,
         convergence_patience=convergence_patience,
     )
     t0 = time.perf_counter()
@@ -474,6 +489,7 @@ def run_nas(
 
 
 # ── Verilog Emitter ─────────────────────────────────────────────────
+
 
 class NASVerilogEmitter:
     """Emits SystemVerilog for Pareto-optimal SC-NAS candidates."""
@@ -495,7 +511,7 @@ class NASVerilogEmitter:
         for i, layer in enumerate(candidate.layers):
             params.append(f"    parameter L{i}_NEURONS    = {layer.neurons},")
             params.append(f"    parameter L{i}_BITSTREAM  = {layer.bitstream_length},")
-            params.append(f"    parameter L{i}_DECORR     = \"{layer.decorrelation.value}\",")
+            params.append(f'    parameter L{i}_DECORR     = "{layer.decorrelation.value}",')
         if params:
             params[-1] = params[-1].rstrip(",")
         lines.extend(params)
@@ -523,11 +539,15 @@ class NASVerilogEmitter:
                 NeuronType.HH: "sc_hh_neuron",
             }.get(layer.neuron_type, "sc_lif_neuron")
 
-            lines.append(f"    // Layer {i}: {layer.neurons} × {neuron_module} "
-                         f"(N={layer.bitstream_length}, {layer.decorrelation.value})")
+            lines.append(
+                f"    // Layer {i}: {layer.neurons} × {neuron_module} "
+                f"(N={layer.bitstream_length}, {layer.decorrelation.value})"
+            )
             lines.append(f"    genvar g{i};")
             lines.append("    generate")
-            lines.append(f"        for (g{i} = 0; g{i} < L{i}_NEURONS; g{i} = g{i} + 1) begin : layer{i}_gen")
+            lines.append(
+                f"        for (g{i} = 0; g{i} < L{i}_NEURONS; g{i} = g{i} + 1) begin : layer{i}_gen"
+            )
             lines.append(f"            {neuron_module} #(")
             lines.append(f"                .BITSTREAM_W(L{i}_BITSTREAM)")
             lines.append(f"            ) u_l{i} (")
@@ -549,4 +569,3 @@ class NASVerilogEmitter:
             name = f"sc_nas_pareto_{i}"
             result[name] = NASVerilogEmitter.emit(c, module_name=name)
         return result
-

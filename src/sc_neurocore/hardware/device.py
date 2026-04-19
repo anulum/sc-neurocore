@@ -21,6 +21,7 @@ from enum import Enum, auto
 
 class DeviceFamily(Enum):
     """Supported neuromorphic hardware families."""
+
     LOIHI = auto()
     LOIHI2 = auto()
     SPINNAKER = auto()
@@ -51,6 +52,7 @@ class DeviceSpec:
         delay_bits: Synaptic delay bit-width.
         max_delay_ticks: Maximum synaptic delay in ticks.
     """
+
     family: DeviceFamily
     cores: int
     neurons_per_core: int
@@ -78,7 +80,6 @@ class DeviceSpec:
 #   Akida:       official product datasheets (BrainChip, 2023).
 
 DEVICE_CATALOG: dict[DeviceFamily, DeviceSpec] = {
-
     DeviceFamily.LOIHI: DeviceSpec(
         family=DeviceFamily.LOIHI,
         cores=128,
@@ -95,7 +96,6 @@ DEVICE_CATALOG: dict[DeviceFamily, DeviceSpec] = {
         delay_bits=6,
         max_delay_ticks=63,
     ),
-
     DeviceFamily.LOIHI2: DeviceSpec(
         family=DeviceFamily.LOIHI2,
         cores=128,
@@ -112,7 +112,6 @@ DEVICE_CATALOG: dict[DeviceFamily, DeviceSpec] = {
         delay_bits=6,
         max_delay_ticks=63,
     ),
-
     DeviceFamily.SPINNAKER: DeviceSpec(
         family=DeviceFamily.SPINNAKER,
         cores=18,  # 18 ARM968 per chip
@@ -129,7 +128,6 @@ DEVICE_CATALOG: dict[DeviceFamily, DeviceSpec] = {
         delay_bits=4,
         max_delay_ticks=15,
     ),
-
     DeviceFamily.SPINNAKER2: DeviceSpec(
         family=DeviceFamily.SPINNAKER2,
         cores=152,
@@ -146,7 +144,6 @@ DEVICE_CATALOG: dict[DeviceFamily, DeviceSpec] = {
         delay_bits=8,
         max_delay_ticks=255,
     ),
-
     DeviceFamily.BRAINSCALES: DeviceSpec(
         family=DeviceFamily.BRAINSCALES,
         cores=1,  # wafer-scale, single "core" abstraction
@@ -163,7 +160,6 @@ DEVICE_CATALOG: dict[DeviceFamily, DeviceSpec] = {
         delay_bits=0,
         max_delay_ticks=0,
     ),
-
     DeviceFamily.BRAINSCALES2: DeviceSpec(
         family=DeviceFamily.BRAINSCALES2,
         cores=2,  # 2 PPUs per HICANN-X
@@ -180,7 +176,6 @@ DEVICE_CATALOG: dict[DeviceFamily, DeviceSpec] = {
         delay_bits=0,
         max_delay_ticks=0,
     ),
-
     DeviceFamily.FPGA_GENERIC: DeviceSpec(
         family=DeviceFamily.FPGA_GENERIC,
         cores=64,  # configurable
@@ -197,7 +192,6 @@ DEVICE_CATALOG: dict[DeviceFamily, DeviceSpec] = {
         delay_bits=8,
         max_delay_ticks=255,
     ),
-
     DeviceFamily.AKIDA: DeviceSpec(
         family=DeviceFamily.AKIDA,
         cores=80,

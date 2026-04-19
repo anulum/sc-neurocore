@@ -64,13 +64,16 @@ FAULT_MODELS = [
 
 # ─────────────────────────── Backend probes ──────────────────────────
 
+
 def probe_rust() -> dict:
     if importlib.util.find_spec("sc_neurocore_engine") is None:
         return {"available": False, "reason": "sc_neurocore_engine not importable"}
     mod = importlib.import_module("sc_neurocore_engine")
     needed = (
-        "py_inject_bitflip_u8", "py_inject_stuck_at_0_u8",
-        "py_inject_stuck_at_1_u8", "py_inject_dropout_u8",
+        "py_inject_bitflip_u8",
+        "py_inject_stuck_at_0_u8",
+        "py_inject_stuck_at_1_u8",
+        "py_inject_dropout_u8",
         "py_inject_gaussian_u8",
     )
     missing = [n for n in needed if not hasattr(mod, n)]
@@ -94,6 +97,7 @@ def probe_julia() -> dict:
         return {"available": False, "reason": f"{jl_path} missing"}
     try:
         from juliacall import Main as jl
+
         jl.include(str(jl_path))
         accel = jl.FaultInjectionAccel
     except Exception as exc:
@@ -110,16 +114,25 @@ def probe_julia() -> dict:
 
 def probe_go() -> dict:
     import ctypes
+
     so_path = REPO_ROOT / "src/sc_neurocore/accel/go/fault_injection/libfault.so"
     if not so_path.is_file():
-        return {"available": False, "reason": f"{so_path} missing — "
-                "build via: go build -buildmode=c-shared -o libfault.so fault.go"}
+        return {
+            "available": False,
+            "reason": f"{so_path} missing — "
+            "build via: go build -buildmode=c-shared -o libfault.so fault.go",
+        }
     try:
         lib = ctypes.CDLL(str(so_path))
     except OSError as exc:
         return {"available": False, "reason": f"ctypes CDLL failed: {exc}"}
-    sigs = ("inject_bitflip_c", "inject_stuck_at_0_c", "inject_stuck_at_1_c",
-            "inject_dropout_c", "inject_gaussian_c")
+    sigs = (
+        "inject_bitflip_c",
+        "inject_stuck_at_0_c",
+        "inject_stuck_at_1_c",
+        "inject_dropout_c",
+        "inject_gaussian_c",
+    )
     missing = [s for s in sigs if not hasattr(lib, s)]
     if missing:
         return {"available": False, "reason": f"go symbols missing: {missing}"}
@@ -138,19 +151,28 @@ def probe_go() -> dict:
 
 def probe_mojo() -> dict:
     import ctypes
+
     mojo_bin = Path.home() / ".pixi/bin/mojo"
     if not mojo_bin.is_file():
         return {"available": False, "reason": "mojo toolchain not at ~/.pixi/bin/mojo"}
     so_path = REPO_ROOT / "src/sc_neurocore/accel/mojo/fault_injection/libfault.so"
     if not so_path.is_file():
-        return {"available": False, "reason": f"{so_path} missing — build via: "
-                f"mojo build --emit shared-lib -o libfault.so fault.mojo"}
+        return {
+            "available": False,
+            "reason": f"{so_path} missing — build via: "
+            f"mojo build --emit shared-lib -o libfault.so fault.mojo",
+        }
     try:
         lib = ctypes.CDLL(str(so_path))
     except OSError as exc:
         return {"available": False, "reason": f"ctypes CDLL failed: {exc}"}
-    sigs = ("inject_bitflip_c", "inject_stuck_at_0_c", "inject_stuck_at_1_c",
-            "inject_dropout_c", "inject_gaussian_c")
+    sigs = (
+        "inject_bitflip_c",
+        "inject_stuck_at_0_c",
+        "inject_stuck_at_1_c",
+        "inject_dropout_c",
+        "inject_gaussian_c",
+    )
     missing = [s for s in sigs if not hasattr(lib, s)]
     if missing:
         return {"available": False, "reason": f"mojo symbols missing: {missing}"}
@@ -162,6 +184,7 @@ def probe_mojo() -> dict:
 
 
 # ─────────────────────────── Runners ─────────────────────────────────
+
 
 def _run_python(mdl: FaultModel, ber: float, rng_seed: int) -> tuple[float, int]:
     bs = np.random.default_rng(rng_seed).integers(0, 2, N_BITS, dtype=np.uint8).astype(bool)
@@ -210,23 +233,32 @@ def _run_julia(kernel, ber: float, rng_seed: int) -> tuple[float, int]:
 
 def _run_go(lib, sym: str, ber: float, rng_seed: int) -> tuple[float, int]:
     import ctypes
+
     fn = getattr(lib, f"inject_{sym}_c")
     bs_src = np.random.default_rng(rng_seed).integers(0, 2, N_BITS, dtype=np.uint8)
     # warm
     bs = bs_src.copy()
     n_out = ctypes.c_uint64(0)
-    fn(bs.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8)),
-       ctypes.c_int64(N_BITS), ctypes.c_double(ber),
-       ctypes.c_uint64(rng_seed), ctypes.byref(n_out))
+    fn(
+        bs.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8)),
+        ctypes.c_int64(N_BITS),
+        ctypes.c_double(ber),
+        ctypes.c_uint64(rng_seed),
+        ctypes.byref(n_out),
+    )
     times: list[float] = []
     n_last = 0
     for _ in range(N_REPEATS):
         bs = bs_src.copy()
         n_out = ctypes.c_uint64(0)
         t0 = time.perf_counter()
-        fn(bs.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8)),
-           ctypes.c_int64(N_BITS), ctypes.c_double(ber),
-           ctypes.c_uint64(rng_seed), ctypes.byref(n_out))
+        fn(
+            bs.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8)),
+            ctypes.c_int64(N_BITS),
+            ctypes.c_double(ber),
+            ctypes.c_uint64(rng_seed),
+            ctypes.byref(n_out),
+        )
         times.append((time.perf_counter() - t0) * 1000.0)
         n_last = int(n_out.value)
     times.sort()
@@ -237,18 +269,21 @@ def _run_mojo(lib, sym: str, ber: float, rng_seed: int) -> tuple[float, int]:
     """Mojo kernel via ctypes — accepts raw Int address (per
     feedback_mojo_026_ffi_pattern.md), returns u64 affected count."""
     import ctypes
+
     fn = getattr(lib, f"inject_{sym}_c")
     bs_src = np.random.default_rng(rng_seed).integers(0, 2, N_BITS, dtype=np.uint8)
     bs = bs_src.copy()
-    fn(bs.ctypes.data, ctypes.c_int64(N_BITS),
-       ctypes.c_double(ber), ctypes.c_uint64(rng_seed))  # warm
+    fn(
+        bs.ctypes.data, ctypes.c_int64(N_BITS), ctypes.c_double(ber), ctypes.c_uint64(rng_seed)
+    )  # warm
     times: list[float] = []
     n_last = 0
     for _ in range(N_REPEATS):
         bs = bs_src.copy()
         t0 = time.perf_counter()
-        n = fn(bs.ctypes.data, ctypes.c_int64(N_BITS),
-               ctypes.c_double(ber), ctypes.c_uint64(rng_seed))
+        n = fn(
+            bs.ctypes.data, ctypes.c_int64(N_BITS), ctypes.c_double(ber), ctypes.c_uint64(rng_seed)
+        )
         times.append((time.perf_counter() - t0) * 1000.0)
         n_last = int(n)
     times.sort()
@@ -256,6 +291,7 @@ def _run_mojo(lib, sym: str, ber: float, rng_seed: int) -> tuple[float, int]:
 
 
 # ─────────────────────────── Parity check ────────────────────────────
+
 
 def _statistical_parity_ok(model_name: str, ber: float, n: int) -> bool:
     """Verify fault count is within 4σ of Binomial(N_BITS, ber) mean,
@@ -278,14 +314,14 @@ def _statistical_parity_ok(model_name: str, ber: float, n: int) -> bool:
 
 # ─────────────────────────── Main ────────────────────────────────────
 
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json", type=Path, default=None)
     args = parser.parse_args(argv)
 
     print("# FaultInjector.inject() multi-backend benchmark")
-    print(f"# Bitstream length: {N_BITS}, BER: {BENCH_BER:.0e} "
-          f"(Gaussian σ: {GAUSSIAN_SIGMA})")
+    print(f"# Bitstream length: {N_BITS}, BER: {BENCH_BER:.0e} (Gaussian σ: {GAUSSIAN_SIGMA})")
     print(f"# Repeats per cell: {N_REPEATS}")
     print(f"# Python: {platform.python_version()}, NumPy: {np.__version__}")
     print(f"# platform: {platform.platform()}")
@@ -301,16 +337,20 @@ def main(argv: list[str]) -> int:
     print()
     print("# Backend availability")
     for name, info in backends.items():
-        tag = "OK" if info.get("available") and not info.get("exempt") else (
-            "EXEMPT" if info.get("exempt") else "MISSING"
+        tag = (
+            "OK"
+            if info.get("available") and not info.get("exempt")
+            else ("EXEMPT" if info.get("exempt") else "MISSING")
         )
         reason = info.get("reason", "") if tag != "OK" else ""
         print(f"  {name:<8} {tag:<8} {reason}")
 
     print()
-    print(f"{'model':<16} {'python ms':>10} {'rust ms':>10} "
-          f"{'julia ms':>10} {'go ms':>10} {'mojo ms':>10}  {'parity':>8}")
-    print(f"{'-'*16} {'-'*10} {'-'*10} {'-'*10} {'-'*10} {'-'*10}  {'-'*8}")
+    print(
+        f"{'model':<16} {'python ms':>10} {'rust ms':>10} "
+        f"{'julia ms':>10} {'go ms':>10} {'mojo ms':>10}  {'parity':>8}"
+    )
+    print(f"{'-' * 16} {'-' * 10} {'-' * 10} {'-' * 10} {'-' * 10} {'-' * 10}  {'-' * 8}")
 
     rows: list[dict[str, object]] = []
     for display_name, mdl, ber, sym in FAULT_MODELS:
@@ -358,23 +398,25 @@ def main(argv: list[str]) -> int:
 
         parity_ok = all(
             _statistical_parity_ok(display_name, ber, n)
-            for n in [py_n, ru_n, ju_n, go_n, mo_n] if n is not None
+            for n in [py_n, ru_n, ju_n, go_n, mo_n]
+            if n is not None
         )
         row["parity_ok"] = parity_ok
 
         def fmt(v: float | None) -> str:
             return f"{v:>10.2f}" if v is not None else f"{'-':>10}"
 
-        print(f"{display_name:<16} {fmt(py_ms)} {fmt(ru_ms)} "
-              f"{fmt(ju_ms)} {fmt(go_ms)} {fmt(mo_ms)}  "
-              f"{'ok' if parity_ok else 'FAIL':>8}")
+        print(
+            f"{display_name:<16} {fmt(py_ms)} {fmt(ru_ms)} "
+            f"{fmt(ju_ms)} {fmt(go_ms)} {fmt(mo_ms)}  "
+            f"{'ok' if parity_ok else 'FAIL':>8}"
+        )
         rows.append(row)
 
     if args.json is not None:
         args.json.parent.mkdir(parents=True, exist_ok=True)
         backends_json = {
-            name: {k: v for k, v in info.items()
-                   if k in ("available", "exempt", "reason")}
+            name: {k: v for k, v in info.items() if k in ("available", "exempt", "reason")}
             for name, info in backends.items()
         }
         payload = {

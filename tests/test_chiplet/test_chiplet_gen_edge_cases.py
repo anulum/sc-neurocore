@@ -83,6 +83,7 @@ class TestLfsrSeedClamp:
 # CDC ratio zero-divisor guard (line 823)
 # ────────────────────────────────────────────────────────────────────
 
+
 class TestClockDomainCrossingZero:
     def test_ratio_returns_one_when_dst_clock_zero(self) -> None:
         cdc = CDCConfig(src_clk_mhz=200.0, dst_clk_mhz=0.0)
@@ -96,6 +97,7 @@ class TestClockDomainCrossingZero:
 # ────────────────────────────────────────────────────────────────────
 # compute_cdc_configs missing-die guard (line 838)
 # ────────────────────────────────────────────────────────────────────
+
 
 class TestCdcConfigsMissingDie:
     def test_continues_when_link_references_unknown_die(self) -> None:
@@ -115,6 +117,7 @@ class TestCdcConfigsMissingDie:
 # _build_conductance_matrix missing-die guard (line 967)
 # ────────────────────────────────────────────────────────────────────
 
+
 class TestThermalConductanceMissingDie:
     def test_simulate_thermal_skips_link_with_missing_die(self) -> None:
         # Dies 0 and 1; link references die 99.
@@ -131,6 +134,7 @@ class TestThermalConductanceMissingDie:
 # simulate_thermal die_state override branch (line 1085)
 # ────────────────────────────────────────────────────────────────────
 
+
 class TestSimulateThermalCustomDieState:
     def test_uses_provided_die_state_dict(self) -> None:
         topo = ChipletTopology()
@@ -139,7 +143,8 @@ class TestSimulateThermalCustomDieState:
         # Override only die 0; die 1 falls through to default branch.
         custom = {0: DieThermal(die_id=0, r_to_ambient_k_per_w=10.0)}
         report = simulate_thermal(
-            topo, power_per_die_mw={0: 1000.0, 1: 100.0},
+            topo,
+            power_per_die_mw={0: 1000.0, 1: 100.0},
             die_state=custom,
         )
         assert report is not None
@@ -152,6 +157,7 @@ class TestSimulateThermalCustomDieState:
 # ────────────────────────────────────────────────────────────────────
 # find_route_with_congestion fallback to no-exclusion (line 1155)
 # ────────────────────────────────────────────────────────────────────
+
 
 class TestAdaptiveRouteCongestionFallback:
     def test_falls_back_when_all_routes_congested(self) -> None:
@@ -167,7 +173,10 @@ class TestAdaptiveRouteCongestionFallback:
             congestion.utilisation[(link.src_die, link.dst_die)] = 1.0
         # Threshold 0.5 → primary excludes every link, fallback wins.
         path = adaptive_route(
-            topo, src_die=0, dst_die=2, congestion=congestion,
+            topo,
+            src_die=0,
+            dst_die=2,
+            congestion=congestion,
             congestion_threshold=0.5,
         )
         assert path is not None
@@ -178,14 +187,14 @@ class TestAdaptiveRouteCongestionFallback:
 # bandwidth_aware_route visited + queue-append (lines 1247, 1253)
 # ────────────────────────────────────────────────────────────────────
 
+
 class TestBandwidthAwareRoute:
     def test_visited_skip_and_queue_extension(self) -> None:
         # 4-die mesh 0↔1↔2↔3 + 1↔3 short-cut, all links 50 Gbps.
         topo = ChipletTopology()
         for i in range(4):
             topo.add_die(ChipletDie(die_id=i))
-        for s, d in [(0, 1), (1, 0), (1, 2), (2, 1), (2, 3),
-                     (3, 2), (1, 3), (3, 1)]:
+        for s, d in [(0, 1), (1, 0), (1, 2), (2, 1), (2, 3), (3, 2), (1, 3), (3, 1)]:
             link = InterposerLink.from_tech(s, d, InterposerTech.UCIE)
             link.bandwidth_gbps = 50.0
             topo.add_link(link)
@@ -193,7 +202,10 @@ class TestBandwidthAwareRoute:
         # (queue.append, line 1253). Two paths reach die 3 → visited-skip
         # at line 1247.
         path = bandwidth_aware_route(
-            topo, src_die=0, dst_die=3, required_gbps=30.0,
+            topo,
+            src_die=0,
+            dst_die=3,
+            required_gbps=30.0,
         )
         assert path is not None
         assert path[0] == 0 and path[-1] == 3
@@ -207,7 +219,10 @@ class TestBandwidthAwareRoute:
         topo.add_link(link)
         # required 100 Gbps > 10 Gbps available → no path.
         path = bandwidth_aware_route(
-            topo, src_die=0, dst_die=1, required_gbps=100.0,
+            topo,
+            src_die=0,
+            dst_die=1,
+            required_gbps=100.0,
         )
         assert path is None
 
@@ -216,14 +231,15 @@ class TestBandwidthAwareRoute:
 # PartitionAssignment.to_routing_tables cross-die skip (line 1485)
 # ────────────────────────────────────────────────────────────────────
 
+
 class TestPartitionAssignmentCrossDieSkip:
     def test_connectivity_with_unmapped_neuron_skipped(self) -> None:
         # Dies 0+1, neurons 0/1 → die 0; neurons 2/3 → die 1.
         pa = PartitionAssignment(die_assignments={0: [0, 1], 1: [2, 3]})
         connectivity: list[tuple[int, int, int]] = [
-            (0, 2, 256),     # cross-die: die 0 → die 1 ✓
-            (99, 3, 256),    # 99 unmapped → continue (line 1485)
-            (0, 1, 256),     # same-die: die 0 → die 0 → continue (1487)
+            (0, 2, 256),  # cross-die: die 0 → die 1 ✓
+            (99, 3, 256),  # 99 unmapped → continue (line 1485)
+            (0, 1, 256),  # same-die: die 0 → die 0 → continue (1487)
         ]
         tables = pa.to_routing_tables(connectivity)
         # Only the cross-die route appears.

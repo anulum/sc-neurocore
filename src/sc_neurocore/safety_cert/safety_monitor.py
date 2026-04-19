@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 @dataclass
 class SafetyLimits:
     """Configurable safety thresholds matching SV parameters."""
+
     max_current: int = 0x7FFF
     max_voltage: int = 0xC000
     coherence_limit: int = 0x0100
@@ -40,6 +41,7 @@ class SafetyMonitor:
       [P5] lif_membrane_bounded — membrane ≤ v_max
       [P6] correlation_range — |SCC numerator| ≤ denominator
     """
+
     limits: SafetyLimits = field(default_factory=SafetyLimits)
     halted: bool = False
     violation_flags: int = 0  # 6-bit sticky flags

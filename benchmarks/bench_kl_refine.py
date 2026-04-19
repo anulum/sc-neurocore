@@ -65,6 +65,7 @@ WORKLOAD_VS = (100, 200, 500, 1000)
 
 # ─────────────────────────── Workload builder ─────────────────────────
 
+
 def _build_graph(n: int, deg: int = 8, seed: int = 42) -> CorrelationAwareGraph:
     rng = np.random.default_rng(seed)
     edges: list[CorrelationEdge] = []
@@ -85,6 +86,7 @@ def _initial_partitions(n_v: int, n_parts: int) -> list[list[int]]:
 
 # ─────────────────────────── Backend probes ───────────────────────────
 
+
 def probe_rust() -> dict:
     if importlib.util.find_spec("sc_neurocore_engine") is None:
         return {"available": False, "reason": "sc_neurocore_engine not installed"}
@@ -103,6 +105,7 @@ def probe_julia() -> dict:
         return {"available": False, "reason": f"{jl_path.name} not yet implemented"}
     try:
         from juliacall import Main as jl
+
         jl.include(str(jl_path))
         return {"available": True, "kernel": jl.KLRefineAccel.kl_refine}
     except Exception as exc:
@@ -111,6 +114,7 @@ def probe_julia() -> dict:
 
 def probe_go() -> dict:
     import ctypes
+
     so_path = REPO_ROOT / "src/sc_neurocore/accel/go/partition/libpartition.so"
     if not so_path.is_file():
         return {"available": False, "reason": f"{so_path.name} not yet built"}
@@ -122,18 +126,18 @@ def probe_go() -> dict:
         return {"available": False, "reason": "kl_refine_c missing from libpartition.so"}
     fn = lib.kl_refine_c
     fn.argtypes = [
-        ctypes.POINTER(ctypes.c_int64),    # adj_offsets
-        ctypes.POINTER(ctypes.c_int32),    # adj_neighbours
-        ctypes.POINTER(ctypes.c_double),   # adj_scc_abs
-        ctypes.POINTER(ctypes.c_double),   # vertex_weights
-        ctypes.POINTER(ctypes.c_int32),    # part_map (mut)
-        ctypes.POINTER(ctypes.c_int32),    # parts_concat
-        ctypes.POINTER(ctypes.c_int64),    # parts_offsets
-        ctypes.c_int64,                    # v_total
-        ctypes.c_int64,                    # e_total
-        ctypes.c_int32,                    # n_parts
-        ctypes.c_int32,                    # kl_iterations
-        ctypes.c_double,                   # correlation_penalty
+        ctypes.POINTER(ctypes.c_int64),  # adj_offsets
+        ctypes.POINTER(ctypes.c_int32),  # adj_neighbours
+        ctypes.POINTER(ctypes.c_double),  # adj_scc_abs
+        ctypes.POINTER(ctypes.c_double),  # vertex_weights
+        ctypes.POINTER(ctypes.c_int32),  # part_map (mut)
+        ctypes.POINTER(ctypes.c_int32),  # parts_concat
+        ctypes.POINTER(ctypes.c_int64),  # parts_offsets
+        ctypes.c_int64,  # v_total
+        ctypes.c_int64,  # e_total
+        ctypes.c_int32,  # n_parts
+        ctypes.c_int32,  # kl_iterations
+        ctypes.c_double,  # correlation_penalty
     ]
     fn.restype = ctypes.c_uint64
     return {"available": True, "lib": lib}
@@ -141,6 +145,7 @@ def probe_go() -> dict:
 
 def probe_mojo() -> dict:
     import ctypes
+
     mojo_bin = Path.home() / ".pixi/bin/mojo"
     if not mojo_bin.is_file():
         return {"available": False, "reason": "mojo not at ~/.pixi/bin/mojo"}
@@ -155,10 +160,18 @@ def probe_mojo() -> dict:
         return {"available": False, "reason": "kl_refine_c missing from Mojo .so"}
     fn = lib.kl_refine_c
     fn.argtypes = [
-        ctypes.c_int64, ctypes.c_int64, ctypes.c_int64, ctypes.c_int64,
-        ctypes.c_int64, ctypes.c_int64, ctypes.c_int64,
-        ctypes.c_int64, ctypes.c_int64,
-        ctypes.c_int32, ctypes.c_int32, ctypes.c_double,
+        ctypes.c_int64,
+        ctypes.c_int64,
+        ctypes.c_int64,
+        ctypes.c_int64,
+        ctypes.c_int64,
+        ctypes.c_int64,
+        ctypes.c_int64,
+        ctypes.c_int64,
+        ctypes.c_int64,
+        ctypes.c_int32,
+        ctypes.c_int32,
+        ctypes.c_double,
     ]
     fn.restype = ctypes.c_uint64
     return {"available": True, "lib": lib}
@@ -166,14 +179,16 @@ def probe_mojo() -> dict:
 
 # ─────────────────────────── Per-backend runners ─────────────────────
 
+
 def _encode(graph: CorrelationAwareGraph, partitions: list[list[int]]):
     hp = HierarchicalPartitioner(num_partitions=N_PARTS, kl_iterations=KL_ITERATIONS)
     return hp._encode_csr(partitions, graph.adjacency(), graph)
 
 
 def _run_python(graph, init):
-    hp = HierarchicalPartitioner(num_partitions=N_PARTS, kl_iterations=KL_ITERATIONS,
-                                  refine_backend="python")
+    hp = HierarchicalPartitioner(
+        num_partitions=N_PARTS, kl_iterations=KL_ITERATIONS, refine_backend="python"
+    )
     adj = graph.adjacency()
     hp._refine(copy.deepcopy(init), adj, graph)  # warm
     times: list[float] = []
@@ -193,14 +208,14 @@ def _run_python(graph, init):
 
 def _run_rust(graph, init, kernel):
     offsets, neighbours, scc_abs, vw, pm0, pc, po = _encode(graph, init)
-    kernel(offsets, neighbours, scc_abs, vw, pm0, pc, po,
-           N_PARTS, KL_ITERATIONS, 2.0)  # warm
+    kernel(offsets, neighbours, scc_abs, vw, pm0, pc, po, N_PARTS, KL_ITERATIONS, 2.0)  # warm
     times: list[float] = []
     pm = None
     for _ in range(N_REPEATS):
         t0 = time.perf_counter()
-        pm, _moves = kernel(offsets, neighbours, scc_abs, vw, pm0, pc, po,
-                             N_PARTS, KL_ITERATIONS, 2.0)
+        pm, _moves = kernel(
+            offsets, neighbours, scc_abs, vw, pm0, pc, po, N_PARTS, KL_ITERATIONS, 2.0
+        )
         times.append((time.perf_counter() - t0) * 1000.0)
     times.sort()
     return times[len(times) // 2], pm
@@ -208,15 +223,15 @@ def _run_rust(graph, init, kernel):
 
 def _run_julia(graph, init, kernel):
     offsets, neighbours, scc_abs, vw, pm0, pc, po = _encode(graph, init)
-    kernel(offsets, neighbours, scc_abs, vw, pm0.copy(), pc, po,
-           N_PARTS, KL_ITERATIONS, 2.0)  # warm
+    kernel(
+        offsets, neighbours, scc_abs, vw, pm0.copy(), pc, po, N_PARTS, KL_ITERATIONS, 2.0
+    )  # warm
     times: list[float] = []
     pm = None
     for _ in range(N_REPEATS):
         pm0_jl = pm0.copy()
         t0 = time.perf_counter()
-        pm = kernel(offsets, neighbours, scc_abs, vw, pm0_jl, pc, po,
-                     N_PARTS, KL_ITERATIONS, 2.0)
+        pm = kernel(offsets, neighbours, scc_abs, vw, pm0_jl, pc, po, N_PARTS, KL_ITERATIONS, 2.0)
         times.append((time.perf_counter() - t0) * 1000.0)
         pm = np.asarray(pm, dtype=np.int32)
     times.sort()
@@ -225,30 +240,43 @@ def _run_julia(graph, init, kernel):
 
 def _run_go(graph, init, lib):
     import ctypes
+
     offsets, neighbours, scc_abs, vw, pm0, pc, po = _encode(graph, init)
     V, E = vw.size, scc_abs.size
     fn = lib.kl_refine_c
     pm = pm0.copy()
-    fn(offsets.ctypes.data_as(ctypes.POINTER(ctypes.c_int64)),
-       neighbours.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
-       scc_abs.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-       vw.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-       pm.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
-       pc.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
-       po.ctypes.data_as(ctypes.POINTER(ctypes.c_int64)),
-       V, E, N_PARTS, KL_ITERATIONS, 2.0)  # warm
+    fn(
+        offsets.ctypes.data_as(ctypes.POINTER(ctypes.c_int64)),
+        neighbours.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
+        scc_abs.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+        vw.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+        pm.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
+        pc.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
+        po.ctypes.data_as(ctypes.POINTER(ctypes.c_int64)),
+        V,
+        E,
+        N_PARTS,
+        KL_ITERATIONS,
+        2.0,
+    )  # warm
     times: list[float] = []
     for _ in range(N_REPEATS):
         pm = pm0.copy()
         t0 = time.perf_counter()
-        fn(offsets.ctypes.data_as(ctypes.POINTER(ctypes.c_int64)),
-           neighbours.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
-           scc_abs.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-           vw.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-           pm.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
-           pc.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
-           po.ctypes.data_as(ctypes.POINTER(ctypes.c_int64)),
-           V, E, N_PARTS, KL_ITERATIONS, 2.0)
+        fn(
+            offsets.ctypes.data_as(ctypes.POINTER(ctypes.c_int64)),
+            neighbours.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
+            scc_abs.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            vw.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            pm.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
+            pc.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
+            po.ctypes.data_as(ctypes.POINTER(ctypes.c_int64)),
+            V,
+            E,
+            N_PARTS,
+            KL_ITERATIONS,
+            2.0,
+        )
         times.append((time.perf_counter() - t0) * 1000.0)
     times.sort()
     return times[len(times) // 2], pm
@@ -259,24 +287,45 @@ def _run_mojo(graph, init, lib):
     V, E = vw.size, scc_abs.size
     fn = lib.kl_refine_c
     pm = pm0.copy()
-    fn(offsets.ctypes.data, neighbours.ctypes.data, scc_abs.ctypes.data,
-       vw.ctypes.data, pm.ctypes.data,
-       pc.ctypes.data, po.ctypes.data,
-       V, E, N_PARTS, KL_ITERATIONS, 2.0)  # warm
+    fn(
+        offsets.ctypes.data,
+        neighbours.ctypes.data,
+        scc_abs.ctypes.data,
+        vw.ctypes.data,
+        pm.ctypes.data,
+        pc.ctypes.data,
+        po.ctypes.data,
+        V,
+        E,
+        N_PARTS,
+        KL_ITERATIONS,
+        2.0,
+    )  # warm
     times: list[float] = []
     for _ in range(N_REPEATS):
         pm = pm0.copy()
         t0 = time.perf_counter()
-        fn(offsets.ctypes.data, neighbours.ctypes.data, scc_abs.ctypes.data,
-           vw.ctypes.data, pm.ctypes.data,
-           pc.ctypes.data, po.ctypes.data,
-           V, E, N_PARTS, KL_ITERATIONS, 2.0)
+        fn(
+            offsets.ctypes.data,
+            neighbours.ctypes.data,
+            scc_abs.ctypes.data,
+            vw.ctypes.data,
+            pm.ctypes.data,
+            pc.ctypes.data,
+            po.ctypes.data,
+            V,
+            E,
+            N_PARTS,
+            KL_ITERATIONS,
+            2.0,
+        )
         times.append((time.perf_counter() - t0) * 1000.0)
     times.sort()
     return times[len(times) // 2], pm
 
 
 # ─────────────────────────── Driver ────────────────────────────────
+
 
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -302,9 +351,9 @@ def main(argv: list[str]) -> int:
         print(f"  {name:<8} {tag:<8} {reason}")
     print()
     cols = ["python", "rust", "julia", "go", "mojo"]
-    header_cells = "  ".join(f"{c+' ms':>10}" for c in cols)
+    header_cells = "  ".join(f"{c + ' ms':>10}" for c in cols)
     print(f"{'V':>5}  {header_cells}  {'parity':>8}")
-    print(f"{'-'*5}  {'  '.join(['-'*10]*5)}  {'-'*8}")
+    print(f"{'-' * 5}  {'  '.join(['-' * 10] * 5)}  {'-' * 8}")
 
     rows: list[dict[str, object]] = []
     for v_n in WORKLOAD_VS:
@@ -360,8 +409,7 @@ def main(argv: list[str]) -> int:
     if args.json is not None:
         args.json.parent.mkdir(parents=True, exist_ok=True)
         backends_json = {
-            name: {k: v for k, v in info.items()
-                   if k in ("available", "reason")}
+            name: {k: v for k, v in info.items() if k in ("available", "reason")}
             for name, info in backends.items()
         }
         payload = {

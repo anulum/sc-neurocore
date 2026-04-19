@@ -146,8 +146,7 @@ def bench_sa(sizes: list[int]) -> None:
             speedup = t_py / t_rs
             print(f"{n:>6} {t_py:>14.1f} {t_rs:>14.1f} {speedup:>9.1f}x")
             print(
-                f"       E_py={result_py['best_energy']:.4f}  "
-                f"E_rs={result_rs['best_energy']:.4f}"
+                f"       E_py={result_py['best_energy']:.4f}  E_rs={result_rs['best_energy']:.4f}"
             )
         else:
             print(f"{n:>6} {t_py:>14.1f} {'N/A':>14} {'N/A':>10}")
@@ -166,9 +165,7 @@ def bench_batch_energy(sizes: list[int]) -> None:
     for n in sizes:
         model, _ = _build_model(n)
         rng = np.random.default_rng(42)
-        configs_dict = [
-            {i: int(rng.choice([-1, 1])) for i in range(n)} for _ in range(n_configs)
-        ]
+        configs_dict = [{i: int(rng.choice([-1, 1])) for i in range(n)} for _ in range(n_configs)]
 
         # Python
         t0 = time.perf_counter()
@@ -178,9 +175,7 @@ def bench_batch_energy(sizes: list[int]) -> None:
         # Rust
         if _HAS_RUST:
             args = _model_to_rust_args(model)
-            configs_list = [
-                [c.get(i, 1) for i in range(n)] for c in configs_dict
-            ]
+            configs_list = [[c.get(i, 1) for i in range(n)] for c in configs_dict]
             t0 = time.perf_counter()
             energies_rs = _engine.py_qa_batch_ising_energy(
                 args["h_indices"],
