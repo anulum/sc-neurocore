@@ -23,8 +23,14 @@ import (
 	"unsafe"
 )
 
+// sigmoid — published Wilson-Cowan 1972 two-term form:
+//
+//	S(x) = 1/(1+exp(-a(x-θ))) − 1/(1+exp(aθ))
+//
+// The subtracted baseline makes S(0) = 0 exactly.
 func sigmoid(a, theta, x float64) float64 {
-	return 1.0 / (1.0 + math.Exp(-a*(x-theta)))
+	baseline := 1.0 / (1.0 + math.Exp(a*theta))
+	return 1.0/(1.0+math.Exp(-a*(x-theta))) - baseline
 }
 
 // wilson_cowan_simulate_c — C-ABI entry point.

@@ -24,7 +24,10 @@ from std.memory import UnsafePointer
 
 @always_inline
 fn sigmoid(a: Float64, theta: Float64, x: Float64) -> Float64:
-    return 1.0 / (1.0 + exp(-a * (x - theta)))
+    # Published Wilson-Cowan 1972 two-term sigmoid:
+    #   S(x) = 1/(1+exp(-a(x-θ))) − 1/(1+exp(aθ))
+    var baseline = 1.0 / (1.0 + exp(a * theta))
+    return 1.0 / (1.0 + exp(-a * (x - theta))) - baseline
 
 
 @export

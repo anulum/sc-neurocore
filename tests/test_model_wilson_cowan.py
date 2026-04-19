@@ -15,6 +15,7 @@ Performance: ~163K isolation steps/s."""
 
 from __future__ import annotations
 
+import math
 import time
 
 import numpy as np
@@ -59,23 +60,34 @@ class TestWilsonCowanIsolation:
 
 
 class TestWilsonCowanSigmoid:
-    """S(x) = 1/(1+exp(-a(x-θ)))."""
+    """Published two-term form, Wilson-Cowan 1972:
+        S(x) = 1/(1+exp(-a(x-θ))) − 1/(1+exp(aθ))
+    The subtracted baseline makes S(0) = 0 exactly. Range is therefore
+    [-β, 1-β] where β = 1/(1+exp(aθ))."""
 
     def test_sigmoid_at_threshold(self):
-        """S(θ) = 0.5."""
+        """S(θ) = 0.5 − β."""
         n = WilsonCowanUnit()
-        assert abs(n._sigmoid(n.theta) - 0.5) < 1e-10
+        baseline = 1.0 / (1.0 + math.exp(n.a * n.theta))
+        assert abs(float(n._sigmoid(n.theta)) - (0.5 - baseline)) < 1e-12
+
+    def test_sigmoid_at_zero(self):
+        """S(0) = 0 by construction of the baseline subtraction."""
+        n = WilsonCowanUnit()
+        assert abs(float(n._sigmoid(0.0))) < 1e-12
 
     def test_sigmoid_monotonic(self):
         n = WilsonCowanUnit()
         vals = [float(n._sigmoid(x)) for x in [-5, 0, 4, 5, 10]]
         assert all(vals[j] <= vals[j + 1] for j in range(len(vals) - 1))
 
-    def test_sigmoid_bounded_0_1(self):
+    def test_sigmoid_bounded_published_range(self):
+        """Range is [−β, 1−β] where β = 1/(1+exp(aθ))."""
         n = WilsonCowanUnit()
-        for x in [-100, -10, 0, 10, 100]:
+        baseline = 1.0 / (1.0 + math.exp(n.a * n.theta))
+        for x in [-50, -10, 0, 10, 50]:
             s = float(n._sigmoid(x))
-            assert 0.0 <= s <= 1.0
+            assert -baseline - 1e-12 <= s <= 1.0 - baseline + 1e-12
 
 
 class TestWilsonCowanEIDynamics:
