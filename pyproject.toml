@@ -158,6 +158,7 @@ exclude_lines = [
     "if HAS_QISKIT",
     "if HAS_PENNYLANE",
     "if HAS_TORCH",
+    "if HAS_LAVA",
     "except ImportError",
     "if TYPE_CHECKING",
     "^\\s*\\.\\.\\.\\s*$",
