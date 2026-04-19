@@ -22,11 +22,15 @@ extend-exclude = [
 [default.extend-words]
 # Author names in references
 Yau = "Yau"       # King-Wai Yau (retinal physiologist)
+Tung = "Tung"     # Henry C. Tung (Rauch-Tung-Striebel smoother, 1965)
 # Neuroscience terms
 anf = "anf"       # Auditory Nerve Fibre (variable name)
 Shal = "Shal"     # Kv4.x (Shal/Shaker) K+ channel gene family
 VOR = "VOR"       # Vestibulo-Ocular Reflex
 # Code identifiers
 systemc = "systemc"  # SystemC (hardware description language)
+lik = "lik"       # abbreviation for "likelihood" (log_lik, lik_out, etc.)
+# Hardware / reliability acronyms
+DED = "DED"       # Double-Error-Detection (SEC-DED ECC)
 # Cargo.lock / third-party crate descriptions
 THS = "THS"          # abbreviation in rand crate docs
