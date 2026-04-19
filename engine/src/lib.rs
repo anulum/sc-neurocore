@@ -975,10 +975,8 @@ fn unpack_bitstream(
                 )));
             }
             length
-        } else if batch == 0 {
-            0
         } else {
-            original_length / batch
+            original_length.checked_div(batch).unwrap_or(0)
         };
 
         let unpacked_rows: Vec<Vec<u8>> = rows

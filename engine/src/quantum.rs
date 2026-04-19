@@ -322,7 +322,10 @@ impl Xoshiro256pp {
 mod tests {
     use super::*;
 
-    fn simple_model() -> (Vec<(usize, f64)>, Vec<((usize, usize), f64)>) {
+    type HTerms = Vec<(usize, f64)>;
+    type JTerms = Vec<((usize, usize), f64)>;
+
+    fn simple_model() -> (HTerms, JTerms) {
         let h = vec![(0, 0.1), (1, -0.2), (2, 0.0)];
         let j = vec![((0, 1), -1.0), ((1, 2), 0.5)];
         (h, j)

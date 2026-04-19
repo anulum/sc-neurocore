@@ -106,7 +106,7 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
             ScOp::GraphForward { id, n_features, .. } => {
                 sv.push_str(&format!(
                     "    wire [{}:0] v{};\n",
-                    n_features.saturating_sub(1).max(0),
+                    n_features.saturating_sub(1),
                     id.0
                 ));
             }

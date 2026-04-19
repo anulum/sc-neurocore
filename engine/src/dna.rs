@@ -386,7 +386,7 @@ mod tests {
     fn test_gc_content_balanced() {
         let seq = design_sequence(40, 42);
         let gc = gc_content(&seq);
-        assert!(gc >= 0.3 && gc <= 0.7, "GC={gc}");
+        assert!((0.3..=0.7).contains(&gc), "GC={gc}");
     }
 
     #[test]
