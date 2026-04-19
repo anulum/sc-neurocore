@@ -26,7 +26,10 @@ module WilsonCowanAccel
 export simulate_wilson_cowan!, sigmoid_wc
 
 @inline function sigmoid_wc(a::Real, theta::Real, x::Real)::Float64
-    return 1.0 / (1.0 + exp(-a * (x - theta)))
+    # Published Wilson-Cowan 1972 two-term sigmoid:
+    #   S(x) = 1/(1+exp(-a(x-θ))) − 1/(1+exp(aθ))
+    baseline = 1.0 / (1.0 + exp(Float64(a) * Float64(theta)))
+    return 1.0 / (1.0 + exp(-Float64(a) * (Float64(x) - Float64(theta)))) - baseline
 end
 
 """

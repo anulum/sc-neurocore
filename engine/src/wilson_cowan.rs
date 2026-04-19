@@ -24,7 +24,11 @@
 
 #[inline]
 fn sigmoid(a: f64, theta: f64, x: f64) -> f64 {
-    1.0 / (1.0 + (-a * (x - theta)).exp())
+    // Published Wilson-Cowan 1972 two-term form:
+    //   S(x) = 1/(1+exp(-a(x-θ))) − 1/(1+exp(aθ))
+    // Range is [-β, 1-β] where β = 1/(1+exp(aθ)).
+    let baseline = 1.0 / (1.0 + (a * theta).exp());
+    1.0 / (1.0 + (-a * (x - theta)).exp()) - baseline
 }
 
 /// Simulate `ext_input.len()` Wilson-Cowan iterations, writing per-step
@@ -81,17 +85,27 @@ mod tests {
     }
 
     #[test]
-    fn sigmoid_at_theta_equals_half() {
+    fn sigmoid_at_zero_is_zero() {
+        // Two-term form zeroes the baseline so S(0) = 0 exactly.
         let (_, _, _, _, _, _, a, theta, _) = defaults();
-        let r = sigmoid(a, theta, theta);
-        assert!((r - 0.5).abs() < 1e-12);
+        assert!(sigmoid(a, theta, 0.0).abs() < 1e-12);
     }
 
     #[test]
-    fn sigmoid_asymptotes() {
+    fn sigmoid_at_theta_equals_half_minus_baseline() {
         let (_, _, _, _, _, _, a, theta, _) = defaults();
-        assert!(sigmoid(a, theta, -1e6) < 1e-50);
-        assert!((sigmoid(a, theta, 1e6) - 1.0).abs() < 1e-50);
+        let baseline = 1.0 / (1.0 + (a * theta).exp());
+        let r = sigmoid(a, theta, theta);
+        assert!((r - (0.5 - baseline)).abs() < 1e-12);
+    }
+
+    #[test]
+    fn sigmoid_asymptotes_respect_baseline() {
+        // As x → +∞, S(x) → 1 − baseline. As x → −∞, S(x) → −baseline.
+        let (_, _, _, _, _, _, a, theta, _) = defaults();
+        let baseline = 1.0 / (1.0 + (a * theta).exp());
+        assert!((sigmoid(a, theta, 1e6) - (1.0 - baseline)).abs() < 1e-50);
+        assert!((sigmoid(a, theta, -1e6) - (-baseline)).abs() < 1e-50);
     }
 
     #[test]

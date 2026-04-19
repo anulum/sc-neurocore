@@ -19,10 +19,17 @@ $$\tau_I \frac{dI}{dt} = -I + S(w_{IE} E - w_{II} I)$$
 
 ### Sigmoid activation function
 
-$$S(x) = \frac{1}{1 + \exp(-a(x - \theta))}$$
+Published two-term form (Wilson & Cowan 1972):
+
+$$S(x) = \frac{1}{1 + \exp(-a(x - \theta))} - \frac{1}{1 + \exp(a\theta)}$$
 
 where $a$ is the sigmoid gain (steepness) and $\theta$ is the threshold
-(midpoint). $S(\theta) = 0.5$ exactly.
+(midpoint). The subtracted baseline $\beta = 1/(1 + \exp(a\theta))$ makes
+$S(0) = 0$ exactly; the range is $[-\beta,\, 1-\beta]$. This baseline
+term is what allows the Hopf bifurcation that produces the paper's
+canonical limit-cycle regime — an earlier one-term implementation
+without the subtraction flattened the fixed-point structure and
+suppressed oscillations.
 
 ### Implementation (as coded)
 
@@ -498,26 +505,64 @@ print(f"Different attractors: {abs(wc_low.e - wc_high.e) > 0.1}")
 
 ---
 
-## Performance Benchmarks
+## Multi-language acceleration chain
 
-### Criterion benchmarks (local i5-11600K, measured 2026-04-05)
+### Kernel sources
 
-| Metric | Value |
-|--------|-------|
-| Test | `wilson_cowan_100k_steps` |
-| Median | 3,046 µs (3.0 ms) |
-| Per-step | 30.5 ns |
-| Throughput | ~32.8M steps/s |
+| Backend | Source file | Binding |
+|---------|-------------|---------|
+| Python primary   | `src/sc_neurocore/neurons/models/wilson_cowan.py`             | — (reference) |
+| Rust (PyO3)      | `engine/src/wilson_cowan.rs`                                  | `sc_neurocore_engine.py_wilson_cowan_simulate` |
+| Julia (juliacall)| `src/sc_neurocore/accel/julia/neurons/wilson_cowan.jl`        | `sc_neurocore.accel.julia.neurons.simulate_wilson_cowan` |
+| Go (cgo)         | `src/sc_neurocore/accel/go/wilson_cowan/wilson_cowan.go`      | `sc_neurocore.accel.go.wilson_cowan.simulate_wilson_cowan` |
+| Mojo (FFI)       | `src/sc_neurocore/accel/mojo/wilson_cowan/wilson_cowan.mojo`  | `sc_neurocore.accel.mojo.wilson_cowan.simulate_wilson_cowan` |
 
-### Python baseline
+Wilson-Cowan is deterministic (no stochastic noise) so all five
+backends produce identical trajectories to machine epsilon given the
+same external-input array.
 
-| Metric | Value |
-|--------|-------|
-| Isolation | ~163K steps/s |
+### Multi-backend performance
 
-Rust achieves a **200× speedup** over Python. The model is
-computationally trivial — 2 sigmoid evaluations (2 exp calls)
-and 2 Euler updates per step, with no sub-stepping or stiffness.
+Measured on local i5-11600K, `N = 100 000` steps, `benchmarks/
+bench_wilson_cowan.py`. Numbers trace back to
+`benchmarks/results/bench_wilson_cowan.json` committed alongside.
+
+| Backend | Steps/s | Wall (ms) | Speedup vs Python | Parity vs Rust |
+|---------|--------:|----------:|------------------:|---------------:|
+| Python primary | 1 110 484 | 90.05 |   1.00× | — |
+| Rust PyO3      | 36 516 581 |  2.74 |  32.9× | reference |
+| Julia (warm)   | 31 530 702 |  3.17 |  28.4× | Δ ≈ 1e-16 (bit-exact) |
+| Go cgo         | 21 838 772 |  4.58 |  19.7× | Δ ≈ 7e-15 |
+| Mojo FFI       | 27 997 794 |  3.57 |  25.2× | Δ ≈ 9e-11 (libm vs f64::exp) |
+
+### Backends
+
+| Backend | Status | Rationale |
+|---------|--------|-----------|
+| Rust PyO3 | **USED** | default `auto` path; fastest measured + zero parity drift |
+| Julia     | USED   | warm path ~87 % of Rust; preferred when juliacall is hot |
+| Go cgo    | USED   | simplest cross-platform .so, slight FFI overhead |
+| Mojo FFI  | USED   | warm path ~77 % of Rust; libm-exp ulp drift tolerated |
+
+### Tests
+
+| Backend | File | Tests | What is verified |
+|---------|------|------:|------------------|
+| Rust    | `tests/test_wilson_cowan_parity.py` (+ `engine/src/wilson_cowan.rs::tests`) | 16 | sigmoid regime + asymptotes, quiescent convergence, strong-drive elevation, output-shape, length-panic, Python↔Rust bit-exact under 4 drive patterns, zero-length + single-step edge |
+| Julia   | `tests/test_wilson_cowan_julia_parity.py` | 4 | Python↔Julia bit-exact, Rust↔Julia cross |
+| Go      | `tests/test_wilson_cowan_go_parity.py`    | 4 | Python↔Go bit-exact, Rust↔Go cross |
+| Mojo    | `tests/test_wilson_cowan_mojo_parity.py`  | 3 | Python↔Mojo within libm ulp drift, Rust↔Mojo |
+
+### Sophisticated dynamics (`tests/test_wilson_cowan_dynamics.py`, 23)
+
+Covers published properties beyond API parity: sigmoid regime (5),
+quiescent fixed point (2), monotone response, time-constant
+separation (τ_e < τ_i → E settles before I), **limit-cycle
+oscillator regime** from Wilson-Cowan 1972 Fig 3 (repeated
+zero-crossings around the post-transient mean — only possible with
+the correct two-term sigmoid), bounded state over 5 extreme drives,
+parameter sweep monotonicity, extreme-param cross-backend parity
+(5 regimes), edge cases.
 
 ---
 

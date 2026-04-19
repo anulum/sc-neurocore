@@ -36,9 +36,16 @@ class WilsonCowanUnit:
     dt: float = 0.1
 
     def _sigmoid(self, x: float) -> float:
-        # math.exp on scalars is ~4× faster than np.exp with bit-identical
-        # output (both dispatch to libm `exp()`); measured 2.72 → 0.68 µs/step.
-        return 1.0 / (1.0 + math.exp(-self.a * (x - self.theta)))
+        # Published Wilson-Cowan 1972 two-term sigmoid:
+        #   S(x) = 1/(1+exp(-a(x-θ))) − 1/(1+exp(aθ))
+        # The subtracted baseline makes S(0) = 0 exactly. The earlier
+        # one-term implementation left an artefactual bias
+        # `1/(1+exp(aθ))` ≈ 0.008 at x = 0 that shifted the model's
+        # fixed points and suppressed the Hopf oscillator regime.
+        # math.exp on scalars keeps the per-step cost ~0.7 µs.
+        return 1.0 / (1.0 + math.exp(-self.a * (x - self.theta))) - 1.0 / (
+            1.0 + math.exp(self.a * self.theta)
+        )
 
     def step(self, ext_input: float = 0.0) -> float:
         se = self._sigmoid(self.w_ee * self.e - self.w_ei * self.i + ext_input)
