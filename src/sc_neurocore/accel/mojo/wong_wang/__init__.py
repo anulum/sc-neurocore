@@ -22,10 +22,12 @@ from __future__ import annotations
 
 import ctypes
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
 _LIB_PATH = Path(__file__).resolve().parent / "libwong_wang.so"
+_lib: ctypes.CDLL | None
 
 try:
     _lib = ctypes.CDLL(str(_LIB_PATH))
@@ -67,11 +69,11 @@ def simulate_wong_wang(
     i_0: float,
     sigma: float,
     dt: float,
-    stim1,
-    stim2,
-    xi,
-):
-    """Mojo-accelerated batch Wong-Wang simulator. Same signature + return
+    stim1: np.ndarray | list[float],
+    stim2: np.ndarray | list[float],
+    xi: np.ndarray | list[float],
+) -> dict[str, Any]:
+    """Mojo-accelerated N-step Wong-Wang simulator. Same signature + return
     shape as the Rust/Julia/Go dispatchers.
 
     Mojo @export uses raw Int buffer addresses (parametric signature

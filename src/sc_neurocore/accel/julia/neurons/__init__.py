@@ -21,7 +21,7 @@ from typing import Any
 import numpy as np
 
 try:
-    from juliacall import Main as _jl  # type: ignore[import-not-found]
+    from juliacall import Main as _jl  # type: ignore[import-untyped,import-not-found]
 
     _HAS_JULIA_NEURONS = True
 except ImportError:
@@ -72,11 +72,11 @@ def simulate_wong_wang(
     i_0: float,
     sigma: float,
     dt: float,
-    stim1,
-    stim2,
-    xi,
-):
-    """Julia-accelerated batch Wong-Wang simulator; parity with
+    stim1: np.ndarray | list[float],
+    stim2: np.ndarray | list[float],
+    xi: np.ndarray | list[float],
+) -> dict[str, Any]:
+    """Julia-accelerated N-step Wong-Wang simulator; parity with
     ``sc_neurocore_engine.py_wong_wang_simulate``. Returns a dict with
     per-step ``s1``/``s2``/``r1``/``r2`` arrays + final scalars.
     """
@@ -133,9 +133,9 @@ def simulate_wilson_cowan(
     a: float,
     theta: float,
     dt: float,
-    ext_input,
-):
-    """Julia-accelerated batch Wilson-Cowan simulator; parity with
+    ext_input: np.ndarray | list[float],
+) -> dict[str, Any]:
+    """Julia-accelerated N-step Wilson-Cowan simulator; parity with
     ``sc_neurocore_engine.py_wilson_cowan_simulate``. Returns a dict
     with per-step ``e``/``i`` arrays + final scalars.
     """
