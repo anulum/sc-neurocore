@@ -4,12 +4,12 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Parity tests: Python primary vs Rust batch (Wong-Wang)
+# SC-NeuroCore — Parity tests: Python primary vs Rust simulator (Wong-Wang)
 
 """Bit-exact parity between `WongWangUnit.step` and `py_wong_wang_simulate`.
 
 The Python primary draws two `np.random.randn()` samples per step (one
-for each pool). The Rust batch takes an `xi` array of length `2 *
+for each pool). The Rust simulator takes an `xi` array of length `2 *
 n_steps` pre-drawn by the caller. Both consume the same RNG sequence
 when the caller re-seeds and draws `2*N` samples before calling Rust,
 so trajectories must match to within f64 round-off.
@@ -55,7 +55,7 @@ def _run_python(n_steps: int, stim1: np.ndarray, stim2: np.ndarray, seed: int):
 
 
 def _run_rust(n_steps: int, stim1: np.ndarray, stim2: np.ndarray, seed: int):
-    """Run the Rust batch with xi drawn from the SAME seed. 2 draws per step,
+    """Run the Rust simulator with xi drawn from the SAME seed. 2 draws per step,
     same order as the Python loop (xi1 then xi2)."""
     np.random.seed(seed)
     xi = np.random.randn(2 * n_steps).astype(np.float64)
