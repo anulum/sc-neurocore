@@ -213,6 +213,7 @@ if _core_available:
     from .ir import ScGraph, ScGraphBuilder, parse_ir
     from .hdc import HDCVector
     from .petri_net import PetriNetEngine
+
     _bridge_available = True
 else:
     # Rust engine not built — raise ImportError so pytest.importorskip works
@@ -468,6 +469,7 @@ except ImportError:
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import py_kl_refine
+
     __all__ += ["py_kl_refine"]
     _kl_refine_rust_available = True
 except ImportError:
@@ -475,6 +477,7 @@ except ImportError:
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import py_ping_step
+
     __all__ += ["py_ping_step"]
     _ping_step_rust_available = True
 except ImportError:
@@ -484,7 +487,16 @@ try:
     from sc_neurocore_engine.sc_neurocore_engine import (
         py_parallel_csr_spmv_add,
     )
+
     __all__ += ["py_parallel_csr_spmv_add"]
     _parallel_csr_spmv_rust_available = True
 except ImportError:
     _parallel_csr_spmv_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import py_wong_wang_simulate
+
+    __all__ += ["py_wong_wang_simulate"]
+    _wong_wang_rust_available = True
+except ImportError:
+    _wong_wang_rust_available = False
