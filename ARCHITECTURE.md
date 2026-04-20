@@ -42,10 +42,23 @@ sc-neurocore/
 │   ├── core/               Core bitstream types and SC arithmetic
 │   ├── utils/              Bitstream encoding/decoding, RNG, helpers
 │   ├── network/            Population-Projection-Network simulation engine
-│   ├── accel/              GPU (CuPy), JAX, JIT, MPI backends
+│   ├── accel/              GPU (CuPy), JAX, JIT, MPI, Mojo, Julia, Go backends
+│   │   ├── mojo/           MojoKernelRunner + kernels.mojo SIMD primitives
+│   │   ├── julia/solvers/  JuliaFusionSolver + DiffEq.jl reference ODEs
+│   │   └── go/services/    aer_router, hil_debugger, services, services_ext
+│   ├── arcane_zenith.py    ArcaneZenithCognitiveCore (neuron ⇄ 4-rule meta-plasticity)
+│   ├── bioware/            MEA ↔ SC ↔ opto closed-loop (BioHybridSession, SpikeSorter)
+│   ├── optics/             Photonic SC + FDTD (Berenger PML) + GDSII export
+│   ├── evo_substrate/      Self-replicating SC organisms (Genome + FormalSafetyGuard)
+│   ├── formal/             FormalProofEngine → Lean 4 safety_bounds.lean (6 theorems)
+│   ├── edge/               AERRoutingDaemon — Python façade over Go AER UDP router
+│   ├── debug/              Offline SpikeTracer + live HILServerDaemon / HILDebugger
+│   ├── proto/              core.proto + telemetry.proto (wire contract for HIL)
 │   ├── compiler/           IR graph → SystemVerilog + MLIR/CIRCT pipeline
 │   ├── hardware/           HDL generation (Verilog emitter)
-│   ├── hdl_gen/            Equation-to-Verilog RTL compiler
+│   ├── hdl_gen/            Equation-to-Verilog RTL compiler + safety_monitor.sv
+│   │   ├── safety/         neuro_safe_monitor (6 P-properties ↔ Lean theorems)
+│   │   └── openroad_flow/  Yosys + OpenROAD ASIC synthesis driver
 │   ├── nir_bridge/         NIR import/export (18/18 primitives, multi-framework interop)
 │   ├─�� learning/           STDP, BPTT, TBPTT, EWC, e-prop, R-STDP, MAML, STP, BCM
 │   ├── training/           Surrogate gradient training cells
