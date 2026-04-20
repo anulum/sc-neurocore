@@ -140,6 +140,46 @@ except (ImportError, AttributeError):
     except (ImportError, AttributeError):
         pass
 
+import ctypes
+import os
+
+_julia_multi_spmv = None
+_HAS_JULIA_MULTI_SPMV = False
+try:
+    from juliacall import Main as jl
+    _jl_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "accel", "julia", "network", "cortical_column.jl"))
+    if os.path.exists(_jl_file):
+        jl.seval(f'include("{_jl_file}")')
+        _julia_multi_spmv = jl.CorticalColumnAccel.py_parallel_csr_multi_spmv_add
+        _HAS_JULIA_MULTI_SPMV = True
+except Exception:
+    pass
+
+_go_multi_spmv = None
+_HAS_GO_MULTI_SPMV = False
+try:
+    _go_lib_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "accel", "go", "cortical_column", "libcortical_column.so"))
+    if os.path.exists(_go_lib_file):
+        _go_lib = ctypes.CDLL(_go_lib_file)
+        _go_multi_spmv = _go_lib.py_parallel_csr_multi_spmv_add_c
+        _go_multi_spmv.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.POINTER(ctypes.c_int32)), ctypes.POINTER(ctypes.POINTER(ctypes.c_int32)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int32), ctypes.POINTER(ctypes.c_double)]
+        _go_multi_spmv.restype = None
+        _HAS_GO_MULTI_SPMV = True
+except Exception:
+    pass
+
+_mojo_multi_spmv = None
+_HAS_MOJO_MULTI_SPMV = False
+try:
+    _mojo_lib_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "accel", "mojo", "kernels", "libcortical_column.so"))
+    if os.path.exists(_mojo_lib_file):
+        _mojo_lib = ctypes.CDLL(_mojo_lib_file)
+        _mojo_multi_spmv = _mojo_lib.py_parallel_csr_multi_spmv_add_c
+        _mojo_multi_spmv.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.POINTER(ctypes.c_int32)), ctypes.POINTER(ctypes.POINTER(ctypes.c_int32)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int32), ctypes.POINTER(ctypes.c_double)]
+        _mojo_multi_spmv.restype = None
+        _HAS_MOJO_MULTI_SPMV = True
+except Exception:
+    pass
 
 # ── Population ordering and per-population sizes (Potjans Table 5) ──
 
@@ -274,6 +314,7 @@ class CorticalColumn:
         n_delay_bins: int = 5,
         use_block_csr: bool = False,
         seed: int | None = None,
+        backend: str = "auto",
     ) -> None:
         if not (0.0 < scale <= 1.0):
             raise ValueError(f"scale must be in (0, 1], got {scale}")
@@ -287,6 +328,19 @@ class CorticalColumn:
         self.scale_correction = scale_correction
         self.delay_distribution = delay_distribution
         self.n_delay_bins = n_delay_bins
+        self.backend = backend
+
+        if self.backend not in {"auto", "rust", "python", "julia", "go", "mojo"}:
+            raise ValueError(f"backend must be one of 'auto'|'rust'|'python'|'julia'|'go'|'mojo', got {self.backend!r}")
+        if self.backend == "rust" and not _HAS_RUST_CSR_MULTI_SPMV:
+            raise RuntimeError("backend='rust' requested but `sc_neurocore_engine.py_parallel_csr_multi_spmv_add` is not available")
+        if self.backend == "julia" and not _HAS_JULIA_MULTI_SPMV:
+            raise RuntimeError("backend='julia' requested but Julia kernel is not available")
+        if self.backend == "go" and not _HAS_GO_MULTI_SPMV:
+            raise RuntimeError("backend='go' requested but Go kernel is not available")
+        if self.backend == "mojo" and not _HAS_MOJO_MULTI_SPMV:
+            raise RuntimeError("backend='mojo' requested but Mojo kernel is not available")
+
         # `use_block_csr=True` constructs stacked block-CSR matrices
         # per (source-type, global-bin) so the per-step inner loop
         # collapses from `n_pairs * n_delay_bins` (~320) sparse
@@ -809,7 +863,50 @@ class CorticalColumn:
             xs.append(spike_concat)
 
         if indptrs:
-            if _HAS_RUST_CSR_MULTI_SPMV and _rust_csr_multi_spmv_add is not None:
+            bnd = self.backend
+            if bnd == "auto":
+                if _HAS_RUST_CSR_MULTI_SPMV and _rust_csr_multi_spmv_add is not None:
+                    bnd = "rust"
+                elif _HAS_MOJO_MULTI_SPMV and _mojo_multi_spmv is not None:
+                    bnd = "mojo"
+                elif _HAS_GO_MULTI_SPMV and _go_multi_spmv is not None:
+                    bnd = "go"
+                elif _HAS_JULIA_MULTI_SPMV and _julia_multi_spmv is not None:
+                    bnd = "julia"
+                else:
+                    bnd = "python"
+                    
+            if bnd in ("mojo", "go", "julia"):
+                n_blocks = len(indptrs)
+                n_rows = contrib_concat.size
+                P_INT32 = ctypes.POINTER(ctypes.c_int32)
+                P_FLOAT64 = ctypes.POINTER(ctypes.c_double)
+                
+                if bnd == "julia" and _julia_multi_spmv is not None:
+                    indptr_ptrs_arr = np.array([arr.ctypes.data for arr in indptrs], dtype=np.uintp)
+                    indices_ptrs_arr = np.array([arr.ctypes.data for arr in indices_list], dtype=np.uintp)
+                    data_ptrs_arr = np.array([arr.ctypes.data for arr in data_list], dtype=np.uintp)
+                    x_ptrs_arr = np.array([arr.ctypes.data for arr in xs], dtype=np.uintp)
+                    x_lens_arr = np.array([arr.size for arr in xs], dtype=int)
+                    _julia_multi_spmv(
+                        n_blocks, n_rows,
+                        indptr_ptrs_arr, indices_ptrs_arr, data_ptrs_arr, x_ptrs_arr, x_lens_arr,
+                        contrib_concat.ctypes.data
+                    )
+                else:
+                    indptr_ptrs = (P_INT32 * n_blocks)(*[arr.ctypes.data_as(P_INT32) for arr in indptrs])
+                    indices_ptrs = (P_INT32 * n_blocks)(*[arr.ctypes.data_as(P_INT32) for arr in indices_list])
+                    data_ptrs = (P_FLOAT64 * n_blocks)(*[arr.ctypes.data_as(P_FLOAT64) for arr in data_list])
+                    x_ptrs = (P_FLOAT64 * n_blocks)(*[arr.ctypes.data_as(P_FLOAT64) for arr in xs])
+                    x_lens = (ctypes.c_int32 * n_blocks)(*[arr.size for arr in xs])
+                    y_ptr = contrib_concat.ctypes.data_as(P_FLOAT64)
+                    
+                    if bnd == "mojo" and _mojo_multi_spmv is not None:
+                        _mojo_multi_spmv(n_blocks, n_rows, indptr_ptrs, indices_ptrs, data_ptrs, x_ptrs, x_lens, y_ptr)
+                    elif bnd == "go" and _go_multi_spmv is not None:
+                        _go_multi_spmv(n_blocks, n_rows, indptr_ptrs, indices_ptrs, data_ptrs, x_ptrs, x_lens, y_ptr)
+                        
+            elif bnd == "rust" and _HAS_RUST_CSR_MULTI_SPMV and _rust_csr_multi_spmv_add is not None:
                 # ONE batched FFI call replaces the up-to-10
                 # per-bin calls. Rust loops internally and shares
                 # the rayon thread pool across all bins.

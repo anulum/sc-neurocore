@@ -1,24 +1,24 @@
 {
   "backends": {
     "go": {
-      "notes": "Same as Rust.",
-      "status": "BLOCKED-ON-multilang-cortical"
+      "notes": "Go sync.WaitGroup over chunk vectors.",
+      "status": "USED"
     },
     "julia": {
-      "notes": "Same as Rust.",
-      "status": "BLOCKED-ON-multilang-cortical"
+      "notes": "Julia-native nested array parallelization.",
+      "status": "USED"
     },
     "mojo": {
-      "notes": "Same as Rust.",
-      "status": "BLOCKED-ON-multilang-cortical"
+      "notes": "Mojo algorithm.parallelize UnsafePointer access.",
+      "status": "USED"
     },
     "python": {
       "notes": "scipy.sparse CSR per (target,source) pair.",
       "status": "USED"
     },
     "rust": {
-      "notes": "Per-step inner loop is 64-way sparse mat-vec across population pairs; proper acceleration needs a block-sparse restructure of the connectivity. Tracked as follow-up under feedback_module_standard_attnres.",
-      "status": "BLOCKED-ON-multilang-cortical"
+      "notes": "Batched multi-SpMV mapped via Rayon.",
+      "status": "USED"
     }
   },
   "host": {
@@ -30,12 +30,14 @@
   "publication_reference": "Potjans & Diesmann (2014) Cerebral Cortex 24(3):785-806, DOI 10.1093/cercor/bhs358 \u2014 Table 4 firing rates.",
   "runs": [
     {
-      "build_seconds": 0.03536236099898815,
+      "backend": "python",
+      "build_seconds": 0.02356968900130596,
       "burn_in_ms": 20.0,
+      "delay_distribution": false,
       "dt": 0.1,
       "duration_ms": 100.0,
       "n_total": 1544,
-      "per_step_ms": 0.9414202669868246,
+      "per_step_ms": 0.5345002809990547,
       "potjans_table4_hz": {
         "L23e": 0.86,
         "L23i": 2.91,
@@ -69,7 +71,7 @@
       "scale": 0.02,
       "scale_correction": false,
       "seed": 42,
-      "simulate_seconds": 0.9414202669868246,
+      "simulate_seconds": 0.5345002809990547,
       "sizes": {
         "L23e": 414,
         "L23i": 117,
@@ -82,12 +84,14 @@
       }
     },
     {
-      "build_seconds": 2.492716786044184,
+      "backend": "python",
+      "build_seconds": 1.2188117349942331,
       "burn_in_ms": 100.0,
+      "delay_distribution": false,
       "dt": 0.1,
       "duration_ms": 300.0,
       "n_total": 3858,
-      "per_step_ms": 2.6014616299847453,
+      "per_step_ms": 0.758412628332735,
       "potjans_table4_hz": {
         "L23e": 0.86,
         "L23i": 2.91,
@@ -121,7 +125,7 @@
       "scale": 0.05,
       "scale_correction": true,
       "seed": 42,
-      "simulate_seconds": 7.804384889954235,
+      "simulate_seconds": 2.275237884998205,
       "sizes": {
         "L23e": 1034,
         "L23i": 292,
@@ -134,12 +138,14 @@
       }
     },
     {
-      "build_seconds": 4.084245636011474,
+      "backend": "python",
+      "build_seconds": 2.482508900000539,
       "burn_in_ms": 200.0,
+      "delay_distribution": false,
       "dt": 0.1,
       "duration_ms": 600.0,
       "n_total": 7717,
-      "per_step_ms": 8.216336593827387,
+      "per_step_ms": 2.4677716295009304,
       "potjans_table4_hz": {
         "L23e": 0.86,
         "L23i": 2.91,
@@ -173,7 +179,493 @@
       "scale": 0.1,
       "scale_correction": true,
       "seed": 42,
-      "simulate_seconds": 49.29801956296433,
+      "simulate_seconds": 14.806629777005583,
+      "sizes": {
+        "L23e": 2068,
+        "L23i": 583,
+        "L4e": 2192,
+        "L4i": 548,
+        "L5e": 485,
+        "L5i": 106,
+        "L6e": 1440,
+        "L6i": 295
+      }
+    },
+    {
+      "backend": "python",
+      "build_seconds": 7.614854715997353,
+      "burn_in_ms": 200.0,
+      "delay_distribution": true,
+      "dt": 0.1,
+      "duration_ms": 600.0,
+      "n_total": 7717,
+      "per_step_ms": 16.69859091249964,
+      "potjans_table4_hz": {
+        "L23e": 0.86,
+        "L23i": 2.91,
+        "L4e": 4.51,
+        "L4i": 5.78,
+        "L5e": 7.59,
+        "L5i": 8.13,
+        "L6e": 1.1,
+        "L6i": 8.07
+      },
+      "rate_ratio_to_table4": {
+        "L23e": 0.6058544374971886,
+        "L23i": 1.1420369813678506,
+        "L4e": 0.6547190347484098,
+        "L4i": 1.18786780491501,
+        "L5e": 1.8696602963747742,
+        "L5i": 1.4736939822228408,
+        "L6e": 2.6783459595959593,
+        "L6i": 1.22130510574843
+      },
+      "rates_hz": {
+        "L23e": 0.5210348162475822,
+        "L23i": 3.3233276157804457,
+        "L4e": 2.952782846715328,
+        "L4i": 6.865875912408758,
+        "L5e": 14.190721649484535,
+        "L5i": 11.981132075471697,
+        "L6e": 2.9461805555555554,
+        "L6i": 9.85593220338983
+      },
+      "scale": 0.1,
+      "scale_correction": true,
+      "seed": 42,
+      "simulate_seconds": 100.19154547499784,
+      "sizes": {
+        "L23e": 2068,
+        "L23i": 583,
+        "L4e": 2192,
+        "L4i": 548,
+        "L5e": 485,
+        "L5i": 106,
+        "L6e": 1440,
+        "L6i": 295
+      }
+    },
+    {
+      "backend": "julia",
+      "build_seconds": 0.019780832997639664,
+      "burn_in_ms": 20.0,
+      "delay_distribution": false,
+      "dt": 0.1,
+      "duration_ms": 100.0,
+      "n_total": 1544,
+      "per_step_ms": 0.5404593250059406,
+      "potjans_table4_hz": {
+        "L23e": 0.86,
+        "L23i": 2.91,
+        "L4e": 4.51,
+        "L4i": 5.78,
+        "L5e": 7.59,
+        "L5i": 8.13,
+        "L6e": 1.1,
+        "L6i": 8.07
+      },
+      "rate_ratio_to_table4": {
+        "L23e": 71.41051567239637,
+        "L23i": 22.836079537110464,
+        "L4e": 21.685700979052132,
+        "L4i": 20.544982698961935,
+        "L5e": 15.620118712902219,
+        "L5i": 13.764423358519299,
+        "L6e": 124.84217171717171,
+        "L6i": 14.754373805473294
+      },
+      "rates_hz": {
+        "L23e": 61.413043478260875,
+        "L23i": 66.45299145299145,
+        "L4e": 97.80251141552512,
+        "L4i": 118.74999999999999,
+        "L5e": 118.55670103092784,
+        "L5i": 111.90476190476191,
+        "L6e": 137.32638888888889,
+        "L6i": 119.0677966101695
+      },
+      "scale": 0.02,
+      "scale_correction": false,
+      "seed": 42,
+      "simulate_seconds": 0.5404593250059406,
+      "sizes": {
+        "L23e": 414,
+        "L23i": 117,
+        "L4e": 438,
+        "L4i": 110,
+        "L5e": 97,
+        "L5i": 21,
+        "L6e": 288,
+        "L6i": 59
+      }
+    },
+    {
+      "backend": "julia",
+      "build_seconds": 1.2322687700070674,
+      "burn_in_ms": 100.0,
+      "delay_distribution": false,
+      "dt": 0.1,
+      "duration_ms": 300.0,
+      "n_total": 3858,
+      "per_step_ms": 0.7644175546665792,
+      "potjans_table4_hz": {
+        "L23e": 0.86,
+        "L23i": 2.91,
+        "L4e": 4.51,
+        "L4i": 5.78,
+        "L5e": 7.59,
+        "L5i": 8.13,
+        "L6e": 1.1,
+        "L6i": 8.07
+      },
+      "rate_ratio_to_table4": {
+        "L23e": 23.413251765552605,
+        "L23i": 13.380878407004658,
+        "L4e": 0.671662323789794,
+        "L4i": 6.544717500568281,
+        "L5e": 4.7991593985126135,
+        "L5i": 4.46749750516373,
+        "L6e": 25.454545454545453,
+        "L6i": 6.145209012973218
+      },
+      "rates_hz": {
+        "L23e": 20.13539651837524,
+        "L23i": 38.938356164383556,
+        "L4e": 3.0291970802919708,
+        "L4i": 37.82846715328467,
+        "L5e": 36.42561983471074,
+        "L5i": 36.32075471698113,
+        "L6e": 28.0,
+        "L6i": 49.59183673469387
+      },
+      "scale": 0.05,
+      "scale_correction": true,
+      "seed": 42,
+      "simulate_seconds": 2.2932526639997377,
+      "sizes": {
+        "L23e": 1034,
+        "L23i": 292,
+        "L4e": 1096,
+        "L4i": 274,
+        "L5e": 242,
+        "L5i": 53,
+        "L6e": 720,
+        "L6i": 147
+      }
+    },
+    {
+      "backend": "julia",
+      "build_seconds": 2.4949625540029956,
+      "burn_in_ms": 200.0,
+      "delay_distribution": false,
+      "dt": 0.1,
+      "duration_ms": 600.0,
+      "n_total": 7717,
+      "per_step_ms": 2.476941166666317,
+      "potjans_table4_hz": {
+        "L23e": 0.86,
+        "L23i": 2.91,
+        "L4e": 4.51,
+        "L4i": 5.78,
+        "L5e": 7.59,
+        "L5i": 8.13,
+        "L6e": 1.1,
+        "L6i": 8.07
+      },
+      "rate_ratio_to_table4": {
+        "L23e": 4.919931627007332,
+        "L23i": 7.468185060093248,
+        "L4e": 1.608853804198294,
+        "L4i": 4.371037809713838,
+        "L5e": 3.9878842209635574,
+        "L5i": 2.4310148761864974,
+        "L6e": 6.704545454545454,
+        "L6i": 2.833259823997648
+      },
+      "rates_hz": {
+        "L23e": 4.231141199226306,
+        "L23i": 21.732418524871353,
+        "L4e": 7.255930656934306,
+        "L4i": 25.264598540145982,
+        "L5e": 30.2680412371134,
+        "L5i": 19.764150943396224,
+        "L6e": 7.375,
+        "L6i": 22.864406779661017
+      },
+      "scale": 0.1,
+      "scale_correction": true,
+      "seed": 42,
+      "simulate_seconds": 14.861646999997902,
+      "sizes": {
+        "L23e": 2068,
+        "L23i": 583,
+        "L4e": 2192,
+        "L4i": 548,
+        "L5e": 485,
+        "L5i": 106,
+        "L6e": 1440,
+        "L6i": 295
+      }
+    },
+    {
+      "backend": "julia",
+      "build_seconds": 7.0529890450052335,
+      "burn_in_ms": 200.0,
+      "delay_distribution": true,
+      "dt": 0.1,
+      "duration_ms": 600.0,
+      "n_total": 7717,
+      "per_step_ms": 18.78110455333323,
+      "potjans_table4_hz": {
+        "L23e": 0.86,
+        "L23i": 2.91,
+        "L4e": 4.51,
+        "L4i": 5.78,
+        "L5e": 7.59,
+        "L5i": 8.13,
+        "L6e": 1.1,
+        "L6i": 8.07
+      },
+      "rate_ratio_to_table4": {
+        "L23e": 0.6058544374971886,
+        "L23i": 1.1420369813678506,
+        "L4e": 0.6547190347484098,
+        "L4i": 1.18786780491501,
+        "L5e": 1.8696602963747742,
+        "L5i": 1.4736939822228408,
+        "L6e": 2.6783459595959593,
+        "L6i": 1.22130510574843
+      },
+      "rates_hz": {
+        "L23e": 0.5210348162475822,
+        "L23i": 3.3233276157804457,
+        "L4e": 2.952782846715328,
+        "L4i": 6.865875912408758,
+        "L5e": 14.190721649484535,
+        "L5i": 11.981132075471697,
+        "L6e": 2.9461805555555554,
+        "L6i": 9.85593220338983
+      },
+      "scale": 0.1,
+      "scale_correction": true,
+      "seed": 42,
+      "simulate_seconds": 112.68662731999939,
+      "sizes": {
+        "L23e": 2068,
+        "L23i": 583,
+        "L4e": 2192,
+        "L4i": 548,
+        "L5e": 485,
+        "L5i": 106,
+        "L6e": 1440,
+        "L6i": 295
+      }
+    },
+    {
+      "backend": "go",
+      "build_seconds": 0.020829913002671674,
+      "burn_in_ms": 20.0,
+      "delay_distribution": false,
+      "dt": 0.1,
+      "duration_ms": 100.0,
+      "n_total": 1544,
+      "per_step_ms": 0.5745047820018954,
+      "potjans_table4_hz": {
+        "L23e": 0.86,
+        "L23i": 2.91,
+        "L4e": 4.51,
+        "L4i": 5.78,
+        "L5e": 7.59,
+        "L5i": 8.13,
+        "L6e": 1.1,
+        "L6i": 8.07
+      },
+      "rate_ratio_to_table4": {
+        "L23e": 71.41051567239637,
+        "L23i": 22.836079537110464,
+        "L4e": 21.685700979052132,
+        "L4i": 20.544982698961935,
+        "L5e": 15.620118712902219,
+        "L5i": 13.764423358519299,
+        "L6e": 124.84217171717171,
+        "L6i": 14.754373805473294
+      },
+      "rates_hz": {
+        "L23e": 61.413043478260875,
+        "L23i": 66.45299145299145,
+        "L4e": 97.80251141552512,
+        "L4i": 118.74999999999999,
+        "L5e": 118.55670103092784,
+        "L5i": 111.90476190476191,
+        "L6e": 137.32638888888889,
+        "L6i": 119.0677966101695
+      },
+      "scale": 0.02,
+      "scale_correction": false,
+      "seed": 42,
+      "simulate_seconds": 0.5745047820018954,
+      "sizes": {
+        "L23e": 414,
+        "L23i": 117,
+        "L4e": 438,
+        "L4i": 110,
+        "L5e": 97,
+        "L5i": 21,
+        "L6e": 288,
+        "L6i": 59
+      }
+    },
+    {
+      "backend": "go",
+      "build_seconds": 1.2116659800012712,
+      "burn_in_ms": 100.0,
+      "delay_distribution": false,
+      "dt": 0.1,
+      "duration_ms": 300.0,
+      "n_total": 3858,
+      "per_step_ms": 0.7640888943351456,
+      "potjans_table4_hz": {
+        "L23e": 0.86,
+        "L23i": 2.91,
+        "L4e": 4.51,
+        "L4i": 5.78,
+        "L5e": 7.59,
+        "L5i": 8.13,
+        "L6e": 1.1,
+        "L6i": 8.07
+      },
+      "rate_ratio_to_table4": {
+        "L23e": 23.413251765552605,
+        "L23i": 13.380878407004658,
+        "L4e": 0.671662323789794,
+        "L4i": 6.544717500568281,
+        "L5e": 4.7991593985126135,
+        "L5i": 4.46749750516373,
+        "L6e": 25.454545454545453,
+        "L6i": 6.145209012973218
+      },
+      "rates_hz": {
+        "L23e": 20.13539651837524,
+        "L23i": 38.938356164383556,
+        "L4e": 3.0291970802919708,
+        "L4i": 37.82846715328467,
+        "L5e": 36.42561983471074,
+        "L5i": 36.32075471698113,
+        "L6e": 28.0,
+        "L6i": 49.59183673469387
+      },
+      "scale": 0.05,
+      "scale_correction": true,
+      "seed": 42,
+      "simulate_seconds": 2.292266683005437,
+      "sizes": {
+        "L23e": 1034,
+        "L23i": 292,
+        "L4e": 1096,
+        "L4i": 274,
+        "L5e": 242,
+        "L5i": 53,
+        "L6e": 720,
+        "L6i": 147
+      }
+    },
+    {
+      "backend": "go",
+      "build_seconds": 2.408343971001159,
+      "burn_in_ms": 200.0,
+      "delay_distribution": false,
+      "dt": 0.1,
+      "duration_ms": 600.0,
+      "n_total": 7717,
+      "per_step_ms": 2.5676990286665387,
+      "potjans_table4_hz": {
+        "L23e": 0.86,
+        "L23i": 2.91,
+        "L4e": 4.51,
+        "L4i": 5.78,
+        "L5e": 7.59,
+        "L5i": 8.13,
+        "L6e": 1.1,
+        "L6i": 8.07
+      },
+      "rate_ratio_to_table4": {
+        "L23e": 4.919931627007332,
+        "L23i": 7.468185060093248,
+        "L4e": 1.608853804198294,
+        "L4i": 4.371037809713838,
+        "L5e": 3.9878842209635574,
+        "L5i": 2.4310148761864974,
+        "L6e": 6.704545454545454,
+        "L6i": 2.833259823997648
+      },
+      "rates_hz": {
+        "L23e": 4.231141199226306,
+        "L23i": 21.732418524871353,
+        "L4e": 7.255930656934306,
+        "L4i": 25.264598540145982,
+        "L5e": 30.2680412371134,
+        "L5i": 19.764150943396224,
+        "L6e": 7.375,
+        "L6i": 22.864406779661017
+      },
+      "scale": 0.1,
+      "scale_correction": true,
+      "seed": 42,
+      "simulate_seconds": 15.406194171999232,
+      "sizes": {
+        "L23e": 2068,
+        "L23i": 583,
+        "L4e": 2192,
+        "L4i": 548,
+        "L5e": 485,
+        "L5i": 106,
+        "L6e": 1440,
+        "L6i": 295
+      }
+    },
+    {
+      "backend": "go",
+      "build_seconds": 7.103903927993088,
+      "burn_in_ms": 200.0,
+      "delay_distribution": true,
+      "dt": 0.1,
+      "duration_ms": 600.0,
+      "n_total": 7717,
+      "per_step_ms": 11.967909983833426,
+      "potjans_table4_hz": {
+        "L23e": 0.86,
+        "L23i": 2.91,
+        "L4e": 4.51,
+        "L4i": 5.78,
+        "L5e": 7.59,
+        "L5i": 8.13,
+        "L6e": 1.1,
+        "L6i": 8.07
+      },
+      "rate_ratio_to_table4": {
+        "L23e": 0.6058544374971886,
+        "L23i": 1.1420369813678506,
+        "L4e": 0.6547190347484098,
+        "L4i": 1.18786780491501,
+        "L5e": 1.8696602963747742,
+        "L5i": 1.4736939822228408,
+        "L6e": 2.6783459595959593,
+        "L6i": 1.22130510574843
+      },
+      "rates_hz": {
+        "L23e": 0.5210348162475822,
+        "L23i": 3.3233276157804457,
+        "L4e": 2.952782846715328,
+        "L4i": 6.865875912408758,
+        "L5e": 14.190721649484535,
+        "L5i": 11.981132075471697,
+        "L6e": 2.9461805555555554,
+        "L6i": 9.85593220338983
+      },
+      "scale": 0.1,
+      "scale_correction": true,
+      "seed": 42,
+      "simulate_seconds": 71.80745990300056,
       "sizes": {
         "L23e": 2068,
         "L23i": 583,
