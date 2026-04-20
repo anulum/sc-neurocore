@@ -8,7 +8,5 @@
 
 """sc_neurocore.evo_substrate -- Self-replicating evolutionary SC substrate with FPGA deployment.
 
-Tier: experimental.
+Tier: industrial. Fully verified autonomous network builder.
 """
-
-__tier__ = "experimental"

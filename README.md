@@ -137,6 +137,7 @@ explainability, neuro-symbolic predictive coding, stochastic doctor, and model z
 | Chiplet/memristor/spintronic | **Yes** | — | — | — | — |
 | BCI closed-loop control | **Yes** | — | — | — | — |
 | Federated SC learning | **Yes** | — | — | — | — |
+| Evolutionary Substrate (FPGA) | **Yes** | — | — | — | — |
 | Photonic SC Bridge (FDTD, GDSII) | **Yes** | — | — | — | — |
 | conda-forge recipe | **Ready** | Yes | — | — | Yes |
 | PyPI package | Yes | Yes | Yes | Yes | Yes |
@@ -149,6 +150,8 @@ explainability, neuro-symbolic predictive coding, stochastic doctor, and model z
 - **Project Zenith Autonomous Learning** — Seamless bridge unifying PyTorch surrogate gradients with stochastic biological plasticity parameters (BCM, ELIGENT, R-STDP). Allows developers to train mathematically exact `nn.Module` plasticity rules purely on GPU networks, then seamlessly deploy identical bounded bits (`.scal` Exascale binary drops) targeting verifiable SymbiYosys architectures and Spintronic Rust emulation with 0 execution parity decay. **Project Zenith (including the pure-Rust WGPU backend) is now complete and available.**
 
 - **Photonic SC Bridge (experimental)** — SC bitstream → optical pulse mapping → FDTD co-simulation → crosstalk analysis → GDSII export with Rust acceleration. Full pipeline from ArcaneNeuron to silicon photonics.
+
+- **Self-Replicating Evolutionary SC Substrate (experimental)** — Open-ended evolution of SC networks with genomes, CPPN developmental encoding, island model, Pareto front, formal safety guard, HW-in-the-loop FPGA feedback, and direct NIR/Verilog emission. Evolves ArcaneZenith organisms.
 
 - **ArcaneZenith Cognitive Core** (New in v3.14) — The flagship cognitive primitive of the framework. It wires `ArcaneNeuron` (a deeply self-referential multi-timescale novelty-gating architecture) directly with Project Zenith's autonomous structural plasticity. Instead of static hyperparameters, internal phenomenology metrics (like novelty detection, confidence thresholds, and meta-learning accumulation) dynamically continuous their own deterministic bounds natively mapped by physical synaptic structures scaling dynamically and reacting across lifelong continuous streams.
 
