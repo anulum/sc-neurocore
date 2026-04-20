@@ -156,6 +156,8 @@ explainability, neuro-symbolic predictive coding, stochastic doctor, and model z
 
 - **HIL Debugger (experimental)** — Real-time FPGA telemetry server with lock-free RingBuffer, WebSocket broadcast, per-layer stats, triggers, rate limiting, and Python orchestration daemon. Full HW-in-the-loop support for SC networks.
 
+- **Mojo SIMD Kernel Acceleration (experimental)** — High-performance Mojo kernels for bitstream ops, popcount, SCC, LFSR. Automatic Pixi orchestration with Python fallback.
+
 - **ArcaneZenith Cognitive Core** (New in v3.14) — The flagship cognitive primitive of the framework. It wires `ArcaneNeuron` (a deeply self-referential multi-timescale novelty-gating architecture) directly with Project Zenith's autonomous structural plasticity. Instead of static hyperparameters, internal phenomenology metrics (like novelty detection, confidence thresholds, and meta-learning accumulation) dynamically continuous their own deterministic bounds natively mapped by physical synaptic structures scaling dynamically and reacting across lifelong continuous streams.
 
 SC-NeuroCore's niche: **deterministic stochastic computing with FPGA co-design** — Python simulation matches synthesisable RTL bit-for-bit (deterministic LFSR seeds, Q8.8 fixed-point, cycle-exact co-simulation).
