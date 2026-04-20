@@ -203,25 +203,24 @@ except (ImportError, ModuleNotFoundError):
     except Exception:
         _studio_rust_available = False
 
-if _core_available:
-    from .layers import VectorizedSCLayer
-    from .neurons import FixedPointLIFNeuron
-    from .grad import SurrogateLif, DifferentiableDenseLayer
-    from .attention import StochasticAttention
-    from .graphs import StochasticGraphLayer
-    from .scpn import KuramotoSolver
-    from .ir import ScGraph, ScGraphBuilder, parse_ir
-    from .hdc import HDCVector
-    from .petri_net import PetriNetEngine
-
-    _bridge_available = True
-else:
-    # Rust engine not built — raise ImportError so pytest.importorskip works
-    _bridge_available = False
+_ENGINE_AVAILABLE = _core_available and _neurons_available
+if not _ENGINE_AVAILABLE:
     raise ImportError(
-        "sc_neurocore_engine native module not found. "
-        "Build with: cd engine && maturin develop --release"
+        "sc_neurocore_engine not found. Build with:\n"
+        "cd engine && maturin develop --release"
     )
+
+from .layers import VectorizedSCLayer
+from .neurons import FixedPointLIFNeuron
+from .grad import SurrogateLif, DifferentiableDenseLayer
+from .attention import StochasticAttention
+from .graphs import StochasticGraphLayer
+from .scpn import KuramotoSolver
+from .ir import ScGraph, ScGraphBuilder, parse_ir
+from .hdc import HDCVector
+from .petri_net import PetriNetEngine
+
+_bridge_available = True
 
 _NEURON_MODELS = [
     "QuadraticIFNeuron",
@@ -446,6 +445,26 @@ try:
     _lgssm_rust_available = True
 except ImportError:
     _lgssm_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
+        py_ph_route_waveguides,
+        py_ph_mzi_transfer_matrix,
+        py_ph_cascade_mzi,
+        py_ph_analyze_crosstalk,
+        py_ph_analyze_power_budget,
+    )
+
+    __all__ += [
+        "py_ph_route_waveguides",
+        "py_ph_mzi_transfer_matrix",
+        "py_ph_cascade_mzi",
+        "py_ph_analyze_crosstalk",
+        "py_ph_analyze_power_budget",
+    ]
+    _ph_rust_available = True
+except ImportError:
+    _ph_rust_available = False
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (

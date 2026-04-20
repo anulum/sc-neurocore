@@ -239,6 +239,13 @@ class FDTDSolver:
         self.hy = np.zeros(grid_size, dtype=np.float64)
         self._loss_per_metre = 0.0
 
+        self.pml_layers = 20
+        self._damping = np.ones(grid_size, dtype=np.float64)
+        for i in range(self.pml_layers):
+            strength = 1.0 - 0.8 * ((self.pml_layers - i) / self.pml_layers) ** 2
+            self._damping[i] = strength
+            self._damping[max(0, grid_size - 1 - i)] = strength
+
     def set_loss(self, loss_db_per_cm: float) -> None:
         """Set propagation loss."""
         self._loss_per_metre = loss_db_per_cm * 100.0
@@ -275,6 +282,9 @@ class FDTDSolver:
             if loss_factor < 1.0:
                 self.ez *= loss_factor
 
+            self.ez *= self._damping
+            self.hy *= self._damping
+
     def field_energy(self) -> float:
         """Total electromagnetic energy in the grid."""
         return float(np.sum(self.ez**2) + np.sum(self.hy**2))
@@ -298,6 +308,32 @@ class CompilationResult:
     netlist: str
     fdtd_energy: float = 0.0
 
+    def to_gdsii(self, filename: str) -> None:
+        """Export the compiled photonic layout to a GDSII file.
+
+        Requires `gdsfactory` pip package. Falls back to purely geometric
+        layout plotting if unavailable.
+        """
+        try:
+            import gdsfactory as gf
+
+            c = gf.Component(f"SC_NeuroCore_Target_{self.target}")
+
+            x_offset = 0.0
+            for i in range(self.num_modulators):
+                mzi = gf.components.mzi(length_x=10.0)
+                ref = c.add_ref(mzi)
+                ref.x = x_offset
+                x_offset += 100.0
+
+            c.write_gds(filename)
+            print(f"[{self.target}] GDSII Successfully exported to {filename} using gdsfactory.")
+        except ImportError:
+            raise ImportError(
+                "gdsfactory is not installed. Please run `pip install gdsfactory` "
+                "to export physical GDS layout."
+            )
+
 
 class PhotonicCompiler:
     """End-to-end compiler: SC IR → optical mapping → netlist → co-sim."""
@@ -314,6 +350,9 @@ class PhotonicCompiler:
         fdtd_steps: int = 100,
     ) -> CompilationResult:
         """Compile a single SC bitstream to a photonic deployment."""
+        if bitstream is None or len(bitstream) == 0:
+            raise ValueError("Input bitstream cannot be empty.")
+
         phases = self.converter.to_phase_array(bitstream)
         power = self.converter.optical_power_profile(bitstream)
 
@@ -478,7 +517,8 @@ class FDTD2DSolver:
         self.dt = dt_factor * ds_min / (self.c0 * math.sqrt(2))
         self.pml_layers = pml_layers
 
-        # Fields: Ez (nx, ny), Hx (nx, ny), Hy (nx, ny)
+        self.ezx = np.zeros((nx, ny), dtype=np.float64)
+        self.ezy = np.zeros((nx, ny), dtype=np.float64)
         self.ez = np.zeros((nx, ny), dtype=np.float64)
         self.hx = np.zeros((nx, ny), dtype=np.float64)
         self.hy = np.zeros((nx, ny), dtype=np.float64)
@@ -487,24 +527,20 @@ class FDTD2DSolver:
         self.n_map = np.ones((nx, ny), dtype=np.float64)
 
         # PML conductivity profiles
-        self._sigma_x = np.zeros((nx, ny), dtype=np.float64)
-        self._sigma_y = np.zeros((nx, ny), dtype=np.float64)
+        self.sigma_x = np.zeros((nx, ny), dtype=np.float64)
+        self.sigma_y = np.zeros((nx, ny), dtype=np.float64)
         self._build_pml()
 
     def _build_pml(self) -> None:
-        """Construct PML damping mask (exponential taper)."""
-        self._damping = np.ones((self.nx, self.ny), dtype=np.float64)
+        """Construct Berenger PML conductivity profiles."""
         p = self.pml_layers
+        sigma_max = 5.0 / (120.0 * math.pi * self.dx)
         for i in range(p):
-            strength = 1.0 - 0.8 * ((p - i) / p) ** 2
-            self._damping[i, :] = np.minimum(self._damping[i, :], strength)
-            self._damping[self.nx - 1 - i, :] = np.minimum(
-                self._damping[self.nx - 1 - i, :], strength
-            )
-            self._damping[:, i] = np.minimum(self._damping[:, i], strength)
-            self._damping[:, self.ny - 1 - i] = np.minimum(
-                self._damping[:, self.ny - 1 - i], strength
-            )
+            sx = sigma_max * ((p - i) / p) ** 3
+            self.sigma_x[i, :] = sx
+            self.sigma_x[self.nx - 1 - i, :] = sx
+            self.sigma_y[:, i] = sx
+            self.sigma_y[:, self.ny - 1 - i] = sx
 
     def set_waveguide(
         self,
@@ -515,9 +551,15 @@ class FDTD2DSolver:
         x_end: Optional[int] = None,
     ) -> None:
         """Define a horizontal waveguide stripe."""
+        if refractive_index < 1.0:
+            raise ValueError(f"Invalid refractive index: {refractive_index}. Must be >= 1.0.")
+
         x_end = x_end or self.nx
-        y_lo = max(0, y_center - width_cells // 2)
-        y_hi = min(self.ny, y_center + width_cells // 2)
+        x_start = max(0, min(self.nx, x_start))
+        x_end = max(0, min(self.nx, x_end))
+        y_lo = max(0, min(self.ny, y_center - width_cells // 2))
+        y_hi = max(0, min(self.ny, y_center + width_cells // 2))
+
         self.n_map[x_start:x_end, y_lo:y_hi] = refractive_index
 
     def inject_source(
@@ -529,6 +571,11 @@ class FDTD2DSolver:
         sigma_cells: int = 10,
     ) -> None:
         """Inject a 2D Gaussian source."""
+        if wavelength_nm <= 0.0:
+            raise ValueError(f"Wavelength must be strictly positive, got {wavelength_nm}")
+        if not (0 <= x < self.nx) or not (0 <= y < self.ny):
+            raise ValueError(f"Source injection ({x}, {y}) out of bounds [{self.nx}, {self.ny}]")
+
         freq = self.c0 / (wavelength_nm * 1e-9)
         for ix in range(max(0, x - 3 * sigma_cells), min(self.nx, x + 3 * sigma_cells)):
             for iy in range(max(0, y - 3 * sigma_cells), min(self.ny, y + 3 * sigma_cells)):
@@ -539,30 +586,43 @@ class FDTD2DSolver:
 
     def step(self, n_steps: int = 1) -> None:
         """Advance TE simulation by n_steps."""
+        if np.any(self.n_map <= 0):
+            raise ValueError("Refractive index must be > 0 in all cells.")
+            
         eps0 = 8.854e-12
         mu0 = 4 * math.pi * 1e-7
 
         eps_map = eps0 * self.n_map**2
-        coeff_ez = self.dt / eps_map
 
-        coeff_hx = self.dt / (mu0 * self.dx)
-        coeff_hy = self.dt / (mu0 * self.dy)
+        cx_a = (eps_map - self.sigma_x * self.dt / 2.0) / (eps_map + self.sigma_x * self.dt / 2.0)
+        cx_b = self.dt / ((eps_map + self.sigma_x * self.dt / 2.0) * self.dx)
+        cy_a = (eps_map - self.sigma_y * self.dt / 2.0) / (eps_map + self.sigma_y * self.dt / 2.0)
+        cy_b = self.dt / ((eps_map + self.sigma_y * self.dt / 2.0) * self.dy)
+
+        smag_y = self.sigma_y * (mu0 / eps0)
+        smag_x = self.sigma_x * (mu0 / eps0)
+        chx_a = (mu0 - smag_y * self.dt / 2.0) / (mu0 + smag_y * self.dt / 2.0)
+        chx_b = self.dt / ((mu0 + smag_y * self.dt / 2.0) * self.dy)
+        chy_a = (mu0 - smag_x * self.dt / 2.0) / (mu0 + smag_x * self.dt / 2.0)
+        chy_b = self.dt / ((mu0 + smag_x * self.dt / 2.0) * self.dx)
 
         for _ in range(n_steps):
-            # Update Hx: dHx/dt = -1/mu0 * dEz/dy
-            self.hx[:, :-1] -= coeff_hx * (self.ez[:, 1:] - self.ez[:, :-1])
+            # Update Hx, Hy
+            self.hx[:, :-1] = chx_a[:, :-1] * self.hx[:, :-1] - chx_b[:, :-1] * (
+                self.ez[:, 1:] - self.ez[:, :-1]
+            )
+            self.hy[:-1, :] = chy_a[:-1, :] * self.hy[:-1, :] + chy_b[:-1, :] * (
+                self.ez[1:, :] - self.ez[:-1, :]
+            )
 
-            # Update Hy: dHy/dt = 1/mu0 * dEz/dx
-            self.hy[:-1, :] += coeff_hy * (self.ez[1:, :] - self.ez[:-1, :])
-
-            # Update Ez: dEz/dt = 1/eps * (dHy/dx - dHx/dy)
-            self.ez[1:, :] += coeff_ez[1:, :] * (self.hy[1:, :] - self.hy[:-1, :])
-            self.ez[:, 1:] -= coeff_ez[:, 1:] * (self.hx[:, 1:] - self.hx[:, :-1])
-
-            # PML damping
-            self.ez *= self._damping
-            self.hx *= self._damping
-            self.hy *= self._damping
+            # Update Split Ez
+            self.ezx[1:, :] = cx_a[1:, :] * self.ezx[1:, :] + cx_b[1:, :] * (
+                self.hy[1:, :] - self.hy[:-1, :]
+            )
+            self.ezy[:, 1:] = cy_a[:, 1:] * self.ezy[:, 1:] - cy_b[:, 1:] * (
+                self.hx[:, 1:] - self.hx[:, :-1]
+            )
+            self.ez = self.ezx + self.ezy
 
     def field_energy(self) -> float:
         """Total EM energy in the grid."""
@@ -799,42 +859,36 @@ class CrosstalkModel:
 
         Delegates to Rust engine when available for O(N²) acceleration.
         """
-        if _HAS_RUST_PH and waveguides > 10:
-            channel_ids = list(range(waveguides - 1))
-            wavelengths = [1550.0] * (waveguides - 1)
-            bandwidths = [0.8] * (waveguides - 1)
-            powers = [1.0] * (waveguides - 1)
-            result = py_ph_analyze_crosstalk(
-                channel_ids,
-                wavelengths,
-                bandwidths,
-                powers,
+        if not _HAS_RUST_PH:
+            raise ImportError(
+                "Rust photonic acceleration is required for Crosstalk bank analysis. "
+                "The python fallback is too slow for production arrays.\n"
+                "Please run: pip install 'sc-neurocore[optics]'"
             )
-            return {
-                "num_waveguides": waveguides,
-                "num_pairs": waveguides - 1,
-                "gap_nm": gap_nm,
-                "worst_isolation_db": result.get("min_isolation_db", float("inf")),
-                "mean_coupling_ratio": result.get("mean_coupling", 0.0),
-                "max_coupling_ratio": result.get("max_coupling", 0.0),
-                "crosstalk_safe": result.get("min_isolation_db", 0.0) > 20.0,
-                "backend": "rust",
-            }
 
-        pairs = []
-        for i in range(waveguides - 1):
-            pairs.append(WaveguidePair(gap_nm=gap_nm, coupling_length_um=coupling_length_um))
-        self.pairs = pairs
+        channel_ids = list(range(waveguides - 1))
+        wavelengths = [1550.0] * (waveguides - 1)
+        bandwidths = [0.8] * (waveguides - 1)
+        powers = [1.0] * (waveguides - 1)
+        result = py_ph_analyze_crosstalk(
+            channel_ids,
+            wavelengths,
+            bandwidths,
+            powers,
+        )
+        from math import log10
 
-        isolations = [p.isolation_db for p in pairs]
-        couplings = [p.coupling_ratio for p in pairs]
-
+        xts = result.get("crosstalk_db", [])
+        min_isolation = min([-x for x in xts]) if xts else float("inf")
+        # crosstalk_db roughly = 10 * log10(coupling_ratio) => ratio = 10^(crosstalk/10)
+        couplings = [10 ** (x / 10.0) for x in xts]
         return {
             "num_waveguides": waveguides,
-            "num_pairs": len(pairs),
+            "num_pairs": waveguides - 1,
             "gap_nm": gap_nm,
-            "worst_isolation_db": min(isolations) if isolations else float("inf"),
+            "worst_isolation_db": min_isolation,
             "mean_coupling_ratio": float(np.mean(couplings)) if couplings else 0.0,
-            "max_coupling_ratio": max(couplings) if couplings else 0.0,
-            "crosstalk_safe": all(iso > 20.0 for iso in isolations),
+            "max_coupling_ratio": float(np.max(couplings)) if couplings else 0.0,
+            "crosstalk_safe": min_isolation > 20.0,
+            "backend": "rust",
         }

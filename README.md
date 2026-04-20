@@ -137,6 +137,7 @@ explainability, neuro-symbolic predictive coding, stochastic doctor, and model z
 | Chiplet/memristor/spintronic | **Yes** | — | — | — | — |
 | BCI closed-loop control | **Yes** | — | — | — | — |
 | Federated SC learning | **Yes** | — | — | — | — |
+| Photonic SC Bridge (FDTD, GDSII) | **Yes** | — | — | — | — |
 | conda-forge recipe | **Ready** | Yes | — | — | Yes |
 | PyPI package | Yes | Yes | Yes | Yes | Yes |
 | License | AGPL-3.0 | MIT | LGPL-3.0 | BSD-3 | CeCILL-2.1 |
@@ -146,6 +147,8 @@ explainability, neuro-symbolic predictive coding, stochastic doctor, and model z
 - **Neural data compression library** — Two layers: **WaveformCodec** compresses raw 10-bit electrode waveforms end-to-end (spike detection + template matching + LFP compression, 24x on 1024-channel Neuralink-scale data, fits Bluetooth uplink). **Spike raster codecs** (ISI+Huffman, Predictive with 4 learnable predictors, Delta, Streaming, AER) compress binary spike trains 50-750x. Unified API: `get_codec(name)`, `recommend_codec()`. Learnable world-model predictor (99.6% accuracy). Rust backend (780x speedup). Bit-true LFSR matches Verilog RTL.
 
 - **Project Zenith Autonomous Learning** — Seamless bridge unifying PyTorch surrogate gradients with stochastic biological plasticity parameters (BCM, ELIGENT, R-STDP). Allows developers to train mathematically exact `nn.Module` plasticity rules purely on GPU networks, then seamlessly deploy identical bounded bits (`.scal` Exascale binary drops) targeting verifiable SymbiYosys architectures and Spintronic Rust emulation with 0 execution parity decay. **Project Zenith (including the pure-Rust WGPU backend) is now complete and available.**
+
+- **Photonic SC Bridge (experimental)** — SC bitstream → optical pulse mapping → FDTD co-simulation → crosstalk analysis → GDSII export with Rust acceleration. Full pipeline from ArcaneNeuron to silicon photonics.
 
 - **ArcaneZenith Cognitive Core** (New in v3.14) — The flagship cognitive primitive of the framework. It wires `ArcaneNeuron` (a deeply self-referential multi-timescale novelty-gating architecture) directly with Project Zenith's autonomous structural plasticity. Instead of static hyperparameters, internal phenomenology metrics (like novelty detection, confidence thresholds, and meta-learning accumulation) dynamically continuous their own deterministic bounds natively mapped by physical synaptic structures scaling dynamically and reacting across lifelong continuous streams.
 
