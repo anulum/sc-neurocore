@@ -25,11 +25,24 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 
 try:
-    from sc_neurocore_engine import py_ph_analyze_crosstalk
+    # py_ph_analyze_crosstalk is kept imported for backward-compatible
+    # callers that access it via this module; analyze_bank / analyze_pairs
+    # below use py_ph_analyze_crosstalk_bank / _pairs directly.
+    from sc_neurocore_engine import (
+        py_ph_analyze_crosstalk,  # noqa: F401 — re-export surface
+        py_ph_analyze_crosstalk_bank,
+        py_ph_analyze_crosstalk_pairs,
+    )
     import sc_neurocore_engine as _sne
 
     _HAS_RUST_PH = all(
-        hasattr(_sne, _name) for _name in ("py_ph_route_waveguides", "py_ph_analyze_power_budget")
+        hasattr(_sne, _name)
+        for _name in (
+            "py_ph_route_waveguides",
+            "py_ph_analyze_power_budget",
+            "py_ph_analyze_crosstalk_bank",
+            "py_ph_analyze_crosstalk_pairs",
+        )
     )
     del _sne
 except ImportError:
@@ -220,6 +233,15 @@ class FDTDSolver:
     Solves Maxwell's equations on a 1D grid with Yee discretisation.
     Suitable for verifying pulse propagation, dispersion, and loss in
     simple waveguide geometries.
+
+    Boundary condition: a quadratic-ramp multiplicative **absorbing
+    boundary** at each end (not a Berenger split-field PML; 1D does not
+    require the σ-matched split formulation because there is no transverse
+    dimension into which energy could scatter). Field amplitude is tapered
+    by ``s_i = 1 − 0.8·((N−i)/N)²`` for the outermost ``N`` cells on each
+    side. Reflection is < −30 dB for wavelengths much smaller than the
+    boundary depth; for higher-fidelity absorption use :class:`FDTD2DSolver`
+    which implements full split-field Berenger PML.
     """
 
     def __init__(
@@ -228,6 +250,7 @@ class FDTDSolver:
         dx_um: float = 0.01,
         dt_factor: float = 0.5,
         refractive_index: float = 3.48,
+        boundary_cells: int = 20,
     ):
         self.grid_size = grid_size
         self.dx = dx_um * 1e-6  # metres
@@ -239,12 +262,12 @@ class FDTDSolver:
         self.hy = np.zeros(grid_size, dtype=np.float64)
         self._loss_per_metre = 0.0
 
-        self.pml_layers = 20
-        self._damping = np.ones(grid_size, dtype=np.float64)
-        for i in range(self.pml_layers):
-            strength = 1.0 - 0.8 * ((self.pml_layers - i) / self.pml_layers) ** 2
-            self._damping[i] = strength
-            self._damping[max(0, grid_size - 1 - i)] = strength
+        self.boundary_cells = boundary_cells
+        self._abc_taper = np.ones(grid_size, dtype=np.float64)
+        for i in range(boundary_cells):
+            strength = 1.0 - 0.8 * ((boundary_cells - i) / boundary_cells) ** 2
+            self._abc_taper[i] = strength
+            self._abc_taper[max(0, grid_size - 1 - i)] = strength
 
     def set_loss(self, loss_db_per_cm: float) -> None:
         """Set propagation loss."""
@@ -282,8 +305,8 @@ class FDTDSolver:
             if loss_factor < 1.0:
                 self.ez *= loss_factor
 
-            self.ez *= self._damping
-            self.hy *= self._damping
+            self.ez *= self._abc_taper
+            self.hy *= self._abc_taper
 
     def field_energy(self) -> float:
         """Total electromagnetic energy in the grid."""
@@ -308,31 +331,90 @@ class CompilationResult:
     netlist: str
     fdtd_energy: float = 0.0
 
-    def to_gdsii(self, filename: str) -> None:
-        """Export the compiled photonic layout to a GDSII file.
+    def to_gdsii(
+        self,
+        filename: str,
+        mzi_length_um: float = 10.0,
+        pitch_um: float = 100.0,
+    ) -> Dict[str, Any]:
+        """Export the compiled MZI cascade to a GDSII file via gdsfactory.
 
-        Requires `gdsfactory` pip package. Falls back to purely geometric
-        layout plotting if unavailable.
+        The layout is a linear cascade of :attr:`num_modulators` MZI cells at
+        ``pitch_um`` spacing, connected by straight routing waveguides. Each
+        MZI is instantiated with ``length_x = mzi_length_um`` (matching the
+        fallback coupling length of the compiler target). An SC-NeuroCore
+        header label is placed at the origin so the origin of the layout is
+        identifiable in KLayout / gdsfactory viewers, and the serialised
+        Verilog-style netlist string is stored in the GDS TEXT layer (63/0)
+        beside the layout so the physical file retains the logical build.
+
+        Requires ``gdsfactory``. A ``NotImplementedError`` is raised when
+        :attr:`num_modulators` is zero — an empty layout would be a silent
+        misuse.
+
+        Returns a dict with ``n_modulators``, ``total_length_um``,
+        ``filename`` — useful for verification and tests.
         """
+        if self.num_modulators <= 0:
+            raise NotImplementedError(
+                "to_gdsii() requires num_modulators > 0; the compiler produced an "
+                "empty layout (check the input bitstream and compiler target)."
+            )
         try:
             import gdsfactory as gf
-
-            c = gf.Component(f"SC_NeuroCore_Target_{self.target}")
-
-            x_offset = 0.0
-            for i in range(self.num_modulators):
-                mzi = gf.components.mzi(length_x=10.0)
-                ref = c.add_ref(mzi)
-                ref.x = x_offset
-                x_offset += 100.0
-
-            c.write_gds(filename)
-            print(f"[{self.target}] GDSII Successfully exported to {filename} using gdsfactory.")
-        except ImportError:
+        except ImportError as exc:
             raise ImportError(
-                "gdsfactory is not installed. Please run `pip install gdsfactory` "
-                "to export physical GDS layout."
+                "gdsfactory is not installed. Run `pip install gdsfactory` or "
+                "`pip install 'sc-neurocore[optics]'` to enable GDSII export."
+            ) from exc
+
+        # gdsfactory requires an active PDK for layer resolution and
+        # `gf.components.mzi` defaults. Activate the generic PDK on demand
+        # so callers don't have to manage global state to export.
+        try:
+            gf.get_active_pdk()
+        except (ValueError, AttributeError):
+            from gdsfactory.generic_tech import get_generic_pdk
+
+            get_generic_pdk().activate()
+
+        # kfactory backend rejects duplicate cell names in its process-wide
+        # registry; pre-create the klayout cell with ``allow_duplicate`` so
+        # repeated exports for the same target succeed.
+        kdb_cell = gf.kcl.create_cell(
+            f"SC_NeuroCore_Target_{self.target}", allow_duplicate=True
+        )
+        component = gf.Component(kdb_cell=kdb_cell)
+        # Header label identifies the origin and records the compiled netlist
+        # alongside the physical layout (TEXT layer 63/0).
+        component.add_label(
+            text=f"sc_neurocore:{self.target} N={self.num_modulators}",
+            position=(0.0, 10.0),
+            layer=(63, 0),
+        )
+        if self.netlist:
+            component.add_label(
+                text=self.netlist[: min(200, len(self.netlist))],
+                position=(0.0, -10.0),
+                layer=(63, 0),
             )
+
+        mzi_cell = gf.components.mzi(length_x=mzi_length_um)
+        x = 0.0
+        for _ in range(self.num_modulators):
+            ref = component.add_ref(mzi_cell)
+            ref.x = x
+            x += pitch_um
+
+        component.write_gds(filename)
+        return {
+            "filename": filename,
+            "n_modulators": self.num_modulators,
+            "mzi_length_um": mzi_length_um,
+            "pitch_um": pitch_um,
+            "total_length_um": x,
+            "target": self.target,
+        }
 
 
 class PhotonicCompiler:
@@ -588,7 +670,7 @@ class FDTD2DSolver:
         """Advance TE simulation by n_steps."""
         if np.any(self.n_map <= 0):
             raise ValueError("Refractive index must be > 0 in all cells.")
-            
+
         eps0 = 8.854e-12
         mu0 = 4 * math.pi * 1e-7
 
@@ -853,42 +935,153 @@ class CrosstalkModel:
         return min(p.isolation_db for p in self.pairs)
 
     def analyze_bank(
-        self, waveguides: int, gap_nm: float, coupling_length_um: float
+        self,
+        waveguides: int,
+        gap_nm: float,
+        coupling_length_um: float,
+        wavelength_nm: float = 1550.0,
+        core_index: float = 3.48,
+        cladding_index: float = 1.45,
     ) -> Dict[str, Any]:
-        """Analyze a bank of parallel waveguides.
+        """Geometric crosstalk for a uniform bank of parallel waveguides.
 
-        Delegates to Rust engine when available for O(N²) acceleration.
+        Uses coupled-mode theory with a Marcatili-form evanescent decay:
+
+        ``L_decay = λ / (2π √(n_core² − n_clad²))``, ``κ = π Δn_eff / λ``,
+        ``ratio = sin²(κL)``, ``isolation [dB] = −10 log₁₀(ratio)``.
+
+        Adjacent pairs (gap = ``gap_nm``) are the dominant term; next-nearest
+        pairs (gap = ``2·gap_nm``) are included as the largest secondary
+        term. All further pairs decay at least as ``exp(−2·g/L_decay)``.
+
+        Delegated to the Rust engine (``py_ph_analyze_crosstalk_bank``) when
+        available; a Python fallback using :class:`WaveguidePair` matches
+        the Rust result to within 1e-9.
+
+        References:
+
+        - Marcatili, Bell Syst. Tech. J. 48(7):2071-2102, 1969.
+        - Okamoto, *Fundamentals of Optical Waveguides*, 2006, Ch. 4.
         """
-        if not _HAS_RUST_PH:
-            raise ImportError(
-                "Rust photonic acceleration is required for Crosstalk bank analysis. "
-                "The python fallback is too slow for production arrays.\n"
-                "Please run: pip install 'sc-neurocore[optics]'"
+        if waveguides < 1:
+            raise ValueError("waveguides must be >= 1")
+
+        if _HAS_RUST_PH:
+            return dict(
+                py_ph_analyze_crosstalk_bank(
+                    num_waveguides=waveguides,
+                    gap_nm=gap_nm,
+                    coupling_length_um=coupling_length_um,
+                    wavelength_nm=wavelength_nm,
+                    core_index=core_index,
+                    cladding_index=cladding_index,
+                )
             )
 
-        channel_ids = list(range(waveguides - 1))
-        wavelengths = [1550.0] * (waveguides - 1)
-        bandwidths = [0.8] * (waveguides - 1)
-        powers = [1.0] * (waveguides - 1)
-        result = py_ph_analyze_crosstalk(
-            channel_ids,
-            wavelengths,
-            bandwidths,
-            powers,
+        # Pure-Python fallback: identical math via WaveguidePair properties.
+        near = WaveguidePair(
+            gap_nm=gap_nm,
+            coupling_length_um=coupling_length_um,
+            wavelength_nm=wavelength_nm,
+            core_index=core_index,
+            cladding_index=cladding_index,
         )
-        from math import log10
-
-        xts = result.get("crosstalk_db", [])
-        min_isolation = min([-x for x in xts]) if xts else float("inf")
-        # crosstalk_db roughly = 10 * log10(coupling_ratio) => ratio = 10^(crosstalk/10)
-        couplings = [10 ** (x / 10.0) for x in xts]
+        far = WaveguidePair(
+            gap_nm=2.0 * gap_nm,
+            coupling_length_um=coupling_length_um,
+            wavelength_nm=wavelength_nm,
+            core_index=core_index,
+            cladding_index=cladding_index,
+        )
+        num_near = max(0, waveguides - 1)
+        num_far = max(0, waveguides - 2)
+        total = num_near + num_far
+        if total == 0:
+            worst = float("inf")
+            mean_ratio = 0.0
+            max_ratio = 0.0
+        else:
+            worst = min(near.isolation_db, far.isolation_db)
+            mean_ratio = (num_near * near.coupling_ratio + num_far * far.coupling_ratio) / total
+            max_ratio = max(near.coupling_ratio, far.coupling_ratio)
         return {
             "num_waveguides": waveguides,
-            "num_pairs": waveguides - 1,
+            "num_pairs": num_near + num_far,
+            "num_near_pairs": num_near,
+            "num_far_pairs": num_far,
             "gap_nm": gap_nm,
-            "worst_isolation_db": min_isolation,
-            "mean_coupling_ratio": float(np.mean(couplings)) if couplings else 0.0,
-            "max_coupling_ratio": float(np.max(couplings)) if couplings else 0.0,
-            "crosstalk_safe": min_isolation > 20.0,
-            "backend": "rust",
+            "coupling_length_um": coupling_length_um,
+            "adjacent_coupling_ratio": near.coupling_ratio,
+            "adjacent_isolation_db": near.isolation_db,
+            "next_nearest_coupling_ratio": far.coupling_ratio,
+            "next_nearest_isolation_db": far.isolation_db,
+            "worst_isolation_db": worst,
+            "mean_coupling_ratio": mean_ratio,
+            "max_coupling_ratio": max_ratio,
+            "crosstalk_safe": worst > 20.0,
+            "backend": "python",
+        }
+
+    def analyze_pairs(
+        self,
+        pair_indices: List[Tuple[int, int]],
+        gaps_nm: List[float],
+        coupling_lengths_um: List[float],
+        wavelength_nm: float = 1550.0,
+        core_index: float = 3.48,
+        cladding_index: float = 1.45,
+    ) -> Dict[str, Any]:
+        """Per-pair crosstalk for arbitrary waveguide geometry — the O(N²) path.
+
+        Use this when the bank is not uniform: each pair may have its own
+        gap and coupling length. Rust path evaluates pairs in parallel via
+        Rayon; the Python fallback reproduces the same math serially.
+        """
+        n = len(pair_indices)
+        if len(gaps_nm) != n or len(coupling_lengths_um) != n:
+            raise ValueError(
+                f"pair_indices ({n}), gaps_nm ({len(gaps_nm)}) and "
+                f"coupling_lengths_um ({len(coupling_lengths_um)}) must be equal length"
+            )
+
+        if _HAS_RUST_PH and n > 0:
+            pairs_a = [a for (a, _) in pair_indices]
+            pairs_b = [b for (_, b) in pair_indices]
+            return dict(
+                py_ph_analyze_crosstalk_pairs(
+                    pairs_a=pairs_a,
+                    pairs_b=pairs_b,
+                    gaps_nm=list(gaps_nm),
+                    lengths_um=list(coupling_lengths_um),
+                    wavelength_nm=wavelength_nm,
+                    core_index=core_index,
+                    cladding_index=cladding_index,
+                )
+            )
+
+        # Pure-Python fallback.
+        kappas: List[float] = []
+        ratios: List[float] = []
+        isos: List[float] = []
+        for g, ell in zip(gaps_nm, coupling_lengths_um):
+            p = WaveguidePair(
+                gap_nm=g,
+                coupling_length_um=ell,
+                wavelength_nm=wavelength_nm,
+                core_index=core_index,
+                cladding_index=cladding_index,
+            )
+            kappas.append(p.coupling_coefficient)
+            ratios.append(p.coupling_ratio)
+            isos.append(p.isolation_db)
+        return {
+            "pair_a": [a for (a, _) in pair_indices],
+            "pair_b": [b for (_, b) in pair_indices],
+            "gap_nm": list(gaps_nm),
+            "coupling_length_um": list(coupling_lengths_um),
+            "coupling_coefficient_per_um": kappas,
+            "coupling_ratio": ratios,
+            "isolation_db": isos,
+            "num_pairs": n,
+            "backend": "python",
         }

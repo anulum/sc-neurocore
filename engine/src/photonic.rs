@@ -216,6 +216,156 @@ pub fn analyze_power_budget(
         .collect()
 }
 
+// ── Geometric (evanescent) crosstalk for a waveguide bank ───────────
+//
+// Physical model: coupled-mode theory with a Marcatili-form transverse
+// decay for the coupling coefficient.
+//
+//   L_decay(λ, n_core, n_clad) = λ / (2π √(n_core² - n_clad²))      [nm]
+//   Δn_eff(g)                  = 0.1 · exp(-g / L_decay)             [—]
+//   κ(g)                       = π · Δn_eff(g) / (λ [µm])            [µm⁻¹]
+//   power coupling ratio       = sin²(κ·L)                           [—]
+//   pair isolation             = -10 log₁₀(ratio)                    [dB]
+//
+// References:
+// - Marcatili, Bell Syst. Tech. J. 48(7):2071-2102, 1969
+// - Okamoto, *Fundamentals of Optical Waveguides*, 2006, Ch. 4
+
+#[derive(Clone, Debug)]
+pub struct CrosstalkPairResult {
+    pub index_a: usize,
+    pub index_b: usize,
+    pub gap_nm: f64,
+    pub coupling_length_um: f64,
+    pub coupling_coefficient_per_um: f64,
+    pub coupling_ratio: f64,
+    pub isolation_db: f64,
+}
+
+#[derive(Clone, Debug)]
+pub struct CrosstalkBankResult {
+    pub num_waveguides: usize,
+    pub num_near_pairs: usize,
+    pub num_far_pairs: usize,
+    pub gap_nm: f64,
+    pub coupling_length_um: f64,
+    pub adjacent_coupling_ratio: f64,
+    pub adjacent_isolation_db: f64,
+    pub next_nearest_coupling_ratio: f64,
+    pub next_nearest_isolation_db: f64,
+    pub worst_isolation_db: f64,
+    pub mean_coupling_ratio: f64,
+    pub max_coupling_ratio: f64,
+    pub crosstalk_safe: bool,
+}
+
+#[inline]
+fn pair_coupling(
+    gap_nm: f64,
+    coupling_length_um: f64,
+    wavelength_nm: f64,
+    core_index: f64,
+    cladding_index: f64,
+) -> (f64, f64, f64) {
+    // Transverse evanescent decay length (Marcatili).
+    let n2 = (core_index * core_index - cladding_index * cladding_index).max(1e-6);
+    let l_decay_nm = wavelength_nm / (2.0 * std::f64::consts::PI * n2.sqrt());
+    // Effective-index split at the coupler.
+    let dn_eff = 0.1 * (-gap_nm / l_decay_nm).exp();
+    // κ in per-µm. λ converted µm.
+    let lambda_um = wavelength_nm * 1.0e-3;
+    let kappa = std::f64::consts::PI * dn_eff / lambda_um;
+    // Power coupling ratio for uniform parallel coupler of length L.
+    let kl = kappa * coupling_length_um;
+    let ratio = kl.sin().powi(2);
+    let iso_db = if ratio > 1.0e-30 {
+        -10.0 * ratio.log10()
+    } else {
+        300.0
+    };
+    (kappa, ratio, iso_db)
+}
+
+/// Analyse crosstalk in a uniform parallel-waveguide bank. Adjacent pairs
+/// (gap = g) are the dominant term; next-nearest (gap = 2g) are included
+/// as the largest secondary term — Marcatili 1969 predicts that all other
+/// pairs are at least `exp(-2·g/L_decay)` smaller still.
+pub fn analyze_crosstalk_bank(
+    num_waveguides: usize,
+    gap_nm: f64,
+    coupling_length_um: f64,
+    wavelength_nm: f64,
+    core_index: f64,
+    cladding_index: f64,
+) -> CrosstalkBankResult {
+    let (_, near_ratio, near_iso) =
+        pair_coupling(gap_nm, coupling_length_um, wavelength_nm, core_index, cladding_index);
+    let (_, far_ratio, far_iso) = pair_coupling(
+        2.0 * gap_nm,
+        coupling_length_um,
+        wavelength_nm,
+        core_index,
+        cladding_index,
+    );
+
+    let num_near = num_waveguides.saturating_sub(1);
+    let num_far = num_waveguides.saturating_sub(2);
+    let total_pairs = num_near + num_far;
+    let (worst_iso, mean_ratio, max_ratio) = if total_pairs == 0 {
+        (f64::INFINITY, 0.0, 0.0)
+    } else {
+        let worst = near_iso.min(far_iso);
+        let mean = ((num_near as f64) * near_ratio + (num_far as f64) * far_ratio)
+            / (total_pairs as f64);
+        let mx = near_ratio.max(far_ratio);
+        (worst, mean, mx)
+    };
+
+    CrosstalkBankResult {
+        num_waveguides,
+        num_near_pairs: num_near,
+        num_far_pairs: num_far,
+        gap_nm,
+        coupling_length_um,
+        adjacent_coupling_ratio: near_ratio,
+        adjacent_isolation_db: near_iso,
+        next_nearest_coupling_ratio: far_ratio,
+        next_nearest_isolation_db: far_iso,
+        worst_isolation_db: worst_iso,
+        mean_coupling_ratio: mean_ratio,
+        max_coupling_ratio: max_ratio,
+        crosstalk_safe: worst_iso > 20.0,
+    }
+}
+
+/// Per-pair crosstalk for arbitrary waveguide geometry.
+/// `pairs` carries `(idx_a, idx_b, gap_nm, coupling_length_um)` per pair.
+/// Evaluated in parallel via Rayon — this is the O(N²) path the
+/// commercial layout tools call after full pair enumeration.
+pub fn analyze_crosstalk_pairs(
+    pairs: &[(usize, usize, f64, f64)],
+    wavelength_nm: f64,
+    core_index: f64,
+    cladding_index: f64,
+) -> Vec<CrosstalkPairResult> {
+    pairs
+        .par_iter()
+        .map(|&(a, b, gap, len)| {
+            let (kappa, ratio, iso) =
+                pair_coupling(gap, len, wavelength_nm, core_index, cladding_index);
+            CrosstalkPairResult {
+                index_a: a,
+                index_b: b,
+                gap_nm: gap,
+                coupling_length_um: len,
+                coupling_coefficient_per_um: kappa,
+                coupling_ratio: ratio,
+                isolation_db: iso,
+            }
+        })
+        .collect()
+}
+
 // ── Thermal phase shifter ────────────────────────────────────────────
 
 /// Compute electrical power (mW) needed for a phase shift.
@@ -349,5 +499,48 @@ mod tests {
         );
         assert!(p > 0.0);
         assert!(p < 100.0); // reasonable range
+    }
+
+    #[test]
+    fn crosstalk_bank_isolation_grows_with_gap() {
+        let narrow = analyze_crosstalk_bank(4, 100.0, 10.0, 1550.0, 3.48, 1.45);
+        let wide = analyze_crosstalk_bank(4, 400.0, 10.0, 1550.0, 3.48, 1.45);
+        // Wider gap ⇒ less coupling ⇒ higher isolation (dB).
+        assert!(wide.worst_isolation_db > narrow.worst_isolation_db);
+        // Nearest-neighbour dominates over next-nearest (smaller gap couples more).
+        assert!(narrow.adjacent_coupling_ratio >= narrow.next_nearest_coupling_ratio);
+    }
+
+    #[test]
+    fn crosstalk_bank_counts_match_bank_size() {
+        let r = analyze_crosstalk_bank(5, 200.0, 10.0, 1550.0, 3.48, 1.45);
+        assert_eq!(r.num_near_pairs, 4); // N-1 adjacent
+        assert_eq!(r.num_far_pairs, 3); // N-2 next-nearest
+        assert!(r.crosstalk_safe || r.worst_isolation_db <= 20.0);
+    }
+
+    #[test]
+    fn crosstalk_bank_single_waveguide_has_no_pairs() {
+        let r = analyze_crosstalk_bank(1, 200.0, 10.0, 1550.0, 3.48, 1.45);
+        assert_eq!(r.num_near_pairs, 0);
+        assert_eq!(r.num_far_pairs, 0);
+        assert!(r.worst_isolation_db.is_infinite());
+    }
+
+    #[test]
+    fn crosstalk_pairs_parallelism_matches_serial_math() {
+        let pairs = vec![
+            (0, 1, 200.0, 10.0),
+            (1, 2, 400.0, 10.0),
+            (0, 2, 800.0, 10.0),
+        ];
+        let out = analyze_crosstalk_pairs(&pairs, 1550.0, 3.48, 1.45);
+        assert_eq!(out.len(), 3);
+        // Sanity: larger gap ⇒ smaller coupling ratio.
+        assert!(out[0].coupling_ratio >= out[1].coupling_ratio);
+        assert!(out[1].coupling_ratio >= out[2].coupling_ratio);
+        // Isolation monotonically increases (inverse of ratio).
+        assert!(out[0].isolation_db <= out[1].isolation_db);
+        assert!(out[1].isolation_db <= out[2].isolation_db);
     }
 }

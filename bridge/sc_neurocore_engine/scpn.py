@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import numpy as np
 
-from sc_neurocore_engine.sc_neurocore_engine import SCPNMetrics
 from sc_neurocore_engine.sc_neurocore_engine import KuramotoSolver as _RustKuramoto
 
 

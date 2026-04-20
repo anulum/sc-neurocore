@@ -206,8 +206,7 @@ except (ImportError, ModuleNotFoundError):
 _ENGINE_AVAILABLE = _core_available and _neurons_available
 if not _ENGINE_AVAILABLE:
     raise ImportError(
-        "sc_neurocore_engine not found. Build with:\n"
-        "cd engine && maturin develop --release"
+        "sc_neurocore_engine not found. Build with:\ncd engine && maturin develop --release"
     )
 
 from .layers import VectorizedSCLayer
@@ -453,6 +452,8 @@ try:
         py_ph_cascade_mzi,
         py_ph_analyze_crosstalk,
         py_ph_analyze_power_budget,
+        py_ph_analyze_crosstalk_bank,
+        py_ph_analyze_crosstalk_pairs,
     )
 
     __all__ += [
@@ -461,6 +462,8 @@ try:
         "py_ph_cascade_mzi",
         "py_ph_analyze_crosstalk",
         "py_ph_analyze_power_budget",
+        "py_ph_analyze_crosstalk_bank",
+        "py_ph_analyze_crosstalk_pairs",
     ]
     _ph_rust_available = True
 except ImportError:

@@ -786,6 +786,8 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_ph_cascade_mzi, m)?)?;
     m.add_function(wrap_pyfunction!(py_ph_analyze_crosstalk, m)?)?;
     m.add_function(wrap_pyfunction!(py_ph_analyze_power_budget, m)?)?;
+    m.add_function(wrap_pyfunction!(py_ph_analyze_crosstalk_bank, m)?)?;
+    m.add_function(wrap_pyfunction!(py_ph_analyze_crosstalk_pairs, m)?)?;
     // SC-Optimizer acceleration
     m.add_function(wrap_pyfunction!(py_opt_sa_search, m)?)?;
     m.add_function(wrap_pyfunction!(py_opt_extract_pareto, m)?)?;
@@ -5058,6 +5060,99 @@ fn py_ph_analyze_power_budget<'py>(
     dict.set_item("passed", passed)?;
     dict.set_item("total_losses_db", total_losses)?;
     dict.set_item("n_paths", result.len())?;
+    dict.set_item("backend", "rust")?;
+    Ok(dict.into_any().unbind())
+}
+
+/// Geometric crosstalk analysis for a uniform bank of parallel waveguides.
+#[pyfunction]
+#[pyo3(signature = (num_waveguides, gap_nm, coupling_length_um, wavelength_nm=1550.0, core_index=3.48, cladding_index=1.45))]
+fn py_ph_analyze_crosstalk_bank<'py>(
+    py: Python<'py>,
+    num_waveguides: usize,
+    gap_nm: f64,
+    coupling_length_um: f64,
+    wavelength_nm: f64,
+    core_index: f64,
+    cladding_index: f64,
+) -> PyResult<Py<PyAny>> {
+    let r = photonic::analyze_crosstalk_bank(
+        num_waveguides,
+        gap_nm,
+        coupling_length_um,
+        wavelength_nm,
+        core_index,
+        cladding_index,
+    );
+    let dict = PyDict::new(py);
+    dict.set_item("num_waveguides", r.num_waveguides)?;
+    dict.set_item("num_pairs", r.num_near_pairs + r.num_far_pairs)?;
+    dict.set_item("num_near_pairs", r.num_near_pairs)?;
+    dict.set_item("num_far_pairs", r.num_far_pairs)?;
+    dict.set_item("gap_nm", r.gap_nm)?;
+    dict.set_item("coupling_length_um", r.coupling_length_um)?;
+    dict.set_item("adjacent_coupling_ratio", r.adjacent_coupling_ratio)?;
+    dict.set_item("adjacent_isolation_db", r.adjacent_isolation_db)?;
+    dict.set_item("next_nearest_coupling_ratio", r.next_nearest_coupling_ratio)?;
+    dict.set_item("next_nearest_isolation_db", r.next_nearest_isolation_db)?;
+    dict.set_item("worst_isolation_db", r.worst_isolation_db)?;
+    dict.set_item("mean_coupling_ratio", r.mean_coupling_ratio)?;
+    dict.set_item("max_coupling_ratio", r.max_coupling_ratio)?;
+    dict.set_item("crosstalk_safe", r.crosstalk_safe)?;
+    dict.set_item("backend", "rust")?;
+    Ok(dict.into_any().unbind())
+}
+
+/// Per-pair geometric crosstalk for arbitrary waveguide geometry.
+/// `pairs_a[i]`, `pairs_b[i]`, `gaps_nm[i]`, `lengths_um[i]` describe pair i.
+/// Evaluated in parallel via Rayon — the O(N²) analysis path.
+#[pyfunction]
+#[pyo3(signature = (pairs_a, pairs_b, gaps_nm, lengths_um, wavelength_nm=1550.0, core_index=3.48, cladding_index=1.45))]
+fn py_ph_analyze_crosstalk_pairs<'py>(
+    py: Python<'py>,
+    pairs_a: Vec<usize>,
+    pairs_b: Vec<usize>,
+    gaps_nm: Vec<f64>,
+    lengths_um: Vec<f64>,
+    wavelength_nm: f64,
+    core_index: f64,
+    cladding_index: f64,
+) -> PyResult<Py<PyAny>> {
+    let n = pairs_a.len();
+    if pairs_b.len() != n || gaps_nm.len() != n || lengths_um.len() != n {
+        return Err(pyo3::exceptions::PyValueError::new_err(
+            "pairs_a, pairs_b, gaps_nm, lengths_um must be equal length",
+        ));
+    }
+    let pairs: Vec<(usize, usize, f64, f64)> = pairs_a
+        .into_iter()
+        .zip(pairs_b)
+        .zip(gaps_nm)
+        .zip(lengths_um)
+        .map(|(((a, b), g), l)| (a, b, g, l))
+        .collect();
+    let results = photonic::analyze_crosstalk_pairs(&pairs, wavelength_nm, core_index, cladding_index);
+
+    let dict = PyDict::new(py);
+    let idx_a: Vec<usize> = results.iter().map(|r| r.index_a).collect();
+    let idx_b: Vec<usize> = results.iter().map(|r| r.index_b).collect();
+    let gaps: Vec<f64> = results.iter().map(|r| r.gap_nm).collect();
+    let lens: Vec<f64> = results.iter().map(|r| r.coupling_length_um).collect();
+    let kappas: Vec<f64> = results
+        .iter()
+        .map(|r| r.coupling_coefficient_per_um)
+        .collect();
+    let ratios: Vec<f64> = results.iter().map(|r| r.coupling_ratio).collect();
+    let isos: Vec<f64> = results.iter().map(|r| r.isolation_db).collect();
+
+    dict.set_item("pair_a", idx_a)?;
+    dict.set_item("pair_b", idx_b)?;
+    dict.set_item("gap_nm", gaps)?;
+    dict.set_item("coupling_length_um", lens)?;
+    dict.set_item("coupling_coefficient_per_um", kappas)?;
+    dict.set_item("coupling_ratio", ratios)?;
+    dict.set_item("isolation_db", isos)?;
+    dict.set_item("num_pairs", n)?;
     dict.set_item("backend", "rust")?;
     Ok(dict.into_any().unbind())
 }
