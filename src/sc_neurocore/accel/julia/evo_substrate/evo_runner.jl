@@ -18,11 +18,51 @@
 module EvoRunner
 
 using JSON
-using Random
 using SHA
 
 const GENOME_DIM = 19
 const EPSILON = 1e-10
+
+# ─── Shared XorShift64 PRNG (byte-identical across Rust/Julia/Go/Mojo) ──
+
+mutable struct XorShift64
+    state::UInt64
+end
+
+function XorShift64_seed(seed::UInt64)
+    # non-zero state required
+    s = seed == UInt64(0) ? UInt64(0xDEAD_BEEF_CAFE_BABE) : seed
+    XorShift64(s)
+end
+
+function next_u64!(r::XorShift64)
+    x = r.state
+    x = xor(x, x << 13)
+    x = xor(x, x >> 7)
+    x = xor(x, x << 17)
+    r.state = x
+    x
+end
+
+function next_f64!(r::XorShift64)
+    Float64(next_u64!(r) >> 11) / Float64(UInt64(1) << 53)
+end
+
+function next_normal!(r::XorShift64, mu::Float64, sigma::Float64)
+    u1 = next_f64!(r)
+    u2 = next_f64!(r)
+    if u1 < 1e-300
+        u1 = 1e-300
+    end
+    radius = sqrt(-2.0 * log(u1))
+    theta = 2.0 * pi * u2
+    mu + sigma * radius * cos(theta)
+end
+
+function gen_range!(r::XorShift64, lo::Int, hi::Int)
+    span = UInt64(hi - lo)
+    Int(lo + (next_u64!(r) % span))
+end
 
 # ─── Genome + gene blocks ─────────────────────────────────────────
 
@@ -142,23 +182,25 @@ end
 
 mutation_defaults() = MutationConfig(0.2, 0.05, 0.05, 0.01, 0.02, Int32(1024), Int32(4))
 
-function apply_point!(cfg::MutationConfig, g::Genome, rng::AbstractRNG)
+function apply_point!(cfg::MutationConfig, g::Genome, rng::XorShift64)
     v = to_vector(g)
     for i in 1:GENOME_DIM
-        if rand(rng) < cfg.point_rate
-            noise = randn(rng) * cfg.point_sigma
+        if next_f64!(rng) < cfg.point_rate
+            noise = next_normal!(rng, 0.0, cfg.point_sigma)
             v[i] += noise * (abs(v[i]) + 1e-8)
         end
     end
     from_vector!(g, v, g.generation)
 end
 
-function apply_structural!(cfg::MutationConfig, g::Genome, rng::AbstractRNG)
-    delta = [-2, -1, 1, 2][rand(rng, 1:4)]
+function apply_structural!(cfg::MutationConfig, g::Genome, rng::XorShift64)
+    # gen_range!(rng, 0, 4) matches the Rust `rng.gen_range(0, 4)` semantics → [0, 4)
+    delta = [-2, -1, 1, 2][gen_range!(rng, 0, 4) + 1]
     g.topology.num_neurons = clamp(
         g.topology.num_neurons + Int32(delta), cfg.min_neurons, cfg.max_neurons,
     )
-    g.topology.connectivity = clamp(g.topology.connectivity + randn(rng) * 0.05, 0.01, 1.0)
+    conn_noise = next_normal!(rng, 0.0, 0.05)
+    g.topology.connectivity = clamp(g.topology.connectivity + conn_noise, 0.01, 1.0)
 end
 
 function apply_duplication!(cfg::MutationConfig, g::Genome)
@@ -172,7 +214,7 @@ end
 
 mutable struct MutationEngine
     config::MutationConfig
-    rng::MersenneTwister
+    rng::XorShift64
 end
 
 function mutate!(eng::MutationEngine, parent::Genome)
@@ -181,7 +223,7 @@ function mutate!(eng::MutationEngine, parent::Genome)
     child.generation = parent.generation + Int32(1)
     child.identity_deep = 0.0
 
-    roll = rand(eng.rng)
+    roll = next_f64!(eng.rng)
     cumulative = 0.0
 
     cumulative += eng.config.structural_rate
@@ -210,13 +252,13 @@ end
 # ─── Crossover ────────────────────────────────────────────────────
 
 mutable struct CrossoverEngine
-    rng::MersenneTwister
+    rng::XorShift64
 end
 
 function crossover(eng::CrossoverEngine, a::Genome, b::Genome)
     va = to_vector(a)
     vb = to_vector(b)
-    child_v = [rand(eng.rng) < 0.5 ? va[i] : vb[i] for i in 1:GENOME_DIM]
+    child_v = [next_f64!(eng.rng) < 0.5 ? va[i] : vb[i] for i in 1:GENOME_DIM]
     new_gen = max(a.generation, b.generation) + Int32(1)
     child = from_vector(child_v, new_gen)
     child.parent_id = "$(a.genome_id)x$(b.genome_id)"
@@ -354,10 +396,14 @@ function check_extinction!(det::ExtinctionDetector, best::Float64)
 end
 
 function apply_extinction!(det::ExtinctionDetector, pop::Vector{Organism},
-                           rng::AbstractRNG)
+                           rng::XorShift64)
     n_kill = min(Int(floor(length(pop) * det.kill_fraction)), length(pop))
     indices = collect(1:length(pop))
-    shuffle!(rng, indices)
+    # Fisher-Yates partial shuffle (matches Rust runner's swap loop).
+    for i in 1:n_kill
+        j = gen_range!(rng, i - 1, length(indices)) + 1
+        indices[i], indices[j] = indices[j], indices[i]
+    end
     killed = 0
     for idx in indices[1:n_kill]
         if pop[idx].alive
@@ -417,14 +463,15 @@ struct TournamentSelector
 end
 
 function select_tournament(ts::TournamentSelector, pop::Vector{Organism},
-                           rng::AbstractRNG)
+                           rng::XorShift64)
     isempty(pop) && return nothing
     k = min(ts.tournament_size, length(pop))
     seen = Int[]
     best = nothing
     best_fit = -Inf
     while length(seen) < k
-        idx = rand(rng, 1:length(pop))
+        # gen_range!(rng, 0, n) yields [0, n) — shift by +1 for 1-based Julia indexing
+        idx = gen_range!(rng, 0, length(pop)) + 1
         idx in seen && continue
         push!(seen, idx)
         org = pop[idx]
@@ -484,7 +531,7 @@ end
 # ─── Main runner ──────────────────────────────────────────────────
 
 function evolve_run(cfg::AbstractDict)
-    master_rng = MersenneTwister(UInt32(cfg["seed"]))
+    master_rng = XorShift64_seed(UInt64(cfg["seed"]))
 
     mutation_cfg = MutationConfig(
         cfg["mutation"]["point_rate"], cfg["mutation"]["point_sigma"],
@@ -505,9 +552,8 @@ function evolve_run(cfg::AbstractDict)
         cfg["safety_bounds"]["max_connectivity"],
     )
 
-    mutator = MutationEngine(mutation_cfg,
-                             MersenneTwister(UInt32(rand(master_rng, UInt32))))
-    xover = CrossoverEngine(MersenneTwister(UInt32(rand(master_rng, UInt32))))
+    mutator = MutationEngine(mutation_cfg, XorShift64_seed(next_u64!(master_rng)))
+    xover = CrossoverEngine(XorShift64_seed(next_u64!(master_rng)))
     guard = FormalSafetyGuard(safety, 0, 0)
     bloat = bloat_defaults()
     age = AgeRegulator(Int32(cfg["max_age"]))
@@ -593,7 +639,7 @@ function evolve_run(cfg::AbstractDict)
                                    (length(survivors) > 1 ? survivors[2] : nothing)
 
             local child_genome
-            if partner !== nothing && rand(mutator.rng) < crossover_prob
+            if partner !== nothing && next_f64!(mutator.rng) < crossover_prob
                 c = crossover(xover, parent.genome, partner.genome)
                 c.generation = gen_i32
                 child_genome = c
