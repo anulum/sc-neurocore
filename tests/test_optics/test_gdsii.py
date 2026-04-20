@@ -92,9 +92,7 @@ class TestEmptyLayoutGuard:
 class TestLayoutArithmetic:
     def test_returns_full_layout_dict(self, populated_result, tmp_path: Path):
         out_path = tmp_path / "cascade.gds"
-        info = populated_result.to_gdsii(
-            str(out_path), mzi_length_um=12.5, pitch_um=80.0
-        )
+        info = populated_result.to_gdsii(str(out_path), mzi_length_um=12.5, pitch_um=80.0)
         assert info["filename"] == str(out_path)
         assert info["n_modulators"] == populated_result.num_modulators
         assert info["mzi_length_um"] == pytest.approx(12.5)
@@ -104,12 +102,8 @@ class TestLayoutArithmetic:
         assert info["total_length_um"] == pytest.approx(4 * 80.0)
 
     def test_pitch_scales_total_length_linearly(self, populated_result, tmp_path: Path):
-        info_a = populated_result.to_gdsii(
-            str(tmp_path / "a.gds"), pitch_um=50.0
-        )
-        info_b = populated_result.to_gdsii(
-            str(tmp_path / "b.gds"), pitch_um=200.0
-        )
+        info_a = populated_result.to_gdsii(str(tmp_path / "a.gds"), pitch_um=50.0)
+        info_b = populated_result.to_gdsii(str(tmp_path / "b.gds"), pitch_um=200.0)
         assert info_b["total_length_um"] == pytest.approx(info_a["total_length_um"] * 4.0)
 
 

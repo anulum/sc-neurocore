@@ -8,7 +8,7 @@
 
 """Hardware-in-the-Loop server orchestrator.
 
-Spawns and manages the standalone high-performance Go-based WebSocket 
+Spawns and manages the standalone high-performance Go-based WebSocket
 telemetry server for real-time SC debugging and visualization.
 """
 
@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import os
 import subprocess
-import threading
 import time
 import urllib.request
 import urllib.error
@@ -43,8 +42,8 @@ class HILServerDaemon:
             self._go_dir = installed_bin.parent
             return
         raise FileNotFoundError(
-            f"HIL Debugger Go binary not found. "
-            f"Run: cd accel/go/services/hil_debugger && go build -o hil_debugger main.go"
+            "HIL Debugger Go binary not found. "
+            "Run: cd accel/go/services/hil_debugger && go build -o hil_debugger main.go"
         )
 
     def start(self, build: bool = True) -> bool:
@@ -89,7 +88,11 @@ class HILServerDaemon:
         url = f"http://localhost:{self.port}/health"
         while time.time() - start_time < timeout_sec:
             if self._process.poll() is not None:
-                err = self._process.stderr.read().decode() if self._process.stderr else "unknown crash"
+                err = (
+                    self._process.stderr.read().decode()
+                    if self._process.stderr
+                    else "unknown crash"
+                )
                 print(f"[HIL Daemon] Server crashed: {err}")
                 return False
             try:

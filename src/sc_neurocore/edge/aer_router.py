@@ -15,15 +15,21 @@ class AERRoutingDaemon:
     """Orchestrates the Go-based AER UDP mesh multi-FPGA router pipeline dynamically."""
 
     def __init__(self, port: int = 9000):
-        self._router_dir = Path(__file__).resolve().parent.parent / "accel" / "go" / "services" / "aer_router"
+        self._router_dir = (
+            Path(__file__).resolve().parent.parent / "accel" / "go" / "services" / "aer_router"
+        )
         self._port = port
         self._process = None
 
     def start(self, build: bool = True):
         if build:
             print("[AER Router] Natively compiling robust Go pipeline...")
-            subprocess.run(["go", "build", "-o", "aer_router", "main.go"], cwd=str(self._router_dir), check=True)
-            
+            subprocess.run(
+                ["go", "build", "-o", "aer_router", "main.go"],
+                cwd=str(self._router_dir),
+                check=True,
+            )
+
         print(f"[AER Router] Spawning background listener on port {self._port}...")
         self._process = subprocess.Popen(
             ["./aer_router"],

@@ -1051,7 +1051,9 @@ class HomeostaticPlasticity:
         new_q88 = current_q88 + delta_q88
         return max(self.min_threshold_q88, min(self.max_threshold_q88, new_q88))
 
+
 # ── Evo Substrate Bridge (Gap 11) ───────────────────────────────────
+
 
 def mea_fitness_hook(
     detected_spikes: List[DetectedSpike],

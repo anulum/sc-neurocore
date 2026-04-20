@@ -450,7 +450,7 @@ class TestSpikeSorter:
         shapes = {
             0: -30.0 * np.sin(np.pi * t),  # shallow early peak
             1: -60.0 * np.sin(np.pi * t) ** 2,  # deeper, broader
-            2: -90.0 * np.exp(-((t - 0.5) / 0.1) ** 2),  # narrow spike
+            2: -90.0 * np.exp(-(((t - 0.5) / 0.1) ** 2)),  # narrow spike
         }
         spikes: list[DetectedSpike] = []
         for unit, base in shapes.items():
@@ -810,8 +810,7 @@ class TestMEAFitnessHook:
     def test_near_target_rate_scores_high(self):
         # 10 spikes on a single channel, target_rate=10 → mean_rate = 10 → accuracy 0.99 ceiling.
         spikes = [
-            DetectedSpike(channel=0, timestamp_s=i * 0.01, amplitude_uv=-40.0)
-            for i in range(10)
+            DetectedSpike(channel=0, timestamp_s=i * 0.01, amplitude_uv=-40.0) for i in range(10)
         ]
         r = mea_fitness_hook(spikes, target_rate=10.0)
         assert r["accuracy"] == pytest.approx(0.99, abs=1e-9)
@@ -819,8 +818,7 @@ class TestMEAFitnessHook:
     def test_off_target_rate_penalised(self):
         # 100 spikes on one channel, target 10 → rate_error ratio = 9 → accuracy floor.
         spikes = [
-            DetectedSpike(channel=0, timestamp_s=i * 0.001, amplitude_uv=-40.0)
-            for i in range(100)
+            DetectedSpike(channel=0, timestamp_s=i * 0.001, amplitude_uv=-40.0) for i in range(100)
         ]
         r = mea_fitness_hook(spikes, target_rate=10.0)
         assert r["accuracy"] == pytest.approx(0.1, abs=1e-9)

@@ -193,9 +193,7 @@ class TestBackendParity:
         if not mod._HAS_RUST_PH:
             pytest.skip("Rust photonic bindings not built")
         model_rust = CrosstalkModel()
-        r_rust = model_rust.analyze_bank(
-            waveguides=6, gap_nm=250.0, coupling_length_um=12.0
-        )
+        r_rust = model_rust.analyze_bank(waveguides=6, gap_nm=250.0, coupling_length_um=12.0)
         assert r_rust["backend"] == "rust"
 
         # Force Python path via monkey-patched flag.

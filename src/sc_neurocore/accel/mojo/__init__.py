@@ -9,6 +9,7 @@
 _HAS_MOJO = False
 try:
     from .runner import MojoKernelRunner
+
     _HAS_MOJO = True
 except Exception:
     pass
