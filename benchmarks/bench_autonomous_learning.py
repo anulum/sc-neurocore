@@ -18,7 +18,7 @@ except ImportError:
 
 
 def run_benchmark(timesteps: int = 100_000):
-    print(f"Benchmarking Autonomous Learning (Rust FFI over Python via C-Types)...")
+    print("Benchmarking Autonomous Learning (Rust FFI over Python via C-Types)...")
     print(f"Timesteps: {timesteps}")
 
     if not FFI_AVAILABLE:

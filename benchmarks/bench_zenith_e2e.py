@@ -8,7 +8,7 @@ import tempfile
 import numpy as np
 import torch
 import torch.utils.benchmark as benchmark
-from typing import List, Dict, Any
+from typing import Dict, Any
 
 from sc_neurocore.plasticity import create_plasticity_layer
 from sc_neurocore._native.learning_bridge import (
