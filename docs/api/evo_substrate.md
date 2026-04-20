@@ -567,6 +567,126 @@ the NumPy reference (bit-exact). Julia / Go / Mojo versions are
 honest parity references for benchmarking, not called in the Python
 hot path.
 
+### 7.3 Whole-process industrial runners (4-backend flagship)
+
+Beyond the per-kernel dispatch surface above, each of the four
+compilers ships a **whole-process** evolve runner — the entire
+`ReplicationEngine.evolve_generation()` loop plus the eleven industrial
+guards (TournamentSelector, AgeRegulator, FormalSafetyGuard,
+BloatPenalizer, ExtinctionDetector, HallOfFame, ParetoFront,
+LineageTracker, MutationEngine × 4 variants, CrossoverEngine,
+parametric FitnessEvaluator). A Python orchestrator can invoke any
+backend with identical JSON config on stdin and receive an identical
+`EvolveResult` JSON on stdout.
+
+| Backend    | Entry point                                                   | Source                                                            |
+| ---------- | ------------------------------------------------------------- | ----------------------------------------------------------------- |
+| **Rust**   | `evo_substrate_core.py_evolve_run(config_json) -> str` (PyO3) | `crates/evo_substrate_core/src/runner.rs` (1 227 LOC)             |
+| **Julia**  | `julia evo_runner.jl < cfg > result` subprocess               | `src/sc_neurocore/accel/julia/evo_substrate/evo_runner.jl` (720 LOC) |
+| **Go**     | `./evo_substrate_bench --runner < cfg > result` subprocess    | `src/sc_neurocore/accel/go/evo_substrate/runner.go` (926 LOC)     |
+| **Mojo**   | `pixi run mojo run kernels/evo_runner.mojo < cfg > result`    | `src/sc_neurocore/accel/mojo/kernels/evo_runner.mojo` (803 LOC)   |
+
+All four runners share a **common XorShift64 PRNG** (constants 13/7/17,
+`0xDEADBEEFCAFEBABE` fallback for zero seeds) so the same seed produces
+byte-identical uniform sequences across languages.
+
+#### 7.3.1 Cross-backend parity — measured on fixed seed
+
+Running the default config `(seed=7, pop=16, gens=10,
+industrial_mode=True)` against all four runners:
+
+| Backend | gen 10 best        | Pareto size | Lineage records | Replications |
+| ------- | ------------------ | ----------- | --------------- | ------------ |
+| Rust    | 0.69955078125      | 1           | 96              | 80           |
+| Julia   | 0.69955078125      | 1           | 96              | 80           |
+| Go      | 0.6992578125       | 1           | 96              | 80           |
+| Mojo    | 0.6999804687500001 | 3           | 96              | 80           |
+
+**Rust ↔ Julia are byte-exact identical** on every field (genome_ids,
+lineage records, HoF entries, Pareto members, gen-by-gen stats).
+
+**Rust ↔ Go** match on all structural counters and converge on the
+same Pareto size but drift at ~1e-3 on `best_fitness` — Go's
+`math.Cos` and `math.Log` differ from Rust's libm at ~1 ULP, and
+Box-Muller-based Gaussian mutation compounds that drift over ~80
+mutations. A bit-exact polynomial `cos`/`log` is the path to close
+this; tracked as follow-up.
+
+**Rust ↔ Mojo** structural parity (lineage, counters); numerics drift
+similarly to Go for the same libm reason plus Mojo 0.26 Python-interop
+noise in the SHA-256 hashing path. Mojo's Pareto size is larger (3 vs 1)
+because the compounding drift leaves a few more non-dominated organisms
+standing.
+
+The cross-language parity suite in
+`tests/test_evo_substrate/test_multilang_parity.py` asserts the above
+four-way relationships; it skips gracefully on missing toolchains.
+
+#### 7.3.2 Whole-process timing (seed=7, pop=16, 10 gens, industrial)
+
+Measured 2026-04-20 on i5-11600K / CPython 3.12.3:
+
+| Backend                                | Wall clock           | Dispatch model                         |
+| -------------------------------------- | -------------------- | -------------------------------------- |
+| Rust (PyO3 in-process)                 | **0.57 ms / run**    | per-call from Python, warm             |
+| Rust (Criterion, pure Rust binary)     | ~5 µs / run          | in-process Rust, no FFI                |
+| Go (already-built binary, excl build)  | ~2 ms / run          | subprocess; add ~3 s for `go build`    |
+| Mojo (cold pixi + JIT compile)         | ~1.1 s / run         | subprocess; Mojo 0.26 JIT per invocation |
+| Julia (cold Julia + JSON.jl precompile)| ~3 s / run           | subprocess; amortises across long runs  |
+| Python (`ReplicationEngine` reference) | 40.88 ms / run       | in-process, NumPy                      |
+
+**Honest caveats on the "cold" column:**
+
+* **Go** — the `./evo_substrate_bench` binary must exist on disk. A
+  fresh `go build -o evo_substrate_bench .` takes ~3 s the first time
+  (compiler + module cache cold); the 2 ms figure above is the binary's
+  own execution wall after build. The repo's `.gitignore` already skips
+  the compiled binary, and the pytest + parity harness rebuild it on
+  demand.
+* **Mojo** — the ~1.1 s includes pixi env activation (~200 ms), Mojo
+  JIT compile (~800 ms), and Python interop bootstrap (~100 ms). Running
+  the same `.mojo` file a second time in the SAME pixi env keeps the
+  JIT result in the `.pixi/envs/default` mojo cache, so warm runs are
+  ~700 ms. There is no truly "warm" Mojo because every subprocess
+  restart re-pays the JIT cost.
+* **Julia** — ~3 s cold is dominated by `JSON.jl` + `SHA.jl` precompile
+  (~2.5 s) plus Julia runtime startup (~500 ms). Inside an already-hot
+  Julia session this drops to ~20 ms per `evolve_run` call. The Julia
+  runner is the right choice when the surrounding experiment is *also*
+  Julia (e.g. a `DifferentialEquations.jl` fitness function); as a
+  per-call backend from Python, the subprocess overhead dominates.
+* **Rust** — the 0.57 ms is *warm* in-process via the PyO3 extension.
+  First import incurs a ~10 ms module load, amortised across any
+  non-trivial run.
+
+#### 7.3.3 When to pick which backend
+
+* **Per-call from Python orchestration** — Rust PyO3. The other three
+  subprocess startup costs (2 ms – 3 s) make them unusable for the
+  inner loop, which calls `evolve_generation` thousands of times.
+* **Long experiments (1 000+ generations, 100+ pop)** — any subprocess
+  backend amortises; pick by what else your experiment touches. Julia
+  if you reach into DiffEq / Plots; Go if you already have a Go service
+  mesh; Mojo if you use other SIMD kernels in the same pixi env.
+* **Audit / cross-check** — run the same config through two backends
+  and compare the JSON. Rust ↔ Julia is byte-exact; any mismatch
+  indicates a regression in one of them.
+
+#### 7.3.4 Testing the 4-backend flagship
+
+* Rust: `cargo test --release --features pyo3_bindings --manifest-path
+  crates/evo_substrate_core/Cargo.toml` — 17 unit tests.
+* Julia: `julia src/sc_neurocore/accel/julia/evo_substrate/test_evo_runner.jl`
+  — 17 unit tests (PRNG, roundtrip, fitness, safety, determinism).
+* Go: `go test -v ./src/sc_neurocore/accel/go/evo_substrate/...` — 8
+  unit tests (PRNG, roundtrip, id-shape, fitness, safety, determinism).
+* Mojo: `pytest tests/test_evo_substrate/test_mojo_runner.py` — 7
+  side-validated unit tests driven from Python (Mojo 0.26 has no
+  native unit-test harness).
+* Cross-language parity: `pytest tests/test_evo_substrate/test_multilang_parity.py`
+  — 18 tests (schema, Rust↔Julia bit-exact, Rust↔Go tolerance,
+  Rust↔Mojo structure, determinism).
+
 **Interpretation.** Safety checks and distance computations are cheap
 enough (<1 µs and ~10 µs respectively) that they do not dominate the
 generation cost. Mutation and crossover are the slower inner ops
