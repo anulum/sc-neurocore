@@ -23,11 +23,53 @@
 
 from std.python import Python, PythonObject
 from std.math import abs, cos, log, sqrt
-from std.random import random_float64, seed as rng_seed
 from std.collections import List
 
 alias GENOME_DIM: Int = 19
 alias EPSILON: Float64 = 1.0e-10
+
+
+# ─── Shared XorShift64 PRNG (byte-identical uniform across 4 backends) ──
+#
+# Single 64-bit state with constants 13/7/17. The uniform [0,1) sequence
+# is bit-exact identical to Rust / Julia / Go on a fixed seed; the
+# Gaussian that rides on top of it via Box-Muller may diverge by ~1 ULP
+# because of libm `cos()` / `log()` differences between language stdlibs.
+
+
+struct XorShift64:
+    var state: UInt64
+
+    fn __init__(out self, seed: UInt64):
+        var v = seed
+        if v == UInt64(0):
+            v = UInt64(0xDEAD_BEEF_CAFE_BABE)
+        self.state = v
+
+    fn next_u64(mut self) -> UInt64:
+        var x = self.state
+        x = x ^ (x << 13)
+        x = x ^ (x >> 7)
+        x = x ^ (x << 17)
+        self.state = x
+        return x
+
+    fn next_f64(mut self) -> Float64:
+        return Float64(Int(self.next_u64() >> 11)) / 9007199254740992.0
+
+    fn next_normal(mut self, mu: Float64, sigma: Float64) -> Float64:
+        """Box-Muller; same RNG-draw order as the other runners."""
+        var u1 = self.next_f64()
+        var u2 = self.next_f64()
+        if u1 < 1e-300:
+            u1 = 1e-300
+        var radius = sqrt(-2.0 * log(u1))
+        var theta = 2.0 * 3.14159265358979323846 * u2
+        return mu + sigma * radius * cos(theta)
+
+    fn gen_range(mut self, lo: Int, hi: Int) -> Int:
+        var span = UInt64(hi - lo)
+        return lo + Int(self.next_u64() % span)
 
 
 # ─── Helpers ──────────────────────────────────────────────────────
@@ -116,16 +158,6 @@ fn clamp_vector(mut v: List[Float64]):
     v[18] = max_f(0.1, v[18])
 
 
-fn gaussian(mu: Float64, sigma: Float64) -> Float64:
-    """Box-Muller transform for a standard normal sample."""
-    var u1 = random_float64()
-    var u2 = random_float64()
-    if u1 < 1e-12:
-        u1 = 1e-12
-    var r = sqrt(-2.0 * log(u1))
-    return mu + sigma * r * cos(2.0 * 3.14159265358979323846 * u2)
-
-
 # ─── Compute SHA-256 id via Python hashlib (I/O boundary) ────────
 
 
@@ -147,34 +179,33 @@ fn compute_id(v: List[Float64], py_hashlib: PythonObject) raises -> String:
 
 fn apply_point(
     mut v: List[Float64],
+    mut rng: XorShift64,
     point_rate: Float64,
     point_sigma: Float64,
 ):
     for i in range(GENOME_DIM):
-        if random_float64() < point_rate:
-            var noise = gaussian(0.0, point_sigma)
+        if rng.next_f64() < point_rate:
+            var noise = rng.next_normal(0.0, point_sigma)
             v[i] = v[i] + noise * (abs(v[i]) + 1e-8)
     clamp_vector(v)
 
 
 fn apply_structural(
     mut v: List[Float64],
+    mut rng: XorShift64,
     min_neurons: Int,
     max_neurons: Int,
 ):
-    # delta ∈ {-2,-1,1,2}
-    var r = random_float64()
-    var delta = -2
-    if r < 0.25:
-        delta = -2
-    elif r < 0.50:
-        delta = -1
-    elif r < 0.75:
-        delta = 1
-    else:
-        delta = 2
+    # delta ∈ {-2,-1,1,2} — mirrors Rust `[-2,-1,1,2][gen_range(0, 4)]`
+    var idx = rng.gen_range(0, 4)
+    var deltas = List[Int]()
+    deltas.append(-2)
+    deltas.append(-1)
+    deltas.append(1)
+    deltas.append(2)
+    var delta = deltas[idx]
     v[0] = Float64(clamp_i32(Int(v[0]) + delta, min_neurons, max_neurons))
-    var conn_noise = gaussian(0.0, 0.05)
+    var conn_noise = rng.next_normal(0.0, 0.05)
     v[2] = clamp_f64(v[2] + conn_noise, 0.01, 1.0)
 
 
@@ -198,6 +229,7 @@ fn apply_swap(mut v: List[Float64]):
 
 fn mutate(
     mut v: List[Float64],
+    mut rng: XorShift64,
     point_rate: Float64,
     point_sigma: Float64,
     structural_rate: Float64,
@@ -207,10 +239,10 @@ fn mutate(
     max_neurons: Int,
 ) -> String:
     """Applies one mutation and returns the operator name."""
-    var roll = random_float64()
+    var roll = rng.next_f64()
     var cumulative = structural_rate
     if roll < cumulative:
-        apply_structural(v, min_neurons, max_neurons)
+        apply_structural(v, rng, min_neurons, max_neurons)
         return String("structural")
     cumulative = cumulative + duplication_rate
     if roll < cumulative:
@@ -220,17 +252,17 @@ fn mutate(
     if roll < cumulative:
         apply_swap(v)
         return String("swap")
-    apply_point(v, point_rate, point_sigma)
+    apply_point(v, rng, point_rate, point_sigma)
     return String("point")
 
 
 # ─── Crossover ────────────────────────────────────────────────────
 
 
-fn crossover(a: List[Float64], b: List[Float64]) -> List[Float64]:
+fn crossover(a: List[Float64], b: List[Float64], mut rng: XorShift64) -> List[Float64]:
     var out = List[Float64]()
     for i in range(GENOME_DIM):
-        if random_float64() < 0.5:
+        if rng.next_f64() < 0.5:
             out.append(a[i])
         else:
             out.append(b[i])
@@ -302,27 +334,32 @@ fn safety_check(
 
 
 fn tournament_select(
-    fits: List[Float64], alive: List[Bool], k: Int
+    fits: List[Float64], alive: List[Bool], k: Int, mut rng: XorShift64
 ) -> Int:
     """Returns the index of the tournament winner among alive organisms,
-    or -1 if none."""
+    or -1 if none. Matches the Rust runner's linear-scan `seen` tracking
+    so that the RNG sequence is consumed identically."""
     var n = len(fits)
     if n == 0:
         return -1
     var best = -1
     var best_fit = -1.0e18
-    var picked: Int = 0
-    while picked < k:
-        var idx = Int(random_float64() * Float64(n))
-        if idx >= n:
-            idx = n - 1
+    var seen = List[Int]()
+    while len(seen) < k:
+        var idx = rng.gen_range(0, n)
+        var dupe = False
+        for s in seen:
+            if s == idx:
+                dupe = True
+                break
+        if dupe:
+            continue
+        seen.append(idx)
         if not alive[idx]:
-            picked = picked + 1
             continue
         if fits[idx] > best_fit:
             best_fit = fits[idx]
             best = idx
-        picked = picked + 1
     return best
 
 
@@ -372,7 +409,11 @@ fn main() raises:
     var sb_max_bitstream = Int(atol(String(sb_cfg["max_bitstream"])))
     var sb_max_connectivity = atof(String(sb_cfg["max_connectivity"]))
 
-    rng_seed(seed)
+    # Drive two sub-RNGs from the master (mirrors Rust's pattern so the
+    # mutator and crossover streams stay aligned with the other runners).
+    var master_rng = XorShift64(UInt64(seed))
+    var mutator_rng = XorShift64(master_rng.next_u64())
+    var xover_rng = XorShift64(master_rng.next_u64())
 
     # Population state — flat Float64 array of size pop_size * GENOME_DIM
     var pop_flat = List[Float64]()
@@ -465,7 +506,7 @@ fn main() raises:
         for slot in range(pop_size):
             if alive[slot]:
                 continue
-            var pidx = tournament_select(parent_fits, parent_alive, tournament_size)
+            var pidx = tournament_select(parent_fits, parent_alive, tournament_size, mutator_rng)
             if pidx < 0:
                 continue
             var real_pi = parent_idx_list[pidx]
@@ -474,20 +515,24 @@ fn main() raises:
                 parent_v.append(pop_flat[real_pi * GENOME_DIM + k])
             var child_v: List[Float64]
             var mtype: String
-            if random_float64() < crossover_prob:
-                var pidx2 = tournament_select(parent_fits, parent_alive, tournament_size)
+            # Unconditional RNG consume matches the Rust runner, where the
+            # tuple-pattern always evaluates the nextF64() call.
+            var roll = mutator_rng.next_f64()
+            if roll < crossover_prob:
+                var pidx2 = tournament_select(parent_fits, parent_alive, tournament_size, mutator_rng)
                 if pidx2 < 0:
                     pidx2 = pidx
                 var real_pi2 = parent_idx_list[pidx2]
                 var partner_v = List[Float64]()
                 for k in range(GENOME_DIM):
                     partner_v.append(pop_flat[real_pi2 * GENOME_DIM + k])
-                child_v = crossover(parent_v, partner_v)
+                child_v = crossover(parent_v, partner_v, xover_rng)
                 mtype = String("crossover")
             else:
                 child_v = parent_v^
                 mtype = mutate(
                     child_v,
+                    mutator_rng,
                     point_rate, point_sigma,
                     structural_rate, duplication_rate, swap_rate,
                     min_neurons_mut, max_neurons_mut,

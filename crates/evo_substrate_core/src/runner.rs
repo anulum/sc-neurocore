@@ -15,18 +15,66 @@
 //! MutationEngine (point/structural/duplication/swap), CrossoverEngine,
 //! parametric FitnessEvaluator.
 //!
-//! Determinism: every RNG is seeded from `config.seed` via
-//! `rand_chacha::ChaCha20Rng` — the same config produces the same
-//! generation history across hosts. Python's `numpy.random.default_rng`
-//! uses PCG64, so byte-for-byte parity with the Python reference is
-//! **not** achieved; statistical equivalence (same mutation rates, same
-//! fitness distributions, same selection pressure) *is* achieved.
+//! Determinism: every RNG is XorShift64 seeded from `config.seed`. The
+//! same PRNG algorithm + same call order is shared with the Julia, Go,
+//! and Mojo runners so the **byte-for-byte output is identical across
+//! all four backends** on a given seed. The Python reference still uses
+//! NumPy's PCG64 — Python is orchestration-only, so a parity-critical
+//! cross-language run goes through one of the four backends.
 
-use rand::{Rng, SeedableRng};
-use rand_chacha::ChaCha20Rng;
-use rand_distr::{Distribution, Normal};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+
+// ─── Shared XorShift64 PRNG (byte-identical across Rust/Julia/Go/Mojo) ──
+
+/// 64-bit XorShift PRNG — single-state, unused-state-never-zero.
+/// Algorithm: state ^= state << 13; state ^= state >> 7; state ^= state << 17.
+/// Same constants used by the other three backends so the full sequence is
+/// byte-identical across languages on a fixed seed.
+pub struct XorShift64 {
+    state: u64,
+}
+
+impl XorShift64 {
+    pub fn seed_from_u64(seed: u64) -> Self {
+        // XorShift requires non-zero state. Bump a zero seed to something harmless.
+        let s = if seed == 0 { 0xDEAD_BEEF_CAFE_BABE } else { seed };
+        Self { state: s }
+    }
+
+    /// Next raw u64. Caller is responsible for trimming or scaling.
+    pub fn next_u64(&mut self) -> u64 {
+        let mut x = self.state;
+        x ^= x << 13;
+        x ^= x >> 7;
+        x ^= x << 17;
+        self.state = x;
+        x
+    }
+
+    /// Uniform [0, 1) double from the top 53 bits of next_u64.
+    pub fn next_f64(&mut self) -> f64 {
+        (self.next_u64() >> 11) as f64 / ((1u64 << 53) as f64)
+    }
+
+    /// Gaussian (Box-Muller, consumes two uniforms in fixed order).
+    pub fn next_normal(&mut self, mu: f64, sigma: f64) -> f64 {
+        let mut u1 = self.next_f64();
+        let u2 = self.next_f64();
+        if u1 < 1e-300 {
+            u1 = 1e-300;
+        }
+        let r = (-2.0 * u1.ln()).sqrt();
+        let theta = 2.0 * std::f64::consts::PI * u2;
+        mu + sigma * r * theta.cos()
+    }
+
+    pub fn gen_range(&mut self, lo: usize, hi: usize) -> usize {
+        // [lo, hi) inclusive-exclusive — matches Rust rand::gen_range semantics
+        let span = (hi - lo) as u64;
+        lo + (self.next_u64() % span) as usize
+    }
+}
 
 const GENOME_DIM: usize = 19;
 const EPS_SC: f64 = 1e-10;
@@ -294,12 +342,11 @@ impl Default for MutationConfig {
     }
 }
 
-fn apply_point(cfg: &MutationConfig, genome: &mut Genome, rng: &mut ChaCha20Rng) {
+fn apply_point(cfg: &MutationConfig, genome: &mut Genome, rng: &mut XorShift64) {
     let mut v = genome.to_vector();
-    let normal = Normal::new(0.0, cfg.point_sigma).expect("sigma > 0");
     for i in 0..GENOME_DIM {
-        if rng.gen::<f64>() < cfg.point_rate {
-            let noise = normal.sample(rng);
+        if rng.next_f64() < cfg.point_rate {
+            let noise = rng.next_normal(0.0, cfg.point_sigma);
             v[i] += noise * (v[i].abs() + 1e-8);
         }
     }
@@ -309,12 +356,12 @@ fn apply_point(cfg: &MutationConfig, genome: &mut Genome, rng: &mut ChaCha20Rng)
     genome.plasticity = rebuilt.plasticity;
 }
 
-fn apply_structural(cfg: &MutationConfig, genome: &mut Genome, rng: &mut ChaCha20Rng) {
-    let delta = [-2i32, -1, 1, 2][rng.gen_range(0..4)];
+fn apply_structural(cfg: &MutationConfig, genome: &mut Genome, rng: &mut XorShift64) {
+    let delta = [-2i32, -1, 1, 2][rng.gen_range(0, 4)];
     let new_n =
         (genome.topology.num_neurons + delta).clamp(cfg.min_neurons, cfg.max_neurons);
     genome.topology.num_neurons = new_n;
-    let conn_noise = Normal::new(0.0, 0.05).unwrap().sample(rng);
+    let conn_noise = rng.next_normal(0.0, 0.05);
     genome.topology.connectivity = (genome.topology.connectivity + conn_noise).clamp(0.01, 1.0);
 }
 
@@ -331,14 +378,14 @@ fn apply_swap(genome: &mut Genome) {
 /// Deterministic mutation engine mirroring the Python cumulative-roll.
 pub struct MutationEngine {
     pub config: MutationConfig,
-    pub rng: ChaCha20Rng,
+    pub rng: XorShift64,
 }
 
 impl MutationEngine {
     pub fn new(config: MutationConfig, seed: u64) -> Self {
         Self {
             config,
-            rng: ChaCha20Rng::seed_from_u64(seed),
+            rng: XorShift64::seed_from_u64(seed),
         }
     }
 
@@ -349,7 +396,7 @@ impl MutationEngine {
         child.generation = parent.generation + 1;
         child.identity_deep = 0.0;
 
-        let roll = self.rng.gen::<f64>();
+        let roll = self.rng.next_f64();
         let mut cumulative = 0.0;
 
         cumulative += self.config.structural_rate;
@@ -379,13 +426,13 @@ impl MutationEngine {
 
 /// Uniform crossover over full 19-D vector.
 pub struct CrossoverEngine {
-    pub rng: ChaCha20Rng,
+    pub rng: XorShift64,
 }
 
 impl CrossoverEngine {
     pub fn new(seed: u64) -> Self {
         Self {
-            rng: ChaCha20Rng::seed_from_u64(seed),
+            rng: XorShift64::seed_from_u64(seed),
         }
     }
 
@@ -394,7 +441,7 @@ impl CrossoverEngine {
         let vb = b.to_vector();
         let mut child_v = [0.0; GENOME_DIM];
         for i in 0..GENOME_DIM {
-            child_v[i] = if self.rng.gen::<f64>() < 0.5 {
+            child_v[i] = if self.rng.next_f64() < 0.5 {
                 va[i]
             } else {
                 vb[i]
@@ -615,13 +662,13 @@ impl ExtinctionDetector {
         false
     }
 
-    pub fn apply(&self, population: &mut [Organism], rng: &mut ChaCha20Rng) -> usize {
+    pub fn apply(&self, population: &mut [Organism], rng: &mut XorShift64) -> usize {
         let n_kill = ((population.len() as f64) * self.kill_fraction) as usize;
         let n_kill = n_kill.min(population.len());
         let mut indices: Vec<usize> = (0..population.len()).collect();
         // Fisher-Yates partial shuffle to select distinct random indices.
         for i in 0..n_kill {
-            let j = rng.gen_range(i..indices.len());
+            let j = rng.gen_range(i, indices.len());
             indices.swap(i, j);
         }
         let mut killed = 0;
@@ -724,7 +771,7 @@ impl TournamentSelector {
     pub fn select<'a>(
         &self,
         population: &'a [Organism],
-        rng: &mut ChaCha20Rng,
+        rng: &mut XorShift64,
     ) -> Option<&'a Organism> {
         if population.is_empty() {
             return None;
@@ -734,7 +781,7 @@ impl TournamentSelector {
         let mut best_fit = f64::MIN;
         let mut seen = Vec::with_capacity(k);
         while seen.len() < k {
-            let idx = rng.gen_range(0..population.len());
+            let idx = rng.gen_range(0, population.len());
             if seen.contains(&idx) {
                 continue;
             }
@@ -902,9 +949,9 @@ fn pairwise_diversity(pop: &[Organism]) -> f64 {
 
 /// Run the full industrial evolve loop. See module docs for scope.
 pub fn evolve_run(config: &EvolveConfig) -> EvolveResult {
-    let mut master_rng = ChaCha20Rng::seed_from_u64(config.seed);
-    let mut mutator = MutationEngine::new(config.mutation.clone(), master_rng.gen());
-    let mut crossover = CrossoverEngine::new(master_rng.gen());
+    let mut master_rng = XorShift64::seed_from_u64(config.seed);
+    let mut mutator = MutationEngine::new(config.mutation.clone(), master_rng.next_u64());
+    let mut crossover = CrossoverEngine::new(master_rng.next_u64());
     let mut guard = FormalSafetyGuard::new(config.safety_bounds.clone());
     let mut bloat = BloatPenalizer::default();
     let age = AgeRegulator::new(config.max_age);
@@ -997,7 +1044,7 @@ pub fn evolve_run(config: &EvolveConfig) -> EvolveResult {
             };
 
             let child_genome = if let (Some(partner), true) =
-                (partner.as_ref(), mutator.rng.gen::<f64>() < config.crossover_prob)
+                (partner.as_ref(), mutator.rng.next_f64() < config.crossover_prob)
             {
                 let mut c = crossover.crossover(&parent.genome, &partner.genome);
                 c.generation = gen;
