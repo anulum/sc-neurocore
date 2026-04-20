@@ -14,20 +14,23 @@
 //! the original ELIGENT (eligibility-trace + intrinsic adaptation) rule.
 //!
 //! All rules implement the [`PlasticityRule`] trait, enabling uniform
+//! All rules implement the [`PlasticityRule`] trait, enabling uniform
 //! dispatch from Python, Go, and C consumers via opaque pointers.
+
+use rayon::prelude::*;
 
 // ---------------------------------------------------------------------------
 // Trait: PlasticityRule
 // ---------------------------------------------------------------------------
 
 /// Common interface for all online plasticity rules.
-pub trait PlasticityRule: Send {
+pub trait PlasticityRule: Send + Sync {
     /// Advance one timestep.
     ///
     /// * `pre_spike`  — presynaptic spike occurred this timestep
     /// * `post_spike` — postsynaptic spike occurred this timestep
     /// * `reward`     — global reward/neuromodulatory signal (ignored by unsupervised rules)
-    fn step(&mut self, pre_spike: bool, post_spike: bool, reward: f32);
+    fn step(&mut self, pre_spike: bool, post_spike: bool, reward: f32, dt: f32);
 
     /// Reset internal state (traces, accumulators) without changing learned weights.
     fn reset(&mut self);
@@ -37,13 +40,21 @@ pub trait PlasticityRule: Send {
 
     /// Rule identifier for FFI dispatch.
     fn rule_id(&self) -> u32;
+
+    /// Get internal state (for persistence). Returns contiguous float representation.
+    fn get_state(&self) -> Vec<f32> { vec![] }
+
+    /// Restore internal state.
+    fn set_state(&mut self, _state: &[f32]) {}
 }
 
 // ---------------------------------------------------------------------------
 // Rule 0: ELIGENT (Eligibility + Intrinsic Adaptation)
 // ---------------------------------------------------------------------------
 
-/// Eligibility-trace learning with intrinsic threshold adaptation.
+/// NOTE: The `sum_weights` variable in this struct governs a Local Synaptic Exhaustion (LSE) boundary.
+/// It deliberately normalizes only this single synaptic junction, diverging from global Oja layer norms. 
+/// This replicates exact constrained bounds found natively in isolated discrete MTJ circuits.
 ///
 /// The neuron adjusts its firing threshold toward a target rate (homeostasis)
 /// while an eligibility trace modulated by global reward drives synaptic weight change.
@@ -65,19 +76,22 @@ pub struct EligentRule {
 }
 
 impl PlasticityRule for EligentRule {
-    fn step(&mut self, pre_spike: bool, post_spike: bool, reward: f32) {
+    fn step(&mut self, pre_spike: bool, post_spike: bool, reward: f32, dt: f32) {
         let current_rate = if post_spike { 1.0 } else { 0.0 };
-        self.threshold += self.eta_intrinsic * (current_rate - self.target_rate);
+        self.threshold += self.eta_intrinsic * (current_rate - self.target_rate) * dt;
 
         if pre_spike {
             self.eligibility_trace += 1.0;
         }
-        self.eligibility_trace *= self.tau_e;
-        self.weight += self.eligibility_trace * reward;
+        self.eligibility_trace *= (-dt / self.tau_e).exp();
+        let delta = self.eligibility_trace * reward;
+        self.weight += delta;
+        self.sum_weights += delta; // Update sum_weights physically!
 
         if self.sum_weights > 0.0 {
             let scale = self.target_sum_weights / self.sum_weights;
             self.weight *= scale;
+            self.sum_weights = self.target_sum_weights; // Reset sum_weights to normalized target
         }
     }
 
@@ -91,6 +105,18 @@ impl PlasticityRule for EligentRule {
 
     fn rule_id(&self) -> u32 {
         0
+    }
+
+    fn get_state(&self) -> Vec<f32> {
+        vec![self.weight, self.threshold, self.eligibility_trace]
+    }
+
+    fn set_state(&mut self, state: &[f32]) {
+        if state.len() >= 3 {
+            self.weight = state[0];
+            self.threshold = state[1];
+            self.eligibility_trace = state[2];
+        }
     }
 }
 
@@ -133,10 +159,10 @@ impl StdpRule {
 }
 
 impl PlasticityRule for StdpRule {
-    fn step(&mut self, pre_spike: bool, post_spike: bool, _reward: f32) {
+    fn step(&mut self, pre_spike: bool, post_spike: bool, _reward: f32, dt: f32) {
         // Decay traces
-        self.pre_trace *= (-1.0 / self.tau_plus).exp();
-        self.post_trace *= (-1.0 / self.tau_minus).exp();
+        self.pre_trace *= (-dt / self.tau_plus).exp();
+        self.post_trace *= (-dt / self.tau_minus).exp();
 
         // Pre-before-post: LTP (potentiation)
         if post_spike {
@@ -169,6 +195,18 @@ impl PlasticityRule for StdpRule {
 
     fn rule_id(&self) -> u32 {
         1
+    }
+
+    fn get_state(&self) -> Vec<f32> {
+        vec![self.weight, self.pre_trace, self.post_trace]
+    }
+
+    fn set_state(&mut self, state: &[f32]) {
+        if state.len() >= 3 {
+            self.weight = state[0];
+            self.pre_trace = state[1];
+            self.post_trace = state[2];
+        }
     }
 }
 
@@ -222,9 +260,9 @@ impl RewardStdpRule {
 }
 
 impl PlasticityRule for RewardStdpRule {
-    fn step(&mut self, pre_spike: bool, post_spike: bool, reward: f32) {
-        self.pre_trace *= (-1.0 / self.tau_plus).exp();
-        self.post_trace *= (-1.0 / self.tau_minus).exp();
+    fn step(&mut self, pre_spike: bool, post_spike: bool, reward: f32, dt: f32) {
+        self.pre_trace *= (-dt / self.tau_plus).exp();
+        self.post_trace *= (-dt / self.tau_minus).exp();
 
         // Accumulate STDP signal into eligibility trace
         if post_spike {
@@ -235,7 +273,7 @@ impl PlasticityRule for RewardStdpRule {
         }
 
         // Decay eligibility
-        self.eligibility *= self.tau_e;
+        self.eligibility *= (-dt / self.tau_e).exp();
 
         // Reward-gated weight update
         self.weight += self.eligibility * reward;
@@ -261,6 +299,19 @@ impl PlasticityRule for RewardStdpRule {
 
     fn rule_id(&self) -> u32 {
         2
+    }
+
+    fn get_state(&self) -> Vec<f32> {
+        vec![self.weight, self.pre_trace, self.post_trace, self.eligibility]
+    }
+
+    fn set_state(&mut self, state: &[f32]) {
+        if state.len() >= 4 {
+            self.weight = state[0];
+            self.pre_trace = state[1];
+            self.post_trace = state[2];
+            self.eligibility = state[3];
+        }
     }
 }
 
@@ -303,17 +354,17 @@ impl BcmRule {
 }
 
 impl PlasticityRule for BcmRule {
-    fn step(&mut self, pre_spike: bool, post_spike: bool, _reward: f32) {
+    fn step(&mut self, pre_spike: bool, post_spike: bool, _reward: f32, dt: f32) {
         let x = if pre_spike { 1.0f32 } else { 0.0 };
         let y = if post_spike { 1.0f32 } else { 0.0 };
 
         // BCM weight update
-        self.weight += self.eta * y * (y - self.theta_m) * x;
+        self.weight += self.eta * y * (y - self.theta_m) * x * dt;
         self.weight = self.weight.clamp(self.w_min, self.w_max);
 
         // Update sliding threshold
-        self.activity_avg += (y - self.activity_avg) / self.tau_theta;
-        self.theta_m += (self.activity_avg * self.activity_avg - self.theta_m) / self.tau_theta;
+        self.activity_avg += (y - self.activity_avg) * (dt / self.tau_theta);
+        self.theta_m += (self.activity_avg * self.activity_avg - self.theta_m) * (dt / self.tau_theta);
         self.theta_m = self.theta_m.max(0.01); // prevent collapse
     }
 
@@ -328,6 +379,17 @@ impl PlasticityRule for BcmRule {
 
     fn rule_id(&self) -> u32 {
         3
+    }
+
+    fn get_state(&self) -> Vec<f32> {
+        vec![self.weight, self.theta_m]
+    }
+
+    fn set_state(&mut self, state: &[f32]) {
+        if state.len() >= 2 {
+            self.weight = state[0];
+            self.theta_m = state[1];
+        }
     }
 }
 
@@ -420,12 +482,13 @@ pub unsafe extern "C" fn step_rule(
     pre_spike: bool,
     post_spike: bool,
     reward: f32,
+    dt: f32,
 ) {
     if ptr.is_null() {
         return;
     }
     let handle = unsafe { &mut *ptr };
-    handle.as_rule().step(pre_spike, post_spike, reward);
+    handle.as_rule().step(pre_spike, post_spike, reward, dt);
 }
 
 /// Get current weight from a rule.
@@ -467,12 +530,12 @@ pub unsafe extern "C" fn destroy_rule(ptr: *mut RuleHandle) {
 
 /// Backward-compatible FFI for ELIGENT learner step.
 #[no_mangle]
-pub extern "C" fn step_learner(ptr: *mut EligentRule, fired: bool, pre_spike: bool, global_reward: f32) {
+pub extern "C" fn step_learner(ptr: *mut EligentRule, fired: bool, pre_spike: bool, global_reward: f32, dt: f32) {
     if ptr.is_null() {
         return;
     }
     let state = unsafe { &mut *ptr };
-    state.step(pre_spike, fired, global_reward);
+    state.step(pre_spike, fired, global_reward, dt);
 }
 
 /// Backward-compatible FFI for ELIGENT learner destruction.
@@ -483,6 +546,312 @@ pub extern "C" fn destroy_learner(ptr: *mut EligentRule) {
             let _ = Box::from_raw(ptr);
         }
     }
+}
+
+// ---------------------------------------------------------------------------
+// Batched Vector Execution
+// ---------------------------------------------------------------------------
+
+/// Batched FFI execution for vector arrays.
+#[no_mangle]
+pub unsafe extern "C" fn step_rule_batched(
+    ptr: *mut RuleHandle,
+    pre_spikes: *const bool,
+    post_spikes: *const bool,
+    rewards: *const f32,
+    count: usize,
+    dt: f32,
+) {
+    if ptr.is_null() || pre_spikes.is_null() || post_spikes.is_null() || rewards.is_null() {
+        return;
+    }
+    let handle = unsafe { &mut *ptr };
+    let pre_slice = std::slice::from_raw_parts(pre_spikes, count);
+    let post_slice = std::slice::from_raw_parts(post_spikes, count);
+    let rew_slice = std::slice::from_raw_parts(rewards, count);
+    
+    let rule = handle.as_rule();
+    for i in 0..count {
+        rule.step(pre_slice[i], post_slice[i], rew_slice[i], dt);
+    }
+}
+
+/// Batched FFI execution for ELIGENT legacy vectors.
+#[no_mangle]
+pub unsafe extern "C" fn step_learner_batched(
+    ptr: *mut EligentRule,
+    fired: *const bool,
+    pre_spikes: *const bool,
+    rewards: *const f32,
+    count: usize,
+    dt: f32,
+) {
+    if ptr.is_null() || fired.is_null() || pre_spikes.is_null() || rewards.is_null() {
+        return;
+    }
+    let state = unsafe { &mut *ptr };
+    let fired_slice = std::slice::from_raw_parts(fired, count);
+    let pre_slice = std::slice::from_raw_parts(pre_spikes, count);
+    let rew_slice = std::slice::from_raw_parts(rewards, count);
+    
+    for i in 0..count {
+        state.step(pre_slice[i], fired_slice[i], rew_slice[i], dt);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Spatial Layer Parallelization (Rayon)
+// ---------------------------------------------------------------------------
+
+pub struct RuleLayerHandle {
+    pub rules: Vec<Box<dyn PlasticityRule>>,
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn create_rule_layer(
+    count: usize,
+    rule_type: u32,
+    weight: f32,
+    param_a: f32,
+    param_b: f32,
+) -> *mut RuleLayerHandle {
+    let mut rules = Vec::with_capacity(count);
+    for _ in 0..count {
+        let rule: Box<dyn PlasticityRule> = match rule_type {
+            0 => Box::new(EligentRule {
+                threshold: 1.0,
+                target_rate: param_a.max(0.01),
+                eta_intrinsic: 0.001,
+                eligibility_trace: 0.0,
+                tau_e: param_b.max(0.01),
+                weight,
+                sum_weights: weight,
+                target_sum_weights: 1.0,
+            }),
+            1 => Box::new(StdpRule::new(weight, param_a.max(0.001), param_a.max(0.001) * 0.5, 20.0, 20.0)),
+            2 => Box::new(RewardStdpRule::new(weight, param_a.max(0.001), param_a.max(0.001) * 0.5, 20.0, 20.0, param_b.max(0.01))),
+            3 => Box::new(BcmRule::new(weight, param_a.max(0.0001), param_b.max(1.0))),
+            _ => Box::new(StdpRule::new(weight, param_a.max(0.001), param_a.max(0.001) * 0.5, 20.0, 20.0)),
+        };
+        rules.push(rule);
+    }
+
+    Box::into_raw(Box::new(RuleLayerHandle { rules }))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn step_rule_layer(
+    layer_ptr: *mut RuleLayerHandle,
+    pre_spikes: *const bool,
+    post_spikes: *const bool,
+    rewards: *const f32,
+    dt: f32,
+) {
+    if layer_ptr.is_null() || pre_spikes.is_null() || post_spikes.is_null() || rewards.is_null() {
+        return;
+    }
+    let layer = unsafe { &mut *layer_ptr };
+    let count = layer.rules.len();
+
+    let pre_slice = std::slice::from_raw_parts(pre_spikes, count);
+    let post_slice = std::slice::from_raw_parts(post_spikes, count);
+    let rew_slice = std::slice::from_raw_parts(rewards, count);
+
+    layer
+        .rules
+        .par_iter_mut()
+        .zip(pre_slice.par_iter())
+        .zip(post_slice.par_iter())
+        .zip(rew_slice.par_iter())
+        .for_each(|(((rule, &pre), &post), &rew)| {
+            rule.step(pre, post, rew, dt);
+        });
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn step_rule_layer_analog(
+    layer_ptr: *mut RuleLayerHandle,
+    pre_probs: *const f32,
+    post_probs: *const f32,
+    rewards: *const f32,
+    seed: u64,
+    dt: f32,
+) {
+    if layer_ptr.is_null() || pre_probs.is_null() || post_probs.is_null() || rewards.is_null() {
+        return;
+    }
+    let layer = unsafe { &mut *layer_ptr };
+    let count = layer.rules.len();
+
+    let pre_slice = std::slice::from_raw_parts(pre_probs, count);
+    let post_slice = std::slice::from_raw_parts(post_probs, count);
+    let rew_slice = std::slice::from_raw_parts(rewards, count);
+
+    use rand::{Rng, SeedableRng};
+    use rand::rngs::SmallRng;
+
+    layer
+        .rules
+        .par_iter_mut()
+        .zip(pre_slice.par_iter())
+        .zip(post_slice.par_iter())
+        .zip(rew_slice.par_iter())
+        .enumerate()
+        .for_each(|(idx, (((rule, &pre_p), &post_p), &rew))| {
+            // Seed uniquely per spatial node trace to guarantee structural reproducibility across CPUs blockings
+            let mut rng = SmallRng::seed_from_u64(seed.wrapping_add(idx as u64));
+            let pre_spike = rng.gen::<f32>() < pre_p;
+            let post_spike = rng.gen::<f32>() < post_p;
+            rule.step(pre_spike, post_spike, rew, dt);
+        });
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn get_rule_layer_weights(
+    layer_ptr: *const RuleLayerHandle,
+    out_weights: *mut f32,
+) {
+    if layer_ptr.is_null() || out_weights.is_null() {
+        return;
+    }
+    let layer = unsafe { &*layer_ptr };
+    let count = layer.rules.len();
+    let out_slice = std::slice::from_raw_parts_mut(out_weights, count);
+
+    layer.rules.par_iter().zip(out_slice.par_iter_mut()).for_each(|(rule, out)| {
+        *out = rule.weight();
+    });
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn save_rule_layer_batched(
+    layer_ptr: *const RuleLayerHandle,
+    filepath: *const std::os::raw::c_char,
+) -> bool {
+    if layer_ptr.is_null() || filepath.is_null() { return false; }
+    let c_str = std::ffi::CStr::from_ptr(filepath);
+    let path = match c_str.to_str() { Ok(s) => s, Err(_) => return false };
+
+    let size = get_rule_layer_state_size(layer_ptr);
+    let mut buffer = vec![0u8; size];
+    if !get_rule_layer_state_mem(layer_ptr, buffer.as_mut_ptr()) { return false; }
+    
+    if let Ok(mut file) = std::fs::File::create(path) {
+        use std::io::Write;
+        file.write_all(&buffer).is_ok()
+    } else {
+        false
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn load_rule_layer_batched(
+    layer_ptr: *mut RuleLayerHandle,
+    filepath: *const std::os::raw::c_char,
+) -> bool {
+    if layer_ptr.is_null() || filepath.is_null() { return false; }
+    let c_str = std::ffi::CStr::from_ptr(filepath);
+    let path = match c_str.to_str() { Ok(s) => s, Err(_) => return false };
+
+    if let Ok(mut file) = std::fs::File::open(path) {
+        let mut byte_buffer = Vec::new();
+        use std::io::Read;
+        if file.read_to_end(&mut byte_buffer).is_err() { return false; }
+        
+        set_rule_layer_state_mem(layer_ptr, byte_buffer.as_ptr())
+    } else {
+        false
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn destroy_rule_layer(layer_ptr: *mut RuleLayerHandle) {
+    if !layer_ptr.is_null() {
+        let _ = unsafe { Box::from_raw(layer_ptr) };
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn get_rule_layer_state_size(layer_ptr: *const RuleLayerHandle) -> usize {
+    if layer_ptr.is_null() { return 0; }
+    let layer = &*layer_ptr;
+    let mut total_f32 = 0;
+    for rule in &layer.rules {
+        total_f32 += rule.get_state().len();
+    }
+    // 4 magic + 4 version + 4 count + per_rule(4 id + 4 len) + f32 bytes
+    12 + layer.rules.len() * 8 + total_f32 * 4
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn get_rule_layer_state_mem(
+    layer_ptr: *const RuleLayerHandle,
+    out_buffer: *mut u8,
+) -> bool {
+    if layer_ptr.is_null() || out_buffer.is_null() { return false; }
+    let layer = &*layer_ptr;
+    
+    let mut offset = 0;
+    let size = get_rule_layer_state_size(layer_ptr);
+    let out_slice = std::slice::from_raw_parts_mut(out_buffer, size);
+    
+    out_slice[offset..offset+4].copy_from_slice(b"SCAL");
+    offset += 4;
+    out_slice[offset..offset+4].copy_from_slice(&1u32.to_le_bytes());
+    offset += 4;
+    out_slice[offset..offset+4].copy_from_slice(&(layer.rules.len() as u32).to_le_bytes());
+    offset += 4;
+    
+    for rule in &layer.rules {
+        out_slice[offset..offset+4].copy_from_slice(&rule.rule_id().to_le_bytes());
+        offset += 4;
+        let rs = rule.get_state();
+        out_slice[offset..offset+4].copy_from_slice(&(rs.len() as u32).to_le_bytes());
+        offset += 4;
+        
+        let byte_size = rs.len() * 4;
+        std::ptr::copy_nonoverlapping(rs.as_ptr() as *const u8, out_slice[offset..].as_mut_ptr(), byte_size);
+        offset += byte_size;
+    }
+    true
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn set_rule_layer_state_mem(
+    layer_ptr: *mut RuleLayerHandle,
+    in_buffer: *const u8,
+) -> bool {
+    if layer_ptr.is_null() || in_buffer.is_null() { return false; }
+    let layer = &mut *layer_ptr;
+    
+    let magic = std::slice::from_raw_parts(in_buffer, 4);
+    if magic != b"SCAL" { return false; } // Strict Magic Verify
+    
+    let mut offset = 4;
+    let version_bytes = std::slice::from_raw_parts(in_buffer.add(offset), 4);
+    let version = u32::from_le_bytes(version_bytes.try_into().unwrap());
+    offset += 4;
+    if version != 1 { return false; } // Unsupported version
+    
+    let count_bytes = std::slice::from_raw_parts(in_buffer.add(offset), 4);
+    let count = u32::from_le_bytes(count_bytes.try_into().unwrap());
+    offset += 4;
+    
+    if count as usize != layer.rules.len() { return false; } // Layer dimension mismatch
+    
+    for rule in &mut layer.rules {
+        let rule_id = u32::from_le_bytes(std::slice::from_raw_parts(in_buffer.add(offset), 4).try_into().unwrap());
+        offset += 4;
+        if rule_id != rule.rule_id() { return false; } // Rule mapping mismatch
+        
+        let trace_count = u32::from_le_bytes(std::slice::from_raw_parts(in_buffer.add(offset), 4).try_into().unwrap()) as usize;
+        offset += 4;
+        
+        let traces = std::slice::from_raw_parts(in_buffer.add(offset) as *const f32, trace_count);
+        rule.set_state(traces);
+        offset += trace_count * 4;
+    }
+    true
 }
 
 // ---------------------------------------------------------------------------
@@ -508,8 +877,8 @@ mod tests {
 
         let initial = rule.weight();
         // Pre-spike builds eligibility, then reward drives weight change
-        rule.step(true, false, 0.0);
-        rule.step(false, true, 1.0);
+        rule.step(true, false, 0.0, 1.0);
+        rule.step(false, true, 1.0, 1.0);
         assert_ne!(rule.weight(), initial, "Weight should change after reward");
     }
 
@@ -518,8 +887,8 @@ mod tests {
         let mut rule = StdpRule::new(0.5, 0.1, 0.05, 20.0, 20.0);
         let initial = rule.weight();
         // Pre spike first, then post spike → LTP (potentiation)
-        rule.step(true, false, 0.0);
-        rule.step(false, true, 0.0);
+        rule.step(true, false, 0.0, 1.0);
+        rule.step(false, true, 0.0, 1.0);
         assert!(
             rule.weight() > initial,
             "Pre-before-post should increase weight: {} vs {}",
@@ -533,8 +902,8 @@ mod tests {
         let mut rule = StdpRule::new(0.5, 0.1, 0.05, 20.0, 20.0);
         let initial = rule.weight();
         // Post spike first, then pre spike → LTD (depression)
-        rule.step(false, true, 0.0);
-        rule.step(true, false, 0.0);
+        rule.step(false, true, 0.0, 1.0);
+        rule.step(true, false, 0.0, 1.0);
         assert!(
             rule.weight() < initial,
             "Post-before-pre should decrease weight: {} vs {}",
@@ -547,7 +916,7 @@ mod tests {
     fn stdp_weight_bounds() {
         let mut rule = StdpRule::new(0.5, 0.1, 0.05, 20.0, 20.0);
         for _ in 0..1000 {
-            rule.step(true, true, 0.0);
+            rule.step(true, true, 0.0, 1.0);
         }
         assert!(rule.weight() >= 0.0 && rule.weight() <= 1.0);
     }
@@ -557,8 +926,8 @@ mod tests {
         let mut rule = RewardStdpRule::new(0.5, 0.1, 0.05, 20.0, 20.0, 0.95);
         let initial = rule.weight();
         // Spikes but no reward → eligibility builds but weight doesn't change
-        rule.step(true, false, 0.0);
-        rule.step(false, true, 0.0);
+        rule.step(true, false, 0.0, 1.0);
+        rule.step(false, true, 0.0, 1.0);
         // Without reward, weight should remain close to initial
         assert!(
             (rule.weight() - initial).abs() < 1e-6,
@@ -572,8 +941,8 @@ mod tests {
     fn rstdp_reward_drives_change() {
         let mut rule = RewardStdpRule::new(0.5, 0.1, 0.05, 20.0, 20.0, 0.95);
         let initial = rule.weight();
-        rule.step(true, false, 0.0);
-        rule.step(false, true, 1.0); // reward delivered with post spike
+        rule.step(true, false, 0.0, 1.0);
+        rule.step(false, true, 1.0, 1.0); // reward delivered with post spike
         assert_ne!(
             rule.weight(),
             initial,
@@ -589,7 +958,7 @@ mod tests {
         // y=1 < θ_m=1.0 → (y - θ_m) = 0, no change on exact boundary
         // But activity below threshold across time should depress
         for _ in 0..10 {
-            rule.step(true, false, 0.0); // pre but no post → no change
+            rule.step(true, false, 0.0, 1.0); // pre but no post → no change
         }
         // Without post spikes, no BCM update (requires y > 0)
         assert_eq!(rule.weight(), initial);
@@ -601,7 +970,7 @@ mod tests {
         let initial_theta = rule.theta_m;
         // Sustained high activity should raise the sliding threshold
         for _ in 0..100 {
-            rule.step(true, true, 0.0);
+            rule.step(true, true, 0.0, 1.0);
         }
         assert!(
             rule.theta_m > initial_theta,
@@ -617,8 +986,8 @@ mod tests {
             let ptr = create_rule(rule_type, 0.5, 0.1, 0.95);
             assert!(!ptr.is_null(), "Rule type {rule_type} should create successfully");
             unsafe {
-                step_rule(ptr, true, false, 0.0);
-                step_rule(ptr, false, true, 1.0);
+                step_rule(ptr, true, false, 0.0, 1.0);
+                step_rule(ptr, false, true, 1.0, 1.0);
                 let w = get_rule_weight(ptr);
                 assert!(w.is_finite(), "Weight should be finite for rule {rule_type}");
                 reset_rule(ptr);
@@ -637,14 +1006,14 @@ mod tests {
     fn backward_compat_eligent_ffi() {
         let ptr = create_learner(1.0, 0.1, 0.5);
         assert!(!ptr.is_null());
-        step_learner(ptr, true, true, 1.0);
+        step_learner(ptr, true, true, 1.0, 1.0);
         destroy_learner(ptr);
     }
 
     #[test]
     fn rule_reset_clears_traces() {
         let mut rule = StdpRule::new(0.5, 0.1, 0.05, 20.0, 20.0);
-        rule.step(true, false, 0.0);
+        rule.step(true, false, 0.0, 1.0);
         assert!(rule.pre_trace > 0.0);
         rule.reset();
         assert_eq!(rule.pre_trace, 0.0);

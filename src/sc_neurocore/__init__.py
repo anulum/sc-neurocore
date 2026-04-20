@@ -38,6 +38,7 @@ __version__ = "3.14.0"
 
 # ── Datasets ────────────────────────────────────────────────────────────────
 from . import datasets  # noqa: F401
+from . import plasticity
 
 # ── Neurons ──────────────────────────────────────────────────────────────────
 from .neurons import (
@@ -100,6 +101,8 @@ from .exceptions import (
 )
 
 __all__ = [
+    # General
+    "plasticity",
     # Datasets
     "datasets",
     # Neurons

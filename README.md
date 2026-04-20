@@ -144,6 +144,8 @@ explainability, neuro-symbolic predictive coding, stochastic doctor, and model z
 
 - **Neural data compression library** — Two layers: **WaveformCodec** compresses raw 10-bit electrode waveforms end-to-end (spike detection + template matching + LFP compression, 24x on 1024-channel Neuralink-scale data, fits Bluetooth uplink). **Spike raster codecs** (ISI+Huffman, Predictive with 4 learnable predictors, Delta, Streaming, AER) compress binary spike trains 50-750x. Unified API: `get_codec(name)`, `recommend_codec()`. Learnable world-model predictor (99.6% accuracy). Rust backend (780x speedup). Bit-true LFSR matches Verilog RTL.
 
+- **Project Zenith Autonomous Learning** — Seamless bridge unifying PyTorch surrogate gradients with stochastic biological plasticity parameters (BCM, ELIGENT, R-STDP). Allows developers to train mathematically exact `nn.Module` plasticity rules purely on GPU networks, then seamlessly deploy identical bounded bits (`.scal` Exascale binary drops) targeting verifiable SymbiYosys architectures and Spintronic Rust emulation with 0 execution parity decay.
+
 SC-NeuroCore's niche: **deterministic stochastic computing with FPGA co-design** — Python simulation matches synthesisable RTL bit-for-bit (deterministic LFSR seeds, Q8.8 fixed-point, cycle-exact co-simulation).
 
 ### Performance: Rust Engine vs Brian2 (Brunel AI network)
@@ -238,6 +240,25 @@ neuron = StochasticLIFNeuron(v_threshold=1.0, tau_mem=20.0, noise_std=0.0)
 spikes = sum(neuron.step(0.8) for _ in range(500))
 print(f"{spikes} spikes in 500 steps")
 ```
+
+### Zenith Quickstart
+
+Train biologically plausible rules using PyTorch surrogate autograd, then export the exact layer to hardware:
+
+```python
+import torch
+from sc_neurocore.plasticity import create_plasticity_layer
+from sc_neurocore._native.learning_bridge import RULE_STDP
+
+# 1. Train entirely in standard DL execution architectures
+bcm_layer = create_plasticity_layer(count=128, rule_type=RULE_STDP, backend="torch", autograd=True)
+# ... standard cross-entropy loss.backward() loop
+
+# 2. Deploy natively to SC-NeuroCore hardware limits
+exascale_layer = create_plasticity_layer(count=128, rule_type=RULE_STDP, backend="rust", weight=bcm_layer.weights.detach().numpy())
+exascale_layer.save("hw_layer.scal")
+```
+See the full end-to-end integration demo in [`examples/zenith_hybrid_resnet.py`](examples/zenith_hybrid_resnet.py).
 
 ```bash
 # Optional extras
@@ -535,6 +556,7 @@ Runnable scripts in `examples/`:
 | `10_benchmark_report.py` | Head-to-head v2/v3 benchmark suite (v3 Rust engine) |
 | `11_sc_training_demo.py` | Surrogate-gradient training of an SC dense layer (v3 Rust engine) |
 | `12_load_pretrained_model.py` | Load pretrained ConvSpikingNet and classify MNIST digits |
+| `zenith_hybrid_resnet.py` | Train hybrid network with PyTorch autograd → save via Zenith exascale persistence |
 | `jax_training_demo.py` | JAX JIT surrogate-gradient SNN training on synthetic data |
 | `mnist_fpga/demo.py` | MNIST classifier: train → quantise Q8.8 → SC simulate → Verilog export |
 | `mnist_conv_train.py` | **ConvSpikingNet: 99.49% MNIST** (learnable beta/threshold, cosine LR) |
