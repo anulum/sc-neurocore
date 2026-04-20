@@ -19,6 +19,16 @@
 //! when the compiled `.so` is missing). Numerical parity is bit-exact
 //! on the distance and crossover kernels; point mutation matches in
 //! distribution (same Gaussian parameters) because it needs an RNG.
+//!
+//! The `runner` submodule exposes a *whole-process* industrial evolve
+//! runner (`evolve_run`) that ports `ReplicationEngine.evolve_generation`
+//! plus the 11 industrial guards (FormalSafetyGuard, BloatPenalizer,
+//! AgeRegulator, ExtinctionDetector, HallOfFame, ParetoFront,
+//! TournamentSelector, LineageTracker, MutationEngine × 4 variants,
+//! CrossoverEngine, parametric FitnessEvaluator) to Rust so Python can
+//! invoke one call that runs N generations of M organisms natively.
+
+pub mod runner;
 
 // ---------------------------------------------------------------------------
 // Genomic distance — scale-invariant L1 on 19-D vectors
@@ -323,6 +333,26 @@ mod python {
         Ok(population_diversity(flat, n, d))
     }
 
+    /// Run the full industrial evolve loop natively in Rust. The config
+    /// arrives as a JSON string (matching `runner::EvolveConfig`) and the
+    /// result is returned as a JSON string (matching `runner::EvolveResult`).
+    /// JSON is chosen to keep the FFI surface stable across pyo3 versions
+    /// and across the Julia / Go / Mojo runners that will share the same
+    /// wire format.
+    #[pyfunction]
+    fn py_evolve_run(config_json: &str) -> PyResult<String> {
+        let cfg: crate::runner::EvolveConfig = serde_json::from_str(config_json)
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!(
+                "invalid EvolveConfig JSON: {e}"
+            )))?;
+        let result = crate::runner::evolve_run(&cfg);
+        serde_json::to_string(&result).map_err(|e| {
+            pyo3::exceptions::PyRuntimeError::new_err(format!(
+                "EvolveResult serialise failed: {e}"
+            ))
+        })
+    }
+
     /// Python module registration.
     #[pymodule]
     fn evo_substrate_core(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -330,6 +360,7 @@ mod python {
         m.add_function(wrap_pyfunction!(py_crossover_uniform, m)?)?;
         m.add_function(wrap_pyfunction!(py_point_mutation, m)?)?;
         m.add_function(wrap_pyfunction!(py_population_diversity, m)?)?;
+        m.add_function(wrap_pyfunction!(py_evolve_run, m)?)?;
         Ok(())
     }
 }
