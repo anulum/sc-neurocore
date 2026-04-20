@@ -152,6 +152,9 @@ References:
 the ``pymeep`` package is installed, for higher-order accuracy or
 dispersive material studies.
 
+Full coverage in `tests/test_optics/` (43 tests: 20 crosstalk + 18 FDTD
++ 5 GDSII).
+
 ---
 
 ## 4. Crosstalk — coupled-mode theory
