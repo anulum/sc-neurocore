@@ -10,9 +10,22 @@
 
 Monitors correlation metrics and auto-tunes bitstream length.
 Enables ECC when length exceeds threshold to protect against noise.
+
+The three hot methods (:meth:`ScDoctor.adapt`, :meth:`ScDoctor.encode_ecc`,
+:meth:`ScDoctor.decode_ecc`) dispatch to the Rust ``stochastic_doctor_core``
+PyO3 extension when the compiled `.so` is importable. When it is not, a
+bit-exact pure-Python fallback is used so behaviour is identical.
 """
 
 from __future__ import annotations
+
+try:
+    from sc_neurocore.stochastic_doctor import stochastic_doctor_core as _sdc
+
+    _HAS_RUST_DOCTOR = True
+except ImportError:
+    _sdc = None
+    _HAS_RUST_DOCTOR = False
 
 
 class ScDoctor:
@@ -32,6 +45,9 @@ class ScDoctor:
     def adapt(self, current_correlation: float, popcount: int = 0) -> None:
         """Analyze correlation and adjust bitstream length.
 
+        Dispatches to the Rust ``stochastic_doctor_core.py_sc_doctor_adapt``
+        when available; falls back to the bit-exact Python implementation.
+
         Parameters
         ----------
         current_correlation : float
@@ -39,6 +55,16 @@ class ScDoctor:
         popcount : int
             Current popcount (reserved for future use).
         """
+        if _HAS_RUST_DOCTOR:
+            new_length, ecc_enabled = _sdc.py_sc_doctor_adapt(
+                int(self.current_bitstream_length),
+                bool(self.error_correction_enabled),
+                float(current_correlation),
+            )
+            self.current_bitstream_length = int(new_length)
+            self.error_correction_enabled = bool(ecc_enabled)
+            return
+
         if current_correlation > 0.15:
             self.current_bitstream_length *= 2
             if self.current_bitstream_length > 2048:
@@ -50,10 +76,14 @@ class ScDoctor:
     def encode_ecc(self, data: int) -> int:
         """Hamming(7,4) encode a 4-bit chunk → 7-bit codeword.
 
-        If ECC is disabled, returns lower 4 bits unchanged.
+        If ECC is disabled, returns lower 4 bits unchanged. Hot path
+        dispatches to ``stochastic_doctor_core.py_hamming74_encode``.
         """
         if not self.error_correction_enabled:
             return data & 0x0F
+
+        if _HAS_RUST_DOCTOR:
+            return int(_sdc.py_hamming74_encode(int(data)))
 
         d1 = (data >> 3) & 1
         d2 = (data >> 2) & 1
@@ -69,10 +99,14 @@ class ScDoctor:
     def decode_ecc(self, encoded: int) -> int:
         """Hamming(7,4) decode with single-bit error correction.
 
-        If ECC is disabled, returns lower 4 bits unchanged.
+        If ECC is disabled, returns lower 4 bits unchanged. Hot path
+        dispatches to ``stochastic_doctor_core.py_hamming74_decode``.
         """
         if not self.error_correction_enabled:
             return encoded & 0x0F
+
+        if _HAS_RUST_DOCTOR:
+            return int(_sdc.py_hamming74_decode(int(encoded)))
 
         p1 = (encoded >> 6) & 1
         p2 = (encoded >> 5) & 1

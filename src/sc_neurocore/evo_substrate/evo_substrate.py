@@ -54,6 +54,14 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
+try:
+    from sc_neurocore.evo_substrate import evo_substrate_core as _ec
+
+    _HAS_RUST_EVO = True
+except ImportError:
+    _ec = None
+    _HAS_RUST_EVO = False
+
 
 # ── Genome ───────────────────────────────────────────────────────────
 
@@ -332,8 +340,20 @@ class CrossoverEngine:
 
 
 def genomic_distance(a: Genome, b: Genome) -> float:
-    """Normalised L2 distance between genome vectors."""
+    """Normalised L1 distance between genome vectors.
+
+    Dispatches to the Rust ``evo_substrate_core.py_genomic_distance`` when
+    the compiled extension is importable. The NumPy fallback is kept as
+    the reference implementation and produces bit-exact identical values.
+    """
     va, vb = a.to_vector(), b.to_vector()
+    if _HAS_RUST_EVO:
+        return float(
+            _ec.py_genomic_distance(
+                np.ascontiguousarray(va, dtype=np.float64),
+                np.ascontiguousarray(vb, dtype=np.float64),
+            )
+        )
     diffs = va - vb
     norms = np.abs(va) + np.abs(vb) + 1e-10
     return float(np.mean(np.abs(diffs) / norms))

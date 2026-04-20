@@ -1,32 +1,32 @@
 {
   "find_divergence_T1000_N32": {
-    "ns_per_call": 2605721.3689928176
+    "ns_per_call": 2614736.4680073224
   },
   "spike_diff_T1000_N32": {
-    "ns_per_call": 2642248.5200018855
+    "ns_per_call": 2640288.3660048246
   },
   "causal_chain_depth10": {
-    "ns_per_call": 28376.75299088005
+    "ns_per_call": 30275.565004558302
   },
   "scdoctor_adapt": {
-    "ns_per_call": 85.32791005563922
+    "ns_per_call": 276.2711800460238
   },
   "scdoctor_encode_ecc": {
-    "ns_per_call": 313.7249899737071
+    "ns_per_call": 181.09404991264455
   },
   "scdoctor_decode_ecc": {
-    "ns_per_call": 590.8948800060898
+    "ns_per_call": 191.37436000164598
   },
   "liveanalyzer_layer_stats": {
-    "ns_per_call": 24658.97660003975
+    "ns_per_call": 24111.910999636166
   },
   "compute_scc_256w": {
-    "ns_per_call": 1391.9185992563143
+    "ns_per_call": 1449.1790003376082
   },
   "trigger_engine_evaluate_2conds": {
-    "ns_per_call": 16504.870830103755
+    "ns_per_call": 17859.936599998036
   },
   "layer_error_budget_check": {
-    "ns_per_call": 190.3388201026246
+    "ns_per_call": 201.9752601336222
   }
 }

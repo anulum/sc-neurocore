@@ -356,6 +356,144 @@ impl DriftDetector {
 }
 
 // ---------------------------------------------------------------------------
+// Hamming(7,4) single-error-correcting code
+// ---------------------------------------------------------------------------
+
+/// Encode a 4-bit word (`data & 0x0F`) into a 7-bit Hamming(7,4) codeword.
+///
+/// Layout (MSB..LSB): `p1 p2 d1 p3 d2 d3 d4` where
+/// `p1 = d1 ^ d2 ^ d4`, `p2 = d1 ^ d3 ^ d4`, `p3 = d2 ^ d3 ^ d4`.
+/// Matches the Python reference in `sc_neurocore.debug.sc_doctor.ScDoctor.encode_ecc`.
+#[inline]
+pub fn hamming74_encode(data: u32) -> u32 {
+    let d1 = (data >> 3) & 1;
+    let d2 = (data >> 2) & 1;
+    let d3 = (data >> 1) & 1;
+    let d4 = data & 1;
+
+    let p1 = d1 ^ d2 ^ d4;
+    let p2 = d1 ^ d3 ^ d4;
+    let p3 = d2 ^ d3 ^ d4;
+
+    (p1 << 6) | (p2 << 5) | (d1 << 4) | (p3 << 3) | (d2 << 2) | (d3 << 1) | d4
+}
+
+/// Decode a 7-bit Hamming(7,4) codeword back to the 4-bit data word, correcting
+/// a single bit error if the syndrome indicates one.
+#[inline]
+pub fn hamming74_decode(encoded: u32) -> u32 {
+    let p1 = (encoded >> 6) & 1;
+    let p2 = (encoded >> 5) & 1;
+    let d1 = (encoded >> 4) & 1;
+    let p3 = (encoded >> 3) & 1;
+    let d2 = (encoded >> 2) & 1;
+    let d3 = (encoded >> 1) & 1;
+    let d4 = encoded & 1;
+
+    let s1 = p1 ^ d1 ^ d2 ^ d4;
+    let s2 = p2 ^ d1 ^ d3 ^ d4;
+    let s3 = p3 ^ d2 ^ d3 ^ d4;
+
+    let syndrome = (s3 << 2) | (s2 << 1) | s1;
+
+    // Map the syndrome to a bit position inside the 7-bit codeword (same mapping
+    // as the Python reference). `syndrome == 0` means no correction needed.
+    let corrected = match syndrome {
+        1 => encoded ^ (1 << 6),
+        2 => encoded ^ (1 << 5),
+        3 => encoded ^ (1 << 4),
+        4 => encoded ^ (1 << 3),
+        5 => encoded ^ (1 << 2),
+        6 => encoded ^ (1 << 1),
+        7 => encoded ^ 1,
+        _ => encoded,
+    };
+
+    let cd1 = (corrected >> 4) & 1;
+    let cd2 = (corrected >> 2) & 1;
+    let cd3 = (corrected >> 1) & 1;
+    let cd4 = corrected & 1;
+
+    (cd1 << 3) | (cd2 << 2) | (cd3 << 1) | cd4
+}
+
+#[no_mangle]
+/// # Safety
+/// `data` is treated as a 4-bit unsigned value; the upper bits are ignored.
+pub unsafe extern "C" fn hamming74_encode_ffi(data: u32) -> u32 {
+    hamming74_encode(data)
+}
+
+#[no_mangle]
+/// # Safety
+/// `encoded` is treated as a 7-bit unsigned codeword.
+pub unsafe extern "C" fn hamming74_decode_ffi(encoded: u32) -> u32 {
+    hamming74_decode(encoded)
+}
+
+// ---------------------------------------------------------------------------
+// Adaptive-length control law (ScDoctor.adapt)
+// ---------------------------------------------------------------------------
+
+/// Output of one adapt step: new bitstream length and ECC-enable flag.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct AdaptResult {
+    pub new_length: u32,
+    pub ecc_enabled: bool,
+}
+
+/// Adaptive SC bitstream length controller, matching
+/// `sc_neurocore.debug.sc_doctor.ScDoctor.adapt` exactly.
+///
+/// * `current_length` — current bitstream length.
+/// * `current_ecc` — current ECC state.
+/// * `correlation` — latest SCC observation.
+///
+/// Hysteresis rules:
+///   * SCC > 0.15: double length; enable ECC if the new length exceeds 2048.
+///   * SCC < 0.05 and length > 256: halve length; disable ECC.
+///   * otherwise: unchanged.
+#[inline]
+pub fn sc_doctor_adapt(current_length: u32, current_ecc: bool, correlation: f64) -> AdaptResult {
+    if correlation > 0.15 {
+        let new_length = current_length.saturating_mul(2);
+        AdaptResult {
+            new_length,
+            ecc_enabled: current_ecc || new_length > 2048,
+        }
+    } else if correlation < 0.05 && current_length > 256 {
+        AdaptResult {
+            new_length: current_length / 2,
+            ecc_enabled: false,
+        }
+    } else {
+        AdaptResult {
+            new_length: current_length,
+            ecc_enabled: current_ecc,
+        }
+    }
+}
+
+#[no_mangle]
+/// # Safety
+/// Pure integer + float arithmetic on values; no pointer dereference.
+pub unsafe extern "C" fn sc_doctor_adapt_ffi(
+    current_length: u32,
+    current_ecc: u32,
+    correlation: f64,
+    out_new_length: *mut u32,
+    out_ecc_enabled: *mut u32,
+) {
+    let result = sc_doctor_adapt(current_length, current_ecc != 0, correlation);
+    if !out_new_length.is_null() {
+        *out_new_length = result.new_length;
+    }
+    if !out_ecc_enabled.is_null() {
+        *out_ecc_enabled = u32::from(result.ecc_enabled);
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
@@ -594,6 +732,83 @@ mod tests {
         assert!(var > 0.0);
     }
 
+    // ── Hamming(7,4) ──────────────────────────────────────────────────
+
+    #[test]
+    fn hamming_roundtrip_all_16_words() {
+        for word in 0u32..16 {
+            let encoded = hamming74_encode(word);
+            let decoded = hamming74_decode(encoded);
+            assert_eq!(decoded, word, "round-trip failed for {word}");
+        }
+    }
+
+    #[test]
+    fn hamming_corrects_single_bit_flip() {
+        for word in 0u32..16 {
+            let encoded = hamming74_encode(word);
+            for flip in 0..7 {
+                let corrupted = encoded ^ (1 << flip);
+                let decoded = hamming74_decode(corrupted);
+                assert_eq!(
+                    decoded, word,
+                    "single-bit error at position {flip} not corrected for word {word}",
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn hamming_ffi_matches_safe_fn() {
+        for word in 0u32..16 {
+            let safe_enc = hamming74_encode(word);
+            let ffi_enc = unsafe { hamming74_encode_ffi(word) };
+            assert_eq!(safe_enc, ffi_enc);
+            let safe_dec = hamming74_decode(safe_enc);
+            let ffi_dec = unsafe { hamming74_decode_ffi(safe_enc) };
+            assert_eq!(safe_dec, ffi_dec);
+        }
+    }
+
+    // ── ScDoctor.adapt ────────────────────────────────────────────────
+
+    #[test]
+    fn adapt_doubles_on_high_scc() {
+        let r = sc_doctor_adapt(512, false, 0.2);
+        assert_eq!(r.new_length, 1024);
+        assert!(!r.ecc_enabled, "length 1024 stays under 2048 → ECC off");
+    }
+
+    #[test]
+    fn adapt_enables_ecc_when_length_crosses_2048() {
+        let r = sc_doctor_adapt(2048, false, 0.2);
+        assert_eq!(r.new_length, 4096);
+        assert!(r.ecc_enabled, "new length 4096 > 2048 → ECC on");
+    }
+
+    #[test]
+    fn adapt_halves_on_low_scc() {
+        let r = sc_doctor_adapt(1024, true, 0.02);
+        assert_eq!(r.new_length, 512);
+        assert!(!r.ecc_enabled, "halving disables ECC");
+    }
+
+    #[test]
+    fn adapt_floor_at_256() {
+        let r = sc_doctor_adapt(256, false, 0.02);
+        assert_eq!(r.new_length, 256, "must not halve below 256 floor");
+    }
+
+    #[test]
+    fn adapt_hysteresis_band_unchanged() {
+        for corr in [0.05, 0.10, 0.149] {
+            let r = sc_doctor_adapt(1024, false, corr);
+            assert_eq!(
+                r.new_length, 1024,
+                "length must not change inside hysteresis band ({corr})",
+            );
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -694,6 +909,29 @@ mod python {
         Ok(PyArray1::from_vec(py, hist))
     }
 
+    /// Encode a 4-bit data word via Hamming(7,4).
+    #[pyfunction]
+    fn py_hamming74_encode(data: u32) -> u32 {
+        hamming74_encode(data & 0x0F)
+    }
+
+    /// Decode a 7-bit codeword with single-error correction.
+    #[pyfunction]
+    fn py_hamming74_decode(encoded: u32) -> u32 {
+        hamming74_decode(encoded & 0x7F)
+    }
+
+    /// Adaptive bitstream length controller (hysteresis rules from ScDoctor).
+    #[pyfunction]
+    fn py_sc_doctor_adapt(
+        current_length: u32,
+        current_ecc: bool,
+        correlation: f64,
+    ) -> (u32, bool) {
+        let result = sc_doctor_adapt(current_length, current_ecc, correlation);
+        (result.new_length, result.ecc_enabled)
+    }
+
     /// EMA-based drift detector (stateful).
     #[pyclass]
     struct PyDriftDetector {
@@ -746,6 +984,9 @@ mod python {
         m.add_function(wrap_pyfunction!(py_scc_batch, m)?)?;
         m.add_function(wrap_pyfunction!(py_precision_bytes, m)?)?;
         m.add_function(wrap_pyfunction!(py_histogram, m)?)?;
+        m.add_function(wrap_pyfunction!(py_hamming74_encode, m)?)?;
+        m.add_function(wrap_pyfunction!(py_hamming74_decode, m)?)?;
+        m.add_function(wrap_pyfunction!(py_sc_doctor_adapt, m)?)?;
         m.add_class::<PyDriftDetector>()?;
         Ok(())
     }
