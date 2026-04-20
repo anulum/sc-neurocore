@@ -527,19 +527,45 @@ the exact mutation chain from seed to present, which is what
 :class:`OrganismEmitter` serialises alongside the Verilog blob for
 audit trails on the FPGA tile side.
 
-### 7.2 Rust coverage gap (honest accounting)
+### 7.2 Multi-language kernel comparison
 
-`evo_substrate.py` has **no Rust counterpart** today. The hot paths
-(mutation 64 µs, crossover 33 µs, genomic distance 10 µs,
-evolve_generation 6 ms for pop=32) are dominated by NumPy array
-allocation, not pure arithmetic, so a naive port to Rust would yield
-~2–3× at best — not the 5–10× the multi-language rule usually buys
-on compute-heavy inner loops. Bigger gains come from amortising the
-per-call allocation (reusing buffers across generations) on the
-Python side. A Rust path into `crates/evo_substrate_core/` is on the
-roadmap but is currently below the bar that justifies the FFI
-surface; the decision will be revisited when population sizes exceed
-~1 000 organisms or generation counts exceed ~10 k.
+The four compute hot paths are also mirrored in Rust, Julia, Go, and
+Mojo for honest cross-language measurement. Python orchestration
+(`ReplicationEngine`, lineage, hall-of-fame, island model, safety
+guards — 40+ classes) stays authoritative in Python; only
+`genomic_distance`, `crossover_uniform`, `point_mutation`, and
+`population_diversity` are mirrored elsewhere.
+
+Measured on 2026-04-20 via `benchmarks/bench_evo_substrate_multilang.py`
+(committed harness, JSON at
+`benchmarks/results/bench_evo_substrate_multilang.json`). Inputs are
+19-D Float64 vectors, 100 000 iterations, warm cache.
+
+| Kernel (ns/call, dim=19) |    Rust |  Julia |    Go |   Mojo |   Python |
+| ------------------------ | ------: | -----: | ----: | -----: | -------: |
+| `genomic_distance`       |   257.6 |   22.5 |  22.8 |   18.8 |  5 992.3 |
+| `crossover_uniform`      |   481.4 |   45.8 |  42.2 |  150.5 |  1 093.9 |
+| `point_mutation`         |   432.4 |  295.4 |  46.7 |  151.2 |  3 984.4 |
+
+**How to read this.** The standalone numbers (Julia 22 ns,
+Go 23 ns, Mojo 19 ns on `genomic_distance`) confirm the kernel itself
+is cheap in every language — the hot loop is 19 float ops. The Rust
+number (258 ns) includes the PyO3 FFI boundary: NumPy array view
+materialisation + reference-count bump + tuple unpack. Rust **called
+from another Rust binary** runs in ~10 ns (see the Criterion benches
+in `crates/evo_substrate_core/benches/evo_bench.rs`).
+
+**From the Python orchestration's perspective** (the caller that
+matters), Rust is the fastest accessible backend because Julia / Go /
+Mojo would need a subprocess round-trip per call (~ms, fatal for inner
+loops). The PyO3-dispatched Rust path gives 23× speedup over pure
+Python without any subprocess cost.
+
+**Fallback order.** Python callers currently dispatch
+`genomic_distance` to Rust PyO3 when importable, else fall back to
+the NumPy reference (bit-exact). Julia / Go / Mojo versions are
+honest parity references for benchmarking, not called in the Python
+hot path.
 
 **Interpretation.** Safety checks and distance computations are cheap
 enough (<1 µs and ~10 µs respectively) that they do not dominate the

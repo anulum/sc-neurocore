@@ -13,6 +13,7 @@ exclude = [
     "crates/neuro_symbolic",
     "crates/stochastic_doctor_core",
     "crates/spike_stats_core",
+    "crates/evo_substrate_core",
     "VISION2030/phase2_edge/tinysc_riscv",
     "VISION2030/phase2_edge/dynamic_adaptation",
     "VISION2030/phase6_unification/autonomous_learning",

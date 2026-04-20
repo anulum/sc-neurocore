@@ -428,25 +428,33 @@ single-thread, 2026-04-20. Raw JSON at
 
 | Operation                                  | Throughput        | Latency     |
 | ------------------------------------------ | ----------------- | ----------- |
-| `find_divergence` (T=1000, N=32)           | 384 ops/s         | 2.61 ms     |
-| `spike_diff` (T=1000, N=32)                | 378 ops/s         | 2.64 ms     |
-| `causal_chain` (depth=10)                  | 35 240 ops/s      | 28.38 µs    |
-| `ScDoctor.adapt`                           | 11.72 M ops/s     | 85.3 ns     |
-| `ScDoctor.encode_ecc` (4→7 bits)           | 3.19 M ops/s      | 313.7 ns    |
-| `ScDoctor.decode_ecc` (7→4 bits)           | 1.69 M ops/s      | 590.9 ns    |
-| `LiveAnalyzer.layer_stats`                 | 40 553 ops/s      | 24.66 µs    |
-| `compute_scc` (256 u32 words, Rust)        | 718 433 ops/s     | 1.39 µs     |
-| `TriggerEngine.evaluate` (2 conditions)    | 60 588 ops/s      | 16.50 µs    |
-| `LayerErrorBudget.check`                   | 5.25 M ops/s      | 190.3 ns    |
+| `find_divergence` (T=1000, N=32)           | 382 ops/s         | 2.61 ms     |
+| `spike_diff` (T=1000, N=32)                | 379 ops/s         | 2.64 ms     |
+| `causal_chain` (depth=10)                  | 33 030 ops/s      | 30.28 µs    |
+| `ScDoctor.adapt` (Rust dispatch)           | 3.62 M ops/s      | 276.3 ns    |
+| `ScDoctor.encode_ecc` (Rust dispatch)      | 5.52 M ops/s      | 181.1 ns    |
+| `ScDoctor.decode_ecc` (Rust dispatch)      | 5.22 M ops/s      | 191.4 ns    |
+| `LiveAnalyzer.layer_stats`                 | 41 473 ops/s      | 24.11 µs    |
+| `compute_scc` (256 u32 words, Rust)        | 690 046 ops/s     | 1.45 µs     |
+| `TriggerEngine.evaluate` (2 conditions)    | 55 991 ops/s      | 17.86 µs    |
+| `LayerErrorBudget.check`                   | 4.95 M ops/s      | 202.0 ns    |
 
 **Interpretation.**
 
 - Offline trace walking dominates at 1000-step traces: ~2.6 ms per
   full divergence scan. At 10 000 steps this scales linearly to ~26 ms;
   still acceptable for a CI gate.
-- `ScDoctor.adapt` sits at 51.8 ns — cheap enough to run on every
-  sample. Encode is 5× faster than decode because decode has the
-  syndrome arithmetic + error-correction branch.
+- `ScDoctor.adapt` sits at 276 ns via Rust — the compute itself takes
+  ~30 ns, the rest is PyO3 tuple pack/unpack overhead. Pure Python is
+  actually faster on this one (~85 ns) because the function is
+  branch-only with no array work. The Rust dispatch is kept to satisfy
+  the multi-language rule and because it stops being the bottleneck as
+  soon as the caller wants to batch many samples (a future
+  `py_sc_doctor_adapt_batch` entrypoint would amortise the FFI cost).
+- `ScDoctor.encode_ecc` / `decode_ecc`: Rust wins 1.7× / 3.1× over
+  pure Python (181 ns / 191 ns vs 314 ns / 591 ns). Decode benefits
+  more because the syndrome arithmetic + error-correction branch is
+  heavier per call.
 - `compute_scc` now dispatches to `stochastic_doctor_core.py_scc_packed`
   (PyO3 bridge over the Rust `scc_packed` kernel) when the compiled
   extension is importable. Measured speedup against the pure-Python
@@ -526,13 +534,14 @@ Figures above are `time.perf_counter` deltas from
   fine up to $T \cdot N \approx 4 \cdot 10^{9}$ float64 entries but
   needs a chunking strategy for longer recordings. No streaming-to-disk
   writer ships in the current module.
-- **Partial Rust coverage.** :func:`compute_scc` now dispatches to
-  the `stochastic_doctor_core` PyO3 extension (174× speedup, bit-exact
-  parity with the Python fallback). :class:`ScDoctor.adapt` and the
-  Hamming(7,4) encode/decode are still pure-Python; at 51.8 ns / 242 ns
-  / 557 ns per call (§7) they are cheap enough not to block, but the
-  multi-language rule wants a Rust path — adding Hamming + adapt
-  kernels to `stochastic_doctor_core` is a small future patch.
+- **Rust coverage complete.** :func:`compute_scc`,
+  :meth:`ScDoctor.adapt`, :meth:`ScDoctor.encode_ecc`, and
+  :meth:`ScDoctor.decode_ecc` all now dispatch to the
+  `stochastic_doctor_core` PyO3 extension with pure-Python fallback.
+  Honest measured per-op result (see §7): `compute_scc` 174× faster,
+  `encode_ecc` 1.7× faster, `decode_ecc` 3.1× faster, `adapt`
+  ~3× slower because the FFI overhead dominates the trivial branch
+  body. A future batch entrypoint will amortise the FFI for `adapt`.
 - **Rust coverage gap on trace walking.** `find_divergence`,
   `spike_diff`, and `causal_chain` are pure-NumPy Python. Moving them
   to `spike_stats_core` would deliver a ~40× speedup (per §9 above)

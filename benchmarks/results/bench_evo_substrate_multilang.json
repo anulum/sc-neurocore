@@ -1,0 +1,32 @@
+{
+  "dim": 19,
+  "iters": 100000,
+  "backends": {
+    "rust": {
+      "genomic_distance_ns_per_call": 257.5644900207408,
+      "crossover_uniform_ns_per_call": 481.35791992535815,
+      "point_mutation_ns_per_call": 432.43831998552196
+    },
+    "julia": {
+      "genomic_distance_ns_per_call": 22.5,
+      "crossover_uniform_ns_per_call": 45.8,
+      "point_mutation_ns_per_call": 295.4
+    },
+    "go": {
+      "crossover_uniform_ns_per_call": 42.1763,
+      "genomic_distance_ns_per_call": 22.80301,
+      "point_mutation_ns_per_call": 46.74153
+    },
+    "mojo": {
+      "genomic_distance_ns_per_call": 18.77696,
+      "crossover_uniform_ns_per_call": 150.50048,
+      "point_mutation_ns_per_call": 151.20289
+    },
+    "python": {
+      "genomic_distance_ns_per_call": 5992.319560027681,
+      "crossover_uniform_ns_per_call": 1093.8634499325417,
+      "point_mutation_ns_per_call": 3984.3632400152273
+    }
+  },
+  "unavailable": []
+}

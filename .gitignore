@@ -73,6 +73,7 @@ cosim/obj_dir/
 src/sc_neurocore/accel/go/services/**/services_bench
 src/sc_neurocore/accel/go/services/**/services_ext_bench
 src/sc_neurocore/accel/go/services/**/*_bench
+src/sc_neurocore/accel/go/evo_substrate/evo_substrate_bench
 
 # Ad-hoc fix scripts
 auto_fix*.py
