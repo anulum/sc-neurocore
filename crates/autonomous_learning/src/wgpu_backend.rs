@@ -256,6 +256,35 @@ impl WgpuRuleLayer {
         self.device.poll(wgpu::Maintain::Wait);
     }
 
+    /// Zero the plasticity traces without changing the learned weights.
+    ///
+    /// Mirrors the `PlasticityRule::reset` contract used by the CPU backend:
+    /// pre/post traces, eligibility (param_extra) and threshold (param_extra3)
+    /// are cleared; the rule-dependent accumulator (param_extra2 = BCM θ_m
+    /// or ELIGENT sum_weights) is re-initialised to the same value used at
+    /// construction (0.5 for BCM, 1.0 for ELIGENT, 0.0 otherwise); the
+    /// weights buffer is untouched.
+    pub fn reset(&mut self) {
+        let count = self.count as usize;
+        let zeros = vec![0.0f32; count];
+        self.queue.write_buffer(&self.pre_trace_buf, 0, bytemuck::cast_slice(&zeros));
+        self.queue.write_buffer(&self.post_trace_buf, 0, bytemuck::cast_slice(&zeros));
+        self.queue.write_buffer(&self.param_extra_buf, 0, bytemuck::cast_slice(&zeros));
+        self.queue.write_buffer(&self.param_extra3_buf, 0, bytemuck::cast_slice(&zeros));
+
+        let param_extra2_val = if self.rule_type == 0 {
+            1.0f32
+        } else if self.rule_type == 3 {
+            0.5f32
+        } else {
+            0.0f32
+        };
+        let extra2 = vec![param_extra2_val; count];
+        self.queue.write_buffer(&self.param_extra2_buf, 0, bytemuck::cast_slice(&extra2));
+
+        self.device.poll(wgpu::Maintain::Wait);
+    }
+
     pub fn get_weights(&self) -> Vec<f32> {
         let size = (self.count as usize * std::mem::size_of::<f32>()) as u64;
         let staging_buf = self.device.create_buffer(&wgpu::BufferDescriptor {

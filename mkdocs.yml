@@ -366,6 +366,7 @@ nav:
       - Frontiers:
           - Evolutionary Substrate: api/evo_substrate.md
           - Meta-Plasticity: api/meta_plasticity.md
+          - ArcaneZenith Cognitive Core: api/arcane_zenith.md
           - Bioware Interface: api/bioware.md
           - Federated SC: api/federated.md
           - BCI Studio: api/bci_studio.md
