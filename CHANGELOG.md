@@ -4,6 +4,40 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### ArcaneZenith + VISION2030 unification (2026-04-20)
+
+#### Added
+- `sc_neurocore.arcane_zenith.ArcaneZenithCognitiveCore` — five-compartment ArcaneNeuron wired to four reward-modulated plasticity rules via a sharpened sigmoid that maps weights into biological ranges for `tau_deep`, `surprise_baseline`, `delta_conf`, `lr_base`. Factory `create_arcane_neuron_with_zenith_plasticity(backend=…)`, plus `step_from_bio_rates` (MEA rate dict) and `step_from_genome` (evo_substrate bridge). 32 multi-angle tests in `tests/test_arcane_zenith/`.
+- `sc_neurocore.optics.photonic_emitter` — full rewrite of `CrosstalkModel.analyze_bank` on Marcatili coupled-mode theory (adjacent + next-nearest pairs); new `analyze_pairs` for O(N²) arbitrary geometry. Rust FFI `py_ph_analyze_crosstalk_bank` / `py_ph_analyze_crosstalk_pairs` (with 4 cargo tests); Python fallback matches to 1e-9. `FDTD2DSolver` split-field Berenger PML (Ezx + Ezy with σ-matched magnetic conductivity). `CompilationResult.to_gdsii` now produces real GDSII via `gdsfactory` + `klayout` (PDK auto-activation, `allow_duplicate` cells, netlist string to GDS TEXT layer 63/0). 43 tests in `tests/test_optics/`.
+- `sc_neurocore.bioware` closed-loop surface: `BioHybridSession.process_frame` returns `BioHybridFrameResult` (typed dataclass with legacy mapping view — `result["round"]` + `result.round` both valid). `SpikeSorter` fit/assign with sklearn PCA+KMeans, no-op on empty input. `HomeostaticPlasticity.update_threshold` Q8.8 proportional controller (error × α × 256, clamped to min/max). New `mea_fitness_hook` — converts MEA spike dynamics to `{accuracy, energy_mw, latency_ms}` for evo_substrate's `ReplicationEngine(metrics_fn=…)`. Matching PCA / Berenger / closed-loop regression tests added.
+- `sc_neurocore.accel.mojo.MojoKernelRunner` + `kernels.mojo` — Mojo SIMD primitives (packed SC ops, `sc_and/or/xor/mux/sub/not`, pack/unpack, `vec_mac`, `stdp_update`, `reward_modulated_stdp`, `hdc_bind`). Pixi-managed toolchain; `_HAS_MOJO` flag never raises on missing tooling. `benchmarks/bench_mojo_vs_rust.py` pure-text side-by-side harness.
+- `sc_neurocore.edge.aer_router.AERRoutingDaemon` — Python lifecycle wrapper for the Go AER UDP mesh router (`accel/go/services/aer_router/main.go`). Three sibling Go modules: `hil_debugger` (WebSocket telemetry), `services` / `services_ext` (Phase 2 / Phase 6 coordination). Each with its own `go.mod` + `main_test.go`.
+- `sc_neurocore.debug.hil_server.HILServerDaemon` + `HILDebugger` — lifecycle wrapper for the Go HIL debugger binary with `GET /health` readiness probe, 5 s timeout, SIGTERM → SIGKILL ladder.
+- `sc_neurocore.formal.FormalProofEngine` — Lean 4 bridge. `safety_bounds.lean` proves six theorems (`monitor_soundness`, `safe_transition`, `sc_precision_bound`, `sc_add_preserves_range`, `lif_membrane_bounded`, `correlation_range`) mapped 1:1 to `neuro_safe_monitor.sv` P-properties. New `src/sc_neurocore/formal/__init__.py` exports the engine.
+- `sc_neurocore.accel.julia.solvers.JuliaFusionSolver` + 4 `.jl` scripts (`fusion_solver`, `neuron_zoo`, `dynamical_analysis`, `spike_analysis`) — reference continuous-time ODE solvers via `DifferentialEquations.jl` (Tsit5).
+- `sc_neurocore.hdl_gen.safety.neuro_safe_monitor` + `tb_safety_monitor` — SystemVerilog runtime safety monitor enforcing the six Lean theorems at nanosecond scale. Parameterised on Q8.8 current / voltage / coherence / SC denominator / LIF max. `openroad_flow/run_asic_flow.sh` drives Yosys synthesis (+ optional OpenROAD P&R) against the monitor with area / timing reports.
+- `sc_neurocore.evo_substrate` gained (documented in full): `FormalSafetyGuard`, `BloatPenalizer`, `ExtinctionDetector`, `ComplexityTracker`, `CPPNGenome`, `ParetoFront`, `NoveltyArchive`, `HallOfFame`, `TileDeploymentTracker`, `ResourceBudget`, `LineageTracker`, `IslandModel`. Bridged to MEA via `mea_fitness_hook` and to ArcaneZenith via `step_from_genome`.
+- `sc_neurocore.proto` — `core.proto` (Tensor, BitstreamMetadata) + `telemetry.proto` (HILFrame) as the wire contract for HIL debugging.
+- Plasticity-layer `reset()` contract: new FFI `reset_rule_layer` in `libautonomous_learning` (Rayon par_iter over rules), new `WgpuRuleLayer::reset` + `reset_wgpu_layer` FFI, and `reset()` methods on `RustRuleLayer`, `RustWgpuRuleLayer`, `TorchRuleLayer` with per-rule trace-clearing scope matching the Rust `PlasticityRule::reset` trait contract. `ArcaneZenithCognitiveCore.reset()` now works across all three backends. 11 new tests.
+- Example demos: `examples/14_bioware_closed_loop_demo.py` (100-frame MEA ↔ ArcaneZenith closed loop), `examples/15_photonic_compilation_demo.py` (SC → MZI cascade → real GDSII), `examples/16_evo_substrate_demo.py` (genome → SC top-level module → Verilog emit).
+
+#### Documentation
+- New API pages: `docs/api/mojo_accel.md`, `docs/api/edge.md`, `docs/api/formal.md`, `docs/api/julia_solvers.md`, `docs/api/proto.md`.
+- Upgraded from stubs: `docs/api/evo_substrate.md` (23 → 155 lines), `docs/api/debug.md` (24 → 120 lines, added HIL section), `docs/api/hdl_gen.md` (17 → 100 lines, added safety-monitor P-property table + Lean mapping + ASIC flow).
+- `docs/api/bioware.md` upgraded from 14-line stub (full `BioHybridSession` + `BioHybridFrameResult` dual-access + Q8.8 homeostatic controller + SpikeSorter + mea_fitness_hook sections).
+- New `docs/api/arcane_zenith.md` + `docs/api/optics.md` completely rewritten (photonic compiler + Berenger PML + Marcatili crosstalk + GDSII).
+- `mkdocs.yml` navigation restructured: new *Acceleration* (Mojo + Julia), *Formal + Safety*, *Edge + Wire Protocol* groups under Frontiers.
+
+#### Fixed
+- `RustEligentLearner.step` FFI signature was missing the `dt` parameter (4 args passed, 5 expected) — every non-empty call raised `AttributeError`. Added `dt: float = 0.001` kwarg.
+- `sc_neurocore._native.learning_bridge` no longer raises at import time when `libautonomous_learning.so` is absent; returns `_HAS_LEARNING = False` so downstream imports succeed (the 398 previously-failing test collections now run).
+- `CI workflows` (`ci.yml`, `v3-engine.yml`) now build the `autonomous_learning` cdylib and copy it into `src/sc_neurocore/_native/` before pytest runs — keeps the Rust path live.
+
+#### Repository hygiene
+- Untracked compiled Go bench binaries (`services_bench`, `services_ext_bench` ≈ 4.4 MB total) from `src/sc_neurocore/accel/go/services/…`; pattern added to `.gitignore` (regenerate locally via `go test -bench -c`).
+- 22 ruff lint + format fixes across user-WIP modules (evo_substrate, mojo/runner, debug/hil_*, edge/aer_router, formal/lean_bridge). `ruff check src/ tests/` and `ruff format --check src/ tests/` clean.
+- New optional extras in `pyproject.toml`: `optics = ["gdsfactory>=9.0"]`, `bioware = ["scikit-learn>=1.3"]`.
+
 ### CorticalColumn full-scale (77 169 cells) verification (2026-04-19)
 - Ran the canonical fidelity reference: `scale=1.0, seed=42`, 600 ms simulation with the block + Rust batched multi-spmv path. 77 169 cells, build 298 s, sim 3 564 s ≈ **64 minutes wall**.
 - **5/8 populations within 1.2× of Potjans Table 4** (L23i 1.07×, L4e 1.06×, L4i 1.09×, L6e 1.24×, L6i 1.05×). L5e 1.32×, L5i 1.22× plateau ~25 % over published — NOT purely a finite-size effect (does not collapse below 1.20× at full scale). L23e under-fires at 0.67× consistently across all four scales.
