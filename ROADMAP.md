@@ -198,6 +198,10 @@ dependabot PRs merged.
 - Enforced complete WGSL global seed matching via `set_wgpu_layer_seed` native ABI to fully guarantee cross-platform execution predictability.
 - Finalized explicit state serialization boundaries integrating `get_state_dict()` proxies over Torch, Rust, and Wgpu backends to support familiar PyTorch-style checkpoint loading protocols.
 
+### ~~HIL Debugger Telemetry Server~~ ✓
+
+- Added HIL Debugger: real-time FPGA telemetry server with WebSocket broadcast, lock-free ring buffer, per-layer stats, triggers, and Python orchestration daemon (experimental).
+
 ## v4.0 — Physical FPGA Demos + Production (target: Q3 2026)
 
 ### FPGA deployment proof ~~(P0 blocker)~~ PARTIALLY DONE
