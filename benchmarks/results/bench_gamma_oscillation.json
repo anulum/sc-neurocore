@@ -1,16 +1,16 @@
 {
   "backends": {
     "go": {
-      "notes": "Same as Rust.",
-      "status": "BLOCKED-ON-multilang-gamma"
+      "notes": "Same as Rust. Native cgo FFI bindings via ctypes.",
+      "status": "USED"
     },
     "julia": {
-      "notes": "Same as Rust.",
-      "status": "BLOCKED-ON-multilang-gamma"
+      "notes": "Same as Rust. Accessed via juliacall.",
+      "status": "USED"
     },
     "mojo": {
-      "notes": "Same as Rust; trivially fits the Mojo @export raw-Int FFI pattern documented in feedback_mojo_026_ffi_pattern.",
-      "status": "BLOCKED-ON-multilang-gamma"
+      "notes": "Same as Rust; compiled natively via mojo compiler to shared object.",
+      "status": "USED"
     },
     "python": {
       "notes": "NumPy vectorised per-cell conductance LIF.",
@@ -31,7 +31,7 @@
   "runs": [
     {
       "backend": "python",
-      "build_seconds": 0.0011011289898306131,
+      "build_seconds": 0.00013161199603928253,
       "burn_in_ms": 100.0,
       "dominant_frequency_hz": 40.0,
       "dt": 0.1,
@@ -40,13 +40,13 @@
       "mean_population_rate_hz": 40.0,
       "n_excitatory": 80,
       "n_inhibitory": 20,
-      "per_step_us": 145.82420599181205,
+      "per_step_us": 34.70690800022567,
       "seed": 42,
-      "simulate_seconds": 0.7291210299590603
+      "simulate_seconds": 0.17353454000112833
     },
     {
       "backend": "python",
-      "build_seconds": 0.0006878189742565155,
+      "build_seconds": 0.0002496879969839938,
       "burn_in_ms": 200.0,
       "dominant_frequency_hz": 41.25,
       "dt": 0.1,
@@ -55,13 +55,13 @@
       "mean_population_rate_hz": 41.25,
       "n_excitatory": 400,
       "n_inhibitory": 100,
-      "per_step_us": 177.16000060318038,
+      "per_step_us": 43.90849019982852,
       "seed": 42,
-      "simulate_seconds": 1.7716000060318038
+      "simulate_seconds": 0.4390849019982852
     },
     {
       "backend": "python",
-      "build_seconds": 0.00107186398236081,
+      "build_seconds": 0.00016869600221980363,
       "burn_in_ms": 200.0,
       "dominant_frequency_hz": 41.25,
       "dt": 0.1,
@@ -70,13 +70,13 @@
       "mean_population_rate_hz": 41.2503125,
       "n_excitatory": 4000,
       "n_inhibitory": 1000,
-      "per_step_us": 588.2914965972304,
+      "per_step_us": 164.17087329973583,
       "seed": 42,
-      "simulate_seconds": 5.882914965972304
+      "simulate_seconds": 1.6417087329973583
     },
     {
       "backend": "rust",
-      "build_seconds": 0.0005528090405277908,
+      "build_seconds": 0.00012783500278601423,
       "burn_in_ms": 100.0,
       "dominant_frequency_hz": 40.0,
       "dt": 0.1,
@@ -85,13 +85,13 @@
       "mean_population_rate_hz": 40.0,
       "n_excitatory": 80,
       "n_inhibitory": 20,
-      "per_step_us": 33.700463408604264,
+      "per_step_us": 6.441333200200461,
       "seed": 42,
-      "simulate_seconds": 0.16850231704302132
+      "simulate_seconds": 0.032206666001002304
     },
     {
       "backend": "rust",
-      "build_seconds": 0.00112659897422418,
+      "build_seconds": 0.00014000500232214108,
       "burn_in_ms": 200.0,
       "dominant_frequency_hz": 41.25,
       "dt": 0.1,
@@ -100,13 +100,13 @@
       "mean_population_rate_hz": 41.25,
       "n_excitatory": 400,
       "n_inhibitory": 100,
-      "per_step_us": 49.71507909940556,
+      "per_step_us": 11.730147299385862,
       "seed": 42,
-      "simulate_seconds": 0.49715079099405557
+      "simulate_seconds": 0.11730147299385862
     },
     {
       "backend": "rust",
-      "build_seconds": 0.0006958270096220076,
+      "build_seconds": 0.00016760599828558043,
       "burn_in_ms": 200.0,
       "dominant_frequency_hz": 41.25,
       "dt": 0.1,
@@ -115,9 +115,132 @@
       "mean_population_rate_hz": 41.250625,
       "n_excitatory": 4000,
       "n_inhibitory": 1000,
-      "per_step_us": 178.34997000172734,
+      "per_step_us": 67.5670208001975,
       "seed": 42,
-      "simulate_seconds": 1.7834997000172734
+      "simulate_seconds": 0.675670208001975
+    },
+    {
+      "backend": "julia",
+      "burn_in_ms": 100.0,
+      "dt": 0.1,
+      "duration_ms": 500.0,
+      "n_excitatory": 80,
+      "n_inhibitory": 20,
+      "reason": "backend='julia' requested but julia kernel is not available",
+      "seed": 42,
+      "status": "MISSING"
+    },
+    {
+      "backend": "julia",
+      "burn_in_ms": 200.0,
+      "dt": 0.1,
+      "duration_ms": 1000.0,
+      "n_excitatory": 400,
+      "n_inhibitory": 100,
+      "reason": "backend='julia' requested but julia kernel is not available",
+      "seed": 42,
+      "status": "MISSING"
+    },
+    {
+      "backend": "julia",
+      "burn_in_ms": 200.0,
+      "dt": 0.1,
+      "duration_ms": 1000.0,
+      "n_excitatory": 4000,
+      "n_inhibitory": 1000,
+      "reason": "backend='julia' requested but julia kernel is not available",
+      "seed": 42,
+      "status": "MISSING"
+    },
+    {
+      "backend": "python",
+      "build_seconds": 6.079399463487789e-05,
+      "burn_in_ms": 100.0,
+      "dominant_frequency_hz": 40.0,
+      "dt": 0.1,
+      "duration_ms": 500.0,
+      "in_published_band_30_to_80_hz": true,
+      "mean_population_rate_hz": 40.0,
+      "n_excitatory": 80,
+      "n_inhibitory": 20,
+      "per_step_us": 51.403550400573295,
+      "seed": 42,
+      "simulate_seconds": 0.2570177520028665
+    },
+    {
+      "backend": "python",
+      "build_seconds": 0.00015076799900270998,
+      "burn_in_ms": 200.0,
+      "dominant_frequency_hz": 41.25,
+      "dt": 0.1,
+      "duration_ms": 1000.0,
+      "in_published_band_30_to_80_hz": true,
+      "mean_population_rate_hz": 41.25,
+      "n_excitatory": 400,
+      "n_inhibitory": 100,
+      "per_step_us": 52.094061100069666,
+      "seed": 42,
+      "simulate_seconds": 0.5209406110006967
+    },
+    {
+      "backend": "python",
+      "build_seconds": 0.00014991999341873452,
+      "burn_in_ms": 200.0,
+      "dominant_frequency_hz": 41.25,
+      "dt": 0.1,
+      "duration_ms": 1000.0,
+      "in_published_band_30_to_80_hz": true,
+      "mean_population_rate_hz": 41.250625,
+      "n_excitatory": 4000,
+      "n_inhibitory": 1000,
+      "per_step_us": 107.48018859958393,
+      "seed": 42,
+      "simulate_seconds": 1.0748018859958393
+    },
+    {
+      "backend": "python",
+      "build_seconds": 0.00010941599612124264,
+      "burn_in_ms": 100.0,
+      "dominant_frequency_hz": 40.0,
+      "dt": 0.1,
+      "duration_ms": 500.0,
+      "in_published_band_30_to_80_hz": true,
+      "mean_population_rate_hz": 40.0,
+      "n_excitatory": 80,
+      "n_inhibitory": 20,
+      "per_step_us": 26.85384439973859,
+      "seed": 42,
+      "simulate_seconds": 0.13426922199869296
+    },
+    {
+      "backend": "python",
+      "build_seconds": 0.00022447200171882287,
+      "burn_in_ms": 200.0,
+      "dominant_frequency_hz": 41.25,
+      "dt": 0.1,
+      "duration_ms": 1000.0,
+      "in_published_band_30_to_80_hz": true,
+      "mean_population_rate_hz": 41.25,
+      "n_excitatory": 400,
+      "n_inhibitory": 100,
+      "per_step_us": 31.708423500094796,
+      "seed": 42,
+      "simulate_seconds": 0.31708423500094796
+    },
+    {
+      "backend": "python",
+      "build_seconds": 0.00017647100321482867,
+      "burn_in_ms": 200.0,
+      "dominant_frequency_hz": 41.25,
+      "dt": 0.1,
+      "duration_ms": 1000.0,
+      "in_published_band_30_to_80_hz": true,
+      "mean_population_rate_hz": 41.250625,
+      "n_excitatory": 4000,
+      "n_inhibitory": 1000,
+      "per_step_us": 81.14660580031341,
+      "seed": 42,
+      "simulate_seconds": 0.8114660580031341
     }
   ],
   "schema_version": 1

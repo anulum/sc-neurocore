@@ -104,7 +104,7 @@ def main() -> None:
         (4000, 1000, 1000.0, 0.1, 200.0),
     ]
     runs = []
-    for backend in ("python", "rust"):
+    for backend in ("python", "rust", "julia", "go", "mojo"):
         for n_e, n_i, dur, dt, burn in cfgs:
             print(
                 f"running backend={backend} n_e={n_e} n_i={n_i} dur={dur}ms ...",
@@ -167,18 +167,16 @@ def main() -> None:
                 "SIMD-vs-scalar float ordering, sub-threshold.",
             },
             "julia": {
-                "status": "BLOCKED-ON-multilang-gamma",
-                "notes": "Same as Rust.",
+                "status": "USED",
+                "notes": "Same as Rust. Accessed via juliacall.",
             },
             "go": {
-                "status": "BLOCKED-ON-multilang-gamma",
-                "notes": "Same as Rust.",
+                "status": "USED",
+                "notes": "Same as Rust. Native cgo FFI bindings via ctypes.",
             },
             "mojo": {
-                "status": "BLOCKED-ON-multilang-gamma",
-                "notes": "Same as Rust; trivially fits the Mojo "
-                "@export raw-Int FFI pattern documented in "
-                "feedback_mojo_026_ffi_pattern.",
+                "status": "USED",
+                "notes": "Same as Rust; compiled natively via mojo compiler to shared object.",
             },
         },
         "runs": runs,
