@@ -11,6 +11,10 @@
 Provides ring buffer, layer aggregation, error budget, correlation
 window, precision tracking, event filtering, trigger conditions,
 rate limiting, health checks, and CSV/JSON export.
+
+NOTE: This is a pure-Python simulation/testing reference.
+For high-performance, real-time edge telemetry, use the compiled Go
+server daemon (`sc_neurocore.debug.hil_server.HILServerDaemon`).
 """
 
 from __future__ import annotations

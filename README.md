@@ -139,6 +139,7 @@ explainability, neuro-symbolic predictive coding, stochastic doctor, and model z
 | Federated SC learning | **Yes** | — | — | — | — |
 | Evolutionary Substrate (FPGA) | **Yes** | — | — | — | — |
 | Photonic SC Bridge (FDTD, GDSII) | **Yes** | — | — | — | — |
+| HIL Debugger Telemetry Server | **Yes** | — | — | — | — |
 | conda-forge recipe | **Ready** | Yes | — | — | Yes |
 | PyPI package | Yes | Yes | Yes | Yes | Yes |
 | License | AGPL-3.0 | MIT | LGPL-3.0 | BSD-3 | CeCILL-2.1 |
@@ -152,6 +153,8 @@ explainability, neuro-symbolic predictive coding, stochastic doctor, and model z
 - **Photonic SC Bridge (experimental)** — SC bitstream → optical pulse mapping → FDTD co-simulation → crosstalk analysis → GDSII export with Rust acceleration. Full pipeline from ArcaneNeuron to silicon photonics.
 
 - **Self-Replicating Evolutionary SC Substrate (experimental)** — Open-ended evolution of SC networks with genomes, CPPN developmental encoding, island model, Pareto front, formal safety guard, HW-in-the-loop FPGA feedback, and direct NIR/Verilog emission. Evolves ArcaneZenith organisms.
+
+- **HIL Debugger (experimental)** — Real-time FPGA telemetry server with lock-free RingBuffer, WebSocket broadcast, per-layer stats, triggers, rate limiting, and Python orchestration daemon. Full HW-in-the-loop support for SC networks.
 
 - **ArcaneZenith Cognitive Core** (New in v3.14) — The flagship cognitive primitive of the framework. It wires `ArcaneNeuron` (a deeply self-referential multi-timescale novelty-gating architecture) directly with Project Zenith's autonomous structural plasticity. Instead of static hyperparameters, internal phenomenology metrics (like novelty detection, confidence thresholds, and meta-learning accumulation) dynamically continuous their own deterministic bounds natively mapped by physical synaptic structures scaling dynamically and reacting across lifelong continuous streams.
 
