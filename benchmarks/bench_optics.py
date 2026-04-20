@@ -48,9 +48,7 @@ def main() -> int:
     mod._HAS_RUST_PH = False
     t0 = time.perf_counter()
     for _ in range(N):
-        CrosstalkModel().analyze_bank(
-            waveguides=100, gap_nm=200.0, coupling_length_um=10.0
-        )
+        CrosstalkModel().analyze_bank(waveguides=100, gap_nm=200.0, coupling_length_um=10.0)
     dt_py = time.perf_counter() - t0
     py_bank_per_s = N / dt_py
     mod._HAS_RUST_PH = orig
@@ -117,10 +115,7 @@ def main() -> int:
     print(f"{'analyze_pairs rust':<34} {rust_pairs_ms:>19.3f} ms")
     print(f"{'analyze_pairs python':<34} {py_pairs_ms:>19.3f} ms")
     print(f"{'analyze_pairs speedup':<34} {py_pairs_ms / rust_pairs_ms:>21.2f}x")
-    print(
-        f"{'fdtd2d 500 steps':<34} "
-        f"{dt*1000:>16.1f} ms, {cells / dt / 1e6:.1f} Mcell-steps/s"
-    )
+    print(f"{'fdtd2d 500 steps':<34} {dt * 1000:>16.1f} ms, {cells / dt / 1e6:.1f} Mcell-steps/s")
 
     out_dir = os.path.join(SCRIPT_DIR, "results")
     os.makedirs(out_dir, exist_ok=True)

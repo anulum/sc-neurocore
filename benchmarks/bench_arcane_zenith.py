@@ -49,8 +49,8 @@ def main() -> int:
 
     print(f"\n{'Metric':<36} {'Value':>16}")
     print("-" * 54)
-    print(f"{'ArcaneZenith.step torch':<36} {N/dt:>10.0f} steps/s")
-    print(f"{'per-step latency':<36} {1e6*dt/N:>12.1f} µs")
+    print(f"{'ArcaneZenith.step torch':<36} {N / dt:>10.0f} steps/s")
+    print(f"{'per-step latency':<36} {1e6 * dt / N:>12.1f} µs")
     print(f"{'identity_drift (5k steps, τ_deep≥1s)':<36} {core.neuron._identity_drift:>16.4f}")
 
     out_dir = os.path.join(SCRIPT_DIR, "results")

@@ -86,8 +86,7 @@ def main() -> int:
                 "yosys",
                 "-q",
                 "-p",
-                f"read_verilog -sv {sv_path}; "
-                "hierarchy -top neuro_safe_monitor; synth; stat",
+                f"read_verilog -sv {sv_path}; hierarchy -top neuro_safe_monitor; synth; stat",
             ],
             capture_output=True,
         )

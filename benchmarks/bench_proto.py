@@ -76,7 +76,7 @@ def main() -> int:
             f.metrics.popcount = 512
             f.sample_spikes.shape.append(32)
             f.sample_spikes.shape.append(32)
-            f.sample_spikes.bit_data = b"\xAA" * 128
+            f.sample_spikes.bit_data = b"\xaa" * 128
             return f
 
         def _frame_build_serialize():
