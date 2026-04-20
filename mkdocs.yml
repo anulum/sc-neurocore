@@ -370,6 +370,14 @@ nav:
           - Bioware Interface: api/bioware.md
           - Federated SC: api/federated.md
           - BCI Studio: api/bci_studio.md
+      - Acceleration:
+          - Mojo SIMD Kernels: api/mojo_accel.md
+          - Julia ODE Solvers: api/julia_solvers.md
+      - Formal + Safety:
+          - Lean 4 Safety Proofs: api/formal.md
+      - Edge + Wire Protocol:
+          - AER Interconnect Router: api/edge.md
+          - Protobuf Schemas: api/proto.md
       - Unification:
           - Explainability: api/explainability.md
           - Neuro-Symbolic: api/neuro_symbolic.md

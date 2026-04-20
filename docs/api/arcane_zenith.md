@@ -195,6 +195,7 @@ in the repository.
 ## Reference
 
 Module: `src/sc_neurocore/arcane_zenith.py`.
-Tests: `tests/test_arcane_zenith/test_arcane_zenith.py` (28 tests).
+Tests: `tests/test_arcane_zenith/test_arcane_zenith.py` (32 tests incl.
+`TestStepFromGenome` for the evo_substrate bridge).
 
 ::: sc_neurocore.arcane_zenith
