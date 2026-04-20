@@ -34,7 +34,7 @@
 
 ## 1. Overview
 
-The `dna_mapper` module is the **flagship bridge** in the SC-NeuroCore
+The `dna_mapper` module is the **primary bridge** in the SC-NeuroCore
 `bridges` package. It compiles stochastic computing (SC) Boolean networks
 into DNA strand displacement circuits, enzymatic gate cascades, and
 NUPACK-compatible sequence designs — bridging the gap between digital
