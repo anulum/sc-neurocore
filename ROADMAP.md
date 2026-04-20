@@ -167,6 +167,7 @@ Feature-gated wgpu backend for DenseLayer stochastic computing:
 - Exact bit-identical parity mapped bridging `PyTorch Surrogate Autograd` and `Rust Spintronic Emulation`.
 - `sc_neurocore.plasticity.create_plasticity_layer` fully integrates supervised biological convergence loops mapped securely to deterministic `SymbiYosys` formal proofs.
 - 4 Metaplasticity rules (STDP, BCM, R-STDP, ELIGENT).
+- **Available now via v4.1**: Fully functional, verified natively on `rust-wgpu` parallel cross-platform frameworks supporting massive scale edge deployments natively.
 
 ### ~~Model documentation upgrade~~ in progress
 

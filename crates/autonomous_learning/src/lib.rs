@@ -19,6 +19,9 @@
 
 use rayon::prelude::*;
 
+pub mod wgpu_backend;
+use wgpu_backend::WgpuRuleLayer;
+
 // ---------------------------------------------------------------------------
 // Trait: PlasticityRule
 // ---------------------------------------------------------------------------
@@ -596,6 +599,67 @@ pub unsafe extern "C" fn step_learner_batched(
     
     for i in 0..count {
         state.step(pre_slice[i], fired_slice[i], rew_slice[i], dt);
+    }
+}
+
+/// WGPU Backend FFI
+
+#[no_mangle]
+pub unsafe extern "C" fn create_wgpu_layer(
+    count: usize,
+    rule_type: u32,
+    a_plus: f32,
+    a_minus: f32,
+    tau_plus: f32,
+    tau_minus: f32,
+    param_c: f32,
+    param_d: f32,
+) -> *mut WgpuRuleLayer {
+    println!("Initializing WGPU backend (Rule {}, Scale {})", rule_type, count);
+    if let Some(layer) = WgpuRuleLayer::new(count, rule_type, a_plus, a_minus, tau_plus, tau_minus, param_c, param_d) {
+        Box::into_raw(Box::new(layer))
+    } else {
+        println!("Warning: WGPU initialization failed gracefully on host. Returning NULL pointer.");
+        std::ptr::null_mut()
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn step_wgpu_layer(
+    mgr: *mut WgpuRuleLayer,
+    pre_probs: *const f32,
+    post_probs: *const f32,
+    rewards: *const f32,
+    dt: f32,
+) {
+    if mgr.is_null() { return; }
+    let layer = &mut *mgr;
+    let pre_slice = std::slice::from_raw_parts(pre_probs, layer.count as usize);
+    let post_slice = std::slice::from_raw_parts(post_probs, layer.count as usize);
+    let reward_slice = if !rewards.is_null() {
+        std::slice::from_raw_parts(rewards, layer.count as usize)
+    } else {
+        &[]
+    };
+    
+    layer.step(pre_slice, post_slice, reward_slice, dt);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn get_wgpu_weights(
+    mgr: *mut WgpuRuleLayer,
+    out_weights: *mut f32,
+) {
+    if mgr.is_null() || out_weights.is_null() { return; }
+    let layer = &*mgr;
+    let weights = layer.get_weights();
+    std::ptr::copy_nonoverlapping(weights.as_ptr(), out_weights, layer.count as usize);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn free_wgpu_layer(mgr: *mut WgpuRuleLayer) {
+    if !mgr.is_null() {
+        drop(Box::from_raw(mgr));
     }
 }
 

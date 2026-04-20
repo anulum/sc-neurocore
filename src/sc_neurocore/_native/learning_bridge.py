@@ -93,6 +93,16 @@ def _load_native_library():
         _lib.step_rule_layer_analog.argtypes = [_ct.c_void_p, _ct.POINTER(_ct.c_float), _ct.POINTER(_ct.c_float), _ct.POINTER(_ct.c_float), _ct.c_uint64, _ct.c_float]
         _lib.step_rule_layer_analog.restype = None
 
+        # WGPU Backend boundaries
+        _lib.create_wgpu_layer.argtypes = [_ct.c_size_t, _ct.c_uint32, _ct.c_float, _ct.c_float, _ct.c_float, _ct.c_float, _ct.c_float, _ct.c_float]
+        _lib.create_wgpu_layer.restype = _ct.c_void_p
+        _lib.step_wgpu_layer.argtypes = [_ct.c_void_p, _ct.POINTER(_ct.c_float), _ct.POINTER(_ct.c_float), _ct.POINTER(_ct.c_float), _ct.c_float]
+        _lib.step_wgpu_layer.restype = None
+        _lib.get_wgpu_weights.argtypes = [_ct.c_void_p, _ct.POINTER(_ct.c_float)]
+        _lib.get_wgpu_weights.restype = None
+        _lib.free_wgpu_layer.argtypes = [_ct.c_void_p]
+        _lib.free_wgpu_layer.restype = None
+
         _HAS_LEARNING = True
     except OSError as e:
         raise RuntimeError(f"Corrupted or ABI-incompatible native library at {lib_path}: {e}")
@@ -345,6 +355,82 @@ class RustRuleLayer:
             _lib.destroy_rule_layer(self._ptr)
             self._ptr = None
 
+class RustWgpuRuleLayer:
+    """RAII wrapper around explicit Rust WGPU execution instances computing via WGSL bindings."""
+    __slots__ = ("_ptr", "_count", "_rule_type")
+
+    def __init__(
+        self,
+        count: int,
+        rule_type: int = RULE_STDP,
+        weight: float = 0.5,
+        param_a: float = 0.01,
+        param_b: float = 0.012,
+        tau_e: float = 20.0,
+        target_sum_weights: float = 1.0,
+        **kwargs
+    ) -> None:
+        if not _HAS_LEARNING:
+            raise RuntimeError("Native library not loaded.")
+        self._count = count
+        self._rule_type = rule_type
+        
+        # param_c acts as tau_e generically across R-STDP and ELIGENT bounds
+        # param_d acts as target_sum_weights explicitly in ELIGENT limits
+        param_c = max(tau_e, 0.01)
+        param_d = max(target_sum_weights, 0.0)
+        tau_plus = float(kwargs.get('tau_plus', 20.0))
+        tau_minus = float(kwargs.get('tau_minus', 20.0))
+        
+        self._ptr = _lib.create_wgpu_layer(
+            _ct.c_size_t(count),
+            _ct.c_uint32(rule_type),
+            _ct.c_float(param_a),
+            _ct.c_float(param_b),
+            _ct.c_float(tau_plus),
+            _ct.c_float(tau_minus),
+            _ct.c_float(param_c),
+            _ct.c_float(param_d)
+        )
+        
+        if not self._ptr:
+            raise RuntimeError("WGPU backend initialization failed natively. Ensure the system possesses a compatible backend (Vulkan/Metal/WebGPU/DX12).")
+
+    def step(self, pre_spikes, post_spikes, rewards=None, dt: float = 0.001) -> None:
+        import numpy as np
+        # Convert deterministically to 1.0 or 0.0 floats matching hardware probabilities natively
+        pre_spikes = np.ascontiguousarray(pre_spikes, dtype=np.float32)
+        post_spikes = np.ascontiguousarray(post_spikes, dtype=np.float32)
+
+        pre_ptr = pre_spikes.ctypes.data_as(_ct.POINTER(_ct.c_float))
+        post_ptr = post_spikes.ctypes.data_as(_ct.POINTER(_ct.c_float))
+        
+        rew_ptr = None
+        if rewards is not None:
+            rewards = np.ascontiguousarray(rewards, dtype=np.float32)
+            rew_ptr = rewards.ctypes.data_as(_ct.POINTER(_ct.c_float))
+            
+        _lib.step_wgpu_layer(self._ptr, pre_ptr, post_ptr, rew_ptr, _ct.c_float(dt))
+
+    def step_analog(self, pre_probs, post_probs, rewards, dt: float = 0.001, seed: int = None) -> None:
+        """
+        Native true analog probabilistic emulation via WGSL.
+        Float probabilities are passed directly down to the deterministic WGSL kernel 
+        which executes continuous uniform random thresholds per synapse.
+        """
+        self.step(pre_probs, post_probs, rewards, dt)
+
+    def get_weights(self):
+        import numpy as np
+        out = np.zeros(self._count, dtype=np.float32)
+        out_ptr = out.ctypes.data_as(_ct.POINTER(_ct.c_float))
+        _lib.get_wgpu_weights(self._ptr, out_ptr)
+        return out
+        
+    def __del__(self) -> None:
+        if hasattr(self, '_ptr') and getattr(self, '_ptr') and _HAS_LEARNING:
+            _lib.free_wgpu_layer(self._ptr)
+            self._ptr = None
 
 # We will define TorchRuleLayer inside the try-catch block for torch.
 
@@ -525,14 +611,19 @@ try:
     AutogradSTDPLayer = TorchRuleLayer
 
     def create_plasticity_layer(
-        count: int, 
-        rule_type: int = RULE_STDP, 
-        backend: str = "torch", 
+        count: int,
+        rule_type: int = RULE_STDP,
+        backend: str = "torch",
         autograd: bool = True,
         **kwargs
     ):
         """
         High-level SC-NeuroCore plasticity layer factory.
+        
+        Backends:
+        - "torch": Highly-optimized C++ autograd surrogate bindings. Primary training accelerator.
+        - "rust": Parallel CPU execution over Rayon bounds natively.
+        - "rust-wgpu": pure-Rust GPU for cross-platform edge deployment where CUDA is unavailable. Not primary training accelerator.
         
         Args:
             count: Number of neurons/synapses in the layer.
@@ -550,14 +641,16 @@ try:
             scalar bounds internally ensuring absolute limit zeroing which diverges slightly during stochastic boundary conditions.
             
         Returns:
-            Either TorchRuleLayer or RustRuleLayer
+            Either TorchRuleLayer, RustRuleLayer, or RustWgpuRuleLayer
         """
         if backend.lower() == "torch":
             return TorchRuleLayer(count=count, rule_type=rule_type, autograd=autograd, **kwargs)
         elif backend.lower() == "rust":
             return RustRuleLayer(count=count, rule_type=rule_type, **kwargs)
+        elif backend.lower() == "rust-wgpu":
+            return RustWgpuRuleLayer(count=count, rule_type=rule_type, **kwargs)
         else:
-            raise ValueError(f"Unknown backend '{backend}'. Use 'torch' or 'rust'.")
+            raise ValueError(f"Unknown backend '{backend}'. Use 'torch', 'rust', or 'rust-wgpu'.")
 
 except ImportError:
     pass
