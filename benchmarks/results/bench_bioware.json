@@ -1,0 +1,15 @@
+{
+  "bioware_closed_loop_100frames": {
+    "wall_seconds_driver_side": 3.722231062987703,
+    "demo_reported_seconds": 0.69,
+    "final_identity_drift": 1.9001,
+    "total_network_bursts": 0,
+    "per_frame_latency_us": {
+      "frame_020": 5015.9,
+      "frame_040": 3615.0,
+      "frame_060": 4322.5,
+      "frame_080": 3532.2,
+      "frame_100": 4047.1
+    }
+  }
+}

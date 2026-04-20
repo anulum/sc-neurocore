@@ -40,6 +40,14 @@ from typing import Any, Deque, Dict, List, Optional
 
 import numpy as np
 
+try:
+    from sc_neurocore.stochastic_doctor import stochastic_doctor_core as _sdc
+
+    _HAS_RUST_SCC = True
+except ImportError:
+    _sdc = None
+    _HAS_RUST_SCC = False
+
 
 # ── Transport Backends ───────────────────────────────────────────────
 
@@ -218,10 +226,8 @@ class AnalysisWindow:
         return (len(self.timestamps) - 1) * 1e9 / dt_ns
 
 
-def compute_scc(a: np.ndarray, b: np.ndarray) -> float:
-    """Stochastic Computing Correlation between two u32-packed bitstreams."""
-    if len(a) != len(b) or len(a) == 0:
-        return 0.0
+def _compute_scc_python(a: np.ndarray, b: np.ndarray) -> float:
+    """Pure-Python Alaghi-Hayes SCC (reference implementation + fallback)."""
     total_bits = len(a) * 32
     ones_a = sum(bin(int(w)).count("1") for w in a)
     ones_b = sum(bin(int(w)).count("1") for w in b)
@@ -229,17 +235,48 @@ def compute_scc(a: np.ndarray, b: np.ndarray) -> float:
 
     pa = ones_a / total_bits
     pb = ones_b / total_bits
-    pab = ones_ab / total_bits
+    p_and = ones_ab / total_bits
 
-    denom = pa * pb if pa * pb > 0 else 1e-12
-    if pa >= pb:
-        max_pab = pb
-    else:
-        max_pab = pa
-    denom2 = max_pab - pa * pb
-    if abs(denom2) < 1e-12:
+    numerator = p_and - pa * pb
+    if abs(numerator) < 1e-12:
         return 0.0
-    return (pab - pa * pb) / abs(denom2)
+    if numerator > 0.0:
+        denominator = min(pa, pb) - pa * pb
+    else:
+        denominator = pa * pb - max(0.0, pa + pb - 1.0)
+    if abs(denominator) < 1e-12:
+        return 0.0
+    return max(-1.0, min(1.0, numerator / denominator))
+
+
+def compute_scc(a: np.ndarray, b: np.ndarray) -> float:
+    """Stochastic Computing Correlation between two u32-packed bitstreams.
+
+    Dispatches to the Rust ``stochastic_doctor_core.py_scc_packed`` when the
+    compiled extension is importable (the default when the repo is built with
+    ``maturin develop --release``). Falls back to :func:`_compute_scc_python`
+    when the extension is missing — the fallback is numerically identical
+    (both implement the case-split Alaghi & Hayes 2013 form).
+    """
+    if len(a) != len(b) or len(a) == 0:
+        return 0.0
+
+    if _HAS_RUST_SCC:
+        a32 = np.ascontiguousarray(a, dtype=np.uint32)
+        b32 = np.ascontiguousarray(b, dtype=np.uint32)
+        # Reinterpret pairs of u32 words as u64 for the Rust kernel. Popcount
+        # is position-invariant inside a word, so viewing two adjacent u32s as
+        # one u64 preserves the bit-level meaning on little-endian hosts. Pad
+        # an odd-length array by one zero word.
+        if a32.size % 2 == 1:
+            a32 = np.concatenate([a32, np.zeros(1, dtype=np.uint32)])
+            b32 = np.concatenate([b32, np.zeros(1, dtype=np.uint32)])
+        a64 = a32.view(np.uint64)
+        b64 = b32.view(np.uint64)
+        total_bits = len(a) * 32
+        return float(_sdc.py_scc_packed(a64, b64, total_bits))
+
+    return _compute_scc_python(a, b)
 
 
 class LiveAnalyzer:

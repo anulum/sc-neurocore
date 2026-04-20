@@ -1,0 +1,8 @@
+{
+  "lean_check_cold_wall_s": 0.61327027301013,
+  "lean_check_warm_wall_s": 0.5416830989997834,
+  "n_theorems_proved": 3,
+  "n_axioms_explicit": 3,
+  "cold_exit_code": 0,
+  "warm_exit_code": 0
+}

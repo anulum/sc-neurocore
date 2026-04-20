@@ -1,0 +1,17 @@
+{
+  "hilframe_build_serialize_159B": {
+    "ns_per_call": 2078.1233004527166
+  },
+  "hilframe_size_bytes": {
+    "bytes": 159.0
+  },
+  "hilframe_parse_159B": {
+    "ns_per_call": 447.91839900426567
+  },
+  "tensor_serialize_256bit": {
+    "ns_per_call": 252.97412008512765
+  },
+  "metadata_serialize": {
+    "ns_per_call": 257.3717400082387
+  }
+}

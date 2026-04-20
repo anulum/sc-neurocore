@@ -1,0 +1,33 @@
+{
+  "popcount32": {
+    "ns_per_call": 302.9885709984228
+  },
+  "popcount_slice_1024w": {
+    "ns_per_call": 282077.36300100805
+  },
+  "lfsr16_encode_1024bit": {
+    "ns_per_call": 271756.39280176256
+  },
+  "sobol_encode_1024bit": {
+    "ns_per_call": 1092263.093800284
+  },
+  "lif_neuron_tick_32w": {
+    "ns_per_call": 10009.11383901257
+  },
+  "izhikevich_tick": {
+    "ns_per_call": 453.2322900049621
+  },
+  "sc_network_run_32_16_8": {
+    "ns_per_call": 15348173.620004673
+  },
+  "serialize_weights_2layer": {
+    "ns_per_call": 5023.933001211844,
+    "blob_bytes": 144.0
+  },
+  "deserialize_weights_2layer": {
+    "ns_per_call": 7919.5500002242625
+  },
+  "scc_32w": {
+    "ns_per_call": 27719.349000835788
+  }
+}

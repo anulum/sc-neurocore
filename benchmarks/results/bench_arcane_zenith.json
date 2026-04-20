@@ -1,0 +1,7 @@
+{
+  "arcane_zenith_step_torch": {
+    "steps_per_s": 1578.8038315593662,
+    "us_per_step": 633.3909127977677,
+    "identity_drift_after_5k_steps": 0.0002864114642404202
+  }
+}

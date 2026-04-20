@@ -1,0 +1,20 @@
+{
+  "mutate": {
+    "ns_per_call": 65688.8961995719
+  },
+  "crossover": {
+    "ns_per_call": 33748.33570123883
+  },
+  "genomic_distance": {
+    "ns_per_call": 10765.294800512493
+  },
+  "safety_guard_check": {
+    "ns_per_call": 726.6638000146486
+  },
+  "assign_species_n64": {
+    "ns_per_call": 699258.2749953726
+  },
+  "evolve_generation_pop32": {
+    "ns_per_call": 6197748.600243358
+  }
+}
