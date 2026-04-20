@@ -141,7 +141,10 @@ except (ImportError, AttributeError):
         pass
 
 import ctypes
+import logging
 import os
+
+_logger = logging.getLogger(__name__)
 
 _julia_multi_spmv = None
 _HAS_JULIA_MULTI_SPMV = False
@@ -157,8 +160,8 @@ try:
         jl.seval(f'include("{_jl_file}")')
         _julia_multi_spmv = jl.CorticalColumnAccel.py_parallel_csr_multi_spmv_add
         _HAS_JULIA_MULTI_SPMV = True
-except Exception:
-    pass
+except Exception as _jl_err:  # noqa: BLE001
+    _logger.debug("Julia multi-spmv accel unavailable: %r", _jl_err)
 
 _go_multi_spmv = None
 _HAS_GO_MULTI_SPMV = False
@@ -188,8 +191,8 @@ try:
         ]
         _go_multi_spmv.restype = None
         _HAS_GO_MULTI_SPMV = True
-except Exception:
-    pass
+except Exception as _go_err:  # noqa: BLE001
+    _logger.debug("Go multi-spmv accel unavailable: %r", _go_err)
 
 _mojo_multi_spmv = None
 _HAS_MOJO_MULTI_SPMV = False
@@ -214,8 +217,8 @@ try:
         ]
         _mojo_multi_spmv.restype = None
         _HAS_MOJO_MULTI_SPMV = True
-except Exception:
-    pass
+except Exception as _mojo_err:  # noqa: BLE001
+    _logger.debug("Mojo multi-spmv accel unavailable: %r", _mojo_err)
 
 # ── Population ordering and per-population sizes (Potjans Table 5) ──
 

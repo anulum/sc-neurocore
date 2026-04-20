@@ -72,13 +72,15 @@ def _detect_rust() -> bool:
 
 try:
     _MOJO_AVAILABLE = _detect_mojo()
-except Exception:
-    pass
+except Exception as _mojo_detect_err:  # noqa: BLE001
+    _MOJO_AVAILABLE = False
+    logger.debug("Mojo probe failed: %r", _mojo_detect_err)
 
 try:
     _RUST_AVAILABLE = _detect_rust()
-except Exception:
-    pass
+except Exception as _rust_detect_err:  # noqa: BLE001
+    _RUST_AVAILABLE = False
+    logger.debug("Rust probe failed: %r", _rust_detect_err)
 
 logger.info(
     "Acceleration backends: Mojo=%s Rust=%s",

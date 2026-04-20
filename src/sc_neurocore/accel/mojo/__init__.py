@@ -11,7 +11,11 @@ try:
     from .runner import MojoKernelRunner
 
     _HAS_MOJO = True
-except Exception:
-    pass
+except Exception as _mojo_import_error:  # noqa: BLE001
+    # Mojo toolchain missing or runner refused to import — record why so
+    # downstream callers can log + surface the reason instead of silently
+    # falling back.
+    _HAS_MOJO = False
+    _mojo_import_reason = repr(_mojo_import_error)
 
 __all__ = ["MojoKernelRunner", "_HAS_MOJO"]

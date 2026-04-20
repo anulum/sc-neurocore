@@ -14,12 +14,11 @@ telemetry server for real-time SC debugging and visualization.
 
 from __future__ import annotations
 
+import http.client
 import os
 import subprocess
-import time
-import urllib.request
-import urllib.error
 import sysconfig
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -85,7 +84,6 @@ class HILServerDaemon:
 
     def _wait_for_ready(self, timeout_sec: int = 5) -> bool:
         start_time = time.time()
-        url = f"http://localhost:{self.port}/health"
         while time.time() - start_time < timeout_sec:
             if self._process.poll() is not None:
                 err = (
@@ -95,13 +93,17 @@ class HILServerDaemon:
                 )
                 print(f"[HIL Daemon] Server crashed: {err}")
                 return False
+            conn = http.client.HTTPConnection("localhost", self.port, timeout=0.5)
             try:
-                with urllib.request.urlopen(url, timeout=0.5) as response:
-                    if response.status == 200:
-                        print(f"[HIL Daemon] Server ready on port {self.port}.")
-                        return True
-            except urllib.error.URLError:
+                conn.request("GET", "/health")
+                response = conn.getresponse()
+                if response.status == 200:
+                    print(f"[HIL Daemon] Server ready on port {self.port}.")
+                    return True
+            except (ConnectionError, TimeoutError, OSError):
                 pass
+            finally:
+                conn.close()
             time.sleep(0.1)
         print("[HIL Daemon] Timeout waiting for readiness.")
         self.stop()

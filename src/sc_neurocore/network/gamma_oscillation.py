@@ -98,8 +98,11 @@ except (ImportError, AttributeError):
     except (ImportError, AttributeError):
         pass
 
-import os
 import ctypes
+import logging
+import os
+
+_logger = logging.getLogger(__name__)
 
 _julia_ping_step = None
 _HAS_JULIA_PING_STEP = False
@@ -115,8 +118,8 @@ try:
         jl.seval(f'include("{_jl_ping_file}")')
         _julia_ping_step = jl.GammaOscillationAccel.py_ping_step
         _HAS_JULIA_PING_STEP = True
-except Exception:
-    pass
+except Exception as _jl_err:  # noqa: BLE001
+    _logger.debug("Julia PING accel unavailable: %r", _jl_err)
 
 _go_ping_step = None
 _HAS_GO_PING_STEP = False
@@ -135,8 +138,8 @@ try:
         _go_lib = ctypes.CDLL(_go_ping_lib)
         _go_ping_step = _go_lib.py_ping_step_c
         _HAS_GO_PING_STEP = True
-except Exception:
-    pass
+except Exception as _go_err:  # noqa: BLE001
+    _logger.debug("Go PING accel unavailable: %r", _go_err)
 
 _mojo_ping_step = None
 _HAS_MOJO_PING_STEP = False
@@ -150,8 +153,8 @@ try:
         _mojo_lib = ctypes.CDLL(_mojo_ping_lib)
         _mojo_ping_step = _mojo_lib.py_ping_step
         _HAS_MOJO_PING_STEP = True
-except Exception:
-    pass
+except Exception as _mojo_err:  # noqa: BLE001
+    _logger.debug("Mojo PING accel unavailable: %r", _mojo_err)
 
 # Border-Kopell 2003 published defaults (Fig 2A, weak-PING 40 Hz).
 _DEFAULT_C_M = 1.0  # µF/cm²

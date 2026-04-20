@@ -18,10 +18,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import gdsfactory as gf  # hard dep — install via `pip install sc-neurocore[optics]`
 import pytest
 
-from sc_neurocore.optics.photonic_emitter import CompilationResult
+gf = pytest.importorskip(
+    "gdsfactory",
+    reason="gdsfactory is an optional dep (install via `pip install sc-neurocore[optics]`)",
+)
+
+from sc_neurocore.optics.photonic_emitter import CompilationResult  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
