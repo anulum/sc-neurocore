@@ -69,6 +69,11 @@ cosim/obj_dir/
 # Benchmark artifacts (Criterion working dirs)
 .benchmarks/
 
+# Compiled Go benchmark binaries (regenerate via `go test -bench -c`)
+src/sc_neurocore/accel/go/services/**/services_bench
+src/sc_neurocore/accel/go/services/**/services_ext_bench
+src/sc_neurocore/accel/go/services/**/*_bench
+
 # Ad-hoc fix scripts
 auto_fix*.py
 fix_*.py

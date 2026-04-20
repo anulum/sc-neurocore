@@ -1,0 +1,19 @@
+syntax = "proto3";
+package vision2030.core;
+
+option go_package = "github.com/anulum/sc-neurocore/vision2030/proto/core";
+
+message Tensor {
+  repeated uint32 shape = 1;
+  oneof data {
+    bytes float_data = 2;   // Packed float32
+    bytes int_data = 3;     // Packed int32
+    bytes bit_data = 4;     // Packed bitstream (bool8)
+  }
+}
+
+message BitstreamMetadata {
+  uint32 length = 1;
+  float correlation = 2;
+  uint32 popcount = 3;
+}
