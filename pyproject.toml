@@ -191,7 +191,13 @@ ignore = [
 
 [tool.bandit]
 skips = ["B101", "B307", "B311", "B404", "B603", "B607"]
-exclude_dirs = ["tests", "experiments", "research", "scripts"]
+exclude_dirs = [
+    "tests",
+    "experiments",
+    "research",
+    "scripts",
+    "src/sc_neurocore/accel/mojo/.pixi",
+]
 
 [tool.mypy]
 strict = true
