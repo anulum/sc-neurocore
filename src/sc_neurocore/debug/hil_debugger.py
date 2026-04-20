@@ -26,3 +26,8 @@ class HILDebugger:
     def is_running(self):
         """Returns True if the server is active."""
         return self.daemon.is_running
+
+    @property
+    def url(self) -> str:
+        """Returns the base URL for the active telemetry server."""
+        return f"http://localhost:{self.daemon.port}"

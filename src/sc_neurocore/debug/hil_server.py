@@ -53,7 +53,7 @@ class HILServerDaemon:
             return True  # Already running
 
         if build and self._go_dir.is_dir():  # only build from source
-            print("[HIL Daemon] Compiling high-latency Go telemetry server...")
+            print("[HIL Daemon] Compiling high-performance Go telemetry server...")
             try:
                 subprocess.run(
                     ["go", "build", "-o", "hil_debugger", "main.go"],
