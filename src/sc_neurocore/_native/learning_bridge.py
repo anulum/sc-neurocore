@@ -123,6 +123,8 @@ def _load_native_library() -> bool:
         _lib.get_rule_layer_weights.restype = None
         _lib.destroy_rule_layer.argtypes = [_ct.c_void_p]
         _lib.destroy_rule_layer.restype = None
+        _lib.reset_rule_layer.argtypes = [_ct.c_void_p]
+        _lib.reset_rule_layer.restype = None
 
         _lib.save_rule_layer_batched.argtypes = [_ct.c_void_p, _ct.c_char_p]
         _lib.save_rule_layer_batched.restype = _ct.c_bool
@@ -173,6 +175,8 @@ def _load_native_library() -> bool:
         _lib.set_wgpu_layer_seed.restype = None
         _lib.free_wgpu_layer.argtypes = [_ct.c_void_p]
         _lib.free_wgpu_layer.restype = None
+        _lib.reset_wgpu_layer.argtypes = [_ct.c_void_p]
+        _lib.reset_wgpu_layer.restype = None
 
         _HAS_LEARNING = True
         return True
@@ -286,8 +290,10 @@ class RustEligentLearner:
             _ct.c_float(weight),
         )
 
-    def step(self, fired: bool, pre_spike: bool, global_reward: float = 0.0) -> None:
-        _lib.step_learner(self._ptr, fired, pre_spike, _ct.c_float(global_reward))
+    def step(
+        self, fired: bool, pre_spike: bool, global_reward: float = 0.0, dt: float = 0.001
+    ) -> None:
+        _lib.step_learner(self._ptr, fired, pre_spike, _ct.c_float(global_reward), _ct.c_float(dt))
 
     def step_batched(self, fired_slice, pre_spikes, rewards, dt: float = 0.001) -> None:
         import numpy as np
@@ -450,6 +456,10 @@ class RustRuleLayer:
             raise OSError(f"Failed to load biological traits or format mismatched from {safe_path}")
         return True
 
+    def reset(self) -> None:
+        """Zero each rule's plasticity traces; learned weights are preserved."""
+        _lib.reset_rule_layer(self._ptr)
+
     def __del__(self) -> None:
         if hasattr(self, "_ptr") and self._ptr and _HAS_LEARNING:
             _lib.destroy_rule_layer(self._ptr)
@@ -547,6 +557,10 @@ class RustWgpuRuleLayer:
         warnings.warn(
             "RustWgpuRuleLayer load_state_dict explicitly relies on weights re-initialization rather than state restoration at runtime natively for WGPU."
         )
+
+    def reset(self) -> None:
+        """Zero WGSL plasticity traces; weights preserved. See `WgpuRuleLayer::reset`."""
+        _lib.reset_wgpu_layer(self._ptr)
 
     def __del__(self) -> None:
         if hasattr(self, "_ptr") and self._ptr and _HAS_LEARNING:
@@ -758,6 +772,33 @@ try:
                 if rule_type == RULE_ELIGENT
                 else torch.zeros(count, dtype=torch.float32),
             )
+
+        def reset(self) -> None:
+            """Zero the plasticity traces; learned weights preserved.
+
+            Matches the per-rule ``PlasticityRule::reset`` contract of the
+            Rust backend (see ``autonomous_learning/src/lib.rs``):
+
+            * STDP (1)       — pre/post traces cleared
+            * REWARD_STDP(2) — pre/post traces + eligibility cleared
+            * BCM (3)        — ``act_avg`` → 0.0, ``theta_m`` → 0.5
+            * ELIGENT (0)    — eligibility cleared
+
+            Buffers outside each rule's reset scope are left untouched.
+            """
+            with torch.no_grad():
+                if self.rule_type == RULE_STDP:
+                    self.pre_trace.zero_()
+                    self.post_trace.zero_()
+                elif self.rule_type == RULE_REWARD_STDP:
+                    self.pre_trace.zero_()
+                    self.post_trace.zero_()
+                    self.eligibility.zero_()
+                elif self.rule_type == RULE_BCM:
+                    self.act_avg.zero_()
+                    self.theta_m.fill_(0.5)
+                elif self.rule_type == RULE_ELIGENT:
+                    self.eligibility.zero_()
 
         def forward(self, pre_spikes, post_spikes, rewards=None, dt=1.0):
             pre_f = pre_spikes.to(self.weights.dtype)

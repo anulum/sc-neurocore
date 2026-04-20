@@ -666,6 +666,19 @@ pub unsafe extern "C" fn set_wgpu_layer_seed(
     layer.set_deterministic_mode(seed);
 }
 
+/// Reset a WGPU rule layer's traces. See `WgpuRuleLayer::reset`.
+///
+/// # Safety
+/// `mgr` must have been returned by `create_wgpu_layer`.
+#[no_mangle]
+pub unsafe extern "C" fn reset_wgpu_layer(mgr: *mut WgpuRuleLayer) {
+    if mgr.is_null() {
+        return;
+    }
+    let layer = unsafe { &mut *mgr };
+    layer.reset();
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn free_wgpu_layer(mgr: *mut WgpuRuleLayer) {
     if !mgr.is_null() {
@@ -843,6 +856,23 @@ pub unsafe extern "C" fn destroy_rule_layer(layer_ptr: *mut RuleLayerHandle) {
     if !layer_ptr.is_null() {
         let _ = unsafe { Box::from_raw(layer_ptr) };
     }
+}
+
+/// Reset every rule in a layer to its no-history state.
+///
+/// Clears traces/accumulators (pre/post trace, eligibility, running activity
+/// averages, adaptive thresholds) as defined by each rule's `PlasticityRule::reset`.
+/// Learned weights are preserved — the layer keeps its identity.
+///
+/// # Safety
+/// `layer_ptr` must have been returned by `create_rule_layer`.
+#[no_mangle]
+pub unsafe extern "C" fn reset_rule_layer(layer_ptr: *mut RuleLayerHandle) {
+    if layer_ptr.is_null() {
+        return;
+    }
+    let layer = unsafe { &mut *layer_ptr };
+    layer.rules.par_iter_mut().for_each(|rule| rule.reset());
 }
 
 #[no_mangle]
