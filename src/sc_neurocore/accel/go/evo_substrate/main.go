@@ -91,6 +91,16 @@ func PopulationDiversity(population []float64, n, d int) float64 {
 }
 
 func main() {
+	// `--runner` dispatches to the full industrial evolve runner in
+	// runner.go; no flag runs the per-kernel benchmark.
+	if len(os.Args) > 1 && os.Args[1] == "--runner" {
+		runnerMain()
+		return
+	}
+	runBench()
+}
+
+func runBench() {
 	const iters = 100_000
 	const d = 19
 
