@@ -22,4 +22,3 @@ func RunConsensus() {
 func CoordinatedMission() {
 	// Go-accelerated coordinated_mission
 }
-

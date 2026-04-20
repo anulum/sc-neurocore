@@ -21,4 +21,3 @@ fn reset() -> Int:
     var _reset_line = '_stim_buf = zeros(n_k)'
     var _reset_line = '_spike_buf = zeros(n_h)'
     return 0
-

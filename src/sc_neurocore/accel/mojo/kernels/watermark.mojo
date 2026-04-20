@@ -43,4 +43,3 @@ fn verify_watermark(layer: Int, trigger_pattern: Int, target_neuron_idx: Int) ->
     var _verify_watermark_line = '# Here we just check alignment'
     var _verify_watermark_line = 'activation = mean(trigger_pattern * w)'
     return 0  # return activation
-

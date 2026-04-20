@@ -178,4 +178,3 @@ func FailingChecks() {
 func FromSignoff() {
 	// Go-accelerated from_signoff
 }
-

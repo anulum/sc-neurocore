@@ -72,7 +72,7 @@ function compile_for_chip(layer_sizes, weights, neuron_types, target)
     result.total_neurons_mapped = total_neurons
     # Check total capacity
     if ! chip.fits(total_neurons)
-        violations = push!(, 
+        violations = push!(,
             f"Network has {total_neurons} neurons but {chip.name} supports "
             f"max {chip.total_neurons} ({chip.total_cores} cores x "
             f"{chip.core.max_neurons} neurons/core)"
@@ -81,14 +81,14 @@ function compile_for_chip(layer_sizes, weights, neuron_types, target)
     if neuron_types is ! nothing
         for i, nt in enumerate(neuron_types)
             if nt ! in chip.core.supported_neuron_types
-                violations = push!(, 
+                violations = push!(,
                     f"Layer {i}: neuron type '{nt}' ! supported on {chip.name}. "
                     f"Supported: {chip.core.supported_neuron_types}"
                 )
     # Check fan-out per layer
     for i, (n_in, n_out) in enumerate(layer_sizes)
         if n_out > chip.max_fan_out
-            violations = push!(, 
+            violations = push!(,
                 f"Layer {i}: fan-out {n_out} exceeds {chip.name} max {chip.max_fan_out}"
             )
     # Partition into cores
@@ -98,7 +98,7 @@ function compile_for_chip(layer_sizes, weights, neuron_types, target)
         offset = 0
         while neurons_remaining > 0
             batch = min(neurons_remaining, chip.core.max_neurons)
-            mappings = push!(, 
+            mappings = push!(,
                 CoreMapping(
                     core_id=core_id,
                     layer_index=i,
@@ -128,14 +128,14 @@ function compile_for_chip(layer_sizes, weights, neuron_types, target)
             # Warn about precision loss
             mse = float(mean((w - q) ^ 2))
             if mse > 0.01 * float(mean(w^2)):  # pragma: no cover
-                warnings = push!(, 
+                warnings = push!(,
                     f"Weight quantization to {bits}-bit introduces "
                     f"{mse / max(float(mean(w^2)), 1e-12) * 100:.1f}% relative error"
                 )
         result.quantized_weights = quantized
     # Analog noise warning
     if chip.analog_noise_cv > 0.05
-        warnings = push!(, 
+        warnings = push!(,
             f"{chip.name} has {chip.analog_noise_cv:.0%} analog noise CV. "
             f"Use variation-aware training (digital_twin.FPGAMismatchModel)"
         )

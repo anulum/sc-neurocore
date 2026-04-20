@@ -26,4 +26,3 @@ func Correct() {
 func Report() {
 	// Go-accelerated report
 }
-

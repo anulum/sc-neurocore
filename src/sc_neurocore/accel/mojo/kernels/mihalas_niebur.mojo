@@ -33,4 +33,3 @@ fn reset() -> Int:
     var _reset_line = 'i1 = 0.0'
     var _reset_line = 'i2 = 0.0'
     return 0
-

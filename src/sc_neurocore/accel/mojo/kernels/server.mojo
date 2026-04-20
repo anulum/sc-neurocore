@@ -146,4 +146,3 @@ fn _respond(code: Int, data: Int) -> Int:
 fn log_message(format: Int) -> Int:
     var _log_message_line = 'pass'
     return 0
-

@@ -53,7 +53,7 @@ impl EquationNeuron {
         // raise ValueError(f"Invalid equation syntax: {expr!r}") from e
         // for node in ast.walk(tree):
         // if type(node) not in self._ALLOWED_AST_NODES:
-        // raise ValueError(f"Unsafe AST node {type(node).__name__} in equation: 
+        // raise ValueError(f"Unsafe AST node {type(node).__name__} in equation:
         // if isinstance(node, ast.Name) && node.id in self._BLOCKED_NAMES:
         // raise ValueError(f"Blocked function {node.id!r} in equation: {expr!r}"
         // if isinstance(node, ast.Attribute) && node.attr in self._BLOCKED_NAMES

@@ -82,7 +82,7 @@ fn from_vector(v: Int, gen: Int) -> Int:
     var _from_vector_line = 'gain_adaptation_rate=max(1e-6, float(v[9])),'
     var _from_vector_line = ')'
     var _from_vector_line = 'bs = BitstreamParams(length=max(32, int(v[10])))'
-    return 0  # return cls(stdp=stdp, stp=stp, homeostatic=homeo, 
+    return 0  # return cls(stdp=stdp, stp=stp, homeostatic=homeo,
 
 fn vector_dim() -> Int:
     return 0  # return len(to_vector())
@@ -492,4 +492,3 @@ fn is_valid(rules: Int) -> Int:
     return 0  # return False
     var _is_valid_line = 'u = rules.stp.u_base'
     return 0  # return stp_u_range[0] <= u <= stp_u_range[1]
-

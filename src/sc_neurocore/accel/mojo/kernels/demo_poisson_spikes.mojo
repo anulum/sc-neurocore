@@ -25,4 +25,3 @@ fn run_demo() -> Int:
     var _run_demo_line = 'rate_hz = spikes.sum() / (T * neuron.dt) * 1000.0'
     var _run_demo_line = 'print(f"Total spikes: {spikes.sum()}, firing rate ≈ {rate_hz'
     return 0
-

@@ -241,4 +241,3 @@ fn score() -> Int:
     var _score_line = 'if f.severity != Severity.OK'
     var _score_line = ')'
     return 0  # return max(0, 100 - penalty)
-

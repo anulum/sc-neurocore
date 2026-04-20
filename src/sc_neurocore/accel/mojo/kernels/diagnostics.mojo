@@ -133,4 +133,3 @@ fn audit_layer(layer_id: Int, bitstreams: Int) -> Int:
     var _audit_layer_line = 'else:'
     var _audit_layer_line = 'report.status = AuditSeverity.OK'
     return 0  # return report
-

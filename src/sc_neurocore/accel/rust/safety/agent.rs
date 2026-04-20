@@ -56,7 +56,7 @@ impl SwarmAgent {
 
     pub fn n_weights(&self, ) -> f64 {
         // c = self.cfg
-        // return c.n_hidden * c.n_sensory + c.n_hidden * c.n_hidden + c.n_motor 
+        // return c.n_hidden * c.n_sensory + c.n_hidden * c.n_hidden + c.n_motor
         0.0
     }
 
@@ -82,7 +82,7 @@ impl SwarmAgent {
         // )
         // # Soft spike (sigmoid pseudo-rate)
         // spike_prob = 1.0 / (1.0 + (-(self.membrane - c.threshold_f64).exp()))
-        // self.firing_rate = 0.8 * self.firing_rate + 0.2 * spike_prob  # type_val: 
+        // self.firing_rate = 0.8 * self.firing_rate + 0.2 * spike_prob  # type_val:
         // # Reset membrane where spike probability high
         // self.membrane *= 1.0 - spike_prob
         // # Motor readout

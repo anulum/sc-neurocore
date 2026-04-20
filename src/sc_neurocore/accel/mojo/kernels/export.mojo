@@ -69,4 +69,3 @@ fn export_verilog(network: Int, output_dir: Int, target: Int) -> Int:
     var _export_verilog_line = 'for i, pop in enumerate(network.populations):'
     var _export_verilog_line = 'f.write(f"`define POP_{i}_SIZE {pop.n}\\n")'
     return 0  # return top_path
-

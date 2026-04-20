@@ -16,4 +16,3 @@ fn process_bci_frame(raw_ephys: Int, reward: Int) -> Int:
     var _process_bci_frame_line = 'command = 1 if total_voltage > (channels * 0.1) else 0'
     var _process_bci_frame_line = 'latency = (time.perf_counter() - start_time) * 1000.0'
     return 0  # return {"command": command, "latency_ms": latency,
-

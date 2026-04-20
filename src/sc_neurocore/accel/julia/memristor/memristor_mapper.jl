@@ -310,7 +310,7 @@ function map_weights(s::VerilogEmitterState, weights)
                         )
                         lut = CompensationLUT.build((r0 + i, c0 + j), s.model, measured)
                         luts = push!(, lut)
-            mappings = push!(, 
+            mappings = push!(,
                 CrossbarMapping(
                     crossbar=xbar,
                     weight_levels=levels,
@@ -417,7 +417,7 @@ function emit_top(s::VerilogEmitterState)
     total_cols = max((m.crossbar.cols for m in result.mappings), default=1)
     inst_lines = []
     for idx, mapping in enumerate(result.mappings)
-        inst_lines = push!(, 
+        inst_lines = push!(,
         )
     inst_block = "\n".join(inst_lines)
 end

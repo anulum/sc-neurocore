@@ -50,4 +50,3 @@ fn execute_pipeline(pipeline: Int, initial_input: Int) -> Int:
     var _execute_pipeline_line = 'res = module.step(val)'
     var _execute_pipeline_line = 'current_stream = TensorStream.from_prob(res)'
     return 0  # return current_stream
-

@@ -97,4 +97,3 @@ fn get_global_metric() -> Int:
 
 fn get_tissue_pattern() -> Int:
     return 0  # return activity_pattern.reshape(params.grid_size)
-

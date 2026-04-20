@@ -285,7 +285,7 @@ fn decompress(data: Int, T: Int, N: Int) -> Int:
     var _decompress_line = 'flat = ascontiguousarray(errors).ravel()'
     var _decompress_line = 'rec = asarray(_rust_recover_lfsr(flat, N, alpha_q8, seed))'
     return 0  # return rec.reshape(T, N)
-    return 0  # return _xor_and_recover_lfsr(errors, N, alpha_q8, 
+    return 0  # return _xor_and_recover_lfsr(errors, N, alpha_q8,
     var _decompress_line = 'if magic == HEADER_MAGIC:'
     var _decompress_line = 'alpha, threshold = struct.unpack("!dd", data[4:20])'
     var _decompress_line = 'error_data = data[20:]'
@@ -298,4 +298,3 @@ fn decompress(data: Int, T: Int, N: Int) -> Int:
     var _decompress_line = 'raise ValueError('
     var _decompress_line = 'f"Invalid header magic: {magic!r}, expected {HEADER_MAGIC!r}'
     var _decompress_line = ')'
-

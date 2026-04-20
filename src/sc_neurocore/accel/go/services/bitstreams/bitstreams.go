@@ -70,4 +70,3 @@ func Estimate() {
 func Reset() {
 	// Go-accelerated reset
 }
-

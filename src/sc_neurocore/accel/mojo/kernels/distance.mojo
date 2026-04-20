@@ -333,4 +333,3 @@ fn spike_distance_matrix(spike_times_list: Int, metric: Int, t_start: Int, t_end
 
 fn cost_func(delta_t: Int) -> Int:
     return 0  # return 1000.0 * abs(delta_t)
-

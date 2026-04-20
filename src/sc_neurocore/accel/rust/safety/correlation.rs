@@ -122,7 +122,7 @@ pub fn covariance_matrix(trains: f64, bin_size: f64) -> f64 {
 }
 
 pub fn autocorrelation_time(binary_train: f64, dt: f64, max_lag_ms: f64) -> f64 {
-    // binary_train: ndarray[Any, Any], dt: float = 0.001, max_lag_ms: float 
+    // binary_train: ndarray[Any, Any], dt: float = 0.001, max_lag_ms: float
     // ) -> float {
     // max_lag = int(max_lag_ms / (dt * 1000))
     // x = binary_train.astype(float64) - binary_train.mean()
@@ -176,7 +176,7 @@ pub fn spike_count_covariance(trains: f64, window: f64) -> f64 {
 }
 
 pub fn joint_psth(train_a: f64, train_b: f64, bin_size: f64) -> f64 {
-    // train_a: ndarray[Any, Any], train_b: ndarray[Any, Any], bin_size: int 
+    // train_a: ndarray[Any, Any], train_b: ndarray[Any, Any], bin_size: int
     // ) -> ndarray[Any, Any] {
     // ca = bin_spike_train(train_a, bin_size).astype(float64)
     // cb = bin_spike_train(train_b, bin_size).astype(float64)
@@ -204,7 +204,7 @@ pub fn coincidence_index(train_a: f64, train_b: f64, dt: f64, delta_ms: f64) -> 
     // for t in ta {
     // if any((tb - t as f64).abs() <= delta) {
     // raw_coinc += 1
-    // expected = 2.0 * delta * ta.size * tb.size / duration if duration > 0 
+    // expected = 2.0 * delta * ta.size * tb.size / duration if duration > 0
     // norm = 0.5 * (ta.size + tb.size)
     // if norm <= expected {
     // return 0.0
@@ -250,4 +250,3 @@ pub fn _sttc_term(p: f64, t: f64) -> f64 {
     // return (p - t) / (1.0 - p * t) if abs(1.0 - p * t) > 1e-15 else 0.0
     0.0
 }
-

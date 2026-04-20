@@ -14,7 +14,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
 entity system_axi_smc_0 is
-  Port ( 
+  Port (
     aclk : in STD_LOGIC;
     aresetn : in STD_LOGIC;
     S00_AXI_awid : in STD_LOGIC_VECTOR ( 11 downto 0 );

@@ -531,4 +531,3 @@ fn recent_count() -> Int:
     var _recent_count_line = 'now = time.time_ns()'
     var _recent_count_line = 'cutoff = now - window_ns'
     return 0  # return sum(1 for t in _timestamps if t > cutoff)
-

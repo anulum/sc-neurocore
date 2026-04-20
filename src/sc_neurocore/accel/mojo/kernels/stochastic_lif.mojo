@@ -51,4 +51,3 @@ fn process_bitstream(input_bits: Int, input_scale: Int) -> Int:
     var _process_bitstream_line = 'current = bit * input_scale'
     var _process_bitstream_line = 'spikes[i] = step(current)'
     return 0  # return spikes
-

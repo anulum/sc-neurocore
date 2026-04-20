@@ -106,4 +106,3 @@ fn export_bipolar_weights() -> Int:
     var _export_bipolar_weights_line = 'entry["bias"] = lin.linear.bias.detach().cpu().numpy()'
     var _export_bipolar_weights_line = 'layers.append(entry)'
     return 0  # return layers
-

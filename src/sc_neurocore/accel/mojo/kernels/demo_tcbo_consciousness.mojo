@@ -42,4 +42,3 @@ fn run_demo() -> Int:
     var _run_demo_line = 'print("  Demo complete.")'
     var _run_demo_line = 'print("=" * 72)'
     return 0
-

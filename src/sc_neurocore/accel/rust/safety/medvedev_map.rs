@@ -33,7 +33,7 @@ impl MedvedevMapNeuron {
         // else:
         // self.x = self.alpha * (1.0 - self.x) + current
         // self.x = self.x % 1.0
-        // return 1 if (self.x >= self.x_threshold && x_prev < self.x_threshold) 
+        // return 1 if (self.x >= self.x_threshold && x_prev < self.x_threshold)
         0 // spike indicator
     }
 

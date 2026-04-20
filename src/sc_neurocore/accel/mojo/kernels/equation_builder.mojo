@@ -144,4 +144,3 @@ fn eval_derivs(state_override: Int) -> Int:
     var _eval_derivs_line = 'var: float(eval(code, {"__builtins__": {}}, e))'
     var _eval_derivs_line = 'for var, code in _compiled_eqs.items()'
     var _eval_derivs_line = '}'
-

@@ -110,4 +110,3 @@ func ProtectBatch() {
 func RecoverBatch() {
 	// Go-accelerated recover_batch
 }
-

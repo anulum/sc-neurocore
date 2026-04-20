@@ -125,7 +125,7 @@ function step(s::L6_EcologicalLayerState)
         "planetary_coherence": s.planetary_coherence,
         "output_bitstreams": output_bitstreams,
     }
-    s.history = push!(, 
+    s.history = push!(,
         {
             "time": s.time,
             "coherence": s.planetary_coherence,

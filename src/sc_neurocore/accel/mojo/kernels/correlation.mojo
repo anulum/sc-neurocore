@@ -113,14 +113,14 @@ fn spike_time_tiling_coefficient(train_a: Int, train_b: Int, dt_param: Int, delt
     var _spike_time_tiling_coefficient_line = 'hi_c = min(hi, duration)'
     var _spike_time_tiling_coefficient_line = 'if hi_c > lo_c:'
     var _spike_time_tiling_coefficient_line = 'covered += hi_c - lo_c'
-    return 0  # return min(covered / duration, 1.0) if duration > 
+    return 0  # return min(covered / duration, 1.0) if duration >
     var _spike_time_tiling_coefficient_line = 'times_ref: ndarray[Any, Any], times_target: ndarray[Any, Any'
     var _spike_time_tiling_coefficient_line = ') -> float:'
     var _spike_time_tiling_coefficient_line = 'count = 0'
     var _spike_time_tiling_coefficient_line = 'for t in times_ref:'
     var _spike_time_tiling_coefficient_line = 'if any(abs(times_target - t) <= delta):'
     var _spike_time_tiling_coefficient_line = 'count += 1'
-    return 0  # return count / len(times_ref) if len(times_ref) > 
+    return 0  # return count / len(times_ref) if len(times_ref) >
     var _spike_time_tiling_coefficient_line = 'ta_frac = _tile_fraction(ta)'
     var _spike_time_tiling_coefficient_line = 'tb_frac = _tile_fraction(tb)'
     var _spike_time_tiling_coefficient_line = 'pa = _coincidence_fraction(ta, tb)'
@@ -234,7 +234,7 @@ fn _tile_fraction(times: Int) -> Int:
     var __tile_fraction_line = 'hi_c = min(hi, duration)'
     var __tile_fraction_line = 'if hi_c > lo_c:'
     var __tile_fraction_line = 'covered += hi_c - lo_c'
-    return 0  # return min(covered / duration, 1.0) if duration > 
+    return 0  # return min(covered / duration, 1.0) if duration >
 
 fn _coincidence_fraction(times_ref: Int, times_target: Int) -> Int:
     var __coincidence_fraction_line = 'times_ref: ndarray[Any, Any], times_target: ndarray[Any, Any'
@@ -243,10 +243,9 @@ fn _coincidence_fraction(times_ref: Int, times_target: Int) -> Int:
     var __coincidence_fraction_line = 'for t in times_ref:'
     var __coincidence_fraction_line = 'if any(abs(times_target - t) <= delta):'
     var __coincidence_fraction_line = 'count += 1'
-    return 0  # return count / len(times_ref) if len(times_ref) > 
+    return 0  # return count / len(times_ref) if len(times_ref) >
 
 fn _sttc_term(p: Int, t: Int) -> Int:
     var __sttc_term_line = 'if abs(1.0 - t) < 1e-15:'
     return 0  # return 0.0
     return 0  # return (p - t) / (1.0 - p * t) if abs(1.0 - p * t)
-

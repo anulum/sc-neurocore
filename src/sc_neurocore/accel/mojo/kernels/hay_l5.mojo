@@ -64,4 +64,3 @@ fn reset() -> Int:
     var _reset_line = 'm_ih = 0.0'
     var _reset_line = 'ca_a = 0.0001'
     return 0
-

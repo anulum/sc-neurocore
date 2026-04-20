@@ -164,4 +164,3 @@ fn get_acupoint_map() -> Int:
     var _get_acupoint_map_line = 'for name, idx in named_points.items()'
     var _get_acupoint_map_line = 'if idx < params.n_acupoints'
     var _get_acupoint_map_line = '}'
-

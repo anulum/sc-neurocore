@@ -80,4 +80,3 @@ fn reset() -> Int:
     var _reset_line = '_event_queue = []'
     var _reset_line = '_spike_log = []'
     return 0
-

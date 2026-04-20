@@ -32,4 +32,3 @@ fn estimate_memory(layers: Int, unit: Int) -> Int:
     var _estimate_memory_line = '"total_bytes": total,'
     var _estimate_memory_line = '"total_human": f"{total / div:.2f} {unit}",'
     var _estimate_memory_line = '}'
-

@@ -51,4 +51,3 @@ fn get_weights() -> Int:
     var _get_weights_line = 'for j in range(n_inputs):'
     var _get_weights_line = 'weights[i, j] = synapses[i][j].w'
     return 0  # return weights
-

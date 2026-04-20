@@ -25,4 +25,3 @@ fn secure_sum_protocol(client_gradients: Int) -> Int:
     var _secure_sum_protocol_line = '# This is strictly not a bitstream anymore but a discretized'
     var _secure_sum_protocol_line = 'stack = stack(client_gradients, axis=0)'
     return 0  # return sum(stack, axis=0)
-

@@ -77,7 +77,7 @@ impl EpropTrainer {
         // new_spikes = (self._v >= self.threshold).astype(np.float64)
         // self._v -= new_spikes * self.threshold
         // # Surrogate gradient: pseudo-derivative of spike function
-        // pseudo_deriv = 1.0 / (1.0 + (self._v - self.threshold_f64).abs() * 5) 
+        // pseudo_deriv = 1.0 / (1.0 + (self._v - self.threshold_f64).abs() * 5)
         // # Update eligibility traces (low-pass filtered outer products)
         // self._trace_in = kappa * self._trace_in + np.outer(pseudo_deriv, x)
         // self._trace_rec = kappa * self._trace_rec + np.outer(pseudo_deriv, sel

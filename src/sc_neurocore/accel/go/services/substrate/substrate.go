@@ -38,4 +38,3 @@ func SpikeHistory() {
 func EeWeights() {
 	// Go-accelerated ee_weights
 }
-

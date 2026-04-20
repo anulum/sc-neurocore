@@ -962,22 +962,22 @@ output bit M_AXI_GP0_RREADY
 
    export "DPI-C" function ps7_set_output_pins_FCLK_RESET0_N;
    function void ps7_set_output_pins_FCLK_RESET0_N(int value);
-       FCLK_RESET0_N = value; 
+       FCLK_RESET0_N = value;
    endfunction
 
    export "DPI-C" function ps7_set_output_pins_FCLK_RESET1_N;
    function void ps7_set_output_pins_FCLK_RESET1_N(int value);
-       FCLK_RESET1_N = value; 
+       FCLK_RESET1_N = value;
    endfunction
 
    export "DPI-C" function ps7_set_output_pins_FCLK_RESET2_N;
    function void ps7_set_output_pins_FCLK_RESET2_N(int value);
-       FCLK_RESET2_N = value; 
+       FCLK_RESET2_N = value;
    endfunction
 
    export "DPI-C" function ps7_set_output_pins_FCLK_RESET3_N;
    function void ps7_set_output_pins_FCLK_RESET3_N(int value);
-       FCLK_RESET3_N = value; 
+       FCLK_RESET3_N = value;
    endfunction
 
 
@@ -1114,4 +1114,3 @@ always@(posedge M_AXI_GP0_ACLK)
    end
 
 endmodule
-

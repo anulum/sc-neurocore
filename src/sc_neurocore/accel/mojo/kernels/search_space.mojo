@@ -88,4 +88,3 @@ fn space_size() -> Int:
     var _space_size_line = 'for n in range(min_layers, max_layers + 1):'
     var _space_size_line = 'total += per_layer**n'
     return 0  # return total
-

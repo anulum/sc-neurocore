@@ -26,4 +26,3 @@ fn reset() -> Int:
     var _reset_line = 'x = 1.0'
     var _reset_line = 'u = u_se'
     return 0
-

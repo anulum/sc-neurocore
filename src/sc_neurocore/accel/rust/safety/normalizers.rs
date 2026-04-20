@@ -38,7 +38,7 @@ impl TemporalAccumulatedBN {
         // mean = self.running_mean
         // var = self.running_var
         // x_norm = (x - mean) / (var + self.eps_f64).sqrt()
-        // result: np.ndarray[Any, Any] = self.gamma * x_norm * self.threshold + 
+        // result: np.ndarray[Any, Any] = self.gamma * x_norm * self.threshold +
         // return result
         0.0
     }

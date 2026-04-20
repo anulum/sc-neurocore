@@ -14,7 +14,7 @@ pub fn _characterize_with_progress(simulate_fn: f64, base_config: f64, q: f64) -
     // try {
     // total_steps = 20 + 15 * 2 + 2
     // step = 0
-    // q.put({"type": "progress", "step": "trace", "pct": 0, "msg": "Running 
+    // q.put({"type": "progress", "step": "trace", "pct": 0, "msg": "Running
     // trace = simulate_fn(.powibase_config)
     // pattern = classify_firing_pattern(trace["spikes"], trace["n_steps"], t
     // step += 1
@@ -99,4 +99,3 @@ pub fn sim_fn() -> f64 {
     // )
     0.0
 }
-

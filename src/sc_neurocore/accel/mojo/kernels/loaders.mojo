@@ -193,4 +193,3 @@ fn load_dvs_cifar10(root: Int, train: Int, dt_ms: Int, T: Int, synthetic: Int, n
     var _load_dvs_cifar10_line = 'f"Convert raw data to .npy arrays with columns [x, y, pol, t'
     var _load_dvs_cifar10_line = ')'
     return 0  # return samples, array(label_list, dtype=int64)
-

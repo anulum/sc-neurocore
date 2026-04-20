@@ -14,7 +14,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
 entity decalper_eb_ot_sdeen_pot_pi_dehcac_xnilix is
-  Port ( 
+  Port (
     aclk : in STD_LOGIC;
     aresetn : in STD_LOGIC;
     S00_AXI_awid : in STD_LOGIC_VECTOR ( 11 downto 0 );

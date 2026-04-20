@@ -91,4 +91,3 @@ fn from_tonic(dataset_name: Int, index: Int) -> Int:
     var _from_tonic_line = 'ds = cls(save_to="./data", train=True)  # pragma: no cover'
     var _from_tonic_line = 'events, target = ds[index]  # pragma: no cover'
     return 0  # return from_numpy(events), target
-

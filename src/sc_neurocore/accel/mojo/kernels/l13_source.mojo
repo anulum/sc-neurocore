@@ -37,4 +37,3 @@ fn get_metrics() -> Int:
     var _get_metrics_line = '"vacuum_potential": float(jmean(vacuum_state)),'
     var _get_metrics_line = '"fisher_information_metric": float(jmean(fim_density)),'
     var _get_metrics_line = '}'
-

@@ -28,7 +28,7 @@ This document contains automated hardware profiling results evaluating the `auto
 **Performance Analysis / Surrogate Autograd vs Native WGSL**:
 The numbers show WGPU is slower than Torch CUDA (expected — WGPU is general-purpose, has extra host/device copies). WGPU is an explicitly *pure-Rust GPU for cross-platform edge deployment, not primary training accelerator*. On this GTX 1060, Torch GPU backprop is 25-40x faster than the Rust wgpu path for 50 M nodes, demonstrating that Torch remains the primary training accelerator while wgpu targets cross-platform edge deployment.
 
-At the 1M parameter scale, PyTorch’s deeply optimized C++ Tensor cores operate the biological trace operations in *1.63 ms*. This is heavily optimized for workstation GPU environments where memory is directly bound into PyTorch Tensors natively. 
+At the 1M parameter scale, PyTorch’s deeply optimized C++ Tensor cores operate the biological trace operations in *1.63 ms*. This is heavily optimized for workstation GPU environments where memory is directly bound into PyTorch Tensors natively.
 
 In contrast, our `rust-wgpu` backend performs the exact same mathematical operations explicitly in native Rust via cross-platform Vulkan/WGSL bindings at *166.2 ms / step* natively. While this is sequentially slower than Torch due to mapping standalone host memory (Python Numpy / standard buffers) continuously across the PCI-e bus inside the WGPU adapter, **it is executing entirely standalone without PyTorch being installed**, making massive plasticity scalable entirely down to edge AI deployment targets like Apple Silicon, Qualcomm GPUs, and discrete compute nodes mapping natively via WebGPU parameters implicitly mapped for analog stochastic resolutions!
 

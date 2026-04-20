@@ -72,7 +72,7 @@ function recommend(s::EncodingOptimizerState, data)
             info = 0.5
         base_score = score_fn(stats)
         final_score = 0.5 * base_score + 0.3 * info + 0.2 * (0.5 + 0.5 * sparsity)
-        recs = push!(, 
+        recs = push!(,
             EncodingRecommendation(
                 encoding=name,
                 score=float(clamp(final_score, 0, 1)),

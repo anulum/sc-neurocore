@@ -39,4 +39,3 @@ fn run_spatial_gen_demo() -> Int:
     var _run_spatial_gen_demo_line = 'ens.add_agent("Support", CognitiveOrchestrator())'
     var _run_spatial_gen_demo_line = 'ens.coordinated_mission("Navigation")'
     return 0
-

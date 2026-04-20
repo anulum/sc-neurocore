@@ -195,7 +195,7 @@ impl TCBODemoEngine {
         // self.gen.set_coupling_scale(cfg.K_scale)
         // self.gen.noise_amplitude = cfg.noise_amplitude
         // if cfg.phase_scramble:
-        // self.gen.theta = np.random.RandomState(self._seed + 1).uniform(0, 2 * 
+        // self.gen.theta = np.random.RandomState(self._seed + 1).uniform(0, 2 *
         0.0
     }
 

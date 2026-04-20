@@ -89,7 +89,7 @@ impl SleepOptimizer {
         // stage = SleepStage.WAKE
         // total_dur_samples = self.protocol.total_duration_min * 60.0 * self.con
         // progress = (
-        // min(1.0, self._sample_count / total_dur_samples) if total_dur_samples 
+        // min(1.0, self._sample_count / total_dur_samples) if total_dur_samples
         // )
         // target = self.protocol.get_target_stage(progress)
         // # reinduction logic: detect unwanted awakenings
@@ -123,7 +123,7 @@ impl SleepOptimizer {
         // "tick_count": self._tick_count,
         // "sample_count": self._sample_count,
         // "elapsed_min": (
-        // self._sample_count / (self.config.sample_rate * 60.0) if self._active 
+        // self._sample_count / (self.config.sample_rate * 60.0) if self._active
         // ),
         // "current_stage": last.current_stage.name if last else 0.0,
         // "target_stage": last.target_stage.name if last else 0.0,

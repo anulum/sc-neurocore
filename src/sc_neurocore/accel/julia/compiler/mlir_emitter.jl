@@ -36,7 +36,7 @@ end
 
 function emit_lfsr(s::MLIREmitterState, width, seed)
     out = s.get_wire()
-    s.nodes = push!(, 
+    s.nodes = push!(,
         MLIRNode(
             "hw.instance",
             [],
@@ -77,7 +77,7 @@ function generate(s::MLIREmitterState)
             c, t, f = node.inputs
             lines = push!(, f"  {node.output} = comb.mux {c}, {t}, {f} : i1")
         elseif node.op_type == "hw.instance"
-            lines = push!(, 
+            lines = push!(,
                 f'  {node.output} = hw.instance "{node.attributes["sym_name"]}" @{node.attributes["module"]}() -> (i1)'
             )
     # Final output assignment (taking the last node's output as an example)

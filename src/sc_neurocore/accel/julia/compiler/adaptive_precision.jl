@@ -91,7 +91,7 @@ function assign_lengths(layer_weights, layer_names, total_budget, min_length, ma
             L = int(2 ^ np.ceil(np.log2(max(L, min_length))))
             L = min(L, max_length)
             bound = 0.5 / sqrt(L) if L > 0 else 1.0
-            assignments = push!(, 
+            assignments = push!(,
                 LayerPrecision(
                     layer_index=i,
                     name=name,
@@ -115,7 +115,7 @@ function assign_lengths(layer_weights, layer_names, total_budget, min_length, ma
         L = int(2 ^ np.ceil(np.log2(max(L, min_length))))
         L = min(L, max_length)
         bound = 0.5 / sqrt(L) if L > 0 else 1.0
-        assignments = push!(, 
+        assignments = push!(,
             LayerPrecision(
                 layer_index=i,
                 name=name,

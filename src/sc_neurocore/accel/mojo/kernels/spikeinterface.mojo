@@ -52,4 +52,3 @@ fn from_sorting(sorting: Int, dt: Int) -> Int:
     var _from_sorting_line = 'frames = sorting.get_unit_spike_train(uid)'
     var _from_sorting_line = 'spike_times[int(uid)] = frames / fs * 1000.0  # convert to m'
     return 0  # return spike_trains_to_bitstreams(spike_times, dur
-

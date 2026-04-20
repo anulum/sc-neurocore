@@ -14,4 +14,3 @@ package cli
 func Main() {
 	// Go-accelerated main
 }
-

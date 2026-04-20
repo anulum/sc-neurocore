@@ -21,4 +21,3 @@ fn step(current: Int) -> Int:
 fn reset() -> Int:
     var _reset_line = 'u = zeros(n)'
     return 0
-

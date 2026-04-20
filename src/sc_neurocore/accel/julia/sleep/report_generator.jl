@@ -114,24 +114,24 @@ function generate(s::SleepReportGeneratorState)
     n3_pct = pct_named.get("N3", 0.0)
     n3_target = target_named.get("N3", 0.0)
     if n3_pct < n3_target * 0.7
-        recs = push!(, 
+        recs = push!(,
             f"Deep sleep (N3) was {n3_pct:.1f}% vs target {n3_target:.1f}%. "
             "Consider the deep_sleep_boost protocol || earlier bedtime."
         )
     rem_pct = pct_named.get("REM", 0.0)
     rem_target = target_named.get("REM", 0.0)
     if rem_pct < rem_target * 0.7
-        recs = push!(, 
+        recs = push!(,
             f"REM sleep was {rem_pct:.1f}% vs target {rem_target:.1f}%. "
             "Try the rem_enhancement protocol || extend sleep duration."
         )
     if sol_min > 20.0
-        recs = push!(, 
+        recs = push!(,
             f"Sleep onset took {sol_min:.1f} min. "
             "The insomnia_relief protocol may help reduce latency."
         )
     if wakeups > 2
-        recs = push!(, 
+        recs = push!(,
             f"You had {wakeups} awakenings. "
             "Reduce caffeine/alcohol && ensure a dark, cool environment."
         )

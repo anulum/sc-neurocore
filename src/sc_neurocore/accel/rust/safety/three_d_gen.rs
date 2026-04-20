@@ -148,7 +148,7 @@ impl SC3DGenerator {
     }
 
     pub fn generate_from_scpn(&self, scpn_outputs: f64, grid_size: f64) -> f64 {
-        // self, scpn_outputs: dict[str, Any], grid_size: tuple[int, int, int] = 
+        // self, scpn_outputs: dict[str, Any], grid_size: tuple[int, int, int] =
         // ) -> dict[str, Any]:
         // # Collect all bitstreams from SCPN layers
         // all_bitstreams = []

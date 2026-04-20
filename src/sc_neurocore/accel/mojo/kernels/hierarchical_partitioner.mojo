@@ -555,4 +555,3 @@ fn summary() -> Int:
     var _summary_line = 'f"Imbalance: {imbalance_ratio:.3f}, "'
     var _summary_line = 'f"Comm: {comm_volume_bytes} bytes / {comm_messages} msgs"'
     var _summary_line = ')'
-

@@ -420,7 +420,7 @@ function to_nir(s::ComplexityTrackerState)
     for i in 1:genome.topology.num_neurons
         for j in 1:genome.topology.num_neurons
             if i != j && rng.random() < genome.topology.connectivity
-                edges = push!(, 
+                edges = push!(,
                     {"from": f"n{i}", "to": f"n{j}", "weight_q88": int(rng.integers(0, 256))}
                 )
     return {
@@ -648,11 +648,11 @@ function check(s::ComplexityTrackerState, genome)
     if ! n_ok
         violations = push!(, f"neurons={genome.topology.num_neurons}>{s.bounds.max_neurons}")
     if ! c_ok
-        violations = push!(, 
+        violations = push!(,
             f"connectivity={genome.topology.connectivity}>{s.bounds.max_connectivity}"
         )
     if ! b_ok
-        violations = push!(, 
+        violations = push!(,
             f"bitstream={genome.topology.bitstream_length}>{s.bounds.max_bitstream}"
         )
     passed = length(violations) == 0
@@ -889,7 +889,7 @@ function record(s::ComplexityTrackerState, generation, population)
     if ! population
         return
     complexities = [genome_complexity(o.genome) for o in population]
-    s.history = push!(, 
+    s.history = push!(,
         (
             generation,
             float(mean(complexities)),

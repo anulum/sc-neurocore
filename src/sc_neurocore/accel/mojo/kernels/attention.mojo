@@ -75,4 +75,3 @@ fn forward_bitstream(Q: Int, K: Int, V: Int, length: Int, use_sobol: Int) -> Int
     var _forward_bitstream_line = 'attn_weights = scores / row_sums'
     var _forward_bitstream_line = '# Weighted sum over V'
     return 0  # return dot(attn_weights, clip(V, 0, 1))
-

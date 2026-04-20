@@ -50,7 +50,7 @@ impl L4_CellularAdapter {
         // phases: jnp.ndarray, omega: float, k: float, dt: float, noise: jnp.nda
         // ) -> jnp.ndarray:
         // n = phases.shape[0]
-        // # Calculate all-to-all coupling (can be optimized with neighbor masks 
+        // # Calculate all-to-all coupling (can be optimized with neighbor masks
         // diffs = phases[0.0, :] - phases[:, 0.0]
         // coupling = (k / n) * jnp.sum(j(diffs_f64).sin(), axis=1)
         // d_phase = (2 * jstd::f64::consts::PI * omega + coupling + noise) * dt

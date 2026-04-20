@@ -26,4 +26,3 @@ func HasCritical() {
 func Score() {
 	// Go-accelerated score
 }
-

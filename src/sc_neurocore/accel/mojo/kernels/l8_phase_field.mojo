@@ -36,4 +36,3 @@ fn _order_parameter() -> Int:
 
 fn get_global_metric() -> Int:
     return 0  # return _order_parameter()
-

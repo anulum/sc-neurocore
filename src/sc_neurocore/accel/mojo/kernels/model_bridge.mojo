@@ -57,4 +57,3 @@ fn export_to_numpy(layers: Int) -> Int:
     var _export_to_numpy_line = 'elif hasattr(layer, "weights"):'
     var _export_to_numpy_line = 'state[f"{name}.weight"] = layer.weights'
     return 0  # return state
-

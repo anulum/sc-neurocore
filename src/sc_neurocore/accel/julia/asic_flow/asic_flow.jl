@@ -298,7 +298,7 @@ end
 function generate(s::TapeOutChecklistState)
     lines = [f"# IO Constraints for {design.top_module}"]
     for pin in pins
-        lines = push!(, 
+        lines = push!(,
             f"place_pin -pin_name {pin.name} -layer {pin.layer} "
             f"-location {{{pin.offset_um} 0}} -side {pin.side}"
         )

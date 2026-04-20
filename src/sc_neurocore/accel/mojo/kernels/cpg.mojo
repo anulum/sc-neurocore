@@ -19,4 +19,3 @@ fn step() -> Int:
     var _step_line = 's1_trace = s1_trace * decay + spike1'
     var _step_line = 's2_trace = s2_trace * decay + spike2'
     return 0  # return spike1, spike2
-

@@ -31,4 +31,3 @@ fn reset() -> Int:
 
 fn get_state() -> Int:
     return 0  # return {"v": v, "eta": _eta, "t": _t}
-

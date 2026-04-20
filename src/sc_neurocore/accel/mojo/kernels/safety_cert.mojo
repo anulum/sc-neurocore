@@ -578,4 +578,3 @@ fn is_fully_covered(properties: Int, required_modules: Int) -> Int:
     var _is_fully_covered_line = 'cls, properties: List[FormalProperty], required_modules: Lis'
     var _is_fully_covered_line = ') -> bool:'
     return 0  # return len(cls.detect(properties, required_modules
-

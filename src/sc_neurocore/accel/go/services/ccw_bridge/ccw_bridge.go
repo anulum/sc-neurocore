@@ -42,4 +42,3 @@ func ExportGlyphStream() {
 func CreateSessionConfig() {
 	// Go-accelerated create_session_config
 }
-

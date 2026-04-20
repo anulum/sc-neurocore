@@ -11,7 +11,7 @@
 assign CAN0_PHY_TX = 0;
 assign CAN1_PHY_TX = 0;
 always @(CAN0_PHY_RX or CAN1_PHY_RX)
-begin 
+begin
  if(CAN0_PHY_RX | CAN1_PHY_RX)
   $display("[%0d] : %0s : CAN Interface is not supported.",$time, DISP_ERR);
 end
@@ -36,11 +36,11 @@ assign ENET0_PTP_SYNC_FRAME_TX = 0;
 assign ENET0_SOF_RX = 0;
 assign ENET0_SOF_TX = 0;
 assign ENET0_GMII_TXD = 0;
-always@(ENET0_GMII_COL or ENET0_GMII_CRS or ENET0_EXT_INTIN or 
+always@(ENET0_GMII_COL or ENET0_GMII_CRS or ENET0_EXT_INTIN or
         ENET0_GMII_RX_CLK or ENET0_GMII_RX_DV or ENET0_GMII_RX_ER or
         ENET0_GMII_TX_CLK or ENET0_MDIO_I or ENET0_GMII_RXD)
-begin 
- if(ENET0_GMII_COL | ENET0_GMII_CRS | ENET0_EXT_INTIN | 
+begin
+ if(ENET0_GMII_COL | ENET0_GMII_CRS | ENET0_EXT_INTIN |
         ENET0_GMII_RX_CLK | ENET0_GMII_RX_DV | ENET0_GMII_RX_ER |
         ENET0_GMII_TX_CLK | ENET0_MDIO_I )
   $display("[%0d] : %0s : ETHERNET Interface is not supported.",$time, DISP_ERR);
@@ -62,11 +62,11 @@ assign ENET1_PTP_SYNC_FRAME_TX = 0;
 assign ENET1_SOF_RX = 0;
 assign ENET1_SOF_TX = 0;
 assign ENET1_GMII_TXD = 0;
-always@(ENET1_GMII_COL or ENET1_GMII_CRS or ENET1_EXT_INTIN or 
+always@(ENET1_GMII_COL or ENET1_GMII_CRS or ENET1_EXT_INTIN or
         ENET1_GMII_RX_CLK or ENET1_GMII_RX_DV or ENET1_GMII_RX_ER or
         ENET1_GMII_TX_CLK or ENET1_MDIO_I or ENET1_GMII_RXD)
-begin 
- if(ENET1_GMII_COL | ENET1_GMII_CRS | ENET1_EXT_INTIN | 
+begin
+ if(ENET1_GMII_COL | ENET1_GMII_CRS | ENET1_EXT_INTIN |
         ENET1_GMII_RX_CLK | ENET1_GMII_RX_DV | ENET1_GMII_RX_ER |
         ENET1_GMII_TX_CLK | ENET1_MDIO_I )
   $display("[%0d] : %0s : ETHERNET Interface is not supported.",$time, DISP_ERR);
@@ -272,7 +272,7 @@ always@(SRAM_INTIN)
 begin
  if(SRAM_INTIN)
   $display("[%0d] : %0s : SRAM_INTIN is not supported.",$time, DISP_ERR);
-end 
+end
 
 /* ------------------------------------------- */
 /* DMA  */
@@ -325,7 +325,7 @@ end
 assign FTMT_F2P_TRIGACK = 0;
 assign FTMT_P2F_TRIG = 0;
 assign FTMT_P2F_DEBUG = 0;
-always@(FTMD_TRACEIN_DATA or FTMD_TRACEIN_VALID or FTMD_TRACEIN_CLK or 
+always@(FTMD_TRACEIN_DATA or FTMD_TRACEIN_VALID or FTMD_TRACEIN_CLK or
         FTMD_TRACEIN_ATID or FTMT_F2P_TRIG or FTMT_F2P_DEBUG or FTMT_P2F_TRIGACK)
 begin
  if(FTMD_TRACEIN_DATA | FTMD_TRACEIN_VALID | FTMD_TRACEIN_CLK | FTMD_TRACEIN_ATID | FTMT_F2P_TRIG | FTMT_F2P_DEBUG | FTMT_P2F_TRIGACK)
@@ -337,7 +337,7 @@ end
 /* ------------------------------------------- */
 
 assign EVENT_EVENTO = 0;
-assign EVENT_STANDBYWFE = 0;  
+assign EVENT_STANDBYWFE = 0;
 assign EVENT_STANDBYWFI = 0;
 always@(EVENT_EVENTI)
 begin
@@ -383,7 +383,7 @@ end
 
 always@(Core0_nFIQ or Core0_nIRQ or Core1_nFIQ or Core1_nIRQ )
 begin
- if(Core0_nFIQ | Core0_nIRQ | Core1_nFIQ | Core1_nIRQ) 
+ if(Core0_nFIQ | Core0_nIRQ | Core1_nFIQ | Core1_nIRQ)
   $display("[%0d] : %0s : CORE FIQ,IRQ is not supported.",$time, DISP_ERR);
 end
 

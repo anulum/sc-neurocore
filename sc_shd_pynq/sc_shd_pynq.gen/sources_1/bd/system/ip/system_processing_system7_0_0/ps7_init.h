@@ -109,9 +109,8 @@ char* getPS7MessageInfo(unsigned key);
 void perf_start_clock(void);
 void perf_disable_clock(void);
 void perf_reset_clock(void);
-void perf_reset_and_start_timer(); 
-int get_number_of_cycles_for_delay(unsigned int delay); 
+void perf_reset_and_start_timer();
+int get_number_of_cycles_for_delay(unsigned int delay);
 #ifdef __cplusplus
 }
 #endif
-

@@ -295,7 +295,7 @@ end
 function _emit_routing_table(s::PartitionAssignmentState, table, die)
     entries_sv = []
     for e in table.entries
-        entries_sv = push!(, 
+        entries_sv = push!(,
             f"        rt_target_die[{e.src_neuron}]    = {e.dst_die};\n"
             f"        rt_target_neuron[{e.src_neuron}] = {e.dst_neuron};\n"
             f"        rt_weight[{e.src_neuron}]        = 16'sd{e.weight_q88};"
@@ -307,7 +307,7 @@ end
 function _emit_top(s::PartitionAssignmentState, topo)
     die_insts = []
     for die in topo.dies
-        die_insts = push!(, 
+        die_insts = push!(,
             f"    // Die {die.die_id}\n"
             f"    sc_chiplet_die_{die.die_id} die_{die.die_id}_inst (\n"
             f"        .clk(clk), .rst_n(rst_n)\n"
@@ -316,7 +316,7 @@ function _emit_top(s::PartitionAssignmentState, topo)
         )
     bridge_insts = []
     for link in topo.links
-        bridge_insts = push!(, 
+        bridge_insts = push!(,
             f"    // Bridge {link.src_die} → {link.dst_die} ({link.technology.value})\n"
             f"    sc_chiplet_bridge_{link.src_die}_to_{link.dst_die} bridge_{link.src_die}_{link.dst_die}_inst (\n"
             f"        .src_clk(clk), .src_rst(!rst_n),\n"
@@ -336,7 +336,7 @@ function _emit_constraints(s::PartitionAssignmentState, topo)
     ]
     for die in topo.dies
         lines = push!(, f"# Die {die.die_id}: {die.clock_mhz} MHz")
-        lines = push!(, 
+        lines = push!(,
             f"create_clock -name clk_die_{die.die_id} "
             f"-period {die.clock_period_ns:.3f} "
             f"[get_pins die_{die.die_id}_inst/clk]"
@@ -344,7 +344,7 @@ function _emit_constraints(s::PartitionAssignmentState, topo)
     lines = push!(, "")
     for link in topo.links
         lines = push!(, f"# Link {link.src_die} → {link.dst_die}: {link.latency_ns} ns")
-        lines = push!(, 
+        lines = push!(,
             f"set_max_delay -from [get_clocks clk_die_{link.src_die}] "
             f"-to [get_clocks clk_die_{link.dst_die}] {link.latency_ns}"
         )

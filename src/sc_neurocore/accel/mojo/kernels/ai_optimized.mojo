@@ -146,4 +146,3 @@ fn reset() -> Int:
     var _reset_line = 'error_trace = 0.0'
     var _reset_line = 'expected_reward = 0.0'
     return 0
-

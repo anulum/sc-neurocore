@@ -20,4 +20,3 @@ fn apply(rates: Int) -> Int:
 
 fn winners(rates: Int) -> Int:
     return 0  # return argsort(rates)[-k :][::-1]
-

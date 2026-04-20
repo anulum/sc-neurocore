@@ -54,4 +54,3 @@ fn get_metrics() -> Int:
     var _get_metrics_line = '"routing_coherence": float(jabs(jmean(jexp(1j * node_phases)'
     var _get_metrics_line = '"metatron_stability": float(jmean(jcos(node_phases))),'
     var _get_metrics_line = '}'
-

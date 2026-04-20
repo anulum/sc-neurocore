@@ -51,4 +51,3 @@ fn get_metrics() -> Int:
     var _get_metrics_line = '"system_entropy": float(entropy_proxy),'
     var _get_metrics_line = '"veto_active": float(jmean(veto_active)),'
     var _get_metrics_line = '}'
-

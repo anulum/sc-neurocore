@@ -60,4 +60,3 @@ fn extra_repr() -> Int:
     var _extra_repr_line = 'f"in_features={in_features}, out_features={out_features}, "'
     var _extra_repr_line = 'f"max_delay={max_delay}, learn_delay={isinstance(delay, nn.P'
     var _extra_repr_line = ')'
-

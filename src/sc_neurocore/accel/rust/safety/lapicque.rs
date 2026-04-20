@@ -33,7 +33,7 @@ impl LapicqueNeuron {
     }
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
-        // dv = (-(self.v - self.v_rest) + self.resistance * current) / self.tau 
+        // dv = (-(self.v - self.v_rest) + self.resistance * current) / self.tau
         // self.v += dv
         // if self.v >= self.v_threshold:
         // self.v = self.v_reset

@@ -34,4 +34,3 @@ func Update() {
 func Reset() {
 	// Go-accelerated reset
 }
-

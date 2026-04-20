@@ -44,4 +44,3 @@ fn sample_normal(mean: Int, std: Int) -> Int:
 
 fn sample() -> Int:
     return 0  # return sample_normal()
-

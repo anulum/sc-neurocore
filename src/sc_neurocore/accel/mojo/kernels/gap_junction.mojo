@@ -19,4 +19,3 @@ fn current_matrix(voltages: Int, adjacency: Int) -> Int:
     var _current_matrix_line = 'dv_matrix = voltages[newaxis, :] - voltages[:, newaxis]  # d'
     var _current_matrix_line = 'currents = conductance * dv_matrix * adjacency'
     return 0  # return currents.sum(axis=1)
-

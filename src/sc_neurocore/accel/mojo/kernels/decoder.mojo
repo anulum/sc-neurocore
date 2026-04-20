@@ -12,7 +12,7 @@ fn _recent_trains(n_neurons: Int, window: Int) -> Int:
     return 0  # return []
     var __recent_trains_line = 'recent = history[-window:]'
     var __recent_trains_line = 'n = min(n_neurons, substrate.n_cortical)'
-    return 0  # return [array([h[i] for h in recent], dtype=int8) 
+    return 0  # return [array([h[i] for h in recent], dtype=int8)
 
 fn extract_dominant_patterns(n_components: Int) -> Int:
     var _extract_dominant_patterns_line = 'trains = _recent_trains()'
@@ -79,4 +79,3 @@ fn generate_priming_context() -> Int:
     var _generate_priming_context_line = 'w_std = float(ee_weights.std())'
     var _generate_priming_context_line = 'lines.append(f"E-E weights: mean={w_mean:.4f}, std={w_std:.4'
     return 0  # return " ".join(lines)
-

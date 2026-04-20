@@ -23,4 +23,3 @@ fn build_knm_matrix(n_layers: Int) -> Int:
     var _build_knm_matrix_line = 'K = 0.5 * (K + K.T)  # type: ignore[assignment]'
     var _build_knm_matrix_line = 'fill_diagonal(K, 0.0)'
     return 0  # return K
-

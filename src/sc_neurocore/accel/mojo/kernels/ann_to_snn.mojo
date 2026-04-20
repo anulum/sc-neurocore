@@ -103,4 +103,3 @@ fn classify(x: Int) -> Int:
 fn hook_fn(module: Int, inp: Int, out: Int) -> Int:
     var _hook_fn_line = 'activations.append(out.detach().cpu())'
     return 0
-

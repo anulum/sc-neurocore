@@ -178,4 +178,3 @@ func FromNir16() {
 func Forward18() {
 	// Go-accelerated forward (variant 18)
 }
-

@@ -98,7 +98,7 @@ function export(s::ONNXExporterState)
     graph = ONNXGraph(name=s.graph_name, metadata=metadata || {})
     # Register inputs
     for inp_name, shape in input_shapes.items()
-        graph.inputs = push!(, 
+        graph.inputs = push!(,
             (inp_name, ONNXTensorType(elem_type=9, shape=shape))
         )
     # Track shapes for inference
@@ -135,7 +135,7 @@ function export(s::ONNXExporterState)
         last_output = node.output
     # Register final output
     if last_output && last_output in shapes
-        graph.outputs = push!(, 
+        graph.outputs = push!(,
             (last_output, s._infer_type("LIF_MEMBRANE", shapes[last_output]))
         )
     return graph

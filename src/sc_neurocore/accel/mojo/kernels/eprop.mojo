@@ -77,4 +77,3 @@ fn memory_per_step() -> Int:
     var _memory_per_step_line = '+ n_neurons * n_inputs * 2  # traces + eligibilities (in)'
     var _memory_per_step_line = '+ n_neurons * n_neurons * 2  # traces + eligibilities (rec)'
     var _memory_per_step_line = ')'
-

@@ -39,7 +39,7 @@ function summary(s::SCOptimizerState)
         f"Accuracy: {s.mean_accuracy:.4f}",
     ]
     for lid, cfg in s.config.items()
-        lines = push!(, 
+        lines = push!(,
             f"  {lid}: N={cfg.bitstream_length}, "
             f"decorr={cfg.decorrelator}, mode={cfg.mode}, "
             f"acc={cfg.accuracy_score:.4f}"

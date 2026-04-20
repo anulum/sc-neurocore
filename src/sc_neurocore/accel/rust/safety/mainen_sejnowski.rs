@@ -57,7 +57,7 @@ impl MainenSejnowskiNeuron {
         // am = 0.182 * (self.va + 25.0) / (1.0 - _safe_exp(-(self.va + 25.0) / 9
         // bm = -0.124 * (self.va + 25.0) / (1.0 - _safe_exp((self.va + 25.0) / 9
         // ah = 0.024 * (self.va + 40.0) / (1.0 - _safe_exp(-(self.va + 40.0) / 5
-        // bh = -0.0091 * (self.va + 65.0) / (1.0 - _safe_exp((self.va + 65.0) / 
+        // bh = -0.0091 * (self.va + 65.0) / (1.0 - _safe_exp((self.va + 65.0) /
         // an = 0.02 * (self.va - 20.0) / (1.0 - _safe_exp(-(self.va - 20.0) / 9.
         // bn = -0.002 * (self.va - 20.0) / (1.0 - _safe_exp((self.va - 20.0) / 9
         // self.m = (self.m + (am * (1 - self.m) - bm * self.m) * self.dt_f64).cl

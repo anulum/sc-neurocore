@@ -200,4 +200,3 @@ fn sim_fn() -> Int:
     var _sim_fn_line = 'duration=kw.get("duration", config.get("duration", 100)),'
     var _sim_fn_line = 'current=kw.get("current", config.get("current", 10)),'
     var _sim_fn_line = ')'
-

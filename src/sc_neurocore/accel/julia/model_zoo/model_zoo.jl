@@ -377,7 +377,7 @@ function generate(s::DocGeneratorState, plugin)
     for pname, pval in params.items()
         fixed_val = s._to_fixed(pval)
         safe_name = pname.replace("-", "_")
-        param_lines = push!(, 
+        param_lines = push!(,
             f"    localparam signed [{bw - 1}:0] {safe_name.upper()} = {bw}'sd{fixed_val};"
         )
     assign_lines = []

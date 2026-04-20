@@ -72,20 +72,20 @@
 -------------------------------------------------------------------------------
 -- Naming Conventions:
 --      active low signals:                     "*_n"
---      clock signals:                          "clk", "clk_div#", "clk_#x" 
---      reset signals:                          "rst", "rst_n" 
---      generics:                               "C_*" 
---      user defined types:                     "*_TYPE" 
---      state machine next state:               "*_ns" 
---      state machine current state:            "*_cs" 
---      combinatorial signals:                  "*_com" 
---      pipelined or register delay signals:    "*_d#" 
+--      clock signals:                          "clk", "clk_div#", "clk_#x"
+--      reset signals:                          "rst", "rst_n"
+--      generics:                               "C_*"
+--      user defined types:                     "*_TYPE"
+--      state machine next state:               "*_ns"
+--      state machine current state:            "*_cs"
+--      combinatorial signals:                  "*_com"
+--      pipelined or register delay signals:    "*_d#"
 --      counter signals:                        "*cnt*"
---      clock enable signals:                   "*_ce" 
+--      clock enable signals:                   "*_ce"
 --      internal version of output port         "*_i"
---      device pins:                            "*_pin" 
---      ports:                                  - Names begin with Uppercase 
---      processes:                              "*_PROCESS" 
+--      device pins:                            "*_pin"
+--      ports:                                  - Names begin with Uppercase
+--      processes:                              "*_PROCESS"
 --      component instantiations:               "<ENTITY_>I_<#|FUNC>
 -------------------------------------------------------------------------------
 library IEEE;
@@ -96,7 +96,7 @@ use IEEE.std_logic_arith.all;
 -------------------------------------------------------------------------------
 -- Definition of Generics:
 --          C_SIZE    -- Number of bits in counter
---                          
+--
 --
 -- Definition of Ports:
 --          Data       -- parallel data input
@@ -111,16 +111,16 @@ entity upcnt_n is
    generic(
            C_SIZE : Integer
           );
-      
+
 	port(
-	     Data    : in  STD_LOGIC_VECTOR (C_SIZE-1 downto 0); 
-	     Cnt_en  : in  STD_LOGIC;                            
-	     Load    : in  STD_LOGIC;                            
- 	     Clr     : in  STD_LOGIC;                            
-	     Clk     : in  STD_LOGIC;                            
+	     Data    : in  STD_LOGIC_VECTOR (C_SIZE-1 downto 0);
+	     Cnt_en  : in  STD_LOGIC;
+	     Load    : in  STD_LOGIC;
+ 	     Clr     : in  STD_LOGIC;
+	     Clk     : in  STD_LOGIC;
 	     Qout    : out STD_LOGIC_VECTOR (C_SIZE-1 downto 0)
 	    );
-		
+
 end upcnt_n;
 
 architecture imp of upcnt_n is
@@ -132,7 +132,7 @@ signal q_int : UNSIGNED (C_SIZE-1 downto 0) := (others => '1');
 begin
    process(Clk)
    begin
-	       
+
       if (Clk'event) and Clk = '1' then
           -- Clear output register
          if (Clr = CLEAR) then
@@ -150,7 +150,7 @@ begin
    Qout <= STD_LOGIC_VECTOR(q_int);
 
 end imp;
-  
+
 
 
 
@@ -351,9 +351,9 @@ begin
    -- Core_out <= core;
    -- Chip_out <= chip or sys;
    -- Sys_out  <= sys;
-   
+
 -------------------------------------------------------------------------------
--- This process remembers that the reset was caused be 
+-- This process remembers that the reset was caused be
 -- System_Reset_Req
 -------------------------------------------------------------------------------
   SYS_FROM_PROCESS: process (Slowest_sync_clk)
@@ -393,13 +393,13 @@ begin
   SEQ_CNT_EN_PROCESS: process (Slowest_sync_clk)
   begin
     if (Slowest_sync_clk'event and Slowest_sync_clk = '1') then
-      if (Lpf_reset='1'           --or 
+      if (Lpf_reset='1'           --or
           --System_Reset_Req_d3='1' or
-          --Chip_Reset_Req_d3='1'   or 
+          --Chip_Reset_Req_d3='1'   or
 	  --ris_edge = '1'
 	  ) then
         seq_cnt_en <= '1';
-      elsif  (Core='0') then              -- Core always present and always last 
+      elsif  (Core='0') then              -- Core always present and always last
         seq_cnt_en <= '0';
       end if;
     end if;
@@ -446,7 +446,7 @@ begin
   begin
     if (Slowest_sync_clk'event and Slowest_sync_clk = '1') then
       if (
-          (seq_cnt(5 downto 3) = PR_END_LPF_CHIP(5 downto 3) and from_sys = '0')  
+          (seq_cnt(5 downto 3) = PR_END_LPF_CHIP(5 downto 3) and from_sys = '0')
 	  or
           (seq_cnt(5 downto 3) = PR_END_SYS(5 downto 3)  and from_sys = '1')
 	  ) then
@@ -455,7 +455,7 @@ begin
          pr_dec(0) <= '0';
       end if;
       if (
-          (seq_cnt(2 downto 0) = PR_END_LPF_CHIP(2 downto 0) and from_sys = '0') 
+          (seq_cnt(2 downto 0) = PR_END_LPF_CHIP(2 downto 0) and from_sys = '0')
           or
           (seq_cnt(2 downto 0) = PR_END_SYS(2 downto 0) and from_sys = '1')
 	  )then
@@ -489,7 +489,7 @@ begin
   begin
     if (Slowest_sync_clk'event and Slowest_sync_clk = '1') then
       if (
-          (seq_cnt(5 downto 3) = BSR_END_LPF_CHIP(5 downto 3) and from_sys = '0')  
+          (seq_cnt(5 downto 3) = BSR_END_LPF_CHIP(5 downto 3) and from_sys = '0')
 	  or
           (seq_cnt(5 downto 3) = BSR_END_SYS(5 downto 3) and from_sys = '1')
 	 )then
@@ -498,7 +498,7 @@ begin
          bsr_dec(0) <= '0';
       end if;
       if (
-          (seq_cnt(2 downto 0) = BSR_END_LPF_CHIP(2 downto 0) and from_sys = '0') 
+          (seq_cnt(2 downto 0) = BSR_END_LPF_CHIP(2 downto 0) and from_sys = '0')
 	  or
           (seq_cnt(2 downto 0) = BSR_END_SYS(2 downto 0) and from_sys = '1')
 	  )then
@@ -533,7 +533,7 @@ begin
   begin
     if (Slowest_sync_clk'event and Slowest_sync_clk = '1') then
       if (
-          (seq_cnt(5 downto 3) = CORE_END_LPF_CHIP(5 downto 3) and from_sys = '0')  
+          (seq_cnt(5 downto 3) = CORE_END_LPF_CHIP(5 downto 3) and from_sys = '0')
 	  or
           (seq_cnt(5 downto 3) = CORE_END_SYS(5 downto 3) and from_sys = '1')
 	  )then
@@ -542,7 +542,7 @@ begin
          core_dec(0) <= '0';
       end if;
       if (
-          (seq_cnt(2 downto 0) = CORE_END_LPF_CHIP(2 downto 0) and from_sys = '0') 
+          (seq_cnt(2 downto 0) = CORE_END_LPF_CHIP(2 downto 0) and from_sys = '0')
 	  or
           (seq_cnt(2 downto 0) = CORE_END_SYS(2 downto 0) and from_sys = '1')
 	  )then
@@ -589,7 +589,7 @@ begin
 --      chip_dec(2) <= chip_dec(1) and chip_dec(0);
 --    end if;
 --  end process;
-  
+
 ---------------------------------------------------------------------------------
 ---- This process defines the Sys output signal
 ---------------------------------------------------------------------------------
@@ -603,7 +603,7 @@ begin
 --      end if;
 --    end if;
 --  end process;
---  
+--
 ---------------------------------------------------------------------------------
 ---- This process decodes the sequence counter for Sys to use
 ---------------------------------------------------------------------------------
@@ -747,7 +747,7 @@ end architecture imp;
 --  KC                02/25/2002    -- Added Dcm_locked as an input
 --                                  -- Added Power on reset srl_time_out
 --
---  KC                08/26/2003    -- Added attribute statements for power on 
+--  KC                08/26/2003    -- Added attribute statements for power on
 --                                     reset SRL
 --
 -- ~~~~~~~
@@ -759,20 +759,20 @@ end architecture imp;
 -------------------------------------------------------------------------------
 -- Naming Conventions:
 --      active low signals:                     "*_n"
---      clock signals:                          "clk", "clk_div#", "clk_#x" 
---      reset signals:                          "rst", "rst_n" 
---      generics:                               "C_*" 
---      user defined types:                     "*_TYPE" 
---      state machine next state:               "*_ns" 
---      state machine current state:            "*_cs" 
---      combinatorial signals:                  "*_com" 
---      pipelined or register delay signals:    "*_d#" 
+--      clock signals:                          "clk", "clk_div#", "clk_#x"
+--      reset signals:                          "rst", "rst_n"
+--      generics:                               "C_*"
+--      user defined types:                     "*_TYPE"
+--      state machine next state:               "*_ns"
+--      state machine current state:            "*_cs"
+--      combinatorial signals:                  "*_com"
+--      pipelined or register delay signals:    "*_d#"
 --      counter signals:                        "*cnt*"
---      clock enable signals:                   "*_ce" 
+--      clock enable signals:                   "*_ce"
 --      internal version of output port         "*_i"
---      device pins:                            "*_pin" 
---      ports:                                  - Names begin with Uppercase 
---      processes:                              "*_PROCESS" 
+--      device pins:                            "*_pin"
+--      ports:                                  - Names begin with Uppercase
+--      processes:                              "*_PROCESS"
 --      component instantiations:               "<ENTITY_>I_<#|FUNC>
 -------------------------------------------------------------------------------
 library IEEE;
@@ -780,19 +780,19 @@ library IEEE;
     use IEEE.std_logic_arith.all;
 library xpm;
 use xpm.vcomponents.all;
-library Unisim; 
-    use Unisim.all; 
+library Unisim;
+    use Unisim.all;
 -------------------------------------------------------------------------------
 -- Port Declaration
 -------------------------------------------------------------------------------
 -- Definition of Generics:
 --          C_EXT_RST_WIDTH       -- External Reset Low Pass Filter setting
---          C_AUX_RST_WIDTH       -- Auxiliary Reset Low Pass Filter setting   
+--          C_AUX_RST_WIDTH       -- Auxiliary Reset Low Pass Filter setting
 --          C_EXT_RESET_HIGH      -- External Reset Active High or Active Low
 --          C_AUX_RESET_HIGH      -= Auxiliary Reset Active High or Active Low
 --
 -- Definition of Ports:
---          Slowest_sync_clk       -- Clock 
+--          Slowest_sync_clk       -- Clock
 --          External_System_Reset  -- External Reset Input
 --          Auxiliary_System_Reset -- Auxiliary Reset Input
 --          Dcm_locked             -- DCM Locked, hold system in reset until 1
@@ -804,35 +804,35 @@ entity lpf is
            C_EXT_RST_WIDTH    : Integer;
            C_AUX_RST_WIDTH    : Integer;
            C_EXT_RESET_HIGH   : std_logic;
-           C_AUX_RESET_HIGH   : std_logic 
+           C_AUX_RESET_HIGH   : std_logic
           );
-      
+
    port(
         MB_Debug_Sys_Rst         : in  std_logic;
         Dcm_locked               : in  std_logic;
-        External_System_Reset    : in  std_logic; 
-        Auxiliary_System_Reset   : in  std_logic;                         
-        Slowest_Sync_Clk         : in  std_logic; 
-        Lpf_reset                : out std_logic                          
+        External_System_Reset    : in  std_logic;
+        Auxiliary_System_Reset   : in  std_logic;
+        Slowest_Sync_Clk         : in  std_logic;
+        Lpf_reset                : out std_logic
        );
-      
+
 end lpf;
 
 architecture imp of lpf is
 
-component SRL16 is 
--- synthesis translate_off 
-  generic ( 
-        INIT : bit_vector ); 
--- synthesis translate_on 
-  port (D    : in  std_logic; 
-        CLK  : in  std_logic; 
-        A0   : in  std_logic; 
-        A1   : in  std_logic; 
-        A2   : in  std_logic; 
-        A3   : in  std_logic; 
-        Q    : out std_logic); 
-end component SRL16; 
+component SRL16 is
+-- synthesis translate_off
+  generic (
+        INIT : bit_vector );
+-- synthesis translate_on
+  port (D    : in  std_logic;
+        CLK  : in  std_logic;
+        A0   : in  std_logic;
+        A1   : in  std_logic;
+        A2   : in  std_logic;
+        A3   : in  std_logic;
+        Q    : out std_logic);
+end component SRL16;
 
 
 constant CLEAR : std_logic := '0';
@@ -840,21 +840,21 @@ constant CLEAR : std_logic := '0';
 signal exr_d1        : std_logic := '0'; -- delayed External_System_Reset
 signal exr_lpf       : std_logic_vector(0 to C_EXT_RST_WIDTH - 1)
                              := (others => '0'); -- LPF DFF
-                             
+
 signal asr_d1        : std_logic := '0'; -- delayed Auxiliary_System_Reset
 signal asr_lpf       : std_logic_vector(0 to C_AUX_RST_WIDTH - 1)
                              := (others => '0'); -- LPF DFF
-                             
+
 signal exr_and       : std_logic := '0'; -- varible input width "and" gate
 signal exr_nand      : std_logic := '0'; -- vaiable input width "and" gate
-                     
+
 signal asr_and       : std_logic := '0'; -- varible input width "and" gate
 signal asr_nand      : std_logic := '0'; -- vaiable input width "and" gate
-                     
+
 signal lpf_int       : std_logic := '0'; -- internal Lpf_reset
 signal lpf_exr       : std_logic := '0';
 signal lpf_asr       : std_logic := '0';
-                     
+
 signal srl_time_out  : std_logic;
 
 attribute INIT             : string;
@@ -864,32 +864,32 @@ attribute INIT of POR_SRL_I: label is "FFFF";
 begin
 
    Lpf_reset <= lpf_int;
-   
+
 -------------------------------------------------------------------------------
 -- Power On Reset Generation
 -------------------------------------------------------------------------------
 --  This generates a reset for the first 16 clocks after a power up
 -------------------------------------------------------------------------------
-  POR_SRL_I: SRL16 
--- synthesis translate_off 
-    generic map ( 
-      INIT => X"FFFF") 
--- synthesis translate_on 
-    port map ( 
-      D   => '0', 
-      CLK => Slowest_sync_clk, 
-      A0  => '1', 
-      A1  => '1', 
-      A2  => '1', 
-      A3  => '1', 
-      Q   => srl_time_out); 
-   
+  POR_SRL_I: SRL16
+-- synthesis translate_off
+    generic map (
+      INIT => X"FFFF")
+-- synthesis translate_on
+    port map (
+      D   => '0',
+      CLK => Slowest_sync_clk,
+      A0  => '1',
+      A1  => '1',
+      A2  => '1',
+      A3  => '1',
+      Q   => srl_time_out);
+
 -------------------------------------------------------------------------------
 -- LPF_OUTPUT_PROCESS
 -------------------------------------------------------------------------------
 --  This generates the reset pulse and the count enable to core reset counter
 --
---ACTIVE_HIGH_LPF_EXT: if  (C_EXT_RESET_HIGH = '1') generate  
+--ACTIVE_HIGH_LPF_EXT: if  (C_EXT_RESET_HIGH = '1') generate
 --begin
 LPF_OUTPUT_PROCESS: process (Slowest_sync_clk)
 begin
@@ -899,14 +899,14 @@ begin
 end process LPF_OUTPUT_PROCESS;
 --end generate ACTIVE_HIGH_LPF_EXT;
 
---ACTIVE_LOW_LPF_EXT: if  (C_EXT_RESET_HIGH = '0') generate  
+--ACTIVE_LOW_LPF_EXT: if  (C_EXT_RESET_HIGH = '0') generate
 --begin
 --LPF_OUTPUT_PROCESS: process (Slowest_sync_clk)
 --   begin
 --      if (Slowest_sync_clk'event and Slowest_sync_clk = '1') then
---         lpf_int <= not (lpf_exr      or 
---	                 lpf_asr      or 
---			 srl_time_out)or 
+--         lpf_int <= not (lpf_exr      or
+--	                 lpf_asr      or
+--			 srl_time_out)or
 --			 not Dcm_locked;
 --      end if;
 --   end process;
@@ -934,9 +934,9 @@ begin
    end if;
 end process ASR_OUTPUT_PROCESS;
 -------------------------------------------------------------------------------
--- This If-generate selects an active high input for External System Reset 
+-- This If-generate selects an active high input for External System Reset
 -------------------------------------------------------------------------------
-ACTIVE_HIGH_EXT: if (C_EXT_RESET_HIGH /= '0') generate  
+ACTIVE_HIGH_EXT: if (C_EXT_RESET_HIGH /= '0') generate
 begin
    -----------------------------------
 exr_d1 <= External_System_Reset or MB_Debug_Sys_Rst;
@@ -958,9 +958,9 @@ port map (
 -----------------------------------
 end generate ACTIVE_HIGH_EXT;
 -------------------------------------------------------------------------------
--- This If-generate selects an active low input for External System Reset 
+-- This If-generate selects an active low input for External System Reset
 -------------------------------------------------------------------------------
-ACTIVE_LOW_EXT: if  (C_EXT_RESET_HIGH = '0') generate  
+ACTIVE_LOW_EXT: if  (C_EXT_RESET_HIGH = '0') generate
 begin
 exr_d1 <= not External_System_Reset or MB_Debug_Sys_Rst;
    -------------------------------------
@@ -982,9 +982,9 @@ port map (
 end generate ACTIVE_LOW_EXT;
 
 -------------------------------------------------------------------------------
--- This If-generate selects an active high input for Auxiliary System Reset 
+-- This If-generate selects an active high input for Auxiliary System Reset
 -------------------------------------------------------------------------------
-ACTIVE_HIGH_AUX: if (C_AUX_RESET_HIGH /= '0') generate  
+ACTIVE_HIGH_AUX: if (C_AUX_RESET_HIGH /= '0') generate
 begin
 asr_d1 <= Auxiliary_System_Reset;
 -------------------------------------
@@ -1005,9 +1005,9 @@ port map (
    -------------------------------------
 end generate ACTIVE_HIGH_AUX;
 -------------------------------------------------------------------------------
--- This If-generate selects an active low input for Auxiliary System Reset 
+-- This If-generate selects an active low input for Auxiliary System Reset
 -------------------------------------------------------------------------------
-ACTIVE_LOW_AUX: if (C_AUX_RESET_HIGH = '0') generate  
+ACTIVE_LOW_AUX: if (C_AUX_RESET_HIGH = '0') generate
 begin
    -------------------------------------
 asr_d1 <= not Auxiliary_System_Reset;
@@ -1055,11 +1055,11 @@ Begin
       loop_and  := loop_and and      exr_lpf(j);
       loop_nand := loop_nand and not exr_lpf(j);
    End loop;
-  
+
    exr_and  <= loop_and;
    exr_nand <= loop_nand;
 
-end process; 
+end process;
 
 -------------------------------------------------------------------------------
 -- This For-generate creates the low pass filter D-Flip Flops
@@ -1088,14 +1088,14 @@ Begin
       aux_loop_and  := aux_loop_and and      asr_lpf(m);
       aux_loop_nand := aux_loop_nand and not asr_lpf(m);
    End loop;
-  
+
    asr_and  <= aux_loop_and;
    asr_nand <= aux_loop_nand;
 
-end process; 
+end process;
 
 end imp;
-  
+
 
 
 
@@ -1370,7 +1370,7 @@ begin
 
   FDRE_inst : FDRE
    generic map (
-      INIT => '1') -- Initial value of register ('0' or '1')  
+      INIT => '1') -- Initial value of register ('0' or '1')
    port map (
       Q => mb_reset,      -- Data output
       C => slowest_sync_clk,      -- Clock input
@@ -1386,7 +1386,7 @@ begin
 
   FDRE_BSR : FDRE
    generic map (
-      INIT => '1') -- Initial value of register ('0' or '1')  
+      INIT => '1') -- Initial value of register ('0' or '1')
    port map (
       Q => bus_struct_reset(i),      -- Data output
       C => slowest_sync_clk,      -- Clock input
@@ -1412,7 +1412,7 @@ begin
   ACTIVE_LOW_BSR_OUT_DFF: for i in 0 to (C_NUM_INTERCONNECT_ARESETN-1) generate
   FDRE_BSR_N : FDRE
    generic map (
-      INIT => '0') -- Initial value of register ('0' or '1')  
+      INIT => '0') -- Initial value of register ('0' or '1')
    port map (
       Q => interconnect_aresetn(i),      -- Data output
       C => slowest_sync_clk,      -- Clock input
@@ -1435,7 +1435,7 @@ begin
   PR_OUT_DFF: for i in 0 to (C_NUM_PERP_RST-1) generate
   FDRE_PER : FDRE
    generic map (
-      INIT => '1') -- Initial value of register ('0' or '1')  
+      INIT => '1') -- Initial value of register ('0' or '1')
    port map (
       Q => peripheral_reset(i),      -- Data output
       C => slowest_sync_clk,      -- Clock input
@@ -1459,7 +1459,7 @@ begin
   ACTIVE_LOW_PR_OUT_DFF: for i in 0 to (C_NUM_PERP_ARESETN-1) generate
   FDRE_PER_N : FDRE
    generic map (
-      INIT => '0') -- Initial value of register ('0' or '1')  
+      INIT => '0') -- Initial value of register ('0' or '1')
    port map (
       Q => peripheral_aresetn(i),      -- Data output
       C => slowest_sync_clk,      -- Clock input
@@ -1532,24 +1532,24 @@ begin
 -- ** --   generic map (C_SIZE => 4)
 -- ** --   port map(
 -- ** --     Data     => "0000",                    -- in  STD_LOGIC_VECTOR (C_SIZE-1 downto 0);
--- ** --     Cnt_en   => core_cnt_en_0,             -- in  STD_LOGIC;                           
--- ** --     Load     => '0',                       -- in  STD_LOGIC;                           
--- ** --     Clr      => core_req_edge_0,           -- in  STD_LOGIC;                           
--- ** --     Clk      => Slowest_sync_clk,          -- in  STD_LOGIC;                           
--- ** --     Qout     => core_cnt_0                 -- out STD_LOGIC_VECTOR (C_SIZE-1 downto 0) 
+-- ** --     Cnt_en   => core_cnt_en_0,             -- in  STD_LOGIC;
+-- ** --     Load     => '0',                       -- in  STD_LOGIC;
+-- ** --     Clr      => core_req_edge_0,           -- in  STD_LOGIC;
+-- ** --     Clk      => Slowest_sync_clk,          -- in  STD_LOGIC;
+-- ** --     Qout     => core_cnt_0                 -- out STD_LOGIC_VECTOR (C_SIZE-1 downto 0)
 -- ** --   );
--- ** -- 
+-- ** --
 -- ** --   CORE_RESET_1 : entity proc_sys_reset_v5_0_17.UPCNT_N
 -- ** --   generic map (C_SIZE => 4)
 -- ** --   port map(
 -- ** --     Data     => "0000",                    -- in  STD_LOGIC_VECTOR (C_SIZE-1 downto 0);
--- ** --     Cnt_en   => core_cnt_en_1,             -- in  STD_LOGIC;                           
--- ** --     Load     => '0',                       -- in  STD_LOGIC;                           
--- ** --     Clr      => core_req_edge_1,           -- in  STD_LOGIC;                           
--- ** --     Clk      => Slowest_sync_clk,          -- in  STD_LOGIC;                           
--- ** --     Qout     => core_cnt_1                 -- out STD_LOGIC_VECTOR (C_SIZE-1 downto 0) 
+-- ** --     Cnt_en   => core_cnt_en_1,             -- in  STD_LOGIC;
+-- ** --     Load     => '0',                       -- in  STD_LOGIC;
+-- ** --     Clr      => core_req_edge_1,           -- in  STD_LOGIC;
+-- ** --     Clk      => Slowest_sync_clk,          -- in  STD_LOGIC;
+-- ** --     Qout     => core_cnt_1                 -- out STD_LOGIC_VECTOR (C_SIZE-1 downto 0)
 -- ** --   );
--- ** -- 
+-- ** --
 -- ** -- -------------------------------------------------------------------------------
 -- ** -- -- CORE_RESET_PROCESS
 -- ** -- -------------------------------------------------------------------------------
@@ -1563,7 +1563,7 @@ begin
 -- ** --        --core_req_edge_0 <= not(Core_Reset_Req_0_d2 and not Core_Reset_Req_0_d3);
 -- ** --      end if;
 -- ** --   end process;
--- ** -- 
+-- ** --
 -- ** --   CORE_RESET_PROCESS_1: process (Slowest_sync_clk)
 -- ** --   begin
 -- ** --     if (Slowest_sync_clk'event and Slowest_sync_clk = '1') then
@@ -1621,5 +1621,3 @@ begin
 end imp;
 
 --END_SINGLE_FILE_TAG
-
-

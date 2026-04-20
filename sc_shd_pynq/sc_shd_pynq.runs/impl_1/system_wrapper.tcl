@@ -13,7 +13,7 @@ if {![info exists ::dispatch::connected]} {
       set result "true"
       if {[catch {
         if {[lsearch -exact [package names] DispatchTcl] < 0} {
-          set result [load librdi_cd_clienttcl[info sharedlibextension]] 
+          set result [load librdi_cd_clienttcl[info sharedlibextension]]
         }
         if {$result eq "false"} {
           puts "WARNING: Could not load dispatch client library"
@@ -133,7 +133,7 @@ OPTRACE "read constraints: implementation_pre" END { }
 OPTRACE "add files" END { }
 OPTRACE "link_design" START { }
   set_param project.isImplRun true
-  link_design -top system_wrapper -part xc7z020clg400-1 
+  link_design -top system_wrapper -part xc7z020clg400-1
 OPTRACE "link_design" END { }
   set_param project.isImplRun false
 OPTRACE "gray box cells" START { }
@@ -149,7 +149,7 @@ if {$rc} {
   return -code error $RESULT
 } else {
   end_step init_design
-  unset ACTIVE_STEP 
+  unset ACTIVE_STEP
 }
 
 OPTRACE "Phase: Init Design" END { }
@@ -161,7 +161,7 @@ set rc [catch {
 OPTRACE "read constraints: opt_design" START { }
 OPTRACE "read constraints: opt_design" END { }
 OPTRACE "opt_design" START { }
-  opt_design 
+  opt_design
 OPTRACE "opt_design" END { }
 OPTRACE "read constraints: opt_design_post" START { }
 OPTRACE "read constraints: opt_design_post" END { }
@@ -180,7 +180,7 @@ if {$rc} {
   return -code error $RESULT
 } else {
   end_step opt_design
-  unset ACTIVE_STEP 
+  unset ACTIVE_STEP
 }
 
 OPTRACE "Phase: Opt Design" END { }
@@ -191,14 +191,14 @@ set rc [catch {
   create_msg_db place_design.pb
 OPTRACE "read constraints: place_design" START { }
 OPTRACE "read constraints: place_design" END { }
-  if { [llength [get_debug_cores -quiet] ] > 0 }  { 
+  if { [llength [get_debug_cores -quiet] ] > 0 }  {
 OPTRACE "implement_debug_core" START { }
-    implement_debug_core 
+    implement_debug_core
 OPTRACE "implement_debug_core" END { }
-  } 
+  }
 OPTRACE "place_design" START { }
   set_param project.isImplRun true
-  place_design 
+  place_design
   set_param project.isImplRun false
 OPTRACE "place_design" END { }
 OPTRACE "read constraints: place_design_post" START { }
@@ -218,7 +218,7 @@ if {$rc} {
   return -code error $RESULT
 } else {
   end_step place_design
-  unset ACTIVE_STEP 
+  unset ACTIVE_STEP
 }
 
 OPTRACE "Phase: Place Design" END { }
@@ -230,7 +230,7 @@ set rc [catch {
 OPTRACE "read constraints: phys_opt_design" START { }
 OPTRACE "read constraints: phys_opt_design" END { }
 OPTRACE "phys_opt_design" START { }
-  phys_opt_design 
+  phys_opt_design
 OPTRACE "phys_opt_design" END { }
 OPTRACE "read constraints: phys_opt_design_post" START { }
 OPTRACE "read constraints: phys_opt_design_post" END { }
@@ -246,7 +246,7 @@ if {$rc} {
   return -code error $RESULT
 } else {
   end_step phys_opt_design
-  unset ACTIVE_STEP 
+  unset ACTIVE_STEP
 }
 
 OPTRACE "Phase: Physical Opt Design" END { }
@@ -258,7 +258,7 @@ set rc [catch {
 OPTRACE "read constraints: route_design" START { }
 OPTRACE "read constraints: route_design" END { }
 OPTRACE "route_design" START { }
-  route_design 
+  route_design
 OPTRACE "route_design" END { }
 OPTRACE "read constraints: route_design_post" START { }
 OPTRACE "read constraints: route_design_post" END { }
@@ -281,7 +281,7 @@ OPTRACE "route_design write_checkpoint" END { }
   return -code error $RESULT
 } else {
   end_step route_design
-  unset ACTIVE_STEP 
+  unset ACTIVE_STEP
 }
 
 OPTRACE "route_design misc" END { }
@@ -298,7 +298,7 @@ OPTRACE "read constraints: write_bitstream" END { }
   catch { write_mem_info -force -no_partial_mmi system_wrapper.mmi }
 OPTRACE "write_bitstream setup" END { }
 OPTRACE "write_bitstream" START { }
-  write_bitstream -force system_wrapper.bit 
+  write_bitstream -force system_wrapper.bit
 OPTRACE "write_bitstream" END { }
 OPTRACE "write_bitstream misc" START { }
 OPTRACE "read constraints: write_bitstream_post" START { }
@@ -312,7 +312,7 @@ if {$rc} {
   return -code error $RESULT
 } else {
   end_step write_bitstream
-  unset ACTIVE_STEP 
+  unset ACTIVE_STEP
 }
 
 OPTRACE "write_bitstream misc" END { }

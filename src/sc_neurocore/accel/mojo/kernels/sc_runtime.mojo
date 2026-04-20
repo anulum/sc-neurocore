@@ -96,7 +96,7 @@ fn encode(data_4bit: Int) -> Int:
     var _encode_line = 'p1 = d1 ^ d2 ^ d4'
     var _encode_line = 'p2 = d1 ^ d3 ^ d4'
     var _encode_line = 'p3 = d2 ^ d3 ^ d4'
-    return 0  # return (p1 << 6) | (p2 << 5) | (d1 << 4) | (p3 << 
+    return 0  # return (p1 << 6) | (p2 << 5) | (d1 << 4) | (p3 <<
 
 fn decode(encoded_7bit: Int) -> Int:
     var _decode_line = 'p1 = (encoded_7bit >> 6) & 1'
@@ -351,4 +351,3 @@ fn protect_batch(bitstreams: Int) -> Int:
 
 fn recover_batch(encoded_list: Int) -> Int:
     return 0  # return [recover(enc) for enc in encoded_list]
-

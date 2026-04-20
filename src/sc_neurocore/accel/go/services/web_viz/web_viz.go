@@ -14,4 +14,3 @@ package web_viz
 func GenerateHtml() {
 	// Go-accelerated generate_html
 }
-

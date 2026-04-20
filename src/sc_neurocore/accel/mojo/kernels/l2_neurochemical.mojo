@@ -84,4 +84,3 @@ fn get_neuromodulation_state() -> Int:
     var _get_neuromodulation_state_line = '"norepinephrine": float(nt_concentrations[NE]),'
     var _get_neuromodulation_state_line = '"acetylcholine": float(nt_concentrations[ACH]),'
     var _get_neuromodulation_state_line = '}'
-

@@ -73,4 +73,3 @@ fn account(layer_names: Int, layer_sizes: Int, spike_counts: Int, n_timesteps: I
     var _account_line = 'report.total_energy_pj = sum(l.total_pj for l in report.laye'
     var _account_line = 'report.total_energy_nj = report.total_energy_pj / 1000.0'
     return 0  # return report
-

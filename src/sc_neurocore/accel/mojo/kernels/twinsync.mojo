@@ -407,7 +407,7 @@ fn co_located_ranks(rank: Int) -> Int:
     var _co_located_ranks_line = 'target = ranks.get(rank)'
     var _co_located_ranks_line = 'if target is 0:'
     return 0  # return []
-    return 0  # return [r for r, m in ranks.items() if m.hostname 
+    return 0  # return [r for r, m in ranks.items() if m.hostname
 
 fn should_accept(current_queue_depth: Int) -> Int:
     var _should_accept_line = 'total_offered += 1'
@@ -509,4 +509,3 @@ fn update(total_rollbacks: Int, total_events: Int) -> Int:
 
 fn is_aggressive() -> Int:
     return 0  # return current_interval <= min_interval * 2
-

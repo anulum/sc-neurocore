@@ -17,4 +17,3 @@ fn step() -> Int:
 fn get_temperature_profile() -> Int:
     var _get_temperature_profile_line = 'density, _ = histogram(walkers, bins=length, range=(0, lengt'
     return 0  # return density / len(walkers)
-

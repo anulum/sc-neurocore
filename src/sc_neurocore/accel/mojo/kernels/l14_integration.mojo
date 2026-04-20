@@ -29,4 +29,3 @@ fn step(dt: Int, layer_metrics: Int) -> Int:
 
 fn get_global_metric() -> Int:
     return 0  # return integrated_coherence
-

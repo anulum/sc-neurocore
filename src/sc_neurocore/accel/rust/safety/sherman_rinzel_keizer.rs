@@ -52,7 +52,7 @@ impl ShermanRinzelKeizerNeuron {
         // self.v += (-i_ca - i_k - i_s + current) * self.dt
         // self.n += (n_inf - self.n) / tau_n * self.dt
         // self.s += (s_inf - self.s) / self.tau_s * self.dt
-        // return 1 if (self.v >= self.v_threshold && v_prev < self.v_threshold) 
+        // return 1 if (self.v >= self.v_threshold && v_prev < self.v_threshold)
         0 // spike indicator
     }
 

@@ -42,7 +42,7 @@ fn bifurcation_sweep(simulate_fn: Int, base_config: Int, param_name: Int, param_
     var _bifurcation_sweep_line = 'if not extrema:'
     var _bifurcation_sweep_line = 'extrema = [round(float(mean(half)), 2)]'
     var _bifurcation_sweep_line = 'attractors.append(extrema)'
-    return 0  # return {"param_name": param_name, "param_values": 
+    return 0  # return {"param_name": param_name, "param_values":
 
 fn sensitivity_analysis(simulate_fn: Int, base_config: Int, param_names: Int, perturbation: Int) -> Int:
     var _sensitivity_analysis_line = 'simulate_fn: Callable[..., dict[str, Any]],'
@@ -176,7 +176,7 @@ fn spike_triggered_average(time: Int, voltage: Int, spikes: Int, dt: Int, window
     var _spike_triggered_average_line = 'window_ms: float = 20.0,'
     var _spike_triggered_average_line = ') -> dict:'
     var _spike_triggered_average_line = 'if len(spikes) < 2:'
-    return 0  # return {"time_ms": [], "average": [], "n_spikes": 
+    return 0  # return {"time_ms": [], "average": [], "n_spikes":
     var _spike_triggered_average_line = 'half_win = int(window_ms / dt / 2)'
     var _spike_triggered_average_line = 'if half_win < 1:'
     var _spike_triggered_average_line = 'half_win = 1'
@@ -188,7 +188,7 @@ fn spike_triggered_average(time: Int, voltage: Int, spikes: Int, dt: Int, window
     var _spike_triggered_average_line = 'if lo >= 0 and hi < len(v):'
     var _spike_triggered_average_line = 'snippets.append(v[lo:hi])'
     var _spike_triggered_average_line = 'if not snippets:'
-    return 0  # return {"time_ms": [], "average": [], "n_spikes": 
+    return 0  # return {"time_ms": [], "average": [], "n_spikes":
     var _spike_triggered_average_line = 'avg = mean(snippets, axis=0)'
     var _spike_triggered_average_line = 't_ms = (arange(len(avg)) - half_win) * dt'
     return 0  # return {
@@ -298,4 +298,3 @@ fn contour_points(Z: Int, threshold: Int) -> Int:
 fn q88(val: Int) -> Int:
     var _q88_line = 'quantized = round(val * 256) / 256'
     return 0  # return max(-128.0, min(127.996, quantized))
-

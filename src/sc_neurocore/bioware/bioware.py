@@ -40,7 +40,10 @@ import hashlib
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from sc_neurocore.arcane_zenith import ArcaneZenithCognitiveCore
 
 import numpy as np
 
@@ -119,7 +122,7 @@ class SpikeDetector:
         self._noise_estimates = mad
         return mad
 
-    def detect(self, voltage_data: np.ndarray) -> List[DetectedSpike]:
+    def detect(self, voltage_data: np.ndarray, snippet_ms: float = 2.0) -> List[DetectedSpike]:
         """Detect spikes in multi-channel voltage data.
 
         voltage_data: shape (num_samples, num_channels)
@@ -145,12 +148,35 @@ class SpikeDetector:
                 last_spike_idx = idx
                 amp = float(voltage_data[idx, ch])
                 ts = idx * dt
+
+                # Extract waveform snippet
+                half = int(snippet_ms * self.config.sample_rate_hz / 2000.0)
+                start = max(0, idx - half)
+                end = min(n_samples, idx + half)
+
+                # Pad if too close to edges
+                raw_wave = voltage_data[start:end, ch].copy()
+                target_len = int(2 * half)
+                if len(raw_wave) < target_len:
+                    pad_before = max(0, half - idx)
+                    pad_after = target_len - len(raw_wave) - pad_before
+                    # ensure we don't end up with negative pad_after in edge cases
+                    pad_after = max(0, pad_after)
+                    raw_wave = np.pad(raw_wave, (pad_before, pad_after), "constant")
+
+                # Strict bound to prevent arbitrary dimension mismatches
+                if len(raw_wave) > target_len:
+                    raw_wave = raw_wave[:target_len]
+                elif len(raw_wave) < target_len:
+                    raw_wave = np.pad(raw_wave, (0, target_len - len(raw_wave)), "constant")
+
                 spikes.append(
                     DetectedSpike(
                         channel=ch,
                         timestamp_s=ts,
                         amplitude_uv=amp,
                         unit_id=ch,
+                        waveform=raw_wave,
                     )
                 )
         return spikes
@@ -442,6 +468,23 @@ class CultureHealth:
 
 
 @dataclass
+class BioHybridFrameResult:
+    """Strictly typed output packet detailing a full closed-loop step."""
+
+    round: int
+    num_spikes: int
+    num_aer_events: int
+    num_bitstreams: int
+    num_opto_pulses: int
+    latency_us: float
+    health: Dict[str, Any]
+    spikes: List[DetectedSpike]
+    aer_events: List[AEREvent]
+    bitstreams: Dict[int, np.ndarray]
+    opto_pulses: List[OptogeneticPulse]
+
+
+@dataclass
 class BioHybridSession:
     """Manages a complete bio-hybrid experiment session.
 
@@ -456,28 +499,53 @@ class BioHybridSession:
     opto_encoder: SCToOptoEncoder
     stdp: BiologicalSTDP = field(default_factory=BiologicalSTDP)
     health_monitor: CultureHealth = field(default_factory=CultureHealth)
+    artifact_rejector: Optional["ArtifactRejector"] = None
+    pharm_model: Optional["PharmModel"] = None
+    latency_budget: Optional["LatencyBudget"] = None
+    homeostatic: Optional["HomeostaticPlasticity"] = None
+    sorter: Optional["SpikeSorter"] = None
+    zenith_core: Optional["ArcaneZenithCognitiveCore"] = None
     round_count: int = 0
 
     def process_frame(
         self,
         voltage_data: np.ndarray,
         t_start_s: float = 0.0,
-    ) -> Dict:
-        """Process one MEA data frame through the full pipeline.
-
-        Returns dict with intermediate results at each stage.
-        """
+        stim_times_s: Optional[List[float]] = None,
+    ) -> BioHybridFrameResult:
+        """Process one MEA data frame through the full pipeline."""
         t0 = time.perf_counter_ns()
         self.round_count += 1
 
+        if self.artifact_rejector is not None and stim_times_s is not None:
+            voltage_data = self.artifact_rejector.blank(
+                voltage_data, stim_times_s, self.mea_config.sample_rate_hz
+            )
+
         # 1. Detect spikes
         spikes = self.detector.detect(voltage_data)
+
+        # 1.5 Core primitive wiring
+        if self.sorter is not None:
+            spikes = self.sorter.assign(spikes)
+
+        if self.pharm_model is not None:
+            spike_counts = np.array([len(spikes)], dtype=float)  # scalar → array for API
+            mod_counts = self.pharm_model.modulate_spikes(spike_counts, t_start_s)
+            mod_count = int(mod_counts[0])
+            if mod_count < len(spikes):
+                spikes = spikes[:mod_count]  # simplified density modulation
 
         # 2. Transcode to AER
         aer_events = self.transcoder.transcode(spikes, t_start_s)
 
         # 3. Convert to SC bitstreams
         bitstreams = self.sc_converter.convert(aer_events)
+
+        # 3.5 Zenith integration!
+        if self.zenith_core is not None:
+            rates = decode_bitstream_rate(bitstreams)
+            self.zenith_core.step_from_bio_rates(rates)
 
         # 4. Generate optogenetic pulses
         opto_pulses = self.opto_encoder.encode(bitstreams)
@@ -489,23 +557,26 @@ class BioHybridSession:
             if s.channel < n_channels:
                 spike_counts[s.channel] += 1
         duration = voltage_data.shape[0] / self.mea_config.sample_rate_hz
-        health = self.health_monitor.assess(spike_counts, duration)
+        health = self.health_monitor.assess(spike_counts, duration_s=duration)
 
         latency_us = (time.perf_counter_ns() - t0) / 1000.0
 
-        return {
-            "round": self.round_count,
-            "num_spikes": len(spikes),
-            "num_aer_events": len(aer_events),
-            "num_bitstreams": len(bitstreams),
-            "num_opto_pulses": len(opto_pulses),
-            "latency_us": latency_us,
-            "health": health,
-            "spikes": spikes,
-            "aer_events": aer_events,
-            "bitstreams": bitstreams,
-            "opto_pulses": opto_pulses,
-        }
+        if self.latency_budget is not None:
+            self.latency_budget.record(latency_us)
+
+        return BioHybridFrameResult(
+            round=self.round_count,
+            num_spikes=len(spikes),
+            num_aer_events=len(aer_events),
+            num_bitstreams=len(bitstreams),
+            num_opto_pulses=len(opto_pulses),
+            latency_us=latency_us,
+            health=health,
+            spikes=spikes,
+            aer_events=aer_events,
+            bitstreams=bitstreams,
+            opto_pulses=opto_pulses,
+        )
 
 
 # ── Spike Sorter — template matching (Gap 1) ────────────────────────
@@ -513,37 +584,54 @@ class BioHybridSession:
 
 @dataclass
 class SpikeSorter:
-    """Simple template-based spike sorter using amplitude clustering.
+    """Production-ready spike sorter utilizing PCA feature extraction and K-Means clustering.
 
-    Assigns detected spikes to unit IDs based on amplitude bins.
-    For production use, replace with PCA + k-means or wavelet methods.
+    Extracts the dominant principal components from the input raw waveforms, and cleanly
+    separates units. Handles missing datasets explicitly natively. Requires `scikit-learn` to execute correctly.
     """
 
     num_units: int = 4
-    amplitude_bins: Optional[np.ndarray] = None
+    n_components: int = 3
+    _pca: Any = field(default=None, repr=False)
+    _kmeans: Any = field(default=None, repr=False)
 
     def fit(self, spikes: List[DetectedSpike]) -> None:
-        """Compute amplitude bin edges from training data."""
-        amps = np.array([abs(s.amplitude_uv) for s in spikes])
-        if len(amps) == 0:
-            self.amplitude_bins = np.array([])
+        """Fit PCA and KMeans models sequentially on available waveforms."""
+        try:
+            from sklearn.decomposition import PCA
+            from sklearn.cluster import KMeans
+        except ImportError:
+            raise ImportError(
+                "SpikeSorter requires `scikit-learn`. Please install it to enable PCA clustering."
+            )
+
+        waveforms = [s.waveform for s in spikes if s.waveform is not None]
+        if len(waveforms) < self.num_units:
+            self._pca = None
+            self._kmeans = None
             return
-        self.amplitude_bins = np.linspace(amps.min(), amps.max(), self.num_units + 1)
+
+        waves_array = np.vstack(waveforms)
+        self._pca = PCA(n_components=min(self.n_components, len(waveforms), waves_array.shape[1]))
+        features = self._pca.fit_transform(waves_array)
+
+        self._kmeans = KMeans(n_clusters=self.num_units, n_init=10)
+        self._kmeans.fit(features)
 
     def assign(self, spikes: List[DetectedSpike]) -> List[DetectedSpike]:
-        """Assign unit_id to each spike based on amplitude bins."""
-        if self.amplitude_bins is None or len(self.amplitude_bins) == 0:
+        """Assign cluster IDs based on PCA feature projections."""
+        if self._pca is None or self._kmeans is None:
             return spikes
+
         result = []
         for s in spikes:
-            amp = abs(s.amplitude_uv)
-            unit = int(
-                np.clip(
-                    np.searchsorted(self.amplitude_bins, amp) - 1,
-                    0,
-                    self.num_units - 1,
-                )
-            )
+            if s.waveform is None:
+                result.append(s)
+                continue
+
+            features = self._pca.transform(s.waveform.reshape(1, -1))
+            unit = int(self._kmeans.predict(features)[0])
+
             result.append(
                 DetectedSpike(
                     channel=s.channel,
@@ -856,13 +944,23 @@ class BioAuditLog:
 
     def checksum(self) -> str:
         """SHA-256 of log contents for tamper detection."""
-        import json as _json
+        try:
+            import orjson
 
-        data = _json.dumps(self.to_list(), sort_keys=True)
-        return hashlib.sha256(data.encode()).hexdigest()
+            data = orjson.dumps(self.to_list(), option=orjson.OPT_SORT_KEYS)
+        except ImportError:
+            import json as _json
+
+            data = _json.dumps(self.to_list(), sort_keys=True).encode("utf-8")
+        return hashlib.sha256(data).hexdigest()
 
 
 # ── SC Bitstream → Firing Rate Decoder (Gap 9) ──────────────────────
+
+# Multi-language acceleration backends (Rust via PyO3, Julia, Mojo, Go)
+# are planned for v4.0. The pure-Python implementation is the formal,
+# fully-tested reference. All performance-critical paths are designed
+# to be easily ported later.
 
 
 def decode_bitstream_rate(

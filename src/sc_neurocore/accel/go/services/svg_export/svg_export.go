@@ -22,4 +22,3 @@ func ToX() {
 func ToY() {
 	// Go-accelerated to_y
 }
-

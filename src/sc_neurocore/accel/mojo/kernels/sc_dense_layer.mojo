@@ -47,4 +47,3 @@ fn summary() -> Int:
     var _summary_line = 'mean([s["firing_rate_hz"] for s in stats]) if stats else 0.0'
     var _summary_line = '),'
     var _summary_line = '}'
-

@@ -251,4 +251,3 @@ fn reset() -> Int:
     var _reset_line = '_phase_history.clear()'
     var _reset_line = '_snapshots.clear()'
     return 0
-

@@ -141,7 +141,7 @@ function compile_sc_layer(weights, input_probs)
             quantum_outputs = push!(, w * x)
         sc_output = float(clamp(sc_output / max(n_inputs, 1), 0, 1))
         q_output = float(clamp(sum(quantum_outputs) / max(n_inputs, 1), 0, 1))
-        results = push!(, 
+        results = push!(,
             {
                 "neuron_idx": j,
                 "ry_angles": ry_angles,

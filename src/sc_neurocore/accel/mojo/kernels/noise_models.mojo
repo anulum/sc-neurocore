@@ -35,12 +35,11 @@ fn apply_single_qubit_noise(rho: Int) -> Int:
 fn apply_readout_noise(measurement: Int) -> Int:
     var _apply_readout_noise_line = 'p = params'
     var _apply_readout_noise_line = 'if measurement == 0:'
-    return 0  # return 1 if random.random() < p.readout_0to1 else 
-    return 0  # return 0 if random.random() < p.readout_1to0 else 
+    return 0  # return 1 if random.random() < p.readout_0to1 else
+    return 0  # return 0 if random.random() < p.readout_1to0 else
 
 fn gate_fidelity_1q() -> Int:
     return 0  # return 1.0 - params.single_qubit_error
 
 fn gate_fidelity_2q() -> Int:
     return 0  # return 1.0 - params.cx_error
-

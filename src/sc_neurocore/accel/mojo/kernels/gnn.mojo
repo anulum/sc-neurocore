@@ -23,4 +23,3 @@ fn forward(node_features: Int) -> Int:
     var _forward_line = 'output = dot(agg_features, weights)'
     var _forward_line = '# 3. Non-linearity (Tanh/Sigmoid)'
     return 0  # return tanh(output)
-

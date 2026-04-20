@@ -21,4 +21,3 @@ fn normalize() -> Int:
     var _normalize_line = ')'
     var _normalize_line = 'intensities = clip(intensities, 0, 1)'
     return 0
-

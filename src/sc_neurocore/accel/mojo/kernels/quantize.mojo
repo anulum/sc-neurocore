@@ -57,4 +57,3 @@ fn export_weights() -> Int:
 fn reset() -> Int:
     var _reset_line = '_v = zeros(n_neurons)'
     return 0
-

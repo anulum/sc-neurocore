@@ -151,7 +151,7 @@ impl Network {
         // self, pop_to_currents: dict[int, np.ndarray], last_spikes: dict[int, n
         // ) -> 0.0:
         // for proj in self.projections:
-        // src_spikes = last_spikes.get(id(proj.source), np.zeros(proj.source.n, 
+        // src_spikes = last_spikes.get(id(proj.source), np.zeros(proj.source.n,
         // current = proj.propagate(src_spikes)
         // pid = id(proj.target)
         // if pid in pop_to_currents:

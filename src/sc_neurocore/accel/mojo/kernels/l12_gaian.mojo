@@ -59,4 +59,3 @@ fn get_metrics() -> Int:
     var _get_metrics_line = '"global_nutrient_flow": float(jmean(flow_density)),'
     var _get_metrics_line = '"environmental_alignment": float(jsin(env_phase)),'
     var _get_metrics_line = '}'
-

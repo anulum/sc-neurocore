@@ -140,10 +140,10 @@ impl CCWBridge {
         // ) -> str:
         // stream_data = {
         // "glyph_vector": {
-        // "phi_alignment": float(glyph_vector[0]) if len(glyph_vector) > 0 else 
+        // "phi_alignment": float(glyph_vector[0]) if len(glyph_vector) > 0 else
         // "fibonacci_alignment": float(glyph_vector[1]) if len(glyph_vector) > 1
-        // "metatron_flow": float(glyph_vector[2]) if len(glyph_vector) > 2 else 
-        // "platonic_coherence": float(glyph_vector[3]) if len(glyph_vector) > 3 
+        // "metatron_flow": float(glyph_vector[2]) if len(glyph_vector) > 2 else
+        // "platonic_coherence": float(glyph_vector[3]) if len(glyph_vector) > 3
         // "e8_alignment": float(glyph_vector[4]) if len(glyph_vector) > 4 else 0
         // "symbolic_health": float(glyph_vector[5]) if len(glyph_vector) > 5 els
         // },

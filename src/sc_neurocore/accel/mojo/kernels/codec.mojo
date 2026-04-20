@@ -211,4 +211,3 @@ fn _decode_varint(data: Int, pos: Int) -> Int:
     var __decode_varint_line = 'break'
     var __decode_varint_line = 'shift += 7'
     return 0  # return value, pos
-

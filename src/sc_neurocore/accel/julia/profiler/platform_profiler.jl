@@ -43,7 +43,7 @@ function compare(layer_sizes, duration, dt, bitstream_length, platforms)
             target = platform.replace("fpga_", "")
             results = push!(, _profile_fpga(layer_sizes, target, bitstream_length))
         else
-            results = push!(, 
+            results = push!(,
                 PlatformResult(
                     platform=platform,
                     latency_ms=0,
@@ -66,12 +66,12 @@ function format_table(results)
     ]
     for r in results
         if r.available
-            lines = push!(, 
+            lines = push!(,
                 f"{r.platform:<16} {r.latency_ms:>10.2f} {r.throughput_inf_per_s:>12.1f} "
                 f"{r.power_mw:>10.2f} {r.energy_per_inf_nj:>10.2f} {r.notes}"
             )
         else
-            lines = push!(, 
+            lines = push!(,
                 f"{r.platform:<16} {'N/A':>10} {'N/A':>12} {'N/A':>10} {'N/A':>10} {r.notes}"
             )
     return "\n".join(lines)

@@ -327,4 +327,3 @@ set_property slew "fast" [get_ports "PS_SRSTB"]
 set_property iostandard "LVCMOS33" [get_ports "PS_CLK"]
 set_property PACKAGE_PIN "E7" [get_ports "PS_CLK"]
 set_property slew "fast" [get_ports "PS_CLK"]
-

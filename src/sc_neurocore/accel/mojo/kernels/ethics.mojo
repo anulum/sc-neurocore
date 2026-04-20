@@ -32,4 +32,3 @@ fn check_laws(action: Int) -> Int:
     var _check_laws_line = '"Ethics PASS: Action %d (%s on %s) allowed.", action.id, act'
     var _check_laws_line = ')'
     return 0  # return True
-

@@ -39,7 +39,7 @@ impl AlphaNeuron {
     pub fn step(&mut self, i_ext: f64) -> i32 {
         // self.i_exc += (-self.i_exc / self.tau_exc + exc_current) * self.dt
         // self.i_inh += (-self.i_inh / self.tau_inh + inh_current) * self.dt
-        // dv = (-(self.v - self.v_rest) + self.i_exc - self.i_inh) / self.tau_v 
+        // dv = (-(self.v - self.v_rest) + self.i_exc - self.i_inh) / self.tau_v
         // self.v += dv
         // if self.v >= self.v_threshold:
         // self.v = self.v_rest

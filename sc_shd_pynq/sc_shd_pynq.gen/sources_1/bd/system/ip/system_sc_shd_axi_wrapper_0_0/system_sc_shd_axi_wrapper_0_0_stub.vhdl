@@ -14,7 +14,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
 entity system_sc_shd_axi_wrapper_0_0 is
-  Port ( 
+  Port (
     S_AXI_ACLK : in STD_LOGIC;
     S_AXI_ARESETN : in STD_LOGIC;
     S_AXI_AWADDR : in STD_LOGIC_VECTOR ( 7 downto 0 );

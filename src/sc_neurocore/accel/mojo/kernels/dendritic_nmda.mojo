@@ -28,4 +28,3 @@ fn reset() -> Int:
     var _reset_line = 'v_soma = -65.0'
     var _reset_line = 'v_dend = -65.0'
     return 0
-

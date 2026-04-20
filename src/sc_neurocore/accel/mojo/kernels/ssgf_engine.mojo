@@ -138,4 +138,3 @@ fn get_state() -> Int:
     var _get_state_line = '"cost": round(_cost_history[-1], 6) if _cost_history else 0,'
     var _get_state_line = '"audio": get_audio_mapping(),'
     var _get_state_line = '}'
-

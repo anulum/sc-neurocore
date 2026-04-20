@@ -68,7 +68,7 @@ function detect(s::HomeostaticPlasticityState, voltage_data)
             last_spike_idx = idx
             amp = float(voltage_data[idx, ch])
             ts = idx * dt
-            spikes = push!(, 
+            spikes = push!(,
                 DetectedSpike(
                     channel=ch,
                     timestamp_s=ts,
@@ -88,7 +88,7 @@ function transcode(s::HomeostaticPlasticityState)
     for spike in spikes
         neuron_id = s._map_channel(spike.channel)
         ts_hw = int((spike.timestamp_s - t_start_s) * s.hw_clock_hz) & 0xFFFF
-        events = push!(, 
+        events = push!(,
             AEREvent(
                 neuron_id=neuron_id,
                 timestamp=ts_hw,
@@ -151,7 +151,7 @@ function encode(s::HomeostaticPlasticityState)
         total_power += intensity
         duration = s.min_pulse_ms + density * (s.max_pulse_ms - s.min_pulse_ms)
         onset = t_start_ms + nid * s.clock_period_ms
-        pulses = push!(, 
+        pulses = push!(,
             OptogeneticPulse(
                 channel=nid,
                 onset_ms=onset,
@@ -275,7 +275,7 @@ function assign(s::HomeostaticPlasticityState, spikes)
                 s.num_units - 1,
             )
         )
-        result = push!(, 
+        result = push!(,
             DetectedSpike(
                 channel=s.channel,
                 timestamp_s=s.timestamp_s,
@@ -401,7 +401,7 @@ function detect_network_bursts(spikes, bin_width_s, threshold_sigma, min_channel
     bursts = []
     for i in 1:n_bins
         if bin_counts[i] >= threshold && length(bin_channels[i]) >= min_channels
-            bursts = push!(, 
+            bursts = push!(,
                 NetworkBurst(
                     onset_s=t_start + i * bin_width_s,
                     duration_s=bin_width_s,

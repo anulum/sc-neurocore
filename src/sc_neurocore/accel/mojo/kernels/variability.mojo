@@ -336,4 +336,3 @@ fn _count_matches(dim: Int) -> Int:
     var __count_matches_line = 'dists = max(abs(templates[i + 1 :] - templates[i]), axis=1)'
     var __count_matches_line = 'total += int(sum(dists <= r))'
     return 0  # return total
-

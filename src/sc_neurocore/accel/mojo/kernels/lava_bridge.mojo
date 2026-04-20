@@ -61,4 +61,3 @@ fn run_spk() -> Int:
     var _run_spk_line = 'v[spikes_out == 1] = 0'
     var _run_spk_line = 's_out.send(spikes_out)'
     return 0
-

@@ -278,4 +278,3 @@ fn visual_cortex_v1(n_orientation: Int, n_per_orientation: Int) -> Int:
     var _visual_cortex_v1_line = 'for obj in simple_pops + complex_pops + projs + mons + stims'
     var _visual_cortex_v1_line = 'net.add(obj)'
     return 0  # return net
-

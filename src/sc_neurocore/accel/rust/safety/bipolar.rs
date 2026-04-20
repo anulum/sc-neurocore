@@ -78,4 +78,3 @@ pub fn float_to_bipolar_weights(weight_tensor: f64) -> f64 {
     // return w / abs_max
     0.0
 }
-

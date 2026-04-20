@@ -22,4 +22,3 @@ fn reset() -> Int:
     var _reset_line = 'v = v_rest'
     var _reset_line = 'theta1, theta2 = 0.0, 0.0'
     return 0
-

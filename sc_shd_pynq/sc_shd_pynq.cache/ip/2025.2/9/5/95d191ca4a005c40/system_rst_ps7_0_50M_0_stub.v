@@ -14,10 +14,10 @@
 // This empty module with port declaration file causes synthesis tools to infer a black box for IP.
 // The synthesis directives are for Synopsys Synplify support to prevent IO buffer insertion.
 // Please paste the declaration into a Verilog source file or add the file as an additional source.
-(* CHECK_LICENSE_TYPE = "system_rst_ps7_0_50M_0,proc_sys_reset,{}" *) (* core_generation_info = "system_rst_ps7_0_50M_0,proc_sys_reset,{x_ipProduct=Vivado 2025.2,x_ipVendor=xilinx.com,x_ipLibrary=ip,x_ipName=proc_sys_reset,x_ipVersion=5.0,x_ipCoreRevision=17,x_ipLanguage=VERILOG,x_ipSimLanguage=MIXED,C_FAMILY=zynq,C_EXT_RST_WIDTH=4,C_AUX_RST_WIDTH=4,C_EXT_RESET_HIGH=0,C_AUX_RESET_HIGH=0,C_NUM_BUS_RST=1,C_NUM_PERP_RST=1,C_NUM_INTERCONNECT_ARESETN=1,C_NUM_PERP_ARESETN=1}" *) (* downgradeipidentifiedwarnings = "yes" *) 
-(* x_core_info = "proc_sys_reset,Vivado 2025.2" *) 
-module decalper_eb_ot_sdeen_pot_pi_dehcac_xnilix(slowest_sync_clk, ext_reset_in, aux_reset_in, 
-  mb_debug_sys_rst, dcm_locked, mb_reset, bus_struct_reset, peripheral_reset, 
+(* CHECK_LICENSE_TYPE = "system_rst_ps7_0_50M_0,proc_sys_reset,{}" *) (* core_generation_info = "system_rst_ps7_0_50M_0,proc_sys_reset,{x_ipProduct=Vivado 2025.2,x_ipVendor=xilinx.com,x_ipLibrary=ip,x_ipName=proc_sys_reset,x_ipVersion=5.0,x_ipCoreRevision=17,x_ipLanguage=VERILOG,x_ipSimLanguage=MIXED,C_FAMILY=zynq,C_EXT_RST_WIDTH=4,C_AUX_RST_WIDTH=4,C_EXT_RESET_HIGH=0,C_AUX_RESET_HIGH=0,C_NUM_BUS_RST=1,C_NUM_PERP_RST=1,C_NUM_INTERCONNECT_ARESETN=1,C_NUM_PERP_ARESETN=1}" *) (* downgradeipidentifiedwarnings = "yes" *)
+(* x_core_info = "proc_sys_reset,Vivado 2025.2" *)
+module decalper_eb_ot_sdeen_pot_pi_dehcac_xnilix(slowest_sync_clk, ext_reset_in, aux_reset_in,
+  mb_debug_sys_rst, dcm_locked, mb_reset, bus_struct_reset, peripheral_reset,
   interconnect_aresetn, peripheral_aresetn)
 /* synthesis syn_black_box black_box_pad_pin="ext_reset_in,aux_reset_in,mb_debug_sys_rst,dcm_locked,mb_reset,bus_struct_reset[0:0],peripheral_reset[0:0],interconnect_aresetn[0:0],peripheral_aresetn[0:0]" */
 /* synthesis syn_force_seq_prim="slowest_sync_clk" */;

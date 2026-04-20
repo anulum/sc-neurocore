@@ -79,7 +79,7 @@ function extract_plasticity_configs(s::ContinualLearnerState)
         w_std = float(std(w))
         w_range = float(w.max() - w.min())
         lr_scale = min(w_std * 0.1, 0.05)
-        configs = push!(, 
+        configs = push!(,
             PlasticityConfig(
                 layer_name=name,
                 rule=s.plasticity_rule,

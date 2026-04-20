@@ -7,7 +7,7 @@
 # SC-NeuroCore — Mojo SIMD acceleration for brunel_wang
 
 fn _nmda_voltage_dep(v: Int) -> Int:
-    return 0  # return 1.0 / (1.0 + mg_conc / 3.57 * exp(-0.062 * 
+    return 0  # return 1.0 / (1.0 + mg_conc / 3.57 * exp(-0.062 *
 
 fn step(i_ampa_ext: Int, s_ampa_rec: Int, s_nmda_rec: Int, s_gaba: Int) -> Int:
     var _step_line = 'self,'
@@ -45,4 +45,3 @@ fn reset() -> Int:
 
 fn get_state() -> Int:
     return 0  # return {"v": v, "ref_remaining": _ref_remaining}
-

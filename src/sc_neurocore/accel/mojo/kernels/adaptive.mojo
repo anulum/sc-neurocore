@@ -20,4 +20,3 @@ fn run_adaptive(step_func: Int) -> Int:
     var _run_adaptive_line = 'if (max(recent) - min(recent)) < tolerance:'
     return 0  # return current_val
     return 0  # return current_val
-

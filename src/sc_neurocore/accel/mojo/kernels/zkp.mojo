@@ -24,4 +24,3 @@ fn verify(commitment: Int, challenge_idx: Int, revealed_bit: Int, bitstream_slic
     var _verify_line = "# This is a 'Reveal' step, not fully ZK without the Merkle t"
     var _verify_line = '# but demonstrates the protocol.'
     return 0  # return True
-

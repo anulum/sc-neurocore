@@ -38,7 +38,7 @@ impl FitzHughNagumoNeuron {
         // dw = self.epsilon * (self.v + self.a - self.b * self.w) * self.dt
         // self.v += dv
         // self.w += dw
-        // return 1 if (self.v >= self.v_threshold && v_prev < self.v_threshold) 
+        // return 1 if (self.v >= self.v_threshold && v_prev < self.v_threshold)
         0 // spike indicator
     }
 

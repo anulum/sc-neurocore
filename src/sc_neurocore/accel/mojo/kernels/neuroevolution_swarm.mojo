@@ -85,4 +85,3 @@ fn run(n_generations: Int) -> Int:
     var _run_line = 'for _ in range(n_generations):'
     var _run_line = 'evolve_generation()'
     return 0  # return list(best_fitness_history)
-

@@ -46,4 +46,3 @@ fn get_metrics() -> Int:
     var _get_metrics_line = '"clock_stability": float(jstd(system_phases)),'
     var _get_metrics_line = '"pta_locking_index": float(jabs(jmean(jexp(1j * system_phase'
     var _get_metrics_line = '}'
-

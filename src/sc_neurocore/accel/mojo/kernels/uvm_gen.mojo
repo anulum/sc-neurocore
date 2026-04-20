@@ -438,4 +438,3 @@ fn generate_formal_links(rtl: Int) -> Int:
     var _generate_formal_links_line = ')'
     var _generate_formal_links_line = ')'
     return 0  # return links
-

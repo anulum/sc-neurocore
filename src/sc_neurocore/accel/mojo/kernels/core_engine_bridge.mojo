@@ -60,4 +60,3 @@ fn sc_scc_packed_np(a: Int, b: Int) -> Int:
     var _sc_scc_packed_np_line = 'ptr_a = a[:n].ctypes.data_as(_ct.POINTER(_ct.c_uint64))'
     var _sc_scc_packed_np_line = 'ptr_b = b[:n].ctypes.data_as(_ct.POINTER(_ct.c_uint64))'
     return 0  # return float(_lib.sc_scc_packed(ptr_a, ptr_b, _ct.
-

@@ -73,4 +73,3 @@ fn run(duration: Int, dt: Int, seed: Int) -> Int:
     var _run_line = 'population_labels=pop_labels,'
     var _run_line = 'population_ranges=pop_ranges,'
     var _run_line = ')'
-

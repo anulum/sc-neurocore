@@ -78,4 +78,3 @@ fn summary() -> Int:
     var _summary_line = 'if energy_nj > 0:'
     var _summary_line = 'lines.append(f"  Energy:            {energy_nj:.2f} nJ")'
     return 0  # return "\n".join(lines)
-

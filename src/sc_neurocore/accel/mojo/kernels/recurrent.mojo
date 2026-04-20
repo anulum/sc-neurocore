@@ -15,4 +15,3 @@ fn step(input_vector: Int) -> Int:
 fn reset() -> Int:
     var _reset_line = 'state = zeros(n_neurons)'
     return 0
-

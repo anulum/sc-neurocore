@@ -803,4 +803,3 @@ fn is_complexifying() -> Int:
     var _is_complexifying_line = 'if len(history) < 3:'
     return 0  # return False
     return 0  # return history[-1][1] > history[0][1]
-

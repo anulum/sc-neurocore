@@ -49,4 +49,3 @@ fn _retrieval_quality() -> Int:
 
 fn get_global_metric() -> Int:
     return 0  # return _retrieval_quality()
-

@@ -44,4 +44,3 @@ fn _integrity() -> Int:
 
 fn get_global_metric() -> Int:
     return 0  # return _integrity()
-

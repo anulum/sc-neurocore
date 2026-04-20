@@ -48,7 +48,7 @@ impl FitzHughRinzelNeuron {
         // self.v += dv
         // self.w += dw
         // self.y += dy
-        // return 1 if (self.v >= self.v_threshold && v_prev < self.v_threshold) 
+        // return 1 if (self.v >= self.v_threshold && v_prev < self.v_threshold)
         0 // spike indicator
     }
 

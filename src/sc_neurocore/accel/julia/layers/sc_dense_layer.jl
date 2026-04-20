@@ -58,7 +58,7 @@ end
 function summary(s::SCDenseLayerState)
     stats = []
     for i, rec in enumerate(s.recorders)
-        stats = push!(, 
+        stats = push!(,
             {
                 "neuron": i,
                 "total_spikes": rec.total_spikes(),

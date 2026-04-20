@@ -56,4 +56,3 @@ fn get_metrics() -> Int:
     var _get_metrics_line = '"self_soliton_magnitude": float(jmean(self_soliton)),'
     var _get_metrics_line = '"emotional_valence": float(emotions[0]),'
     var _get_metrics_line = '}'
-

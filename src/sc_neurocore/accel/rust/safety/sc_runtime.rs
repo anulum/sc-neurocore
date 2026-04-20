@@ -229,7 +229,7 @@ impl SCRuntimeEngine {
         // scc = abs(metrics.get("ema_scc", 0.0))
         // drift = metrics.get("drift_detected", false)
         // if scc > self.scc_high:
-        // new.bitstream_length = min(self.max_length, config.bitstream_length * 
+        // new.bitstream_length = min(self.max_length, config.bitstream_length *
         // if new.bitstream_length > self.ecc_trigger_length:
         // new.ecc_enabled = true
         // return new, "high_scc"

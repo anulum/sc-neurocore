@@ -37,23 +37,23 @@ fn py_parallel_csr_multi_spmv_add_c(
         var end_row = start_row + CHUNK_SIZE
         if end_row > rows:
             end_row = rows
-            
+
         for r in range(start_row, end_row):
             var row_sum: Float64 = 0.0
-            
+
             for b in range(blocks):
                 var indptr = indptr_ptrs[b]
                 var indices = indices_ptrs[b]
                 var data = data_ptrs[b]
                 var x = x_ptrs[b]
-                
+
                 var start_idx = int(indptr[r])
                 var end_idx = int(indptr[r + 1])
-                
+
                 for k in range(start_idx, end_idx):
                     var col = int(indices[k])
                     row_sum += data[k] * x[col]
-                    
+
             y_ptr[r] += row_sum
 
     parallelize[process_chunk](num_chunks)

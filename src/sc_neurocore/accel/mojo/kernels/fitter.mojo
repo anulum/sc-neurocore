@@ -100,4 +100,3 @@ fn fit(voltage: Int, current: Int, dt: Int, threshold: Int, candidates: Int, top
     var _fit_line = 'continue'
     var _fit_line = 'results.sort(key=lambda r: r.combined_score)'
     return 0  # return results[:top_k]
-

@@ -30,4 +30,3 @@ func FromNumpy() {
 func FromTonic() {
 	// Go-accelerated from_tonic
 }
-

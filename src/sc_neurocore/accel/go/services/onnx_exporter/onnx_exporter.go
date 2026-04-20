@@ -14,4 +14,3 @@ package onnx_exporter
 func Export() {
 	// Go-accelerated export
 }
-

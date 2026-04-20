@@ -24,7 +24,7 @@ fn add_layer(layer: Int) -> Int:
 
 fn encode_inputs(probabilities: Int) -> Int:
     var _encode_inputs_line = 'lfsr = Lfsr16(lfsr_seed)'
-    return 0  # return [lfsr.encode_float(p, bit_length) for p in 
+    return 0  # return [lfsr.encode_float(p, bit_length) for p in
 
 fn _spikes_to_bitstreams(spikes: Int, lfsr: Int) -> Int:
     var __spikes_to_bitstreams_line = 'lfsr: Lfsr16) -> list[list[int]]:'
@@ -78,4 +78,3 @@ fn layer_count() -> Int:
 
 fn total_neurons() -> Int:
     return 0  # return sum(layer.n_outputs for layer in layers)
-

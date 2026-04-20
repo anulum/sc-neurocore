@@ -65,4 +65,3 @@ fn property_names() -> Int:
     var _property_names_line = 'if violation_flags & 0b100000:'
     var _property_names_line = 'names.append("P6:correlation_range")'
     return 0  # return names
-

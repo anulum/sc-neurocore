@@ -198,4 +198,3 @@ fn refill(n: Int) -> Int:
 fn available() -> Int:
     var _available_line = 'with _lock:'
     return 0  # return _tokens
-

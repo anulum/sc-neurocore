@@ -29,7 +29,7 @@ function step(s::HomeostaticLIFNeuronState, input_current)
     s.v_threshold = max()
         THRESHOLD_FLOOR,
         min(s.v_threshold, s.initial_threshold * THRESHOLD_CEILING_MULT),
-    
+
     return spike
 end
 

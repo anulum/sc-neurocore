@@ -75,4 +75,3 @@ fn train(n_steps: Int, lr: Int) -> Int:
 
 fn evaluate(params: Int) -> Int:
     return 0  # return circuit(params)
-

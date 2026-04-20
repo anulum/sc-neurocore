@@ -254,4 +254,3 @@ func Detect() {
 func IsFullyCovered() {
 	// Go-accelerated is_fully_covered
 }
-

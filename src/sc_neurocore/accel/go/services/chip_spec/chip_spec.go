@@ -30,4 +30,3 @@ func Fits() {
 func CoresNeeded() {
 	// Go-accelerated cores_needed
 }
-

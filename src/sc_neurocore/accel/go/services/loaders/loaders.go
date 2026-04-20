@@ -22,4 +22,3 @@ func LoadShd() {
 func LoadDvsCifar10() {
 	// Go-accelerated load_dvs_cifar10
 }
-

@@ -42,7 +42,7 @@
 //  regulations governing limitations on product liability.
 //
 //  THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS
-//  PART OF THIS FILE AT ALL TIMES. 
+//  PART OF THIS FILE AT ALL TIMES.
 //-----------------------------------------------------------------------------
 //
 // axis to vector
@@ -56,7 +56,7 @@
 `timescale 1ps/1ps
 `default_nettype none
 
-(* DowngradeIPIdentifiedWarnings="yes" *) 
+(* DowngradeIPIdentifiedWarnings="yes" *)
 module axi_infrastructure_v1_1_0_axi2vector #
 (
 ///////////////////////////////////////////////////////////////////////////////
@@ -201,7 +201,7 @@ generate
     if (C_AXI_SUPPORTS_REGION_SIGNALS == 1 && G_AXI_AWREGION_WIDTH > 0) begin : gen_region_signals
       assign s_awpayload[G_AXI_AWREGION_INDEX+:G_AXI_AWREGION_WIDTH] = s_axi_awregion;
       assign s_arpayload[G_AXI_ARREGION_INDEX+:G_AXI_ARREGION_WIDTH] = s_axi_arregion;
-    end 
+    end
     else begin : gen_no_region_signals
     end
     if (C_AXI_SUPPORTS_USER_SIGNALS == 1 && C_AXI_PROTOCOL != 2) begin : gen_user_signals
@@ -210,7 +210,7 @@ generate
       assign s_axi_buser                                       = s_bpayload[G_AXI_BUSER_INDEX+:G_AXI_BUSER_WIDTH];
       assign s_arpayload[G_AXI_ARUSER_INDEX+:G_AXI_ARUSER_WIDTH] = s_axi_aruser;
       assign s_axi_ruser                                       = s_rpayload[G_AXI_RUSER_INDEX+:G_AXI_RUSER_WIDTH];
-    end 
+    end
     else begin : gen_no_user_signals
       assign s_axi_buser = 'b0;
       assign s_axi_ruser = 'b0;
@@ -225,7 +225,7 @@ generate
     assign s_axi_ruser = 'b0;
   end
 endgenerate
-endmodule 
+endmodule
 
 `default_nettype wire
 
@@ -274,7 +274,7 @@ endmodule
 //  regulations governing limitations on product liability.
 //
 //  THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS
-//  PART OF THIS FILE AT ALL TIMES. 
+//  PART OF THIS FILE AT ALL TIMES.
 //-----------------------------------------------------------------------------
 // Description: SRL based FIFO for AXIS/AXI Channels.
 //--------------------------------------------------------------------------
@@ -283,7 +283,7 @@ endmodule
 `timescale 1ps/1ps
 `default_nettype none
 
-(* DowngradeIPIdentifiedWarnings="yes" *) 
+(* DowngradeIPIdentifiedWarnings="yes" *)
 module axi_infrastructure_v1_1_0_axic_srl_fifo #(
 ///////////////////////////////////////////////////////////////////////////////
 // Parameter Definitions
@@ -337,49 +337,49 @@ reg                                 areset_r1;
 // BEGIN RTL
 ////////////////////////////////////////////////////////////////////////////////
 
-always @(posedge aclk) begin 
+always @(posedge aclk) begin
   areset_r1 <= ~aresetn;
 end
 
-always @(posedge aclk) begin 
+always @(posedge aclk) begin
   if (~aresetn) begin
     fifo_index <= {LP_LOG_FIFO_DEPTH{1'b1}};
   end
   else begin
     fifo_index <= push & ~pop ? fifo_index + 1'b1 :
-                  ~push & pop ? fifo_index - 1'b1 : 
+                  ~push & pop ? fifo_index - 1'b1 :
                   fifo_index;
   end
 end
 
 assign push = s_valid & s_ready;
 
-always @(posedge aclk) begin 
-  if (~aresetn) begin 
+always @(posedge aclk) begin
+  if (~aresetn) begin
     s_ready <= 1'b0;
   end
-  else begin 
-    s_ready <= areset_r1 ? 1'b1 : 
+  else begin
+    s_ready <= areset_r1 ? 1'b1 :
                push & ~pop && (fifo_index == (C_FIFO_DEPTH - 2'd2)) ? 1'b0 :
-               ~push & pop ? 1'b1 : 
+               ~push & pop ? 1'b1 :
                s_ready;
   end
 end
 
 assign pop = m_valid & m_ready;
-               
-always @(posedge aclk) begin 
-  if (~aresetn) begin 
+
+always @(posedge aclk) begin
+  if (~aresetn) begin
     m_valid <= 1'b0;
   end
-  else begin 
+  else begin
     m_valid <= ~push & pop && (fifo_index == {LP_LOG_FIFO_DEPTH{1'b0}}) ? 1'b0 :
-               push & ~pop ? 1'b1 : 
+               push & ~pop ? 1'b1 :
                m_valid;
   end
 end
 
-generate 
+generate
   if (LP_LOG_FIFO_DEPTH < 4) begin : gen_pad_fifo_addr
     assign fifo_addr[0+:LP_LOG_FIFO_DEPTH] = fifo_index[LP_LOG_FIFO_DEPTH-1:0];
     assign fifo_addr[LP_LOG_FIFO_DEPTH+:(4-LP_LOG_FIFO_DEPTH)] = {4-LP_LOG_FIFO_DEPTH{1'b0}};
@@ -393,7 +393,7 @@ endgenerate
 generate
   genvar i;
   for (i = 0; i < C_PAYLOAD_WIDTH; i = i + 1) begin : gen_data_bit
-    SRL16E 
+    SRL16E
     u_srl_fifo(
       .Q   ( m_payload[i] ) ,
       .A0  ( fifo_addr[0]     ) ,
@@ -402,7 +402,7 @@ generate
       .A3  ( fifo_addr[3]     ) ,
       .CE  ( push              ) ,
       .CLK ( aclk              ) ,
-      .D   ( s_payload[i] ) 
+      .D   ( s_payload[i] )
     );
   end
 endgenerate
@@ -456,7 +456,7 @@ endmodule
 //  regulations governing limitations on product liability.
 //
 //  THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS
-//  PART OF THIS FILE AT ALL TIMES. 
+//  PART OF THIS FILE AT ALL TIMES.
 //-----------------------------------------------------------------------------
 //
 // axi to vector
@@ -470,7 +470,7 @@ endmodule
 `timescale 1ps/1ps
 `default_nettype none
 
-(* DowngradeIPIdentifiedWarnings="yes" *) 
+(* DowngradeIPIdentifiedWarnings="yes" *)
 module axi_infrastructure_v1_1_0_vector2axi #
 (
 ///////////////////////////////////////////////////////////////////////////////
@@ -616,7 +616,7 @@ generate
     if (C_AXI_SUPPORTS_REGION_SIGNALS == 1 && G_AXI_AWREGION_WIDTH > 0) begin : gen_region_signals
       assign m_axi_awregion = m_awpayload[G_AXI_AWREGION_INDEX+:G_AXI_AWREGION_WIDTH];
       assign m_axi_arregion = m_arpayload[G_AXI_ARREGION_INDEX+:G_AXI_ARREGION_WIDTH];
-    end 
+    end
     else begin : gen_no_region_signals
       assign m_axi_awregion = 'b0;
       assign m_axi_arregion = 'b0;
@@ -627,7 +627,7 @@ generate
       assign m_bpayload[G_AXI_BUSER_INDEX+:G_AXI_BUSER_WIDTH] = m_axi_buser                                      ;
       assign m_axi_aruser = m_arpayload[G_AXI_ARUSER_INDEX+:G_AXI_ARUSER_WIDTH];
       assign m_rpayload[G_AXI_RUSER_INDEX+:G_AXI_RUSER_WIDTH] = m_axi_ruser                                      ;
-    end 
+    end
     else begin : gen_no_user_signals
       assign m_axi_awuser = 'b0;
       assign m_axi_wuser = 'b0;
@@ -663,8 +663,6 @@ generate
     assign m_axi_aruser = 'b0;
   end
 endgenerate
-endmodule 
+endmodule
 
 `default_nettype wire
-
-

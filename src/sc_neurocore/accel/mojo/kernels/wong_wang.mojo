@@ -38,4 +38,3 @@ fn step(stim1: Int, stim2: Int) -> Int:
 fn reset() -> Int:
     var _reset_line = 's1, s2 = 0.1, 0.1'
     return 0
-

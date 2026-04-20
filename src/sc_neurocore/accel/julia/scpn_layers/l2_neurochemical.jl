@@ -74,7 +74,7 @@ function step(s::L2_NeurochemicalLayerState)
     )
     output_bitstreams = (rands < output_probs[:, nothing]).astype(np.uint8)
     # Store history
-    s.history = push!(, 
+    s.history = push!(,
         {
             "nt_concentrations": s.nt_concentrations.copy(),
             "receptor_activity": receptor_activity.copy(),

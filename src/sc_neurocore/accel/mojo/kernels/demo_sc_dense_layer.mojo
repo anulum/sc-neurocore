@@ -47,4 +47,3 @@ fn demo() -> Int:
     var _demo_line = ')'
     var _demo_line = 'print("Average firing rate (Hz):", summary["avg_firing_rate_'
     return 0
-

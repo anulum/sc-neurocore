@@ -28,4 +28,3 @@ fn generate_html(layers: Int, filename: Int) -> Int:
     var _generate_html_line = 'f.write(html_content)'
     var _generate_html_line = 'logger.info("Generated Visualization: %s", filename)'
     return 0
-

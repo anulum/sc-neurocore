@@ -1,11 +1,11 @@
 
 // (c) Copyright 1995-2013 Xilinx, Inc. All rights reserved.
-// 
+//
 // This file contains confidential and proprietary information
 // of Xilinx, Inc. and is protected under U.S. and
 // international copyright and other intellectual property
 // laws.
-// 
+//
 // DISCLAIMER
 // This disclaimer is not a license and does not grant any
 // rights to the materials distributed herewith. Except as
@@ -27,7 +27,7 @@
 // by a third party) even if such damage or loss was
 // reasonably foreseeable or Xilinx had been advised of the
 // possibility of the same.
-// 
+//
 // CRITICAL APPLICATIONS
 // Xilinx products are not designed or intended to be fail-
 // safe, or for use in any application requiring fail-safe
@@ -41,10 +41,10 @@
 // liability of any use of Xilinx products in Critical
 // Applications, subject only to applicable laws and
 // regulations governing limitations on product liability.
-// 
+//
 // THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS
 // PART OF THIS FILE AT ALL TIMES.
-// 
+//
 // DO NOT MODIFY THIS FILE.
 
 #include"processing_system7_v5_5_tlm.h"
@@ -75,7 +75,7 @@ void rptlm2xtlm_converter<IN_WIDTH, OUT_WIDTH>::registerUserExtensionHandlerCall
 *   This function is called when tlm2xtlm bridge convert tlm payload to xtlm payload.
 *
 *   caller:     tlm2xtlm bridge
-*   purpose:    To get master id and other parameters out of genattr_extension 
+*   purpose:    To get master id and other parameters out of genattr_extension
 *               and use master id to AxUSER PIN of xtlm payload.
 *
 *
@@ -133,7 +133,7 @@ void add_extensions_to_tlm(const xtlm::aximm_payload* xtlm_pay, tlm::tlm_generic
     //val = (*(uint8_t*)(xtlm_pay->get_axi_id())) && 0x3F;
     genattr_extension* ext = new genattr_extension;
     ext->set_master_id(val);
-    gp->set_extension(ext);    
+    gp->set_extension(ext);
     gp->set_streaming_width(gp->get_data_length());
     if(gp->get_command() != tlm::TLM_WRITE_COMMAND)
     {
@@ -168,7 +168,7 @@ processing_system7_v5_5_tlm :: processing_system7_v5_5_tlm (sc_core::sc_module_n
         ,PS_SRSTB("PS_SRSTB")
         ,PS_CLK("PS_CLK")
         ,PS_PORB("PS_PORB")
-    ,m_rp_bridge_M_AXI_GP0("m_rp_bridge_M_AXI_GP0")     
+    ,m_rp_bridge_M_AXI_GP0("m_rp_bridge_M_AXI_GP0")
         ,FCLK_CLK0_clk("FCLK_CLK0_clk", sc_time(20000.0,sc_core::SC_PS))//clock period in picoseconds = 1000000/freq(in MZ)
     ,prop(_prop)
     {
@@ -180,7 +180,7 @@ processing_system7_v5_5_tlm :: processing_system7_v5_5_tlm (sc_core::sc_module_n
 	    char* unix_path = getenv("COSIM_MACHINE_PATH");
 	    char* tcpip_addr = getenv("COSIM_MACHINE_TCPIP_ADDRESS");
 	    char* dir_path_to_test_machine;
-	    bool unix_socket_en = false;        
+	    bool unix_socket_en = false;
 	    if (unix_path != nullptr) {
 	    	dir_path_to_test_machine = strdup(unix_path);
 	    	unix_socket_en = true;
@@ -204,14 +204,14 @@ processing_system7_v5_5_tlm :: processing_system7_v5_5_tlm (sc_core::sc_module_n
 	    const char* skt = skt_name.c_str();
         m_zynq_tlm_model = new xilinx_zynq("xilinx_zynq",skt);
 
-        //instantiating TLM2XTLM bridge and stiching it between 
-        //s_axi_gp[0] initiator socket of zynq Qemu tlm wrapper to M_AXI_GP0_wr_socket/rd_socket sockets 
+        //instantiating TLM2XTLM bridge and stiching it between
+        //s_axi_gp[0] initiator socket of zynq Qemu tlm wrapper to M_AXI_GP0_wr_socket/rd_socket sockets
         m_rp_bridge_M_AXI_GP0.wr_socket->bind(*M_AXI_GP0_wr_socket);
         m_rp_bridge_M_AXI_GP0.rd_socket->bind(*M_AXI_GP0_rd_socket);
         m_rp_bridge_M_AXI_GP0.target_socket.bind(*m_zynq_tlm_model->m_axi_gp[0]);
 
         m_zynq_tlm_model->tie_off();
-        
+
         SC_METHOD(trigger_FCLK_CLK0_pin);
         sensitive << FCLK_CLK0_clk;
         dont_initialize();
@@ -219,13 +219,13 @@ processing_system7_v5_5_tlm :: processing_system7_v5_5_tlm (sc_core::sc_module_n
         m_zynq_tlm_model->rst(qemu_rst);
     }
 processing_system7_v5_5_tlm :: ~processing_system7_v5_5_tlm() {
-        //deleteing dynamically created objects 
+        //deleteing dynamically created objects
         delete M_AXI_GP0_wr_socket;
         delete M_AXI_GP0_rd_socket;
     }
-    
+
     //Method which is sentive to FCLK_CLK0_clk sc_clock object
-    //FCLK_CLK0 pin written based on FCLK_CLK0_clk clock value 
+    //FCLK_CLK0 pin written based on FCLK_CLK0_clk clock value
     void processing_system7_v5_5_tlm ::trigger_FCLK_CLK0_pin()    {
         FCLK_CLK0.write(FCLK_CLK0_clk.read());
     }
@@ -235,7 +235,7 @@ processing_system7_v5_5_tlm :: ~processing_system7_v5_5_tlm() {
     }
     void processing_system7_v5_5_tlm ::start_of_simulation()
     {
-    //temporary fix to drive the enabled reset pin 
+    //temporary fix to drive the enabled reset pin
         FCLK_RESET0_N.write(true);
         qemu_rst.write(false);
     }

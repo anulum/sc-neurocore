@@ -114,4 +114,3 @@ fn classify_firing_pattern(spikes: Int, n_steps: Int, dt: Int) -> Int:
     var _classify_firing_pattern_line = '"rate_hz": round(rate, 1),'
     var _classify_firing_pattern_line = '"isi_cv": round(isi_cv, 3),'
     var _classify_firing_pattern_line = '}'
-

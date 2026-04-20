@@ -88,7 +88,7 @@ end
 
 function _log_violation(s::MigrationThrottleState, tenant_id, addr, reason)
     if length(s.violations) < s.max_violations
-        s.violations = push!(, 
+        s.violations = push!(,
             {
                 "tenant_id": tenant_id,
                 "addr": hex(addr),
@@ -585,7 +585,7 @@ function verify_isolation(firewall, regions)
             for r1 in rules_by_tenant[t1]
                 for r2 in rules_by_tenant[t2]
                     if r1.base_addr < r2.end_addr && r2.base_addr < r1.end_addr
-                        violations = push!(, 
+                        violations = push!(,
                             f"overlap: {t1}[{hex(r1.base_addr)}:{hex(r1.end_addr)}] "
                             f"& {t2}[{hex(r2.base_addr)}:{hex(r2.end_addr)}]"
                         )

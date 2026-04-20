@@ -87,4 +87,3 @@ fn hook(module: Int, input: Int, output: Int) -> Int:
     var _hook_line = 'if isinstance(output, tuple) and len(output) >= 1:'
     var _hook_line = '_records[name].append(output[0].detach())'
     return 0
-

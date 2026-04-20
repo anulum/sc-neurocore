@@ -68,7 +68,7 @@ pub fn lvr(binary_train: f64, dt: f64, refractoriness_ms: f64) -> f64 {
 }
 
 pub fn fano_factor(binary_train: f64, window_ms: f64, dt: f64) -> f64 {
-    // binary_train: ndarray[Any, Any], window_ms: float = 50.0, dt: float = 
+    // binary_train: ndarray[Any, Any], window_ms: float = 50.0, dt: float =
     // ) -> float {
     // window_steps = max(1, int(window_ms / (dt * 1000)))
     // n = binary_train.size
@@ -178,7 +178,7 @@ pub fn permutation_entropy(binary_train: f64, order: f64, delay: f64) -> f64 {
     // if n < order * delay {
     // return float("nan")
     // if _HAS_RUST and _ssc is not 0 {
-    // return float(_ssc.py_permutation_entropy(ascontiguousarray(x), order, 
+    // return float(_ssc.py_permutation_entropy(ascontiguousarray(x), order,
     // n_patterns = n - (order - 1) * delay
     // if n_patterns < 1 {
     // return float("nan")
@@ -340,4 +340,3 @@ pub fn _count_matches(dim: f64) -> f64 {
     // return total
     0.0
 }
-

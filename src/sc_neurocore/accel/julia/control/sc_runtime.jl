@@ -307,7 +307,7 @@ function summary(s::SCRuntimeEngineState)
         f"Runtime Report: {s.total_observations} observations, {s.num_adaptations} adaptations",
     ]
     if s.final_config
-        lines = push!(, 
+        lines = push!(,
             f"  Final: length={s.final_config.bitstream_length}, "
             f"decorr={s.final_config.decorrelator.value}, "
             f"ecc={s.final_config.ecc_enabled} ({s.final_config.ecc_mode.value})"

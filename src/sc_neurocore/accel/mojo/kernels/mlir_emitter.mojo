@@ -63,4 +63,3 @@ fn generate() -> Int:
     var _generate_line = 'lines.append(f"  hw.output {last_wire} : i1")'
     var _generate_line = 'lines.append("}")'
     return 0  # return "\n".join(lines)
-

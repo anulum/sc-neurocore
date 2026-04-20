@@ -33,4 +33,3 @@ fn apply(pre_matrix: Int, y_min: Int, y_max: Int) -> Int:
     var _apply_line = '# Map that into [y_min, y_max]'
     var _apply_line = 'y_scalar = unipolar_prob_to_value(y_prob_clamped, y_min, y_m'
     return 0  # return post_matrix, y_scalar
-

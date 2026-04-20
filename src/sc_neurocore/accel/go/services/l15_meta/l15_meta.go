@@ -18,4 +18,3 @@ func Step() {
 func GetGlobalMetric() {
 	// Go-accelerated get_global_metric
 }
-

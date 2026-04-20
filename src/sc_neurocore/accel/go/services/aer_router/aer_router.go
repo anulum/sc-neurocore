@@ -54,4 +54,3 @@ func TotalAcked() {
 func GetStats() {
 	// Go-accelerated get_stats
 }
-

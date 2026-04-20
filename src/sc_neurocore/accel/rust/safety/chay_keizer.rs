@@ -63,7 +63,7 @@ impl ChayKeizerNeuron {
         // self.n += (n_inf - self.n) / max(tau_n, 0.1) * self.dt
         // self.n = (self.n_f64).clamp(0.0, 1.0)
         // self.ca = max(0.0, self.ca + (-self.f_ca * i_ca - self.k_ca * self.ca)
-        // return 1 if (self.v >= self.v_threshold && v_prev < self.v_threshold) 
+        // return 1 if (self.v >= self.v_threshold && v_prev < self.v_threshold)
         0 // spike indicator
     }
 

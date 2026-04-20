@@ -59,4 +59,3 @@ fn cubic_higher_order(binary_train: Int, dt: Int, max_lag: Int) -> Int:
     var _cubic_higher_order_line = 'continue'
     var _cubic_higher_order_line = 'c3[t1, t2] = sum(x[:valid_n] * x[t1 : t1 + valid_n] * x[t2 :'
     return 0  # return c3
-

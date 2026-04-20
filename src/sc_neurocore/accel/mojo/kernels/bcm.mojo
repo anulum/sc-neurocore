@@ -18,4 +18,3 @@ fn step(pre_rate: Int, post_rate: Int, dt: Int) -> Int:
 fn reset() -> Int:
     var _reset_line = 'theta_m = theta_init'
     return 0
-

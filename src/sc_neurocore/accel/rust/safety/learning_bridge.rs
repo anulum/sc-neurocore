@@ -16,7 +16,7 @@ extern "C" {
     fn get_rule_weight(ptr: *const c_void) -> f32;
     fn reset_rule(ptr: *mut c_void);
     fn destroy_rule(ptr: *mut c_void);
-    
+
     fn create_learner(threshold: f32, target_rate: f32, weight: f32) -> *mut c_void;
     fn step_learner(ptr: *mut c_void, fired: bool, pre_spike: bool, global_reward: f32);
     fn destroy_learner(ptr: *mut c_void);
@@ -87,4 +87,3 @@ pub fn validate_learning_bridge(state: &RustEligentLearner) -> bool {
 
 // Tests require proper linking against libautonomous_learning.so
 // which is managed externally during Python module build.
-

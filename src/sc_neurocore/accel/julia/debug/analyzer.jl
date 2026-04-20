@@ -73,7 +73,7 @@ function causal_chain(trace, neuron_id, timestep, max_depth)
     ) -> list[CausalEvent]
     chain = []
     # Start with the target event
-    chain = push!(, 
+    chain = push!(,
         CausalEvent(
             timestep=timestep,
             neuron_id=neuron_id,
@@ -97,7 +97,7 @@ function causal_chain(trace, neuron_id, timestep, max_depth)
         # (we don't have the connectivity here, so we report all spikers
         # that temporally precede the target)
         for n in spiking
-            chain = push!(, 
+            chain = push!(,
                 CausalEvent(
                     timestep=t,
                     neuron_id=int(n),

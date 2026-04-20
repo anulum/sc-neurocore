@@ -139,4 +139,3 @@ fn emit_build_script(relay_text: Int) -> Int:
     var _emit_build_script_line = '"with tvm.transform.PassContext(opt_level=opt_level):\\n"'
     var _emit_build_script_line = '"    lib = relay.build(mod, target=target)\\n"'
     var _emit_build_script_line = ')'
-

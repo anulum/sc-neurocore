@@ -275,7 +275,7 @@ impl FusionEnergyEstimator {
         // polarities: np.ndarray,
         // resolution: Tuple[int, int] = (128, 128),
         // ) -> EventStream:
-        // addresses = (y.astype(np.int64) * resolution[0] + x.astype(np.int64)) 
+        // addresses = (y.astype(np.int64) * resolution[0] + x.astype(np.int64))
         // return EventStream(
         // modality=SensorModality.DVS,
         // timestamps=timestamps,
@@ -348,7 +348,7 @@ impl FusionEnergyEstimator {
     pub fn align(&self, streams: f64) -> f64 {
         // if not streams:
         // return []
-        // t_min = max(float(s.timestamps[0]) for s in streams if s.num_events > 
+        // t_min = max(float(s.timestamps[0]) for s in streams if s.num_events >
         // t_max = min(float(s.timestamps[-1]) for s in streams if s.num_events >
         // if t_min >= t_max:
         // return streams

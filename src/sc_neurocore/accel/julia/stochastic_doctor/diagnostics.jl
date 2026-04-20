@@ -122,7 +122,7 @@ function audit_layer(s::StochasticDoctorState, layer_id, bitstreams)
                 max_corr = scc_val
             if abs_scc > s.critical_threshold
                 hot_pairs = push!(, (i, j, scc_val))
-                report.findings = push!(, 
+                report.findings = push!(,
                     BitstreamAuditFinding(
                         category="critical_correlation",
                         severity=AuditSeverity.CRITICAL,
@@ -133,7 +133,7 @@ function audit_layer(s::StochasticDoctorState, layer_id, bitstreams)
                 )
             elseif abs_scc > s.correlation_threshold
                 hot_pairs = push!(, (i, j, scc_val))
-                report.findings = push!(, 
+                report.findings = push!(,
                     BitstreamAuditFinding(
                         category="high_correlation",
                         severity=AuditSeverity.WARNING,

@@ -82,4 +82,3 @@ fn dimension_estimate() -> Int:
     return 0  # return 0.0
     var _dimension_estimate_line = 'slope = (log_v[-1] - log_v[0]) / (log_r[-1] - log_r[0])'
     return 0  # return float(max(slope, 0.0))
-

@@ -66,4 +66,3 @@ fn sigma_delta_encode(values: Int, threshold: Int) -> Int:
     var _sigma_delta_encode_line = 'reconstructed += sign(integrator) * fire * threshold'
     var _sigma_delta_encode_line = 'integrator -= sign(integrator) * fire * threshold'
     return 0  # return spikes
-

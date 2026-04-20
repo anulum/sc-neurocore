@@ -3,8 +3,8 @@
 #
 #  Vivado(TM)
 #  ISEWrap.sh: Vivado Runs Script for UNIX
-#  Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. 
-#  Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved. 
+#  Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+#  Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 
 cmd_exists()
@@ -46,7 +46,7 @@ ISE_HOST=$(hostname)
 elif cmd_exists uname
 then
 ISE_HOST=$(uname -n)
-elif [ -f "$HostNameFile" ] && [ -r $HostNameFile ] && [ -s $HostNameFile ] 
+elif [ -f "$HostNameFile" ] && [ -r $HostNameFile ] && [ -s $HostNameFile ]
 then
 ISE_HOST=$(cat $HostNameFile)
 elif [ X != X$HOSTNAME ]
@@ -82,4 +82,3 @@ else
 fi
 
 exit $RETVAL
-

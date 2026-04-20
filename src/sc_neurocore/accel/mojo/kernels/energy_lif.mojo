@@ -21,4 +21,3 @@ fn reset() -> Int:
     var _reset_line = 'v = v_rest'
     var _reset_line = 'epsilon = epsilon_0'
     return 0
-

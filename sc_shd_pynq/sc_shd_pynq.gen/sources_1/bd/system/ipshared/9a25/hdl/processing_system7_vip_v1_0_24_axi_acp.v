@@ -15,7 +15,7 @@
                axi_acp_id_width, // ID width
                C_S_AXI_ACP_BASEADDR, // slave base address
                C_S_AXI_ACP_HIGHADDR,// slave size
-               axi_acp_outstanding, // outstanding transactions // 7 Reads and 3 Writes 
+               axi_acp_outstanding, // outstanding transactions // 7 Reads and 3 Writes
                axi_slv_excl_support, // Exclusive access support
                axi_acp_wr_outstanding,
                axi_acp_rd_outstanding)
@@ -35,8 +35,8 @@
             // Write Data Channel Signals.
             .S_WID    (S_AXI_ACP_WID),
             .S_WDATA  (S_AXI_ACP_WDATA),
-            .S_WSTRB  (S_AXI_ACP_WSTRB), 
-            .S_WLAST  (S_AXI_ACP_WLAST), 
+            .S_WSTRB  (S_AXI_ACP_WSTRB),
+            .S_WLAST  (S_AXI_ACP_WLAST),
             .S_WVALID (S_AXI_ACP_WVALID),
             .S_WREADY (S_AXI_ACP_WREADY),
             // Write Response Channel Signals.
@@ -62,20 +62,20 @@
             .S_RLAST  (S_AXI_ACP_RLAST),
             .S_RVALID (S_AXI_ACP_RVALID),
             .S_RREADY (S_AXI_ACP_RREADY),
-            // Side band signals 
+            // Side band signals
             .S_AWQOS  (S_AXI_ACP_AWQOS),
-            .S_ARQOS  (S_AXI_ACP_ARQOS),            // Side band signals 
+            .S_ARQOS  (S_AXI_ACP_ARQOS),            // Side band signals
 
             .SW_CLK   (net_sw_clk),
 /* This goes to port 0 of DDR and port 0 of OCM , port 0 of REG*/
             .WR_DATA_ACK_DDR (ddr_wr_ack_port0),
             .WR_DATA_ACK_OCM (ocm_wr_ack_port0),
-            .WR_DATA  (net_wr_data_acp), 
-            .WR_DATA_STRB  (net_wr_strb_acp), 
-            .WR_ADDR  (net_wr_addr_acp), 
-            .WR_BYTES  (net_wr_bytes_acp), 
-            .WR_DATA_VALID_DDR  (ddr_wr_dv_port0), 
-            .WR_DATA_VALID_OCM  (ocm_wr_dv_port0), 
+            .WR_DATA  (net_wr_data_acp),
+            .WR_DATA_STRB  (net_wr_strb_acp),
+            .WR_ADDR  (net_wr_addr_acp),
+            .WR_BYTES  (net_wr_bytes_acp),
+            .WR_DATA_VALID_DDR  (ddr_wr_dv_port0),
+            .WR_DATA_VALID_OCM  (ocm_wr_dv_port0),
             .WR_QOS (net_wr_qos_acp),
 
             .RD_REQ_DDR (ddr_rd_req_port0),

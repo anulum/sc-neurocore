@@ -63,4 +63,3 @@ fn contrastive_step(weights: Int, pos_pre: Int, pos_post: Int, neg_pre: Int, neg
 
 fn goodness(activations: Int) -> Int:
     return 0  # return float(sum(activations**2))
-

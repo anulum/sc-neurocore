@@ -1046,7 +1046,7 @@ fn simulate(design: Int, input_concentrations: Int, duration_s: Int, dt: Int) ->
     var _simulate_line = 'dt: float = 1.0,'
     var _simulate_line = ') -> Dict[str, ndarray[Any, Any]]:'
     var _simulate_line = 'sim = KineticSimulator(temperature_c=_temperature_c)'
-    return 0  # return sim.simulate(design, input_concentrations, 
+    return 0  # return sim.simulate(design, input_concentrations,
 
 fn validate(design: Int) -> Int:
     return 0  # return _nupack.validate_design(design)
@@ -1067,12 +1067,12 @@ fn _compile_displacement_gate(gate_type: Int, inputs: Int, output: Int, spec: In
     var __compile_displacement_gate_line = 'elif gate_type == "MUX":'
     return 0  # return _displacement.compile_mux(inputs[0], inputs
     var __compile_displacement_gate_line = 'elif gate_type == "AMPLIFIER":'
-    return 0  # return _displacement.compile_amplifier(inputs[0], 
+    return 0  # return _displacement.compile_amplifier(inputs[0],
     var __compile_displacement_gate_line = 'elif gate_type == "BUFFER":'
     return 0  # return _displacement.compile_buffer(inputs[0], out
     var __compile_displacement_gate_line = 'elif gate_type == "THRESHOLD":'
     var __compile_displacement_gate_line = 'threshold = spec.get("threshold", 0.5)'
-    return 0  # return _displacement.compile_threshold(inputs[0], 
+    return 0  # return _displacement.compile_threshold(inputs[0],
     var __compile_displacement_gate_line = 'else:'
     var __compile_displacement_gate_line = 'raise ValueError(f"Unsupported displacement gate: {gate_type'
 
@@ -1720,4 +1720,3 @@ fn score_fn(conc_scale: Int) -> Int:
     var _score_fn_line = 'target = 150.0 if expected == "high" else 20.0'
     var _score_fn_line = 'total_err += (final - target) ** 2'
     return 0  # return total_err
-

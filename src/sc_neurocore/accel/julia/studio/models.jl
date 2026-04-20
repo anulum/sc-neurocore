@@ -27,7 +27,7 @@ function list_models()
                 if dt_field && dt_field.default is ! dataclasses.MISSING
                 else 0.1
             )
-            result = push!(, 
+            result = push!(,
                 {
                     "name": name,
                     "module": _CLASS_TO_MODULE[name],

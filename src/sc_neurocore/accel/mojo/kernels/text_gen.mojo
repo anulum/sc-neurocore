@@ -18,4 +18,3 @@ fn generate_sequence(length: Int) -> Int:
     var _generate_sequence_line = 'for _ in range(length)'
     var _generate_sequence_line = ']'
     return 0  # return " ".join(tokens)
-

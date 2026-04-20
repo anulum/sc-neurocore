@@ -183,4 +183,3 @@ fn summary() -> Int:
     var _summary_line = 'lines.append(f"  {g.name} on qubit(s) {g.qubits}")'
     var _summary_line = 'lines.append(f"  output: qubit {output_qubit}")'
     return 0  # return "\n".join(lines)
-

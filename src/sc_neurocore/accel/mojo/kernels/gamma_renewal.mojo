@@ -45,4 +45,3 @@ fn step(rate_override: Int) -> Int:
 fn reset() -> Int:
     var _reset_line = '_time_since_spike = 0.0'
     return 0
-

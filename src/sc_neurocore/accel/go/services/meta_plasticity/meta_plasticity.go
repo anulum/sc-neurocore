@@ -230,4 +230,3 @@ func Enforce() {
 func IsValid() {
 	// Go-accelerated is_valid
 }
-

@@ -71,7 +71,7 @@ impl CompteWMNeuron {
         // self.x_nmda += 1.0
         // self.s_ampa *= (-self.dt / self.tau_ampa_f64).exp()
         // self.s_nmda += (
-        // -self.s_nmda / self.tau_nmda + self.alpha_nmda * self.x_nmda * (1.0 - 
+        // -self.s_nmda / self.tau_nmda + self.alpha_nmda * self.x_nmda * (1.0 -
         // ) * self.dt
         // self.x_nmda *= (-self.dt / self.tau_x_f64).exp()
         // self.s_gaba *= (-self.dt / 5.0_f64).exp()

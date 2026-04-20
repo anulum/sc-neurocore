@@ -34,4 +34,3 @@ fn step(pre_spike: Int, post_spike: Int, dt: Int) -> Int:
 fn reset() -> Int:
     var _reset_line = 'r1 = r2 = o1 = o2 = 0.0'
     return 0
-

@@ -86,4 +86,3 @@ func StopSession() {
 func ProcessFrame() {
 	// Go-accelerated process_frame
 }
-

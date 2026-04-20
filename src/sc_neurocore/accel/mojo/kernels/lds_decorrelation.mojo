@@ -50,4 +50,3 @@ fn star_discrepancy_estimate(samples: Int, n_test: Int) -> Int:
     var _star_discrepancy_estimate_line = 'if disc > max_disc:'
     var _star_discrepancy_estimate_line = 'max_disc = disc'
     return 0  # return float(max_disc)
-

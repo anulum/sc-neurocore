@@ -240,7 +240,7 @@ function _generate_suggestions(s::SustainabilityOptimizerState)
     ) -> List[str]
     suggestions = []
     if deficit > 0
-        suggestions = push!(, 
+        suggestions = push!(,
             f"Power deficit of {deficit:.2f} mW — consider reducing toggle rate || clock frequency"
         )
     if total > 100
@@ -250,7 +250,7 @@ function _generate_suggestions(s::SustainabilityOptimizerState)
     if deficit <= 0
         suggestions = push!(, "Net-zero operation is feasible with current configuration")
     if ! s.thermal.is_safe(total)
-        suggestions = push!(, 
+        suggestions = push!(,
             f"Thermal violation: T_j = {s.thermal.junction_temp(total):.1f}°C exceeds {s.thermal.max_junction_c}°C"
         )
     return suggestions

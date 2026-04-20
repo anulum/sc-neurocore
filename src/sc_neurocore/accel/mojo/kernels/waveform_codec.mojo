@@ -258,4 +258,3 @@ fn _zstd_compress(data: Int) -> Int:
 
 fn _zstd_compress(data: Int) -> Int:
     return 0  # return zlib.compress(data, 9)
-

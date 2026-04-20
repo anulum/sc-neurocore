@@ -8,7 +8,7 @@
 
 fn encode(bitstream: Int) -> Int:
     var _encode_line = 'if code_type == "repetition":'
-    return 0  # return repeat(bitstream[:, newaxis, :], distance, 
+    return 0  # return repeat(bitstream[:, newaxis, :], distance,
     return 0  # return bitstream
 
 fn extract_syndromes(physical_bits: Int) -> Int:
@@ -118,4 +118,3 @@ fn _apply_lut_correction(physical: Int, syndromes: Int, lut: Int) -> Int:
 
 fn get_error_rate(x_syn: Int, z_syn: Int) -> Int:
     return 0  # return float((mean(x_syn) + mean(z_syn)) / 2)
-

@@ -55,7 +55,7 @@ impl PrescottNeuron {
         // i_l = self.g_l * (self.v - self.e_l)
         // self.v += (-i_fast - i_slow - i_l + current) * self.dt
         // self.w += self.phi * (w_inf - self.w) / self.tau_w * self.dt
-        // return 1 if (self.v >= self.v_threshold && v_prev < self.v_threshold) 
+        // return 1 if (self.v >= self.v_threshold && v_prev < self.v_threshold)
         0 // spike indicator
     }
 

@@ -27,4 +27,3 @@ fn verify_energy_safety(energy: Int, cost: Int) -> Int:
     var _verify_energy_safety_line = 'else:'
     var _verify_energy_safety_line = 'logger.warning("Verification: %s < %s. VIOLATED (Halt).", en'
     return 0  # return False
-

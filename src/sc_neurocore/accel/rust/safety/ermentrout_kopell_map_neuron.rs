@@ -29,7 +29,7 @@ impl ErmentroutKopellMapNeuron {
     pub fn step(&mut self, i_ext: f64) -> i32 {
         // inp = self.gain * current
         // theta_prev = self.theta
-        // d_theta = (1.0 - math.cos(self.theta)) + (1.0 + math.cos(self.theta)) 
+        // d_theta = (1.0 - math.cos(self.theta)) + (1.0 + math.cos(self.theta))
         // self.theta += self.dt * d_theta
         // fired = 1 if self.theta >= self.theta_threshold && theta_prev < self.t
         // two_pi = 2.0 * math.pi

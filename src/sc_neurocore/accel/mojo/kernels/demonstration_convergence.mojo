@@ -71,4 +71,3 @@ fn run_demonstration() -> Int:
     var _run_demonstration_line = 'logger.info(f"Lowered MLIR to Verilog: {v_path}")'
     var _run_demonstration_line = 'logger.info("Phase 16 Omni-Substrate Demonstration COMPLETE.'
     return 0
-

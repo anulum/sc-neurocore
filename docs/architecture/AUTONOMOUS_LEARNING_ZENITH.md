@@ -1,6 +1,6 @@
 # Autonomous Learning Engine: "Project Zenith" Core
 
-The Autonomous Learning Engine within SC-NEUROCORE represents a production-ready, highly synchronized C-FFI pipeline mapping low-level physical Rust biological models into deep learning infrastructures and external hardware persistence. Following the "Zenith" update, this toolchain provides strong execution parity bridging PyTorch optimizations with asynchronous neuromorphic hardware constraints. 
+The Autonomous Learning Engine within SC-NEUROCORE represents a production-ready, highly synchronized C-FFI pipeline mapping low-level physical Rust biological models into deep learning infrastructures and external hardware persistence. Following the "Zenith" update, this toolchain provides strong execution parity bridging PyTorch optimizations with asynchronous neuromorphic hardware constraints.
 
 ## 1. What This Solves
 
@@ -15,7 +15,7 @@ The **Zenith Architecture** eliminates the traditional trade-off, providing nati
 ## 2. Analog Stochasticity (`step_analog`)
 
 ### How it Works
-In a physical analog Spintronic chip or MTJ array, signals do not cleanly resolve to boolean `True` or `False`. They resolve probabilistically (e.g., this spike fired with 65% certainty). Passing rigid booleans into STDP arrays degrades true physical realization. 
+In a physical analog Spintronic chip or MTJ array, signals do not cleanly resolve to boolean `True` or `False`. They resolve probabilistically (e.g., this spike fired with 65% certainty). Passing rigid booleans into STDP arrays degrades true physical realization.
 The Rust engine exposes:
 ```rust
 pub unsafe extern "C" fn step_rule_layer_analog(...)
@@ -25,12 +25,12 @@ Instead of converting float probabilities into Boolean threshold spikes inside P
 Inside Rust, `rayon` dispatches these probabilities natively over thread-local pseudo-random number generators (`rand::thread_rng()`). The PRNG rolls physical probabilities on isolated CPU threads for millions of nodes simultaneously, converting floating uncertainty into exact discrete biological realities localized to individual synaptic weights.
 
 ### Formal Verification & Deterministic Mode
-While probabilistic sampling is highly accurate to biological stochastic resonance, hardware deployment pipelines (like generating Verilog out of equation logic using `SymbiYosys` formal proofs) require strictly comparable exact results without RNG divergence. 
+While probabilistic sampling is highly accurate to biological stochastic resonance, hardware deployment pipelines (like generating Verilog out of equation logic using `SymbiYosys` formal proofs) require strictly comparable exact results without RNG divergence.
 
-By engaging the `set_deterministic_mode(seed: int)` wrapper from `sc_neurocore._native.learning_bridge`, the native Rayon `rand::thread_rng` logic is explicitly bypassed in favor of a strictly reproducible pseudo-random state identical across bit-true tests. 
+By engaging the `set_deterministic_mode(seed: int)` wrapper from `sc_neurocore._native.learning_bridge`, the native Rayon `rand::thread_rng` logic is explicitly bypassed in favor of a strictly reproducible pseudo-random state identical across bit-true tests.
 
 ### Performance & Benchmarks
-> [!NOTE] 
+> [!NOTE]
 > For exact hardware bounds and verifiable execution data on reference hardware (31 GB / 12-core CPU) reproducing biological convergence, see the full suite at **[Project Zenith: End-to-End Benchmark Report](../benchmarks/ZENITH_BENCHMARKS.md)** (`benchmarks/bench_zenith_e2e.py`).
 
 ### Real Time Applications
@@ -47,7 +47,7 @@ STDP (Spike-timing-dependent plasticity) is naturally an unsupervised algorithm.
 We utilized the **Straight-Through Estimator (STE)** paradigm inside the backward pass. The Unsupervised biological FFI runs purely out-of-place during the `forward()` operation, caching states (`ctx.save_for_backward`). When you fire `loss.backward()` anywhere in the ML chain, the Python Autograd intercepts the gradients and maps them directly through the biological eligibility trace (`grad_weights * a_plus * pre_trace`) backward up to preceding dense / CNN layers.
 
 ### Performance & Benchmarks
-> [!NOTE] 
+> [!NOTE]
 > For exact throughput measurements of surrogate memory graphs at Exascale boundaries, see the physical trace tests at **[Project Zenith: End-to-End Benchmark Report](../benchmarks/ZENITH_BENCHMARKS.md)** (`benchmarks/bench_zenith_e2e.py`).
 
 ### Real Time Applications
@@ -59,18 +59,18 @@ We utilized the **Straight-Through Estimator (STE)** paradigm inside the backwar
 ## 4. Exascale Persistence (`save` / `load`)
 
 ### How it Works
-Standard Python architectures (like `pickle` or `torch.save()`) must map Python objects into bytes. Doing this across 10 Million specific node combinations (Weight, Threshold, Trace histories) crashes RAM buffers and stalls operations. 
+Standard Python architectures (like `pickle` or `torch.save()`) must map Python objects into bytes. Doing this across 10 Million specific node combinations (Weight, Threshold, Trace histories) crashes RAM buffers and stalls operations.
 
 We circumvent Python entirely by executing a contiguous C-pointer cast natively bounded in `lib.rs`:
 ```rust
-let mut state_buffer: Vec<f32>; // Pre-allocated scaling 
+let mut state_buffer: Vec<f32>; // Pre-allocated scaling
 // ... dumps arrays strictly to generic u8 bytes
 file.write_all(byte_slice)
 ```
 Python simply calls `layer.save("/path.bin")`, and the file IO writes instantaneously directly out of RAM limits over the OS storage pipeline.
 
 ### Performance & Benchmarks
-> [!NOTE] 
+> [!NOTE]
 > To review the actual disk-mapping NVMe latency arrays comparing Python Pickle formats explicitly to Exascale boundaries, see **[Project Zenith: End-to-End Benchmark Report](../benchmarks/ZENITH_BENCHMARKS.md)** (`benchmarks/bench_zenith_e2e.py`).
 
 ### Real Time Applications

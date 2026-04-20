@@ -27,4 +27,3 @@ fn compute_gradient(params: Int) -> Int:
 fn step(params: Int) -> Int:
     var _step_line = 'grad = compute_gradient(params)'
     return 0  # return params - lr * grad
-

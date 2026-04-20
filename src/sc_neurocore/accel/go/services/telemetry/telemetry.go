@@ -58,4 +58,3 @@ func Record() {
 func Summary() {
 	// Go-accelerated summary
 }
-

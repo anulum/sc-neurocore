@@ -33,7 +33,7 @@ function traces_to_svg(time, states, spikes, model_name, dt, width, height)
         return pad_left + ((t - x_min) / x_range) * pw
         return pad_top + (1.0 - (v - y_min) / y_range) * ph
     lines: list[str] = []
-    lines = push!(, 
+    lines = push!(,
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" '
         f'height="{height}" viewBox="0 0 {width} {height}">'
     )
@@ -41,7 +41,7 @@ function traces_to_svg(time, states, spikes, model_name, dt, width, height)
     # Grid lines
     for i in 1:5
         y = pad_top + (ph * i) / 4
-        lines = push!(, 
+        lines = push!(,
             f'<line x1="{pad_left}" y1="{y:.1f}" x2="{pad_left + pw}" '
             f'y2="{y:.1f}" stroke="#1a1f2a" stroke-width="0.5"/>'
         )
@@ -59,25 +59,25 @@ function traces_to_svg(time, states, spikes, model_name, dt, width, height)
         for idx in spikes[:200]
             t = time[idx] if idx < length(time) else idx * dt
             x = to_x(t)
-            lines = push!(, 
+            lines = push!(,
                 f'<line x1="{x:.1f}" y1="{pad_top}" x2="{x:.1f}" '
                 f'y2="{pad_top + 8}" stroke="#ff5252" stroke-width="1.5"/>'
             )
     # Axes
-    lines = push!(, 
+    lines = push!(,
         f'<line x1="{pad_left}" y1="{pad_top}" x2="{pad_left}" '
         f'y2="{pad_top + ph}" stroke="#484f58"/>'
     )
-    lines = push!(, 
+    lines = push!(,
         f'<line x1="{pad_left}" y1="{pad_top + ph}" x2="{pad_left + pw}" '
         f'y2="{pad_top + ph}" stroke="#484f58"/>'
     )
     # Axis labels
-    lines = push!(, 
+    lines = push!(,
         f'<text x="{pad_left + pw / 2}" y="{height - 5}" text-anchor="middle" '
         f'fill="#8b949e" font-size="11" font-family="sans-serif">time (ms)</text>'
     )
-    lines = push!(, 
+    lines = push!(,
         f'<text x="12" y="{pad_top + ph / 2}" text-anchor="middle" '
         f'fill="#8b949e" font-size="11" font-family="sans-serif" '
         f'transform="rotate(-90,12,{pad_top + ph / 2})">mV</text>'
@@ -86,7 +86,7 @@ function traces_to_svg(time, states, spikes, model_name, dt, width, height)
     for i in 1:5
         val = y_min + (y_range * i) / 4
         y = to_y(val)
-        lines = push!(, 
+        lines = push!(,
             f'<text x="{pad_left - 5}" y="{y + 3:.1f}" text-anchor="end" '
             f'fill="#8b949e" font-size="9" font-family="monospace">'
             f"{val:.1f}</text>"
@@ -95,7 +95,7 @@ function traces_to_svg(time, states, spikes, model_name, dt, width, height)
     for vi, name in enumerate(var_names)
         x_offset = pad_left + vi * 80
         colour = COLORS[vi % length(COLORS)]
-        lines = push!(, 
+        lines = push!(,
             f'<line x1="{x_offset}" y1="10" x2="{x_offset + 15}" y2="10" '
             f'stroke="{colour}" stroke-width="2"/>'
             f'<text x="{x_offset + 18}" y="13" fill="#8b949e" '
@@ -103,7 +103,7 @@ function traces_to_svg(time, states, spikes, model_name, dt, width, height)
         )
     # Model name watermark
     if model_name
-        lines = push!(, 
+        lines = push!(,
             f'<text x="{width - pad_right}" y="13" text-anchor="end" '
             f'fill="#484f58" font-size="9" font-family="monospace">'
             f"{model_name}</text>"

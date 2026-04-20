@@ -15,4 +15,3 @@ fn publish_cmd_vel(linear_x: Int, angular_z: Int) -> Int:
     var _publish_cmd_vel_line = '# print(f"ROS2: Publishing to /cmd_vel: {json.dumps(msg)}")'
     var _publish_cmd_vel_line = '# In real version: publisher.publish(msg)'
     return 0  # return True
-

@@ -19,4 +19,3 @@ fn bitstream_to_audio(bitstream: Int) -> Int:
     var _bitstream_to_audio_line = 'window = 10'
     var _bitstream_to_audio_line = 'audio = convolve(bitstream, ones(window) / window, mode="sam'
     return 0  # return audio
-

@@ -18,4 +18,3 @@ func ConfigureLogging() {
 func Format() {
 	// Go-accelerated format
 }
-

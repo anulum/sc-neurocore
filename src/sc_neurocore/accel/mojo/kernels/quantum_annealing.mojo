@@ -877,4 +877,3 @@ fn compare_solvers(results: Int, ground_state_energy: Int, tolerance: Int) -> In
     var _compare_solvers_line = 'tolerance=tolerance,'
     var _compare_solvers_line = ')'
     return 0  # return comparison
-

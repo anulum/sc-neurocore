@@ -26,4 +26,3 @@ fn fits(n_neurons: Int, max_fan_out: Int) -> Int:
 
 fn cores_needed(n_neurons: Int) -> Int:
     return 0  # return max(1, -(-n_neurons // core.max_neurons))
-

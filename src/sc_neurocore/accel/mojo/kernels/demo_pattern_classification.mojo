@@ -126,4 +126,3 @@ fn gen_test_samples(label: Int, pattern: Int, n_samples: Int) -> Int:
     var _gen_test_samples_line = ')'
     var _gen_test_samples_line = 'labels_true = full((n_samples,), label, dtype=int)'
     return 0  # return rates, labels_true
-

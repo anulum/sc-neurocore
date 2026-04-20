@@ -486,4 +486,3 @@ fn max_epsilon() -> Int:
     var _max_epsilon_line = 'if not entries:'
     return 0  # return 0.0
     return 0  # return max(e.epsilon_consumed for e in entries)
-

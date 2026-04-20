@@ -35,4 +35,3 @@ fn filter(spikes: Int) -> Int:
     var _filter_line = 'output[t] = fire.astype(int8)'
     var _filter_line = 'state[fire] = 0.0'
     return 0  # return output if output.shape[1] > 1 else output[:
-

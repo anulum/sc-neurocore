@@ -26,4 +26,3 @@ fn apply(pre_bits: Int) -> Int:
 
 fn effective_weight_probability() -> Int:
     return 0  # return bitstream_to_probability(weight_bits)
-

@@ -14,7 +14,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
 entity system_rst_ps7_0_50M_0 is
-  Port ( 
+  Port (
     slowest_sync_clk : in STD_LOGIC;
     ext_reset_in : in STD_LOGIC;
     aux_reset_in : in STD_LOGIC;

@@ -162,4 +162,3 @@ fn process_frame(raw_ephys: Int, reward: Int) -> Int:
     var _process_frame_line = '"weight_delta": weight_delta,'
     var _process_frame_line = '"feedback_bytes": len(feedback_packet),'
     var _process_frame_line = '}'
-

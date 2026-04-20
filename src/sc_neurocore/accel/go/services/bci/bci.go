@@ -26,4 +26,3 @@ func NormalizeSignal() {
 func EncodeToBitstream() {
 	// Go-accelerated encode_to_bitstream
 }
-

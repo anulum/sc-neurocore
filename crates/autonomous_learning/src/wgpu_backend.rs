@@ -21,7 +21,7 @@ pub struct WgpuRuleParams {
     pub dt: f32,
     pub count: u32,
     pub seed: u32,
-    
+
     pub param_c: f32, // tau_e (R-STDP / ELIGENT)
     pub param_d: f32, // target_sum_weights (ELIGENT)
     pub _pad0: u32,
@@ -33,7 +33,7 @@ pub struct WgpuRuleLayer {
     queue: std::sync::Arc<wgpu::Queue>,
     compute_pipeline: wgpu::ComputePipeline,
     bind_group_layout: wgpu::BindGroupLayout,
-    
+
     weights_buf: wgpu::Buffer,
     pre_trace_buf: wgpu::Buffer,
     post_trace_buf: wgpu::Buffer,
@@ -44,7 +44,7 @@ pub struct WgpuRuleLayer {
     param_extra3_buf: wgpu::Buffer,
     rewards_buf: wgpu::Buffer,
     params_buf: wgpu::Buffer,
-    
+
     pub count: u32,
     pub rule_type: u32,
     pub a_plus: f32,
@@ -85,13 +85,13 @@ impl WgpuRuleLayer {
                 },
                 None,
             )).ok()?;
-            
-            Some(WgpuContext { 
-                device: std::sync::Arc::new(device), 
-                queue: std::sync::Arc::new(queue) 
+
+            Some(WgpuContext {
+                device: std::sync::Arc::new(device),
+                queue: std::sync::Arc::new(queue)
             })
         });
-        
+
         let ctx = ctx_opt.as_ref()?;
         // Natively, wgpu bindings (Device/Queue) are internally Arc-wrapped handles so cloning is virtually free
         let device = ctx.device.clone();
@@ -134,7 +134,7 @@ impl WgpuRuleLayer {
         });
 
         let vec_bytes = count * std::mem::size_of::<f32>();
-        
+
         let create_storage_buf = |device: &wgpu::Device, contents: &[f32]| {
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: None,
@@ -146,7 +146,7 @@ impl WgpuRuleLayer {
         // Initialize state arrays accurately out of box
         let zeros = vec![0.0f32; count];
         let mut param_extra2_init = vec![0.0f32; count];
-        
+
         // Setup BCM theta_m (Starts at 0.5 default) and ELIGENT sum_weights (Starts at 1.0)
         let param_extra2_val = if rule_type == 0 { 1.0f32 } else if rule_type == 3 { 0.5f32 } else { 0.0f32 };
         param_extra2_init.fill(param_extra2_val);
@@ -173,7 +173,7 @@ impl WgpuRuleLayer {
                 usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
                 mapped_at_creation: false,
             }),
-            
+
             device,
             queue,
             compute_pipeline,
@@ -251,7 +251,7 @@ impl WgpuRuleLayer {
         }
 
         self.queue.submit(Some(encoder.finish()));
-        
+
         // Wait for execution to finish
         self.device.poll(wgpu::Maintain::Wait);
     }

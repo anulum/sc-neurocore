@@ -40,4 +40,3 @@ pub fn clip_voltage(v: f64, v_min: f64, v_max: f64) -> f64 {
     // return float(clip(v, v_min, v_max))
     0.0
 }
-

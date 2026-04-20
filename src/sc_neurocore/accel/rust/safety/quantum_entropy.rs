@@ -57,7 +57,7 @@ impl QuantumEntropySource {
         // u1 = (self._measure() + self._rng.uniform()) / N
         // u1 = (u1_f64).clamp(1e-10, 1.0 - 1e-10)
         // u2 = (self._measure() + self._rng.uniform()) / N
-        // z = (-2.0 * (u1_f64_f64).ln().sqrt()) * (2.0 * std::f64::consts::PI * 
+        // z = (-2.0 * (u1_f64_f64).ln().sqrt()) * (2.0 * std::f64::consts::PI *
         // return float(mean + z * std)
         0.0
     }

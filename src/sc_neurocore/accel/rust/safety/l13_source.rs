@@ -57,7 +57,7 @@ impl L13_SourceAdapter {
         // )
         // # 2. Update FIM Density (Measures rate of change / information work)
         // # delta_Psi ~ rate of information creation
-        // self.fim_density = 0.9 * self.fim_density + 0.1 * j(self.vacuum_state 
+        // self.fim_density = 0.9 * self.fim_density + 0.1 * j(self.vacuum_state
         // # 3. Return encoded bitstreams (The primordial carrier)
         // return self.encode(0.0)
         0.0

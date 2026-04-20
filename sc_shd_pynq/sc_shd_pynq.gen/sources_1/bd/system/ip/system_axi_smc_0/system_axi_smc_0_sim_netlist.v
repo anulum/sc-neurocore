@@ -13,7 +13,7 @@
 // --------------------------------------------------------------------------------
 `timescale 1 ps / 1 ps
 
-(* CHECK_LICENSE_TYPE = "system_axi_smc_0,bd_44e3,{}" *) (* DowngradeIPIdentifiedWarnings = "yes" *) (* X_CORE_INFO = "bd_44e3,Vivado 2025.2" *) 
+(* CHECK_LICENSE_TYPE = "system_axi_smc_0,bd_44e3,{}" *) (* DowngradeIPIdentifiedWarnings = "yes" *) (* X_CORE_INFO = "bd_44e3,Vivado 2025.2" *)
 (* NotValidForBitStream *)
 module system_axi_smc_0
    (aclk,
@@ -188,7 +188,7 @@ module system_axi_smc_0
   wire aclk;
   wire aresetn;
 
-  (* HW_HANDOFF = "system_axi_smc_0.hwdef" *) 
+  (* HW_HANDOFF = "system_axi_smc_0.hwdef" *)
   system_axi_smc_0_bd_44e3 inst
        (.M00_AXI_araddr(M00_AXI_araddr),
         .M00_AXI_arprot(M00_AXI_arprot),
@@ -251,7 +251,7 @@ module system_axi_smc_0
         .aresetn(aresetn));
 endmodule
 
-(* HW_HANDOFF = "system_axi_smc_0.hwdef" *) (* ORIG_REF_NAME = "bd_44e3" *) 
+(* HW_HANDOFF = "system_axi_smc_0.hwdef" *) (* ORIG_REF_NAME = "bd_44e3" *)
 module system_axi_smc_0_bd_44e3
    (M00_AXI_araddr,
     M00_AXI_arprot,
@@ -539,7 +539,7 @@ module system_axi_smc_0_bd_44e3
         .s_axi_rresp(m00_sc2axi_M_AXI_RRESP),
         .s_axi_rvalid(m00_sc2axi_M_AXI_RVALID),
         .s_axi_wready(m00_sc2axi_M_AXI_WREADY));
-  (* x_core_info = "sc_sc2axi_v1_0_11_top,Vivado 2025.2" *) 
+  (* x_core_info = "sc_sc2axi_v1_0_11_top,Vivado 2025.2" *)
   system_axi_smc_0_bd_44e3_m00s2a_0 m00_sc2axi
        (.M_SC_AR_payld({s00_nodes_M_SC_AR_PAYLD[129:127],s00_nodes_M_SC_AR_PAYLD[101:94]}),
         .M_SC_AR_recv(s00_nodes_M_SC_AR_RECV),
@@ -575,7 +575,7 @@ module system_axi_smc_0_bd_44e3
         .s_axi_rresp(m00_sc2axi_M_AXI_RRESP),
         .s_axi_rvalid(m00_sc2axi_M_AXI_RVALID),
         .s_axi_wready(m00_sc2axi_M_AXI_WREADY));
-  (* x_core_info = "sc_axi2sc_v1_0_11_top,Vivado 2025.2" *) 
+  (* x_core_info = "sc_axi2sc_v1_0_11_top,Vivado 2025.2" *)
   system_axi_smc_0_bd_44e3_s00a2s_0 s00_axi2sc
        (.M_SC_B_payld(s00_nodes_M_SC_B_PAYLD),
         .M_SC_B_recv(s00_nodes_M_SC_B_RECV),
@@ -699,7 +699,7 @@ module system_axi_smc_0_bd_44e3
         .interconnect_aresetn(aresetn_2));
 endmodule
 
-(* ORIG_REF_NAME = "bd_44e3_m00e_0" *) 
+(* ORIG_REF_NAME = "bd_44e3_m00e_0" *)
 module system_axi_smc_0_bd_44e3_m00e_0
    (s_axi_awready,
     s_axi_wready,
@@ -847,48 +847,48 @@ module system_axi_smc_0_bd_44e3_m00e_0
   wire [0:0]NLW_inst_s_axi_rid_UNCONNECTED;
   wire [1023:0]NLW_inst_s_axi_ruser_UNCONNECTED;
 
-  (* C_ADDR_WIDTH = "8" *) 
-  (* C_ENABLE_PIPELINING = "1'b0" *) 
-  (* C_FAMILY = "zynq" *) 
-  (* C_HAS_LOCK = "0" *) 
-  (* C_IS_CASCADED = "0" *) 
-  (* C_MAX_RUSER_BITS_PER_BYTE = "0" *) 
-  (* C_MAX_WUSER_BITS_PER_BYTE = "0" *) 
-  (* C_MEP_IDENTIFIER_WIDTH = "1" *) 
-  (* C_M_ARUSER_WIDTH = "0" *) 
-  (* C_M_AWUSER_WIDTH = "0" *) 
-  (* C_M_BUSER_WIDTH = "0" *) 
-  (* C_M_ID_WIDTH = "0" *) 
-  (* C_M_LIMIT_READ_LENGTH = "0" *) 
-  (* C_M_LIMIT_WRITE_LENGTH = "0" *) 
-  (* C_M_PROTOCOL = "2" *) 
-  (* C_M_RUSER_BITS_PER_BYTE = "0" *) 
-  (* C_M_RUSER_WIDTH = "0" *) 
-  (* C_M_WUSER_BITS_PER_BYTE = "0" *) 
-  (* C_M_WUSER_WIDTH = "0" *) 
-  (* C_NUM_MSC = "1" *) 
-  (* C_NUM_READ_OUTSTANDING = "8" *) 
-  (* C_NUM_READ_THREADS = "1" *) 
-  (* C_NUM_WRITE_OUTSTANDING = "8" *) 
-  (* C_NUM_WRITE_THREADS = "1" *) 
-  (* C_RDATA_WIDTH = "32" *) 
-  (* C_READ_ACCEPTANCE = "32" *) 
-  (* C_SINGLE_ISSUING = "1" *) 
-  (* C_SSC_ROUTE_ARRAY = "6'b111101" *) 
-  (* C_SSC_ROUTE_WIDTH = "3" *) 
-  (* C_S_ID_WIDTH = "1" *) 
-  (* C_WDATA_WIDTH = "32" *) 
-  (* C_WRITE_ACCEPTANCE = "32" *) 
-  (* KEEP_HIERARCHY = "SOFT" *) 
-  (* P_BYPASS = "0" *) 
-  (* P_FULLY_PIPELINED = "2" *) 
-  (* P_NUM_READ_OUTSTANDING = "16" *) 
-  (* P_NUM_WRITE_OUTSTANDING = "16" *) 
-  (* P_SINGLE_THREAD_R = "0" *) 
-  (* P_SINGLE_THREAD_W = "0" *) 
-  (* P_ZERO_LATENCY = "1" *) 
-  (* downgradeipidentifiedwarnings = "yes" *) 
-  (* is_du_within_envelope = "true" *) 
+  (* C_ADDR_WIDTH = "8" *)
+  (* C_ENABLE_PIPELINING = "1'b0" *)
+  (* C_FAMILY = "zynq" *)
+  (* C_HAS_LOCK = "0" *)
+  (* C_IS_CASCADED = "0" *)
+  (* C_MAX_RUSER_BITS_PER_BYTE = "0" *)
+  (* C_MAX_WUSER_BITS_PER_BYTE = "0" *)
+  (* C_MEP_IDENTIFIER_WIDTH = "1" *)
+  (* C_M_ARUSER_WIDTH = "0" *)
+  (* C_M_AWUSER_WIDTH = "0" *)
+  (* C_M_BUSER_WIDTH = "0" *)
+  (* C_M_ID_WIDTH = "0" *)
+  (* C_M_LIMIT_READ_LENGTH = "0" *)
+  (* C_M_LIMIT_WRITE_LENGTH = "0" *)
+  (* C_M_PROTOCOL = "2" *)
+  (* C_M_RUSER_BITS_PER_BYTE = "0" *)
+  (* C_M_RUSER_WIDTH = "0" *)
+  (* C_M_WUSER_BITS_PER_BYTE = "0" *)
+  (* C_M_WUSER_WIDTH = "0" *)
+  (* C_NUM_MSC = "1" *)
+  (* C_NUM_READ_OUTSTANDING = "8" *)
+  (* C_NUM_READ_THREADS = "1" *)
+  (* C_NUM_WRITE_OUTSTANDING = "8" *)
+  (* C_NUM_WRITE_THREADS = "1" *)
+  (* C_RDATA_WIDTH = "32" *)
+  (* C_READ_ACCEPTANCE = "32" *)
+  (* C_SINGLE_ISSUING = "1" *)
+  (* C_SSC_ROUTE_ARRAY = "6'b111101" *)
+  (* C_SSC_ROUTE_WIDTH = "3" *)
+  (* C_S_ID_WIDTH = "1" *)
+  (* C_WDATA_WIDTH = "32" *)
+  (* C_WRITE_ACCEPTANCE = "32" *)
+  (* KEEP_HIERARCHY = "SOFT" *)
+  (* P_BYPASS = "0" *)
+  (* P_FULLY_PIPELINED = "2" *)
+  (* P_NUM_READ_OUTSTANDING = "16" *)
+  (* P_NUM_WRITE_OUTSTANDING = "16" *)
+  (* P_SINGLE_THREAD_R = "0" *)
+  (* P_SINGLE_THREAD_W = "0" *)
+  (* P_ZERO_LATENCY = "1" *)
+  (* downgradeipidentifiedwarnings = "yes" *)
+  (* is_du_within_envelope = "true" *)
   system_axi_smc_0_sc_exit_v1_0_18_top inst
        (.aclk(aclk),
         .aclken(1'b1),
@@ -976,7 +976,7 @@ module system_axi_smc_0_bd_44e3_m00e_0
         .s_axi_wvalid(m_axi_wvalid));
 endmodule
 
-(* ORIG_REF_NAME = "bd_44e3_m00s2a_0" *) 
+(* ORIG_REF_NAME = "bd_44e3_m00s2a_0" *)
 module system_axi_smc_0_bd_44e3_m00s2a_0
    (S_SC_R_send,
     S_SC_R_payld,
@@ -1102,44 +1102,44 @@ module system_axi_smc_0_bd_44e3_m00s2a_0
   wire [0:0]NLW_inst_m_sc_r_info_UNCONNECTED;
   wire [18:0]NLW_inst_m_sc_r_payld_UNCONNECTED;
 
-  (* C_ARPAYLD_WIDTH = "138" *) 
-  (* C_AWPAYLD_WIDTH = "138" *) 
-  (* C_AXI_ADDR_WIDTH = "8" *) 
-  (* C_AXI_ID_WIDTH = "1" *) 
-  (* C_AXI_RDATA_WIDTH = "32" *) 
-  (* C_AXI_WDATA_WIDTH = "32" *) 
-  (* C_BPAYLD_WIDTH = "5" *) 
-  (* C_MSC_ROUTE_WIDTH = "1" *) 
-  (* C_RPAYLD_WIDTH = "51" *) 
-  (* C_SC_ADDR_WIDTH = "32" *) 
-  (* C_SC_ARUSER_WIDTH = "0" *) 
-  (* C_SC_AWUSER_WIDTH = "0" *) 
-  (* C_SC_BUSER_WIDTH = "0" *) 
-  (* C_SC_ID_WIDTH = "1" *) 
-  (* C_SC_RDATA_WIDTH = "32" *) 
-  (* C_SC_RUSER_BITS_PER_BYTE = "0" *) 
-  (* C_SC_WDATA_WIDTH = "32" *) 
-  (* C_SC_WUSER_BITS_PER_BYTE = "0" *) 
-  (* C_SSC_ROUTE_WIDTH = "1" *) 
-  (* C_WPAYLD_WIDTH = "52" *) 
-  (* KEEP_HIERARCHY = "SOFT" *) 
-  (* LP_NZ_AXI_ID_WIDTH = "1" *) 
-  (* LP_NZ_RUBPB = "1" *) 
-  (* LP_NZ_WUBPB = "1" *) 
-  (* LP_RUSER_INDEX = "0" *) 
-  (* LP_WUSER_INDEX = "0" *) 
-  (* T_SC_ADDR_WIDTH = "32" *) 
-  (* T_SC_ARUSER_WIDTH = "1" *) 
-  (* T_SC_AWUSER_WIDTH = "1" *) 
-  (* T_SC_BUSER_WIDTH = "1" *) 
-  (* T_SC_ID_WIDTH = "1" *) 
-  (* T_SC_MSC_ROUTE_WIDTH = "1" *) 
-  (* T_SC_RDATA_WIDTH = "32" *) 
-  (* T_SC_RUSER_BITS_PER_BYTE = "0" *) 
-  (* T_SC_SSC_ROUTE_WIDTH = "1" *) 
-  (* T_SC_WDATA_WIDTH = "32" *) 
-  (* T_SC_WUSER_BITS_PER_BYTE = "0" *) 
-  (* is_du_within_envelope = "true" *) 
+  (* C_ARPAYLD_WIDTH = "138" *)
+  (* C_AWPAYLD_WIDTH = "138" *)
+  (* C_AXI_ADDR_WIDTH = "8" *)
+  (* C_AXI_ID_WIDTH = "1" *)
+  (* C_AXI_RDATA_WIDTH = "32" *)
+  (* C_AXI_WDATA_WIDTH = "32" *)
+  (* C_BPAYLD_WIDTH = "5" *)
+  (* C_MSC_ROUTE_WIDTH = "1" *)
+  (* C_RPAYLD_WIDTH = "51" *)
+  (* C_SC_ADDR_WIDTH = "32" *)
+  (* C_SC_ARUSER_WIDTH = "0" *)
+  (* C_SC_AWUSER_WIDTH = "0" *)
+  (* C_SC_BUSER_WIDTH = "0" *)
+  (* C_SC_ID_WIDTH = "1" *)
+  (* C_SC_RDATA_WIDTH = "32" *)
+  (* C_SC_RUSER_BITS_PER_BYTE = "0" *)
+  (* C_SC_WDATA_WIDTH = "32" *)
+  (* C_SC_WUSER_BITS_PER_BYTE = "0" *)
+  (* C_SSC_ROUTE_WIDTH = "1" *)
+  (* C_WPAYLD_WIDTH = "52" *)
+  (* KEEP_HIERARCHY = "SOFT" *)
+  (* LP_NZ_AXI_ID_WIDTH = "1" *)
+  (* LP_NZ_RUBPB = "1" *)
+  (* LP_NZ_WUBPB = "1" *)
+  (* LP_RUSER_INDEX = "0" *)
+  (* LP_WUSER_INDEX = "0" *)
+  (* T_SC_ADDR_WIDTH = "32" *)
+  (* T_SC_ARUSER_WIDTH = "1" *)
+  (* T_SC_AWUSER_WIDTH = "1" *)
+  (* T_SC_BUSER_WIDTH = "1" *)
+  (* T_SC_ID_WIDTH = "1" *)
+  (* T_SC_MSC_ROUTE_WIDTH = "1" *)
+  (* T_SC_RDATA_WIDTH = "32" *)
+  (* T_SC_RUSER_BITS_PER_BYTE = "0" *)
+  (* T_SC_SSC_ROUTE_WIDTH = "1" *)
+  (* T_SC_WDATA_WIDTH = "32" *)
+  (* T_SC_WUSER_BITS_PER_BYTE = "0" *)
+  (* is_du_within_envelope = "true" *)
   system_axi_smc_0_sc_sc2axi_v1_0_11_top inst
        (.aclk(1'b0),
         .m_axi_araddr(m_axi_araddr),
@@ -1207,7 +1207,7 @@ module system_axi_smc_0_bd_44e3_m00s2a_0
         .s_sc_w_send(M_SC_W_send));
 endmodule
 
-(* ORIG_REF_NAME = "bd_44e3_psr_aclk_0" *) 
+(* ORIG_REF_NAME = "bd_44e3_psr_aclk_0" *)
 module system_axi_smc_0_bd_44e3_psr_aclk_0
    (interconnect_aresetn,
     aclk,
@@ -1226,7 +1226,7 @@ module system_axi_smc_0_bd_44e3_psr_aclk_0
         .interconnect_aresetn(interconnect_aresetn));
 endmodule
 
-(* ORIG_REF_NAME = "bd_44e3_s00a2s_0" *) 
+(* ORIG_REF_NAME = "bd_44e3_s00a2s_0" *)
 module system_axi_smc_0_bd_44e3_s00a2s_0
    (M_SC_R_recv,
     M_SC_B_recv,
@@ -1346,44 +1346,44 @@ module system_axi_smc_0_bd_44e3_s00a2s_0
   wire [0:0]NLW_inst_s_axi_rid_UNCONNECTED;
   wire [1023:0]NLW_inst_s_axi_ruser_UNCONNECTED;
 
-  (* C_ARPAYLD_WIDTH = "138" *) 
-  (* C_AWPAYLD_WIDTH = "138" *) 
-  (* C_AXI_ADDR_WIDTH = "32" *) 
-  (* C_AXI_ID_WIDTH = "1" *) 
-  (* C_AXI_RDATA_WIDTH = "32" *) 
-  (* C_AXI_WDATA_WIDTH = "32" *) 
-  (* C_BPAYLD_WIDTH = "5" *) 
-  (* C_MSC_ROUTE_WIDTH = "1" *) 
-  (* C_RPAYLD_WIDTH = "51" *) 
-  (* C_SC_ADDR_WIDTH = "32" *) 
-  (* C_SC_ARUSER_WIDTH = "0" *) 
-  (* C_SC_AWUSER_WIDTH = "0" *) 
-  (* C_SC_BUSER_WIDTH = "0" *) 
-  (* C_SC_ID_WIDTH = "1" *) 
-  (* C_SC_RDATA_WIDTH = "32" *) 
-  (* C_SC_RUSER_BITS_PER_BYTE = "0" *) 
-  (* C_SC_WDATA_WIDTH = "32" *) 
-  (* C_SC_WUSER_BITS_PER_BYTE = "0" *) 
-  (* C_SSC_ROUTE_WIDTH = "1" *) 
-  (* C_WPAYLD_WIDTH = "52" *) 
-  (* KEEP_HIERARCHY = "SOFT" *) 
-  (* LP_NZ_AXI_ID_WIDTH = "1" *) 
-  (* LP_NZ_RUBPB = "1" *) 
-  (* LP_NZ_WUBPB = "1" *) 
-  (* LP_RUSER_INDEX = "0" *) 
-  (* LP_WUSER_INDEX = "0" *) 
-  (* T_SC_ADDR_WIDTH = "32" *) 
-  (* T_SC_ARUSER_WIDTH = "1" *) 
-  (* T_SC_AWUSER_WIDTH = "1" *) 
-  (* T_SC_BUSER_WIDTH = "1" *) 
-  (* T_SC_ID_WIDTH = "1" *) 
-  (* T_SC_MSC_ROUTE_WIDTH = "1" *) 
-  (* T_SC_RDATA_WIDTH = "32" *) 
-  (* T_SC_RUSER_BITS_PER_BYTE = "0" *) 
-  (* T_SC_SSC_ROUTE_WIDTH = "1" *) 
-  (* T_SC_WDATA_WIDTH = "32" *) 
-  (* T_SC_WUSER_BITS_PER_BYTE = "0" *) 
-  (* is_du_within_envelope = "true" *) 
+  (* C_ARPAYLD_WIDTH = "138" *)
+  (* C_AWPAYLD_WIDTH = "138" *)
+  (* C_AXI_ADDR_WIDTH = "32" *)
+  (* C_AXI_ID_WIDTH = "1" *)
+  (* C_AXI_RDATA_WIDTH = "32" *)
+  (* C_AXI_WDATA_WIDTH = "32" *)
+  (* C_BPAYLD_WIDTH = "5" *)
+  (* C_MSC_ROUTE_WIDTH = "1" *)
+  (* C_RPAYLD_WIDTH = "51" *)
+  (* C_SC_ADDR_WIDTH = "32" *)
+  (* C_SC_ARUSER_WIDTH = "0" *)
+  (* C_SC_AWUSER_WIDTH = "0" *)
+  (* C_SC_BUSER_WIDTH = "0" *)
+  (* C_SC_ID_WIDTH = "1" *)
+  (* C_SC_RDATA_WIDTH = "32" *)
+  (* C_SC_RUSER_BITS_PER_BYTE = "0" *)
+  (* C_SC_WDATA_WIDTH = "32" *)
+  (* C_SC_WUSER_BITS_PER_BYTE = "0" *)
+  (* C_SSC_ROUTE_WIDTH = "1" *)
+  (* C_WPAYLD_WIDTH = "52" *)
+  (* KEEP_HIERARCHY = "SOFT" *)
+  (* LP_NZ_AXI_ID_WIDTH = "1" *)
+  (* LP_NZ_RUBPB = "1" *)
+  (* LP_NZ_WUBPB = "1" *)
+  (* LP_RUSER_INDEX = "0" *)
+  (* LP_WUSER_INDEX = "0" *)
+  (* T_SC_ADDR_WIDTH = "32" *)
+  (* T_SC_ARUSER_WIDTH = "1" *)
+  (* T_SC_AWUSER_WIDTH = "1" *)
+  (* T_SC_BUSER_WIDTH = "1" *)
+  (* T_SC_ID_WIDTH = "1" *)
+  (* T_SC_MSC_ROUTE_WIDTH = "1" *)
+  (* T_SC_RDATA_WIDTH = "32" *)
+  (* T_SC_RUSER_BITS_PER_BYTE = "0" *)
+  (* T_SC_SSC_ROUTE_WIDTH = "1" *)
+  (* T_SC_WDATA_WIDTH = "32" *)
+  (* T_SC_WUSER_BITS_PER_BYTE = "0" *)
+  (* is_du_within_envelope = "true" *)
   system_axi_smc_0_sc_axi2sc_v1_0_11_top inst
        (.aclk(1'b0),
         .m_sc_ar_info(NLW_inst_m_sc_ar_info_UNCONNECTED[0]),
@@ -1451,7 +1451,7 @@ module system_axi_smc_0_bd_44e3_s00a2s_0
         .s_sc_r_send(M_SC_R_send));
 endmodule
 
-(* ORIG_REF_NAME = "bd_44e3_s00mmu_0" *) 
+(* ORIG_REF_NAME = "bd_44e3_s00mmu_0" *)
 module system_axi_smc_0_bd_44e3_s00mmu_0
    (S00_AXI_awready,
     S00_AXI_wready,
@@ -1662,60 +1662,60 @@ module system_axi_smc_0_bd_44e3_s00mmu_0
   wire [0:0]NLW_inst_s_axi_buser_UNCONNECTED;
   wire [0:0]NLW_inst_s_axi_ruser_UNCONNECTED;
 
-  (* C_ADDR_WIDTH = "32" *) 
-  (* C_ENABLE_PIPELINING = "1'b0" *) 
-  (* C_FAMILY = "zynq" *) 
-  (* C_ID_WIDTH = "12" *) 
-  (* C_IS_CASCADED = "0" *) 
-  (* C_MSC_ROUTE_ARRAY = "3'b111" *) 
-  (* C_MSC_ROUTE_WIDTH = "3" *) 
-  (* C_NUM_MSC = "1" *) 
-  (* C_NUM_READ_OUTSTANDING = "8" *) 
-  (* C_NUM_SEG = "1" *) 
-  (* C_NUM_WRITE_OUTSTANDING = "8" *) 
-  (* C_RDATA_WIDTH = "32" *) 
-  (* C_READ_ACCEPTANCE = "32" *) 
-  (* C_SEG_BASE_ADDR_ARRAY = "64'b0000000000000000000000000000000001000000000000000000000000000000" *) 
-  (* C_SEG_SECURE_READ_ARRAY = "1'b0" *) 
-  (* C_SEG_SECURE_WRITE_ARRAY = "1'b0" *) 
-  (* C_SEG_SEP_ROUTE_ARRAY = "64'b0000000000000000000000000000000000000000000000000000000000000000" *) 
-  (* C_SEG_SIZE_ARRAY = "12" *) 
-  (* C_SEG_SUPPORTS_READ_ARRAY = "1'b1" *) 
-  (* C_SEG_SUPPORTS_WRITE_ARRAY = "1'b1" *) 
-  (* C_SINGLE_ISSUING = "1" *) 
-  (* C_SUPPORTS_NARROW = "0" *) 
-  (* C_SUPPORTS_READ_DECERR = "1" *) 
-  (* C_SUPPORTS_WRAP = "1" *) 
-  (* C_SUPPORTS_WRITE_DECERR = "1" *) 
-  (* C_S_ARUSER_WIDTH = "0" *) 
-  (* C_S_AWUSER_WIDTH = "0" *) 
-  (* C_S_BUSER_WIDTH = "0" *) 
-  (* C_S_PROTOCOL = "1" *) 
-  (* C_S_RUSER_WIDTH = "0" *) 
-  (* C_S_WUSER_WIDTH = "0" *) 
-  (* C_WDATA_WIDTH = "32" *) 
-  (* C_WRITE_ACCEPTANCE = "32" *) 
-  (* KEEP_HIERARCHY = "SOFT" *) 
-  (* P_AXI3 = "1" *) 
-  (* P_AXI4 = "0" *) 
-  (* P_AXILITE = "2" *) 
-  (* P_BYPASS = "0" *) 
-  (* P_DECERR = "2'b11" *) 
-  (* P_FIXED = "2'b00" *) 
-  (* P_FULLY_PIPELINED = "2" *) 
-  (* P_INCR = "2'b01" *) 
-  (* P_NUM_MSC_LOG = "1" *) 
-  (* P_NUM_SEG_LOG = "1" *) 
-  (* P_R_DWBYTES = "4" *) 
-  (* P_R_DWSIZE = "2" *) 
-  (* P_R_QUEUE_SIZE = "4" *) 
-  (* P_WRAP = "2'b10" *) 
-  (* P_W_DWBYTES = "4" *) 
-  (* P_W_DWSIZE = "2" *) 
-  (* P_W_QUEUE_SIZE = "4" *) 
-  (* P_ZERO_LATENCY = "1" *) 
-  (* downgradeipidentifiedwarnings = "yes" *) 
-  (* is_du_within_envelope = "true" *) 
+  (* C_ADDR_WIDTH = "32" *)
+  (* C_ENABLE_PIPELINING = "1'b0" *)
+  (* C_FAMILY = "zynq" *)
+  (* C_ID_WIDTH = "12" *)
+  (* C_IS_CASCADED = "0" *)
+  (* C_MSC_ROUTE_ARRAY = "3'b111" *)
+  (* C_MSC_ROUTE_WIDTH = "3" *)
+  (* C_NUM_MSC = "1" *)
+  (* C_NUM_READ_OUTSTANDING = "8" *)
+  (* C_NUM_SEG = "1" *)
+  (* C_NUM_WRITE_OUTSTANDING = "8" *)
+  (* C_RDATA_WIDTH = "32" *)
+  (* C_READ_ACCEPTANCE = "32" *)
+  (* C_SEG_BASE_ADDR_ARRAY = "64'b0000000000000000000000000000000001000000000000000000000000000000" *)
+  (* C_SEG_SECURE_READ_ARRAY = "1'b0" *)
+  (* C_SEG_SECURE_WRITE_ARRAY = "1'b0" *)
+  (* C_SEG_SEP_ROUTE_ARRAY = "64'b0000000000000000000000000000000000000000000000000000000000000000" *)
+  (* C_SEG_SIZE_ARRAY = "12" *)
+  (* C_SEG_SUPPORTS_READ_ARRAY = "1'b1" *)
+  (* C_SEG_SUPPORTS_WRITE_ARRAY = "1'b1" *)
+  (* C_SINGLE_ISSUING = "1" *)
+  (* C_SUPPORTS_NARROW = "0" *)
+  (* C_SUPPORTS_READ_DECERR = "1" *)
+  (* C_SUPPORTS_WRAP = "1" *)
+  (* C_SUPPORTS_WRITE_DECERR = "1" *)
+  (* C_S_ARUSER_WIDTH = "0" *)
+  (* C_S_AWUSER_WIDTH = "0" *)
+  (* C_S_BUSER_WIDTH = "0" *)
+  (* C_S_PROTOCOL = "1" *)
+  (* C_S_RUSER_WIDTH = "0" *)
+  (* C_S_WUSER_WIDTH = "0" *)
+  (* C_WDATA_WIDTH = "32" *)
+  (* C_WRITE_ACCEPTANCE = "32" *)
+  (* KEEP_HIERARCHY = "SOFT" *)
+  (* P_AXI3 = "1" *)
+  (* P_AXI4 = "0" *)
+  (* P_AXILITE = "2" *)
+  (* P_BYPASS = "0" *)
+  (* P_DECERR = "2'b11" *)
+  (* P_FIXED = "2'b00" *)
+  (* P_FULLY_PIPELINED = "2" *)
+  (* P_INCR = "2'b01" *)
+  (* P_NUM_MSC_LOG = "1" *)
+  (* P_NUM_SEG_LOG = "1" *)
+  (* P_R_DWBYTES = "4" *)
+  (* P_R_DWSIZE = "2" *)
+  (* P_R_QUEUE_SIZE = "4" *)
+  (* P_WRAP = "2'b10" *)
+  (* P_W_DWBYTES = "4" *)
+  (* P_W_DWSIZE = "2" *)
+  (* P_W_QUEUE_SIZE = "4" *)
+  (* P_ZERO_LATENCY = "1" *)
+  (* downgradeipidentifiedwarnings = "yes" *)
+  (* is_du_within_envelope = "true" *)
   system_axi_smc_0_sc_mmu_v1_0_16_top inst
        (.aclk(aclk),
         .aclken(1'b1),
@@ -1807,7 +1807,7 @@ module system_axi_smc_0_bd_44e3_s00mmu_0
         .s_axi_wvalid(S00_AXI_wvalid));
 endmodule
 
-(* ORIG_REF_NAME = "bd_44e3_s00sic_0" *) 
+(* ORIG_REF_NAME = "bd_44e3_s00sic_0" *)
 module system_axi_smc_0_bd_44e3_s00sic_0
    (s_axi_awready,
     s_axi_wready,
@@ -1975,55 +1975,55 @@ module system_axi_smc_0_bd_44e3_s00sic_0
   wire [0:0]NLW_inst_s_axi_rid_UNCONNECTED;
   wire [1023:0]NLW_inst_s_axi_ruser_UNCONNECTED;
 
-  (* C_ADDR_WIDTH = "32" *) 
-  (* C_AXILITE_CONV = "1" *) 
-  (* C_ENABLE_PIPELINING = "1'b1" *) 
-  (* C_HAS_BURST = "1" *) 
-  (* C_ID_WIDTH = "1" *) 
-  (* C_IS_CASCADED = "0" *) 
-  (* C_LIMIT_READ_LENGTH = "0" *) 
-  (* C_LIMIT_WRITE_LENGTH = "0" *) 
-  (* C_MAX_RUSER_BITS_PER_BYTE = "0" *) 
-  (* C_MAX_WUSER_BITS_PER_BYTE = "0" *) 
-  (* C_MEP_IDENTIFIER_WIDTH = "1" *) 
-  (* C_MSC_RDATA_WIDTH_ARRAY = "32" *) 
-  (* C_MSC_WDATA_WIDTH_ARRAY = "32" *) 
-  (* C_NUM_MSC = "1" *) 
-  (* C_NUM_READ_OUTSTANDING = "8" *) 
-  (* C_NUM_READ_THREADS = "1" *) 
-  (* C_NUM_SEG = "1" *) 
-  (* C_NUM_WRITE_OUTSTANDING = "8" *) 
-  (* C_NUM_WRITE_THREADS = "1" *) 
-  (* C_RDATA_WIDTH = "32" *) 
-  (* C_READ_ACCEPTANCE = "32" *) 
-  (* C_READ_WATERMARK = "0" *) 
-  (* C_SEP_PROTOCOL_ARRAY = "2" *) 
-  (* C_SEP_RDATA_WIDTH_ARRAY = "32" *) 
-  (* C_SEP_WDATA_WIDTH_ARRAY = "32" *) 
-  (* C_SINGLE_ISSUING = "1" *) 
-  (* C_SPLIT_WRAP_NARROW = "0" *) 
-  (* C_SUPPORTS_NARROW = "0" *) 
-  (* C_S_RUSER_BITS_PER_BYTE = "0" *) 
-  (* C_S_WUSER_BITS_PER_BYTE = "0" *) 
-  (* C_WDATA_WIDTH = "32" *) 
-  (* C_WRITE_ACCEPTANCE = "32" *) 
-  (* C_WRITE_WATERMARK = "0" *) 
-  (* KEEP_HIERARCHY = "SOFT" *) 
-  (* P_EXOK = "2'b01" *) 
-  (* P_FULLY_PIPELINED = "2" *) 
-  (* P_ID_WIDTH = "1" *) 
-  (* P_MAX_RUSER_BITS_PER_BYTE = "1" *) 
-  (* P_MAX_WUSER_BITS_PER_BYTE = "1" *) 
-  (* P_NUM_READ_OUTSTANDING = "16" *) 
-  (* P_NUM_WRITE_OUTSTANDING = "16" *) 
-  (* P_R_DWBYTES = "4" *) 
-  (* P_R_DWSIZE = "2" *) 
-  (* P_S_RUSER_BITS_PER_BYTE = "1" *) 
-  (* P_S_WUSER_BITS_PER_BYTE = "1" *) 
-  (* P_W_DWBYTES = "4" *) 
-  (* P_W_DWSIZE = "2" *) 
-  (* P_ZERO_LATENCY = "1" *) 
-  (* is_du_within_envelope = "true" *) 
+  (* C_ADDR_WIDTH = "32" *)
+  (* C_AXILITE_CONV = "1" *)
+  (* C_ENABLE_PIPELINING = "1'b1" *)
+  (* C_HAS_BURST = "1" *)
+  (* C_ID_WIDTH = "1" *)
+  (* C_IS_CASCADED = "0" *)
+  (* C_LIMIT_READ_LENGTH = "0" *)
+  (* C_LIMIT_WRITE_LENGTH = "0" *)
+  (* C_MAX_RUSER_BITS_PER_BYTE = "0" *)
+  (* C_MAX_WUSER_BITS_PER_BYTE = "0" *)
+  (* C_MEP_IDENTIFIER_WIDTH = "1" *)
+  (* C_MSC_RDATA_WIDTH_ARRAY = "32" *)
+  (* C_MSC_WDATA_WIDTH_ARRAY = "32" *)
+  (* C_NUM_MSC = "1" *)
+  (* C_NUM_READ_OUTSTANDING = "8" *)
+  (* C_NUM_READ_THREADS = "1" *)
+  (* C_NUM_SEG = "1" *)
+  (* C_NUM_WRITE_OUTSTANDING = "8" *)
+  (* C_NUM_WRITE_THREADS = "1" *)
+  (* C_RDATA_WIDTH = "32" *)
+  (* C_READ_ACCEPTANCE = "32" *)
+  (* C_READ_WATERMARK = "0" *)
+  (* C_SEP_PROTOCOL_ARRAY = "2" *)
+  (* C_SEP_RDATA_WIDTH_ARRAY = "32" *)
+  (* C_SEP_WDATA_WIDTH_ARRAY = "32" *)
+  (* C_SINGLE_ISSUING = "1" *)
+  (* C_SPLIT_WRAP_NARROW = "0" *)
+  (* C_SUPPORTS_NARROW = "0" *)
+  (* C_S_RUSER_BITS_PER_BYTE = "0" *)
+  (* C_S_WUSER_BITS_PER_BYTE = "0" *)
+  (* C_WDATA_WIDTH = "32" *)
+  (* C_WRITE_ACCEPTANCE = "32" *)
+  (* C_WRITE_WATERMARK = "0" *)
+  (* KEEP_HIERARCHY = "SOFT" *)
+  (* P_EXOK = "2'b01" *)
+  (* P_FULLY_PIPELINED = "2" *)
+  (* P_ID_WIDTH = "1" *)
+  (* P_MAX_RUSER_BITS_PER_BYTE = "1" *)
+  (* P_MAX_WUSER_BITS_PER_BYTE = "1" *)
+  (* P_NUM_READ_OUTSTANDING = "16" *)
+  (* P_NUM_WRITE_OUTSTANDING = "16" *)
+  (* P_R_DWBYTES = "4" *)
+  (* P_R_DWSIZE = "2" *)
+  (* P_S_RUSER_BITS_PER_BYTE = "1" *)
+  (* P_S_WUSER_BITS_PER_BYTE = "1" *)
+  (* P_W_DWBYTES = "4" *)
+  (* P_W_DWSIZE = "2" *)
+  (* P_ZERO_LATENCY = "1" *)
+  (* is_du_within_envelope = "true" *)
   system_axi_smc_0_sc_si_converter_v1_0_16_top inst
        (.aclk(aclk),
         .aclken(1'b1),
@@ -2110,7 +2110,7 @@ module system_axi_smc_0_bd_44e3_s00sic_0
         .s_axi_wvalid(s_axi_wready_i_reg));
 endmodule
 
-(* ORIG_REF_NAME = "bd_44e3_s00tr_0" *) 
+(* ORIG_REF_NAME = "bd_44e3_s00tr_0" *)
 module system_axi_smc_0_bd_44e3_s00tr_0
    (s_axi_awready,
     s_axi_wready,
@@ -2311,38 +2311,38 @@ module system_axi_smc_0_bd_44e3_s00tr_0
   wire [1023:0]NLW_inst_s_axi_buser_UNCONNECTED;
   wire [1023:0]NLW_inst_s_axi_ruser_UNCONNECTED;
 
-  (* C_ADDR_WIDTH = "32" *) 
-  (* C_ENABLE_PIPELINING = "1'b1" *) 
-  (* C_FAMILY = "zynq" *) 
-  (* C_IS_CASCADED = "0" *) 
-  (* C_MEP_IDENTIFIER = "1'b1" *) 
-  (* C_MEP_IDENTIFIER_WIDTH = "1" *) 
-  (* C_M_ID_WIDTH = "1" *) 
-  (* C_NUM_READ_OUTSTANDING = "8" *) 
-  (* C_NUM_READ_THREADS = "1" *) 
-  (* C_NUM_WRITE_OUTSTANDING = "8" *) 
-  (* C_NUM_WRITE_THREADS = "1" *) 
-  (* C_RDATA_WIDTH = "32" *) 
-  (* C_READ_ACCEPTANCE = "32" *) 
-  (* C_SEP_ROUTE_WIDTH = "1" *) 
-  (* C_SINGLE_ISSUING = "1" *) 
-  (* C_SUPPORTS_READ_DEADLOCK = "0" *) 
-  (* C_SUPPORTS_WRITE_DEADLOCK = "0" *) 
-  (* C_S_ID_WIDTH = "12" *) 
-  (* C_WDATA_WIDTH = "32" *) 
-  (* C_WRITE_ACCEPTANCE = "32" *) 
-  (* KEEP_HIERARCHY = "SOFT" *) 
-  (* P_FULLY_PIPELINED = "2" *) 
-  (* P_ID_BUFFER_WIDTH = "12" *) 
-  (* P_M_THREAD_ID_WIDTH = "1" *) 
-  (* P_NUM_READ_OUTSTANDING = "16" *) 
-  (* P_NUM_WRITE_OUTSTANDING = "16" *) 
-  (* P_R_QUEUE_SIZE = "4" *) 
-  (* P_S_ID_WIDTH = "12" *) 
-  (* P_W_QUEUE_SIZE = "4" *) 
-  (* P_ZERO_LATENCY = "1" *) 
-  (* downgradeipidentifiedwarnings = "yes" *) 
-  (* is_du_within_envelope = "true" *) 
+  (* C_ADDR_WIDTH = "32" *)
+  (* C_ENABLE_PIPELINING = "1'b1" *)
+  (* C_FAMILY = "zynq" *)
+  (* C_IS_CASCADED = "0" *)
+  (* C_MEP_IDENTIFIER = "1'b1" *)
+  (* C_MEP_IDENTIFIER_WIDTH = "1" *)
+  (* C_M_ID_WIDTH = "1" *)
+  (* C_NUM_READ_OUTSTANDING = "8" *)
+  (* C_NUM_READ_THREADS = "1" *)
+  (* C_NUM_WRITE_OUTSTANDING = "8" *)
+  (* C_NUM_WRITE_THREADS = "1" *)
+  (* C_RDATA_WIDTH = "32" *)
+  (* C_READ_ACCEPTANCE = "32" *)
+  (* C_SEP_ROUTE_WIDTH = "1" *)
+  (* C_SINGLE_ISSUING = "1" *)
+  (* C_SUPPORTS_READ_DEADLOCK = "0" *)
+  (* C_SUPPORTS_WRITE_DEADLOCK = "0" *)
+  (* C_S_ID_WIDTH = "12" *)
+  (* C_WDATA_WIDTH = "32" *)
+  (* C_WRITE_ACCEPTANCE = "32" *)
+  (* KEEP_HIERARCHY = "SOFT" *)
+  (* P_FULLY_PIPELINED = "2" *)
+  (* P_ID_BUFFER_WIDTH = "12" *)
+  (* P_M_THREAD_ID_WIDTH = "1" *)
+  (* P_NUM_READ_OUTSTANDING = "16" *)
+  (* P_NUM_WRITE_OUTSTANDING = "16" *)
+  (* P_R_QUEUE_SIZE = "4" *)
+  (* P_S_ID_WIDTH = "12" *)
+  (* P_W_QUEUE_SIZE = "4" *)
+  (* P_ZERO_LATENCY = "1" *)
+  (* downgradeipidentifiedwarnings = "yes" *)
+  (* is_du_within_envelope = "true" *)
   system_axi_smc_0_sc_transaction_regulator_v1_0_12_top inst
        (.aclk(aclk),
         .aclken(1'b1),
@@ -2434,7 +2434,7 @@ module system_axi_smc_0_bd_44e3_s00tr_0
         .s_axi_wvalid(s_axi_wready_i_reg));
 endmodule
 
-(* ORIG_REF_NAME = "bd_44e3_sarn_0" *) 
+(* ORIG_REF_NAME = "bd_44e3_sarn_0" *)
 module system_axi_smc_0_bd_44e3_sarn_0
    (S_SC_AR_recv,
     M_SC_AR_send,
@@ -2468,80 +2468,80 @@ module system_axi_smc_0_bd_44e3_sarn_0
   wire [137:0]NLW_inst_m_sc_payld_UNCONNECTED;
   wire [0:0]NLW_inst_m_sc_req_UNCONNECTED;
 
-  (* C_ACLKEN_CONVERSION = "0" *) 
-  (* C_ACLK_RELATIONSHIP = "1" *) 
-  (* C_ADDR_WIDTH = "32" *) 
-  (* C_ARBITER_MODE = "1" *) 
-  (* C_CHANNEL = "2" *) 
-  (* C_DISABLE_IP = "0" *) 
-  (* C_ENABLE_PIPELINING = "8'b00000001" *) 
-  (* C_FAMILY = "zynq" *) 
-  (* C_FIFO_IP = "0" *) 
-  (* C_FIFO_OUTPUT_REG = "1" *) 
-  (* C_FIFO_SIZE = "0" *) 
-  (* C_FIFO_TYPE = "0" *) 
-  (* C_ID_WIDTH = "1" *) 
-  (* C_MAX_PAYLD_BYTES = "4" *) 
-  (* C_M_NUM_BYTES_ARRAY = "4" *) 
-  (* C_M_PIPELINE = "0" *) 
-  (* C_M_SEND_PIPELINE = "0" *) 
-  (* C_NUM_MI = "1" *) 
-  (* C_NUM_OUTSTANDING = "8" *) 
-  (* C_NUM_SI = "1" *) 
-  (* C_PAYLD_WIDTH = "138" *) 
-  (* C_PRIORITY_ARB_ARRAY = "1'b0" *) 
-  (* C_SC_ROUTE_WIDTH = "1" *) 
-  (* C_SYNCHRONIZATION_STAGES = "3" *) 
-  (* C_S_LATENCY = "0" *) 
-  (* C_S_NUM_BYTES_ARRAY = "4" *) 
-  (* C_S_PIPELINE = "0" *) 
-  (* C_USER_BITS_PER_BYTE = "0" *) 
-  (* C_USER_WIDTH = "0" *) 
-  (* KEEP_HIERARCHY = "SOFT" *) 
-  (* LP_ACLK_RELATIONSHIP = "1" *) 
-  (* LP_ARBITER_MODE = "1" *) 
-  (* LP_DT_REG = "true" *) 
-  (* LP_FIFO_OUTPUT_REG = "1" *) 
-  (* LP_FIFO_TYPE = "0" *) 
-  (* LP_LIGHTWT_MI = "0" *) 
-  (* LP_LIGHTWT_PASS = "0" *) 
-  (* LP_LIGHTWT_SI = "0" *) 
-  (* LP_LOG_MAX_DOWNSIZER_RATIO = "1" *) 
-  (* LP_LOG_MAX_UPSIZER_RATIO = "1" *) 
-  (* LP_LOG_NUM_MI = "1" *) 
-  (* LP_LOG_NUM_SI = "1" *) 
-  (* LP_LTWT_REG_TYPE = "7" *) 
-  (* LP_MAX_DOWNSIZER_RATIO = "1" *) 
-  (* LP_MAX_NUM_BYTES = "4" *) 
-  (* LP_MAX_UPSIZER_RATIO = "1" *) 
-  (* LP_M_MAX_NUM_BYTES = "4" *) 
-  (* LP_M_MIN_NUM_BYTES = "4" *) 
-  (* LP_M_STATIC_DWIDTH = "1" *) 
-  (* LP_NODE_ADDR_WIDTH = "32" *) 
-  (* LP_NODE_ID_WIDTH = "1" *) 
-  (* LP_NODE_ROUTE_WIDTH = "1" *) 
-  (* LP_NODE_USER_WIDTH = "0" *) 
-  (* LP_SYNCHRONIZATION_STAGES = "2" *) 
-  (* LP_S_AXIS_REG_SLICE_CONFIG = "0" *) 
-  (* LP_S_MAX_NUM_BYTES = "4" *) 
-  (* LP_S_MIN_NUM_BYTES = "4" *) 
-  (* LP_S_PIPELINE = "0" *) 
-  (* LP_S_STATIC_DWIDTH = "1" *) 
-  (* LP_ZERO_ROUTE_WIDTH = "1" *) 
-  (* P_NUM_OUTSTANDING = "16" *) 
-  (* P_QUEUE_SIZE = "3" *) 
-  (* T_SC_ADDR_WIDTH = "32" *) 
-  (* T_SC_ARUSER_WIDTH = "0" *) 
-  (* T_SC_AWUSER_WIDTH = "0" *) 
-  (* T_SC_BUSER_WIDTH = "0" *) 
-  (* T_SC_ID_WIDTH = "1" *) 
-  (* T_SC_MSC_ROUTE_WIDTH = "1" *) 
-  (* T_SC_RDATA_WIDTH = "32" *) 
-  (* T_SC_RUSER_BITS_PER_BYTE = "0" *) 
-  (* T_SC_SSC_ROUTE_WIDTH = "1" *) 
-  (* T_SC_WDATA_WIDTH = "32" *) 
-  (* T_SC_WUSER_BITS_PER_BYTE = "0" *) 
-  (* is_du_within_envelope = "true" *) 
+  (* C_ACLKEN_CONVERSION = "0" *)
+  (* C_ACLK_RELATIONSHIP = "1" *)
+  (* C_ADDR_WIDTH = "32" *)
+  (* C_ARBITER_MODE = "1" *)
+  (* C_CHANNEL = "2" *)
+  (* C_DISABLE_IP = "0" *)
+  (* C_ENABLE_PIPELINING = "8'b00000001" *)
+  (* C_FAMILY = "zynq" *)
+  (* C_FIFO_IP = "0" *)
+  (* C_FIFO_OUTPUT_REG = "1" *)
+  (* C_FIFO_SIZE = "0" *)
+  (* C_FIFO_TYPE = "0" *)
+  (* C_ID_WIDTH = "1" *)
+  (* C_MAX_PAYLD_BYTES = "4" *)
+  (* C_M_NUM_BYTES_ARRAY = "4" *)
+  (* C_M_PIPELINE = "0" *)
+  (* C_M_SEND_PIPELINE = "0" *)
+  (* C_NUM_MI = "1" *)
+  (* C_NUM_OUTSTANDING = "8" *)
+  (* C_NUM_SI = "1" *)
+  (* C_PAYLD_WIDTH = "138" *)
+  (* C_PRIORITY_ARB_ARRAY = "1'b0" *)
+  (* C_SC_ROUTE_WIDTH = "1" *)
+  (* C_SYNCHRONIZATION_STAGES = "3" *)
+  (* C_S_LATENCY = "0" *)
+  (* C_S_NUM_BYTES_ARRAY = "4" *)
+  (* C_S_PIPELINE = "0" *)
+  (* C_USER_BITS_PER_BYTE = "0" *)
+  (* C_USER_WIDTH = "0" *)
+  (* KEEP_HIERARCHY = "SOFT" *)
+  (* LP_ACLK_RELATIONSHIP = "1" *)
+  (* LP_ARBITER_MODE = "1" *)
+  (* LP_DT_REG = "true" *)
+  (* LP_FIFO_OUTPUT_REG = "1" *)
+  (* LP_FIFO_TYPE = "0" *)
+  (* LP_LIGHTWT_MI = "0" *)
+  (* LP_LIGHTWT_PASS = "0" *)
+  (* LP_LIGHTWT_SI = "0" *)
+  (* LP_LOG_MAX_DOWNSIZER_RATIO = "1" *)
+  (* LP_LOG_MAX_UPSIZER_RATIO = "1" *)
+  (* LP_LOG_NUM_MI = "1" *)
+  (* LP_LOG_NUM_SI = "1" *)
+  (* LP_LTWT_REG_TYPE = "7" *)
+  (* LP_MAX_DOWNSIZER_RATIO = "1" *)
+  (* LP_MAX_NUM_BYTES = "4" *)
+  (* LP_MAX_UPSIZER_RATIO = "1" *)
+  (* LP_M_MAX_NUM_BYTES = "4" *)
+  (* LP_M_MIN_NUM_BYTES = "4" *)
+  (* LP_M_STATIC_DWIDTH = "1" *)
+  (* LP_NODE_ADDR_WIDTH = "32" *)
+  (* LP_NODE_ID_WIDTH = "1" *)
+  (* LP_NODE_ROUTE_WIDTH = "1" *)
+  (* LP_NODE_USER_WIDTH = "0" *)
+  (* LP_SYNCHRONIZATION_STAGES = "2" *)
+  (* LP_S_AXIS_REG_SLICE_CONFIG = "0" *)
+  (* LP_S_MAX_NUM_BYTES = "4" *)
+  (* LP_S_MIN_NUM_BYTES = "4" *)
+  (* LP_S_PIPELINE = "0" *)
+  (* LP_S_STATIC_DWIDTH = "1" *)
+  (* LP_ZERO_ROUTE_WIDTH = "1" *)
+  (* P_NUM_OUTSTANDING = "16" *)
+  (* P_QUEUE_SIZE = "3" *)
+  (* T_SC_ADDR_WIDTH = "32" *)
+  (* T_SC_ARUSER_WIDTH = "0" *)
+  (* T_SC_AWUSER_WIDTH = "0" *)
+  (* T_SC_BUSER_WIDTH = "0" *)
+  (* T_SC_ID_WIDTH = "1" *)
+  (* T_SC_MSC_ROUTE_WIDTH = "1" *)
+  (* T_SC_RDATA_WIDTH = "32" *)
+  (* T_SC_RUSER_BITS_PER_BYTE = "0" *)
+  (* T_SC_SSC_ROUTE_WIDTH = "1" *)
+  (* T_SC_WDATA_WIDTH = "32" *)
+  (* T_SC_WUSER_BITS_PER_BYTE = "0" *)
+  (* is_du_within_envelope = "true" *)
   system_axi_smc_0_sc_node_v1_0_19_top inst
        (.m_axis_arb_tdata(NLW_inst_m_axis_arb_tdata_UNCONNECTED[15:0]),
         .m_axis_arb_tready(1'b1),
@@ -2567,7 +2567,7 @@ module system_axi_smc_0_bd_44e3_sarn_0
         .s_sc_send(S_SC_AR_send));
 endmodule
 
-(* ORIG_REF_NAME = "bd_44e3_sawn_0" *) 
+(* ORIG_REF_NAME = "bd_44e3_sawn_0" *)
 module system_axi_smc_0_bd_44e3_sawn_0
    (S_SC_AW_recv,
     M_SC_AW_send,
@@ -2601,80 +2601,80 @@ module system_axi_smc_0_bd_44e3_sawn_0
   wire [137:0]NLW_inst_m_sc_payld_UNCONNECTED;
   wire [0:0]NLW_inst_m_sc_req_UNCONNECTED;
 
-  (* C_ACLKEN_CONVERSION = "0" *) 
-  (* C_ACLK_RELATIONSHIP = "1" *) 
-  (* C_ADDR_WIDTH = "32" *) 
-  (* C_ARBITER_MODE = "1" *) 
-  (* C_CHANNEL = "3" *) 
-  (* C_DISABLE_IP = "0" *) 
-  (* C_ENABLE_PIPELINING = "8'b00000001" *) 
-  (* C_FAMILY = "zynq" *) 
-  (* C_FIFO_IP = "0" *) 
-  (* C_FIFO_OUTPUT_REG = "1" *) 
-  (* C_FIFO_SIZE = "0" *) 
-  (* C_FIFO_TYPE = "0" *) 
-  (* C_ID_WIDTH = "1" *) 
-  (* C_MAX_PAYLD_BYTES = "4" *) 
-  (* C_M_NUM_BYTES_ARRAY = "4" *) 
-  (* C_M_PIPELINE = "0" *) 
-  (* C_M_SEND_PIPELINE = "0" *) 
-  (* C_NUM_MI = "1" *) 
-  (* C_NUM_OUTSTANDING = "8" *) 
-  (* C_NUM_SI = "1" *) 
-  (* C_PAYLD_WIDTH = "138" *) 
-  (* C_PRIORITY_ARB_ARRAY = "1'b0" *) 
-  (* C_SC_ROUTE_WIDTH = "1" *) 
-  (* C_SYNCHRONIZATION_STAGES = "3" *) 
-  (* C_S_LATENCY = "0" *) 
-  (* C_S_NUM_BYTES_ARRAY = "4" *) 
-  (* C_S_PIPELINE = "0" *) 
-  (* C_USER_BITS_PER_BYTE = "0" *) 
-  (* C_USER_WIDTH = "0" *) 
-  (* KEEP_HIERARCHY = "SOFT" *) 
-  (* LP_ACLK_RELATIONSHIP = "1" *) 
-  (* LP_ARBITER_MODE = "1" *) 
-  (* LP_DT_REG = "true" *) 
-  (* LP_FIFO_OUTPUT_REG = "1" *) 
-  (* LP_FIFO_TYPE = "0" *) 
-  (* LP_LIGHTWT_MI = "0" *) 
-  (* LP_LIGHTWT_PASS = "0" *) 
-  (* LP_LIGHTWT_SI = "0" *) 
-  (* LP_LOG_MAX_DOWNSIZER_RATIO = "1" *) 
-  (* LP_LOG_MAX_UPSIZER_RATIO = "1" *) 
-  (* LP_LOG_NUM_MI = "1" *) 
-  (* LP_LOG_NUM_SI = "1" *) 
-  (* LP_LTWT_REG_TYPE = "7" *) 
-  (* LP_MAX_DOWNSIZER_RATIO = "1" *) 
-  (* LP_MAX_NUM_BYTES = "4" *) 
-  (* LP_MAX_UPSIZER_RATIO = "1" *) 
-  (* LP_M_MAX_NUM_BYTES = "4" *) 
-  (* LP_M_MIN_NUM_BYTES = "4" *) 
-  (* LP_M_STATIC_DWIDTH = "1" *) 
-  (* LP_NODE_ADDR_WIDTH = "32" *) 
-  (* LP_NODE_ID_WIDTH = "1" *) 
-  (* LP_NODE_ROUTE_WIDTH = "1" *) 
-  (* LP_NODE_USER_WIDTH = "0" *) 
-  (* LP_SYNCHRONIZATION_STAGES = "2" *) 
-  (* LP_S_AXIS_REG_SLICE_CONFIG = "0" *) 
-  (* LP_S_MAX_NUM_BYTES = "4" *) 
-  (* LP_S_MIN_NUM_BYTES = "4" *) 
-  (* LP_S_PIPELINE = "0" *) 
-  (* LP_S_STATIC_DWIDTH = "1" *) 
-  (* LP_ZERO_ROUTE_WIDTH = "1" *) 
-  (* P_NUM_OUTSTANDING = "16" *) 
-  (* P_QUEUE_SIZE = "3" *) 
-  (* T_SC_ADDR_WIDTH = "32" *) 
-  (* T_SC_ARUSER_WIDTH = "0" *) 
-  (* T_SC_AWUSER_WIDTH = "0" *) 
-  (* T_SC_BUSER_WIDTH = "0" *) 
-  (* T_SC_ID_WIDTH = "1" *) 
-  (* T_SC_MSC_ROUTE_WIDTH = "1" *) 
-  (* T_SC_RDATA_WIDTH = "32" *) 
-  (* T_SC_RUSER_BITS_PER_BYTE = "0" *) 
-  (* T_SC_SSC_ROUTE_WIDTH = "1" *) 
-  (* T_SC_WDATA_WIDTH = "32" *) 
-  (* T_SC_WUSER_BITS_PER_BYTE = "0" *) 
-  (* is_du_within_envelope = "true" *) 
+  (* C_ACLKEN_CONVERSION = "0" *)
+  (* C_ACLK_RELATIONSHIP = "1" *)
+  (* C_ADDR_WIDTH = "32" *)
+  (* C_ARBITER_MODE = "1" *)
+  (* C_CHANNEL = "3" *)
+  (* C_DISABLE_IP = "0" *)
+  (* C_ENABLE_PIPELINING = "8'b00000001" *)
+  (* C_FAMILY = "zynq" *)
+  (* C_FIFO_IP = "0" *)
+  (* C_FIFO_OUTPUT_REG = "1" *)
+  (* C_FIFO_SIZE = "0" *)
+  (* C_FIFO_TYPE = "0" *)
+  (* C_ID_WIDTH = "1" *)
+  (* C_MAX_PAYLD_BYTES = "4" *)
+  (* C_M_NUM_BYTES_ARRAY = "4" *)
+  (* C_M_PIPELINE = "0" *)
+  (* C_M_SEND_PIPELINE = "0" *)
+  (* C_NUM_MI = "1" *)
+  (* C_NUM_OUTSTANDING = "8" *)
+  (* C_NUM_SI = "1" *)
+  (* C_PAYLD_WIDTH = "138" *)
+  (* C_PRIORITY_ARB_ARRAY = "1'b0" *)
+  (* C_SC_ROUTE_WIDTH = "1" *)
+  (* C_SYNCHRONIZATION_STAGES = "3" *)
+  (* C_S_LATENCY = "0" *)
+  (* C_S_NUM_BYTES_ARRAY = "4" *)
+  (* C_S_PIPELINE = "0" *)
+  (* C_USER_BITS_PER_BYTE = "0" *)
+  (* C_USER_WIDTH = "0" *)
+  (* KEEP_HIERARCHY = "SOFT" *)
+  (* LP_ACLK_RELATIONSHIP = "1" *)
+  (* LP_ARBITER_MODE = "1" *)
+  (* LP_DT_REG = "true" *)
+  (* LP_FIFO_OUTPUT_REG = "1" *)
+  (* LP_FIFO_TYPE = "0" *)
+  (* LP_LIGHTWT_MI = "0" *)
+  (* LP_LIGHTWT_PASS = "0" *)
+  (* LP_LIGHTWT_SI = "0" *)
+  (* LP_LOG_MAX_DOWNSIZER_RATIO = "1" *)
+  (* LP_LOG_MAX_UPSIZER_RATIO = "1" *)
+  (* LP_LOG_NUM_MI = "1" *)
+  (* LP_LOG_NUM_SI = "1" *)
+  (* LP_LTWT_REG_TYPE = "7" *)
+  (* LP_MAX_DOWNSIZER_RATIO = "1" *)
+  (* LP_MAX_NUM_BYTES = "4" *)
+  (* LP_MAX_UPSIZER_RATIO = "1" *)
+  (* LP_M_MAX_NUM_BYTES = "4" *)
+  (* LP_M_MIN_NUM_BYTES = "4" *)
+  (* LP_M_STATIC_DWIDTH = "1" *)
+  (* LP_NODE_ADDR_WIDTH = "32" *)
+  (* LP_NODE_ID_WIDTH = "1" *)
+  (* LP_NODE_ROUTE_WIDTH = "1" *)
+  (* LP_NODE_USER_WIDTH = "0" *)
+  (* LP_SYNCHRONIZATION_STAGES = "2" *)
+  (* LP_S_AXIS_REG_SLICE_CONFIG = "0" *)
+  (* LP_S_MAX_NUM_BYTES = "4" *)
+  (* LP_S_MIN_NUM_BYTES = "4" *)
+  (* LP_S_PIPELINE = "0" *)
+  (* LP_S_STATIC_DWIDTH = "1" *)
+  (* LP_ZERO_ROUTE_WIDTH = "1" *)
+  (* P_NUM_OUTSTANDING = "16" *)
+  (* P_QUEUE_SIZE = "3" *)
+  (* T_SC_ADDR_WIDTH = "32" *)
+  (* T_SC_ARUSER_WIDTH = "0" *)
+  (* T_SC_AWUSER_WIDTH = "0" *)
+  (* T_SC_BUSER_WIDTH = "0" *)
+  (* T_SC_ID_WIDTH = "1" *)
+  (* T_SC_MSC_ROUTE_WIDTH = "1" *)
+  (* T_SC_RDATA_WIDTH = "32" *)
+  (* T_SC_RUSER_BITS_PER_BYTE = "0" *)
+  (* T_SC_SSC_ROUTE_WIDTH = "1" *)
+  (* T_SC_WDATA_WIDTH = "32" *)
+  (* T_SC_WUSER_BITS_PER_BYTE = "0" *)
+  (* is_du_within_envelope = "true" *)
   system_axi_smc_0_sc_node_v1_0_19_top__parameterized0 inst
        (.m_axis_arb_tdata(NLW_inst_m_axis_arb_tdata_UNCONNECTED[15:0]),
         .m_axis_arb_tready(1'b1),
@@ -2700,7 +2700,7 @@ module system_axi_smc_0_bd_44e3_sawn_0
         .s_sc_send(S_SC_AW_send));
 endmodule
 
-(* ORIG_REF_NAME = "bd_44e3_sbn_0" *) 
+(* ORIG_REF_NAME = "bd_44e3_sbn_0" *)
 module system_axi_smc_0_bd_44e3_sbn_0
    (S_SC_B_recv,
     M_SC_B_send,
@@ -2734,80 +2734,80 @@ module system_axi_smc_0_bd_44e3_sbn_0
   wire [2:0]NLW_inst_m_sc_payld_UNCONNECTED;
   wire [0:0]NLW_inst_m_sc_req_UNCONNECTED;
 
-  (* C_ACLKEN_CONVERSION = "0" *) 
-  (* C_ACLK_RELATIONSHIP = "1" *) 
-  (* C_ADDR_WIDTH = "32" *) 
-  (* C_ARBITER_MODE = "1" *) 
-  (* C_CHANNEL = "4" *) 
-  (* C_DISABLE_IP = "0" *) 
-  (* C_ENABLE_PIPELINING = "8'b00000001" *) 
-  (* C_FAMILY = "zynq" *) 
-  (* C_FIFO_IP = "0" *) 
-  (* C_FIFO_OUTPUT_REG = "1" *) 
-  (* C_FIFO_SIZE = "0" *) 
-  (* C_FIFO_TYPE = "0" *) 
-  (* C_ID_WIDTH = "1" *) 
-  (* C_MAX_PAYLD_BYTES = "4" *) 
-  (* C_M_NUM_BYTES_ARRAY = "4" *) 
-  (* C_M_PIPELINE = "0" *) 
-  (* C_M_SEND_PIPELINE = "0" *) 
-  (* C_NUM_MI = "1" *) 
-  (* C_NUM_OUTSTANDING = "8" *) 
-  (* C_NUM_SI = "1" *) 
-  (* C_PAYLD_WIDTH = "5" *) 
-  (* C_PRIORITY_ARB_ARRAY = "1'b0" *) 
-  (* C_SC_ROUTE_WIDTH = "1" *) 
-  (* C_SYNCHRONIZATION_STAGES = "3" *) 
-  (* C_S_LATENCY = "0" *) 
-  (* C_S_NUM_BYTES_ARRAY = "4" *) 
-  (* C_S_PIPELINE = "0" *) 
-  (* C_USER_BITS_PER_BYTE = "0" *) 
-  (* C_USER_WIDTH = "0" *) 
-  (* KEEP_HIERARCHY = "SOFT" *) 
-  (* LP_ACLK_RELATIONSHIP = "1" *) 
-  (* LP_ARBITER_MODE = "1" *) 
-  (* LP_DT_REG = "true" *) 
-  (* LP_FIFO_OUTPUT_REG = "1" *) 
-  (* LP_FIFO_TYPE = "0" *) 
-  (* LP_LIGHTWT_MI = "0" *) 
-  (* LP_LIGHTWT_PASS = "0" *) 
-  (* LP_LIGHTWT_SI = "0" *) 
-  (* LP_LOG_MAX_DOWNSIZER_RATIO = "1" *) 
-  (* LP_LOG_MAX_UPSIZER_RATIO = "1" *) 
-  (* LP_LOG_NUM_MI = "1" *) 
-  (* LP_LOG_NUM_SI = "1" *) 
-  (* LP_LTWT_REG_TYPE = "7" *) 
-  (* LP_MAX_DOWNSIZER_RATIO = "1" *) 
-  (* LP_MAX_NUM_BYTES = "4" *) 
-  (* LP_MAX_UPSIZER_RATIO = "1" *) 
-  (* LP_M_MAX_NUM_BYTES = "4" *) 
-  (* LP_M_MIN_NUM_BYTES = "4" *) 
-  (* LP_M_STATIC_DWIDTH = "1" *) 
-  (* LP_NODE_ADDR_WIDTH = "32" *) 
-  (* LP_NODE_ID_WIDTH = "1" *) 
-  (* LP_NODE_ROUTE_WIDTH = "1" *) 
-  (* LP_NODE_USER_WIDTH = "0" *) 
-  (* LP_SYNCHRONIZATION_STAGES = "2" *) 
-  (* LP_S_AXIS_REG_SLICE_CONFIG = "0" *) 
-  (* LP_S_MAX_NUM_BYTES = "4" *) 
-  (* LP_S_MIN_NUM_BYTES = "4" *) 
-  (* LP_S_PIPELINE = "0" *) 
-  (* LP_S_STATIC_DWIDTH = "1" *) 
-  (* LP_ZERO_ROUTE_WIDTH = "1" *) 
-  (* P_NUM_OUTSTANDING = "16" *) 
-  (* P_QUEUE_SIZE = "3" *) 
-  (* T_SC_ADDR_WIDTH = "32" *) 
-  (* T_SC_ARUSER_WIDTH = "0" *) 
-  (* T_SC_AWUSER_WIDTH = "0" *) 
-  (* T_SC_BUSER_WIDTH = "0" *) 
-  (* T_SC_ID_WIDTH = "1" *) 
-  (* T_SC_MSC_ROUTE_WIDTH = "1" *) 
-  (* T_SC_RDATA_WIDTH = "32" *) 
-  (* T_SC_RUSER_BITS_PER_BYTE = "0" *) 
-  (* T_SC_SSC_ROUTE_WIDTH = "1" *) 
-  (* T_SC_WDATA_WIDTH = "32" *) 
-  (* T_SC_WUSER_BITS_PER_BYTE = "0" *) 
-  (* is_du_within_envelope = "true" *) 
+  (* C_ACLKEN_CONVERSION = "0" *)
+  (* C_ACLK_RELATIONSHIP = "1" *)
+  (* C_ADDR_WIDTH = "32" *)
+  (* C_ARBITER_MODE = "1" *)
+  (* C_CHANNEL = "4" *)
+  (* C_DISABLE_IP = "0" *)
+  (* C_ENABLE_PIPELINING = "8'b00000001" *)
+  (* C_FAMILY = "zynq" *)
+  (* C_FIFO_IP = "0" *)
+  (* C_FIFO_OUTPUT_REG = "1" *)
+  (* C_FIFO_SIZE = "0" *)
+  (* C_FIFO_TYPE = "0" *)
+  (* C_ID_WIDTH = "1" *)
+  (* C_MAX_PAYLD_BYTES = "4" *)
+  (* C_M_NUM_BYTES_ARRAY = "4" *)
+  (* C_M_PIPELINE = "0" *)
+  (* C_M_SEND_PIPELINE = "0" *)
+  (* C_NUM_MI = "1" *)
+  (* C_NUM_OUTSTANDING = "8" *)
+  (* C_NUM_SI = "1" *)
+  (* C_PAYLD_WIDTH = "5" *)
+  (* C_PRIORITY_ARB_ARRAY = "1'b0" *)
+  (* C_SC_ROUTE_WIDTH = "1" *)
+  (* C_SYNCHRONIZATION_STAGES = "3" *)
+  (* C_S_LATENCY = "0" *)
+  (* C_S_NUM_BYTES_ARRAY = "4" *)
+  (* C_S_PIPELINE = "0" *)
+  (* C_USER_BITS_PER_BYTE = "0" *)
+  (* C_USER_WIDTH = "0" *)
+  (* KEEP_HIERARCHY = "SOFT" *)
+  (* LP_ACLK_RELATIONSHIP = "1" *)
+  (* LP_ARBITER_MODE = "1" *)
+  (* LP_DT_REG = "true" *)
+  (* LP_FIFO_OUTPUT_REG = "1" *)
+  (* LP_FIFO_TYPE = "0" *)
+  (* LP_LIGHTWT_MI = "0" *)
+  (* LP_LIGHTWT_PASS = "0" *)
+  (* LP_LIGHTWT_SI = "0" *)
+  (* LP_LOG_MAX_DOWNSIZER_RATIO = "1" *)
+  (* LP_LOG_MAX_UPSIZER_RATIO = "1" *)
+  (* LP_LOG_NUM_MI = "1" *)
+  (* LP_LOG_NUM_SI = "1" *)
+  (* LP_LTWT_REG_TYPE = "7" *)
+  (* LP_MAX_DOWNSIZER_RATIO = "1" *)
+  (* LP_MAX_NUM_BYTES = "4" *)
+  (* LP_MAX_UPSIZER_RATIO = "1" *)
+  (* LP_M_MAX_NUM_BYTES = "4" *)
+  (* LP_M_MIN_NUM_BYTES = "4" *)
+  (* LP_M_STATIC_DWIDTH = "1" *)
+  (* LP_NODE_ADDR_WIDTH = "32" *)
+  (* LP_NODE_ID_WIDTH = "1" *)
+  (* LP_NODE_ROUTE_WIDTH = "1" *)
+  (* LP_NODE_USER_WIDTH = "0" *)
+  (* LP_SYNCHRONIZATION_STAGES = "2" *)
+  (* LP_S_AXIS_REG_SLICE_CONFIG = "0" *)
+  (* LP_S_MAX_NUM_BYTES = "4" *)
+  (* LP_S_MIN_NUM_BYTES = "4" *)
+  (* LP_S_PIPELINE = "0" *)
+  (* LP_S_STATIC_DWIDTH = "1" *)
+  (* LP_ZERO_ROUTE_WIDTH = "1" *)
+  (* P_NUM_OUTSTANDING = "16" *)
+  (* P_QUEUE_SIZE = "3" *)
+  (* T_SC_ADDR_WIDTH = "32" *)
+  (* T_SC_ARUSER_WIDTH = "0" *)
+  (* T_SC_AWUSER_WIDTH = "0" *)
+  (* T_SC_BUSER_WIDTH = "0" *)
+  (* T_SC_ID_WIDTH = "1" *)
+  (* T_SC_MSC_ROUTE_WIDTH = "1" *)
+  (* T_SC_RDATA_WIDTH = "32" *)
+  (* T_SC_RUSER_BITS_PER_BYTE = "0" *)
+  (* T_SC_SSC_ROUTE_WIDTH = "1" *)
+  (* T_SC_WDATA_WIDTH = "32" *)
+  (* T_SC_WUSER_BITS_PER_BYTE = "0" *)
+  (* is_du_within_envelope = "true" *)
   system_axi_smc_0_sc_node_v1_0_19_top__parameterized1 inst
        (.m_axis_arb_tdata(NLW_inst_m_axis_arb_tdata_UNCONNECTED[15:0]),
         .m_axis_arb_tready(1'b1),
@@ -2833,7 +2833,7 @@ module system_axi_smc_0_bd_44e3_sbn_0
         .s_sc_send(S_SC_B_send));
 endmodule
 
-(* ORIG_REF_NAME = "bd_44e3_srn_0" *) 
+(* ORIG_REF_NAME = "bd_44e3_srn_0" *)
 module system_axi_smc_0_bd_44e3_srn_0
    (S_SC_R_recv,
     M_SC_R_send,
@@ -2867,80 +2867,80 @@ module system_axi_smc_0_bd_44e3_srn_0
   wire [18:0]NLW_inst_m_sc_payld_UNCONNECTED;
   wire [0:0]NLW_inst_m_sc_req_UNCONNECTED;
 
-  (* C_ACLKEN_CONVERSION = "0" *) 
-  (* C_ACLK_RELATIONSHIP = "1" *) 
-  (* C_ADDR_WIDTH = "32" *) 
-  (* C_ARBITER_MODE = "1" *) 
-  (* C_CHANNEL = "0" *) 
-  (* C_DISABLE_IP = "0" *) 
-  (* C_ENABLE_PIPELINING = "8'b00000001" *) 
-  (* C_FAMILY = "zynq" *) 
-  (* C_FIFO_IP = "0" *) 
-  (* C_FIFO_OUTPUT_REG = "1" *) 
-  (* C_FIFO_SIZE = "0" *) 
-  (* C_FIFO_TYPE = "0" *) 
-  (* C_ID_WIDTH = "1" *) 
-  (* C_MAX_PAYLD_BYTES = "4" *) 
-  (* C_M_NUM_BYTES_ARRAY = "4" *) 
-  (* C_M_PIPELINE = "0" *) 
-  (* C_M_SEND_PIPELINE = "0" *) 
-  (* C_NUM_MI = "1" *) 
-  (* C_NUM_OUTSTANDING = "8" *) 
-  (* C_NUM_SI = "1" *) 
-  (* C_PAYLD_WIDTH = "51" *) 
-  (* C_PRIORITY_ARB_ARRAY = "1'b0" *) 
-  (* C_SC_ROUTE_WIDTH = "1" *) 
-  (* C_SYNCHRONIZATION_STAGES = "3" *) 
-  (* C_S_LATENCY = "0" *) 
-  (* C_S_NUM_BYTES_ARRAY = "4" *) 
-  (* C_S_PIPELINE = "0" *) 
-  (* C_USER_BITS_PER_BYTE = "0" *) 
-  (* C_USER_WIDTH = "512" *) 
-  (* KEEP_HIERARCHY = "SOFT" *) 
-  (* LP_ACLK_RELATIONSHIP = "1" *) 
-  (* LP_ARBITER_MODE = "1" *) 
-  (* LP_DT_REG = "true" *) 
-  (* LP_FIFO_OUTPUT_REG = "1" *) 
-  (* LP_FIFO_TYPE = "0" *) 
-  (* LP_LIGHTWT_MI = "0" *) 
-  (* LP_LIGHTWT_PASS = "0" *) 
-  (* LP_LIGHTWT_SI = "0" *) 
-  (* LP_LOG_MAX_DOWNSIZER_RATIO = "1" *) 
-  (* LP_LOG_MAX_UPSIZER_RATIO = "1" *) 
-  (* LP_LOG_NUM_MI = "1" *) 
-  (* LP_LOG_NUM_SI = "1" *) 
-  (* LP_LTWT_REG_TYPE = "1" *) 
-  (* LP_MAX_DOWNSIZER_RATIO = "1" *) 
-  (* LP_MAX_NUM_BYTES = "4" *) 
-  (* LP_MAX_UPSIZER_RATIO = "1" *) 
-  (* LP_M_MAX_NUM_BYTES = "4" *) 
-  (* LP_M_MIN_NUM_BYTES = "4" *) 
-  (* LP_M_STATIC_DWIDTH = "1" *) 
-  (* LP_NODE_ADDR_WIDTH = "32" *) 
-  (* LP_NODE_ID_WIDTH = "1" *) 
-  (* LP_NODE_ROUTE_WIDTH = "1" *) 
-  (* LP_NODE_USER_WIDTH = "1" *) 
-  (* LP_SYNCHRONIZATION_STAGES = "2" *) 
-  (* LP_S_AXIS_REG_SLICE_CONFIG = "0" *) 
-  (* LP_S_MAX_NUM_BYTES = "4" *) 
-  (* LP_S_MIN_NUM_BYTES = "4" *) 
-  (* LP_S_PIPELINE = "0" *) 
-  (* LP_S_STATIC_DWIDTH = "1" *) 
-  (* LP_ZERO_ROUTE_WIDTH = "1" *) 
-  (* P_NUM_OUTSTANDING = "16" *) 
-  (* P_QUEUE_SIZE = "3" *) 
-  (* T_SC_ADDR_WIDTH = "32" *) 
-  (* T_SC_ARUSER_WIDTH = "1" *) 
-  (* T_SC_AWUSER_WIDTH = "1" *) 
-  (* T_SC_BUSER_WIDTH = "1" *) 
-  (* T_SC_ID_WIDTH = "1" *) 
-  (* T_SC_MSC_ROUTE_WIDTH = "1" *) 
-  (* T_SC_RDATA_WIDTH = "32" *) 
-  (* T_SC_RUSER_BITS_PER_BYTE = "0" *) 
-  (* T_SC_SSC_ROUTE_WIDTH = "1" *) 
-  (* T_SC_WDATA_WIDTH = "32" *) 
-  (* T_SC_WUSER_BITS_PER_BYTE = "0" *) 
-  (* is_du_within_envelope = "true" *) 
+  (* C_ACLKEN_CONVERSION = "0" *)
+  (* C_ACLK_RELATIONSHIP = "1" *)
+  (* C_ADDR_WIDTH = "32" *)
+  (* C_ARBITER_MODE = "1" *)
+  (* C_CHANNEL = "0" *)
+  (* C_DISABLE_IP = "0" *)
+  (* C_ENABLE_PIPELINING = "8'b00000001" *)
+  (* C_FAMILY = "zynq" *)
+  (* C_FIFO_IP = "0" *)
+  (* C_FIFO_OUTPUT_REG = "1" *)
+  (* C_FIFO_SIZE = "0" *)
+  (* C_FIFO_TYPE = "0" *)
+  (* C_ID_WIDTH = "1" *)
+  (* C_MAX_PAYLD_BYTES = "4" *)
+  (* C_M_NUM_BYTES_ARRAY = "4" *)
+  (* C_M_PIPELINE = "0" *)
+  (* C_M_SEND_PIPELINE = "0" *)
+  (* C_NUM_MI = "1" *)
+  (* C_NUM_OUTSTANDING = "8" *)
+  (* C_NUM_SI = "1" *)
+  (* C_PAYLD_WIDTH = "51" *)
+  (* C_PRIORITY_ARB_ARRAY = "1'b0" *)
+  (* C_SC_ROUTE_WIDTH = "1" *)
+  (* C_SYNCHRONIZATION_STAGES = "3" *)
+  (* C_S_LATENCY = "0" *)
+  (* C_S_NUM_BYTES_ARRAY = "4" *)
+  (* C_S_PIPELINE = "0" *)
+  (* C_USER_BITS_PER_BYTE = "0" *)
+  (* C_USER_WIDTH = "512" *)
+  (* KEEP_HIERARCHY = "SOFT" *)
+  (* LP_ACLK_RELATIONSHIP = "1" *)
+  (* LP_ARBITER_MODE = "1" *)
+  (* LP_DT_REG = "true" *)
+  (* LP_FIFO_OUTPUT_REG = "1" *)
+  (* LP_FIFO_TYPE = "0" *)
+  (* LP_LIGHTWT_MI = "0" *)
+  (* LP_LIGHTWT_PASS = "0" *)
+  (* LP_LIGHTWT_SI = "0" *)
+  (* LP_LOG_MAX_DOWNSIZER_RATIO = "1" *)
+  (* LP_LOG_MAX_UPSIZER_RATIO = "1" *)
+  (* LP_LOG_NUM_MI = "1" *)
+  (* LP_LOG_NUM_SI = "1" *)
+  (* LP_LTWT_REG_TYPE = "1" *)
+  (* LP_MAX_DOWNSIZER_RATIO = "1" *)
+  (* LP_MAX_NUM_BYTES = "4" *)
+  (* LP_MAX_UPSIZER_RATIO = "1" *)
+  (* LP_M_MAX_NUM_BYTES = "4" *)
+  (* LP_M_MIN_NUM_BYTES = "4" *)
+  (* LP_M_STATIC_DWIDTH = "1" *)
+  (* LP_NODE_ADDR_WIDTH = "32" *)
+  (* LP_NODE_ID_WIDTH = "1" *)
+  (* LP_NODE_ROUTE_WIDTH = "1" *)
+  (* LP_NODE_USER_WIDTH = "1" *)
+  (* LP_SYNCHRONIZATION_STAGES = "2" *)
+  (* LP_S_AXIS_REG_SLICE_CONFIG = "0" *)
+  (* LP_S_MAX_NUM_BYTES = "4" *)
+  (* LP_S_MIN_NUM_BYTES = "4" *)
+  (* LP_S_PIPELINE = "0" *)
+  (* LP_S_STATIC_DWIDTH = "1" *)
+  (* LP_ZERO_ROUTE_WIDTH = "1" *)
+  (* P_NUM_OUTSTANDING = "16" *)
+  (* P_QUEUE_SIZE = "3" *)
+  (* T_SC_ADDR_WIDTH = "32" *)
+  (* T_SC_ARUSER_WIDTH = "1" *)
+  (* T_SC_AWUSER_WIDTH = "1" *)
+  (* T_SC_BUSER_WIDTH = "1" *)
+  (* T_SC_ID_WIDTH = "1" *)
+  (* T_SC_MSC_ROUTE_WIDTH = "1" *)
+  (* T_SC_RDATA_WIDTH = "32" *)
+  (* T_SC_RUSER_BITS_PER_BYTE = "0" *)
+  (* T_SC_SSC_ROUTE_WIDTH = "1" *)
+  (* T_SC_WDATA_WIDTH = "32" *)
+  (* T_SC_WUSER_BITS_PER_BYTE = "0" *)
+  (* is_du_within_envelope = "true" *)
   system_axi_smc_0_sc_node_v1_0_19_top__parameterized2 inst
        (.m_axis_arb_tdata(NLW_inst_m_axis_arb_tdata_UNCONNECTED[15:0]),
         .m_axis_arb_tready(1'b1),
@@ -2966,7 +2966,7 @@ module system_axi_smc_0_bd_44e3_srn_0
         .s_sc_send(S_SC_R_send));
 endmodule
 
-(* ORIG_REF_NAME = "bd_44e3_swn_0" *) 
+(* ORIG_REF_NAME = "bd_44e3_swn_0" *)
 module system_axi_smc_0_bd_44e3_swn_0
    (S_SC_W_recv,
     M_SC_W_send,
@@ -3000,80 +3000,80 @@ module system_axi_smc_0_bd_44e3_swn_0
   wire [15:0]NLW_inst_m_sc_payld_UNCONNECTED;
   wire [0:0]NLW_inst_m_sc_req_UNCONNECTED;
 
-  (* C_ACLKEN_CONVERSION = "0" *) 
-  (* C_ACLK_RELATIONSHIP = "1" *) 
-  (* C_ADDR_WIDTH = "32" *) 
-  (* C_ARBITER_MODE = "1" *) 
-  (* C_CHANNEL = "1" *) 
-  (* C_DISABLE_IP = "0" *) 
-  (* C_ENABLE_PIPELINING = "8'b00000001" *) 
-  (* C_FAMILY = "zynq" *) 
-  (* C_FIFO_IP = "0" *) 
-  (* C_FIFO_OUTPUT_REG = "1" *) 
-  (* C_FIFO_SIZE = "0" *) 
-  (* C_FIFO_TYPE = "0" *) 
-  (* C_ID_WIDTH = "1" *) 
-  (* C_MAX_PAYLD_BYTES = "4" *) 
-  (* C_M_NUM_BYTES_ARRAY = "4" *) 
-  (* C_M_PIPELINE = "0" *) 
-  (* C_M_SEND_PIPELINE = "0" *) 
-  (* C_NUM_MI = "1" *) 
-  (* C_NUM_OUTSTANDING = "8" *) 
-  (* C_NUM_SI = "1" *) 
-  (* C_PAYLD_WIDTH = "52" *) 
-  (* C_PRIORITY_ARB_ARRAY = "1'b0" *) 
-  (* C_SC_ROUTE_WIDTH = "1" *) 
-  (* C_SYNCHRONIZATION_STAGES = "3" *) 
-  (* C_S_LATENCY = "0" *) 
-  (* C_S_NUM_BYTES_ARRAY = "4" *) 
-  (* C_S_PIPELINE = "0" *) 
-  (* C_USER_BITS_PER_BYTE = "0" *) 
-  (* C_USER_WIDTH = "512" *) 
-  (* KEEP_HIERARCHY = "SOFT" *) 
-  (* LP_ACLK_RELATIONSHIP = "1" *) 
-  (* LP_ARBITER_MODE = "2" *) 
-  (* LP_DT_REG = "true" *) 
-  (* LP_FIFO_OUTPUT_REG = "1" *) 
-  (* LP_FIFO_TYPE = "0" *) 
-  (* LP_LIGHTWT_MI = "0" *) 
-  (* LP_LIGHTWT_PASS = "0" *) 
-  (* LP_LIGHTWT_SI = "0" *) 
-  (* LP_LOG_MAX_DOWNSIZER_RATIO = "1" *) 
-  (* LP_LOG_MAX_UPSIZER_RATIO = "1" *) 
-  (* LP_LOG_NUM_MI = "1" *) 
-  (* LP_LOG_NUM_SI = "1" *) 
-  (* LP_LTWT_REG_TYPE = "1" *) 
-  (* LP_MAX_DOWNSIZER_RATIO = "1" *) 
-  (* LP_MAX_NUM_BYTES = "4" *) 
-  (* LP_MAX_UPSIZER_RATIO = "1" *) 
-  (* LP_M_MAX_NUM_BYTES = "4" *) 
-  (* LP_M_MIN_NUM_BYTES = "4" *) 
-  (* LP_M_STATIC_DWIDTH = "1" *) 
-  (* LP_NODE_ADDR_WIDTH = "32" *) 
-  (* LP_NODE_ID_WIDTH = "1" *) 
-  (* LP_NODE_ROUTE_WIDTH = "1" *) 
-  (* LP_NODE_USER_WIDTH = "1" *) 
-  (* LP_SYNCHRONIZATION_STAGES = "2" *) 
-  (* LP_S_AXIS_REG_SLICE_CONFIG = "0" *) 
-  (* LP_S_MAX_NUM_BYTES = "4" *) 
-  (* LP_S_MIN_NUM_BYTES = "4" *) 
-  (* LP_S_PIPELINE = "0" *) 
-  (* LP_S_STATIC_DWIDTH = "1" *) 
-  (* LP_ZERO_ROUTE_WIDTH = "1" *) 
-  (* P_NUM_OUTSTANDING = "16" *) 
-  (* P_QUEUE_SIZE = "3" *) 
-  (* T_SC_ADDR_WIDTH = "32" *) 
-  (* T_SC_ARUSER_WIDTH = "1" *) 
-  (* T_SC_AWUSER_WIDTH = "1" *) 
-  (* T_SC_BUSER_WIDTH = "1" *) 
-  (* T_SC_ID_WIDTH = "1" *) 
-  (* T_SC_MSC_ROUTE_WIDTH = "1" *) 
-  (* T_SC_RDATA_WIDTH = "32" *) 
-  (* T_SC_RUSER_BITS_PER_BYTE = "0" *) 
-  (* T_SC_SSC_ROUTE_WIDTH = "1" *) 
-  (* T_SC_WDATA_WIDTH = "32" *) 
-  (* T_SC_WUSER_BITS_PER_BYTE = "0" *) 
-  (* is_du_within_envelope = "true" *) 
+  (* C_ACLKEN_CONVERSION = "0" *)
+  (* C_ACLK_RELATIONSHIP = "1" *)
+  (* C_ADDR_WIDTH = "32" *)
+  (* C_ARBITER_MODE = "1" *)
+  (* C_CHANNEL = "1" *)
+  (* C_DISABLE_IP = "0" *)
+  (* C_ENABLE_PIPELINING = "8'b00000001" *)
+  (* C_FAMILY = "zynq" *)
+  (* C_FIFO_IP = "0" *)
+  (* C_FIFO_OUTPUT_REG = "1" *)
+  (* C_FIFO_SIZE = "0" *)
+  (* C_FIFO_TYPE = "0" *)
+  (* C_ID_WIDTH = "1" *)
+  (* C_MAX_PAYLD_BYTES = "4" *)
+  (* C_M_NUM_BYTES_ARRAY = "4" *)
+  (* C_M_PIPELINE = "0" *)
+  (* C_M_SEND_PIPELINE = "0" *)
+  (* C_NUM_MI = "1" *)
+  (* C_NUM_OUTSTANDING = "8" *)
+  (* C_NUM_SI = "1" *)
+  (* C_PAYLD_WIDTH = "52" *)
+  (* C_PRIORITY_ARB_ARRAY = "1'b0" *)
+  (* C_SC_ROUTE_WIDTH = "1" *)
+  (* C_SYNCHRONIZATION_STAGES = "3" *)
+  (* C_S_LATENCY = "0" *)
+  (* C_S_NUM_BYTES_ARRAY = "4" *)
+  (* C_S_PIPELINE = "0" *)
+  (* C_USER_BITS_PER_BYTE = "0" *)
+  (* C_USER_WIDTH = "512" *)
+  (* KEEP_HIERARCHY = "SOFT" *)
+  (* LP_ACLK_RELATIONSHIP = "1" *)
+  (* LP_ARBITER_MODE = "2" *)
+  (* LP_DT_REG = "true" *)
+  (* LP_FIFO_OUTPUT_REG = "1" *)
+  (* LP_FIFO_TYPE = "0" *)
+  (* LP_LIGHTWT_MI = "0" *)
+  (* LP_LIGHTWT_PASS = "0" *)
+  (* LP_LIGHTWT_SI = "0" *)
+  (* LP_LOG_MAX_DOWNSIZER_RATIO = "1" *)
+  (* LP_LOG_MAX_UPSIZER_RATIO = "1" *)
+  (* LP_LOG_NUM_MI = "1" *)
+  (* LP_LOG_NUM_SI = "1" *)
+  (* LP_LTWT_REG_TYPE = "1" *)
+  (* LP_MAX_DOWNSIZER_RATIO = "1" *)
+  (* LP_MAX_NUM_BYTES = "4" *)
+  (* LP_MAX_UPSIZER_RATIO = "1" *)
+  (* LP_M_MAX_NUM_BYTES = "4" *)
+  (* LP_M_MIN_NUM_BYTES = "4" *)
+  (* LP_M_STATIC_DWIDTH = "1" *)
+  (* LP_NODE_ADDR_WIDTH = "32" *)
+  (* LP_NODE_ID_WIDTH = "1" *)
+  (* LP_NODE_ROUTE_WIDTH = "1" *)
+  (* LP_NODE_USER_WIDTH = "1" *)
+  (* LP_SYNCHRONIZATION_STAGES = "2" *)
+  (* LP_S_AXIS_REG_SLICE_CONFIG = "0" *)
+  (* LP_S_MAX_NUM_BYTES = "4" *)
+  (* LP_S_MIN_NUM_BYTES = "4" *)
+  (* LP_S_PIPELINE = "0" *)
+  (* LP_S_STATIC_DWIDTH = "1" *)
+  (* LP_ZERO_ROUTE_WIDTH = "1" *)
+  (* P_NUM_OUTSTANDING = "16" *)
+  (* P_QUEUE_SIZE = "3" *)
+  (* T_SC_ADDR_WIDTH = "32" *)
+  (* T_SC_ARUSER_WIDTH = "1" *)
+  (* T_SC_AWUSER_WIDTH = "1" *)
+  (* T_SC_BUSER_WIDTH = "1" *)
+  (* T_SC_ID_WIDTH = "1" *)
+  (* T_SC_MSC_ROUTE_WIDTH = "1" *)
+  (* T_SC_RDATA_WIDTH = "32" *)
+  (* T_SC_RUSER_BITS_PER_BYTE = "0" *)
+  (* T_SC_SSC_ROUTE_WIDTH = "1" *)
+  (* T_SC_WDATA_WIDTH = "32" *)
+  (* T_SC_WUSER_BITS_PER_BYTE = "0" *)
+  (* is_du_within_envelope = "true" *)
   system_axi_smc_0_sc_node_v1_0_19_top__parameterized3 inst
        (.m_axis_arb_tdata(NLW_inst_m_axis_arb_tdata_UNCONNECTED[15:0]),
         .m_axis_arb_tready(1'b1),
@@ -3099,7 +3099,7 @@ module system_axi_smc_0_bd_44e3_swn_0
         .s_sc_send(S_SC_W_send));
 endmodule
 
-(* ORIG_REF_NAME = "clk_map_imp_1LX95IS" *) 
+(* ORIG_REF_NAME = "clk_map_imp_1LX95IS" *)
 module system_axi_smc_0_clk_map_imp_1LX95IS
    (interconnect_aresetn,
     aclk,
@@ -3112,14 +3112,14 @@ module system_axi_smc_0_clk_map_imp_1LX95IS
   wire aresetn;
   wire [0:0]interconnect_aresetn;
 
-  (* x_core_info = "proc_sys_reset,Vivado 2025.2" *) 
+  (* x_core_info = "proc_sys_reset,Vivado 2025.2" *)
   system_axi_smc_0_bd_44e3_psr_aclk_0 psr_aclk
        (.aclk(aclk),
         .aresetn(aresetn),
         .interconnect_aresetn(interconnect_aresetn));
 endmodule
 
-(* ORIG_REF_NAME = "lpf" *) 
+(* ORIG_REF_NAME = "lpf" *)
 module system_axi_smc_0_lpf
    (lpf_int,
     aclk,
@@ -3143,65 +3143,65 @@ module system_axi_smc_0_lpf
   wire p_1_in;
   wire p_2_in;
 
-  (* DEST_SYNC_FF = "4" *) 
-  (* INIT_SYNC_FF = "0" *) 
-  (* SIM_ASSERT_CHK = "0" *) 
-  (* SRC_INPUT_REG = "0" *) 
-  (* VERSION = "0" *) 
-  (* XPM_CDC = "SINGLE" *) 
-  (* XPM_MODULE = "TRUE" *) 
-  system_axi_smc_0_xpm_cdc_single \ACTIVE_LOW_AUX.ACT_LO_AUX 
+  (* DEST_SYNC_FF = "4" *)
+  (* INIT_SYNC_FF = "0" *)
+  (* SIM_ASSERT_CHK = "0" *)
+  (* SRC_INPUT_REG = "0" *)
+  (* VERSION = "0" *)
+  (* XPM_CDC = "SINGLE" *)
+  (* XPM_MODULE = "TRUE" *)
+  system_axi_smc_0_xpm_cdc_single \ACTIVE_LOW_AUX.ACT_LO_AUX
        (.dest_clk(aclk),
         .dest_out(asr_lpf_0),
         .src_clk(1'b1),
         .src_in(asr_d1));
   LUT1 #(
-    .INIT(2'h1)) 
-    \ACTIVE_LOW_AUX.ACT_LO_AUX_i_1 
+    .INIT(2'h1))
+    \ACTIVE_LOW_AUX.ACT_LO_AUX_i_1
        (.I0(aresetn),
         .O(asr_d1));
-  (* DEST_SYNC_FF = "4" *) 
-  (* INIT_SYNC_FF = "0" *) 
-  (* SIM_ASSERT_CHK = "0" *) 
-  (* SRC_INPUT_REG = "0" *) 
-  (* VERSION = "0" *) 
-  (* XPM_CDC = "SINGLE" *) 
-  (* XPM_MODULE = "TRUE" *) 
-  system_axi_smc_0_xpm_cdc_single__1 \ACTIVE_LOW_EXT.ACT_LO_EXT 
+  (* DEST_SYNC_FF = "4" *)
+  (* INIT_SYNC_FF = "0" *)
+  (* SIM_ASSERT_CHK = "0" *)
+  (* SRC_INPUT_REG = "0" *)
+  (* VERSION = "0" *)
+  (* XPM_CDC = "SINGLE" *)
+  (* XPM_MODULE = "TRUE" *)
+  system_axi_smc_0_xpm_cdc_single__1 \ACTIVE_LOW_EXT.ACT_LO_EXT
        (.dest_clk(aclk),
         .dest_out(dest_out),
         .src_clk(1'b1),
         .src_in(1'b0));
   FDRE #(
-    .INIT(1'b0)) 
-    \EXT_LPF[1].exr_lpf_reg[1] 
+    .INIT(1'b0))
+    \EXT_LPF[1].exr_lpf_reg[1]
        (.C(aclk),
         .CE(1'b1),
         .D(dest_out),
         .Q(p_2_in),
         .R(1'b0));
   FDRE #(
-    .INIT(1'b0)) 
-    \EXT_LPF[2].exr_lpf_reg[2] 
+    .INIT(1'b0))
+    \EXT_LPF[2].exr_lpf_reg[2]
        (.C(aclk),
         .CE(1'b1),
         .D(p_2_in),
         .Q(p_1_in),
         .R(1'b0));
   FDRE #(
-    .INIT(1'b0)) 
-    \EXT_LPF[3].exr_lpf_reg[3] 
+    .INIT(1'b0))
+    \EXT_LPF[3].exr_lpf_reg[3]
        (.C(aclk),
         .CE(1'b1),
         .D(p_1_in),
         .Q(\EXT_LPF[3].exr_lpf_reg_n_0_[3] ),
         .R(1'b0));
-  (* BOX_TYPE = "PRIMITIVE" *) 
-  (* XILINX_LEGACY_PRIM = "SRL16" *) 
-  (* XILINX_TRANSFORM_PINMAP = "VCC:CE" *) 
-  (* srl_name = "inst/\\clk_map/psr_aclk/U0/EXT_LPF/POR_SRL_I " *) 
+  (* BOX_TYPE = "PRIMITIVE" *)
+  (* XILINX_LEGACY_PRIM = "SRL16" *)
+  (* XILINX_TRANSFORM_PINMAP = "VCC:CE" *)
+  (* srl_name = "inst/\\clk_map/psr_aclk/U0/EXT_LPF/POR_SRL_I " *)
   SRL16E #(
-    .INIT(16'hFFFF)) 
+    .INIT(16'hFFFF))
     POR_SRL_I
        (.A0(1'b1),
         .A1(1'b1),
@@ -3212,7 +3212,7 @@ module system_axi_smc_0_lpf
         .D(1'b0),
         .Q(Q));
   FDRE #(
-    .INIT(1'b0)) 
+    .INIT(1'b0))
     lpf_asr_reg
        (.C(aclk),
         .CE(1'b1),
@@ -3220,7 +3220,7 @@ module system_axi_smc_0_lpf
         .Q(lpf_asr),
         .R(1'b0));
   LUT5 #(
-    .INIT(32'hEAAAAAA8)) 
+    .INIT(32'hEAAAAAA8))
     lpf_exr_i_1
        (.I0(lpf_exr),
         .I1(p_1_in),
@@ -3229,7 +3229,7 @@ module system_axi_smc_0_lpf
         .I4(\EXT_LPF[3].exr_lpf_reg_n_0_[3] ),
         .O(lpf_exr_i_1_n_0));
   FDRE #(
-    .INIT(1'b0)) 
+    .INIT(1'b0))
     lpf_exr_reg
        (.C(aclk),
         .CE(1'b1),
@@ -3237,14 +3237,14 @@ module system_axi_smc_0_lpf
         .Q(lpf_exr),
         .R(1'b0));
   LUT3 #(
-    .INIT(8'hFE)) 
+    .INIT(8'hFE))
     lpf_int0
        (.I0(lpf_exr),
         .I1(lpf_asr),
         .I2(Q),
         .O(lpf_int0__0));
   FDRE #(
-    .INIT(1'b0)) 
+    .INIT(1'b0))
     lpf_int_reg
        (.C(aclk),
         .CE(1'b1),
@@ -3253,7 +3253,7 @@ module system_axi_smc_0_lpf
         .R(1'b0));
 endmodule
 
-(* ORIG_REF_NAME = "m00_exit_pipeline_imp_B7U41B" *) 
+(* ORIG_REF_NAME = "m00_exit_pipeline_imp_B7U41B" *)
 module system_axi_smc_0_m00_exit_pipeline_imp_B7U41B
    (s_axi_awready,
     s_axi_wready,
@@ -3377,7 +3377,7 @@ module system_axi_smc_0_m00_exit_pipeline_imp_B7U41B
   wire s_axi_rvalid;
   wire s_axi_wready;
 
-  (* x_core_info = "sc_exit_v1_0_18_top,Vivado 2025.2" *) 
+  (* x_core_info = "sc_exit_v1_0_18_top,Vivado 2025.2" *)
   system_axi_smc_0_bd_44e3_m00e_0 m00_exit
        (.M00_AXI_araddr(M00_AXI_araddr),
         .M00_AXI_arprot(M00_AXI_arprot),
@@ -3421,7 +3421,7 @@ module system_axi_smc_0_m00_exit_pipeline_imp_B7U41B
         .s_axi_wready(s_axi_wready));
 endmodule
 
-(* ORIG_REF_NAME = "proc_sys_reset" *) 
+(* ORIG_REF_NAME = "proc_sys_reset" *)
 module system_axi_smc_0_proc_sys_reset
    (interconnect_aresetn,
     aclk,
@@ -3436,13 +3436,13 @@ module system_axi_smc_0_proc_sys_reset
   wire [0:0]interconnect_aresetn;
   wire lpf_int;
 
-  (* BOX_TYPE = "PRIMITIVE" *) 
+  (* BOX_TYPE = "PRIMITIVE" *)
   FDRE #(
     .INIT(1'b0),
     .IS_C_INVERTED(1'b0),
     .IS_D_INVERTED(1'b0),
-    .IS_R_INVERTED(1'b0)) 
-    \ACTIVE_LOW_BSR_OUT_DFF[0].FDRE_BSR_N 
+    .IS_R_INVERTED(1'b0))
+    \ACTIVE_LOW_BSR_OUT_DFF[0].FDRE_BSR_N
        (.C(aclk),
         .CE(1'b1),
         .D(SEQ_n_0),
@@ -3458,7 +3458,7 @@ module system_axi_smc_0_proc_sys_reset
         .lpf_int(lpf_int));
 endmodule
 
-(* ORIG_REF_NAME = "s00_entry_pipeline_imp_1BIQ3N0" *) 
+(* ORIG_REF_NAME = "s00_entry_pipeline_imp_1BIQ3N0" *)
 module system_axi_smc_0_s00_entry_pipeline_imp_1BIQ3N0
    (S00_AXI_awready,
     S00_AXI_wready,
@@ -3676,7 +3676,7 @@ module system_axi_smc_0_s00_entry_pipeline_imp_1BIQ3N0
   wire [3:0]s00_transaction_regulator_M_AXI_WSTRB;
   wire s00_transaction_regulator_M_AXI_WVALID;
 
-  (* x_core_info = "sc_mmu_v1_0_16_top,Vivado 2025.2" *) 
+  (* x_core_info = "sc_mmu_v1_0_16_top,Vivado 2025.2" *)
   system_axi_smc_0_bd_44e3_s00mmu_0 s00_mmu
        (.S00_AXI_araddr(S00_AXI_araddr),
         .S00_AXI_arburst(S00_AXI_arburst),
@@ -3742,7 +3742,7 @@ module system_axi_smc_0_s00_entry_pipeline_imp_1BIQ3N0
         .s_axi_rresp(s00_mmu_M_AXI_RRESP),
         .s_axi_rvalid(s00_mmu_M_AXI_RVALID),
         .s_axi_wready(s00_mmu_M_AXI_WREADY));
-  (* x_core_info = "sc_si_converter_v1_0_16_top,Vivado 2025.2" *) 
+  (* x_core_info = "sc_si_converter_v1_0_16_top,Vivado 2025.2" *)
   system_axi_smc_0_bd_44e3_s00sic_0 s00_si_converter
        (.aclk(aclk),
         .\aw_addr_reg[11] (s00_transaction_regulator_M_AXI_AWADDR),
@@ -3792,7 +3792,7 @@ module system_axi_smc_0_s00_entry_pipeline_imp_1BIQ3N0
         .s_axi_wready(s00_transaction_regulator_M_AXI_WREADY),
         .s_axi_wready_i_reg(s00_transaction_regulator_M_AXI_WVALID),
         .\wrap_araddr_reg[11] (s00_transaction_regulator_M_AXI_ARADDR));
-  (* x_core_info = "sc_transaction_regulator_v1_0_12_top,Vivado 2025.2" *) 
+  (* x_core_info = "sc_transaction_regulator_v1_0_12_top,Vivado 2025.2" *)
   system_axi_smc_0_bd_44e3_s00tr_0 s00_transaction_regulator
        (.\S00_AXI_bresp[1] (s00_transaction_regulator_M_AXI_BRESP),
         .\S00_AXI_rdata[31] (s00_transaction_regulator_M_AXI_RDATA),
@@ -3856,7 +3856,7 @@ module system_axi_smc_0_s00_entry_pipeline_imp_1BIQ3N0
         .\wrap_araddr_reg[11] (s00_mmu_M_AXI_ARADDR));
 endmodule
 
-(* ORIG_REF_NAME = "s00_nodes_imp_1GZQO6U" *) 
+(* ORIG_REF_NAME = "s00_nodes_imp_1GZQO6U" *)
 module system_axi_smc_0_s00_nodes_imp_1GZQO6U
    (S_SC_AR_recv,
     M_SC_AR_send,
@@ -3956,7 +3956,7 @@ module system_axi_smc_0_s00_nodes_imp_1GZQO6U
   wire aclk;
   wire [0:0]interconnect_aresetn;
 
-  (* x_core_info = "sc_node_v1_0_19_top,Vivado 2025.2" *) 
+  (* x_core_info = "sc_node_v1_0_19_top,Vivado 2025.2" *)
   system_axi_smc_0_bd_44e3_sarn_0 s00_ar_node
        (.M_SC_AR_payld(M_SC_AR_payld),
         .M_SC_AR_recv(M_SC_AR_recv),
@@ -3966,7 +3966,7 @@ module system_axi_smc_0_s00_nodes_imp_1GZQO6U
         .S_SC_AR_send(S_SC_AR_send),
         .aclk(aclk),
         .interconnect_aresetn(interconnect_aresetn));
-  (* x_core_info = "sc_node_v1_0_19_top,Vivado 2025.2" *) 
+  (* x_core_info = "sc_node_v1_0_19_top,Vivado 2025.2" *)
   system_axi_smc_0_bd_44e3_sawn_0 s00_aw_node
        (.M_SC_AW_payld(M_SC_AW_payld),
         .M_SC_AW_recv(M_SC_AW_recv),
@@ -3976,7 +3976,7 @@ module system_axi_smc_0_s00_nodes_imp_1GZQO6U
         .S_SC_AW_send(S_SC_AW_send),
         .aclk(aclk),
         .interconnect_aresetn(interconnect_aresetn));
-  (* x_core_info = "sc_node_v1_0_19_top,Vivado 2025.2" *) 
+  (* x_core_info = "sc_node_v1_0_19_top,Vivado 2025.2" *)
   system_axi_smc_0_bd_44e3_sbn_0 s00_b_node
        (.M_SC_B_payld(M_SC_B_payld),
         .M_SC_B_recv(M_SC_B_recv),
@@ -3986,7 +3986,7 @@ module system_axi_smc_0_s00_nodes_imp_1GZQO6U
         .S_SC_B_send(S_SC_B_send),
         .aclk(aclk),
         .interconnect_aresetn(interconnect_aresetn));
-  (* x_core_info = "sc_node_v1_0_19_top,Vivado 2025.2" *) 
+  (* x_core_info = "sc_node_v1_0_19_top,Vivado 2025.2" *)
   system_axi_smc_0_bd_44e3_srn_0 s00_r_node
        (.M_SC_R_payld(M_SC_R_payld),
         .M_SC_R_recv(M_SC_R_recv),
@@ -3996,7 +3996,7 @@ module system_axi_smc_0_s00_nodes_imp_1GZQO6U
         .S_SC_R_send(S_SC_R_send),
         .aclk(aclk),
         .interconnect_aresetn(interconnect_aresetn));
-  (* x_core_info = "sc_node_v1_0_19_top,Vivado 2025.2" *) 
+  (* x_core_info = "sc_node_v1_0_19_top,Vivado 2025.2" *)
   system_axi_smc_0_bd_44e3_swn_0 s00_w_node
        (.M_SC_W_payld(M_SC_W_payld),
         .M_SC_W_recv(M_SC_W_recv),
@@ -4008,7 +4008,7 @@ module system_axi_smc_0_s00_nodes_imp_1GZQO6U
         .interconnect_aresetn(interconnect_aresetn));
 endmodule
 
-(* ORIG_REF_NAME = "sequence_psr" *) 
+(* ORIG_REF_NAME = "sequence_psr" *)
 module system_axi_smc_0_sequence_psr
    (bsr_reg_0,
     lpf_int,
@@ -4038,21 +4038,21 @@ module system_axi_smc_0_sequence_psr
   wire [5:0]seq_cnt;
   wire seq_cnt_en;
 
-  (* SOFT_HLUTNM = "soft_lutpair4" *) 
+  (* SOFT_HLUTNM = "soft_lutpair4" *)
   LUT1 #(
-    .INIT(2'h1)) 
-    \ACTIVE_LOW_BSR_OUT_DFF[0].FDRE_BSR_N_i_1 
+    .INIT(2'h1))
+    \ACTIVE_LOW_BSR_OUT_DFF[0].FDRE_BSR_N_i_1
        (.I0(Bsr_out),
         .O(bsr_reg_0));
-  (* SOFT_HLUTNM = "soft_lutpair3" *) 
+  (* SOFT_HLUTNM = "soft_lutpair3" *)
   LUT2 #(
-    .INIT(4'h2)) 
+    .INIT(4'h2))
     Core_i_1
        (.I0(MB_out),
         .I1(\core_dec_reg_n_0_[2] ),
         .O(Core_i_1_n_0));
   FDSE #(
-    .INIT(1'b1)) 
+    .INIT(1'b1))
     Core_reg
        (.C(aclk),
         .CE(1'b1),
@@ -4064,102 +4064,102 @@ module system_axi_smc_0_sequence_psr
         .aclk(aclk),
         .seq_clr(seq_clr),
         .seq_cnt_en(seq_cnt_en));
-  (* SOFT_HLUTNM = "soft_lutpair2" *) 
+  (* SOFT_HLUTNM = "soft_lutpair2" *)
   LUT4 #(
-    .INIT(16'h0090)) 
-    \bsr_dec[0]_i_1 
+    .INIT(16'h0090))
+    \bsr_dec[0]_i_1
        (.I0(seq_cnt_en),
         .I1(seq_cnt[4]),
         .I2(seq_cnt[3]),
         .I3(seq_cnt[5]),
         .O(p_5_out[0]));
-  (* SOFT_HLUTNM = "soft_lutpair5" *) 
+  (* SOFT_HLUTNM = "soft_lutpair5" *)
   LUT2 #(
-    .INIT(4'h8)) 
-    \bsr_dec[2]_i_1 
+    .INIT(4'h8))
+    \bsr_dec[2]_i_1
        (.I0(\bsr_dec_reg_n_0_[1] ),
         .I1(\bsr_dec_reg_n_0_[0] ),
         .O(p_5_out[2]));
   FDRE #(
-    .INIT(1'b0)) 
-    \bsr_dec_reg[0] 
+    .INIT(1'b0))
+    \bsr_dec_reg[0]
        (.C(aclk),
         .CE(1'b1),
         .D(p_5_out[0]),
         .Q(\bsr_dec_reg_n_0_[0] ),
         .R(1'b0));
   FDRE #(
-    .INIT(1'b0)) 
-    \bsr_dec_reg[1] 
+    .INIT(1'b0))
+    \bsr_dec_reg[1]
        (.C(aclk),
         .CE(1'b1),
         .D(pr_dec0__0),
         .Q(\bsr_dec_reg_n_0_[1] ),
         .R(1'b0));
   FDRE #(
-    .INIT(1'b0)) 
-    \bsr_dec_reg[2] 
+    .INIT(1'b0))
+    \bsr_dec_reg[2]
        (.C(aclk),
         .CE(1'b1),
         .D(p_5_out[2]),
         .Q(\bsr_dec_reg_n_0_[2] ),
         .R(1'b0));
-  (* SOFT_HLUTNM = "soft_lutpair4" *) 
+  (* SOFT_HLUTNM = "soft_lutpair4" *)
   LUT2 #(
-    .INIT(4'h2)) 
+    .INIT(4'h2))
     bsr_i_1
        (.I0(Bsr_out),
         .I1(\bsr_dec_reg_n_0_[2] ),
         .O(bsr_i_1_n_0));
   FDSE #(
-    .INIT(1'b1)) 
+    .INIT(1'b1))
     bsr_reg
        (.C(aclk),
         .CE(1'b1),
         .D(bsr_i_1_n_0),
         .Q(Bsr_out),
         .S(lpf_int));
-  (* SOFT_HLUTNM = "soft_lutpair2" *) 
+  (* SOFT_HLUTNM = "soft_lutpair2" *)
   LUT4 #(
-    .INIT(16'h9000)) 
-    \core_dec[0]_i_1 
+    .INIT(16'h9000))
+    \core_dec[0]_i_1
        (.I0(seq_cnt_en),
         .I1(seq_cnt[4]),
         .I2(seq_cnt[3]),
         .I3(seq_cnt[5]),
         .O(\core_dec[0]_i_1_n_0 ));
-  (* SOFT_HLUTNM = "soft_lutpair5" *) 
+  (* SOFT_HLUTNM = "soft_lutpair5" *)
   LUT2 #(
-    .INIT(4'h8)) 
-    \core_dec[2]_i_1 
+    .INIT(4'h8))
+    \core_dec[2]_i_1
        (.I0(\bsr_dec_reg_n_0_[1] ),
         .I1(\core_dec_reg_n_0_[0] ),
         .O(\core_dec[2]_i_1_n_0 ));
   FDRE #(
-    .INIT(1'b0)) 
-    \core_dec_reg[0] 
+    .INIT(1'b0))
+    \core_dec_reg[0]
        (.C(aclk),
         .CE(1'b1),
         .D(\core_dec[0]_i_1_n_0 ),
         .Q(\core_dec_reg_n_0_[0] ),
         .R(1'b0));
   FDRE #(
-    .INIT(1'b0)) 
-    \core_dec_reg[2] 
+    .INIT(1'b0))
+    \core_dec_reg[2]
        (.C(aclk),
         .CE(1'b1),
         .D(\core_dec[2]_i_1_n_0 ),
         .Q(\core_dec_reg_n_0_[2] ),
         .R(1'b0));
-  (* SOFT_HLUTNM = "soft_lutpair3" *) 
+  (* SOFT_HLUTNM = "soft_lutpair3" *)
   LUT2 #(
-    .INIT(4'h8)) 
+    .INIT(4'h8))
     from_sys_i_1
        (.I0(MB_out),
         .I1(seq_cnt_en),
         .O(from_sys_i_1_n_0));
   FDSE #(
-    .INIT(1'b0)) 
+    .INIT(1'b0))
     from_sys_reg
        (.C(aclk),
         .CE(1'b1),
@@ -4167,7 +4167,7 @@ module system_axi_smc_0_sequence_psr
         .Q(seq_cnt_en),
         .S(lpf_int));
   LUT4 #(
-    .INIT(16'h0018)) 
+    .INIT(16'h0018))
     pr_dec0
        (.I0(seq_cnt_en),
         .I1(seq_cnt[0]),
@@ -4175,7 +4175,7 @@ module system_axi_smc_0_sequence_psr
         .I3(seq_cnt[1]),
         .O(pr_dec0__0));
   FDRE #(
-    .INIT(1'b0)) 
+    .INIT(1'b0))
     seq_clr_reg
        (.C(aclk),
         .CE(1'b1),
@@ -4184,7 +4184,7 @@ module system_axi_smc_0_sequence_psr
         .R(lpf_int));
 endmodule
 
-(* ORIG_REF_NAME = "upcnt_n" *) 
+(* ORIG_REF_NAME = "upcnt_n" *)
 module system_axi_smc_0_upcnt_n
    (Q,
     seq_clr,
@@ -4203,38 +4203,38 @@ module system_axi_smc_0_upcnt_n
   wire seq_cnt_en;
 
   LUT1 #(
-    .INIT(2'h1)) 
-    \q_int[0]_i_1 
+    .INIT(2'h1))
+    \q_int[0]_i_1
        (.I0(Q[0]),
         .O(q_int0[0]));
-  (* SOFT_HLUTNM = "soft_lutpair1" *) 
+  (* SOFT_HLUTNM = "soft_lutpair1" *)
   LUT2 #(
-    .INIT(4'h6)) 
-    \q_int[1]_i_1 
+    .INIT(4'h6))
+    \q_int[1]_i_1
        (.I0(Q[0]),
         .I1(Q[1]),
         .O(q_int0[1]));
-  (* SOFT_HLUTNM = "soft_lutpair1" *) 
+  (* SOFT_HLUTNM = "soft_lutpair1" *)
   LUT3 #(
-    .INIT(8'h78)) 
-    \q_int[2]_i_1 
+    .INIT(8'h78))
+    \q_int[2]_i_1
        (.I0(Q[0]),
         .I1(Q[1]),
         .I2(Q[2]),
         .O(q_int0[2]));
-  (* SOFT_HLUTNM = "soft_lutpair0" *) 
+  (* SOFT_HLUTNM = "soft_lutpair0" *)
   LUT4 #(
-    .INIT(16'h7F80)) 
-    \q_int[3]_i_1 
+    .INIT(16'h7F80))
+    \q_int[3]_i_1
        (.I0(Q[1]),
         .I1(Q[0]),
         .I2(Q[2]),
         .I3(Q[3]),
         .O(q_int0[3]));
-  (* SOFT_HLUTNM = "soft_lutpair0" *) 
+  (* SOFT_HLUTNM = "soft_lutpair0" *)
   LUT5 #(
-    .INIT(32'h7FFF8000)) 
-    \q_int[4]_i_1 
+    .INIT(32'h7FFF8000))
+    \q_int[4]_i_1
        (.I0(Q[2]),
         .I1(Q[0]),
         .I2(Q[1]),
@@ -4242,13 +4242,13 @@ module system_axi_smc_0_upcnt_n
         .I4(Q[4]),
         .O(q_int0[4]));
   LUT1 #(
-    .INIT(2'h1)) 
-    \q_int[5]_i_1 
+    .INIT(2'h1))
+    \q_int[5]_i_1
        (.I0(seq_clr),
         .O(clear));
   LUT6 #(
-    .INIT(64'h7FFFFFFF80000000)) 
-    \q_int[5]_i_2 
+    .INIT(64'h7FFFFFFF80000000))
+    \q_int[5]_i_2
        (.I0(Q[3]),
         .I1(Q[1]),
         .I2(Q[0]),
@@ -4257,48 +4257,48 @@ module system_axi_smc_0_upcnt_n
         .I5(Q[5]),
         .O(q_int0[5]));
   FDRE #(
-    .INIT(1'b1)) 
-    \q_int_reg[0] 
+    .INIT(1'b1))
+    \q_int_reg[0]
        (.C(aclk),
         .CE(seq_cnt_en),
         .D(q_int0[0]),
         .Q(Q[0]),
         .R(clear));
   FDRE #(
-    .INIT(1'b1)) 
-    \q_int_reg[1] 
+    .INIT(1'b1))
+    \q_int_reg[1]
        (.C(aclk),
         .CE(seq_cnt_en),
         .D(q_int0[1]),
         .Q(Q[1]),
         .R(clear));
   FDRE #(
-    .INIT(1'b1)) 
-    \q_int_reg[2] 
+    .INIT(1'b1))
+    \q_int_reg[2]
        (.C(aclk),
         .CE(seq_cnt_en),
         .D(q_int0[2]),
         .Q(Q[2]),
         .R(clear));
   FDRE #(
-    .INIT(1'b1)) 
-    \q_int_reg[3] 
+    .INIT(1'b1))
+    \q_int_reg[3]
        (.C(aclk),
         .CE(seq_cnt_en),
         .D(q_int0[3]),
         .Q(Q[3]),
         .R(clear));
   FDRE #(
-    .INIT(1'b1)) 
-    \q_int_reg[4] 
+    .INIT(1'b1))
+    \q_int_reg[4]
        (.C(aclk),
         .CE(seq_cnt_en),
         .D(q_int0[4]),
         .Q(Q[4]),
         .R(clear));
   FDRE #(
-    .INIT(1'b1)) 
-    \q_int_reg[5] 
+    .INIT(1'b1))
+    \q_int_reg[5]
        (.C(aclk),
         .CE(seq_cnt_en),
         .D(q_int0[5]),
@@ -4306,9 +4306,9 @@ module system_axi_smc_0_upcnt_n
         .R(clear));
 endmodule
 
-(* DEST_SYNC_FF = "4" *) (* INIT_SYNC_FF = "0" *) (* ORIG_REF_NAME = "xpm_cdc_single" *) 
-(* SIM_ASSERT_CHK = "0" *) (* SRC_INPUT_REG = "0" *) (* VERSION = "0" *) 
-(* XPM_MODULE = "TRUE" *) (* keep_hierarchy = "soft" *) (* xpm_cdc = "SINGLE" *) 
+(* DEST_SYNC_FF = "4" *) (* INIT_SYNC_FF = "0" *) (* ORIG_REF_NAME = "xpm_cdc_single" *)
+(* SIM_ASSERT_CHK = "0" *) (* SRC_INPUT_REG = "0" *) (* VERSION = "0" *)
+(* XPM_MODULE = "TRUE" *) (* keep_hierarchy = "soft" *) (* xpm_cdc = "SINGLE" *)
 module system_axi_smc_0_xpm_cdc_single
    (src_clk,
     src_in,
@@ -4324,37 +4324,37 @@ module system_axi_smc_0_xpm_cdc_single
   (* RTL_KEEP = "true" *) (* async_reg = "true" *) (* xpm_cdc = "SINGLE" *) wire [3:0]syncstages_ff;
 
   assign dest_out = syncstages_ff[3];
-  (* ASYNC_REG *) 
-  (* KEEP = "true" *) 
-  (* XPM_CDC = "SINGLE" *) 
-  FDRE \syncstages_ff_reg[0] 
+  (* ASYNC_REG *)
+  (* KEEP = "true" *)
+  (* XPM_CDC = "SINGLE" *)
+  FDRE \syncstages_ff_reg[0]
        (.C(dest_clk),
         .CE(1'b1),
         .D(src_in),
         .Q(syncstages_ff[0]),
         .R(1'b0));
-  (* ASYNC_REG *) 
-  (* KEEP = "true" *) 
-  (* XPM_CDC = "SINGLE" *) 
-  FDRE \syncstages_ff_reg[1] 
+  (* ASYNC_REG *)
+  (* KEEP = "true" *)
+  (* XPM_CDC = "SINGLE" *)
+  FDRE \syncstages_ff_reg[1]
        (.C(dest_clk),
         .CE(1'b1),
         .D(syncstages_ff[0]),
         .Q(syncstages_ff[1]),
         .R(1'b0));
-  (* ASYNC_REG *) 
-  (* KEEP = "true" *) 
-  (* XPM_CDC = "SINGLE" *) 
-  FDRE \syncstages_ff_reg[2] 
+  (* ASYNC_REG *)
+  (* KEEP = "true" *)
+  (* XPM_CDC = "SINGLE" *)
+  FDRE \syncstages_ff_reg[2]
        (.C(dest_clk),
         .CE(1'b1),
         .D(syncstages_ff[1]),
         .Q(syncstages_ff[2]),
         .R(1'b0));
-  (* ASYNC_REG *) 
-  (* KEEP = "true" *) 
-  (* XPM_CDC = "SINGLE" *) 
-  FDRE \syncstages_ff_reg[3] 
+  (* ASYNC_REG *)
+  (* KEEP = "true" *)
+  (* XPM_CDC = "SINGLE" *)
+  FDRE \syncstages_ff_reg[3]
        (.C(dest_clk),
         .CE(1'b1),
         .D(syncstages_ff[2]),
@@ -4362,9 +4362,9 @@ module system_axi_smc_0_xpm_cdc_single
         .R(1'b0));
 endmodule
 
-(* DEST_SYNC_FF = "4" *) (* INIT_SYNC_FF = "0" *) (* ORIG_REF_NAME = "xpm_cdc_single" *) 
-(* SIM_ASSERT_CHK = "0" *) (* SRC_INPUT_REG = "0" *) (* VERSION = "0" *) 
-(* XPM_MODULE = "TRUE" *) (* keep_hierarchy = "soft" *) (* xpm_cdc = "SINGLE" *) 
+(* DEST_SYNC_FF = "4" *) (* INIT_SYNC_FF = "0" *) (* ORIG_REF_NAME = "xpm_cdc_single" *)
+(* SIM_ASSERT_CHK = "0" *) (* SRC_INPUT_REG = "0" *) (* VERSION = "0" *)
+(* XPM_MODULE = "TRUE" *) (* keep_hierarchy = "soft" *) (* xpm_cdc = "SINGLE" *)
 module system_axi_smc_0_xpm_cdc_single__1
    (src_clk,
     src_in,
@@ -4379,37 +4379,37 @@ module system_axi_smc_0_xpm_cdc_single__1
   (* RTL_KEEP = "true" *) (* async_reg = "true" *) (* xpm_cdc = "SINGLE" *) wire [3:0]syncstages_ff;
 
   assign dest_out = syncstages_ff[3];
-  (* ASYNC_REG *) 
-  (* KEEP = "true" *) 
-  (* XPM_CDC = "SINGLE" *) 
-  FDRE \syncstages_ff_reg[0] 
+  (* ASYNC_REG *)
+  (* KEEP = "true" *)
+  (* XPM_CDC = "SINGLE" *)
+  FDRE \syncstages_ff_reg[0]
        (.C(dest_clk),
         .CE(1'b1),
         .D(1'b0),
         .Q(syncstages_ff[0]),
         .R(1'b0));
-  (* ASYNC_REG *) 
-  (* KEEP = "true" *) 
-  (* XPM_CDC = "SINGLE" *) 
-  FDRE \syncstages_ff_reg[1] 
+  (* ASYNC_REG *)
+  (* KEEP = "true" *)
+  (* XPM_CDC = "SINGLE" *)
+  FDRE \syncstages_ff_reg[1]
        (.C(dest_clk),
         .CE(1'b1),
         .D(syncstages_ff[0]),
         .Q(syncstages_ff[1]),
         .R(1'b0));
-  (* ASYNC_REG *) 
-  (* KEEP = "true" *) 
-  (* XPM_CDC = "SINGLE" *) 
-  FDRE \syncstages_ff_reg[2] 
+  (* ASYNC_REG *)
+  (* KEEP = "true" *)
+  (* XPM_CDC = "SINGLE" *)
+  FDRE \syncstages_ff_reg[2]
        (.C(dest_clk),
         .CE(1'b1),
         .D(syncstages_ff[1]),
         .Q(syncstages_ff[2]),
         .R(1'b0));
-  (* ASYNC_REG *) 
-  (* KEEP = "true" *) 
-  (* XPM_CDC = "SINGLE" *) 
-  FDRE \syncstages_ff_reg[3] 
+  (* ASYNC_REG *)
+  (* KEEP = "true" *)
+  (* XPM_CDC = "SINGLE" *)
+  FDRE \syncstages_ff_reg[3]
        (.C(dest_clk),
         .CE(1'b1),
         .D(syncstages_ff[2]),
@@ -27074,7 +27074,7 @@ module glbl ();
     wire FCSBO_GLBL;
     wire [3:0] DO_GLBL;
     wire [3:0] DI_GLBL;
-   
+
     reg GSR_int;
     reg GTS_int;
     reg PRLD_int;
@@ -27122,7 +27122,7 @@ module glbl ();
 	GTS_int = 1'b0;
     end
 
-    initial begin 
+    initial begin
 	GRESTORE_int = 1'b0;
 	#(GRES_START);
 	GRESTORE_int = 1'b1;

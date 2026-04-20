@@ -1,7 +1,7 @@
 // -- (c) Copyright 2010 - 2011 Xilinx, Inc. All rights reserved.
 // --
 // -- This file contains confidential and proprietary information
-// -- of Xilinx, Inc. and is protected under U.S. and 
+// -- of Xilinx, Inc. and is protected under U.S. and
 // -- international copyright and other intellectual property
 // -- laws.
 // --
@@ -69,7 +69,7 @@ module processing_system7_v5_5_w_atc #
                        // Width of all DATA signals on SI and MI side of checker.
                        // Range: 64.
    parameter integer C_AXI_WUSER_WIDTH                = 1
-                       // Width of AWUSER signals. 
+                       // Width of AWUSER signals.
                        // Range: >= 1.
    )
   (
@@ -82,13 +82,13 @@ module processing_system7_v5_5_w_atc #
    input  wire                                  cmd_w_check,
    input  wire [C_AXI_ID_WIDTH-1:0]             cmd_w_id,
    output wire                                  cmd_w_ready,
-   
+
    // Command Interface (Out)
    output wire                                  cmd_b_push,
    output wire                                  cmd_b_error,
    output reg  [C_AXI_ID_WIDTH-1:0]             cmd_b_id,
    input  wire                                  cmd_b_full,
-   
+
    // Slave Interface Write Port
    input  wire [C_AXI_ID_WIDTH-1:0]             S_AXI_WID,
    input  wire [C_AXI_DATA_WIDTH-1:0]           S_AXI_WDATA,
@@ -107,52 +107,52 @@ module processing_system7_v5_5_w_atc #
    output wire                                  M_AXI_WVALID,
    input  wire                                  M_AXI_WREADY
    );
-  
-  
+
+
   /////////////////////////////////////////////////////////////////////////////
   // Local params
   /////////////////////////////////////////////////////////////////////////////
-  
-  
+
+
   /////////////////////////////////////////////////////////////////////////////
   // Variables for generating parameter controlled instances.
   /////////////////////////////////////////////////////////////////////////////
-  
-  
+
+
   /////////////////////////////////////////////////////////////////////////////
   // Functions
   /////////////////////////////////////////////////////////////////////////////
-  
-  
+
+
   /////////////////////////////////////////////////////////////////////////////
   // Internal signals
   /////////////////////////////////////////////////////////////////////////////
-  
+
   // Detecttion.
   wire                                any_strb_deasserted;
   wire                                incoming_strb_issue;
   reg                                 first_word;
   reg                                 strb_issue;
-  
+
   // Data flow.
   wire                                data_pop;
   wire                                cmd_b_push_blocked;
   reg                                 cmd_b_push_i;
-  
-  
+
+
   /////////////////////////////////////////////////////////////////////////////
   // Detect error:
   //
   // Detect and accumulate error when a transaction shall be scanned for
   // potential issues.
-  // Accumulation of error is restarted for each ne transaction. 
-  // 
+  // Accumulation of error is restarted for each ne transaction.
+  //
   /////////////////////////////////////////////////////////////////////////////
-  
+
   // Check stobe information
   assign any_strb_deasserted  = ( S_AXI_WSTRB != {C_AXI_DATA_WIDTH/8{1'b1}} );
   assign incoming_strb_issue  = cmd_w_valid & S_AXI_WVALID & cmd_w_check & any_strb_deasserted;
-  
+
   // Keep track of first word in a transaction.
   always @ (posedge ACLK) begin
     if (ARESET) begin
@@ -161,7 +161,7 @@ module processing_system7_v5_5_w_atc #
       first_word  <= S_AXI_WLAST;
     end
   end
-  
+
   // Keep track of error status.
   always @ (posedge ACLK) begin
     if (ARESET) begin
@@ -176,22 +176,22 @@ module processing_system7_v5_5_w_atc #
       cmd_b_id    <= cmd_w_id;
     end
   end
-  
+
   assign cmd_b_error  = strb_issue;
-  
-  
+
+
   /////////////////////////////////////////////////////////////////////////////
   // Control command queue to B:
   //
-  // Push command to B queue when all data for the transaction has flowed  
+  // Push command to B queue when all data for the transaction has flowed
   // through.
   // Delay pipelined command until there is room in the Queue.
-  // 
+  //
   /////////////////////////////////////////////////////////////////////////////
-  
+
   // Detect when data is popped.
-  assign data_pop   = S_AXI_WVALID & M_AXI_WREADY & cmd_w_valid & ~cmd_b_full & ~cmd_b_push_blocked; 
-  
+  assign data_pop   = S_AXI_WVALID & M_AXI_WREADY & cmd_w_valid & ~cmd_b_full & ~cmd_b_push_blocked;
+
   // Push command when last word in transfered (pipelined).
   always @ (posedge ACLK) begin
     if (ARESET) begin
@@ -200,45 +200,45 @@ module processing_system7_v5_5_w_atc #
       cmd_b_push_i  <= ( S_AXI_WLAST & data_pop ) | cmd_b_push_blocked;
     end
   end
-  
+
   // Detect if pipelined push is blocked.
   assign cmd_b_push_blocked = cmd_b_push_i & cmd_b_full;
-  
+
   // Assign output.
   assign cmd_b_push = cmd_b_push_i & ~cmd_b_full;
-  
-  
+
+
   /////////////////////////////////////////////////////////////////////////////
   // Transaction Throttling:
   //
-  // Stall commands if FIFO is full or there is no valid command information 
-  // from AW. 
-  // 
+  // Stall commands if FIFO is full or there is no valid command information
+  // from AW.
+  //
   /////////////////////////////////////////////////////////////////////////////
-  
+
   // Propagate masked valid.
   assign M_AXI_WVALID   = S_AXI_WVALID & cmd_w_valid & ~cmd_b_full & ~cmd_b_push_blocked;
-  
+
   // Return ready with push back.
   assign S_AXI_WREADY   = M_AXI_WREADY & cmd_w_valid & ~cmd_b_full & ~cmd_b_push_blocked;
-  
+
   // End of burst.
   assign cmd_w_ready    = S_AXI_WVALID & M_AXI_WREADY & cmd_w_valid & ~cmd_b_full & ~cmd_b_push_blocked & S_AXI_WLAST;
-  
-  
+
+
   /////////////////////////////////////////////////////////////////////////////
   // Write propagation:
   //
   // All information is simply forwarded on from the SI- to MI-Side untouched.
-  // 
+  //
   /////////////////////////////////////////////////////////////////////////////
-  
+
   // 1:1 mapping.
   assign M_AXI_WID      = S_AXI_WID;
   assign M_AXI_WDATA    = S_AXI_WDATA;
   assign M_AXI_WSTRB    = S_AXI_WSTRB;
   assign M_AXI_WLAST    = S_AXI_WLAST;
   assign M_AXI_WUSER    = S_AXI_WUSER;
-  
-  
+
+
 endmodule

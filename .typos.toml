@@ -17,6 +17,10 @@ extend-exclude = [
     "docs/benchmarks/",
     "notebooks/",
     "studio/",
+    # Auto-generated Rust stubs whose `// ...` docs are Python pseudocode
+    # truncated at ~80 cols mid-word (cannot be spell-checked without
+    # regenerating the stubs).
+    "src/sc_neurocore/accel/rust/safety/",
 ]
 
 [default.extend-words]

@@ -22,4 +22,3 @@ func RunSynthesis() {
 func RunPnr() {
 	// Go-accelerated run_pnr
 }
-

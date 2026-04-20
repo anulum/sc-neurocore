@@ -54,4 +54,3 @@ fn reset() -> Int:
     var _reset_line = 'layer.reset()'
     var _reset_line = '_last_outputs[i] = zeros(layer.n_neurons)'
     return 0
-

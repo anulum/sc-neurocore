@@ -519,7 +519,7 @@ function log_round(s::AuditLogState)
     epsilon_consumed: float,
     grad_norm: float,
     ) -> nothing
-    s.entries = push!(, 
+    s.entries = push!(,
         AuditEntry(
             round_number=round_number,
             num_active_clients=num_active,

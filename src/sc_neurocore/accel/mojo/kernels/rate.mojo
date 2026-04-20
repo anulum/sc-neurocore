@@ -62,4 +62,3 @@ fn psth(trials: Int, bin_ms: Int, dt: Int) -> Int:
     var _psth_line = 'rates = counts / (len(trials) * bin_ms / 1000.0)'
     var _psth_line = 'centers = (arange(n_bins) + 0.5) * bin_ms'
     return 0  # return rates, centers
-

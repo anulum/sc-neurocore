@@ -122,4 +122,3 @@ func Forward12() {
 func ToScWeights2() {
 	// Go-accelerated to_sc_weights (variant 2)
 }
-

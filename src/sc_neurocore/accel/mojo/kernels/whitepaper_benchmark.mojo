@@ -59,4 +59,3 @@ fn run_whitepaper_benchmark() -> Int:
     var _run_whitepaper_benchmark_line = 'print(f"Energy per Bit-Op: {j_per_op*1e15:.2f} fJ")'
     var _run_whitepaper_benchmark_line = 'print(f"CO2 Emissions per Inference: {co2:.2e} g")'
     return 0
-

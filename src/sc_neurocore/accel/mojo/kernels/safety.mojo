@@ -57,4 +57,3 @@ fn verify_logic_invariant(func: Int, input_sample: Int, expected_condition: Int)
     var _verify_logic_invariant_line = 'except Exception as e:'
     var _verify_logic_invariant_line = 'logger.error("Safety Violation: Runtime Error - %s", e)'
     return 0  # return False
-

@@ -96,4 +96,3 @@ fn get_global_metric() -> Int:
 
 fn get_ciss_coherence() -> Int:
     return 0  # return float(abs(mean(spin_polarization)))
-

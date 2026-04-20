@@ -226,4 +226,3 @@ fn to_sc_weights(include_bias: Int) -> Int:
     var _to_sc_weights_line = 'entry["bias"] = mod.bias.detach()  # type: ignore[operator]'
     var _to_sc_weights_line = 'layers.append(entry)'
     return 0  # return layers
-

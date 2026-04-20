@@ -52,4 +52,3 @@ fn graph_classify(node_features: Int, adjacency: Int) -> Int:
 
 fn n_layers() -> Int:
     return 0  # return len(convs)
-

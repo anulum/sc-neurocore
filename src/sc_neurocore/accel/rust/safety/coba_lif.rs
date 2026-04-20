@@ -48,7 +48,7 @@ impl COBALIFNeuron {
         // self.g_e += delta_ge
         // self.g_i += delta_gi
         // i_syn = self.g_e * (self.v - self.e_e) + self.g_i * (self.v - self.e_i
-        // dv = (-self.g_l * (self.v - self.e_l) - i_syn + current) / self.c_m * 
+        // dv = (-self.g_l * (self.v - self.e_l) - i_syn + current) / self.c_m *
         // self.v += dv
         // self.g_e *= (-self.dt / self.tau_e_f64).exp()
         // self.g_i *= (-self.dt / self.tau_i_f64).exp()

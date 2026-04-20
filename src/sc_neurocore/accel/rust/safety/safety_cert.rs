@@ -186,7 +186,7 @@ impl FormalPropertyGapDetector {
         // dd = [fm for fm in self.failure_modes if fm.category == FailureCategor
         // if not dd:
         // return 0.0
-        // return sum(fm.diagnostic_coverage * fm.failure_rate_fit for fm in dd) 
+        // return sum(fm.diagnostic_coverage * fm.failure_rate_fit for fm in dd)
         // fm.failure_rate_fit for fm in dd
         // )
         0.0
@@ -517,7 +517,7 @@ impl FormalPropertyGapDetector {
     pub fn add_from_package(&self, pkg: f64) -> f64 {
         // self.add(EvidenceItem("traceability_matrix.md", "report", "Requirement
         // self.add(EvidenceItem("fmeda_report.md", "analysis", "FMEDA analysis")
-        // self.add(EvidenceItem("formal_proof_cert.md", "formal", "Formal proof 
+        // self.add(EvidenceItem("formal_proof_cert.md", "formal", "Formal proof
         // self.add(EvidenceItem("wcet_analysis.md", "analysis", "WCET analysis")
         // self.add(EvidenceItem("compliance_checklist.md", "report", "Compliance
         0.0

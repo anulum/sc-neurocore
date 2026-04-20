@@ -1,13 +1,13 @@
- 
+
 
 
 // (c) Copyright 1995-2013 Xilinx, Inc. All rights reserved.
-// 
+//
 // This file contains confidential and proprietary information
 // of Xilinx, Inc. and is protected under U.S. and
 // international copyright and other intellectual property
 // laws.
-// 
+//
 // DISCLAIMER
 // This disclaimer is not a license and does not grant any
 // rights to the materials distributed herewith. Except as
@@ -29,7 +29,7 @@
 // by a third party) even if such damage or loss was
 // reasonably foreseeable or Xilinx had been advised of the
 // possibility of the same.
-// 
+//
 // CRITICAL APPLICATIONS
 // Xilinx products are not designed or intended to be fail-
 // safe, or for use in any application requiring fail-safe
@@ -43,10 +43,10 @@
 // liability of any use of Xilinx products in Critical
 // Applications, subject only to applicable laws and
 // regulations governing limitations on product liability.
-// 
+//
 // THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS
 // PART OF THIS FILE AT ALL TIMES.
-// 
+//
 // DO NOT MODIFY THIS FILE.
 
 
@@ -56,68 +56,68 @@
 `timescale 1ns/1ps
 
 module system_processing_system7_0_0 (
-M_AXI_GP0_ARVALID, 
-M_AXI_GP0_AWVALID, 
-M_AXI_GP0_BREADY, 
-M_AXI_GP0_RREADY, 
-M_AXI_GP0_WLAST, 
-M_AXI_GP0_WVALID, 
-M_AXI_GP0_ARID, 
-M_AXI_GP0_AWID, 
-M_AXI_GP0_WID, 
-M_AXI_GP0_ARBURST, 
-M_AXI_GP0_ARLOCK, 
-M_AXI_GP0_ARSIZE, 
-M_AXI_GP0_AWBURST, 
-M_AXI_GP0_AWLOCK, 
-M_AXI_GP0_AWSIZE, 
-M_AXI_GP0_ARPROT, 
-M_AXI_GP0_AWPROT, 
-M_AXI_GP0_ARADDR, 
-M_AXI_GP0_AWADDR, 
-M_AXI_GP0_WDATA, 
-M_AXI_GP0_ARCACHE, 
-M_AXI_GP0_ARLEN, 
-M_AXI_GP0_ARQOS, 
-M_AXI_GP0_AWCACHE, 
-M_AXI_GP0_AWLEN, 
-M_AXI_GP0_AWQOS, 
-M_AXI_GP0_WSTRB, 
-M_AXI_GP0_ACLK, 
-M_AXI_GP0_ARREADY, 
-M_AXI_GP0_AWREADY, 
-M_AXI_GP0_BVALID, 
-M_AXI_GP0_RLAST, 
-M_AXI_GP0_RVALID, 
-M_AXI_GP0_WREADY, 
-M_AXI_GP0_BID, 
-M_AXI_GP0_RID, 
-M_AXI_GP0_BRESP, 
-M_AXI_GP0_RRESP, 
-M_AXI_GP0_RDATA, 
-FCLK_CLK0, 
-FCLK_RESET0_N, 
-MIO, 
-DDR_CAS_n, 
-DDR_CKE, 
-DDR_Clk_n, 
-DDR_Clk, 
-DDR_CS_n, 
-DDR_DRSTB, 
-DDR_ODT, 
-DDR_RAS_n, 
-DDR_WEB, 
-DDR_BankAddr, 
-DDR_Addr, 
-DDR_VRN, 
-DDR_VRP, 
-DDR_DM, 
-DDR_DQ, 
-DDR_DQS_n, 
-DDR_DQS, 
-PS_SRSTB, 
-PS_CLK, 
-PS_PORB 
+M_AXI_GP0_ARVALID,
+M_AXI_GP0_AWVALID,
+M_AXI_GP0_BREADY,
+M_AXI_GP0_RREADY,
+M_AXI_GP0_WLAST,
+M_AXI_GP0_WVALID,
+M_AXI_GP0_ARID,
+M_AXI_GP0_AWID,
+M_AXI_GP0_WID,
+M_AXI_GP0_ARBURST,
+M_AXI_GP0_ARLOCK,
+M_AXI_GP0_ARSIZE,
+M_AXI_GP0_AWBURST,
+M_AXI_GP0_AWLOCK,
+M_AXI_GP0_AWSIZE,
+M_AXI_GP0_ARPROT,
+M_AXI_GP0_AWPROT,
+M_AXI_GP0_ARADDR,
+M_AXI_GP0_AWADDR,
+M_AXI_GP0_WDATA,
+M_AXI_GP0_ARCACHE,
+M_AXI_GP0_ARLEN,
+M_AXI_GP0_ARQOS,
+M_AXI_GP0_AWCACHE,
+M_AXI_GP0_AWLEN,
+M_AXI_GP0_AWQOS,
+M_AXI_GP0_WSTRB,
+M_AXI_GP0_ACLK,
+M_AXI_GP0_ARREADY,
+M_AXI_GP0_AWREADY,
+M_AXI_GP0_BVALID,
+M_AXI_GP0_RLAST,
+M_AXI_GP0_RVALID,
+M_AXI_GP0_WREADY,
+M_AXI_GP0_BID,
+M_AXI_GP0_RID,
+M_AXI_GP0_BRESP,
+M_AXI_GP0_RRESP,
+M_AXI_GP0_RDATA,
+FCLK_CLK0,
+FCLK_RESET0_N,
+MIO,
+DDR_CAS_n,
+DDR_CKE,
+DDR_Clk_n,
+DDR_Clk,
+DDR_CS_n,
+DDR_DRSTB,
+DDR_ODT,
+DDR_RAS_n,
+DDR_WEB,
+DDR_BankAddr,
+DDR_Addr,
+DDR_VRN,
+DDR_VRP,
+DDR_DM,
+DDR_DQ,
+DDR_DQS_n,
+DDR_DQS,
+PS_SRSTB,
+PS_CLK,
+PS_PORB
 );
 output M_AXI_GP0_ARVALID;
 output M_AXI_GP0_AWVALID;
@@ -203,7 +203,7 @@ input PS_PORB;
     .C_FCLK_CLK3_FREQ(10.0),
 	.C_M_AXI_GP0_ENABLE_STATIC_REMAP(0),
 	.C_M_AXI_GP1_ENABLE_STATIC_REMAP(0),
-	.C_M_AXI_GP0_THREAD_ID_WIDTH (12), 
+	.C_M_AXI_GP0_THREAD_ID_WIDTH (12),
 	.C_M_AXI_GP1_THREAD_ID_WIDTH (12)
   ) inst (
     .M_AXI_GP0_ARVALID(M_AXI_GP0_ARVALID),
@@ -560,11 +560,11 @@ input PS_PORB;
     .S_AXI_HP3_WDATA(64'B0),
     .S_AXI_HP3_WSTRB(8'B0),
     .FCLK_CLK0(FCLK_CLK0),
-	
+
     .FCLK_CLK1(),
-	
+
     .FCLK_CLK2(),
-	
+
     .FCLK_CLK3(),
     .FCLK_RESET0_N(FCLK_RESET0_N),
     .FCLK_RESET1_N(),

@@ -40,4 +40,3 @@ fn mismatch_report(weights: Int) -> Int:
     var _mismatch_report_line = '"threshold_cv": threshold_cv,'
     var _mismatch_report_line = '"quantization_bits": quantization_bits,'
     var _mismatch_report_line = '}'
-

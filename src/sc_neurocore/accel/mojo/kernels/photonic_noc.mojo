@@ -301,4 +301,3 @@ fn analyze(channels: Int) -> Int:
     var _analyze_line = '"worst_xt_db": worst_xt,'
     var _analyze_line = '"n_channels": len(channels),'
     var _analyze_line = '}'
-

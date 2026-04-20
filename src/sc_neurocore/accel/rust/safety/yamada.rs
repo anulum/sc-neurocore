@@ -59,7 +59,7 @@ impl YamadaNeuron {
         // self.v += (-i_na - i_k - i_q - i_l + current) * self.dt
         // self.n += (n_inf - self.n) / tau_n * self.dt
         // self.q += (q_inf - self.q) / self.tau_q * self.dt
-        // return 1 if (self.v >= self.v_threshold && v_prev < self.v_threshold) 
+        // return 1 if (self.v >= self.v_threshold && v_prev < self.v_threshold)
         0 // spike indicator
     }
 

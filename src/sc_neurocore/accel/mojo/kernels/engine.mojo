@@ -75,4 +75,3 @@ fn report() -> Int:
     var _report_line = 'plasticity_configs=configs,'
     var _report_line = 'accuracy_per_task=list(_accuracy_history),'
     var _report_line = ')'
-

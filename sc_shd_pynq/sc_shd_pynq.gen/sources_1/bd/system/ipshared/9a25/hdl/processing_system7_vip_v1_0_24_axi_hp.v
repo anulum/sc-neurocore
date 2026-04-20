@@ -7,7 +7,7 @@
  *
  *****************************************************************************/
 
-/* AXI Slave HP0 */  
+/* AXI Slave HP0 */
  processing_system7_vip_v1_0_24_afi_slave #(  C_USE_S_AXI_HP0, // enable
                axi_hp0_name, // name
                C_S_AXI_HP0_DATA_WIDTH, // data width
@@ -33,8 +33,8 @@
             // Write Data channel signals.
             .S_WID    (S_AXI_HP0_WID),
             .S_WDATA  (S_AXI_HP0_WDATA),
-            .S_WSTRB  (S_AXI_HP0_WSTRB), 
-            .S_WLAST  (S_AXI_HP0_WLAST), 
+            .S_WSTRB  (S_AXI_HP0_WSTRB),
+            .S_WLAST  (S_AXI_HP0_WLAST),
             .S_WVALID (S_AXI_HP0_WVALID),
             .S_WREADY (S_AXI_HP0_WREADY),
             // Write Response channel signals.
@@ -61,8 +61,8 @@
             .S_RVALID (S_AXI_HP0_RVALID),
             .S_RREADY (S_AXI_HP0_RREADY),
             // Side band signals
-            .S_AWQOS  (S_AXI_HP0_AWQOS), 
-            .S_ARQOS  (S_AXI_HP0_ARQOS), 
+            .S_AWQOS  (S_AXI_HP0_AWQOS),
+            .S_ARQOS  (S_AXI_HP0_ARQOS),
             // these are needed only for HP ports
             .S_RDISSUECAP1_EN (S_AXI_HP0_RDISSUECAP1_EN),
             .S_WRISSUECAP1_EN (S_AXI_HP0_WRISSUECAP1_EN),
@@ -74,12 +74,12 @@
             .SW_CLK   (net_sw_clk),
             .WR_DATA_ACK_DDR (net_wr_ack_ddr_hp0),
             .WR_DATA_ACK_OCM (net_wr_ack_ocm_hp0),
-            .WR_DATA  (net_wr_data_hp0), 
-            .WR_DATA_STRB  (net_wr_strb_hp0), 
-            .WR_ADDR  (net_wr_addr_hp0), 
-            .WR_BYTES (net_wr_bytes_hp0), 
-            .WR_DATA_VALID_DDR  (net_wr_dv_ddr_hp0), 
-            .WR_DATA_VALID_OCM  (net_wr_dv_ocm_hp0), 
+            .WR_DATA  (net_wr_data_hp0),
+            .WR_DATA_STRB  (net_wr_strb_hp0),
+            .WR_ADDR  (net_wr_addr_hp0),
+            .WR_BYTES (net_wr_bytes_hp0),
+            .WR_DATA_VALID_DDR  (net_wr_dv_ddr_hp0),
+            .WR_DATA_VALID_OCM  (net_wr_dv_ocm_hp0),
             .WR_QOS (net_wr_qos_hp0),
             .RD_REQ_DDR (net_rd_req_ddr_hp0),
             .RD_REQ_OCM (net_rd_req_ocm_hp0),
@@ -92,7 +92,7 @@
             .RD_QOS (net_rd_qos_hp0)
  );
 
-/* AXI Slave HP1 */  
+/* AXI Slave HP1 */
  processing_system7_vip_v1_0_24_afi_slave #( C_USE_S_AXI_HP1, // enable
                axi_hp1_name, // name
                C_S_AXI_HP1_DATA_WIDTH, // data width
@@ -118,8 +118,8 @@
             // Write Data channel signals.
             .S_WID    (S_AXI_HP1_WID),
             .S_WDATA  (S_AXI_HP1_WDATA),
-            .S_WSTRB  (S_AXI_HP1_WSTRB), 
-            .S_WLAST  (S_AXI_HP1_WLAST), 
+            .S_WSTRB  (S_AXI_HP1_WSTRB),
+            .S_WLAST  (S_AXI_HP1_WLAST),
             .S_WVALID (S_AXI_HP1_WVALID),
             .S_WREADY (S_AXI_HP1_WREADY),
             // Write Response channel signals.
@@ -146,8 +146,8 @@
             .S_RVALID (S_AXI_HP1_RVALID),
             .S_RREADY (S_AXI_HP1_RREADY),
             // Side band signals
-            .S_AWQOS  (S_AXI_HP1_AWQOS), 
-            .S_ARQOS  (S_AXI_HP1_ARQOS), 
+            .S_AWQOS  (S_AXI_HP1_AWQOS),
+            .S_ARQOS  (S_AXI_HP1_ARQOS),
             // these are needed only for HP ports
             .S_RDISSUECAP1_EN (S_AXI_HP1_RDISSUECAP1_EN),
             .S_WRISSUECAP1_EN (S_AXI_HP1_WRISSUECAP1_EN),
@@ -159,12 +159,12 @@
             .SW_CLK   (net_sw_clk),
             .WR_DATA_ACK_DDR (net_wr_ack_ddr_hp1),
             .WR_DATA_ACK_OCM (net_wr_ack_ocm_hp1),
-            .WR_DATA  (net_wr_data_hp1), 
+            .WR_DATA  (net_wr_data_hp1),
 			.WR_DATA_STRB  (net_wr_strb_hp1),
-            .WR_ADDR  (net_wr_addr_hp1), 
-            .WR_BYTES (net_wr_bytes_hp1), 
-            .WR_DATA_VALID_DDR (net_wr_dv_ddr_hp1), 
-            .WR_DATA_VALID_OCM (net_wr_dv_ocm_hp1), 
+            .WR_ADDR  (net_wr_addr_hp1),
+            .WR_BYTES (net_wr_bytes_hp1),
+            .WR_DATA_VALID_DDR (net_wr_dv_ddr_hp1),
+            .WR_DATA_VALID_OCM (net_wr_dv_ocm_hp1),
             .WR_QOS (net_wr_qos_hp1),
             .RD_REQ_DDR (net_rd_req_ddr_hp1),
             .RD_REQ_OCM (net_rd_req_ocm_hp1),
@@ -178,7 +178,7 @@
 
   );
 
-/* AXI Slave HP2 */  
+/* AXI Slave HP2 */
  processing_system7_vip_v1_0_24_afi_slave #( C_USE_S_AXI_HP2, // enable
                axi_hp2_name, // name
                C_S_AXI_HP2_DATA_WIDTH, // data width
@@ -204,8 +204,8 @@
             // Write Data channel signals.
             .S_WID    (S_AXI_HP2_WID),
             .S_WDATA  (S_AXI_HP2_WDATA),
-            .S_WSTRB  (S_AXI_HP2_WSTRB), 
-            .S_WLAST  (S_AXI_HP2_WLAST), 
+            .S_WSTRB  (S_AXI_HP2_WSTRB),
+            .S_WLAST  (S_AXI_HP2_WLAST),
             .S_WVALID (S_AXI_HP2_WVALID),
             .S_WREADY (S_AXI_HP2_WREADY),
             // Write Response channel signals.
@@ -232,8 +232,8 @@
             .S_RVALID (S_AXI_HP2_RVALID),
             .S_RREADY (S_AXI_HP2_RREADY),
             // Side band signals
-            .S_AWQOS  (S_AXI_HP2_AWQOS), 
-            .S_ARQOS  (S_AXI_HP2_ARQOS), 
+            .S_AWQOS  (S_AXI_HP2_AWQOS),
+            .S_ARQOS  (S_AXI_HP2_ARQOS),
              // these are needed only for HP ports
             .S_RDISSUECAP1_EN (S_AXI_HP2_RDISSUECAP1_EN),
             .S_WRISSUECAP1_EN (S_AXI_HP2_WRISSUECAP1_EN),
@@ -245,12 +245,12 @@
             .SW_CLK   (net_sw_clk),
             .WR_DATA_ACK_DDR (net_wr_ack_ddr_hp2),
             .WR_DATA_ACK_OCM (net_wr_ack_ocm_hp2),
-            .WR_DATA  (net_wr_data_hp2), 
+            .WR_DATA  (net_wr_data_hp2),
 			.WR_DATA_STRB  (net_wr_strb_hp2),
-            .WR_ADDR  (net_wr_addr_hp2), 
-            .WR_BYTES (net_wr_bytes_hp2), 
-            .WR_DATA_VALID_DDR  (net_wr_dv_ddr_hp2), 
-            .WR_DATA_VALID_OCM  (net_wr_dv_ocm_hp2), 
+            .WR_ADDR  (net_wr_addr_hp2),
+            .WR_BYTES (net_wr_bytes_hp2),
+            .WR_DATA_VALID_DDR  (net_wr_dv_ddr_hp2),
+            .WR_DATA_VALID_OCM  (net_wr_dv_ocm_hp2),
             .WR_QOS (net_wr_qos_hp2),
             .RD_REQ_DDR (net_rd_req_ddr_hp2),
             .RD_REQ_OCM (net_rd_req_ocm_hp2),
@@ -264,7 +264,7 @@
 
  );
 
-/* AXI Slave HP3 */  
+/* AXI Slave HP3 */
  processing_system7_vip_v1_0_24_afi_slave #( C_USE_S_AXI_HP3, // enable
                axi_hp3_name, // name
                C_S_AXI_HP3_DATA_WIDTH, // data width
@@ -290,8 +290,8 @@
             // Write Data channel signals.
             .S_WID    (S_AXI_HP3_WID),
             .S_WDATA  (S_AXI_HP3_WDATA),
-            .S_WSTRB  (S_AXI_HP3_WSTRB), 
-            .S_WLAST  (S_AXI_HP3_WLAST), 
+            .S_WSTRB  (S_AXI_HP3_WSTRB),
+            .S_WLAST  (S_AXI_HP3_WLAST),
             .S_WVALID (S_AXI_HP3_WVALID),
             .S_WREADY (S_AXI_HP3_WREADY),
             // Write Response channel signals.
@@ -318,7 +318,7 @@
             .S_RVALID (S_AXI_HP3_RVALID),
             .S_RREADY (S_AXI_HP3_RREADY),
             // Side band signals
-            .S_AWQOS  (S_AXI_HP3_AWQOS), 
+            .S_AWQOS  (S_AXI_HP3_AWQOS),
             .S_ARQOS  (S_AXI_HP3_ARQOS),
             // these are needed only for HP ports
             .S_RDISSUECAP1_EN (S_AXI_HP3_RDISSUECAP1_EN),
@@ -331,12 +331,12 @@
             .SW_CLK   (net_sw_clk),
             .WR_DATA_ACK_DDR (net_wr_ack_ddr_hp3),
             .WR_DATA_ACK_OCM (net_wr_ack_ocm_hp3),
-            .WR_DATA  (net_wr_data_hp3), 
+            .WR_DATA  (net_wr_data_hp3),
 			.WR_DATA_STRB  (net_wr_strb_hp3),
-            .WR_ADDR  (net_wr_addr_hp3), 
-            .WR_BYTES (net_wr_bytes_hp3), 
-            .WR_DATA_VALID_DDR  (net_wr_dv_ddr_hp3), 
-            .WR_DATA_VALID_OCM  (net_wr_dv_ocm_hp3), 
+            .WR_ADDR  (net_wr_addr_hp3),
+            .WR_BYTES (net_wr_bytes_hp3),
+            .WR_DATA_VALID_DDR  (net_wr_dv_ddr_hp3),
+            .WR_DATA_VALID_OCM  (net_wr_dv_ocm_hp3),
             .WR_QOS (net_wr_qos_hp3),
             .RD_REQ_DDR (net_rd_req_ddr_hp3),
             .RD_REQ_OCM (net_rd_req_ocm_hp3),

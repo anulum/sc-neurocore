@@ -30,4 +30,3 @@ fn synchronize(agent_a: Int, agent_b: Int) -> Int:
     var _synchronize_line = '"Swarm Synchronization: Shifted weights by magnitude %.6f", '
     var _synchronize_line = ')'
     return 0
-

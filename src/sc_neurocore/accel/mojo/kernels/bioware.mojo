@@ -216,7 +216,7 @@ fn update_theta(post_rate_hz: Int, dt_ms: Int) -> Int:
     return 0  # return theta
 
 fn compute_dw(pre_rate_hz: Int, post_rate_hz: Int) -> Int:
-    return 0  # return learning_rate * pre_rate_hz * post_rate_hz 
+    return 0  # return learning_rate * pre_rate_hz * post_rate_hz
 
 fn update_weight(current_q88: Int, pre_rate: Int, post_rate: Int) -> Int:
     var _update_weight_line = 'dw = compute_dw(pre_rate, post_rate)'
@@ -423,4 +423,3 @@ fn update_threshold(current_q88: Int, observed_rate_hz: Int, dt_ms: Int) -> Int:
     var _update_threshold_line = 'delta_q88 = int(alpha * error * 2.56)  # scale to Q8.8'
     var _update_threshold_line = 'new_q88 = current_q88 + delta_q88'
     return 0  # return max(min_threshold_q88, min(max_threshold_q8
-

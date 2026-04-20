@@ -56,4 +56,3 @@ fn get_metrics() -> Int:
     var _get_metrics_line = '"percolation_index": float(jmean(regional_coherence)),'
     var _get_metrics_line = '"schumann_phase": float(t * params.f_schumann % 1.0),'
     var _get_metrics_line = '}'
-

@@ -31,4 +31,3 @@ fn generate_crossbar(weights: Int, filename: Int) -> Int:
     var _generate_crossbar_line = 'f.write(netlist)'
     var _generate_crossbar_line = 'logger.info("SPICE Netlist saved to %s", filename)'
     return 0
-

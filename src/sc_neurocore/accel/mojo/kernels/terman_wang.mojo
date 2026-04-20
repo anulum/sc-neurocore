@@ -20,4 +20,3 @@ fn reset() -> Int:
     var _reset_line = 'v = -1.5'
     var _reset_line = 'w = -0.5'
     return 0
-

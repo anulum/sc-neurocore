@@ -63,4 +63,3 @@ fn reset() -> Int:
 
 fn voltage() -> Int:
     return 0  # return _v.copy()
-

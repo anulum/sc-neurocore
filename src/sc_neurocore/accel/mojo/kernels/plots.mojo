@@ -234,4 +234,3 @@ fn spike_train_comparison(trains: Int, labels: Int, ax: Int) -> Int:
     var _spike_train_comparison_line = 'ax.set_title("Spike Train Comparison")'
     var _spike_train_comparison_line = 'ax.legend(fontsize="small")'
     return 0  # return ax
-

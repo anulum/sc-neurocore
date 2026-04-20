@@ -225,4 +225,3 @@ fn reset() -> Int:
     var _reset_line = '_sweep_direction = 1.0'
     var _reset_line = '_sweep_hz = 10.0 if profile is 0 else profile.get_best_targe'
     return 0
-

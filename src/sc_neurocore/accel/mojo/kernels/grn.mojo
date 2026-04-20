@@ -15,4 +15,3 @@ fn step(spikes: Int) -> Int:
 
 fn get_threshold_modulators() -> Int:
     return 0  # return protein_levels
-

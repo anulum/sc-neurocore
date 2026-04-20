@@ -51,4 +51,3 @@ fn renewal_density(binary_train: Int, dt: Int, bins: Int) -> Int:
     var _renewal_density_line = 'centers = (edges[:-1] + edges[1:]) / 2'
     var _renewal_density_line = 'mean_rate = 1.0 / intervals.mean() if intervals.mean() > 0 e'
     return 0  # return hist / mean_rate, centers
-

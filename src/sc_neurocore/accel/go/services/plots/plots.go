@@ -58,4 +58,3 @@ func InstantaneousRatePlot() {
 func SpikeTrainComparison() {
 	// Go-accelerated spike_train_comparison
 }
-

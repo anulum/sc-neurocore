@@ -29,4 +29,3 @@ pub fn verify_link(extras: f64) -> f64 {
     // # Import via standard PYTHONPATH resolution. The sibling-repo
     0.0
 }
-

@@ -65,4 +65,3 @@ fn audit(member_samples: Int, non_member_samples: Int) -> Int:
     var _audit_line = '"non_member_confidence": mean_non,'
     var _audit_line = '"vulnerable": accuracy > 0.6,'
     var _audit_line = '}'
-

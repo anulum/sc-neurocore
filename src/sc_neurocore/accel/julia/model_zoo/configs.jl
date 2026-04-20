@@ -142,7 +142,7 @@ function cortical_column(n_layers)
     ff_map = [(1, 0), (0, 2), (2, 3)]
     for src_l, tgt_l in ff_map
         if src_l < length(layer_names) && tgt_l < length(layer_names)
-            projections = push!(, 
+            projections = push!(,
                 Projection(
                     populations[2 * src_l], populations[2 * tgt_l], weight=1.5, probability=0.1
                 )

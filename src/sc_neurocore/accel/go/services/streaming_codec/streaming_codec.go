@@ -26,4 +26,3 @@ func CompressFrame() {
 func DecompressFrame() {
 	// Go-accelerated decompress_frame
 }
-

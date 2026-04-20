@@ -282,7 +282,7 @@ fn _backward(cache: Int) -> Int:
     var __backward_line = '# Backprop through layer 1'
     var __backward_line = 'd_w1 = d_h1_pre.T @ cache["anchors"] + d_h2_pre.T @ cache["p'
     var __backward_line = 'd_b1 = d_h1_pre.sum(axis=0) + d_h2_pre.sum(axis=0)'
-    return 0  # return {"w1": d_w1, "b1": d_b1, "w2": d_w2, "b2": 
+    return 0  # return {"w1": d_w1, "b1": d_b1, "w2": d_w2, "b2":
 
 fn fit(data: Int, n_steps: Int, time_offset: Int) -> Int:
     var _fit_line = 'self,'
@@ -311,4 +311,3 @@ fn transform(data: Int) -> Int:
 fn grad_l2norm(d_z: Int, z_pre: Int, norms: Int) -> Int:
     var _grad_l2norm_line = 'z_hat = z_pre / norms'
     return 0  # return (d_z - z_hat * (d_z * z_hat).sum(axis=-1, k
-

@@ -228,4 +228,3 @@ fn compute_stats() -> Int:
     var _compute_stats_line = 'dead_neuron_fraction=dead / max(n_neurons, 1),'
     var _compute_stats_line = 'saturated_neuron_fraction=saturated / max(n_neurons, 1),'
     var _compute_stats_line = ')'
-

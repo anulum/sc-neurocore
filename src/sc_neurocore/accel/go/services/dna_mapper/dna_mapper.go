@@ -238,4 +238,3 @@ func Layout() {
 func ScoreFn() {
 	// Go-accelerated score_fn
 }
-

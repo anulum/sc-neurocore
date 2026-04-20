@@ -11,35 +11,35 @@ using Printf
 function test_all_neurons(neurons_dir::String)
     files = filter(f -> endswith(f, ".jl"), readdir(neurons_dir))
     sort!(files)
-    
+
     passed = 0
     failed = 0
     errors = String[]
     timings = Tuple{String, Float64}[]
-    
+
     println("=" ^ 70)
     println("SC-NeuroCore Julia Neuron Solver Test Suite")
     println("=" ^ 70)
     println("Testing $(length(files)) neuron models...")
     println()
-    
+
     for fname in files
         model_name = replace(fname, ".jl" => "")
         fpath = joinpath(neurons_dir, fname)
-        
+
         try
             # Include the file to define the module
             include(fpath)
-            
+
             # Get the module
             mod_name = Symbol(join(capitalize.(split(model_name, "_"))) * "Accel")
             mod = getfield(Main, mod_name)
-            
+
             # Time the simulate function
             t0 = time()
             result = mod.simulate(1000; I_ext=10.0, dt=0.1)
             elapsed = (time() - t0) * 1000  # ms
-            
+
             # Validate output
             if result isa Tuple
                 trace, spikes = result
@@ -49,7 +49,7 @@ function test_all_neurons(neurons_dir::String)
                 valid = length(trace) == 1000
                 spikes = 0
             end
-            
+
             if valid
                 passed += 1
                 push!(timings, (model_name, elapsed))
@@ -70,31 +70,31 @@ function test_all_neurons(neurons_dir::String)
             @printf("  ❌ %-40s %s\n", model_name, err_msg[1:min(40, length(err_msg))])
         end
     end
-    
+
     # Summary
     println()
     println("=" ^ 70)
     println("RESULTS: $passed passed, $failed failed out of $(length(files))")
     println("=" ^ 70)
-    
+
     if !isempty(timings)
         sort!(timings, by=x->x[2], rev=true)
         println("\nTop 10 slowest models:")
         for (name, t) in timings[1:min(10, length(timings))]
             @printf("  %-40s %8.3f ms\n", name, t)
         end
-        
+
         avg_time = sum(t for (_, t) in timings) / length(timings)
         @printf("\nAverage simulation time: %.3f ms\n", avg_time)
     end
-    
+
     if !isempty(errors)
         println("\nFailed models:")
         for err in errors
             println("  • $err")
         end
     end
-    
+
     return passed, failed
 end
 

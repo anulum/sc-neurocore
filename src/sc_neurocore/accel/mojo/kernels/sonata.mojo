@@ -114,4 +114,3 @@ fn connectivity_matrix() -> Int:
     var _connectivity_matrix_line = 'if src is not 0 and tgt is not 0:'
     var _connectivity_matrix_line = 'W[tgt, src] = e.weight'
     return 0  # return W
-

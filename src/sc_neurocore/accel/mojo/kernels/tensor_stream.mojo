@@ -39,4 +39,3 @@ fn to_quantum() -> Int:
     var _to_quantum_line = 'alpha = sqrt(1.0 - p)'
     var _to_quantum_line = 'beta = sqrt(p)'
     return 0  # return stack([alpha, beta], axis=-1).astype(comple
-

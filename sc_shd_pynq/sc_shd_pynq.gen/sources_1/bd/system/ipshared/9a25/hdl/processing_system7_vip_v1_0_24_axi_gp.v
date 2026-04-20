@@ -7,25 +7,25 @@
  *
  *****************************************************************************/
 
-    /* IDs for Masters 
+    /* IDs for Masters
        // l2m1 (CPU000)
-       12'b11_000_000_00_00    
-       12'b11_010_000_00_00     
-       12'b11_011_000_00_00   
-       12'b11_100_000_00_00   
-       12'b11_101_000_00_00   
-       12'b11_110_000_00_00     
-       12'b11_111_000_00_00     
+       12'b11_000_000_00_00
+       12'b11_010_000_00_00
+       12'b11_011_000_00_00
+       12'b11_100_000_00_00
+       12'b11_101_000_00_00
+       12'b11_110_000_00_00
+       12'b11_111_000_00_00
        // l2m1 (CPU001)
-       12'b11_000_001_00_00    
-       12'b11_010_001_00_00     
-       12'b11_011_001_00_00    
-       12'b11_100_001_00_00    
-       12'b11_101_001_00_00    
-       12'b11_110_001_00_00     
-       12'b11_111_001_00_00    
+       12'b11_000_001_00_00
+       12'b11_010_001_00_00
+       12'b11_011_001_00_00
+       12'b11_100_001_00_00
+       12'b11_101_001_00_00
+       12'b11_110_001_00_00
+       12'b11_111_001_00_00
    */
- 
+
 /* AXI -Master GP0 */
   processing_system7_vip_v1_0_24_axi_master #(C_USE_M_AXI_GP0, // enable
                axi_mgp0_name,// name
@@ -52,8 +52,8 @@
             // Write Data Channel Signals.
             .M_WID    (M_AXI_GP0_WID_FULL),
             .M_WDATA  (M_AXI_GP0_WDATA),
-            .M_WSTRB  (M_AXI_GP0_WSTRB), 
-            .M_WLAST  (M_AXI_GP0_WLAST), 
+            .M_WSTRB  (M_AXI_GP0_WSTRB),
+            .M_WLAST  (M_AXI_GP0_WLAST),
             .M_WVALID (M_AXI_GP0_WVALID),
             .M_WREADY (M_AXI_GP0_WREADY),
             // Write Response Channel Signals.
@@ -79,11 +79,11 @@
             .M_RLAST  (M_AXI_GP0_RLAST),
             .M_RVALID (M_AXI_GP0_RVALID),
             .M_RREADY (M_AXI_GP0_RREADY),
-            // Side band signals 
+            // Side band signals
             .M_AWQOS  (M_AXI_GP0_AWQOS),
             .M_ARQOS  (M_AXI_GP0_ARQOS)
-            ); 
- 
+            );
+
  /* AXI Master GP1 */
   processing_system7_vip_v1_0_24_axi_master #(C_USE_M_AXI_GP1, // enable
                axi_mgp1_name,// name
@@ -110,8 +110,8 @@
             // Write Data Channel Signals.
             .M_WID    (M_AXI_GP1_WID_FULL),
             .M_WDATA  (M_AXI_GP1_WDATA),
-            .M_WSTRB  (M_AXI_GP1_WSTRB), 
-            .M_WLAST  (M_AXI_GP1_WLAST), 
+            .M_WSTRB  (M_AXI_GP1_WSTRB),
+            .M_WLAST  (M_AXI_GP1_WLAST),
             .M_WVALID (M_AXI_GP1_WVALID),
             .M_WREADY (M_AXI_GP1_WREADY),
             // Write Response Channel Signals.
@@ -137,7 +137,7 @@
             .M_RLAST  (M_AXI_GP1_RLAST),
             .M_RVALID (M_AXI_GP1_RVALID),
             .M_RREADY (M_AXI_GP1_RREADY),
-            // Side band signals 
+            // Side band signals
             .M_AWQOS  (M_AXI_GP1_AWQOS),
             .M_ARQOS  (M_AXI_GP1_ARQOS)
            );
@@ -149,7 +149,7 @@
               addr_width, /// address width
               axi_sgp_id_width,  /// ID width
               C_S_AXI_GP0_BASEADDR,//// base address
-              C_S_AXI_GP0_HIGHADDR,/// Memory size (high_addr - base_addr) 
+              C_S_AXI_GP0_HIGHADDR,/// Memory size (high_addr - base_addr)
               axi_sgp_outstanding, // outstanding transactions
               axi_slv_excl_support, // exclusive access not supported
               axi_sgp_wr_outstanding,
@@ -170,8 +170,8 @@
             // Write Data Channel Signals.
             .S_WID    (S_AXI_GP0_WID),
             .S_WDATA  (S_AXI_GP0_WDATA),
-            .S_WSTRB  (S_AXI_GP0_WSTRB), 
-            .S_WLAST  (S_AXI_GP0_WLAST), 
+            .S_WSTRB  (S_AXI_GP0_WSTRB),
+            .S_WLAST  (S_AXI_GP0_WLAST),
             .S_WVALID (S_AXI_GP0_WVALID),
             .S_WREADY (S_AXI_GP0_WREADY),
             // Write Response Channel Signals.
@@ -197,19 +197,19 @@
             .S_RLAST  (S_AXI_GP0_RLAST),
             .S_RVALID (S_AXI_GP0_RVALID),
             .S_RREADY (S_AXI_GP0_RREADY),
-            // Side band signals 
+            // Side band signals
             .S_AWQOS  (S_AXI_GP0_AWQOS),
             .S_ARQOS  (S_AXI_GP0_ARQOS),
 
             .SW_CLK   (net_sw_clk),
             .WR_DATA_ACK_OCM (net_wr_ack_ocm_gp0),
             .WR_DATA_ACK_DDR (net_wr_ack_ddr_gp0),
-            .WR_DATA  (net_wr_data_gp0), 
-            .WR_DATA_STRB  (net_wr_strb_gp0), 
-            .WR_ADDR  (net_wr_addr_gp0), 
-            .WR_BYTES  (net_wr_bytes_gp0), 
-            .WR_DATA_VALID_OCM  (net_wr_dv_ocm_gp0), 
-            .WR_DATA_VALID_DDR  (net_wr_dv_ddr_gp0), 
+            .WR_DATA  (net_wr_data_gp0),
+            .WR_DATA_STRB  (net_wr_strb_gp0),
+            .WR_ADDR  (net_wr_addr_gp0),
+            .WR_BYTES  (net_wr_bytes_gp0),
+            .WR_DATA_VALID_OCM  (net_wr_dv_ocm_gp0),
+            .WR_DATA_VALID_DDR  (net_wr_dv_ddr_gp0),
             .WR_QOS (net_wr_qos_gp0),
             .RD_REQ_DDR (net_rd_req_ddr_gp0),
             .RD_REQ_OCM (net_rd_req_ocm_gp0),
@@ -233,7 +233,7 @@
               addr_width, /// address width
               axi_sgp_id_width,  /// ID width
               C_S_AXI_GP1_BASEADDR,//// base address
-              C_S_AXI_GP1_HIGHADDR,/// HIGh_addr 
+              C_S_AXI_GP1_HIGHADDR,/// HIGh_addr
               axi_sgp_outstanding, // outstanding transactions
               axi_slv_excl_support, // exclusive access
               axi_sgp_wr_outstanding,
@@ -254,8 +254,8 @@
             // Write Data Channel Signals.
             .S_WID    (S_AXI_GP1_WID),
             .S_WDATA  (S_AXI_GP1_WDATA),
-            .S_WSTRB  (S_AXI_GP1_WSTRB), 
-            .S_WLAST  (S_AXI_GP1_WLAST), 
+            .S_WSTRB  (S_AXI_GP1_WSTRB),
+            .S_WLAST  (S_AXI_GP1_WLAST),
             .S_WVALID (S_AXI_GP1_WVALID),
             .S_WREADY (S_AXI_GP1_WREADY),
             // Write Response Channel Signals.
@@ -281,19 +281,19 @@
             .S_RLAST  (S_AXI_GP1_RLAST),
             .S_RVALID (S_AXI_GP1_RVALID),
             .S_RREADY (S_AXI_GP1_RREADY),
-            // Side band signals 
+            // Side band signals
             .S_AWQOS  (S_AXI_GP1_AWQOS),
             .S_ARQOS  (S_AXI_GP1_ARQOS),
 
             .SW_CLK   (net_sw_clk),
             .WR_DATA_ACK_DDR (net_wr_ack_ddr_gp1),
             .WR_DATA_ACK_OCM (net_wr_ack_ocm_gp1),
-            .WR_DATA  (net_wr_data_gp1), 
-            .WR_DATA_STRB  (net_wr_strb_gp1), 
-            .WR_ADDR  (net_wr_addr_gp1), 
-            .WR_BYTES  (net_wr_bytes_gp1), 
-            .WR_DATA_VALID_OCM  (net_wr_dv_ocm_gp1), 
-            .WR_DATA_VALID_DDR  (net_wr_dv_ddr_gp1), 
+            .WR_DATA  (net_wr_data_gp1),
+            .WR_DATA_STRB  (net_wr_strb_gp1),
+            .WR_ADDR  (net_wr_addr_gp1),
+            .WR_BYTES  (net_wr_bytes_gp1),
+            .WR_DATA_VALID_OCM  (net_wr_dv_ocm_gp1),
+            .WR_DATA_VALID_DDR  (net_wr_dv_ddr_gp1),
             .WR_QOS (net_wr_qos_gp1),
             .RD_REQ_OCM (net_rd_req_ocm_gp1),
             .RD_REQ_DDR (net_rd_req_ddr_gp1),

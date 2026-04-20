@@ -198,4 +198,3 @@ func TotalRounds() {
 func MaxEpsilon() {
 	// Go-accelerated max_epsilon
 }
-

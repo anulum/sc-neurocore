@@ -395,7 +395,7 @@ Net: **7 PASS.** The fidelity violation is fully resolved and the legacy gap clo
 These were the issues this doc surfaced during v3.14.0. **All have been fixed.**
 
 1. **Cited-paper fidelity gap** — FIXED. The module is fully conductance-based.
-2. **Non-determinism bug** — FIXED by task #22. 
+2. **Non-determinism bug** — FIXED by task #22.
 3. **Inhibitory population fires at unphysiological rates** — FIXED. Proper exponential decay integration and absolute refactory implementation `t_ref` has resolved all saturation abnormalities.
 4. **Frequency is not robust** — FIXED. The correct implementation relies securely on the `tau_gaba` pacing.
 5. **No `run(...)` convenience method** — Users build their own spike-recording loop by design internally, to give maximum flexibility to the execution block.

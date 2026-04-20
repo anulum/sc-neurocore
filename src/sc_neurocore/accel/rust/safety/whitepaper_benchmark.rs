@@ -29,4 +29,3 @@ pub fn run_whitepaper_benchmark() -> f64 {
     // end_time = time.time()
     0.0
 }
-

@@ -471,7 +471,7 @@ impl RuleConstraints {
     }
 
     pub fn enforce(&self, rules: f64) -> f64 {
-        // rules.stdp.lr = max(self.stdp_lr_range[0], min(self.stdp_lr_range[1], 
+        // rules.stdp.lr = max(self.stdp_lr_range[0], min(self.stdp_lr_range[1],
         // rules.stdp.tau_plus = max(
         // self.stdp_tau_range[0], min(self.stdp_tau_range[1], rules.stdp.tau_plu
         // )

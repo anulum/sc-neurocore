@@ -46,4 +46,3 @@ func Start() {
 func Stop() {
 	// Go-accelerated stop
 }
-

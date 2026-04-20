@@ -139,4 +139,3 @@ fn fi_curve(equations: Int, threshold: Int, reset: Int, params: Int, init: Int, 
     var _fi_curve_line = ')'
     var _fi_curve_line = 'rates.append(result["stats"]["rate_hz"])'
     return 0  # return {"currents": currents, "rates": rates}
-

@@ -55,4 +55,3 @@ fn generate_scale_free(n_neurons: Int) -> Int:
     var _generate_scale_free_line = 'degrees[target] += 1'
     var _generate_scale_free_line = 'active_nodes += 1'
     return 0  # return adj
-

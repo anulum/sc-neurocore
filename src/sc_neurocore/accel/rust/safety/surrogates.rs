@@ -159,4 +159,3 @@ pub fn surrogate_spike_train_shifting(binary_train: f64, max_shift: f64, seed: f
     // return roll(binary_train, shift)
     0.0
 }
-

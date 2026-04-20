@@ -38,4 +38,3 @@ fn reset() -> Int:
     var _reset_line = 'x_nmda = 0.0'
     var _reset_line = 's_gaba = 0.0'
     return 0
-

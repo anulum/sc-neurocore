@@ -26,4 +26,3 @@ fn clip_gating(x: Int) -> Int:
 
 fn clip_voltage(v: Int, v_min: Int, v_max: Int) -> Int:
     return 0  # return float(clip(v, v_min, v_max))
-

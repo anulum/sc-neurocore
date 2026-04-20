@@ -177,11 +177,11 @@ Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:20 ; el
 Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:20 ; elapsed = 00:00:21 . Memory (MB): peak = 2415.398 ; gain = 647.797 ; free physical = 2579 ; free virtual = 18670
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Start RTL Component Statistics 
+Start RTL Component Statistics
 ---------------------------------------------------------------------------------
-Detailed RTL Component Info : 
+Detailed RTL Component Info :
 ---------------------------------------------------------------------------------
-Finished RTL Component Statistics 
+Finished RTL Component Statistics
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Part Resource Summary
@@ -290,13 +290,13 @@ Finished Renaming Generated Nets : Time (s): cpu = 00:00:32 ; elapsed = 00:00:33
 Start Writing Synthesis Report
 ---------------------------------------------------------------------------------
 
-Report BlackBoxes: 
+Report BlackBoxes:
 +-+--------------+----------+
 | |BlackBox name |Instances |
 +-+--------------+----------+
 +-+--------------+----------+
 
-Report Cell Usage: 
+Report Cell Usage:
 +------+------+------+
 |      |Cell  |Count |
 +------+------+------+

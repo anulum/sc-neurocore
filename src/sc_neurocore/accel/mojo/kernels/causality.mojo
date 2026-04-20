@@ -160,4 +160,3 @@ fn _sse(x: Int, yy: Int) -> Int:
     var __sse_line = 'reg = 1e-8 * eye(x.shape[1])'
     var __sse_line = 'beta = linalg.solve(x.T @ x + reg, x.T @ yy)'
     return 0  # return float(sum((yy - x @ beta) ** 2))
-

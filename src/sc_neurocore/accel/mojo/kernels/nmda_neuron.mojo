@@ -59,4 +59,3 @@ fn reset() -> Int:
     var _reset_line = 'n = 0.32'
     var _reset_line = 's_nmda = 0.0'
     return 0
-

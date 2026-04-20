@@ -119,12 +119,12 @@ function validate(s::PlateLayoutState)
         all_strands.extend(g.strands)
     for s in all_strands
         if ! (_GC_TARGET_LOW <= s.gc_content <= _GC_TARGET_HIGH)
-            warnings = push!(, 
+            warnings = push!(,
                 f"{s.name}: GC content {s.gc_content:.2f} outside "
                 f"[{_GC_TARGET_LOW}, {_GC_TARGET_HIGH}]"
             )
         if s.max_homopolymer_run > _MAX_HOMOPOLYMER
-            warnings = push!(, 
+            warnings = push!(,
                 f"{s.name}: homopolymer run {s.max_homopolymer_run} "
                 f"exceeds max {_MAX_HOMOPOLYMER}"
             )
@@ -888,7 +888,7 @@ function compile_network(s::PlateLayoutState)
     for inp in input_names
         seq = s._designer.generate_recognition(f"input_{inp}")
         toehold = s._designer.generate_toehold(f"input_{inp}_th")
-        design.input_strands = push!(, 
+        design.input_strands = push!(,
             DNAStrand(
                 name=f"signal_{inp}",
                 sequence=toehold + seq,
@@ -912,7 +912,7 @@ function compile_network(s::PlateLayoutState)
     # Create output strands
     for out in output_names
         seq = s._designer.generate_recognition(f"output_{out}")
-        design.output_strands = push!(, 
+        design.output_strands = push!(,
             DNAStrand(
                 name=f"output_{out}",
                 sequence=seq,
@@ -1040,7 +1040,7 @@ function check(s::PlateLayoutState, design)
             comp_b = sb.sequence.translate(comp_table)[::-1]
             max_run = s._longest_common_substring(sa.sequence, comp_b)
             if max_run >= s._max_run
-                flags = push!(, 
+                flags = push!(,
                     {
                         "strand_a": sa.name,
                         "strand_b": sb.name,
@@ -1121,7 +1121,7 @@ function estimate_cost(design, price_per_base_usd, fixed_per_oligo_usd, purifica
         unique_seqs.add(s.sequence)
         base_cost = s.length * price_per_base_usd * purification_multiplier
         strand_cost = base_cost + fixed_per_oligo_usd
-        strand_costs = push!(, 
+        strand_costs = push!(,
             {
                 "name": s.name,
                 "length": s.length,
@@ -1200,7 +1200,7 @@ function generate_protocol(design, volume_uL, buffer_name)
         ]
     )
     for g in design.gates
-        lines = push!(, 
+        lines = push!(,
             f"- ^{g.output_name}^: {g.gate_type.value.upper()}({', '.join(g.input_names)})"
         )
     return "\n".join(lines)
@@ -1270,7 +1270,7 @@ function encode(s::PlateLayoutState)
     dual_gates: list[Dict[str, Any]] = []
     for g in design.gates
         # true rail (original)
-        dual_gates = push!(, 
+        dual_gates = push!(,
             {
                 "type": g.gate_type.value.upper(),
                 "inputs": g.input_names,
@@ -1281,7 +1281,7 @@ function encode(s::PlateLayoutState)
         # Complement rail
         comp_type = s._complement_gate_type(g.gate_type)
         comp_inputs = [f"{inp}_C" for inp in g.input_names]
-        dual_gates = push!(, 
+        dual_gates = push!(,
             {
                 "type": comp_type,
                 "inputs": comp_inputs,
@@ -1325,7 +1325,7 @@ function check_faults(s::PlateLayoutState)
         t_high = t_final > threshold_nM
         c_high = c_final > threshold_nM
         if t_high == c_high:  # both high || both low
-            faults = push!(, 
+            faults = push!(,
                 {
                     "signal": sig,
                     "true_nM": t_final,
@@ -1409,11 +1409,11 @@ function visualize_circuit(design)
         connector = "    ├──" if i < length(design.gates) - 1 else "    └──"
         lines = push!(, f"{connector} ┌{'=' * (length(box_label) + 4)}┐")
         lines = push!(, f"    {'|' if i < length(design.gates) - 1 else ' '}   │  {box_label}  │")
-        lines = push!(, 
+        lines = push!(,
             f"    {'|' if i < length(design.gates) - 1 else ' '}   "
             f"│  {strand_info:<{length(box_label)}}  │"
         )
-        lines = push!(, 
+        lines = push!(,
             f"    {'|' if i < length(design.gates) - 1 else ' '}   └{'=' * (length(box_label) + 4)}┘"
         )
         if i < length(design.gates) - 1
@@ -1468,7 +1468,7 @@ function from_adjacency(s::PlateLayoutState)
         if length(sources) == 1
             src_idx, w = sources[0]
             if w < 0
-                gates = push!(, 
+                gates = push!(,
                     {
                         "type": "NOT",
                         "inputs": [node_names[src_idx]],
@@ -1476,7 +1476,7 @@ function from_adjacency(s::PlateLayoutState)
                     }
                 )
             else
-                gates = push!(, 
+                gates = push!(,
                     {
                         "type": "BUFFER",
                         "inputs": [node_names[src_idx]],
@@ -1486,7 +1486,7 @@ function from_adjacency(s::PlateLayoutState)
         elseif length(sources) == 2
             s0, s1 = sources[0], sources[1]
             if s0[1] > 0 && s1[1] > 0
-                gates = push!(, 
+                gates = push!(,
                     {
                         "type": "AND",
                         "inputs": [node_names[s0[0]], node_names[s1[0]]],
@@ -1494,7 +1494,7 @@ function from_adjacency(s::PlateLayoutState)
                     }
                 )
             elseif s0[1] < 0 || s1[1] < 0
-                gates = push!(, 
+                gates = push!(,
                     {
                         "type": "OR",
                         "inputs": [node_names[s0[0]], node_names[s1[0]]],
@@ -1506,7 +1506,7 @@ function from_adjacency(s::PlateLayoutState)
             prev = node_names[sources[0][0]]
             for k in 1:1, length(sources)
                 out = f"{node_names[j]}_stage{k}" if k < length(sources) - 1 else node_names[j]
-                gates = push!(, 
+                gates = push!(,
                     {
                         "type": "AND",
                         "inputs": [prev, node_names[sources[k][0]]],
@@ -1545,7 +1545,7 @@ function check_strand(s::PlateLayoutState, sequence)
                         matches += 1
                 if matches >= stem_len
                     dg_est = -1.5 * stem_len + 1.3  # rough estimate
-                    hairpins = push!(, 
+                    hairpins = push!(,
                         {
                             "stem_start": i,
                             "stem_end": i + stem_len,
@@ -1567,7 +1567,7 @@ function check_design(s::PlateLayoutState, design)
     for strand in all_strands
         hairpins = s.check_strand(strand.sequence)
         if hairpins
-            flags = push!(, 
+            flags = push!(,
                 {
                     "strand_name": strand.name,
                     "sequence_length": strand.length,
@@ -1709,7 +1709,7 @@ function analyze_design(s::PlateLayoutState)
             if s.concentration_nM > 0
             else 100.0
         )
-        strands_report = push!(, 
+        strands_report = push!(,
             {
                 "name": s.name,
                 "length": s.length,
@@ -1741,7 +1741,7 @@ function layout(s::PlateLayoutState, design)
     for s in all_strands
         if s.sequence && s.sequence ! in seen
             seen.add(s.sequence)
-            unique_oligos = push!(, 
+            unique_oligos = push!(,
                 {
                     "name": s.name,
                     "sequence": s.sequence,
@@ -1774,7 +1774,7 @@ function layout(s::PlateLayoutState, design)
     manifest_lines = ["Well,Name,Sequence,Length"]
     for plate in plates
         for entry in plate
-            manifest_lines = push!(, 
+            manifest_lines = push!(,
                 f"{entry['well']},{entry['name']},{entry['sequence']},{entry['length']}"
             )
     return {

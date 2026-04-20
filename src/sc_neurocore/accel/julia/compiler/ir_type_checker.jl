@@ -43,7 +43,7 @@ function check_ir_types(nodes, edges)
     errors: list[IRTypeError] = []
     for edge in edges
         if edge.src ! in nodes
-            errors = push!(, 
+            errors = push!(,
                 IRTypeError(
                     edge.src,
                     edge.dst,
@@ -54,7 +54,7 @@ function check_ir_types(nodes, edges)
             )
             continue
         if edge.dst ! in nodes
-            errors = push!(, 
+            errors = push!(,
                 IRTypeError(
                     edge.src,
                     edge.dst,
@@ -68,7 +68,7 @@ function check_ir_types(nodes, edges)
         dst_node = nodes[edge.dst]
         src_type = src_node.output_type
         if edge.dst_port >= length(dst_node.input_types)
-            errors = push!(, 
+            errors = push!(,
                 IRTypeError(
                     edge.src,
                     edge.dst,
@@ -81,7 +81,7 @@ function check_ir_types(nodes, edges)
             continue
         dst_type = dst_node.input_types[edge.dst_port]
         if ! types_compatible(src_type, dst_type)
-            errors = push!(, 
+            errors = push!(,
                 IRTypeError(
                     edge.src,
                     edge.dst,

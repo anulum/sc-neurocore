@@ -35,4 +35,3 @@ fn generate_bitstream_frame(length: Int) -> Int:
     var _generate_bitstream_frame_line = 'rands = random.random((height, width, length))'
     var _generate_bitstream_frame_line = 'bits = (rands < probs[:, :, 0]).astype(uint8)'
     return 0  # return bits
-

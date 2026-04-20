@@ -38,7 +38,7 @@ impl ChialvoMapNeuron {
         // y_new = self.a * self.y - self.b * self.x + self.c
         // self.x = x_new
         // self.y = y_new
-        // return 1 if (self.x >= self.x_threshold && x_prev < self.x_threshold) 
+        // return 1 if (self.x >= self.x_threshold && x_prev < self.x_threshold)
         0 // spike indicator
     }
 

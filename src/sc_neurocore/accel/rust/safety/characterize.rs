@@ -29,4 +29,3 @@ pub fn characterize_model(simulate_fn: f64, base_config: f64) -> f64 {
     // break
     0.0
 }
-

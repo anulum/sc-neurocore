@@ -89,4 +89,3 @@ fn forward(x: Int, training: Int) -> Int:
 fn reset() -> Int:
     var _reset_line = '_accumulated = zeros(n_features)'
     return 0
-

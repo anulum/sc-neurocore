@@ -14,11 +14,11 @@
 // This empty module with port declaration file causes synthesis tools to infer a black box for IP.
 // The synthesis directives are for Synopsys Synplify support to prevent IO buffer insertion.
 // Please paste the declaration into a Verilog source file or add the file as an additional source.
-(* CHECK_LICENSE_TYPE = "system_sc_shd_axi_wrapper_0_0,sc_shd_axi_wrapper,{}" *) (* CORE_GENERATION_INFO = "system_sc_shd_axi_wrapper_0_0,sc_shd_axi_wrapper,{x_ipProduct=Vivado 2025.2,x_ipVendor=xilinx.com,x_ipLibrary=module_ref,x_ipName=sc_shd_axi_wrapper,x_ipVersion=1.0,x_ipCoreRevision=1,x_ipLanguage=VERILOG,x_ipSimLanguage=MIXED,C_S_AXI_DATA_WIDTH=32,C_S_AXI_ADDR_WIDTH=8}" *) (* DowngradeIPIdentifiedWarnings = "yes" *) 
-(* IP_DEFINITION_SOURCE = "module_ref" *) (* X_CORE_INFO = "sc_shd_axi_wrapper,Vivado 2025.2" *) 
-module system_sc_shd_axi_wrapper_0_0(S_AXI_ACLK, S_AXI_ARESETN, S_AXI_AWADDR, 
-  S_AXI_AWPROT, S_AXI_AWVALID, S_AXI_AWREADY, S_AXI_WDATA, S_AXI_WSTRB, S_AXI_WVALID, 
-  S_AXI_WREADY, S_AXI_BRESP, S_AXI_BVALID, S_AXI_BREADY, S_AXI_ARADDR, S_AXI_ARPROT, 
+(* CHECK_LICENSE_TYPE = "system_sc_shd_axi_wrapper_0_0,sc_shd_axi_wrapper,{}" *) (* CORE_GENERATION_INFO = "system_sc_shd_axi_wrapper_0_0,sc_shd_axi_wrapper,{x_ipProduct=Vivado 2025.2,x_ipVendor=xilinx.com,x_ipLibrary=module_ref,x_ipName=sc_shd_axi_wrapper,x_ipVersion=1.0,x_ipCoreRevision=1,x_ipLanguage=VERILOG,x_ipSimLanguage=MIXED,C_S_AXI_DATA_WIDTH=32,C_S_AXI_ADDR_WIDTH=8}" *) (* DowngradeIPIdentifiedWarnings = "yes" *)
+(* IP_DEFINITION_SOURCE = "module_ref" *) (* X_CORE_INFO = "sc_shd_axi_wrapper,Vivado 2025.2" *)
+module system_sc_shd_axi_wrapper_0_0(S_AXI_ACLK, S_AXI_ARESETN, S_AXI_AWADDR,
+  S_AXI_AWPROT, S_AXI_AWVALID, S_AXI_AWREADY, S_AXI_WDATA, S_AXI_WSTRB, S_AXI_WVALID,
+  S_AXI_WREADY, S_AXI_BRESP, S_AXI_BVALID, S_AXI_BREADY, S_AXI_ARADDR, S_AXI_ARPROT,
   S_AXI_ARVALID, S_AXI_ARREADY, S_AXI_RDATA, S_AXI_RRESP, S_AXI_RVALID, S_AXI_RREADY)
 /* synthesis syn_black_box black_box_pad_pin="S_AXI_ARESETN,S_AXI_AWADDR[7:0],S_AXI_AWPROT[2:0],S_AXI_AWVALID,S_AXI_AWREADY,S_AXI_WDATA[31:0],S_AXI_WSTRB[3:0],S_AXI_WVALID,S_AXI_WREADY,S_AXI_BRESP[1:0],S_AXI_BVALID,S_AXI_BREADY,S_AXI_ARADDR[7:0],S_AXI_ARPROT[2:0],S_AXI_ARVALID,S_AXI_ARREADY,S_AXI_RDATA[31:0],S_AXI_RRESP[1:0],S_AXI_RVALID,S_AXI_RREADY" */
 /* synthesis syn_force_seq_prim="S_AXI_ACLK" */;

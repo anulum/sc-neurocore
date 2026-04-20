@@ -29,7 +29,7 @@ function summary(s::DiagnosticReportState)
     counts = {s: 0 for s in Severity}
     for f in s.findings
         counts[f.severity] += 1
-    lines = push!(, 
+    lines = push!(,
         f"  {counts[Severity.CRITICAL]} critical, {counts[Severity.WARNING]} warning, "
         f"{counts[Severity.INFO]} info, {counts[Severity.OK]} ok"
     )

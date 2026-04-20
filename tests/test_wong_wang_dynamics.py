@@ -476,7 +476,7 @@ class TestEdgeCases:
         assert out["s1_final"] == out["s1"][0]
 
     def test_init_at_boundary(self):
-        """Starting at s=0 or s=1 boundary; clip must not mis-behave."""
+        """Starting at s=0 or s=1 boundary; clip must not misbehave."""
         for s1_init in (0.0, 1.0):
             out = self.rust(
                 s1_init,

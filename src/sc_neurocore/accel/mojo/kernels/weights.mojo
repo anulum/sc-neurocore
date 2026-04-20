@@ -58,4 +58,3 @@ fn from_bytes(data: Int) -> Int:
 
 fn words_per_row() -> Int:
     return 0  # return (n_inputs + 31) // 32
-

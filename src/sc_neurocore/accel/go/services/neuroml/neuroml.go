@@ -18,4 +18,3 @@ func ImportNeuroml() {
 func CreateNeuron() {
 	// Go-accelerated create_neuron
 }
-

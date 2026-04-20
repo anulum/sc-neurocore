@@ -73,7 +73,7 @@ function validate_graph(graph)
             errors = push!(, f"Projection {proj['id']} probability out of range (0, 1]")
     total_neurons = sum(p.get("count", 0) for p in populations)
     if total_neurons > 2000
-        errors = push!(, 
+        errors = push!(,
             f"Total neuron count {total_neurons} exceeds 2000 limit for browser simulation"
         )
     return errors
@@ -143,7 +143,7 @@ function graph_to_nir(graph)
             "params": pop.get("params", {}),
         }
     for proj in graph.get("projections", [])
-        edges = push!(, 
+        edges = push!(,
             {
                 "source": proj["source"],
                 "target": proj["target"],
@@ -164,7 +164,7 @@ function nir_to_graph(nir_data)
     projections = []
     x_offset = 0
     for node_id, node in nir_data.get("nodes", {}).items()
-        populations = push!(, 
+        populations = push!(,
             {
                 "id": node_id,
                 "type": "population",
@@ -178,7 +178,7 @@ function nir_to_graph(nir_data)
         )
         x_offset += 200
     for edge in nir_data.get("edges", [])
-        projections = push!(, 
+        projections = push!(,
             {
                 "id": f"proj_{secrets.token_hex(4)}",
                 "source": edge["source"],

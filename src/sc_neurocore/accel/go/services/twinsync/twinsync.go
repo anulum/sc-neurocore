@@ -270,4 +270,3 @@ func Update() {
 func IsAggressive() {
 	// Go-accelerated is_aggressive
 }
-

@@ -30,4 +30,3 @@ fn forward(input_image: Int) -> Int:
     var _forward_line = 'filters = kernels.reshape(out_channels, -1)  # (out, C_in*k*'
     var _forward_line = 'output = filters @ col.T  # (out, H_out*W_out)'
     return 0  # return output.reshape(out_channels, H_out, W_out)
-

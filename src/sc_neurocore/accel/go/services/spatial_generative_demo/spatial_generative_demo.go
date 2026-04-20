@@ -14,4 +14,3 @@ package spatial_generative_demo
 func RunSpatialGenDemo() {
 	// Go-accelerated run_spatial_gen_demo
 }
-

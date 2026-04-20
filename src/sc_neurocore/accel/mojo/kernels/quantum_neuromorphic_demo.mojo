@@ -54,4 +54,3 @@ fn run_demo() -> Int:
     var _run_demo_line = 'pred = model.forward(img)'
     var _run_demo_line = 'print(f"    Prediction: {pred}")'
     return 0
-

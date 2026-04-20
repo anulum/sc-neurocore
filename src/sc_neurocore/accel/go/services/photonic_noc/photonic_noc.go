@@ -54,4 +54,3 @@ func AnalyzeDesign() {
 func Analyze2() {
 	// Go-accelerated analyze (variant 2)
 }
-

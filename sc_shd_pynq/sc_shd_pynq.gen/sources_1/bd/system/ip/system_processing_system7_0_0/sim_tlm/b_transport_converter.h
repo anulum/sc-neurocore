@@ -54,7 +54,7 @@
 #include <vector>
 
 template<int IN_WIDTH, int OUT_WIDTH>
-class b_transport_converter: public sc_core::sc_module 
+class b_transport_converter: public sc_core::sc_module
 {
     enum TLM_IF_TYPE
     {
@@ -68,7 +68,7 @@ class b_transport_converter: public sc_core::sc_module
 
     public:
         SC_HAS_PROCESS(b_transport_converter);
-        b_transport_converter<IN_WIDTH, OUT_WIDTH>(sc_core::sc_module_name name): 
+        b_transport_converter<IN_WIDTH, OUT_WIDTH>(sc_core::sc_module_name name):
             sc_module(name)
     {
         target_socket.register_b_transport(
@@ -111,7 +111,7 @@ class b_transport_converter: public sc_core::sc_module
         }
 
         tlm::tlm_sync_enum
-            nb_transport_bw(tlm::tlm_generic_payload& payload, 
+            nb_transport_bw(tlm::tlm_generic_payload& payload,
                     tlm::tlm_phase& phase, sc_core::sc_time& time)
             {
                 if(phase == tlm::BEGIN_RESP) {
@@ -167,4 +167,3 @@ typename b_transport_converter<IN_WIDTH,OUT_WIDTH>::addr_range_list b_transport_
 
 
 #endif /* _B_TRANSPORT_CONVERTER_H_ */
-

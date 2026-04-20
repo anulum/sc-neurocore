@@ -28,4 +28,3 @@ fn decode(mdl_string: Int) -> Int:
     var _decode_line = 'data.get("version"),'
     var _decode_line = ')'
     return 0  # return data
-

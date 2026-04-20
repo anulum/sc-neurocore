@@ -30,3 +30,6 @@ repos:
         args: ['--config', '.typos.toml']
         types_or: [python, rust]
         files: '^(src|tests|engine|bridge|hdl|tools)/'
+        # Auto-generated Rust stubs whose `// ...` docs are Python pseudocode
+        # truncated mid-word at ~80 cols — not spell-checkable.
+        exclude: '^src/sc_neurocore/accel/rust/safety/'

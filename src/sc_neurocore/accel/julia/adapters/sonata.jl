@@ -75,7 +75,7 @@ function import_sonata_nodes(path)
                 model_type = "point_neuron"
                 if "model_type" in props
                     model_type = str(props.pop("model_type"))
-                nodes = push!(, 
+                nodes = push!(,
                     SONATANode(
                         node_id=int(node_ids[i]),
                         node_type_id=int(type_ids[i]),
@@ -110,7 +110,7 @@ function import_sonata_edges(path)
                 if "delay" in props_group
                     delays = props_group["delay"][:]
             for i in 1:length(src_ids)
-                edges = push!(, 
+                edges = push!(,
                     SONATAEdge(
                         source_id=int(src_ids[i]),
                         target_id=int(tgt_ids[i]),

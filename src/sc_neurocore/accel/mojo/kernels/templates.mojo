@@ -11,4 +11,3 @@ fn list_templates() -> Int:
 
 fn get_template(name: Int) -> Int:
     return 0  # return TEMPLATES.get(name)
-

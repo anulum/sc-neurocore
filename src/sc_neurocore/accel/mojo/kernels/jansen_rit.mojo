@@ -38,4 +38,3 @@ fn step(p_ext: Int) -> Int:
 fn reset() -> Int:
     var _reset_line = 'y0 = y1 = y2 = y3 = y4 = y5 = 0.0'
     return 0
-

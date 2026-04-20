@@ -30,4 +30,3 @@ func Run() {
 func Reset() {
 	// Go-accelerated reset
 }
-

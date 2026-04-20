@@ -80,4 +80,3 @@ fn classify(support_x: Int, support_y: Int, query_x: Int) -> Int:
     var _classify_line = 'best_c = c'
     var _classify_line = 'predictions.append(best_c)'
     return 0  # return predictions
-

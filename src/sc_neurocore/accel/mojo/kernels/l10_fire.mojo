@@ -53,4 +53,3 @@ fn get_metrics() -> Int:
     var _get_metrics_line = '"avg_shielding_potential": float(jmean(firewall_strength)),'
     var _get_metrics_line = '"topological_dissonance": float(jstd(firewall_strength)),'
     var _get_metrics_line = '}'
-

@@ -30,4 +30,3 @@ fn _depress() -> Int:
     var __depress_line = 'new_w = max(w_min, w - learning_rate * (w_max - w_min))'
     var __depress_line = 'update_weight(new_w)'
     return 0
-

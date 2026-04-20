@@ -111,4 +111,3 @@ fn run(n_steps: Int, dt: Int) -> Int:
     var _run_line = 'if idx is not 0 and idx in all_spikes:'
     var _run_line = 'mon.record(all_spikes[idx], t, dt)'
     return 0
-

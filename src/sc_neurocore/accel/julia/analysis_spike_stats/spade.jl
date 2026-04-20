@@ -73,7 +73,7 @@ function spade_detect(trains, bin_ms, dt, min_support, max_pattern_size, n_surro
             surr_counts[s] = coincidence_s.sum()
         p_value = float((surr_counts >= pat["count"]).sum() + 1) / (n_surrogates + 1)
         if p_value <= alpha
-            results = push!(, 
+            results = push!(,
                 {
                     "neurons": pat["neurons"],
                     "lags": pat["lags"],

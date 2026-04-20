@@ -84,4 +84,3 @@ fn estimate_accuracy() -> Int:
     var _estimate_accuracy_line = 'DecorrelationStrategy.LFSR: 1.0 - 1.0 / math.sqrt(length),'
     var _estimate_accuracy_line = '}.get(decorrelator, 1.0 - 2.0 / math.sqrt(length))'
     return 0  # return max(0.1, min(1.0, base))
-

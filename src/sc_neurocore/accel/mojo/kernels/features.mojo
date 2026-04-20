@@ -53,4 +53,3 @@ fn extract_features(voltage: Int, dt: Int, threshold: Int) -> Int:
     var _extract_features_line = '"ap_height": ap_height,'
     var _extract_features_line = '"ap_width": ap_width,'
     var _extract_features_line = '}'
-

@@ -31,4 +31,3 @@ fn get_functor(source: Int, target: Int) -> Int:
     var _get_functor_line = 'if source == "Bio" and target == "Stochastic":'
     return 0  # return Morphism(bio_to_stochastic, "Functor: Bio->
     var _get_functor_line = 'raise ValueError(f"No morphism from {source} to {target}")'
-

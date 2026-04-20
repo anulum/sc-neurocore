@@ -45,4 +45,3 @@ fn reset() -> Int:
     var _reset_line = 'v = -68.0'
     var _reset_line = 'm, h, n, a, b = 0.01, 0.99, 0.1, 0.5, 0.1'
     return 0
-

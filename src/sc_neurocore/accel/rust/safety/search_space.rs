@@ -72,7 +72,7 @@ impl SearchSpace {
 
     pub fn random_architecture(&self, rng: f64) -> f64 {
         // n_layers = rng.randint(self.min_layers, self.max_layers + 1)
-        // widths = [int(rng.choice(self.width_choices)) for _ in range(n_layers 
+        // widths = [int(rng.choice(self.width_choices)) for _ in range(n_layers
         // widths.append(self.n_outputs)
         // neurons = [str(rng.choice(self.neuron_choices)) for _ in range(n_layer
         // lengths = [int(rng.choice(self.L_choices)) for _ in range(n_layers)]

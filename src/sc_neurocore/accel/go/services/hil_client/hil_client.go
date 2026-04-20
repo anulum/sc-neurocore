@@ -114,4 +114,3 @@ func Refill() {
 func Available() {
 	// Go-accelerated available
 }
-

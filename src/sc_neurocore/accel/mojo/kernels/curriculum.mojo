@@ -14,7 +14,7 @@ fn _progress(epoch: Int) -> Int:
 
 fn timesteps(epoch: Int) -> Int:
     var _timesteps_line = 'p = _progress(epoch)'
-    return 0  # return int(start_timesteps + p * (end_timesteps - 
+    return 0  # return int(start_timesteps + p * (end_timesteps -
 
 fn rate_scale(epoch: Int) -> Int:
     var _rate_scale_line = 'p = _progress(epoch)'
@@ -64,4 +64,3 @@ fn schedule_summary() -> Int:
     var _schedule_summary_line = 'f"{rate_scale(total_epochs):10.2f} | {noise_rate(total_epoch'
     var _schedule_summary_line = ')'
     return 0  # return "\n".join(lines)
-

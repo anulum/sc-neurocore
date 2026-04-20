@@ -38,4 +38,3 @@ fn quantize_delays(delays: Int, resolution: Int, max_delay: Int) -> Int:
     var _quantize_delays_line = 'if max_delay is not 0:'
     var _quantize_delays_line = 'q = clip(q, 0, max_delay)'
     return 0  # return q
-

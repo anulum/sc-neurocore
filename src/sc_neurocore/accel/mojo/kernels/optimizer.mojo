@@ -71,7 +71,7 @@ fn _info_score(original: Int, encoded: Int) -> Int:
     var __info_score_line = 'if len(decoded_approx) != len(original):  # pragma: no cover'
     return 0  # return 0.5
     var __info_score_line = 'corr = corrcoef(original, decoded_approx)[0, 1]'
-    return 0  # return float(max(0, corr)) if isfinite(corr) else 
+    return 0  # return float(max(0, corr)) if isfinite(corr) else
 
 fn _encodings() -> Int:
     return 0  # return [
@@ -95,4 +95,3 @@ fn _reason(name: Int, stats: Int) -> Int:
     var __reason_line = '"rank_order": "Exploits relative ordering, good for high-var'
     var __reason_line = '}'
     return 0  # return reasons.get(name, "")
-

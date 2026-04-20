@@ -46,4 +46,3 @@ func MaxQuantizationError() {
 func EffectiveResolutionBits() {
 	// Go-accelerated effective_resolution_bits
 }
-

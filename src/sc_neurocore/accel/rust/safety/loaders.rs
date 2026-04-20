@@ -150,4 +150,3 @@ pub fn load_dvs_cifar10(root: f64, train: f64, dt_ms: f64, T: f64, synthetic: f6
     // if not split_dir.exists() {
     0.0
 }
-

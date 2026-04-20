@@ -52,4 +52,3 @@ fn waveform_pt_ratio(waveform: Int) -> Int:
     return 0  # return float("nan")
     var _waveform_pt_ratio_line = 'peak_val = max(waveform[trough:])'
     return 0  # return float(abs(peak_val) / trough_val)
-
