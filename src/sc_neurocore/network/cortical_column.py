@@ -146,7 +146,7 @@ import os
 _julia_multi_spmv = None
 _HAS_JULIA_MULTI_SPMV = False
 try:
-    from juliacall import Main as jl
+    from juliacall import Main as jl  # type: ignore[import-not-found]
     _jl_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "accel", "julia", "network", "cortical_column.jl"))
     if os.path.exists(_jl_file):
         jl.seval(f'include("{_jl_file}")')

@@ -104,7 +104,7 @@ import ctypes
 _julia_ping_step = None
 _HAS_JULIA_PING_STEP = False
 try:
-    from juliacall import Main as jl
+    from juliacall import Main as jl  # type: ignore[import-not-found]
     _jl_ping_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "accel", "julia", "network", "gamma_oscillation.jl"))
     if os.path.exists(_jl_ping_file):
         jl.seval(f'include("{_jl_ping_file}")')
