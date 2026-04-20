@@ -657,6 +657,16 @@ pub unsafe extern "C" fn get_wgpu_weights(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn set_wgpu_layer_seed(
+    mgr: *mut WgpuRuleLayer,
+    seed: u32,
+) {
+    if mgr.is_null() { return; }
+    let layer = &mut *mgr;
+    layer.set_deterministic_mode(seed);
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn free_wgpu_layer(mgr: *mut WgpuRuleLayer) {
     if !mgr.is_null() {
         drop(Box::from_raw(mgr));

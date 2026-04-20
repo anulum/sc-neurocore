@@ -180,6 +180,14 @@ and integrated into the production `SC-NEUROCORE` tree. Each module has been:
   - `RuleEvolver` — Evolutionary plasticity rule search
   - `ConsolidationScheduler` — Memory consolidation timing
 
+#### autonomous_learning — High-Performance Online Plasticity Engine
+- **Source:** `crates/autonomous_learning/`, `src/sc_neurocore/_native/`, `src/sc_neurocore/accel/go/autonomous_learning/`
+- **Tests:** `tests/test_learning/` — **3 tests (Parity & Unit)**
+- **Key Classes:**
+  - `RustPlasticityRule` — FFI Python class mapping STDP/BCM/R-STDP to Rust backend
+  - `LearningBridgeAccel` — Julia C-FFI wrapper
+  - `autonomous_learning.PlasticityRule` (Go) — Go Cgo wrapper
+
 #### bioware — Biological-Hardware Interface
 - **Source:** `src/sc_neurocore/bioware/bioware.py`
 - **Tests:** `tests/test_bioware/test_bioware.py` — **79 tests**

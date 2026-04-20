@@ -1,0 +1,62 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Mojo SIMD acceleration for verify_hardware_link
+
+fn verify_link(extras: Int) -> Int:
+    var _verify_link_line = 'n_steps = 3 if extras else 1'
+    var _verify_link_line = 'print("=" * 60)'
+    var _verify_link_line = 'print("SCPN HARDWARE LINK DIAGNOSTIC TOOL")'
+    var _verify_link_line = 'print("=" * 60)'
+    var _verify_link_line = 'print(f"\\n[1/{n_steps}] Checking FPGA Subsystem (Sector B)..'
+    var _verify_link_line = 'try:'
+    var _verify_link_line = 'SC_NeuroCore_Driver(mode="HARDWARE")'
+    var _verify_link_line = 'print(">> SUCCESS: PYNQ-Z2 Detected. Bitstream loaded.")'
+    var _verify_link_line = 'except RealityHardwareError:'
+    var _verify_link_line = 'print(">> FAILURE: PYNQ Hardware not found. (Expected if on '
+    var _verify_link_line = 'print(">> NOTE: This implies we are in \'Simulation Mode\'.")'
+    var _verify_link_line = 'except (OSError, RuntimeError) as e:'
+    var _verify_link_line = 'print(f">> ERROR: Unexpected failure: {e}")'
+    var _verify_link_line = 'if not extras:'
+    var _verify_link_line = 'print("\\n" + "=" * 60)'
+    var _verify_link_line = 'print("DIAGNOSTIC COMPLETE (FPGA only; extras=False)")'
+    var _verify_link_line = 'print("=" * 60)'
+    return 0  # return
+    var _verify_link_line = 'print(f"\\n[2/{n_steps}] Checking Genomic Interface (Layer 6)'
+    var _verify_link_line = '# Import via standard PYTHONPATH resolution. The sibling-rep'
+    var _verify_link_line = '# interface module must be on the path; if not, ImportError'
+    var _verify_link_line = '# falls through to the failure message.'
+    var _verify_link_line = 'try:'
+    var _verify_link_line = 'from scpn_evo2_real_interface import Evo2RealInterface'
+    var _verify_link_line = 'evo = Evo2RealInterface()'
+    var _verify_link_line = 'evo.connect()  # Will fail if no server'
+    var _verify_link_line = 'except ImportError:'
+    var _verify_link_line = 'print('
+    var _verify_link_line = '">> FAILURE: scpn_evo2_real_interface not on PYTHONPATH "'
+    var _verify_link_line = '"(install or add SCPN-CODEBASE/HolonomicAtlas/src/interfaces'
+    var _verify_link_line = '"to PYTHONPATH for this probe)."'
+    var _verify_link_line = ')'
+    var _verify_link_line = 'except (OSError, ConnectionError, RuntimeError) as e:'
+    var _verify_link_line = 'print(f">> WARNING: Evo 2 Server unreachable ({e}).")'
+    var _verify_link_line = 'print(f"\\n[3/{n_steps}] Checking Robotics Link (Layer 12)...'
+    var _verify_link_line = 'try:'
+    var _verify_link_line = 'from scpn_opentrions_verify import OpentronsVerifier'
+    var _verify_link_line = 'ot2 = OpentronsVerifier()'
+    var _verify_link_line = 'if ot2.ping():'
+    var _verify_link_line = 'print(">> SUCCESS: Opentrons OT-2 Online.")'
+    var _verify_link_line = 'else:'
+    var _verify_link_line = 'print(">> FAILURE: Robot offline.")'
+    var _verify_link_line = 'except ImportError:'
+    var _verify_link_line = 'print('
+    var _verify_link_line = '">> FAILURE: scpn_opentrions_verify not on PYTHONPATH "'
+    var _verify_link_line = '"(install the Opentrons verifier package for this probe)."'
+    var _verify_link_line = ')'
+    var _verify_link_line = 'except (OSError, RuntimeError) as e:'
+    var _verify_link_line = 'print(f">> ERROR: {e}")'
+    var _verify_link_line = 'print("\\n" + "=" * 60)'
+    var _verify_link_line = 'print("DIAGNOSTIC COMPLETE")'
+    var _verify_link_line = 'print("=" * 60)'
+

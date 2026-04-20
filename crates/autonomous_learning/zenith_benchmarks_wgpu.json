@@ -1,0 +1,99 @@
+{
+  "timestamp": 1776657531.3419213,
+  "device": "cuda",
+  "system_ram_gb": 31.129894256591797,
+  "cpu_cores": 12,
+  "results": {
+    "100000": {
+      "parity": true,
+      "eligent": {
+        "torch": {
+          "forward_ms": 0.298040019988548,
+          "backward_ms": 0.16756715980591252,
+          "total_ms": 0.46560717979446054
+        },
+        "rust": {
+          "step_ms": 6.4817572987522,
+          "deterministic": true
+        },
+        "rust-wgpu": {
+          "step_ms": 13.407438299327623,
+          "deterministic": true
+        },
+        "io": {
+          "write_ms": 4.165703998296522,
+          "write_mb_s": 457.8722054385699,
+          "read_ms": 1.1922750127268955,
+          "read_mb_s": 1599.7652022765321,
+          "file_size_mb": 1.9073600769042969
+        }
+      },
+      "stdp": {
+        "torch": {
+          "forward_ms": 0.4323608201229945,
+          "backward_ms": 0.19580127991503105,
+          "total_ms": 0.6281621000380255
+        },
+        "rust": {
+          "step_ms": 6.200967500626575,
+          "deterministic": true
+        },
+        "rust-wgpu": {
+          "step_ms": 24.980596100795083,
+          "deterministic": true
+        },
+        "io": {
+          "write_ms": 3.6912329960614443,
+          "write_mb_s": 516.7270879241314,
+          "read_ms": 0.7328160136239603,
+          "read_mb_s": 2602.7816552096338,
+          "file_size_mb": 1.9073600769042969
+        }
+      },
+      "r_stdp": {
+        "torch": {
+          "forward_ms": 0.33921291993465275,
+          "backward_ms": 0.18557076022261754,
+          "total_ms": 0.5247836801572703
+        },
+        "rust": {
+          "step_ms": 6.53247750014998,
+          "deterministic": true
+        },
+        "rust-wgpu": {
+          "step_ms": 20.001403499918524,
+          "deterministic": true
+        },
+        "io": {
+          "write_ms": 6.08234699757304,
+          "write_mb_s": 376.3070085248472,
+          "read_ms": 1.4009839942445979,
+          "read_mb_s": 1633.7301588523287,
+          "file_size_mb": 2.288829803466797
+        }
+      },
+      "bcm": {
+        "torch": {
+          "forward_ms": 0.32580665982095525,
+          "backward_ms": 0.3112811202299781,
+          "total_ms": 0.6370877800509334
+        },
+        "rust": {
+          "step_ms": 6.165128501015715,
+          "deterministic": true
+        },
+        "rust-wgpu": {
+          "step_ms": 25.281618000008166,
+          "deterministic": true
+        },
+        "io": {
+          "write_ms": 4.106562992092222,
+          "write_mb_s": 371.5735892229386,
+          "read_ms": 0.946312997257337,
+          "read_mb_s": 1612.4584093890994,
+          "file_size_mb": 1.5258903503417969
+        }
+      }
+    }
+  }
+}

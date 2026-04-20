@@ -18,7 +18,8 @@ from typing import Dict
 try:
     from sc_neurocore._native.learning_bridge import (
         is_available as _rust_learning_available,
-        RustEligentLearner,
+        RustRuleLayer,
+        RULE_ELIGENT,
     )
 
     FFI_ENABLED = _rust_learning_available()
@@ -32,21 +33,23 @@ class BCIClosedLoopEngine:
         self.weights = np.ones(channels, dtype=np.float32)
 
         if FFI_ENABLED:
-            self.learners = [RustEligentLearner(1.0, 0.1, 1.0) for _ in range(channels)]
+            self.layer = RustRuleLayer(channels, RULE_ELIGENT, weight=1.0, param_a=0.1, param_b=1.0)
         else:
-            self.learners = [None] * channels
+            self.layer = None
 
     def process_bci_frame(self, raw_ephys: np.ndarray, reward: float) -> Dict:
         start_time = time.perf_counter()
         spikes = (np.abs(np.diff(raw_ephys, prepend=0)) > 0.5).astype(bool)
 
         total_voltage = np.dot(spikes, self.weights)
+        command = 1 if total_voltage > (self.channels * 0.1) else 0
 
         if FFI_ENABLED:
-            for i in range(self.channels):
-                self.learners[i].step(spikes[i], spikes[i], reward)
+            post_spikes = np.full(self.channels, command > 0, dtype=np.bool_)
+            rewards = np.full(self.channels, reward, dtype=np.float32)
+            self.layer.step(spikes, post_spikes, rewards)
+            self.weights = self.layer.get_weights()
 
-        command = 1 if total_voltage > (self.channels * 0.1) else 0
         latency = (time.perf_counter() - start_time) * 1000.0
 
         return {"command": command, "latency_ms": latency, "spikes": int(np.sum(spikes))}

@@ -1,0 +1,29 @@
+{
+  "timestamp": 1776658064.9027212,
+  "device": "cuda",
+  "system_ram_gb": 31.129894256591797,
+  "cpu_cores": 12,
+  "results": {
+    "50000000": {
+      "parity": true,
+      "stdp": {
+        "torch": {
+          "forward_ms": 55.74588119983673,
+          "backward_ms": 20.370507020270452,
+          "total_ms": 76.11638822010718
+        },
+        "rust-wgpu": {
+          "step_ms": 4153.674709000916,
+          "deterministic": true
+        },
+        "io": {
+          "write_ms": 4133.311534998938,
+          "write_mb_s": 230.72887677956913,
+          "read_ms": 738.889914995525,
+          "read_mb_s": 1290.6852678536254,
+          "file_size_mb": 953.6743278503418
+        }
+      }
+    }
+  }
+}

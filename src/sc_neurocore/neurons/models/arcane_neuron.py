@@ -98,6 +98,7 @@ class ArcaneNeuron:
     _hist_idx: int = 0
     _nov_idx: int = 0
     _total_steps: int = 0
+    _identity_drift: float = 0.0
     # Inhibitory self-feedback
     w_inh: float = 0.3
     # Timestep
@@ -156,9 +157,11 @@ class ArcaneNeuron:
         self.v_work += -self.v_work / self.tau_work * self.dt
 
         # Deep compartment: only updates on genuine novelty
+        prev_deep = self.v_deep
         self.v_deep += (
             (-self.v_deep + self.alpha_d * self.v_work * self._novelty) / self.tau_deep * self.dt
         )
+        self._identity_drift += abs(self.v_deep - prev_deep)
 
         # Meta-learning: update predictor weights toward reducing surprise
         meta_lr = self.lr_base * (1.0 + self.eta * self._novelty)
@@ -186,6 +189,7 @@ class ArcaneNeuron:
         self._novelty = 0.0
         self._spike_history = [0] * 50
         self._hist_idx = 0
+        self._identity_drift = 0.0
 
     @property
     def identity_state(self) -> float:
@@ -201,8 +205,18 @@ class ArcaneNeuron:
         return self._novelty
 
     @property
+    def identity_drift(self) -> float:
+        """Cumulative absolute magnitude of identity mutation."""
+        return self._identity_drift
+
+    @property
     def meta_learning_rate(self) -> float:
         return self.lr_base * (1.0 + self.eta * self._novelty)
+
+    def get_recent_pre_activity(self) -> float:
+        """Get proxy for pre-synaptic activation (recent spike behavior)."""
+        hist_ix = (self._hist_idx - 1) % max(1, len(self._spike_history))
+        return float(self._spike_history[hist_ix])
 
     def get_state(self) -> dict:
         return {
@@ -213,6 +227,7 @@ class ArcaneNeuron:
             "novelty": self._novelty,
             "surprise": self._surprise,
             "prediction": self._prediction,
+            "identity_drift": self._identity_drift,
             "meta_lr": self.meta_learning_rate,
             "total_steps": self._total_steps,
         }
