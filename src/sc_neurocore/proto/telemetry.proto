@@ -1,0 +1,13 @@
+syntax = "proto3";
+package vision2030.telemetry;
+
+import "core.proto";
+
+option go_package = "github.com/anulum/sc-neurocore/vision2030/proto/telemetry";
+
+message HILFrame {
+  int64 timestamp_ms = 1;
+  string layer_id = 2;
+  vision2030.core.BitstreamMetadata metrics = 3;
+  vision2030.core.Tensor sample_spikes = 4;
+}
