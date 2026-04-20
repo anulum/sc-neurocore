@@ -290,6 +290,36 @@ fn evaluate_fitness(
     return w_accuracy * accuracy + w_energy * energy + w_latency * latency
 
 
+fn evaluate_fitness_components(
+    v: List[Float64],
+    accuracy_bias: Float64,
+    accuracy_neuron_coef: Float64,
+) -> List[Float64]:
+    """Return [accuracy, energy, latency] — the raw per-objective scores
+    consumed by the Pareto front. Same formula as `evaluate_fitness` but
+    without the composite weighting."""
+    var out = List[Float64]()
+    var num_neurons = v[0]
+    var num_layers = v[1]
+    var bitstream = v[4]
+    out.append(accuracy_bias + accuracy_neuron_coef * num_neurons / 32.0)
+    out.append(max_f(0.0, 1.0 - 0.5 * num_neurons / 1024.0 - 0.5 * bitstream / 1024.0))
+    out.append(max_f(0.0, 1.0 - num_layers / 10.0))
+    return out^
+
+
+fn dominates(a: List[Float64], b: List[Float64]) -> Bool:
+    """Pareto dominance on the 3-objective fitness vector (accuracy,
+    energy, latency) — mirrors the Rust runner's `dominates` exactly."""
+    var at_least_one_better = False
+    for i in range(3):
+        if a[i] < b[i]:
+            return False
+        if a[i] > b[i]:
+            at_least_one_better = True
+    return at_least_one_better
+
+
 # ─── Bloat + guard helpers ────────────────────────────────────────
 
 
@@ -386,6 +416,8 @@ fn main() raises:
     var crossover_prob = atof(String(cfg["crossover_prob"]))
     var max_age = Int(atol(String(cfg["max_age"])))
     var hall_of_fame_size = Int(atol(String(cfg["hall_of_fame_size"])))
+    var stagnation_gens = Int(atol(String(cfg["stagnation_gens"])))
+    var extinction_kill_fraction = atof(String(cfg["extinction_kill_fraction"]))
     var industrial_mode = String(cfg["industrial_mode"]) == String("True")
 
     var mut_cfg = cfg["mutation"]
@@ -438,11 +470,25 @@ fn main() raises:
     var total_replications: Int = 0
     var safety_checked: Int = 0
     var safety_rejected: Int = 0
+    var extinction_count: Int = 0
     var stats_list = Python.import_module("builtins").list()
+    var lineage_list = Python.import_module("builtins").list()
+    var pareto_front = Python.import_module("builtins").list()
+    var best_history = List[Float64]()
+
+    # Seed lineage with initial population
+    for i in range(pop_size):
+        var rec = json_mod.loads("{}")
+        rec["genome_id"] = ids[i]
+        rec["parent_id"] = String("")
+        rec["generation"] = 0
+        rec["mutation_type"] = String("seed")
+        rec["fitness"] = 0.0
+        lineage_list.append(rec)
 
     # Evolution loop
     for gen in range(1, n_generations + 1):
-        # 1. Evaluate fitness
+        # 1. Evaluate fitness + update Pareto front
         for i in range(pop_size):
             if not alive[i]:
                 continue
@@ -457,6 +503,55 @@ fn main() raises:
                 raw_fit = penalize(raw_fit, v, 0.1, 2.0, 16.0)
             fits[i] = raw_fit
 
+            # Pareto update: non-dominated-sorted insertion matching Rust.
+            var comps = evaluate_fitness_components(v, accuracy_bias, accuracy_neuron_coef)
+            var new_fit_list = Python.import_module("builtins").list()
+            new_fit_list.append(comps[0])
+            new_fit_list.append(comps[1])
+            new_fit_list.append(comps[2])
+            var any_dominates_new = False
+            var existing_count = len(pareto_front)
+            for p_idx in range(existing_count):
+                var existing_fit = pareto_front[p_idx]["fitness_components"]
+                var ea = atof(String(existing_fit[0]))
+                var eb = atof(String(existing_fit[1]))
+                var ec = atof(String(existing_fit[2]))
+                var existing_comps = List[Float64]()
+                existing_comps.append(ea)
+                existing_comps.append(eb)
+                existing_comps.append(ec)
+                if dominates(existing_comps, comps):
+                    any_dominates_new = True
+                    break
+            if not any_dominates_new:
+                # Drop any existing member dominated by the new one
+                var filtered = Python.import_module("builtins").list()
+                for p_idx in range(existing_count):
+                    var existing_fit = pareto_front[p_idx]["fitness_components"]
+                    var ea = atof(String(existing_fit[0]))
+                    var eb = atof(String(existing_fit[1]))
+                    var ec = atof(String(existing_fit[2]))
+                    var existing_comps = List[Float64]()
+                    existing_comps.append(ea)
+                    existing_comps.append(eb)
+                    existing_comps.append(ec)
+                    if not dominates(comps, existing_comps):
+                        filtered.append(pareto_front[p_idx])
+                pareto_front = filtered
+                var member = json_mod.loads("{}")
+                member["genome_id"] = ids[i]
+                member["parent_id"] = parent_ids[i]
+                member["generation"] = generations[i]
+                member["num_neurons"] = Int(pop_flat[i * GENOME_DIM + 0])
+                member["num_layers"] = Int(pop_flat[i * GENOME_DIM + 1])
+                member["connectivity"] = pop_flat[i * GENOME_DIM + 2]
+                member["bitstream_length"] = Int(pop_flat[i * GENOME_DIM + 4])
+                member["tau_fast"] = pop_flat[i * GENOME_DIM + 5]
+                member["tau_work"] = pop_flat[i * GENOME_DIM + 6]
+                member["tau_deep"] = pop_flat[i * GENOME_DIM + 7]
+                member["fitness_components"] = new_fit_list
+                pareto_front.append(member)
+
         # 2. Age cull
         var killed: Int = 0
         if industrial_mode:
@@ -464,6 +559,41 @@ fn main() raises:
                 if alive[i] and (gen - birth_gens[i]) > max_age:
                     alive[i] = False
                     killed = killed + 1
+
+        # 2b. Extinction check (stagnation detection matching Rust)
+        if industrial_mode:
+            var best_fit: Float64 = 0.0
+            for i in range(pop_size):
+                if alive[i] and fits[i] > best_fit:
+                    best_fit = fits[i]
+            best_history.append(best_fit)
+            if len(best_history) >= stagnation_gens:
+                var start = len(best_history) - stagnation_gens
+                var mn = best_history[start]
+                var mx = best_history[start]
+                for h in range(start + 1, len(best_history)):
+                    if best_history[h] < mn:
+                        mn = best_history[h]
+                    if best_history[h] > mx:
+                        mx = best_history[h]
+                if mx - mn < 1e-6:
+                    extinction_count = extinction_count + 1
+                    # Fisher-Yates partial shuffle → kill kill_fraction of pop
+                    var n_kill = Int(Float64(pop_size) * extinction_kill_fraction)
+                    if n_kill > pop_size:
+                        n_kill = pop_size
+                    var idx_list = List[Int]()
+                    for i in range(pop_size):
+                        idx_list.append(i)
+                    for step in range(n_kill):
+                        var j = mutator_rng.gen_range(step, pop_size)
+                        var tmp = idx_list[step]
+                        idx_list[step] = idx_list[j]
+                        idx_list[j] = tmp
+                    for step in range(n_kill):
+                        if alive[idx_list[step]]:
+                            alive[idx_list[step]] = False
+                            killed = killed + 1
 
         # 3. Survival-fraction cull (sort alive by fitness, keep top frac)
         var alive_idx = List[Int]()
@@ -552,7 +682,15 @@ fn main() raises:
                 child_v, accuracy_bias, accuracy_neuron_coef,
                 w_accuracy, w_energy, w_latency,
             )
-            _ = mtype  # mutation type not recorded in this minimal runner
+            # Lineage record (matches Rust/Julia/Go schema exactly)
+            var rec = json_mod.loads("{}")
+            rec["genome_id"] = ids[slot]
+            rec["parent_id"] = parent_ids[slot]
+            rec["generation"] = gen
+            rec["mutation_type"] = String("replicate")
+            rec["fitness"] = fits[slot]
+            lineage_list.append(rec)
+            _ = mtype  # operator name captured inside lineage below once wired
             total_replications = total_replications + 1
             children = children + 1
 
@@ -639,10 +777,27 @@ fn main() raises:
     result["final_population"] = final_pop
     result["stats_per_generation"] = stats_list
     result["hall_of_fame"] = hall
-    result["pareto_front"] = Python.import_module("builtins").list()
-    result["lineage"] = Python.import_module("builtins").list()
+    # Strip the internal `fitness_components` key from Pareto members so
+    # the emitted JSON matches the Rust / Julia / Go schema.
+    var pareto_out = Python.import_module("builtins").list()
+    for p_idx in range(len(pareto_front)):
+        var m = pareto_front[p_idx]
+        var m_clean = json_mod.loads("{}")
+        m_clean["genome_id"] = m["genome_id"]
+        m_clean["parent_id"] = m["parent_id"]
+        m_clean["generation"] = m["generation"]
+        m_clean["num_neurons"] = m["num_neurons"]
+        m_clean["num_layers"] = m["num_layers"]
+        m_clean["connectivity"] = m["connectivity"]
+        m_clean["bitstream_length"] = m["bitstream_length"]
+        m_clean["tau_fast"] = m["tau_fast"]
+        m_clean["tau_work"] = m["tau_work"]
+        m_clean["tau_deep"] = m["tau_deep"]
+        pareto_out.append(m_clean)
+    result["pareto_front"] = pareto_out
+    result["lineage"] = lineage_list
     result["total_replications"] = total_replications
     result["safety_checked"] = safety_checked
     result["safety_rejected"] = safety_rejected
-    result["extinction_count"] = 0
+    result["extinction_count"] = extinction_count
     print(json_mod.dumps(result))
