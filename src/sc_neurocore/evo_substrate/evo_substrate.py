@@ -507,6 +507,7 @@ class ReplicationEngine:
         fitness_evaluator: Optional[FitnessEvaluator] = None,
         max_population: int = 32,
         elitism: int = 1,
+        industrial_mode: bool = True,
     ):
         self.mutator = mutation_engine or MutationEngine()
         self.crossover = crossover_engine or CrossoverEngine()
@@ -519,6 +520,17 @@ class ReplicationEngine:
         self.total_replications: int = 0
         self.lineage = LineageTracker()
 
+        # Industrial Features
+        self.industrial_mode = industrial_mode
+        self.tournament = TournamentSelector()
+        self.safety_guard = FormalSafetyGuard()
+        self.age_regulator = AgeRegulator(max_age=20)
+        self.bloat_penalizer = BloatPenalizer()
+        self.extinction_detector = ExtinctionDetector(stagnation_gens=10, kill_fraction=0.9)
+        self.hall_of_fame = HallOfFame()
+        self.pareto_front = ParetoFront()
+        self.stats_tracker = EvoStatisticsTracker()
+
     def seed(self, genome: Genome) -> Organism:
         """Seed the population with an initial organism."""
         genome.compute_id()
@@ -527,9 +539,15 @@ class ReplicationEngine:
         self.lineage.record(org, "seed")
         return org
 
-    def replicate(self, parent: Organism) -> Organism:
+    def replicate(self, parent: Organism) -> Optional[Organism]:
         """Create a mutated child from a parent."""
         child_genome, mut_type = self.mutator.mutate(parent.genome)
+        
+        if self.industrial_mode:
+            result = self.safety_guard.check(child_genome)
+            if not result.passed:
+                return None
+                
         child = Organism(
             genome=child_genome,
             birth_generation=self.generation,
@@ -540,9 +558,15 @@ class ReplicationEngine:
             self.population.append(child)
         return child
 
-    def replicate_crossover(self, parent_a: Organism, parent_b: Organism) -> Organism:
+    def replicate_crossover(self, parent_a: Organism, parent_b: Organism) -> Optional[Organism]:
         """Create a child via crossover of two parents."""
         child_genome = self.crossover.crossover(parent_a.genome, parent_b.genome)
+        
+        if self.industrial_mode:
+            result = self.safety_guard.check(child_genome)
+            if not result.passed:
+                return None
+                
         child = Organism(
             genome=child_genome,
             birth_generation=self.generation,
@@ -559,9 +583,21 @@ class ReplicationEngine:
             if org.alive:
                 metrics = metrics_fn(org.genome)
                 org.fitness = self.evaluator.evaluate(org.genome, metrics)
+                
+                if self.industrial_mode:
+                    if org.fitness:
+                        org.fitness.composite = self.bloat_penalizer.penalize(org.fitness.composite, org.genome)
+                        org.fitness.composite = shared_fitness(org, self.population)
+                    self.hall_of_fame.update(org)
+                    self.pareto_front.update(org)
 
     def select_and_cull(self, survival_fraction: float = 0.5) -> int:
         """Select fittest organisms, cull the rest. Elitism preserved."""
+        if self.industrial_mode:
+            killed = self.age_regulator.apply(self.population, self.generation)
+            if self.extinction_detector.check(self.best_fitness):
+                killed += self.extinction_detector.apply(self.population, self.mutator.rng)
+        
         alive = [o for o in self.population if o.alive and o.fitness is not None]
         alive.sort(key=lambda o: o.fitness.composite, reverse=True)
 
@@ -588,14 +624,40 @@ class ReplicationEngine:
         # 3. Replicate from survivors
         survivors = list(self.population)
         children_created = 0
-        for i, parent in enumerate(survivors):
+        
+        for i in range(len(survivors)):
             if len(self.population) >= self.max_population:
                 break
-            if len(survivors) > 1 and i + 1 < len(survivors) and self.mutator.rng.random() < 0.3:
-                self.replicate_crossover(parent, survivors[(i + 1) % len(survivors)])
+                
+            if self.industrial_mode:
+                parent = self.tournament.select(survivors, self.mutator.rng)
+                partner = self.tournament.select(survivors, self.mutator.rng)
             else:
-                self.replicate(parent)
-            children_created += 1
+                parent = survivors[i]
+                partner = survivors[(i + 1) % len(survivors)] if len(survivors) > 1 else None
+            
+            if parent is None:
+                continue
+
+            child_added = None
+            if partner and self.mutator.rng.random() < 0.3:
+                child_added = self.replicate_crossover(parent, partner)
+            else:
+                child_added = self.replicate(parent)
+                
+            if child_added:
+                children_created += 1
+
+        stats = GenerationStats(
+            generation=self.generation,
+            population_size=len(self.population),
+            best_fitness=self.best_fitness,
+            mean_fitness=self.mean_fitness,
+            diversity=population_diversity(self.population),
+            extinctions=self.extinction_detector.extinction_count if self.industrial_mode else 0
+        )
+        if self.industrial_mode:
+            self.stats_tracker.record(stats)
 
         return {
             "generation": self.generation,
@@ -604,7 +666,8 @@ class ReplicationEngine:
             "children": children_created,
             "best_fitness": self.best_fitness,
             "mean_fitness": self.mean_fitness,
-            "diversity": population_diversity(self.population),
+            "diversity": stats.diversity,
+            "extinctions": stats.extinctions
         }
 
     @property
@@ -708,8 +771,30 @@ module {name} #(
 endmodule
 """)
 
+    @staticmethod
+    def to_photonic_netlist(genome: Genome, pml_layers: int = 12) -> Dict[str, Any]:
+        """Emit a photonic netlist compatible with the optics PhotonicCompiler."""
+        return {
+            "version": "1.0",
+            "metadata": {
+                "genome_id": genome.genome_id,
+                "generation": genome.generation,
+                "num_neurons": genome.topology.num_neurons
+            },
+            "parameters": {
+                "wavelength": 1.55e-6,
+                "n_core": 3.48,
+                "n_clad": 1.44,
+                "pml_layers": pml_layers
+            },
+            "waveguides": [
+                {"id": f"wg_{i}", "width": 0.5, "length": 10.0} 
+                for i in range(genome.topology.num_neurons)
+            ]
+        }
 
-# ── Mutation Safety Bounds (Gap 1) ──────────────────────────────────
+
+# ── Mutation Safety Bounds ──────────────────────────────────
 
 
 @dataclass
@@ -751,7 +836,7 @@ class SafetyBounds:
         )
 
 
-# ── FPGA Tile Deployment Tracker (Gap 2) ────────────────────────────
+# ── FPGA Tile Deployment Tracker ────────────────────────────
 
 
 @dataclass
@@ -796,7 +881,7 @@ class TileDeploymentTracker:
         return used / self.num_tiles if self.num_tiles > 0 else 0.0
 
 
-# ── Fitness Hall of Fame (Gap 3) ────────────────────────────────────
+# ── Fitness Hall of Fame ────────────────────────────────────
 
 
 class HallOfFame:
@@ -825,7 +910,7 @@ class HallOfFame:
         return len(self.entries)
 
 
-# ── Island Model (Gap 4) ────────────────────────────────────────────
+# ── Island Model ────────────────────────────────────────────
 
 
 @dataclass
@@ -870,7 +955,7 @@ class IslandModel:
         return sum(len(isl.population) for isl in self.islands.values())
 
 
-# ── Genome Serialization (Gap 5) ────────────────────────────────────
+# ── Genome Serialization ────────────────────────────────────
 
 
 class GenomeSerializer:
@@ -898,7 +983,7 @@ class GenomeSerializer:
         return g
 
 
-# ── Novelty Search (Gap 6) ──────────────────────────────────────────
+# ── Novelty Search ──────────────────────────────────────────
 
 
 class NoveltyArchive:
@@ -929,7 +1014,7 @@ class NoveltyArchive:
         return len(self.archive)
 
 
-# ── Resource Budget (Gap 7) ─────────────────────────────────────────
+# ── Resource Budget ─────────────────────────────────────────
 
 
 @dataclass
@@ -950,7 +1035,7 @@ class ResourceBudget:
         return (len(violations) == 0, violations)
 
 
-# ── Extinction Events (Gap 8) ───────────────────────────────────────
+# ── Extinction Events ───────────────────────────────────────
 
 
 class ExtinctionDetector:
@@ -984,7 +1069,7 @@ class ExtinctionDetector:
         return killed
 
 
-# ── Co-Evolution (Predator-Prey) (Gap 9) ────────────────────────────
+# ── Co-Evolution (Predator-Prey) ────────────────────────────
 
 
 @dataclass
@@ -1044,7 +1129,7 @@ class CoevolutionArena:
         return len(self.predators) + len(self.prey)
 
 
-# ── Formal Safety Guard (Gap 10) ────────────────────────────────────
+# ── Formal Safety Guard ────────────────────────────────────
 
 
 @dataclass
@@ -1106,7 +1191,7 @@ class FormalSafetyGuard:
         return self.rejected / self.checked if self.checked > 0 else 0.0
 
 
-# ── Tournament Selection (Gap 11) ───────────────────────────────────
+# ── Tournament Selection ───────────────────────────────────
 
 
 class TournamentSelector:
@@ -1137,7 +1222,7 @@ class TournamentSelector:
         return [self.select(population, rng) for _ in range(n)]
 
 
-# ── Multi-Objective Pareto Front (Gap 12) ───────────────────────────
+# ── Multi-Objective Pareto Front ───────────────────────────
 
 
 def dominates(a: FitnessResult, b: FitnessResult) -> bool:
@@ -1178,7 +1263,7 @@ class ParetoFront:
         return len(self.front)
 
 
-# ── Age-Based Regulation (Gap 13) ───────────────────────────────────
+# ── Age-Based Regulation ───────────────────────────────────
 
 
 class AgeRegulator:
@@ -1197,7 +1282,7 @@ class AgeRegulator:
         return killed
 
 
-# ── Genome Bloat Control (Gap 14) ───────────────────────────────────
+# ── Genome Bloat Control ───────────────────────────────────
 
 
 @dataclass
@@ -1241,7 +1326,7 @@ class BloatPenalizer:
         return fitness
 
 
-# ── Fitness Sharing (Gap 15) ────────────────────────────────────────
+# ── Fitness Sharing ────────────────────────────────────────
 
 
 def shared_fitness(
@@ -1259,7 +1344,7 @@ def shared_fitness(
     return raw / max(1.0, niche_count)
 
 
-# ── Developmental Encoding / CPPN (Gap 16) ──────────────────────────
+# ── Developmental Encoding / CPPN ──────────────────────────
 
 
 class ActivationFunc(Enum):
@@ -1345,7 +1430,7 @@ class CPPNGenome:
         return len(self.edges)
 
 
-# ── HW-in-the-Loop Fitness Feedback (Gap 17) ────────────────────────
+# ── HW-in-the-Loop Fitness Feedback ────────────────────────
 
 
 @dataclass
@@ -1386,7 +1471,7 @@ class HWFitnessCollector:
         return len(self.reports)
 
 
-# ── Evolutionary Statistics (Gap 18) ────────────────────────────────
+# ── Evolutionary Statistics ────────────────────────────────
 
 
 @dataclass
@@ -1429,7 +1514,7 @@ class EvoStatisticsTracker:
         return self.history[-1].best_fitness - self.history[0].best_fitness
 
 
-# ── Genome Diff / Comparison (Gap 19) ───────────────────────────────
+# ── Genome Diff / Comparison ───────────────────────────────
 
 
 @dataclass
@@ -1462,7 +1547,7 @@ def genome_diff(a: Genome, b: Genome) -> GenomeDiff:
     )
 
 
-# ── Open-Ended Complexity Metric (Gap 20) ───────────────────────────
+# ── Open-Ended Complexity Metric ───────────────────────────
 
 
 def genome_complexity(genome: Genome) -> float:

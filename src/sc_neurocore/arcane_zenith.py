@@ -19,6 +19,7 @@ import numpy as np
 
 from sc_neurocore.neurons.models.arcane_neuron import ArcaneNeuron
 from sc_neurocore.plasticity import create_plasticity_layer
+from sc_neurocore.evo_substrate.evo_substrate import Genome
 
 
 class ArcaneZenithCognitiveCore:
@@ -99,6 +100,16 @@ class ArcaneZenithCognitiveCore:
 
         # Step the unified physical simulation one tick forward mapped to the mean bio rate
         self.step(float(mean_rate))
+
+    def step_from_genome(self, genome: Genome) -> None:
+        """Modulate phenomenological bounds leveraging a generated Evo Substrate Genome.
+
+        Evaluates the organism's parameters to drive structural novelty and progression.
+        """
+        self.neuron.tau_deep = genome.neuron.tau_deep
+        self.neuron.tau_fast = genome.neuron.tau_fast
+        self.neuron.tau_work = genome.neuron.tau_work
+        self.step(float(genome.topology.connectivity))
 
     def reset(self) -> None:
         self.neuron.reset()

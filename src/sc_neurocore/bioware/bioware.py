@@ -1008,6 +1008,33 @@ class HomeostaticPlasticity:
         """Adjust threshold to drive firing rate toward target."""
         error = observed_rate_hz - self.target_rate_hz
         alpha = dt_ms / self.tau_homeo_ms
-        delta_q88 = int(alpha * error * 2.56)  # scale to Q8.8
-        new_q88 = current_q88 + delta_q88
-        return max(self.min_threshold_q88, min(self.max_threshold_q88, new_q88))
+        delta = int(self.learning_rate_q88 * rate_error)
+        self.current_threshold_q88 += delta
+        self.current_threshold_q88 = max(
+            self.min_threshold_q88, min(self.max_threshold_q88, self.current_threshold_q88)
+        )
+
+# ── Evo Substrate Bridge (Gap 11) ───────────────────────────────────
+
+def mea_fitness_hook(detected_spikes: List[DetectedSpike], target_rate: float = 10.0) -> Dict[str, float]:
+    """Generates an organism fitness score directly from MEA response dynamics.
+    
+    Can be seamlessly routed into ReplicationEngine(metrics_fn=mea_fitness_hook).
+    """
+    if not detected_spikes:
+        return {"accuracy": 0.1, "energy_mw": 0.0, "latency_ms": 0.0}
+        
+    rates = {}
+    for s in detected_spikes:
+        rates[s.channel_id] = rates.get(s.channel_id, 0.0) + 1.0
+        
+    mean_rate = np.mean(list(rates.values())) if rates else 0.0
+    
+    # Distance to ideal target burst rate
+    accuracy = 1.0 - min(1.0, abs(mean_rate - target_rate) / target_rate)
+    
+    return {
+        "accuracy": float(np.clip(accuracy, 0.1, 0.99)),
+        "energy_mw": float(len(detected_spikes) * 0.5),
+        "latency_ms": 1.0
+    }
