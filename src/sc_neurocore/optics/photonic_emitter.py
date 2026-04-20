@@ -381,9 +381,7 @@ class CompilationResult:
         # kfactory backend rejects duplicate cell names in its process-wide
         # registry; pre-create the klayout cell with ``allow_duplicate`` so
         # repeated exports for the same target succeed.
-        kdb_cell = gf.kcl.create_cell(
-            f"SC_NeuroCore_Target_{self.target}", allow_duplicate=True
-        )
+        kdb_cell = gf.kcl.create_cell(f"SC_NeuroCore_Target_{self.target}", allow_duplicate=True)
         component = gf.Component(kdb_cell=kdb_cell)
         # Header label identifies the origin and records the compiled netlist
         # alongside the physical layout (TEXT layer 63/0).

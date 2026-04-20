@@ -20,7 +20,7 @@ import time
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict
 
 
 @dataclass
@@ -40,14 +40,16 @@ class MojoKernelRunner:
         if installed_mojo.exists():
             self._mojo_dir = installed_mojo.parent
             return
-        raise FileNotFoundError(
-            f"kernels.mojo not found. Run: pixi install && pixi run mojo build"
-        )
+        raise FileNotFoundError("kernels.mojo not found. Run: pixi install && pixi run mojo build")
 
     def build(self) -> bool:
         """Helper to invoke `mojo build` natively across the active working directory."""
         try:
-            subprocess.run([self._pixi_bin, "run", "mojo", "build", "kernels.mojo"], cwd=str(self._mojo_dir), check=True)
+            subprocess.run(
+                [self._pixi_bin, "run", "mojo", "build", "kernels.mojo"],
+                cwd=str(self._mojo_dir),
+                check=True,
+            )
             return True
         except Exception as e:
             print(f"[Mojo Runner] Build failed: {e}")
@@ -65,19 +67,21 @@ class MojoKernelRunner:
                 timeout=timeout_sec,
                 cwd=str(self._mojo_dir),
             )
-            
+
             timings = {}
             for line in result.stdout.splitlines():
                 if "ms" in line.lower() and ":" in line:
                     parts = line.split(":", 1)
                     if len(parts) == 2:
                         label = parts[0].strip()
-                        val_match = re.search(r"(\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s*ms", parts[1], re.IGNORECASE)
+                        val_match = re.search(
+                            r"(\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s*ms", parts[1], re.IGNORECASE
+                        )
                         if val_match:
                             timings[label] = float(val_match.group(1))
-            
+
             return timings
-            
+
         except subprocess.CalledProcessError as e:
             print(f"[Mojo Runner] Execution failed: {e.stderr}")
             return {}
@@ -85,7 +89,9 @@ class MojoKernelRunner:
             print(f"[Mojo Runner] Hard timeout of {timeout_sec}s exceeded.")
             return {}
         except FileNotFoundError:
-            print(f"[Mojo Runner] Pixi or Mojo completely missing at {self._pixi_bin}. Check installation bounds.")
+            print(
+                f"[Mojo Runner] Pixi or Mojo completely missing at {self._pixi_bin}. Check installation bounds."
+            )
             return {}
 
     def popcount(self, data: list[int]) -> int:
@@ -95,6 +101,7 @@ class MojoKernelRunner:
             raise NotImplementedError("Mojo IPC bindings pending v4.0")
         except Exception:
             from sc_neurocore.edge.bitstream import popcount_slice
+
             return popcount_slice(data)
 
     def lfsr_encode(self, seed: int, threshold: int, bits: int) -> list[int]:
@@ -103,5 +110,6 @@ class MojoKernelRunner:
             raise NotImplementedError("Mojo IPC bindings pending v4.0")
         except Exception:
             from sc_neurocore.edge.lfsr import Lfsr16
+
             lfsr = Lfsr16(seed)
             return lfsr.encode(threshold, bits)

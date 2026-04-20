@@ -542,12 +542,12 @@ class ReplicationEngine:
     def replicate(self, parent: Organism) -> Optional[Organism]:
         """Create a mutated child from a parent."""
         child_genome, mut_type = self.mutator.mutate(parent.genome)
-        
+
         if self.industrial_mode:
             result = self.safety_guard.check(child_genome)
             if not result.passed:
                 return None
-                
+
         child = Organism(
             genome=child_genome,
             birth_generation=self.generation,
@@ -561,12 +561,12 @@ class ReplicationEngine:
     def replicate_crossover(self, parent_a: Organism, parent_b: Organism) -> Optional[Organism]:
         """Create a child via crossover of two parents."""
         child_genome = self.crossover.crossover(parent_a.genome, parent_b.genome)
-        
+
         if self.industrial_mode:
             result = self.safety_guard.check(child_genome)
             if not result.passed:
                 return None
-                
+
         child = Organism(
             genome=child_genome,
             birth_generation=self.generation,
@@ -583,10 +583,12 @@ class ReplicationEngine:
             if org.alive:
                 metrics = metrics_fn(org.genome)
                 org.fitness = self.evaluator.evaluate(org.genome, metrics)
-                
+
                 if self.industrial_mode:
                     if org.fitness:
-                        org.fitness.composite = self.bloat_penalizer.penalize(org.fitness.composite, org.genome)
+                        org.fitness.composite = self.bloat_penalizer.penalize(
+                            org.fitness.composite, org.genome
+                        )
                         org.fitness.composite = shared_fitness(org, self.population)
                     self.hall_of_fame.update(org)
                     self.pareto_front.update(org)
@@ -597,7 +599,7 @@ class ReplicationEngine:
             killed = self.age_regulator.apply(self.population, self.generation)
             if self.extinction_detector.check(self.best_fitness):
                 killed += self.extinction_detector.apply(self.population, self.mutator.rng)
-        
+
         alive = [o for o in self.population if o.alive and o.fitness is not None]
         alive.sort(key=lambda o: o.fitness.composite, reverse=True)
 
@@ -624,18 +626,18 @@ class ReplicationEngine:
         # 3. Replicate from survivors
         survivors = list(self.population)
         children_created = 0
-        
+
         for i in range(len(survivors)):
             if len(self.population) >= self.max_population:
                 break
-                
+
             if self.industrial_mode:
                 parent = self.tournament.select(survivors, self.mutator.rng)
                 partner = self.tournament.select(survivors, self.mutator.rng)
             else:
                 parent = survivors[i]
                 partner = survivors[(i + 1) % len(survivors)] if len(survivors) > 1 else None
-            
+
             if parent is None:
                 continue
 
@@ -644,7 +646,7 @@ class ReplicationEngine:
                 child_added = self.replicate_crossover(parent, partner)
             else:
                 child_added = self.replicate(parent)
-                
+
             if child_added:
                 children_created += 1
 
@@ -654,7 +656,7 @@ class ReplicationEngine:
             best_fitness=self.best_fitness,
             mean_fitness=self.mean_fitness,
             diversity=population_diversity(self.population),
-            extinctions=self.extinction_detector.extinction_count if self.industrial_mode else 0
+            extinctions=self.extinction_detector.extinction_count if self.industrial_mode else 0,
         )
         if self.industrial_mode:
             self.stats_tracker.record(stats)
@@ -667,7 +669,7 @@ class ReplicationEngine:
             "best_fitness": self.best_fitness,
             "mean_fitness": self.mean_fitness,
             "diversity": stats.diversity,
-            "extinctions": stats.extinctions
+            "extinctions": stats.extinctions,
         }
 
     @property
@@ -779,18 +781,18 @@ endmodule
             "metadata": {
                 "genome_id": genome.genome_id,
                 "generation": genome.generation,
-                "num_neurons": genome.topology.num_neurons
+                "num_neurons": genome.topology.num_neurons,
             },
             "parameters": {
                 "wavelength": 1.55e-6,
                 "n_core": 3.48,
                 "n_clad": 1.44,
-                "pml_layers": pml_layers
+                "pml_layers": pml_layers,
             },
             "waveguides": [
-                {"id": f"wg_{i}", "width": 0.5, "length": 10.0} 
+                {"id": f"wg_{i}", "width": 0.5, "length": 10.0}
                 for i in range(genome.topology.num_neurons)
-            ]
+            ],
         }
 
 

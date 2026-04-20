@@ -8,9 +8,10 @@
 
 from sc_neurocore.debug.hil_server import HILServerDaemon
 
+
 class HILDebugger:
     """High-level wrapper for the HIL telemetry server."""
-    
+
     def __init__(self, port: int = 8081):
         self.daemon = HILServerDaemon(port=port)
 

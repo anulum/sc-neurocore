@@ -29,7 +29,9 @@ class FormalProofEngine:
 
         print("[Formal] Running formal checking across physical stochastic theorems...")
         try:
-            result = subprocess.run([self._lean_bin, str(self.proof_file)], capture_output=True, text=True, check=True)
+            result = subprocess.run(
+                [self._lean_bin, str(self.proof_file)], capture_output=True, text=True, check=True
+            )
             if "error" in result.stdout.lower() or "error" in result.stderr.lower():
                 print(f"[Formal] Failure natively detected: {result.stderr}")
                 return False
