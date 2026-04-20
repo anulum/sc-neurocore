@@ -31,8 +31,27 @@ class MojoKernelRunner:
     _pixi_bin: str = field(default_factory=lambda: os.path.expanduser("~/.pixi/bin/pixi"))
 
     def __post_init__(self):
-        if not (self._mojo_dir / "kernels.mojo").exists():
-            raise FileNotFoundError(f"kernels.mojo not found at {self._mojo_dir}")
+        # Prefer source-tree location, then installed package
+        mojo_file = self._mojo_dir / "kernels.mojo"
+        if mojo_file.exists():
+            return
+        # Installed package fallback (kernels.mojo should be in package data)
+        installed_mojo = Path(__file__).parent / "kernels.mojo"
+        if installed_mojo.exists():
+            self._mojo_dir = installed_mojo.parent
+            return
+        raise FileNotFoundError(
+            f"kernels.mojo not found. Run: pixi install && pixi run mojo build"
+        )
+
+    def build(self) -> bool:
+        """Helper to invoke `mojo build` natively across the active working directory."""
+        try:
+            subprocess.run([self._pixi_bin, "run", "mojo", "build", "kernels.mojo"], cwd=str(self._mojo_dir), check=True)
+            return True
+        except Exception as e:
+            print(f"[Mojo Runner] Build failed: {e}")
+            return False
 
     def run_benchmark(self, timeout_sec: int = 60) -> Dict[str, float]:
         """Runs the entire kernel suite and parses output times natively in MS."""
