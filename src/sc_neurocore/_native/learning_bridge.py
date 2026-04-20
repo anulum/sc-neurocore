@@ -928,4 +928,15 @@ try:
             raise ValueError(f"Unknown backend '{backend}'. Use 'torch', 'rust', or 'rust-wgpu'.")
 
 except ImportError:
-    pass
+    # torch unavailable — keep the module importable but surface a clear
+    # error if a caller actually tries to build a plasticity layer that
+    # needs torch. `create_plasticity_layer` is the public re-export in
+    # `src/sc_neurocore/plasticity.py`; without this stub the module-load
+    # import fails on every test that transitively imports plasticity.
+    def create_plasticity_layer(*args, **kwargs):  # type: ignore[no-redef]
+        raise ImportError(
+            "create_plasticity_layer requires PyTorch. Install the "
+            "'torch' extra (`pip install sc-neurocore[torch]`) or "
+            "pick the Rust / Rust-WGPU backend directly from "
+            "sc_neurocore._native.learning_bridge."
+        )
