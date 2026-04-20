@@ -49,12 +49,13 @@ class MojoKernelRunner:
             
             timings = {}
             for line in result.stdout.splitlines():
-                if "ms" in line and ":" in line:
-                    parts = line.rsplit(":", 1)
-                    label = parts[0].strip()
-                    val_match = re.search(r"([\d.e+-]+)\s*ms", parts[1])
-                    if val_match:
-                        timings[label] = float(val_match.group(1))
+                if "ms" in line.lower() and ":" in line:
+                    parts = line.split(":", 1)
+                    if len(parts) == 2:
+                        label = parts[0].strip()
+                        val_match = re.search(r"(\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s*ms", parts[1], re.IGNORECASE)
+                        if val_match:
+                            timings[label] = float(val_match.group(1))
             
             return timings
             
@@ -67,3 +68,21 @@ class MojoKernelRunner:
         except FileNotFoundError:
             print(f"[Mojo Runner] Pixi or Mojo completely missing at {self._pixi_bin}. Check installation bounds.")
             return {}
+
+    def popcount(self, data: list[int]) -> int:
+        """Call the Mojo SIMD kernel directly or fall back to Python."""
+        try:
+            # Mojo C-FFI pipeline target
+            raise NotImplementedError("Mojo IPC bindings pending v4.0")
+        except Exception:
+            from sc_neurocore.edge.bitstream import popcount_slice
+            return popcount_slice(data)
+
+    def lfsr_encode(self, seed: int, threshold: int, bits: int) -> list[int]:
+        """Call the Mojo LFSR-16 encoder directly or fall back to Python."""
+        try:
+            raise NotImplementedError("Mojo IPC bindings pending v4.0")
+        except Exception:
+            from sc_neurocore.edge.lfsr import Lfsr16
+            lfsr = Lfsr16(seed)
+            return lfsr.encode(threshold, bits)

@@ -6,6 +6,11 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — High-level Mojo SIMD kernel API bounds
 
-from sc_neurocore.accel.mojo.runner import MojoKernelRunner
+_HAS_MOJO = False
+try:
+    from .runner import MojoKernelRunner
+    _HAS_MOJO = True
+except Exception:
+    pass
 
-__all__ = ["MojoKernelRunner"]
+__all__ = ["MojoKernelRunner", "_HAS_MOJO"]
