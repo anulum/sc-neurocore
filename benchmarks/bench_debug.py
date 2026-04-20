@@ -70,9 +70,7 @@ def main() -> int:
         "ns_per_call": _ns_per_call(lambda: spike_diff(trace_a, trace_b), 1_000),
     }
     results["causal_chain_depth10"] = {
-        "ns_per_call": _ns_per_call(
-            lambda: causal_chain(trace_a, 0, 999, max_depth=10), 1_000
-        ),
+        "ns_per_call": _ns_per_call(lambda: causal_chain(trace_a, 0, 999, max_depth=10), 1_000),
     }
 
     doc = ScDoctor(initial_length=512)

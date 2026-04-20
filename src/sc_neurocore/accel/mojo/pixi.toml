@@ -12,4 +12,3 @@ mojo = ">=0.26"
 [tasks]
 run-kernels = "mojo run kernels.mojo"
 bench-kernels = "mojo run kernels.mojo"
-

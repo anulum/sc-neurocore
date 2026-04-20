@@ -1,7 +1,7 @@
-**VISION 2030: Supremacy Module Development**  
-**Status**: ACTIVE — Foundation Implemented (2026-04-17)  
-   
-**Path**: Gitignored sandbox for upfront development of future-wave capabilities.  
+**VISION 2030: Supremacy Module Development**
+**Status**: ACTIVE — Foundation Implemented (2026-04-17)
+
+**Path**: Gitignored sandbox for upfront development of future-wave capabilities.
 
 ## Module Status
 

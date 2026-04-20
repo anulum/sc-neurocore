@@ -18,9 +18,7 @@ import time
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
-SOLVER_DIR = os.path.join(
-    REPO_ROOT, "src", "sc_neurocore", "accel", "julia", "solvers"
-)
+SOLVER_DIR = os.path.join(REPO_ROOT, "src", "sc_neurocore", "accel", "julia", "solvers")
 
 
 def _resolve_julia() -> str:
