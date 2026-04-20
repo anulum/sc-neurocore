@@ -44,17 +44,27 @@ def _minimal_cfg(seed: int, pop: int = 8, gens: int = 3) -> str:
         "stagnation_gens": 10,
         "extinction_kill_fraction": 0.9,
         "mutation": {
-            "point_rate": 0.2, "point_sigma": 0.05,
-            "structural_rate": 0.05, "duplication_rate": 0.01,
-            "swap_rate": 0.02, "max_neurons": 1024, "min_neurons": 4,
+            "point_rate": 0.2,
+            "point_sigma": 0.05,
+            "structural_rate": 0.05,
+            "duplication_rate": 0.01,
+            "swap_rate": 0.02,
+            "max_neurons": 1024,
+            "min_neurons": 4,
         },
         "fitness": {
-            "accuracy_bias": 0.5, "accuracy_neuron_coef": 0.01,
-            "w_accuracy": 0.5, "w_energy": 0.3, "w_latency": 0.2,
+            "accuracy_bias": 0.5,
+            "accuracy_neuron_coef": 0.01,
+            "w_accuracy": 0.5,
+            "w_energy": 0.3,
+            "w_latency": 0.2,
         },
         "safety_bounds": {
-            "max_neurons": 1024, "min_neurons": 4, "max_layers": 16,
-            "max_bitstream": 4096, "min_bitstream": 32,
+            "max_neurons": 1024,
+            "min_neurons": 4,
+            "max_layers": 16,
+            "max_bitstream": 4096,
+            "min_bitstream": 32,
             "max_connectivity": 1.0,
         },
         "industrial_mode": True,
@@ -88,9 +98,15 @@ pytestmark = pytest.mark.skipif(
 def test_mojo_runner_produces_valid_schema():
     r = _run_mojo(_minimal_cfg(seed=7))
     required = {
-        "final_population", "stats_per_generation", "hall_of_fame",
-        "pareto_front", "lineage", "total_replications",
-        "safety_checked", "safety_rejected", "extinction_count",
+        "final_population",
+        "stats_per_generation",
+        "hall_of_fame",
+        "pareto_front",
+        "lineage",
+        "total_replications",
+        "safety_checked",
+        "safety_rejected",
+        "extinction_count",
     }
     assert set(r.keys()) >= required
 
@@ -105,8 +121,11 @@ def test_mojo_runner_lineage_records_have_full_schema():
     assert len(r["lineage"]) > 0
     for rec in r["lineage"]:
         assert set(rec.keys()) >= {
-            "genome_id", "parent_id", "generation",
-            "mutation_type", "fitness",
+            "genome_id",
+            "parent_id",
+            "generation",
+            "mutation_type",
+            "fitness",
         }
 
 
