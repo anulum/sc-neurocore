@@ -16,6 +16,7 @@ from sc_neurocore.bioware.bioware import (
     BCMPlasticity,
     BioAuditEntry,
     BioAuditLog,
+    BioHybridFrameResult,
     BioHybridSession,
     BiologicalSTDP,
     CultureHealth,
@@ -35,6 +36,7 @@ from sc_neurocore.bioware.bioware import (
     decode_bitstream_rate,
     detect_network_bursts,
     extract_lfp_power,
+    mea_fitness_hook,
 )
 
 
@@ -438,17 +440,36 @@ class TestEdgeCases:
 
 class TestSpikeSorter:
     def test_fit_and_assign(self):
-        spikes = [
-            DetectedSpike(channel=0, timestamp_s=0.0, amplitude_uv=-30),
-            DetectedSpike(channel=0, timestamp_s=0.01, amplitude_uv=-60),
-            DetectedSpike(channel=0, timestamp_s=0.02, amplitude_uv=-90),
-        ]
+        # SpikeSorter clusters on the waveform shape, not the scalar
+        # amplitude — construct three clearly distinct waveforms so PCA +
+        # KMeans have enough variance to separate them into distinct
+        # units. Each shape is a different half-sine + noise-free profile.
+        pytest.importorskip("sklearn")  # cluster backend
+        rng = np.random.default_rng(seed=42)
+        t = np.linspace(0.0, 1.0, 32, dtype=np.float64)
+        shapes = {
+            0: -30.0 * np.sin(np.pi * t),  # shallow early peak
+            1: -60.0 * np.sin(np.pi * t) ** 2,  # deeper, broader
+            2: -90.0 * np.exp(-((t - 0.5) / 0.1) ** 2),  # narrow spike
+        }
+        spikes: list[DetectedSpike] = []
+        for unit, base in shapes.items():
+            for rep in range(6):  # 6 copies per unit = 18 total
+                wf = base + rng.normal(0.0, 1.5, size=base.shape)
+                spikes.append(
+                    DetectedSpike(
+                        channel=0,
+                        timestamp_s=rep * 0.01 + unit * 0.1,
+                        amplitude_uv=float(wf.min()),
+                        waveform=wf,
+                    )
+                )
         sorter = SpikeSorter(num_units=3)
         sorter.fit(spikes)
         sorted_spikes = sorter.assign(spikes)
-        assert len(sorted_spikes) == 3
-        units = set(s.unit_id for s in sorted_spikes)
-        assert len(units) > 1
+        assert len(sorted_spikes) == len(spikes)
+        units = {s.unit_id for s in sorted_spikes}
+        assert len(units) > 1, f"PCA+KMeans produced a single cluster: {units}"
 
     def test_no_fit_returns_original(self):
         sorter = SpikeSorter(num_units=3)
@@ -697,3 +718,130 @@ class TestHomeostaticPlasticity:
         assert new <= 512
         new = hp.update_threshold(70, observed_rate_hz=0.0, dt_ms=10000.0)
         assert new >= 64
+
+
+# ── BioHybridFrameResult — dataclass + mapping dual interface ──────────
+
+
+class TestBioHybridFrameResult:
+    """The packet returned by ``BioHybridSession.process_frame`` must be
+    both a typed dataclass (new callers) and a read-only mapping view
+    (legacy callers that did ``result["round"]``). Both surfaces carry
+    identical data; the mapping wraps the dataclass, not a shadow dict.
+    """
+
+    def _make(self, **overrides) -> BioHybridFrameResult:
+        base: dict = dict(
+            round=3,
+            num_spikes=12,
+            num_aer_events=12,
+            num_bitstreams=4,
+            num_opto_pulses=2,
+            latency_us=1234.5,
+            health={"score": 0.95},
+            spikes=[],
+            aer_events=[],
+            bitstreams={},
+            opto_pulses=[],
+        )
+        base.update(overrides)
+        return BioHybridFrameResult(**base)
+
+    def test_attribute_access(self):
+        r = self._make()
+        assert r.round == 3
+        assert r.latency_us == pytest.approx(1234.5)
+        assert r.health["score"] == pytest.approx(0.95)
+
+    def test_dict_subscript_matches_attribute(self):
+        r = self._make()
+        assert r["round"] == r.round
+        assert r["latency_us"] == r.latency_us
+        assert r["health"] is r.health  # same object, not a copy
+
+    def test_contains_reports_field_names(self):
+        r = self._make()
+        assert "round" in r
+        assert "latency_us" in r
+        assert "not_a_field" not in r
+        assert 42 not in r  # non-string keys are not fields
+
+    def test_unknown_key_raises_keyerror(self):
+        r = self._make()
+        with pytest.raises(KeyError, match="nope"):
+            _ = r["nope"]
+
+    def test_private_attribute_hidden_from_mapping(self):
+        # Mapping view must not leak Python dunder / private names.
+        r = self._make()
+        with pytest.raises(KeyError):
+            _ = r["__class__"]
+
+    def test_keys_returns_declared_fields(self):
+        r = self._make()
+        assert set(r.keys()) == {
+            "round",
+            "num_spikes",
+            "num_aer_events",
+            "num_bitstreams",
+            "num_opto_pulses",
+            "latency_us",
+            "health",
+            "spikes",
+            "aer_events",
+            "bitstreams",
+            "opto_pulses",
+        }
+
+
+# ── mea_fitness_hook — evo_substrate fitness adaptor ───────────────────
+
+
+class TestMEAFitnessHook:
+    """``mea_fitness_hook`` converts MEA spike dynamics into the
+    ``{"accuracy", "energy_mw", "latency_ms"}`` triple consumed by the
+    evo_substrate ``ReplicationEngine`` fitness function.
+    """
+
+    def test_empty_spikes_returns_floor(self):
+        r = mea_fitness_hook([])
+        assert r == {"accuracy": 0.1, "energy_mw": 0.0, "latency_ms": 0.0}
+
+    def test_near_target_rate_scores_high(self):
+        # 10 spikes on a single channel, target_rate=10 → mean_rate = 10 → accuracy 0.99 ceiling.
+        spikes = [
+            DetectedSpike(channel=0, timestamp_s=i * 0.01, amplitude_uv=-40.0)
+            for i in range(10)
+        ]
+        r = mea_fitness_hook(spikes, target_rate=10.0)
+        assert r["accuracy"] == pytest.approx(0.99, abs=1e-9)
+
+    def test_off_target_rate_penalised(self):
+        # 100 spikes on one channel, target 10 → rate_error ratio = 9 → accuracy floor.
+        spikes = [
+            DetectedSpike(channel=0, timestamp_s=i * 0.001, amplitude_uv=-40.0)
+            for i in range(100)
+        ]
+        r = mea_fitness_hook(spikes, target_rate=10.0)
+        assert r["accuracy"] == pytest.approx(0.1, abs=1e-9)
+
+    def test_energy_scales_with_spike_count(self):
+        spikes = [DetectedSpike(channel=0, timestamp_s=0.0, amplitude_uv=-40.0)] * 20
+        r = mea_fitness_hook(spikes)
+        assert r["energy_mw"] == pytest.approx(20 * 0.5)
+
+    def test_target_rate_zero_returns_floor(self):
+        spikes = [DetectedSpike(channel=0, timestamp_s=0.0, amplitude_uv=-40.0)]
+        r = mea_fitness_hook(spikes, target_rate=0.0)
+        assert r["accuracy"] == pytest.approx(0.1, abs=1e-9)
+
+    def test_channel_key_used_not_channel_id(self):
+        # Regression guard: previous implementation accessed ``s.channel_id``
+        # which doesn't exist on DetectedSpike and raised AttributeError on
+        # any non-empty input.
+        spikes = [
+            DetectedSpike(channel=0, timestamp_s=0.0, amplitude_uv=-40.0),
+            DetectedSpike(channel=1, timestamp_s=0.0, amplitude_uv=-40.0),
+        ]
+        r = mea_fitness_hook(spikes)
+        assert {"accuracy", "energy_mw", "latency_ms"} == set(r.keys())

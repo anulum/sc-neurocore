@@ -71,6 +71,7 @@ class TestArcaneIsolation:
             "novelty",
             "surprise",
             "prediction",
+            "identity_drift",
             "meta_lr",
             "total_steps",
         }

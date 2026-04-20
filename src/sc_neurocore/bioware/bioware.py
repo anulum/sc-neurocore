@@ -38,7 +38,7 @@ from __future__ import annotations
 
 import hashlib
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from enum import Enum
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
@@ -469,7 +469,13 @@ class CultureHealth:
 
 @dataclass
 class BioHybridFrameResult:
-    """Strictly typed output packet detailing a full closed-loop step."""
+    """Strictly typed output packet detailing a full closed-loop step.
+
+    Behaves both as a dataclass (``result.round``) and, for backward
+    compatibility with pre-dataclass callers, as a mapping view of its
+    fields (``result["round"]``, ``"latency_us" in result``,
+    ``dict(result)``). The mapping surface is read-only.
+    """
 
     round: int
     num_spikes: int
@@ -482,6 +488,22 @@ class BioHybridFrameResult:
     aer_events: List[AEREvent]
     bitstreams: Dict[int, np.ndarray]
     opto_pulses: List[OptogeneticPulse]
+
+    def __getitem__(self, key: str) -> Any:
+        if not isinstance(key, str) or key.startswith("_"):
+            raise KeyError(key)
+        try:
+            return getattr(self, key)
+        except AttributeError as exc:
+            raise KeyError(key) from exc
+
+    def __contains__(self, key: object) -> bool:
+        if not isinstance(key, str):
+            return False
+        return key in {f.name for f in fields(self)}
+
+    def keys(self) -> List[str]:
+        return [f.name for f in fields(self)]
 
 
 @dataclass
@@ -596,20 +618,28 @@ class SpikeSorter:
     _kmeans: Any = field(default=None, repr=False)
 
     def fit(self, spikes: List[DetectedSpike]) -> None:
-        """Fit PCA and KMeans models sequentially on available waveforms."""
-        try:
-            from sklearn.decomposition import PCA
-            from sklearn.cluster import KMeans
-        except ImportError:
-            raise ImportError(
-                "SpikeSorter requires `scikit-learn`. Please install it to enable PCA clustering."
-            )
+        """Fit PCA and KMeans models sequentially on available waveforms.
 
+        Silently no-ops (leaves ``_pca``/``_kmeans`` as ``None``) when
+        fewer than ``num_units`` waveforms are present — sklearn is only
+        imported in the path that actually needs it, so empty or
+        amplitude-only spike lists don't require scikit-learn.
+        """
         waveforms = [s.waveform for s in spikes if s.waveform is not None]
         if len(waveforms) < self.num_units:
             self._pca = None
             self._kmeans = None
             return
+
+        try:
+            from sklearn.cluster import KMeans
+            from sklearn.decomposition import PCA
+        except ImportError as exc:
+            raise ImportError(
+                "SpikeSorter.fit requires scikit-learn to cluster waveforms. "
+                "Install with `pip install scikit-learn` or "
+                "`pip install 'sc-neurocore[bioware]'`."
+            ) from exc
 
         waves_array = np.vstack(waveforms)
         self._pca = PCA(n_components=min(self.n_components, len(waveforms), waves_array.shape[1]))
@@ -1005,36 +1035,55 @@ class HomeostaticPlasticity:
         observed_rate_hz: float,
         dt_ms: float,
     ) -> int:
-        """Adjust threshold to drive firing rate toward target."""
+        """Adjust threshold to drive firing rate toward target.
+
+        Proportional homeostatic controller on a Q8.8 fixed-point
+        threshold. ``alpha = dt_ms / tau_homeo_ms`` is the integration
+        weight over the time step; the rate error (``observed − target``)
+        is scaled by ``alpha·256`` so that a 1 Hz error integrated over
+        one full time-constant shifts the threshold by 1.0 Q8.8 unit
+        (i.e. by ``256`` in integer representation). Result clamped to
+        ``[min_threshold_q88, max_threshold_q88]``.
+        """
         error = observed_rate_hz - self.target_rate_hz
         alpha = dt_ms / self.tau_homeo_ms
-        delta = int(self.learning_rate_q88 * rate_error)
-        self.current_threshold_q88 += delta
-        self.current_threshold_q88 = max(
-            self.min_threshold_q88, min(self.max_threshold_q88, self.current_threshold_q88)
-        )
+        delta_q88 = int(alpha * error * 256.0)
+        new_q88 = current_q88 + delta_q88
+        return max(self.min_threshold_q88, min(self.max_threshold_q88, new_q88))
 
 # ── Evo Substrate Bridge (Gap 11) ───────────────────────────────────
 
-def mea_fitness_hook(detected_spikes: List[DetectedSpike], target_rate: float = 10.0) -> Dict[str, float]:
-    """Generates an organism fitness score directly from MEA response dynamics.
-    
-    Can be seamlessly routed into ReplicationEngine(metrics_fn=mea_fitness_hook).
+def mea_fitness_hook(
+    detected_spikes: List[DetectedSpike],
+    target_rate: float = 10.0,
+) -> Dict[str, float]:
+    """Organism fitness metrics derived from MEA response dynamics.
+
+    Designed to plug into the evo_substrate
+    ``ReplicationEngine(metrics_fn=mea_fitness_hook)`` — returns the
+    ``{"accuracy", "energy_mw", "latency_ms"}`` triple the engine scores.
+
+    Accuracy is a bounded distance to the target mean per-channel spike
+    count (``target_rate``); ``energy_mw`` is a proxy (0.5 mW / spike);
+    ``latency_ms`` is a constant placeholder for the round-trip time
+    budget of the closed-loop system.
     """
     if not detected_spikes:
         return {"accuracy": 0.1, "energy_mw": 0.0, "latency_ms": 0.0}
-        
-    rates = {}
+
+    counts: Dict[int, float] = {}
     for s in detected_spikes:
-        rates[s.channel_id] = rates.get(s.channel_id, 0.0) + 1.0
-        
-    mean_rate = np.mean(list(rates.values())) if rates else 0.0
-    
-    # Distance to ideal target burst rate
-    accuracy = 1.0 - min(1.0, abs(mean_rate - target_rate) / target_rate)
-    
+        counts[s.channel] = counts.get(s.channel, 0.0) + 1.0
+
+    mean_rate = float(np.mean(list(counts.values()))) if counts else 0.0
+
+    # Normalised distance to target rate → accuracy ∈ [0.1, 0.99].
+    if target_rate > 0.0:
+        accuracy = 1.0 - min(1.0, abs(mean_rate - target_rate) / target_rate)
+    else:
+        accuracy = 0.1
     return {
         "accuracy": float(np.clip(accuracy, 0.1, 0.99)),
         "energy_mw": float(len(detected_spikes) * 0.5),
-        "latency_ms": 1.0
+        "latency_ms": 1.0,
     }
