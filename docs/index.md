@@ -16,7 +16,7 @@ FPGA deployment.
 
 - **173 neuron models** — McCulloch-Pitts (1943) through ArcaneNeuron (2026), 9 hardware chip emulators, 9 AI-optimised
 - **173 Rust neuron models** — PyO3 bindings, 160-model NetworkRunner with Rayon parallelism
-- **ArcaneNeuron** — flagship self-referential cognition model with 5 coupled subsystems (fast/working/deep/gate/predictor)
+- **ArcaneNeuron** — primary self-referential cognition model with 3 coupled compartments (fast / working / deep) + attention gate + self-model predictor
 - **Identity substrate** — persistent spiking network with checkpointing, trace encoding/decoding, L16 Director control
 - **Network simulation** — Population-Projection-Network with 3 backends (Python, Rust, MPI)
 - **MPI distributed** — billion-neuron scale via mpi4py

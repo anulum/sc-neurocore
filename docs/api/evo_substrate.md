@@ -567,7 +567,7 @@ the NumPy reference (bit-exact). Julia / Go / Mojo versions are
 honest parity references for benchmarking, not called in the Python
 hot path.
 
-### 7.3 Whole-process industrial runners (4-backend flagship)
+### 7.3 Whole-process industrial runners (4-backend parity set)
 
 Beyond the per-kernel dispatch surface above, each of the four
 compilers ships a **whole-process** evolve runner — the entire
@@ -672,7 +672,7 @@ Measured 2026-04-20 on i5-11600K / CPython 3.12.3:
   and compare the JSON. Rust ↔ Julia is byte-exact; any mismatch
   indicates a regression in one of them.
 
-#### 7.3.4 Testing the 4-backend flagship
+#### 7.3.4 Testing the 4-backend parity set
 
 * Rust: `cargo test --release --features pyo3_bindings --manifest-path
   crates/evo_substrate_core/Cargo.toml` — 17 unit tests.

@@ -2,7 +2,7 @@
 
 # Tutorial 34: ArcaneNeuron — Self-Referential Cognition
 
-ArcaneNeuron is the flagship AI-optimized neuron model in SC-NeuroCore. It couples
+ArcaneNeuron is the primary AI-optimised neuron model in SC-NeuroCore. It couples
 five subsystems in a single coherent ODE: fast processing, working memory, deep
 context accumulation, learned attention gating, and a forward self-model (predictor).
 No equivalent exists in any other toolkit.

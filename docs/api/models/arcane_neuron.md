@@ -698,7 +698,7 @@ See `tests/test_model_arcane_neuron.py` (296 lines). No bugs found.
     bit-exact match).
 
 13. **29 tests — highest coverage:** Most tested single model in
-    SC-NeuroCore, reflecting its flagship status.
+    SC-NeuroCore, reflecting its headline status.
 
 14. **~27K steps/s:** The most computationally expensive model per step,
     but still fast enough for real-time network simulation of ~100 neurons.
