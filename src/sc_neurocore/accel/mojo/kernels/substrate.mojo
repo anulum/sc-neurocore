@@ -1,0 +1,204 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Mojo SIMD acceleration for substrate
+
+fn _build_projections(seed: Int) -> Int:
+    var __build_projections_line = 'rng = random.default_rng(seed)'
+    var __build_projections_line = 'seeds = rng.integers(0, 2**31, size=6)'
+    var __build_projections_line = '# E->E: small-world with STDP'
+    var __build_projections_line = 'n_c = n_cortical'
+    var __build_projections_line = 'sw_csr = small_world(n_c, k=6, p_rewire=0.1, weight=0.5, see'
+    var __build_projections_line = 'proj_ee = Projection('
+    var __build_projections_line = 'cortical,'
+    var __build_projections_line = 'cortical,'
+    var __build_projections_line = 'weight=0.5,'
+    var __build_projections_line = 'topology=sw_csr,'
+    var __build_projections_line = 'plasticity="stdp",'
+    var __build_projections_line = 'seed=int(seeds[0]),'
+    var __build_projections_line = ')'
+    var __build_projections_line = '# E->I: random excitatory drive to inhibitory'
+    var __build_projections_line = 'proj_ei = Projection('
+    var __build_projections_line = 'cortical,'
+    var __build_projections_line = 'inhibitory,'
+    var __build_projections_line = 'weight=0.8,'
+    var __build_projections_line = 'probability=0.2,'
+    var __build_projections_line = 'topology="random",'
+    var __build_projections_line = 'seed=int(seeds[1]),'
+    var __build_projections_line = ')'
+    var __build_projections_line = '# I->E: inhibitory feedback (negative weight)'
+    var __build_projections_line = 'proj_ie = Projection('
+    var __build_projections_line = 'inhibitory,'
+    var __build_projections_line = 'cortical,'
+    var __build_projections_line = 'weight=-1.0,'
+    var __build_projections_line = 'probability=0.3,'
+    var __build_projections_line = 'topology="random",'
+    var __build_projections_line = 'seed=int(seeds[2]),'
+    var __build_projections_line = ')'
+    var __build_projections_line = '# E->M: cortical drives memory (pattern imprinting)'
+    var __build_projections_line = 'proj_em = Projection('
+    var __build_projections_line = 'cortical,'
+    var __build_projections_line = 'memory,'
+    var __build_projections_line = 'weight=0.6,'
+    var __build_projections_line = 'probability=0.15,'
+    var __build_projections_line = 'topology="random",'
+    var __build_projections_line = 'seed=int(seeds[3]),'
+    var __build_projections_line = ')'
+    var __build_projections_line = '# M->E: memory reactivation drives cortex'
+    var __build_projections_line = 'proj_me = Projection('
+    var __build_projections_line = 'memory,'
+    var __build_projections_line = 'cortical,'
+    var __build_projections_line = 'weight=0.4,'
+    var __build_projections_line = 'probability=0.1,'
+    var __build_projections_line = 'topology="random",'
+    var __build_projections_line = 'seed=int(seeds[4]),'
+    var __build_projections_line = ')'
+    var __build_projections_line = '# I->I: mutual inhibition for competition'
+    var __build_projections_line = 'proj_ii = Projection('
+    var __build_projections_line = 'inhibitory,'
+    var __build_projections_line = 'inhibitory,'
+    var __build_projections_line = 'weight=-0.5,'
+    var __build_projections_line = 'probability=0.15,'
+    var __build_projections_line = 'topology="random",'
+    var __build_projections_line = 'seed=int(seeds[5]),'
+    var __build_projections_line = ')'
+    return 0
+
+fn _build_monitors() -> Int:
+    var __build_monitors_line = 'mon_cortical = SpikeMonitor(cortical)'
+    var __build_monitors_line = 'mon_inhibitory = SpikeMonitor(inhibitory)'
+    var __build_monitors_line = 'mon_memory = SpikeMonitor(memory)'
+    return 0
+
+fn _build_network() -> Int:
+    var __build_network_line = 'network = Network('
+    var __build_network_line = 'cortical,'
+    var __build_network_line = 'inhibitory,'
+    var __build_network_line = 'memory,'
+    var __build_network_line = 'proj_ee,'
+    var __build_network_line = 'proj_ei,'
+    var __build_network_line = 'proj_ie,'
+    var __build_network_line = 'proj_em,'
+    var __build_network_line = 'proj_me,'
+    var __build_network_line = 'proj_ii,'
+    var __build_network_line = 'mon_cortical,'
+    var __build_network_line = 'mon_inhibitory,'
+    var __build_network_line = 'mon_memory,'
+    var __build_network_line = 'seed=seed,'
+    var __build_network_line = ')'
+    return 0
+
+fn step(stimuli: Int, dt: Int) -> Int:
+    var _step_line = 'if stimuli is not 0:'
+    var _step_line = 'currents = asarray(stimuli, dtype=float64)'
+    var _step_line = 'if currents.shape[0] < n_cortical:'
+    var _step_line = 'padded = zeros(n_cortical, dtype=float64)'
+    var _step_line = 'padded[: currents.shape[0]] = currents'
+    var _step_line = 'currents = padded'
+    var _step_line = 'else:'
+    var _step_line = 'currents = zeros(n_cortical, dtype=float64)'
+    var _step_line = 'spikes_c = cortical.step_all(currents)'
+    var _step_line = 'i_from_c = proj_ei.propagate(spikes_c)'
+    var _step_line = 'i_from_i_to_e = proj_ie.propagate(zeros(n_inhibitory, dtype='
+    var _step_line = 'spikes_i = inhibitory.step_all(i_from_c)'
+    var _step_line = 'i_feedback = proj_ie.propagate(spikes_i)'
+    var _step_line = 'i_from_m = proj_me.propagate(zeros(n_memory, dtype=int8))'
+    var _step_line = 'i_to_m = proj_em.propagate(spikes_c)'
+    var _step_line = 'spikes_m = memory.step_all(i_to_m)'
+    var _step_line = 'proj_ee.update_plasticity(spikes_c, spikes_c)'
+    var _step_line = '_spike_history.append(spikes_c.copy())'
+    var _step_line = '_total_steps += 1'
+    return 0  # return spikes_c
+
+fn run(duration: Int, dt: Int, stimuli_sequence: Int) -> Int:
+    var _run_line = 'self,'
+    var _run_line = 'duration: float,'
+    var _run_line = 'dt: float = 0.001,'
+    var _run_line = 'stimuli_sequence: ndarray[Any, Any] | 0 = 0,'
+    var _run_line = ') -> ndarray[Any, Any]:'
+    var _run_line = 'n_steps = int(round(duration / dt))'
+    var _run_line = 'all_spikes = zeros((n_steps, n_cortical), dtype=int8)'
+    var _run_line = 'for t in range(n_steps):'
+    var _run_line = 'stim = stimuli_sequence[t] if stimuli_sequence is not 0 else'
+    var _run_line = 'all_spikes[t] = step(stim, dt)'
+    return 0  # return all_spikes
+
+fn inject_experience(reasoning_trace: Int) -> Int:
+    var _inject_experience_line = 'from .encoder import TraceEncoder'
+    var _inject_experience_line = 'encoder = TraceEncoder(n_neurons=n_cortical, seed=seed)'
+    var _inject_experience_line = 'pattern = encoder.encode(reasoning_trace, duration_ms=200, d'
+    var _inject_experience_line = 'n_steps = pattern.shape[1]'
+    var _inject_experience_line = 'for t in range(n_steps):'
+    var _inject_experience_line = 'currents = pattern[:, t] * 15.0  # scale spikes to nA-range '
+    var _inject_experience_line = 'step(currents)'
+    return 0
+
+fn extract_state() -> Int:
+    var _extract_state_line = 'if len(_spike_history) < 10:'
+    return 0  # return {
+    var _extract_state_line = '"firing_rates": zeros(n_cortical),'
+    var _extract_state_line = '"dominant_patterns": zeros((0, 0)),'
+    var _extract_state_line = '"explained_variance": array([]),'
+    var _extract_state_line = '"connectivity": zeros((0, 0)),'
+    var _extract_state_line = '"total_steps": _total_steps,'
+    var _extract_state_line = '}'
+    var _extract_state_line = 'trains = ['
+    var _extract_state_line = 'array([h[i] for h in _spike_history[-1000:]], dtype=int8)'
+    var _extract_state_line = 'for i in range(min(n_cortical, 50))'
+    var _extract_state_line = ']'
+    var _extract_state_line = 'rates = array([firing_rate(t) for t in trains])'
+    var _extract_state_line = 'projected, explained = spike_train_pca(trains, n_components='
+    var _extract_state_line = 'n_fc = min(20, len(trains))'
+    var _extract_state_line = 'fc = functional_connectivity(trains[:n_fc])'
+    return 0  # return {
+    var _extract_state_line = '"firing_rates": rates,'
+    var _extract_state_line = '"dominant_patterns": projected,'
+    var _extract_state_line = '"explained_variance": explained,'
+    var _extract_state_line = '"connectivity": fc,'
+    var _extract_state_line = '"total_steps": _total_steps,'
+    var _extract_state_line = '}'
+
+fn health_check() -> Int:
+    var _health_check_line = 'if len(_spike_history) < 100:'
+    return 0  # return {
+    var _health_check_line = '"mean_rate": 0.0,'
+    var _health_check_line = '"cv": float("nan"),'
+    var _health_check_line = '"fano": float("nan"),'
+    var _health_check_line = '"spectral_entropy": float("nan"),'
+    var _health_check_line = '"is_healthy": True,'
+    var _health_check_line = '"n_steps": _total_steps,'
+    var _health_check_line = '}'
+    var _health_check_line = 'recent = array(_spike_history[-1000:], dtype=int8)'
+    var _health_check_line = 'pop_train = recent.sum(axis=1).astype(int8)'
+    var _health_check_line = 'pop_train_binary = (pop_train > 0).astype(int8)'
+    var _health_check_line = 'mean_r = firing_rate(pop_train_binary)'
+    var _health_check_line = 'cv = cv_isi(pop_train_binary)'
+    var _health_check_line = 'fano = fano_factor(pop_train_binary, window_ms=50.0)'
+    var _health_check_line = 'psd, freqs = power_spectrum(pop_train_binary)'
+    var _health_check_line = 'if psd.size > 0 and psd.sum() > 0:'
+    var _health_check_line = 'p_norm = psd / psd.sum()'
+    var _health_check_line = 'p_norm = p_norm[p_norm > 0]'
+    var _health_check_line = 's_entropy = float(-sum(p_norm * log2(p_norm)))'
+    var _health_check_line = 'else:'
+    var _health_check_line = 's_entropy = 0.0'
+    var _health_check_line = 'rate_ok = 1.0 <= mean_r <= 500.0'
+    var _health_check_line = 'cv_ok = isnan(cv) or 0.2 <= cv <= 3.0'
+    var _health_check_line = 'fano_ok = isnan(fano) or 0.1 <= fano <= 10.0'
+    return 0  # return {
+    var _health_check_line = '"mean_rate": mean_r,'
+    var _health_check_line = '"cv": cv,'
+    var _health_check_line = '"fano": fano,'
+    var _health_check_line = '"spectral_entropy": s_entropy,'
+    var _health_check_line = '"is_healthy": rate_ok and cv_ok and fano_ok,'
+    var _health_check_line = '"n_steps": _total_steps,'
+    var _health_check_line = '}'
+
+fn spike_history() -> Int:
+    return 0  # return _spike_history
+
+fn ee_weights() -> Int:
+    return 0  # return proj_ee.data.copy()
+

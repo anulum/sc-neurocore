@@ -185,6 +185,19 @@ Rust + Verilog paths, bit-true guarantees, mode parameter (background/snippet).
 ruff 0.15.9, mkdocs strict mode, typos exceptions, Vivado gitignore,
 dependabot PRs merged.
 
+## v3.14 — ArcaneZenith Cognitive Core & Hardened Interfaces (ship now) ✓
+
+### ~~ArcaneZenith Cognitive Core Primitive~~ ✓
+
+- Shipped unified `sc_neurocore.arcane_zenith.create_arcane_neuron_with_zenith_plasticity` factory combining the novelty-driven `ArcaneNeuron` identity structure with Project Zenith plasticity rules driving the internal boundaries natively (tau_deep, novelty threshold, confidence, and lr_base bounds).
+- Extracted and tracked `identity_drift` across continuous execution lifetimes for explicit verification bounds predictability.
+
+### ~~Zenith Backend API Parity and WGPU Determinism~~ ✓
+
+- Configured Python TorchRuleLayer natively parsing exact keyword parameter boundaries (tau_plus, tau_minus, tau_e) uniformly across framework targets.
+- Enforced complete WGSL global seed matching via `set_wgpu_layer_seed` native ABI to fully guarantee cross-platform execution predictability.
+- Finalized explicit state serialization boundaries integrating `get_state_dict()` proxies over Torch, Rust, and Wgpu backends to support familiar PyTorch-style checkpoint loading protocols.
+
 ## v4.0 — Physical FPGA Demos + Production (target: Q3 2026)
 
 ### FPGA deployment proof ~~(P0 blocker)~~ PARTIALLY DONE
@@ -237,6 +250,14 @@ Population-Projection-Network with Python, Rust, MPI backends. Moved to v3.12.
 
 Recipe ready for distribution. Moved to v3.12.
 
+### Mixed-precision plasticity (Zenith)
+
+Allow per-rule or per-synapse bit-width selection inside the plasticity update (e.g., 8-bit traces for ELIGENT, 16-bit for BCM). Native support over verifying surfaces.
+
+### Online meta-learning loop (ArcaneNeuron)
+
+Built-in outer loop using Zenith’s mapping controlling internal thresholds adapting on dynamic environments continuously. Full demo notebook deployment scheduled.
+
 ## v4.1 — Community & Ecosystem (target: Q4 2026)
 
 ### Community seeding
@@ -252,6 +273,12 @@ Recipe ready for distribution. Moved to v3.12.
 - Intel Loihi 2: LAVA framework backend adapter
 - SpiNNaker2: SpiNNTools compilation target
 - Target: default middleware layer for neuromorphic silicon
+
+### Zenith BCI & Neuro-symbolic Primitives
+
+- **BCI closed-loop primitive**: `ZenithBCILoop` module translating Neuralink/Neuropixels continuous streams dropping latency guarantees beneath 10 ms constraints via parallel GPU interfaces.
+- **Online fault-injection + resilience mode**: Add radiation-hard bit-flip verification logic directly integrating across biological pathways for satellite deployment.
+- **Neuro-symbolic self-verification trace**: Leverage ArcaneNeuron identity compartments to export a short symbolic "reasoning log" capturing novelty/internal shift.
 
 ### Industrial applications
 

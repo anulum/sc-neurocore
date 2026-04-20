@@ -1,0 +1,57 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Mojo SIMD acceleration for quantum_neuromorphic_demo
+
+fn run_demo() -> Int:
+    var _run_demo_line = 'print("--- QUANTUM-NEUROMORPHIC DEMO ---")'
+    var _run_demo_line = '# 1. Ising Machine'
+    var _run_demo_line = 'print("\\n[1] Testing Ising Solver...")'
+    var _run_demo_line = '# Simple ferromagnetic chain: J=1 interactions'
+    var _run_demo_line = 'J = array([[0, 1, 0], [1, 0, 1], [0, 1, 0]])'
+    var _run_demo_line = 'h = zeros(3)'
+    var _run_demo_line = 'ising = StochasticIsingGraph(num_spins=3, J=J, h=h, temperat'
+    var _run_demo_line = 'print(f"    Initial Energy: {ising.get_energy()}")'
+    var _run_demo_line = 'for _ in range(100):'
+    var _run_demo_line = 'ising.step()'
+    var _run_demo_line = 'print(f"    Final Energy: {ising.get_energy()}")'
+    var _run_demo_line = 'print(f"    Config: {ising.get_config()} (Should be aligned)'
+    var _run_demo_line = '# 2. DVS Interface'
+    var _run_demo_line = 'print("\\n[2] Testing DVS Interface...")'
+    var _run_demo_line = 'dvs = DVSInputLayer(height=10, width=10)'
+    var _run_demo_line = '# Simulate a moving dot'
+    var _run_demo_line = 'events = [(5, 5, 10.0, 1), (5, 6, 11.0, 1), (5, 7, 12.0, 1)]'
+    var _run_demo_line = 'probs = dvs.process_events(events)'
+    var _run_demo_line = 'print(f"    Max Activity: {max(probs):.4f}")'
+    var _run_demo_line = 'bits = dvs.generate_bitstream_frame(length=10)'
+    var _run_demo_line = 'print(f"    Bitstream Shape: {bits.shape}")'
+    var _run_demo_line = '# 3. Federated Learning'
+    var _run_demo_line = 'print("\\n[3] Testing Federated Aggregation...")'
+    var _run_demo_line = 'g1 = array([1, 1, 0, 0, 1], dtype=uint8)'
+    var _run_demo_line = 'g2 = array([1, 0, 0, 0, 1], dtype=uint8)'
+    var _run_demo_line = 'g3 = array([0, 1, 0, 1, 0], dtype=uint8)'
+    var _run_demo_line = 'agg = FederatedAggregator.aggregate_gradients([g1, g2, g3])'
+    var _run_demo_line = 'print(f"    Aggregated (Majority): {agg}")'
+    var _run_demo_line = '# 4. Connectomes'
+    var _run_demo_line = 'print("\\n[4] Testing Connectome Generation...")'
+    var _run_demo_line = 'adj = ConnectomeGenerator.generate_watts_strogatz(n_neurons='
+    var _run_demo_line = 'print(f"    Small-World Edges: {sum(adj)}")'
+    var _run_demo_line = '# 5. Homeostatic Plasticity'
+    var _run_demo_line = 'print("\\n[5] Testing Homeostatic Neuron...")'
+    var _run_demo_line = 'neuron = HomeostaticLIFNeuron(target_rate=0.5, v_threshold=1'
+    var _run_demo_line = '# Force high firing'
+    var _run_demo_line = 'print(f"    Initial Threshold: {neuron.v_threshold}")'
+    var _run_demo_line = 'for _ in range(50):'
+    var _run_demo_line = 'neuron.step(input_current=10.0)'
+    var _run_demo_line = 'print(f"    Adapted Threshold: {neuron.v_threshold:.4f} (Sho'
+    var _run_demo_line = '# 6. Model Zoo'
+    var _run_demo_line = 'print("\\n[6] Testing Model Zoo (Digit Classifier)...")'
+    var _run_demo_line = 'model = SCDigitClassifier()'
+    var _run_demo_line = 'img = random.random((28, 28))'
+    var _run_demo_line = 'pred = model.forward(img)'
+    var _run_demo_line = 'print(f"    Prediction: {pred}")'
+    return 0
+

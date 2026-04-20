@@ -1,0 +1,11 @@
+[package]
+name = "sc-neurocore-safety"
+version = "3.12.0"
+edition = "2021"
+authors = ["Miroslav Šotek <protoscience@anulum.li>"]
+license = "AGPL-3.0-or-later"
+description = "Rust safety-critical validation for SC-NeuroCore"
+
+[lib]
+name = "sc_neurocore_safety"
+path = "safety/lib.rs"

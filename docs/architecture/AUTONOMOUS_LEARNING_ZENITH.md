@@ -29,12 +29,9 @@ While probabilistic sampling is highly accurate to biological stochastic resonan
 
 By engaging the `set_deterministic_mode(seed: int)` wrapper from `sc_neurocore._native.learning_bridge`, the native Rayon `rand::thread_rng` logic is explicitly bypassed in favor of a strictly reproducible pseudo-random state identical across bit-true tests. 
 
-### Performance & Benchmarks (Hardware: Standard Desktop Workstation / GTX 1060 architecture)
-| Metric | Latency (10 Million Nodes) | Detail |
-|---|---|---|
-| Deterministic Logic | **53.45 ms** | Strict Boolean execution with Rayon. |
-| Analog Stochastic Logic | **63.59 ms** | Rolling 20 Million independent `f32` thermal likelihoods. |
-| **Overhead** | **1.19X Penalty** | Demonstrates the extreme speed of `rand::thread_rng()` within `rayon` parallel closures. |
+### Performance & Benchmarks
+> [!NOTE] 
+> For exact hardware bounds and verifiable execution data on reference hardware (31 GB / 12-core CPU) reproducing biological convergence, see the full suite at **[Project Zenith: End-to-End Benchmark Report](../benchmarks/ZENITH_BENCHMARKS.md)** (`benchmarks/bench_zenith_e2e.py`).
 
 ### Real Time Applications
 *   **Emulating Hardware Drift:** Simulating actual chip unreliability and thermal drift before taping out silicon designs.
@@ -50,12 +47,8 @@ STDP (Spike-timing-dependent plasticity) is naturally an unsupervised algorithm.
 We utilized the **Straight-Through Estimator (STE)** paradigm inside the backward pass. The Unsupervised biological FFI runs purely out-of-place during the `forward()` operation, caching states (`ctx.save_for_backward`). When you fire `loss.backward()` anywhere in the ML chain, the Python Autograd intercepts the gradients and maps them directly through the biological eligibility trace (`grad_weights * a_plus * pre_trace`) backward up to preceding dense / CNN layers.
 
 ### Performance & Benchmarks
-Evaluating a 10 Million Parameter backward pass on standard hardware:
-| Operation | Latency (10 Million Nodes) | 
-|---|---|
-| Autograd Forward Pass | **76.62 ms** | 
-| Autograd Backward Pass (Surrogate) | **45.17 ms** | 
-| **Total DL Training Latency** | **~121.79 ms per step** |
+> [!NOTE] 
+> For exact throughput measurements of surrogate memory graphs at Exascale boundaries, see the physical trace tests at **[Project Zenith: End-to-End Benchmark Report](../benchmarks/ZENITH_BENCHMARKS.md)** (`benchmarks/bench_zenith_e2e.py`).
 
 ### Real Time Applications
 *   **Hybrid Neuromorphic ResNets:** Plugging a biological STDP module into the center of a traditional GPU PyTorch model and maintaining end-to-end mathematical optimization.
@@ -77,11 +70,8 @@ file.write_all(byte_slice)
 Python simply calls `layer.save("/path.bin")`, and the file IO writes instantaneously directly out of RAM limits over the OS storage pipeline.
 
 ### Performance & Benchmarks
-Evaluating file memory dumps against NVMe disk architecture constraints.
-| Metric | Bandwidth (10 Million Nodes) | Duration |
-|---|---|---|
-| Binary Write Dump (152.59 MB) | **791.94 MB/s** | **0.19 Seconds** |
-| Binary Load Reconstruction | **1349.36 MB/s** | **0.11 Seconds** |
+> [!NOTE] 
+> To review the actual disk-mapping NVMe latency arrays comparing Python Pickle formats explicitly to Exascale boundaries, see **[Project Zenith: End-to-End Benchmark Report](../benchmarks/ZENITH_BENCHMARKS.md)** (`benchmarks/bench_zenith_e2e.py`).
 
 ### Real Time Applications
 *   **mmap2 Exascale Ready:** A single motherboard cannot hold 1-Trillion biological parameters (Approx 64 Terabytes). By having perfectly constrained binary dumps, the engine establishes the roadmap for reading arrays natively using `memmap`/`mmap2`, allowing future systems to load parameters seamlessly over clusters of multi-petabyte NVMe SSD arrays.

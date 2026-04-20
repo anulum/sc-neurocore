@@ -100,6 +100,8 @@ def _load_native_library():
         _lib.step_wgpu_layer.restype = None
         _lib.get_wgpu_weights.argtypes = [_ct.c_void_p, _ct.POINTER(_ct.c_float)]
         _lib.get_wgpu_weights.restype = None
+        _lib.set_wgpu_layer_seed.argtypes = [_ct.c_void_p, _ct.c_uint32]
+        _lib.set_wgpu_layer_seed.restype = None
         _lib.free_wgpu_layer.argtypes = [_ct.c_void_p]
         _lib.free_wgpu_layer.restype = None
 
@@ -269,6 +271,9 @@ class RustRuleLayer:
             "mem_buffer": bytes(buf)
         }
 
+    def get_state_dict(self) -> dict:
+        return self.__getstate__()
+
     def __setstate__(self, state):
         self._count = state["count"]
         self._rule_type = state["rule_type"]
@@ -290,6 +295,9 @@ class RustRuleLayer:
         if mem_buffer:
             buf = (_ct.c_byte * len(mem_buffer)).from_buffer_copy(mem_buffer)
             _lib.set_rule_layer_state_mem(self._ptr, buf)
+
+    def load_state_dict(self, state_dict: dict) -> None:
+        self.__setstate__(state_dict)
 
     def step(self, pre_spikes, post_spikes, rewards, dt: float = 0.001) -> None:
         """Process spatial Numpy arrays natively across Rayon Rust threads."""
@@ -395,6 +403,9 @@ class RustWgpuRuleLayer:
         
         if not self._ptr:
             raise RuntimeError("WGPU backend initialization failed natively. Ensure the system possesses a compatible backend (Vulkan/Metal/WebGPU/DX12).")
+            
+        if _DETERMINISTIC_SEED is not None:
+            _lib.set_wgpu_layer_seed(self._ptr, _ct.c_uint32(_DETERMINISTIC_SEED))
 
     def step(self, pre_spikes, post_spikes, rewards=None, dt: float = 0.001) -> None:
         import numpy as np
@@ -426,6 +437,13 @@ class RustWgpuRuleLayer:
         out_ptr = out.ctypes.data_as(_ct.POINTER(_ct.c_float))
         _lib.get_wgpu_weights(self._ptr, out_ptr)
         return out
+        
+    def get_state_dict(self) -> dict:
+        return {"weights": self.get_weights()}
+        
+    def load_state_dict(self, state_dict: dict) -> None:
+        import warnings
+        warnings.warn("RustWgpuRuleLayer load_state_dict explicitly relies on weights re-initialization rather than state restoration at runtime natively for WGPU.")
         
     def __del__(self) -> None:
         if hasattr(self, '_ptr') and getattr(self, '_ptr') and _HAS_LEARNING:
@@ -538,16 +556,16 @@ try:
             self.rule_type = rule_type
             self.autograd = autograd
             
-            # Note: For GPU training performance, TorchRuleLayer only maps param_a (primary scale) 
-            # and param_b (time constant scale). Secondary parameters default to scalar constants.
-            if rule_type == RULE_ELIGENT:
-                rp = [max(param_a, 0.01), 0.001, 1.0, 1.0, max(param_b, 0.01)]
-            elif rule_type == RULE_REWARD_STDP:
-                rp = [max(param_a, 0.001), max(param_a, 0.001)*0.5, 20.0, 20.0, max(param_b, 0.01)]
-            elif rule_type == RULE_BCM:
-                rp = [max(param_a, 0.0001), 1.0, max(param_b, 1.0), 1.0, 1.0]
-            else:
-                rp = [max(param_a, 0.001), max(param_a, 0.001)*0.5, 20.0, 20.0, 1.0]
+            # Convert kwargs to matching native float boundaries overriding internal constants when defined
+            p_a_plus = max(param_a, 0.0001) if rule_type != RULE_ELIGENT else max(param_a, 0.01)
+            default_a_minus = 0.001 if rule_type == RULE_ELIGENT else (1.0 if rule_type == RULE_BCM else p_a_plus * 0.5)
+            p_a_minus = float(kwargs.get('param_a_minus', default_a_minus))
+            
+            p_b_tau1 = float(kwargs.get('tau_plus', kwargs.get('tau', param_b if rule_type not in (RULE_ELIGENT, RULE_BCM) else (1.0 if rule_type == RULE_ELIGENT else max(param_b, 1.0)))))
+            p_b_tau2 = float(kwargs.get('tau_minus', kwargs.get('tau', param_b if rule_type not in (RULE_ELIGENT, RULE_BCM) else 1.0)))
+            p_tau_e = float(kwargs.get('tau_e', param_b if rule_type in (RULE_ELIGENT, RULE_REWARD_STDP) else 1.0))
+            
+            rp = [p_a_plus, p_a_minus, p_b_tau1, p_b_tau2, p_tau_e]
 
             self.register_buffer("rule_params", torch.tensor(rp, dtype=torch.float32))
             self.weights = nn.Parameter(torch.full((count,), weight, dtype=torch.float32), requires_grad=autograd)
@@ -602,6 +620,12 @@ try:
                 post_spikes = torch.tensor(post_spikes, device=self.weights.device, dtype=torch.bool)
                 rewards = torch.tensor(rewards, device=self.weights.device, dtype=torch.float32)
             self.forward(pre_spikes, post_spikes, rewards, dt)
+
+        def get_state_dict(self):
+            return self.state_dict()
+            
+        def load_state_dict(self, state_dict):
+            super().load_state_dict(state_dict)
 
         def get_weights(self):
             return self.weights.detach().cpu().numpy()
