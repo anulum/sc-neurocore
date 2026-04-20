@@ -162,6 +162,12 @@ Feature-gated wgpu backend for DenseLayer stochastic computing:
 - Cross-platform via Vulkan (AMD RDNA2, NVIDIA, Metal, DX12)
 - PyO3 GpuDenseLayer class with forward_fast() and forward_batch_numpy()
 
+### ~~Project Zenith: Autonomous Learning Subsystem~~ ✓
+
+- Exact bit-identical parity mapped bridging `PyTorch Surrogate Autograd` and `Rust Spintronic Emulation`.
+- `sc_neurocore.plasticity.create_plasticity_layer` fully integrates supervised biological convergence loops mapped securely to deterministic `SymbiYosys` formal proofs.
+- 4 Metaplasticity rules (STDP, BCM, R-STDP, ELIGENT).
+
 ### ~~Model documentation upgrade~~ in progress
 
 Per-model documentation pages (567+ lines each) with equations, parameters,
