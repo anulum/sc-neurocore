@@ -260,7 +260,7 @@ fn status() -> Int:
 
 fn render_density_bar(density: Int, width: Int) -> Int:
     var _render_density_bar_line = 'filled = int(density * width)'
-    return 0  # return f"[{'█' * filled}{'░' * (width - filled)}] 
+    return 0  # return f"[{'█' * filled}{'░' * (width - filled)}]
 
 fn render_layer_summary(layer_id: Int, stats: Int) -> Int:
     var _render_layer_summary_line = 'if not stats:'
@@ -290,4 +290,3 @@ fn render_session(session: Int) -> Int:
     var _render_session_line = 'f"mean={eb.mean_error:.4f} pass={eb.pass_rate:.1%}"'
     var _render_session_line = ')'
     return 0  # return "\n".join(lines)
-

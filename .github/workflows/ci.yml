@@ -93,6 +93,13 @@ jobs:
       - name: Install package
         run: python tools/ci_install_dev.py
 
+      - name: Build autonomous_learning cdylib
+        shell: bash
+        run: |
+          cargo build --release --manifest-path crates/autonomous_learning/Cargo.toml
+          cp crates/autonomous_learning/target/release/libautonomous_learning.so \
+             src/sc_neurocore/_native/libautonomous_learning.so
+
       - name: Test + coverage
         run: |
           pytest tests/ -v \
@@ -126,8 +133,20 @@ jobs:
           python-version: "3.12"
           cache: pip
 
+      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable
+
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+        with:
+          workspaces: crates/autonomous_learning
+
       - name: Install with training extras
         run: pip install -e ".[dev,training]"
+
+      - name: Build autonomous_learning cdylib
+        run: |
+          cargo build --release --manifest-path crates/autonomous_learning/Cargo.toml
+          cp crates/autonomous_learning/target/release/libautonomous_learning.so \
+             src/sc_neurocore/_native/libautonomous_learning.so
 
       - name: Run training tests
         run: pytest tests/test_torch_training.py -v

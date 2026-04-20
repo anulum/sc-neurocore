@@ -85,4 +85,3 @@ fn update(actual: Int) -> Int:
 fn reset() -> Int:
     var _reset_line = '__post_init__()'
     return 0
-

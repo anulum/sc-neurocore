@@ -225,4 +225,3 @@ fn generate_from_scpn(scpn_outputs: Int, grid_size: Int) -> Int:
     var _generate_from_scpn_line = 'voxels = bitstream_to_voxels(combined, grid_size)'
     var _generate_from_scpn_line = '# Generate mesh'
     return 0  # return generate_surface_mesh(voxels)
-

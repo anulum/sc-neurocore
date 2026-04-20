@@ -492,4 +492,3 @@ fn forward(x: Int) -> Int:
     var _forward_line = 'val += weight[o, ci, ki, kj] * x[c_start + ci, ii, jj]'
     var _forward_line = 'out[o, i, j] = val + bias[o]'
     return 0  # return out.squeeze()
-

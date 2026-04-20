@@ -38,4 +38,3 @@ func ExtractPlasticityConfigs() {
 func Report() {
 	// Go-accelerated report
 }
-

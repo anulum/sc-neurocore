@@ -34,4 +34,3 @@ func DoGet() {
 func LogMessage() {
 	// Go-accelerated log_message
 }
-

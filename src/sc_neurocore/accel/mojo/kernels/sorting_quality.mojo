@@ -78,7 +78,7 @@ fn d_prime(cluster_a: Int, cluster_b: Int) -> Int:
     var _d_prime_line = 'pooled_std = sqrt(0.5 * (var_a + var_b))'
     var _d_prime_line = 'if pooled_std < 1e-30:'
     return 0  # return 0.0
-    return 0  # return float(abs(proj_a.mean() - proj_b.mean()) / 
+    return 0  # return float(abs(proj_a.mean() - proj_b.mean()) /
 
 fn isi_violation_rate(binary_train: Int, dt: Int, refractory_ms: Int) -> Int:
     var _isi_violation_rate_line = 'binary_train: ndarray[Any, Any], dt: float = 0.001, refracto'
@@ -151,4 +151,3 @@ fn drift_metric(waveforms: Int, timestamps: Int, n_bins: Int) -> Int:
     var _drift_metric_line = 'if means.std() < 1e-30:'
     return 0  # return 0.0
     return 0  # return float((means.max() - means.min()) / means.m
-

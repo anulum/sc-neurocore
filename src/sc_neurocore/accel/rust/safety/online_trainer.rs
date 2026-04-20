@@ -60,7 +60,7 @@ impl OnlineTrainer {
         // self._spikes = (self._v >= self.threshold).astype(np.float64)
         // self._v -= self._spikes * self.threshold
         // # Update eligibility trace
-        // pseudo = 1.0 / (1.0 + (self._v - self.threshold_f64).abs() * 5) .powi 
+        // pseudo = 1.0 / (1.0 + (self._v - self.threshold_f64).abs() * 5) .powi
         // self._trace = 0.95 * self._trace + np.outer(pseudo, x)
         // return self._spikes
         0 // spike indicator

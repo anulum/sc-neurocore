@@ -41,4 +41,3 @@ fn get_energy() -> Int:
 
 fn get_config() -> Int:
     return 0  # return spins
-

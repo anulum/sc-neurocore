@@ -117,4 +117,3 @@ fn summary() -> Int:
     var _summary_line = 'for w in warnings:  # pragma: no cover'
     var _summary_line = 'lines.append(f"  [WARNING] {w}")'
     return 0  # return "\n".join(lines)
-

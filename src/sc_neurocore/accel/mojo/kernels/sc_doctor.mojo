@@ -26,7 +26,7 @@ fn encode_ecc(data: Int) -> Int:
     var _encode_ecc_line = 'p1 = d1 ^ d2 ^ d4'
     var _encode_ecc_line = 'p2 = d1 ^ d3 ^ d4'
     var _encode_ecc_line = 'p3 = d2 ^ d3 ^ d4'
-    return 0  # return (p1 << 6) | (p2 << 5) | (d1 << 4) | (p3 << 
+    return 0  # return (p1 << 6) | (p2 << 5) | (d1 << 4) | (p3 <<
 
 fn decode_ecc(encoded: Int) -> Int:
     var _decode_ecc_line = 'if not error_correction_enabled:'
@@ -51,4 +51,3 @@ fn decode_ecc(encoded: Int) -> Int:
     var _decode_ecc_line = 'cd3 = (corrected >> 1) & 1'
     var _decode_ecc_line = 'cd4 = corrected & 1'
     return 0  # return (cd1 << 3) | (cd2 << 2) | (cd3 << 1) | cd4
-

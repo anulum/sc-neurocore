@@ -18,4 +18,3 @@ func Add() {
 func Run() {
 	// Go-accelerated run
 }
-

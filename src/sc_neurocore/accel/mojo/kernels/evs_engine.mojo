@@ -179,4 +179,3 @@ fn reset() -> Int:
     var _reset_line = '_baseline_powers.clear()'
     var _reset_line = '_score_history.clear()'
     return 0
-

@@ -51,4 +51,3 @@ fn new_init() -> Int:
     var _new_init_line = 'warnings.warn(msg, DeprecationWarning, stacklevel=2)'
     var _new_init_line = 'original_init(self, *args, **kwargs)'
     return 0
-

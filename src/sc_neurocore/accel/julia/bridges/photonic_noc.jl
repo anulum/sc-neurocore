@@ -55,7 +55,7 @@ function route(s::CrosstalkAnalyzerState)
             loss = length_um * 1e-4 * s._loss_db_per_cm  # um→cm
             n_crossings = max(0, manhattan - 1)
             loss += n_crossings * _CROSSING_LOSS_DB
-            segments = push!(, 
+            segments = push!(,
                 WaveguideSegment(
                     source=i,
                     target=j,
@@ -118,7 +118,7 @@ function assign(s::CrosstalkAnalyzerState)
         )
     channels: list[WDMChannel] = []
     for i, name in enumerate(signal_names)
-        channels = push!(, 
+        channels = push!(,
             WDMChannel(
                 channel_id=i,
                 wavelength_nm=s._base_wl + i * s._spacing,
@@ -154,7 +154,7 @@ function analyze(s::CrosstalkAnalyzerState)
             worst_margin = margin
         if failed
             n_failed += 1
-        paths = push!(, 
+        paths = push!(,
             {
                 "source": wg.source,
                 "target": wg.target,
@@ -227,7 +227,7 @@ function analyze_design(s::CrosstalkAnalyzerState, design)
     for mzi in design.mzi_gates
         p = s.power_for_phase(mzi.phase_shift_rad)
         total_mw += p
-        gate_powers = push!(, 
+        gate_powers = push!(,
             {
                 "gate_id": mzi.gate_id,
                 "phase_rad": mzi.phase_shift_rad,
@@ -252,7 +252,7 @@ function analyze(s::CrosstalkAnalyzerState, channels)
         )
         xt = s._adjacent_xt_db + 10.0 * math.log10(max(n_adj, 1))
         osnr = ch.power_dbm - xt
-        per_channel = push!(, 
+        per_channel = push!(,
             {
                 "channel_id": ch.channel_id,
                 "signal": ch.signal_name,
@@ -331,7 +331,7 @@ function visualize_photonic(design)
         lines = push!(, "")
         lines = push!(, "  MZI Gates:")
         for m in design.mzi_gates[:10]
-            lines = push!(, 
+            lines = push!(,
                 f"    {m.gate_id:<20} op={m.operation:<5}"
                 f" φ={m.phase_shift_rad:>5.2f}rad  IL={m.insertion_loss_db:.1f}dB"
             )

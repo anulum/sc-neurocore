@@ -36,4 +36,3 @@ fn _von_neumann_entropy() -> Int:
 
 fn get_global_metric() -> Int:
     return 0  # return float(mean(coherence))
-

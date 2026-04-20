@@ -52,4 +52,3 @@ fn fuse(spike_trains: Int, duration_us: Int) -> Int:
     var _fuse_line = 'weighted.append(r * attention_weights[i])'
     return 0  # return concatenate(weighted, axis=1)
     var _fuse_line = 'raise ValueError(f"Unknown mode \'{mode}\'")'
-

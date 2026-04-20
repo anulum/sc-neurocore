@@ -104,4 +104,3 @@ fn rate() -> Int:
 
 fn t() -> Int:
     return 0  # return array(_bin_edges, dtype=int64)
-

@@ -22,4 +22,3 @@ func ToNeurobenchJson() {
 func Summary() {
 	// Go-accelerated summary
 }
-

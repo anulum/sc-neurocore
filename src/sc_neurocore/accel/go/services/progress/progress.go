@@ -18,4 +18,3 @@ func SimFn() {
 func SimFn2() {
 	// Go-accelerated sim_fn (variant 2)
 }
-

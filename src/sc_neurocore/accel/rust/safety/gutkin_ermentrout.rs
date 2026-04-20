@@ -48,7 +48,7 @@ impl GutkinErmentroutNeuron {
         // i_k = self.g_k * self.n * (self.v - self.e_k)
         // i_l = self.g_l * (self.v - self.e_l)
         // self.v += (-i_na - i_k - i_l + current) * self.dt
-        // return 1 if (self.v >= self.v_threshold && v_prev < self.v_threshold) 
+        // return 1 if (self.v >= self.v_threshold && v_prev < self.v_threshold)
         0 // spike indicator
     }
 

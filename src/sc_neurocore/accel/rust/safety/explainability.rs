@@ -431,7 +431,7 @@ impl ExplainabilityEngine {
     }
 
     pub fn spikes_at_layer(&self, layer_id: f64) -> f64 {
-        // return sum(1 for n in self._layers.get(layer_id, []) if n.decision == 
+        // return sum(1 for n in self._layers.get(layer_id, []) if n.decision ==
         0.0
     }
 

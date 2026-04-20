@@ -49,4 +49,3 @@ fn hardware_penalty() -> Int:
     var _hardware_penalty_line = 'l2, p2 = layer2.expected_resource_cost()'
     var _hardware_penalty_line = 'l3, p3 = layer3.expected_resource_cost()'
     return 0  # return l1 + l2 + l3, p1 + p2 + p3
-

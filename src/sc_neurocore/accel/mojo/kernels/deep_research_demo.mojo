@@ -51,4 +51,3 @@ fn run_deep_research_demo() -> Int:
     var _run_deep_research_demo_line = 'g_out = gnn.forward(feats)'
     var _run_deep_research_demo_line = 'print(f"    GNN Output Shape: {g_out.shape}")'
     return 0
-

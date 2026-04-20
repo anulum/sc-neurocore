@@ -69,4 +69,3 @@ fn factor_analysis(trains: Int, n_factors: Int, bin_size: Int, n_iter: Int) -> I
     var _factor_analysis_line = 'psi = diag(cov - loadings @ ez @ mat.T / t)'
     var _factor_analysis_line = 'psi = clip(psi, 1e-6, 0)'
     return 0  # return loadings, psi
-

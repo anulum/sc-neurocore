@@ -87,7 +87,7 @@ function bitstream_to_events(s::MockNodeState, neuron_id, bitstream)
     events = []
     for i, bit in enumerate(bitstream)
         if bit
-            events = push!(, 
+            events = push!(,
                 AEREvent(
                     neuron_id=neuron_id,
                     timestamp_us=i * s.clock_period_us,

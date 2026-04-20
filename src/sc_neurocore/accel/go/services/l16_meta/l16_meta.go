@@ -26,4 +26,3 @@ func Decode() {
 func GetMetrics() {
 	// Go-accelerated get_metrics
 }
-

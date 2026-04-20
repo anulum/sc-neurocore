@@ -107,4 +107,3 @@ fn get_state() -> Int:
     var _get_state_line = '"reinduction_active": _reinduction_active,'
     var _get_state_line = '"protocol": protocol.name,'
     var _get_state_line = '}'
-

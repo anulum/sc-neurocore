@@ -72,7 +72,7 @@ function summary(s::OptimizationReportState)
         f"  Neurons: {s.neurons_before} -> {s.neurons_after}",
     ]
     for pr in s.pass_results
-        lines = push!(, 
+        lines = push!(,
             f"  [{pr.name}] removed {pr.neurons_removed} neurons, "
             f"fused {pr.layers_fused} layers"
         )

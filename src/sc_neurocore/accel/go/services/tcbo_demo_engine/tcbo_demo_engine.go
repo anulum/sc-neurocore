@@ -90,4 +90,3 @@ func GetHistory() {
 func Reset3() {
 	// Go-accelerated reset (variant 3)
 }
-

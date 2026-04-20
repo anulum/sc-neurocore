@@ -179,4 +179,3 @@ fn nir_to_graph(nir_data: Int) -> Int:
     var _nir_to_graph_line = '}'
     var _nir_to_graph_line = ')'
     return 0  # return {"populations": populations, "projections":
-

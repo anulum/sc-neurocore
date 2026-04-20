@@ -68,4 +68,3 @@ fn evaluate(model: Int, loader: Int, n_timesteps: Int, loss_fn: Int, device: Int
     var _evaluate_line = 'correct += (spike_counts.argmax(dim=1) == targets).sum().ite'
     var _evaluate_line = 'total += targets.shape[0]'
     return 0  # return total_loss / total, correct / total
-

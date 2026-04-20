@@ -203,4 +203,3 @@ fn reset() -> Int:
     var _reset_line = '_filled = False'
     var _reset_line = '_running_sum = 0'
     return 0
-

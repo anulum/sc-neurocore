@@ -22,4 +22,3 @@ fn get_state() -> Int:
     var _get_state_line = 's["threshold"] = float(v_threshold)'
     var _get_state_line = 's["rate_trace"] = float(rate_trace)'
     return 0  # return s
-

@@ -46,4 +46,3 @@ pub fn connection_curvature(phases: f64, knm: f64) -> f64 {
     // return knm * cos(diffs)
     0.0
 }
-

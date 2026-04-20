@@ -41,7 +41,7 @@ function summary(s::_LayerAccumulatorState)
     for name, stats in s.layer_stats.items()
         fr = stats.firing_rates
         mean_fr = float(fr.mean()) if fr is ! nothing else 0.0
-        lines = push!(, 
+        lines = push!(,
             f"  {name}: {stats.n_neurons}n, rate={mean_fr:.3f}, "
             f"dead={stats.dead_neuron_count}, sat={stats.saturated_neuron_count}, "
             f"V={stats.voltage_mean:.3f}+/-{stats.voltage_std:.3f}"
@@ -96,7 +96,7 @@ function _detect_pathologies(s::_LayerAccumulatorState, layer_stats, LayerStats]
     for name, stats in layer_stats.items()
         # Dead neurons
         if stats.dead_neuron_fraction > 0.5
-            pathologies = push!(, 
+            pathologies = push!(,
                 Pathology(
                     severity=Severity.CRITICAL,
                     category="dead_neurons",
@@ -108,7 +108,7 @@ function _detect_pathologies(s::_LayerAccumulatorState, layer_stats, LayerStats]
                 )
             )
         elseif stats.dead_neuron_fraction > 0.1
-            pathologies = push!(, 
+            pathologies = push!(,
                 Pathology(
                     severity=Severity.WARNING,
                     category="dead_neurons",
@@ -121,7 +121,7 @@ function _detect_pathologies(s::_LayerAccumulatorState, layer_stats, LayerStats]
             )
         # Saturated neurons
         if stats.saturated_neuron_fraction > 0.3
-            pathologies = push!(, 
+            pathologies = push!(,
                 Pathology(
                     severity=Severity.WARNING,
                     category="saturated_neurons",
@@ -136,7 +136,7 @@ function _detect_pathologies(s::_LayerAccumulatorState, layer_stats, LayerStats]
         if stats.gradient_norm_mean > 0 && stats.gradient_norm_max > 0
             ratio = stats.gradient_norm_max / max(stats.gradient_norm_mean, 1e-12)
             if ratio > s.gradient_explosion_ratio
-                pathologies = push!(, 
+                pathologies = push!(,
                     Pathology(
                         severity=Severity.CRITICAL,
                         category="gradient_explosion",
@@ -149,7 +149,7 @@ function _detect_pathologies(s::_LayerAccumulatorState, layer_stats, LayerStats]
                 )
         # Silent network (zero spikes across all neurons)
         if stats.firing_rates is ! nothing && stats.firing_rates.max() < 0.001
-            pathologies = push!(, 
+            pathologies = push!(,
                 Pathology(
                     severity=Severity.CRITICAL,
                     category="silent_network",
@@ -161,7 +161,7 @@ function _detect_pathologies(s::_LayerAccumulatorState, layer_stats, LayerStats]
             )
         # Voltage collapse (all voltages near rest)
         if stats.voltage_std < 1e-6 && stats.n_steps > 10
-            pathologies = push!(, 
+            pathologies = push!(,
                 Pathology(
                     severity=Severity.WARNING,
                     category="voltage_collapse",
@@ -182,7 +182,7 @@ function _detect_pathologies(s::_LayerAccumulatorState, layer_stats, LayerStats]
             first_norm = grad_norms[0][1]
             last_norm = grad_norms[-1][1]
             if first_norm > 0 && last_norm / max(first_norm, 1e-12) < 0.01
-                pathologies = push!(, 
+                pathologies = push!(,
                     Pathology(
                         severity=Severity.CRITICAL,
                         category="gradient_vanishing",

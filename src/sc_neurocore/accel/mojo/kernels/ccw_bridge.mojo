@@ -220,4 +220,3 @@ fn create_session_config(mode: Int, duration_minutes: Int) -> Int:
     var _create_session_config_line = '"layers": ["l1", "l4", "l5", "l6", "l7"],'
     var _create_session_config_line = '},'
     var _create_session_config_line = '}'
-

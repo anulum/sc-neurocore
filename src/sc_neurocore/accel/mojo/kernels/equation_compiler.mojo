@@ -294,7 +294,7 @@ fn visit_BinOp(node: Int) -> Int:
     var _visit_BinOp_line = 'intermediates.append('
     var _visit_BinOp_line = 'f"wire signed [{2 * q.data_width - 1}:0] {tmp} = {left} * {r'
     var _visit_BinOp_line = ')'
-    return 0  # return f"({tmp} >>> {q.fraction})[{q.data_width - 
+    return 0  # return f"({tmp} >>> {q.fraction})[{q.data_width -
     var _visit_BinOp_line = 'elif isinstance(node.op, ast.Div):'
     var _visit_BinOp_line = '# Division by constant → multiply by reciprocal'
     var _visit_BinOp_line = 'if isinstance(node.right, ast.Constant) and isinstance(node.'
@@ -305,7 +305,7 @@ fn visit_BinOp(node: Int) -> Int:
     var _visit_BinOp_line = 'intermediates.append('
     var _visit_BinOp_line = 'f"wire signed [{2 * q.data_width - 1}:0] {tmp} = {left} * {r'
     var _visit_BinOp_line = ')'
-    return 0  # return f"({tmp} >>> {q.fraction})[{q.data_width - 
+    return 0  # return f"({tmp} >>> {q.fraction})[{q.data_width -
     return 0  # return f"({left} / {right})"
     var _visit_BinOp_line = 'elif isinstance(node.op, ast.Pow):'
     var _visit_BinOp_line = '# x**2 → x * x, x**3 → x * x * x (small integer powers only)'
@@ -315,7 +315,7 @@ fn visit_BinOp(node: Int) -> Int:
     var _visit_BinOp_line = 'intermediates.append('
     var _visit_BinOp_line = 'f"wire signed [{2 * q.data_width - 1}:0] {tmp} = {left} * {l'
     var _visit_BinOp_line = ')'
-    return 0  # return f"({tmp} >>> {q.fraction})[{q.data_width - 
+    return 0  # return f"({tmp} >>> {q.fraction})[{q.data_width -
     var _visit_BinOp_line = 'elif isinstance(node.right, ast.Constant) and node.right.val'
     var _visit_BinOp_line = 'sq = f"_mul{_mul_count}"'
     var _visit_BinOp_line = '_mul_count += 1'
@@ -420,7 +420,7 @@ fn visit_Call(node: Int) -> Int:
     var _visit_Call_line = 'if len(node.args) == 3:'
     var _visit_Call_line = 'lo: str = visit(node.args[1])'
     var _visit_Call_line = 'hi: str = visit(node.args[2])'
-    return 0  # return f"(({arg} < {lo}) ? {lo} : (({arg} > {hi}) 
+    return 0  # return f"(({arg} < {lo}) ? {lo} : (({arg} > {hi})
     return 0  # return arg
     var _visit_Call_line = 'elif fname in ("max", "min"):'
     var _visit_Call_line = 'if len(node.args) >= 2:'
@@ -474,7 +474,7 @@ fn _log_lut_entries() -> Int:
 
 fn _sqrt_lut_entries() -> Int:
     var __sqrt_lut_entries_line = 'import math'
-    return 0  # return [int(round(math.sqrt(max(i * 0.5, 0)) * (1 
+    return 0  # return [int(round(math.sqrt(max(i * 0.5, 0)) * (1
 
 fn _tanh_lut_entries() -> Int:
     var __tanh_lut_entries_line = 'import math'
@@ -484,7 +484,7 @@ fn _tanh_lut_entries() -> Int:
 fn _sigmoid_lut_entries() -> Int:
     var __sigmoid_lut_entries_line = 'import math'
     var __sigmoid_lut_entries_line = 'points = [(-8 + i) for i in range(16)]'
-    return 0  # return [int(round(1.0 / (1.0 + math.exp(-x)) * (1 
+    return 0  # return [int(round(1.0 / (1.0 + math.exp(-x)) * (1
 
 fn _sin_lut_entries() -> Int:
     var __sin_lut_entries_line = 'import math'
@@ -499,4 +499,3 @@ fn _cos_lut_entries() -> Int:
 fn generic_visit(node: Int) -> Int:
     var _generic_visit_line = 'raise ValueError(f"Unsupported AST node for Verilog: {type(n'
     return 0
-

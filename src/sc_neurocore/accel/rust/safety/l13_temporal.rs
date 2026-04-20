@@ -56,7 +56,7 @@ impl L13_TemporalLayer {
     pub fn get_global_metric(&self, ) -> f64 {
         // n = self.params.n_channels
         // off_diag = self.binding_matrix[~np.eye(n, dtype=bool)]
-        // return float(np.mean((off_diag_f64).abs())) if len(off_diag) > 0 else 
+        // return float(np.mean((off_diag_f64).abs())) if len(off_diag) > 0 else
         0.0
     }
 

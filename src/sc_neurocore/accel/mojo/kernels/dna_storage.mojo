@@ -25,4 +25,3 @@ fn decode(dna_str: Int) -> Int:
     var _decode_line = 'pair = REV_MAP[char]'
     var _decode_line = 'bits.extend(pair)'
     return 0  # return array(bits, dtype=uint8)
-

@@ -56,7 +56,7 @@
 
 `timescale 1ps/1ps
 
-(* DowngradeIPIdentifiedWarnings="yes" *) 
+(* DowngradeIPIdentifiedWarnings="yes" *)
 module axi_vip_v1_1_22_top #
   (
    parameter C_AXI_PROTOCOL                      = 0,
@@ -86,7 +86,7 @@ module axi_vip_v1_1_22_top #
   (
    //NOTE:  C_AXI_INTERFACE_MODE =0 means MASTER MODE, 1 means PASS-THROUGH MODE and 2 means SLAVE MODE
    //Please refer xgui tcl and coreinfo.yml
-   
+
    // System Signals
    input wire aclk,
    input wire aclken,
@@ -146,7 +146,7 @@ module axi_vip_v1_1_22_top #
    output wire [C_AXI_RUSER_WIDTH==0?0:C_AXI_RUSER_WIDTH-1:0]      s_axi_ruser,
    output wire                                                     s_axi_rvalid,
    input  wire                                                     s_axi_rready,
-   
+
    // Master Interface Write Address Port
    output wire [C_AXI_WID_WIDTH==0?0:C_AXI_WID_WIDTH-1:0]          m_axi_awid,
    output wire [C_AXI_ADDR_WIDTH-1:0]                              m_axi_awaddr,
@@ -161,7 +161,7 @@ module axi_vip_v1_1_22_top #
    output wire [C_AXI_AWUSER_WIDTH==0?0:C_AXI_AWUSER_WIDTH-1:0]    m_axi_awuser,
    output wire                                                     m_axi_awvalid,
    input  wire                                                     m_axi_awready,
-   
+
    // Master Interface Write Data Ports
    output wire [C_AXI_WID_WIDTH==0?0:C_AXI_WID_WIDTH-1:0]          m_axi_wid,
    output wire [C_AXI_WDATA_WIDTH-1:0]                             m_axi_wdata,
@@ -170,14 +170,14 @@ module axi_vip_v1_1_22_top #
    output wire [C_AXI_WUSER_WIDTH==0?0:C_AXI_WUSER_WIDTH-1:0]      m_axi_wuser,
    output wire                                                     m_axi_wvalid,
    input  wire                                                     m_axi_wready,
-   
+
    // Master Interface Write Response Ports
    input  wire [C_AXI_WID_WIDTH==0?0:C_AXI_WID_WIDTH-1:0]          m_axi_bid,
    input  wire [2-1:0]                                             m_axi_bresp,
    input  wire [C_AXI_BUSER_WIDTH==0?0:C_AXI_BUSER_WIDTH-1:0]      m_axi_buser,
    input  wire                                                     m_axi_bvalid,
    output wire                                                     m_axi_bready,
-   
+
    // Master Interface Read Address Port
    output wire [C_AXI_RID_WIDTH==0?0:C_AXI_RID_WIDTH-1:0]          m_axi_arid,
    output wire [ C_AXI_ADDR_WIDTH-1:0]                             m_axi_araddr,
@@ -192,7 +192,7 @@ module axi_vip_v1_1_22_top #
    output wire [C_AXI_ARUSER_WIDTH==0?0:C_AXI_ARUSER_WIDTH-1:0]    m_axi_aruser,
    output wire                                                     m_axi_arvalid,
    input  wire                                                     m_axi_arready,
-   
+
    // Master Interface Read Data Ports
    input  wire [C_AXI_RID_WIDTH==0?0:C_AXI_RID_WIDTH-1:0]          m_axi_rid,
    input  wire [C_AXI_RDATA_WIDTH-1:0]                             m_axi_rdata,
@@ -202,25 +202,25 @@ module axi_vip_v1_1_22_top #
    input  wire                                                     m_axi_rvalid,
    output wire                                                     m_axi_rready
   );
-   
+
   /**********************************************************************************************
-  * NOTE:  
-  *   C_AXI_INTERFACE_MODE =0 -- MASTER MODE, 
-  *   C_AXI_INTERFACE_MODE =1 -- PASS-THROUGH MODE 
+  * NOTE:
+  *   C_AXI_INTERFACE_MODE =0 -- MASTER MODE,
+  *   C_AXI_INTERFACE_MODE =1 -- PASS-THROUGH MODE
   *   C_AXI_INTERFACE_MODE =2 -- SLAVE MODE
   *   Please refer xgui tcl and coreinfo.yml
-  *   User can change PASS_THROUGH VIP to run time master mode or run time slave mode during 
-  *   the simulation 
+  *   User can change PASS_THROUGH VIP to run time master mode or run time slave mode during
+  *   the simulation
   *********************************************************************************************/
 
   /**********************************************************************************************
   * Master_mode means that either the dut is statically being configured to be in master mode
   * or it statically being configured to be pass-through mode and switched to be in master mode
-  * in run time. 
-   
+  * in run time.
+
   * Slave mode means that either the dut is statically being configured to be in slave mode
   * or it statically being configured to be pass-through mode and switched to be in slave mode
-  * in run time. 
+  * in run time.
 
    * Pass-through mode means that either the dut is statically being configured to be in
    * pass-through mode or it statically being configured to be pass-through mode and switched
@@ -242,10 +242,10 @@ module axi_vip_v1_1_22_top #
   assign run_slave_mode = C_AXI_INTERFACE_MODE ==1 && runtime_slave ==1 && runtime_master ==0;
   assign run_passth_mode = (runtime_slave ==0 && runtime_master ==0);
 
-  assign compile_master_mode = (C_AXI_INTERFACE_MODE ==0 || C_AXI_INTERFACE_MODE ==1 )&& run_passth_mode ;   
+  assign compile_master_mode = (C_AXI_INTERFACE_MODE ==0 || C_AXI_INTERFACE_MODE ==1 )&& run_passth_mode ;
   assign compile_slave_mode  = (C_AXI_INTERFACE_MODE ==2 || C_AXI_INTERFACE_MODE ==1) && run_passth_mode ;
 
-  assign master_mode = compile_master_mode || run_master_mode; 
+  assign master_mode = compile_master_mode || run_master_mode;
   assign slave_mode = compile_slave_mode || run_slave_mode;
 
   // Slave Interface Write Address Ports Internal
@@ -263,13 +263,13 @@ module axi_vip_v1_1_22_top #
   assign IF.AWVALID     = slave_mode? s_axi_awvalid : {1'bz};
   assign s_axi_awready  = slave_mode? IF.AWREADY : {1'b0};
 
-  // Slave Interface Write Data Ports  
+  // Slave Interface Write Data Ports
   assign IF.WID         = slave_mode? s_axi_wid : {C_AXI_WID_WIDTH==0?1:C_AXI_WID_WIDTH{1'bz}};
   assign IF.WDATA       = slave_mode? s_axi_wdata : {C_AXI_WDATA_WIDTH{1'bz}};
   assign IF.WSTRB       = slave_mode? s_axi_wstrb : {(C_AXI_WDATA_WIDTH/8){1'bz}};
   assign IF.WLAST       = slave_mode? s_axi_wlast: {1'bz};
   assign IF.WUSER       = slave_mode? s_axi_wuser : {C_AXI_WUSER_WIDTH==0?1:C_AXI_WUSER_WIDTH{1'bz}};
-  assign IF.WVALID      = slave_mode? s_axi_wvalid : {1'bz}; 
+  assign IF.WVALID      = slave_mode? s_axi_wvalid : {1'bz};
   assign s_axi_wready   = slave_mode? IF.WREADY : {1'b0};
 
   // Slave Interface Write Response Ports
@@ -279,7 +279,7 @@ module axi_vip_v1_1_22_top #
   assign s_axi_bvalid   = slave_mode? IF.BVALID : {1{1'b0}};
   assign IF.BREADY      = slave_mode? s_axi_bready :{1{1'bz}};
 
-  // Slave Interface Read Address Ports 
+  // Slave Interface Read Address Ports
   assign IF.ARID        = slave_mode? s_axi_arid :{C_AXI_RID_WIDTH==0?1:C_AXI_RID_WIDTH{1'bz}};
   assign IF.ARADDR      = slave_mode? s_axi_araddr : {C_AXI_ADDR_WIDTH{1'bz}} ;
   assign IF.ARLEN       = slave_mode? s_axi_arlen: {((C_AXI_PROTOCOL == 1) ? 4 : 8){1'bz}};
@@ -294,7 +294,7 @@ module axi_vip_v1_1_22_top #
   assign IF.ARVALID     = slave_mode? s_axi_arvalid : {1'bz};
   assign s_axi_arready  = slave_mode? IF.ARREADY : {1'b0};
 
-  //Slave Interface Read Data Ports 
+  //Slave Interface Read Data Ports
   assign s_axi_rid      = slave_mode?  IF.RID: {C_AXI_RID_WIDTH==0?1:C_AXI_RID_WIDTH{1'b0}};
   assign s_axi_rdata    = slave_mode? IF.RDATA : {C_AXI_RDATA_WIDTH{1'b0}};
   assign s_axi_rresp    = slave_mode? IF.RRESP : {2{1'b0}};
@@ -303,7 +303,7 @@ module axi_vip_v1_1_22_top #
   assign s_axi_rvalid   = slave_mode? IF.RVALID : {{1'b0}};
   assign IF.RREADY      = slave_mode? s_axi_rready:{{1'bz}};
 
-  // Master Interface Write Address Port 
+  // Master Interface Write Address Port
   assign m_axi_awid     = master_mode? IF.AWID : {C_AXI_WID_WIDTH==0?1:C_AXI_WID_WIDTH{1'b0}};
   assign m_axi_awaddr   = master_mode? IF.AWADDR : {C_AXI_ADDR_WIDTH{1'b0}};
   assign m_axi_awlen    = master_mode? IF.AWLEN : {((C_AXI_PROTOCOL == 1) ? 4 : 8){1'b0}};
@@ -364,8 +364,8 @@ module axi_vip_v1_1_22_top #
     .C_AXI_WDATA_WIDTH(C_AXI_WDATA_WIDTH ),
     .C_AXI_RDATA_WIDTH(C_AXI_RDATA_WIDTH ),
     .C_AXI_WID_WIDTH(C_AXI_WID_WIDTH ),
-    .C_AXI_RID_WIDTH(C_AXI_RID_WIDTH ), 
-    .C_AXI_AWUSER_WIDTH(C_AXI_AWUSER_WIDTH ), 
+    .C_AXI_RID_WIDTH(C_AXI_RID_WIDTH ),
+    .C_AXI_AWUSER_WIDTH(C_AXI_AWUSER_WIDTH ),
     .C_AXI_WUSER_WIDTH(C_AXI_WUSER_WIDTH ),
     .C_AXI_BUSER_WIDTH(C_AXI_BUSER_WIDTH ),
     .C_AXI_ARUSER_WIDTH(C_AXI_ARUSER_WIDTH ),
@@ -385,7 +385,7 @@ module axi_vip_v1_1_22_top #
     .ACLK(aclk),
     .ARESET_N(aresetn),
     .ACLKEN(aclken)
-  );  
+  );
 
 
   //synthesis translate_off
@@ -393,7 +393,7 @@ module axi_vip_v1_1_22_top #
     $display("XilinxAXIVIP: Found at Path: %m");
   end
 
-  //set IF mode to be in the correct mode according to C_AXI_INTERFACE_MODE,Default is monitor mode  
+  //set IF mode to be in the correct mode according to C_AXI_INTERFACE_MODE,Default is monitor mode
   generate
     initial begin
       if(C_AXI_INTERFACE_MODE ==0) begin
@@ -405,7 +405,7 @@ module axi_vip_v1_1_22_top #
       end else begin
         $fatal(0,"This AXI VIP's mode is out of range");
       end
-    end  
+    end
   endgenerate
 
   /*
@@ -468,7 +468,7 @@ module axi_vip_v1_1_22_top #
 
   /*
    Function: set_max_aw_wait_cycles (not available in VIVADO Simulator)
-   Sets max_aw_wait_cycles of PC(ARM Protocol Checker) 
+   Sets max_aw_wait_cycles of PC(ARM Protocol Checker)
   */
   function void set_max_aw_wait_cycles(input integer unsigned new_num);
     IF.PC.max_aw_wait_cycles = new_num;
@@ -476,7 +476,7 @@ module axi_vip_v1_1_22_top #
 
   /*
    Function: set_max_ar_wait_cycles (not available in VIVADO Simulator)
-   Sets max_ar_wait_cycles of PC(ARM Protocol Checker) 
+   Sets max_ar_wait_cycles of PC(ARM Protocol Checker)
   */
   function void set_max_ar_wait_cycles(input integer unsigned new_num);
     IF.PC.max_ar_wait_cycles = new_num;
@@ -484,7 +484,7 @@ module axi_vip_v1_1_22_top #
 
   /*
    Function: set_max_r_wait_cycles (not available in VIVADO Simulator)
-   Sets max_r_wait_cycles of PC(ARM Protocol Checker) 
+   Sets max_r_wait_cycles of PC(ARM Protocol Checker)
   */
   function void set_max_r_wait_cycles(input integer unsigned new_num);
     IF.PC.max_r_wait_cycles = new_num;
@@ -492,7 +492,7 @@ module axi_vip_v1_1_22_top #
 
   /*
    Function: set_max_b_wait_cycles (not available in VIVADO Simulator)
-   Sets max_b_wait_cycles of PC(ARM Protocol Checker) 
+   Sets max_b_wait_cycles of PC(ARM Protocol Checker)
   */
   function void set_max_b_wait_cycles(input integer unsigned new_num);
     IF.PC.max_b_wait_cycles = new_num;
@@ -500,7 +500,7 @@ module axi_vip_v1_1_22_top #
 
   /*
    Function: set_max_w_wait_cycles (not available in VIVADO Simulator)
-   Sets max_w_wait_cycles of PC(ARM Protocol Checker) 
+   Sets max_w_wait_cycles of PC(ARM Protocol Checker)
   */
   function void set_max_w_wait_cycles(input integer unsigned new_num);
     IF.PC.max_w_wait_cycles = new_num;
@@ -508,7 +508,7 @@ module axi_vip_v1_1_22_top #
 
   /*
    Function: set_max_wlast_wait_cycles (not available in VIVADO Simulator)
-   Sets max_wlast_to_awvalid_wait_cycles of PC(ARM Protocol Checker) 
+   Sets max_wlast_to_awvalid_wait_cycles of PC(ARM Protocol Checker)
   */
   function void set_max_wlast_wait_cycles(input integer unsigned new_num);
     IF.PC.max_wlast_to_awvalid_wait_cycles = new_num;
@@ -516,7 +516,7 @@ module axi_vip_v1_1_22_top #
 
   /*
    Function: set_max_rtransfer_wait_cycles (not available in VIVADO Simulator)
-   Sets max_rtransfer_wait_cycles of PC(ARM Protocol Checker) 
+   Sets max_rtransfer_wait_cycles of PC(ARM Protocol Checker)
   */
   function void set_max_rtransfers_wait_cycles(input integer unsigned new_num);
     IF.PC.max_rtransfers_wait_cycles = new_num;
@@ -524,7 +524,7 @@ module axi_vip_v1_1_22_top #
 
   /*
    Function: set_max_wtransfer_wait_cycles (not available in VIVADO Simulator)
-   Sets max_wtransfer_wait_cycles of PC(ARM Protocol Checker) 
+   Sets max_wtransfer_wait_cycles of PC(ARM Protocol Checker)
   */
   function void set_max_wtransfers_wait_cycles(input integer unsigned new_num);
     IF.PC.max_wtransfers_wait_cycles = new_num;
@@ -532,7 +532,7 @@ module axi_vip_v1_1_22_top #
 
   /*
    Function: set_max_wlcmd_wait_cycles (not available in VIVADO Simulator)
-   Sets max_wlcmd_wait_cycles of PC(ARM Protocol Checker) 
+   Sets max_wlcmd_wait_cycles of PC(ARM Protocol Checker)
   */
   function void set_max_wlcmd_wait_cycles(input integer unsigned new_num);
     IF.PC.max_wlcmd_wait_cycles = new_num;
@@ -540,7 +540,7 @@ module axi_vip_v1_1_22_top #
 
   /*
    Function: get_max_aw_wait_cycles (not available in VIVADO Simulator)
-   Returns max_aw_wait_cycles of PC(ARM Protocol Checker) 
+   Returns max_aw_wait_cycles of PC(ARM Protocol Checker)
   */
   function integer unsigned get_max_aw_wait_cycles();
     return(IF.PC.max_aw_wait_cycles);
@@ -548,7 +548,7 @@ module axi_vip_v1_1_22_top #
 
   /*
    Function: get_max_ar_wait_cycles (not available in VIVADO Simulator)
-   Returns max_ar_wait_cycles of PC(ARM Protocol Checker) 
+   Returns max_ar_wait_cycles of PC(ARM Protocol Checker)
   */
   function integer unsigned get_max_ar_wait_cycles();
     return(IF.PC.max_ar_wait_cycles);
@@ -556,7 +556,7 @@ module axi_vip_v1_1_22_top #
 
   /*
    Function: get_max_r_wait_cycles (not available in VIVADO Simulator)
-   Returns max_r_wait_cycles of PC(ARM Protocol Checker) 
+   Returns max_r_wait_cycles of PC(ARM Protocol Checker)
   */
   function integer unsigned get_max_r_wait_cycles();
     return(IF.PC.max_r_wait_cycles);
@@ -564,7 +564,7 @@ module axi_vip_v1_1_22_top #
 
   /*
    Function: get_max_b_wait_cycles (not available in VIVADO Simulator)
-   Returns max_b_wait_cycles of PC(ARM Protocol Checker) 
+   Returns max_b_wait_cycles of PC(ARM Protocol Checker)
   */
   function integer unsigned get_max_b_wait_cycles();
     return(IF.PC.max_b_wait_cycles);
@@ -572,7 +572,7 @@ module axi_vip_v1_1_22_top #
 
   /*
    Function: get_max_w_wait_cycles (not available in VIVADO Simulator)
-   Returns max_w_wait_cycles of PC(ARM Protocol Checker) 
+   Returns max_w_wait_cycles of PC(ARM Protocol Checker)
   */
   function integer unsigned get_max_w_wait_cycles();
     return(IF.PC.max_w_wait_cycles);
@@ -580,7 +580,7 @@ module axi_vip_v1_1_22_top #
 
   /*
    Function: get_max_wlast_wait_cycles (not available in VIVADO Simulator)
-   Returns max_wlast_to_awvalid_wait_cycles of PC(ARM Protocol Checker) 
+   Returns max_wlast_to_awvalid_wait_cycles of PC(ARM Protocol Checker)
   */
   function integer unsigned get_max_wlast_wait_cycles();
     return(IF.PC.max_wlast_to_awvalid_wait_cycles);
@@ -588,7 +588,7 @@ module axi_vip_v1_1_22_top #
 
   /*
    Function: get_max_rtransfer_wait_cycles (not available in VIVADO Simulator)
-   Returns max_rtransfer_wait_cycles of PC(ARM Protocol Checker) 
+   Returns max_rtransfer_wait_cycles of PC(ARM Protocol Checker)
   */
   function integer unsigned get_max_rtransfers_wait_cycles();
     return(IF.PC.max_rtransfers_wait_cycles);
@@ -596,7 +596,7 @@ module axi_vip_v1_1_22_top #
 
   /*
    Function: get_max_wtransfer_wait_cycles (not available in VIVADO Simulator)
-   Returns max_wtransfer_wait_cycles of PC(ARM Protocol Checker) 
+   Returns max_wtransfer_wait_cycles of PC(ARM Protocol Checker)
   */
   function integer unsigned get_max_wtransfers_wait_cycles();
     return(IF.PC.max_wtransfers_wait_cycles);
@@ -604,7 +604,7 @@ module axi_vip_v1_1_22_top #
 
   /*
    Function: get_max_wlcmd_wait_cycles (not available in VIVADO Simulator)
-   Returns max_wlcmd_wait_cycles of PC(ARM Protocol Checker) 
+   Returns max_wlcmd_wait_cycles of PC(ARM Protocol Checker)
   */
   function integer unsigned get_max_wlcmd_wait_cycles();
     return(IF.PC.max_wlcmd_wait_cycles);
@@ -628,5 +628,3 @@ module axi_vip_v1_1_22_top #
   //synthesis translate_on
 
 endmodule // axi_vip_v1_1_22_top
-
-

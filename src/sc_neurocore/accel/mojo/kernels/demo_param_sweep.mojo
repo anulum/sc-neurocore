@@ -119,4 +119,3 @@ fn demo() -> Int:
     var _demo_line = 'print(f"Accuracy: {best_accuracy * 100:.2f}%")'
     var _demo_line = 'print(best_params)'
     return 0
-

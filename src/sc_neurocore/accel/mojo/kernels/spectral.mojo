@@ -15,4 +15,3 @@ fn power_spectrum(binary_train: Int, dt: Int) -> Int:
     var _power_spectrum_line = 'psd = abs(fft_vals) ** 2 / n'
     var _power_spectrum_line = 'freqs = fft.rfftfreq(n, d=dt)'
     return 0  # return psd, freqs
-

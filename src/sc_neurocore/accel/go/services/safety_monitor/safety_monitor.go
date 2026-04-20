@@ -22,4 +22,3 @@ func Check() {
 func PropertyNames() {
 	// Go-accelerated property_names
 }
-

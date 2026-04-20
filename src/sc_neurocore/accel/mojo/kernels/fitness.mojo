@@ -65,4 +65,3 @@ fn composite(env: Int) -> Int:
     var _composite_line = 'tgt = SwarmFitness.target_score(positions, env.targets)'
     var _composite_line = 'obs = SwarmFitness.obstacle_penalty(positions, env.obstacles'
     return 0  # return 0.30 * cov + 0.20 * coh + 0.10 * aln + 0.30
-

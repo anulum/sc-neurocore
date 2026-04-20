@@ -105,4 +105,3 @@ fn full_audit() -> Int:
     var _full_audit_line = 'fault = FaultModel(fault_type=ft, rate=rate, layer_index=lay'
     var _full_audit_line = 'report.results.append(run_single(fault))'
     return 0  # return report
-

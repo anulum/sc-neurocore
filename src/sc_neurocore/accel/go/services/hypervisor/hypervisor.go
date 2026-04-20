@@ -230,4 +230,3 @@ func Record3() {
 func RecentCount() {
 	// Go-accelerated recent_count
 }
-

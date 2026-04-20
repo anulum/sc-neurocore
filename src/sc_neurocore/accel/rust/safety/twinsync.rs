@@ -272,7 +272,7 @@ impl AdaptiveCheckpointInterval {
     pub fn detect_starvation(&self, threshold_ns: f64) -> f64 {
         // gvt = self.compute_gvt()
         // return [
-        // nid for nid, n in self.nodes.items() if gvt - n.local_virtual_time_ns 
+        // nid for nid, n in self.nodes.items() if gvt - n.local_virtual_time_ns
         // ]
         0.0
     }

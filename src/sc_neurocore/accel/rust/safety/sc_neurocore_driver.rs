@@ -43,7 +43,7 @@ impl SC_NeuroCore_Driver {
         // # Check for specific IP blocks to verify it's the right bitstream
         // if not hasattr(self.overlay, "scpn_layer_1_0"):
         // from sc_neurocore.exceptions import SCHardwareError
-        // raise SCHardwareError("Loaded bitstream does not contain SCPN Layer 1 
+        // raise SCHardwareError("Loaded bitstream does not contain SCPN Layer 1
         0.0
     }
 

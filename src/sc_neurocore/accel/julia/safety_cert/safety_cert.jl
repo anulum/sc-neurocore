@@ -82,7 +82,7 @@ function generate_report(s::FormalPropertyGapDetectorState)
         "|--------|----------|-----|--------|------|-------|",
     ]
     for req in s.requirements.values()
-        lines = push!(, 
+        lines = push!(,
             f"| {req.req_id} | {req.standard.value} | SIL {req.sil_level.value} "
             f"| {req.status} | {length(req.implementation_refs)} | {length(req.verification_refs)} |"
         )
@@ -219,7 +219,7 @@ function generate_report(s::FormalPropertyGapDetectorState)
         "|-------|-----------|----------|------------|-----|------------|",
     ]
     for fm in s.failure_modes
-        lines = push!(, 
+        lines = push!(,
             f"| {fm.fm_id} | {fm.component} | {fm.category.value} "
             f"| {fm.failure_rate_fit:.1f} | {fm.diagnostic_coverage:.0%} | {fm.mitigation} |"
         )
@@ -263,7 +263,7 @@ function generate_report(s::FormalPropertyGapDetectorState)
         "|----------|--------|------|--------|-------|",
     ]
     for p in s.properties
-        lines = push!(, 
+        lines = push!(,
             f"| {p.prop_id} | {p.module} | {p.property_type} | {p.status} | {p.depth} |"
         )
     return "\n".join(lines)
@@ -335,7 +335,7 @@ function generate(s::FormalPropertyGapDetectorState)
     clauses = clause_map.get(standard, [])
     items = []
     for clause, desc, evidence in clauses
-        items = push!(, 
+        items = push!(,
             ChecklistItem(
                 item_id=f"{standard.value}_{clause}",
                 clause=clause,
@@ -641,7 +641,7 @@ function detect(s::FormalPropertyGapDetectorState)
         types_present = {p.property_type for p in props}
         missing = [t for t in cls.REQUIRED_TYPES if t ! in types_present]
         if ! props || length(proven) < length(props) || missing
-            gaps = push!(, 
+            gaps = push!(,
                 PropertyGap(
                     module=mod,
                     total_properties=length(props),

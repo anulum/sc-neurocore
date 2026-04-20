@@ -81,7 +81,7 @@ function _export_json()
         "inputs": [],
         "outputs": [],
     }
-    graph["inputs"] = push!(, 
+    graph["inputs"] = push!(,
         {
             "name": "input_0",
             "type": "tensor(float)",

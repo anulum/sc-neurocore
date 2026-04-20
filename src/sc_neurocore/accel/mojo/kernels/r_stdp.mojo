@@ -33,4 +33,3 @@ fn apply_reward(reward: Int) -> Int:
     var _apply_reward_line = 'new_w = max(w_min, min(w_max, new_w))'
     var _apply_reward_line = 'update_weight(new_w)'
     return 0
-

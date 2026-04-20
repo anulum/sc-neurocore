@@ -28,4 +28,3 @@ fn step(current: Int) -> Int:
 fn reset() -> Int:
     var _reset_line = 'ca, h, ip3 = 0.05, 0.8, 0.5'
     return 0
-

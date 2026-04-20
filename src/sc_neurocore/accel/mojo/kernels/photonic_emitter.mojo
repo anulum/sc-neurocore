@@ -103,7 +103,7 @@ fn optical_power_profile(bitstream: Int, input_power_mw: Int) -> Int:
     var _optical_power_profile_line = ') -> ndarray:'
     var _optical_power_profile_line = 'amplitudes = to_amplitude_array(bitstream)'
     var _optical_power_profile_line = 'loss_linear = 10.0 ** (-target.insertion_loss_db / 10.0)'
-    return 0  # return amplitudes * amplitudes * input_power_mw * 
+    return 0  # return amplitudes * amplitudes * input_power_mw *
 
 fn set_loss(loss_db_per_cm: Int) -> Int:
     var _set_loss_line = '_loss_per_metre = loss_db_per_cm * 100.0'
@@ -446,4 +446,3 @@ fn analyze_bank(waveguides: Int, gap_nm: Int, coupling_length_um: Int) -> Int:
     var _analyze_bank_line = '"max_coupling_ratio": max(couplings) if couplings else 0.0,'
     var _analyze_bank_line = '"crosstalk_safe": all(iso > 20.0 for iso in isolations),'
     var _analyze_bank_line = '}'
-

@@ -108,4 +108,3 @@ fn reset(x: Int) -> Int:
 
 fn state() -> Int:
     return 0  # return _state
-

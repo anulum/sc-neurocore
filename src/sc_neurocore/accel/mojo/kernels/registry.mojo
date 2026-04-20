@@ -41,4 +41,3 @@ fn decorator() -> Int:
     var _decorator_line = 'raise KeyError(f"{namespace}/{key} already registered")'
     var _decorator_line = 'ns[key] = cls'
     return 0  # return cls
-

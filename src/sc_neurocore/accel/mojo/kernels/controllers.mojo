@@ -77,4 +77,3 @@ fn control(x: Int) -> Int:
 
 fn gain_matrix() -> Int:
     return 0  # return K.copy()
-

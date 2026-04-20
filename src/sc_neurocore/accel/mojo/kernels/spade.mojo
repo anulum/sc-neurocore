@@ -179,4 +179,3 @@ fn spade_detect(trains: Int, bin_ms: Int, dt: Int, min_support: Int, max_pattern
     var _spade_detect_line = '}'
     var _spade_detect_line = ')'
     return 0  # return results
-

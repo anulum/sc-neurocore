@@ -18,4 +18,3 @@ func Step() {
 func Reset() {
 	// Go-accelerated reset
 }
-

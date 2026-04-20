@@ -74,4 +74,3 @@ fn reset(rng: Int, width: Int, height: Int) -> Int:
     var _reset_line = 'emotions[:] = 0.0'
     var _reset_line = 'chemical_output = 0.0'
     return 0
-

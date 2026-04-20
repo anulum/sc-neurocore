@@ -44,7 +44,7 @@ impl L8_CosmicAdapter {
     }
 
     pub fn _cosmic_kernel(&self, phases: f64, pulsar_omegas: f64, k_cosmic: f64, dt: f64) -> f64 {
-        // phases: jnp.ndarray, pulsar_omegas: jnp.ndarray, k_cosmic: float, dt: 
+        // phases: jnp.ndarray, pulsar_omegas: jnp.ndarray, k_cosmic: float, dt:
         // ) -> jnp.ndarray:
         // # Theta_pulsar is simulated as Omega_p * t
         // # For simplicity in the JIT kernel, we assume pulsar phases are pre-ca
@@ -66,7 +66,7 @@ impl L8_CosmicAdapter {
         // # Map input dimensions
         // if symbolic_drive.shape[0] != self.params.n_pulsars:
         // symbolic_drive = jnp.full((self.params.n_pulsars,), jnp.mean(symbolic_
-        // self.system_phases = (self.system_phases + 0.1 * symbolic_drive * dt) 
+        // self.system_phases = (self.system_phases + 0.1 * symbolic_drive * dt)
         // # 3. Return encoded bitstreams
         // return self.encode(0.0)
         0.0

@@ -5,9 +5,8 @@ import os
 import math
 
 try:
-    from sc_neurocore._native.learning_bridge import (
-        is_available, RustPlasticityRule, RULE_STDP
-    )
+    from sc_neurocore._native.learning_bridge import is_available, RustPlasticityRule, RULE_STDP
+
     FFI_AVAILABLE = is_available()
 except ImportError:
     FFI_AVAILABLE = False
@@ -29,6 +28,7 @@ w = LearningBridgeAccel.weight(rule)
 println(w)
 """
 
+
 @pytest.mark.skipif(not FFI_AVAILABLE, reason="Rust FFI not available")
 def test_julia_python_learning_parity():
     # Python baseline
@@ -36,21 +36,22 @@ def test_julia_python_learning_parity():
     rule.step(True, False)
     rule.step(False, True)
     py_weight = rule.weight
-    
+
     # Julia evaluation
     env = os.environ.copy()
     try:
         res = subprocess.run(
-            ["julia", "-e", JULIA_SCRIPT],
-            capture_output=True, text=True, env=env, check=True
+            ["julia", "-e", JULIA_SCRIPT], capture_output=True, text=True, env=env, check=True
         )
     except FileNotFoundError:
         pytest.skip("Julia not installed")
-        
+
     out = res.stdout.strip().split()[-1]
     if out == "NO_FFI":
         pytest.skip("Julia could not load FFI lib")
-        
+
     jl_weight = float(out)
-    
-    assert math.isclose(py_weight, jl_weight, rel_tol=1e-5), f"Parity mismatch: Python={py_weight}, Julia={jl_weight}"
+
+    assert math.isclose(py_weight, jl_weight, rel_tol=1e-5), (
+        f"Parity mismatch: Python={py_weight}, Julia={jl_weight}"
+    )

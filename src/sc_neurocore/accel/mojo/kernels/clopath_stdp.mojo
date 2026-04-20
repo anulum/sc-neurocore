@@ -33,4 +33,3 @@ fn reset() -> Int:
     var _reset_line = 'u_bar_minus = 0.0'
     var _reset_line = 'u_bar_plus = 0.0'
     return 0
-

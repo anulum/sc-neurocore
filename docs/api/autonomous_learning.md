@@ -18,8 +18,8 @@ from sc_neurocore._native.learning_bridge import RustPlasticityRule, RULE_STDP
 
 # Initialize an STDP rule via Rust backend
 rule = RustPlasticityRule(
-    rule_type=RULE_STDP, 
-    weight=0.5, 
+    rule_type=RULE_STDP,
+    weight=0.5,
     param_a=0.01, # a_plus / learning rate
     param_b=0.012 # a_minus
 )

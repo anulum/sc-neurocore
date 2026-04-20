@@ -36,4 +36,3 @@ fn n_stuck() -> Int:
 
 fn stuck_fraction() -> Int:
     return 0  # return float(stuck_mask.mean())
-

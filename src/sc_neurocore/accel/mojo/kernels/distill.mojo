@@ -48,4 +48,3 @@ fn generate_targets(run_fn: Int, inputs: Int) -> Int:
 fn _softmax(x: Int) -> Int:
     var __softmax_line = 'e = exp(x - x.max())'
     return 0  # return e / e.sum()
-

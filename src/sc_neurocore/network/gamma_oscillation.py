@@ -105,7 +105,12 @@ _julia_ping_step = None
 _HAS_JULIA_PING_STEP = False
 try:
     from juliacall import Main as jl  # type: ignore[import-not-found]
-    _jl_ping_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "accel", "julia", "network", "gamma_oscillation.jl"))
+
+    _jl_ping_file = os.path.abspath(
+        os.path.join(
+            os.path.dirname(__file__), "..", "accel", "julia", "network", "gamma_oscillation.jl"
+        )
+    )
     if os.path.exists(_jl_ping_file):
         jl.seval(f'include("{_jl_ping_file}")')
         _julia_ping_step = jl.GammaOscillationAccel.py_ping_step
@@ -116,7 +121,16 @@ except Exception:
 _go_ping_step = None
 _HAS_GO_PING_STEP = False
 try:
-    _go_ping_lib = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "accel", "go", "gamma_oscillation", "libgamma_oscillation.so"))
+    _go_ping_lib = os.path.abspath(
+        os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "accel",
+            "go",
+            "gamma_oscillation",
+            "libgamma_oscillation.so",
+        )
+    )
     if os.path.exists(_go_ping_lib):
         _go_lib = ctypes.CDLL(_go_ping_lib)
         _go_ping_step = _go_lib.py_ping_step_c
@@ -127,7 +141,11 @@ except Exception:
 _mojo_ping_step = None
 _HAS_MOJO_PING_STEP = False
 try:
-    _mojo_ping_lib = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "accel", "mojo", "kernels", "libgamma_oscillation.so"))
+    _mojo_ping_lib = os.path.abspath(
+        os.path.join(
+            os.path.dirname(__file__), "..", "accel", "mojo", "kernels", "libgamma_oscillation.so"
+        )
+    )
     if os.path.exists(_mojo_ping_lib):
         _mojo_lib = ctypes.CDLL(_mojo_ping_lib)
         _mojo_ping_step = _mojo_lib.py_ping_step
@@ -244,16 +262,20 @@ class PINGCircuit:
         # if available; explicit "rust" raises if the kernel is
         # missing rather than silently downgrading.
         if self.backend not in {"auto", "rust", "python", "julia", "go", "mojo"}:
-            raise ValueError(f"backend must be one of 'auto'|'rust'|'python'|'julia'|'go'|'mojo', got {self.backend!r}")
+            raise ValueError(
+                f"backend must be one of 'auto'|'rust'|'python'|'julia'|'go'|'mojo', got {self.backend!r}"
+            )
         if self.backend == "rust" and not _HAS_RUST_PING_STEP:
-            raise RuntimeError("backend='rust' requested but `sc_neurocore_engine.py_ping_step` is not available")
+            raise RuntimeError(
+                "backend='rust' requested but `sc_neurocore_engine.py_ping_step` is not available"
+            )
         if self.backend == "julia" and not _HAS_JULIA_PING_STEP:
             raise RuntimeError("backend='julia' requested but julia kernel is not available")
         if self.backend == "go" and not _HAS_GO_PING_STEP:
             raise RuntimeError("backend='go' requested but go kernel is not available")
         if self.backend == "mojo" and not _HAS_MOJO_PING_STEP:
             raise RuntimeError("backend='mojo' requested but mojo kernel is not available")
-            
+
         self._use_rust = self.backend == "rust" or (self.backend == "auto" and _HAS_RUST_PING_STEP)
         self._use_julia = self.backend == "julia"
         self._use_go = self.backend == "go"
@@ -365,11 +387,33 @@ class PINGCircuit:
         spikes_e_u8 = np.zeros(self.n_excitatory, dtype=np.uint8)
         spikes_i_u8 = np.zeros(self.n_inhibitory, dtype=np.uint8)
         n_e_spikes, n_i_spikes = _julia_ping_step(
-            self.v_e, self.g_ampa_e, self.g_gaba_e, self.refrac_e, self.i_drive_e, xi_e, spikes_e_u8,
-            self.v_i, self.g_ampa_i, self.g_gaba_i, self.refrac_i, self.i_drive_i, xi_i, spikes_i_u8,
-            float(self.e_l), float(self.e_ampa), float(self.e_gaba), float(self.g_l), float(self.c_m),
-            float(self.v_threshold), float(self.v_reset), float(self.t_refrac),
-            float(self.tau_ampa), float(self.tau_gaba), float(self.sigma_e), float(self.sigma_i), float(dt)
+            self.v_e,
+            self.g_ampa_e,
+            self.g_gaba_e,
+            self.refrac_e,
+            self.i_drive_e,
+            xi_e,
+            spikes_e_u8,
+            self.v_i,
+            self.g_ampa_i,
+            self.g_gaba_i,
+            self.refrac_i,
+            self.i_drive_i,
+            xi_i,
+            spikes_i_u8,
+            float(self.e_l),
+            float(self.e_ampa),
+            float(self.e_gaba),
+            float(self.g_l),
+            float(self.c_m),
+            float(self.v_threshold),
+            float(self.v_reset),
+            float(self.t_refrac),
+            float(self.tau_ampa),
+            float(self.tau_gaba),
+            float(self.sigma_e),
+            float(self.sigma_i),
+            float(dt),
         )
         if n_e_spikes > 0:
             self.g_ampa_e += self._w_ee_eff * n_e_spikes
@@ -386,9 +430,10 @@ class PINGCircuit:
         spikes_i_u8 = np.zeros(self.n_inhibitory, dtype=np.uint8)
         out_n_e = ctypes.c_uint32(0)
         out_n_i = ctypes.c_uint32(0)
-        
+
         _go_ping_step.argtypes = [
-            ctypes.c_int, ctypes.c_int,
+            ctypes.c_int,
+            ctypes.c_int,
             np.ctypeslib.ndpointer(dtype=np.float64, flags="C_CONTIGUOUS"),
             np.ctypeslib.ndpointer(dtype=np.float64, flags="C_CONTIGUOUS"),
             np.ctypeslib.ndpointer(dtype=np.float64, flags="C_CONTIGUOUS"),
@@ -403,24 +448,59 @@ class PINGCircuit:
             np.ctypeslib.ndpointer(dtype=np.float64, flags="C_CONTIGUOUS"),
             np.ctypeslib.ndpointer(dtype=np.float64, flags="C_CONTIGUOUS"),
             np.ctypeslib.ndpointer(dtype=np.uint8, flags="C_CONTIGUOUS"),
-            ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double,
-            ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double,
-            ctypes.c_double, ctypes.c_double, ctypes.c_double,
-            ctypes.POINTER(ctypes.c_uint32), ctypes.POINTER(ctypes.c_uint32)
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.POINTER(ctypes.c_uint32),
+            ctypes.POINTER(ctypes.c_uint32),
         ]
-        
+
         _go_ping_step(
-            self.n_excitatory, self.n_inhibitory,
-            self.v_e, self.g_ampa_e, self.g_gaba_e, self.refrac_e, self.i_drive_e, xi_e, spikes_e_u8,
-            self.v_i, self.g_ampa_i, self.g_gaba_i, self.refrac_i, self.i_drive_i, xi_i, spikes_i_u8,
-            self.e_l, self.e_ampa, self.e_gaba, self.g_l, self.c_m,
-            self.v_threshold, self.v_reset, self.t_refrac,
-            self.tau_ampa, self.tau_gaba, self.sigma_e, self.sigma_i, dt,
-            ctypes.byref(out_n_e), ctypes.byref(out_n_i)
+            self.n_excitatory,
+            self.n_inhibitory,
+            self.v_e,
+            self.g_ampa_e,
+            self.g_gaba_e,
+            self.refrac_e,
+            self.i_drive_e,
+            xi_e,
+            spikes_e_u8,
+            self.v_i,
+            self.g_ampa_i,
+            self.g_gaba_i,
+            self.refrac_i,
+            self.i_drive_i,
+            xi_i,
+            spikes_i_u8,
+            self.e_l,
+            self.e_ampa,
+            self.e_gaba,
+            self.g_l,
+            self.c_m,
+            self.v_threshold,
+            self.v_reset,
+            self.t_refrac,
+            self.tau_ampa,
+            self.tau_gaba,
+            self.sigma_e,
+            self.sigma_i,
+            dt,
+            ctypes.byref(out_n_e),
+            ctypes.byref(out_n_i),
         )
         n_e_spikes = out_n_e.value
         n_i_spikes = out_n_i.value
-        
+
         if n_e_spikes > 0:
             self.g_ampa_e += self._w_ee_eff * n_e_spikes
             self.g_ampa_i += self._w_ei_eff * n_e_spikes
@@ -438,18 +518,42 @@ class PINGCircuit:
         out_n_i = np.zeros(1, dtype=np.uint32)
 
         _mojo_ping_step.argtypes = [
-            ctypes.c_longlong, ctypes.c_longlong, ctypes.c_longlong, ctypes.c_longlong,
-            ctypes.c_longlong, ctypes.c_longlong, ctypes.c_longlong, ctypes.c_longlong,
-            ctypes.c_longlong, ctypes.c_longlong, ctypes.c_longlong, ctypes.c_longlong,
-            ctypes.c_longlong, ctypes.c_longlong, ctypes.c_longlong, ctypes.c_longlong,
-            ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double,
-            ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double,
-            ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double,
-            ctypes.c_double, ctypes.c_longlong, ctypes.c_longlong
+            ctypes.c_longlong,
+            ctypes.c_longlong,
+            ctypes.c_longlong,
+            ctypes.c_longlong,
+            ctypes.c_longlong,
+            ctypes.c_longlong,
+            ctypes.c_longlong,
+            ctypes.c_longlong,
+            ctypes.c_longlong,
+            ctypes.c_longlong,
+            ctypes.c_longlong,
+            ctypes.c_longlong,
+            ctypes.c_longlong,
+            ctypes.c_longlong,
+            ctypes.c_longlong,
+            ctypes.c_longlong,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.c_longlong,
+            ctypes.c_longlong,
         ]
 
         _mojo_ping_step(
-            ctypes.c_longlong(self.n_excitatory), ctypes.c_longlong(self.n_inhibitory),
+            ctypes.c_longlong(self.n_excitatory),
+            ctypes.c_longlong(self.n_inhibitory),
             ctypes.c_longlong(self.v_e.ctypes.data),
             ctypes.c_longlong(self.g_ampa_e.ctypes.data),
             ctypes.c_longlong(self.g_gaba_e.ctypes.data),
@@ -464,15 +568,23 @@ class PINGCircuit:
             ctypes.c_longlong(self.i_drive_i.ctypes.data),
             ctypes.c_longlong(xi_i.ctypes.data),
             ctypes.c_longlong(spikes_i_u8.ctypes.data),
-            ctypes.c_double(self.e_l), ctypes.c_double(self.e_ampa),
-            ctypes.c_double(self.e_gaba), ctypes.c_double(self.g_l), ctypes.c_double(self.c_m),
-            ctypes.c_double(self.v_threshold), ctypes.c_double(self.v_reset), ctypes.c_double(self.t_refrac),
-            ctypes.c_double(self.tau_ampa), ctypes.c_double(self.tau_gaba), ctypes.c_double(self.sigma_e),
-            ctypes.c_double(self.sigma_i), ctypes.c_double(dt),
+            ctypes.c_double(self.e_l),
+            ctypes.c_double(self.e_ampa),
+            ctypes.c_double(self.e_gaba),
+            ctypes.c_double(self.g_l),
+            ctypes.c_double(self.c_m),
+            ctypes.c_double(self.v_threshold),
+            ctypes.c_double(self.v_reset),
+            ctypes.c_double(self.t_refrac),
+            ctypes.c_double(self.tau_ampa),
+            ctypes.c_double(self.tau_gaba),
+            ctypes.c_double(self.sigma_e),
+            ctypes.c_double(self.sigma_i),
+            ctypes.c_double(dt),
             ctypes.c_longlong(out_n_e.ctypes.data),
-            ctypes.c_longlong(out_n_i.ctypes.data)
+            ctypes.c_longlong(out_n_i.ctypes.data),
         )
-        
+
         n_e_spikes = int(out_n_e[0])
         n_i_spikes = int(out_n_i[0])
         if n_e_spikes > 0:

@@ -26,4 +26,3 @@ fn apply_ewc_penalty(step_size: Int) -> Int:
     var _apply_ewc_penalty_line = 'for j in range(n_inputs):'
     var _apply_ewc_penalty_line = 'synapses[i][j].w = float(new_w[i, j])'
     return 0  # return float(sum(abs(penalty_grad)))
-

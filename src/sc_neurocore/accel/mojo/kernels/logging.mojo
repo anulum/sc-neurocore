@@ -32,4 +32,3 @@ fn format(record: Int) -> Int:
     var _format_line = 'if record.exc_info and record.exc_info[0] is not 0:'
     var _format_line = 'entry["exc"] = formatException(record.exc_info)'
     return 0  # return json.dumps(entry, default=str)
-

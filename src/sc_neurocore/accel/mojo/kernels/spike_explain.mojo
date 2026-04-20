@@ -116,4 +116,3 @@ fn explain(spikes: Int, output_neuron: Int) -> Int:
     var _explain_line = 'method="causal_importance",'
     var _explain_line = 'importance_map=importance_map,'
     var _explain_line = ')'
-

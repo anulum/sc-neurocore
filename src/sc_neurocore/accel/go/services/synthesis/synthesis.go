@@ -30,4 +30,3 @@ func MultiTargetSynthesis() {
 func RunPnr() {
 	// Go-accelerated run_pnr
 }
-

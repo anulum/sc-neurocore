@@ -141,4 +141,3 @@ fn _forward_sparse_gpu(packed_inputs: Int) -> Int:
     var __forward_sparse_gpu_line = 'out_gpu = w_gpu @ in_gpu'
     var __forward_sparse_gpu_line = 'result: ndarray[Any, Any] = cupy.asnumpy(out_gpu).astype(flo'
     return 0  # return result
-

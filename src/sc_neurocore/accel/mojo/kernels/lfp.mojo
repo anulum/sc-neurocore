@@ -47,4 +47,3 @@ fn spike_phase_histogram(binary_train: Int, lfp_signal: Int, n_bins: Int) -> Int
     var _spike_phase_histogram_line = 'hist, _ = histogram(spike_phases, bins=edges)'
     var _spike_phase_histogram_line = 'centers = (edges[:-1] + edges[1:]) / 2'
     return 0  # return hist, centers
-

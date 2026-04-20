@@ -39,7 +39,7 @@ function summary(s::EnergyReportState)
         "",
     ]
     for layer in s.layers
-        lines = push!(, 
+        lines = push!(,
             f"  {layer.name}: {layer.n_inputs}->{layer.n_neurons} "
             f"({layer.n_synapses} syn, L={layer.bitstream_length}) "
             f"-> {layer.luts} LUTs, {layer.dynamic_power_mw:.2f} mW"
@@ -103,7 +103,7 @@ function estimate(layer_sizes, target, bitstream_length, neuron_type, event_driv
         freq = clock_mhz * 1e6
         power_w = c_eff_f * v_sq * freq * total_luts * activity
         power_mw = power_w * 1e3
-        layers = push!(, 
+        layers = push!(,
             LayerEstimate(
                 name=f"layer_{i}",
                 n_inputs=n_in,

@@ -101,4 +101,3 @@ pub fn gpfa_transform(new_trains: f64, params: f64, bin_ms: f64, dt: f64) -> f64
     // return x_post
     0.0
 }
-

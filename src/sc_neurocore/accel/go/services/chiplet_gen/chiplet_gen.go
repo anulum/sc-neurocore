@@ -214,4 +214,3 @@ func NeuronsOnDie() {
 func ToRoutingTables() {
 	// Go-accelerated to_routing_tables
 }
-

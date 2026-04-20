@@ -90,6 +90,17 @@ jobs:
         run: |
           python tools/ci_install_engine_deps.py
 
+      - name: Build autonomous_learning cdylib
+        shell: bash
+        run: |
+          cargo build --release --manifest-path crates/autonomous_learning/Cargo.toml
+          case "${{ runner.os }}" in
+            Linux)   src=crates/autonomous_learning/target/release/libautonomous_learning.so;    dst=src/sc_neurocore/_native/libautonomous_learning.so ;;
+            macOS)   src=crates/autonomous_learning/target/release/libautonomous_learning.dylib; dst=src/sc_neurocore/_native/libautonomous_learning.dylib ;;
+            Windows) src=crates/autonomous_learning/target/release/autonomous_learning.dll;      dst=src/sc_neurocore/_native/autonomous_learning.dll ;;
+          esac
+          cp "$src" "$dst"
+
       - name: Remove tracked Windows bridge binary
         if: runner.os == 'Windows'
         shell: pwsh

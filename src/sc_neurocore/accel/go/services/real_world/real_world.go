@@ -18,4 +18,3 @@ func ReceiveChunk() {
 func PublishCmdVel() {
 	// Go-accelerated publish_cmd_vel
 }
-

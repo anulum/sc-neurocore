@@ -236,6 +236,11 @@ Persistent spiking network for identity continuity (`sc_neurocore.identity`).
 pip install sc-neurocore
 ```
 
+For biological closed-loop BCI implementations (experimental), install the bioware optional dependencies:
+```bash
+pip install "sc-neurocore[bioware]"
+```
+
 ```python
 from sc_neurocore import StochasticLIFNeuron
 
@@ -247,6 +252,10 @@ print(f"{spikes} spikes in 500 steps")
 ### Zenith Quickstart
 
 Train biologically plausible rules using PyTorch surrogate autograd, then export the exact layer to hardware:
+
+### Bio-hybrid Closed-Loop with ArcaneZenith (Experimental)
+
+The `bioware` module securely bridges biological real-world MEA setups into Stochastic Computing and Optogenetic laser outputs natively. It supports PCA/K-Means spike sorting, runtime health tracking, pharmacological wash simulations, and `ArcaneZenithCognitiveCore` bridged bindings.
 
 ```python
 import torch

@@ -26,4 +26,3 @@ fn step(ext_input: Int) -> Int:
 fn reset() -> Int:
     var _reset_line = 'r, v = 0.1, -2.0'
     return 0
-

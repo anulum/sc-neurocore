@@ -304,7 +304,7 @@ set_reset_data( ddrc__phy_gate_lvl_fsm, val_ddrc__phy_gate_lvl_fsm);
 
 // ************************************************************
 //   Module debug_axim axim
-//   doc version: 
+//   doc version:
 // ************************************************************
 
 // ADDRESS  DEVFALUE   MASK       NAME
@@ -385,7 +385,7 @@ set_reset_data( debug_axim__COMPID3, val_debug_axim__COMPID3);
 
 // ************************************************************
 //   Module debug_cpu_cti0 cti
-//   doc version: 
+//   doc version:
 // ************************************************************
 
 // ADDRESS  DEVFALUE   MASK       NAME
@@ -447,7 +447,7 @@ set_reset_data( debug_cpu_cti0__COMPID3, val_debug_cpu_cti0__COMPID3);
 
 // ************************************************************
 //   Module debug_cpu_cti1 cti
-//   doc version: 
+//   doc version:
 // ************************************************************
 
 // ADDRESS  DEVFALUE   MASK       NAME
@@ -565,7 +565,7 @@ set_reset_data( debug_cpu_pmu1__PMUSERENR, val_debug_cpu_pmu1__PMUSERENR);
 
 // ************************************************************
 //   Module debug_cpu_ptm0 ptm
-//   doc version: 
+//   doc version:
 // ************************************************************
 
 // ADDRESS  DEVFALUE   MASK       NAME
@@ -649,7 +649,7 @@ set_reset_data( debug_cpu_ptm0__COMPID3, val_debug_cpu_ptm0__COMPID3);
 
 // ************************************************************
 //   Module debug_cpu_ptm1 ptm
-//   doc version: 
+//   doc version:
 // ************************************************************
 
 // ADDRESS  DEVFALUE   MASK       NAME
@@ -733,7 +733,7 @@ set_reset_data( debug_cpu_ptm1__COMPID3, val_debug_cpu_ptm1__COMPID3);
 
 // ************************************************************
 //   Module debug_cti_axim cti
-//   doc version: 
+//   doc version:
 // ************************************************************
 
 // ADDRESS  DEVFALUE   MASK       NAME
@@ -795,7 +795,7 @@ set_reset_data( debug_cti_axim__COMPID3, val_debug_cti_axim__COMPID3);
 
 // ************************************************************
 //   Module debug_cti_etb_tpiu cti
-//   doc version: 
+//   doc version:
 // ************************************************************
 
 // ADDRESS  DEVFALUE   MASK       NAME
@@ -857,7 +857,7 @@ set_reset_data( debug_cti_etb_tpiu__COMPID3, val_debug_cti_etb_tpiu__COMPID3);
 
 // ************************************************************
 //   Module debug_cti_ftm cti
-//   doc version: 
+//   doc version:
 // ************************************************************
 
 // ADDRESS  DEVFALUE   MASK       NAME
@@ -919,7 +919,7 @@ set_reset_data( debug_cti_ftm__COMPID3, val_debug_cti_ftm__COMPID3);
 
 // ************************************************************
 //   Module debug_dap_rom dap
-//   doc version: 
+//   doc version:
 // ************************************************************
 
 // ADDRESS  DEVFALUE   MASK       NAME
@@ -954,7 +954,7 @@ set_reset_data( debug_dap_rom__COMPID3, val_debug_dap_rom__COMPID3);
 
 // ************************************************************
 //   Module debug_etb etb
-//   doc version: 
+//   doc version:
 // ************************************************************
 
 // ADDRESS  DEVFALUE   MASK       NAME
@@ -998,7 +998,7 @@ set_reset_data( debug_etb__COMPID3, val_debug_etb__COMPID3);
 
 // ************************************************************
 //   Module debug_ftm ftm
-//   doc version: 
+//   doc version:
 // ************************************************************
 
 // ADDRESS  DEVFALUE   MASK       NAME
@@ -1048,7 +1048,7 @@ set_reset_data( debug_ftm__FTMCOMPONID3, val_debug_ftm__FTMCOMPONID3);
 
 // ************************************************************
 //   Module debug_funnel funnel
-//   doc version: 
+//   doc version:
 // ************************************************************
 
 // ADDRESS  DEVFALUE   MASK       NAME
@@ -1081,7 +1081,7 @@ set_reset_data( debug_funnel__COMPID3, val_debug_funnel__COMPID3);
 
 // ************************************************************
 //   Module debug_itm itm
-//   doc version: 
+//   doc version:
 // ************************************************************
 
 // ADDRESS  DEVFALUE   MASK       NAME
@@ -1150,7 +1150,7 @@ set_reset_data( debug_itm__COMPID3, val_debug_itm__COMPID3);
 
 // ************************************************************
 //   Module debug_tpiu tpiu
-//   doc version: 
+//   doc version:
 // ************************************************************
 
 // ADDRESS  DEVFALUE   MASK       NAME
@@ -1438,7 +1438,7 @@ set_reset_data( efuse_ctrl__RD_STBW, val_efuse_ctrl__RD_STBW);
 
 // ************************************************************
 //   Module gem0 GEM
-//   doc version: 
+//   doc version:
 // ************************************************************
 
 // ADDRESS  DEVFALUE   MASK       NAME
@@ -1641,7 +1641,7 @@ set_reset_data( gem0__intr_mask_pq7, val_gem0__intr_mask_pq7);
 
 // ************************************************************
 //   Module gem1 GEM
-//   doc version: 
+//   doc version:
 // ************************************************************
 
 // ADDRESS  DEVFALUE   MASK       NAME
@@ -1844,7 +1844,7 @@ set_reset_data( gem1__intr_mask_pq7, val_gem1__intr_mask_pq7);
 
 // ************************************************************
 //   Module gpio gpio
-//   doc version: 
+//   doc version:
 // ************************************************************
 
 // ADDRESS  DEVFALUE   MASK       NAME

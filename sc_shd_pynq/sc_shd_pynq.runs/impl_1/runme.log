@@ -111,7 +111,7 @@ Phase 3 Retarget | Checksum: 1de604cca
 Time (s): cpu = 00:00:00.43 ; elapsed = 00:00:00.25 . Memory (MB): peak = 2899.574 ; gain = 0.000 ; free physical = 8831 ; free virtual = 23599
 Retarget | Checksum: 1de604cca
 INFO: [Opt 31-389] Phase Retarget created 8 cells and removed 43 cells
-INFO: [Opt 31-1021] In phase Retarget, 20 netlist objects are constrained preventing optimization. Please run opt_design with -debug_log to get more detail. 
+INFO: [Opt 31-1021] In phase Retarget, 20 netlist objects are constrained preventing optimization. Please run opt_design with -debug_log to get more detail.
 
 Phase 4 Constant propagation
 INFO: [Opt 31-138] Pushed 2 inverter(s) to 2 load pin(s).
@@ -120,7 +120,7 @@ Phase 4 Constant propagation | Checksum: 1db9e332a
 Time (s): cpu = 00:00:00.54 ; elapsed = 00:00:00.35 . Memory (MB): peak = 2899.574 ; gain = 0.000 ; free physical = 8832 ; free virtual = 23600
 Constant propagation | Checksum: 1db9e332a
 INFO: [Opt 31-389] Phase Constant propagation created 44 cells and removed 458 cells
-INFO: [Opt 31-1021] In phase Constant propagation, 20 netlist objects are constrained preventing optimization. Please run opt_design with -debug_log to get more detail. 
+INFO: [Opt 31-1021] In phase Constant propagation, 20 netlist objects are constrained preventing optimization. Please run opt_design with -debug_log to get more detail.
 
 Phase 5 Sweep
 INFO: [Constraints 18-11670] Building netlist checker database with flags, 0x8
@@ -132,7 +132,7 @@ Phase 5 Sweep | Checksum: 13607326d
 Time (s): cpu = 00:00:00.94 ; elapsed = 00:00:00.76 . Memory (MB): peak = 2899.574 ; gain = 0.000 ; free physical = 8834 ; free virtual = 23601
 Sweep | Checksum: 13607326d
 INFO: [Opt 31-389] Phase Sweep created 0 cells and removed 82 cells
-INFO: [Opt 31-1021] In phase Sweep, 25 netlist objects are constrained preventing optimization. Please run opt_design with -debug_log to get more detail. 
+INFO: [Opt 31-1021] In phase Sweep, 25 netlist objects are constrained preventing optimization. Please run opt_design with -debug_log to get more detail.
 
 Phase 6 BUFG optimization
 Phase 6 BUFG optimization | Checksum: 13607326d
@@ -155,7 +155,7 @@ Phase 8 Post Processing Netlist | Checksum: 1a0da7d67
 Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.87 . Memory (MB): peak = 2931.590 ; gain = 32.016 ; free physical = 8833 ; free virtual = 23601
 Post Processing Netlist | Checksum: 1a0da7d67
 INFO: [Opt 31-389] Phase Post Processing Netlist created 0 cells and removed 0 cells
-INFO: [Opt 31-1021] In phase Post Processing Netlist, 20 netlist objects are constrained preventing optimization. Please run opt_design with -debug_log to get more detail. 
+INFO: [Opt 31-1021] In phase Post Processing Netlist, 20 netlist objects are constrained preventing optimization. Please run opt_design with -debug_log to get more detail.
 
 Phase 9 Finalization
 
@@ -432,7 +432,7 @@ Time (s): cpu = 00:00:26 ; elapsed = 00:00:09 . Memory (MB): peak = 3019.633 ; g
 Phase 4.3 Placer Reporting
 
 Phase 4.3.1 Print Estimated Congestion
-INFO: [Place 30-612] Post-Placement Estimated Congestion 
+INFO: [Place 30-612] Post-Placement Estimated Congestion
  ____________________________________________________
 |           | Global Congestion | Short Congestion  |
 | Direction | Region Size       | Region Size       |
@@ -493,7 +493,7 @@ INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xc
 Starting Initial Update Timing Task
 
 Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.31 . Memory (MB): peak = 3019.633 ; gain = 0.000 ; free physical = 8836 ; free virtual = 23642
-INFO: [Vivado_Tcl 4-2279] Estimated Timing Summary | WNS= 12.259 | TNS= 0.000 | 
+INFO: [Vivado_Tcl 4-2279] Estimated Timing Summary | WNS= 12.259 | TNS= 0.000 |
 INFO: [Vivado_Tcl 4-383] Design worst setup slack (WNS) is greater than or equal to 0.000 ns. All physical synthesis setup optimizations will be skipped.
 INFO: [Vivado_Tcl 4-232] No setup violation found. The netlist was not modified.
 INFO: [Common 17-83] Releasing license: Implementation
@@ -703,7 +703,7 @@ INFO: [Timing 38-35] Done setting XDC timing constraints.
 INFO: [DRC 23-133] Running Methodology with 8 threads
 INFO: [Vivado_Tcl 2-1520] The results of Report Methodology are in file /media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.runs/impl_1/system_wrapper_methodology_drc_routed.rpt.
 report_methodology completed successfully
-INFO: [Vivado 12-24828] Executing command : report_timing_summary -max_paths 10 -routable_nets -report_unconstrained -file system_wrapper_timing_summary_routed.rpt -pb system_wrapper_timing_summary_routed.pb -rpx system_wrapper_timing_summary_routed.rpx -warn_on_violation 
+INFO: [Vivado 12-24828] Executing command : report_timing_summary -max_paths 10 -routable_nets -report_unconstrained -file system_wrapper_timing_summary_routed.rpt -pb system_wrapper_timing_summary_routed.pb -rpx system_wrapper_timing_summary_routed.rpx -warn_on_violation
 INFO: [Timing 38-35] Done setting XDC timing constraints.
 INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -1, Delay Type: min_max.
 INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 8 CPUs

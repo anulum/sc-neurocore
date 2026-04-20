@@ -27,4 +27,3 @@ fn step() -> Int:
 
 fn full_current_estimate() -> Int:
     return 0  # return float(current_scalar)
-

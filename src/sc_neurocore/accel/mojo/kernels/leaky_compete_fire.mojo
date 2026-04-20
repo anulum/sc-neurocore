@@ -25,4 +25,3 @@ fn step(currents: Int) -> Int:
 fn reset() -> Int:
     var _reset_line = 'v = [0.0] * n_units'
     return 0
-

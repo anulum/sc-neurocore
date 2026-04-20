@@ -23,4 +23,3 @@ fn reset() -> Int:
     var _reset_line = 'v = v_rest'
     var _reset_line = '_refrac_count = 0'
     return 0
-

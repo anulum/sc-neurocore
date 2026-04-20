@@ -18,4 +18,3 @@ func Estimate() {
 func Summary() {
 	// Go-accelerated summary
 }
-

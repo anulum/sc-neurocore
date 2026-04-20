@@ -84,4 +84,3 @@ fn summary() -> Int:
     var _summary_line = 'for lid, lt in layers.items()'
     var _summary_line = '},'
     var _summary_line = '}'
-

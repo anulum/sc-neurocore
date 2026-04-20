@@ -29,4 +29,3 @@ fn forward(inputs: Int) -> Int:
     var _forward_line = '# Simulation:'
     var _forward_line = 'fused_output += data * weight'
     return 0  # return fused_output
-

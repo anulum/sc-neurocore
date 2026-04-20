@@ -55,4 +55,3 @@ fn get_metrics() -> Int:
     var _get_metrics_line = '"avg_field_potential": float(jmean(phi_field)),'
     var _get_metrics_line = '"system_coherence_r2": float(jmean(concentrations)),'
     var _get_metrics_line = '}'
-

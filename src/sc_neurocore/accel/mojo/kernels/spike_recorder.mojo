@@ -44,4 +44,3 @@ fn isi_histogram(bins: Int) -> Int:
     var _isi_histogram_line = 'isi_ms = isi_steps * dt_ms'
     var _isi_histogram_line = 'hist, bin_edges = histogram(isi_ms, bins=bins)'
     return 0  # return hist, bin_edges
-

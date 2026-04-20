@@ -39,4 +39,3 @@ fn plan_sequence(current_state: Int, goal_state: Int, horizon: Int) -> Int:
     var _plan_sequence_line = 'plan.append(action)'
     var _plan_sequence_line = 'curr_s = world_model.predict_next_state(curr_s, action)'
     return 0  # return plan
-

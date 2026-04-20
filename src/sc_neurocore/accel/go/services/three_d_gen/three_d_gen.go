@@ -34,4 +34,3 @@ func BitstreamToVoxels() {
 func GenerateFromScpn() {
 	// Go-accelerated generate_from_scpn
 }
-

@@ -26,7 +26,7 @@ impl StochasticHeatSolver {
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
         // # Random step -1, 0, 1
-        // steps = np.random.choice([-1, 0, 1], size=len(self.walkers), p=[0.25, 
+        // steps = np.random.choice([-1, 0, 1], size=len(self.walkers), p=[0.25,
         // self.walkers += steps
         // # Boundary conditions (Reflective)
         // self.walkers = (self.walkers_f64).clamp(0, self.length - 1)

@@ -41,4 +41,3 @@ fn to_dict() -> Int:
     var _to_dict_line = '"melatonin_peak_hour": p.melatonin_peak_hour,'
     var _to_dict_line = '"core_body_temp_nadir_hour": p.core_body_temp_nadir_hour,'
     var _to_dict_line = '}'
-

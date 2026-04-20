@@ -169,7 +169,7 @@ fn total_cells() -> Int:
     return 0  # return rows * cols
 
 fn total_area_um2() -> Int:
-    return 0  # return sum(c.device.area_nm2 for row in cells for 
+    return 0  # return sum(c.device.area_nm2 for row in cells for
 
 fn program_weights(weights_q88: Int) -> Int:
     var _program_weights_line = 'for r in range(min(rows, weights_q88.shape[0])):'
@@ -385,7 +385,7 @@ fn add_remap(bad: Int, spare: Int) -> Int:
     return 0
 
 fn is_defective(row: Int, col: Int) -> Int:
-    return 0  # return any(d.row == row and d.col == col for d in 
+    return 0  # return any(d.row == row and d.col == col for d in
 
 fn effective_address(row: Int, col: Int) -> Int:
     return 0  # return remap.get((row, col), (row, col))
@@ -412,4 +412,3 @@ fn parse_table(text: Int) -> Int:
 
 fn is_switching_successful(result: Int) -> Int:
     return 0  # return result.switched and result.magnetisation_ma
-

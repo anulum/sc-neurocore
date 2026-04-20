@@ -108,4 +108,3 @@ fn assign_lengths(layer_weights: Int, layer_names: Int, total_budget: Int, min_l
     var _assign_lengths_line = ')'
     var _assign_lengths_line = ')'
     return 0  # return assignments
-

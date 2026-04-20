@@ -30,4 +30,3 @@ func StimulateMeridian() {
 func GetAcupointMap() {
 	// Go-accelerated get_acupoint_map
 }
-

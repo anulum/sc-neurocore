@@ -138,4 +138,3 @@ func CrossRankEdges() {
 func Summary() {
 	// Go-accelerated summary
 }
-

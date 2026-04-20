@@ -56,7 +56,7 @@ pub trait PlasticityRule: Send + Sync {
 // ---------------------------------------------------------------------------
 
 /// NOTE: The `sum_weights` variable in this struct governs a Local Synaptic Exhaustion (LSE) boundary.
-/// It deliberately normalizes only this single synaptic junction, diverging from global Oja layer norms. 
+/// It deliberately normalizes only this single synaptic junction, diverging from global Oja layer norms.
 /// This replicates exact constrained bounds found natively in isolated discrete MTJ circuits.
 ///
 /// The neuron adjusts its firing threshold toward a target rate (homeostasis)
@@ -572,7 +572,7 @@ pub unsafe extern "C" fn step_rule_batched(
     let pre_slice = std::slice::from_raw_parts(pre_spikes, count);
     let post_slice = std::slice::from_raw_parts(post_spikes, count);
     let rew_slice = std::slice::from_raw_parts(rewards, count);
-    
+
     let rule = handle.as_rule();
     for i in 0..count {
         rule.step(pre_slice[i], post_slice[i], rew_slice[i], dt);
@@ -596,7 +596,7 @@ pub unsafe extern "C" fn step_learner_batched(
     let fired_slice = std::slice::from_raw_parts(fired, count);
     let pre_slice = std::slice::from_raw_parts(pre_spikes, count);
     let rew_slice = std::slice::from_raw_parts(rewards, count);
-    
+
     for i in 0..count {
         state.step(pre_slice[i], fired_slice[i], rew_slice[i], dt);
     }
@@ -641,7 +641,7 @@ pub unsafe extern "C" fn step_wgpu_layer(
     } else {
         &[]
     };
-    
+
     layer.step(pre_slice, post_slice, reward_slice, dt);
 }
 
@@ -809,7 +809,7 @@ pub unsafe extern "C" fn save_rule_layer_batched(
     let size = get_rule_layer_state_size(layer_ptr);
     let mut buffer = vec![0u8; size];
     if !get_rule_layer_state_mem(layer_ptr, buffer.as_mut_ptr()) { return false; }
-    
+
     if let Ok(mut file) = std::fs::File::create(path) {
         use std::io::Write;
         file.write_all(&buffer).is_ok()
@@ -831,7 +831,7 @@ pub unsafe extern "C" fn load_rule_layer_batched(
         let mut byte_buffer = Vec::new();
         use std::io::Read;
         if file.read_to_end(&mut byte_buffer).is_err() { return false; }
-        
+
         set_rule_layer_state_mem(layer_ptr, byte_buffer.as_ptr())
     } else {
         false
@@ -864,25 +864,25 @@ pub unsafe extern "C" fn get_rule_layer_state_mem(
 ) -> bool {
     if layer_ptr.is_null() || out_buffer.is_null() { return false; }
     let layer = &*layer_ptr;
-    
+
     let mut offset = 0;
     let size = get_rule_layer_state_size(layer_ptr);
     let out_slice = std::slice::from_raw_parts_mut(out_buffer, size);
-    
+
     out_slice[offset..offset+4].copy_from_slice(b"SCAL");
     offset += 4;
     out_slice[offset..offset+4].copy_from_slice(&1u32.to_le_bytes());
     offset += 4;
     out_slice[offset..offset+4].copy_from_slice(&(layer.rules.len() as u32).to_le_bytes());
     offset += 4;
-    
+
     for rule in &layer.rules {
         out_slice[offset..offset+4].copy_from_slice(&rule.rule_id().to_le_bytes());
         offset += 4;
         let rs = rule.get_state();
         out_slice[offset..offset+4].copy_from_slice(&(rs.len() as u32).to_le_bytes());
         offset += 4;
-        
+
         let byte_size = rs.len() * 4;
         std::ptr::copy_nonoverlapping(rs.as_ptr() as *const u8, out_slice[offset..].as_mut_ptr(), byte_size);
         offset += byte_size;
@@ -897,30 +897,30 @@ pub unsafe extern "C" fn set_rule_layer_state_mem(
 ) -> bool {
     if layer_ptr.is_null() || in_buffer.is_null() { return false; }
     let layer = &mut *layer_ptr;
-    
+
     let magic = std::slice::from_raw_parts(in_buffer, 4);
     if magic != b"SCAL" { return false; } // Strict Magic Verify
-    
+
     let mut offset = 4;
     let version_bytes = std::slice::from_raw_parts(in_buffer.add(offset), 4);
     let version = u32::from_le_bytes(version_bytes.try_into().unwrap());
     offset += 4;
     if version != 1 { return false; } // Unsupported version
-    
+
     let count_bytes = std::slice::from_raw_parts(in_buffer.add(offset), 4);
     let count = u32::from_le_bytes(count_bytes.try_into().unwrap());
     offset += 4;
-    
+
     if count as usize != layer.rules.len() { return false; } // Layer dimension mismatch
-    
+
     for rule in &mut layer.rules {
         let rule_id = u32::from_le_bytes(std::slice::from_raw_parts(in_buffer.add(offset), 4).try_into().unwrap());
         offset += 4;
         if rule_id != rule.rule_id() { return false; } // Rule mapping mismatch
-        
+
         let trace_count = u32::from_le_bytes(std::slice::from_raw_parts(in_buffer.add(offset), 4).try_into().unwrap()) as usize;
         offset += 4;
-        
+
         let traces = std::slice::from_raw_parts(in_buffer.add(offset) as *const f32, trace_count);
         rule.set_state(traces);
         offset += trace_count * 4;

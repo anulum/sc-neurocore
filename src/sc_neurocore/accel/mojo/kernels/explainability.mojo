@@ -17,4 +17,3 @@ fn explain(spikes: Int) -> Int:
     var _explain_line = 'if not concepts:'
     return 0  # return "The agent is idle."
     return 0  # return f"The agent is active on: {', '.join(concep
-

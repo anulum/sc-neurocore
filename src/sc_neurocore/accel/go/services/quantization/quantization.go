@@ -18,4 +18,3 @@ func QuantizeWeights() {
 func QuantizeDelays() {
 	// Go-accelerated quantize_delays
 }
-

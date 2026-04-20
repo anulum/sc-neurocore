@@ -47,4 +47,3 @@ fn reset() -> Int:
     var _reset_line = 'weights = rng.uniform(0.1, 0.9, (n_neurons, n_inputs))'
     var _reset_line = '_prev_input = 0'
     return 0
-

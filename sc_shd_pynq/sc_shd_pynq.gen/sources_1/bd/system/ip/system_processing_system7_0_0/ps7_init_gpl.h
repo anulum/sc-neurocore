@@ -1,7 +1,7 @@
 /******************************************************************************
 *
 * Copyright (C) 2010-2020 <Xilinx Inc.>
-* 
+*
 *  This program is free software; you can redistribute it and/or modify
 *  it under the terms of the GNU General Public License as published by
 *  the Free Software Foundation; either version 2 of the License, or
@@ -11,11 +11,11 @@
 *  but WITHOUT ANY WARRANTY; without even the implied warranty of
 *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 *  GNU General Public License for more details.
-* 
+*
 *  You should have received a copy of the GNU General Public License along
 *  with this program; if not, see <http://www.gnu.org/licenses/>
-* 
-* 
+*
+*
 ******************************************************************************/
 /****************************************************************************/
 /**
@@ -123,9 +123,8 @@ char* getPS7MessageInfo(unsigned key);
 void perf_start_clock(void);
 void perf_disable_clock(void);
 void perf_reset_clock(void);
-void perf_reset_and_start_timer(); 
-int get_number_of_cycles_for_delay(unsigned int delay); 
+void perf_reset_and_start_timer();
+int get_number_of_cycles_for_delay(unsigned int delay);
 #ifdef __cplusplus
 }
 #endif
-

@@ -37,42 +37,42 @@ INFO: [Synth 8-6157] synthesizing module 'system_axi_smc_0' [/media/anulum/724AA
 INFO: [Synth 8-6157] synthesizing module 'bd_44e3' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ip/system_axi_smc_0/bd_0/synth/bd_44e3.v:10]
 INFO: [Synth 8-6157] synthesizing module 'clk_map_imp_1LX95IS' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ip/system_axi_smc_0/bd_0/synth/bd_44e3.v:660]
 INFO: [Synth 8-638] synthesizing module 'bd_44e3_psr_aclk_0' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ip/system_axi_smc_0/bd_0/ip/ip_1/synth/bd_44e3_psr_aclk_0.vhd:74]
-	Parameter C_FAMILY bound to: zynq - type: string 
-	Parameter C_EXT_RST_WIDTH bound to: 4 - type: integer 
-	Parameter C_AUX_RST_WIDTH bound to: 1 - type: integer 
-	Parameter C_EXT_RESET_HIGH bound to: 1'b0 
-	Parameter C_AUX_RESET_HIGH bound to: 1'b0 
-	Parameter C_NUM_BUS_RST bound to: 1 - type: integer 
-	Parameter C_NUM_PERP_RST bound to: 1 - type: integer 
-	Parameter C_NUM_INTERCONNECT_ARESETN bound to: 1 - type: integer 
-	Parameter C_NUM_PERP_ARESETN bound to: 1 - type: integer 
+	Parameter C_FAMILY bound to: zynq - type: string
+	Parameter C_EXT_RST_WIDTH bound to: 4 - type: integer
+	Parameter C_AUX_RST_WIDTH bound to: 1 - type: integer
+	Parameter C_EXT_RESET_HIGH bound to: 1'b0
+	Parameter C_AUX_RESET_HIGH bound to: 1'b0
+	Parameter C_NUM_BUS_RST bound to: 1 - type: integer
+	Parameter C_NUM_PERP_RST bound to: 1 - type: integer
+	Parameter C_NUM_INTERCONNECT_ARESETN bound to: 1 - type: integer
+	Parameter C_NUM_PERP_ARESETN bound to: 1 - type: integer
 INFO: [Synth 8-3491] module 'proc_sys_reset' declared at '/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ipshared/9438/hdl/proc_sys_reset_v5_0_vh_rfs.vhd:1243' bound to instance 'U0' of component 'proc_sys_reset' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ip/system_axi_smc_0/bd_0/ip/ip_1/synth/bd_44e3_psr_aclk_0.vhd:139]
 INFO: [Synth 8-638] synthesizing module 'proc_sys_reset' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ipshared/9438/hdl/proc_sys_reset_v5_0_vh_rfs.vhd:1302]
-	Parameter INIT bound to: 1'b1 
+	Parameter INIT bound to: 1'b1
 INFO: [Synth 8-113] binding component instance 'FDRE_inst' to cell 'FDRE' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ipshared/9438/hdl/proc_sys_reset_v5_0_vh_rfs.vhd:1371]
-	Parameter INIT bound to: 1'b1 
+	Parameter INIT bound to: 1'b1
 INFO: [Synth 8-113] binding component instance 'FDRE_BSR' to cell 'FDRE' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ipshared/9438/hdl/proc_sys_reset_v5_0_vh_rfs.vhd:1387]
-	Parameter INIT bound to: 1'b0 
+	Parameter INIT bound to: 1'b0
 INFO: [Synth 8-113] binding component instance 'FDRE_BSR_N' to cell 'FDRE' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ipshared/9438/hdl/proc_sys_reset_v5_0_vh_rfs.vhd:1413]
-	Parameter INIT bound to: 1'b1 
+	Parameter INIT bound to: 1'b1
 INFO: [Synth 8-113] binding component instance 'FDRE_PER' to cell 'FDRE' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ipshared/9438/hdl/proc_sys_reset_v5_0_vh_rfs.vhd:1436]
-	Parameter INIT bound to: 1'b0 
+	Parameter INIT bound to: 1'b0
 INFO: [Synth 8-113] binding component instance 'FDRE_PER_N' to cell 'FDRE' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ipshared/9438/hdl/proc_sys_reset_v5_0_vh_rfs.vhd:1460]
 INFO: [Synth 8-638] synthesizing module 'lpf' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ipshared/9438/hdl/proc_sys_reset_v5_0_vh_rfs.vhd:821]
 INFO: [Synth 8-3491] module 'SRL16' declared at '/tools/Xilinx/2025.2/Vivado/scripts/rt/data/unisim_comp.v:165318' bound to instance 'POR_SRL_I' of component 'SRL16' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ipshared/9438/hdl/proc_sys_reset_v5_0_vh_rfs.vhd:873]
 INFO: [Synth 8-6157] synthesizing module 'SRL16' [/tools/Xilinx/2025.2/Vivado/scripts/rt/data/unisim_comp.v:165318]
 INFO: [Synth 8-6155] done synthesizing module 'SRL16' (0#1) [/tools/Xilinx/2025.2/Vivado/scripts/rt/data/unisim_comp.v:165318]
-	Parameter DEST_SYNC_FF bound to: 4 - type: integer 
-	Parameter INIT_SYNC_FF bound to: 0 - type: integer 
-	Parameter SIM_ASSERT_CHK bound to: 0 - type: integer 
-	Parameter SRC_INPUT_REG bound to: 0 - type: integer 
+	Parameter DEST_SYNC_FF bound to: 4 - type: integer
+	Parameter INIT_SYNC_FF bound to: 0 - type: integer
+	Parameter SIM_ASSERT_CHK bound to: 0 - type: integer
+	Parameter SRC_INPUT_REG bound to: 0 - type: integer
 INFO: [Synth 8-3491] module 'xpm_cdc_single' declared at '/tools/Xilinx/2025.2/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:152' bound to instance 'ACT_LO_EXT' of component 'xpm_cdc_single' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ipshared/9438/hdl/proc_sys_reset_v5_0_vh_rfs.vhd:968]
 INFO: [Synth 8-6157] synthesizing module 'xpm_cdc_single' [/tools/Xilinx/2025.2/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:152]
 INFO: [Synth 8-6155] done synthesizing module 'xpm_cdc_single' (0#1) [/tools/Xilinx/2025.2/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:152]
-	Parameter DEST_SYNC_FF bound to: 4 - type: integer 
-	Parameter INIT_SYNC_FF bound to: 0 - type: integer 
-	Parameter SIM_ASSERT_CHK bound to: 0 - type: integer 
-	Parameter SRC_INPUT_REG bound to: 0 - type: integer 
+	Parameter DEST_SYNC_FF bound to: 4 - type: integer
+	Parameter INIT_SYNC_FF bound to: 0 - type: integer
+	Parameter SIM_ASSERT_CHK bound to: 0 - type: integer
+	Parameter SRC_INPUT_REG bound to: 0 - type: integer
 INFO: [Synth 8-3491] module 'xpm_cdc_single' declared at '/tools/Xilinx/2025.2/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:152' bound to instance 'ACT_LO_AUX' of component 'xpm_cdc_single' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ipshared/9438/hdl/proc_sys_reset_v5_0_vh_rfs.vhd:1015]
 INFO: [Synth 8-256] done synthesizing module 'lpf' (0#1) [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ipshared/9438/hdl/proc_sys_reset_v5_0_vh_rfs.vhd:821]
 INFO: [Synth 8-638] synthesizing module 'sequence_psr' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ipshared/9438/hdl/proc_sys_reset_v5_0_vh_rfs.vhd:304]
@@ -256,7 +256,7 @@ Completed Processing XDC Constraints
 Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2618.551 ; gain = 0.000 ; free physical = 2507 ; free virtual = 18584
 INFO: [Project 1-111] Unisim Transformation Summary:
   A total of 1 instances were transformed.
-  SRL16 => SRL16E: 1 instance 
+  SRL16 => SRL16E: 1 instance
 
 Constraint Validation Runtime : Time (s): cpu = 00:00:00.13 ; elapsed = 00:00:00.11 . Memory (MB): peak = 2618.586 ; gain = 0.000 ; free physical = 2486 ; free virtual = 18563
 INFO: [Designutils 20-5008] Incremental synthesis strategy off
@@ -282,7 +282,7 @@ INFO: [Synth 8-802] inferred FSM for state register 'gen_endpoint.r_state_reg' i
 INFO: [Synth 8-802] inferred FSM for state register 'w_state_reg' in module 'sc_si_converter_v1_0_16_axilite_conv'
 INFO: [Synth 8-802] inferred FSM for state register 'r_state_reg' in module 'sc_si_converter_v1_0_16_axilite_conv'
 ---------------------------------------------------------------------------------------------------
-                   State |                     New Encoding |                Previous Encoding 
+                   State |                     New Encoding |                Previous Encoding
 ---------------------------------------------------------------------------------------------------
             P_WRITE_IDLE |                              001 |                               00
             P_WRITE_DATA |                              010 |                               01
@@ -290,7 +290,7 @@ INFO: [Synth 8-802] inferred FSM for state register 'r_state_reg' in module 'sc_
 ---------------------------------------------------------------------------------------------------
 INFO: [Synth 8-3354] encoded FSM with state register 'gen_axi.gen_write.write_cs_reg' using encoding 'one-hot' in module 'sc_mmu_v1_0_16_decerr_slave'
 ---------------------------------------------------------------------------------------------------
-                   State |                     New Encoding |                Previous Encoding 
+                   State |                     New Encoding |                Previous Encoding
 ---------------------------------------------------------------------------------------------------
                   iSTATE |                               00 | 00000000000000000000000000000000
 *
@@ -300,7 +300,7 @@ INFO: [Synth 8-3354] encoded FSM with state register 'gen_axi.gen_write.write_cs
 ---------------------------------------------------------------------------------------------------
 INFO: [Synth 8-3354] encoded FSM with state register 'gen_endpoint.w_state_reg' using encoding 'sequential' in module 'sc_mmu_v1_0_16_top'
 ---------------------------------------------------------------------------------------------------
-                   State |                     New Encoding |                Previous Encoding 
+                   State |                     New Encoding |                Previous Encoding
 ---------------------------------------------------------------------------------------------------
                   iSTATE |                               00 | 00000000000000000000000000000000
 *
@@ -310,7 +310,7 @@ INFO: [Synth 8-3354] encoded FSM with state register 'gen_endpoint.w_state_reg' 
 ---------------------------------------------------------------------------------------------------
 INFO: [Synth 8-3354] encoded FSM with state register 'gen_endpoint.r_state_reg' using encoding 'sequential' in module 'sc_mmu_v1_0_16_top'
 ---------------------------------------------------------------------------------------------------
-                   State |                     New Encoding |                Previous Encoding 
+                   State |                     New Encoding |                Previous Encoding
 ---------------------------------------------------------------------------------------------------
                   W_IDLE |                              000 | 00000000000000000000000000000000
                     W_RX |                              001 | 00000000000000000000000000000001
@@ -320,7 +320,7 @@ INFO: [Synth 8-3354] encoded FSM with state register 'gen_endpoint.r_state_reg' 
 ---------------------------------------------------------------------------------------------------
 INFO: [Synth 8-3354] encoded FSM with state register 'w_state_reg' using encoding 'sequential' in module 'sc_si_converter_v1_0_16_axilite_conv'
 ---------------------------------------------------------------------------------------------------
-                   State |                     New Encoding |                Previous Encoding 
+                   State |                     New Encoding |                Previous Encoding
 ---------------------------------------------------------------------------------------------------
                   R_IDLE |                             0001 | 00000000000000000000000000000000
                R_PENDING |                             0010 | 00000000000000000000000000000001
@@ -332,10 +332,10 @@ INFO: [Synth 8-3354] encoded FSM with state register 'r_state_reg' using encodin
 Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:35 ; elapsed = 00:00:37 . Memory (MB): peak = 2626.555 ; gain = 849.070 ; free physical = 3048 ; free virtual = 19182
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Start RTL Component Statistics 
+Start RTL Component Statistics
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished RTL Component Statistics 
+Finished RTL Component Statistics
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Part Resource Summary
@@ -428,13 +428,13 @@ Finished Renaming Generated Nets : Time (s): cpu = 00:00:53 ; elapsed = 00:00:56
 Start Writing Synthesis Report
 ---------------------------------------------------------------------------------
 
-Report BlackBoxes: 
+Report BlackBoxes:
 +-+--------------+----------+
 | |BlackBox name |Instances |
 +-+--------------+----------+
 +-+--------------+----------+
 
-Report Cell Usage: 
+Report Cell Usage:
 +------+-------+------+
 |      |Cell   |Count |
 +------+-------+------+
@@ -465,7 +465,7 @@ INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
 Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2875.434 ; gain = 0.000 ; free physical = 3587 ; free virtual = 19733
 INFO: [Project 1-111] Unisim Transformation Summary:
   A total of 1 instances were transformed.
-  SRL16 => SRL16E: 1 instance 
+  SRL16 => SRL16E: 1 instance
 
 Synth Design complete | Checksum: 893aea4e
 INFO: [Common 17-83] Releasing license: Synthesis

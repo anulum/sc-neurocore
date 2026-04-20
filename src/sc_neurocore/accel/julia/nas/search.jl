@@ -39,7 +39,7 @@ function summary(s::NASResultState)
         f"Pareto front: {length(s.pareto_front)} architectures",
     ]
     for i, a in enumerate(s.pareto_front)
-        lines = push!(, 
+        lines = push!(,
             f"  [{i}] {a.layer_widths} L={a.bitstream_lengths} "
             f"acc={a.fitness_accuracy:.3f} luts={a.fitness_luts} "
             f"E={a.fitness_energy_nj:.1f}nJ"

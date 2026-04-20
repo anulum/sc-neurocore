@@ -22,4 +22,3 @@ func AdaptationRate() {
 func Summary() {
 	// Go-accelerated summary
 }
-

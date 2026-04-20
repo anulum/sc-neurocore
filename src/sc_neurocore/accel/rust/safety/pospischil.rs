@@ -61,7 +61,7 @@ impl PospischilNeuron {
         // an = -0.032 * (dv - 15.0) / ((-(dv - 15.0_f64).exp() / 5.0) - 1.0 + 1e
         // bn = 0.5 * (-(dv - 10.0_f64).exp() / 40.0)
         // p_inf = 1.0 / (1.0 + (-(self.v + 35.0_f64).exp() / 10.0))
-        // tau_p = 608.0 / (3.3 * ((self.v + 35.0_f64).exp() / 20.0) + (-(self.v 
+        // tau_p = 608.0 / (3.3 * ((self.v + 35.0_f64).exp() / 20.0) + (-(self.v
         // self.m += (am * (1 - self.m) - bm * self.m) * self.dt
         // self.h += (ah * (1 - self.h) - bh * self.h) * self.dt
         // self.n += (an * (1 - self.n) - bn * self.n) * self.dt

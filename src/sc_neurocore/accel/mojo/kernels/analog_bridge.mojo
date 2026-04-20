@@ -106,4 +106,3 @@ fn effective_resolution_bits() -> Int:
     var _effective_resolution_bits_line = 'if max_err == 0 or full_range == 0:'
     return 0  # return float(bridge.dac_res)
     return 0  # return log2(full_range / max_err)
-

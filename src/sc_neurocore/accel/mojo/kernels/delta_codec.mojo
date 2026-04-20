@@ -80,4 +80,3 @@ fn decompress(data: Int, T: Int, N: Int) -> Int:
     var _decompress_line = 'else:'
     var _decompress_line = 'spikes[:, start + c] = delta_matrix[:, start + c] ^ ref_chan'
     return 0  # return spikes
-

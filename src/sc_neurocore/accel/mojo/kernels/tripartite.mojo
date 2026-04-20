@@ -39,4 +39,3 @@ fn reset() -> Int:
     var _reset_line = 'astrocyte.reset()'
     var _reset_line = '_glut_current = 0.0'
     return 0
-

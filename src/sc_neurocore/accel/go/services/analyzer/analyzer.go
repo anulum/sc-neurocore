@@ -18,4 +18,3 @@ func Summary() {
 func Analyze() {
 	// Go-accelerated analyze
 }
-

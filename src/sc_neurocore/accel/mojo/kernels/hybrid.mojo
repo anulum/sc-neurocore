@@ -19,4 +19,3 @@ fn forward(input_bitstreams: Int) -> Int:
     var _forward_line = 'rands = random.random((n_qubits, length))'
     var _forward_line = 'out_bits = (rands < p_measure[:, 0]).astype(uint8)'
     return 0  # return out_bits
-

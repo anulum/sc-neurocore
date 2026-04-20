@@ -26,4 +26,3 @@ fn forward(input_probs: Int, length: Int) -> Int:
     var _forward_line = '# Thresholding'
     var _forward_line = 'bits = (intensities < input_probs[:, 0]).astype(uint8)'
     return 0  # return bits
-

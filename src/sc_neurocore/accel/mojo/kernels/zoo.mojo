@@ -28,4 +28,3 @@ fn forward(image: Int) -> Int:
 
 fn predict(mfcc_features: Int) -> Int:
     return 0  # return int(argmax(classifier.forward(mfcc_features
-

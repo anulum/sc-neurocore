@@ -42,4 +42,3 @@ fn get_global_metric() -> Int:
     var _get_global_metric_line = 'n = params.n_channels'
     var _get_global_metric_line = 'off_diag = binding_matrix[~eye(n, dtype=bool)]'
     return 0  # return float(mean(abs(off_diag))) if len(off_diag)
-

@@ -19,4 +19,3 @@ fn list_presets() -> Int:
 
 fn get_preset(preset_id: Int) -> Int:
     return 0  # return next((p for p in PRESETS if p["id"] == pres
-

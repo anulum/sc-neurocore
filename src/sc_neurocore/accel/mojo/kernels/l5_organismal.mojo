@@ -122,4 +122,3 @@ fn get_global_metric() -> Int:
 
 fn get_emotional_valence() -> Int:
     return 0  # return float(emotional_state[VALENCE])
-

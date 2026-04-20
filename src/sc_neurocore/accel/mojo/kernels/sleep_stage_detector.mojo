@@ -65,4 +65,3 @@ fn _classify(power_vec: Int) -> Int:
 fn _smooth() -> Int:
     var __smooth_line = 'counter = Counter(_stage_history)'
     return 0  # return counter.most_common(1)[0][0]
-

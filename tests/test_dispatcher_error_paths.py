@@ -21,7 +21,6 @@ inject the failure paths with monkey-patching.
 from __future__ import annotations
 
 import ctypes
-import importlib
 from pathlib import Path
 
 import numpy as np
@@ -58,7 +57,15 @@ class TestLibraryNotBuiltRaisesImportError:
                 fn(0.1, 0.05, 10.0, 6.0, 10.0, 1.0, 1.0, 2.0, 1.2, 4.0, 0.1, **kwargs)
             else:
                 fn(
-                    0.1, 0.1, 0.1, 0.641, 0.2609, 0.0497, 0.3255, 0.02, 0.001,
+                    0.1,
+                    0.1,
+                    0.1,
+                    0.641,
+                    0.2609,
+                    0.0497,
+                    0.3255,
+                    0.02,
+                    0.001,
                     **kwargs,
                 )
 
@@ -80,11 +87,7 @@ class TestNonZeroReturnRaisesRuntimeError:
             pass
 
         # Real lib is loaded; inject a stub that returns 42.
-        c_fn_attr = (
-            "wilson_cowan_simulate_c"
-            if "wilson" in fn_name
-            else "wong_wang_simulate_c"
-        )
+        c_fn_attr = "wilson_cowan_simulate_c" if "wilson" in fn_name else "wong_wang_simulate_c"
         lib = FakeLib()
         setattr(lib, c_fn_attr, FakeCShim())
         monkeypatch.setattr(module, "_lib", lib)
@@ -94,8 +97,18 @@ class TestNonZeroReturnRaisesRuntimeError:
             args = (0.1, 0.05, 10.0, 6.0, 10.0, 1.0, 1.0, 2.0, 1.2, 4.0, 0.1, np.zeros(10))
         else:
             args = (
-                0.1, 0.1, 0.1, 0.641, 0.2609, 0.0497, 0.3255, 0.02, 0.001,
-                np.zeros(10), np.zeros(10), np.zeros(20),
+                0.1,
+                0.1,
+                0.1,
+                0.641,
+                0.2609,
+                0.0497,
+                0.3255,
+                0.02,
+                0.001,
+                np.zeros(10),
+                np.zeros(10),
+                np.zeros(20),
             )
         with pytest.raises(RuntimeError, match="42"):
             fn(*args)
@@ -149,9 +162,7 @@ class TestJuliaMissingKernelFile:
         if not mod._HAS_JULIA_NEURONS:
             pytest.skip("juliacall not installed")
         monkeypatch.setattr(mod, "_WILSON_COWAN_LOADED", False)
-        monkeypatch.setattr(
-            mod, "_KERNEL_DIR", Path("/tmp/nonexistent_wilson_cowan_dir")
-        )
+        monkeypatch.setattr(mod, "_KERNEL_DIR", Path("/tmp/nonexistent_wilson_cowan_dir"))
         with pytest.raises(FileNotFoundError, match="wilson_cowan.jl missing"):
             mod._ensure_wilson_cowan_loaded()
 
@@ -184,7 +195,17 @@ class TestInputValidationBranches:
         # Wilson-Cowan has only `ext_input`; there is no stim1/stim2 in its
         # signature. This test is the degenerate case: empty array works.
         out = go_wilson.simulate_wilson_cowan(
-            0.1, 0.05, 10.0, 6.0, 10.0, 1.0, 1.0, 2.0, 1.2, 4.0, 0.1,
+            0.1,
+            0.05,
+            10.0,
+            6.0,
+            10.0,
+            1.0,
+            1.0,
+            2.0,
+            1.2,
+            4.0,
+            0.1,
             np.zeros(0),
         )
         assert out["e"].shape == (0,)

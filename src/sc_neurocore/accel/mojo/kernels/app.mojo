@@ -1298,4 +1298,3 @@ fn fn() -> Int:
 
 fn serve_index() -> Int:
     return 0  # return FileResponse(os.path.join(dist_dir, "index.
-

@@ -28,7 +28,7 @@ impl HomeostaticLIFNeuron {
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
         // spike = super().step(input_current)
-        // self.rate_trace = self.rate_trace * self.trace_decay + spike * (1.0 - 
+        // self.rate_trace = self.rate_trace * self.trace_decay + spike * (1.0 -
         // error = self.rate_trace - self.target_rate
         // self.v_threshold += self.adaptation_rate * error
         // self.v_threshold = max(

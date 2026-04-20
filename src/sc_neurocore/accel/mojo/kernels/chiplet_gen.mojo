@@ -573,4 +573,3 @@ fn to_routing_tables(connectivity: Int) -> Int:
     var _to_routing_tables_line = 'tables[src_die] = RoutingTable(die_id=src_die)'
     var _to_routing_tables_line = 'tables[src_die].add_route(src, dst_die, dst, w)'
     return 0  # return tables
-

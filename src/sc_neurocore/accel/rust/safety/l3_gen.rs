@@ -49,7 +49,7 @@ impl L3_GenomicAdapter {
     }
 
     pub fn _cbc_kernel(&self, v_bio: f64, p_spin: f64, alpha_b: f64, g_op: f64, dt: f64) -> f64 {
-        // v_bio: jnp.ndarray, p_spin: jnp.ndarray, alpha_b: float, g_op: float, 
+        // v_bio: jnp.ndarray, p_spin: jnp.ndarray, alpha_b: float, g_op: float,
         // ) -> jnp.ndarray:
         // dv = g_op * (alpha_b * p_spin) - 0.05 * v_bio
         // return v_bio + dv * dt
@@ -68,7 +68,7 @@ impl L3_GenomicAdapter {
         // self.p_spin = j(self.p_spin + 0.1 * drive * dt_f64).clamp(0.0, 1.0)
         // # 2. Execute CBC Bridge Transduction (Field -> Bioelectric)
         // self.v_bio = self._cbc_kernel(
-        // self.v_bio, self.p_spin, self.params.alpha_b, self.params.g_operator, 
+        // self.v_bio, self.p_spin, self.params.alpha_b, self.params.g_operator,
         // )
         // # 3. Update Chromatin Accessibility (Bioelectric -> Structural)
         // # dA/dt = V_bio * Gain - k * A

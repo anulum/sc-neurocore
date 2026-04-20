@@ -17,4 +17,3 @@ fn apply_hardware_defects() -> Int:
     var _apply_hardware_defects_line = '# Refresh packed representation'
     var _apply_hardware_defects_line = '_refresh_packed_weights()'
     return 0
-

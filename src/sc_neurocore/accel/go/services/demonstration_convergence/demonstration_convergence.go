@@ -14,4 +14,3 @@ package demonstration_convergence
 func RunDemonstration() {
 	// Go-accelerated run_demonstration
 }
-

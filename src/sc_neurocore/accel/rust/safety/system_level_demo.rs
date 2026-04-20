@@ -29,4 +29,3 @@ pub fn run_system_demo() -> f64 {
     // print(f"    Est. CO2: {co2:.9f} g")
     0.0
 }
-

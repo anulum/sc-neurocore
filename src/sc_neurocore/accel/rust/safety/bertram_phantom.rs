@@ -85,7 +85,7 @@ impl BertramPhantomBurster {
         // self.v += (-i_ca - i_k - i_s1 - i_s2 - i_l + current) / self.c_m * sel
         // self.s1 += (s1_inf - self.s1) / self.tau_s1 * self.dt
         // self.s2 += (s2_inf - self.s2) / self.tau_s2 * self.dt
-        // return 1 if (self.v >= self.v_threshold && v_prev < self.v_threshold) 
+        // return 1 if (self.v >= self.v_threshold && v_prev < self.v_threshold)
         0 // spike indicator
     }
 

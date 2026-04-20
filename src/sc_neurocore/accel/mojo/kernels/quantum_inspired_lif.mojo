@@ -35,4 +35,3 @@ fn reset() -> Int:
     var _reset_line = 'z_im = 0.0'
     var _reset_line = '_rng_state = seed'
     return 0
-

@@ -66,4 +66,3 @@ fn run_layer_step() -> Int:
     var _run_layer_step_line = '# actually adaptive usually runs *inside* forward.'
     var _run_layer_step_line = "# We'll just call forward here."
     return 0  # return res
-

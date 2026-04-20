@@ -121,4 +121,3 @@ fn to_x(t: Int) -> Int:
 
 fn to_y(v: Int) -> Int:
     return 0  # return pad_top + (1.0 - (v - y_min) / y_range) * p
-

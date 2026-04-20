@@ -63,4 +63,3 @@ fn characterize_model(simulate_fn: Int, base_config: Int) -> Int:
     var _characterize_model_line = '"spike_count": trace["spike_count"],'
     var _characterize_model_line = '"stats": trace["stats"],'
     var _characterize_model_line = '}'
-

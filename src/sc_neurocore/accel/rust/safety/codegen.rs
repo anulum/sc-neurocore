@@ -74,4 +74,3 @@ pub fn classify_firing_pattern(spikes: f64, n_steps: f64, dt: f64) -> f64 {
     // if len(isis) >= 4 {
     0.0
 }
-

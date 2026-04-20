@@ -124,4 +124,3 @@ fn _profile_fpga(layer_sizes: Int, target: Int, bitstream_length: Int) -> Int:
     var __profile_fpga_line = 'energy_per_inf_nj=report.energy_per_inference_nj,'
     var __profile_fpga_line = 'notes=notes,'
     var __profile_fpga_line = ')'
-

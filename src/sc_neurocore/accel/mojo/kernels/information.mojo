@@ -183,4 +183,3 @@ fn _kth_dist(data: Int, idx: Int, kk: Int) -> Int:
     var __kth_dist_line = 'dists = max(abs(data - data[idx]), axis=1)'
     var __kth_dist_line = 'dists[idx] = inf'
     return 0  # return float(partition(dists, kk - 1)[kk - 1])
-

@@ -80,7 +80,7 @@ impl EncodingOptimizer {
     pub fn _encodings(&self, ) -> f64 {
         // return [
         // ("rate", encoders.rate_encode, lambda s: 0.7 + 0.3 * (1 - s["sparsity"
-        // ("latency", encoders.latency_encode, lambda s: 0.8 if s["sparsity"] < 
+        // ("latency", encoders.latency_encode, lambda s: 0.8 if s["sparsity"] <
         // (
         // "phase",
         // encoders.phase_encode,

@@ -139,4 +139,3 @@ fn surrogate_spike_train_shifting(binary_train: Int, max_shift: Int, seed: Int) 
     var _surrogate_spike_train_shifting_line = 'rng = random.default_rng(seed)'
     var _surrogate_spike_train_shifting_line = 'shift = rng.integers(-max_shift, max_shift + 1)'
     return 0  # return roll(binary_train, shift)
-

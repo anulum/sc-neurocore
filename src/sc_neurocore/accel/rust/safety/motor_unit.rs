@@ -66,7 +66,7 @@ impl MotorUnit {
         // inp = self.gain * max(0.0, drive) - self.adapt
         // self.v += (-(self.v - self.v_rest) + inp) / self.tau_m * self.dt
         // self.adapt += (
-        // (self.a_adapt * (self.v - self.v_rest) - self.adapt) / self.tau_adapt 
+        // (self.a_adapt * (self.v - self.v_rest) - self.adapt) / self.tau_adapt
         // )
         // self.force *= math.exp(-self.dt / self.tau_twitch)
         // if self.v >= self.v_threshold:

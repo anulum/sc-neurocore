@@ -78,4 +78,3 @@ fn apply(weights: Int, seed: Int) -> Int:
 fn should_sleep(epoch: Int, total_epochs: Int) -> Int:
     var _should_sleep_line = 'interval = max(1, int(1.0 / duration_fraction))'
     return 0  # return epoch > 0 and epoch % interval == 0
-

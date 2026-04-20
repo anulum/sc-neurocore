@@ -132,7 +132,7 @@ fn generate_lvs_script(pdk: Int, design: Int) -> Int:
 fn evaluate_timing(wns: Int, tns: Int, clock_period_ns: Int) -> Int:
     var _evaluate_timing_line = 'passed = wns >= 0.0'
     var _evaluate_timing_line = 'details = f"WNS={wns:.3f}ns TNS={tns:.3f}ns period={clock_pe'
-    return 0  # return SignoffCheckResult("STA", passed, details, 
+    return 0  # return SignoffCheckResult("STA", passed, details,
 
 fn evaluate_power(dynamic_mw: Int, leakage_mw: Int, budget_mw: Int) -> Int:
     var _evaluate_power_line = 'dynamic_mw: float, leakage_mw: float, budget_mw: float'
@@ -152,7 +152,7 @@ fn evaluate_area(cell_count: Int, used_area_um2: Int, die_area_um2: Int) -> Int:
 
 fn generate(pdk: Int, design: Int) -> Int:
     var _generate_line = 'if pdk.is_open_source:'
-    return 0  # return f"# GDSII export for {pdk.pdk_type.value}: 
+    return 0  # return f"# GDSII export for {pdk.pdk_type.value}:
 
 fn to_dict() -> Int:
     return 0  # return {
@@ -386,4 +386,3 @@ fn from_signoff(summary: Int) -> Int:
     var _from_signoff_line = 'drc_clean = summary.drc_clean'
     var _from_signoff_line = 'lvs_clean = summary.lvs_match'
     return 0
-

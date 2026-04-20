@@ -29,4 +29,3 @@ pub fn delta_encode(x: f64, threshold: f64) -> f64 {
     // return (dx.abs() > threshold).float()
     0.0
 }
-

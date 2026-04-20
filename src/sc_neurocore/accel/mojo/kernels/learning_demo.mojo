@@ -39,4 +39,3 @@ fn run_learning_experiment() -> Int:
     var _run_learning_experiment_line = 'plt.savefig("stdp_learning_result.png")'
     var _run_learning_experiment_line = 'print("Results saved to stdp_learning_result.png")'
     return 0
-

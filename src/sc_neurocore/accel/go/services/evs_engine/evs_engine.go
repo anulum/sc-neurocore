@@ -42,4 +42,3 @@ func ScoreHistory() {
 func Reset() {
 	// Go-accelerated reset
 }
-

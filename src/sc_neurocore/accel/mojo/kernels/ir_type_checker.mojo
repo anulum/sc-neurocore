@@ -68,4 +68,3 @@ fn check_ir_types(nodes: Int, edges: Int) -> Int:
     var _check_ir_types_line = ')'
     var _check_ir_types_line = ')'
     return 0  # return errors
-

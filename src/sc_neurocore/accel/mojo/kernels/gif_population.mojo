@@ -21,4 +21,3 @@ fn step(current: Int) -> Int:
 fn reset() -> Int:
     var _reset_line = 'v, eta = -65.0, 0.0'
     return 0
-

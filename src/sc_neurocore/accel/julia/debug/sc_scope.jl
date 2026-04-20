@@ -341,7 +341,7 @@ function render_session(s::ScopeRendererState)
         lines = push!(, "── Error Budgets ────────")
         for lid, eb in sorted(session.error_budgets.items())
             status = "✓" if eb.pass_rate >= 0.95 else "✗"
-            lines = push!(, 
+            lines = push!(,
                 f"  L{lid}: {status} err={eb.current_error:.4f} "
                 f"mean={eb.mean_error:.4f} pass={eb.pass_rate:.1%}"
             )

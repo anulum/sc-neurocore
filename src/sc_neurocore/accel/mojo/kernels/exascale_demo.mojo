@@ -42,4 +42,3 @@ fn fitness(layer: Int) -> Int:
     var _fitness_line = '# Target: Output 1.0 for input [1,1,1,1,1]'
     var _fitness_line = 'out = layer.forward(ones(5))'
     return 0  # return float(out[0])
-

@@ -67,4 +67,3 @@ fn memory_per_step() -> Int:
     var _memory_per_step_line = 'layer.n_neurons + layer.n_neurons + layer.n_neurons * layer.'
     var _memory_per_step_line = 'for layer in layers'
     var _memory_per_step_line = ')'
-

@@ -1,4 +1,4 @@
- 
+
 //-----------------------------------------------------------------------------
 // processing_system7
 // processor sub system wrapper
@@ -47,9 +47,9 @@
 //-----------------------------------------------------------------------------
 // Filename:      processing_system7_v5_5_processing_system7.v
 // Version:       v1.00.a
-// Description:   This is the wrapper file for PSS. 
+// Description:   This is the wrapper file for PSS.
 //-----------------------------------------------------------------------------
-// Structure:   This section shows the hierarchical structure of 
+// Structure:   This section shows the hierarchical structure of
 //              pss_wrapper.
 //
 //              --processing_system7_v5_5_processing_system7.v
@@ -77,7 +77,7 @@
 // TODO:
 // 1. C_NUM_F2P_INTR_INPUTS needs to have control on the
 //    number of interrupt ports connected for IRQ_F2P.
-// 
+//
 //------------------------------------------------------------------------------
 // ^^^^^^
 //  KP     12/07/11       -- v3.00.a version
@@ -89,7 +89,7 @@
 //  NR     12/09/11       -- v3.00.a version
 // ~~~~~~~
 // Key changes are
-//  C_FCLK_CLK0_BUF to C_FCLK_CLK3_BUF parameters were updated 
+//  C_FCLK_CLK0_BUF to C_FCLK_CLK3_BUF parameters were updated
 //  to STRING and fix for CR 640523
 //------------------------------------------------------------------------------
 // ^^^^^^
@@ -111,7 +111,7 @@
 //  NR     02/27/12       -- v3.01.a version
 // ~~~~~~~
 // Key changes are
-// TTC(0,1)_WAVE_OUT and TTC(0,1)_CLK_IN vector signals are made as individual 
+// TTC(0,1)_WAVE_OUT and TTC(0,1)_CLK_IN vector signals are made as individual
 // ports as fix for CR 646379
 //------------------------------------------------------------------------------
 // ^^^^^^
@@ -155,8 +155,8 @@
 , PCW_M_AXI_GP1_FREQMHZ=10, PCW_S_AXI_GP0_FREQMHZ=10, PCW_S_AXI_GP1_FREQMHZ=10, PCW_S_AXI_ACP_FREQMHZ=10, PCW_S_AXI_HP0_FREQMHZ=10, PCW_S_AXI_HP1_FREQMHZ=10, PCW_S_AXI_HP2_FREQMHZ=10, PCW_S_AXI_HP3_FREQMHZ=10, PCW_USE_CROSS_TRIGGER=0, PCW_FTM_CTI_IN0=DISABLED, PCW_FTM_CTI_IN1=DISABLED, PCW_FTM_CTI_IN2=DISABLED, PCW_FTM_CTI_IN3=DISABLED, PCW_FTM_CTI_OUT0=DISABLED, PCW_FTM_CTI_OUT1=DISABLED, PCW_FTM_CTI_OUT2=DISABLED, PCW_FTM_CTI_OUT3=DISABLED, PCW_UART0_BAUD_RATE=115200, PCW_UART1_BAUD_RATE=115200, PCW_S_AXI_HP0_DATA_WIDTH=64, PCW_S_AXI_HP1_DATA_WIDTH=64, PCW_S_AXI_HP2_DATA_WIDTH=64, PCW_S_AXI_HP3_DATA_WIDTH=64, PCW_IRQ_F2P_MODE=DIRECT, PCW_PRESET_BANK0_VOLTAGE=LVCMOS 3.3V, PCW_PRESET_BANK1_VOLTAGE=LVCMOS 3.3V, PCW_UIPARAM_DDR_ENABLE=1, PCW_UIPARAM_DDR_ADV_ENABLE=0, PCW_UIPARAM_DDR_MEMORY_TYPE=DDR 3, PCW_UIPARAM_DDR_ECC=Disabled, PCW_UIPARAM_DDR_BUS_WIDTH=32 Bit, PCW_UIPARAM_DDR_BL=8, PCW_UIPARAM_DDR_HIGH_TEMP=Normal (0-85), PCW_UIPARAM_DDR_PARTNO=MT41J128M8 JP-125, PCW_UIPARAM_DDR_DRAM_WIDTH=8 Bits, PCW_UIPARAM_DDR_DEVICE_CAPACITY=1024 MBits, PCW_UIPARAM_DDR_SPEED_BIN=DDR3_1066F, PCW_UIPARAM_DDR_TRAIN_WRITE_LEVEL=1, PCW_UIPARAM_DDR_TRAIN_READ_GATE=1, PCW_UIPARAM_DDR_TRAIN_DATA_EYE=1, PCW_UIPARAM_DDR_CLOCK_STOP_EN=0, PCW_UIPARAM_DDR_USE_INTERNAL_VREF=0, PCW_DDR_PORT0_HPR_ENABLE=0, PCW_DDR_PORT1_HPR_ENABLE=0, PCW_DDR_PORT2_HPR_ENABLE=0, PCW_DDR_PORT3_HPR_ENABLE=0, PCW_DDR_HPRLPR_QUEUE_PARTITION=HPR(0)/LPR(32), PCW_DDR_LPR_TO_CRITICAL_PRIORITY_LEVEL=2, PCW_DDR_HPR_TO_CRITICAL_PRIORITY_LEVEL=15, PCW_DDR_WRITE_TO_CRITICAL_PRIORITY_LEVEL=2\
 , PCW_NAND_PERIPHERAL_ENABLE=0, PCW_NAND_GRP_D8_ENABLE=0, PCW_NOR_PERIPHERAL_ENABLE=0, PCW_NOR_GRP_A25_ENABLE=0, PCW_NOR_GRP_CS0_ENABLE=0, PCW_NOR_GRP_SRAM_CS0_ENABLE=0, PCW_NOR_GRP_CS1_ENABLE=0, PCW_NOR_GRP_SRAM_CS1_ENABLE=0, PCW_NOR_GRP_SRAM_INT_ENABLE=0, PCW_QSPI_PERIPHERAL_ENABLE=0, PCW_QSPI_GRP_SINGLE_SS_ENABLE=0, PCW_QSPI_GRP_SS1_ENABLE=0, PCW_QSPI_GRP_IO1_ENABLE=0, PCW_QSPI_GRP_FBCLK_ENABLE=0, PCW_QSPI_INTERNAL_HIGHADDRESS=0xFCFFFFFF, PCW_ENET0_PERIPHERAL_ENABLE=0, PCW_ENET0_GRP_MDIO_ENABLE=0, PCW_ENET0_RESET_ENABLE=0, PCW_ENET1_PERIPHERAL_ENABLE=0, PCW_ENET1_GRP_MDIO_ENABLE=0, PCW_ENET1_RESET_ENABLE=0, PCW_SD0_PERIPHERAL_ENABLE=0, PCW_SD0_GRP_CD_ENABLE=0, PCW_SD0_GRP_WP_ENABLE=0, PCW_SD0_GRP_POW_ENABLE=0, PCW_SD1_PERIPHERAL_ENABLE=0, PCW_SD1_GRP_CD_ENABLE=0, PCW_SD1_GRP_WP_ENABLE=0, PCW_SD1_GRP_POW_ENABLE=0, PCW_UART0_PERIPHERAL_ENABLE=0, PCW_UART0_GRP_FULL_ENABLE=0, PCW_UART1_PERIPHERAL_ENABLE=0, PCW_UART1_GRP_FULL_ENABLE=0, PCW_SPI0_PERIPHERAL_ENABLE=0, PCW_SPI0_GRP_SS0_ENABLE=0, PCW_SPI0_GRP_SS1_ENABLE=0, PCW_SPI0_GRP_SS2_ENABLE=0, PCW_SPI1_PERIPHERAL_ENABLE=0, PCW_SPI1_GRP_SS0_ENABLE=0, PCW_SPI1_GRP_SS1_ENABLE=0, PCW_SPI1_GRP_SS2_ENABLE=0, PCW_CAN0_PERIPHERAL_ENABLE=0, PCW_CAN0_GRP_CLK_ENABLE=0, PCW_CAN1_PERIPHERAL_ENABLE=0, PCW_CAN1_GRP_CLK_ENABLE=0, PCW_TRACE_PERIPHERAL_ENABLE=0, PCW_TRACE_GRP_2BIT_ENABLE=0, PCW_TRACE_GRP_4BIT_ENABLE=0, PCW_TRACE_GRP_8BIT_ENABLE=0, PCW_TRACE_GRP_16BIT_ENABLE=0\
 , PCW_TRACE_GRP_32BIT_ENABLE=0, PCW_WDT_PERIPHERAL_ENABLE=0, PCW_TTC0_PERIPHERAL_ENABLE=0, PCW_TTC1_PERIPHERAL_ENABLE=0, PCW_PJTAG_PERIPHERAL_ENABLE=0, PCW_USB0_PERIPHERAL_ENABLE=0, PCW_USB0_RESET_ENABLE=0, PCW_USB1_PERIPHERAL_ENABLE=0, PCW_USB1_RESET_ENABLE=0, PCW_I2C0_PERIPHERAL_ENABLE=0, PCW_I2C0_GRP_INT_ENABLE=0, PCW_I2C0_RESET_ENABLE=0, PCW_I2C1_PERIPHERAL_ENABLE=0, PCW_I2C1_GRP_INT_ENABLE=0, PCW_I2C1_RESET_ENABLE=0, PCW_GPIO_PERIPHERAL_ENABLE=0, PCW_GPIO_MIO_GPIO_ENABLE=0, PCW_GPIO_EMIO_GPIO_ENABLE=0, PCW_APU_CLK_RATIO_ENABLE=6:2:1, PCW_ENET0_PERIPHERAL_FREQMHZ=1000 Mbps, PCW_ENET1_PERIPHERAL_FREQMHZ=1000 Mbps, PCW_CPU_PERIPHERAL_CLKSRC=ARM PLL, PCW_DDR_PERIPHERAL_CLKSRC=DDR PLL, PCW_SMC_PERIPHERAL_CLKSRC=IO PLL, PCW_QSPI_PERIPHERAL_CLKSRC=IO PLL, PCW_SDIO_PERIPHERAL_CLKSRC=IO PLL, PCW_UART_PERIPHERAL_CLKSRC=IO PLL, PCW_SPI_PERIPHERAL_CLKSRC=IO PLL, PCW_CAN_PERIPHERAL_CLKSRC=IO PLL, PCW_FCLK0_PERIPHERAL_CLKSRC=IO PLL, PCW_FCLK1_PERIPHERAL_CLKSRC=IO PLL, PCW_FCLK2_PERIPHERAL_CLKSRC=IO PLL, PCW_FCLK3_PERIPHERAL_CLKSRC=IO PLL, PCW_ENET0_PERIPHERAL_CLKSRC=IO PLL, PCW_ENET1_PERIPHERAL_CLKSRC=IO PLL, PCW_CAN0_PERIPHERAL_CLKSRC=External, PCW_CAN1_PERIPHERAL_CLKSRC=External, PCW_TPIU_PERIPHERAL_CLKSRC=External, PCW_TTC0_CLK0_PERIPHERAL_CLKSRC=CPU_1X, PCW_TTC0_CLK1_PERIPHERAL_CLKSRC=CPU_1X, PCW_TTC0_CLK2_PERIPHERAL_CLKSRC=CPU_1X, PCW_TTC1_CLK0_PERIPHERAL_CLKSRC=CPU_1X, PCW_TTC1_CLK1_PERIPHERAL_CLKSRC=CPU_1X, PCW_TTC1_CLK2_PERIPHERAL_CLKSRC=CPU_1X, PCW_WDT_PERIPHERAL_CLKSRC=CPU_1X, PCW_DCI_PERIPHERAL_CLKSRC=DDR PLL, PCW_PCAP_PERIPHERAL_CLKSRC=IO PLL, PCW_USB_RESET_POLARITY=Active Low, PCW_ENET_RESET_POLARITY=Active Low, PCW_I2C_RESET_POLARITY=Active Low\
-, PCW_FPGA_FCLK0_ENABLE=1, PCW_FPGA_FCLK1_ENABLE=0, PCW_FPGA_FCLK2_ENABLE=0, PCW_FPGA_FCLK3_ENABLE=0, PCW_NOR_SRAM_CS0_T_TR=1, PCW_NOR_SRAM_CS0_T_PC=1, PCW_NOR_SRAM_CS0_T_WP=1, PCW_NOR_SRAM_CS0_T_CEOE=1, PCW_NOR_SRAM_CS0_T_WC=11, PCW_NOR_SRAM_CS0_T_RC=11, PCW_NOR_SRAM_CS0_WE_TIME=0, PCW_NOR_SRAM_CS1_T_TR=1, PCW_NOR_SRAM_CS1_T_PC=1, PCW_NOR_SRAM_CS1_T_WP=1, PCW_NOR_SRAM_CS1_T_CEOE=1, PCW_NOR_SRAM_CS1_T_WC=11, PCW_NOR_SRAM_CS1_T_RC=11, PCW_NOR_SRAM_CS1_WE_TIME=0, PCW_NOR_CS0_T_TR=1, PCW_NOR_CS0_T_PC=1, PCW_NOR_CS0_T_WP=1, PCW_NOR_CS0_T_CEOE=1, PCW_NOR_CS0_T_WC=11, PCW_NOR_CS0_T_RC=11, PCW_NOR_CS0_WE_TIME=0, PCW_NOR_CS1_T_TR=1, PCW_NOR_CS1_T_PC=1, PCW_NOR_CS1_T_WP=1, PCW_NOR_CS1_T_CEOE=1, PCW_NOR_CS1_T_WC=11, PCW_NOR_CS1_T_RC=11, PCW_NOR_CS1_WE_TIME=0, PCW_NAND_CYCLES_T_RR=1, PCW_NAND_CYCLES_T_AR=1, PCW_NAND_CYCLES_T_CLR=1, PCW_NAND_CYCLES_T_WP=1, PCW_NAND_CYCLES_T_REA=1, PCW_NAND_CYCLES_T_WC=11, PCW_NAND_CYCLES_T_RC=11 }" *)  
-(* HW_HANDOFF = "system_processing_system7_0_0.hwdef" *)  
+, PCW_FPGA_FCLK0_ENABLE=1, PCW_FPGA_FCLK1_ENABLE=0, PCW_FPGA_FCLK2_ENABLE=0, PCW_FPGA_FCLK3_ENABLE=0, PCW_NOR_SRAM_CS0_T_TR=1, PCW_NOR_SRAM_CS0_T_PC=1, PCW_NOR_SRAM_CS0_T_WP=1, PCW_NOR_SRAM_CS0_T_CEOE=1, PCW_NOR_SRAM_CS0_T_WC=11, PCW_NOR_SRAM_CS0_T_RC=11, PCW_NOR_SRAM_CS0_WE_TIME=0, PCW_NOR_SRAM_CS1_T_TR=1, PCW_NOR_SRAM_CS1_T_PC=1, PCW_NOR_SRAM_CS1_T_WP=1, PCW_NOR_SRAM_CS1_T_CEOE=1, PCW_NOR_SRAM_CS1_T_WC=11, PCW_NOR_SRAM_CS1_T_RC=11, PCW_NOR_SRAM_CS1_WE_TIME=0, PCW_NOR_CS0_T_TR=1, PCW_NOR_CS0_T_PC=1, PCW_NOR_CS0_T_WP=1, PCW_NOR_CS0_T_CEOE=1, PCW_NOR_CS0_T_WC=11, PCW_NOR_CS0_T_RC=11, PCW_NOR_CS0_WE_TIME=0, PCW_NOR_CS1_T_TR=1, PCW_NOR_CS1_T_PC=1, PCW_NOR_CS1_T_WP=1, PCW_NOR_CS1_T_CEOE=1, PCW_NOR_CS1_T_WC=11, PCW_NOR_CS1_T_RC=11, PCW_NOR_CS1_WE_TIME=0, PCW_NAND_CYCLES_T_RR=1, PCW_NAND_CYCLES_T_AR=1, PCW_NAND_CYCLES_T_CLR=1, PCW_NAND_CYCLES_T_WP=1, PCW_NAND_CYCLES_T_REA=1, PCW_NAND_CYCLES_T_WC=11, PCW_NAND_CYCLES_T_RC=11 }" *)
+(* HW_HANDOFF = "system_processing_system7_0_0.hwdef" *)
 
 module processing_system7_v5_5_processing_system7
 
@@ -165,9 +165,9 @@ module processing_system7_v5_5_processing_system7
   parameter integer C_S_AXI_ACP_ARUSER_VAL = 31,
   parameter integer C_S_AXI_ACP_AWUSER_VAL = 31,
   parameter integer C_M_AXI_GP0_THREAD_ID_WIDTH = 12,
-  parameter integer C_M_AXI_GP1_THREAD_ID_WIDTH = 12, 
+  parameter integer C_M_AXI_GP1_THREAD_ID_WIDTH = 12,
   parameter integer C_M_AXI_GP0_ENABLE_STATIC_REMAP = 1,
-  parameter integer C_M_AXI_GP1_ENABLE_STATIC_REMAP = 1, 
+  parameter integer C_M_AXI_GP1_ENABLE_STATIC_REMAP = 1,
   parameter integer C_M_AXI_GP0_ID_WIDTH = 12,
   parameter integer C_M_AXI_GP1_ID_WIDTH = 12,
   parameter integer C_S_AXI_GP0_ID_WIDTH = 6,
@@ -205,16 +205,16 @@ module processing_system7_v5_5_processing_system7
   parameter C_IRQ_F2P_MODE = "DIRECT",
   parameter C_TRACE_INTERNAL_WIDTH = 32,
   parameter integer C_EN_EMIO_PJTAG = 0,
-  
-  // Enable and disable AFI Secure transaction 
+
+  // Enable and disable AFI Secure transaction
   parameter C_USE_AXI_NONSECURE = 0,
-  
-  //parameters for HP enable ports 
+
+  //parameters for HP enable ports
   parameter C_USE_S_AXI_HP0 = 0,
   parameter C_USE_S_AXI_HP1 = 0,
   parameter C_USE_S_AXI_HP2 = 0,
   parameter C_USE_S_AXI_HP3 = 0,
-  
+
   //parameters for GP and ACP enable ports */
   parameter C_USE_M_AXI_GP0 = 0,
   parameter C_USE_M_AXI_GP1 = 0,
@@ -223,19 +223,19 @@ module processing_system7_v5_5_processing_system7
   parameter C_USE_S_AXI_ACP = 0,
   parameter C_GP0_EN_MODIFIABLE_TXN=0,
   parameter C_GP1_EN_MODIFIABLE_TXN=0
-   
+
 )
 (
   //FMIO =========================================
-  
+
   //FMIO CAN0
   output          CAN0_PHY_TX,
   input           CAN0_PHY_RX,
 
   //FMIO CAN1
-  output          CAN1_PHY_TX,  
+  output          CAN1_PHY_TX,
   input           CAN1_PHY_RX,
-  
+
   //FMIO ENET0
   output  reg     ENET0_GMII_TX_EN = 'b0,
   output  reg     ENET0_GMII_TX_ER = 'b0,
@@ -252,11 +252,11 @@ module processing_system7_v5_5_processing_system7
   output          ENET0_PTP_SYNC_FRAME_TX,
   output          ENET0_SOF_RX,
   output          ENET0_SOF_TX,
-  
-  
-  output  reg [7:0]    ENET0_GMII_TXD,  
 
-  
+
+  output  reg [7:0]    ENET0_GMII_TXD,
+
+
   input           ENET0_GMII_COL,
   input           ENET0_GMII_CRS,
   input           ENET0_GMII_RX_CLK,
@@ -265,7 +265,7 @@ module processing_system7_v5_5_processing_system7
   input           ENET0_GMII_TX_CLK,
   input           ENET0_MDIO_I,
   input           ENET0_EXT_INTIN,
-  input [7:0]     ENET0_GMII_RXD,  
+  input [7:0]     ENET0_GMII_RXD,
 
   //FMIO ENET1
   output   reg    ENET1_GMII_TX_EN = 'b0,
@@ -283,7 +283,7 @@ module processing_system7_v5_5_processing_system7
   output          ENET1_PTP_SYNC_FRAME_TX,
   output          ENET1_SOF_RX,
   output          ENET1_SOF_TX,
-  output reg [7:0]    ENET1_GMII_TXD,  
+  output reg [7:0]    ENET1_GMII_TXD,
 
   input          ENET1_GMII_COL,
   input          ENET1_GMII_CRS,
@@ -292,14 +292,14 @@ module processing_system7_v5_5_processing_system7
   input          ENET1_GMII_RX_ER,
   input          ENET1_GMII_TX_CLK,
   input          ENET1_MDIO_I,
-  input          ENET1_EXT_INTIN,  
+  input          ENET1_EXT_INTIN,
   input [7:0]    ENET1_GMII_RXD,
-  
+
   //FMIO GPIO
   input    [(C_EMIO_GPIO_WIDTH-1):0] GPIO_I,
   output   [(C_EMIO_GPIO_WIDTH-1):0] GPIO_O,
-  output   [(C_EMIO_GPIO_WIDTH-1):0] GPIO_T,  
-  
+  output   [(C_EMIO_GPIO_WIDTH-1):0] GPIO_T,
+
   //FMIO I2C0
   input           I2C0_SDA_I,
   output          I2C0_SDA_O,
@@ -315,14 +315,14 @@ module processing_system7_v5_5_processing_system7
   input           I2C1_SCL_I,
   output          I2C1_SCL_O,
   output          I2C1_SCL_T,
-  
+
   //FMIO PJTAG
   input           PJTAG_TCK,
   input           PJTAG_TMS,
   input           PJTAG_TDI,
   output          PJTAG_TDO,
 
-  
+
   //FMIO SDIO0
   output          SDIO0_CLK,
   input           SDIO0_CLK_FB,
@@ -334,7 +334,7 @@ module processing_system7_v5_5_processing_system7
   output    [3:0] SDIO0_DATA_T,
   output          SDIO0_LED,
   input           SDIO0_CDN,
-  input           SDIO0_WP,  
+  input           SDIO0_WP,
   output          SDIO0_BUSPOW,
   output    [2:0] SDIO0_BUSVOLT,
 
@@ -346,11 +346,11 @@ module processing_system7_v5_5_processing_system7
   output          SDIO1_CMD_T,
   input     [3:0] SDIO1_DATA_I,
   output    [3:0] SDIO1_DATA_O,
-  output    [3:0] SDIO1_DATA_T,  
+  output    [3:0] SDIO1_DATA_T,
   output          SDIO1_LED,
-  input           SDIO1_CDN,  
+  input           SDIO1_CDN,
   input           SDIO1_WP,
-  output          SDIO1_BUSPOW,  
+  output          SDIO1_BUSPOW,
   output    [2:0] SDIO1_BUSVOLT,
 
   //FMIO SPI0
@@ -382,27 +382,27 @@ module processing_system7_v5_5_processing_system7
   input           SPI1_SS_I,
   output          SPI1_SS_O,
   output          SPI1_SS1_O,
-  output          SPI1_SS2_O,  
+  output          SPI1_SS2_O,
   output          SPI1_SS_T,
 
   //FMIO UART0
   output          UART0_DTRN,
-  output          UART0_RTSN,  
+  output          UART0_RTSN,
   output          UART0_TX,
   input           UART0_CTSN,
   input           UART0_DCDN,
   input           UART0_DSRN,
-  input           UART0_RIN,  
+  input           UART0_RIN,
   input           UART0_RX,
 
   //FMIO UART1
   output          UART1_DTRN,
-  output          UART1_RTSN,  
+  output          UART1_RTSN,
   output          UART1_TX,
   input           UART1_CTSN,
   input           UART1_DCDN,
   input           UART1_DSRN,
-  input           UART1_RIN,  
+  input           UART1_RIN,
   input           UART1_RX,
 
   //FMIO TTC0
@@ -430,7 +430,7 @@ module processing_system7_v5_5_processing_system7
   output          TRACE_CTL,
   output   [(C_TRACE_INTERNAL_WIDTH)-1:0] TRACE_DATA,
   output   reg		  TRACE_CLK_OUT,
-  
+
   // USB
   output   [1:0]  USB0_PORT_INDCTL,
   output          USB0_VBUS_PWRSELECT,
@@ -439,15 +439,15 @@ module processing_system7_v5_5_processing_system7
   output   [1:0]  USB1_PORT_INDCTL,
   output          USB1_VBUS_PWRSELECT,
   input           USB1_VBUS_PWRFAULT,
-  
+
   input           SRAM_INTIN,
 
   //AIO ===================================================
 
   //M_AXI_GP0
-  
+
   // -- Output
-  
+
   output M_AXI_GP0_ARESETN,
   output M_AXI_GP0_ARVALID,
   output M_AXI_GP0_AWVALID,
@@ -475,10 +475,10 @@ module processing_system7_v5_5_processing_system7
   output [3:0] M_AXI_GP0_AWCACHE,
   output [3:0] M_AXI_GP0_AWLEN,
   output [3:0] M_AXI_GP0_AWQOS,
-  output [3:0] M_AXI_GP0_WSTRB, 
-  
-  // -- Input  
-  
+  output [3:0] M_AXI_GP0_WSTRB,
+
+  // -- Input
+
   input M_AXI_GP0_ACLK,
   input M_AXI_GP0_ARREADY,
   input M_AXI_GP0_AWREADY,
@@ -490,11 +490,11 @@ module processing_system7_v5_5_processing_system7
   input [(C_M_AXI_GP0_THREAD_ID_WIDTH - 1):0] M_AXI_GP0_RID,
   input [1:0] M_AXI_GP0_BRESP,
   input [1:0] M_AXI_GP0_RRESP,
-  input [31:0] M_AXI_GP0_RDATA,  
+  input [31:0] M_AXI_GP0_RDATA,
 
 
   //M_AXI_GP1
-  
+
   // -- Output
 
   output M_AXI_GP1_ARESETN,
@@ -525,40 +525,40 @@ module processing_system7_v5_5_processing_system7
   output [3:0] M_AXI_GP1_AWLEN,
   output [3:0] M_AXI_GP1_AWQOS,
   output [3:0] M_AXI_GP1_WSTRB,
-  
+
   // -- Input
-  
+
   input M_AXI_GP1_ACLK,
   input M_AXI_GP1_ARREADY,
   input M_AXI_GP1_AWREADY,
   input M_AXI_GP1_BVALID,
   input M_AXI_GP1_RLAST,
   input M_AXI_GP1_RVALID,
-  input M_AXI_GP1_WREADY,  
+  input M_AXI_GP1_WREADY,
   input [(C_M_AXI_GP1_THREAD_ID_WIDTH - 1):0] M_AXI_GP1_BID,
   input [(C_M_AXI_GP1_THREAD_ID_WIDTH - 1):0] M_AXI_GP1_RID,
   input [1:0] M_AXI_GP1_BRESP,
   input [1:0] M_AXI_GP1_RRESP,
-  input [31:0] M_AXI_GP1_RDATA,  
-  
+  input [31:0] M_AXI_GP1_RDATA,
+
 
   // S_AXI_GP0
-  
+
   // -- Output
-  
+
   output S_AXI_GP0_ARESETN,
   output S_AXI_GP0_ARREADY,
   output S_AXI_GP0_AWREADY,
   output S_AXI_GP0_BVALID,
   output S_AXI_GP0_RLAST,
   output S_AXI_GP0_RVALID,
-  output S_AXI_GP0_WREADY,  
+  output S_AXI_GP0_WREADY,
   output [1:0] S_AXI_GP0_BRESP,
   output [1:0] S_AXI_GP0_RRESP,
   output [31:0] S_AXI_GP0_RDATA,
   output [(C_S_AXI_GP0_ID_WIDTH - 1) : 0] S_AXI_GP0_BID,
   output [(C_S_AXI_GP0_ID_WIDTH - 1) : 0] S_AXI_GP0_RID,
-  
+
   // -- Input
   input S_AXI_GP0_ACLK,
   input S_AXI_GP0_ARVALID,
@@ -587,24 +587,24 @@ module processing_system7_v5_5_processing_system7
   input [3:0] S_AXI_GP0_WSTRB,
   input [(C_S_AXI_GP0_ID_WIDTH - 1) : 0] S_AXI_GP0_ARID,
   input [(C_S_AXI_GP0_ID_WIDTH - 1) : 0] S_AXI_GP0_AWID,
-  input [(C_S_AXI_GP0_ID_WIDTH - 1) : 0] S_AXI_GP0_WID,  
+  input [(C_S_AXI_GP0_ID_WIDTH - 1) : 0] S_AXI_GP0_WID,
 
   // S_AXI_GP1
-  
-  // -- Output  
+
+  // -- Output
   output S_AXI_GP1_ARESETN,
   output S_AXI_GP1_ARREADY,
   output S_AXI_GP1_AWREADY,
   output S_AXI_GP1_BVALID,
   output S_AXI_GP1_RLAST,
   output S_AXI_GP1_RVALID,
-  output S_AXI_GP1_WREADY,  
+  output S_AXI_GP1_WREADY,
   output [1:0] S_AXI_GP1_BRESP,
   output [1:0] S_AXI_GP1_RRESP,
   output [31:0] S_AXI_GP1_RDATA,
   output [(C_S_AXI_GP1_ID_WIDTH - 1) : 0] S_AXI_GP1_BID,
   output [(C_S_AXI_GP1_ID_WIDTH - 1) : 0] S_AXI_GP1_RID,
-  
+
   // -- Input
   input S_AXI_GP1_ACLK,
   input S_AXI_GP1_ARVALID,
@@ -633,27 +633,27 @@ module processing_system7_v5_5_processing_system7
   input [3:0] S_AXI_GP1_WSTRB,
   input [(C_S_AXI_GP1_ID_WIDTH - 1) : 0] S_AXI_GP1_ARID,
   input [(C_S_AXI_GP1_ID_WIDTH - 1) : 0] S_AXI_GP1_AWID,
-  input [(C_S_AXI_GP1_ID_WIDTH - 1) : 0] S_AXI_GP1_WID,  
+  input [(C_S_AXI_GP1_ID_WIDTH - 1) : 0] S_AXI_GP1_WID,
 
   //S_AXI_ACP
-  
-  // -- Output  
-  
+
+  // -- Output
+
   output S_AXI_ACP_ARESETN,
   output S_AXI_ACP_ARREADY,
   output S_AXI_ACP_AWREADY,
   output S_AXI_ACP_BVALID,
   output S_AXI_ACP_RLAST,
   output S_AXI_ACP_RVALID,
-  output S_AXI_ACP_WREADY,  
+  output S_AXI_ACP_WREADY,
   output [1:0] S_AXI_ACP_BRESP,
   output [1:0] S_AXI_ACP_RRESP,
   output [(C_S_AXI_ACP_ID_WIDTH - 1) : 0] S_AXI_ACP_BID,
   output [(C_S_AXI_ACP_ID_WIDTH - 1) : 0] S_AXI_ACP_RID,
   output [63:0] S_AXI_ACP_RDATA,
-  
+
   // -- Input
-  
+
   input S_AXI_ACP_ACLK,
   input S_AXI_ACP_ARVALID,
   input S_AXI_ACP_AWVALID,
@@ -673,7 +673,7 @@ module processing_system7_v5_5_processing_system7
   input [3:0] S_AXI_ACP_ARQOS,
   input [3:0] S_AXI_ACP_AWCACHE,
   input [3:0] S_AXI_ACP_AWLEN,
-  input [3:0] S_AXI_ACP_AWQOS,  
+  input [3:0] S_AXI_ACP_AWQOS,
   input [1:0] S_AXI_ACP_ARBURST,
   input [1:0] S_AXI_ACP_ARLOCK,
   input [2:0] S_AXI_ACP_ARSIZE,
@@ -683,10 +683,10 @@ module processing_system7_v5_5_processing_system7
   input [4:0] S_AXI_ACP_ARUSER,
   input [4:0] S_AXI_ACP_AWUSER,
   input [63:0] S_AXI_ACP_WDATA,
-  input [7:0] S_AXI_ACP_WSTRB,  
-  
+  input [7:0] S_AXI_ACP_WSTRB,
+
   // S_AXI_HP_0
-  
+
   // -- Output
   output S_AXI_HP0_ARESETN,
   output S_AXI_HP0_ARREADY,
@@ -694,7 +694,7 @@ module processing_system7_v5_5_processing_system7
   output S_AXI_HP0_BVALID,
   output S_AXI_HP0_RLAST,
   output S_AXI_HP0_RVALID,
-  output S_AXI_HP0_WREADY,  
+  output S_AXI_HP0_WREADY,
   output [1:0] S_AXI_HP0_BRESP,
   output [1:0] S_AXI_HP0_RRESP,
   output [(C_S_AXI_HP0_ID_WIDTH - 1) : 0] S_AXI_HP0_BID,
@@ -704,8 +704,8 @@ module processing_system7_v5_5_processing_system7
   output [7:0] S_AXI_HP0_WCOUNT,
   output [2:0] S_AXI_HP0_RACOUNT,
   output [5:0] S_AXI_HP0_WACOUNT,
-  
-  // -- Input  
+
+  // -- Input
   input S_AXI_HP0_ACLK,
   input S_AXI_HP0_ARVALID,
   input S_AXI_HP0_AWVALID,
@@ -735,7 +735,7 @@ module processing_system7_v5_5_processing_system7
   input [(C_S_AXI_HP0_ID_WIDTH - 1) : 0] S_AXI_HP0_AWID,
   input [(C_S_AXI_HP0_ID_WIDTH - 1) : 0] S_AXI_HP0_WID,
   input [(C_S_AXI_HP0_DATA_WIDTH - 1) :0] S_AXI_HP0_WDATA,
-  input [((C_S_AXI_HP0_DATA_WIDTH/8)-1):0] S_AXI_HP0_WSTRB,  
+  input [((C_S_AXI_HP0_DATA_WIDTH/8)-1):0] S_AXI_HP0_WSTRB,
 
   // S_AXI_HP1
   // -- Output
@@ -745,7 +745,7 @@ module processing_system7_v5_5_processing_system7
   output S_AXI_HP1_BVALID,
   output S_AXI_HP1_RLAST,
   output S_AXI_HP1_RVALID,
-  output S_AXI_HP1_WREADY,  
+  output S_AXI_HP1_WREADY,
   output [1:0] S_AXI_HP1_BRESP,
   output [1:0] S_AXI_HP1_RRESP,
   output [(C_S_AXI_HP1_ID_WIDTH - 1) : 0] S_AXI_HP1_BID,
@@ -755,9 +755,9 @@ module processing_system7_v5_5_processing_system7
   output [7:0] S_AXI_HP1_WCOUNT,
   output [2:0] S_AXI_HP1_RACOUNT,
   output [5:0] S_AXI_HP1_WACOUNT,
-  
-  
-  // -- Input  
+
+
+  // -- Input
   input S_AXI_HP1_ACLK,
   input S_AXI_HP1_ARVALID,
   input S_AXI_HP1_AWVALID,
@@ -787,7 +787,7 @@ module processing_system7_v5_5_processing_system7
   input [(C_S_AXI_HP1_ID_WIDTH - 1) : 0] S_AXI_HP1_AWID,
   input [(C_S_AXI_HP1_ID_WIDTH - 1) : 0] S_AXI_HP1_WID,
   input [(C_S_AXI_HP1_DATA_WIDTH - 1) :0] S_AXI_HP1_WDATA,
-  input [((C_S_AXI_HP1_DATA_WIDTH/8)-1):0] S_AXI_HP1_WSTRB,  
+  input [((C_S_AXI_HP1_DATA_WIDTH/8)-1):0] S_AXI_HP1_WSTRB,
 
   // S_AXI_HP2
   // -- Output
@@ -797,7 +797,7 @@ module processing_system7_v5_5_processing_system7
   output S_AXI_HP2_BVALID,
   output S_AXI_HP2_RLAST,
   output S_AXI_HP2_RVALID,
-  output S_AXI_HP2_WREADY,  
+  output S_AXI_HP2_WREADY,
   output [1:0] S_AXI_HP2_BRESP,
   output [1:0] S_AXI_HP2_RRESP,
   output [(C_S_AXI_HP2_ID_WIDTH - 1) : 0] S_AXI_HP2_BID,
@@ -807,9 +807,9 @@ module processing_system7_v5_5_processing_system7
   output [7:0] S_AXI_HP2_WCOUNT,
   output [2:0] S_AXI_HP2_RACOUNT,
   output [5:0] S_AXI_HP2_WACOUNT,
-  
-  
-  // -- Input  
+
+
+  // -- Input
   input S_AXI_HP2_ACLK,
   input S_AXI_HP2_ARVALID,
   input S_AXI_HP2_AWVALID,
@@ -839,10 +839,10 @@ module processing_system7_v5_5_processing_system7
   input [(C_S_AXI_HP2_ID_WIDTH - 1) : 0] S_AXI_HP2_AWID,
   input [(C_S_AXI_HP2_ID_WIDTH - 1) : 0] S_AXI_HP2_WID,
   input [(C_S_AXI_HP2_DATA_WIDTH - 1) :0] S_AXI_HP2_WDATA,
-  input [((C_S_AXI_HP2_DATA_WIDTH/8)-1):0] S_AXI_HP2_WSTRB,  
+  input [((C_S_AXI_HP2_DATA_WIDTH/8)-1):0] S_AXI_HP2_WSTRB,
 
   // S_AXI_HP_3
-  
+
   // -- Output
   output S_AXI_HP3_ARESETN,
   output S_AXI_HP3_ARREADY,
@@ -850,7 +850,7 @@ module processing_system7_v5_5_processing_system7
   output S_AXI_HP3_BVALID,
   output S_AXI_HP3_RLAST,
   output S_AXI_HP3_RVALID,
-  output S_AXI_HP3_WREADY,  
+  output S_AXI_HP3_WREADY,
   output [1:0] S_AXI_HP3_BRESP,
   output [1:0] S_AXI_HP3_RRESP,
   output [(C_S_AXI_HP3_ID_WIDTH - 1) : 0] S_AXI_HP3_BID,
@@ -860,9 +860,9 @@ module processing_system7_v5_5_processing_system7
   output [7:0] S_AXI_HP3_WCOUNT,
   output [2:0] S_AXI_HP3_RACOUNT,
   output [5:0] S_AXI_HP3_WACOUNT,
-  
-  
-  // -- Input  
+
+
+  // -- Input
   input S_AXI_HP3_ACLK,
   input S_AXI_HP3_ARVALID,
   input S_AXI_HP3_AWVALID,
@@ -892,8 +892,8 @@ module processing_system7_v5_5_processing_system7
   input [(C_S_AXI_HP3_ID_WIDTH - 1) : 0] S_AXI_HP3_AWID,
   input [(C_S_AXI_HP3_ID_WIDTH - 1) : 0] S_AXI_HP3_WID,
   input [(C_S_AXI_HP3_DATA_WIDTH - 1) :0] S_AXI_HP3_WDATA,
-  input [((C_S_AXI_HP3_DATA_WIDTH/8)-1):0] S_AXI_HP3_WSTRB,  
-  
+  input [((C_S_AXI_HP3_DATA_WIDTH/8)-1):0] S_AXI_HP3_WSTRB,
+
   //FIO ========================================
 
   //IRQ
@@ -935,22 +935,22 @@ module processing_system7_v5_5_processing_system7
 
   //DMA
 
-  output [1:0] DMA0_DATYPE,  
+  output [1:0] DMA0_DATYPE,
   output DMA0_DAVALID,
   output DMA0_DRREADY,
-  output DMA0_RSTN,  
-  output [1:0] DMA1_DATYPE,  
+  output DMA0_RSTN,
+  output [1:0] DMA1_DATYPE,
   output DMA1_DAVALID,
   output DMA1_DRREADY,
-  output DMA1_RSTN,  
-  output [1:0] DMA2_DATYPE,  
+  output DMA1_RSTN,
+  output [1:0] DMA2_DATYPE,
   output DMA2_DAVALID,
   output DMA2_DRREADY,
-  output DMA2_RSTN,  
-  output [1:0] DMA3_DATYPE,    
+  output DMA2_RSTN,
+  output [1:0] DMA3_DATYPE,
   output DMA3_DAVALID,
   output DMA3_DRREADY,
-  output DMA3_RSTN,  
+  output DMA3_RSTN,
   input DMA0_ACLK,
   input DMA0_DAREADY,
   input DMA0_DRLAST,
@@ -966,23 +966,23 @@ module processing_system7_v5_5_processing_system7
   input DMA3_ACLK,
   input DMA3_DAREADY,
   input DMA3_DRLAST,
-  input DMA3_DRVALID,  
+  input DMA3_DRVALID,
   input [1:0] DMA0_DRTYPE,
   input [1:0] DMA1_DRTYPE,
   input [1:0] DMA2_DRTYPE,
   input [1:0] DMA3_DRTYPE,
-  
+
   //FCLK
   output    FCLK_CLK3,
   output    FCLK_CLK2,
   output    FCLK_CLK1,
   output    FCLK_CLK0,
- 
+
   input     FCLK_CLKTRIG3_N,
   input     FCLK_CLKTRIG2_N,
   input     FCLK_CLKTRIG1_N,
   input     FCLK_CLKTRIG0_N,
- 
+
   output    FCLK_RESET3_N,
   output    FCLK_RESET2_N,
   output    FCLK_RESET1_N,
@@ -1003,7 +1003,7 @@ module processing_system7_v5_5_processing_system7
   output    FTMT_F2P_TRIGACK_2,
   input     FTMT_F2P_TRIG_3,
   output    FTMT_F2P_TRIGACK_3,
-  input     [31:0] FTMT_F2P_DEBUG,  
+  input     [31:0] FTMT_F2P_DEBUG,
   input     FTMT_P2F_TRIGACK_0,
   output    FTMT_P2F_TRIG_0,
   input     FTMT_P2F_TRIGACK_1,
@@ -1016,42 +1016,42 @@ module processing_system7_v5_5_processing_system7
 
   //FIDLE
   input           FPGA_IDLE_N,
-  
+
   //EVENT
 
   output EVENT_EVENTO,
   output [1:0] EVENT_STANDBYWFE,
-  output [1:0] EVENT_STANDBYWFI,  
-  input EVENT_EVENTI,   
-  
+  output [1:0] EVENT_STANDBYWFI,
+  input EVENT_EVENTI,
+
 
   //DARB
   input     [3:0] DDR_ARB,
-  inout     [C_MIO_PRIMITIVE - 1:0] MIO,  
-  
+  inout     [C_MIO_PRIMITIVE - 1:0] MIO,
+
   //DDR
   inout         DDR_CAS_n,       // CASB
   inout         DDR_CKE,         // CKE
   inout         DDR_Clk_n,       // CKN
   inout         DDR_Clk,         // CKP
-  inout         DDR_CS_n,        // CSB 
-  inout         DDR_DRSTB,       // DDR_DRSTB  
+  inout         DDR_CS_n,        // CSB
+  inout         DDR_DRSTB,       // DDR_DRSTB
   inout         DDR_ODT,         // ODT
   inout         DDR_RAS_n,       // RASB
   inout         DDR_WEB,
-  inout  [2:0]  DDR_BankAddr,    // BA  
+  inout  [2:0]  DDR_BankAddr,    // BA
   inout  [14:0] DDR_Addr,        // A
-  
+
   inout          DDR_VRN,
   inout          DDR_VRP,
-  inout   [C_DM_WIDTH - 1:0]  DDR_DM,          // DM  
+  inout   [C_DM_WIDTH - 1:0]  DDR_DM,          // DM
   inout   [C_DQ_WIDTH - 1:0] DDR_DQ,          // DQ
   inout   [C_DQS_WIDTH -1:0]  DDR_DQS_n,       // DQSN
   inout   [C_DQS_WIDTH - 1:0]  DDR_DQS,         // DQSP
-  
-  inout          PS_SRSTB,        // SRSTB    
+
+  inout          PS_SRSTB,        // SRSTB
   inout          PS_CLK,          // CLK
-  inout          PS_PORB         // PORB 
+  inout          PS_PORB         // PORB
 
 
 );
@@ -1147,7 +1147,7 @@ wire [2:0]    S_AXI_ACP_BID_out;
 wire [2:0]    S_AXI_ACP_RID_out;
 wire [2:0]    S_AXI_ACP_ARID_in;
 wire [2:0]    S_AXI_ACP_AWID_in;
-wire [2:0]    S_AXI_ACP_WID_in;  
+wire [2:0]    S_AXI_ACP_WID_in;
 
 wire [63:0]   S_AXI_HP0_WDATA_in;
 wire [7:0]    S_AXI_HP0_WSTRB_in;
@@ -1164,7 +1164,7 @@ wire [63:0]   S_AXI_HP2_RDATA_out;
 wire [63:0]   S_AXI_HP3_WDATA_in;
 wire [7:0]    S_AXI_HP3_WSTRB_in;
 wire [63:0]   S_AXI_HP3_RDATA_out;
- 
+
 wire [1:0]    M_AXI_GP0_ARSIZE_i;
 wire [1:0]    M_AXI_GP0_AWSIZE_i;
 
@@ -1175,7 +1175,7 @@ wire [(C_S_AXI_ACP_ID_WIDTH - 1) : 0]    SAXIACPBID_W;
 wire [(C_S_AXI_ACP_ID_WIDTH - 1) : 0]    SAXIACPRID_W;
 wire [(C_S_AXI_ACP_ID_WIDTH - 1) : 0]    SAXIACPARID_W;
 wire [(C_S_AXI_ACP_ID_WIDTH - 1) : 0]    SAXIACPAWID_W;
-wire [(C_S_AXI_ACP_ID_WIDTH - 1) : 0]    SAXIACPWID_W;  
+wire [(C_S_AXI_ACP_ID_WIDTH - 1) : 0]    SAXIACPWID_W;
 
 
 wire SAXIACPARREADY_W;
@@ -1183,13 +1183,13 @@ wire SAXIACPAWREADY_W;
 wire SAXIACPBVALID_W;
 wire SAXIACPRLAST_W;
 wire SAXIACPRVALID_W;
-wire SAXIACPWREADY_W;  
+wire SAXIACPWREADY_W;
 wire [1:0] SAXIACPBRESP_W;
 wire [1:0] SAXIACPRRESP_W;
 wire [(C_S_AXI_ACP_ID_WIDTH - 1) : 0] S_AXI_ATC_BID;
 wire [(C_S_AXI_ACP_ID_WIDTH - 1) : 0] S_AXI_ATC_RID;
 wire [63:0] SAXIACPRDATA_W;
-  
+
 wire S_AXI_ATC_ARVALID;
 wire S_AXI_ATC_AWVALID;
 wire S_AXI_ATC_BREADY;
@@ -1208,7 +1208,7 @@ wire [3:0] S_AXI_ATC_ARLEN;
 wire [3:0] S_AXI_ATC_ARQOS;
 wire [3:0] S_AXI_ATC_AWCACHE;
 wire [3:0] S_AXI_ATC_AWLEN;
-wire [3:0] S_AXI_ATC_AWQOS;  
+wire [3:0] S_AXI_ATC_AWQOS;
 wire [1:0] S_AXI_ATC_ARBURST;
 wire [1:0] S_AXI_ATC_ARLOCK;
 wire [2:0] S_AXI_ATC_ARSIZE;
@@ -1218,7 +1218,7 @@ wire [2:0] S_AXI_ATC_AWSIZE;
 wire [4:0] S_AXI_ATC_ARUSER;
 wire [4:0] S_AXI_ATC_AWUSER;
 wire [63:0] S_AXI_ATC_WDATA;
-wire [7:0] S_AXI_ATC_WSTRB;  
+wire [7:0] S_AXI_ATC_WSTRB;
 
 
 wire SAXIACPARVALID_W;
@@ -1236,7 +1236,7 @@ wire [3:0] SAXIACPARLEN_W;
 wire [3:0] SAXIACPARQOS_W;
 wire [3:0] SAXIACPAWCACHE_W;
 wire [3:0] SAXIACPAWLEN_W;
-wire [3:0] SAXIACPAWQOS_W;  
+wire [3:0] SAXIACPAWQOS_W;
 wire [1:0] SAXIACPARBURST_W;
 wire [1:0] SAXIACPARLOCK_W;
 wire [2:0] SAXIACPARSIZE_W;
@@ -1314,21 +1314,21 @@ wire  buffered_DDR_CAS_n;
 wire  buffered_DDR_CKE;
 wire  buffered_DDR_Clk_n;
 wire  buffered_DDR_Clk;
-wire  buffered_DDR_CS_n; 
-wire  buffered_DDR_DRSTB;  
+wire  buffered_DDR_CS_n;
+wire  buffered_DDR_DRSTB;
 wire  buffered_DDR_ODT;
 wire  buffered_DDR_RAS_n;
-wire  [2:0]  buffered_DDR_BankAddr; 
+wire  [2:0]  buffered_DDR_BankAddr;
 wire  [14:0]  buffered_DDR_Addr;
-  
+
 wire  buffered_DDR_VRN;
 wire  buffered_DDR_VRP;
-wire  [C_DM_WIDTH - 1:0]  buffered_DDR_DM;  
+wire  [C_DM_WIDTH - 1:0]  buffered_DDR_DM;
 wire  [C_DQ_WIDTH - 1:0]  buffered_DDR_DQ;
 wire  [C_DQS_WIDTH -1:0]  buffered_DDR_DQS_n;
 wire  [C_DQS_WIDTH - 1:0]  buffered_DDR_DQS;
-  
-wire  buffered_PS_SRSTB; 
+
+wire  buffered_PS_SRSTB;
 wire  buffered_PS_CLK;
 wire  buffered_PS_PORB;
 
@@ -1350,8 +1350,8 @@ wire TRACE_CTL_i;
 // fixed CR #665394
 integer j;
 generate
-  if (C_EN_EMIO_TRACE == 1) begin 
-    always @(posedge TRACE_CLK) 
+  if (C_EN_EMIO_TRACE == 1) begin
+    always @(posedge TRACE_CLK)
     begin
 	  TRACE_CTL_PIPE[C_TRACE_PIPELINE_WIDTH - 1] <= TRACE_CTL_i;
 	  TRACE_DATA_PIPE[C_TRACE_PIPELINE_WIDTH - 1] <= TRACE_DATA_i[(C_TRACE_INTERNAL_WIDTH-1):0];
@@ -1361,18 +1361,18 @@ generate
       end
 	  TRACE_CLK_OUT  <= ~TRACE_CLK_OUT;
 	end
-  end	
+  end
 else
 begin
 always @*
 begin
 TRACE_CTL_PIPE[C_TRACE_PIPELINE_WIDTH - 1] <= 1'b0;
-  TRACE_DATA_PIPE[C_TRACE_PIPELINE_WIDTH - 1] <= 1'b0; 
+  TRACE_DATA_PIPE[C_TRACE_PIPELINE_WIDTH - 1] <= 1'b0;
   for (j=(C_TRACE_PIPELINE_WIDTH-1); j>0; j=j-1) begin
   TRACE_CTL_PIPE[j-1] <= 1'b0;
 		TRACE_DATA_PIPE[j-1] <= 1'b0;
 		end
-  TRACE_CLK_OUT  <= 1'b0; 
+  TRACE_CLK_OUT  <= 1'b0;
   end
 end
 endgenerate
@@ -1384,7 +1384,7 @@ assign TRACE_DATA = TRACE_DATA_PIPE[0];
 //irq_p2f
 
 // Updated IRQ_F2P logic to address CR 641523
-generate 
+generate
   if(C_NUM_F2P_INTR_INPUTS == 0) begin : irq_f2p_select_null
     assign irq_f2p_i[19:0] = {Core1_nFIQ,Core0_nFIQ,Core1_nIRQ,Core0_nIRQ,irq_f2p_null[15:0]};
   end else if(C_NUM_F2P_INTR_INPUTS == 16) begin : irq_f2p_select_all
@@ -1411,261 +1411,261 @@ assign M_AXI_GP1_AWSIZE[2:0] = {1'b0, M_AXI_GP1_AWSIZE_i[1:0]};
 
 // Compress Function
 
-   
-// Modified as per CR 631955   
-//function [11:0] uncompress_id; 
-//   input [5:0] id; 
-//      begin 
-//         case (id[5:0]) 
-//            // dmac0 
-//            6'd1 : uncompress_id = 12'b010000_1000_00 ; 
-//            6'd2 : uncompress_id = 12'b010000_0000_00 ; 
-//            6'd3 : uncompress_id = 12'b010000_0001_00 ; 
-//            6'd4 : uncompress_id = 12'b010000_0010_00 ; 
-//            6'd5 : uncompress_id = 12'b010000_0011_00 ; 
-//            6'd6 : uncompress_id = 12'b010000_0100_00 ; 
-//            6'd7 : uncompress_id = 12'b010000_0101_00 ; 
-//            6'd8 : uncompress_id = 12'b010000_0110_00 ; 
-//            6'd9 : uncompress_id = 12'b010000_0111_00 ; 
-//            // ioum 
-//            6'd10 : uncompress_id = 12'b0100000_000_01 ; 
-//            6'd11 : uncompress_id = 12'b0100000_001_01 ; 
-//            6'd12 : uncompress_id = 12'b0100000_010_01 ; 
-//            6'd13 : uncompress_id = 12'b0100000_011_01 ; 
-//            6'd14 : uncompress_id = 12'b0100000_100_01 ; 
-//            6'd15 : uncompress_id = 12'b0100000_101_01 ; 
-//            // devci 
-//            6'd16 : uncompress_id = 12'b1000_0000_0000 ; 
-//            // dap 
-//            6'd17 : uncompress_id = 12'b1000_0000_0001 ; 
-//            // l2m1 (CPU000) 
-//            6'd18 : uncompress_id = 12'b11_000_000_00_00 ; 
-//            6'd19 : uncompress_id = 12'b11_010_000_00_00 ; 
-//            6'd20 : uncompress_id = 12'b11_011_000_00_00 ; 
-//            6'd21 : uncompress_id = 12'b11_100_000_00_00 ; 
-//            6'd22 : uncompress_id = 12'b11_101_000_00_00 ; 
-//            6'd23 : uncompress_id = 12'b11_110_000_00_00 ; 
-//            6'd24 : uncompress_id = 12'b11_111_000_00_00 ; 
-//            // l2m1 (CPU001) 
-//            6'd25 : uncompress_id = 12'b11_000_001_00_00 ; 
-//            6'd26 : uncompress_id = 12'b11_010_001_00_00 ; 
-//            6'd27 : uncompress_id = 12'b11_011_001_00_00 ; 
-//            6'd28 : uncompress_id = 12'b11_100_001_00_00 ; 
-//            6'd29 : uncompress_id = 12'b11_101_001_00_00 ; 
-//            6'd30 : uncompress_id = 12'b11_110_001_00_00 ; 
-//            6'd31 : uncompress_id = 12'b11_111_001_00_00 ; 
-//            // l2m1 (L2CC) 
-//            6'd32 : uncompress_id = 12'b11_000_00101_00 ; 
-//            6'd33 : uncompress_id = 12'b11_000_01001_00 ; 
-//            6'd34 : uncompress_id = 12'b11_000_01101_00 ; 
-//            6'd35 : uncompress_id = 12'b11_000_10011_00 ; 
-//            6'd36 : uncompress_id = 12'b11_000_10111_00 ; 
-//            6'd37 : uncompress_id = 12'b11_000_11011_00 ; 
-//            6'd38 : uncompress_id = 12'b11_000_11111_00 ; 
-//            6'd39 : uncompress_id = 12'b11_000_00011_00 ; 
-//            6'd40 : uncompress_id = 12'b11_000_00111_00 ; 
-//            6'd41 : uncompress_id = 12'b11_000_01011_00 ; 
-//            6'd42 : uncompress_id = 12'b11_000_01111_00 ; 
-//            6'd43 : uncompress_id = 12'b11_000_00001_00 ; 
-//            // l2m1 (ACP) 
-//            6'd44 : uncompress_id = 12'b11_000_10000_00 ; 
-//            6'd45 : uncompress_id = 12'b11_001_10000_00 ; 
-//            6'd46 : uncompress_id = 12'b11_010_10000_00 ; 
-//            6'd47 : uncompress_id = 12'b11_011_10000_00 ; 
-//            6'd48 : uncompress_id = 12'b11_100_10000_00 ; 
-//            6'd49 : uncompress_id = 12'b11_101_10000_00 ; 
-//            6'd50 : uncompress_id = 12'b11_110_10000_00 ; 
-//            6'd51 : uncompress_id = 12'b11_111_10000_00 ; 
-//         default : uncompress_id = ~0; 
-//      endcase 
-//   end 
-//endfunction 
-// 
-//function [5:0] compress_id; 
-//   input [11:0] id; 
-//      begin 
-//         case (id[11:0]) 
-//         // dmac0 
-//            12'b010000_1000_00 : compress_id = 'd1 ; 
-//            12'b010000_0000_00 : compress_id = 'd2 ; 
-//            12'b010000_0001_00 : compress_id = 'd3 ; 
-//            12'b010000_0010_00 : compress_id = 'd4 ; 
-//            12'b010000_0011_00 : compress_id = 'd5 ; 
-//            12'b010000_0100_00 : compress_id = 'd6 ; 
-//            12'b010000_0101_00 : compress_id = 'd7 ; 
-//            12'b010000_0110_00 : compress_id = 'd8 ; 
-//            12'b010000_0111_00 : compress_id = 'd9 ; 
-//            // ioum 
-//            12'b0100000_000_01 : compress_id = 'd10 ; 
-//            12'b0100000_001_01 : compress_id = 'd11 ; 
-//            12'b0100000_010_01 : compress_id = 'd12 ; 
-//            12'b0100000_011_01 : compress_id = 'd13 ; 
-//            12'b0100000_100_01 : compress_id = 'd14 ; 
-//            12'b0100000_101_01 : compress_id = 'd15 ; 
-//            // devci 
-//            12'b1000_0000_0000 : compress_id = 'd16 ; 
-//            // dap 
-//            12'b1000_0000_0001 : compress_id = 'd17 ; 
-//            // l2m1 (CPU000) 
-//            12'b11_000_000_00_00 : compress_id = 'd18 ; 
-//            12'b11_010_000_00_00 : compress_id = 'd19 ; 
-//            12'b11_011_000_00_00 : compress_id = 'd20 ; 
-//            12'b11_100_000_00_00 : compress_id = 'd21 ; 
-//            12'b11_101_000_00_00 : compress_id = 'd22 ; 
-//            12'b11_110_000_00_00 : compress_id = 'd23 ; 
-//            12'b11_111_000_00_00 : compress_id = 'd24 ; 
-//            // l2m1 (CPU001) 
-//            12'b11_000_001_00_00 : compress_id = 'd25 ; 
-//            12'b11_010_001_00_00 : compress_id = 'd26 ; 
-//            12'b11_011_001_00_00 : compress_id = 'd27 ; 
-//            12'b11_100_001_00_00 : compress_id = 'd28 ; 
-//            12'b11_101_001_00_00 : compress_id = 'd29 ; 
-//            12'b11_110_001_00_00 : compress_id = 'd30 ; 
-//            12'b11_111_001_00_00 : compress_id = 'd31 ; 
-//            // l2m1 (L2CC) 
-//            12'b11_000_00101_00 : compress_id = 'd32 ; 
-//            12'b11_000_01001_00 : compress_id = 'd33 ; 
-//            12'b11_000_01101_00 : compress_id = 'd34 ; 
-//            12'b11_000_10011_00 : compress_id = 'd35 ; 
-//            12'b11_000_10111_00 : compress_id = 'd36 ; 
-//            12'b11_000_11011_00 : compress_id = 'd37 ; 
-//            12'b11_000_11111_00 : compress_id = 'd38 ; 
-//            12'b11_000_00011_00 : compress_id = 'd39 ; 
-//            12'b11_000_00111_00 : compress_id = 'd40 ; 
-//            12'b11_000_01011_00 : compress_id = 'd41 ; 
-//            12'b11_000_01111_00 : compress_id = 'd42 ; 
-//            12'b11_000_00001_00 : compress_id = 'd43 ; 
-//            // l2m1 (ACP) 
-//            12'b11_000_10000_00 : compress_id = 'd44 ; 
-//            12'b11_001_10000_00 : compress_id = 'd45 ; 
-//            12'b11_010_10000_00 : compress_id = 'd46 ; 
-//            12'b11_011_10000_00 : compress_id = 'd47 ; 
-//            12'b11_100_10000_00 : compress_id = 'd48 ; 
-//            12'b11_101_10000_00 : compress_id = 'd49 ; 
-//            12'b11_110_10000_00 : compress_id = 'd50 ; 
-//            12'b11_111_10000_00 : compress_id = 'd51 ; 
-//         default: compress_id = ~0; 
-//      endcase 
-//   end 
-//endfunction 
+
+// Modified as per CR 631955
+//function [11:0] uncompress_id;
+//   input [5:0] id;
+//      begin
+//         case (id[5:0])
+//            // dmac0
+//            6'd1 : uncompress_id = 12'b010000_1000_00 ;
+//            6'd2 : uncompress_id = 12'b010000_0000_00 ;
+//            6'd3 : uncompress_id = 12'b010000_0001_00 ;
+//            6'd4 : uncompress_id = 12'b010000_0010_00 ;
+//            6'd5 : uncompress_id = 12'b010000_0011_00 ;
+//            6'd6 : uncompress_id = 12'b010000_0100_00 ;
+//            6'd7 : uncompress_id = 12'b010000_0101_00 ;
+//            6'd8 : uncompress_id = 12'b010000_0110_00 ;
+//            6'd9 : uncompress_id = 12'b010000_0111_00 ;
+//            // ioum
+//            6'd10 : uncompress_id = 12'b0100000_000_01 ;
+//            6'd11 : uncompress_id = 12'b0100000_001_01 ;
+//            6'd12 : uncompress_id = 12'b0100000_010_01 ;
+//            6'd13 : uncompress_id = 12'b0100000_011_01 ;
+//            6'd14 : uncompress_id = 12'b0100000_100_01 ;
+//            6'd15 : uncompress_id = 12'b0100000_101_01 ;
+//            // devci
+//            6'd16 : uncompress_id = 12'b1000_0000_0000 ;
+//            // dap
+//            6'd17 : uncompress_id = 12'b1000_0000_0001 ;
+//            // l2m1 (CPU000)
+//            6'd18 : uncompress_id = 12'b11_000_000_00_00 ;
+//            6'd19 : uncompress_id = 12'b11_010_000_00_00 ;
+//            6'd20 : uncompress_id = 12'b11_011_000_00_00 ;
+//            6'd21 : uncompress_id = 12'b11_100_000_00_00 ;
+//            6'd22 : uncompress_id = 12'b11_101_000_00_00 ;
+//            6'd23 : uncompress_id = 12'b11_110_000_00_00 ;
+//            6'd24 : uncompress_id = 12'b11_111_000_00_00 ;
+//            // l2m1 (CPU001)
+//            6'd25 : uncompress_id = 12'b11_000_001_00_00 ;
+//            6'd26 : uncompress_id = 12'b11_010_001_00_00 ;
+//            6'd27 : uncompress_id = 12'b11_011_001_00_00 ;
+//            6'd28 : uncompress_id = 12'b11_100_001_00_00 ;
+//            6'd29 : uncompress_id = 12'b11_101_001_00_00 ;
+//            6'd30 : uncompress_id = 12'b11_110_001_00_00 ;
+//            6'd31 : uncompress_id = 12'b11_111_001_00_00 ;
+//            // l2m1 (L2CC)
+//            6'd32 : uncompress_id = 12'b11_000_00101_00 ;
+//            6'd33 : uncompress_id = 12'b11_000_01001_00 ;
+//            6'd34 : uncompress_id = 12'b11_000_01101_00 ;
+//            6'd35 : uncompress_id = 12'b11_000_10011_00 ;
+//            6'd36 : uncompress_id = 12'b11_000_10111_00 ;
+//            6'd37 : uncompress_id = 12'b11_000_11011_00 ;
+//            6'd38 : uncompress_id = 12'b11_000_11111_00 ;
+//            6'd39 : uncompress_id = 12'b11_000_00011_00 ;
+//            6'd40 : uncompress_id = 12'b11_000_00111_00 ;
+//            6'd41 : uncompress_id = 12'b11_000_01011_00 ;
+//            6'd42 : uncompress_id = 12'b11_000_01111_00 ;
+//            6'd43 : uncompress_id = 12'b11_000_00001_00 ;
+//            // l2m1 (ACP)
+//            6'd44 : uncompress_id = 12'b11_000_10000_00 ;
+//            6'd45 : uncompress_id = 12'b11_001_10000_00 ;
+//            6'd46 : uncompress_id = 12'b11_010_10000_00 ;
+//            6'd47 : uncompress_id = 12'b11_011_10000_00 ;
+//            6'd48 : uncompress_id = 12'b11_100_10000_00 ;
+//            6'd49 : uncompress_id = 12'b11_101_10000_00 ;
+//            6'd50 : uncompress_id = 12'b11_110_10000_00 ;
+//            6'd51 : uncompress_id = 12'b11_111_10000_00 ;
+//         default : uncompress_id = ~0;
+//      endcase
+//   end
+//endfunction
+//
+//function [5:0] compress_id;
+//   input [11:0] id;
+//      begin
+//         case (id[11:0])
+//         // dmac0
+//            12'b010000_1000_00 : compress_id = 'd1 ;
+//            12'b010000_0000_00 : compress_id = 'd2 ;
+//            12'b010000_0001_00 : compress_id = 'd3 ;
+//            12'b010000_0010_00 : compress_id = 'd4 ;
+//            12'b010000_0011_00 : compress_id = 'd5 ;
+//            12'b010000_0100_00 : compress_id = 'd6 ;
+//            12'b010000_0101_00 : compress_id = 'd7 ;
+//            12'b010000_0110_00 : compress_id = 'd8 ;
+//            12'b010000_0111_00 : compress_id = 'd9 ;
+//            // ioum
+//            12'b0100000_000_01 : compress_id = 'd10 ;
+//            12'b0100000_001_01 : compress_id = 'd11 ;
+//            12'b0100000_010_01 : compress_id = 'd12 ;
+//            12'b0100000_011_01 : compress_id = 'd13 ;
+//            12'b0100000_100_01 : compress_id = 'd14 ;
+//            12'b0100000_101_01 : compress_id = 'd15 ;
+//            // devci
+//            12'b1000_0000_0000 : compress_id = 'd16 ;
+//            // dap
+//            12'b1000_0000_0001 : compress_id = 'd17 ;
+//            // l2m1 (CPU000)
+//            12'b11_000_000_00_00 : compress_id = 'd18 ;
+//            12'b11_010_000_00_00 : compress_id = 'd19 ;
+//            12'b11_011_000_00_00 : compress_id = 'd20 ;
+//            12'b11_100_000_00_00 : compress_id = 'd21 ;
+//            12'b11_101_000_00_00 : compress_id = 'd22 ;
+//            12'b11_110_000_00_00 : compress_id = 'd23 ;
+//            12'b11_111_000_00_00 : compress_id = 'd24 ;
+//            // l2m1 (CPU001)
+//            12'b11_000_001_00_00 : compress_id = 'd25 ;
+//            12'b11_010_001_00_00 : compress_id = 'd26 ;
+//            12'b11_011_001_00_00 : compress_id = 'd27 ;
+//            12'b11_100_001_00_00 : compress_id = 'd28 ;
+//            12'b11_101_001_00_00 : compress_id = 'd29 ;
+//            12'b11_110_001_00_00 : compress_id = 'd30 ;
+//            12'b11_111_001_00_00 : compress_id = 'd31 ;
+//            // l2m1 (L2CC)
+//            12'b11_000_00101_00 : compress_id = 'd32 ;
+//            12'b11_000_01001_00 : compress_id = 'd33 ;
+//            12'b11_000_01101_00 : compress_id = 'd34 ;
+//            12'b11_000_10011_00 : compress_id = 'd35 ;
+//            12'b11_000_10111_00 : compress_id = 'd36 ;
+//            12'b11_000_11011_00 : compress_id = 'd37 ;
+//            12'b11_000_11111_00 : compress_id = 'd38 ;
+//            12'b11_000_00011_00 : compress_id = 'd39 ;
+//            12'b11_000_00111_00 : compress_id = 'd40 ;
+//            12'b11_000_01011_00 : compress_id = 'd41 ;
+//            12'b11_000_01111_00 : compress_id = 'd42 ;
+//            12'b11_000_00001_00 : compress_id = 'd43 ;
+//            // l2m1 (ACP)
+//            12'b11_000_10000_00 : compress_id = 'd44 ;
+//            12'b11_001_10000_00 : compress_id = 'd45 ;
+//            12'b11_010_10000_00 : compress_id = 'd46 ;
+//            12'b11_011_10000_00 : compress_id = 'd47 ;
+//            12'b11_100_10000_00 : compress_id = 'd48 ;
+//            12'b11_101_10000_00 : compress_id = 'd49 ;
+//            12'b11_110_10000_00 : compress_id = 'd50 ;
+//            12'b11_111_10000_00 : compress_id = 'd51 ;
+//         default: compress_id = ~0;
+//      endcase
+//   end
+//endfunction
 
 // Modified as per CR 648393
 
-	function [5:0] compress_id; 
-		input [11:0] id; 
-			begin 
-				compress_id[0] = id[7] | (id[4] & id[2]) | (~id[11] & id[2]) | (id[11] & id[0]); 
-				compress_id[1] = id[8] | id[5] | (~id[11] & id[3]); 
-				compress_id[2] = id[9] | (id[6] & id[3] & id[2]) | (~id[11] & id[4]); 
-				compress_id[3] = (id[11] & id[10] & id[4]) | (id[11] & id[10] & id[2]) | (~id[11] & id[10] & ~id[5] & ~id[0]); 
-				compress_id[4] = (id[11] & id[3]) | (id[10] & id[0]) | (id[11] & id[10] & ~id[2] &~id[6]); 
-				compress_id[5] = id[11] & id[10] & ~id[3]; 
-			end 
-	endfunction 
-
-	function [11:0] uncompress_id; 
-		input [5:0] id; 
-			begin 
-				case (id[5:0]) 
-					// dmac0 
-					6'b000_010 : uncompress_id = 12'b010000_1000_00 ; 
-					6'b001_000 : uncompress_id = 12'b010000_0000_00 ; 
-					6'b001_001 : uncompress_id = 12'b010000_0001_00 ; 
-					6'b001_010 : uncompress_id = 12'b010000_0010_00 ; 
-					6'b001_011 : uncompress_id = 12'b010000_0011_00 ; 
-					6'b001_100 : uncompress_id = 12'b010000_0100_00 ; 
-					6'b001_101 : uncompress_id = 12'b010000_0101_00 ; 
-					6'b001_110 : uncompress_id = 12'b010000_0110_00 ; 
-					6'b001_111 : uncompress_id = 12'b010000_0111_00 ; 
-					// ioum 
-					6'b010_000 : uncompress_id = 12'b0100000_000_01 ; 
-					6'b010_001 : uncompress_id = 12'b0100000_001_01 ; 
-					6'b010_010 : uncompress_id = 12'b0100000_010_01 ; 
-					6'b010_011 : uncompress_id = 12'b0100000_011_01 ; 
-					6'b010_100 : uncompress_id = 12'b0100000_100_01 ; 
-					6'b010_101 : uncompress_id = 12'b0100000_101_01 ; 
-					// devci 
-					6'b000_000 : uncompress_id = 12'b1000_0000_0000 ; 
-					// dap 
-					6'b000_001 : uncompress_id = 12'b1000_0000_0001 ; 
-					// l2m1 (CPU000) 
-					6'b110_000 : uncompress_id = 12'b11_000_000_00_00 ; 
-					6'b110_010 : uncompress_id = 12'b11_010_000_00_00 ; 
-					6'b110_011 : uncompress_id = 12'b11_011_000_00_00 ; 
-					6'b110_100 : uncompress_id = 12'b11_100_000_00_00 ; 
-					6'b110_101 : uncompress_id = 12'b11_101_000_00_00 ; 
-					6'b110_110 : uncompress_id = 12'b11_110_000_00_00 ; 
-					6'b110_111 : uncompress_id = 12'b11_111_000_00_00 ; 
-					// l2m1 (CPU001) 
-					6'b111_000 : uncompress_id = 12'b11_000_001_00_00 ; 
-					6'b111_010 : uncompress_id = 12'b11_010_001_00_00 ; 
-					6'b111_011 : uncompress_id = 12'b11_011_001_00_00 ; 
-					6'b111_100 : uncompress_id = 12'b11_100_001_00_00 ; 
-					6'b111_101 : uncompress_id = 12'b11_101_001_00_00 ; 
-					6'b111_110 : uncompress_id = 12'b11_110_001_00_00 ; 
-					6'b111_111 : uncompress_id = 12'b11_111_001_00_00 ; 
-					// l2m1 (L2CC) 
-					6'b101_001 : uncompress_id = 12'b11_000_00101_00 ; 
-					6'b101_010 : uncompress_id = 12'b11_000_01001_00 ; 
-					6'b101_011 : uncompress_id = 12'b11_000_01101_00 ; 
-					6'b011_100 : uncompress_id = 12'b11_000_10011_00 ; 
-					6'b011_101 : uncompress_id = 12'b11_000_10111_00 ; 
-					6'b011_110 : uncompress_id = 12'b11_000_11011_00 ; 
-					6'b011_111 : uncompress_id = 12'b11_000_11111_00 ; 
-					6'b011_000 : uncompress_id = 12'b11_000_00011_00 ; 
-					6'b011_001 : uncompress_id = 12'b11_000_00111_00 ; 
-					6'b011_010 : uncompress_id = 12'b11_000_01011_00 ; 
-					6'b011_011 : uncompress_id = 12'b11_000_01111_00 ; 
-					6'b101_000 : uncompress_id = 12'b11_000_00001_00 ; 
-					// l2m1 (ACP) 
-					6'b100_000 : uncompress_id = 12'b11_000_10000_00 ; 
-					6'b100_001 : uncompress_id = 12'b11_001_10000_00 ; 
-					6'b100_010 : uncompress_id = 12'b11_010_10000_00 ; 
-					6'b100_011 : uncompress_id = 12'b11_011_10000_00 ; 
-					6'b100_100 : uncompress_id = 12'b11_100_10000_00 ; 
-					6'b100_101 : uncompress_id = 12'b11_101_10000_00 ; 
-					6'b100_110 : uncompress_id = 12'b11_110_10000_00 ; 
-					6'b100_111 : uncompress_id = 12'b11_111_10000_00 ; 
-					default : uncompress_id = 12'hx ; 
-				endcase 
-			end 
+	function [5:0] compress_id;
+		input [11:0] id;
+			begin
+				compress_id[0] = id[7] | (id[4] & id[2]) | (~id[11] & id[2]) | (id[11] & id[0]);
+				compress_id[1] = id[8] | id[5] | (~id[11] & id[3]);
+				compress_id[2] = id[9] | (id[6] & id[3] & id[2]) | (~id[11] & id[4]);
+				compress_id[3] = (id[11] & id[10] & id[4]) | (id[11] & id[10] & id[2]) | (~id[11] & id[10] & ~id[5] & ~id[0]);
+				compress_id[4] = (id[11] & id[3]) | (id[10] & id[0]) | (id[11] & id[10] & ~id[2] &~id[6]);
+				compress_id[5] = id[11] & id[10] & ~id[3];
+			end
 	endfunction
 
-   
-// Static Remap logic Enablement and Disablement for C_M_AXI0 port
-        
-        assign M_AXI_GP0_AWID        = (C_M_AXI_GP0_ENABLE_STATIC_REMAP == 1) ? compress_id(M_AXI_GP0_AWID_FULL) : M_AXI_GP0_AWID_FULL;
-        assign M_AXI_GP0_WID         = (C_M_AXI_GP0_ENABLE_STATIC_REMAP == 1) ? compress_id(M_AXI_GP0_WID_FULL)  : M_AXI_GP0_WID_FULL;   
-        assign M_AXI_GP0_ARID        = (C_M_AXI_GP0_ENABLE_STATIC_REMAP == 1) ? compress_id(M_AXI_GP0_ARID_FULL) : M_AXI_GP0_ARID_FULL;      
-        assign M_AXI_GP0_BID_FULL    = (C_M_AXI_GP0_ENABLE_STATIC_REMAP == 1) ? uncompress_id(M_AXI_GP0_BID)     : M_AXI_GP0_BID;
-        assign M_AXI_GP0_RID_FULL    = (C_M_AXI_GP0_ENABLE_STATIC_REMAP == 1) ? uncompress_id(M_AXI_GP0_RID)     : M_AXI_GP0_RID;      
+	function [11:0] uncompress_id;
+		input [5:0] id;
+			begin
+				case (id[5:0])
+					// dmac0
+					6'b000_010 : uncompress_id = 12'b010000_1000_00 ;
+					6'b001_000 : uncompress_id = 12'b010000_0000_00 ;
+					6'b001_001 : uncompress_id = 12'b010000_0001_00 ;
+					6'b001_010 : uncompress_id = 12'b010000_0010_00 ;
+					6'b001_011 : uncompress_id = 12'b010000_0011_00 ;
+					6'b001_100 : uncompress_id = 12'b010000_0100_00 ;
+					6'b001_101 : uncompress_id = 12'b010000_0101_00 ;
+					6'b001_110 : uncompress_id = 12'b010000_0110_00 ;
+					6'b001_111 : uncompress_id = 12'b010000_0111_00 ;
+					// ioum
+					6'b010_000 : uncompress_id = 12'b0100000_000_01 ;
+					6'b010_001 : uncompress_id = 12'b0100000_001_01 ;
+					6'b010_010 : uncompress_id = 12'b0100000_010_01 ;
+					6'b010_011 : uncompress_id = 12'b0100000_011_01 ;
+					6'b010_100 : uncompress_id = 12'b0100000_100_01 ;
+					6'b010_101 : uncompress_id = 12'b0100000_101_01 ;
+					// devci
+					6'b000_000 : uncompress_id = 12'b1000_0000_0000 ;
+					// dap
+					6'b000_001 : uncompress_id = 12'b1000_0000_0001 ;
+					// l2m1 (CPU000)
+					6'b110_000 : uncompress_id = 12'b11_000_000_00_00 ;
+					6'b110_010 : uncompress_id = 12'b11_010_000_00_00 ;
+					6'b110_011 : uncompress_id = 12'b11_011_000_00_00 ;
+					6'b110_100 : uncompress_id = 12'b11_100_000_00_00 ;
+					6'b110_101 : uncompress_id = 12'b11_101_000_00_00 ;
+					6'b110_110 : uncompress_id = 12'b11_110_000_00_00 ;
+					6'b110_111 : uncompress_id = 12'b11_111_000_00_00 ;
+					// l2m1 (CPU001)
+					6'b111_000 : uncompress_id = 12'b11_000_001_00_00 ;
+					6'b111_010 : uncompress_id = 12'b11_010_001_00_00 ;
+					6'b111_011 : uncompress_id = 12'b11_011_001_00_00 ;
+					6'b111_100 : uncompress_id = 12'b11_100_001_00_00 ;
+					6'b111_101 : uncompress_id = 12'b11_101_001_00_00 ;
+					6'b111_110 : uncompress_id = 12'b11_110_001_00_00 ;
+					6'b111_111 : uncompress_id = 12'b11_111_001_00_00 ;
+					// l2m1 (L2CC)
+					6'b101_001 : uncompress_id = 12'b11_000_00101_00 ;
+					6'b101_010 : uncompress_id = 12'b11_000_01001_00 ;
+					6'b101_011 : uncompress_id = 12'b11_000_01101_00 ;
+					6'b011_100 : uncompress_id = 12'b11_000_10011_00 ;
+					6'b011_101 : uncompress_id = 12'b11_000_10111_00 ;
+					6'b011_110 : uncompress_id = 12'b11_000_11011_00 ;
+					6'b011_111 : uncompress_id = 12'b11_000_11111_00 ;
+					6'b011_000 : uncompress_id = 12'b11_000_00011_00 ;
+					6'b011_001 : uncompress_id = 12'b11_000_00111_00 ;
+					6'b011_010 : uncompress_id = 12'b11_000_01011_00 ;
+					6'b011_011 : uncompress_id = 12'b11_000_01111_00 ;
+					6'b101_000 : uncompress_id = 12'b11_000_00001_00 ;
+					// l2m1 (ACP)
+					6'b100_000 : uncompress_id = 12'b11_000_10000_00 ;
+					6'b100_001 : uncompress_id = 12'b11_001_10000_00 ;
+					6'b100_010 : uncompress_id = 12'b11_010_10000_00 ;
+					6'b100_011 : uncompress_id = 12'b11_011_10000_00 ;
+					6'b100_100 : uncompress_id = 12'b11_100_10000_00 ;
+					6'b100_101 : uncompress_id = 12'b11_101_10000_00 ;
+					6'b100_110 : uncompress_id = 12'b11_110_10000_00 ;
+					6'b100_111 : uncompress_id = 12'b11_111_10000_00 ;
+					default : uncompress_id = 12'hx ;
+				endcase
+			end
+	endfunction
 
-  // Static Remap logic Enablement and Disablement for C_M_AXI1 port   
+
+// Static Remap logic Enablement and Disablement for C_M_AXI0 port
+
+        assign M_AXI_GP0_AWID        = (C_M_AXI_GP0_ENABLE_STATIC_REMAP == 1) ? compress_id(M_AXI_GP0_AWID_FULL) : M_AXI_GP0_AWID_FULL;
+        assign M_AXI_GP0_WID         = (C_M_AXI_GP0_ENABLE_STATIC_REMAP == 1) ? compress_id(M_AXI_GP0_WID_FULL)  : M_AXI_GP0_WID_FULL;
+        assign M_AXI_GP0_ARID        = (C_M_AXI_GP0_ENABLE_STATIC_REMAP == 1) ? compress_id(M_AXI_GP0_ARID_FULL) : M_AXI_GP0_ARID_FULL;
+        assign M_AXI_GP0_BID_FULL    = (C_M_AXI_GP0_ENABLE_STATIC_REMAP == 1) ? uncompress_id(M_AXI_GP0_BID)     : M_AXI_GP0_BID;
+        assign M_AXI_GP0_RID_FULL    = (C_M_AXI_GP0_ENABLE_STATIC_REMAP == 1) ? uncompress_id(M_AXI_GP0_RID)     : M_AXI_GP0_RID;
+
+  // Static Remap logic Enablement and Disablement for C_M_AXI1 port
 
         assign M_AXI_GP1_AWID        = (C_M_AXI_GP1_ENABLE_STATIC_REMAP == 1) ? compress_id(M_AXI_GP1_AWID_FULL) : M_AXI_GP1_AWID_FULL;
-        assign M_AXI_GP1_WID         = (C_M_AXI_GP1_ENABLE_STATIC_REMAP == 1) ? compress_id(M_AXI_GP1_WID_FULL)  : M_AXI_GP1_WID_FULL;   
-        assign M_AXI_GP1_ARID        = (C_M_AXI_GP1_ENABLE_STATIC_REMAP == 1) ? compress_id(M_AXI_GP1_ARID_FULL) : M_AXI_GP1_ARID_FULL;      
+        assign M_AXI_GP1_WID         = (C_M_AXI_GP1_ENABLE_STATIC_REMAP == 1) ? compress_id(M_AXI_GP1_WID_FULL)  : M_AXI_GP1_WID_FULL;
+        assign M_AXI_GP1_ARID        = (C_M_AXI_GP1_ENABLE_STATIC_REMAP == 1) ? compress_id(M_AXI_GP1_ARID_FULL) : M_AXI_GP1_ARID_FULL;
         assign M_AXI_GP1_BID_FULL    = (C_M_AXI_GP1_ENABLE_STATIC_REMAP == 1) ? uncompress_id(M_AXI_GP1_BID)     : M_AXI_GP1_BID;
-        assign M_AXI_GP1_RID_FULL    = (C_M_AXI_GP1_ENABLE_STATIC_REMAP == 1) ? uncompress_id(M_AXI_GP1_RID)     : M_AXI_GP1_RID;      
+        assign M_AXI_GP1_RID_FULL    = (C_M_AXI_GP1_ENABLE_STATIC_REMAP == 1) ? uncompress_id(M_AXI_GP1_RID)     : M_AXI_GP1_RID;
 
 
 //// Compress_id and uncompress_id has been removed to address CR 642527
 //// AXI interconnect v1.05.a and beyond implements dynamic ID compression/decompression.
 //        assign M_AXI_GP0_AWID        =  M_AXI_GP0_AWID_FULL;
-//        assign M_AXI_GP0_WID         =  M_AXI_GP0_WID_FULL;   
-//        assign M_AXI_GP0_ARID        =  M_AXI_GP0_ARID_FULL;      
+//        assign M_AXI_GP0_WID         =  M_AXI_GP0_WID_FULL;
+//        assign M_AXI_GP0_ARID        =  M_AXI_GP0_ARID_FULL;
 //        assign M_AXI_GP0_BID_FULL    =  M_AXI_GP0_BID;
-//        assign M_AXI_GP0_RID_FULL    =  M_AXI_GP0_RID;      
+//        assign M_AXI_GP0_RID_FULL    =  M_AXI_GP0_RID;
 //
 //        assign M_AXI_GP1_AWID        =  M_AXI_GP1_AWID_FULL;
-//        assign M_AXI_GP1_WID         =  M_AXI_GP1_WID_FULL;   
-//        assign M_AXI_GP1_ARID        =  M_AXI_GP1_ARID_FULL;      
+//        assign M_AXI_GP1_WID         =  M_AXI_GP1_WID_FULL;
+//        assign M_AXI_GP1_ARID        =  M_AXI_GP1_ARID_FULL;
 //        assign M_AXI_GP1_BID_FULL    =  M_AXI_GP1_BID;
-//        assign M_AXI_GP1_RID_FULL    =  M_AXI_GP1_RID;      
-						  
-  
+//        assign M_AXI_GP1_RID_FULL    =  M_AXI_GP1_RID;
+
+
 // Pipeline Stage for ENET0
-	
+
 generate
   if (C_EN_EMIO_ENET0 == 1) begin
   always @(posedge ENET0_GMII_TX_CLK)
@@ -1685,12 +1685,12 @@ generate
 	  ENET0_GMII_TX_ER  <= 'b0;//ENET0_GMII_TX_ER_i; //1'b0;//ENET0_GMII_TX_ER_i;
 	  ENET0_GMII_COL_i <= 'b0;
 	  ENET0_GMII_CRS_i <= 'b0;
-	 end  
+	 end
 endgenerate
-  
+
 generate
-  if (C_EN_EMIO_ENET0 == 1) begin 
-    always @(posedge ENET0_GMII_RX_CLK) 
+  if (C_EN_EMIO_ENET0 == 1) begin
+    always @(posedge ENET0_GMII_RX_CLK)
     begin
       ENET0_GMII_RXD_i    <= ENET0_GMII_RXD;
       ENET0_GMII_RX_DV_i  <= ENET0_GMII_RX_DV;
@@ -1709,10 +1709,10 @@ generate
 endgenerate
 
 // Pipeline Stage for ENET1
-	
+
 generate
-  if (C_EN_EMIO_ENET1 == 1) begin 
-    always @(posedge ENET1_GMII_TX_CLK) 
+  if (C_EN_EMIO_ENET1 == 1) begin
+    always @(posedge ENET1_GMII_TX_CLK)
     begin
       ENET1_GMII_TXD    <= ENET1_GMII_TXD_i;
       ENET1_GMII_TX_EN  <= ENET1_GMII_TX_EN_i;
@@ -1730,19 +1730,19 @@ generate
 	  ENET1_GMII_TX_ER  <= 'b0;//ENET0_GMII_TX_ER_i; //1'b0;//ENET0_GMII_TX_ER_i;
 	  ENET1_GMII_COL_i <= 0;
 	  ENET1_GMII_CRS_i <= 0;
-	 end  
+	 end
   end
 endgenerate
-   
-generate	
-  if (C_EN_EMIO_ENET1 == 1) begin 
-    always @(posedge ENET1_GMII_RX_CLK) 
+
+generate
+  if (C_EN_EMIO_ENET1 == 1) begin
+    always @(posedge ENET1_GMII_RX_CLK)
     begin
       ENET1_GMII_RXD_i    <= ENET1_GMII_RXD;
       ENET1_GMII_RX_DV_i  <= ENET1_GMII_RX_DV;
       ENET1_GMII_RX_ER_i  <= ENET1_GMII_RX_ER;
     end
-  end	
+  end
 else
 	begin
 	always @*
@@ -1751,17 +1751,17 @@ else
    ENET1_GMII_RX_DV_i  <= 'b0;
   ENET1_GMII_RX_ER_i  <= 'b0;
 	end
-	end  
-endgenerate   
-   
+	end
+endgenerate
+
 // Trace buffer instantiated when C_INCLUDE_TRACE_BUFFER is 1.
 
 generate
   if (C_EN_EMIO_TRACE == 1)  begin
     if (C_INCLUDE_TRACE_BUFFER == 0) begin : gen_no_trace_buffer
-        
+
       // Pipeline Stage for Traceport ATID
-      always @(posedge FTMD_TRACEIN_CLK) 
+      always @(posedge FTMD_TRACEIN_CLK)
       begin
        	FTMD_TRACEIN_DATA_notracebuf    <= FTMD_TRACEIN_DATA;
         FTMD_TRACEIN_VALID_notracebuf   <= FTMD_TRACEIN_VALID;
@@ -1773,26 +1773,26 @@ generate
       assign FTMD_TRACEIN_ATID_i   = FTMD_TRACEIN_ATID_notracebuf;
 
     end else begin : gen_trace_buffer
-    
+
       processing_system7_v5_5_trace_buffer #(.FIFO_SIZE (C_TRACE_BUFFER_FIFO_SIZE),
       .USE_TRACE_DATA_EDGE_DETECTOR(USE_TRACE_DATA_EDGE_DETECTOR),
       .C_DELAY_CLKS(C_TRACE_BUFFER_CLOCK_DELAY)
        )
       trace_buffer_i (
-        .TRACE_CLK(FTMD_TRACEIN_CLK), 
-        .RST(~FCLK_RESET0_N), 
-        .TRACE_VALID_IN(FTMD_TRACEIN_VALID), 
-        .TRACE_DATA_IN(FTMD_TRACEIN_DATA), 
-        .TRACE_ATID_IN(FTMD_TRACEIN_ATID), 
-        .TRACE_ATID_OUT(FTMD_TRACEIN_ATID_tracebuf), 
-        .TRACE_VALID_OUT(FTMD_TRACEIN_VALID_tracebuf), 
+        .TRACE_CLK(FTMD_TRACEIN_CLK),
+        .RST(~FCLK_RESET0_N),
+        .TRACE_VALID_IN(FTMD_TRACEIN_VALID),
+        .TRACE_DATA_IN(FTMD_TRACEIN_DATA),
+        .TRACE_ATID_IN(FTMD_TRACEIN_ATID),
+        .TRACE_ATID_OUT(FTMD_TRACEIN_ATID_tracebuf),
+        .TRACE_VALID_OUT(FTMD_TRACEIN_VALID_tracebuf),
         .TRACE_DATA_OUT(FTMD_TRACEIN_DATA_tracebuf)
       );
 
       assign FTMD_TRACEIN_DATA_i   = FTMD_TRACEIN_DATA_tracebuf;
       assign FTMD_TRACEIN_VALID_i  = FTMD_TRACEIN_VALID_tracebuf;
       assign FTMD_TRACEIN_ATID_i   = FTMD_TRACEIN_ATID_tracebuf;
- 
+
     end
   end
   else
@@ -1802,11 +1802,11 @@ generate
       assign FTMD_TRACEIN_ATID_i   = 1'b0;
 	  end
 endgenerate
-  
-   
+
+
    // ID Width Control on AXI Slave ports
    // S_AXI_GP0
-   
+
      function [5:0] id_in_gp0;
        input [(C_S_AXI_GP0_ID_WIDTH - 1) : 0] axi_id_gp0_in;
      begin
@@ -1816,7 +1816,7 @@ endgenerate
               3:  id_in_gp0  = {3'b0, axi_id_gp0_in};
               4:  id_in_gp0  = {2'b0, axi_id_gp0_in};
               5:  id_in_gp0  = {1'b0, axi_id_gp0_in};
-              6:  id_in_gp0  = axi_id_gp0_in;    
+              6:  id_in_gp0  = axi_id_gp0_in;
               default : id_in_gp0 =  axi_id_gp0_in;
         endcase
      end
@@ -1835,17 +1835,17 @@ endgenerate
               3:  id_out_gp0  = axi_id_gp0_out[2:0];
               4:  id_out_gp0  = axi_id_gp0_out[3:0];
               5:  id_out_gp0  = axi_id_gp0_out[4:0];
-              6:  id_out_gp0  = axi_id_gp0_out;    
-              default : id_out_gp0 =  axi_id_gp0_out;              
+              6:  id_out_gp0  = axi_id_gp0_out;
+              default : id_out_gp0 =  axi_id_gp0_out;
         endcase
      end
      endfunction
-    
+
     assign S_AXI_GP0_BID     = id_out_gp0(S_AXI_GP0_BID_out);
-    assign S_AXI_GP0_RID     = id_out_gp0(S_AXI_GP0_RID_out);    
-   
+    assign S_AXI_GP0_RID     = id_out_gp0(S_AXI_GP0_RID_out);
+
    // S_AXI_GP1
-   
+
      function [5:0] id_in_gp1;
        input [(C_S_AXI_GP1_ID_WIDTH - 1) : 0] axi_id_gp1_in;
      begin
@@ -1855,7 +1855,7 @@ endgenerate
               3:  id_in_gp1  = {3'b0, axi_id_gp1_in};
               4:  id_in_gp1  = {2'b0, axi_id_gp1_in};
               5:  id_in_gp1  = {1'b0, axi_id_gp1_in};
-              6:  id_in_gp1  = axi_id_gp1_in;    
+              6:  id_in_gp1  = axi_id_gp1_in;
               default : id_in_gp1 =  axi_id_gp1_in;
         endcase
      end
@@ -1874,17 +1874,17 @@ endgenerate
               3:  id_out_gp1  = axi_id_gp1_out[2:0];
               4:  id_out_gp1  = axi_id_gp1_out[3:0];
               5:  id_out_gp1  = axi_id_gp1_out[4:0];
-              6:  id_out_gp1  = axi_id_gp1_out;    
-              default : id_out_gp1 =  axi_id_gp1_out;              
+              6:  id_out_gp1  = axi_id_gp1_out;
+              default : id_out_gp1 =  axi_id_gp1_out;
         endcase
      end
      endfunction
-    
+
     assign S_AXI_GP1_BID     = id_out_gp1(S_AXI_GP1_BID_out);
-    assign S_AXI_GP1_RID     = id_out_gp1(S_AXI_GP1_RID_out);    
-    
-// S_AXI_HP0    
-    
+    assign S_AXI_GP1_RID     = id_out_gp1(S_AXI_GP1_RID_out);
+
+// S_AXI_HP0
+
      function [5:0] id_in_hp0;
        input [(C_S_AXI_HP0_ID_WIDTH - 1) : 0] axi_id_hp0_in;
      begin
@@ -1894,7 +1894,7 @@ endgenerate
               3:  id_in_hp0  = {3'b0, axi_id_hp0_in};
               4:  id_in_hp0  = {2'b0, axi_id_hp0_in};
               5:  id_in_hp0  = {1'b0, axi_id_hp0_in};
-              6:  id_in_hp0  = axi_id_hp0_in;    
+              6:  id_in_hp0  = axi_id_hp0_in;
               default : id_in_hp0 =  axi_id_hp0_in;
         endcase
      end
@@ -1913,20 +1913,20 @@ endgenerate
               3:  id_out_hp0  = axi_id_hp0_out[2:0];
               4:  id_out_hp0  = axi_id_hp0_out[3:0];
               5:  id_out_hp0  = axi_id_hp0_out[4:0];
-              6:  id_out_hp0  = axi_id_hp0_out;    
-              default : id_out_hp0 =  axi_id_hp0_out;              
+              6:  id_out_hp0  = axi_id_hp0_out;
+              default : id_out_hp0 =  axi_id_hp0_out;
         endcase
      end
      endfunction
-    
+
     assign S_AXI_HP0_BID     = id_out_hp0(S_AXI_HP0_BID_out);
-    assign S_AXI_HP0_RID     = id_out_hp0(S_AXI_HP0_RID_out);  
-    
+    assign S_AXI_HP0_RID     = id_out_hp0(S_AXI_HP0_RID_out);
+
     assign S_AXI_HP0_WDATA_in        = (C_S_AXI_HP0_DATA_WIDTH == 64) ? S_AXI_HP0_WDATA : {32'b0,S_AXI_HP0_WDATA};
-    assign S_AXI_HP0_WSTRB_in        = (C_S_AXI_HP0_DATA_WIDTH == 64) ? S_AXI_HP0_WSTRB : {4'b0,S_AXI_HP0_WSTRB};       
+    assign S_AXI_HP0_WSTRB_in        = (C_S_AXI_HP0_DATA_WIDTH == 64) ? S_AXI_HP0_WSTRB : {4'b0,S_AXI_HP0_WSTRB};
     assign S_AXI_HP0_RDATA           = (C_S_AXI_HP0_DATA_WIDTH == 64) ? S_AXI_HP0_RDATA_out : S_AXI_HP0_RDATA_out[31:0];
-    
-// S_AXI_HP1    
+
+// S_AXI_HP1
 
      function [5:0] id_in_hp1;
        input [(C_S_AXI_HP1_ID_WIDTH - 1) : 0] axi_id_hp1_in;
@@ -1937,13 +1937,13 @@ endgenerate
               3:  id_in_hp1  = {3'b0, axi_id_hp1_in};
               4:  id_in_hp1  = {2'b0, axi_id_hp1_in};
               5:  id_in_hp1  = {1'b0, axi_id_hp1_in};
-              6:  id_in_hp1  = axi_id_hp1_in;    
+              6:  id_in_hp1  = axi_id_hp1_in;
               default : id_in_hp1 =  axi_id_hp1_in;
         endcase
      end
      endfunction
-     
-     
+
+
 
     assign S_AXI_HP1_ARID_in = id_in_hp1(S_AXI_HP1_ARID);
     assign S_AXI_HP1_AWID_in = id_in_hp1(S_AXI_HP1_AWID);
@@ -1958,21 +1958,21 @@ endgenerate
               3:  id_out_hp1  = axi_id_hp1_out[2:0];
               4:  id_out_hp1  = axi_id_hp1_out[3:0];
               5:  id_out_hp1  = axi_id_hp1_out[4:0];
-              6:  id_out_hp1  = axi_id_hp1_out;    
-              default : id_out_hp1 =  axi_id_hp1_out;              
+              6:  id_out_hp1  = axi_id_hp1_out;
+              default : id_out_hp1 =  axi_id_hp1_out;
         endcase
      end
      endfunction
-    
+
     assign S_AXI_HP1_BID     = id_out_hp1(S_AXI_HP1_BID_out);
-    assign S_AXI_HP1_RID     = id_out_hp1(S_AXI_HP1_RID_out); 
-    
+    assign S_AXI_HP1_RID     = id_out_hp1(S_AXI_HP1_RID_out);
+
     assign S_AXI_HP1_WDATA_in        = (C_S_AXI_HP1_DATA_WIDTH == 64) ? S_AXI_HP1_WDATA : {32'b0,S_AXI_HP1_WDATA};
-    assign S_AXI_HP1_WSTRB_in        = (C_S_AXI_HP1_DATA_WIDTH == 64) ? S_AXI_HP1_WSTRB : {4'b0,S_AXI_HP1_WSTRB};       
+    assign S_AXI_HP1_WSTRB_in        = (C_S_AXI_HP1_DATA_WIDTH == 64) ? S_AXI_HP1_WSTRB : {4'b0,S_AXI_HP1_WSTRB};
     assign S_AXI_HP1_RDATA           = (C_S_AXI_HP1_DATA_WIDTH == 64) ? S_AXI_HP1_RDATA_out : S_AXI_HP1_RDATA_out[31:0];
-    
-    
-// S_AXI_HP2    
+
+
+// S_AXI_HP2
 
      function [5:0] id_in_hp2;
        input [(C_S_AXI_HP2_ID_WIDTH - 1) : 0] axi_id_hp2_in;
@@ -1983,16 +1983,16 @@ endgenerate
               3:  id_in_hp2  = {3'b0, axi_id_hp2_in};
               4:  id_in_hp2  = {2'b0, axi_id_hp2_in};
               5:  id_in_hp2  = {1'b0, axi_id_hp2_in};
-              6:  id_in_hp2  = axi_id_hp2_in;    
+              6:  id_in_hp2  = axi_id_hp2_in;
               default : id_in_hp2 =  axi_id_hp2_in;
         endcase
      end
      endfunction
-     
+
     assign S_AXI_HP2_ARID_in = id_in_hp2(S_AXI_HP2_ARID);
     assign S_AXI_HP2_AWID_in = id_in_hp2(S_AXI_HP2_AWID);
     assign S_AXI_HP2_WID_in  = id_in_hp2(S_AXI_HP2_WID);
- 
+
 
      function [5:0] id_out_hp2;
        input [(C_S_AXI_HP2_ID_WIDTH - 1) : 0] axi_id_hp2_out;
@@ -2003,21 +2003,21 @@ endgenerate
               3:  id_out_hp2  = axi_id_hp2_out[2:0];
               4:  id_out_hp2  = axi_id_hp2_out[3:0];
               5:  id_out_hp2  = axi_id_hp2_out[4:0];
-              6:  id_out_hp2  = axi_id_hp2_out;    
-              default : id_out_hp2 =  axi_id_hp2_out;              
+              6:  id_out_hp2  = axi_id_hp2_out;
+              default : id_out_hp2 =  axi_id_hp2_out;
         endcase
      end
      endfunction
-    
+
     assign S_AXI_HP2_BID     = id_out_hp2(S_AXI_HP2_BID_out);
-    assign S_AXI_HP2_RID     = id_out_hp2(S_AXI_HP2_RID_out);  
-    
+    assign S_AXI_HP2_RID     = id_out_hp2(S_AXI_HP2_RID_out);
+
     assign S_AXI_HP2_WDATA_in        = (C_S_AXI_HP2_DATA_WIDTH == 64) ? S_AXI_HP2_WDATA : {32'b0,S_AXI_HP2_WDATA};
-    assign S_AXI_HP2_WSTRB_in        = (C_S_AXI_HP2_DATA_WIDTH == 64) ? S_AXI_HP2_WSTRB : {4'b0,S_AXI_HP2_WSTRB};       
+    assign S_AXI_HP2_WSTRB_in        = (C_S_AXI_HP2_DATA_WIDTH == 64) ? S_AXI_HP2_WSTRB : {4'b0,S_AXI_HP2_WSTRB};
     assign S_AXI_HP2_RDATA           = (C_S_AXI_HP2_DATA_WIDTH == 64) ? S_AXI_HP2_RDATA_out : S_AXI_HP2_RDATA_out[31:0];
-    
-    
-// S_AXI_HP3    
+
+
+// S_AXI_HP3
 
      function [5:0] id_in_hp3;
        input [(C_S_AXI_HP3_ID_WIDTH - 1) : 0] axi_id_hp3_in;
@@ -2028,16 +2028,16 @@ endgenerate
               3:  id_in_hp3  = {3'b0, axi_id_hp3_in};
               4:  id_in_hp3  = {2'b0, axi_id_hp3_in};
               5:  id_in_hp3  = {1'b0, axi_id_hp3_in};
-              6:  id_in_hp3  = axi_id_hp3_in;    
+              6:  id_in_hp3  = axi_id_hp3_in;
               default : id_in_hp3 =  axi_id_hp3_in;
         endcase
      end
      endfunction
-     
+
     assign S_AXI_HP3_ARID_in = id_in_hp3(S_AXI_HP3_ARID);
     assign S_AXI_HP3_AWID_in = id_in_hp3(S_AXI_HP3_AWID);
     assign S_AXI_HP3_WID_in  = id_in_hp3(S_AXI_HP3_WID);
-     
+
 
 
      function [5:0] id_out_hp3;
@@ -2049,21 +2049,21 @@ endgenerate
               3:  id_out_hp3  = axi_id_hp3_out[2:0];
               4:  id_out_hp3  = axi_id_hp3_out[3:0];
               5:  id_out_hp3  = axi_id_hp3_out[4:0];
-              6:  id_out_hp3  = axi_id_hp3_out;    
-              default : id_out_hp3 =  axi_id_hp3_out;              
+              6:  id_out_hp3  = axi_id_hp3_out;
+              default : id_out_hp3 =  axi_id_hp3_out;
         endcase
      end
      endfunction
-    
+
     assign S_AXI_HP3_BID     = id_out_hp3(S_AXI_HP3_BID_out);
-    assign S_AXI_HP3_RID     = id_out_hp3(S_AXI_HP3_RID_out); 
-    
+    assign S_AXI_HP3_RID     = id_out_hp3(S_AXI_HP3_RID_out);
+
     assign S_AXI_HP3_WDATA_in        = (C_S_AXI_HP3_DATA_WIDTH == 64) ? S_AXI_HP3_WDATA : {32'b0,S_AXI_HP3_WDATA};
-    assign S_AXI_HP3_WSTRB_in        = (C_S_AXI_HP3_DATA_WIDTH == 64) ? S_AXI_HP3_WSTRB : {4'b0,S_AXI_HP3_WSTRB};       
+    assign S_AXI_HP3_WSTRB_in        = (C_S_AXI_HP3_DATA_WIDTH == 64) ? S_AXI_HP3_WSTRB : {4'b0,S_AXI_HP3_WSTRB};
     assign S_AXI_HP3_RDATA           = (C_S_AXI_HP3_DATA_WIDTH == 64) ? S_AXI_HP3_RDATA_out : S_AXI_HP3_RDATA_out[31:0];
-    
-    
-// S_AXI_ACP    
+
+
+// S_AXI_ACP
 
      function [2:0] id_in_acp;
        input [(C_S_AXI_ACP_ID_WIDTH - 1) : 0] axi_id_acp_in;
@@ -2088,28 +2088,28 @@ endgenerate
               1:  id_out_acp  = axi_id_acp_out[0];
               2:  id_out_acp  = axi_id_acp_out[1:0];
               3:  id_out_acp  = axi_id_acp_out;
-              default : id_out_acp =  axi_id_acp_out;              
+              default : id_out_acp =  axi_id_acp_out;
         endcase
      end
      endfunction
-    
+
     assign SAXIACPBID_W     = id_out_acp(S_AXI_ACP_BID_out);
-    assign SAXIACPRID_W     = id_out_acp(S_AXI_ACP_RID_out);  
-    
-// FMIO Tristate Inversion logic 
+    assign SAXIACPRID_W     = id_out_acp(S_AXI_ACP_RID_out);
+
+// FMIO Tristate Inversion logic
 
 //FMIO I2C0
 assign        I2C0_SDA_T  = ~ I2C0_SDA_T_n;
 assign        I2C0_SCL_T  = ~ I2C0_SCL_T_n;
-//FMIO I2C1                     
+//FMIO I2C1
 assign        I2C1_SDA_T  = ~ I2C1_SDA_T_n;
 assign        I2C1_SCL_T  = ~ I2C1_SCL_T_n;
-//FMIO SPI0             
+//FMIO SPI0
 assign        SPI0_SCLK_T = ~ SPI0_SCLK_T_n;
 assign        SPI0_MOSI_T = ~ SPI0_MOSI_T_n;
 assign        SPI0_MISO_T = ~ SPI0_MISO_T_n;
 assign        SPI0_SS_T   = ~ SPI0_SS_T_n;
-//FMIO SPI1             
+//FMIO SPI1
 assign        SPI1_SCLK_T = ~ SPI1_SCLK_T_n;
 assign        SPI1_MOSI_T = ~ SPI1_MOSI_T_n;
 assign        SPI1_MISO_T = ~ SPI1_MISO_T_n;
@@ -2119,14 +2119,14 @@ assign        SPI1_SS_T   = ~ SPI1_SS_T_n;
 
 // EMIO GEM0 MDIO
 assign        ENET0_MDIO_T = ~ ENET0_MDIO_T_n;
-    
+
 // EMIO GEM1 MDIO
 assign        ENET1_MDIO_T = ~ ENET1_MDIO_T_n;
 
 // EMIO GPIO
 assign        GPIO_T = ~ GPIO_T_n;
 
-// EMIO GPIO Width Control 
+// EMIO GPIO Width Control
 
   function [63:0] gpio_width_adjust_in;
     input [(C_EMIO_GPIO_WIDTH - 1) : 0] gpio_in;
@@ -2195,7 +2195,7 @@ assign        GPIO_T = ~ GPIO_T_n;
            61:  gpio_width_adjust_in  = {3'b0, gpio_in};
            62:  gpio_width_adjust_in  = {2'b0, gpio_in};
            63:  gpio_width_adjust_in  = {1'b0, gpio_in};
-           64:  gpio_width_adjust_in  = gpio_in;    
+           64:  gpio_width_adjust_in  = gpio_in;
            default : gpio_width_adjust_in =  gpio_in;
      endcase
   end
@@ -2271,7 +2271,7 @@ assign        GPIO_T = ~ GPIO_T_n;
            61: gpio_width_adjust_out    = gpio_o[60:0];
            62: gpio_width_adjust_out    = gpio_o[61:0];
            63: gpio_width_adjust_out    = gpio_o[62:0];
-           64: gpio_width_adjust_out    = gpio_o;    
+           64: gpio_width_adjust_out    = gpio_o;
            default : gpio_width_adjust_out =  gpio_o;
      endcase
   end
@@ -2286,7 +2286,7 @@ generate
 	OBUFT jtag_obuft_inst (
 	.O(PJTAG_TDO),
 	.I(PJTAG_TDO_O),
-	.T(PJTAG_TDO_T)  
+	.T(PJTAG_TDO_T)
 	);
   end
   else
@@ -2300,7 +2300,7 @@ assign        PJTAG_TDO_T = ~ PJTAG_TDO_T_n;
 
 // EMIO SDIO0 : No negation required as per CR#636210 for 1.0 version of  Silicon,
 // FOR Other SI REV, inversion is required
- 
+
 assign        SDIO0_CMD_T       =   (C_PS7_SI_REV == "1.0") ? (SDIO0_CMD_T_n) : (~ SDIO0_CMD_T_n);
 assign        SDIO0_DATA_T[3:0] =   (C_PS7_SI_REV == "1.0") ? (SDIO0_DATA_T_n[3:0]) : (~ SDIO0_DATA_T_n[3:0]);
 
@@ -2324,7 +2324,7 @@ generate
    if (C_FCLK_CLK3_BUF == "TRUE" | C_FCLK_CLK3_BUF == "true") begin : buffer_fclk_clk_3
      BUFG FCLK_CLK_3_BUFG (.I(FCLK_CLK_unbuffered[3]), .O(FCLK_CLK_buffered[3]));
    end
-endgenerate 
+endgenerate
 
 assign FCLK_CLK0_temp = (C_FCLK_CLK0_BUF == "TRUE" | C_FCLK_CLK0_BUF == "true") ? FCLK_CLK_buffered[0] : FCLK_CLK_unbuffered[0];
 assign FCLK_CLK1 = (C_FCLK_CLK1_BUF == "TRUE" | C_FCLK_CLK1_BUF == "true") ? FCLK_CLK_buffered[1] : FCLK_CLK_unbuffered[1];
@@ -2398,7 +2398,7 @@ endgenerate
 
 
 generate
-  if ( C_USE_AXI_NONSECURE == 1 && C_USE_S_AXI_HP0 == 0) begin 
+  if ( C_USE_AXI_NONSECURE == 1 && C_USE_S_AXI_HP0 == 0) begin
    assign S_AXI_HP0_ACLK_temp = FCLK_CLK0_temp;
   end
   else begin
@@ -2407,7 +2407,7 @@ generate
 endgenerate
 
 generate
-  if ( C_USE_AXI_NONSECURE == 1 && C_USE_S_AXI_HP1 == 0) begin 
+  if ( C_USE_AXI_NONSECURE == 1 && C_USE_S_AXI_HP1 == 0) begin
 	assign S_AXI_HP1_ACLK_temp = FCLK_CLK0_temp;
   end
   else begin
@@ -2416,7 +2416,7 @@ generate
 endgenerate
 
 generate
-  if ( C_USE_AXI_NONSECURE == 1 && C_USE_S_AXI_HP2 == 0) begin 
+  if ( C_USE_AXI_NONSECURE == 1 && C_USE_S_AXI_HP2 == 0) begin
 	assign S_AXI_HP2_ACLK_temp = FCLK_CLK0_temp;
   end
   else begin
@@ -2425,7 +2425,7 @@ generate
 endgenerate
 
 generate
-  if ( C_USE_AXI_NONSECURE == 1 && C_USE_S_AXI_HP3 == 0) begin 
+  if ( C_USE_AXI_NONSECURE == 1 && C_USE_S_AXI_HP3 == 0) begin
 	assign S_AXI_HP3_ACLK_temp = FCLK_CLK0_temp;
   end
   else begin
@@ -2437,47 +2437,47 @@ endgenerate
 
 
 generate
-  if ( C_USE_AXI_NONSECURE == 1 && C_USE_M_AXI_GP0 == 0) begin 
+  if ( C_USE_AXI_NONSECURE == 1 && C_USE_M_AXI_GP0 == 0) begin
 	assign M_AXI_GP0_ACLK_temp = FCLK_CLK0_temp;
   end
   else begin
-	assign M_AXI_GP0_ACLK_temp = M_AXI_GP0_ACLK;  
+	assign M_AXI_GP0_ACLK_temp = M_AXI_GP0_ACLK;
   end
 endgenerate
 
 generate
-  if ( C_USE_AXI_NONSECURE == 1 && C_USE_M_AXI_GP1 == 0) begin 
+  if ( C_USE_AXI_NONSECURE == 1 && C_USE_M_AXI_GP1 == 0) begin
 	assign M_AXI_GP1_ACLK_temp = FCLK_CLK0_temp;
   end
   else begin
-	assign M_AXI_GP1_ACLK_temp = M_AXI_GP1_ACLK;    
+	assign M_AXI_GP1_ACLK_temp = M_AXI_GP1_ACLK;
   end
 endgenerate
 
 generate
-  if ( C_USE_AXI_NONSECURE == 1 && C_USE_S_AXI_GP0 == 0) begin 
+  if ( C_USE_AXI_NONSECURE == 1 && C_USE_S_AXI_GP0 == 0) begin
 	assign S_AXI_GP0_ACLK_temp = FCLK_CLK0_temp;
   end
   else begin
-	assign S_AXI_GP0_ACLK_temp = S_AXI_GP0_ACLK;    
+	assign S_AXI_GP0_ACLK_temp = S_AXI_GP0_ACLK;
     end
 endgenerate
 
 generate
-  if ( C_USE_AXI_NONSECURE == 1 && C_USE_S_AXI_GP1 == 0) begin 
+  if ( C_USE_AXI_NONSECURE == 1 && C_USE_S_AXI_GP1 == 0) begin
 	assign S_AXI_GP1_ACLK_temp = FCLK_CLK0_temp;
   end
   else begin
-	assign S_AXI_GP1_ACLK_temp = S_AXI_GP1_ACLK;      
+	assign S_AXI_GP1_ACLK_temp = S_AXI_GP1_ACLK;
    end
 endgenerate
 
 generate
-  if ( C_USE_AXI_NONSECURE == 1 && C_USE_S_AXI_ACP == 0) begin 
+  if ( C_USE_AXI_NONSECURE == 1 && C_USE_S_AXI_ACP == 0) begin
 	assign S_AXI_ACP_ACLK_temp = FCLK_CLK0_temp;
   end
   else begin
-	assign S_AXI_ACP_ACLK_temp = S_AXI_ACP_ACLK;        
+	assign S_AXI_ACP_ACLK_temp = S_AXI_ACP_ACLK;
   end
 endgenerate
 
@@ -2489,16 +2489,16 @@ assign M_AXI_GP1_AWCACHE=(C_GP1_EN_MODIFIABLE_TXN==1)?{{M_AXI_GP1_AWCACHE_t[3:2]
 
 //END
 //====================
-//PSS TOP             
+//PSS TOP
 //====================
-generate 
+generate
 if (C_PACKAGE_NAME == "clg225" ) begin
 	wire [21:0] dummy;
 	PS7 PS7_i (
 	  .DMA0DATYPE		   (DMA0_DATYPE ),
 	  .DMA0DAVALID		   (DMA0_DAVALID),
-	  .DMA0DRREADY		   (DMA0_DRREADY),  
-	  .DMA0RSTN		   (DMA0_RSTN   ),  
+	  .DMA0DRREADY		   (DMA0_DRREADY),
+	  .DMA0RSTN		   (DMA0_RSTN   ),
 	  .DMA1DATYPE		   (DMA1_DATYPE ),
 	  .DMA1DAVALID		   (DMA1_DAVALID),
 	  .DMA1DRREADY		   (DMA1_DRREADY),
@@ -2510,9 +2510,9 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .DMA3DATYPE		   (DMA3_DATYPE ),
 	  .DMA3DAVALID		   (DMA3_DAVALID),
 	  .DMA3DRREADY		   (DMA3_DRREADY),
-	  .DMA3RSTN		   (DMA3_RSTN   ),  
+	  .DMA3RSTN		   (DMA3_RSTN   ),
 	  .EMIOCAN0PHYTX	   (CAN0_PHY_TX ),
-	  .EMIOCAN1PHYTX	   (CAN1_PHY_TX ),  
+	  .EMIOCAN1PHYTX	   (CAN1_PHY_TX ),
 	  .EMIOENET0GMIITXD	  (ENET0_GMII_TXD_i), // (ENET0_GMII_TXD_i ),
 	  .EMIOENET0GMIITXEN	(ENET0_GMII_TX_EN_i), //   (ENET0_GMII_TX_EN_i),
 	  .EMIOENET0GMIITXER	(ENET0_GMII_TX_ER_i), //   (ENET0_GMII_TX_ER_i),
@@ -2528,7 +2528,7 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .EMIOENET0PTPSYNCFRAMERX (ENET0_PTP_SYNC_FRAME_RX),
 	  .EMIOENET0PTPSYNCFRAMETX (ENET0_PTP_SYNC_FRAME_TX),
 	  .EMIOENET0SOFRX          (ENET0_SOF_RX),
-	  .EMIOENET0SOFTX          (ENET0_SOF_TX),   
+	  .EMIOENET0SOFTX          (ENET0_SOF_TX),
 	  .EMIOENET1GMIITXD	   (ENET1_GMII_TXD_i), //(ENET1_GMII_TXD_i),
 	  .EMIOENET1GMIITXEN	(ENET1_GMII_TX_EN_i), //  (ENET1_GMII_TX_EN_i),
 	  .EMIOENET1GMIITXER	(ENET1_GMII_TX_ER_i), // (ENET1_GMII_TX_ER_i),
@@ -2544,7 +2544,7 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .EMIOENET1PTPSYNCFRAMERX (ENET1_PTP_SYNC_FRAME_RX),
 	  .EMIOENET1PTPSYNCFRAMETX (ENET1_PTP_SYNC_FRAME_TX),
 	  .EMIOENET1SOFRX          (ENET1_SOF_RX),
-	  .EMIOENET1SOFTX          (ENET1_SOF_TX),  
+	  .EMIOENET1SOFTX          (ENET1_SOF_TX),
 	  .EMIOGPIOO	           (gpio_out),
 	  .EMIOGPIOTN	           (gpio_out_t_n),
 	  .EMIOI2C0SCLO            (I2C0_SCL_O),
@@ -2564,13 +2564,13 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .EMIOSDIO0DATAO	   (SDIO0_DATA_O),
 	  .EMIOSDIO0DATATN	   (SDIO0_DATA_T_n),
 	  .EMIOSDIO0LED            (SDIO0_LED),
-	  .EMIOSDIO1BUSPOW         (SDIO1_BUSPOW),  
+	  .EMIOSDIO1BUSPOW         (SDIO1_BUSPOW),
 	  .EMIOSDIO1CLK            (SDIO1_CLK   ),
 	  .EMIOSDIO1CMDO           (SDIO1_CMD_O ),
 	  .EMIOSDIO1CMDTN          (SDIO1_CMD_T_n ),
 	  .EMIOSDIO1DATAO          (SDIO1_DATA_O),
 	  .EMIOSDIO1DATATN         (SDIO1_DATA_T_n),
-	  .EMIOSDIO1LED            (SDIO1_LED),  
+	  .EMIOSDIO1LED            (SDIO1_LED),
 	  .EMIOSPI0MO		   (SPI0_MOSI_O),
 	  .EMIOSPI0MOTN	           (SPI0_MOSI_T_n),
 	  .EMIOSPI0SCLKO	   (SPI0_SCLK_O),
@@ -2597,22 +2597,22 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .EMIOUART1DTRN	   (UART1_DTRN),
 	  .EMIOUART1RTSN	   (UART1_RTSN),
 	  .EMIOUART1TX		   (UART1_TX  ),
-	  .EMIOUSB0PORTINDCTL      (USB0_PORT_INDCTL),  
+	  .EMIOUSB0PORTINDCTL      (USB0_PORT_INDCTL),
 	  .EMIOUSB0VBUSPWRSELECT   (USB0_VBUS_PWRSELECT),
 	  .EMIOUSB1PORTINDCTL      (USB1_PORT_INDCTL),
-	  .EMIOUSB1VBUSPWRSELECT   (USB1_VBUS_PWRSELECT),  
+	  .EMIOUSB1VBUSPWRSELECT   (USB1_VBUS_PWRSELECT),
 	  .EMIOWDTRSTO    	   (WDT_RST_OUT),
 	  .EVENTEVENTO             (EVENT_EVENTO),
 	  .EVENTSTANDBYWFE         (EVENT_STANDBYWFE),
-	  .EVENTSTANDBYWFI         (EVENT_STANDBYWFI),  
+	  .EVENTSTANDBYWFI         (EVENT_STANDBYWFI),
 	  .FCLKCLK		   (FCLK_CLK_unbuffered),
-	  .FCLKRESETN		   ({FCLK_RESET3_N,FCLK_RESET2_N,FCLK_RESET1_N,FCLK_RESET0_N}),  
-	  .EMIOSDIO0BUSVOLT        (SDIO0_BUSVOLT), 
-	  .EMIOSDIO1BUSVOLT        (SDIO1_BUSVOLT),  
+	  .FCLKRESETN		   ({FCLK_RESET3_N,FCLK_RESET2_N,FCLK_RESET1_N,FCLK_RESET0_N}),
+	  .EMIOSDIO0BUSVOLT        (SDIO0_BUSVOLT),
+	  .EMIOSDIO1BUSVOLT        (SDIO1_BUSVOLT),
 	  .FTMTF2PTRIGACK	   ({FTMT_F2P_TRIGACK_3,FTMT_F2P_TRIGACK_2,FTMT_F2P_TRIGACK_1,FTMT_F2P_TRIGACK_0}),
 	  .FTMTP2FDEBUG		   (FTMT_P2F_DEBUG  ),
 	  .FTMTP2FTRIG		   ({FTMT_P2F_TRIG_3,FTMT_P2F_TRIG_2,FTMT_P2F_TRIG_1,FTMT_P2F_TRIG_0}),
-	  .IRQP2F		   ({IRQ_P2F_DMAC_ABORT, IRQ_P2F_DMAC7, IRQ_P2F_DMAC6, IRQ_P2F_DMAC5, IRQ_P2F_DMAC4, IRQ_P2F_DMAC3, IRQ_P2F_DMAC2, IRQ_P2F_DMAC1, IRQ_P2F_DMAC0, IRQ_P2F_SMC, IRQ_P2F_QSPI, IRQ_P2F_CTI, IRQ_P2F_GPIO, IRQ_P2F_USB0, IRQ_P2F_ENET0, IRQ_P2F_ENET_WAKE0, IRQ_P2F_SDIO0, IRQ_P2F_I2C0, IRQ_P2F_SPI0, IRQ_P2F_UART0, IRQ_P2F_CAN0, IRQ_P2F_USB1, IRQ_P2F_ENET1, IRQ_P2F_ENET_WAKE1, IRQ_P2F_SDIO1, IRQ_P2F_I2C1, IRQ_P2F_SPI1, IRQ_P2F_UART1, IRQ_P2F_CAN1}),    
+	  .IRQP2F		   ({IRQ_P2F_DMAC_ABORT, IRQ_P2F_DMAC7, IRQ_P2F_DMAC6, IRQ_P2F_DMAC5, IRQ_P2F_DMAC4, IRQ_P2F_DMAC3, IRQ_P2F_DMAC2, IRQ_P2F_DMAC1, IRQ_P2F_DMAC0, IRQ_P2F_SMC, IRQ_P2F_QSPI, IRQ_P2F_CTI, IRQ_P2F_GPIO, IRQ_P2F_USB0, IRQ_P2F_ENET0, IRQ_P2F_ENET_WAKE0, IRQ_P2F_SDIO0, IRQ_P2F_I2C0, IRQ_P2F_SPI0, IRQ_P2F_UART0, IRQ_P2F_CAN0, IRQ_P2F_USB1, IRQ_P2F_ENET1, IRQ_P2F_ENET_WAKE1, IRQ_P2F_SDIO1, IRQ_P2F_I2C1, IRQ_P2F_SPI1, IRQ_P2F_UART1, IRQ_P2F_CAN1}),
 	  .MAXIGP0ARADDR	   (M_AXI_GP0_ARADDR),
 	  .MAXIGP0ARBURST	   (M_AXI_GP0_ARBURST),
 	  .MAXIGP0ARCACHE	   (M_AXI_GP0_ARCACHE_t),
@@ -2719,7 +2719,7 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .SAXIHP0RRESP	           (S_AXI_HP0_RRESP),
 	  .SAXIHP0RVALID	   (S_AXI_HP0_RVALID),
 	  .SAXIHP0WCOUNT	   (S_AXI_HP0_WCOUNT),
-	  .SAXIHP0WACOUNT          (S_AXI_HP0_WACOUNT),  
+	  .SAXIHP0WACOUNT          (S_AXI_HP0_WACOUNT),
 	  .SAXIHP0WREADY	   (S_AXI_HP0_WREADY),
 	  .SAXIHP1ARESETN	   (S_AXI_HP1_ARESETN),
 	  .SAXIHP1ARREADY	   (S_AXI_HP1_ARREADY),
@@ -2727,14 +2727,14 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .SAXIHP1BID	           (S_AXI_HP1_BID_out    ),
 	  .SAXIHP1BRESP	           (S_AXI_HP1_BRESP  ),
 	  .SAXIHP1BVALID	   (S_AXI_HP1_BVALID ),
-	  .SAXIHP1RACOUNT	   (S_AXI_HP1_RACOUNT ),  
+	  .SAXIHP1RACOUNT	   (S_AXI_HP1_RACOUNT ),
 	  .SAXIHP1RCOUNT	   (S_AXI_HP1_RCOUNT ),
 	  .SAXIHP1RDATA	           (S_AXI_HP1_RDATA_out),
 	  .SAXIHP1RID	           (S_AXI_HP1_RID_out    ),
 	  .SAXIHP1RLAST	           (S_AXI_HP1_RLAST  ),
 	  .SAXIHP1RRESP	           (S_AXI_HP1_RRESP  ),
 	  .SAXIHP1RVALID	   (S_AXI_HP1_RVALID),
-	  .SAXIHP1WACOUNT	   (S_AXI_HP1_WACOUNT),  
+	  .SAXIHP1WACOUNT	   (S_AXI_HP1_WACOUNT),
 	  .SAXIHP1WCOUNT	   (S_AXI_HP1_WCOUNT),
 	  .SAXIHP1WREADY	   (S_AXI_HP1_WREADY),
 	  .SAXIHP2ARESETN	   (S_AXI_HP2_ARESETN),
@@ -2743,14 +2743,14 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .SAXIHP2BID	           (S_AXI_HP2_BID_out ),
 	  .SAXIHP2BRESP	           (S_AXI_HP2_BRESP),
 	  .SAXIHP2BVALID	   (S_AXI_HP2_BVALID),
-	  .SAXIHP2RACOUNT	   (S_AXI_HP2_RACOUNT),  
+	  .SAXIHP2RACOUNT	   (S_AXI_HP2_RACOUNT),
 	  .SAXIHP2RCOUNT	   (S_AXI_HP2_RCOUNT),
 	  .SAXIHP2RDATA	           (S_AXI_HP2_RDATA_out),
 	  .SAXIHP2RID	           (S_AXI_HP2_RID_out ),
 	  .SAXIHP2RLAST	           (S_AXI_HP2_RLAST),
 	  .SAXIHP2RRESP	           (S_AXI_HP2_RRESP),
 	  .SAXIHP2RVALID	   (S_AXI_HP2_RVALID),
-	  .SAXIHP2WACOUNT	   (S_AXI_HP2_WACOUNT),  
+	  .SAXIHP2WACOUNT	   (S_AXI_HP2_WACOUNT),
 	  .SAXIHP2WCOUNT	   (S_AXI_HP2_WCOUNT),
 	  .SAXIHP2WREADY	   (S_AXI_HP2_WREADY),
 	  .SAXIHP3ARESETN	   (S_AXI_HP3_ARESETN),
@@ -2759,7 +2759,7 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .SAXIHP3BID	           (S_AXI_HP3_BID_out),
 	  .SAXIHP3BRESP	           (S_AXI_HP3_BRESP),
 	  .SAXIHP3BVALID	   (S_AXI_HP3_BVALID),
-	  .SAXIHP3RACOUNT	   (S_AXI_HP3_RACOUNT),    
+	  .SAXIHP3RACOUNT	   (S_AXI_HP3_RACOUNT),
 	  .SAXIHP3RCOUNT	   (S_AXI_HP3_RCOUNT),
 	  .SAXIHP3RDATA	           (S_AXI_HP3_RDATA_out),
 	  .SAXIHP3RID	           (S_AXI_HP3_RID_out),
@@ -2767,9 +2767,9 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .SAXIHP3RRESP	           (S_AXI_HP3_RRESP),
 	  .SAXIHP3RVALID	   (S_AXI_HP3_RVALID),
 	  .SAXIHP3WCOUNT	   (S_AXI_HP3_WCOUNT),
-	  .SAXIHP3WACOUNT	   (S_AXI_HP3_WACOUNT),    
-	  .SAXIHP3WREADY	   (S_AXI_HP3_WREADY), 
-	  .DDRARB                  (DDR_ARB), 
+	  .SAXIHP3WACOUNT	   (S_AXI_HP3_WACOUNT),
+	  .SAXIHP3WREADY	   (S_AXI_HP3_WREADY),
+	  .DDRARB                  (DDR_ARB),
 	  .DMA0ACLK		   (DMA0_ACLK   ),
 	  .DMA0DAREADY		   (DMA0_DAREADY),
 	  .DMA0DRLAST		   (DMA0_DRLAST ),
@@ -2778,21 +2778,21 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .DMA1ACLK		   (DMA1_ACLK   ),
 	  .DMA1DAREADY		   (DMA1_DAREADY),
 	  .DMA1DRLAST		   (DMA1_DRLAST ),
-	  .DMA1DRTYPE              (DMA1_DRTYPE),  
+	  .DMA1DRTYPE              (DMA1_DRTYPE),
 	  .DMA1DRVALID		   (DMA1_DRVALID),
 	  .DMA2ACLK		   (DMA2_ACLK   ),
 	  .DMA2DAREADY		   (DMA2_DAREADY),
 	  .DMA2DRLAST		   (DMA2_DRLAST ),
-	  .DMA2DRTYPE              (DMA2_DRTYPE),    
+	  .DMA2DRTYPE              (DMA2_DRTYPE),
 	  .DMA2DRVALID		   (DMA2_DRVALID),
 	  .DMA3ACLK		   (DMA3_ACLK   ),
 	  .DMA3DAREADY		   (DMA3_DAREADY),
 	  .DMA3DRLAST		   (DMA3_DRLAST ),
-	  .DMA3DRTYPE              (DMA3_DRTYPE),      
+	  .DMA3DRTYPE              (DMA3_DRTYPE),
 	  .DMA3DRVALID		   (DMA3_DRVALID),
-	  .EMIOCAN0PHYRX	   (CAN0_PHY_RX),  
+	  .EMIOCAN0PHYRX	   (CAN0_PHY_RX),
 	  .EMIOCAN1PHYRX	   (CAN1_PHY_RX),
-	  .EMIOENET0EXTINTIN       (ENET0_EXT_INTIN),  
+	  .EMIOENET0EXTINTIN       (ENET0_EXT_INTIN),
 	  .EMIOENET0GMIICOL        (ENET0_GMII_COL_i),
 	  .EMIOENET0GMIICRS        (ENET0_GMII_CRS_i),
 	  .EMIOENET0GMIIRXCLK      (ENET0_GMII_RX_CLK),
@@ -2801,7 +2801,7 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .EMIOENET0GMIIRXER       (ENET0_GMII_RX_ER_i),
 	  .EMIOENET0GMIITXCLK      (ENET0_GMII_TX_CLK),
 	  .EMIOENET0MDIOI          (ENET0_MDIO_I),
-	  .EMIOENET1EXTINTIN       (ENET1_EXT_INTIN),    
+	  .EMIOENET1EXTINTIN       (ENET1_EXT_INTIN),
 	  .EMIOENET1GMIICOL        (ENET1_GMII_COL_i),
 	  .EMIOENET1GMIICRS        (ENET1_GMII_CRS_i),
 	  .EMIOENET1GMIIRXCLK      (ENET1_GMII_RX_CLK),
@@ -2809,7 +2809,7 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .EMIOENET1GMIIRXDV       (ENET1_GMII_RX_DV_i),
 	  .EMIOENET1GMIIRXER       (ENET1_GMII_RX_ER_i),
 	  .EMIOENET1GMIITXCLK      (ENET1_GMII_TX_CLK),
-	  .EMIOENET1MDIOI          (ENET1_MDIO_I),  
+	  .EMIOENET1MDIOI          (ENET1_MDIO_I),
 	  .EMIOGPIOI	           (gpio_in63_0  ),
 	  .EMIOI2C0SCLI	           (I2C0_SCL_I),
 	  .EMIOI2C0SDAI	           (I2C0_SDA_I),
@@ -2823,7 +2823,7 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .EMIOSDIO0CMDI	   (SDIO0_CMD_I   ),
 	  .EMIOSDIO0DATAI	   (SDIO0_DATA_I  ),
 	  .EMIOSDIO0WP             (SDIO0_WP),
-	  .EMIOSDIO1CDN            (SDIO1_CDN),  
+	  .EMIOSDIO1CDN            (SDIO1_CDN),
 	  .EMIOSDIO1CLKFB	   (SDIO1_CLK_FB  ),
 	  .EMIOSDIO1CMDI	   (SDIO1_CMD_I   ),
 	  .EMIOSDIO1DATAI	   (SDIO1_DATA_I  ),
@@ -2836,7 +2836,7 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .EMIOSPI1SCLKI	   (SPI1_SCLK_I),
 	  .EMIOSPI1SI		   (SPI1_MOSI_I),
 	  .EMIOSPI1SSIN	           (SPI1_SS_I),
-	  .EMIOSRAMINTIN           (SRAM_INTIN),  
+	  .EMIOSRAMINTIN           (SRAM_INTIN),
 	  .EMIOTRACECLK		   (TRACE_CLK),
 	  .EMIOTTC0CLKI	           ({TTC0_CLK2_IN, TTC0_CLK1_IN, TTC0_CLK0_IN}),
 	  .EMIOTTC1CLKI	           ({TTC1_CLK2_IN, TTC1_CLK1_IN, TTC1_CLK0_IN}),
@@ -2851,19 +2851,19 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .EMIOUART1RIN		   (UART1_RIN ),
 	  .EMIOUART1RX		   (UART1_RX  ),
 	  .EMIOUSB0VBUSPWRFAULT    (USB0_VBUS_PWRFAULT),
-	  .EMIOUSB1VBUSPWRFAULT    (USB1_VBUS_PWRFAULT),  
-	  .EMIOWDTCLKI		   (WDT_CLK_IN),  
+	  .EMIOUSB1VBUSPWRFAULT    (USB1_VBUS_PWRFAULT),
+	  .EMIOWDTCLKI		   (WDT_CLK_IN),
 	  .EVENTEVENTI             (EVENT_EVENTI),
 	  .FCLKCLKTRIGN		   (fclk_clktrig_gnd),
-	  .FPGAIDLEN		   (FPGA_IDLE_N),  
-	  .FTMDTRACEINATID	   (FTMD_TRACEIN_ATID_i),  
+	  .FPGAIDLEN		   (FPGA_IDLE_N),
+	  .FTMDTRACEINATID	   (FTMD_TRACEIN_ATID_i),
 	  .FTMDTRACEINCLOCK	   (FTMD_TRACEIN_CLK),
 	  .FTMDTRACEINDATA	   (FTMD_TRACEIN_DATA_i),
 	  .FTMDTRACEINVALID	   (FTMD_TRACEIN_VALID_i),
 	  .FTMTF2PDEBUG		   (FTMT_F2P_DEBUG  ),
 	  .FTMTF2PTRIG		   ({FTMT_F2P_TRIG_3,FTMT_F2P_TRIG_2,FTMT_F2P_TRIG_1,FTMT_F2P_TRIG_0}),
-	  .FTMTP2FTRIGACK	   ({FTMT_P2F_TRIGACK_3,FTMT_P2F_TRIGACK_2,FTMT_P2F_TRIGACK_1,FTMT_P2F_TRIGACK_0}),  
-	  .IRQF2P		   (irq_f2p_i),  
+	  .FTMTP2FTRIGACK	   ({FTMT_P2F_TRIGACK_3,FTMT_P2F_TRIGACK_2,FTMT_P2F_TRIGACK_1,FTMT_P2F_TRIGACK_0}),
+	  .IRQF2P		   (irq_f2p_i),
 	  .MAXIGP0ACLK	           (M_AXI_GP0_ACLK_temp),
 	  .MAXIGP0ARREADY	   (M_AXI_GP0_ARREADY),
 	  .MAXIGP0AWREADY	   (M_AXI_GP0_AWREADY),
@@ -2887,7 +2887,7 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .MAXIGP1RLAST	           (M_AXI_GP1_RLAST  ),
 	  .MAXIGP1RRESP	           (M_AXI_GP1_RRESP  ),
 	  .MAXIGP1RVALID	   (M_AXI_GP1_RVALID ),
-	  .MAXIGP1WREADY	   (M_AXI_GP1_WREADY ),  
+	  .MAXIGP1WREADY	   (M_AXI_GP1_WREADY ),
 	  .SAXIACPACLK	           (S_AXI_ACP_ACLK_temp   ),
 	  .SAXIACPARADDR	   (SAXIACPARADDR_W ),
 	  .SAXIACPARBURST	   (SAXIACPARBURST_W),
@@ -2973,7 +2973,7 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .SAXIGP1WID	           (S_AXI_GP1_WID_in    ),
 	  .SAXIGP1WLAST	           (S_AXI_GP1_WLAST  ),
 	  .SAXIGP1WSTRB	           (S_AXI_GP1_WSTRB  ),
-	  .SAXIGP1WVALID	   (S_AXI_GP1_WVALID ),  
+	  .SAXIGP1WVALID	   (S_AXI_GP1_WVALID ),
 	  .SAXIHP0ACLK             (S_AXI_HP0_ACLK_temp   ),
 	  .SAXIHP0ARADDR           (S_AXI_HP0_ARADDR),
 	  .SAXIHP0ARBURST          (S_AXI_HP0_ARBURST),
@@ -3063,7 +3063,7 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .SAXIHP2WLAST            (S_AXI_HP2_WLAST),
 	  .SAXIHP2WRISSUECAP1EN    (S_AXI_HP2_WRISSUECAP1_EN),
 	  .SAXIHP2WSTRB            (S_AXI_HP2_WSTRB_in),
-	  .SAXIHP2WVALID           (S_AXI_HP2_WVALID),  
+	  .SAXIHP2WVALID           (S_AXI_HP2_WVALID),
 	  .SAXIHP3ACLK             (S_AXI_HP3_ACLK_temp),
 	  .SAXIHP3ARADDR           (S_AXI_HP3_ARADDR ),
 	  .SAXIHP3ARBURST          (S_AXI_HP3_ARBURST),
@@ -3106,16 +3106,16 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .DDRDQSN		   (buffered_DDR_DQS_n),
 	  .DDRDQSP		   (buffered_DDR_DQS),
 	  .DDRDRSTB                (buffered_DDR_DRSTB),
-	  .DDRODT		   (buffered_DDR_ODT),  
+	  .DDRODT		   (buffered_DDR_ODT),
 	  .DDRRASB		   (buffered_DDR_RAS_n),
 	  .DDRVRN          (buffered_DDR_VRN),
 	  .DDRVRP          (buffered_DDR_VRP),
 	  .DDRWEB          (buffered_DDR_WEB),
 	  .MIO			   ({buffered_MIO[31:30],dummy[21:20],buffered_MIO[29:28],dummy[19:12],buffered_MIO[27:16],dummy[11:0],buffered_MIO[15:0]}),
-	  .PSCLK		   (buffered_PS_CLK),  
-	  .PSPORB		   (buffered_PS_PORB),  
-	  .PSSRSTB		   (buffered_PS_SRSTB)  
-  
+	  .PSCLK		   (buffered_PS_CLK),
+	  .PSPORB		   (buffered_PS_PORB),
+	  .PSSRSTB		   (buffered_PS_SRSTB)
+
 
 );
  end
@@ -3123,8 +3123,8 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	PS7 PS7_i (
 	  .DMA0DATYPE		   (DMA0_DATYPE ),
 	  .DMA0DAVALID		   (DMA0_DAVALID),
-	  .DMA0DRREADY		   (DMA0_DRREADY),  
-	  .DMA0RSTN		   (DMA0_RSTN   ),  
+	  .DMA0DRREADY		   (DMA0_DRREADY),
+	  .DMA0RSTN		   (DMA0_RSTN   ),
 	  .DMA1DATYPE		   (DMA1_DATYPE ),
 	  .DMA1DAVALID		   (DMA1_DAVALID),
 	  .DMA1DRREADY		   (DMA1_DRREADY),
@@ -3136,9 +3136,9 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .DMA3DATYPE		   (DMA3_DATYPE ),
 	  .DMA3DAVALID		   (DMA3_DAVALID),
 	  .DMA3DRREADY		   (DMA3_DRREADY),
-	  .DMA3RSTN		   (DMA3_RSTN   ),  
+	  .DMA3RSTN		   (DMA3_RSTN   ),
 	  .EMIOCAN0PHYTX	   (CAN0_PHY_TX ),
-	  .EMIOCAN1PHYTX	   (CAN1_PHY_TX ),  
+	  .EMIOCAN1PHYTX	   (CAN1_PHY_TX ),
 	  .EMIOENET0GMIITXD	  (ENET0_GMII_TXD_i), // (ENET0_GMII_TXD_i ),
 	  .EMIOENET0GMIITXEN	(ENET0_GMII_TX_EN_i), //  (ENET0_GMII_TX_EN_i),
 	  .EMIOENET0GMIITXER   (ENET0_GMII_TX_ER_i), //	 (ENET0_GMII_TX_ER_i),
@@ -3154,7 +3154,7 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .EMIOENET0PTPSYNCFRAMERX (ENET0_PTP_SYNC_FRAME_RX),
 	  .EMIOENET0PTPSYNCFRAMETX (ENET0_PTP_SYNC_FRAME_TX),
 	  .EMIOENET0SOFRX          (ENET0_SOF_RX),
-	  .EMIOENET0SOFTX          (ENET0_SOF_TX),   
+	  .EMIOENET0SOFTX          (ENET0_SOF_TX),
 	  .EMIOENET1GMIITXD	 (ENET1_GMII_TXD_i), //  (ENET1_GMII_TXD_i),
 	  .EMIOENET1GMIITXEN	(ENET1_GMII_TX_EN_i), // (ENET1_GMII_TX_EN_i),
 	  .EMIOENET1GMIITXER	(ENET1_GMII_TX_ER_i), //  (ENET1_GMII_TX_ER_i),
@@ -3170,7 +3170,7 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .EMIOENET1PTPSYNCFRAMERX (ENET1_PTP_SYNC_FRAME_RX),
 	  .EMIOENET1PTPSYNCFRAMETX (ENET1_PTP_SYNC_FRAME_TX),
 	  .EMIOENET1SOFRX          (ENET1_SOF_RX),
-	  .EMIOENET1SOFTX          (ENET1_SOF_TX),  
+	  .EMIOENET1SOFTX          (ENET1_SOF_TX),
 	  .EMIOGPIOO	           (gpio_out),
 	  .EMIOGPIOTN	           (gpio_out_t_n),
 	  .EMIOI2C0SCLO            (I2C0_SCL_O),
@@ -3190,13 +3190,13 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .EMIOSDIO0DATAO	   (SDIO0_DATA_O),
 	  .EMIOSDIO0DATATN	   (SDIO0_DATA_T_n),
 	  .EMIOSDIO0LED            (SDIO0_LED),
-	  .EMIOSDIO1BUSPOW         (SDIO1_BUSPOW),  
+	  .EMIOSDIO1BUSPOW         (SDIO1_BUSPOW),
 	  .EMIOSDIO1CLK            (SDIO1_CLK   ),
 	  .EMIOSDIO1CMDO           (SDIO1_CMD_O ),
 	  .EMIOSDIO1CMDTN          (SDIO1_CMD_T_n ),
 	  .EMIOSDIO1DATAO          (SDIO1_DATA_O),
 	  .EMIOSDIO1DATATN         (SDIO1_DATA_T_n),
-	  .EMIOSDIO1LED            (SDIO1_LED),  
+	  .EMIOSDIO1LED            (SDIO1_LED),
 	  .EMIOSPI0MO		   (SPI0_MOSI_O),
 	  .EMIOSPI0MOTN	           (SPI0_MOSI_T_n),
 	  .EMIOSPI0SCLKO	   (SPI0_SCLK_O),
@@ -3223,22 +3223,22 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .EMIOUART1DTRN	   (UART1_DTRN),
 	  .EMIOUART1RTSN	   (UART1_RTSN),
 	  .EMIOUART1TX		   (UART1_TX  ),
-	  .EMIOUSB0PORTINDCTL      (USB0_PORT_INDCTL),  
+	  .EMIOUSB0PORTINDCTL      (USB0_PORT_INDCTL),
 	  .EMIOUSB0VBUSPWRSELECT   (USB0_VBUS_PWRSELECT),
 	  .EMIOUSB1PORTINDCTL      (USB1_PORT_INDCTL),
-	  .EMIOUSB1VBUSPWRSELECT   (USB1_VBUS_PWRSELECT),  
+	  .EMIOUSB1VBUSPWRSELECT   (USB1_VBUS_PWRSELECT),
 	  .EMIOWDTRSTO    	   (WDT_RST_OUT),
 	  .EVENTEVENTO             (EVENT_EVENTO),
 	  .EVENTSTANDBYWFE         (EVENT_STANDBYWFE),
-	  .EVENTSTANDBYWFI         (EVENT_STANDBYWFI),  
+	  .EVENTSTANDBYWFI         (EVENT_STANDBYWFI),
 	  .FCLKCLK		   (FCLK_CLK_unbuffered),
-	  .FCLKRESETN		   ({FCLK_RESET3_N,FCLK_RESET2_N,FCLK_RESET1_N,FCLK_RESET0_N}),  
-	  .EMIOSDIO0BUSVOLT        (SDIO0_BUSVOLT), 
-	  .EMIOSDIO1BUSVOLT        (SDIO1_BUSVOLT),  
+	  .FCLKRESETN		   ({FCLK_RESET3_N,FCLK_RESET2_N,FCLK_RESET1_N,FCLK_RESET0_N}),
+	  .EMIOSDIO0BUSVOLT        (SDIO0_BUSVOLT),
+	  .EMIOSDIO1BUSVOLT        (SDIO1_BUSVOLT),
 	  .FTMTF2PTRIGACK	   ({FTMT_F2P_TRIGACK_3,FTMT_F2P_TRIGACK_2,FTMT_F2P_TRIGACK_1,FTMT_F2P_TRIGACK_0}),
 	  .FTMTP2FDEBUG		   (FTMT_P2F_DEBUG  ),
 	  .FTMTP2FTRIG		   ({FTMT_P2F_TRIG_3,FTMT_P2F_TRIG_2,FTMT_P2F_TRIG_1,FTMT_P2F_TRIG_0}),
-	  .IRQP2F		   ({IRQ_P2F_DMAC_ABORT, IRQ_P2F_DMAC7, IRQ_P2F_DMAC6, IRQ_P2F_DMAC5, IRQ_P2F_DMAC4, IRQ_P2F_DMAC3, IRQ_P2F_DMAC2, IRQ_P2F_DMAC1, IRQ_P2F_DMAC0, IRQ_P2F_SMC, IRQ_P2F_QSPI, IRQ_P2F_CTI, IRQ_P2F_GPIO, IRQ_P2F_USB0, IRQ_P2F_ENET0, IRQ_P2F_ENET_WAKE0, IRQ_P2F_SDIO0, IRQ_P2F_I2C0, IRQ_P2F_SPI0, IRQ_P2F_UART0, IRQ_P2F_CAN0, IRQ_P2F_USB1, IRQ_P2F_ENET1, IRQ_P2F_ENET_WAKE1, IRQ_P2F_SDIO1, IRQ_P2F_I2C1, IRQ_P2F_SPI1, IRQ_P2F_UART1, IRQ_P2F_CAN1}),    
+	  .IRQP2F		   ({IRQ_P2F_DMAC_ABORT, IRQ_P2F_DMAC7, IRQ_P2F_DMAC6, IRQ_P2F_DMAC5, IRQ_P2F_DMAC4, IRQ_P2F_DMAC3, IRQ_P2F_DMAC2, IRQ_P2F_DMAC1, IRQ_P2F_DMAC0, IRQ_P2F_SMC, IRQ_P2F_QSPI, IRQ_P2F_CTI, IRQ_P2F_GPIO, IRQ_P2F_USB0, IRQ_P2F_ENET0, IRQ_P2F_ENET_WAKE0, IRQ_P2F_SDIO0, IRQ_P2F_I2C0, IRQ_P2F_SPI0, IRQ_P2F_UART0, IRQ_P2F_CAN0, IRQ_P2F_USB1, IRQ_P2F_ENET1, IRQ_P2F_ENET_WAKE1, IRQ_P2F_SDIO1, IRQ_P2F_I2C1, IRQ_P2F_SPI1, IRQ_P2F_UART1, IRQ_P2F_CAN1}),
 	  .MAXIGP0ARADDR	   (M_AXI_GP0_ARADDR),
 	  .MAXIGP0ARBURST	   (M_AXI_GP0_ARBURST),
 	  .MAXIGP0ARCACHE	   (M_AXI_GP0_ARCACHE_t),
@@ -3345,7 +3345,7 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .SAXIHP0RRESP	           (S_AXI_HP0_RRESP),
 	  .SAXIHP0RVALID	   (S_AXI_HP0_RVALID),
 	  .SAXIHP0WCOUNT	   (S_AXI_HP0_WCOUNT),
-	  .SAXIHP0WACOUNT          (S_AXI_HP0_WACOUNT),  
+	  .SAXIHP0WACOUNT          (S_AXI_HP0_WACOUNT),
 	  .SAXIHP0WREADY	   (S_AXI_HP0_WREADY),
 	  .SAXIHP1ARESETN	   (S_AXI_HP1_ARESETN),
 	  .SAXIHP1ARREADY	   (S_AXI_HP1_ARREADY),
@@ -3353,14 +3353,14 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .SAXIHP1BID	           (S_AXI_HP1_BID_out    ),
 	  .SAXIHP1BRESP	           (S_AXI_HP1_BRESP  ),
 	  .SAXIHP1BVALID	   (S_AXI_HP1_BVALID ),
-	  .SAXIHP1RACOUNT	   (S_AXI_HP1_RACOUNT ),  
+	  .SAXIHP1RACOUNT	   (S_AXI_HP1_RACOUNT ),
 	  .SAXIHP1RCOUNT	   (S_AXI_HP1_RCOUNT ),
 	  .SAXIHP1RDATA	           (S_AXI_HP1_RDATA_out),
 	  .SAXIHP1RID	           (S_AXI_HP1_RID_out    ),
 	  .SAXIHP1RLAST	           (S_AXI_HP1_RLAST  ),
 	  .SAXIHP1RRESP	           (S_AXI_HP1_RRESP  ),
 	  .SAXIHP1RVALID	   (S_AXI_HP1_RVALID),
-	  .SAXIHP1WACOUNT	   (S_AXI_HP1_WACOUNT),  
+	  .SAXIHP1WACOUNT	   (S_AXI_HP1_WACOUNT),
 	  .SAXIHP1WCOUNT	   (S_AXI_HP1_WCOUNT),
 	  .SAXIHP1WREADY	   (S_AXI_HP1_WREADY),
 	  .SAXIHP2ARESETN	   (S_AXI_HP2_ARESETN),
@@ -3369,14 +3369,14 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .SAXIHP2BID	           (S_AXI_HP2_BID_out ),
 	  .SAXIHP2BRESP	           (S_AXI_HP2_BRESP),
 	  .SAXIHP2BVALID	   (S_AXI_HP2_BVALID),
-	  .SAXIHP2RACOUNT	   (S_AXI_HP2_RACOUNT),  
+	  .SAXIHP2RACOUNT	   (S_AXI_HP2_RACOUNT),
 	  .SAXIHP2RCOUNT	   (S_AXI_HP2_RCOUNT),
 	  .SAXIHP2RDATA	           (S_AXI_HP2_RDATA_out),
 	  .SAXIHP2RID	           (S_AXI_HP2_RID_out ),
 	  .SAXIHP2RLAST	           (S_AXI_HP2_RLAST),
 	  .SAXIHP2RRESP	           (S_AXI_HP2_RRESP),
 	  .SAXIHP2RVALID	   (S_AXI_HP2_RVALID),
-	  .SAXIHP2WACOUNT	   (S_AXI_HP2_WACOUNT),  
+	  .SAXIHP2WACOUNT	   (S_AXI_HP2_WACOUNT),
 	  .SAXIHP2WCOUNT	   (S_AXI_HP2_WCOUNT),
 	  .SAXIHP2WREADY	   (S_AXI_HP2_WREADY),
 	  .SAXIHP3ARESETN	   (S_AXI_HP3_ARESETN),
@@ -3385,7 +3385,7 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .SAXIHP3BID	           (S_AXI_HP3_BID_out),
 	  .SAXIHP3BRESP	           (S_AXI_HP3_BRESP),
 	  .SAXIHP3BVALID	   (S_AXI_HP3_BVALID),
-	  .SAXIHP3RACOUNT	   (S_AXI_HP3_RACOUNT),    
+	  .SAXIHP3RACOUNT	   (S_AXI_HP3_RACOUNT),
 	  .SAXIHP3RCOUNT	   (S_AXI_HP3_RCOUNT),
 	  .SAXIHP3RDATA	           (S_AXI_HP3_RDATA_out),
 	  .SAXIHP3RID	           (S_AXI_HP3_RID_out),
@@ -3393,9 +3393,9 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .SAXIHP3RRESP	           (S_AXI_HP3_RRESP),
 	  .SAXIHP3RVALID	   (S_AXI_HP3_RVALID),
 	  .SAXIHP3WCOUNT	   (S_AXI_HP3_WCOUNT),
-	  .SAXIHP3WACOUNT	   (S_AXI_HP3_WACOUNT),    
-	  .SAXIHP3WREADY	   (S_AXI_HP3_WREADY), 
-	  .DDRARB                  (DDR_ARB), 
+	  .SAXIHP3WACOUNT	   (S_AXI_HP3_WACOUNT),
+	  .SAXIHP3WREADY	   (S_AXI_HP3_WREADY),
+	  .DDRARB                  (DDR_ARB),
 	  .DMA0ACLK		   (DMA0_ACLK   ),
 	  .DMA0DAREADY		   (DMA0_DAREADY),
 	  .DMA0DRLAST		   (DMA0_DRLAST ),
@@ -3404,21 +3404,21 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .DMA1ACLK		   (DMA1_ACLK   ),
 	  .DMA1DAREADY		   (DMA1_DAREADY),
 	  .DMA1DRLAST		   (DMA1_DRLAST ),
-	  .DMA1DRTYPE              (DMA1_DRTYPE),  
+	  .DMA1DRTYPE              (DMA1_DRTYPE),
 	  .DMA1DRVALID		   (DMA1_DRVALID),
 	  .DMA2ACLK		   (DMA2_ACLK   ),
 	  .DMA2DAREADY		   (DMA2_DAREADY),
 	  .DMA2DRLAST		   (DMA2_DRLAST ),
-	  .DMA2DRTYPE              (DMA2_DRTYPE),    
+	  .DMA2DRTYPE              (DMA2_DRTYPE),
 	  .DMA2DRVALID		   (DMA2_DRVALID),
 	  .DMA3ACLK		   (DMA3_ACLK   ),
 	  .DMA3DAREADY		   (DMA3_DAREADY),
 	  .DMA3DRLAST		   (DMA3_DRLAST ),
-	  .DMA3DRTYPE              (DMA3_DRTYPE),      
+	  .DMA3DRTYPE              (DMA3_DRTYPE),
 	  .DMA3DRVALID		   (DMA3_DRVALID),
-	  .EMIOCAN0PHYRX	   (CAN0_PHY_RX),  
+	  .EMIOCAN0PHYRX	   (CAN0_PHY_RX),
 	  .EMIOCAN1PHYRX	   (CAN1_PHY_RX),
-	  .EMIOENET0EXTINTIN       (ENET0_EXT_INTIN),  
+	  .EMIOENET0EXTINTIN       (ENET0_EXT_INTIN),
 	  .EMIOENET0GMIICOL        (ENET0_GMII_COL_i),
 	  .EMIOENET0GMIICRS        (ENET0_GMII_CRS_i),
 	  .EMIOENET0GMIIRXCLK      (ENET0_GMII_RX_CLK),
@@ -3427,7 +3427,7 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .EMIOENET0GMIIRXER       (ENET0_GMII_RX_ER_i),
 	  .EMIOENET0GMIITXCLK      (ENET0_GMII_TX_CLK),
 	  .EMIOENET0MDIOI          (ENET0_MDIO_I),
-	  .EMIOENET1EXTINTIN       (ENET1_EXT_INTIN),    
+	  .EMIOENET1EXTINTIN       (ENET1_EXT_INTIN),
 	  .EMIOENET1GMIICOL        (ENET1_GMII_COL_i),
 	  .EMIOENET1GMIICRS        (ENET1_GMII_CRS_i),
 	  .EMIOENET1GMIIRXCLK      (ENET1_GMII_RX_CLK),
@@ -3435,7 +3435,7 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .EMIOENET1GMIIRXDV       (ENET1_GMII_RX_DV_i),
 	  .EMIOENET1GMIIRXER       (ENET1_GMII_RX_ER_i),
 	  .EMIOENET1GMIITXCLK      (ENET1_GMII_TX_CLK),
-	  .EMIOENET1MDIOI          (ENET1_MDIO_I),  
+	  .EMIOENET1MDIOI          (ENET1_MDIO_I),
 	  .EMIOGPIOI	           (gpio_in63_0  ),
 	  .EMIOI2C0SCLI	           (I2C0_SCL_I),
 	  .EMIOI2C0SDAI	           (I2C0_SDA_I),
@@ -3449,7 +3449,7 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .EMIOSDIO0CMDI	   (SDIO0_CMD_I   ),
 	  .EMIOSDIO0DATAI	   (SDIO0_DATA_I  ),
 	  .EMIOSDIO0WP             (SDIO0_WP),
-	  .EMIOSDIO1CDN            (SDIO1_CDN),  
+	  .EMIOSDIO1CDN            (SDIO1_CDN),
 	  .EMIOSDIO1CLKFB	   (SDIO1_CLK_FB  ),
 	  .EMIOSDIO1CMDI	   (SDIO1_CMD_I   ),
 	  .EMIOSDIO1DATAI	   (SDIO1_DATA_I  ),
@@ -3462,7 +3462,7 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .EMIOSPI1SCLKI	   (SPI1_SCLK_I),
 	  .EMIOSPI1SI		   (SPI1_MOSI_I),
 	  .EMIOSPI1SSIN	           (SPI1_SS_I),
-	  .EMIOSRAMINTIN           (SRAM_INTIN),  
+	  .EMIOSRAMINTIN           (SRAM_INTIN),
 	  .EMIOTRACECLK		   (TRACE_CLK),
 	  .EMIOTTC0CLKI	           ({TTC0_CLK2_IN, TTC0_CLK1_IN, TTC0_CLK0_IN}),
 	  .EMIOTTC1CLKI	           ({TTC1_CLK2_IN, TTC1_CLK1_IN, TTC1_CLK0_IN}),
@@ -3477,19 +3477,19 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .EMIOUART1RIN		   (UART1_RIN ),
 	  .EMIOUART1RX		   (UART1_RX  ),
 	  .EMIOUSB0VBUSPWRFAULT    (USB0_VBUS_PWRFAULT),
-	  .EMIOUSB1VBUSPWRFAULT    (USB1_VBUS_PWRFAULT),  
-	  .EMIOWDTCLKI		   (WDT_CLK_IN),  
+	  .EMIOUSB1VBUSPWRFAULT    (USB1_VBUS_PWRFAULT),
+	  .EMIOWDTCLKI		   (WDT_CLK_IN),
 	  .EVENTEVENTI             (EVENT_EVENTI),
 	  .FCLKCLKTRIGN		   (fclk_clktrig_gnd),
-	  .FPGAIDLEN		   (FPGA_IDLE_N),  
-	  .FTMDTRACEINATID	   (FTMD_TRACEIN_ATID_i),  
+	  .FPGAIDLEN		   (FPGA_IDLE_N),
+	  .FTMDTRACEINATID	   (FTMD_TRACEIN_ATID_i),
 	  .FTMDTRACEINCLOCK	   (FTMD_TRACEIN_CLK),
 	  .FTMDTRACEINDATA	   (FTMD_TRACEIN_DATA_i),
 	  .FTMDTRACEINVALID	   (FTMD_TRACEIN_VALID_i),
 	  .FTMTF2PDEBUG		   (FTMT_F2P_DEBUG  ),
 	  .FTMTF2PTRIG		   ({FTMT_F2P_TRIG_3,FTMT_F2P_TRIG_2,FTMT_F2P_TRIG_1,FTMT_F2P_TRIG_0}),
-	  .FTMTP2FTRIGACK	   ({FTMT_P2F_TRIGACK_3,FTMT_P2F_TRIGACK_2,FTMT_P2F_TRIGACK_1,FTMT_P2F_TRIGACK_0}),  
-	  .IRQF2P		   (irq_f2p_i),  
+	  .FTMTP2FTRIGACK	   ({FTMT_P2F_TRIGACK_3,FTMT_P2F_TRIGACK_2,FTMT_P2F_TRIGACK_1,FTMT_P2F_TRIGACK_0}),
+	  .IRQF2P		   (irq_f2p_i),
 	  .MAXIGP0ACLK	           (M_AXI_GP0_ACLK_temp),
 	  .MAXIGP0ARREADY	   (M_AXI_GP0_ARREADY),
 	  .MAXIGP0AWREADY	   (M_AXI_GP0_AWREADY),
@@ -3513,7 +3513,7 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .MAXIGP1RLAST	           (M_AXI_GP1_RLAST  ),
 	  .MAXIGP1RRESP	           (M_AXI_GP1_RRESP  ),
 	  .MAXIGP1RVALID	   (M_AXI_GP1_RVALID ),
-	  .MAXIGP1WREADY	   (M_AXI_GP1_WREADY ),  
+	  .MAXIGP1WREADY	   (M_AXI_GP1_WREADY ),
 	  .SAXIACPACLK	           (S_AXI_ACP_ACLK_temp),
 	  .SAXIACPARADDR	   (SAXIACPARADDR_W ),
 	  .SAXIACPARBURST	   (SAXIACPARBURST_W),
@@ -3599,7 +3599,7 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .SAXIGP1WID	           (S_AXI_GP1_WID_in    ),
 	  .SAXIGP1WLAST	           (S_AXI_GP1_WLAST  ),
 	  .SAXIGP1WSTRB	           (S_AXI_GP1_WSTRB  ),
-	  .SAXIGP1WVALID	   (S_AXI_GP1_WVALID ),  
+	  .SAXIGP1WVALID	   (S_AXI_GP1_WVALID ),
 	  .SAXIHP0ACLK             (S_AXI_HP0_ACLK_temp   ),
 	  .SAXIHP0ARADDR           (S_AXI_HP0_ARADDR),
 	  .SAXIHP0ARBURST          (S_AXI_HP0_ARBURST),
@@ -3689,7 +3689,7 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .SAXIHP2WLAST            (S_AXI_HP2_WLAST),
 	  .SAXIHP2WRISSUECAP1EN    (S_AXI_HP2_WRISSUECAP1_EN),
 	  .SAXIHP2WSTRB            (S_AXI_HP2_WSTRB_in),
-	  .SAXIHP2WVALID           (S_AXI_HP2_WVALID),  
+	  .SAXIHP2WVALID           (S_AXI_HP2_WVALID),
 	  .SAXIHP3ACLK             (S_AXI_HP3_ACLK_temp),
 	  .SAXIHP3ARADDR           (S_AXI_HP3_ARADDR ),
 	  .SAXIHP3ARBURST          (S_AXI_HP3_ARBURST),
@@ -3732,19 +3732,19 @@ if (C_PACKAGE_NAME == "clg225" ) begin
 	  .DDRDQSN		   (buffered_DDR_DQS_n),
 	  .DDRDQSP		   (buffered_DDR_DQS),
 	  .DDRDRSTB                (buffered_DDR_DRSTB),
-	  .DDRODT		   (buffered_DDR_ODT),  
+	  .DDRODT		   (buffered_DDR_ODT),
 	  .DDRRASB		   (buffered_DDR_RAS_n),
 	  .DDRVRN                  (buffered_DDR_VRN),
 	  .DDRVRP                  (buffered_DDR_VRP),
 	  .DDRWEB                  (buffered_DDR_WEB),
 	  .MIO			   (buffered_MIO),
-	  .PSCLK		   (buffered_PS_CLK),  
-	  .PSPORB		   (buffered_PS_PORB),  
-	  .PSSRSTB		   (buffered_PS_SRSTB)  
-	  
+	  .PSCLK		   (buffered_PS_CLK),
+	  .PSPORB		   (buffered_PS_PORB),
+	  .PSSRSTB		   (buffered_PS_SRSTB)
+
 
 	);
- 	
+
  end
  endgenerate
 
@@ -3763,12 +3763,12 @@ assign param_awuser = C_USE_DEFAULT_ACP_USER_VAL? C_S_AXI_ACP_AWUSER_VAL : S_AXI
   assign  SAXIACPARSIZE_W      = (C_INCLUDE_ACP_TRANS_CHECK == 1) ? S_AXI_ATC_ARSIZE  : S_AXI_ACP_ARSIZE;
   //assign  SAXIACPARUSER_W      = (C_INCLUDE_ACP_TRANS_CHECK == 1) ? S_AXI_ATC_ARUSER  : S_AXI_ACP_ARUSER;
   assign  SAXIACPARUSER_W      = (C_INCLUDE_ACP_TRANS_CHECK == 1) ? S_AXI_ATC_ARUSER  : param_aruser;
-  
+
   assign  SAXIACPARVALID_W     = (C_INCLUDE_ACP_TRANS_CHECK == 1) ? S_AXI_ATC_ARVALID : S_AXI_ACP_ARVALID ;
   assign  SAXIACPAWADDR_W      = (C_INCLUDE_ACP_TRANS_CHECK == 1) ? S_AXI_ATC_AWADDR  : S_AXI_ACP_AWADDR;
   assign  SAXIACPAWBURST_W     = (C_INCLUDE_ACP_TRANS_CHECK == 1) ? S_AXI_ATC_AWBURST : S_AXI_ACP_AWBURST;
-  
-  
+
+
   assign  SAXIACPAWCACHE_W     = (C_INCLUDE_ACP_TRANS_CHECK == 1) ? S_AXI_ATC_AWCACHE : S_AXI_ACP_AWCACHE;
   assign  SAXIACPAWLEN_W       = (C_INCLUDE_ACP_TRANS_CHECK == 1) ? S_AXI_ATC_AWLEN   : S_AXI_ACP_AWLEN;
   assign  SAXIACPAWLOCK_W      = (C_INCLUDE_ACP_TRANS_CHECK == 1) ? S_AXI_ATC_AWLOCK  : S_AXI_ACP_AWLOCK;
@@ -3781,38 +3781,38 @@ assign param_awuser = C_USE_DEFAULT_ACP_USER_VAL? C_S_AXI_ACP_AWUSER_VAL : S_AXI
   assign  SAXIACPRREADY_W      = (C_INCLUDE_ACP_TRANS_CHECK == 1) ? S_AXI_ATC_RREADY  : S_AXI_ACP_RREADY;
   assign  SAXIACPWDATA_W       = (C_INCLUDE_ACP_TRANS_CHECK == 1) ? S_AXI_ATC_WDATA   : S_AXI_ACP_WDATA;
   assign  SAXIACPWLAST_W       = (C_INCLUDE_ACP_TRANS_CHECK == 1) ? S_AXI_ATC_WLAST   : S_AXI_ACP_WLAST;
-  assign  SAXIACPWSTRB_W       = (C_INCLUDE_ACP_TRANS_CHECK == 1) ? S_AXI_ATC_WSTRB   : S_AXI_ACP_WSTRB;  
-  assign  SAXIACPWVALID_W      = (C_INCLUDE_ACP_TRANS_CHECK == 1) ? S_AXI_ATC_WVALID  : S_AXI_ACP_WVALID;      
-  
-  assign  SAXIACPARID_W     = (C_INCLUDE_ACP_TRANS_CHECK == 1) ? S_AXI_ATC_ARID    : S_AXI_ACP_ARID;    
-  assign  SAXIACPAWID_W     = (C_INCLUDE_ACP_TRANS_CHECK == 1) ? S_AXI_ATC_AWID    : S_AXI_ACP_AWID;      
-  assign  SAXIACPWID_W      = (C_INCLUDE_ACP_TRANS_CHECK == 1) ? S_AXI_ATC_WID     : S_AXI_ACP_WID;        
-  
+  assign  SAXIACPWSTRB_W       = (C_INCLUDE_ACP_TRANS_CHECK == 1) ? S_AXI_ATC_WSTRB   : S_AXI_ACP_WSTRB;
+  assign  SAXIACPWVALID_W      = (C_INCLUDE_ACP_TRANS_CHECK == 1) ? S_AXI_ATC_WVALID  : S_AXI_ACP_WVALID;
+
+  assign  SAXIACPARID_W     = (C_INCLUDE_ACP_TRANS_CHECK == 1) ? S_AXI_ATC_ARID    : S_AXI_ACP_ARID;
+  assign  SAXIACPAWID_W     = (C_INCLUDE_ACP_TRANS_CHECK == 1) ? S_AXI_ATC_AWID    : S_AXI_ACP_AWID;
+  assign  SAXIACPWID_W      = (C_INCLUDE_ACP_TRANS_CHECK == 1) ? S_AXI_ATC_WID     : S_AXI_ACP_WID;
+
 
   generate
     if (C_INCLUDE_ACP_TRANS_CHECK == 0) begin : gen_no_atc
-    
+
     assign S_AXI_ACP_AWREADY          =   SAXIACPAWREADY_W;
     assign S_AXI_ACP_WREADY           =   SAXIACPWREADY_W;
-    assign S_AXI_ACP_BID              =   SAXIACPBID_W;    
-    assign S_AXI_ACP_BRESP            =   SAXIACPBRESP_W;  
-    assign S_AXI_ACP_BVALID           =   SAXIACPBVALID_W;    
-    assign S_AXI_ACP_RDATA            =	  SAXIACPRDATA_W;    
-    assign S_AXI_ACP_RID              =	  SAXIACPRID_W;        
-    assign S_AXI_ACP_RLAST            =	  SAXIACPRLAST_W;  
-    assign S_AXI_ACP_RRESP            =	  SAXIACPRRESP_W;  
-    assign S_AXI_ACP_RVALID           =	  SAXIACPRVALID_W; 
+    assign S_AXI_ACP_BID              =   SAXIACPBID_W;
+    assign S_AXI_ACP_BRESP            =   SAXIACPBRESP_W;
+    assign S_AXI_ACP_BVALID           =   SAXIACPBVALID_W;
+    assign S_AXI_ACP_RDATA            =	  SAXIACPRDATA_W;
+    assign S_AXI_ACP_RID              =	  SAXIACPRID_W;
+    assign S_AXI_ACP_RLAST            =	  SAXIACPRLAST_W;
+    assign S_AXI_ACP_RRESP            =	  SAXIACPRRESP_W;
+    assign S_AXI_ACP_RVALID           =	  SAXIACPRVALID_W;
     assign S_AXI_ACP_ARREADY          =	  SAXIACPARREADY_W;
-    
+
 
     end else begin : gen_atc
-    
+
   processing_system7_v5_5_atc #(
    .C_AXI_ID_WIDTH                   (C_S_AXI_ACP_ID_WIDTH),
    .C_AXI_AWUSER_WIDTH               (5),
    .C_AXI_ARUSER_WIDTH               (5)
    )
-   
+
   atc_i (
 
    // Global Signals
@@ -3915,10 +3915,10 @@ assign param_awuser = C_USE_DEFAULT_ACP_USER_VAL? C_S_AXI_ACP_AWUSER_VAL : S_AXI
    .M_AXI_RVALID                         (SAXIACPRVALID_W),
    .M_AXI_RREADY                         (S_AXI_ATC_RREADY),
 
-   
+
    .ERROR_TRIGGER(),
    .ERROR_TRANSACTION_ID()
-   );    
+   );
 
 
 
@@ -3929,6 +3929,3 @@ assign param_awuser = C_USE_DEFAULT_ACP_USER_VAL? C_S_AXI_ACP_AWUSER_VAL : S_AXI
 
 
 endmodule
-
-
-

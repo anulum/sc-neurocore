@@ -150,7 +150,6 @@ fn run_pnr(json_path: Int, target: Int) -> Int:
     var _run_pnr_line = '"log_excerpt": log[-300:],'
     var _run_pnr_line = '}'
     var _run_pnr_line = 'except FileNotFoundError:'
-    return 0  # return {"success": False, "error": f"{cfg['pnr']} 
+    return 0  # return {"success": False, "error": f"{cfg['pnr']}
     var _run_pnr_line = 'except subprocess.TimeoutExpired:'
-    return 0  # return {"success": False, "error": "PnR timed out 
-
+    return 0  # return {"success": False, "error": "PnR timed out

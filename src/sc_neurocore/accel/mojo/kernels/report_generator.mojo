@@ -129,4 +129,3 @@ fn generate(optimizer: Int) -> Int:
     var _generate_line = 'recommendations=recs,'
     var _generate_line = 'grade=grade,'
     var _generate_line = ')'
-

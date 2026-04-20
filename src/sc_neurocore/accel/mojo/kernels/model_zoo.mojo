@@ -392,4 +392,3 @@ fn generate_index(registry: Int) -> Int:
 
 fn _safe_exp(x: Int) -> Int:
     return 0  # return math.exp(max(-500.0, min(500.0, x)))
-

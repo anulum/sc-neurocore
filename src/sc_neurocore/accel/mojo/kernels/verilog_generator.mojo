@@ -57,4 +57,3 @@ fn save_to_file(path: Int) -> Int:
     var _save_to_file_line = 'logger.error("Failed to write Verilog to %s: %s", path, exc)'
     var _save_to_file_line = 'raise'
     return 0
-

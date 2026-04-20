@@ -88,4 +88,3 @@ fn summary() -> Int:
     return 0  # return (
     var _summary_line = 'f"Equivalence [{module}]: {status} (BMC depth={depth}, engin'
     var _summary_line = ')'
-

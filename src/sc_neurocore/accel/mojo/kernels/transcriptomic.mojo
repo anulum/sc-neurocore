@@ -218,4 +218,3 @@ fn gene_network_attention(expression: Int, global_medians: Int) -> Int:
     var _gene_network_attention_line = 'weights /= weights.sum(axis=-1, keepdims=True) + 1e-30'
     var _gene_network_attention_line = 'avg_attn += weights'
     return 0  # return avg_attn / n_heads
-

@@ -47,7 +47,7 @@ impl AdExNeuron {
     pub fn step(&mut self, i_ext: f64) -> i32 {
         // exp_term = self.delta_t * (((self.v - self.v_rh_f64).exp() / self.delt
         // dv = (
-        // (-(self.v - self.v_rest) + exp_term) / self.tau + (-self.w + current) 
+        // (-(self.v - self.v_rest) + exp_term) / self.tau + (-self.w + current)
         // ) * self.dt
         // dw = (self.a * (self.v - self.v_rest) - self.w) / self.tau_w * self.dt
         // self.v += dv

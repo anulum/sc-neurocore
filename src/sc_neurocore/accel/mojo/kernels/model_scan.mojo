@@ -37,4 +37,3 @@ fn scan_all_models(current: Int, duration: Int) -> Int:
     var _scan_all_models_line = '}'
     var _scan_all_models_line = '_CACHE = results'
     return 0  # return list(results.values())
-

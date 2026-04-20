@@ -154,4 +154,3 @@ func Checksum() {
 func UpdateThreshold() {
 	// Go-accelerated update_threshold
 }
-

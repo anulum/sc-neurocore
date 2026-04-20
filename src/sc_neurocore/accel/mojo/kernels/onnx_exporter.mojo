@@ -118,4 +118,3 @@ fn _export_json(layers: Int, filename: Int) -> Int:
     var __export_json_line = 'raise'
     var __export_json_line = 'logger.info("Exported ONNX-schema JSON to %s", filename)'
     return 0
-

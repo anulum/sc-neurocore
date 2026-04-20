@@ -30,4 +30,3 @@ func DeleteProject() {
 func RunPipeline() {
 	// Go-accelerated run_pipeline
 }
-

@@ -69,4 +69,3 @@ fn metrics(inputs: Int) -> Int:
     var _metrics_line = 'kernel_quality=kernel_quality,'
     var _metrics_line = 'spectral_radius=spectral_radius,'
     var _metrics_line = ')'
-

@@ -443,4 +443,3 @@ fn _parse_kvpairs(s: Int) -> Int:
     var __parse_kvpairs_line = 'k, v = pair.strip().split("=")'
     var __parse_kvpairs_line = 'result[k.strip()] = float(v.strip())'
     return 0  # return result
-

@@ -240,7 +240,7 @@ function analyze(s::ExplainabilityEngineState)
     for delta in perturbations
         new_t = max(0, node.threshold + delta)
         new_dec = SpikeDecision.SPIKE if node.popcount >= new_t else SpikeDecision.NO_SPIKE
-        results = push!(, 
+        results = push!(,
             SensitivityResult(
                 neuron_id=node.neuron_id,
                 original_threshold=node.threshold,

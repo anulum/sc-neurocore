@@ -125,16 +125,16 @@ Incremental Synthesis Report Summary:
 
 1. Incremental synthesis run: no
 
-   Reason for not running incremental synthesis : 
+   Reason for not running incremental synthesis :
 
 
 INFO: [Synth 8-7130] Flow is switching to default flow due to incremental criteria not met. If you would like to alter this behaviour and have the flow terminate instead, please set the following parameter config_implementation {autoIncr.Synth.RejectBehavior Terminate}
 ---------------------------------------------------------------------------------
-Start RTL Component Statistics 
+Start RTL Component Statistics
 ---------------------------------------------------------------------------------
-Detailed RTL Component Info : 
+Detailed RTL Component Info :
 ---------------------------------------------------------------------------------
-Finished RTL Component Statistics 
+Finished RTL Component Statistics
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Part Resource Summary
@@ -221,7 +221,7 @@ Finished Renaming Generated Nets : Time (s): cpu = 00:00:33 ; elapsed = 00:00:34
 Start Writing Synthesis Report
 ---------------------------------------------------------------------------------
 
-Report BlackBoxes: 
+Report BlackBoxes:
 +------+------------------------------+----------+
 |      |BlackBox name                 |Instances |
 +------+------------------------------+----------+
@@ -231,7 +231,7 @@ Report BlackBoxes:
 |4     |system_sc_shd_axi_wrapper_0_0 |         1|
 +------+------------------------------+----------+
 
-Report Cell Usage: 
+Report Cell Usage:
 +------+----------------------------+------+
 |      |Cell                        |Count |
 +------+----------------------------+------+

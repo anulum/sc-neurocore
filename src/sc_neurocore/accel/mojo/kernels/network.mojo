@@ -108,4 +108,3 @@ fn synfire_chain_detection(trains: Int, dt: Int, max_delay_ms: Int, min_chain_le
     var _synfire_chain_detection_line = 'chains.append(chain)'
     var _synfire_chain_detection_line = 'visited.update(chain)'
     return 0  # return chains
-

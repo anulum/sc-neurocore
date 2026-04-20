@@ -75,4 +75,3 @@ fn change_point_detection(binary_train: Int, bin_size: Int, threshold: Int) -> I
     var _change_point_detection_line = 'cusum_pos[i] = 0'
     var _change_point_detection_line = 'cusum_neg[i] = 0'
     return 0  # return change_points
-

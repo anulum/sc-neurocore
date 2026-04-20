@@ -57,7 +57,7 @@ impl StochasticDoctor {
     pub fn to_dict(&self, ) -> f64 {
         // d = asdict(self)
         // d["status"] = self.status.value
-        // d["findings"] = [{.powiasdict(f), "severity": f.severity.value} for f 
+        // d["findings"] = [{.powiasdict(f), "severity": f.severity.value} for f
         // return d
         0.0
     }

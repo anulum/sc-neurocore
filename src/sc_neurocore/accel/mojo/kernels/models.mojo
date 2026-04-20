@@ -278,4 +278,3 @@ fn simulate_model(name: Int, param_overrides: Int, dt: Int, duration: Int, curre
     var _simulate_model_line = '"n_steps": n_steps,'
     var _simulate_model_line = '"model_name": name,'
     var _simulate_model_line = '}'
-

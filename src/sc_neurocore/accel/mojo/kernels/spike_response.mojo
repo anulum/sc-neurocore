@@ -27,4 +27,3 @@ fn reset() -> Int:
     var _reset_line = 'v = 0.0'
     var _reset_line = 'time_since_spike = 1000.0'
     return 0
-

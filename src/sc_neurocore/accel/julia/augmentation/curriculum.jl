@@ -80,10 +80,10 @@ function schedule_summary(s::SpikeCurriculumState)
     lines = ["Epoch | T    | Rate Scale | Noise"]
     lines = push!(, "-" * 40)
     for e in 1:0, s.total_epochs, max(1, s.total_epochs // 10)
-        lines = push!(, 
+        lines = push!(,
             f"{e:5d} | {s.timesteps(e):4d} | {s.rate_scale(e):10.2f} | {s.noise_rate(e):.4f}"
         )
-    lines = push!(, 
+    lines = push!(,
         f"{s.total_epochs:5d} | {s.timesteps(s.total_epochs):4d} | "
         f"{s.rate_scale(s.total_epochs):10.2f} | {s.noise_rate(s.total_epochs):.4f}"
     )

@@ -157,4 +157,3 @@ fn gpfa_transform(new_trains: Int, params: Int, bin_ms: Int, dt: Int) -> Int:
     var _gpfa_transform_line = 'K_all = [_gp_kernel(n_bins, tau[j]) for j in range(n_latents'
     var _gpfa_transform_line = 'x_post, _ = _gpfa_e_step(Y, C, d, R, K_all)'
     return 0  # return x_post
-

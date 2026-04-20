@@ -34,42 +34,42 @@ INFO: [Synth 8-7075] Helper process launched with PID 3958962
 Starting RTL Elaboration : Time (s): cpu = 00:00:07 ; elapsed = 00:00:07 . Memory (MB): peak = 2243.660 ; gain = 484.156 ; free physical = 3458 ; free virtual = 19509
 ---------------------------------------------------------------------------------
 INFO: [Synth 8-638] synthesizing module 'system_rst_ps7_0_50M_0' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ip/system_rst_ps7_0_50M_0/synth/system_rst_ps7_0_50M_0.vhd:74]
-	Parameter C_FAMILY bound to: zynq - type: string 
-	Parameter C_EXT_RST_WIDTH bound to: 4 - type: integer 
-	Parameter C_AUX_RST_WIDTH bound to: 4 - type: integer 
-	Parameter C_EXT_RESET_HIGH bound to: 1'b0 
-	Parameter C_AUX_RESET_HIGH bound to: 1'b0 
-	Parameter C_NUM_BUS_RST bound to: 1 - type: integer 
-	Parameter C_NUM_PERP_RST bound to: 1 - type: integer 
-	Parameter C_NUM_INTERCONNECT_ARESETN bound to: 1 - type: integer 
-	Parameter C_NUM_PERP_ARESETN bound to: 1 - type: integer 
+	Parameter C_FAMILY bound to: zynq - type: string
+	Parameter C_EXT_RST_WIDTH bound to: 4 - type: integer
+	Parameter C_AUX_RST_WIDTH bound to: 4 - type: integer
+	Parameter C_EXT_RESET_HIGH bound to: 1'b0
+	Parameter C_AUX_RESET_HIGH bound to: 1'b0
+	Parameter C_NUM_BUS_RST bound to: 1 - type: integer
+	Parameter C_NUM_PERP_RST bound to: 1 - type: integer
+	Parameter C_NUM_INTERCONNECT_ARESETN bound to: 1 - type: integer
+	Parameter C_NUM_PERP_ARESETN bound to: 1 - type: integer
 INFO: [Synth 8-3491] module 'proc_sys_reset' declared at '/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ipshared/9438/hdl/proc_sys_reset_v5_0_vh_rfs.vhd:1243' bound to instance 'U0' of component 'proc_sys_reset' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ip/system_rst_ps7_0_50M_0/synth/system_rst_ps7_0_50M_0.vhd:139]
 INFO: [Synth 8-638] synthesizing module 'proc_sys_reset' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ipshared/9438/hdl/proc_sys_reset_v5_0_vh_rfs.vhd:1302]
-	Parameter INIT bound to: 1'b1 
+	Parameter INIT bound to: 1'b1
 INFO: [Synth 8-113] binding component instance 'FDRE_inst' to cell 'FDRE' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ipshared/9438/hdl/proc_sys_reset_v5_0_vh_rfs.vhd:1371]
-	Parameter INIT bound to: 1'b1 
+	Parameter INIT bound to: 1'b1
 INFO: [Synth 8-113] binding component instance 'FDRE_BSR' to cell 'FDRE' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ipshared/9438/hdl/proc_sys_reset_v5_0_vh_rfs.vhd:1387]
-	Parameter INIT bound to: 1'b0 
+	Parameter INIT bound to: 1'b0
 INFO: [Synth 8-113] binding component instance 'FDRE_BSR_N' to cell 'FDRE' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ipshared/9438/hdl/proc_sys_reset_v5_0_vh_rfs.vhd:1413]
-	Parameter INIT bound to: 1'b1 
+	Parameter INIT bound to: 1'b1
 INFO: [Synth 8-113] binding component instance 'FDRE_PER' to cell 'FDRE' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ipshared/9438/hdl/proc_sys_reset_v5_0_vh_rfs.vhd:1436]
-	Parameter INIT bound to: 1'b0 
+	Parameter INIT bound to: 1'b0
 INFO: [Synth 8-113] binding component instance 'FDRE_PER_N' to cell 'FDRE' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ipshared/9438/hdl/proc_sys_reset_v5_0_vh_rfs.vhd:1460]
 INFO: [Synth 8-638] synthesizing module 'lpf' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ipshared/9438/hdl/proc_sys_reset_v5_0_vh_rfs.vhd:821]
 INFO: [Synth 8-3491] module 'SRL16' declared at '/tools/Xilinx/2025.2/Vivado/scripts/rt/data/unisim_comp.v:165318' bound to instance 'POR_SRL_I' of component 'SRL16' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ipshared/9438/hdl/proc_sys_reset_v5_0_vh_rfs.vhd:873]
 INFO: [Synth 8-6157] synthesizing module 'SRL16' [/tools/Xilinx/2025.2/Vivado/scripts/rt/data/unisim_comp.v:165318]
 INFO: [Synth 8-6155] done synthesizing module 'SRL16' (0#1) [/tools/Xilinx/2025.2/Vivado/scripts/rt/data/unisim_comp.v:165318]
-	Parameter DEST_SYNC_FF bound to: 4 - type: integer 
-	Parameter INIT_SYNC_FF bound to: 0 - type: integer 
-	Parameter SIM_ASSERT_CHK bound to: 0 - type: integer 
-	Parameter SRC_INPUT_REG bound to: 0 - type: integer 
+	Parameter DEST_SYNC_FF bound to: 4 - type: integer
+	Parameter INIT_SYNC_FF bound to: 0 - type: integer
+	Parameter SIM_ASSERT_CHK bound to: 0 - type: integer
+	Parameter SRC_INPUT_REG bound to: 0 - type: integer
 INFO: [Synth 8-3491] module 'xpm_cdc_single' declared at '/tools/Xilinx/2025.2/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:152' bound to instance 'ACT_LO_EXT' of component 'xpm_cdc_single' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ipshared/9438/hdl/proc_sys_reset_v5_0_vh_rfs.vhd:968]
 INFO: [Synth 8-6157] synthesizing module 'xpm_cdc_single' [/tools/Xilinx/2025.2/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:152]
 INFO: [Synth 8-6155] done synthesizing module 'xpm_cdc_single' (0#1) [/tools/Xilinx/2025.2/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:152]
-	Parameter DEST_SYNC_FF bound to: 4 - type: integer 
-	Parameter INIT_SYNC_FF bound to: 0 - type: integer 
-	Parameter SIM_ASSERT_CHK bound to: 0 - type: integer 
-	Parameter SRC_INPUT_REG bound to: 0 - type: integer 
+	Parameter DEST_SYNC_FF bound to: 4 - type: integer
+	Parameter INIT_SYNC_FF bound to: 0 - type: integer
+	Parameter SIM_ASSERT_CHK bound to: 0 - type: integer
+	Parameter SRC_INPUT_REG bound to: 0 - type: integer
 INFO: [Synth 8-3491] module 'xpm_cdc_single' declared at '/tools/Xilinx/2025.2/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:152' bound to instance 'ACT_LO_AUX' of component 'xpm_cdc_single' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ipshared/9438/hdl/proc_sys_reset_v5_0_vh_rfs.vhd:1015]
 INFO: [Synth 8-256] done synthesizing module 'lpf' (0#1) [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ipshared/9438/hdl/proc_sys_reset_v5_0_vh_rfs.vhd:821]
 INFO: [Synth 8-638] synthesizing module 'sequence_psr' [/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/sc_shd_pynq/sc_shd_pynq.gen/sources_1/bd/system/ipshared/9438/hdl/proc_sys_reset_v5_0_vh_rfs.vhd:304]
@@ -112,7 +112,7 @@ Completed Processing XDC Constraints
 Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2460.180 ; gain = 0.000 ; free physical = 2775 ; free virtual = 18818
 INFO: [Project 1-111] Unisim Transformation Summary:
   A total of 1 instances were transformed.
-  SRL16 => SRL16E: 1 instance 
+  SRL16 => SRL16E: 1 instance
 
 Constraint Validation Runtime : Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2460.215 ; gain = 0.000 ; free physical = 2770 ; free virtual = 18813
 INFO: [Designutils 20-5008] Incremental synthesis strategy off
@@ -136,21 +136,21 @@ Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:19 ; el
 Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:20 ; elapsed = 00:00:20 . Memory (MB): peak = 2468.184 ; gain = 708.680 ; free physical = 2581 ; free virtual = 18672
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Start RTL Component Statistics 
+Start RTL Component Statistics
 ---------------------------------------------------------------------------------
-Detailed RTL Component Info : 
-+---Adders : 
-	   2 Input    6 Bit       Adders := 1     
-+---Registers : 
-	                6 Bit    Registers := 1     
-	                4 Bit    Registers := 2     
-	                3 Bit    Registers := 3     
-	                1 Bit    Registers := 14    
-+---Muxes : 
-	   2 Input    6 Bit        Muxes := 1     
-	   2 Input    1 Bit        Muxes := 1     
+Detailed RTL Component Info :
++---Adders :
+	   2 Input    6 Bit       Adders := 1
++---Registers :
+	                6 Bit    Registers := 1
+	                4 Bit    Registers := 2
+	                3 Bit    Registers := 3
+	                1 Bit    Registers := 14
++---Muxes :
+	   2 Input    6 Bit        Muxes := 1
+	   2 Input    1 Bit        Muxes := 1
 ---------------------------------------------------------------------------------
-Finished RTL Component Statistics 
+Finished RTL Component Statistics
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Part Resource Summary
@@ -238,13 +238,13 @@ Finished Renaming Generated Nets : Time (s): cpu = 00:00:31 ; elapsed = 00:00:33
 Start Writing Synthesis Report
 ---------------------------------------------------------------------------------
 
-Report BlackBoxes: 
+Report BlackBoxes:
 +-+--------------+----------+
 | |BlackBox name |Instances |
 +-+--------------+----------+
 +-+--------------+----------+
 
-Report Cell Usage: 
+Report Cell Usage:
 +------+------+------+
 |      |Cell  |Count |
 +------+------+------+
@@ -273,7 +273,7 @@ INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
 Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2770.070 ; gain = 0.000 ; free physical = 1742 ; free virtual = 17862
 INFO: [Project 1-111] Unisim Transformation Summary:
   A total of 1 instances were transformed.
-  SRL16 => SRL16E: 1 instance 
+  SRL16 => SRL16E: 1 instance
 
 Synth Design complete | Checksum: f883625d
 INFO: [Common 17-83] Releasing license: Synthesis

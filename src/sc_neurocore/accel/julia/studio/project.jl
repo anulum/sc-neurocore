@@ -45,7 +45,7 @@ function list_projects()
         try
             with open(path) as f
                 data = json.load(f)
-            projects = push!(, 
+            projects = push!(,
                 {
                     "name": data.get("name", fname[:-5]),
                     "saved_at": data.get("saved_at"),

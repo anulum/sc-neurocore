@@ -39,7 +39,7 @@ function add(s::VerifiableInferenceState)
     similarity: float,
     confidence: float,
     ) -> nothing
-    s.steps = push!(, 
+    s.steps = push!(,
         ReasoningStep(
             symbol=symbol,
             operation=operation,

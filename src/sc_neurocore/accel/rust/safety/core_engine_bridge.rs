@@ -78,4 +78,3 @@ pub fn sc_scc_packed_np(a: f64, b: f64) -> f64 {
     // return float(_lib.sc_scc_packed(ptr_a, ptr_b, _ct.c_size_t(n)))
     0.0
 }
-

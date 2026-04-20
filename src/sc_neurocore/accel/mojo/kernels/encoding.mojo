@@ -23,4 +23,3 @@ fn delta_encode(x: Int, threshold: Int) -> Int:
     var _delta_encode_line = 'dx = torch.zeros_like(x)'
     var _delta_encode_line = 'dx[1:] = x[1:] - x[:-1]'
     return 0  # return (dx.abs() > threshold).float()
-

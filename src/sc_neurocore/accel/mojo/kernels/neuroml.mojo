@@ -180,4 +180,3 @@ fn create_neuron(cell: Int) -> Int:
     var _create_neuron_line = 'from ..neurons.models.adex import AdExNeuron'
     return 0  # return AdExNeuron(**cell.params)
     var _create_neuron_line = 'raise ValueError(f"Unknown cell type: {cell.cell_type}")'
-

@@ -42,4 +42,3 @@ func Remove() {
 func Hook() {
 	// Go-accelerated hook
 }
-

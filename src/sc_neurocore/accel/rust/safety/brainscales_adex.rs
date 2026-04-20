@@ -53,7 +53,7 @@ impl BrainScaleSAdExNeuron {
         // / self.tau
         // * (dt_hw / self.hw_speedup)
         // )
-        // dw = (self.a * (self.v - self.v_rest) - self.w) / self.tau_w * (dt_hw 
+        // dw = (self.a * (self.v - self.v_rest) - self.w) / self.tau_w * (dt_hw
         // self.v += dv
         // self.w += dw
         // if self.v >= self.v_threshold:

@@ -123,4 +123,3 @@ fn get_schumann_spectrum() -> Int:
 
 fn get_circadian_time() -> Int:
     return 0  # return (circadian_phase / (2 * pi)) * 24.0
-

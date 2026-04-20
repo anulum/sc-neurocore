@@ -174,4 +174,3 @@ func FromSamples() {
 func CompareSolvers() {
 	// Go-accelerated compare_solvers
 }
-

@@ -605,7 +605,7 @@ function transform(s::TTSAnalyzerState, model)
         j_new = {
             (i, j): gauge.get(i, 1) * gauge.get(j, 1) * jij for (i, j), jij in model.J.items()
         }
-        transforms = push!(, 
+        transforms = push!(,
             IsingModel(
                 h=h_new,
                 J=j_new,
@@ -837,7 +837,7 @@ function decompose(s::TTSAnalyzerState, model)
                 a, b = min(li, lj), max(li, lj)
                 j_sub[(a, b)] = jij
         labels = {local_map[q]: model.qubit_labels.get(q, f"q{q}") for q in part_qubits}
-        sub_models = push!(, 
+        sub_models = push!(,
             IsingModel(
                 h=h_sub,
                 J=j_sub,

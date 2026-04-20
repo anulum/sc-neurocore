@@ -34,7 +34,7 @@ impl StochasticTransformerBlock {
         // # Position-wise FFN: apply same weights to each token
         // vals = token.tolist() if hasattr(token, "tolist") else token
         // h = (self.ffn_1.forward(vals)_f64).clamp(0.0, 1.0)  # type_val: ignore[arg
-        // return self.ffn_2.forward(h.tolist() if hasattr(h, "tolist") else h)  
+        // return self.ffn_2.forward(h.tolist() if hasattr(h, "tolist") else h)
         // if res1.ndim > 1:
         // ff_out = np.zeros_like(res1)
         // for t in range(res1.shape[0]):

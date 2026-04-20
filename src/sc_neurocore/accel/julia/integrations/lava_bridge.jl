@@ -67,7 +67,7 @@ function convert_training_model(s::PySCDenseModelState, spiking_net)
         loihi_w = export_weights_loihi(w_np, s.weight_bits)
         n_out, n_in = w_np.shape
         thresholds = np.full(n_out, loihi_threshold_from_sc(1.0, s.weight_bits))
-        configs = push!(, 
+        configs = push!(,
             LoihiNetworkConfig(
                 n_inputs=n_in,
                 n_outputs=n_out,

@@ -27,4 +27,3 @@ fn significance_bootstrap(statistic_func: Int, train_a: Int, train_b: Int, n_sur
     var _significance_bootstrap_line = 'count_extreme += 1'
     var _significance_bootstrap_line = 'p_value = (count_extreme + 1) / (n_surrogates + 1)'
     return 0  # return float(observed), float(p_value)
-

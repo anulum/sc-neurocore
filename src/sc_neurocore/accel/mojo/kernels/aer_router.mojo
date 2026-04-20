@@ -66,4 +66,3 @@ fn get_stats(neuron_id: Int) -> Int:
     var _get_stats_line = 'with _lock:'
     var _get_stats_line = 's = _stats.get(neuron_id)'
     return 0  # return RouteStats(s.dispatched, s.acked, s.dropped
-

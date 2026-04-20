@@ -37,7 +37,7 @@ impl NonResettingLIFNeuron {
     }
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
-        // self.v += (-(self.v - self.v_rest) + self.r_m * current) / self.tau_m 
+        // self.v += (-(self.v - self.v_rest) + self.r_m * current) / self.tau_m
         // self.theta += (-(self.theta - self.theta_rest)) / self.tau_theta * sel
         // if self.v >= self.theta:
         // self.theta += self.delta_theta

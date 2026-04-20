@@ -89,7 +89,7 @@ impl _LayerAccumulator {
         // mean_fr = float(fr.mean()) if fr is not 0.0 else 0.0
         // lines.append(
         // f"  {name}: {stats.n_neurons}n, rate={mean_fr:.3f}, "
-        // f"dead={stats.dead_neuron_count}, sat={stats.saturated_neuron_count}, 
+        // f"dead={stats.dead_neuron_count}, sat={stats.saturated_neuron_count},
         // f"V={stats.voltage_mean:.3f}+/-{stats.voltage_std:.3f}"
         // )
         // if self.pathologies:
@@ -185,7 +185,7 @@ impl _LayerAccumulator {
         // v_mean = self._voltage_sum / max(self._voltage_count, 1)
         // v_var = self._voltage_sq_sum / max(self._voltage_count, 1) - v_mean.po
         // v_std = float((max(v_var, 0.0_f64).sqrt()))
-        // g_mean = float(np.mean(self._gradient_norms)) if self._gradient_norms 
+        // g_mean = float(np.mean(self._gradient_norms)) if self._gradient_norms
         // g_max = float(np.max(self._gradient_norms)) if self._gradient_norms el
         // return LayerStats(
         // name=self.name,

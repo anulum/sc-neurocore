@@ -20,4 +20,3 @@ fn reset() -> Int:
     var _reset_line = 'buffer[:] = 0.0'
     var _reset_line = '_ptr = 0'
     return 0
-

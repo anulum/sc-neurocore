@@ -29,4 +29,3 @@ fn reset(seed: Int) -> Int:
     var _reset_line = '_reg = uint16(seed)'
     var _reset_line = '_index = uint32(0)'
     return 0
-

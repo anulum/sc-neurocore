@@ -52,7 +52,7 @@ fn effective_conductance(g_nominal: Int, row: Int, col: Int, v_read: Int) -> Int
     var _effective_conductance_line = ') -> float:'
     var _effective_conductance_line = 'v_drop = voltage_drop(row, col)'
     var _effective_conductance_line = 'v_eff = max(0.0, v_read - v_drop)'
-    return 0  # return g_nominal * (v_eff / v_read) if v_read > 0 
+    return 0  # return g_nominal * (v_eff / v_read) if v_read > 0
 
 fn generate(rows: Int, cols: Int, fault_rate: Int, seed: Int) -> Int:
     var _generate_line = 'cls,'
@@ -365,4 +365,3 @@ fn emit_top(result: Int, module_name: Int) -> Int:
     var _emit_top_line = ')'
     var _emit_top_line = 'inst_block = "\\n".join(inst_lines)'
     return 0
-

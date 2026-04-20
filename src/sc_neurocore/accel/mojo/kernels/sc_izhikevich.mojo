@@ -32,4 +32,3 @@ fn reset_state() -> Int:
 
 fn get_state() -> Int:
     return 0  # return {"v": float(v), "u": float(u)}
-

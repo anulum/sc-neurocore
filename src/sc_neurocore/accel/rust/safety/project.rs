@@ -111,4 +111,3 @@ pub fn run_pipeline(graph: f64, target: f64) -> f64 {
     // eq = "dv/dt = -(v - (-65)) / 20 + I / 1"
     0.0
 }
-

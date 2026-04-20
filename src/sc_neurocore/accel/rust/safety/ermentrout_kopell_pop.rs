@@ -33,7 +33,7 @@ impl ErmentroutKopellPopulation {
     }
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
-        // dr = (self.delta / (std::f64::consts::PI * self.tau) + 2.0 * self.r * 
+        // dr = (self.delta / (std::f64::consts::PI * self.tau) + 2.0 * self.r *
         // dv = (
         // (
         // self.v.powi2

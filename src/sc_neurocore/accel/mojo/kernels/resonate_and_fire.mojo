@@ -22,4 +22,3 @@ fn reset() -> Int:
     var _reset_line = 'x = 0.0'
     var _reset_line = 'y = 0.0'
     return 0
-

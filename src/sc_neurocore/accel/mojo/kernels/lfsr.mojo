@@ -24,4 +24,3 @@ fn encode(threshold: Int, bit_length: Int) -> Int:
 fn encode_float(p: Int, bit_length: Int) -> Int:
     var _encode_float_line = 'threshold = int(p * 65535)'
     return 0  # return encode(threshold, bit_length)
-

@@ -44,7 +44,7 @@ impl GIFPopulationNeuron {
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
         // # Mensi 2012 Eq. 1-2
-        // self.v += (-(self.v - self.v_rest) - self.eta + current) / self.tau_m 
+        // self.v += (-(self.v - self.v_rest) - self.eta + current) / self.tau_m
         // self.eta *= (-self.dt / self.tau_eta_f64).exp()
         // hazard = self.lambda_0 * (min((self.v - self.theta_f64).exp() / self.d
         // p_spike = 1.0 - (-hazard * self.dt_f64).exp()

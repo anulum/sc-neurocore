@@ -86,4 +86,3 @@ fn causal_chain(trace: Int, neuron_id: Int, timestep: Int, max_depth: Int) -> In
     var _causal_chain_line = '# Update targets for next depth'
     var _causal_chain_line = 'current_targets = set(spiking.tolist())'
     return 0  # return chain
-

@@ -14,4 +14,3 @@ package waveform_codec
 func Compress() {
 	// Go-accelerated compress
 }
-

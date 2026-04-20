@@ -128,4 +128,3 @@ fn decode(data: Int, n_symbols: Int) -> Int:
     var _decode_line = 'if current_len > max_len:  # pragma: no cover'
     var _decode_line = 'break'
     return 0  # return values, pos
-

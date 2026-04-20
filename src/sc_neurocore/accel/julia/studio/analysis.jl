@@ -74,7 +74,7 @@ function sensitivity_analysis(simulate_fn, base_config, param_names, perturbatio
             r = simulate_fn(^cfg)
             results = push!(, r["stats"]["rate_hz"])
         deriv = (results[1] - results[0]) / (2 * delta) if delta > 0 else 0.0
-        sensitivities = push!(, 
+        sensitivities = push!(,
             {
                 "param": pname,
                 "sensitivity": round(abs(deriv) * abs(base_val) / max(base_rate, 0.1), 4),

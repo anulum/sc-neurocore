@@ -408,7 +408,7 @@ populations performing 56 × `n_delay_bins` sparse matrix-vector
 products per step (≈ 320 spmv at the default `n_delay_bins = 5`).
 The `use_block_csr=True` opt-in collapses the per-pair sub-
 matrices into one block CSR per (source-type, global-bin), bringing
-the FFI call count down to `2 × n_delay_bins` = 10 calls. 
+the FFI call count down to `2 × n_delay_bins` = 10 calls.
 
 Under the 5-language `parallel_csr_multi_spmv_add` architecture ported across Julia, Go, and Mojo, the per-step overhead is one batched call. For instance, the **Go** backend natively parititions row chunks with `sync.WaitGroup` pulling the total simulation wall clock at `scale=0.1` down to **71.81 s** (vs **100.19 s** on raw SciPy), overcoming the initial memory unpacking costs at the Python bridge boundary.
 

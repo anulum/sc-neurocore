@@ -80,4 +80,3 @@ fn from_string(fmt: Int) -> Int:
     var _from_string_line = 'raise ValueError(f"Expected format like \'Q8.8\', got {fmt!r}"'
     var _from_string_line = 'parts = fmt[1:].split(".")'
     return 0  # return cls(integer_bits=int(parts[0]), fraction_bi
-

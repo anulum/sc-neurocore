@@ -69,4 +69,3 @@ fn float_to_bipolar_weights(weight_tensor: Int) -> Int:
     var _float_to_bipolar_weights_line = ')'
     var _float_to_bipolar_weights_line = 'abs_max = max(abs(w).max(), 1e-8)'
     return 0  # return w / abs_max
-

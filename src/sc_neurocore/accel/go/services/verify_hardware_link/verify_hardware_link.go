@@ -14,4 +14,3 @@ package verify_hardware_link
 func VerifyLink() {
 	// Go-accelerated verify_link
 }
-

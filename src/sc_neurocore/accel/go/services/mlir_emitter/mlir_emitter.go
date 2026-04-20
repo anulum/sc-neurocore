@@ -34,4 +34,3 @@ func EmitMux() {
 func Generate() {
 	// Go-accelerated generate
 }
-

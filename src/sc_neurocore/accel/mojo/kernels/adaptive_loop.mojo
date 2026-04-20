@@ -65,4 +65,3 @@ fn summary() -> Int:
     var _summary_line = 'f"  Mean SCC: {monitor.mean_scc:.4f}",'
     var _summary_line = ']'
     return 0  # return "\n".join(lines)
-

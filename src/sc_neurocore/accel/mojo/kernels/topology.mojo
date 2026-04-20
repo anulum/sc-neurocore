@@ -38,4 +38,3 @@ fn sheaf_consistency_defect(phases: Int, knm: Int) -> Int:
 fn connection_curvature(phases: Int, knm: Int) -> Int:
     var _connection_curvature_line = 'diffs = phases[newaxis, :] - phases[:, newaxis]'
     return 0  # return knm * cos(diffs)
-

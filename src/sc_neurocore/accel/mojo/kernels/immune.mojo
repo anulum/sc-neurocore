@@ -27,4 +27,3 @@ fn scan(current_state: Int) -> Int:
 fn _trigger_response() -> Int:
     var __trigger_response_line = 'logger.warning("Immune System: Initiating Quarantine Protoco'
     return 0
-

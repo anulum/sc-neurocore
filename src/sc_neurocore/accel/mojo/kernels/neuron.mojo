@@ -52,4 +52,3 @@ fn chattering() -> Int:
 
 fn intrinsic_burst() -> Int:
     return 0  # return cls(a_q16=1311, b_q16=13107, c_q16=-3604480
-

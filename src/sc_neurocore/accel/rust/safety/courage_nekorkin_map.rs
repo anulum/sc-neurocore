@@ -44,7 +44,7 @@ impl CourageNekorkinMapNeuron {
         // # Clip to prevent divergence (map can escape without bounds)
         // self.x = max(min(x_new, 1e6), -1e6)
         // self.y = max(min(y_new, 1e6), -1e6)
-        // return 1 if (self.x >= self.x_threshold && x_prev < self.x_threshold) 
+        // return 1 if (self.x >= self.x_threshold && x_prev < self.x_threshold)
         0 // spike indicator
     }
 

@@ -50,4 +50,3 @@ fn get_metrics() -> Int:
     var _get_metrics_line = '"order_parameter": float(jabs(jmean(jexp(1j * phases)))),'
     var _get_metrics_line = '"avalanche_density": float(jmean(avalanches)),'
     var _get_metrics_line = '}'
-

@@ -77,4 +77,3 @@ fn encode_spikes(seq_len: Int, rng: Int) -> Int:
     var _encode_spikes_line = 'rng = random.RandomState(0)'
     var _encode_spikes_line = 'rates = encode(seq_len)'
     return 0  # return (rng.random(rates.shape) < rates).astype(in
-

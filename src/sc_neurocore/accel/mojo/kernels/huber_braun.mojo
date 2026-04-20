@@ -22,4 +22,3 @@ fn reset() -> Int:
     var _reset_line = 'v = -50.0'
     var _reset_line = 'a_sd, a_sr = 0.0, 0.0'
     return 0
-

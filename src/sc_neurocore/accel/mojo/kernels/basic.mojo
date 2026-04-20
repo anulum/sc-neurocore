@@ -31,4 +31,3 @@ fn bin_spike_train(binary_train: Int, bin_size: Int) -> Int:
     return 0  # return array([int(binary_train.sum())])
     var _bin_spike_train_line = 'trimmed = binary_train[: n_bins * bin_size]'
     return 0  # return trimmed.reshape(n_bins, bin_size).sum(axis=
-

@@ -1,8 +1,8 @@
 //
 //  Vivado(TM)
 //  ISEWrap.js: Vivado Runs Script for WSH 5.1/5.6
-//  Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. 
-//  Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved. 
+//  Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+//  Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
 //
 
 // GLOBAL VARIABLES
@@ -29,7 +29,7 @@ function ISEInit() {
   // 1. RUN DIR setup
   var ISEScrFP = WScript.ScriptFullName;
   var ISEScrN = WScript.ScriptName;
-  ISERunDir = 
+  ISERunDir =
     ISEScrFP.substr( 0, ISEScrFP.length - ISEScrN.length - 1 );
 
   // 2. LOG file setup
@@ -78,7 +78,7 @@ function ISEStep( ISEProg, ISEArgs ) {
   ISEStdOut( "" );
 
   // LAUNCH!
-  var ISEExitCode = ISEExec( ISEProg, ISEArgs );  
+  var ISEExitCode = ISEExec( ISEProg, ISEArgs );
   if ( ISEExitCode != 0 ) {
     WScript.Quit( ISEExitCode );
   }
@@ -102,7 +102,7 @@ function ISEExec( ISEProg, ISEArgs ) {
 
     // LAUNCH!
     ISELogFileStr.Close();
-    ISECmdLine = 
+    ISECmdLine =
       "%comspec% /c " + ISECmdLine + " >> " + ISELogFile + " 2>&1";
     ISEExitCode = ISEShell.Run( ISECmdLine, 0, true );
     ISELogFileStr = ISEOpenFile( ISELogFile );
@@ -115,7 +115,7 @@ function ISEExec( ISEProg, ISEArgs ) {
     // Redirect STDERR to STDOUT
     ISECmdLine = "%comspec% /c " + ISECmdLine + " 2>&1";
     var ISEProcess = ISEShell.Exec( ISECmdLine );
-    
+
     // BEGIN file creation
     var wbemFlagReturnImmediately = 0x10;
     var wbemFlagForwardOnly = 0x20;
@@ -147,9 +147,9 @@ function ISEExec( ISEProg, ISEArgs ) {
     var ISEBeginFile = ISEOpenFile( "." + ISEStep + ".begin.rst" );
     ISEBeginFile.WriteLine( "<?xml version=\"1.0\"?>" );
     ISEBeginFile.WriteLine( "<ProcessHandle Version=\"1\" Minor=\"0\">" );
-    ISEBeginFile.WriteLine( "    <Process Command=\"" + ISEProg + 
-			    "\" Owner=\"" + ISEUser + 
-			    "\" Host=\"" + ISEHost + 
+    ISEBeginFile.WriteLine( "    <Process Command=\"" + ISEProg +
+			    "\" Owner=\"" + ISEUser +
+			    "\" Host=\"" + ISEHost +
 			    "\" Pid=\"" + ISEPid +
 			    "\" HostCore=\"" + ISEHOSTCORE +
 			    "\" HostMemory=\"" + ISEMEMTOTAL +
@@ -157,18 +157,18 @@ function ISEExec( ISEProg, ISEArgs ) {
     ISEBeginFile.WriteLine( "    </Process>" );
     ISEBeginFile.WriteLine( "</ProcessHandle>" );
     ISEBeginFile.Close();
-    
+
     var ISEOutStr = ISEProcess.StdOut;
     var ISEErrStr = ISEProcess.StdErr;
-    
+
     // WAIT for ISEStep to finish
     while ( ISEProcess.Status == 0 ) {
-      
+
       // dump stdout then stderr - feels a little arbitrary
       while ( !ISEOutStr.AtEndOfStream ) {
         ISEStdOut( ISEOutStr.ReadLine() );
-      }  
-      
+      }
+
       WScript.Sleep( 100 );
     }
 
@@ -178,9 +178,9 @@ function ISEExec( ISEProg, ISEArgs ) {
   ISELogFileStr.Close();
 
   // END/ERROR file creation
-  if ( ISEExitCode != 0 ) {    
+  if ( ISEExitCode != 0 ) {
     ISETouchFile( ISEStep, "error" );
-    
+
   } else {
     ISETouchFile( ISEStep, "end" );
   }
@@ -195,14 +195,14 @@ function ISEExec( ISEProg, ISEArgs ) {
 function ISEStdOut( ISELine ) {
 
   ISELogFileStr.WriteLine( ISELine );
-  
+
   if ( ISELogEcho ) {
     WScript.StdOut.WriteLine( ISELine );
   }
 }
 
 function ISEStdErr( ISELine ) {
-  
+
   ISELogFileStr.WriteLine( ISELine );
 
   if ( ISELogEcho ) {
@@ -212,7 +212,7 @@ function ISEStdErr( ISELine ) {
 
 function ISETouchFile( ISERoot, ISEStatus ) {
 
-  var ISETFile = 
+  var ISETFile =
     ISEOpenFile( "." + ISERoot + "." + ISEStatus + ".rst" );
   ISETFile.Close();
 }

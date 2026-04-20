@@ -34,4 +34,3 @@ fn reset() -> Int:
     var _reset_line = 'theta = theta_inf'
     var _reset_line = 'i_asc1, i_asc2 = 0.0, 0.0'
     return 0
-

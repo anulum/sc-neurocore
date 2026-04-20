@@ -89,4 +89,3 @@ fn update(agents: Int, env: Int, dt: Int) -> Int:
     var _update_line = 'if idx < n_agents:'
     var _update_line = 'agent.emotions = emotional_field[idx].copy()'
     return 0
-

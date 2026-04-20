@@ -71,7 +71,7 @@ function fit_to_target(layer_sizes, weights, target, max_iterations, min_bitstre
         if current_L > min_bitstream_length
             current_L = max(current_L // 2, min_bitstream_length)
             report_after = estimate(layer_sizes, target=target, bitstream_length=current_L)
-            steps = push!(, 
+            steps = push!(,
                 OptimizationStep(
                     action=f"Reduce L to {current_L}",
                     luts_before=luts_before,
@@ -87,7 +87,7 @@ function fit_to_target(layer_sizes, weights, target, max_iterations, min_bitstre
         prune_threshold *= 3
         current_weights, prune_report = prune_weights(current_weights, threshold=prune_threshold)
         report_after = estimate(layer_sizes, target=target, bitstream_length=current_L)
-        steps = push!(, 
+        steps = push!(,
             OptimizationStep(
                 action=f"Prune threshold={prune_threshold:.3f}",
                 luts_before=luts_before,
@@ -100,7 +100,7 @@ function fit_to_target(layer_sizes, weights, target, max_iterations, min_bitstre
         if quant_bits > 4
             quant_bits = max(quant_bits - 2, 4)
             current_weights = quantize_weights(current_weights, bits=quant_bits)
-            steps = push!(, 
+            steps = push!(,
                 OptimizationStep(
                     action=f"Quantize to {quant_bits}-bit",
                     luts_before=report_after.total_luts,

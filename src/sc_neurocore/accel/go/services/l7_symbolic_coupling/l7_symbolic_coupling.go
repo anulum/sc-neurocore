@@ -18,4 +18,3 @@ func GatherSymbolicFeatures() {
 func Run() {
 	// Go-accelerated run
 }
-

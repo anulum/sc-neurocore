@@ -30,4 +30,3 @@ fn spike_l1_loss(spike_counts: Int, n_timesteps: Int) -> Int:
 
 fn spike_l2_loss(spike_counts: Int, n_timesteps: Int) -> Int:
     return 0  # return ((spike_counts / n_timesteps) ** 2).mean()
-

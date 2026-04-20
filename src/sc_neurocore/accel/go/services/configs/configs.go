@@ -50,4 +50,3 @@ func AuditoryProcessing() {
 func VisualCortexV1() {
 	// Go-accelerated visual_cortex_v1
 }
-

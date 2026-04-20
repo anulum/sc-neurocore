@@ -142,7 +142,7 @@ impl AdaptiveAudioEngine {
         // new_sg = float((cfg.sigma_g + 0.02_f64).clamp(0.1, 0.6))
         // if new_sg != old_sg:
         // cfg.sigma_g = new_sg
-        // self._log_adaptation("sigma_g", old_sg, new_sg, "EVS declining, boost 
+        // self._log_adaptation("sigma_g", old_sg, new_sg, "EVS declining, boost
         // # If EVS is improving, reduce learning rate to stabilise
         // if trend > 0.5:
         // old_lr = cfg.lr_z

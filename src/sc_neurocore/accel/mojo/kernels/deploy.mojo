@@ -24,4 +24,3 @@ fn generate_memory_x(board: Int) -> Int:
     return 0  # return _MEMORY_X[Board.ESP32_C3]
     return 0  # return ('MEMORY\n{\n    FLASH : ORIGIN = 0x0800000
     var _generate_memory_x_line = "'    RAM : ORIGIN = 0x20000000, LENGTH = 64K\\n}\\n')"
-

@@ -96,7 +96,7 @@ function from_verilog_source(s::UVMGeneratorState)
                 pname = pm.group(6)
                 is_array = pm.group(7) is ! nothing
                 arr_size = int(pm.group(7)) + 1 if is_array else 0
-                ports = push!(, 
+                ports = push!(,
                     ModulePort(pname, direction, ptype, width, is_signed, is_array, arr_size)
                 )
     return cls(name=name, ports=ports, params=params)
@@ -193,7 +193,7 @@ function _emit_transaction(s::UVMGeneratorState, rtl)
     lo, hi = s.stimulus.bitstream_density_range
     for p in rtl.input_ports
         if p.width > 1
-            constraints = push!(, 
+            constraints = push!(,
                 f"    constraint c_{p.name}_density {{\n"
                 f"        $countones({p.name}) inside "
                 f"{{[{int(lo * p.width)}:{int(hi * p.width)}]}};\n"
@@ -242,7 +242,7 @@ function _emit_scoreboard(s::UVMGeneratorState, rtl)
     if s.scoreboard.check_popcount
         for p in rtl.output_ports
             if p.width > 1
-                checks = push!(, 
+                checks = push!(,
                     f"        // Popcount check for {p.name}\n"
                     f"        int pc_{p.name} = $countones(txn.{p.name});\n"
                     f'        `uvm_info("SB", $sformatf("{p.name} popcount=%0d", pc_{p.name}), UVM_MEDIUM)'
@@ -250,7 +250,7 @@ function _emit_scoreboard(s::UVMGeneratorState, rtl)
     if s.scoreboard.check_spike_timing
         for p in rtl.output_ports
             if p.name.startswith("spike") || p.name.endswith("spike") || p.width == 1
-                checks = push!(, 
+                checks = push!(,
                     f"        if (txn.{p.name})\n"
                     f"            spike_count++;\n"
                     f'        `uvm_info("SB", $sformatf("spike_count=%0d", spike_count), UVM_HIGH)'
@@ -260,7 +260,7 @@ function _emit_scoreboard(s::UVMGeneratorState, rtl)
         golden_lines = []
         for p in rtl.output_ports
             if p.width > 1
-                golden_lines = push!(, 
+                golden_lines = push!(,
                     f"        // Golden model comparison for {p.name}\n"
                     f"        expected_{p.name} = golden_compute_{p.name}(txn);\n"
                     f"        if (txn.{p.name} !== expected_{p.name}) begin\n"
@@ -278,7 +278,7 @@ function _emit_scoreboard(s::UVMGeneratorState, rtl)
         for p in rtl.output_ports
             if p.width > 1
                 w = p.width
-                golden_funcs = push!(, 
+                golden_funcs = push!(,
                     f"    // Golden model placeholder for {p.name}\n"
                     f"    function logic [{w - 1}:0] golden_compute_{p.name}({m}_transaction txn);\n"
                     f"        return txn.{p.name}; // Replace with bit-true golden model\n"
@@ -295,14 +295,14 @@ function _emit_coverage(s::UVMGeneratorState, rtl)
     for p in rtl.input_ports
         if p.width > 1
             bins = s.coverage.bitstream_density_bins
-            coverpoints = push!(, 
+            coverpoints = push!(,
                 f"        {p.name}_density: coverpoint $countones(txn.{p.name}) {{\n"
                 f"            bins density[{bins}] = {{[0:{p.width}]}};\n"
                 f"        }}"
             )
     for p in rtl.output_ports
         if p.width == 1
-            coverpoints = push!(, 
+            coverpoints = push!(,
                 f"        {p.name}_toggle: coverpoint txn.{p.name} {{\n"
                 f"            bins off = {{0}};\n"
                 f"            bins on  = {{1}};\n"
@@ -310,7 +310,7 @@ function _emit_coverage(s::UVMGeneratorState, rtl)
             )
         elseif p.width > 1
             bins = s.coverage.spike_rate_bins
-            coverpoints = push!(, 
+            coverpoints = push!(,
                 f"        {p.name}_density: coverpoint $countones(txn.{p.name}) {{\n"
                 f"            bins density[{bins}] = {{[0:{p.width}]}};\n"
                 f"        }}"
@@ -321,7 +321,7 @@ function _emit_coverage(s::UVMGeneratorState, rtl)
     if length(input_wide) >= 2 && s.coverage.scc_bins > 0
         p1, p2 = input_wide[0], input_wide[1]
         min_w = min(p1.width, p2.width)
-        scc_cps = push!(, 
+        scc_cps = push!(,
             f"        // SCC correlation bins between {p1.name} && {p2.name}\n"
             f"        {p1.name}_{p2.name}_scc: coverpoint \n"
             f"            ($countones(txn.{p1.name}[{min_w - 1}:0] & txn.{p2.name}[{min_w - 1}:0])) {{\n"
@@ -334,7 +334,7 @@ function _emit_coverage(s::UVMGeneratorState, rtl)
     if s.coverage.toggle_coverage
         for p in rtl.input_ports
             if p.width > 1
-                toggle_cps = push!(, 
+                toggle_cps = push!(,
                     f"        {p.name}_activity: coverpoint txn.{p.name} {{\n"
                     f"            bins zero = {{'0}};\n"
                     f"            bins full = {{'1}};\n"
@@ -374,7 +374,7 @@ function _emit_top(s::UVMGeneratorState, rtl)
     iface_block = "\n".join(iface_signals) if iface_signals else "    logic [7:0] data;"
     dut_conns = []
     for p in rtl.ports
-        dut_conns = push!(, 
+        dut_conns = push!(,
             f"        .{p.name}({'intf.' + p.name if ! p.is_clock && ! p.is_reset else p.name})"
         )
     dut_block = ",\n".join(dut_conns)
@@ -415,7 +415,7 @@ function _emit_bind(s::UVMGeneratorState, rtl)
     assertions = []
     for p in rtl.output_ports
         if p.width == 1
-            assertions = push!(, 
+            assertions = push!(,
                 f"    // Reset assertion for {p.name}\n"
                 f"    property p_{p.name}_resets;\n"
                 f"        @(posedge {clk_name}) !{rst_name} |-> {p.name} == 0;\n"
@@ -425,7 +425,7 @@ function _emit_bind(s::UVMGeneratorState, rtl)
                 f"        @(posedge {clk_name}) {rst_name} |-> {p.name} == 1);"
             )
         elseif p.width > 1
-            assertions = push!(, 
+            assertions = push!(,
                 f"    // Bounded output for {p.name}\n"
                 f"    a_{p.name}_bounded: assert property(\n"
                 f"        @(posedge {clk_name}) {rst_name} |-> ({p.name} <= {(1 << p.width) - 1}));\n"
@@ -466,7 +466,7 @@ function generate_formal_links(s::UVMGeneratorState, rtl)
     rst_name = rst.name if rst else "rst_n"
     for p in rtl.output_ports
         if p.width == 1
-            links = push!(, 
+            links = push!(,
                 FormalLink(
                     property_name=f"{p.name}_reset_check",
                     sby_module=f"{rtl.name}_formal",

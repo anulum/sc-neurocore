@@ -39,7 +39,7 @@ function summary(s::EnergyAccountantState)
     ]
     for le in s.layers
         pct = le.total_pj / max(s.total_energy_pj, 1e-12) * 100
-        lines = push!(, 
+        lines = push!(,
             f"  {le.name}: {le.total_pj:.1f} pJ ({pct:.0f}%) — "
             f"{le.n_synops} synops, {le.n_spikes} spikes"
         )
@@ -83,7 +83,7 @@ function account(s::EnergyAccountantState)
         # Memory: each synop reads a weight
         mem_read_e = n_synops * c.memory_read_pj
         total = synop_e + mem_e + spike_e + mem_read_e
-        report.layers = push!(, 
+        report.layers = push!(,
             LayerEnergy(
                 name=name,
                 synop_energy_pj=synop_e,

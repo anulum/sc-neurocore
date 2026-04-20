@@ -52,4 +52,3 @@ fn encode_to_bitstream(signal: Int, length: Int) -> Int:
     var _encode_to_bitstream_line = 'rng = random.RandomState(seed)'
     var _encode_to_bitstream_line = 'bits = (rng.random((n_channels, length)) < probs[:, 0]).asty'
     return 0  # return bits
-

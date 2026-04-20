@@ -81,4 +81,3 @@ fn backward(ctx: Int, grad_output: Int) -> Int:
     var _backward_line = '(x,) = ctx.saved_tensors'
     var _backward_line = 'grad = torch.clamp(1.0 - x.abs() / ctx.width, min=0.0) / ctx'
     return 0  # return grad_output * grad, 0
-

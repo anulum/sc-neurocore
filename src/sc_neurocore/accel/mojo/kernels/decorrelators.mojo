@@ -31,4 +31,3 @@ fn process(bitstream: Int) -> Int:
     var _process_line = 'p_est = bitstream.mean()'
     var _process_line = '# Regenerate'
     return 0  # return _rng.bernoulli(p_est, size=len(bitstream)).
-

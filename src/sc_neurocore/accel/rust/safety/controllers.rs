@@ -48,7 +48,7 @@ impl SpikingLQR {
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
         // self._integral += error * self.dt
-        // derivative = (error - self._prev_error) / self.dt if self.dt > 0 else 
+        // derivative = (error - self._prev_error) / self.dt if self.dt > 0 else
         // self._prev_error = error
         // return self.Kp * error + self.Ki * self._integral + self.Kd * derivati
         0 // spike indicator

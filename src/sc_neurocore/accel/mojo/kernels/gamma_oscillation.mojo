@@ -7,10 +7,10 @@
 # SC-NeuroCore — Mojo SIMD acceleration for gamma_oscillation
 #
 # Accelerator kernel for the PING gamma oscillation circuit.
-# Implements the step logic matching the conductance-based dynamics 
+# Implements the step logic matching the conductance-based dynamics
 # described in:
-# Börgers, C. & Kopell, N. (2003). Synchronization in Networks of 
-# Excitatory and Inhibitory Neurons with Sparse, Random Connectivity. 
+# Börgers, C. & Kopell, N. (2003). Synchronization in Networks of
+# Excitatory and Inhibitory Neurons with Sparse, Random Connectivity.
 # Neural Computation 15(3): 509-538.
 
 from memory import UnsafePointer
@@ -90,13 +90,13 @@ fn py_ping_step(
         var i_gaba_cur = -g_gaba_e[k] * (v_old - e_gaba)
         var i_total = i_leak + i_ampa_cur + i_gaba_cur + i_drive_e[k]
         var noise = sqrt_dt * sigma_e * xi_e[k]
-        
+
         var v_new: Float64 = v_old + i_total * dt_over_cm + noise
         if in_refrac:
             v_new = v_reset
-            
+
         var spk = (v_new >= v_threshold) and not in_refrac
-        
+
         if spk:
             v_e[k] = v_reset
             refrac_e[k] = t_refrac
@@ -110,7 +110,7 @@ fn py_ping_step(
             else:
                 refrac_e[k] = 0.0
             spikes_e_out[k] = 0
-            
+
     out_n_e_spikes[] = n_e
 
     var n_i: UInt32 = 0
@@ -122,13 +122,13 @@ fn py_ping_step(
         var i_gaba_cur = -g_gaba_i[k] * (v_old - e_gaba)
         var i_total = i_leak + i_ampa_cur + i_gaba_cur + i_drive_i[k]
         var noise = sqrt_dt * sigma_i * xi_i[k]
-        
+
         var v_new: Float64 = v_old + i_total * dt_over_cm + noise
         if in_refrac:
             v_new = v_reset
-            
+
         var spk = (v_new >= v_threshold) and not in_refrac
-        
+
         if spk:
             v_i[k] = v_reset
             refrac_i[k] = t_refrac
@@ -142,5 +142,5 @@ fn py_ping_step(
             else:
                 refrac_i[k] = 0.0
             spikes_i_out[k] = 0
-            
+
     out_n_i_spikes[] = n_i

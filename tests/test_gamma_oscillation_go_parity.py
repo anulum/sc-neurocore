@@ -14,6 +14,7 @@ from sc_neurocore.network.gamma_oscillation import (
     PINGCircuit,
 )
 
+
 @pytest.mark.skipif(
     not _HAS_GO_PING_STEP,
     reason="Go kernel libgamma_oscillation.so not built",

@@ -29,4 +29,3 @@ fn _ffn(token: Int) -> Int:
     var __ffn_line = 'vals = token.tolist() if hasattr(token, "tolist") else token'
     var __ffn_line = 'h = clip(ffn_1.forward(vals), 0.0, 1.0)  # type: ignore[arg-'
     return 0  # return ffn_2.forward(h.tolist() if hasattr(h, "tol
-

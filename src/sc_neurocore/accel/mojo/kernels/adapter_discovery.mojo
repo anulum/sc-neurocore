@@ -21,4 +21,3 @@ fn discover_adapters() -> Int:
     var _discover_adapters_line = 'except (ImportError, KeyError, AttributeError):'
     var _discover_adapters_line = 'continue'
     return 0  # return found
-

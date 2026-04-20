@@ -55,4 +55,3 @@ fn run_demo() -> Int:
     var _run_demo_line = 'res = mem.query(v1)  # Should match cat'
     var _run_demo_line = 'print(f"    Query(v1) => {res}")'
     return 0
-

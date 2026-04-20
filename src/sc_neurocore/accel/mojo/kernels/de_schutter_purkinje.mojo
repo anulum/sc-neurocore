@@ -39,4 +39,3 @@ fn reset() -> Int:
     var _reset_line = 'h_na, n_k, m_cap, h_cap, q_kca = 0.8, 0.1, 0.0, 0.9, 0.0'
     var _reset_line = 'ca = 0.0001'
     return 0
-

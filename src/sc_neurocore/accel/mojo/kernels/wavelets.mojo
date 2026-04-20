@@ -40,4 +40,3 @@ fn spike_wavelet_decompose(spikes: Int, n_scales: Int, base_window: Int) -> Int:
     var _spike_wavelet_decompose_line = 'binary_band = (band > threshold).astype(int8)'
     var _spike_wavelet_decompose_line = 'scales.append(binary_band[:, 0] if squeeze else binary_band)'
     return 0  # return scales
-

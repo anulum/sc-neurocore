@@ -30,4 +30,3 @@ func GetBandPowers() {
 func Reset() {
 	// Go-accelerated reset
 }
-

@@ -39,4 +39,3 @@ fn max_neurons(board: Int) -> Int:
     var _max_neurons_line = 'if ram <= overhead:'
     return 0  # return 0
     return 0  # return (ram - overhead) // 12
-

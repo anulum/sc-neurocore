@@ -192,4 +192,3 @@ fn _enforce_symmetry() -> Int:
     var __enforce_symmetry_line = 'data[k2] = avg'
     var __enforce_symmetry_line = 'break'
     return 0
-

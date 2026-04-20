@@ -8,7 +8,7 @@
  *****************************************************************************/
 
 
-/* local */ 
+/* local */
 parameter m_axi_gp0_baseaddr = 32'h4000_0000;
 parameter m_axi_gp1_baseaddr = 32'h8000_0000;
 parameter m_axi_gp0_highaddr = 32'h7FFF_FFFF;
@@ -22,16 +22,16 @@ parameter shft_addr_bits = clogb2(mem_width); /// Address to be right shifted
 parameter int_width  = 32; //integre width
 
 /* for internal read/write APIs used for data transfers */
-parameter max_burst_len   = 16;  /// maximum brst length on axi 
-parameter max_data_width  = 64; // maximum data width for internal AXI bursts 
-parameter max_burst_bits  = (max_data_width * max_burst_len); // maximum data width for internal AXI bursts 
-parameter max_burst_bytes = (max_burst_bits)/8;                // maximum data bytes in each transfer 
-parameter max_burst_bytes_width = clogb2(max_burst_bytes); // maximum data width for internal AXI bursts 
+parameter max_burst_len   = 16;  /// maximum brst length on axi
+parameter max_data_width  = 64; // maximum data width for internal AXI bursts
+parameter max_burst_bits  = (max_data_width * max_burst_len); // maximum data width for internal AXI bursts
+parameter max_burst_bytes = (max_burst_bits)/8;                // maximum data bytes in each transfer
+parameter max_burst_bytes_width = clogb2(max_burst_bytes); // maximum data width for internal AXI bursts
 
 parameter max_registers   = 32;
 parameter max_regs_width  = clogb2(max_registers);
 
-parameter REG_MEM = 2'b00, DDR_MEM = 2'b01, OCM_MEM = 2'b10, INVALID_MEM_TYPE = 2'b11; 
+parameter REG_MEM = 2'b00, DDR_MEM = 2'b01, OCM_MEM = 2'b10, INVALID_MEM_TYPE = 2'b11;
 
 /* Interrupt bits supported */
 parameter irq_width = 16;
@@ -147,11 +147,11 @@ endfunction
   // parameter wr_data_msb  = wr_data_lsb + (data_bus_width*axi_burst_len)-1;
   // parameter wr_qos_lsb   = wr_data_msb + 1;
   // `parameter wr_qos_msb   = wr_qos_lsb + axi_qos_width-1;
- 
-  /* WR AFI FIFO data */ 
+
+  /* WR AFI FIFO data */
     /* ID -  1071:1066
      Resp - 1065:1064
-     data - 1063:40   
+     data - 1063:40
      address - 39:8
      valid_bytes - 7:0
     */
@@ -161,16 +161,16 @@ endfunction
   // parameter wr_afi_addr_lsb  = wr_afi_bytes_msb + 1;
   // parameter wr_afi_addr_msb  = wr_afi_addr_lsb + addr_width-1;
   // parameter wr_afi_data_lsb  = wr_afi_addr_msb + 1;
-  // parameter wr_afi_rsp_msb   = wr_afi_rsp_lsb + axi_rsp_width-1; 
-  // parameter wr_afi_id_lsb    = wr_afi_rsp_msb + 1; 
-  // parameter wr_afi_id_msb    = wr_afi_id_lsb + axi_hp_id_width-1; 
+  // parameter wr_afi_rsp_msb   = wr_afi_rsp_lsb + axi_rsp_width-1;
+  // parameter wr_afi_id_lsb    = wr_afi_rsp_msb + 1;
+  // parameter wr_afi_id_msb    = wr_afi_id_lsb + axi_hp_id_width-1;
   // parameter wr_afi_ln_lsb    = wr_afi_id_msb + 1;
   // parameter wr_afi_ln_msb    = wr_afi_ln_lsb + axi_len_width-1;
   // parameter wr_afi_qos_lsb   = wr_afi_ln_msb + 1;
   // parameter wr_afi_qos_msb   = wr_afi_qos_lsb + axi_qos_width-1;
 
 
-  parameter afi_fifo_size    = 1024; /// AFI FIFO is stored as 1024-bytes 
+  parameter afi_fifo_size    = 1024; /// AFI FIFO is stored as 1024-bytes
   parameter afi_fifo_databits = 64; /// AFI FIFO is stored as 64-bits i.e 8 bytes per location (8 bytes(64-bits) * 128 locations = 1024 bytes)
   parameter afi_fifo_locations= afi_fifo_size/(afi_fifo_databits/8); /// AFI FIFO is stored as 128-locations with 8 bytes per location
 
@@ -183,10 +183,10 @@ endfunction
   //Read Burst Data, addr, size, burst, len, RID, RRESP, valid bytes
   parameter rd_afi_bytes_lsb = 0;
   parameter rd_afi_bytes_msb = max_burst_bytes_width;
-  parameter rd_afi_rsp_lsb   = rd_afi_bytes_msb + 1; 
-  parameter rd_afi_rsp_msb   = rd_afi_rsp_lsb + axi_rsp_width-1; 
-  parameter rd_afi_id_lsb    = rd_afi_rsp_msb + 1; 
-  parameter rd_afi_id_msb    = rd_afi_id_lsb + axi_hp_id_width-1; 
+  parameter rd_afi_rsp_lsb   = rd_afi_bytes_msb + 1;
+  parameter rd_afi_rsp_msb   = rd_afi_rsp_lsb + axi_rsp_width-1;
+  parameter rd_afi_id_lsb    = rd_afi_rsp_msb + 1;
+  parameter rd_afi_id_msb    = rd_afi_id_lsb + axi_hp_id_width-1;
   parameter rd_afi_ln_lsb    = rd_afi_id_msb + 1;
   parameter rd_afi_ln_msb    = rd_afi_ln_lsb + axi_len_width-1;
   parameter rd_afi_brst_lsb  = rd_afi_ln_msb + 1;
@@ -196,7 +196,7 @@ endfunction
   parameter rd_afi_addr_lsb  = rd_afi_siz_msb + 1;
   parameter rd_afi_addr_msb  = rd_afi_addr_lsb + addr_width-1;
   parameter rd_afi_data_lsb  = rd_afi_addr_msb + 1;
-  parameter rd_afi_data_msb  = rd_afi_data_lsb + max_burst_bits-1; 
+  parameter rd_afi_data_msb  = rd_afi_data_lsb + max_burst_bits-1;
 
 
 /* Latency types */
@@ -211,7 +211,7 @@ endfunction
   parameter acp_wr_max   =  27;
   parameter acp_rd_min   =  34;
   parameter acp_rd_avg   =  125;
-  parameter acp_rd_max   =  130; 
+  parameter acp_rd_max   =  130;
 
 /* Latency Parameters GP  */
   parameter gp_wr_min   =  21;
@@ -219,7 +219,7 @@ endfunction
   parameter gp_wr_max   =  46;
   parameter gp_rd_min   =  38;
   parameter gp_rd_avg   =  125;
-  parameter gp_rd_max   =  130; 
+  parameter gp_rd_max   =  130;
 
 /* Latency Parameters HP  */
   parameter afi_wr_min  =  37;
@@ -227,7 +227,7 @@ endfunction
   parameter afi_wr_max  =  42;
   parameter afi_rd_min  =  41;
   parameter afi_rd_avg  =  221;
-  parameter afi_rd_max  =  229; 
+  parameter afi_rd_max  =  229;
 
 /* ID VALID and INVALID */
   parameter secure_access_enabled = 0;
@@ -241,4 +241,3 @@ endfunction
   parameter DISP_INT_INFO = "ZYNQ_VIP_INT_INFO";
 
   parameter all_strb_valid = 2048'hFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-

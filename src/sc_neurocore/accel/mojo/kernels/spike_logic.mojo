@@ -101,4 +101,3 @@ fn shift_left(a: Int, n: Int) -> Int:
 
 fn shift_right(a: Int, n: Int) -> Int:
     return 0  # return a >> n
-

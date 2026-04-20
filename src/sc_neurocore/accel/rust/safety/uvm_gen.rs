@@ -82,7 +82,7 @@ impl UVMGenerator {
         // signed = " signed" if self.is_signed else ""
         // width = f" [{self.width - 1}:0]" if self.width > 1 else ""
         // arr = f" [0:{self.array_size - 1}]" if self.is_array else ""
-        // return f"{self.direction.value} {self.port_type.value}{signed}{width} 
+        // return f"{self.direction.value} {self.port_type.value}{signed}{width}
         0.0
     }
 
@@ -231,7 +231,7 @@ impl UVMGenerator {
         // drive_lines = []
         // for p in rtl.input_ports:
         // drive_lines.append(f"            vif.{p.name} <= txn.{p.name};")
-        // drive_block = "\n".join(drive_lines) if drive_lines else "            
+        // drive_block = "\n".join(drive_lines) if drive_lines else "
         0.0
     }
 

@@ -70,7 +70,7 @@ pub fn nullclines_2d(equations: f64, params: f64, var_names: f64, ranges: f64, g
     // x = linspace(r0[0], r0[1], grid_size)
     // y = linspace(r1[0], r1[1], grid_size)
     // X, Y = meshgrid(x, y)
-    // neuron = from_equations(*equations, params=params, init={v0: 0.0, v1: 
+    // neuron = from_equations(*equations, params=params, init={v0: 0.0, v1:
     // dv0 = zeros_like(X)
     // dv1 = zeros_like(X)
     // compiled_eq0 = neuron._compiled_eqs[v0]
@@ -190,4 +190,3 @@ pub fn q88(val: f64) -> f64 {
     // return max(-128.0, min(127.996, quantized))
     0.0
 }
-

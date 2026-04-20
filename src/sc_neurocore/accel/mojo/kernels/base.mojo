@@ -21,4 +21,3 @@ fn decode(bitstreams: Int) -> Int:
 fn get_metrics() -> Int:
     var _get_metrics_line = '...'
     return 0
-

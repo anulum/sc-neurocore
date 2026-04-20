@@ -46,4 +46,3 @@ fn get_metrics() -> Int:
     var _get_metrics_line = '"avg_brane_alignment": float(jmean(brane_alignment)),'
     var _get_metrics_line = '"resonance_sharpness": float(jmean(resonance_intensity)),'
     var _get_metrics_line = '}'
-

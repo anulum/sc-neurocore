@@ -13,7 +13,7 @@
 // --------------------------------------------------------------------------------
 `timescale 1 ps / 1 ps
 
-(* CHECK_LICENSE_TYPE = "system_rst_ps7_0_50M_0,proc_sys_reset,{}" *) (* downgradeipidentifiedwarnings = "yes" *) (* x_core_info = "proc_sys_reset,Vivado 2025.2" *) 
+(* CHECK_LICENSE_TYPE = "system_rst_ps7_0_50M_0,proc_sys_reset,{}" *) (* downgradeipidentifiedwarnings = "yes" *) (* x_core_info = "proc_sys_reset,Vivado 2025.2" *)
 (* NotValidForBitStream *)
 module system_rst_ps7_0_50M_0
    (slowest_sync_clk,
@@ -48,15 +48,15 @@ module system_rst_ps7_0_50M_0
   wire [0:0]peripheral_reset;
   wire slowest_sync_clk;
 
-  (* C_AUX_RESET_HIGH = "1'b0" *) 
-  (* C_AUX_RST_WIDTH = "4" *) 
-  (* C_EXT_RESET_HIGH = "1'b0" *) 
-  (* C_EXT_RST_WIDTH = "4" *) 
-  (* C_FAMILY = "zynq" *) 
-  (* C_NUM_BUS_RST = "1" *) 
-  (* C_NUM_INTERCONNECT_ARESETN = "1" *) 
-  (* C_NUM_PERP_ARESETN = "1" *) 
-  (* C_NUM_PERP_RST = "1" *) 
+  (* C_AUX_RESET_HIGH = "1'b0" *)
+  (* C_AUX_RST_WIDTH = "4" *)
+  (* C_EXT_RESET_HIGH = "1'b0" *)
+  (* C_EXT_RST_WIDTH = "4" *)
+  (* C_FAMILY = "zynq" *)
+  (* C_NUM_BUS_RST = "1" *)
+  (* C_NUM_INTERCONNECT_ARESETN = "1" *)
+  (* C_NUM_PERP_ARESETN = "1" *)
+  (* C_NUM_PERP_RST = "1" *)
   system_rst_ps7_0_50M_0_proc_sys_reset U0
        (.aux_reset_in(aux_reset_in),
         .bus_struct_reset(bus_struct_reset),
@@ -70,7 +70,7 @@ module system_rst_ps7_0_50M_0
         .slowest_sync_clk(slowest_sync_clk));
 endmodule
 
-(* ORIG_REF_NAME = "lpf" *) 
+(* ORIG_REF_NAME = "lpf" *)
 module system_rst_ps7_0_50M_0_lpf
    (lpf_int,
     slowest_sync_clk,
@@ -108,95 +108,95 @@ module system_rst_ps7_0_50M_0_lpf
   wire p_3_in1_in;
   wire slowest_sync_clk;
 
-  (* DEST_SYNC_FF = "4" *) 
-  (* INIT_SYNC_FF = "0" *) 
-  (* SIM_ASSERT_CHK = "0" *) 
-  (* SRC_INPUT_REG = "0" *) 
-  (* VERSION = "0" *) 
-  (* XPM_CDC = "SINGLE" *) 
-  (* XPM_MODULE = "TRUE" *) 
-  system_rst_ps7_0_50M_0_xpm_cdc_single \ACTIVE_LOW_AUX.ACT_LO_AUX 
+  (* DEST_SYNC_FF = "4" *)
+  (* INIT_SYNC_FF = "0" *)
+  (* SIM_ASSERT_CHK = "0" *)
+  (* SRC_INPUT_REG = "0" *)
+  (* VERSION = "0" *)
+  (* XPM_CDC = "SINGLE" *)
+  (* XPM_MODULE = "TRUE" *)
+  system_rst_ps7_0_50M_0_xpm_cdc_single \ACTIVE_LOW_AUX.ACT_LO_AUX
        (.dest_clk(slowest_sync_clk),
         .dest_out(p_3_in1_in),
         .src_clk(1'b1),
         .src_in(asr_d1));
   LUT1 #(
-    .INIT(2'h1)) 
-    \ACTIVE_LOW_AUX.ACT_LO_AUX_i_1 
+    .INIT(2'h1))
+    \ACTIVE_LOW_AUX.ACT_LO_AUX_i_1
        (.I0(aux_reset_in),
         .O(asr_d1));
-  (* DEST_SYNC_FF = "4" *) 
-  (* INIT_SYNC_FF = "0" *) 
-  (* SIM_ASSERT_CHK = "0" *) 
-  (* SRC_INPUT_REG = "0" *) 
-  (* VERSION = "0" *) 
-  (* XPM_CDC = "SINGLE" *) 
-  (* XPM_MODULE = "TRUE" *) 
-  system_rst_ps7_0_50M_0_xpm_cdc_single__1 \ACTIVE_LOW_EXT.ACT_LO_EXT 
+  (* DEST_SYNC_FF = "4" *)
+  (* INIT_SYNC_FF = "0" *)
+  (* SIM_ASSERT_CHK = "0" *)
+  (* SRC_INPUT_REG = "0" *)
+  (* VERSION = "0" *)
+  (* XPM_CDC = "SINGLE" *)
+  (* XPM_MODULE = "TRUE" *)
+  system_rst_ps7_0_50M_0_xpm_cdc_single__1 \ACTIVE_LOW_EXT.ACT_LO_EXT
        (.dest_clk(slowest_sync_clk),
         .dest_out(dest_out),
         .src_clk(1'b1),
         .src_in(exr_d1));
   LUT2 #(
-    .INIT(4'hB)) 
-    \ACTIVE_LOW_EXT.ACT_LO_EXT_i_1 
+    .INIT(4'hB))
+    \ACTIVE_LOW_EXT.ACT_LO_EXT_i_1
        (.I0(mb_debug_sys_rst),
         .I1(ext_reset_in),
         .O(exr_d1));
   FDRE #(
-    .INIT(1'b0)) 
-    \AUX_LPF[1].asr_lpf_reg[1] 
+    .INIT(1'b0))
+    \AUX_LPF[1].asr_lpf_reg[1]
        (.C(slowest_sync_clk),
         .CE(1'b1),
         .D(p_3_in1_in),
         .Q(p_2_in),
         .R(1'b0));
   FDRE #(
-    .INIT(1'b0)) 
-    \AUX_LPF[2].asr_lpf_reg[2] 
+    .INIT(1'b0))
+    \AUX_LPF[2].asr_lpf_reg[2]
        (.C(slowest_sync_clk),
         .CE(1'b1),
         .D(p_2_in),
         .Q(p_1_in),
         .R(1'b0));
   FDRE #(
-    .INIT(1'b0)) 
-    \AUX_LPF[3].asr_lpf_reg[3] 
+    .INIT(1'b0))
+    \AUX_LPF[3].asr_lpf_reg[3]
        (.C(slowest_sync_clk),
         .CE(1'b1),
         .D(p_1_in),
         .Q(\AUX_LPF[3].asr_lpf_reg_n_0_[3] ),
         .R(1'b0));
   FDRE #(
-    .INIT(1'b0)) 
-    \EXT_LPF[1].exr_lpf_reg[1] 
+    .INIT(1'b0))
+    \EXT_LPF[1].exr_lpf_reg[1]
        (.C(slowest_sync_clk),
         .CE(1'b1),
         .D(dest_out),
         .Q(p_2_in3_in),
         .R(1'b0));
   FDRE #(
-    .INIT(1'b0)) 
-    \EXT_LPF[2].exr_lpf_reg[2] 
+    .INIT(1'b0))
+    \EXT_LPF[2].exr_lpf_reg[2]
        (.C(slowest_sync_clk),
         .CE(1'b1),
         .D(p_2_in3_in),
         .Q(p_1_in4_in),
         .R(1'b0));
   FDRE #(
-    .INIT(1'b0)) 
-    \EXT_LPF[3].exr_lpf_reg[3] 
+    .INIT(1'b0))
+    \EXT_LPF[3].exr_lpf_reg[3]
        (.C(slowest_sync_clk),
         .CE(1'b1),
         .D(p_1_in4_in),
         .Q(\EXT_LPF[3].exr_lpf_reg_n_0_[3] ),
         .R(1'b0));
-  (* BOX_TYPE = "PRIMITIVE" *) 
-  (* XILINX_LEGACY_PRIM = "SRL16" *) 
-  (* XILINX_TRANSFORM_PINMAP = "VCC:CE" *) 
-  (* srl_name = "U0/\\EXT_LPF/POR_SRL_I " *) 
+  (* BOX_TYPE = "PRIMITIVE" *)
+  (* XILINX_LEGACY_PRIM = "SRL16" *)
+  (* XILINX_TRANSFORM_PINMAP = "VCC:CE" *)
+  (* srl_name = "U0/\\EXT_LPF/POR_SRL_I " *)
   SRL16E #(
-    .INIT(16'hFFFF)) 
+    .INIT(16'hFFFF))
     POR_SRL_I
        (.A0(1'b1),
         .A1(1'b1),
@@ -207,7 +207,7 @@ module system_rst_ps7_0_50M_0_lpf
         .D(1'b0),
         .Q(Q));
   LUT5 #(
-    .INIT(32'hEAAAAAA8)) 
+    .INIT(32'hEAAAAAA8))
     lpf_asr_i_1
        (.I0(lpf_asr),
         .I1(p_1_in),
@@ -216,7 +216,7 @@ module system_rst_ps7_0_50M_0_lpf
         .I4(\AUX_LPF[3].asr_lpf_reg_n_0_[3] ),
         .O(lpf_asr_i_1_n_0));
   FDRE #(
-    .INIT(1'b0)) 
+    .INIT(1'b0))
     lpf_asr_reg
        (.C(slowest_sync_clk),
         .CE(1'b1),
@@ -224,7 +224,7 @@ module system_rst_ps7_0_50M_0_lpf
         .Q(lpf_asr),
         .R(1'b0));
   LUT5 #(
-    .INIT(32'hEAAAAAA8)) 
+    .INIT(32'hEAAAAAA8))
     lpf_exr_i_1
        (.I0(lpf_exr),
         .I1(p_1_in4_in),
@@ -233,7 +233,7 @@ module system_rst_ps7_0_50M_0_lpf
         .I4(\EXT_LPF[3].exr_lpf_reg_n_0_[3] ),
         .O(lpf_exr_i_1_n_0));
   FDRE #(
-    .INIT(1'b0)) 
+    .INIT(1'b0))
     lpf_exr_reg
        (.C(slowest_sync_clk),
         .CE(1'b1),
@@ -241,7 +241,7 @@ module system_rst_ps7_0_50M_0_lpf
         .Q(lpf_exr),
         .R(1'b0));
   LUT4 #(
-    .INIT(16'hFFFD)) 
+    .INIT(16'hFFFD))
     lpf_int0
        (.I0(dcm_locked),
         .I1(lpf_exr),
@@ -249,7 +249,7 @@ module system_rst_ps7_0_50M_0_lpf
         .I3(Q),
         .O(lpf_int0__0));
   FDRE #(
-    .INIT(1'b0)) 
+    .INIT(1'b0))
     lpf_int_reg
        (.C(slowest_sync_clk),
         .CE(1'b1),
@@ -258,10 +258,10 @@ module system_rst_ps7_0_50M_0_lpf
         .R(1'b0));
 endmodule
 
-(* C_AUX_RESET_HIGH = "1'b0" *) (* C_AUX_RST_WIDTH = "4" *) (* C_EXT_RESET_HIGH = "1'b0" *) 
-(* C_EXT_RST_WIDTH = "4" *) (* C_FAMILY = "zynq" *) (* C_NUM_BUS_RST = "1" *) 
-(* C_NUM_INTERCONNECT_ARESETN = "1" *) (* C_NUM_PERP_ARESETN = "1" *) (* C_NUM_PERP_RST = "1" *) 
-(* ORIG_REF_NAME = "proc_sys_reset" *) 
+(* C_AUX_RESET_HIGH = "1'b0" *) (* C_AUX_RST_WIDTH = "4" *) (* C_EXT_RESET_HIGH = "1'b0" *)
+(* C_EXT_RST_WIDTH = "4" *) (* C_FAMILY = "zynq" *) (* C_NUM_BUS_RST = "1" *)
+(* C_NUM_INTERCONNECT_ARESETN = "1" *) (* C_NUM_PERP_ARESETN = "1" *) (* C_NUM_PERP_RST = "1" *)
+(* ORIG_REF_NAME = "proc_sys_reset" *)
 module system_rst_ps7_0_50M_0_proc_sys_reset
    (slowest_sync_clk,
     ext_reset_in,
@@ -301,37 +301,37 @@ module system_rst_ps7_0_50M_0_proc_sys_reset
   wire [0:0]peripheral_reset;
   wire slowest_sync_clk;
 
-  (* BOX_TYPE = "PRIMITIVE" *) 
+  (* BOX_TYPE = "PRIMITIVE" *)
   FDRE #(
     .INIT(1'b0),
     .IS_C_INVERTED(1'b0),
     .IS_D_INVERTED(1'b0),
-    .IS_R_INVERTED(1'b0)) 
-    \ACTIVE_LOW_BSR_OUT_DFF[0].FDRE_BSR_N 
+    .IS_R_INVERTED(1'b0))
+    \ACTIVE_LOW_BSR_OUT_DFF[0].FDRE_BSR_N
        (.C(slowest_sync_clk),
         .CE(1'b1),
         .D(SEQ_n_3),
         .Q(interconnect_aresetn),
         .R(1'b0));
-  (* BOX_TYPE = "PRIMITIVE" *) 
+  (* BOX_TYPE = "PRIMITIVE" *)
   FDRE #(
     .INIT(1'b0),
     .IS_C_INVERTED(1'b0),
     .IS_D_INVERTED(1'b0),
-    .IS_R_INVERTED(1'b0)) 
-    \ACTIVE_LOW_PR_OUT_DFF[0].FDRE_PER_N 
+    .IS_R_INVERTED(1'b0))
+    \ACTIVE_LOW_PR_OUT_DFF[0].FDRE_PER_N
        (.C(slowest_sync_clk),
         .CE(1'b1),
         .D(SEQ_n_4),
         .Q(peripheral_aresetn),
         .R(1'b0));
-  (* BOX_TYPE = "PRIMITIVE" *) 
+  (* BOX_TYPE = "PRIMITIVE" *)
   FDRE #(
     .INIT(1'b1),
     .IS_C_INVERTED(1'b0),
     .IS_D_INVERTED(1'b0),
-    .IS_R_INVERTED(1'b0)) 
-    \BSR_OUT_DFF[0].FDRE_BSR 
+    .IS_R_INVERTED(1'b0))
+    \BSR_OUT_DFF[0].FDRE_BSR
        (.C(slowest_sync_clk),
         .CE(1'b1),
         .D(Bsr_out),
@@ -344,25 +344,25 @@ module system_rst_ps7_0_50M_0_proc_sys_reset
         .lpf_int(lpf_int),
         .mb_debug_sys_rst(mb_debug_sys_rst),
         .slowest_sync_clk(slowest_sync_clk));
-  (* BOX_TYPE = "PRIMITIVE" *) 
+  (* BOX_TYPE = "PRIMITIVE" *)
   FDRE #(
     .INIT(1'b1),
     .IS_C_INVERTED(1'b0),
     .IS_D_INVERTED(1'b0),
-    .IS_R_INVERTED(1'b0)) 
+    .IS_R_INVERTED(1'b0))
     FDRE_inst
        (.C(slowest_sync_clk),
         .CE(1'b1),
         .D(MB_out),
         .Q(mb_reset),
         .R(1'b0));
-  (* BOX_TYPE = "PRIMITIVE" *) 
+  (* BOX_TYPE = "PRIMITIVE" *)
   FDRE #(
     .INIT(1'b1),
     .IS_C_INVERTED(1'b0),
     .IS_D_INVERTED(1'b0),
-    .IS_R_INVERTED(1'b0)) 
-    \PR_OUT_DFF[0].FDRE_PER 
+    .IS_R_INVERTED(1'b0))
+    \PR_OUT_DFF[0].FDRE_PER
        (.C(slowest_sync_clk),
         .CE(1'b1),
         .D(Pr_out),
@@ -378,7 +378,7 @@ module system_rst_ps7_0_50M_0_proc_sys_reset
         .slowest_sync_clk(slowest_sync_clk));
 endmodule
 
-(* ORIG_REF_NAME = "sequence_psr" *) 
+(* ORIG_REF_NAME = "sequence_psr" *)
 module system_rst_ps7_0_50M_0_sequence_psr
    (MB_out,
     Bsr_out,
@@ -422,27 +422,27 @@ module system_rst_ps7_0_50M_0_sequence_psr
   wire seq_cnt_en;
   wire slowest_sync_clk;
 
-  (* SOFT_HLUTNM = "soft_lutpair4" *) 
+  (* SOFT_HLUTNM = "soft_lutpair4" *)
   LUT1 #(
-    .INIT(2'h1)) 
-    \ACTIVE_LOW_BSR_OUT_DFF[0].FDRE_BSR_N_i_1 
+    .INIT(2'h1))
+    \ACTIVE_LOW_BSR_OUT_DFF[0].FDRE_BSR_N_i_1
        (.I0(Bsr_out),
         .O(bsr_reg_0));
-  (* SOFT_HLUTNM = "soft_lutpair5" *) 
+  (* SOFT_HLUTNM = "soft_lutpair5" *)
   LUT1 #(
-    .INIT(2'h1)) 
-    \ACTIVE_LOW_PR_OUT_DFF[0].FDRE_PER_N_i_1 
+    .INIT(2'h1))
+    \ACTIVE_LOW_PR_OUT_DFF[0].FDRE_PER_N_i_1
        (.I0(Pr_out),
         .O(pr_reg_0));
-  (* SOFT_HLUTNM = "soft_lutpair3" *) 
+  (* SOFT_HLUTNM = "soft_lutpair3" *)
   LUT2 #(
-    .INIT(4'h2)) 
+    .INIT(4'h2))
     Core_i_1
        (.I0(MB_out),
         .I1(\core_dec_reg_n_0_[2] ),
         .O(Core_i_1_n_0));
   FDSE #(
-    .INIT(1'b1)) 
+    .INIT(1'b1))
     Core_reg
        (.C(slowest_sync_clk),
         .CE(1'b1),
@@ -454,102 +454,102 @@ module system_rst_ps7_0_50M_0_sequence_psr
         .seq_clr(seq_clr),
         .seq_cnt_en(seq_cnt_en),
         .slowest_sync_clk(slowest_sync_clk));
-  (* SOFT_HLUTNM = "soft_lutpair2" *) 
+  (* SOFT_HLUTNM = "soft_lutpair2" *)
   LUT4 #(
-    .INIT(16'h0090)) 
-    \bsr_dec[0]_i_1 
+    .INIT(16'h0090))
+    \bsr_dec[0]_i_1
        (.I0(seq_cnt_en),
         .I1(seq_cnt[4]),
         .I2(seq_cnt[3]),
         .I3(seq_cnt[5]),
         .O(p_5_out[0]));
-  (* SOFT_HLUTNM = "soft_lutpair6" *) 
+  (* SOFT_HLUTNM = "soft_lutpair6" *)
   LUT2 #(
-    .INIT(4'h8)) 
-    \bsr_dec[2]_i_1 
+    .INIT(4'h8))
+    \bsr_dec[2]_i_1
        (.I0(\core_dec_reg_n_0_[1] ),
         .I1(\bsr_dec_reg_n_0_[0] ),
         .O(p_5_out[2]));
   FDRE #(
-    .INIT(1'b0)) 
-    \bsr_dec_reg[0] 
+    .INIT(1'b0))
+    \bsr_dec_reg[0]
        (.C(slowest_sync_clk),
         .CE(1'b1),
         .D(p_5_out[0]),
         .Q(\bsr_dec_reg_n_0_[0] ),
         .R(1'b0));
   FDRE #(
-    .INIT(1'b0)) 
-    \bsr_dec_reg[2] 
+    .INIT(1'b0))
+    \bsr_dec_reg[2]
        (.C(slowest_sync_clk),
         .CE(1'b1),
         .D(p_5_out[2]),
         .Q(\bsr_dec_reg_n_0_[2] ),
         .R(1'b0));
-  (* SOFT_HLUTNM = "soft_lutpair4" *) 
+  (* SOFT_HLUTNM = "soft_lutpair4" *)
   LUT2 #(
-    .INIT(4'h2)) 
+    .INIT(4'h2))
     bsr_i_1
        (.I0(Bsr_out),
         .I1(\bsr_dec_reg_n_0_[2] ),
         .O(bsr_i_1_n_0));
   FDSE #(
-    .INIT(1'b1)) 
+    .INIT(1'b1))
     bsr_reg
        (.C(slowest_sync_clk),
         .CE(1'b1),
         .D(bsr_i_1_n_0),
         .Q(Bsr_out),
         .S(lpf_int));
-  (* SOFT_HLUTNM = "soft_lutpair2" *) 
+  (* SOFT_HLUTNM = "soft_lutpair2" *)
   LUT4 #(
-    .INIT(16'h9000)) 
-    \core_dec[0]_i_1 
+    .INIT(16'h9000))
+    \core_dec[0]_i_1
        (.I0(seq_cnt_en),
         .I1(seq_cnt[4]),
         .I2(seq_cnt[3]),
         .I3(seq_cnt[5]),
         .O(\core_dec[0]_i_1_n_0 ));
-  (* SOFT_HLUTNM = "soft_lutpair6" *) 
+  (* SOFT_HLUTNM = "soft_lutpair6" *)
   LUT2 #(
-    .INIT(4'h8)) 
-    \core_dec[2]_i_1 
+    .INIT(4'h8))
+    \core_dec[2]_i_1
        (.I0(\core_dec_reg_n_0_[1] ),
         .I1(\core_dec_reg_n_0_[0] ),
         .O(\core_dec[2]_i_1_n_0 ));
   FDRE #(
-    .INIT(1'b0)) 
-    \core_dec_reg[0] 
+    .INIT(1'b0))
+    \core_dec_reg[0]
        (.C(slowest_sync_clk),
         .CE(1'b1),
         .D(\core_dec[0]_i_1_n_0 ),
         .Q(\core_dec_reg_n_0_[0] ),
         .R(1'b0));
   FDRE #(
-    .INIT(1'b0)) 
-    \core_dec_reg[1] 
+    .INIT(1'b0))
+    \core_dec_reg[1]
        (.C(slowest_sync_clk),
         .CE(1'b1),
         .D(pr_dec0__0),
         .Q(\core_dec_reg_n_0_[1] ),
         .R(1'b0));
   FDRE #(
-    .INIT(1'b0)) 
-    \core_dec_reg[2] 
+    .INIT(1'b0))
+    \core_dec_reg[2]
        (.C(slowest_sync_clk),
         .CE(1'b1),
         .D(\core_dec[2]_i_1_n_0 ),
         .Q(\core_dec_reg_n_0_[2] ),
         .R(1'b0));
-  (* SOFT_HLUTNM = "soft_lutpair3" *) 
+  (* SOFT_HLUTNM = "soft_lutpair3" *)
   LUT2 #(
-    .INIT(4'h8)) 
+    .INIT(4'h8))
     from_sys_i_1
        (.I0(MB_out),
         .I1(seq_cnt_en),
         .O(from_sys_i_1_n_0));
   FDSE #(
-    .INIT(1'b0)) 
+    .INIT(1'b0))
     from_sys_reg
        (.C(slowest_sync_clk),
         .CE(1'b1),
@@ -557,7 +557,7 @@ module system_rst_ps7_0_50M_0_sequence_psr
         .Q(seq_cnt_en),
         .S(lpf_int));
   LUT4 #(
-    .INIT(16'h0018)) 
+    .INIT(16'h0018))
     pr_dec0
        (.I0(seq_cnt_en),
         .I1(seq_cnt[0]),
@@ -565,44 +565,44 @@ module system_rst_ps7_0_50M_0_sequence_psr
         .I3(seq_cnt[1]),
         .O(pr_dec0__0));
   LUT4 #(
-    .INIT(16'h0480)) 
-    \pr_dec[0]_i_1 
+    .INIT(16'h0480))
+    \pr_dec[0]_i_1
        (.I0(seq_cnt_en),
         .I1(seq_cnt[3]),
         .I2(seq_cnt[5]),
         .I3(seq_cnt[4]),
         .O(p_3_out[0]));
   LUT2 #(
-    .INIT(4'h8)) 
-    \pr_dec[2]_i_1 
+    .INIT(4'h8))
+    \pr_dec[2]_i_1
        (.I0(\core_dec_reg_n_0_[1] ),
         .I1(\pr_dec_reg_n_0_[0] ),
         .O(p_3_out[2]));
   FDRE #(
-    .INIT(1'b0)) 
-    \pr_dec_reg[0] 
+    .INIT(1'b0))
+    \pr_dec_reg[0]
        (.C(slowest_sync_clk),
         .CE(1'b1),
         .D(p_3_out[0]),
         .Q(\pr_dec_reg_n_0_[0] ),
         .R(1'b0));
   FDRE #(
-    .INIT(1'b0)) 
-    \pr_dec_reg[2] 
+    .INIT(1'b0))
+    \pr_dec_reg[2]
        (.C(slowest_sync_clk),
         .CE(1'b1),
         .D(p_3_out[2]),
         .Q(\pr_dec_reg_n_0_[2] ),
         .R(1'b0));
-  (* SOFT_HLUTNM = "soft_lutpair5" *) 
+  (* SOFT_HLUTNM = "soft_lutpair5" *)
   LUT2 #(
-    .INIT(4'h2)) 
+    .INIT(4'h2))
     pr_i_1
        (.I0(Pr_out),
         .I1(\pr_dec_reg_n_0_[2] ),
         .O(pr_i_1_n_0));
   FDSE #(
-    .INIT(1'b1)) 
+    .INIT(1'b1))
     pr_reg
        (.C(slowest_sync_clk),
         .CE(1'b1),
@@ -610,7 +610,7 @@ module system_rst_ps7_0_50M_0_sequence_psr
         .Q(Pr_out),
         .S(lpf_int));
   FDRE #(
-    .INIT(1'b0)) 
+    .INIT(1'b0))
     seq_clr_reg
        (.C(slowest_sync_clk),
         .CE(1'b1),
@@ -619,7 +619,7 @@ module system_rst_ps7_0_50M_0_sequence_psr
         .R(lpf_int));
 endmodule
 
-(* ORIG_REF_NAME = "upcnt_n" *) 
+(* ORIG_REF_NAME = "upcnt_n" *)
 module system_rst_ps7_0_50M_0_upcnt_n
    (Q,
     seq_clr,
@@ -638,38 +638,38 @@ module system_rst_ps7_0_50M_0_upcnt_n
   wire slowest_sync_clk;
 
   LUT1 #(
-    .INIT(2'h1)) 
-    \q_int[0]_i_1 
+    .INIT(2'h1))
+    \q_int[0]_i_1
        (.I0(Q[0]),
         .O(q_int0[0]));
-  (* SOFT_HLUTNM = "soft_lutpair1" *) 
+  (* SOFT_HLUTNM = "soft_lutpair1" *)
   LUT2 #(
-    .INIT(4'h6)) 
-    \q_int[1]_i_1 
+    .INIT(4'h6))
+    \q_int[1]_i_1
        (.I0(Q[0]),
         .I1(Q[1]),
         .O(q_int0[1]));
-  (* SOFT_HLUTNM = "soft_lutpair1" *) 
+  (* SOFT_HLUTNM = "soft_lutpair1" *)
   LUT3 #(
-    .INIT(8'h78)) 
-    \q_int[2]_i_1 
+    .INIT(8'h78))
+    \q_int[2]_i_1
        (.I0(Q[0]),
         .I1(Q[1]),
         .I2(Q[2]),
         .O(q_int0[2]));
-  (* SOFT_HLUTNM = "soft_lutpair0" *) 
+  (* SOFT_HLUTNM = "soft_lutpair0" *)
   LUT4 #(
-    .INIT(16'h7F80)) 
-    \q_int[3]_i_1 
+    .INIT(16'h7F80))
+    \q_int[3]_i_1
        (.I0(Q[1]),
         .I1(Q[0]),
         .I2(Q[2]),
         .I3(Q[3]),
         .O(q_int0[3]));
-  (* SOFT_HLUTNM = "soft_lutpair0" *) 
+  (* SOFT_HLUTNM = "soft_lutpair0" *)
   LUT5 #(
-    .INIT(32'h7FFF8000)) 
-    \q_int[4]_i_1 
+    .INIT(32'h7FFF8000))
+    \q_int[4]_i_1
        (.I0(Q[2]),
         .I1(Q[0]),
         .I2(Q[1]),
@@ -677,13 +677,13 @@ module system_rst_ps7_0_50M_0_upcnt_n
         .I4(Q[4]),
         .O(q_int0[4]));
   LUT1 #(
-    .INIT(2'h1)) 
-    \q_int[5]_i_1 
+    .INIT(2'h1))
+    \q_int[5]_i_1
        (.I0(seq_clr),
         .O(clear));
   LUT6 #(
-    .INIT(64'h7FFFFFFF80000000)) 
-    \q_int[5]_i_2 
+    .INIT(64'h7FFFFFFF80000000))
+    \q_int[5]_i_2
        (.I0(Q[3]),
         .I1(Q[1]),
         .I2(Q[0]),
@@ -692,48 +692,48 @@ module system_rst_ps7_0_50M_0_upcnt_n
         .I5(Q[5]),
         .O(q_int0[5]));
   FDRE #(
-    .INIT(1'b1)) 
-    \q_int_reg[0] 
+    .INIT(1'b1))
+    \q_int_reg[0]
        (.C(slowest_sync_clk),
         .CE(seq_cnt_en),
         .D(q_int0[0]),
         .Q(Q[0]),
         .R(clear));
   FDRE #(
-    .INIT(1'b1)) 
-    \q_int_reg[1] 
+    .INIT(1'b1))
+    \q_int_reg[1]
        (.C(slowest_sync_clk),
         .CE(seq_cnt_en),
         .D(q_int0[1]),
         .Q(Q[1]),
         .R(clear));
   FDRE #(
-    .INIT(1'b1)) 
-    \q_int_reg[2] 
+    .INIT(1'b1))
+    \q_int_reg[2]
        (.C(slowest_sync_clk),
         .CE(seq_cnt_en),
         .D(q_int0[2]),
         .Q(Q[2]),
         .R(clear));
   FDRE #(
-    .INIT(1'b1)) 
-    \q_int_reg[3] 
+    .INIT(1'b1))
+    \q_int_reg[3]
        (.C(slowest_sync_clk),
         .CE(seq_cnt_en),
         .D(q_int0[3]),
         .Q(Q[3]),
         .R(clear));
   FDRE #(
-    .INIT(1'b1)) 
-    \q_int_reg[4] 
+    .INIT(1'b1))
+    \q_int_reg[4]
        (.C(slowest_sync_clk),
         .CE(seq_cnt_en),
         .D(q_int0[4]),
         .Q(Q[4]),
         .R(clear));
   FDRE #(
-    .INIT(1'b1)) 
-    \q_int_reg[5] 
+    .INIT(1'b1))
+    \q_int_reg[5]
        (.C(slowest_sync_clk),
         .CE(seq_cnt_en),
         .D(q_int0[5]),
@@ -741,9 +741,9 @@ module system_rst_ps7_0_50M_0_upcnt_n
         .R(clear));
 endmodule
 
-(* DEST_SYNC_FF = "4" *) (* INIT_SYNC_FF = "0" *) (* ORIG_REF_NAME = "xpm_cdc_single" *) 
-(* SIM_ASSERT_CHK = "0" *) (* SRC_INPUT_REG = "0" *) (* VERSION = "0" *) 
-(* XPM_MODULE = "TRUE" *) (* keep_hierarchy = "soft" *) (* xpm_cdc = "SINGLE" *) 
+(* DEST_SYNC_FF = "4" *) (* INIT_SYNC_FF = "0" *) (* ORIG_REF_NAME = "xpm_cdc_single" *)
+(* SIM_ASSERT_CHK = "0" *) (* SRC_INPUT_REG = "0" *) (* VERSION = "0" *)
+(* XPM_MODULE = "TRUE" *) (* keep_hierarchy = "soft" *) (* xpm_cdc = "SINGLE" *)
 module system_rst_ps7_0_50M_0_xpm_cdc_single
    (src_clk,
     src_in,
@@ -759,37 +759,37 @@ module system_rst_ps7_0_50M_0_xpm_cdc_single
   (* RTL_KEEP = "true" *) (* async_reg = "true" *) (* xpm_cdc = "SINGLE" *) wire [3:0]syncstages_ff;
 
   assign dest_out = syncstages_ff[3];
-  (* ASYNC_REG *) 
-  (* KEEP = "true" *) 
-  (* XPM_CDC = "SINGLE" *) 
-  FDRE \syncstages_ff_reg[0] 
+  (* ASYNC_REG *)
+  (* KEEP = "true" *)
+  (* XPM_CDC = "SINGLE" *)
+  FDRE \syncstages_ff_reg[0]
        (.C(dest_clk),
         .CE(1'b1),
         .D(src_in),
         .Q(syncstages_ff[0]),
         .R(1'b0));
-  (* ASYNC_REG *) 
-  (* KEEP = "true" *) 
-  (* XPM_CDC = "SINGLE" *) 
-  FDRE \syncstages_ff_reg[1] 
+  (* ASYNC_REG *)
+  (* KEEP = "true" *)
+  (* XPM_CDC = "SINGLE" *)
+  FDRE \syncstages_ff_reg[1]
        (.C(dest_clk),
         .CE(1'b1),
         .D(syncstages_ff[0]),
         .Q(syncstages_ff[1]),
         .R(1'b0));
-  (* ASYNC_REG *) 
-  (* KEEP = "true" *) 
-  (* XPM_CDC = "SINGLE" *) 
-  FDRE \syncstages_ff_reg[2] 
+  (* ASYNC_REG *)
+  (* KEEP = "true" *)
+  (* XPM_CDC = "SINGLE" *)
+  FDRE \syncstages_ff_reg[2]
        (.C(dest_clk),
         .CE(1'b1),
         .D(syncstages_ff[1]),
         .Q(syncstages_ff[2]),
         .R(1'b0));
-  (* ASYNC_REG *) 
-  (* KEEP = "true" *) 
-  (* XPM_CDC = "SINGLE" *) 
-  FDRE \syncstages_ff_reg[3] 
+  (* ASYNC_REG *)
+  (* KEEP = "true" *)
+  (* XPM_CDC = "SINGLE" *)
+  FDRE \syncstages_ff_reg[3]
        (.C(dest_clk),
         .CE(1'b1),
         .D(syncstages_ff[2]),
@@ -797,9 +797,9 @@ module system_rst_ps7_0_50M_0_xpm_cdc_single
         .R(1'b0));
 endmodule
 
-(* DEST_SYNC_FF = "4" *) (* INIT_SYNC_FF = "0" *) (* ORIG_REF_NAME = "xpm_cdc_single" *) 
-(* SIM_ASSERT_CHK = "0" *) (* SRC_INPUT_REG = "0" *) (* VERSION = "0" *) 
-(* XPM_MODULE = "TRUE" *) (* keep_hierarchy = "soft" *) (* xpm_cdc = "SINGLE" *) 
+(* DEST_SYNC_FF = "4" *) (* INIT_SYNC_FF = "0" *) (* ORIG_REF_NAME = "xpm_cdc_single" *)
+(* SIM_ASSERT_CHK = "0" *) (* SRC_INPUT_REG = "0" *) (* VERSION = "0" *)
+(* XPM_MODULE = "TRUE" *) (* keep_hierarchy = "soft" *) (* xpm_cdc = "SINGLE" *)
 module system_rst_ps7_0_50M_0_xpm_cdc_single__1
    (src_clk,
     src_in,
@@ -815,37 +815,37 @@ module system_rst_ps7_0_50M_0_xpm_cdc_single__1
   (* RTL_KEEP = "true" *) (* async_reg = "true" *) (* xpm_cdc = "SINGLE" *) wire [3:0]syncstages_ff;
 
   assign dest_out = syncstages_ff[3];
-  (* ASYNC_REG *) 
-  (* KEEP = "true" *) 
-  (* XPM_CDC = "SINGLE" *) 
-  FDRE \syncstages_ff_reg[0] 
+  (* ASYNC_REG *)
+  (* KEEP = "true" *)
+  (* XPM_CDC = "SINGLE" *)
+  FDRE \syncstages_ff_reg[0]
        (.C(dest_clk),
         .CE(1'b1),
         .D(src_in),
         .Q(syncstages_ff[0]),
         .R(1'b0));
-  (* ASYNC_REG *) 
-  (* KEEP = "true" *) 
-  (* XPM_CDC = "SINGLE" *) 
-  FDRE \syncstages_ff_reg[1] 
+  (* ASYNC_REG *)
+  (* KEEP = "true" *)
+  (* XPM_CDC = "SINGLE" *)
+  FDRE \syncstages_ff_reg[1]
        (.C(dest_clk),
         .CE(1'b1),
         .D(syncstages_ff[0]),
         .Q(syncstages_ff[1]),
         .R(1'b0));
-  (* ASYNC_REG *) 
-  (* KEEP = "true" *) 
-  (* XPM_CDC = "SINGLE" *) 
-  FDRE \syncstages_ff_reg[2] 
+  (* ASYNC_REG *)
+  (* KEEP = "true" *)
+  (* XPM_CDC = "SINGLE" *)
+  FDRE \syncstages_ff_reg[2]
        (.C(dest_clk),
         .CE(1'b1),
         .D(syncstages_ff[1]),
         .Q(syncstages_ff[2]),
         .R(1'b0));
-  (* ASYNC_REG *) 
-  (* KEEP = "true" *) 
-  (* XPM_CDC = "SINGLE" *) 
-  FDRE \syncstages_ff_reg[3] 
+  (* ASYNC_REG *)
+  (* KEEP = "true" *)
+  (* XPM_CDC = "SINGLE" *)
+  FDRE \syncstages_ff_reg[3]
        (.C(dest_clk),
         .CE(1'b1),
         .D(syncstages_ff[2]),
@@ -877,7 +877,7 @@ module glbl ();
     wire FCSBO_GLBL;
     wire [3:0] DO_GLBL;
     wire [3:0] DI_GLBL;
-   
+
     reg GSR_int;
     reg GTS_int;
     reg PRLD_int;
@@ -925,7 +925,7 @@ module glbl ();
 	GTS_int = 1'b0;
     end
 
-    initial begin 
+    initial begin
 	GRESTORE_int = 1'b0;
 	#(GRES_START);
 	GRESTORE_int = 1'b1;

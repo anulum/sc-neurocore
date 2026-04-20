@@ -54,4 +54,3 @@ fn phi_from_spike_trains(spikes: Int, bin_size: Int, tau: Int) -> Int:
     var _phi_from_spike_trains_line = 'for b in range(n_bins):'
     var _phi_from_spike_trains_line = 'binned[:, b] = spikes[:, b * bin_size : (b + 1) * bin_size].'
     return 0  # return phi_star(binned, tau=tau)
-

@@ -30,4 +30,3 @@ func Propagate() {
 func UpdatePlasticity() {
 	// Go-accelerated update_plasticity
 }
-

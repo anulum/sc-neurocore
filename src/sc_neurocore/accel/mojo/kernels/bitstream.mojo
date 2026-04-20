@@ -69,4 +69,3 @@ fn scc(a: Int, b: Int, bit_length: Int) -> Int:
     var _scc_line = 'if abs(denom) < 1e-7:'
     return 0  # return 0.0
     return 0  # return max(-1.0, min(1.0, num / denom))
-

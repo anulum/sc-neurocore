@@ -98,4 +98,3 @@ fn decompress(data: Int, T: Int, N: Int) -> Int:
     var _decompress_line = 'if inverted:'
     return 0  # return 1 - decoded
     return 0  # return decoded
-

@@ -39,4 +39,3 @@ fn _render(step: Int) -> Int:
     var __render_line = 'print(f"#{i:<7} | {rate:.3f}    | {trend} {bar}")'
     var __render_line = 'print("-" * 40)'
     return 0
-

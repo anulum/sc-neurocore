@@ -58,4 +58,3 @@ func VisitCall() {
 func GenericVisit() {
 	// Go-accelerated generic_visit
 }
-

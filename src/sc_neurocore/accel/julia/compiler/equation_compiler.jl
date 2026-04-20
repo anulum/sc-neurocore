@@ -47,7 +47,7 @@ function visit_BinOp(s::_VerilogExprEmitterState, node)
         # Fixed-point multiply: (a * b) >>> FRACTION
         tmp = f"_mul{s._mul_count}"
         s._mul_count += 1
-        s.intermediates = push!(, 
+        s.intermediates = push!(,
             f"wire signed [{2 * s.q.data_width - 1}:0] {tmp} = {left} * {right};"
         )
         return f"({tmp} >>> {s.q.fraction})[{s.q.data_width - 1}:0]"
@@ -58,7 +58,7 @@ function visit_BinOp(s::_VerilogExprEmitterState, node)
             recip_q = s.q.encode_signed_literal(recip)
             tmp = f"_mul{s._mul_count}"
             s._mul_count += 1
-            s.intermediates = push!(, 
+            s.intermediates = push!(,
                 f"wire signed [{2 * s.q.data_width - 1}:0] {tmp} = {left} * {recip_q};"
             )
             return f"({tmp} >>> {s.q.fraction})[{s.q.data_width - 1}:0]"
@@ -68,20 +68,20 @@ function visit_BinOp(s::_VerilogExprEmitterState, node)
         if isinstance(node.right, ast.Constant) && node.right.value == 2
             tmp = f"_mul{s._mul_count}"
             s._mul_count += 1
-            s.intermediates = push!(, 
+            s.intermediates = push!(,
                 f"wire signed [{2 * s.q.data_width - 1}:0] {tmp} = {left} * {left};"
             )
             return f"({tmp} >>> {s.q.fraction})[{s.q.data_width - 1}:0]"
         elseif isinstance(node.right, ast.Constant) && node.right.value == 3
             sq = f"_mul{s._mul_count}"
             s._mul_count += 1
-            s.intermediates = push!(, 
+            s.intermediates = push!(,
                 f"wire signed [{2 * s.q.data_width - 1}:0] {sq} = {left} * {left};"
             )
             sq_trunc = f"({sq} >>> {s.q.fraction})[{s.q.data_width - 1}:0]"
             cu = f"_mul{s._mul_count}"
             s._mul_count += 1
-            s.intermediates = push!(, 
+            s.intermediates = push!(,
                 f"wire signed [{2 * s.q.data_width - 1}:0] {cu} = {sq_trunc} * {left};"
             )
             return f"({cu} >>> {s.q.fraction})[{s.q.data_width - 1}:0]"
@@ -96,7 +96,7 @@ function visit_BinOp(s::_VerilogExprEmitterState, node)
             for step in 1:exp - 1
                 tmp = f"_mul{s._mul_count}"
                 s._mul_count += 1
-                s.intermediates = push!(, 
+                s.intermediates = push!(,
                     f"wire signed [{2 * s.q.data_width - 1}:0] {tmp} = {prev} * {left};"
                 )
                 prev = f"({tmp} >>> {s.q.fraction})[{s.q.data_width - 1}:0]"
@@ -201,13 +201,13 @@ function _emit_lut_call(s::_VerilogExprEmitterState, lut_name, arg, entries)
     s._mul_count += 1
     # Declare the LUT as a reg array
     dw = s.q.data_width
-    s.intermediates = push!(, 
+    s.intermediates = push!(,
         f"// {lut_name} lookup table (16 entries, Q{dw - s.q.fraction}.{s.q.fraction})"
     )
     # Shift input to unsigned index: add 8.0 (=2048 in Q8.8) then take top 4 bits
     offset = 8 << s.q.fraction  # 2048 for Q8.8
     idx_wire = f"{lut_id}_idx"
-    s.intermediates = push!(, 
+    s.intermediates = push!(,
         f"wire [3:0] {idx_wire} = ({arg} + {dw}'sd{offset}) >>> {s.q.fraction + 4 - 4};"
     )
     # Build case expression
@@ -299,7 +299,7 @@ function compile_to_verilog(neuron, module_name, data_width, fraction)
         vname = f"P_{pname.upper()}"
         param_map[pname] = vname
         q_val = q.encode(pval)
-        param_decls = push!(, 
+        param_decls = push!(,
             f"    parameter signed [{data_width - 1}:0] {vname} = {data_width}'sd{q_val}"
         )
     # Generate derivative expressions
@@ -312,11 +312,11 @@ function compile_to_verilog(neuron, module_name, data_width, fraction)
         # dv = expr * dt (multiply by dt in fixed-point)
         dt_literal = q.encode_signed_literal(neuron.dt)
         dt_tmp = f"_dt_mul_{var}"
-        all_intermediates = push!(, 
+        all_intermediates = push!(,
             f"wire signed [{2 * data_width - 1}:0] {dt_tmp} = ({vexpr}) * {dt_literal};"
         )
         deriv_name = f"d{var}"
-        deriv_wires = push!(, 
+        deriv_wires = push!(,
             f"wire signed [{data_width - 1}:0] {deriv_name} = ({dt_tmp} >>> {fraction})[{data_width - 1}:0];"
         )
     # Next-state computation with saturation
@@ -326,7 +326,7 @@ function compile_to_verilog(neuron, module_name, data_width, fraction)
     for var in neuron.equations
         raw = f"{var}_raw"
         next_wires = push!(, f"wire signed [{data_width}:0] {raw} = {var}_reg + d{var};")
-        next_wires = push!(, 
+        next_wires = push!(,
             f"wire signed [{data_width - 1}:0] {var}_next = "
             f"({raw} > {data_width + 1}'sd{max_val}) ? {data_width}'sd{max_val} : "
             f"({raw} < {data_width + 1}'sd{min_val}) ? {data_width}'sd{min_val} : "
@@ -514,11 +514,11 @@ function generate_testbench(neuron, module_name, n_steps, input_current, data_wi
     lines = push!(, "        if (spike_out) spike_count = spike_count + 1;")
     lines = push!(, "    end")
     lines = push!(, "")
-    lines = push!(, 
+    lines = push!(,
         f'    $display("Simulation complete: %0d spikes in {n_steps} cycles", spike_count);'
     )
     for var in state_vars
-        lines = push!(, 
+        lines = push!(,
             f'    $display("Final {var} = %0d (Q{data_width - fraction}.{fraction})", {var}_out);'
         )
     lines = push!(, "    $finish;")

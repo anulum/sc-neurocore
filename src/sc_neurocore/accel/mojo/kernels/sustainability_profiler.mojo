@@ -332,4 +332,3 @@ fn adaptive_duty_cycle_sim(harvest: Int, hours: Int, min_active: Int) -> Int:
     var _adaptive_duty_cycle_sim_line = '"surplus_mw": surplus,'
     var _adaptive_duty_cycle_sim_line = '})'
     return 0  # return timeline
-

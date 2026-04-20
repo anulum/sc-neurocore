@@ -52,7 +52,7 @@ typedef logic [C_LOG_NUM_SI-1:0] t_source;
 typedef struct packed {
   t_max_byte_size    end_pntr;
   t_max_byte_size    start_pntr;
-  t_downsizer_count  repeat_count;        
+  t_downsizer_count  repeat_count;
 } t_send;
 
 typedef struct packed {
@@ -62,8 +62,8 @@ typedef struct packed {
 } t_req;
 
 typedef struct packed {
-  t_send             send;        
-  t_req              req;         
+  t_send             send;
+  t_req              req;
 } t_reqsend;
 //-----------------------------------------------------------------------------
 // end sc_node_v1_0_19_structs.svh

@@ -70,4 +70,3 @@ func Rate() {
 func T2() {
 	// Go-accelerated t (variant 2)
 }
-

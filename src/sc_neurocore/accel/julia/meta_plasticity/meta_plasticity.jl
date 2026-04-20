@@ -118,7 +118,7 @@ function decide(s::RuleConstraintsState)
     signals = []
     # High novelty → learn faster
     if mean_novelty > 0.7 * s.sensitivity
-        signals = push!(, 
+        signals = push!(,
             MetaControlSignal(
                 MetaSignalType.INCREASE_LR,
                 magnitude=0.1 * mean_novelty,
@@ -127,7 +127,7 @@ function decide(s::RuleConstraintsState)
         )
     # Low novelty + low surprise → consolidate
     elseif mean_novelty < 0.3 && mean_surprise < 0.1
-        signals = push!(, 
+        signals = push!(,
             MetaControlSignal(
                 MetaSignalType.DECREASE_LR,
                 magnitude=0.05,
@@ -136,7 +136,7 @@ function decide(s::RuleConstraintsState)
         )
     # Unstable GCI → widen STDP window
     if gci_std > 0.1 * s.sensitivity
-        signals = push!(, 
+        signals = push!(,
             MetaControlSignal(
                 MetaSignalType.WIDEN_WINDOW,
                 magnitude=2.0,
@@ -145,7 +145,7 @@ function decide(s::RuleConstraintsState)
         )
     # Stable GCI → narrow window (exploit)
     elseif gci_std < 0.02 && mean_gci > 0.7
-        signals = push!(, 
+        signals = push!(,
             MetaControlSignal(
                 MetaSignalType.NARROW_WINDOW,
                 magnitude=1.0,

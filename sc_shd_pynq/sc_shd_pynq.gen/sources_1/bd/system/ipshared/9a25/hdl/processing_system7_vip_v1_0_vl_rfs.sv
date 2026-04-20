@@ -63,10 +63,10 @@ if(!rstn) begin
  prt_qos = 0;
 end else begin
  case(state)
- wait_req:begin  
+ wait_req:begin
          state = wait_req;
          prt_ack1 = 1'b0;
-         prt_ack2 = 1'b0; 
+         prt_ack2 = 1'b0;
          prt_req = 1'b0;
          if(prt_dv1 && !prt_dv2) begin
            state = serv_req1;
@@ -129,11 +129,11 @@ end else begin
              state = serv_req1;
            end
          end
-       end 
- serv_req1:begin  
-         state = serv_req1; 
+       end
+ serv_req1:begin
+         state = serv_req1;
          prt_ack2 = 1'b0;
-         if(prt_ack) begin 
+         if(prt_ack) begin
            prt_ack1 = 1'b1;
            prt_req = 0;
            if(prt_dv2) begin
@@ -153,11 +153,11 @@ end else begin
          state = wait_ack_low;
            end
          end
-       end 
+       end
  serv_req2:begin
-         state = serv_req2; 
+         state = serv_req2;
          prt_ack1 = 1'b0;
-         if(prt_ack) begin 
+         if(prt_ack) begin
            prt_ack2 = 1'b1;
            prt_req = 0;
            if(prt_dv1) begin
@@ -176,14 +176,14 @@ end else begin
          //    state = wait_req;
            end
          end
-       end 
+       end
  wait_ack_low:begin
          prt_ack1 = 1'b0;
          prt_ack2 = 1'b0;
          state = wait_ack_low;
          if(!prt_ack)
            state = wait_req;
-       end  
+       end
  endcase
 end /// if else
 end /// always
@@ -256,7 +256,7 @@ if(!rstn) begin
  prt_qos = 0;
 end else begin
  case(state)
- wait_req:begin  
+ wait_req:begin
          state = wait_req;
          prt_dv1 = 1'b0;
          prt_dv2 = 1'b0;
@@ -294,11 +294,11 @@ end else begin
              state = serv_req1;
            end
          end
-       end 
- serv_req1:begin  
-         state = serv_req1; 
+       end
+ serv_req1:begin
+         state = serv_req1;
          prt_dv2 = 1'b0;
-         if(prt_dv) begin 
+         if(prt_dv) begin
            prt_dv1 = 1'b1;
            prt_data1 = prt_data;
            prt_req = 0;
@@ -313,11 +313,11 @@ end else begin
              //state = wait_req;
            end
          end
-       end 
+       end
  serv_req2:begin
-         state = serv_req2; 
+         state = serv_req2;
          prt_dv1 = 1'b0;
-         if(prt_dv) begin 
+         if(prt_dv) begin
            prt_dv2 = 1'b1;
            prt_data2 = prt_data;
            prt_req = 0;
@@ -332,7 +332,7 @@ end else begin
              //state = wait_req;
            end
          end
-       end 
+       end
 
  wait_dv_low:begin
          prt_dv1 = 1'b0;
@@ -340,7 +340,7 @@ end else begin
          state = wait_dv_low;
          if(!prt_dv)
            state = wait_req;
-       end  
+       end
  endcase
 end /// if else
 end /// always
@@ -435,7 +435,7 @@ if(!rstn) begin
  prt_qos = 0;
 end else begin
  case(state)
- wait_req:begin  
+ wait_req:begin
          state = wait_req;
          prt_ack1 = 1'b0;
          prt_ack2 = 1'b0;
@@ -491,13 +491,13 @@ end else begin
            prt_bytes = prt_bytes4;
            state = serv_req4;
          end
-       end 
- serv_req1:begin  
+       end
+ serv_req1:begin
          state = serv_req1;
          prt_ack2 = 1'b0;
          prt_ack3 = 1'b0;
          prt_ack4 = 1'b0;
-       if(prt_ack)begin 
+       if(prt_ack)begin
            prt_ack1 = 1'b1;
            //state = wait_req;
            state = wait_ack_low;
@@ -539,14 +539,14 @@ end else begin
            prt_bytes = prt_bytes4;
            state = serv_req4;
          end
-       end 
        end
- serv_req2:begin  
+       end
+ serv_req2:begin
          state = serv_req2;
          prt_ack1 = 1'b0;
          prt_ack3 = 1'b0;
          prt_ack4 = 1'b0;
-       if(prt_ack)begin 
+       if(prt_ack)begin
            prt_ack2 = 1'b1;
            //state = wait_req;
            state = wait_ack_low;
@@ -589,13 +589,13 @@ end else begin
            state = serv_req1;
          end
        end
-       end 
- serv_req3:begin  
+       end
+ serv_req3:begin
          state = serv_req3;
          prt_ack1 = 1'b0;
          prt_ack2 = 1'b0;
          prt_ack4 = 1'b0;
-       if(prt_ack)begin 
+       if(prt_ack)begin
            prt_ack3 = 1'b1;
 //           state = wait_req;
            state = wait_ack_low;
@@ -638,13 +638,13 @@ end else begin
            state = serv_req2;
          end
        end
-       end 
- serv_req4:begin  
+       end
+ serv_req4:begin
          state = serv_req4;
          prt_ack1 = 1'b0;
          prt_ack2 = 1'b0;
          prt_ack3 = 1'b0;
-       if(prt_ack)begin 
+       if(prt_ack)begin
            prt_ack4 = 1'b1;
            //state = wait_req;
            state = wait_ack_low;
@@ -687,7 +687,7 @@ end else begin
            state = serv_req3;
          end
        end
-       end 
+       end
  wait_ack_low:begin
          state = wait_ack_low;
          prt_ack1 = 1'b0;
@@ -696,7 +696,7 @@ end else begin
          prt_ack4 = 1'b0;
          if(!prt_ack)
            state = wait_req;
-       end  
+       end
  endcase
 end /// if else
 end /// always
@@ -784,7 +784,7 @@ if(!rstn) begin
  prt_qos =    0;
 end else begin
  case(state)
- wait_req:begin  
+ wait_req:begin
          state = wait_req;
          prt_dv1 = 1'b0;
          prt_dv2 = 1'b0;
@@ -816,13 +816,13 @@ end else begin
            prt_bytes = prt_bytes4;
            state = serv_req4;
          end
-       end 
- serv_req1:begin  
+       end
+ serv_req1:begin
          state = serv_req1;
          prt_dv2 = 1'b0;
          prt_dv3 = 1'b0;
          prt_dv4 = 1'b0;
-       if(prt_dv)begin 
+       if(prt_dv)begin
            prt_dv1 = 1'b1;
            prt_data1 = prt_data;
            //state = wait_req;
@@ -847,14 +847,14 @@ end else begin
            prt_bytes = prt_bytes4;
            state = serv_req4;
          end
-       end 
        end
- serv_req2:begin  
+       end
+ serv_req2:begin
          state = serv_req2;
          prt_dv1 = 1'b0;
          prt_dv3 = 1'b0;
          prt_dv4 = 1'b0;
-       if(prt_dv)begin 
+       if(prt_dv)begin
            prt_dv2 = 1'b1;
            prt_data2 = prt_data;
            //state = wait_req;
@@ -880,13 +880,13 @@ end else begin
            state = serv_req1;
          end
        end
-       end 
- serv_req3:begin  
+       end
+ serv_req3:begin
          state = serv_req3;
          prt_dv1 = 1'b0;
          prt_dv2 = 1'b0;
          prt_dv4 = 1'b0;
-       if(prt_dv)begin 
+       if(prt_dv)begin
            prt_dv3 = 1'b1;
            prt_data3 = prt_data;
            //state = wait_req;
@@ -912,13 +912,13 @@ end else begin
            state = serv_req2;
          end
        end
-       end 
- serv_req4:begin  
+       end
+ serv_req4:begin
          state = serv_req4;
          prt_dv1 = 1'b0;
          prt_dv2 = 1'b0;
          prt_dv3 = 1'b0;
-       if(prt_dv)begin 
+       if(prt_dv)begin
            prt_dv4 = 1'b1;
            prt_data4 = prt_data;
            //state = wait_req;
@@ -944,7 +944,7 @@ end else begin
            state = serv_req3;
          end
        end
-       end 
+       end
  wait_dv_low:begin
          state = wait_dv_low;
          prt_dv1 = 1'b0;
@@ -953,7 +953,7 @@ end else begin
          prt_dv4 = 1'b0;
          if(!prt_dv)
            state = wait_req;
-       end  
+       end
  endcase
 end /// if else
 end /// always
@@ -1008,7 +1008,7 @@ module processing_system7_vip_v1_0_24_arb_hp2_3(
  ddr_rd_dv,
  ddr_rd_qos,
  ddr_wr_qos,
- 
+
  ddr_wr_addr,
  ddr_wr_data,
  ddr_wr_strb,
@@ -1040,7 +1040,7 @@ input [addr_width-1:0] rd_addr_hp2;
 input [max_burst_bytes_width:0] rd_bytes_hp2;
 output [max_burst_bits-1:0] rd_data_ddr_hp2;
 output rd_dv_ddr_hp2;
- 
+
 output wr_ack_ddr_hp3;
 input [max_burst_bits-1:0] wr_data_hp3;
 input [max_burst_bytes-1:0] wr_strb_hp3;
@@ -1053,7 +1053,7 @@ input [addr_width-1:0] rd_addr_hp3;
 input [max_burst_bytes_width:0] rd_bytes_hp3;
 output [max_burst_bits-1:0] rd_data_ddr_hp3;
 output rd_dv_ddr_hp3;
- 
+
 input ddr_wr_ack;
 output ddr_wr_dv;
 output [addr_width-1:0]ddr_wr_addr;
@@ -1170,7 +1170,7 @@ module processing_system7_vip_v1_0_24_arb_hp0_1(
  ddr_rd_dv,
  ddr_rd_qos,
  ddr_wr_qos,
- 
+
  ddr_wr_addr,
  ddr_wr_data,
  ddr_wr_strb,
@@ -1202,7 +1202,7 @@ input [addr_width-1:0] rd_addr_hp0;
 input [max_burst_bytes_width:0] rd_bytes_hp0;
 output [max_burst_bits-1:0] rd_data_ddr_hp0;
 output rd_dv_ddr_hp0;
- 
+
 output wr_ack_ddr_hp1;
 input [max_burst_bits-1:0] wr_data_hp1;
 input [max_burst_bytes-1:0] wr_strb_hp1;
@@ -1215,7 +1215,7 @@ input [addr_width-1:0] rd_addr_hp1;
 input [max_burst_bytes_width:0] rd_bytes_hp1;
 output [max_burst_bits-1:0] rd_data_ddr_hp1;
 output rd_dv_ddr_hp1;
- 
+
 input ddr_wr_ack;
 output ddr_wr_dv;
 output [addr_width-1:0]ddr_wr_addr;
@@ -1413,7 +1413,7 @@ module processing_system7_vip_v1_0_24_ssw_hp(
  ocm_rd_dv,
 
  ocm_wr_qos,
- ocm_rd_qos, 
+ ocm_rd_qos,
  ocm_wr_addr,
  ocm_wr_data,
  ocm_wr_strb,
@@ -1421,7 +1421,7 @@ module processing_system7_vip_v1_0_24_ssw_hp(
  ocm_rd_addr,
  ocm_rd_data,
  ocm_rd_bytes
- 
+
 
 
 );
@@ -1442,7 +1442,7 @@ output [3:0] ddr_wr_qos0;
 output [3:0] ddr_rd_qos1;
 output [3:0] ddr_wr_qos1;
 output [3:0] ocm_wr_qos;
-output [3:0] ocm_rd_qos; 
+output [3:0] ocm_rd_qos;
 
 output wr_ack_ddr_hp0;
 input [1023:0] wr_data_hp0;
@@ -1456,7 +1456,7 @@ input [31:0] rd_addr_hp0;
 input [7:0] rd_bytes_hp0;
 output [1023:0] rd_data_ddr_hp0;
 output rd_dv_ddr_hp0;
- 
+
 output wr_ack_ddr_hp1;
 input [1023:0] wr_data_hp1;
 input [127:0] wr_strb_hp1;
@@ -1482,7 +1482,7 @@ input [31:0] rd_addr_hp2;
 input [7:0] rd_bytes_hp2;
 output [1023:0] rd_data_ddr_hp2;
 output rd_dv_ddr_hp2;
- 
+
 output wr_ack_ddr_hp3;
 input [1023:0] wr_data_hp3;
 input [127:0] wr_strb_hp3;
@@ -1567,7 +1567,7 @@ processing_system7_vip_v1_0_24_arb_hp0_1 ddr_hp01 (
  .r_qos_hp0(r_qos_hp0),
  .w_qos_hp1(w_qos_hp1),
  .r_qos_hp1(r_qos_hp1),
-   
+
  .wr_ack_ddr_hp0(wr_ack_ddr_hp0),
  .wr_data_hp0(wr_data_hp0),
  .wr_strb_hp0(wr_strb_hp0),
@@ -1579,7 +1579,7 @@ processing_system7_vip_v1_0_24_arb_hp0_1 ddr_hp01 (
  .rd_bytes_hp0(rd_bytes_hp0),
  .rd_data_ddr_hp0(rd_data_ddr_hp0),
  .rd_dv_ddr_hp0(rd_dv_ddr_hp0),
-   
+
  .wr_ack_ddr_hp1(wr_ack_ddr_hp1),
  .wr_data_hp1(wr_data_hp1),
  .wr_strb_hp1(wr_strb_hp1),
@@ -1591,13 +1591,13 @@ processing_system7_vip_v1_0_24_arb_hp0_1 ddr_hp01 (
  .rd_bytes_hp1(rd_bytes_hp1),
  .rd_data_ddr_hp1(rd_data_ddr_hp1),
  .rd_dv_ddr_hp1(rd_dv_ddr_hp1),
-   
+
  .ddr_wr_ack(ddr_wr_ack0),
  .ddr_wr_dv(ddr_wr_dv0),
  .ddr_rd_req(ddr_rd_req0),
  .ddr_rd_dv(ddr_rd_dv0),
  .ddr_rd_qos(ddr_rd_qos0),
- .ddr_wr_qos(ddr_wr_qos0), 
+ .ddr_wr_qos(ddr_wr_qos0),
  .ddr_wr_addr(ddr_wr_addr0),
  .ddr_wr_data(ddr_wr_data0),
  .ddr_wr_strb(ddr_wr_strb0),
@@ -1615,7 +1615,7 @@ processing_system7_vip_v1_0_24_arb_hp2_3 ddr_hp23 (
  .r_qos_hp2(r_qos_hp2),
  .w_qos_hp3(w_qos_hp3),
  .r_qos_hp3(r_qos_hp3),
-   
+
  .wr_ack_ddr_hp2(wr_ack_ddr_hp2),
  .wr_data_hp2(wr_data_hp2),
  .wr_strb_hp2(wr_strb_hp2),
@@ -1627,7 +1627,7 @@ processing_system7_vip_v1_0_24_arb_hp2_3 ddr_hp23 (
  .rd_bytes_hp2(rd_bytes_hp2),
  .rd_data_ddr_hp2(rd_data_ddr_hp2),
  .rd_dv_ddr_hp2(rd_dv_ddr_hp2),
-   
+
  .wr_ack_ddr_hp3(wr_ack_ddr_hp3),
  .wr_data_hp3(wr_data_hp3),
  .wr_strb_hp3(wr_strb_hp3),
@@ -1639,13 +1639,13 @@ processing_system7_vip_v1_0_24_arb_hp2_3 ddr_hp23 (
  .rd_bytes_hp3(rd_bytes_hp3),
  .rd_data_ddr_hp3(rd_data_ddr_hp3),
  .rd_dv_ddr_hp3(rd_dv_ddr_hp3),
-   
+
  .ddr_wr_ack(ddr_wr_ack1),
  .ddr_wr_dv(ddr_wr_dv1),
  .ddr_rd_req(ddr_rd_req1),
  .ddr_rd_dv(ddr_rd_dv1),
  .ddr_rd_qos(ddr_rd_qos1),
- .ddr_wr_qos(ddr_wr_qos1), 
+ .ddr_wr_qos(ddr_wr_qos1),
 
  .ddr_wr_addr(ddr_wr_addr1),
  .ddr_wr_data(ddr_wr_data1),
@@ -1661,42 +1661,42 @@ processing_system7_vip_v1_0_24_arb_hp2_3 ddr_hp23 (
 processing_system7_vip_v1_0_24_arb_wr_4 ocm_wr_hp(
  .rstn(rstn),
  .sw_clk(sw_clk),
-   
+
  .qos1(w_qos_hp0),
  .qos2(w_qos_hp1),
  .qos3(w_qos_hp2),
  .qos4(w_qos_hp3),
-   
+
  .prt_dv1(wr_dv_ocm_hp0),
  .prt_dv2(wr_dv_ocm_hp1),
  .prt_dv3(wr_dv_ocm_hp2),
  .prt_dv4(wr_dv_ocm_hp3),
-   
+
  .prt_data1(wr_data_hp0),
  .prt_data2(wr_data_hp1),
  .prt_data3(wr_data_hp2),
  .prt_data4(wr_data_hp3),
-   
+
  .prt_strb1(wr_strb_hp0),
  .prt_strb2(wr_strb_hp1),
  .prt_strb3(wr_strb_hp2),
  .prt_strb4(wr_strb_hp3),
-    
+
  .prt_addr1(wr_addr_hp0),
  .prt_addr2(wr_addr_hp1),
  .prt_addr3(wr_addr_hp2),
  .prt_addr4(wr_addr_hp3),
-   
+
  .prt_bytes1(wr_bytes_hp0),
  .prt_bytes2(wr_bytes_hp1),
  .prt_bytes3(wr_bytes_hp2),
  .prt_bytes4(wr_bytes_hp3),
-   
+
  .prt_ack1(wr_ack_ocm_hp0),
  .prt_ack2(wr_ack_ocm_hp1),
  .prt_ack3(wr_ack_ocm_hp2),
  .prt_ack4(wr_ack_ocm_hp3),
-   
+
  .prt_qos(ocm_wr_qos),
  .prt_req(ocm_wr_dv),
  .prt_data(ocm_wr_data),
@@ -1711,37 +1711,37 @@ processing_system7_vip_v1_0_24_arb_wr_4 ocm_wr_hp(
 processing_system7_vip_v1_0_24_arb_rd_4 ocm_rd_hp(
  .rstn(rstn),
  .sw_clk(sw_clk),
-   
+
  .qos1(r_qos_hp0),
  .qos2(r_qos_hp1),
  .qos3(r_qos_hp2),
  .qos4(r_qos_hp3),
-   
+
  .prt_req1(rd_req_ocm_hp0),
  .prt_req2(rd_req_ocm_hp1),
  .prt_req3(rd_req_ocm_hp2),
  .prt_req4(rd_req_ocm_hp3),
-   
+
  .prt_data1(rd_data_ocm_hp0),
  .prt_data2(rd_data_ocm_hp1),
  .prt_data3(rd_data_ocm_hp2),
  .prt_data4(rd_data_ocm_hp3),
-   
+
  .prt_addr1(rd_addr_hp0),
  .prt_addr2(rd_addr_hp1),
  .prt_addr3(rd_addr_hp2),
  .prt_addr4(rd_addr_hp3),
-   
+
  .prt_bytes1(rd_bytes_hp0),
  .prt_bytes2(rd_bytes_hp1),
  .prt_bytes3(rd_bytes_hp2),
  .prt_bytes4(rd_bytes_hp3),
-   
+
  .prt_dv1(rd_dv_ocm_hp0),
  .prt_dv2(rd_dv_ocm_hp1),
  .prt_dv3(rd_dv_ocm_hp2),
  .prt_dv4(rd_dv_ocm_hp3),
-   
+
  .prt_qos(ocm_rd_qos),
  .prt_req(ocm_rd_req),
  .prt_data(ocm_rd_data),
@@ -1857,13 +1857,13 @@ addr = start_addr>>shft_addr_bits;
 //      for (int i = 0; i < no_of_bytes; i = i + 1) begin
 //        ddr_mem0[(start_addr>>shft_addr_bits) + i] = ddr_mem0_temp[(start_addr>>shft_addr_bits) + i];
 //      end
-//   end else begin	
+//   end else begin
 //     $display(" pre_load_mem_from_file222 entered");
 //     // $readmemh(file_name,ddr_mem1,addr[27:0]);
 //      $readmemh(file_name,ddr_mem1_temp,start_addr>>shft_addr_bits);
 //      for (int i = 0; i < no_of_bytes; i = i + 1) begin
 //        ddr_mem1[(start_addr>>shft_addr_bits) + i] = ddr_mem1_temp[(start_addr>>shft_addr_bits) + i];
-//     end		
+//     end
 //   end
   if(addr[28] == 1'h0) begin
     if(DEBUG_INFO) $display(" pre_load_mem_from_file11 entered");
@@ -1871,7 +1871,7 @@ addr = start_addr>>shft_addr_bits;
   end else begin
     if(DEBUG_INFO) $display(" pre_load_mem_from_file222 entered");
     $readmemh(file_name,ddr_mem1,addr[27:0],addr[27:0]+(no_of_bytes-1));
-  end	  
+  end
 endtask
 
 
@@ -1892,7 +1892,7 @@ endtask
 //      default    : set_data(addr , $random);
 //    endcase
 //    addr = addr+1;
-// end 
+// end
 // end
 // endtask
 
@@ -1913,7 +1913,7 @@ for (i = 0; i < no_of_bytes; i = i + mem_width) begin
      default    : set_data(addr , $random, 4'hF);
    endcase
    addr = addr+1;
-end 
+end
 end
 endtask
 
@@ -1925,7 +1925,7 @@ output[data_width-1:0] dataout;
 begin
   check_up_add = address >> shft_addr_bits;
   check_we = 1;
-  @(mem_updated); 
+  @(mem_updated);
   dataout = updated_data;
   check_we = 0;
 end
@@ -2049,12 +2049,12 @@ end
      if (strb[1] == 1'b1) ddr_mem0[addr[27:0]][15:8]  = data[15:8];
      if (strb[2] == 1'b1) ddr_mem0[addr[27:0]][23:16] = data[23:16];
      if (strb[3] == 1'b1) ddr_mem0[addr[27:0]][31:24] = data[31:24];
-  end else begin	
+  end else begin
      if (strb[0] == 1'b1) ddr_mem1[addr[27:0]][7:0]   = data[7:0];
      if (strb[1] == 1'b1) ddr_mem1[addr[27:0]][15:8]  = data[15:8];
      if (strb[2] == 1'b1) ddr_mem1[addr[27:0]][23:16] = data[23:16];
      if (strb[3] == 1'b1) ddr_mem1[addr[27:0]][31:24] = data[31:24];
-  end	
+  end
 end
 endtask
 
@@ -2114,10 +2114,10 @@ begin
   if (addr[28] == 1'h0 ) begin
      data = ddr_mem0[addr[27:0]];
      //$display(" ddr_mem0 read addr %0h data %0h ddr_mem0[%0h] %0h ",addr[28:0],data,addr[27:0],ddr_mem0[addr[27:0]]);
-  end else begin	
+  end else begin
      data = ddr_mem1[addr[27:0]];
      //$display(" ddr_mem1 read addr %0h data %0h ddr_mem1[%0h] %0h ",addr[28:0],data,addr[27:0],ddr_mem1[addr[27:0]]);
-  end		 
+  end
 end
 endtask
 
@@ -2135,11 +2135,11 @@ endtask
 // begin
 // addr = start_addr >> shft_addr_bits;
 // wr_temp_data = data;
-// 
+//
 // `ifdef XLNX_INT_DBG
-//    $display("[%0d] : %0s : Writing DDR Memory starting address (0x%0h) with %0d bytes.\n Data (0x%0h)",$time, DISP_INT_INFO, start_addr, no_of_bytes, data); 
+//    $display("[%0d] : %0s : Writing DDR Memory starting address (0x%0h) with %0d bytes.\n Data (0x%0h)",$time, DISP_INT_INFO, start_addr, no_of_bytes, data);
 // `endif
-// 
+//
 // temp_data = wr_temp_data[data_width-1:0];
 // bytes_left = no_of_bytes;
 // /* when the no. of bytes to be updated is less than mem_width */
@@ -2166,7 +2166,7 @@ endtask
 //  repeat(post_pad_bytes) begin
 //    temp_data = temp_data >> 8;
 //    temp_data[data_width-1:data_width-8] = post_pad_data[7:0];
-//    post_pad_data = post_pad_data >> 8; 
+//    post_pad_data = post_pad_data >> 8;
 //  end
 //  //ddr_mem[addr] = temp_data;
 //  set_data(addr,temp_data);
@@ -2181,10 +2181,10 @@ endtask
 //     temp_data = temp_data >> 8;
 //     temp_data[data_width-1:data_width-8] = wr_temp_data[7:0];
 //     wr_temp_data = wr_temp_data >> 8;
-//     bytes_left = bytes_left -1;  
+//     bytes_left = bytes_left -1;
 //   end
 //  end else begin
-//   wr_temp_data = wr_temp_data >> data_width;  
+//   wr_temp_data = wr_temp_data >> data_width;
 //   bytes_left = bytes_left - mem_width;
 //  end
 //  /* first data word end */
@@ -2198,7 +2198,7 @@ endtask
 //   wr_temp_data = wr_temp_data >> data_width;
 //   bytes_left = bytes_left - mem_width;
 //  end
-//  
+//
 //  //post_pad_data   = ddr_mem[addr];
 //  get_data(addr,post_pad_data);
 //  post_pad_bytes  = mem_width - bytes_left;
@@ -2210,13 +2210,13 @@ endtask
 //    repeat(post_pad_bytes) begin
 //      temp_data = temp_data >> 8;
 //      temp_data[data_width-1:data_width-8] = post_pad_data[7:0];
-//      post_pad_data = post_pad_data >> 8; 
+//      post_pad_data = post_pad_data >> 8;
 //    end
 //    //ddr_mem[addr] = temp_data;
 //    set_data(addr,temp_data);
 //  end
 // end
-// `ifdef XLNX_INT_DBG $display("[%0d] : %0s : DONE -> Writing DDR Memory starting address (0x%0h)",$time, DISP_INT_INFO, start_addr ); 
+// `ifdef XLNX_INT_DBG $display("[%0d] : %0s : DONE -> Writing DDR Memory starting address (0x%0h)",$time, DISP_INT_INFO, start_addr );
 // `endif
 // end
 // endtask
@@ -2241,7 +2241,7 @@ wr_temp_data = data;
 wr_temp_strb = strb;
 
 `ifdef XLNX_INT_DBG
-   $display("[%0d] : %0s : Writing DDR Memory starting address (0x%0h) with %0d bytes.\n Data (0x%0h)",$time, DISP_INT_INFO, start_addr, no_of_bytes, data); 
+   $display("[%0d] : %0s : Writing DDR Memory starting address (0x%0h) with %0d bytes.\n Data (0x%0h)",$time, DISP_INT_INFO, start_addr, no_of_bytes, data);
 `endif
 
 temp_data = wr_temp_data[data_width-1:0];
@@ -2287,7 +2287,7 @@ if(bytes_left+start_addr[shft_addr_bits-1:0] < mem_width) begin
    temp_strb = temp_strb >> 1;
    temp_data[data_width-1:data_width-8] = post_pad_data[7:0];
    temp_strb[(data_width/8)-1]          = post_pad_strb[0];
-   post_pad_data = post_pad_data >> 8; 
+   post_pad_data = post_pad_data >> 8;
    post_pad_strb = post_pad_strb >> 1;
  end
  //ddr_mem[addr] = temp_data;
@@ -2310,7 +2310,7 @@ end else begin
     temp_strb[(data_width/8)-1]          = wr_temp_strb[0];
     wr_temp_data = wr_temp_data >> 8;
 	wr_temp_strb = wr_temp_strb >> 1;
-    bytes_left = bytes_left -1;  
+    bytes_left = bytes_left -1;
   end
  end else begin
   wr_temp_data = wr_temp_data >> data_width;
@@ -2329,7 +2329,7 @@ end else begin
   wr_temp_strb = wr_temp_strb >> data_width/8;
   bytes_left = bytes_left - mem_width;
  end
- 
+
  //post_pad_data   = ddr_mem[addr];
  get_data(addr,post_pad_data);
  post_pad_strb = 4'hF;
@@ -2351,14 +2351,14 @@ end else begin
 	 temp_strb = temp_strb >> 1;
      temp_data[data_width-1:data_width-8] = post_pad_data[7:0];
      temp_strb[(data_width/8)-1]          = post_pad_strb[0];
-     post_pad_data = post_pad_data >> 8; 
+     post_pad_data = post_pad_data >> 8;
 	 post_pad_strb = post_pad_strb >> 1;
    end
    //ddr_mem[addr] = temp_data;
    set_data(addr,temp_data,temp_strb);
  end
 end
-`ifdef XLNX_INT_DBG $display("[%0d] : %0s : DONE -> Writing DDR Memory starting address (0x%0h)",$time, DISP_INT_INFO, start_addr ); 
+`ifdef XLNX_INT_DBG $display("[%0d] : %0s : DONE -> Writing DDR Memory starting address (0x%0h)",$time, DISP_INT_INFO, start_addr );
 `endif
 end
 endtask
@@ -2381,20 +2381,20 @@ endtask
 // addr = start_addr >> shft_addr_bits;
 // pre_bytes  = start_addr[shft_addr_bits-1:0];
 // bytes_left = no_of_bytes;
-// 
+//
 // `ifdef XLNX_INT_DBG
-//    $display("[%0d] : %0s : Reading DDR Memory starting address (0x%0h) -> %0d bytes",$time, DISP_INT_INFO, start_addr,no_of_bytes ); 
-// `endif 
-// 
+//    $display("[%0d] : %0s : Reading DDR Memory starting address (0x%0h) -> %0d bytes",$time, DISP_INT_INFO, start_addr,no_of_bytes );
+// `endif
+//
 // /* Get first data ... if unaligned address */
 // //temp_data[(max_burst * max_data_burst)-1 : (max_burst * max_data_burst)- data_width] = ddr_mem[addr];
 // get_data(addr,temp_data[max_burst_bits-1 : max_burst_bits-data_width]);
-// 
+//
 // if(no_of_bytes < mem_width ) begin
 //   temp_data = temp_data >> (pre_bytes * 8);
 //   repeat(max_burst_bytes - mem_width)
 //    temp_data = temp_data >> 8;
-// 
+//
 // end else begin
 //   bytes_left = bytes_left - (mem_width - pre_bytes);
 //   addr  = addr+1;
@@ -2405,8 +2405,8 @@ endtask
 //    get_data(addr,temp_data[max_burst_bits-1 : max_burst_bits-data_width]);
 //    addr = addr+1;
 //    bytes_left = bytes_left - mem_width;
-//   end 
-// 
+//   end
+//
 //   /* Get last valid data in the burst*/
 //   //temp_rd_data = ddr_mem[addr];
 //   get_data(addr,temp_rd_data);
@@ -2419,11 +2419,11 @@ endtask
 //   /* align to the brst_byte length */
 //   repeat(max_burst_bytes - no_of_bytes)
 //     temp_data = temp_data >> 8;
-// end 
+// end
 // data = temp_data;
 // `ifdef XLNX_INT_DBG
-//    $display("[%0d] : %0s : DONE -> Reading DDR Memory starting address (0x%0h), Data returned(0x%0h)",$time, DISP_INT_INFO, start_addr, data ); 
-// `endif 
+//    $display("[%0d] : %0s : DONE -> Reading DDR Memory starting address (0x%0h), Data returned(0x%0h)",$time, DISP_INT_INFO, start_addr, data );
+// `endif
 // end
 // endtask
 
@@ -2445,8 +2445,8 @@ pre_bytes  = start_addr[shft_addr_bits-1:0];
 bytes_left = no_of_bytes;
 
 `ifdef XLNX_INT_DBG
-   $display("[%0d] : %0s : Reading DDR Memory starting address (0x%0h) -> %0d bytes",$time, DISP_INT_INFO, start_addr,no_of_bytes ); 
-`endif 
+   $display("[%0d] : %0s : Reading DDR Memory starting address (0x%0h) -> %0d bytes",$time, DISP_INT_INFO, start_addr,no_of_bytes );
+`endif
 
 /* Get first data ... if unaligned address */
 //temp_data[(max_burst * max_data_burst)-1 : (max_burst * max_data_burst)- data_width] = ddr_mem[addr];
@@ -2467,7 +2467,7 @@ end else begin
    get_data(addr,temp_data[max_burst_bits-1 : max_burst_bits-data_width]);
    addr = addr+1;
    bytes_left = bytes_left - mem_width;
-  end 
+  end
 
   /* Get last valid data in the burst*/
   //temp_rd_data = ddr_mem[addr];
@@ -2481,11 +2481,11 @@ end else begin
   /* align to the brst_byte length */
   repeat(max_burst_bytes - no_of_bytes)
     temp_data = temp_data >> 8;
-end 
+end
 data = temp_data;
 `ifdef XLNX_INT_DBG
-   $display("[%0d] : %0s : DONE -> Reading DDR Memory starting address (0x%0h), Data returned(0x%0h)",$time, DISP_INT_INFO, start_addr, data ); 
-`endif 
+   $display("[%0d] : %0s : DONE -> Reading DDR Memory starting address (0x%0h), Data returned(0x%0h)",$time, DISP_INT_INFO, start_addr, data );
+`endif
 end
 endtask
 
@@ -2545,7 +2545,7 @@ module processing_system7_vip_v1_0_24_reg_map();
 `include "processing_system7_vip_v1_0_24_reg_params.v"
 
 parameter mem_size = 32'h2000_0000; ///as the memory is implemented 4 byte wide
-parameter xsim_mem_size = 32'h1000_0000; ///as the memory is implemented 4 byte wide 256 MB 
+parameter xsim_mem_size = 32'h1000_0000; ///as the memory is implemented 4 byte wide 256 MB
 
 `ifdef XSIM_ISIM
  reg [data_width-1:0] reg_mem0 [0:(xsim_mem_size/mem_width)-1]; // 256MB mem
@@ -2570,7 +2570,7 @@ input [addr_width-1:0] address;
 input [data_width-1:0] data;
 reg   [addr_width-1:0] addr;
 begin
-addr = address >> 2; 
+addr = address >> 2;
 `ifdef XSIM_ISIM
   case(addr[addr_width-1:addr_offset_bits])
     14 : reg_mem0[addr[addr_offset_bits-1:0]] = data;
@@ -2629,8 +2629,8 @@ addr = start_addr >> shft_addr_bits;
 bytes_left = no_of_bytes;
 
 `ifdef XLNX_INT_DBG
-   $display("[%0d] : %0s : Reading Register Map starting address (0x%0h) -> %0d bytes",$time, DISP_INT_INFO, start_addr,no_of_bytes ); 
-`endif 
+   $display("[%0d] : %0s : Reading Register Map starting address (0x%0h) -> %0d bytes",$time, DISP_INT_INFO, start_addr,no_of_bytes );
+`endif
 
 /* Get first data ... if unaligned address */
 get_data(addr,temp_data[max_burst_bits-1 : max_burst_bits- data_width]);
@@ -2648,7 +2648,7 @@ end else begin
    get_data(addr,temp_data[max_burst_bits-1 : max_burst_bits-data_width]);
    addr = addr+1;
    bytes_left = bytes_left - mem_width;
-  end 
+  end
 
   /* Get last valid data in the burst*/
   get_data(addr,temp_rd_data);
@@ -2661,15 +2661,15 @@ end else begin
   /* align to the brst_byte length */
   repeat(max_burst_bytes - no_of_bytes)
     temp_data = temp_data >> 8;
-end 
+end
 data = temp_data;
 `ifdef XLNX_INT_DBG
-   $display("[%0d] : %0s : DONE -> Reading Register Map starting address (0x%0h), Data returned(0x%0h)",$time, DISP_INT_INFO, start_addr, data ); 
-`endif 
+   $display("[%0d] : %0s : DONE -> Reading Register Map starting address (0x%0h), Data returned(0x%0h)",$time, DISP_INT_INFO, start_addr, data );
+`endif
 end
 endtask
 
-initial 
+initial
 begin
  pre_load_rst_values(1);
 end
@@ -2690,10 +2690,10 @@ endmodule
 module processing_system7_vip_v1_0_24_ocm_mem();
 `include "processing_system7_vip_v1_0_24_local_params.v"
 
-parameter mem_size = 32'h4_0000; /// 256 KB 
+parameter mem_size = 32'h4_0000; /// 256 KB
 parameter mem_addr_width = clogb2(mem_size/mem_width);
 
-reg [data_width-1:0] ocm_memory [0:(mem_size/mem_width)-1]; /// 256 KB memory 
+reg [data_width-1:0] ocm_memory [0:(mem_size/mem_width)-1]; /// 256 KB memory
 
 /* preload memory from file */
 // task automatic pre_load_mem_from_file;
@@ -2736,7 +2736,7 @@ for (i = 0; i < no_of_bytes; i = i + mem_width) begin
      default    : ocm_memory[addr] = $random;
    endcase
    addr = addr+1;
-end 
+end
 end
 endtask
 
@@ -2762,7 +2762,7 @@ wr_temp_strb = strb;
 
 
 `ifdef XLNX_INT_DBG
-   $display("[%0d] : %0s : Writing OCM Memory starting address (0x%0h) with %0d bytes.\n Data (0x%0h)",$time, DISP_INT_INFO, start_addr, no_of_bytes, data); 
+   $display("[%0d] : %0s : Writing OCM Memory starting address (0x%0h) with %0d bytes.\n Data (0x%0h)",$time, DISP_INT_INFO, start_addr, no_of_bytes, data);
 `endif
 
 temp_data = wr_temp_data[data_width-1:0];
@@ -2775,10 +2775,10 @@ bytes_left = no_of_bytes;
    temp_data     = ocm_memory[addr];
    temp_strb     = 4'hF;
    pre_pad_bytes = mem_width - start_addr[shft_addr_bits-1:0];
-   repeat(pre_pad_bytes) begin 
+   repeat(pre_pad_bytes) begin
      temp_data = temp_data << 8;
      temp_strb = temp_strb << 1;
-   end 
+   end
    repeat(pre_pad_bytes) begin
      temp_data = temp_data >> 8;
 	 temp_strb = temp_strb >> 1;
@@ -2797,16 +2797,16 @@ bytes_left = no_of_bytes;
     temp_data = temp_data << 8;
     temp_strb = temp_strb << 1;
  end
- repeat(bytes_left) begin 
-   post_pad_data = post_pad_data >> 8;   
+ repeat(bytes_left) begin
+   post_pad_data = post_pad_data >> 8;
    post_pad_strb = post_pad_strb >> 1;
  end
  repeat(post_pad_bytes) begin
-   temp_data = temp_data >> 8; 
+   temp_data = temp_data >> 8;
    temp_strb = temp_strb >> 1;
    temp_data[data_width-1:data_width-8] = post_pad_data[7:0];
-   temp_strb[(data_width/8)-1]          = post_pad_strb[0]; 
-   post_pad_data = post_pad_data >> 8; 
+   temp_strb[(data_width/8)-1]          = post_pad_strb[0];
+   post_pad_data = post_pad_data >> 8;
    post_pad_strb = post_pad_strb >> 1;
  end
  if (temp_strb[0] == 1'b1) ocm_memory[addr][7:0]   = temp_data[7:0];
@@ -2831,10 +2831,10 @@ end else begin
     temp_strb[(data_width/8)-1]          = wr_temp_strb[0];
     wr_temp_data = wr_temp_data >> 8;
     wr_temp_strb = wr_temp_strb >> 1;
-    bytes_left = bytes_left -1;  
+    bytes_left = bytes_left -1;
   end
  end else begin
-  wr_temp_data = wr_temp_data >> data_width;  
+  wr_temp_data = wr_temp_data >> data_width;
   wr_temp_strb = wr_temp_strb >> data_width/8;
   bytes_left = bytes_left - mem_width;
  end
@@ -2857,7 +2857,7 @@ end else begin
   wr_temp_strb = wr_temp_strb >> data_width/8;
   bytes_left = bytes_left - mem_width;
  end
- 
+
  post_pad_data   = ocm_memory[addr];
  post_pad_strb   = 4'hF;
  post_pad_bytes  = mem_width - bytes_left;
@@ -2865,7 +2865,7 @@ end else begin
  if(bytes_left > 0) begin
    temp_data = wr_temp_data[data_width-1:0];
    temp_strb = wr_temp_strb[(data_width/8)-1:0];
-   repeat(post_pad_bytes) begin 
+   repeat(post_pad_bytes) begin
      temp_data = temp_data << 8;
 	 temp_strb = temp_strb << 1;
    end
@@ -2878,7 +2878,7 @@ end else begin
 	 temp_strb = temp_strb >> 1;
      temp_data[data_width-1:data_width-8] = post_pad_data[7:0];
      temp_strb[(data_width/8)-1]          = post_pad_strb[0];
-     post_pad_data = post_pad_data >> 8; 
+     post_pad_data = post_pad_data >> 8;
 	 post_pad_strb = post_pad_strb >> 1;
    end
    if (temp_strb[0] == 1'b1) ocm_memory[addr][7:0]   = temp_data[7:0];
@@ -2889,7 +2889,7 @@ end else begin
 // ocm_memory[addr] = temp_data;
  end
 end
-`ifdef XLNX_INT_DBG $display("[%0d] : %0s : DONE -> Writing OCM Memory starting address (0x%0h)",$time, DISP_INT_INFO, start_addr ); 
+`ifdef XLNX_INT_DBG $display("[%0d] : %0s : DONE -> Writing OCM Memory starting address (0x%0h)",$time, DISP_INT_INFO, start_addr );
 `endif
 end
 endtask
@@ -2926,8 +2926,8 @@ number_of_extra_reads = 0;
 bytes_left = no_of_bytes-number_of_reads_first_loc;
 
 `ifdef XLNX_INT_DBG
-   $display("[%0d] : %0s : Reading OCM Memory starting address (0x%0h) -> %0d bytes",$time, DISP_INT_INFO, start_addr,no_of_bytes ); 
-`endif 
+   $display("[%0d] : %0s : Reading OCM Memory starting address (0x%0h) -> %0d bytes",$time, DISP_INT_INFO, start_addr,no_of_bytes );
+`endif
 
 //$display("start_addr %0h  no_of_bytes %0d addr %0h shft_addr_bits %0d",start_addr,no_of_bytes,addr,shft_addr_bits);
 
@@ -2953,7 +2953,7 @@ end else begin
    temp_data[max_burst_bits-1 : max_burst_bits-data_width] = ocm_memory[addr];
    addr = addr+1;
    bytes_left = bytes_left - mem_width;
-  end 
+  end
 
   /* Get last valid data in the burst*/
   temp_rd_data = ocm_memory[addr];
@@ -2970,13 +2970,13 @@ end else begin
   repeat(max_burst_bytes - no_of_bytes) begin
     temp_data = temp_data >> 8;
     // $display("temp_data %0h no_of_bytes %0d max_burst_bytes %0d",temp_data,no_of_bytes,max_burst_bytes);
-  end	
-end 
+  end
+end
 data = temp_data;
     //$display("final data %0h ",data);
 `ifdef XLNX_INT_DBG
-   $display("[%0d] : %0s : DONE -> Reading OCM Memory starting address (0x%0h), Data returned(0x%0h)",$time, DISP_INT_INFO, start_addr, data ); 
-`endif 
+   $display("[%0d] : %0s : DONE -> Reading OCM Memory starting address (0x%0h), Data returned(0x%0h)",$time, DISP_INT_INFO, start_addr, data );
+`endif
 end
 endtask
 
@@ -2995,19 +2995,19 @@ endtask
 // addr = start_addr >> shft_addr_bits;
 // pre_bytes  = start_addr[shft_addr_bits-1:0];
 // bytes_left = no_of_bytes;
-// 
+//
 // `ifdef XLNX_INT_DBG
-//    $display("[%0d] : %0s : Reading OCM Memory starting address (0x%0h) -> %0d bytes",$time, DISP_INT_INFO, start_addr,no_of_bytes ); 
-// `endif 
-// 
+//    $display("[%0d] : %0s : Reading OCM Memory starting address (0x%0h) -> %0d bytes",$time, DISP_INT_INFO, start_addr,no_of_bytes );
+// `endif
+//
 // /* Get first data ... if unaligned address */
 // temp_data[max_burst_bits-1 : max_burst_bits-data_width] = ocm_memory[addr];
-// 
+//
 // if(no_of_bytes < mem_width ) begin
 //   temp_data = temp_data >> (pre_bytes * 8);
 //   repeat(max_burst_bytes - mem_width)
 //    temp_data = temp_data >> 8;
-// 
+//
 // end else begin
 //   bytes_left = bytes_left - (mem_width - pre_bytes);
 //   addr  = addr+1;
@@ -3017,8 +3017,8 @@ endtask
 //    temp_data[max_burst_bits-1 : max_burst_bits-data_width] = ocm_memory[addr];
 //    addr = addr+1;
 //    bytes_left = bytes_left - mem_width;
-//   end 
-// 
+//   end
+//
 //   /* Get last valid data in the burst*/
 //   temp_rd_data = ocm_memory[addr];
 //   while(bytes_left > 0) begin
@@ -3030,11 +3030,11 @@ endtask
 //   /* align to the brst_byte length */
 //   repeat(max_burst_bytes - no_of_bytes)
 //     temp_data = temp_data >> 8;
-// end 
+// end
 // data = temp_data;
 // `ifdef XLNX_INT_DBG
-//    $display("[%0d] : %0s : DONE -> Reading OCM Memory starting address (0x%0h), Data returned(0x%0h)",$time, DISP_INT_INFO, start_addr, data ); 
-// `endif 
+//    $display("[%0d] : %0s : DONE -> Reading OCM Memory starting address (0x%0h), Data returned(0x%0h)",$time, DISP_INT_INFO, start_addr, data );
+// `endif
 // end
 // endtask
 
@@ -3078,7 +3078,7 @@ endmodule
 module processing_system7_vip_v1_0_24_intr_wr_mem(
 sw_clk,
 rstn,
- 
+
 full,
 
 WR_DATA_ACK_OCM,
@@ -3099,7 +3099,7 @@ WR_DATA_VALID_DDR
   parameter wr_addr_msb  = wr_addr_lsb + addr_width-1;
   parameter wr_data_lsb  = wr_addr_msb + 1;
 
-  parameter data_bus_width = 32;   
+  parameter data_bus_width = 32;
   parameter wr_data_msb  = wr_data_lsb + (data_bus_width*axi_burst_len)-1;
   parameter wr_qos_lsb   = wr_data_msb + 1;
   parameter wr_qos_msb   = wr_qos_lsb + axi_qos_width-1;
@@ -3109,7 +3109,7 @@ WR_DATA_VALID_DDR
 
 parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_width*axi_burst_len) + axi_qos_width + addr_width + (max_burst_bytes_width+1);
 input sw_clk, rstn;
-output full; 
+output full;
 
 input WR_DATA_ACK_DDR, WR_DATA_ACK_OCM;
 output reg WR_DATA_VALID_DDR, WR_DATA_VALID_OCM;
@@ -3131,9 +3131,9 @@ task automatic write_mem;
 input [wr_fifo_data_bits-1:0] data;
 begin
  wr_fifo[wr_ptr[intr_cnt_width-2:0]] = data;
- if(wr_ptr[intr_cnt_width-2:0] === intr_max_outstanding-1) 
+ if(wr_ptr[intr_cnt_width-2:0] === intr_max_outstanding-1)
    wr_ptr[intr_cnt_width-2:0] = 0;
- else 
+ else
    wr_ptr = wr_ptr + 1;
 end
 endtask
@@ -3163,7 +3163,7 @@ end else begin
        OCM_MEM : WR_DATA_VALID_OCM = 1;
        DDR_MEM : WR_DATA_VALID_DDR = 1;
        default : state = SEND_DATA;
-      endcase 
+      endcase
       if(rd_ptr[intr_cnt_width-2:0] === intr_max_outstanding-1) begin
 	    rd_ptr[intr_cnt_width-2:0] = 0;
 	   end else begin
@@ -3173,7 +3173,7 @@ end else begin
     end
  WAIT_ACK :begin
     state = WAIT_ACK;
-    if(WR_DATA_ACK_OCM | WR_DATA_ACK_DDR) begin 
+    if(WR_DATA_ACK_OCM | WR_DATA_ACK_DDR) begin
       WR_DATA_VALID_OCM = 1'b0;
       WR_DATA_VALID_DDR = 1'b0;
       state = SEND_DATA;
@@ -3199,7 +3199,7 @@ endmodule
 module processing_system7_vip_v1_0_24_intr_rd_mem(
 sw_clk,
 rstn,
- 
+
 full,
 empty,
 
@@ -3236,9 +3236,9 @@ task read_mem;
 output [rd_afi_fifo_bits-1:0] data;
 begin
  data = rd_fifo[rd_ptr[intr_cnt_width-1:0]];
- if(rd_ptr[intr_cnt_width-2:0] === intr_max_outstanding-1) 
+ if(rd_ptr[intr_cnt_width-2:0] === intr_max_outstanding-1)
    rd_ptr[intr_cnt_width-2:0] = 0;
- else 
+ else
    rd_ptr = rd_ptr + 1;
 end
 endtask
@@ -3256,7 +3256,7 @@ if(!rstn) begin
 end else begin
  case (state)
  0 : begin
-  state  = 0;  
+  state  = 0;
   invalid_rd  = 0;
   if(req)begin
    state     = 1;
@@ -3265,16 +3265,16 @@ end else begin
  end
  1 : begin
   state     = 1;
-  if(RD_DATA_VALID_OCM | RD_DATA_VALID_DDR | invalid_rd) begin 
+  if(RD_DATA_VALID_OCM | RD_DATA_VALID_DDR | invalid_rd) begin
    if(RD_DATA_VALID_DDR)
      rd_fifo[wr_ptr[intr_cnt_width-2:0]]  = {RD_DATA_DDR,rd_info};
    else if(RD_DATA_VALID_OCM)
      rd_fifo[wr_ptr[intr_cnt_width-2:0]]  = {RD_DATA_OCM,rd_info};
-   else 
+   else
      rd_fifo[wr_ptr[intr_cnt_width-2:0]]  = rd_info;
-   if(wr_ptr[intr_cnt_width-2:0] === intr_max_outstanding-1) 
+   if(wr_ptr[intr_cnt_width-2:0] === intr_max_outstanding-1)
      wr_ptr[intr_cnt_width-2:0]  = 0;
-   else 
+   else
      wr_ptr  = wr_ptr + 1;
    state   = 0;
    invalid_rd  = 0;
@@ -3322,7 +3322,7 @@ module processing_system7_vip_v1_0_24_fmsw_gp(
  rd_dv_ocm_gp0,
  rd_dv_ddr_gp0,
  rd_dv_reg_gp0,
- 
+
  w_qos_gp1,
  r_qos_gp1,
  wr_ack_ocm_gp1,
@@ -3421,7 +3421,7 @@ output [max_burst_bits-1:0] rd_data_reg_gp0;
 output rd_dv_ocm_gp0;
 output rd_dv_ddr_gp0;
 output rd_dv_reg_gp0;
- 
+
 output wr_ack_ocm_gp1;
 output wr_ack_ddr_gp1;
 input [max_burst_bits-1:0] wr_data_gp1;
@@ -3442,8 +3442,8 @@ output [max_burst_bits-1:0] rd_data_reg_gp1;
 output rd_dv_ocm_gp1;
 output rd_dv_ddr_gp1;
 output rd_dv_reg_gp1;
- 
- 
+
+
 input ocm_wr_ack;
 output ocm_wr_dv;
 output [addr_width-1:0]ocm_wr_addr;
@@ -3632,7 +3632,7 @@ module processing_system7_vip_v1_0_24_regc(
  reg_rd_addr_port1,
  reg_rd_data_port1,
  reg_rd_bytes_port1,
- reg_rd_qos_port1 
+ reg_rd_qos_port1
 
 );
 
@@ -3663,25 +3663,25 @@ wire rd_req;
 processing_system7_vip_v1_0_24_arb_rd reg_read_ports (
  .rstn(rstn),
  .sw_clk(sw_clk),
-   
+
  .qos1(reg_rd_qos_port0),
  .qos2(reg_rd_qos_port1),
-   
+
  .prt_req1(reg_rd_req_port0),
  .prt_req2(reg_rd_req_port1),
-   
+
  .prt_data1(reg_rd_data_port0),
  .prt_data2(reg_rd_data_port1),
-   
+
  .prt_addr1(reg_rd_addr_port0),
  .prt_addr2(reg_rd_addr_port1),
-   
+
  .prt_bytes1(reg_rd_bytes_port0),
  .prt_bytes2(reg_rd_bytes_port1),
-   
+
  .prt_dv1(reg_rd_dv_port0),
  .prt_dv2(reg_rd_dv_port1),
-   
+
  .prt_qos(rd_qos),
  .prt_req(rd_req),
  .prt_data(rd_data),
@@ -3700,12 +3700,12 @@ if(!rstn) begin
  rd_dv <= 0;
  state <= 0;
 end else begin
- case(state) 
+ case(state)
  0:begin
      state <= 0;
      rd_dv <= 0;
      if(rd_req) begin
-       regm.read_reg_mem(rd_data,rd_addr, rd_bytes); 
+       regm.read_reg_mem(rd_data,rd_addr, rd_bytes);
        rd_dv <= 1;
        state <= 1;
      end
@@ -3714,13 +3714,13 @@ end else begin
  1:begin
        rd_dv  <= 0;
        state <= 0;
-   end 
+   end
 
  endcase
 end /// if
 end// always
 
-endmodule 
+endmodule
 
 
 /*****************************************************************************
@@ -3766,7 +3766,7 @@ module processing_system7_vip_v1_0_24_ocmc(
  ocm_rd_data_port1,
  ocm_rd_bytes_port1,
  ocm_wr_qos_port1,
- ocm_rd_qos_port1 
+ ocm_rd_qos_port1
 
 );
 
@@ -3821,28 +3821,28 @@ wire rd_req;
 processing_system7_vip_v1_0_24_arb_wr ocm_write_ports (
  .rstn(rstn),
  .sw_clk(sw_clk),
-   
+
  .qos1(ocm_wr_qos_port0),
  .qos2(ocm_wr_qos_port1),
-   
+
  .prt_dv1(ocm_wr_dv_port0),
  .prt_dv2(ocm_wr_dv_port1),
-   
+
  .prt_data1(ocm_wr_data_port0),
  .prt_data2(ocm_wr_data_port1),
-   
+
  .prt_strb1(ocm_wr_strb_port0),
  .prt_strb2(ocm_wr_strb_port1),
-   
+
  .prt_addr1(ocm_wr_addr_port0),
  .prt_addr2(ocm_wr_addr_port1),
-   
+
  .prt_bytes1(ocm_wr_bytes_port0),
  .prt_bytes2(ocm_wr_bytes_port1),
-   
+
  .prt_ack1(ocm_wr_ack_port0),
  .prt_ack2(ocm_wr_ack_port1),
-   
+
  .prt_qos(wr_qos),
  .prt_req(wr_req),
  .prt_data(wr_data),
@@ -3856,25 +3856,25 @@ processing_system7_vip_v1_0_24_arb_wr ocm_write_ports (
 processing_system7_vip_v1_0_24_arb_rd ocm_read_ports (
  .rstn(rstn),
  .sw_clk(sw_clk),
-   
+
  .qos1(ocm_rd_qos_port0),
  .qos2(ocm_rd_qos_port1),
-   
+
  .prt_req1(ocm_rd_req_port0),
  .prt_req2(ocm_rd_req_port1),
-   
+
  .prt_data1(ocm_rd_data_port0),
  .prt_data2(ocm_rd_data_port1),
-   
+
  .prt_addr1(ocm_rd_addr_port0),
  .prt_addr2(ocm_rd_addr_port1),
-   
+
  .prt_bytes1(ocm_rd_bytes_port0),
  .prt_bytes2(ocm_rd_bytes_port1),
-   
+
  .prt_dv1(ocm_rd_dv_port0),
  .prt_dv2(ocm_rd_dv_port1),
-   
+
  .prt_qos(rd_qos),
  .prt_req(rd_req),
  .prt_data(rd_data),
@@ -3890,17 +3890,17 @@ reg [1:0] state;
 always@(posedge sw_clk or negedge rstn)
 begin
 if(!rstn) begin
- wr_ack <= 0; 
+ wr_ack <= 0;
  rd_dv <= 0;
  state <= 2'd0;
 end else begin
- case(state) 
+ case(state)
  0:begin
      state <= 0;
      wr_ack <= 0;
      rd_dv <= 0;
      if(wr_req) begin
-       ocm.write_mem(wr_data , wr_addr, wr_bytes, wr_strb); 
+       ocm.write_mem(wr_data , wr_addr, wr_bytes, wr_strb);
 	   //$display(" ocm_write_data wr_addr %0h wr_data %0h wr_bytes %0h wr_strb %0h",wr_addr,wr_data,wr_bytes,wr_strb);
        wr_ack <= 1;
        state <= 1;
@@ -3917,13 +3917,13 @@ end else begin
        wr_ack <= 0;
        rd_dv  <= 0;
        state <= 0;
-   end 
+   end
 
  endcase
 end /// if
 end// always
 
-endmodule 
+endmodule
 
 
 /*****************************************************************************
@@ -3938,8 +3938,8 @@ endmodule
 
 module processing_system7_vip_v1_0_24_interconnect_model (
  rstn,
- sw_clk, 
- 
+ sw_clk,
+
  w_qos_gp0,
  w_qos_gp1,
  w_qos_hp0,
@@ -4150,7 +4150,7 @@ input [axi_qos_width-1:0] r_qos_hp0;
 input [axi_qos_width-1:0] r_qos_hp1;
 input [axi_qos_width-1:0] r_qos_hp2;
 input [axi_qos_width-1:0] r_qos_hp3;
- 
+
 output [axi_qos_width-1:0] ocm_wr_qos_port1;
 output [axi_qos_width-1:0] ocm_rd_qos_port1;
 
@@ -4321,7 +4321,7 @@ output[addr_width-1:0] ocm_rd_addr_port1;
 output[max_burst_bytes_width:0] ocm_rd_bytes_port1;
 
 /* Goes to port1 of REG */
-output [axi_qos_width-1:0] reg_rd_qos_port1;  
+output [axi_qos_width-1:0] reg_rd_qos_port1;
 output reg_rd_req_port1;
 input reg_rd_dv_port1;
 input[max_burst_bits-1:0] reg_rd_data_port1;
@@ -4360,7 +4360,7 @@ wire [axi_qos_width-1:0] ocm_rd_qos_osw1;
 processing_system7_vip_v1_0_24_fmsw_gp fmsw (
  .sw_clk(sw_clk),
  .rstn(rstn),
-   
+
  .w_qos_gp0(w_qos_gp0),
  .r_qos_gp0(r_qos_gp0),
  .wr_ack_ocm_gp0(wr_ack_ocm_gp0),
@@ -4382,7 +4382,7 @@ processing_system7_vip_v1_0_24_fmsw_gp fmsw (
  .rd_dv_ocm_gp0(rd_dv_ocm_gp0),
  .rd_dv_ddr_gp0(rd_dv_ddr_gp0),
  .rd_dv_reg_gp0(rd_dv_reg_gp0),
- 
+
  .w_qos_gp1(w_qos_gp1),
  .r_qos_gp1(r_qos_gp1),
  .wr_ack_ocm_gp1(wr_ack_ocm_gp1),
@@ -4404,7 +4404,7 @@ processing_system7_vip_v1_0_24_fmsw_gp fmsw (
  .rd_dv_ocm_gp1(rd_dv_ocm_gp1),
  .rd_dv_ddr_gp1(rd_dv_ddr_gp1),
  .rd_dv_reg_gp1(rd_dv_reg_gp1),
-    
+
  .ocm_wr_ack (ocm_wr_ack_osw0),
  .ocm_wr_dv  (ocm_wr_dv_osw0),
  .ocm_rd_req (ocm_rd_req_osw0),
@@ -4419,7 +4419,7 @@ processing_system7_vip_v1_0_24_fmsw_gp fmsw (
 
  .ocm_wr_qos(ocm_wr_qos_osw0),
  .ocm_rd_qos(ocm_rd_qos_osw0),
- 
+
  .ddr_wr_qos(ddr_wr_qos_port1),
  .ddr_rd_qos(ddr_rd_qos_port1),
 
@@ -4456,7 +4456,7 @@ processing_system7_vip_v1_0_24_ssw_hp ssw(
  .r_qos_hp2(r_qos_hp2),
  .w_qos_hp3(w_qos_hp3),
  .r_qos_hp3(r_qos_hp3),
-   
+
  .wr_ack_ddr_hp0(wr_ack_ddr_hp0),
  .wr_data_hp0(wr_data_hp0),
  .wr_strb_hp0(wr_strb_hp0),
@@ -4469,12 +4469,12 @@ processing_system7_vip_v1_0_24_ssw_hp ssw(
  .rd_data_ddr_hp0(rd_data_ddr_hp0),
  .rd_data_ocm_hp0(rd_data_ocm_hp0),
  .rd_dv_ddr_hp0(rd_dv_ddr_hp0),
-   
+
  .wr_ack_ocm_hp0(wr_ack_ocm_hp0),
  .wr_dv_ocm_hp0(wr_dv_ocm_hp0),
  .rd_req_ocm_hp0(rd_req_ocm_hp0),
  .rd_dv_ocm_hp0(rd_dv_ocm_hp0),
-   
+
  .wr_ack_ddr_hp1(wr_ack_ddr_hp1),
  .wr_data_hp1(wr_data_hp1),
  .wr_strb_hp1(wr_strb_hp1),
@@ -4487,12 +4487,12 @@ processing_system7_vip_v1_0_24_ssw_hp ssw(
  .rd_data_ddr_hp1(rd_data_ddr_hp1),
  .rd_data_ocm_hp1(rd_data_ocm_hp1),
  .rd_dv_ddr_hp1(rd_dv_ddr_hp1),
-   
+
  .wr_ack_ocm_hp1(wr_ack_ocm_hp1),
  .wr_dv_ocm_hp1(wr_dv_ocm_hp1),
  .rd_req_ocm_hp1(rd_req_ocm_hp1),
  .rd_dv_ocm_hp1(rd_dv_ocm_hp1),
-   
+
  .wr_ack_ddr_hp2(wr_ack_ddr_hp2),
  .wr_data_hp2(wr_data_hp2),
  .wr_strb_hp2(wr_strb_hp2),
@@ -4505,12 +4505,12 @@ processing_system7_vip_v1_0_24_ssw_hp ssw(
  .rd_data_ddr_hp2(rd_data_ddr_hp2),
  .rd_data_ocm_hp2(rd_data_ocm_hp2),
  .rd_dv_ddr_hp2(rd_dv_ddr_hp2),
-   
+
  .wr_ack_ocm_hp2(wr_ack_ocm_hp2),
  .wr_dv_ocm_hp2(wr_dv_ocm_hp2),
  .rd_req_ocm_hp2(rd_req_ocm_hp2),
  .rd_dv_ocm_hp2(rd_dv_ocm_hp2),
-   
+
  .wr_ack_ddr_hp3(wr_ack_ddr_hp3),
  .wr_data_hp3(wr_data_hp3),
  .wr_strb_hp3(wr_strb_hp3),
@@ -4523,12 +4523,12 @@ processing_system7_vip_v1_0_24_ssw_hp ssw(
  .rd_data_ddr_hp3(rd_data_ddr_hp3),
  .rd_data_ocm_hp3(rd_data_ocm_hp3),
  .rd_dv_ddr_hp3(rd_dv_ddr_hp3),
-   
+
  .wr_ack_ocm_hp3(wr_ack_ocm_hp3),
  .wr_dv_ocm_hp3(wr_dv_ocm_hp3),
  .rd_req_ocm_hp3(rd_req_ocm_hp3),
  .rd_dv_ocm_hp3(rd_dv_ocm_hp3),
-   
+
  .ddr_wr_ack0(ddr_wr_ack_port2),
  .ddr_wr_dv0(ddr_wr_dv_port2),
  .ddr_rd_req0(ddr_rd_req_port2),
@@ -4542,7 +4542,7 @@ processing_system7_vip_v1_0_24_ssw_hp ssw(
  .ddr_rd_bytes0(ddr_rd_bytes_port2),
  .ddr_wr_qos0(ddr_wr_qos_port2),
  .ddr_rd_qos0(ddr_rd_qos_port2),
-    
+
  .ddr_wr_ack1(ddr_wr_ack_port3),
  .ddr_wr_dv1(ddr_wr_dv_port3),
  .ddr_rd_req1(ddr_rd_req_port3),
@@ -4559,7 +4559,7 @@ processing_system7_vip_v1_0_24_ssw_hp ssw(
 
  .ocm_wr_qos(ocm_wr_qos_osw1),
  .ocm_rd_qos(ocm_rd_qos_osw1),
- 
+
  .ocm_wr_ack (ocm_wr_ack_osw1),
  .ocm_wr_dv  (ocm_wr_dv_osw1),
  .ocm_rd_req (ocm_rd_req_osw1),
@@ -4748,29 +4748,29 @@ assign fpga_gp_m0_reset_n = !fabric_rst_n[12];
 
 task fpga_soft_reset;
 input[31:0] reset_ctrl;
- begin 
+ begin
   fabric_rst_n[0] = reset_ctrl[0];
   fabric_rst_n[1] = reset_ctrl[1];
   fabric_rst_n[2] = reset_ctrl[2];
   fabric_rst_n[3] = reset_ctrl[3];
-  
+
   fabric_rst_n[12] = reset_ctrl[12];
   fabric_rst_n[13] = reset_ctrl[13];
   fabric_rst_n[16] = reset_ctrl[16];
   fabric_rst_n[17] = reset_ctrl[17];
-  
+
   fabric_rst_n[20] = reset_ctrl[20];
   fabric_rst_n[21] = reset_ctrl[21];
   fabric_rst_n[22] = reset_ctrl[22];
   fabric_rst_n[23] = reset_ctrl[23];
-  
+
   fabric_rst_n[24] = reset_ctrl[24];
  end
 endtask
 
 // task por_srstb_reset;
 // input por_reset_ctrl;
-//  begin 
+//  begin
 //   por_rst_n = por_reset_ctrl;
 //   sys_rst_n = por_reset_ctrl;
 //  end
@@ -4779,7 +4779,7 @@ endtask
 always@(negedge por_rst_n or negedge sys_rst_n) fabric_rst_n = 32'h01f3_300f;
 
 always@(posedge m_axi_gp0_clk or negedge (por_rst_n & sys_rst_n))
-  begin 
+  begin
     if (!(por_rst_n & sys_rst_n))
       m_axi_gp0_rstn = 1'b0;
 	else
@@ -4787,7 +4787,7 @@ always@(posedge m_axi_gp0_clk or negedge (por_rst_n & sys_rst_n))
   end
 
 always@(posedge m_axi_gp1_clk or negedge (por_rst_n & sys_rst_n))
-  begin 
+  begin
     if (!(por_rst_n & sys_rst_n))
       m_axi_gp1_rstn = 1'b0;
 	else
@@ -4795,7 +4795,7 @@ always@(posedge m_axi_gp1_clk or negedge (por_rst_n & sys_rst_n))
   end
 
 always@(posedge s_axi_gp0_clk or negedge (por_rst_n & sys_rst_n))
-  begin 
+  begin
     if (!(por_rst_n & sys_rst_n))
       s_axi_gp0_rstn = 1'b0;
 	else
@@ -4803,7 +4803,7 @@ always@(posedge s_axi_gp0_clk or negedge (por_rst_n & sys_rst_n))
   end
 
 always@(posedge s_axi_gp1_clk or negedge (por_rst_n & sys_rst_n))
-  begin 
+  begin
     if (!(por_rst_n & sys_rst_n))
       s_axi_gp1_rstn = 1'b0;
 	else
@@ -4811,7 +4811,7 @@ always@(posedge s_axi_gp1_clk or negedge (por_rst_n & sys_rst_n))
   end
 
 always@(posedge s_axi_hp0_clk or negedge (por_rst_n & sys_rst_n))
-  begin 
+  begin
     if (!(por_rst_n & sys_rst_n))
       s_axi_hp0_rstn = 1'b0;
 	else
@@ -4819,7 +4819,7 @@ always@(posedge s_axi_hp0_clk or negedge (por_rst_n & sys_rst_n))
   end
 
 always@(posedge s_axi_hp1_clk or negedge (por_rst_n & sys_rst_n))
-  begin 
+  begin
     if (!(por_rst_n & sys_rst_n))
       s_axi_hp1_rstn = 1'b0;
 	else
@@ -4827,7 +4827,7 @@ always@(posedge s_axi_hp1_clk or negedge (por_rst_n & sys_rst_n))
   end
 
 always@(posedge s_axi_hp2_clk or negedge (por_rst_n & sys_rst_n))
-  begin 
+  begin
     if (!(por_rst_n & sys_rst_n))
       s_axi_hp2_rstn = 1'b0;
 	else
@@ -4835,7 +4835,7 @@ always@(posedge s_axi_hp2_clk or negedge (por_rst_n & sys_rst_n))
   end
 
 always@(posedge s_axi_hp3_clk or negedge (por_rst_n & sys_rst_n))
-  begin 
+  begin
     if (!(por_rst_n & sys_rst_n))
       s_axi_hp3_rstn = 1'b0;
 	else
@@ -4843,7 +4843,7 @@ always@(posedge s_axi_hp3_clk or negedge (por_rst_n & sys_rst_n))
   end
 
 always@(posedge s_axi_acp_clk or negedge (por_rst_n & sys_rst_n))
-  begin 
+  begin
     if (!(por_rst_n & sys_rst_n))
       s_axi_acp_rstn = 1'b0;
 	else
@@ -4866,15 +4866,15 @@ endmodule
  *
  * Date : 2012-11
  *
- * Description : Module that generates FCLK clocks and internal clock for Zynq VIP. 
+ * Description : Module that generates FCLK clocks and internal clock for Zynq VIP.
  *
  *****************************************************************************/
  `timescale 1ns/1ps
 
 module processing_system7_vip_v1_0_24_gen_clock(
- ps_clk, 
+ ps_clk,
  sw_clk,
- 
+
  fclk_clk3,
  fclk_clk2,
  fclk_clk1,
@@ -4904,7 +4904,7 @@ assign fclk_clk0 = clk0;
 assign fclk_clk1 = clk1;
 assign fclk_clk2 = clk2;
 assign fclk_clk3 = clk3;
- 
+
 real clk3_p = (1000.00/freq_clk3)/2;
 real clk2_p = (1000.00/freq_clk2)/2;
 real clk1_p = (1000.00/freq_clk1)/2;
@@ -4994,7 +4994,7 @@ module processing_system7_vip_v1_0_24_ddrc(
  ddr_rd_data_port3,
  ddr_rd_bytes_port3,
  ddr_wr_qos_port3,
- ddr_rd_qos_port3 
+ ddr_rd_qos_port3
 
 );
 
@@ -5077,22 +5077,22 @@ wire rd_req;
 processing_system7_vip_v1_0_24_arb_wr_4 ddr_write_ports (
  .rstn(rstn),
  .sw_clk(sw_clk),
-   
+
  .qos1(ddr_wr_qos_port0),
  .qos2(ddr_wr_qos_port1),
  .qos3(ddr_wr_qos_port2),
  .qos4(ddr_wr_qos_port3),
-   
+
  .prt_dv1(ddr_wr_dv_port0),
  .prt_dv2(ddr_wr_dv_port1),
  .prt_dv3(ddr_wr_dv_port2),
  .prt_dv4(ddr_wr_dv_port3),
-   
+
  .prt_data1(ddr_wr_data_port0),
  .prt_data2(ddr_wr_data_port1),
  .prt_data3(ddr_wr_data_port2),
  .prt_data4(ddr_wr_data_port3),
-   
+
  .prt_strb1(ddr_wr_strb_port0),
  .prt_strb2(ddr_wr_strb_port1),
  .prt_strb3(ddr_wr_strb_port2),
@@ -5102,17 +5102,17 @@ processing_system7_vip_v1_0_24_arb_wr_4 ddr_write_ports (
  .prt_addr2(ddr_wr_addr_port1),
  .prt_addr3(ddr_wr_addr_port2),
  .prt_addr4(ddr_wr_addr_port3),
-   
+
  .prt_bytes1(ddr_wr_bytes_port0),
  .prt_bytes2(ddr_wr_bytes_port1),
  .prt_bytes3(ddr_wr_bytes_port2),
  .prt_bytes4(ddr_wr_bytes_port3),
-   
+
  .prt_ack1(ddr_wr_ack_port0),
  .prt_ack2(ddr_wr_ack_port1),
  .prt_ack3(ddr_wr_ack_port2),
  .prt_ack4(ddr_wr_ack_port3),
-   
+
  .prt_qos(wr_qos),
  .prt_req(wr_req),
  .prt_data(wr_data),
@@ -5126,37 +5126,37 @@ processing_system7_vip_v1_0_24_arb_wr_4 ddr_write_ports (
 processing_system7_vip_v1_0_24_arb_rd_4 ddr_read_ports (
  .rstn(rstn),
  .sw_clk(sw_clk),
-   
+
  .qos1(ddr_rd_qos_port0),
  .qos2(ddr_rd_qos_port1),
  .qos3(ddr_rd_qos_port2),
  .qos4(ddr_rd_qos_port3),
-   
+
  .prt_req1(ddr_rd_req_port0),
  .prt_req2(ddr_rd_req_port1),
  .prt_req3(ddr_rd_req_port2),
  .prt_req4(ddr_rd_req_port3),
-   
+
  .prt_data1(ddr_rd_data_port0),
  .prt_data2(ddr_rd_data_port1),
  .prt_data3(ddr_rd_data_port2),
  .prt_data4(ddr_rd_data_port3),
-   
+
  .prt_addr1(ddr_rd_addr_port0),
  .prt_addr2(ddr_rd_addr_port1),
  .prt_addr3(ddr_rd_addr_port2),
  .prt_addr4(ddr_rd_addr_port3),
-   
+
  .prt_bytes1(ddr_rd_bytes_port0),
  .prt_bytes2(ddr_rd_bytes_port1),
  .prt_bytes3(ddr_rd_bytes_port2),
  .prt_bytes4(ddr_rd_bytes_port3),
-   
+
  .prt_dv1(ddr_rd_dv_port0),
  .prt_dv2(ddr_rd_dv_port1),
  .prt_dv3(ddr_rd_dv_port2),
  .prt_dv4(ddr_rd_dv_port3),
-   
+
  .prt_qos(rd_qos),
  .prt_req(rd_req),
  .prt_data(rd_data),
@@ -5172,33 +5172,33 @@ reg [1:0] state;
 // always@(posedge sw_clk or negedge rstn)
 // begin
 // if(!rstn) begin
-//  wr_ack <= 0; 
+//  wr_ack <= 0;
 //  rd_dv <= 0;
 //  state <= 2'd0;
 // end else begin
-//  case(state) 
+//  case(state)
 //  0:begin
 //      state <= 0;
 //      wr_ack <= 0;
 //      rd_dv <= 0;
 //      if(wr_req) begin
-//        ddr.write_mem(wr_data , wr_addr, wr_bytes); 
+//        ddr.write_mem(wr_data , wr_addr, wr_bytes);
 //        wr_ack <= 1;
 //        state <= 1;
 //      end
 //      if(rd_req) begin
-//        ddr.read_mem(rd_data,rd_addr, rd_bytes); 
+//        ddr.read_mem(rd_data,rd_addr, rd_bytes);
 //        rd_dv <= 1;
 //        state <= 1;
 //      end
-// 
+//
 //    end
 //  1:begin
 //        wr_ack <= 0;
 //        rd_dv  <= 0;
 //        state <= 0;
-//    end 
-// 
+//    end
+//
 //  endcase
 // end /// if
 // end// always
@@ -5207,24 +5207,24 @@ reg [1:0] state;
 always@(posedge sw_clk or negedge rstn)
 begin
 if(!rstn) begin
- wr_ack <= 0; 
+ wr_ack <= 0;
  rd_dv <= 0;
  state <= 2'd0;
 end else begin
- case(state) 
+ case(state)
  0:begin
      state <= 0;
      wr_ack <= 0;
      rd_dv <= 0;
      if(wr_req) begin
 	   //$display("wr_addr %0h,wr_data %0h,wr_bytes %0h , wr_strb %0h ",wr_addr,wr_data,wr_bytes,wr_strb);
-       ddr.write_mem(wr_data , wr_addr, wr_bytes, wr_strb); 
-       // ddr.write_mem(wr_data , wr_addr, wr_bytes, 16'hFFFF); 
+       ddr.write_mem(wr_data , wr_addr, wr_bytes, wr_strb);
+       // ddr.write_mem(wr_data , wr_addr, wr_bytes, 16'hFFFF);
        wr_ack <= 1;
        state <= 1;
      end
      if(rd_req) begin
-       ddr.read_mem(rd_data,rd_addr, rd_bytes); 
+       ddr.read_mem(rd_data,rd_addr, rd_bytes);
 	   // $display("rd_addr %0h,rd_data %0h  , rd_bytes %0h ",rd_addr,rd_data,rd_bytes);
        rd_dv <= 1;
        state <= 1;
@@ -5235,7 +5235,7 @@ end else begin
        wr_ack <= 0;
        rd_dv  <= 0;
        state <= 0;
-   end 
+   end
 
  endcase
 end /// if
@@ -5243,7 +5243,7 @@ end// always
 
 
 
-endmodule 
+endmodule
 
 
 /*****************************************************************************
@@ -5251,7 +5251,7 @@ endmodule
  *
  * Date : 2012-11
  *
- * Description : Model that acts as PS AXI Slave  port interface. 
+ * Description : Model that acts as PS AXI Slave  port interface.
  *               It uses AXI3 Slave  VIP
  *****************************************************************************/
  `timescale 1ns/1ps
@@ -5298,7 +5298,7 @@ module processing_system7_vip_v1_0_24_axi_slave (
   S_ARID,
   S_AWID,
   S_WID,
-  
+
   S_AWQOS,
   S_ARQOS,
 
@@ -5313,7 +5313,7 @@ module processing_system7_vip_v1_0_24_axi_slave (
   WR_DATA_VALID_DDR,
   WR_QOS,
 
-  RD_QOS, 
+  RD_QOS,
   RD_REQ_DDR,
   RD_REQ_OCM,
   RD_REQ_REG,
@@ -5328,7 +5328,7 @@ module processing_system7_vip_v1_0_24_axi_slave (
 
 );
 
-  parameter enable_this_port = 0;  
+  parameter enable_this_port = 0;
   parameter slave_name = "Slave";
   parameter data_bus_width = 32;
   parameter address_bus_width = 32;
@@ -5345,7 +5345,7 @@ module processing_system7_vip_v1_0_24_axi_slave (
   parameter wr_addr_lsb  = wr_bytes_msb + 1;
   parameter wr_addr_msb  = wr_addr_lsb + addr_width-1;
   parameter wr_data_lsb  = wr_addr_msb + 1;
- 
+
 parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_width*axi_burst_len) + axi_qos_width + addr_width + (max_burst_bytes_width+1);
   /* Local parameters only for this module */
   /* Internal counters that are used as Read/Write pointers to the fifo's that store all the transaction info on all channles.
@@ -5375,11 +5375,11 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
   parameter wr_strb_msb  = wr_strb_lsb + ((data_bus_width/8)*axi_burst_len)-1;
 
   /* RESP data */
-  parameter rsp_fifo_bits = axi_rsp_width+id_bus_width; 
+  parameter rsp_fifo_bits = axi_rsp_width+id_bus_width;
   parameter rsp_lsb = 0;
   parameter rsp_msb = axi_rsp_width-1;
-  parameter rsp_id_lsb = rsp_msb + 1;  
-  parameter rsp_id_msb = rsp_id_lsb + id_bus_width-1;  
+  parameter rsp_id_lsb = rsp_msb + 1;
+  parameter rsp_id_msb = rsp_id_lsb + id_bus_width-1;
 
   input  S_RESETN;
 
@@ -5414,9 +5414,9 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
   input [data_bus_width-1:0] S_WDATA;
   input [axi_cache_width-1:0] S_ARCACHE;
   input [axi_len_width-1:0] S_ARLEN;
-  
+
   input [axi_qos_width-1:0] S_ARQOS;
- 
+
   input [axi_cache_width-1:0] S_AWCACHE;
   input [axi_len_width-1:0] S_AWLEN;
 
@@ -5574,7 +5574,7 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
    xil_axi_write_beat twd;
    xil_axi_read_beat trd;
    axi_transaction twr, trr,trr_get_rd;
-   axi_transaction trr_rd[$];   
+   axi_transaction trr_rd[$];
 
 
    axi_ready_gen           awready_gen;
@@ -5602,12 +5602,12 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
     slave.IF.set_enable_xchecks_to_warn();
     repeat(10) @(posedge S_ACLK);
     slave.IF.set_enable_xchecks();
-   end 
+   end
 
   /* Latency type and Debug/Error Control */
   reg[1:0] latency_type = RANDOM_CASE;
-  reg DEBUG_INFO = 1; 
-  reg STOP_ON_ERROR = 1'b1; 
+  reg DEBUG_INFO = 1;
+  reg STOP_ON_ERROR = 1'b1;
 
   /* WR_FIFO stores 32-bit address, valid data and valid bytes for each AXI Write burst transaction */
   reg [wr_fifo_data_bits-1:0] wr_fifo [0:max_wr_outstanding_transactions-1];
@@ -5617,7 +5617,7 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
   /* Store the awvalid receive time --- necessary for calculating the latency in sending the bresp*/
   reg [7:0] aw_time_cnt = 0, bresp_time_cnt = 0;
   real awvalid_receive_time[0:max_wr_outstanding_transactions]; // store the time when a new awvalid is received
-  reg  awvalid_flag[0:max_wr_outstanding_transactions]; // indicates awvalid is received 
+  reg  awvalid_flag[0:max_wr_outstanding_transactions]; // indicates awvalid is received
 
   /* Address Write Channel handshake*/
   reg[int_wr_cntr_width-1:0] aw_cnt = 0;// count of awvalid
@@ -5639,7 +5639,7 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
   wire aw_fifo_full; // indicates awvalid_fifo is full (max outstanding transactions reached)
 
   /* internal fifos to store burst write data, ID & strobes*/
-  reg [(data_bus_width*axi_burst_len)-1:0] burst_data [0:max_wr_outstanding_transactions-1];  
+  reg [(data_bus_width*axi_burst_len)-1:0] burst_data [0:max_wr_outstanding_transactions-1];
   reg [((data_bus_width/8)*axi_burst_len)-1:0] burst_strb [0:max_wr_outstanding_transactions-1];
 
   reg [max_burst_bytes_width:0] burst_valid_bytes [0:max_wr_outstanding_transactions-1]; /// total valid bytes received in a complete burst transfer
@@ -5662,7 +5662,7 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
   reg  wr_delayed;
   wire bresp_fifo_empty;
 
-  /* states for managing read/write to WR_FIFO */ 
+  /* states for managing read/write to WR_FIFO */
   parameter SEND_DATA = 0,  WAIT_ACK = 1;
   reg state;
 
@@ -5678,13 +5678,13 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
    end
   end
 
-//initial slave.set_disable_reset_value_checks(1); 
+//initial slave.set_disable_reset_value_checks(1);
   initial begin
      repeat(2) @(posedge S_ACLK);
      if(!enable_this_port) begin
 //      slave.set_channel_level_info(0);
 //      slave.set_function_level_info(0);
-     end 
+     end
 //   slave.RESPONSE_TIMEOUT = 0;
   end
   /*--------------------------------------------------------------------------------*/
@@ -5693,7 +5693,7 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
   task set_latency_type;
     input[1:0] lat;
   begin
-   if(enable_this_port) 
+   if(enable_this_port)
     latency_type = lat;
    else begin
     if(DEBUG_INFO)
@@ -5707,7 +5707,7 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
   task automatic set_verbosity;
     input[31:0] verb;
   begin
-   if(enable_this_port) begin 
+   if(enable_this_port) begin
     slv.set_verbosity(verb);
    end  else begin
     if(DEBUG_INFO)
@@ -5724,7 +5724,7 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
   task automatic set_arqos;
     input[axi_qos_width-1:0] qos;
   begin
-   if(enable_this_port) begin 
+   if(enable_this_port) begin
     ar_qos = qos;
    end else begin
     if(DEBUG_INFO)
@@ -5739,7 +5739,7 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
   task set_awqos;
     input[axi_qos_width-1:0] qos;
   begin
-   if(enable_this_port) 
+   if(enable_this_port)
     aw_qos = qos;
    else begin
     if(DEBUG_INFO)
@@ -5752,18 +5752,18 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
   function [31:0] get_wr_lat_number;
   input dummy;
   reg[1:0] temp;
-  begin 
+  begin
    case(latency_type)
-    BEST_CASE   : if(slave_name == axi_acp_name) get_wr_lat_number = acp_wr_min; else get_wr_lat_number = gp_wr_min;            
-    AVG_CASE    : if(slave_name == axi_acp_name) get_wr_lat_number = acp_wr_avg; else get_wr_lat_number = gp_wr_avg;            
-    WORST_CASE  : if(slave_name == axi_acp_name) get_wr_lat_number = acp_wr_max; else get_wr_lat_number = gp_wr_max;            
+    BEST_CASE   : if(slave_name == axi_acp_name) get_wr_lat_number = acp_wr_min; else get_wr_lat_number = gp_wr_min;
+    AVG_CASE    : if(slave_name == axi_acp_name) get_wr_lat_number = acp_wr_avg; else get_wr_lat_number = gp_wr_avg;
+    WORST_CASE  : if(slave_name == axi_acp_name) get_wr_lat_number = acp_wr_max; else get_wr_lat_number = gp_wr_max;
     default     : begin  // RANDOM_CASE
                    temp = $random;
-                   case(temp) 
-                    2'b00   : if(slave_name == axi_acp_name) get_wr_lat_number = ($random()%10+ acp_wr_min); else get_wr_lat_number = ($random()%10+ gp_wr_min); 
-                    2'b01   : if(slave_name == axi_acp_name) get_wr_lat_number = ($random()%40+ acp_wr_avg); else get_wr_lat_number = ($random()%40+ gp_wr_avg); 
-                    default : if(slave_name == axi_acp_name) get_wr_lat_number = ($random()%60+ acp_wr_max); else get_wr_lat_number = ($random()%60+ gp_wr_max); 
-                   endcase        
+                   case(temp)
+                    2'b00   : if(slave_name == axi_acp_name) get_wr_lat_number = ($random()%10+ acp_wr_min); else get_wr_lat_number = ($random()%10+ gp_wr_min);
+                    2'b01   : if(slave_name == axi_acp_name) get_wr_lat_number = ($random()%40+ acp_wr_avg); else get_wr_lat_number = ($random()%40+ gp_wr_avg);
+                    default : if(slave_name == axi_acp_name) get_wr_lat_number = ($random()%60+ acp_wr_max); else get_wr_lat_number = ($random()%60+ gp_wr_max);
+                   endcase
                   end
    endcase
   end
@@ -5774,18 +5774,18 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
   function [31:0] get_rd_lat_number;
   input dummy;
   reg[1:0] temp;
-  begin 
+  begin
    case(latency_type)
-    BEST_CASE   : if(slave_name == axi_acp_name) get_rd_lat_number = acp_rd_min; else get_rd_lat_number = gp_rd_min;            
-    AVG_CASE    : if(slave_name == axi_acp_name) get_rd_lat_number = acp_rd_avg; else get_rd_lat_number = gp_rd_avg;            
-    WORST_CASE  : if(slave_name == axi_acp_name) get_rd_lat_number = acp_rd_max; else get_rd_lat_number = gp_rd_max;            
+    BEST_CASE   : if(slave_name == axi_acp_name) get_rd_lat_number = acp_rd_min; else get_rd_lat_number = gp_rd_min;
+    AVG_CASE    : if(slave_name == axi_acp_name) get_rd_lat_number = acp_rd_avg; else get_rd_lat_number = gp_rd_avg;
+    WORST_CASE  : if(slave_name == axi_acp_name) get_rd_lat_number = acp_rd_max; else get_rd_lat_number = gp_rd_max;
     default     : begin  // RANDOM_CASE
                    temp = $random;
-                   case(temp) 
-                    2'b00   : if(slave_name == axi_acp_name) get_rd_lat_number = ($random()%10+ acp_rd_min); else get_rd_lat_number = ($random()%10+ gp_rd_min); 
-                    2'b01   : if(slave_name == axi_acp_name) get_rd_lat_number = ($random()%40+ acp_rd_avg); else get_rd_lat_number = ($random()%40+ gp_rd_avg); 
-                    default : if(slave_name == axi_acp_name) get_rd_lat_number = ($random()%60+ acp_rd_max); else get_rd_lat_number = ($random()%60+ gp_rd_max); 
-                   endcase        
+                   case(temp)
+                    2'b00   : if(slave_name == axi_acp_name) get_rd_lat_number = ($random()%10+ acp_rd_min); else get_rd_lat_number = ($random()%10+ gp_rd_min);
+                    2'b01   : if(slave_name == axi_acp_name) get_rd_lat_number = ($random()%40+ acp_rd_avg); else get_rd_lat_number = ($random()%40+ gp_rd_avg);
+                    default : if(slave_name == axi_acp_name) get_rd_lat_number = ($random()%60+ acp_rd_max); else get_rd_lat_number = ($random()%60+ gp_rd_max);
+                   endcase
                   end
    endcase
   end
@@ -5817,7 +5817,7 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
 
  /*--------------------------------------------------------------------------------*/
 
- 
+
   assign net_ARVALID = enable_this_port ? S_ARVALID : 1'b0;
   assign net_AWVALID = enable_this_port ? S_AWVALID : 1'b0;
   assign net_WVALID  = enable_this_port ? S_WVALID : 1'b0;
@@ -5826,7 +5826,7 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
   assign aw_fifo_full = ((aw_cnt[int_wr_cntr_width-1] !== rd_bresp_cnt[int_wr_cntr_width-1]) && (aw_cnt[int_wr_cntr_width-2:0] === rd_bresp_cnt[int_wr_cntr_width-2:0]))?1'b1 :1'b0; /// complete this
   assign wd_fifo_full = ((wd_cnt[int_wr_cntr_width-1] !== rd_bresp_cnt[int_wr_cntr_width-1]) && (wd_cnt[int_wr_cntr_width-2:0] === rd_bresp_cnt[int_wr_cntr_width-2:0]))?1'b1 :1'b0; /// complete this
   assign bresp_fifo_empty = (wr_bresp_cnt === rd_bresp_cnt)?1'b1:1'b0;
- 
+
 
   /* Store the awvalid receive time --- necessary for calculating the bresp latency */
   always@(negedge S_RESETN or posedge S_ACLK)
@@ -5838,7 +5838,7 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
      awvalid_receive_time[aw_time_cnt] = $realtime;
      awvalid_flag[aw_time_cnt] = 1'b1;
      aw_time_cnt = aw_time_cnt + 1;
-     if(aw_time_cnt === max_wr_outstanding_transactions) aw_time_cnt = 0; 
+     if(aw_time_cnt === max_wr_outstanding_transactions) aw_time_cnt = 0;
    end
   end // else
   end /// always
@@ -5846,26 +5846,26 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
   always@(posedge S_ACLK)
   begin
   if(net_AWVALID && S_AWREADY) begin
-    if(S_AWQOS === 0) begin awqos[aw_cnt[int_wr_cntr_width-2:0]] = aw_qos; 
-    end else awqos[aw_cnt[int_wr_cntr_width-2:0]] = S_AWQOS; 
+    if(S_AWQOS === 0) begin awqos[aw_cnt[int_wr_cntr_width-2:0]] = aw_qos;
+    end else awqos[aw_cnt[int_wr_cntr_width-2:0]] = S_AWQOS;
   end
   end
   /*--------------------------------------------------------------------------------*/
-  
+
   always@(aw_fifo_full)
   begin
-  if(aw_fifo_full && DEBUG_INFO) 
+  if(aw_fifo_full && DEBUG_INFO)
     $display("[%0d] : %0s : %0s : Reached the maximum outstanding Write transactions limit (%0d). Blocking all future Write transactions until at least 1 of the outstanding Write transaction has completed.",$time, DISP_INFO, slave_name,max_wr_outstanding_transactions);
   end
   /*--------------------------------------------------------------------------------*/
-  
+
   /* Address Write Channel handshake*/
   always@(negedge S_RESETN or posedge S_ACLK)
   begin
   if(!S_RESETN) begin
     aw_cnt = 0;
   end else begin
-    if(!aw_fifo_full) begin 
+    if(!aw_fifo_full) begin
         slv.monitor.axi_wr_cmd_port.get(twc);
         // awaddr[aw_cnt[int_wr_cntr_width-2:0]] = twc.addr;
         awlen[aw_cnt[int_wr_cntr_width-2:0]]  = twc.len;
@@ -5881,7 +5881,7 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
         burst_local = twc.burst;
 		len_local = twc.len;
 		if(burst_local == AXI_INCR || burst_local == AXI_FIXED) begin
-          if(data_bus_width === 'd128)  begin 
+          if(data_bus_width === 'd128)  begin
           if(size_local === 'd0)  a = {twc.addr[3:0]};
           if(size_local === 'd1)  a = {twc.addr[3:1],1'b0};
           if(size_local === 'd2)  a = {twc.addr[3:2],2'b0};
@@ -5898,7 +5898,7 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
           if(size_local === 'd2)  a = 'b0;
 		  end
 		end if(burst_local == AXI_WRAP) begin
-		  if(data_bus_width === 'd128)  begin 
+		  if(data_bus_width === 'd128)  begin
           if(size_local === 'd0)  a = {twc.addr[3:0]};
           if(size_local === 'd1)  a = {twc.addr[3:1],1'b0};
           if(size_local === 'd2)  a = {twc.addr[3:2],2'b0};
@@ -5921,22 +5921,22 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
 		end
 		addr_wr_local = twc.addr;
 		if(burst_local == AXI_INCR || burst_local == AXI_FIXED) begin
-	      case(size_local) 
-	        0   : addr_wr_final = {addr_wr_local}; 
-	        1   : addr_wr_final = {addr_wr_local[31:1],1'b0}; 
-	        2   : addr_wr_final = {addr_wr_local[31:2],2'b0}; 
-	        3   : addr_wr_final = {addr_wr_local[31:3],3'b0}; 
-	        4   : addr_wr_final = {addr_wr_local[31:4],4'b0}; 
-	        5   : addr_wr_final = {addr_wr_local[31:5],5'b0}; 
-	        6   : addr_wr_final = {addr_wr_local[31:6],6'b0}; 
-	        7   : addr_wr_final = {addr_wr_local[31:7],7'b0}; 
-	      endcase	  
+	      case(size_local)
+	        0   : addr_wr_final = {addr_wr_local};
+	        1   : addr_wr_final = {addr_wr_local[31:1],1'b0};
+	        2   : addr_wr_final = {addr_wr_local[31:2],2'b0};
+	        3   : addr_wr_final = {addr_wr_local[31:3],3'b0};
+	        4   : addr_wr_final = {addr_wr_local[31:4],4'b0};
+	        5   : addr_wr_final = {addr_wr_local[31:5],5'b0};
+	        6   : addr_wr_final = {addr_wr_local[31:6],6'b0};
+	        7   : addr_wr_final = {addr_wr_local[31:7],7'b0};
+	      endcase
 	      awaddr[aw_cnt[int_wr_cntr_width-2:0]] = addr_wr_final;
 		  // $display("addr_wr_final %0h",addr_wr_final);
 		end if(burst_local == AXI_WRAP) begin
 	       awaddr[aw_cnt[int_wr_cntr_width-2:0]] = twc.addr;
            // $display(" awaddr[aw_cnt[int_wr_cntr_width-2:0]] %0h",awaddr[aw_cnt[int_wr_cntr_width-2:0]]);
-		end         
+		end
 		aw_cnt   = aw_cnt + 1;
         // if(data_bus_width === 'd32)  a = 0;
         // if(data_bus_width === 'd64)  a = twc.addr[2:0];
@@ -5990,15 +5990,15 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
     if(!wd_fifo_full && S_WVALID) begin
       slv.monitor.axi_wr_beat_port.get(twd);
       wait((aw_flag[wd_cnt[int_wr_cntr_width-2:0]] === 'b1));
-	  case(size_local) 
-	    0   : add_val = 1; 
-	    1   : add_val = 2; 
-	    2   : add_val = 4; 
-	    3   : add_val = 8; 
-	    4   : add_val = 16; 
-	    5   : add_val = 32; 
-	    6   : add_val = 64; 
-	    7   : add_val = 128; 
+	  case(size_local)
+	    0   : add_val = 1;
+	    1   : add_val = 2;
+	    2   : add_val = 4;
+	    3   : add_val = 8;
+	    4   : add_val = 16;
+	    5   : add_val = 32;
+	    6   : add_val = 64;
+	    7   : add_val = 128;
 	  endcase
 
 	 // $display(" size_local %0d add_val %0d wd_cnt %0d",size_local,add_val,wd_cnt);
@@ -6012,7 +6012,7 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
 		   burst_strb[wd_cnt[int_wr_cntr_width-2:0]][((valid_bytes)+(i*1))+:1] = twd.strb[i+a];
 		   //$display("burst_strb %0h twd_strb %0h int_wr_cntr_width %0d  valid_bytes %0d wd_cnt[int_wr_cntr_width-2:0] %0d twd.strb[i+a] %0b full strb %0h",burst_strb[wd_cnt[int_wr_cntr_width-2:0]][((valid_bytes)+(i*1))+:1],twd.strb[i],int_wr_cntr_width,valid_bytes,wd_cnt[int_wr_cntr_width-2:0],twd.strb[i+a],twd.strb[i+a]);
 		   //$display("burst_strb %0h twd.strb[i+1] %0h twd.strb[i+2] %0h twd.strb[i+3] %0h twd.strb[i+4] %0h twd.strb[i+5] %0h twd.strb[i+6] %0h twd.strb[i+7] %0h",twd.strb[i],twd.strb[i+1],twd.strb[i+1],twd.strb[i+2],twd.strb[i+3],twd.strb[i+4],twd.strb[i+5],twd.strb[i+6],twd.strb[i+7]);
-		  
+
 		  if(i == ((2**awsize[wr_bresp_cnt[int_wr_cntr_width-2:0]])-1) ) begin
 		     if(burst_local == AXI_FIXED) begin
 		       a = a;
@@ -6034,25 +6034,25 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
 				   else if(data_bus_width === 'd32)
 			       a = a_new[1:0];
 			       //$display(" setting up a_wrap %0h a_new %0h a %0h", a_wrap,a_new,a);
-			     end else begin 
+			     end else begin
 		           a = a;
 			        //$display(" setting incr a_wrap %0h a_new %0h a %0h", a_wrap,a_new ,a );
 			     end
 			  end
 			 //$display(" new a value a %0h add_val %0d",a,add_val);
-		  end	 
-        end 
-		if(burst_local == AXI_INCR) begin   
+		  end
+        end
+		if(burst_local == AXI_INCR) begin
 		if( a >= (data_bus_width/8) || (burst_local == 0 ) || (twd.last) ) begin
 		// if( (burst_local == 0 ) || (twd.last) ) begin
 		  a = 0;
 		  //$display("resetting a = %0d ",a);
-		end  
-		end else if (burst_local == AXI_WRAP) begin 
+		end
+		end else if (burst_local == AXI_WRAP) begin
 		 if( ((a >= (data_bus_width/8)) ) || (burst_local == 0 ) || (twd.last) ) begin
 		  a = 0;
 		  //$display("resetting a = %0d ",a);
-		end  
+		end
 		end
 
       valid_bytes = valid_bytes+(2**awsize[wr_bresp_cnt[int_wr_cntr_width-2:0]]);
@@ -6100,7 +6100,7 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
     end
     wrp_bytes = addr - start_addr;
     wrp_data = b_data << (wrp_bytes*8);
-    
+
     aligned_data = (temp_data | wrp_data);
   end
   endtask
@@ -6138,18 +6138,18 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
     end
     wrp_bytes = addr - start_addr;
     wrp_strb = b_strb << (wrp_bytes);
-    
+
     aligned_strb = (temp_strb | wrp_strb);
 	// $display("wrap strb aligned_strb %0h tmep_strb %0h wrp_strb %0h",aligned_strb,temp_strb,wrp_strb);
   end
   endtask
   /*--------------------------------------------------------------------------------*/
 
-   
+
   /* Calculate the Response for each read/write transaction */
   function [axi_rsp_width-1:0] calculate_resp;
-  input rd_wr; // indicates Read(1) or Write(0) transaction 
-  input [addr_width-1:0] awaddr; 
+  input rd_wr; // indicates Read(1) or Write(0) transaction
+  input [addr_width-1:0] awaddr;
   input [axi_prot_width-1:0] awprot;
   reg [axi_rsp_width-1:0] rsp;
   begin
@@ -6189,7 +6189,7 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
    if(enable_write_bresp) begin
      aw_flag[wr_bresp_cnt[int_wr_cntr_width-2:0]]    = 0;
      wlast_flag[wr_bresp_cnt[int_wr_cntr_width-2:0]] = 0;
-     // $display("awaddr[wr_bresp_cnt[int_wr_cntr_width-2:0]] %0h ",awaddr[wr_bresp_cnt[int_wr_cntr_width-2:0]]); 
+     // $display("awaddr[wr_bresp_cnt[int_wr_cntr_width-2:0]] %0h ",awaddr[wr_bresp_cnt[int_wr_cntr_width-2:0]]);
      bresp = calculate_resp(1'b0, awaddr[wr_bresp_cnt[int_wr_cntr_width-2:0]],awprot[wr_bresp_cnt[int_wr_cntr_width-2:0]]);
      fifo_bresp[wr_bresp_cnt[int_wr_cntr_width-2:0]] = {awid[wr_bresp_cnt[int_wr_cntr_width-2:0]],bresp};
      /* Fill WR data FIFO */
@@ -6198,23 +6198,23 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
          get_wrap_aligned_wr_data(aligned_wr_data,aligned_wr_addr, awaddr[wr_bresp_cnt[int_wr_cntr_width-2:0]],burst_data[wr_bresp_cnt[int_wr_cntr_width-2:0]],burst_valid_bytes[wr_bresp_cnt[int_wr_cntr_width-2:0]]);      /// gives wrapped start address
          get_wrap_aligned_wr_strb(aligned_wr_strb,aligned_wr_addr, awaddr[wr_bresp_cnt[int_wr_cntr_width-2:0]],burst_strb[wr_bresp_cnt[int_wr_cntr_width-2:0]],burst_valid_bytes[wr_bresp_cnt[int_wr_cntr_width-2:0]]);      /// gives wrapped start address
        end else begin
-         aligned_wr_data = burst_data[wr_bresp_cnt[int_wr_cntr_width-2:0]]; 
+         aligned_wr_data = burst_data[wr_bresp_cnt[int_wr_cntr_width-2:0]];
          aligned_wr_addr = awaddr[wr_bresp_cnt[int_wr_cntr_width-2:0]] ;
 		 aligned_wr_strb = burst_strb[wr_bresp_cnt[int_wr_cntr_width-2:0]];
 		 //$display("  got form fifo aligned_wr_addr %0h wr_bresp_cnt[int_wr_cntr_width-2:0]] %0d",aligned_wr_addr,wr_bresp_cnt[int_wr_cntr_width-2:0]);
 		 //$display("  got form fifo aligned_wr_strb %0h wr_bresp_cnt[int_wr_cntr_width-2:0]] %0d",aligned_wr_strb,wr_bresp_cnt[int_wr_cntr_width-2:0]);
        end
        valid_data_bytes = burst_valid_bytes[wr_bresp_cnt[int_wr_cntr_width-2:0]];
-     end else 
-       valid_data_bytes = 0;  
+     end else
+       valid_data_bytes = 0;
 
-      if(awbrst[wr_bresp_cnt[int_wr_cntr_width-2:0]] != AXI_WRAP) begin 
+      if(awbrst[wr_bresp_cnt[int_wr_cntr_width-2:0]] != AXI_WRAP) begin
         // wr_fifo[wr_fifo_wr_ptr[int_wr_cntr_width-2:0]] = {burst_strb[wr_bresp_cnt[int_wr_cntr_width-2:0]],awqos[wr_bresp_cnt[int_wr_cntr_width-2:0]], aligned_wr_data, aligned_wr_addr, valid_data_bytes};
         wr_fifo[wr_fifo_wr_ptr[int_wr_cntr_width-2:0]] = {aligned_wr_strb,awqos[wr_bresp_cnt[int_wr_cntr_width-2:0]], aligned_wr_data, aligned_wr_addr, valid_data_bytes};
-	  end else begin	
+	  end else begin
         wr_fifo[wr_fifo_wr_ptr[int_wr_cntr_width-2:0]] = {aligned_wr_strb,awqos[wr_bresp_cnt[int_wr_cntr_width-2:0]], aligned_wr_data, aligned_wr_addr, valid_data_bytes};
 	 end
-     wr_fifo_wr_ptr = wr_fifo_wr_ptr + 1; 
+     wr_fifo_wr_ptr = wr_fifo_wr_ptr + 1;
      wr_bresp_cnt = wr_bresp_cnt+1;
 	 enable_write_bresp = 'b0;
      if(wr_bresp_cnt[int_wr_cntr_width-2:0] === (max_wr_outstanding_transactions-1)) begin
@@ -6239,7 +6239,7 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
  //   if(enable_write_bresp) begin
  //     aw_flag[wr_bresp_cnt[int_wr_cntr_width-2:0]]    = 0;
  //     wlast_flag[wr_bresp_cnt[int_wr_cntr_width-2:0]] = 0;
- //  
+ //
  //     bresp = calculate_resp(1'b0, awaddr[wr_bresp_cnt[int_wr_cntr_width-2:0]],awprot[wr_bresp_cnt[int_wr_cntr_width-2:0]]);
  //     fifo_bresp[wr_bresp_cnt[int_wr_cntr_width-2:0]] = {awid[wr_bresp_cnt[int_wr_cntr_width-2:0]],bresp};
  //     /* Fill WR data FIFO */
@@ -6247,15 +6247,15 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
  //       if(awbrst[wr_bresp_cnt[int_wr_cntr_width-2:0]] === AXI_WRAP) begin /// wrap type? then align the data
  //         get_wrap_aligned_wr_data(aligned_wr_data,aligned_wr_addr, awaddr[wr_bresp_cnt[int_wr_cntr_width-2:0]],burst_data[wr_bresp_cnt[int_wr_cntr_width-2:0]],burst_valid_bytes[wr_bresp_cnt[int_wr_cntr_width-2:0]]);      /// gives wrapped start address
  //       end else begin
- //         aligned_wr_data = burst_data[wr_bresp_cnt[int_wr_cntr_width-2:0]]; 
+ //         aligned_wr_data = burst_data[wr_bresp_cnt[int_wr_cntr_width-2:0]];
  //         aligned_wr_addr = awaddr[wr_bresp_cnt[int_wr_cntr_width-2:0]] ;
  //       end
  //       valid_data_bytes = burst_valid_bytes[wr_bresp_cnt[int_wr_cntr_width-2:0]];
- //     end else 
- //       valid_data_bytes = 0;  
+ //     end else
+ //       valid_data_bytes = 0;
 
  //     wr_fifo[wr_fifo_wr_ptr[int_wr_cntr_width-2:0]] = {awqos[wr_bresp_cnt[int_wr_cntr_width-2:0]], aligned_wr_data, aligned_wr_addr, valid_data_bytes};
- //     wr_fifo_wr_ptr = wr_fifo_wr_ptr + 1; 
+ //     wr_fifo_wr_ptr = wr_fifo_wr_ptr + 1;
  //     wr_bresp_cnt = wr_bresp_cnt+1;
  //     if(wr_bresp_cnt[int_wr_cntr_width-2:0] === (max_wr_outstanding_transactions-1)) begin
  //       wr_bresp_cnt[int_wr_cntr_width-1] = ~ wr_bresp_cnt[int_wr_cntr_width-1];
@@ -6273,13 +6273,13 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
    rd_bresp_cnt = 0;
    wr_latency_count = get_wr_lat_number(1);
    wr_delayed = 0;
-   bresp_time_cnt = 0; 
+   bresp_time_cnt = 0;
   end else begin
   //  	 if(static_count < 32 ) begin
-  //       // wready_gen.set_ready_policy(XIL_AXI_READY_GEN_SINGLE); 
-  //      wready_gen.set_ready_policy(XIL_AXI_READY_GEN_NO_BACKPRESSURE); 
-  //      //wready_gen.set_low_time(0); 
-  //      //wready_gen.set_high_time(1); 
+  //       // wready_gen.set_ready_policy(XIL_AXI_READY_GEN_SINGLE);
+  //      wready_gen.set_ready_policy(XIL_AXI_READY_GEN_NO_BACKPRESSURE);
+  //      //wready_gen.set_low_time(0);
+  //      //wready_gen.set_high_time(1);
   //      slv.wr_driver.send_wready(wready_gen);
   //    end
    if(awvalid_flag[bresp_time_cnt] && (($realtime - awvalid_receive_time[bresp_time_cnt])/diff_time >= wr_latency_count))
@@ -6293,17 +6293,17 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
 	  2'b10: twr.set_bresp(XIL_AXI_RESP_SLVERR);
 	  2'b11: twr.set_bresp(XIL_AXI_RESP_DECERR);
 	 endcase
-	 
+
     // if(static_count > 32 ) begin
-    //   //  wready_gen.set_ready_policy(XIL_AXI_READY_GEN_SINGLE); 
-    //   wready_gen.set_ready_policy(XIL_AXI_READY_GEN_NO_BACKPRESSURE); 
-    //   // wready_gen.set_low_time(3); 
-    //   // wready_gen.set_high_time(3); 
-    //   // wready_gen.set_low_time_range(3,6); 
-    //   // wready_gen.set_high_time_range(3,6); 
+    //   //  wready_gen.set_ready_policy(XIL_AXI_READY_GEN_SINGLE);
+    //   wready_gen.set_ready_policy(XIL_AXI_READY_GEN_NO_BACKPRESSURE);
+    //   // wready_gen.set_low_time(3);
+    //   // wready_gen.set_high_time(3);
+    //   // wready_gen.set_low_time_range(3,6);
+    //   // wready_gen.set_high_time_range(3,6);
     //   slv.wr_driver.send_wready(wready_gen);
     //  end
-     wready_gen.set_ready_policy(XIL_AXI_READY_GEN_NO_BACKPRESSURE); 
+     wready_gen.set_ready_policy(XIL_AXI_READY_GEN_NO_BACKPRESSURE);
      slv.wr_driver.send_wready(wready_gen);
      slv.wr_driver.send(twr);
      wr_delayed = 0;
@@ -6315,11 +6315,11 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
         rd_bresp_cnt[int_wr_cntr_width-2:0] = 0;
       end
       if(bresp_time_cnt === max_wr_outstanding_transactions) begin
-        bresp_time_cnt = 0; 
+        bresp_time_cnt = 0;
       end
      wr_latency_count = get_wr_lat_number(1);
 	 static_count++;
-   end 
+   end
 	 static_count++;
   end // else
   end//always
@@ -6332,12 +6332,12 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
 //   rd_bresp_cnt = 0;
 //   wr_latency_count = get_wr_lat_number(1);
 //   wr_delayed = 0;
-//   bresp_time_cnt = 0; 
+//   bresp_time_cnt = 0;
 //  end else begin
 //  if(static_count < 32 ) begin
-//    wready_gen.set_ready_policy(XIL_AXI_READY_GEN_SINGLE); 
-//    wready_gen.set_low_time(0); 
-//    wready_gen.set_high_time(1); 
+//    wready_gen.set_ready_policy(XIL_AXI_READY_GEN_SINGLE);
+//    wready_gen.set_low_time(0);
+//    wready_gen.set_high_time(1);
 //    slv.wr_driver.send_wready(wready_gen);
 //  end
 //   if(awvalid_flag[bresp_time_cnt] && (($time - awvalid_receive_time[bresp_time_cnt])/s_aclk_period >= wr_latency_count))
@@ -6352,11 +6352,11 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
 //	  2'b11: twr.set_bresp(XIL_AXI_RESP_DECERR);
 //	 endcase
 //   if(static_count > 32) begin
-//   wready_gen.set_ready_policy(XIL_AXI_READY_GEN_SINGLE); 
-//   wready_gen.set_low_time(3); 
-//   wready_gen.set_high_time(3); 
-//   wready_gen.set_low_time_range(3,6); 
-//   wready_gen.set_high_time_range(3,6); 
+//   wready_gen.set_ready_policy(XIL_AXI_READY_GEN_SINGLE);
+//   wready_gen.set_low_time(3);
+//   wready_gen.set_high_time(3);
+//   wready_gen.set_low_time_range(3,6);
+//   wready_gen.set_high_time_range(3,6);
 //   slv.wr_driver.send_wready(wready_gen);
 //  end
 //   // wr_delayed = 1'b0;
@@ -6370,11 +6370,11 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
 //       rd_bresp_cnt[int_wr_cntr_width-2:0] = 0;
 //     end
 //     if(bresp_time_cnt === max_wr_outstanding_transactions) begin
-//       bresp_time_cnt = 0; 
+//       bresp_time_cnt = 0;
 //     end
 //     wr_latency_count = get_wr_lat_number(1);
 //     	 static_count++;
-//   end 
+//   end
 //   	 static_count++;
 //  end // else
 //end
@@ -6382,7 +6382,7 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
 
   /* Reading from the wr_fifo */
   always@(negedge S_RESETN or posedge SW_CLK) begin
-  if(!S_RESETN) begin 
+  if(!S_RESETN) begin
    WR_DATA_VALID_DDR = 1'b0;
    WR_DATA_VALID_OCM = 1'b0;
    wr_fifo_rd_ptr = 0;
@@ -6411,7 +6411,7 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
       end
    WAIT_ACK :begin
       state = WAIT_ACK;
-      if(WR_DATA_ACK_OCM | WR_DATA_ACK_DDR) begin 
+      if(WR_DATA_ACK_OCM | WR_DATA_ACK_DDR) begin
         WR_DATA_VALID_OCM = 1'b0;
         WR_DATA_VALID_DDR = 1'b0;
         state = SEND_DATA;
@@ -6461,11 +6461,11 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
 
   reg [max_burst_bits-1:0] read_fifo [0:max_rd_outstanding_transactions-1]; /// Store only AXI Burst Data ..
   reg [int_rd_cntr_width-1:0] rd_fifo_wr_ptr = 0, rd_fifo_rd_ptr = 0;
-  wire read_fifo_full; 
- 
+  wire read_fifo_full;
+
   assign read_fifo_full = (rd_fifo_wr_ptr[int_rd_cntr_width-1] !== rd_fifo_rd_ptr[int_rd_cntr_width-1] && rd_fifo_wr_ptr[int_rd_cntr_width-2:0] === rd_fifo_rd_ptr[int_rd_cntr_width-2:0])?1'b1: 1'b0;
   assign read_fifo_empty = (rd_fifo_wr_ptr === rd_fifo_rd_ptr)?1'b1: 1'b0;
-  assign ar_fifo_full = ((ar_cnt[int_rd_cntr_width-1] !== rd_cnt[int_rd_cntr_width-1]) && (ar_cnt[int_rd_cntr_width-2:0] === rd_cnt[int_rd_cntr_width-2:0]))?1'b1 :1'b0; 
+  assign ar_fifo_full = ((ar_cnt[int_rd_cntr_width-1] !== rd_cnt[int_rd_cntr_width-1]) && (ar_cnt[int_rd_cntr_width-2:0] === rd_cnt[int_rd_cntr_width-2:0]))?1'b1 :1'b0;
 
   /* Store the arvalid receive time --- necessary for calculating the bresp latency */
   always@(negedge S_RESETN or posedge S_ACLK)
@@ -6478,30 +6478,30 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
      arvalid_flag[ar_time_cnt] = 1'b1;
      ar_time_cnt = ar_time_cnt + 1;
 	 if((ar_time_cnt[int_rd_cntr_width-1:0] === max_rd_outstanding_transactions) )
-       ar_time_cnt[int_rd_cntr_width-1:0] = 0; 
-   end 
+       ar_time_cnt[int_rd_cntr_width-1:0] = 0;
+   end
   end // else
   end /// always
   /*--------------------------------------------------------------------------------*/
   always@(posedge S_ACLK)
   begin
   if(net_ARVALID == 'b1 && S_ARREADY == 'b1) begin
-    if(S_ARQOS === 0) begin 
-      arqos[ar_cnt[int_rd_cntr_width-2:0]] = ar_qos; 
-    end else begin 
-	  arqos[ar_cnt[int_rd_cntr_width-2:0]] = S_ARQOS; 
+    if(S_ARQOS === 0) begin
+      arqos[ar_cnt[int_rd_cntr_width-2:0]] = ar_qos;
+    end else begin
+	  arqos[ar_cnt[int_rd_cntr_width-2:0]] = S_ARQOS;
 	end
   end
   end
   /*--------------------------------------------------------------------------------*/
-  
+
   always@(ar_fifo_full)
   begin
-  if(ar_fifo_full && DEBUG_INFO) 
+  if(ar_fifo_full && DEBUG_INFO)
     $display("[%0d] : %0s : %0s : Reached the maximum outstanding Read transactions limit (%0d). Blocking all future Read transactions until at least 1 of the outstanding Read transaction has completed.",$time, DISP_INFO, slave_name,max_rd_outstanding_transactions);
   end
   /*--------------------------------------------------------------------------------*/
-  
+
   /* Address Read  Channel handshake*/
   always@(negedge S_RESETN or posedge S_ACLK)
   begin
@@ -6521,16 +6521,16 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
       ar_flag[ar_cnt[int_rd_cntr_width-2:0]] = 1'b1;
 	  size_local = trc.size;
 	  addr_local = trc.addr;
-	  case(size_local) 
-	    0   : addr_final = {addr_local}; 
-	    1   : addr_final = {addr_local[31:1],1'b0}; 
-	    2   : addr_final = {addr_local[31:2],2'b0}; 
-	    3   : addr_final = {addr_local[31:3],3'b0}; 
-	    4   : addr_final = {addr_local[31:4],4'b0}; 
-	    5   : addr_final = {addr_local[31:5],5'b0}; 
-	    6   : addr_final = {addr_local[31:6],6'b0}; 
-	    7   : addr_final = {addr_local[31:7],7'b0}; 
-	  endcase	  
+	  case(size_local)
+	    0   : addr_final = {addr_local};
+	    1   : addr_final = {addr_local[31:1],1'b0};
+	    2   : addr_final = {addr_local[31:2],2'b0};
+	    3   : addr_final = {addr_local[31:3],3'b0};
+	    4   : addr_final = {addr_local[31:4],4'b0};
+	    5   : addr_final = {addr_local[31:5],5'b0};
+	    6   : addr_final = {addr_local[31:6],6'b0};
+	    7   : addr_final = {addr_local[31:7],7'b0};
+	  endcase
 	    araddr[ar_cnt[int_rd_cntr_width-2:0]] = addr_final;
         ar_cnt = ar_cnt+1;
 		// $display(" %m before resetting ar_cnt %0d max_rd_outstanding_transactions %0d",ar_cnt,max_rd_outstanding_transactions-1);
@@ -6538,7 +6538,7 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
           // ar_cnt[int_rd_cntr_width-1] = ~ ar_cnt[int_rd_cntr_width-1];
           ar_cnt[int_rd_cntr_width-1:0] = 0;
 		  // $display(" %m resetting ar_cnt %0d",ar_cnt);
-        end 
+        end
     end /// if(!ar_fifo_full)
   end /// if else
   end /// always*/
@@ -6568,22 +6568,22 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
     temp_data = temp_data >> ((data_bus_width*axi_burst_len) - (v_bytes*8));
     wrp_bytes = addr - start_addr;
     wrp_data = b_data >> (wrp_bytes*8);
-    
+
     aligned_data = (temp_data | wrp_data);
   end
   endtask
   /*--------------------------------------------------------------------------------*/
-   
+
   parameter RD_DATA_REQ = 1'b0, WAIT_RD_VALID = 1'b1;
   reg [addr_width-1:0] temp_read_address;
   reg [max_burst_bytes_width:0] temp_rd_valid_bytes;
-  reg rd_fifo_state; 
+  reg rd_fifo_state;
   reg invalid_rd_req;
   /* get the data from memory && also calculate the rresp*/
   always@(negedge S_RESETN or posedge SW_CLK)
   begin
   if(!S_RESETN)begin
-   rd_fifo_wr_ptr = 0; 
+   rd_fifo_wr_ptr = 0;
    wr_rresp_cnt =0;
    rd_fifo_state = RD_DATA_REQ;
    temp_rd_valid_bytes = 0;
@@ -6609,9 +6609,9 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
 
        if(arbrst[wr_rresp_cnt[int_rd_cntr_width-2:0]] === AXI_WRAP) /// wrap begin
         temp_read_address = (araddr[wr_rresp_cnt[int_rd_cntr_width-2:0]]/temp_rd_valid_bytes) * temp_rd_valid_bytes;
-       else 
+       else
         temp_read_address = araddr[wr_rresp_cnt[int_rd_cntr_width-2:0]];
-       if(rresp === AXI_OK) begin 
+       if(rresp === AXI_OK) begin
         case(decode_address(temp_read_address))//decode_address(araddr[wr_rresp_cnt[int_rd_cntr_width-2:0]]);
           OCM_MEM : RD_REQ_OCM = 1;
           DDR_MEM : RD_REQ_DDR = 1;
@@ -6620,7 +6620,7 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
         endcase
        end else
         invalid_rd_req = 1;
-        
+
        RD_QOS     = arqos[wr_rresp_cnt[int_rd_cntr_width-2:0]];
        RD_ADDR    = temp_read_address; ///araddr[wr_rresp_cnt[int_rd_cntr_width-2:0]];
        RD_BYTES   = temp_rd_valid_bytes;
@@ -6632,8 +6632,8 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
        end
      end
     end
-    WAIT_RD_VALID : begin    
-     rd_fifo_state = WAIT_RD_VALID; 
+    WAIT_RD_VALID : begin
+     rd_fifo_state = WAIT_RD_VALID;
      if(RD_DATA_VALID_OCM | RD_DATA_VALID_DDR | RD_DATA_VALID_REG | invalid_rd_req) begin ///temp_dec == 2'b11) begin
        if(RD_DATA_VALID_DDR)
          read_fifo[rd_fifo_wr_ptr[int_rd_cntr_width-2:0]] = RD_DATA_DDR;
@@ -6722,10 +6722,10 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
   	   @(posedge S_ACLK);
      end
 
-     //if(arvalid_flag[rresp_time_cnt] && ((($realtime - arvalid_receive_time[rresp_time_cnt])/diff_time) >= rd_latency_count)) 
+     //if(arvalid_flag[rresp_time_cnt] && ((($realtime - arvalid_receive_time[rresp_time_cnt])/diff_time) >= rd_latency_count))
        rd_delayed = 1;
      if(!read_fifo_empty && rd_delayed)begin
-       rd_delayed = 0;  
+       rd_delayed = 0;
        arvalid_flag[rresp_time_cnt] = 1'b0;
        rd_v_b = ((arlen[rd_cnt[int_rd_cntr_width-2:0]]+1)*(2**arsize[rd_cnt[int_rd_cntr_width-2:0]]));
        temp_read_data =  read_fifo[rd_fifo_rd_ptr[int_rd_cntr_width-2:0]];
@@ -6734,12 +6734,12 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
        if(arbrst[rd_cnt[int_rd_cntr_width-2:0]]=== AXI_WRAP) begin
          get_wrap_aligned_rd_data(temp_wrap_data, araddr[rd_cnt[int_rd_cntr_width-2:0]], temp_read_data, rd_v_b);
          temp_read_data = temp_wrap_data;
-       end 
+       end
        temp_read_rsp = 0;
        repeat(axi_burst_len) begin
          temp_read_rsp = temp_read_rsp >> axi_rsp_width;
          temp_read_rsp[(axi_rsp_width*axi_burst_len)-1:(axi_rsp_width*axi_burst_len)-axi_rsp_width] = fifo_rresp[rd_cnt[int_rd_cntr_width-2:0]][rsp_msb : rsp_lsb];
-       end 
+       end
 	   case (arsize[rd_cnt[int_rd_cntr_width-2:0]])
          3'b000: trr_get_rd.size = XIL_AXI_SIZE_1BYTE;
          3'b001: trr_get_rd.size = XIL_AXI_SIZE_2BYTE;
@@ -6768,10 +6768,10 @@ parameter wr_fifo_data_bits = ((data_bus_width/8)*axi_burst_len) + (data_bus_wid
 	     endcase
        end
        slv.rd_driver.send(trr_get_rd);
-       rd_cnt = rd_cnt + 1; 
+       rd_cnt = rd_cnt + 1;
        rresp_time_cnt = rresp_time_cnt+1;
 	   // $display("current rresp_time_cnt %0d rd_cnt %0d",rresp_time_cnt,rd_cnt);
-       if(rresp_time_cnt[int_rd_cntr_width-1:0] === max_rd_outstanding_transactions) begin 
+       if(rresp_time_cnt[int_rd_cntr_width-1:0] === max_rd_outstanding_transactions) begin
 	   rresp_time_cnt[int_rd_cntr_width-1:0] = 0;
 	   end
        if(rd_cnt[int_rd_cntr_width-1:0] === (max_rd_outstanding_transactions)) begin
@@ -6796,10 +6796,10 @@ end
  //  end else begin
  //     if(net_ARVALID && S_ARREADY)
  //       slv.rd_driver.get_rd_reactive(trr);
- //     if(arvalid_flag[rresp_time_cnt] && ((($time - arvalid_receive_time[rresp_time_cnt])/s_aclk_period) >= rd_latency_count)) 
+ //     if(arvalid_flag[rresp_time_cnt] && ((($time - arvalid_receive_time[rresp_time_cnt])/s_aclk_period) >= rd_latency_count))
  //       rd_delayed = 1;
  //     if(!read_fifo_empty && rd_delayed)begin
- //       rd_delayed = 0;  
+ //       rd_delayed = 0;
  //       arvalid_flag[rresp_time_cnt] = 1'b0;
  //       rd_v_b = ((arlen[rd_cnt[int_rd_cntr_width-2:0]]+1)*(2**arsize[rd_cnt[int_rd_cntr_width-2:0]]));
  //       temp_read_data =  read_fifo[rd_fifo_rd_ptr[int_rd_cntr_width-2:0]];
@@ -6808,12 +6808,12 @@ end
  //       if(arbrst[rd_cnt[int_rd_cntr_width-2:0]]=== AXI_WRAP) begin
  //         get_wrap_aligned_rd_data(temp_wrap_data, araddr[rd_cnt[int_rd_cntr_width-2:0]], temp_read_data, rd_v_b);
  //         temp_read_data = temp_wrap_data;
- //       end 
+ //       end
  //       temp_read_rsp = 0;
  //       repeat(axi_burst_len) begin
  //         temp_read_rsp = temp_read_rsp >> axi_rsp_width;
  //         temp_read_rsp[(axi_rsp_width*axi_burst_len)-1:(axi_rsp_width*axi_burst_len)-axi_rsp_width] = fifo_rresp[rd_cnt[int_rd_cntr_width-2:0]][rsp_msb : rsp_lsb];
- //       end 
+ //       end
  //       case (arsize[rd_cnt[int_rd_cntr_width-2:0]])
  //         3'b000: trr.size = XIL_AXI_SIZE_1BYTE;
  //         3'b001: trr.size = XIL_AXI_SIZE_2BYTE;
@@ -6842,7 +6842,7 @@ end
  //         endcase
  //       end
  //       slv.rd_driver.send(trr);
- //       rd_cnt = rd_cnt + 1; 
+ //       rd_cnt = rd_cnt + 1;
  //       rresp_time_cnt = rresp_time_cnt+1;
  //       if(rresp_time_cnt === max_rd_outstanding_transactions) rresp_time_cnt = 0;
  //       if(rd_cnt[int_rd_cntr_width-2:0] === (max_rd_outstanding_transactions-1)) begin
@@ -6861,7 +6861,7 @@ endmodule
  *
  * Date : 2012-11
  *
- * Description : Model that acts as PS AXI Slave  port interface. 
+ * Description : Model that acts as PS AXI Slave  port interface.
  *               It uses AXI3 Slave  BFM
  *****************************************************************************/
  `timescale 1ns/1ps
@@ -6922,7 +6922,7 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
   WR_DATA_VALID_DDR,
   WR_QOS,
 
-  RD_QOS, 
+  RD_QOS,
   RD_REQ_DDR,
   RD_REQ_OCM,
   RD_REQ_REG,
@@ -6936,7 +6936,7 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
   RD_DATA_VALID_REG
 
 );
-  parameter enable_this_port = 0;  
+  parameter enable_this_port = 0;
   parameter slave_name = "Slave";
   parameter data_bus_width = 32;
   parameter address_bus_width = 32;
@@ -6953,7 +6953,7 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
   parameter max_wr_outstanding_transactions = 8;
   parameter max_rd_outstanding_transactions = 8;
   parameter region_bus_width = 4;
-  
+
   `include "processing_system7_vip_v1_0_24_local_params.v"
   // `include "zynq_ultra_ps_e_vip_v1_0_local_params.sv"
 
@@ -7017,12 +7017,12 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
   input [data_bus_width-1:0] S_WDATA;
   input [axi_cache_width-1:0] S_ARCACHE;
   input [axi_len_width-1:0] S_ARLEN;
-  
+
   input [axi_qos_width-1:0] S_ARQOS;
   // input [aruser_bus_width-1:0] S_ARUSER;
   // output [ruser_bus_width-1:0] S_RUSER;
   // input [region_bus_width-1:0] S_ARREGION;
- 
+
   input [axi_cache_width-1:0] S_AWCACHE;
   input [axi_len_width-1:0] S_AWLEN;
 
@@ -7054,7 +7054,7 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
   wire net_ARVALID;
   wire net_AWVALID;
   wire net_WVALID;
-  bit [31:0] static_count; 
+  bit [31:0] static_count;
 
   real s_aclk_period1;
   real s_aclk_period2;
@@ -7212,13 +7212,13 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
     slave.IF.set_enable_xchecks_to_warn();
     repeat(10) @(posedge S_ACLK);
     slave.IF.set_enable_xchecks();
-   end 
+   end
 
 
   /* Latency type and Debug/Error Control */
   reg[1:0] latency_type = RANDOM_CASE;
-  reg DEBUG_INFO = 1; 
-  reg STOP_ON_ERROR = 1'b1; 
+  reg DEBUG_INFO = 1;
+  reg STOP_ON_ERROR = 1'b1;
 
   /* WR_FIFO stores 32-bit address, valid data and valid bytes for each AXI Write burst transaction */
   reg [wr_fifo_data_bits-1:0] wr_fifo [0:max_wr_outstanding_transactions-1];
@@ -7229,7 +7229,7 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
   // reg [7:0] aw_time_cnt = 0, bresp_time_cnt = 0;
   reg [int_wr_cntr_width-1:0] aw_time_cnt = 0, bresp_time_cnt = 0;
   real awvalid_receive_time[0:max_wr_outstanding_transactions-1]; // store the time when a new awvalid is received
-  reg  awvalid_flag[0:max_wr_outstanding_transactions-1]; // indicates awvalid is received 
+  reg  awvalid_flag[0:max_wr_outstanding_transactions-1]; // indicates awvalid is received
 
   /* Address Write Channel handshake*/
   reg[int_wr_cntr_width-1:0] aw_cnt = 0;// count of awvalid
@@ -7272,7 +7272,7 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
   reg  wr_delayed,wr_fifo_full_flag;
   wire bresp_fifo_empty;
 
-  /* states for managing read/write to WR_FIFO */ 
+  /* states for managing read/write to WR_FIFO */
   parameter SEND_DATA = 0,  WAIT_ACK = 1;
   reg state;
 
@@ -7288,11 +7288,11 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
    end
   end
 
-//initial slave.set_disable_reset_value_checks(1); 
+//initial slave.set_disable_reset_value_checks(1);
   initial begin
      repeat(2) @(posedge S_ACLK);
      if(!enable_this_port) begin
-     end 
+     end
 //   slave.RESPONSE_TIMEOUT = 0;
   end
   /*--------------------------------------------------------------------------------*/
@@ -7301,7 +7301,7 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
   task set_latency_type;
     input[1:0] lat;
   begin
-   if(enable_this_port) 
+   if(enable_this_port)
     latency_type = lat;
    else begin
     if(DEBUG_INFO)
@@ -7315,7 +7315,7 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
   task automatic set_verbosity;
     input[31:0] verb;
   begin
-   if(enable_this_port) begin 
+   if(enable_this_port) begin
     slv.set_verbosity(verb);
    end  else begin
     if(DEBUG_INFO)
@@ -7330,7 +7330,7 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
   task automatic set_arqos;
     input[axi_qos_width-1:0] qos;
   begin
-   if(enable_this_port) begin 
+   if(enable_this_port) begin
     ar_qos = qos;
    end  else begin
     if(DEBUG_INFO)
@@ -7345,7 +7345,7 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
   task set_awqos;
     input[axi_qos_width-1:0] qos;
   begin
-   if(enable_this_port) 
+   if(enable_this_port)
     aw_qos = qos;
    else begin
     if(DEBUG_INFO)
@@ -7358,18 +7358,18 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
   function [31:0] get_wr_lat_number;
   input dummy;
   reg[1:0] temp;
-  begin 
+  begin
    case(latency_type)
-    BEST_CASE   : if(slave_name == axi_acp_name) get_wr_lat_number = acp_wr_min; else get_wr_lat_number = gp_wr_min;            
-    AVG_CASE    : if(slave_name == axi_acp_name) get_wr_lat_number = acp_wr_avg; else get_wr_lat_number = gp_wr_avg;            
-    WORST_CASE  : if(slave_name == axi_acp_name) get_wr_lat_number = acp_wr_max; else get_wr_lat_number = gp_wr_max;            
+    BEST_CASE   : if(slave_name == axi_acp_name) get_wr_lat_number = acp_wr_min; else get_wr_lat_number = gp_wr_min;
+    AVG_CASE    : if(slave_name == axi_acp_name) get_wr_lat_number = acp_wr_avg; else get_wr_lat_number = gp_wr_avg;
+    WORST_CASE  : if(slave_name == axi_acp_name) get_wr_lat_number = acp_wr_max; else get_wr_lat_number = gp_wr_max;
     default     : begin  // RANDOM_CASE
                    temp = $random;
-                   case(temp) 
-                    2'b00   : if(slave_name == axi_acp_name) get_wr_lat_number = ($random()%10+ acp_wr_min); else get_wr_lat_number = ($random()%10+ gp_wr_min); 
-                    2'b01   : if(slave_name == axi_acp_name) get_wr_lat_number = ($random()%40+ acp_wr_avg); else get_wr_lat_number = ($random()%40+ gp_wr_avg); 
-                    default : if(slave_name == axi_acp_name) get_wr_lat_number = ($random()%60+ acp_wr_max); else get_wr_lat_number = ($random()%60+ gp_wr_max); 
-                   endcase        
+                   case(temp)
+                    2'b00   : if(slave_name == axi_acp_name) get_wr_lat_number = ($random()%10+ acp_wr_min); else get_wr_lat_number = ($random()%10+ gp_wr_min);
+                    2'b01   : if(slave_name == axi_acp_name) get_wr_lat_number = ($random()%40+ acp_wr_avg); else get_wr_lat_number = ($random()%40+ gp_wr_avg);
+                    default : if(slave_name == axi_acp_name) get_wr_lat_number = ($random()%60+ acp_wr_max); else get_wr_lat_number = ($random()%60+ gp_wr_max);
+                   endcase
                   end
    endcase
   end
@@ -7380,18 +7380,18 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
   function [31:0] get_rd_lat_number;
   input dummy;
   reg[1:0] temp;
-  begin 
+  begin
    case(latency_type)
-    BEST_CASE   : if(slave_name == axi_acp_name) get_rd_lat_number = acp_rd_min; else get_rd_lat_number = gp_rd_min;            
-    AVG_CASE    : if(slave_name == axi_acp_name) get_rd_lat_number = acp_rd_avg; else get_rd_lat_number = gp_rd_avg;            
-    WORST_CASE  : if(slave_name == axi_acp_name) get_rd_lat_number = acp_rd_max; else get_rd_lat_number = gp_rd_max;            
+    BEST_CASE   : if(slave_name == axi_acp_name) get_rd_lat_number = acp_rd_min; else get_rd_lat_number = gp_rd_min;
+    AVG_CASE    : if(slave_name == axi_acp_name) get_rd_lat_number = acp_rd_avg; else get_rd_lat_number = gp_rd_avg;
+    WORST_CASE  : if(slave_name == axi_acp_name) get_rd_lat_number = acp_rd_max; else get_rd_lat_number = gp_rd_max;
     default     : begin  // RANDOM_CASE
                    temp = $random;
-                   case(temp) 
-                    2'b00   : if(slave_name == axi_acp_name) get_rd_lat_number = ($random()%10+ acp_rd_min); else get_rd_lat_number = ($random()%10+ gp_rd_min); 
-                    2'b01   : if(slave_name == axi_acp_name) get_rd_lat_number = ($random()%40+ acp_rd_avg); else get_rd_lat_number = ($random()%40+ gp_rd_avg); 
-                    default : if(slave_name == axi_acp_name) get_rd_lat_number = ($random()%60+ acp_rd_max); else get_rd_lat_number = ($random()%60+ gp_rd_max); 
-                   endcase        
+                   case(temp)
+                    2'b00   : if(slave_name == axi_acp_name) get_rd_lat_number = ($random()%10+ acp_rd_min); else get_rd_lat_number = ($random()%10+ gp_rd_min);
+                    2'b01   : if(slave_name == axi_acp_name) get_rd_lat_number = ($random()%40+ acp_rd_avg); else get_rd_lat_number = ($random()%40+ gp_rd_avg);
+                    default : if(slave_name == axi_acp_name) get_rd_lat_number = ($random()%60+ acp_rd_max); else get_rd_lat_number = ($random()%60+ gp_rd_max);
+                   endcase
                   end
    endcase
   end
@@ -7424,7 +7424,7 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
 
  /*--------------------------------------------------------------------------------*/
 
- 
+
   assign net_ARVALID = enable_this_port ? S_ARVALID : 1'b0;
   assign net_AWVALID = enable_this_port ? S_AWVALID : 1'b0;
   assign net_WVALID  = enable_this_port ? S_WVALID : 1'b0;
@@ -7435,7 +7435,7 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
   assign aw_fifo_full = ((aw_cnt[1] !== rd_bresp_cnt[1]) && (aw_cnt[0] === rd_bresp_cnt[0]))?1'b1 :1'b0; /// complete this
   assign wd_fifo_full = ((wd_cnt[1] !== rd_bresp_cnt[1]) && (wd_cnt[0] === rd_bresp_cnt[0]))?1'b1 :1'b0; /// complete this
   assign bresp_fifo_empty = ((wr_fifo_full_flag == 1'b0) && (wr_bresp_cnt === rd_bresp_cnt))?1'b1:1'b0;
- 
+
 
   /* Store the awvalid receive time --- necessary for calculating the bresp latency */
   always@(negedge S_RESETN or posedge S_ACLK)
@@ -7448,7 +7448,7 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
      awvalid_flag[aw_time_cnt] = 1'b1;
 	 // $display("setting up awredy flag awvalid_receive_time[aw_time_cnt] %0t awvalid_flag[aw_time_cnt] %0d aw_time_cnt %0d",awvalid_receive_time[aw_time_cnt],awvalid_flag[aw_time_cnt],aw_time_cnt);
      aw_time_cnt = aw_time_cnt + 1;
-     if(aw_time_cnt === max_wr_outstanding_transactions) begin 
+     if(aw_time_cnt === max_wr_outstanding_transactions) begin
 	    aw_time_cnt = 0;
 		// $display("reached max count max_wr_outstanding_transactions %0d aw_time_cnt %0d",max_wr_outstanding_transactions,aw_time_cnt);
      end
@@ -7459,19 +7459,19 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
   always@(posedge S_ACLK)
   begin
   if(net_AWVALID && S_AWREADY) begin
-    if(S_AWQOS === 0) begin awqos[aw_cnt[int_wr_cntr_width-2:0]] = aw_qos; 
-    end else awqos[aw_cnt[int_wr_cntr_width-2:0]] = S_AWQOS; 
+    if(S_AWQOS === 0) begin awqos[aw_cnt[int_wr_cntr_width-2:0]] = aw_qos;
+    end else awqos[aw_cnt[int_wr_cntr_width-2:0]] = S_AWQOS;
   end
   end
   /*--------------------------------------------------------------------------------*/
-  
+
   always@(aw_fifo_full)
   begin
-  if(aw_fifo_full && DEBUG_INFO) 
+  if(aw_fifo_full && DEBUG_INFO)
      $display("[%0d] : %0s : %0s : Reached the maximum outstanding Write transactions limit (%0d). Blocking all future Write transactions until at least 1 of the outstanding Write transaction has completed.",$time, DISP_INFO, slave_name,max_wr_outstanding_transactions);
   end
   /*--------------------------------------------------------------------------------*/
-  
+
   /* Address Write Channel handshake*/
  //  always@(negedge S_RESETN or posedge S_ACLK)
   initial begin
@@ -7479,9 +7479,9 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
   if(!S_RESETN) begin
     aw_cnt = 0;
   end else begin
-    // if(!aw_fifo_full) begin 
+    // if(!aw_fifo_full) begin
 	// $display(" %0t ACP waitting for aw_fifo_full %0d max_wr_outstanding_transactions %0d",$time, aw_fifo_full,max_wr_outstanding_transactions);
-    wait(aw_fifo_full == 0) begin 
+    wait(aw_fifo_full == 0) begin
 	// $display("%0t ACP waitting done for aw_fifo_full %0d max_wr_outstanding_transactions %0d ",$time,aw_fifo_full,max_wr_outstanding_transactions);
         slv.monitor.axi_wr_cmd_port.get(twc);
         // awaddr[aw_cnt[int_wr_cntr_width-2:0]] = twc.addr;
@@ -7497,7 +7497,7 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
         burst_local = twc.burst;
 		len_local = twc.len;
 		if(burst_local == AXI_INCR || burst_local == AXI_FIXED) begin
-          if(data_bus_width === 'd128)  begin 
+          if(data_bus_width === 'd128)  begin
           if(size_local === 'd0)  a = {twc.addr[3:0]};
           if(size_local === 'd1)  a = {twc.addr[3:1],1'b0};
           if(size_local === 'd2)  a = {twc.addr[3:2],2'b0};
@@ -7514,7 +7514,7 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
           if(size_local === 'd2)  a = 'b0;
 		  end
 		end if(burst_local == AXI_WRAP) begin
-		  if(data_bus_width === 'd128)  begin 
+		  if(data_bus_width === 'd128)  begin
           if(size_local === 'd0)  a = {twc.addr[3:0]};
           if(size_local === 'd1)  a = {twc.addr[3:1],1'b0};
           if(size_local === 'd2)  a = {twc.addr[3:2],2'b0};
@@ -7537,22 +7537,22 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
 		end
 		addr_wr_local = twc.addr;
 		if(burst_local == AXI_INCR || burst_local == AXI_FIXED) begin
-	      case(size_local) 
-	        0   : addr_wr_final = {addr_wr_local}; 
-	        1   : addr_wr_final = {addr_wr_local[31:1],1'b0}; 
-	        2   : addr_wr_final = {addr_wr_local[31:2],2'b0}; 
-	        3   : addr_wr_final = {addr_wr_local[31:3],3'b0}; 
-	        4   : addr_wr_final = {addr_wr_local[31:4],4'b0}; 
-	        5   : addr_wr_final = {addr_wr_local[31:5],5'b0}; 
-	        6   : addr_wr_final = {addr_wr_local[31:6],6'b0}; 
-	        7   : addr_wr_final = {addr_wr_local[31:7],7'b0}; 
-	      endcase	  
+	      case(size_local)
+	        0   : addr_wr_final = {addr_wr_local};
+	        1   : addr_wr_final = {addr_wr_local[31:1],1'b0};
+	        2   : addr_wr_final = {addr_wr_local[31:2],2'b0};
+	        3   : addr_wr_final = {addr_wr_local[31:3],3'b0};
+	        4   : addr_wr_final = {addr_wr_local[31:4],4'b0};
+	        5   : addr_wr_final = {addr_wr_local[31:5],5'b0};
+	        6   : addr_wr_final = {addr_wr_local[31:6],6'b0};
+	        7   : addr_wr_final = {addr_wr_local[31:7],7'b0};
+	      endcase
 	      awaddr[aw_cnt[int_wr_cntr_width-1:0]] = addr_wr_final;
 		  // $display("addr_wr_final %0h aw_cnt %0d",addr_wr_final,aw_cnt);
 		end if(burst_local == AXI_WRAP) begin
 	       awaddr[aw_cnt[int_wr_cntr_width-1:0]] = twc.addr;
            // $display(" awaddr[aw_cnt[int_wr_cntr_width-2:0]] %0h",awaddr[aw_cnt[int_wr_cntr_width-1:0]]);
-		end         
+		end
 		aw_cnt   = aw_cnt + 1;
 		// $display(" %0t ACP aw_cnt %0d",$time,aw_cnt);
         // if(data_bus_width === 'd32)  a = 0;
@@ -7587,15 +7587,15 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
       slv.monitor.axi_wr_beat_port.get(twd);
 	  // $display(" ACP got the element from monitor data channel wd_fifo_full %0d S_WVALID %0d",wd_fifo_full,S_WVALID);
       wait((aw_flag[wd_cnt[int_wr_cntr_width-1:0]] === 'b1));
-	  case(size_local) 
-	    0   : add_val = 1; 
-	    1   : add_val = 2; 
-	    2   : add_val = 4; 
-	    3   : add_val = 8; 
-	    4   : add_val = 16; 
-	    5   : add_val = 32; 
-	    6   : add_val = 64; 
-	    7   : add_val = 128; 
+	  case(size_local)
+	    0   : add_val = 1;
+	    1   : add_val = 2;
+	    2   : add_val = 4;
+	    3   : add_val = 8;
+	    4   : add_val = 16;
+	    5   : add_val = 32;
+	    6   : add_val = 64;
+	    7   : add_val = 128;
 	  endcase
 
 	 // $display(" ACP size_local %0d add_val %0d wd_cnt %0d",size_local,add_val,wd_cnt);
@@ -7611,7 +7611,7 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
 		   // $display("ACP burst_strb %0h twd_strb %0h int_wr_cntr_width %0d  valid_bytes %0d wd_cnt[int_wr_cntr_width-1:0] %0d twd.strb[i+a] %0b full strb %0h",burst_strb[wd_cnt[int_wr_cntr_width-1:0]][((valid_bytes)+(i*1))+:1],twd.strb[i],int_wr_cntr_width,valid_bytes,wd_cnt[int_wr_cntr_width-1:0],twd.strb[i+a],twd.strb[i+a]);
 		   // $display("ACP burst_strb %0h twd.strb[i+1] %0h twd.strb[i+2] %0h twd.strb[i+3] %0h twd.strb[i+4] %0h twd.strb[i+5] %0h twd.strb[i+6] %0h twd.strb[i+7] %0h",twd.strb[i],twd.strb[i+1],twd.strb[i+1],twd.strb[i+2],twd.strb[i+3],twd.strb[i+4],twd.strb[i+5],twd.strb[i+6],twd.strb[i+7]);
 		   // $display("ACP full strb %0h",twd.strb[i+a]);
-		  
+
 		  if(i == ((2**awsize[wr_bresp_cnt[int_wr_cntr_width-1:0]])-1) ) begin
 		     if(burst_local == AXI_FIXED) begin
 		       a = a;
@@ -7633,25 +7633,25 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
 				   else if(data_bus_width === 'd32)
 			       a = a_new[1:0];
 			       //$display(" setting up a_wrap %0h a_new %0h a %0h", a_wrap,a_new,a);
-			     end else begin 
+			     end else begin
 		           a = a;
 			        // $display(" ACP setting incr a_wrap %0h a_new %0h a %0h", a_wrap,a_new ,a );
 			     end
 			  end
 			 // $display(" ACP new a value a %0h add_val %0d",a,add_val);
-		  end	 
-        end 
-		if(burst_local == AXI_INCR) begin   
+		  end
+        end
+		if(burst_local == AXI_INCR) begin
 		if( a >= (data_bus_width/8) || (burst_local == 0 ) || (twd.last) ) begin
 		// if( (burst_local == 0 ) || (twd.last) ) begin
 		  a = 0;
 		  //$display("resetting a = %0d ",a);
-		end  
-		end else if (burst_local == AXI_WRAP) begin 
+		end
+		end else if (burst_local == AXI_WRAP) begin
 		 if( ((a >= (data_bus_width/8)) ) || (burst_local == 0 ) || (twd.last) ) begin
 		  a = 0;
 		  //$display("resetting a = %0d ",a);
-		end  
+		end
 		end
 
       valid_bytes = valid_bytes+(2**awsize[wr_bresp_cnt[int_wr_cntr_width-1:0]]);
@@ -7708,7 +7708,7 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
 //    end /// if
 //  end /// else
 //  end /// always
- 
+
   /* Align the wrap data for write transaction */
   task automatic get_wrap_aligned_wr_data;
   output [(data_bus_width*axi_burst_len)-1:0] aligned_data;
@@ -7738,7 +7738,7 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
     end
     wrp_bytes = addr - start_addr;
     wrp_data = b_data << (wrp_bytes*8);
-    
+
     aligned_data = (temp_data | wrp_data);
 	// $display("temp_data %0h wrp_data %0h aligned_data %0h",temp_data,wrp_data,aligned_data);
   end
@@ -7776,17 +7776,17 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
     end
     wrp_bytes = addr - start_addr;
     wrp_strb = b_strb << (wrp_bytes);
-    
+
     aligned_strb = (temp_strb | wrp_strb);
 	// $display("wrap strb aligned_strb %0h tmep_strb %0h wrp_strb %0h",aligned_strb,temp_strb,wrp_strb);
   end
   endtask
   /*--------------------------------------------------------------------------------*/
-   
+
   /* Calculate the Response for each read/write transaction */
   function [axi_rsp_width-1:0] calculate_resp;
-  input rd_wr; // indicates Read(1) or Write(0) transaction 
-  input [addr_width-1:0] awaddr; 
+  input rd_wr; // indicates Read(1) or Write(0) transaction
+  input [addr_width-1:0] awaddr;
   input [axi_prot_width-1:0] awprot;
   reg [axi_rsp_width-1:0] rsp;
   begin
@@ -7831,7 +7831,7 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
    if(enable_write_bresp) begin
      aw_flag[wr_bresp_cnt[int_wr_cntr_width-1:0]]    = 0;
      wlast_flag[wr_bresp_cnt[int_wr_cntr_width-1:0]] = 0;
-     // $display("awaddr[wr_bresp_cnt[int_wr_cntr_width-1:0]] %0h ",awaddr[wr_bresp_cnt[int_wr_cntr_width-1:0]]); 
+     // $display("awaddr[wr_bresp_cnt[int_wr_cntr_width-1:0]] %0h ",awaddr[wr_bresp_cnt[int_wr_cntr_width-1:0]]);
      bresp = calculate_resp(1'b0, awaddr[wr_bresp_cnt[int_wr_cntr_width-1:0]],awprot[wr_bresp_cnt[int_wr_cntr_width-1:0]]);
      fifo_bresp[wr_bresp_cnt[int_wr_cntr_width-1:0]] = {awid[wr_bresp_cnt[int_wr_cntr_width-1:0]],bresp};
      /* Fill WR data FIFO */
@@ -7840,29 +7840,29 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
          get_wrap_aligned_wr_data(aligned_wr_data,aligned_wr_addr, awaddr[wr_bresp_cnt[int_wr_cntr_width-1:0]],burst_data[wr_bresp_cnt[int_wr_cntr_width-1:0]],burst_valid_bytes[wr_bresp_cnt[int_wr_cntr_width-1:0]]);      /// gives wrapped start address
          get_wrap_aligned_wr_strb(aligned_wr_strb,aligned_wr_addr, awaddr[wr_bresp_cnt[int_wr_cntr_width-1:0]],burst_strb[wr_bresp_cnt[int_wr_cntr_width-1:0]],burst_valid_bytes[wr_bresp_cnt[int_wr_cntr_width-1:0]]);      /// gives wrapped start address
        end else begin
-         aligned_wr_data = burst_data[wr_bresp_cnt[int_wr_cntr_width-1:0]]; 
+         aligned_wr_data = burst_data[wr_bresp_cnt[int_wr_cntr_width-1:0]];
          aligned_wr_addr = awaddr[wr_bresp_cnt[int_wr_cntr_width-1:0]] ;
 		 aligned_wr_strb = burst_strb[wr_bresp_cnt[int_wr_cntr_width-1:0]];
 		 //$display("  got form fifo aligned_wr_addr %0h wr_bresp_cnt[int_wr_cntr_width-1:0]] %0d",aligned_wr_addr,wr_bresp_cnt[int_wr_cntr_width-1:0]);
 		 //$display("  got form fifo aligned_wr_strb %0h wr_bresp_cnt[int_wr_cntr_width-1:0]] %0d",aligned_wr_strb,wr_bresp_cnt[int_wr_cntr_width-1:0]);
        end
        valid_data_bytes = burst_valid_bytes[wr_bresp_cnt[int_wr_cntr_width-1:0]];
-     end else 
-       valid_data_bytes = 0;  
+     end else
+       valid_data_bytes = 0;
 
-      if(awbrst[wr_bresp_cnt[int_wr_cntr_width-1:0]] != AXI_WRAP) begin 
+      if(awbrst[wr_bresp_cnt[int_wr_cntr_width-1:0]] != AXI_WRAP) begin
         // wr_fifo[wr_fifo_wr_ptr[int_wr_cntr_width-1:0]] = {burst_strb[wr_bresp_cnt[int_wr_cntr_width-1:0]],awqos[wr_bresp_cnt[int_wr_cntr_width-1:0]], aligned_wr_data, aligned_wr_addr, valid_data_bytes};
         wr_fifo[wr_fifo_wr_ptr[int_wr_cntr_width-1:0]] = {aligned_wr_strb,awqos[wr_bresp_cnt[int_wr_cntr_width-1:0]], aligned_wr_data, aligned_wr_addr, valid_data_bytes};
 		// $display(" %0t ACP updating the wr_fifo  wrap aligned_wr_strb %0h  aligned_wr_addr %0h valid_data_bytes %0h",$time,aligned_wr_strb,aligned_wr_addr ,valid_data_bytes);
-	  end else begin	
+	  end else begin
         wr_fifo[wr_fifo_wr_ptr[int_wr_cntr_width-1:0]] = {aligned_wr_strb,awqos[wr_bresp_cnt[int_wr_cntr_width-1:0]], aligned_wr_data, aligned_wr_addr, valid_data_bytes};
 		// $display(" %0t ACP updating the wr_fifo  incr aligned_wr_strb %0h  aligned_wr_addr %0h valid_data_bytes %0h",$time,aligned_wr_strb,aligned_wr_addr ,valid_data_bytes);
 	 end
-     wr_fifo_wr_ptr = wr_fifo_wr_ptr + 1'b1; 
+     wr_fifo_wr_ptr = wr_fifo_wr_ptr + 1'b1;
      wr_bresp_cnt = wr_bresp_cnt+1'b1;
 	 enable_write_bresp = 'b0;
 	 if(wr_bresp_cnt == 2'd2) begin
-	   wr_fifo_full_flag = 1'b1; 
+	   wr_fifo_full_flag = 1'b1;
 	 end
 
 	 // $display(" %0t ACP before resetting the wr_bresp_cnt counter %0d max_wr_outstanding_transactions %0d int_wr_cntr_width %0d wr_fifo_wr_ptr %0d" ,$time, wr_bresp_cnt[int_wr_cntr_width-1:0],max_wr_outstanding_transactions,int_wr_cntr_width,wr_fifo_wr_ptr);
@@ -7891,13 +7891,13 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
    wr_latency_count = get_wr_lat_number(1);
    // wr_latency_count = 5;
    wr_delayed = 0;
-   bresp_time_cnt = 0; 
+   bresp_time_cnt = 0;
   end else begin
    // 	 if(static_count < 32 ) begin
-   //      // wready_gen.set_ready_policy(XIL_AXI_READY_GEN_SINGLE); 
-   //     wready_gen.set_ready_policy(XIL_AXI_READY_GEN_NO_BACKPRESSURE); 
-   //     //wready_gen.set_low_time(0); 
-   //     //wready_gen.set_high_time(1); 
+   //      // wready_gen.set_ready_policy(XIL_AXI_READY_GEN_SINGLE);
+   //     wready_gen.set_ready_policy(XIL_AXI_READY_GEN_NO_BACKPRESSURE);
+   //     //wready_gen.set_low_time(0);
+   //     //wready_gen.set_high_time(1);
    //     slv.wr_driver.send_wready(wready_gen);
    //   end
    // $display(" ACP waiting for awvalid_flag[bresp_time_cnt] %0d $realtime  %0t awvalid_receive_time[bresp_time_cnt] %0t",awvalid_flag[bresp_time_cnt],$realtime ,awvalid_receive_time[bresp_time_cnt]);
@@ -7905,7 +7905,7 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
    // $display(" ACP waiting for diff_time %0t",diff_time);
    if(awvalid_flag[bresp_time_cnt] && (($realtime - awvalid_receive_time[bresp_time_cnt])/diff_time >= wr_latency_count)) begin
      wr_delayed = 1;
-   end	 
+   end
 	 // $display(" ACP waiting for wr_delayed wr_delayed %0d bresp_fifo_empty %0d ",wr_delayed,bresp_fifo_empty);
    if(!bresp_fifo_empty && wr_delayed) begin
 	 // $display(" ACP before getting twr wr_delayed %0d bresp_fifo_empty %0d ",wr_delayed,bresp_fifo_empty);
@@ -7919,12 +7919,12 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
 	  2'b11: twr.set_bresp(XIL_AXI_RESP_DECERR);
 	 endcase
 	//  if(static_count > 32 ) begin
-      //  wready_gen.set_ready_policy(XIL_AXI_READY_GEN_SINGLE); 
-      wready_gen.set_ready_policy(XIL_AXI_READY_GEN_NO_BACKPRESSURE); 
-      // wready_gen.set_low_time(3); 
-      // wready_gen.set_high_time(3); 
-      // wready_gen.set_low_time_range(3,6); 
-      // wready_gen.set_high_time_range(3,6); 
+      //  wready_gen.set_ready_policy(XIL_AXI_READY_GEN_SINGLE);
+      wready_gen.set_ready_policy(XIL_AXI_READY_GEN_NO_BACKPRESSURE);
+      // wready_gen.set_low_time(3);
+      // wready_gen.set_high_time(3);
+      // wready_gen.set_low_time_range(3,6);
+      // wready_gen.set_high_time_range(3,6);
       // slv.wr_driver.send_wready(wready_gen);
      // end
      slv.wr_driver.send_wready(wready_gen);
@@ -7935,19 +7935,19 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
      bresp_time_cnt = bresp_time_cnt+1;
      rd_bresp_cnt = rd_bresp_cnt + 1;
 	 if(rd_bresp_cnt == 2'd2) begin
-	   wr_fifo_full_flag = 1'b0; 
+	   wr_fifo_full_flag = 1'b0;
 	 end
       if(rd_bresp_cnt[int_wr_cntr_width-1:0] === (max_wr_outstanding_transactions)) begin
         // rd_bresp_cnt[int_wr_cntr_width] = ~ rd_bresp_cnt[int_wr_cntr_width];
         rd_bresp_cnt[int_wr_cntr_width-1:0] = 0;
       end
       if(bresp_time_cnt[int_wr_cntr_width-1:0] === max_wr_outstanding_transactions) begin
-        bresp_time_cnt[int_wr_cntr_width-1:0] = 0; 
+        bresp_time_cnt[int_wr_cntr_width-1:0] = 0;
       end
      wr_latency_count = get_wr_lat_number(1);
      // wr_latency_count = 5;
 	 static_count++;
-   end 
+   end
 	 static_count++;
   end // else
   end//always
@@ -7955,7 +7955,7 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
 
   /* Reading from the wr_fifo */
   always@(negedge S_RESETN or posedge SW_CLK) begin
-  if(!S_RESETN) begin 
+  if(!S_RESETN) begin
    WR_DATA_VALID_DDR = 1'b0;
    WR_DATA_VALID_OCM = 1'b0;
    wr_fifo_rd_ptr = 0;
@@ -7991,7 +7991,7 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
       end
    WAIT_ACK :begin
       state = WAIT_ACK;
-      if(WR_DATA_ACK_OCM | WR_DATA_ACK_DDR) begin 
+      if(WR_DATA_ACK_OCM | WR_DATA_ACK_DDR) begin
         WR_DATA_VALID_OCM = 1'b0;
         WR_DATA_VALID_DDR = 1'b0;
         state = SEND_DATA;
@@ -8040,11 +8040,11 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
 
   reg [max_burst_bits-1:0] read_fifo [0:max_rd_outstanding_transactions-1]; /// Store only AXI Burst Data ..
   reg [int_rd_cntr_width-1:0] rd_fifo_wr_ptr = 0, rd_fifo_rd_ptr = 0;
-  wire read_fifo_full; 
- 
+  wire read_fifo_full;
+
   assign read_fifo_full = (rd_fifo_wr_ptr[int_rd_cntr_width-1] !== rd_fifo_rd_ptr[int_rd_cntr_width-1] && rd_fifo_wr_ptr[int_rd_cntr_width-1:0] === rd_fifo_rd_ptr[int_rd_cntr_width-1:0])?1'b1: 1'b0;
   assign read_fifo_empty = (rd_fifo_wr_ptr === rd_fifo_rd_ptr)?1'b1: 1'b0;
-  assign ar_fifo_full = ((ar_cnt[int_rd_cntr_width-1] !== rd_cnt[int_rd_cntr_width-1]) && (ar_cnt[int_rd_cntr_width-1:0] === rd_cnt[int_rd_cntr_width-1:0]))?1'b1 :1'b0; 
+  assign ar_fifo_full = ((ar_cnt[int_rd_cntr_width-1] !== rd_cnt[int_rd_cntr_width-1]) && (ar_cnt[int_rd_cntr_width-1:0] === rd_cnt[int_rd_cntr_width-1:0]))?1'b1 :1'b0;
 
   /* Store the arvalid receive time --- necessary for calculating the bresp latency */
   always@(negedge S_RESETN or posedge S_ACLK)
@@ -8058,33 +8058,33 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
      ar_time_cnt = ar_time_cnt + 1;
 	 // $display(" %m current ar_time_cnt %0d",ar_time_cnt);
      if((ar_time_cnt === max_rd_outstanding_transactions) ) begin
-       ar_time_cnt = 0; 
+       ar_time_cnt = 0;
 	   // $display("reached max count max_rd_outstanding_transactions %0d aw_time_cnt %0d",max_rd_outstanding_transactions,ar_time_cnt);
 	   // $display(" resetting the read ar_time_cnt counter %0d", ar_time_cnt);
-	 end   
-   end 
+	 end
+   end
   end // else
   end /// always
   /*--------------------------------------------------------------------------------*/
   always@(posedge S_ACLK)
   begin
   if(net_ARVALID == 'b1 && S_ARREADY == 'b1) begin
-    if(S_ARQOS === 0) begin 
-      arqos[ar_cnt[int_rd_cntr_width-1:0]] = ar_qos; 
-    end else begin 
-      arqos[ar_cnt[int_rd_cntr_width-1:0]] = S_ARQOS; 
+    if(S_ARQOS === 0) begin
+      arqos[ar_cnt[int_rd_cntr_width-1:0]] = ar_qos;
+    end else begin
+      arqos[ar_cnt[int_rd_cntr_width-1:0]] = S_ARQOS;
     end
   end
   end
   /*--------------------------------------------------------------------------------*/
-  
+
   always@(ar_fifo_full)
   begin
-  if(ar_fifo_full && DEBUG_INFO) 
+  if(ar_fifo_full && DEBUG_INFO)
     $display("[%0d] : %0s : %0s : Reached the maximum outstanding Read transactions limit (%0d). Blocking all future Read transactions until at least 1 of the outstanding Read transaction has completed.",$time, DISP_INFO, slave_name,max_rd_outstanding_transactions);
   end
   /*--------------------------------------------------------------------------------*/
-  
+
   /* Address Read  Channel handshake*/
   // always@(negedge S_RESETN or posedge S_ACLK)
   // begin
@@ -8107,16 +8107,16 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
       ar_flag[ar_cnt[int_rd_cntr_width-1:0]] = 1'b1;
 	  size_local = trc.size;
 	  addr_local = trc.addr;
-	  case(size_local) 
-	    0   : addr_final = {addr_local}; 
-	    1   : addr_final = {addr_local[31:1],1'b0}; 
-	    2   : addr_final = {addr_local[31:2],2'b0}; 
-	    3   : addr_final = {addr_local[31:3],3'b0}; 
-	    4   : addr_final = {addr_local[31:4],4'b0}; 
-	    5   : addr_final = {addr_local[31:5],5'b0}; 
-	    6   : addr_final = {addr_local[31:6],6'b0}; 
-	    7   : addr_final = {addr_local[31:7],7'b0}; 
-	  endcase	  
+	  case(size_local)
+	    0   : addr_final = {addr_local};
+	    1   : addr_final = {addr_local[31:1],1'b0};
+	    2   : addr_final = {addr_local[31:2],2'b0};
+	    3   : addr_final = {addr_local[31:3],3'b0};
+	    4   : addr_final = {addr_local[31:4],4'b0};
+	    5   : addr_final = {addr_local[31:5],5'b0};
+	    6   : addr_final = {addr_local[31:6],6'b0};
+	    7   : addr_final = {addr_local[31:7],7'b0};
+	  endcase
 	    araddr[ar_cnt[int_rd_cntr_width-1:0]] = addr_final;
         ar_cnt = ar_cnt+1;
 		// $display(" READ address addr_final %0h ar_cnt %0d",addr_final,ar_cnt);
@@ -8124,7 +8124,7 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
           ar_cnt[int_rd_cntr_width] = ~ ar_cnt[int_rd_cntr_width];
           ar_cnt[int_rd_cntr_width-1:0] = 0;
 		  // $display(" reseeting the read ar_cnt %0d",ar_cnt);
-        end 
+        end
     end /// if(!ar_fifo_full)
   end /// if else
   end /// forever
@@ -8155,22 +8155,22 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
     temp_data = temp_data >> ((data_bus_width*axi_burst_len) - (v_bytes*8));
     wrp_bytes = addr - start_addr;
     wrp_data = b_data >> (wrp_bytes*8);
-    
+
     aligned_data = (temp_data | wrp_data);
   end
   endtask
   /*--------------------------------------------------------------------------------*/
-   
+
   parameter RD_DATA_REQ = 1'b0, WAIT_RD_VALID = 1'b1;
   reg [addr_width-1:0] temp_read_address;
   reg [max_burst_bytes_width:0] temp_rd_valid_bytes;
-  reg rd_fifo_state; 
+  reg rd_fifo_state;
   reg invalid_rd_req;
   /* get the data from memory && also calculate the rresp*/
   always@(negedge S_RESETN or posedge SW_CLK)
   begin
   if(!S_RESETN)begin
-   rd_fifo_wr_ptr = 0; 
+   rd_fifo_wr_ptr = 0;
    wr_rresp_cnt =0;
    rd_fifo_state = RD_DATA_REQ;
    temp_rd_valid_bytes = 0;
@@ -8198,9 +8198,9 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
 
        if(arbrst[wr_rresp_cnt[int_rd_cntr_width-1:0]] === AXI_WRAP) /// wrap begin
         temp_read_address = (araddr[wr_rresp_cnt[int_rd_cntr_width-1:0]]/temp_rd_valid_bytes) * temp_rd_valid_bytes;
-       else 
+       else
         temp_read_address = araddr[wr_rresp_cnt[int_rd_cntr_width-1:0]];
-       if(rresp === AXI_OK) begin 
+       if(rresp === AXI_OK) begin
         case(decode_address(temp_read_address))//decode_address(araddr[wr_rresp_cnt[int_rd_cntr_width-2:0]]);
           OCM_MEM : RD_REQ_OCM = 1;
           DDR_MEM : RD_REQ_DDR = 1;
@@ -8209,7 +8209,7 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
         endcase
        end else
         invalid_rd_req = 1;
-        
+
        RD_QOS     = arqos[wr_rresp_cnt[int_rd_cntr_width-1:0]];
        RD_ADDR    = temp_read_address; ///araddr[wr_rresp_cnt[int_rd_cntr_width-2:0]];
        RD_BYTES   = temp_rd_valid_bytes;
@@ -8224,8 +8224,8 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
        end
      end
     end
-    WAIT_RD_VALID : begin    
-     rd_fifo_state = WAIT_RD_VALID; 
+    WAIT_RD_VALID : begin
+     rd_fifo_state = WAIT_RD_VALID;
      if(RD_DATA_VALID_OCM | RD_DATA_VALID_DDR | RD_DATA_VALID_REG | invalid_rd_req) begin ///temp_dec == 2'b11) begin
        if(RD_DATA_VALID_DDR)
          read_fifo[rd_fifo_wr_ptr[int_rd_cntr_width-1:0]] = RD_DATA_DDR;
@@ -8310,7 +8310,7 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
   	   // @(posedge S_ACLK);
 	   // end
        // rd_latency_count = get_rd_lat_number(1);
-       rd_latency_count = 20; 
+       rd_latency_count = 20;
 	    // $display("%m waiting for element form vip rresp_time_cnt %0d ",rresp_time_cnt);
 	    // while(trr_rd.size()< 0 ) begin
 	    // $display("%m got the element form vip rresp_time_cnt %0d ",rresp_time_cnt);
@@ -8324,11 +8324,11 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
   	   @(posedge S_ACLK);
      end
 
-     //if(arvalid_flag[rresp_time_cnt] && ((($realtime - arvalid_receive_time[rresp_time_cnt])/diff_time) >= rd_latency_count)) 
+     //if(arvalid_flag[rresp_time_cnt] && ((($realtime - arvalid_receive_time[rresp_time_cnt])/diff_time) >= rd_latency_count))
        rd_delayed = 1;
        // $display("%m   reading form rd_delayed %0d read_fifo_empty %0d next transfer rresp_time_cnt %0d trr_get_rd.id %0h",rd_delayed ,~read_fifo_empty,rresp_time_cnt,trr_get_rd.id);
      if(!read_fifo_empty && rd_delayed)begin
-       rd_delayed = 0;  
+       rd_delayed = 0;
        // $display("%m   reading form rd_delayed %0d next transfer rresp_time_cnt %0d trr_get_rd.id %0h",rd_delayed ,rresp_time_cnt,trr_get_rd.id);
        arvalid_flag[rresp_time_cnt] = 1'b0;
        rd_v_b = ((arlen[rd_cnt[int_rd_cntr_width-1:0]]+1)*(2**arsize[rd_cnt[int_rd_cntr_width-1:0]]));
@@ -8338,12 +8338,12 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
        if(arbrst[rd_cnt[int_rd_cntr_width-1:0]]=== AXI_WRAP) begin
          get_wrap_aligned_rd_data(temp_wrap_data, araddr[rd_cnt[int_rd_cntr_width-1:0]], temp_read_data, rd_v_b);
          temp_read_data = temp_wrap_data;
-       end 
+       end
        temp_read_rsp = 0;
        repeat(axi_burst_len) begin
          temp_read_rsp = temp_read_rsp >> axi_rsp_width;
          temp_read_rsp[(axi_rsp_width*axi_burst_len)-1:(axi_rsp_width*axi_burst_len)-axi_rsp_width] = fifo_rresp[rd_cnt[int_rd_cntr_width-1:0]][rsp_msb : rsp_lsb];
-       end 
+       end
 	   case (arsize[rd_cnt[int_rd_cntr_width-1:0]])
          3'b000: trr_get_rd.size = XIL_AXI_SIZE_1BYTE;
          3'b001: trr_get_rd.size = XIL_AXI_SIZE_2BYTE;
@@ -8374,7 +8374,7 @@ module processing_system7_vip_v1_0_24_axi_slave_acp (
 	     endcase
        end
        slv.rd_driver.send(trr_get_rd);
-       rd_cnt = rd_cnt + 1; 
+       rd_cnt = rd_cnt + 1;
        rresp_time_cnt = rresp_time_cnt+1;
 	   // $display("current rresp_time_cnt %0d rd_cnt %0d",rresp_time_cnt,rd_cnt[int_rd_cntr_width-1:0]);
        if(rd_cnt[int_rd_cntr_width-1:0] === (max_rd_outstanding_transactions)) begin
@@ -8407,7 +8407,7 @@ endmodule
  *
  * Date : 2012-11
  *
- * Description : Model that acts as PS AXI Master port interface. 
+ * Description : Model that acts as PS AXI Master port interface.
  *               It uses AXI3 Master VIP
  *****************************************************************************/
  `timescale 1ns/1ps
@@ -8457,7 +8457,7 @@ module processing_system7_vip_v1_0_24_axi_master (
     M_RDATA
 
 );
-   parameter enable_this_port = 0;  
+   parameter enable_this_port = 0;
    parameter master_name = "Master";
    parameter data_bus_width = 32;
    parameter address_bus_width = 32;
@@ -8466,23 +8466,23 @@ module processing_system7_vip_v1_0_24_axi_master (
    parameter exclusive_access_supported = 0;
    parameter ID = 12'hC00;
    `include "processing_system7_vip_v1_0_24_local_params.v"
-    /* IDs for Masters 
+    /* IDs for Masters
        // l2m1 (CPU000)
-       12'b11_000_000_00_00    
-       12'b11_010_000_00_00     
-       12'b11_011_000_00_00   
-       12'b11_100_000_00_00   
-       12'b11_101_000_00_00   
-       12'b11_110_000_00_00     
-       12'b11_111_000_00_00     
+       12'b11_000_000_00_00
+       12'b11_010_000_00_00
+       12'b11_011_000_00_00
+       12'b11_100_000_00_00
+       12'b11_101_000_00_00
+       12'b11_110_000_00_00
+       12'b11_111_000_00_00
        // l2m1 (CPU001)
-       12'b11_000_001_00_00    
-       12'b11_010_001_00_00     
-       12'b11_011_001_00_00    
-       12'b11_100_001_00_00    
-       12'b11_101_001_00_00    
-       12'b11_110_001_00_00     
-       12'b11_111_001_00_00    
+       12'b11_000_001_00_00
+       12'b11_010_001_00_00
+       12'b11_011_001_00_00
+       12'b11_100_001_00_00
+       12'b11_101_001_00_00
+       12'b11_110_001_00_00
+       12'b11_111_001_00_00
    */
 
    input  M_RESETN;
@@ -8530,8 +8530,8 @@ module processing_system7_vip_v1_0_24_axi_master (
    wire net_RESETN;
    wire net_RVALID;
    wire net_BVALID;
-   reg DEBUG_INFO = 1'b1; 
-   reg STOP_ON_ERROR = 1'b1; 
+   reg DEBUG_INFO = 1'b1;
+   reg STOP_ON_ERROR = 1'b1;
 
    integer use_id_no = 0;
 
@@ -8550,7 +8550,7 @@ module processing_system7_vip_v1_0_24_axi_master (
    end
   end
 
-   initial master.IF.xilinx_slave_ready_check_enable = 0; 
+   initial master.IF.xilinx_slave_ready_check_enable = 0;
    initial begin
      repeat(2) @(posedge M_ACLK);
      if(!enable_this_port) begin
@@ -8697,8 +8697,8 @@ module processing_system7_vip_v1_0_24_axi_master (
     master.IF.set_enable_xchecks_to_warn();
     repeat(10) @(posedge M_ACLK);
     master.IF.set_enable_xchecks();
-   end 
-   
+   end
+
 
 /* Call to VIP APIs */
  task automatic read_burst(input [address_bus_width-1:0] addr,input [axi_len_width-1:0] len,input [axi_size_width-1:0] siz,input [axi_brst_type_width-1:0] burst,input [axi_lock_width-1:0] lck,input [axi_cache_width-1:0] cache,input [axi_prot_width-1:0] prot,output [(axi_burst_len*data_bus_width)-1:0] data, output [(axi_rsp_width*axi_burst_len)-1:0] response);
@@ -8732,7 +8732,7 @@ module processing_system7_vip_v1_0_24_axi_master (
     2'b11: lock_i = XIL_AXI_ALOCK_RSVD;
   endcase
   if(enable_this_port)begin
-   fork 
+   fork
      begin
        rready_gen = mst.rd_driver.create_ready("rready");
        rready_gen.set_ready_policy(XIL_AXI_READY_GEN_OSC);
@@ -8771,7 +8771,7 @@ module processing_system7_vip_v1_0_24_axi_master (
     if(STOP_ON_ERROR) $stop;
   end
 	   //$display("axi_master data %0h response %0h ",data, response );
- endtask 
+ endtask
 
 // task automatic read_burst(input [address_bus_width-1:0] addr,input [axi_len_width-1:0] len,input [axi_size_width-1:0] siz,input [axi_brst_type_width-1:0] burst,input [axi_lock_width-1:0] lck,input [axi_cache_width-1:0] cache,input [axi_prot_width-1:0] prot,output [(axi_mgp_data_width*axi_burst_len)-1:0] data, output [(axi_rsp_width*axi_burst_len)-1:0] response);
 //  integer i;
@@ -8803,7 +8803,7 @@ module processing_system7_vip_v1_0_24_axi_master (
 //    2'b11: lock_i = XIL_AXI_ALOCK_RSVD;
 //  endcase
 //  if(enable_this_port)begin
-//   fork 
+//   fork
 //     begin
 //       rready_gen = mst.rd_driver.create_ready("rready");
 //       rready_gen.set_ready_policy(XIL_AXI_READY_GEN_OSC);
@@ -8836,7 +8836,7 @@ module processing_system7_vip_v1_0_24_axi_master (
 //    $display("[%0d] : %0s : %0s : Port is disabled. 'read_burst' will not be executed...",$time, DISP_ERR, master_name);
 //    if(STOP_ON_ERROR) $stop;
 //  end
-// endtask 
+// endtask
  task automatic write_burst(input [address_bus_width-1:0] addr,input [axi_len_width-1:0] len,input [axi_size_width-1:0] siz,input [axi_brst_type_width-1:0] burst,input [axi_lock_width-1:0] lck,input [axi_cache_width-1:0] cache,input [axi_prot_width-1:0] prot,input [(axi_burst_len*data_bus_width)-1:0] data,input integer datasize, output [axi_rsp_width-1:0] response);
   integer i,j;
   xil_axi_burst_t burst_i;
@@ -8844,7 +8844,7 @@ module processing_system7_vip_v1_0_24_axi_master (
   xil_axi_lock_t  lock_i;
   xil_axi_data_beat new_data;
   xil_axi_strb_beat new_strb;
- 
+
   case (burst)
     2'b00: burst_i = XIL_AXI_BURST_TYPE_FIXED;
     2'b01: burst_i = XIL_AXI_BURST_TYPE_INCR;
@@ -8868,7 +8868,7 @@ module processing_system7_vip_v1_0_24_axi_master (
     2'b11: lock_i = XIL_AXI_ALOCK_RSVD;
   endcase
   if(enable_this_port)begin
-    fork 
+    fork
       begin
         bready_gen = mst.wr_driver.create_ready("bready");
         bready_gen.set_ready_policy(XIL_AXI_READY_GEN_OSC);
@@ -8903,7 +8903,7 @@ module processing_system7_vip_v1_0_24_axi_master (
     // $display("[%0d] : %0s : %0s : Port is disabled. 'write_burst' will not be executed...",$time, DISP_ERR, master_name);
     if(STOP_ON_ERROR) $stop;
   end
- endtask 
+ endtask
 
 // task automatic write_burst(input [address_bus_width-1:0] addr,input [axi_len_width-1:0] len,input [axi_size_width-1:0] siz,input [axi_brst_type_width-1:0] burst,input [axi_lock_width-1:0] lck,input [axi_cache_width-1:0] cache,input [axi_prot_width-1:0] prot,input [(axi_mgp_data_width*axi_burst_len)-1:0] data,input integer datasize, output [axi_rsp_width-1:0] response);
 //  integer i,j;
@@ -8912,7 +8912,7 @@ module processing_system7_vip_v1_0_24_axi_master (
 //  xil_axi_lock_t  lock_i;
 //  xil_axi_data_beat new_data;
 //  xil_axi_strb_beat new_strb;
-// 
+//
 //  case (burst)
 //    2'b00: burst_i = XIL_AXI_BURST_TYPE_FIXED;
 //    2'b01: burst_i = XIL_AXI_BURST_TYPE_INCR;
@@ -8936,7 +8936,7 @@ module processing_system7_vip_v1_0_24_axi_master (
 //    2'b11: lock_i = XIL_AXI_ALOCK_RSVD;
 //  endcase
 //  if(enable_this_port)begin
-//    fork 
+//    fork
 //      begin
 //        bready_gen = mst.wr_driver.create_ready("bready");
 //        bready_gen.set_ready_policy(XIL_AXI_READY_GEN_OSC);
@@ -8969,7 +8969,7 @@ module processing_system7_vip_v1_0_24_axi_master (
 //    $display("[%0d] : %0s : %0s : Port is disabled. 'write_burst' will not be executed...",$time, DISP_ERR, master_name);
 //    if(STOP_ON_ERROR) $stop;
 //  end
-// endtask 
+// endtask
   task automatic write_burst_strb(input [address_bus_width-1:0] addr,input [axi_len_width-1:0] len,input [axi_size_width-1:0] siz,input [axi_brst_type_width-1:0] burst,input [axi_lock_width-1:0] lck,input [axi_cache_width-1:0] cache,input [axi_prot_width-1:0] prot,input [((axi_burst_len*data_bus_width))-1:0] data,input strb_en,input [((axi_burst_len*data_bus_width)/8)-1:0] strb,input integer datasize, output [axi_rsp_width-1:0] response);
   integer i,j;
   xil_axi_burst_t burst_i;
@@ -8977,8 +8977,8 @@ module processing_system7_vip_v1_0_24_axi_master (
   xil_axi_lock_t  lock_i;
   xil_axi_data_beat new_data;
   xil_axi_strb_beat new_strb;
-  reg[11:0] ID1; 
- 
+  reg[11:0] ID1;
+
   // $display(" write_burst_strb addr %0h trnsfr_lngth %0d siz %0d burst %0d wr_data %0h strb %0h",addr,len,siz,burst,data,strb);
   case (burst)
     2'b00: burst_i = XIL_AXI_BURST_TYPE_FIXED;
@@ -9003,7 +9003,7 @@ module processing_system7_vip_v1_0_24_axi_master (
     2'b11: lock_i = XIL_AXI_ALOCK_RSVD;
   endcase
   if(enable_this_port)begin
-    fork 
+    fork
       begin
         bready_gen = mst.wr_driver.create_ready("bready");
         bready_gen.set_ready_policy(XIL_AXI_READY_GEN_OSC);
@@ -9054,7 +9054,7 @@ module processing_system7_vip_v1_0_24_axi_master (
     $display("[%0d] : %0s : %0s : Port is disabled. 'write_burst_strb' will not be executed...",$time, DISP_ERR, master_name);
     if(STOP_ON_ERROR) $stop;
   end
- endtask 
+ endtask
 
  task automatic write_burst_concurrent(input [address_bus_width-1:0] addr,input [axi_len_width-1:0] len,input [axi_size_width-1:0] siz,input [axi_brst_type_width-1:0] burst,input [axi_lock_width-1:0] lck,input [axi_cache_width-1:0] cache,input [axi_prot_width-1:0] prot,input [(axi_burst_len*data_bus_width)-1:0] data,input integer datasize, output [axi_rsp_width-1:0] response);
   integer i;
@@ -9064,8 +9064,8 @@ module processing_system7_vip_v1_0_24_axi_master (
     $display("[%0d] : %0s : %0s : Port is disabled. 'write_burst_concurrent' will not be executed...",$time, DISP_ERR, master_name);
     if(STOP_ON_ERROR) $stop;
   end
- endtask 
- 
+ endtask
+
 // task automatic write_burst_concurrent(input [address_bus_width-1:0] addr,input [axi_len_width-1:0] len,input [axi_size_width-1:0] siz,input [axi_brst_type_width-1:0] burst,input [axi_lock_width-1:0] lck,input [axi_cache_width-1:0] cache,input [axi_prot_width-1:0] prot,input [(axi_mgp_data_width*axi_burst_len)-1:0] data,input integer datasize, output [axi_rsp_width-1:0] response);
 //  integer i;
 //  if(enable_this_port)begin
@@ -9074,7 +9074,7 @@ module processing_system7_vip_v1_0_24_axi_master (
 //    $display("[%0d] : %0s : %0s : Port is disabled. 'write_burst_concurrent' will not be executed...",$time, DISP_ERR, master_name);
 //    if(STOP_ON_ERROR) $stop;
 //  end
-// endtask 
+// endtask
 
  /* Write data from file */
  task automatic write_from_file;
@@ -9090,64 +9090,64 @@ module processing_system7_vip_v1_0_24_axi_master (
  integer wr_fd;
  integer succ;
  integer trnsfr_lngth;
- reg concurrent; 
+ reg concurrent;
  integer i;
  int siz_in_bytes;
- 
+
  reg [id_bus_width-1:0] wr_id;
  reg [axi_size_width-1:0] siz;
  reg [axi_brst_type_width-1:0] burst;
  reg [axi_lock_width-1:0] lck;
  reg [axi_cache_width-1:0] cache;
- reg [axi_prot_width-1:0] prot; 
+ reg [axi_prot_width-1:0] prot;
  begin
  if(!enable_this_port) begin
   $display("[%0d] : %0s : %0s : Port is disabled. 'write_from_file' will not be executed...",$time, DISP_ERR, master_name);
   if(STOP_ON_ERROR) $stop;
  end else begin
-  siz =  2; 
+  siz =  2;
   burst = 1;
   lck = 0;
   cache = 0;
   prot = 0;
- 
+
   addr = start_addr;
   bytes = wr_size;
   wresp = 0;
-  concurrent = $random; 
+  concurrent = $random;
   if(bytes > (axi_burst_len * data_bus_width/8)) begin
     trnsfr_bytes = (axi_burst_len * data_bus_width/8);
     trnsfr_lngth = axi_burst_len-1;
-    siz_in_bytes =  (data_bus_width/8); 
+    siz_in_bytes =  (data_bus_width/8);
   end else begin
     trnsfr_bytes = bytes;
-  end 
-  
+  end
+
   if(bytes > (axi_burst_len * data_bus_width/8)) begin
    trnsfr_lngth = axi_burst_len-1;
   end else if(bytes%(data_bus_width/8) == 0) begin
    trnsfr_lngth = bytes/(data_bus_width/8) - 1;
-   siz_in_bytes =  (data_bus_width/8); 
-  end else begin 
+   siz_in_bytes =  (data_bus_width/8);
+  end else begin
    trnsfr_lngth = bytes/(data_bus_width/8);
-   siz_in_bytes =  (data_bus_width/8); 
+   siz_in_bytes =  (data_bus_width/8);
   end
 
   wr_id = ID;
   wr_fd = $fopen(file_name,"r");
-  
+
   while (bytes > 0) begin
-    case(siz_in_bytes) 
-	  1   : siz = 0; 
-	  2   : siz = 1; 
-	  4   : siz = 2; 
-	  8   : siz = 3; 
-	  16  : siz = 4; 
-	  32  : siz = 5; 
-	  64  : siz = 6; 
-	  128 : siz = 7; 
+    case(siz_in_bytes)
+	  1   : siz = 0;
+	  2   : siz = 1;
+	  4   : siz = 2;
+	  8   : siz = 3;
+	  16  : siz = 4;
+	  32  : siz = 5;
+	  64  : siz = 6;
+	  128 : siz = 7;
 	endcase
-  
+
     repeat(axi_burst_len) begin /// get the data for 1 AXI burst transaction
      wr_data = wr_data >> data_bus_width;
      succ = $fscanf(wr_fd,"%h",wr_data[(axi_burst_len*data_bus_width)-1 :(axi_burst_len*data_bus_width)-data_bus_width ]); /// write as 4 bytes (data_bus_width) ..
@@ -9159,16 +9159,16 @@ module processing_system7_vip_v1_0_24_axi_master (
      trnsfr_bytes = (axi_burst_len * data_bus_width/8); //
     else
      trnsfr_bytes = bytes;
-  
+
     if(bytes > (axi_burst_len * data_bus_width/8))
      trnsfr_lngth = axi_burst_len-1;
     else if(bytes%(data_bus_width/8) == 0)
      trnsfr_lngth = bytes/(data_bus_width/8) - 1;
-    else 
+    else
      trnsfr_lngth = bytes/(data_bus_width/8);
-  
+
     wresp = wresp | rwrsp;
-  end /// while 
+  end /// while
   response = wresp;
  end
  end
@@ -9188,45 +9188,45 @@ module processing_system7_vip_v1_0_24_axi_master (
 // integer wr_fd;
 // integer succ;
 // integer trnsfr_lngth;
-// reg concurrent; 
+// reg concurrent;
 // integer i;
-// 
+//
 // reg [id_bus_width-1:0] wr_id;
 // reg [axi_size_width-1:0] siz;
 // reg [axi_brst_type_width-1:0] burst;
 // reg [axi_lock_width-1:0] lck;
 // reg [axi_cache_width-1:0] cache;
-// reg [axi_prot_width-1:0] prot; 
+// reg [axi_prot_width-1:0] prot;
 // begin
 // if(!enable_this_port) begin
 //  $display("[%0d] : %0s : %0s : Port is disabled. 'write_from_file' will not be executed...",$time, DISP_ERR, master_name);
 //  if(STOP_ON_ERROR) $stop;
 // end else begin
-//  siz =  2; 
+//  siz =  2;
 //  burst = 1;
 //  lck = 0;
 //  cache = 0;
 //  prot = 0;
-// 
+//
 //  addr = start_addr;
 //  bytes = wr_size;
 //  wresp = 0;
-//  concurrent = $random; 
+//  concurrent = $random;
 //  if(bytes > (axi_burst_len * data_bus_width/8))
 //   trnsfr_bytes = (axi_burst_len * data_bus_width/8);
 //  else
 //   trnsfr_bytes = bytes;
-//  
+//
 //  if(bytes > (axi_burst_len * data_bus_width/8))
 //   trnsfr_lngth = axi_burst_len-1;
 //  else if(bytes%(data_bus_width/8) == 0)
 //   trnsfr_lngth = bytes/(data_bus_width/8) - 1;
-//  else 
+//  else
 //   trnsfr_lngth = bytes/(data_bus_width/8);
-//  
+//
 //  wr_id = ID;
 //  wr_fd = $fopen(file_name,"r");
-//  
+//
 //  while (bytes > 0) begin
 //    repeat(axi_burst_len) begin /// get the data for 1 AXI burst transaction
 //     wr_data = wr_data >> data_bus_width;
@@ -9239,16 +9239,16 @@ module processing_system7_vip_v1_0_24_axi_master (
 //     trnsfr_bytes = (axi_burst_len * data_bus_width/8); //
 //    else
 //     trnsfr_bytes = bytes;
-//  
+//
 //    if(bytes > (axi_burst_len * data_bus_width/8))
 //     trnsfr_lngth = axi_burst_len-1;
 //    else if(bytes%(data_bus_width/8) == 0)
 //     trnsfr_lngth = bytes/(data_bus_width/8) - 1;
-//    else 
+//    else
 //     trnsfr_lngth = bytes/(data_bus_width/8);
-//  
+//
 //    wresp = wresp | rwrsp;
-//  end /// while 
+//  end /// while
 //  response = wresp;
 // end
 // end
@@ -9267,78 +9267,78 @@ module processing_system7_vip_v1_0_24_axi_master (
  reg [(axi_burst_len*data_bus_width)-1 :0] rd_data;
  integer rd_fd;
  reg [id_bus_width-1:0] rd_id;
- 
+
  reg [axi_size_width-1:0] siz;
  int siz_in_bytes;
  reg [axi_brst_type_width-1:0] burst;
  reg [axi_lock_width-1:0] lck;
  reg [axi_cache_width-1:0] cache;
- reg [axi_prot_width-1:0] prot; 
+ reg [axi_prot_width-1:0] prot;
  begin
  if(!enable_this_port) begin
   $display("[%0d] : %0s : %0s : Port is disabled. 'read_to_file' will not be executed...",$time, DISP_ERR, master_name);
   if(STOP_ON_ERROR) $stop;
  end else begin
-   siz =  2; 
+   siz =  2;
    burst = 1;
    lck = 0;
    cache = 0;
    prot = 0;
- 
+
    addr = start_addr;
    rresp = 0;
    bytes = rd_size;
-   
+
    rd_id = ID;
-   
+
    if(bytes > (axi_burst_len * data_bus_width/8)) begin
      trnsfr_lngth = axi_burst_len-1;
-	 siz_in_bytes =  (data_bus_width/8); 
-    end		
+	 siz_in_bytes =  (data_bus_width/8);
+    end
    else if(bytes%(data_bus_width/8) == 0) begin
     trnsfr_lngth = bytes/(data_bus_width/8) - 1;
-	siz_in_bytes =  (data_bus_width/8); 
-	end  
+	siz_in_bytes =  (data_bus_width/8);
+	end
    else begin
     trnsfr_lngth = bytes/(data_bus_width/8);
-    siz_in_bytes =  (data_bus_width/8); 
+    siz_in_bytes =  (data_bus_width/8);
    end
-  
+
    rd_fd = $fopen(file_name,"w");
-   
+
    while (bytes > 0) begin
-     case(siz_in_bytes) 
-	   1   : siz = 0; 
-	   2   : siz = 1; 
-	   4   : siz = 2; 
-	   8   : siz = 3; 
-	   16  : siz = 4; 
-	   32  : siz = 5; 
-	   64  : siz = 6; 
-	   128 : siz = 7; 
+     case(siz_in_bytes)
+	   1   : siz = 0;
+	   2   : siz = 1;
+	   4   : siz = 2;
+	   8   : siz = 3;
+	   16  : siz = 4;
+	   32  : siz = 5;
+	   64  : siz = 6;
+	   128 : siz = 7;
 	 endcase
      read_burst(addr, trnsfr_lngth, siz, burst, lck, cache, prot, rd_data, rrrsp);
      repeat(trnsfr_lngth+1) begin
       $fdisplayh(rd_fd,rd_data[data_bus_width-1:0]);
       rd_data = rd_data >> data_bus_width;
      end
-     
+
      addr = addr + (trnsfr_lngth+1)*4;
- 
+
      if(bytes >= (axi_burst_len * data_bus_width/8) )
       bytes = bytes - (axi_burst_len * data_bus_width/8); //
      else
       bytes = 0;
-  
+
      if(bytes > (axi_burst_len * data_bus_width/8))
       trnsfr_lngth = axi_burst_len-1;
      else if(bytes%(data_bus_width/8) == 0)
       trnsfr_lngth = bytes/(data_bus_width/8) - 1;
-     else 
+     else
       trnsfr_lngth = bytes/(data_bus_width/8);
- 
+
      rresp = rresp | rrrsp;
-   end /// while 
+   end /// while
    response = rresp;
  end
  end
@@ -9356,61 +9356,61 @@ module processing_system7_vip_v1_0_24_axi_master (
 // reg [(axi_burst_len*data_bus_width)-1 :0] rd_data;
 // integer rd_fd;
 // reg [id_bus_width-1:0] rd_id;
-// 
+//
 // reg [axi_size_width-1:0] siz;
 // reg [axi_brst_type_width-1:0] burst;
 // reg [axi_lock_width-1:0] lck;
 // reg [axi_cache_width-1:0] cache;
-// reg [axi_prot_width-1:0] prot; 
+// reg [axi_prot_width-1:0] prot;
 // begin
 // if(!enable_this_port) begin
 //  $display("[%0d] : %0s : %0s : Port is disabled. 'read_to_file' will not be executed...",$time, DISP_ERR, master_name);
 //  if(STOP_ON_ERROR) $stop;
 // end else begin
-//   siz =  2; 
+//   siz =  2;
 //   burst = 1;
 //   lck = 0;
 //   cache = 0;
 //   prot = 0;
-// 
+//
 //   addr = start_addr;
 //   rresp = 0;
 //   bytes = rd_size;
-//   
+//
 //   rd_id = ID;
-//   
+//
 //   if(bytes > (axi_burst_len * data_bus_width/8))
 //    trnsfr_lngth = axi_burst_len-1;
 //   else if(bytes%(data_bus_width/8) == 0)
 //    trnsfr_lngth = bytes/(data_bus_width/8) - 1;
-//   else 
+//   else
 //    trnsfr_lngth = bytes/(data_bus_width/8);
-//  
+//
 //   rd_fd = $fopen(file_name,"w");
-//   
+//
 //   while (bytes > 0) begin
 //     read_burst(addr, trnsfr_lngth, siz, burst, lck, cache, prot, rd_data, rrrsp);
 //     repeat(trnsfr_lngth+1) begin
 //      $fdisplayh(rd_fd,rd_data[data_bus_width-1:0]);
 //      rd_data = rd_data >> data_bus_width;
 //     end
-//     
+//
 //     addr = addr + (trnsfr_lngth+1)*4;
-// 
+//
 //     if(bytes >= (axi_burst_len * data_bus_width/8) )
 //      bytes = bytes - (axi_burst_len * data_bus_width/8); //
 //     else
 //      bytes = 0;
-//  
+//
 //     if(bytes > (axi_burst_len * data_bus_width/8))
 //      trnsfr_lngth = axi_burst_len-1;
 //     else if(bytes%(data_bus_width/8) == 0)
 //      trnsfr_lngth = bytes/(data_bus_width/8) - 1;
-//     else 
+//     else
 //      trnsfr_lngth = bytes/(data_bus_width/8);
-// 
+//
 //     rresp = rresp | rrrsp;
-//   end /// while 
+//   end /// while
 //   response = rresp;
 // end
 // end
@@ -9432,18 +9432,18 @@ module processing_system7_vip_v1_0_24_axi_master (
  integer trnsfr_bytes,strb_cnt;
  reg [((axi_burst_len*data_bus_width))-1:0] wr_data;
  integer trnsfr_lngth;
- reg concurrent; 
- 
+ reg concurrent;
+
  reg [id_bus_width-1:0] wr_id;
  reg [axi_size_width-1:0] siz;
  int siz_in_bytes,j;
  reg [axi_brst_type_width-1:0] burst;
  reg [axi_lock_width-1:0] lck;
  reg [axi_cache_width-1:0] cache;
- reg [axi_prot_width-1:0] prot; 
+ reg [axi_prot_width-1:0] prot;
  reg[11:0] ID_tmp;
 
- 
+
  integer pad_bytes;
  begin
  if(!enable_this_port) begin
@@ -9455,8 +9455,8 @@ module processing_system7_vip_v1_0_24_axi_master (
   bytes = wr_size;
   wresp = 0;
   wr_data = w_data;
-  concurrent = $random; 
-  siz =  2; 
+  concurrent = $random;
+  siz =  2;
   burst = 1;
   lck = 0;
   cache = 0;
@@ -9470,20 +9470,20 @@ module processing_system7_vip_v1_0_24_axi_master (
      $display("wr_id called with wr_size %0h ",wr_id);
   // $display("outside pad_bytes %0d ",pad_bytes);
   if(bytes+pad_bytes > (data_bus_width/8*axi_burst_len)) begin /// for unaligned address
-    trnsfr_bytes = (data_bus_width*axi_burst_len)/8 - pad_bytes;//start_addr[1:0]; 
+    trnsfr_bytes = (data_bus_width*axi_burst_len)/8 - pad_bytes;//start_addr[1:0];
     trnsfr_lngth = axi_burst_len-1;
-     siz_in_bytes =  (data_bus_width/8); 
+     siz_in_bytes =  (data_bus_width/8);
 	 // $display("0 pad_bytes %0d ",pad_bytes);
-  end else begin 
+  end else begin
     trnsfr_bytes = bytes;
     tmp_bytes   = bytes + pad_bytes;//start_addr[1:0];
     if(tmp_bytes%(data_bus_width/8) == 0) begin
       trnsfr_lngth = tmp_bytes/(data_bus_width/8) - 1;
-      siz_in_bytes =  (data_bus_width/8); 
+      siz_in_bytes =  (data_bus_width/8);
 	 // $display("1 pad_bytes %0d ",pad_bytes);
     end else begin
       trnsfr_lngth = tmp_bytes/(data_bus_width/8);
-      siz_in_bytes =  (data_bus_width/8); 
+      siz_in_bytes =  (data_bus_width/8);
 	 // $display("2 pad_bytes %0d ",pad_bytes);
 	end
   end
@@ -9495,23 +9495,23 @@ module processing_system7_vip_v1_0_24_axi_master (
 	  strb_cnt =  bytes ;
 	  // $display("strb_cnt %0d max_transfer_bytes_width %0d",strb_cnt,max_transfer_bytes_width);
 	end
- 
+
   while (bytes > 0) begin
-    case(siz_in_bytes) 
-	  1   : siz = 0; 
-	  2   : siz = 1; 
-	  4   : siz = 2; 
-	  8   : siz = 3; 
-	  16  : siz = 4; 
-	  32  : siz = 5; 
-	  64  : siz = 6; 
-	  128 : siz = 7; 
+    case(siz_in_bytes)
+	  1   : siz = 0;
+	  2   : siz = 1;
+	  4   : siz = 2;
+	  8   : siz = 3;
+	  16  : siz = 4;
+	  32  : siz = 5;
+	  64  : siz = 6;
+	  128 : siz = 7;
 	endcase
     // $display("bytes %0d",bytes);
     // $display("addr %0h trnsfr_lngth %0d siz %0d burst %0d wr_data %0h trnsfr_bytes %0d siz_in_bytes %0d ",addr,trnsfr_lngth,siz,burst,wr_data,trnsfr_bytes,siz_in_bytes);
 	mask_addr = addr[27:0] & (~(1 << siz));
 	// $display("mask_addr %0h addr %0h (~(1 << siz)) %0h ((1 << siz)) %0h size %0d ",mask_addr,addr,(~(1 << siz)), ((1 << siz)),siz);
-	if(pad_bytes != 0) begin 
+	if(pad_bytes != 0) begin
 	wr_data = (wr_data << (mask_addr[3:0]*8) );
 	// $display(" pading bytes wr_data %0h ",wr_data);
 	end else begin
@@ -9538,25 +9538,25 @@ module processing_system7_vip_v1_0_24_axi_master (
     addr = addr + trnsfr_bytes;
     // $display("addr %0d",addr);
     if(bytes  > (axi_burst_len * data_bus_width/8)) begin
-     trnsfr_bytes = (axi_burst_len * data_bus_width/8) - pad_bytes;//start_addr[1:0]; 
+     trnsfr_bytes = (axi_burst_len * data_bus_width/8) - pad_bytes;//start_addr[1:0];
      trnsfr_lngth = axi_burst_len-1;
 	 pad_bytes = 0;
      // $display("trnsfr_lngth %0d pad_bytes %0d",trnsfr_lngth,pad_bytes);
-    end else begin 
+    end else begin
       trnsfr_bytes = bytes;
       // $display(" 1 trnsfr_bytes %0d",trnsfr_bytes);
       tmp_bytes = bytes + pad_bytes;//start_addr[1:0];
       if(tmp_bytes%(data_bus_width/8) == 0) begin
         trnsfr_lngth = tmp_bytes/(data_bus_width/8) - 1;
         // $display("2 trnsfr_lngth %0d",trnsfr_lngth);
-      end else begin 
+      end else begin
         trnsfr_lngth = tmp_bytes/(data_bus_width/8);
 	    pad_bytes = 0;
         // $display("3 trnsfr_lngth %0d pad_bytes %0d",trnsfr_lngth,pad_bytes);
-	  end	
+	  end
     end
     wresp = wresp | rwrsp;
-  end /// while 
+  end /// while
   response = wresp;
  end
  end
@@ -9573,15 +9573,15 @@ module processing_system7_vip_v1_0_24_axi_master (
 // integer trnsfr_bytes;
 // reg [(max_transfer_bytes*8)-1:0] wr_data;
 // integer trnsfr_lngth;
-// reg concurrent; 
-// 
+// reg concurrent;
+//
 // reg [id_bus_width-1:0] wr_id;
 // reg [axi_size_width-1:0] siz;
 // reg [axi_brst_type_width-1:0] burst;
 // reg [axi_lock_width-1:0] lck;
 // reg [axi_cache_width-1:0] cache;
-// reg [axi_prot_width-1:0] prot; 
-// 
+// reg [axi_prot_width-1:0] prot;
+//
 // integer pad_bytes;
 // begin
 // if(!enable_this_port) begin
@@ -9592,8 +9592,8 @@ module processing_system7_vip_v1_0_24_axi_master (
 //  bytes = wr_size;
 //  wresp = 0;
 //  wr_data = w_data;
-//  concurrent = $random; 
-//  siz =  2; 
+//  concurrent = $random;
+//  siz =  2;
 //  burst = 1;
 //  lck = 0;
 //  cache = 0;
@@ -9601,35 +9601,35 @@ module processing_system7_vip_v1_0_24_axi_master (
 //  pad_bytes = start_addr[clogb2(data_bus_width/8)-1:0];
 //  wr_id = ID;
 //  if(bytes+pad_bytes > (data_bus_width/8*axi_burst_len)) begin /// for unaligned address
-//    trnsfr_bytes = (data_bus_width*axi_burst_len)/8 - pad_bytes;//start_addr[1:0]; 
+//    trnsfr_bytes = (data_bus_width*axi_burst_len)/8 - pad_bytes;//start_addr[1:0];
 //    trnsfr_lngth = axi_burst_len-1;
-//  end else begin 
+//  end else begin
 //    trnsfr_bytes = bytes;
 //    tmp_bytes   = bytes + pad_bytes;//start_addr[1:0];
 //    if(tmp_bytes%(data_bus_width/8) == 0)
 //      trnsfr_lngth = tmp_bytes/(data_bus_width/8) - 1;
-//    else 
+//    else
 //      trnsfr_lngth = tmp_bytes/(data_bus_width/8);
 //  end
-// 
+//
 //  while (bytes > 0) begin
 //    write_burst(addr, trnsfr_lngth,  siz, burst, lck, cache, prot, wr_data[(axi_burst_len*data_bus_width)-1:0], trnsfr_bytes, rwrsp);
 //    wr_data = wr_data >> (trnsfr_bytes*8);
 //    bytes = bytes - trnsfr_bytes;
 //    addr = addr + trnsfr_bytes;
 //    if(bytes  > (axi_burst_len * data_bus_width/8)) begin
-//     trnsfr_bytes = (axi_burst_len * data_bus_width/8) - pad_bytes;//start_addr[1:0]; 
+//     trnsfr_bytes = (axi_burst_len * data_bus_width/8) - pad_bytes;//start_addr[1:0];
 //     trnsfr_lngth = axi_burst_len-1;
-//    end else begin 
+//    end else begin
 //      trnsfr_bytes = bytes;
 //      tmp_bytes = bytes + pad_bytes;//start_addr[1:0];
 //      if(tmp_bytes%(data_bus_width/8) == 0)
 //        trnsfr_lngth = tmp_bytes/(data_bus_width/8) - 1;
-//      else 
+//      else
 //        trnsfr_lngth = tmp_bytes/(data_bus_width/8);
 //    end
 //    wresp = wresp | rwrsp;
-//  end /// while 
+//  end /// while
 //  response = wresp;
 // end
 // end
@@ -9653,16 +9653,16 @@ module processing_system7_vip_v1_0_24_axi_master (
  integer trnsfr_lngth;
  integer i;
  reg [id_bus_width-1:0] rd_id;
- 
+
  reg [axi_size_width-1:0] siz;
  int siz_in_bytes;
  reg [axi_brst_type_width-1:0] burst;
  reg [axi_lock_width-1:0] lck;
  reg [axi_cache_width-1:0] cache;
- reg [axi_prot_width-1:0] prot; 
- 
+ reg [axi_prot_width-1:0] prot;
+
  integer pad_bytes;
- 
+
  begin
  if(!enable_this_port) begin
   $display("[%0d] : %0s : %0s : Port is disabled. 'read_data' will not be executed...",$time, DISP_ERR, master_name);
@@ -9672,45 +9672,45 @@ module processing_system7_vip_v1_0_24_axi_master (
   bytes = rd_size;
   rresp = 0;
   total_rcvd_bytes = 0;
-  rd_data = 0; 
+  rd_data = 0;
   rd_id = ID;
- 
-  siz =  2; 
+
+  siz =  2;
   burst = 1;
   lck = 0;
   cache = 0;
   prot = 0;
   pad_bytes = start_addr[clogb2(data_bus_width/8)-1:0];
- 
+
   if(bytes+ pad_bytes > (axi_burst_len * data_bus_width/8)) begin /// for unaligned address
-    trnsfr_bytes = (axi_burst_len * data_bus_width/8) - pad_bytes;//start_addr[1:0]; 
+    trnsfr_bytes = (axi_burst_len * data_bus_width/8) - pad_bytes;//start_addr[1:0];
     trnsfr_lngth = axi_burst_len-1;
-	siz_in_bytes =  (data_bus_width/8); 
+	siz_in_bytes =  (data_bus_width/8);
 	// $display("0 pad_bytes %0d ",pad_bytes);
-  end else begin 
+  end else begin
     trnsfr_bytes = bytes;
     tmp_bytes = bytes + pad_bytes;//start_addr[1:0];
     if(tmp_bytes%(data_bus_width/8) == 0) begin
       trnsfr_lngth = tmp_bytes/(data_bus_width/8) - 1;
-      siz_in_bytes =  (data_bus_width/8); 
+      siz_in_bytes =  (data_bus_width/8);
 	 // $display("1 pad_bytes %0d ",pad_bytes);
-	end  
-    else begin 
+	end
+    else begin
       trnsfr_lngth = tmp_bytes/(data_bus_width/8);
-      siz_in_bytes =  (data_bus_width/8); 
+      siz_in_bytes =  (data_bus_width/8);
 	 // $display("2 pad_bytes %0d ",pad_bytes);
 	end
   end
   while (bytes > 0) begin
-      case(siz_in_bytes) 
-	  1   : siz = 0; 
-	  2   : siz = 1; 
-	  4   : siz = 2; 
-	  8   : siz = 3; 
-	  16  : siz = 4; 
-	  32  : siz = 5; 
-	  64  : siz = 6; 
-	  128 : siz = 7; 
+      case(siz_in_bytes)
+	  1   : siz = 0;
+	  2   : siz = 1;
+	  4   : siz = 2;
+	  8   : siz = 3;
+	  16  : siz = 4;
+	  32  : siz = 5;
+	  64  : siz = 6;
+	  128 : siz = 7;
 	endcase
     read_burst(addr, trnsfr_lngth, siz, burst, lck, cache, prot, rcv_rd_data, rdrsp);
 	 //$display(" axi_master read_data rcv_rd_data %0h rdrsp %0h",rcv_rd_data, rdrsp);
@@ -9725,18 +9725,18 @@ module processing_system7_vip_v1_0_24_axi_master (
     bytes = bytes - trnsfr_bytes;
     addr = addr + trnsfr_bytes;
     if(bytes  > (axi_burst_len * data_bus_width/8)) begin
-     trnsfr_bytes = (axi_burst_len * data_bus_width/8) - pad_bytes;//start_addr[1:0]; 
+     trnsfr_bytes = (axi_burst_len * data_bus_width/8) - pad_bytes;//start_addr[1:0];
      trnsfr_lngth = 15;
-    end else begin 
+    end else begin
       trnsfr_bytes = bytes;
       tmp_bytes = bytes + pad_bytes;//start_addr[1:0];
       if(tmp_bytes%(data_bus_width/8) == 0)
         trnsfr_lngth = tmp_bytes/(data_bus_width/8) - 1;
-      else 
+      else
         trnsfr_lngth = tmp_bytes/(data_bus_width/8);
     end
     rresp = rresp | rdrsp;
-  end /// while 
+  end /// while
   rd_data =  rd_data >> (max_transfer_bytes - total_rcvd_bytes)*8;
   r_data = rd_data;
   //$display(" afi_master read_data r_data %0h",r_data);
@@ -9760,15 +9760,15 @@ module processing_system7_vip_v1_0_24_axi_master (
 // integer trnsfr_lngth;
 // integer i;
 // reg [id_bus_width-1:0] rd_id;
-// 
+//
 // reg [axi_size_width-1:0] siz;
 // reg [axi_brst_type_width-1:0] burst;
 // reg [axi_lock_width-1:0] lck;
 // reg [axi_cache_width-1:0] cache;
-// reg [axi_prot_width-1:0] prot; 
-// 
+// reg [axi_prot_width-1:0] prot;
+//
 // integer pad_bytes;
-// 
+//
 // begin
 // if(!enable_this_port) begin
 //  $display("[%0d] : %0s : %0s : Port is disabled. 'read_data' will not be executed...",$time, DISP_ERR, master_name);
@@ -9778,25 +9778,25 @@ module processing_system7_vip_v1_0_24_axi_master (
 //  bytes = rd_size;
 //  rresp = 0;
 //  total_rcvd_bytes = 0;
-//  rd_data = 0; 
+//  rd_data = 0;
 //  rd_id = ID;
-// 
-//  siz =  2; 
+//
+//  siz =  2;
 //  burst = 1;
 //  lck = 0;
 //  cache = 0;
 //  prot = 0;
 //  pad_bytes = start_addr[clogb2(data_bus_width/8)-1:0];
-// 
+//
 //  if(bytes+ pad_bytes > (axi_burst_len * data_bus_width/8)) begin /// for unaligned address
-//    trnsfr_bytes = (axi_burst_len * data_bus_width/8) - pad_bytes;//start_addr[1:0]; 
+//    trnsfr_bytes = (axi_burst_len * data_bus_width/8) - pad_bytes;//start_addr[1:0];
 //    trnsfr_lngth = axi_burst_len-1;
-//  end else begin 
+//  end else begin
 //    trnsfr_bytes = bytes;
 //    tmp_bytes = bytes + pad_bytes;//start_addr[1:0];
 //    if(tmp_bytes%(data_bus_width/8) == 0)
 //      trnsfr_lngth = tmp_bytes/(data_bus_width/8) - 1;
-//    else 
+//    else
 //      trnsfr_lngth = tmp_bytes/(data_bus_width/8);
 //  end
 //  while (bytes > 0) begin
@@ -9810,18 +9810,18 @@ module processing_system7_vip_v1_0_24_axi_master (
 //    bytes = bytes - trnsfr_bytes;
 //    addr = addr + trnsfr_bytes;
 //    if(bytes  > (axi_burst_len * data_bus_width/8)) begin
-//     trnsfr_bytes = (axi_burst_len * data_bus_width/8) - pad_bytes;//start_addr[1:0]; 
+//     trnsfr_bytes = (axi_burst_len * data_bus_width/8) - pad_bytes;//start_addr[1:0];
 //     trnsfr_lngth = 15;
-//    end else begin 
+//    end else begin
 //      trnsfr_bytes = bytes;
 //      tmp_bytes = bytes + pad_bytes;//start_addr[1:0];
 //      if(tmp_bytes%(data_bus_width/8) == 0)
 //        trnsfr_lngth = tmp_bytes/(data_bus_width/8) - 1;
-//      else 
+//      else
 //        trnsfr_lngth = tmp_bytes/(data_bus_width/8);
 //    end
 //    rresp = rresp | rdrsp;
-//  end /// while 
+//  end /// while
 //  rd_data =  rd_data >> (max_transfer_bytes - total_rcvd_bytes)*8;
 //  r_data = rd_data;
 //  response = rresp;
@@ -9854,11 +9854,11 @@ reg [axi_size_width-1:0] siz;
 reg [axi_brst_type_width-1:0] burst;
 reg [axi_lock_width-1:0] lck;
 reg [axi_cache_width-1:0] cache;
-reg [axi_prot_width-1:0] prot; 
+reg [axi_prot_width-1:0] prot;
 reg [data_width-1:0] rcv_data;
-integer trnsfr_lngth; 
+integer trnsfr_lngth;
 reg rd_loop;
-reg timed_out; 
+reg timed_out;
 integer i;
 integer cycle_cnt;
 
@@ -9877,14 +9877,14 @@ if(!enable_this_port) begin
  if(STOP_ON_ERROR) $stop;
 end else begin
  rd_id = ID;
- siz =  2; 
+ siz =  2;
  burst = 1;
  lck = 0;
  cache = 0;
  prot = 0;
  trnsfr_lngth = 0;
  rd_loop = 1;
- fork 
+ fork
   begin
     while(!timed_out & rd_loop) begin
       cycle_cnt = cycle_cnt + 1;
@@ -9893,20 +9893,20 @@ end else begin
     end
   end
   begin
-    while (rd_loop) begin 
+    while (rd_loop) begin
      if(DEBUG_INFO)
-       $display("[%0d] : %0s : %0s : Reading Register mapped at Address(0x%0h) ",$time, master_name, DISP_INFO, addr); 
+       $display("[%0d] : %0s : %0s : Reading Register mapped at Address(0x%0h) ",$time, master_name, DISP_INFO, addr);
      read_burst(addr, trnsfr_lngth, siz, burst, lck, cache, prot, rcv_data, rdrsp);
      if(DEBUG_INFO)
-       $display("[%0d] : %0s : %0s : Reading Register returned (0x%0h) ",$time, master_name, DISP_INFO, rcv_data); 
+       $display("[%0d] : %0s : %0s : Reading Register returned (0x%0h) ",$time, master_name, DISP_INFO, rcv_data);
      if(((rcv_data & ~mask_i) === (data_i & ~mask_i)) | timed_out)
        rd_loop = 0;
      else
        repeat(time_int) @(posedge M_ACLK);
-    end /// while 
-  end 
+    end /// while
+  end
  join
- data_o = rcv_data & ~mask_i; 
+ data_o = rcv_data & ~mask_i;
  if(timed_out) begin
    $display("[%0d] : %0s : %0s : 'wait_reg_update' timed out ... Register is not updated ",$time, DISP_ERR, master_name);
    if(STOP_ON_ERROR) $stop;
@@ -9920,7 +9920,7 @@ endtask
   task automatic set_verbosity;
     input[31:0] verb;
   begin
-   if(enable_this_port) begin 
+   if(enable_this_port) begin
     mst.set_verbosity(verb);
    end  else begin
     if(DEBUG_INFO)
@@ -9985,7 +9985,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
   S_ARID,
   S_AWID,
   S_WID,
-  
+
   S_AWQOS,
   S_ARQOS,
 
@@ -9995,11 +9995,11 @@ module processing_system7_vip_v1_0_24_afi_slave (
   WR_ADDR,
   WR_DATA,
   WR_BYTES,
-  WR_DATA_STRB, 
+  WR_DATA_STRB,
   WR_DATA_VALID_OCM,
   WR_DATA_VALID_DDR,
   WR_QOS,
-  
+
   RD_REQ_DDR,
   RD_REQ_OCM,
   RD_ADDR,
@@ -10017,7 +10017,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
   S_WACOUNT
 
 );
-  parameter enable_this_port = 0;  
+  parameter enable_this_port = 0;
   parameter slave_name = "Slave";
   parameter data_bus_width = 32;
   parameter address_bus_width = 32;
@@ -10056,10 +10056,10 @@ module processing_system7_vip_v1_0_24_afi_slave (
   parameter wr_afi_addr_msb  = wr_afi_addr_lsb + addr_width-1;
   parameter wr_afi_data_lsb  = wr_afi_addr_msb + 1;
   parameter wr_afi_data_msb  = wr_data_lsb + (data_bus_width*axi_burst_len)-1;
-  parameter wr_afi_rsp_lsb   =  axi_rsp_width-1; 
-  parameter wr_afi_rsp_msb   = wr_afi_rsp_lsb + axi_rsp_width-1; 
-  parameter wr_afi_id_lsb    = wr_afi_rsp_msb + 1; 
-  parameter wr_afi_id_msb    = wr_afi_id_lsb + axi_hp_id_width-1; 
+  parameter wr_afi_rsp_lsb   =  axi_rsp_width-1;
+  parameter wr_afi_rsp_msb   = wr_afi_rsp_lsb + axi_rsp_width-1;
+  parameter wr_afi_id_lsb    = wr_afi_rsp_msb + 1;
+  parameter wr_afi_id_msb    = wr_afi_id_lsb + axi_hp_id_width-1;
   parameter wr_afi_ln_lsb    = wr_afi_id_msb + 1;
   parameter wr_afi_ln_msb    = wr_afi_ln_lsb + axi_len_width-1;
   parameter wr_afi_qos_lsb   = wr_afi_ln_msb + 1;
@@ -10071,11 +10071,11 @@ module processing_system7_vip_v1_0_24_afi_slave (
   parameter wr_strb_msb  = wr_strb_lsb + ((data_bus_width/8)*axi_burst_len)-1;
 
   /* RESP data */
-  parameter rsp_fifo_bits = axi_rsp_width+id_bus_width; 
+  parameter rsp_fifo_bits = axi_rsp_width+id_bus_width;
   parameter rsp_lsb = 0;
   parameter rsp_msb = axi_rsp_width-1;
-  parameter rsp_id_lsb = rsp_msb + 1;  
-  parameter rsp_id_msb = rsp_id_lsb + id_bus_width-1;  
+  parameter rsp_id_lsb = rsp_msb + 1;
+  parameter rsp_id_msb = rsp_id_lsb + id_bus_width-1;
 
   input  S_RESETN;
 
@@ -10110,9 +10110,9 @@ module processing_system7_vip_v1_0_24_afi_slave (
   input [data_bus_width-1:0] S_WDATA;
   input [axi_cache_width-1:0] S_ARCACHE;
   input [axi_len_width-1:0] S_ARLEN;
-  
+
   input [axi_qos_width-1:0] S_ARQOS;
- 
+
   input [axi_cache_width-1:0] S_AWCACHE;
   input [axi_len_width-1:0] S_AWLEN;
 
@@ -10128,7 +10128,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
   output reg [max_burst_bits-1:0] WR_DATA;
   output reg [addr_width-1:0] WR_ADDR;
   output reg [max_transfer_bytes_width:0] WR_BYTES;
-  output reg [((data_bus_width/8)*axi_burst_len)-1:0] WR_DATA_STRB;  
+  output reg [((data_bus_width/8)*axi_burst_len)-1:0] WR_DATA_STRB;
   // output reg RD_REQ_OCM, RD_REQ_DDR, RD_REQ_REG;
   output reg RD_REQ_OCM, RD_REQ_DDR;
   output reg [addr_width-1:0] RD_ADDR;
@@ -10139,7 +10139,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
   // input RD_DATA_VALID_OCM,RD_DATA_VALID_DDR, RD_DATA_VALID_REG;
   output reg [axi_qos_width-1:0] WR_QOS;
   output reg [axi_qos_width-1:0] RD_QOS;
- 
+
   input S_RDISSUECAP1_EN;
   input S_WRISSUECAP1_EN;
 
@@ -10290,21 +10290,21 @@ module processing_system7_vip_v1_0_24_afi_slave (
    axi_ready_gen           arready_gen;
    integer i,j,k,add_val,size_local,burst_local,len_local,num_bytes;
    bit [3:0] a;
-   bit [15:0] a_16_bits,a_new,a_wrap,a_wrt_val,a_cnt;  
+   bit [15:0] a_16_bits,a_new,a_wrap,a_wrt_val,a_cnt;
 
   initial begin
    slv = new("slv",slave.IF);
    twr = new("twr");
    trr = new("trr");
    trr_get_rd = new("trr_get_rd");
-   wready_gen = slv.wr_driver.create_ready("wready");   
+   wready_gen = slv.wr_driver.create_ready("wready");
    slv.monitor.axi_wr_cmd_port.set_enabled();
    slv.monitor.axi_wr_beat_port.set_enabled();
    slv.monitor.axi_rd_cmd_port.set_enabled();
    // slv.wr_driver.set_transaction_depth(max_outstanding_transactions);
    // slv.rd_driver.set_transaction_depth(max_outstanding_transactions);
    slv.wr_driver.set_transaction_depth(max_wr_outstanding_transactions);
-   slv.rd_driver.set_transaction_depth(max_rd_outstanding_transactions);   
+   slv.rd_driver.set_transaction_depth(max_rd_outstanding_transactions);
    slv.start_slave();
   end
 
@@ -10312,10 +10312,10 @@ module processing_system7_vip_v1_0_24_afi_slave (
     slave.IF.set_enable_xchecks_to_warn();
     repeat(10) @(posedge S_ACLK);
     slave.IF.set_enable_xchecks();
-   end 
+   end
 
   wire wr_intr_fifo_full;
-  reg temp_wr_intr_fifo_full; 
+  reg temp_wr_intr_fifo_full;
 
   /* Interconnect WR_FIFO model instance */
   // processing_system7_vip_v1_0_24_intr_wr_mem wr_intr_fifo(SW_CLK, S_RESETN, wr_intr_fifo_full, WR_DATA_ACK_OCM, WR_DATA_ACK_DDR, WR_ADDR, WR_DATA, WR_BYTES, WR_QOS, WR_DATA_VALID_OCM, WR_DATA_VALID_DDR);
@@ -10325,8 +10325,8 @@ module processing_system7_vip_v1_0_24_afi_slave (
 
   /* Latency type and Debug/Error Control */
   reg[1:0] latency_type = RANDOM_CASE;
-  reg DEBUG_INFO = 1; 
-  reg STOP_ON_ERROR = 1'b1; 
+  reg DEBUG_INFO = 1;
+  reg STOP_ON_ERROR = 1'b1;
 
   /* Internal nets/regs for calling slave VIP API's*/
   reg [wr_afi_fifo_data_bits-1:0] wr_fifo [0:max_wr_outstanding_transactions-1];
@@ -10351,14 +10351,14 @@ module processing_system7_vip_v1_0_24_afi_slave (
   reg aw_flag [0:max_wr_outstanding_transactions-1];
   reg [addr_width-1:0] awaddr [0:max_wr_outstanding_transactions-1];
   reg [addr_width-1:0] addr_wr_local;
-  reg [addr_width-1:0] addr_wr_final; 
+  reg [addr_width-1:0] addr_wr_final;
   reg [id_bus_width-1:0] awid [0:max_wr_outstanding_transactions-1];
   reg [axi_qos_width-1:0]  awqos [0:max_wr_outstanding_transactions-1];
   wire aw_fifo_full; // indicates awvalid_fifo is full (max outstanding transactions reached)
 
   /* internal fifos to store burst write data, ID & strobes*/
   reg [(data_bus_width*axi_burst_len)-1:0] burst_data [0:max_wr_outstanding_transactions-1];
-  reg [((data_bus_width/8)*axi_burst_len)-1:0] burst_strb [0:max_wr_outstanding_transactions-1]; 
+  reg [((data_bus_width/8)*axi_burst_len)-1:0] burst_strb [0:max_wr_outstanding_transactions-1];
   reg [max_burst_bytes_width:0] burst_valid_bytes [0:max_wr_outstanding_transactions-1]; /// total valid bytes received in a complete burst transfer
   reg [max_burst_bytes_width:0] valid_bytes = 0; /// total valid bytes received in a complete burst transfer
   reg wlast_flag [0:max_wr_outstanding_transactions-1]; // flag  to indicate WLAST received
@@ -10367,7 +10367,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
   /* Write Data Channel and Write Response handshake signals*/
   reg [int_wr_cntr_width-1:0] wd_cnt = 0;
   reg [(data_bus_width*axi_burst_len)-1:0] aligned_wr_data;
-  reg [((data_bus_width/8)*axi_burst_len)-1:0] aligned_wr_strb;  
+  reg [((data_bus_width/8)*axi_burst_len)-1:0] aligned_wr_strb;
   reg [addr_width-1:0] aligned_wr_addr;
   reg [max_burst_bytes_width:0] valid_data_bytes;
   reg [int_wr_cntr_width-1:0] wr_bresp_cnt = 0;
@@ -10383,7 +10383,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
   reg[7:0] wcount;
   reg[5:0] wacount;
 
-  /* states for managing read/write to WR_FIFO */ 
+  /* states for managing read/write to WR_FIFO */
   parameter SEND_DATA = 0,  WAIT_ACK = 1;
   reg state;
 
@@ -10401,7 +10401,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
  /*--------------------------------------------------------------------------------*/
 
 //   /* Store the Clock cycle time period */
-//           
+//
 //   always@(S_RESETN)
 //   begin
 //    if(S_RESETN) begin
@@ -10413,13 +10413,13 @@ module processing_system7_vip_v1_0_24_afi_slave (
 //   end
  /*--------------------------------------------------------------------------------*/
 
-//initial slave.set_disable_reset_value_checks(1); 
+//initial slave.set_disable_reset_value_checks(1);
   initial begin
      repeat(2) @(posedge S_ACLK);
      if(!enable_this_port) begin
 //      slave.set_channel_level_info(0);
 //      slave.set_function_level_info(0);
-     end 
+     end
 //   slave.RESPONSE_TIMEOUT = 0;
   end
  /*--------------------------------------------------------------------------------*/
@@ -10428,7 +10428,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
   task set_latency_type;
     input[1:0] lat;
   begin
-   if(enable_this_port) 
+   if(enable_this_port)
     latency_type = lat;
    else begin
     //if(DEBUG_INFO)
@@ -10442,7 +10442,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
   task automatic set_verbosity;
     input[31:0] verb;
   begin
-   if(enable_this_port) begin 
+   if(enable_this_port) begin
     slv.set_verbosity(verb);
    end  else begin
     if(DEBUG_INFO)
@@ -10459,7 +10459,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
   task automatic set_arqos;
     input[axi_qos_width-1:0] qos;
   begin
-   if(enable_this_port) begin 
+   if(enable_this_port) begin
     ar_qos = qos;
    end else begin
     if(DEBUG_INFO)
@@ -10473,7 +10473,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
   task set_awqos;
     input[axi_qos_width-1:0] qos;
   begin
-   if(enable_this_port) 
+   if(enable_this_port)
     aw_qos = qos;
    else begin
     if(DEBUG_INFO)
@@ -10487,18 +10487,18 @@ module processing_system7_vip_v1_0_24_afi_slave (
   function [31:0] get_wr_lat_number;
   input dummy;
   reg[1:0] temp;
-  begin 
+  begin
    case(latency_type)
-    BEST_CASE   : get_wr_lat_number = afi_wr_min;            
-    AVG_CASE    : get_wr_lat_number = afi_wr_avg;            
-    WORST_CASE  : get_wr_lat_number = afi_wr_max;            
+    BEST_CASE   : get_wr_lat_number = afi_wr_min;
+    AVG_CASE    : get_wr_lat_number = afi_wr_avg;
+    WORST_CASE  : get_wr_lat_number = afi_wr_max;
     default     : begin  // RANDOM_CASE
                    temp = $random;
-                   case(temp) 
-                    2'b00   : get_wr_lat_number = ($random()%10+ afi_wr_min); 
-                    2'b01   : get_wr_lat_number = ($random()%40+ afi_wr_avg); 
-                    default : get_wr_lat_number = ($random()%60+ afi_wr_max); 
-                   endcase        
+                   case(temp)
+                    2'b00   : get_wr_lat_number = ($random()%10+ afi_wr_min);
+                    2'b01   : get_wr_lat_number = ($random()%40+ afi_wr_avg);
+                    default : get_wr_lat_number = ($random()%60+ afi_wr_max);
+                   endcase
                   end
    endcase
   end
@@ -10509,18 +10509,18 @@ module processing_system7_vip_v1_0_24_afi_slave (
   function [31:0] get_rd_lat_number;
   input dummy;
   reg[1:0] temp;
-  begin 
+  begin
    case(latency_type)
-    BEST_CASE   : get_rd_lat_number = afi_rd_min;            
-    AVG_CASE    : get_rd_lat_number = afi_rd_avg;            
-    WORST_CASE  : get_rd_lat_number = afi_rd_max;            
+    BEST_CASE   : get_rd_lat_number = afi_rd_min;
+    AVG_CASE    : get_rd_lat_number = afi_rd_avg;
+    WORST_CASE  : get_rd_lat_number = afi_rd_max;
     default     : begin  // RANDOM_CASE
                    temp = $random;
-                   case(temp) 
-                    2'b00   : get_rd_lat_number = ($random()%10+ afi_rd_min); 
-                    2'b01   : get_rd_lat_number = ($random()%40+ afi_rd_avg); 
-                    default : get_rd_lat_number = ($random()%60+ afi_rd_max); 
-                   endcase        
+                   case(temp)
+                    2'b00   : get_rd_lat_number = ($random()%10+ afi_rd_min);
+                    2'b01   : get_rd_lat_number = ($random()%40+ afi_rd_avg);
+                    default : get_rd_lat_number = ($random()%60+ afi_rd_max);
+                   endcase
                   end
    endcase
   end
@@ -10560,20 +10560,20 @@ module processing_system7_vip_v1_0_24_afi_slave (
 
   assign wr_fifo_empty = (wr_fifo_wr_ptr === wr_fifo_rd_ptr)?1'b1: 1'b0;
  assign aw_fifo_full = ((aw_cnt[int_wr_cntr_width-1] !== rd_bresp_cnt[int_wr_cntr_width-1]) && (aw_cnt[int_wr_cntr_width-2:0] === rd_bresp_cnt[int_wr_cntr_width-2:0]))?1'b1 :1'b0; /// complete this
-  assign wd_fifo_full = ((wd_cnt[int_wr_cntr_width-1] !== rd_bresp_cnt[int_wr_cntr_width-1]) && (wd_cnt[int_wr_cntr_width-2:0] === rd_bresp_cnt[int_wr_cntr_width-2:0]))?1'b1 :1'b0; /// complete this  
+  assign wd_fifo_full = ((wd_cnt[int_wr_cntr_width-1] !== rd_bresp_cnt[int_wr_cntr_width-1]) && (wd_cnt[int_wr_cntr_width-2:0] === rd_bresp_cnt[int_wr_cntr_width-2:0]))?1'b1 :1'b0; /// complete this
   assign bresp_fifo_empty = (wr_bresp_cnt === rd_bresp_cnt)?1'b1:1'b0;
   assign bresp_fifo_full  = ((wr_bresp_cnt[int_wr_cntr_width-1] !== rd_bresp_cnt[int_wr_cntr_width-1]) && (wr_bresp_cnt[int_wr_cntr_width-2:0] === rd_bresp_cnt[int_wr_cntr_width-2:0]))?1'b1:1'b0;
 
   assign S_WCOUNT = wcount;
   assign S_WACOUNT = wacount;
 
- // FIFO_STATUS (only if AFI port) 1- full 
+ // FIFO_STATUS (only if AFI port) 1- full
  function automatic wrfifo_full ;
  input [axi_len_width:0] fifo_space_exp;
- integer fifo_space_left; 
+ integer fifo_space_left;
  begin
    fifo_space_left = afi_fifo_locations - wcount;
-   if(fifo_space_left < fifo_space_exp) 
+   if(fifo_space_left < fifo_space_exp)
      wrfifo_full = 1;
    else
      wrfifo_full = 0;
@@ -10592,7 +10592,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
      awvalid_receive_time[aw_time_cnt] = $realtime;
      awvalid_flag[aw_time_cnt] = 1'b1;
      aw_time_cnt = aw_time_cnt + 1;
-     if(aw_time_cnt === max_wr_outstanding_transactions) aw_time_cnt = 0; 
+     if(aw_time_cnt === max_wr_outstanding_transactions) aw_time_cnt = 0;
    end
   end // else
   end /// always
@@ -10615,14 +10615,14 @@ module processing_system7_vip_v1_0_24_afi_slave (
   if(net_AWVALID && S_AWREADY) begin
     if(S_AWQOS === 0) begin awqos[aw_cnt[int_wr_cntr_width-2:0]] = aw_qos;
         if(DEBUG_INFO) $display(" afi_slave aw_qos %0h aw_cnt[int_wr_cntr_width-2:0] %0d int_wr_cntr_width %0d",aw_qos,aw_cnt[int_wr_cntr_width-2:0],int_wr_cntr_width);
-    end else awqos[aw_cnt[int_wr_cntr_width-2:0]] = S_AWQOS; 
+    end else awqos[aw_cnt[int_wr_cntr_width-2:0]] = S_AWQOS;
   end
   end
   /*--------------------------------------------------------------------------------*/
-  
+
   always@(aw_fifo_full)
   begin
-  if(aw_fifo_full && DEBUG_INFO) 
+  if(aw_fifo_full && DEBUG_INFO)
     $display("[%0d] : %0s : %0s : Reached the maximum outstanding Write transactions limit (%0d). Blocking all future Write transactions until at least 1 of the outstanding Write transaction has completed.",$time, DISP_INFO, slave_name,max_wr_outstanding_transactions);
   end
 
@@ -10632,7 +10632,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
   if(!S_RESETN) begin
     aw_cnt = 0;
   end else begin
-    if(!aw_fifo_full) begin 
+    if(!aw_fifo_full) begin
         slv.monitor.axi_wr_cmd_port.get(twc);
         // awaddr[aw_cnt[int_wr_cntr_width-2:0]] = twc.addr;
         awlen[aw_cnt[int_wr_cntr_width-2:0]]  = twc.len;
@@ -10648,7 +10648,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
         burst_local = twc.burst;
 		len_local = twc.len;
 		if(burst_local == AXI_INCR || burst_local == AXI_FIXED) begin
-          if(data_bus_width === 'd128)  begin 
+          if(data_bus_width === 'd128)  begin
           if(size_local === 'd0)  a = {twc.addr[3:0]};
           if(size_local === 'd1)  a = {twc.addr[3:1],1'b0};
           if(size_local === 'd2)  a = {twc.addr[3:2],2'b0};
@@ -10665,7 +10665,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
           if(size_local === 'd2)  a = 'b0;
 		  end
 		end if(burst_local == AXI_WRAP) begin
-		  if(data_bus_width === 'd128)  begin 
+		  if(data_bus_width === 'd128)  begin
           if(size_local === 'd0)  a = {twc.addr[3:0]};
           if(size_local === 'd1)  a = {twc.addr[3:1],1'b0};
           if(size_local === 'd2)  a = {twc.addr[3:2],2'b0};
@@ -10688,22 +10688,22 @@ module processing_system7_vip_v1_0_24_afi_slave (
 		end
 		addr_wr_local = twc.addr;
 		if(burst_local == AXI_INCR || burst_local == AXI_FIXED) begin
-	      case(size_local) 
-	        0   : addr_wr_final = {addr_wr_local}; 
-	        1   : addr_wr_final = {addr_wr_local[31:1],1'b0}; 
-	        2   : addr_wr_final = {addr_wr_local[31:2],2'b0}; 
-	        3   : addr_wr_final = {addr_wr_local[31:3],3'b0}; 
-	        4   : addr_wr_final = {addr_wr_local[31:4],4'b0}; 
-	        5   : addr_wr_final = {addr_wr_local[31:5],5'b0}; 
-	        6   : addr_wr_final = {addr_wr_local[31:6],6'b0}; 
-	        7   : addr_wr_final = {addr_wr_local[31:7],7'b0}; 
-	      endcase	  
+	      case(size_local)
+	        0   : addr_wr_final = {addr_wr_local};
+	        1   : addr_wr_final = {addr_wr_local[31:1],1'b0};
+	        2   : addr_wr_final = {addr_wr_local[31:2],2'b0};
+	        3   : addr_wr_final = {addr_wr_local[31:3],3'b0};
+	        4   : addr_wr_final = {addr_wr_local[31:4],4'b0};
+	        5   : addr_wr_final = {addr_wr_local[31:5],5'b0};
+	        6   : addr_wr_final = {addr_wr_local[31:6],6'b0};
+	        7   : addr_wr_final = {addr_wr_local[31:7],7'b0};
+	      endcase
 	      awaddr[aw_cnt[int_wr_cntr_width-2:0]] = addr_wr_final;
 		  // $display("addr_wr_final %0h",addr_wr_final);
 		end if(burst_local == AXI_WRAP) begin
 	       awaddr[aw_cnt[int_wr_cntr_width-2:0]] = twc.addr;
            // $display(" awaddr[aw_cnt[int_wr_cntr_width-2:0]] %0h",awaddr[aw_cnt[int_wr_cntr_width-2:0]]);
-		end         
+		end
 		aw_cnt   = aw_cnt + 1;
               //==  $display($time,"awcnt isssss %0d",aw_cnt);
         // if(data_bus_width === 'd32)  a = 0;
@@ -10728,7 +10728,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
 //    aw_cnt = 0;
 //    wacount = 0;
 //  end else begin
-//    if(S_AWVALID && !wrfifo_full(S_AWLEN+1)) begin 
+//    if(S_AWVALID && !wrfifo_full(S_AWLEN+1)) begin
 //       slv.monitor.axi_wr_cmd_port.get(twc);
 //       awaddr[aw_cnt[int_wr_cntr_width-2:0]] = twc.addr;
 //       awlen[aw_cnt[int_wr_cntr_width-2:0]]  = twc.len;
@@ -10754,15 +10754,15 @@ module processing_system7_vip_v1_0_24_afi_slave (
     if(!wd_fifo_full && S_WVALID) begin
       slv.monitor.axi_wr_beat_port.get(twd);
       wait((aw_flag[wd_cnt[int_wr_cntr_width-2:0]] === 'b1));
-	  case(size_local) 
-	    0   : add_val = 1; 
-	    1   : add_val = 2; 
-	    2   : add_val = 4; 
-	    3   : add_val = 8; 
-	    4   : add_val = 16; 
-	    5   : add_val = 32; 
-	    6   : add_val = 64; 
-	    7   : add_val = 128; 
+	  case(size_local)
+	    0   : add_val = 1;
+	    1   : add_val = 2;
+	    2   : add_val = 4;
+	    3   : add_val = 8;
+	    4   : add_val = 16;
+	    5   : add_val = 32;
+	    6   : add_val = 64;
+	    7   : add_val = 128;
 	  endcase
 
 	 // $display(" size_local %0d add_val %0d wd_cnt %0d",size_local,add_val,wd_cnt);
@@ -10776,7 +10776,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
 		   burst_strb[wd_cnt[int_wr_cntr_width-2:0]][((valid_bytes)+(i*1))+:1] = twd.strb[i+a];
 		   //$display("burst_strb %0h twd_strb %0h int_wr_cntr_width %0d  valid_bytes %0d wd_cnt[int_wr_cntr_width-2:0] %0d twd.strb[i+a] %0b full strb %0h",burst_strb[wd_cnt[int_wr_cntr_width-2:0]][((valid_bytes)+(i*1))+:1],twd.strb[i],int_wr_cntr_width,valid_bytes,wd_cnt[int_wr_cntr_width-2:0],twd.strb[i+a],twd.strb[i+a]);
 		   //$display("burst_strb %0h twd.strb[i+1] %0h twd.strb[i+2] %0h twd.strb[i+3] %0h twd.strb[i+4] %0h twd.strb[i+5] %0h twd.strb[i+6] %0h twd.strb[i+7] %0h",twd.strb[i],twd.strb[i+1],twd.strb[i+1],twd.strb[i+2],twd.strb[i+3],twd.strb[i+4],twd.strb[i+5],twd.strb[i+6],twd.strb[i+7]);
-		  
+
 		  if(i == ((2**awsize[wr_bresp_cnt[int_wr_cntr_width-2:0]])-1) ) begin
 		     if(burst_local == AXI_FIXED) begin
 		       a = a;
@@ -10798,25 +10798,25 @@ module processing_system7_vip_v1_0_24_afi_slave (
 				   else if(data_bus_width === 'd32)
 			       a = a_new[1:0];
 			       //$display(" setting up a_wrap %0h a_new %0h a %0h", a_wrap,a_new,a);
-			     end else begin 
+			     end else begin
 		           a = a;
 			        //$display(" setting incr a_wrap %0h a_new %0h a %0h", a_wrap,a_new ,a );
 			     end
 			  end
 			 //$display(" new a value a %0h add_val %0d",a,add_val);
-		  end	 
-        end 
-		if(burst_local == AXI_INCR) begin   
+		  end
+        end
+		if(burst_local == AXI_INCR) begin
 		if( a >= (data_bus_width/8) || (burst_local == 0 ) || (twd.last) ) begin
 		// if( (burst_local == 0 ) || (twd.last) ) begin
 		  a = 0;
 		  //$display("resetting a = %0d ",a);
-		end  
-		end else if (burst_local == AXI_WRAP) begin 
+		end
+		end else if (burst_local == AXI_WRAP) begin
 		 if( ((a >= (data_bus_width/8)) ) || (burst_local == 0 ) || (twd.last) ) begin
 		  a = 0;
 		  //$display("resetting a = %0d ",a);
-		end  
+		end
 		end
 
       valid_bytes = valid_bytes+(2**awsize[wr_bresp_cnt[int_wr_cntr_width-2:0]]);
@@ -10839,8 +10839,8 @@ module processing_system7_vip_v1_0_24_afi_slave (
     end /// if
   end /// else
   end /// always
- 
- 
+
+
  /* Align the wrap data for write transaction */
  task automatic get_wrap_aligned_wr_data;
  output [(data_bus_width*axi_burst_len)-1:0] aligned_data;
@@ -10865,7 +10865,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
    end
    wrp_bytes = addr - start_addr;
    wrp_data = b_data << (wrp_bytes*8);
-   
+
    aligned_data = (temp_data | wrp_data);
  end
  endtask
@@ -10902,7 +10902,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
     end
     wrp_bytes = addr - start_addr;
     wrp_strb = b_strb << (wrp_bytes);
-    
+
     aligned_strb = (temp_strb | wrp_strb);
 	// $display("wrap strb aligned_strb %0h tmep_strb %0h wrp_strb %0h",aligned_strb,temp_strb,wrp_strb);
   end
@@ -10910,8 +10910,8 @@ module processing_system7_vip_v1_0_24_afi_slave (
   /*--------------------------------------------------------------------------------*/
   /* Calculate the Response for each read/write transaction */
   function [axi_rsp_width-1:0] calculate_resp;
-  input rd_wr; // indicates Read(1) or Write(0) transaction 
-  input [addr_width-1:0] awaddr; 
+  input rd_wr; // indicates Read(1) or Write(0) transaction
+  input [addr_width-1:0] awaddr;
   input [axi_prot_width-1:0] awprot;
   reg [axi_rsp_width-1:0] rsp;
   begin
@@ -10931,11 +10931,11 @@ module processing_system7_vip_v1_0_24_afi_slave (
   end
   endfunction
   /*--------------------------------------------------------------------------------*/
-// 
-// 
+//
+//
 //  /* Calculate the Response for each read/write transaction */
 //  function [axi_rsp_width-1:0] calculate_resp;
-//  input [addr_width-1:0] awaddr; 
+//  input [addr_width-1:0] awaddr;
 //  input [axi_prot_width-1:0] awprot;
 //  reg [axi_rsp_width-1:0] rsp;
 //  begin
@@ -10975,7 +10975,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
    if(enable_write_bresp) begin
      aw_flag[wr_bresp_cnt[int_wr_cntr_width-2:0]]    = 0;
      wlast_flag[wr_bresp_cnt[int_wr_cntr_width-2:0]] = 0;
-     // $display("awaddr[wr_bresp_cnt[int_wr_cntr_width-2:0]] %0h ",awaddr[wr_bresp_cnt[int_wr_cntr_width-2:0]]); 
+     // $display("awaddr[wr_bresp_cnt[int_wr_cntr_width-2:0]] %0h ",awaddr[wr_bresp_cnt[int_wr_cntr_width-2:0]]);
      bresp = calculate_resp(1'b0, awaddr[wr_bresp_cnt[int_wr_cntr_width-2:0]],awprot[wr_bresp_cnt[int_wr_cntr_width-2:0]]);
      fifo_bresp[wr_bresp_cnt[int_wr_cntr_width-2:0]] = {awid[wr_bresp_cnt[int_wr_cntr_width-2:0]],bresp};
      /* Fill WR data FIFO */
@@ -10984,7 +10984,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
          get_wrap_aligned_wr_data(aligned_wr_data,aligned_wr_addr, awaddr[wr_bresp_cnt[int_wr_cntr_width-2:0]],burst_data[wr_bresp_cnt[int_wr_cntr_width-2:0]],burst_valid_bytes[wr_bresp_cnt[int_wr_cntr_width-2:0]]);      /// gives wrapped start address
          get_wrap_aligned_wr_strb(aligned_wr_strb,aligned_wr_addr, awaddr[wr_bresp_cnt[int_wr_cntr_width-2:0]],burst_strb[wr_bresp_cnt[int_wr_cntr_width-2:0]],burst_valid_bytes[wr_bresp_cnt[int_wr_cntr_width-2:0]]);      /// gives wrapped start address
        end else begin
-         aligned_wr_data = burst_data[wr_bresp_cnt[int_wr_cntr_width-2:0]]; 
+         aligned_wr_data = burst_data[wr_bresp_cnt[int_wr_cntr_width-2:0]];
          aligned_wr_addr = awaddr[wr_bresp_cnt[int_wr_cntr_width-2:0]] ;
 		 aligned_wr_strb = burst_strb[wr_bresp_cnt[int_wr_cntr_width-2:0]];
 		 //$display("  got form fifo aligned_wr_addr %0h wr_bresp_cnt[int_wr_cntr_width-2:0]] %0d",aligned_wr_addr,wr_bresp_cnt[int_wr_cntr_width-2:0]);
@@ -10992,18 +10992,18 @@ module processing_system7_vip_v1_0_24_afi_slave (
        end
        valid_data_bytes = burst_valid_bytes[wr_bresp_cnt[int_wr_cntr_width-2:0]];
 	   //$display(" afi_slave  aligned_wr_strb %0h",aligned_wr_strb);
-     end else 
-       valid_data_bytes = 0;  
+     end else
+       valid_data_bytes = 0;
 
-      if(awbrst[wr_bresp_cnt[int_wr_cntr_width-2:0]] != AXI_WRAP) begin 
+      if(awbrst[wr_bresp_cnt[int_wr_cntr_width-2:0]] != AXI_WRAP) begin
         // wr_fifo[wr_fifo_wr_ptr[int_wr_cntr_width-2:0]] = {burst_strb[wr_bresp_cnt[int_wr_cntr_width-2:0]],awqos[wr_bresp_cnt[int_wr_cntr_width-2:0]], aligned_wr_data, aligned_wr_addr, valid_data_bytes};
         wr_fifo[wr_fifo_wr_ptr[int_wr_cntr_width-2:0]] = {aligned_wr_strb,awqos[wr_bresp_cnt[int_wr_cntr_width-2:0]], aligned_wr_data, aligned_wr_addr, valid_data_bytes};
 		//$display("afi_slave wr_fifo[wr_fifo_wr_ptr[int_wr_cntyyr_width-2:0]] %0h",wr_fifo[wr_fifo_wr_ptr[int_wr_cntr_width-2:0]]);
-	  end else begin	
+	  end else begin
         wr_fifo[wr_fifo_wr_ptr[int_wr_cntr_width-2:0]] = {aligned_wr_strb,awqos[wr_bresp_cnt[int_wr_cntr_width-2:0]], aligned_wr_data, aligned_wr_addr, valid_data_bytes};
 		//$display("afi_slave wr_fifo[wr_fifo_wr_ptr[int_wr_cntyyr_width-2:0]] %0h",wr_fifo[wr_fifo_wr_ptr[int_wr_cntr_width-2:0]]);
 	 end
-     wr_fifo_wr_ptr = wr_fifo_wr_ptr + 1; 
+     wr_fifo_wr_ptr = wr_fifo_wr_ptr + 1;
      wr_bresp_cnt = wr_bresp_cnt+1;
 	 enable_write_bresp = 'b0;
      if(wr_bresp_cnt[int_wr_cntr_width-2:0] === (max_wr_outstanding_transactions-1)) begin
@@ -11028,14 +11028,14 @@ module processing_system7_vip_v1_0_24_afi_slave (
 //   if(enable_write_bresp) begin
 //     aw_flag[wr_fifo_wr_ptr[int_cntr_width-2:0]]    = 0;
 //     wlast_flag[wr_fifo_wr_ptr[int_cntr_width-2:0]] = 0;
-//  
+//
 //     bresp = calculate_resp(awaddr[wr_fifo_wr_ptr[int_cntr_width-2:0]], awprot[wr_fifo_wr_ptr[int_cntr_width-2:0]]);
 //     /* Fill AFI_WR_data FIFO */
 //     if(bresp === AXI_OK ) begin
 //       if(awbrst[wr_fifo_wr_ptr[int_cntr_width-2:0]]=== AXI_WRAP) begin /// wrap type? then align the data
 //         get_wrap_aligned_wr_data(aligned_wr_data, aligned_wr_addr, awaddr[wr_fifo_wr_ptr[int_cntr_width-2:0]], burst_data[wr_fifo_wr_ptr[int_cntr_width-2:0]],burst_valid_bytes[wr_fifo_wr_ptr[int_cntr_width-2:0]]);      /// gives wrapped start address
 //       end else begin
-//         aligned_wr_data = burst_data[wr_fifo_wr_ptr[int_cntr_width-2:0]]; 
+//         aligned_wr_data = burst_data[wr_fifo_wr_ptr[int_cntr_width-2:0]];
 //         aligned_wr_addr = awaddr[wr_fifo_wr_ptr[int_cntr_width-2:0]] ;
 //       end
 //       valid_data_bytes = burst_valid_bytes[wr_fifo_wr_ptr[int_cntr_width-2:0]];
@@ -11057,12 +11057,12 @@ module processing_system7_vip_v1_0_24_afi_slave (
    rd_bresp_cnt = 0;
    wr_latency_count = get_wr_lat_number(1);
    wr_delayed = 0;
-   bresp_time_cnt = 0; 
+   bresp_time_cnt = 0;
   end else begin
    	 // if(static_count < 32 ) begin
-        // wready_gen.set_ready_policy(XIL_AXI_READY_GEN_SINGLE); 
-       //wready_gen.set_low_time(0); 
-       //wready_gen.set_high_time(1); 
+        // wready_gen.set_ready_policy(XIL_AXI_READY_GEN_SINGLE);
+       //wready_gen.set_low_time(0);
+       //wready_gen.set_high_time(1);
        // slv.wr_driver.send_wready(wready_gen);
      // end
    if(awvalid_flag[bresp_time_cnt] && (($realtime - awvalid_receive_time[bresp_time_cnt])/diff_time >= wr_latency_count))
@@ -11077,15 +11077,15 @@ module processing_system7_vip_v1_0_24_afi_slave (
 	  2'b11: twr.set_bresp(XIL_AXI_RESP_DECERR);
 	 endcase
 	 // if(static_count > 32 ) begin
-     //  //  wready_gen.set_ready_policy(XIL_AXI_READY_GEN_SINGLE); 
-     //  wready_gen.set_ready_policy(XIL_AXI_READY_GEN_NO_BACKPRESSURE); 
-     //  // wready_gen.set_low_time(3); 
-     //  // wready_gen.set_high_time(3); 
-     //  // wready_gen.set_low_time_range(3,6); 
-     //  // wready_gen.set_high_time_range(3,6); 
+     //  //  wready_gen.set_ready_policy(XIL_AXI_READY_GEN_SINGLE);
+     //  wready_gen.set_ready_policy(XIL_AXI_READY_GEN_NO_BACKPRESSURE);
+     //  // wready_gen.set_low_time(3);
+     //  // wready_gen.set_high_time(3);
+     //  // wready_gen.set_low_time_range(3,6);
+     //  // wready_gen.set_high_time_range(3,6);
      //  slv.wr_driver.send_wready(wready_gen);
      // end
-       wready_gen.set_ready_policy(XIL_AXI_READY_GEN_NO_BACKPRESSURE); 
+       wready_gen.set_ready_policy(XIL_AXI_READY_GEN_NO_BACKPRESSURE);
       slv.wr_driver.send_wready(wready_gen);
      slv.wr_driver.send(twr);
      wr_delayed = 0;
@@ -11097,11 +11097,11 @@ module processing_system7_vip_v1_0_24_afi_slave (
         rd_bresp_cnt[int_wr_cntr_width-2:0] = 0;
       end
       if(bresp_time_cnt === max_wr_outstanding_transactions) begin
-        bresp_time_cnt = 0; 
+        bresp_time_cnt = 0;
       end
      wr_latency_count = get_wr_lat_number(1);
 	 static_count++;
-   end 
+   end
 	 static_count++;
   end // else
   end//always
@@ -11113,7 +11113,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
 //  rd_bresp_cnt = 0;
 //  wr_latency_count = get_wr_lat_number(1);
 //  wr_delayed = 0;
-//  bresp_time_cnt = 0; 
+//  bresp_time_cnt = 0;
 // end else begin
 //  wr_delayed = 1'b0;
 //  if(awvalid_flag[bresp_time_cnt] && (($time - awvalid_receive_time[bresp_time_cnt])/s_aclk_period >= wr_latency_count))
@@ -11133,16 +11133,16 @@ module processing_system7_vip_v1_0_24_afi_slave (
 //    bresp_time_cnt = bresp_time_cnt+1;
 //    rd_bresp_cnt   = rd_bresp_cnt + 1;
 //    wr_latency_count = get_wr_lat_number(1);
-//  end 
+//  end
 // end // else
 // end//always
 // /*--------------------------------------------------------------------------------*/
- 
+
  /* Write Response Channel handshake */
  reg wr_int_state;
  /* Reading from the wr_fifo and sending to Interconnect fifo*/
   always@(negedge S_RESETN or posedge SW_CLK) begin
-  if(!S_RESETN) begin 
+  if(!S_RESETN) begin
    WR_DATA_VALID_DDR = 1'b0;
    WR_DATA_VALID_OCM = 1'b0;
  //==  WR_DATA_STRB = 'b0;
@@ -11173,7 +11173,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
       end
    WAIT_ACK :begin
       state = WAIT_ACK;
-      if(WR_DATA_ACK_OCM | WR_DATA_ACK_DDR) begin 
+      if(WR_DATA_ACK_OCM | WR_DATA_ACK_DDR) begin
         WR_DATA_VALID_OCM = 1'b0;
         WR_DATA_VALID_DDR = 1'b0;
         state = SEND_DATA;
@@ -11185,7 +11185,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
 
   end
 
- // always@(negedge S_RESETN or posedge S_ACLK) 
+ // always@(negedge S_RESETN or posedge S_ACLK)
  // begin
  // if(!S_RESETN) begin
  //  wr_int_state = 1'b0;
@@ -11214,7 +11214,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
  // end
   /*--------------------------------------------------------------------------------*/
 /*-------------------------------- WRITE HANDSHAKE END ----------------------------------------*/
- 
+
 /*-------------------------------- READ HANDSHAKE ---------------------------------------------*/
 
 /* READ CHANNELS */
@@ -11234,7 +11234,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
   reg ar_flag [0:max_rd_outstanding_transactions-1];
   reg [addr_width-1:0] araddr [0:max_rd_outstanding_transactions-1];
   reg [addr_width-1:0] addr_local;
-  reg [addr_width-1:0] addr_final;  
+  reg [addr_width-1:0] addr_final;
   reg [id_bus_width-1:0]  arid [0:max_rd_outstanding_transactions-1];
   reg [axi_qos_width-1:0]  arqos [0:max_rd_outstanding_transactions-1];
   wire ar_fifo_full; // indicates arvalid_fifo is full (max outstanding transactions reached)
@@ -11255,19 +11255,19 @@ module processing_system7_vip_v1_0_24_afi_slave (
   reg [max_burst_bits-1:0] read_fifo [0:max_rd_outstanding_transactions-1]; /// Store only AXI Burst Data ..
   // reg [rd_afi_fifo_bits-1:0] read_fifo[0:max_rd_outstanding_transactions-1]; /// Read Burst Data, addr, size, burst, len, RID, RRESP, valid_bytes
   reg [int_rd_cntr_width-1:0] rd_fifo_wr_ptr = 0, rd_fifo_rd_ptr = 0;
-  wire read_fifo_full; 
+  wire read_fifo_full;
 
   reg [7:0] rcount;
   reg [2:0] racount;
-  
+
   wire rd_intr_fifo_full, rd_intr_fifo_empty;
 
   assign read_fifo_full = (rd_fifo_wr_ptr[int_rd_cntr_width-1] !== rd_fifo_rd_ptr[int_rd_cntr_width-1] && rd_fifo_wr_ptr[int_rd_cntr_width-2:0] === rd_fifo_rd_ptr[int_rd_cntr_width-2:0])?1'b1: 1'b0;
 
   /* signals to communicate with interconnect RD_FIFO model */
   reg rd_req, invalid_rd_req;
-  
-  /* REad control Info 
+
+  /* REad control Info
     56:25 : Address (32)
     24:22 : Size (3)
     21:20 : BRST (2)
@@ -11276,27 +11276,27 @@ module processing_system7_vip_v1_0_24_afi_slave (
     9:8 : RRSP (2)
     7:0 : byte cnt (8)
   */
-  reg [rd_info_bits-1:0] read_control_info;   
+  reg [rd_info_bits-1:0] read_control_info;
   reg [(data_bus_width*axi_burst_len)-1:0] aligned_rd_data;
   reg temp_rd_intr_fifo_empty;
 
   processing_system7_vip_v1_0_24_intr_rd_mem rd_intr_fifo(SW_CLK, S_RESETN, rd_intr_fifo_full, rd_intr_fifo_empty, rd_req, invalid_rd_req, read_control_info , RD_DATA_OCM, RD_DATA_DDR, RD_DATA_VALID_OCM, RD_DATA_VALID_DDR);
 
   assign read_fifo_empty = (rd_fifo_wr_ptr === rd_fifo_rd_ptr)?1'b1: 1'b0;
-  assign ar_fifo_full = ((ar_cnt[int_rd_cntr_width-1] !== rd_cnt[int_rd_cntr_width-1]) && (ar_cnt[int_rd_cntr_width-2:0] === rd_cnt[int_rd_cntr_width-2:0]))?1'b1 :1'b0;  
+  assign ar_fifo_full = ((ar_cnt[int_rd_cntr_width-1] !== rd_cnt[int_rd_cntr_width-1]) && (ar_cnt[int_rd_cntr_width-2:0] === rd_cnt[int_rd_cntr_width-2:0]))?1'b1 :1'b0;
   assign S_RCOUNT = rcount;
   assign S_RACOUNT = racount;
 
   /* Register the asynch signal empty coming from Interconnect READ FIFO */
   always@(posedge S_ACLK) temp_rd_intr_fifo_empty = rd_intr_fifo_empty;
-   
-  // FIFO_STATUS (only if AFI port) 1- full 
+
+  // FIFO_STATUS (only if AFI port) 1- full
    function automatic rdfifo_full ;
    input [axi_len_width:0] fifo_space_exp;
-   integer fifo_space_left; 
+   integer fifo_space_left;
    begin
      fifo_space_left = afi_fifo_locations - rcount;
-     if(fifo_space_left < fifo_space_exp) 
+     if(fifo_space_left < fifo_space_exp)
        rdfifo_full = 1;
      else
        rdfifo_full = 0;
@@ -11314,10 +11314,10 @@ module processing_system7_vip_v1_0_24_afi_slave (
      arvalid_flag[ar_time_cnt[int_rd_cntr_width-2:0]] = 1'b1;
      ar_time_cnt = ar_time_cnt + 1;
 	 if((ar_time_cnt[int_rd_cntr_width-1:0] === max_rd_outstanding_transactions) )
-       ar_time_cnt[int_rd_cntr_width-1:0] = 0; 
-   end 
+       ar_time_cnt[int_rd_cntr_width-1:0] = 0;
+   end
   end // else
-  end /// always  
+  end /// always
 //   /* Store the arvalid receive time --- necessary for calculating the bresp latency */
 //   always@(negedge S_RESETN or S_ARID or S_ARADDR or S_ARVALID )
 //   begin
@@ -11328,33 +11328,33 @@ module processing_system7_vip_v1_0_24_afi_slave (
 //      arvalid_receive_time[ar_time_cnt] = $time;
 //      arvalid_flag[ar_time_cnt] = 1'b1;
 //      ar_time_cnt = ar_time_cnt + 1;
-//    end 
+//    end
 //   end // else
 //   end /// always
   /*--------------------------------------------------------------------------------*/
-  
+
   always@(ar_fifo_full)
   begin
-  if(ar_fifo_full && DEBUG_INFO) 
+  if(ar_fifo_full && DEBUG_INFO)
     $display("[%0d] : %0s : %0s : Reached the maximum outstanding Read transactions limit (%0d). Blocking all future Read transactions until at least 1 of the outstanding Read transaction has completed.",$time, DISP_INFO, slave_name,max_rd_outstanding_transactions);
   end
-  /*--------------------------------------------------------------------------------*/ 
+  /*--------------------------------------------------------------------------------*/
 
   always@(posedge S_ACLK)
   begin
   if(net_ARVALID == 'b1 && S_ARREADY == 'b1) begin
-    if(S_ARQOS === 0) begin 
-      arqos[ar_cnt[int_rd_cntr_width-2:0]] = ar_qos; 
-    end else begin 
-	  arqos[ar_cnt[int_rd_cntr_width-2:0]] = S_ARQOS; 
+    if(S_ARQOS === 0) begin
+      arqos[ar_cnt[int_rd_cntr_width-2:0]] = ar_qos;
+    end else begin
+	  arqos[ar_cnt[int_rd_cntr_width-2:0]] = S_ARQOS;
 	end
   end
-  end  
+  end
 //   always@(posedge S_ACLK)
 //   begin
 //   if(net_ARVALID && S_ARREADY) begin
-//     if(S_ARQOS === 0) arqos[ar_cnt[int_rd_cntr_width-2:0]] = ar_qos; 
-//     else arqos[aw_cnt[int_rd_cntr_width-2:0]] = S_ARQOS; 
+//     if(S_ARQOS === 0) arqos[ar_cnt[int_rd_cntr_width-2:0]] = ar_qos;
+//     else arqos[aw_cnt[int_rd_cntr_width-2:0]] = S_ARQOS;
 //   end
 //   end
 
@@ -11378,22 +11378,22 @@ module processing_system7_vip_v1_0_24_afi_slave (
       ar_flag[ar_cnt[int_rd_cntr_width-2:0]] = 1'b1;
 	  size_local = trc.size;
 	  addr_local = trc.addr;
-	  case(size_local) 
-	    0   : addr_final = {addr_local}; 
-	    1   : addr_final = {addr_local[31:1],1'b0}; 
-	    2   : addr_final = {addr_local[31:2],2'b0}; 
-	    3   : addr_final = {addr_local[31:3],3'b0}; 
-	    4   : addr_final = {addr_local[31:4],4'b0}; 
-	    5   : addr_final = {addr_local[31:5],5'b0}; 
-	    6   : addr_final = {addr_local[31:6],6'b0}; 
-	    7   : addr_final = {addr_local[31:7],7'b0}; 
-	  endcase	  
+	  case(size_local)
+	    0   : addr_final = {addr_local};
+	    1   : addr_final = {addr_local[31:1],1'b0};
+	    2   : addr_final = {addr_local[31:2],2'b0};
+	    3   : addr_final = {addr_local[31:3],3'b0};
+	    4   : addr_final = {addr_local[31:4],4'b0};
+	    5   : addr_final = {addr_local[31:5],5'b0};
+	    6   : addr_final = {addr_local[31:6],6'b0};
+	    7   : addr_final = {addr_local[31:7],7'b0};
+	  endcase
 	    araddr[ar_cnt[int_rd_cntr_width-2:0]] = addr_final;
         ar_cnt = ar_cnt+1;
         if(ar_cnt[int_rd_cntr_width-1:0] === max_rd_outstanding_transactions) begin
           // ar_cnt[int_rd_cntr_width-1] = ~ ar_cnt[int_rd_cntr_width-1];
           ar_cnt[int_rd_cntr_width-1:0] = 0;
-        end 
+        end
     end /// if(!ar_fifo_full)
   end /// if else
   end /// always*/
@@ -11421,7 +11421,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
 //    end /// if(!ar_fifo_full)
 //  end /// if else
 //  end /// always*/
-  
+
   /*--------------------------------------------------------------------------------*/
 
   /* Align Wrap data for read transaction*/
@@ -11448,14 +11448,14 @@ module processing_system7_vip_v1_0_24_afi_slave (
     temp_data = temp_data >> ((data_bus_width*axi_burst_len) - (v_bytes*8));
     wrp_bytes = addr - start_addr;
     wrp_data = b_data >> (wrp_bytes*8);
-    
+
     aligned_data = (temp_data | wrp_data);
   end
   endtask
   /*--------------------------------------------------------------------------------*/
 
   parameter RD_DATA_REQ = 1'b0, WAIT_RD_VALID = 1'b1;
-  reg rd_fifo_state; 
+  reg rd_fifo_state;
   reg [addr_width-1:0] temp_read_address;
   reg [max_burst_bytes_width:0] temp_rd_valid_bytes;
   /* get the data from memory && also calculate the rresp*/
@@ -11463,7 +11463,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
   always@(negedge S_RESETN or posedge SW_CLK)
   begin
   if(!S_RESETN)begin
-   rd_fifo_wr_ptr = 0; 
+   rd_fifo_wr_ptr = 0;
    wr_rresp_cnt =0;
    rd_fifo_state = RD_DATA_REQ;
    temp_rd_valid_bytes = 0;
@@ -11490,10 +11490,10 @@ module processing_system7_vip_v1_0_24_afi_slave (
 
        if(arbrst[wr_rresp_cnt[int_rd_cntr_width-2:0]] === AXI_WRAP) /// wrap begin
         temp_read_address = (araddr[wr_rresp_cnt[int_rd_cntr_width-2:0]]/temp_rd_valid_bytes) * temp_rd_valid_bytes;
-       else 
+       else
         temp_read_address = araddr[wr_rresp_cnt[int_rd_cntr_width-2:0]];
 
-       if(rresp === AXI_OK) begin 
+       if(rresp === AXI_OK) begin
         case(decode_address(temp_read_address))//decode_address(araddr[wr_rresp_cnt[int_rd_cntr_width-2:0]]);
           OCM_MEM : RD_REQ_OCM = 1;
           DDR_MEM : RD_REQ_DDR = 1;
@@ -11502,7 +11502,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
         endcase
        end else
         invalid_rd_req = 1;
-        
+
        RD_QOS     = arqos[wr_rresp_cnt[int_rd_cntr_width-2:0]];
        RD_ADDR    = temp_read_address; ///araddr[wr_rresp_cnt[int_rd_cntr_width-2:0]];
        RD_BYTES   = temp_rd_valid_bytes;
@@ -11518,8 +11518,8 @@ module processing_system7_vip_v1_0_24_afi_slave (
        end
      end
     end
-    WAIT_RD_VALID : begin    
-     rd_fifo_state = WAIT_RD_VALID; 
+    WAIT_RD_VALID : begin
+     rd_fifo_state = WAIT_RD_VALID;
      if(RD_DATA_VALID_OCM | RD_DATA_VALID_DDR  | invalid_rd_req) begin ///temp_dec == 2'b11) begin
      // if(RD_DATA_VALID_OCM | RD_DATA_VALID_DDR | RD_DATA_VALID_REG | invalid_rd_req) begin ///temp_dec == 2'b11) begin
        if(RD_DATA_VALID_DDR)
@@ -11543,7 +11543,7 @@ module processing_system7_vip_v1_0_24_afi_slave (
   end /// else
   end /// always
 
-  /*--------------------------------------------------------------------------------*/ 
+  /*--------------------------------------------------------------------------------*/
 //   always@(negedge S_RESETN or posedge SW_CLK)
 //   begin
 //   if(!S_RESETN)begin
@@ -11567,13 +11567,13 @@ module processing_system7_vip_v1_0_24_afi_slave (
 //        ar_flag[wr_rresp_cnt[int_cntr_width-2:0]] = 0;
 //        rresp = calculate_resp(araddr[wr_rresp_cnt[int_cntr_width-2:0]],arprot[wr_rresp_cnt[int_cntr_width-2:0]]);
 //        temp_rd_valid_bytes = (arlen[wr_rresp_cnt[int_cntr_width-2:0]]+1)*(2**arsize[wr_rresp_cnt[int_cntr_width-2:0]]);//data_bus_width/8;
-// 
+//
 //        if(arbrst[wr_rresp_cnt[int_cntr_width-2:0]] === AXI_WRAP) /// wrap begin
 //         temp_read_address = (araddr[wr_rresp_cnt[int_cntr_width-2:0]]/temp_rd_valid_bytes) * temp_rd_valid_bytes;
-//        else 
+//        else
 //         temp_read_address = araddr[wr_rresp_cnt[int_cntr_width-2:0]];
-//        
-//        if(rresp === AXI_OK) begin 
+//
+//        if(rresp === AXI_OK) begin
 //          case(decode_address(temp_read_address))//decode_address(araddr[wr_rresp_cnt[int_cntr_width-2:0]]);
 //           OCM_MEM : RD_REQ_OCM = 1;
 //           DDR_MEM : RD_REQ_DDR = 1;
@@ -11584,15 +11584,15 @@ module processing_system7_vip_v1_0_24_afi_slave (
 //        RD_ADDR    = temp_read_address; ///araddr[wr_rresp_cnt[int_cntr_width-2:0]];
 //        RD_BYTES   = temp_rd_valid_bytes;
 //        RD_QOS     = arqos[wr_rresp_cnt[int_cntr_width-2:0]];
-//        rd_fifo_state = WAIT_RD_VALID; 
+//        rd_fifo_state = WAIT_RD_VALID;
 //        rd_req     = 1;
 //        racount    = racount - 1;
 //        read_control_info = {araddr[wr_rresp_cnt[int_cntr_width-2:0]], arsize[wr_rresp_cnt[int_cntr_width-2:0]], arbrst[wr_rresp_cnt[int_cntr_width-2:0]], arlen[wr_rresp_cnt[int_cntr_width-2:0]], arid[wr_rresp_cnt[int_cntr_width-2:0]], rresp, temp_rd_valid_bytes  };
 //        wr_rresp_cnt = wr_rresp_cnt + 1;
 //      end
 //    end
-//    WAIT_RD_VALID : begin    
-//      rd_fifo_state = WAIT_RD_VALID;  
+//    WAIT_RD_VALID : begin
+//      rd_fifo_state = WAIT_RD_VALID;
 //      rd_req        = 0;
 //      if(RD_DATA_VALID_OCM | RD_DATA_VALID_DDR | invalid_rd_req) begin ///temp_dec == 2'b11) begin
 //        RD_REQ_DDR = 1'b0;
@@ -11605,26 +11605,26 @@ module processing_system7_vip_v1_0_24_afi_slave (
 //   end /// else
 //   end /// always
   /*--------------------------------------------------------------------------------*/
-  
+
   /* thread to fill in the AFI RD_FIFO */
   reg[rd_afi_fifo_bits-1:0] temp_rd_data;//Read Burst Data, addr, size, burst, len, RID, RRESP, valid bytes
-  reg tmp_state; 
+  reg tmp_state;
   always@(negedge S_RESETN or posedge S_ACLK)
   begin
   if(!S_RESETN)begin
-   rd_fifo_wr_ptr = 0; 
+   rd_fifo_wr_ptr = 0;
    rcount = 0;
    tmp_state = 0;
   end else begin
    case(tmp_state)
-   0 : begin 
+   0 : begin
        tmp_state = 0;
        if(!temp_rd_intr_fifo_empty) begin
          rd_intr_fifo.read_mem(temp_rd_data);
          tmp_state = 1;
        end
       end
-   1 : begin  
+   1 : begin
        tmp_state = 1;
        if(!rdfifo_full(temp_rd_data[rd_afi_ln_msb:rd_afi_ln_lsb]+1)) begin
         read_fifo[rd_fifo_wr_ptr[int_rd_cntr_width-2:0]] = temp_rd_data;
@@ -11637,11 +11637,11 @@ module processing_system7_vip_v1_0_24_afi_slave (
   end
   end
   /*--------------------------------------------------------------------------------*/
-  
+
   reg[max_burst_bytes_width:0] rd_v_b;
   reg[rd_afi_fifo_bits-1:0] tmp_fifo_rd;  /// Data, addr, size, burst, len, RID, RRESP,valid_bytes
   reg[(data_bus_width*axi_burst_len)-1:0] temp_read_data;
-  reg [(data_bus_width*axi_burst_len)-1:0] temp_wrap_data; 
+  reg [(data_bus_width*axi_burst_len)-1:0] temp_wrap_data;
   reg[(axi_rsp_width*axi_burst_len)-1:0] temp_read_rsp;
 
   xil_axi_data_beat new_data;
@@ -11707,11 +11707,11 @@ module processing_system7_vip_v1_0_24_afi_slave (
   	   @(posedge S_ACLK);
      end
 
-     //if(arvalid_flag[rresp_time_cnt] && ((($realtime - arvalid_receive_time[rresp_time_cnt])/diff_time) >= rd_latency_count)) 
+     //if(arvalid_flag[rresp_time_cnt] && ((($realtime - arvalid_receive_time[rresp_time_cnt])/diff_time) >= rd_latency_count))
        rd_delayed = 1;
 
      if(!read_fifo_empty && rd_delayed)begin
-       rd_delayed = 0;  
+       rd_delayed = 0;
        arvalid_flag[rresp_time_cnt[int_rd_cntr_width-2:0]] = 1'b0;
        rd_v_b = ((arlen[rd_cnt[int_rd_cntr_width-2:0]]+1)*(2**arsize[rd_cnt[int_rd_cntr_width-2:0]]));
        temp_read_data =  read_fifo[rd_fifo_rd_ptr[int_rd_cntr_width-2:0]];
@@ -11720,12 +11720,12 @@ module processing_system7_vip_v1_0_24_afi_slave (
        if(arbrst[rd_cnt[int_rd_cntr_width-2:0]]=== AXI_WRAP) begin
          get_wrap_aligned_rd_data(temp_wrap_data, araddr[rd_cnt[int_rd_cntr_width-2:0]], temp_read_data, rd_v_b);
          temp_read_data = temp_wrap_data;
-       end 
+       end
        temp_read_rsp = 0;
        repeat(axi_burst_len) begin
          temp_read_rsp = temp_read_rsp >> axi_rsp_width;
          temp_read_rsp[(axi_rsp_width*axi_burst_len)-1:(axi_rsp_width*axi_burst_len)-axi_rsp_width] = fifo_rresp[rd_cnt[int_rd_cntr_width-2:0]][rsp_msb : rsp_lsb];
-       end 
+       end
 	   case (arsize[rd_cnt[int_rd_cntr_width-2:0]])
          3'b000: trr_get_rd.size = XIL_AXI_SIZE_1BYTE;
          3'b001: trr_get_rd.size = XIL_AXI_SIZE_2BYTE;
@@ -11754,11 +11754,11 @@ module processing_system7_vip_v1_0_24_afi_slave (
 	     endcase
        end
        slv.rd_driver.send(trr_get_rd);
-       rd_cnt = rd_cnt + 1; 
+       rd_cnt = rd_cnt + 1;
 
        rresp_time_cnt = rresp_time_cnt+1;
        if(DEBUG_INFO) $display(" %m current rresp_time_cnt %0d rd_cnt %0d max_rd_outstanding_transactions %0d",rresp_time_cnt,rd_cnt,max_rd_outstanding_transactions);
-       if(rresp_time_cnt[int_rd_cntr_width-1:0] === max_rd_outstanding_transactions) begin 
+       if(rresp_time_cnt[int_rd_cntr_width-1:0] === max_rd_outstanding_transactions) begin
 	     // rresp_time_cnt[int_rd_cntr_width-1] = ~ rresp_time_cnt[int_rd_cntr_width-1];
          rresp_time_cnt[int_rd_cntr_width-1:0] = 0;
         if(DEBUG_INFO) $display(" %m resetting rresp_time_cnt %0d max_rd_outstanding_transactions %0d",rresp_time_cnt,max_rd_outstanding_transactions);
@@ -11793,7 +11793,7 @@ end
 //        rd_delayed = 1;
 //      end
 //      if(!read_fifo_empty && rd_delayed)begin
-//        rd_delayed = 0;  
+//        rd_delayed = 0;
 //        arvalid_flag[rresp_time_cnt] = 1'b0;
 //        tmp_fifo_rd =  read_fifo[rd_fifo_rd_ptr[int_cntr_width-2:0]];
 //        rd_v_b      = (tmp_fifo_rd[rd_afi_ln_msb : rd_afi_ln_lsb]+1)*(2**tmp_fifo_rd[rd_afi_siz_msb : rd_afi_siz_lsb]);
@@ -11806,7 +11806,7 @@ end
 //        repeat(axi_burst_len) begin
 //          temp_read_rsp = temp_read_rsp >> axi_rsp_width;
 //          temp_read_rsp[(axi_rsp_width*axi_burst_len)-1:(axi_rsp_width*axi_burst_len)-axi_rsp_width] = tmp_fifo_rd[rd_afi_rsp_msb : rd_afi_rsp_lsb];
-//        end 
+//        end
 // 	   case (tmp_fifo_rd[rd_afi_siz_msb : rd_afi_siz_lsb])
 //          3'b000: trr.size = XIL_AXI_SIZE_1BYTE;
 //          3'b001: trr.size = XIL_AXI_SIZE_2BYTE;
@@ -12540,13 +12540,13 @@ module processing_system7_vip_v1_0_24
   parameter C_S_AXI_HP1_DATA_WIDTH = 32;
   parameter C_S_AXI_HP2_DATA_WIDTH = 32;
   parameter C_S_AXI_HP3_DATA_WIDTH = 32;
-  
+
   parameter C_M_AXI_GP0_THREAD_ID_WIDTH = 12;
-  parameter C_M_AXI_GP1_THREAD_ID_WIDTH = 12; 
+  parameter C_M_AXI_GP1_THREAD_ID_WIDTH = 12;
   parameter C_M_AXI_GP0_ENABLE_STATIC_REMAP = 0;
-  parameter C_M_AXI_GP1_ENABLE_STATIC_REMAP = 0; 
-  
-/* Do we need these 
+  parameter C_M_AXI_GP1_ENABLE_STATIC_REMAP = 0;
+
+/* Do we need these
   parameter C_S_AXI_HP0_ENABLE_HIGHOCM = 0;
   parameter C_S_AXI_HP1_ENABLE_HIGHOCM = 0;
   parameter C_S_AXI_HP2_ENABLE_HIGHOCM = 0;
@@ -12556,36 +12556,36 @@ module processing_system7_vip_v1_0_24
   parameter C_S_AXI_HP1_BASEADDR = 32'h0000_0000;
   parameter C_S_AXI_HP2_BASEADDR = 32'h0000_0000;
   parameter C_S_AXI_HP3_BASEADDR = 32'h0000_0000;
-  
+
   parameter C_S_AXI_HP0_HIGHADDR = 32'hFFFF_FFFF;
   parameter C_S_AXI_HP1_HIGHADDR = 32'hFFFF_FFFF;
   parameter C_S_AXI_HP2_HIGHADDR = 32'hFFFF_FFFF;
   parameter C_S_AXI_HP3_HIGHADDR = 32'hFFFF_FFFF;
- 
+
   /* parameters for GP and ACP ports */
   parameter C_USE_M_AXI_GP0 = 0;
   parameter C_USE_M_AXI_GP1 = 0;
   parameter C_USE_S_AXI_GP0 = 1;
   parameter C_USE_S_AXI_GP1 = 1;
-  
+
   /* Do we need this?
   parameter C_M_AXI_GP0_ENABLE_HIGHOCM = 0;
   parameter C_M_AXI_GP1_ENABLE_HIGHOCM = 0;
   parameter C_S_AXI_GP0_ENABLE_HIGHOCM = 0;
   parameter C_S_AXI_GP1_ENABLE_HIGHOCM = 0;
-  
+
   parameter C_S_AXI_ACP_ENABLE_HIGHOCM = 0;*/
 
   parameter C_S_AXI_GP0_BASEADDR = 32'h0000_0000;
   parameter C_S_AXI_GP1_BASEADDR = 32'h0000_0000;
-  
+
   parameter C_S_AXI_GP0_HIGHADDR = 32'hFFFF_FFFF;
   parameter C_S_AXI_GP1_HIGHADDR = 32'hFFFF_FFFF;
-  
+
   parameter C_USE_S_AXI_ACP = 1;
   parameter C_S_AXI_ACP_BASEADDR = 32'h0000_0000;
   parameter C_S_AXI_ACP_HIGHADDR = 32'hFFFF_FFFF;
- 
+
   `include "processing_system7_vip_v1_0_24_local_params.v"
 
   output CAN0_PHY_TX;
@@ -13277,18 +13277,18 @@ module processing_system7_vip_v1_0_24
   /* Global variables */
   reg DEBUG_INFO = 1;
   reg STOP_ON_ERROR = 1;
-  
-  /* local variable acting as semaphore for wait_mem_update and wait_reg_update task */ 
-  reg mem_update_key = 1; 
-  reg reg_update_key_0 = 1; 
-  reg reg_update_key_1 = 1; 
-  
+
+  /* local variable acting as semaphore for wait_mem_update and wait_reg_update task */
+  reg mem_update_key = 1;
+  reg reg_update_key_0 = 1;
+  reg reg_update_key_1 = 1;
+
   /* assignments and semantic checks for unused ports */
   `include "processing_system7_vip_v1_0_24_unused_ports.v"
- 
+
   /* include api definition */
   `include "processing_system7_vip_v1_0_24_apis.v"
- 
+
   /* Reset Generator */
   processing_system7_vip_v1_0_24_gen_reset gen_rst(.por_rst_n(PS_PORB),
                     .sys_rst_n(PS_SRSTB),
@@ -13361,7 +13361,7 @@ module processing_system7_vip_v1_0_24
   wire  net_rd_dv_ocm_gp0, net_rd_dv_ocm_gp1;
   wire  net_rd_dv_reg_gp0, net_rd_dv_reg_gp1;
   wire [axi_qos_width-1:0] net_rd_qos_gp0, net_rd_qos_gp1;
-  
+
   wire net_wr_ack_ddr_hp0, net_wr_ack_ddr_hp1, net_wr_ack_ddr_hp2, net_wr_ack_ddr_hp3;
   wire net_wr_ack_ocm_hp0, net_wr_ack_ocm_hp1, net_wr_ack_ocm_hp2, net_wr_ack_ocm_hp3;
   wire net_wr_dv_ddr_hp0, net_wr_dv_ddr_hp1, net_wr_dv_ddr_hp2, net_wr_dv_ddr_hp3;
@@ -13371,7 +13371,7 @@ module processing_system7_vip_v1_0_24
   wire [addr_width-1:0] net_wr_addr_hp0, net_wr_addr_hp1, net_wr_addr_hp2, net_wr_addr_hp3;
   wire [max_burst_bytes_width:0] net_wr_bytes_hp0, net_wr_bytes_hp1, net_wr_bytes_hp2, net_wr_bytes_hp3;
   wire [axi_qos_width-1:0] net_wr_qos_hp0, net_wr_qos_hp1, net_wr_qos_hp2, net_wr_qos_hp3;
-  
+
   wire net_rd_req_ddr_hp0, net_rd_req_ddr_hp1, net_rd_req_ddr_hp2, net_rd_req_ddr_hp3;
   wire net_rd_req_ocm_hp0, net_rd_req_ocm_hp1, net_rd_req_ocm_hp2, net_rd_req_ocm_hp3;
   wire [addr_width-1:0] net_rd_addr_hp0, net_rd_addr_hp1, net_rd_addr_hp2, net_rd_addr_hp3;
@@ -13389,7 +13389,7 @@ module processing_system7_vip_v1_0_24
   wire [addr_width-1:0] net_wr_addr_acp;
   wire [max_burst_bytes_width:0] net_wr_bytes_acp;
   wire [axi_qos_width-1:0] net_wr_qos_acp;
-  
+
   wire net_rd_req_ddr_acp, net_rd_req_ocm_acp;
   wire [addr_width-1:0] net_rd_addr_acp;
   wire [max_burst_bytes_width:0] net_rd_bytes_acp;
@@ -13397,7 +13397,7 @@ module processing_system7_vip_v1_0_24
   wire [max_burst_bits-1:0] net_rd_data_ocm_acp;
   wire  net_rd_dv_ddr_acp,net_rd_dv_ocm_acp;
   wire [axi_qos_width-1:0] net_rd_qos_acp;
-  
+
   wire ocm_wr_ack_port0;
   wire ocm_wr_dv_port0;
   wire ocm_rd_req_port0;
@@ -13453,7 +13453,7 @@ module processing_system7_vip_v1_0_24
   wire[max_burst_bytes_width:0] ddr_rd_bytes_port1;
   wire[axi_qos_width-1:0] ddr_wr_qos_port1;
   wire[axi_qos_width-1:0] ddr_rd_qos_port1;
-  
+
   wire ddr_wr_ack_port2;
   wire ddr_wr_dv_port2;
   wire ddr_rd_req_port2;
@@ -13467,7 +13467,7 @@ module processing_system7_vip_v1_0_24
   wire[max_burst_bytes_width:0] ddr_rd_bytes_port2;
   wire[axi_qos_width-1:0] ddr_wr_qos_port2;
   wire[axi_qos_width-1:0] ddr_rd_qos_port2;
-  
+
   wire ddr_wr_ack_port3;
   wire ddr_wr_dv_port3;
   wire ddr_rd_req_port3;
@@ -13499,44 +13499,44 @@ module processing_system7_vip_v1_0_24
   wire [11:0]  M_AXI_GP0_AWID_FULL;
   wire [11:0]  M_AXI_GP0_WID_FULL;
   wire [11:0]  M_AXI_GP0_ARID_FULL;
-  
+
   wire [11:0]  M_AXI_GP0_BID_FULL;
   wire [11:0]  M_AXI_GP0_RID_FULL;
-  
+
   wire [11:0]  M_AXI_GP1_AWID_FULL;
   wire [11:0]  M_AXI_GP1_WID_FULL;
   wire [11:0]  M_AXI_GP1_ARID_FULL;
-  
+
   wire [11:0]  M_AXI_GP1_BID_FULL;
   wire [11:0]  M_AXI_GP1_RID_FULL;
 
-  
-  function [5:0] compress_id; 
-  	input [11:0] id; 
-  		begin 
-  			compress_id = id[5:0]; 
-  		end 
-  endfunction 
-  
-  function [11:0] uncompress_id; 
-  	input [5:0] id; 
-  		begin 
+
+  function [5:0] compress_id;
+  	input [11:0] id;
+  		begin
+  			compress_id = id[5:0];
+  		end
+  endfunction
+
+  function [11:0] uncompress_id;
+  	input [5:0] id;
+  		begin
   		    uncompress_id = {6'b110000, id[5:0]};
-  		end 
+  		end
   endfunction
 
   assign M_AXI_GP0_AWID        = (C_M_AXI_GP0_ENABLE_STATIC_REMAP == 1) ? compress_id(M_AXI_GP0_AWID_FULL) : M_AXI_GP0_AWID_FULL;
-  assign M_AXI_GP0_WID         = (C_M_AXI_GP0_ENABLE_STATIC_REMAP == 1) ? compress_id(M_AXI_GP0_WID_FULL)  : M_AXI_GP0_WID_FULL;   
-  assign M_AXI_GP0_ARID        = (C_M_AXI_GP0_ENABLE_STATIC_REMAP == 1) ? compress_id(M_AXI_GP0_ARID_FULL) : M_AXI_GP0_ARID_FULL;      
+  assign M_AXI_GP0_WID         = (C_M_AXI_GP0_ENABLE_STATIC_REMAP == 1) ? compress_id(M_AXI_GP0_WID_FULL)  : M_AXI_GP0_WID_FULL;
+  assign M_AXI_GP0_ARID        = (C_M_AXI_GP0_ENABLE_STATIC_REMAP == 1) ? compress_id(M_AXI_GP0_ARID_FULL) : M_AXI_GP0_ARID_FULL;
   assign M_AXI_GP0_BID_FULL    = (C_M_AXI_GP0_ENABLE_STATIC_REMAP == 1) ? uncompress_id(M_AXI_GP0_BID)     : M_AXI_GP0_BID;
-  assign M_AXI_GP0_RID_FULL    = (C_M_AXI_GP0_ENABLE_STATIC_REMAP == 1) ? uncompress_id(M_AXI_GP0_RID)     : M_AXI_GP0_RID;      
+  assign M_AXI_GP0_RID_FULL    = (C_M_AXI_GP0_ENABLE_STATIC_REMAP == 1) ? uncompress_id(M_AXI_GP0_RID)     : M_AXI_GP0_RID;
 
 
   assign M_AXI_GP1_AWID        = (C_M_AXI_GP1_ENABLE_STATIC_REMAP == 1) ? compress_id(M_AXI_GP1_AWID_FULL) : M_AXI_GP1_AWID_FULL;
-  assign M_AXI_GP1_WID         = (C_M_AXI_GP1_ENABLE_STATIC_REMAP == 1) ? compress_id(M_AXI_GP1_WID_FULL)  : M_AXI_GP1_WID_FULL;   
-  assign M_AXI_GP1_ARID        = (C_M_AXI_GP1_ENABLE_STATIC_REMAP == 1) ? compress_id(M_AXI_GP1_ARID_FULL) : M_AXI_GP1_ARID_FULL;      
+  assign M_AXI_GP1_WID         = (C_M_AXI_GP1_ENABLE_STATIC_REMAP == 1) ? compress_id(M_AXI_GP1_WID_FULL)  : M_AXI_GP1_WID_FULL;
+  assign M_AXI_GP1_ARID        = (C_M_AXI_GP1_ENABLE_STATIC_REMAP == 1) ? compress_id(M_AXI_GP1_ARID_FULL) : M_AXI_GP1_ARID_FULL;
   assign M_AXI_GP1_BID_FULL    = (C_M_AXI_GP1_ENABLE_STATIC_REMAP == 1) ? uncompress_id(M_AXI_GP1_BID)     : M_AXI_GP1_BID;
-  assign M_AXI_GP1_RID_FULL    = (C_M_AXI_GP1_ENABLE_STATIC_REMAP == 1) ? uncompress_id(M_AXI_GP1_RID)     : M_AXI_GP1_RID;      
+  assign M_AXI_GP1_RID_FULL    = (C_M_AXI_GP1_ENABLE_STATIC_REMAP == 1) ? uncompress_id(M_AXI_GP1_RID)     : M_AXI_GP1_RID;
 
 
 
@@ -13551,7 +13551,7 @@ module processing_system7_vip_v1_0_24
                  .w_qos_hp1(net_wr_qos_hp1),
                  .w_qos_hp2(net_wr_qos_hp2),
                  .w_qos_hp3(net_wr_qos_hp3),
-                                            
+
                  .r_qos_gp0(net_rd_qos_gp0),
                  .r_qos_gp1(net_rd_qos_gp1),
                  .r_qos_hp0(net_rd_qos_hp0),
@@ -13582,7 +13582,7 @@ module processing_system7_vip_v1_0_24
 
                  .wr_ack_ddr_gp1(net_wr_ack_ddr_gp1),
                  .wr_ack_ocm_gp1(net_wr_ack_ocm_gp1),
-                 .wr_data_gp1(net_wr_data_gp1), 
+                 .wr_data_gp1(net_wr_data_gp1),
                  .wr_strb_gp1(net_wr_strb_gp1),
                  .wr_addr_gp1(net_wr_addr_gp1),
                  .wr_bytes_gp1(net_wr_bytes_gp1),
@@ -13683,7 +13683,7 @@ module processing_system7_vip_v1_0_24
                  .ddr_rd_bytes_port1(ddr_rd_bytes_port1),
                  .ddr_wr_qos_port1(ddr_wr_qos_port1),
                  .ddr_rd_qos_port1(ddr_rd_qos_port1),
-                 
+
                 /* Goes to port2 of DDR */
                  .ddr_wr_ack_port2 (ddr_wr_ack_port2),
                  .ddr_wr_dv_port2  (ddr_wr_dv_port2),
@@ -13698,7 +13698,7 @@ module processing_system7_vip_v1_0_24
                  .ddr_rd_bytes_port2(ddr_rd_bytes_port2),
                  .ddr_wr_qos_port2 (ddr_wr_qos_port2),
                  .ddr_rd_qos_port2 (ddr_rd_qos_port2),
-                
+
                 /* Goes to port3 of DDR */
                  .ddr_wr_ack_port3 (ddr_wr_ack_port3),
                  .ddr_wr_dv_port3  (ddr_wr_dv_port3),
@@ -13727,7 +13727,7 @@ module processing_system7_vip_v1_0_24
                  .ocm_rd_data_port1(ocm_rd_data_port1),
                  .ocm_rd_bytes_port1(ocm_rd_bytes_port1),
                  .ocm_wr_qos_port1(ocm_wr_qos_port1),
-                 .ocm_rd_qos_port1(ocm_rd_qos_port1), 
+                 .ocm_rd_qos_port1(ocm_rd_qos_port1),
 
                 /* Goes to port 0 of REG */
                  .reg_rd_qos_port1 (reg_rd_qos_port1) ,
@@ -13736,12 +13736,12 @@ module processing_system7_vip_v1_0_24
                  .reg_rd_addr_port1(reg_rd_addr_port1),
                  .reg_rd_data_port1(reg_rd_data_port1),
                  .reg_rd_bytes_port1(reg_rd_bytes_port1)
-                 ); 
+                 );
 
   processing_system7_vip_v1_0_24_ddrc ddrc (
            .rstn(net_rstn),
            .sw_clk(net_sw_clk),
-          
+
           /* Goes to port 0 of DDR */
            .ddr_wr_ack_port0 (ddr_wr_ack_port0),
            .ddr_wr_dv_port0  (ddr_wr_dv_port0),
@@ -13755,13 +13755,13 @@ module processing_system7_vip_v1_0_24
 
            .ddr_rd_addr_port0(net_rd_addr_acp),
            .ddr_rd_bytes_port0(net_rd_bytes_acp),
-           
+
            .ddr_rd_data_port0(ddr_rd_data_port0),
 
            .ddr_wr_qos_port0 (net_wr_qos_acp),
            .ddr_rd_qos_port0 (net_rd_qos_acp),
-          
-          
+
+
           /* Goes to port 1 of DDR */
            .ddr_wr_ack_port1 (ddr_wr_ack_port1),
            .ddr_wr_dv_port1  (ddr_wr_dv_port1),
@@ -13776,7 +13776,7 @@ module processing_system7_vip_v1_0_24
            .ddr_rd_bytes_port1(ddr_rd_bytes_port1),
            .ddr_wr_qos_port1 (ddr_wr_qos_port1),
            .ddr_rd_qos_port1 (ddr_rd_qos_port1),
-          
+
           /* Goes to port2 of DDR */
            .ddr_wr_ack_port2 (ddr_wr_ack_port2),
            .ddr_wr_dv_port2  (ddr_wr_dv_port2),
@@ -13791,7 +13791,7 @@ module processing_system7_vip_v1_0_24
            .ddr_rd_bytes_port2(ddr_rd_bytes_port2),
            .ddr_wr_qos_port2 (ddr_wr_qos_port2),
            .ddr_rd_qos_port2 (ddr_rd_qos_port2),
-          
+
           /* Goes to port3 of DDR */
            .ddr_wr_ack_port3 (ddr_wr_ack_port3),
            .ddr_wr_dv_port3  (ddr_wr_dv_port3),
@@ -13806,13 +13806,13 @@ module processing_system7_vip_v1_0_24
            .ddr_rd_bytes_port3(ddr_rd_bytes_port3),
            .ddr_wr_qos_port3 (ddr_wr_qos_port3),
            .ddr_rd_qos_port3 (ddr_rd_qos_port3)
-          
+
             );
 
   processing_system7_vip_v1_0_24_ocmc ocmc (
            .rstn(net_rstn),
            .sw_clk(net_sw_clk),
-    
+
     /* Goes to port 0 of OCM */
            .ocm_wr_ack_port0 (ocm_wr_ack_port0),
            .ocm_wr_dv_port0  (ocm_wr_dv_port0),
@@ -13826,12 +13826,12 @@ module processing_system7_vip_v1_0_24
 
            .ocm_rd_addr_port0(net_rd_addr_acp),
            .ocm_rd_bytes_port0(net_rd_bytes_acp),
-           
+
            .ocm_rd_data_port0(ocm_rd_data_port0),
 
            .ocm_wr_qos_port0 (net_wr_qos_acp),
            .ocm_rd_qos_port0 (net_rd_qos_acp),
-          
+
             /* Goes to port 1 of OCM */
            .ocm_wr_ack_port1 (ocm_wr_ack_port1),
            .ocm_wr_dv_port1  (ocm_wr_dv_port1),
@@ -13845,14 +13845,14 @@ module processing_system7_vip_v1_0_24
            .ocm_rd_data_port1(ocm_rd_data_port1),
            .ocm_rd_bytes_port1(ocm_rd_bytes_port1),
            .ocm_wr_qos_port1(ocm_wr_qos_port1),
-           .ocm_rd_qos_port1(ocm_rd_qos_port1) 
-    
+           .ocm_rd_qos_port1(ocm_rd_qos_port1)
+
   );
 
   processing_system7_vip_v1_0_24_regc regc (
            .rstn(net_rstn),
            .sw_clk(net_sw_clk),
-    
+
             /* Goes to port 0 of REG */
            .reg_rd_req_port0 (reg_rd_req_port0),
            .reg_rd_dv_port0  (reg_rd_dv_port0),
@@ -13860,17 +13860,17 @@ module processing_system7_vip_v1_0_24
            .reg_rd_bytes_port0(net_rd_bytes_acp),
            .reg_rd_data_port0(reg_rd_data_port0),
            .reg_rd_qos_port0 (net_rd_qos_acp),
-          
+
             /* Goes to port 1 of REG */
            .reg_rd_req_port1 (reg_rd_req_port1),
            .reg_rd_dv_port1  (reg_rd_dv_port1),
            .reg_rd_addr_port1(reg_rd_addr_port1),
            .reg_rd_data_port1(reg_rd_data_port1),
            .reg_rd_bytes_port1(reg_rd_bytes_port1),
-           .reg_rd_qos_port1(reg_rd_qos_port1) 
-    
+           .reg_rd_qos_port1(reg_rd_qos_port1)
+
   );
- 
+
   /* include axi_gp port instantiations */
   `include "processing_system7_vip_v1_0_24_axi_gp.v"
 
@@ -13881,5 +13881,3 @@ module processing_system7_vip_v1_0_24
   `include "processing_system7_vip_v1_0_24_axi_acp.v"
 
 endmodule
-
-

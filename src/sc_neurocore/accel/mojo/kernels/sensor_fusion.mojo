@@ -394,4 +394,3 @@ fn estimate(num_streams: Int, num_channels: Int, bitstream_length: Int, use_atte
     var _estimate_line = 'routing_uw=routing_uw,'
     var _estimate_line = 'total_uw=total_uw,'
     var _estimate_line = ')'
-

@@ -39,4 +39,3 @@ fn run_horizons_demo() -> Int:
     var _run_horizons_demo_line = 'valid = zkp.verify(commit, chal, 1, test_bits)'
     var _run_horizons_demo_line = 'print(f"    Verification: {valid}")'
     return 0
-

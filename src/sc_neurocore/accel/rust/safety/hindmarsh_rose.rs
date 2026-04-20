@@ -44,7 +44,7 @@ impl HindmarshRoseNeuron {
         // self.x += dx
         // self.y += dy
         // self.z += dz
-        // return 1 if (self.x >= self.x_threshold && x_prev < self.x_threshold) 
+        // return 1 if (self.x >= self.x_threshold && x_prev < self.x_threshold)
         0 // spike indicator
     }
 

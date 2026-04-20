@@ -30,4 +30,3 @@ func ToNirDelayArray() {
 func ExtraRepr() {
 	// Go-accelerated extra_repr
 }
-

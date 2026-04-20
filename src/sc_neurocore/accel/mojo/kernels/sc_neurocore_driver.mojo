@@ -55,4 +55,3 @@ fn run_step(input_vector: Int) -> Int:
     var _run_step_line = 'raise NotImplementedError('
     var _run_step_line = '"HARDWARE DMA transfer requires PYNQ overlay. Use mode=\'EMUL'
     var _run_step_line = ')'
-

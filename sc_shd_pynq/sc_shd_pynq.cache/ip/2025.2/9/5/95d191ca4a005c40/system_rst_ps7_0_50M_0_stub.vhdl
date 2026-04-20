@@ -14,7 +14,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
 entity decalper_eb_ot_sdeen_pot_pi_dehcac_xnilix is
-  Port ( 
+  Port (
     slowest_sync_clk : in STD_LOGIC;
     ext_reset_in : in STD_LOGIC;
     aux_reset_in : in STD_LOGIC;

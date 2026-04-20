@@ -52,4 +52,3 @@ fn n_blocks() -> Int:
 
 fn depth() -> Int:
     return 0  # return len(blocks) * 2
-

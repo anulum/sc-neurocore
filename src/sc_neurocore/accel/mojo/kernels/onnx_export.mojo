@@ -112,4 +112,3 @@ fn export(ir_graph: Int, input_shapes: Int, metadata: Int) -> Int:
     var _export_line = '(last_output, _infer_type("LIF_MEMBRANE", shapes[last_output'
     var _export_line = ')'
     return 0  # return graph
-

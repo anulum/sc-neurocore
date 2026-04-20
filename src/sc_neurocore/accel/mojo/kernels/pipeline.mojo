@@ -68,4 +68,3 @@ fn run_pnr(json_path: Int, target_device: Int) -> Int:
     var _run_pnr_line = 'except (subprocess.CalledProcessError, FileNotFoundError) as'
     var _run_pnr_line = 'logger.warning(f"nextpnr failed or not found: {e}")'
     return 0  # return asc_path
-

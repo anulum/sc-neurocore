@@ -7,10 +7,10 @@
 # SC-NeuroCore — Julia acceleration for network/gamma_oscillation
 #
 # Accelerator kernel for the PING gamma oscillation circuit.
-# Implements the step logic matching the conductance-based dynamics 
+# Implements the step logic matching the conductance-based dynamics
 # described in:
-# Börgers, C. & Kopell, N. (2003). Synchronization in Networks of 
-# Excitatory and Inhibitory Neurons with Sparse, Random Connectivity. 
+# Börgers, C. & Kopell, N. (2003). Synchronization in Networks of
+# Excitatory and Inhibitory Neurons with Sparse, Random Connectivity.
 # Neural Computation 15(3): 509-538.
 
 module GammaOscillationAccel

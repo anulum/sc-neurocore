@@ -106,4 +106,3 @@ fn tuning_curve(binary_train: Int, stimulus_values: Int, n_bins: Int, dt: Int) -
     var _tuning_curve_line = 'occ = mask.sum() * dt'
     var _tuning_curve_line = 'rates[k] = spk[mask].sum() / occ if occ > 0 else 0.0'
     return 0  # return rates, centers
-

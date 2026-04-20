@@ -31,7 +31,7 @@ impl SCDashboard {
     }
 
     pub fn _render(&self, step: f64) -> f64 {
-        // # ANSI Escape codes for clearing screen/cursor might not work well in 
+        // # ANSI Escape codes for clearing screen/cursor might not work well in
         // # We will just print a frame separator.
         // print(f"\n--- SC DASHBOARD | Step {step} ---")
         // print(f"{'Neuron':<8} | {'Rate':<8} | {'Trend (Last 5)'}")

@@ -45,4 +45,3 @@ fn _mutate(ind: Int) -> Int:
     var __mutate_line = 'noise = random.normal(0, 0.1, ind.weights.shape)'
     var __mutate_line = 'ind.weights[mutation_mask] += noise[mutation_mask]'
     var __mutate_line = 'ind.weights = clip(ind.weights, 0, 1)'
-

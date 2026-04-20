@@ -23,4 +23,3 @@ fn forward(voxel_grid: Int) -> Int:
     var _forward_line = '# We take the mean of features to get back to 1 value per vo'
     var _forward_line = 'output_grid = mean(attn_out, axis=1).reshape((res, res, res)'
     return 0  # return output_grid
-

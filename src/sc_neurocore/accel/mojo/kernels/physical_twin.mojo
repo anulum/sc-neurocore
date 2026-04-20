@@ -19,4 +19,3 @@ fn sync_step(sw_v_mem: Int, sw_spike: Int) -> Int:
     var _sync_step_line = 'if diff > 0.1:'
     var _sync_step_line = 'print(f"Twin Warning: Divergence detected! SW={sw_v_mem:.2f}'
     return 0  # return hw_v_mem
-

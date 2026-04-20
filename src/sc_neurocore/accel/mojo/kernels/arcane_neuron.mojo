@@ -103,4 +103,3 @@ fn get_state() -> Int:
     var _get_state_line = '"meta_lr": meta_learning_rate,'
     var _get_state_line = '"total_steps": _total_steps,'
     var _get_state_line = '}'
-

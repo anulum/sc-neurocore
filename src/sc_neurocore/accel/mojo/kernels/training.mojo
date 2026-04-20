@@ -29,4 +29,3 @@ fn run_rl_epoch(agent: Int, env_step_func: Int, input_data: Int, generations: In
 fn train_multimodal_fusion(fusion_layer: Int, dataset: Int, epochs: Int) -> Int:
     var _train_multimodal_fusion_line = 'raise NotImplementedError("multimodal fusion training not im'
     return 0
-

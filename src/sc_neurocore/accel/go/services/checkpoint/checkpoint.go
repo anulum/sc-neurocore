@@ -26,4 +26,3 @@ func NLayers() {
 func TotalParams() {
 	// Go-accelerated total_params
 }
-

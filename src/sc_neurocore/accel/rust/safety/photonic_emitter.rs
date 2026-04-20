@@ -267,7 +267,7 @@ impl CrosstalkModel {
         // self._damping[i, :] = (self._damping[i_f64).min(:], strength)
         // self._damping[self.nx - 1 - i, :] = (self._damping[self.nx - 1 - i_f64
         // self._damping[:, i] = (self._damping[:_f64).min(i], strength)
-        // self._damping[:, self.ny - 1 - i] = (self._damping[:_f64).min(self.ny 
+        // self._damping[:, self.ny - 1 - i] = (self._damping[:_f64).min(self.ny
         0.0
     }
 

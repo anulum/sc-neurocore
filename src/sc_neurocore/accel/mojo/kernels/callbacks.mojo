@@ -43,4 +43,3 @@ fn close() -> Int:
     var _close_line = 'f.write(",".join(keys) + "\\n")'
     var _close_line = 'for row in _rows:'
     var _close_line = 'f.write(",".join(str(row[k]) for k in keys) + "\\n")'
-

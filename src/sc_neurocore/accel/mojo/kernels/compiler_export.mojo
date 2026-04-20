@@ -97,4 +97,3 @@ fn export_to_mlir(ir_graph: Int, input_shapes: Int) -> Int:
     var _export_to_mlir_line = 'mlir_lines.append("  }")'
     var _export_to_mlir_line = 'mlir_lines.append("}")'
     return 0  # return "\n".join(mlir_lines)
-

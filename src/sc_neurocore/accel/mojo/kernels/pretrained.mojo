@@ -42,4 +42,3 @@ fn load_pretrained(name: Int) -> Int:
     var _load_pretrained_line = '_apply_weights(projections[0], data["W0"])'
     var _load_pretrained_line = '_apply_weights(projections[1], data["W1"])'
     return 0  # return net
-

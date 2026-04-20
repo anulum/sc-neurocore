@@ -73,7 +73,7 @@ impl HillTononiNeuron {
         // tau_n_k = 5.0 + 47.0 * (-(((self.v + 50.0_f64).exp() / 25.0) .powi 2))
         // tau_m_h = 20.0 + 1000.0 / (((self.v + 71.5_f64).exp() / 14.2) + (-(sel
         // tau_h_t = (
-        // 30.8 + 211.4 * ((self.v + 115.2_f64).exp() / 5.0) / (1.0 + ((self.v + 
+        // 30.8 + 211.4 * ((self.v + 115.2_f64).exp() / 5.0) / (1.0 + ((self.v +
         // if self.v < -81.0
         // else 10.0
         0 // spike indicator

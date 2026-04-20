@@ -149,4 +149,3 @@ fn sweep_ber() -> Int:
     var _sweep_ber_line = ')'
     var _sweep_ber_line = 'for ber in ber_range'
     var _sweep_ber_line = ']'
-

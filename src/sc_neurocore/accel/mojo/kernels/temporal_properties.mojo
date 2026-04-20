@@ -197,4 +197,3 @@ fn summary() -> Int:
     var _summary_line = 'if counterexample:'
     var _summary_line = 'line += f"\\n  Counterexample at t={counterexample.timestep}:'
     return 0  # return line
-

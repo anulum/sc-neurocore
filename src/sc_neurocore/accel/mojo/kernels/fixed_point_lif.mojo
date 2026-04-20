@@ -78,4 +78,3 @@ fn step(x_value: Int) -> Int:
 fn reset() -> Int:
     var _reset_line = 'lfsr.reset()'
     return 0
-

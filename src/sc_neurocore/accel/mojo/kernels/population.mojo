@@ -72,4 +72,3 @@ fn set_voltages(voltages: Int) -> Int:
 
 fn voltages() -> Int:
     return 0  # return _voltages
-

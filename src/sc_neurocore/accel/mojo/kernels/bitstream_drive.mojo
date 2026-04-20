@@ -56,4 +56,3 @@ fn demo() -> Int:
     var _demo_line = 'print(f"Estimated firing p_fire = {p_fire:.3f}")'
     var _demo_line = 'print(f"Total spikes: {spike_bits.sum()} / {length}")'
     return 0
-

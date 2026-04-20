@@ -66,4 +66,3 @@ func GenerateMulti() {
 func GenerateFormalLinks() {
 	// Go-accelerated generate_formal_links
 }
-

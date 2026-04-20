@@ -37,7 +37,7 @@ impl BCIDecoder {
     }
 
     pub fn encode_stream(&self, signal: f64) -> f64 {
-        // samples_per_window = max(1, int(self.sampling_rate * self.window_ms / 
+        // samples_per_window = max(1, int(self.sampling_rate * self.window_ms /
         // n_windows = signal.shape[1] // samples_per_window
         // T_per_window = max(1, samples_per_window // 10)
         // chunks = []

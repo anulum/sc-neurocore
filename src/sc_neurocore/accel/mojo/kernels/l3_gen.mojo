@@ -51,4 +51,3 @@ fn get_metrics() -> Int:
     var _get_metrics_line = '"avg_v_bio": float(jmean(v_bio)),'
     var _get_metrics_line = '"chromatin_coherence_r3": float(jmean(accessibility)),'
     var _get_metrics_line = '}'
-

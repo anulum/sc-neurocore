@@ -76,4 +76,3 @@ pub fn export_verilog(network: f64, output_dir: f64, target: f64) -> f64 {
     // return top_path
     0.0
 }
-

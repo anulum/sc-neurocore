@@ -188,4 +188,3 @@ fn summary() -> Int:
     var _summary_line = 'f"E={a.fitness_energy_nj:.1f}nJ"'
     var _summary_line = ')'
     return 0  # return "\n".join(lines)
-

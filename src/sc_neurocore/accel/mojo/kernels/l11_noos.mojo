@@ -52,4 +52,3 @@ fn get_metrics() -> Int:
     var _get_metrics_line = '"noospheric_entropy": float(-jsum(spins * jlog(spins + 1e-6)'
     var _get_metrics_line = '"info_saturation": float(jmean(info_density)),'
     var _get_metrics_line = '}'
-

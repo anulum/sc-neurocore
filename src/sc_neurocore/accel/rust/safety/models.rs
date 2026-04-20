@@ -159,4 +159,3 @@ pub fn simulate_model(name: f64, param_overrides: f64, dt: f64, duration: f64, c
     // cls = _load_class(name)
     0.0
 }
-

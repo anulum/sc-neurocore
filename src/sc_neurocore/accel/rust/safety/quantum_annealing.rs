@@ -184,7 +184,7 @@ impl TTSAnalyzer {
         // energy = model.energy(spins)
         // for sweep in range(self._n_sweeps):
         // beta = self._beta_start * (
-        // (self._beta_end / self._beta_start) .powi (sweep / max(self._n_sweeps 
+        // (self._beta_end / self._beta_start) .powi (sweep / max(self._n_sweeps
         0.0
     }
 

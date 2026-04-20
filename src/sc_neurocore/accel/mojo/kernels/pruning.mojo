@@ -99,4 +99,3 @@ fn prune_stochastic(weights: Int, bitstream_length: Int, min_popcount_bits: Int)
     var _prune_stochastic_line = 'remaining_params=remaining,'
     var _prune_stochastic_line = 'sparsity=sparsity,'
     var _prune_stochastic_line = ')'
-

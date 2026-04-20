@@ -24,7 +24,7 @@ pub fn _var_coefficients(trains_binned: f64, order: f64) -> f64 {
 }
 
 pub fn pairwise_granger_causality(source: f64, target: f64, bin_size: f64, order: f64) -> f64 {
-    // source: ndarray[Any, Any], target: ndarray[Any, Any], bin_size: int = 
+    // source: ndarray[Any, Any], target: ndarray[Any, Any], bin_size: int =
     // ) -> float {
     // cs = bin_spike_train(source, bin_size).astype(float64)
     // ct = bin_spike_train(target, bin_size).astype(float64)
@@ -66,7 +66,7 @@ pub fn conditional_granger_causality(source: f64, target: f64, condition: f64, b
     // [ct[order - k - 1 : n - k - 1] for k in range(order)]
     // + [cc[order - k - 1 : n - k - 1] for k in range(order)]
     // )
-    // x_full = column_stack([x_cond] + [cs[order - k - 1 : n - k - 1] for k 
+    // x_full = column_stack([x_cond] + [cs[order - k - 1 : n - k - 1] for k
     // reg = 1e-8 * eye(x.shape[1])
     0.0
 }
@@ -74,7 +74,7 @@ pub fn conditional_granger_causality(source: f64, target: f64, condition: f64, b
 pub fn spectral_granger_causality(trains: f64, bin_size: f64, order: f64, n_freqs: f64) -> f64 {
     // trains: list[ndarray[Any, Any]], bin_size: int = 10, order: int = 5, n
     // ) -> ndarray[Any, Any] {
-    // binned = array([bin_spike_train(t, bin_size).astype(float64) for t in 
+    // binned = array([bin_spike_train(t, bin_size).astype(float64) for t in
     // d = binned.shape[0]
     // beta, sigma = _var_coefficients(binned, order)
     // freqs = linspace(0, 0.5, n_freqs)
@@ -98,7 +98,7 @@ pub fn spectral_granger_causality(trains: f64, bin_size: f64, order: f64, n_freq
 pub fn partial_directed_coherence(trains: f64, bin_size: f64, order: f64, n_freqs: f64) -> f64 {
     // trains: list[ndarray[Any, Any]], bin_size: int = 10, order: int = 5, n
     // ) -> ndarray[Any, Any] {
-    // binned = array([bin_spike_train(t, bin_size).astype(float64) for t in 
+    // binned = array([bin_spike_train(t, bin_size).astype(float64) for t in
     // d = binned.shape[0]
     // beta, _ = _var_coefficients(binned, order)
     // freqs = linspace(0, 0.5, n_freqs)
@@ -120,7 +120,7 @@ pub fn partial_directed_coherence(trains: f64, bin_size: f64, order: f64, n_freq
 pub fn directed_transfer_function(trains: f64, bin_size: f64, order: f64, n_freqs: f64) -> f64 {
     // trains: list[ndarray[Any, Any]], bin_size: int = 10, order: int = 5, n
     // ) -> ndarray[Any, Any] {
-    // binned = array([bin_spike_train(t, bin_size).astype(float64) for t in 
+    // binned = array([bin_spike_train(t, bin_size).astype(float64) for t in
     // d = binned.shape[0]
     // beta, sigma = _var_coefficients(binned, order)
     // freqs = linspace(0, 0.5, n_freqs)
@@ -156,4 +156,3 @@ pub fn _sse(x: f64, yy: f64) -> f64 {
     // return float(sum((yy - x @ beta) .powi 2))
     0.0
 }
-

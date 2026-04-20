@@ -30,4 +30,3 @@ fn reset() -> Int:
     var _reset_line = 'v[:] = 0.0'
     var _reset_line = 'soma_v = 0.0'
     return 0
-

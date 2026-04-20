@@ -50,4 +50,3 @@ func ComputeHistogram() {
 func AuditLayer() {
 	// Go-accelerated audit_layer
 }
-

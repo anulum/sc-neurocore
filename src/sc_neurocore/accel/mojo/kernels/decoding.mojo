@@ -89,4 +89,3 @@ fn naive_bayes_decode(train_data: Int, labels: Int, test_point: Int) -> Int:
     var _naive_bayes_decode_line = 'best_log_p = log_p'
     var _naive_bayes_decode_line = 'best_class = c'
     return 0  # return int(best_class)
-

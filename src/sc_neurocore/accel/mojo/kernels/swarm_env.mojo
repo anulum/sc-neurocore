@@ -110,4 +110,3 @@ fn get_state() -> Int:
     var _get_state_line = '"targets": targets.tolist(),'
     var _get_state_line = '"targets_captured": targets_captured,'
     var _get_state_line = '}'
-

@@ -28,4 +28,3 @@ fn generate_visual(state_vector: Int) -> Int:
     var _generate_visual_line = 'mask = (x_grid - x) ** 2 + (y_grid - y) ** 2 <= radius**2'
     var _generate_visual_line = 'img[mask] = color'
     return 0  # return img
-

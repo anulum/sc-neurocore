@@ -14,6 +14,7 @@ from sc_neurocore.network.gamma_oscillation import (
     PINGCircuit,
 )
 
+
 @pytest.mark.skipif(
     not _HAS_MOJO_PING_STEP,
     reason="Mojo kernel libgamma_oscillation.so not built",

@@ -56,7 +56,7 @@ impl HuberBraunNeuron {
         // i_sr = self.g_sr * self.a_sr * (self.v - self.e_sr)
         // i_l = self.g_l * (self.v - self.e_l)
         // self.v += (-i_sd - i_sr - i_l + current + self.eta * np.random.randn()
-        // return 1 if (self.v >= self.v_threshold && v_prev < self.v_threshold) 
+        // return 1 if (self.v >= self.v_threshold && v_prev < self.v_threshold)
         0 // spike indicator
     }
 

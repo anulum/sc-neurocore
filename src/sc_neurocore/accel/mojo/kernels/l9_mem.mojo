@@ -65,4 +65,3 @@ fn get_metrics() -> Int:
     var _get_metrics_line = '),'
     var _get_metrics_line = '"imprint_density": float(jmean(imprints_psi)),'
     var _get_metrics_line = '}'
-

@@ -43,4 +43,3 @@ pub fn maybe_jit(fn: f64) -> f64 {
     // return fn
     0.0
 }
-

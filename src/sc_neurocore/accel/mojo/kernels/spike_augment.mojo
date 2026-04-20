@@ -51,4 +51,3 @@ fn _hot_pixel(spikes: Int, rng: Int) -> Int:
     var __hot_pixel_line = 'result = spikes.copy()'
     var __hot_pixel_line = 'result[:, hot_mask] = 1.0'
     return 0  # return result
-

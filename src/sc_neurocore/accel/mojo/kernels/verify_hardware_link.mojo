@@ -59,4 +59,3 @@ fn verify_link(extras: Int) -> Int:
     var _verify_link_line = 'print("\\n" + "=" * 60)'
     var _verify_link_line = 'print("DIAGNOSTIC COMPLETE")'
     var _verify_link_line = 'print("=" * 60)'
-

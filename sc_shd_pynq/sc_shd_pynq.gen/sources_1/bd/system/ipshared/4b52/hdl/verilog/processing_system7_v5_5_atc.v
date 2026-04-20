@@ -47,10 +47,10 @@
 //-----------------------------------------------------------------------------
 //
 // Description: ACP Transaction Checker
-// 
+//
 // Check for optimized ACP transactions and flag if they are broken.
-// 
-// 
+//
+//
 //
 // Verilog-standard:  Verilog 2001
 //--------------------------------------------------------------------------
@@ -79,19 +79,19 @@ module processing_system7_v5_5_atc #
                        // Width of all DATA signals on SI and MI side of checker.
                        // Range: 64.
    parameter integer C_AXI_AWUSER_WIDTH               = 1,
-                       // Width of AWUSER signals. 
+                       // Width of AWUSER signals.
                        // Range: >= 1.
    parameter integer C_AXI_ARUSER_WIDTH               = 1,
-                       // Width of ARUSER signals. 
+                       // Width of ARUSER signals.
                        // Range: >= 1.
    parameter integer C_AXI_WUSER_WIDTH                = 1,
-                       // Width of WUSER signals. 
+                       // Width of WUSER signals.
                        // Range: >= 1.
    parameter integer C_AXI_RUSER_WIDTH                = 1,
-                       // Width of RUSER signals. 
+                       // Width of RUSER signals.
                        // Range: >= 1.
    parameter integer C_AXI_BUSER_WIDTH                = 1
-                       // Width of BUSER signals. 
+                       // Width of BUSER signals.
                        // Range: >= 1.
    )
   (
@@ -192,37 +192,37 @@ module processing_system7_v5_5_atc #
    input  wire [C_AXI_RUSER_WIDTH-1:0]          M_AXI_RUSER,
    input  wire                                  M_AXI_RVALID,
    output wire                                  M_AXI_RREADY,
-   
+
    output wire                                  ERROR_TRIGGER,
    output wire [C_AXI_ID_WIDTH-1:0]             ERROR_TRANSACTION_ID
    );
 
-   
+
   /////////////////////////////////////////////////////////////////////////////
   // Functions
   /////////////////////////////////////////////////////////////////////////////
-  
-  
+
+
   /////////////////////////////////////////////////////////////////////////////
   // Local params
   /////////////////////////////////////////////////////////////////////////////
-  
+
   localparam C_FIFO_DEPTH_LOG            = 4;
-  
-  
+
+
   /////////////////////////////////////////////////////////////////////////////
   // Internal signals
   /////////////////////////////////////////////////////////////////////////////
-  
+
   // Internal reset.
   reg                                   ARESET;
-  
+
   // AW->W command queue signals.
   wire                                  cmd_w_valid;
   wire                                  cmd_w_check;
   wire [C_AXI_ID_WIDTH-1:0]             cmd_w_id;
   wire                                  cmd_w_ready;
-  
+
   // W->B command queue signals.
   wire                                  cmd_b_push;
   wire                                  cmd_b_error;
@@ -230,7 +230,7 @@ module processing_system7_v5_5_atc #
   wire                                  cmd_b_full;
   wire [C_FIFO_DEPTH_LOG-1:0]           cmd_b_addr;
   wire                                  cmd_b_ready;
-  
+
 
   /////////////////////////////////////////////////////////////////////////////
   // Handle Internal Reset
@@ -238,12 +238,12 @@ module processing_system7_v5_5_atc #
   always @ (posedge ACLK) begin
     ARESET <= !ARESETN;
   end
-  
-  
+
+
   /////////////////////////////////////////////////////////////////////////////
   // Handle Write Channels (AW/W/B)
   /////////////////////////////////////////////////////////////////////////////
-  
+
   // Write Address Channel.
   processing_system7_v5_5_aw_atc #
   (
@@ -265,7 +265,7 @@ module processing_system7_v5_5_atc #
     .cmd_w_ready                (cmd_w_ready),
     .cmd_b_addr                 (cmd_b_addr),
     .cmd_b_ready                (cmd_b_ready),
-   
+
     // Slave Interface Write Address Ports
     .S_AXI_AWID                 (S_AXI_AWID),
     .S_AXI_AWADDR               (S_AXI_AWADDR),
@@ -278,7 +278,7 @@ module processing_system7_v5_5_atc #
     .S_AXI_AWUSER               (S_AXI_AWUSER),
     .S_AXI_AWVALID              (S_AXI_AWVALID),
     .S_AXI_AWREADY              (S_AXI_AWREADY),
-    
+
     // Master Interface Write Address Port
     .M_AXI_AWID                 (M_AXI_AWID),
     .M_AXI_AWADDR               (M_AXI_AWADDR),
@@ -292,7 +292,7 @@ module processing_system7_v5_5_atc #
     .M_AXI_AWVALID              (M_AXI_AWVALID),
     .M_AXI_AWREADY              (M_AXI_AWREADY)
    );
-   
+
   // Write Data channel.
   processing_system7_v5_5_w_atc #
   (
@@ -311,13 +311,13 @@ module processing_system7_v5_5_atc #
     .cmd_w_check                (cmd_w_check),
     .cmd_w_id                   (cmd_w_id),
     .cmd_w_ready                (cmd_w_ready),
-    
+
     // Command Interface (Out)
     .cmd_b_push                 (cmd_b_push),
     .cmd_b_error                (cmd_b_error),
     .cmd_b_id                   (cmd_b_id),
     .cmd_b_full                 (cmd_b_full),
-    
+
     // Slave Interface Write Data Ports
     .S_AXI_WID                  (S_AXI_WID),
     .S_AXI_WDATA                (S_AXI_WDATA),
@@ -326,7 +326,7 @@ module processing_system7_v5_5_atc #
     .S_AXI_WUSER                (S_AXI_WUSER),
     .S_AXI_WVALID               (S_AXI_WVALID),
     .S_AXI_WREADY               (S_AXI_WREADY),
-    
+
     // Master Interface Write Data Ports
     .M_AXI_WID                  (M_AXI_WID),
     .M_AXI_WDATA                (M_AXI_WDATA),
@@ -336,7 +336,7 @@ module processing_system7_v5_5_atc #
     .M_AXI_WVALID               (M_AXI_WVALID),
     .M_AXI_WREADY               (M_AXI_WREADY)
    );
-   
+
   // Write Response channel.
   processing_system7_v5_5_b_atc #
   (
@@ -357,28 +357,28 @@ module processing_system7_v5_5_atc #
     .cmd_b_full                 (cmd_b_full),
     .cmd_b_addr                 (cmd_b_addr),
     .cmd_b_ready                (cmd_b_ready),
-    
+
     // Slave Interface Write Response Ports
     .S_AXI_BID                  (S_AXI_BID),
     .S_AXI_BRESP                (S_AXI_BRESP),
     .S_AXI_BUSER                (S_AXI_BUSER),
     .S_AXI_BVALID               (S_AXI_BVALID),
     .S_AXI_BREADY               (S_AXI_BREADY),
-    
+
     // Master Interface Write Response Ports
     .M_AXI_BID                  (M_AXI_BID),
     .M_AXI_BRESP                (M_AXI_BRESP),
     .M_AXI_BUSER                (M_AXI_BUSER),
     .M_AXI_BVALID               (M_AXI_BVALID),
     .M_AXI_BREADY               (M_AXI_BREADY),
-    
+
     // Trigger detection
     .ERROR_TRIGGER              (ERROR_TRIGGER),
     .ERROR_TRANSACTION_ID       (ERROR_TRANSACTION_ID)
    );
-  
-  
-  
+
+
+
   /////////////////////////////////////////////////////////////////////////////
   // Handle Read Channels (AR/R)
   /////////////////////////////////////////////////////////////////////////////
@@ -394,7 +394,7 @@ module processing_system7_v5_5_atc #
   assign M_AXI_ARUSER   = S_AXI_ARUSER;
   assign M_AXI_ARVALID  = S_AXI_ARVALID;
   assign S_AXI_ARREADY  = M_AXI_ARREADY;
-   
+
   // Read Data Port
   assign S_AXI_RID      = M_AXI_RID;
   assign S_AXI_RDATA    = M_AXI_RDATA;
@@ -403,7 +403,7 @@ module processing_system7_v5_5_atc #
   assign S_AXI_RUSER    = M_AXI_RUSER;
   assign S_AXI_RVALID   = M_AXI_RVALID;
   assign M_AXI_RREADY   = S_AXI_RREADY;
-  
-  
+
+
 endmodule
 `default_nettype wire

@@ -14,6 +14,7 @@ from sc_neurocore.network.gamma_oscillation import (
     PINGCircuit,
 )
 
+
 @pytest.mark.skipif(
     not _HAS_JULIA_PING_STEP,
     reason="Julia kernel not loaded",

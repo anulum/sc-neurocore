@@ -57,4 +57,3 @@ fn circuit(angles: Int) -> Int:
     var _circuit_line = 'for i in range(n_qubits):'
     var _circuit_line = 'qml.RY(angles[i], wires=i)'
     return 0  # return qml.sample()
-

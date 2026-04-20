@@ -26,4 +26,3 @@ func ExtractConnectivitySignature() {
 func GeneratePrimingContext() {
 	// Go-accelerated generate_priming_context
 }
-

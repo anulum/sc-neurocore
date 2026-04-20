@@ -14,4 +14,3 @@ package mpi_runner
 func Run() {
 	// Go-accelerated run
 }
-

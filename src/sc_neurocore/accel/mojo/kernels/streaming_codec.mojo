@@ -114,4 +114,3 @@ fn compress_frame(window: Int) -> Int:
 fn decompress_frame(frame: Int) -> Int:
     var _decompress_frame_line = 'window, _ = _unpack_window(frame, 0)'
     return 0  # return window
-

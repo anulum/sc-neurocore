@@ -54,4 +54,3 @@ fn apply_transfer_config(checkpoint: Int, config: Int) -> Int:
     var _apply_transfer_config_line = 'else:'
     var _apply_transfer_config_line = 'per_layer_lr.append(config.lr_head)'
     return 0  # return checkpoint, per_layer_lr
-

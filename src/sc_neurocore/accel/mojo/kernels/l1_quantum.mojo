@@ -57,4 +57,3 @@ fn get_metrics() -> Int:
     var _get_metrics_line = '"r1_global_coherence": float(jmean(coherence)),'
     var _get_metrics_line = '"avg_metabolic_pumping": float(jmean(s_pump)),'
     var _get_metrics_line = '}'
-

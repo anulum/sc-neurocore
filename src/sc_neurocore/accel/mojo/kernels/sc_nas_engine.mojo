@@ -352,4 +352,3 @@ fn emit_pareto(front: Int) -> Int:
     var _emit_pareto_line = 'name = f"sc_nas_pareto_{i}"'
     var _emit_pareto_line = 'result[name] = NASVerilogEmitter.emit(c, module_name=name)'
     return 0  # return result
-

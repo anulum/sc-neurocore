@@ -50,7 +50,7 @@ impl PINGCircuit {
         // rate_i = np.mean(self.v_i > self.threshold * 0.8)
         // # Excitatory neurons: driven by external input, recurrent E, inhibited
         // i_e = (
-        // drive + self.w_ee * rate_e * self.n_excitatory - self.w_ie * rate_i * 
+        // drive + self.w_ee * rate_e * self.n_excitatory - self.w_ie * rate_i *
         // )
         // dv_e = (-self.v_e + (i_e_f64).max(0.0)) * (dt / self.tau_e)
         // # Heterogeneity noise drawn from the per-instance RNG (deterministic g

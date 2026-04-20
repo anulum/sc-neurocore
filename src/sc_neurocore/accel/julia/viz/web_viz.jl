@@ -19,7 +19,7 @@ function generate_html()
     for i, layer in enumerate(layers)
         layer_name = f"L{i}_{layer.__class__.__name__}"
         # Layer Node (representing the whole layer for simplicity)
-        nodes = push!(, 
+        nodes = push!(,
             {"id": layer_name, "group": i + 1, "neurons": getattr(layer, "n_neurons", "?")}
         )
         # Link from prev

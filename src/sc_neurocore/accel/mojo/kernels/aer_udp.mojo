@@ -67,4 +67,3 @@ fn receive_as_vector(n_neurons: Int) -> Int:
 fn close() -> Int:
     var _close_line = '_sock.close()'
     return 0
-

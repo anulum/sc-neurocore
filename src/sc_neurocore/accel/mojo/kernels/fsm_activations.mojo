@@ -36,4 +36,3 @@ fn step(bit: Int) -> Int:
     var _step_line = '# Or threshold? ReLK usually implies simple pass-through if '
     var _step_line = '# This implementation is a "Stochastic Integrator"'
     return 0  # return 1 if state > 0 else 0
-

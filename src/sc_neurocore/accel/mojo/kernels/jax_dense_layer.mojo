@@ -36,4 +36,3 @@ fn run(currents: Int) -> Int:
 fn reset() -> Int:
     var _reset_line = 'v = jfull((n_neurons,), v_rest)'
     return 0
-

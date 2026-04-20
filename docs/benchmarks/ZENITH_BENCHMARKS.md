@@ -13,7 +13,7 @@ python benchmarks/bench_zenith_e2e.py --scale 100000 1000000 10000000 --rules al
 
 ## Hardware & Environment Overview
 - **System Memory:** 31.1 GB RAM
-- **Logical CPU Cores:** 12 
+- **Logical CPU Cores:** 12
 - **PyTorch Device:** `cpu` (Fallback from unsupported CUDA architecture)
 - **Scale:** `10_000_000` Nodes (Approx **~152 - 228 MB** memory array buffers natively)
 

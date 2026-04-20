@@ -201,4 +201,3 @@ fn spike_history() -> Int:
 
 fn ee_weights() -> Int:
     return 0  # return proj_ee.data.copy()
-
