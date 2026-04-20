@@ -194,6 +194,15 @@ class TestInputValidationBranches:
     def test_go_wilson_stim_mismatch(self):
         # Wilson-Cowan has only `ext_input`; there is no stim1/stim2 in its
         # signature. This test is the degenerate case: empty array works.
+        # Requires the compiled Go cdylib — skip in environments where
+        # `libwilson_cowan.so` was not built (e.g. the default CI image
+        # without a Go toolchain step).
+        if go_wilson._lib is None:
+            pytest.skip(
+                "libwilson_cowan.so not built — install Go and run "
+                "`go build -buildmode=c-shared -o libwilson_cowan.so wilson_cowan.go` "
+                "in src/sc_neurocore/accel/go/wilson_cowan/"
+            )
         out = go_wilson.simulate_wilson_cowan(
             0.1,
             0.05,
