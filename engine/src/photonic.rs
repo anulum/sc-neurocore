@@ -298,8 +298,13 @@ pub fn analyze_crosstalk_bank(
     core_index: f64,
     cladding_index: f64,
 ) -> CrosstalkBankResult {
-    let (_, near_ratio, near_iso) =
-        pair_coupling(gap_nm, coupling_length_um, wavelength_nm, core_index, cladding_index);
+    let (_, near_ratio, near_iso) = pair_coupling(
+        gap_nm,
+        coupling_length_um,
+        wavelength_nm,
+        core_index,
+        cladding_index,
+    );
     let (_, far_ratio, far_iso) = pair_coupling(
         2.0 * gap_nm,
         coupling_length_um,
@@ -315,8 +320,8 @@ pub fn analyze_crosstalk_bank(
         (f64::INFINITY, 0.0, 0.0)
     } else {
         let worst = near_iso.min(far_iso);
-        let mean = ((num_near as f64) * near_ratio + (num_far as f64) * far_ratio)
-            / (total_pairs as f64);
+        let mean =
+            ((num_near as f64) * near_ratio + (num_far as f64) * far_ratio) / (total_pairs as f64);
         let mx = near_ratio.max(far_ratio);
         (worst, mean, mx)
     };

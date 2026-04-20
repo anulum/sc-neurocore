@@ -5131,7 +5131,8 @@ fn py_ph_analyze_crosstalk_pairs<'py>(
         .zip(lengths_um)
         .map(|(((a, b), g), l)| (a, b, g, l))
         .collect();
-    let results = photonic::analyze_crosstalk_pairs(&pairs, wavelength_nm, core_index, cladding_index);
+    let results =
+        photonic::analyze_crosstalk_pairs(&pairs, wavelength_nm, core_index, cladding_index);
 
     let dict = PyDict::new(py);
     let idx_a: Vec<usize> = results.iter().map(|r| r.index_a).collect();
