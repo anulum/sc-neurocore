@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Complete Julia ODE / Scientific Computing Suite
 
-using DifferentialEquations, LinearAlgebra, Statistics
+using DifferentialEquations, LinearAlgebra, Statistics, Printf
 
 # ============================================================
 # §1  LIF (Leaky Integrate-and-Fire) ODE

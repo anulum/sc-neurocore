@@ -684,12 +684,13 @@ fn main():
     for _ in range(1024):
         data.append(UInt32(0xDEAD_BEEF))
 
-    # §1 Popcount
+    # §1 Popcount — XOR accumulator prevents dead-code elimination.
     var t0 = perf_counter()
+    var sink_pop: Int = 0
     for _ in range(1_000_000):
-        _ = popcount_slice(data)
+        sink_pop ^= popcount_slice(data)
     var t1 = perf_counter()
-    print("§1  Popcount 1024w × 1M:          ", Float64(t1-t0)/1e6, "ms")
+    print("§1  Popcount 1024w × 1M:          ", Float64(t1-t0)*1e3, "ms (sink=", sink_pop, ")")
 
     # §2 SCC
     var a = List[UInt32]()
@@ -698,10 +699,11 @@ fn main():
         a.append(UInt32(0xAAAA_AAAA))
         b.append(UInt32(0x5555_5555))
     t0 = perf_counter()
+    var sink_scc: Int = 0
     for _ in range(1_000_000):
-        _ = scc_numerator(a, b)
+        sink_scc ^= scc_numerator(a, b)
     t1 = perf_counter()
-    print("§2  SCC 256w × 1M:                ", Float64(t1-t0)/1e6, "ms")
+    print("§2  SCC 256w × 1M:                ", Float64(t1-t0)*1e3, "ms (sink=", sink_scc, ")")
 
     # §3 LFSR
     t0 = perf_counter()
@@ -709,7 +711,7 @@ fn main():
         var lfsr = Lfsr16(0xACE1)
         _ = lfsr.encode_into(UInt16(32768), 1024)
     t1 = perf_counter()
-    print("§3  LFSR 1024-bit × 100k:         ", Float64(t1-t0)/1e6, "ms")
+    print("§3  LFSR 1024-bit × 100k:         ", Float64(t1-t0)*1e3, "ms")
 
     # §7 STDP
     var weights = List[UInt32]()
@@ -723,35 +725,35 @@ fn main():
     for _ in range(100_000):
         _ = stdp_update(weights, pre, post, UInt32(0x0F0F_0F0F), UInt32(0x0101_0101))
     t1 = perf_counter()
-    print("§7  STDP 1024w × 100k:            ", Float64(t1-t0)/1e6, "ms")
+    print("§7  STDP 1024w × 100k:            ", Float64(t1-t0)*1e3, "ms")
 
     # §8 HDC similarity
     t0 = perf_counter()
     for _ in range(1_000_000):
         _ = hdc_similarity(a, b, 8192)
     t1 = perf_counter()
-    print("§8  HDC similarity 256w × 1M:     ", Float64(t1-t0)/1e6, "ms")
+    print("§8  HDC similarity 256w × 1M:     ", Float64(t1-t0)*1e3, "ms")
 
     # §9 Evo fitness
     t0 = perf_counter()
     for _ in range(1_000_000):
         _ = evo_fitness_bitstream(a, b)
     t1 = perf_counter()
-    print("§9  Evo fitness 256w × 1M:        ", Float64(t1-t0)/1e6, "ms")
+    print("§9  Evo fitness 256w × 1M:        ", Float64(t1-t0)*1e3, "ms")
 
     # §14 Attention score
     t0 = perf_counter()
     for _ in range(1_000_000):
         _ = sc_attention_score(a, b, 8192)
     t1 = perf_counter()
-    print("§14 Attention score 256w × 1M:    ", Float64(t1-t0)/1e6, "ms")
+    print("§14 Attention score 256w × 1M:    ", Float64(t1-t0)*1e3, "ms")
 
     # §18 Histogram
     t0 = perf_counter()
     for _ in range(10_000):
         _ = bitstream_histogram(data, 32)
     t1 = perf_counter()
-    print("§18 Histogram 1024w/32 × 10k:     ", Float64(t1-t0)/1e6, "ms")
+    print("§18 Histogram 1024w/32 × 10k:     ", Float64(t1-t0)*1e3, "ms")
 
     # §19 Fixed-point LIF batch
     var lif_batch = LifBatch(64, UInt32(512), UInt32(3))
@@ -762,14 +764,14 @@ fn main():
     for _ in range(100_000):
         _ = lif_batch.tick_all(excitations)
     t1 = perf_counter()
-    print("§19 LIF batch 64 × 100k:          ", Float64(t1-t0)/1e6, "ms")
+    print("§19 LIF batch 64 × 100k:          ", Float64(t1-t0)*1e3, "ms")
 
     # §20 Sparsity
     t0 = perf_counter()
     for _ in range(100_000):
         _ = sparsity_ratio(data)
     t1 = perf_counter()
-    print("§20 Sparsity 1024w × 100k:        ", Float64(t1-t0)/1e6, "ms")
+    print("§20 Sparsity 1024w × 100k:        ", Float64(t1-t0)*1e3, "ms")
 
     # §23 Sobol
     var sob = Sobol32()
@@ -778,7 +780,7 @@ fn main():
         sob = Sobol32()
         _ = sob.encode(32768, 1024)
     t1 = perf_counter()
-    print("§23 Sobol 1024-bit × 100k:        ", Float64(t1-t0)/1e6, "ms")
+    print("§23 Sobol 1024-bit × 100k:        ", Float64(t1-t0)*1e3, "ms")
 
     # §26 Hamming ECC
     t0 = perf_counter()
@@ -786,7 +788,7 @@ fn main():
         _ = hamming_encode_7_4(UInt32(0b1010))
         _ = hamming_decode_7_4(UInt32(0b1010101))
     t1 = perf_counter()
-    print("§26 Hamming ECC × 1M:             ", Float64(t1-t0)/1e6, "ms")
+    print("§26 Hamming ECC × 1M:             ", Float64(t1-t0)*1e3, "ms")
 
     # §31 Spike binning
     var spike_times = List[Int]()
@@ -796,7 +798,7 @@ fn main():
     for _ in range(10_000):
         _ = bin_spike_train(spike_times, 10, 1000)
     t1 = perf_counter()
-    print("§31 Spike bin 10k × 10k:          ", Float64(t1-t0)/1e6, "ms")
+    print("§31 Spike bin 10k × 10k:          ", Float64(t1-t0)*1e3, "ms")
 
     # §33 DVS packing
     var events = List[UInt32]()
@@ -806,14 +808,14 @@ fn main():
     for _ in range(10_000):
         _ = dvs_pack_events(events, 128, 128)
     t1 = perf_counter()
-    print("§33 DVS pack 4k × 10k:            ", Float64(t1-t0)/1e6, "ms")
+    print("§33 DVS pack 4k × 10k:            ", Float64(t1-t0)*1e3, "ms")
 
     # §35 Scale-free graph
     t0 = perf_counter()
     for _ in range(1_000):
         _ = generate_ring_topology(64)
     t1 = perf_counter()
-    print("§35 Ring topo 64 × 1k:            ", Float64(t1-t0)/1e6, "ms")
+    print("§35 Ring topo 64 × 1k:            ", Float64(t1-t0)*1e3, "ms")
 
     # §37 DNA hamming
     var code_a = List[UInt32]()
@@ -825,7 +827,7 @@ fn main():
     for _ in range(1_000_000):
         _ = dna_hamming_distance(code_a, code_b)
     t1 = perf_counter()
-    print("§37 DNA hamming 256w × 1M:        ", Float64(t1-t0)/1e6, "ms")
+    print("§37 DNA hamming 256w × 1M:        ", Float64(t1-t0)*1e3, "ms")
 
     print("=" * 55)
     print("45 kernel groups, 107 functions total")

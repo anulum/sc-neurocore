@@ -263,7 +263,6 @@ See §3-§4. This is the headline issue.
 
 ### 7.2 No `tests/test_constants.py`
 
-Per `feedback_test_sophistication`: "STRONG is the minimum default".
 A constants module with 44 declared values warrants at least:
 - Type assertion (every constant has the documented dtype)
 - Range assertion (e.g. `0 < HOMEOSTATIC_TARGET_RATE < 1`)

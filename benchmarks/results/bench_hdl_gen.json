@@ -1,0 +1,15 @@
+{
+  "verilog_generate_3layer": {
+    "ns_per_call": 3548.3415005728602
+  },
+  "spice_generate_crossbar_16x16": {
+    "ns_per_call": 391960.9159929678
+  },
+  "spice_generate_crossbar_64x64": {
+    "ns_per_call": 4328243.070049211
+  },
+  "yosys_synth_safety_monitor": {
+    "ns_per_call": 246596885.00105405,
+    "exit_code": 0.0
+  }
+}

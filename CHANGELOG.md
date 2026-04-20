@@ -277,21 +277,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Rust acceleration: tokenise_spikes, sinusoidal_position_encode, scaled_dot_product_attention, gaussian_attention, ssm_step_diagonal, infonce_loss (6 pub fn, 11 tests)
 - PyO3: 5 functions registered
 - Tests: 47 multi-angle tests
-- SUPERIOR documentation: 976 lines, 8/8 sections
+- Documentation: 976 lines, 8/8 sections
 
 ### Transcriptomic Foundation Model Interfaces (2026-04-07)
 - **ScKGBERTInterface**: dual S-Encoder + K-Encoder with Gaussian attention (Li et al. 2025 Genome Biology)
 - **GeneformerInterface**: rank-value tokenisation + multi-head attention + MLM (Theodoris et al. 2023 Nature)
 - **rank_value_encode**: shared utility for gene expression tokenisation
 - Tests: 29 multi-angle tests
-- SUPERIOR documentation: 1,118 lines, 8/8 sections
+- Documentation: 1,118 lines, 8/8 sections
 
 ### Gap Model Python + PyO3 + Docs (11 models, 2026-04-07)
 - 10 new Python implementations (publication-exact): AdaptiveThresholdMoENeuron, HybridLinearAttentionNeuron, QuantumInspiredLIFNeuron, DendriticNMDANeuron, MulticompartmentMCNNeuron, AstrocyteLIFNeuron, DirectionSelectiveRGC, CochlearHairCell, ShortTermPlasticitySynapse, DopamineStdpSynapse
 - PyO3 wiring: 11 models registered (2 macro + 9 manual wrappers)
 - Tests: 87 multi-angle tests
-- 10 SUPERIOR docs (5,701 lines total)
-- GPU backend SUPERIOR documentation (607 lines)
+- 10 docs (5,701 lines total)
+- GPU backend documentation (607 lines)
 
 ### CI & Dependency Fixes (2026-04-07)
 - **PEP 639**: migrated `license = { text = "..." }` → `license = "AGPL-3.0-or-later"` (fixes setuptools ≥78)

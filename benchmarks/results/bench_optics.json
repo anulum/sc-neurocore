@@ -1,0 +1,27 @@
+{
+  "analyze_bank_rust": {
+    "calls_per_s": 833651.516018714,
+    "ns_per_call": 1199.541991809383
+  },
+  "analyze_bank_python": {
+    "calls_per_s": 149997.33745277353,
+    "ns_per_call": 6666.7850041994825
+  },
+  "analyze_bank_speedup": {
+    "rust_over_python": 5.557775425721728
+  },
+  "analyze_pairs_rust": {
+    "wall_ms_best_of_5": 0.6713799957651645
+  },
+  "analyze_pairs_python": {
+    "wall_ms_best_of_5": 9.02625200978946
+  },
+  "analyze_pairs_speedup": {
+    "rust_over_python": 13.444326710244528
+  },
+  "fdtd2d_200x100_500steps": {
+    "wall_ms": 102.5470349995885,
+    "mcell_steps_per_s": 97.5162275539232,
+    "field_energy": 0.013810922758582346
+  }
+}

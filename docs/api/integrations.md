@@ -295,7 +295,7 @@ of task #33.
 | 1 | Pipeline wiring | ✅ PASS | `lava_bridge.py` internals wire correctly; `__init__.py` re-exports 5 always-importable symbols + 2 conditional Lava classes (closes task #33; see §1) |
 | 2 | Multi-angle tests | ⚠️ WARN | 3 tests defined but **all skip** without `lava-nc` (Python 3.10 only). No tests cover `export_weights_loihi` / `loihi_threshold_from_sc` / `SCtoLavaConverter` independently of Lava. |
 | 3 | Rust path | N/A | I/O + integer quantisation; downstream Lava is the compute layer |
-| 4 | Benchmarks | ❌ FAIL | None — `lava-nc` unavailable in this env. Not fabricated. |
+| 4 | Benchmarks | ❌ FAIL | None — `lava-nc` unavailable in this env. |
 | 5 | Performance docs | ⚠️ WARN | §7 is honest but empty. |
 | 6 | Documentation page | ✅ PASS | This page |
 | 7 | Rules followed | ⚠️ WARN | SPDX header on every file ✅. Docstring + `__init__` re-exports FIXED by task #33 (§3, §10.1, §10.2). **3+ undocumented `# type: ignore` markers** (lines 87, 101, 121, 135) — still open. |

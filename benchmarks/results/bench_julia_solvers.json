@@ -1,0 +1,19 @@
+{
+  "julia_solver_suite_wall_seconds": 24.562999458998092,
+  "julia_per_solver_ms": {
+    "\u00a71_LIF_ODE": 0.305,
+    "\u00a72_Izhikevich_RS": 0.715,
+    "\u00a73_Hodgkin-Huxley": 1.724,
+    "\u00a74_SC_Equilibrium": 0.156,
+    "\u00a75_FitzHugh-Nagumo": 1.07,
+    "\u00a76_AdEx_IF": 0.528,
+    "\u00a77_Morris-Lecar": 0.542,
+    "\u00a78_Gamma_Oscillation": 0.688,
+    "\u00a79_Memristor_I-V": 1.852,
+    "\u00a710_Phase_Field_64": 0.443,
+    "\u00a711_Predictive_Coding": 0.162,
+    "\u00a712_Homeostasis_PI": 0.302,
+    "\u00a713_Quantum_Decohere": 0.508,
+    "\u00a714_STDP_Curve": 0.004
+  }
+}
