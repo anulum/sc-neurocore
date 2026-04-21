@@ -21,7 +21,23 @@ import pathlib as _pl
 import os
 
 _HAS_LEARNING = False
-_lib = None
+_lib: _ct.CDLL | None = None
+
+
+def _get_lib() -> _ct.CDLL:
+    """Return the loaded Rust learning library or raise if absent.
+
+    Narrows ``_lib`` from ``CDLL | None`` to ``CDLL`` at every call site so
+    mypy does not need per-method ``assert _lib is not None`` in each class
+    method. Kept intentionally cheap: one pointer-equality check per call.
+    """
+    if _lib is None:
+        raise RuntimeError(
+            "libautonomous_learning.so is not loaded. Call "
+            "_load_native_library() first or ensure the Rust crate "
+            "has been built (see CONTRIBUTING.md)."
+        )
+    return _lib
 
 
 def _load_native_library() -> bool:
@@ -227,7 +243,7 @@ class RustPlasticityRule:
         if not _HAS_LEARNING:
             raise RuntimeError("libautonomous_learning.so not available")
         self._rule_type = rule_type
-        self._ptr = _lib.create_rule(
+        self._ptr = _get_lib().create_rule(
             _ct.c_uint32(rule_type),
             _ct.c_float(weight),
             _ct.c_float(param_a),
@@ -237,7 +253,7 @@ class RustPlasticityRule:
     def step(
         self, pre_spike: bool, post_spike: bool, dt: float = 0.001, reward: float = 0.0
     ) -> None:
-        _lib.step_rule(self._ptr, pre_spike, post_spike, _ct.c_float(reward), _ct.c_float(dt))
+        _get_lib().step_rule(self._ptr, pre_spike, post_spike, _ct.c_float(reward), _ct.c_float(dt))
 
     def step_batched(self, pre_spikes, post_spikes, rewards, dt: float = 0.001) -> None:
         """Process Numpy arrays in a single FFI boundary crossing."""
@@ -257,20 +273,20 @@ class RustPlasticityRule:
         post_ptr = post_spikes.ctypes.data_as(_ct.POINTER(_ct.c_bool))
         rew_ptr = rewards.ctypes.data_as(_ct.POINTER(_ct.c_float))
 
-        _lib.step_rule_batched(
+        _get_lib().step_rule_batched(
             self._ptr, pre_ptr, post_ptr, rew_ptr, _ct.c_size_t(count), _ct.c_float(dt)
         )
 
     @property
     def weight(self) -> float:
-        return float(_lib.get_rule_weight(self._ptr))
+        return float(_get_lib().get_rule_weight(self._ptr))
 
     def reset(self) -> None:
-        _lib.reset_rule(self._ptr)
+        _get_lib().reset_rule(self._ptr)
 
     def __del__(self) -> None:
         if self._ptr and _HAS_LEARNING:
-            _lib.destroy_rule(self._ptr)
+            _get_lib().destroy_rule(self._ptr)
             self._ptr = None
 
 
@@ -284,7 +300,7 @@ class RustEligentLearner:
     ) -> None:
         if not _HAS_LEARNING:
             raise RuntimeError("libautonomous_learning.so not available")
-        self._ptr = _lib.create_learner(
+        self._ptr = _get_lib().create_learner(
             _ct.c_float(threshold),
             _ct.c_float(target_rate),
             _ct.c_float(weight),
@@ -293,7 +309,9 @@ class RustEligentLearner:
     def step(
         self, fired: bool, pre_spike: bool, global_reward: float = 0.0, dt: float = 0.001
     ) -> None:
-        _lib.step_learner(self._ptr, fired, pre_spike, _ct.c_float(global_reward), _ct.c_float(dt))
+        _get_lib().step_learner(
+            self._ptr, fired, pre_spike, _ct.c_float(global_reward), _ct.c_float(dt)
+        )
 
     def step_batched(self, fired_slice, pre_spikes, rewards, dt: float = 0.001) -> None:
         import numpy as np
@@ -308,13 +326,13 @@ class RustEligentLearner:
         fired_ptr = fired_slice.ctypes.data_as(_ct.POINTER(_ct.c_bool))
         pre_ptr = pre_spikes.ctypes.data_as(_ct.POINTER(_ct.c_bool))
         rew_ptr = rewards.ctypes.data_as(_ct.POINTER(_ct.c_float))
-        _lib.step_learner_batched(
+        _get_lib().step_learner_batched(
             self._ptr, fired_ptr, pre_ptr, rew_ptr, _ct.c_size_t(count), _ct.c_float(dt)
         )
 
     def __del__(self) -> None:
         if self._ptr and _HAS_LEARNING:
-            _lib.destroy_learner(self._ptr)
+            _get_lib().destroy_learner(self._ptr)
             self._ptr = None
 
 
@@ -339,7 +357,7 @@ class RustRuleLayer:
         self._param_a = param_a
         self._param_b = param_b
 
-        self._ptr = _lib.create_rule_layer(
+        self._ptr = _get_lib().create_rule_layer(
             _ct.c_size_t(count),
             _ct.c_uint32(rule_type),
             _ct.c_float(weight),
@@ -348,9 +366,9 @@ class RustRuleLayer:
         )
 
     def __getstate__(self):
-        size = _lib.get_rule_layer_state_size(self._ptr)
+        size = _get_lib().get_rule_layer_state_size(self._ptr)
         buf = (_ct.c_byte * size)()
-        _lib.get_rule_layer_state_mem(self._ptr, buf)
+        _get_lib().get_rule_layer_state_mem(self._ptr, buf)
         return {
             "count": self._count,
             "rule_type": self._rule_type,
@@ -375,7 +393,7 @@ class RustRuleLayer:
         if not _HAS_LEARNING:
             raise RuntimeError("libautonomous_learning.so not available")
 
-        self._ptr = _lib.create_rule_layer(
+        self._ptr = _get_lib().create_rule_layer(
             _ct.c_size_t(self._count),
             _ct.c_uint32(self._rule_type),
             _ct.c_float(self._weight),
@@ -385,7 +403,7 @@ class RustRuleLayer:
         mem_buffer = state["mem_buffer"]
         if mem_buffer:
             buf = (_ct.c_byte * len(mem_buffer)).from_buffer_copy(mem_buffer)
-            _lib.set_rule_layer_state_mem(self._ptr, buf)
+            _get_lib().set_rule_layer_state_mem(self._ptr, buf)
 
     def load_state_dict(self, state_dict: dict) -> None:
         self.__setstate__(state_dict)
@@ -402,7 +420,7 @@ class RustRuleLayer:
         post_ptr = post_spikes.ctypes.data_as(_ct.POINTER(_ct.c_bool))
         rew_ptr = rewards.ctypes.data_as(_ct.POINTER(_ct.c_float))
 
-        _lib.step_rule_layer(self._ptr, pre_ptr, post_ptr, rew_ptr, _ct.c_float(dt))
+        _get_lib().step_rule_layer(self._ptr, pre_ptr, post_ptr, rew_ptr, _ct.c_float(dt))
 
     def step_analog(
         self, pre_probs, post_probs, rewards, dt: float = 0.001, seed: int = None
@@ -426,7 +444,7 @@ class RustRuleLayer:
         post_ptr = post_probs.ctypes.data_as(_ct.POINTER(_ct.c_float))
         rew_ptr = rewards.ctypes.data_as(_ct.POINTER(_ct.c_float))
 
-        _lib.step_rule_layer_analog(
+        _get_lib().step_rule_layer_analog(
             self._ptr, pre_ptr, post_ptr, rew_ptr, _ct.c_uint64(seed), _ct.c_float(dt)
         )
 
@@ -435,14 +453,14 @@ class RustRuleLayer:
 
         out = np.zeros(self._count, dtype=np.float32)
         out_ptr = out.ctypes.data_as(_ct.POINTER(_ct.c_float))
-        _lib.get_rule_layer_weights(self._ptr, out_ptr)
+        _get_lib().get_rule_layer_weights(self._ptr, out_ptr)
         return out
 
     def save(self, path: str) -> bool:
         """Serialize the internal traces and weights to a binary file natively."""
         safe_path = str(_pl.Path(path).resolve().absolute())
         c_path = _ct.c_char_p(safe_path.encode("utf-8"))
-        success = _lib.save_rule_layer_batched(self._ptr, c_path)
+        success = _get_lib().save_rule_layer_batched(self._ptr, c_path)
         if not success:
             raise OSError(f"Failed to save biological traits to {safe_path}")
         return True
@@ -451,18 +469,18 @@ class RustRuleLayer:
         """Deserialize traces and weights from a binary file directly into memory."""
         safe_path = str(_pl.Path(path).resolve().absolute())
         c_path = _ct.c_char_p(safe_path.encode("utf-8"))
-        success = _lib.load_rule_layer_batched(self._ptr, c_path)
+        success = _get_lib().load_rule_layer_batched(self._ptr, c_path)
         if not success:
             raise OSError(f"Failed to load biological traits or format mismatched from {safe_path}")
         return True
 
     def reset(self) -> None:
         """Zero each rule's plasticity traces; learned weights are preserved."""
-        _lib.reset_rule_layer(self._ptr)
+        _get_lib().reset_rule_layer(self._ptr)
 
     def __del__(self) -> None:
         if hasattr(self, "_ptr") and self._ptr and _HAS_LEARNING:
-            _lib.destroy_rule_layer(self._ptr)
+            _get_lib().destroy_rule_layer(self._ptr)
             self._ptr = None
 
 
@@ -494,7 +512,7 @@ class RustWgpuRuleLayer:
         tau_plus = float(kwargs.get("tau_plus", 20.0))
         tau_minus = float(kwargs.get("tau_minus", 20.0))
 
-        self._ptr = _lib.create_wgpu_layer(
+        self._ptr = _get_lib().create_wgpu_layer(
             _ct.c_size_t(count),
             _ct.c_uint32(rule_type),
             _ct.c_float(param_a),
@@ -511,7 +529,7 @@ class RustWgpuRuleLayer:
             )
 
         if _DETERMINISTIC_SEED is not None:
-            _lib.set_wgpu_layer_seed(self._ptr, _ct.c_uint32(_DETERMINISTIC_SEED))
+            _get_lib().set_wgpu_layer_seed(self._ptr, _ct.c_uint32(_DETERMINISTIC_SEED))
 
     def step(self, pre_spikes, post_spikes, rewards=None, dt: float = 0.001) -> None:
         import numpy as np
@@ -528,7 +546,7 @@ class RustWgpuRuleLayer:
             rewards = np.ascontiguousarray(rewards, dtype=np.float32)
             rew_ptr = rewards.ctypes.data_as(_ct.POINTER(_ct.c_float))
 
-        _lib.step_wgpu_layer(self._ptr, pre_ptr, post_ptr, rew_ptr, _ct.c_float(dt))
+        _get_lib().step_wgpu_layer(self._ptr, pre_ptr, post_ptr, rew_ptr, _ct.c_float(dt))
 
     def step_analog(
         self, pre_probs, post_probs, rewards, dt: float = 0.001, seed: int = None
@@ -545,7 +563,7 @@ class RustWgpuRuleLayer:
 
         out = np.zeros(self._count, dtype=np.float32)
         out_ptr = out.ctypes.data_as(_ct.POINTER(_ct.c_float))
-        _lib.get_wgpu_weights(self._ptr, out_ptr)
+        _get_lib().get_wgpu_weights(self._ptr, out_ptr)
         return out
 
     def get_state_dict(self) -> dict:
@@ -560,11 +578,11 @@ class RustWgpuRuleLayer:
 
     def reset(self) -> None:
         """Zero WGSL plasticity traces; weights preserved. See `WgpuRuleLayer::reset`."""
-        _lib.reset_wgpu_layer(self._ptr)
+        _get_lib().reset_wgpu_layer(self._ptr)
 
     def __del__(self) -> None:
         if hasattr(self, "_ptr") and self._ptr and _HAS_LEARNING:
-            _lib.free_wgpu_layer(self._ptr)
+            _get_lib().free_wgpu_layer(self._ptr)
             self._ptr = None
 
 

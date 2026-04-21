@@ -22,7 +22,18 @@ import pathlib as _pl
 
 _LIB_PATH = _pl.Path(__file__).parent / "libcore_engine.so"
 _HAS_CORE_ENGINE = False
-_lib = None
+_lib: _ct.CDLL | None = None
+
+
+def _get_lib() -> _ct.CDLL:
+    """Return the loaded Rust core-engine library or raise if absent."""
+    if _lib is None:
+        raise RuntimeError(
+            "libcore_engine.so is not loaded. Build the `core_engine` crate "
+            "or ensure the .so is present next to this module."
+        )
+    return _lib
+
 
 if _LIB_PATH.exists():
     try:
@@ -114,28 +125,28 @@ def sc_multiply(a: int, b: int) -> int:
     """SC multiply: AND of two u32 bitstreams."""
     if not _HAS_CORE_ENGINE:
         return a & b
-    return int(_lib.sc_multiply(_ct.c_uint32(a), _ct.c_uint32(b)))
+    return int(_get_lib().sc_multiply(_ct.c_uint32(a), _ct.c_uint32(b)))
 
 
 def sc_mux(a: int, b: int, sel: int) -> int:
     """SC MUX: (sel & a) | (~sel & b)."""
     if not _HAS_CORE_ENGINE:
         return (sel & a) | (~sel & b) & 0xFFFFFFFF
-    return int(_lib.sc_mux(_ct.c_uint32(a), _ct.c_uint32(b), _ct.c_uint32(sel)))
+    return int(_get_lib().sc_mux(_ct.c_uint32(a), _ct.c_uint32(b), _ct.c_uint32(sel)))
 
 
 def sc_popcount(a: int) -> int:
     """Population count of a u32."""
     if not _HAS_CORE_ENGINE:
         return bin(a).count("1")
-    return int(_lib.sc_popcount(_ct.c_uint32(a)))
+    return int(_get_lib().sc_popcount(_ct.c_uint32(a)))
 
 
 def sc_popcount64(a: int) -> int:
     """Population count of a u64."""
     if not _HAS_CORE_ENGINE:
         return bin(a).count("1")
-    return int(_lib.sc_popcount64(_ct.c_uint64(a)))
+    return int(_get_lib().sc_popcount64(_ct.c_uint64(a)))
 
 
 def sc_popcount_packed(data: list[int]) -> int:
@@ -144,7 +155,7 @@ def sc_popcount_packed(data: list[int]) -> int:
         return sum(bin(w).count("1") for w in data)
     n = len(data)
     arr = (_ct.c_uint64 * n)(*data)
-    return int(_lib.sc_popcount_packed(arr, _ct.c_size_t(n)))
+    return int(_get_lib().sc_popcount_packed(arr, _ct.c_size_t(n)))
 
 
 def sc_popcount_packed_np(data):
@@ -153,7 +164,7 @@ def sc_popcount_packed_np(data):
 
     data = np.ascontiguousarray(data, dtype=np.uint64)
     ptr = data.ctypes.data_as(_ct.POINTER(_ct.c_uint64))
-    return int(_lib.sc_popcount_packed(ptr, _ct.c_size_t(data.size)))
+    return int(_get_lib().sc_popcount_packed(ptr, _ct.c_size_t(data.size)))
 
 
 def sc_scc_packed(a: list[int], b: list[int]) -> float:
@@ -163,7 +174,7 @@ def sc_scc_packed(a: list[int], b: list[int]) -> float:
         return 0.0
     arr_a = (_ct.c_uint64 * n)(*a[:n])
     arr_b = (_ct.c_uint64 * n)(*b[:n])
-    return float(_lib.sc_scc_packed(arr_a, arr_b, _ct.c_size_t(n)))
+    return float(_get_lib().sc_scc_packed(arr_a, arr_b, _ct.c_size_t(n)))
 
 
 def sc_scc_packed_np(a, b) -> float:
@@ -177,4 +188,4 @@ def sc_scc_packed_np(a, b) -> float:
         return 0.0
     ptr_a = a[:n].ctypes.data_as(_ct.POINTER(_ct.c_uint64))
     ptr_b = b[:n].ctypes.data_as(_ct.POINTER(_ct.c_uint64))
-    return float(_lib.sc_scc_packed(ptr_a, ptr_b, _ct.c_size_t(n)))
+    return float(_get_lib().sc_scc_packed(ptr_a, ptr_b, _ct.c_size_t(n)))
