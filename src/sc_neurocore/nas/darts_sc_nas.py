@@ -84,7 +84,7 @@ class SCMixedOp(nn.Module):
         return exp_luts, exp_power
 
     def extract_optimal_config(self) -> int:
-        idx = torch.argmax(self.alphas).item()
+        idx = int(torch.argmax(self.alphas).item())
         return self.lengths[idx]
 
 
@@ -93,7 +93,7 @@ class SCNASNetwork(nn.Module):
     A small hardware-aware search network representing a deep SNN.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.layer1 = SCMixedOp(1, 16, 3, 1, 1)
         self.layer2 = SCMixedOp(16, 32, 3, 2, 1)
@@ -135,13 +135,16 @@ if __name__ == "__main__":
     target_luts = 500_000.0
     hw_loss = torch.relu(total_luts - target_luts) * 1e-4
 
-    loss = ce_loss + hw_loss
+    loss: torch.Tensor = ce_loss + hw_loss
     loss.backward()
 
     print("--- SC-NAS Differentiable Search (DARTS) ---")
     print(f"Total Loss: {loss.item():.4f} (CE: {ce_loss.item():.4f}, HW: {hw_loss.item():.4f})")
     print(f"Expected LUTs: {total_luts.item():.2f}")
     print(f"Expected Power: {total_power.item():.2f} mW")
+    assert net.layer1.alphas.grad is not None, (
+        "alpha grads should have been populated by backward()"
+    )
     print(f"Layer 1 Alphas Grad: {net.layer1.alphas.grad.norm().item():.4f}")
 
     # Display the optimal extracted architecture

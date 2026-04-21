@@ -206,10 +206,11 @@ warn_unused_ignores = false
 warn_return_any = false
 disallow_any_generics = false
 [[tool.mypy.overrides]]
-module = ['cupy.*', 'cupyx.*', 'mpi4py.*', 'numba.*', 'matplotlib.*', 'scipy.*', 'networkx.*', 'onnx.*', 'torch.*', 'torchvision.*', 'gym.*', 'flask.*', 'scpn_evo2_real_interface.*', 'scpn_opentrions_verify.*', 'scpn_cross_layer_integration_L1_L7.*', 'jax.*', 'qiskit.*', 'pennylane.*', 'qiskit_aer.*', 'fastapi.*', 'uvicorn.*', 'starlette.*', 'pydantic.*', 'nir.*', 'h5py.*', 'sc_neurocore_engine.*', 'tonic.*', 'lava.*', 'wandb.*', 'yaml.*', 'serial.*', 'usb.*', 'zstandard.*', 'pywt.*', 'juliacall.*']
+module = ['cupy.*', 'cupyx.*', 'mpi4py.*', 'numba.*', 'matplotlib.*', 'scipy.*', 'networkx.*', 'onnx.*', 'torch.*', 'torchvision.*', 'gym.*', 'flask.*', 'scpn_evo2_real_interface.*', 'scpn_opentrions_verify.*', 'scpn_cross_layer_integration_L1_L7.*', 'jax.*', 'qiskit.*', 'pennylane.*', 'qiskit_aer.*', 'fastapi.*', 'uvicorn.*', 'starlette.*', 'pydantic.*', 'nir.*', 'h5py.*', 'sc_neurocore_engine.*', 'tonic.*', 'lava.*', 'wandb.*', 'yaml.*', 'serial.*', 'usb.*', 'zstandard.*', 'pywt.*', 'juliacall.*', 'gdsfactory.*', 'meep.*']
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = ['sc_neurocore.training.*', 'sc_neurocore.qat.*', 'sc_neurocore.conversion.*', 'sc_neurocore.accel.jax_backend', 'sc_neurocore.accel.jit_kernels']
+module = ['sc_neurocore.training.*', 'sc_neurocore.qat.*', 'sc_neurocore.conversion.*', 'sc_neurocore.accel.jax_backend', 'sc_neurocore.accel.jit_kernels', 'sc_neurocore.nas.*']
 disallow_subclassing_any = false
 disallow_untyped_decorators = false
+disallow_untyped_calls = false

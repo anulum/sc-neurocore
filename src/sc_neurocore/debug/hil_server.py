@@ -32,7 +32,7 @@ class HILServerDaemon:
     _process: Optional[subprocess.Popen] = None
     _go_dir: Path = Path(__file__).parent.parent / "accel" / "go" / "services" / "hil_debugger"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self._go_dir.exists():
             return
         # Fallback for installed package
@@ -84,6 +84,7 @@ class HILServerDaemon:
 
     def _wait_for_ready(self, timeout_sec: int = 5) -> bool:
         start_time = time.time()
+        assert self._process is not None, "_wait_for_ready called before start()"
         while time.time() - start_time < timeout_sec:
             if self._process.poll() is not None:
                 err = (

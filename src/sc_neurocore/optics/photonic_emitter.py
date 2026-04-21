@@ -63,7 +63,7 @@ class PhotonicEmitter:
     def _topological_sort(self, nodes: List[Any]) -> List[Any]:
         in_degree = {n.id: 0 for n in nodes}
         node_map = {n.id: n for n in nodes}
-        adj = {n.id: [] for n in nodes}
+        adj: dict[str, list[str]] = {n.id: [] for n in nodes}
         output_to_id = {n.output: n.id for n in nodes}
 
         for n in nodes:
@@ -597,11 +597,11 @@ class FDTD2DSolver:
         self.dt = dt_factor * ds_min / (self.c0 * math.sqrt(2))
         self.pml_layers = pml_layers
 
-        self.ezx = np.zeros((nx, ny), dtype=np.float64)
-        self.ezy = np.zeros((nx, ny), dtype=np.float64)
-        self.ez = np.zeros((nx, ny), dtype=np.float64)
-        self.hx = np.zeros((nx, ny), dtype=np.float64)
-        self.hy = np.zeros((nx, ny), dtype=np.float64)
+        self.ezx: np.ndarray = np.zeros((nx, ny), dtype=np.float64)
+        self.ezy: np.ndarray = np.zeros((nx, ny), dtype=np.float64)
+        self.ez: np.ndarray = np.zeros((nx, ny), dtype=np.float64)
+        self.hx: np.ndarray = np.zeros((nx, ny), dtype=np.float64)
+        self.hy: np.ndarray = np.zeros((nx, ny), dtype=np.float64)
 
         # Material map: refractive index per cell
         self.n_map = np.ones((nx, ny), dtype=np.float64)
@@ -904,7 +904,7 @@ class CrosstalkModel:
     parallel waveguide runs on a photonic chip.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.pairs: List[WaveguidePair] = []
 
     def add_pair(self, pair: WaveguidePair) -> None:
