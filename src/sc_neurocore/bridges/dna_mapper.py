@@ -3008,8 +3008,8 @@ class PlateLayout:
                 )
 
         # Assign to wells
-        plates: list[list[Dict[str, str]]] = []
-        current_plate: list[Dict[str, str]] = []
+        plates: list[list[Dict[str, Any]]] = []
+        current_plate: list[Dict[str, Any]] = []
 
         for i, oligo in enumerate(unique_oligos):
             plate_idx = i // self._n_wells
