@@ -124,16 +124,16 @@ class BitstreamDecorrelator:
         """Compute stochastic cross-correlation between two bitstreams."""
         a_flat = a.flatten().astype(np.float64)
         b_flat = b.flatten().astype(np.float64)
-        pa = np.mean(a_flat)
-        pb = np.mean(b_flat)
-        p_and = np.mean(a_flat * b_flat)
+        pa = float(np.mean(a_flat))
+        pb = float(np.mean(b_flat))
+        p_and = float(np.mean(a_flat * b_flat))
         num = p_and - (pa * pb)
         if abs(num) < 1e-12:
             return 0.0
-        denom = (min(pa, pb) - pa * pb) if num > 0 else (pa * pb - max(0, pa + pb - 1))
+        denom = (min(pa, pb) - pa * pb) if num > 0 else (pa * pb - max(0.0, pa + pb - 1.0))
         if abs(denom) < 1e-12:
             return 0.0
-        return float(max(-1.0, min(1.0, num / denom)))
+        return max(-1.0, min(1.0, num / denom))
 
 
 class CrossModalAttention:

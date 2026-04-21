@@ -19,9 +19,9 @@ class AERRoutingDaemon:
             Path(__file__).resolve().parent.parent / "accel" / "go" / "services" / "aer_router"
         )
         self._port = port
-        self._process = None
+        self._process: subprocess.Popen[bytes] | None = None
 
-    def start(self, build: bool = True):
+    def start(self, build: bool = True) -> None:
         if build:
             print("[AER Router] Natively compiling robust Go pipeline...")
             subprocess.run(
@@ -39,7 +39,7 @@ class AERRoutingDaemon:
         )
         time.sleep(0.5)
 
-    def stop(self):
+    def stop(self) -> None:
         """Tears down the active background UDP topology safely."""
         if self._process is not None:
             self._process.terminate()
