@@ -373,6 +373,7 @@ nav:
       - Acceleration:
           - Mojo SIMD Kernels: api/mojo_accel.md
           - Julia ODE Solvers: api/julia_solvers.md
+          - Native FFI Array Guards: api/array_guards.md
       - Formal + Safety:
           - Lean 4 Safety Proofs: api/formal.md
       - Edge + Wire Protocol:
