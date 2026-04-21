@@ -64,6 +64,7 @@ Usage:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any, Callable
 
 import numpy as np
 
@@ -80,20 +81,23 @@ import numpy as np
 # expose every Rust symbol, so the bare `from sc_neurocore_engine
 # import …` would yield `False` whenever the bridge wrapper wins
 # the import race.
-_rust_ping_step = None
+# Tracks the Rust PING kernel when the compiled `sc_neurocore_engine`
+# wheel is present, `None` otherwise. Loaded via `importlib` (rather than
+# `from X import Y as _rust_ping_step`) so the variable binding is a
+# regular assignment — the `from X import Y as Z` form would trip mypy's
+# no-redef rule twice over inside the nested try/except fallback.
+import importlib as _importlib
+
+_rust_ping_step: Callable[..., Any] | None = None
 _HAS_RUST_PING_STEP = False
 try:
-    from sc_neurocore_engine.sc_neurocore_engine import (  # type: ignore[import-not-found]
-        py_ping_step as _rust_ping_step,
-    )
-
+    _rust_ping_step = _importlib.import_module(
+        "sc_neurocore_engine.sc_neurocore_engine"
+    ).py_ping_step
     _HAS_RUST_PING_STEP = True
 except (ImportError, AttributeError):
     try:
-        from sc_neurocore_engine import (  # type: ignore[no-redef]
-            py_ping_step as _rust_ping_step,
-        )
-
+        _rust_ping_step = _importlib.import_module("sc_neurocore_engine").py_ping_step
         _HAS_RUST_PING_STEP = True
     except (ImportError, AttributeError):
         pass
@@ -104,7 +108,7 @@ import os
 
 _logger = logging.getLogger(__name__)
 
-_julia_ping_step = None
+_julia_ping_step: Callable[..., Any] | None = None
 _HAS_JULIA_PING_STEP = False
 try:
     from juliacall import Main as jl  # type: ignore[import-not-found]
@@ -121,7 +125,7 @@ try:
 except Exception as _jl_err:  # noqa: BLE001
     _logger.debug("Julia PING accel unavailable: %r", _jl_err)
 
-_go_ping_step = None
+_go_ping_step: Any = None  # ctypes function pointer; precise type varies
 _HAS_GO_PING_STEP = False
 try:
     _go_ping_lib = os.path.abspath(
@@ -141,7 +145,7 @@ try:
 except Exception as _go_err:  # noqa: BLE001
     _logger.debug("Go PING accel unavailable: %r", _go_err)
 
-_mojo_ping_step = None
+_mojo_ping_step: Any = None  # ctypes function pointer; precise type varies
 _HAS_MOJO_PING_STEP = False
 try:
     _mojo_ping_lib = os.path.abspath(
@@ -232,17 +236,20 @@ class PINGCircuit:
     # raises `RuntimeError` from `__post_init__`.
     backend: str = "auto"
 
-    # State (initialised in __post_init__).
-    v_e: np.ndarray | None = field(default=None, repr=False)
-    v_i: np.ndarray | None = field(default=None, repr=False)
-    g_ampa_e: np.ndarray | None = field(default=None, repr=False)
-    g_ampa_i: np.ndarray | None = field(default=None, repr=False)
-    g_gaba_e: np.ndarray | None = field(default=None, repr=False)
-    g_gaba_i: np.ndarray | None = field(default=None, repr=False)
-    refrac_e: np.ndarray | None = field(default=None, repr=False)
-    refrac_i: np.ndarray | None = field(default=None, repr=False)
-    i_drive_e: np.ndarray | None = field(default=None, repr=False)
-    i_drive_i: np.ndarray | None = field(default=None, repr=False)
+    # State (sized and populated by __post_init__; the empty-array
+    # defaults exist only so mypy sees the fields as plain ndarray
+    # instead of ndarray | None, which would force a narrowing
+    # assertion at every usage site).
+    v_e: np.ndarray = field(default_factory=lambda: np.zeros(0), repr=False)
+    v_i: np.ndarray = field(default_factory=lambda: np.zeros(0), repr=False)
+    g_ampa_e: np.ndarray = field(default_factory=lambda: np.zeros(0), repr=False)
+    g_ampa_i: np.ndarray = field(default_factory=lambda: np.zeros(0), repr=False)
+    g_gaba_e: np.ndarray = field(default_factory=lambda: np.zeros(0), repr=False)
+    g_gaba_i: np.ndarray = field(default_factory=lambda: np.zeros(0), repr=False)
+    refrac_e: np.ndarray = field(default_factory=lambda: np.zeros(0), repr=False)
+    refrac_i: np.ndarray = field(default_factory=lambda: np.zeros(0), repr=False)
+    i_drive_e: np.ndarray = field(default_factory=lambda: np.zeros(0), repr=False)
+    i_drive_i: np.ndarray = field(default_factory=lambda: np.zeros(0), repr=False)
 
     def __post_init__(self) -> None:
         if self.n_excitatory <= 0 or self.n_inhibitory <= 0:
@@ -385,6 +392,7 @@ class PINGCircuit:
         return spikes_e_u8.astype(bool), spikes_i_u8.astype(bool)
 
     def _step_julia(self, dt: float) -> tuple[np.ndarray, np.ndarray]:
+        assert _julia_ping_step is not None, "backend='julia' but _julia_ping_step is not loaded"
         xi_e = self._rng.standard_normal(self.n_excitatory)
         xi_i = self._rng.standard_normal(self.n_inhibitory)
         spikes_e_u8 = np.zeros(self.n_excitatory, dtype=np.uint8)
@@ -427,6 +435,7 @@ class PINGCircuit:
         return spikes_e_u8.astype(bool), spikes_i_u8.astype(bool)
 
     def _step_go(self, dt: float) -> tuple[np.ndarray, np.ndarray]:
+        assert _go_ping_step is not None, "backend='go' but _go_ping_step is not loaded"
         xi_e = self._rng.standard_normal(self.n_excitatory)
         xi_i = self._rng.standard_normal(self.n_inhibitory)
         spikes_e_u8 = np.zeros(self.n_excitatory, dtype=np.uint8)
@@ -513,6 +522,7 @@ class PINGCircuit:
         return spikes_e_u8.astype(bool), spikes_i_u8.astype(bool)
 
     def _step_mojo(self, dt: float) -> tuple[np.ndarray, np.ndarray]:
+        assert _mojo_ping_step is not None, "backend='mojo' but _mojo_ping_step is not loaded"
         xi_e = self._rng.standard_normal(self.n_excitatory)
         xi_i = self._rng.standard_normal(self.n_inhibitory)
         spikes_e_u8 = np.zeros(self.n_excitatory, dtype=np.uint8)
