@@ -87,7 +87,7 @@ the connectivity (which is expensive at full scale).
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable
 
 import numpy as np
 from scipy import sparse, stats
@@ -105,37 +105,35 @@ if TYPE_CHECKING:
 # local. Imported via the engine submodule directly (the
 # `bridge/sc_neurocore_engine` Python wrapper that pytest places
 # earlier on `sys.path` does not re-export every Rust symbol).
-_rust_csr_spmv_add = None
-_rust_csr_multi_spmv_add = None
+import importlib as _importlib
+
+_rust_csr_spmv_add: Callable[..., Any] | None = None
+_rust_csr_multi_spmv_add: Callable[..., Any] | None = None
 _HAS_RUST_CSR_SPMV = False
 _HAS_RUST_CSR_MULTI_SPMV = False
 try:
-    from sc_neurocore_engine.sc_neurocore_engine import (  # type: ignore[import-not-found]
-        py_parallel_csr_spmv_add as _rust_csr_spmv_add,
-    )
-
+    _rust_csr_spmv_add = _importlib.import_module(
+        "sc_neurocore_engine.sc_neurocore_engine"
+    ).py_parallel_csr_spmv_add
     _HAS_RUST_CSR_SPMV = True
 except (ImportError, AttributeError):
     try:
-        from sc_neurocore_engine import (  # type: ignore[no-redef]
-            py_parallel_csr_spmv_add as _rust_csr_spmv_add,
-        )
-
+        _rust_csr_spmv_add = _importlib.import_module(
+            "sc_neurocore_engine"
+        ).py_parallel_csr_spmv_add
         _HAS_RUST_CSR_SPMV = True
     except (ImportError, AttributeError):
         pass
 try:
-    from sc_neurocore_engine.sc_neurocore_engine import (  # type: ignore[import-not-found]
-        py_parallel_csr_multi_spmv_add as _rust_csr_multi_spmv_add,
-    )
-
+    _rust_csr_multi_spmv_add = _importlib.import_module(
+        "sc_neurocore_engine.sc_neurocore_engine"
+    ).py_parallel_csr_multi_spmv_add
     _HAS_RUST_CSR_MULTI_SPMV = True
 except (ImportError, AttributeError):
     try:
-        from sc_neurocore_engine import (  # type: ignore[no-redef]
-            py_parallel_csr_multi_spmv_add as _rust_csr_multi_spmv_add,
-        )
-
+        _rust_csr_multi_spmv_add = _importlib.import_module(
+            "sc_neurocore_engine"
+        ).py_parallel_csr_multi_spmv_add
         _HAS_RUST_CSR_MULTI_SPMV = True
     except (ImportError, AttributeError):
         pass
@@ -405,7 +403,7 @@ class CorticalColumn:
         # Per-population scaled sizes (at least 1 cell per pop to
         # keep matrix shapes well-defined at very low scale).
         self.sizes: dict[str, int] = {
-            p: max(1, int(round(FULL_SIZES[p] * scale))) for p in POPULATIONS
+            pop: max(1, int(round(FULL_SIZES[pop] * scale))) for pop in POPULATIONS
         }
         self.n_total = sum(self.sizes.values())
 
@@ -513,8 +511,8 @@ class CorticalColumn:
         for ti, target in enumerate(POPULATIONS):
             n_t = self.sizes[target]
             for sj, source in enumerate(POPULATIONS):
-                p = float(CONN_PROBS[ti, sj])
-                if p <= 0.0:
+                prob = float(CONN_PROBS[ti, sj])
+                if prob <= 0.0:
                     continue
                 n_s = self.sizes[source]
                 if scale_correction:
@@ -535,7 +533,7 @@ class CorticalColumn:
                     # default at sub-full scale.
                     k_per_target = max(
                         1,
-                        int(round(p * FULL_SIZES[source])),
+                        int(round(prob * FULL_SIZES[source])),
                     )
                     rows = np.repeat(
                         np.arange(n_t, dtype=np.int32),
@@ -550,7 +548,7 @@ class CorticalColumn:
                     data = np.ones(n_t * k_per_target, dtype=np.float32)
                 else:
                     # Bernoulli per pair at the literal probability.
-                    mask = self._rng.random((n_t, n_s)) < p
+                    mask = self._rng.random((n_t, n_s)) < prob
                     rows_t, cols_t = np.nonzero(mask)
                     rows = rows_t.astype(np.int32, copy=False)
                     cols = cols_t.astype(np.int32, copy=False)
@@ -653,7 +651,7 @@ class CorticalColumn:
                     )[1:-1]
                     cuts = np.quantile(delays_ms, quantiles)
                     bin_idx = np.searchsorted(cuts, delays_ms)
-                    bins_list: list[tuple[int, sparse.csr_matrix]] = []
+                    bins_list: list[tuple[float, sparse.csr_matrix]] = []
                     for b in range(n_bins):
                         mask = bin_idx == b
                         if not mask.any():
