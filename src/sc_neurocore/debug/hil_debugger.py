@@ -12,19 +12,19 @@ from sc_neurocore.debug.hil_server import HILServerDaemon
 class HILDebugger:
     """High-level wrapper for the HIL telemetry server."""
 
-    def __init__(self, port: int = 8081):
+    def __init__(self, port: int = 8081) -> None:
         self.daemon = HILServerDaemon(port=port)
 
-    def start(self):
+    def start(self) -> bool:
         """Starts the HIL debugger server."""
         return self.daemon.start()
 
-    def stop(self):
+    def stop(self) -> None:
         """Stops the HIL debugger server."""
         self.daemon.stop()
 
     @property
-    def is_running(self):
+    def is_running(self) -> bool:
         """Returns True if the server is active."""
         return self.daemon.is_running
 

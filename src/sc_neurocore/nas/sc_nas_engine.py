@@ -298,11 +298,13 @@ class EvolutionaryNAS:
         self.history: List[Dict[str, Any]] = []
 
     def _random_layer(self) -> LayerConfig:
+        neuron_types = self.objective.allowed_neuron_types
+        decorrelators = self.objective.allowed_decorrelators
         return LayerConfig(
             neurons=int(self.rng.choice([16, 32, 64, 128, 256])),
-            neuron_type=self.rng.choice(self.objective.allowed_neuron_types),
+            neuron_type=neuron_types[int(self.rng.integers(0, len(neuron_types)))],
             bitstream_length=int(self.rng.choice([64, 128, 256, 512, 1024, 2048, 4096])),
-            decorrelation=self.rng.choice(self.objective.allowed_decorrelators),
+            decorrelation=decorrelators[int(self.rng.integers(0, len(decorrelators)))],
         )
 
     def _random_candidate(self, gen: int = 0) -> SCCandidate:
@@ -329,10 +331,14 @@ class EvolutionaryNAS:
             )
         elif action == "neuron" and c.layers:
             idx = int(self.rng.integers(0, len(c.layers)))
-            c.layers[idx].neuron_type = self.rng.choice(self.objective.allowed_neuron_types)
+            neuron_types = self.objective.allowed_neuron_types
+            c.layers[idx].neuron_type = neuron_types[int(self.rng.integers(0, len(neuron_types)))]
         elif action == "decorr" and c.layers:
             idx = int(self.rng.integers(0, len(c.layers)))
-            c.layers[idx].decorrelation = self.rng.choice(self.objective.allowed_decorrelators)
+            decorrelators = self.objective.allowed_decorrelators
+            c.layers[idx].decorrelation = decorrelators[
+                int(self.rng.integers(0, len(decorrelators)))
+            ]
         elif action == "add":
             c.layers.append(self._random_layer())
         elif action == "remove" and len(c.layers) > 2:
@@ -360,7 +366,9 @@ class EvolutionaryNAS:
             fitness = [c.fitness for c in population]
             indices = py_evo_tournament(fitness, 1, k, int(self.rng.integers(0, 2**32)))
             return population[indices[0]]
-        candidates = self.rng.choice(population, size=min(k, len(population)), replace=False)
+        k_sel = min(k, len(population))
+        sel_idx = self.rng.choice(len(population), size=k_sel, replace=False)
+        candidates = [population[int(i)] for i in sel_idx]
         return max(candidates, key=lambda c: c.fitness)
 
     def search(self) -> List[SCCandidate]:
