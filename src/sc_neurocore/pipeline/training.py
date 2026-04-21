@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 
@@ -54,7 +55,7 @@ class SCTrainingLoop:
             logger.info("RL Epoch %d: Reward = %.4f", gen, reward)
 
     @staticmethod
-    def train_multimodal_fusion(fusion_layer: object, dataset: object, epochs: int = 5) -> None:
+    def train_multimodal_fusion(fusion_layer: Any, dataset: Any, epochs: int = 5) -> None:
         """Train weights in a multimodal fusion layer via per-sample updates.
 
         Iterates over the dataset for ``epochs`` rounds, calling
@@ -66,8 +67,8 @@ class SCTrainingLoop:
         for epoch in range(epochs):
             total_loss = 0.0
             for i in range(n_samples):
-                sample = dataset.get_sample(i)  # type: ignore[union-attr]
-                output = fusion_layer.train_step(sample)  # type: ignore[union-attr]
+                sample = dataset.get_sample(i)
+                output = fusion_layer.train_step(sample)
                 if output is not None:
                     total_loss += float(np.sum(np.abs(output)))
             avg_loss = total_loss / max(n_samples, 1)

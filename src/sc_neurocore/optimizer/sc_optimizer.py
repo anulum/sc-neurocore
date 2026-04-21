@@ -251,7 +251,7 @@ class SCOptimizer:
                         best_upgrade = cand
                         best_layer_id = layer.id
 
-            if best_upgrade:
+            if best_upgrade and best_layer_id is not None:
                 current_config[best_layer_id] = best_upgrade
                 upgraded = True
 

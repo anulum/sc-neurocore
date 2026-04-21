@@ -259,9 +259,9 @@ else:
     def _jax_not_installed(*_args: Any, **_kwargs: Any) -> Any:
         raise ImportError("JAX is not installed. Install with: pip install sc-neurocore[jax]")
 
-    jax_vec_and = _jax_not_installed
-    jax_popcount = _jax_not_installed
-    jax_vec_mac = _jax_not_installed
+    jax_vec_and = _jax_not_installed  # type: ignore[assignment]
+    jax_popcount = _jax_not_installed  # type: ignore[assignment]
+    jax_vec_mac = _jax_not_installed  # type: ignore[assignment]
     jax_lif_step = _jax_not_installed  # type: ignore[assignment]
-    jax_forward_pass = _jax_not_installed
-    jax_surrogate_gradient_step = _jax_not_installed
+    jax_forward_pass = _jax_not_installed  # type: ignore[assignment]
+    jax_surrogate_gradient_step = _jax_not_installed  # type: ignore[assignment]

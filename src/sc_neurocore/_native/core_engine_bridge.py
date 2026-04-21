@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import ctypes as _ct
 import pathlib as _pl
+from typing import Any
 
 _LIB_PATH = _pl.Path(__file__).parent / "libcore_engine.so"
 _HAS_CORE_ENGINE = False
@@ -158,7 +159,7 @@ def sc_popcount_packed(data: list[int]) -> int:
     return int(_get_lib().sc_popcount_packed(arr, _ct.c_size_t(n)))
 
 
-def sc_popcount_packed_np(data):
+def sc_popcount_packed_np(data: Any) -> int:
     """Popcount of packed u64 numpy array (zero-copy)."""
     import numpy as np
 
@@ -177,7 +178,7 @@ def sc_scc_packed(a: list[int], b: list[int]) -> float:
     return float(_get_lib().sc_scc_packed(arr_a, arr_b, _ct.c_size_t(n)))
 
 
-def sc_scc_packed_np(a, b) -> float:
+def sc_scc_packed_np(a: Any, b: Any) -> float:
     """Stochastic cross-correlation of packed u64 numpy arrays (zero-copy)."""
     import numpy as np
 

@@ -47,8 +47,8 @@ class ONNXNode:
     name: str
     attributes: Dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict:
-        d = {
+    def to_dict(self) -> Dict[str, Any]:
+        d: Dict[str, Any] = {
             "op_type": self.op_type,
             "domain": self.domain,
             "input": self.inputs,
