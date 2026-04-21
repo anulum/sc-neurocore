@@ -55,6 +55,21 @@ GATES = [
 ]
 
 
+SPDX_SKIP_PARTS = {
+    "__pycache__",
+    ".pixi",
+    ".venv",
+    "venv",
+    "node_modules",
+    "target",
+    "build",
+    "dist",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".pytest_cache",
+}
+
+
 def check_spdx() -> bool:
     missing = []
     for d in SPDX_DIRS:
@@ -62,7 +77,12 @@ def check_spdx() -> bool:
         if not root.exists():
             continue
         for p in root.rglob("*"):
-            if p.suffix not in SPDX_EXTS or "__pycache__" in p.parts:
+            if p.suffix not in SPDX_EXTS:
+                continue
+            # Skip vendored / cached trees that are gitignored and not
+            # part of the project's source set (e.g. the .pixi Python
+            # environment under accel/mojo/).
+            if any(part in SPDX_SKIP_PARTS for part in p.parts):
                 continue
             try:
                 text = p.read_text(encoding="utf-8", errors="ignore")[:2048]

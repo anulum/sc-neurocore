@@ -10,6 +10,8 @@ from typing import Any
 import logging
 from typing import Dict
 
+from ._ident import sanitize_ident
+
 logger = logging.getLogger(__name__)
 
 
@@ -19,13 +21,19 @@ class VerilogGenerator:
     """
 
     def __init__(self, module_name="sc_network_top") -> None:  # type: ignore[no-untyped-def]
-        self.module_name = module_name
+        self.module_name = sanitize_ident(module_name, context="module name")
         self.layers = []  # type: ignore[var-annotated]
         self.wires = []  # type: ignore[var-annotated]
         self.instances = []  # type: ignore[var-annotated]
 
     def add_layer(self, layer_type: str, name: str, params: Dict[str, Any]) -> None:
-        self.layers.append({"type": layer_type, "name": name, "params": params})
+        self.layers.append(
+            {
+                "type": layer_type,
+                "name": sanitize_ident(name, context="layer name"),
+                "params": params,
+            }
+        )
 
     def generate(self) -> str:
         """

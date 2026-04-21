@@ -30,6 +30,7 @@ from __future__ import annotations
 import ast
 from dataclasses import dataclass
 
+from ..hdl_gen._ident import sanitize_ident
 from ..neurons.equation_builder import EquationNeuron
 
 
@@ -59,7 +60,7 @@ class _VerilogExprEmitter(ast.NodeVisitor):
     Multiplications emit wide product with arithmetic right shift.
     """
 
-    def __init__(self, state_vars: set[str], param_map: dict[str, str], q: Q88):
+    def __init__(self, state_vars: dict[str, str], param_map: dict[str, str], q: Q88):
         self.state_vars = state_vars
         self.param_map = param_map
         self.q = q
@@ -148,12 +149,12 @@ class _VerilogExprEmitter(ast.NodeVisitor):
     def visit_Name(self, node: ast.Name) -> str:
         name = node.id
         if name in self.state_vars:
-            return f"{name}_reg"
+            return f"{self.state_vars[name]}_reg"
         if name in self.param_map:
             return self.param_map[name]
         if name == "I":
             return "I_t"
-        return name
+        return sanitize_ident(name, context="expression identifier")
 
     def visit_Constant(self, node: ast.Constant) -> str:
         val: float = float(node.value) if isinstance(node.value, (int, float)) else 0.0
@@ -309,7 +310,7 @@ class _VerilogExprEmitter(ast.NodeVisitor):
 
 
 def _emit_expr(
-    expr_str: str, state_vars: set[str], param_map: dict[str, str], q: Q88
+    expr_str: str, state_vars: dict[str, str], param_map: dict[str, str], q: Q88
 ) -> tuple[str, list[str]]:
     """Parse a Python expression string and return (verilog_expr, intermediate_wires)."""
     tree = ast.parse(expr_str, mode="eval")
@@ -359,13 +360,15 @@ def compile_to_verilog(
                 f"or pass a wider fraction (e.g. Q4.12 via fraction=12) to the compiler."
             )
 
-    state_vars = set(neuron.equations.keys())
+    safe_module_name = sanitize_ident(module_name, context="module name")
+    state_var_map = {var: sanitize_ident(var, context="state variable") for var in neuron.equations}
 
     # Build parameter map: Python name → Verilog parameter name
     param_map: dict[str, str] = {}
     param_decls: list[str] = []
     for pname, pval in {**neuron.parameters, **neuron.constants}.items():
-        vname = f"P_{pname.upper()}"
+        safe_pname = sanitize_ident(pname, context="parameter name")
+        vname = f"P_{safe_pname.upper()}"
         param_map[pname] = vname
         q_val = q.encode(pval)
         param_decls.append(
@@ -378,15 +381,16 @@ def compile_to_verilog(
     all_intermediates: list[str] = []
 
     for var, expr_str in neuron.equations.items():
-        vexpr, intermediates = _emit_expr(expr_str, state_vars, param_map, q)
+        safe_var = state_var_map[var]
+        vexpr, intermediates = _emit_expr(expr_str, state_var_map, param_map, q)
         all_intermediates.extend(intermediates)
         # dv = expr * dt (multiply by dt in fixed-point)
         dt_literal = q.encode_signed_literal(neuron.dt)
-        dt_tmp = f"_dt_mul_{var}"
+        dt_tmp = f"_dt_mul_{safe_var}"
         all_intermediates.append(
             f"wire signed [{2 * data_width - 1}:0] {dt_tmp} = ({vexpr}) * {dt_literal};"
         )
-        deriv_name = f"d{var}"
+        deriv_name = f"d{safe_var}"
         deriv_wires.append(
             f"wire signed [{data_width - 1}:0] {deriv_name} = ({dt_tmp} >>> {fraction})[{data_width - 1}:0];"
         )
@@ -396,10 +400,11 @@ def compile_to_verilog(
     min_val = -(1 << (data_width - 1))  # e.g. -32768 for 16-bit
     next_wires: list[str] = []
     for var in neuron.equations:
-        raw = f"{var}_raw"
-        next_wires.append(f"wire signed [{data_width}:0] {raw} = {var}_reg + d{var};")
+        safe_var = state_var_map[var]
+        raw = f"{safe_var}_raw"
+        next_wires.append(f"wire signed [{data_width}:0] {raw} = {safe_var}_reg + d{safe_var};")
         next_wires.append(
-            f"wire signed [{data_width - 1}:0] {var}_next = "
+            f"wire signed [{data_width - 1}:0] {safe_var}_next = "
             f"({raw} > {data_width + 1}'sd{max_val}) ? {data_width}'sd{max_val} : "
             f"({raw} < {data_width + 1}'sd{min_val}) ? {data_width}'sd{min_val} : "
             f"{raw}[{data_width - 1}:0];"
@@ -409,16 +414,17 @@ def compile_to_verilog(
     threshold_verilog = ""
     if neuron.threshold_expr:
         threshold_verilog, thr_intermediates = _emit_expr(
-            neuron.threshold_expr, state_vars, param_map, q
+            neuron.threshold_expr, state_var_map, param_map, q
         )
         all_intermediates.extend(thr_intermediates)
 
     # Reset assignments
     reset_assignments: list[str] = []
     for var, expr_str in neuron.reset_rules.items():
-        rexpr, r_intermediates = _emit_expr(expr_str, state_vars, param_map, q)
+        safe_var = state_var_map[var]
+        rexpr, r_intermediates = _emit_expr(expr_str, state_var_map, param_map, q)
         all_intermediates.extend(r_intermediates)
-        reset_assignments.append(f"                    {var}_reg <= {rexpr};")
+        reset_assignments.append(f"                    {safe_var}_reg <= {rexpr};")
 
     # Build the Verilog module
     lines = [
@@ -427,7 +433,7 @@ def compile_to_verilog(
         f"// Fixed-point: Q{data_width - fraction}.{fraction} ({data_width}-bit signed)",
         "`timescale 1ns / 1ps",
         "",
-        f"module {module_name} #(",
+        f"module {safe_module_name} #(",
     ]
     lines.append(",\n".join(param_decls))
     lines.append(")(")
@@ -438,7 +444,8 @@ def compile_to_verilog(
 
     # Output ports for each state variable
     for var in neuron.equations:
-        lines.append(f"    output reg signed [{data_width - 1}:0] {var}_out,")
+        safe_var = state_var_map[var]
+        lines.append(f"    output reg signed [{data_width - 1}:0] {safe_var}_out,")
     # Remove trailing comma from last port
     lines[-1] = lines[-1].rstrip(",")
     lines.append(");")
@@ -446,8 +453,8 @@ def compile_to_verilog(
 
     # State registers
     for var in neuron.equations:
-        init_val = q.encode_signed_literal(neuron.initial_state.get(var, 0.0))
-        lines.append(f"reg signed [{data_width - 1}:0] {var}_reg;")
+        safe_var = state_var_map[var]
+        lines.append(f"reg signed [{data_width - 1}:0] {safe_var}_reg;")
 
     lines.append("")
 
@@ -470,9 +477,10 @@ def compile_to_verilog(
     lines.append("always @(posedge clk or negedge rst_n) begin")
     lines.append("    if (!rst_n) begin")
     for var in neuron.equations:
+        safe_var = state_var_map[var]
         init_val = q.encode_signed_literal(neuron.initial_state.get(var, 0.0))
-        lines.append(f"        {var}_reg <= {init_val};")
-        lines.append(f"        {var}_out <= {init_val};")
+        lines.append(f"        {safe_var}_reg <= {init_val};")
+        lines.append(f"        {safe_var}_out <= {init_val};")
     lines.append("        spike_out <= 1'b0;")
     lines.append("    end else begin")
 
@@ -483,20 +491,18 @@ def compile_to_verilog(
             lines.append(assign)
         # State vars not in reset keep their next value
         for var in neuron.equations:
+            safe_var = state_var_map[var]
             if var not in neuron.reset_rules:
-                lines.append(f"            {var}_reg <= {var}_next;")
+                lines.append(f"            {safe_var}_reg <= {safe_var}_next;")
         for var in neuron.equations:
-            reset_val = (
-                f"{param_map.get(var + '_reset_val', var + '_next')}"
-                if var in neuron.reset_rules
-                else f"{var}_next"
-            )
-            lines.append(f"            {var}_out <= {var}_reg;")
+            safe_var = state_var_map[var]
+            lines.append(f"            {safe_var}_out <= {safe_var}_reg;")
         lines.append("        end else begin")
         lines.append("            spike_out <= 1'b0;")
         for var in neuron.equations:
-            lines.append(f"            {var}_reg <= {var}_next;")
-            lines.append(f"            {var}_out <= {var}_next;")
+            safe_var = state_var_map[var]
+            lines.append(f"            {safe_var}_reg <= {safe_var}_next;")
+            lines.append(f"            {safe_var}_out <= {safe_var}_next;")
         lines.append("        end")
     else:
         lines.append("        spike_out <= 1'b0;")

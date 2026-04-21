@@ -14,9 +14,61 @@ import time
 from typing import Any
 import logging
 
+from sc_neurocore.hdl_gen._ident import sanitize_ident
+
 _PROJECTS_DIR = os.path.join(os.path.expanduser("~"), ".sc-neurocore", "studio", "projects")
 
 logger = logging.getLogger(__name__)
+
+_IDENTIFIER_KEY_CONTEXTS = {
+    "module_name": "module name",
+    "signal_name": "signal name",
+}
+_IDENTIFIER_MAPPING_CONTEXTS = {
+    "constants": "parameter name",
+    "input_shapes": "input name",
+    "parameters": "parameter name",
+    "params": "parameter name",
+}
+
+
+def _validate_hdl_identifiers(payload: Any) -> None:
+    """Reject workspace content that would later interpolate into HDL/MLIR source."""
+    errors: list[str] = []
+
+    def _check(value: str, context: str, path: str) -> None:
+        try:
+            sanitize_ident(value, context=context)
+        except ValueError as exc:
+            errors.append(f"{path}: {exc}")
+
+    def _walk(obj: Any, path: str) -> None:
+        if isinstance(obj, dict):
+            for key, value in obj.items():
+                key_path = f"{path}.{key}"
+                if key in _IDENTIFIER_KEY_CONTEXTS and isinstance(value, str):
+                    _check(value, _IDENTIFIER_KEY_CONTEXTS[key], key_path)
+                if key in _IDENTIFIER_MAPPING_CONTEXTS and isinstance(value, dict):
+                    context = _IDENTIFIER_MAPPING_CONTEXTS[key]
+                    for ident_key in value:
+                        if isinstance(ident_key, str):
+                            _check(ident_key, context, f"{key_path}[{ident_key!r}]")
+                if key == "layers" and isinstance(value, list):
+                    for idx, layer in enumerate(value):
+                        if isinstance(layer, dict) and isinstance(layer.get("name"), str):
+                            _check(layer["name"], "layer name", f"{key_path}[{idx}].name")
+                if key == "signals" and isinstance(value, list):
+                    for idx, signal in enumerate(value):
+                        if isinstance(signal, dict) and isinstance(signal.get("name"), str):
+                            _check(signal["name"], "signal name", f"{key_path}[{idx}].name")
+                _walk(value, key_path)
+        elif isinstance(obj, list):
+            for idx, item in enumerate(obj):
+                _walk(item, f"{path}[{idx}]")
+
+    _walk(payload, "project")
+    if errors:
+        raise ValueError("Invalid HDL-facing identifiers in project: " + "; ".join(errors))
 
 
 def _ensure_dir() -> None:
@@ -64,6 +116,7 @@ def load_project(name: str) -> dict:
         return {"error": f"Project '{name}' not found"}
     with open(path) as f:
         data = json.load(f)
+    _validate_hdl_identifiers(data)
     return data
 
 

@@ -922,15 +922,22 @@ fn py_recover_xor_lfsr(
 // ── Phi* ─────────────────────────────────────────────────────────────
 
 #[pyfunction]
-fn py_phi_star(_py: Python<'_>, data: PyReadonlyArray2<'_, f64>, tau: usize) -> f64 {
+fn py_phi_star(_py: Python<'_>, data: PyReadonlyArray2<'_, f64>, tau: usize) -> PyResult<f64> {
+    if !data.is_c_contiguous() {
+        return Err(PyValueError::new_err(
+            "py_phi_star requires C-contiguous array input",
+        ));
+    }
     let shape = data.shape();
     let n_channels = shape[0];
     let n_timesteps = shape[1];
-    let flat = data.as_slice().unwrap_or(&[]);
+    let flat = data.as_slice().map_err(|e| {
+        PyValueError::new_err(format!("py_phi_star requires C-contiguous array: {e}"))
+    })?;
     let channels: Vec<Vec<f64>> = (0..n_channels)
         .map(|i| flat[i * n_timesteps..(i + 1) * n_timesteps].to_vec())
         .collect();
-    phi::phi_star(&channels, tau)
+    Ok(phi::phi_star(&channels, tau))
 }
 
 // ── Cortical column ──────────────────────────────────────────────────
