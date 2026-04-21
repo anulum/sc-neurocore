@@ -99,6 +99,10 @@ data/
 
 # Experimental / speculative code (AI-generated, not production)
 experimental/
+# ...except the packaged `alternative_path` harness which ships as a
+# real opt-in module under sc_neurocore.experimental.
+!src/sc_neurocore/experimental/
+!src/sc_neurocore/experimental/**
 
 # Hardware tests (PYNQ board-specific, not part of CI)
 hardware_tests/
