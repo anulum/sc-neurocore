@@ -7,8 +7,8 @@
 // SC-NeuroCore — Plasticity Rule Benchmarks
 // Co-Authored-By: Arcane Sapience <protoscience@anulum.li>
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use autonomous_learning::{BcmRule, EligentRule, PlasticityRule, RewardStdpRule, StdpRule};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 
 fn bench_stdp_step(c: &mut Criterion) {
     let mut group = c.benchmark_group("stdp_step");

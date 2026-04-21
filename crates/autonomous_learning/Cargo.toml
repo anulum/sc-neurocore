@@ -19,7 +19,10 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 rayon = "1.10"
-rand = { version = "0.8", features = ["small_rng"] }
+# rand 0.10 removed the bundled `small_rng` feature; SmallRng's
+# underlying algorithm (Xoshiro256PlusPlus) is now in `rand_xoshiro`.
+rand = "0.10"
+rand_xoshiro = "0.8"
 wgpu = "0.20"
 pollster = "0.3"
 bytemuck = { version = "1.16", features = ["derive"] }

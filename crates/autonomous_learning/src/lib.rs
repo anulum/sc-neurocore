@@ -45,7 +45,9 @@ pub trait PlasticityRule: Send + Sync {
     fn rule_id(&self) -> u32;
 
     /// Get internal state (for persistence). Returns contiguous float representation.
-    fn get_state(&self) -> Vec<f32> { vec![] }
+    fn get_state(&self) -> Vec<f32> {
+        vec![]
+    }
 
     /// Restore internal state.
     fn set_state(&mut self, _state: &[f32]) {}
@@ -305,7 +307,12 @@ impl PlasticityRule for RewardStdpRule {
     }
 
     fn get_state(&self) -> Vec<f32> {
-        vec![self.weight, self.pre_trace, self.post_trace, self.eligibility]
+        vec![
+            self.weight,
+            self.pre_trace,
+            self.post_trace,
+            self.eligibility,
+        ]
     }
 
     fn set_state(&mut self, state: &[f32]) {
@@ -367,7 +374,8 @@ impl PlasticityRule for BcmRule {
 
         // Update sliding threshold
         self.activity_avg += (y - self.activity_avg) * (dt / self.tau_theta);
-        self.theta_m += (self.activity_avg * self.activity_avg - self.theta_m) * (dt / self.tau_theta);
+        self.theta_m +=
+            (self.activity_avg * self.activity_avg - self.theta_m) * (dt / self.tau_theta);
         self.theta_m = self.theta_m.max(0.01); // prevent collapse
     }
 
@@ -439,7 +447,12 @@ impl RuleHandle {
 ///
 /// Caller must free with `destroy_rule`.
 #[no_mangle]
-pub extern "C" fn create_rule(rule_type: u32, weight: f32, param_a: f32, param_b: f32) -> *mut RuleHandle {
+pub extern "C" fn create_rule(
+    rule_type: u32,
+    weight: f32,
+    param_a: f32,
+    param_b: f32,
+) -> *mut RuleHandle {
     let handle = match rule_type {
         0 => RuleHandle::Eligent(EligentRule {
             threshold: 1.0,
@@ -451,8 +464,21 @@ pub extern "C" fn create_rule(rule_type: u32, weight: f32, param_a: f32, param_b
             sum_weights: weight,
             target_sum_weights: 1.0,
         }),
-        1 => RuleHandle::Stdp(StdpRule::new(weight, param_a.max(0.001), param_a.max(0.001) * 0.5, 20.0, 20.0)),
-        2 => RuleHandle::RewardStdp(RewardStdpRule::new(weight, param_a.max(0.001), param_a.max(0.001) * 0.5, 20.0, 20.0, param_b.max(0.01))),
+        1 => RuleHandle::Stdp(StdpRule::new(
+            weight,
+            param_a.max(0.001),
+            param_a.max(0.001) * 0.5,
+            20.0,
+            20.0,
+        )),
+        2 => RuleHandle::RewardStdp(RewardStdpRule::new(
+            weight,
+            param_a.max(0.001),
+            param_a.max(0.001) * 0.5,
+            20.0,
+            20.0,
+            param_b.max(0.01),
+        )),
         3 => RuleHandle::Bcm(BcmRule::new(weight, param_a.max(0.0001), param_b.max(1.0))),
         _ => return std::ptr::null_mut(),
     };
@@ -461,7 +487,11 @@ pub extern "C" fn create_rule(rule_type: u32, weight: f32, param_a: f32, param_b
 
 /// Backward-compatible FFI entry point for ELIGENT rule.
 #[no_mangle]
-pub extern "C" fn create_learner(threshold: f32, target_rate: f32, weight: f32) -> *mut EligentRule {
+pub extern "C" fn create_learner(
+    threshold: f32,
+    target_rate: f32,
+    weight: f32,
+) -> *mut EligentRule {
     let state = EligentRule {
         threshold,
         target_rate,
@@ -533,7 +563,13 @@ pub unsafe extern "C" fn destroy_rule(ptr: *mut RuleHandle) {
 
 /// Backward-compatible FFI for ELIGENT learner step.
 #[no_mangle]
-pub extern "C" fn step_learner(ptr: *mut EligentRule, fired: bool, pre_spike: bool, global_reward: f32, dt: f32) {
+pub extern "C" fn step_learner(
+    ptr: *mut EligentRule,
+    fired: bool,
+    pre_spike: bool,
+    global_reward: f32,
+    dt: f32,
+) {
     if ptr.is_null() {
         return;
     }
@@ -615,8 +651,13 @@ pub unsafe extern "C" fn create_wgpu_layer(
     param_c: f32,
     param_d: f32,
 ) -> *mut WgpuRuleLayer {
-    println!("Initializing WGPU backend (Rule {}, Scale {})", rule_type, count);
-    if let Some(layer) = WgpuRuleLayer::new(count, rule_type, a_plus, a_minus, tau_plus, tau_minus, param_c, param_d) {
+    println!(
+        "Initializing WGPU backend (Rule {}, Scale {})",
+        rule_type, count
+    );
+    if let Some(layer) = WgpuRuleLayer::new(
+        count, rule_type, a_plus, a_minus, tau_plus, tau_minus, param_c, param_d,
+    ) {
         Box::into_raw(Box::new(layer))
     } else {
         println!("Warning: WGPU initialization failed gracefully on host. Returning NULL pointer.");
@@ -632,7 +673,9 @@ pub unsafe extern "C" fn step_wgpu_layer(
     rewards: *const f32,
     dt: f32,
 ) {
-    if mgr.is_null() { return; }
+    if mgr.is_null() {
+        return;
+    }
     let layer = &mut *mgr;
     let pre_slice = std::slice::from_raw_parts(pre_probs, layer.count as usize);
     let post_slice = std::slice::from_raw_parts(post_probs, layer.count as usize);
@@ -646,22 +689,20 @@ pub unsafe extern "C" fn step_wgpu_layer(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn get_wgpu_weights(
-    mgr: *mut WgpuRuleLayer,
-    out_weights: *mut f32,
-) {
-    if mgr.is_null() || out_weights.is_null() { return; }
+pub unsafe extern "C" fn get_wgpu_weights(mgr: *mut WgpuRuleLayer, out_weights: *mut f32) {
+    if mgr.is_null() || out_weights.is_null() {
+        return;
+    }
     let layer = &*mgr;
     let weights = layer.get_weights();
     std::ptr::copy_nonoverlapping(weights.as_ptr(), out_weights, layer.count as usize);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn set_wgpu_layer_seed(
-    mgr: *mut WgpuRuleLayer,
-    seed: u32,
-) {
-    if mgr.is_null() { return; }
+pub unsafe extern "C" fn set_wgpu_layer_seed(mgr: *mut WgpuRuleLayer, seed: u32) {
+    if mgr.is_null() {
+        return;
+    }
     let layer = &mut *mgr;
     layer.set_deterministic_mode(seed);
 }
@@ -715,10 +756,29 @@ pub unsafe extern "C" fn create_rule_layer(
                 sum_weights: weight,
                 target_sum_weights: 1.0,
             }),
-            1 => Box::new(StdpRule::new(weight, param_a.max(0.001), param_a.max(0.001) * 0.5, 20.0, 20.0)),
-            2 => Box::new(RewardStdpRule::new(weight, param_a.max(0.001), param_a.max(0.001) * 0.5, 20.0, 20.0, param_b.max(0.01))),
+            1 => Box::new(StdpRule::new(
+                weight,
+                param_a.max(0.001),
+                param_a.max(0.001) * 0.5,
+                20.0,
+                20.0,
+            )),
+            2 => Box::new(RewardStdpRule::new(
+                weight,
+                param_a.max(0.001),
+                param_a.max(0.001) * 0.5,
+                20.0,
+                20.0,
+                param_b.max(0.01),
+            )),
             3 => Box::new(BcmRule::new(weight, param_a.max(0.0001), param_b.max(1.0))),
-            _ => Box::new(StdpRule::new(weight, param_a.max(0.001), param_a.max(0.001) * 0.5, 20.0, 20.0)),
+            _ => Box::new(StdpRule::new(
+                weight,
+                param_a.max(0.001),
+                param_a.max(0.001) * 0.5,
+                20.0,
+                20.0,
+            )),
         };
         rules.push(rule);
     }
@@ -774,8 +834,8 @@ pub unsafe extern "C" fn step_rule_layer_analog(
     let post_slice = std::slice::from_raw_parts(post_probs, count);
     let rew_slice = std::slice::from_raw_parts(rewards, count);
 
-    use rand::{Rng, SeedableRng};
-    use rand::rngs::SmallRng;
+    use rand::{RngExt, SeedableRng};
+    use rand_xoshiro::Xoshiro256PlusPlus;
 
     layer
         .rules
@@ -785,10 +845,15 @@ pub unsafe extern "C" fn step_rule_layer_analog(
         .zip(rew_slice.par_iter())
         .enumerate()
         .for_each(|(idx, (((rule, &pre_p), &post_p), &rew))| {
-            // Seed uniquely per spatial node trace to guarantee structural reproducibility across CPUs blockings
-            let mut rng = SmallRng::seed_from_u64(seed.wrapping_add(idx as u64));
-            let pre_spike = rng.gen::<f32>() < pre_p;
-            let post_spike = rng.gen::<f32>() < post_p;
+            // Seed uniquely per spatial node trace to guarantee structural
+            // reproducibility across CPU parallel partitioning. In rand 0.8
+            // we used `SmallRng`, which was backed by Xoshiro256PlusPlus;
+            // rand 0.10 unbundled the alias, so we construct the same
+            // underlying algorithm directly from `rand_xoshiro`.
+            let mut rng = Xoshiro256PlusPlus::seed_from_u64(seed.wrapping_add(idx as u64));
+            // rand 0.9+: `Rng::gen` renamed to `Rng::random`.
+            let pre_spike = rng.random::<f32>() < pre_p;
+            let post_spike = rng.random::<f32>() < post_p;
             rule.step(pre_spike, post_spike, rew, dt);
         });
 }
@@ -805,9 +870,13 @@ pub unsafe extern "C" fn get_rule_layer_weights(
     let count = layer.rules.len();
     let out_slice = std::slice::from_raw_parts_mut(out_weights, count);
 
-    layer.rules.par_iter().zip(out_slice.par_iter_mut()).for_each(|(rule, out)| {
-        *out = rule.weight();
-    });
+    layer
+        .rules
+        .par_iter()
+        .zip(out_slice.par_iter_mut())
+        .for_each(|(rule, out)| {
+            *out = rule.weight();
+        });
 }
 
 #[no_mangle]
@@ -815,13 +884,20 @@ pub unsafe extern "C" fn save_rule_layer_batched(
     layer_ptr: *const RuleLayerHandle,
     filepath: *const std::os::raw::c_char,
 ) -> bool {
-    if layer_ptr.is_null() || filepath.is_null() { return false; }
+    if layer_ptr.is_null() || filepath.is_null() {
+        return false;
+    }
     let c_str = std::ffi::CStr::from_ptr(filepath);
-    let path = match c_str.to_str() { Ok(s) => s, Err(_) => return false };
+    let path = match c_str.to_str() {
+        Ok(s) => s,
+        Err(_) => return false,
+    };
 
     let size = get_rule_layer_state_size(layer_ptr);
     let mut buffer = vec![0u8; size];
-    if !get_rule_layer_state_mem(layer_ptr, buffer.as_mut_ptr()) { return false; }
+    if !get_rule_layer_state_mem(layer_ptr, buffer.as_mut_ptr()) {
+        return false;
+    }
 
     if let Ok(mut file) = std::fs::File::create(path) {
         use std::io::Write;
@@ -836,14 +912,21 @@ pub unsafe extern "C" fn load_rule_layer_batched(
     layer_ptr: *mut RuleLayerHandle,
     filepath: *const std::os::raw::c_char,
 ) -> bool {
-    if layer_ptr.is_null() || filepath.is_null() { return false; }
+    if layer_ptr.is_null() || filepath.is_null() {
+        return false;
+    }
     let c_str = std::ffi::CStr::from_ptr(filepath);
-    let path = match c_str.to_str() { Ok(s) => s, Err(_) => return false };
+    let path = match c_str.to_str() {
+        Ok(s) => s,
+        Err(_) => return false,
+    };
 
     if let Ok(mut file) = std::fs::File::open(path) {
         let mut byte_buffer = Vec::new();
         use std::io::Read;
-        if file.read_to_end(&mut byte_buffer).is_err() { return false; }
+        if file.read_to_end(&mut byte_buffer).is_err() {
+            return false;
+        }
 
         set_rule_layer_state_mem(layer_ptr, byte_buffer.as_ptr())
     } else {
@@ -877,7 +960,9 @@ pub unsafe extern "C" fn reset_rule_layer(layer_ptr: *mut RuleLayerHandle) {
 
 #[no_mangle]
 pub unsafe extern "C" fn get_rule_layer_state_size(layer_ptr: *const RuleLayerHandle) -> usize {
-    if layer_ptr.is_null() { return 0; }
+    if layer_ptr.is_null() {
+        return 0;
+    }
     let layer = &*layer_ptr;
     let mut total_f32 = 0;
     for rule in &layer.rules {
@@ -892,29 +977,35 @@ pub unsafe extern "C" fn get_rule_layer_state_mem(
     layer_ptr: *const RuleLayerHandle,
     out_buffer: *mut u8,
 ) -> bool {
-    if layer_ptr.is_null() || out_buffer.is_null() { return false; }
+    if layer_ptr.is_null() || out_buffer.is_null() {
+        return false;
+    }
     let layer = &*layer_ptr;
 
     let mut offset = 0;
     let size = get_rule_layer_state_size(layer_ptr);
     let out_slice = std::slice::from_raw_parts_mut(out_buffer, size);
 
-    out_slice[offset..offset+4].copy_from_slice(b"SCAL");
+    out_slice[offset..offset + 4].copy_from_slice(b"SCAL");
     offset += 4;
-    out_slice[offset..offset+4].copy_from_slice(&1u32.to_le_bytes());
+    out_slice[offset..offset + 4].copy_from_slice(&1u32.to_le_bytes());
     offset += 4;
-    out_slice[offset..offset+4].copy_from_slice(&(layer.rules.len() as u32).to_le_bytes());
+    out_slice[offset..offset + 4].copy_from_slice(&(layer.rules.len() as u32).to_le_bytes());
     offset += 4;
 
     for rule in &layer.rules {
-        out_slice[offset..offset+4].copy_from_slice(&rule.rule_id().to_le_bytes());
+        out_slice[offset..offset + 4].copy_from_slice(&rule.rule_id().to_le_bytes());
         offset += 4;
         let rs = rule.get_state();
-        out_slice[offset..offset+4].copy_from_slice(&(rs.len() as u32).to_le_bytes());
+        out_slice[offset..offset + 4].copy_from_slice(&(rs.len() as u32).to_le_bytes());
         offset += 4;
 
         let byte_size = rs.len() * 4;
-        std::ptr::copy_nonoverlapping(rs.as_ptr() as *const u8, out_slice[offset..].as_mut_ptr(), byte_size);
+        std::ptr::copy_nonoverlapping(
+            rs.as_ptr() as *const u8,
+            out_slice[offset..].as_mut_ptr(),
+            byte_size,
+        );
         offset += byte_size;
     }
     true
@@ -925,30 +1016,48 @@ pub unsafe extern "C" fn set_rule_layer_state_mem(
     layer_ptr: *mut RuleLayerHandle,
     in_buffer: *const u8,
 ) -> bool {
-    if layer_ptr.is_null() || in_buffer.is_null() { return false; }
+    if layer_ptr.is_null() || in_buffer.is_null() {
+        return false;
+    }
     let layer = &mut *layer_ptr;
 
     let magic = std::slice::from_raw_parts(in_buffer, 4);
-    if magic != b"SCAL" { return false; } // Strict Magic Verify
+    if magic != b"SCAL" {
+        return false;
+    } // Strict Magic Verify
 
     let mut offset = 4;
     let version_bytes = std::slice::from_raw_parts(in_buffer.add(offset), 4);
     let version = u32::from_le_bytes(version_bytes.try_into().unwrap());
     offset += 4;
-    if version != 1 { return false; } // Unsupported version
+    if version != 1 {
+        return false;
+    } // Unsupported version
 
     let count_bytes = std::slice::from_raw_parts(in_buffer.add(offset), 4);
     let count = u32::from_le_bytes(count_bytes.try_into().unwrap());
     offset += 4;
 
-    if count as usize != layer.rules.len() { return false; } // Layer dimension mismatch
+    if count as usize != layer.rules.len() {
+        return false;
+    } // Layer dimension mismatch
 
     for rule in &mut layer.rules {
-        let rule_id = u32::from_le_bytes(std::slice::from_raw_parts(in_buffer.add(offset), 4).try_into().unwrap());
+        let rule_id = u32::from_le_bytes(
+            std::slice::from_raw_parts(in_buffer.add(offset), 4)
+                .try_into()
+                .unwrap(),
+        );
         offset += 4;
-        if rule_id != rule.rule_id() { return false; } // Rule mapping mismatch
+        if rule_id != rule.rule_id() {
+            return false;
+        } // Rule mapping mismatch
 
-        let trace_count = u32::from_le_bytes(std::slice::from_raw_parts(in_buffer.add(offset), 4).try_into().unwrap()) as usize;
+        let trace_count = u32::from_le_bytes(
+            std::slice::from_raw_parts(in_buffer.add(offset), 4)
+                .try_into()
+                .unwrap(),
+        ) as usize;
         offset += 4;
 
         let traces = std::slice::from_raw_parts(in_buffer.add(offset) as *const f32, trace_count);
@@ -1047,11 +1156,7 @@ mod tests {
         let initial = rule.weight();
         rule.step(true, false, 0.0, 1.0);
         rule.step(false, true, 1.0, 1.0); // reward delivered with post spike
-        assert_ne!(
-            rule.weight(),
-            initial,
-            "Reward should drive weight change"
-        );
+        assert_ne!(rule.weight(), initial, "Reward should drive weight change");
     }
 
     #[test]
@@ -1088,12 +1193,18 @@ mod tests {
     fn ffi_create_all_rules() {
         for rule_type in 0..4 {
             let ptr = create_rule(rule_type, 0.5, 0.1, 0.95);
-            assert!(!ptr.is_null(), "Rule type {rule_type} should create successfully");
+            assert!(
+                !ptr.is_null(),
+                "Rule type {rule_type} should create successfully"
+            );
             unsafe {
                 step_rule(ptr, true, false, 0.0, 1.0);
                 step_rule(ptr, false, true, 1.0, 1.0);
                 let w = get_rule_weight(ptr);
-                assert!(w.is_finite(), "Weight should be finite for rule {rule_type}");
+                assert!(
+                    w.is_finite(),
+                    "Weight should be finite for rule {rule_type}"
+                );
                 reset_rule(ptr);
                 destroy_rule(ptr);
             }

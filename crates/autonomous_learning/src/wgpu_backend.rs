@@ -1,7 +1,7 @@
-use std::borrow::Cow;
-use wgpu::util::DeviceExt;
 use bytemuck::{Pod, Zeroable};
+use std::borrow::Cow;
 use std::sync::OnceLock;
+use wgpu::util::DeviceExt;
 
 struct WgpuContext {
     device: std::sync::Arc<wgpu::Device>,
@@ -57,7 +57,16 @@ pub struct WgpuRuleLayer {
 }
 
 impl WgpuRuleLayer {
-    pub fn new(count: usize, rule_type: u32, a_plus: f32, a_minus: f32, tau_plus: f32, tau_minus: f32, param_c: f32, param_d: f32) -> Option<Self> {
+    pub fn new(
+        count: usize,
+        rule_type: u32,
+        a_plus: f32,
+        a_minus: f32,
+        tau_plus: f32,
+        tau_minus: f32,
+        param_c: f32,
+        param_d: f32,
+    ) -> Option<Self> {
         // Global Singleton context mapping replacing costly per-layer adapter querying over PCI-e
         let ctx_opt = WGPU_CONTEXT.get_or_init(|| {
             let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
@@ -65,11 +74,12 @@ impl WgpuRuleLayer {
                 ..Default::default()
             });
 
-            let adapter = pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
-                power_preference: wgpu::PowerPreference::HighPerformance,
-                compatible_surface: None,
-                force_fallback_adapter: false,
-            }))?;
+            let adapter =
+                pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
+                    power_preference: wgpu::PowerPreference::HighPerformance,
+                    compatible_surface: None,
+                    force_fallback_adapter: false,
+                }))?;
 
             let mut limits = wgpu::Limits::downlevel_defaults();
             limits.max_storage_buffers_per_shader_stage = 16;
@@ -84,11 +94,12 @@ impl WgpuRuleLayer {
                     required_limits: limits,
                 },
                 None,
-            )).ok()?;
+            ))
+            .ok()?;
 
             Some(WgpuContext {
                 device: std::sync::Arc::new(device),
-                queue: std::sync::Arc::new(queue)
+                queue: std::sync::Arc::new(queue),
             })
         });
 
@@ -106,16 +117,106 @@ impl WgpuRuleLayer {
         let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             label: Some("Plasticity BindGroup"),
             entries: &[
-                wgpu::BindGroupLayoutEntry { binding: 0, visibility: wgpu::ShaderStages::COMPUTE, ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Storage { read_only: false }, has_dynamic_offset: false, min_binding_size: None }, count: None },
-                wgpu::BindGroupLayoutEntry { binding: 1, visibility: wgpu::ShaderStages::COMPUTE, ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Storage { read_only: false }, has_dynamic_offset: false, min_binding_size: None }, count: None },
-                wgpu::BindGroupLayoutEntry { binding: 2, visibility: wgpu::ShaderStages::COMPUTE, ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Storage { read_only: false }, has_dynamic_offset: false, min_binding_size: None }, count: None },
-                wgpu::BindGroupLayoutEntry { binding: 3, visibility: wgpu::ShaderStages::COMPUTE, ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Storage { read_only: true }, has_dynamic_offset: false, min_binding_size: None }, count: None },
-                wgpu::BindGroupLayoutEntry { binding: 4, visibility: wgpu::ShaderStages::COMPUTE, ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Storage { read_only: true }, has_dynamic_offset: false, min_binding_size: None }, count: None },
-                wgpu::BindGroupLayoutEntry { binding: 5, visibility: wgpu::ShaderStages::COMPUTE, ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Storage { read_only: false }, has_dynamic_offset: false, min_binding_size: None }, count: None },
-                wgpu::BindGroupLayoutEntry { binding: 6, visibility: wgpu::ShaderStages::COMPUTE, ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Storage { read_only: false }, has_dynamic_offset: false, min_binding_size: None }, count: None },
-                wgpu::BindGroupLayoutEntry { binding: 7, visibility: wgpu::ShaderStages::COMPUTE, ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Storage { read_only: false }, has_dynamic_offset: false, min_binding_size: None }, count: None },
-                wgpu::BindGroupLayoutEntry { binding: 8, visibility: wgpu::ShaderStages::COMPUTE, ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Storage { read_only: true }, has_dynamic_offset: false, min_binding_size: None }, count: None },
-                wgpu::BindGroupLayoutEntry { binding: 9, visibility: wgpu::ShaderStages::COMPUTE, ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Uniform, has_dynamic_offset: false, min_binding_size: None }, count: None },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::COMPUTE,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Storage { read_only: false },
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: wgpu::ShaderStages::COMPUTE,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Storage { read_only: false },
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 2,
+                    visibility: wgpu::ShaderStages::COMPUTE,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Storage { read_only: false },
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 3,
+                    visibility: wgpu::ShaderStages::COMPUTE,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Storage { read_only: true },
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 4,
+                    visibility: wgpu::ShaderStages::COMPUTE,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Storage { read_only: true },
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 5,
+                    visibility: wgpu::ShaderStages::COMPUTE,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Storage { read_only: false },
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 6,
+                    visibility: wgpu::ShaderStages::COMPUTE,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Storage { read_only: false },
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 7,
+                    visibility: wgpu::ShaderStages::COMPUTE,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Storage { read_only: false },
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 8,
+                    visibility: wgpu::ShaderStages::COMPUTE,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Storage { read_only: true },
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 9,
+                    visibility: wgpu::ShaderStages::COMPUTE,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
             ],
         });
 
@@ -139,7 +240,9 @@ impl WgpuRuleLayer {
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: None,
                 contents: bytemuck::cast_slice(contents),
-                usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC | wgpu::BufferUsages::COPY_DST,
+                usage: wgpu::BufferUsages::STORAGE
+                    | wgpu::BufferUsages::COPY_SRC
+                    | wgpu::BufferUsages::COPY_DST,
             })
         };
 
@@ -148,7 +251,13 @@ impl WgpuRuleLayer {
         let mut param_extra2_init = vec![0.0f32; count];
 
         // Setup BCM theta_m (Starts at 0.5 default) and ELIGENT sum_weights (Starts at 1.0)
-        let param_extra2_val = if rule_type == 0 { 1.0f32 } else if rule_type == 3 { 0.5f32 } else { 0.0f32 };
+        let param_extra2_val = if rule_type == 0 {
+            1.0f32
+        } else if rule_type == 3 {
+            0.5f32
+        } else {
+            0.0f32
+        };
         param_extra2_init.fill(param_extra2_val);
 
         // Robustness: limit wrapper for sizes escaping safe VRAM chunks linearly
@@ -195,10 +304,13 @@ impl WgpuRuleLayer {
     }
 
     pub fn step(&mut self, pre_probs: &[f32], post_probs: &[f32], rewards: &[f32], dt: f32) {
-        self.queue.write_buffer(&self.pre_probs_buf, 0, bytemuck::cast_slice(pre_probs));
-        self.queue.write_buffer(&self.post_probs_buf, 0, bytemuck::cast_slice(post_probs));
+        self.queue
+            .write_buffer(&self.pre_probs_buf, 0, bytemuck::cast_slice(pre_probs));
+        self.queue
+            .write_buffer(&self.post_probs_buf, 0, bytemuck::cast_slice(post_probs));
         if !rewards.is_empty() {
-            self.queue.write_buffer(&self.rewards_buf, 0, bytemuck::cast_slice(rewards));
+            self.queue
+                .write_buffer(&self.rewards_buf, 0, bytemuck::cast_slice(rewards));
         }
 
         let params = WgpuRuleParams {
@@ -217,28 +329,64 @@ impl WgpuRuleLayer {
         };
         self.seed_offset = self.seed_offset.wrapping_add(1);
 
-        self.queue.write_buffer(&self.params_buf, 0, bytemuck::bytes_of(&params));
+        self.queue
+            .write_buffer(&self.params_buf, 0, bytemuck::bytes_of(&params));
 
         let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("Runtime BindGroup"),
             layout: &self.bind_group_layout,
             entries: &[
-                wgpu::BindGroupEntry { binding: 0, resource: self.weights_buf.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 1, resource: self.pre_trace_buf.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 2, resource: self.post_trace_buf.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 3, resource: self.pre_probs_buf.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 4, resource: self.post_probs_buf.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 5, resource: self.param_extra_buf.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 6, resource: self.param_extra2_buf.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 7, resource: self.param_extra3_buf.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 8, resource: self.rewards_buf.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 9, resource: self.params_buf.as_entire_binding() },
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: self.weights_buf.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: self.pre_trace_buf.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 2,
+                    resource: self.post_trace_buf.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 3,
+                    resource: self.pre_probs_buf.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 4,
+                    resource: self.post_probs_buf.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 5,
+                    resource: self.param_extra_buf.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 6,
+                    resource: self.param_extra2_buf.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 7,
+                    resource: self.param_extra3_buf.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 8,
+                    resource: self.rewards_buf.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 9,
+                    resource: self.params_buf.as_entire_binding(),
+                },
             ],
         });
 
-        let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+        let mut encoder = self
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
         {
-            let mut cpass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor { label: None, timestamp_writes: None });
+            let mut cpass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: None,
+                timestamp_writes: None,
+            });
             cpass.set_pipeline(&self.compute_pipeline);
             cpass.set_bind_group(0, &bind_group, &[]);
             let mut workgroups_x = (self.count as f32 / 256.0).ceil() as u32;
@@ -267,10 +415,14 @@ impl WgpuRuleLayer {
     pub fn reset(&mut self) {
         let count = self.count as usize;
         let zeros = vec![0.0f32; count];
-        self.queue.write_buffer(&self.pre_trace_buf, 0, bytemuck::cast_slice(&zeros));
-        self.queue.write_buffer(&self.post_trace_buf, 0, bytemuck::cast_slice(&zeros));
-        self.queue.write_buffer(&self.param_extra_buf, 0, bytemuck::cast_slice(&zeros));
-        self.queue.write_buffer(&self.param_extra3_buf, 0, bytemuck::cast_slice(&zeros));
+        self.queue
+            .write_buffer(&self.pre_trace_buf, 0, bytemuck::cast_slice(&zeros));
+        self.queue
+            .write_buffer(&self.post_trace_buf, 0, bytemuck::cast_slice(&zeros));
+        self.queue
+            .write_buffer(&self.param_extra_buf, 0, bytemuck::cast_slice(&zeros));
+        self.queue
+            .write_buffer(&self.param_extra3_buf, 0, bytemuck::cast_slice(&zeros));
 
         let param_extra2_val = if self.rule_type == 0 {
             1.0f32
@@ -280,7 +432,8 @@ impl WgpuRuleLayer {
             0.0f32
         };
         let extra2 = vec![param_extra2_val; count];
-        self.queue.write_buffer(&self.param_extra2_buf, 0, bytemuck::cast_slice(&extra2));
+        self.queue
+            .write_buffer(&self.param_extra2_buf, 0, bytemuck::cast_slice(&extra2));
 
         self.device.poll(wgpu::Maintain::Wait);
     }
@@ -294,7 +447,9 @@ impl WgpuRuleLayer {
             mapped_at_creation: false,
         });
 
-        let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+        let mut encoder = self
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
         encoder.copy_buffer_to_buffer(&self.weights_buf, 0, &staging_buf, 0, size);
         self.queue.submit(Some(encoder.finish()));
 
