@@ -20,7 +20,10 @@ from sc_neurocore.experimental import (
     build_builtin_registry,
     build_demo_registry,
     default_report_path,
+    make_harmonic_symplectic_route,
     make_heat_cosine_mode_route,
+    make_kuramoto_noiseless_symplectic_lift_route,
+    make_lif_subthreshold_exact_route,
     write_batch_report,
 )
 
@@ -252,6 +255,56 @@ def test_builtin_registry_exposes_real_physics_route():
     names = {item["name"] for item in descriptions}
 
     assert "physics.heat.cosine-mode" in names
+    assert "physics.oscillator.harmonic-symplectic" in names
+    assert "physics.kuramoto.noiseless-symplectic-lift" in names
+    assert "solver.lif.subthreshold-exact" in names
+
+
+def test_kuramoto_noiseless_symplectic_lift_route_stays_close_on_short_horizon():
+    route = make_kuramoto_noiseless_symplectic_lift_route()
+
+    result = route.run(
+        AlternativePathConfig(
+            enabled=True,
+            mode=AlternativePathMode.SHADOW,
+            absolute_tolerance=5e-2,
+            relative_tolerance=1e-1,
+        ),
+        np.array([0.1, 1.2, 2.4], dtype=np.float64),
+        0.01,
+        omegas=np.array([0.8, 1.0, 1.1], dtype=np.float64),
+        coupling=0.18,
+        dt=5e-4,
+    )
+
+    assert result.returned_path == "shadow-baseline"
+    assert result.comparison is not None
+    assert result.comparison.matched
+
+
+def test_harmonic_symplectic_route_matches_rk4_with_low_energy_drift():
+    route = make_harmonic_symplectic_route()
+
+    result = route.run(
+        AlternativePathConfig(
+            enabled=True,
+            mode=AlternativePathMode.SHADOW,
+            absolute_tolerance=5e-3,
+            relative_tolerance=5e-2,
+        ),
+        1.0,
+        0.0,
+        0.5 * np.pi,
+        dt=5e-3,
+    )
+
+    assert result.returned_path == "shadow-baseline"
+    assert result.comparison is not None
+    assert result.comparison.matched
+    assert result.candidate_value is not None
+    energy_drift = result.candidate_value["relative_energy_drift"]
+    assert isinstance(energy_drift, float)
+    assert energy_drift < 1e-3
 
 
 def test_write_batch_report_writes_json_file(tmp_path):
@@ -274,6 +327,48 @@ def test_default_report_path_is_under_benchmarks_results():
     path = default_report_path("physics.heat.cosine-mode")
 
     assert str(path) == "benchmarks/results/experimental_physics_heat_cosine_mode.json"
+
+
+def test_default_report_path_handles_second_physics_route():
+    path = default_report_path("physics.oscillator.harmonic-symplectic")
+
+    assert (
+        str(path) == "benchmarks/results/experimental_physics_oscillator_harmonic_symplectic.json"
+    )
+
+
+def test_lif_subthreshold_exact_route_matches_rk4_and_stays_below_threshold():
+    route = make_lif_subthreshold_exact_route()
+
+    result = route.run(
+        AlternativePathConfig(
+            enabled=True,
+            mode=AlternativePathMode.SHADOW,
+            absolute_tolerance=1e-4,
+            relative_tolerance=1e-4,
+        ),
+        -65.0,
+        10.0,
+        20.0,
+        tau=20.0,
+        v_rest=-65.0,
+        v_thresh=-50.0,
+        r_m=1.0,
+        dt=1e-2,
+    )
+
+    assert result.returned_path == "shadow-baseline"
+    assert result.comparison is not None
+    assert result.comparison.matched
+    assert result.candidate_value is not None
+    assert result.candidate_value["subthreshold"] is True
+    assert result.candidate_value["predicted_spike_time"] is None
+
+
+def test_default_report_path_handles_solver_route():
+    path = default_report_path("solver.lif.subthreshold-exact")
+
+    assert str(path) == "benchmarks/results/experimental_solver_lif_subthreshold_exact.json"
 
 
 def test_result_report_is_json_friendly():

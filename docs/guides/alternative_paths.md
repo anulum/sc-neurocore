@@ -175,6 +175,87 @@ Why this route is safe:
 - it is ideal for `shadow` validation because the candidate is exact for the
   chosen family while the baseline remains the production/reference path
 
+## Second Real Physics Route
+
+The second non-demo route is:
+
+- `physics.oscillator.harmonic-symplectic`
+
+This route compares:
+
+- baseline: existing `RK4Solver` on the harmonic oscillator
+- candidate: existing `StormerVerlet` symplectic solver on the same system
+
+Why this route is safe:
+
+- it uses production solver infrastructure already present in the codebase
+- it stays on a strict Hamiltonian toy problem where the symplectic claim is
+  actually relevant
+- it does not force a symplectic method into dissipative neuron paths where the
+  audit overreached
+
+What to expect:
+
+- on bounded horizons, the symplectic candidate should remain close to the RK4
+  baseline
+- on longer runs, the symplectic candidate should keep relative energy drift
+  small, which is the point of the route
+- this is a validation lane for Hamiltonian-like problems, not a blanket
+  replacement policy for all ODEs in SC-NeuroCore
+
+## Third Real Route
+
+The third route is solver-focused rather than a broad physics claim:
+
+- `solver.lif.subthreshold-exact`
+
+This route compares:
+
+- baseline: existing `RK4Solver` integration of the constant-current LIF ODE
+- candidate: existing `ExactLIFSolver` analytical solution
+
+Why this route is safe:
+
+- the regime is tightly bounded to constant subthreshold current
+- the candidate is analytical, so the acceptance criterion is hard rather than
+  subjective
+- it does not try to replace general neuron simulation, event logic, or
+  time-varying input paths
+
+What to expect:
+
+- the candidate should match the RK4 baseline within tight tolerance
+- the candidate should remain below threshold for the supplied cases
+- `predicted_spike_time` should stay `null` for the built-in cases
+
+## Fourth Real Route
+
+The fourth route keeps the secondary-audit symplectic idea in a bounded,
+explicitly non-production lane:
+
+- `physics.kuramoto.noiseless-symplectic-lift`
+
+This route compares:
+
+- baseline: the current noiseless first-order Kuramoto Euler update
+- candidate: a symplectic XY-model lift integrated with `StormerVerlet`
+
+Why this route is safe:
+
+- it does **not** replace the production Kuramoto solver
+- it is limited to the bounded noiseless phase-only regime
+- it documents the mathematical lift explicitly instead of pretending the
+  current noisy or forced production path is Hamiltonian
+
+What to expect:
+
+- on short horizons, the candidate should stay close to the Euler baseline in
+  phase and order parameter
+- this route is a research probe for the Hamiltonian limit, not a blanket
+  promotion target for `engine/src/scpn/kuramoto.rs` or `L8_PhaseFieldLayer`
+- if the lifted candidate ever becomes useful, it still needs separate
+  justification before touching the stable path
+
 ## CLI Runner
 
 Use the small runner tool to execute built-in routes and write JSON reports:
@@ -183,7 +264,138 @@ Use the small runner tool to execute built-in routes and write JSON reports:
 python tools/run_experimental_path.py --list-routes
 python tools/run_experimental_path.py --route demo.affine-sigmoid
 python tools/run_experimental_path.py --route physics.heat.cosine-mode
+python tools/run_experimental_path.py --route physics.oscillator.harmonic-symplectic
+python tools/run_experimental_path.py --route physics.kuramoto.noiseless-symplectic-lift
+python tools/run_experimental_path.py --route solver.lif.subthreshold-exact
 ```
 
 By default, reports are written under `benchmarks/results/` with an
 `experimental_<route>.json` name.
+
+## How To Read The JSON Report
+
+Each run writes one JSON object with route-level and case-level fields.
+
+Top-level fields:
+
+- `route_name`: which experimental path was evaluated
+- `mode`: `baseline`, `shadow`, or `candidate`
+- `total_cases`: how many built-in or supplied cases ran
+- `matched_cases`: how many cases stayed within the configured tolerances
+- `candidate_failures`: how many cases raised and needed fallback or failed
+- `median_baseline_runtime_ns`: median baseline runtime across cases
+- `median_candidate_runtime_ns`: median candidate runtime across cases
+
+Case-level fields:
+
+- `returned_path`: whether the route returned baseline, shadow-baseline,
+  candidate, or fallback-baseline
+- `candidate_error`: populated only if the candidate raised
+- `comparison.matched`: whether that case passed the tolerance check
+- `comparison.max_abs_diff`: worst absolute difference seen in comparable leaves
+- `comparison.max_rel_diff`: worst relative difference seen in comparable leaves
+
+Practical reading order:
+
+1. check `candidate_failures`
+2. check `matched_cases == total_cases`
+3. inspect the largest `max_abs_diff` and `max_rel_diff`
+4. only then compare `median_*_runtime_ns`
+
+Do not treat a faster candidate as promotable if it is failing cases or only
+passing because the tolerances are loose.
+
+## Comparing Reports Over Time
+
+For one route, compare JSON reports by holding the route, case set, and
+tolerances fixed.
+
+Good comparison:
+
+- same route
+- same cases
+- same `absolute_tolerance` and `relative_tolerance`
+- same hardware or a clearly documented hardware change
+
+Bad comparison:
+
+- different case sets
+- different tolerances
+- one run in `shadow` and one in `candidate`
+- one run on the local CPU and another on a different machine without noting it
+
+Promotion should require both:
+
+- consistent case matching
+- a reason to prefer the candidate, such as lower runtime or better invariant
+  preservation on the route's stated target
+
+## Promotion Validation
+
+Use the validator to turn report review into an explicit gate:
+
+```bash
+env PYTHONPATH=src ./.venv/bin/python tools/validate_experimental_reports.py \
+  --require-mode shadow \
+  --max-abs-diff 0.01 \
+  --max-rel-diff 0.01
+```
+
+This fails if any report has:
+
+- candidate failures
+- unmatched cases
+- wrong execution mode for the requested gate
+- absolute or relative drift above the supplied caps
+
+For a quick human summary of the current route set, see
+`benchmarks/results/experimental_INDEX.md`.
+
+## Repeated Suite Runs
+
+To accumulate evidence instead of relying on one-off runs, use the suite runner:
+
+```bash
+env PYTHONPATH=src ./.venv/bin/python tools/run_experimental_suite.py \
+  --repetitions 3 \
+  --mode shadow \
+  --max-abs-diff 0.01 \
+  --max-rel-diff 0.01
+```
+
+This writes a timestamped directory under `benchmarks/results/experimental_runs/`
+containing:
+
+- one JSON report per route per repetition
+- `suite_summary.json`
+- `suite_summary.md`
+
+The suite exits non-zero if any repetition fails the configured gate.
+
+For a production-evidence batch that excludes the demo route:
+
+```bash
+env PYTHONPATH=src ./.venv/bin/python tools/run_experimental_suite.py \
+  --repetitions 3 \
+  --mode shadow \
+  --max-abs-diff 0.01 \
+  --max-rel-diff 0.01 \
+  --real-only
+```
+
+## Comparing Two Suite Runs
+
+To compare two suite directories on their common routes:
+
+```bash
+env PYTHONPATH=src ./.venv/bin/python tools/compare_experimental_suites.py \
+  benchmarks/results/experimental_runs/<baseline_dir> \
+  benchmarks/results/experimental_runs/<candidate_dir>
+```
+
+This reports:
+
+- common routes with delta in max absolute and relative drift
+- routes present only in one suite
+
+It does not pretend non-overlapping route sets are directly comparable.

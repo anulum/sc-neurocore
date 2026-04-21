@@ -108,6 +108,9 @@ See [Architecture](architecture/architecture.md) for the full package map.
 
 - **[Getting Started](guides/getting-started.md)** — Installation and first steps
 - **[Alternative Paths](guides/alternative_paths.md)** — Safe opt-in workflow for baseline vs candidate implementations
+- **[Neuron Integrator Paths](guides/neuron_integrator_paths.md)** — Explicit baseline vs higher-order integrator routes for selected neuron models
+- **[Stochastic Source Emitters](guides/stochastic_source_emitters.md)** — Explicit standalone RTL emitters for LFSR-16 and Sobol-16
+- **[Surrogate Execution Paths](guides/surrogate_execution_paths.md)** — Explicit `custom_op` vs legacy autograd surrogate routes for PyTorch training
 - **[API Reference](api/API_REFERENCE.md)** — Python package API
 - **[Rust Engine API](api/rust-engine.md)** — High-performance Rust engine docs
 - **[Hardware Guide](hardware/HARDWARE_GUIDE.md)** — FPGA deployment workflow

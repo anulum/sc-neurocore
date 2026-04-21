@@ -117,6 +117,13 @@ experimental/
 stdp_learning_result.png
 test_points.json
 
+# Timestamped suite-runner output under benchmarks/results/; the
+# summary JSON files at the top of benchmarks/results/ are the
+# reference reports, the dated subdirectories are per-invocation
+# artefacts regenerated every time tools/run_experimental_suite.py
+# runs.
+benchmarks/results/experimental_runs/
+
 # Hardware tests (PYNQ board-specific, not part of CI)
 hardware_tests/
 

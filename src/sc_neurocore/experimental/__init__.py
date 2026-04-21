@@ -27,8 +27,13 @@ from .alternative_path import (
 )
 from .builtins import build_builtin_registry
 from .examples import build_demo_registry, make_demo_sigmoid_route
-from .physics_routes import make_heat_cosine_mode_route
+from .physics_routes import (
+    make_harmonic_symplectic_route,
+    make_heat_cosine_mode_route,
+    make_kuramoto_noiseless_symplectic_lift_route,
+)
 from .reporting import default_report_path, write_batch_report
+from .solver_routes import make_lif_subthreshold_exact_route
 
 __all__ = [
     "AlternativePathBatchSummary",
@@ -42,7 +47,10 @@ __all__ = [
     "build_builtin_registry",
     "build_demo_registry",
     "default_report_path",
+    "make_harmonic_symplectic_route",
     "make_heat_cosine_mode_route",
+    "make_kuramoto_noiseless_symplectic_lift_route",
+    "make_lif_subthreshold_exact_route",
     "make_demo_sigmoid_route",
     "write_batch_report",
 ]
