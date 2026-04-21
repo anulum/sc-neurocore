@@ -13,7 +13,7 @@ Train in float with PyTorch autograd, deploy to SC bitstreams via to_sc_weights(
 
 from __future__ import annotations
 
-from typing import Any, Callable, List, Tuple
+from typing import Any, Callable, List, Tuple, cast
 
 import torch
 import torch.nn as nn
@@ -514,7 +514,10 @@ class SpikingNet(nn.Module):
         T, batch, _ = x.shape
         device = x.device
         n_cells = len(self.lifs)
-        v = [torch.zeros(batch, lin.out_features, device=device) for lin in self.linears]
+        v = [
+            torch.zeros(batch, cast(torch.nn.Linear, lin).out_features, device=device)
+            for lin in self.linears
+        ]
 
         spike_sum = torch.zeros(batch, self.n_output, device=device)
         mem_sum = torch.zeros(batch, self.n_output, device=device)
@@ -522,8 +525,8 @@ class SpikingNet(nn.Module):
         for t in range(T):
             h = x[t]
             for i in range(n_cells):
-                h = self.linears[i](h)
-                spike, v[i] = self.lifs[i](h, v[i])
+                h = cast(torch.nn.Linear, self.linears[i])(h)
+                spike, v[i] = cast(LIFCell, self.lifs[i])(h, v[i])
                 h = spike
             spike_sum = spike_sum + spike
             mem_sum = mem_sum + v[-1]
@@ -544,15 +547,16 @@ class SpikingNet(nn.Module):
         """
         layers = []
         for lin in self.linears:
-            w = lin.weight.detach()
+            lin_typed = cast(torch.nn.Linear, lin)
+            w = lin_typed.weight.detach()
             w_min, w_max = w.min(), w.max()
             if w_max > w_min:
                 w = (w - w_min) / (w_max - w_min)
             else:
                 w = torch.zeros_like(w)
             entry: dict = {"weight": w}
-            if include_bias and lin.bias is not None:
-                entry["bias"] = lin.bias.detach()
+            if include_bias and lin_typed.bias is not None:
+                entry["bias"] = lin_typed.bias.detach()
             layers.append(entry)
         return layers
 
