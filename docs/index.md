@@ -107,6 +107,7 @@ See [Architecture](architecture/architecture.md) for the full package map.
 ## Documentation
 
 - **[Getting Started](guides/getting-started.md)** — Installation and first steps
+- **[Alternative Paths](guides/alternative_paths.md)** — Safe opt-in workflow for baseline vs candidate implementations
 - **[API Reference](api/API_REFERENCE.md)** — Python package API
 - **[Rust Engine API](api/rust-engine.md)** — High-performance Rust engine docs
 - **[Hardware Guide](hardware/HARDWARE_GUIDE.md)** — FPGA deployment workflow
