@@ -45,7 +45,10 @@ from sc_neurocore._native.array_guards import require_c_contiguous
 try:
     from sc_neurocore.stochastic_doctor import stochastic_doctor_core as _sdc
 
-    _HAS_RUST_SCC = True
+    # `stochastic_doctor/__init__.py` now returns `None` on missing .so
+    # rather than raising ImportError (so module import never hard-fails);
+    # the real gate is whether the attribute is a loaded extension.
+    _HAS_RUST_SCC = _sdc is not None
 except ImportError:
     _sdc = None
     _HAS_RUST_SCC = False

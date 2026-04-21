@@ -11,9 +11,14 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 
-REPO_ROOT = "/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE"
+# Derive the repo root from this file's location — a hard-coded absolute
+# path would work on the author's workstation only; CI runners, wheels
+# installed into virtualenvs, and anyone else cloning the repo elsewhere
+# all need the relative walk.
+REPO_ROOT = str(Path(__file__).resolve().parent.parent)
 RUNNER = f"{REPO_ROOT}/tools/run_experimental_path.py"
 
 
