@@ -40,6 +40,8 @@ from typing import Any, Deque, Dict, List, Optional
 
 import numpy as np
 
+from sc_neurocore._native.array_guards import require_c_contiguous
+
 try:
     from sc_neurocore.stochastic_doctor import stochastic_doctor_core as _sdc
 
@@ -262,8 +264,8 @@ def compute_scc(a: np.ndarray, b: np.ndarray) -> float:
         return 0.0
 
     if _HAS_RUST_SCC:
-        a32 = np.ascontiguousarray(a, dtype=np.uint32)
-        b32 = np.ascontiguousarray(b, dtype=np.uint32)
+        a32 = require_c_contiguous(a, "a", np.uint32)
+        b32 = require_c_contiguous(b, "b", np.uint32)
         # Reinterpret pairs of u32 words as u64 for the Rust kernel. Popcount
         # is position-invariant inside a word, so viewing two adjacent u32s as
         # one u64 preserves the bit-level meaning on little-endian hosts. Pad

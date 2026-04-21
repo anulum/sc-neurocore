@@ -28,6 +28,8 @@ from typing import Dict, List, Optional
 
 import numpy as np
 
+from sc_neurocore._native.array_guards import require_c_contiguous
+
 
 # ---------------------------------------------------------------------------
 # Rust Acceleration Configuration
@@ -132,10 +134,12 @@ def compute_scc(a: np.ndarray, b: np.ndarray) -> float:
     Uses Rust PyO3 acceleration when available, falls back to pure Python.
     Set ``SC_NEUROCORE_NO_RUST=1`` to force Python path.
     """
+    if _HAS_PYO3 and _sdc_rust is not None:
+        a = require_c_contiguous(a, "a", np.uint8)
+        b = require_c_contiguous(b, "b", np.uint8)
+        return float(_sdc_rust.py_scc_bytes(a, b))
     a = np.ascontiguousarray(a, dtype=np.uint8)
     b = np.ascontiguousarray(b, dtype=np.uint8)
-    if _HAS_PYO3 and _sdc_rust is not None:
-        return float(_sdc_rust.py_scc_bytes(a, b))
     return _scc_python(a, b)
 
 
@@ -221,9 +225,10 @@ class StochasticDoctor:
         -------
         (probability, variance_bound)
         """
-        bs = np.ascontiguousarray(bitstream, dtype=np.uint8)
         if _HAS_PYO3 and _sdc_rust is not None:
+            bs = require_c_contiguous(bitstream, "bitstream", np.uint8)
             return _sdc_rust.py_precision_bytes(bs)
+        bs = np.ascontiguousarray(bitstream, dtype=np.uint8)
         n = len(bs)
         if n == 0:
             return (0.0, 0.0)
@@ -245,9 +250,10 @@ class StochasticDoctor:
         word_size : int
             Number of bits per word (default 64).
         """
-        bs = np.ascontiguousarray(bitstream, dtype=np.uint8)
         if _HAS_PYO3 and _sdc_rust is not None:
+            bs = require_c_contiguous(bitstream, "bitstream", np.uint8)
             return np.asarray(_sdc_rust.py_histogram(bs, word_size))
+        bs = np.ascontiguousarray(bitstream, dtype=np.uint8)
         n = len(bs)
         hist = np.zeros(word_size + 1, dtype=np.int64)
         for start in range(0, n, word_size):

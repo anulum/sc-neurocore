@@ -18,6 +18,8 @@ FPGA bitstream synthesis, skipping string-based Verilog generation.
 from dataclasses import dataclass
 from typing import List, Any
 
+from ..hdl_gen._ident import sanitize_ident
+
 
 @dataclass
 class MLIRNode:
@@ -40,6 +42,10 @@ class MLIREmitter:
     def get_wire(self) -> str:
         self._wire_counter += 1
         return f"%w{self._wire_counter}"
+
+    def _sanitize_ssa_name(self, name: str, context: str) -> str:
+        ident = name[1:] if name.startswith("%") else name
+        return f"%{sanitize_ident(ident, context=context)}"
 
     def emit_and(self, lhs: str, rhs: str) -> str:
         """Emits a comb.and operation for stochastic multiplication."""
@@ -79,22 +85,31 @@ class MLIREmitter:
     def generate(self) -> str:
         """Generates the final MLIR string for the module."""
         lines = []
+        safe_module_name = sanitize_ident(self.module_name, context="module name")
         # Modern CIRCT / MLIR HW dialect syntax
-        lines.append(f"hw.module @{self.module_name}(in %clk: i1, in %rst: i1, out out: i1) {{")
+        lines.append(f"hw.module @{safe_module_name}(in %clk: i1, in %rst: i1, out out: i1) {{")
 
         for node in self.nodes:
-            ins = ", ".join(node.inputs)
+            ins = ", ".join(
+                self._sanitize_ssa_name(inp, context="signal name") for inp in node.inputs
+            )
+            safe_output = self._sanitize_ssa_name(node.output, context="signal name")
             if node.op_type == "comb.and":
-                lines.append(f"  {node.output} = comb.and {ins} : i1")
+                lines.append(f"  {safe_output} = comb.and {ins} : i1")
             elif node.op_type == "comb.xor":
-                lines.append(f"  {node.output} = comb.xor {ins} : i1")
+                lines.append(f"  {safe_output} = comb.xor {ins} : i1")
             elif node.op_type == "comb.mux":
                 c, t, f = node.inputs
-                lines.append(f"  {node.output} = comb.mux {c}, {t}, {f} : i1")
-            elif node.op_type == "hw.instance":
                 lines.append(
-                    f'  {node.output} = hw.instance "{node.attributes["sym_name"]}" @{node.attributes["module"]}() -> (i1)'
+                    f"  {safe_output} = comb.mux "
+                    f"{self._sanitize_ssa_name(c, context='signal name')}, "
+                    f"{self._sanitize_ssa_name(t, context='signal name')}, "
+                    f"{self._sanitize_ssa_name(f, context='signal name')} : i1"
                 )
+            elif node.op_type == "hw.instance":
+                sym_name = sanitize_ident(node.attributes["sym_name"], context="signal name")
+                module_name = sanitize_ident(node.attributes["module"], context="module name")
+                lines.append(f'  {safe_output} = hw.instance "{sym_name}" @{module_name}() -> (i1)')
 
         # Final output assignment (taking the last node's output as an example)
         last_wire = self.nodes[-1].output if self.nodes else "0"

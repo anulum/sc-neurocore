@@ -24,6 +24,11 @@
 
 use std::slice;
 
+#[inline]
+fn validated_len_matches(len: usize, validated_len: usize) -> bool {
+    len == validated_len
+}
+
 // ---------------------------------------------------------------------------
 // Chunked popcount
 // ---------------------------------------------------------------------------
@@ -62,9 +67,20 @@ fn popcount_u64(data: &[u64]) -> u64 {
 /// # Safety
 /// `a_ptr` and `b_ptr` must be valid for `len` bytes.
 #[no_mangle]
-pub unsafe extern "C" fn compute_scc_f64(a_ptr: *const u8, b_ptr: *const u8, len: usize) -> f64 {
+pub unsafe extern "C" fn compute_scc_f64(
+    a_ptr: *const u8,
+    b_ptr: *const u8,
+    len: usize,
+    len_validated: usize,
+) -> f64 {
+    if !validated_len_matches(len, len_validated) {
+        return f64::NAN;
+    }
     if len == 0 {
         return 0.0;
+    }
+    if a_ptr.is_null() || b_ptr.is_null() {
+        return f64::NAN;
     }
     let a = unsafe { slice::from_raw_parts(a_ptr, len) };
     let b = unsafe { slice::from_raw_parts(b_ptr, len) };
@@ -84,7 +100,11 @@ pub fn scc_bytes(a: &[u8], b: &[u8]) -> f64 {
     let pb_count = popcount_bytes(b);
 
     // AND in unpacked format: a[i] & b[i]
-    let and_count: usize = a.iter().zip(b.iter()).map(|(&x, &y)| (x & y) as usize).sum();
+    let and_count: usize = a
+        .iter()
+        .zip(b.iter())
+        .map(|(&x, &y)| (x & y) as usize)
+        .sum();
 
     let pa = pa_count as f64 / n;
     let pb = pb_count as f64 / n;
@@ -157,10 +177,17 @@ pub unsafe extern "C" fn compute_scc_packed(
     a_ptr: *const u64,
     b_ptr: *const u64,
     word_count: usize,
+    word_count_validated: usize,
     bit_length: usize,
 ) -> f64 {
+    if !validated_len_matches(word_count, word_count_validated) {
+        return f64::NAN;
+    }
     if word_count == 0 || bit_length == 0 {
         return 0.0;
+    }
+    if a_ptr.is_null() || b_ptr.is_null() {
+        return f64::NAN;
     }
     let a = unsafe { slice::from_raw_parts(a_ptr, word_count) };
     let b = unsafe { slice::from_raw_parts(b_ptr, word_count) };
@@ -184,15 +211,32 @@ pub unsafe extern "C" fn compute_scc_batch(
     streams_ptr: *const u8,
     n: usize,
     stream_len: usize,
+    streams_len_validated: usize,
     out_ptr: *mut f64,
-) {
-    if n == 0 || stream_len == 0 {
-        return;
+    out_len_validated: usize,
+) -> bool {
+    let Some(streams_len) = n.checked_mul(stream_len) else {
+        return false;
+    };
+    let Some(out_len) = n.checked_mul(n) else {
+        return false;
+    };
+    if !validated_len_matches(streams_len, streams_len_validated)
+        || !validated_len_matches(out_len, out_len_validated)
+    {
+        return false;
     }
-    let streams = unsafe { slice::from_raw_parts(streams_ptr, n * stream_len) };
-    let out = unsafe { slice::from_raw_parts_mut(out_ptr, n * n) };
+    if streams_len == 0 {
+        return true;
+    }
+    if streams_ptr.is_null() || out_ptr.is_null() {
+        return false;
+    }
+    let streams = unsafe { slice::from_raw_parts(streams_ptr, streams_len) };
+    let out = unsafe { slice::from_raw_parts_mut(out_ptr, out_len) };
 
     scc_batch_impl(streams, n, stream_len, out);
+    true
 }
 
 /// Pure Rust batch SCC computation.
@@ -225,9 +269,19 @@ pub fn scc_batch_impl(streams: &[u8], n: usize, stream_len: usize, out: &mut [f6
 /// # Safety
 /// `data_ptr` must be valid for `len` bytes.
 #[no_mangle]
-pub unsafe extern "C" fn compute_precision_f64(data_ptr: *const u8, len: usize) -> f64 {
+pub unsafe extern "C" fn compute_precision_f64(
+    data_ptr: *const u8,
+    len: usize,
+    len_validated: usize,
+) -> f64 {
+    if !validated_len_matches(len, len_validated) {
+        return f64::NAN;
+    }
     if len == 0 {
         return 0.0;
+    }
+    if data_ptr.is_null() {
+        return f64::NAN;
     }
     let data = unsafe { slice::from_raw_parts(data_ptr, len) };
     popcount_bytes(data) as f64 / len as f64
@@ -254,12 +308,26 @@ pub fn precision_packed(data: &[u64], bit_length: usize) -> (f64, f64) {
 pub unsafe extern "C" fn compute_precision_packed(
     data_ptr: *const u64,
     word_count: usize,
+    word_count_validated: usize,
     bit_length: usize,
     out_prob: *mut f64,
     out_variance: *mut f64,
-) {
+) -> bool {
+    if !validated_len_matches(word_count, word_count_validated) {
+        return false;
+    }
+    if out_prob.is_null() || out_variance.is_null() {
+        return false;
+    }
     if word_count == 0 || bit_length == 0 {
-        return;
+        unsafe {
+            *out_prob = 0.0;
+            *out_variance = 0.0;
+        }
+        return true;
+    }
+    if data_ptr.is_null() {
+        return false;
     }
     let data = unsafe { slice::from_raw_parts(data_ptr, word_count) };
     let (p, v) = precision_packed(data, bit_length);
@@ -267,6 +335,7 @@ pub unsafe extern "C" fn compute_precision_packed(
         *out_prob = p;
         *out_variance = v;
     }
+    true
 }
 
 // ---------------------------------------------------------------------------
@@ -285,10 +354,27 @@ pub unsafe extern "C" fn compute_precision_packed(
 pub unsafe extern "C" fn histogram_u64(
     data_ptr: *const u64,
     word_count: usize,
+    word_count_validated: usize,
     out_ptr: *mut u64,
-) {
+    out_len_validated: usize,
+) -> bool {
+    if !validated_len_matches(word_count, word_count_validated)
+        || !validated_len_matches(65, out_len_validated)
+    {
+        return false;
+    }
+    if out_ptr.is_null() {
+        return false;
+    }
     if word_count == 0 {
-        return;
+        let out = unsafe { slice::from_raw_parts_mut(out_ptr, 65) };
+        for bin in out.iter_mut() {
+            *bin = 0;
+        }
+        return true;
+    }
+    if data_ptr.is_null() {
+        return false;
     }
     let data = unsafe { slice::from_raw_parts(data_ptr, word_count) };
     let out = unsafe { slice::from_raw_parts_mut(out_ptr, 65) };
@@ -300,6 +386,7 @@ pub unsafe extern "C" fn histogram_u64(
         let pc = word.count_ones() as usize;
         out[pc] += 1;
     }
+    true
 }
 
 /// Pure Rust histogram computation returning a Vec.
@@ -507,7 +594,10 @@ mod tests {
     fn scc_identical_streams() {
         let a: Vec<u8> = vec![1, 0, 1, 1, 0, 0, 1, 0, 1, 0];
         let scc = scc_bytes(&a, &a);
-        assert!((scc - 1.0).abs() < 1e-6, "identical streams should have SCC=1.0, got {scc}");
+        assert!(
+            (scc - 1.0).abs() < 1e-6,
+            "identical streams should have SCC=1.0, got {scc}"
+        );
     }
 
     #[test]
@@ -515,7 +605,10 @@ mod tests {
         let a: Vec<u8> = vec![1, 0, 1, 0, 1, 0, 1, 0];
         let b: Vec<u8> = vec![0, 1, 0, 1, 0, 1, 0, 1];
         let scc = scc_bytes(&a, &b);
-        assert!((scc - (-1.0)).abs() < 1e-6, "anticorrelated should have SCC=-1.0, got {scc}");
+        assert!(
+            (scc - (-1.0)).abs() < 1e-6,
+            "anticorrelated should have SCC=-1.0, got {scc}"
+        );
     }
 
     #[test]
@@ -523,7 +616,10 @@ mod tests {
         let a: Vec<u8> = vec![0; 256];
         let b: Vec<u8> = vec![0; 256];
         let scc = scc_bytes(&a, &b);
-        assert!(scc.abs() < 1e-6, "all-zero streams should have SCC=0, got {scc}");
+        assert!(
+            scc.abs() < 1e-6,
+            "all-zero streams should have SCC=0, got {scc}"
+        );
     }
 
     #[test]
@@ -538,7 +634,10 @@ mod tests {
     fn scc_packed_identical() {
         let a = vec![0xAAAA_AAAA_AAAA_AAAAu64; 4];
         let scc = scc_packed(&a, &a, 256);
-        assert!((scc - 1.0).abs() < 1e-6, "packed identical SCC should be 1.0, got {scc}");
+        assert!(
+            (scc - 1.0).abs() < 1e-6,
+            "packed identical SCC should be 1.0, got {scc}"
+        );
     }
 
     #[test]
@@ -546,7 +645,10 @@ mod tests {
         let a = vec![0xAAAA_AAAA_AAAA_AAAAu64; 4];
         let b = vec![0x5555_5555_5555_5555u64; 4];
         let scc = scc_packed(&a, &b, 256);
-        assert!((scc - (-1.0)).abs() < 1e-6, "packed anticorrelated SCC should be -1.0, got {scc}");
+        assert!(
+            (scc - (-1.0)).abs() < 1e-6,
+            "packed anticorrelated SCC should be -1.0, got {scc}"
+        );
     }
 
     // ── Batch SCC ────────────────────────────────────────────────────
@@ -562,7 +664,10 @@ mod tests {
         scc_batch_impl(&streams, n, stream_len, &mut out);
 
         for i in 0..n {
-            assert!((out[i * n + i] - 1.0).abs() < 1e-6, "diagonal should be 1.0");
+            assert!(
+                (out[i * n + i] - 1.0).abs() < 1e-6,
+                "diagonal should be 1.0"
+            );
         }
     }
 
@@ -592,7 +697,10 @@ mod tests {
     fn precision_half_density() {
         let data = vec![0xAAAA_AAAA_AAAA_AAAAu64; 4]; // alternating bits
         let (p, v) = precision_packed(&data, 256);
-        assert!((p - 0.5).abs() < 0.01, "alternating bits should give p≈0.5, got {p}");
+        assert!(
+            (p - 0.5).abs() < 0.01,
+            "alternating bits should give p≈0.5, got {p}"
+        );
         assert!(v > 0.0, "variance should be positive");
         // Theoretical variance for p=0.5, N=256: 0.5*0.5/256 ≈ 0.000977
         assert!((v - 0.000977).abs() < 0.001, "variance mismatch: {v}");
@@ -688,14 +796,14 @@ mod tests {
     fn ffi_scc_f64() {
         let a: Vec<u8> = vec![1, 0, 1, 1, 0, 0, 1, 0];
         let b: Vec<u8> = vec![1, 0, 1, 1, 0, 0, 1, 0];
-        let scc = unsafe { compute_scc_f64(a.as_ptr(), b.as_ptr(), a.len()) };
+        let scc = unsafe { compute_scc_f64(a.as_ptr(), b.as_ptr(), a.len(), a.len()) };
         assert!((scc - 1.0).abs() < 1e-6);
     }
 
     #[test]
     fn ffi_precision() {
         let data: Vec<u8> = vec![1, 1, 1, 0, 0, 0, 0, 0, 1, 1]; // 5/10 = 0.5
-        let p = unsafe { compute_precision_f64(data.as_ptr(), data.len()) };
+        let p = unsafe { compute_precision_f64(data.as_ptr(), data.len(), data.len()) };
         assert!((p - 0.5).abs() < 1e-6);
     }
 
@@ -703,7 +811,16 @@ mod tests {
     fn ffi_histogram() {
         let data = vec![0u64, u64::MAX];
         let mut out = vec![0u64; 65];
-        unsafe { histogram_u64(data.as_ptr(), data.len(), out.as_mut_ptr()) };
+        let ok = unsafe {
+            histogram_u64(
+                data.as_ptr(),
+                data.len(),
+                data.len(),
+                out.as_mut_ptr(),
+                out.len(),
+            )
+        };
+        assert!(ok);
         assert_eq!(out[0], 1);
         assert_eq!(out[64], 1);
     }
@@ -714,7 +831,17 @@ mod tests {
         let stream_len = 4;
         let streams: Vec<u8> = vec![1, 0, 1, 0, 1, 0, 1, 0];
         let mut out = vec![0.0f64; 4];
-        unsafe { compute_scc_batch(streams.as_ptr(), n, stream_len, out.as_mut_ptr()) };
+        let ok = unsafe {
+            compute_scc_batch(
+                streams.as_ptr(),
+                n,
+                stream_len,
+                streams.len(),
+                out.as_mut_ptr(),
+                out.len(),
+            )
+        };
+        assert!(ok);
         assert!((out[0] - 1.0).abs() < 1e-6, "diag(0,0) should be 1.0");
         assert!((out[3] - 1.0).abs() < 1e-6, "diag(1,1) should be 1.0");
         assert!((out[1] - out[2]).abs() < 1e-10, "should be symmetric");
@@ -725,11 +852,44 @@ mod tests {
         let data = vec![0xAAAA_AAAA_AAAA_AAAAu64; 2];
         let mut prob = 0.0f64;
         let mut var = 0.0f64;
-        unsafe {
-            compute_precision_packed(data.as_ptr(), 2, 128, &mut prob, &mut var);
-        }
+        let ok = unsafe { compute_precision_packed(data.as_ptr(), 2, 2, 128, &mut prob, &mut var) };
+        assert!(ok);
         assert!((prob - 0.5).abs() < 0.01);
         assert!(var > 0.0);
+    }
+
+    #[test]
+    fn ffi_scc_f64_len_mismatch_returns_nan() {
+        let a: Vec<u8> = vec![1, 0, 1, 0];
+        let b: Vec<u8> = vec![1, 0, 1, 0];
+        let scc = unsafe { compute_scc_f64(a.as_ptr(), b.as_ptr(), a.len(), a.len() + 1) };
+        assert!(scc.is_nan());
+    }
+
+    #[test]
+    fn ffi_precision_f64_len_mismatch_returns_nan() {
+        let data: Vec<u8> = vec![1, 0, 1, 0];
+        let p = unsafe { compute_precision_f64(data.as_ptr(), data.len(), data.len() + 1) };
+        assert!(p.is_nan());
+    }
+
+    #[test]
+    fn ffi_batch_len_mismatch_returns_false() {
+        let n = 2;
+        let stream_len = 4;
+        let streams: Vec<u8> = vec![1, 0, 1, 0, 1, 0, 1, 0];
+        let mut out = vec![0.0f64; 4];
+        let ok = unsafe {
+            compute_scc_batch(
+                streams.as_ptr(),
+                n,
+                stream_len,
+                streams.len() + 1,
+                out.as_mut_ptr(),
+                out.len(),
+            )
+        };
+        assert!(!ok);
     }
 
     // ── Hamming(7,4) ──────────────────────────────────────────────────
@@ -873,9 +1033,7 @@ mod python {
 
     /// Estimate precision (probability, variance) for a uint8 bitstream.
     #[pyfunction]
-    fn py_precision_bytes<'py>(
-        data: PyReadonlyArray1<'py, u8>,
-    ) -> PyResult<(f64, f64)> {
+    fn py_precision_bytes<'py>(data: PyReadonlyArray1<'py, u8>) -> PyResult<(f64, f64)> {
         let slice = data.as_slice()?;
         let n = slice.len();
         if n == 0 {
@@ -923,11 +1081,7 @@ mod python {
 
     /// Adaptive bitstream length controller (hysteresis rules from ScDoctor).
     #[pyfunction]
-    fn py_sc_doctor_adapt(
-        current_length: u32,
-        current_ecc: bool,
-        correlation: f64,
-    ) -> (u32, bool) {
+    fn py_sc_doctor_adapt(current_length: u32, current_ecc: bool, correlation: f64) -> (u32, bool) {
         let result = sc_doctor_adapt(current_length, current_ecc, correlation);
         (result.new_length, result.ecc_enabled)
     }

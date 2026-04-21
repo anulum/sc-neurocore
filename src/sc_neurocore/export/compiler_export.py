@@ -16,6 +16,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Tuple
 
+from sc_neurocore.hdl_gen._ident import sanitize_ident
+
 
 class SSAEnvironment:
     """Manages Static Single Assignment (SSA) registers for MLIR/Relay."""
@@ -33,7 +35,7 @@ class SSAEnvironment:
     def get(self, edge_name: str) -> str:
         if edge_name not in self.registers:
             # Assume it's a global input if not defined internally
-            return f"%{edge_name}"
+            return f"%{sanitize_ident(edge_name, context='input name')}"
         return self.registers[edge_name]
 
 
@@ -104,11 +106,15 @@ class CompilerExporter:
         sorted_nodes = self._topological_sort(ir_graph.nodes)
         ssa = SSAEnvironment()
         shape_inf = ShapeInference(input_shapes)
+        safe_input_names = {inp: sanitize_ident(inp, context="input name") for inp in input_shapes}
 
         mlir_lines = ["module {"]
 
         sig_args = ", ".join(
-            [f"%{inp}: {self._format_mlir_type(shape)}" for inp, shape in input_shapes.items()]
+            [
+                f"%{safe_input_names[inp]}: {self._format_mlir_type(shape)}"
+                for inp, shape in input_shapes.items()
+            ]
         )
         mlir_lines.append(f"  func.func @sc_network_forward({sig_args}) {{")
 
