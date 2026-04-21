@@ -1664,7 +1664,7 @@ class ProblemDecomposer:
             while len(partition) < self._max_size and remaining:
                 # Find unassigned neighbor of current partition
                 best = None
-                best_score = -1
+                best_score: float = -1.0
                 for q in partition:
                     for n in neighbors.get(q, []):
                         if n in remaining:
