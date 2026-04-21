@@ -9,7 +9,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
+
 import numpy as np
+
+from sc_neurocore.solvers import RK4Solver
 
 
 @dataclass
@@ -22,6 +26,11 @@ class HodgkinHuxleyNeuron:
     dn/dt = α_n(1-n) - β_n·n
 
     Reference: Hodgkin, A.L. & Huxley, A.F. (1952). J. Physiol. 117:500–544.
+
+    Integrator options:
+    - ``baseline_euler`` preserves the historical explicit-Euler sub-step path
+    - ``rk4`` is an explicit higher-order alternative path over the same
+      sub-step schedule
     """
 
     v: float = -65.0
@@ -37,6 +46,11 @@ class HodgkinHuxleyNeuron:
     e_l: float = -54.4
     dt: float = 0.01
     v_threshold: float = 0.0
+    integrator: Literal["baseline_euler", "rk4"] = "baseline_euler"
+
+    def __post_init__(self) -> None:
+        if self.integrator not in {"baseline_euler", "rk4"}:
+            raise ValueError(f"Unsupported integrator for HodgkinHuxleyNeuron: {self.integrator}")
 
     def _alpha_m(self, v: float) -> float:
         d = v + 40.0
@@ -64,6 +78,29 @@ class HodgkinHuxleyNeuron:
 
     def step(self, current: float) -> int:
         v_prev = self.v
+        if self.integrator == "baseline_euler":
+            self._step_baseline_euler(current)
+        else:
+            self._step_rk4(current)
+        return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
+
+    def _rhs(self, _t: float, state: np.ndarray, current: float) -> np.ndarray:
+        v, m, h, n = (float(value) for value in state)
+        am, bm = self._alpha_m(v), self._beta_m(v)
+        ah, bh = self._alpha_h(v), self._beta_h(v)
+        an, bn = self._alpha_n(v), self._beta_n(v)
+
+        dm = am * (1.0 - m) - bm * m
+        dh = ah * (1.0 - h) - bh * h
+        dn = an * (1.0 - n) - bn * n
+
+        i_na = self.g_na * m**3 * h * (v - self.e_na)
+        i_k = self.g_k * n**4 * (v - self.e_k)
+        i_l = self.g_l * (v - self.e_l)
+        dv = (-i_na - i_k - i_l + current) / self.c_m
+        return np.array([dv, dm, dh, dn], dtype=np.float64)
+
+    def _step_baseline_euler(self, current: float) -> None:
         for _ in range(round(1.0 / self.dt)):
             am, bm = self._alpha_m(self.v), self._beta_m(self.v)
             ah, bh = self._alpha_h(self.v), self._beta_h(self.v)
@@ -79,7 +116,19 @@ class HodgkinHuxleyNeuron:
 
             self.v += (-i_na - i_k - i_l + current) / self.c_m * self.dt
 
-        return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
+    def _step_rk4(self, current: float) -> None:
+        solver = RK4Solver()
+        state = np.array([self.v, self.m, self.h, self.n], dtype=np.float64)
+        t = 0.0
+        for _ in range(round(1.0 / self.dt)):
+            state, dt_used = solver.step(
+                lambda time, y: self._rhs(time, y, current),
+                state,
+                t,
+                self.dt,
+            )
+            t += dt_used
+        self.v, self.m, self.h, self.n = (float(value) for value in state)
 
     def reset(self) -> None:
         self.v = -65.0

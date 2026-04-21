@@ -9,7 +9,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
+
 import numpy as np
+
+from sc_neurocore.solvers import RK4Solver
 
 
 @dataclass
@@ -21,6 +25,10 @@ class AdExNeuron:
     if v >= v_threshold: v = v_reset, w += b
 
     Reference: Brette, R. & Gerstner, W. (2005). J. Neurophysiol. 94:3637–3642.
+
+    Integrator options:
+    - ``baseline_euler`` preserves the historical explicit-Euler path
+    - ``rk4`` is an explicit higher-order alternative path
     """
 
     v: float = -65.0
@@ -36,22 +44,50 @@ class AdExNeuron:
     b: float = 7.0
     c_m: float = 200.0
     dt: float = 0.1
+    integrator: Literal["baseline_euler", "rk4"] = "baseline_euler"
+
+    def __post_init__(self) -> None:
+        if self.integrator not in {"baseline_euler", "rk4"}:
+            raise ValueError(f"Unsupported integrator for AdExNeuron: {self.integrator}")
 
     def step(self, current: float) -> int:
-        exp_term = self.delta_t * np.exp(np.clip((self.v - self.v_rh) / self.delta_t, -20.0, 20.0))
-        dv = (
-            (-(self.v - self.v_rest) + exp_term) / self.tau + (-self.w + current) / self.c_m
-        ) * self.dt
-        dw = (self.a * (self.v - self.v_rest) - self.w) / self.tau_w * self.dt
-
-        self.v += dv
-        self.w += dw
+        if self.integrator == "baseline_euler":
+            self._step_baseline_euler(current)
+        else:
+            self._step_rk4(current)
 
         if self.v >= self.v_threshold:
             self.v = self.v_reset
             self.w += self.b
             return 1
         return 0
+
+    def _rhs(self, _t: float, state: np.ndarray, current: float) -> np.ndarray:
+        v = float(state[0])
+        w = float(state[1])
+        exp_term = self.delta_t * np.exp(np.clip((v - self.v_rh) / self.delta_t, -20.0, 20.0))
+        dv = (-(v - self.v_rest) + exp_term) / self.tau + (-w + current) / self.c_m
+        dw = (self.a * (v - self.v_rest) - w) / self.tau_w
+        return np.array([dv, dw], dtype=np.float64)
+
+    def _step_baseline_euler(self, current: float) -> None:
+        exp_term = self.delta_t * np.exp(np.clip((self.v - self.v_rh) / self.delta_t, -20.0, 20.0))
+        dv = (-(self.v - self.v_rest) + exp_term) / self.tau + (-self.w + current) / self.c_m
+        dw = (self.a * (self.v - self.v_rest) - self.w) / self.tau_w
+        self.v += dv * self.dt
+        self.w += dw * self.dt
+
+    def _step_rk4(self, current: float) -> None:
+        solver = RK4Solver()
+        state = np.array([self.v, self.w], dtype=np.float64)
+        state, _ = solver.step(
+            lambda time, y: self._rhs(time, y, current),
+            state,
+            0.0,
+            self.dt,
+        )
+        self.v = float(state[0])
+        self.w = float(state[1])
 
     def reset(self) -> None:
         self.v = self.v_rest
