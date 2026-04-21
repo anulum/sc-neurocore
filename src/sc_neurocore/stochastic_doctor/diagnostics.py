@@ -44,7 +44,9 @@ if not _os.environ.get("SC_NEUROCORE_NO_RUST"):
     try:
         from sc_neurocore.stochastic_doctor import stochastic_doctor_core as _sdc_rust  # type: ignore[attr-defined,no-redef]
 
-        _HAS_PYO3 = True
+        # `stochastic_doctor/__init__.py` now returns `None` on missing
+        # .so rather than raising — so the real gate is a non-None value.
+        _HAS_PYO3 = _sdc_rust is not None
     except ImportError:
         pass
 
