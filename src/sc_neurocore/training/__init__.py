@@ -47,12 +47,25 @@ if HAS_TORCH:
     )
     from .delay_linear import DelayLinear
     from .surrogate import (
+        SURROGATE_PATHS,
         atan_surrogate,
+        atan_surrogate_custom_op,
+        atan_surrogate_legacy,
         fast_sigmoid,
+        fast_sigmoid_custom_op,
+        fast_sigmoid_legacy,
         sigmoid_surrogate,
+        sigmoid_surrogate_custom_op,
+        sigmoid_surrogate_legacy,
         straight_through,
+        straight_through_custom_op,
+        straight_through_legacy,
         superspike,
+        superspike_custom_op,
+        superspike_legacy,
         triangular,
+        triangular_custom_op,
+        triangular_legacy,
     )
 
 __all__ = [
@@ -73,12 +86,25 @@ __all__ = [
     # Delay layer
     "DelayLinear",
     # Surrogate gradients
+    "SURROGATE_PATHS",
     "fast_sigmoid",
+    "fast_sigmoid_custom_op",
+    "fast_sigmoid_legacy",
     "superspike",
+    "superspike_custom_op",
+    "superspike_legacy",
     "atan_surrogate",
+    "atan_surrogate_custom_op",
+    "atan_surrogate_legacy",
     "sigmoid_surrogate",
+    "sigmoid_surrogate_custom_op",
+    "sigmoid_surrogate_legacy",
     "straight_through",
+    "straight_through_custom_op",
+    "straight_through_legacy",
     "triangular",
+    "triangular_custom_op",
+    "triangular_legacy",
     # Spike encoding
     "rate_encode",
     "latency_encode",
