@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 
@@ -114,6 +115,35 @@ class TestCalibrationRoutine(unittest.TestCase):
         err_hires = cal_hires.max_quantization_error()
         err_lores = self.cal.max_quantization_error()
         self.assertLess(err_hires, err_lores)
+
+    def test_enob_zero_error_falls_back_to_nominal(self):
+        """Perfect quantisation (max_err == 0) avoids log2(inf) via the fallback.
+
+        Reachable when every sweep target lands exactly on a DAC level —
+        here forced via a patched ``max_quantization_error`` because FP
+        round-off usually keeps the real error strictly positive.
+        """
+        with patch.object(CalibrationRoutine, "max_quantization_error", return_value=0.0):
+            enob = self.cal.effective_resolution_bits()
+        self.assertEqual(enob, float(self.bridge.dac_res))
+
+    def test_enob_zero_range_falls_back_to_nominal(self):
+        """Zero-width conductance range (``g_max == g_min``) short-circuits ENOB.
+
+        ``_quantize`` would raise ``ZeroDivisionError`` if invoked, so the
+        sweep is bypassed by patching ``max_quantization_error`` to a
+        positive stub while the bridge itself is constructed degenerately.
+        """
+        bridge = AnalogBridge.__new__(AnalogBridge)
+        bridge.g_min = 10.0
+        bridge.g_max = 10.0
+        bridge.v_min = -80.0
+        bridge.v_max = -40.0
+        bridge.dac_res = 8
+        cal = CalibrationRoutine(bridge)
+        with patch.object(CalibrationRoutine, "max_quantization_error", return_value=1e-3):
+            enob = cal.effective_resolution_bits()
+        self.assertEqual(enob, float(bridge.dac_res))
 
 
 if __name__ == "__main__":
