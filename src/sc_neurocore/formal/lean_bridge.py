@@ -14,8 +14,8 @@ from pathlib import Path
 class FormalProofEngine:
     """Invokes Lean 4 `safety_bounds.lean` to formally verify mathematical parameters dynamically."""
 
-    def __init__(self):
-        self._lean_bin = shutil.which("lean")
+    def __init__(self) -> None:
+        self._lean_bin: str | None = shutil.which("lean")
         self.proof_file = Path(__file__).parent / "proofs" / "safety_bounds.lean"
 
     def is_available(self) -> bool:
@@ -27,6 +27,7 @@ class FormalProofEngine:
             print("[Formal] Lean 4 unavailable on the system path.")
             return False
 
+        assert self._lean_bin is not None, "is_available() guarantees a non-None bin path"
         print("[Formal] Running formal checking across physical stochastic theorems...")
         try:
             result = subprocess.run(

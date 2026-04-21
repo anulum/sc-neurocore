@@ -206,7 +206,7 @@ warn_unused_ignores = false
 warn_return_any = false
 disallow_any_generics = false
 [[tool.mypy.overrides]]
-module = ['cupy.*', 'cupyx.*', 'mpi4py.*', 'numba.*', 'matplotlib.*', 'scipy.*', 'networkx.*', 'onnx.*', 'torch.*', 'torchvision.*', 'gym.*', 'flask.*', 'scpn_evo2_real_interface.*', 'scpn_opentrions_verify.*', 'scpn_cross_layer_integration_L1_L7.*', 'jax.*', 'qiskit.*', 'pennylane.*', 'qiskit_aer.*', 'fastapi.*', 'uvicorn.*', 'starlette.*', 'pydantic.*', 'nir.*', 'h5py.*', 'sc_neurocore_engine.*', 'tonic.*', 'lava.*', 'wandb.*', 'yaml.*', 'serial.*', 'usb.*', 'zstandard.*', 'pywt.*', 'juliacall.*', 'gdsfactory.*', 'meep.*']
+module = ['cupy.*', 'cupyx.*', 'mpi4py.*', 'numba.*', 'matplotlib.*', 'scipy.*', 'networkx.*', 'onnx.*', 'torch.*', 'torchvision.*', 'gym.*', 'flask.*', 'scpn_evo2_real_interface.*', 'scpn_opentrions_verify.*', 'scpn_cross_layer_integration_L1_L7.*', 'jax.*', 'qiskit.*', 'pennylane.*', 'qiskit_aer.*', 'fastapi.*', 'uvicorn.*', 'starlette.*', 'pydantic.*', 'nir.*', 'h5py.*', 'sc_neurocore_engine.*', 'tonic.*', 'lava.*', 'wandb.*', 'yaml.*', 'serial.*', 'usb.*', 'zstandard.*', 'pywt.*', 'juliacall.*', 'gdsfactory.*', 'meep.*', 'gdstk.*', 'dimod.*', 'dwave.*', 'nupack.*']
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]

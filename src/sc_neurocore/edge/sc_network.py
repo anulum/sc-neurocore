@@ -32,7 +32,7 @@ class SCLayer:
     threshold: int = 512
     weights: list[list[int]] = field(default_factory=list)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not self.weights:
             self.weights = [
                 [0x5555_5555] * ((self.n_inputs + 31) // 32) for _ in range(self.n_outputs)

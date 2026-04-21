@@ -30,7 +30,7 @@ class MojoKernelRunner:
     _mojo_dir: Path = Path(__file__).parent
     _pixi_bin: str = field(default_factory=lambda: os.path.expanduser("~/.pixi/bin/pixi"))
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         # Prefer source-tree location, then installed package
         mojo_file = self._mojo_dir / "kernels.mojo"
         if mojo_file.exists():

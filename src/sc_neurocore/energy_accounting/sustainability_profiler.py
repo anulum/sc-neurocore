@@ -205,7 +205,7 @@ class HarvestProfile:
     duty_cycle: float = 0.5
     storage_capacity_mwh: float = 0.01
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.peak_power_mw <= 0:
             self.peak_power_mw = _HARVEST_PEAK_MW.get(self.harvester, 1.0)
 
@@ -266,7 +266,7 @@ class EnergyStorageSim:
     efficiency: float = 0.9  # round-trip
     self_discharge_rate: float = 0.001  # per hour
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.soc: float = self.initial_soc
         self.history: List[float] = [self.soc]
 

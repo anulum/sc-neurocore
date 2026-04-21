@@ -82,7 +82,7 @@ class SpikeRingBuffer:
 class LayerAggregator:
     """Per-layer running statistics collector."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._layers: dict[str, dict] = {}
         self._lock = threading.Lock()
 
@@ -243,7 +243,7 @@ class TriggerCondition:
 class TriggerLog:
     """Records fired trigger events for post-mortem analysis."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.entries: list[SpikeEvent] = []
         self._lock = threading.Lock()
 
