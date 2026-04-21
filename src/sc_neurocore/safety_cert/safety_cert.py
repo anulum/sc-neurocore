@@ -97,7 +97,7 @@ class TraceabilityMatrix:
     - Verification artifacts (formal proofs, UVM results, tests)
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.requirements: Dict[str, Requirement] = {}
 
     def add_requirement(self, req: Requirement) -> None:
@@ -193,7 +193,7 @@ class FMEDA:
     Safe Failure Fraction (SFF) and Diagnostic Coverage (DC).
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.failure_modes: List[FailureMode] = []
 
     def add_failure_mode(self, fm: FailureMode) -> None:
@@ -695,7 +695,7 @@ class CCFAnalysis:
         CCFDefence("D6", "Complexity analysis and minimisation", "complexity", 0.01),
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.defences: List[CCFDefence] = [
             CCFDefence(d.defence_id, d.description, d.category, d.beta_reduction, d.implemented)
             for d in self.DEFAULT_DEFENCES
@@ -828,7 +828,7 @@ class ChangeRecord:
 class ChangeImpactTracker:
     """Tracks changes and their impact on certification artifacts."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.changes: List[ChangeRecord] = []
 
     def add_change(self, change: ChangeRecord) -> None:
@@ -998,7 +998,7 @@ class EvidenceItem:
 class EvidenceBag:
     """Manifest of all certification evidence artifacts."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.items: List[EvidenceItem] = []
 
     def add(self, item: EvidenceItem) -> None:
