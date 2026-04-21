@@ -19,7 +19,7 @@ At export: call export_quantized() to get integer weights at target bits.
 
 from __future__ import annotations
 
-from typing import Callable, Tuple
+from typing import Callable, Tuple, cast
 
 import torch
 import torch.nn as nn
@@ -121,7 +121,10 @@ class QuantizedLIFNet(nn.Module):
         """x: (T, batch, n_input). Returns (spike_counts, membrane_acc)."""
         T, batch, _ = x.shape
         device = x.device
-        v = [torch.zeros(batch, lin.linear.out_features, device=device) for lin in self.linears]
+        v = [
+            torch.zeros(batch, cast(QuantizedLinear, lin).linear.out_features, device=device)
+            for lin in self.linears
+        ]
 
         spike_sum = torch.zeros(batch, self.n_output, device=device)
         mem_sum = torch.zeros(batch, self.n_output, device=device)
@@ -129,8 +132,8 @@ class QuantizedLIFNet(nn.Module):
         for t in range(T):
             h = x[t]
             for i in range(len(self.linears)):
-                h = self.linears[i](h)
-                spike, v[i] = self.lifs[i](h, v[i])
+                h = cast(QuantizedLinear, self.linears[i])(h)
+                spike, v[i] = cast(LIFCell, self.lifs[i])(h, v[i])
                 h = spike
             spike_sum = spike_sum + spike
             mem_sum = mem_sum + v[-1]
@@ -139,14 +142,14 @@ class QuantizedLIFNet(nn.Module):
 
     def export_quantized(self) -> list[dict]:
         """Export all layers as quantized integer weights."""
-        return [lin.export_quantized() for lin in self.linears]
+        return [cast(QuantizedLinear, lin).export_quantized() for lin in self.linears]
 
     def effective_bits(self) -> float:
         """Average effective bits across all weights (for reporting)."""
         total_params = 0
         total_bits = 0
         for lin in self.linears:
-            n = lin.linear.weight.numel()
+            n = cast(QuantizedLinear, lin).linear.weight.numel()
             total_params += n
             total_bits += n * self.n_bits
         return total_bits / max(total_params, 1)
@@ -225,7 +228,10 @@ class SCAwareLIFNet(nn.Module):
         """x: (T, batch, n_input). Returns (spike_counts, membrane_acc)."""
         T, batch, _ = x.shape
         device = x.device
-        v = [torch.zeros(batch, lin.linear.out_features, device=device) for lin in self.linears]
+        v = [
+            torch.zeros(batch, cast(SCAwareLinear, lin).linear.out_features, device=device)
+            for lin in self.linears
+        ]
 
         spike_sum = torch.zeros(batch, self.n_output, device=device)
         mem_sum = torch.zeros(batch, self.n_output, device=device)
@@ -233,8 +239,8 @@ class SCAwareLIFNet(nn.Module):
         for t in range(T):
             h = x[t]
             for i in range(len(self.linears)):
-                h = self.linears[i](h)
-                spike, v[i] = self.lifs[i](h, v[i])
+                h = cast(SCAwareLinear, self.linears[i])(h)
+                spike, v[i] = cast(LIFCell, self.lifs[i])(h, v[i])
                 h = spike
             spike_sum = spike_sum + spike
             mem_sum = mem_sum + v[-1]
@@ -245,9 +251,10 @@ class SCAwareLIFNet(nn.Module):
         """Export weights clamped to [-1, 1] for bipolar SC deployment."""
         layers = []
         for lin in self.linears:
-            w = lin.linear.weight.detach().clamp(-1.0, 1.0)
+            lin_typed = cast(SCAwareLinear, lin)
+            w = lin_typed.linear.weight.detach().clamp(-1.0, 1.0)
             entry = {"weight": w.cpu().numpy()}
-            if lin.linear.bias is not None:
-                entry["bias"] = lin.linear.bias.detach().cpu().numpy()
+            if lin_typed.linear.bias is not None:
+                entry["bias"] = lin_typed.linear.bias.detach().cpu().numpy()
             layers.append(entry)
         return layers
