@@ -185,7 +185,7 @@ class AnalysisWindow:
     effective_bits: Deque[float] = field(default_factory=lambda: deque(maxlen=64))
     timestamps: Deque[int] = field(default_factory=lambda: deque(maxlen=64))
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.densities = deque(maxlen=self.window_size)
         self.popcounts = deque(maxlen=self.window_size)
         self.effective_bits = deque(maxlen=self.window_size)
@@ -400,7 +400,7 @@ class TriggerEvent:
 class TriggerEngine:
     """Evaluates capture triggers against incoming samples."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.conditions: List[TriggerCondition] = []
         self.events: List[TriggerEvent] = []
         self.max_events: int = 1000

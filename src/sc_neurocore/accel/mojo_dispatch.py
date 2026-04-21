@@ -131,9 +131,9 @@ def _np_pack_bitstream(bits: np.ndarray) -> np.ndarray:
     bits = np.asarray(bits, dtype=np.uint8)
     n = len(bits)
     n_words = (n + 63) // 64
-    padded = np.zeros(n_words * 64, dtype=np.uint8)
-    padded[:n] = bits
-    padded = padded.reshape(n_words, 64)
+    flat = np.zeros(n_words * 64, dtype=np.uint8)
+    flat[:n] = bits
+    padded = flat.reshape(n_words, 64)
     powers = np.uint64(1) << np.arange(64, dtype=np.uint64)
     return (padded.astype(np.uint64) * powers).sum(axis=1).astype(np.uint64)
 

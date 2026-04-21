@@ -641,7 +641,7 @@ try:
             eligibility: torch.Tensor,
             theta_m: torch.Tensor,
             act_avg: torch.Tensor,
-            rule_params: tuple[float, float, float, float, float],
+            rule_params: torch.Tensor,
             rule_type: int,
             dt: float,
         ) -> tuple[
@@ -953,13 +953,22 @@ try:
             dt: float = 1.0,
         ) -> None:
             """Legacy compatibility bridge for SC-NeuroCore benchmarks."""
-            if not isinstance(pre_spikes, torch.Tensor):
-                pre_spikes = torch.tensor(pre_spikes, device=self.weights.device, dtype=torch.bool)
-                post_spikes = torch.tensor(
-                    post_spikes, device=self.weights.device, dtype=torch.bool
-                )
-                rewards = torch.tensor(rewards, device=self.weights.device, dtype=torch.float32)
-            self.forward(pre_spikes, post_spikes, rewards, dt)
+            pre_t = (
+                pre_spikes
+                if isinstance(pre_spikes, torch.Tensor)
+                else torch.tensor(pre_spikes, device=self.weights.device, dtype=torch.bool)
+            )
+            post_t = (
+                post_spikes
+                if isinstance(post_spikes, torch.Tensor)
+                else torch.tensor(post_spikes, device=self.weights.device, dtype=torch.bool)
+            )
+            rew_t = (
+                rewards
+                if isinstance(rewards, torch.Tensor)
+                else torch.tensor(rewards, device=self.weights.device, dtype=torch.float32)
+            )
+            self.forward(pre_t, post_t, rew_t, dt)
 
         def get_state_dict(self) -> dict[str, Any]:
             return dict(self.state_dict())
@@ -1023,7 +1032,13 @@ except ImportError:
     # needs torch. `create_plasticity_layer` is the public re-export in
     # `src/sc_neurocore/plasticity.py`; without this stub the module-load
     # import fails on every test that transitively imports plasticity.
-    def create_plasticity_layer(*args: Any, **kwargs: Any) -> Any:  # type: ignore[no-redef]
+    def create_plasticity_layer(  # type: ignore[no-redef]
+        count: int,
+        rule_type: int = RULE_STDP,
+        backend: str = "torch",
+        autograd: bool = True,
+        **kwargs: Any,
+    ) -> Any:
         raise ImportError(
             "create_plasticity_layer requires PyTorch. Install the "
             "'torch' extra (`pip install sc-neurocore[torch]`) or "

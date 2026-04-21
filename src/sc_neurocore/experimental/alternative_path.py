@@ -11,7 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 from time import perf_counter_ns
-from typing import Any, Callable, Generic, Literal, Mapping, TypeVar
+from typing import Any, Callable, Generic, Literal, Mapping, TypeVar, cast
 
 import math
 
@@ -315,12 +315,19 @@ class AlternativePathRoute(Generic[T]):
 
         config = config or AlternativePathConfig()
 
+        baseline_value: T | None = None
+        baseline_runtime_ns: int | None = None
+        candidate_value: T | None = None
+        candidate_runtime_ns: int | None = None
+        comparison: ComparisonStats | None = None
+        candidate_error: str | None = None
+
         if not config.enabled or config.mode is AlternativePathMode.BASELINE:
             baseline_value, baseline_runtime_ns = _call_timed(self.baseline, *args, **kwargs)
             return AlternativePathResult(
                 route_name=self.name,
                 returned_path="baseline",
-                value=baseline_value,
+                value=cast(T, baseline_value),
                 baseline_value=baseline_value,
                 candidate_value=None,
                 baseline_runtime_ns=baseline_runtime_ns if config.benchmark else None,
@@ -328,13 +335,6 @@ class AlternativePathRoute(Generic[T]):
                 comparison=None,
                 candidate_error=None,
             )
-
-        baseline_value: T | None = None
-        baseline_runtime_ns: int | None = None
-        candidate_value: T | None = None
-        candidate_runtime_ns: int | None = None
-        comparison: ComparisonStats | None = None
-        candidate_error: str | None = None
 
         if config.mode is AlternativePathMode.SHADOW:
             baseline_value, baseline_runtime_ns = _call_timed(self.baseline, *args, **kwargs)
@@ -348,7 +348,7 @@ class AlternativePathRoute(Generic[T]):
             return AlternativePathResult(
                 route_name=self.name,
                 returned_path="shadow-baseline",
-                value=baseline_value,
+                value=cast(T, baseline_value),
                 baseline_value=baseline_value,
                 candidate_value=candidate_value,
                 baseline_runtime_ns=baseline_runtime_ns if config.benchmark else None,
@@ -367,7 +367,7 @@ class AlternativePathRoute(Generic[T]):
             return AlternativePathResult(
                 route_name=self.name,
                 returned_path="fallback-baseline",
-                value=baseline_value,
+                value=cast(T, baseline_value),
                 baseline_value=baseline_value,
                 candidate_value=None,
                 baseline_runtime_ns=baseline_runtime_ns if config.benchmark else None,
@@ -381,6 +381,12 @@ class AlternativePathRoute(Generic[T]):
         if baseline_value is not None and config.compare_outputs:
             comparison = self.comparator(baseline_value, candidate_value, config)
 
+        # The candidate path succeeded (no exception) — `candidate_value`
+        # is guaranteed non-None even though the `T | None` narrowing
+        # widened it; assert for mypy, then pass through.
+        assert candidate_value is not None, (
+            "candidate branch with no error must set candidate_value"
+        )
         return AlternativePathResult(
             route_name=self.name,
             returned_path="candidate",

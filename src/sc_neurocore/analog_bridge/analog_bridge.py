@@ -84,7 +84,7 @@ class AnalogBridge:
             self.g_min, self.g_max = profile.g_min, profile.g_max
             self.v_min, self.v_max = profile.v_min, profile.v_max
             self.dac_res = profile.dac_resolution
-            self.profile = profile
+            self.profile: AnalogSubstrateProfile | None = profile
         else:
             self.g_min, self.g_max = g_range or (0.0, 100.0)
             self.v_min, self.v_max = v_range or (-80.0, -40.0)
@@ -199,10 +199,13 @@ if __name__ == "__main__":
     bridge = AnalogBridge(profile=profile)
 
     class MockNode:
-        def __init__(self, t, i, prob=0.0, th=0.0):
+        def __init__(self, t: str, i: str, prob: float = 0.0, th: float = 0.0) -> None:
             self.type, self.id, self.probability, self.threshold = t, i, prob, th
 
-    nodes = [MockNode("SC_WEIGHT", "s1", prob=0.33), MockNode("LIF_MEMBRANE", "n1", th=0.55)]
+    nodes: List[MockNode] = [
+        MockNode("SC_WEIGHT", "s1", prob=0.33),
+        MockNode("LIF_MEMBRANE", "n1", th=0.55),
+    ]
     config = bridge.emit_analog_config(nodes)
     import json
 

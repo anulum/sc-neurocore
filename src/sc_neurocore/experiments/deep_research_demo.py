@@ -51,11 +51,11 @@ def run_deep_research_demo() -> None:
 
     # 4. Stochastic Heat Solver
     print("\n[4] Testing Heat Equation Solver...")
-    heat = StochasticHeatSolver(length=20, num_walkers=1000, alpha=0.1)
+    heat = StochasticHeatSolver(length=20.0, num_walkers=1000, diffusivity=0.1)
     # Start in middle
     heat.walkers[:] = 10
     heat.step()
-    temp = heat.get_temperature_profile()
+    temp = heat.get_density(n_bins=20)
     print(f"    Temp Profile Center: {temp[8:13]}")
 
     # 5. Memristive Layer

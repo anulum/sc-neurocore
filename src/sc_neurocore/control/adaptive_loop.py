@@ -19,6 +19,8 @@ import time
 from dataclasses import dataclass
 from typing import List, Optional
 
+import numpy as np
+
 from sc_neurocore.core.types import HardwareBudget, LayerSpec
 from sc_neurocore.optimizer.sc_optimizer import (
     SCOptimizer,
@@ -93,8 +95,8 @@ class AdaptiveController:
 
     def step(
         self,
-        bitstream_a,
-        bitstream_b,
+        bitstream_a: np.ndarray,
+        bitstream_b: np.ndarray,
     ) -> Optional[AdaptationEvent]:
         """Feed a bitstream pair; returns AdaptationEvent if re-optimisation triggered."""
         self.monitor.observe(bitstream_a, bitstream_b)

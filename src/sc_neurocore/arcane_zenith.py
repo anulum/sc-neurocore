@@ -37,7 +37,7 @@ class ArcaneZenithCognitiveCore:
         >>> print(f"drift={core.neuron.identity_drift:.4f}")
     """
 
-    def __init__(self, backend: str = "torch", **kwargs) -> None:
+    def __init__(self, backend: str = "torch", **kwargs: Any) -> None:
         self.neuron = ArcaneNeuron()
 
         # RULE_REWARD_STDP seamlessly interpolates weights bounded [0, 1] mapped dynamically to limits
@@ -147,7 +147,7 @@ class ArcaneZenithCognitiveCore:
 
 
 def create_arcane_neuron_with_zenith_plasticity(
-    backend: str = "torch", **kwargs
+    backend: str = "torch", **kwargs: Any
 ) -> ArcaneZenithCognitiveCore:
     """Seamless factory configuring a unified ArcaneZenith primitive running entirely connected."""
     return ArcaneZenithCognitiveCore(backend=backend, **kwargs)
