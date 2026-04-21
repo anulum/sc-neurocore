@@ -43,13 +43,13 @@ function is_available()
     return _HAS_LEARNING
 end
 
-function step(s::RustPlasticityRule, pre_spike::Bool, post_spike::Bool, reward::Float32=0.0f0)
-    ccall((:step_rule, _LIB_PATH), Cvoid, (Ptr{Cvoid}, Bool, Bool, Float32), s.ptr, pre_spike, post_spike, reward)
+function step(s::RustPlasticityRule, pre_spike::Bool, post_spike::Bool, reward::Float32=0.0f0, dt::Float32=0.001f0)
+    ccall((:step_rule, _LIB_PATH), Cvoid, (Ptr{Cvoid}, Bool, Bool, Float32, Float32), s.ptr, pre_spike, post_spike, reward, dt)
 end
 
-function step_batched(s::RustPlasticityRule, pre_spikes::Array{Bool, 1}, post_spikes::Array{Bool, 1}, rewards::Array{Float32, 1})
+function step_batched(s::RustPlasticityRule, pre_spikes::Array{Bool, 1}, post_spikes::Array{Bool, 1}, rewards::Array{Float32, 1}, dt::Float32=0.001f0)
     count = length(pre_spikes)
-    ccall((:step_rule_batched, _LIB_PATH), Cvoid, (Ptr{Cvoid}, Ptr{Bool}, Ptr{Bool}, Ptr{Float32}, UInt), s.ptr, pre_spikes, post_spikes, rewards, count)
+    ccall((:step_rule_batched, _LIB_PATH), Cvoid, (Ptr{Cvoid}, Ptr{Bool}, Ptr{Bool}, Ptr{Float32}, UInt, Float32), s.ptr, pre_spikes, post_spikes, rewards, count, dt)
 end
 
 function weight(s::RustPlasticityRule)
@@ -81,13 +81,13 @@ function destroy_learner(learner::RustEligentLearner)
     end
 end
 
-function step(s::RustEligentLearner, fired::Bool, pre_spike::Bool, global_reward::Float32=0.0f0)
-    ccall((:step_learner, _LIB_PATH), Cvoid, (Ptr{Cvoid}, Bool, Bool, Float32), s.ptr, fired, pre_spike, global_reward)
+function step(s::RustEligentLearner, fired::Bool, pre_spike::Bool, global_reward::Float32=0.0f0, dt::Float32=0.001f0)
+    ccall((:step_learner, _LIB_PATH), Cvoid, (Ptr{Cvoid}, Bool, Bool, Float32, Float32), s.ptr, fired, pre_spike, global_reward, dt)
 end
 
-function step_batched(s::RustEligentLearner, fired::Array{Bool, 1}, pre_spikes::Array{Bool, 1}, global_rewards::Array{Float32, 1})
+function step_batched(s::RustEligentLearner, fired::Array{Bool, 1}, pre_spikes::Array{Bool, 1}, global_rewards::Array{Float32, 1}, dt::Float32=0.001f0)
     count = length(fired)
-    ccall((:step_learner_batched, _LIB_PATH), Cvoid, (Ptr{Cvoid}, Ptr{Bool}, Ptr{Bool}, Ptr{Float32}, UInt), s.ptr, fired, pre_spikes, global_rewards, count)
+    ccall((:step_learner_batched, _LIB_PATH), Cvoid, (Ptr{Cvoid}, Ptr{Bool}, Ptr{Bool}, Ptr{Float32}, UInt, Float32), s.ptr, fired, pre_spikes, global_rewards, count, dt)
 end
 
 end # module LearningBridgeAccel
