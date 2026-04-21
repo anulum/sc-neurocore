@@ -16,9 +16,11 @@ Provides:
 from __future__ import annotations
 
 import ctypes as _ct
-import pathlib as _pl
-
 import os
+import pathlib as _pl
+from typing import Any
+
+import numpy as np
 
 _HAS_LEARNING = False
 _lib: _ct.CDLL | None = None
@@ -214,7 +216,7 @@ RULE_BCM = 3
 _DETERMINISTIC_SEED = None
 
 
-def set_deterministic_mode(seed: int = None) -> None:
+def set_deterministic_mode(seed: int | None = None) -> None:
     """Force exact random generator seeds for bit-true SC formal verification."""
     global _DETERMINISTIC_SEED
     _DETERMINISTIC_SEED = seed
@@ -255,10 +257,14 @@ class RustPlasticityRule:
     ) -> None:
         _get_lib().step_rule(self._ptr, pre_spike, post_spike, _ct.c_float(reward), _ct.c_float(dt))
 
-    def step_batched(self, pre_spikes, post_spikes, rewards, dt: float = 0.001) -> None:
+    def step_batched(
+        self,
+        pre_spikes: np.ndarray,
+        post_spikes: np.ndarray,
+        rewards: np.ndarray,
+        dt: float = 0.001,
+    ) -> None:
         """Process Numpy arrays in a single FFI boundary crossing."""
-        import numpy as np
-
         if len(pre_spikes) != len(post_spikes) or len(pre_spikes) != len(rewards):
             raise ValueError(
                 f"Batched array lengths mismatch: {len(pre_spikes)}, {len(post_spikes)}, {len(rewards)}"
@@ -313,9 +319,13 @@ class RustEligentLearner:
             self._ptr, fired, pre_spike, _ct.c_float(global_reward), _ct.c_float(dt)
         )
 
-    def step_batched(self, fired_slice, pre_spikes, rewards, dt: float = 0.001) -> None:
-        import numpy as np
-
+    def step_batched(
+        self,
+        fired_slice: np.ndarray,
+        pre_spikes: np.ndarray,
+        rewards: np.ndarray,
+        dt: float = 0.001,
+    ) -> None:
         if len(fired_slice) != len(pre_spikes) or len(fired_slice) != len(rewards):
             raise ValueError("Arrays must be identically sized")
         fired_slice = np.ascontiguousarray(fired_slice, dtype=np.bool_)
@@ -339,7 +349,15 @@ class RustEligentLearner:
 class RustRuleLayer:
     """RAII wrapper around a Rust RuleLayerHandle for parallelized spatial (layer) execution."""
 
-    __slots__ = ("_ptr", "_count", "_rule_type", "_weight", "_param_a", "_param_b")
+    __slots__ = (
+        "_ptr",
+        "_count",
+        "_rule_type",
+        "_weight",
+        "_param_a",
+        "_param_b",
+        "_analog_seed_counter",
+    )
 
     def __init__(
         self,
@@ -365,7 +383,7 @@ class RustRuleLayer:
             _ct.c_float(param_b),
         )
 
-    def __getstate__(self):
+    def __getstate__(self) -> dict[str, Any]:
         size = _get_lib().get_rule_layer_state_size(self._ptr)
         buf = (_ct.c_byte * size)()
         _get_lib().get_rule_layer_state_mem(self._ptr, buf)
@@ -378,10 +396,10 @@ class RustRuleLayer:
             "mem_buffer": bytes(buf),
         }
 
-    def get_state_dict(self) -> dict:
+    def get_state_dict(self) -> dict[str, Any]:
         return self.__getstate__()
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict[str, Any]) -> None:
         self._count = state["count"]
         self._rule_type = state["rule_type"]
         self._weight = state["weight"]
@@ -408,10 +426,14 @@ class RustRuleLayer:
     def load_state_dict(self, state_dict: dict) -> None:
         self.__setstate__(state_dict)
 
-    def step(self, pre_spikes, post_spikes, rewards, dt: float = 0.001) -> None:
+    def step(
+        self,
+        pre_spikes: np.ndarray,
+        post_spikes: np.ndarray,
+        rewards: np.ndarray,
+        dt: float = 0.001,
+    ) -> None:
         """Process spatial Numpy arrays natively across Rayon Rust threads."""
-        import numpy as np
-
         pre_spikes = np.ascontiguousarray(pre_spikes, dtype=np.bool_)
         post_spikes = np.ascontiguousarray(post_spikes, dtype=np.bool_)
         rewards = np.ascontiguousarray(rewards, dtype=np.float32)
@@ -423,7 +445,12 @@ class RustRuleLayer:
         _get_lib().step_rule_layer(self._ptr, pre_ptr, post_ptr, rew_ptr, _ct.c_float(dt))
 
     def step_analog(
-        self, pre_probs, post_probs, rewards, dt: float = 0.001, seed: int = None
+        self,
+        pre_probs: np.ndarray,
+        post_probs: np.ndarray,
+        rewards: np.ndarray,
+        dt: float = 0.001,
+        seed: int | None = None,
     ) -> None:
         """Process MTJ analogue probability states directly into sampled stochastic spikes using Rayon RNG."""
         if _DETERMINISTIC_SEED is not None:
@@ -448,9 +475,7 @@ class RustRuleLayer:
             self._ptr, pre_ptr, post_ptr, rew_ptr, _ct.c_uint64(seed), _ct.c_float(dt)
         )
 
-    def get_weights(self):
-        import numpy as np
-
+    def get_weights(self) -> np.ndarray:
         out = np.zeros(self._count, dtype=np.float32)
         out_ptr = out.ctypes.data_as(_ct.POINTER(_ct.c_float))
         _get_lib().get_rule_layer_weights(self._ptr, out_ptr)
@@ -498,7 +523,7 @@ class RustWgpuRuleLayer:
         param_b: float = 0.012,
         tau_e: float = 20.0,
         target_sum_weights: float = 1.0,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         if not _HAS_LEARNING:
             raise RuntimeError("Native library not loaded.")
@@ -531,9 +556,13 @@ class RustWgpuRuleLayer:
         if _DETERMINISTIC_SEED is not None:
             _get_lib().set_wgpu_layer_seed(self._ptr, _ct.c_uint32(_DETERMINISTIC_SEED))
 
-    def step(self, pre_spikes, post_spikes, rewards=None, dt: float = 0.001) -> None:
-        import numpy as np
-
+    def step(
+        self,
+        pre_spikes: np.ndarray,
+        post_spikes: np.ndarray,
+        rewards: np.ndarray | None = None,
+        dt: float = 0.001,
+    ) -> None:
         # Convert deterministically to 1.0 or 0.0 floats matching hardware probabilities natively
         pre_spikes = np.ascontiguousarray(pre_spikes, dtype=np.float32)
         post_spikes = np.ascontiguousarray(post_spikes, dtype=np.float32)
@@ -549,7 +578,12 @@ class RustWgpuRuleLayer:
         _get_lib().step_wgpu_layer(self._ptr, pre_ptr, post_ptr, rew_ptr, _ct.c_float(dt))
 
     def step_analog(
-        self, pre_probs, post_probs, rewards, dt: float = 0.001, seed: int = None
+        self,
+        pre_probs: np.ndarray,
+        post_probs: np.ndarray,
+        rewards: np.ndarray,
+        dt: float = 0.001,
+        seed: int | None = None,
     ) -> None:
         """
         Native true analog probabilistic emulation via WGSL.
@@ -558,15 +592,13 @@ class RustWgpuRuleLayer:
         """
         self.step(pre_probs, post_probs, rewards, dt)
 
-    def get_weights(self):
-        import numpy as np
-
+    def get_weights(self) -> np.ndarray:
         out = np.zeros(self._count, dtype=np.float32)
         out_ptr = out.ctypes.data_as(_ct.POINTER(_ct.c_float))
         _get_lib().get_wgpu_weights(self._ptr, out_ptr)
         return out
 
-    def get_state_dict(self) -> dict:
+    def get_state_dict(self) -> dict[str, Any]:
         return {"weights": self.get_weights()}
 
     def load_state_dict(self, state_dict: dict) -> None:
@@ -589,6 +621,8 @@ class RustWgpuRuleLayer:
 # We will define TorchRuleLayer inside the try-catch block for torch.
 
 try:
+    import math
+
     import torch
     import torch.nn as nn
 
@@ -596,21 +630,28 @@ try:
         """Mathematically exact Jacobian estimations routing gradients through specific biological traces."""
 
         @staticmethod
-        def forward(
-            ctx,
-            pre_spikes_f,
-            post_spikes_f,
-            rewards_f,
-            weights,
-            pre_trace,
-            post_trace,
-            eligibility,
-            theta_m,
-            act_avg,
-            rule_params,
-            rule_type,
-            dt,
-        ):
+        def forward(  # type: ignore[override]
+            ctx: Any,
+            pre_spikes_f: torch.Tensor,
+            post_spikes_f: torch.Tensor,
+            rewards_f: torch.Tensor,
+            weights: torch.Tensor,
+            pre_trace: torch.Tensor,
+            post_trace: torch.Tensor,
+            eligibility: torch.Tensor,
+            theta_m: torch.Tensor,
+            act_avg: torch.Tensor,
+            rule_params: tuple[float, float, float, float, float],
+            rule_type: int,
+            dt: float,
+        ) -> tuple[
+            torch.Tensor,
+            torch.Tensor,
+            torch.Tensor,
+            torch.Tensor,
+            torch.Tensor,
+            torch.Tensor,
+        ]:
             ctx.rule_type = rule_type
             ctx.dt = dt
 
@@ -624,20 +665,20 @@ try:
             n_act_avg = act_avg.clone()
 
             if rule_type == RULE_STDP:
-                n_pre_trace *= torch.exp(-dt / p_b_tau1)
-                n_post_trace *= torch.exp(-dt / p_b_tau2)
+                n_pre_trace *= math.exp(-dt / p_b_tau1)
+                n_post_trace *= math.exp(-dt / p_b_tau2)
                 ltp = p_a_plus * n_pre_trace * post_spikes_f
                 ltd = p_a_minus * n_post_trace * pre_spikes_f
                 n_weights = torch.clamp(n_weights + ltp - ltd, 0.0, 1.0)
                 n_pre_trace += pre_spikes_f
                 n_post_trace += post_spikes_f
             elif rule_type == RULE_REWARD_STDP:
-                n_pre_trace *= torch.exp(-dt / p_b_tau1)
-                n_post_trace *= torch.exp(-dt / p_b_tau2)
+                n_pre_trace *= math.exp(-dt / p_b_tau1)
+                n_post_trace *= math.exp(-dt / p_b_tau2)
                 ltp = p_a_plus * n_pre_trace * post_spikes_f
                 ltd = p_a_minus * n_post_trace * pre_spikes_f
                 n_eligibility = n_eligibility + ltp - ltd
-                n_eligibility *= torch.exp(-dt / p_tau_e)
+                n_eligibility *= math.exp(-dt / p_tau_e)
                 n_weights = torch.clamp(n_weights + n_eligibility * rewards_f, 0.0, 1.0)
                 n_pre_trace += pre_spikes_f
                 n_post_trace += post_spikes_f
@@ -645,7 +686,7 @@ try:
                 current_rate = post_spikes_f
                 n_theta_m += p_a_minus * (current_rate - p_a_plus) * dt
                 n_eligibility += pre_spikes_f
-                n_eligibility *= torch.exp(-dt / p_tau_e)
+                n_eligibility *= math.exp(-dt / p_tau_e)
                 delta = n_eligibility * rewards_f
                 n_weights += delta
                 n_act_avg += delta
@@ -683,7 +724,15 @@ try:
             return n_weights, n_pre_trace, n_post_trace, n_eligibility, n_theta_m, n_act_avg
 
         @staticmethod
-        def backward(ctx, gw, gp, gp2, ge, gt, ga):
+        def backward(  # type: ignore[override]
+            ctx: Any,
+            gw: torch.Tensor,
+            gp: torch.Tensor,
+            gp2: torch.Tensor,
+            ge: torch.Tensor,
+            gt: torch.Tensor,
+            ga: torch.Tensor,
+        ) -> tuple[Any, ...]:
             (
                 pre_spikes_f,
                 post_spikes_f,
@@ -719,6 +768,16 @@ try:
     class TorchRuleLayer(nn.Module):
         """PyTorch native mixed-precision layer replicating biological plasticity exactly for pure GPU/TPU execution."""
 
+        # Declared-at-class so mypy can type `self.<buffer>` usages. The
+        # actual tensors are populated in __init__ via `register_buffer`,
+        # which would otherwise give mypy no way to infer the type.
+        rule_params: torch.Tensor
+        pre_trace: torch.Tensor
+        post_trace: torch.Tensor
+        eligibility: torch.Tensor
+        theta_m: torch.Tensor
+        act_avg: torch.Tensor
+
         def __init__(
             self,
             count: int,
@@ -727,7 +786,7 @@ try:
             param_a: float = 0.01,
             param_b: float = 0.012,
             autograd: bool = False,
-            **kwargs,
+            **kwargs: Any,
         ) -> None:
             super().__init__()
             self.count = count
@@ -818,7 +877,13 @@ try:
                 elif self.rule_type == RULE_ELIGENT:
                     self.eligibility.zero_()
 
-        def forward(self, pre_spikes, post_spikes, rewards=None, dt=1.0):
+        def forward(
+            self,
+            pre_spikes: torch.Tensor,
+            post_spikes: torch.Tensor,
+            rewards: torch.Tensor | None = None,
+            dt: float = 1.0,
+        ) -> torch.Tensor:
             pre_f = pre_spikes.to(self.weights.dtype)
             post_f = post_spikes.to(self.weights.dtype)
 
@@ -880,7 +945,13 @@ try:
                     self.act_avg.copy_(n_a)
                     return self.weights
 
-        def step(self, pre_spikes, post_spikes, rewards, dt: float = 1.0) -> None:
+        def step(
+            self,
+            pre_spikes: torch.Tensor | np.ndarray,
+            post_spikes: torch.Tensor | np.ndarray,
+            rewards: torch.Tensor | np.ndarray,
+            dt: float = 1.0,
+        ) -> None:
             """Legacy compatibility bridge for SC-NeuroCore benchmarks."""
             if not isinstance(pre_spikes, torch.Tensor):
                 pre_spikes = torch.tensor(pre_spikes, device=self.weights.device, dtype=torch.bool)
@@ -890,16 +961,17 @@ try:
                 rewards = torch.tensor(rewards, device=self.weights.device, dtype=torch.float32)
             self.forward(pre_spikes, post_spikes, rewards, dt)
 
-        def get_state_dict(self):
-            return self.state_dict()
+        def get_state_dict(self) -> dict[str, Any]:
+            return dict(self.state_dict())
 
-        def load_state_dict(self, state_dict):
+        def load_state_dict(  # type: ignore[override]
+            self, state_dict: dict[str, Any]
+        ) -> None:
             super().load_state_dict(state_dict)
 
-        def get_weights(self):
+        def get_weights(self) -> np.ndarray:
             return self.weights.detach().cpu().numpy()
 
-    # Bridge the deprecated prototype to the hardened module
     # Bridge the deprecated prototype to the hardened module
     AutogradSTDPLayer = TorchRuleLayer
 
@@ -908,8 +980,8 @@ try:
         rule_type: int = RULE_STDP,
         backend: str = "torch",
         autograd: bool = True,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> Any:
         """
         High-level SC-NeuroCore plasticity layer factory.
 
@@ -951,7 +1023,7 @@ except ImportError:
     # needs torch. `create_plasticity_layer` is the public re-export in
     # `src/sc_neurocore/plasticity.py`; without this stub the module-load
     # import fails on every test that transitively imports plasticity.
-    def create_plasticity_layer(*args, **kwargs):  # type: ignore[no-redef]
+    def create_plasticity_layer(*args: Any, **kwargs: Any) -> Any:  # type: ignore[no-redef]
         raise ImportError(
             "create_plasticity_layer requires PyTorch. Install the "
             "'torch' extra (`pip install sc-neurocore[torch]`) or "
