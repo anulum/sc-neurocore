@@ -83,6 +83,141 @@ spintronic/memristor/chiplet mapping, evolutionary substrate with FPGA deploymen
 meta-plasticity, bioware interface, federated learning, BCI studio,
 explainability, neuro-symbolic predictive coding, stochastic doctor, and model zoo.
 
+## Engineering Philosophy: Polyglot Research, Compiled Production
+
+SC-NeuroCore carries parallel implementations of several compute kernels across
+**Python, Rust, Julia, Go, Mojo,** and **WGSL** (GPU shader). This polyglot
+surface is deliberate and **scoped to research and benchmarking**. It is not the
+shape of the production runtime.
+
+**Why a polyglot research layer.** Each hot kernel (PING gamma-oscillation step,
+cortical-column CSR mat-vec, evolutionary-substrate genome operators,
+Wilson-Cowan / Wong-Wang batch simulators, STDP plasticity step, SC bitstream
+arithmetic, …) is implemented in multiple languages. The test suite then asserts
+(a) **cross-language parity** — bit-exact where the algorithm permits (shared
+XorShift64 PRNG across the four evolve-runner backends, bit-exact Python ↔ Rust
+spike outputs in gamma_oscillation), and (b) **honest wall-clock cost** under a
+common harness. The goal is to measure, not to guess, which implementation
+should win a given operation on real hardware. Without this layer, any claim
+like "Rust is faster than Julia here" is folklore.
+
+**Production path.** The shipping product is **one finetuned pipeline** per
+deployment target, not the polyglot matrix. The IR compiler (`sc-neurocore deploy`
++ `compiler/`, `hdl_gen/`, `export/`) consumes a topology and emits **one**
+artefact per target:
+
+| Target | Artefact | Source of truth for each kernel |
+|---|---|---|
+| **FPGA** (Xilinx, Intel, Lattice) | SystemVerilog RTL + bitstream | Rust IR → Verilog emitter (bit-true to NumPy reference) |
+| **Edge / embedded** | Rust `cdylib` (`libautonomous_learning.so` + `core_engine.so`) | Rust crate, PyO3-wrapped |
+| **Python wheel** | `sc_neurocore_engine` (maturin) | Rust engine + thin Python API |
+| **GPU** | WGSL compute shaders (Vulkan / Metal / DX12 / WebGPU) | Shared Rust kernels compiled to WGSL |
+
+At deploy time the compiler resolves every operator to its measured-fastest
+backend on the target architecture and drops the others. The production binary
+has **no Julia, Go, or Mojo runtime dependency**, and no Python on the FPGA
+path. The polyglot is the **testbed**; the compile product is **monolithic and
+fast**.
+
+### Default pipeline — stage by stage
+
+```mermaid
+flowchart LR
+    %% ===== Research / Bench Plane =====
+    subgraph RESEARCH["① Research & Bench Plane (source tree, not shipped)"]
+        direction TB
+        PY[Python<br/>reference<br/>NumPy / scipy.sparse]
+        RS[Rust PyO3<br/>engine/ + crates/]
+        JL[Julia<br/>juliacall]
+        GO[Go cgo<br/>cdylib]
+        MJ[Mojo SIMD<br/>.mojo → .so]
+        WG[WGSL<br/>compute shader]
+        PY --- RS --- JL --- GO --- MJ --- WG
+    end
+
+    RESEARCH --> HARNESS["② Bench Harness<br/>benchmarks/bench_*.py<br/>per-op wall-time + bit-parity assertions<br/>JSON → benchmarks/results/"]
+
+    HARNESS --> IR["③ IR Compiler<br/>compiler/, hdl_gen/, export/<br/>reads bench JSON → picks fastest<br/>backend per op → lowers to IR"]
+
+    %% ===== Deploy Plane =====
+    IR --> DEPLOY
+    subgraph DEPLOY["④ Deploy Plane (one artefact per target, monolithic)"]
+        direction TB
+        FPGA["FPGA target<br/>SystemVerilog + bitstream<br/>(Yosys / Vivado / Quartus)"]
+        WHEEL["Python wheel<br/>sc_neurocore_engine<br/>(Rust + PyO3 + maturin)"]
+        EDGE["Edge cdylib<br/>libautonomous_learning.so<br/>libcore_engine.so"]
+        GPU["GPU backend<br/>.wgsl shader pack<br/>Vulkan / Metal / DX12"]
+    end
+
+    DEPLOY --> RUN["⑤ Runtime<br/>no Julia / Go / Mojo required<br/>no Python on FPGA path"]
+
+    style RESEARCH fill:#2d4a6b,color:#fff,stroke:#5b7ca8
+    style HARNESS fill:#5a2a6f,color:#fff,stroke:#9b6bb5
+    style IR fill:#b5651d,color:#fff,stroke:#d9904f
+    style DEPLOY fill:#1a237e,color:#fff,stroke:#5c72d1
+    style RUN fill:#1b4332,color:#fff,stroke:#52b788
+```
+
+### Measured per-operation winners (benchmarks/results/)
+
+Hot-path picks used by the compiler, from the committed benchmark JSON
+(Intel i5-11600K @ 3.9 GHz, Linux 6.17, Python 3.12.3):
+
+| Operation | Python baseline | Rust | Julia | Go | Mojo | Compiler picks | Speedup vs Python |
+|---|---:|---:|---:|---:|---:|:---|---:|
+| `evo_substrate.genomic_distance` | 5992 ns | 258 ns | 23 ns | 23 ns | **19 ns** | **Mojo** | **319×** |
+| `evo_substrate.crossover_uniform` | 1094 ns | 481 ns | 46 ns | **42 ns** | 151 ns | **Go** | **26×** |
+| `evo_substrate.point_mutation` | 3984 ns | 432 ns | 295 ns | **47 ns** | 151 ns | **Go** | **85×** |
+| `gamma_oscillation.step` (100 cells, PING) | 34.7 µs | **6.4 µs** | n/a | — | — | **Rust** | **5.4×** |
+| `cortical_column.step` (1544 cells, Potjans) | 0.53 ms | 0.53 ms | 0.54 ms | 0.57 ms | — | Python (tie) | 1.0× |
+| SC popcount (packed u64) | — | native | n/a | n/a | — | **Rust SIMD** | — |
+| FPGA inference (SC dense, 1024-bit) | — | Verilog RTL | — | — | — | **RTL** | event-driven |
+
+Three observations the benchmark table makes explicit:
+
+1. **No single language wins everything.** Mojo dominates tight SIMD math
+  (`genomic_distance`), Go's goroutines + escape-analysis win short-lived
+  allocator-heavy ops (`point_mutation`), Rust dominates kernels that reward
+  borrow-checker-verified no-copy iteration (`gamma_oscillation`). Python is
+  competitive when the inner loop is already in scipy / NumPy C code
+  (`cortical_column` — scipy.sparse CSR is hand-tuned C).
+
+2. **The compiler's job is dispatch.** Each polyglot implementation is
+  a candidate; the compiler picks the measured winner at deploy time and
+  statically drops the rest. Users do not need Mojo on their machine to run
+  a wheel that was compiled with Mojo as the winner on the build machine —
+  the output is a `.so`.
+
+3. **Numbers are verifiable.** Every row traces to a committed, runnable
+  script in `benchmarks/` and a JSON in `benchmarks/results/`. Nothing in the
+  table is an estimate or folklore.
+
+### Lifecycle of one kernel
+
+```mermaid
+sequenceDiagram
+    participant Algo as Algorithm<br/>(reference)
+    participant Py as Python impl
+    participant Backends as Rust / Julia / Go / Mojo<br/>(parallel ports)
+    participant Bench as Bench harness
+    participant Compiler as IR Compiler
+    participant Prod as Deployed artefact
+
+    Algo->>Py: first implementation<br/>(NumPy or scipy, human-readable)
+    Py->>Backends: port with parity tests<br/>(bit-exact or tolerance-bounded)
+    Backends->>Bench: run under `pytest benchmarks/`<br/>shared seeds, shared input
+    Bench->>Bench: assert parity + record<br/>ns / op, wall time, output
+    Bench->>Compiler: JSON result + target<br/>(FPGA / wheel / cdylib / WGSL)
+    Compiler->>Compiler: per op, pick fastest<br/>backend that hits the target
+    Compiler->>Prod: emit single artefact<br/>(SystemVerilog or cdylib)
+    Prod->>Prod: run in production<br/>no polyglot runtime
+```
+
+Short version: the polyglot matrix lives in the source tree for **honesty**
+(measurements not guesses) and **correctness** (cross-language parity catches
+algorithm bugs that a single implementation would hide). The shipping product
+is **one fast path per target**, selected by data.
+
 ## Feature Comparison
 
 | Feature | SC-NeuroCore | snnTorch | Norse | Lava | Brian2 |
