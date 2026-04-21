@@ -138,10 +138,13 @@ class ActivityMonitor:
         self,
         bitstream: np.ndarray,
         reference: Optional[np.ndarray] = None,
-    ) -> Dict[str, float]:
+    ) -> Dict[str, Any]:
         """Record one observation.
 
-        Returns dict with current metrics.
+        Returns dict with current metrics. Mixed value types — numeric
+        fields plus `drift_detected: bool` and `activity_zone: str`, so
+        the annotation is ``dict[str, Any]`` rather than
+        ``dict[str, float]``.
         """
         density = float(np.mean(bitstream))
         self._density_history.append(density)
@@ -167,15 +170,16 @@ class ActivityMonitor:
     def _compute_scc(self, a: np.ndarray, b: np.ndarray) -> float:
         a_f = a.astype(np.float64).flatten()
         b_f = b.astype(np.float64).flatten()
-        pa, pb = np.mean(a_f), np.mean(b_f)
-        p_and = np.mean(a_f * b_f)
+        pa = float(np.mean(a_f))
+        pb = float(np.mean(b_f))
+        p_and = float(np.mean(a_f * b_f))
         num = p_and - pa * pb
         if abs(num) < 1e-12:
             return 0.0
-        denom = (min(pa, pb) - pa * pb) if num > 0 else (pa * pb - max(0, pa + pb - 1))
+        denom = (min(pa, pb) - pa * pb) if num > 0 else (pa * pb - max(0.0, pa + pb - 1.0))
         if abs(denom) < 1e-12:
             return 0.0
-        return float(max(-1.0, min(1.0, num / denom)))
+        return max(-1.0, min(1.0, num / denom))
 
     @property
     def mean_density(self) -> float:
@@ -275,7 +279,7 @@ class SECDEC_ECC:
     detection.  Corrects all 1-bit errors, detects all 2-bit errors.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._hamming = HammingECC()
 
     def encode(self, data_4bit: int) -> int:
@@ -541,10 +545,10 @@ class SCRuntimeEngine:
             chunks = (n + 7) // 8
             padded = np.zeros(chunks * 8, dtype=np.uint8)
             padded[:n] = bitstream
-            out = []
+            out: list[int] = []
             for i in range(0, len(padded), 8):
                 chunk = padded[i : i + 8]
-                out.extend(chunk)
+                out.extend(int(v) for v in chunk)
                 out.append(int(np.sum(chunk) % 2))
             return np.array(out, dtype=np.uint8)
         return bitstream
@@ -560,10 +564,10 @@ class SCRuntimeEngine:
         elif self.config.ecc_mode == ECCMode.HAMMING:
             return self.ecc_hamming.decode_bitstream(encoded)
         elif self.config.ecc_mode == ECCMode.PARITY:
-            decoded = []
+            decoded_bits: list[int] = []
             for i in range(0, len(encoded) - 8, 9):
-                decoded.extend(encoded[i : i + 8])
-            return np.array(decoded, dtype=np.uint8)
+                decoded_bits.extend(int(v) for v in encoded[i : i + 8])
+            return np.array(decoded_bits, dtype=np.uint8)
         return encoded
 
     def protect_batch(self, bitstreams: List[np.ndarray]) -> List[np.ndarray]:
