@@ -28,11 +28,16 @@ from sc_neurocore.export.compiler_export import CompilerExporter
 
 @dataclass
 class PipelineStageResult:
-    """Result from a single pipeline stage."""
+    """Result from a single pipeline stage.
+
+    `output` accepts strings (verilog / relay / mlir text) and the
+    richer ONNXGraph object so each stage can store its native
+    representation without stringifying.
+    """
 
     stage: str
     success: bool
-    output: str
+    output: Any
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -138,10 +143,11 @@ class ExportPipeline:
             # Build a simple IR-like description
             ir_graph = _build_ir_graph(neuron_name, n_neurons, bitstream_length, meta)
 
+            n_state_vars = len(meta.state_variables)
             return PipelineStageResult(
                 stage="model_zoo",
                 success=True,
-                output=f"Loaded {meta.name} ({meta.ode_order}-order ODE, {n_neurons} neurons)",
+                output=f"Loaded {meta.name} ({n_state_vars}-state ODE, {n_neurons} neurons)",
                 metadata={"ir_graph": ir_graph, "plugin": plugin},
             )
         except Exception as e:
@@ -160,17 +166,24 @@ class ExportPipeline:
     ) -> PipelineStageResult:
         """Stage 2: Generate SystemVerilog."""
         try:
+            plugin = self.registry.get(neuron_name)
+            if plugin is None:
+                return PipelineStageResult(
+                    stage="verilog",
+                    success=False,
+                    output=f"Neuron '{neuron_name}' not found in registry",
+                )
             gen = VerilogGenerator()
-            verilog = gen.emit(
-                neuron_type=neuron_name,
-                n_neurons=n_neurons,
-                bitstream_length=bitstream_length,
-                module_name=module_name,
-            )
+            verilog = gen.generate(plugin)
             return PipelineStageResult(
                 stage="verilog",
                 success=True,
                 output=verilog,
+                metadata={
+                    "n_neurons": n_neurons,
+                    "bitstream_length": bitstream_length,
+                    "module_name": module_name,
+                },
             )
         except Exception as e:
             return PipelineStageResult(
@@ -185,14 +198,15 @@ class ExportPipeline:
         n_neurons: int,
         bitstream_length: int,
     ) -> PipelineStageResult:
-        """Stage 3: Export to ONNX JSON."""
+        """Stage 3: Export to ONNX graph."""
         try:
             exporter = ONNXExporter()
-            onnx_json = exporter.export(ir_graph)
+            shapes: Dict[str, tuple[int, ...]] = {"input": (n_neurons, bitstream_length)}
+            onnx_graph = exporter.export(ir_graph, shapes)
             return PipelineStageResult(
                 stage="onnx",
                 success=True,
-                output=onnx_json,
+                output=onnx_graph,
             )
         except Exception as e:
             return PipelineStageResult(
@@ -210,7 +224,7 @@ class ExportPipeline:
         """Stage 4: Lower to TVM Relay."""
         try:
             lowering = TVMLowering(schedule=self.target)
-            shapes = {
+            shapes: Dict[str, tuple[int, ...]] = {
                 "input": (n_neurons, bitstream_length),
             }
             relay_text = lowering.lower(ir_graph, shapes)
@@ -235,7 +249,7 @@ class ExportPipeline:
         """Stage 5: Export to MLIR/SSA."""
         try:
             exporter = CompilerExporter(target="mlir")
-            shapes = {"input": (n_neurons, bitstream_length)}
+            shapes: Dict[str, tuple[int, ...]] = {"input": (n_neurons, bitstream_length)}
             mlir_text = exporter.export_to_mlir(ir_graph, shapes)
             return PipelineStageResult(
                 stage="mlir",
@@ -259,15 +273,21 @@ def _build_ir_graph(
     """Build a lightweight IR graph from neuron plugin metadata."""
 
     class IRNode:
-        def __init__(self, name, node_type, inputs=None, attrs=None):
+        def __init__(
+            self,
+            name: str,
+            node_type: str,
+            inputs: Optional[List[str]] = None,
+            attrs: Optional[Dict[str, Any]] = None,
+        ) -> None:
             self.name = name
             self.type = node_type
             self.inputs = inputs or []
             self.attrs = attrs or {}
 
     class IRGraph:
-        def __init__(self):
-            self.nodes = []
+        def __init__(self) -> None:
+            self.nodes: List[IRNode] = []
             self.name = f"{neuron_name}_network"
 
     g = IRGraph()

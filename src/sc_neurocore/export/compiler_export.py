@@ -22,7 +22,7 @@ from sc_neurocore.hdl_gen._ident import sanitize_ident
 class SSAEnvironment:
     """Manages Static Single Assignment (SSA) registers for MLIR/Relay."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.registers: Dict[str, str] = {}
         self.counter: int = 0
 
@@ -45,7 +45,7 @@ class ShapeInference:
     def __init__(self, input_shapes: Dict[str, Tuple[int, ...]]):
         self.shapes = input_shapes.copy()
 
-    def infer(self, node: Any):
+    def infer(self, node: Any) -> None:
         if node.type == "SC_AND":
             # AND gate preserves shape (element-wise)
             self.shapes[node.output] = self.shapes[node.inputs[0]]
@@ -66,7 +66,7 @@ class CompilerExporter:
         """Kahn's algorithm for topological sorting of the DAG."""
         in_degree = {n.id: 0 for n in nodes}
         node_map = {n.id: n for n in nodes}
-        adj_list = {n.id: [] for n in nodes}
+        adj_list: Dict[str, List[str]] = {n.id: [] for n in nodes}
         output_to_node_id = {n.output: n.id for n in nodes}
 
         # Build adjacency and degrees based on data flow (output -> input)
@@ -165,7 +165,14 @@ class CompilerExporter:
 if __name__ == "__main__":
 
     class MockNode:
-        def __init__(self, t, i, ins, out, **kwargs):
+        def __init__(
+            self,
+            t: str,
+            i: str,
+            ins: List[str],
+            out: str,
+            **kwargs: Any,
+        ) -> None:
             self.type = t
             self.id = i
             self.inputs = ins
@@ -174,16 +181,16 @@ if __name__ == "__main__":
                 setattr(self, k, v)
 
     class MockGraph:
-        def __init__(self):
+        def __init__(self) -> None:
             # Deliberately out of order: LIF is defined before AND,
             # but LIF depends on AND's output ("mac_1").
-            self.nodes = [
+            self.nodes: List[MockNode] = [
                 MockNode("LIF_MEMBRANE", "n1", ["mac_1"], "spike_out", threshold=0.75, leak=0.9),
                 MockNode("SC_AND", "m1", ["input_a", "input_b"], "mac_1"),
             ]
 
     exporter = CompilerExporter()
-    inputs = {"input_a": (128, 1024), "input_b": (128, 1024)}
+    inputs: Dict[str, Tuple[int, ...]] = {"input_a": (128, 1024), "input_b": (128, 1024)}
 
     print("--- Real SSA MLIR Export ---")
     print(exporter.export_to_mlir(MockGraph(), inputs))
