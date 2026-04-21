@@ -9,13 +9,15 @@
 from __future__ import annotations
 
 import unittest
+
 import numpy as np
-from analog_bridge import (
+
+from sc_neurocore.analog_bridge import (
+    AEREvent,
     AnalogBridge,
     AnalogSubstrateProfile,
-    EventDrivenInterface,
     CalibrationRoutine,
-    AEREvent,
+    EventDrivenInterface,
 )
 
 
