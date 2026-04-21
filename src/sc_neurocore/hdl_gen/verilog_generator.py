@@ -11,6 +11,8 @@ import logging
 from typing import Dict
 
 from ._ident import sanitize_ident
+from .lfsr16_emitter import Lfsr16Emitter
+from .sobol16_emitter import Sobol16Emitter
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +86,14 @@ class VerilogGenerator:
 
         code += "endmodule\n"
         return code
+
+    def emit_lfsr16_source(self, module_name: str = "sc_lfsr16_source", seed: int = 0xACE1) -> str:
+        """Emit a standalone LFSR-16 stochastic source module."""
+        return Lfsr16Emitter(module_name=module_name, seed=seed).generate()
+
+    def emit_sobol16_source(self, module_name: str = "sc_sobol16_source", seed: int = 0) -> str:
+        """Emit a standalone Sobol-16 stochastic source module."""
+        return Sobol16Emitter(module_name=module_name, seed=seed).generate()
 
     def save_to_file(self, path: str) -> None:
         try:
