@@ -71,6 +71,11 @@ cosim/obj_dir/
 
 # Compiled Go benchmark binaries (regenerate via `go test -bench -c`)
 src/sc_neurocore/accel/go/services/**/services_bench
+# Compiled Go-service executables built by `hil_server.py` on first
+# `.start(build=True)` / by the `aer_router` daemon at runtime. Source
+# (*.go, go.mod, go.sum) stays tracked; the compiled output does not.
+src/sc_neurocore/accel/go/services/*/hil_debugger
+src/sc_neurocore/accel/go/services/*/aer_router
 src/sc_neurocore/accel/go/services/**/services_ext_bench
 src/sc_neurocore/accel/go/services/**/*_bench
 src/sc_neurocore/accel/go/evo_substrate/evo_substrate_bench
