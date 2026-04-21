@@ -73,7 +73,7 @@ class AERRouter:
     UDP routing, use the Go server (hil_debugger/interconnect).
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._routes: dict[int, str] = {}
         self._stats: dict[int, RouteStats] = {}
         self._pending: dict[int, float] = {}

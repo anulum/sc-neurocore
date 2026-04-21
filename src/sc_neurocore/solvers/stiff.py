@@ -18,6 +18,10 @@ from __future__ import annotations
 
 import numpy as np
 
+from typing import Callable
+
+from numpy.typing import NDArray
+
 from .ode import ODESolver
 
 
@@ -32,11 +36,17 @@ class ImplicitEuler(ODESolver):
     Reference: Hairer, E. & Wanner, G. (1996). Solving ODEs II. Springer.
     """
 
-    def __init__(self, max_iterations: int = 10, tol: float = 1e-10):
+    def __init__(self, max_iterations: int = 10, tol: float = 1e-10) -> None:
         self.max_iterations = max_iterations
         self.tol = tol
 
-    def step(self, f, y, t, dt):
+    def step(
+        self,
+        f: Callable[[float, NDArray], NDArray],
+        y: NDArray,
+        t: float,
+        dt: float,
+    ) -> tuple[NDArray, float]:
         t_next = t + dt
         y_next = y + dt * f(t, y)  # initial guess from forward Euler
 
@@ -60,11 +70,17 @@ class TrapezoidalRule(ODESolver):
     Reference: Crank, J. & Nicolson, P. (1947). Proc. Camb. Phil. Soc. 43:50–67.
     """
 
-    def __init__(self, max_iterations: int = 10, tol: float = 1e-10):
+    def __init__(self, max_iterations: int = 10, tol: float = 1e-10) -> None:
         self.max_iterations = max_iterations
         self.tol = tol
 
-    def step(self, f, y, t, dt):
+    def step(
+        self,
+        f: Callable[[float, NDArray], NDArray],
+        y: NDArray,
+        t: float,
+        dt: float,
+    ) -> tuple[NDArray, float]:
         f_n = f(t, y)
         t_next = t + dt
         y_next = y + dt * f_n  # initial guess

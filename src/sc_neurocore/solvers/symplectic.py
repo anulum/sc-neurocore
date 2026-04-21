@@ -18,6 +18,10 @@ from __future__ import annotations
 
 import numpy as np
 
+from typing import Callable
+
+from numpy.typing import NDArray
+
 from .ode import ODESolver
 
 
@@ -35,7 +39,13 @@ class StormerVerlet(ODESolver):
     Reference: Hairer, E. et al. (2006). Geometric Numerical Integration. Springer.
     """
 
-    def step(self, f, y, t, dt):
+    def step(
+        self,
+        f: Callable[[float, NDArray], NDArray],
+        y: NDArray,
+        t: float,
+        dt: float,
+    ) -> tuple[NDArray, float]:
         n = len(y) // 2
         q, p = y[:n], y[n:]
 
@@ -70,7 +80,13 @@ class LeapfrogSolver(ODESolver):
     Reference: Yoshida, H. (1990). Phys. Lett. A 150:262–268.
     """
 
-    def step(self, f, y, t, dt):
+    def step(
+        self,
+        f: Callable[[float, NDArray], NDArray],
+        y: NDArray,
+        t: float,
+        dt: float,
+    ) -> tuple[NDArray, float]:
         n = len(y) // 2
         q, p = y[:n].copy(), y[n:].copy()
 

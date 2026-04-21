@@ -14,13 +14,14 @@ from pathlib import Path
 class JuliaFusionSolver:
     """Orchestrates Julia ODE solvers executing the `fusion_solver.jl` logic natively."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.julia_script = Path(__file__).parent / "fusion_solver.jl"
-        self._julia_bin = shutil.which("julia")
-        if not self._julia_bin:
+        julia_bin = shutil.which("julia")
+        if not julia_bin:
             raise FileNotFoundError("Julia binary not found on system PATH. Please install Julia.")
+        self._julia_bin: str = julia_bin
 
-    def run_dynamics(self, steps: int):
+    def run_dynamics(self, steps: int) -> None:
         """Invoke continuous ODE simulation on the Julia baseline bounds."""
         try:
             print("[Julia Solvers] Executing continuous physics wrapper via DiffEq.jl")
