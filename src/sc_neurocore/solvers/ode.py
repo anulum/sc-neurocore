@@ -15,7 +15,7 @@ and exponential integrators for linear ODEs (exact LIF integration).
 from __future__ import annotations
 
 import abc
-from typing import Callable
+from typing import Any, Callable
 
 import numpy as np
 from numpy.typing import NDArray
@@ -41,7 +41,13 @@ class EulerSolver(ODESolver):
     y_{n+1} = y_n + h * f(t_n, y_n)
     """
 
-    def step(self, f, y, t, dt):
+    def step(
+        self,
+        f: Callable[[float, NDArray], NDArray],
+        y: NDArray,
+        t: float,
+        dt: float,
+    ) -> tuple[NDArray, float]:
         return y + dt * f(t, y), dt
 
 
@@ -53,7 +59,13 @@ class HeunSolver(ODESolver):
     y_{n+1} = y_n + h/2 * (k1 + k2)
     """
 
-    def step(self, f, y, t, dt):
+    def step(
+        self,
+        f: Callable[[float, NDArray], NDArray],
+        y: NDArray,
+        t: float,
+        dt: float,
+    ) -> tuple[NDArray, float]:
         k1 = f(t, y)
         k2 = f(t + dt, y + dt * k1)
         return y + 0.5 * dt * (k1 + k2), dt
@@ -71,7 +83,13 @@ class RK4Solver(ODESolver):
     Reference: Kutta, W. (1901). Z. Math. Phys. 46:435–453.
     """
 
-    def step(self, f, y, t, dt):
+    def step(
+        self,
+        f: Callable[[float, NDArray], NDArray],
+        y: NDArray,
+        t: float,
+        dt: float,
+    ) -> tuple[NDArray, float]:
         k1 = f(t, y)
         k2 = f(t + 0.5 * dt, y + 0.5 * dt * k1)
         k3 = f(t + 0.5 * dt, y + 0.5 * dt * k2)
@@ -131,14 +149,20 @@ class DormandPrinceSolver(ODESolver):
         max_factor: float = 5.0,
         min_factor: float = 0.2,
         safety: float = 0.9,
-    ):
+    ) -> None:
         self.atol = atol
         self.rtol = rtol
         self.max_factor = max_factor
         self.min_factor = min_factor
         self.safety = safety
 
-    def step(self, f, y, t, dt):
+    def step(  # type: ignore[override]
+        self,
+        f: Callable[[float, NDArray], NDArray],
+        y: NDArray,
+        t: float,
+        dt: float,
+    ) -> tuple[NDArray, float, float]:
         while True:
             k1 = f(t, y)
             k2 = f(t + self._a2 * dt, y + dt * self._b21 * k1)
@@ -231,35 +255,43 @@ class ExponentialEuler(ODESolver):
     The callable f must return A*y + b; the solver extracts the decay constant.
     """
 
-    def __init__(self, tau: float = 20.0, y_rest: float = -65.0, r_m: float = 1.0):
+    def __init__(self, tau: float = 20.0, y_rest: float = -65.0, r_m: float = 1.0) -> None:
         self.tau = tau
         self.y_rest = y_rest
         self.r_m = r_m
 
-    def step(self, f, y, t, dt):
+    def step(
+        self,
+        f: Callable[[float, NDArray], NDArray],
+        y: NDArray,
+        t: float,
+        dt: float,
+    ) -> tuple[NDArray, float]:
         decay = np.exp(-dt / self.tau)
         # f is expected to return current only (scalar)
         current = f(t, y)
-        if np.isscalar(current):
-            y_new = self.y_rest + (y - self.y_rest) * decay + self.r_m * current * (1.0 - decay)
-        else:
-            y_new = self.y_rest + (y - self.y_rest) * decay + self.r_m * current * (1.0 - decay)
+        # Same arithmetic shape either way: scalar or ndarray `current`
+        # both broadcast against (y - self.y_rest) * decay.
+        y_new = self.y_rest + (y - self.y_rest) * decay + self.r_m * current * (1.0 - decay)
         return y_new, dt
 
 
-def get_solver(name: str, **kwargs) -> ODESolver:
+def get_solver(name: str, **kwargs: Any) -> ODESolver:
     """Factory function: return an ODE solver by name.
 
     Supported names: 'euler', 'heun', 'rk4', 'dp45', 'exponential_euler'.
     """
-    solvers = {
-        "euler": EulerSolver,
-        "heun": HeunSolver,
-        "rk4": RK4Solver,
-        "dp45": DormandPrinceSolver,
-        "exponential_euler": ExponentialEuler,
-    }
-    cls = solvers.get(name.lower())
-    if cls is None:
-        raise ValueError(f"Unknown solver: {name!r}. Available: {list(solvers)}")
-    return cls(**kwargs)
+    key = name.lower()
+    if key == "euler":
+        return EulerSolver()
+    if key == "heun":
+        return HeunSolver()
+    if key == "rk4":
+        return RK4Solver()
+    if key == "dp45":
+        return DormandPrinceSolver(**kwargs)
+    if key == "exponential_euler":
+        return ExponentialEuler(**kwargs)
+    raise ValueError(
+        f"Unknown solver: {name!r}. Available: 'euler', 'heun', 'rk4', 'dp45', 'exponential_euler'."
+    )
