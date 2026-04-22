@@ -8,12 +8,16 @@
 
 """Tests for equation_compiler: ODE strings → synthesizable Verilog RTL."""
 
+import pint
+
 from sc_neurocore.neurons.equation_builder import EquationNeuron, from_equations
 from sc_neurocore.compiler.equation_compiler import (
     Q88,
     compile_to_verilog,
     equation_to_fpga,
 )
+
+UNIT_REGISTRY = pint.UnitRegistry()
 
 
 class TestQ88:
@@ -89,6 +93,32 @@ class TestCompileLIF:
         assert "P_E_L" in verilog
         assert "P_TAU_M" in verilog
         assert "P_C" in verilog
+
+    def test_strict_units_lif_compiles_with_named_threshold_and_reset_constants(self):
+        neuron = from_equations(
+            "dv/dt = (-(v - E_L) + R * I) / tau_m",
+            threshold="v > v_threshold",
+            reset="v = v_reset",
+            params={
+                "E_L": -65.0 * UNIT_REGISTRY.millivolt,
+                "R": 100e6 * UNIT_REGISTRY.ohm,
+                "tau_m": 10.0 * UNIT_REGISTRY.millisecond,
+            },
+            init={"v": -65.0 * UNIT_REGISTRY.millivolt},
+            constants={
+                "v_threshold": -50.0 * UNIT_REGISTRY.millivolt,
+                "v_reset": -65.0 * UNIT_REGISTRY.millivolt,
+            },
+            dt=1.0 * UNIT_REGISTRY.millisecond,
+            units="strict",
+            input_unit=1.0 * UNIT_REGISTRY.nanoampere,
+        )
+        verilog = compile_to_verilog(neuron, module_name="strict_lif", fraction=16)
+        assert "module strict_lif" in verilog
+        assert "P_V_THRESHOLD" in verilog
+        assert "P_V_RESET" in verilog
+        assert "if ((v_reg > P_V_THRESHOLD))" in verilog
+        assert "v_reg <= P_V_RESET;" in verilog
 
 
 class TestCompileMultiVariable:
@@ -173,6 +203,31 @@ class TestEquationToFPGA:
         )
         assert "v_reg" in verilog
         assert "w_reg" in verilog
+
+    def test_strict_units_one_liner_export_path(self):
+        neuron, verilog = equation_to_fpga(
+            "dv/dt = (-(v - E_L) + R * I) / tau_m",
+            threshold="v > v_threshold",
+            reset="v = v_reset",
+            params={
+                "E_L": -65.0 * UNIT_REGISTRY.millivolt,
+                "R": 100e6 * UNIT_REGISTRY.ohm,
+                "tau_m": 10.0 * UNIT_REGISTRY.millisecond,
+            },
+            init={"v": -65.0 * UNIT_REGISTRY.millivolt},
+            constants={
+                "v_threshold": -50.0 * UNIT_REGISTRY.millivolt,
+                "v_reset": -65.0 * UNIT_REGISTRY.millivolt,
+            },
+            dt=1.0 * UNIT_REGISTRY.millisecond,
+            module_name="strict_oneliner_lif",
+            fraction=16,
+            units="strict",
+            input_unit=1.0 * UNIT_REGISTRY.nanoampere,
+        )
+        assert "module strict_oneliner_lif" in verilog
+        assert "P_V_THRESHOLD" in verilog
+        assert str(neuron.get_state()["v"].units) == "millivolt"
 
 
 class TestVerilogSyntax:

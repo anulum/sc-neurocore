@@ -19,4 +19,4 @@ reachable.
 from ci_install_common import install_editable
 
 
-raise SystemExit(install_editable("dev,nir,compression,training,research,bioware,studio"))
+raise SystemExit(install_editable("dev,units,nir,compression,training,research,bioware,studio"))

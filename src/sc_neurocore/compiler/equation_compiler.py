@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import ast
 from dataclasses import dataclass
+from typing import Any
 
 from ..hdl_gen._ident import sanitize_ident
 from ..neurons.equation_builder import EquationNeuron
@@ -522,10 +523,15 @@ def equation_to_fpga(
     *equation_strings: str,
     threshold: str | None = None,
     reset: str | None = None,
-    params: dict[str, float] | None = None,
-    init: dict[str, float] | None = None,
-    dt: float = 0.1,
+    params: dict[str, Any] | None = None,
+    init: dict[str, Any] | None = None,
+    constants: dict[str, Any] | None = None,
+    dt: Any = 0.1,
     module_name: str = "sc_equation_neuron",
+    data_width: int = 16,
+    fraction: int = 8,
+    units: str = "none",
+    input_unit: Any | None = None,
 ) -> tuple[EquationNeuron, str]:
     """One-liner: ODE string → (Python neuron, Verilog RTL).
 
@@ -549,9 +555,17 @@ def equation_to_fpga(
         reset=reset,
         params=params,
         init=init,
+        constants=constants,
         dt=dt,
+        units=units,
+        input_unit=input_unit,
     )
-    verilog = compile_to_verilog(neuron, module_name=module_name)
+    verilog = compile_to_verilog(
+        neuron,
+        module_name=module_name,
+        data_width=data_width,
+        fraction=fraction,
+    )
     return neuron, verilog
 
 
