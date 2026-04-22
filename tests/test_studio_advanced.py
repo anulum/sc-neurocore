@@ -15,6 +15,7 @@ fastapi = pytest.importorskip("fastapi")
 from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
+from sc_neurocore_engine.studio import get_ei_network_simulator
 from sc_neurocore.studio.characterize import characterize_model
 from sc_neurocore.studio.codegen import (
     classify_firing_pattern,
@@ -54,9 +55,8 @@ class TestNetwork:
     def test_network_uses_rust_engine(self):
         """Verify the Rust engine path is used when available."""
         try:
-            from sc_neurocore_engine import py_simulate_ei_network
-
-            r = py_simulate_ei_network(n_exc=10, n_inh=5, duration=20.0, ext_rate=100.0)
+            simulate = get_ei_network_simulator()
+            r = simulate(n_exc=10, n_inh=5, duration=20.0, ext_rate=100.0)
             assert "spike_times" in r
             assert "n_total" in r
             assert int(r["n_total"]) == 15

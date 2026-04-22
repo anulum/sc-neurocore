@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import numpy as np
 
+from sc_neurocore_engine.studio import get_ei_network_simulator
+
 
 def simulate_ei_network(
     n_exc: int = 80,
@@ -65,9 +67,8 @@ def _simulate_rust(
     dt: float,
 ) -> dict:
     """Entire simulation in Rust — connectivity, Poisson input, stepping, recording."""
-    from sc_neurocore_engine import py_simulate_ei_network
-
-    result = py_simulate_ei_network(
+    simulate = get_ei_network_simulator()
+    result = simulate(
         n_exc=n_exc,
         n_inh=n_inh,
         w_ee=w_ee,

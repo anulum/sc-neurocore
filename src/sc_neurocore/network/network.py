@@ -15,6 +15,8 @@ from typing import Any
 
 import numpy as np
 
+from sc_neurocore_engine.network import get_network_runner_class
+
 from .population import Population
 from .projection import Projection
 from .monitor import SpikeMonitor, StateMonitor, RateMonitor
@@ -27,9 +29,7 @@ def _get_rust_engine() -> Any:
     global _RUST_ENGINE
     if _RUST_ENGINE is None:
         try:
-            from sc_neurocore_engine.sc_neurocore_engine import NetworkRunner
-
-            _RUST_ENGINE = NetworkRunner
+            _RUST_ENGINE = get_network_runner_class()
         except ImportError:
             _RUST_ENGINE = False
     return _RUST_ENGINE
