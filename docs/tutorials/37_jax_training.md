@@ -32,30 +32,43 @@ print(f"Output: {output}")
 
 ## 2. Surrogate Gradient Training
 
-JAX's `grad` computes gradients through the non-differentiable spike function
-using a straight-through estimator:
+SC-NeuroCore exposes two explicit JAX surrogate paths:
+
+- `custom_vjp` — hard spikes forward, fast-sigmoid proxy backward
+- `legacy_stop_gradient` — historical straight-through reset path
+
+For new work, prefer `custom_vjp`:
 
 ```python
-import jax
 import jax.numpy as jnp
-from sc_neurocore.accel.jax_backend import to_jax
+from sc_neurocore.accel.jax_backend import jax_surrogate_gradient_step
 
-def lif_step(v, current, threshold=1.0, tau=20.0, dt=1.0):
-    """Single LIF step with straight-through surrogate gradient."""
-    dv = (-v + current) * dt / tau
-    v_new = v + dv
-    # Spike: hard threshold forward, surrogate backward
-    spike = (v_new >= threshold).astype(jnp.float32)
-    # Straight-through: gradient of spike ≈ gradient of sigmoid
-    spike_surrogate = jax.nn.sigmoid(10.0 * (v_new - threshold))
-    spike = spike - jax.lax.stop_gradient(spike - spike_surrogate)
-    v_reset = v_new * (1.0 - spike)
-    return v_reset, spike
+weights = [jnp.asarray([[0.4, -0.1], [0.2, 0.5]], dtype=jnp.float32)]
+x = jnp.asarray([[1.0, 0.2], [0.3, 1.1]], dtype=jnp.float32)
+targets = jnp.asarray([[1.0, 0.0], [0.0, 1.0]], dtype=jnp.float32)
 
-# Differentiable through the spike function
-grad_fn = jax.grad(lambda v, I: lif_step(v, I)[1].sum())
-gradient = grad_fn(jnp.float32(0.8), jnp.float32(1.5))
-print(f"Gradient of spikes w.r.t. voltage: {gradient:.4f}")
+updated, loss_value = jax_surrogate_gradient_step(
+    weights,
+    x,
+    targets,
+    n_steps=5,
+    lr=1e-2,
+    surrogate_path="custom_vjp",
+)
+print(f"Loss after one step: {loss_value:.4f}")
+```
+
+The legacy route remains available when you need direct comparison:
+
+```python
+updated_legacy, loss_legacy = jax_surrogate_gradient_step(
+    weights,
+    x,
+    targets,
+    n_steps=5,
+    lr=1e-2,
+    surrogate_path="legacy_stop_gradient",
+)
 ```
 
 ## 3. Training Loop on Synthetic Data

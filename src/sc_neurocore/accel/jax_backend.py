@@ -43,6 +43,7 @@ __all__ = [
     "jax",
     "jnp",
     "HAS_JAX",
+    "JAX_SURROGATE_PATHS",
     "to_jax",
     "to_host",
     "jax_pack_bitstream",
@@ -51,8 +52,11 @@ __all__ = [
     "jax_vec_mac",
     "jax_lif_step",
     "jax_forward_pass",
+    "jax_surrogate_loss",
     "jax_surrogate_gradient_step",
 ]
+
+JAX_SURROGATE_PATHS = ("custom_vjp", "legacy_stop_gradient")
 
 
 def to_jax(arr: Any) -> Any:
@@ -74,6 +78,106 @@ def to_host(arr: Any) -> np.ndarray[Any, Any]:
 # ---------------------------------------------------------------------------
 
 if HAS_JAX:
+
+    def _fast_sigmoid_proxy(v: jax.Array, beta: jax.Array, threshold: jax.Array) -> jax.Array:
+        centered = v - threshold
+        return centered / (1.0 + jnp.abs(beta * centered))
+
+    def _fast_sigmoid_grad(v: jax.Array, beta: jax.Array, threshold: jax.Array) -> jax.Array:
+        centered = v - threshold
+        return 1.0 / (1.0 + jnp.abs(beta * centered)) ** 2
+
+    @jax.custom_vjp
+    def _custom_vjp_superspike(v: jax.Array, beta: jax.Array, threshold: jax.Array) -> jax.Array:
+        return (v >= threshold).astype(v.dtype)
+
+    def _custom_vjp_superspike_fwd(
+        v: jax.Array, beta: jax.Array, threshold: jax.Array
+    ) -> tuple[jax.Array, tuple[jax.Array, jax.Array, jax.Array]]:
+        return _custom_vjp_superspike(v, beta, threshold), (v, beta, threshold)
+
+    def _custom_vjp_superspike_bwd(
+        res: tuple[jax.Array, jax.Array, jax.Array], g: jax.Array
+    ) -> tuple[jax.Array, jax.Array, jax.Array]:
+        v, beta, threshold = res
+        grad = _fast_sigmoid_grad(v, beta, threshold)
+        return g * grad, jnp.zeros_like(beta), jnp.zeros_like(threshold)
+
+    _custom_vjp_superspike.defvjp(
+        _custom_vjp_superspike_fwd,
+        _custom_vjp_superspike_bwd,
+    )
+
+    def _legacy_stop_gradient_spike(
+        v: jax.Array, beta: jax.Array, threshold: jax.Array
+    ) -> tuple[jax.Array, jax.Array]:
+        centered = v - threshold
+        surrogate_rate = 1.0 / (1.0 + jnp.abs(beta * centered))
+        spike_hard = (v >= threshold).astype(v.dtype)
+        spike_reset = surrogate_rate + jax.lax.stop_gradient(spike_hard - surrogate_rate)
+        return surrogate_rate, spike_reset
+
+    def _jax_loss_with_custom_vjp_surrogate(
+        weights: list[jax.Array],
+        x: jax.Array,
+        targets: jax.Array,
+        n_steps: int,
+        beta: float,
+        threshold: float,
+    ) -> jax.Array:
+        batch = x.shape[0]
+        spikes_in = x
+        beta_arr = jnp.asarray(beta, dtype=x.dtype)
+        threshold_arr = jnp.asarray(threshold, dtype=x.dtype)
+
+        for W in weights:
+            n_out = W.shape[0]
+            v = jnp.zeros((batch, n_out), dtype=x.dtype)
+            spike_sum = jnp.zeros((batch, n_out), dtype=x.dtype)
+            for _t in range(n_steps):
+                current = spikes_in @ W.T
+                v = 0.9 * v + current
+                spikes = _custom_vjp_superspike(v, beta_arr, threshold_arr)
+                spike_sum = spike_sum + spikes
+                v = v * (1.0 - spikes)
+            spikes_in = spike_sum / n_steps
+
+        logits = spikes_in
+        log_softmax = logits - jax.nn.logsumexp(logits, axis=-1, keepdims=True)
+        ce = -jnp.sum(targets * log_softmax) / batch
+        return ce
+
+    def _jax_loss_with_legacy_stop_gradient_surrogate(
+        weights: list[jax.Array],
+        x: jax.Array,
+        targets: jax.Array,
+        n_steps: int,
+        beta: float,
+        threshold: float,
+    ) -> jax.Array:
+        batch = x.shape[0]
+        spikes_in = x
+        beta_arr = jnp.asarray(beta, dtype=x.dtype)
+        threshold_arr = jnp.asarray(threshold, dtype=x.dtype)
+
+        for W in weights:
+            n_out = W.shape[0]
+            v = jnp.zeros((batch, n_out), dtype=x.dtype)
+            spike_sum = jnp.zeros((batch, n_out), dtype=x.dtype)
+            for _t in range(n_steps):
+                current = spikes_in @ W.T
+                v = 0.9 * v + current
+                surrogate_rate, spike_reset = _legacy_stop_gradient_spike(
+                    v, beta_arr, threshold_arr
+                )
+                spike_sum = spike_sum + surrogate_rate
+                v = v * (1.0 - spike_reset)
+            spikes_in = spike_sum / n_steps
+
+        logits = spikes_in
+        log_softmax = logits - jax.nn.logsumexp(logits, axis=-1, keepdims=True)
+        ce = -jnp.sum(targets * log_softmax) / batch
+        return ce
 
     @jax.jit
     def _jax_pack_1d(bits: jax.Array) -> jax.Array:
@@ -210,6 +314,47 @@ if HAS_JAX:
 
         return all_spikes, v
 
+    def jax_surrogate_loss(
+        weights: list[jax.Array],
+        x: jax.Array,
+        targets: jax.Array,
+        n_steps: int = 25,
+        beta: float = 10.0,
+        threshold: float = 1.0,
+        surrogate_path: str = "custom_vjp",
+    ) -> jax.Array:
+        """
+        Cross-entropy loss for JAX SNN training with explicit surrogate paths.
+
+        Available paths:
+        - ``custom_vjp``: hard spikes forward, fast-sigmoid proxy backward
+          via ``jax.custom_vjp``
+        - ``legacy_stop_gradient``: historical straight-through reset path
+          using ``jax.lax.stop_gradient``
+        """
+
+        if surrogate_path == "custom_vjp":
+            return _jax_loss_with_custom_vjp_surrogate(
+                weights=weights,
+                x=x,
+                targets=targets,
+                n_steps=n_steps,
+                beta=beta,
+                threshold=threshold,
+            )
+        if surrogate_path == "legacy_stop_gradient":
+            return _jax_loss_with_legacy_stop_gradient_surrogate(
+                weights=weights,
+                x=x,
+                targets=targets,
+                n_steps=n_steps,
+                beta=beta,
+                threshold=threshold,
+            )
+
+        valid = ", ".join(JAX_SURROGATE_PATHS)
+        raise ValueError(f"Unknown surrogate_path {surrogate_path!r}; expected one of: {valid}")
+
     def jax_surrogate_gradient_step(
         weights: list[jax.Array],
         x: jax.Array,
@@ -217,36 +362,26 @@ if HAS_JAX:
         n_steps: int = 25,
         lr: float = 1e-3,
         beta: float = 10.0,
+        threshold: float = 1.0,
+        surrogate_path: str = "custom_vjp",
     ) -> tuple[list[jax.Array], float]:
         """
-        One training step with surrogate gradient (fast sigmoid).
+        One training step with surrogate gradient over an explicit JAX path.
 
-        Uses jax.grad on a cross-entropy loss over mean output spike rates.
-        Returns (updated_weights, loss_value).
+        ``custom_vjp`` is the modern path. ``legacy_stop_gradient`` keeps the
+        historical training route available for side-by-side verification.
         """
 
         def loss_fn(ws: list[jax.Array]) -> jax.Array:
-            batch = x.shape[0]
-            spikes_in = x
-            for W in ws:
-                n_out = W.shape[0]
-                v = jnp.zeros((batch, n_out))
-                spike_sum = jnp.zeros((batch, n_out))
-                for _t in range(n_steps):
-                    current = spikes_in @ W.T
-                    v = 0.9 * v + current
-                    # Fast sigmoid surrogate: σ(β(v-θ)) / β
-                    sg = 1.0 / (1.0 + jnp.abs(beta * (v - 1.0)))
-                    spike_sum = spike_sum + sg
-                    # Straight-through estimator: hard reset forward, surrogate backward
-                    spike_hard = (v >= 1.0).astype(v.dtype)
-                    spike_st = sg + jax.lax.stop_gradient(spike_hard - sg)
-                    v = v * (1.0 - spike_st)
-                spikes_in = spike_sum / n_steps
-            logits = spikes_in
-            log_softmax = logits - jax.nn.logsumexp(logits, axis=-1, keepdims=True)
-            ce = -jnp.sum(targets * log_softmax) / batch
-            return ce
+            return jax_surrogate_loss(
+                weights=ws,
+                x=x,
+                targets=targets,
+                n_steps=n_steps,
+                beta=beta,
+                threshold=threshold,
+                surrogate_path=surrogate_path,
+            )
 
         loss_val, grads = jax.value_and_grad(loss_fn)(weights)
         updated = [w - lr * g for w, g in zip(weights, grads)]
@@ -264,4 +399,5 @@ else:
     jax_vec_mac = _jax_not_installed  # type: ignore[assignment]
     jax_lif_step = _jax_not_installed  # type: ignore[assignment]
     jax_forward_pass = _jax_not_installed  # type: ignore[assignment]
+    jax_surrogate_loss = _jax_not_installed  # type: ignore[assignment]
     jax_surrogate_gradient_step = _jax_not_installed  # type: ignore[assignment]
