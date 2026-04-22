@@ -46,6 +46,17 @@ class TestModelEndpoints:
         r = client.get("/api/models/NonexistentModel")
         assert r.status_code == 404
 
+    def test_model_detail_internal_failure_is_500(self, client, monkeypatch):
+        import sc_neurocore.studio.app as app_mod
+
+        def _boom(_name: str):
+            raise RuntimeError("metadata exploded")
+
+        monkeypatch.setattr(app_mod, "get_model_detail", _boom)
+        r = client.get(f"/api/models/{MODEL}")
+        assert r.status_code == 500
+        assert r.json()["detail"] == "Internal error"
+
     def test_simulate_model(self, client):
         r = client.post(
             "/api/models/simulate",

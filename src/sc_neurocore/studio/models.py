@@ -12,6 +12,8 @@ import dataclasses
 import importlib
 from typing import Any
 
+from sc_neurocore_engine.studio import get_batch_simulate
+
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
 
 # State variable names that change during .step() — common across models
@@ -184,6 +186,18 @@ def _categorize(name: str) -> str:
 _models_cache: list[dict] | None = None
 
 
+class RustStudioBackendUnavailable(ImportError):
+    """Raised when the Studio Rust batch-simulation path is unavailable."""
+
+
+class RustStudioBackendError(RuntimeError):
+    """Raised when the Studio Rust batch-simulation path fails at runtime."""
+
+
+class ModelMetadataError(RuntimeError):
+    """Raised when Studio model metadata loading fails for a known model."""
+
+
 def list_models() -> list[dict]:
     """Return metadata for all 118 neuron models with categories.
 
@@ -230,8 +244,11 @@ def get_model_detail(name: str) -> dict | None:
         return None
     try:
         cls = _load_class(name)
-        if not dataclasses.is_dataclass(cls):
-            return None
+    except Exception as exc:
+        raise ModelMetadataError(f"Failed to load Studio model metadata for '{name}'") from exc
+    if not dataclasses.is_dataclass(cls):
+        return None
+    try:
         state_vars, params = _classify_fields(cls)
         dt_field = next((f for f in dataclasses.fields(cls) if f.name == "dt"), None)
         dt_val = (
@@ -239,17 +256,36 @@ def get_model_detail(name: str) -> dict | None:
             if dt_field and dt_field.default is not dataclasses.MISSING
             else 0.1
         )
-        return {
-            "name": name,
-            "module": _CLASS_TO_MODULE[name],
-            "category": _categorize(name),
-            "state_vars": state_vars,
-            "params": params,
-            "dt": dt_val,
-            "docstring": (cls.__doc__ or "").strip().split("\n")[0],
-        }
-    except Exception:
-        return None
+    except Exception as exc:
+        raise ModelMetadataError(
+            f"Failed to classify Studio model metadata for '{name}'"
+        ) from exc
+    return {
+        "name": name,
+        "module": _CLASS_TO_MODULE[name],
+        "category": _categorize(name),
+        "state_vars": state_vars,
+        "params": params,
+        "dt": dt_val,
+        "docstring": (cls.__doc__ or "").strip().split("\n")[0],
+    }
+
+
+def _load_rust_batch_simulate() -> Any:
+    """Load the Rust batch-simulation bridge entrypoint.
+
+    Import failure means the backend is unavailable; it must not be conflated
+    with runtime failure inside an otherwise available backend.
+    """
+    try:
+        return get_batch_simulate()
+    except ImportError as exc:
+        raise RustStudioBackendUnavailable("Studio Rust batch simulator unavailable") from exc
+
+
+def _is_rust_unsupported_model_error(exc: Exception) -> bool:
+    """True when the Rust backend rejected a model as unsupported."""
+    return isinstance(exc, ValueError) and "Unsupported model:" in str(exc)
 
 
 def _detect_step_kwarg(cls: Any) -> str:
@@ -274,42 +310,56 @@ def _try_rust_simulate(
     current_trace: Any,
     actual_dt: float,
 ) -> dict[str, Any] | None:
-    """Attempt Rust batch simulation. Returns None if model not in Rust dispatch."""
+    """Attempt Rust batch simulation.
+
+    Returns ``None`` only when the backend is unavailable or the model is not
+    implemented in Rust. Runtime failures in an available backend are raised so
+    the caller does not silently degrade to Python.
+    """
+    import numpy as np
+    from sc_neurocore.studio.simulation import MAX_PLOT_POINTS, _spike_stats
+
     try:
-        import numpy as np
-        from sc_neurocore_engine import py_batch_simulate
-        from sc_neurocore.studio.simulation import MAX_PLOT_POINTS, _spike_stats
-
-        current_arr = np.asarray(current_trace, dtype=np.float64)
-        result = py_batch_simulate(name, n_steps, current_arr)
-        voltages = np.asarray(result["voltages"])
-        spikes = result["spikes"].tolist()
-        stats = _spike_stats(spikes, actual_dt, n_steps)
-
-        time = np.arange(n_steps) * actual_dt
-        if n_steps > MAX_PLOT_POINTS:
-            stride = n_steps // MAX_PLOT_POINTS
-            time = time[::stride]
-            voltages = voltages[::stride]
-            current_trace = current_trace[::stride]
-
-        voltages = np.nan_to_num(voltages, nan=0.0, posinf=0.0, neginf=0.0)
-
-        return {
-            "time": time.tolist(),
-            "states": {"v": voltages.tolist()},
-            "current_trace": current_trace.tolist()
-            if hasattr(current_trace, "tolist")
-            else list(current_trace),
-            "spikes": spikes,
-            "spike_count": len(spikes),
-            "stats": stats,
-            "dt": actual_dt,
-            "n_steps": n_steps,
-            "model_name": name,
-        }
-    except (ImportError, Exception):
+        py_batch_simulate = _load_rust_batch_simulate()
+    except RustStudioBackendUnavailable:
         return None
+
+    current_arr = np.asarray(current_trace, dtype=np.float64)
+    try:
+        result = py_batch_simulate(name, n_steps, current_arr)
+    except Exception as exc:
+        if _is_rust_unsupported_model_error(exc):
+            return None
+        raise RustStudioBackendError(
+            f"Studio Rust batch simulation failed for model '{name}'"
+        ) from exc
+
+    voltages = np.asarray(result["voltages"])
+    spikes = result["spikes"].tolist()
+    stats = _spike_stats(spikes, actual_dt, n_steps)
+
+    time = np.arange(n_steps) * actual_dt
+    if n_steps > MAX_PLOT_POINTS:
+        stride = n_steps // MAX_PLOT_POINTS
+        time = time[::stride]
+        voltages = voltages[::stride]
+        current_trace = current_trace[::stride]
+
+    voltages = np.nan_to_num(voltages, nan=0.0, posinf=0.0, neginf=0.0)
+
+    return {
+        "time": time.tolist(),
+        "states": {"v": voltages.tolist()},
+        "current_trace": current_trace.tolist()
+        if hasattr(current_trace, "tolist")
+        else list(current_trace),
+        "spikes": spikes,
+        "spike_count": len(spikes),
+        "stats": stats,
+        "dt": actual_dt,
+        "n_steps": n_steps,
+        "model_name": name,
+    }
 
 
 def simulate_model(

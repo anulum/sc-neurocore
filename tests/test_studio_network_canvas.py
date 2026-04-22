@@ -65,7 +65,18 @@ class TestCreation:
     def test_available_models(self):
         models = available_models()
         assert isinstance(models, list)
-        assert len(models) > 0
+        assert len(models) > 100
+        assert "AdExNeuron" in models
+
+    def test_available_models_raises_on_catalog_failure(self, monkeypatch):
+        import sc_neurocore.studio.network_graph as mod
+
+        def _boom():
+            raise RuntimeError("catalog failed")
+
+        monkeypatch.setattr(mod, "list_models", _boom)
+        with pytest.raises(RuntimeError, match="catalog failed"):
+            mod.available_models()
 
 
 # --- Graph Validation ---
@@ -179,6 +190,17 @@ class TestEndpoints:
         r = client.get("/api/graph/models")
         assert r.status_code == 200
         assert isinstance(r.json(), list)
+
+    def test_models_endpoint_surfaces_discovery_failure(self, client, monkeypatch):
+        import sc_neurocore.studio.app as app_mod
+
+        def _boom():
+            raise RuntimeError("catalog failed")
+
+        monkeypatch.setattr(app_mod, "graph_available_models", _boom)
+        r = client.get("/api/graph/models")
+        assert r.status_code == 500
+        assert r.json()["detail"] == "Internal error"
 
     def test_create_population_endpoint(self, client):
         r = client.post("/api/graph/population", json={"label": "Test", "count": 50})
