@@ -285,3 +285,31 @@ class Network:
                 correction = lam * deviation[i] / n_src
                 for k in range(proj.indptr[i], proj.indptr[i + 1]):
                     proj.data[k] = max(0.0, proj.data[k] - correction)
+
+    def to_torch(
+        self,
+        surrogate_fn: Any | None = None,
+    ) -> Any:
+        """Build an explicit differentiable bridge without altering NumPy/Rust execution.
+
+        The returned module accepts an input current tensor of shape
+        ``(T, batch, input_dim)`` and runs the graph with the same
+        previous-spike projection semantics used by the NumPy backend.
+        """
+        if self.stimuli:
+            raise NotImplementedError(
+                "Network.to_torch() does not support embedded stimuli; pass input currents "
+                "through the returned module instead"
+            )
+        from ._torch_bridge import NetworkTorchBridge
+
+        if surrogate_fn is None:
+            from sc_neurocore.training.surrogate import atan_surrogate_custom_op
+
+            surrogate_fn = atan_surrogate_custom_op
+
+        return NetworkTorchBridge(
+            self.populations,
+            self.projections,
+            surrogate_fn=surrogate_fn,
+        )
