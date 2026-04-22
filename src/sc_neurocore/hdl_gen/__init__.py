@@ -12,12 +12,16 @@ __tier__ = "research"
 
 from .verilog_generator import VerilogGenerator
 from .spice_generator import SpiceGenerator
+from .aer_emitter import AEREmitter
+from .kuramoto_emitter import KuramotoEmitter
 from .lfsr16_emitter import Lfsr16Emitter
 from .sobol16_emitter import Sobol16Emitter
 
 __all__ = [
     "VerilogGenerator",
     "SpiceGenerator",
+    "AEREmitter",
+    "KuramotoEmitter",
     "Lfsr16Emitter",
     "Sobol16Emitter",
 ]

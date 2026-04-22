@@ -10,7 +10,9 @@ from typing import Any
 import logging
 from typing import Dict
 
+from .aer_emitter import AEREmitter
 from ._ident import sanitize_ident
+from .kuramoto_emitter import KuramotoEmitter
 from .lfsr16_emitter import Lfsr16Emitter
 from .sobol16_emitter import Sobol16Emitter
 
@@ -37,10 +39,18 @@ class VerilogGenerator:
             }
         )
 
-    def generate(self) -> str:
+    def generate(self, mode: str = "sync") -> str:
         """
         Emits Verilog code.
         """
+        if mode == "async_aer":
+            emitter = AEREmitter(module_name=self.module_name)
+            for layer in self.layers:
+                emitter.add_layer(layer["type"], layer["name"], layer["params"])
+            return emitter.generate()
+        if mode != "sync":
+            raise ValueError("mode must be 'sync' or 'async_aer'")
+
         code = f"module {self.module_name} (\n"
         code += "    input wire clk,\n"
         code += "    input wire rst_n,\n"
@@ -94,6 +104,40 @@ class VerilogGenerator:
     def emit_sobol16_source(self, module_name: str = "sc_sobol16_source", seed: int = 0) -> str:
         """Emit a standalone Sobol-16 stochastic source module."""
         return Sobol16Emitter(module_name=module_name, seed=seed).generate()
+
+    def emit_async_aer(self, module_name: str | None = None) -> str:
+        """Emit the research-stage async AER wrapper."""
+        emitter = AEREmitter(module_name=module_name or self.module_name)
+        for layer in self.layers:
+            emitter.add_layer(layer["type"], layer["name"], layer["params"])
+        return emitter.generate()
+
+    def emit_kuramoto_phase(
+        self,
+        module_name: str | None = None,
+        *,
+        n_oscillators: int = 4,
+        omegas: list[float] | tuple[float, ...] | None = None,
+        initial_phases: list[float] | tuple[float, ...] | None = None,
+        coupling: float = 0.1,
+        dt: float = 1e-2,
+        data_width: int = 24,
+        fraction: int = 16,
+        lut_size: int = 64,
+    ) -> str:
+        """Emit the bounded research Kuramoto phase core."""
+        emitter = KuramotoEmitter(
+            module_name=module_name or self.module_name,
+            n_oscillators=n_oscillators,
+            omegas=omegas,
+            initial_phases=initial_phases,
+            coupling=coupling,
+            dt=dt,
+            data_width=data_width,
+            fraction=fraction,
+            lut_size=lut_size,
+        )
+        return emitter.generate()
 
     def save_to_file(self, path: str) -> None:
         try:
