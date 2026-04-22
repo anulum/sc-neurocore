@@ -656,6 +656,21 @@ print(f"FDTD2D 200x100: 500 steps in {dt*1000:.1f} ms")
 
 ---
 
+### Output from `bench_optics.py`
+
+```text
+Benchmark                                           Value
+----------------------------------------------------------
+analyze_bank rust                             61161 calls/s
+analyze_bank python                           58879 calls/s
+analyze_bank speedup                                1.04x
+analyze_pairs rust                              11.307 ms
+analyze_pairs python                            11.462 ms
+analyze_pairs speedup                               1.01x
+fdtd2d 500 steps                              134.1 ms, 74.5 Mcell-steps/s
+
+Results written to /media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/benchmarks/results/bench_optics.json
+```
 ## 8. Citations
 
 1. **Abhari, N., Hofmann, G. W., Reiter, R.** (2019). *True random

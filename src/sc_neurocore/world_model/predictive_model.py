@@ -57,14 +57,20 @@ from dataclasses import dataclass
 from typing import Optional, Tuple
 
 import numpy as np
+import numpy.typing as npt
+from sc_neurocore_engine.world_model import get_lgssm_kalman_filter
+
+
+def _missing_rust_kalman_filter(*_args: object, **_kwargs: object) -> object:
+    raise RuntimeError("Rust LGSSM backend is not available")
 
 # Detect Rust acceleration backend
 try:
-    from sc_neurocore_engine import py_lgssm_kalman_filter as _rust_kalman_filter
+    _rust_kalman_filter = get_lgssm_kalman_filter()
 
     _HAS_RUST_LGSSM = True
 except (ImportError, AttributeError):
-    _rust_kalman_filter = None
+    _rust_kalman_filter = _missing_rust_kalman_filter
     _HAS_RUST_LGSSM = False
 
 
@@ -608,7 +614,7 @@ class KalmanFilter:
         covs_out = np.zeros((T, d, d), dtype=np.float64, order="C")
         pred_means_out = np.zeros((T, d), dtype=np.float64, order="C")
         pred_covs_out = np.zeros((T, d, d), dtype=np.float64, order="C")
-        log_lik_out = np.zeros(1, dtype=np.float64, order="C")
+        log_lik_out: npt.NDArray[np.float64] = np.zeros(1, dtype=np.float64, order="C")
 
         _go_lib.kalman_filter_c(
             obs_arr.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
@@ -675,7 +681,7 @@ class KalmanFilter:
         covs_out = np.zeros((T, d, d), dtype=np.float64, order="C")
         pred_means_out = np.zeros((T, d), dtype=np.float64, order="C")
         pred_covs_out = np.zeros((T, d, d), dtype=np.float64, order="C")
-        log_lik_out = np.zeros(1, dtype=np.float64, order="C")
+        log_lik_out: npt.NDArray[np.float64] = np.zeros(1, dtype=np.float64, order="C")
 
         _mojo_lib.kalman_filter_c(
             obs_arr.ctypes.data,
@@ -929,7 +935,7 @@ class PredictiveWorldModel:
         Returns the deterministic mean prediction; for a full
         probabilistic forecast use `predict_next_state_with_cov`.
         """
-        u = action.astype(np.float64)
+        u: npt.NDArray[np.float64] = action.astype(np.float64)
         if u.shape == ():
             u = u[np.newaxis]
         return self.model.A @ current_state + (
@@ -954,7 +960,7 @@ class PredictiveWorldModel:
     ) -> list[np.ndarray]:
         """Multi-step deterministic forecast (mean trajectory)."""
         traj: list[np.ndarray] = []
-        x = initial_state.astype(np.float64)
+        x: npt.NDArray[np.float64] = initial_state.astype(np.float64)
         for a in actions:
             x = self.predict_next_state(x, np.asarray(a, dtype=np.float64))
             traj.append(x.copy())
@@ -968,8 +974,8 @@ class PredictiveWorldModel:
     ) -> list[Tuple[np.ndarray, np.ndarray]]:
         """Multi-step probabilistic forecast (mean + cov trajectory)."""
         traj: list[Tuple[np.ndarray, np.ndarray]] = []
-        x = initial_state.astype(np.float64)
-        P = initial_cov.astype(np.float64)
+        x: npt.NDArray[np.float64] = initial_state.astype(np.float64)
+        P: npt.NDArray[np.float64] = initial_cov.astype(np.float64)
         for a in actions:
             x, P = self.predict_next_state_with_cov(
                 x,

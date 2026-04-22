@@ -23,28 +23,22 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
+import numpy.typing as npt
+from sc_neurocore_engine.photonics import (
+    get_crosstalk_analyzer,
+    get_crosstalk_bank_analyzer,
+    get_crosstalk_pair_analyzer,
+    has_full_photonic_crosstalk_backend,
+)
 
 try:
     # py_ph_analyze_crosstalk is kept imported for backward-compatible
     # callers that access it via this module; analyze_bank / analyze_pairs
     # below use py_ph_analyze_crosstalk_bank / _pairs directly.
-    from sc_neurocore_engine import (
-        py_ph_analyze_crosstalk,  # noqa: F401 — re-export surface
-        py_ph_analyze_crosstalk_bank,
-        py_ph_analyze_crosstalk_pairs,
-    )
-    import sc_neurocore_engine as _sne
-
-    _HAS_RUST_PH = all(
-        hasattr(_sne, _name)
-        for _name in (
-            "py_ph_route_waveguides",
-            "py_ph_analyze_power_budget",
-            "py_ph_analyze_crosstalk_bank",
-            "py_ph_analyze_crosstalk_pairs",
-        )
-    )
-    del _sne
+    py_ph_analyze_crosstalk = get_crosstalk_analyzer()  # noqa: F401 — re-export surface
+    py_ph_analyze_crosstalk_bank = get_crosstalk_bank_analyzer()
+    py_ph_analyze_crosstalk_pairs = get_crosstalk_pair_analyzer()
+    _HAS_RUST_PH = has_full_photonic_crosstalk_backend()
 except ImportError:
     _HAS_RUST_PH = False
 
@@ -195,7 +189,7 @@ class BitstreamToOptical:
 
     def to_phase_array(self, bitstream: np.ndarray) -> np.ndarray:
         """Vectorised phase extraction."""
-        bs = bitstream.astype(np.float64)
+        bs: npt.NDArray[np.float64] = bitstream.astype(np.float64)
         if self.target.modulation == OpticalModulation.PHASE:
             return np.where(bs > 0.5, 0.0, math.pi)
         elif self.target.modulation == OpticalModulation.AMPLITUDE:
@@ -205,7 +199,7 @@ class BitstreamToOptical:
 
     def to_amplitude_array(self, bitstream: np.ndarray) -> np.ndarray:
         """Vectorised amplitude extraction."""
-        bs = bitstream.astype(np.float64)
+        bs: npt.NDArray[np.float64] = bitstream.astype(np.float64)
         if self.target.modulation == OpticalModulation.PHASE:
             return np.ones_like(bs)
         elif self.target.modulation == OpticalModulation.AMPLITUDE:
@@ -258,12 +252,12 @@ class FDTDSolver:
         self.n = refractive_index
         self.v = self.c0 / self.n
         self.dt = dt_factor * self.dx / self.c0
-        self.ez = np.zeros(grid_size, dtype=np.float64)
-        self.hy = np.zeros(grid_size, dtype=np.float64)
+        self.ez: npt.NDArray[np.float64] = np.zeros(grid_size, dtype=np.float64)
+        self.hy: npt.NDArray[np.float64] = np.zeros(grid_size, dtype=np.float64)
         self._loss_per_metre = 0.0
 
         self.boundary_cells = boundary_cells
-        self._abc_taper = np.ones(grid_size, dtype=np.float64)
+        self._abc_taper: npt.NDArray[np.float64] = np.ones(grid_size, dtype=np.float64)
         for i in range(boundary_cells):
             strength = 1.0 - 0.8 * ((boundary_cells - i) / boundary_cells) ** 2
             self._abc_taper[i] = strength
@@ -604,11 +598,11 @@ class FDTD2DSolver:
         self.hy: np.ndarray = np.zeros((nx, ny), dtype=np.float64)
 
         # Material map: refractive index per cell
-        self.n_map = np.ones((nx, ny), dtype=np.float64)
+        self.n_map: npt.NDArray[np.float64] = np.ones((nx, ny), dtype=np.float64)
 
         # PML conductivity profiles
-        self.sigma_x = np.zeros((nx, ny), dtype=np.float64)
-        self.sigma_y = np.zeros((nx, ny), dtype=np.float64)
+        self.sigma_x: npt.NDArray[np.float64] = np.zeros((nx, ny), dtype=np.float64)
+        self.sigma_y: npt.NDArray[np.float64] = np.zeros((nx, ny), dtype=np.float64)
         self._build_pml()
 
     def _build_pml(self) -> None:

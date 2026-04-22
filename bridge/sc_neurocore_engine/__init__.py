@@ -5,6 +5,7 @@
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Engine — 111 Rust neuron models + SIMD primitives + IR
+# ruff: noqa: F401
 
 """SC-NeuroCore Engine — 111 Rust neuron models + SIMD primitives + IR compiler."""
 
@@ -193,11 +194,14 @@ except (ImportError, ModuleNotFoundError):
         _pyds += _glob.glob(f"{_site}/sc_neurocore_engine/sc_neurocore_engine*.so")
         if _pyds:
             _spec = _ilu.spec_from_file_location("sc_neurocore_engine", _pyds[0])
-            _mod = _ilu.module_from_spec(_spec)
-            _spec.loader.exec_module(_mod)
-            py_simulate_ei_network = _mod.py_simulate_ei_network
-            py_batch_simulate = _mod.py_batch_simulate
-            _studio_rust_available = True
+            if _spec is not None and _spec.loader is not None:
+                _mod = _ilu.module_from_spec(_spec)
+                _spec.loader.exec_module(_mod)
+                py_simulate_ei_network = _mod.py_simulate_ei_network
+                py_batch_simulate = _mod.py_batch_simulate
+                _studio_rust_available = True
+            else:
+                _studio_rust_available = False
         else:
             _studio_rust_available = False
     except Exception:
@@ -530,3 +534,21 @@ try:
     _wilson_cowan_rust_available = True
 except ImportError:
     _wilson_cowan_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
+        py_predict_xor_ema,
+        py_predict_xor_lfsr,
+        py_recover_xor_ema,
+        py_recover_xor_lfsr,
+    )
+
+    __all__ += [
+        "py_predict_xor_ema",
+        "py_predict_xor_lfsr",
+        "py_recover_xor_ema",
+        "py_recover_xor_lfsr",
+    ]
+    _predictive_codec_rust_available = True
+except ImportError:
+    _predictive_codec_rust_available = False

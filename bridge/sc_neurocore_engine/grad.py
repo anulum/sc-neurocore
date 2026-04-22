@@ -13,6 +13,7 @@ from __future__ import annotations
 from typing import Sequence
 
 import numpy as np
+import numpy.typing as npt
 
 from sc_neurocore_engine.sc_neurocore_engine import (
     DifferentiableDenseLayer as _RustDifferentiableDenseLayer,
@@ -33,7 +34,7 @@ class SurrogateLif:
         refractory_period: int = 2,
         surrogate: str = "fast_sigmoid",
         k: float | None = None,
-    ):
+    ) -> None:
         self._engine = _RustSurrogateLif(
             data_width,
             fraction,
@@ -51,10 +52,10 @@ class SurrogateLif:
     def backward(self, grad_output: float) -> float:
         return float(self._engine.backward(float(grad_output)))
 
-    def clear_trace(self):
+    def clear_trace(self) -> None:
         self._engine.clear_trace()
 
-    def reset(self):
+    def reset(self) -> None:
         self._engine.reset()
 
     def trace_len(self) -> int:
@@ -72,7 +73,7 @@ class DifferentiableDenseLayer:
         seed: int = 24301,
         surrogate: str = "fast_sigmoid",
         k: float | None = None,
-    ):
+    ) -> None:
         self._engine = _RustDifferentiableDenseLayer(
             n_inputs,
             n_neurons,
@@ -83,22 +84,26 @@ class DifferentiableDenseLayer:
         )
 
     @property
-    def weights(self) -> np.ndarray:
+    def weights(self) -> npt.NDArray[np.float64]:
         return np.asarray(self._engine.get_weights(), dtype=np.float64)
 
-    def forward(self, input_values: Sequence[float], seed: int = 44257) -> np.ndarray:
+    def forward(
+        self, input_values: Sequence[float], seed: int = 44257
+    ) -> npt.NDArray[np.float64]:
         values = np.asarray(input_values, dtype=np.float64)
         out = self._engine.forward(values.tolist(), int(seed))
         return np.asarray(out, dtype=np.float64)
 
-    def backward(self, grad_output: Sequence[float]) -> tuple[np.ndarray, np.ndarray]:
+    def backward(
+        self, grad_output: Sequence[float]
+    ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
         grad = np.asarray(grad_output, dtype=np.float64)
         grad_in, grad_w = self._engine.backward(grad.tolist())
         return np.asarray(grad_in, dtype=np.float64), np.asarray(grad_w, dtype=np.float64)
 
-    def update_weights(self, weight_grads: Sequence[Sequence[float]], lr: float):
+    def update_weights(self, weight_grads: Sequence[Sequence[float]], lr: float) -> None:
         grads = np.asarray(weight_grads, dtype=np.float64)
         self._engine.update_weights(grads.tolist(), float(lr))
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         self._engine.clear_cache()

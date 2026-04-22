@@ -53,6 +53,21 @@ DNA_SYMBOLS: tuple[str, ...] = (
     "py_dna_simulate_kinetics",
 )
 
+PHOTONIC_SYMBOLS: tuple[str, ...] = (
+    "py_ph_analyze_crosstalk",
+    "py_ph_analyze_crosstalk_bank",
+    "py_ph_analyze_crosstalk_pairs",
+)
+
+WORLD_MODEL_SYMBOLS: tuple[str, ...] = ("py_lgssm_kalman_filter",)
+
+PREDICTIVE_CODEC_SYMBOLS: tuple[str, ...] = (
+    "py_predict_xor_ema",
+    "py_predict_xor_lfsr",
+    "py_recover_xor_ema",
+    "py_recover_xor_lfsr",
+)
+
 
 def _has_inner_qa() -> bool:
     """True when the inner Rust module exposes the QA bindings."""
@@ -69,6 +84,30 @@ def _has_inner_dna() -> bool:
     except ImportError:
         return False
     return all(hasattr(inner, sym) for sym in DNA_SYMBOLS)
+
+
+def _has_inner_photonics() -> bool:
+    try:
+        inner = importlib.import_module("sc_neurocore_engine.sc_neurocore_engine")
+    except ImportError:
+        return False
+    return all(hasattr(inner, sym) for sym in PHOTONIC_SYMBOLS)
+
+
+def _has_inner_world_model() -> bool:
+    try:
+        inner = importlib.import_module("sc_neurocore_engine.sc_neurocore_engine")
+    except ImportError:
+        return False
+    return all(hasattr(inner, sym) for sym in WORLD_MODEL_SYMBOLS)
+
+
+def _has_inner_predictive_codec() -> bool:
+    try:
+        inner = importlib.import_module("sc_neurocore_engine.sc_neurocore_engine")
+    except ImportError:
+        return False
+    return all(hasattr(inner, sym) for sym in PREDICTIVE_CODEC_SYMBOLS)
 
 
 # ───────────────────────── QA re-exports ─────────────────────────
@@ -196,3 +235,83 @@ def test_bridges_dna_mapper_HAS_RUST_DNA_lit() -> None:
     from sc_neurocore.bridges.dna_mapper import _HAS_RUST_DNA
 
     assert _HAS_RUST_DNA is True
+
+
+# ───────────────────────── Stable bridge wrappers ─────────────────────────
+
+
+@pytest.mark.skipif(not _has_inner_world_model(), reason="engine wheel built without LGSSM bindings")
+def test_world_model_wrapper_returns_callable() -> None:
+    from sc_neurocore_engine.world_model import get_lgssm_kalman_filter
+
+    assert callable(get_lgssm_kalman_filter())
+
+
+@pytest.mark.skipif(not _has_inner_photonics(), reason="engine wheel built without photonic bindings")
+def test_photonics_wrapper_returns_callable() -> None:
+    from sc_neurocore_engine.photonics import (
+        get_crosstalk_analyzer,
+        get_crosstalk_bank_analyzer,
+        get_crosstalk_pair_analyzer,
+        has_full_photonic_crosstalk_backend,
+    )
+
+    assert callable(get_crosstalk_analyzer())
+    assert callable(get_crosstalk_bank_analyzer())
+    assert callable(get_crosstalk_pair_analyzer())
+    assert has_full_photonic_crosstalk_backend() is True
+
+
+@pytest.mark.skipif(not _has_inner_dna(), reason="engine wheel built without DNA bindings")
+def test_dna_wrapper_contract_true() -> None:
+    from sc_neurocore_engine.dna import has_full_dna_backend
+
+    assert has_full_dna_backend() is True
+
+
+@pytest.mark.skipif(not _has_inner_qa(), reason="engine wheel built without QA bindings")
+def test_quantum_wrapper_contract_true() -> None:
+    from sc_neurocore_engine.quantum import has_full_quantum_annealing_backend
+
+    assert has_full_quantum_annealing_backend() is True
+
+
+# ───────────────────────── Predictive codec re-exports ─────────────────────────
+
+
+@pytest.mark.skipif(
+    not _has_inner_predictive_codec(),
+    reason="engine wheel built without predictive codec bindings",
+)
+@pytest.mark.parametrize("sym", PREDICTIVE_CODEC_SYMBOLS)
+def test_predictive_codec_symbol_importable_from_toplevel(sym: str) -> None:
+    obj = getattr(_engine, sym, None)
+    assert obj is not None, f"{sym} not re-exported from sc_neurocore_engine.__init__"
+
+
+@pytest.mark.skipif(
+    not _has_inner_predictive_codec(),
+    reason="engine wheel built without predictive codec bindings",
+)
+def test_predictive_codec_symbols_in_all() -> None:
+    public = set(_engine.__all__)
+    missing = [s for s in PREDICTIVE_CODEC_SYMBOLS if s not in public]
+    assert not missing, f"Predictive codec symbols missing from __all__: {missing}"
+
+
+@pytest.mark.skipif(
+    not _has_inner_predictive_codec(),
+    reason="engine wheel built without predictive codec bindings",
+)
+def test_predictive_codec_symbols_are_callable() -> None:
+    for sym in PREDICTIVE_CODEC_SYMBOLS:
+        obj = getattr(_engine, sym)
+        assert callable(obj), f"{sym} is not callable: type={type(obj).__name__}"
+
+
+@pytest.mark.skipif(
+    not _has_inner_predictive_codec(),
+    reason="engine wheel built without predictive codec bindings",
+)
+def test_predictive_codec_rust_available_flag_true() -> None:
+    assert getattr(_engine, "_predictive_codec_rust_available", False) is True

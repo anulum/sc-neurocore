@@ -8,10 +8,13 @@
 
 """Drop-in replacement for sc_neurocore.layers.VectorizedSCLayer."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Sequence
 
 import numpy as np
+import numpy.typing as npt
 
 from sc_neurocore_engine.sc_neurocore_engine import DenseLayer as _RustDenseLayer
 
@@ -29,12 +32,12 @@ class VectorizedSCLayer:
     length: int = 1024
     use_gpu: bool = False
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self._engine = _RustDenseLayer(self.n_inputs, self.n_neurons, self.length)
         self.weights = np.array(self._engine.get_weights(), dtype=np.float64)
-        self.packed_weights = None
+        self.packed_weights: npt.NDArray[np.uint64] | None = None
 
-    def _refresh_packed_weights(self):
+    def _refresh_packed_weights(self) -> None:
         self._engine.set_weights(self.weights.tolist())
         self._engine.refresh_packed_weights()
 
@@ -56,7 +59,7 @@ class VectorizedSCLayer:
         result = self._engine.forward_fast(in_probs.tolist(), seed)
         return np.array(result, dtype=np.float64)
 
-    def forward_prepacked(self, packed_inputs) -> np.ndarray:
+    def forward_prepacked(self, packed_inputs: npt.ArrayLike) -> npt.NDArray[np.float64]:
         packed = np.asarray(packed_inputs, dtype=np.uint64)
         if packed.ndim != 2:
             raise ValueError(f"Expected 2-D packed input array, got shape {packed.shape}")
@@ -65,17 +68,21 @@ class VectorizedSCLayer:
         result = self._engine.forward_prepacked(packed)
         return np.array(result, dtype=np.float64)
 
-    def forward_prepacked_numpy(self, packed_inputs) -> np.ndarray:
+    def forward_prepacked_numpy(self, packed_inputs: npt.ArrayLike) -> npt.NDArray[np.float64]:
         """Dense forward with pre-packed numpy 2D input (true zero-copy)."""
         arr = np.ascontiguousarray(packed_inputs, dtype=np.uint64)
         return self._engine.forward_prepacked_numpy(arr)
 
-    def forward_numpy(self, input_values, seed: int = 44257) -> np.ndarray:
+    def forward_numpy(
+        self, input_values: npt.ArrayLike, seed: int = 44257
+    ) -> npt.NDArray[np.float64]:
         """Dense forward with numpy input/output and parallel encoding."""
         arr = np.asarray(input_values, dtype=np.float64)
         return self._engine.forward_numpy(arr, seed)
 
-    def forward_batch_numpy(self, input_values, seed: int = 44257) -> np.ndarray:
+    def forward_batch_numpy(
+        self, input_values: npt.ArrayLike, seed: int = 44257
+    ) -> npt.NDArray[np.float64]:
         """Dense forward for batched numpy input with one FFI call."""
         arr = np.ascontiguousarray(input_values, dtype=np.float64)
         if arr.ndim != 2 or arr.shape[1] != self.n_inputs:

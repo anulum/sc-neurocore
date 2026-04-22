@@ -47,6 +47,12 @@ from enum import Enum
 from typing import Any, Dict
 
 import numpy as np
+from sc_neurocore_engine.quantum import (
+    get_batch_ising_energy,
+    get_ising_energy,
+    get_simulated_annealing,
+    has_full_quantum_annealing_backend,
+)
 
 # ── Constants ─────────────────────────────────────────────────────────
 
@@ -76,22 +82,10 @@ except ImportError:
     _HAS_DWAVE = False
 
 try:
-    from sc_neurocore_engine import (
-        py_qa_ising_energy as _rust_ising_energy,
-        py_qa_simulated_annealing as _rust_sa,
-        py_qa_batch_ising_energy as _rust_batch_energy,
-    )
-    import sc_neurocore_engine as _sne
-
-    _HAS_RUST_QA = all(
-        hasattr(_sne, _name)
-        for _name in (
-            "py_qa_gauge_transform",
-            "py_qa_generate_gauges",
-            "py_qa_greedy_partition",
-        )
-    )
-    del _sne
+    _rust_ising_energy = get_ising_energy()
+    _rust_sa = get_simulated_annealing()
+    _rust_batch_energy = get_batch_ising_energy()
+    _HAS_RUST_QA = has_full_quantum_annealing_backend()
 except ImportError:
     _HAS_RUST_QA = False
 
