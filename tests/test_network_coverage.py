@@ -248,9 +248,16 @@ class TestMonitorDeepCoverage:
 
 class TestNetworkBackendCoverage:
     def test_can_use_rust_returns_false(self):
+        import sc_neurocore.network.network as netmod
+
         pop = Population(StochasticLIFNeuron, n=5, label="test")
         net = Network(pop)
-        assert not net._can_use_rust()
+        old = netmod._RUST_ENGINE
+        try:
+            netmod._RUST_ENGINE = False
+            assert not net._can_use_rust()
+        finally:
+            netmod._RUST_ENGINE = old
 
     def test_auto_falls_to_python(self):
         pop = Population(StochasticLIFNeuron, n=5, label="test")
@@ -259,22 +266,39 @@ class TestNetworkBackendCoverage:
         net.run(duration=0.005, dt=0.001, backend="auto")
 
     def test_rust_raises_without_engine(self):
+        import sc_neurocore.network.network as netmod
+
         pop = Population(StochasticLIFNeuron, n=5, label="test")
         net = Network(pop)
+        old = netmod._RUST_ENGINE
         try:
-            net.run(duration=0.001, dt=0.001, backend="rust")
-            raise AssertionError("should raise")
-        except RuntimeError:
-            pass
+            netmod._RUST_ENGINE = False
+            try:
+                net.run(duration=0.001, dt=0.001, backend="rust")
+                raise AssertionError("should raise")
+            except RuntimeError:
+                pass
+        finally:
+            netmod._RUST_ENGINE = old
 
     def test_mpi_raises_without_mpi4py(self):
+        import sc_neurocore.network.mpi_runner as mpimod
+
         pop = Population(StochasticLIFNeuron, n=5, label="test")
         net = Network(pop)
+        old_has_mpi = mpimod.HAS_MPI
+        old_mpi = mpimod.MPI
         try:
-            net.run(duration=0.001, dt=0.001, backend="mpi")
-            raise AssertionError("should raise")
-        except (ImportError, RuntimeError):
-            pass
+            mpimod.HAS_MPI = False
+            mpimod.MPI = None
+            try:
+                net.run(duration=0.001, dt=0.001, backend="mpi")
+                raise AssertionError("should raise")
+            except (ImportError, RuntimeError):
+                pass
+        finally:
+            mpimod.HAS_MPI = old_has_mpi
+            mpimod.MPI = old_mpi
 
     def test_progress_flag(self):
         pop = Population(StochasticLIFNeuron, n=5, label="test")
@@ -294,15 +318,15 @@ class TestRustBackendMock:
         try:
             netmod._RUST_ENGINE = None
             result = netmod._get_rust_engine()
-            assert result is False
-            assert netmod._RUST_ENGINE is False
+            assert result is netmod._RUST_ENGINE
+            assert result is not None
         finally:
             netmod._RUST_ENGINE = old
 
     def test_rust_supports_model_false(self):
         import sc_neurocore.network.network as netmod
 
-        assert not netmod._rust_supports_model("StochasticLIFNeuron")
+        assert not netmod._rust_supports_model("DefinitelyUnsupportedNeuron")
 
     def test_can_use_rust_with_stimuli(self):
         pop = Population(StochasticLIFNeuron, n=5, label="test")

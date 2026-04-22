@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import numpy as np
+import numpy.typing as npt
 
 from sc_neurocore_engine.sc_neurocore_engine import KuramotoSolver as _RustKuramoto
 
@@ -21,7 +22,13 @@ class KuramotoSolver:
     L4_CellularLayer and the UPDE solver.
     """
 
-    def __init__(self, omega, coupling, phases, noise_amp=0.1):
+    def __init__(
+        self,
+        omega: npt.ArrayLike,
+        coupling: npt.ArrayLike,
+        phases: npt.ArrayLike,
+        noise_amp: float = 0.1,
+    ) -> None:
         self._engine = _RustKuramoto(
             np.asarray(omega, dtype=np.float64).tolist(),
             np.asarray(coupling, dtype=np.float64).ravel().tolist(),
@@ -35,7 +42,7 @@ class KuramotoSolver:
     def run(self, n_steps: int, dt: float, seed: int = 0) -> np.ndarray:
         return np.array(self._engine.run(int(n_steps), float(dt), int(seed)), dtype=np.float64)
 
-    def set_field_pressure(self, f: float):
+    def set_field_pressure(self, f: float) -> None:
         """Set the external field pressure strength F."""
         self._engine.set_field_pressure(float(f))
 
@@ -49,15 +56,15 @@ class KuramotoSolver:
         pgbo_weight: float = 0.0,
     ) -> float:
         """SSGF-compatible step with geometry and PGBO coupling."""
-        w_flat = np.asarray(W, dtype=np.float64).ravel().tolist() if W is not None else []
-        h_flat = np.asarray(h_munu, dtype=np.float64).ravel().tolist() if h_munu is not None else []
+        w_arg = np.asarray(W, dtype=np.float64) if W is not None else None
+        h_arg = np.asarray(h_munu, dtype=np.float64) if h_munu is not None else None
         return float(
             self._engine.step_ssgf(
                 float(dt),
                 int(seed),
-                w_flat,
+                w_arg,
                 float(sigma_g),
-                h_flat,
+                h_arg,
                 float(pgbo_weight),
             )
         )
@@ -73,16 +80,16 @@ class KuramotoSolver:
         pgbo_weight: float = 0.0,
     ) -> np.ndarray:
         """Run N SSGF-compatible steps."""
-        w_flat = np.asarray(W, dtype=np.float64).ravel().tolist() if W is not None else []
-        h_flat = np.asarray(h_munu, dtype=np.float64).ravel().tolist() if h_munu is not None else []
+        w_arg = np.asarray(W, dtype=np.float64) if W is not None else None
+        h_arg = np.asarray(h_munu, dtype=np.float64) if h_munu is not None else None
         return np.array(
             self._engine.run_ssgf(
                 int(n_steps),
                 float(dt),
                 int(seed),
-                w_flat,
+                w_arg,
                 float(sigma_g),
-                h_flat,
+                h_arg,
                 float(pgbo_weight),
             ),
             dtype=np.float64,
@@ -93,8 +100,11 @@ class KuramotoSolver:
 
     @property
     def phases(self) -> np.ndarray:
-        return np.array(self._engine.get_phases(), dtype=np.float64)
+        getter = getattr(self._engine, "get_phases", None)
+        if callable(getter):
+            return np.array(getter(), dtype=np.float64)
+        return np.array(self._engine.phases, dtype=np.float64)
 
     @phases.setter
-    def phases(self, new_phases):
+    def phases(self, new_phases: npt.ArrayLike) -> None:
         self._engine.set_phases(np.asarray(new_phases, dtype=np.float64).tolist())

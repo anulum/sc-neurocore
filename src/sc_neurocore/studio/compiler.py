@@ -22,7 +22,7 @@ def build_ir_from_equation(
     that represents the neuron's ODE as a hardware pipeline:
     input current → encode → multiply (leak, gain) → LIF step → output spike.
     """
-    from sc_neurocore_engine import ScGraphBuilder, ir_print, ir_verify
+    from sc_neurocore_engine.ir import ScGraphBuilder
 
     params = params or {}
     builder = ScGraphBuilder("ode_neuron")
@@ -63,15 +63,15 @@ def build_ir_from_equation(
     graph = builder.build()
 
     # Verification
-    errors = ir_verify(graph)
-    ir_text = ir_print(graph)
+    errors = graph.verify()
+    ir_text = graph.to_text()
 
     return {
         "ir_text": ir_text,
         "errors": errors if errors else [],
         "n_ops": len(graph),
-        "n_inputs": graph.num_inputs(),
-        "n_outputs": graph.num_outputs(),
+        "n_inputs": graph.num_inputs,
+        "n_outputs": graph.num_outputs,
         "graph_name": graph.name,
         "params_q88": {k: int(round(v * 256)) for k, v in (params or {}).items()},
     }
@@ -79,10 +79,10 @@ def build_ir_from_equation(
 
 def verify_ir(ir_text: str) -> dict:
     """Parse and verify an IR text representation."""
-    from sc_neurocore_engine import ir_parse, ir_verify
+    from sc_neurocore_engine.ir import parse_ir
 
-    graph = ir_parse(ir_text)
-    errors = ir_verify(graph)
+    graph = parse_ir(ir_text)
+    errors = graph.verify()
     return {
         "valid": errors is None,
         "errors": errors if errors else [],
@@ -93,10 +93,10 @@ def verify_ir(ir_text: str) -> dict:
 
 def emit_systemverilog(ir_text: str) -> dict:
     """Parse IR text and emit synthesisable SystemVerilog."""
-    from sc_neurocore_engine import ir_parse, ir_emit_sv
+    from sc_neurocore_engine.ir import parse_ir
 
-    graph = ir_parse(ir_text)
-    sv_source = ir_emit_sv(graph)
+    graph = parse_ir(ir_text)
+    sv_source = graph.emit_sv()
     return {
         "systemverilog": sv_source,
         "graph_name": graph.name,
