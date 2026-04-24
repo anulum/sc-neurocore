@@ -566,6 +566,42 @@ class NaturalLanguageExplainer:
             f"(from {smallest.original_threshold} to {smallest.perturbed_threshold})."
         )
 
+    @staticmethod
+    def enhance_with_local_llm(
+        text: str,
+        *,
+        bridge: Any,
+        question: str = (
+            "Rewrite this deterministic spike explanation for a human operator. "
+            "Preserve all numeric facts and keep the wording concise."
+        ),
+    ) -> str:
+        """Enhance a deterministic explanation through the local LLM bridge.
+
+        The caller must supply a configured ``LocalLLMBridge`` instance so this
+        module keeps no hard runtime dependency on any local model server.
+        """
+        response = bridge.chat(f"{question}\n\nBase explanation:\n{text}")
+        return response.text
+
+    @staticmethod
+    def explain_node_with_local_llm(
+        node: DecisionNode,
+        *,
+        bridge: Any,
+        question: str = (
+            "Explain this spike decision for a human operator in two short paragraphs. "
+            "Do not change or invent numeric values."
+        ),
+    ) -> str:
+        """Generate a local-LLM-enhanced explanation for one decision node."""
+        base = NaturalLanguageExplainer.explain_node(node)
+        return NaturalLanguageExplainer.enhance_with_local_llm(
+            base,
+            bridge=bridge,
+            question=question,
+        )
+
 
 # ── Multi-Layer Trace ────────────────────────────────────────────────
 
@@ -773,3 +809,38 @@ class ExplainabilityEngine:
     ) -> CausalAttribution:
         """Compute causal attribution for a decision."""
         return CausalAttributor.attribute(target, input_bitstreams, weights)
+
+    def explain_spike_with_local_llm(
+        self,
+        neuron_id: str,
+        threshold_q16: int,
+        bitstream_length: int,
+        spike_threshold_count: int,
+        *,
+        bridge: Any,
+        scc: float = 0.0,
+        timestep: int = 0,
+        layer_id: str = "",
+        contributing_neurons: Optional[List[str]] = None,
+        question: str = (
+            "Explain this spike decision for a human operator in two short paragraphs. "
+            "Do not change or invent numeric values."
+        ),
+    ) -> tuple[DecisionNode, str]:
+        """Run the deterministic explainability path, then enhance it locally."""
+        node = self.explain_spike(
+            neuron_id=neuron_id,
+            threshold_q16=threshold_q16,
+            bitstream_length=bitstream_length,
+            spike_threshold_count=spike_threshold_count,
+            scc=scc,
+            timestep=timestep,
+            layer_id=layer_id,
+            contributing_neurons=contributing_neurons,
+        )
+        text = NaturalLanguageExplainer.explain_node_with_local_llm(
+            node,
+            bridge=bridge,
+            question=question,
+        )
+        return node, text
