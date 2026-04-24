@@ -16,9 +16,7 @@ from pathlib import Path
 from tools.run_experimental_suite import run_suite
 
 
-REPO_ROOT = Path(
-    "/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE"
-)
+REPO_ROOT = Path(__file__).resolve().parents[1]
 SUITE_RUNNER = REPO_ROOT / "tools" / "run_experimental_suite.py"
 
 
@@ -33,6 +31,7 @@ def test_run_suite_writes_summary_and_reports(tmp_path):
 
     assert summary["all_passed"] is True
     assert summary["route_count"] >= 3
+    assert "memory.delayed-recall.shared-state" not in summary["selected_routes"]
     assert (tmp_path / "suite_summary.json").exists()
     assert (tmp_path / "suite_summary.md").exists()
     reports = sorted(tmp_path.glob("rep_01_experimental_*.json"))

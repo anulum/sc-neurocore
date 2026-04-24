@@ -90,6 +90,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
+      - name: Install HDL simulator
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq iverilog
+
       - name: Install package
         run: python tools/ci_install_dev.py
 

@@ -6,7 +6,7 @@
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 
-"""Run all built-in experimental routes repeatedly and validate the reports."""
+"""Run promotion-ready built-in experimental routes and validate reports."""
 
 from __future__ import annotations
 
@@ -28,6 +28,9 @@ try:
     from tools.validate_experimental_reports import ValidationResult, validate_report
 except ModuleNotFoundError:  # direct script execution with PYTHONPATH=src
     from validate_experimental_reports import ValidationResult, validate_report
+
+
+EXPLORATORY_ROUTES = frozenset({"memory.delayed-recall.shared-state"})
 
 
 def _parse_args() -> argparse.Namespace:
@@ -151,9 +154,10 @@ def _write_summary_files(output_dir: Path, summary: dict[str, Any]) -> None:
 
 
 def _select_route_names(route_names: tuple[str, ...], *, real_only: bool) -> tuple[str, ...]:
+    selected = tuple(name for name in route_names if name not in EXPLORATORY_ROUTES)
     if not real_only:
-        return route_names
-    return tuple(name for name in route_names if not name.startswith("demo."))
+        return selected
+    return tuple(name for name in selected if not name.startswith("demo."))
 
 
 def run_suite(

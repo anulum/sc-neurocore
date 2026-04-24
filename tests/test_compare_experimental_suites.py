@@ -18,9 +18,7 @@ import pytest
 from tools.compare_experimental_suites import compare_suites
 
 
-REPO_ROOT = Path(
-    "/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE"
-)
+REPO_ROOT = Path(__file__).resolve().parents[1]
 COMPARE = REPO_ROOT / "tools" / "compare_experimental_suites.py"
 
 

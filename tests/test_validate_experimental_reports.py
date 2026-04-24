@@ -16,9 +16,7 @@ from pathlib import Path
 from tools.validate_experimental_reports import validate_report
 
 
-REPO_ROOT = Path(
-    "/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE"
-)
+REPO_ROOT = Path(__file__).resolve().parents[1]
 VALIDATOR = REPO_ROOT / "tools" / "validate_experimental_reports.py"
 
 
