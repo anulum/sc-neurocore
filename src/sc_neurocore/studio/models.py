@@ -257,9 +257,7 @@ def get_model_detail(name: str) -> dict | None:
             else 0.1
         )
     except Exception as exc:
-        raise ModelMetadataError(
-            f"Failed to classify Studio model metadata for '{name}'"
-        ) from exc
+        raise ModelMetadataError(f"Failed to classify Studio model metadata for '{name}'") from exc
     return {
         "name": name,
         "module": _CLASS_TO_MODULE[name],

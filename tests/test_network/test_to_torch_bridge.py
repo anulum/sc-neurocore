@@ -9,9 +9,11 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 import torch
 
 from sc_neurocore.network import Network, Population, Projection
+from sc_neurocore.neurons.stochastic_lif import StochasticLIFNeuron
 from sc_neurocore.training.surrogate import atan_surrogate_custom_op
 
 
@@ -154,3 +156,128 @@ def test_network_to_torch_rejects_unsupported_population_model():
         assert "AdaptiveThresholdIFNeuron" in str(exc)
     else:
         raise AssertionError("Expected NotImplementedError for unsupported model")
+
+
+def test_network_to_torch_validates_input_rank_and_dimension():
+    pop = Population("LapicqueNeuron", 2, params={"tau": 5.0, "dt": 1.0}, label="src")
+    net = Network(pop)
+    bridge = net.to_torch()
+
+    try:
+        bridge(torch.zeros((2, 2), dtype=torch.float32))
+    except ValueError as exc:
+        assert "shape (T, batch, input_dim)" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for non-3D input tensor")
+
+    try:
+        bridge(torch.zeros((3, 1, 3), dtype=torch.float32))
+    except ValueError as exc:
+        assert "Expected input_dim=2" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for wrong input_dim")
+
+
+def test_network_to_torch_return_traces_returns_output_label_trace_stack():
+    pop = Population("LapicqueNeuron", 1, params={"tau": 2.0, "dt": 1.0}, label="out")
+    net = Network(pop)
+    bridge = net.to_torch()
+
+    counts, traces = bridge(
+        torch.tensor([[[2.5]], [[2.5]], [[0.0]]], dtype=torch.float32),
+        return_traces=True,
+    )
+
+    assert counts.shape == (1, 1)
+    assert list(traces) == ["out"]
+    assert traces["out"].shape == (3, 1, 1)
+
+
+def test_network_to_torch_supports_deterministic_stochastic_lif():
+    pop = Population(
+        StochasticLIFNeuron,
+        2,
+        params={
+            "tau_mem": 5.0,
+            "dt": 1.0,
+            "resistance": 1.0,
+            "noise_std": 0.0,
+            "refractory_period": 0,
+            "v_reset": 0.0,
+            "v_rest": 0.0,
+        },
+        label="lif",
+    )
+    net = Network(pop)
+    bridge = net.to_torch()
+
+    counts = bridge(torch.tensor([[[3.0, 0.0]], [[3.0, 0.0]]], dtype=torch.float32))
+
+    assert counts.shape == (1, 2)
+
+
+def test_network_to_torch_rejects_stochastic_lif_with_noise():
+    pop = Population(
+        StochasticLIFNeuron,
+        1,
+        params={"noise_std": 0.1, "refractory_period": 0, "v_reset": 0.0, "v_rest": 0.0},
+    )
+    net = Network(pop)
+
+    with pytest.raises(NotImplementedError, match="noise_std == 0.0"):
+        net.to_torch()
+
+
+def test_network_to_torch_rejects_stochastic_lif_with_refractory_period():
+    pop = Population(
+        StochasticLIFNeuron,
+        1,
+        params={"noise_std": 0.0, "refractory_period": 1, "v_reset": 0.0, "v_rest": 0.0},
+    )
+    net = Network(pop)
+
+    with pytest.raises(NotImplementedError, match="refractory_period == 0"):
+        net.to_torch()
+
+
+def test_network_to_torch_rejects_stochastic_lif_with_entropy_source():
+    pop = Population(
+        StochasticLIFNeuron,
+        1,
+        params={
+            "noise_std": 0.0,
+            "refractory_period": 0,
+            "v_reset": 0.0,
+            "v_rest": 0.0,
+            "entropy_source": object(),
+        },
+    )
+    net = Network(pop)
+
+    with pytest.raises(NotImplementedError, match="external entropy_source"):
+        net.to_torch()
+
+
+def test_network_to_torch_rejects_stochastic_lif_when_reset_differs_from_rest():
+    pop = Population(
+        StochasticLIFNeuron,
+        1,
+        params={"noise_std": 0.0, "refractory_period": 0, "v_reset": -1.0, "v_rest": 0.0},
+    )
+    net = Network(pop)
+
+    with pytest.raises(NotImplementedError, match="v_reset == v_rest"):
+        net.to_torch()
+
+
+def test_network_to_torch_rejects_plastic_and_delayed_projections():
+    src = Population("LapicqueNeuron", 1, params={"tau": 5.0, "dt": 1.0}, label="src")
+    out = Population("LapicqueNeuron", 1, params={"tau": 5.0, "dt": 1.0}, label="out")
+
+    plastic_projection = Projection(src, out, weight=1.0, plasticity="stdp")
+    with pytest.raises(NotImplementedError, match="plastic projections"):
+        Network(src, out, plastic_projection).to_torch()
+
+    delayed_projection = Projection(src, out, weight=1.0, delay=1.0)
+    with pytest.raises(NotImplementedError, match="delayed projections"):
+        Network(src, out, delayed_projection).to_torch()

@@ -240,14 +240,18 @@ def test_bridges_dna_mapper_HAS_RUST_DNA_lit() -> None:
 # ───────────────────────── Stable bridge wrappers ─────────────────────────
 
 
-@pytest.mark.skipif(not _has_inner_world_model(), reason="engine wheel built without LGSSM bindings")
+@pytest.mark.skipif(
+    not _has_inner_world_model(), reason="engine wheel built without LGSSM bindings"
+)
 def test_world_model_wrapper_returns_callable() -> None:
     from sc_neurocore_engine.world_model import get_lgssm_kalman_filter
 
     assert callable(get_lgssm_kalman_filter())
 
 
-@pytest.mark.skipif(not _has_inner_photonics(), reason="engine wheel built without photonic bindings")
+@pytest.mark.skipif(
+    not _has_inner_photonics(), reason="engine wheel built without photonic bindings"
+)
 def test_photonics_wrapper_returns_callable() -> None:
     from sc_neurocore_engine.photonics import (
         get_crosstalk_analyzer,

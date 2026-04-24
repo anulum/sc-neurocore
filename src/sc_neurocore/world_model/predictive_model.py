@@ -64,6 +64,7 @@ from sc_neurocore_engine.world_model import get_lgssm_kalman_filter
 def _missing_rust_kalman_filter(*_args: object, **_kwargs: object) -> object:
     raise RuntimeError("Rust LGSSM backend is not available")
 
+
 # Detect Rust acceleration backend
 try:
     _rust_kalman_filter = get_lgssm_kalman_filter()

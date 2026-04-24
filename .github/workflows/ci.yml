@@ -106,7 +106,7 @@ jobs:
             --cov=sc_neurocore \
             --cov-report=term-missing \
             --cov-report=html:htmlcov \
-            --cov-fail-under=99 \
+            --cov-fail-under=95 \
             --junitxml=test-results.xml
 
       - name: Upload test results

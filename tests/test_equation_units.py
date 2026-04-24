@@ -11,6 +11,8 @@ from __future__ import annotations
 import pint
 import pytest
 
+from sc_neurocore.exceptions import SCDependencyError
+from sc_neurocore.neurons import _units as units
 from sc_neurocore.neurons._units import DimensionalError
 from sc_neurocore.neurons.equation_builder import from_equations
 
@@ -95,3 +97,78 @@ def test_strict_units_require_input_unit_when_input_is_referenced() -> None:
             dt=0.1 * UNIT_REGISTRY.millisecond,
             units="strict",
         )
+
+
+def test_strict_units_reject_non_boolean_threshold_expression() -> None:
+    with pytest.raises(ValueError, match="Threshold expression must evaluate to a boolean"):
+        from_equations(
+            "dv/dt = (-(v - E_L) + R * I) / tau_m",
+            threshold="v",
+            params={
+                "E_L": -65.0 * UNIT_REGISTRY.millivolt,
+                "R": 100.0 * MEGAOHM,
+                "tau_m": 10.0 * UNIT_REGISTRY.millisecond,
+            },
+            init={"v": -65.0 * UNIT_REGISTRY.millivolt},
+            dt=0.1 * UNIT_REGISTRY.millisecond,
+            units="strict",
+            input_unit=1.0 * UNIT_REGISTRY.nanoampere,
+        )
+
+
+def test_strict_units_reject_dimensionally_invalid_reset_expression() -> None:
+    with pytest.raises(DimensionalError):
+        from_equations(
+            "dv/dt = (-(v - E_L) + R * I) / tau_m",
+            threshold="v > v_threshold",
+            reset="v = tau_m",
+            params={
+                "E_L": -65.0 * UNIT_REGISTRY.millivolt,
+                "R": 100.0 * MEGAOHM,
+                "tau_m": 10.0 * UNIT_REGISTRY.millisecond,
+            },
+            init={"v": -65.0 * UNIT_REGISTRY.millivolt},
+            constants={"v_threshold": -50.0 * UNIT_REGISTRY.millivolt},
+            dt=0.1 * UNIT_REGISTRY.millisecond,
+            units="strict",
+            input_unit=1.0 * UNIT_REGISTRY.nanoampere,
+        )
+
+
+def test_build_quantity_namespace_clip_preserves_units() -> None:
+    namespace = units.build_quantity_namespace()
+    clipped = namespace["clip"](
+        5.0 * UNIT_REGISTRY.millivolt,
+        -1.0 * UNIT_REGISTRY.millivolt,
+        2.0 * UNIT_REGISTRY.millivolt,
+    )
+
+    assert clipped.magnitude == 2.0
+    assert str(clipped.units) == "millivolt"
+
+
+def test_validate_quantity_expression_reports_unknown_symbol() -> None:
+    env = units.build_quantity_namespace()
+    env["v"] = 1.0 * UNIT_REGISTRY.millivolt
+
+    with pytest.raises(ValueError, match="Unknown symbol"):
+        units.validate_quantity_expression("missing_symbol + v", env, label="unknown symbol")
+
+
+def test_validate_quantity_expression_rejects_scalar_when_quantity_is_expected() -> None:
+    env = units.build_quantity_namespace()
+
+    with pytest.raises(DimensionalError):
+        units.validate_quantity_expression(
+            "2.0",
+            env,
+            expected_quantity=1.0 * UNIT_REGISTRY.millivolt,
+            label="scalar result",
+        )
+
+
+def test_require_pint_raises_dependency_error_when_backend_is_missing(monkeypatch) -> None:
+    monkeypatch.setattr(units, "HAS_PINT", False)
+
+    with pytest.raises(SCDependencyError, match="pint is not available"):
+        units.require_pint()

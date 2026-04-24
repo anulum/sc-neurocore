@@ -11,8 +11,10 @@
 from __future__ import annotations
 
 from pathlib import Path
+import shutil
 import subprocess
 import sys
+import sysconfig
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,6 +28,37 @@ TRACKED_WINDOWS_EXTENSION = (
 
 def _run(*args: str, cwd: Path | None = None) -> None:
     subprocess.run(args, cwd=cwd or ROOT, check=True)
+
+
+def _sync_engine_extension_into_bridge() -> None:
+    """Copy the installed extension into bridge/ for pytest's path injection.
+
+    Root ``conftest.py`` prepends ``bridge/`` to ``sys.path`` so test imports
+    resolve the checkout copy of ``sc_neurocore_engine`` before site-packages.
+    CI therefore needs the version-matching compiled extension present inside
+    ``bridge/sc_neurocore_engine`` as well, not only inside the installed wheel.
+    """
+    ext_suffix = sysconfig.get_config_var("EXT_SUFFIX")
+    if not ext_suffix:
+        raise RuntimeError("Could not determine Python extension suffix for CI install")
+
+    site_packages = Path(sysconfig.get_path("purelib"))
+    installed_dir = site_packages / "sc_neurocore_engine"
+    installed_candidates = sorted(installed_dir.glob(f"sc_neurocore_engine*{ext_suffix}"))
+    if not installed_candidates:
+        raise FileNotFoundError(
+            f"No installed engine extension matching {ext_suffix!r} found in {installed_dir}"
+        )
+
+    bridge_pkg_dir = BRIDGE_DIR / "sc_neurocore_engine"
+    for stale in bridge_pkg_dir.glob("sc_neurocore_engine*.so"):
+        if stale.name != TRACKED_WINDOWS_EXTENSION.name:
+            stale.unlink()
+    for stale in bridge_pkg_dir.glob("sc_neurocore_engine*.pyd"):
+        if stale.name != TRACKED_WINDOWS_EXTENSION.name:
+            stale.unlink()
+
+    shutil.copy2(installed_candidates[-1], bridge_pkg_dir / installed_candidates[-1].name)
 
 
 def install_editable(extra: str) -> int:
@@ -44,5 +77,6 @@ def install_editable(extra: str) -> int:
         raise FileNotFoundError("No sc_neurocore_engine wheel was produced in dist/")
 
     _run(sys.executable, "-m", "pip", "install", "--force-reinstall", str(wheels[-1]))
+    _sync_engine_extension_into_bridge()
     _run(sys.executable, "-m", "pip", "install", "-e", f".[{extra}]")
     return 0
