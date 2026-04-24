@@ -63,7 +63,7 @@ Both standalone modules expose:
 - `bit_out`
 - source state registers for inspection
 
-The LFSR module exports `state[15:0]`.  
+The LFSR module exports `state[15:0]`.
 The Sobol module exports `value[15:0]` and `index[15:0]`.
 
 ## Intended use
