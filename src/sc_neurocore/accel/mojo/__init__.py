@@ -6,6 +6,31 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — High-level Mojo SIMD kernel API bounds
 
+"""Mojo acceleration namespace.
+
+Only a narrow subset of this tree is an authoritative backend surface today:
+
+- Python loaders such as ``runner.py``
+- compiled shared-library paths explicitly consumed from maintained Python code
+
+Large parts of ``kernels/*.mojo`` are exploratory mirrors or transcripts and
+must not be treated as the source of truth for runtime behaviour.
+"""
+
+AUTHORITATIVE_MOJO_ENTRYPOINTS: tuple[str, ...] = (
+    "fault_injection/fault.mojo",
+    "runner.py",
+    "wilson_cowan/__init__.py",
+    "wong_wang/__init__.py",
+    "world_model/lgssm.mojo",
+)
+
+NON_AUTHORITATIVE_MOJO_MIRROR_GLOBS: tuple[str, ...] = (
+    "kernels/*.mojo",
+    "kernels/app.mojo",
+    "kernels/compiler.mojo",
+)
+
 _HAS_MOJO = False
 try:
     from .runner import MojoKernelRunner
@@ -18,4 +43,9 @@ except Exception as _mojo_import_error:  # noqa: BLE001
     _HAS_MOJO = False
     _mojo_import_reason = repr(_mojo_import_error)
 
-__all__ = ["MojoKernelRunner", "_HAS_MOJO"]
+__all__ = [
+    "AUTHORITATIVE_MOJO_ENTRYPOINTS",
+    "MojoKernelRunner",
+    "NON_AUTHORITATIVE_MOJO_MIRROR_GLOBS",
+    "_HAS_MOJO",
+]

@@ -5,6 +5,14 @@
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Julia acceleration for studio/compiler
+#
+# WARNING:
+# This file is a non-authoritative mirror / transcript, not a maintained Julia
+# backend contract. Source of truth for Studio compiler behaviour is:
+# - `src/sc_neurocore/studio/compiler.py`
+# - `bridge/sc_neurocore_engine/ir.py`
+# Do not treat this file as executable parity unless it is explicitly wired from
+# maintained Python code and covered by tests.
 
 module CompilerAccel
 
