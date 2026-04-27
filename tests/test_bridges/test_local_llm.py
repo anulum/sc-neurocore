@@ -69,19 +69,19 @@ def test_chat_ollama_parses_response(monkeypatch: pytest.MonkeyPatch) -> None:
     assert result.completion_tokens == 9
 
 
-def test_chat_openai_compat_parses_response(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_chat_completions_parses_response(monkeypatch: pytest.MonkeyPatch) -> None:
     bridge = LocalLLMBridge(
         LocalLLMConfig(
             base_url="http://127.0.0.1:8000",
-            provider=LocalLLMProvider.OPENAI_COMPAT,
-            model="local-openai",
+            provider=LocalLLMProvider.CHAT_COMPLETIONS,
+            model="local-chat",
         )
     )
 
     def fake_post(payload: dict[str, object]) -> dict[str, object]:
-        assert payload["model"] == "local-openai"
+        assert payload["model"] == "local-chat"
         return {
-            "model": "local-openai",
+            "model": "local-chat",
             "choices": [
                 {
                     "message": {"role": "assistant", "content": "compat answer"},
@@ -94,7 +94,7 @@ def test_chat_openai_compat_parses_response(monkeypatch: pytest.MonkeyPatch) -> 
     monkeypatch.setattr(bridge, "_post_json", fake_post)
     result = bridge.chat("hello")
     assert result.text == "compat answer"
-    assert result.model == "local-openai"
+    assert result.model == "local-chat"
     assert result.prompt_tokens == 21
     assert result.completion_tokens == 11
 
@@ -124,11 +124,11 @@ def test_post_json_timeout_raises_local_error(monkeypatch: pytest.MonkeyPatch) -
 def test_post_json_rejects_non_http_scheme() -> None:
     bridge = LocalLLMBridge(
         LocalLLMConfig(
-            base_url="file:///tmp/local-model.sock", provider=LocalLLMProvider.OPENAI_COMPAT
+            base_url="file:///tmp/local-model.sock", provider=LocalLLMProvider.CHAT_COMPLETIONS
         )
     )
     with pytest.raises(LocalLLMError, match="http or https"):
-        bridge._post_json({"model": "local-openai", "messages": []})
+        bridge._post_json({"model": "local-chat", "messages": []})
 
 
 def test_post_json_rejects_non_loopback_host() -> None:
@@ -140,7 +140,7 @@ def test_post_json_rejects_non_loopback_host() -> None:
 
 
 def test_analyse_spike_raster_forwards_summary(monkeypatch: pytest.MonkeyPatch) -> None:
-    bridge = LocalLLMBridge(LocalLLMConfig(provider=LocalLLMProvider.OPENAI_COMPAT))
+    bridge = LocalLLMBridge(LocalLLMConfig(provider=LocalLLMProvider.CHAT_COMPLETIONS))
     captured_prompt: dict[str, str] = {}
     original_chat = bridge.chat
 
@@ -158,7 +158,7 @@ def test_analyse_spike_raster_forwards_summary(monkeypatch: pytest.MonkeyPatch) 
 
     def fake_post(_payload: dict[str, object]) -> dict[str, object]:
         return {
-            "model": "local-openai",
+            "model": "local-chat",
             "choices": [
                 {"message": {"role": "assistant", "content": "analysis"}, "finish_reason": "stop"}
             ],

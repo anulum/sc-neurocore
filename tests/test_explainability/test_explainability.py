@@ -564,7 +564,7 @@ class TestNaturalLanguageExplainer:
         tree = SpikeDecisionTree()
         bs = np.ones(100, dtype=np.uint8)
         node = tree.add_decision("n0", bs, threshold=50)
-        bridge = LocalLLMBridge(LocalLLMConfig(provider=LocalLLMProvider.OPENAI_COMPAT))
+        bridge = LocalLLMBridge(LocalLLMConfig(provider=LocalLLMProvider.CHAT_COMPLETIONS))
 
         def fake_chat(user_prompt: str, **_kwargs):
             assert "Base explanation:" in user_prompt
@@ -682,7 +682,7 @@ class TestEngineIntegration:
 
     def test_explain_spike_with_local_llm(self, monkeypatch):
         engine = ExplainabilityEngine(seed=0xACE1)
-        bridge = LocalLLMBridge(LocalLLMConfig(provider=LocalLLMProvider.OPENAI_COMPAT))
+        bridge = LocalLLMBridge(LocalLLMConfig(provider=LocalLLMProvider.CHAT_COMPLETIONS))
 
         def fake_chat(user_prompt: str, **_kwargs):
             assert "Base explanation:" in user_prompt
