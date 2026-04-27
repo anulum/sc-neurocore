@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 
 from sc_neurocore.neurons.stochastic_lif import StochasticLIFNeuron
 
@@ -77,7 +78,7 @@ def _run_delayed_recall_trial(
     if use_shared_state:
         assert write_matrix is not None
         assert read_matrix is not None
-        shared_state = np.zeros(write_matrix.shape[0], dtype=np.float64)
+        shared_state: npt.NDArray[np.float64] = np.zeros(write_matrix.shape[0], dtype=np.float64)
     else:
         shared_state = np.zeros(0, dtype=np.float64)
 
