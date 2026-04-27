@@ -732,7 +732,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - SCDenseProcess + PySCDenseModel for Lava CPU simulation
 - Weight conversion: SC probability [0,1] -> Loihi fixed-point
 
-### Rust Engine 100% Parity (v3.8/v3.9 carry-forward)
+### Rust Engine parity expansion (v3.8/v3.9 carry-forward)
 - **Sobol bitstream** (M1): Gray-code Sobol quasi-random encoder in Rust (`sobol.rs`)
 - **HomeostaticLIF**: adaptive threshold neuron with EMA spike rate tracking
 - **DendriticNeuron**: XOR-nonlinearity compartmental model
