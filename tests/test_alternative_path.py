@@ -20,6 +20,7 @@ from sc_neurocore.experimental import (
     build_builtin_registry,
     build_demo_registry,
     default_report_path,
+    make_delayed_recall_shared_state_route,
     make_harmonic_symplectic_route,
     make_heat_cosine_mode_route,
     make_kuramoto_noiseless_symplectic_lift_route,
@@ -254,10 +255,28 @@ def test_builtin_registry_exposes_real_physics_route():
     descriptions = registry.describe()
     names = {item["name"] for item in descriptions}
 
+    assert "memory.delayed-recall.shared-state" in names
     assert "physics.heat.cosine-mode" in names
     assert "physics.oscillator.harmonic-symplectic" in names
     assert "physics.kuramoto.noiseless-symplectic-lift" in names
     assert "solver.lif.subthreshold-exact" in names
+
+
+def test_delayed_recall_shared_state_route_beats_local_baseline():
+    route = make_delayed_recall_shared_state_route()
+
+    result = route.run(
+        AlternativePathConfig(enabled=True, mode=AlternativePathMode.SHADOW),
+        16,
+    )
+
+    assert result.returned_path == "shadow-baseline"
+    assert result.baseline_value is not None
+    assert result.candidate_value is not None
+    assert result.comparison is not None
+    assert result.comparison.matched
+    assert result.candidate_value["mean_accuracy"] > result.baseline_value["mean_accuracy"]
+    assert result.candidate_value["mean_accuracy"] >= 0.6
 
 
 def test_kuramoto_noiseless_symplectic_lift_route_stays_close_on_short_horizon():

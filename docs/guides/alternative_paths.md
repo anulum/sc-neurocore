@@ -228,6 +228,45 @@ What to expect:
 - the candidate should remain below threshold for the supplied cases
 - `predicted_spike_time` should stay `null` for the built-in cases
 
+## First Memory Route
+
+The first bounded memory route is:
+
+- `memory.delayed-recall.shared-state`
+
+This route compares:
+
+- baseline: a local trace-only delayed-recall loop built on real
+  `StochasticLIFNeuron` units
+- candidate: the same local spiking baseline plus a small non-local shared
+  latent state that writes from and feeds back into the neurons during the
+  delay and recall phases
+
+Why this route is safe:
+
+- it is explicitly phenomenological rather than a claim about validated brain
+  quantum memory
+- it stays inside `sc_neurocore.experimental` and does not touch the stable
+  neuron or network path
+- it tests a narrow engineering question:
+  can a non-local shared state improve delayed cue recall over a purely local
+  baseline?
+
+What to expect:
+
+- on short delays, the shared-state candidate should be no worse than the local
+  baseline
+- on longer delays, the candidate should show a material recall gain rather
+  than merely reproducing the baseline
+- the route is *quantum-inspired* only at the architectural level; it does not
+  claim to model ATP, Posner molecules, CISS, or validated in-vivo
+  non-locality
+
+Built-in cases:
+
+- `short_delay`
+- `long_delay`
+
 ## Fourth Real Route
 
 The fourth route keeps the secondary-audit symplectic idea in a bounded,

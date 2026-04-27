@@ -27,6 +27,7 @@ from .alternative_path import (
 )
 from .builtins import build_builtin_registry
 from .examples import build_demo_registry, make_demo_sigmoid_route
+from .memory_routes import make_delayed_recall_shared_state_route
 from .physics_routes import (
     make_harmonic_symplectic_route,
     make_heat_cosine_mode_route,
@@ -47,6 +48,7 @@ __all__ = [
     "build_builtin_registry",
     "build_demo_registry",
     "default_report_path",
+    "make_delayed_recall_shared_state_route",
     "make_harmonic_symplectic_route",
     "make_heat_cosine_mode_route",
     "make_kuramoto_noiseless_symplectic_lift_route",

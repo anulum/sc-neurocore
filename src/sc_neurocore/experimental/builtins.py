@@ -12,6 +12,7 @@ import numpy as np
 
 from .alternative_path import AlternativePathCase, AlternativePathRegistry
 from .examples import make_demo_sigmoid_route
+from .memory_routes import make_delayed_recall_shared_state_route
 from .physics_routes import (
     make_harmonic_symplectic_route,
     make_heat_cosine_mode_route,
@@ -25,6 +26,7 @@ def build_builtin_registry() -> AlternativePathRegistry:
 
     registry = AlternativePathRegistry()
     registry.register(make_demo_sigmoid_route())
+    registry.register(make_delayed_recall_shared_state_route())
     registry.register(make_heat_cosine_mode_route())
     registry.register(make_harmonic_symplectic_route())
     registry.register(make_kuramoto_noiseless_symplectic_lift_route())
@@ -39,6 +41,11 @@ def builtin_cases_for_route(route_name: str) -> list[AlternativePathCase]:
         return [
             AlternativePathCase("small", args=([0.0, 1.0, -1.0],)),
             AlternativePathCase("biased", args=([2.0, -2.0],), kwargs={"bias": 0.25}),
+        ]
+    if route_name == "memory.delayed-recall.shared-state":
+        return [
+            AlternativePathCase("short_delay", args=(4,)),
+            AlternativePathCase("long_delay", args=(16,)),
         ]
     if route_name == "physics.heat.cosine-mode":
         return [
