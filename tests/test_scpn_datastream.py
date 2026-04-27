@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -58,7 +59,7 @@ def test_quantum_amplitudes_obey_born_rule() -> None:
     np.testing.assert_allclose(np.sum(amplitudes**2, axis=1), 1.0, atol=1e-12)
 
 
-def test_json_payload_roundtrip(tmp_path) -> None:
+def test_json_payload_roundtrip(tmp_path: Path) -> None:
     stream = generate_scpn_datastream(n_steps=8, dt_s=0.005, seed=123)
     path = tmp_path / "scpn_stream.json"
 
