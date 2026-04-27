@@ -7,24 +7,12 @@
 # SC-NeuroCore — Fault Injection Tests
 
 from __future__ import annotations
-import sys
-import os
-
-sys.path.insert(
-    0,
-    os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "..",
-        "..",
-        "src",
-        "sc_neurocore",
-        "fault_injection",
-    ),
-)
 
 import unittest
+
 import numpy as np
-from fault_injection import (
+
+from sc_neurocore.fault_injection.fault_injection import (
     FaultInjector,
     FaultModel,
     FaultInjectionResult,
