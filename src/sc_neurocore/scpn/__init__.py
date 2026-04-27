@@ -23,6 +23,15 @@ from .layers import (
     get_global_metrics,
 )
 from .params import OMEGA_N, N_LAYERS, K_BASE, DECAY_ALPHA, build_knm_matrix
+from .datastream import (
+    SCHEMA_VERSION,
+    SCPNDatastream,
+    generate_scpn_datastream,
+    generate_scpn_datastream_payload,
+    read_scpn_datastream,
+    validate_scpn_datastream,
+    write_scpn_datastream,
+)
 
 __all__ = [
     "L1_QuantumLayer",
@@ -40,4 +49,11 @@ __all__ = [
     "K_BASE",
     "DECAY_ALPHA",
     "build_knm_matrix",
+    "SCHEMA_VERSION",
+    "SCPNDatastream",
+    "generate_scpn_datastream",
+    "generate_scpn_datastream_payload",
+    "read_scpn_datastream",
+    "validate_scpn_datastream",
+    "write_scpn_datastream",
 ]
