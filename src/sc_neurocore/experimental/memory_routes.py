@@ -73,7 +73,7 @@ def _run_delayed_recall_trial(
 ) -> tuple[float, np.ndarray]:
     cue_arr = np.asarray(cue, dtype=np.float64).reshape(-1)
     neurons = _make_memory_neurons(cue_arr.size, seed)
-    local_trace = np.zeros(cue_arr.size, dtype=np.float64)
+    local_trace: npt.NDArray[np.float64] = np.zeros(cue_arr.size, dtype=np.float64)
     use_shared_state = write_matrix is not None and read_matrix is not None
     if use_shared_state:
         assert write_matrix is not None
@@ -117,7 +117,7 @@ def _run_delayed_recall_trial(
                 write_matrix @ spikes
             )
 
-    recall_spikes = np.zeros(cue_arr.size, dtype=np.float64)
+    recall_spikes: npt.NDArray[np.float64] = np.zeros(cue_arr.size, dtype=np.float64)
     for _ in range(recall_steps):
         if use_shared_state:
             assert read_matrix is not None
