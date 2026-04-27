@@ -17,6 +17,6 @@ This bridge turns spike-derived summaries into prompts for a local model
 running behind either:
 
 - an Ollama chat endpoint
-- an OpenAI-compatible local server
+- a generic chat-completions local server
 
 It is explicitly local and opt-in.

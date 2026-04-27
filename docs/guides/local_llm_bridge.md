@@ -28,7 +28,7 @@ It does **not** alter any existing simulation path.
 It provides a local client around two endpoint styles:
 
 - Ollama chat API
-- OpenAI-compatible chat-completions API hosted locally
+- generic chat-completions API hosted locally
 
 ## Module
 
@@ -79,7 +79,7 @@ response = bridge.analyse_spike_raster(
 print(response.text)
 ```
 
-## Example: OpenAI-compatible local server
+## Example: Chat-Completions Local Server
 
 ```python
 from sc_neurocore.bridges.local_llm import (
@@ -91,7 +91,7 @@ from sc_neurocore.bridges.local_llm import (
 bridge = LocalLLMBridge(
     LocalLLMConfig(
         base_url="http://127.0.0.1:8000",
-        provider=LocalLLMProvider.OPENAI_COMPAT,
+        provider=LocalLLMProvider.CHAT_COMPLETIONS,
         model="local-model",
     )
 )

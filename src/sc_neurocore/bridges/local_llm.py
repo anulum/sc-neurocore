@@ -12,7 +12,7 @@ This module is intentionally local-only and opt-in. It does not talk to any
 hosted service. Supported endpoint styles:
 
 - Ollama-style chat API at ``/api/chat``
-- OpenAI-compatible chat-completions API at ``/v1/chat/completions``
+- generic chat-completions API at ``/v1/chat/completions``
 
 The bridge is useful when SC-NeuroCore data should be explained or summarised
 through a locally hosted language model without introducing a cloud dependency.
@@ -40,7 +40,7 @@ class LocalLLMProvider(Enum):
 
     AUTO = "auto"
     OLLAMA = "ollama"
-    OPENAI_COMPAT = "openai_compat"
+    CHAT_COMPLETIONS = "chat_completions"
 
 
 @dataclass(frozen=True)
@@ -65,7 +65,7 @@ class LocalLLMConfig:
             return self.provider
         if ":11434" in self.base_url or self.base_url.rstrip("/").endswith("/api"):
             return LocalLLMProvider.OLLAMA
-        return LocalLLMProvider.OPENAI_COMPAT
+        return LocalLLMProvider.CHAT_COMPLETIONS
 
 
 @dataclass(frozen=True)
@@ -149,7 +149,7 @@ class LocalLLMBridge:
         provider = self.config.resolved_provider()
         if provider is LocalLLMProvider.OLLAMA:
             return f"{base}/api/chat"
-        if provider is LocalLLMProvider.OPENAI_COMPAT:
+        if provider is LocalLLMProvider.CHAT_COMPLETIONS:
             return f"{base}/v1/chat/completions"
         raise LocalLLMError(f"Unsupported provider: {provider.value}")
 
@@ -252,13 +252,13 @@ class LocalLLMBridge:
         raw = self._post_json(payload)
         choices = raw.get("choices")
         if not isinstance(choices, list) or not choices:
-            raise LocalLLMError("OpenAI-compatible response missing choices")
+            raise LocalLLMError("chat-completions response missing choices")
         first = choices[0]
         if not isinstance(first, dict):
-            raise LocalLLMError("OpenAI-compatible choice is malformed")
+            raise LocalLLMError("chat-completions choice is malformed")
         message = first.get("message")
         if not isinstance(message, dict) or not isinstance(message.get("content"), str):
-            raise LocalLLMError("OpenAI-compatible response missing choices[0].message.content")
+            raise LocalLLMError("chat-completions response missing choices[0].message.content")
         usage_obj = raw.get("usage")
         usage: dict[str, Any] = usage_obj if isinstance(usage_obj, dict) else {}
         prompt_tokens = usage.get("prompt_tokens")
