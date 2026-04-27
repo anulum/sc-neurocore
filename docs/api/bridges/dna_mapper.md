@@ -975,3 +975,48 @@ strands).
 - GF(4) error correction, cross-hybridization analysis
 - Monte Carlo noise model, cost estimation, protocol generation
 - Full pipeline wiring via `bridges/__init__.py`
+
+
+## 7. Performance benchmarks
+
+
+### Output from `dna_mapper_benchmark.py`
+
+```text
+============================================================
+SC-NeuroCore DNA Mapper Benchmark
+============================================================
+Python 3.12.3 (main, Mar  3 2026, 12:15:18) [GCC 13.3.0]
+Platform: Linux-6.17.0-20-generic-x86_64-with-glibc2.39
+NumPy: 2.2.6
+
+[1/5] Compilation benchmarks
+  compile   1 gates: 4.2 ms (8 strands, 185 nt)
+  compile   5 gates: 12.3 ms (27 strands, 690 nt)
+  compile  10 gates: 24.0 ms (50 strands, 1265 nt)
+  compile  25 gates: 86.2 ms (120 strands, 3065 nt)
+  compile  50 gates: 241.8 ms (237 strands, 6090 nt)
+
+[2/5] Simulation benchmarks
+  simulate   100s: 0.1 ms
+  simulate  1000s: 0.7 ms
+  simulate  3600s: 3.8 ms
+  simulate  7200s: 5.3 ms
+
+[3/5] Error correction benchmarks
+  EC    48 nt: encode 28 µs, decode 30 µs
+  EC   240 nt: encode 136 µs, decode 143 µs
+  EC  1200 nt: encode 660 µs, decode 744 µs
+
+[4/5] Cross-hybridization benchmarks
+  X-hyb   5 gates (17 strands): 5.3 ms, 8 flags
+  X-hyb  10 gates (32 strands): 19.8 ms, 13 flags
+  X-hyb  25 gates (77 strands): 115.3 ms, 40 flags
+
+[5/5] Cost & protocol benchmarks
+  Cost estimation: 10 µs ($98.00)
+  Protocol gen:    17 µs (52 lines)
+
+Results written to /media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/benchmarks/results/dna_mapper_benchmark.json
+============================================================
+```

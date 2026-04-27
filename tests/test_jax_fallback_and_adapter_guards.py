@@ -18,6 +18,11 @@ import pytest
 
 
 class TestJaxBackendFallback:
+    def test_surrogate_paths_declared_without_jax(self):
+        from sc_neurocore.accel.jax_backend import JAX_SURROGATE_PATHS
+
+        assert JAX_SURROGATE_PATHS == ("custom_vjp", "legacy_stop_gradient")
+
     def test_to_jax_no_jax(self):
         with patch("sc_neurocore.accel.jax_backend.HAS_JAX", False):
             from sc_neurocore.accel.jax_backend import to_jax

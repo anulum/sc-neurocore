@@ -183,3 +183,21 @@ __all__ += [
     "export_photonic_json",
     "visualize_photonic",
 ]
+
+from .local_llm import (
+    LocalLLMBridge,
+    LocalLLMConfig,
+    LocalLLMError,
+    LocalLLMProvider,
+    LocalLLMResponse,
+    SpikePromptAdapter,
+)
+
+__all__ += [
+    "LocalLLMBridge",
+    "LocalLLMConfig",
+    "LocalLLMError",
+    "LocalLLMProvider",
+    "LocalLLMResponse",
+    "SpikePromptAdapter",
+]

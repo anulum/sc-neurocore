@@ -44,3 +44,6 @@ class TestKuramotoSolver:
         phases = np.array([0.1, 0.2, 0.3, 0.4])
         solver = KuramotoSolver(np.ones(4), np.zeros((4, 4)), phases)
         np.testing.assert_allclose(solver.phases, phases, atol=1e-12)
+        updated = phases + 0.5
+        solver.phases = updated
+        np.testing.assert_allclose(solver.phases, updated, atol=1e-12)

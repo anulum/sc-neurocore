@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import numpy as np
+import numpy.typing as npt
 
 from sc_neurocore_engine.sc_neurocore_engine import StochasticGraphLayer as _RustGraphLayer
 
@@ -18,7 +19,7 @@ from sc_neurocore_engine.sc_neurocore_engine import StochasticGraphLayer as _Rus
 class StochasticGraphLayer:
     """API-compatible with sc_neurocore.graphs.StochasticGraphLayer."""
 
-    def __init__(self, adj_matrix, n_features: int, seed: int = 42):
+    def __init__(self, adj_matrix: npt.ArrayLike, n_features: int, seed: int = 42) -> None:
         adj = np.asarray(adj_matrix, dtype=np.float64)
         if adj.ndim != 2 or adj.shape[0] != adj.shape[1]:
             raise ValueError(f"adj_matrix must be square 2-D, got shape {adj.shape}")
@@ -53,7 +54,7 @@ class StochasticGraphLayer:
     @classmethod
     def from_dense_auto(
         cls,
-        adj_matrix,
+        adj_matrix: npt.ArrayLike,
         n_features: int,
         seed: int = 42,
         density_threshold: float = 0.3,
@@ -74,12 +75,14 @@ class StochasticGraphLayer:
     def is_sparse(self) -> bool:
         return self._engine.is_sparse()
 
-    def forward(self, node_features) -> np.ndarray:
+    def forward(self, node_features: npt.ArrayLike) -> npt.NDArray[np.float64]:
         X = np.asarray(node_features, dtype=np.float64)
         result = self._engine.forward(X)
         return np.asarray(result, dtype=np.float64).reshape(self.n_nodes, self.n_features)
 
-    def forward_sc(self, node_features, length: int = 1024, seed: int = 44257) -> np.ndarray:
+    def forward_sc(
+        self, node_features: npt.ArrayLike, length: int = 1024, seed: int = 44257
+    ) -> npt.NDArray[np.float64]:
         X = np.asarray(node_features, dtype=np.float64)
         result = self._engine.forward_sc(X, int(length), int(seed))
         return np.asarray(result, dtype=np.float64).reshape(self.n_nodes, self.n_features)

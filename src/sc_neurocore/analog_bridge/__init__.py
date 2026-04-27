@@ -11,4 +11,19 @@
 Tier: research.
 """
 
+from sc_neurocore.analog_bridge.analog_bridge import (
+    AEREvent,
+    AnalogBridge,
+    AnalogSubstrateProfile,
+    CalibrationRoutine,
+    EventDrivenInterface,
+)
+
 __tier__ = "research"
+__all__ = [
+    "AEREvent",
+    "AnalogBridge",
+    "AnalogSubstrateProfile",
+    "CalibrationRoutine",
+    "EventDrivenInterface",
+]

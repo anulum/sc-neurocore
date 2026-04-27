@@ -28,6 +28,7 @@ from sc_neurocore.explainability.explainability import (
     TemporalWindow,
     VerifiabilityReport,
 )
+from sc_neurocore.bridges.local_llm import LocalLLMBridge, LocalLLMConfig, LocalLLMProvider
 
 
 # ── LFSRReplay Tests ────────────────────────────────────────────────
@@ -559,6 +560,24 @@ class TestNaturalLanguageExplainer:
         text = NaturalLanguageExplainer.explain_sensitivity(results)
         assert "flip" in text
 
+    def test_explain_node_with_local_llm(self, monkeypatch):
+        tree = SpikeDecisionTree()
+        bs = np.ones(100, dtype=np.uint8)
+        node = tree.add_decision("n0", bs, threshold=50)
+        bridge = LocalLLMBridge(LocalLLMConfig(provider=LocalLLMProvider.OPENAI_COMPAT))
+
+        def fake_chat(user_prompt: str, **_kwargs):
+            assert "Base explanation:" in user_prompt
+
+            class _Resp:
+                text = "Local rewrite"
+
+            return _Resp()
+
+        monkeypatch.setattr(bridge, "chat", fake_chat)
+        text = NaturalLanguageExplainer.explain_node_with_local_llm(node, bridge=bridge)
+        assert text == "Local rewrite"
+
 
 # ── Regulatory Metadata Tests ────────────────────────────────────────
 
@@ -660,6 +679,29 @@ class TestEngineIntegration:
         engine = ExplainabilityEngine(seed=0xACE1)
         engine.explain_spike("n0", 32768, 64, 20)
         assert engine.symbolic.length == 1
+
+    def test_explain_spike_with_local_llm(self, monkeypatch):
+        engine = ExplainabilityEngine(seed=0xACE1)
+        bridge = LocalLLMBridge(LocalLLMConfig(provider=LocalLLMProvider.OPENAI_COMPAT))
+
+        def fake_chat(user_prompt: str, **_kwargs):
+            assert "Base explanation:" in user_prompt
+
+            class _Resp:
+                text = "Enhanced local explanation"
+
+            return _Resp()
+
+        monkeypatch.setattr(bridge, "chat", fake_chat)
+        node, text = engine.explain_spike_with_local_llm(
+            "n0",
+            32768,
+            64,
+            20,
+            bridge=bridge,
+        )
+        assert node.neuron_id == "n0"
+        assert text == "Enhanced local explanation"
         lst = engine.symbolic.to_list()
         assert "popcount" in lst[0]["reason"]
 

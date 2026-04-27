@@ -7,7 +7,7 @@ stochastic computing (SC) neural networks — from individual neurons to full
 SCPN layer hierarchies, with both software simulation and Verilog RTL for
 FPGA deployment.
 
-**Version 3.14.0** | 8 598 Python tests passing + 1 717 Rust tests | 100% Coverage | 173 Neuron Models | 160-Model NetworkRunner | 19 Industrial Modules | 6 Rust Crates | 29 Notebooks | [PyPI](https://pypi.org/project/sc-neurocore/) | [Rust Engine](https://pypi.org/project/sc-neurocore-engine/) | [GitHub](https://github.com/anulum/sc-neurocore)
+**Version 3.14.0** | 173 neuron models | Rust engine + Python front-end | HDL generation + hardware guides | [PyPI](https://pypi.org/project/sc-neurocore/) | [Rust Engine](https://pypi.org/project/sc-neurocore-engine/) | [GitHub](https://github.com/anulum/sc-neurocore)
 
 ![SC-NeuroCore train-to-hardware pipeline](assets/pipeline.png)
 *Train in PyTorch → Quantise to Q8.8 → Simulate with stochastic bitstreams → Compile to SystemVerilog → Synthesise for FPGA. The Rust SIMD engine accelerates all stages.*
@@ -26,12 +26,12 @@ FPGA deployment.
 - **13 advanced plasticity rules** — pair/triplet/voltage STDP, BCM, BPTT, TBPTT, EWC, e-prop, R-STDP, MAML, homeostatic, STP, structural
 - **7 biological circuits** — gap junctions, tripartite synapse (astrocyte), Rall dendrite, cortical column, lateral inhibition, WTA, gamma oscillation
 - **Packed bitwise layers** — 64-bit vectorised AND/MUX/XNOR/NOT/CORDIV for high throughput
-- **Rust SIMD engine** — 113 Gbit/s bitstream packing (AVX-512), AVX2/NEON/SVE/RVV dispatch
+- **Rust SIMD engine** — Rust-backed execution paths with SIMD dispatch and committed benchmark harnesses
 - **GPU acceleration** — PyTorch CUDA + CuPy backend + JAX JIT training
 - **SNN training** — 6 surrogate gradients, 12 differentiable neuron cells/nets (`nn.Module`), SpikingNet + ConvSpikingNet, `to_sc_weights()` bridge to bitstreams
 - **SCPN layer stack** — 16-layer holonomic model (L1 Quantum → L16 Meta) with JAX acceleration
 - **Equation → Verilog compiler** — arbitrary ODE string to synthesizable Q8.8 fixed-point RTL in one function call
-- **Verilog RTL** — 20 synthesisable modules (incl. event-driven AER encoder/router/neuron), 7 formal verification files (72 properties), bit-exact co-simulation
+- **Verilog RTL** — synthesis-oriented modules, formal-verification collateral, and targeted co-simulation/parity paths
 - **HDC/VSA** — Hyper-dimensional computing for symbolic AI workloads
 - **[NIR bridge](guides/nir_integration.md)** — FPGA backend for [NIR](https://neuroir.org/) (18/18 primitives, recurrent edges, multi-port subgraphs)
 - **SC→quantum compiler** — compile SC operations to quantum circuits, statevector + noisy simulation
@@ -41,13 +41,13 @@ FPGA deployment.
 - **Fault tolerance** — SC vs fixed-point degradation benchmark, hardware-aware training
 - **SpikeInterface adapter** — import experimental spike data (spike trains, sorting results)
 - **Adaptive bitstream length** — Hoeffding/Chebyshev bounds for precision-speed tradeoff
-- **AXI-Stream + DMA** — production hardware interface (stream, DMA, parameterized registers, CDC)
+- **AXI-Stream + DMA** — hardware interface modules (stream, DMA, parameterised registers, CDC)
 - **ANN-to-SNN conversion** — `convert()` turns trained PyTorch ANNs into rate-coded SNNs with QCFS activation
 - **Learnable delays** — `DelayLinear` with trainable per-synapse delays via differentiable interpolation
-- **One-command deploy** — `sc-neurocore deploy model.nir --target artix7` produces a bitstream-ready project
+- **Deploy helper** — `sc-neurocore deploy model.nir --target artix7` scaffolds a project or FPGA flow invocation when the required toolchain is installed
 - **Mixed-precision SC** — per-layer adaptive bitstream length (Hoeffding/sensitivity-based)
 - **Event-driven FPGA** — AER encoder, event neuron, spike router (power proportional to spike rate)
-- **Neural data compression** — WaveformCodec: 24x on raw 1024-channel electrode data (fits Bluetooth uplink). Plus 6 spike raster codecs (ISI+Huffman, 4-mode predictive, delta, streaming, AER) achieving 50-750x. Learnable world-model predictor. Rust backend (780x speedup). Bit-true Verilog
+- **Neural data compression** — waveform and spike-raster codecs, learnable predictors, Rust acceleration, and benchmark artefacts
 - **conda-forge recipe** — ready for conda-forge distribution
 
 The default `pip install sc-neurocore` wheel ships the public
@@ -108,6 +108,16 @@ See [Architecture](architecture/architecture.md) for the full package map.
 
 - **[Getting Started](guides/getting-started.md)** — Installation and first steps
 - **[Alternative Paths](guides/alternative_paths.md)** — Safe opt-in workflow for baseline vs candidate implementations
+- **[Stable Engine Bridge Contracts](guides/engine_bridge_contracts.md)** — Maintained wrapper modules for Rust engine consumers
+- **[Acceleration Mirror Authority](guides/accel_mirror_authority.md)** — Which Julia/Mojo acceleration files are authoritative today and which are mirrors only
+- **[Neuron Integrator Paths](guides/neuron_integrator_paths.md)** — Explicit baseline vs higher-order integrator routes for selected neuron models
+- **[Stochastic Source Emitters](guides/stochastic_source_emitters.md)** — Explicit standalone RTL emitters for LFSR-16 and Sobol-16
+- **[Async AER HDL](guides/async_aer_hdl.md)** — Research-stage 4-phase AER wrapper around the stable synchronous HDL path
+- **[Kuramoto Phase HDL](guides/kuramoto_phase_hdl.md)** — Research-stage fixed-point Kuramoto emitter for bounded synthesis experiments
+- **[Surrogate Execution Paths](guides/surrogate_execution_paths.md)** — Explicit `custom_op` vs legacy autograd surrogate routes for PyTorch training
+- **[Network To Torch Bridge](guides/network_to_torch_bridge.md)** — Explicit differentiable bridge from declarative `Network` graphs to torch execution
+- **[JAX Surrogate Execution Paths](guides/jax_surrogate_paths.md)** — Explicit `custom_vjp` vs legacy `stop_gradient` routes for JAX training
+- **[Equation Units](guides/equation_units.md)** — Opt-in strict dimensional validation for `EquationNeuron` and `from_equations(...)`
 - **[API Reference](api/API_REFERENCE.md)** — Python package API
 - **[Rust Engine API](api/rust-engine.md)** — High-performance Rust engine docs
 - **[Hardware Guide](hardware/HARDWARE_GUIDE.md)** — FPGA deployment workflow

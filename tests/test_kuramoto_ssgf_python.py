@@ -33,6 +33,21 @@ class TestSSGFKuramoto:
         assert abs(r_basic - r_ssgf) < 1e-14
         np.testing.assert_allclose(solver_a.phases, solver_b.phases, atol=1e-14)
 
+    def test_run_ssgf_matches_run_without_extras(self):
+        n = 16
+        omega = np.ones(n)
+        coupling = np.full((n, n), 0.3)
+        phases = np.arange(n) * 0.3
+
+        solver_a = KuramotoSolver(omega, coupling, phases.copy(), noise_amp=0.0)
+        solver_b = KuramotoSolver(omega, coupling, phases.copy(), noise_amp=0.0)
+
+        r_basic = solver_a.run(n_steps=8, dt=0.01, seed=42)
+        r_ssgf = solver_b.run_ssgf(n_steps=8, dt=0.01, seed=42)
+
+        np.testing.assert_allclose(r_basic, r_ssgf, atol=1e-14)
+        np.testing.assert_allclose(solver_a.phases, solver_b.phases, atol=1e-14)
+
     def test_geometry_coupling_changes_output(self):
         n = 20
         omega = np.ones(n)

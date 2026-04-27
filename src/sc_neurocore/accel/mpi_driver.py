@@ -26,6 +26,7 @@ class MPIDriver:
     """
 
     def __init__(self) -> None:
+        self.comm: Any | None
         if HAS_MPI:  # pragma: no cover
             self.comm = MPI.COMM_WORLD
             self.rank = self.comm.Get_rank()
@@ -42,12 +43,15 @@ class MPIDriver:
         """
         if not HAS_MPI or self.size == 1:
             return global_inputs
+        comm = self.comm
+        if comm is None:  # pragma: no cover
+            return global_inputs
 
         # MPI multi-node path  # pragma: no cover
         total_len = len(global_inputs)  # pragma: no cover
         chunk_size = total_len // self.size  # pragma: no cover
         local_input = np.zeros(chunk_size, dtype=global_inputs.dtype)  # pragma: no cover
-        self.comm.Scatter(global_inputs, local_input, root=0)  # pragma: no cover
+        comm.Scatter(global_inputs, local_input, root=0)  # pragma: no cover
         return local_input  # pragma: no cover
 
     def gather_results(self, local_results: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
@@ -56,18 +60,21 @@ class MPIDriver:
         """
         if not HAS_MPI or self.size == 1:
             return local_results
+        comm = self.comm
+        if comm is None:  # pragma: no cover
+            return local_results
 
         # MPI multi-node path  # pragma: no cover
         total_len = len(local_results) * self.size  # pragma: no cover
         global_results = None  # pragma: no cover
         if self.rank == 0:  # pragma: no cover
             global_results = np.zeros(total_len, dtype=local_results.dtype)  # pragma: no cover
-        self.comm.Gather(local_results, global_results, root=0)  # pragma: no cover
+        comm.Gather(local_results, global_results, root=0)  # pragma: no cover
         if global_results is None:
             return np.zeros(0)
         return global_results
 
     def barrier(self) -> None:
         """Synchronize all nodes."""
-        if HAS_MPI:  # pragma: no cover
+        if HAS_MPI and self.comm is not None:  # pragma: no cover
             self.comm.Barrier()

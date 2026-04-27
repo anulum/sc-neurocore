@@ -13,10 +13,11 @@ from flash/disk without heap allocation. Compatible with the Rust
 bare-metal implementation.
 
 Wire format (little-endian):
-    [4B magic 0x5343574C] [4B version] [4B n_layers] [4B flags]
-    For each layer:
-        [4B n_inputs] [4B n_outputs] [4B threshold] [4B reserved]
-        [n_outputs × n_words × 4B weight words]
+    Header fields: ``4B magic 0x5343574C``, ``4B version``,
+    ``4B n_layers``, ``4B flags``.
+    Per-layer fields: ``4B n_inputs``, ``4B n_outputs``,
+    ``4B threshold``, ``4B reserved``, followed by
+    ``n_outputs × n_words × 4B weight words``.
 """
 
 from __future__ import annotations

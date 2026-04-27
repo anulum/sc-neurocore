@@ -5,6 +5,13 @@
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Mojo SIMD acceleration for app
+#
+# WARNING:
+# This file is a non-authoritative transcript mirror, not a maintained Mojo
+# backend. Source of truth for Studio app behaviour is:
+# - `src/sc_neurocore/studio/app.py`
+# Only explicit Python loaders or compiled Mojo libraries covered by tests
+# should be treated as authoritative runtime surfaces.
 
 fn _safe(fn: Int) -> Int:
     var __safe_line = 'try:'

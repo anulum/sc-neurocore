@@ -304,3 +304,52 @@ This page was produced as part of the **Antigravity audit**
 (#66 / #62) — third complete audit cycle (after `chiplet_gen.simulate_thermal`
 and `physics/heat.py`). One commit per task per
 `feedback_per_task_full_workflow.md`.
+
+
+## 7. Performance benchmarks
+
+
+### Output from `bench_predictive_model.py`
+
+```text
+# LGSSM Kalman / RTS / EM benchmark
+# Workload: 4-D state, 3-D obs, T=200
+# Repeats per cell: 5
+# Python: 3.12.3, NumPy: 2.2.6
+# platform: Linux-6.17.0-20-generic-x86_64-with-glibc2.39
+
+backend     available   reason / status
+----------  ----------  ------------------------------------------------------------
+python      yes
+rust        no          sc_neurocore_engine wheel not installed
+julia       yes
+mojo        yes
+go          yes
+
+## Forward Kalman filter
+backend        median ms        min ms         log_lik
+----------  ------------  ------------  --------------
+python             9.693         8.402       -288.0601
+rust              (skip)        (skip)               -
+julia              0.644         0.623       -288.0601
+mojo               0.121         0.119       -288.0601
+go                 0.972         0.937       -288.0601
+
+## RTS smoother (backward pass)
+backend        median ms        min ms
+----------  ------------  ------------
+python             2.897         2.887
+rust              (skip)        (skip)
+julia             (skip)        (skip)
+mojo              (skip)        (skip)
+go                (skip)        (skip)
+
+## EM learner (10 iterations)
+backend        median ms        min ms
+----------  ------------  ------------
+python           140.372       138.624
+rust              (skip)        (skip)
+julia             (skip)        (skip)
+mojo              (skip)        (skip)
+go                (skip)        (skip)
+```

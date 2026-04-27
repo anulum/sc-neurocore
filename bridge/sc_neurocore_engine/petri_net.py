@@ -139,7 +139,7 @@ class PetriNetEngine:
             history.append(self._marking.copy())
         return history
 
-    def reset(self, marking: np.ndarray | None = None):
+    def reset(self, marking: np.ndarray | None = None) -> None:
         """Reset to initial or given marking."""
         if marking is not None:
             self._marking = np.asarray(marking, dtype=np.float64).copy()

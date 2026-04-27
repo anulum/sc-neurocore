@@ -54,6 +54,16 @@ from typing import Any
 
 import numpy as np
 
+from sc_neurocore.neurons._units import (
+    UNIT_REGISTRY,
+    build_quantity_namespace,
+    is_quantity,
+    quantity_to_base,
+    require_pint,
+    require_quantity,
+    validate_quantity_expression,
+)
+
 
 class EquationNeuron:
     """Neuron defined by arbitrary ODE equations as strings.
@@ -61,6 +71,9 @@ class EquationNeuron:
     Each equation is a right-hand-side expression for dX/dt.
     Variables can reference other state variables, parameters,
     and the special variable `I` (input current).
+
+    ``units="strict"`` enables opt-in pint-based dimensional
+    validation before the expressions are compiled for runtime.
     """
 
     def __init__(
@@ -71,18 +84,24 @@ class EquationNeuron:
         threshold: str | None = None,
         reset: dict[str, str] | None = None,
         constants: dict[str, float] | None = None,
-        dt: float = 0.1,
+        dt: Any = 0.1,
         method: str = "euler",
+        units: str = "none",
+        input_unit: Any | None = None,
     ):
+        if units not in {"none", "strict"}:
+            raise ValueError("units must be 'none' or 'strict'")
+
         self.equations = equations
-        self.parameters = parameters or {}
-        self.state = state or {k: 0.0 for k in equations}
-        self.initial_state = deepcopy(self.state)
         self.threshold_expr = threshold
         self.reset_rules = reset or {}
-        self.constants = constants or {}
-        self.dt = dt
         self.method = method
+        self.units = units
+        self._strict_units = units == "strict"
+        self._display_state_units: dict[str, Any] = {}
+        self._base_state_units: dict[str, Any] = {}
+        self._runtime_units: dict[str, Any] = {}
+        self._input_unit_name = "I"
 
         def _sigmoid(x: float) -> Any:
             return 1.0 / (1.0 + np.exp(-np.clip(x, -500, 500)))
@@ -103,6 +122,25 @@ class EquationNeuron:
             "max": max,
             "min": min,
         }
+        raw_parameters = parameters or {}
+        raw_state = state or {k: 0.0 for k in equations}
+        raw_constants = constants or {}
+
+        if self._strict_units:
+            self.parameters, self.state, self.constants, self.dt = self._prepare_strict_runtime(
+                raw_parameters=raw_parameters,
+                raw_state=raw_state,
+                raw_constants=raw_constants,
+                dt=dt,
+                input_unit=input_unit,
+            )
+        else:
+            self.parameters = raw_parameters
+            self.state = raw_state
+            self.constants = raw_constants
+            self.dt = float(dt)
+
+        self.initial_state = deepcopy(self.state)
         self._noise_scale = np.sqrt(self.dt)
 
         all_exprs = list(self.equations.values()) + list(self.reset_rules.values())
@@ -189,6 +227,119 @@ class EquationNeuron:
             if isinstance(node, ast.Attribute) and node.attr in self._BLOCKED_NAMES:
                 raise ValueError(f"Blocked attribute {node.attr!r} in equation: {expr!r}")
 
+    def _prepare_strict_runtime(
+        self,
+        *,
+        raw_parameters: dict[str, Any],
+        raw_state: dict[str, Any],
+        raw_constants: dict[str, Any],
+        dt: Any,
+        input_unit: Any | None,
+    ) -> tuple[dict[str, float], dict[str, float], dict[str, float], float]:
+        require_pint()
+
+        missing_state = sorted(set(self.equations) - set(raw_state))
+        if missing_state:
+            raise ValueError(
+                "units='strict' requires explicit state quantities for all equation variables: "
+                + ", ".join(missing_state)
+            )
+
+        dt_quantity = require_quantity(dt, "dt")
+        dt_base = quantity_to_base(dt_quantity)
+        dt_base.to(UNIT_REGISTRY.second)
+
+        quantity_parameters = {
+            name: require_quantity(value, f"parameter {name}")
+            for name, value in raw_parameters.items()
+        }
+        quantity_state = {
+            name: require_quantity(value, f"state {name}") for name, value in raw_state.items()
+        }
+        quantity_constants = {
+            name: require_quantity(value, f"constant {name}")
+            for name, value in raw_constants.items()
+        }
+
+        quantity_env = build_quantity_namespace()
+        quantity_env.update(quantity_parameters)
+        quantity_env.update(quantity_constants)
+        quantity_env.update(quantity_state)
+        quantity_env["xi"] = 1.0 * UNIT_REGISTRY.dimensionless
+
+        uses_input = any(re.search(r"\bI\b", expr) for expr in self.equations.values())
+        if self.threshold_expr:
+            uses_input = uses_input or bool(re.search(r"\bI\b", self.threshold_expr))
+        if any(re.search(r"\bI\b", expr) for expr in self.reset_rules.values()):
+            uses_input = True
+
+        if uses_input:
+            if input_unit is None:
+                raise ValueError(
+                    "units='strict' requires input_unit when equations reference the special input 'I'"
+                )
+            input_quantity = require_quantity(input_unit, "input_unit")
+            quantity_env[self._input_unit_name] = input_quantity
+            self._runtime_units[self._input_unit_name] = quantity_to_base(input_quantity).units
+
+        for var, expr in self.equations.items():
+            expected = quantity_state[var] / dt_quantity
+            validate_quantity_expression(
+                expr,
+                quantity_env,
+                expected_quantity=expected,
+                label=f"d{var}/dt",
+            )
+
+        for var, expr in self.reset_rules.items():
+            validate_quantity_expression(
+                expr,
+                quantity_env,
+                expected_quantity=quantity_state[var],
+                label=f"reset {var}",
+            )
+
+        if self.threshold_expr:
+            threshold_result = validate_quantity_expression(
+                self.threshold_expr,
+                quantity_env,
+                label="threshold",
+            )
+            if not isinstance(threshold_result, (bool, np.bool_)):
+                raise ValueError(
+                    "Threshold expression must evaluate to a boolean in strict units mode"
+                )
+
+        runtime_parameters = {}
+        runtime_state = {}
+        runtime_constants = {}
+
+        for name, quantity in quantity_parameters.items():
+            runtime_parameters[name] = float(quantity_to_base(quantity).magnitude)
+            self._runtime_units[name] = quantity_to_base(quantity).units
+
+        for name, quantity in quantity_constants.items():
+            runtime_constants[name] = float(quantity_to_base(quantity).magnitude)
+            self._runtime_units[name] = quantity_to_base(quantity).units
+
+        for name, quantity in quantity_state.items():
+            base_quantity = quantity_to_base(quantity)
+            runtime_state[name] = float(base_quantity.magnitude)
+            self._runtime_units[name] = base_quantity.units
+            self._base_state_units[name] = base_quantity.units
+            self._display_state_units[name] = quantity.units
+
+        return runtime_parameters, runtime_state, runtime_constants, float(dt_base.magnitude)
+
+    def _convert_runtime_value(self, name: str, value: Any) -> float:
+        if not self._strict_units:
+            return float(value)
+        if not is_quantity(value):
+            return float(value)
+        if name not in self._runtime_units:
+            raise ValueError(f"No runtime unit declared for {name!r}")
+        return float(quantity_to_base(value).to(self._runtime_units[name]).magnitude)
+
     def _build_env(self, **kwargs: float) -> dict[str, object]:
         env: dict[str, object] = dict(self._namespace)
         # Euler-Maruyama: noise scaled by sqrt(dt)/dt so that after deriv*dt
@@ -201,7 +352,11 @@ class EquationNeuron:
         return env
 
     def step(self, I: float = 0.0, **kwargs: float) -> int:
-        kwargs["I"] = I
+        kwargs["I"] = self._convert_runtime_value(self._input_unit_name, I)
+        if self._strict_units:
+            kwargs = {
+                name: self._convert_runtime_value(name, value) for name, value in kwargs.items()
+            }
         env = self._build_env(**kwargs)
 
         if self.method == "euler":
@@ -260,7 +415,12 @@ class EquationNeuron:
 
         return spike
 
-    def get_state(self) -> dict[str, float]:
+    def get_state(self) -> dict[str, Any]:
+        if self._strict_units:
+            return {
+                name: (value * self._base_state_units[name]).to(self._display_state_units[name])
+                for name, value in self.state.items()
+            }
         return dict(self.state)
 
     def reset(self) -> None:
@@ -275,10 +435,13 @@ def from_equations(
     *equation_strings: str,
     threshold: str | None = None,
     reset: str | None = None,
-    params: dict[str, float] | None = None,
-    init: dict[str, float] | None = None,
-    dt: float = 0.1,
+    params: dict[str, Any] | None = None,
+    init: dict[str, Any] | None = None,
+    constants: dict[str, Any] | None = None,
+    dt: Any = 0.1,
     method: str = "euler",
+    units: str = "none",
+    input_unit: Any | None = None,
 ) -> EquationNeuron:
     """Factory: build EquationNeuron from Brian2-style equation strings.
 
@@ -290,6 +453,9 @@ def from_equations(
             params=dict(E_L=-65, tau_m=10, C=1),
             init=dict(v=-65),
         )
+
+    Use ``units="strict"`` with pint quantities to validate the
+    equation dimensions before runtime compilation.
     """
     equations = {}
     for eq_str in equation_strings:
@@ -303,7 +469,7 @@ def from_equations(
             raise ValueError(f"Cannot parse equation: {eq_str!r}. Expected 'd<var>/dt = <expr>'")
 
     reset_rules = {}
-    constants = {}
+    constant_values = constants.copy() if constants else {}
     if reset:
         for part in reset.split(";"):
             part = part.strip()
@@ -314,7 +480,7 @@ def from_equations(
                 var = m.group(1)
                 val_str = m.group(2).strip()
                 try:
-                    constants[f"{var}_reset_val"] = float(val_str)
+                    constant_values[f"{var}_reset_val"] = float(val_str)
                     reset_rules[var] = f"{var}_reset_val"
                 except ValueError:
                     reset_rules[var] = val_str
@@ -332,7 +498,9 @@ def from_equations(
         state=state,
         threshold=threshold_expr,
         reset=reset_rules,
-        constants=constants,
+        constants=constant_values,
         dt=dt,
         method=method,
+        units=units,
+        input_unit=input_unit,
     )
