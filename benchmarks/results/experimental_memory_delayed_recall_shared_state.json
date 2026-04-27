@@ -1,0 +1,41 @@
+{
+  "candidate_failures": 0,
+  "cases": [
+    {
+      "baseline_runtime_ns": 30383843,
+      "candidate_error": null,
+      "candidate_runtime_ns": 19280352,
+      "case_name": "short_delay",
+      "comparison": {
+        "comparable_leaf_count": 2,
+        "detail": "memory.delayed-recall: shared-state candidate improved recall",
+        "matched": true,
+        "max_abs_diff": 0.17708333333333337,
+        "max_rel_diff": 0.35416666666666674
+      },
+      "returned_path": "shadow-baseline",
+      "route_name": "memory.delayed-recall.shared-state"
+    },
+    {
+      "baseline_runtime_ns": 23494706,
+      "candidate_error": null,
+      "candidate_runtime_ns": 29464821,
+      "case_name": "long_delay",
+      "comparison": {
+        "comparable_leaf_count": 2,
+        "detail": "memory.delayed-recall: shared-state candidate improved recall",
+        "matched": true,
+        "max_abs_diff": 0.16666666666666663,
+        "max_rel_diff": 0.33333333333333326
+      },
+      "returned_path": "shadow-baseline",
+      "route_name": "memory.delayed-recall.shared-state"
+    }
+  ],
+  "matched_cases": 2,
+  "median_baseline_runtime_ns": 26939274,
+  "median_candidate_runtime_ns": 24372586,
+  "mode": "shadow",
+  "route_name": "memory.delayed-recall.shared-state",
+  "total_cases": 2
+}

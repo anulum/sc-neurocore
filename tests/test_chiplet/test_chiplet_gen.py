@@ -6,16 +6,9 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Chiplet/Interposer Generator Tests
 
-import sys
-import os
-
 import numpy as np
 
-sys.path.insert(
-    0, os.path.join(os.path.dirname(__file__), "..", "..", "src", "sc_neurocore", "chiplet")
-)
-
-from chiplet_gen import (
+from sc_neurocore.chiplet.chiplet_gen import (
     ChipletDie,
     ChipletGenerator,
     ChipletOutput,

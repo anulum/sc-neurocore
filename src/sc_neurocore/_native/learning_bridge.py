@@ -291,7 +291,7 @@ class RustPlasticityRule:
         _get_lib().reset_rule(self._ptr)
 
     def __del__(self) -> None:
-        if self._ptr and _HAS_LEARNING:
+        if hasattr(self, "_ptr") and self._ptr and _HAS_LEARNING:
             _get_lib().destroy_rule(self._ptr)
             self._ptr = None
 
@@ -341,7 +341,7 @@ class RustEligentLearner:
         )
 
     def __del__(self) -> None:
-        if self._ptr and _HAS_LEARNING:
+        if hasattr(self, "_ptr") and self._ptr and _HAS_LEARNING:
             _get_lib().destroy_learner(self._ptr)
             self._ptr = None
 

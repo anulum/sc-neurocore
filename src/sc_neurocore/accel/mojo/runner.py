@@ -8,7 +8,15 @@
 
 """Mojo SIMD Kernel Orchestrator.
 
-Spawns and manages high-performance Mojo binaries natively replacing Python bottlenecks.
+This loader is part of the maintained Mojo surface.
+
+Important boundary:
+
+- authoritative Mojo behaviour comes from Python loaders and compiled libraries
+  explicitly wired into maintained Python code
+- transcript-style mirrors under ``accel/mojo/kernels/*.mojo`` are not an
+  authoritative runtime contract unless they are explicitly loaded and tested
+
 Expects `pixi run mojo` to be available strictly on the system PATH.
 """
 

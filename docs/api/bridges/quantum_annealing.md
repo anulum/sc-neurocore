@@ -584,3 +584,47 @@ Internal:
         - export_qubo_json
         - export_bqm
         - visualize_ising
+
+
+## 7. Performance benchmarks
+
+
+### Output from `bench_quantum_annealing.py`
+
+```text
+SC-NeuroCore Quantum Annealing Benchmark
+Rust backend available: False
+
+
+============================================================
+  BENCHMARK: Ising Energy Evaluation
+============================================================
+     N    Python (µs)      Rust (µs)    Speedup
+------------------------------------------------------------
+    10           10.5            N/A        N/A
+    20           42.1            N/A        N/A
+    50          190.1            N/A        N/A
+   100          470.3            N/A        N/A
+
+============================================================
+  BENCHMARK: Batch Energy (10000 configurations)
+============================================================
+     N    Python (ms)      Rust (ms)    Speedup
+------------------------------------------------------------
+    10           49.2            N/A        N/A
+    20          190.7            N/A        N/A
+    50         1175.1            N/A        N/A
+
+============================================================
+  BENCHMARK: Simulated Annealing (1000 sweeps × 10 reads)
+============================================================
+     N    Python (ms)      Rust (ms)    Speedup
+------------------------------------------------------------
+    10          235.8            N/A        N/A
+    20         1317.8            N/A        N/A
+    50        17721.0            N/A        N/A
+
+============================================================
+  BENCHMARK COMPLETE
+============================================================
+```

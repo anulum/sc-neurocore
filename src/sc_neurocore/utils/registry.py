@@ -23,6 +23,7 @@ Usage::
 from __future__ import annotations
 
 from collections.abc import Callable
+import importlib
 
 
 class ComponentRegistry:
@@ -30,6 +31,17 @@ class ComponentRegistry:
 
     def __init__(self) -> None:
         self._store: dict[str, dict[str, type]] = {}
+        self._lazy_modules: dict[str, str] = {
+            "adapter": "sc_neurocore.adapters.holonomic",
+        }
+
+    def _ensure_namespace_loaded(self, namespace: str) -> None:
+        """Load namespace-side registration modules on first access."""
+        if self._store.get(namespace):
+            return
+        module_name = self._lazy_modules.get(namespace)
+        if module_name is not None:
+            importlib.import_module(module_name)
 
     def register(self, namespace: str, name: str | None = None) -> Callable[[type], type]:
         """Decorator to register a class under *namespace*/*name*.
@@ -49,6 +61,7 @@ class ComponentRegistry:
 
     def get(self, namespace: str, name: str) -> type:
         """Retrieve a registered class. Raises ``KeyError`` if missing."""
+        self._ensure_namespace_loaded(namespace)
         try:
             return self._store[namespace][name]
         except KeyError:
@@ -56,6 +69,7 @@ class ComponentRegistry:
 
     def list(self, namespace: str) -> list[str]:
         """Return sorted names in *namespace*."""
+        self._ensure_namespace_loaded(namespace)
         return sorted(self._store.get(namespace, {}))
 
     def namespaces(self) -> list[str]:  # type: ignore[valid-type]

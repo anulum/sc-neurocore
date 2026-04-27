@@ -13,7 +13,6 @@ Commercial Licensing: Available
 [![CI](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml/badge.svg)](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/anulum/sc-neurocore/actions/workflows/codeql.yml/badge.svg)](https://github.com/anulum/sc-neurocore/actions/workflows/codeql.yml)
 [![Version](https://img.shields.io/badge/version-3.14.0-blue)](https://github.com/anulum/sc-neurocore/releases)
-[![Coverage](https://img.shields.io/badge/core_coverage-100%25-brightgreen)](https://github.com/anulum/sc-neurocore)
 [![mypy](https://img.shields.io/badge/mypy-strict-blue)](https://mypy-lang.org/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Typed](https://img.shields.io/badge/typed-py.typed-blue)](https://peps.python.org/pep-0561/)
@@ -27,10 +26,10 @@ Commercial Licensing: Available
 [![REUSE](https://img.shields.io/badge/REUSE-compliant-green)](https://reuse.software/)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)
 
-> **Active Development** — SC-NeuroCore is under intensive development. The core engine, all 173 neuron models, the full simulation pipeline (Population → Projection → Network → SpikeMonitor → Analysis), and 19 industrialized modules (safety certification, ASIC flow, evolutionary substrate, hypervisor, chiplet generator, and more) are fully functional, tested (10 315 passing tests — 8 598 Python + 1 717 Rust), and production-deployable. We are currently completing comprehensive per-model documentation and end-to-end pipeline benchmarking across the entire model library. APIs may evolve as this work progresses.
+> **Active Development** — SC-NeuroCore is under active development. The repository contains a large Python and Rust test surface, hardware-oriented compilers and emitters, and multiple research-tier modules. Public APIs, benchmark coverage, and deployment workflows are still being consolidated; use the committed tests and benchmark artefacts in `benchmarks/results/` as the evidence boundary for specific claims.
 
 **Version:** 3.14.0
-**Status:** 173 Neuron Models (164 Bio + 9 AI) | 99.49% MNIST (ConvSNN) | 8 598 Python tests passing + 1 717 Rust tests | 100% Core Coverage | 173 Rust Neuron Models (PyO3) | 160-Model NetworkRunner | 132-Function Analysis Toolkit | wgpu GPU Backend | 19 Industrial Modules | 6 Rust Crates | 29 Notebooks
+**Status:** 173 neuron models (164 biological + 9 AI-oriented) | Rust engine + Python front-end | HDL generation + hardware guides | multi-backend training and benchmarking | research modules included in source checkout
 
 <p align="center">
   <img src="docs/assets/spike_raster.png" width="800" alt="LIF spike raster — 5 neurons, sinusoidal input">
@@ -40,15 +39,10 @@ SC-NeuroCore is an open-source stochastic computing SNN framework
 with FPGA synthesis. 173 neuron models (164 biophysical + 9 AI-optimised) spanning
 82 years of computational neuroscience (McCulloch-Pitts 1943 through
 ArcaneNeuron 2026) run inside a deterministic stochastic computing engine
-with bit-true Verilog RTL co-simulation, FPGA synthesis via an IR compiler
-(SystemVerilog + MLIR/CIRCT backends), an equation-to-Verilog compiler
-that turns arbitrary ODE strings into synthesizable Q8.8 fixed-point RTL,
-formal verification (7 SymbiYosys
-modules, 72 properties), a Rust SIMD engine **39–202× faster than Brian2**
-(27.7 billion synaptic events/s at 100K neurons, 173 Rust neuron models
-with PyO3 bindings, 160-model NetworkRunner with Rayon-parallel populations),
-wgpu compute shader GPU backend (21× on GTX 1060, cross-platform Vulkan/Metal/DX12),
-CuPy GPU acceleration, JAX JIT training,
+with FPGA-oriented RTL generation, an equation-to-Verilog compiler
+for Q-format fixed-point hardware experiments, formal-verification collateral,
+a Rust-backed execution engine with benchmark scripts in `benchmarks/`,
+GPU-facing backends including wgpu, CuPy, and JAX training surfaces,
 MPI distributed simulation (billion-neuron scale via mpi4py),
 an identity continuity substrate (persistent spiking networks with
 checkpointing and L16 Director control), a 132-function spike train
@@ -59,25 +53,24 @@ e-prop, R-STDP, MAML, STP, structural plasticity), 7 biological circuit
 primitives (gap junctions, tripartite synapse, Rall dendrite, cortical
 column, lateral inhibition, WTA, gamma oscillation), 10 model zoo
 configurations with 3 pre-trained weight sets, 9 hardware chip emulators,
-quantum hybrid computing (Qiskit + PennyLane + SC-to-quantum compiler),
-surrogate gradient training reaching 99.49% MNIST accuracy, a
+quantum hybrid computing (Qiskit + PennyLane + SC-to-quantum compiler), a
 [NIR](https://neuroir.org/) bridge — FPGA backend for the
 neuromorphic intermediate representation standard (18/18 primitives,
 recurrent edges, multi-port subgraphs; verified interop with SpikingJelly,
 snnTorch, and Norse), a SpikeInterface adapter for experimental data import,
 ANN-to-SNN conversion (trained PyTorch models to rate-coded SNNs in one call),
 trainable per-synapse delays (DelayLinear with differentiable interpolation),
-one-command FPGA synthesis (`sc-neurocore deploy model.nir --target ice40` auto-runs Yosys+nextpnr+icepack if installed; generates project files for Vivado targets),
+a deploy helper (`sc-neurocore deploy model.nir --target ice40`) that scaffolds
+or invokes FPGA flow steps when the required external toolchain is installed,
 per-layer adaptive bitstream length for mixed-precision SC networks,
-event-driven FPGA RTL (AER encoder, event neuron, spike router —
-15-39x fewer register toggles than clock-driven at 0.01-10% activity, measured),
+event-driven FPGA RTL (AER encoder, event neuron, spike router),
 and a 6-codec neural data compression library (ISI, predictive, delta, streaming,
-AER) with a unified API and auto-recommendation engine — targeting BCI
+AER) with a unified API and documented benchmark artefacts — targeting BCI
 implants (Neuralink-scale 1024+ channels), neural probes (Neuropixels),
 neuromorphic inter-chip routing, and real-time closed-loop telemetry.
-8 598 Python tests passing and 1 717 Rust tests (across 6 crates).
-13 CI workflows guard every push. conda-forge recipe ready.
-19 industrialized modules: IEC 61508 safety certification, multi-PDK ASIC flow,
+CI workflows guard changes across the core package and optional backends.
+conda-forge recipe ready.
+19 research and hardware-facing modules: IEC 61508 safety certification, multi-PDK ASIC flow,
 fault injection, UVM testbench generation, multi-tenant hypervisor, digital twin sync,
 spintronic/memristor/chiplet mapping, evolutionary substrate with FPGA deployment,
 meta-plasticity, bioware interface, federated learning, BCI studio,

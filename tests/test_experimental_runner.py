@@ -41,7 +41,11 @@ def test_runner_lists_routes():
 
     assert result.returncode == 0
     assert "demo.affine-sigmoid" in result.stdout
+    assert "memory.delayed-recall.shared-state" in result.stdout
     assert "physics.heat.cosine-mode" in result.stdout
+    assert "physics.oscillator.harmonic-symplectic" in result.stdout
+    assert "physics.kuramoto.noiseless-symplectic-lift" in result.stdout
+    assert "solver.lif.subthreshold-exact" in result.stdout
 
 
 def test_runner_writes_demo_report(tmp_path):

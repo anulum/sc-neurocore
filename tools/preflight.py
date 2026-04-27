@@ -12,12 +12,24 @@ import argparse
 import pathlib
 import subprocess
 import sys
+import tomllib
 
 SPDX_DIRS = ["src", "tests", "engine/src", "engine/tests", "engine/benches", "hdl", "bridge"]
 SPDX_EXTS = {".py", ".rs", ".v"}
 SPDX_MARKER = "SPDX-License-Identifier"
 
 ENGINE_DIR = pathlib.Path("engine")
+
+
+def _coverage_fail_under() -> int:
+    pyproject = pathlib.Path("pyproject.toml")
+    if not pyproject.exists():
+        return 100
+    try:
+        data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+    except (OSError, tomllib.TOMLDecodeError):
+        return 100
+    return int(data.get("tool", {}).get("coverage", {}).get("report", {}).get("fail_under", 100))
 
 
 GATES = [
@@ -41,16 +53,7 @@ GATES = [
     ("spdx-guard", None),
     (
         "pytest",
-        [
-            "python",
-            "-m",
-            "pytest",
-            "tests/",
-            "-v",
-            "--cov=sc_neurocore",
-            "--cov-report=term",
-            "--cov-fail-under=100",
-        ],
+        None,
     ),
 ]
 
@@ -109,7 +112,7 @@ def _has_cargo() -> bool:
 _CARGO_AVAILABLE: bool | None = None
 
 
-def run_gate(name: str, cmd) -> bool:
+def run_gate(name: str, cmd: list[str] | None) -> bool:
     global _CARGO_AVAILABLE
     print(f"\n{'=' * 60}")
     print(f"  GATE: {name}")
@@ -122,6 +125,22 @@ def run_gate(name: str, cmd) -> bool:
             return True
     if name == "spdx-guard":
         ok = check_spdx()
+    elif name == "pytest":
+        ok = (
+            subprocess.run(
+                [
+                    "python",
+                    "-m",
+                    "pytest",
+                    "tests/",
+                    "-v",
+                    "--cov=sc_neurocore",
+                    "--cov-report=term",
+                    f"--cov-fail-under={_coverage_fail_under()}",
+                ]
+            ).returncode
+            == 0
+        )
     elif cmd is not None:
         ok = subprocess.run(cmd).returncode == 0
     else:

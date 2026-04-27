@@ -6,22 +6,9 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Analog Bridge Tests
 
-import sys
-import os
-
-sys.path.insert(
-    0,
-    os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "..",
-        "..",
-        "src",
-        "sc_neurocore",
-        "analog_bridge",
-    ),
-)
 import unittest
-from analog_bridge import AnalogBridge
+
+from sc_neurocore.analog_bridge import AnalogBridge
 
 
 class MockNode:

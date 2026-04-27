@@ -14,12 +14,16 @@ from sc_neurocore.studio.models import list_models
 from sc_neurocore.studio.network import simulate_ei_network
 
 
+class ModelDiscoveryError(RuntimeError):
+    """Raised when Studio model discovery cannot produce a trustworthy list."""
+
+
 def available_models() -> list[str]:
     """Return names of all neuron models available for populations."""
-    try:
-        return [m["name"] for m in list_models()]
-    except Exception:
-        return ["LIFNeuron", "IzhikevichNeuron", "AdExNeuron"]
+    names = [m["name"] for m in list_models()]
+    if not names:
+        raise ModelDiscoveryError("Studio model discovery returned no models")
+    return names
 
 
 def create_population(

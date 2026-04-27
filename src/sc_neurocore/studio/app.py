@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 from collections import OrderedDict
 from collections.abc import Callable
 from typing import Any
@@ -78,6 +79,9 @@ from sc_neurocore.studio.models import get_model_detail, list_models, simulate_m
 from sc_neurocore.studio.presets import get_preset, list_presets
 from sc_neurocore.studio.simulation import simulate
 from sc_neurocore.studio.templates import get_template, list_templates
+
+
+logger = logging.getLogger(__name__)
 
 
 # --- Request schemas ---
@@ -281,6 +285,7 @@ def _safe(fn: Callable[..., Any]) -> Any:
     except (ValueError, TypeError, KeyError):
         raise HTTPException(status_code=422, detail="Invalid input") from None
     except Exception:
+        logger.exception("Studio API internal error in %r", fn)
         raise HTTPException(status_code=500, detail="Internal error") from None
 
 
@@ -840,7 +845,7 @@ def create_app() -> FastAPI:
     # --- Network Canvas (Block 5) ---
     @app.get("/api/graph/models")
     def api_graph_models() -> Any:
-        return graph_available_models()
+        return _safe(graph_available_models)
 
     @app.post("/api/graph/population")
     def api_create_population(data: dict[str, Any]) -> Any:

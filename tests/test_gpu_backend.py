@@ -14,7 +14,9 @@ selected automatically at import time.
 """
 
 import numpy as np
+import pytest
 
+import sc_neurocore.accel.gpu_backend as gb
 from sc_neurocore.accel.gpu_backend import (
     xp,
     to_device,
@@ -119,6 +121,25 @@ class TestGPUVecMAC:
         inp = xp.zeros((3, 2), dtype=xp.uint64)
         result = to_host(gpu_vec_mac(w, inp))
         np.testing.assert_array_equal(result, 0)
+
+    @pytest.mark.skipif(not hasattr(gb, "cp") or not gb.HAS_CUPY, reason="CuPy unavailable")
+    def test_runtime_failure_falls_back_to_numpy(self, monkeypatch):
+        original = gb.cp.bitwise_and
+        monkeypatch.setattr(gb, "_GPU_RUNTIME_BROKEN", False)
+
+        def _broken(*args, **kwargs):
+            raise RuntimeError("Failed to auto-detect CUDA root directory")
+
+        monkeypatch.setattr(gb.cp, "bitwise_and", _broken)
+        w = np.array([[[0xFFFFFFFFFFFFFFFF]], [[0]]], dtype=np.uint64)
+        inp = np.array([[0xFFFFFFFFFFFFFFFF]], dtype=np.uint64)
+        result = to_host(gpu_vec_mac(w, inp))
+
+        assert result[0] == 64
+        assert result[1] == 0
+        assert gb._GPU_RUNTIME_BROKEN is True
+
+        monkeypatch.setattr(gb.cp, "bitwise_and", original)
 
 
 class TestVectorizedLayerGPU:

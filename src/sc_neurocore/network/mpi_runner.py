@@ -15,13 +15,16 @@ via ``MPI_Allgatherv`` per timestep. Falls back gracefully when
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-try:
-    from mpi4py import MPI
+MPI: Any
 
+try:
+    from mpi4py import MPI as _MPI
+
+    MPI = _MPI
     HAS_MPI = True
 except ImportError:
     MPI = None

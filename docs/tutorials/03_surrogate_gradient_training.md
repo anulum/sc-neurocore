@@ -51,6 +51,17 @@ from sc_neurocore.training import atan_surrogate, fast_sigmoid, superspike
 
 Also available: `sigmoid_surrogate`, `straight_through` (STE), `triangular`.
 
+## Execution paths
+
+The six surrogates now expose two explicit execution paths:
+
+- `custom_op` — the modern `torch.library.custom_op` path
+- `legacy_autograd` — the historical `torch.autograd.Function` path
+
+The public functions default to `custom_op`, while explicit `_custom_op` and
+`_legacy` variants remain available for direct comparison. See
+[Surrogate Execution Paths](../guides/surrogate_execution_paths.md).
+
 ## Neuron model: LIFCell
 
 ```python

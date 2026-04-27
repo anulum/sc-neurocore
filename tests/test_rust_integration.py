@@ -78,13 +78,18 @@ class TestNetworkRunner:
 
 class TestRustNeurons:
     @pytest.mark.parametrize(
-        "model",
-        ["Izhikevich", "HodgkinHuxleyNeuron", "AdExNeuron", "LapicqueNeuron"],
+        ("model", "current"),
+        [
+            ("Izhikevich", 15.0),
+            ("HodgkinHuxleyNeuron", 15.0),
+            ("AdExNeuron", 200.0),
+            ("LapicqueNeuron", 15.0),
+        ],
     )
-    def test_neuron_produces_spikes(self, model):
+    def test_neuron_produces_spikes(self, model, current):
         cls = getattr(engine, model)
         neuron = cls()
-        spikes = sum(neuron.step(15.0) for _ in range(500))
+        spikes = sum(neuron.step(current) for _ in range(500))
         assert spikes > 0
 
     def test_izhikevich_deterministic(self):
@@ -118,8 +123,8 @@ class TestIRCompiler:
         v_lif = b.lif_step(i_in, leak, gain, noise)
         b.output("spike", v_lif)
         graph = b.build()
-        engine.ir_verify(graph)
-        sv = engine.ir_emit_sv(graph)
+        assert graph.verify() is None
+        sv = graph.emit_sv()
         assert "module" in sv
 
     def test_ir_print(self):
@@ -127,5 +132,5 @@ class TestIRCompiler:
         v = b.input("x", "bool")
         b.output("y", v)
         graph = b.build()
-        text = engine.ir_print(graph)
+        text = graph.to_text()
         assert "print_test" in text

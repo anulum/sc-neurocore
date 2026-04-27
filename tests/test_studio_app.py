@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+import logging
+
 import pytest
 
 fastapi = pytest.importorskip("fastapi")
@@ -56,6 +58,19 @@ class TestTemplatesEndpoints:
     def test_each_template_accessible(self, client, name):
         r = client.get(f"/api/templates/{name}")
         assert r.status_code == 200
+
+    def test_internal_error_is_logged(self, client, monkeypatch, caplog):
+        import sc_neurocore.studio.app as app_mod
+
+        def _boom():
+            raise RuntimeError("catalog exploded")
+
+        monkeypatch.setattr(app_mod, "list_models", _boom)
+        with caplog.at_level(logging.ERROR):
+            r = client.get("/api/models")
+        assert r.status_code == 500
+        assert r.json()["detail"] == "Internal error"
+        assert "catalog exploded" in caplog.text
 
 
 class TestSimulateEndpoint:

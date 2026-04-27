@@ -55,6 +55,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
+from sc_neurocore_engine.dna import has_full_dna_backend
 
 # ── Soft imports ──────────────────────────────────────────────────────
 
@@ -67,19 +68,7 @@ except ImportError:
     _HAS_NUPACK = False
 
 try:
-    import sc_neurocore_engine as _sne
-
-    _HAS_RUST_DNA = all(
-        hasattr(_sne, _name)
-        for _name in (
-            "py_dna_design_sequence",
-            "py_dna_detect_hairpins",
-            "py_dna_check_cross_hybridization",
-            "py_dna_simulate_kinetics",
-            "py_dna_design_orthogonal_set",
-        )
-    )
-    del _sne
+    _HAS_RUST_DNA = has_full_dna_backend()
 except ImportError:
     _HAS_RUST_DNA = False
 
@@ -1896,13 +1885,16 @@ class NoiseModel:
         report: Dict[str, Any] = {"n_trials": self._n_trials, "outputs": {}}
         for k, vals in results.items():
             arr = np.array(vals)
+            mean = float(np.mean(arr))
+            std = float(np.std(arr))
+            cv = std / max(mean, 1e-12)
             report["outputs"][k] = {
-                "mean": float(np.mean(arr)),
-                "std": float(np.std(arr)),
-                "cv": float(np.std(arr) / max(np.mean(arr), 1e-12)),
+                "mean": mean,
+                "std": std,
+                "cv": cv,
                 "min": float(np.min(arr)),
                 "max": float(np.max(arr)),
-                "robust": bool(np.std(arr) / max(np.mean(arr), 1e-12) < 0.15),
+                "robust": bool(cv < 0.15),
             }
 
         return report
