@@ -60,6 +60,54 @@ the weight file:
 sc-neurocore deploy weights.pt --target ice40 --T 256 -o build/fpga_scaffold
 ```
 
+## 2a. MNIST to NIR to FPGA handoff
+
+For a source checkout, the bundled MNIST training helper saves a PyTorch
+checkpoint plus metadata:
+
+```bash
+pip install "sc-neurocore[training]" torchvision
+python tools/train_pretrained_mnist.py \
+  --epochs 1 \
+  --output build/mnist/conv_spiking_net_mnist.pt
+```
+
+That checkpoint can be scaffolded directly, without an FPGA toolchain:
+
+```bash
+sc-neurocore deploy build/mnist/conv_spiking_net_mnist.pt \
+  --target ice40 \
+  --T 256 \
+  -o build/mnist_fpga_scaffold
+```
+
+If the MNIST model is trained in a NIR-native frontend such as SpikingJelly,
+snnTorch, or Norse, export the trained model to `build/mnist/mnist.nir` first,
+then use the same deploy command on the NIR file:
+
+```python
+import nir
+import torch
+from spikingjelly.activation_based.nir_exchange import export_to_nir
+
+example_input = torch.randn(1, 1, 28, 28)
+graph = export_to_nir(model, example_input, dt=1e-4)
+nir.write("build/mnist/mnist.nir", graph)
+```
+
+```bash
+sc-neurocore deploy build/mnist/mnist.nir \
+  --target ice40 \
+  --dt 1e-4 \
+  --T 256 \
+  -o build/mnist_fpga_scaffold
+```
+
+Use the NIR route when the training frontend owns the model definition. Use the
+checkpoint route when the SC-NeuroCore training module owns the model
+definition. Both routes stop at a generated hardware project until a real
+synthesis tool is installed.
+
 ## 3. Inspect the scaffold
 
 The deploy command writes a self-contained project directory:
@@ -103,8 +151,8 @@ tool-generated outputs from your machine as evidence.
 
 ## 5. Parse real reports into optimiser evidence
 
-After Vivado or Quartus produces reports, convert the measured data into SC
-design optimiser evidence. The report collector requires explicit design
+After Vivado, Quartus, or Yosys produces reports, convert the measured data into
+SC design optimiser evidence. The report collector requires explicit design
 metadata and measured accuracy so it cannot invent missing evidence.
 
 Create a compact network manifest for the deployed model:
@@ -128,9 +176,15 @@ sc-neurocore collect-synthesis \
   --clock-mhz 100 \
   --inferences-per-run 1 \
   --out build/synthesis_observations.json
+```
 
+For the MNIST scaffold, keep the measured accuracy beside the checkpoint
+metadata and pass that value to `--accuracy-score`. If a power report does not
+exist yet, stop here; do not substitute README or benchmark-table numbers.
+
+```bash
 python tools/optimise_sc_design.py \
-  --network build/network_manifest.json \
+  --network build/network_design.json \
   --evidence build/synthesis_observations.json \
   --max-luts 50000 \
   --max-power-mw 500 \
