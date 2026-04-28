@@ -357,7 +357,7 @@ fast compartment (tau=5ms), working memory (tau=200ms), deep context
 (tau=10s), learned attention gate, and a forward self-model (predictor).
 The deep compartment accumulates identity: it changes only on genuine
 novelty (prediction errors), not routine input. Confidence modulates
-threshold and meta-learning rate. No equivalent in any other toolkit.
+threshold and meta-learning rate.
 
 ### Identity Substrate
 
@@ -414,12 +414,15 @@ exascale_layer.save("hw_layer.scal")
 See the full end-to-end integration demo in [`examples/zenith_hybrid_resnet.py`](examples/zenith_hybrid_resnet.py).
 
 ```bash
-# Optional extras
-pip install sc-neurocore[full]     # all research modules
-pip install sc-neurocore[gpu]      # CuPy GPU acceleration
-pip install sc-neurocore[nir]      # NIR interop (Norse, snnTorch, Lava)
-pip install sc-neurocore[studio]   # Visual SNN Design Studio (web IDE)
+# Add only the extras needed for the current workflow.
+pip install "sc-neurocore[nir]"       # NIR interop
+pip install "sc-neurocore[training]"  # PyTorch-backed training
+pip install "sc-neurocore[studio]"    # local web studio
+pip install "sc-neurocore[full]"      # local research environment only
 ```
+
+See [Install Profiles](docs/guides/install_profiles.md) for the full optional
+dependency matrix and research-only boundaries.
 
 ### Rust Engine (39–202× faster)
 
@@ -790,16 +793,32 @@ mkdocs serve
 
 ## Install Extras
 
+Start with the base package. It installs the Python package plus `numpy` and
+`scipy`; it does not install PyTorch, JAX, Qiskit, PennyLane, Lava, FastAPI, or
+hardware toolchains.
+
 ```bash
-pip install sc-neurocore              # core engine only (neurons, layers, compiler, HDL gen)
-pip install sc-neurocore[accel]       # + Numba JIT acceleration
-pip install sc-neurocore[gpu]         # + CuPy CUDA acceleration
-pip install sc-neurocore[jax]         # + JAX backend for holonomic adapters
-pip install sc-neurocore[quantum]     # + Qiskit + PennyLane quantum bridges
-pip install sc-neurocore[lava]        # + Intel Lava interop (Loihi target)
-pip install sc-neurocore[research]    # + matplotlib, networkx, onnx, torch
-pip install sc-neurocore[full]        # + numba, matplotlib, networkx, onnx, qiskit, pennylane
+pip install sc-neurocore              # base package: core simulation, compiler, HDL scaffold
+pip install sc-neurocore[training]    # PyTorch-backed training
+pip install sc-neurocore[nir]         # NIR import/export
+pip install sc-neurocore[studio]      # local web studio
+pip install sc-neurocore[bioware]     # biological closed-loop prototypes
 ```
+
+Acceleration and research extras are intentionally opt-in:
+
+```bash
+pip install sc-neurocore[accel]       # Numba JIT experiments
+pip install sc-neurocore[gpu]         # CuPy CUDA experiments
+pip install sc-neurocore[jax]         # JAX-backed experiments
+pip install sc-neurocore[quantum]     # research-grade Qiskit/PennyLane bridges
+pip install sc-neurocore[lava]        # Lava interop experiments
+pip install sc-neurocore[research]    # plotting, graph, ONNX, and torch research stack
+pip install sc-neurocore[full]        # local research environment only; pulls heavy extras
+```
+
+See [Install Profiles](docs/guides/install_profiles.md) before using `full`.
+The default package and FPGA scaffold flow do not require those heavy extras.
 
 For development (includes all modules + research/frontier code from source):
 
