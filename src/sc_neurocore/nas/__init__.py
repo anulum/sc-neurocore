@@ -10,5 +10,20 @@
 
 from .search_space import Architecture, SearchSpace
 from .search import nas, NASResult
+from .surrogate_bridge import (
+    NASPolicyLayer,
+    NASPolicyPlan,
+    apply_surrogate_policy,
+    build_nas_policy_plan,
+)
 
-__all__ = ["Architecture", "SearchSpace", "nas", "NASResult"]
+__all__ = [
+    "Architecture",
+    "SearchSpace",
+    "nas",
+    "NASResult",
+    "NASPolicyLayer",
+    "NASPolicyPlan",
+    "apply_surrogate_policy",
+    "build_nas_policy_plan",
+]
