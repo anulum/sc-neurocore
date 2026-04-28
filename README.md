@@ -29,7 +29,7 @@ Commercial Licensing: Available
 > **Active Development** — SC-NeuroCore is under active development. The repository contains a large Python and Rust test surface, hardware-oriented compilers and emitters, and multiple research-tier modules. Public APIs, benchmark coverage, and deployment workflows are still being consolidated; use the committed tests and benchmark artefacts in `benchmarks/results/` as the evidence boundary for specific claims.
 
 **Version:** 3.14.0
-**Status:** 173 neuron models (164 biological + 9 AI-oriented) | Rust engine + Python front-end | HDL generation + hardware guides | multi-backend training and benchmarking | research modules included in source checkout
+**Status:** 173 neuron models (164 biological + 9 AI-oriented) | optional Rust engine + Python front-end | HDL generation + hardware guides | multi-backend training and benchmarking | research modules included in source checkout
 
 <p align="center">
   <img src="docs/assets/spike_raster.png" width="800" alt="LIF spike raster — 5 neurons, sinusoidal input">
@@ -76,7 +76,7 @@ spintronic/memristor/chiplet mapping, evolutionary substrate with FPGA deploymen
 meta-plasticity, bioware interface, federated learning, BCI studio,
 explainability, neuro-symbolic predictive coding, stochastic doctor, and model zoo.
 
-## Engineering Philosophy: Polyglot Research, Compiled Production
+## Engineering Philosophy: Research Polyglot, Shipped Core
 
 SC-NeuroCore carries parallel implementations of several compute kernels across
 **Python, Rust, Julia, Go, Mojo,** and **WGSL** (GPU shader). This polyglot
@@ -94,10 +94,12 @@ common harness. The goal is to measure, not to guess, which implementation
 should win a given operation on real hardware. Without this layer, any claim
 like "Rust is faster than Julia here" is folklore.
 
-**Production path.** The shipping product is **one finetuned pipeline** per
-deployment target, not the polyglot matrix. The IR compiler (`sc-neurocore deploy`
-+ `compiler/`, `hdl_gen/`, `export/`) consumes a topology and emits **one**
-artefact per target:
+**Production path.** The shipping product is the Python package, optional Rust
+engine hot paths, and generated hardware artefacts. The research-only polyglot
+matrix is not installed by default, is not required by `pip install
+sc-neurocore`, and is not part of FPGA deployment. The IR compiler
+(`sc-neurocore deploy` + `compiler/`, `hdl_gen/`, `export/`) consumes a
+topology and emits one artefact per target:
 
 | Target | Artefact | Source of truth for each kernel |
 |---|---|---|
@@ -106,11 +108,11 @@ artefact per target:
 | **Python wheel** | `sc_neurocore_engine` (maturin) | Rust engine + thin Python API |
 | **GPU** | WGSL compute shaders (Vulkan / Metal / DX12 / WebGPU) | Shared Rust kernels compiled to WGSL |
 
-At deploy time the compiler resolves every operator to its measured-fastest
-backend on the target architecture and drops the others. The production binary
-has **no Julia, Go, or Mojo runtime dependency**, and no Python on the FPGA
-path. The polyglot is the **testbed**; the compile product is **monolithic and
-fast**.
+At deploy time the compiler resolves operators to the maintained target path
+for that artefact. Benchmark results can inform optimisation decisions, but
+Julia, Go, and Mojo sources remain source-checkout research material unless a
+maintained loader and tests make a specific path authoritative. FPGA artefacts
+do not depend on Python or the polyglot toolchain at runtime.
 
 ### Default pipeline — stage by stage
 
@@ -130,7 +132,7 @@ flowchart LR
 
     RESEARCH --> HARNESS["② Bench Harness<br/>benchmarks/bench_*.py<br/>per-op wall-time + bit-parity assertions<br/>JSON → benchmarks/results/"]
 
-    HARNESS --> IR["③ IR Compiler<br/>compiler/, hdl_gen/, export/<br/>reads bench JSON → picks fastest<br/>backend per op → lowers to IR"]
+    HARNESS --> IR["③ IR Compiler<br/>compiler/, hdl_gen/, export/<br/>may use bench JSON for optimisation<br/>lowers to target IR"]
 
     %% ===== Deploy Plane =====
     IR --> DEPLOY
@@ -175,11 +177,10 @@ Three observations the benchmark table makes explicit:
   competitive when the inner loop is already in scipy / NumPy C code
   (`cortical_column` — scipy.sparse CSR is hand-tuned C).
 
-2. **The compiler's job is dispatch.** Each polyglot implementation is
-  a candidate; the compiler picks the measured winner at deploy time and
-  statically drops the rest. Users do not need Mojo on their machine to run
-  a wheel that was compiled with Mojo as the winner on the build machine —
-  the output is a `.so`.
+2. **The compiler's job is target selection.** Maintained compiler paths emit
+  one target artefact and do not ship the research matrix. A polyglot
+  implementation becomes authoritative only when a maintained Python entrypoint
+  loads it and tests cover that path.
 
 3. **Numbers are verifiable.** Every row traces to a committed, runnable
   script in `benchmarks/` and a JSON in `benchmarks/results/`. Nothing in the
@@ -201,15 +202,16 @@ sequenceDiagram
     Backends->>Bench: run under `pytest benchmarks/`<br/>shared seeds, shared input
     Bench->>Bench: assert parity + record<br/>ns / op, wall time, output
     Bench->>Compiler: JSON result + target<br/>(FPGA / wheel / cdylib / WGSL)
-    Compiler->>Compiler: per op, pick fastest<br/>backend that hits the target
+    Compiler->>Compiler: select maintained<br/>target path
     Compiler->>Prod: emit single artefact<br/>(SystemVerilog or cdylib)
     Prod->>Prod: run in production<br/>no polyglot runtime
 ```
 
 Short version: the polyglot matrix lives in the source tree for **honesty**
 (measurements not guesses) and **correctness** (cross-language parity catches
-algorithm bugs that a single implementation would hide). The shipping product
-is **one fast path per target**, selected by data.
+algorithm bugs that a single implementation would hide). Treat it as
+research-only unless a maintained loader, tests, and install profile say
+otherwise.
 
 ## Feature Comparison
 
@@ -423,11 +425,8 @@ pip install sc-neurocore[studio]   # Visual SNN Design Studio (web IDE)
 
 The optional Rust engine provides SIMD-accelerated simulation, 173 neuron
 models via PyO3, and fused E-I network simulation. Pre-built wheels are
-available for Linux, Windows, and macOS (Python 3.10–3.13):
-
-```bash
-pip install sc-neurocore-engine
-```
+available through repository release assets or source builds when present in
+the local environment.
 
 When installed, SC-NeuroCore automatically uses the Rust engine for:
 
@@ -437,8 +436,9 @@ When installed, SC-NeuroCore automatically uses the Rust engine for:
 - **SIMD bitstream ops:** 190 Gbit/s popcount (AVX-512)
 
 The pure Python package works without the engine — NumPy fallbacks are
-used for all operations. Install the engine only when you need the
-performance advantage.
+used for all operations. Install or build the engine only when you need the
+performance advantage. See [Install Profiles](docs/guides/install_profiles.md)
+for the base install, optional extras, and source-build path.
 
 `pip install sc-neurocore` publishes the Python suite under the public
 `sc-neurocore` package name. The optional Rust engine remains part of the
@@ -772,6 +772,8 @@ Sample results (CPU, quick mode):
 **Live site**: [anulum.github.io/sc-neurocore](https://anulum.github.io/sc-neurocore/)
 
 - [Getting Started](docs/guides/getting-started.md) — Installation & quickstart
+- [Install Profiles](docs/guides/install_profiles.md) — Base install, optional extras, and research-only polyglot boundary
+- [FPGA Deploy Cookbook](docs/tutorials/fpga_deploy_cookbook.md) — Five-minute scaffold, optional synthesis, report-to-optimiser handoff
 - [**Tutorials**](https://anulum.github.io/sc-neurocore/tutorials/01_stochastic_computing_fundamentals/) — 51 hands-on guides (SC fundamentals → MNIST → FPGA → quantum → formal verification)
 - [API Reference](docs/api/API_REFERENCE.md) — Python package API
 - [Rust Engine API](https://anulum.github.io/sc-neurocore/rust-api/sc_neurocore_engine/) — Rust engine docs

@@ -56,6 +56,7 @@ nav:
   - Guides:
       - For Research Labs: guides/FOR_RESEARCH_LABS.md
       - Getting Started: guides/getting-started.md
+      - Install Profiles: guides/install_profiles.md
       - User Manual: guides/USER_MANUAL.md
       - Technical Manual: guides/TECHNICAL_MANUAL.md
       - Layer-by-Layer Guide: guides/LAYER_BY_LAYER_GUIDE.md
@@ -101,6 +102,7 @@ nav:
       - Surrogate Gradient Training: tutorials/03_surrogate_gradient_training.md
       - Hyper-Dimensional Computing: tutorials/04_hyperdimensional_computing.md
       - FPGA Deployment in 20 Minutes: tutorials/fpga_in_20_minutes.md
+      - FPGA Deploy Cookbook: tutorials/fpga_deploy_cookbook.md
       - Rust Engine & Performance: tutorials/05_rust_engine_performance.md
       - Brunel Network Translation: tutorials/06_brunel_network_translation.md
       - MNIST SC Classification: tutorials/07_mnist_sc_classification.md
