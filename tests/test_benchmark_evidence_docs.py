@@ -46,7 +46,11 @@ def test_missing_framework_rows_are_marked_as_gaps() -> None:
         "| SpikingJelly | No committed artefact | None | Runner available, measurement gap |"
         in text
     )
-    assert "| FPGA power/energy | No committed artefact | None | Gap |" in text
+    assert (
+        "| FPGA power/energy | No committed measurement artefact | "
+        "Parser available via `sc-neurocore collect-synthesis` | "
+        "Capture path available, measurement gap |"
+    ) in text
 
 
 def test_cross_framework_1k_result_schema_is_current() -> None:

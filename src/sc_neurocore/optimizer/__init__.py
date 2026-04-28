@@ -15,6 +15,11 @@ from .observation_loader import (
     observation_from_synthesis_reports,
     observations_from_payload,
 )
+from .feedback_loop import (
+    SynthesisFeedbackResult,
+    optimise_from_evidence_payload,
+    optimise_from_synthesis_reports,
+)
 from .resource_optimizer import fit_to_target, OptimizationResult
 from .synthesis_evidence import build_payload_from_reports, write_payload
 from .surrogate_sc_optimizer import (
@@ -32,6 +37,9 @@ __all__ = [
     "load_synthesis_observation",
     "observation_from_synthesis_reports",
     "observations_from_payload",
+    "SynthesisFeedbackResult",
+    "optimise_from_evidence_payload",
+    "optimise_from_synthesis_reports",
     "build_payload_from_reports",
     "write_payload",
     "BenchmarkObservation",
