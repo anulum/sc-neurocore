@@ -17,18 +17,24 @@ print(f'{spikes} spikes in 500 steps')
 "
 ```
 
-That's it. NumPy is the only hard dependency. Everything else is optional.
+That's it. NumPy and SciPy are the hard runtime dependencies. Everything else
+is optional.
 
 ## Which Install Path?
 
 | Your goal | Install command | What you get |
 |-----------|----------------|--------------|
 | Explore neuron models | `pip install sc-neurocore` | 173 models, simulation, analysis |
-| Train SNNs on GPU | `pip install sc-neurocore[research]` | + PyTorch training, matplotlib |
+| Train SNNs | `pip install sc-neurocore[training]` | + PyTorch-backed training |
 | Benchmark against Brian2 | `pip install sc-neurocore[accel]` | + Numba JIT (4x speedup at 1K neurons) |
 | Deploy to FPGA | `pip install sc-neurocore` + [Yosys](https://github.com/YosysHQ/yosys) | + IR compiler, SystemVerilog emission |
 | Import NIR models | `pip install sc-neurocore[nir]` | + [NIR](https://neuroir.org/) bridge (Norse, snnTorch, Lava-DL interop) |
-| Full research stack | `pip install sc-neurocore[full]` | Everything above |
+| Research plotting/export stack | `pip install sc-neurocore[research]` | + matplotlib, networkx, ONNX, torch |
+| Local full research stack | `pip install sc-neurocore[full]` | Heavy optional extras for local research work |
+
+Prefer the base package plus the narrow workflow extra you need. See
+[Install Profiles](install_profiles.md) before using `full`; it is not required
+for simulation, NIR import/export, or FPGA scaffolding.
 
 **Python 3.10 through 3.14** supported. Linux, macOS, Windows.
 
