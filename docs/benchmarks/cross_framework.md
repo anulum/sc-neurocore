@@ -1,69 +1,75 @@
-# Cross-Framework SNN Benchmark
+<!--
+SPDX-License-Identifier: AGPL-3.0-or-later
+Commercial license available
+© Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+© Code 2020–2026 Miroslav Šotek. All rights reserved.
+ORCID: 0009-0009-3560-0851
+Contact: www.anulum.li | protoscience@anulum.li
+SC-NeuroCore — Cross-framework benchmark evidence
+-->
 
-Balanced E-I LIF network (1,000 neurons, 80/20 split, 10% random
-connectivity, Poisson external drive, 300ms simulation, dt=0.1ms).
+# Cross-Framework Benchmark Evidence
 
-Measured on Intel i5-11600K @ 3.90 GHz, Python 3.12.10, Windows 11.
-Single-threaded. No GPU.
+This page is an evidence index for framework comparisons. It separates
+committed measurements from planned comparisons so the public benchmark surface
+does not imply numbers that are not in the repository.
 
-## Results (1,000 neurons)
+## Evidence Rules
 
-| Framework | Mode | Time (s) | Peak Memory | Speedup vs Brian2 |
-|-----------|------|----------|-------------|-------------------|
-| **SC-NeuroCore** | **Rust engine** | **0.08** | **0.3 MB** | **835×** |
-| SC-NeuroCore | NumPy | 12.9 | 26.4 MB | 5.2× |
-| Norse | PyTorch CPU | 41.7 | 18.9 MB | 1.6× |
-| snnTorch | PyTorch CPU | 49.1 | 48.5 MB | 1.4× |
-| Brian2 | runtime (NumPy) | 67.7 | 87.9 MB | 1.0× (baseline) |
+- A comparison is published only when a committed artefact under
+  `benchmarks/results/` or `hdl/reports/` backs it.
+- Wall-time claims must identify the framework, mode, scale, and local artefact.
+- Spike-count, spike-timing, rate, or accuracy-parity claims must cite the
+  artefact that stores the reference and SC-NeuroCore outputs.
+- FPGA resource, timing, power, and energy claims are separate categories.
+  Resource or timing reports are not power or energy evidence.
+- Missing comparisons stay visible as gaps. They are not filled with estimates.
 
-### Caveats
+## Current Matrix
 
-- Brian2 "runtime" mode uses NumPy codegen, not Brian2's fastest path.
-  Brian2 C++ standalone compiles the network to native C++ and would be
-  significantly faster. We have not yet measured standalone mode on this
-  machine (compilation time is excluded from Brian2's reported time in
-  standalone mode, which affects fair comparison).
-- snnTorch and Norse step through the network in PyTorch without
-  compiled graph optimisation (`torch.compile` was not used).
-- SC-NeuroCore Rust uses a fused E-I simulation in compiled Rust with
-  CSR connectivity, Poisson input, and Euler integration in a single
-  FFI call.
-- SC-NeuroCore NumPy uses pure Python + NumPy vectorised operations
-  with the same algorithm.
-- Low spike counts indicate the external drive was suboptimal for this
-  network configuration. All frameworks received the same input
-  parameters, so timing comparisons remain valid (all did equivalent
-  computational work).
+| Target | Committed artefact | Covered metrics | Status | Gap |
+| --- | --- | --- | --- | --- |
+| Brian2 parity | `benchmarks/results/brian2_parity_results.json` | single-LIF spike count/timing, population spike count/rate, wall time | Covered for parity microbench | Network API path failed in this artefact and remains excluded from parity claims |
+| Brian2 translator suite | `benchmarks/results/snn_translator_20v.json` | Brunel-style variant wall time, spike counts, rate ratios | Covered for local translator variants | Not a replacement for Brian2 C++ standalone energy or hardware measurements |
+| Brian2 head-to-head rerun | `benchmarks/results/upcloud_p4_rerun_20260310/brian2_headtohead.json` | cloud rerun wall-time comparison | Covered as archived cloud artefact | Use with adjacent `system_info.json` for environment context |
+| snnTorch | `benchmarks/results/snntorch_vs_sc_microbench.json` | per-step wall time, spike totals, mean rates across four scales | Covered for CPU microbench | No committed snnTorch dataset-level accuracy parity or energy comparison |
+| Norse | `benchmarks/results/cross_framework_1k.json` | 1k-neuron wall time, peak memory, spike totals, rates | Covered as legacy CPU run | Legacy JSON field labels are retained; do not derive new claims without rerun |
+| NEST | No committed artefact | None | Gap | Add a NEST benchmark runner before publishing NEST numbers |
+| SpikingJelly | No committed artefact | None | Gap | Add a SpikingJelly benchmark runner before publishing SpikingJelly numbers |
+| FPGA resource/timing | `hdl/reports/vivado_util_xc7z020_100mhz.rpt`; `hdl/reports/vivado_timing_xc7z020_100mhz.rpt`; `benchmarks/results/yosys_synth.json` | utilisation, timing, generic synthesis counts | Covered for resource/timing | These are not power or energy reports |
+| FPGA power/energy | No committed artefact | None | Gap | Add Vivado/Quartus power report capture plus workload-normalised energy parser |
 
-### What This Means
+## Published Reference Points
 
-The Rust engine's advantage comes from:
+The committed Brian2 parity artefact records:
 
-1. **Zero Python overhead per timestep** — the entire simulation loop
-   runs in compiled Rust
-2. **CSR sparse connectivity** — only non-zero synapses are stored and
-   iterated
-3. **Fused kernels** — connectivity build + Poisson input + Euler step +
-   spike detection in one call, no intermediate allocations
+- single LIF spike count: Brian2 `20`, SC-NeuroCore `20`;
+- maximum single-LIF spike-time difference: `0.000 ms`;
+- population mean rate: Brian2 `69.12 Hz`, SC-NeuroCore `70.48 Hz`;
+- population wall time: Brian2 `0.507 s`, SC-NeuroCore `0.069 s`.
 
-The NumPy backend is already competitive with snnTorch and Norse despite
-being pure Python, because the algorithm is vectorised over neurons
-rather than using per-neuron Python loops.
+The committed snnTorch microbench artefact records the CPU comparison rows used
+in the main benchmark page:
 
-## Reproduce
+- single neuron, 1000 steps;
+- dense 100→50, 500 steps;
+- scale 500→500, 100 steps;
+- scale 1000→1000, 50 steps.
 
-```bash
-pip install sc-neurocore sc-neurocore-engine brian2 snntorch norse
-python benchmarks/cross_framework_benchmark.py --scales 1000 --json results.json
-```
+The committed cross-framework 1k artefact records one legacy CPU run covering
+SC-NeuroCore NumPy, SC-NeuroCore Rust, Brian2 runtime mode, snnTorch, and Norse.
+Treat it as a historical timing artefact until the harness is rerun with the
+current schema.
 
-Stored artifact:
-[`benchmarks/results/cross_framework_1k.json`](https://github.com/anulum/sc-neurocore/blob/main/benchmarks/results/cross_framework_1k.json)
+## Required Next Measurements
 
-## Benchmark Script
-
-Source: [`benchmarks/cross_framework_benchmark.py`](https://github.com/anulum/sc-neurocore/blob/main/benchmarks/cross_framework_benchmark.py)
-
-Tests all frameworks with the same network topology, parameters, and
-simulation duration. Measures wall time via `time.perf_counter()` and
-peak memory via `tracemalloc`.
+1. Add NEST and SpikingJelly runners to `benchmarks/cross_framework_benchmark.py`
+   or a successor harness.
+2. Regenerate `benchmarks/results/cross_framework_1k.json` with current
+   `BenchResult` field names and checked optional dependency versions.
+3. Capture FPGA power reports from Vivado or Quartus for the same deployed
+   network used in wall-time comparisons.
+4. Add workload-normalised energy fields before publishing energy-per-inference
+   claims.
+5. Keep accuracy or spike-parity claims separate from resource and energy
+   claims.
