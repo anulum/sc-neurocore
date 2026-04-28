@@ -255,7 +255,8 @@ installed on this workstation, so the Rust path falls back to
 Python every time. To verify the claim:
 
 ```bash
-pip install sc-neurocore-engine    # provides the Rust .so
+cd bridge
+maturin develop --release          # provides the local Rust bridge
 PYTHONPATH=src pytest tests/test_bridges/test_quantum_annealing.py::test_rust_parity
 ```
 
