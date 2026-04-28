@@ -34,8 +34,8 @@ does not imply numbers that are not in the repository.
 | Brian2 head-to-head rerun | `benchmarks/results/upcloud_p4_rerun_20260310/brian2_headtohead.json` | cloud rerun wall-time comparison | Covered as archived cloud artefact | Use with adjacent `system_info.json` for environment context |
 | snnTorch | `benchmarks/results/snntorch_vs_sc_microbench.json` | per-step wall time, spike totals, mean rates across four scales | Covered for CPU microbench | No committed snnTorch dataset-level accuracy parity or energy comparison |
 | Norse | `benchmarks/results/cross_framework_1k.json` | 1k-neuron wall time, peak memory, spike totals, rates | Covered as CPU run | No committed Norse dataset-level accuracy parity or energy comparison |
-| NEST | No committed artefact | None | Gap | Add a NEST benchmark runner before publishing NEST numbers |
-| SpikingJelly | No committed artefact | None | Gap | Add a SpikingJelly benchmark runner before publishing SpikingJelly numbers |
+| NEST | No committed artefact | None | Runner available, measurement gap | Run the opt-in NEST row and commit artefact before publishing NEST numbers |
+| SpikingJelly | No committed artefact | None | Runner available, measurement gap | Run the opt-in SpikingJelly row and commit artefact before publishing SpikingJelly numbers |
 | FPGA resource/timing | `hdl/reports/vivado_util_xc7z020_100mhz.rpt`; `hdl/reports/vivado_timing_xc7z020_100mhz.rpt`; `benchmarks/results/yosys_synth.json` | utilisation, timing, generic synthesis counts | Covered for resource/timing | These are not power or energy reports |
 | FPGA power/energy | No committed artefact | None | Gap | Add Vivado/Quartus power report capture plus workload-normalised energy parser |
 
@@ -63,10 +63,19 @@ It stores wall time, peak memory, spike totals, and rates for the shared
 
 ## Required Next Measurements
 
-1. Add NEST and SpikingJelly runners to `benchmarks/cross_framework_benchmark.py`
-   or a successor harness.
+1. Run the opt-in NEST and SpikingJelly rows and commit the resulting artefact:
+
+   ```bash
+   python benchmarks/cross_framework_benchmark.py \
+       --scales 1000 \
+       --skip-standalone \
+       --include-gap-frameworks \
+       --json benchmarks/results/cross_framework_1k_next.json
+   ```
+
 2. Capture checked optional dependency versions alongside future
-   cross-framework artefacts.
+   cross-framework artefacts. The harness now writes `dependency_versions` into
+   JSON output.
 3. Capture FPGA power reports from Vivado or Quartus for the same deployed
    network used in wall-time comparisons.
 4. Add workload-normalised energy fields before publishing energy-per-inference

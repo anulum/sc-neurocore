@@ -41,8 +41,11 @@ def test_cross_framework_evidence_doc_tracks_required_frameworks() -> None:
 def test_missing_framework_rows_are_marked_as_gaps() -> None:
     text = _doc_text()
 
-    assert "| NEST | No committed artefact | None | Gap |" in text
-    assert "| SpikingJelly | No committed artefact | None | Gap |" in text
+    assert "| NEST | No committed artefact | None | Runner available, measurement gap |" in text
+    assert (
+        "| SpikingJelly | No committed artefact | None | Runner available, measurement gap |"
+        in text
+    )
     assert "| FPGA power/energy | No committed artefact | None | Gap |" in text
 
 

@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import argparse
 import gc
+import importlib.metadata
 import json
 import platform
 import sys
@@ -59,7 +60,38 @@ class BenchResult:
     error: str | None = None
 
 
-def _measure(fn, label: str, n_neurons: int, mode: str) -> BenchResult:
+DEFAULT_FRAMEWORKS = (
+    "sc_numpy",
+    "sc_rust",
+    "brian2_runtime",
+    "snntorch",
+    "norse",
+)
+OPTIONAL_GAP_FRAMEWORKS = ("nest", "spikingjelly")
+DEPENDENCY_PACKAGES = (
+    "sc-neurocore",
+    "sc-neurocore-engine",
+    "brian2",
+    "snntorch",
+    "norse",
+    "nest",
+    "spikingjelly",
+    "torch",
+)
+
+
+def dependency_versions(packages: tuple[str, ...] = DEPENDENCY_PACKAGES) -> dict[str, str | None]:
+    """Return installed package versions for benchmark provenance."""
+    versions: dict[str, str | None] = {}
+    for package in packages:
+        try:
+            versions[package] = importlib.metadata.version(package)
+        except importlib.metadata.PackageNotFoundError:
+            versions[package] = None
+    return versions
+
+
+def _measure(fn, label: str, mode: str, n_neurons: int) -> BenchResult:
     """Run fn(), measure time and memory."""
     gc.collect()
     tracemalloc.start()
@@ -340,16 +372,126 @@ def bench_norse(n_neurons: int, duration_ms: float = 300.0, dt: float = 0.1) -> 
     return _measure(run, "Norse", "PyTorch CPU", n_neurons)
 
 
+def bench_nest(n_neurons: int, duration_ms: float = 300.0, dt: float = 0.1) -> BenchResult:
+    def run():
+        import nest
+
+        nest.ResetKernel()
+        nest.SetKernelStatus({"resolution": dt})
+
+        n_exc = int(n_neurons * 0.8)
+        n_inh = n_neurons - n_exc
+        neurons = nest.Create(
+            "iaf_psc_delta",
+            n_neurons,
+            params={
+                "V_m": -65.0,
+                "E_L": -65.0,
+                "V_th": -50.0,
+                "V_reset": -65.0,
+                "tau_m": 20.0,
+                "t_ref": 2.0,
+            },
+        )
+        spike_recorder = nest.Create("spike_recorder")
+        nest.Connect(neurons, spike_recorder)
+
+        poisson = nest.Create("poisson_generator", params={"rate": 8.0})
+        nest.Connect(poisson, neurons, syn_spec={"weight": 0.5})
+
+        exc = neurons[:n_exc]
+        inh = neurons[n_exc : n_exc + n_inh]
+        conn_spec = {"rule": "pairwise_bernoulli", "p": 0.1}
+        nest.Connect(exc, neurons, conn_spec=conn_spec, syn_spec={"weight": 0.5})
+        if n_inh:
+            nest.Connect(inh, neurons, conn_spec=conn_spec, syn_spec={"weight": -2.0})
+
+        nest.Simulate(duration_ms)
+        events = spike_recorder.get("events")
+        n_spikes = len(events["senders"])
+        rate = n_spikes / (n_neurons * duration_ms / 1000)
+        return n_spikes, rate
+
+    return _measure(run, "NEST", "iaf_psc_delta", n_neurons)
+
+
+def bench_spikingjelly(
+    n_neurons: int, duration_ms: float = 300.0, dt: float = 0.1
+) -> BenchResult:
+    def run():
+        import torch
+        from spikingjelly.activation_based import functional, neuron
+
+        n_steps = int(duration_ms / dt)
+        n_exc = int(n_neurons * 0.8)
+        lif = neuron.LIFNode(tau=20.0, v_threshold=1.0, v_reset=0.0, step_mode="s")
+        spikes = torch.zeros(n_neurons)
+        recurrent = torch.zeros(n_neurons, n_neurons)
+        mask = torch.rand(n_neurons, n_neurons) < 0.1
+        mask.fill_diagonal_(False)
+        presyn_is_exc = torch.arange(n_neurons).unsqueeze(0) < n_exc
+        recurrent[mask & presyn_is_exc] = 0.1
+        recurrent[mask & ~presyn_is_exc] = -0.4
+
+        spk_count = 0.0
+        for _ in range(min(n_steps, 3000)):
+            ext = torch.poisson(torch.full((n_neurons,), 8.0 * dt / 1000.0)) * 0.5
+            current = ext + recurrent @ spikes
+            spikes = lif(current)
+            spk_count += float(spikes.sum().item())
+
+        functional.reset_net(lif)
+        rate = spk_count / (n_neurons * min(n_steps, 3000) * dt / 1000)
+        return int(spk_count), rate
+
+    return _measure(run, "SpikingJelly", "PyTorch CPU", n_neurons)
+
+
+def _benchmark_registry():
+    return {
+        "sc_numpy": ("SC-NeuroCore NumPy", bench_sc_numpy),
+        "sc_rust": ("SC-NeuroCore Rust", bench_sc_rust),
+        "brian2_runtime": ("Brian2 runtime", bench_brian2_runtime),
+        "brian2_standalone": ("Brian2 C++ standalone", bench_brian2_standalone),
+        "snntorch": ("snnTorch", bench_snntorch),
+        "norse": ("Norse", bench_norse),
+        "nest": ("NEST", bench_nest),
+        "spikingjelly": ("SpikingJelly", bench_spikingjelly),
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(description="Cross-framework SNN benchmark")
     parser.add_argument("--scales", nargs="+", type=int, default=[1000])
     parser.add_argument("--json", type=str, default=None)
     parser.add_argument(
+        "--frameworks",
+        nargs="+",
+        choices=tuple(_benchmark_registry()),
+        default=list(DEFAULT_FRAMEWORKS),
+        help="Framework keys to benchmark",
+    )
+    parser.add_argument(
         "--skip-standalone",
         action="store_true",
         help="Skip Brian2 C++ standalone (slow compilation)",
     )
+    parser.add_argument(
+        "--include-gap-frameworks",
+        action="store_true",
+        help="Also run opt-in NEST and SpikingJelly rows when available",
+    )
     args = parser.parse_args()
+    selected = list(args.frameworks)
+    if not args.skip_standalone and "brian2_standalone" not in selected:
+        selected.append("brian2_standalone")
+    if args.skip_standalone and "brian2_standalone" in selected:
+        selected.remove("brian2_standalone")
+    if args.include_gap_frameworks:
+        for framework in OPTIONAL_GAP_FRAMEWORKS:
+            if framework not in selected:
+                selected.append(framework)
+    registry = _benchmark_registry()
 
     print("=" * 70)
     print("Cross-Framework SNN Benchmark")
@@ -361,20 +503,10 @@ def main():
     for n in args.scales:
         print(f"\n--- {n} neurons ---")
 
-        benchmarks = [
-            ("SC-NeuroCore NumPy", lambda n=n: bench_sc_numpy(n)),
-            ("SC-NeuroCore Rust", lambda n=n: bench_sc_rust(n)),
-            ("Brian2 runtime", lambda n=n: bench_brian2_runtime(n)),
-            ("snnTorch", lambda n=n: bench_snntorch(n)),
-            ("Norse", lambda n=n: bench_norse(n)),
-        ]
-
-        if not args.skip_standalone:
-            benchmarks.insert(3, ("Brian2 C++ standalone", lambda n=n: bench_brian2_standalone(n)))
-
-        for name, fn in benchmarks:
+        for key in selected:
+            name, bench_fn = registry[key]
             print(f"  {name:30s} ... ", end="", flush=True)
-            r = fn()
+            r = bench_fn(n)
             if r.error:
                 print(f"ERROR: {r.error[:60]}")
             else:
@@ -402,6 +534,7 @@ def main():
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "platform": platform.processor(),
             "python": sys.version.split()[0],
+            "dependency_versions": dependency_versions(),
             "results": [asdict(r) for r in results],
         }
         Path(args.json).write_text(json.dumps(output, indent=2, default=str))
