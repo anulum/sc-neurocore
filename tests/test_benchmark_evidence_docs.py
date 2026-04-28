@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -43,3 +44,19 @@ def test_missing_framework_rows_are_marked_as_gaps() -> None:
     assert "| NEST | No committed artefact | None | Gap |" in text
     assert "| SpikingJelly | No committed artefact | None | Gap |" in text
     assert "| FPGA power/energy | No committed artefact | None | Gap |" in text
+
+
+def test_cross_framework_1k_result_schema_is_current() -> None:
+    result_path = REPO_ROOT / "benchmarks" / "results" / "cross_framework_1k.json"
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+
+    assert isinstance(payload["results"], list)
+    assert payload["results"]
+    for row in payload["results"]:
+        assert isinstance(row["framework"], str)
+        assert isinstance(row["mode"], str)
+        assert isinstance(row["n_neurons"], int)
+        assert isinstance(row["wall_time_s"], (int, float))
+        assert isinstance(row["peak_memory_mb"], (int, float))
+        assert isinstance(row["n_spikes"], int)
+        assert isinstance(row["rate_hz"], (int, float))

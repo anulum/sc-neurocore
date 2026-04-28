@@ -33,7 +33,7 @@ does not imply numbers that are not in the repository.
 | Brian2 translator suite | `benchmarks/results/snn_translator_20v.json` | Brunel-style variant wall time, spike counts, rate ratios | Covered for local translator variants | Not a replacement for Brian2 C++ standalone energy or hardware measurements |
 | Brian2 head-to-head rerun | `benchmarks/results/upcloud_p4_rerun_20260310/brian2_headtohead.json` | cloud rerun wall-time comparison | Covered as archived cloud artefact | Use with adjacent `system_info.json` for environment context |
 | snnTorch | `benchmarks/results/snntorch_vs_sc_microbench.json` | per-step wall time, spike totals, mean rates across four scales | Covered for CPU microbench | No committed snnTorch dataset-level accuracy parity or energy comparison |
-| Norse | `benchmarks/results/cross_framework_1k.json` | 1k-neuron wall time, peak memory, spike totals, rates | Covered as legacy CPU run | Legacy JSON field labels are retained; do not derive new claims without rerun |
+| Norse | `benchmarks/results/cross_framework_1k.json` | 1k-neuron wall time, peak memory, spike totals, rates | Covered as CPU run | No committed Norse dataset-level accuracy parity or energy comparison |
 | NEST | No committed artefact | None | Gap | Add a NEST benchmark runner before publishing NEST numbers |
 | SpikingJelly | No committed artefact | None | Gap | Add a SpikingJelly benchmark runner before publishing SpikingJelly numbers |
 | FPGA resource/timing | `hdl/reports/vivado_util_xc7z020_100mhz.rpt`; `hdl/reports/vivado_timing_xc7z020_100mhz.rpt`; `benchmarks/results/yosys_synth.json` | utilisation, timing, generic synthesis counts | Covered for resource/timing | These are not power or energy reports |
@@ -56,17 +56,17 @@ in the main benchmark page:
 - scale 500→500, 100 steps;
 - scale 1000→1000, 50 steps.
 
-The committed cross-framework 1k artefact records one legacy CPU run covering
+The committed cross-framework 1k artefact records one CPU run covering
 SC-NeuroCore NumPy, SC-NeuroCore Rust, Brian2 runtime mode, snnTorch, and Norse.
-Treat it as a historical timing artefact until the harness is rerun with the
-current schema.
+It stores wall time, peak memory, spike totals, and rates for the shared
+1k-neuron setup.
 
 ## Required Next Measurements
 
 1. Add NEST and SpikingJelly runners to `benchmarks/cross_framework_benchmark.py`
    or a successor harness.
-2. Regenerate `benchmarks/results/cross_framework_1k.json` with current
-   `BenchResult` field names and checked optional dependency versions.
+2. Capture checked optional dependency versions alongside future
+   cross-framework artefacts.
 3. Capture FPGA power reports from Vivado or Quartus for the same deployed
    network used in wall-time comparisons.
 4. Add workload-normalised energy fields before publishing energy-per-inference
