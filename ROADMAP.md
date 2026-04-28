@@ -1,13 +1,27 @@
 # Roadmap
 
-> Last updated: 2026-04-13 (v3.14.0). Priorities may shift based on
+> Last updated: 2026-04-28 (v3.14.0). Priorities may shift based on
 > validation results and community feedback.
+
+## Current Maintenance Snapshot — 2026-04-28
+
+- Mainline CI was last verified green before the coverage-recovery branch.
+- Coverage is being recovered in staged slices. The active branch raises the
+  Python gate to 96%; 100% remains the target, not the current release claim.
+- Open production blockers are tracked in the internal audit index: HDL
+  identifier sanitisation, C FFI contiguity validation, stochastic-source RTL
+  parity wiring, and follow-up numerical-integrator parity work.
+- Cross-repository validation must confirm the SCPN datastream contract with
+  SCPN-QUANTUM-CONTROL and SCPN-PHASE-ORCHESTRATOR before claiming bridge
+  readiness.
 
 ## v3.8 — Hardening & Edge AI Readiness ✓
 
-### ~~Coverage gate ≥ 98%~~ ✓
+### Coverage gate recovery
 
-Done. 100% enforced (3 376+ tests passed; gate at 100).
+Historical releases reached higher local gates, but the current production
+path uses a staged recovery plan: keep CI green, raise the gate only after
+measured full-suite coverage supports it, and converge back to 100%.
 
 ### ~~NumPy 2.x full compatibility~~ ✓
 
