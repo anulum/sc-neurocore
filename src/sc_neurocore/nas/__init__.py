@@ -11,10 +11,14 @@
 from .search_space import Architecture, SearchSpace
 from .search import nas, NASResult
 from .surrogate_bridge import (
+    NASPolicyEvaluation,
     NASPolicyLayer,
     NASPolicyPlan,
     apply_surrogate_policy,
     build_nas_policy_plan,
+    candidate_layer_profiles,
+    evaluate_candidate_with_surrogate,
+    optimise_candidate_policy,
 )
 
 __all__ = [
@@ -24,6 +28,10 @@ __all__ = [
     "NASResult",
     "NASPolicyLayer",
     "NASPolicyPlan",
+    "NASPolicyEvaluation",
     "apply_surrogate_policy",
     "build_nas_policy_plan",
+    "candidate_layer_profiles",
+    "evaluate_candidate_with_surrogate",
+    "optimise_candidate_policy",
 ]
