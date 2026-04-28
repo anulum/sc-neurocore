@@ -1,10 +1,10 @@
 # Pinned dev dependencies for SC-NeuroCore v3.14.0
 # Canonical source of truth: pyproject.toml [project.optional-dependencies.dev]
 -r requirements.txt
-pytest>=7.0
-pytest-cov>=4.0
-hypothesis>=6.0
+pytest>=9.0.3
+pytest-cov>=7.1.0
+hypothesis>=6.152.4
 mypy>=1.0
-ruff>=0.4
+ruff>=0.15.12
 bandit>=1.7
 pyyaml>=6.0
