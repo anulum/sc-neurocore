@@ -59,7 +59,7 @@ class ExactLIFSolver:
             return 0.0  # already at or above threshold
 
         ratio = (v_inf - self.v_thresh) / (v_inf - v0)
-        if ratio <= 0:
+        if ratio <= 0:  # pragma: no cover - defensive guard after threshold/current checks.
             return None
         return -self.tau * math.log(ratio)
 
