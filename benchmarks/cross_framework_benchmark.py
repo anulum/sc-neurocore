@@ -415,9 +415,7 @@ def bench_nest(n_neurons: int, duration_ms: float = 300.0, dt: float = 0.1) -> B
     return _measure(run, "NEST", "iaf_psc_delta", n_neurons)
 
 
-def bench_spikingjelly(
-    n_neurons: int, duration_ms: float = 300.0, dt: float = 0.1
-) -> BenchResult:
+def bench_spikingjelly(n_neurons: int, duration_ms: float = 300.0, dt: float = 0.1) -> BenchResult:
     def run():
         import torch
         from spikingjelly.activation_based import functional, neuron
