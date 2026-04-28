@@ -147,7 +147,7 @@ omit = [
 ]
 
 [tool.coverage.report]
-fail_under = 95  # Temporary floor; target remains 100 after closing repo-wide coverage debt
+fail_under = 96  # Ratcheted after closing the first coverage slice; target remains 100.
 exclude_lines = [
     "pragma: no cover",
     "if __name__",
