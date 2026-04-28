@@ -10,12 +10,27 @@
 
 __tier__ = "research"
 
-from .bci import BCIDecoder
+from .bci import BCIDecoder, BCIEncoder
+from .bci_closed_loop import (
+    ClosedLoopBCIConfig,
+    ClosedLoopBCIResult,
+    ClosedLoopBCITemplate,
+    FeedbackFrame,
+    ImplantEmulator,
+    RateSpikeDecoder,
+)
 from .dvs_input import DVSInputLayer
 from .real_world import LSLBridge, ROS2Node
 
 __all__ = [
+    "BCIEncoder",
     "BCIDecoder",
+    "ClosedLoopBCIConfig",
+    "ClosedLoopBCIResult",
+    "ClosedLoopBCITemplate",
+    "FeedbackFrame",
+    "ImplantEmulator",
+    "RateSpikeDecoder",
     "DVSInputLayer",
     "LSLBridge",
     "ROS2Node",
