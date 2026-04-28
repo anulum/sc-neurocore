@@ -37,7 +37,7 @@ does not imply numbers that are not in the repository.
 | NEST | No committed artefact | None | Runner available, measurement gap | Run the opt-in NEST row and commit artefact before publishing NEST numbers |
 | SpikingJelly | No committed artefact | None | Runner available, measurement gap | Run the opt-in SpikingJelly row and commit artefact before publishing SpikingJelly numbers |
 | FPGA resource/timing | `hdl/reports/vivado_util_xc7z020_100mhz.rpt`; `hdl/reports/vivado_timing_xc7z020_100mhz.rpt`; `benchmarks/results/yosys_synth.json` | utilisation, timing, generic synthesis counts | Covered for resource/timing | These are not power or energy reports |
-| FPGA power/energy | No committed artefact | None | Gap | Add Vivado/Quartus power report capture plus workload-normalised energy parser |
+| FPGA power/energy | No committed measurement artefact | Parser available via `tools/collect_synthesis_observation.py` | Capture path available, measurement gap | Commit real Vivado/Quartus power reports plus workload-normalised energy output before publishing energy numbers |
 
 ## Published Reference Points
 
@@ -77,8 +77,22 @@ It stores wall time, peak memory, spike totals, and rates for the shared
    cross-framework artefacts. The harness now writes `dependency_versions` into
    JSON output.
 3. Capture FPGA power reports from Vivado or Quartus for the same deployed
-   network used in wall-time comparisons.
-4. Add workload-normalised energy fields before publishing energy-per-inference
-   claims.
+   network used in wall-time comparisons, then convert them to optimiser
+   evidence:
+
+   ```bash
+   python tools/collect_synthesis_observation.py \
+       --design build/network_design.json \
+       --utilisation build/vivado_utilisation.rpt \
+       --power build/vivado_power.rpt \
+       --timing build/vivado_timing.rpt \
+       --accuracy-score 0.991 \
+       --clock-mhz 100 \
+       --inferences-per-run 1 \
+       --out benchmarks/results/fpga_power_observations.json
+   ```
+
+4. Commit only tool-generated reports and workload-normalised energy fields
+   before publishing energy-per-inference claims.
 5. Keep accuracy or spike-parity claims separate from resource and energy
    claims.

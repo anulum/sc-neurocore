@@ -103,9 +103,9 @@ tool-generated outputs from your machine as evidence.
 
 ## 5. Parse real reports into optimiser evidence
 
-After Vivado or Quartus produces reports, feed the measured data into the SC
-design optimiser. The report parser requires explicit design metadata and
-measured accuracy so it cannot invent missing evidence.
+After Vivado or Quartus produces reports, convert the measured data into SC
+design optimiser evidence. The report collector requires explicit design
+metadata and measured accuracy so it cannot invent missing evidence.
 
 Create a compact network manifest for the deployed model:
 
@@ -119,6 +119,16 @@ Create a compact network manifest for the deployed model:
 ```
 
 ```bash
+python tools/collect_synthesis_observation.py \
+  --design build/network_design.json \
+  --utilisation build/fpga_scaffold/reports/utilisation.rpt \
+  --power build/fpga_scaffold/reports/power.rpt \
+  --timing build/fpga_scaffold/reports/timing.rpt \
+  --accuracy-score 0.991 \
+  --clock-mhz 100 \
+  --inferences-per-run 1 \
+  --out build/synthesis_observations.json
+
 python tools/optimise_sc_design.py \
   --network build/network_manifest.json \
   --evidence build/synthesis_observations.json \
