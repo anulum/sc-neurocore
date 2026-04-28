@@ -2,7 +2,7 @@
 # Canonical source of truth: pyproject.toml [project.optional-dependencies.dev]
 -r requirements.txt
 pytest>=7.0
-pytest-cov>=4.0
+pytest-cov>=7.1.0
 hypothesis>=6.0
 mypy>=1.0
 ruff>=0.4
