@@ -119,7 +119,7 @@ Create a compact network manifest for the deployed model:
 ```
 
 ```bash
-python tools/collect_synthesis_observation.py \
+sc-neurocore collect-synthesis \
   --design build/network_design.json \
   --utilisation build/fpga_scaffold/reports/utilisation.rpt \
   --power build/fpga_scaffold/reports/power.rpt \

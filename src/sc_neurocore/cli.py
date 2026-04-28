@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import argparse
 import sys
-from typing import Any
+from typing import Any, cast
 
 
 def main() -> int:
@@ -24,7 +24,16 @@ def main() -> int:
     parser.add_argument(
         "command",
         nargs="?",
-        choices=["info", "benchmark", "preflight", "deploy", "serve", "compile", "studio"],
+        choices=[
+            "info",
+            "benchmark",
+            "preflight",
+            "deploy",
+            "serve",
+            "compile",
+            "studio",
+            "collect-synthesis",
+        ],
         help="Command to run",
     )
     parser.add_argument("model", nargs="?", help="Model file (.nir) or ODE string for compile")
@@ -66,6 +75,32 @@ def main() -> int:
     parser.add_argument(
         "--synthesize", action="store_true", help="Run Yosys synthesis after compilation"
     )
+    parser.add_argument("--design", help="JSON compiler-design metadata for collect-synthesis")
+    parser.add_argument(
+        "--utilisation",
+        "--utilization",
+        dest="utilisation",
+        help="Vivado utilisation or Quartus fitter report for collect-synthesis",
+    )
+    parser.add_argument("--power", help="Vivado or Quartus power report for collect-synthesis")
+    parser.add_argument("--timing", help="Optional timing report for collect-synthesis")
+    parser.add_argument(
+        "--accuracy-score",
+        type=float,
+        help="Measured model accuracy or parity score for collect-synthesis",
+    )
+    parser.add_argument(
+        "--latency-cycles",
+        type=int,
+        help="Explicit latency cycles when reports do not carry latency",
+    )
+    parser.add_argument("--clock-mhz", type=float, help="Clock used for energy calculation")
+    parser.add_argument(
+        "--inferences-per-run",
+        type=int,
+        help="Number of inferences represented by the reported latency",
+    )
+    parser.add_argument("--out", help="Output JSON evidence path for collect-synthesis")
     args = parser.parse_args()
 
     if args.version:
@@ -107,6 +142,8 @@ def main() -> int:
         return _cmd_serve(args.model, args.port, args.dt)
     if args.command == "studio":
         return _cmd_studio(args.port)
+    if args.command == "collect-synthesis":
+        return _cmd_collect_synthesis(args)
 
     parser.print_help()
     return 0
@@ -222,6 +259,43 @@ def _cmd_info() -> int:
     return 0
 
 
+def _cmd_collect_synthesis(args: Any) -> int:
+    """Collect synthesis reports into optimiser evidence JSON."""
+    from sc_neurocore.optimizer import build_payload_from_reports, write_payload
+
+    required = (
+        ("design", "--design"),
+        ("utilisation", "--utilisation"),
+        ("power", "--power"),
+        ("accuracy_score", "--accuracy-score"),
+    )
+    missing = [flag for attr, flag in required if getattr(args, attr) is None]
+    if missing:
+        joined = ", ".join(missing)
+        print(f"Error: collect-synthesis requires {joined}")
+        return 1
+
+    try:
+        payload = build_payload_from_reports(
+            design_path=args.design,
+            utilisation_path=args.utilisation,
+            power_path=args.power,
+            timing_path=args.timing,
+            accuracy_score=args.accuracy_score,
+            latency_cycles=args.latency_cycles,
+            clock_mhz=args.clock_mhz,
+            inferences_per_run=args.inferences_per_run,
+        )
+        write_payload(payload, args.out)
+    except (OSError, ValueError) as exc:
+        print(f"Error: {exc}")
+        return 1
+
+    if args.out is not None:
+        print(f"Evidence written: {args.out}")
+    return 0
+
+
 def _print_optional_dependency_version(module_name: str, label: str) -> None:
     try:
         module = __import__(module_name)
@@ -302,8 +376,8 @@ def _cmd_deploy(
             layers.pop()
         model = torch.nn.Sequential(*layers)
         model.load_state_dict(state, strict=False)
-        in_dim = layers[0].in_features if layers else 1
-        cal_data = torch.randn(64, in_dim)  # type: ignore[arg-type]
+        in_dim = cast(int, layers[0].in_features) if layers else 1
+        cal_data = torch.randn(64, in_dim)
         snn = convert(model, calibration_data=cal_data, T=bitstream_length)
         network = None
         print(f"  Converted {snn.n_layers}-layer SNN, T={snn.T}")

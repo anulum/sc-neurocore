@@ -16,6 +16,7 @@ from .observation_loader import (
     observations_from_payload,
 )
 from .resource_optimizer import fit_to_target, OptimizationResult
+from .synthesis_evidence import build_payload_from_reports, write_payload
 from .surrogate_sc_optimizer import (
     BenchmarkObservation,
     SurrogateOptimizerReport,
@@ -31,6 +32,8 @@ __all__ = [
     "load_synthesis_observation",
     "observation_from_synthesis_reports",
     "observations_from_payload",
+    "build_payload_from_reports",
+    "write_payload",
     "BenchmarkObservation",
     "SurrogateOptimizerReport",
     "SurrogateSCOptimizer",

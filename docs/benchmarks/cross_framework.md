@@ -37,7 +37,7 @@ does not imply numbers that are not in the repository.
 | NEST | No committed artefact | None | Runner available, measurement gap | Run the opt-in NEST row and commit artefact before publishing NEST numbers |
 | SpikingJelly | No committed artefact | None | Runner available, measurement gap | Run the opt-in SpikingJelly row and commit artefact before publishing SpikingJelly numbers |
 | FPGA resource/timing | `hdl/reports/vivado_util_xc7z020_100mhz.rpt`; `hdl/reports/vivado_timing_xc7z020_100mhz.rpt`; `benchmarks/results/yosys_synth.json` | utilisation, timing, generic synthesis counts | Covered for resource/timing | These are not power or energy reports |
-| FPGA power/energy | No committed measurement artefact | Parser available via `tools/collect_synthesis_observation.py` | Capture path available, measurement gap | Commit real Vivado/Quartus power reports plus workload-normalised energy output before publishing energy numbers |
+| FPGA power/energy | No committed measurement artefact | Parser available via `sc-neurocore collect-synthesis` | Capture path available, measurement gap | Commit real Vivado/Quartus power reports plus workload-normalised energy output before publishing energy numbers |
 
 ## Published Reference Points
 
@@ -81,7 +81,7 @@ It stores wall time, peak memory, spike totals, and rates for the shared
    evidence:
 
    ```bash
-   python tools/collect_synthesis_observation.py \
+   sc-neurocore collect-synthesis \
        --design build/network_design.json \
        --utilisation build/vivado_utilisation.rpt \
        --power build/vivado_power.rpt \
