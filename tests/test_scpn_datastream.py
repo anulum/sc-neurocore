@@ -16,6 +16,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+import sc_neurocore.scpn.datastream as datastream_module
 from sc_neurocore.scpn import (
     SCHEMA_VERSION,
     SCPNDatastream,
@@ -98,6 +99,117 @@ def test_validation_rejects_non_binary_spikes() -> None:
 
     with pytest.raises(ValueError, match="binary"):
         validate_scpn_datastream(bad)
+
+
+def test_from_json_rejects_unknown_schema() -> None:
+    payload = generate_scpn_datastream_payload(n_steps=3, seed=2)
+    payload["schema_version"] = "sc-neurocore.scpn.datastream.v0"
+
+    with pytest.raises(ValueError, match="unsupported"):
+        SCPNDatastream.from_json_dict(payload)
+
+
+def test_validation_rejects_shape_and_bound_violations() -> None:
+    stream = generate_scpn_datastream(n_steps=4, seed=3)
+
+    cases = [
+        (
+            "matching shapes",
+            dict(probabilities=stream.probabilities[:-1]),
+        ),
+        (
+            "2-D",
+            dict(
+                probabilities=stream.probabilities.reshape(-1),
+                spike_train=stream.spike_train.reshape(-1),
+            ),
+        ),
+        (
+            "layer columns",
+            dict(
+                probabilities=stream.probabilities[:, :-1], spike_train=stream.spike_train[:, :-1]
+            ),
+        ),
+        (
+            "omega_rad_s",
+            dict(omega_rad_s=stream.omega_rad_s[:-1]),
+        ),
+        (
+            "knm must have shape",
+            dict(knm=stream.knm[:-1, :]),
+        ),
+        (
+            "probabilities must be in",
+            dict(probabilities=stream.probabilities.copy()),
+        ),
+        (
+            "knm must be symmetric",
+            dict(knm=stream.knm.copy()),
+        ),
+        (
+            "knm diagonal",
+            dict(knm=stream.knm.copy()),
+        ),
+    ]
+
+    cases[5][1]["probabilities"][0, 0] = 1.1
+    cases[6][1]["knm"][0, 1] += 0.5
+    cases[7][1]["knm"][0, 0] = 0.5
+
+    for match, overrides in cases:
+        bad = SCPNDatastream(
+            dt_s=overrides.get("dt_s", stream.dt_s),
+            seed=stream.seed,
+            probabilities=overrides.get("probabilities", stream.probabilities),
+            spike_train=overrides.get("spike_train", stream.spike_train),
+            omega_rad_s=overrides.get("omega_rad_s", stream.omega_rad_s),
+            knm=overrides.get("knm", stream.knm),
+        )
+        with pytest.raises(ValueError, match=match):
+            validate_scpn_datastream(bad)
+
+
+def test_generation_rejects_invalid_probability_bounds() -> None:
+    with pytest.raises(ValueError, match="spike_floor"):
+        generate_scpn_datastream(spike_floor=0.5, spike_ceiling=0.5)
+
+    with pytest.raises(ValueError, match="spike_floor"):
+        generate_scpn_datastream(spike_floor=-0.1, spike_ceiling=0.9)
+
+    with pytest.raises(ValueError, match="spike_floor"):
+        generate_scpn_datastream(spike_floor=0.1, spike_ceiling=1.1)
+
+
+def test_generation_handles_zero_coupling_span(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(datastream_module, "build_knm_matrix", lambda: np.zeros((16, 16)))
+
+    stream = generate_scpn_datastream(n_steps=3, seed=4)
+
+    np.testing.assert_allclose(stream.knm, 0.0)
+    assert stream.probabilities.shape == (3, 16)
+
+
+def test_validation_rejects_non_positive_dt() -> None:
+    stream = generate_scpn_datastream(n_steps=3, seed=6)
+    bad = SCPNDatastream(
+        dt_s=0.0,
+        seed=stream.seed,
+        probabilities=stream.probabilities,
+        spike_train=stream.spike_train,
+        omega_rad_s=stream.omega_rad_s,
+        knm=stream.knm,
+    )
+
+    with pytest.raises(ValueError, match="dt_s"):
+        validate_scpn_datastream(bad)
+
+
+def test_read_rejects_non_object_json(tmp_path: Path) -> None:
+    path = tmp_path / "bad_stream.json"
+    path.write_text("[]")
+
+    with pytest.raises(ValueError, match="root"):
+        read_scpn_datastream(path)
 
 
 def test_generation_rejects_invalid_window() -> None:
