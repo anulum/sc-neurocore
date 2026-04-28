@@ -17,8 +17,9 @@ error rather than being filled with invented data.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 from sc_neurocore.optimizer.surrogate_sc_optimizer import BenchmarkObservation
 
@@ -35,6 +36,50 @@ def load_observations(path: str | Path) -> list[BenchmarkObservation]:
     except json.JSONDecodeError as exc:
         raise ObservationLoadError(f"{source} is not valid JSON: {exc}") from exc
     return observations_from_payload(payload, source=str(source))
+
+
+def load_synthesis_observation(
+    report_paths: Mapping[str, str | Path],
+    *,
+    design: Mapping[str, Any],
+    accuracy_score: float,
+    latency_cycles: int | None = None,
+) -> BenchmarkObservation:
+    """Load one observation from Vivado/Quartus report files plus design metadata.
+
+    Raw vendor reports do not describe the compiler decision that produced the
+    hardware, and many do not carry model accuracy.  The caller must therefore
+    provide the design fields and measured accuracy explicitly.
+    """
+    reports: dict[str, str] = {}
+    for name, path in report_paths.items():
+        source = Path(path)
+        reports[name] = source.read_text(encoding="utf-8", errors="ignore")
+    return observation_from_synthesis_reports(
+        reports,
+        design=design,
+        accuracy_score=accuracy_score,
+        latency_cycles=latency_cycles,
+        source=", ".join(str(path) for path in report_paths.values()),
+    )
+
+
+def observation_from_synthesis_reports(
+    reports: Mapping[str, str],
+    *,
+    design: Mapping[str, Any],
+    accuracy_score: float,
+    latency_cycles: int | None = None,
+    source: str = "<synthesis-reports>",
+) -> BenchmarkObservation:
+    """Build one observation from raw Vivado/Quartus text reports."""
+    metrics = _metrics_from_synthesis_reports(reports, source=source)
+    if latency_cycles is not None:
+        metrics["latency_cycles"] = latency_cycles
+    record = dict(design)
+    record.update(metrics)
+    record["accuracy_score"] = accuracy_score
+    return _observation_from_record(record, source=source, index=0)
 
 
 def observations_from_payload(
@@ -55,6 +100,71 @@ def observations_from_payload(
         merged.update(_mapping(record))
         observations.append(_observation_from_record(merged, source=source, index=index))
     return observations
+
+
+def _metrics_from_synthesis_reports(
+    reports: Mapping[str, str], *, source: str
+) -> dict[str, int | float]:
+    merged = "\n".join(reports.values())
+    metrics: dict[str, int | float] = {}
+
+    luts = _first_numeric_match(
+        merged,
+        (
+            r"\bCLB\s+LUTs\b[^\n\r\d]*(?P<value>[\d,]+)",
+            r"\bSlice\s+LUTs\b[^\n\r\d]*(?P<value>[\d,]+)",
+            r"\bLogic\s+LUTs\b[^\n\r\d]*(?P<value>[\d,]+)",
+            r"\bALMs?\s+(?:needed|required|used)\b[^\n\r\d]*(?P<value>[\d,]+)",
+            r"\bTotal\s+combinational\s+functions\b[^\n\r\d]*(?P<value>[\d,]+)",
+        ),
+    )
+    if luts is not None:
+        metrics["luts_used"] = int(luts)
+
+    power_mw = _first_power_mw(merged)
+    if power_mw is not None:
+        metrics["power_mw"] = power_mw
+
+    latency = _first_numeric_match(
+        merged,
+        (
+            r"\bLatency\s*\(?cycles\)?\b[^\n\r\d]*(?P<value>[\d,]+)",
+            r"\bLatency\s*:\s*(?P<value>[\d,]+)\s*cycles\b",
+            r"\bcycles\b[^\n\r\d]*(?P<value>[\d,]+)",
+        ),
+    )
+    if latency is not None:
+        metrics["latency_cycles"] = int(latency)
+
+    missing = [key for key in ("luts_used", "power_mw") if key not in metrics]
+    if missing:
+        joined = ", ".join(missing)
+        raise ObservationLoadError(f"{source}: synthesis reports missing {joined}")
+    return metrics
+
+
+def _first_numeric_match(text: str, patterns: tuple[str, ...]) -> float | None:
+    for pattern in patterns:
+        match = re.search(pattern, text, flags=re.IGNORECASE)
+        if match:
+            return float(match.group("value").replace(",", ""))
+    return None
+
+
+def _first_power_mw(text: str) -> float | None:
+    patterns = (
+        r"\bTotal\s+On-Chip\s+Power\s*\((?P<label_unit>m?W)\)\s*[:|]?\s*(?P<value>[\d.]+)",
+        r"\bTotal\s+On-Chip\s+Power\b[^\n\r\d]*(?P<value>[\d.]+)\s*(?P<unit>m?W)\b",
+        r"\bTotal\s+thermal\s+power\s+dissipation\b[^\n\r\d]*(?P<value>[\d.]+)\s*(?P<unit>m?W)\b",
+        r"\bThermal\s+Power\b[^\n\r\d]*(?P<value>[\d.]+)\s*(?P<unit>m?W)\b",
+    )
+    for pattern in patterns:
+        match = re.search(pattern, text, flags=re.IGNORECASE)
+        if match:
+            value = float(match.group("value"))
+            unit = (match.groupdict().get("unit") or match.groupdict()["label_unit"]).lower()
+            return value if unit == "mw" else value * 1000.0
+    return None
 
 
 def _extract_records(payload: Any) -> list[dict[str, Any]]:

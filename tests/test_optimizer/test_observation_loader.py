@@ -12,7 +12,12 @@ import json
 
 import pytest
 
-from sc_neurocore.optimizer import load_observations, observations_from_payload
+from sc_neurocore.optimizer import (
+    load_observations,
+    load_synthesis_observation,
+    observation_from_synthesis_reports,
+    observations_from_payload,
+)
 from sc_neurocore.optimizer.observation_loader import ObservationLoadError
 from sc_neurocore.optimizer.sc_optimizer import HardwareBudget, LayerProfile
 from sc_neurocore.optimizer.surrogate_sc_optimizer import (
@@ -160,6 +165,95 @@ def test_loads_observations_from_file(tmp_path) -> None:
 
     assert len(observations) == 1
     assert observations[0].luts_used == 300
+
+
+def test_loads_vivado_text_reports_with_explicit_design_and_accuracy() -> None:
+    observation = observation_from_synthesis_reports(
+        {
+            "utilisation": """
+            +----------------------------+------+------+
+            | Site Type                  | Used | Util |
+            | CLB LUTs                   | 1,024| 10%  |
+            +----------------------------+------+------+
+            """,
+            "power": """
+            Power Report
+            Total On-Chip Power (W): 0.125
+            """,
+        },
+        design=_design(),
+        accuracy_score=0.991,
+        latency_cycles=128,
+        source="vivado.rpt",
+    )
+
+    assert observation.luts_used == 1024
+    assert observation.power_mw == 125.0
+    assert observation.latency_cycles == 128
+    assert observation.accuracy_score == 0.991
+
+
+def test_loads_quartus_text_reports_and_embedded_latency() -> None:
+    observation = observation_from_synthesis_reports(
+        {
+            "fit": """
+            Fitter Resource Usage Summary
+            ALMs needed : 118
+            Latency (cycles): 96
+            """,
+            "power": """
+            Power Analyzer Summary
+            Total thermal power dissipation: 3.2 mW
+            """,
+        },
+        design=_design(),
+        accuracy_score=0.982,
+        source="quartus.fit.rpt",
+    )
+
+    assert observation.luts_used == 118
+    assert observation.power_mw == 3.2
+    assert observation.latency_cycles == 96
+    assert observation.accuracy_score == 0.982
+
+
+def test_loads_synthesis_observation_from_report_files(tmp_path) -> None:
+    utilisation = tmp_path / "utilisation.rpt"
+    power = tmp_path / "power.rpt"
+    utilisation.write_text("Slice LUTs | 421\nLatency: 64 cycles\n", encoding="utf-8")
+    power.write_text("Total On-Chip Power (mW): 2.75\n", encoding="utf-8")
+
+    observation = load_synthesis_observation(
+        {"utilisation": utilisation, "power": power},
+        design=_design(),
+        accuracy_score=0.977,
+    )
+
+    assert observation.luts_used == 421
+    assert observation.power_mw == 2.75
+    assert observation.latency_cycles == 64
+
+
+def test_rejects_incomplete_synthesis_reports_without_fabricating_metrics() -> None:
+    with pytest.raises(ObservationLoadError, match="missing power_mw"):
+        observation_from_synthesis_reports(
+            {"utilisation": "CLB LUTs | 256"},
+            design=_design(),
+            accuracy_score=0.99,
+            latency_cycles=32,
+            source="missing-power.rpt",
+        )
+
+    with pytest.raises(ObservationLoadError, match="missing one of latency_cycles"):
+        observation_from_synthesis_reports(
+            {
+                "utilisation": "CLB LUTs | 256",
+                "power": "Total On-Chip Power (W): 0.01",
+            },
+            design=_design(),
+            accuracy_score=0.99,
+            source="missing-latency.rpt",
+        )
 
 
 def test_rejects_invalid_json_file(tmp_path) -> None:

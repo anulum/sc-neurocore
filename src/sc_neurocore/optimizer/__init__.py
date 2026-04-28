@@ -4,11 +4,17 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Automatic FPGA resource optimizer
+# SC-NeuroCore — Automatic FPGA resource optimiser
 
 """Automatically compress and tune SNNs for target hardware."""
 
-from .observation_loader import ObservationLoadError, load_observations, observations_from_payload
+from .observation_loader import (
+    ObservationLoadError,
+    load_observations,
+    load_synthesis_observation,
+    observation_from_synthesis_reports,
+    observations_from_payload,
+)
 from .resource_optimizer import fit_to_target, OptimizationResult
 from .surrogate_sc_optimizer import (
     BenchmarkObservation,
@@ -22,6 +28,8 @@ __all__ = [
     "OptimizationResult",
     "ObservationLoadError",
     "load_observations",
+    "load_synthesis_observation",
+    "observation_from_synthesis_reports",
     "observations_from_payload",
     "BenchmarkObservation",
     "SurrogateOptimizerReport",
