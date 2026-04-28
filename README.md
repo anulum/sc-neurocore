@@ -357,7 +357,9 @@ fast compartment (tau=5ms), working memory (tau=200ms), deep context
 (tau=10s), learned attention gate, and a forward self-model (predictor).
 The deep compartment accumulates identity: it changes only on genuine
 novelty (prediction errors), not routine input. Confidence modulates
-threshold and meta-learning rate.
+threshold and meta-learning rate. No direct equivalent is documented in the
+mainstream SNN toolkits compared here for this combined multi-timescale
+identity, confidence, and self-model loop.
 
 ### Identity Substrate
 
