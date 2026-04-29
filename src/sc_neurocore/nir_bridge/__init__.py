@@ -19,7 +19,60 @@ networks.
     >>> network.run(inputs, steps=100)
 """
 
-from .parser import from_nir
-from .export import to_nir
+from __future__ import annotations
 
-__all__ = ["from_nir", "to_nir"]
+from pathlib import Path
+from typing import Any
+
+from .hardware_targets import (
+    HardwareNoiseAnnotation,
+    NeuromorphicHardwareProfile,
+    SCMappingConstraints,
+    available_hardware_profiles,
+    build_nir_hardware_manifest,
+    build_noise_annotation,
+    get_hardware_profile,
+)
+
+_NIR_IMPORT_ERROR: ImportError | None = None
+_from_nir_impl: Any | None = None
+_to_nir_impl: Any | None = None
+
+try:
+    from .parser import from_nir as _from_nir_impl
+    from .export import to_nir as _to_nir_impl
+except ImportError as exc:
+    _NIR_IMPORT_ERROR = exc
+
+
+def from_nir(source: Any, dt: float = 1.0, reset_mode: str = "reset") -> Any:
+    """Convert a NIR graph/source to an SC-NeuroCore network."""
+
+    if _from_nir_impl is None:
+        if _NIR_IMPORT_ERROR is None:
+            raise ImportError("NIR import failed")
+        raise _NIR_IMPORT_ERROR
+    return _from_nir_impl(source, dt=dt, reset_mode=reset_mode)
+
+
+def to_nir(network: Any, path: str | Path | None = None) -> Any:
+    """Export an SC-NeuroCore network to NIR."""
+
+    if _to_nir_impl is None:
+        if _NIR_IMPORT_ERROR is None:
+            raise ImportError("NIR import failed")
+        raise _NIR_IMPORT_ERROR
+    return _to_nir_impl(network, path=path)
+
+
+__all__ = [
+    "from_nir",
+    "to_nir",
+    "HardwareNoiseAnnotation",
+    "NeuromorphicHardwareProfile",
+    "SCMappingConstraints",
+    "available_hardware_profiles",
+    "build_nir_hardware_manifest",
+    "build_noise_annotation",
+    "get_hardware_profile",
+]

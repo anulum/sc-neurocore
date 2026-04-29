@@ -13,12 +13,87 @@ Train in float with PyTorch autograd, deploy to SC bitstreams via to_sc_weights(
 
 from __future__ import annotations
 
-from typing import Any, Callable, List, Tuple, cast
+from dataclasses import dataclass
+from typing import Any, Callable, List, Mapping, Tuple, cast
 
 import torch
 import torch.nn as nn
 
 from .surrogate import atan_surrogate
+
+
+@dataclass(frozen=True)
+class SCWeightNoiseModel:
+    """Deterministic export-time noise model for SC weight probabilities."""
+
+    mode: str = "binomial"
+    bitstream_length: int = 256
+    seed: int = 0
+    sigma: float = 0.0
+
+    def __post_init__(self) -> None:
+        if self.mode not in {"none", "binomial", "gaussian"}:
+            raise ValueError(f"unsupported SC weight noise mode: {self.mode}")
+        if self.bitstream_length <= 0:
+            raise ValueError("bitstream_length must be positive")
+        if self.sigma < 0.0:
+            raise ValueError("sigma must be non-negative")
+
+    def metadata(self) -> dict[str, Any]:
+        return {
+            "mode": self.mode,
+            "bitstream_length": self.bitstream_length,
+            "seed": self.seed,
+            "sigma": self.sigma,
+        }
+
+
+SCWeightNoiseSpec = SCWeightNoiseModel | str | Mapping[str, Any] | None
+
+
+def _coerce_sc_weight_noise_model(noise_model: SCWeightNoiseSpec) -> SCWeightNoiseModel | None:
+    if noise_model is None:
+        return None
+    if isinstance(noise_model, SCWeightNoiseModel):
+        return noise_model
+    if isinstance(noise_model, str):
+        return SCWeightNoiseModel(mode=noise_model)
+    return SCWeightNoiseModel(**dict(noise_model))
+
+
+def _normalise_sc_weight_tensor(weight: torch.Tensor) -> torch.Tensor:
+    w_min, w_max = weight.min(), weight.max()
+    if w_max > w_min:
+        return (weight - w_min) / (w_max - w_min)
+    return torch.zeros_like(weight)
+
+
+def _apply_sc_weight_noise(
+    weight: torch.Tensor, model: SCWeightNoiseModel | None, layer_index: int
+) -> torch.Tensor:
+    if model is None or model.mode == "none":
+        return weight
+
+    generator = torch.Generator(device=weight.device)
+    generator.manual_seed(model.seed + layer_index)
+    probabilities = weight.clamp(0.0, 1.0)
+
+    if model.mode == "binomial":
+        samples = torch.rand(
+            (*probabilities.shape, model.bitstream_length),
+            generator=generator,
+            device=probabilities.device,
+            dtype=probabilities.dtype,
+        )
+        return (samples < probabilities.unsqueeze(-1)).to(probabilities.dtype).mean(dim=-1)
+
+    noise = torch.randn(
+        probabilities.shape,
+        generator=generator,
+        device=probabilities.device,
+        dtype=probabilities.dtype,
+    )
+    return (probabilities + noise * model.sigma).clamp(0.0, 1.0)
 
 
 class LIFCell(nn.Module):
@@ -533,28 +608,33 @@ class SpikingNet(nn.Module):
 
         return spike_sum, mem_sum
 
-    def to_sc_weights(self, include_bias: bool = True) -> List[dict]:
-        """Export weight matrices normalized to [0,1] for SC bitstream deployment.
+    def to_sc_weights(
+        self, include_bias: bool = True, noise_model: SCWeightNoiseSpec = None
+    ) -> List[dict]:
+        """Export weight matrices normalised to [0,1] for SC bitstream deployment.
 
         Parameters
         ----------
         include_bias : bool
             If True (default), include bias vectors in the output dicts.
+        noise_model : SCWeightNoiseModel | str | Mapping | None
+            Optional deterministic export-time SC noise model. ``"binomial"``
+            samples Bernoulli bitstreams and stores realised probabilities;
+            ``"gaussian"`` adds clamped probability noise with ``sigma``.
 
         Returns
         -------
         List of dicts with keys "weight" (Tensor [0,1]) and optionally "bias" (Tensor).
         """
         layers = []
-        for lin in self.linears:
+        model = _coerce_sc_weight_noise_model(noise_model)
+        for layer_index, lin in enumerate(self.linears):
             lin_typed = cast(torch.nn.Linear, lin)
-            w = lin_typed.weight.detach()
-            w_min, w_max = w.min(), w.max()
-            if w_max > w_min:
-                w = (w - w_min) / (w_max - w_min)
-            else:
-                w = torch.zeros_like(w)
+            w = _normalise_sc_weight_tensor(lin_typed.weight.detach())
+            w = _apply_sc_weight_noise(w, model, layer_index)
             entry: dict = {"weight": w}
+            if model is not None:
+                entry["noise_model"] = model.metadata()
             if include_bias and lin_typed.bias is not None:
                 entry["bias"] = lin_typed.bias.detach()
             layers.append(entry)
@@ -629,25 +709,27 @@ class ConvSpikingNet(nn.Module):
 
         return spike_sum, mem_sum
 
-    def to_sc_weights(self, include_bias: bool = True) -> List[dict]:
-        """Export weight matrices normalized to [0,1] for SC bitstream deployment.
+    def to_sc_weights(
+        self, include_bias: bool = True, noise_model: SCWeightNoiseSpec = None
+    ) -> List[dict]:
+        """Export weight matrices normalised to [0,1] for SC bitstream deployment.
 
         Returns list of dicts with "weight" and optionally "bias" keys,
         matching SpikingNet.to_sc_weights() format.
         """
         layers = []
-        for mod in [self.conv1, self.conv2, self.fc1, self.fc2]:
+        model = _coerce_sc_weight_noise_model(noise_model)
+        for layer_index, mod in enumerate([self.conv1, self.conv2, self.fc1, self.fc2]):
             w = (
                 mod.weight.detach().flatten(1)
                 if isinstance(mod, nn.Conv2d)
                 else mod.weight.detach()  # type: ignore[operator]
             )
-            w_min, w_max = w.min(), w.max()
-            if w_max > w_min:
-                w = (w - w_min) / (w_max - w_min)
-            else:
-                w = torch.zeros_like(w)
+            w = _normalise_sc_weight_tensor(w)
+            w = _apply_sc_weight_noise(w, model, layer_index)
             entry: dict[str, Any] = {"weight": w}
+            if model is not None:
+                entry["noise_model"] = model.metadata()
             if include_bias and mod.bias is not None:
                 entry["bias"] = mod.bias.detach()  # type: ignore[operator]
             layers.append(entry)

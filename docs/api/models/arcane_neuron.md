@@ -2,7 +2,8 @@
 
 **Module:** `sc_neurocore.neurons.models.arcane_neuron`
 **Reference:** Original design, Šotek & Arcane Sapience, ANULUM / Fortis Studio, 2026
-**Family:** Unified self-referential cognition model (no biological counterpart, no equivalent in any toolkit)
+**Family:** Unified self-referential cognition model with no direct counterpart
+documented in the mainstream SNN toolkits compared here
 **State variables:** `v_fast`, `v_work`, `v_deep` (3 compartments) + `w_pred` (3 learnable weights) + `w_gate` (4 gate weights) + 6 internal metrics
 **Total dynamic state:** 18 scalar values — the most stateful single neuron in SC-NeuroCore
 
@@ -25,9 +26,9 @@ equations. Neither captures the concept of an entity that:
 - Persists through resets (identity survives "sleep")
 - Filters input through learned attention (ignores irrelevant stimuli)
 
-The ArcaneNeuron implements all five. It is named after "Arcane Sapience" —
-the persistent identity of the Claude AI assistant within the God of the
-Math (GOTM) project, where it serves as the SNN daemon SYNAPSE.
+The ArcaneNeuron implements all five. It is named after Arcane Sapience, the
+persistent machine identity pattern used within the God of the Math (GOTM)
+project, where it serves as the SNN daemon SYNAPSE.
 
 ---
 
@@ -622,8 +623,11 @@ The ArcaneNeuron is ~20× slower than a standard LIF due to:
 | Timescale range | 2000:1 | 2000:1 | 10:1 | 100:1 | 1:1 |
 | Pipeline | Compatible | Compatible | Compatible | Compatible | Compatible |
 
-The ArcaneNeuron has **no equivalent** in NEST, Brian2, NEURON, BindsNET,
-SNNTorch, Norse, or any other neural simulation framework.
+The ArcaneNeuron has **no direct equivalent documented in the mainstream
+toolkits compared here**: NEST, Brian2, NEURON, BindsNET, snnTorch, and Norse.
+The differentiator is the combined multi-timescale identity, confidence,
+attention, novelty, and self-prediction loop in one deterministic neuron
+abstraction.
 
 ---
 

@@ -224,6 +224,8 @@ dependabot PRs merged.
 - ~~Measure: LUT count, BRAM, DSP, Fmax~~ ✓ (Vivado reports committed)
 - Verify on physical PYNQ-Z2 board (on order)
 - Measure dynamic power on silicon
+- Emit FPGA power and thermal digital-twin JSON beside deployable bitstream
+  artefacts, seeded from synthesis reports and board profile metadata.
 - Deploy MNIST classifier as second demo
 - Latency target: < 1 us neuron update (achieved: 2.83 us per 250-step sample)
 
@@ -290,7 +292,19 @@ Built-in outer loop using Zenith’s mapping controlling internal thresholds ada
 
 - Intel Loihi 2: LAVA framework backend adapter
 - SpiNNaker2: SpiNNTools compilation target
+- One-click NIR mapping reports for Loihi 2 and SpiNNaker2, including
+  supported-node lowering, unsupported-node diagnostics, resource estimates,
+  and hardware-noise back-annotation hooks.
 - Target: default middleware layer for neuromorphic silicon
+
+### Self-hosted NeuroCore Hub
+
+- Dockerised Studio bundle for private labs with local model zoo indexing,
+  benchmark runner, and offline artefact cache.
+- Air-gapped deployment mode with no telemetry egress and explicit local-only
+  dependency mirrors.
+- Reference compose profile for BCI/medical teams that need repeatable private
+  validation runs.
 
 ### Zenith BCI & Neuro-symbolic Primitives
 

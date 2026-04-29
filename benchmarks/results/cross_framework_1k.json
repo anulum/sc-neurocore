@@ -5,8 +5,8 @@
   "results": [
     {
       "framework": "SC-NeuroCore",
-      "mode": 1000,
-      "n_neurons": "NumPy",
+      "mode": "NumPy",
+      "n_neurons": 1000,
       "wall_time_s": 12.8982,
       "peak_memory_mb": 26.4,
       "n_spikes": 0,
@@ -15,8 +15,8 @@
     },
     {
       "framework": "SC-NeuroCore",
-      "mode": 1000,
-      "n_neurons": "Rust",
+      "mode": "Rust",
+      "n_neurons": 1000,
       "wall_time_s": 0.0813,
       "peak_memory_mb": 0.3,
       "n_spikes": 0,
@@ -25,18 +25,18 @@
     },
     {
       "framework": "Brian2",
-      "mode": 1000,
-      "n_neurons": "runtime (NumPy)",
+      "mode": "runtime (NumPy)",
+      "n_neurons": 1000,
       "wall_time_s": 67.6862,
       "peak_memory_mb": 87.9,
-      "n_spikes": "1",
+      "n_spikes": 1,
       "rate_hz": 0.0,
       "error": null
     },
     {
       "framework": "snnTorch",
-      "mode": 1000,
-      "n_neurons": "PyTorch CPU",
+      "mode": "PyTorch CPU",
+      "n_neurons": 1000,
       "wall_time_s": 49.1494,
       "peak_memory_mb": 48.5,
       "n_spikes": 0,
@@ -45,8 +45,8 @@
     },
     {
       "framework": "Norse",
-      "mode": 1000,
-      "n_neurons": "PyTorch CPU",
+      "mode": "PyTorch CPU",
+      "n_neurons": 1000,
       "wall_time_s": 41.7399,
       "peak_memory_mb": 18.9,
       "n_spikes": 0,

@@ -10,12 +10,39 @@
 
 __tier__ = "research"
 
-from .bci import BCIDecoder
+from .bci import BCIDecoder, BCIEncoder
+from .bci_closed_loop import (
+    ClosedLoopBCIConfig,
+    ClosedLoopBCIResult,
+    ClosedLoopBCITemplate,
+    FeedbackFrame,
+    ImplantEmulator,
+    RateSpikeDecoder,
+)
+from .bci_hil_manifest import (
+    BCIHILBoardProfile,
+    available_bci_hil_profiles,
+    build_bci_hil_reference_manifest,
+    create_bci_hil_template,
+    get_bci_hil_profile,
+)
 from .dvs_input import DVSInputLayer
 from .real_world import LSLBridge, ROS2Node
 
 __all__ = [
+    "BCIEncoder",
     "BCIDecoder",
+    "ClosedLoopBCIConfig",
+    "ClosedLoopBCIResult",
+    "ClosedLoopBCITemplate",
+    "FeedbackFrame",
+    "ImplantEmulator",
+    "RateSpikeDecoder",
+    "BCIHILBoardProfile",
+    "available_bci_hil_profiles",
+    "build_bci_hil_reference_manifest",
+    "create_bci_hil_template",
+    "get_bci_hil_profile",
     "DVSInputLayer",
     "LSLBridge",
     "ROS2Node",

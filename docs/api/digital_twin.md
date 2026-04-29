@@ -60,3 +60,10 @@ See [Tutorial 48: Digital Twin](../tutorials/48_digital_twin.md).
 ::: sc_neurocore.digital_twin
     options:
       show_root_heading: true
+
+## Compiler-Service Sync Contract
+
+The digital-twin replay boundary used by compiler-service planning lives in
+`sc_neurocore.compiler_service`. It records checkpoint cadence, drift budget,
+event channels, and replay-verification requirements before any live FPGA
+update package is accepted. See [Compiler Service Contract](compiler_service.md).

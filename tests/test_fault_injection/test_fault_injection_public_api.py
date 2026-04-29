@@ -6,18 +6,13 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Tests for sc_neurocore.fault_injection package public API
 
-"""Tests for the `sc_neurocore.fault_injection` package re-exports.
-
-Antigravity authored `fault_injection.py` but did not wire
-`__init__.py` to re-export the 6 public symbols. Arcane Sapience
-wired the re-exports in this batch (audit B1 pkg 2 of #57).
-This test pins the contract.
-"""
+"""Tests for the `sc_neurocore.fault_injection` package re-exports."""
 
 from __future__ import annotations
 
 import sc_neurocore.fault_injection as fi
 from sc_neurocore.fault_injection import fault_injection as inner
+from sc_neurocore.fault_injection import resilience_policy
 
 
 SYMBOLS: tuple[str, ...] = (
@@ -27,6 +22,10 @@ SYMBOLS: tuple[str, ...] = (
     "RadiationProfile",
     "ResilienceBenchmark",
     "ResilienceReport",
+    "SeededFaultObservation",
+    "DegradationAction",
+    "DegradationPlan",
+    "GracefulDegradationPolicy",
 )
 
 
@@ -34,9 +33,9 @@ def test_tier_is_industrial() -> None:
     assert fi.__tier__ == "industrial"
 
 
-def test_all_lists_six_symbols() -> None:
+def test_all_lists_public_symbols() -> None:
     assert isinstance(fi.__all__, list)
-    assert len(fi.__all__) == 6
+    assert len(fi.__all__) == len(SYMBOLS)
     assert set(fi.__all__) == set(SYMBOLS)
 
 
@@ -47,8 +46,14 @@ def test_symbols_importable_from_package() -> None:
 
 def test_symbols_identity_with_inner() -> None:
     """Top-level package symbol IS the inner-module symbol."""
-    for sym in SYMBOLS:
+    for sym in SYMBOLS[:6]:
         assert getattr(fi, sym) is getattr(inner, sym)
+
+
+def test_resilience_policy_symbols_identity() -> None:
+    """Top-level resilience policy symbols are the module symbols."""
+    for sym in SYMBOLS[6:]:
+        assert getattr(fi, sym) is getattr(resilience_policy, sym)
 
 
 def test_fault_model_enum_has_five_members() -> None:

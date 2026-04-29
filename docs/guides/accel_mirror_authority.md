@@ -18,6 +18,10 @@ They do not all carry the same authority.
 Treat an acceleration file as authoritative only if at least one maintained
 Python execution path loads it directly and tests cover that path.
 
+The polyglot acceleration tree is research-only unless it satisfies that rule.
+It is not shipped as the production runtime, and it is not required by
+`pip install sc-neurocore`.
+
 Everything else is one of:
 
 - research-only source

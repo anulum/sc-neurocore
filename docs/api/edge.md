@@ -23,9 +23,47 @@ from sc_neurocore.edge import (
     WeightHeader, LayerHeader, WEIGHT_MAGIC,
     serialize_weights, deserialize_weights,
     PowerProfile, Board,
+    WebDeploymentConfig, build_web_deployment,
 )
 from sc_neurocore.edge.aer_router import AERRoutingDaemon
 ```
+
+---
+
+## Browser Deployment Scaffold
+
+`sc_neurocore.edge.web_deploy` emits a deterministic static web bundle for
+`.nir`, `.pt`, `.pth`, and JSON model artefacts. It is the first slice of the
+WASM/WebGPU deployment path: generation does not require a browser, WebGPU
+driver, Node.js, or a native WASM toolchain, and the emitted `manifest.json`
+records the runtime contract honestly.
+
+```python
+from sc_neurocore.edge import WebDeploymentConfig, build_web_deployment
+
+manifest = build_web_deployment(
+    "model.nir",
+    "build/web",
+    WebDeploymentConfig(dt=1.0, bitstream_length=256),
+)
+print(manifest.artefacts["html"])  # index.html
+```
+
+Generated layout:
+
+```text
+build/web/
+  index.html
+  manifest.json
+  model/model.nir
+  runtime/sc_neurocore_web.js
+  runtime/sc_neurocore_webgpu.wgsl
+```
+
+The browser runtime loads the manifest, checks WebGPU availability, and exposes
+the SC probability contract used by later WASM kernels. The WGSL kernel clamps
+probabilities into `[0, 1]`; it is intentionally small so it can be used as a
+capability and packaging test before computational kernels are added.
 
 ---
 

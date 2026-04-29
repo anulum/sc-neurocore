@@ -26,6 +26,12 @@ from sc_neurocore.fault_injection.fault_injection import (
     ResilienceBenchmark,
     ResilienceReport,
 )
+from sc_neurocore.fault_injection.resilience_policy import (
+    DegradationAction,
+    DegradationPlan,
+    GracefulDegradationPolicy,
+    SeededFaultObservation,
+)
 
 __tier__ = "industrial"
 
@@ -36,7 +42,11 @@ __all__ = [
     "FaultInjectionResult",
     "RadiationProfile",
     "ResilienceReport",
+    "SeededFaultObservation",
     # injectors / benchmarks
+    "DegradationAction",
+    "DegradationPlan",
     "FaultInjector",
+    "GracefulDegradationPolicy",
     "ResilienceBenchmark",
 ]
