@@ -46,9 +46,11 @@ def van_rossum_distance(
     if _HAS_RUST and _ssc is not None:
         return float(_ssc.py_van_rossum_distance(a, b, dt, tau_ms))
     tau = tau_ms / 1000.0
+    if tau <= 0.0:
+        return float("nan")
     n = min(a.size, b.size)
     t = np.arange(n) * dt
-    decay = np.exp(-t / tau) if tau > 0 else np.zeros(n)
+    decay = np.exp(-t / tau)
     fa = np.convolve(a[:n], decay[:n], mode="full")[:n]
     fb = np.convolve(b[:n], decay[:n], mode="full")[:n]
     return float(np.sqrt(np.sum((fa - fb) ** 2) * dt / tau))
@@ -183,8 +185,6 @@ def spike_sync(
         tau = min(isi_a, isi_b) / 2.0
         if tau > 0 and diffs[i] < tau:
             total_coincidences += 1
-    if total_possible == 0:
-        return 0.0
     return float(total_coincidences / total_possible)
 
 
