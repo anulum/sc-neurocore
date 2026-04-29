@@ -128,6 +128,41 @@ from sc_neurocore.network.projection import Projection
 proj = Projection(src_pop, tgt_pop, weight=0.1, delay=nir_delays)
 ```
 
+## Deployable checkpoint selection
+
+For FPGA or ASIC deployment, the checkpoint-selection metric must match the
+hardware constraint. A delay model trained with fractional positions and a
+wide interpolation kernel can score well in native PyTorch validation while
+still being a poor hardware candidate after delays are rounded to integer
+timesteps. The deployable validation path therefore uses the same conditions
+as exported RTL:
+
+1. save the current training delay and kernel state;
+2. round trainable delay positions to integer timesteps;
+3. set the DCLS `max` kernel bandwidth to `SIG=0`;
+4. run validation and record the score as `fpga_val_acc`;
+5. restore the training state before continuing optimisation.
+
+`data/masquelier_shd/train_dcls_max.py` follows this protocol for the SHD
+`dcls_max` experiments. The script writes both native validation accuracy and
+`fpga_val_acc` to `training_log.csv`; `best.pth` is selected by
+`fpga_val_acc`, while native validation remains a diagnostic ceiling.
+
+The upstream SHD evaluator rounds model positions in place during evaluation,
+so the script saves and restores the full model state around native validation
+and test scoring unless persistent rounding is explicitly enabled. This keeps
+deployable scoring separate from the optimiser trajectory.
+
+Relevant environment variables:
+
+| Variable | Default | Purpose |
+|---|---:|---|
+| `SHD_SIGMA_INIT` | `15.0` | Start of the DCLS `max` bandwidth schedule. |
+| `SHD_SIGMA_FINAL` | `0.0` | End of the bandwidth schedule. |
+| `SHD_ROUND_EACH_EPOCH` | `0` | Set to `1` to persistently round delays after every epoch. |
+| `SHD_SEED` | config seed | Override deterministic training seed for sweeps. |
+| `SHD_OUTPUT_SUBDIR` | `dcls_max` | Output directory below `exp/SHD/SNN_axonal_feedforward_delays/`. |
+
 ## References
 
 - Hammouamri, Xiloyannis, Bhatt, Bhattacharyya & Bhatt,
