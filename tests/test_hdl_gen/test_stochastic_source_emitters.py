@@ -10,12 +10,18 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+from types import SimpleNamespace
 
 import pytest
 
 from sc_neurocore.edge.lfsr import Lfsr16
 from sc_neurocore.edge.sobol import SobolGenerator
-from sc_neurocore.hdl_gen import Lfsr16Emitter, Sobol16Emitter, VerilogGenerator
+from sc_neurocore.hdl_gen import (
+    Lfsr16Emitter,
+    Sobol16Emitter,
+    VerilogGenerator,
+    emit_sources_from_ir,
+)
 
 
 _RTL_SAMPLE_COUNT = 24
@@ -221,6 +227,91 @@ def test_verilog_generator_exposes_stochastic_source_helpers():
     assert "module sc_lfsr16_source" in lfsr_verilog
     assert "module sc_sobol16_source" in sobol_verilog
     assert "16'h0042" in sobol_verilog
+
+
+def test_emit_sources_from_ir_accepts_mapping_nodes():
+    verilog = emit_sources_from_ir(
+        {
+            "nodes": [
+                {
+                    "name": "rng_lfsr",
+                    "type": "StochasticSource",
+                    "params": {"source_type": "LFSR", "seed": 0xBEEF},
+                },
+                {
+                    "id": "rng_sobol",
+                    "node_type": "StochasticSource",
+                    "decorrelator": "Sobol",
+                    "seed": 0x0042,
+                },
+                {"name": "dense0", "type": "Dense"},
+            ]
+        }
+    )
+
+    assert "module rng_lfsr" in verilog
+    assert "16'hBEEF" in verilog
+    assert "module rng_sobol" in verilog
+    assert "16'h0042" in verilog
+    assert "dense0" not in verilog
+
+
+def test_verilog_generator_routes_stochastic_sources_from_ir():
+    generator = VerilogGenerator()
+
+    verilog = generator.emit_sources_from_ir(
+        {
+            "nodes": {
+                "source-a": {
+                    "type": "lfsr16",
+                    "module_name": "source_a",
+                    "seed": 0,
+                }
+            }
+        }
+    )
+
+    assert "module source_a" in verilog
+    assert "16'hACE1" in verilog
+
+
+def test_emit_sources_from_ir_accepts_object_nodes():
+    node = SimpleNamespace(
+        module_name="object_sobol",
+        node_type="StochasticSource",
+        params={"decorrelator": "sobol16", "seed": 0x0017},
+    )
+
+    verilog = emit_sources_from_ir(SimpleNamespace(nodes=[node]))
+
+    assert "module object_sobol" in verilog
+    assert "16'h0017" in verilog
+
+
+def test_emit_sources_from_ir_rejects_unknown_explicit_source_kind():
+    with pytest.raises(ValueError, match="unsupported stochastic source type"):
+        emit_sources_from_ir(
+            {
+                "nodes": [
+                    {
+                        "type": "StochasticSource",
+                        "params": {"source_type": "Halton"},
+                    }
+                ]
+            }
+        )
+
+
+def test_emit_sources_from_ir_rejects_duplicate_module_names():
+    with pytest.raises(ValueError, match="duplicate stochastic source module name"):
+        emit_sources_from_ir(
+            {
+                "nodes": [
+                    {"type": "lfsr16", "module_name": "shared_source"},
+                    {"type": "sobol16", "module_name": "shared_source"},
+                ]
+            }
+        )
 
 
 def test_stochastic_source_emitters_reject_invalid_module_names():

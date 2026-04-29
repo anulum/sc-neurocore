@@ -28,7 +28,8 @@ Before this addition the codebase had:
 - no direct standalone RTL emitter modules under `sc_neurocore.hdl_gen`
 
 That gap made the RTL path less explicit than the software path. The new
-emitters close that gap without rewiring the existing top-level generator.
+emitters close that gap while preserving the existing top-level Dense-layer
+wiring.
 
 ## Semantics
 
@@ -51,7 +52,31 @@ sobol_rtl = Sobol16Emitter(seed=0x0042).generate()
 generator = VerilogGenerator()
 inline_lfsr = generator.emit_lfsr16_source()
 inline_sobol = generator.emit_sobol16_source()
+
+generator.add_layer("StochasticSource", "rng_lfsr", {"source_type": "LFSR", "seed": 0xBEEF})
+generator.add_layer("StochasticSource", "rng_sobol", {"source_type": "Sobol", "seed": 0x0042})
+top_and_sources_rtl = generator.generate()
+
+source_rtl = generator.emit_sources_from_ir(
+    {
+        "nodes": [
+            {
+                "name": "rng_lfsr",
+                "type": "StochasticSource",
+                "params": {"source_type": "LFSR", "seed": 0xBEEF},
+            },
+            {
+                "name": "rng_sobol",
+                "type": "StochasticSource",
+                "params": {"source_type": "Sobol", "seed": 0x0042},
+            },
+        ]
+    }
+)
 ```
+
+`emit_sources_from_ir(...)` is also exported at package level for callers that
+already hold an IR payload and do not need a `VerilogGenerator` instance.
 
 ## Emitted module interface
 
