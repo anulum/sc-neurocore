@@ -11,7 +11,13 @@ BrainChip Akida, SpiNNaker2, and BrainScaleS-2.
       members:
         - ChipSpec
         - CoreSpec
+        - load_chip_spec
         - BUILTIN_CHIPS
+
+`load_chip_spec()` accepts UTF-8 JSON files for custom chip targets. The
+loader rejects non-object roots, missing or unexpected fields, invalid scalar
+types, non-finite numeric values, unsupported routing topologies, and malformed
+core specifications before constructing `ChipSpec` / `CoreSpec` objects.
 
 ## Compiler
 
