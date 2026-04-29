@@ -54,6 +54,13 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
+from sc_neurocore.fault_injection import (
+    DegradationAction,
+    DegradationPlan,
+    FaultModel,
+    GracefulDegradationPolicy,
+)
+
 try:
     from sc_neurocore.evo_substrate import evo_substrate_core as _ec
 
@@ -512,6 +519,59 @@ class Organism:
     tile_id: Optional[int] = None
     birth_generation: int = 0
     lifespan_steps: int = 0
+    runtime_fault_checks: List[RuntimeFaultCheck] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class RuntimeFaultConfig:
+    """Runtime fault-check settings for evolved SC organisms."""
+
+    fault_model: FaultModel = FaultModel.BIT_FLIP
+    ber: float = 0.0
+    seed_offset: int = 0
+    sample_neurons: int = 8
+    fitness_penalty_on_extend: float = 0.95
+    fitness_penalty_on_replay: float = 0.85
+
+
+@dataclass(frozen=True)
+class RuntimeFaultCheck:
+    """Recorded runtime fault/degradation decision for one organism."""
+
+    organism_id: str
+    generation: int
+    action: str
+    recommended_bitstream_length: int
+    replay_seed: int
+    affected_ratio: float
+    audit_status: str
+    reason: str
+
+    @classmethod
+    def from_plan(cls, organism: Organism, plan: DegradationPlan) -> RuntimeFaultCheck:
+        return cls(
+            organism_id=organism.genome.genome_id,
+            generation=organism.genome.generation,
+            action=plan.action.value,
+            recommended_bitstream_length=plan.recommended_bitstream_length,
+            replay_seed=plan.replay_seed,
+            affected_ratio=plan.observation.affected_ratio,
+            audit_status=plan.observation.audit.status.value,
+            reason=plan.reason,
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Return a JSON-ready fault-check summary."""
+        return {
+            "organism_id": self.organism_id,
+            "generation": self.generation,
+            "action": self.action,
+            "recommended_bitstream_length": self.recommended_bitstream_length,
+            "replay_seed": self.replay_seed,
+            "affected_ratio": self.affected_ratio,
+            "audit_status": self.audit_status,
+            "reason": self.reason,
+        }
 
 
 class ReplicationEngine:
@@ -528,6 +588,8 @@ class ReplicationEngine:
         max_population: int = 32,
         elitism: int = 1,
         industrial_mode: bool = True,
+        runtime_fault_config: Optional[RuntimeFaultConfig] = None,
+        degradation_policy: Optional[GracefulDegradationPolicy] = None,
     ):
         self.mutator = mutation_engine or MutationEngine()
         self.crossover = crossover_engine or CrossoverEngine()
@@ -539,6 +601,8 @@ class ReplicationEngine:
         self.generation: int = 0
         self.total_replications: int = 0
         self.lineage = LineageTracker()
+        self.runtime_fault_config = runtime_fault_config
+        self.degradation_policy = degradation_policy or GracefulDegradationPolicy()
 
         # Industrial Features
         self.industrial_mode = industrial_mode
@@ -610,8 +674,56 @@ class ReplicationEngine:
                             org.fitness.composite, org.genome
                         )
                         org.fitness.composite = shared_fitness(org, self.population)
+                    if self.runtime_fault_config is not None:
+                        self.verify_runtime_faults(org, self.runtime_fault_config)
                     self.hall_of_fame.update(org)
                     self.pareto_front.update(org)
+
+    def verify_runtime_faults(
+        self,
+        organism: Organism,
+        config: Optional[RuntimeFaultConfig] = None,
+    ) -> RuntimeFaultCheck:
+        """Run seeded runtime fault diagnosis and apply bounded degradation."""
+        cfg = config or self.runtime_fault_config or RuntimeFaultConfig()
+        streams = self._runtime_bitstreams(organism.genome, cfg)
+        replay_seed = int(organism.genome.weight_seed + cfg.seed_offset)
+        plan = self.degradation_policy.evaluate(
+            streams,
+            layer_id=organism.genome.genome_id or "unidentified",
+            fault_model=cfg.fault_model,
+            ber=cfg.ber,
+            seed=replay_seed,
+        )
+        check = RuntimeFaultCheck.from_plan(organism, plan)
+        organism.runtime_fault_checks.append(check)
+        self._apply_runtime_fault_plan(organism, plan, cfg)
+        return check
+
+    def _runtime_bitstreams(
+        self, genome: Genome, config: RuntimeFaultConfig
+    ) -> np.ndarray[Any, Any]:
+        neurons = max(1, min(config.sample_neurons, genome.topology.num_neurons))
+        length = max(1, genome.topology.bitstream_length)
+        rng = np.random.default_rng(int(genome.weight_seed + config.seed_offset))
+        return (rng.random((neurons, length)) < 0.5).astype(np.uint8)
+
+    def _apply_runtime_fault_plan(
+        self,
+        organism: Organism,
+        plan: DegradationPlan,
+        config: RuntimeFaultConfig,
+    ) -> None:
+        if plan.action == DegradationAction.NOMINAL:
+            return
+        organism.genome.topology.bitstream_length = plan.recommended_bitstream_length
+        organism.genome.compute_id()
+        if organism.fitness is None:
+            return
+        if plan.action == DegradationAction.REPLAY_WITH_SEED:
+            organism.fitness.composite *= config.fitness_penalty_on_replay
+        else:
+            organism.fitness.composite *= config.fitness_penalty_on_extend
 
     def select_and_cull(self, survival_fraction: float = 0.5) -> int:
         """Select fittest organisms, cull the rest. Elitism preserved."""
