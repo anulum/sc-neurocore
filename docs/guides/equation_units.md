@@ -102,6 +102,8 @@ The strict-unit route also works with the equation compiler.
 `compile_to_verilog(...)` receives the validated numeric internal
 representation, while named dimensional constants such as
 `v_threshold` and `v_reset` still export as normal Verilog parameters.
+Module names, state variables, parameters, and downstream MLIR signal
+names are validated as HDL identifiers before source text is emitted.
 
 `equation_to_fpga(...)` accepts the same strict-mode arguments as
 `from_equations(...)`:

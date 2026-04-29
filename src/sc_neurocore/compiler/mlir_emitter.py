@@ -112,7 +112,11 @@ class MLIREmitter:
                 lines.append(f'  {safe_output} = hw.instance "{sym_name}" @{module_name}() -> (i1)')
 
         # Final output assignment (taking the last node's output as an example)
-        last_wire = self.nodes[-1].output if self.nodes else "0"
+        last_wire = (
+            self._sanitize_ssa_name(self.nodes[-1].output, context="signal name")
+            if self.nodes
+            else "0"
+        )
         lines.append(f"  hw.output {last_wire} : i1")
         lines.append("}")
         return "\n".join(lines)
