@@ -18,6 +18,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Hardened validation boundaries for fuzzed JSON, NPZ, NIR, IR, and HDL inputs
   before they reach parser, lowering, or hardware-resource paths.
 - Documented the strict release-mode supply-chain gate in `SECURITY.md`.
+- Aligned the CycloneDX SBOM root component version with `pyproject.toml` so
+  strict supply-chain audit runs pass without metadata drift.
 
 ### CI coverage restoration (2026-04-21)
 
