@@ -368,6 +368,8 @@ def _cmd_deploy(
         print(f"  Entry:    {os.path.join(output_dir, manifest.artefacts['html'])}")
         return 0
 
+    deployment_layer_sizes = [(1, 1)]
+
     # Step 1: Load model
     ext = os.path.splitext(model_path)[1].lower()
     if ext == ".nir":
@@ -386,6 +388,11 @@ def _cmd_deploy(
         state = torch.load(model_path, map_location="cpu", weights_only=True)
         layers: list[torch.nn.Module] = []
         weight_keys = [k for k in state if k.endswith(".weight") and state[k].dim() == 2]
+        deployment_layer_sizes = [
+            (int(state[k].shape[1]), int(state[k].shape[0])) for k in weight_keys
+        ]
+        if not deployment_layer_sizes:
+            deployment_layer_sizes = [(1, 1)]
         for k in weight_keys:
             w = state[k]
             layers.append(torch.nn.Linear(w.shape[1], w.shape[0]))
@@ -446,6 +453,18 @@ def _cmd_deploy(
     # Step 5: Generate project files
     print("[5/5] Generating project files...")
     _generate_project(output_dir, target, "sc_deploy_lif")
+    from sc_neurocore.edge.power_thermal import PowerThermalConfig, write_power_thermal_model
+
+    power_model_path = write_power_thermal_model(
+        output_dir,
+        PowerThermalConfig(
+            target=target,
+            layer_sizes=tuple(deployment_layer_sizes),
+            bitstream_length=bitstream_length,
+            clock_mhz=100.0,
+        ),
+    )
+    print(f"  Power/thermal model -> {power_model_path}")
 
     # Step 6: Auto-synthesize if open-source toolchain available
     cfg = _TARGET_CONFIGS[target]

@@ -10,6 +10,7 @@
 
 import builtins
 import importlib.util
+import json
 import types
 from unittest import mock
 
@@ -234,6 +235,9 @@ class TestDeployCommand:
         # README in the deploy dir
         readme = (out_dir / "README.md").read_text()
         assert "ice40" in readme
+        power_model = json.loads((out_dir / "power_thermal_model.json").read_text())
+        assert power_model["source_mode"] == "pre_silicon_estimate"
+        assert power_model["workload"]["layer_sizes"] == [[4, 8], [8, 2]]
 
     def test_deploy_emits_vivado_tcl_for_artix7(self, tmp_path):
         """artix7 target should emit a project.tcl, not a Makefile."""

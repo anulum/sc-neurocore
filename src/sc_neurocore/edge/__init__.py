@@ -21,6 +21,11 @@ from sc_neurocore.edge.web_deploy import (
     WebDeploymentManifest,
     build_web_deployment,
 )
+from sc_neurocore.edge.power_thermal import (
+    PowerThermalConfig,
+    build_power_thermal_model,
+    write_power_thermal_model,
+)
 from sc_neurocore.edge.bitstream import (
     popcount32,
     popcount_slice,
@@ -55,6 +60,9 @@ __all__ = [
     "WebDeploymentConfig",
     "WebDeploymentManifest",
     "build_web_deployment",
+    "PowerThermalConfig",
+    "build_power_thermal_model",
+    "write_power_thermal_model",
     "popcount32",
     "popcount_slice",
     "sc_and",
