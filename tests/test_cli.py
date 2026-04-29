@@ -272,6 +272,69 @@ class TestDeployCommand:
 
 
 # ---------------------------------------------------------------------------
+# NIR silicon mapping command
+# ---------------------------------------------------------------------------
+
+
+class TestMapNirCommand:
+    """Tests for `sc-neurocore map-nir ...`."""
+
+    def test_map_nir_rejects_non_nir_extension(self, tmp_path, capsys):
+        from sc_neurocore.cli import _cmd_map_nir
+
+        rc = _cmd_map_nir(
+            str(tmp_path / "model.pt"),
+            str(tmp_path / "out"),
+            "loihi2",
+            dt=1.0,
+            bitstream_length=256,
+        )
+
+        assert rc == 1
+        assert "supports .nir files only" in capsys.readouterr().out
+
+    def test_map_nir_writes_report_with_mocked_nir_import(self, tmp_path, capsys):
+        from sc_neurocore.cli import _cmd_map_nir
+
+        nir_path = tmp_path / "model.nir"
+        nir_path.write_bytes(b"")
+        fake_graph = mock.MagicMock()
+        fake_network = types.SimpleNamespace(
+            nodes={
+                "input": {"node_type": "Input", "shape": (2,)},
+                "dense": {"node_type": "Linear", "weight": (3, 2)},
+                "output": {"node_type": "Output", "shape": (3,)},
+            },
+            topo_order=["input", "dense", "output"],
+            edges=[("input", "dense"), ("dense", "output")],
+        )
+        fake_nir = _fake_module("nir", read=mock.MagicMock(return_value=fake_graph))
+
+        with (
+            mock.patch.dict("sys.modules", {"nir": fake_nir}),
+            mock.patch("sc_neurocore.nir_bridge.from_nir", return_value=fake_network),
+        ):
+            rc = _cmd_map_nir(
+                str(nir_path),
+                str(tmp_path / "mapping"),
+                "loihi2,spinnaker2",
+                dt=0.5,
+                bitstream_length=256,
+            )
+
+        report = json.loads(
+            (tmp_path / "mapping" / "nir_silicon_mapping_report.json").read_text(encoding="utf-8")
+        )
+        assert rc == 0
+        assert [target["target_id"] for target in report["targets"]] == [
+            "loihi2",
+            "spinnaker2",
+        ]
+        assert report["targets"][0]["summary"]["estimated_synapses"] == 6
+        assert "NIR silicon mapping report generated" in capsys.readouterr().out
+
+
+# ---------------------------------------------------------------------------
 # Serve command
 # ---------------------------------------------------------------------------
 

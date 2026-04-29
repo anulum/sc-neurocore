@@ -30,6 +30,7 @@ def main() -> int:
             "preflight",
             "deploy",
             "serve",
+            "map-nir",
             "compile",
             "studio",
             "collect-synthesis",
@@ -56,6 +57,11 @@ def main() -> int:
     )
     parser.add_argument("--T", type=int, default=256, help="Bitstream length for SC layers")
     parser.add_argument("--port", type=int, default=8001, help="Port for serve command")
+    parser.add_argument(
+        "--hardware-targets",
+        default="loihi2,spinnaker2",
+        help="Comma-separated neuromorphic targets for map-nir",
+    )
     parser.add_argument(
         "--threshold", default=None, help="Threshold expression for compile (e.g. 'v > -50')"
     )
@@ -140,6 +146,13 @@ def main() -> int:
             )
             return 1
         return _cmd_serve(args.model, args.port, args.dt)
+    if args.command == "map-nir":
+        if not args.model:
+            print(
+                "Error: map-nir requires a NIR model file. Usage: sc-neurocore map-nir model.nir -o build/silicon"
+            )
+            return 1
+        return _cmd_map_nir(args.model, args.output, args.hardware_targets, args.dt, args.T)
     if args.command == "studio":
         return _cmd_studio(args.port)
     if args.command == "collect-synthesis":
@@ -483,6 +496,50 @@ def _cmd_deploy(
     else:
         print("Vivado project generated. To synthesize:")
         print(f"  cd {output_dir} && vivado -mode batch -source project.tcl")
+    return 0
+
+
+def _cmd_map_nir(
+    model_path: str,
+    output_dir: str,
+    hardware_targets: str,
+    dt: float,
+    bitstream_length: int,
+) -> int:
+    """Generate deterministic silicon-mapping reports for a NIR graph."""
+    import os
+
+    if os.path.splitext(model_path)[1].lower() != ".nir":
+        print("Error: map-nir supports .nir files only")
+        return 1
+
+    targets = tuple(item.strip() for item in hardware_targets.split(",") if item.strip())
+    if not targets:
+        print("Error: --hardware-targets must name at least one target")
+        return 1
+
+    try:
+        import nir as nir_lib
+        from sc_neurocore.nir_bridge import from_nir
+        from sc_neurocore.nir_bridge.silicon_mapping import (
+            SiliconMappingConfig,
+            write_silicon_mapping_report,
+        )
+
+        graph = nir_lib.read(model_path)
+        network = from_nir(graph, dt=dt)
+        report_path = write_silicon_mapping_report(
+            output_dir,
+            network,
+            SiliconMappingConfig(targets=targets, bitstream_length=bitstream_length),
+        )
+    except (ImportError, KeyError, OSError, TypeError, ValueError) as exc:
+        print(f"Error: {exc}")
+        return 1
+
+    print("NIR silicon mapping report generated")
+    print(f"  Targets:  {', '.join(targets)}")
+    print(f"  Report:   {report_path}")
     return 0
 
 
