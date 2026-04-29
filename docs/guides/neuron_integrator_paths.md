@@ -22,8 +22,8 @@ This avoids confusion between:
 | Model | Default path | Alternative path | Why it exists |
 |---|---|---|---|
 | `SCIzhikevichNeuron` | `baseline_half_euler` | `rk4` | quadratic voltage term benefits from a clearer explicit higher-order reference |
-| `HodgkinHuxleyNeuron` | `baseline_euler` | `rk4` | four coupled ion-channel ODEs are sensitive to step method |
-| `AdExNeuron` | `baseline_euler` | `rk4` | exponential spike-initiation term benefits from a higher-order alternative |
+| `HodgkinHuxleyNeuron` | `baseline_euler` | `rk4`, `rosenbrock` | four coupled ion-channel ODEs are sensitive to step method; Rosenbrock adds a linearly implicit stiff-system route |
+| `AdExNeuron` | `baseline_euler` | `rk4`, `rosenbrock` | exponential spike-initiation term benefits from higher-order and linearly implicit alternatives |
 
 ## How To Use
 
@@ -35,6 +35,8 @@ from sc_neurocore.neurons.models.adex import AdExNeuron
 izh = SCIzhikevichNeuron(integrator="rk4")
 hh = HodgkinHuxleyNeuron(integrator="rk4")
 adex = AdExNeuron(integrator="rk4")
+hh_stiff = HodgkinHuxleyNeuron(integrator="rosenbrock")
+adex_stiff = AdExNeuron(integrator="rosenbrock")
 ```
 
 Baseline-preserving construction:
@@ -55,12 +57,13 @@ adex = AdExNeuron()                 # baseline_euler
 ## What This Does Not Claim
 
 - it does not claim that RK4 is universally the best method for every neuron
+- it does not claim that Rosenbrock-Euler replaces model-specific validation
 - it does not claim that every model in `neurons/models/` has already been
   migrated
-- it does not claim that a stiffness-specific Rosenbrock path exists today
 
 The current state is explicit:
 
 - baseline path kept
 - RK4 path added for the first three priority models
+- Rosenbrock path added for the two priority stiff neuron models
 - further integrator work should follow the same pattern

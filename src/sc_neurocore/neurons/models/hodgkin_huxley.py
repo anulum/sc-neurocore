@@ -13,7 +13,7 @@ from typing import Literal
 
 import numpy as np
 
-from sc_neurocore.solvers import RK4Solver
+from sc_neurocore.solvers import RK4Solver, RosenbrockEuler
 
 
 @dataclass
@@ -31,6 +31,8 @@ class HodgkinHuxleyNeuron:
     - ``baseline_euler`` preserves the historical explicit-Euler sub-step path
     - ``rk4`` is an explicit higher-order alternative path over the same
       sub-step schedule
+    - ``rosenbrock`` is a linearly implicit stiff-system path over the same
+      Hodgkin-Huxley ODEs
     """
 
     v: float = -65.0
@@ -46,10 +48,10 @@ class HodgkinHuxleyNeuron:
     e_l: float = -54.4
     dt: float = 0.01
     v_threshold: float = 0.0
-    integrator: Literal["baseline_euler", "rk4"] = "baseline_euler"
+    integrator: Literal["baseline_euler", "rk4", "rosenbrock"] = "baseline_euler"
 
     def __post_init__(self) -> None:
-        if self.integrator not in {"baseline_euler", "rk4"}:
+        if self.integrator not in {"baseline_euler", "rk4", "rosenbrock"}:
             raise ValueError(f"Unsupported integrator for HodgkinHuxleyNeuron: {self.integrator}")
 
     def _alpha_m(self, v: float) -> float:
@@ -80,8 +82,10 @@ class HodgkinHuxleyNeuron:
         v_prev = self.v
         if self.integrator == "baseline_euler":
             self._step_baseline_euler(current)
-        else:
+        elif self.integrator == "rk4":
             self._step_rk4(current)
+        else:
+            self._step_rosenbrock(current)
         return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
 
     def _rhs(self, _t: float, state: np.ndarray, current: float) -> np.ndarray:
@@ -118,6 +122,20 @@ class HodgkinHuxleyNeuron:
 
     def _step_rk4(self, current: float) -> None:
         solver = RK4Solver()
+        state = np.array([self.v, self.m, self.h, self.n], dtype=np.float64)
+        t = 0.0
+        for _ in range(round(1.0 / self.dt)):
+            state, dt_used = solver.step(
+                lambda time, y: self._rhs(time, y, current),
+                state,
+                t,
+                self.dt,
+            )
+            t += dt_used
+        self.v, self.m, self.h, self.n = (float(value) for value in state)
+
+    def _step_rosenbrock(self, current: float) -> None:
+        solver = RosenbrockEuler()
         state = np.array([self.v, self.m, self.h, self.n], dtype=np.float64)
         t = 0.0
         for _ in range(round(1.0 / self.dt)):
