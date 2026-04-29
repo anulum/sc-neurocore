@@ -59,6 +59,16 @@ for explicit RK4 batch simulation of the same first three priority models:
 This is an opt-in FFI parity path. It does not change Python constructor
 defaults or the Rust network-runner defaults.
 
+## Julia RK4 Parity Path
+
+The maintained JuliaCall entry point is
+`sc_neurocore.accel.julia.neurons.simulate_rk4_neuron(model_name, current_trace, dt=None)`.
+It exposes the same output schema as the Rust parity path and uses fixed-step
+RK4 arithmetic so tests can compare directly against Python and Rust
+trajectories. Install the optional bridge with `sc-neurocore[julia]`.
+The older per-model Julia mirror files are not authoritative unless loaded
+through a maintained Python wrapper.
+
 ## Design Rules
 
 - default construction must preserve historical behaviour

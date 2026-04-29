@@ -69,6 +69,7 @@ full = ["numba>=0.56", "matplotlib>=3.5", "networkx", "onnx", "qiskit", "pennyla
 research = ["matplotlib>=3.5", "networkx", "onnx", "torch>=2.0"]
 training = ["torch>=2.0"]
 jax = ["jax", "jaxlib"]
+julia = ["juliacall>=0.9"]
 quantum = ["qiskit", "pennylane", "qiskit-aer"]
 nir = ["nir>=1.0"]
 mpi = ["mpi4py>=3.0"]
@@ -102,7 +103,17 @@ exclude = [
 ]
 
 [tool.setuptools.package-data]
-sc_neurocore = ["py.typed", "model_zoo/weights/*.npz"]
+sc_neurocore = [
+  "py.typed",
+  "model_zoo/weights/*.npz",
+  "accel/julia/_native/*.jl",
+  "accel/julia/chiplet/*.jl",
+  "accel/julia/fault_injection/*.jl",
+  "accel/julia/neurons/rk4_neurons.jl",
+  "accel/julia/neurons/wilson_cowan.jl",
+  "accel/julia/neurons/wong_wang.jl",
+  "accel/julia/world_model/*.jl",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
