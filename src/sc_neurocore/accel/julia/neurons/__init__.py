@@ -32,6 +32,7 @@ except ImportError:
 _KERNEL_DIR = Path(__file__).resolve().parent
 _WONG_WANG_LOADED = False
 _WILSON_COWAN_LOADED = False
+_RK4_NEURONS_LOADED = False
 
 
 def _ensure_wong_wang_loaded() -> Any:
@@ -60,6 +61,24 @@ def _ensure_wilson_cowan_loaded() -> Any:
         _jl.include(str(jl_path))
         _WILSON_COWAN_LOADED = True
     return _jl.WilsonCowanAccel
+
+
+def _ensure_rk4_neurons_loaded() -> Any:
+    """Include `rk4_neurons.jl` into Julia Main on first use; return the module."""
+    global _RK4_NEURONS_LOADED
+    if _jl is None:
+        raise ImportError("juliacall not available; install the `julia` extra")
+    if not _RK4_NEURONS_LOADED:
+        jl_path = _KERNEL_DIR / "rk4_neurons.jl"
+        if not jl_path.is_file():
+            raise FileNotFoundError(f"rk4_neurons.jl missing at {jl_path}")
+        _jl.include(str(jl_path))
+        _RK4_NEURONS_LOADED = True
+    return _jl.Rk4NeuronsAccel
+
+
+def _normalise_model_name(model_name: str) -> str:
+    return "".join(ch.lower() for ch in model_name if ch.isalnum())
 
 
 def simulate_wong_wang(
@@ -166,3 +185,71 @@ def simulate_wilson_cowan(
         "e_final": float(e_final),
         "i_final": float(i_final),
     }
+
+
+def simulate_rk4_neuron(
+    model_name: str,
+    current_trace: np.ndarray | list[float],
+    dt: float | None = None,
+) -> dict[str, Any]:
+    """Julia-backed RK4 batch simulator for the first priority neuron models.
+
+    The returned schema mirrors ``sc_neurocore_engine.py_rk4_neuron_simulate``:
+    state trajectories, zero-based spike indices, and ``n_steps``.
+    """
+    mod = _ensure_rk4_neurons_loaded()
+    currents = np.asarray(current_trace, dtype=np.float64)
+    n = currents.size
+    spikes = np.empty(n, dtype=np.uint64)
+    model = _normalise_model_name(model_name)
+
+    if model in {"izhikevich", "scizhikevichneuron", "izhikevichneuron"}:
+        v = np.empty(n, dtype=np.float64)
+        u = np.empty(n, dtype=np.float64)
+        n_spikes = int(
+            mod.simulate_izhikevich_rk4_b(currents, 1.0 if dt is None else dt, v, u, spikes)
+        )
+        return {
+            "v": v,
+            "u": u,
+            "spikes": spikes[:n_spikes].copy(),
+            "n_steps": n,
+        }
+
+    if model in {"hodgkinhuxley", "hodgkinhuxleyneuron"}:
+        v = np.empty(n, dtype=np.float64)
+        m = np.empty(n, dtype=np.float64)
+        h = np.empty(n, dtype=np.float64)
+        gate_n = np.empty(n, dtype=np.float64)
+        n_spikes = int(
+            mod.simulate_hodgkin_huxley_rk4_b(
+                currents,
+                0.01 if dt is None else dt,
+                v,
+                m,
+                h,
+                gate_n,
+                spikes,
+            )
+        )
+        return {
+            "v": v,
+            "m": m,
+            "h": h,
+            "n": gate_n,
+            "spikes": spikes[:n_spikes].copy(),
+            "n_steps": n,
+        }
+
+    if model in {"adex", "adexneuron"}:
+        v = np.empty(n, dtype=np.float64)
+        w = np.empty(n, dtype=np.float64)
+        n_spikes = int(mod.simulate_adex_rk4_b(currents, 0.1 if dt is None else dt, v, w, spikes))
+        return {
+            "v": v,
+            "w": w,
+            "spikes": spikes[:n_spikes].copy(),
+            "n_steps": n,
+        }
+
+    raise ValueError(f"unsupported RK4 neuron model {model_name!r}")

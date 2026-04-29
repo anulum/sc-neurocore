@@ -21,6 +21,7 @@ AUTHORITATIVE_JULIA_ENTRYPOINTS: tuple[str, ...] = (
     "_native/learning_bridge.jl",
     "chiplet/kl_refine.jl",
     "fault_injection/fault_injection.jl",
+    "neurons/rk4_neurons.jl",
     "world_model/predictive_model.jl",
 )
 
