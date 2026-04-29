@@ -22,7 +22,7 @@ from sc_neurocore.nir_bridge.hardware_targets import (
 )
 
 SCHEMA_VERSION = "sc-neurocore.nir-silicon-mapping.v1"
-_DEFAULT_TARGETS = ("loihi2", "spinnaker2")
+_DEFAULT_TARGETS = ("loihi2", "spinnaker2", "akida")
 
 _NODE_TYPE_ALIASES = {
     "_UnitDelayNode": "Delay",

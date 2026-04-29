@@ -38,7 +38,7 @@ def _network() -> SimpleNamespace:
     )
 
 
-def test_silicon_mapping_report_defaults_to_loihi_and_spinnaker() -> None:
+def test_silicon_mapping_report_defaults_to_loihi_spinnaker_and_akida() -> None:
     report = build_silicon_mapping_report(_network())
 
     assert report["schema_version"] == SCHEMA_VERSION
@@ -47,7 +47,11 @@ def test_silicon_mapping_report_defaults_to_loihi_and_spinnaker() -> None:
         "edge_count": 3,
         "topological_order": ["input", "dense", "lif", "output"],
     }
-    assert [target["target_id"] for target in report["targets"]] == ["loihi2", "spinnaker2"]
+    assert [target["target_id"] for target in report["targets"]] == [
+        "loihi2",
+        "spinnaker2",
+        "akida",
+    ]
     for target in report["targets"]:
         assert target["lowering_status"] == "clean"
         assert target["summary"]["native_nodes"] == 4
@@ -56,6 +60,32 @@ def test_silicon_mapping_report_defaults_to_loihi_and_spinnaker() -> None:
         assert target["summary"]["routing_edges"] == 3
         assert target["fallback_requirements"] == []
         assert target["noise_back_annotation_hooks"]
+
+
+def test_akida_mapping_marks_delay_as_explicit_fallback() -> None:
+    report = build_silicon_mapping_report(
+        {
+            "input": {"node_type": "Input", "shape": (4,)},
+            "delay": {"node_type": "Delay"},
+            "conv": {"node_type": "Conv2d", "weight": (8, 4, 3, 3)},
+        },
+        SiliconMappingConfig(targets=("akida",)),
+    )
+
+    target = report["targets"][0]
+    delay_node = next(node for node in target["nodes"] if node["name"] == "delay")
+    conv_node = next(node for node in target["nodes"] if node["name"] == "conv")
+    assert target["target_id"] == "akida"
+    assert target["lowering_status"] == "fallback_required"
+    assert delay_node["lowering"] == "fallback"
+    assert conv_node["lowering"] == "native"
+    assert target["fallback_requirements"] == [
+        {
+            "node": "delay",
+            "node_type": "Delay",
+            "requirement": "pre-lower or host-side execute before silicon mapping",
+        }
+    ]
 
 
 def test_silicon_mapping_report_marks_known_fallback_nodes() -> None:

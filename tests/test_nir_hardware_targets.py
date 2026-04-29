@@ -26,6 +26,7 @@ def test_available_hardware_profiles_are_deterministic() -> None:
     profiles = available_hardware_profiles()
 
     assert [profile.target_id for profile in profiles] == [
+        "akida",
         "brainscales3",
         "dynap_se",
         "loihi2",
@@ -40,6 +41,17 @@ def test_get_hardware_profile_normalises_identifier() -> None:
     assert profile.target_id == "dynap_se"
     assert profile.display_name == "DYNAP-SE"
     assert "aer_drop_rate" in profile.sc_constraints.back_annotation_channels
+
+
+def test_akida_profile_is_conservative_manifest_only() -> None:
+    profile = get_hardware_profile("akida")
+
+    assert profile.display_name == "Akida"
+    assert profile.backend_status == "capability_manifest"
+    assert "Conv2d" in profile.supported_nir_nodes
+    assert "Delay" in profile.unsupported_nir_nodes
+    assert profile.sc_constraints.stream_transport == "event_rate_probability"
+    assert "quantisation_error_rate" in profile.sc_constraints.back_annotation_channels
 
 
 def test_get_hardware_profile_rejects_unknown_identifier() -> None:

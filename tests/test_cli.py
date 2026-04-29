@@ -317,7 +317,7 @@ class TestMapNirCommand:
             rc = _cmd_map_nir(
                 str(nir_path),
                 str(tmp_path / "mapping"),
-                "loihi2,spinnaker2",
+                "loihi2,spinnaker2,akida",
                 dt=0.5,
                 bitstream_length=256,
             )
@@ -329,6 +329,7 @@ class TestMapNirCommand:
         assert [target["target_id"] for target in report["targets"]] == [
             "loihi2",
             "spinnaker2",
+            "akida",
         ]
         assert report["targets"][0]["summary"]["estimated_synapses"] == 6
         assert "NIR silicon mapping report generated" in capsys.readouterr().out
