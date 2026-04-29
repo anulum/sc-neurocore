@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+import math
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -287,14 +289,61 @@ def from_nir(source, dt: float = 1.0, reset_mode: str = "reset") -> SCNetwork:  
     SCNetwork
         Executable network with topologically sorted forward pass.
     """
+    _validate_import_options(dt, reset_mode)
+
     if isinstance(source, (str, Path)):
-        graph = nir.read(str(source))
+        graph = _read_nir_file(source)
     elif isinstance(source, nir.NIRGraph):
         graph = source
     else:
         raise TypeError(f"Expected NIRGraph or path, got {type(source)}")
 
+    _validate_nir_graph_boundary(graph)
     return _parse_graph(graph, dt=dt, reset_mode=reset_mode)
+
+
+def _validate_import_options(dt: float, reset_mode: str) -> None:
+    if not isinstance(dt, (int, float)) or isinstance(dt, bool) or not math.isfinite(float(dt)):
+        raise ValueError("NIR import dt must be a finite number")
+    if float(dt) <= 0:
+        raise ValueError("NIR import dt must be positive")
+
+
+def _read_nir_file(source: str | Path) -> Any:
+    try:
+        return nir.read(str(source))
+    except Exception as exc:
+        raise ValueError(f"Failed to read NIR file {source!s}") from exc
+
+
+def _validate_nir_graph_boundary(graph: Any, context: str = "NIR graph") -> None:
+    if not isinstance(graph, nir.NIRGraph):
+        raise TypeError(f"Expected NIRGraph, got {type(graph)}")
+
+    if not isinstance(graph.nodes, Mapping):
+        raise ValueError(f"{context} nodes must be a mapping")
+    node_names = set()
+    for name, node in graph.nodes.items():
+        if not isinstance(name, str) or not name:
+            raise ValueError(f"{context} node names must be non-empty strings")
+        node_names.add(name)
+        if isinstance(node, nir.NIRGraph):
+            _validate_nir_graph_boundary(node, context=f"{context}.{name}")
+
+    if not isinstance(graph.edges, Sequence) or isinstance(graph.edges, (str, bytes)):
+        raise ValueError(f"{context} edges must be a sequence")
+    for index, edge in enumerate(graph.edges):
+        if not isinstance(edge, Sequence) or isinstance(edge, (str, bytes)) or len(edge) != 2:
+            raise ValueError(f"{context} edge {index} must contain source and destination")
+        src, dst = edge
+        if not isinstance(src, str) or not src:
+            raise ValueError(f"{context} edge {index} source must be a non-empty string")
+        if not isinstance(dst, str) or not dst:
+            raise ValueError(f"{context} edge {index} destination must be a non-empty string")
+        if src not in node_names:
+            raise ValueError(f"{context} edge {index} source {src!r} not found")
+        if dst not in node_names:
+            raise ValueError(f"{context} edge {index} destination {dst!r} not found")
 
 
 def _parse_graph(

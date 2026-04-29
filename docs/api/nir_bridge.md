@@ -28,6 +28,14 @@ temporal dynamics. See `_UnitDelayNode`.
 Nested NIR graphs with multiple inputs/outputs use `SCMultiPortSubgraphNode`,
 which exposes `forward_multi(inputs_dict) → outputs_dict` for named I/O ports.
 
+### Import Boundary Validation
+
+`from_nir()` accepts a `nir.NIRGraph`, string path, or `Path`. File reads are
+wrapped as `ValueError` on malformed or unreadable NIR payloads. Parsed graphs
+must expose mapping-like nodes and sequence-like edges, all node names and edge
+endpoints must be non-empty strings, and every edge endpoint must reference an
+existing node before the graph is lowered.
+
 ## Node Map
 
 ::: sc_neurocore.nir_bridge.node_map
