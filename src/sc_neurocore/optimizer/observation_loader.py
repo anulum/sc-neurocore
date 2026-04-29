@@ -17,6 +17,7 @@ error rather than being filled with invented data.
 from __future__ import annotations
 
 import json
+import math
 import re
 from pathlib import Path
 from typing import Any, Mapping
@@ -282,9 +283,14 @@ def _required_any(
 
 
 def _to_int(value: Any, key: str, source: str, index: int) -> int:
+    if isinstance(value, bool):
+        raise ObservationLoadError(f"{source} observation {index}: {key} must be an int")
+    if isinstance(value, float):
+        if not math.isfinite(value) or not value.is_integer():
+            raise ObservationLoadError(f"{source} observation {index}: {key} must be an int")
     try:
         result = int(value)
-    except (TypeError, ValueError) as exc:
+    except (OverflowError, TypeError, ValueError) as exc:
         raise ObservationLoadError(f"{source} observation {index}: {key} must be an int") from exc
     if result < 0:
         raise ObservationLoadError(f"{source} observation {index}: {key} must be non-negative")
@@ -292,10 +298,14 @@ def _to_int(value: Any, key: str, source: str, index: int) -> int:
 
 
 def _to_float(value: Any, key: str, source: str, index: int) -> float:
+    if isinstance(value, bool):
+        raise ObservationLoadError(f"{source} observation {index}: {key} must be numeric")
     try:
         result = float(value)
-    except (TypeError, ValueError) as exc:
+    except (OverflowError, TypeError, ValueError) as exc:
         raise ObservationLoadError(f"{source} observation {index}: {key} must be numeric") from exc
+    if not math.isfinite(result):
+        raise ObservationLoadError(f"{source} observation {index}: {key} must be finite")
     if result < 0.0:
         raise ObservationLoadError(f"{source} observation {index}: {key} must be non-negative")
     return result

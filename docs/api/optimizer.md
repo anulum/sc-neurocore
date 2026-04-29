@@ -76,7 +76,9 @@ layers.
 Measured observations are optional but preferred. The loader accepts JSON
 payloads with `observations`, `benchmark_observations`, `layers`, `runs`, or
 `results` records and raises `ObservationLoadError` when required fields are
-missing.
+missing. Numeric metrics must be finite, non-negative numbers; integer fields
+such as `mac_count`, `bitstream_length`, `precision_bits`, `luts_used`, and
+`latency_cycles` reject booleans and fractional values.
 
 ```python
 from sc_neurocore.optimizer import load_observations
