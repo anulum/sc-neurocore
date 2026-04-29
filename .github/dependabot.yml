@@ -27,6 +27,8 @@ updates:
     commit-message:
       prefix: "ci(deps)"
     open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: dtolnay/rust-toolchain
     groups:
       actions:
         patterns: ["*"]
