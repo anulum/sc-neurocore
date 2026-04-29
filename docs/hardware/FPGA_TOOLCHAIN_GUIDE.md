@@ -47,6 +47,7 @@ AXI-Lite register file directly from Jupyter notebooks.
 | Item | Details |
 |------|---------|
 | **Download** | [AMD/Xilinx Downloads](https://www.xilinx.com/support/download.html) |
+| **Release pin** | Vivado ML Standard `v2025.2` for current SHD / PYNQ-Z2 synthesis evidence |
 | **Edition** | Vivado ML Standard (free for Artix-7 and Zynq-7000 parts) |
 | **License** | Free for parts up to Artix-7 100T and Zynq-7020. Larger parts need paid license. |
 | **Supported OS** | Ubuntu 20.04/22.04, RHEL 8/9, Windows 10/11 |
@@ -55,7 +56,7 @@ AXI-Lite register file directly from Jupyter notebooks.
 
 ```bash
 # After install, source the setup script
-source /tools/Xilinx/Vivado/2024.2/settings64.sh
+source /tools/Xilinx/Vivado/2025.2/settings64.sh
 
 # Verify
 vivado -version
@@ -107,6 +108,19 @@ yosys -p "read_verilog hdl/sc_neurocore_top.v; synth_ice40 -top sc_neurocore_top
 nextpnr-ice40 --up5k --json build/sc.json --asc build/sc.asc --pcf deploy/fpga/icebreaker.pcf
 icepack build/sc.asc build/sc.bin
 ```
+
+### ASIC flow: Yosys + OpenROAD
+
+The ASIC flow emits Yosys/OpenROAD-compatible decks, but OpenROAD is not
+release-pinned yet. Treat OpenROAD area, timing, power, and GDSII numbers as
+unpublished until the report records:
+
+- the exact OpenROAD binary version or Docker image digest;
+- the PDK name and revision;
+- the Liberty, LEF, technology LEF, DRC, and LVS deck paths used for the run.
+
+The current release can document Vivado `v2025.2` FPGA evidence; it must not
+quote OpenROAD physical-design numbers without those pins.
 
 ### Co-Simulation: Icarus Verilog (all platforms, free)
 

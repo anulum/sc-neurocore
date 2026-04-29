@@ -104,3 +104,18 @@ FPGA and ASIC tools are external to Python packaging:
 
 The deploy command can still scaffold a project without those tools. Synthesis
 and power reports appear only after an external toolchain has produced them.
+
+### Version evidence for hardware reports
+
+Hardware reports must name the EDA tool version that produced them. Current
+release evidence uses:
+
+| Tool | Version status | Scope |
+| --- | --- | --- |
+| AMD Vivado | `v2025.2` | SHD / PYNQ-Z2 synthesis evidence in `docs/CHANGELOG.md`. |
+| OpenROAD | Not release-pinned yet | The ASIC flow can generate OpenROAD-compatible decks, but no committed OpenROAD place-and-route report is release evidence yet. |
+| Yosys | Report-specific | Existing reports name the Yosys version beside the numbers because generic-cell counts vary by release. |
+
+Do not quote OpenROAD area, power, timing, or GDS results until the exact
+OpenROAD binary or container digest and PDK revision are recorded with the
+report.
