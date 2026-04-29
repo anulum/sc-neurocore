@@ -34,13 +34,15 @@ Env:
   SHD_PRUNE_EPSILON   — abs threshold for epsilon pruning (default 0.01)
   SHD_FINETUNE_EPOCHS — epochs after pruning (default 20)
   SHD_EPOCHS          — total main-phase epochs (default = config.epochs)
+  SHD_SEED            — deterministic seed override (default = config.seed)
   SHD_SIGMA_INIT      — cosine schedule start (default 15.0)
-  SHD_SIGMA_FINAL     — cosine schedule end (default 0.23)
+  SHD_SIGMA_FINAL     — cosine schedule end (default 0.0)
+  SHD_ROUND_EACH_EPOCH — round train delays after every epoch (default 0)
   SHD_OUTPUT_SUBDIR   — output subdirectory name
 
 Tim Masquelier corrections (email [22/22], 2026-04-13):
-  1. Delays are rounded inplace after each epoch (like Alexandre's code)
-  2. Best checkpoint selected by FPGA-relevant val accuracy (sigma=0, rounded delays)
+  1. Best checkpoint selected by FPGA-relevant val accuracy (sigma=0, rounded delays)
+  2. Optional inplace rounding after each epoch for Alexandre-style experiments
   3. Pruning uses epsilon threshold instead of fixed percentage
 """
 
@@ -67,7 +69,7 @@ os.environ["WANDB_MODE"] = "disabled"
 wandb.init(mode="disabled")
 
 from configs.config_SHD import Config
-from src.datasets import load_dataset
+from src.datasets import SHD_dataloaders
 from src.modules import dcls_module
 from src.SHD.snn import SNN_axonal_feedforward_delays
 from src.SHD.trainer import test, init_optim_sche, count_parameters
@@ -128,7 +130,10 @@ def fpga_val_accuracy(
     you need to temporarily switch to v1 (or vmax SIG=0) and round the
     delays just to estimate the validation accuracy."
 
-    This function saves delay state, rounds delays, evaluates, and restores.
+    The embedded trainer.test() mutates models by calling round_pos() before
+    every evaluation. This wrapper saves both delay and sigma state, evaluates
+    the deployable rounded-delay path, and restores the training state unless
+    the caller separately opts into in-place rounding.
     """
     # Save original delay values
     saved_delays = {}
@@ -201,7 +206,13 @@ def integer_delay_penalty(model: torch.nn.Module) -> torch.Tensor:
 
 SIG_INIT = float(os.environ.get("SHD_SIGMA_INIT", "15.0"))
 SIG_FINAL = float(os.environ.get("SHD_SIGMA_FINAL", "0.0"))  # Tim: sigma must end at 0
-# 0.23 is below 0.5 so rounding has at most 0.5/0.23 ratio of neighbour overlap
+# Historical comparison runs used 0.23; deployable selection always scores sigma=0.
+ROUND_EACH_EPOCH = os.environ.get("SHD_ROUND_EACH_EPOCH", "0").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
 
 
 def get_sigma_schedule(epoch: int, total_epochs: int) -> float:
@@ -282,16 +293,19 @@ def set_sigma(model: torch.nn.Module, sigma: float) -> None:
 
 if __name__ == "__main__":
     config = Config()
-    # Sweep parameters from environment (defaults match the published
-    # 75.21% baseline so legacy invocations behave unchanged):
-    #   SHD_LAMBDA_DELAY  — integer-delay regulariser weight (default 0.01)
-    #   SHD_EPOCHS        — total epochs override (default = config.epochs)
-    #   SHD_OUTPUT_SUBDIR — per-run output subdirectory under
-    #                       exp/SHD/SNN_axonal_feedforward_delays/
+    # Sweep parameters from environment:
+    #   SHD_LAMBDA_DELAY     — integer-delay regulariser weight (default 0.01)
+    #   SHD_EPOCHS           — total epochs override (default = config.epochs)
+    #   SHD_SEED             — deterministic seed override
+    #   SHD_ROUND_EACH_EPOCH — opt into in-place delay rounding experiments
+    #   SHD_OUTPUT_SUBDIR    — per-run output subdirectory under
+    #                          exp/SHD/SNN_axonal_feedforward_delays/
     config.lambda_delay = float(os.environ.get("SHD_LAMBDA_DELAY", "0.01"))
     config.l1_weight = float(os.environ.get("SHD_L1_WEIGHT", "0.0"))
     config.prune_sparsity = float(os.environ.get("SHD_PRUNE_SPARSITY", "0.9"))
     config.finetune_epochs = int(os.environ.get("SHD_FINETUNE_EPOCHS", "20"))
+    if os.environ.get("SHD_SEED"):
+        config.seed = int(os.environ["SHD_SEED"])
     if os.environ.get("SHD_EPOCHS"):
         config.epochs = int(os.environ["SHD_EPOCHS"])
     out_subdir = os.environ.get("SHD_OUTPUT_SUBDIR", "dcls_max")
@@ -304,6 +318,10 @@ if __name__ == "__main__":
     print(f"SHD_PRUNE_SPARSITY = {config.prune_sparsity}")
     print(f"SHD_FINETUNE_EPOCHS= {config.finetune_epochs}")
     print(f"SHD_EPOCHS         = {config.epochs}")
+    print(f"SHD_SEED           = {config.seed}")
+    print(f"SHD_SIGMA_INIT     = {SIG_INIT}")
+    print(f"SHD_SIGMA_FINAL    = {SIG_FINAL}")
+    print(f"SHD_ROUND_EACH_EPOCH = {ROUND_EACH_EPOCH}")
     print(f"SHD_OUTPUT_SUBDIR  = {out_subdir}")
     print(f"L1 sparsity mode   = {l1_mode}")
 
@@ -321,7 +339,9 @@ if __name__ == "__main__":
     out_dir = os.path.join("exp", "SHD", "SNN_axonal_feedforward_delays", out_subdir)
     os.makedirs(out_dir, exist_ok=True)
 
-    train_loader, valid_loader, test_loader = load_dataset(config)
+    if config.dataset != "SHD":
+        raise ValueError(f"Dataset {config.dataset} is not supported.")
+    train_loader, valid_loader, test_loader = SHD_dataloaders(config)
     print(
         f"Train: {len(train_loader.dataset)}, Valid: {len(valid_loader.dataset)}, "
         f"Test: {len(test_loader.dataset)}"
@@ -357,6 +377,7 @@ if __name__ == "__main__":
                 "train_acc",
                 "train_loss",
                 "val_acc",
+                "fpga_val_acc",
                 "val_loss",
                 "test_acc",
                 "test_loss",
@@ -369,7 +390,7 @@ if __name__ == "__main__":
     best_val_acc = 0.0
 
     print(
-        f"\n{'Epoch':>5} {'SIG':>6} {'Train':>8} {'Val':>8} {'Test':>8} "
+        f"\n{'Epoch':>5} {'SIG':>6} {'Train':>8} {'Val/FPG':>17} {'Test':>8} "
         f"{'LR':>10} {'LR_pos':>10} {'Time':>6}"
     )
     print("-" * 75)
@@ -390,7 +411,21 @@ if __name__ == "__main__":
             lambda_delay=getattr(config, "lambda_delay", 0.01),
             l1_weight=getattr(config, "l1_weight", 0.0),
         )
+        # Tim [22/22]: checkpoint selection is based on the deployable path:
+        # rounded delays and sigma=0. fpga_val_accuracy() restores the train
+        # state because trainer.test() rounds model delays in place.
+        fpga_val = fpga_val_accuracy(model, valid_loader, device, config, epoch)
+
+        if ROUND_EACH_EPOCH:
+            round_delays_inplace(model)
+
+        saved_state = {
+            key: value.detach().clone()
+            for key, value in model.state_dict().items()
+        }
         val_acc, val_loss = test(valid_loader, model, epoch, device, config)
+        if not ROUND_EACH_EPOCH:
+            model.load_state_dict(saved_state)
 
         for sc in scheduler:
             sc.step()
@@ -401,11 +436,14 @@ if __name__ == "__main__":
 
         if epoch % 10 == 0 or epoch in [config.epochs - 1]:
             test_acc, test_loss = test(test_loader, model, epoch, device, config)
+            if not ROUND_EACH_EPOCH:
+                model.load_state_dict(saved_state)
         else:
             test_acc, test_loss = -1.0, -1.0
 
         print(
-            f"{epoch:>5} {sigma:>6.2f} {train_acc:>7.1f}% {val_acc:>7.1f}% "
+            f"{epoch:>5} {sigma:>6.2f} {train_acc:>7.1f}% "
+            f"{val_acc:>7.1f}%/{fpga_val:>7.1f}% "
             f"{test_acc:>7.1f}% {lr:>10.2e} {lr_pos:>10.2e} {elapsed:>5.0f}s"
         )
 
@@ -417,6 +455,7 @@ if __name__ == "__main__":
                     f"{train_acc:.2f}",
                     f"{train_loss:.4f}",
                     f"{val_acc:.2f}",
+                    f"{fpga_val:.2f}",
                     f"{val_loss:.4f}",
                     f"{test_acc:.2f}",
                     f"{test_loss:.4f}",
@@ -426,15 +465,9 @@ if __name__ == "__main__":
                 ]
             )
 
-        # Tim [22/22]: round delays inplace after each epoch (like Alexandre's code)
-        round_delays_inplace(model)
-
-        # Tim [22/22]: evaluate with rounded delays at sigma=0 for FPGA-relevant accuracy
-        fpga_val = fpga_val_accuracy(model, valid_loader, device, config, epoch)
-
         state = {
             "net": model.state_dict(), "acc": val_acc, "fpga_val_acc": fpga_val,
-            "epoch": epoch, "sigma": sigma,
+            "epoch": epoch, "sigma": sigma, "round_each_epoch": ROUND_EACH_EPOCH,
         }
         torch.save(state, os.path.join(out_dir, "last.pth"))
 
@@ -496,7 +529,14 @@ if __name__ == "__main__":
                 lambda_delay=getattr(config, "lambda_delay", 0.01),
                 l1_weight=0.0,  # L1 off during fine-tune
             )
+            ft_fpga_val = fpga_val_accuracy(model, valid_loader, device, config, ft_epoch)
+
+            saved_state = {
+                key: value.detach().clone()
+                for key, value in model.state_dict().items()
+            }
             ft_val_acc, ft_val_loss = test(valid_loader, model, ft_epoch, device, config)
+            model.load_state_dict(saved_state)
 
             for sc in ft_scheduler:
                 sc.step()
@@ -505,11 +545,13 @@ if __name__ == "__main__":
 
             if ft_epoch % 5 == 0 or ft_epoch == config.finetune_epochs - 1:
                 ft_test_acc, _ = test(test_loader, model, ft_epoch, device, config)
+                model.load_state_dict(saved_state)
             else:
                 ft_test_acc = -1.0
 
             print(
-                f"  FT {ft_epoch:>3} {ft_train_acc:>7.1f}% {ft_val_acc:>7.1f}% "
+                f"  FT {ft_epoch:>3} {ft_train_acc:>7.1f}% "
+                f"{ft_val_acc:>7.1f}%/{ft_fpga_val:>7.1f}% "
                 f"{ft_test_acc:>7.1f}% {elapsed:>5.0f}s"
             )
 
@@ -517,7 +559,7 @@ if __name__ == "__main__":
                 csv.writer(f).writerow([
                     f"ft_{ft_epoch}", f"{SIG_FINAL:.4f}",
                     f"{ft_train_acc:.2f}", f"{ft_train_loss:.4f}",
-                    f"{ft_val_acc:.2f}", f"{ft_val_loss:.4f}",
+                    f"{ft_val_acc:.2f}", f"{ft_fpga_val:.2f}", f"{ft_val_loss:.4f}",
                     f"{ft_test_acc:.2f}", "0.0",
                     f"{ft_optimizer[0].param_groups[0]['lr']:.2e}",
                     f"{ft_optimizer[1].param_groups[0]['lr']:.2e}",
@@ -525,30 +567,30 @@ if __name__ == "__main__":
                 ])
 
             state = {
-                "net": model.state_dict(), "acc": ft_val_acc,
+                "net": model.state_dict(), "acc": ft_val_acc, "fpga_val_acc": ft_fpga_val,
                 "epoch": config.epochs + ft_epoch, "sigma": SIG_FINAL,
                 "l1_mode": True, "prune_sparsity": config.prune_sparsity,
                 "finetune_epoch": ft_epoch,
             }
             torch.save(state, os.path.join(out_dir, "last.pth"))
 
-            if ft_val_acc >= best_val_acc:
-                best_val_acc = ft_val_acc
+            if ft_fpga_val >= best_val_acc:
+                best_val_acc = ft_fpga_val
                 torch.save(state, os.path.join(out_dir, "best.pth"))
 
     # === Final evaluation ===
-    # We evaluate TWO checkpoints:
-    #   1. BEST (highest val_acc) at its NATIVE sigma — accuracy ceiling
-    #   2. LAST (epoch 149) at SIG_FINAL — FPGA-deployable model
-    # Forcing SIG_FINAL on the best checkpoint is wrong because best may have
-    # been trained at a higher sigma (e.g. epoch 82, sigma=6.45) and a much
-    # narrower kernel breaks weight optimisation. v9 (job 2055391165397598208)
-    # hit this bug — best.pth was at sigma=6.45 and forced eval at 0.23 gave
-    # 71.0% instead of the correct LAST-checkpoint result of 75.2%.
+    # We evaluate THREE views:
+    #   1. BEST at native sigma — accuracy ceiling only
+    #   2. BEST at SIG_FINAL with rounded delays — deployable selected model
+    #   3. LAST at SIG_FINAL with rounded delays — historical comparison
+    # Older runs used LAST as the deployable model because best.pth had been
+    # selected by native validation. best.pth is now selected by fpga_val_acc,
+    # so the deployable headline must come from BEST under rounded/SIG_FINAL
+    # evaluation.
     print("\n=== Final Evaluation ===")
 
     def _eval_checkpoint(label, ckpt_path, force_sigma, do_round):
-        ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
+        ckpt = torch.load(ckpt_path, map_location=device, weights_only=True)
         model.load_state_dict(ckpt["net"])
         native_sigma = ckpt.get("sigma", float("nan"))
         epoch = ckpt.get("epoch", -1)
@@ -583,29 +625,34 @@ if __name__ == "__main__":
         "BEST @ native sigma", best_path, force_sigma=None, do_round=False
     )
 
-    # 2. LAST at SIG_FINAL — FPGA-deployable model
-    last_before, last_after, last_epoch, last_native_sigma = _eval_checkpoint(
-        "LAST @ SIG_FINAL", last_path, force_sigma=SIG_FINAL, do_round=True
+    # 2. BEST at SIG_FINAL — FPGA-deployable selected model
+    best_deploy_before, best_deploy_after, best_deploy_epoch, _ = _eval_checkpoint(
+        "BEST @ SIG_FINAL", best_path, force_sigma=SIG_FINAL, do_round=True
     )
 
-    # Save the FPGA-deployable rounded checkpoint (from LAST, not BEST)
+    # Save the FPGA-deployable rounded checkpoint from the selected BEST model.
     torch.save(
         {
             "net": model.state_dict(),
-            "acc": last_after,
-            "epoch": last_epoch,
+            "acc": best_deploy_after,
+            "epoch": best_deploy_epoch,
             "dcls_version": "max",
             "sigma_init": SIG_INIT,
             "sigma_final": SIG_FINAL,
             "rounded": True,
-            "source": "last.pth",
+            "source": "best.pth",
         },
         os.path.join(out_dir, "best_rounded.pth"),
     )
 
-    # Use the LAST results as the primary headline numbers
-    test_before = last_before
-    test_after = last_after
+    # 3. LAST at SIG_FINAL — historical comparison
+    last_before, last_after, last_epoch, last_native_sigma = _eval_checkpoint(
+        "LAST @ SIG_FINAL", last_path, force_sigma=SIG_FINAL, do_round=True
+    )
+
+    # Use the deployable BEST results as the primary headline numbers.
+    test_before = best_deploy_before
+    test_after = best_deploy_after
     drop = test_before - test_after
 
     config_data = {
@@ -614,8 +661,13 @@ if __name__ == "__main__":
         "sigma_schedule": "cosine",
         "sigma_init": SIG_INIT,
         "sigma_final": SIG_FINAL,
+        "seed": config.seed,
+        "round_each_epoch": ROUND_EACH_EPOCH,
         "lambda_delay": getattr(config, "lambda_delay", 0.01),
         "best_val_acc": best_val_acc,
+        "best_fpga_deployable_epoch": best_deploy_epoch,
+        "best_fpga_deployable_before_round": best_deploy_before,
+        "best_fpga_deployable_after_round": best_deploy_after,
         "best_native_sigma": best_native_sigma,
         "best_test_at_native_sigma": best_before,
         "last_epoch": last_epoch,
@@ -628,8 +680,9 @@ if __name__ == "__main__":
             "vgauss_rounded": 58.6,
             "v1_test": 72.5,
             "max_best_at_native_sigma": best_before,
-            "max_last_before_rounding": test_before,
-            "max_last_after_rounding": test_after,
+            "max_best_after_rounding": best_deploy_after,
+            "max_last_before_rounding": last_before,
+            "max_last_after_rounding": last_after,
         },
     }
     if l1_mode:
@@ -654,5 +707,8 @@ if __name__ == "__main__":
     print("v1 (tent, fixed):          72.5% test (0% rounding drop)")
     print(f"max BEST @ native sigma={best_native_sigma:.2f}:  {best_before:.1f}% test (NOT FPGA)")
     print(
-        f"max LAST @ sigma={SIG_FINAL}:  {test_before:.1f}% before / {test_after:.1f}% after round (FPGA-deployable)"
+        f"max BEST @ sigma={SIG_FINAL}:  {best_deploy_before:.1f}% before / {best_deploy_after:.1f}% after round (FPGA-selected)"
+    )
+    print(
+        f"max LAST @ sigma={SIG_FINAL}:  {last_before:.1f}% before / {last_after:.1f}% after round (historical comparison)"
     )
