@@ -31,6 +31,7 @@ def main() -> int:
             "deploy",
             "serve",
             "map-nir",
+            "hub-init",
             "compile",
             "studio",
             "collect-synthesis",
@@ -153,6 +154,8 @@ def main() -> int:
             )
             return 1
         return _cmd_map_nir(args.model, args.output, args.hardware_targets, args.dt, args.T)
+    if args.command == "hub-init":
+        return _cmd_hub_init(args.output, args.port)
     if args.command == "studio":
         return _cmd_studio(args.port)
     if args.command == "collect-synthesis":
@@ -540,6 +543,26 @@ def _cmd_map_nir(
     print("NIR silicon mapping report generated")
     print(f"  Targets:  {', '.join(targets)}")
     print(f"  Report:   {report_path}")
+    return 0
+
+
+def _cmd_hub_init(output_dir: str, port: int) -> int:
+    """Generate a local self-hosted hub Compose bundle."""
+    from sc_neurocore.hub import HubBundleConfig, write_hub_bundle
+
+    try:
+        paths = write_hub_bundle(
+            output_dir,
+            HubBundleConfig(studio_port=port),
+        )
+    except (OSError, ValueError) as exc:
+        print(f"Error: {exc}")
+        return 1
+
+    print("SC-NeuroCore hub bundle generated")
+    print(f"  Directory: {output_dir}")
+    print(f"  Compose:   {paths['compose']}")
+    print(f"  Manifest:  {paths['manifest']}")
     return 0
 
 
