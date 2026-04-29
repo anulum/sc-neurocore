@@ -65,7 +65,25 @@ dev = ["pytest", "pytest-cov", "hypothesis", "mypy", "ruff", "bandit", "pyyaml",
 dev-full = ["sc-neurocore[dev]", "jax", "jaxlib", "qiskit", "pennylane", "qiskit-aer"]
 accel = ["numba>=0.56"]
 gpu = ["cupy-cuda12x>=12.0"]
-full = ["numba>=0.56", "matplotlib>=3.5", "networkx", "onnx", "qiskit", "pennylane"]
+hdl = ["pint>=0.23"]
+full = [
+  "numba>=0.56",
+  "matplotlib>=3.5",
+  "networkx",
+  "onnx",
+  "torch>=2.0",
+  "nir>=1.0",
+  "fastapi>=0.100",
+  "uvicorn[standard]>=0.20",
+  "httpx>=0.27",
+  "PyWavelets>=1.4",
+  "zstandard>=0.22",
+  "scikit-learn>=1.3",
+  "pint>=0.23",
+  "qiskit",
+  "pennylane",
+  "qiskit-aer",
+]
 research = ["matplotlib>=3.5", "networkx", "onnx", "torch>=2.0"]
 training = ["torch>=2.0"]
 jax = ["jax", "jaxlib"]
@@ -115,6 +133,9 @@ sc_neurocore = [
   "accel/julia/world_model/*.jl",
   "accel/go/rk4_neurons/*.go",
   "accel/mojo/rk4_neurons/*.mojo",
+  "hardware/*.v",
+  "hdl_gen/safety/*.sv",
+  "hdl_gen/openroad_flow/*.sh",
 ]
 
 [tool.pytest.ini_options]

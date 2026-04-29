@@ -58,6 +58,7 @@ sc-neurocore info
 | --- | --- | --- |
 | `pip install "sc-neurocore[training]"` | Training PyTorch-backed models | `torch` |
 | `pip install "sc-neurocore[nir]"` | Importing/exporting Neuromorphic Intermediate Representation graphs | `nir` |
+| `pip install "sc-neurocore[hdl]"` | Equation-to-HDL workflows, unit-checked equations, packaged HDL primitives | `pint`; bundled `.v` / `.sv` / OpenROAD helper artefacts |
 | `pip install "sc-neurocore[gpu]"` | CuPy CUDA experiments | `cupy-cuda12x` |
 | `pip install "sc-neurocore[jax]"` | JAX-backed experiments | `jax`, `jaxlib` |
 | `pip install "sc-neurocore[quantum]"` | Quantum-circuit experiments | `qiskit`, `pennylane`, `qiskit-aer` |
@@ -72,6 +73,11 @@ are acceptable:
 ```bash
 pip install "sc-neurocore[full]"
 ```
+
+The `full` profile is the CPU-side union for training, NIR, Studio, HDL, codec,
+bioware, and quantum workflows. It deliberately does not pull GPU-, MPI-,
+Lava-, Julia-, or JAX-specific stacks because those depend on local hardware,
+drivers, or external runtimes.
 
 ## Research-only polyglot layer
 
