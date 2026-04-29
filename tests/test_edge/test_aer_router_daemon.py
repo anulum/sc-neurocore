@@ -51,7 +51,11 @@ def test_aer_router_start_builds_and_spawns_daemon(monkeypatch: pytest.MonkeyPat
     daemon.start(build=True)
 
     expected_dir = (
-        Path(aer_router.__file__).resolve().parent.parent / "accel" / "go" / "services" / "aer_router"
+        Path(aer_router.__file__).resolve().parent.parent
+        / "accel"
+        / "go"
+        / "services"
+        / "aer_router"
     )
     assert daemon._router_dir == expected_dir
     assert daemon._port == 9101
