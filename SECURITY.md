@@ -55,6 +55,10 @@ correct Python ↔ Rust conversions.
 - **Rust:** `cargo audit` in CI
 - **Python:** Minimal dependencies (`numpy`, `scipy`). No `pickle.load` of
   untrusted data in any production module.
+- **SBOM/release artefacts:** run the offline audit locally with
+  `python tools/supply_chain_audit.py`. Use `--strict` before releases to fail
+  on SBOM metadata drift as well as hard errors such as un-hashed release
+  requirements.
 
 ## Known Limitations
 
