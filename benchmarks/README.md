@@ -6,6 +6,7 @@ Performance benchmarks for the SC-NeuroCore framework.
 
 | Script | Description |
 |--------|-------------|
+| `bench_neuron_integrators.py` | Cross-language RK4 neuron integrator parity and timing for Python / Rust / Julia / Go / Mojo |
 | `bench_v2_vs_v3.py` | Compare v2 (pure-Python) vs v3 (Rust engine) performance |
 | `benchmark_advanced_modules.py` | Benchmark advanced module operations |
 | `benchmark_sc.py` | Core stochastic computing primitives |
@@ -22,6 +23,9 @@ python benchmarks/benchmark_suite.py --full --markdown
 
 # v2 vs v3 comparison
 python benchmarks/bench_v2_vs_v3.py
+
+# RK4 neuron integrator parity + timing
+python benchmarks/bench_neuron_integrators.py
 ```
 
 ## Rust Benchmarks

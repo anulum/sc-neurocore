@@ -98,6 +98,19 @@ Mojo recurrence kernels run as compiled shared-library code but still preserve
 the same fixed-step RK4 recurrence as Python, Rust, Julia, and Go. The time
 axis is not vectorised because each RK4 step depends on the previous state.
 
+## Cross-Language Harness
+
+`benchmarks/bench_neuron_integrators.py` runs the shared deterministic
+1 000-step parity trace for Python, Rust, Julia, Go, and Mojo backend slots.
+Unavailable optional backends are reported with explicit missing-runtime or
+missing-shared-library reasons. Available backends are then timed on the same
+model/current traces and written to `benchmarks/results/bench_neuron_integrators.json`.
+
+```bash
+python benchmarks/bench_neuron_integrators.py
+python benchmarks/bench_neuron_integrators.py --parity-only
+```
+
 ## Design Rules
 
 - default construction must preserve historical behaviour
