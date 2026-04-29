@@ -13,6 +13,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   equation/MLIR lowering, and optimiser evidence JSON.
 - Offline supply-chain audit command for committed CycloneDX SBOM and release
   requirements metadata: `python tools/supply_chain_audit.py`.
+- Hardware-install documentation now records Vivado `v2025.2` as the current
+  SHD/PYNQ evidence pin and marks OpenROAD PPA numbers as unpublished until the
+  binary/container digest and PDK revision are recorded.
 
 #### Fixed
 - Hardened validation boundaries for fuzzed JSON, NPZ, NIR, IR, and HDL inputs
