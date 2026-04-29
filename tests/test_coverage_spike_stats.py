@@ -267,12 +267,8 @@ def test_distance_python_fallback_algorithms(monkeypatch):
     assert np.all(np.isfinite(sync_profile))
     assert np.all(np.isfinite(spike_dist_profile))
 
-    adaptive_zero = adaptive_spike_distance(
-        np.array([0.2, 0.6]), np.array([0.2, 0.7]), cost=0.0
-    )
-    adaptive_one = adaptive_spike_distance(
-        np.array([0.2, 0.6]), np.array([0.2, 0.7]), cost=1.0
-    )
+    adaptive_zero = adaptive_spike_distance(np.array([0.2, 0.6]), np.array([0.2, 0.7]), cost=0.0)
+    adaptive_one = adaptive_spike_distance(np.array([0.2, 0.6]), np.array([0.2, 0.7]), cost=1.0)
     assert adaptive_zero == spike_distance(np.array([0.2, 0.6]), np.array([0.2, 0.7]))
     assert 0.0 <= adaptive_one <= 1.0
 
@@ -455,7 +451,9 @@ def test_information_rust_acceleration_delegation(monkeypatch):
     monkeypatch.setattr(information_module, "_HAS_RUST", True)
     monkeypatch.setattr(information_module, "_ssc", RustCore())
 
-    assert spike_train_entropy(np.array([1, 0, 1, 0], dtype=np.int8), bin_size=1, word_length=2) == 1.5
+    assert (
+        spike_train_entropy(np.array([1, 0, 1, 0], dtype=np.int8), bin_size=1, word_length=2) == 1.5
+    )
     assert kozachenko_leonenko_mi(np.arange(8.0), np.arange(8.0), k=2) == 0.25
 
 
