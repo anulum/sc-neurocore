@@ -77,6 +77,10 @@ source_rtl = generator.emit_sources_from_ir(
 
 `emit_sources_from_ir(...)` is also exported at package level for callers that
 already hold an IR payload and do not need a `VerilogGenerator` instance.
+Source module names are validated as HDL identifiers before emission. Explicit
+source seeds must be integer values; invalid identifiers, duplicate module
+names, unknown source kinds, and non-integer seeds are rejected instead of being
+coerced into generated RTL.
 
 ## Emitted module interface
 
