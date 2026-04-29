@@ -113,6 +113,8 @@ sc_neurocore = [
   "accel/julia/neurons/wilson_cowan.jl",
   "accel/julia/neurons/wong_wang.jl",
   "accel/julia/world_model/*.jl",
+  "accel/go/rk4_neurons/*.go",
+  "accel/mojo/rk4_neurons/*.mojo",
 ]
 
 [tool.pytest.ini_options]
