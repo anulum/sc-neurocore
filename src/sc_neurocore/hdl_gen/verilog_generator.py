@@ -8,6 +8,7 @@
 
 import logging
 from collections.abc import Mapping
+from numbers import Integral
 from typing import Any, Dict
 
 from .aer_emitter import AEREmitter
@@ -251,6 +252,8 @@ def _source_module_name(node: Any, *, node_id: str | None, index: int) -> str:
 def _source_seed(node: Any, *, default: int) -> int:
     params = _node_params(node)
     raw_seed = _node_value(node, "seed", default=_node_value(params, "seed", default=default))
+    if isinstance(raw_seed, bool) or not isinstance(raw_seed, Integral):
+        raise ValueError("stochastic source seed must be an integer")
     return int(raw_seed)
 
 
