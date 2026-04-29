@@ -33,6 +33,11 @@ from .hardware_targets import (
     build_noise_annotation,
     get_hardware_profile,
 )
+from .silicon_mapping import (
+    SiliconMappingConfig,
+    build_silicon_mapping_report,
+    write_silicon_mapping_report,
+)
 
 _NIR_IMPORT_ERROR: ImportError | None = None
 _from_nir_impl: Any | None = None
@@ -71,8 +76,11 @@ __all__ = [
     "HardwareNoiseAnnotation",
     "NeuromorphicHardwareProfile",
     "SCMappingConstraints",
+    "SiliconMappingConfig",
     "available_hardware_profiles",
     "build_nir_hardware_manifest",
     "build_noise_annotation",
+    "build_silicon_mapping_report",
     "get_hardware_profile",
+    "write_silicon_mapping_report",
 ]
