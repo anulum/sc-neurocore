@@ -22,7 +22,7 @@ flowchart LR
     B --> C[SpikingNet<br/>Linear → LIFCell × N]
     C --> D{Loss + Backward<br/>surrogate gradient}
     D --> |optimizer.step| C
-    D --> E[to_sc_weights<br/>normalize to 0,1]
+    D --> E[to_sc_weights<br/>normalise to 0,1]
     E --> F[SC Bitstream<br/>SCDenseLayer]
     E --> G[Verilog RTL<br/>equation compiler]
     G --> H[FPGA Bitstream<br/>Yosys + nextpnr]
@@ -416,10 +416,12 @@ spike_counts, mem_acc = net(x)
 predicted = spike_counts.argmax(dim=1)  # (64,)
 ```
 
-#### `to_sc_weights(include_bias=True)`
+#### `to_sc_weights(include_bias=True, noise_model=None)`
 
 Export trained weights to [0, 1] range for stochastic computing bitstream
-deployment. Each layer's weight matrix is min-max normalized independently.
+deployment. Each layer's weight matrix is min-max normalised independently.
+Optional deterministic export-time noise models can realise finite bitstream
+probabilities before FPGA/ASIC hand-off.
 
 ```python
 sc_layers = net.to_sc_weights()
@@ -428,6 +430,14 @@ for i, layer in enumerate(sc_layers):
     print(f"Layer {i}: {tuple(w.shape)}, range [{w.min():.3f}, {w.max():.3f}]")
     if "bias" in layer:
         print(f"  bias: {tuple(layer['bias'].shape)}")
+```
+
+```python
+from sc_neurocore.training import SCWeightNoiseModel
+
+noise = SCWeightNoiseModel(mode="binomial", bitstream_length=256, seed=17)
+sc_layers = net.to_sc_weights(noise_model=noise)
+print(sc_layers[0]["noise_model"])
 ```
 
 These weights map directly to bitstream probabilities in `SCDenseLayer` and

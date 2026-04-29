@@ -22,6 +22,7 @@ from sc_neurocore.training.snn_modules import (
     LapicqueCell,
     LIFCell,
     RecurrentLIFCell,
+    SCWeightNoiseModel,
     SecondOrderLIFCell,
     SpikingNet,
     SynapticCell,
@@ -200,6 +201,31 @@ class TestSpikingNet:
             assert entry["weight"].min() >= 0.0
             assert entry["weight"].max() <= 1.0
 
+    def test_to_sc_weights_binomial_noise_is_deterministic(self):
+        net = SpikingNet(n_input=5, n_hidden=8, n_output=3, n_layers=1)
+        model = SCWeightNoiseModel(mode="binomial", bitstream_length=32, seed=17)
+        first = net.to_sc_weights(noise_model=model)
+        second = net.to_sc_weights(noise_model=model)
+        assert first[0]["noise_model"]["mode"] == "binomial"
+        assert first[0]["noise_model"]["bitstream_length"] == 32
+        assert torch.equal(first[0]["weight"], second[0]["weight"])
+        assert first[0]["weight"].min() >= 0.0
+        assert first[0]["weight"].max() <= 1.0
+
+    def test_to_sc_weights_gaussian_noise_uses_sigma(self):
+        net = SpikingNet(n_input=5, n_hidden=8, n_output=3, n_layers=1)
+        base = net.to_sc_weights(noise_model="none")
+        noisy = net.to_sc_weights(noise_model={"mode": "gaussian", "sigma": 0.05, "seed": 11})
+        assert noisy[0]["noise_model"]["sigma"] == 0.05
+        assert not torch.equal(base[0]["weight"], noisy[0]["weight"])
+        assert noisy[0]["weight"].min() >= 0.0
+        assert noisy[0]["weight"].max() <= 1.0
+
+    def test_to_sc_weights_rejects_invalid_noise_model(self):
+        net = SpikingNet(n_input=5, n_hidden=8, n_output=3, n_layers=1)
+        with pytest.raises(ValueError, match="unsupported"):
+            net.to_sc_weights(noise_model="shot")
+
     def test_single_layer(self):
         net = SpikingNet(n_input=5, n_hidden=8, n_output=3, n_layers=0)
         x = torch.randn(10, 2, 5)
@@ -324,6 +350,14 @@ class TestConvSpikingNet:
             assert "weight" in entry
             assert entry["weight"].min() >= 0.0
             assert entry["weight"].max() <= 1.0
+
+    def test_to_sc_weights_noise_metadata(self):
+        net = ConvSpikingNet(n_output=3)
+        weights = net.to_sc_weights(
+            noise_model=SCWeightNoiseModel(mode="binomial", bitstream_length=16, seed=5)
+        )
+        assert len(weights) == 4
+        assert all(entry["noise_model"]["mode"] == "binomial" for entry in weights)
 
     def test_learnable_params(self):
         net = ConvSpikingNet(n_output=5, learn_beta=True, learn_threshold=True)

@@ -54,7 +54,7 @@ depending on the command). All other parameters are keyword flags; running
 | `benchmark` | Run `pytest benchmarks/benchmark_suite.py --benchmark-only` | — | pytest exit code |
 | `preflight` | Run `tools/preflight.py` | — | preflight exit code |
 | `compile` | Equation string → SystemVerilog RTL (+ optional TB + Yosys) | ODE string | `0` on success, `1` on missing model |
-| `deploy` | NIR/PyTorch model → SC-NeuroCore HDL project for FPGA | model file path | `0` on success, `1` on bad format |
+| `deploy` | NIR/PyTorch model → SC-NeuroCore HDL project for FPGA, or static web scaffold with `--target web` | model file path | `0` on success, `1` on bad format |
 | `serve` | Start streaming spike inference server (`SpikeServer`) | `.nir` file path | `0` while running |
 | `studio` | Launch Visual SNN Design Studio (FastAPI + Uvicorn) | — | `0` on clean exit, `1` if FastAPI missing |
 | `collect-synthesis` | Convert real utilisation, timing, and power reports into optimiser evidence JSON | — | `0` on success, `1` on missing or invalid input |
@@ -136,7 +136,7 @@ parameters) and synthesises with Yosys for ICE40/ECP5 targets when
 
 ### 2.5 `deploy`
 
-Five-step pipeline (six with auto-synthesis):
+FPGA targets run a five-step pipeline (six with auto-synthesis):
 
 1. **Load model** — `.nir` via `nir_lib.read` + `from_nir`, or `.pt`/`.pth`
    via `torch.load(weights_only=True)` with automatic per-`Linear` ReLU
@@ -160,6 +160,25 @@ Five-step pipeline (six with auto-synthesis):
 | `ecp5` | `ecp5` | `85k` | `CABGA381` | Yosys |
 | `artix7` | `xc7a` | `xc7a100t` | `csg324` | Vivado |
 | `zynq` | `xc7z` | `xc7z020` | `clg400` | Vivado |
+
+`--target web` generates a static browser bundle instead of an FPGA project:
+
+```bash
+sc-neurocore deploy model.nir --target web --output build/web --dt 1.0 --T 256
+```
+
+Generated files:
+
+- `manifest.json` — deterministic model/runtime contract.
+- `index.html` — browser entry point.
+- `runtime/sc_neurocore_web.js` — manifest loader and WebGPU capability check.
+- `runtime/sc_neurocore_webgpu.wgsl` — minimal SC probability shader scaffold.
+- `model/<name>` — copied source model artefact.
+
+The web target accepts `.nir`, `.pt`, `.pth`, and `.json` inputs. It does not
+invoke PyTorch, NIR import, Node.js, or a native WASM build during generation,
+so packaging can be tested in CI without browser drivers or hardware
+accelerators.
 
 ### 2.6 `serve`
 

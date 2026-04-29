@@ -41,6 +41,7 @@ if HAS_TORCH:
         LapicqueCell,
         LIFCell,
         RecurrentLIFCell,
+        SCWeightNoiseModel,
         SecondOrderLIFCell,
         SpikingNet,
         SynapticCell,
@@ -83,6 +84,7 @@ __all__ = [
     "SecondOrderLIFCell",
     "SpikingNet",
     "ConvSpikingNet",
+    "SCWeightNoiseModel",
     # Delay layer
     "DelayLinear",
     # Surrogate gradients

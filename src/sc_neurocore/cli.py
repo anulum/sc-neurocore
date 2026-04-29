@@ -40,8 +40,8 @@ def main() -> int:
     parser.add_argument(
         "--target",
         default="ice40",
-        choices=["ice40", "ecp5", "artix7", "zynq"],
-        help="FPGA target for deploy (default: ice40)",
+        choices=["ice40", "ecp5", "artix7", "zynq", "web"],
+        help="Deployment target (default: ice40)",
     )
     parser.add_argument("--output", "-o", default="build", help="Output directory for deploy")
     parser.add_argument(
@@ -340,7 +340,7 @@ def _cmd_benchmark() -> int:
 def _cmd_deploy(
     model_path: str, target: str, output_dir: str, dt: float, bitstream_length: int
 ) -> int:
-    """Deploy a model to FPGA: NIR/PyTorch → quantize → Verilog → project."""
+    """Deploy a model to FPGA or browser artefacts."""
     import os
 
     os.makedirs(output_dir, exist_ok=True)
@@ -349,6 +349,24 @@ def _cmd_deploy(
     print(f"  Target: {target}")
     print(f"  Output: {output_dir}")
     print()
+
+    if target == "web":
+        from sc_neurocore.edge.web_deploy import WebDeploymentConfig, build_web_deployment
+
+        try:
+            manifest = build_web_deployment(
+                model_path,
+                output_dir,
+                WebDeploymentConfig(dt=dt, bitstream_length=bitstream_length),
+            )
+        except (OSError, ValueError) as exc:
+            print(f"Error: {exc}")
+            return 1
+
+        print("[1/1] Browser deployment scaffold generated")
+        print(f"  Manifest: {os.path.join(output_dir, manifest.artefacts['manifest'])}")
+        print(f"  Entry:    {os.path.join(output_dir, manifest.artefacts['html'])}")
+        return 0
 
     # Step 1: Load model
     ext = os.path.splitext(model_path)[1].lower()

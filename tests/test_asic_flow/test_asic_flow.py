@@ -23,17 +23,22 @@ from sc_neurocore.asic_flow.asic_flow import (
     LECGenerator,
     MultiCornerAnalysis,
     OCVConfig,
+    OpenSourcePDKResolver,
     PDKConfig,
+    PDKResolution,
     PDKType,
     PVTCorner,
     PlaceRouteGenerator,
     PreSynthEstimator,
+    ResolvedPDKFiles,
+    SCASICOptimisationConfig,
     SDCGenerator,
     SignoffCheckResult,
     SignoffGenerator,
     SignoffSummary,
     SynthesisGenerator,
     TapeOutChecklist,
+    validate_pdk_installation,
     validate_pdk,
 )
 
@@ -51,6 +56,7 @@ class TestPDKConfig:
     def test_gf180_preset(self):
         cfg = PDKConfig.from_pdk_type(PDKType.GF180MCU)
         assert "gf180" in cfg.liberty_file
+        assert cfg.tech_lef.endswith(".tlef")
         assert cfg.voltage_v == 3.3
 
     def test_tsmc28_preset(self):
@@ -74,6 +80,51 @@ class TestPDKConfig:
         for pdk in PDKType:
             cfg = PDKConfig.from_pdk_type(pdk)
             assert cfg.min_feature_nm > 0
+
+    def test_bind_pdk_root(self):
+        cfg = PDKConfig.from_pdk_type(PDKType.SKY130).with_pdk_root("/opt/pdk")
+        assert cfg.liberty_file.startswith("/opt/pdk/sky130A")
+        assert "$PDK_ROOT" not in cfg.lef_file
+
+
+class TestOpenSourcePDKResolver:
+    def test_resolves_sky130_manifest(self):
+        pdk = PDKConfig.from_pdk_type(PDKType.SKY130)
+        resolution = OpenSourcePDKResolver.resolve(pdk, pdk_root="/opt/pdk")
+        assert isinstance(resolution, PDKResolution)
+        assert isinstance(resolution.files, ResolvedPDKFiles)
+        assert resolution.pdk.liberty_file.startswith("/opt/pdk/sky130A")
+        assert "sky130.lydrc" in resolution.files.drc_deck
+
+    def test_resolves_gf180_manifest(self):
+        pdk = PDKConfig.from_pdk_type(PDKType.GF180MCU)
+        resolution = OpenSourcePDKResolver.resolve(pdk, pdk_root="/opt/pdk")
+        assert resolution.pdk.tech_lef.endswith(".tlef")
+        assert "gf180mcuD_setup.tcl" in resolution.files.lvs_setup
+
+    def test_reports_missing_required_files(self):
+        pdk = PDKConfig.from_pdk_type(PDKType.SKY130)
+        resolution = OpenSourcePDKResolver.resolve(
+            pdk, pdk_root="/definitely/missing/pdk", require_existing=True
+        )
+        assert not resolution.usable_for_synthesis
+        assert "liberty_file" in resolution.missing_required
+
+    def test_accepts_minimal_existing_synthesis_files(self, tmp_path):
+        root = tmp_path / "pdk"
+        paths = [
+            root / "sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib",
+            root / "sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef",
+            root / "sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__nom.tlef",
+        ]
+        for path in paths:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("placeholder\n", encoding="utf-8")
+
+        pdk = PDKConfig.from_pdk_type(PDKType.SKY130)
+        resolution = OpenSourcePDKResolver.resolve(pdk, pdk_root=str(root), require_existing=True)
+        assert resolution.usable_for_synthesis
+        assert not resolution.usable_for_signoff
 
 
 # ── DesignParams Tests ───────────────────────────────────────────────
@@ -122,8 +173,24 @@ class TestSynthesisGenerator:
         pdk = PDKConfig.from_pdk_type(PDKType.SKY130)
         design = DesignParams(target_frequency_mhz=200.0)
         tcl = SynthesisGenerator.generate(pdk, design)
-        # 200 MHz = 5ns = 5000ps
-        assert "5000" in tcl
+        # 200 MHz = 5ns; SC optimisation uses the default 90% delay margin.
+        assert "4500" in tcl
+
+    def test_sc_optimisation_passes_enabled(self):
+        pdk = PDKConfig.from_pdk_type(PDKType.SKY130)
+        design = DesignParams()
+        tcl = SynthesisGenerator.generate(pdk, design)
+        assert "wreduce" in tcl
+        assert "opt_share" in tcl
+        assert "keep_hierarchy" in tcl
+
+    def test_sc_optimisation_can_disable_counter_sharing(self):
+        pdk = PDKConfig.from_pdk_type(PDKType.SKY130)
+        design = DesignParams(
+            sc_optimisation=SCASICOptimisationConfig(share_stochastic_counters=False)
+        )
+        tcl = SynthesisGenerator.generate(pdk, design)
+        assert "opt_share" not in tcl
 
 
 # ── FloorplanGenerator Tests ─────────────────────────────────────────
@@ -193,6 +260,12 @@ class TestSDCGenerator:
         sdc = SDCGenerator.generate(pdk, design)
         assert "rst_n" in sdc
         assert "false_path" in sdc
+
+    def test_sc_fanout_constraint(self):
+        pdk = PDKConfig.from_pdk_type(PDKType.SKY130)
+        design = DesignParams(sc_optimisation=SCASICOptimisationConfig(max_fanout=8))
+        sdc = SDCGenerator.generate(pdk, design)
+        assert "set_max_fanout 8" in sdc
 
 
 # ── SignoffGenerator Tests ───────────────────────────────────────────
@@ -519,6 +592,30 @@ class TestPDKValidation:
         )
         result = validate_pdk(pdk)
         assert result.valid
+
+    def test_installation_check_reports_missing_pdk(self):
+        pdk = PDKConfig.from_pdk_type(PDKType.SKY130)
+        result = validate_pdk_installation(pdk, pdk_root="/definitely/missing/pdk")
+        assert not result.valid
+        assert any("liberty_file not found" in err for err in result.errors)
+
+    def test_installation_check_can_require_signoff_files(self, tmp_path):
+        root = tmp_path / "pdk"
+        paths = [
+            root / "sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib",
+            root / "sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef",
+            root / "sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__nom.tlef",
+        ]
+        for path in paths:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("placeholder\n", encoding="utf-8")
+
+        pdk = PDKConfig.from_pdk_type(PDKType.SKY130)
+        synth_only = validate_pdk_installation(pdk, pdk_root=str(root))
+        signoff = validate_pdk_installation(pdk, pdk_root=str(root), require_signoff=True)
+        assert synth_only.valid
+        assert synth_only.warnings
+        assert not signoff.valid
 
 
 # ── Hierarchical Flow Tests (Gap 9) ───────────────────────────────────
