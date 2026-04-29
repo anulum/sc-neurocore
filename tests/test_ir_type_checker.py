@@ -84,6 +84,16 @@ class TestCheckIRTypes:
         assert len(errors) == 1
         assert "out of range" in errors[0].message
 
+    def test_negative_port_out_of_range(self):
+        nodes = {
+            "a": IRNode("a", "enc", [], SignalType.BITSTREAM),
+            "b": IRNode("b", "and", [SignalType.BITSTREAM], SignalType.BITSTREAM),
+        }
+        edges = [IREdge("a", "b", dst_port=-1)]
+        errors = check_ir_types(nodes, edges)
+        assert len(errors) == 1
+        assert "out of range" in errors[0].message
+
     def test_multiple_errors(self):
         nodes = {
             "rate_in": IRNode("rate_in", "input", [], SignalType.RATE),
