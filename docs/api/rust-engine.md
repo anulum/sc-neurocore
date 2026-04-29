@@ -35,7 +35,8 @@ cargo doc --open
 
 ## Python Bindings (PyO3)
 
-The engine is exposed to Python via the `sc_neurocore_engine` wheel:
+The engine is exposed to Python via the local `sc_neurocore_engine` bridge.
+For source checkouts:
 
 ```bash
 cd bridge

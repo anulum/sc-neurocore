@@ -7,7 +7,7 @@ stochastic computing (SC) neural networks — from individual neurons to full
 SCPN layer hierarchies, with both software simulation and Verilog RTL for
 FPGA deployment.
 
-**Version 3.14.0** | 173 neuron models | Rust engine + Python front-end | HDL generation + hardware guides | [PyPI](https://pypi.org/project/sc-neurocore/) | [Rust Engine](https://pypi.org/project/sc-neurocore-engine/) | [GitHub](https://github.com/anulum/sc-neurocore)
+**Version 3.14.0** | 173 neuron models | optional Rust engine + Python front-end | HDL generation + hardware guides | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
 
 ![SC-NeuroCore train-to-hardware pipeline](assets/pipeline.png)
 *Train in PyTorch → Quantise to Q8.8 → Simulate with stochastic bitstreams → Compile to SystemVerilog → Synthesise for FPGA. The Rust SIMD engine accelerates all stages.*
@@ -61,15 +61,11 @@ product name. Frontier modules such as `analysis`, `viz`, `audio`,
 pip install sc-neurocore
 ```
 
-For the 39–202× Rust SIMD engine (pre-built wheels for Linux/Windows/macOS):
-
-```bash
-pip install sc-neurocore-engine
-```
-
-When installed, SC-NeuroCore automatically uses Rust for NetworkRunner,
-E-I network simulation, batch model dispatch, and SIMD bitstream ops.
-Everything works without it — NumPy fallbacks are used.
+When the optional Rust engine is available in the environment, SC-NeuroCore
+automatically uses it for NetworkRunner, E-I network simulation, batch model
+dispatch, and SIMD bitstream ops. Everything works without it: NumPy fallbacks
+are used. See [Install Profiles](guides/install_profiles.md) for the base
+install, optional extras, and source-build path for acceleration.
 
 ```python
 from sc_neurocore import VectorizedSCLayer, BitstreamEncoder
@@ -85,7 +81,7 @@ print(output)  # array of firing-rate probabilities
 |------|---------|:--------------:|
 | **Core** | neurons, synapses, layers, sources, utils, recorders, accel, compiler, hdl_gen, hardware | Yes |
 | **Simulation** | hdc, solvers, transformers, learning, graphs, ensembles, export, pipeline, training | Yes |
-| **Domain bridges** | quantum (Qiskit/PennyLane), adapters/holonomic (JAX), scpn (Petri nets) | Yes |
+| **Domain bridges** | quantum API guards, adapters/holonomic, scpn | API guards ship; Qiskit/PennyLane/JAX extras are opt-in |
 | **Research** | robotics, physics, bio, optics, chaos, sleep, interfaces | Source only |
 | **Frontier** | analysis, viz, audio, dashboard, generative, world_model, swarm | Source only |
 
@@ -100,6 +96,7 @@ See [Architecture](architecture/architecture.md) for the full package map.
 | [Surrogate Gradient Training](tutorials/03_surrogate_gradient_training.md) | Train SNNs with backpropagation |
 | [Hyper-Dimensional Computing](tutorials/04_hyperdimensional_computing.md) | Symbolic AI with high-dimensional vectors |
 | [FPGA in 20 Minutes](tutorials/fpga_in_20_minutes.md) | Train → quantise → synthesise → deploy |
+| [FPGA Deploy Cookbook](tutorials/fpga_deploy_cookbook.md) | Five-minute scaffold, optional synthesis, report-to-optimiser handoff |
 | [Rust Engine & Performance](tutorials/05_rust_engine_performance.md) | SIMD tiers, GPU, benchmarking |
 | [Brunel Network Translation](tutorials/06_brunel_network_translation.md) | Brian2 → SC conversion workflow |
 | [Spike Codec Library](tutorials/70_spike_codec.md) | 6 codecs for BCI, probes, neuromorphic, real-time |
@@ -107,6 +104,7 @@ See [Architecture](architecture/architecture.md) for the full package map.
 ## Documentation
 
 - **[Getting Started](guides/getting-started.md)** — Installation and first steps
+- **[Install Profiles](guides/install_profiles.md)** — Base install, optional extras, and research-only polyglot boundary
 - **[Alternative Paths](guides/alternative_paths.md)** — Safe opt-in workflow for baseline vs candidate implementations
 - **[Stable Engine Bridge Contracts](guides/engine_bridge_contracts.md)** — Maintained wrapper modules for Rust engine consumers
 - **[Acceleration Mirror Authority](guides/accel_mirror_authority.md)** — Which Julia/Mojo acceleration files are authoritative today and which are mirrors only
@@ -121,6 +119,7 @@ See [Architecture](architecture/architecture.md) for the full package map.
 - **[API Reference](api/API_REFERENCE.md)** — Python package API
 - **[Rust Engine API](api/rust-engine.md)** — High-performance Rust engine docs
 - **[Hardware Guide](hardware/HARDWARE_GUIDE.md)** — FPGA deployment workflow
+- **[FPGA Deploy Cookbook](tutorials/fpga_deploy_cookbook.md)** — Five-minute scaffold, optional synthesis, report-to-optimiser handoff
 - **[Benchmarks](benchmarks/BENCHMARKS.md)** — Performance measurements
 - **[For Research Labs](guides/FOR_RESEARCH_LABS.md)** — Setup guide for neuroscience, hardware, and ML labs
 - **[Pricing](pricing.md)** — Free for research, commercial licenses available

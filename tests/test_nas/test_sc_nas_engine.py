@@ -20,6 +20,46 @@ from sc_neurocore.nas.sc_nas_engine import (
     pareto_front,
     run_nas,
 )
+from sc_neurocore.optimizer.sc_optimizer import LayerProfile
+from sc_neurocore.optimizer.surrogate_sc_optimizer import (
+    SurrogateLayerConfig,
+    SurrogateOptimizerReport,
+)
+
+
+def _surrogate_cfg(length: int) -> SurrogateLayerConfig:
+    return SurrogateLayerConfig(
+        bitstream_length=length,
+        decorrelator="LFSR",
+        mode="SC",
+        precision_bits=8,
+        lfsr_polynomial="x16+x14+x13+x11+1",
+        luts_used=100,
+        power_used=1.0,
+        latency_cycles=length,
+        accuracy_score=0.99,
+        utility_score=0.95,
+    )
+
+
+class _FakeSurrogateOptimiser:
+    def __init__(self) -> None:
+        self.calls: list[list[LayerProfile]] = []
+
+    def optimise(self, network: list[LayerProfile]) -> SurrogateOptimizerReport:
+        self.calls.append(network)
+        return SurrogateOptimizerReport(
+            config={
+                profile.id: _surrogate_cfg(128 + index * 128)
+                for index, profile in enumerate(network)
+            },
+            total_luts=100 * len(network),
+            total_power_mw=float(len(network)),
+            total_latency_cycles=256,
+            mean_accuracy=0.99,
+            training_points=16,
+            target_name="unit-fpga",
+        )
 
 
 # ── LayerConfig Tests ────────────────────────────────────────────────
@@ -258,6 +298,19 @@ class TestEvolutionaryNAS:
         report = run_nas(budget=budget, population_size=10, num_generations=5, seed=42)
         for c in report.pareto_front:
             assert c.total_luts <= budget.max_luts
+
+    def test_search_can_score_candidates_with_surrogate_optimizer(self):
+        surrogate = _FakeSurrogateOptimiser()
+        report = run_nas(
+            population_size=6,
+            num_generations=2,
+            seed=42,
+            surrogate_optimizer=surrogate,
+        )
+
+        assert surrogate.calls
+        assert len(report.pareto_front) > 0
+        assert all(candidate.accuracy == 0.99 for candidate in report.pareto_front)
 
     def test_summary_format(self):
         report = run_nas(population_size=10, num_generations=3, seed=42)

@@ -286,6 +286,7 @@ class EvolutionaryNAS:
         mutation_rate: float = 0.3,
         seed: int = 42,
         convergence_patience: int = 0,
+        surrogate_optimizer: Any | None = None,
     ):
         self.objective = objective
         self.budget = budget
@@ -295,6 +296,7 @@ class EvolutionaryNAS:
         self.convergence_patience = convergence_patience
         self.rng = np.random.default_rng(seed)
         self.evaluator = SCFitnessEvaluator(seed)
+        self.surrogate_optimizer = surrogate_optimizer
         self.history: List[Dict[str, Any]] = []
 
     def _random_layer(self) -> LayerConfig:
@@ -371,16 +373,27 @@ class EvolutionaryNAS:
         candidates = [population[int(i)] for i in sel_idx]
         return max(candidates, key=lambda c: c.fitness)
 
+    def _evaluate_candidate(self, candidate: SCCandidate) -> SCCandidate:
+        """Evaluate a candidate through the configured NAS scoring path."""
+        if self.surrogate_optimizer is not None:
+            from sc_neurocore.nas.surrogate_bridge import evaluate_candidate_with_surrogate
+
+            return evaluate_candidate_with_surrogate(
+                candidate,
+                self.surrogate_optimizer,
+                budget=self.budget,
+            ).candidate
+
+        acc = self.evaluator.evaluate(candidate)
+        penalty = 0.0 if candidate.meets_budget(self.budget) else 0.5
+        candidate.fitness = acc - penalty
+        return candidate
+
     def search(self) -> List[SCCandidate]:
         """Run the evolutionary search. Returns the final Pareto front."""
         population = [self._random_candidate(0) for _ in range(self.pop_size)]
 
-        for c in population:
-            acc = self.evaluator.evaluate(c)
-            resource_penalty = 0.0
-            if not c.meets_budget(self.budget):
-                resource_penalty = 0.5
-            c.fitness = acc - resource_penalty
+        population = [self._evaluate_candidate(c) for c in population]
 
         stale_count = 0
         prev_best = -1.0
@@ -395,10 +408,7 @@ class EvolutionaryNAS:
                     p1 = self._tournament_select(population)
                     p2 = self._tournament_select(population)
                     child = self._crossover(p1, p2, gen)
-                acc = self.evaluator.evaluate(child)
-                penalty = 0.0 if child.meets_budget(self.budget) else 0.5
-                child.fitness = acc - penalty
-                offspring.append(child)
+                offspring.append(self._evaluate_candidate(child))
 
             combined = population + offspring
             combined.sort(key=lambda c: c.fitness, reverse=True)
@@ -474,6 +484,7 @@ def run_nas(
     num_generations: int = 100,
     seed: int = 42,
     convergence_patience: int = 0,
+    surrogate_optimizer: Any | None = None,
 ) -> NASReport:
     """Convenience entry point for SC-NAS search."""
     obj = objective or NASObjective()
@@ -485,6 +496,7 @@ def run_nas(
         num_generations,
         seed=seed,
         convergence_patience=convergence_patience,
+        surrogate_optimizer=surrogate_optimizer,
     )
     t0 = time.perf_counter()
     front = engine.search()

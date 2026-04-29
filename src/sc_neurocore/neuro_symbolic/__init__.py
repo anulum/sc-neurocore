@@ -12,3 +12,31 @@ Tier: experimental.
 """
 
 __tier__ = "experimental"
+
+from .agent import (
+    HybridInferenceResult,
+    NeuroSymbolicPredictiveAgent,
+    PredictiveAgentConfig,
+    SCErrorSignature,
+    build_sc_error_signature,
+)
+from .predictive_coding import (
+    Hypervector,
+    PredictiveCodingLayer,
+    ReasoningTrace,
+    SymbolEncoder,
+    VerifiableInference,
+)
+
+__all__ = [
+    "HybridInferenceResult",
+    "NeuroSymbolicPredictiveAgent",
+    "PredictiveAgentConfig",
+    "SCErrorSignature",
+    "build_sc_error_signature",
+    "Hypervector",
+    "PredictiveCodingLayer",
+    "ReasoningTrace",
+    "SymbolEncoder",
+    "VerifiableInference",
+]

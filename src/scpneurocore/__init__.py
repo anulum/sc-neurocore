@@ -18,12 +18,24 @@ from .bridge import (
     load_power_grid,
     load_tokamak_data,
 )
+from .datastream import (
+    SC_NEUROCORE_DATASTREAM_SCHEMA_VERSION,
+    DatastreamValidationError,
+    SCNeuroCoreDatastreamPacket,
+    build_datastream_packet,
+    validate_datastream_payload,
+)
 
 __all__ = [
+    "SC_NEUROCORE_DATASTREAM_SCHEMA_VERSION",
+    "DatastreamValidationError",
+    "SCNeuroCoreDatastreamPacket",
     "QPUBridgeArtifact",
     "SourceDataUnavailable",
+    "build_datastream_packet",
     "load_connectome",
     "load_live_stream",
     "load_power_grid",
     "load_tokamak_data",
+    "validate_datastream_payload",
 ]

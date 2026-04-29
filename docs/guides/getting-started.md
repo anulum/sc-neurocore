@@ -12,32 +12,42 @@ pip install -e .
 # With development tools
 pip install -e ".[dev]"
 
-# With GPU acceleration (CuPy)
-pip install -e ".[gpu]"
-
-# Full research stack
-pip install -e ".[research]"
+# Training with PyTorch-backed cells
+pip install -e ".[training]"
 
 # NIR interop (Norse, snnTorch, Lava-DL)
 pip install -e ".[nir]"
+
+# Research plotting/export stack
+pip install -e ".[research]"
+
+# GPU acceleration experiments (CuPy)
+pip install -e ".[gpu]"
+
+# Local full research environment only
+pip install -e ".[full]"
 ```
 
 `pip install sc-neurocore` installs the public Python package. If you are
 editing the Rust bridge locally, install `bridge/` in the same environment or
-run source-tree commands with `PYTHONPATH=src:bridge`.
+run source-tree commands with `PYTHONPATH=src:bridge`. For the complete
+dependency boundary, see [Install Profiles](install_profiles.md).
 
 ## Requirements
 
 - Python >= 3.10
-- NumPy >= 1.22
-- SciPy >= 1.7
+- NumPy >= 1.24
+- SciPy >= 1.10
+- PyTorch (optional, `pip install sc-neurocore[training]`)
 - Numba (optional, `pip install sc-neurocore[accel]`)
-- Matplotlib (optional, `pip install sc-neurocore[full]`)
+- Matplotlib (optional, `pip install sc-neurocore[research]`)
+- Hardware toolchains such as Vivado, Quartus, and Yosys are external and only
+  needed for synthesis or implementation, not for the base package.
 
 ## Running Tests
 
 ```bash
-# Full suite (7 578+ tests, 100% coverage gate)
+# Full repository suite (long-running)
 pytest tests/ -v --cov=sc_neurocore --cov-report=term
 
 # Quick smoke test

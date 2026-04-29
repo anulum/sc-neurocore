@@ -16,6 +16,11 @@ Ported from ``tinysc_riscv`` Rust no_std crate.
 from sc_neurocore.edge.power_estimator import PowerProfile, Board
 from sc_neurocore.edge.sobol import SobolGenerator
 from sc_neurocore.edge.deploy import generate_cargo_config, generate_memory_x
+from sc_neurocore.edge.web_deploy import (
+    WebDeploymentConfig,
+    WebDeploymentManifest,
+    build_web_deployment,
+)
 from sc_neurocore.edge.bitstream import (
     popcount32,
     popcount_slice,
@@ -47,6 +52,9 @@ __all__ = [
     "SobolGenerator",
     "generate_cargo_config",
     "generate_memory_x",
+    "WebDeploymentConfig",
+    "WebDeploymentManifest",
+    "build_web_deployment",
     "popcount32",
     "popcount_slice",
     "sc_and",

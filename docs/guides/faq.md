@@ -14,7 +14,10 @@ No. The Rust engine (`sc-neurocore-engine`) is optional. All Python
 functionality works without it. The Rust engine provides 39–202× speedup
 for bitstream operations and network simulation.
 
-Install with: `pip install sc-neurocore-engine`
+Use `sc-neurocore info` to see whether the current environment can import
+`sc_neurocore_engine`. For source checkouts, build the local bridge with
+`maturin develop --release`; the base `pip install sc-neurocore` path does not
+require the engine.
 
 ### Do I need a GPU?
 
@@ -137,7 +140,9 @@ bitstream length, and whether DSP48 blocks are used for multiplies.
 ### `ImportError: cannot import name 'sc_neurocore_engine'`
 
 The Rust engine is not installed. Either:
-- Install it: `pip install sc-neurocore-engine`
+- Build the local source bridge with `maturin develop --release` from the
+  checkout.
+- Install a matching release wheel when one is provided for your platform.
 - Or use Python backend: `net.run(backend="python")`
 
 ### `SCEncodingError: Probability p must be in [0,1]`

@@ -4,13 +4,14 @@
 
 This tutorial walks through the full SC-NeuroCore pipeline: train a digit
 classifier in Python, simulate it with stochastic bitstreams (bit-exact match
-to RTL), synthesise to FPGA, and read the resource report.
+to RTL), export hardware artefacts, and optionally run FPGA tool reports.
 
 **Prerequisites**:
 
 - Python 3.10+, `pip install sc-neurocore scikit-learn`
-- [Yosys](https://github.com/YosysHQ/yosys) (open-source synthesis, for resource reports)
-- Optional: Xilinx Vivado Design Suite (for Artix-7/Zynq bitstream generation) or Lattice iCEcube2 (for iCE40)
+- Optional: [Yosys](https://github.com/YosysHQ/yosys) plus any required
+  SystemVerilog frontend helpers for open-source resource reports
+- Optional: Xilinx Vivado Design Suite (for Artix-7/Zynq implementation) or Lattice iCEcube2 (for iCE40)
 - Optional: FPGA board (Artix-7 100T, Zynq-7020, or iCE40 for physical deployment)
 
 ## 1. Train and quantise (5 min)
@@ -23,7 +24,7 @@ This loads sklearn's 8×8 digits dataset (1,797 images, 10 classes), applies
 PCA to reduce 64 features → 16, trains a logistic regression classifier, and
 quantises weights to Q8.8 fixed-point (the format used by the Verilog RTL).
 
-Expected output:
+The deterministic demo configuration currently reports:
 
 ```
   Float accuracy:     94.2%
@@ -73,14 +74,14 @@ weight encoders and AND synapses, N_NEURONS dot-product units and LIF neurons.
 python tools/yosys_synth.py --module sc_dense_matrix_layer --markdown
 ```
 
-For the reference 3-input × 7-neuron configuration:
+Treat this output as evidence only when the `Status` column is `OK`. If the
+local Yosys build reports `SKIP` because a SystemVerilog frontend helper is
+missing or a library module cannot be parsed, stop at the scaffold/export stage
+and do not report LUT/FF numbers from that run.
 
-| Module | LUTs | FFs |
-|--------|-----:|----:|
-| `sc_neurocore_top` | 3,673 | 1,221 |
-
-The 16→10 MNIST classifier is estimated at ~28K LUTs (scaled from the Yosys
-default `sc_neurocore_top` at 3,673 LUTs), fitting an Artix-7 100T.
+The MNIST demo also prints a sizing estimate scaled from an older reference
+configuration. That estimate is useful for planning target class, but it is not
+a replacement for a tool-generated utilisation report.
 
 ## 5. Vivado implementation (optional, 5 min)
 
@@ -98,20 +99,25 @@ Parse the reports:
 python tools/vivado_report.py vivado_reports/
 ```
 
-This gives Fmax (expected ~200–300 MHz on 7-series), LUT/FF/BRAM utilisation,
-and dynamic power (expected <0.5 W for the 16→10 configuration).
+This gives measured Fmax, LUT/FF/BRAM utilisation, and dynamic power for the
+specified part and clock. Use those generated reports, not estimates, when
+publishing power or resource claims.
 
 **Latency per inference**: `stream_len` clock cycles. At 250 MHz with L=1024:
 1024 / 250 MHz = **4.1 µs per classification**.
 
-## 6. Scaling guide
+## 6. Planning guide
 
-| Configuration | Est. LUTs | Target FPGA | Accuracy |
+The table below is a planning guide, not a synthesis report. Re-run the demo
+and a target-specific synthesis flow before publishing resource or power
+numbers.
+
+| Configuration | Planning LUT estimate | Target FPGA class | Accuracy source |
 |--------------|----------:|-------------|----------|
-| 16→10 (PCA) | ~56K | Artix-7 100T | ~94% |
-| 8→10 (PCA) | ~28K | Artix-7 35T | ~88% |
-| 64→10 (raw pixels) | ~225K | Kintex-7 325T | ~96% |
-| 16→64→10 (2-layer) | ~400K | Virtex-7 | ~97% |
+| 16→10 (PCA) | ~56K | Artix-7 100T | demo run |
+| 8→10 (PCA) | ~28K | Artix-7 35T | rerun required |
+| 64→10 (raw pixels) | ~225K | Kintex-7 325T | rerun required |
+| 16→64→10 (2-layer) | ~400K | Virtex-7 | rerun required |
 
 Resource usage scales as O(N_INPUTS × N_NEURONS) for a single layer.
 Time-multiplexed designs (1 encoder cycling through N inputs) reduce LUTs
@@ -125,5 +131,6 @@ by N× at the cost of N× more clock cycles.
    no accuracy loss for this task
 3. **SC overhead is bounded**: accuracy gap = f(1/L), controllable via
    bitstream length
-4. **FPGA-ready**: synthesisable to Xilinx 7-series, ~4 µs inference latency
-   at 250 MHz, <0.5 W power budget
+4. **Hardware handoff**: generated artefacts and latency formula are ready for
+   a real synthesis or implementation flow; resource and power claims require
+   tool-generated reports

@@ -2,18 +2,18 @@
 
 **Module:** `sc_neurocore.cli`
 **Entry point:** `sc-neurocore` (declared in `pyproject.toml` `[project.scripts]`)
-**Source:** `src/sc_neurocore/cli.py` — 551 lines, `argparse`-based, single-`main()` dispatch
-**Status (v3.14.0):** seven sub-commands wired; three (`compile`, `deploy`, `serve`) lack dedicated tests; one default-value bug filed (see [Known Issues](#9-known-issues))
+**Source:** `src/sc_neurocore/cli.py` — 633 lines, `argparse`-based, single-`main()` dispatch
+**Status (v3.14.0):** eight sub-commands wired; deployment, serving, compilation, and synthesis-evidence collection have focused tests.
 
 ---
 
 ## 1. Installation & Entry Point
 
-The CLI ships with the PyPI package `sc-neurocore-engine`. Installing the
+The CLI ships with the PyPI package `sc-neurocore`. Installing the
 package registers the console script `sc-neurocore`:
 
 ```bash
-pip install sc-neurocore-engine
+pip install sc-neurocore
 sc-neurocore --version
 # sc-neurocore 3.14.0
 ```
@@ -31,8 +31,8 @@ The entry point is wired through `pyproject.toml`:
 sc-neurocore = "sc_neurocore.cli:main"
 ```
 
-`main()` returns an integer exit code; `if __name__ == "__main__"` (line 550)
-calls `sys.exit(main())`.
+`main()` returns an integer exit code; the module entrypoint calls
+`sys.exit(main())`.
 
 ---
 
@@ -40,8 +40,8 @@ calls `sys.exit(main())`.
 
 The CLI accepts a single positional `command` token chosen from:
 
-```
-{info, benchmark, preflight, deploy, serve, compile, studio}
+```text
+{info, benchmark, preflight, deploy, serve, compile, studio, collect-synthesis}
 ```
 
 with an optional positional `model` argument (file path or ODE string,
@@ -54,9 +54,10 @@ depending on the command). All other parameters are keyword flags; running
 | `benchmark` | Run `pytest benchmarks/benchmark_suite.py --benchmark-only` | — | pytest exit code |
 | `preflight` | Run `tools/preflight.py` | — | preflight exit code |
 | `compile` | Equation string → SystemVerilog RTL (+ optional TB + Yosys) | ODE string | `0` on success, `1` on missing model |
-| `deploy` | NIR/PyTorch model → SC-NeuroCore HDL project for FPGA | model file path | `0` on success, `1` on bad format |
+| `deploy` | NIR/PyTorch model → SC-NeuroCore HDL project for FPGA, or static web scaffold with `--target web` | model file path | `0` on success, `1` on bad format |
 | `serve` | Start streaming spike inference server (`SpikeServer`) | `.nir` file path | `0` while running |
 | `studio` | Launch Visual SNN Design Studio (FastAPI + Uvicorn) | — | `0` on clean exit, `1` if FastAPI missing |
+| `collect-synthesis` | Convert real utilisation, timing, and power reports into optimiser evidence JSON | — | `0` on success, `1` on missing or invalid input |
 
 ### 2.1 `info`
 
@@ -76,7 +77,7 @@ NumPy: 2.2.6
 
 The Rust-engine status line additionally reports a version mismatch when the
 engine wheel reports a different `__version__` than the Python package
-(handled by `_format_engine_status`, line 225).
+(handled by `_format_engine_status`).
 
 ### 2.2 `benchmark`
 
@@ -135,7 +136,7 @@ parameters) and synthesises with Yosys for ICE40/ECP5 targets when
 
 ### 2.5 `deploy`
 
-Five-step pipeline (six with auto-synthesis):
+FPGA targets run a five-step pipeline (six with auto-synthesis):
 
 1. **Load model** — `.nir` via `nir_lib.read` + `from_nir`, or `.pt`/`.pth`
    via `torch.load(weights_only=True)` with automatic per-`Linear` ReLU
@@ -151,7 +152,7 @@ Five-step pipeline (six with auto-synthesis):
 6. **Auto-synthesise** (optional) — runs Yosys + nextpnr + bitstream packing
    when the open-source toolchain is on `$PATH`.
 
-`_TARGET_CONFIGS` (line 455):
+`_TARGET_CONFIGS`:
 
 | Target | Family | Device | Package | Tool |
 |--------|--------|--------|---------|------|
@@ -159,6 +160,25 @@ Five-step pipeline (six with auto-synthesis):
 | `ecp5` | `ecp5` | `85k` | `CABGA381` | Yosys |
 | `artix7` | `xc7a` | `xc7a100t` | `csg324` | Vivado |
 | `zynq` | `xc7z` | `xc7z020` | `clg400` | Vivado |
+
+`--target web` generates a static browser bundle instead of an FPGA project:
+
+```bash
+sc-neurocore deploy model.nir --target web --output build/web --dt 1.0 --T 256
+```
+
+Generated files:
+
+- `manifest.json` — deterministic model/runtime contract.
+- `index.html` — browser entry point.
+- `runtime/sc_neurocore_web.js` — manifest loader and WebGPU capability check.
+- `runtime/sc_neurocore_webgpu.wgsl` — minimal SC probability shader scaffold.
+- `model/<name>` — copied source model artefact.
+
+The web target accepts `.nir`, `.pt`, `.pth`, and `.json` inputs. It does not
+invoke PyTorch, NIR import, Node.js, or a native WASM build during generation,
+so packaging can be tested in CI without browser drivers or hardware
+accelerators.
 
 ### 2.6 `serve`
 
@@ -169,14 +189,52 @@ mode on the configured port. Other formats are rejected with exit code 1.
 sc-neurocore serve model.nir --port 8001 --dt 1.0
 ```
 
-### 2.7 `studio`
+### 2.7 `collect-synthesis`
+
+Collects FPGA synthesis reports into the strict optimiser observation format.
+The command requires explicit compiler-design metadata and measured model
+accuracy so it cannot invent missing benchmark evidence.
+
+Required flags:
+
+- `--design` — JSON compiler-design metadata for the synthesised model.
+- `--utilisation` / `--utilization` — Vivado utilisation or Quartus fitter report.
+- `--power` — Vivado or Quartus power report.
+- `--accuracy-score` — measured model accuracy or parity score for this design.
+
+Optional flags:
+
+- `--timing` — timing report when latency appears outside the utilisation report.
+- `--latency-cycles` — explicit latency when vendor reports do not carry it.
+- `--clock-mhz` and `--inferences-per-run` — both required together for
+  workload-normalised energy calculation.
+- `--out` — output JSON path; without it, JSON is written to stdout.
+
+Example:
+
+```bash
+sc-neurocore collect-synthesis \
+    --design build/network_design.json \
+    --utilisation build/vivado_utilisation.rpt \
+    --power build/vivado_power.rpt \
+    --timing build/vivado_timing.rpt \
+    --accuracy-score 0.991 \
+    --clock-mhz 100 \
+    --inferences-per-run 1 \
+    --out build/synthesis_observations.json
+```
+
+The output is accepted by `sc_neurocore.optimizer.load_observations()` and by
+`tools/optimise_sc_design.py --evidence`.
+
+### 2.8 `studio`
 
 Launches the Visual SNN Design Studio (FastAPI + Uvicorn) and opens
 `http://127.0.0.1:{port}` in the default browser. Requires the `studio`
 extra:
 
 ```bash
-pip install sc-neurocore-engine[studio]
+pip install "sc-neurocore[studio]"
 sc-neurocore studio --port 8001
 ```
 
@@ -192,43 +250,44 @@ install hint.
                 │ sc-neurocore (entry) │
                 └──────────┬───────────┘
                            │ argparse
-              ┌────────────┼────────────┐
-              │            │            │
-              ▼            ▼            ▼
-          _cmd_info   _cmd_compile  _cmd_deploy
-              │            │            │
-              ▼            ▼            ▼
-       sc_neurocore   equation_     nir_bridge
-       _engine        compiler      conversion
-       (Rust)         (Python)      (Python)
-                           │            │
-                           ▼            ▼
-                       Verilog       hdl/ +
-                       RTL          Makefile/.tcl
+        ┌──────────────┬──────────────┬──────────────┐
+        │              │              │              │
+        ▼              ▼              ▼              ▼
+   _cmd_info      _cmd_compile   _cmd_deploy  _cmd_collect_synthesis
+        │              │              │              │
+        ▼              ▼              ▼              ▼
+ sc_neurocore   equation_      nir_bridge     optimiser
+ _engine        compiler       conversion     synthesis_evidence
+ (Rust status)  (Python)       (Python)       (Python)
+                       │              │              │
+                       ▼              ▼              ▼
+                   Verilog        hdl/ +       evidence JSON
+                   RTL            Makefile/.tcl
 ```
 
-`main()` is a single linear dispatcher (lines 17–104) — no subparsers, no
+`main()` is a single linear dispatcher — no subparsers, no
 command classes, no plugin registry. Each `_cmd_*` helper performs its own
 imports lazily so that the CLI cold-start cost is bounded by the dispatcher
 itself, not by every command's transitive dependency tree.
 
 ### Private helpers
 
-| Symbol | Purpose | Line |
-|--------|---------|------|
-| `_cmd_info` | Print runtime/engine status | 205 |
-| `_cmd_compile` | ODE → Verilog dispatcher | 107 |
-| `_cmd_serve` | Streaming server launcher | 183 |
-| `_cmd_benchmark` | pytest-benchmark delegate | 250 |
-| `_cmd_preflight` | preflight.py delegate | 544 |
-| `_cmd_deploy` | NIR/PyTorch → FPGA project | 258 |
-| `_cmd_studio` | FastAPI Studio launcher | 523 |
-| `_auto_synthesize` | Yosys + nextpnr + packing | 370 |
-| `_generate_project` | Makefile or project.tcl emitter | 463 |
-| `_format_engine_status` | Rust engine status line | 225 |
-| `_safe_simd_tier` | Defensive SIMD-tier accessor | 240 |
-| `_print_optional_dependency_version` | numpy/jax version line | 217 |
-| `_TARGET_CONFIGS` | FPGA target metadata table | 455 |
+| Symbol | Purpose |
+|--------|---------|
+| `_cmd_info` | Print runtime/engine status |
+| `_cmd_compile` | ODE → Verilog dispatcher |
+| `_cmd_serve` | Streaming server launcher |
+| `_cmd_benchmark` | pytest-benchmark delegate |
+| `_cmd_preflight` | preflight.py delegate |
+| `_cmd_deploy` | NIR/PyTorch → FPGA project |
+| `_cmd_collect_synthesis` | Report files → optimiser evidence JSON |
+| `_cmd_studio` | FastAPI Studio launcher |
+| `_auto_synthesize` | Yosys + nextpnr + packing |
+| `_generate_project` | Makefile or project.tcl emitter |
+| `_format_engine_status` | Rust engine status line |
+| `_safe_simd_tier` | Defensive SIMD-tier accessor |
+| `_print_optional_dependency_version` | numpy/jax version line |
+| `_TARGET_CONFIGS` | FPGA target metadata table |
 
 ---
 
@@ -267,7 +326,7 @@ Two backend tools are supported:
 - **Vivado** (proprietary) — `artix7`, `zynq`. Not auto-run; `project.tcl` is
   emitted for the user to invoke `vivado -mode batch -source project.tcl`.
 
-The `_auto_synthesize` helper (line 370) is a best-effort: it returns `False`
+The `_auto_synthesize` helper is a best-effort path: it returns `False`
 silently if `yosys` is not on `$PATH`, and it never raises on
 synthesis/PnR failure — instead it prints the last 5 lines of `stderr`. This
 is a deliberate degradation strategy: the user gets the Verilog output even
@@ -337,10 +396,31 @@ sc-neurocore deploy model.nir --target ice40 --output build/deploy
 cd build/deploy && make synth
 ```
 
-### 6.5 Launch the Studio
+### 6.5 Collect synthesis evidence
+
+After an external FPGA tool has produced utilisation, timing, and power
+reports:
 
 ```bash
-pip install sc-neurocore-engine[studio]
+sc-neurocore collect-synthesis \
+    --design build/network_design.json \
+    --utilisation build/vivado_utilisation.rpt \
+    --power build/vivado_power.rpt \
+    --timing build/vivado_timing.rpt \
+    --accuracy-score 0.991 \
+    --clock-mhz 100 \
+    --inferences-per-run 1 \
+    --out build/synthesis_observations.json
+```
+
+This produces evidence JSON with one `observations` record plus optional
+workload-normalised energy fields. It does not run Vivado, Quartus, Yosys, or
+nextpnr.
+
+### 6.6 Launch the Studio
+
+```bash
+pip install "sc-neurocore[studio]"
 sc-neurocore studio --port 8001
 # SC-NeuroCore Studio starting at http://127.0.0.1:8001
 ```
@@ -397,11 +477,12 @@ dedicated benchmark suite — cold-start is documented above instead.
 | Surface | How it's wired | Verifier |
 |---------|---------------|----------|
 | Console script | `pyproject.toml [project.scripts] sc-neurocore = "sc_neurocore.cli:main"` | `pip install` registers it |
-| Package main | `python -m sc_neurocore.cli` works via `if __name__ == "__main__"` (line 550) | Manual invocation |
+| Package main | `python -m sc_neurocore.cli` works via the module entrypoint | Manual invocation |
 | Compile path | `_cmd_compile` → `sc_neurocore.compiler.equation_compiler.equation_to_fpga` + `generate_testbench` | `tests/test_equation_compiler.py` |
 | Deploy NIR path | `_cmd_deploy` → `sc_neurocore.nir_bridge.from_nir` | `tests/test_nir_bridge*.py` |
 | Deploy PyTorch path | `_cmd_deploy` → `sc_neurocore.conversion.convert` | `tests/test_conversion*.py` |
 | Serve path | `_cmd_serve` → `sc_neurocore.serve.SpikeServer` | `tests/test_serve_server.py` |
+| Synthesis evidence path | `_cmd_collect_synthesis` → `sc_neurocore.optimizer.build_payload_from_reports` | `tests/test_optimizer/test_synthesis_evidence_cli.py` |
 | Studio path | `_cmd_studio` → `sc_neurocore.studio.app.create_app` | `tests/test_cli.py::test_studio_*` |
 | Status path | `_cmd_info` → `sc_neurocore_engine.simd_tier` | `tests/test_cli.py::test_info_*` |
 
@@ -483,19 +564,19 @@ CLI explicit-dt raise).
   `TestDtUnderflowGuard` adds 2 more CLI cases (default-dt success,
   explicit-dt-0.001 raise).
 
-### 9.3 `# type: ignore[arg-type]` without comment
+### 9.3 `collect-synthesis` does not run vendor tools
 
-Line 298 (`cal_data = torch.randn(64, in_dim)  # type: ignore[arg-type]`)
-suppresses a mypy complaint without explaining why. Per the global rule (no
-`# type: ignore` without reason) this should either be replaced with a
-properly typed alternative or annotated with the rationale.
+`collect-synthesis` intentionally parses reports that already exist. It does
+not invoke Vivado, Quartus, Yosys, nextpnr, or board programming utilities. Use
+`deploy` to scaffold the FPGA project, run the external implementation flow,
+then pass the generated reports into `collect-synthesis`.
 
 ---
 
 ## 10. Tests & Coverage
 
-`tests/test_cli.py` (179 lines, 14 test functions, all passing on
-2026-04-17):
+`tests/test_cli.py` and the focused optimiser CLI tests cover the public
+dispatcher surface:
 
 ```text
 test_version_flag                              PASS
@@ -512,13 +593,16 @@ test_preflight_delegates_to_subprocess         PASS
 test_studio_launches_uvicorn                   PASS
 test_studio_missing_fastapi                    PASS
 test_studio_command_via_main                   PASS
+test_collect_synthesis_command_writes_optimizer_evidence PASS
+test_collect_synthesis_command_reports_missing_required_args PASS
 ```
 
 Run locally:
 
 ```bash
-PYTHONPATH=src python3 -m pytest tests/test_cli.py -q
-# 14 passed in 0.88s
+PYTHONPATH=src python3 -m pytest \
+    tests/test_cli.py \
+    tests/test_optimizer/test_synthesis_evidence_cli.py -q
 ```
 
 Multi-angle dimensions covered:
@@ -529,12 +613,7 @@ Multi-angle dimensions covered:
   `simd_tier` not callable)
 - subprocess delegation (`benchmark`, `preflight`)
 - end-to-end command dispatch via `main()` (`studio`)
-
-Multi-angle dimensions **missing**:
-
-- `compile` invocation (no test covers `_cmd_compile` end-to-end)
-- `deploy` paths (NIR vs. PyTorch, all four FPGA targets, missing `hdl/`)
-- `serve` path (`SpikeServer` startup, non-`.nir` rejection)
+- report evidence success and missing-required-argument errors
 
 ---
 
@@ -543,16 +622,15 @@ Multi-angle dimensions **missing**:
 | # | Dimension | Status | Detail |
 |---|-----------|--------|--------|
 | 1 | Pipeline wiring | ✅ PASS | Console script registered; every `_cmd_*` reaches a downstream public symbol |
-| 2 | Multi-angle tests | ✅ PASS | 23 cli tests (14 originals + 5 deploy + 4 serve, 3 deploy tests skip without torch) plus 7 dt-underflow tests in `test_equation_compiler.py::TestDtUnderflowGuard`. Tasks #7 and #8 both closed. |
+| 2 | Multi-angle tests | ✅ PASS | CLI tests cover info, benchmark, preflight, studio, deploy, serve, compile dispatch cases, and synthesis-evidence collection. |
 | 3 | Rust path | N/A | Dispatch-only; engine is queried for status only |
 | 4 | Benchmarks | N/A | CLI cold-start measured (Section 7); no pytest-benchmark suite for the dispatcher itself |
 | 5 | Performance docs | ✅ PASS | Section 7 (this page) with measured numbers |
 | 6 | Documentation page | ✅ PASS | This page |
-| 7 | Rules followed | ⚠️ WARN | SPDX header present; one undocumented `# type: ignore` (line 298) — see §9.3 |
+| 7 | Rules followed | ✅ PASS | SPDX header present; no undocumented type-check suppressions remain in `cli.py`. |
 
-Net status: **1 WARN, 0 FAIL.** The remaining WARN is the documented
-`# type: ignore[arg-type]` on `cli.py:298` (§9.3) — minor and not
-behavioural. Tasks #7 and #8 are both closed.
+Net status: **0 WARN, 0 FAIL.** Tasks #7 and #8 are both closed, and
+`collect-synthesis` is wired, documented, and tested.
 
 ---
 
