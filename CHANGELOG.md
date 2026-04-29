@@ -4,6 +4,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Security hardening (2026-04-29)
+
+#### Added
+- Property-based fuzz coverage for malformed bitstream/IR ports, Studio graph
+  JSON, transfer checkpoints, NIR imports, model-zoo NPZ archives, SCPN
+  datastream JSON, custom chip-spec JSON, HDL stochastic-source lowering,
+  equation/MLIR lowering, and optimiser evidence JSON.
+- Offline supply-chain audit command for committed CycloneDX SBOM and release
+  requirements metadata: `python tools/supply_chain_audit.py`.
+
+#### Fixed
+- Hardened validation boundaries for fuzzed JSON, NPZ, NIR, IR, and HDL inputs
+  before they reach parser, lowering, or hardware-resource paths.
+- Documented the strict release-mode supply-chain gate in `SECURITY.md`.
+
 ### CI coverage restoration (2026-04-21)
 
 #### Fixed
