@@ -47,6 +47,18 @@ hh = HodgkinHuxleyNeuron()          # baseline_euler
 adex = AdExNeuron()                 # baseline_euler
 ```
 
+## Rust RK4 Parity Path
+
+The Rust engine exposes `py_rk4_neuron_simulate(model_name, current_trace, dt=None)`
+for explicit RK4 batch simulation of the same first three priority models:
+
+- `izhikevich`
+- `hodgkin_huxley`
+- `adex`
+
+This is an opt-in FFI parity path. It does not change Python constructor
+defaults or the Rust network-runner defaults.
+
 ## Design Rules
 
 - default construction must preserve historical behaviour

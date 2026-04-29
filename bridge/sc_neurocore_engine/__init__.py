@@ -179,6 +179,7 @@ try:
     from sc_neurocore_engine.sc_neurocore_engine import (
         py_simulate_ei_network,
         py_batch_simulate,
+        py_rk4_neuron_simulate,
     )
 
     _studio_rust_available = True
@@ -199,6 +200,7 @@ except (ImportError, ModuleNotFoundError):
                 _spec.loader.exec_module(_mod)
                 py_simulate_ei_network = _mod.py_simulate_ei_network
                 py_batch_simulate = _mod.py_batch_simulate
+                py_rk4_neuron_simulate = _mod.py_rk4_neuron_simulate
                 _studio_rust_available = True
             else:
                 _studio_rust_available = False
@@ -388,7 +390,11 @@ __all__ = [
     "NetworkRunner",
     *(_NEURON_MODELS if _neurons_available else []),
     *(_AI_MODELS if _ai_available else []),
-    *(["py_simulate_ei_network", "py_batch_simulate"] if _studio_rust_available else []),
+    *(
+        ["py_simulate_ei_network", "py_batch_simulate", "py_rk4_neuron_simulate"]
+        if _studio_rust_available
+        else []
+    ),
 ]
 
 
