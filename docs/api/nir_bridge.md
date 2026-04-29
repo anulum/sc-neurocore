@@ -77,9 +77,9 @@ which exposes `forward_multi(inputs_dict) → outputs_dict` for named I/O ports.
         - build_nir_hardware_manifest
         - build_noise_annotation
 
-`build_nir_hardware_manifest()` records capability manifests for Loihi 2,
-BrainScaleS-3, SpiNNaker2, and DYNAP-SE. These entries are planning metadata,
-not live SDK integrations: each profile carries `backend_status:
+`build_nir_hardware_manifest()` records capability manifests for Akida,
+Loihi 2, BrainScaleS-3, SpiNNaker2, and DYNAP-SE. These entries are planning
+metadata, not live SDK integrations: each profile carries `backend_status:
 capability_manifest` and only records NIR node support, SC bitstream ranges,
 stream transport, stochastic sources, and noise channels that can be measured
 and replayed in simulation.
@@ -87,7 +87,7 @@ and replayed in simulation.
 ```python
 from sc_neurocore.nir_bridge import build_nir_hardware_manifest, build_noise_annotation
 
-manifest = build_nir_hardware_manifest(("loihi2", "spinnaker2"))
+manifest = build_nir_hardware_manifest(("loihi2", "spinnaker2", "akida"))
 noise = build_noise_annotation("loihi2", {"spike_drop_rate": 0.001})
 ```
 

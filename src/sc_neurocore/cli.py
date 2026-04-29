@@ -60,7 +60,7 @@ def main() -> int:
     parser.add_argument("--port", type=int, default=8001, help="Port for serve command")
     parser.add_argument(
         "--hardware-targets",
-        default="loihi2,spinnaker2",
+        default="loihi2,spinnaker2,akida",
         help="Comma-separated neuromorphic targets for map-nir",
     )
     parser.add_argument(
