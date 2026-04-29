@@ -134,7 +134,7 @@ def check_ir_types(
         dst_node = nodes[edge.dst]
         src_type = src_node.output_type
 
-        if edge.dst_port >= len(dst_node.input_types):
+        if edge.dst_port < 0 or edge.dst_port >= len(dst_node.input_types):
             errors.append(
                 IRTypeError(
                     edge.src,

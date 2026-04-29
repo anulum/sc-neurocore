@@ -100,7 +100,8 @@ plus SC probability mapping.
 ## IR Type Checker
 
 Validates Stochastic IR graphs before emission. Catches Bitstream/Rate/Spike
-type mismatches that would otherwise silently produce wrong results.
+type mismatches and malformed edge ports that would otherwise silently produce
+wrong results.
 
 Signal types: `BITSTREAM`, `RATE`, `SPIKE`, `FIXED`, `ANY`.
 
