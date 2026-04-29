@@ -6,9 +6,9 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Generates Top-Level Verilog for a defined SC Network
 
-from typing import Any
 import logging
-from typing import Dict
+from collections.abc import Mapping
+from typing import Any, Dict
 
 from .aer_emitter import AEREmitter
 from ._ident import sanitize_ident
@@ -17,6 +17,16 @@ from .lfsr16_emitter import Lfsr16Emitter
 from .sobol16_emitter import Sobol16Emitter
 
 logger = logging.getLogger(__name__)
+
+_SOURCE_NODE_TYPES = {
+    "stochastic_source",
+    "stochasticsource",
+    "sc_stochastic_source",
+    "sc_source",
+    "source",
+}
+_LFSR_SOURCE_TYPES = {"lfsr", "lfsr16", "lfsr_16", "lfsr16_source", "sc_lfsr16_source"}
+_SOBOL_SOURCE_TYPES = {"sobol", "sobol16", "sobol_16", "sobol16_source", "sc_sobol16_source"}
 
 
 class VerilogGenerator:
@@ -95,6 +105,9 @@ class VerilogGenerator:
                 code += "    );\n\n"
 
         code += "endmodule\n"
+        source_modules = emit_sources_from_ir({"nodes": self.layers})
+        if source_modules:
+            code += f"\n\n{source_modules}\n"
         return code
 
     def emit_lfsr16_source(self, module_name: str = "sc_lfsr16_source", seed: int = 0xACE1) -> str:
@@ -104,6 +117,10 @@ class VerilogGenerator:
     def emit_sobol16_source(self, module_name: str = "sc_sobol16_source", seed: int = 0) -> str:
         """Emit a standalone Sobol-16 stochastic source module."""
         return Sobol16Emitter(module_name=module_name, seed=seed).generate()
+
+    def emit_sources_from_ir(self, ir: Any) -> str:
+        """Emit standalone stochastic source modules declared in an IR payload."""
+        return emit_sources_from_ir(ir)
 
     def emit_async_aer(self, module_name: str | None = None) -> str:
         """Emit the research-stage async AER wrapper."""
@@ -146,3 +163,114 @@ class VerilogGenerator:
         except OSError as exc:
             logger.error("Failed to write Verilog to %s: %s", path, exc)
             raise
+
+
+def emit_sources_from_ir(ir: Any) -> str:
+    """Emit LFSR-16 and Sobol-16 source modules from a lightweight IR payload.
+
+    The helper accepts the mapping shapes already used by documentation,
+    tests, and compiler-service payloads: ``{"nodes": [...]}``,
+    ``{"nodes": {"node_id": {...}}}``, or a direct iterable of node mappings.
+    Non-source nodes are ignored. Source nodes must identify their generator
+    through ``source_type``, ``decorrelator``, ``generator``, ``strategy``, or
+    the node ``type``/``node_type`` itself.
+    """
+    emitted = []
+    seen_names: set[str] = set()
+    for index, (node_id, node) in enumerate(_iter_ir_nodes(ir)):
+        kind = _source_kind(node)
+        if kind is None:
+            continue
+        module_name = _source_module_name(node, node_id=node_id, index=index)
+        if module_name in seen_names:
+            raise ValueError(f"duplicate stochastic source module name {module_name!r}")
+        seen_names.add(module_name)
+        seed = _source_seed(node, default=0xACE1 if kind == "lfsr16" else 0)
+        if kind == "lfsr16":
+            emitted.append(Lfsr16Emitter(module_name=module_name, seed=seed).generate())
+        elif kind == "sobol16":
+            emitted.append(Sobol16Emitter(module_name=module_name, seed=seed).generate())
+        else:
+            raise ValueError(f"unsupported stochastic source type {kind!r}")
+    return "\n\n".join(emitted)
+
+
+def _iter_ir_nodes(ir: Any) -> list[tuple[str | None, Any]]:
+    if isinstance(ir, Mapping):
+        nodes = ir.get("nodes", ir)
+    else:
+        nodes = getattr(ir, "nodes", ir)
+
+    if isinstance(nodes, Mapping):
+        return [(str(node_id), node) for node_id, node in nodes.items()]
+    if isinstance(nodes, (list, tuple)):
+        return [(None, node) for node in nodes]
+    raise TypeError("IR payload must contain a mapping or sequence of nodes")
+
+
+def _source_kind(node: Any) -> str | None:
+    params = _node_params(node)
+    node_type = _normalise(_node_value(node, "type", "node_type", "op", "kind"))
+    candidate = _normalise(
+        _node_value(
+            node,
+            "source_type",
+            "decorrelator",
+            "generator",
+            "strategy",
+            default=_node_value(params, "source_type", "decorrelator", "generator", "strategy"),
+        )
+    )
+
+    if node_type in _LFSR_SOURCE_TYPES or candidate in _LFSR_SOURCE_TYPES:
+        return "lfsr16"
+    if node_type in _SOBOL_SOURCE_TYPES or candidate in _SOBOL_SOURCE_TYPES:
+        return "sobol16"
+    if node_type in _SOURCE_NODE_TYPES:
+        if candidate:
+            raise ValueError(f"unsupported stochastic source type {candidate!r}")
+        raise ValueError("stochastic source node is missing source_type/decorrelator")
+    return None
+
+
+def _source_module_name(node: Any, *, node_id: str | None, index: int) -> str:
+    params = _node_params(node)
+    raw_name = _node_value(
+        node,
+        "module_name",
+        "name",
+        "id",
+        "node_id",
+        default=_node_value(params, "module_name", "name", "id", "node_id", default=node_id),
+    )
+    if raw_name is None:
+        raw_name = f"sc_stochastic_source_{index}"
+    return sanitize_ident(str(raw_name), context="stochastic source module name")
+
+
+def _source_seed(node: Any, *, default: int) -> int:
+    params = _node_params(node)
+    raw_seed = _node_value(node, "seed", default=_node_value(params, "seed", default=default))
+    return int(raw_seed)
+
+
+def _node_params(node: Any) -> Any:
+    return _node_value(node, "params", "parameters", "attrs", "attributes", default={})
+
+
+def _node_value(node: Any, *keys: str, default: Any = None) -> Any:
+    if isinstance(node, Mapping):
+        for key in keys:
+            if key in node:
+                return node[key]
+        return default
+    for key in keys:
+        if hasattr(node, key):
+            return getattr(node, key)
+    return default
+
+
+def _normalise(value: Any) -> str:
+    if value is None:
+        return ""
+    return str(value).strip().lower().replace("-", "_")

@@ -77,6 +77,20 @@ def test_verilog_generator_non_dense_ignored():
     assert "custom0_inst" not in code
 
 
+def test_verilog_generator_generate_routes_stochastic_source_layers():
+    """Stochastic source layers should emit their standalone source modules."""
+    gen = VerilogGenerator()
+    gen.add_layer("StochasticSource", "rng_lfsr", {"source_type": "LFSR", "seed": 0xBEEF})
+    gen.add_layer("StochasticSource", "rng_sobol", {"source_type": "Sobol", "seed": 0x0042})
+
+    code = gen.generate()
+
+    assert "module rng_lfsr" in code
+    assert "16'hBEEF" in code
+    assert "module rng_sobol" in code
+    assert "16'h0042" in code
+
+
 def test_verilog_generator_no_layers_still_valid():
     """Generator should emit module wrapper even with no layers."""
     gen = VerilogGenerator()
