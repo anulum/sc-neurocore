@@ -58,6 +58,7 @@ pub mod quantum;
 pub mod rall_dendrite;
 pub mod recorder;
 pub mod recurrent;
+pub mod rk4_neurons;
 pub mod scpn;
 pub mod simd;
 pub mod sobol;
@@ -620,6 +621,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyNetworkRunner>()?;
     m.add_function(wrap_pyfunction!(py_simulate_ei_network, m)?)?;
     m.add_function(wrap_pyfunction!(py_batch_simulate, m)?)?;
+    m.add_function(wrap_pyfunction!(rk4_neurons::py_rk4_neuron_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_cordiv, m)?)?;
     m.add_function(wrap_pyfunction!(py_adaptive_length, m)?)?;
     m.add_function(wrap_pyfunction!(py_prediction_error, m)?)?;
