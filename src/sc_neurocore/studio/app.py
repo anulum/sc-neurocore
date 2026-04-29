@@ -880,11 +880,11 @@ def create_app() -> FastAPI:
 
     @app.post("/api/graph/export-nir")
     def api_export_nir(data: dict[str, Any]) -> Any:
-        return graph_to_nir(data)
+        return _safe(lambda: graph_to_nir(data))
 
     @app.post("/api/graph/import-nir")
     def api_import_nir(data: dict[str, Any]) -> Any:
-        return nir_to_graph(data)
+        return _safe(lambda: nir_to_graph(data))
 
     # --- Training Monitor (Block 4) ---
     @app.get("/api/training/surrogates")
