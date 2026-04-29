@@ -125,3 +125,20 @@ release evidence uses:
 Do not quote OpenROAD area, power, timing, or GDS results until the exact
 OpenROAD binary or container digest and PDK revision are recorded with the
 report.
+
+Before publishing a hardware report, capture the local toolchain inventory:
+
+```bash
+python tools/eda_toolchain_versions.py --pretty --out build/eda-toolchain.json
+```
+
+Release gates can also require specific tools and version substrings:
+
+```bash
+python tools/eda_toolchain_versions.py \
+  --require vivado --expect vivado=v2025.2 \
+  --require yosys --expect yosys=0.63
+```
+
+The JSON inventory records Vivado, OpenROAD, Yosys, nextpnr, IceStorm,
+Trellis, Quartus, Lattice Diamond/Radiant, PYNQ, and OpenROAD/PDK pin fields.

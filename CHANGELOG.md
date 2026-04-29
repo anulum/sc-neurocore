@@ -19,6 +19,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Packaging metadata now exposes `sc-neurocore[hdl]`, expands
   `sc-neurocore[full]` across CPU-side training, NIR, Studio, HDL, codec,
   bioware, and quantum workflows, and packages HDL/OpenROAD source artefacts.
+- Added an offline EDA toolchain version inventory helper for Vivado,
+  OpenROAD, Yosys, nextpnr, IceStorm, Trellis, Quartus, Lattice tools, PYNQ,
+  and OpenROAD/PDK pin metadata.
 
 #### Fixed
 - Hardened validation boundaries for fuzzed JSON, NPZ, NIR, IR, and HDL inputs
