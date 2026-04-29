@@ -23,6 +23,7 @@ from sc_neurocore.solvers import (
     ExactLIFSolver,
     StormerVerlet,
     LeapfrogSolver,
+    RosenbrockEuler,
     ImplicitEuler,
     TrapezoidalRule,
     get_solver,
@@ -286,6 +287,20 @@ class TestSymplecticSolvers:
 
 
 class TestImplicitSolvers:
+    def test_rosenbrock_euler_stable_for_stiff(self):
+        solver = RosenbrockEuler()
+        y = np.array([1.0])
+        dt = 0.01
+        for _ in range(10):
+            y, _ = solver.step(stiff_ode, y, 0.0, dt)
+        assert 0.0 <= y[0] < 1e-8
+
+    def test_rosenbrock_euler_rejects_invalid_parameters(self):
+        with pytest.raises(ValueError, match="gamma must be positive"):
+            RosenbrockEuler(gamma=0.0)
+        with pytest.raises(ValueError, match="jacobian_epsilon must be positive"):
+            RosenbrockEuler(jacobian_epsilon=0.0)
+
     def test_implicit_euler_stable_for_stiff(self):
         solver = ImplicitEuler(max_iterations=50)
         y = np.array([1.0])
@@ -346,6 +361,12 @@ class TestFactory:
         assert isinstance(solver, ExponentialEuler)
         assert solver.tau == pytest.approx(5.0)
         assert solver.y_rest == pytest.approx(-60.0)
+
+    @pytest.mark.parametrize("name", ["rosenbrock", "rosenbrock_euler"])
+    def test_rosenbrock_aliases(self, name):
+        solver = get_solver(name, gamma=0.5)
+        assert isinstance(solver, RosenbrockEuler)
+        assert solver.gamma == pytest.approx(0.5)
 
 
 # ---------------------------------------------------------------------------

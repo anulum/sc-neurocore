@@ -14,7 +14,8 @@ Includes:
 - Exponential integrator for linear ODEs
 - Exact event-driven LIF solver
 - Symplectic integrators: Störmer-Verlet, Leapfrog
-- Implicit solvers: Backward Euler, Trapezoidal (Crank-Nicolson)
+- Implicit solvers: Rosenbrock-Euler, Backward Euler, Trapezoidal
+  (Crank-Nicolson)
 - Combinatorial: Stochastic Ising Graph
 """
 
@@ -32,7 +33,7 @@ from .ode import (
 )
 from .exact_lif import ExactLIFSolver
 from .symplectic import StormerVerlet, LeapfrogSolver
-from .stiff import ImplicitEuler, TrapezoidalRule
+from .stiff import ImplicitEuler, RosenbrockEuler, TrapezoidalRule
 
 __all__ = [
     "StochasticIsingGraph",
@@ -45,6 +46,7 @@ __all__ = [
     "ExactLIFSolver",
     "StormerVerlet",
     "LeapfrogSolver",
+    "RosenbrockEuler",
     "ImplicitEuler",
     "TrapezoidalRule",
     "get_solver",

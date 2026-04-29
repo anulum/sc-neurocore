@@ -15,14 +15,67 @@ steps; implicit methods remain stable with larger steps.
 
 from __future__ import annotations
 
-
-import numpy as np
-
 from typing import Callable
 
+import numpy as np
 from numpy.typing import NDArray
 
 from .ode import ODESolver
+
+
+def _finite_difference_jacobian(
+    f: Callable[[float, NDArray], NDArray],
+    t: float,
+    y: NDArray,
+    f_y: NDArray,
+    epsilon: float,
+) -> NDArray:
+    n = y.size
+    jacobian = np.empty((n, n), dtype=np.float64)
+    for col in range(n):
+        delta = epsilon * max(1.0, abs(float(y[col])))
+        shifted = y.copy()
+        shifted[col] += delta
+        jacobian[:, col] = (f(t, shifted) - f_y) / delta
+    return jacobian
+
+
+class RosenbrockEuler(ODESolver):
+    """Linearly implicit one-stage Rosenbrock solver.
+
+    The step solves ``(I - gamma*h*J) k = h*f(t, y)`` and returns
+    ``y + k``. With ``gamma=1`` this is the Rosenbrock-Euler method:
+    first-order, L-stable for linear stiff decay, and suitable as a
+    stiffness-specific alternative path for small neuron state vectors.
+
+    Reference: Hairer, E. & Wanner, G. (1996). Solving ODEs II. Springer.
+    """
+
+    def __init__(self, gamma: float = 1.0, jacobian_epsilon: float = 1e-6) -> None:
+        if gamma <= 0.0:
+            raise ValueError("gamma must be positive")
+        if jacobian_epsilon <= 0.0:
+            raise ValueError("jacobian_epsilon must be positive")
+        self.gamma = gamma
+        self.jacobian_epsilon = jacobian_epsilon
+
+    def step(
+        self,
+        f: Callable[[float, NDArray], NDArray],
+        y: NDArray,
+        t: float,
+        dt: float,
+    ) -> tuple[NDArray, float]:
+        y_vec = np.asarray(y, dtype=np.float64)
+        f_y = np.asarray(f(t, y_vec), dtype=np.float64)
+        jacobian = _finite_difference_jacobian(f, t, y_vec, f_y, self.jacobian_epsilon)
+        system = np.eye(y_vec.size, dtype=np.float64) - self.gamma * dt * jacobian
+        rhs = dt * f_y
+        try:
+            increment = np.linalg.solve(system, rhs)
+        except np.linalg.LinAlgError:
+            increment = np.linalg.lstsq(system, rhs, rcond=None)[0]
+        return y_vec + increment, dt
 
 
 class ImplicitEuler(ODESolver):

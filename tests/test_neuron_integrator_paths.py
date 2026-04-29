@@ -65,6 +65,23 @@ def test_hodgkin_huxley_rk4_path_stays_finite_and_tracks_baseline():
     assert abs(candidate.v - baseline.v) < 15.0
 
 
+def test_hodgkin_huxley_rosenbrock_path_tracks_rk4_and_keeps_gates_bounded():
+    reference = HodgkinHuxleyNeuron(dt=0.02, integrator="rk4")
+    candidate = HodgkinHuxleyNeuron(dt=0.02, integrator="rosenbrock")
+
+    reference_spikes = _count_spikes(reference, 10.0, 200)
+    candidate_spikes = _count_spikes(candidate, 10.0, 200)
+
+    for value in [candidate.v, candidate.m, candidate.h, candidate.n]:
+        assert np.isfinite(value)
+    assert 0.0 <= candidate.m <= 1.0
+    assert 0.0 <= candidate.h <= 1.0
+    assert 0.0 <= candidate.n <= 1.0
+    assert reference_spikes > 0
+    assert abs(candidate_spikes - reference_spikes) <= 1
+    assert abs(candidate.v - reference.v) < 1.0
+
+
 def test_adex_rk4_path_stays_finite_and_tracks_baseline():
     baseline = AdExNeuron(dt=0.1, integrator="baseline_euler")
     candidate = AdExNeuron(dt=0.1, integrator="rk4")
@@ -78,6 +95,21 @@ def test_adex_rk4_path_stays_finite_and_tracks_baseline():
     assert candidate_spikes > 0
     assert abs(candidate_spikes - baseline_spikes) <= 10
     assert abs(candidate.w - baseline.w) < 20.0
+
+
+def test_adex_rosenbrock_path_tracks_rk4_and_stays_finite():
+    reference = AdExNeuron(dt=0.2, integrator="rk4")
+    candidate = AdExNeuron(dt=0.2, integrator="rosenbrock")
+
+    reference_spikes = _count_spikes(reference, 500.0, 500)
+    candidate_spikes = _count_spikes(candidate, 500.0, 500)
+
+    assert np.isfinite(candidate.v)
+    assert np.isfinite(candidate.w)
+    assert reference_spikes > 0
+    assert abs(candidate_spikes - reference_spikes) <= 1
+    assert abs(candidate.v - reference.v) < 1.0
+    assert abs(candidate.w - reference.w) < 1.0
 
 
 def test_default_integrators_match_historical_paths():

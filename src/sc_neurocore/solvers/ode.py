@@ -279,7 +279,8 @@ class ExponentialEuler(ODESolver):
 def get_solver(name: str, **kwargs: Any) -> ODESolver:
     """Factory function: return an ODE solver by name.
 
-    Supported names: 'euler', 'heun', 'rk4', 'dp45', 'exponential_euler'.
+    Supported names: 'euler', 'heun', 'rk4', 'dp45', 'exponential_euler',
+    'rosenbrock', and 'rosenbrock_euler'.
     """
     key = name.lower()
     if key == "euler":
@@ -292,6 +293,11 @@ def get_solver(name: str, **kwargs: Any) -> ODESolver:
         return DormandPrinceSolver(**kwargs)
     if key == "exponential_euler":
         return ExponentialEuler(**kwargs)
+    if key in {"rosenbrock", "rosenbrock_euler"}:
+        from .stiff import RosenbrockEuler
+
+        return RosenbrockEuler(**kwargs)
     raise ValueError(
-        f"Unknown solver: {name!r}. Available: 'euler', 'heun', 'rk4', 'dp45', 'exponential_euler'."
+        f"Unknown solver: {name!r}. Available: 'euler', 'heun', 'rk4', 'dp45', "
+        "'exponential_euler', 'rosenbrock', 'rosenbrock_euler'."
     )
