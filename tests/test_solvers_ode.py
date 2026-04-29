@@ -155,6 +155,27 @@ class TestDormandPrinceSolver:
         ts, ys = solver.integrate(decay_ode, np.array([1.0]), (0.0, 1.0))
         assert abs(ys[-1, 0] - math.exp(-1.0)) < 1e-9
 
+    def test_zero_error_uses_max_growth_factor(self):
+        solver = DormandPrinceSolver(max_factor=3.0)
+
+        def zero_rhs(t, y):
+            return np.zeros_like(y)
+
+        y_new, dt_used, dt_next = solver.step(zero_rhs, np.array([1.0]), 0.0, 0.1)
+
+        np.testing.assert_allclose(y_new, np.array([1.0]))
+        assert dt_used == pytest.approx(0.1)
+        assert dt_next == pytest.approx(0.3)
+
+    def test_rejects_initial_step_when_error_is_large(self):
+        solver = DormandPrinceSolver(atol=1e-12, rtol=1e-12, min_factor=0.2)
+
+        y_new, dt_used, dt_next = solver.step(lambda t, y: y * y, np.array([1.0]), 0.0, 1.0)
+
+        assert dt_used < 1.0
+        assert dt_next > 0.0
+        assert y_new[0] > 1.0
+
 
 # ---------------------------------------------------------------------------
 # Exponential Euler
@@ -197,6 +218,11 @@ class TestExactLIFSolver:
         t = solver.next_spike_time(v0=-65.0, current=10.0)
         assert t is None  # V_inf = -55, never reaches -50
 
+    def test_already_threshold_spikes_immediately(self):
+        solver = ExactLIFSolver(v_thresh=-50.0)
+
+        assert solver.next_spike_time(v0=-50.0, current=20.0) == 0.0
+
     def test_evolve_to_time_at_zero(self):
         solver = ExactLIFSolver()
         v = solver.evolve_to_time(v0=-60.0, t=0.0, current=0.0)
@@ -212,10 +238,23 @@ class TestExactLIFSolver:
         rate = solver.firing_rate(current=5.0)
         assert rate == 0.0
 
+    def test_firing_rate_zero_for_immediate_spike_time(self):
+        solver = ExactLIFSolver(v_thresh=-50.0, v_reset=-50.0)
+
+        assert solver.firing_rate(current=20.0) == 0.0
+
     def test_simulate_produces_spikes(self):
         solver = ExactLIFSolver(tau=10.0, v_rest=-65.0, v_thresh=-50.0, v_reset=-65.0, r_m=1.0)
         spikes, _ = solver.simulate(current=30.0, t_end=100.0)
         assert len(spikes) >= 2
+
+    def test_simulate_breaks_when_next_spike_exceeds_window(self):
+        solver = ExactLIFSolver(tau=10.0, v_rest=-65.0, v_thresh=-50.0, v_reset=-65.0, r_m=1.0)
+
+        spikes, voltages = solver.simulate(current=20.0, t_end=1.0)
+
+        assert spikes == []
+        assert voltages == []
 
 
 # ---------------------------------------------------------------------------
@@ -301,6 +340,12 @@ class TestFactory:
     def test_dp45_with_kwargs(self):
         solver = get_solver("dp45", atol=1e-6, rtol=1e-4)
         assert isinstance(solver, DormandPrinceSolver)
+
+    def test_exponential_euler_with_kwargs(self):
+        solver = get_solver("exponential_euler", tau=5.0, y_rest=-60.0)
+        assert isinstance(solver, ExponentialEuler)
+        assert solver.tau == pytest.approx(5.0)
+        assert solver.y_rest == pytest.approx(-60.0)
 
 
 # ---------------------------------------------------------------------------
