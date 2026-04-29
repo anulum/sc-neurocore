@@ -335,6 +335,35 @@ class TestMapNirCommand:
 
 
 # ---------------------------------------------------------------------------
+# Self-hosted hub command
+# ---------------------------------------------------------------------------
+
+
+class TestHubInitCommand:
+    """Tests for `sc-neurocore hub-init ...`."""
+
+    def test_hub_init_writes_bundle(self, tmp_path, capsys):
+        from sc_neurocore.cli import _cmd_hub_init
+
+        out = tmp_path / "hub"
+        rc = _cmd_hub_init(str(out), port=8111)
+
+        assert rc == 0
+        assert (out / "docker-compose.yml").exists()
+        manifest = json.loads((out / "hub_manifest.json").read_text(encoding="utf-8"))
+        assert manifest["services"]["studio"]["url"] == "http://127.0.0.1:8111"
+        assert "hub bundle generated" in capsys.readouterr().out
+
+    def test_hub_init_rejects_invalid_port(self, tmp_path, capsys):
+        from sc_neurocore.cli import _cmd_hub_init
+
+        rc = _cmd_hub_init(str(tmp_path / "hub"), port=0)
+
+        assert rc == 1
+        assert "studio_port must be in the range" in capsys.readouterr().out
+
+
+# ---------------------------------------------------------------------------
 # Serve command
 # ---------------------------------------------------------------------------
 
