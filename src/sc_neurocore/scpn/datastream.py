@@ -30,6 +30,14 @@ from .params import N_LAYERS, OMEGA_N, build_knm_matrix
 
 SCHEMA_VERSION = "sc-neurocore.scpn.datastream.v1"
 LAYER_IDS = tuple(f"l{i}" for i in range(1, N_LAYERS + 1))
+_REQUIRED_PAYLOAD_FIELDS = (
+    "dt_s",
+    "seed",
+    "probabilities",
+    "spike_train",
+    "omega_rad_s",
+    "knm",
+)
 
 
 @dataclass(frozen=True)
@@ -92,15 +100,27 @@ class SCPNDatastream:
     @classmethod
     def from_json_dict(cls, payload: dict[str, Any]) -> SCPNDatastream:
         """Load and validate a datastream from a JSON-compatible mapping."""
+        if not isinstance(payload, dict):
+            raise ValueError("SCPN datastream JSON root must be an object")
         if payload.get("schema_version") != SCHEMA_VERSION:
             raise ValueError("unsupported SCPN datastream schema version")
+        missing = [key for key in _REQUIRED_PAYLOAD_FIELDS if key not in payload]
+        if missing:
+            raise ValueError(f"SCPN datastream payload missing required fields: {missing}")
+
+        spike_train = _numeric_array_from_payload(payload["spike_train"], key="spike_train")
+        if not np.all((spike_train == 0.0) | (spike_train == 1.0)):
+            raise ValueError("spike_train must be binary")
+
         stream = cls(
-            dt_s=float(payload["dt_s"]),
-            seed=int(payload["seed"]),
-            probabilities=np.asarray(payload["probabilities"], dtype=np.float64),
-            spike_train=np.asarray(payload["spike_train"], dtype=np.uint8),
-            omega_rad_s=np.asarray(payload["omega_rad_s"], dtype=np.float64),
-            knm=np.asarray(payload["knm"], dtype=np.float64),
+            dt_s=_float_scalar_from_payload(payload["dt_s"], key="dt_s"),
+            seed=_int_scalar_from_payload(payload["seed"], key="seed"),
+            probabilities=_numeric_array_from_payload(
+                payload["probabilities"], key="probabilities"
+            ),
+            spike_train=spike_train.astype(np.uint8, copy=False),
+            omega_rad_s=_numeric_array_from_payload(payload["omega_rad_s"], key="omega_rad_s"),
+            knm=_numeric_array_from_payload(payload["knm"], key="knm"),
         )
         validate_scpn_datastream(stream)
         return stream
@@ -160,7 +180,7 @@ def generate_scpn_datastream(
 
 def validate_scpn_datastream(stream: SCPNDatastream) -> None:
     """Validate shape, bounds, and canonical matrix invariants."""
-    if stream.dt_s <= 0.0:
+    if not np.isfinite(stream.dt_s) or stream.dt_s <= 0.0:
         raise ValueError("dt_s must be > 0")
     if stream.probabilities.shape != stream.spike_train.shape:
         raise ValueError("probabilities and spike_train must have matching shapes")
@@ -172,6 +192,12 @@ def validate_scpn_datastream(stream: SCPNDatastream) -> None:
         raise ValueError(f"omega_rad_s must have shape ({N_LAYERS},)")
     if stream.knm.shape != (N_LAYERS, N_LAYERS):
         raise ValueError(f"knm must have shape ({N_LAYERS}, {N_LAYERS})")
+    if not np.isfinite(stream.probabilities).all():
+        raise ValueError("probabilities must be finite")
+    if not np.isfinite(stream.omega_rad_s).all():
+        raise ValueError("omega_rad_s must be finite")
+    if not np.isfinite(stream.knm).all():
+        raise ValueError("knm must be finite")
     if not np.all((stream.probabilities >= 0.0) & (stream.probabilities <= 1.0)):
         raise ValueError("probabilities must be in [0, 1]")
     if not np.isin(stream.spike_train, [0, 1]).all():
@@ -190,10 +216,47 @@ def write_scpn_datastream(path: str | Path, stream: SCPNDatastream) -> None:
 
 def read_scpn_datastream(path: str | Path) -> SCPNDatastream:
     """Read a stream payload from JSON."""
-    payload = json.loads(Path(path).read_text())
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise ValueError("SCPN datastream JSON root must be an object")
     return SCPNDatastream.from_json_dict(payload)
+
+
+def _float_scalar_from_payload(value: Any, *, key: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        raise ValueError(f"{key} must be numeric")
+    result = float(value)
+    if not np.isfinite(result):
+        raise ValueError(f"{key} must be finite")
+    return result
+
+
+def _int_scalar_from_payload(value: Any, *, key: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError(f"{key} must be an integer")
+    return int(value)
+
+
+def _numeric_array_from_payload(value: Any, *, key: str) -> np.ndarray:
+    _validate_numeric_json_tree(value, key=key)
+    try:
+        return np.asarray(value, dtype=np.float64)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{key} must be a numeric JSON array") from exc
+
+
+def _validate_numeric_json_tree(value: Any, *, key: str) -> None:
+    if isinstance(value, bool) or value is None or isinstance(value, str):
+        raise ValueError(f"{key} must contain only numeric values")
+    if isinstance(value, int | float):
+        if not np.isfinite(float(value)):
+            raise ValueError(f"{key} must contain only finite values")
+        return
+    if isinstance(value, list):
+        for item in value:
+            _validate_numeric_json_tree(item, key=key)
+        return
+    raise ValueError(f"{key} must be a numeric JSON array")
 
 
 def generate_scpn_datastream_payload(**kwargs: Any) -> dict[str, Any]:
