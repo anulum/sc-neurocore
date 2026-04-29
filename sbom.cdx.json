@@ -86,7 +86,7 @@
       ],
       "name": "sc-neurocore",
       "type": "application",
-      "version": "3.13.3"
+      "version": "3.14.0"
     },
     "properties": [
       {
