@@ -69,6 +69,35 @@ trajectories. Install the optional bridge with `sc-neurocore[julia]`.
 The older per-model Julia mirror files are not authoritative unless loaded
 through a maintained Python wrapper.
 
+## Go RK4 Parity Path
+
+The Go shared-library entry point is
+`sc_neurocore.accel.go.rk4_neurons.simulate_rk4_neuron(model_name, current_trace, dt=None)`.
+Build the local shared object before using it:
+
+```bash
+cd src/sc_neurocore/accel/go/rk4_neurons
+go build -buildmode=c-shared -o librk4_neurons.so rk4_neurons.go
+```
+
+The generated shared object is platform-specific and is not committed. The Go
+source is included in the Python package so wheel builders can precompile it.
+
+## Mojo RK4 Parity Path
+
+The Mojo shared-library entry point is
+`sc_neurocore.accel.mojo.rk4_neurons.simulate_rk4_neuron(model_name, current_trace, dt=None)`.
+Build the local shared object before using it:
+
+```bash
+cd src/sc_neurocore/accel/mojo/rk4_neurons
+~/.pixi/bin/mojo build --emit shared-lib -o librk4_neurons.so rk4_neurons.mojo
+```
+
+Mojo recurrence kernels run as compiled shared-library code but still preserve
+the same fixed-step RK4 recurrence as Python, Rust, Julia, and Go. The time
+axis is not vectorised because each RK4 step depends on the previous state.
+
 ## Design Rules
 
 - default construction must preserve historical behaviour
@@ -86,6 +115,7 @@ through a maintained Python wrapper.
 The current state is explicit:
 
 - baseline path kept
-- RK4 path added for the first three priority models
+- RK4 path added for the first three priority models across Python, Rust,
+  Julia, Go, and Mojo parity paths
 - Rosenbrock path added for the two priority stiff neuron models
 - further integrator work should follow the same pattern
