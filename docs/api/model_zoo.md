@@ -381,6 +381,11 @@ with dense-to-sparse converted weight matrices.
 Converted to CSR via `scipy.sparse.csr_matrix` for efficient sparse-matrix
 vector multiplication during projection propagation.
 
+Pretrained archives are loaded with numpy pickle support disabled. The
+loader rejects missing or unexpected archive members, non-2-D arrays,
+shape mismatches, complex or object arrays, and non-finite values before
+overwriting projection weights.
+
 **Spiking correction:** Weights use Xavier/Glorot with spiking correction
 factor 0.5 (Zenke & Ganguli 2018). This accounts for the fact that SNN
 gradients are noisier than ANN gradients due to the non-differentiable
