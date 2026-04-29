@@ -8,7 +8,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+import math
+from numbers import Real
 import secrets
+from typing import Any
 
 from sc_neurocore.studio.models import list_models
 from sc_neurocore.studio.network import simulate_ei_network
@@ -65,32 +69,86 @@ def create_projection(
     }
 
 
-def validate_graph(graph: dict) -> list[str]:
+def validate_graph(graph: object) -> list[str]:
     """Validate a network graph. Returns list of error messages (empty = valid)."""
     errors = []
+    if not isinstance(graph, Mapping):
+        return ["Network graph must be an object"]
+
     populations = graph.get("populations", [])
     projections = graph.get("projections", [])
+
+    if not isinstance(populations, list):
+        errors.append("Network populations must be a list")
+        populations = []
+    if not isinstance(projections, list):
+        errors.append("Network projections must be a list")
+        projections = []
 
     if not populations:
         errors.append("Network has no populations")
         return errors
 
-    pop_ids = {p["id"] for p in populations}
+    pop_ids: set[str] = set()
+    valid_populations: list[Mapping[str, Any]] = []
+    for index, pop in enumerate(populations):
+        if not isinstance(pop, Mapping):
+            errors.append(f"Population {index} must be an object")
+            continue
+        pop_id = pop.get("id")
+        if not isinstance(pop_id, str) or not pop_id:
+            errors.append(f"Population {index} id must be a non-empty string")
+            continue
+        pop_ids.add(pop_id)
+        valid_populations.append(pop)
 
-    for proj in projections:
-        if proj["source"] not in pop_ids:
-            errors.append(f"Projection {proj['id']} source {proj['source']} not found")
-        if proj["target"] not in pop_ids:
-            errors.append(f"Projection {proj['id']} target {proj['target']} not found")
-        if proj.get("weight", 0) == 0:
-            errors.append(f"Projection {proj['id']} has zero weight")
-        if proj.get("probability", 0) <= 0 or proj.get("probability", 1) > 1:
-            errors.append(f"Projection {proj['id']} probability out of range (0, 1]")
+    if not valid_populations:
+        errors.append("Network has no valid populations")
 
-    total_neurons = sum(p.get("count", 0) for p in populations)
+    for index, proj in enumerate(projections):
+        if not isinstance(proj, Mapping):
+            errors.append(f"Projection {index} must be an object")
+            continue
+        proj_id = proj.get("id")
+        proj_label = proj_id if isinstance(proj_id, str) and proj_id else str(index)
+        source = proj.get("source")
+        target = proj.get("target")
+        if not isinstance(source, str) or not source:
+            errors.append(f"Projection {proj_label} source must be a non-empty string")
+        elif source not in pop_ids:
+            errors.append(f"Projection {proj_label} source {source} not found")
+        if not isinstance(target, str) or not target:
+            errors.append(f"Projection {proj_label} target must be a non-empty string")
+        elif target not in pop_ids:
+            errors.append(f"Projection {proj_label} target {target} not found")
+        weight = proj.get("weight", 0)
+        if not isinstance(weight, Real) or isinstance(weight, bool):
+            errors.append(f"Projection {proj_label} weight must be numeric")
+        elif not math.isfinite(float(weight)):
+            errors.append(f"Projection {proj_label} weight must be finite")
+        elif float(weight) == 0:
+            errors.append(f"Projection {proj_label} has zero weight")
+        probability = proj.get("probability", 0)
+        if not isinstance(probability, Real) or isinstance(probability, bool):
+            errors.append(f"Projection {proj_label} probability must be numeric")
+        elif not math.isfinite(float(probability)):
+            errors.append(f"Projection {proj_label} probability must be finite")
+        elif float(probability) <= 0 or float(probability) > 1:
+            errors.append(f"Projection {proj_label} probability out of range (0, 1]")
+
+    total_neurons = 0.0
+    for index, pop in enumerate(valid_populations):
+        count = pop.get("count", 0)
+        if not isinstance(count, Real) or isinstance(count, bool):
+            errors.append(f"Population {index} count must be numeric")
+            continue
+        if not math.isfinite(float(count)):
+            errors.append(f"Population {index} count must be finite")
+            continue
+        total_neurons += float(count)
     if total_neurons > 2000:
         errors.append(
-            f"Total neuron count {total_neurons} exceeds 2000 limit for browser simulation"
+            f"Total neuron count {total_neurons:g} exceeds 2000 limit for browser simulation"
         )
 
     return errors
@@ -161,8 +219,14 @@ def simulate_graph(graph: dict) -> dict:
     return result
 
 
-def graph_to_nir(graph: dict) -> dict:
+def graph_to_nir(graph: object) -> dict:
     """Export network graph to NIR-compatible format."""
+    if not isinstance(graph, Mapping):
+        raise ValueError("Network graph must be an object")
+    errors = validate_graph(graph)
+    if errors:
+        raise ValueError(f"Invalid network graph: {'; '.join(errors)}")
+
     nodes = {}
     edges = []
 
@@ -192,13 +256,26 @@ def graph_to_nir(graph: dict) -> dict:
     }
 
 
-def nir_to_graph(nir_data: dict) -> dict:
+def nir_to_graph(nir_data: object) -> dict:
     """Import NIR-compatible format to network graph."""
+    if not isinstance(nir_data, Mapping):
+        raise ValueError("NIR payload must be an object")
+    raw_nodes = nir_data.get("nodes", {})
+    raw_edges = nir_data.get("edges", [])
+    if not isinstance(raw_nodes, Mapping):
+        raise ValueError("NIR nodes must be an object")
+    if not isinstance(raw_edges, list):
+        raise ValueError("NIR edges must be a list")
+
     populations = []
     projections = []
 
     x_offset = 0
-    for node_id, node in nir_data.get("nodes", {}).items():
+    for node_id, node in raw_nodes.items():
+        if not isinstance(node_id, str) or not node_id:
+            raise ValueError("NIR node ids must be non-empty strings")
+        if not isinstance(node, Mapping):
+            raise ValueError(f"NIR node {node_id!r} must be an object")
         populations.append(
             {
                 "id": node_id,
@@ -213,12 +290,20 @@ def nir_to_graph(nir_data: dict) -> dict:
         )
         x_offset += 200
 
-    for edge in nir_data.get("edges", []):
+    for index, edge in enumerate(raw_edges):
+        if not isinstance(edge, Mapping):
+            raise ValueError(f"NIR edge {index} must be an object")
+        source = edge.get("source")
+        target = edge.get("target")
+        if not isinstance(source, str) or not source:
+            raise ValueError(f"NIR edge {index} source must be a non-empty string")
+        if not isinstance(target, str) or not target:
+            raise ValueError(f"NIR edge {index} target must be a non-empty string")
         projections.append(
             {
                 "id": f"proj_{secrets.token_hex(4)}",
-                "source": edge["source"],
-                "target": edge["target"],
+                "source": source,
+                "target": target,
                 "weight": edge.get("weight", 1.0),
                 "delay": edge.get("delay", 0.0),
                 "probability": 1.0,

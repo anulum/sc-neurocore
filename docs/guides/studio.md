@@ -186,6 +186,23 @@ Simulations are cached (LRU, 64 slots) for instant replay.
 | GET | `/api/cache/stats` | Cache hit/miss statistics |
 | GET | `/api/health` | Health check |
 
+### Network Canvas
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/graph/models` | List neuron models available for graph populations |
+| POST | `/api/graph/population` | Create a population node |
+| POST | `/api/graph/projection` | Create a projection edge |
+| POST | `/api/graph/validate` | Validate graph JSON and return structured errors |
+| POST | `/api/graph/simulate` | Simulate a graph through the E-I backend |
+| POST | `/api/graph/export-nir` | Export validated graph JSON to NIR-compatible JSON |
+| POST | `/api/graph/import-nir` | Import NIR-compatible JSON to Studio graph JSON |
+
+Graph and NIR import endpoints validate malformed JSON boundaries explicitly:
+`populations` and `projections` must be lists, population IDs and NIR edge
+endpoints must be non-empty strings, and numeric count/weight/probability
+fields must be finite.
+
 ### Example: POST /api/simulate
 
 ```json

@@ -239,3 +239,13 @@ class TestEndpoints:
         assert r.status_code == 200
         data = r.json()
         assert len(data["populations"]) == 1
+
+    def test_export_nir_endpoint_rejects_malformed_graph(self, client):
+        r = client.post("/api/graph/export-nir", json={"populations": [{"count": 10}]})
+        assert r.status_code == 422
+        assert r.json()["detail"] == "Invalid input"
+
+    def test_import_nir_endpoint_rejects_malformed_edges(self, client):
+        r = client.post("/api/graph/import-nir", json={"nodes": {"a": {}}, "edges": [{}]})
+        assert r.status_code == 422
+        assert r.json()["detail"] == "Invalid input"
