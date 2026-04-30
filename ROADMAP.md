@@ -339,7 +339,13 @@ public feature set.
 Per-synapse bit-length selection driven by sensitivity analysis and formal
 error bounds. This extends the existing adaptive precision, stochastic
 computing, and Zenith/ArcaneZenith plasticity pieces into a first-class
-optimizer with proof-carrying precision assignments.
+optimiser with proof-carrying precision assignments.
+
+2026-04-30 implementation slice: `assign_synapse_precisions(...)` now produces
+per-synapse bit-width and SC bitstream-length plans with conservative
+quantisation, Hoeffding stochastic, and total error bounds. The companion
+`precision_plan_manifest(...)` gives downstream compiler and verification
+passes a deterministic evidence surface.
 
 ### Production HIL daemon and real-time digital twin
 
@@ -353,6 +359,12 @@ as the design target.
 Add MLIR/CIRCT emission alongside the current Verilog path so compiler output
 can target next-generation open EDA flows without replacing the proven RTL
 backend.
+
+2026-04-30 implementation slice: `generate_mlir_bundle(...)` now validates
+HDL-facing identifiers and writes CIRCT-ready `.mlir` plus
+`mlir_bundle_manifest.json` with operation counts and `firtool` availability.
+The manifest keeps downstream Verilog, timing, area, and power claims gated
+until explicit CIRCT/OpenROAD execution evidence is attached.
 
 ### One-command multi-PDK ASIC flow
 

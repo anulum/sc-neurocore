@@ -6,7 +6,11 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Tests for MLIR Emitter
 
-from sc_neurocore.compiler.mlir_emitter import MLIREmitter
+import json
+
+import pytest
+
+from sc_neurocore.compiler.mlir_emitter import MLIREmitter, generate_mlir_bundle
 
 
 def test_mlir_emitter_basic():
@@ -30,6 +34,45 @@ def test_mlir_emitter_basic():
     assert "hw.output" in mlir
 
     # print(mlir)
+
+
+def test_mlir_bundle_writes_manifest(tmp_path):
+    emitter = MLIREmitter("native_sc_top")
+    lhs = emitter.emit_lfsr(8, 0x5A)
+    rhs = emitter.emit_lfsr(8, 0xC3)
+    emitter.emit_and(lhs, rhs)
+
+    bundle = generate_mlir_bundle(emitter, tmp_path, firtool="definitely_missing_firtool")
+
+    assert bundle.module_name == "native_sc_top"
+    assert bundle.node_count == 3
+    assert bundle.op_counts == {"comb.and": 1, "hw.instance": 2}
+    assert bundle.firtool_path is None
+    assert (tmp_path / "native_sc_top.mlir").is_file()
+    assert (tmp_path / "mlir_bundle_manifest.json").is_file()
+
+    manifest = json.loads((tmp_path / "mlir_bundle_manifest.json").read_text(encoding="utf-8"))
+    assert manifest["schema"] == "sc-neurocore.mlir_bundle_manifest.v1"
+    assert manifest["circt"]["available"] is False
+    assert manifest["circt"]["executed"] is False
+    assert manifest["claim_status"]["circt_lowering_executed"] is False
+    assert manifest["claim_status"]["verilog_generated_from_mlir"] is False
+
+
+def test_mlir_bundle_rejects_unsafe_module_name(tmp_path):
+    emitter = MLIREmitter("native-sc/top")
+    emitter.emit_and("%lhs", "%rhs")
+
+    with pytest.raises(ValueError, match="Invalid module name"):
+        generate_mlir_bundle(emitter, tmp_path)
+
+
+def test_mlir_bundle_method_rejects_implicit_external_execution(tmp_path):
+    emitter = MLIREmitter("safe_top")
+    emitter.emit_xor("%a", "%b")
+
+    with pytest.raises(NotImplementedError, match="CIRCT execution"):
+        emitter.write_bundle(tmp_path, run_circt=True)
 
 
 if __name__ == "__main__":

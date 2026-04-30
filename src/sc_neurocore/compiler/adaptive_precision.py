@@ -43,6 +43,37 @@ class LayerPrecision:
     sensitivity: float
 
 
+@dataclass(frozen=True)
+class SynapsePrecision:
+    """Precision assignment and conservative error bound for one synapse."""
+
+    layer_index: int
+    layer_name: str
+    output_index: int
+    input_index: int
+    bit_width: int
+    bitstream_length: int
+    sensitivity: float
+    quantization_error_bound: float
+    stochastic_error_bound: float
+    total_error_bound: float
+
+    def to_dict(self) -> dict[str, int | float | str]:
+        """Return a JSON-serialisable precision-plan row."""
+        return {
+            "layer_index": self.layer_index,
+            "layer_name": self.layer_name,
+            "output_index": self.output_index,
+            "input_index": self.input_index,
+            "bit_width": self.bit_width,
+            "bitstream_length": self.bitstream_length,
+            "sensitivity": self.sensitivity,
+            "quantization_error_bound": self.quantization_error_bound,
+            "stochastic_error_bound": self.stochastic_error_bound,
+            "total_error_bound": self.total_error_bound,
+        }
+
+
 def analyze_sensitivity(
     layer_weights: list[np.ndarray[Any, Any]],
     lengths: list[int] | None = None,
@@ -116,6 +147,134 @@ def analyze_sensitivity(
         sensitivities.append(float(np.mean(errors)))
 
     return sensitivities
+
+
+def assign_synapse_precisions(
+    layer_weights: list[np.ndarray[Any, Any]],
+    layer_names: list[str] | None = None,
+    sensitivity_maps: list[np.ndarray[Any, Any]] | None = None,
+    target_error: float = 0.01,
+    min_bits: int = 4,
+    max_bits: int = 16,
+    min_length: int = 32,
+    max_length: int = 4096,
+    confidence: float = 0.95,
+) -> list[SynapsePrecision]:
+    """Assign per-synapse bit widths and SC lengths with error bounds.
+
+    The bound is intentionally conservative: each synapse gets a local target
+    derived from the global target, quantisation error is bounded by half an
+    integer-quantisation step scaled by sensitivity, and stochastic sampling
+    error uses the existing Hoeffding bitstream-length helper.
+    """
+    if target_error <= 0:
+        raise ValueError("target_error must be positive")
+    if min_bits < 1 or max_bits < min_bits:
+        raise ValueError("bit-width bounds must satisfy 1 <= min_bits <= max_bits")
+    if min_length < 1 or max_length < min_length:
+        raise ValueError("length bounds must satisfy 1 <= min_length <= max_length")
+
+    n_layers = len(layer_weights)
+    if layer_names is None:
+        layer_names = [f"layer_{i}" for i in range(n_layers)]
+    if len(layer_names) != n_layers:
+        raise ValueError("layer_names length must match layer_weights")
+    if sensitivity_maps is not None and len(sensitivity_maps) != n_layers:
+        raise ValueError("sensitivity_maps length must match layer_weights")
+
+    total_synapses = sum(int(np.asarray(w).size) for w in layer_weights)
+    local_target = target_error / max(1.0, float(np.sqrt(total_synapses)))
+    assignments: list[SynapsePrecision] = []
+
+    for layer_index, (weights, name) in enumerate(zip(layer_weights, layer_names)):
+        w = np.asarray(weights, dtype=float)
+        if w.ndim not in {1, 2}:
+            raise ValueError("layer weights must be 1D or 2D arrays")
+        matrix: np.ndarray[Any, Any] = w.reshape(1, -1) if w.ndim == 1 else w
+
+        if sensitivity_maps is None:
+            max_abs = float(np.max(np.abs(matrix))) if matrix.size else 0.0
+            sensitivity = np.abs(matrix) / max(max_abs, 1e-12)
+        else:
+            sensitivity_raw = np.asarray(sensitivity_maps[layer_index], dtype=float)
+            if sensitivity_raw.shape != w.shape:
+                raise ValueError("each sensitivity map must match its layer weight shape")
+            sensitivity = (
+                sensitivity_raw.reshape(1, -1) if sensitivity_raw.ndim == 1 else sensitivity_raw
+            )
+            if np.any(sensitivity < 0) or not np.all(np.isfinite(sensitivity)):
+                raise ValueError("sensitivity maps must contain finite non-negative values")
+
+        for output_index in range(matrix.shape[0]):
+            for input_index in range(matrix.shape[1]):
+                sens = float(sensitivity[output_index, input_index])
+                bit_width = _select_bit_width(sens, local_target, min_bits, max_bits)
+                quant_bound = _quantization_error_bound(sens, bit_width)
+                remaining = max(local_target - quant_bound, local_target * 0.25)
+                if sens <= 0:
+                    length = min_length
+                    stochastic_bound = 0.0
+                else:
+                    epsilon = max(remaining / sens, 1e-12)
+                    length = adaptive_length(
+                        p=0.5,
+                        epsilon=epsilon,
+                        confidence=confidence,
+                        min_length=min_length,
+                        max_length=max_length,
+                    )
+                    stochastic_bound = sens * _hoeffding_radius(length, confidence)
+
+                assignments.append(
+                    SynapsePrecision(
+                        layer_index=layer_index,
+                        layer_name=name,
+                        output_index=output_index,
+                        input_index=input_index,
+                        bit_width=bit_width,
+                        bitstream_length=length,
+                        sensitivity=sens,
+                        quantization_error_bound=quant_bound,
+                        stochastic_error_bound=stochastic_bound,
+                        total_error_bound=quant_bound + stochastic_bound,
+                    )
+                )
+
+    return assignments
+
+
+def precision_plan_manifest(assignments: list[SynapsePrecision]) -> dict[str, Any]:
+    """Build a deterministic manifest for a per-synapse precision plan."""
+    rows = [assignment.to_dict() for assignment in assignments]
+    return {
+        "schema": "sc-neurocore.adaptive_precision_plan.v1",
+        "granularity": "synapse",
+        "num_synapses": len(assignments),
+        "max_total_error_bound": max(
+            (assignment.total_error_bound for assignment in assignments),
+            default=0.0,
+        ),
+        "assignments": rows,
+    }
+
+
+def _select_bit_width(sensitivity: float, target: float, min_bits: int, max_bits: int) -> int:
+    for bits in range(min_bits, max_bits + 1):
+        if _quantization_error_bound(sensitivity, bits) <= target:
+            return bits
+    return max_bits
+
+
+def _quantization_error_bound(sensitivity: float, bits: int) -> float:
+    levels = max(1, 2**bits - 1)
+    return float(sensitivity) * 0.5 / levels
+
+
+def _hoeffding_radius(length: int, confidence: float) -> float:
+    delta = 1.0 - confidence
+    if delta <= 0:
+        raise ValueError("confidence must be < 1.0")
+    return float(np.sqrt(-np.log(delta / 2.0) / (2.0 * length)))
 
 
 def assign_lengths(

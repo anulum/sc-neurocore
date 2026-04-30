@@ -15,7 +15,11 @@ This allows us to leverage LLVM's optimization passes directly for
 FPGA bitstream synthesis, skipping string-based Verilog generation.
 """
 
-from dataclasses import dataclass
+import json
+import shutil
+from collections import Counter
+from dataclasses import asdict, dataclass
+from pathlib import Path
 from typing import List, Any
 
 from ..hdl_gen._ident import sanitize_ident
@@ -27,6 +31,22 @@ class MLIRNode:
     inputs: List[str]
     output: str
     attributes: dict[str, Any]
+
+
+@dataclass(frozen=True)
+class MLIRBundle:
+    """Generated MLIR file and evidence manifest."""
+
+    output_dir: str
+    mlir_path: str
+    manifest_path: str
+    module_name: str
+    node_count: int
+    op_counts: dict[str, int]
+    firtool_path: str | None
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
 
 
 class MLIREmitter:
@@ -120,3 +140,83 @@ class MLIREmitter:
         lines.append(f"  hw.output {last_wire} : i1")
         lines.append("}")
         return "\n".join(lines)
+
+    def write_bundle(
+        self,
+        output_dir: str | Path,
+        *,
+        firtool: str = "firtool",
+        run_circt: bool = False,
+    ) -> MLIRBundle:
+        """Write MLIR plus a manifest describing CIRCT lowering readiness.
+
+        The helper is intentionally evidence-first: by default it records
+        whether ``firtool`` is available, but does not run it. Set
+        ``run_circt=True`` only after wiring a controlled external-tool runner.
+        """
+        return generate_mlir_bundle(self, output_dir, firtool=firtool, run_circt=run_circt)
+
+
+def generate_mlir_bundle(
+    emitter: MLIREmitter,
+    output_dir: str | Path,
+    *,
+    firtool: str = "firtool",
+    run_circt: bool = False,
+) -> MLIRBundle:
+    """Write a CIRCT-ready MLIR file and reproducibility manifest."""
+    if run_circt:
+        raise NotImplementedError(
+            "CIRCT execution is not launched by generate_mlir_bundle yet; "
+            "use the manifest firtool_path to run external lowering explicitly."
+        )
+
+    out = Path(output_dir).expanduser()
+    out.mkdir(parents=True, exist_ok=True)
+    safe_module_name = sanitize_ident(emitter.module_name, context="module name")
+    mlir_path = out / f"{safe_module_name}.mlir"
+    manifest_path = out / "mlir_bundle_manifest.json"
+
+    mlir_text = emitter.generate()
+    mlir_path.write_text(mlir_text + "\n", encoding="utf-8")
+
+    op_counts = dict(sorted(Counter(node.op_type for node in emitter.nodes).items()))
+    firtool_path = shutil.which(firtool)
+    manifest = {
+        "schema": "sc-neurocore.mlir_bundle_manifest.v1",
+        "module_name": safe_module_name,
+        "mlir_path": str(mlir_path),
+        "node_count": len(emitter.nodes),
+        "op_counts": op_counts,
+        "dialects": ["hw", "comb", "seq"],
+        "circt": {
+            "firtool": firtool,
+            "firtool_path": firtool_path,
+            "available": firtool_path is not None,
+            "executed": False,
+        },
+        "claim_status": {
+            "mlir_emitted": True,
+            "circt_lowering_executed": False,
+            "verilog_generated_from_mlir": False,
+            "reason": (
+                "Bundle contains CIRCT-ready MLIR text and tool availability "
+                "metadata; downstream Verilog/EDA claims require an attached "
+                "firtool/OpenROAD execution record."
+            ),
+        },
+    }
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    return MLIRBundle(
+        output_dir=str(out),
+        mlir_path=str(mlir_path),
+        manifest_path=str(manifest_path),
+        module_name=safe_module_name,
+        node_count=len(emitter.nodes),
+        op_counts=op_counts,
+        firtool_path=firtool_path,
+    )

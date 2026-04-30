@@ -8,7 +8,7 @@
 
 from .equation_compiler import compile_to_verilog, equation_to_fpga, Q88
 from .pipeline import CompilerPipeline
-from .mlir_emitter import MLIREmitter
+from .mlir_emitter import MLIRBundle, MLIREmitter, generate_mlir_bundle
 from .quantizer import (
     QFormat,
     quantize_weights,
@@ -23,13 +23,23 @@ from .ir_type_checker import (
     IRTypeError,
     SignalType,
 )
+from .adaptive_precision import (
+    LayerPrecision,
+    SynapsePrecision,
+    analyze_sensitivity,
+    assign_lengths,
+    assign_synapse_precisions,
+    precision_plan_manifest,
+)
 
 __all__ = [
     "compile_to_verilog",
     "equation_to_fpga",
     "Q88",
     "CompilerPipeline",
+    "MLIRBundle",
     "MLIREmitter",
+    "generate_mlir_bundle",
     "QFormat",
     "quantize_weights",
     "dequantize_weights",
@@ -40,4 +50,10 @@ __all__ = [
     "IREdge",
     "IRTypeError",
     "SignalType",
+    "LayerPrecision",
+    "SynapsePrecision",
+    "analyze_sensitivity",
+    "assign_lengths",
+    "assign_synapse_precisions",
+    "precision_plan_manifest",
 ]

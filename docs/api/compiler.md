@@ -86,6 +86,30 @@ Orchestration pipeline: MLIR → firtool → Verilog → Yosys → nextpnr → b
 
 ::: sc_neurocore.compiler.mlir_emitter
 
+### 2026-04-30 MLIR/CIRCT bundle manifest
+
+The MLIR backend now exposes `generate_mlir_bundle(...)` and
+`MLIREmitter.write_bundle(...)` for the roadmap native-CIRCT path. The helper
+validates HDL-facing identifiers and writes a `.mlir` file plus
+`mlir_bundle_manifest.json`:
+
+```python
+from sc_neurocore.compiler import MLIREmitter, generate_mlir_bundle
+
+emitter = MLIREmitter("sc_native_top")
+lhs = emitter.emit_lfsr(8, 0x5A)
+rhs = emitter.emit_lfsr(8, 0xC3)
+emitter.emit_and(lhs, rhs)
+
+bundle = generate_mlir_bundle(emitter, "build/mlir/sc_native_top")
+print(bundle.mlir_path)
+print(bundle.manifest_path)
+```
+
+The manifest records operation counts and whether `firtool` is available. It
+does not claim CIRCT lowering, generated Verilog, timing, area, or power unless
+a downstream tool execution record is attached.
+
 ## Weight Quantizer
 
 Float → Q-format fixed-point with nearest/stochastic/floor rounding,
