@@ -19,8 +19,15 @@ from sc_neurocore.edge.power_thermal import (
     SCHEMA_VERSION,
     PowerThermalConfig,
     build_power_thermal_model,
+    build_power_thermal_model_from_vivado_reports,
+    parse_vivado_power_report,
+    parse_vivado_utilization_report,
     write_power_thermal_model,
+    write_power_thermal_model_from_vivado_reports,
 )
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+PYNQ_IMPL_DIR = REPO_ROOT / "sc_shd_pynq" / "sc_shd_pynq.runs" / "impl_1"
 
 
 def test_power_thermal_model_is_deterministic_pre_silicon_estimate() -> None:
@@ -95,3 +102,71 @@ def test_write_power_thermal_model_writes_sorted_json(tmp_path: Path) -> None:
     assert path == output / "power_thermal_model.json"
     assert payload["target"]["family"] == "ecp5"
     assert path.read_text(encoding="utf-8").endswith("\n")
+
+
+def test_parse_vivado_power_report_extracts_routed_pynq_values() -> None:
+    report = parse_vivado_power_report(PYNQ_IMPL_DIR / "system_wrapper_power_routed.rpt")
+
+    assert report.tool_version.startswith("Vivado v.2025.2")
+    assert report.design == "system_wrapper"
+    assert report.device == "xc7z020clg400-1"
+    assert report.total_on_chip_power_w == 1.674
+    assert report.dynamic_power_w == 1.538
+    assert report.static_power_w == 0.136
+    assert report.effective_tja_c_per_w == 11.5
+    assert report.junction_temperature_c == 44.3
+    assert report.confidence_level == "Medium"
+
+
+def test_parse_vivado_utilization_report_extracts_routed_pynq_resources() -> None:
+    report = parse_vivado_utilization_report(
+        PYNQ_IMPL_DIR / "system_wrapper_utilization_placed.rpt"
+    )
+
+    assert report.tool_version.startswith("Vivado v.2025.2")
+    assert report.design == "system_wrapper"
+    assert report.device == "xc7z020clg400-1"
+    assert report.slice_luts == 1452
+    assert report.slice_luts_available == 53200
+    assert report.slice_luts_util_pct == 2.73
+    assert report.slice_registers == 1453
+    assert report.block_ram_tiles == 0
+    assert report.dsps == 0
+    assert report.dsps_available == 220
+
+
+def test_build_power_thermal_model_from_vivado_reports_uses_report_values() -> None:
+    model = build_power_thermal_model_from_vivado_reports(
+        PYNQ_IMPL_DIR,
+        PowerThermalConfig(
+            target="zynq",
+            layer_sizes=((700, 128), (128, 128), (128, 20)),
+            bitstream_length=256,
+            clock_mhz=100.0,
+        ),
+    )
+
+    assert model["source_mode"] == "vivado_report_derived"
+    assert model["power"]["total_power_mw"] == 1674.0
+    assert model["power"]["reported_dynamic_power_mw"] == 1538.0
+    assert model["power"]["reported_static_power_mw"] == 136.0
+    assert model["thermal"]["theta_ja_c_per_w"] == 11.5
+    assert model["thermal"]["reported_junction_c"] == 44.3
+    assert model["implementation"]["device"] == "xc7z020clg400-1"
+    assert model["implementation"]["utilisation"]["slice_luts"] == 1452
+    assert model["implementation"]["utilisation"]["block_ram_tiles"] == 0
+    assert model["implementation"]["utilisation"]["dsps"] == 0
+    assert "Vivado power is report-derived" in model["limitations"][0]
+
+
+def test_write_power_thermal_model_from_vivado_reports_writes_json(tmp_path: Path) -> None:
+    destination = write_power_thermal_model_from_vivado_reports(
+        PYNQ_IMPL_DIR,
+        tmp_path,
+        PowerThermalConfig(target="zynq", layer_sizes=((8, 4),), bitstream_length=64),
+    )
+
+    payload = json.loads(destination.read_text(encoding="utf-8"))
+    assert destination == tmp_path / "power_thermal_model.json"
+    assert payload["source_mode"] == "vivado_report_derived"
+    assert payload["source_reports"]["power"].endswith("system_wrapper_power_routed.rpt")

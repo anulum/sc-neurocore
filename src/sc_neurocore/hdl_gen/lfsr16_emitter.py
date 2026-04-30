@@ -4,13 +4,14 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Standalone LFSR-16 RTL emitter with compare-before-advance semantics
+# SC-NeuroCore — Standalone LFSR-16 RTL emitter with software-parity semantics
 
 """Standalone RTL emitter for the canonical 16-bit stochastic source.
 
-The emitted module exposes the current 16-bit state and a compare output
-`bit_out = (state < threshold)`. This preserves the same compare-before-
-advance semantics used by the software and Rust encoders.
+The emitted module exposes the current generated 16-bit sample and a compare
+output `bit_out = (state < threshold)`. Reset initialises `state` to the first
+advanced LFSR sample, matching the software and Rust encoders which advance
+before comparing.
 """
 
 from __future__ import annotations
@@ -30,6 +31,7 @@ class Lfsr16Emitter:
     def generate(self) -> str:
         """Return the standalone LFSR-16 Verilog module."""
         seed_hex = f"16'h{self.seed:04X}"
+        first_sample_hex = f"16'h{self._advance(self.seed):04X}"
         lines = [
             f"module {self.module_name} (",
             "    input wire clk,",
@@ -40,15 +42,16 @@ class Lfsr16Emitter:
             ");",
             "",
             f"    localparam [15:0] SEED = {seed_hex};",
+            f"    localparam [15:0] FIRST_SAMPLE = {first_sample_hex};",
             "    wire feedback;",
             "",
-            "    // Compare the current state before the next clocked advance.",
+            "    // Compare the current generated sample before the next advance.",
             "    assign bit_out = (state < threshold);",
             "    assign feedback = state[0] ^ state[2] ^ state[3] ^ state[5];",
             "",
             "    always @(posedge clk or negedge rst_n) begin",
             "        if (!rst_n) begin",
-            "            state <= SEED;",
+            "            state <= FIRST_SAMPLE;",
             "        end else begin",
             "            state <= {feedback, state[15:1]};",
             "        end",
@@ -56,3 +59,8 @@ class Lfsr16Emitter:
             "endmodule",
         ]
         return "\n".join(lines)
+
+    @staticmethod
+    def _advance(state: int) -> int:
+        feedback = ((state >> 0) ^ (state >> 2) ^ (state >> 3) ^ (state >> 5)) & 1
+        return ((state >> 1) | (feedback << 15)) & 0xFFFF

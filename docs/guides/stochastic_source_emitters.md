@@ -33,13 +33,16 @@ wiring.
 
 ## Semantics
 
-Both emitters use **compare-before-advance** semantics:
+Both emitters use **software-parity** stream semantics:
 
-1. `bit_out` compares the current source state against `threshold`
-2. the internal source state advances on the next clock edge
+1. reset initialises the exposed state to the first generated source sample
+2. `bit_out` compares that current generated sample against `threshold`
+3. the internal source state advances on the next clock edge
 
-This matches the software and Rust encoder semantics already tested in the
-repository.
+This matches the software and Rust encoder contract, where `Lfsr16.encode(...)`
+and `SobolGenerator.encode(...)` advance before comparing each packed output
+bit. The RTL still exposes the current sample before the next clocked advance,
+so downstream testbenches can inspect the same value that drives `bit_out`.
 
 ## Python usage
 

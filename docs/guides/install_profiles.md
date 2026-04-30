@@ -19,6 +19,13 @@ add extras only for the workflows you actually run.
 pip install sc-neurocore
 ```
 
+For scripts, Dockerfiles, or lab SOPs that want every install command to name a
+profile explicitly, `core` is a stable alias for the same base dependency set:
+
+```bash
+pip install "sc-neurocore[core]"
+```
+
 The base wheel installs the public Python package surface and the core numeric
 dependencies declared in `pyproject.toml`: `numpy` and `scipy`. It does not
 install PyTorch, JAX, Qiskit, PennyLane, Lava, FastAPI, MPI, Vivado, Yosys, or
@@ -56,6 +63,7 @@ sc-neurocore info
 
 | Install command | Use when | Adds |
 | --- | --- | --- |
+| `pip install "sc-neurocore[core]"` | Explicit base install for reproducible scripts and Dockerfiles | No additional packages beyond base `numpy` / `scipy` |
 | `pip install "sc-neurocore[training]"` | Training PyTorch-backed models | `torch` |
 | `pip install "sc-neurocore[nir]"` | Importing/exporting Neuromorphic Intermediate Representation graphs | `nir` |
 | `pip install "sc-neurocore[hdl]"` | Equation-to-HDL workflows, unit-checked equations, packaged HDL primitives | `pint`; bundled `.v` / `.sv` / OpenROAD helper artefacts |
@@ -73,6 +81,13 @@ are acceptable:
 ```bash
 pip install "sc-neurocore[full]"
 ```
+
+The `hdl` and `full` profiles use the same wheel artefact set as the base
+package: source RTL primitives under `hardware/`, safety SystemVerilog under
+`hdl_gen/safety/`, and OpenROAD helper scripts under `hdl_gen/openroad_flow/`.
+Those files are bundled with the wheel so install-time extras only decide which
+Python dependencies are added; external synthesis tools still produce bitstreams
+or routed reports locally.
 
 The `full` profile is the CPU-side union for training, NIR, Studio, HDL, codec,
 bioware, and quantum workflows. It deliberately does not pull GPU-, MPI-,

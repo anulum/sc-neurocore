@@ -23,6 +23,7 @@ from sc_neurocore.edge import (
     WeightHeader, LayerHeader, WEIGHT_MAGIC,
     serialize_weights, deserialize_weights,
     PowerProfile, Board,
+    PowerThermalConfig, build_power_thermal_model_from_vivado_reports,
     WebDeploymentConfig, build_web_deployment,
 )
 from sc_neurocore.edge.aer_router import AERRoutingDaemon
@@ -392,7 +393,37 @@ fp = MemoryFootprint.estimate(
 print(fp.fits_in_ram, fp.stack_bytes)
 ```
 
-### 6.4 Launch the AER router
+### 6.4 FPGA report-derived power/thermal JSON
+
+Deployment bundles can emit a pre-silicon model from architecture settings, or
+a report-derived model once Vivado has produced routed reports. The
+report-derived path records the Vivado headline power, static/dynamic split,
+effective TJA, junction temperature, and implementation resource counts while
+preserving the SC workload metadata used by the estimator.
+
+```python
+from sc_neurocore.edge import (
+    PowerThermalConfig,
+    write_power_thermal_model_from_vivado_reports,
+)
+
+write_power_thermal_model_from_vivado_reports(
+    "sc_shd_pynq/sc_shd_pynq.runs/impl_1",
+    "sc_shd_pynq/deployable_artifacts",
+    PowerThermalConfig(
+        target="zynq",
+        layer_sizes=((700, 128), (128, 128), (128, 20)),
+        bitstream_length=256,
+        clock_mhz=100.0,
+    ),
+)
+```
+
+The emitted JSON uses `source_mode = "vivado_report_derived"`. It is still not
+a substitute for physical PYNQ board measurement; it is the reproducible bridge
+between routed Vivado reports and the deployment artefact directory.
+
+### 6.5 Launch the AER router
 
 ```python
 from sc_neurocore.edge.aer_router import AERRoutingDaemon

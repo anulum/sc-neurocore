@@ -1,0 +1,84 @@
+# Security Hardening
+
+This page tracks current security hardening evidence and the remaining roadmap
+work. It complements `SECURITY.md`; it does not replace coordinated disclosure
+through GitHub Security Advisories or the project security email.
+
+## 2026-04-30 Status
+
+### Property-based fuzzing
+
+Python fuzz coverage exists for the current high-risk structured input surface:
+
+| Surface | Test file |
+|---|---|
+| Bitstream and IR parsing | `tests/test_fuzz_bitstream_ir.py` |
+| NIR import | `tests/test_fuzz_nir_import_inputs.py` |
+| Model-zoo `.npz` input handling | `tests/test_fuzz_model_zoo_npz_inputs.py` |
+| Chip-spec JSON | `tests/test_fuzz_chip_spec_json_inputs.py` |
+| Optimizer evidence JSON | `tests/test_fuzz_optimizer_evidence_json_inputs.py` |
+| SCPN datastream JSON | `tests/test_fuzz_scpn_datastream_json_inputs.py` |
+| Studio graph JSON | `tests/test_fuzz_studio_graph_inputs.py` |
+| Equation-to-MLIR lowering | `tests/test_fuzz_equation_mlir_lowering_inputs.py` |
+| HDL-source lowering | `tests/test_fuzz_hdl_source_lowering_inputs.py` |
+| Transfer-checkpoint input handling | `tests/test_fuzz_transfer_checkpoint_inputs.py` |
+| General property suite | `tests/test_hypothesis_properties.py` |
+
+Run the focused Python fuzz/property suite:
+
+```bash
+pytest tests/test_fuzz_*.py tests/test_hypothesis_properties.py -q
+```
+
+Dedicated Rust `cargo-fuzz` targets are still roadmap work. Until they exist,
+Rust parser and SIMD safety evidence comes from the existing Rust tests,
+property sweeps, and the documented `unsafe` invariants at the PyO3/SIMD
+boundary.
+
+### Supply-chain audit
+
+The release supply-chain check is:
+
+```bash
+python tools/supply_chain_audit.py --strict
+```
+
+Use `--strict` before publishing release artifacts so SBOM metadata drift,
+unhashed release requirements, and dependency-audit failures block the release.
+
+### Static analysis
+
+Run Bandit on Python sources:
+
+```bash
+bandit -r src/sc_neurocore/ -c pyproject.toml -q
+```
+
+CI also carries the broader quality gates documented in the release process.
+
+### Bug-bounty status
+
+No paid bug-bounty program is active as of 2026-04-30. The active process is
+coordinated disclosure through GitHub Security Advisories or the security email
+listed in `SECURITY.md`.
+
+Before announcing a bounty, define:
+
+1. In-scope assets and versions.
+2. Reward tiers for parser crashes, arbitrary code execution, data exfiltration,
+   dependency-confusion, and denial-of-service findings.
+3. Exclusions for speculative model-output concerns that do not cross a security
+   boundary.
+4. Disclosure timelines and public-credit policy.
+
+## Remaining Roadmap
+
+- Add `cargo-fuzz` harnesses for native parsers, bitstream/IR decoding, and PyO3
+  boundary adapters.
+- Add crash-corpus preservation for minimized Python Hypothesis examples.
+- Extend malicious-input coverage for `.nir`, `.npz`, JSON, and pathological
+  bitstream lengths as new import paths land.
+- Run an external third-party security audit before publishing audited-security
+  claims.
+- Fund and publish a scoped bug-bounty program once the disclosure budget and
+  triage rota are ready.
