@@ -42,9 +42,10 @@ Compatible with:
 
 from __future__ import annotations
 
+import json
 import os
 import textwrap
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -759,6 +760,158 @@ gdsii: pnr
 clean:
 \trm -rf synth_$(TOP).* $(TOP)_final.* $(TOP).gds logs/
 """)
+
+
+@dataclass(frozen=True)
+class ASICFlowBundle:
+    """Generated ASIC flow files plus the evidence manifest path."""
+
+    output_dir: str
+    manifest_path: str
+    file_paths: Dict[str, str]
+    pdk_resolution: PDKResolution
+    estimate: DesignEstimate
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "output_dir": self.output_dir,
+            "manifest_path": self.manifest_path,
+            "file_paths": dict(self.file_paths),
+            "pdk_resolution": {
+                "pdk": _pdk_to_manifest(self.pdk_resolution.pdk),
+                "files": asdict(self.pdk_resolution.files),
+                "missing_required": list(self.pdk_resolution.missing_required),
+                "missing_optional": list(self.pdk_resolution.missing_optional),
+                "usable_for_synthesis": self.pdk_resolution.usable_for_synthesis,
+                "usable_for_signoff": self.pdk_resolution.usable_for_signoff,
+            },
+            "estimate": asdict(self.estimate),
+        }
+
+
+def generate_asic_flow_bundle(
+    output_dir: str | Path,
+    *,
+    pdk_type: PDKType | str = PDKType.SKY130,
+    design: Optional[DesignParams] = None,
+    pdk_root: Optional[str] = None,
+    require_pdk_files: bool = False,
+    n_neurons: int = 16,
+    n_synapses: int = 256,
+    bitstream_width: int = 256,
+    n_aer_ports: int = 4,
+) -> ASICFlowBundle:
+    """Write a complete ASIC flow deck and evidence manifest in one call.
+
+    The helper deliberately does not run Yosys/OpenROAD. It materialises the
+    scripts, resolves the requested PDK paths, records missing artefacts, and
+    adds a pre-synthesis estimate so Python API users can inspect the bundle
+    before launching external EDA tools.
+    """
+    pdk_enum = _normalise_pdk_type(pdk_type)
+    design = design or DesignParams()
+    out = Path(output_dir).expanduser()
+    out.mkdir(parents=True, exist_ok=True)
+
+    pdk = PDKConfig.from_pdk_type(pdk_enum)
+    resolution = OpenSourcePDKResolver.resolve(
+        pdk,
+        pdk_root=pdk_root,
+        require_existing=require_pdk_files,
+    )
+    flow = ASICFlowGenerator().generate(resolution.pdk, design)
+
+    file_paths: Dict[str, str] = {}
+    for name, content in flow.to_dict().items():
+        path = out / name
+        path.write_text(content, encoding="utf-8")
+        file_paths[name] = str(path)
+
+    estimate = PreSynthEstimator.estimate(
+        n_neurons=n_neurons,
+        n_synapses=n_synapses,
+        bitstream_width=bitstream_width,
+        n_aer_ports=n_aer_ports,
+        pdk=resolution.pdk,
+    )
+    manifest = _build_asic_flow_manifest(
+        design=design,
+        pdk_resolution=resolution,
+        estimate=estimate,
+        file_paths=file_paths,
+        require_pdk_files=require_pdk_files,
+    )
+    manifest_path = out / "asic_flow_manifest.json"
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+
+    return ASICFlowBundle(
+        output_dir=str(out),
+        manifest_path=str(manifest_path),
+        file_paths=file_paths,
+        pdk_resolution=resolution,
+        estimate=estimate,
+    )
+
+
+def _normalise_pdk_type(pdk_type: PDKType | str) -> PDKType:
+    if isinstance(pdk_type, PDKType):
+        return pdk_type
+    try:
+        return PDKType(str(pdk_type).lower())
+    except ValueError as exc:
+        valid = ", ".join(p.value for p in PDKType)
+        raise ValueError(f"unknown PDK type {pdk_type!r}; expected one of: {valid}") from exc
+
+
+def _pdk_to_manifest(pdk: PDKConfig) -> Dict[str, Any]:
+    data = asdict(pdk)
+    data["pdk_type"] = pdk.pdk_type.value
+    data["is_open_source"] = pdk.is_open_source
+    return data
+
+
+def _design_to_manifest(design: DesignParams) -> Dict[str, Any]:
+    data = asdict(design)
+    data["clock_period_ns"] = design.clock_period_ns
+    data["die_width_um"] = design.die_width_um
+    data["die_height_um"] = design.die_height_um
+    data["core_area_mm2"] = design.core_area_mm2
+    return data
+
+
+def _build_asic_flow_manifest(
+    *,
+    design: DesignParams,
+    pdk_resolution: PDKResolution,
+    estimate: DesignEstimate,
+    file_paths: Dict[str, str],
+    require_pdk_files: bool,
+) -> Dict[str, Any]:
+    return {
+        "schema": "sc-neurocore.asic_flow_manifest.v1",
+        "claim_status": {
+            "scripts_generated": True,
+            "external_eda_executed": False,
+            "physical_ppa_claim_allowed": False,
+            "reason": (
+                "Generated decks and pre-synthesis estimates only; quote physical "
+                "area, power, timing, or GDSII claims only after attaching exact "
+                "OpenROAD/container and PDK revision evidence."
+            ),
+        },
+        "require_pdk_files": require_pdk_files,
+        "pdk": _pdk_to_manifest(pdk_resolution.pdk),
+        "pdk_files": asdict(pdk_resolution.files),
+        "missing_required": list(pdk_resolution.missing_required),
+        "missing_optional": list(pdk_resolution.missing_optional),
+        "usable_for_synthesis": pdk_resolution.usable_for_synthesis,
+        "usable_for_signoff": pdk_resolution.usable_for_signoff,
+        "design": _design_to_manifest(design),
+        "estimate": asdict(estimate),
+        "generated_files": dict(sorted(file_paths.items())),
+    }
 
 
 # ── Area/Power/Timing Estimator ──────────────────────────────────────

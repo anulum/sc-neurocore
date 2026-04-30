@@ -1,0 +1,31 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later | Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+
+[package]
+name = "sc-neurocore-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+sc_neurocore_engine = { path = "../engine" }
+
+[[bin]]
+name = "ir_parser"
+path = "fuzz_targets/ir_parser.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "bitstream_ops"
+path = "fuzz_targets/bitstream_ops.rs"
+test = false
+doc = false
+

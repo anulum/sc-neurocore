@@ -30,10 +30,18 @@ Run the focused Python fuzz/property suite:
 pytest tests/test_fuzz_*.py tests/test_hypothesis_properties.py -q
 ```
 
-Dedicated Rust `cargo-fuzz` targets are still roadmap work. Until they exist,
-Rust parser and SIMD safety evidence comes from the existing Rust tests,
-property sweeps, and the documented `unsafe` invariants at the PyO3/SIMD
-boundary.
+Dedicated Rust `cargo-fuzz` targets now start under `fuzz/` for the SC IR
+parser and core bitstream operations. Rust parser and SIMD safety evidence also
+comes from the existing Rust tests, property sweeps, and the documented
+`unsafe` invariants at the PyO3/SIMD boundary.
+
+Run the initial native fuzz targets:
+
+```bash
+cargo install cargo-fuzz
+cargo fuzz run ir_parser
+cargo fuzz run bitstream_ops
+```
 
 ### Supply-chain audit
 
@@ -73,8 +81,8 @@ Before announcing a bounty, define:
 
 ## Remaining Roadmap
 
-- Add `cargo-fuzz` harnesses for native parsers, bitstream/IR decoding, and PyO3
-  boundary adapters.
+- Extend `cargo-fuzz` harnesses from IR parser and bitstream operations into
+  PyO3 boundary adapters and additional native import/decoder paths.
 - Add crash-corpus preservation for minimized Python Hypothesis examples.
 - Extend malicious-input coverage for `.nir`, `.npz`, JSON, and pathological
   bitstream lengths as new import paths land.
