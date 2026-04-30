@@ -327,3 +327,53 @@ verification:
 - Liveness: every reachable marking can fire at least one transition
 - Boundedness: token counts within proven upper bounds
 - Deadlock freedom: compiler output is provably deadlock-free
+
+## Frontier TODO Intake — 2026-04-30
+
+The following items are accepted as roadmap candidates. They require scoped
+design docs, milestone split, and evidence gates before claims move into the
+public feature set.
+
+### Auto-adaptive precision optimizer
+
+Per-synapse bit-length selection driven by sensitivity analysis and formal
+error bounds. This extends the existing adaptive precision, stochastic
+computing, and Zenith/ArcaneZenith plasticity pieces into a first-class
+optimizer with proof-carrying precision assignments.
+
+### Production HIL daemon and real-time digital twin
+
+Closed-loop BCI path from Neuropixels/Neuralink-scale telemetry into live SC
+network adaptation. Build from the HIL debugger, AER routing, bioware signal
+handling, and digital-twin synchronization primitives, with sub-10 ms latency
+as the design target.
+
+### MLIR/CIRCT native backend
+
+Add MLIR/CIRCT emission alongside the current Verilog path so compiler output
+can target next-generation open EDA flows without replacing the proven RTL
+backend.
+
+### One-command multi-PDK ASIC flow
+
+Expose OpenROAD-backed multi-PDK ASIC compilation through the Python API with
+area, timing, and power estimates attached to generated evidence manifests.
+Claims remain gated on exact OpenROAD binary/container digest and PDK revision.
+
+2026-04-30 implementation slice: `generate_asic_flow_bundle(...)` writes the
+Yosys/OpenROAD deck bundle and `asic_flow_manifest.json` in one Python call,
+including PDK-resolution blockers and pre-synthesis area/power/timing
+estimates while explicitly marking physical PPA claims as not allowed until
+real EDA evidence is attached.
+
+### Stochastic photonic co-design loop
+
+Promote the photonic bridge into a first-class SC-to-photonics workflow:
+stochastic bitstream mapping, FDTD validation loop, and GDSII generation with
+auto-placed optical pulse modulators.
+
+### Federated edge neuromorphic hypervisor
+
+Multi-tenant edge-cluster orchestration built on AER routing and deployment
+contracts. Target isolation, scheduling, telemetry, and per-tenant evidence
+manifests for distributed neuromorphic deployments.

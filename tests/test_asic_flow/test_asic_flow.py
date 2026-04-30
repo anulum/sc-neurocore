@@ -7,6 +7,7 @@
 # SC-NeuroCore — OpenROAD ASIC Tape-Out Flow Tests
 
 from sc_neurocore.asic_flow.asic_flow import (
+    ASICFlowBundle,
     ASICFlowGenerator,
     ASICFlowOutput,
     BlockConfig,
@@ -40,6 +41,7 @@ from sc_neurocore.asic_flow.asic_flow import (
     TapeOutChecklist,
     validate_pdk_installation,
     validate_pdk,
+    generate_asic_flow_bundle,
 )
 
 
@@ -384,6 +386,46 @@ class TestASICFlowGenerator:
         assert "synth.tcl" in d
         assert "Makefile" in d
         assert len(d) == 9
+
+    def test_one_command_bundle_writes_manifest(self, tmp_path):
+        design = DesignParams(top_module="edge_snn", rtl_files=["edge_snn.sv"])
+        bundle = generate_asic_flow_bundle(
+            tmp_path,
+            pdk_type="sky130",
+            design=design,
+            pdk_root="/opt/pdks",
+            n_neurons=32,
+            n_synapses=512,
+            bitstream_width=128,
+            n_aer_ports=8,
+        )
+
+        assert isinstance(bundle, ASICFlowBundle)
+        assert (tmp_path / "synth.tcl").is_file()
+        assert (tmp_path / "Makefile").is_file()
+        assert (tmp_path / "asic_flow_manifest.json").is_file()
+        assert bundle.estimate.gate_count > 0
+        manifest = (tmp_path / "asic_flow_manifest.json").read_text(encoding="utf-8")
+        assert '"schema": "sc-neurocore.asic_flow_manifest.v1"' in manifest
+        assert '"external_eda_executed": false' in manifest
+        assert '"physical_ppa_claim_allowed": false' in manifest
+        assert "edge_snn" in manifest
+
+    def test_one_command_bundle_reports_missing_required_pdk_files(self, tmp_path):
+        missing_root = tmp_path / "missing_pdk_root"
+        bundle = generate_asic_flow_bundle(
+            tmp_path / "out",
+            pdk_type=PDKType.GF180MCU,
+            pdk_root=str(missing_root),
+            require_pdk_files=True,
+        )
+
+        assert bundle.pdk_resolution.usable_for_synthesis is False
+        assert set(bundle.pdk_resolution.missing_required) == {
+            "liberty_file",
+            "lef_file",
+            "tech_lef",
+        }
 
 
 # ── PreSynthEstimator Tests ──────────────────────────────────────────

@@ -1,0 +1,6 @@
+# Copyright 2026 Simon Stanelle
+# SPDX-License-Identifier: Apache-2.0
+
+/artifacts/
+/corpus/
+/target/
