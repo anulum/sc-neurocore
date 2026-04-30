@@ -24,6 +24,10 @@ def _project_metadata() -> dict:
     return tomllib.loads(pyproject.read_text(encoding="utf-8"))
 
 
+def _package_root() -> Path:
+    return Path(__file__).resolve().parents[1] / "src" / "sc_neurocore"
+
+
 def test_all_symbols_importable():
     for name in sc_neurocore.__all__:
         assert hasattr(sc_neurocore, name), f"Missing export: {name}"
@@ -48,9 +52,11 @@ def test_project_does_not_require_separate_engine_pypi_package():
 def test_install_extras_cover_documented_workflow_groups():
     extras = _project_metadata()["project"]["optional-dependencies"]
 
+    assert extras["core"] == []
     assert extras["hdl"] == ["pint>=0.23"]
 
     full = set(extras["full"])
+    assert set(extras["hdl"]) <= full
     assert {
         "numba>=0.56",
         "matplotlib>=3.5",
@@ -77,3 +83,14 @@ def test_hdl_install_profile_packages_source_artefacts():
     assert "hardware/*.v" in package_data
     assert "hdl_gen/safety/*.sv" in package_data
     assert "hdl_gen/openroad_flow/*.sh" in package_data
+
+    package_root = _package_root()
+    matched = {
+        str(path.relative_to(package_root))
+        for pattern in package_data
+        for path in package_root.glob(pattern)
+    }
+
+    assert "hardware/microtubule_neuron.v" in matched
+    assert "hdl_gen/safety/safety_monitor.sv" in matched
+    assert "hdl_gen/openroad_flow/run_asic_flow.sh" in matched

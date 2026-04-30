@@ -12,6 +12,7 @@ import pint
 import pytest
 
 from sc_neurocore.exceptions import SCDependencyError
+from sc_neurocore.compiler.equation_compiler import equation_to_fpga
 from sc_neurocore.neurons import _units as units
 from sc_neurocore.neurons._units import DimensionalError
 from sc_neurocore.neurons.equation_builder import from_equations
@@ -172,3 +173,42 @@ def test_require_pint_raises_dependency_error_when_backend_is_missing(monkeypatc
 
     with pytest.raises(SCDependencyError, match="pint is not available"):
         units.require_pint()
+
+
+def test_equation_to_fpga_accepts_strict_unit_checked_equation() -> None:
+    neuron, verilog = equation_to_fpga(
+        "dx/dt = -x / tau",
+        threshold="x > x_threshold",
+        reset="x = x_reset",
+        params={"tau": 10.0 * UNIT_REGISTRY.millisecond},
+        init={"x": 1.0 * UNIT_REGISTRY.dimensionless},
+        constants={
+            "x_threshold": 2.0 * UNIT_REGISTRY.dimensionless,
+            "x_reset": 0.0 * UNIT_REGISTRY.dimensionless,
+        },
+        dt=0.1 * UNIT_REGISTRY.millisecond,
+        units="strict",
+        module_name="strict_unit_decay",
+        data_width=32,
+        fraction=24,
+    )
+
+    assert neuron.units == "strict"
+    assert "module strict_unit_decay" in verilog
+    assert "parameter signed [31:0] P_TAU" in verilog
+    assert "P_X_THRESHOLD" in verilog
+    assert "P_X_RESET" in verilog
+
+
+def test_equation_to_fpga_rejects_strict_unit_mismatch_before_rtl_emit() -> None:
+    with pytest.raises(DimensionalError):
+        equation_to_fpga(
+            "dx/dt = -x / tau",
+            params={"tau": 10.0 * UNIT_REGISTRY.millivolt},
+            init={"x": 1.0 * UNIT_REGISTRY.dimensionless},
+            dt=0.1 * UNIT_REGISTRY.millisecond,
+            units="strict",
+            module_name="bad_units",
+            data_width=32,
+            fraction=24,
+        )

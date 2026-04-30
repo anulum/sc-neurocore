@@ -205,14 +205,21 @@ def _ensure_julia_loaded() -> bool:
     global _julia_module, _HAS_JULIA_LGSSM
     if _julia_module is not None:
         return True
-    import importlib
-    import importlib.util
     import os as _os
 
-    spec = importlib.util.find_spec("juliacall")
+    importlib_module = globals().get("importlib")
+    if importlib_module is None:
+        import importlib as importlib_module
+    importlib_util = globals().get("importlib.util")
+    if importlib_util is None:
+        import importlib.util as importlib_util
+
+    assert importlib_module is not None
+    assert importlib_util is not None
+    spec = importlib_util.find_spec("juliacall")
     if spec is None:
         return False
-    juliacall = importlib.import_module("juliacall")
+    juliacall = importlib_module.import_module("juliacall")
     jl = juliacall.Main
     jl_path = _os.path.join(
         _os.path.dirname(_os.path.dirname(__file__)),

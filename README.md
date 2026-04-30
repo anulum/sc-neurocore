@@ -417,6 +417,7 @@ See the full end-to-end integration demo in [`examples/zenith_hybrid_resnet.py`]
 
 ```bash
 # Add only the extras needed for the current workflow.
+pip install "sc-neurocore[core]"      # explicit base profile
 pip install "sc-neurocore[nir]"       # NIR interop
 pip install "sc-neurocore[training]"  # PyTorch-backed training
 pip install "sc-neurocore[studio]"    # local web studio
@@ -801,6 +802,7 @@ hardware toolchains.
 
 ```bash
 pip install sc-neurocore              # base package: core simulation, compiler, HDL scaffold
+pip install sc-neurocore[core]        # explicit base profile
 pip install sc-neurocore[training]    # PyTorch-backed training
 pip install sc-neurocore[nir]         # NIR import/export
 pip install sc-neurocore[studio]      # local web studio

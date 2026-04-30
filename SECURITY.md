@@ -71,3 +71,31 @@ correct Python ↔ Rust conversions.
 
 Contributions to improve security coverage (fuzzing harnesses, static analysis
 integration, audit reports) are welcome.
+
+## 2026-04-30 Hardening Status Update
+
+The older limitation above is now partially superseded. The repository has
+Python property-based fuzz coverage for high-risk structured inputs, including
+bitstream/IR parsing, NIR import, model-zoo `.npz` inputs, chip-spec JSON,
+optimizer evidence JSON, SCPN datastream JSON, Studio graph JSON,
+equation-to-MLIR lowering, HDL-source lowering, and transfer-checkpoint inputs.
+
+Current release-blocking security checks:
+
+```bash
+pytest tests/test_fuzz_*.py tests/test_hypothesis_properties.py -q
+python tools/supply_chain_audit.py --strict
+bandit -r src/sc_neurocore/ -c pyproject.toml -q
+```
+
+Remaining hardening work:
+
+- Add dedicated Rust `cargo-fuzz` targets for native parsers and PyO3 boundary
+  adapters.
+- Keep expanding Python Hypothesis coverage for malicious `.nir`, `.npz`, JSON,
+  and pathological bitstream-length cases.
+- Complete an external third-party security review before making audited
+  security claims.
+- No paid bug-bounty program is active yet. Until a scoped bounty is funded,
+  coordinated disclosure through GitHub Security Advisories and the security
+  email above is the official process.

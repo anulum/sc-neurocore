@@ -23,8 +23,14 @@ from sc_neurocore.edge.web_deploy import (
 )
 from sc_neurocore.edge.power_thermal import (
     PowerThermalConfig,
+    VivadoPowerReport,
+    VivadoUtilizationReport,
     build_power_thermal_model,
+    build_power_thermal_model_from_vivado_reports,
+    parse_vivado_power_report,
+    parse_vivado_utilization_report,
     write_power_thermal_model,
+    write_power_thermal_model_from_vivado_reports,
 )
 from sc_neurocore.edge.bitstream import (
     popcount32,
@@ -61,8 +67,14 @@ __all__ = [
     "WebDeploymentManifest",
     "build_web_deployment",
     "PowerThermalConfig",
+    "VivadoPowerReport",
+    "VivadoUtilizationReport",
     "build_power_thermal_model",
+    "build_power_thermal_model_from_vivado_reports",
+    "parse_vivado_power_report",
+    "parse_vivado_utilization_report",
     "write_power_thermal_model",
+    "write_power_thermal_model_from_vivado_reports",
     "popcount32",
     "popcount_slice",
     "sc_and",

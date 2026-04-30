@@ -41,6 +41,14 @@ def _sobol16_step(value: int, index: int) -> tuple[int, int]:
     return value ^ directions[c], index + 1
 
 
+def _pack_sample_bits(samples: list[tuple[int, int, int]], word_bits: int) -> list[int]:
+    words = [0] * ((len(samples) + word_bits - 1) // word_bits)
+    for idx, _, bit in samples:
+        if bit:
+            words[idx // word_bits] |= 1 << (idx % word_bits)
+    return words
+
+
 def _simulate_source(verilog: str, testbench: str, tmp_path) -> list[tuple[int, int, int]]:
     iverilog = shutil.which("iverilog")
     vvp = shutil.which("vvp")
@@ -147,12 +155,13 @@ endmodule
 """
 
 
-def test_lfsr16_emitter_generates_compare_before_advance_module():
+def test_lfsr16_emitter_generates_software_parity_module():
     verilog = Lfsr16Emitter(module_name="lfsr16_source", seed=0xBEEF).generate()
 
     assert "module lfsr16_source" in verilog
     assert "assign bit_out = (state < threshold);" in verilog
     assert "state[0] ^ state[2] ^ state[3] ^ state[5]" in verilog
+    assert "localparam [15:0] FIRST_SAMPLE" in verilog
     assert "state <= {feedback, state[15:1]};" in verilog
     assert "16'hBEEF" in verilog
 
@@ -166,7 +175,7 @@ def test_lfsr16_reference_formula_matches_python_encoder():
         assert lfsr.step() == state
 
 
-def test_sobol16_emitter_generates_direction_table_and_compare_before_advance_module():
+def test_sobol16_emitter_generates_direction_table_and_software_parity_module():
     verilog = Sobol16Emitter(module_name="sobol16_source", seed=0x1234).generate()
 
     assert "module sobol16_source" in verilog
@@ -174,6 +183,7 @@ def test_sobol16_emitter_generates_direction_table_and_compare_before_advance_mo
     assert "16'h8000" in verilog
     assert "16'h0001" in verilog
     assert "value <= value ^ direction;" in verilog
+    assert "index <= 16'd1;" in verilog
     assert "16'h1234" in verilog
 
 
@@ -193,13 +203,14 @@ def test_lfsr16_emitted_rtl_matches_reference_sequence(tmp_path):
     verilog = Lfsr16Emitter(module_name="lfsr16_parity", seed=seed).generate()
     samples = _simulate_source(verilog, _lfsr_testbench("lfsr16_parity", threshold), tmp_path)
 
-    state = seed
+    state = _lfsr16_step(seed)
     expected = []
     for idx in range(_RTL_SAMPLE_COUNT):
         expected.append((idx, state, int(state < threshold)))
         state = _lfsr16_step(state)
 
     assert samples == expected
+    assert _pack_sample_bits(samples, 32) == Lfsr16(seed=seed).encode(threshold, _RTL_SAMPLE_COUNT)
 
 
 def test_sobol16_emitted_rtl_matches_reference_sequence(tmp_path):
@@ -208,14 +219,16 @@ def test_sobol16_emitted_rtl_matches_reference_sequence(tmp_path):
     verilog = Sobol16Emitter(module_name="sobol16_parity", seed=seed).generate()
     samples = _simulate_source(verilog, _sobol_testbench("sobol16_parity", threshold), tmp_path)
 
-    value = seed
-    index = 0
+    value, index = _sobol16_step(seed, 0)
     expected = []
     for idx in range(_RTL_SAMPLE_COUNT):
         expected.append((idx, value, int(value < threshold)))
         value, index = _sobol16_step(value, index)
 
     assert samples == expected
+    assert _pack_sample_bits(samples, 64) == [
+        int(word) for word in SobolGenerator(seed=seed).encode(threshold, _RTL_SAMPLE_COUNT)
+    ]
 
 
 def test_verilog_generator_exposes_stochastic_source_helpers():

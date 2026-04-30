@@ -224,8 +224,10 @@ dependabot PRs merged.
 - ~~Measure: LUT count, BRAM, DSP, Fmax~~ ✓ (Vivado reports committed)
 - Verify on physical PYNQ-Z2 board (on order)
 - Measure dynamic power on silicon
-- Emit FPGA power and thermal digital-twin JSON beside deployable bitstream
-  artefacts, seeded from synthesis reports and board profile metadata.
+- ~~Emit FPGA power and thermal digital-twin JSON beside deployable bitstream
+  artefacts, seeded from synthesis reports and board profile metadata~~ ✓
+  (`sc_neurocore.edge.power_thermal` now supports pre-silicon estimates and
+  Vivado routed report-derived JSON).
 - Deploy MNIST classifier as second demo
 - Latency target: < 1 us neuron update (achieved: 2.83 us per 250-step sample)
 
@@ -243,7 +245,7 @@ dependabot PRs merged.
 ### Wheel trimming
 
 - Remove frontier/speculative tiers from `pip install sc-neurocore`
-- Add `pip install sc-neurocore[core]` install flag
+- ~~Add `pip install sc-neurocore[core]` install flag~~ ✓
 - Fewer modules = stronger signal for core SC+SNN+FPGA story
 
 ### ~~Sparse weight matrices~~ ✓

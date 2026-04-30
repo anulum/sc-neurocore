@@ -4,9 +4,13 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Standalone Sobol-16 RTL emitter with compare-before-advance semantics
+# SC-NeuroCore — Standalone Sobol-16 RTL emitter with software-parity semantics
 
-"""Standalone RTL emitter for the 16-bit Sobol stochastic source."""
+"""Standalone RTL emitter for the 16-bit Sobol stochastic source.
+
+Reset initialises the output to the first advanced Sobol sample, matching the
+software and Rust encoders which advance before comparing to the threshold.
+"""
 
 from __future__ import annotations
 
@@ -23,6 +27,7 @@ class Sobol16Emitter:
     def generate(self) -> str:
         """Return the standalone Sobol-16 Verilog module."""
         seed_hex = f"16'h{self.seed:04X}"
+        first_sample_hex = f"16'h{(self.seed ^ 0x8000) & 0xFFFF:04X}"
         lines = [
             f"module {self.module_name} (",
             "    input wire clk,",
@@ -33,9 +38,12 @@ class Sobol16Emitter:
             "    output reg [15:0] index",
             ");",
             "",
+            f"    localparam [15:0] SEED = {seed_hex};",
+            f"    localparam [15:0] FIRST_SAMPLE = {first_sample_hex};",
+            "",
             "    reg [15:0] direction;",
             "",
-            "    // Compare the current Sobol value before the next clocked advance.",
+            "    // Compare the current generated sample before the next advance.",
             "    assign bit_out = (value < threshold);",
             "",
             "    always @(*) begin",
@@ -62,8 +70,8 @@ class Sobol16Emitter:
             "",
             "    always @(posedge clk or negedge rst_n) begin",
             "        if (!rst_n) begin",
-            f"            value <= {seed_hex};",
-            "            index <= 16'd0;",
+            "            value <= FIRST_SAMPLE;",
+            "            index <= 16'd1;",
             "        end else begin",
             "            value <= value ^ direction;",
             "            index <= index + 16'd1;",
