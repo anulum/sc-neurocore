@@ -6,19 +6,20 @@
 
 # Hardware Platform Profiles
 
-SC-NeuroCore ships with **113 pre-configured hardware profiles** across **9
-platform classes** and **66 vendors**, covering every FPGA vendor (including
+SC-NeuroCore ships with **134 pre-configured hardware profiles** across **15
+platform classes** and **79 vendors**, covering every FPGA vendor (including
 rad-hard and eFPGA), AI accelerator, DSP processor, neuromorphic chip, ASIC
 target, photonic/optical compute, processing-in-memory, chiplet/UCIe,
-automotive/edge AI, sovereign/defence, emerging compute paradigm, and
-simulation reference. Each profile encodes the optimal fixed-point
-configuration (bit width, fraction, overflow handling, rounding semantics)
-for its target platform.
+automotive/edge AI, sovereign/defence, superconducting/cryogenic, spintronic,
+ferroelectric compute-in-memory, CGRA, 3D-stacked, edge MCU/TinyML, RISC-V AI,
+emerging compute paradigm, and simulation reference. Each profile encodes the
+optimal fixed-point configuration (bit width, fraction, overflow handling,
+rounding semantics) for its target platform.
 
 ## Quick Start
 
 ```bash
-# List all 113 hardware profiles
+# List all 134 hardware profiles
 python -m sc_neurocore.neurons platforms
 
 # Compile a LIF neuron for Intel Loihi 2 (auto-selects Q12.12, wrap overflow)
