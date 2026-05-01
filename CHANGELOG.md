@@ -4,6 +4,31 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Wave 6: Total paradigm coverage & overlooked compiler features (2026-05-01)
+
+#### Added — Hardware Profiles (21 new → 134 total, 79 vendors, 15 classes)
+- **Superconducting** (3): `nist_sfq`, `northrop_aqfp`, `josephson_jj`.
+- **Spintronic** (2): `everspin_stt_mram`, `samsung_sot_mram`.
+- **Ferroelectric** (2): `gf_fefet`, `sk_hynix_feram`.
+- **CGRA** (3): `samsung_cgra`, `qualcomm_npu_cgra`, `pact_xtensa`.
+- **3D-Stacked** (3): `tsmc_soic`, `intel_foveros`, `amd_3dv`.
+- **Edge MCU** (5): `rp2040`, `esp32_s3`, `stm32h7`, `nrf5340`, `max78000`.
+- **RISC-V AI** (3): `sifive_x280`, `qualcomm_ventana`, `ainekko_rv`.
+
+#### Added — Strategic Compiler Features (8 new → 33 total)
+- `generate_equivalence_sketch()` — formal ODE↔RTL proof skeleton with SVA.
+- `partition_timescales()` — multi-timescale ODE clock-domain splitting.
+- `generate_provenance_chain()` / `format_provenance_json()` — SHA-256 audit trail.
+- `generate_compliance_matrix()` / `format_compliance_report()` — DO-254/IEC 61508/ISO 26262.
+- `generate_energy_schedule()` — energy-harvesting neuron update scheduling.
+- `lint_side_channels()` — power/timing side-channel leakage analysis.
+- `generate_drift_compensator()` — analog device aging calibration controller.
+- `plan_heterogeneous_dispatch()` — multi-backend SNN model splitting.
+
+#### Added — Tests
+- `tests/test_wave6_features.py` — 58 tests across 10 test classes.
+- Total regression: **1024 passed**, 1 xfailed, 0 failures.
+
 ### Wave 5: Universal hardware coverage & strategic features (2026-05-01)
 
 #### Added — Hardware Profiles (29 new → 113 total, 66 vendors, 9 classes)
