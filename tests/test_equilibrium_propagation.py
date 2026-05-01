@@ -11,7 +11,6 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from sc_neurocore.training.equilibrium_propagation import EPNetwork, _rho, _rho_prime
 
@@ -90,9 +89,7 @@ class TestEPSettling:
             energies.append(net._energy(states))
         # Energy should generally decrease (or be stable) during settling
         # Allow small fluctuations
-        assert energies[-1] <= energies[0] + 0.1, (
-            f"Energy should decrease: {energies}"
-        )
+        assert energies[-1] <= energies[0] + 0.1, f"Energy should decrease: {energies}"
 
 
 class TestEPTraining:
@@ -149,6 +146,7 @@ class TestEPSerialisation:
 
     def test_params_are_json_serialisable(self) -> None:
         import json
+
         net = EPNetwork([3, 2])
         params = net.get_params()
         json_str = json.dumps(params)

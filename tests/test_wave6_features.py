@@ -11,81 +11,123 @@ import pytest
 # 1. New Platform Classes (6 new classes, 18 profiles)
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestNewPlatformClasses:
     """Verify all 6 new platform classes and 18 new profiles."""
 
-    @pytest.mark.parametrize("name", [
-        "nist_sfq", "northrop_aqfp", "josephson_jj",
-    ])
+    @pytest.mark.parametrize(
+        "name",
+        [
+            "nist_sfq",
+            "northrop_aqfp",
+            "josephson_jj",
+        ],
+    )
     def test_superconducting_profiles(self, name):
         from sc_neurocore.compiler.hardware_profiles import get_profile
+
         p = get_profile(name)
         assert p.platform_class == "superconducting"
         assert p.max_freq_mhz >= 5000  # GHz-class
 
-    @pytest.mark.parametrize("name", [
-        "everspin_stt_mram", "samsung_sot_mram",
-    ])
+    @pytest.mark.parametrize(
+        "name",
+        [
+            "everspin_stt_mram",
+            "samsung_sot_mram",
+        ],
+    )
     def test_spintronic_profiles(self, name):
         from sc_neurocore.compiler.hardware_profiles import get_profile
+
         p = get_profile(name)
         assert p.platform_class == "spintronic"
 
     @pytest.mark.parametrize("name", ["gf_fefet", "sk_hynix_feram"])
     def test_ferroelectric_profiles(self, name):
         from sc_neurocore.compiler.hardware_profiles import get_profile
+
         p = get_profile(name)
         assert p.platform_class == "ferroelectric"
 
-    @pytest.mark.parametrize("name", [
-        "samsung_cgra", "qualcomm_npu_cgra", "pact_xtensa",
-    ])
+    @pytest.mark.parametrize(
+        "name",
+        [
+            "samsung_cgra",
+            "qualcomm_npu_cgra",
+            "pact_xtensa",
+        ],
+    )
     def test_cgra_profiles(self, name):
         from sc_neurocore.compiler.hardware_profiles import get_profile
+
         p = get_profile(name)
         assert p.platform_class == "cgra"
         assert p.dsp_block  # CGRAs have PE blocks
 
-    @pytest.mark.parametrize("name", [
-        "tsmc_soic", "intel_foveros", "amd_3dv",
-    ])
+    @pytest.mark.parametrize(
+        "name",
+        [
+            "tsmc_soic",
+            "intel_foveros",
+            "amd_3dv",
+        ],
+    )
     def test_3d_stacked_profiles(self, name):
         from sc_neurocore.compiler.hardware_profiles import get_profile
+
         p = get_profile(name)
         assert p.platform_class == "3d_stacked"
 
-    @pytest.mark.parametrize("name", [
-        "rp2040", "esp32_s3", "stm32h7", "nrf5340", "max78000",
-    ])
+    @pytest.mark.parametrize(
+        "name",
+        [
+            "rp2040",
+            "esp32_s3",
+            "stm32h7",
+            "nrf5340",
+            "max78000",
+        ],
+    )
     def test_edge_mcu_profiles(self, name):
         from sc_neurocore.compiler.hardware_profiles import get_profile
+
         p = get_profile(name)
         assert p.platform_class == "edge_mcu"
 
-    @pytest.mark.parametrize("name", [
-        "sifive_x280", "qualcomm_ventana", "ainekko_rv",
-    ])
+    @pytest.mark.parametrize(
+        "name",
+        [
+            "sifive_x280",
+            "qualcomm_ventana",
+            "ainekko_rv",
+        ],
+    )
     def test_riscv_ai_profiles(self, name):
         from sc_neurocore.compiler.hardware_profiles import get_profile
+
         p = get_profile(name)
         assert p.platform_class == "accelerator"
 
     def test_total_profile_count(self):
         from sc_neurocore.compiler.hardware_profiles import list_profile_names
+
         assert len(list_profile_names()) >= 131
 
     def test_platform_class_count(self):
         from sc_neurocore.compiler.hardware_profiles import (
-            list_profile_names, get_profile,
+            list_profile_names,
+            get_profile,
         )
-        classes = {get_profile(n).platform_class
-                   for n in list_profile_names()}
+
+        classes = {get_profile(n).platform_class for n in list_profile_names()}
         assert len(classes) >= 15
 
 
 # ═══════════════════════════════════════════════════════════════════════
 # 2. Formal Equivalence Sketch
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestFormalEquivalence:
     """Formal equivalence proof skeleton."""
@@ -94,8 +136,10 @@ class TestFormalEquivalence:
         from sc_neurocore.compiler.advanced_features import (
             generate_equivalence_sketch,
         )
+
         s = generate_equivalence_sketch(
-            "sc_lif", {"v": "a + b * c"},
+            "sc_lif",
+            {"v": "a + b * c"},
         )
         assert s.module_name == "sc_lif"
         assert len(s.proof_steps) >= 5
@@ -106,8 +150,10 @@ class TestFormalEquivalence:
         from sc_neurocore.compiler.advanced_features import (
             generate_equivalence_sketch,
         )
+
         s = generate_equivalence_sketch(
-            "sc_izh", {"v": "a * b + c", "u": "d * e"},
+            "sc_izh",
+            {"v": "a * b + c", "u": "d * e"},
         )
         assert len(s.assertions) == 2
         assert "CONCLUSION" in s.proof_steps[-1]
@@ -116,6 +162,7 @@ class TestFormalEquivalence:
         from sc_neurocore.compiler.advanced_features import (
             generate_equivalence_sketch,
         )
+
         s = generate_equivalence_sketch("sc_lif", {"v": "a + b"})
         assert "assert property" in s.assertions[0]
         assert "posedge clk" in s.assertions[0]
@@ -125,6 +172,7 @@ class TestFormalEquivalence:
 # 3. Multi-Timescale ODE Partitioner
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestTimescalePartitioner:
     """Multi-timescale ODE partitioning."""
 
@@ -132,6 +180,7 @@ class TestTimescalePartitioner:
         from sc_neurocore.compiler.advanced_features import (
             partition_timescales,
         )
+
         p = partition_timescales({"v": "a + b"})
         assert len(p.fast_equations) == 1
         assert len(p.slow_equations) == 0
@@ -140,6 +189,7 @@ class TestTimescalePartitioner:
         from sc_neurocore.compiler.advanced_features import (
             partition_timescales,
         )
+
         p = partition_timescales(
             {"v": "a + b", "w": "c + d"},
             time_constants={"v": 1.0, "w": 100.0},
@@ -152,6 +202,7 @@ class TestTimescalePartitioner:
         from sc_neurocore.compiler.advanced_features import (
             partition_timescales,
         )
+
         p = partition_timescales(
             {"v": "a + b", "w": "v * c"},
             time_constants={"v": 1.0, "w": 100.0},
@@ -162,6 +213,7 @@ class TestTimescalePartitioner:
         from sc_neurocore.compiler.advanced_features import (
             partition_timescales,
         )
+
         p = partition_timescales(
             {"v": "a + b", "w": "c + d"},
             time_constants={"v": 1.0, "w": 2.0},
@@ -173,6 +225,7 @@ class TestTimescalePartitioner:
 # 4. Provenance Chain
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestProvenanceChain:
     """Cryptographic audit trail."""
 
@@ -180,8 +233,10 @@ class TestProvenanceChain:
         from sc_neurocore.compiler.advanced_features import (
             generate_provenance_chain,
         )
+
         chain = generate_provenance_chain(
-            "sc_lif", {"v": "a + b"},
+            "sc_lif",
+            {"v": "a + b"},
         )
         assert len(chain) == 3
         assert chain[0].stage == "source_equations"
@@ -192,8 +247,10 @@ class TestProvenanceChain:
         from sc_neurocore.compiler.advanced_features import (
             generate_provenance_chain,
         )
+
         chain = generate_provenance_chain(
-            "sc_lif", {"v": "a + b"},
+            "sc_lif",
+            {"v": "a + b"},
         )
         assert chain[0].output_hash == chain[1].input_hash
         assert chain[1].output_hash == chain[2].input_hash
@@ -202,14 +259,17 @@ class TestProvenanceChain:
         from sc_neurocore.compiler.advanced_features import (
             generate_provenance_chain,
         )
+
         chain = generate_provenance_chain("sc_lif", {"v": "a"})
         assert chain[0].input_hash == "genesis"
 
     def test_json_format(self):
         import json
         from sc_neurocore.compiler.advanced_features import (
-            generate_provenance_chain, format_provenance_json,
+            generate_provenance_chain,
+            format_provenance_json,
         )
+
         chain = generate_provenance_chain("sc_lif", {"v": "a"})
         j = format_provenance_json(chain)
         data = json.loads(j)
@@ -220,6 +280,7 @@ class TestProvenanceChain:
         from sc_neurocore.compiler.advanced_features import (
             generate_provenance_chain,
         )
+
         c1 = generate_provenance_chain("sc_lif", {"v": "a + b"})
         c2 = generate_provenance_chain("sc_lif", {"v": "a + b"})
         assert c1[0].output_hash == c2[0].output_hash
@@ -229,6 +290,7 @@ class TestProvenanceChain:
 # 5. Compliance Matrix
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestComplianceMatrix:
     """Safety compliance matrix generation."""
 
@@ -236,6 +298,7 @@ class TestComplianceMatrix:
         from sc_neurocore.compiler.advanced_features import (
             generate_compliance_matrix,
         )
+
         entries = generate_compliance_matrix("sc_lif")
         standards = {e.standard for e in entries}
         assert "DO-254" in standards
@@ -246,10 +309,13 @@ class TestComplianceMatrix:
         from sc_neurocore.compiler.advanced_features import (
             generate_compliance_matrix,
         )
+
         entries = generate_compliance_matrix(
             "sc_lif",
-            has_tmr=True, has_checksum=True,
-            has_sva=True, has_provenance=True,
+            has_tmr=True,
+            has_checksum=True,
+            has_sva=True,
+            has_provenance=True,
         )
         covered = [e for e in entries if e.status == "covered"]
         assert len(covered) == len(entries)
@@ -258,14 +324,17 @@ class TestComplianceMatrix:
         from sc_neurocore.compiler.advanced_features import (
             generate_compliance_matrix,
         )
+
         entries = generate_compliance_matrix("sc_lif")
         gaps = [e for e in entries if e.status == "gap"]
         assert len(gaps) > 0
 
     def test_format_report(self):
         from sc_neurocore.compiler.advanced_features import (
-            generate_compliance_matrix, format_compliance_report,
+            generate_compliance_matrix,
+            format_compliance_report,
         )
+
         entries = generate_compliance_matrix("sc_lif", has_tmr=True)
         report = format_compliance_report(entries)
         assert "Compliance Matrix" in report
@@ -277,6 +346,7 @@ class TestComplianceMatrix:
 # 6. Energy Harvesting Scheduler
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestEnergyScheduler:
     """Energy-aware neuron scheduling."""
 
@@ -284,6 +354,7 @@ class TestEnergyScheduler:
         from sc_neurocore.compiler.advanced_features import (
             generate_energy_schedule,
         )
+
         s = generate_energy_schedule(1000)
         assert s.total_neurons == 1000
         assert s.neurons_per_epoch <= 1000
@@ -293,8 +364,11 @@ class TestEnergyScheduler:
         from sc_neurocore.compiler.advanced_features import (
             generate_energy_schedule,
         )
+
         s = generate_energy_schedule(
-            1000, energy_budget_uj=1.0, energy_per_neuron_nj=100.0,
+            1000,
+            energy_budget_uj=1.0,
+            energy_per_neuron_nj=100.0,
         )
         assert s.neurons_per_epoch == 10
         assert s.duty_cycle == 0.01
@@ -303,8 +377,10 @@ class TestEnergyScheduler:
         from sc_neurocore.compiler.advanced_features import (
             generate_energy_schedule,
         )
+
         s = generate_energy_schedule(
-            100, priority_neurons=[50, 51, 52],
+            100,
+            priority_neurons=[50, 51, 52],
         )
         assert s.update_order[0] == 50
         assert s.update_order[1] == 51
@@ -313,8 +389,10 @@ class TestEnergyScheduler:
         from sc_neurocore.compiler.advanced_features import (
             generate_energy_schedule,
         )
+
         s = generate_energy_schedule(
-            10, energy_budget_uj=1000.0,
+            10,
+            energy_budget_uj=1000.0,
         )
         assert s.neurons_per_epoch == 10
         assert s.duty_cycle == 1.0
@@ -324,6 +402,7 @@ class TestEnergyScheduler:
 # 7. Side-Channel Lint
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestSideChannelLint:
     """Side-channel leakage analysis."""
 
@@ -331,6 +410,7 @@ class TestSideChannelLint:
         from sc_neurocore.compiler.advanced_features import (
             lint_side_channels,
         )
+
         findings = lint_side_channels({"v": "a + b"})
         # Should still have spike_out finding
         assert any(f.signal == "spike_out" for f in findings)
@@ -339,6 +419,7 @@ class TestSideChannelLint:
         from sc_neurocore.compiler.advanced_features import (
             lint_side_channels,
         )
+
         findings = lint_side_channels({"v": "a / b"})
         div_findings = [f for f in findings if "Division" in f.description]
         assert len(div_findings) == 1
@@ -348,6 +429,7 @@ class TestSideChannelLint:
         from sc_neurocore.compiler.advanced_features import (
             lint_side_channels,
         )
+
         findings = lint_side_channels({"v": "a if x > 0 else b"})
         branch = [f for f in findings if f.risk_level == "high"]
         assert len(branch) >= 1
@@ -356,6 +438,7 @@ class TestSideChannelLint:
         from sc_neurocore.compiler.advanced_features import (
             lint_side_channels,
         )
+
         findings = lint_side_channels({"v": "a * b"})
         mul = [f for f in findings if "Hamming" in f.description]
         assert len(mul) == 1
@@ -365,6 +448,7 @@ class TestSideChannelLint:
 # 8. Drift Compensation
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestDriftCompensation:
     """Analog drift compensation controller."""
 
@@ -372,6 +456,7 @@ class TestDriftCompensation:
         from sc_neurocore.compiler.advanced_features import (
             generate_drift_compensator,
         )
+
         d = generate_drift_compensator("sc_analog")
         assert "module sc_analog_drift_ctrl" in d.verilog_controller
         assert "endmodule" in d.verilog_controller
@@ -382,8 +467,10 @@ class TestDriftCompensation:
         from sc_neurocore.compiler.advanced_features import (
             generate_drift_compensator,
         )
+
         d = generate_drift_compensator(
-            "sc_rram", drift_rate_per_day=0.1,
+            "sc_rram",
+            drift_rate_per_day=0.1,
             max_drift_tolerance=0.01,
         )
         # Should refresh very frequently
@@ -393,6 +480,7 @@ class TestDriftCompensation:
         from sc_neurocore.compiler.advanced_features import (
             generate_drift_compensator,
         )
+
         d = generate_drift_compensator("sc_mem")
         assert "counter" in d.verilog_controller
         assert "refresh_trigger" in d.verilog_controller
@@ -403,6 +491,7 @@ class TestDriftCompensation:
 # 9. Heterogeneous Dispatch
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestHeterogeneousDispatch:
     """Multi-backend SNN dispatch."""
 
@@ -410,6 +499,7 @@ class TestHeterogeneousDispatch:
         from sc_neurocore.compiler.advanced_features import (
             plan_heterogeneous_dispatch,
         )
+
         plan = plan_heterogeneous_dispatch(
             {"v": "a + b", "u": "c * d"},
             ["fpga", "gpu"],
@@ -422,8 +512,10 @@ class TestHeterogeneousDispatch:
         from sc_neurocore.compiler.advanced_features import (
             plan_heterogeneous_dispatch,
         )
+
         plan = plan_heterogeneous_dispatch(
-            {"v": "a + b"}, ["fpga"],
+            {"v": "a + b"},
+            ["fpga"],
         )
         assert len(plan.sync_barriers) == 0
         assert plan.total_neurons_per_backend["fpga"] == 1000
@@ -432,6 +524,7 @@ class TestHeterogeneousDispatch:
         from sc_neurocore.compiler.advanced_features import (
             plan_heterogeneous_dispatch,
         )
+
         plan = plan_heterogeneous_dispatch(
             {"v": "a", "u": "b", "w": "c"},
             ["fpga", "mcu", "gpu"],
@@ -445,6 +538,7 @@ class TestHeterogeneousDispatch:
         from sc_neurocore.compiler.advanced_features import (
             plan_heterogeneous_dispatch,
         )
+
         plan = plan_heterogeneous_dispatch(
             {"v": "a", "u": "b"},
             ["fpga", "gpu"],
@@ -458,19 +552,25 @@ class TestHeterogeneousDispatch:
 # 10. Cross-Feature E2E Integration
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestWave6Integration:
     """Cross-feature integration tests."""
 
     def test_provenance_then_compliance(self):
         """Provenance chain enables compliance coverage."""
         from sc_neurocore.compiler.advanced_features import (
-            generate_provenance_chain, generate_compliance_matrix,
+            generate_provenance_chain,
+            generate_compliance_matrix,
         )
+
         chain = generate_provenance_chain("sc_lif", {"v": "a + b"})
         assert len(chain) == 3
         matrix = generate_compliance_matrix(
-            "sc_lif", has_provenance=True, has_tmr=True,
-            has_checksum=True, has_sva=True,
+            "sc_lif",
+            has_provenance=True,
+            has_tmr=True,
+            has_checksum=True,
+            has_sva=True,
         )
         all_covered = all(e.status == "covered" for e in matrix)
         assert all_covered
@@ -478,25 +578,31 @@ class TestWave6Integration:
     def test_timescale_then_dispatch(self):
         """Partition timescales, then dispatch to backends."""
         from sc_neurocore.compiler.advanced_features import (
-            partition_timescales, plan_heterogeneous_dispatch,
+            partition_timescales,
+            plan_heterogeneous_dispatch,
         )
+
         part = partition_timescales(
             {"v": "a + b", "w": "c + d"},
             time_constants={"v": 1.0, "w": 100.0},
         )
         all_eqs = {**part.fast_equations, **part.slow_equations}
         plan = plan_heterogeneous_dispatch(
-            all_eqs, ["fpga", "mcu"],
+            all_eqs,
+            ["fpga", "mcu"],
         )
         assert plan.estimated_speedup > 1.0
 
     def test_equivalence_then_lint(self):
         """Generate proof sketch, then lint for side channels."""
         from sc_neurocore.compiler.advanced_features import (
-            generate_equivalence_sketch, lint_side_channels,
+            generate_equivalence_sketch,
+            lint_side_channels,
         )
+
         sketch = generate_equivalence_sketch(
-            "sc_hh", {"v": "a * b / c + d"},
+            "sc_hh",
+            {"v": "a * b / c + d"},
         )
         findings = lint_side_channels({"v": "a * b / c + d"})
         assert sketch.quantisation_bound > 0
@@ -508,6 +614,7 @@ class TestWave6Integration:
         from sc_neurocore.compiler.advanced_features import (
             generate_energy_schedule,
         )
+
         p = get_profile("esp32_s3")
         assert p.platform_class == "edge_mcu"
         s = generate_energy_schedule(500, energy_budget_uj=5.0)

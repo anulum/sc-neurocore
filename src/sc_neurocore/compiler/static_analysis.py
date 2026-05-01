@@ -64,6 +64,7 @@ from typing import Any
 # 1. Guard-Bit Auto-Computation
 # ═══════════════════════════════════════════════════════════════════════
 
+
 def _count_additions(expr_str: str) -> int:
     """Count the number of addition/subtraction nodes in an expression AST.
 
@@ -139,6 +140,7 @@ def compute_guard_bits_multi(equations: dict[str, str]) -> dict[str, int]:
 # 2. Formal Overflow Proof (Interval Arithmetic)
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @dataclass
 class Interval:
     """A closed interval [lo, hi] for interval arithmetic."""
@@ -157,8 +159,10 @@ class Interval:
     def __mul__(self, other: Interval) -> Interval:
         """Multiply intervals: all four products, take min/max."""
         products = [
-            self.lo * other.lo, self.lo * other.hi,
-            self.hi * other.lo, self.hi * other.hi,
+            self.lo * other.lo,
+            self.lo * other.hi,
+            self.hi * other.lo,
+            self.hi * other.hi,
         ]
         return Interval(min(products), max(products))
 
@@ -167,8 +171,10 @@ class Interval:
         if other.lo <= 0 <= other.hi:
             return Interval(float("-inf"), float("inf"))
         quotients = [
-            self.lo / other.lo, self.lo / other.hi,
-            self.hi / other.lo, self.hi / other.hi,
+            self.lo / other.lo,
+            self.lo / other.hi,
+            self.hi / other.lo,
+            self.hi / other.hi,
         ]
         return Interval(min(quotients), max(quotients))
 
@@ -320,6 +326,7 @@ def prove_no_overflow(
 # 3. SystemVerilog Assertion (SVA) Generation
 # ═══════════════════════════════════════════════════════════════════════
 
+
 def generate_sva(
     state_vars: list[str],
     *,
@@ -368,15 +375,15 @@ def generate_sva(
     sign_kw = "signed " if signed else ""
     lines = [
         f"// Auto-generated SystemVerilog Assertions for {module_name}",
-        f"// SC-NeuroCore static analysis — DO-254 / IEC 61508 compliance",
+        "// SC-NeuroCore static analysis — DO-254 / IEC 61508 compliance",
         f"// Fixed-point: Q{data_width - fraction - (1 if signed else 0)}.{fraction} "
         f"({data_width}-bit {'signed' if signed else 'unsigned'})",
-        f"",
+        "",
         f"module {module_name}_sva (",
-        f"    input wire clk,",
-        f"    input wire rst_n,",
+        "    input wire clk,",
+        "    input wire rst_n,",
         f"    input wire {sign_kw}[{data_width - 1}:0] I_t,",
-        f"    input wire spike_out,",
+        "    input wire spike_out,",
     ]
 
     for var in state_vars:
@@ -384,16 +391,16 @@ def generate_sva(
 
     # Remove trailing comma from last port
     lines[-1] = lines[-1].rstrip(",")
-    lines.append(f");")
-    lines.append(f"")
+    lines.append(");")
+    lines.append("")
 
     # Default clocking block
-    lines.append(f"    default clocking cb @(posedge clk);")
-    lines.append(f"    endclocking")
-    lines.append(f"")
+    lines.append("    default clocking cb @(posedge clk);")
+    lines.append("    endclocking")
+    lines.append("")
 
     # 1. Overflow assertions
-    lines.append(f"    // ── Overflow Assertions ──────────────────────────────────")
+    lines.append("    // ── Overflow Assertions ──────────────────────────────────")
     for var in state_vars:
         if signed:
             lines.append(
@@ -401,30 +408,22 @@ def generate_sva(
                 f"disable iff (!rst_n) "
                 f"$signed({var}_reg) >= {data_width}'sd{q_min} && "
                 f"$signed({var}_reg) <= {data_width}'sd{q_max}"
-                f") else $error(\"OVERFLOW: {var}_reg = %0d\", {var}_reg);"
+                f') else $error("OVERFLOW: {var}_reg = %0d", {var}_reg);'
             )
         else:
             lines.append(
                 f"    a_no_overflow_{var}: assert property ("
                 f"disable iff (!rst_n) "
                 f"{var}_reg <= {data_width}'d{q_max}"
-                f") else $error(\"OVERFLOW: {var}_reg = %0d\", {var}_reg);"
+                f') else $error("OVERFLOW: {var}_reg = %0d", {var}_reg);'
             )
 
-    lines.append(f"")
+    lines.append("")
 
     # 2. Reachability covers
-    lines.append(f"    // ── Reachability Covers ─────────────────────────────────")
-    lines.append(
-        f"    c_spike_reachable: cover property ("
-        f"disable iff (!rst_n) spike_out == 1'b1"
-        f");"
-    )
-    lines.append(
-        f"    c_no_spike: cover property ("
-        f"disable iff (!rst_n) spike_out == 1'b0"
-        f");"
-    )
+    lines.append("    // ── Reachability Covers ─────────────────────────────────")
+    lines.append("    c_spike_reachable: cover property (disable iff (!rst_n) spike_out == 1'b1);")
+    lines.append("    c_no_spike: cover property (disable iff (!rst_n) spike_out == 1'b0);")
 
     for var in state_vars:
         lines.append(
@@ -433,11 +432,11 @@ def generate_sva(
             f");"
         )
 
-    lines.append(f"")
+    lines.append("")
 
     # 3. Input assumptions
     if input_bounds:
-        lines.append(f"    // ── Input Assumptions ──────────────────────────────────")
+        lines.append("    // ── Input Assumptions ──────────────────────────────────")
         for name, (lo, hi) in input_bounds.items():
             lines.append(
                 f"    m_{name}_bound: assume property ("
@@ -446,26 +445,26 @@ def generate_sva(
                 f"$signed({name}) <= {data_width}'sd{hi}"
                 f");"
             )
-        lines.append(f"")
+        lines.append("")
 
     # 4. Stability check — membrane voltage should not stay at max for too long
-    lines.append(f"    // ── Stability Checks ───────────────────────────────────")
+    lines.append("    // ── Stability Checks ───────────────────────────────────")
     for var in state_vars:
         lines.append(
             f"    a_{var}_not_stuck_max: assert property ("
             f"disable iff (!rst_n) "
             f"not ({var}_reg == {data_width}'sd{q_max} [*100])"
-            f") else $warning(\"{var}_reg stuck at max for 100+ cycles\");"
+            f') else $warning("{var}_reg stuck at max for 100+ cycles");'
         )
 
-    lines.append(f"")
-    lines.append(f"endmodule")
-    lines.append(f"")
+    lines.append("")
+    lines.append("endmodule")
+    lines.append("")
 
     # Bind directive
-    lines.append(f"// Bind to DUT — place in testbench or verification top")
+    lines.append("// Bind to DUT — place in testbench or verification top")
     lines.append(f"// bind {module_name} {module_name}_sva sva_inst (.*);")
-    lines.append(f"")
+    lines.append("")
 
     return "\n".join(lines)
 
@@ -473,6 +472,7 @@ def generate_sva(
 # ═══════════════════════════════════════════════════════════════════════
 # 4. Pipeline Stage Analysis
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def _mul_div_depth(node: ast.AST) -> int:
     """Return the longest chain of Mult/Div operations from root to leaf.
@@ -609,6 +609,7 @@ def pipeline_analysis(
 # 5. Power Estimation
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @dataclass
 class PowerEstimate:
     """Estimated power consumption for a compiled neuron.
@@ -672,14 +673,21 @@ def estimate_power(
     import re as _re
 
     # Count switching elements
-    mul_count = len(_re.findall(r'wire\s+signed\s+\[.*?\]\s+_mul\d+', verilog))
-    add_count = verilog.count(' + ') + verilog.count(' - ')
-    reg_count = len(_re.findall(r'reg\s+signed\s+\[', verilog))
+    mul_count = len(_re.findall(r"wire\s+signed\s+\[.*?\]\s+_mul\d+", verilog))
+    add_count = verilog.count(" + ") + verilog.count(" - ")
+    reg_count = len(_re.findall(r"reg\s+signed\s+\[", verilog))
 
     # Technology-dependent capacitance (fF per toggle per bit)
     cap_per_bit_ff = {
-        7: 0.2, 10: 0.3, 14: 0.5, 16: 0.6,
-        22: 0.8, 28: 1.0, 40: 1.5, 45: 1.8, 65: 2.5,
+        7: 0.2,
+        10: 0.3,
+        14: 0.5,
+        16: 0.6,
+        22: 0.8,
+        28: 1.0,
+        40: 1.5,
+        45: 1.8,
+        65: 2.5,
     }.get(process_nm, 1.0)
 
     # Toggle rate estimation (heuristic)
@@ -694,12 +702,12 @@ def estimate_power(
     # P_dynamic = α × C × V² × f
     cap_f = cap_per_bit_ff * 1e-15  # convert fF to F
     freq_hz = freq_mhz * 1e6
-    p_dynamic_w = total_toggles * cap_f * (vdd ** 2) * freq_hz
+    p_dynamic_w = total_toggles * cap_f * (vdd**2) * freq_hz
     p_dynamic_mw = p_dynamic_w * 1e3
 
     # Leakage: ~0.1 μW per LUT for 28nm (scales with process²)
     leakage_uw_per_lut = 0.1 * (process_nm / 28) ** 2
-    lut_estimate = (add_count * data_width + mul_count * data_width * data_width // 4)
+    lut_estimate = add_count * data_width + mul_count * data_width * data_width // 4
     p_static_mw = lut_estimate * leakage_uw_per_lut * 1e-3
 
     total_mw = p_dynamic_mw + p_static_mw

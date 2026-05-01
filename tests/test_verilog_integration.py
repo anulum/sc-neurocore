@@ -10,7 +10,6 @@
 
 from __future__ import annotations
 
-import pytest
 
 from sc_neurocore.hdl_gen.verilog_generator import (
     VerilogGenerator,
@@ -28,18 +27,20 @@ class TestHaltonIRResolution:
         assert "reversed" in code  # Halton uses bit-reversal
 
     def test_halton_by_source_type(self) -> None:
-        ir = {"nodes": [{"type": "stochastic_source",
-                         "source_type": "halton",
-                         "name": "halton_src"}]}
+        ir = {
+            "nodes": [{"type": "stochastic_source", "source_type": "halton", "name": "halton_src"}]
+        }
         code = emit_sources_from_ir(ir)
         assert "module halton_src" in code
 
     def test_mixed_sources(self) -> None:
-        ir = {"nodes": [
-            {"type": "lfsr16", "name": "lfsr_src"},
-            {"type": "sobol16", "name": "sobol_src"},
-            {"type": "halton16", "name": "halton_src"},
-        ]}
+        ir = {
+            "nodes": [
+                {"type": "lfsr16", "name": "lfsr_src"},
+                {"type": "sobol16", "name": "sobol_src"},
+                {"type": "halton16", "name": "halton_src"},
+            ]
+        }
         code = emit_sources_from_ir(ir)
         assert "module lfsr_src" in code
         assert "module sobol_src" in code
@@ -104,18 +105,21 @@ class TestPublicAPIExports:
             Halton16Emitter,
             generate_tmr_wrapper,
         )
+
         assert QuasiRandomEmitter is not None
         assert Halton16Emitter is not None
         assert callable(generate_tmr_wrapper)
 
     def test_neurons_exports(self) -> None:
         from sc_neurocore.neurons import UniversalNeuron, list_bundled_schemas
+
         assert UniversalNeuron is not None
         assert callable(list_bundled_schemas)
         assert len(list_bundled_schemas()) >= 9
 
     def test_universal_neuron_from_neurons_package(self) -> None:
         from sc_neurocore.neurons import UniversalNeuron
+
         neuron = UniversalNeuron.from_schema("lif")
         spike = neuron.step(I=30.0)
         assert isinstance(spike, int)

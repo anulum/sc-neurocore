@@ -122,11 +122,8 @@ class TestQuasiRandomEmitter:
             vfile = tmp_path / f"{method}.v"
             vfile.write_text(code)
             result = subprocess.run(
-                ["iverilog", "-g2012", "-o",
-                 str(tmp_path / f"{method}.out"), str(vfile)],
+                ["iverilog", "-g2012", "-o", str(tmp_path / f"{method}.out"), str(vfile)],
                 capture_output=True,
                 text=True,
             )
-            assert result.returncode == 0, (
-                f"iverilog failed for {method}: {result.stderr}"
-            )
+            assert result.returncode == 0, f"iverilog failed for {method}: {result.stderr}"

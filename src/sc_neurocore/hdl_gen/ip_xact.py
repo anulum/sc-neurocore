@@ -67,10 +67,13 @@ def generate_ip_xact(
         IP-XACT XML string.
     """
     ns = "http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009"
-    comp = Element("spirit:component", {
-        "xmlns:spirit": ns,
-        "xmlns:xilinx": "http://www.xilinx.com",
-    })
+    comp = Element(
+        "spirit:component",
+        {
+            "xmlns:spirit": ns,
+            "xmlns:xilinx": "http://www.xilinx.com",
+        },
+    )
 
     # Identity
     SubElement(comp, "spirit:vendor").text = vendor
@@ -163,7 +166,10 @@ def generate_ip_xact(
 
 
 def _add_port(
-    parent: Element, name: str, direction: str, width: int,
+    parent: Element,
+    name: str,
+    direction: str,
+    width: int,
 ) -> None:
     """Add a port element to the ports section.
 

@@ -11,7 +11,10 @@ import pytest
 
 from sc_neurocore.hdl_gen.ip_xact import generate_ip_xact
 from sc_neurocore.compiler.advanced_features import (
-    POSIT8_0, POSIT8_1, POSIT16_1, POSIT16_2, PositConfig,
+    POSIT8_0,
+    POSIT8_1,
+    POSIT16_1,
+    POSIT16_2,
     generate_cdc_synchroniser,
     generate_oss_makefile,
     generate_tcl_project,
@@ -26,6 +29,7 @@ LIF_PARAMS = {"P_V_REST": 16, "P_V_THRESH": 16, "P_TAU_M": 16}
 # ═══════════════════════════════════════════════════════════════════════
 # IP-XACT Tests
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestIPXACT:
     """Test IP-XACT XML generation."""
@@ -74,6 +78,7 @@ class TestIPXACT:
 # ═══════════════════════════════════════════════════════════════════════
 # VHDL Output Tests
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestVHDLOutput:
     """Test VHDL-2008 wrapper generation."""
@@ -130,6 +135,7 @@ class TestVHDLOutput:
 # Posit Arithmetic Tests
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestPositArithmetic:
     """Test posit number encoding/decoding."""
 
@@ -170,14 +176,15 @@ class TestPositArithmetic:
 
     def test_useed(self) -> None:
         """Useed should be 2^(2^es)."""
-        assert POSIT8_0.useed == 2    # 2^(2^0) = 2
-        assert POSIT8_1.useed == 4    # 2^(2^1) = 4
+        assert POSIT8_0.useed == 2  # 2^(2^0) = 2
+        assert POSIT8_1.useed == 4  # 2^(2^1) = 4
         assert POSIT16_2.useed == 16  # 2^(2^2) = 16
 
 
 # ═══════════════════════════════════════════════════════════════════════
 # CDC Synchroniser Tests
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestCDCSynchroniser:
     """Test CDC synchroniser generation."""
@@ -225,6 +232,7 @@ class TestCDCSynchroniser:
 # TCL Script Tests
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestTCLGen:
     """Test Vivado/Quartus TCL generation."""
 
@@ -269,6 +277,7 @@ class TestTCLGen:
 # Bitstream Automation Tests
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestBitstreamGen:
     """Test open-source Makefile generation."""
 
@@ -304,7 +313,8 @@ class TestBitstreamGen:
     def test_custom_sources(self) -> None:
         """Should include custom source files."""
         mk = generate_oss_makefile(
-            "sc_lif", target="ice40",
+            "sc_lif",
+            target="ice40",
             verilog_files=["sc_lif.v", "lfsr16.v"],
         )
         assert "sc_lif.v" in mk

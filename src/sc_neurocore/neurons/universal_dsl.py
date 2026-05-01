@@ -138,9 +138,7 @@ def load_schema(source: str | Path) -> dict[str, Any]:
                 path = candidate
                 break
         else:
-            raise FileNotFoundError(
-                f"No schema found for {source!r} in {_SCHEMA_DIR}"
-            )
+            raise FileNotFoundError(f"No schema found for {source!r} in {_SCHEMA_DIR}")
     elif not path.exists():
         raise FileNotFoundError(f"Schema file not found: {path}")
 
@@ -155,8 +153,7 @@ def load_schema(source: str | Path) -> dict[str, Any]:
     version = schema.get("metadata", {}).get("schema_version", 1)
     if version not in _SUPPORTED_SCHEMA_VERSIONS:
         raise ValueError(
-            f"Schema version {version} is not supported. "
-            f"Supported: {_SUPPORTED_SCHEMA_VERSIONS}"
+            f"Schema version {version} is not supported. Supported: {_SUPPORTED_SCHEMA_VERSIONS}"
         )
 
     return schema
@@ -194,8 +191,16 @@ def schema_to_toml(schema: dict[str, Any]) -> str:
     lines: list[str] = []
 
     # Ordered sections
-    for section in ("metadata", "state", "parameters", "integration",
-                    "dynamics", "threshold", "reset", "extensions"):
+    for section in (
+        "metadata",
+        "state",
+        "parameters",
+        "integration",
+        "dynamics",
+        "threshold",
+        "reset",
+        "extensions",
+    ):
         data = schema.get(section)
         if not data:
             continue

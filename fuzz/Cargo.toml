@@ -28,4 +28,3 @@ name = "bitstream_ops"
 path = "fuzz_targets/bitstream_ops.rs"
 test = false
 doc = false
-

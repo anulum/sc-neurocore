@@ -41,8 +41,14 @@ class TestAXI4Lite:
     def test_has_axi_ports(self) -> None:
         """Should include all AXI4-Lite signal names."""
         v = generate_bus_wrapper("sc_lif", LIF_PARAMS, bus="axi_lite")
-        for sig in ["S_AXI_ACLK", "S_AXI_ARESETN", "S_AXI_AWADDR",
-                     "S_AXI_WDATA", "S_AXI_RDATA", "S_AXI_BRESP"]:
+        for sig in [
+            "S_AXI_ACLK",
+            "S_AXI_ARESETN",
+            "S_AXI_AWADDR",
+            "S_AXI_WDATA",
+            "S_AXI_RDATA",
+            "S_AXI_BRESP",
+        ]:
             assert sig in v, f"Missing AXI signal: {sig}"
 
     def test_has_interrupt(self) -> None:
@@ -87,9 +93,17 @@ class TestWishbone:
     def test_has_wishbone_ports(self) -> None:
         """Should include all Wishbone signal names."""
         v = generate_bus_wrapper("sc_lif", LIF_PARAMS, bus="wishbone")
-        for sig in ["wb_clk_i", "wb_rst_i", "wb_adr_i",
-                     "wb_dat_i", "wb_dat_o", "wb_we_i",
-                     "wb_stb_i", "wb_cyc_i", "wb_ack_o"]:
+        for sig in [
+            "wb_clk_i",
+            "wb_rst_i",
+            "wb_adr_i",
+            "wb_dat_i",
+            "wb_dat_o",
+            "wb_we_i",
+            "wb_stb_i",
+            "wb_cyc_i",
+            "wb_ack_o",
+        ]:
             assert sig in v, f"Missing Wishbone signal: {sig}"
 
     def test_has_interrupt(self) -> None:
@@ -135,6 +149,7 @@ class TestRegisterMap:
 # Mixed-Precision Tests
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestPrecisionConfig:
     """Test the PrecisionConfig dataclass."""
 
@@ -143,7 +158,7 @@ class TestPrecisionConfig:
         cfg = PrecisionConfig(16, 8)
         assert cfg.int_bits == 7
         assert cfg.q_label == "Q7.8"
-        assert cfg.resolution == pytest.approx(1/256)
+        assert cfg.resolution == pytest.approx(1 / 256)
 
     def test_unsigned(self) -> None:
         """Unsigned config should have min=0 and doubled positive range."""
@@ -170,25 +185,31 @@ class TestMixedPrecisionSpec:
 
     def test_total_bits(self) -> None:
         """Total bits should sum correctly."""
-        spec = MixedPrecisionSpec({
-            "v": PrecisionConfig(16, 8),
-            "u": PrecisionConfig(8, 4),
-        })
+        spec = MixedPrecisionSpec(
+            {
+                "v": PrecisionConfig(16, 8),
+                "u": PrecisionConfig(8, 4),
+            }
+        )
         assert spec.total_bits == 24
 
     def test_variables(self) -> None:
         """Should list all variables."""
-        spec = MixedPrecisionSpec({
-            "v": PrecisionConfig(16, 8),
-            "u": PrecisionConfig(8, 4),
-        })
+        spec = MixedPrecisionSpec(
+            {
+                "v": PrecisionConfig(16, 8),
+                "u": PrecisionConfig(8, 4),
+            }
+        )
         assert set(spec.variables) == {"v", "u"}
 
     def test_get(self) -> None:
         """Should retrieve config by name."""
-        spec = MixedPrecisionSpec({
-            "v": PrecisionConfig(16, 8),
-        })
+        spec = MixedPrecisionSpec(
+            {
+                "v": PrecisionConfig(16, 8),
+            }
+        )
         assert spec.get("v").data_width == 16
 
     def test_get_missing(self) -> None:
@@ -199,10 +220,12 @@ class TestMixedPrecisionSpec:
 
     def test_summary(self) -> None:
         """Summary should be human-readable."""
-        spec = MixedPrecisionSpec({
-            "v": PrecisionConfig(16, 8),
-            "u": PrecisionConfig(8, 4),
-        })
+        spec = MixedPrecisionSpec(
+            {
+                "v": PrecisionConfig(16, 8),
+                "u": PrecisionConfig(8, 4),
+            }
+        )
         s = spec.summary()
         assert "24 bits total" in s
         assert "Q7.8" in s

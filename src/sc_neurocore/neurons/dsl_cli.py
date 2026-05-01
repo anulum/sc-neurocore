@@ -85,7 +85,9 @@ def cmd_validate(args: argparse.Namespace) -> None:
                     print(f"      {e}")
             total_errors += len(real_errors)
             total_warnings += len(warnings)
-        print(f"\nTotal: {len(results)} schemas, {total_errors} error(s), {total_warnings} warning(s)")
+        print(
+            f"\nTotal: {len(results)} schemas, {total_errors} error(s), {total_warnings} warning(s)"
+        )
         if total_errors > 0:
             sys.exit(1)
 
@@ -124,23 +126,23 @@ def cmd_info(args: argparse.Namespace) -> None:
 # Ordered by data_width then fraction for display consistency.
 PRECISION_MODES: dict[str, tuple[int, int, str, str]] = {
     # 8-bit tier
-    "q17":    (8,  7,  "Q1.7",   "8-bit ultra-compact (Loihi/TrueNorth-class)"),
+    "q17": (8, 7, "Q1.7", "8-bit ultra-compact (Loihi/TrueNorth-class)"),
     # 16-bit tier
-    "q88":    (16, 8,  "Q8.8",   "16-bit default (mV-scale models)"),
-    "q412":   (16, 12, "Q4.12",  "16-bit high precision (normalised dynamics)"),
-    "q115":   (16, 15, "Q1.15",  "16-bit DSP fractional (ARM CMSIS standard)"),
+    "q88": (16, 8, "Q8.8", "16-bit default (mV-scale models)"),
+    "q412": (16, 12, "Q4.12", "16-bit high precision (normalised dynamics)"),
+    "q115": (16, 15, "Q1.15", "16-bit DSP fractional (ARM CMSIS standard)"),
     # 18-bit tier (DSP48-native)
-    "q99":    (18, 9,  "Q9.9",   "18-bit DSP48-native (zero-waste Xilinx/Lattice)"),
+    "q99": (18, 9, "Q9.9", "18-bit DSP48-native (zero-waste Xilinx/Lattice)"),
     # 24-bit tier
-    "q1212":  (24, 12, "Q12.12", "24-bit audio-grade (Loihi-2 native)"),
+    "q1212": (24, 12, "Q12.12", "24-bit audio-grade (Loihi-2 native)"),
     # 27-bit tier (Intel Stratix DSP-native)
-    "q1413":  (27, 13, "Q14.13", "27-bit Stratix-native (Intel 27×27 DSP)"),
+    "q1413": (27, 13, "Q14.13", "27-bit Stratix-native (Intel 27×27 DSP)"),
     # 32-bit tier
-    "q2012":  (32, 12, "Q20.12", "32-bit network-level (10K synapse accumulation)"),
-    "q1616":  (32, 16, "Q16.16", "32-bit gold standard"),
-    "q824":   (32, 24, "Q8.24",  "32-bit ultra-precision (EP training)"),
+    "q2012": (32, 12, "Q20.12", "32-bit network-level (10K synapse accumulation)"),
+    "q1616": (32, 16, "Q16.16", "32-bit gold standard"),
+    "q824": (32, 24, "Q8.24", "32-bit ultra-precision (EP training)"),
     # 36-bit tier (DSP48E2-native)
-    "q1818":  (36, 18, "Q18.18", "36-bit DSP48E2-native (UltraScale)"),
+    "q1818": (36, 18, "Q18.18", "36-bit DSP48E2-native (UltraScale)"),
 }
 
 
@@ -166,8 +168,10 @@ def cmd_compile(args: argparse.Namespace) -> None:
     try:
         verilog = n.to_verilog(
             module_name=args.module_name,
-            data_width=dw, fraction=frac,
-            overflow=overflow, rounding=rounding,
+            data_width=dw,
+            fraction=frac,
+            overflow=overflow,
+            rounding=rounding,
         )
     except Exception as e:
         print(f"Compilation error: {e}", file=sys.stderr)
@@ -176,8 +180,10 @@ def cmd_compile(args: argparse.Namespace) -> None:
     if args.output:
         with open(args.output, "w") as f:
             f.write(verilog)
-        print(f"Written: {args.output} ({len(verilog)} bytes, {display}, "
-              f"overflow={overflow}, rounding={rounding})")
+        print(
+            f"Written: {args.output} ({len(verilog)} bytes, {display}, "
+            f"overflow={overflow}, rounding={rounding})"
+        )
     else:
         print(verilog)
 
@@ -233,10 +239,7 @@ def cmd_precision(args: argparse.Namespace) -> None:
 
         # Check compatibility: dt must not underflow AND all params in range
         dt_raw = int(round(dt * (1 << q.fraction)))
-        range_ok = all(
-            q.min_value <= v <= q.max_value
-            for v in params.values()
-        )
+        range_ok = all(q.min_value <= v <= q.max_value for v in params.values())
         if dt_raw > 0 and range_ok:
             compatible.append((mode_name, q.data_width, q.fraction))
 
@@ -265,8 +268,13 @@ def cmd_platforms(args: argparse.Namespace) -> None:
 
     # Group by platform_class
     classes = {
-        "fpga": [], "neuromorphic": [], "accelerator": [],
-        "dsp": [], "asic": [], "emerging": [], "simulation": [],
+        "fpga": [],
+        "neuromorphic": [],
+        "accelerator": [],
+        "dsp": [],
+        "asic": [],
+        "emerging": [],
+        "simulation": [],
     }
     for p in profiles:
         classes.setdefault(p.platform_class, []).append(p)
@@ -275,8 +283,10 @@ def cmd_platforms(args: argparse.Namespace) -> None:
         if not cls_profiles:
             continue
         print(f"\n{cls_name.upper()} ({len(cls_profiles)} targets):")
-        print(f"  {'Name':18s} {'Vendor':12s} {'Family':18s} {'Format':10s} "
-              f"{'Bits':>4s} {'OVF':>8s} {'RND':>10s}  Notes")
+        print(
+            f"  {'Name':18s} {'Vendor':12s} {'Family':18s} {'Format':10s} "
+            f"{'Bits':>4s} {'OVF':>8s} {'RND':>10s}  Notes"
+        )
         print(f"  {'-' * 110}")
         for p in cls_profiles:
             print(
@@ -314,23 +324,29 @@ def main() -> None:
     p_comp.add_argument("--output", "-o", help="Output file (default: stdout)")
     p_comp.add_argument("--module-name", help="Verilog module name (default: auto)")
     p_comp.add_argument(
-        "--precision", "-p", default="q88",
+        "--precision",
+        "-p",
+        default="q88",
         choices=list(PRECISION_MODES.keys()),
         help="Fixed-point format (default: q88). Options: "
-             + ", ".join(f"{k} ({v[2]})" for k, v in PRECISION_MODES.items()),
+        + ", ".join(f"{k} ({v[2]})" for k, v in PRECISION_MODES.items()),
     )
     p_comp.add_argument(
-        "--target", "-t", default=None,
+        "--target",
+        "-t",
+        default=None,
         help="Hardware target profile (e.g. 'loihi2', 'artix7'). "
-             "Overrides --precision with optimal settings for the target.",
+        "Overrides --precision with optimal settings for the target.",
     )
     p_comp.add_argument(
-        "--overflow", default=None,
+        "--overflow",
+        default=None,
         choices=["saturate", "wrap", "trap"],
         help="Overflow mode (default: saturate, or from target profile)",
     )
     p_comp.add_argument(
-        "--rounding", default=None,
+        "--rounding",
+        default=None,
         choices=["truncate", "nearest", "bankers", "stochastic"],
         help="Rounding mode (default: truncate, or from target profile)",
     )

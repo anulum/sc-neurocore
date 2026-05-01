@@ -38,8 +38,7 @@ Usage (Constraint Solver)::
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
-from typing import Any
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
@@ -197,6 +196,7 @@ PRECISION_PRESETS: dict[str, PrecisionConfig] = {
 # ═══════════════════════════════════════════════════════════════════════
 # Constraint Solver
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def _min_bits_for_range(lo: float, hi: float, signed: bool = True) -> int:
     """Compute minimum integer bits to cover a value range.

@@ -15,16 +15,14 @@ compile + simulate with Icarus Verilog to verify functional correctness.
 
 from __future__ import annotations
 
-import os
 import subprocess
 import tempfile
 from pathlib import Path
 
 import pytest
 
-from sc_neurocore.neurons.universal_dsl import UniversalNeuron, list_bundled_schemas
+from sc_neurocore.neurons.universal_dsl import UniversalNeuron
 from sc_neurocore.compiler.equation_compiler import (
-    compile_to_verilog,
     generate_testbench,
 )
 
@@ -36,7 +34,11 @@ HAS_IVERILOG = shutil.which("iverilog") is not None
 # Models that use only polynomial/linear dynamics (no transcendentals)
 # These are guaranteed to compile cleanly with the Q8.8 arithmetic.
 _SIMPLE_MODELS = [
-    "lif", "lapicque", "izhikevich", "quadratic_if", "resonate_fire",
+    "lif",
+    "lapicque",
+    "izhikevich",
+    "quadratic_if",
+    "resonate_fire",
 ]
 
 # Models with transcendentals (exp, tanh) — require LUT support
@@ -156,8 +158,10 @@ class TestIVerilogSimulation:
 
         verilog = neuron.to_verilog(module_name=module_name)
         tb = generate_testbench(
-            eq_neuron, module_name=module_name,
-            n_steps=50, input_current=5.0,
+            eq_neuron,
+            module_name=module_name,
+            n_steps=50,
+            input_current=5.0,
         )
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -171,16 +175,18 @@ class TestIVerilogSimulation:
             # Compile
             result = subprocess.run(
                 ["iverilog", "-g2012", "-o", str(out_path), str(rtl_path), str(tb_path)],
-                capture_output=True, text=True, timeout=30,
+                capture_output=True,
+                text=True,
+                timeout=30,
             )
             assert result.returncode == 0, f"iverilog compile failed:\n{result.stderr}"
 
             # Simulate
             result = subprocess.run(
                 ["vvp", str(out_path)],
-                capture_output=True, text=True, timeout=30,
+                capture_output=True,
+                text=True,
+                timeout=30,
             )
             assert result.returncode == 0, f"vvp simulation failed:\n{result.stderr}"
-            assert "Simulation complete" in result.stdout, (
-                f"Unexpected output:\n{result.stdout}"
-            )
+            assert "Simulation complete" in result.stdout, f"Unexpected output:\n{result.stdout}"

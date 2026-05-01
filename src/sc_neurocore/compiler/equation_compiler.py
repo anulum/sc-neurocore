@@ -84,8 +84,8 @@ class Q88:
     data_width: int = 16
     fraction: int = 8
     signed: bool = True
-    overflow: str = "saturate"   # saturate | wrap | trap
-    rounding: str = "truncate"   # truncate | nearest | bankers | stochastic
+    overflow: str = "saturate"  # saturate | wrap | trap
+    rounding: str = "truncate"  # truncate | nearest | bankers | stochastic
 
     @property
     def integer_bits(self) -> int:
@@ -177,10 +177,16 @@ class Q88:
         # dt analysis
         dt_raw = int(round(dt * (1 << self.fraction)))
         dt_actual = dt_raw / (1 << self.fraction) if dt_raw != 0 else 0.0
-        dt_error = abs(dt_actual - dt) / dt * 100 if dt != 0 and dt_raw != 0 else (100.0 if dt != 0 else 0.0)
+        dt_error = (
+            abs(dt_actual - dt) / dt * 100
+            if dt != 0 and dt_raw != 0
+            else (100.0 if dt != 0 else 0.0)
+        )
         dt_status = "✓" if dt_raw > 0 else "✗ UNDERFLOW"
-        lines.append(f"  dt={dt} → Q-value={dt_raw} (actual={dt_actual:.6f}, "
-                      f"error={dt_error:.1f}%) {dt_status}")
+        lines.append(
+            f"  dt={dt} → Q-value={dt_raw} (actual={dt_actual:.6f}, "
+            f"error={dt_error:.1f}%) {dt_status}"
+        )
 
         # Parameter analysis
         if params:
@@ -256,32 +262,27 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         if rounding == "truncate":
             # Original behaviour: simple arithmetic right shift
             self.intermediates.append(
-                f"wire {sign}[{dw - 1}:0] {trunc_name} = "
-                f"({wide_name} >>> {frac});"
+                f"wire {sign}[{dw - 1}:0] {trunc_name} = ({wide_name} >>> {frac});"
             )
         elif rounding == "nearest":
             # Add 0.5 LSB (= 1 << (frac-1)) before truncation
             half = f"_rnd_half{self._trunc_count}"
             self.intermediates.append(
-                f"wire {sign}[{2 * dw - 1}:0] {half} = "
-                f"{wide_name} + {1 << (frac - 1)};"
+                f"wire {sign}[{2 * dw - 1}:0] {half} = {wide_name} + {1 << (frac - 1)};"
             )
             self.intermediates.append(
-                f"wire {sign}[{dw - 1}:0] {trunc_name} = "
-                f"({half} >>> {frac});"
+                f"wire {sign}[{dw - 1}:0] {trunc_name} = ({half} >>> {frac});"
             )
         elif rounding == "bankers":
             # Round half to even: add 0.5 LSB, then clear LSB if exactly 0.5
             biased = f"_rnd_biased{self._trunc_count}"
             guard = f"_rnd_guard{self._trunc_count}"
             self.intermediates.append(
-                f"wire {sign}[{2 * dw - 1}:0] {biased} = "
-                f"{wide_name} + {1 << (frac - 1)};"
+                f"wire {sign}[{2 * dw - 1}:0] {biased} = {wide_name} + {1 << (frac - 1)};"
             )
             # Guard bit: 1 if the fractional part was exactly 0.5
             self.intermediates.append(
-                f"wire {guard} = "
-                f"({wide_name}[{frac - 1}:0] == {1 << (frac - 1)});"
+                f"wire {guard} = ({wide_name}[{frac - 1}:0] == {1 << (frac - 1)});"
             )
             # If guard=1 (exact half), clear LSB of result (round to even)
             self.intermediates.append(
@@ -297,8 +298,7 @@ class _VerilogExprEmitter(ast.NodeVisitor):
                 f"{wide_name} + {{{{({2 * dw - frac}){{1'b0}}}}, _lfsr[{frac - 1}:0]}};"
             )
             self.intermediates.append(
-                f"wire {sign}[{dw - 1}:0] {trunc_name} = "
-                f"({stoch} >>> {frac});"
+                f"wire {sign}[{dw - 1}:0] {trunc_name} = ({stoch} >>> {frac});"
             )
         else:
             raise ValueError(f"Unknown rounding mode: {rounding!r}")
@@ -349,9 +349,7 @@ class _VerilogExprEmitter(ast.NodeVisitor):
             div_tmp = f"_div{self._mul_count}"
             self._mul_count += 1
             # Wire for left operand (needed for clean bit-select)
-            self.intermediates.append(
-                f"wire signed [{dw - 1}:0] {num_wire} = {left};"
-            )
+            self.intermediates.append(f"wire signed [{dw - 1}:0] {num_wire} = {left};")
             # Sign-extend to wide, shift left by fraction
             self.intermediates.append(
                 f"wire signed [{wide - 1}:0] {ext_name} = "
@@ -600,8 +598,11 @@ def _emit_expr(
     """Parse a Python expression string and return (verilog_expr, intermediate_wires, mul_end, trunc_end)."""
     tree = ast.parse(expr_str, mode="eval")
     emitter = _VerilogExprEmitter(
-        state_vars, param_map, q,
-        mul_start=mul_start, trunc_start=trunc_start,
+        state_vars,
+        param_map,
+        q,
+        mul_start=mul_start,
+        trunc_start=trunc_start,
     )
     result = emitter.visit(tree.body)
     return result, emitter.intermediates, emitter._mul_count, emitter._trunc_count
@@ -642,8 +643,13 @@ def compile_to_verilog(
     str
         Synthesizable Verilog source code.
     """
-    q = Q88(data_width=data_width, fraction=fraction,
-            signed=signed, overflow=overflow, rounding=rounding)
+    q = Q88(
+        data_width=data_width,
+        fraction=fraction,
+        signed=signed,
+        overflow=overflow,
+        rounding=rounding,
+    )
 
     # Reject dt that quantises to zero in the chosen fixed-point format.
     # Without this guard the compiler silently emits Verilog where every
@@ -685,8 +691,12 @@ def compile_to_verilog(
     for var, expr_str in neuron.equations.items():
         safe_var = state_var_map[var]
         vexpr, intermediates, _mc, _tc = _emit_expr(
-            expr_str, state_var_map, param_map, q,
-            mul_start=_mc, trunc_start=_tc,
+            expr_str,
+            state_var_map,
+            param_map,
+            q,
+            mul_start=_mc,
+            trunc_start=_tc,
         )
         all_intermediates.extend(intermediates)
         # dv = expr * dt (multiply by dt in fixed-point)
@@ -700,27 +710,22 @@ def compile_to_verilog(
         all_intermediates.append(
             f"wire signed [{data_width - 1}:0] {deriv_trunc} = ({dt_tmp} >>> {fraction});"
         )
-        deriv_wires.append(
-            f"wire signed [{data_width - 1}:0] {deriv_name} = {deriv_trunc};"
-        )
+        deriv_wires.append(f"wire signed [{data_width - 1}:0] {deriv_name} = {deriv_trunc};")
 
     # Next-state computation with configurable overflow handling
     sign_kw = "signed " if q.signed else ""
     if q.signed:
-        max_val = (1 << (data_width - 1)) - 1   # e.g. 32767 for 16-bit
-        min_val = -(1 << (data_width - 1))       # e.g. -32768 for 16-bit
+        max_val = (1 << (data_width - 1)) - 1  # e.g. 32767 for 16-bit
+        min_val = -(1 << (data_width - 1))  # e.g. -32768 for 16-bit
     else:
-        max_val = (1 << data_width) - 1          # e.g. 65535 for unsigned 16-bit
+        max_val = (1 << data_width) - 1  # e.g. 65535 for unsigned 16-bit
         min_val = 0
 
     next_wires: list[str] = []
     for var in neuron.equations:
         safe_var = state_var_map[var]
         raw = f"{safe_var}_raw"
-        next_wires.append(
-            f"wire {sign_kw}[{data_width}:0] {raw} = "
-            f"{safe_var}_reg + d{safe_var};"
-        )
+        next_wires.append(f"wire {sign_kw}[{data_width}:0] {raw} = {safe_var}_reg + d{safe_var};")
 
         if q.overflow == "saturate":
             # Clamp to [min_val, max_val] (default, safest)
@@ -742,8 +747,7 @@ def compile_to_verilog(
         elif q.overflow == "wrap":
             # Two's complement wrap-around (Loihi 2 hardware behaviour)
             next_wires.append(
-                f"wire {sign_kw}[{data_width - 1}:0] {safe_var}_next = "
-                f"{raw}[{data_width - 1}:0];"
+                f"wire {sign_kw}[{data_width - 1}:0] {safe_var}_next = {raw}[{data_width - 1}:0];"
             )
         elif q.overflow == "trap":
             # Safety-critical: assert $fatal on overflow (DO-254 / IEC 61508)
@@ -753,28 +757,23 @@ def compile_to_verilog(
                     f"wire {sign_kw}[{data_width - 1}:0] {safe_var}_next = "
                     f"{raw}[{data_width - 1}:0];"
                 )
-                next_wires.append(
-                    f"// synthesis translate_off"
-                )
+                next_wires.append("// synthesis translate_off")
                 next_wires.append(
                     f"always @(*) if ({raw} > {data_width + 1}'sd{max_val} || "
                     f"{raw} < (-{data_width + 1}'sd{abs_min})) "
-                    f"$fatal(1, \"OVERFLOW TRAP: {safe_var}_raw=%0d\", {raw});"
+                    f'$fatal(1, "OVERFLOW TRAP: {safe_var}_raw=%0d", {raw});'
                 )
-                next_wires.append(
-                    f"// synthesis translate_on"
-                )
+                next_wires.append("// synthesis translate_on")
             else:
                 next_wires.append(
-                    f"wire [{data_width - 1}:0] {safe_var}_next = "
-                    f"{raw}[{data_width - 1}:0];"
+                    f"wire [{data_width - 1}:0] {safe_var}_next = {raw}[{data_width - 1}:0];"
                 )
-                next_wires.append(f"// synthesis translate_off")
+                next_wires.append("// synthesis translate_off")
                 next_wires.append(
                     f"always @(*) if ({raw}[{data_width}]) "
-                    f"$fatal(1, \"OVERFLOW TRAP: {safe_var}_raw=%0d\", {raw});"
+                    f'$fatal(1, "OVERFLOW TRAP: {safe_var}_raw=%0d", {raw});'
                 )
-                next_wires.append(f"// synthesis translate_on")
+                next_wires.append("// synthesis translate_on")
         else:
             raise ValueError(f"Unknown overflow mode: {q.overflow!r}")
 
@@ -790,8 +789,12 @@ def compile_to_verilog(
             thr_param_map[var] = f"{safe_var}_next"
         # Pass empty state_vars so no _reg suffixes are appended
         threshold_verilog, thr_intermediates, _mc, _tc = _emit_expr(
-            neuron.threshold_expr, {}, thr_param_map, q,
-            mul_start=_mc, trunc_start=_tc,
+            neuron.threshold_expr,
+            {},
+            thr_param_map,
+            q,
+            mul_start=_mc,
+            trunc_start=_tc,
         )
         all_intermediates.extend(thr_intermediates)
 
@@ -800,8 +803,12 @@ def compile_to_verilog(
     for var, expr_str in neuron.reset_rules.items():
         safe_var = state_var_map[var]
         rexpr, r_intermediates, _mc, _tc = _emit_expr(
-            expr_str, state_var_map, param_map, q,
-            mul_start=_mc, trunc_start=_tc,
+            expr_str,
+            state_var_map,
+            param_map,
+            q,
+            mul_start=_mc,
+            trunc_start=_tc,
         )
         all_intermediates.extend(r_intermediates)
         reset_assignments.append(f"                    {safe_var}_reg <= {rexpr};")

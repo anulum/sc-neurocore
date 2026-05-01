@@ -259,8 +259,7 @@ class EquationNeuron:
         max_depth = self._ast_depth(tree)
         if max_depth > self._MAX_AST_DEPTH:
             raise ValueError(
-                f"Equation AST depth {max_depth} exceeds limit "
-                f"{self._MAX_AST_DEPTH}: {expr!r}"
+                f"Equation AST depth {max_depth} exceeds limit {self._MAX_AST_DEPTH}: {expr!r}"
             )
 
         for node in ast.walk(tree):
