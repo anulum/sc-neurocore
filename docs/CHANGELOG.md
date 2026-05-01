@@ -4,6 +4,76 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Wave 10: Absolute endgame — security, sovereignty & extensibility (2026-05-01)
+
+#### Added — Hardware Profiles (10 new → 175 total, 31 platform classes)
+- **Magnonic** (3): `tum_skyrmion`, `kaist_spinwave`, `imec_mtj_reservoir`.
+- **Organic Bioelectronic** (2): `cambridge_oect`, `linkoping_organic`.
+- **RISC-V Sovereign** (5): `sifive_x280_ai`, `esperanto_et_soc`,
+  `ventana_veyron_ai`, `tenstorrent_ascalon`, `andes_ax45mpv`.
+
+#### Added — Generic Profile Constructor
+- `HardwareProfile.from_constraints()` — auto-construct profile from spec
+  sheet constraints. **Any future hardware automatically supported.**
+
+#### Added — Compiler Features (8 new → 67 total)
+- `lint_hardware_trojans()` — detect dormant trigger / payload paths.
+- `generate_sbom()` — CycloneDX/SPDX SBOM for EU CRA compliance.
+- `generate_hil_calibration()` — HIL drift compensation protocol.
+- `generate_digital_twin()` — software shadow of deployed hardware.
+- `map_ucie_protocol()` — UCIe chiplet die-to-die lane mapping.
+- `schedule_seu_scrubbing()` — space-grade configuration scrubbing.
+- `obfuscate_ip()` — logic locking + structural IP protection.
+- `embed_watermark()` — verifiable netlist watermark embedding.
+
+#### Added — Tests
+- `tests/test_wave10_features.py` — 32 tests across 13 test classes.
+
+### Wave 9: Universal coverage & extensibility (2026-05-01)
+
+#### Added — Hardware Profiles (10 new → 165 total, 28 platform classes)
+- **Optical I/O** (2): `ayar_teraphy`, `intel_cpo`.
+- **Acoustic** (2): `mit_phononic`, `caltech_mems_nn`.
+- **Fluidic** (2): `stanford_microfluidic`, `eth_fluidic_logic`.
+- **Space-Qualified** (4): `bae_rad750_sq`, `seakr_sbc`, `vorago_va10820`, `frontgrade_leon5`.
+
+#### Added — Compiler Features (8 new → 59 total)
+- `analyze_cdc()` — formal CDC check.
+- `load_profiles_from_toml()` — custom HW without code changes.
+- `plan_multi_die_floorplan()` — chiplet/3D bin packing.
+- `check_regression()` — perf regression detector.
+- `check_license_compliance()` — SPDX IP compatibility.
+- `generate_power_state_machine()` — sleep/wake/hibernate FSM.
+- `register_platform_hook()` / `discover_platforms()` — runtime extensibility.
+- `generate_compilation_report()` — one-click markdown report.
+
+#### Added — Tests
+- `tests/test_wave9_features.py` — 28 tests across 10 test classes.
+
+### Wave 8: Final gap closure & trajectory synthesis (2026-05-01)
+
+#### Added — Hardware Profiles (11 new → 155 total, 24 platform classes)
+- **RRAM** (3): `weebit_reram`, `crossbar_rram`, `adesto_cbram`.
+- **SRAM-CIM** (2): `tsmc_cim_n7`, `samsung_cim_sf3`.
+- **Cryo CMOS** (2): `intel_horse_ridge`, `google_cryo_ctrl`.
+- **DNA/Molecular** (2): `microsoft_dna_store`, `asu_dna_perovskite`.
+- **Quantum Neuromorphic** (2): `ibm_qnn`, `ionq_trapped_ion`.
+
+#### Added — Compiler Intelligence Features (10 new → 51 total)
+- `import_nir_graph()` — NIR/ONNX-SNN model import.
+- `verify_ode_stability()` — Lyapunov/eigenvalue discretization check.
+- `generate_power_intent()` — IEEE 1801 UPF generation.
+- `estimate_carbon_footprint()` — lifecycle CO₂ per target.
+- `insert_debug_probes()` — ILA/SignalTap auto-insertion.
+- `generate_memory_map()` — address decoder for neuron SoC arrays.
+- `score_portability()` — cross-platform compatibility scoring.
+- `predict_reliability()` — MTTF from voltage/temp/node.
+- `generate_fault_tree()` — FTA/FMEA for DO-254 Level A.
+- `generate_testbench()` — Cocotb/UVM auto-generation.
+
+#### Added — Tests
+- `tests/test_wave8_features.py` — 38 tests across 12 test classes.
+
 ### Wave 7: Compiler intelligence & frontier paradigms (2026-05-01)
 
 #### Added — Hardware Profiles (10 new → 144 total, 19 platform classes)

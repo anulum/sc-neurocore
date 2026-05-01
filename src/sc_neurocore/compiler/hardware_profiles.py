@@ -139,6 +139,87 @@ class HardwareProfile:
         """Smallest representable step."""
         return 1.0 / (1 << self.fraction)
 
+    @classmethod
+    def from_constraints(
+        cls,
+        name: str,
+        *,
+        vendor: str = "Generic",
+        family: str = "Auto",
+        platform_class: str = "custom",
+        data_width: int | None = None,
+        fraction: int | None = None,
+        max_freq_mhz: int = 0,
+        overflow: OverflowMode = "saturate",
+        rounding: RoundingMode = "nearest",
+        min_precision_bits: int = 8,
+        max_power_budget_mw: float | None = None,
+        notes: str = "",
+    ) -> "HardwareProfile":
+        """Auto-construct an optimal profile from spec-sheet constraints.
+
+        This is the **ultimate extensibility mechanism**: instead of manually
+        defining every field, provide constraints and let SC-NeuroCore select
+        the optimal fixed-point configuration.
+
+        Parameters
+        ----------
+        name : str
+            Unique profile identifier.
+        vendor : str
+            Vendor name.
+        family : str
+            Product family.
+        platform_class : str
+            Platform class identifier.
+        data_width : int, optional
+            Override total bit width. Auto-selects if None.
+        fraction : int, optional
+            Override fraction bits. Auto-selects if None.
+        max_freq_mhz : int
+            Maximum clock frequency.
+        overflow : OverflowMode
+            Overflow handling.
+        rounding : RoundingMode
+            Rounding mode.
+        min_precision_bits : int
+            Minimum fractional precision required.
+        max_power_budget_mw : float, optional
+            Power budget constraint (used for width selection).
+        notes : str
+            Human-readable description.
+
+        Returns
+        -------
+        HardwareProfile
+            Auto-constructed profile.
+        """
+        # Auto-select data width based on precision and power
+        if data_width is None:
+            if max_power_budget_mw is not None and max_power_budget_mw < 10:
+                data_width = max(8, min_precision_bits)
+            elif max_power_budget_mw is not None and max_power_budget_mw < 100:
+                data_width = max(16, min_precision_bits * 2)
+            else:
+                data_width = max(16, min_precision_bits * 2)
+
+        # Auto-select fraction: half the data width, at least min_precision
+        if fraction is None:
+            fraction = max(min_precision_bits, data_width // 2)
+            fraction = min(fraction, data_width - 1)
+
+        profile = cls(
+            name=name, vendor=vendor, family=family,
+            platform_class=platform_class,
+            data_width=data_width, fraction=fraction,
+            overflow=overflow, rounding=rounding,
+            max_freq_mhz=max_freq_mhz,
+            notes=notes or f"Auto-constructed from constraints.",
+        )
+        # Auto-register
+        _PROFILES[name.lower().replace("-", "_").replace(" ", "_")] = profile
+        return profile
+
 
 # ═══════════════════════════════════════════════════════════════════════
 # Pre-configured profiles
@@ -1369,6 +1450,257 @@ _reg(HardwareProfile(
     overflow="saturate", rounding="nearest",
     notes="IonQ Trapped-Ion QNN: all-to-all connectivity for quantum "
           "SNN simulation.",
+))
+
+# ── Optical Interconnect / CPO ───────────────────────────────────────
+
+_reg(HardwareProfile(
+    name="ayar_teraphy", vendor="Ayar Labs", family="TeraPHY",
+    platform_class="optical_io", data_width=16, fraction=8,
+    overflow="saturate", rounding="nearest",
+    max_freq_mhz=25000,
+    notes="Ayar Labs TeraPHY: silicon photonic I/O chiplet. "
+          "8 Tbps bidirectional, UCIe-compatible.",
+))
+_reg(HardwareProfile(
+    name="intel_cpo", vendor="Intel", family="CPO",
+    platform_class="optical_io", data_width=16, fraction=8,
+    overflow="saturate", rounding="nearest",
+    max_freq_mhz=20000,
+    notes="Intel co-packaged optics: silicon photonic I/O for "
+          "die-to-die and rack-scale optical links.",
+))
+
+# ── Acoustic / Phononic ──────────────────────────────────────────────
+
+_reg(HardwareProfile(
+    name="mit_phononic", vendor="MIT", family="Phononic-NN",
+    platform_class="acoustic", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    notes="MIT phononic neural network: acoustic wave reservoir "
+          "computing in MEMS resonator arrays.",
+))
+_reg(HardwareProfile(
+    name="caltech_mems_nn", vendor="Caltech", family="MEMS-NN",
+    platform_class="acoustic", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    notes="Caltech MEMS neural processor: mechanical resonator "
+          "array for edge inference.",
+))
+
+# ── Fluidic / Microfluidic ───────────────────────────────────────────
+
+_reg(HardwareProfile(
+    name="stanford_microfluidic", vendor="Stanford", family="µFluidic-NN",
+    platform_class="fluidic", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    notes="Stanford microfluidic neural network: droplet-based "
+          "logic gates for lab-on-chip compute.",
+))
+_reg(HardwareProfile(
+    name="eth_fluidic_logic", vendor="ETH Zurich", family="Fluidic-Logic",
+    platform_class="fluidic", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    notes="ETH Zurich fluidic logic: pressure-driven bistable "
+          "valves for chemical neural computation.",
+))
+
+# ── Space-Qualified ──────────────────────────────────────────────────
+
+_reg(HardwareProfile(
+    name="bae_rad750_sq", vendor="BAE Systems", family="RAD750",
+    platform_class="space_qualified", data_width=32, fraction=16,
+    overflow="saturate", rounding="nearest",
+    max_freq_mhz=200,
+    notes="BAE RAD750: radiation-hardened processor. Mars rovers, "
+          "ISS, deep-space missions.",
+))
+_reg(HardwareProfile(
+    name="seakr_sbc", vendor="SEAKR", family="SBC-SpaceAI",
+    platform_class="space_qualified", data_width=16, fraction=8,
+    overflow="saturate", rounding="nearest",
+    max_freq_mhz=400,
+    notes="SEAKR SpaceAI SBC: radiation-tolerant single-board "
+          "computer for on-orbit neural inference.",
+))
+_reg(HardwareProfile(
+    name="vorago_va10820", vendor="Vorago", family="VA10820",
+    platform_class="space_qualified", data_width=16, fraction=8,
+    overflow="saturate", rounding="nearest",
+    max_freq_mhz=100,
+    notes="Vorago VA10820: Arm Cortex-M0 rad-hard MCU for "
+          "space-grade edge neural processing.",
+))
+_reg(HardwareProfile(
+    name="frontgrade_leon5", vendor="Frontgrade", family="LEON5-FT",
+    platform_class="space_qualified", data_width=32, fraction=16,
+    overflow="saturate", rounding="nearest",
+    max_freq_mhz=250,
+    notes="Frontgrade LEON5-FT: SPARC V8 rad-hard for ESA/NASA "
+          "mission-critical neural control.",
+))
+
+# ── Wave 10: Magnonic / Skyrmion ─────────────────────────────────────
+
+_reg(HardwareProfile(
+    name="tum_skyrmion", vendor="TU Munich", family="SkyANN-v1",
+    platform_class="magnonic", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    notes="Skyrmion-based reservoir computing. EU SkyANN project. "
+          "Topological stability enables ultra-low-power edge AI.",
+))
+
+_reg(HardwareProfile(
+    name="kaist_spinwave", vendor="KAIST", family="SpinWave-RC",
+    platform_class="magnonic", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    notes="Spin-wave interference reservoir. Field-free operation via "
+          "SOT bilayer nanostructures.",
+))
+
+_reg(HardwareProfile(
+    name="imec_mtj_reservoir", vendor="imec", family="MTJ-Reservoir",
+    platform_class="magnonic", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    notes="Magnetic tunnel junction reservoir computing array. "
+          "Sub-fJ switching energy per MAC operation.",
+))
+
+# ── Wave 10: Organic Bioelectronic ───────────────────────────────────
+
+_reg(HardwareProfile(
+    name="cambridge_oect", vendor="Cambridge", family="OECT-Synapse",
+    platform_class="organic_bioelectronic", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    notes="Organic Electrochemical Transistor synapse. PEDOT:PSS "
+          "channel for in-vivo bioelectronic neural interfaces.",
+))
+
+_reg(HardwareProfile(
+    name="linkoping_organic", vendor="Linköping", family="Organic-NN",
+    platform_class="organic_bioelectronic", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    notes="Printed organic transistor array. Biodegradable substrate "
+          "for disposable sensor-neural-interface.",
+))
+
+# ── Wave 10: RISC-V Sovereign AI ─────────────────────────────────────
+
+_reg(HardwareProfile(
+    name="sifive_x280_ai", vendor="SiFive", family="X280-AI",
+    platform_class="risc_v_sovereign", data_width=16, fraction=8,
+    overflow="saturate", rounding="nearest",
+    max_freq_mhz=2000,
+    notes="SiFive Intelligence X280: RISC-V vector AI core. "
+          "Open ISA, no ITAR restrictions, sovereign compute.",
+))
+
+_reg(HardwareProfile(
+    name="esperanto_et_soc", vendor="Esperanto", family="ET-SoC-1",
+    platform_class="risc_v_sovereign", data_width=8, fraction=4,
+    overflow="saturate", rounding="nearest",
+    max_freq_mhz=1000,
+    notes="Esperanto ET-SoC-1: 1000+ RISC-V cores for sovereign "
+          "AI inference. No export control dependencies.",
+))
+
+_reg(HardwareProfile(
+    name="ventana_veyron_ai", vendor="Ventana", family="Veyron-V2",
+    platform_class="risc_v_sovereign", data_width=16, fraction=8,
+    overflow="saturate", rounding="nearest",
+    max_freq_mhz=3600,
+    notes="Ventana Veyron V2: high-perf RISC-V with AI extensions. "
+          "Chiplet-based, UCIe-compatible.",
+))
+
+_reg(HardwareProfile(
+    name="tenstorrent_ascalon", vendor="Tenstorrent", family="Ascalon",
+    platform_class="risc_v_sovereign", data_width=16, fraction=8,
+    overflow="saturate", rounding="nearest",
+    max_freq_mhz=4000,
+    notes="Tenstorrent Ascalon: RISC-V AI server processor. "
+          "Open-source ISA for data-sovereign deployments.",
+))
+
+_reg(HardwareProfile(
+    name="andes_ax45mpv", vendor="Andes", family="AX45MPV",
+    platform_class="risc_v_sovereign", data_width=16, fraction=8,
+    overflow="saturate", rounding="nearest",
+    max_freq_mhz=1500,
+    notes="Andes AX45MPV: multiprocessor RISC-V with vector extension. "
+          "Targets automotive and edge AI sovereignty.",
+))
+
+# ── Wave 11: Thermodynamic Computing ─────────────────────────────────
+
+_reg(HardwareProfile(
+    name="extropic_epu", vendor="Extropic", family="EPU-v1",
+    platform_class="thermodynamic", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    notes="Extropic Energy-Based Processor: probabilistic generative AI "
+          "via controlled thermal fluctuations. Room-temperature.",
+))
+
+_reg(HardwareProfile(
+    name="normal_cn101", vendor="Normal Computing", family="CN101",
+    platform_class="thermodynamic", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    notes="Normal Computing CN101: thermodynamic AI chip. Stochastic "
+          "sampling via thermal noise exploitation.",
+))
+
+# ── Wave 11: Probabilistic / p-Bit ───────────────────────────────────
+
+_reg(HardwareProfile(
+    name="purdue_pbit", vendor="Purdue", family="p-Bit-Array",
+    platform_class="probabilistic", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    notes="Purdue MRAM p-bit array: room-temperature probabilistic "
+          "computing. Boltzmann machine substrate.",
+))
+
+_reg(HardwareProfile(
+    name="tohoku_sot_pbit", vendor="Tohoku", family="SOT-pBit",
+    platform_class="probabilistic", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    notes="Tohoku SOT-MRAM probabilistic computing: tuneable "
+          "fluctuation rate via spin-orbit torque bias.",
+))
+
+# ── Wave 11: Polariton / Exciton ─────────────────────────────────────
+
+_reg(HardwareProfile(
+    name="marvell_polariton", vendor="Marvell", family="Polariton-PIC",
+    platform_class="polariton", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    notes="Marvell/Polariton Technologies: silicon photonic + plasmonic "
+          "active devices for ultrafast optical neural compute.",
+))
+
+_reg(HardwareProfile(
+    name="stanford_polariton", vendor="Stanford", family="Perovskite-RC",
+    platform_class="polariton", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    notes="Stanford perovskite microcavity: exciton-polariton "
+          "condensate reservoir computing at room temperature.",
+))
+
+# ── Wave 11: Metamaterial / Programmable Matter ──────────────────────
+
+_reg(HardwareProfile(
+    name="mit_metamaterial", vendor="MIT", family="RF-Metasurface",
+    platform_class="metamaterial", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    notes="MIT RF metasurface neural network: programmable "
+          "unit-cell phases perform analog matrix-vector multiply.",
+))
+
+_reg(HardwareProfile(
+    name="penn_acoustic_meta", vendor="UPenn", family="Acoustic-Meta",
+    platform_class="metamaterial", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    notes="UPenn acoustic metamaterial classifier: mechanical "
+          "wave propagation implements inference at zero digital power.",
 ))
 
 # ═══════════════════════════════════════════════════════════════════════
