@@ -389,3 +389,52 @@ auto-placed optical pulse modulators.
 Multi-tenant edge-cluster orchestration built on AER routing and deployment
 contracts. Target isolation, scheduling, telemetry, and per-tenant evidence
 manifests for distributed neuromorphic deployments.
+
+## Focused TODO — 2026-05-01
+
+### Studio as default path (drag-drop → train → deploy)
+
+- Studio must become the primary UX with one default flow from network canvas
+  to deployment: drag-drop construction, surrogate-training loop, adaptive
+  precision compile, one-click deploy, and live co-simulation.
+- Outcome: a first-time user can execute a full end-to-end SNN deployment in
+  one Studio session without hand-written scripts.
+
+### Model documentation and evidence sprint
+
+- Finalise the per-model documentation sprint: generate the remaining 84 model
+  pages with:
+  - equations,
+  - benchmarks,
+  - Verilog mapping status.
+- This is the current highest user-facing documentation debt and must be
+  executed before additional feature headlines.
+
+### Hardware validation before expansion
+
+- Before any new feature lane, run physical validation on a physical
+  PYNQ-Z2 board: power, latency, and dynamic measurements, then publish
+  measured numbers and a reproducible run pack.
+- A single measured demo must be the default credibility baseline for claims.
+
+### Packaging polish and offline deployment
+
+- Add shipping profile for `hdl install` + Docker + conda that supports
+  pre-built wheels with static primitive bitstreams so Vivado is not required
+  for baseline FPGA targets.
+- Keep this as the default package path for standard users and CI validation.
+
+### Full tape-out API and formal-aware precision flow
+
+- Extend `generate_asic_flow_bundle(target_pdk="asap7")` so it emits:
+  - GDSII,
+  - power and area reports,
+  - formal evidence bundle.
+- Keep claims gated until manifests include full CIRCT/OpenROAD run evidence.
+
+### Adaptive precision optimiser as API surface
+
+- Promote adaptive precision with formal error-bounds as a first-class API:
+  `assign_synapse_precisions(...)` with an explicit UI action in Studio:
+  “auto-tune for <0.1 % error at minimal LUTs”.
+- Generate and bundle SymbiYosys proof evidence for the bounded-error claims.

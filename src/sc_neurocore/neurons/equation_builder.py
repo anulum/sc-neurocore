@@ -108,10 +108,16 @@ class EquationNeuron:
             """Logistic sigmoid with clipping for numerical stability."""
             return 1.0 / (1.0 + np.exp(-np.clip(x, -500, 500)))
 
+        def _sqrt(x: Any) -> Any:
+            """Square root that fails before NumPy warning machinery on invalid domains."""
+            if np.any(np.asarray(x) < 0):
+                raise ValueError("sqrt domain error")
+            return np.sqrt(x)
+
         self._namespace = {
             "exp": np.exp,
             "log": np.log,
-            "sqrt": np.sqrt,
+            "sqrt": _sqrt,
             "abs": abs,
             "sin": np.sin,
             "cos": np.cos,

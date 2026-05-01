@@ -39,7 +39,7 @@ security, and debug features** available in the compiler.
 discretized ODE system is numerically stable at the chosen timestep.
 
 ```python
-from sc_neurocore.compiler.advanced_features import verify_ode_stability
+from sc_neurocore.compiler.intelligence import verify_ode_stability
 
 # Check LIF stability
 result = verify_ode_stability(
@@ -69,7 +69,7 @@ Determines whether your model is compute-bound, memory-bound, or
 communication-bound, and recommends the optimal platform class:
 
 ```python
-from sc_neurocore.compiler.advanced_features import classify_model_complexity
+from sc_neurocore.compiler.intelligence import classify_model_complexity
 
 cls = classify_model_complexity(
     equations={"v": "g*m*m*m*h*(E-v) + g*n*n*n*n*(E-v)"},
@@ -90,7 +90,7 @@ Generates SystemVerilog assertions that prove bit-accurate equivalence
 between the Python ODE model and the generated Verilog:
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_equivalence_sketch
+from sc_neurocore.compiler.intelligence import generate_equivalence_sketch
 
 sketch = generate_equivalence_sketch(
     equations={"v": "-(v - v_rest) / tau + I"},
@@ -107,7 +107,7 @@ Identifies clock domain crossings when neuron state variables are in
 different clock domains (common in multi-timescale partitioned designs):
 
 ```python
-from sc_neurocore.compiler.advanced_features import analyze_cdc
+from sc_neurocore.compiler.intelligence import analyze_cdc
 
 report = analyze_cdc(
     {"v": "u + I", "u": "v - threshold", "w": "slow_adaptation"},
@@ -124,7 +124,7 @@ for c in report.crossings:
 Generate complete testbenches in Cocotb (Python) or UVM (SystemVerilog):
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_testbench
+from sc_neurocore.compiler.intelligence import generate_testbench
 
 # Cocotb — preferred for rapid iteration
 tb = generate_testbench(
@@ -148,7 +148,7 @@ with open("sc_lif_uvm_test.sv", "w") as f:
 Generate C or Rust code that produces identical output to the Verilog RTL:
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_bittrue_kernel
+from sc_neurocore.compiler.intelligence import generate_bittrue_kernel
 
 c_code = generate_bittrue_kernel(
     equations={"v": "-(v - v_rest) / tau + I"},
@@ -164,7 +164,7 @@ with open("sc_lif_bittrue.c", "w") as f:
 Detect timing and power side-channel vulnerabilities:
 
 ```python
-from sc_neurocore.compiler.advanced_features import lint_side_channels
+from sc_neurocore.compiler.intelligence import lint_side_channels
 
 result = lint_side_channels(
     equations={"v": "-(v) / tau + I * secret_weight"},
@@ -178,7 +178,7 @@ for finding in result.findings:
 Detect suspicious combinational paths that could hide hardware trojans:
 
 ```python
-from sc_neurocore.compiler.advanced_features import lint_hardware_trojans
+from sc_neurocore.compiler.intelligence import lint_hardware_trojans
 
 result = lint_hardware_trojans(
     {"v": "-(v)/tau + I", "u": "a*(b*v - u)"},
@@ -197,7 +197,7 @@ print(f"Total checks: {result.total_checks}")
 Auto-insert ILA (Xilinx Vivado) or SignalTap (Intel Quartus) probes:
 
 ```python
-from sc_neurocore.compiler.advanced_features import insert_debug_probes
+from sc_neurocore.compiler.intelligence import insert_debug_probes
 
 # Xilinx ILA
 probes = insert_debug_probes(
@@ -220,7 +220,7 @@ Generate a step-by-step hardware-in-the-loop calibration procedure
 for compensating analog drift, mismatch, and process variation:
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_hil_calibration
+from sc_neurocore.compiler.intelligence import generate_hil_calibration
 
 cal = generate_hil_calibration(
     "sc_lif", {"v": "expr", "u": "expr"},
@@ -236,7 +236,7 @@ Generate a software shadow model that mirrors deployed hardware state
 for runtime anomaly detection:
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_digital_twin
+from sc_neurocore.compiler.intelligence import generate_digital_twin
 
 twin = generate_digital_twin("sc_lif", {"v": "-(v)/tau"}, "artix7")
 with open("sc_lif_twin.py", "w") as f:
@@ -253,7 +253,7 @@ with open("sc_lif_twin.py", "w") as f:
 Generate scrubbing schedules for space-grade configuration memory:
 
 ```python
-from sc_neurocore.compiler.advanced_features import schedule_seu_scrubbing
+from sc_neurocore.compiler.intelligence import schedule_seu_scrubbing
 
 schedule = schedule_seu_scrubbing(
     config_bits=1_000_000,
@@ -275,7 +275,7 @@ print(f"Expected SEU rate: {schedule.expected_seu_rate:.4f}/day")
 Detect performance regressions between compilation runs:
 
 ```python
-from sc_neurocore.compiler.advanced_features import check_regression
+from sc_neurocore.compiler.intelligence import check_regression
 
 # Save baseline metrics after first compilation
 baseline = {"area_luts": 1200, "fmax_mhz": 250, "power_mw": 85}
@@ -294,7 +294,7 @@ for c in checks:
 Generate a comprehensive markdown report:
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_compilation_report
+from sc_neurocore.compiler.intelligence import generate_compilation_report
 
 report = generate_compilation_report(
     "sc_lif", {"v": "-(v)/tau + I"}, "artix7",

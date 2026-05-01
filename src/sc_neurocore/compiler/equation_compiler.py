@@ -190,16 +190,16 @@ class Q88:
 
         # Parameter analysis
         if params:
-            range_warnings = []
+            range_warnings: list[str] = []
             for name, val in params.items():
-                w = self.check_range(val, name)
-                range_warnings.extend(w)
+                warnings_for_param = self.check_range(val, name)
+                range_warnings.extend(warnings_for_param)
                 q_val = int(round(val * (1 << self.fraction)))
                 q_actual = q_val / (1 << self.fraction)
                 err = abs(q_actual - val) / abs(val) * 100 if val != 0 else 0
                 lines.append(f"  {name}={val} → Q-value={q_val} (error={err:.1f}%)")
-            for w in range_warnings:
-                lines.append(f"  ⚠ {w}")
+            for warning in range_warnings:
+                lines.append(f"  ⚠ {warning}")
 
         return "\n".join(lines)
 
@@ -811,7 +811,7 @@ def compile_to_verilog(
             trunc_start=_tc,
         )
         all_intermediates.extend(r_intermediates)
-        reset_assignments.append(f"                    {safe_var}_reg <= {rexpr};")
+        reset_assignments.append(f"            {safe_var}_reg <= {rexpr};")
 
     # Build the Verilog module
     lines = [

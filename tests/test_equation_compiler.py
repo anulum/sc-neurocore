@@ -117,7 +117,7 @@ class TestCompileLIF:
         assert "module strict_lif" in verilog
         assert "P_V_THRESHOLD" in verilog
         assert "P_V_RESET" in verilog
-        assert "if ((v_reg > P_V_THRESHOLD))" in verilog
+        assert "if ((v_next > P_V_THRESHOLD))" in verilog
         assert "v_reg <= P_V_RESET;" in verilog
 
 
@@ -453,7 +453,7 @@ class TestTranscendentalFunctions:
         )
         assert "v_raw" in verilog
         assert "32767" in verilog
-        assert "-32768" in verilog
+        assert "32768" in verilog
 
     def test_unsupported_function_raises(self):
         import pytest

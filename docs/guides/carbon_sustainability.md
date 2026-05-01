@@ -16,7 +16,7 @@ EU carbon labelling compliance (mandatory from 2027).
 ### Basic Usage
 
 ```python
-from sc_neurocore.compiler.advanced_features import estimate_carbon_footprint
+from sc_neurocore.compiler.intelligence import estimate_carbon_footprint
 
 # Compare CO₂ impact across targets
 targets = ["artix7", "loihi2", "finalspark_neuroplatform", "max78000"]
@@ -70,7 +70,7 @@ Most neuromorphic systems are event-driven and spend most time sleeping.
 The energy schedule generator models this:
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_energy_schedule
+from sc_neurocore.compiler.intelligence import generate_energy_schedule
 
 sched = generate_energy_schedule(
     power_active_mw=100.0,   # during spike processing
@@ -88,7 +88,7 @@ print(f"Annual energy: {sched.annual_kwh:.4f} kWh")
 Generate hardware FSMs that implement sleep/wake transitions:
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_power_state_machine
+from sc_neurocore.compiler.intelligence import generate_power_state_machine
 
 # Default: ACTIVE → IDLE → SLEEP → HIBERNATE
 verilog = generate_power_state_machine("sc_lif")
@@ -113,7 +113,7 @@ verilog = generate_power_state_machine(
 Generate power domains, isolation cells, and retention for multi-voltage SoCs:
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_power_intent
+from sc_neurocore.compiler.intelligence import generate_power_intent
 
 upf = generate_power_intent("sc_lif_array", num_domains=8, always_on=True)
 with open("sc_lif_array.upf", "w") as f:
@@ -128,7 +128,7 @@ with open("sc_lif_array.upf", "w") as f:
 Catch thermal violations before silicon:
 
 ```python
-from sc_neurocore.compiler.advanced_features import estimate_thermal_envelope
+from sc_neurocore.compiler.intelligence import estimate_thermal_envelope
 
 t = estimate_thermal_envelope(
     power_mw=2000,
@@ -145,8 +145,8 @@ print(f"Status: {t.pass_fail}")
 ### Step 1: Identify Low-Carbon Targets
 
 ```python
-from sc_neurocore.compiler.advanced_features import estimate_carbon_footprint
-from sc_neurocore.compiler.hardware_profiles import list_profile_names
+from sc_neurocore.compiler.intelligence import estimate_carbon_footprint
+from sc_neurocore.compiler.platforms import list_profile_names
 
 # Find the greenest targets
 results = []
@@ -163,7 +163,7 @@ for co2, name in results[:10]:
 ### Step 2: Generate Report
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_compilation_report
+from sc_neurocore.compiler.intelligence import generate_compilation_report
 
 report = generate_compilation_report(
     "sc_lif", {"v": "-(v)/tau + I"},

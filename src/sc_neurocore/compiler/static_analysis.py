@@ -232,6 +232,8 @@ class _IntervalEvaluator(ast.NodeVisitor):
 
     def visit_Constant(self, node: ast.Constant) -> Interval:
         """A constant is a point interval [c, c]."""
+        if not isinstance(node.value, (int, float)):
+            raise ValueError(f"Unsupported constant: {node.value!r}")
         v = float(node.value)
         return Interval(v, v)
 

@@ -1024,8 +1024,8 @@ class CompilationResult:
         Flip-flop estimate.
     guard_bits : int
         Required guard bits.
-    max_freq_mhz : int
-        Target max frequency.
+    max_freq_mhz : int | None
+        Target max frequency, or None when unknown.
     """
 
     target: str
@@ -1038,7 +1038,7 @@ class CompilationResult:
     estimated_dsps: int
     estimated_ffs: int
     guard_bits: int
-    max_freq_mhz: int
+    max_freq_mhz: int | None
 
 
 def compile_multi_target(
@@ -1062,7 +1062,7 @@ def compile_multi_target(
     list[CompilationResult]
         Per-target compilation results.
     """
-    from sc_neurocore.compiler.hardware_profiles import get_profile
+    from sc_neurocore.compiler.platforms import get_profile
     from sc_neurocore.compiler.static_analysis import compute_guard_bits
 
     results = []

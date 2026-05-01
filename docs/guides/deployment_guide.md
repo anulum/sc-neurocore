@@ -127,7 +127,7 @@ make SIM=verilator TOPLEVEL=sc_lif MODULE=test_sc_lif
 ### Xilinx Vivado
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_tcl_project
+from sc_neurocore.compiler.intelligence import generate_tcl_project
 
 tcl = generate_tcl_project(
     "sc_lif",
@@ -168,7 +168,7 @@ For designs with multiple clock domains (e.g., neuron at 100 MHz, bus at
 50 MHz):
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_cdc_synchroniser
+from sc_neurocore.compiler.intelligence import generate_cdc_synchroniser
 
 # Single-bit spike signal crossing
 cdc = generate_cdc_synchroniser(
@@ -212,7 +212,7 @@ AI accelerators.
 ### API
 
 ```python
-from sc_neurocore.compiler.advanced_features import (
+from sc_neurocore.compiler.intelligence import (
     POSIT8_0, posit_encode, posit_decode,
 )
 
@@ -231,7 +231,7 @@ open-source tools (Yosys + nextpnr):
 ### iCE40
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_oss_makefile
+from sc_neurocore.compiler.intelligence import generate_oss_makefile
 
 mk = generate_oss_makefile(
     "sc_lif",
@@ -284,7 +284,7 @@ A typical deployment flow using all the tools:
 # 1. Compile neuron to Verilog
 python -c "
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron
-from sc_neurocore.compiler.hardware_profiles import get_profile
+from sc_neurocore.compiler.platforms import get_profile
 
 profile = get_profile('artix7')
 neuron = UniversalNeuron.from_schema('lif')
@@ -309,7 +309,7 @@ open('sc_lif.xdc', 'w').write(xdc)
 
 # 4. Generate Vivado project
 python -c "
-from sc_neurocore.compiler.advanced_features import generate_tcl_project
+from sc_neurocore.compiler.intelligence import generate_tcl_project
 tcl = generate_tcl_project('sc_lif_axi_lite', part='xc7a35tcpg236-1',
     verilog_files=['sc_lif.v', 'sc_lif_axi_lite.v'],
     constraint_file='sc_lif.xdc')

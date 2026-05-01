@@ -44,8 +44,8 @@ notes = "Description of chip."   # Optional: human-readable notes
 ### Loading Profiles
 
 ```python
-from sc_neurocore.compiler.advanced_features import load_profiles_from_toml
-from sc_neurocore.compiler.hardware_profiles import get_profile
+from sc_neurocore.compiler.intelligence import load_profiles_from_toml
+from sc_neurocore.compiler.platforms import get_profile
 
 # Load all profiles from TOML file
 loaded = load_profiles_from_toml("custom_profiles.toml")
@@ -109,10 +109,10 @@ A discovery hook is any Python callable that returns a list of
 `HardwareProfile` instances:
 
 ```python
-from sc_neurocore.compiler.advanced_features import (
+from sc_neurocore.compiler.intelligence import (
     register_platform_hook, discover_platforms,
 )
-from sc_neurocore.compiler.hardware_profiles import HardwareProfile
+from sc_neurocore.compiler.platforms import HardwareProfile
 
 
 def my_lab_discovery():
@@ -144,8 +144,8 @@ Hardware vendors can ship a Python package that auto-registers profiles:
 
 ```python
 # In vendor_sdk/__init__.py
-from sc_neurocore.compiler.advanced_features import register_platform_hook
-from sc_neurocore.compiler.hardware_profiles import HardwareProfile
+from sc_neurocore.compiler.intelligence import register_platform_hook
+from sc_neurocore.compiler.platforms import HardwareProfile
 
 
 def _vendor_profiles():
@@ -170,7 +170,7 @@ Users then simply:
 ```python
 import vendor_sdk  # auto-registers profiles
 
-from sc_neurocore.compiler.advanced_features import discover_platforms
+from sc_neurocore.compiler.intelligence import discover_platforms
 discover_platforms()  # VendorX profiles now available
 ```
 
@@ -180,7 +180,7 @@ discover_platforms()  # VendorX profiles now available
 
 ```python
 # 1. Load static profiles from config
-from sc_neurocore.compiler.advanced_features import (
+from sc_neurocore.compiler.intelligence import (
     load_profiles_from_toml,
     register_platform_hook, discover_platforms,
     generate_compilation_report,
@@ -208,7 +208,7 @@ hardware constraints and let SC-NeuroCore auto-select the optimal
 fixed-point configuration:
 
 ```python
-from sc_neurocore.compiler.hardware_profiles import HardwareProfile
+from sc_neurocore.compiler.platforms import HardwareProfile
 
 # Ultra-low-power sensor chip
 p = HardwareProfile.from_constraints(

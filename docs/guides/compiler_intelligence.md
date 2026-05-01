@@ -8,21 +8,21 @@
 
 SC-NeuroCore includes **59 compiler intelligence features** that transform the
 compiler from a passive code generator into an active decision-making system.
-This guide covers the features added in Waves 6–9 (§26–§59) — capabilities
-that **no other neuromorphic compiler in the world provides**.
+This guide covers formal verification, target selection, deployment analysis,
+extensibility, security, reliability, and frontier co-design capabilities.
 
 ## Table of Contents
 
-1. [Wave 6 — The Moat (§26–§33)](#wave-6--the-moat-2633)
-2. [Wave 7 — The Brain (§34–§41)](#wave-7--the-brain-3441)
-3. [Wave 8 — Full-Stack Intelligence (§42–§51)](#wave-8--full-stack-intelligence-4251)
-4. [Wave 9 — Extensibility Layer (§52–§59)](#wave-9--extensibility-layer-5259)
+1. [Formal Assurance and Provenance (§26–§33)](#formal-assurance-and-provenance-2633)
+2. [Target Selection and Topology Planning (§34–§41)](#target-selection-and-topology-planning-3441)
+3. [Full-Stack Deployment Analysis (§42–§51)](#full-stack-deployment-analysis-4251)
+4. [Extensibility and Reporting (§52–§59)](#extensibility-and-reporting-5259)
 5. [Quick Reference Table](#quick-reference-table)
 6. [Usage Patterns](#usage-patterns)
 
 ---
 
-## Wave 6 — The Moat (§26–§33)
+## Formal Assurance and Provenance (§26–§33)
 
 ### §26. Formal Equivalence Sketch — `generate_equivalence_sketch()`
 
@@ -31,7 +31,7 @@ the compiled Verilog exactly matches the original ODE semantics within
 fixed-point tolerance bounds.
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_equivalence_sketch
+from sc_neurocore.compiler.intelligence import generate_equivalence_sketch
 
 sketch = generate_equivalence_sketch(
     equations={"v": "-(v - v_rest) / tau + I"},
@@ -52,7 +52,7 @@ Separates fast (membrane dynamics, ~1ms) from slow (synaptic plasticity,
 ~100ms) variables, enabling heterogeneous clock domains and power savings.
 
 ```python
-from sc_neurocore.compiler.advanced_features import partition_timescales
+from sc_neurocore.compiler.intelligence import partition_timescales
 
 result = partition_timescales(
     equations={"v": "fast dynamics", "w": "slow adaptation"},
@@ -73,7 +73,7 @@ Creates a cryptographic audit trail from model definition through compilation
 to deployment, enabling full traceability for safety-critical applications.
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_provenance_chain
+from sc_neurocore.compiler.intelligence import generate_provenance_chain
 
 chain = generate_provenance_chain(
     equations={"v": "-(v)/tau + I"},
@@ -94,7 +94,7 @@ Auto-generates a certification compliance matrix mapping SC-NeuroCore features
 to regulatory requirements (DO-254, IEC 61508, ISO 26262).
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_compliance_matrix
+from sc_neurocore.compiler.intelligence import generate_compliance_matrix
 
 matrix = generate_compliance_matrix(
     standard="DO-254",
@@ -113,7 +113,7 @@ Generates a time-domain power schedule for duty-cycled operation, including
 sleep/wake transitions and energy budgeting.
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_energy_schedule
+from sc_neurocore.compiler.intelligence import generate_energy_schedule
 
 sched = generate_energy_schedule(
     power_active_mw=100.0,
@@ -131,7 +131,7 @@ Detects potential side-channel leakage (timing, power) in neuron
 implementations that could compromise model IP or cryptographic parameters.
 
 ```python
-from sc_neurocore.compiler.advanced_features import lint_side_channels
+from sc_neurocore.compiler.intelligence import lint_side_channels
 
 warnings = lint_side_channels(
     equations={"v": "-(v - v_rest) / tau + I * weight"},
@@ -148,7 +148,7 @@ Generates analog drift compensation logic for memristive and ferroelectric
 devices where synaptic weights degrade over time.
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_drift_compensator
+from sc_neurocore.compiler.intelligence import generate_drift_compensator
 
 verilog = generate_drift_compensator(
     num_weights=256,
@@ -166,7 +166,7 @@ different hardware platforms simultaneously (e.g., sensory on FPGA, cortical
 on neuromorphic, motor on MCU).
 
 ```python
-from sc_neurocore.compiler.advanced_features import plan_heterogeneous_dispatch
+from sc_neurocore.compiler.intelligence import plan_heterogeneous_dispatch
 
 plan = plan_heterogeneous_dispatch(
     populations={"sensory": "artix7", "cortical": "loihi2", "motor": "rp2040"},
@@ -178,7 +178,7 @@ for p, target in plan.assignments.items():
 
 ---
 
-## Wave 7 — The Brain (§34–§41)
+## Target Selection and Topology Planning (§34–§41)
 
 ### §34. Auto-Target Recommender — `recommend_target()`
 
@@ -186,7 +186,7 @@ Given a set of constraints (power budget, latency, cost), automatically
 recommends the optimal hardware platform from all 175 profiles.
 
 ```python
-from sc_neurocore.compiler.advanced_features import recommend_target
+from sc_neurocore.compiler.intelligence import recommend_target
 
 recs = recommend_target(
     constraints={"max_power_mw": 500, "min_freq_mhz": 100, "max_width": 16},
@@ -206,7 +206,7 @@ Plans FPGA Dynamic Partial Reconfiguration (DPR) to time-multiplex different
 SNN layers on the same fabric, reducing area by 2-4×.
 
 ```python
-from sc_neurocore.compiler.advanced_features import plan_partial_reconfiguration
+from sc_neurocore.compiler.intelligence import plan_partial_reconfiguration
 
 plan = plan_partial_reconfiguration(
     regions={"region_a": 500, "region_b": 300},
@@ -223,7 +223,7 @@ Profiles geopolitical, sole-source, and ITAR risk for each hardware target,
 enabling informed procurement decisions.
 
 ```python
-from sc_neurocore.compiler.advanced_features import score_supply_chain_risk
+from sc_neurocore.compiler.intelligence import score_supply_chain_risk
 
 risk = score_supply_chain_risk("loihi2")
 print(f"Risk: {risk.overall_risk}")
@@ -238,7 +238,7 @@ Generates C or Rust source code that produces bit-identical output to the
 Verilog RTL, enabling software-in-the-loop (SIL) verification.
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_bittrue_kernel
+from sc_neurocore.compiler.intelligence import generate_bittrue_kernel
 
 code = generate_bittrue_kernel(
     equations={"v": "-(v - v_rest) / tau + I"},
@@ -256,7 +256,7 @@ Classifies a model as memory-bound, compute-bound, or communication-bound,
 then routes to the optimal paradigm (PIM, FPGA, or optical).
 
 ```python
-from sc_neurocore.compiler.advanced_features import classify_model_complexity
+from sc_neurocore.compiler.intelligence import classify_model_complexity
 
 cls = classify_model_complexity(
     equations={"v": "a*b + c*d", "u": "e*f"},
@@ -274,7 +274,7 @@ print(cls.recommended_class)  # "in_memory"
 Memoized compilation cache enabling O(1) retrieval of repeated compilations.
 
 ```python
-from sc_neurocore.compiler.advanced_features import CompilationCache
+from sc_neurocore.compiler.intelligence import CompilationCache
 
 cache = CompilationCache()
 cache.store("lif_artix7", {"verilog": "...", "timing": "..."})
@@ -290,7 +290,7 @@ Predicts junction temperature from power dissipation using thermal resistance
 models, catching thermal violations at compile time.
 
 ```python
-from sc_neurocore.compiler.advanced_features import estimate_thermal_envelope
+from sc_neurocore.compiler.intelligence import estimate_thermal_envelope
 
 t = estimate_thermal_envelope(power_mw=500, theta_ja=25.0, t_ambient=40.0)
 print(f"T_j = {t.t_junction}°C, Margin = {t.thermal_margin}°C")
@@ -305,7 +305,7 @@ Minimizes inter-chip spike bandwidth in multi-chip SNN deployments using
 graph partitioning.
 
 ```python
-from sc_neurocore.compiler.advanced_features import optimize_network_topology
+from sc_neurocore.compiler.intelligence import optimize_network_topology
 
 result = optimize_network_topology(
     adjacency={"a": ["b", "c"], "b": ["c"], "c": ["a"]},
@@ -316,7 +316,7 @@ print(f"Bandwidth reduction: {result.bandwidth_reduction:.1%}")
 
 ---
 
-## Wave 8 — Full-Stack Intelligence (§42–§51)
+## Full-Stack Deployment Analysis (§42–§51)
 
 ### §42. NIR / ONNX-SNN Import — `import_nir_graph()`
 
@@ -325,7 +325,7 @@ Neuromorphic Intermediate Representation (NIR) standard, bridging the gap
 between ML training frameworks and hardware compilation.
 
 ```python
-from sc_neurocore.compiler.advanced_features import import_nir_graph
+from sc_neurocore.compiler.intelligence import import_nir_graph
 
 # NIR graph from snnTorch export
 nir_data = {
@@ -349,7 +349,7 @@ Verifies that the discretized ODE system is numerically stable using
 eigenvalue analysis of the linearized system. Prevents divergent hardware.
 
 ```python
-from sc_neurocore.compiler.advanced_features import verify_ode_stability
+from sc_neurocore.compiler.intelligence import verify_ode_stability
 
 result = verify_ode_stability(
     equations={"v": "-(v)/tau + I", "u": "a*(b*v - u)"},
@@ -372,7 +372,7 @@ Generates IEEE 1801 Unified Power Format (UPF) for multi-voltage neuron
 arrays, including power domains, isolation cells, and retention strategies.
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_power_intent
+from sc_neurocore.compiler.intelligence import generate_power_intent
 
 upf = generate_power_intent("sc_lif_array", num_domains=4, always_on=True)
 # Write to file for use in Synopsys/Cadence flow
@@ -391,7 +391,7 @@ Estimates lifecycle CO₂ emissions (manufacturing + operation) per compilation
 target, enabling ESG-compliant hardware selection.
 
 ```python
-from sc_neurocore.compiler.advanced_features import estimate_carbon_footprint
+from sc_neurocore.compiler.intelligence import estimate_carbon_footprint
 
 # Compare carbon impact across targets
 for target in ["artix7", "loihi2", "finalspark_neuroplatform"]:
@@ -410,7 +410,7 @@ Auto-inserts ILA (Xilinx) or SignalTap (Intel) debug probes for post-silicon
 debugging, with vendor-specific TCL commands.
 
 ```python
-from sc_neurocore.compiler.advanced_features import insert_debug_probes
+from sc_neurocore.compiler.intelligence import insert_debug_probes
 
 probes = insert_debug_probes(
     "sc_lif", {"v": "expr", "u": "expr"},
@@ -428,7 +428,7 @@ Generates address decoders for multi-neuron SoC arrays, producing both the
 address map specification and synthesisable Verilog.
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_memory_map
+from sc_neurocore.compiler.intelligence import generate_memory_map
 
 mmap = generate_memory_map(
     "sc_lif_array",
@@ -448,7 +448,7 @@ Scores 0–100 how portable a neuron model is across all 175 profiles,
 identifying blockers that limit cross-platform deployment.
 
 ```python
-from sc_neurocore.compiler.advanced_features import score_portability
+from sc_neurocore.compiler.intelligence import score_portability
 
 # Simple LIF — highly portable
 s = score_portability({"v": "-(v - v_rest) / tau + I"})
@@ -467,7 +467,7 @@ Predicts Mean Time To Failure (MTTF) using Arrhenius temperature acceleration
 and voltage stress models.
 
 ```python
-from sc_neurocore.compiler.advanced_features import predict_reliability
+from sc_neurocore.compiler.intelligence import predict_reliability
 
 r = predict_reliability(voltage_v=0.9, temperature_c=85, node_nm=7)
 print(f"MTTF: {r.mttf_years:.1f} years")
@@ -485,7 +485,7 @@ Auto-generates Fault Tree Analysis (FTA) and FMEA for DO-254 Level A and
 ISO 26262 ASIL-D certification.
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_fault_tree
+from sc_neurocore.compiler.intelligence import generate_fault_tree
 
 ft = generate_fault_tree("sc_lif", {"v": "expr", "u": "expr"})
 print(f"Top event: {ft.top_event}")
@@ -503,7 +503,7 @@ Generates complete Cocotb or UVM verification testbenches with reset
 verification and multi-cycle runtime checks.
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_testbench
+from sc_neurocore.compiler.intelligence import generate_testbench
 
 # Cocotb testbench
 tb = generate_testbench("sc_lif", {"v": "expr"}, framework="cocotb")
@@ -516,7 +516,7 @@ tb_uvm = generate_testbench("sc_lif", {"v": "expr"}, framework="uvm")
 
 ---
 
-## Wave 9 — Extensibility Layer (§52–§59)
+## Extensibility and Reporting (§52–§59)
 
 ### §52. CDC Analyzer — `analyze_cdc()`
 
@@ -524,7 +524,7 @@ Formal clock domain crossing analysis across neuron array boundaries.
 Identifies unsynchronized crossings and recommends synchroniser types.
 
 ```python
-from sc_neurocore.compiler.advanced_features import analyze_cdc
+from sc_neurocore.compiler.intelligence import analyze_cdc
 
 report = analyze_cdc(
     {"v": "u + I", "u": "v - threshold"},
@@ -559,8 +559,8 @@ notes = "Internal 24-bit ASIC for production deployment."
 ```
 
 ```python
-from sc_neurocore.compiler.advanced_features import load_profiles_from_toml
-from sc_neurocore.compiler.hardware_profiles import get_profile
+from sc_neurocore.compiler.intelligence import load_profiles_from_toml
+from sc_neurocore.compiler.platforms import get_profile
 
 loaded = load_profiles_from_toml("my_custom_profiles.toml")
 print(loaded)  # ['my_asic_v2']
@@ -579,7 +579,7 @@ Assigns neuron blocks to chiplet/die positions using first-fit-decreasing
 bin packing for 3D-stacked and 2.5D chiplet architectures.
 
 ```python
-from sc_neurocore.compiler.advanced_features import plan_multi_die_floorplan
+from sc_neurocore.compiler.intelligence import plan_multi_die_floorplan
 
 result = plan_multi_die_floorplan(
     blocks={"visual_cortex": 800, "motor_cortex": 600,
@@ -599,7 +599,7 @@ Detects performance regressions between compilations by comparing metric
 deltas against configurable thresholds.
 
 ```python
-from sc_neurocore.compiler.advanced_features import check_regression
+from sc_neurocore.compiler.intelligence import check_regression
 
 checks = check_regression(
     baseline={"area_luts": 1200, "fmax_mhz": 250, "power_mw": 85},
@@ -619,7 +619,7 @@ Verifies IP core licensing compatibility using an SPDX-based compatibility
 matrix, preventing copyleft contamination.
 
 ```python
-from sc_neurocore.compiler.advanced_features import check_license_compliance
+from sc_neurocore.compiler.intelligence import check_license_compliance
 
 result = check_license_compliance(
     project_license="Apache-2.0",
@@ -642,7 +642,7 @@ Generates synthesisable Verilog FSMs for ultra-low-power operation with
 configurable sleep/wake/hibernate states.
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_power_state_machine
+from sc_neurocore.compiler.intelligence import generate_power_state_machine
 
 verilog = generate_power_state_machine("sc_lif")
 # Default states: ACTIVE → IDLE → SLEEP → HIBERNATE
@@ -658,10 +658,10 @@ Plugin API enabling third-party vendors to register hardware profiles at
 runtime without modifying SC-NeuroCore source.
 
 ```python
-from sc_neurocore.compiler.advanced_features import (
+from sc_neurocore.compiler.intelligence import (
     register_platform_hook, discover_platforms,
 )
-from sc_neurocore.compiler.hardware_profiles import HardwareProfile
+from sc_neurocore.compiler.platforms import HardwareProfile
 
 def vendor_x_profiles():
     return [HardwareProfile(
@@ -685,7 +685,7 @@ One-click comprehensive markdown report consolidating target info, carbon
 footprint, reliability prediction, and module specification.
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_compilation_report
+from sc_neurocore.compiler.intelligence import generate_compilation_report
 
 report = generate_compilation_report(
     "sc_lif", {"v": "-(v)/tau + I"}, "artix7",
@@ -785,15 +785,15 @@ loaded = load_profiles_from_toml("my_platforms.toml")
 register_platform_hook(my_vendor_discovery_fn)
 discover_platforms()
 
-# Option C: Auto-construct from spec sheet (Wave 10)
-from sc_neurocore.compiler.hardware_profiles import HardwareProfile
+# Option C: Auto-construct from a hardware specification
+from sc_neurocore.compiler.platforms import HardwareProfile
 p = HardwareProfile.from_constraints("my_chip", vendor="MyVendor", max_power_budget_mw=5)
 ```
 
-### Pattern 4: Security-Hardened Deployment (Wave 10)
+### Pattern 4: Security-Hardened Deployment
 
 ```python
-from sc_neurocore.compiler.advanced_features import (
+from sc_neurocore.compiler.intelligence import (
     lint_hardware_trojans, obfuscate_ip, embed_watermark,
     generate_sbom, schedule_seu_scrubbing,
 )
@@ -817,7 +817,7 @@ scrub = schedule_seu_scrubbing(1_000_000, orbit_altitude_km=800)
 
 ---
 
-## Wave 10 — Security, Sovereignty & Endgame (§60–§67)
+## Security, Sovereignty, and Compliance (§60–§67)
 
 ### §60. Hardware Trojan Lint — `lint_hardware_trojans()`
 
@@ -825,7 +825,7 @@ Detects suspicious combinational paths in the ODE dependency graph that
 could hide hardware trojans — dormant triggers and payload injection.
 
 ```python
-from sc_neurocore.compiler.advanced_features import lint_hardware_trojans
+from sc_neurocore.compiler.intelligence import lint_hardware_trojans
 
 result = lint_hardware_trojans(
     {"v": "-(v)/tau + I", "u": "a*(b*v - u)"},
@@ -841,7 +841,7 @@ print(f"Checks: {result.total_checks}")
 Generates CycloneDX/SPDX Bill of Materials. **Required by EU CRA (2026).**
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_sbom
+from sc_neurocore.compiler.intelligence import generate_sbom
 
 sbom = generate_sbom("sc_lif", "artix7",
     dependencies={"numpy": "1.26.0"}, sbom_format="CycloneDX")
@@ -855,7 +855,7 @@ print(f"Components: {sbom.total_components}")
 Step-by-step hardware-in-the-loop calibration for analog drift compensation.
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_hil_calibration
+from sc_neurocore.compiler.intelligence import generate_hil_calibration
 
 cal = generate_hil_calibration("sc_lif", {"v": "expr", "u": "expr"},
     parameters={"tau": (5.0, 50.0)})
@@ -870,7 +870,7 @@ for step in cal.protocol_steps:
 Generates a Python class that mirrors deployed hardware state in real-time.
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_digital_twin
+from sc_neurocore.compiler.intelligence import generate_digital_twin
 
 twin_code = generate_digital_twin("sc_lif", {"v": "-(v)/tau"}, "artix7")
 # Contains: __init__, step(), compare()
@@ -883,7 +883,7 @@ twin_code = generate_digital_twin("sc_lif", {"v": "-(v)/tau"}, "artix7")
 Maps neuron blocks to UCIe die-to-die protocol lanes for chiplet architectures.
 
 ```python
-from sc_neurocore.compiler.advanced_features import map_ucie_protocol
+from sc_neurocore.compiler.intelligence import map_ucie_protocol
 
 mapping = map_ucie_protocol({"cortex": 256, "motor": 128})
 print(f"Total bandwidth: {mapping.total_bandwidth_gbps} Gbps")
@@ -896,7 +896,7 @@ print(f"Total bandwidth: {mapping.total_bandwidth_gbps} Gbps")
 Generates scrubbing schedules for space-grade configuration memory.
 
 ```python
-from sc_neurocore.compiler.advanced_features import schedule_seu_scrubbing
+from sc_neurocore.compiler.intelligence import schedule_seu_scrubbing
 
 s = schedule_seu_scrubbing(1_000_000, orbit_altitude_km=800)
 print(f"Interval: {s.interval_ms:.0f} ms, SEU rate: {s.expected_seu_rate:.4f}/day")
@@ -909,7 +909,7 @@ print(f"Interval: {s.interval_ms:.0f} ms, SEU rate: {s.expected_seu_rate:.4f}/da
 Logic locking + structural transformation for IP reverse-engineering protection.
 
 ```python
-from sc_neurocore.compiler.advanced_features import obfuscate_ip
+from sc_neurocore.compiler.intelligence import obfuscate_ip
 
 result = obfuscate_ip("sc_lif", {"v": "expr"}, key_length=128)
 print(f"Key: {result.key_bits} bits, Methods: {result.techniques_applied}")
@@ -922,10 +922,247 @@ print(f"Key: {result.key_bits} bits, Methods: {result.techniques_applied}")
 Embeds verifiable watermarks into compiled netlists. Survives synthesis.
 
 ```python
-from sc_neurocore.compiler.advanced_features import embed_watermark
+from sc_neurocore.compiler.intelligence import embed_watermark
 
 wm = embed_watermark("sc_lif", {"v": "expr"}, owner_id="MyLab")
 print(f"Hash: {wm.watermark_hash}, Overhead: {wm.overhead_percent}%")
+```
+
+---
+
+## Adaptive Reliability and Telemetry (§68–§76)
+
+### §68. Approximate Computing Configurator — `configure_approximation()`
+
+Trades precision for energy by identifying variables that can tolerate reduced
+bit-widths or aggressive truncation, generating approximation profiles per population.
+
+```python
+from sc_neurocore.compiler.intelligence import configure_approximation
+
+result = configure_approximation(
+    {"v": "-(v)/tau + I"}, max_error_pct=5.0
+)
+print(f"Energy savings: {result.total_energy_savings_pct}%")
+```
+
+---
+
+### §69. Energy Harvesting Modeler — `model_energy_harvest()`
+
+Analyses the feasibility of running the compiled design on batteryless edge
+devices using ambient energy (solar, RF, thermal, piezoelectric).
+
+```python
+from sc_neurocore.compiler.intelligence import model_energy_harvest
+
+eh = model_energy_harvest(
+    power_mw=50.0, harvester_type="solar", environment="indoor"
+)
+print(f"Energy positive: {eh.energy_positive}")
+print(f"Duty cycle: {eh.recommended_duty_cycle:.2f}")
+```
+
+---
+
+### §70. Aging-Aware Timing Predictor — `predict_aging()`
+
+Predicts circuit degradation over time due to NBTI and HCI, generating
+derated timing bounds to ensure the hardware meets timing closure years after deployment.
+
+```python
+from sc_neurocore.compiler.intelligence import predict_aging
+
+aging = predict_aging(fmax_mhz=500.0, years=10, temperature_c=85.0)
+print(f"Degraded Fmax: {aging.degraded_fmax_mhz} MHz")
+```
+
+---
+
+### §71. DVFS Controller Generator — `generate_dvfs_controller()`
+
+Generates a dynamic voltage and frequency scaling (DVFS) state machine that
+scales performance based on network spike rate.
+
+```python
+from sc_neurocore.compiler.intelligence import generate_dvfs_controller
+
+dvfs = generate_dvfs_controller("sc_lif_array")
+# Verilog output: module sc_lif_array_dvfs_ctrl
+```
+
+---
+
+### §72. Pareto Frontier Explorer — `explore_pareto()`
+
+Sweeps compilation parameters to find the non-dominated set of configurations
+balancing power, area, and latency.
+
+```python
+from sc_neurocore.compiler.intelligence import explore_pareto
+
+pareto = explore_pareto({"v": "-(v)/tau + I"})
+for p in pareto[:3]:
+    print(f"P: {p.power_mw}mW, A: {p.area_luts}LUTs, L: {p.latency_ns}ns")
+```
+
+---
+
+### §73. Post-Quantum IP Protector — `protect_ip_pqc()`
+
+Applies NIST-standardized post-quantum cryptography (CRYSTALS-Dilithium) to
+sign the generated IP, securing the design against future quantum threats.
+
+```python
+from sc_neurocore.compiler.intelligence import protect_ip_pqc
+
+pqc = protect_ip_pqc("sc_lif", {"v": "expr"})
+print(f"Algorithm: {pqc.algorithm}")
+print(f"Signature: {pqc.signature_hex}")
+```
+
+---
+
+### §74. Statistical Fault Injector — `run_fault_campaign()`
+
+Runs a statistical fault injection campaign to measure the Soft Error Rate (SER)
+and Silent Data Corruption (SDC) rate of the compiled design.
+
+```python
+from sc_neurocore.compiler.intelligence import run_fault_campaign
+
+campaign = run_fault_campaign({"v": "expr"})
+print(f"SDC Rate: {campaign.sdc_rate:.4f}")
+```
+
+---
+
+### §75. Static Timing Closer — `verify_timing_closure()`
+
+Performs formal static timing analysis (STA) on the generated RTL to verify
+critical path delays before pushing to synthesis.
+
+```python
+from sc_neurocore.compiler.intelligence import verify_timing_closure
+
+timing = verify_timing_closure({"v": "expr"}, target_freq_mhz=250.0)
+print(f"Timing met: {timing.timing_met}")
+print(f"Slack: {timing.slack_ns} ns")
+```
+
+---
+
+### §76. Telemetry Ingestor — `ingest_telemetry()`
+
+Closes the loop between the physical hardware and the compiler's digital twin
+by ingesting physical telemetry to detect drift and recalibrate the model.
+
+```python
+from sc_neurocore.compiler.intelligence import ingest_telemetry
+
+hw_data = [{"v": 1.0}, {"v": 1.1}]
+twin_data = [{"v": 1.0}, {"v": 1.0}]
+telemetry = ingest_telemetry(hw_data, twin_data, drift_threshold=0.05)
+print(f"Healthy: {telemetry.healthy}")
+```
+
+---
+
+---
+
+## Frontier Paradigm Co-Design (§77–§83)
+
+### §77. Omni-Paradigm Dispatcher — `dispatch_omni_paradigm()`
+
+Partitions a monolithic SNN across multiple heterogeneous hardware paradigms simultaneously. Evaluates equation semantics to map stochastic variables to thermodynamic coprocessors, highly interconnected linear sums to optical crossbars, complex nonlinear integrations to CMOS, and entangled proxy states to quantum execution units.
+
+```python
+from sc_neurocore.compiler.intelligence import dispatch_omni_paradigm
+
+map_result = dispatch_omni_paradigm({"v": "-(v)/tau + I", "noise": "rand() * sigma"})
+print(f"CMOS targets: {map_result.cmos_variables}")
+print(f"Thermo targets: {map_result.thermodynamic_variables}")
+```
+
+---
+
+### §78. Reversible Logic Synthesizer — `synthesize_reversible_logic()`
+
+Compiles state equations into Bennett-clocked reversible logic primitives (Toffoli and Fredkin gates), allowing deployment to adiabatic hardware architectures that operate at the Landauer limit of zero static energy dissipation.
+
+```python
+from sc_neurocore.compiler.intelligence import synthesize_reversible_logic
+
+reversible = synthesize_reversible_logic({"v": "v + I * R"})
+print(f"Toffoli Gates: {reversible.toffoli_gates}")
+print(f"Landauer Dissipation: {reversible.landauer_dissipation_kt} kT")
+```
+
+---
+
+### §79. Wetware MEA Mapper — `map_wetware_mea()`
+
+Translates topological network connections and firing targets into exact physical recording and stimulation parameters for high-density Multi-Electrode Arrays (MEAs) interfacing with living biological brain organoids.
+
+```python
+from sc_neurocore.compiler.intelligence import map_wetware_mea
+
+mea_plan = map_wetware_mea(populations=1000, connectivity=0.8)
+print(f"MEA density: {mea_plan.spatial_density}")
+print(f"Stimulation: {mea_plan.stimulation_freq_hz} Hz")
+```
+
+---
+
+### §80. Morphological Auto-Synthesizer — `synthesize_morphology()`
+
+Bypasses predefined ISAs entirely. Employs evolutionary simulation over equation interdependencies to co-design a completely new hardware routing topology physically structured to exactly match the SNN's dynamics (Zero-ISA Computing).
+
+```python
+from sc_neurocore.compiler.intelligence import synthesize_morphology
+
+morph = synthesize_morphology({"a": "b+c", "b": "a+c", "c": "a+b"})
+print(f"Optimal Topology: {morph.topology}")
+print(f"Required Bandwidth: {morph.bisection_bandwidth_gbps} Gbps")
+```
+
+---
+
+### §81. Cognitive Bound Enforcer — `enforce_cognitive_bounds()`
+
+Analyzes equations for state-space criticality and automatically inserts hardware kill-switches into the generated RTL to prevent unconstrained dynamical divergence, ensuring safety for extreme-scale embodied architectures.
+
+```python
+from sc_neurocore.compiler.intelligence import enforce_cognitive_bounds
+
+safe = enforce_cognitive_bounds({"v": "v_old + dV"}, state_bounds={"v": (-65.0, 30.0)})
+print(f"Switches inserted: {safe.switches_inserted}")
+```
+
+---
+
+### §82. Adiabatic Clock Generator — `generate_adiabatic_clocks()`
+
+Generates the exact picosecond trapezoidal resonant clock timings (rise, hold, fall, sleep) required to drive energy-recovery adiabatic circuits without dissipating computational heat.
+
+```python
+from sc_neurocore.compiler.intelligence import generate_adiabatic_clocks
+
+clocks = generate_adiabatic_clocks(phases=4, freq_mhz=100.0)
+print(f"Hold time: {clocks[0].hold_ps} ps")
+```
+
+---
+
+### §83. Holographic Interconnect Router — `route_holographic_interconnects()`
+
+Calculates phase array matrices and Spatial Light Modulator (SLM) configurations to physically map ultra-high-fanout neural pathways via 3D free-space optical holographic projections, entirely sidestepping 2D planar wiring limits.
+
+```python
+from sc_neurocore.compiler.intelligence import route_holographic_interconnects
+
+router = route_holographic_interconnects(num_neurons=1000, connections=10_000_000)
+print(f"Optical fanout: {router.optical_fanout_per_beam}")
 ```
 
 ---
@@ -976,11 +1213,27 @@ print(f"Hash: {wm.watermark_hash}, Overhead: {wm.overhead_percent}%")
 | 65 | `schedule_seu_scrubbing()` | Space |
 | 66 | `obfuscate_ip()` | Security |
 | 67 | `embed_watermark()` | IP Protection |
+| 68 | `configure_approximation()` | Power |
+| 69 | `model_energy_harvest()` | Edge Compute |
+| 70 | `predict_aging()` | Reliability |
+| 71 | `generate_dvfs_controller()` | Power |
+| 72 | `explore_pareto()` | Optimisation |
+| 73 | `protect_ip_pqc()` | Security |
+| 74 | `run_fault_campaign()` | Verification |
+| 75 | `verify_timing_closure()` | Verification |
+| 76 | `ingest_telemetry()` | Digital Twin |
+| 77 | `dispatch_omni_paradigm()` | Deployment |
+| 78 | `synthesize_reversible_logic()` | Synthesis |
+| 79 | `map_wetware_mea()` | Biology |
+| 80 | `synthesize_morphology()` | Synthesis |
+| 81 | `enforce_cognitive_bounds()` | Safety |
+| 82 | `generate_adiabatic_clocks()` | Power |
+| 83 | `route_holographic_interconnects()` | Optical |
 
 ## Further Reading
 
-- [Hardware Profiles Guide](hardware_profiles.md) — all 175 profiles
-- [Frontier Platforms Guide](frontier_platforms.md) — 31 platform classes
+- [Hardware Profiles Guide](hardware_profiles.md) — all 191 profiles
+- [Frontier Platforms Guide](frontier_platforms.md) — 39 platform classes
 - [Platform Extensibility Guide](platform_extensibility.md) — TOML + hook + from_constraints
 - [Safety Certification Guide](safety_certification.md) — DO-254, IEC 61508, ISO 26262
 - [Carbon & Sustainability Guide](carbon_sustainability.md) — ESG features
