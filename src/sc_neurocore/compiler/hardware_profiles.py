@@ -35,6 +35,14 @@ Supported Platform Classes
 - **Lattice** (ECP5, CrossLink-NX, CertusPro-NX)
 - **Gowin**, **Efinix**, **Microchip/Microsemi**, **Achronix**, **QuickLogic**
 - **Neuromorphic** (Loihi 2, TrueNorth, BrainScaleS-2, SpiNNaker 2, Akida, Dynap)
+- **Photonic** (Lightmatter, Xanadu, iPronics, Lightelligence, Luminous)
+- **In-Memory / PIM** (UPMEM, Samsung HBM-PIM, SK Hynix AiM, CXL)
+- **Superconducting** (NIST SFQ, Northrop AQFP, Josephson)
+- **Spintronic** (Everspin STT-MRAM, Samsung SOT-MRAM)
+- **Ferroelectric** (GlobalFoundries FeFET, SK Hynix FeRAM)
+- **CGRA** (Samsung, Qualcomm NPU, Cadence Xtensa)
+- **3D-Stacked** (TSMC SoIC, Intel Foveros, AMD 3D V-Cache)
+- **Edge MCU** (RP2040, ESP32-S3, STM32H7, nRF5340, MAX78000)
 - **ASIC** (arbitrary standard-cell targets)
 - **Simulation** (golden reference)
 """
