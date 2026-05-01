@@ -1,0 +1,34 @@
+[metadata]
+schema_version = 1
+name = "FitzHugh-Nagumo"
+author = "FitzHugh, R."
+year = 1961
+doi = "10.1016/S0006-3495(61)86902-6"
+description = "2D qualitative spike model — cubic v-nullcline relaxation oscillator"
+
+[state]
+v = -1.0
+w = -0.5
+
+[parameters]
+a = 0.7
+b = 0.8
+epsilon = 0.08
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+v = "v - v**3 / 3 - w + I"
+w = "epsilon * (v + a - b * w)"
+
+[threshold]
+condition = "v > 1.0"
+detection = "crossing"
+
+[reset]
+v = "-1.0"
+w = "w"
+
+[extensions]

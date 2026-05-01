@@ -1,0 +1,18 @@
+[tasks]
+prove
+
+[options]
+prove: mode prove
+prove: depth 20
+
+[engines]
+prove: smtbmc z3
+
+[script]
+read -formal ../sc_edt_controller.v
+read -formal edt_controller_formal.v
+prep -top edt_controller_formal
+
+[files]
+edt_controller_formal.v
+../sc_edt_controller.v

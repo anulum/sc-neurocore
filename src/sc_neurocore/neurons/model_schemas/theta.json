@@ -1,0 +1,31 @@
+{
+  "metadata": {
+    "schema_version": 1,
+    "name": "Theta",
+    "author": "Ermentrout, G.B. & Kopell, N.",
+    "year": 1986,
+    "doi": "10.1137/0146017",
+    "description": "Canonical Type-I neuron on the unit circle — phase model"
+  },
+  "state": {
+    "theta": 0.0
+  },
+  "parameters": {},
+  "integration": {
+    "dt": 0.01,
+    "method": "euler"
+  },
+  "dynamics": {
+    "theta": "(1 - cos(theta)) + (1 + cos(theta)) * I"
+  },
+  "threshold": {
+    "condition": "theta > 3.11",
+    "detection": "crossing"
+  },
+  "reset": {
+    "theta": "theta - 6.2832"
+  },
+  "extensions": {
+    "topology": "circular"
+  }
+}

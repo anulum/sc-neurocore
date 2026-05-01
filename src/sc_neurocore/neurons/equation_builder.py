@@ -89,6 +89,7 @@ class EquationNeuron:
         units: str = "none",
         input_unit: Any | None = None,
     ):
+        """Initialise an equation-defined neuron from ODE strings."""
         if units not in {"none", "strict"}:
             raise ValueError("units must be 'none' or 'strict'")
 
@@ -104,6 +105,7 @@ class EquationNeuron:
         self._input_unit_name = "I"
 
         def _sigmoid(x: float) -> Any:
+            """Logistic sigmoid with clipping for numerical stability."""
             return 1.0 / (1.0 + np.exp(-np.clip(x, -500, 500)))
 
         self._namespace = {
@@ -196,7 +198,10 @@ class EquationNeuron:
         ast.List,
     }
 
+    _MAX_AST_DEPTH = 20
+
     _BLOCKED_NAMES = {
+        # Python builtins that enable code execution or introspection
         "__import__",
         "eval",
         "exec",
@@ -209,23 +214,76 @@ class EquationNeuron:
         "open",
         "input",
         "breakpoint",
+        "type",
+        "vars",
+        "dir",
+        "help",
+        "print",
+        "exit",
+        "quit",
+        # Dunder attributes used in sandbox escape chains
         "__builtins__",
         "__class__",
         "__subclasses__",
+        "__mro__",
+        "__bases__",
+        "__globals__",
+        "__code__",
+        "__reduce__",
+        "__reduce_ex__",
+        "__dict__",
+        "__init_subclass__",
+        "__getattr__",
+        "__setattr__",
+        "__delattr__",
+        # Module names that must never appear as identifiers
+        "os",
+        "sys",
+        "subprocess",
+        "importlib",
+        "shutil",
+        "pathlib",
+        "socket",
+        "ctypes",
+        "pickle",
     }
 
     def _validate_expr(self, expr: str) -> None:
+        """Validate an expression against the AST whitelist."""
         try:
             tree = ast.parse(expr, mode="eval")
         except SyntaxError as e:
             raise ValueError(f"Invalid equation syntax: {expr!r}") from e
+
+        # Reject excessively deep ASTs (stack exhaustion / obfuscation)
+        max_depth = self._ast_depth(tree)
+        if max_depth > self._MAX_AST_DEPTH:
+            raise ValueError(
+                f"Equation AST depth {max_depth} exceeds limit "
+                f"{self._MAX_AST_DEPTH}: {expr!r}"
+            )
+
         for node in ast.walk(tree):
             if type(node) not in self._ALLOWED_AST_NODES:
                 raise ValueError(f"Unsafe AST node {type(node).__name__} in equation: {expr!r}")
             if isinstance(node, ast.Name) and node.id in self._BLOCKED_NAMES:
                 raise ValueError(f"Blocked function {node.id!r} in equation: {expr!r}")
-            if isinstance(node, ast.Attribute) and node.attr in self._BLOCKED_NAMES:
-                raise ValueError(f"Blocked attribute {node.attr!r} in equation: {expr!r}")
+            if isinstance(node, ast.Attribute):
+                # Block all double-underscore attribute access
+                if node.attr.startswith("__") and node.attr.endswith("__"):
+                    raise ValueError(
+                        f"Dunder attribute access {node.attr!r} blocked in equation: {expr!r}"
+                    )
+                if node.attr in self._BLOCKED_NAMES:
+                    raise ValueError(f"Blocked attribute {node.attr!r} in equation: {expr!r}")
+
+    @staticmethod
+    def _ast_depth(node: ast.AST) -> int:
+        """Return the maximum nesting depth of an AST."""
+        children = list(ast.iter_child_nodes(node))
+        if not children:
+            return 1
+        return 1 + max(EquationNeuron._ast_depth(c) for c in children)
 
     def _prepare_strict_runtime(
         self,
@@ -236,6 +294,7 @@ class EquationNeuron:
         dt: Any,
         input_unit: Any | None,
     ) -> tuple[dict[str, float], dict[str, float], dict[str, float], float]:
+        """Convert pint quantities to base-unit floats for runtime."""
         require_pint()
 
         missing_state = sorted(set(self.equations) - set(raw_state))
@@ -332,6 +391,7 @@ class EquationNeuron:
         return runtime_parameters, runtime_state, runtime_constants, float(dt_base.magnitude)
 
     def _convert_runtime_value(self, name: str, value: Any) -> float:
+        """Convert a runtime value from pint quantity to float."""
         if not self._strict_units:
             return float(value)
         if not is_quantity(value):
@@ -341,6 +401,7 @@ class EquationNeuron:
         return float(quantity_to_base(value).to(self._runtime_units[name]).magnitude)
 
     def _build_env(self, **kwargs: float) -> dict[str, object]:
+        """Build the eval environment with parameters, state, and noise."""
         env: dict[str, object] = dict(self._namespace)
         # Euler-Maruyama: noise scaled by sqrt(dt)/dt so that after deriv*dt
         # the net noise is noise_scale * sqrt(dt) * N(0,1)
@@ -352,6 +413,7 @@ class EquationNeuron:
         return env
 
     def step(self, I: float = 0.0, **kwargs: float) -> int:
+        """Advance the neuron by one timestep; return 1 if it spikes."""
         kwargs["I"] = self._convert_runtime_value(self._input_unit_name, I)
         if self._strict_units:
             kwargs = {
@@ -378,6 +440,7 @@ class EquationNeuron:
             xi_sample = self._noise_scale * np.random.randn() / max(self.dt, 1e-12) ** 0.5
 
             def eval_derivs(state_override: dict[str, float]) -> dict[str, float]:
+                """Evaluate all ODE derivatives at given state."""
                 e: dict[str, object] = dict(self._namespace)
                 e.update(self.parameters)
                 e.update(self.constants)
@@ -416,6 +479,7 @@ class EquationNeuron:
         return spike
 
     def get_state(self) -> dict[str, Any]:
+        """Return current state, with units if in strict mode."""
         if self._strict_units:
             return {
                 name: (value * self._base_state_units[name]).to(self._display_state_units[name])
@@ -424,9 +488,11 @@ class EquationNeuron:
         return dict(self.state)
 
     def reset(self) -> None:
+        """Reset state to initial values."""
         self.state = deepcopy(self.initial_state)
 
     def __repr__(self) -> str:
+        """Human-readable representation of the neuron equations."""
         eqs = ", ".join(f"d{k}/dt = {v}" for k, v in self.equations.items())
         return f"EquationNeuron({eqs})"
 

@@ -33,6 +33,8 @@ from .fixed_point_lif import FixedPointBitstreamEncoder as FixedPointBitstreamEn
 from .homeostatic_lif import HomeostaticLIFNeuron as HomeostaticLIFNeuron
 from .dendritic import StochasticDendriticNeuron as StochasticDendriticNeuron
 from .sc_izhikevich import SCIzhikevichNeuron as SCIzhikevichNeuron
+from .universal_dsl import UniversalNeuron as UniversalNeuron
+from .universal_dsl import list_bundled_schemas as list_bundled_schemas
 
 _CORE_NAMES = {
     "BaseNeuron",
@@ -43,6 +45,8 @@ _CORE_NAMES = {
     "HomeostaticLIFNeuron",
     "StochasticDendriticNeuron",
     "SCIzhikevichNeuron",
+    "UniversalNeuron",
+    "list_bundled_schemas",
 }
 
 _MODEL_NAMES = {
@@ -172,6 +176,7 @@ _rust_map: dict[str, type] | None = None
 
 
 def _load_rust_map() -> None:
+    """Lazily populate the Rust-backed neuron model dispatch map."""
     global _rust_map
     if _rust_map is not None:
         return

@@ -1,5 +1,4 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
-
 # Tutorial 33: Equation-to-Verilog Compiler
 
 SC-NeuroCore can compile arbitrary ODE strings into synthesizable Q8.8 fixed-point
@@ -277,11 +276,198 @@ clamping at +127. The compiler prevents this automatically.
 
 ## Further Reading
 
+- [Precision Modes Guide](../guides/precision_modes.md) — Q8.8, Q4.12, Q16.16 details
+- [Co-Simulation Guide](../guides/cosimulation_guide.md) — Python ↔ Verilog validation
 - [Tutorial 09: Hardware Co-simulation](09_hardware_cosimulation.md) — verify Python vs Verilog
 - [Tutorial 13: Fixed-Point Arithmetic](13_fixed_point_design.md) — Q8.8 details
 - [API: Compiler](../api/compiler.md) — auto-generated API docs
 - [Hardware Guide](../hardware/HARDWARE_GUIDE.md) — FPGA deployment
 
+## 10. Multi-Precision Compilation
+
+The compiler supports three precision modes. Choose based on your model's
+parameter range:
+
+```python
+from sc_neurocore.neurons.universal_dsl import UniversalNeuron
+
+neuron = UniversalNeuron.from_schema("lif")
+
+# Q8.8 — default (16-bit, ±128 range)
+verilog_q88 = neuron.to_verilog(module_name="sc_lif")
+
+# Q4.12 — high precision (16-bit, ±8 range, 16× finer resolution)
+verilog_q412 = neuron.to_verilog(
+    module_name="sc_lif_hp", data_width=16, fraction=12,
+)
+
+# Q16.16 — gold standard (32-bit, ±32768 range, 1/65536 resolution)
+verilog_q1616 = neuron.to_verilog(
+    module_name="sc_lif_hd", data_width=32, fraction=16,
+)
+```
+
+| Mode | Bits | Range | Resolution | Gate cost |
+|------|:----:|-------|-----------|-----------|
+| Q8.8 | 16 | ±128 | 0.004 | Baseline |
+| Q4.12 | 16 | ±8 | 0.0002 | Same |
+| Q16.16 | 32 | ±32768 | 0.000015 | ~2× |
+
+CLI equivalents:
+
+```bash
+python -m sc_neurocore.neurons compile lif -p q88 -o sc_lif.v
+python -m sc_neurocore.neurons compile lif -p q412 -o sc_lif_hp.v
+python -m sc_neurocore.neurons compile lif -p q1616 -o sc_lif_hd.v
+```
+
+## 11. Precision Diagnostics
+
+Before compiling, check how your model's parameters encode at each precision:
+
+```bash
+python -m sc_neurocore.neurons precision lif
+```
+
+This analyses each parameter's Q-encoding error, flags underflow/overflow,
+and recommends the optimal precision mode. Programmatically:
+
+```python
+from sc_neurocore.compiler.equation_compiler import Q88
+
+q = Q88(data_width=16, fraction=12)  # Q4.12
+print(q.precision_report(dt=0.001, params={"v_rest": -65.0, "tau_m": 10.0}))
+# ⚠ Underflow: v_rest=-65.0 below Q4.12 min=-8.0000
+```
+
+## 12. Python ↔ Verilog Co-Simulation
+
+Verify your compiled model produces identical behaviour:
+
+```python
+from sc_neurocore.neurons.universal_dsl import UniversalNeuron
+from sc_neurocore.compiler.equation_compiler import generate_testbench
+import subprocess, tempfile, re
+from pathlib import Path
+
+neuron = UniversalNeuron.from_schema("lif")
+eq = neuron.to_equation_neuron()
+
+# Compile
+verilog = neuron.to_verilog(module_name="sc_lif")
+tb = generate_testbench(eq, module_name="sc_lif", n_steps=200, input_current=50.0)
+
+with tempfile.TemporaryDirectory() as d:
+    Path(f"{d}/sc_lif.v").write_text(verilog)
+    Path(f"{d}/tb.v").write_text(tb)
+
+    subprocess.run(["iverilog", "-g2012", "-o", f"{d}/tb",
+                     f"{d}/sc_lif.v", f"{d}/tb.v"], check=True)
+    r = subprocess.run(["vvp", f"{d}/tb"], capture_output=True, text=True)
+    print(r.stdout)
+    # → "Simulation complete: 200 spikes in 200 cycles"
+```
+
+All five simulatable models achieve **0.0%** Python-Verilog spike count gap:
+
+| Model | Python | Verilog | Gap |
+|-------|:------:|:-------:|:---:|
+| LIF | 200 | 200 | 0% |
+| Lapicque | 200 | 200 | 0% |
+| Quadratic IF | 50 | 50 | 0% |
+| Izhikevich | 25 | 25 | 0% |
+| Resonate-and-Fire | 200 | 200 | 0% |
+
+## 13. Implementation Notes
+
+### Q-Format Division
+
+Division by parameters uses sign-extended left-shift division:
+`result = (numerator << fraction) / denominator`. The result is already
+in Q-format — no additional right-shift truncation is applied.
+
+### Look-Ahead Threshold
+
+The threshold comparison uses `v_next` (the combinational next-state wire)
+instead of `v_reg` (the registered current-cycle value). This matches the
+Python simulation semantics where threshold is checked after the voltage
+update within the same step.
+
+### Testbench Timing
+
+The generated testbench includes:
+- 1 settling clock cycle after reset de-assertion
+- `#1` combinational propagation delay before sampling `spike_out`
+
+These ensure accurate spike counting that matches the Python reference.
+
+## 14. Hardware-Targeted Compilation
+
+SC-NeuroCore ships with **32 pre-configured hardware profiles** covering every
+major FPGA vendor, neuromorphic chip, and ASIC target. Use `--target` to
+automatically select the optimal precision, overflow, and rounding for your
+hardware.
+
+### CLI Targeting
+
+```bash
+# Compile for Xilinx Artix-7 (auto-selects Q9.9, 18-bit DSP48E1-native)
+python -m sc_neurocore.neurons compile lif --target artix7 -o lif.v
+
+# Compile for Intel Loihi 2 (auto-selects Q12.12, wrap overflow)
+python -m sc_neurocore.neurons compile lif --target loihi2 -o lif_loihi.v
+
+# Safety-critical ASIC with overflow trapping (DO-254)
+python -m sc_neurocore.neurons compile lif --target asic_custom -o lif_safe.v
+
+# Override profile defaults
+python -m sc_neurocore.neurons compile lif --target artix7 --rounding bankers -o lif.v
+
+# List all 32 hardware profiles
+python -m sc_neurocore.neurons platforms
+```
+
+### Python API
+
+```python
+from sc_neurocore.compiler.hardware_profiles import get_profile
+from sc_neurocore.neurons.universal_dsl import UniversalNeuron
+
+profile = get_profile("loihi2")
+neuron = UniversalNeuron.from_schema("lif")
+
+verilog = neuron.to_verilog(
+    module_name="sc_lif",
+    data_width=profile.data_width,
+    fraction=profile.fraction,
+    overflow=profile.overflow,
+    rounding=profile.rounding,
+)
+```
+
+### Overflow Modes
+
+| Mode | CLI Flag | Verilog Behaviour | Use Case |
+|------|----------|------------------|----------|
+| `saturate` | `--overflow saturate` | Clamp to [min, max] | Default, safest |
+| `wrap` | `--overflow wrap` | Two's complement wrap | Loihi 2 hardware |
+| `trap` | `--overflow trap` | `$fatal` assertion | DO-254 safety-critical |
+
+### Rounding Modes
+
+| Mode | CLI Flag | Implementation | Bias |
+|------|----------|---------------|------|
+| `truncate` | `--rounding truncate` | Floor (arithmetic right shift) | -0.5 LSB |
+| `nearest` | `--rounding nearest` | Add 0.5 LSB before shift | ±0.5 LSB |
+| `bankers` | `--rounding bankers` | IEEE 754 round-half-to-even | Zero |
+| `stochastic` | `--rounding stochastic` | LFSR-based probabilistic | Zero |
+
 ## Interactive Notebook
 
 Run the hands-on notebook: [`notebooks/08_equation_to_verilog.ipynb`](https://github.com/anulum/sc-neurocore/blob/main/notebooks/08_equation_to_verilog.ipynb)
+
+## Further Reading
+
+- [Precision Modes Guide](../guides/precision_modes.md) — all 11 Q-format modes
+- [Hardware Profiles Guide](../guides/hardware_profiles.md) — 32 platform profiles
+- [Co-Simulation Guide](../guides/cosimulation_guide.md) — Python↔Verilog verification

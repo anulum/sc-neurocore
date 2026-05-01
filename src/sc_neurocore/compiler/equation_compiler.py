@@ -8,7 +8,13 @@
 
 """Compile arbitrary ODE neuron equations to synthesizable Verilog.
 
-Compile string equations directly to FPGA hardware:
+Supports three precision modes:
+
+- **Q8.8** (16-bit): [-128, +128], 1/256 resolution — default
+- **Q4.12** (16-bit): [-8, +8], 1/4096 resolution — normalised models
+- **Q16.16** (32-bit): [-32768, +32768], 1/65536 resolution — gold standard
+
+Usage::
 
     from sc_neurocore.neurons.equation_builder import from_equations
     from sc_neurocore.compiler.equation_compiler import compile_to_verilog
@@ -18,11 +24,21 @@ Compile string equations directly to FPGA hardware:
                             params=dict(E_L=-65, tau_m=10, C=1),
                             init=dict(v=-65))
 
+    # Default Q8.8
     verilog = compile_to_verilog(neuron, module_name="my_lif")
 
-All arithmetic uses Q8.8 signed fixed-point. Each ODE term becomes
-a multiply-shift pipeline stage. Threshold and reset map to
-combinational comparators and mux logic.
+    # Q16.16 for maximum fidelity
+    verilog_hd = compile_to_verilog(neuron, module_name="my_lif_hd",
+                                    data_width=32, fraction=16)
+
+Key implementation details:
+
+- **Multiplication**: ``(a * b) >>> frac`` with 2×DW intermediate wires.
+- **Division by constant**: reciprocal multiplication ``a * (1/c)``.
+- **Division by parameter**: Q-format ``(a << frac) / b``; result taken
+  directly from low DW bits (no extra truncation).
+- **Threshold**: look-ahead comparison on ``v_next`` (not ``v_reg``).
+- **Saturation**: all next-state values clamped to [min_int, max_int].
 """
 
 from __future__ import annotations
@@ -37,21 +53,149 @@ from ..neurons.equation_builder import EquationNeuron
 
 @dataclass
 class Q88:
-    """Q8.8 fixed-point conversion: 8 integer bits, 8 fractional bits, signed."""
+    """Fixed-point format configuration for Verilog code generation.
+
+    Supports arbitrary precision modes via ``data_width`` / ``fraction``,
+    with configurable signedness, overflow handling, and rounding.
+
+    ============  ==========  ===============  =================  ===============
+    Mode          data_width  fraction         Integer range      Resolution
+    ============  ==========  ===============  =================  ===============
+    **Q8.8**      16          8                [-128, +127.996]   1/256 ≈ 0.004
+    **Q4.12**     16          12               [-8, +7.9998]      1/4096 ≈ 0.0002
+    **Q16.16**    32          16               [-32768, +32767]   1/65536 ≈ 1.5e-5
+    **UQ8.8**     16          8  (unsigned)    [0, +255.996]      1/256 ≈ 0.004
+    ============  ==========  ===============  =================  ===============
+
+    Overflow Modes
+    ~~~~~~~~~~~~~~
+    - ``"saturate"`` — clamp to [min, max] (default, safest)
+    - ``"wrap"``     — two's complement wrap-around (Loihi 2 hardware behaviour)
+    - ``"trap"``     — emit ``$fatal`` assertion (DO-254 / IEC 61508 safety)
+
+    Rounding Modes
+    ~~~~~~~~~~~~~~
+    - ``"truncate"``   — floor towards -∞ (default, fastest)
+    - ``"nearest"``    — round to nearest, ties away from zero
+    - ``"bankers"``    — round to nearest, ties to even (IEEE 754 default)
+    - ``"stochastic"`` — probabilistic rounding via LFSR (reduces long-run bias)
+    """
 
     data_width: int = 16
     fraction: int = 8
+    signed: bool = True
+    overflow: str = "saturate"   # saturate | wrap | trap
+    rounding: str = "truncate"   # truncate | nearest | bankers | stochastic
+
+    @property
+    def integer_bits(self) -> int:
+        """Number of integer bits (excluding sign bit if signed)."""
+        return self.data_width - self.fraction - (1 if self.signed else 0)
+
+    @property
+    def max_value(self) -> float:
+        """Maximum representable positive value."""
+        if self.signed:
+            return ((1 << (self.data_width - 1)) - 1) / (1 << self.fraction)
+        return ((1 << self.data_width) - 1) / (1 << self.fraction)
+
+    @property
+    def min_value(self) -> float:
+        """Minimum (most negative) representable value."""
+        if self.signed:
+            return -(1 << (self.data_width - 1)) / (1 << self.fraction)
+        return 0.0
+
+    @property
+    def resolution(self) -> float:
+        """Smallest representable non-zero step."""
+        return 1.0 / (1 << self.fraction)
 
     def encode(self, value: float) -> int:
+        """Encode a float to unsigned Q-format integer representation.
+
+        Parameters
+        ----------
+        value : float
+            The value to encode (e.g. -65.0 for a membrane voltage).
+
+        Returns
+        -------
+        int
+            The unsigned two's complement representation, masked to
+            ``data_width`` bits.  Example: -65.0 in Q8.8 → 48896.
+        """
         raw = int(round(value * (1 << self.fraction)))
         mask = (1 << self.data_width) - 1
         return raw & mask
 
     def encode_signed_literal(self, value: float) -> str:
+        """Encode a float as a Verilog signed decimal literal.
+
+        Produces a string like ``16'sd48896`` (Q8.8) or ``32'sd4259840``
+        (Q16.16) suitable for embedding directly in generated Verilog.
+
+        Parameters
+        ----------
+        value : float
+            The value to encode.
+
+        Returns
+        -------
+        str
+            Verilog literal, e.g. ``"16'sd48896"`` for -65.0 in Q8.8.
+        """
         raw = int(round(value * (1 << self.fraction)))
         if raw < 0:
             raw = raw & ((1 << self.data_width) - 1)
         return f"{self.data_width}'sd{raw}"
+
+    def check_range(self, value: float, label: str = "") -> list[str]:
+        """Check if a value fits in the integer range. Returns warnings."""
+        warnings = []
+        if value > self.max_value:
+            warnings.append(
+                f"Overflow: {label}={value} exceeds Q{self.data_width - self.fraction}.{self.fraction} "
+                f"max={self.max_value:.4f}"
+            )
+        elif value < self.min_value:
+            warnings.append(
+                f"Underflow: {label}={value} below Q{self.data_width - self.fraction}.{self.fraction} "
+                f"min={self.min_value:.4f}"
+            )
+        return warnings
+
+    def precision_report(self, dt: float, params: dict[str, float] | None = None) -> str:
+        """Generate a human-readable precision diagnostics report."""
+        lines = [
+            f"Fixed-point format: Q{self.data_width - self.fraction}.{self.fraction} "
+            f"({self.data_width}-bit signed)",
+            f"  Integer range: [{self.min_value:.4f}, {self.max_value:.4f}]",
+            f"  Resolution: {self.resolution:.6f}",
+        ]
+
+        # dt analysis
+        dt_raw = int(round(dt * (1 << self.fraction)))
+        dt_actual = dt_raw / (1 << self.fraction) if dt_raw != 0 else 0.0
+        dt_error = abs(dt_actual - dt) / dt * 100 if dt != 0 and dt_raw != 0 else (100.0 if dt != 0 else 0.0)
+        dt_status = "✓" if dt_raw > 0 else "✗ UNDERFLOW"
+        lines.append(f"  dt={dt} → Q-value={dt_raw} (actual={dt_actual:.6f}, "
+                      f"error={dt_error:.1f}%) {dt_status}")
+
+        # Parameter analysis
+        if params:
+            range_warnings = []
+            for name, val in params.items():
+                w = self.check_range(val, name)
+                range_warnings.extend(w)
+                q_val = int(round(val * (1 << self.fraction)))
+                q_actual = q_val / (1 << self.fraction)
+                err = abs(q_actual - val) / abs(val) * 100 if val != 0 else 0
+                lines.append(f"  {name}={val} → Q-value={q_val} (error={err:.1f}%)")
+            for w in range_warnings:
+                lines.append(f"  ⚠ {w}")
+
+        return "\n".join(lines)
 
 
 class _VerilogExprEmitter(ast.NodeVisitor):
@@ -61,14 +205,108 @@ class _VerilogExprEmitter(ast.NodeVisitor):
     Multiplications emit wide product with arithmetic right shift.
     """
 
-    def __init__(self, state_vars: dict[str, str], param_map: dict[str, str], q: Q88):
+    def __init__(
+        self,
+        state_vars: dict[str, str],
+        param_map: dict[str, str],
+        q: Q88,
+        *,
+        mul_start: int = 0,
+        trunc_start: int = 0,
+    ):
+        """Initialise the Verilog expression emitter.
+
+        Parameters
+        ----------
+        state_vars : dict
+            Mapping from ODE variable names to sanitised Verilog identifiers.
+        param_map : dict
+            Mapping from parameter names to Verilog parameter identifiers.
+        q : Q88
+            Fixed-point format configuration (width, fraction, rounding, overflow).
+        mul_start : int
+            Starting counter for multiply wire naming (for chaining emitters).
+        trunc_start : int
+            Starting counter for truncation wire naming.
+        """
         self.state_vars = state_vars
         self.param_map = param_map
         self.q = q
-        self._mul_count = 0
+        self._mul_count = mul_start
+        self._trunc_count = trunc_start
         self.intermediates: list[str] = []
 
+    def _trunc(self, wide_name: str) -> str:
+        """Emit an intermediate wire for fixed-point truncation with rounding.
+
+        Supports four rounding modes (configured via ``self.q.rounding``):
+
+        - ``"truncate"``   — floor towards -∞ (arithmetic right shift)
+        - ``"nearest"``    — add 0.5 LSB before truncation (round half up)
+        - ``"bankers"``    — round half to even (IEEE 754 default)
+        - ``"stochastic"`` — add random fraction before truncation (LFSR)
+        """
+        trunc_name = f"_t{self._trunc_count}"
+        self._trunc_count += 1
+        dw = self.q.data_width
+        frac = self.q.fraction
+        sign = "signed " if self.q.signed else ""
+        rounding = self.q.rounding
+
+        if rounding == "truncate":
+            # Original behaviour: simple arithmetic right shift
+            self.intermediates.append(
+                f"wire {sign}[{dw - 1}:0] {trunc_name} = "
+                f"({wide_name} >>> {frac});"
+            )
+        elif rounding == "nearest":
+            # Add 0.5 LSB (= 1 << (frac-1)) before truncation
+            half = f"_rnd_half{self._trunc_count}"
+            self.intermediates.append(
+                f"wire {sign}[{2 * dw - 1}:0] {half} = "
+                f"{wide_name} + {1 << (frac - 1)};"
+            )
+            self.intermediates.append(
+                f"wire {sign}[{dw - 1}:0] {trunc_name} = "
+                f"({half} >>> {frac});"
+            )
+        elif rounding == "bankers":
+            # Round half to even: add 0.5 LSB, then clear LSB if exactly 0.5
+            biased = f"_rnd_biased{self._trunc_count}"
+            guard = f"_rnd_guard{self._trunc_count}"
+            self.intermediates.append(
+                f"wire {sign}[{2 * dw - 1}:0] {biased} = "
+                f"{wide_name} + {1 << (frac - 1)};"
+            )
+            # Guard bit: 1 if the fractional part was exactly 0.5
+            self.intermediates.append(
+                f"wire {guard} = "
+                f"({wide_name}[{frac - 1}:0] == {1 << (frac - 1)});"
+            )
+            # If guard=1 (exact half), clear LSB of result (round to even)
+            self.intermediates.append(
+                f"wire {sign}[{dw - 1}:0] {trunc_name} = "
+                f"({biased} >>> {frac}) & "
+                f"(({guard}) ? ~{dw}'d1 : {{{dw}{{1'b1}}}});"
+            )
+        elif rounding == "stochastic":
+            # Add random bits (from _lfsr) to fractional part before truncation
+            stoch = f"_rnd_stoch{self._trunc_count}"
+            self.intermediates.append(
+                f"wire {sign}[{2 * dw - 1}:0] {stoch} = "
+                f"{wide_name} + {{{{({2 * dw - frac}){{1'b0}}}}, _lfsr[{frac - 1}:0]}};"
+            )
+            self.intermediates.append(
+                f"wire {sign}[{dw - 1}:0] {trunc_name} = "
+                f"({stoch} >>> {frac});"
+            )
+        else:
+            raise ValueError(f"Unknown rounding mode: {rounding!r}")
+
+        return trunc_name
+
     def visit_BinOp(self, node: ast.BinOp) -> str:
+        """Emit Verilog for a binary operation (add, sub, mul, div)."""
         left: str = self.visit(node.left)
         right: str = self.visit(node.right)
 
@@ -83,10 +321,14 @@ class _VerilogExprEmitter(ast.NodeVisitor):
             self.intermediates.append(
                 f"wire signed [{2 * self.q.data_width - 1}:0] {tmp} = {left} * {right};"
             )
-            return f"({tmp} >>> {self.q.fraction})[{self.q.data_width - 1}:0]"
+            return self._trunc(tmp)
         elif isinstance(node.op, ast.Div):
-            # Division by constant → multiply by reciprocal
+            # Fixed-point division: (a << fraction) / b
+            # For constants, we use the more efficient reciprocal multiplication.
+            # For variables/parameters, we must shift the numerator up to
+            # preserve the Q-format fractional scale.
             if isinstance(node.right, ast.Constant) and isinstance(node.right.value, (int, float)):
+                # Division by constant → multiply by reciprocal (most precise)
                 recip = 1.0 / float(node.right.value)
                 recip_q = self.q.encode_signed_literal(recip)
                 tmp = f"_mul{self._mul_count}"
@@ -94,8 +336,38 @@ class _VerilogExprEmitter(ast.NodeVisitor):
                 self.intermediates.append(
                     f"wire signed [{2 * self.q.data_width - 1}:0] {tmp} = {left} * {recip_q};"
                 )
-                return f"({tmp} >>> {self.q.fraction})[{self.q.data_width - 1}:0]"
-            return f"({left} / {right})"
+                return self._trunc(tmp)
+            # Division by variable/parameter: shift numerator up then divide
+            # In Q-format: (a / b) = (a << frac) / b
+            # Use $signed() and arithmetic shifts for portability.
+            dw = self.q.data_width
+            frac = self.q.fraction
+            wide = 2 * dw
+            # Assign left operand to a named wire (avoids bit-select on expression)
+            num_wire = f"_dop{self._mul_count}"
+            ext_name = f"_dnum{self._mul_count}"
+            div_tmp = f"_div{self._mul_count}"
+            self._mul_count += 1
+            # Wire for left operand (needed for clean bit-select)
+            self.intermediates.append(
+                f"wire signed [{dw - 1}:0] {num_wire} = {left};"
+            )
+            # Sign-extend to wide, shift left by fraction
+            self.intermediates.append(
+                f"wire signed [{wide - 1}:0] {ext_name} = "
+                f"$signed({{{{{dw}{{{num_wire}[{dw - 1}]}}}}, {num_wire}}}) <<< {frac};"
+            )
+            # Sign-extend divisor and perform division
+            # Result of (a << frac) / b is already in Q-format — just take low DW bits
+            res_name = f"_dres{self._mul_count - 1}"
+            self.intermediates.append(
+                f"wire signed [{wide - 1}:0] {div_tmp} = "
+                f"{ext_name} / $signed({{{{{dw}{{{right}[{dw - 1}]}}}}, {right}}});"
+            )
+            self.intermediates.append(
+                f"wire signed [{dw - 1}:0] {res_name} = {div_tmp}[{dw - 1}:0];"
+            )
+            return res_name
         elif isinstance(node.op, ast.Pow):
             # x**2 → x * x, x**3 → x * x * x (small integer powers only)
             if isinstance(node.right, ast.Constant) and node.right.value == 2:
@@ -104,20 +376,20 @@ class _VerilogExprEmitter(ast.NodeVisitor):
                 self.intermediates.append(
                     f"wire signed [{2 * self.q.data_width - 1}:0] {tmp} = {left} * {left};"
                 )
-                return f"({tmp} >>> {self.q.fraction})[{self.q.data_width - 1}:0]"
+                return self._trunc(tmp)
             elif isinstance(node.right, ast.Constant) and node.right.value == 3:
                 sq = f"_mul{self._mul_count}"
                 self._mul_count += 1
                 self.intermediates.append(
                     f"wire signed [{2 * self.q.data_width - 1}:0] {sq} = {left} * {left};"
                 )
-                sq_trunc = f"({sq} >>> {self.q.fraction})[{self.q.data_width - 1}:0]"
+                sq_trunc = self._trunc(sq)
                 cu = f"_mul{self._mul_count}"
                 self._mul_count += 1
                 self.intermediates.append(
                     f"wire signed [{2 * self.q.data_width - 1}:0] {cu} = {sq_trunc} * {left};"
                 )
-                return f"({cu} >>> {self.q.fraction})[{self.q.data_width - 1}:0]"
+                return self._trunc(cu)
             elif (
                 isinstance(node.right, ast.Constant)
                 and isinstance(node.right.value, int)
@@ -132,7 +404,7 @@ class _VerilogExprEmitter(ast.NodeVisitor):
                     self.intermediates.append(
                         f"wire signed [{2 * self.q.data_width - 1}:0] {tmp} = {prev} * {left};"
                     )
-                    prev = f"({tmp} >>> {self.q.fraction})[{self.q.data_width - 1}:0]"
+                    prev = self._trunc(tmp)
                 return prev
             raise ValueError(
                 f"Only integer powers 2-8 supported in Verilog, got {ast.dump(node.right)}"
@@ -140,6 +412,7 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         raise ValueError(f"Unsupported binary op: {type(node.op).__name__}")
 
     def visit_UnaryOp(self, node: ast.UnaryOp) -> str:
+        """Emit Verilog for a unary operation (negate, positive)."""
         operand: str = self.visit(node.operand)
         if isinstance(node.op, ast.USub):
             return f"(-{operand})"
@@ -148,6 +421,7 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         raise ValueError(f"Unsupported unary op: {type(node.op).__name__}")
 
     def visit_Name(self, node: ast.Name) -> str:
+        """Resolve a Python name to its Verilog equivalent (register, parameter, or input)."""
         name = node.id
         if name in self.state_vars:
             return f"{self.state_vars[name]}_reg"
@@ -158,10 +432,12 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         return sanitize_ident(name, context="expression identifier")
 
     def visit_Constant(self, node: ast.Constant) -> str:
+        """Encode a numeric constant as a Verilog signed literal in Q-format."""
         val: float = float(node.value) if isinstance(node.value, (int, float)) else 0.0
         return self.q.encode_signed_literal(val)
 
     def visit_Compare(self, node: ast.Compare) -> str:
+        """Emit Verilog for comparison operators (>, >=, <, <=)."""
         left: str = self.visit(node.left)
         results: list[str] = []
         for op, comp in zip(node.ops, node.comparators):
@@ -179,6 +455,7 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         return " && ".join(results)
 
     def visit_Call(self, node: ast.Call) -> str:
+        """Emit Verilog for function calls (exp, log, sqrt, tanh, sigmoid, sin, cos, abs, clip, max, min)."""
         if not isinstance(node.func, ast.Name):
             raise ValueError(f"Only named function calls supported, got {ast.dump(node.func)}")
         fname = node.func.id
@@ -307,17 +584,27 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         return [int(round(math.cos(x) * (1 << self.q.fraction))) for x in points]
 
     def generic_visit(self, node: ast.AST) -> str:
+        """Raise an error for any unsupported AST node type."""
         raise ValueError(f"Unsupported AST node for Verilog: {type(node).__name__}")
 
 
 def _emit_expr(
-    expr_str: str, state_vars: dict[str, str], param_map: dict[str, str], q: Q88
-) -> tuple[str, list[str]]:
-    """Parse a Python expression string and return (verilog_expr, intermediate_wires)."""
+    expr_str: str,
+    state_vars: dict[str, str],
+    param_map: dict[str, str],
+    q: Q88,
+    *,
+    mul_start: int = 0,
+    trunc_start: int = 0,
+) -> tuple[str, list[str], int, int]:
+    """Parse a Python expression string and return (verilog_expr, intermediate_wires, mul_end, trunc_end)."""
     tree = ast.parse(expr_str, mode="eval")
-    emitter = _VerilogExprEmitter(state_vars, param_map, q)
+    emitter = _VerilogExprEmitter(
+        state_vars, param_map, q,
+        mul_start=mul_start, trunc_start=trunc_start,
+    )
     result = emitter.visit(tree.body)
-    return result, emitter.intermediates
+    return result, emitter.intermediates, emitter._mul_count, emitter._trunc_count
 
 
 def compile_to_verilog(
@@ -325,6 +612,10 @@ def compile_to_verilog(
     module_name: str = "sc_equation_neuron",
     data_width: int = 16,
     fraction: int = 8,
+    *,
+    signed: bool = True,
+    overflow: str = "saturate",
+    rounding: str = "truncate",
 ) -> str:
     """Compile an EquationNeuron to synthesizable Verilog RTL.
 
@@ -338,13 +629,21 @@ def compile_to_verilog(
         Bit width for fixed-point arithmetic (default 16 = Q8.8).
     fraction : int
         Number of fractional bits (default 8).
+    signed : bool
+        True for signed two's complement (default), False for unsigned.
+    overflow : str
+        Overflow mode: ``"saturate"`` (default), ``"wrap"``, or ``"trap"``.
+    rounding : str
+        Rounding mode: ``"truncate"`` (default), ``"nearest"``,
+        ``"bankers"``, or ``"stochastic"``.
 
     Returns
     -------
     str
         Synthesizable Verilog source code.
     """
-    q = Q88(data_width=data_width, fraction=fraction)
+    q = Q88(data_width=data_width, fraction=fraction,
+            signed=signed, overflow=overflow, rounding=rounding)
 
     # Reject dt that quantises to zero in the chosen fixed-point format.
     # Without this guard the compiler silently emits Verilog where every
@@ -380,10 +679,15 @@ def compile_to_verilog(
     deriv_wires: list[str] = []
     deriv_assigns: list[str] = []
     all_intermediates: list[str] = []
+    _mc = 0  # persistent mul counter
+    _tc = 0  # persistent trunc counter
 
     for var, expr_str in neuron.equations.items():
         safe_var = state_var_map[var]
-        vexpr, intermediates = _emit_expr(expr_str, state_var_map, param_map, q)
+        vexpr, intermediates, _mc, _tc = _emit_expr(
+            expr_str, state_var_map, param_map, q,
+            mul_start=_mc, trunc_start=_tc,
+        )
         all_intermediates.extend(intermediates)
         # dv = expr * dt (multiply by dt in fixed-point)
         dt_literal = q.encode_signed_literal(neuron.dt)
@@ -392,30 +696,102 @@ def compile_to_verilog(
             f"wire signed [{2 * data_width - 1}:0] {dt_tmp} = ({vexpr}) * {dt_literal};"
         )
         deriv_name = f"d{safe_var}"
+        deriv_trunc = f"_dt_trunc_{safe_var}"
+        all_intermediates.append(
+            f"wire signed [{data_width - 1}:0] {deriv_trunc} = ({dt_tmp} >>> {fraction});"
+        )
         deriv_wires.append(
-            f"wire signed [{data_width - 1}:0] {deriv_name} = ({dt_tmp} >>> {fraction})[{data_width - 1}:0];"
+            f"wire signed [{data_width - 1}:0] {deriv_name} = {deriv_trunc};"
         )
 
-    # Next-state computation with saturation
-    max_val = (1 << (data_width - 1)) - 1  # e.g. 32767 for 16-bit
-    min_val = -(1 << (data_width - 1))  # e.g. -32768 for 16-bit
+    # Next-state computation with configurable overflow handling
+    sign_kw = "signed " if q.signed else ""
+    if q.signed:
+        max_val = (1 << (data_width - 1)) - 1   # e.g. 32767 for 16-bit
+        min_val = -(1 << (data_width - 1))       # e.g. -32768 for 16-bit
+    else:
+        max_val = (1 << data_width) - 1          # e.g. 65535 for unsigned 16-bit
+        min_val = 0
+
     next_wires: list[str] = []
     for var in neuron.equations:
         safe_var = state_var_map[var]
         raw = f"{safe_var}_raw"
-        next_wires.append(f"wire signed [{data_width}:0] {raw} = {safe_var}_reg + d{safe_var};")
         next_wires.append(
-            f"wire signed [{data_width - 1}:0] {safe_var}_next = "
-            f"({raw} > {data_width + 1}'sd{max_val}) ? {data_width}'sd{max_val} : "
-            f"({raw} < {data_width + 1}'sd{min_val}) ? {data_width}'sd{min_val} : "
-            f"{raw}[{data_width - 1}:0];"
+            f"wire {sign_kw}[{data_width}:0] {raw} = "
+            f"{safe_var}_reg + d{safe_var};"
         )
 
-    # Threshold expression
+        if q.overflow == "saturate":
+            # Clamp to [min_val, max_val] (default, safest)
+            abs_min = abs(min_val)
+            if q.signed:
+                next_wires.append(
+                    f"wire {sign_kw}[{data_width - 1}:0] {safe_var}_next = "
+                    f"({raw} > {data_width + 1}'sd{max_val}) ? {data_width}'sd{max_val} : "
+                    f"({raw} < (-{data_width + 1}'sd{abs_min})) ? (-{data_width}'sd{abs_min}) : "
+                    f"{raw}[{data_width - 1}:0];"
+                )
+            else:
+                next_wires.append(
+                    f"wire [{data_width - 1}:0] {safe_var}_next = "
+                    f"({raw} > {data_width + 1}'d{max_val}) ? {data_width}'d{max_val} : "
+                    f"({raw}[{data_width}]) ? {data_width}'d0 : "
+                    f"{raw}[{data_width - 1}:0];"
+                )
+        elif q.overflow == "wrap":
+            # Two's complement wrap-around (Loihi 2 hardware behaviour)
+            next_wires.append(
+                f"wire {sign_kw}[{data_width - 1}:0] {safe_var}_next = "
+                f"{raw}[{data_width - 1}:0];"
+            )
+        elif q.overflow == "trap":
+            # Safety-critical: assert $fatal on overflow (DO-254 / IEC 61508)
+            abs_min = abs(min_val)
+            if q.signed:
+                next_wires.append(
+                    f"wire {sign_kw}[{data_width - 1}:0] {safe_var}_next = "
+                    f"{raw}[{data_width - 1}:0];"
+                )
+                next_wires.append(
+                    f"// synthesis translate_off"
+                )
+                next_wires.append(
+                    f"always @(*) if ({raw} > {data_width + 1}'sd{max_val} || "
+                    f"{raw} < (-{data_width + 1}'sd{abs_min})) "
+                    f"$fatal(1, \"OVERFLOW TRAP: {safe_var}_raw=%0d\", {raw});"
+                )
+                next_wires.append(
+                    f"// synthesis translate_on"
+                )
+            else:
+                next_wires.append(
+                    f"wire [{data_width - 1}:0] {safe_var}_next = "
+                    f"{raw}[{data_width - 1}:0];"
+                )
+                next_wires.append(f"// synthesis translate_off")
+                next_wires.append(
+                    f"always @(*) if ({raw}[{data_width}]) "
+                    f"$fatal(1, \"OVERFLOW TRAP: {safe_var}_raw=%0d\", {raw});"
+                )
+                next_wires.append(f"// synthesis translate_on")
+        else:
+            raise ValueError(f"Unknown overflow mode: {q.overflow!r}")
+
+    # Threshold expression — uses look-ahead: compare v_NEXT against threshold
+    # This matches the Python semantics where threshold is checked AFTER
+    # the voltage update within the same step (not 1 cycle delayed).
     threshold_verilog = ""
     if neuron.threshold_expr:
-        threshold_verilog, thr_intermediates = _emit_expr(
-            neuron.threshold_expr, state_var_map, param_map, q
+        # Map state variables to _next wires via param_map (avoids _reg suffix)
+        thr_param_map = dict(param_map)
+        for var in neuron.equations:
+            safe_var = state_var_map[var]
+            thr_param_map[var] = f"{safe_var}_next"
+        # Pass empty state_vars so no _reg suffixes are appended
+        threshold_verilog, thr_intermediates, _mc, _tc = _emit_expr(
+            neuron.threshold_expr, {}, thr_param_map, q,
+            mul_start=_mc, trunc_start=_tc,
         )
         all_intermediates.extend(thr_intermediates)
 
@@ -423,7 +799,10 @@ def compile_to_verilog(
     reset_assignments: list[str] = []
     for var, expr_str in neuron.reset_rules.items():
         safe_var = state_var_map[var]
-        rexpr, r_intermediates = _emit_expr(expr_str, state_var_map, param_map, q)
+        rexpr, r_intermediates, _mc, _tc = _emit_expr(
+            expr_str, state_var_map, param_map, q,
+            mul_start=_mc, trunc_start=_tc,
+        )
         all_intermediates.extend(r_intermediates)
         reset_assignments.append(f"                    {safe_var}_reg <= {rexpr};")
 
@@ -650,10 +1029,12 @@ def generate_testbench(
     lines.append("    rst_n = 0;")
     lines.append("    #20;")
     lines.append("    rst_n = 1;")
+    lines.append("    @(posedge clk);  // 1 settling cycle after reset")
     lines.append("")
     lines.append(f"    // Run {n_steps} cycles")
     lines.append(f"    repeat ({n_steps}) begin")
     lines.append("        @(posedge clk);")
+    lines.append("        #1;  // let combinational outputs settle")
     lines.append("        if (spike_out) spike_count = spike_count + 1;")
     lines.append("    end")
     lines.append("")

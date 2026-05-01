@@ -1,0 +1,20 @@
+{
+  "metadata": {
+    "schema_version": 1,
+    "name": "Lapicque",
+    "author": "Lapicque, L.",
+    "year": 1907,
+    "doi": "10.1085/jgp.5.6.747",
+    "description": "Classical RC integrate-and-fire — the original neuron model (1907)"
+  },
+  "state": { "v": 0.0 },
+  "parameters": {
+    "v_rest": 0.0, "v_reset": 0.0, "v_threshold": 1.0,
+    "tau": 20.0, "resistance": 1.0
+  },
+  "integration": { "dt": 1.0, "method": "euler" },
+  "dynamics": { "v": "(-(v - v_rest) + resistance * I) / tau" },
+  "threshold": { "condition": "v > v_threshold", "detection": "crossing" },
+  "reset": { "v": "v_reset" },
+  "extensions": { "historical_note": "First mathematical neuron model, precursor to LIF" }
+}

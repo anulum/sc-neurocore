@@ -1,0 +1,38 @@
+[metadata]
+schema_version = 1
+name = "Escape Rate"
+author = "Gerstner, W."
+year = 2000
+doi = "10.1162/089976600300015899"
+description = "Stochastic threshold neuron — spike probability via escape noise"
+
+[state]
+v = -70.0
+
+[parameters]
+v_rest = -70.0
+v_reset = -70.0
+v_threshold = -50.0
+tau_m = 10.0
+rho_0 = 0.001
+delta_u = 3.0
+resistance = 1.0
+
+[integration]
+dt = 1.0
+method = "euler"
+
+[dynamics]
+v = "(-(v - v_rest) + resistance * I) / tau_m"
+
+[threshold]
+condition = "stochastic"
+detection = "escape_rate"
+rate_expression = "rho_0 * exp((v - v_threshold) / delta_u)"
+
+[reset]
+v = "v_reset"
+
+[extensions]
+noise_type = "escape_rate"
+stochastic = true

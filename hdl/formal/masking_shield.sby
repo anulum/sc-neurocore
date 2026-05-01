@@ -1,0 +1,16 @@
+[tasks]
+prove
+
+[options]
+prove: mode prove
+prove: depth 5
+
+[engines]
+prove: smtbmc z3
+
+[script]
+read -formal -DFORMAL ../sc_masking_shield.v
+prep -top sc_masking_shield
+
+[files]
+../sc_masking_shield.v
