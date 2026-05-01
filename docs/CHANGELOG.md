@@ -4,6 +4,28 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Wave 7: Compiler intelligence & frontier paradigms (2026-05-01)
+
+#### Added — Hardware Profiles (10 new → 144 total, 19 platform classes)
+- **Biological** (2): `finalspark_neuroplatform`, `cortical_labs_dishbrain`.
+- **Electrochemical** (3): `ibm_ecram`, `samsung_pcram`, `stanford_ecram`.
+- **Wafer-Scale** (3): `cerebras_wse3_ws`, `tesla_dojo3`, `tachyum_prodigy`.
+- **Analog Mixed-Signal** (2): `aspinity_aml100`, `renesas_analog_ai`.
+
+#### Added — Compiler Intelligence Features (8 new → 41 total)
+- `recommend_target()` — constraint-driven optimal HW selection.
+- `plan_partial_reconfiguration()` — FPGA DPR partition scheduling.
+- `score_supply_chain_risk()` — geopolitical/sole-source risk analysis.
+- `generate_bittrue_kernel()` — C/Rust code matching Verilog bit-exactly.
+- `classify_model_complexity()` — memory/compute/comm-bound routing.
+- `CompilationCache` — memoized instant re-targeting.
+- `estimate_thermal_envelope()` — junction temperature prediction.
+- `optimize_network_topology()` — multi-chip spike bandwidth minimizer.
+
+#### Added — Tests
+- `tests/test_wave7_features.py` — 41 tests across 11 test classes.
+- Total regression: **1,094 passed**, 1 xfailed, 0 failures.
+
 ### Wave 6: Total paradigm coverage & overlooked compiler features (2026-05-01)
 
 #### Added — Hardware Profiles (21 new → 134 total, 79 vendors, 15 classes)
@@ -27,7 +49,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 #### Added — Tests
 - `tests/test_wave6_features.py` — 58 tests across 10 test classes.
-- Total regression: **1024 passed**, 1 xfailed, 0 failures.
+- Total regression: **1,033 passed**, 1 xfailed, 0 failures.
 
 ### Wave 5: Universal hardware coverage & strategic features (2026-05-01)
 

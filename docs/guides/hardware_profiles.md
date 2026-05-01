@@ -6,8 +6,8 @@
 
 # Hardware Platform Profiles
 
-SC-NeuroCore ships with **134 pre-configured hardware profiles** across **15
-platform classes** and **79 vendors**, covering every FPGA vendor (including
+SC-NeuroCore ships with **144 pre-configured hardware profiles** across **19
+platform classes** and **83 vendors**, covering every FPGA vendor (including
 rad-hard and eFPGA), AI accelerator, DSP processor, neuromorphic chip, ASIC
 target, photonic/optical compute, processing-in-memory, chiplet/UCIe,
 automotive/edge AI, sovereign/defence, superconducting/cryogenic, spintronic,
@@ -19,7 +19,7 @@ rounding semantics) for its target platform.
 ## Quick Start
 
 ```bash
-# List all 134 hardware profiles
+# List all 144 hardware profiles
 python -m sc_neurocore.neurons platforms
 
 # Compile a LIF neuron for Intel Loihi 2 (auto-selects Q12.12, wrap overflow)
@@ -422,6 +422,96 @@ assert result.proven_safe  # Mathematical guarantee
 sva = generate_sva(["v", "u"], data_width=16, fraction=8,
                    module_name="sc_izh")
 ```
+
+## Wave 6 Platform Classes
+
+### Superconducting / Cryogenic
+
+| Profile | Vendor | Family | Width | Freq |
+|---------|--------|--------|------:|-----:|
+| `nist_sfq` | NIST | SFQ | 8-bit | 100 GHz |
+| `northrop_aqfp` | Northrop Grumman | AQFP | 8-bit | 5 GHz |
+| `josephson_jj` | Research | Josephson | 8-bit | 50 GHz |
+
+### Spintronic / MRAM
+
+| Profile | Vendor | Family | Width |
+|---------|--------|--------|------:|
+| `everspin_stt_mram` | Everspin | STT-MRAM | 8-bit |
+| `samsung_sot_mram` | Samsung | SOT-MRAM | 8-bit |
+
+### Ferroelectric Compute-in-Memory
+
+| Profile | Vendor | Family | Width |
+|---------|--------|--------|------:|
+| `gf_fefet` | GlobalFoundries | FeFET-22FDX | 8-bit |
+| `sk_hynix_feram` | SK Hynix | FeRAM | 8-bit |
+
+### CGRA (Coarse-Grained Reconfigurable)
+
+| Profile | Vendor | Family | Width | Freq |
+|---------|--------|--------|------:|-----:|
+| `samsung_cgra` | Samsung | CGRA-NPU | 16-bit | 1 GHz |
+| `qualcomm_npu_cgra` | Qualcomm | NPU-CGRA | 8-bit | 1.2 GHz |
+| `pact_xtensa` | Cadence | Xtensa-CGRA | 16-bit | 800 MHz |
+
+### 3D-Stacked / Monolithic 3D
+
+| Profile | Vendor | Family | Width | Freq |
+|---------|--------|--------|------:|-----:|
+| `tsmc_soic` | TSMC | SoIC-3D | 16-bit | 2 GHz |
+| `intel_foveros` | Intel | Foveros-Direct | 16-bit | 1.8 GHz |
+| `amd_3dv` | AMD | 3D V-Cache | 16-bit | 2.2 GHz |
+
+### Edge MCU / TinyML
+
+| Profile | Vendor | Family | Width | Freq |
+|---------|--------|--------|------:|-----:|
+| `rp2040` | Raspberry Pi | RP2040 | 16-bit | 133 MHz |
+| `esp32_s3` | Espressif | ESP32-S3 | 16-bit | 240 MHz |
+| `stm32h7` | STMicroelectronics | STM32H7 | 32-bit | 480 MHz |
+| `nrf5340` | Nordic | nRF5340 | 16-bit | 128 MHz |
+| `max78000` | Analog Devices | MAX78000 | 8-bit | 100 MHz |
+
+### RISC-V AI Accelerators
+
+| Profile | Vendor | Family | Width | Freq |
+|---------|--------|--------|------:|-----:|
+| `sifive_x280` | SiFive | X280 | 16-bit | 2 GHz |
+| `qualcomm_ventana` | Qualcomm/Ventana | Veyron-V2 | 16-bit | 3 GHz |
+| `ainekko_rv` | Ainekko | ET-Mirai | 8-bit | 1 GHz |
+
+## Wave 7 Platform Classes
+
+### Biological / Wetware
+
+| Profile | Vendor | Family | Width |
+|---------|--------|--------|------:|
+| `finalspark_neuroplatform` | FinalSpark | Neuroplatform | 16-bit |
+| `cortical_labs_dishbrain` | Cortical Labs | DishBrain | 16-bit |
+
+### Electrochemical / Memristive
+
+| Profile | Vendor | Family | Width |
+|---------|--------|--------|------:|
+| `ibm_ecram` | IBM | ECRAM-AnalogAI | 8-bit |
+| `samsung_pcram` | Samsung | PCRAM | 8-bit |
+| `stanford_ecram` | Stanford | ECRAM-Research | 8-bit |
+
+### Wafer-Scale
+
+| Profile | Vendor | Family | Width | Freq |
+|---------|--------|--------|------:|-----:|
+| `cerebras_wse3_ws` | Cerebras | WSE-3-WS | 16-bit | 1 GHz |
+| `tesla_dojo3` | Tesla | Dojo-3 | 16-bit | 2 GHz |
+| `tachyum_prodigy` | Tachyum | Prodigy-2nm | 16-bit | 5.5 GHz |
+
+### Analog Mixed-Signal
+
+| Profile | Vendor | Family | Width |
+|---------|--------|--------|------:|
+| `aspinity_aml100` | Aspinity | AML100 | 8-bit |
+| `renesas_analog_ai` | Renesas | AnalogAI | 8-bit |
 
 ## Further Reading
 
