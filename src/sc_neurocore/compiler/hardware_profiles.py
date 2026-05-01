@@ -1189,6 +1189,188 @@ _reg(HardwareProfile(
     notes="Ainekko ET-Mirai: open-source many-core RISC-V (ex-Esperanto).",
 ))
 
+# ── Biological / Wetware ─────────────────────────────────────────────
+
+_reg(HardwareProfile(
+    name="finalspark_neuroplatform", vendor="FinalSpark",
+    family="Neuroplatform",
+    platform_class="biological", data_width=16, fraction=8,
+    overflow="saturate", rounding="nearest",
+    notes="FinalSpark Neuroplatform: living organoid co-processor. "
+          "Output = electrode stimulation protocol.",
+))
+_reg(HardwareProfile(
+    name="cortical_labs_dishbrain", vendor="Cortical Labs",
+    family="DishBrain",
+    platform_class="biological", data_width=16, fraction=8,
+    overflow="saturate", rounding="nearest",
+    notes="Cortical Labs DishBrain: in-vitro biological neural network. "
+          "Output = MEA stimulation pattern.",
+))
+
+# ── Electrochemical / Memristive ─────────────────────────────────────
+
+_reg(HardwareProfile(
+    name="ibm_ecram", vendor="IBM", family="ECRAM-AnalogAI",
+    platform_class="electrochemical", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    notes="IBM ECRAM: electrochemical RAM. Superior linearity for on-chip "
+          "learning. Multi-level analog weights.",
+))
+_reg(HardwareProfile(
+    name="samsung_pcram", vendor="Samsung", family="PCRAM",
+    platform_class="electrochemical", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    notes="Samsung PCRAM: phase-change memory compute. Non-volatile, "
+          "multi-level cell analog synapses.",
+))
+_reg(HardwareProfile(
+    name="stanford_ecram", vendor="Stanford", family="ECRAM-Research",
+    platform_class="electrochemical", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    notes="Stanford ECRAM: research-grade electrochemical synapse array. "
+          "WO₃-based, 10⁶ endurance cycles.",
+))
+
+# ── Wafer-Scale ──────────────────────────────────────────────────────
+
+_reg(HardwareProfile(
+    name="cerebras_wse3_ws", vendor="Cerebras", family="WSE-3-WS",
+    platform_class="wafer_scale", data_width=16, fraction=8,
+    overflow="saturate", rounding="nearest",
+    dsp_block="PE", dsp_mult_a=16, dsp_mult_b=16,
+    max_freq_mhz=1000,
+    notes="Cerebras WSE-3 wafer-scale: 900K cores, 44GB SRAM, 4 Tflop.",
+))
+_reg(HardwareProfile(
+    name="tesla_dojo3", vendor="Tesla", family="Dojo-3",
+    platform_class="wafer_scale", data_width=16, fraction=8,
+    overflow="saturate", rounding="nearest",
+    dsp_block="TU", dsp_mult_a=16, dsp_mult_b=16,
+    max_freq_mhz=2000,
+    notes="Tesla Dojo 3: in-house wafer-scale AI supercomputer tile.",
+))
+_reg(HardwareProfile(
+    name="tachyum_prodigy", vendor="Tachyum", family="Prodigy-2nm",
+    platform_class="wafer_scale", data_width=16, fraction=8,
+    overflow="saturate", rounding="nearest",
+    max_freq_mhz=5500,
+    notes="Tachyum Prodigy: universal processor. CPU+GPU+AI in one die.",
+))
+
+# ── Analog Mixed-Signal ──────────────────────────────────────────────
+
+_reg(HardwareProfile(
+    name="aspinity_aml100", vendor="Aspinity", family="AML100",
+    platform_class="analog_mixed", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    notes="Aspinity AML100: analog ML at the sensor. "
+          "Always-on anomaly detection, µW power.",
+))
+_reg(HardwareProfile(
+    name="renesas_analog_ai", vendor="Renesas", family="AnalogAI",
+    platform_class="analog_mixed", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    notes="Renesas Analog AI: mixed-signal compute-at-ADC boundary. "
+          "Industrial IoT edge inference.",
+))
+
+# ── RRAM / Memristive Crossbar ───────────────────────────────────────
+
+_reg(HardwareProfile(
+    name="weebit_reram", vendor="Weebit Nano", family="ReRAM-ACiM",
+    platform_class="rram", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    notes="Weebit Nano ReRAM: analog compute-in-memory crossbar. "
+          "200 TOPS/W, licensed to TI/Onsemi.",
+))
+_reg(HardwareProfile(
+    name="crossbar_rram", vendor="Crossbar", family="ReRAM-1T1R",
+    platform_class="rram", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    notes="Crossbar Inc RRAM: 1T1R selector. Non-volatile weights, "
+          "multi-level cell synapses.",
+))
+_reg(HardwareProfile(
+    name="adesto_cbram", vendor="Adesto", family="CBRAM",
+    platform_class="rram", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    notes="Adesto CBRAM: conductive-bridge RAM. Low-power IoT NVM.",
+))
+
+# ── SRAM Compute-in-Memory ───────────────────────────────────────────
+
+_reg(HardwareProfile(
+    name="tsmc_cim_n7", vendor="TSMC", family="CIM-N7",
+    platform_class="sram_cim", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    dsp_block="CIM_MACRO", dsp_mult_a=8, dsp_mult_b=8,
+    max_freq_mhz=1000,
+    notes="TSMC N7 SRAM-CIM macro: digital compute-in-memory. "
+          "Standard cell integration, foundry-qualified.",
+))
+_reg(HardwareProfile(
+    name="samsung_cim_sf3", vendor="Samsung", family="CIM-SF3",
+    platform_class="sram_cim", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    dsp_block="CIM_MACRO", dsp_mult_a=8, dsp_mult_b=8,
+    max_freq_mhz=900,
+    notes="Samsung SF3 SRAM-CIM: 3nm GAA compute-in-memory macro.",
+))
+
+# ── Cryogenic CMOS ───────────────────────────────────────────────────
+
+_reg(HardwareProfile(
+    name="intel_horse_ridge", vendor="Intel", family="Horse-Ridge-II",
+    platform_class="cryo_cmos", data_width=16, fraction=8,
+    overflow="saturate", rounding="nearest",
+    max_freq_mhz=6000,
+    notes="Intel Horse Ridge II: cryogenic CMOS controller at 4K. "
+          "Quantum-classical interface for neuromorphic control.",
+))
+_reg(HardwareProfile(
+    name="google_cryo_ctrl", vendor="Google", family="Cryo-Controller",
+    platform_class="cryo_cmos", data_width=16, fraction=8,
+    overflow="saturate", rounding="nearest",
+    max_freq_mhz=4000,
+    notes="Google cryogenic controller: CMOS at 4K for quantum chip "
+          "readout and control.",
+))
+
+# ── DNA / Molecular ──────────────────────────────────────────────────
+
+_reg(HardwareProfile(
+    name="microsoft_dna_store", vendor="Microsoft", family="DNA-Storage",
+    platform_class="dna_molecular", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    notes="Microsoft DNA Storage: enzymatic DNA synthesis for archival "
+          "compute. Output = nucleotide sequence.",
+))
+_reg(HardwareProfile(
+    name="asu_dna_perovskite", vendor="ASU", family="DNA-Perovskite",
+    platform_class="dna_molecular", data_width=8, fraction=4,
+    overflow="saturate", rounding="truncate",
+    notes="ASU DNA-Perovskite: bio-hybrid synaptic device. DNA base-pair "
+          "gated perovskite semiconductor.",
+))
+
+# ── Quantum Neuromorphic ─────────────────────────────────────────────
+
+_reg(HardwareProfile(
+    name="ibm_qnn", vendor="IBM", family="Quantum-NN",
+    platform_class="quantum_neuro", data_width=16, fraction=8,
+    overflow="saturate", rounding="nearest",
+    notes="IBM Quantum Neural Network: superconducting transmon qubits "
+          "for quantum reservoir computing.",
+))
+_reg(HardwareProfile(
+    name="ionq_trapped_ion", vendor="IonQ", family="Trapped-Ion-QNN",
+    platform_class="quantum_neuro", data_width=16, fraction=8,
+    overflow="saturate", rounding="nearest",
+    notes="IonQ Trapped-Ion QNN: all-to-all connectivity for quantum "
+          "SNN simulation.",
+))
+
 # ═══════════════════════════════════════════════════════════════════════
 # Public API
 # ═══════════════════════════════════════════════════════════════════════
