@@ -6,7 +6,8 @@
 import unittest
 
 from sc_neurocore.compiler.hardware_profiles import (
-    get_profile, list_profile_names, HardwareProfile,
+    get_profile,
+    list_profile_names,
 )
 from sc_neurocore.compiler.advanced_features import (
     configure_approximation,
@@ -22,6 +23,7 @@ from sc_neurocore.compiler.advanced_features import (
 
 
 # ── Platform class tests ──────────────────────────────────────────────
+
 
 class TestThermodynamicPlatforms(unittest.TestCase):
     def test_extropic_epu(self):
@@ -83,6 +85,7 @@ class TestTotalCoverage(unittest.TestCase):
 
 # ── §68 Approximate Computing ────────────────────────────────────────
 
+
 class TestApproximation(unittest.TestCase):
     def test_basic(self):
         r = configure_approximation({"v": "-(v)/tau + I"})
@@ -92,7 +95,8 @@ class TestApproximation(unittest.TestCase):
 
     def test_error_bound(self):
         r = configure_approximation(
-            {"v": "a", "u": "b"}, max_error_pct=2.0,
+            {"v": "a", "u": "b"},
+            max_error_pct=2.0,
         )
         self.assertLessEqual(r.max_output_error_pct, 3.1)
 
@@ -103,21 +107,23 @@ class TestApproximation(unittest.TestCase):
 
 # ── §69 Energy Harvesting ────────────────────────────────────────────
 
+
 class TestEnergyHarvest(unittest.TestCase):
     def test_solar_outdoor(self):
-        r = model_energy_harvest(100.0, harvester_type="solar",
-                                 environment="outdoor", harvester_area_cm2=1.0)
+        r = model_energy_harvest(
+            100.0, harvester_type="solar", environment="outdoor", harvester_area_cm2=1.0
+        )
         self.assertTrue(r.energy_positive)
         self.assertGreater(r.margin_pct, 0)
 
     def test_rf_indoor_insufficient(self):
-        r = model_energy_harvest(100.0, harvester_type="rf",
-                                 environment="indoor")
+        r = model_energy_harvest(100.0, harvester_type="rf", environment="indoor")
         self.assertFalse(r.energy_positive)
         self.assertLess(r.recommended_duty_cycle, 1.0)
 
 
 # ── §70 Aging-Aware ──────────────────────────────────────────────────
+
 
 class TestAging(unittest.TestCase):
     def test_degradation_increases(self):
@@ -138,6 +144,7 @@ class TestAging(unittest.TestCase):
 
 # ── §71 DVFS Controller ──────────────────────────────────────────────
 
+
 class TestDVFS(unittest.TestCase):
     def test_default(self):
         v = generate_dvfs_controller("sc_lif")
@@ -147,15 +154,19 @@ class TestDVFS(unittest.TestCase):
         self.assertIn("endmodule", v)
 
     def test_custom_points(self):
-        v = generate_dvfs_controller("sc_hh", operating_points=[
-            {"voltage_mv": 600, "freq_mhz": 50},
-            {"voltage_mv": 1200, "freq_mhz": 800},
-        ])
+        v = generate_dvfs_controller(
+            "sc_hh",
+            operating_points=[
+                {"voltage_mv": 600, "freq_mhz": 50},
+                {"voltage_mv": 1200, "freq_mhz": 800},
+            ],
+        )
         self.assertIn("50", v)
         self.assertIn("800", v)
 
 
 # ── §72 Pareto Explorer ──────────────────────────────────────────────
+
 
 class TestPareto(unittest.TestCase):
     def test_non_empty(self):
@@ -171,8 +182,11 @@ class TestPareto(unittest.TestCase):
                         q.power_mw <= p.power_mw
                         and q.area_luts <= p.area_luts
                         and q.latency_ns <= p.latency_ns
-                        and (q.power_mw < p.power_mw or q.area_luts < p.area_luts
-                             or q.latency_ns < p.latency_ns),
+                        and (
+                            q.power_mw < p.power_mw
+                            or q.area_luts < p.area_luts
+                            or q.latency_ns < p.latency_ns
+                        ),
                         f"Point {i} dominated by {j}",
                     )
 
@@ -183,6 +197,7 @@ class TestPareto(unittest.TestCase):
 
 
 # ── §73 Post-Quantum IP Protection ───────────────────────────────────
+
 
 class TestPQC(unittest.TestCase):
     def test_basic(self):
@@ -205,6 +220,7 @@ class TestPQC(unittest.TestCase):
 
 # ── §74 Fault Injection ──────────────────────────────────────────────
 
+
 class TestFaultCampaign(unittest.TestCase):
     def test_basic(self):
         r = run_fault_campaign({"v": "a", "u": "b"})
@@ -221,6 +237,7 @@ class TestFaultCampaign(unittest.TestCase):
 
 # ── §75 Timing Closure ───────────────────────────────────────────────
 
+
 class TestTimingClosure(unittest.TestCase):
     def test_simple_passes(self):
         r = verify_timing_closure({"v": "-(v)/tau + I"}, target_freq_mhz=100.0)
@@ -235,6 +252,7 @@ class TestTimingClosure(unittest.TestCase):
 
 
 # ── §76 Telemetry Ingestion ──────────────────────────────────────────
+
 
 class TestTelemetry(unittest.TestCase):
     def test_healthy(self):
@@ -261,6 +279,7 @@ class TestTelemetry(unittest.TestCase):
 
 # ── Integration ──────────────────────────────────────────────────────
 
+
 class TestWave11Integration(unittest.TestCase):
     def test_full_pipeline(self):
         """End-to-end: profile → approx → aging → timing → telemetry."""
@@ -283,8 +302,7 @@ class TestWave11Integration(unittest.TestCase):
 
     def test_batteryless_pipeline(self):
         """Energy harvest → DVFS → Pareto → PQC."""
-        harvest = model_energy_harvest(50.0, harvester_type="solar",
-                                       environment="outdoor")
+        harvest = model_energy_harvest(50.0, harvester_type="solar", environment="outdoor")
         self.assertTrue(harvest.energy_positive)
 
         dvfs = generate_dvfs_controller("sc_sensor")

@@ -37,5 +37,9 @@ lik = "lik"       # abbreviation for "likelihood" (log_lik, lik_out, etc.)
 aci = "aci"       # variable name: AdaptiveCheckpointInterval instance
 # Hardware / reliability acronyms
 DED = "DED"       # Double-Error-Detection (SEC-DED ECC)
+ane = "ane"       # Apple Neural Engine profile identifier
+VALU = "VALU"     # AMD vector ALU block naming
+useed = "useed"   # Posit arithmetic useed term: 2^(2^es)
+evn = "evn"       # ECP5 EVN board identifier
 # Cargo.lock / third-party crate descriptions
 THS = "THS"          # abbreviation in rand crate docs

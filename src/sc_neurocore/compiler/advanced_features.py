@@ -89,6 +89,7 @@ from typing import Literal
 # 1. VHDL Output Mode
 # ═══════════════════════════════════════════════════════════════════════
 
+
 def verilog_to_vhdl_wrapper(
     module_name: str,
     *,
@@ -171,6 +172,7 @@ end architecture rtl;
 # 2. Posit Arithmetic
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @dataclass(frozen=True)
 class PositConfig:
     """Posit number format configuration.
@@ -239,7 +241,7 @@ def posit_encode(value: float, config: PositConfig) -> int:
             k += 1
         # k is regime run length
         regime_bits = k + 1  # k ones + terminating zero
-        regime_val = ((1 << (k + 1)) - 2)  # k ones followed by 0
+        regime_val = (1 << (k + 1)) - 2  # k ones followed by 0
     else:
         k = 0
         tmp = value
@@ -305,15 +307,16 @@ def posit_decode(bits: int, config: PositConfig) -> float:
 
 
 # Standard posit configs
-POSIT8_0 = PositConfig(8, 0)   # Posit<8,0>: range ±64, ~1% resolution
-POSIT8_1 = PositConfig(8, 1)   # Posit<8,1>: range ±4096
-POSIT16_1 = PositConfig(16, 1) # Posit<16,1>: range ±16M
-POSIT16_2 = PositConfig(16, 2) # Posit<16,2>: range ±~10^18
+POSIT8_0 = PositConfig(8, 0)  # Posit<8,0>: range ±64, ~1% resolution
+POSIT8_1 = PositConfig(8, 1)  # Posit<8,1>: range ±4096
+POSIT16_1 = PositConfig(16, 1)  # Posit<16,1>: range ±16M
+POSIT16_2 = PositConfig(16, 2)  # Posit<16,2>: range ±~10^18
 
 
 # ═══════════════════════════════════════════════════════════════════════
 # 3. Multi-Clock Domain CDC Synchroniser
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def generate_cdc_synchroniser(
     signal_name: str,
@@ -352,50 +355,56 @@ def generate_cdc_synchroniser(
 
     lines = [
         f"// Auto-generated CDC synchroniser for '{signal_name}'",
-        f"// SC-NeuroCore multi-clock domain support",
+        "// SC-NeuroCore multi-clock domain support",
         f"// Stages: {stages}, Width: {width}-bit",
-        f"",
-        f"(* ASYNC_REG = \"TRUE\" *)  // Xilinx: place in same slice",
+        "",
+        '(* ASYNC_REG = "TRUE" *)  // Xilinx: place in same slice',
         f"module {module_name} (",
         f"    input  wire         {src_clock},",
         f"    input  wire         {dst_clock},",
-        f"    input  wire         rst,",
+        "    input  wire         rst,",
         f"    input  wire {w}{signal_name}_in,",
         f"    output wire {w}{signal_name}_out",
-        f");",
-        f"",
+        ");",
+        "",
     ]
 
     # Synchroniser chain
     for i in range(stages):
-        lines.append(f"    (* ASYNC_REG = \"TRUE\" *) reg {w}sync_r{i};")
+        lines.append(f'    (* ASYNC_REG = "TRUE" *) reg {w}sync_r{i};')
 
-    lines.extend([
-        f"",
-        f"    always @(posedge {dst_clock} or posedge rst) begin",
-        f"        if (rst) begin",
-    ])
+    lines.extend(
+        [
+            "",
+            f"    always @(posedge {dst_clock} or posedge rst) begin",
+            "        if (rst) begin",
+        ]
+    )
 
     for i in range(stages):
         lines.append(f"            sync_r{i} <= {width}'d0;")
 
-    lines.extend([
-        f"        end else begin",
-        f"            sync_r0 <= {signal_name}_in;",
-    ])
+    lines.extend(
+        [
+            "        end else begin",
+            f"            sync_r0 <= {signal_name}_in;",
+        ]
+    )
 
     for i in range(1, stages):
         lines.append(f"            sync_r{i} <= sync_r{i - 1};")
 
-    lines.extend([
-        f"        end",
-        f"    end",
-        f"",
-        f"    assign {signal_name}_out = sync_r{stages - 1};",
-        f"",
-        f"endmodule",
-        f"",
-    ])
+    lines.extend(
+        [
+            "        end",
+            "    end",
+            "",
+            f"    assign {signal_name}_out = sync_r{stages - 1};",
+            "",
+            "endmodule",
+            "",
+        ]
+    )
 
     return "\n".join(lines)
 
@@ -403,6 +412,7 @@ def generate_cdc_synchroniser(
 # ═══════════════════════════════════════════════════════════════════════
 # 4. TCL Script Generation
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def generate_tcl_project(
     module_name: str,
@@ -443,74 +453,82 @@ def generate_tcl_project(
 
 
 def _gen_vivado_tcl(
-    module_name: str, part: str,
-    verilog_files: list[str], constraint_file: str | None,
+    module_name: str,
+    part: str,
+    verilog_files: list[str],
+    constraint_file: str | None,
 ) -> str:
     """Generate Xilinx Vivado project TCL."""
     lines = [
         f"# Auto-generated Vivado project TCL for {module_name}",
-        f"# SC-NeuroCore deployment utilities",
-        f"",
+        "# SC-NeuroCore deployment utilities",
+        "",
         f"create_project {module_name} ./{module_name}_project -part {part} -force",
-        f"set_property target_language Verilog [current_project]",
-        f"",
-        f"# Add source files",
+        "set_property target_language Verilog [current_project]",
+        "",
+        "# Add source files",
     ]
 
     for vf in verilog_files:
         lines.append(f"add_files {vf}")
 
     if constraint_file:
-        lines.extend([
-            f"",
-            f"# Add constraints",
-            f"add_files -fileset constrs_1 {constraint_file}",
-        ])
+        lines.extend(
+            [
+                "",
+                "# Add constraints",
+                f"add_files -fileset constrs_1 {constraint_file}",
+            ]
+        )
 
-    lines.extend([
-        f"",
-        f"# Set top module",
-        f"set_property top {module_name} [current_fileset]",
-        f"",
-        f"# Run synthesis",
-        f"synth_design -top {module_name} -part {part}",
-        f"",
-        f"# Run implementation",
-        f"opt_design",
-        f"place_design",
-        f"route_design",
-        f"",
-        f"# Reports",
-        f"report_utilization -file {module_name}_util.rpt",
-        f"report_timing_summary -file {module_name}_timing.rpt",
-        f"report_power -file {module_name}_power.rpt",
-        f"",
-        f"# Generate bitstream",
-        f"write_bitstream -force {module_name}.bit",
-        f"",
-        f"puts \"Build complete: {module_name}.bit\"",
-        f"",
-    ])
+    lines.extend(
+        [
+            "",
+            "# Set top module",
+            f"set_property top {module_name} [current_fileset]",
+            "",
+            "# Run synthesis",
+            f"synth_design -top {module_name} -part {part}",
+            "",
+            "# Run implementation",
+            "opt_design",
+            "place_design",
+            "route_design",
+            "",
+            "# Reports",
+            f"report_utilization -file {module_name}_util.rpt",
+            f"report_timing_summary -file {module_name}_timing.rpt",
+            f"report_power -file {module_name}_power.rpt",
+            "",
+            "# Generate bitstream",
+            f"write_bitstream -force {module_name}.bit",
+            "",
+            f'puts "Build complete: {module_name}.bit"',
+            "",
+        ]
+    )
 
     return "\n".join(lines)
 
 
 def _gen_quartus_tcl(
-    module_name: str, part: str,
-    verilog_files: list[str], constraint_file: str | None,
+    module_name: str,
+    part: str,
+    verilog_files: list[str],
+    constraint_file: str | None,
 ) -> str:
     """Generate Intel Quartus project TCL."""
     lines = [
         f"# Auto-generated Quartus project TCL for {module_name}",
-        f"# SC-NeuroCore deployment utilities",
-        f"",
-        f"package require ::quartus::project",
-        f"",
+        "# SC-NeuroCore deployment utilities",
+        "",
+        "package require ::quartus::project",
+        "",
         f"project_new {module_name} -overwrite",
-        f"set_global_assignment -name FAMILY \"Cyclone V\"",
+        'set_global_assignment -name FAMILY "Cyclone V"',
         f"set_global_assignment -name DEVICE {part}",
         f"set_global_assignment -name TOP_LEVEL_ENTITY {module_name}",
-        f"",
+        "",
     ]
 
     for vf in verilog_files:
@@ -519,14 +537,16 @@ def _gen_quartus_tcl(
     if constraint_file:
         lines.append(f"set_global_assignment -name SDC_FILE {constraint_file}")
 
-    lines.extend([
-        f"",
-        f"# Compile",
-        f"execute_flow -compile",
-        f"",
-        f"project_close",
-        f"",
-    ])
+    lines.extend(
+        [
+            "",
+            "# Compile",
+            "execute_flow -compile",
+            "",
+            "project_close",
+            "",
+        ]
+    )
 
     return "\n".join(lines)
 
@@ -534,6 +554,7 @@ def _gen_quartus_tcl(
 # ═══════════════════════════════════════════════════════════════════════
 # 5. Bitstream Automation (Open-Source: Yosys + nextpnr)
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def generate_oss_makefile(
     module_name: str,
@@ -584,7 +605,7 @@ DEVICE = {device}
 PACKAGE = {package}
 FREQ = {freq_mhz}
 SRCS = {srcs}
-PCF = {pcf_file or module_name + '.pcf'}
+PCF = {pcf_file or module_name + ".pcf"}
 
 .PHONY: all clean prog
 
@@ -624,7 +645,7 @@ DEVICE = {device}
 PACKAGE = {package}
 FREQ = {freq_mhz}
 SRCS = {srcs}
-LPF = {pcf_file or module_name + '.lpf'}
+LPF = {pcf_file or module_name + ".lpf"}
 
 .PHONY: all clean prog
 
@@ -655,6 +676,7 @@ clean:
 # ═══════════════════════════════════════════════════════════════════════
 # 6. DVS Event-Camera → AER Bridge
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def generate_dvs_aer_bridge(
     module_name: str = "sc_dvs_aer_bridge",
@@ -789,6 +811,7 @@ endmodule
 # 7. Block Floating-Point / MXFP Encoding
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @dataclass(frozen=True)
 class MXFPConfig:
     """Microsoft Microscaling (MX) floating-point format.
@@ -832,10 +855,8 @@ MXFP6 = MXFPConfig(element_bits=6, exp_bits=3, mantissa_bits=2, block_size=32)
 MXFP8_E4M3 = MXFPConfig(element_bits=8, exp_bits=4, mantissa_bits=3, block_size=32)
 MXFP8_E5M2 = MXFPConfig(element_bits=8, exp_bits=5, mantissa_bits=2, block_size=32)
 # IEEE FP8 (NVIDIA H100/B100 native)
-FP8_E4M3 = MXFPConfig(element_bits=8, exp_bits=4, mantissa_bits=3, block_size=1,
-                       shared_exp_bits=0)
-FP8_E5M2 = MXFPConfig(element_bits=8, exp_bits=5, mantissa_bits=2, block_size=1,
-                       shared_exp_bits=0)
+FP8_E4M3 = MXFPConfig(element_bits=8, exp_bits=4, mantissa_bits=3, block_size=1, shared_exp_bits=0)
+FP8_E5M2 = MXFPConfig(element_bits=8, exp_bits=5, mantissa_bits=2, block_size=1, shared_exp_bits=0)
 
 
 def mxfp_encode_block(
@@ -857,10 +878,7 @@ def mxfp_encode_block(
         (shared_exponent, list_of_encoded_elements).
     """
     if len(values) != config.block_size:
-        raise ValueError(
-            f"Block size mismatch: got {len(values)}, "
-            f"expected {config.block_size}"
-        )
+        raise ValueError(f"Block size mismatch: got {len(values)}, expected {config.block_size}")
 
     # Find shared exponent (max abs value)
     abs_max = max(abs(v) for v in values) if values else 0.0
@@ -869,6 +887,7 @@ def mxfp_encode_block(
 
     # Shared exponent = floor(log2(abs_max)) + bias
     import math as _math
+
     exp_bias = (1 << (config.shared_exp_bits - 1)) - 1
     shared_exp = int(_math.floor(_math.log2(abs_max))) + exp_bias
     shared_exp = max(0, min((1 << config.shared_exp_bits) - 1, shared_exp))
@@ -927,6 +946,7 @@ def mxfp_decode_block(
 # ═══════════════════════════════════════════════════════════════════════
 # 8. BRAM / Register Auto-Selection
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class StorageRecommendation:
@@ -998,7 +1018,7 @@ def storage_recommendation(
             neuron_count=neuron_count,
             total_bits=total_bits,
             reason=f"{neuron_count} neurons × {state_bits_per_neuron}b = "
-                   f"{total_bits}b — fits in registers.",
+            f"{total_bits}b — fits in registers.",
         )
 
     if has_uram and neuron_count > uram_threshold:
@@ -1010,7 +1030,7 @@ def storage_recommendation(
             total_bits=total_bits,
             uram_used=uram_tiles,
             reason=f"{neuron_count} neurons × {state_bits_per_neuron}b = "
-                   f"{total_bits // 1024}Kb — using {uram_tiles} URAM tiles.",
+            f"{total_bits // 1024}Kb — using {uram_tiles} URAM tiles.",
         )
 
     # BRAM: 18Kb or 36Kb tiles
@@ -1028,7 +1048,7 @@ def storage_recommendation(
         bram_18k_used=bram_18k,
         bram_36k_used=bram_36k,
         reason=f"{neuron_count} neurons × {state_bits_per_neuron}b = "
-               f"{total_bits // 1024}Kb — using BRAM.",
+        f"{total_bits // 1024}Kb — using BRAM.",
     )
 
 
@@ -1135,6 +1155,7 @@ endmodule
 # ═══════════════════════════════════════════════════════════════════════
 # 9. Thermal-Aware Compilation
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class ThermalEstimate:
@@ -1277,34 +1298,36 @@ def generate_thermal_constraints(
     period_ns = 1000.0 / analysis.derated_freq_mhz
     lines = [
         f"# Thermal-aware constraints for {module_name}",
-        f"# SC-NeuroCore thermal compilation",
-        f"# Junction temp: {analysis.junction_temp_c}°C, "
-        f"Hotspot risk: {analysis.hotspot_risk}",
+        "# SC-NeuroCore thermal compilation",
+        f"# Junction temp: {analysis.junction_temp_c}°C, Hotspot risk: {analysis.hotspot_risk}",
         f"# Derated frequency: {analysis.derated_freq_mhz} MHz",
-        f"",
-        f"# Use derated clock period",
+        "",
+        "# Use derated clock period",
         f"create_clock -period {period_ns:.3f} -name clk [get_ports clk]",
-        f"",
+        "",
     ]
 
     if analysis.hotspot_risk in ("medium", "high"):
-        lines.extend([
-            f"# DSP spreading across {dsp_columns} columns to reduce hotspots",
-            f"set_property LOC DSP48E2_X0Y0 "
-            f"[get_cells -hier -filter {{REF_NAME =~ DSP*}} -limit 1]",
-            f"",
-            f"# Soft placement constraint: spread DSPs",
-            f"set_property C_REG 1 [get_cells -hier -filter {{REF_NAME =~ DSP*}}]",
-            f"",
-        ])
+        lines.extend(
+            [
+                f"# DSP spreading across {dsp_columns} columns to reduce hotspots",
+                "set_property LOC DSP48E2_X0Y0 "
+                "[get_cells -hier -filter {REF_NAME =~ DSP*} -limit 1]",
+                "",
+                "# Soft placement constraint: spread DSPs",
+                "set_property C_REG 1 [get_cells -hier -filter {REF_NAME =~ DSP*}]",
+                "",
+            ]
+        )
 
     if not analysis.thermal_safe:
-        lines.extend([
-            f"# WARNING: Junction temperature {analysis.junction_temp_c}°C "
-            f"exceeds limit!",
-            f"# Consider: reduce clock, add heatsink, or reduce neuron count.",
-            f"",
-        ])
+        lines.extend(
+            [
+                f"# WARNING: Junction temperature {analysis.junction_temp_c}°C exceeds limit!",
+                "# Consider: reduce clock, add heatsink, or reduce neuron count.",
+                "",
+            ]
+        )
 
     return "\n".join(lines)
 
@@ -1312,6 +1335,7 @@ def generate_thermal_constraints(
 # ═══════════════════════════════════════════════════════════════════════
 # 10. Weight ROM / Synaptic Weight Generation
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def generate_weight_rom(
     weights: list[list[int]],
@@ -1352,8 +1376,8 @@ def generate_weight_rom(
         lines = [
             "; Auto-generated Xilinx .coe weight file",
             f"; SC-NeuroCore: {n_src}×{n_dst} synaptic weights",
-            f"memory_initialization_radix=16;",
-            f"memory_initialization_vector=",
+            "memory_initialization_radix=16;",
+            "memory_initialization_vector=",
         ]
         for i, w in enumerate(flat_weights):
             val = w & ((1 << data_width) - 1)
@@ -1363,13 +1387,13 @@ def generate_weight_rom(
 
     elif output_format == "mif":
         lines = [
-            f"-- Auto-generated Intel .mif weight file",
+            "-- Auto-generated Intel .mif weight file",
             f"-- SC-NeuroCore: {n_src}×{n_dst} synaptic weights",
             f"WIDTH={data_width};",
             f"DEPTH={total_entries};",
-            f"ADDRESS_RADIX=UNS;",
-            f"DATA_RADIX=HEX;",
-            f"CONTENT BEGIN",
+            "ADDRESS_RADIX=UNS;",
+            "DATA_RADIX=HEX;",
+            "CONTENT BEGIN",
         ]
         for i, w in enumerate(flat_weights):
             val = w & ((1 << data_width) - 1)
@@ -1381,31 +1405,36 @@ def generate_weight_rom(
         lines = [
             f"// Auto-generated weight ROM: {module_name}",
             f"// SC-NeuroCore: {n_src}×{n_dst} synaptic weights",
-            f"",
+            "",
             f"module {module_name} (",
             f"    input  wire [{addr_w - 1}:0] addr,",
             f"    output reg  signed [{data_width - 1}:0] data",
-            f");",
-            f"",
-            f"    always @(*) begin",
-            f"        case (addr)",
+            ");",
+            "",
+            "    always @(*) begin",
+            "        case (addr)",
         ]
         for i, w in enumerate(flat_weights):
             val = w & ((1 << data_width) - 1)
-            lines.append(f"            {addr_w}'d{i}: data = {data_width}'sh{val:0{data_width // 4}x};")
-        lines.extend([
-            f"            default: data = {data_width}'sd0;",
-            f"        endcase",
-            f"    end",
-            f"",
-            f"endmodule",
-        ])
+            lines.append(
+                f"            {addr_w}'d{i}: data = {data_width}'sh{val:0{data_width // 4}x};"
+            )
+        lines.extend(
+            [
+                f"            default: data = {data_width}'sd0;",
+                "        endcase",
+                "    end",
+                "",
+                "endmodule",
+            ]
+        )
         return "\n".join(lines)
 
 
 # ═══════════════════════════════════════════════════════════════════════
 # 11. SEU / TMR Wrapper Generator
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def generate_tmr_wrapper(
     module_name: str,
@@ -1444,68 +1473,72 @@ def generate_tmr_wrapper(
 
     lines = [
         f"// Auto-generated TMR wrapper for {module_name}",
-        f"// SC-NeuroCore SEU mitigation — Triple Modular Redundancy",
+        "// SC-NeuroCore SEU mitigation — Triple Modular Redundancy",
         f"// Voter: {voter} | DO-254 DAL-A / IEC 61508 SIL-4",
-        f"// IMPORTANT: Place each instance in a separate region (PBLOCK)",
-        f"",
+        "// IMPORTANT: Place each instance in a separate region (PBLOCK)",
+        "",
         f"module {tmr_name} (",
-        f"    input  wire clk,",
-        f"    input  wire rst,",
-        f"    input  wire en,",
-        f"    input  wire signed [{w-1}:0] I_t,",
+        "    input  wire clk,",
+        "    input  wire rst,",
+        "    input  wire en,",
+        f"    input  wire signed [{w - 1}:0] I_t,",
     ]
     for sv in state_vars:
-        lines.append(f"    output wire signed [{w-1}:0] {sv}_voted,")
-    lines.append(f"    output wire spike_out,")
-    lines.append(f"    output wire seu_detected")
-    lines.append(f");")
-    lines.append(f"")
+        lines.append(f"    output wire signed [{w - 1}:0] {sv}_voted,")
+    lines.append("    output wire spike_out,")
+    lines.append("    output wire seu_detected")
+    lines.append(");")
+    lines.append("")
 
     # Instantiate three copies
     for i in range(3):
-        lines.append(f"    // ── Instance {chr(65+i)} ──")
+        lines.append(f"    // ── Instance {chr(65 + i)} ──")
         for sv in state_vars:
-            lines.append(f"    wire signed [{w-1}:0] {sv}_{chr(97+i)};")
-        lines.append(f"    wire spike_{chr(97+i)};")
-        lines.append(f"")
-        lines.append(f"    {module_name} inst_{chr(97+i)} (")
-        lines.append(f"        .clk(clk), .rst(rst), .en(en), .I_t(I_t),")
+            lines.append(f"    wire signed [{w - 1}:0] {sv}_{chr(97 + i)};")
+        lines.append(f"    wire spike_{chr(97 + i)};")
+        lines.append("")
+        lines.append(f"    {module_name} inst_{chr(97 + i)} (")
+        lines.append("        .clk(clk), .rst(rst), .en(en), .I_t(I_t),")
         for sv in state_vars:
-            lines.append(f"        .{sv}_next({sv}_{chr(97+i)}),")
-        lines.append(f"        .spike_out(spike_{chr(97+i)})")
-        lines.append(f"    );")
-        lines.append(f"")
+            lines.append(f"        .{sv}_next({sv}_{chr(97 + i)}),")
+        lines.append(f"        .spike_out(spike_{chr(97 + i)})")
+        lines.append("    );")
+        lines.append("")
 
     # Majority voter
-    lines.append(f"    // ── Majority Voter ──")
+    lines.append("    // ── Majority Voter ──")
     if voter == "majority":
         for sv in state_vars:
             a, b, c = f"{sv}_a", f"{sv}_b", f"{sv}_c"
-            lines.extend([
-                f"    assign {sv}_voted = ({a} & {b}) | ({b} & {c}) | ({a} & {c});",
-            ])
+            lines.extend(
+                [
+                    f"    assign {sv}_voted = ({a} & {b}) | ({b} & {c}) | ({a} & {c});",
+                ]
+            )
         lines.append(
-            f"    assign spike_out = (spike_a & spike_b) | "
-            f"(spike_b & spike_c) | (spike_a & spike_c);"
+            "    assign spike_out = (spike_a & spike_b) | "
+            "(spike_b & spike_c) | (spike_a & spike_c);"
         )
     else:  # median
         for sv in state_vars:
             a, b, c = f"{sv}_a", f"{sv}_b", f"{sv}_c"
-            lines.extend([
-                f"    // Median: sort three values, pick middle",
-                f"    wire signed [{w-1}:0] {sv}_min = "
-                f"($signed({a}) < $signed({b})) ? "
-                f"(($signed({a}) < $signed({c})) ? {a} : {c}) : "
-                f"(($signed({b}) < $signed({c})) ? {b} : {c});",
-                f"    wire signed [{w-1}:0] {sv}_max = "
-                f"($signed({a}) > $signed({b})) ? "
-                f"(($signed({a}) > $signed({c})) ? {a} : {c}) : "
-                f"(($signed({b}) > $signed({c})) ? {b} : {c});",
-                f"    assign {sv}_voted = {a} + {b} + {c} - {sv}_min - {sv}_max;",
-            ])
+            lines.extend(
+                [
+                    "    // Median: sort three values, pick middle",
+                    f"    wire signed [{w - 1}:0] {sv}_min = "
+                    f"($signed({a}) < $signed({b})) ? "
+                    f"(($signed({a}) < $signed({c})) ? {a} : {c}) : "
+                    f"(($signed({b}) < $signed({c})) ? {b} : {c});",
+                    f"    wire signed [{w - 1}:0] {sv}_max = "
+                    f"($signed({a}) > $signed({b})) ? "
+                    f"(($signed({a}) > $signed({c})) ? {a} : {c}) : "
+                    f"(($signed({b}) > $signed({c})) ? {b} : {c});",
+                    f"    assign {sv}_voted = {a} + {b} + {c} - {sv}_min - {sv}_max;",
+                ]
+            )
         lines.append(
-            f"    assign spike_out = (spike_a & spike_b) | "
-            f"(spike_b & spike_c) | (spike_a & spike_c);"
+            "    assign spike_out = (spike_a & spike_b) | "
+            "(spike_b & spike_c) | (spike_a & spike_c);"
         )
 
     # SEU detection: any mismatch
@@ -1517,8 +1550,8 @@ def generate_tmr_wrapper(
     mismatch_terms.append("(spike_a != spike_b)")
     mismatch_terms.append("(spike_b != spike_c)")
     lines.append(f"    assign seu_detected = {' | '.join(mismatch_terms)};")
-    lines.append(f"")
-    lines.append(f"endmodule")
+    lines.append("")
+    lines.append("endmodule")
 
     return "\n".join(lines)
 
@@ -1526,6 +1559,7 @@ def generate_tmr_wrapper(
 # ═══════════════════════════════════════════════════════════════════════
 # 12. Model Checksum / Hash Embedding
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def embed_model_checksum(
     verilog: str,
@@ -1587,6 +1621,7 @@ def embed_model_checksum(
 # ═══════════════════════════════════════════════════════════════════════
 # 13. Auto-Quantisation Sweep
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class QuantSweepResult:
@@ -1686,19 +1721,21 @@ def auto_quantisation_sweep(
 
         # Numerical range
         int_bits = dw - frac - 1  # sign bit
-        max_repr = (2.0 ** int_bits) - (2.0 ** (-frac))
+        max_repr = (2.0**int_bits) - (2.0 ** (-frac))
         min_step = 2.0 ** (-frac)
 
-        results.append(QuantSweepResult(
-            data_width=dw,
-            fraction=frac,
-            guard_bits=guard,
-            estimated_luts=luts,
-            estimated_dsps=dsps,
-            estimated_ffs=ffs,
-            max_representable=max_repr,
-            min_step=min_step,
-        ))
+        results.append(
+            QuantSweepResult(
+                data_width=dw,
+                fraction=frac,
+                guard_bits=guard,
+                estimated_luts=luts,
+                estimated_dsps=dsps,
+                estimated_ffs=ffs,
+                max_representable=max_repr,
+                min_step=min_step,
+            )
+        )
 
     return results
 
@@ -1719,10 +1756,8 @@ def format_quantisation_report(results: list[QuantSweepResult]) -> str:
     lines = [
         "# SC-NeuroCore Quantisation Sweep Report",
         "",
-        "| Width | Frac | Q-format | Guard | LUTs | DSPs | FFs "
-        "| Max Value | LSB Step |",
-        "|------:|-----:|----------|------:|-----:|-----:|----:"
-        "|---------:|--------:|",
+        "| Width | Frac | Q-format | Guard | LUTs | DSPs | FFs | Max Value | LSB Step |",
+        "|------:|-----:|----------|------:|-----:|-----:|----:|---------:|--------:|",
     ]
     for r in results:
         qfmt = f"Q{r.data_width - r.fraction}.{r.fraction}"
@@ -1738,6 +1773,7 @@ def format_quantisation_report(results: list[QuantSweepResult]) -> str:
 # ═══════════════════════════════════════════════════════════════════════
 # 14. MZI / Optical Weight Encoding
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class MZIWeightEncoding:
@@ -1855,12 +1891,16 @@ def generate_mzi_config(
     """
     if output_format == "json":
         import json
-        return json.dumps({
-            "mesh_size": encoding.mesh_size,
-            "phases_theta": encoding.phases_theta,
-            "phases_phi": encoding.phases_phi,
-            "transmission": encoding.transmission,
-        }, indent=2)
+
+        return json.dumps(
+            {
+                "mesh_size": encoding.mesh_size,
+                "phases_theta": encoding.phases_theta,
+                "phases_phi": encoding.phases_phi,
+                "transmission": encoding.transmission,
+            },
+            indent=2,
+        )
     else:  # CSV
         lines = ["row,col,theta,phi,transmission"]
         for i, (t_row, p_row, tr_row) in enumerate(
@@ -1874,6 +1914,7 @@ def generate_mzi_config(
 # ═══════════════════════════════════════════════════════════════════════
 # 15. PIM Data Layout Planner
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class PIMLayout:
@@ -1950,9 +1991,7 @@ def plan_pim_layout(
     neurons_per_bank = max(1, -(-neuron_count // banks_used))
     weights_per_bank = max(1, -(-synapse_count // banks_used))
 
-    used_bytes_per_bank = (
-        neurons_per_bank * bytes_per_val + weights_per_bank * bytes_per_val
-    )
+    used_bytes_per_bank = neurons_per_bank * bytes_per_val + weights_per_bank * bytes_per_val
     utilisation = min(1.0, used_bytes_per_bank / bank_bytes)
 
     # Layout: first half for neuron state, second half for weights
@@ -1977,6 +2016,7 @@ def plan_pim_layout(
 # ═══════════════════════════════════════════════════════════════════════
 # 16. Power Domain / Clock Gating Wrapper
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def generate_power_domain_wrapper(
     module_name: str,
@@ -2026,106 +2066,124 @@ def generate_power_domain_wrapper(
 
     lines = [
         f"// Auto-generated power domain wrapper for {module_name}",
-        f"// SC-NeuroCore — clock/power gating for ultra-low-power edge",
+        "// SC-NeuroCore — clock/power gating for ultra-low-power edge",
         f"// Wakeup latency: {wakeup_cycles} cycles",
-        f"",
+        "",
         f"module {pg_name} (",
-        f"    input  wire clk,",
-        f"    input  wire rst,",
-        f"    input  wire en,",
-        f"    input  wire power_down,     // Active-high power-down request",
-        f"    input  wire signed [{w-1}:0] I_t,",
+        "    input  wire clk,",
+        "    input  wire rst,",
+        "    input  wire en,",
+        "    input  wire power_down,     // Active-high power-down request",
+        f"    input  wire signed [{w - 1}:0] I_t,",
     ]
     for sv in state_vars:
-        lines.append(f"    output reg  signed [{w-1}:0] {sv}_out,")
+        lines.append(f"    output reg  signed [{w - 1}:0] {sv}_out,")
     for sig in always_on_signals:
         lines.append(f"    output wire {sig},")
-    lines.append(f"    output wire power_state       // 0=active, 1=power-down")
-    lines.append(f");")
-    lines.append(f"")
+    lines.append("    output wire power_state       // 0=active, 1=power-down")
+    lines.append(");")
+    lines.append("")
 
     # ICG cell
-    lines.extend([
-        f"    // ── Integrated Clock Gating ──",
-        f"    wire gated_clk;",
-        f"    reg  clk_enable;",
-        f"    always @(negedge clk)",
-        f"        clk_enable <= en & ~power_down;",
-        f"    assign gated_clk = clk & clk_enable;",
-        f"",
-    ])
+    lines.extend(
+        [
+            "    // ── Integrated Clock Gating ──",
+            "    wire gated_clk;",
+            "    reg  clk_enable;",
+            "    always @(negedge clk)",
+            "        clk_enable <= en & ~power_down;",
+            "    assign gated_clk = clk & clk_enable;",
+            "",
+        ]
+    )
 
     # Wakeup counter
-    lines.extend([
-        f"    // ── Wakeup sequencer ──",
-        f"    reg [{wk_bits-1}:0] wakeup_cnt;",
-        f"    reg  active;",
-        f"    always @(posedge clk or posedge rst) begin",
-        f"        if (rst) begin",
-        f"            wakeup_cnt <= 0;",
-        f"            active <= 0;",
-        f"        end else if (power_down) begin",
-        f"            wakeup_cnt <= 0;",
-        f"            active <= 0;",
-        f"        end else if (!active) begin",
-        f"            if (wakeup_cnt == {wakeup_cycles - 1})",
-        f"                active <= 1;",
-        f"            else",
-        f"                wakeup_cnt <= wakeup_cnt + 1;",
-        f"        end",
-        f"    end",
-        f"    assign power_state = ~active;",
-        f"",
-    ])
+    lines.extend(
+        [
+            "    // ── Wakeup sequencer ──",
+            f"    reg [{wk_bits - 1}:0] wakeup_cnt;",
+            "    reg  active;",
+            "    always @(posedge clk or posedge rst) begin",
+            "        if (rst) begin",
+            "            wakeup_cnt <= 0;",
+            "            active <= 0;",
+            "        end else if (power_down) begin",
+            "            wakeup_cnt <= 0;",
+            "            active <= 0;",
+            "        end else if (!active) begin",
+            f"            if (wakeup_cnt == {wakeup_cycles - 1})",
+            "                active <= 1;",
+            "            else",
+            "                wakeup_cnt <= wakeup_cnt + 1;",
+            "        end",
+            "    end",
+            "    assign power_state = ~active;",
+            "",
+        ]
+    )
 
     # Inner module instance
-    lines.extend([
-        f"    // ── Inner neuron (gated clock domain) ──",
-    ])
+    lines.extend(
+        [
+            "    // ── Inner neuron (gated clock domain) ──",
+        ]
+    )
     for sv in state_vars:
-        lines.append(f"    wire signed [{w-1}:0] {sv}_inner;")
-    lines.extend([
-        f"    wire spike_inner;",
-        f"",
-        f"    {module_name} core (",
-        f"        .clk(gated_clk), .rst(rst), .en(active),",
-        f"        .I_t(I_t),",
-    ])
+        lines.append(f"    wire signed [{w - 1}:0] {sv}_inner;")
+    lines.extend(
+        [
+            "    wire spike_inner;",
+            "",
+            f"    {module_name} core (",
+            "        .clk(gated_clk), .rst(rst), .en(active),",
+            "        .I_t(I_t),",
+        ]
+    )
     for sv in state_vars:
         lines.append(f"        .{sv}_next({sv}_inner),")
-    lines.extend([
-        f"        .spike_out(spike_inner)",
-        f"    );",
-        f"",
-    ])
+    lines.extend(
+        [
+            "        .spike_out(spike_inner)",
+            "    );",
+            "",
+        ]
+    )
 
     # State retention
-    lines.extend([
-        f"    // ── State retention latches ──",
-        f"    always @(posedge clk or posedge rst) begin",
-        f"        if (rst) begin",
-    ])
+    lines.extend(
+        [
+            "    // ── State retention latches ──",
+            "    always @(posedge clk or posedge rst) begin",
+            "        if (rst) begin",
+        ]
+    )
     for sv in state_vars:
         lines.append(f"            {sv}_out <= 0;")
-    lines.extend([
-        f"        end else if (active) begin",
-    ])
+    lines.extend(
+        [
+            "        end else if (active) begin",
+        ]
+    )
     for sv in state_vars:
         lines.append(f"            {sv}_out <= {sv}_inner;")
-    lines.extend([
-        f"        end",
-        f"        // Else: retain previous value (power-down)",
-        f"    end",
-        f"",
-    ])
+    lines.extend(
+        [
+            "        end",
+            "        // Else: retain previous value (power-down)",
+            "    end",
+            "",
+        ]
+    )
 
     # Always-on spike detection
-    lines.extend([
-        f"    // ── Always-on domain (ungated) ──",
-        f"    assign spike_out = active ? spike_inner : 1'b0;",
-        f"",
-        f"endmodule",
-    ])
+    lines.extend(
+        [
+            "    // ── Always-on domain (ungated) ──",
+            "    assign spike_out = active ? spike_inner : 1'b0;",
+            "",
+            "endmodule",
+        ]
+    )
 
     return "\n".join(lines)
 
@@ -2133,6 +2191,7 @@ def generate_power_domain_wrapper(
 # ═══════════════════════════════════════════════════════════════════════
 # 17. HLS-C Export
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def generate_hls_cpp(
     module_name: str,
@@ -2175,54 +2234,64 @@ def generate_hls_cpp(
         f"// Auto-generated HLS C++ for {module_name}",
         f"// SC-NeuroCore — {hls_tool.upper()} HLS export",
         f"// Q{int_bits}.{fraction} fixed-point ({data_width}-bit)",
-        f"",
+        "",
         f"#ifndef {guard}_HLS_H",
         f"#define {guard}_HLS_H",
-        f"",
-        f'#include "ap_fixed.h"',
-        f"",
+        "",
+        '#include "ap_fixed.h"',
+        "",
         f"typedef {ap_type} fp_t;",
-        f"",
+        "",
     ]
 
     # Struct for state variables
-    lines.extend([
-        f"struct {module_name}_state {{",
-    ])
+    lines.extend(
+        [
+            f"struct {module_name}_state {{",
+        ]
+    )
     for sv in equations:
         lines.append(f"    fp_t {sv};")
-    lines.extend([
-        f"    bool spike;",
-        "};",
-        f"",
-    ])
+    lines.extend(
+        [
+            "    bool spike;",
+            "};",
+            "",
+        ]
+    )
 
     # Main function
-    lines.extend([
-        f"void {module_name}(",
-        f"    fp_t I_t,",
-    ])
+    lines.extend(
+        [
+            f"void {module_name}(",
+            "    fp_t I_t,",
+        ]
+    )
     for sv in equations:
         lines.append(f"    fp_t &{sv},")
-    lines.extend([
-        "    bool &spike_out",
-        f") {{",
-    ])
+    lines.extend(
+        [
+            "    bool &spike_out",
+            ") {",
+        ]
+    )
 
     # HLS pragmas
     if hls_tool == "vitis":
-        lines.extend([
-            f"    #pragma HLS PIPELINE II=1",
-            f"    #pragma HLS INTERFACE ap_ctrl_none port=return",
-            f"    #pragma HLS INTERFACE ap_none port=I_t",
-        ])
+        lines.extend(
+            [
+                "    #pragma HLS PIPELINE II=1",
+                "    #pragma HLS INTERFACE ap_ctrl_none port=return",
+                "    #pragma HLS INTERFACE ap_none port=I_t",
+            ]
+        )
         for sv in equations:
             lines.append(f"    #pragma HLS INTERFACE ap_none port={sv}")
-        lines.append(f"    #pragma HLS INTERFACE ap_none port=spike_out")
+        lines.append("    #pragma HLS INTERFACE ap_none port=spike_out")
     else:  # catapult
-        lines.append(f"    // Catapult: pipeline directive applied at synthesis")
+        lines.append("    // Catapult: pipeline directive applied at synthesis")
 
-    lines.append(f"")
+    lines.append("")
 
     # Equations
     for sv, expr in equations.items():
@@ -2230,26 +2299,30 @@ def generate_hls_cpp(
         c_expr = expr
         lines.append(f"    fp_t {sv}_next = (fp_t)({c_expr});")
 
-    lines.append(f"")
+    lines.append("")
 
     # Threshold / spike detection
     first_sv = list(equations.keys())[0]
-    lines.extend([
-        f"    // Threshold detection",
-        f"    const fp_t V_THRESH = (fp_t)(1.0);  // Configurable",
-        f"    spike_out = ({first_sv}_next > V_THRESH);",
-        f"",
-    ])
+    lines.extend(
+        [
+            "    // Threshold detection",
+            "    const fp_t V_THRESH = (fp_t)(1.0);  // Configurable",
+            f"    spike_out = ({first_sv}_next > V_THRESH);",
+            "",
+        ]
+    )
 
     # Update state
     for sv in equations:
         lines.append(f"    {sv} = {sv}_next;")
 
-    lines.extend([
-        f"}}",
-        f"",
-        f"#endif // {guard}_HLS_H",
-    ])
+    lines.extend(
+        [
+            "}",
+            "",
+            f"#endif // {guard}_HLS_H",
+        ]
+    )
 
     return "\n".join(lines)
 
@@ -2257,6 +2330,7 @@ def generate_hls_cpp(
 # ═══════════════════════════════════════════════════════════════════════
 # 18. Bitstream Encryption Wrapper
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def generate_bitstream_encryption(
     module_name: str,
@@ -2293,22 +2367,22 @@ def generate_bitstream_encryption(
             f"# Bitstream encryption for {module_name}",
             f"# SC-NeuroCore — Xilinx AES-{key_length} secure boot",
             f"# Key source: {key_source}",
-            f"",
-            f"# ── Vivado TCL commands ──",
-            f"set_property BITSTREAM.ENCRYPTION.ENCRYPT YES [current_design]",
+            "",
+            "# ── Vivado TCL commands ──",
+            "set_property BITSTREAM.ENCRYPTION.ENCRYPT YES [current_design]",
             f"set_property BITSTREAM.ENCRYPTION.ENCRYPTKEYSELECT {key_source.upper()} [current_design]",
-            f"set_property BITSTREAM.ENCRYPTION.KEYLIFE {{100}} [current_design]",
-            f"",
-            f"# ── Key file reference ──",
+            "set_property BITSTREAM.ENCRYPTION.KEYLIFE {100} [current_design]",
+            "",
+            "# ── Key file reference ──",
             f"# Generate key: write_bitstream -encrypt -encrypt_key_file {module_name}.nky",
             f"set_property BITSTREAM.ENCRYPTION.KEYFILE {{{module_name}.nky}} [current_design]",
-            f"",
-            f"# ── Tamper detection ──",
-            f"set_property BITSTREAM.CONFIG.USR_ACCESS TIMESTAMP [current_design]",
-            f"set_property BITSTREAM.CONFIG.SECURITY_LEVEL LEVEL2 [current_design]",
-            f"",
-            f"# ── Authentication (optional HMAC) ──",
-            f"# set_property BITSTREAM.AUTHENTICATION.AUTHENTICATE YES [current_design]",
+            "",
+            "# ── Tamper detection ──",
+            "set_property BITSTREAM.CONFIG.USR_ACCESS TIMESTAMP [current_design]",
+            "set_property BITSTREAM.CONFIG.SECURITY_LEVEL LEVEL2 [current_design]",
+            "",
+            "# ── Authentication (optional HMAC) ──",
+            "# set_property BITSTREAM.AUTHENTICATION.AUTHENTICATE YES [current_design]",
             f"# set_property BITSTREAM.AUTHENTICATION.HMACKEY_FILE {{{module_name}.hmac}} [current_design]",
         ]
     else:  # Intel
@@ -2316,17 +2390,17 @@ def generate_bitstream_encryption(
             f"# Bitstream encryption for {module_name}",
             f"# SC-NeuroCore — Intel/Altera AES-{key_length} secure boot",
             f"# Key source: {key_source}",
-            f"",
-            f"# ── Quartus Settings ──",
+            "",
+            "# ── Quartus Settings ──",
             f'set_global_assignment -name ENCRYPTION_KEY_SOURCE "{key_source.upper()}"',
             f'set_global_assignment -name ENCRYPTION_SECURITY_KEY "{module_name}_key"',
-            f'set_global_assignment -name ENABLE_CONFIGURATION_BITSTREAM_ENCRYPTION ON',
-            f"",
-            f"# ── Anti-tamper ──",
-            f'set_global_assignment -name ENABLE_ANTI_TAMPER ON',
-            f'set_global_assignment -name ANTI_TAMPER_SCHEME "DETECT"',
-            f"",
-            f"# ── Secure device setup ──",
+            "set_global_assignment -name ENABLE_CONFIGURATION_BITSTREAM_ENCRYPTION ON",
+            "",
+            "# ── Anti-tamper ──",
+            "set_global_assignment -name ENABLE_ANTI_TAMPER ON",
+            'set_global_assignment -name ANTI_TAMPER_SCHEME "DETECT"',
+            "",
+            "# ── Secure device setup ──",
             f"# quartus_pgm --jtag --encrypt --key {module_name}.key",
         ]
 
@@ -2336,6 +2410,7 @@ def generate_bitstream_encryption(
 # ═══════════════════════════════════════════════════════════════════════
 # 19. UCIe Partitioning Advisor
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class UCIePartition:
@@ -2447,6 +2522,7 @@ def advise_ucie_partition(
 # 20. CXL Coherence Advisor
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @dataclass
 class CXLMapping:
     """CXL.mem Type-3 mapping for neuron state.
@@ -2514,7 +2590,7 @@ def advise_cxl_mapping(
     state_bytes = neuron_count * bytes_per_val * 4  # 4 state vars avg
     weight_bytes = synapse_count * bytes_per_val
     total_bytes = state_bytes + weight_bytes
-    total_gb = total_bytes / (1024 ** 3)
+    total_gb = total_bytes / (1024**3)
 
     devices_needed = max(1, int(-(-total_gb // device_capacity_gb)))
     devices_used = min(devices_needed, max_devices)
@@ -2549,6 +2625,7 @@ def advise_cxl_mapping(
 # ═══════════════════════════════════════════════════════════════════════
 # 21. On-Chip Learning Export
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class OnChipLearningParams:
@@ -2706,6 +2783,7 @@ def export_learning_config(
 # 22. Stochastic Weight Noise Injection
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @dataclass
 class WeightNoiseProfile:
     """Device-variation noise model for analog/memristive targets.
@@ -2782,6 +2860,7 @@ def inject_weight_noise(
                 sign = 1 if w >= 0 else -1
                 log_noise = rng.gauss(0, sigma)
                 import math
+
                 noise = sign * abs(w) * (math.exp(log_noise) - 1.0)
             noisy_row.append(round(w + noise, 8))
         noisy.append(noisy_row)
@@ -2829,6 +2908,7 @@ def create_noise_profile(
 # ═══════════════════════════════════════════════════════════════════════
 # 23. Pipeline Register Wrapper
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def generate_pipeline_wrapper(
     module_name: str,
@@ -2887,108 +2967,122 @@ def generate_pipeline_wrapper(
         f"// Auto-generated pipeline wrapper for {module_name}",
         f"// SC-NeuroCore — {stages}-stage pipeline for {freq} MHz",
         f"// Critical path depth: {max_depth} DSP blocks",
-        f"",
+        "",
         f"module {pipe_name} (",
-        f"    input  wire clk,",
-        f"    input  wire rst,",
-        f"    input  wire en,",
-        f"    input  wire valid_in,",
-        f"    input  wire signed [{w-1}:0] I_t,",
-        f"    output wire signed [{w-1}:0] v_out,",
-        f"    output wire spike_out,",
-        f"    output wire valid_out,",
-        f"    output wire [{stages.bit_length()-1}:0] latency",
-        f");",
-        f"",
-        f"    // Pipeline latency (constant)",
+        "    input  wire clk,",
+        "    input  wire rst,",
+        "    input  wire en,",
+        "    input  wire valid_in,",
+        f"    input  wire signed [{w - 1}:0] I_t,",
+        f"    output wire signed [{w - 1}:0] v_out,",
+        "    output wire spike_out,",
+        "    output wire valid_out,",
+        f"    output wire [{stages.bit_length() - 1}:0] latency",
+        ");",
+        "",
+        "    // Pipeline latency (constant)",
         f"    assign latency = {stages};",
-        f"",
+        "",
     ]
 
     # Input pipeline registers
-    lines.extend([
-        f"    // ── Input pipeline registers ──",
-    ])
+    lines.extend(
+        [
+            "    // ── Input pipeline registers ──",
+        ]
+    )
     for s in range(stages):
         if s == 0:
-            lines.append(f"    reg signed [{w-1}:0] I_pipe_{s};")
+            lines.append(f"    reg signed [{w - 1}:0] I_pipe_{s};")
         else:
-            lines.append(f"    reg signed [{w-1}:0] I_pipe_{s};")
-    lines.append(f"")
+            lines.append(f"    reg signed [{w - 1}:0] I_pipe_{s};")
+    lines.append("")
 
-    lines.extend([
-        f"    always @(posedge clk or posedge rst) begin",
-        f"        if (rst) begin",
-    ])
+    lines.extend(
+        [
+            "    always @(posedge clk or posedge rst) begin",
+            "        if (rst) begin",
+        ]
+    )
     for s in range(stages):
         lines.append(f"            I_pipe_{s} <= 0;")
-    lines.extend([
-        f"        end else if (en) begin",
-        f"            I_pipe_0 <= I_t;",
-    ])
+    lines.extend(
+        [
+            "        end else if (en) begin",
+            "            I_pipe_0 <= I_t;",
+        ]
+    )
     for s in range(1, stages):
-        lines.append(f"            I_pipe_{s} <= I_pipe_{s-1};")
-    lines.extend([
-        f"        end",
-        f"    end",
-        f"",
-    ])
+        lines.append(f"            I_pipe_{s} <= I_pipe_{s - 1};")
+    lines.extend(
+        [
+            "        end",
+            "    end",
+            "",
+        ]
+    )
 
     # Valid pipeline (shift register)
-    lines.extend([
-        f"    // ── Valid pipeline ──",
-        f"    reg [{stages-1}:0] valid_pipe;",
-        f"    always @(posedge clk or posedge rst) begin",
-        f"        if (rst)",
-        f"            valid_pipe <= 0;",
-        f"        else if (en)",
-    ])
+    lines.extend(
+        [
+            "    // ── Valid pipeline ──",
+            f"    reg [{stages - 1}:0] valid_pipe;",
+            "    always @(posedge clk or posedge rst) begin",
+            "        if (rst)",
+            "            valid_pipe <= 0;",
+            "        else if (en)",
+        ]
+    )
     if stages == 1:
-        lines.append(f"            valid_pipe[0] <= valid_in;")
+        lines.append("            valid_pipe[0] <= valid_in;")
     else:
-        lines.append(
-            f"            valid_pipe <= {{valid_pipe[{stages-2}:0], valid_in}};"
-        )
-    lines.extend([
-        f"    end",
-        f"    assign valid_out = valid_pipe[{stages-1}];",
-        f"",
-    ])
+        lines.append(f"            valid_pipe <= {{valid_pipe[{stages - 2}:0], valid_in}};")
+    lines.extend(
+        [
+            "    end",
+            f"    assign valid_out = valid_pipe[{stages - 1}];",
+            "",
+        ]
+    )
 
     # Inner module instantiation (fed from last pipeline stage)
-    lines.extend([
-        f"    // ── Inner neuron (combinational) ──",
-        f"    wire signed [{w-1}:0] v_comb;",
-        f"    wire spike_comb;",
-        f"",
-        f"    {module_name} core (",
-        f"        .clk(clk), .rst(rst), .en(en),",
-        f"        .I_t(I_pipe_{stages-1}),",
-        f"        .v_next(v_comb),",
-        f"        .spike_out(spike_comb)",
-        f"    );",
-        f"",
-    ])
+    lines.extend(
+        [
+            "    // ── Inner neuron (combinational) ──",
+            f"    wire signed [{w - 1}:0] v_comb;",
+            "    wire spike_comb;",
+            "",
+            f"    {module_name} core (",
+            "        .clk(clk), .rst(rst), .en(en),",
+            f"        .I_t(I_pipe_{stages - 1}),",
+            "        .v_next(v_comb),",
+            "        .spike_out(spike_comb)",
+            "    );",
+            "",
+        ]
+    )
 
     # Output register
-    lines.extend([
-        f"    // ── Output register ──",
-        f"    reg signed [{w-1}:0] v_reg;",
-        f"    reg spike_reg;",
-        f"    always @(posedge clk or posedge rst) begin",
-        f"        if (rst) begin",
-        f"            v_reg <= 0;",
-        f"            spike_reg <= 0;",
-        f"        end else if (en) begin",
-        f"            v_reg <= v_comb;",
-        f"            spike_reg <= spike_comb;",
-        f"        end",
-        f"    end",
-        f"    assign v_out = v_reg;",
-        f"    assign spike_out = spike_reg;",
-        f"",
-        f"endmodule",
-    ])
+    lines.extend(
+        [
+            "    // ── Output register ──",
+            f"    reg signed [{w - 1}:0] v_reg;",
+            "    reg spike_reg;",
+            "    always @(posedge clk or posedge rst) begin",
+            "        if (rst) begin",
+            "            v_reg <= 0;",
+            "            spike_reg <= 0;",
+            "        end else if (en) begin",
+            "            v_reg <= v_comb;",
+            "            spike_reg <= spike_comb;",
+            "        end",
+            "    end",
+            "    assign v_out = v_reg;",
+            "    assign spike_out = spike_reg;",
+            "",
+            "endmodule",
+        ]
+    )
 
     return "\n".join(lines)
 
@@ -2996,6 +3090,7 @@ def generate_pipeline_wrapper(
 # ═══════════════════════════════════════════════════════════════════════
 # 24. Multi-Target Comparison Report
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class TargetComparison:
@@ -3087,18 +3182,20 @@ def compare_targets(
 
         stages = pipeline_stages_needed(max_depth, freq)
 
-        results.append(TargetComparison(
-            target=tgt,
-            data_width=dw,
-            fraction=frac,
-            overflow=profile.overflow,
-            dsp_block=profile.dsp_block,
-            max_freq_mhz=profile.max_freq_mhz,
-            estimated_luts=luts,
-            estimated_dsps=dsps,
-            pipeline_stages=stages,
-            critical_path_depth=max_depth,
-        ))
+        results.append(
+            TargetComparison(
+                target=tgt,
+                data_width=dw,
+                fraction=frac,
+                overflow=profile.overflow,
+                dsp_block=profile.dsp_block,
+                max_freq_mhz=profile.max_freq_mhz,
+                estimated_luts=luts,
+                estimated_dsps=dsps,
+                pipeline_stages=stages,
+                critical_path_depth=max_depth,
+            )
+        )
 
     return results
 
@@ -3119,10 +3216,8 @@ def format_comparison_report(results: list[TargetComparison]) -> str:
     lines = [
         "# SC-NeuroCore Multi-Target Comparison Report",
         "",
-        "| Target | Width | Frac | Overflow | DSP | Freq (MHz) "
-        "| LUTs | DSPs | Pipeline | Depth |",
-        "|--------|------:|-----:|----------|-----|----------:"
-        "|-----:|-----:|---------:|------:|",
+        "| Target | Width | Frac | Overflow | DSP | Freq (MHz) | LUTs | DSPs | Pipeline | Depth |",
+        "|--------|------:|-----:|----------|-----|----------:|-----:|-----:|---------:|------:|",
     ]
     for r in results:
         freq_str = str(r.max_freq_mhz) if r.max_freq_mhz else "N/A"
@@ -3138,6 +3233,7 @@ def format_comparison_report(results: list[TargetComparison]) -> str:
 # ═══════════════════════════════════════════════════════════════════════
 # 25. Compilation Summary Report
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def generate_compilation_summary(
     module_name: str,
@@ -3203,70 +3299,74 @@ def generate_compilation_summary(
     ffs = len(equations) * data_width
 
     lines = [
-        f"# SC-NeuroCore Compilation Summary",
-        f"",
+        "# SC-NeuroCore Compilation Summary",
+        "",
         f"## Module: `{module_name}`",
-        f"",
-        f"### Equations",
-        f"",
+        "",
+        "### Equations",
+        "",
     ]
     for sv, expr in equations.items():
         lines.append(f"- `{sv}' = {expr}`")
 
-    lines.extend([
-        f"",
-        f"### Target Platform",
-        f"",
-        f"| Property | Value |",
-        f"|----------|-------|",
-        f"| Platform | {profile.name} |",
-        f"| Vendor | {profile.vendor} |",
-        f"| Family | {profile.family} |",
-        f"| Class | {profile.platform_class} |",
-        f"| Max Frequency | {freq} MHz |",
-        f"| DSP Block | {profile.dsp_block or 'None'} |",
-        f"",
-        f"### Fixed-Point Configuration",
-        f"",
-        f"| Property | Value |",
-        f"|----------|-------|",
-        f"| Format | Q{int_bits+1}.{fraction} |",
-        f"| Data Width | {data_width} bits |",
-        f"| Integer Bits | {int_bits+1} (incl. sign) |",
-        f"| Fractional Bits | {fraction} |",
-        f"| Overflow | {profile.overflow} |",
-        f"| Rounding | {profile.rounding} |",
-        f"| Guard Bits | {max_guard} |",
-        f"| Max Representable | {(2.0 ** int_bits) - (2.0 ** (-fraction)):.4f} |",
-        f"| LSB Resolution | {2.0 ** (-fraction):.2e} |",
-        f"",
-        f"### Resource Estimation",
-        f"",
-        f"| Resource | Count |",
-        f"|----------|------:|",
-        f"| LUTs | {luts} |",
-        f"| DSPs | {dsps} |",
-        f"| Flip-Flops | {ffs} |",
-        f"| Multiplies | {mul_count} |",
-        f"| Adds/Subs | {add_count} |",
-        f"",
-        f"### Pipeline Analysis",
-        f"",
-        f"| Property | Value |",
-        f"|----------|------:|",
-        f"| Critical Path Depth | {max_depth} DSP blocks |",
-        f"| Pipeline Stages | {stages} |",
-        f"| Total Latency | {stages + 1} clock cycles |",
-        f"",
-    ])
+    lines.extend(
+        [
+            "",
+            "### Target Platform",
+            "",
+            "| Property | Value |",
+            "|----------|-------|",
+            f"| Platform | {profile.name} |",
+            f"| Vendor | {profile.vendor} |",
+            f"| Family | {profile.family} |",
+            f"| Class | {profile.platform_class} |",
+            f"| Max Frequency | {freq} MHz |",
+            f"| DSP Block | {profile.dsp_block or 'None'} |",
+            "",
+            "### Fixed-Point Configuration",
+            "",
+            "| Property | Value |",
+            "|----------|-------|",
+            f"| Format | Q{int_bits + 1}.{fraction} |",
+            f"| Data Width | {data_width} bits |",
+            f"| Integer Bits | {int_bits + 1} (incl. sign) |",
+            f"| Fractional Bits | {fraction} |",
+            f"| Overflow | {profile.overflow} |",
+            f"| Rounding | {profile.rounding} |",
+            f"| Guard Bits | {max_guard} |",
+            f"| Max Representable | {(2.0**int_bits) - (2.0 ** (-fraction)):.4f} |",
+            f"| LSB Resolution | {2.0 ** (-fraction):.2e} |",
+            "",
+            "### Resource Estimation",
+            "",
+            "| Resource | Count |",
+            "|----------|------:|",
+            f"| LUTs | {luts} |",
+            f"| DSPs | {dsps} |",
+            f"| Flip-Flops | {ffs} |",
+            f"| Multiplies | {mul_count} |",
+            f"| Adds/Subs | {add_count} |",
+            "",
+            "### Pipeline Analysis",
+            "",
+            "| Property | Value |",
+            "|----------|------:|",
+            f"| Critical Path Depth | {max_depth} DSP blocks |",
+            f"| Pipeline Stages | {stages} |",
+            f"| Total Latency | {stages + 1} clock cycles |",
+            "",
+        ]
+    )
 
     if verilog_lines > 0:
-        lines.extend([
-            f"### Output",
-            f"",
-            f"- Verilog: {verilog_lines} lines",
-            f"",
-        ])
+        lines.extend(
+            [
+                "### Output",
+                "",
+                f"- Verilog: {verilog_lines} lines",
+                "",
+            ]
+        )
 
     # Applicable features
     features = []
@@ -3283,18 +3383,22 @@ def generate_compilation_summary(
     features.append("Quantisation sweep (`auto_quantisation_sweep`)")
     features.append("HLS-C++ export (`generate_hls_cpp`)")
 
-    lines.extend([
-        f"### Applicable Features",
-        f"",
-    ])
+    lines.extend(
+        [
+            "### Applicable Features",
+            "",
+        ]
+    )
     for feat in features:
         lines.append(f"- {feat}")
 
-    lines.extend([
-        f"",
-        f"---",
-        f"*Generated by SC-NeuroCore Universal Neuromorphic Compiler*",
-    ])
+    lines.extend(
+        [
+            "",
+            "---",
+            "*Generated by SC-NeuroCore Universal Neuromorphic Compiler*",
+        ]
+    )
 
     return "\n".join(lines)
 
@@ -3302,6 +3406,7 @@ def generate_compilation_summary(
 # ═══════════════════════════════════════════════════════════════════════
 # 26. Formal Equivalence Sketch
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class EquivalenceSketch:
@@ -3366,14 +3471,16 @@ def generate_equivalence_sketch(
     for sv, expr in equations.items():
         proof_steps.append(f"   {sv}' = {expr}")
 
-    proof_steps.extend([
-        f"2. Fixed-point format: Q{data_width - fraction - 1}.{fraction} "
-        f"({data_width}-bit, LSB = {lsb})",
-        f"3. Quantisation error bound: ε ≤ {q_bound} per operation",
-        f"4. Range: [{-max_val - lsb}, {max_val}]",
-        f"5. Each arithmetic operation introduces ≤ ε truncation error",
-        f"6. For N chained operations, total error ≤ N × ε",
-    ])
+    proof_steps.extend(
+        [
+            f"2. Fixed-point format: Q{data_width - fraction - 1}.{fraction} "
+            f"({data_width}-bit, LSB = {lsb})",
+            f"3. Quantisation error bound: ε ≤ {q_bound} per operation",
+            f"4. Range: [{-max_val - lsb}, {max_val}]",
+            "5. Each arithmetic operation introduces ≤ ε truncation error",
+            "6. For N chained operations, total error ≤ N × ε",
+        ]
+    )
 
     # Count operations for error accumulation
     total_ops = 0
@@ -3383,8 +3490,7 @@ def generate_equivalence_sketch(
 
     accumulated_bound = total_ops * q_bound
     proof_steps.append(
-        f"7. Total operations: {total_ops}, "
-        f"accumulated bound: {accumulated_bound:.2e}"
+        f"7. Total operations: {total_ops}, accumulated bound: {accumulated_bound:.2e}"
     )
     proof_steps.append(
         "8. CONCLUSION: RTL output matches ODE within accumulated "
@@ -3411,6 +3517,7 @@ def generate_equivalence_sketch(
 # ═══════════════════════════════════════════════════════════════════════
 # 27. Multi-Timescale ODE Partitioner
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class TimescalePartition:
@@ -3525,6 +3632,7 @@ def partition_timescales(
 # ═══════════════════════════════════════════════════════════════════════
 # 28. Provenance Chain
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class ProvenanceRecord:
@@ -3672,6 +3780,7 @@ def format_provenance_json(chain: list[ProvenanceRecord]) -> str:
 # 29. Compliance Matrix Generator
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @dataclass
 class ComplianceEntry:
     """Single compliance requirement mapping.
@@ -3740,67 +3849,94 @@ def generate_compliance_matrix(
     entries = []
 
     if "DO-254" in standards:
-        entries.extend([
-            ComplianceEntry(
-                "DO254-1", "DO-254", "Design assurance level assignment",
-                "Compilation summary report", "covered",
-                f"{module_name}_compilation_summary.md",
-            ),
-            ComplianceEntry(
-                "DO254-2", "DO-254", "Requirement traceability",
-                "Provenance chain",
-                "covered" if has_provenance else "gap",
-                f"{module_name}_provenance.json",
-            ),
-            ComplianceEntry(
-                "DO254-3", "DO-254", "SEU mitigation",
-                "TMR wrapper with majority voter",
-                "covered" if has_tmr else "gap",
-                f"{module_name}_tmr.v",
-            ),
-            ComplianceEntry(
-                "DO254-4", "DO-254", "Formal verification",
-                "SVA assertions + SymbiYosys proof",
-                "covered" if has_sva else "partial",
-                f"{module_name}_sva.sv",
-            ),
-            ComplianceEntry(
-                "DO254-5", "DO-254", "Configuration control",
-                "Model checksum (SHA-256)",
-                "covered" if has_checksum else "gap",
-                f"{module_name}_checksum.v",
-            ),
-        ])
+        entries.extend(
+            [
+                ComplianceEntry(
+                    "DO254-1",
+                    "DO-254",
+                    "Design assurance level assignment",
+                    "Compilation summary report",
+                    "covered",
+                    f"{module_name}_compilation_summary.md",
+                ),
+                ComplianceEntry(
+                    "DO254-2",
+                    "DO-254",
+                    "Requirement traceability",
+                    "Provenance chain",
+                    "covered" if has_provenance else "gap",
+                    f"{module_name}_provenance.json",
+                ),
+                ComplianceEntry(
+                    "DO254-3",
+                    "DO-254",
+                    "SEU mitigation",
+                    "TMR wrapper with majority voter",
+                    "covered" if has_tmr else "gap",
+                    f"{module_name}_tmr.v",
+                ),
+                ComplianceEntry(
+                    "DO254-4",
+                    "DO-254",
+                    "Formal verification",
+                    "SVA assertions + SymbiYosys proof",
+                    "covered" if has_sva else "partial",
+                    f"{module_name}_sva.sv",
+                ),
+                ComplianceEntry(
+                    "DO254-5",
+                    "DO-254",
+                    "Configuration control",
+                    "Model checksum (SHA-256)",
+                    "covered" if has_checksum else "gap",
+                    f"{module_name}_checksum.v",
+                ),
+            ]
+        )
 
     if "IEC 61508" in standards:
-        entries.extend([
-            ComplianceEntry(
-                "IEC61508-1", "IEC 61508", "SIL determination",
-                "Compilation summary + resource estimation", "covered",
-                f"{module_name}_compilation_summary.md",
-            ),
-            ComplianceEntry(
-                "IEC61508-2", "IEC 61508", "Diagnostic coverage",
-                "TMR + checksum",
-                "covered" if (has_tmr and has_checksum) else "partial",
-                f"{module_name}_tmr.v",
-            ),
-        ])
+        entries.extend(
+            [
+                ComplianceEntry(
+                    "IEC61508-1",
+                    "IEC 61508",
+                    "SIL determination",
+                    "Compilation summary + resource estimation",
+                    "covered",
+                    f"{module_name}_compilation_summary.md",
+                ),
+                ComplianceEntry(
+                    "IEC61508-2",
+                    "IEC 61508",
+                    "Diagnostic coverage",
+                    "TMR + checksum",
+                    "covered" if (has_tmr and has_checksum) else "partial",
+                    f"{module_name}_tmr.v",
+                ),
+            ]
+        )
 
     if "ISO 26262" in standards:
-        entries.extend([
-            ComplianceEntry(
-                "ISO26262-1", "ISO 26262", "ASIL decomposition",
-                "Multi-target comparison report", "covered",
-                f"{module_name}_comparison.md",
-            ),
-            ComplianceEntry(
-                "ISO26262-2", "ISO 26262", "Fault injection",
-                "Weight noise injection + TMR",
-                "covered" if has_tmr else "partial",
-                f"{module_name}_noise_test.py",
-            ),
-        ])
+        entries.extend(
+            [
+                ComplianceEntry(
+                    "ISO26262-1",
+                    "ISO 26262",
+                    "ASIL decomposition",
+                    "Multi-target comparison report",
+                    "covered",
+                    f"{module_name}_comparison.md",
+                ),
+                ComplianceEntry(
+                    "ISO26262-2",
+                    "ISO 26262",
+                    "Fault injection",
+                    "Weight noise injection + TMR",
+                    "covered" if has_tmr else "partial",
+                    f"{module_name}_noise_test.py",
+                ),
+            ]
+        )
 
     return entries
 
@@ -3827,9 +3963,7 @@ def format_compliance_report(
         "|-----|----------|-------------|-------------|--------|----------|",
     ]
     for e in entries:
-        status_icon = {"covered": "✅", "partial": "⚠️", "gap": "❌"}.get(
-            e.status, "?"
-        )
+        status_icon = {"covered": "✅", "partial": "⚠️", "gap": "❌"}.get(e.status, "?")
         lines.append(
             f"| {e.req_id} | {e.standard} | {e.description} "
             f"| {e.verification} | {status_icon} {e.status} | {e.artefact} |"
@@ -3840,6 +3974,7 @@ def format_compliance_report(
 # ═══════════════════════════════════════════════════════════════════════
 # 30. Energy Harvesting Scheduler
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class EnergySchedule:
@@ -3929,6 +4064,7 @@ def generate_energy_schedule(
 # 31. Side-Channel Leakage Lint
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @dataclass
 class SideChannelFinding:
     """Side-channel leakage finding.
@@ -3984,42 +4120,50 @@ def lint_side_channels(
     for sv, expr in equations.items():
         # Check for data-dependent branching (if/else in expr)
         if "if" in expr or "?" in expr:
-            findings.append(SideChannelFinding(
-                signal=sv,
-                risk_level="high",
-                category="timing",
-                description=f"Data-dependent branch in {sv} equation",
-                recommendation="Use constant-time mux instead of branch",
-            ))
+            findings.append(
+                SideChannelFinding(
+                    signal=sv,
+                    risk_level="high",
+                    category="timing",
+                    description=f"Data-dependent branch in {sv} equation",
+                    recommendation="Use constant-time mux instead of branch",
+                )
+            )
 
         # Check for division (variable-latency)
         if "/" in expr:
-            findings.append(SideChannelFinding(
-                signal=sv,
-                risk_level="medium",
-                category="timing",
-                description=f"Division in {sv} — variable latency",
-                recommendation="Use fixed-point shift or LUT-based reciprocal",
-            ))
+            findings.append(
+                SideChannelFinding(
+                    signal=sv,
+                    risk_level="medium",
+                    category="timing",
+                    description=f"Division in {sv} — variable latency",
+                    recommendation="Use fixed-point shift or LUT-based reciprocal",
+                )
+            )
 
         # Check for multiplication by secret data
         if "*" in expr:
-            findings.append(SideChannelFinding(
-                signal=sv,
-                risk_level="low",
-                category="power",
-                description=f"Multiply in {sv} — Hamming weight leakage",
-                recommendation="Add random masking for security-critical paths",
-            ))
+            findings.append(
+                SideChannelFinding(
+                    signal=sv,
+                    risk_level="low",
+                    category="power",
+                    description=f"Multiply in {sv} — Hamming weight leakage",
+                    recommendation="Add random masking for security-critical paths",
+                )
+            )
 
     # General: spike output is 1-bit and data-dependent
-    findings.append(SideChannelFinding(
-        signal="spike_out",
-        risk_level="medium",
-        category="power",
-        description="Spike output toggles are data-dependent",
-        recommendation="Add constant-activity output buffer",
-    ))
+    findings.append(
+        SideChannelFinding(
+            signal="spike_out",
+            risk_level="medium",
+            category="power",
+            description="Spike output toggles are data-dependent",
+            recommendation="Add constant-activity output buffer",
+        )
+    )
 
     return findings
 
@@ -4027,6 +4171,7 @@ def lint_side_channels(
 # ═══════════════════════════════════════════════════════════════════════
 # 32. Analog Drift Compensation Generator
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class DriftCompensator:
@@ -4095,35 +4240,35 @@ def generate_drift_compensator(
         f"// Drift compensation controller for {module_name}",
         f"// SC-NeuroCore — {compensation_method} method",
         f"// Refresh every {refresh_ms:.0f} ms ({cycles} cycles)",
-        f"",
+        "",
         f"module {module_name}_drift_ctrl (",
-        f"    input  wire clk,",
-        f"    input  wire rst,",
-        f"    output reg  refresh_trigger,",
-        f"    output reg  [31:0] refresh_count",
-        f");",
-        f"",
+        "    input  wire clk,",
+        "    input  wire rst,",
+        "    output reg  refresh_trigger,",
+        "    output reg  [31:0] refresh_count",
+        ");",
+        "",
         f"    localparam REFRESH_CYCLES = {cycles};",
-        f"    reg [31:0] counter;",
-        f"",
-        f"    always @(posedge clk or posedge rst) begin",
-        f"        if (rst) begin",
-        f"            counter <= 0;",
-        f"            refresh_trigger <= 0;",
-        f"            refresh_count <= 0;",
-        f"        end else begin",
-        f"            if (counter >= REFRESH_CYCLES) begin",
-        f"                counter <= 0;",
-        f"                refresh_trigger <= 1;",
-        f"                refresh_count <= refresh_count + 1;",
-        f"            end else begin",
-        f"                counter <= counter + 1;",
-        f"                refresh_trigger <= 0;",
-        f"            end",
-        f"        end",
-        f"    end",
-        f"",
-        f"endmodule",
+        "    reg [31:0] counter;",
+        "",
+        "    always @(posedge clk or posedge rst) begin",
+        "        if (rst) begin",
+        "            counter <= 0;",
+        "            refresh_trigger <= 0;",
+        "            refresh_count <= 0;",
+        "        end else begin",
+        "            if (counter >= REFRESH_CYCLES) begin",
+        "                counter <= 0;",
+        "                refresh_trigger <= 1;",
+        "                refresh_count <= refresh_count + 1;",
+        "            end else begin",
+        "                counter <= counter + 1;",
+        "                refresh_trigger <= 0;",
+        "            end",
+        "        end",
+        "    end",
+        "",
+        "endmodule",
     ]
 
     return DriftCompensator(
@@ -4137,6 +4282,7 @@ def generate_drift_compensator(
 # ═══════════════════════════════════════════════════════════════════════
 # 33. Heterogeneous Multi-Backend Dispatch
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class DispatchPlan:
@@ -4214,10 +4360,7 @@ def plan_heterogeneous_dispatch(
     # Sync barriers at each timestep boundary
     barriers = []
     for i in range(len(backends) - 1):
-        barriers.append(
-            f"sync_{backends[i]}_to_{backends[i+1]}: "
-            f"barrier after timestep update"
-        )
+        barriers.append(f"sync_{backends[i]}_to_{backends[i + 1]}: barrier after timestep update")
 
     # Speedup estimate (Amdahl's law approximation)
     speedup = min(len(backends), len(vars_list))
@@ -4234,6 +4377,7 @@ def plan_heterogeneous_dispatch(
 # ═══════════════════════════════════════════════════════════════════════
 # 34. Auto-Target Recommender
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class TargetRecommendation:
@@ -4289,13 +4433,13 @@ def recommend_target(
         Ranked recommendations.
     """
     from sc_neurocore.compiler.hardware_profiles import (
-        list_profile_names, get_profile,
+        list_profile_names,
+        get_profile,
     )
 
     # Count operations for complexity
     total_ops = sum(
-        e.count("+") + e.count("-") + e.count("*") + e.count("/")
-        for e in equations.values()
+        e.count("+") + e.count("-") + e.count("*") + e.count("/") for e in equations.values()
     )
     num_vars = len(equations)
 
@@ -4339,17 +4483,18 @@ def recommend_target(
             score += 10
 
         rationale = (
-            f"{p.vendor} {p.family}: Q{p.data_width - p.fraction}.{p.fraction}, "
-            f"{p.platform_class}"
+            f"{p.vendor} {p.family}: Q{p.data_width - p.fraction}.{p.fraction}, {p.platform_class}"
         )
         if p.max_freq_mhz:
             rationale += f", {p.max_freq_mhz} MHz"
 
-        scored.append(TargetRecommendation(
-            profile_name=name,
-            score=round(score, 1),
-            rationale=rationale,
-        ))
+        scored.append(
+            TargetRecommendation(
+                profile_name=name,
+                score=round(score, 1),
+                rationale=rationale,
+            )
+        )
 
     scored.sort(key=lambda r: r.score, reverse=True)
     return scored[:top_n]
@@ -4358,6 +4503,7 @@ def recommend_target(
 # ═══════════════════════════════════════════════════════════════════════
 # 35. Partial Reconfiguration Planner
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class ReconfigPartition:
@@ -4423,10 +4569,7 @@ def plan_partial_reconfiguration(
     # Generate swap schedule
     schedule = []
     for slot in range(time_slots):
-        schedule.append(
-            f"slot_{slot}: load bitstream_{slot}, "
-            f"activate {regions} region(s)"
-        )
+        schedule.append(f"slot_{slot}: load bitstream_{slot}, activate {regions} region(s)")
 
     return ReconfigPartition(
         partitions=partitions,
@@ -4439,6 +4582,7 @@ def plan_partial_reconfiguration(
 # ═══════════════════════════════════════════════════════════════════════
 # 36. Supply Chain Risk Scorer
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class SupplyChainRisk:
@@ -4467,13 +4611,21 @@ class SupplyChainRisk:
 
 # Geography risk mapping
 _GEO_RISK: dict[str, float] = {
-    "TSMC": 35, "MediaTek": 30,  # Taiwan concentration
-    "Samsung": 20, "SK Hynix": 20,  # South Korea
-    "NIST": 5, "Northrop Grumman": 5,  # US defence
-    "Intel": 10, "AMD": 10, "Qualcomm": 10,
-    "Xilinx": 10, "Lattice": 10, "Microchip": 10,
+    "TSMC": 35,
+    "MediaTek": 30,  # Taiwan concentration
+    "Samsung": 20,
+    "SK Hynix": 20,  # South Korea
+    "NIST": 5,
+    "Northrop Grumman": 5,  # US defence
+    "Intel": 10,
+    "AMD": 10,
+    "Qualcomm": 10,
+    "Xilinx": 10,
+    "Lattice": 10,
+    "Microchip": 10,
     "Research": 50,  # Research-only, no commercial supply
-    "FinalSpark": 60, "Cortical Labs": 60,  # Pre-commercial
+    "FinalSpark": 60,
+    "Cortical Labs": 60,  # Pre-commercial
     "Stanford": 60,  # Academic
     "Tachyum": 45,  # Pre-production
 }
@@ -4510,10 +4662,9 @@ def score_supply_chain_risk(
         factors.append(f"Geographic concentration: {p.vendor}")
 
     # Sole-source risk (heuristic: unique family)
-    if p.platform_class in ("biological", "superconducting",
-                            "electrochemical"):
+    if p.platform_class in ("biological", "superconducting", "electrochemical"):
         score += 20
-        factors.append(f"Emerging tech, limited vendors")
+        factors.append("Emerging tech, limited vendors")
 
     # Export control
     export = "EAR99"  # default commercial
@@ -4531,10 +4682,11 @@ def score_supply_chain_risk(
 
     # Suggest alternatives in same class
     from sc_neurocore.compiler.hardware_profiles import list_profile_names
+
     alts = [
-        n for n in list_profile_names()
-        if n != profile_name
-        and get_profile(n).platform_class == p.platform_class
+        n
+        for n in list_profile_names()
+        if n != profile_name and get_profile(n).platform_class == p.platform_class
     ][:3]
 
     return SupplyChainRisk(
@@ -4549,6 +4701,7 @@ def score_supply_chain_risk(
 # ═══════════════════════════════════════════════════════════════════════
 # 37. Bit-True Simulation Kernel
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def generate_bittrue_kernel(
     module_name: str,
@@ -4591,78 +4744,87 @@ def generate_bittrue_kernel(
         lines = [
             f"/* Bit-true simulation kernel for {module_name} */",
             f"/* SC-NeuroCore — Q{int_bits}.{fraction} ({data_width}-bit) */",
-            f"/* This code produces IDENTICAL results to the Verilog RTL */",
-            f"",
-            f"#include <stdint.h>",
-            f"",
+            "/* This code produces IDENTICAL results to the Verilog RTL */",
+            "",
+            "#include <stdint.h>",
+            "",
             f"#define FRAC_BITS {fraction}",
             f"#define MAX_VAL  {max_val}",
             f"#define MIN_VAL  {min_val}",
-            f"",
+            "",
             f"static inline {c_type} sat({c_type} x) {{",
-            f"    if (x > MAX_VAL) return MAX_VAL;",
-            f"    if (x < MIN_VAL) return MIN_VAL;",
-            f"    return x;",
-            f"}}",
-            f"",
+            "    if (x > MAX_VAL) return MAX_VAL;",
+            "    if (x < MIN_VAL) return MIN_VAL;",
+            "    return x;",
+            "}",
+            "",
             f"static inline {c_type} fxmul({c_type} a, {c_type} b) {{",
-            f"    return sat(((int64_t)a * b) >> FRAC_BITS);",
-            f"}}",
-            f"",
-            f"typedef struct {{",
+            "    return sat(((int64_t)a * b) >> FRAC_BITS);",
+            "}",
+            "",
+            "typedef struct {",
         ]
         for sv in equations:
             lines.append(f"    {c_type} {sv};")
-        lines.extend([
-            f"}} {module_name}_state_t;",
-            f"",
-            f"void {module_name}_step({module_name}_state_t *s) {{",
-        ])
+        lines.extend(
+            [
+                f"}} {module_name}_state_t;",
+                "",
+                f"void {module_name}_step({module_name}_state_t *s) {{",
+            ]
+        )
         for sv, expr in equations.items():
             lines.append(f"    /* {sv}' = {expr} */")
             lines.append(f"    s->{sv} = sat(s->{sv});  /* update */")
-        lines.extend([
-            f"}}",
-        ])
+        lines.extend(
+            [
+                "}",
+            ]
+        )
         return "\n".join(lines)
 
     else:  # rust
         lines = [
             f"/// Bit-true simulation kernel for {module_name}",
             f"/// SC-NeuroCore — Q{int_bits}.{fraction} ({data_width}-bit)",
-            f"",
+            "",
             f"const FRAC_BITS: i32 = {fraction};",
             f"const MAX_VAL: i{max(16, data_width)} = {max_val};",
             f"const MIN_VAL: i{max(16, data_width)} = {min_val};",
-            f"",
+            "",
             f"fn sat(x: i{max(32, data_width * 2)}) -> i{max(16, data_width)} {{",
             f"    x.clamp(MIN_VAL as i{max(32, data_width * 2)}, "
             f"MAX_VAL as i{max(32, data_width * 2)}) as i{max(16, data_width)}",
-            f"}}",
-            f"",
+            "}",
+            "",
             f"pub struct {module_name.capitalize()}State {{",
         ]
         for sv in equations:
             lines.append(f"    pub {sv}: i{max(16, data_width)},")
-        lines.extend([
-            f"}}",
-            f"",
-            f"impl {module_name.capitalize()}State {{",
-            f"    pub fn step(&mut self) {{",
-        ])
+        lines.extend(
+            [
+                "}",
+                "",
+                f"impl {module_name.capitalize()}State {{",
+                "    pub fn step(&mut self) {",
+            ]
+        )
         for sv, expr in equations.items():
             lines.append(f"        // {sv}' = {expr}")
             lines.append(f"        self.{sv} = sat(self.{sv} as i{max(32, data_width * 2)});")
-        lines.extend([
-            f"    }}",
-            f"}}",
-        ])
+        lines.extend(
+            [
+                "    }",
+                "}",
+            ]
+        )
         return "\n".join(lines)
 
 
 # ═══════════════════════════════════════════════════════════════════════
 # 38. Model Complexity Classifier
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class ModelComplexity:
@@ -4709,8 +4871,7 @@ def classify_model_complexity(
     """
     num_vars = len(equations)
     total_ops = sum(
-        e.count("+") + e.count("-") + e.count("*") + e.count("/")
-        for e in equations.values()
+        e.count("+") + e.count("-") + e.count("*") + e.count("/") for e in equations.values()
     )
 
     # Communication: count cross-variable references
@@ -4748,6 +4909,7 @@ def classify_model_complexity(
 # 39. Cross-Compilation Cache
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class CompilationCache:
     """Memoized compilation result cache.
 
@@ -4761,23 +4923,29 @@ class CompilationCache:
         self.misses: int = 0
 
     def _key(
-        self, equations: dict[str, str], target: str,
-        data_width: int, fraction: int,
+        self,
+        equations: dict[str, str],
+        target: str,
+        data_width: int,
+        fraction: int,
     ) -> str:
         import hashlib
         import json
+
         h = hashlib.sha256(
             json.dumps(
-                {"eq": equations, "t": target,
-                 "w": data_width, "f": fraction},
+                {"eq": equations, "t": target, "w": data_width, "f": fraction},
                 sort_keys=True,
             ).encode()
         ).hexdigest()[:16]
         return h
 
     def get(
-        self, equations: dict[str, str], target: str,
-        data_width: int = 16, fraction: int = 8,
+        self,
+        equations: dict[str, str],
+        target: str,
+        data_width: int = 16,
+        fraction: int = 8,
     ) -> dict | None:
         """Look up a cached compilation result.
 
@@ -4806,8 +4974,11 @@ class CompilationCache:
         return result
 
     def put(
-        self, equations: dict[str, str], target: str,
-        data_width: int, fraction: int,
+        self,
+        equations: dict[str, str],
+        target: str,
+        data_width: int,
+        fraction: int,
         result: dict,
     ) -> None:
         """Store a compilation result in cache.
@@ -4837,6 +5008,7 @@ class CompilationCache:
 # ═══════════════════════════════════════════════════════════════════════
 # 40. Thermal Envelope Estimator
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class ThermalEnvelopeEstimate:
@@ -4911,6 +5083,7 @@ def estimate_thermal_envelope(
 # ═══════════════════════════════════════════════════════════════════════
 # 41. Network Topology Optimizer
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class TopologyPlan:
@@ -5023,6 +5196,7 @@ def optimize_network_topology(
 # 42. NIR / ONNX-SNN Import
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @dataclass
 class NIRGraph:
     """Imported NIR/ONNX-SNN graph representation.
@@ -5038,6 +5212,7 @@ class NIRGraph:
     framework : str
         Source framework.
     """
+
     nodes: dict[str, dict]
     edges: list[tuple[str, str]]
     equations: dict[str, str]
@@ -5076,7 +5251,7 @@ def import_nir_graph(
         if ntype in ("LIF", "lif"):
             equations[name] = f"-(v - v_rest) / {tau} + I"
         elif ntype in ("Izhikevich", "izh"):
-            equations[name] = f"0.04 * v * v + 5 * v + 140 - u + I"
+            equations[name] = "0.04 * v * v + 5 * v + 140 - u + I"
         else:
             equations[name] = f"-(v) / {tau} + I"
 
@@ -5091,6 +5266,7 @@ def import_nir_graph(
 # ═══════════════════════════════════════════════════════════════════════
 # 43. ODE Stability Verifier
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class StabilityResult:
@@ -5107,6 +5283,7 @@ class StabilityResult:
     method : str
         Analysis method used.
     """
+
     stable: bool
     max_eigenvalue: float
     critical_dt: float
@@ -5143,7 +5320,7 @@ def verify_ode_stability(
 
     taus = list(time_constants.values())
     max_eig = max(1.0 / tau for tau in taus) if taus else 0.0
-    critical_dt = 2.0 / max_eig if max_eig > 0 else float('inf')
+    critical_dt = 2.0 / max_eig if max_eig > 0 else float("inf")
     stable = dt < critical_dt
 
     return StabilityResult(
@@ -5157,6 +5334,7 @@ def verify_ode_stability(
 # ═══════════════════════════════════════════════════════════════════════
 # 44. Power Intent Generator (UPF)
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def generate_power_intent(
     module_name: str,
@@ -5185,10 +5363,10 @@ def generate_power_intent(
     """
     lines = [
         f"# UPF Power Intent for {module_name}",
-        f"# Generated by SC-NeuroCore",
-        f"",
+        "# Generated by SC-NeuroCore",
+        "",
         f"set_scope {module_name}",
-        f"",
+        "",
     ]
     if always_on:
         lines.append("create_power_domain PD_AON -include_scope")
@@ -5197,21 +5375,21 @@ def generate_power_intent(
         lines.append("")
 
     for i in range(num_domains):
-        lines.extend([
-            f"create_power_domain PD_NEURON_{i}",
-            f"create_supply_net VDD_{i} -domain PD_NEURON_{i}",
-            f"create_supply_net VSS -domain PD_NEURON_{i} -reuse",
-            f"set_isolation iso_{i} -domain PD_NEURON_{i} "
-            f"-isolation_power_net VDD_AON -isolation_ground_net VSS "
-            f"-clamp_value 0",
-            f"set_retention ret_{i} -domain PD_NEURON_{i} "
-            f"-retention_power_net VDD_AON",
-            f"",
-        ])
+        lines.extend(
+            [
+                f"create_power_domain PD_NEURON_{i}",
+                f"create_supply_net VDD_{i} -domain PD_NEURON_{i}",
+                f"create_supply_net VSS -domain PD_NEURON_{i} -reuse",
+                f"set_isolation iso_{i} -domain PD_NEURON_{i} "
+                f"-isolation_power_net VDD_AON -isolation_ground_net VSS "
+                f"-clamp_value 0",
+                f"set_retention ret_{i} -domain PD_NEURON_{i} -retention_power_net VDD_AON",
+                "",
+            ]
+        )
 
-    lines.append(f"# Power states")
-    lines.append(f"add_power_state PD_AON_ON -domain PD_AON "
-                 f"-state ON {{-supply_expr {{VDD_AON == 1}}}}")
+    lines.append("# Power states")
+    lines.append("add_power_state PD_AON_ON -domain PD_AON -state ON {-supply_expr {VDD_AON == 1}}")
 
     return "\n".join(lines)
 
@@ -5219,6 +5397,7 @@ def generate_power_intent(
 # ═══════════════════════════════════════════════════════════════════════
 # 45. Carbon Footprint Estimator
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class CarbonEstimate:
@@ -5237,6 +5416,7 @@ class CarbonEstimate:
     energy_mix : str
         Assumed energy source.
     """
+
     profile_name: str
     manufacturing_kg_co2: float
     operation_kg_co2_per_year: float
@@ -5246,11 +5426,20 @@ class CarbonEstimate:
 
 # Approximate manufacturing CO2 per process node (kg CO2 per die)
 _MFG_CO2: dict[str, float] = {
-    "fpga": 8.0, "asic": 12.0, "neuromorphic": 6.0,
-    "photonic": 10.0, "in_memory": 5.0, "accelerator": 15.0,
-    "edge_mcu": 0.5, "biological": 0.1, "simulation": 0.0,
-    "superconducting": 20.0, "quantum_neuro": 25.0,
-    "rram": 3.0, "sram_cim": 4.0, "electrochemical": 2.0,
+    "fpga": 8.0,
+    "asic": 12.0,
+    "neuromorphic": 6.0,
+    "photonic": 10.0,
+    "in_memory": 5.0,
+    "accelerator": 15.0,
+    "edge_mcu": 0.5,
+    "biological": 0.1,
+    "simulation": 0.0,
+    "superconducting": 20.0,
+    "quantum_neuro": 25.0,
+    "rram": 3.0,
+    "sram_cim": 4.0,
+    "electrochemical": 2.0,
 }
 
 
@@ -5280,6 +5469,7 @@ def estimate_carbon_footprint(
         Lifecycle carbon estimate.
     """
     from sc_neurocore.compiler.hardware_profiles import get_profile
+
     p = get_profile(profile_name)
 
     mfg = _MFG_CO2.get(p.platform_class, 5.0)
@@ -5300,6 +5490,7 @@ def estimate_carbon_footprint(
 # 46. Debug Probe Inserter
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @dataclass
 class DebugProbeSpec:
     """Auto-generated debug probe specification.
@@ -5315,6 +5506,7 @@ class DebugProbeSpec:
     tcl_commands : str
         Vendor-specific TCL to insert probes.
     """
+
     probe_type: str
     signals: list[str]
     depth: int
@@ -5352,20 +5544,18 @@ def insert_debug_probes(
     if vendor == "xilinx":
         tcl = [
             f"# ILA probe insertion for {module_name}",
-            f"create_debug_core u_ila_0 ila",
+            "create_debug_core u_ila_0 ila",
             f"set_property C_DATA_DEPTH {depth} [get_debug_cores u_ila_0]",
         ]
         for sig in signals:
-            tcl.append(f"connect_debug_port u_ila_0/probe0 "
-                       f"[get_nets {module_name}/{sig}]")
+            tcl.append(f"connect_debug_port u_ila_0/probe0 [get_nets {module_name}/{sig}]")
     else:
         tcl = [
             f"# SignalTap probe insertion for {module_name}",
-            f"set_global_assignment -name ENABLE_SIGNALTAP ON",
+            "set_global_assignment -name ENABLE_SIGNALTAP ON",
         ]
         for sig in signals:
-            tcl.append(f"set_instance_assignment -name CONNECT_TO_SLD_NODE "
-                       f"{module_name}|{sig}")
+            tcl.append(f"set_instance_assignment -name CONNECT_TO_SLD_NODE {module_name}|{sig}")
 
     return DebugProbeSpec(
         probe_type=probe_type,
@@ -5378,6 +5568,7 @@ def insert_debug_probes(
 # ═══════════════════════════════════════════════════════════════════════
 # 47. Memory Map Generator
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class MemoryMap:
@@ -5394,6 +5585,7 @@ class MemoryMap:
     decoder_verilog : str
         Generated address decoder Verilog.
     """
+
     base_address: int
     entries: list[dict]
     total_bytes: int
@@ -5437,36 +5629,40 @@ def generate_memory_map(
     for n in range(min(num_neurons, 8)):  # show first 8
         for i, sv in enumerate(vars_list):
             addr = base_address + n * stride + i * bytes_per_reg
-            entries.append({
-                "address": addr,
-                "name": f"neuron_{n}_{sv}",
-                "width": data_width,
-            })
+            entries.append(
+                {
+                    "address": addr,
+                    "name": f"neuron_{n}_{sv}",
+                    "width": data_width,
+                }
+            )
         ctrl_addr = base_address + n * stride + len(vars_list) * bytes_per_reg
-        entries.append({
-            "address": ctrl_addr,
-            "name": f"neuron_{n}_ctrl",
-            "width": data_width,
-        })
+        entries.append(
+            {
+                "address": ctrl_addr,
+                "name": f"neuron_{n}_ctrl",
+                "width": data_width,
+            }
+        )
 
     total = num_neurons * stride
     verilog = [
         f"// Address decoder for {module_name} — {num_neurons} neurons",
         f"// Base: 0x{base_address:08X}, Stride: {stride} bytes",
         f"module {module_name}_addr_dec (",
-        f"    input  [{data_width-1}:0] addr,",
+        f"    input  [{data_width - 1}:0] addr,",
         f"    output reg [{len(vars_list)}:0] reg_sel,",
-        f"    output reg [{num_neurons.bit_length()-1}:0] neuron_sel",
-        f");",
-        f"    wire [{num_neurons.bit_length()-1}:0] idx = "
+        f"    output reg [{num_neurons.bit_length() - 1}:0] neuron_sel",
+        ");",
+        f"    wire [{num_neurons.bit_length() - 1}:0] idx = "
         f"(addr - 32'h{base_address:08X}) / {stride};",
-        f"    wire [{regs_per_neuron.bit_length()-1}:0] reg_off = "
+        f"    wire [{regs_per_neuron.bit_length() - 1}:0] reg_off = "
         f"((addr - 32'h{base_address:08X}) % {stride}) / {bytes_per_reg};",
-        f"    always @(*) begin",
-        f"        neuron_sel = idx;",
-        f"        reg_sel = reg_off;",
-        f"    end",
-        f"endmodule",
+        "    always @(*) begin",
+        "        neuron_sel = idx;",
+        "        reg_sel = reg_off;",
+        "    end",
+        "endmodule",
     ]
 
     return MemoryMap(
@@ -5480,6 +5676,7 @@ def generate_memory_map(
 # ═══════════════════════════════════════════════════════════════════════
 # 48. Model Portability Scorer
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class PortabilityScore:
@@ -5496,6 +5693,7 @@ class PortabilityScore:
     blockers : list[str]
         Portability blockers.
     """
+
     score: float
     compatible_profiles: int
     total_profiles: int
@@ -5522,11 +5720,11 @@ def score_portability(
         Portability assessment.
     """
     from sc_neurocore.compiler.hardware_profiles import (
-        list_profile_names, get_profile,
+        list_profile_names,
+        get_profile,
     )
-    total_ops = sum(
-        e.count("*") + e.count("/") for e in equations.values()
-    )
+
+    total_ops = sum(e.count("*") + e.count("/") for e in equations.values())
     names = list_profile_names()
     compatible = 0
     blockers = []
@@ -5535,8 +5733,15 @@ def score_portability(
         p = get_profile(n)
         if p.data_width < min_data_width:
             continue
-        if total_ops > 3 and not p.dsp_block and p.platform_class not in (
-            "simulation", "biological", "dna_molecular",
+        if (
+            total_ops > 3
+            and not p.dsp_block
+            and p.platform_class
+            not in (
+                "simulation",
+                "biological",
+                "dna_molecular",
+            )
         ):
             continue
         compatible += 1
@@ -5559,6 +5764,7 @@ def score_portability(
 # 49. Aging / Reliability Predictor
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @dataclass
 class ReliabilityEstimate:
     """Mean time to failure estimate.
@@ -5576,6 +5782,7 @@ class ReliabilityEstimate:
     temp_accel : float
         Arrhenius temperature acceleration factor.
     """
+
     mttf_hours: float
     mttf_years: float
     failure_mode: str
@@ -5611,6 +5818,7 @@ def predict_reliability(
         MTTF prediction.
     """
     import math
+
     ea = 0.7  # activation energy (eV)
     k = 8.617e-5  # Boltzmann constant (eV/K)
     t_ref = 25.0 + 273.15
@@ -5636,6 +5844,7 @@ def predict_reliability(
 # 50. Fault Tree Generator
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @dataclass
 class FaultTree:
     """Fault Tree Analysis for safety certification.
@@ -5651,6 +5860,7 @@ class FaultTree:
     mcs : list[list[str]]
         Minimal cut sets.
     """
+
     top_event: str
     gates: list[dict]
     basic_events: list[dict]
@@ -5678,20 +5888,30 @@ def generate_fault_tree(
     top = f"{module_name}_SYSTEM_FAILURE"
     basic_events = []
     for sv in equations:
-        basic_events.extend([
-            {"id": f"{sv}_stuck_at_0", "rate": 1e-7,
-             "description": f"{sv} register stuck-at-0"},
-            {"id": f"{sv}_overflow", "rate": 1e-6,
-             "description": f"{sv} arithmetic overflow"},
-        ])
-    basic_events.extend([
-        {"id": "clk_failure", "rate": 1e-9, "description": "Clock failure"},
-        {"id": "power_glitch", "rate": 1e-8, "description": "Power glitch"},
-    ])
+        basic_events.extend(
+            [
+                {
+                    "id": f"{sv}_stuck_at_0",
+                    "rate": 1e-7,
+                    "description": f"{sv} register stuck-at-0",
+                },
+                {"id": f"{sv}_overflow", "rate": 1e-6, "description": f"{sv} arithmetic overflow"},
+            ]
+        )
+    basic_events.extend(
+        [
+            {"id": "clk_failure", "rate": 1e-9, "description": "Clock failure"},
+            {"id": "power_glitch", "rate": 1e-8, "description": "Power glitch"},
+        ]
+    )
 
     gates = [
-        {"id": "G1", "type": "OR", "description": "System failure",
-         "inputs": [e["id"] for e in basic_events]},
+        {
+            "id": "G1",
+            "type": "OR",
+            "description": "System failure",
+            "inputs": [e["id"] for e in basic_events],
+        },
     ]
 
     # Minimal cut sets: each basic event alone can cause failure (OR gate)
@@ -5708,6 +5928,7 @@ def generate_fault_tree(
 # ═══════════════════════════════════════════════════════════════════════
 # 51. Auto-Testbench Generator
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def generate_testbench(
     module_name: str,
@@ -5737,49 +5958,50 @@ def generate_testbench(
     if framework == "cocotb":
         lines = [
             f'"""Auto-generated Cocotb testbench for {module_name}."""',
-            f"import cocotb",
-            f"from cocotb.clock import Clock",
-            f"from cocotb.triggers import RisingEdge, Timer",
-            f"",
-            f"@cocotb.test()",
+            "import cocotb",
+            "from cocotb.clock import Clock",
+            "from cocotb.triggers import RisingEdge, Timer",
+            "",
+            "@cocotb.test()",
             f"async def test_{module_name}_reset(dut):",
-            f'    """Verify reset clears all state."""',
-            f"    clock = Clock(dut.clk, 10, units='ns')",
-            f"    cocotb.start_soon(clock.start())",
-            f"    dut.rst_n.value = 0",
-            f"    await RisingEdge(dut.clk)",
-            f"    await RisingEdge(dut.clk)",
+            '    """Verify reset clears all state."""',
+            "    clock = Clock(dut.clk, 10, units='ns')",
+            "    cocotb.start_soon(clock.start())",
+            "    dut.rst_n.value = 0",
+            "    await RisingEdge(dut.clk)",
+            "    await RisingEdge(dut.clk)",
         ]
         for sv in equations:
-            lines.append(f"    assert dut.{sv}.value == 0, "
-                         f"'{sv} not cleared on reset'")
-        lines.extend([
-            f"    dut.rst_n.value = 1",
-            f"",
-            f"@cocotb.test()",
-            f"async def test_{module_name}_run(dut):",
-            f'    """Run {num_cycles} cycles and check no overflow."""',
-            f"    clock = Clock(dut.clk, 10, units='ns')",
-            f"    cocotb.start_soon(clock.start())",
-            f"    dut.rst_n.value = 1",
-            f"    for _ in range({num_cycles}):",
-            f"        await RisingEdge(dut.clk)",
-            f"    assert dut.spike_out.value is not None",
-        ])
+            lines.append(f"    assert dut.{sv}.value == 0, '{sv} not cleared on reset'")
+        lines.extend(
+            [
+                "    dut.rst_n.value = 1",
+                "",
+                "@cocotb.test()",
+                f"async def test_{module_name}_run(dut):",
+                f'    """Run {num_cycles} cycles and check no overflow."""',
+                "    clock = Clock(dut.clk, 10, units='ns')",
+                "    cocotb.start_soon(clock.start())",
+                "    dut.rst_n.value = 1",
+                f"    for _ in range({num_cycles}):",
+                "        await RisingEdge(dut.clk)",
+                "    assert dut.spike_out.value is not None",
+            ]
+        )
     else:  # UVM
         lines = [
             f"// Auto-generated UVM testbench for {module_name}",
             f"class {module_name}_test extends uvm_test;",
             f"    `uvm_component_utils({module_name}_test)",
-            f"    function new(string name, uvm_component parent);",
-            f"        super.new(name, parent);",
-            f"    endfunction",
-            f"    task run_phase(uvm_phase phase);",
-            f"        phase.raise_objection(this);",
+            "    function new(string name, uvm_component parent);",
+            "        super.new(name, parent);",
+            "    endfunction",
+            "    task run_phase(uvm_phase phase);",
+            "        phase.raise_objection(this);",
             f"        #{num_cycles * 10};",
-            f"        phase.drop_objection(this);",
-            f"    endtask",
-            f"endclass",
+            "        phase.drop_objection(this);",
+            "    endtask",
+            "endclass",
         ]
 
     return "\n".join(lines)
@@ -5788,6 +6010,7 @@ def generate_testbench(
 # ═══════════════════════════════════════════════════════════════════════
 # 52. CDC (Clock Domain Crossing) Analyzer
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class CDCReport:
@@ -5802,6 +6025,7 @@ class CDCReport:
     total_crossings : int
     safe : bool
     """
+
     crossings: list[dict]
     violations: list[str]
     total_crossings: int
@@ -5837,12 +6061,14 @@ def analyze_cdc(
             if other != sv and other in expr:
                 dst = clock_domains.get(other, "clk_main")
                 if src != dst:
-                    crossings.append({
-                        "signal": f"{other}->{sv}",
-                        "src_domain": dst,
-                        "dst_domain": src,
-                        "sync_type": "2FF",
-                    })
+                    crossings.append(
+                        {
+                            "signal": f"{other}->{sv}",
+                            "src_domain": dst,
+                            "dst_domain": src,
+                            "sync_type": "2FF",
+                        }
+                    )
 
     return CDCReport(
         crossings=crossings,
@@ -5855,6 +6081,7 @@ def analyze_cdc(
 # ═══════════════════════════════════════════════════════════════════════
 # 53. TOML Profile Auto-Loader
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def load_profiles_from_toml(path: str) -> list[str]:
     """Load custom hardware profiles from a TOML file.
@@ -5886,7 +6113,8 @@ def load_profiles_from_toml(path: str) -> list[str]:
     """
     import tomllib
     from sc_neurocore.compiler.hardware_profiles import (
-        HardwareProfile, _PROFILES,
+        HardwareProfile,
+        _PROFILES,
     )
 
     with open(path, "rb") as f:
@@ -5919,6 +6147,7 @@ def load_profiles_from_toml(path: str) -> list[str]:
 # 54. Multi-Die Floorplanner
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @dataclass
 class FloorplanResult:
     """Multi-die/chiplet floorplan assignment.
@@ -5931,6 +6160,7 @@ class FloorplanResult:
         Die index → utilization (0-1).
     total_dies : int
     """
+
     die_assignment: dict[str, int]
     die_utilization: dict[int, float]
     total_dies: int
@@ -5975,8 +6205,7 @@ def plan_multi_die_floorplan(
             assignment[name] = num_dies - 1
             die_used[num_dies - 1] += count
 
-    util = {d: round(die_used[d] / die_capacity, 3)
-            for d in range(num_dies) if die_used[d] > 0}
+    util = {d: round(die_used[d] / die_capacity, 3) for d in range(num_dies) if die_used[d] > 0}
 
     return FloorplanResult(
         die_assignment=assignment,
@@ -5988,6 +6217,7 @@ def plan_multi_die_floorplan(
 # ═══════════════════════════════════════════════════════════════════════
 # 55. Regression Watchdog
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class RegressionCheck:
@@ -6001,6 +6231,7 @@ class RegressionCheck:
     delta_pct : float
     regression : bool
     """
+
     metric: str
     baseline: float
     current: float
@@ -6036,19 +6267,22 @@ def check_regression(
             delta = ((cur_val - base_val) / abs(base_val)) * 100
         else:
             delta = 0.0
-        results.append(RegressionCheck(
-            metric=metric,
-            baseline=base_val,
-            current=cur_val,
-            delta_pct=round(delta, 2),
-            regression=abs(delta) > threshold_pct,
-        ))
+        results.append(
+            RegressionCheck(
+                metric=metric,
+                baseline=base_val,
+                current=cur_val,
+                delta_pct=round(delta, 2),
+                regression=abs(delta) > threshold_pct,
+            )
+        )
     return results
 
 
 # ═══════════════════════════════════════════════════════════════════════
 # 56. License Compliance Checker
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class LicenseCheck:
@@ -6060,6 +6294,7 @@ class LicenseCheck:
     conflicts : list[str]
     licenses_found : list[str]
     """
+
     compatible: bool
     conflicts: list[str]
     licenses_found: list[str]
@@ -6068,8 +6303,7 @@ class LicenseCheck:
 # Compatibility matrix: {project_license: [allowed_deps]}
 _COMPAT: dict[str, set[str]] = {
     "AGPL-3.0": {"MIT", "BSD-2", "BSD-3", "Apache-2.0", "ISC", "AGPL-3.0"},
-    "GPL-3.0": {"MIT", "BSD-2", "BSD-3", "Apache-2.0", "ISC", "GPL-3.0",
-                "LGPL-3.0"},
+    "GPL-3.0": {"MIT", "BSD-2", "BSD-3", "Apache-2.0", "ISC", "GPL-3.0", "LGPL-3.0"},
     "Apache-2.0": {"MIT", "BSD-2", "BSD-3", "Apache-2.0", "ISC"},
     "MIT": {"MIT", "BSD-2", "BSD-3", "ISC"},
     "proprietary": {"MIT", "BSD-2", "BSD-3", "Apache-2.0", "ISC"},
@@ -6113,6 +6347,7 @@ def check_license_compliance(
 # 57. Power State Machine Generator
 # ═══════════════════════════════════════════════════════════════════════
 
+
 def generate_power_state_machine(
     module_name: str,
     *,
@@ -6137,30 +6372,33 @@ def generate_power_state_machine(
 
     lines = [
         f"// Power state machine for {module_name}",
-        f"// Generated by SC-NeuroCore",
+        "// Generated by SC-NeuroCore",
         f"module {module_name}_power_fsm (",
-        f"    input  wire clk, rst_n, wake, sleep_req,",
-        f"    output reg [{len(states).bit_length()-1}:0] state",
-        f");",
+        "    input  wire clk, rst_n, wake, sleep_req,",
+        f"    output reg [{len(states).bit_length() - 1}:0] state",
+        ");",
     ]
     for i, s in enumerate(states):
         lines.append(f"    localparam {s} = {i};")
 
-    lines.extend([
-        f"    always @(posedge clk or negedge rst_n) begin",
-        f"        if (!rst_n)",
-        f"            state <= {states[0]};",
-        f"        else case (state)",
-    ])
+    lines.extend(
+        [
+            "    always @(posedge clk or negedge rst_n) begin",
+            "        if (!rst_n)",
+            f"            state <= {states[0]};",
+            "        else case (state)",
+        ]
+    )
     for i, s in enumerate(states):
         nxt = states[min(i + 1, len(states) - 1)]
-        lines.append(f"            {s}: state <= sleep_req ? {nxt} : "
-                     f"(wake ? {states[0]} : state);")
-    lines.extend([
-        f"        endcase",
-        f"    end",
-        f"endmodule",
-    ])
+        lines.append(f"            {s}: state <= sleep_req ? {nxt} : (wake ? {states[0]} : state);")
+    lines.extend(
+        [
+            "        endcase",
+            "    end",
+            "endmodule",
+        ]
+    )
 
     return "\n".join(lines)
 
@@ -6196,6 +6434,7 @@ def discover_platforms() -> list[str]:
         Names of newly discovered profiles.
     """
     from sc_neurocore.compiler.hardware_profiles import _PROFILES
+
     discovered = []
     for hook in _DISCOVERY_HOOKS:
         profiles = hook()
@@ -6209,6 +6448,7 @@ def discover_platforms() -> list[str]:
 # ═══════════════════════════════════════════════════════════════════════
 # 59. Compilation Report Generator
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def generate_compilation_report(
     module_name: str,
@@ -6242,47 +6482,54 @@ def generate_compilation_report(
         Markdown report.
     """
     from sc_neurocore.compiler.hardware_profiles import get_profile
+
     p = get_profile(profile_name)
 
     sections = [
-        f"# SC-NeuroCore Compilation Report",
-        f"",
+        "# SC-NeuroCore Compilation Report",
+        "",
         f"## Target: `{profile_name}`",
         f"- **Vendor**: {p.vendor}",
         f"- **Family**: {p.family}",
         f"- **Class**: {p.platform_class}",
         f"- **Width**: {p.data_width}-bit Q{p.data_width - p.fraction}.{p.fraction}",
         f"- **Overflow**: {p.overflow} | **Rounding**: {p.rounding}",
-        f"",
+        "",
         f"## Module: `{module_name}`",
         f"- **State variables**: {len(equations)}",
         f"- **Equations**: {', '.join(equations.keys())}",
-        f"",
+        "",
     ]
 
     if include_carbon:
         c = estimate_carbon_footprint(profile_name)
-        sections.extend([
-            f"## Carbon Footprint",
-            f"- Manufacturing: {c.manufacturing_kg_co2} kg CO₂",
-            f"- Operation (5yr): {c.total_5yr_kg_co2} kg CO₂",
-            f"",
-        ])
+        sections.extend(
+            [
+                "## Carbon Footprint",
+                f"- Manufacturing: {c.manufacturing_kg_co2} kg CO₂",
+                f"- Operation (5yr): {c.total_5yr_kg_co2} kg CO₂",
+                "",
+            ]
+        )
 
     if include_reliability:
         r = predict_reliability(voltage_v=0.9, temperature_c=85)
-        sections.extend([
-            f"## Reliability",
-            f"- MTTF: {r.mttf_years} years",
-            f"- Failure mode: {r.failure_mode}",
-            f"",
-        ])
+        sections.extend(
+            [
+                "## Reliability",
+                f"- MTTF: {r.mttf_years} years",
+                f"- Failure mode: {r.failure_mode}",
+                "",
+            ]
+        )
 
-    sections.extend([
-        f"---",
-        f"*Generated by SC-NeuroCore — {len(list(equations))} equations, "
-        f"target {profile_name}*",
-    ])
+    sections.extend(
+        [
+            "---",
+            f"*Generated by SC-NeuroCore — {len(list(equations))} equations, "
+            f"target {profile_name}*",
+        ]
+    )
 
     return "\n".join(sections)
 
@@ -6290,6 +6537,7 @@ def generate_compilation_report(
 # ═══════════════════════════════════════════════════════════════════════
 # 60. Hardware Trojan Lint
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class TrojanLintResult:
@@ -6301,6 +6549,7 @@ class TrojanLintResult:
     risk_level : str
     total_checks : int
     """
+
     suspicious_paths: list[str]
     risk_level: str
     total_checks: int
@@ -6337,9 +6586,7 @@ def lint_hardware_trojans(
         checks += 1
         # Heuristic: detect conditional paths with rare triggers
         if check_dormant and ("if" in expr or "?" in expr):
-            suspicious.append(
-                f"{var}: conditional path detected — potential dormant trigger"
-            )
+            suspicious.append(f"{var}: conditional path detected — potential dormant trigger")
         if check_payload:
             # Cross-variable injection detection
             other_vars = [v for v in equations if v != var]
@@ -6364,6 +6611,7 @@ def lint_hardware_trojans(
 # 61. SBOM / HBOM Generator
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @dataclass
 class SBOM:
     """Software/Hardware Bill of Materials.
@@ -6374,6 +6622,7 @@ class SBOM:
     components : list[dict]
     total_components : int
     """
+
     format: str
     components: list[dict]
     total_components: int
@@ -6407,21 +6656,22 @@ def generate_sbom(
     SBOM
     """
     from sc_neurocore.compiler.hardware_profiles import get_profile
+
     p = get_profile(profile_name)
 
     components = [
-        {"type": "library", "name": "sc-neurocore",
-         "version": "3.15.0", "license": "AGPL-3.0-or-later"},
-        {"type": "hardware", "name": profile_name,
-         "vendor": p.vendor, "family": p.family},
-        {"type": "module", "name": module_name,
-         "target": profile_name},
+        {
+            "type": "library",
+            "name": "sc-neurocore",
+            "version": "3.15.0",
+            "license": "AGPL-3.0-or-later",
+        },
+        {"type": "hardware", "name": profile_name, "vendor": p.vendor, "family": p.family},
+        {"type": "module", "name": module_name, "target": profile_name},
     ]
     if dependencies:
         for name, version in dependencies.items():
-            components.append(
-                {"type": "library", "name": name, "version": version}
-            )
+            components.append({"type": "library", "name": name, "version": version})
 
     return SBOM(
         format=sbom_format,
@@ -6434,6 +6684,7 @@ def generate_sbom(
 # 62. HIL Calibration Stub Generator
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @dataclass
 class HILCalibration:
     """Hardware-in-the-loop calibration protocol.
@@ -6444,6 +6695,7 @@ class HILCalibration:
     num_parameters : int
     sweep_ranges : dict[str, tuple[float, float]]
     """
+
     protocol_steps: list[str]
     num_parameters: int
     sweep_ranges: dict[str, tuple[float, float]]
@@ -6482,16 +6734,15 @@ def generate_hil_calibration(
     ]
     step_num = 3
     for param, (lo, hi) in parameters.items():
-        steps.append(
-            f"{step_num}. Sweep '{param}' from {lo} to {hi}, "
-            f"record output at 10 points"
-        )
+        steps.append(f"{step_num}. Sweep '{param}' from {lo} to {hi}, record output at 10 points")
         step_num += 1
-    steps.extend([
-        f"{step_num}. Compare measured outputs to software golden model",
-        f"{step_num + 1}. Apply least-squares correction coefficients",
-        f"{step_num + 2}. Repeat sweep to verify drift < 1 LSB",
-    ])
+    steps.extend(
+        [
+            f"{step_num}. Compare measured outputs to software golden model",
+            f"{step_num + 1}. Apply least-squares correction coefficients",
+            f"{step_num + 2}. Repeat sweep to verify drift < 1 LSB",
+        ]
+    )
 
     return HILCalibration(
         protocol_steps=steps,
@@ -6503,6 +6754,7 @@ def generate_hil_calibration(
 # ═══════════════════════════════════════════════════════════════════════
 # 63. Digital Twin Shadow Generator
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def generate_digital_twin(
     module_name: str,
@@ -6531,32 +6783,36 @@ def generate_digital_twin(
     vars_list = list(equations.keys())
     lines = [
         f'"""Digital twin for {module_name} targeting {profile_name}."""',
-        f"",
+        "",
         f"class {module_name.title().replace('_', '')}Twin:",
-        f'    """Software shadow of deployed hardware state."""',
-        f"",
-        f"    def __init__(self):",
+        '    """Software shadow of deployed hardware state."""',
+        "",
+        "    def __init__(self):",
     ]
     for v in vars_list:
         lines.append(f"        self.{v} = 0.0")
-    lines.extend([
-        f"        self.cycle = 0",
-        f"",
-        f"    def step(self, inputs: dict[str, float]) -> dict[str, float]:",
-        f'        """Execute one timestep, mirroring hardware state."""',
-    ])
+    lines.extend(
+        [
+            "        self.cycle = 0",
+            "",
+            "    def step(self, inputs: dict[str, float]) -> dict[str, float]:",
+            '        """Execute one timestep, mirroring hardware state."""',
+        ]
+    )
     for v, expr in equations.items():
         lines.append(f"        # {v} = {expr}")
         lines.append(f"        self.{v} = inputs.get('{v}', self.{v})")
-    lines.extend([
-        f"        self.cycle += 1",
-        f"        return {{{', '.join(repr(v) + ': self.' + v for v in vars_list)}}}",
-        f"",
-        f"    def compare(self, hw_state: dict[str, float]) -> dict[str, float]:",
-        f'        """Compare twin state against hardware telemetry."""',
-        f"        return {{k: abs(getattr(self, k, 0) - hw_state.get(k, 0))",
-        f"                for k in {vars_list!r}}}",
-    ])
+    lines.extend(
+        [
+            "        self.cycle += 1",
+            f"        return {{{', '.join(repr(v) + ': self.' + v for v in vars_list)}}}",
+            "",
+            "    def compare(self, hw_state: dict[str, float]) -> dict[str, float]:",
+            '        """Compare twin state against hardware telemetry."""',
+            "        return {k: abs(getattr(self, k, 0) - hw_state.get(k, 0))",
+            f"                for k in {vars_list!r}}}",
+        ]
+    )
 
     return "\n".join(lines)
 
@@ -6564,6 +6820,7 @@ def generate_digital_twin(
 # ═══════════════════════════════════════════════════════════════════════
 # 64. UCIe Protocol Mapper
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class UCIeMapping:
@@ -6575,6 +6832,7 @@ class UCIeMapping:
     protocol_version : str
     total_bandwidth_gbps : float
     """
+
     lanes: dict[str, int]
     protocol_version: str
     total_bandwidth_gbps: float
@@ -6620,6 +6878,7 @@ def map_ucie_protocol(
 # 65. SEU Scrub Scheduler
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @dataclass
 class ScrubSchedule:
     """Configuration memory scrubbing schedule.
@@ -6631,6 +6890,7 @@ class ScrubSchedule:
     frames_per_cycle : int
     expected_seu_rate : float
     """
+
     interval_ms: float
     strategy: str
     frames_per_cycle: int
@@ -6694,6 +6954,7 @@ def schedule_seu_scrubbing(
 # 66. IP Obfuscation
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @dataclass
 class ObfuscationResult:
     """IP obfuscation report.
@@ -6705,6 +6966,7 @@ class ObfuscationResult:
     original_signals : int
     obfuscated_signals : int
     """
+
     techniques_applied: list[str]
     key_bits: int
     original_signals: int
@@ -6759,6 +7021,7 @@ def obfuscate_ip(
 # 67. Model Watermark
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @dataclass
 class WatermarkResult:
     """Netlist watermark embedding result.
@@ -6770,6 +7033,7 @@ class WatermarkResult:
     overhead_percent : float
     verifiable : bool
     """
+
     watermark_hash: str
     embedding_method: str
     overhead_percent: float
@@ -6823,6 +7087,7 @@ def embed_watermark(
 # 68. Approximate Computing Modes
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @dataclass
 class ApproximationConfig:
     """Approximate computing configuration.
@@ -6833,6 +7098,7 @@ class ApproximationConfig:
     total_energy_savings_pct : float
     max_output_error_pct : float
     """
+
     populations: dict[str, dict]
     total_energy_savings_pct: float
     max_output_error_pct: float
@@ -6893,6 +7159,7 @@ def configure_approximation(
 # 69. Energy Harvesting Budget Modeler
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @dataclass
 class EnergyHarvestBudget:
     """Energy harvesting feasibility analysis.
@@ -6905,6 +7172,7 @@ class EnergyHarvestBudget:
     recommended_duty_cycle : float
     margin_pct : float
     """
+
     harvester_power_uw: float
     design_power_uw: float
     energy_positive: bool
@@ -6975,6 +7243,7 @@ def model_energy_harvest(
 # 70. Aging-Aware Compilation
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @dataclass
 class AgingPrediction:
     """Transistor aging prediction.
@@ -6987,6 +7256,7 @@ class AgingPrediction:
     recommended_derating : float
     dominant_mechanism : str
     """
+
     initial_fmax_mhz: float
     degraded_fmax_mhz: float
     degradation_pct: float
@@ -7045,6 +7315,7 @@ def predict_aging(
 # 71. DVFS Controller Generator
 # ═══════════════════════════════════════════════════════════════════════
 
+
 def generate_dvfs_controller(
     module_name: str,
     *,
@@ -7080,53 +7351,58 @@ def generate_dvfs_controller(
     states = [f"OP_{i}" for i in range(n)]
     lines = [
         f"// DVFS Controller for {module_name}",
-        f"// Auto-generated by SC-NeuroCore §71",
+        "// Auto-generated by SC-NeuroCore §71",
         f"module {module_name}_dvfs_ctrl (",
-        f"    input  wire        clk,",
-        f"    input  wire        rst_n,",
-        f"    input  wire [15:0] spike_rate,",
-        f"    output reg  [15:0] target_freq_mhz,",
-        f"    output reg  [15:0] target_voltage_mv",
-        f");",
-        f"",
+        "    input  wire        clk,",
+        "    input  wire        rst_n,",
+        "    input  wire [15:0] spike_rate,",
+        "    output reg  [15:0] target_freq_mhz,",
+        "    output reg  [15:0] target_voltage_mv",
+        ");",
+        "",
     ]
     # State encoding
     for i, s in enumerate(states):
         lines.append(f"    localparam {s} = {i};")
-    lines.extend([
-        f"    reg [{max(1, n-1).bit_length()-1}:0] state;",
-        f"",
-        f"    always @(posedge clk or negedge rst_n) begin",
-        f"        if (!rst_n) begin",
-        f"            state <= {states[0]};",
-        f"            target_freq_mhz <= {operating_points[0]['freq_mhz']};",
-        f"            target_voltage_mv <= {operating_points[0]['voltage_mv']};",
-        f"        end else begin",
-        f"            case (state)",
-    ])
+    lines.extend(
+        [
+            f"    reg [{max(1, n - 1).bit_length() - 1}:0] state;",
+            "",
+            "    always @(posedge clk or negedge rst_n) begin",
+            "        if (!rst_n) begin",
+            f"            state <= {states[0]};",
+            f"            target_freq_mhz <= {operating_points[0]['freq_mhz']};",
+            f"            target_voltage_mv <= {operating_points[0]['voltage_mv']};",
+            "        end else begin",
+            "            case (state)",
+        ]
+    )
     for i, op in enumerate(operating_points):
         lines.append(f"                {states[i]}: begin")
         lines.append(f"                    target_freq_mhz <= {op['freq_mhz']};")
         lines.append(f"                    target_voltage_mv <= {op['voltage_mv']};")
         if i < n - 1 and i < len(spike_rate_thresholds):
             th = int(spike_rate_thresholds[i])
-            lines.append(f"                    if (spike_rate > {th}) state <= {states[i+1]};")
+            lines.append(f"                    if (spike_rate > {th}) state <= {states[i + 1]};")
         if i > 0 and i - 1 < len(spike_rate_thresholds):
             th = int(spike_rate_thresholds[i - 1])
-            lines.append(f"                    if (spike_rate < {th}) state <= {states[i-1]};")
-        lines.append(f"                end")
-    lines.extend([
-        f"            endcase",
-        f"        end",
-        f"    end",
-        f"endmodule",
-    ])
+            lines.append(f"                    if (spike_rate < {th}) state <= {states[i - 1]};")
+        lines.append("                end")
+    lines.extend(
+        [
+            "            endcase",
+            "        end",
+            "    end",
+            "endmodule",
+        ]
+    )
     return "\n".join(lines)
 
 
 # ═══════════════════════════════════════════════════════════════════════
 # 72. Multi-Objective Pareto Explorer
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class ParetoPoint:
@@ -7139,6 +7415,7 @@ class ParetoPoint:
     area_luts : int
     latency_ns : float
     """
+
     config: dict
     power_mw: float
     area_luts: int
@@ -7179,22 +7456,30 @@ def explore_pareto(
             power = n_vars * (w / 8) ** 1.5 * (1.0 / d) * 10
             area = n_vars * w * d * 3
             latency = 1000.0 / (d * (32 / w))
-            points.append(ParetoPoint(
-                config={"data_width": w, "pipeline_depth": d},
-                power_mw=round(power, 2),
-                area_luts=area,
-                latency_ns=round(latency, 2),
-            ))
+            points.append(
+                ParetoPoint(
+                    config={"data_width": w, "pipeline_depth": d},
+                    power_mw=round(power, 2),
+                    area_luts=area,
+                    latency_ns=round(latency, 2),
+                )
+            )
 
     # Filter non-dominated
     pareto = []
     for p in points:
         dominated = False
         for q in points:
-            if (q.power_mw <= p.power_mw and q.area_luts <= p.area_luts
-                    and q.latency_ns <= p.latency_ns
-                    and (q.power_mw < p.power_mw or q.area_luts < p.area_luts
-                         or q.latency_ns < p.latency_ns)):
+            if (
+                q.power_mw <= p.power_mw
+                and q.area_luts <= p.area_luts
+                and q.latency_ns <= p.latency_ns
+                and (
+                    q.power_mw < p.power_mw
+                    or q.area_luts < p.area_luts
+                    or q.latency_ns < p.latency_ns
+                )
+            ):
                 dominated = True
                 break
         if not dominated:
@@ -7207,6 +7492,7 @@ def explore_pareto(
 # 73. Post-Quantum IP Protection
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @dataclass
 class PQCProtection:
     """Post-quantum cryptographic IP protection result.
@@ -7218,6 +7504,7 @@ class PQCProtection:
     key_size_bits : int
     quantum_safe : bool
     """
+
     algorithm: str
     signature_hex: str
     key_size_bits: int
@@ -7268,6 +7555,7 @@ def protect_ip_pqc(
 # 74. Fault Injection Campaign
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @dataclass
 class FaultCampaignResult:
     """Fault injection campaign result.
@@ -7280,6 +7568,7 @@ class FaultCampaignResult:
     critical_bits : list[int]
     recommended_tmr_bits : list[int]
     """
+
     total_injections: int
     sdc_count: int
     sdc_rate: float
@@ -7312,6 +7601,7 @@ def run_fault_campaign(
     FaultCampaignResult
     """
     import random
+
     rng = random.Random(seed)
 
     total_bits = len(equations) * data_width
@@ -7328,10 +7618,8 @@ def run_fault_campaign(
             sdc_count += 1
             bit_criticality[bit] += 1
 
-    critical_bits = [i for i, c in enumerate(bit_criticality)
-                     if c > critical_threshold]
-    tmr_bits = [i for i in critical_bits
-                if bit_criticality[i] > critical_threshold * 2]
+    critical_bits = [i for i, c in enumerate(bit_criticality) if c > critical_threshold]
+    tmr_bits = [i for i in critical_bits if bit_criticality[i] > critical_threshold * 2]
 
     return FaultCampaignResult(
         total_injections=num_injections,
@@ -7346,6 +7634,7 @@ def run_fault_campaign(
 # 75. Formal Timing Closure
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @dataclass
 class TimingReport:
     """Static timing analysis report.
@@ -7359,6 +7648,7 @@ class TimingReport:
     timing_met : bool
     recommendations : list[str]
     """
+
     critical_path: list[str]
     critical_delay_ns: float
     target_period_ns: float
@@ -7427,6 +7717,7 @@ def verify_timing_closure(
 # 76. Hardware Telemetry Ingestion
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @dataclass
 class TelemetryResult:
     """Hardware telemetry comparison result.
@@ -7439,6 +7730,7 @@ class TelemetryResult:
     alerts : list[str]
     healthy : bool
     """
+
     samples: int
     max_drift: float
     mean_drift: float
@@ -7469,8 +7761,11 @@ def ingest_telemetry(
     """
     if not telemetry_data or not twin_states:
         return TelemetryResult(
-            samples=0, max_drift=0.0, mean_drift=0.0,
-            alerts=[], healthy=True,
+            samples=0,
+            max_drift=0.0,
+            mean_drift=0.0,
+            alerts=[],
+            healthy=True,
         )
 
     n = min(len(telemetry_data), len(twin_states))
@@ -7484,9 +7779,7 @@ def ingest_telemetry(
             d = abs(hw[var] - tw.get(var, 0.0))
             drifts.append(d)
             if d > drift_threshold:
-                alerts.append(
-                    f"Sample {i}, var '{var}': drift={d:.4f} > {drift_threshold}"
-                )
+                alerts.append(f"Sample {i}, var '{var}': drift={d:.4f} > {drift_threshold}")
 
     max_d = max(drifts) if drifts else 0.0
     mean_d = sum(drifts) / len(drifts) if drifts else 0.0
