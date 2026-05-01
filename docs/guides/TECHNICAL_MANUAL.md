@@ -386,6 +386,19 @@ The ONNX exporter writes a JSON representation of a network and stores weights a
 ### 6.9 Performance and profiling
 The profiling tools under `profiling/` and the performance tuning guide provide guidance on bitstream length, clock frequency, and resource usage. When optimizing, start with the smallest acceptable bitstream length and increase only if accuracy demands it. Use vectorized layers for CPU experiments and validate accuracy against bit-level results for critical runs.
 
+### 6.10 Compiler intelligence features (Waves 6–10)
+SC-NeuroCore includes **67 compiler intelligence features** covering formal verification, safety certification, power management, carbon estimation, multi-target deployment, security hardening, supply chain compliance, and platform extensibility. **175 hardware profiles** across **31 platform classes** support every known compute paradigm. These features are fully documented in dedicated guides:
+
+- **[Compiler Intelligence Guide](compiler_intelligence.md)** — Complete reference for all 67 features (§26–§67) with code examples and usage patterns.
+- **[Frontier Platforms Guide](frontier_platforms.md)** — Deep-dive into all 16 frontier platform classes (superconducting, spintronic, biological, quantum, magnonic, organic bioelectronic, RISC-V sovereign, etc.).
+- **[Platform Extensibility Guide](platform_extensibility.md)** — 3 mechanisms: TOML loader, runtime discovery hook, and `from_constraints()` auto-constructor.
+- **[Safety Certification Guide](safety_certification.md)** — Automated certification pipeline for DO-254, IEC 61508, and ISO 26262.
+- **[Carbon & Sustainability Guide](carbon_sustainability.md)** — Carbon footprint estimation, energy scheduling, and EU regulatory compliance.
+- **[Verification & Debug Guide](verification_debug.md)** — 14 verification features from pre-RTL stability through post-silicon debug, HIL calibration, and digital twin monitoring.
+- **[Multi-Target Deployment Guide](multi_target_deployment.md)** — Auto-target recommendation, heterogeneous dispatch, UCIe chiplet mapping, and topology optimisation.
+- **[Wave 9 API Reference](wave9_api_reference.md)** — Complete API reference for §52–§59 and 4 platform classes (optical_io, acoustic, fluidic, space_qualified).
+- **[Wave 10 API Reference](wave10_api_reference.md)** — Complete API reference for §60–§67, `from_constraints()`, and 3 platform classes (magnonic, organic_bioelectronic, risc_v_sovereign).
+
 ---
 
 ## 7. Troubleshooting

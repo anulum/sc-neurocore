@@ -6,8 +6,8 @@
 
 # Hardware Platform Profiles
 
-SC-NeuroCore ships with **144 pre-configured hardware profiles** across **19
-platform classes** and **83 vendors**, covering every FPGA vendor (including
+SC-NeuroCore ships with **175 pre-configured hardware profiles** across **31
+platform classes** and **100+ vendors**, covering every FPGA vendor (including
 rad-hard and eFPGA), AI accelerator, DSP processor, neuromorphic chip, ASIC
 target, photonic/optical compute, processing-in-memory, chiplet/UCIe,
 automotive/edge AI, sovereign/defence, superconducting/cryogenic, spintronic,
@@ -19,7 +19,7 @@ rounding semantics) for its target platform.
 ## Quick Start
 
 ```bash
-# List all 144 hardware profiles
+# List all 175 hardware profiles
 python -m sc_neurocore.neurons platforms
 
 # Compile a LIF neuron for Intel Loihi 2 (auto-selects Q12.12, wrap overflow)
@@ -513,6 +513,44 @@ sva = generate_sva(["v", "u"], data_width=16, fraction=8,
 | `aspinity_aml100` | Aspinity | AML100 | 8-bit |
 | `renesas_analog_ai` | Renesas | AnalogAI | 8-bit |
 
+## Wave 8 Platform Classes
+
+### RRAM / Memristive Crossbar
+
+| Profile | Vendor | Family | Width |
+|---------|--------|--------|------:|
+| `weebit_reram` | Weebit Nano | ReRAM-ACiM | 8-bit |
+| `crossbar_rram` | Crossbar | ReRAM-1T1R | 8-bit |
+| `adesto_cbram` | Adesto | CBRAM | 8-bit |
+
+### SRAM Compute-in-Memory
+
+| Profile | Vendor | Family | Width | Freq |
+|---------|--------|--------|------:|-----:|
+| `tsmc_cim_n7` | TSMC | CIM-N7 | 8-bit | 1 GHz |
+| `samsung_cim_sf3` | Samsung | CIM-SF3 | 8-bit | 900 MHz |
+
+### Cryogenic CMOS
+
+| Profile | Vendor | Family | Width | Freq |
+|---------|--------|--------|------:|-----:|
+| `intel_horse_ridge` | Intel | Horse-Ridge-II | 16-bit | 6 GHz |
+| `google_cryo_ctrl` | Google | Cryo-Controller | 16-bit | 4 GHz |
+
+### DNA / Molecular
+
+| Profile | Vendor | Family | Width |
+|---------|--------|--------|------:|
+| `microsoft_dna_store` | Microsoft | DNA-Storage | 8-bit |
+| `asu_dna_perovskite` | ASU | DNA-Perovskite | 8-bit |
+
+### Quantum Neuromorphic
+
+| Profile | Vendor | Family | Width |
+|---------|--------|--------|------:|
+| `ibm_qnn` | IBM | Quantum-NN | 16-bit |
+| `ionq_trapped_ion` | IonQ | Trapped-Ion-QNN | 16-bit |
+
 ## Further Reading
 
 - [Precision Modes Guide](precision_modes.md) — all 11 Q-format modes
@@ -520,5 +558,9 @@ sva = generate_sva(["v", "u"], data_width=16, fraction=8,
 - [SoC Integration Guide](soc_integration_guide.md) — bus wrappers, drivers, IP-XACT
 - [Deployment Guide](deployment_guide.md) — constraints, TCL, Cocotb, bitstream
 - [Co-Simulation Guide](cosimulation_guide.md) — Python↔Verilog verification
+- [Compiler Intelligence Guide](compiler_intelligence.md) — all 67 features (§26–§67)
+- [Frontier Platforms Guide](frontier_platforms.md) — 31 platform classes deep-dive
+- [Platform Extensibility Guide](platform_extensibility.md) — TOML loader + discovery hook
+- [Safety Certification Guide](safety_certification.md) — DO-254, IEC 61508, ISO 26262
 - [Tutorial 33: Equation-to-Verilog](../tutorials/33_equation_to_verilog.md)
 - [SC for Hardware Engineers](SC_FOR_HARDWARE_ENGINEERS.md)
