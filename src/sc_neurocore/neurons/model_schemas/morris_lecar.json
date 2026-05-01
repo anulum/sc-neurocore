@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "schema_version": 1,
+    "name": "Morris-Lecar",
+    "author": "Morris, C. & Lecar, H.",
+    "year": 1981,
+    "doi": "10.1016/S0006-3495(81)84782-0",
+    "description": "Calcium-potassium oscillator — 2D conductance-based model with sigmoidal activation"
+  },
+  "state": {
+    "v": -60.0,
+    "w": 0.0
+  },
+  "parameters": {
+    "c_m": 20.0,
+    "g_ca": 4.0,
+    "g_k": 8.0,
+    "g_l": 2.0,
+    "e_ca": 120.0,
+    "e_k": -84.0,
+    "e_l": -60.0,
+    "v1": -1.2,
+    "v2": 18.0,
+    "v3": 12.0,
+    "v4": 17.4,
+    "phi": 0.0667
+  },
+  "integration": {
+    "dt": 0.1,
+    "method": "euler"
+  },
+  "dynamics": {
+    "v": "(-g_ca * 0.5 * (1 + tanh((v - v1) / v2)) * (v - e_ca) - g_k * w * (v - e_k) - g_l * (v - e_l) + I) / c_m",
+    "w": "phi * cosh((v - v3) / (2 * v4)) * (0.5 * (1 + tanh((v - v3) / v4)) - w)"
+  },
+  "threshold": {
+    "condition": "v > 0",
+    "detection": "crossing"
+  },
+  "reset": {
+    "v": "v",
+    "w": "w"
+  },
+  "extensions": {}
+}

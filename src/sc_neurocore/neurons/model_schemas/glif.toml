@@ -1,0 +1,51 @@
+[metadata]
+schema_version = 1
+name = "GLIF"
+author = "Teeter, C. et al."
+year = 2018
+doi = "10.1038/s41467-017-02717-4"
+description = "Allen Institute GLIF5 — Generalized LIF with threshold adaptation and after-spike currents"
+
+[state]
+v = -70.0
+theta = -50.0
+i_asc1 = 0.0
+i_asc2 = 0.0
+
+[parameters]
+v_rest = -70.0
+v_reset = -70.0
+theta_inf = -50.0
+tau_m = 10.0
+tau_theta = 100.0
+tau_asc1 = 10.0
+tau_asc2 = 200.0
+a_theta = 0.01
+delta_theta = 2.0
+r_asc1 = 1.0
+r_asc2 = 0.5
+resistance = 1.0
+
+[integration]
+dt = 1.0
+method = "euler"
+
+[dynamics]
+v = "(-(v - v_rest) + resistance * I + i_asc1 + i_asc2) / tau_m"
+theta = "(theta_inf - theta + a_theta * (v - v_rest)) / tau_theta"
+i_asc1 = "-i_asc1 / tau_asc1"
+i_asc2 = "-i_asc2 / tau_asc2"
+
+[threshold]
+condition = "v > theta"
+detection = "crossing"
+
+[reset]
+v = "v_reset"
+theta = "theta + delta_theta"
+i_asc1 = "i_asc1 + r_asc1"
+i_asc2 = "i_asc2 + r_asc2"
+
+[extensions]
+hierarchy_level = 5
+source = "Allen Brain Atlas"

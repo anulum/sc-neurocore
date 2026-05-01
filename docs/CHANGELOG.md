@@ -4,63 +4,740 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
-### SHD FPGA Deployment
-- Complete train → quantise → synthesise → bitstream pipeline for SHD speech classification
-- 75.2% test accuracy on DCLS max model (0% rounding drop, FPGA-deployable)
-- 18 Vertex AI T4 training runs: baseline + lambda sweep (5) + sigma=0 (2) + L1 pruning (2)
-- Lambda regulariser has no detectable effect — sigma-annealing alone gives 0% rounding drop
-- Sigma→0 correction tested: 69.1% (worse than sigma=0.23 baseline)
-- L1 magnitude pruning tested: 46–51% (90% one-shot too destructive)
+### Wave 5: Universal hardware coverage & strategic features (2026-05-01)
 
-### Vivado Synthesis (Zynq XC7Z020, PYNQ-Z2)
-- Vivado v2025.2 synthesis: 1 317 LUT (2.5%), 848 FF (0.8%), 0 BRAM, 0 DSP
-- WNS +4.048 ns at 100 MHz (~168 MHz achievable), 0 violations across 2 636 endpoints
-- Bitstream generated via block design (Zynq PS + AXI-Lite)
-- PYNQ deployment package: sc_shd_driver.py, demo_shd_fpga.py, .bit, .hwh (98 KB ZIP)
-- Synthesis reports committed to hdl/reports/
+#### Added — Hardware Profiles (29 new → 113 total, 66 vendors, 9 classes)
+- **Photonic / Optical Compute** (5): `lightmatter_passage`, `lightelligence_pace`,
+  `xanadu_x8`, `ipronics_smartlight`, `luminous_computing`.
+- **Chiplet / UCIe** (5): `tenstorrent_blackhole`, `cerebras_wse3`,
+  `intel_ponte_vecchio`, `amd_mi300x`, `ucie_generic`.
+- **PIM / CXL Memory** (5): `upmem_pim`, `samsung_hbm_pim`, `sk_hynix_aim`,
+  `cxl_type3`, `axdimm`.
+- **Next-Gen Neuromorphic** (5): `akida2`, `spinnaker2`, `dynapse2`,
+  `rain_neuromorphic`, `brainscales2`.
+- **Sovereign / Defence** (5): `bae_rad750`, `cobham_ut700`, `mpfs250t_rt`,
+  `versal_xqrvc1902`, `trenz_zynq_space`.
+- **Automotive / Edge AI** (6): `mythic_m1076`, `mobileye_eyeq6`, `horizon_j6`,
+  `ambarella_cv72s`, `hailo15`, `syntiant_ndp120`.
 
-### New HDL Modules
-- `sc_shd_top.v`: 3-stage pipelined SHD inference core (AxDelay → Dense → Vmin_LIF)
-- `sc_shd_axi_wrapper.v`: AXI4-Lite slave for Zynq PS ↔ PL communication
-- `sc_vmin_lif_neuron.v`: Vmin LIF neuron with JIT eval order (Q8.8 fixed-point)
-- `sc_axonal_delay.v`: circular buffer axonal delay module
-- `sc_dense_int8_sparse.v`: CSR sparse int8 matrix-vector multiply
-- `vmin_lif_lut.vh`: 256-entry softplus lookup table
-- Total HDL modules: 25 (was 19), 5 455 lines
+#### Added — TOML Profile Loader (universal future-proofing)
+- `load_toml_profile()` — register custom hardware targets from TOML files.
+- `load_toml_profiles_dir()` — bulk-load all `*.toml` profiles from a directory.
+- Enables instant compatibility with any future chip without code changes.
 
-### GPU Compute Backend
-- wgpu feature-gated backend for DenseLayer stochastic computing
-- Philox 4x32-10 GPU-native RNG (no PCIe bandwidth bottleneck)
-- Two-kernel architecture: encode (Bernoulli sampling) + accumulate (AND+popcount)
-- Cross-platform via Vulkan (AMD RDNA2, NVIDIA, Metal, DX12)
-- PyO3 GpuDenseLayer class with forward_fast() and forward_batch_numpy()
+#### Added — Strategic Compiler Features
+- `generate_tmr_wrapper()` — SEU/TMR wrapper with majority/median voter.
+- `embed_model_checksum()` — SHA-256 hash embedding for reproducibility.
+- `auto_quantisation_sweep()` — sweep Q4→Q32 for accuracy-vs-resource DSE.
+- `format_quantisation_report()` — markdown table output for sweep results.
+- `encode_mzi_weights()` — MZI phase-shift encoding for photonic chips.
+- `generate_mzi_config()` — photonic chip config (JSON/CSV) from MZI weights.
+- `plan_pim_layout()` — PIM/CXL memory bank layout optimisation.
+- `generate_power_domain_wrapper()` — ICG clock gating for ultra-low-power edge.
+- `generate_hls_cpp()` — Vitis/Catapult HLS C++ translation.
+- `generate_bitstream_encryption()` — AES-256 bitstream encryption (Xilinx/Intel).
+- `advise_ucie_partition()` — chiplet die-to-die neuron array partitioning.
+- `advise_cxl_mapping()` — CXL.mem Type-3 device mapping with protocol selection.
+- `generate_learning_params()` / `export_learning_config()` — STDP/RSTDP on-chip
+  learning parameter export for Akida 2, BrainScaleS-2, SpiNNaker 2.
+- `inject_weight_noise()` — stochastic weight noise injection (Gaussian/uniform/
+  lognormal) for analog/memristive robustness validation.
+- `create_noise_profile()` — device-variation characterisation for analog targets.
+- `generate_pipeline_wrapper()` — auto-insert register stages for HF targets.
+- `compare_targets()` — compile once, compare N hardware targets side-by-side.
+- `format_comparison_report()` — markdown table from multi-target comparison.
+- `generate_compilation_summary()` — comprehensive markdown compilation report.
 
-### FPGA Tooling
-- Q8.8 reference simulator (tools/shd_q88_reference.py) with bit-true guarantees
-- Weight extraction pipeline (tools/extract_shd_weights.py): int8 weights, integer delays, Q16.16 scales
-- Co-simulation harness (tools/cosim_q88_vs_pytorch.py): per-sample PyTorch ↔ Q8.8 comparison
-- Softplus LUT generator (tools/gen_vmin_lif_lut.py)
-- Vivado block design Tcl script (hdl/pynq/create_block_design.tcl)
-- PYNQ-Z2 timing constraints (hdl/constraints/pynq_z2.xdc)
+#### Added — Tests
+- `tests/test_wave5_features.py` — 130 tests (profiles, TOML, TMR, checksum,
+  sweep, MZI, PIM, power-domain, HLS, encryption, UCIe, CXL, STDP, noise,
+  pipeline, comparison, summary, cross-feature E2E integration).
+- Total regression: **933 passed**, 1 xfailed, 0 failures.
 
-### Model Documentation
-- 38/122 model doc pages upgraded to 567+ lines (verified against Rust source)
-- 84 remaining (in progress)
 
-### WaveformCodec
-- Mode parameter (background/snippet) with 13 multi-angle tests
-- SPDX header fix
+### Network-level compilation & thermal-aware deployment (2026-05-01)
 
-### Collaboration
-- Joint work with T. Masquelier, A. Queant, B. Cottereau (CNRS/CerCo) on SHD FPGA
-- 21-message correspondence, email with full sweep results + bitstream sent
+#### Added — Advanced Features: BRAM Auto-Selection
+- `storage_recommendation()` — automatic register/BRAM/URAM strategy.
+- `generate_bram_array()` — time-multiplexed BRAM-backed neuron array
+  with `(* ram_style = "block" *)` inference pragmas.
+- Supports 18Kb, 36Kb BRAM and 288Kb URAM (UltraScale+/Versal).
 
-### CI & Dependencies
-- ruff 0.15.9, mkdocs strict mode with anchor validation
-- .typos.toml author name exception, .gitignore vivado logs
-- Dependabot PR #61 (ruff) merged
+#### Added — Advanced Features: Thermal-Aware Compilation
+- `thermal_analysis()` — ΔT estimation, frequency derating, hotspot risk.
+- `generate_thermal_constraints()` — XDC with derated clock and DSP spreading.
+- Technology model for 7nm through 65nm junction temperature.
 
-## [3.14.0] - 2026-04-13
+#### Added — Advanced Features: Weight ROM Generation
+- `generate_weight_rom()` — synaptic weights in 3 formats:
+  Verilog ROM, Xilinx `.coe`, and Intel `.mif`.
+
+#### Added — Tests
+- `tests/test_wave4_features.py` — 28 tests (BRAM, thermal, weights).
+- `tests/e2e/test_e2e_pipeline.py` — 22 end-to-end integration tests
+  covering 9 cross-cutting compilation pipelines.
+- Total regression: **745 passed**, 1 xfailed, 0 failures.
+
+
+#### Added — Hardware Profiles (7 new → 84 total)
+- **AI accelerators**: `qualcomm_nsp` (Qualcomm NSP), `sambanova` (SambaNova
+  RDU), `cambricon_mlu` (Cambricon MLU370/590).
+- **Emerging compute**: `superconducting` (AQFP/SFQ ~100 GHz),
+  `cim_sram` (compute-in-SRAM), `analog_ai` (PCM/ReRAM),
+  `event_camera` (Prophesee/Sony DVS).
+
+#### Added — Static Analysis: Pipeline Stage Analysis
+- `critical_path_depth()` — AST-based multiply chain analysis.
+- `pipeline_stages_needed()` — pipeline budget from target frequency.
+- `pipeline_analysis()` — multi-ODE per-variable pipeline report.
+
+#### Added — Static Analysis: Power Estimation
+- `estimate_power()` — switching-activity-based power model.
+- `PowerEstimate` dataclass with dynamic/static/total/energy-per-spike.
+- Technology node library: 7nm through 65nm capacitance scaling.
+
+#### Added — Deployment: Multi-Target Compilation
+- `compile_multi_target()` — compile one neuron to N targets.
+- `format_comparison_table()` — markdown comparison report.
+- `CompilationResult` dataclass with per-target metrics.
+
+#### Added — Tests
+- `tests/test_wave3_features.py` — 31 tests (profiles, pipeline,
+  power, multi-target).
+- Total regression: **695 passed**, 1 xfailed, 0 failures.
+
+
+#### Added — Hardware Profiles (12 new → 77 total)
+- **Neuromorphic**: `loihi3` (Intel, 4nm 8M neurons), `northpole` (IBM, 256-core),
+  `innatera_pulsar` (Innatera, analog-digital hybrid μC).
+- **FPGA**: `versal_ai_edge` (AMD, AI Engine + DSP58), `proasic3` (Microchip, flash),
+  `trion` / `titanium` (Efinix), `gowin_arora_v` (Gowin 28nm), `intel_agilex5`
+  (Intel, HBM2e).
+- **AI accelerators**: `nvidia_dla` (Orin DLA), `mediatek_apu` (APU 790),
+  `aws_inferentia` (Inferentia2/Trainium2).
+
+#### Added — Deployment: SymbiYosys Formal Verification
+- One-command `.sby` script generation for BMC, induction, and cover modes.
+- Solver support: boolector, Z3, yices via SymbiYosys + Yosys.
+
+#### Added — Deployment: RISC-V Driver + RTOS Templates
+- RISC-V C driver with volatile MMIO accessors for PolarFire SoC, Efinix
+  Titanium, and RISC-V soft-cores (Nios V, MicroBlaze V).
+- FreeRTOS task template: `xTaskCreate` + `vTaskDelay` neuron tick loop.
+- Zephyr RTOS thread template: `K_THREAD_DEFINE` + `k_msleep` integration.
+
+#### Added — Advanced Features: DVS Event-Camera → AER Bridge
+- Synthesisable Verilog bridge converting Prophesee / Sony IMX636 DVS events
+  to SC-NeuroCore AER address-event protocol.
+- Configurable FIFO depth, address width, timestamp width, polarity bit.
+- Overflow detection flag for back-pressure monitoring.
+
+#### Added — Deployment: Multi-Die SLR Placement
+- Vivado XDC PBLOCK constraint generation for multi-SLR FPGAs (Versal,
+  Agilex 7, Stratix 10, UltraScale+).
+- Auto inter-SLR pipeline register directives for >500 MHz crossing.
+
+#### Added — Advanced Features: Block-FP / MXFP Encoding
+- OCP Microscaling Spec v1.0 formats: MXFP4, MXFP6, MXFP8 (E4M3/E5M2).
+- IEEE FP8 (NVIDIA H100/B100 native) with block_size=1.
+- Encode/decode block functions for parameter transfer and weight storage.
+
+#### Added — Deployment: Safety Certification Evidence
+- XML traceability matrix generation for DO-254 (DAL-A/B/C), IEC 61508
+  (SIL 1–4), and ISO 26262 (ASIL A–D).
+- Requirement → design → verification linkage with pass/fail/untested
+  status and coverage percentage.
+
+#### Added — Tests
+- `tests/test_wave2_features.py` — 49 tests (profiles, SBY, RISC-V,
+  DVS, SLR, MXFP, certification).
+- Total regression: **650 passed**, 1 xfailed, 0 failures.
+
+### Universal hardware compilation & deployment industrialisation (2026-05-01)
+
+#### Added — Compiler: Hardware Profiles
+- Expanded hardware profile registry from 32 to **65 pre-configured profiles**
+  across 7 platform classes and 40 vendors.
+- **Rad-hard / space**: NanoXplore NG-Ultra, Microchip RTG4, Xilinx Kintex
+  UltraScale+ RT — DO-254 / MIL-STD-883 alignment.
+- **Edge AI accelerators**: Hailo-8, Kneron KL730, Groq TSP, NVIDIA Jetson
+  Orin, Intel Habana Gaudi 2/3, Renesas DRP-AI.
+- **eFPGA IP**: Achronix Speedcore, Flex Logix EFLX, Menta Origami.
+- **Vision-on-sensor**: Sony IMX500/IMX501, Samsung Exynos NPU.
+
+#### Added — Compiler: Static Analysis (`static_analysis.py`)
+- Guard-bit auto-computation from expression AST (single + multi-ODE).
+- Formal overflow proof via interval arithmetic — mathematical guarantee of
+  no overflow at compile time, no simulation required.
+- SystemVerilog Assertion (SVA) generation for DO-254 / IEC 61508 formal
+  verification (overflow assertions, reachability covers, input assumptions,
+  stability checks).
+
+#### Added — Compiler: Mixed Precision (`mixed_precision.py`)
+- Per-variable mixed-precision specification via dict API.
+- Automatic constraint solver: given value bounds, resolution requirements,
+  and a total-bit budget, auto-selects optimal Q-format per variable.
+- Preset shorthand (`from_preset({"v": "q88", "u": "q44"})`).
+
+#### Added — SoC Integration: Bus Interface (`bus_interface.py`)
+- AXI4-Lite bus wrapper generator (Xilinx/AMD compatible).
+- Wishbone B4 bus wrapper generator (LiteX/open-source RISC-V compatible).
+- Auto-generated register map with CTRL, I_T, SPIKE_COUNT, and parameter
+  registers. Spike interrupt output for GIC/NVIC integration.
+
+#### Added — Compiler: Deployment Utilities (`deployment.py`)
+- **Resource estimation**: LUT/FF/DSP/BRAM estimation from Verilog without
+  synthesis (heuristic-based, <1 ms).
+- **Constraint generation**: SDC (Intel/generic) and XDC (Xilinx) timing
+  constraint files with configurable target frequency.
+- **Host driver generation**: Python MMIO class and C header with Q-format
+  encode/decode for host-side parameter tuning.
+- **Cocotb testbench generation**: 3-scenario Python-based verification
+  (spike, zero-current, reset).
+
+#### Added — Compiler: Advanced Features (`advanced_features.py`)
+- **VHDL-2008 output mode**: generates entity/architecture wrappers for
+  mixed-language simulation and DO-254 compliance.
+- **Posit arithmetic**: posit-8 and posit-16 encode/decode with 4 standard
+  configs (POSIT8_0, POSIT8_1, POSIT16_1, POSIT16_2).
+- **CDC synchroniser generation**: multi-clock domain crossing with
+  configurable stages and `ASYNC_REG` attributes.
+- **TCL project generation**: complete Vivado and Quartus project scripts
+  (synth → P&R → bitstream → reports).
+- **Bitstream automation**: Yosys + nextpnr Makefiles for iCE40 and ECP5
+  open-source FPGA flow.
+
+#### Added — SoC Integration: IP-XACT Packaging (`ip_xact.py`)
+- IEEE 1685 IP-XACT component XML generator for Vivado IP Integrator
+  drag-and-drop integration with AXI bus interfaces, port definitions,
+  file sets, and parameter schemas.
+
+#### Added — Documentation
+- New guide: `docs/guides/static_analysis_guide.md` (217 lines) — guard bits,
+  interval arithmetic overflow proof, SVA generation.
+- New guide: `docs/guides/soc_integration_guide.md` (239 lines) — bus
+  wrappers, mixed-precision, host drivers, IP-XACT, VHDL output.
+- New guide: `docs/guides/deployment_guide.md` (338 lines) — resource
+  estimation, SDC/XDC constraints, Cocotb testbenches, Vivado/Quartus TCL,
+  CDC synchronisers, posit arithmetic, iCE40/ECP5 Makefile, complete
+  end-to-end deployment workflow.
+- Updated guide: `docs/guides/hardware_profiles.md` (431 lines) — expanded
+  from 51 to 65 profiles with rad-hard, eFPGA, edge AI, and vision tables;
+  cross-references to 3 new guides.
+- Updated roadmap: `docs/internal/COMPILER_ROADMAP_TODO.md` — all Tier 4
+  items marked DONE, cross-references to new modules.
+- 100% docstring coverage across all 13 modified/new source modules.
+
+#### Added — Tests
+- `tests/test_static_analysis.py` — 28 tests.
+- `tests/test_bus_mixed_precision.py` — 34 tests.
+- `tests/test_deployment.py` — 26 tests.
+- `tests/test_advanced_features.py` — 40 tests (IP-XACT, VHDL, posit, CDC,
+  TCL, Makefile).
+- `tests/test_hardware_profiles.py` — expanded to cover all 65 profiles.
+- Total regression: **577 passed**, 1 xfailed, 0 failures.
+
+#### Fixed — Docstring Coverage
+- Added missing docstrings to 24 functions/methods across
+  `verilog_generator.py`, `equation_builder.py`, `universal_dsl.py`, and
+  `neurons/__init__.py` to achieve 100% coverage on all session-touched files.
+
+### Security hardening (2026-04-29)
+
+#### Added
+- Property-based fuzz coverage for malformed bitstream/IR ports, Studio graph
+  JSON, transfer checkpoints, NIR imports, model-zoo NPZ archives, SCPN
+  datastream JSON, custom chip-spec JSON, HDL stochastic-source lowering,
+  equation/MLIR lowering, and optimiser evidence JSON.
+- Offline supply-chain audit command for committed CycloneDX SBOM and release
+  requirements metadata: `python tools/supply_chain_audit.py`.
+- Hardware-install documentation now records Vivado `v2025.2` as the current
+  SHD/PYNQ evidence pin and marks OpenROAD PPA numbers as unpublished until the
+  binary/container digest and PDK revision are recorded.
+- Packaging metadata now exposes `sc-neurocore[hdl]`, expands
+  `sc-neurocore[full]` across CPU-side training, NIR, Studio, HDL, codec,
+  bioware, and quantum workflows, and packages HDL/OpenROAD source artefacts.
+- Added an offline EDA toolchain version inventory helper for Vivado,
+  OpenROAD, Yosys, nextpnr, IceStorm, Trellis, Quartus, Lattice tools, PYNQ,
+  and OpenROAD/PDK pin metadata.
+
+#### Fixed
+- Hardened validation boundaries for fuzzed JSON, NPZ, NIR, IR, and HDL inputs
+  before they reach parser, lowering, or hardware-resource paths.
+- Documented the strict release-mode supply-chain gate in `SECURITY.md`.
+- Aligned the CycloneDX SBOM root component version with `pyproject.toml` so
+  strict supply-chain audit runs pass without metadata drift.
+
+### CI coverage restoration (2026-04-21)
+
+#### Fixed
+- `tools/ci_install_dev.py` now installs `dev,nir,compression,training,research,bioware,studio` so the 342 torch-gated tests (`arcane_zenith`, `darts_sc_nas`, `advanced_plasticity`, and the `_native` bridges that hit the `torch.autograd.Function` path) run inside the 3.10–3.14 matrix instead of being silently skipped.
+- `tests/test_analog_bridge/test_analog_bridge.py` + `test_analog_bridge_extended.py` now import through `sc_neurocore.analog_bridge` rather than via a `sys.path.insert` hack; `coverage.py` was reporting 0 % for `analog_bridge.analog_bridge` despite the 27 tests executing every line.
+
+#### Added
+- `sc_neurocore.analog_bridge` package root re-exports `AnalogBridge`, `AnalogSubstrateProfile`, `EventDrivenInterface`, `CalibrationRoutine`, `AEREvent` through `__all__`.
+- `tests/test_native/test_array_guards.py` — 24 multi-angle tests for `require_c_contiguous` covering happy path, dtype coercion, non-contiguous rejection, list / tuple conversion, the post-asarray defensive branch via `__array__` producers, alignment enforcement, and FFI integration byte ops. Module coverage 42 % → 100 %.
+- Two `unittest.mock.patch`-based tests for `CalibrationRoutine.effective_resolution_bits` fallback (`max_err == 0` and `full_range == 0`); reachable branches not touched by the sweep-and-measure suite. Module coverage 99 % → 100 %.
+
+### evo_substrate: 4-backend whole-process industrial evolve runner (2026-04-20)
+
+#### Added
+- `crates/evo_substrate_core` (new Rust crate, 1 227 LOC of `runner.rs` + C-FFI + PyO3 extension) — port of `ReplicationEngine.evolve_generation` + eleven industrial guards (TournamentSelector, AgeRegulator, FormalSafetyGuard, BloatPenalizer, ExtinctionDetector, HallOfFame, ParetoFront, LineageTracker, MutationEngine × 4 variants, CrossoverEngine, parametric FitnessEvaluator). Entry point `py_evolve_run(config_json) -> str`. Measured 72× speedup over the Python `ReplicationEngine` on 10-gen × 16-pop industrial runs (0.57 ms vs 40.88 ms).
+- `src/sc_neurocore/accel/julia/evo_substrate/evo_runner.jl` (720 LOC) — same industrial loop in Julia 1.10+. JSON-in / JSON-out subprocess contract. Pinned deps via `Project.toml`.
+- `src/sc_neurocore/accel/go/evo_substrate/runner.go` (926 LOC) — same industrial loop in Go 1.22+. Shares the JSON contract. `--runner` flag on the existing `evo_substrate_bench` binary dispatches to it.
+- `src/sc_neurocore/accel/mojo/kernels/evo_runner.mojo` (803 LOC) — same industrial loop in Mojo 0.26+. Uses Mojo's Python interop for JSON + SHA-256 at the I/O boundary; compute loop (mutation, fitness, tournament, Pareto, lineage, extinction) runs in pure Mojo.
+- Unified XorShift64 PRNG across all four backends (shift constants 13/7/17, `0xDEADBEEFCAFEBABE` fallback for zero seeds) so the uniform-random sequence is byte-identical cross-language. Rust↔Julia full bit-exact parity on final genomes / lineage / Pareto; Rust↔Go & Rust↔Mojo agree on structural counters but drift ~1e-3 on `best_fitness` because Go + Mojo `libm` `cos()` / `log()` differ from Rust's libm at ~1 ULP and Box-Muller compounds that.
+- Hamming(7,4) encode / decode + `ScDoctor.adapt` control law added to `crates/stochastic_doctor_core` with PyO3 bridge (`py_hamming74_encode`, `py_hamming74_decode`, `py_sc_doctor_adapt`); `src/sc_neurocore/debug/sc_doctor.py` now dispatches to Rust when the extension is importable (1.7× / 3.1× speedup on encode / decode; `adapt` slower via FFI at 276 ns due to dominant PyO3 overhead). Pure-Python fallback preserved bit-exact.
+- `sc_scope.compute_scc` now dispatches to `stochastic_doctor_core.py_scc_packed` (174× speedup over pure Python; bit-exact parity with fallback).
+- Cross-language parity test harness `tests/test_evo_substrate/test_multilang_parity.py` (18 assertions) asserts Rust↔Julia byte-exact, Rust↔Go counter match + fitness tolerance, Rust↔Mojo schema match.
+- Per-backend unit tests: Julia 17 tests (`test_evo_runner.jl`), Go 8 tests (`runner_test.go`), Mojo 7 side-validated tests (`tests/test_evo_substrate/test_mojo_runner.py`).
+
+#### Documentation
+- `docs/api/evo_substrate.md` §7.3 — new whole-process runners section with entry-point table, measured 4-way parity matrix, honest timing breakdown per backend (Rust PyO3 warm 0.57 ms, Go execution 2 ms excluding ~3 s `go build` first time, Mojo cold ~1.1 s pixi + JIT + Python interop, Julia cold ~3 s JSON.jl + SHA.jl precompile, Python reference 40.88 ms), decision matrix for which backend to pick, and the 4-way test-suite invocation list.
+
+### ArcaneZenith + VISION2030 unification (2026-04-20)
+
+#### Added
+- `sc_neurocore.arcane_zenith.ArcaneZenithCognitiveCore` — three-compartment ArcaneNeuron (fast / working / deep membrane states) coupled via attention gate + self-model predictor, wired to four reward-modulated plasticity rules via a sharpened sigmoid that maps weights into biological ranges for `tau_deep`, `surprise_baseline`, `delta_conf`, `lr_base`. Factory `create_arcane_neuron_with_zenith_plasticity(backend=…)`, plus `step_from_bio_rates` (MEA rate dict) and `step_from_genome` (evo_substrate bridge). 32 multi-angle tests in `tests/test_arcane_zenith/`.
+- `sc_neurocore.optics.photonic_emitter` — full rewrite of `CrosstalkModel.analyze_bank` on Marcatili coupled-mode theory (adjacent + next-nearest pairs); new `analyze_pairs` for O(N²) arbitrary geometry. Rust FFI `py_ph_analyze_crosstalk_bank` / `py_ph_analyze_crosstalk_pairs` (with 4 cargo tests); Python fallback matches to 1e-9. `FDTD2DSolver` split-field Berenger PML (Ezx + Ezy with σ-matched magnetic conductivity). `CompilationResult.to_gdsii` now produces real GDSII via `gdsfactory` + `klayout` (PDK auto-activation, `allow_duplicate` cells, netlist string to GDS TEXT layer 63/0). 43 tests in `tests/test_optics/`.
+- `sc_neurocore.bioware` closed-loop surface: `BioHybridSession.process_frame` returns `BioHybridFrameResult` (typed dataclass with legacy mapping view — `result["round"]` + `result.round` both valid). `SpikeSorter` fit/assign with sklearn PCA+KMeans, no-op on empty input. `HomeostaticPlasticity.update_threshold` Q8.8 proportional controller (error × α × 256, clamped to min/max). New `mea_fitness_hook` — converts MEA spike dynamics to `{accuracy, energy_mw, latency_ms}` for evo_substrate's `ReplicationEngine(metrics_fn=…)`. Matching PCA / Berenger / closed-loop regression tests added.
+- `sc_neurocore.accel.mojo.MojoKernelRunner` + `kernels.mojo` — Mojo SIMD primitives (packed SC ops, `sc_and/or/xor/mux/sub/not`, pack/unpack, `vec_mac`, `stdp_update`, `reward_modulated_stdp`, `hdc_bind`). Pixi-managed toolchain; `_HAS_MOJO` flag never raises on missing tooling. `benchmarks/bench_mojo_vs_rust.py` pure-text side-by-side harness.
+- `sc_neurocore.edge.aer_router.AERRoutingDaemon` — Python lifecycle wrapper for the Go AER UDP mesh router (`accel/go/services/aer_router/main.go`). Three sibling Go modules: `hil_debugger` (WebSocket telemetry), `services` / `services_ext` (Phase 2 / Phase 6 coordination). Each with its own `go.mod` + `main_test.go`.
+- `sc_neurocore.debug.hil_server.HILServerDaemon` + `HILDebugger` — lifecycle wrapper for the Go HIL debugger binary with `GET /health` readiness probe, 5 s timeout, SIGTERM → SIGKILL ladder.
+- `sc_neurocore.formal.FormalProofEngine` — Lean 4 bridge. `safety_bounds.lean` proves six theorems (`monitor_soundness`, `safe_transition`, `sc_precision_bound`, `sc_add_preserves_range`, `lif_membrane_bounded`, `correlation_range`) mapped 1:1 to `neuro_safe_monitor.sv` P-properties. New `src/sc_neurocore/formal/__init__.py` exports the engine.
+- `sc_neurocore.accel.julia.solvers.JuliaFusionSolver` + 4 `.jl` scripts (`fusion_solver`, `neuron_zoo`, `dynamical_analysis`, `spike_analysis`) — reference continuous-time ODE solvers via `DifferentialEquations.jl` (Tsit5).
+- `sc_neurocore.hdl_gen.safety.neuro_safe_monitor` + `tb_safety_monitor` — SystemVerilog runtime safety monitor enforcing the six Lean theorems at nanosecond scale. Parameterised on Q8.8 current / voltage / coherence / SC denominator / LIF max. `openroad_flow/run_asic_flow.sh` drives Yosys synthesis (+ optional OpenROAD P&R) against the monitor with area / timing reports.
+- `sc_neurocore.evo_substrate` gained (documented in full): `FormalSafetyGuard`, `BloatPenalizer`, `ExtinctionDetector`, `ComplexityTracker`, `CPPNGenome`, `ParetoFront`, `NoveltyArchive`, `HallOfFame`, `TileDeploymentTracker`, `ResourceBudget`, `LineageTracker`, `IslandModel`. Bridged to MEA via `mea_fitness_hook` and to ArcaneZenith via `step_from_genome`.
+- `sc_neurocore.proto` — `core.proto` (Tensor, BitstreamMetadata) + `telemetry.proto` (HILFrame) as the wire contract for HIL debugging.
+- Plasticity-layer `reset()` contract: new FFI `reset_rule_layer` in `libautonomous_learning` (Rayon par_iter over rules), new `WgpuRuleLayer::reset` + `reset_wgpu_layer` FFI, and `reset()` methods on `RustRuleLayer`, `RustWgpuRuleLayer`, `TorchRuleLayer` with per-rule trace-clearing scope matching the Rust `PlasticityRule::reset` trait contract. `ArcaneZenithCognitiveCore.reset()` now works across all three backends. 11 new tests.
+- Example demos: `examples/14_bioware_closed_loop_demo.py` (100-frame MEA ↔ ArcaneZenith closed loop), `examples/15_photonic_compilation_demo.py` (SC → MZI cascade → real GDSII), `examples/16_evo_substrate_demo.py` (genome → SC top-level module → Verilog emit).
+
+#### Documentation
+- New API pages: `docs/api/mojo_accel.md`, `docs/api/edge.md`, `docs/api/formal.md`, `docs/api/julia_solvers.md`, `docs/api/proto.md`.
+- Upgraded from stubs: `docs/api/evo_substrate.md` (23 → 155 lines), `docs/api/debug.md` (24 → 120 lines, added HIL section), `docs/api/hdl_gen.md` (17 → 100 lines, added safety-monitor P-property table + Lean mapping + ASIC flow).
+- `docs/api/bioware.md` upgraded from 14-line stub (full `BioHybridSession` + `BioHybridFrameResult` dual-access + Q8.8 homeostatic controller + SpikeSorter + mea_fitness_hook sections).
+- New `docs/api/arcane_zenith.md` + `docs/api/optics.md` completely rewritten (photonic compiler + Berenger PML + Marcatili crosstalk + GDSII).
+- `mkdocs.yml` navigation restructured: new *Acceleration* (Mojo + Julia), *Formal + Safety*, *Edge + Wire Protocol* groups under Frontiers.
+
+#### Fixed
+- `RustEligentLearner.step` FFI signature was missing the `dt` parameter (4 args passed, 5 expected) — every non-empty call raised `AttributeError`. Added `dt: float = 0.001` kwarg.
+- `sc_neurocore._native.learning_bridge` no longer raises at import time when `libautonomous_learning.so` is absent; returns `_HAS_LEARNING = False` so downstream imports succeed (the 398 previously-failing test collections now run).
+- `CI workflows` (`ci.yml`, `v3-engine.yml`) now build the `autonomous_learning` cdylib and copy it into `src/sc_neurocore/_native/` before pytest runs — keeps the Rust path live.
+
+#### Repository hygiene
+- Untracked compiled Go bench binaries (`services_bench`, `services_ext_bench` ≈ 4.4 MB total) from `src/sc_neurocore/accel/go/services/…`; pattern added to `.gitignore` (regenerate locally via `go test -bench -c`).
+- 22 ruff lint + format fixes across user-WIP modules (evo_substrate, mojo/runner, debug/hil_*, edge/aer_router, formal/lean_bridge). `ruff check src/ tests/` and `ruff format --check src/ tests/` clean.
+- New optional extras in `pyproject.toml`: `optics = ["gdsfactory>=9.0"]`, `bioware = ["scikit-learn>=1.3"]`.
+
+### CorticalColumn full-scale (77 169 cells) verification (2026-04-19)
+- Ran the canonical fidelity reference: `scale=1.0, seed=42`, 600 ms simulation with the block + Rust batched multi-spmv path. 77 169 cells, build 298 s, sim 3 564 s ≈ **64 minutes wall**.
+- **5/8 populations within 1.2× of Potjans Table 4** (L23i 1.07×, L4e 1.06×, L4i 1.09×, L6e 1.24×, L6i 1.05×). L5e 1.32×, L5i 1.22× plateau ~25 % over published — NOT purely a finite-size effect (does not collapse below 1.20× at full scale). L23e under-fires at 0.67× consistently across all four scales.
+- Honest interpretation: the residual is a combination of (i) shorter analysis window than the published 5 s, (ii) dt-quantised global-bin delays vs the paper's per-connection continuous Gaussian, (iii) per-target multapse sampling vs NEST's `multapses=False` (which we cannot trivially use without breaking van Albada 2015 in-degree preservation). The shape is faithful (population ordering, E/I balance, all rates finite and bounded); the absolute residual at ≤ 1.32× is the practical limit of the current architecture.
+- Doc page §4.1 now records all four scales side-by-side; the full-scale row is the canonical reference.
+
+### CorticalColumn full-scale convergence verified at scale=0.5 (2026-04-18)
+- Ran `scale=0.5, seed=42`, 600 ms simulation with the block + Rust batched multi-spmv path. 38 586 cells, build 116 s, sim 1 956 s (≈ 33 min wall).
+- **6/8 populations within 1.2× of Potjans Table 4** (vs 5/8 at scale=0.1, 5/8 at scale=0.2): L23i 1.00×, L4e 0.95×, L4i 1.07×, L5i 1.20×, L6i 1.04×.
+- L5e shrinks 1.97× → 1.52× → **1.36×**; L6e shrinks 2.81× → 2.43× → **1.68×**. Both still residual but on the predicted convergence trajectory of van Albada et al. 2015 Fig 5.
+- Confirms the finite-size hypothesis empirically: residuals collapse monotonically as scale grows, full-scale (~77 000 cells) would close to ≤ 1.05× across all populations. scale=0.5 / 600 ms is now reachable in 33 min wall, unblocked by the block + Rust path.
+
+### CorticalColumn batched multi-spmv Rust call (2026-04-18)
+- New `engine/src/cortical_inject.rs::parallel_csr_multi_spmv_add` — does `2 × n_delay_bins` (= 10) spmv add operations in ONE FFI call. Rust loops internally over the bins; `par_chunks_mut(512)` parallelism still applies, with the per-row kernel summing contributions from all bins before writing back.
+- New PyO3 wrapper `sc_neurocore_engine.py_parallel_csr_multi_spmv_add` accepting `Vec<PyReadonlyArray1>` for indptrs / indices / data / xs.
+- `CorticalColumn._inject_block(dt)` now batches all non-empty (E + I) bins into ONE FFI call when the multi-spmv kernel is available; falls back to per-block calls otherwise.
+- Bridge wrapper `bridge/sc_neurocore_engine/__init__.py` re-exports `py_parallel_csr_multi_spmv_add`.
+- 1 new Rust unit test `test_multi_spmv_matches_sequential` proving batched output equals N sequential `parallel_csr_spmv_add` calls.
+- **Measured perf at scale=0.1, 600 ms**: 287.5 s wall — DOWN from 460 s (single-call Rust) and ON PAR with scipy per-pair (290 s). FFI overhead reduction (10 calls → 1) reclaimed the gap.
+
+### CorticalColumn Rust per-row-parallel CSR spmv kernel (2026-04-18)
+- New `engine/src/cortical_inject.rs`: rayon-parallel CSR sparse mat-vec add (`y += W @ x`) with row-chunking (`CHUNK_SIZE = 512`) so each task sees ~250 µs of work — well above rayon's per-iteration scheduler break-even point. 4 unit tests.
+- PyO3 wrapper `sc_neurocore_engine.py_parallel_csr_spmv_add` re-exported via `bridge/sc_neurocore_engine/__init__.py`.
+- `CorticalColumn._inject_block(dt)` now dispatches to the Rust kernel automatically when available (auto-detected via `_HAS_RUST_CSR_SPMV`). Bit-identical results vs scipy single-threaded — per-row reductions are local so parallel order does not affect output.
+- Pre-extracted `(indptr, indices, data)` triples per block at construction (`_block_e_arrays`, `_block_i_arrays`) to dodge per-step `np.ascontiguousarray` cast overhead that otherwise eats the per-call Rust speedup.
+- **Honest perf finding**: Rust kernel measures 18.9 ms vs scipy 33 ms standalone (1.75× per call). In the full simulation pipeline at scale=0.1 / 600 ms, however, Rust takes **460 s** vs scipy **290 s** (per-pair) — a 1.6× regression. scipy's CSR mat-vec is already well-tuned for the in-pipeline access pattern (cache-warm matrices, sparse spike vectors); per-call Rust overhead + the surrounding Python concat / count_nonzero / slice work dominates.
+- The Rust kernel is preserved as the **right primitive** for the future block-CSR / GPU / multi-node scale-up regime (where per-call FFI overhead shrinks relative to per-call work). Default per-pair scipy path is already the fastest Python-side measurement; Rust is opt-in via `use_block_csr=True`.
+
+### CorticalColumn block-CSR opt-in path (2026-04-18)
+- Added stacked block-CSR matrices keyed by `(source-type, global-bin-idx)` so the per-step inner loop can collapse from `n_pairs × n_delay_bins` (≈ 320 sparse mat-vecs) to `2 × n_delay_bins` (≈ 10). Bin centres are global, derived from theoretical Gaussian quantiles via `scipy.stats.norm.ppf`.
+- New `CorticalColumn` parameter `use_block_csr: bool = False`. When True, the construction builds block matrices alongside the per-pair representation; `step()` dispatches to `_inject_block(dt)`.
+- **Honest perf finding**: at `scale=0.1`, 300 ms sim, the block path measures 306 s vs ~145 s for the legacy per-pair path (≈ 2× SLOWER). scipy.sparse CSR mat-vec is compute-bound (FLOPs scale with `nnz`, identical between paths), and the per-pair tight inner loop wins on cache locality. The block path is preserved as an opt-in because it is the natural data layout for any future Rust / Mojo FFI port (10 FFI calls vs 320, where call overhead DOES dominate).
+- Default flipped to `use_block_csr=False` so the as-shipped Python path stays on the fastest measured backend.
+- New `tests/test_cortical_column.py::TestConnectivity::test_block_csr_path_builds_and_runs` exercises the opt-in path so it does not silently rot.
+
+### CorticalColumn finite-size verification at scale=0.2 (2026-04-18)
+- Empirically verified that the L5e/L6e residual at `scale=0.1` is a finite-size effect (van Albada et al. 2015 Fig 5), not a model bug. Scale=0.2 / 600 ms / seed=42 measurements:
+
+  | Pop | scale=0.1 ratio | scale=0.2 ratio | Δ |
+  |-----|----------------:|----------------:|---:|
+  | L23e | 0.67× | 0.27× | overshoots low |
+  | L23i | 1.19× | 0.94× | improving |
+  | L4e | 0.68× | 0.73× | stable |
+  | L4i | 1.21× | 1.08× | improving |
+  | L5e | 1.97× | **1.52×** | **-23 %** |
+  | L5i | 1.50× | **1.27×** | **-15 %** |
+  | L6e | 2.81× | **2.43×** | **-14 %** |
+  | L6i | 1.24× | **1.10×** | improving |
+
+- The deep-layer residuals (L5e, L6e) shrink monotonically with scale; extrapolating linearly suggests scale=0.5 closes them to within 1.2-1.3× of Potjans Table 4. Closing all 8 populations to within 10 % requires full scale (~77 000 cells, ≈ 50 min/sec biotime). The implementation is faithful — the residual is intrinsic to sub-full-scale finite-size effects.
+- `docs/api/cortical_column.md` §4.1 now documents the per-scale ratios side-by-side with the historical baseline and the rejected no-multapse experiment.
+
+### CorticalColumn per-connection Gaussian delay distribution (2026-04-18)
+- `network/cortical_column.py` adds per-connection delay binning. New constants `DELAY_E_SIGMA = 0.75 ms`, `DELAY_I_SIGMA = 0.4 ms` (Potjans Table 5). New `__init__` parameters `delay_distribution: bool = True` and `n_delay_bins: int = 5`. At construction time each (target, source) pair samples `K_per_target * n_t` per-connection delays from `N(DELAY_*, sigma_*)`, quantile-bins them into 5 groups and stores one sub-CSR per bin. Per `step()`, each pair contributes one `dot()` per bin, reading the source spike vector at that bin's delay offset.
+- Setting `delay_distribution=False` restores the legacy single-mean-delay path for fast smoke tests and direct comparison.
+- **Fidelity dramatically tightened.** Measured at `scale=0.1, seed=42`, 200 ms analysis window after 100 ms burn-in:
+
+  | Population | single-delay ratio | per-conn Gaussian ratio |
+  |------------|-------------------:|-----------------------:|
+  | L23e | 5.29× | **0.67×** |
+  | L23i | 4.78× | **1.19×** |
+  | L4e  | 0.83× | 0.68× |
+  | L4i  | 2.03× | **1.21×** |
+  | L5e  | 3.05× | 1.97× |
+  | L5i  | 2.10× | 1.50× |
+  | L6e  | 5.23× | 2.81× |
+  | L6i  | 2.33× | **1.24×** |
+
+  5/8 populations now sit within 1.2× of Potjans Table 4; the remaining 3 (L4e, L5e, L6e) within 2-3×.
+- Cost: per-step ≈ 5× slower (5 sparse mat-vecs per pair instead of 1). At `scale=0.1`, sim wall went 32 s → ~290 s for 600 ms (matches 5× expectation).
+- New `tests/test_cortical_column.py::TestPublishedFidelity::test_per_connection_delays_tighten_rates` — asserts ≥ 5/8 populations within `[0.5, 1.5]×` of published Table 4 values. Pins the win.
+- `benchmarks/bench_cortical_column.py` now bench BOTH `delay_distribution` modes side-by-side.
+- All 29 cortical_column tests pass with the new default (29 passed in 14:18 with delay distribution, 24 deselected-fidelity tests in 4:39 for fast iteration via `-k 'not Fidelity'`).
+
+### PINGCircuit Rust acceleration backend (2026-04-18)
+- New Rust per-step kernel `engine/src/ping.rs` with PyO3 wrapper `sc_neurocore_engine.py_ping_step`. Mirrors the Python step semantics (LIF + AMPA / GABA decays + drive + Wiener noise + refractory + spike detect + reset). Noise samples are drawn on the Python side and passed in as `xi_e` / `xi_i` so the per-instance RNG state evolves identically across both backends.
+- New `backend=` parameter on `PINGCircuit` (`"auto" | "rust" | "python"`, default `"auto"`). `"rust"` raises `RuntimeError` if the kernel is not built; `"auto"` falls back to NumPy.
+- Bridge wrapper `bridge/sc_neurocore_engine/__init__.py` re-exports `py_ping_step` so pytest's `bridge/`-on-`sys.path` setup sees the Rust symbol.
+- New `tests/test_gamma_oscillation.py::TestPythonRustParity` (6 cases): per-population firing rates within 10 % across (80, 20) / (400, 100) / (1000, 250); dominant FFT peak within 1.5 Hz; explicit `backend="rust"` smoke; invalid-backend rejection. Per-cell membrane V values drift at the float-noise level (NumPy SIMD/FMA vs Rust scalar ordering) — documented inline; aggregate dynamics match.
+- `benchmarks/bench_gamma_oscillation.py` extended to bench BOTH backends. Measured speedup: ~3.3-4.3× across the three workload sizes (per-step 145.8 → 33.7 µs at (80, 20); 588.3 → 178.3 µs at (4000, 1000)). All 6 runs stay in the published 30-80 Hz dominant band.
+- `engine/src/ping.rs` ships 3 Rust unit tests (no-drive silence; supra-threshold drive + refractory hold; deterministic for identical inputs). All pass on `cargo test --release`.
+
+### CorticalColumn no-multapse experiment — REJECTED (2026-04-18)
+- Tried replacing the multapse-with-replacement adjacency builder with a vectorised `argpartition` no-multapse sampler (matching NEST `multapses=False` default). Mean per-target weight is identical between the two approaches and per-target unique connectivity rises from ~63 % to 100 %.
+- Measured at `scale=0.1, seed=42`, 600 ms: rates BLEW UP to refractory ceiling for 6 of 8 populations (L23e 90 Hz, L4e/L4i ≈ 410 Hz, L5e/L5i/L6i 260-390 Hz). Pre-experiment multapse-with-replacement gave rates 1.6-7.5× over Potjans Table 4 (within band, just inflated). Post-experiment no-multapse made the divergence ~10× worse.
+- Honest finding: at sub-full scale the deterministic per-target in-degree of the no-multapse path amplifies population synchrony in the heavy-recurrent regime (K approaches N_s for several pairs); the multapse path's natural variance dampens this. Documented inline next to the multapse sampler so future contributors don't repeat the experiment without first re-reading van Albada 2015 §3.
+
+### PINGCircuit scale-invariant weight normalisation (2026-04-18)
+- `network/gamma_oscillation.py`: per-spike conductance contributions are now divided by source population size at construction (`_w_*_eff = w_* · default_size / actual_size`). The default `(80, 20)` published weights stay bit-identical; larger circuits no longer drift out of the 30-80 Hz band. `bench_gamma_oscillation.py` now reports 40.0 / 41.2 / 41.2 Hz across `(80,20) / (400,100) / (4000,1000)` — all in band — vs 40.0 / 103.8 / 76.2 before the fix. All 19 PINGCircuit tests still pass (default weights and behaviour unchanged at `(80, 20)`).
+
+### Honest benchmark scripts for network/ models (2026-04-18)
+- `benchmarks/bench_cortical_column.py`: 3-config wall-clock + per-population firing rates + Potjans Table 4 ratios for `CorticalColumn`. Replaces hand-measured numbers in `docs/api/cortical_column.md` with reproducible JSON output at `benchmarks/results/bench_cortical_column.json`. Honest BLOCKED status reported per backend (Rust/Julia/Go/Mojo) per `feedback_no_fabricated_benchmarks` and `feedback_module_standard_attnres`.
+- `benchmarks/bench_gamma_oscillation.py`: 3-workload `step()` wall-clock + dominant gamma frequency check (must lie in 30-80 Hz) for `PINGCircuit`. JSON output at `benchmarks/results/bench_gamma_oscillation.json`. Documents the per-cell LIF + 4 conductance decays as a clean Rust + Mojo target (BLOCKED, tracked under multilang policy). Bench surfaces a real fidelity edge case at `n_e=400, n_i=100` (f_dom=103.8 Hz, outside published 30-80 Hz band) that the default-configuration test does not catch.
+- `docs/api/cortical_column.md` performance table updated to reference the bench script and JSON path; numbers replaced with the measured values (build 0.04 / 2.04 / 4.07 s and per-step 0.96 / 2.07 / 5.29 ms across the three configurations).
+
+### Bandit MEDIUM triage (2026-04-18)
+- 6 MEDIUM `B307` findings (use of `eval`) → ACCEPT with `# nosec B307` markers and inline rationale: `equation_builder.py` Euler integrator, RK4 derivative eval, threshold expression and reset rule (4 sites); `studio/analysis.py` nullcline grid eval (2 sites). All sites are downstream of `EquationNeuron._validate_expr` AST whitelist (`_ALLOWED_AST_NODES` + `_BLOCKED_NAMES` reject any escape vector before `compile`) with empty-`__builtins__` eval globals.
+- Re-running `bandit -r src/ -ll` returns 0 findings.
+- 55 LOW findings remain (B101 asserts, B603/B404/B607 subprocess, B110 try/pass, B311 random); informational, no real impact, full inventory in `docs/internal/audit_bandit_2026-04-18.md` and `docs/internal/AUDIT_INDEX.md`.
+
+### CorticalColumn Potjans & Diesmann 2014 (2026-04-18)
+- `network/cortical_column.py` rewritten from 5-population canonical-microcircuit toy to the full 8-population Potjans & Diesmann 2014 model: L23e, L23i, L4e, L4i, L5e, L5i, L6e, L6i with per-population sizes from Table 5, the verbatim 8×8 connection-probability matrix from Table 5, per-cell background Poisson drive (`K_bg` per population, `bg_rate=8 Hz`), and exponentially decaying current-based PSCs (`tau_syn=0.5 ms`).
+- LIF integration: `C_m=250 pF`, `tau_m=10 ms`, `t_ref=2 ms`, `E_L=V_reset=-65 mV`, `V_th=-50 mV`. Per-source delays: `1.5 ms` (E), `0.8 ms` (I), quantised to `dt`.
+- Synaptic weights: `w_e=87.81 pA`, `w_i=-g·w_e` with `g=4` (configurable), `w_l4_to_l23e=2·w_e` per Potjans boost.
+- Sparse `scipy.sparse.csr_matrix` adjacency per (target, source) pair with multapses sampled with replacement; full-scale in-degree preservation under `scale_correction=True` (van Albada et al. 2015 protocol).
+- `simulate(duration_ms, dt)`, `step(dt)`, `population_rates(rasters, dt, burn_in_ms)`, `total_indegree(target)` and `reset_state()` helpers.
+- `tests/test_cortical_column.py` rewritten: 29 tests covering smoke, determinism (per-instance RNG, global-seed leak-proofing), connectivity (Table 5 entries, K_bg, weight signs, L4e→L2/3e boost, sparse adjacency built per pair), and published fidelity (no silent populations, no refractory-ceiling saturation, E/I asymmetry, L4e in band, zero-background silence). 100 % coverage on `cortical_column.py`. Closes #10.
+- `docs/api/cortical_column.md` rewritten end-to-end (308 lines): published-reference summary, implementation overview (8 populations, sparse adjacency build, LIF + synapse + refractory, delay handling), public API reference, verification table vs Potjans Table 4 (L4e match within 1 %, other populations within 2-4×), performance table (4.6 s / 19.5 s / 43.6 s wall at scale 0.02 / 0.05 / 0.1) and reference list (Potjans 2014, van Albada 2015, Binzegger 2004, Hahne 2017, Douglas & Martin 2004).
+
+### PINGCircuit conductance-based gamma (2026-04-18)
+- `network/gamma_oscillation.py` rewritten from rate-coded toy model to per-cell conductance-based Börgers-Kopell 2003 weak-PING. HH-style integrate-and-fire with separate AMPA / GABA exponentially decaying conductances, refractory window, per-cell drive jitter and stochastic kicks. Default parameters reproduce the published 30-80 Hz gamma peak (verified at 40 Hz at the default operating point).
+- `population_rate(spike_log, dt, bin_ms)` and `dominant_frequency(spike_log, dt, bin_ms, f_min, f_max)` helpers added; FFT-based with empty-log + out-of-band silence handling.
+- `tests/test_gamma_oscillation.py` updated to the new API: 19 tests covering smoke, determinism (per-instance RNG isolation, global-seed leak-proofing), published fidelity (30-80 Hz peak, gain-loop disengage paths, Hz units, silence handling). 100 % coverage on `gamma_oscillation.py`. Closes #11.
+- Replaced `np.sum(boolarray)` with `np.count_nonzero(boolarray)` in both implementation and tests to be reload-safe under coverage instrumentation (the `_NoValue` sentinel mismatch otherwise raised `TypeError` from `_methods.py`).
+
+### Repository hygiene (2026-04-18)
+- SPDX header format converted from 1-line piped to 2-line form across 2728 source files (.py / .jl / .rs / .go / .mojo). Closes #60.
+- `microtubule_neuron.v` Engineer attribution: `Arcane Sapience`.
+- `cargo clippy --release --lib`: 20 in-source warnings → 0.
+- Bandit HIGH severity in `nas/sc_nas_engine.py:169` → 0 (`hashlib.md5(..., usedforsecurity=False)`).
+- Chiplet package coverage 95 % → 100 % (`test_hierarchical_partitioner_perf.py`, `test_chiplet_gen_edge_cases.py`).
+- `tools/run_full_cov.sh`: batched per-directory `--cov-append` runner. First full sweep completes at 43.81 % cumulative coverage; no OOM. Closes #58.
+- `.gitignore`: `.agent_metadata.json`.
+- `ruff`, `rustfmt`: clean across all touched files.
+
+### Chiplet Partitioner — Multi-Language KL Refine (2026-04-18)
+- **Perf:** `HierarchicalPartitioner.partition` V=200 went from 963 ms (pre-#65) → 12.7 ms (Python post-fix) → 0.04 ms (Mojo). Total wall-clock improvement at V=200: 24,000× across the chain.
+- **#65 fix:** `CorrelationAwareGraph` now caches `(min, max) → edge` lookup → O(1); `_spectral_bisect` hoists `set(vertices)` out of the inner loop. 22-29× speedup at V=50/100/200.
+- **#64-prep refine fix:** `_per_partition_cost(v, n_parts, ...)` returns the full length-P cost vector in ONE neighbour scan (was P redundant scans). Additional 2-9× over #65; bit-identical canonical output.
+- **#74 multi-language KL refine:** Rust (`engine/src/partition.rs`), Julia (`accel/julia/chiplet/kl_refine.jl`), Go (`accel/go/partition/partition.go`), Mojo (`accel/mojo/partition/partition.mojo`) all wired into `HierarchicalPartitioner(refine_backend=...)`. Bit-exact `part_map` parity verified end-to-end via dispatcher tests on V=100. Empirical fastest-pick at V=1000: Mojo 0.20 ms (351×), Julia 0.26 ms (270×), Rust 0.29 ms (242×), Go 0.68 ms (103×), Python 70 ms.
+- **Bench harness:** `benchmarks/bench_kl_refine.py` runs 5 backends with parity check; results in `benchmarks/results/bench_kl_refine.json`.
+- **Tests:** 218 chiplet tests (39 new this batch); coverage 99.58 % on the chiplet package, with `chiplet_gen.py` at 100 % and `hierarchical_partitioner.py` at 99 %.
+
+### LGSSM Multi-Language Acceleration (2026-04-17)
+- **Mojo LGSSM Kalman filter** (`accel/mojo/world_model/lgssm.mojo`): hand-rolled matmul + Cholesky + triangular solve via `mojo build --emit shared-lib`. **46× over Python, 8× over Rust** at T=200 d=4 p=3 workload. Closes #69.
+- **Go LGSSM** (`accel/go/lgssm/lgssm.go`): cgo + ctypes shared lib, hand-rolled Cholesky. Closes #70.
+- **Julia LGSSM** (`accel/julia/world_model/predictive_model.jl`): juliacall + LinearAlgebra LAPACK. Closes #68.
+- **Rust LGSSM** (`engine/src/lgssm.rs`): PyO3 + ndarray Cholesky. Closes #67.
+- All 4 backends dispatched via `KalmanFilter.filter(backend='auto'|'rust'|'julia'|'go'|'mojo'|'python')`; bit-exact parity vs Python at atol≤1e-9 on means/covs, ≤1e-7 on log-likelihood.
+- **Mojo 0.26 FFI pattern proven:** raw `Int` address via `arr.ctypes.data` + `UnsafePointer[T, MutAnyOrigin](unsafe_from_address=addr)` reconstruction inside the `@export` body works around the parametric-signature restriction. Same pattern reused for fault_injection + KL refine.
+
+### Fault Injection Multi-Language (2026-04-17)
+- **Rust + Julia + Go + Mojo** kernels for the 5 fault models (`bitflip`, `stuck_at_0/1`, `dropout`, `gaussian`). Mojo wins 4/5 boolean kernels (2.7-8.2× over NumPy); Julia wins Gaussian via Ziggurat randn. Bench harness with 4σ Binomial parity at `benchmarks/bench_kl_refine.py`-style 5-backend layout.
+
+### Bench Harness Honest Exemptions (2026-04-17)
+- `bench_safety_monitor.py` + `bench_chiplet.py` now emit a `backends` block in the JSON output documenting USED / EXEMPT / BLOCKED-ON-#X status per backend per op, with explicit FFI-vs-compute math instead of silent skipping.
+
+### Cross-Module Integration — (2026-04-16)
+- **Shared Core Types** `core/types.py`: unified `HardwareBudget`, `ResourceReport`, `LayerSpec`, `estimate_network()` — single source of truth for Optimizer↔NAS↔Runtime
+- **Closed-Loop Adaptive Controller** `control/adaptive_loop.py`: Runtime drift detection → SA re-optimisation → new `RuntimeConfig`, configurable cooldown/threshold
+- **Unified Energy Reporter** `energy_accounting/unified_reporter.py`: bridges `CarbonModel` + `ThermalModel` + ASIC power into single `analyze()` call
+- **End-to-End Export Pipeline** `export/pipeline.py`: Model Zoo → ONNX → TVM Relay → MLIR/SSA → SystemVerilog in one `run()` call
+- **Rust Wiring**: `sc_optimizer.py` → `optimizer.rs` SA engine, `sc_nas_engine.py` → `evo.rs` tournament selection, `photonic_emitter.py` → `photonic.rs` crosstalk analysis
+- **Package Exports**: Updated `core/__init__.py`, `control/__init__.py`, `export/__init__.py` with new module exports
+- **Integration Tests**: 20 new tests in `tests/test_integration/test_cross_module.py` covering all 5 actions
+- **Maturin**: Rebuilt `sc_neurocore_engine` v3.14.0 with all Rust bindings
+- **Total**: 10,592 tests (8,895 Python + 1,697 Rust) — ALL GREEN
+
+### Extended Rust Wiring — QA & DNA Bridges (2026-04-17)
+- **Quantum Annealing**: `bridges/quantum_annealing.py` → `py_qa_simulated_annealing` (**2,402×** at 100 qubits)
+  - `IsingModel.energy()` → `py_qa_ising_energy` (Rust path for n>20 qubits)
+  - `SimulatedAnnealer.solve_ising()` → `py_qa_simulated_annealing` (467× at 20Q → **2,402×** at 100Q)
+  - `EnergyLandscape.analyze()` → `py_qa_batch_ising_energy` (batch energy for >100 samples)
+- **DNA Mapper**: `bridges/dna_mapper.py` — Rust engine loaded (`_HAS_RUST_DNA`)
+  - Imported: `py_dna_design_sequence`, `py_dna_detect_hairpins`, `py_dna_check_cross_hybridization`, `py_dna_simulate_kinetics`, `py_dna_design_orthogonal_set`
+- **Photonic**: Fixed `py_ph_analyze_crosstalk` API (channel_ids, wavelengths, bandwidths, powers)
+
+### Python vs Rust Benchmarks — Integration Hot Paths (2026-04-16)
+- **SA Optimizer**: 7× (5 layers) → 36× (20 layers) → **47× (50 layers)**
+- **Tournament Selection**: **337–394×** (amortised per-round overhead elimination)
+- **Batch Mutate**: 17–21× across population sizes 50–1000
+- **Population Diversity**: 34–**90×** (O(N²) SIMD pairwise distance)
+- **Mean Rust speedup**: **334.6×** across all hot paths (incl. QA)
+- **Peak QA**: 467× (20Q) → 1,426× (50Q) → **2,402× (100Q)**
+- **E2E Pipeline**: NAS→Optimizer→Energy→Verilog in **13.7ms** (small) to **116ms** (large)
+- Criterion (Rust-native): spike_times=83ns, firing_rate=13ns, ISI=96ns, van_rossum=1.2µs (N=100)
+- Results: `benchmarks/results/py_vs_rust_integration.json`
+- Script: `benchmarks/py_vs_rust_benchmark.py`
+
+### Cross-Language Acceleration — Spike Stats (2026-04-16)
+- **Crate** `spike_stats_core` (v0.1.0): 16 functions, 28 Rust tests, PyO3 + Criterion
+- **Distance** (7 fns): `victor_purpura_distance` **181×**, `spike_sync` **31×**, `hunter_milton` **27×**, `van_rossum`, `spike_distance`, `earth_movers_distance`, `multi_neuron_victor_purpura` **160×**
+- **Correlation** (5 fns): `cross_correlation`, `event_synchronization`, `spike_time_tiling_coefficient`, `coincidence_index`
+- **Variability** (4 fns): `approximate_entropy` **73×**, `sample_entropy` **78×**, `lempel_ziv_complexity` **69×**, `permutation_entropy` **65×**
+- 99/99 Python tests pass on both Rust and Python fallback paths
+- Python dispatch wired in: `distance.py`, `correlation.py`, `variability.py`
+
+### Cross-Language Acceleration —  Stochastic Doctor (2026-04-16)
+- **PyO3 bindings** for `stochastic_doctor_core` crate: `py_scc_bytes`, `py_scc_batch`, `py_precision_bytes`, `py_histogram`, `PyDriftDetector`
+- Replaced legacy `ctypes.CDLL` with PyO3 import pattern (primary), Python fallback (secondary)
+- `SC_NEUROCORE_NO_RUST=1` env var forces Python path
+- 16/16 Python tests pass on both Rust and Python paths
+- 23 Rust tests pass
+- **Benchmarks** (SCC single-pair): 35× at N=100, 3.5× at N=1M
+- **Benchmarks** (batch SCC N×N): 15–18× for 4–64 neuron layers
+- **Benchmarks** (precision): 5–14× across all sizes
+- Criterion benchmarks: `crates/stochastic_doctor_core/benches/doctor_bench.rs`
+- Python benchmark: `benchmarks/stochastic_doctor_benchmark.py`
+- Results: `benchmarks/results/stochastic_doctor_py_vs_rust.json`
+- API docs updated with full benchmark tables: `docs/api/stochastic_doctor.md`
+
+### Module Integration — 19 Industrialized Modules (2026-04-16)
+- **Industrial tier:** safety_cert (IEC 61508/ISO 26262, 81 tests), asic_flow (multi-PDK, 67 tests), fault_injection (radiation-grade, 22 tests), uvm_gen (UVM testbench, 71 tests)
+- **Exascale tier:** hypervisor (multi-tenant, 78 tests), digital_twin/twinsync (time-warp sync, 72 tests)
+- **Substrates tier:** spintronic (MTJ mapper, 66 tests), chiplet (UCIe/BoW, 94 tests), memristor (crossbar, 70 tests), analog_bridge (SC-to-analog, 27 tests)
+- **Frontiers tier:** evo_substrate (self-replicating evolution, 91 tests), meta_plasticity (self-modifying rules, 72 tests), bioware (organoid interface, 79 tests), federated (DP-SGD, 93 tests), bci_studio (closed-loop BCI, 32 tests)
+- **Unification tier:** explainability (causal attribution, 71 tests), neuro_symbolic (predictive coding, 34 tests), stochastic_doctor (bitstream diagnostics, 16 tests), model_zoo (auto-Verilog, 37 tests)
+- All modules: SPDX dual-license headers, `__tier__` classification, `__init__.py` with docstrings
+- 19 MkDocs API doc pages with `mkdocstrings` directives
+- Updated `mkdocs.yml` nav with 5 new categories (Industrial, Substrates, Exascale, Frontiers, Unification)
+- Integration reference: `docs/MODULE_INTEGRATION.md`
+- Total: **1,173 new Python tests** from integrated modules
+
+### Rust Workspace — 5 Research Crates Integrated (2026-04-16)
+- Created `crates/` directory for research Rust crates
+- Integrated: tinysc_riscv (83 tests), core_engine (22 tests), autonomous_learning (12 tests), neuro_symbolic (28 tests), stochastic_doctor_core (23 tests)
+- Root `Cargo.toml` workspace now has 6 members (engine + 5 research crates)
+- Engine (`sc_neurocore_engine`, 1,549 tests) verified undamaged after workspace expansion
+- Total: **1,717 Rust tests** across 6 crates
+
+### Evolutionary Substrate — (2026-04-16)
+- `FormalSafetyGuard`: pre-deployment safety validation
+- `CPPNGenome`: Compositional Pattern Producing Network developmental encoding
+- `IslandModel`: multi-deme evolution with migration
+- `NoveltyArchive`: k-NN behavioural novelty search
+- `HWFitnessCollector`: FPGA execution feedback for hardware-in-loop fitness
+- `ParetoFront`: NSGA-II style non-dominated sorting
+- `TournamentSelector`, `AgeRegulator`, `BloatPenalizer`, `ExtinctionDetector`, `CoevolutionArena`
+- `EvoStatisticsTracker`, `ComplexityTracker`, `genome_diff()`, `shared_fitness()`
+- Module grew from 657 to 1,400 LOC, 42 to 91 tests
+
+### Foundation-Model Neural Decoders (2026-04-07)
+- **POYODecoder**: spike tokenisation + cross-attention (Azabou et al. 2023 NeurIPS)
+- **POSSMDecoder**: diagonal SSM with HiPPO-LegS init (Ryoo et al. 2025 ICLR)
+- **NDT3Decoder**: causal masked self-attention on binned spikes (Ye & Pandarinath 2025)
+- **CEBRAEncoder**: InfoNCE contrastive embedding with analytical backprop (Schneider et al. 2023 Nature)
+- Rust acceleration: tokenise_spikes, sinusoidal_position_encode, scaled_dot_product_attention, gaussian_attention, ssm_step_diagonal, infonce_loss (6 pub fn, 11 tests)
+- PyO3: 5 functions registered
+- Tests: 47 multi-angle tests
+- Documentation: 976 lines, 8/8 sections
+
+### Transcriptomic Foundation Model Interfaces (2026-04-07)
+- **ScKGBERTInterface**: dual S-Encoder + K-Encoder with Gaussian attention (Li et al. 2025 Genome Biology)
+- **GeneformerInterface**: rank-value tokenisation + multi-head attention + MLM (Theodoris et al. 2023 Nature)
+- **rank_value_encode**: shared utility for gene expression tokenisation
+- Tests: 29 multi-angle tests
+- Documentation: 1,118 lines, 8/8 sections
+
+### Gap Model Python + PyO3 + Docs (11 models, 2026-04-07)
+- 10 new Python implementations (publication-exact): AdaptiveThresholdMoENeuron, HybridLinearAttentionNeuron, QuantumInspiredLIFNeuron, DendriticNMDANeuron, MulticompartmentMCNNeuron, AstrocyteLIFNeuron, DirectionSelectiveRGC, CochlearHairCell, ShortTermPlasticitySynapse, DopamineStdpSynapse
+- PyO3 wiring: 11 models registered (2 macro + 9 manual wrappers)
+- Tests: 87 multi-angle tests
+- 10 docs (5,701 lines total)
+- GPU backend documentation (607 lines)
+
+### CI & Dependency Fixes (2026-04-07)
+- **PEP 639**: migrated `license = { text = "..." }` → `license = "AGPL-3.0-or-later"` (fixes setuptools ≥78)
+- **mypy**: 1.19.1 → 1.20.0
+- **cyclonedx-bom**: 7.2.2 → 7.3.0
+- **ci.yml**: pinned all mypy stub dependencies to exact versions (CodeQL #287)
+- **cargo fmt**: applied to all new Rust code
+- Purged 52 resolved failed/cancelled CI runs
+- Closed superseded dependabot PRs #53, #55
+
+### Neuron Models — (12 new models, 2026-04-04/05)
+- **TUMNetwork**: rate model with short-term plasticity (depression + facilitation), 3 ODEs
+- **ElBoustaniNetwork**: E/I + NMDA bistability, 3 ODEs
+- **GradedSynapseNeuron**: non-spiking, passive RC + sigmoid release
+- **GapJunctionNeuron**: LIF + electrical synapse with Cx36 rectification
+- **FrankenhaeUserHuxleyAxon**: GHK permeability-based currents (not linear V-E)
+- **NodeOfRanvier**: MRG 2002 — Nav1.6 transient + persistent + Kv7 slow K
+- **MyelinatedAxon**: MRG node + passive internode cable
+- **CardiacPurkinjeFibre**: DiFrancesco-Noble 1985, 6 currents
+- **SmoothMuscleCell**: CaL + BK + IP3R/SERCA + Ca²⁺ store
+- **EndocrineBetaCell**: CaL + K_dr + K_ATP + K_Ca glucose-dependent bursting
+
+### Fidelity Audit Fixes (7 models corrected, 2026-04-04)
+- **RetinalGanglionCell**: basic LIF → Pillow 2005 GLM (stimulus + history filters)
+- **InnerHairCell**: no vesicle pool → Meddis 1986/2006 (q/c/w compartments)
+- **OuterHairCell**: unidirectional sigmoid → bidirectional asymmetric prestin (Santos-Sacchi 2006)
+- **GranuleCell**: LIF-style → D'Angelo 2001 full HH (7 ionic currents)
+- **AlphaMotorNeuron**: PIC no inactivation → h_pic + Ca²⁺ buffering
+- **RodPhotoreceptor**: no Ca²⁺ feedback → Ca²⁺-GC feedback (Nikonov 2006, Hill n=4)
+- **TraubMilesNeuron**: missing M-current → Kv7/KCNQ (Yamada 1989)
+
+### Kinetics Audit Fixes (3 models upgraded, 2026-04-05)
+- **GolgiCell** (CRITICAL): 5-current WB → full Solinas 2007 (11 currents, 13 gating variables)
+- **DCNNeuron** (MODERATE): added persistent Na (INaP) + Ca²⁺-dependent AHP (7 currents total)
+- **OlfactoryReceptorNeuron** (MODERATE): added PDE4 negative feedback on cAMP
+
+### Infrastructure (2026-04-05)
+- `supported_models()`: 28 missing entries added (159 total)
+- Interface wrappers: 20 non-standard models wired via Wr* types (multi-input, i32-input, graded/rate)
+- All 4 failing CI workflows fixed (clippy, ruff, MkDocs, typos)
+- `cargo fmt` applied to all engine source
+- Fresh Criterion benchmarks published (2026-04-05)
+- Documentation audit: all stale numbers corrected across README, pricing, index, benchmarks
+
+### Notebooks (13 new, 21 total)
+- **08_equation_to_verilog**: ODE string → Python sim → Q8.8 Verilog (LIF, FHN, Izhikevich)
+- **09_topology_and_dynamics**: 6 generators, adjacency matrices, degree distributions, raster plots
+- **10_spike_train_analysis**: ISI, CV, Fano, cross-correlation, van Rossum, PCA
+- **11_biological_circuits**: tripartite synapse Ca²⁺ dynamics, Rall dendrite nonlinearity
+- **12_learning_rules**: STDP, e-prop eligibility, R-STDP, STP facilitation/depression
+- **13_quantisation_pipeline**: float → Q8.8 → SC probabilities → Verilog export, error budget
+- **14_sc_arithmetic_theory**: AND=multiply, XNOR=bipolar, MUX=add, CORDIV=divide, Sobol vs Bernoulli convergence, Hoeffding bounds
+- **15_fault_tolerance**: SC vs fixed-point under bit-flips/stuck-at, TMR majority vote
+- **16_neuron_atlas**: 12 models from 8 families (LIF→ArcaneNeuron, 1907–2026)
+- **17_reservoir_computing**: liquid state machine, temporal XOR, ridge readout, SVD dimensionality
+- **18_mixed_precision_sc**: per-layer adaptive L, Hoeffding vs sensitivity allocation, Pareto frontier
+- **19_compression_and_pruning**: magnitude/SC-aware pruning, quantisation sweep, combined Pareto
+- **20_power_analysis**: event-driven vs clock-driven toggle count, scaling with network size
+- **21_spike_alu**: Turing-complete spike-based ALU — logic gates, SR latch register, ripple-carry adder, sort
+- **22_ir_type_safety**: IR signal type checker — Bitstream/Rate/Spike/Fixed, catch mismatches before Verilog synthesis
+- **23_topological_observables**: winding number, Ollivier-Ricci curvature, sheaf consistency defect, connection curvature
+- **24_identity_lazarus**: Lazarus checkpoint save/load/merge, TraceEncoder text→spikes, StateDecoder attractor extraction, DirectorController L16 self-regulation
+- **25_cortical_column_dynamics**: canonical 5-population microcircuit, thalamic drive, layer-resolved rasters, feedforward latency
+- **26_spike_codec_benchmark**: 5 codecs (ISI/AER/predictive/delta/streaming) on synthetic data, compression ratio vs density curves
+- **27_python_to_proven_silicon**: complete end-to-end pipeline — ODE string → Python sim → IR type check → Q8.8 Verilog → testbench → formal properties → resource estimate
+- **28_domain_bridge**: TensorStream prob↔bitstream↔quantum conversions, QuantumStochasticLayer cos²(θ/2) non-linearity, Born rule roundtrip
+
+### Tests (19 new files, ~3700 lines, ~310 test methods)
+- `test_topology_generators.py`: 6 generators — CSR validity, degree, symmetry, edge count, determinism
+- `test_cordiv_division.py`: CORDIV accuracy, monotonicity, convergence, adaptive_length Hoeffding bounds
+- `test_fault_injection.py`: bit-flip degradation, stuck-at analytical bounds, TMR, SC vs fixed-point comparison
+- `test_learning_advanced.py`: EligibilityTrace decay, BPTT/TBPTT loss, R-STDP reward gating, STP facilitation/depression/recovery
+- `test_quantisation_pipeline.py`: Q8.8 roundtrip, dequantise fidelity, SC probability ordering, dot product end-to-end
+- `test_network_monitors_stimulus.py`: SpikeMonitor record/count/trains, StateMonitor accumulation, RateMonitor bins, TimedArray clamp, StepCurrent onset/offset, PoissonInput rate/seed/weight
+- `test_neuron_families.py`: parametrised test across 11 EquationNeuron models — step(), spike detection, reset, state finiteness, determinism
+- `test_sc_convergence.py`: AND O(1/√L), Sobol faster than Bernoulli, CORDIV monotonic, correlation violation, popcount exact
+- `test_spike_alu.py`: SpikeGate truth tables (AND/OR/NOT/NAND/XOR), De Morgan law, SpikeRegister roundtrip, SpikeALU add/sub/xor/compare/shift, spike_sort correctness
+- `test_topological_observables.py`: winding number wraps, Ricci curvature complete>ring, sheaf defect zero when synchronised, connection curvature bounded by coupling
+- `test_scpn_integrated.py`: K_nm symmetric zero-diagonal, OMEGA_N physical frequencies, create_full_stack 16 layers, run_integrated_step finite, get_global_metrics
+- `test_identity_lazarus.py`: IdentitySubstrate run/step/health, TraceEncoder encode/determinism, Checkpoint save/load/merge roundtrip, StateDecoder patterns/attractors, DirectorController monitor/diagnose/correct
+- `test_cortical_column_dynamics.py`: CorticalColumn step/run dict outputs, 5 populations, binary spikes, thalamic drive, L4-before-L5, inhibition, reset, determinism
+- `test_codec_roundtrip.py`: all 5 codecs parametrised — lossless roundtrip (sparse/empty/single-spike/all-ones), compression ratio bounds, shape preserved, edge cases (1 channel, 1 timestep)
+- `test_tensor_stream.py`: TensorStream prob↔bitstream↔quantum roundtrips, Born rule, normalisation, p=0/1 edge cases, invalid conversion raises
+- `test_quantum_hybrid.py`: QuantumStochasticLayer cos²(θ/2) transfer, p=0→1, p=1→0, monotonic decreasing, multi-qubit independence
+
+### Model Validation
+- LIF f-I curve: 29/29 tests, <5% error vs analytical solution
+- Izhikevich 20 firing patterns: all from Izhikevich (2003) Table 1 validated
+- Hodgkin-Huxley 1952: AP peak 40.6mV, spike width 1.46ms, AHP -75.1mV
+- NeuroBench SHD: 79.28% test accuracy (250K params, feedforward)
+- Brian2 parity: exact LIF match (0.000ms timing diff), 7.3x speedup
+- 5 validation docs with measured data in `docs/validation/`
+
+### Stochastic Computing Pipeline
+- Bipolar SC (XNOR): `core/bipolar.py` for signed weight multiplication
+- SC bitstream MNIST: 10% (unipolar) -> 35.6% (bipolar) -> 50.0% (all fixes)
+- SC-aware training: `SCAwareLIFNet` with bitstream noise injection (+9.5pp)
+
+### Quantization-Aware Training
+- `QuantizedLIFNet`: 2/4/8/16-bit STE weight quantization (PyTorch)
+- `SCAwareLIFNet`: SC noise injection during training
+- `SCAwareLinear`: drop-in layer replacement
+
+### Encoding Comparison
+- 7 temporal spike encodings benchmarked on MNIST
+- Latency encoding Pareto-optimal: 88.1% at 142 spikes (17x fewer than rate)
+
+### Interoperability
+- NeuroML 2 importer: iafCell, Izhikevich (2003/2007), AdEx
+- SONATA network format importer: nodes.h5 + edges.h5, connectivity matrix
+
+### Reproducibility
+- 7 Kaggle scripts in `notebooks/*_kaggle.py`
+- JSON artifacts in `benchmarks/results/`
+
+## [3.14.0] — 2026-03-27
+
+### Visual SNN Design Studio (Experimental)
+- **New feature:** web-based IDE for designing, training, compiling, and deploying SNNs
+- 118-model browser with live simulation, parameter sliders, pattern classification
+- 20+ analysis views: trace, phase, ISI, f-I, bifurcation, heatmap, sensitivity, STA, frequency response, characterisation, multi-model overlay, A/B comparison
+- Compiler Inspector: SC IR build/verify/emit, SystemVerilog generation, co-simulation
+- Synthesis Dashboard: Yosys synthesis for 4 FPGA targets (ice40, ECP5, Gowin, Xilinx), multi-target comparison, resource estimation without Yosys
+- Training Monitor: live SSE metric streaming, 6 surrogate gradients, per-layer spike rates, learnable beta/threshold
+- Network Canvas: React Flow drag-and-drop populations and projections, NIR export/import
+- Full pipeline: network graph → validate → simulate → compile → synthesise in one click
+- Project save/load: persistent JSON workspaces on server
+- E-I balanced network simulation with Rust engine fast path
+- 140+ Studio-specific tests
+- Documentation: 7 pages on GitHub Pages, 10-step quickstart tutorial
+- Launch: `pip install sc-neurocore[studio] && sc-neurocore studio`
+
+### Rust Engine
+- `py_simulate_ei_network()`: fused E-I network simulation (CSR + Poisson + Euler) in single Rust call
+- `py_batch_simulate()`: batch model simulation with NeuronVariant dispatch loop
+- `create_neuron()` made `pub` for reuse across lib.rs
+- 288 Rust tests passing
+
+### Performance
+- Model list caching: first `/api/models` call loads 118 models in ~1s, subsequent calls <1ms
+
+### Security
+- 25 CodeQL "information exposure through exception" fixes — no tracebacks in HTTP responses
+- 5 CodeQL "uncontrolled data in path expression" fixes — project name sanitisation
+- DOMPurify XSS fix via npm override (>=3.3.2)
+- Bandit: MD5 usedforsecurity=False, narrowed bare except clauses
+
+### CI
+- Engine wheel publish job added to publish.yml (PyPI OIDC)
+- Bridge ImportError restored for pytest.importorskip compatibility
+- PnR added to typos dictionary
+- tsconfig.tsbuildinfo gitignored
+- uvicorn skip guard for studio optional extra
+
+## [Unreleased]
 
 ### NIR Bridge
 - Roundtrip tests for all 18/18 NIR primitives (was 7/18)
@@ -319,7 +996,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - SCDenseProcess + PySCDenseModel for Lava CPU simulation
 - Weight conversion: SC probability [0,1] -> Loihi fixed-point
 
-### Rust Engine 100% Parity (v3.8/v3.9 carry-forward)
+### Rust Engine parity expansion (v3.8/v3.9 carry-forward)
 - **Sobol bitstream** (M1): Gray-code Sobol quasi-random encoder in Rust (`sobol.rs`)
 - **HomeostaticLIF**: adaptive threshold neuron with EMA spike rate tracking
 - **DendriticNeuron**: XOR-nonlinearity compartmental model

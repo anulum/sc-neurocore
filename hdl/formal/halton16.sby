@@ -1,0 +1,18 @@
+[tasks]
+prove
+
+[options]
+prove: mode prove
+prove: depth 10
+
+[engines]
+prove: smtbmc z3
+
+[script]
+read -formal ../sc_halton16_source.v
+read -formal halton16_formal.v
+prep -top halton16_formal
+
+[files]
+halton16_formal.v
+../sc_halton16_source.v

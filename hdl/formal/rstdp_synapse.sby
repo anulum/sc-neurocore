@@ -1,0 +1,23 @@
+[tasks]
+prove_weight    prove
+prove_traces    prove
+cover_learning  cover
+
+[options]
+prove_weight: mode prove
+prove_weight: depth 20
+prove_traces: mode prove
+prove_traces: depth 15
+cover_learning: mode cover
+cover_learning: depth 40
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal sc_rstdp_synapse.v
+hierarchy -top sc_rstdp_synapse
+prep -top sc_rstdp_synapse
+
+[files]
+../sc_rstdp_synapse.v

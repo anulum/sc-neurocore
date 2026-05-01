@@ -1,0 +1,23 @@
+[tasks]
+prove_counter   prove
+prove_shift     prove
+cover_basic     cover
+
+[options]
+prove_counter: mode prove
+prove_counter: depth 20
+prove_shift: mode prove
+prove_shift: depth 10
+cover_basic: mode cover
+cover_basic: depth 30
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal sc_decorrelator.v
+hierarchy -top sc_decorrelator
+prep -top sc_decorrelator
+
+[files]
+../sc_decorrelator.v

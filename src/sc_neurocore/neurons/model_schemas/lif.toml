@@ -1,0 +1,32 @@
+[metadata]
+schema_version = 1
+name = "LIF"
+author = "Lapicque, L."
+year = 1907
+doi = "10.1085/jgp.5.6.747"
+description = "Leaky Integrate-and-Fire — canonical first-order linear neuron model"
+
+[state]
+v = -65.0
+
+[parameters]
+v_rest = -65.0
+tau_m = 10.0
+R = 1.0
+C = 1.0
+
+[integration]
+dt = 1.0
+method = "euler"
+
+[dynamics]
+v = "-(v - v_rest) / tau_m + R * I / C"
+
+[threshold]
+condition = "v > -50"
+detection = "level"
+
+[reset]
+v = "v_rest"
+
+[extensions]

@@ -1,0 +1,25 @@
+{
+  "metadata": {
+    "schema_version": 1,
+    "name": "Poisson",
+    "author": "Gerstner, W. et al.",
+    "year": 2014,
+    "doi": "10.1017/CBO9781107447615",
+    "description": "Poisson spike generator — stochastic input layer at rate lambda"
+  },
+  "state": { "phase": 0.0 },
+  "parameters": { "rate_hz": 100.0, "dt_ms": 1.0 },
+  "integration": { "dt": 1.0, "method": "euler" },
+  "dynamics": { "phase": "rate_hz * dt_ms / 1000.0" },
+  "threshold": {
+    "condition": "stochastic",
+    "detection": "poisson",
+    "description": "P(spike in dt) = rate_hz * dt_ms / 1000"
+  },
+  "reset": { "phase": "0.0" },
+  "extensions": {
+    "layer_type": "input",
+    "stochastic": true,
+    "use_case": "Input layer spike generation for SNN benchmarks"
+  }
+}

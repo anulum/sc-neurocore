@@ -259,7 +259,7 @@ class TestFromEquations:
     def test_reject_blocked_attribute(self):
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
-        with pytest.raises(ValueError, match="Blocked attribute"):
+        with pytest.raises(ValueError, match="Blocked attribute|Dunder attribute"):
             EquationNeuron(
                 equations={"v": "v.__class__"},
                 state={"v": 0.0},

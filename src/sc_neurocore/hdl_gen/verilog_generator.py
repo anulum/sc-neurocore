@@ -16,6 +16,7 @@ from ._ident import sanitize_ident
 from .kuramoto_emitter import KuramotoEmitter
 from .lfsr16_emitter import Lfsr16Emitter
 from .sobol16_emitter import Sobol16Emitter
+from .quasirandom_emitter import QuasiRandomEmitter, Halton16Emitter
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ _SOURCE_NODE_TYPES = {
 }
 _LFSR_SOURCE_TYPES = {"lfsr", "lfsr16", "lfsr_16", "lfsr16_source", "sc_lfsr16_source"}
 _SOBOL_SOURCE_TYPES = {"sobol", "sobol16", "sobol_16", "sobol16_source", "sc_sobol16_source"}
+_HALTON_SOURCE_TYPES = {"halton", "halton16", "halton_16", "halton16_source", "sc_halton16_source"}
 
 
 class VerilogGenerator:
@@ -36,12 +38,14 @@ class VerilogGenerator:
     """
 
     def __init__(self, module_name="sc_network_top") -> None:  # type: ignore[no-untyped-def]
+        """Initialise with a top-level module name."""
         self.module_name = sanitize_ident(module_name, context="module name")
         self.layers = []  # type: ignore[var-annotated]
         self.wires = []  # type: ignore[var-annotated]
         self.instances = []  # type: ignore[var-annotated]
 
     def add_layer(self, layer_type: str, name: str, params: Dict[str, Any]) -> None:
+        """Add a layer definition to the network."""
         self.layers.append(
             {
                 "type": layer_type,
@@ -157,7 +161,98 @@ class VerilogGenerator:
         )
         return emitter.generate()
 
+    def emit_halton16_source(
+        self, module_name: str = "sc_halton16_source"
+    ) -> str:
+        """Emit a standalone Halton-16 stochastic source module."""
+        return Halton16Emitter(module_name=module_name).generate()
+
+    def emit_quasirandom_source(
+        self,
+        method: str = "sobol",
+        module_name: str | None = None,
+        seed: int = 0,
+    ) -> str:
+        """Emit a quasi-random source via the unified factory.
+
+        Parameters
+        ----------
+        method : str
+            ``"sobol"`` or ``"halton"``.
+        module_name : str, optional
+            Override the default module name.
+        seed : int
+            Seed for Sobol (ignored for Halton).
+        """
+        return QuasiRandomEmitter(
+            method=method, module_name=module_name, seed=seed  # type: ignore[arg-type]
+        ).generate()
+
+    def emit_decorrelator(
+        self,
+        *,
+        num_streams: int = 8,
+        stream_width: int = 16,
+        shift_seed: int = 0xA5A5_5A5A,
+    ) -> str:
+        """Return the path to the sc_decorrelator HDL module.
+
+        The decorrelator is a static Verilog module — this method provides
+        the instantiation template for integration into top-level designs.
+        """
+        return (
+            f"    sc_decorrelator #(\n"
+            f"        .NUM_STREAMS({num_streams}),\n"
+            f"        .STREAM_WIDTH({stream_width}),\n"
+            f"        .SHIFT_SEED(32'h{shift_seed:08X})\n"
+            f"    ) decorrelator_inst (\n"
+            f"        .clk(clk),\n"
+            f"        .rst_n(rst_n),\n"
+            f"        .source_bits(source_bits),\n"
+            f"        .decorrelated(decorrelated_bus)\n"
+            f"    );\n"
+        )
+
+    def emit_edt_controller(
+        self,
+        *,
+        data_width: int = 16,
+        margin: int = 0x0040,
+        stable_cycles: int = 8,
+    ) -> str:
+        """Return an instantiation template for the EDT controller."""
+        return (
+            f"    sc_edt_controller #(\n"
+            f"        .DATA_WIDTH({data_width}),\n"
+            f"        .MARGIN(16'h{margin:04X}),\n"
+            f"        .STABLE_CYCLES({stable_cycles})\n"
+            f"    ) edt_inst (\n"
+            f"        .clk(clk),\n"
+            f"        .rst_n(rst_n),\n"
+            f"        .enable(edt_enable),\n"
+            f"        .accumulator(accumulator),\n"
+            f"        .threshold(threshold),\n"
+            f"        .decision_ready(decision_ready),\n"
+            f"        .decision_value(decision_value),\n"
+            f"        .freeze(freeze)\n"
+            f"    );\n"
+        )
+
+    def emit_tmr_wrapper(
+        self,
+        module_name: str,
+        inputs: list[tuple[str, int]],
+        outputs: list[tuple[str, int]],
+    ) -> str:
+        """Generate a TMR wrapper for the given module."""
+        from .tmr_wrapper import generate_tmr_wrapper
+
+        return generate_tmr_wrapper(
+            module_name=module_name, inputs=inputs, outputs=outputs
+        )
+
     def save_to_file(self, path: str) -> None:
+        """Write generated Verilog to a file."""
         try:
             with open(path, "w") as f:
                 f.write(self.generate())
@@ -191,12 +286,15 @@ def emit_sources_from_ir(ir: Any) -> str:
             emitted.append(Lfsr16Emitter(module_name=module_name, seed=seed).generate())
         elif kind == "sobol16":
             emitted.append(Sobol16Emitter(module_name=module_name, seed=seed).generate())
+        elif kind == "halton16":
+            emitted.append(Halton16Emitter(module_name=module_name).generate())
         else:
             raise ValueError(f"unsupported stochastic source type {kind!r}")
     return "\n\n".join(emitted)
 
 
 def _iter_ir_nodes(ir: Any) -> list[tuple[str | None, Any]]:
+    """Iterate IR nodes, yielding (node_id, node) pairs."""
     if isinstance(ir, Mapping):
         nodes = ir.get("nodes", ir)
     else:
@@ -210,6 +308,7 @@ def _iter_ir_nodes(ir: Any) -> list[tuple[str | None, Any]]:
 
 
 def _source_kind(node: Any) -> str | None:
+    """Determine the stochastic source kind from an IR node."""
     params = _node_params(node)
     node_type = _normalise(_node_value(node, "type", "node_type", "op", "kind"))
     candidate = _normalise(
@@ -227,6 +326,8 @@ def _source_kind(node: Any) -> str | None:
         return "lfsr16"
     if node_type in _SOBOL_SOURCE_TYPES or candidate in _SOBOL_SOURCE_TYPES:
         return "sobol16"
+    if node_type in _HALTON_SOURCE_TYPES or candidate in _HALTON_SOURCE_TYPES:
+        return "halton16"
     if node_type in _SOURCE_NODE_TYPES:
         if candidate:
             raise ValueError(f"unsupported stochastic source type {candidate!r}")
@@ -235,6 +336,7 @@ def _source_kind(node: Any) -> str | None:
 
 
 def _source_module_name(node: Any, *, node_id: str | None, index: int) -> str:
+    """Extract or generate a unique module name for a stochastic source."""
     params = _node_params(node)
     raw_name = _node_value(
         node,
@@ -250,6 +352,7 @@ def _source_module_name(node: Any, *, node_id: str | None, index: int) -> str:
 
 
 def _source_seed(node: Any, *, default: int) -> int:
+    """Extract the PRNG seed from an IR node."""
     params = _node_params(node)
     raw_seed = _node_value(node, "seed", default=_node_value(params, "seed", default=default))
     if isinstance(raw_seed, bool) or not isinstance(raw_seed, Integral):
@@ -258,10 +361,12 @@ def _source_seed(node: Any, *, default: int) -> int:
 
 
 def _node_params(node: Any) -> Any:
+    """Extract the params/attributes sub-mapping from an IR node."""
     return _node_value(node, "params", "parameters", "attrs", "attributes", default={})
 
 
 def _node_value(node: Any, *keys: str, default: Any = None) -> Any:
+    """Look up the first matching key in a node mapping or object."""
     if isinstance(node, Mapping):
         for key in keys:
             if key in node:
@@ -274,6 +379,7 @@ def _node_value(node: Any, *keys: str, default: Any = None) -> Any:
 
 
 def _normalise(value: Any) -> str:
+    """Normalise a node type string to lowercase with underscores."""
     if value is None:
         return ""
     return str(value).strip().lower().replace("-", "_")

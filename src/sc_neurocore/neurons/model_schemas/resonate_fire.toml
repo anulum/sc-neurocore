@@ -1,0 +1,37 @@
+[metadata]
+schema_version = 1
+name = "Resonate-and-Fire"
+author = "Izhikevich, E.M."
+year = 2001
+doi = "10.1162/089976601300014538"
+description = "Resonator neuron — subthreshold oscillations with spike threshold"
+
+[state]
+x = 0.0
+y = 0.0
+
+[parameters]
+omega = 0.5
+b = -0.1
+v_threshold = 1.0
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+x = "b * x - omega * y + I"
+y = "omega * x + b * y"
+
+[threshold]
+condition = "x > v_threshold"
+detection = "crossing"
+
+[reset]
+x = "0.0"
+y = "0.0"
+
+[extensions]
+excitability = "Type-II"
+resonance = true
+frequency_preference = "omega / (2 * pi)"

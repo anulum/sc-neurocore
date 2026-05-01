@@ -1,0 +1,35 @@
+[metadata]
+schema_version = 1
+name = "Izhikevich"
+author = "Izhikevich, E.M."
+year = 2003
+doi = "10.1109/TNN.2003.820440"
+description = "2D fast-slow model — reproduces 20+ biological firing patterns via 4 parameters"
+
+[state]
+v = -65.0
+u = -14.0
+
+[parameters]
+a = 0.02
+b = 0.2
+c = -65.0
+d = 8.0
+
+[integration]
+dt = 1.0
+method = "euler"
+
+[dynamics]
+v = "0.04 * v**2 + 5 * v + 140 - u + I"
+u = "a * (b * v - u)"
+
+[threshold]
+condition = "v > 30"
+detection = "level"
+
+[reset]
+v = "c"
+u = "u + d"
+
+[extensions]

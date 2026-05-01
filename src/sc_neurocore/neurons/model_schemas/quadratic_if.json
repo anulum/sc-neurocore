@@ -1,0 +1,17 @@
+{
+  "metadata": {
+    "schema_version": 1,
+    "name": "Quadratic IF",
+    "author": "Latham, P.E. et al.",
+    "year": 2000,
+    "doi": "10.1152/jn.2000.83.2.808",
+    "description": "Canonical Type-I excitable model — simplest model exhibiting saddle-node bifurcation"
+  },
+  "state": { "v": -1.0 },
+  "parameters": { "v_reset": -1.0, "v_peak": 1.0 },
+  "integration": { "dt": 0.01, "method": "euler" },
+  "dynamics": { "v": "v**2 + I" },
+  "threshold": { "condition": "v > 1.0", "detection": "crossing" },
+  "reset": { "v": "-1.0" },
+  "extensions": { "bifurcation": "saddle-node", "excitability": "Type-I" }
+}

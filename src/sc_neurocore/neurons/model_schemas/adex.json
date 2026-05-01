@@ -1,0 +1,44 @@
+{
+  "metadata": {
+    "schema_version": 1,
+    "name": "AdEx",
+    "author": "Brette, R. & Gerstner, W.",
+    "year": 2005,
+    "doi": "10.1152/jn.00686.2005",
+    "description": "Adaptive Exponential Integrate-and-Fire — exponential spike initiation with subthreshold adaptation"
+  },
+  "state": {
+    "v": -65.0,
+    "w": 0.0
+  },
+  "parameters": {
+    "v_rest": -65.0,
+    "v_reset": -68.0,
+    "v_rh": -55.0,
+    "delta_T": 2.0,
+    "tau": 20.0,
+    "tau_w": 100.0,
+    "a": 0.5,
+    "b_adapt": 7.0,
+    "C": 200.0
+  },
+  "integration": {
+    "dt": 0.1,
+    "method": "euler"
+  },
+  "dynamics": {
+    "v": "(-(v - v_rest) + delta_T * exp((v - v_rh) / delta_T)) / tau + (-w + I) / C",
+    "w": "(a * (v - v_rest) - w) / tau_w"
+  },
+  "threshold": {
+    "condition": "v > -50",
+    "detection": "level"
+  },
+  "reset": {
+    "v": "v_reset",
+    "w": "w + b_adapt"
+  },
+  "extensions": {
+    "integrator_options": ["euler", "rk4", "rosenbrock"]
+  }
+}

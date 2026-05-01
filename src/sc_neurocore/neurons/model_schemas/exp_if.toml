@@ -1,0 +1,37 @@
+[metadata]
+schema_version = 1
+name = "Exponential IF"
+author = "Fourcaud-Trocmé, N. et al."
+year = 2003
+doi = "10.1523/JNEUROSCI.23-37-11628.2003"
+description = "Exponential Integrate-and-Fire — sharpened spike initiation with exponential term"
+
+[state]
+v = -70.0
+
+[parameters]
+v_rest = -70.0
+v_reset = -70.0
+v_threshold = -50.0
+v_peak = 20.0
+delta_t = 2.0
+tau_m = 10.0
+resistance = 1.0
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+v = "(-(v - v_rest) + delta_t * exp((v - v_threshold) / delta_t) + resistance * I) / tau_m"
+
+[threshold]
+condition = "v > v_peak"
+detection = "crossing"
+
+[reset]
+v = "v_reset"
+
+[extensions]
+spike_shape = "exponential"
+excitability = "Type-II"

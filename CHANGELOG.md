@@ -4,6 +4,244 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Wave 5: Universal hardware coverage & strategic features (2026-05-01)
+
+#### Added — Hardware Profiles (29 new → 113 total, 66 vendors, 9 classes)
+- **Photonic / Optical Compute** (5): `lightmatter_passage`, `lightelligence_pace`,
+  `xanadu_x8`, `ipronics_smartlight`, `luminous_computing`.
+- **Chiplet / UCIe** (5): `tenstorrent_blackhole`, `cerebras_wse3`,
+  `intel_ponte_vecchio`, `amd_mi300x`, `ucie_generic`.
+- **PIM / CXL Memory** (5): `upmem_pim`, `samsung_hbm_pim`, `sk_hynix_aim`,
+  `cxl_type3`, `axdimm`.
+- **Next-Gen Neuromorphic** (5): `akida2`, `spinnaker2`, `dynapse2`,
+  `rain_neuromorphic`, `brainscales2`.
+- **Sovereign / Defence** (5): `bae_rad750`, `cobham_ut700`, `mpfs250t_rt`,
+  `versal_xqrvc1902`, `trenz_zynq_space`.
+- **Automotive / Edge AI** (6): `mythic_m1076`, `mobileye_eyeq6`, `horizon_j6`,
+  `ambarella_cv72s`, `hailo15`, `syntiant_ndp120`.
+
+#### Added — TOML Profile Loader (universal future-proofing)
+- `load_toml_profile()` — register custom hardware targets from TOML files.
+- `load_toml_profiles_dir()` — bulk-load all `*.toml` profiles from a directory.
+- Enables instant compatibility with any future chip without code changes.
+
+#### Added — Strategic Compiler Features
+- `generate_tmr_wrapper()` — SEU/TMR wrapper with majority/median voter.
+- `embed_model_checksum()` — SHA-256 hash embedding for reproducibility.
+- `auto_quantisation_sweep()` — sweep Q4→Q32 for accuracy-vs-resource DSE.
+- `format_quantisation_report()` — markdown table output for sweep results.
+- `encode_mzi_weights()` — MZI phase-shift encoding for photonic chips.
+- `generate_mzi_config()` — photonic chip config (JSON/CSV) from MZI weights.
+- `plan_pim_layout()` — PIM/CXL memory bank layout optimisation.
+- `generate_power_domain_wrapper()` — ICG clock gating for ultra-low-power edge.
+- `generate_hls_cpp()` — Vitis/Catapult HLS C++ translation.
+- `generate_bitstream_encryption()` — AES-256 bitstream encryption (Xilinx/Intel).
+- `advise_ucie_partition()` — chiplet die-to-die neuron array partitioning.
+- `advise_cxl_mapping()` — CXL.mem Type-3 device mapping with protocol selection.
+- `generate_learning_params()` / `export_learning_config()` — STDP/RSTDP on-chip
+  learning parameter export for Akida 2, BrainScaleS-2, SpiNNaker 2.
+- `inject_weight_noise()` — stochastic weight noise injection (Gaussian/uniform/
+  lognormal) for analog/memristive robustness validation.
+- `create_noise_profile()` — device-variation characterisation for analog targets.
+- `generate_pipeline_wrapper()` — auto-insert register stages for HF targets.
+- `compare_targets()` — compile once, compare N hardware targets side-by-side.
+- `format_comparison_report()` — markdown table from multi-target comparison.
+- `generate_compilation_summary()` — comprehensive markdown compilation report.
+
+#### Added — Tests
+- `tests/test_wave5_features.py` — 130 tests (profiles, TOML, TMR, checksum,
+  sweep, MZI, PIM, power-domain, HLS, encryption, UCIe, CXL, STDP, noise,
+  pipeline, comparison, summary, cross-feature E2E integration).
+- Total regression: **933 passed**, 1 xfailed, 0 failures.
+
+
+### Network-level compilation & thermal-aware deployment (2026-05-01)
+
+#### Added — Advanced Features: BRAM Auto-Selection
+- `storage_recommendation()` — automatic register/BRAM/URAM strategy.
+- `generate_bram_array()` — time-multiplexed BRAM-backed neuron array
+  with `(* ram_style = "block" *)` inference pragmas.
+- Supports 18Kb, 36Kb BRAM and 288Kb URAM (UltraScale+/Versal).
+
+#### Added — Advanced Features: Thermal-Aware Compilation
+- `thermal_analysis()` — ΔT estimation, frequency derating, hotspot risk.
+- `generate_thermal_constraints()` — XDC with derated clock and DSP spreading.
+- Technology model for 7nm through 65nm junction temperature.
+
+#### Added — Advanced Features: Weight ROM Generation
+- `generate_weight_rom()` — synaptic weights in 3 formats:
+  Verilog ROM, Xilinx `.coe`, and Intel `.mif`.
+
+#### Added — Tests
+- `tests/test_wave4_features.py` — 28 tests (BRAM, thermal, weights).
+- `tests/e2e/test_e2e_pipeline.py` — 22 end-to-end integration tests
+  covering 9 cross-cutting compilation pipelines.
+- Total regression: **745 passed**, 1 xfailed, 0 failures.
+
+
+#### Added — Hardware Profiles (7 new → 84 total)
+- **AI accelerators**: `qualcomm_nsp` (Qualcomm NSP), `sambanova` (SambaNova
+  RDU), `cambricon_mlu` (Cambricon MLU370/590).
+- **Emerging compute**: `superconducting` (AQFP/SFQ ~100 GHz),
+  `cim_sram` (compute-in-SRAM), `analog_ai` (PCM/ReRAM),
+  `event_camera` (Prophesee/Sony DVS).
+
+#### Added — Static Analysis: Pipeline Stage Analysis
+- `critical_path_depth()` — AST-based multiply chain analysis.
+- `pipeline_stages_needed()` — pipeline budget from target frequency.
+- `pipeline_analysis()` — multi-ODE per-variable pipeline report.
+
+#### Added — Static Analysis: Power Estimation
+- `estimate_power()` — switching-activity-based power model.
+- `PowerEstimate` dataclass with dynamic/static/total/energy-per-spike.
+- Technology node library: 7nm through 65nm capacitance scaling.
+
+#### Added — Deployment: Multi-Target Compilation
+- `compile_multi_target()` — compile one neuron to N targets.
+- `format_comparison_table()` — markdown comparison report.
+- `CompilationResult` dataclass with per-target metrics.
+
+#### Added — Tests
+- `tests/test_wave3_features.py` — 31 tests (profiles, pipeline,
+  power, multi-target).
+- Total regression: **695 passed**, 1 xfailed, 0 failures.
+
+
+#### Added — Hardware Profiles (12 new → 77 total)
+- **Neuromorphic**: `loihi3` (Intel, 4nm 8M neurons), `northpole` (IBM, 256-core),
+  `innatera_pulsar` (Innatera, analog-digital hybrid μC).
+- **FPGA**: `versal_ai_edge` (AMD, AI Engine + DSP58), `proasic3` (Microchip, flash),
+  `trion` / `titanium` (Efinix), `gowin_arora_v` (Gowin 28nm), `intel_agilex5`
+  (Intel, HBM2e).
+- **AI accelerators**: `nvidia_dla` (Orin DLA), `mediatek_apu` (APU 790),
+  `aws_inferentia` (Inferentia2/Trainium2).
+
+#### Added — Deployment: SymbiYosys Formal Verification
+- One-command `.sby` script generation for BMC, induction, and cover modes.
+- Solver support: boolector, Z3, yices via SymbiYosys + Yosys.
+
+#### Added — Deployment: RISC-V Driver + RTOS Templates
+- RISC-V C driver with volatile MMIO accessors for PolarFire SoC, Efinix
+  Titanium, and RISC-V soft-cores (Nios V, MicroBlaze V).
+- FreeRTOS task template: `xTaskCreate` + `vTaskDelay` neuron tick loop.
+- Zephyr RTOS thread template: `K_THREAD_DEFINE` + `k_msleep` integration.
+
+#### Added — Advanced Features: DVS Event-Camera → AER Bridge
+- Synthesisable Verilog bridge converting Prophesee / Sony IMX636 DVS events
+  to SC-NeuroCore AER address-event protocol.
+- Configurable FIFO depth, address width, timestamp width, polarity bit.
+- Overflow detection flag for back-pressure monitoring.
+
+#### Added — Deployment: Multi-Die SLR Placement
+- Vivado XDC PBLOCK constraint generation for multi-SLR FPGAs (Versal,
+  Agilex 7, Stratix 10, UltraScale+).
+- Auto inter-SLR pipeline register directives for >500 MHz crossing.
+
+#### Added — Advanced Features: Block-FP / MXFP Encoding
+- OCP Microscaling Spec v1.0 formats: MXFP4, MXFP6, MXFP8 (E4M3/E5M2).
+- IEEE FP8 (NVIDIA H100/B100 native) with block_size=1.
+- Encode/decode block functions for parameter transfer and weight storage.
+
+#### Added — Deployment: Safety Certification Evidence
+- XML traceability matrix generation for DO-254 (DAL-A/B/C), IEC 61508
+  (SIL 1–4), and ISO 26262 (ASIL A–D).
+- Requirement → design → verification linkage with pass/fail/untested
+  status and coverage percentage.
+
+#### Added — Tests
+- `tests/test_wave2_features.py` — 49 tests (profiles, SBY, RISC-V,
+  DVS, SLR, MXFP, certification).
+- Total regression: **650 passed**, 1 xfailed, 0 failures.
+
+### Universal hardware compilation & deployment industrialisation (2026-05-01)
+
+#### Added — Compiler: Hardware Profiles
+- Expanded hardware profile registry from 32 to **65 pre-configured profiles**
+  across 7 platform classes and 40 vendors.
+- **Rad-hard / space**: NanoXplore NG-Ultra, Microchip RTG4, Xilinx Kintex
+  UltraScale+ RT — DO-254 / MIL-STD-883 alignment.
+- **Edge AI accelerators**: Hailo-8, Kneron KL730, Groq TSP, NVIDIA Jetson
+  Orin, Intel Habana Gaudi 2/3, Renesas DRP-AI.
+- **eFPGA IP**: Achronix Speedcore, Flex Logix EFLX, Menta Origami.
+- **Vision-on-sensor**: Sony IMX500/IMX501, Samsung Exynos NPU.
+
+#### Added — Compiler: Static Analysis (`static_analysis.py`)
+- Guard-bit auto-computation from expression AST (single + multi-ODE).
+- Formal overflow proof via interval arithmetic — mathematical guarantee of
+  no overflow at compile time, no simulation required.
+- SystemVerilog Assertion (SVA) generation for DO-254 / IEC 61508 formal
+  verification (overflow assertions, reachability covers, input assumptions,
+  stability checks).
+
+#### Added — Compiler: Mixed Precision (`mixed_precision.py`)
+- Per-variable mixed-precision specification via dict API.
+- Automatic constraint solver: given value bounds, resolution requirements,
+  and a total-bit budget, auto-selects optimal Q-format per variable.
+- Preset shorthand (`from_preset({"v": "q88", "u": "q44"})`).
+
+#### Added — SoC Integration: Bus Interface (`bus_interface.py`)
+- AXI4-Lite bus wrapper generator (Xilinx/AMD compatible).
+- Wishbone B4 bus wrapper generator (LiteX/open-source RISC-V compatible).
+- Auto-generated register map with CTRL, I_T, SPIKE_COUNT, and parameter
+  registers. Spike interrupt output for GIC/NVIC integration.
+
+#### Added — Compiler: Deployment Utilities (`deployment.py`)
+- **Resource estimation**: LUT/FF/DSP/BRAM estimation from Verilog without
+  synthesis (heuristic-based, <1 ms).
+- **Constraint generation**: SDC (Intel/generic) and XDC (Xilinx) timing
+  constraint files with configurable target frequency.
+- **Host driver generation**: Python MMIO class and C header with Q-format
+  encode/decode for host-side parameter tuning.
+- **Cocotb testbench generation**: 3-scenario Python-based verification
+  (spike, zero-current, reset).
+
+#### Added — Compiler: Advanced Features (`advanced_features.py`)
+- **VHDL-2008 output mode**: generates entity/architecture wrappers for
+  mixed-language simulation and DO-254 compliance.
+- **Posit arithmetic**: posit-8 and posit-16 encode/decode with 4 standard
+  configs (POSIT8_0, POSIT8_1, POSIT16_1, POSIT16_2).
+- **CDC synchroniser generation**: multi-clock domain crossing with
+  configurable stages and `ASYNC_REG` attributes.
+- **TCL project generation**: complete Vivado and Quartus project scripts
+  (synth → P&R → bitstream → reports).
+- **Bitstream automation**: Yosys + nextpnr Makefiles for iCE40 and ECP5
+  open-source FPGA flow.
+
+#### Added — SoC Integration: IP-XACT Packaging (`ip_xact.py`)
+- IEEE 1685 IP-XACT component XML generator for Vivado IP Integrator
+  drag-and-drop integration with AXI bus interfaces, port definitions,
+  file sets, and parameter schemas.
+
+#### Added — Documentation
+- New guide: `docs/guides/static_analysis_guide.md` (217 lines) — guard bits,
+  interval arithmetic overflow proof, SVA generation.
+- New guide: `docs/guides/soc_integration_guide.md` (239 lines) — bus
+  wrappers, mixed-precision, host drivers, IP-XACT, VHDL output.
+- New guide: `docs/guides/deployment_guide.md` (338 lines) — resource
+  estimation, SDC/XDC constraints, Cocotb testbenches, Vivado/Quartus TCL,
+  CDC synchronisers, posit arithmetic, iCE40/ECP5 Makefile, complete
+  end-to-end deployment workflow.
+- Updated guide: `docs/guides/hardware_profiles.md` (431 lines) — expanded
+  from 51 to 65 profiles with rad-hard, eFPGA, edge AI, and vision tables;
+  cross-references to 3 new guides.
+- Updated roadmap: `docs/internal/COMPILER_ROADMAP_TODO.md` — all Tier 4
+  items marked DONE, cross-references to new modules.
+- 100% docstring coverage across all 13 modified/new source modules.
+
+#### Added — Tests
+- `tests/test_static_analysis.py` — 28 tests.
+- `tests/test_bus_mixed_precision.py` — 34 tests.
+- `tests/test_deployment.py` — 26 tests.
+- `tests/test_advanced_features.py` — 40 tests (IP-XACT, VHDL, posit, CDC,
+  TCL, Makefile).
+- `tests/test_hardware_profiles.py` — expanded to cover all 65 profiles.
+- Total regression: **577 passed**, 1 xfailed, 0 failures.
+
+#### Fixed — Docstring Coverage
+- Added missing docstrings to 24 functions/methods across
+  `verilog_generator.py`, `equation_builder.py`, `universal_dsl.py`, and
+  `neurons/__init__.py` to achieve 100% coverage on all session-touched files.
+
 ### Security hardening (2026-04-29)
 
 #### Added

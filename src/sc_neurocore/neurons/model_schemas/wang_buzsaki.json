@@ -1,0 +1,43 @@
+{
+  "metadata": {
+    "schema_version": 1,
+    "name": "Wang-Buzsáki",
+    "author": "Wang, X.-J. & Buzsáki, G.",
+    "year": 1996,
+    "doi": "10.1523/JNEUROSCI.16-20-06402.1996",
+    "description": "Modified HH for hippocampal interneurons — fast-spiking GABAergic basket cells"
+  },
+  "state": {
+    "v": -65.0,
+    "h": 0.6,
+    "n": 0.32
+  },
+  "parameters": {
+    "C": 1.0,
+    "g_Na": 35.0,
+    "g_K": 9.0,
+    "g_L": 0.1,
+    "E_Na": 55.0,
+    "E_K": -90.0,
+    "E_L": -65.0,
+    "phi": 5.0
+  },
+  "integration": {
+    "dt": 0.01,
+    "method": "euler"
+  },
+  "dynamics": {
+    "v": "(-g_Na * (1 / (1 + exp(-(v + 35) / 10)))**3 * h * (v - E_Na) - g_K * n**4 * (v - E_K) - g_L * (v - E_L) + I) / C",
+    "h": "phi * (0.07 * exp(-(v + 58) / 20) * (1 - h) - 1 / (1 + exp(-(v + 28) / 10)) * h)",
+    "n": "phi * (0.01 * (v + 34) / (1 - exp(-(v + 34) / 10)) * (1 - n) - 0.125 * exp(-(v + 44) / 80) * n)"
+  },
+  "threshold": {
+    "condition": "v > -10",
+    "detection": "crossing"
+  },
+  "reset": {},
+  "extensions": {
+    "cell_type": "fast-spiking interneuron",
+    "brain_region": "hippocampus"
+  }
+}

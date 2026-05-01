@@ -1,0 +1,18 @@
+[tasks]
+prove
+
+[options]
+prove: mode prove
+prove: depth 1
+
+[engines]
+prove: smtbmc z3
+
+[script]
+read -formal ../sc_tmr_voter.v
+read -formal tmr_voter_formal.v
+prep -top tmr_voter_formal
+
+[files]
+tmr_voter_formal.v
+../sc_tmr_voter.v
