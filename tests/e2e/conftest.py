@@ -6,8 +6,6 @@
 
 """conftest.py — register custom 'e2e' marker for selective CI execution."""
 
-import pytest
-
 
 def pytest_configure(config):
     """Register custom markers."""

@@ -31,6 +31,7 @@ from typing import Literal
 # 1. Resource Estimation
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @dataclass
 class ResourceEstimate:
     """Estimated FPGA resource usage.
@@ -88,20 +89,18 @@ def estimate_resources(
     ResourceEstimate
         Estimated resource usage.
     """
-    mul_count = len(re.findall(r'wire\s+signed\s+\[.*?\]\s+_mul\d+', verilog))
-    add_count = verilog.count(' + ') + verilog.count(' - ')
-    reg_count = len(re.findall(r'reg\s+signed\s+\[', verilog))
+    mul_count = len(re.findall(r"wire\s+signed\s+\[.*?\]\s+_mul\d+", verilog))
+    add_count = verilog.count(" + ") + verilog.count(" - ")
+    reg_count = len(re.findall(r"reg\s+signed\s+\[", verilog))
     reg_bits = reg_count * data_width
 
     # LUT estimation heuristics
     luts_per_add = data_width  # 1 LUT per bit for addition
     luts_per_mul = 0 if has_dsp else (data_width * data_width // 4)
     luts_per_mux = data_width // 2  # For saturation/threshold muxes
-    mux_count = verilog.count('?')  # Ternary operators
+    mux_count = verilog.count("?")  # Ternary operators
 
-    luts = (add_count * luts_per_add +
-            mul_count * luts_per_mul +
-            mux_count * luts_per_mux)
+    luts = add_count * luts_per_add + mul_count * luts_per_mul + mux_count * luts_per_mux
 
     ffs = reg_bits + data_width  # + spike_out + control
 
@@ -124,6 +123,7 @@ def estimate_resources(
 # ═══════════════════════════════════════════════════════════════════════
 # 2. Constraint File Generation
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def generate_constraints(
     module_name: str,
@@ -161,56 +161,51 @@ def generate_constraints(
 
     lines = [
         f"# Auto-generated timing constraints for {module_name}",
-        f"# SC-NeuroCore deployment utilities",
+        "# SC-NeuroCore deployment utilities",
         f"# Target: {target_freq_mhz:.1f} MHz ({period_ns:.3f} ns period)",
-        f"",
+        "",
     ]
 
     if format == "xdc":
-        lines.extend([
-            f"# ── Clock Definition ─────────────────────────────────────",
-            f"create_clock -period {period_ns:.3f} -name {clock_port} "
-            f"[get_ports {clock_port}]",
-            f"",
-            f"# ── Input Delays ────────────────────────────────────────",
-            f"set_input_delay -clock {clock_port} {io_delay:.3f} "
-            f"[get_ports {reset_port}]",
-            f"set_input_delay -clock {clock_port} {io_delay:.3f} "
-            f"[get_ports {{I_t[*]}}]",
-            f"set_input_delay -clock {clock_port} {io_delay:.3f} "
-            f"[get_ports en]",
-            f"",
-            f"# ── Output Delays ───────────────────────────────────────",
-            f"set_output_delay -clock {clock_port} {io_delay:.3f} "
-            f"[get_ports spike_out]",
-            f"",
-            f"# ── False Paths ─────────────────────────────────────────",
-            f"set_false_path -from [get_ports {reset_port}]",
-            f"",
-            f"# ── DSP Multicycle (if pipelined) ───────────────────────",
-            f"# set_multicycle_path 2 -setup "
-            f"-from [get_cells -hier *_mul*] -to [get_cells -hier *_t*]",
-            f"# set_multicycle_path 1 -hold "
-            f"-from [get_cells -hier *_mul*] -to [get_cells -hier *_t*]",
-        ])
+        lines.extend(
+            [
+                "# ── Clock Definition ─────────────────────────────────────",
+                f"create_clock -period {period_ns:.3f} -name {clock_port} [get_ports {clock_port}]",
+                "",
+                "# ── Input Delays ────────────────────────────────────────",
+                f"set_input_delay -clock {clock_port} {io_delay:.3f} [get_ports {reset_port}]",
+                f"set_input_delay -clock {clock_port} {io_delay:.3f} [get_ports {{I_t[*]}}]",
+                f"set_input_delay -clock {clock_port} {io_delay:.3f} [get_ports en]",
+                "",
+                "# ── Output Delays ───────────────────────────────────────",
+                f"set_output_delay -clock {clock_port} {io_delay:.3f} [get_ports spike_out]",
+                "",
+                "# ── False Paths ─────────────────────────────────────────",
+                f"set_false_path -from [get_ports {reset_port}]",
+                "",
+                "# ── DSP Multicycle (if pipelined) ───────────────────────",
+                "# set_multicycle_path 2 -setup "
+                "-from [get_cells -hier *_mul*] -to [get_cells -hier *_t*]",
+                "# set_multicycle_path 1 -hold "
+                "-from [get_cells -hier *_mul*] -to [get_cells -hier *_t*]",
+            ]
+        )
     else:  # SDC
-        lines.extend([
-            f"# ── Clock Definition ─────────────────────────────────────",
-            f"create_clock -period {period_ns:.3f} -name {clock_port} "
-            f"[get_ports {clock_port}]",
-            f"",
-            f"# ── Input Delays ────────────────────────────────────────",
-            f"set_input_delay -clock {clock_port} {io_delay:.3f} "
-            f"[get_ports {reset_port}]",
-            f"set_input_delay -clock {clock_port} {io_delay:.3f} "
-            f"[get_ports I_t*]",
-            f"",
-            f"# ── Output Delays ───────────────────────────────────────",
-            f"set_output_delay -clock {clock_port} {io_delay:.3f} "
-            f"[get_ports spike_out]",
-            f"",
-            f"set_false_path -from [get_ports {reset_port}]",
-        ])
+        lines.extend(
+            [
+                "# ── Clock Definition ─────────────────────────────────────",
+                f"create_clock -period {period_ns:.3f} -name {clock_port} [get_ports {clock_port}]",
+                "",
+                "# ── Input Delays ────────────────────────────────────────",
+                f"set_input_delay -clock {clock_port} {io_delay:.3f} [get_ports {reset_port}]",
+                f"set_input_delay -clock {clock_port} {io_delay:.3f} [get_ports I_t*]",
+                "",
+                "# ── Output Delays ───────────────────────────────────────",
+                f"set_output_delay -clock {clock_port} {io_delay:.3f} [get_ports spike_out]",
+                "",
+                f"set_false_path -from [get_ports {reset_port}]",
+            ]
+        )
 
     lines.append("")
     return "\n".join(lines)
@@ -219,6 +214,7 @@ def generate_constraints(
 # ═══════════════════════════════════════════════════════════════════════
 # 3. Host Driver Generation
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def generate_host_driver(
     module_name: str,
@@ -272,100 +268,104 @@ def _gen_python_driver(
     class_name = "".join(w.capitalize() for w in module_name.split("_")) + "Driver"
     lines = [
         f'"""Auto-generated Python driver for {module_name}.',
-        f"",
-        f"SC-NeuroCore deployment utilities.",
+        "",
+        "SC-NeuroCore deployment utilities.",
         f"Bus: memory-mapped I/O at 0x{base_address:08X}.",
-        f'Fixed-point: Q{data_width - fraction - 1}.{fraction} ({data_width}-bit signed).',
-        f'"""',
-        f"",
-        f"from __future__ import annotations",
-        f"",
-        f"",
+        f"Fixed-point: Q{data_width - fraction - 1}.{fraction} ({data_width}-bit signed).",
+        '"""',
+        "",
+        "from __future__ import annotations",
+        "",
+        "",
         f"class {class_name}:",
         f'    """Memory-mapped driver for {module_name}."""',
-        f"",
+        "",
         f"    BASE = 0x{base_address:08X}",
         f"    FRACTION = {fraction}",
-        f"",
-        f"    # Register offsets",
-        f"    REG_CTRL        = 0x00  # bit0=enable, bit1=reset",
-        f"    REG_I_T         = 0x04  # Input current (Q-format)",
-        f"    REG_SPIKE_COUNT = 0x08  # Spike counter (read-only)",
+        "",
+        "    # Register offsets",
+        "    REG_CTRL        = 0x00  # bit0=enable, bit1=reset",
+        "    REG_I_T         = 0x04  # Input current (Q-format)",
+        "    REG_SPIKE_COUNT = 0x08  # Spike counter (read-only)",
     ]
 
     for i, pname in enumerate(params):
         lines.append(f"    REG_{pname.upper():16s}= 0x{0x0C + i * 4:02X}")
 
-    lines.extend([
-        f"",
-        f"    def __init__(self, read_fn, write_fn, base: int = BASE):",
-        f'        """Initialise with platform-specific read/write functions.',
-        f"",
-        f"        Parameters",
-        f"        ----------",
-        f"        read_fn : callable",
-        f"            ``read_fn(addr) -> int`` — read 32-bit register.",
-        f"        write_fn : callable",
-        f"            ``write_fn(addr, value)`` — write 32-bit register.",
-        f"        base : int",
-        f"            Base address override.",
-        f'        """',
-        f"        self._read = read_fn",
-        f"        self._write = write_fn",
-        f"        self._base = base",
-        f"",
-        f"    def _wr(self, offset: int, value: int) -> None:",
-        f'        """Write a register."""',
-        f"        self._write(self._base + offset, value & 0xFFFFFFFF)",
-        f"",
-        f"    def _rd(self, offset: int) -> int:",
-        f'        """Read a register."""',
-        f"        return self._read(self._base + offset)",
-        f"",
-        f"    def encode_q(self, value: float) -> int:",
-        f'        """Encode a float to Q-format integer."""',
-        f"        return int(round(value * (1 << self.FRACTION)))",
-        f"",
-        f"    def decode_q(self, raw: int) -> float:",
-        f'        """Decode a Q-format integer to float."""',
-        f"        return raw / (1 << self.FRACTION)",
-        f"",
-        f"    # ── Control ─────────────────────────────────────────────",
-        f"",
-        f"    def enable(self) -> None:",
-        f'        """Enable the neuron (start clocking)."""',
-        f"        self._wr(self.REG_CTRL, 0x01)",
-        f"",
-        f"    def disable(self) -> None:",
-        f'        """Disable the neuron (stop clocking)."""',
-        f"        self._wr(self.REG_CTRL, 0x00)",
-        f"",
-        f"    def reset(self) -> None:",
-        f'        """Assert reset, then release."""',
-        f"        self._wr(self.REG_CTRL, 0x02)",
-        f"        self._wr(self.REG_CTRL, 0x01)",
-        f"",
-        f"    # ── I/O ─────────────────────────────────────────────────",
-        f"",
-        f"    def set_current(self, I: float) -> None:",
-        f'        """Set the input current."""',
-        f"        self._wr(self.REG_I_T, self.encode_q(I))",
-        f"",
-        f"    def get_spike_count(self) -> int:",
-        f'        """Read the spike counter."""',
-        f"        return self._rd(self.REG_SPIKE_COUNT)",
-        f"",
-        f"    # ── Parameters ──────────────────────────────────────────",
-    ])
+    lines.extend(
+        [
+            "",
+            "    def __init__(self, read_fn, write_fn, base: int = BASE):",
+            '        """Initialise with platform-specific read/write functions.',
+            "",
+            "        Parameters",
+            "        ----------",
+            "        read_fn : callable",
+            "            ``read_fn(addr) -> int`` — read 32-bit register.",
+            "        write_fn : callable",
+            "            ``write_fn(addr, value)`` — write 32-bit register.",
+            "        base : int",
+            "            Base address override.",
+            '        """',
+            "        self._read = read_fn",
+            "        self._write = write_fn",
+            "        self._base = base",
+            "",
+            "    def _wr(self, offset: int, value: int) -> None:",
+            '        """Write a register."""',
+            "        self._write(self._base + offset, value & 0xFFFFFFFF)",
+            "",
+            "    def _rd(self, offset: int) -> int:",
+            '        """Read a register."""',
+            "        return self._read(self._base + offset)",
+            "",
+            "    def encode_q(self, value: float) -> int:",
+            '        """Encode a float to Q-format integer."""',
+            "        return int(round(value * (1 << self.FRACTION)))",
+            "",
+            "    def decode_q(self, raw: int) -> float:",
+            '        """Decode a Q-format integer to float."""',
+            "        return raw / (1 << self.FRACTION)",
+            "",
+            "    # ── Control ─────────────────────────────────────────────",
+            "",
+            "    def enable(self) -> None:",
+            '        """Enable the neuron (start clocking)."""',
+            "        self._wr(self.REG_CTRL, 0x01)",
+            "",
+            "    def disable(self) -> None:",
+            '        """Disable the neuron (stop clocking)."""',
+            "        self._wr(self.REG_CTRL, 0x00)",
+            "",
+            "    def reset(self) -> None:",
+            '        """Assert reset, then release."""',
+            "        self._wr(self.REG_CTRL, 0x02)",
+            "        self._wr(self.REG_CTRL, 0x01)",
+            "",
+            "    # ── I/O ─────────────────────────────────────────────────",
+            "",
+            "    def set_current(self, I: float) -> None:",
+            '        """Set the input current."""',
+            "        self._wr(self.REG_I_T, self.encode_q(I))",
+            "",
+            "    def get_spike_count(self) -> int:",
+            '        """Read the spike counter."""',
+            "        return self._rd(self.REG_SPIKE_COUNT)",
+            "",
+            "    # ── Parameters ──────────────────────────────────────────",
+        ]
+    )
 
     for pname in params:
         fn_name = pname.lower().replace("p_", "")
-        lines.extend([
-            f"",
-            f"    def set_{fn_name}(self, value: float) -> None:",
-            f'        """Set {pname}."""',
-            f"        self._wr(self.REG_{pname.upper()}, self.encode_q(value))",
-        ])
+        lines.extend(
+            [
+                "",
+                f"    def set_{fn_name}(self, value: float) -> None:",
+                f'        """Set {pname}."""',
+                f"        self._wr(self.REG_{pname.upper()}, self.encode_q(value))",
+            ]
+        )
 
     lines.append("")
     return "\n".join(lines)
@@ -382,57 +382,59 @@ def _gen_c_driver(
     guard = module_name.upper() + "_DRIVER_H"
     lines = [
         f"/* Auto-generated C driver for {module_name} */",
-        f"/* SC-NeuroCore deployment utilities */",
+        "/* SC-NeuroCore deployment utilities */",
         f"/* Bus: MMIO at 0x{base_address:08X} */",
-        f"",
+        "",
         f"#ifndef {guard}",
         f"#define {guard}",
-        f"",
-        f"#include <stdint.h>",
-        f"",
+        "",
+        "#include <stdint.h>",
+        "",
         f"#define {module_name.upper()}_BASE       0x{base_address:08X}U",
         f"#define {module_name.upper()}_FRACTION    {fraction}",
-        f"",
-        f"/* Register offsets */",
-        f"#define REG_CTRL        0x00",
-        f"#define REG_I_T         0x04",
-        f"#define REG_SPIKE_COUNT 0x08",
+        "",
+        "/* Register offsets */",
+        "#define REG_CTRL        0x00",
+        "#define REG_I_T         0x04",
+        "#define REG_SPIKE_COUNT 0x08",
     ]
 
     for i, pname in enumerate(params):
         lines.append(f"#define REG_{pname.upper():16s} 0x{0x0C + i * 4:02X}")
 
-    lines.extend([
-        f"",
-        f"/* Platform-specific MMIO (user must implement) */",
-        f"extern void     mmio_write(uint32_t addr, uint32_t val);",
-        f"extern uint32_t mmio_read(uint32_t addr);",
-        f"",
-        f"static inline int32_t {module_name}_encode_q(float val) {{",
-        f"    return (int32_t)(val * (1 << {fraction}));",
-        f"}}",
-        f"",
-        f"static inline void {module_name}_enable(void) {{",
-        f"    mmio_write({module_name.upper()}_BASE + REG_CTRL, 0x01);",
-        f"}}",
-        f"",
-        f"static inline void {module_name}_reset(void) {{",
-        f"    mmio_write({module_name.upper()}_BASE + REG_CTRL, 0x02);",
-        f"    mmio_write({module_name.upper()}_BASE + REG_CTRL, 0x01);",
-        f"}}",
-        f"",
-        f"static inline void {module_name}_set_current(float I) {{",
-        f"    mmio_write({module_name.upper()}_BASE + REG_I_T, "
-        f"(uint32_t){module_name}_encode_q(I));",
-        f"}}",
-        f"",
-        f"static inline uint32_t {module_name}_get_spikes(void) {{",
-        f"    return mmio_read({module_name.upper()}_BASE + REG_SPIKE_COUNT);",
-        f"}}",
-        f"",
-        f"#endif /* {guard} */",
-        f"",
-    ])
+    lines.extend(
+        [
+            "",
+            "/* Platform-specific MMIO (user must implement) */",
+            "extern void     mmio_write(uint32_t addr, uint32_t val);",
+            "extern uint32_t mmio_read(uint32_t addr);",
+            "",
+            f"static inline int32_t {module_name}_encode_q(float val) {{",
+            f"    return (int32_t)(val * (1 << {fraction}));",
+            "}",
+            "",
+            f"static inline void {module_name}_enable(void) {{",
+            f"    mmio_write({module_name.upper()}_BASE + REG_CTRL, 0x01);",
+            "}",
+            "",
+            f"static inline void {module_name}_reset(void) {{",
+            f"    mmio_write({module_name.upper()}_BASE + REG_CTRL, 0x02);",
+            f"    mmio_write({module_name.upper()}_BASE + REG_CTRL, 0x01);",
+            "}",
+            "",
+            f"static inline void {module_name}_set_current(float I) {{",
+            f"    mmio_write({module_name.upper()}_BASE + REG_I_T, "
+            f"(uint32_t){module_name}_encode_q(I));",
+            "}",
+            "",
+            f"static inline uint32_t {module_name}_get_spikes(void) {{",
+            f"    return mmio_read({module_name.upper()}_BASE + REG_SPIKE_COUNT);",
+            "}",
+            "",
+            f"#endif /* {guard} */",
+            "",
+        ]
+    )
 
     return "\n".join(lines)
 
@@ -440,6 +442,7 @@ def _gen_c_driver(
 # ═══════════════════════════════════════════════════════════════════════
 # 4. Cocotb Testbench Generation
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def generate_cocotb_testbench(
     module_name: str,
@@ -472,109 +475,109 @@ def generate_cocotb_testbench(
     i_encoded = int(round(input_current * (1 << fraction)))
     lines = [
         f'"""Auto-generated Cocotb testbench for {module_name}.',
-        f"",
-        f"SC-NeuroCore deployment utilities.",
+        "",
+        "SC-NeuroCore deployment utilities.",
         f"Run: make SIM=icarus TOPLEVEL={module_name} MODULE=test_{module_name}",
-        f'"""',
-        f"",
-        f"import cocotb",
-        f"from cocotb.clock import Clock",
-        f"from cocotb.triggers import RisingEdge, Timer",
-        f"",
-        f"",
+        '"""',
+        "",
+        "import cocotb",
+        "from cocotb.clock import Clock",
+        "from cocotb.triggers import RisingEdge, Timer",
+        "",
+        "",
         f"def encode_q(value: float, frac: int = {fraction}) -> int:",
-        f'    """Encode float to Q-format."""',
-        f"    return int(round(value * (1 << frac)))",
-        f"",
-        f"",
-        f"@cocotb.test()",
+        '    """Encode float to Q-format."""',
+        "    return int(round(value * (1 << frac)))",
+        "",
+        "",
+        "@cocotb.test()",
         f"async def test_{module_name}_spikes(dut):",
         f'    """Verify that {module_name} produces spikes with constant current."""',
-        f"",
-        f"    # Start clock (10 ns period = 100 MHz)",
-        f"    clock = Clock(dut.clk, 10, units='ns')",
-        f"    cocotb.start_soon(clock.start())",
-        f"",
-        f"    # Reset",
-        f"    dut.rst.value = 1",
-        f"    dut.en.value = 0",
-        f"    dut.I_t.value = 0",
-        f"    await RisingEdge(dut.clk)",
-        f"    await RisingEdge(dut.clk)",
-        f"    dut.rst.value = 0",
-        f"    dut.en.value = 1",
-        f"    await RisingEdge(dut.clk)",
-        f"",
-        f"    # Apply constant current",
+        "",
+        "    # Start clock (10 ns period = 100 MHz)",
+        "    clock = Clock(dut.clk, 10, units='ns')",
+        "    cocotb.start_soon(clock.start())",
+        "",
+        "    # Reset",
+        "    dut.rst.value = 1",
+        "    dut.en.value = 0",
+        "    dut.I_t.value = 0",
+        "    await RisingEdge(dut.clk)",
+        "    await RisingEdge(dut.clk)",
+        "    dut.rst.value = 0",
+        "    dut.en.value = 1",
+        "    await RisingEdge(dut.clk)",
+        "",
+        "    # Apply constant current",
         f"    dut.I_t.value = {i_encoded}",
-        f"",
+        "",
         f"    # Run {n_steps} cycles and count spikes",
-        f"    spike_count = 0",
+        "    spike_count = 0",
         f"    for cycle in range({n_steps}):",
-        f"        await RisingEdge(dut.clk)",
-        f"        await Timer(1, units='ns')  # Combinational settling",
-        f"        if dut.spike_out.value == 1:",
-        f"            spike_count += 1",
-        f"",
+        "        await RisingEdge(dut.clk)",
+        "        await Timer(1, units='ns')  # Combinational settling",
+        "        if dut.spike_out.value == 1:",
+        "            spike_count += 1",
+        "",
         f"    dut._log.info(f'Spikes: {{spike_count}} in {n_steps} cycles')",
-        f"    assert spike_count > 0, 'No spikes detected — check current/threshold'",
-        f"",
-        f"",
-        f"@cocotb.test()",
+        "    assert spike_count > 0, 'No spikes detected — check current/threshold'",
+        "",
+        "",
+        "@cocotb.test()",
         f"async def test_{module_name}_no_spike_zero_current(dut):",
-        f'    """Verify no spikes with zero current."""',
-        f"",
-        f"    clock = Clock(dut.clk, 10, units='ns')",
-        f"    cocotb.start_soon(clock.start())",
-        f"",
-        f"    dut.rst.value = 1",
-        f"    dut.en.value = 0",
-        f"    dut.I_t.value = 0",
-        f"    await RisingEdge(dut.clk)",
-        f"    await RisingEdge(dut.clk)",
-        f"    dut.rst.value = 0",
-        f"    dut.en.value = 1",
-        f"    await RisingEdge(dut.clk)",
-        f"",
-        f"    # Zero current",
-        f"    dut.I_t.value = 0",
-        f"",
-        f"    spike_count = 0",
-        f"    for _ in range(100):",
-        f"        await RisingEdge(dut.clk)",
-        f"        await Timer(1, units='ns')",
-        f"        if dut.spike_out.value == 1:",
-        f"            spike_count += 1",
-        f"",
-        f"    dut._log.info(f'Zero-current spikes: {{spike_count}}')",
-        f"    assert spike_count == 0, f'Unexpected spikes with zero current: {{spike_count}}'",
-        f"",
-        f"",
-        f"@cocotb.test()",
+        '    """Verify no spikes with zero current."""',
+        "",
+        "    clock = Clock(dut.clk, 10, units='ns')",
+        "    cocotb.start_soon(clock.start())",
+        "",
+        "    dut.rst.value = 1",
+        "    dut.en.value = 0",
+        "    dut.I_t.value = 0",
+        "    await RisingEdge(dut.clk)",
+        "    await RisingEdge(dut.clk)",
+        "    dut.rst.value = 0",
+        "    dut.en.value = 1",
+        "    await RisingEdge(dut.clk)",
+        "",
+        "    # Zero current",
+        "    dut.I_t.value = 0",
+        "",
+        "    spike_count = 0",
+        "    for _ in range(100):",
+        "        await RisingEdge(dut.clk)",
+        "        await Timer(1, units='ns')",
+        "        if dut.spike_out.value == 1:",
+        "            spike_count += 1",
+        "",
+        "    dut._log.info(f'Zero-current spikes: {spike_count}')",
+        "    assert spike_count == 0, f'Unexpected spikes with zero current: {spike_count}'",
+        "",
+        "",
+        "@cocotb.test()",
         f"async def test_{module_name}_reset_clears_state(dut):",
-        f'    """Verify reset returns to initial state."""',
-        f"",
-        f"    clock = Clock(dut.clk, 10, units='ns')",
-        f"    cocotb.start_soon(clock.start())",
-        f"",
-        f"    # Drive some current",
-        f"    dut.rst.value = 0",
-        f"    dut.en.value = 1",
+        '    """Verify reset returns to initial state."""',
+        "",
+        "    clock = Clock(dut.clk, 10, units='ns')",
+        "    cocotb.start_soon(clock.start())",
+        "",
+        "    # Drive some current",
+        "    dut.rst.value = 0",
+        "    dut.en.value = 1",
         f"    dut.I_t.value = {i_encoded}",
-        f"    for _ in range(50):",
-        f"        await RisingEdge(dut.clk)",
-        f"",
-        f"    # Assert reset",
-        f"    dut.rst.value = 1",
-        f"    await RisingEdge(dut.clk)",
-        f"    await RisingEdge(dut.clk)",
-        f"    dut.rst.value = 0",
-        f"    await RisingEdge(dut.clk)",
-        f"",
-        f"    # After reset, no spike should fire immediately",
-        f"    await Timer(1, units='ns')",
-        f"    assert dut.spike_out.value == 0, 'Spike immediately after reset'",
-        f"",
+        "    for _ in range(50):",
+        "        await RisingEdge(dut.clk)",
+        "",
+        "    # Assert reset",
+        "    dut.rst.value = 1",
+        "    await RisingEdge(dut.clk)",
+        "    await RisingEdge(dut.clk)",
+        "    dut.rst.value = 0",
+        "    await RisingEdge(dut.clk)",
+        "",
+        "    # After reset, no spike should fire immediately",
+        "    await Timer(1, units='ns')",
+        "    assert dut.spike_out.value == 0, 'Spike immediately after reset'",
+        "",
     ]
 
     return "\n".join(lines)
@@ -583,6 +586,7 @@ def generate_cocotb_testbench(
 # ═══════════════════════════════════════════════════════════════════════
 # 5. SymbiYosys Formal Verification Flow
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def generate_sby_script(
     module_name: str,
@@ -649,6 +653,7 @@ def generate_sby_script(
 # 6. RISC-V Driver + FreeRTOS / Zephyr Template
 # ═══════════════════════════════════════════════════════════════════════
 
+
 def generate_riscv_driver(
     module_name: str,
     params: dict[str, int],
@@ -689,12 +694,12 @@ def generate_riscv_driver(
     lines = [
         f"/* Auto-generated RISC-V driver for {module_name} */",
         f"/* SC-NeuroCore — RISC-V SoC integration ({rtos}) */",
-        f"",
+        "",
         f"#ifndef {guard}",
         f"#define {guard}",
-        f"",
-        f"#include <stdint.h>",
-        f"",
+        "",
+        "#include <stdint.h>",
+        "",
         f"#define {upper}_BASE    0x{base_address:08X}U",
         f"#define {upper}_FRAC    {fraction}",
         f"#define {upper}_CTRL    ({upper}_BASE + 0x00)",
@@ -703,96 +708,102 @@ def generate_riscv_driver(
     ]
 
     for i, pname in enumerate(params):
-        lines.append(
-            f"#define {upper}_{pname.upper()}"
-            f"  ({upper}_BASE + 0x{0x0C + i * 4:02X})"
-        )
+        lines.append(f"#define {upper}_{pname.upper()}  ({upper}_BASE + 0x{0x0C + i * 4:02X})")
 
-    lines.extend([
-        f"",
-        f"#define MMIO_WR(a,v) (*(volatile uint32_t*)(a) = (v))",
-        f"#define MMIO_RD(a)   (*(volatile uint32_t*)(a))",
-        f"",
-        f"static inline int32_t {module_name}_encode(float v) {{",
-        f"    return (int32_t)(v * (1 << {upper}_FRAC));",
-        f"}}",
-        f"",
-        f"static inline void {module_name}_enable(void)  {{ MMIO_WR({upper}_CTRL, 0x01); }}",
-        f"static inline void {module_name}_disable(void) {{ MMIO_WR({upper}_CTRL, 0x00); }}",
-        f"",
-        f"static inline void {module_name}_reset(void) {{",
-        f"    MMIO_WR({upper}_CTRL, 0x02);",
-        f"    MMIO_WR({upper}_CTRL, 0x01);",
-        f"}}",
-        f"",
-        f"static inline void {module_name}_set_current(float I) {{",
-        f"    MMIO_WR({upper}_I_T, (uint32_t){module_name}_encode(I));",
-        f"}}",
-        f"",
-        f"static inline uint32_t {module_name}_get_spikes(void) {{",
-        f"    return MMIO_RD({upper}_SPIKES);",
-        f"}}",
-    ])
+    lines.extend(
+        [
+            "",
+            "#define MMIO_WR(a,v) (*(volatile uint32_t*)(a) = (v))",
+            "#define MMIO_RD(a)   (*(volatile uint32_t*)(a))",
+            "",
+            f"static inline int32_t {module_name}_encode(float v) {{",
+            f"    return (int32_t)(v * (1 << {upper}_FRAC));",
+            "}",
+            "",
+            f"static inline void {module_name}_enable(void)  {{ MMIO_WR({upper}_CTRL, 0x01); }}",
+            f"static inline void {module_name}_disable(void) {{ MMIO_WR({upper}_CTRL, 0x00); }}",
+            "",
+            f"static inline void {module_name}_reset(void) {{",
+            f"    MMIO_WR({upper}_CTRL, 0x02);",
+            f"    MMIO_WR({upper}_CTRL, 0x01);",
+            "}",
+            "",
+            f"static inline void {module_name}_set_current(float I) {{",
+            f"    MMIO_WR({upper}_I_T, (uint32_t){module_name}_encode(I));",
+            "}",
+            "",
+            f"static inline uint32_t {module_name}_get_spikes(void) {{",
+            f"    return MMIO_RD({upper}_SPIKES);",
+            "}",
+        ]
+    )
 
     for pname in params:
-        lines.extend([
-            f"",
-            f"static inline void {module_name}_set_{pname.lower()}(float v) {{",
-            f"    MMIO_WR({upper}_{pname.upper()}, (uint32_t){module_name}_encode(v));",
-            f"}}",
-        ])
+        lines.extend(
+            [
+                "",
+                f"static inline void {module_name}_set_{pname.lower()}(float v) {{",
+                f"    MMIO_WR({upper}_{pname.upper()}, (uint32_t){module_name}_encode(v));",
+                "}",
+            ]
+        )
 
     if rtos == "freertos":
-        lines.extend([
-            f"",
-            f"/* ── FreeRTOS neuron tick task ───────────────────── */",
-            f"#include \"FreeRTOS.h\"",
-            f"#include \"task.h\"",
-            f"",
-            f"static void {module_name}_tick(void *p) {{",
-            f"    (void)p;",
-            f"    {module_name}_reset();",
-            f"    {module_name}_enable();",
-            f"    for (;;) {{",
-            f"        float I = 0.0f; /* TODO: read sensor */",
-            f"        {module_name}_set_current(I);",
-            f"        vTaskDelay(pdMS_TO_TICKS(1));",
-            f"    }}",
-            f"}}",
-            f"",
-            f"static inline void {module_name}_start_rtos(void) {{",
-            f"    xTaskCreate({module_name}_tick, \"{module_name}\",",
-            f"                configMINIMAL_STACK_SIZE, NULL,",
-            f"                tskIDLE_PRIORITY + 1, NULL);",
-            f"}}",
-        ])
+        lines.extend(
+            [
+                "",
+                "/* ── FreeRTOS neuron tick task ───────────────────── */",
+                '#include "FreeRTOS.h"',
+                '#include "task.h"',
+                "",
+                f"static void {module_name}_tick(void *p) {{",
+                "    (void)p;",
+                f"    {module_name}_reset();",
+                f"    {module_name}_enable();",
+                "    for (;;) {",
+                "        float I = 0.0f; /* TODO: read sensor */",
+                f"        {module_name}_set_current(I);",
+                "        vTaskDelay(pdMS_TO_TICKS(1));",
+                "    }",
+                "}",
+                "",
+                f"static inline void {module_name}_start_rtos(void) {{",
+                f'    xTaskCreate({module_name}_tick, "{module_name}",',
+                "                configMINIMAL_STACK_SIZE, NULL,",
+                "                tskIDLE_PRIORITY + 1, NULL);",
+                "}",
+            ]
+        )
     elif rtos == "zephyr":
-        lines.extend([
-            f"",
-            f"/* ── Zephyr neuron tick thread ──────────────────── */",
-            f"#include <zephyr/kernel.h>",
-            f"",
-            f"static void {module_name}_thread(void *a, void *b, void *c) {{",
-            f"    ARG_UNUSED(a); ARG_UNUSED(b); ARG_UNUSED(c);",
-            f"    {module_name}_reset();",
-            f"    {module_name}_enable();",
-            f"    while (1) {{",
-            f"        {module_name}_set_current(0.0f);",
-            f"        k_msleep(1);",
-            f"    }}",
-            f"}}",
-            f"",
-            f"K_THREAD_DEFINE({module_name}_tid, 1024,",
-            f"    {module_name}_thread, NULL, NULL, NULL, 5, 0, 0);",
-        ])
+        lines.extend(
+            [
+                "",
+                "/* ── Zephyr neuron tick thread ──────────────────── */",
+                "#include <zephyr/kernel.h>",
+                "",
+                f"static void {module_name}_thread(void *a, void *b, void *c) {{",
+                "    ARG_UNUSED(a); ARG_UNUSED(b); ARG_UNUSED(c);",
+                f"    {module_name}_reset();",
+                f"    {module_name}_enable();",
+                "    while (1) {",
+                f"        {module_name}_set_current(0.0f);",
+                "        k_msleep(1);",
+                "    }",
+                "}",
+                "",
+                f"K_THREAD_DEFINE({module_name}_tid, 1024,",
+                f"    {module_name}_thread, NULL, NULL, NULL, 5, 0, 0);",
+            ]
+        )
 
-    lines.extend([f"", f"#endif /* {guard} */", f""])
+    lines.extend(["", f"#endif /* {guard} */", ""])
     return "\n".join(lines)
 
 
 # ═══════════════════════════════════════════════════════════════════════
 # 7. Multi-Die / SLR Placement Constraints
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class SLRPlacement:
@@ -854,23 +865,26 @@ def generate_slr_constraints(
     slrs_used: set[int] = set()
     for p in placements:
         slrs_used.add(p.slr)
-        lines.extend([
-            f"create_pblock {p.pblock_name}",
-            f"add_cells_to_pblock [get_pblocks {p.pblock_name}] "
-            f"[get_cells -hier -filter {{NAME =~ *{p.module_name}*}}]",
-            f"resize_pblock [get_pblocks {p.pblock_name}] -add SLR{p.slr}",
-            "",
-        ])
+        lines.extend(
+            [
+                f"create_pblock {p.pblock_name}",
+                f"add_cells_to_pblock [get_pblocks {p.pblock_name}] "
+                f"[get_cells -hier -filter {{NAME =~ *{p.module_name}*}}]",
+                f"resize_pblock [get_pblocks {p.pblock_name}] -add SLR{p.slr}",
+                "",
+            ]
+        )
 
     if insert_pipeline_regs and len(slrs_used) > 1:
-        lines.extend([
-            "# Inter-SLR pipeline register directives",
-            "set_property REGISTER_DUPLICATION true "
-            "[get_cells -hier -filter {IS_SEQUENTIAL}]",
-            f"set_max_delay {period_ns / 2:.3f} "
-            "-datapath_only -from [get_clocks *] -to [get_clocks *]",
-            "",
-        ])
+        lines.extend(
+            [
+                "# Inter-SLR pipeline register directives",
+                "set_property REGISTER_DUPLICATION true [get_cells -hier -filter {IS_SEQUENTIAL}]",
+                f"set_max_delay {period_ns / 2:.3f} "
+                "-datapath_only -from [get_clocks *] -to [get_clocks *]",
+                "",
+            ]
+        )
 
     return "\n".join(lines)
 
@@ -878,6 +892,7 @@ def generate_slr_constraints(
 # ═══════════════════════════════════════════════════════════════════════
 # 8. Safety-Critical Certification Evidence
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class CertificationItem:
@@ -946,30 +961,34 @@ def generate_certification_evidence(
 
     lines = [
         '<?xml version="1.0" encoding="UTF-8"?>',
-        f'<!-- SC-NeuroCore Certification Evidence: {module_name} -->',
-        f'<certification_evidence>',
-        f'  <module>{module_name}</module>',
-        f'  <standard>{std_label}</standard>',
-        f'  <level>{dal_level}</level>',
+        f"<!-- SC-NeuroCore Certification Evidence: {module_name} -->",
+        "<certification_evidence>",
+        f"  <module>{module_name}</module>",
+        f"  <standard>{std_label}</standard>",
+        f"  <level>{dal_level}</level>",
         f'  <summary total="{total}" passed="{pass_count}" '
         f'failed="{fail_count}" coverage="{pct:.1f}"/>',
-        f'  <traceability_matrix>',
+        "  <traceability_matrix>",
     ]
 
     for item in items:
-        lines.extend([
-            f'    <requirement id="{item.req_id}" status="{item.status}">',
-            f'      <description>{item.description}</description>',
-            f'      <design_ref>{item.design_ref}</design_ref>',
-            f'      <verification_ref>{item.verification_ref}</verification_ref>',
-            f'    </requirement>',
-        ])
+        lines.extend(
+            [
+                f'    <requirement id="{item.req_id}" status="{item.status}">',
+                f"      <description>{item.description}</description>",
+                f"      <design_ref>{item.design_ref}</design_ref>",
+                f"      <verification_ref>{item.verification_ref}</verification_ref>",
+                "    </requirement>",
+            ]
+        )
 
-    lines.extend([
-        f'  </traceability_matrix>',
-        f'</certification_evidence>',
-        f'',
-    ])
+    lines.extend(
+        [
+            "  </traceability_matrix>",
+            "</certification_evidence>",
+            "",
+        ]
+    )
 
     return "\n".join(lines)
 
@@ -977,6 +996,7 @@ def generate_certification_evidence(
 # ═══════════════════════════════════════════════════════════════════════
 # 9. Multi-Target Compilation (--compare)
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class CompilationResult:
@@ -1056,6 +1076,7 @@ def compile_multi_target(
         for expr in equations.values():
             # Count muls/adds from expression
             import ast
+
             tree = ast.parse(expr, mode="eval")
             for node in ast.walk(tree):
                 if isinstance(node, ast.BinOp):
@@ -1067,25 +1088,26 @@ def compile_multi_target(
             max_guard = max(max_guard, g)
 
         dw = profile.data_width
-        luts = (total_add * dw +
-                (total_mul * dw * dw // 4 if not profile.dsp_block else 0))
+        luts = total_add * dw + (total_mul * dw * dw // 4 if not profile.dsp_block else 0)
         dsps = total_mul if profile.dsp_block else 0
         ffs = len(equations) * dw + dw  # state regs + control
         verilog_lines = 30 + len(equations) * 15 + total_mul * 5
 
-        results.append(CompilationResult(
-            target=target_name,
-            verilog_lines=verilog_lines,
-            data_width=dw,
-            fraction=profile.fraction,
-            overflow=profile.overflow,
-            rounding=profile.rounding,
-            estimated_luts=max(luts, 1),
-            estimated_dsps=dsps,
-            estimated_ffs=max(ffs, 1),
-            guard_bits=max_guard,
-            max_freq_mhz=profile.max_freq_mhz,
-        ))
+        results.append(
+            CompilationResult(
+                target=target_name,
+                verilog_lines=verilog_lines,
+                data_width=dw,
+                fraction=profile.fraction,
+                overflow=profile.overflow,
+                rounding=profile.rounding,
+                estimated_luts=max(luts, 1),
+                estimated_dsps=dsps,
+                estimated_ffs=max(ffs, 1),
+                guard_bits=max_guard,
+                max_freq_mhz=profile.max_freq_mhz,
+            )
+        )
 
     return results
 

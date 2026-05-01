@@ -54,7 +54,6 @@ import pytest
 
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron
 from sc_neurocore.compiler.equation_compiler import (
-    compile_to_verilog,
     generate_testbench,
 )
 
@@ -82,9 +81,7 @@ def _python_spike_count(model_name: str, n_steps: int, current: float) -> int:
     return spikes
 
 
-def _verilog_spike_count(
-    model_name: str, n_steps: int, current: float
-) -> int:
+def _verilog_spike_count(model_name: str, n_steps: int, current: float) -> int:
     """Compile a model to Verilog, simulate with iverilog, return spike count."""
     neuron = UniversalNeuron.from_schema(model_name)
     eq_neuron = neuron.to_equation_neuron()
@@ -109,7 +106,9 @@ def _verilog_spike_count(
         # Compile
         result = subprocess.run(
             ["iverilog", "-g2012", "-o", str(out_path), str(rtl_path), str(tb_path)],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         if result.returncode != 0:
             raise RuntimeError(f"iverilog compile failed:\n{result.stderr}")
@@ -117,7 +116,9 @@ def _verilog_spike_count(
         # Simulate
         result = subprocess.run(
             ["vvp", str(out_path)],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         if result.returncode != 0:
             raise RuntimeError(f"vvp simulation failed:\n{result.stderr}")
@@ -168,9 +169,7 @@ class TestCoSimulation:
             f"(model={model_name}, Python={py_spikes}, Verilog={vlog_spikes})"
         )
 
-    @pytest.mark.parametrize("model_name", [
-        m for m in _COSIM_MODELS if m != "izhikevich"
-    ])
+    @pytest.mark.parametrize("model_name", [m for m in _COSIM_MODELS if m != "izhikevich"])
     def test_no_current_no_spikes(self, model_name: str) -> None:
         """With zero input current, linear models should not spike.
 
@@ -198,16 +197,16 @@ class TestCoSimulation:
         assert a == b
 
 
-def _verilog_spike_count_q412(
-    model_name: str, n_steps: int, current: float
-) -> int:
+def _verilog_spike_count_q412(model_name: str, n_steps: int, current: float) -> int:
     """Compile at Q4.12 precision and simulate, returning spike count."""
     neuron = UniversalNeuron.from_schema(model_name)
     eq_neuron = neuron.to_equation_neuron()
     module_name = f"sc_{model_name}_q412"
 
     verilog = neuron.to_verilog(
-        module_name=module_name, data_width=16, fraction=12,
+        module_name=module_name,
+        data_width=16,
+        fraction=12,
     )
     tb = generate_testbench(
         eq_neuron,
@@ -228,14 +227,18 @@ def _verilog_spike_count_q412(
 
         result = subprocess.run(
             ["iverilog", "-g2012", "-o", str(out_path), str(rtl_path), str(tb_path)],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         if result.returncode != 0:
             raise RuntimeError(f"iverilog compile failed:\n{result.stderr}")
 
         result = subprocess.run(
             ["vvp", str(out_path)],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         if result.returncode != 0:
             raise RuntimeError(f"vvp simulation failed:\n{result.stderr}")
@@ -277,8 +280,7 @@ class TestQ412Precision:
 
         # Q4.12 should be within 5% of Python
         assert gap_pct < 5.0, (
-            f"Q4.12 gap too large: {gap_pct:.1f}% "
-            f"(Python={py_spikes}, Verilog={vlog_spikes})"
+            f"Q4.12 gap too large: {gap_pct:.1f}% (Python={py_spikes}, Verilog={vlog_spikes})"
         )
 
     def test_q412_vs_q88_comparison(self) -> None:
@@ -321,16 +323,16 @@ class TestQ412Precision:
         assert vlog_spikes == 0
 
 
-def _verilog_spike_count_q1616(
-    model_name: str, n_steps: int, current: float
-) -> int:
+def _verilog_spike_count_q1616(model_name: str, n_steps: int, current: float) -> int:
     """Compile at Q16.16 precision (32-bit) and simulate, returning spike count."""
     neuron = UniversalNeuron.from_schema(model_name)
     eq_neuron = neuron.to_equation_neuron()
     module_name = f"sc_{model_name}_q1616"
 
     verilog = neuron.to_verilog(
-        module_name=module_name, data_width=32, fraction=16,
+        module_name=module_name,
+        data_width=32,
+        fraction=16,
     )
     tb = generate_testbench(
         eq_neuron,
@@ -351,14 +353,18 @@ def _verilog_spike_count_q1616(
 
         result = subprocess.run(
             ["iverilog", "-g2012", "-o", str(out_path), str(rtl_path), str(tb_path)],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         if result.returncode != 0:
             raise RuntimeError(f"iverilog compile failed:\n{result.stderr}")
 
         result = subprocess.run(
             ["vvp", str(out_path)],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         if result.returncode != 0:
             raise RuntimeError(f"vvp simulation failed:\n{result.stderr}")
@@ -396,8 +402,7 @@ class TestQ1616Precision:
         )
 
         assert gap_pct < 1.0, (
-            f"Q16.16 gap too large: {gap_pct:.1f}% "
-            f"(Python={py_spikes}, Verilog={vlog_spikes})"
+            f"Q16.16 gap too large: {gap_pct:.1f}% (Python={py_spikes}, Verilog={vlog_spikes})"
         )
 
     def test_q1616_zero_current_silence(self) -> None:
@@ -412,6 +417,7 @@ class TestQ1616Precision:
 # ══════════════════════════════════════════════════════════════════════
 # Generic multi-precision co-simulation infrastructure
 # ══════════════════════════════════════════════════════════════════════
+
 
 def _verilog_spike_count_generic(
     model_name: str,
@@ -432,7 +438,9 @@ def _verilog_spike_count_generic(
     module_name = f"sc_{model_name}_{mode_tag}"
 
     verilog = neuron.to_verilog(
-        module_name=module_name, data_width=data_width, fraction=fraction,
+        module_name=module_name,
+        data_width=data_width,
+        fraction=fraction,
     )
     tb = generate_testbench(
         eq_neuron,
@@ -453,14 +461,18 @@ def _verilog_spike_count_generic(
 
         result = subprocess.run(
             ["iverilog", "-g2012", "-o", str(out_path), str(rtl_path), str(tb_path)],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         if result.returncode != 0:
             raise RuntimeError(f"iverilog compile failed:\n{result.stderr}")
 
         result = subprocess.run(
             ["vvp", str(out_path)],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         if result.returncode != 0:
             raise RuntimeError(f"vvp simulation failed:\n{result.stderr}")
@@ -473,23 +485,22 @@ def _verilog_spike_count_generic(
 
 # ── Full precision mode registry (matches dsl_cli.PRECISION_MODES) ───
 _ALL_MODES = {
-    "Q1.7":   (8,  7),
-    "Q8.8":   (16, 8),
-    "Q4.12":  (16, 12),
-    "Q1.15":  (16, 15),
-    "Q9.9":   (18, 9),
+    "Q1.7": (8, 7),
+    "Q8.8": (16, 8),
+    "Q4.12": (16, 12),
+    "Q1.15": (16, 15),
+    "Q9.9": (18, 9),
     "Q12.12": (24, 12),
     "Q14.13": (27, 13),
     "Q20.12": (32, 12),
     "Q16.16": (32, 16),
-    "Q8.24":  (32, 24),
+    "Q8.24": (32, 24),
     "Q18.18": (36, 18),
 }
 
 # Modes with enough integer range for mV-scale models (v_rest=-65)
 _MV_RANGE_MODES = {
-    name: spec for name, spec in _ALL_MODES.items()
-    if -(1 << (spec[0] - 1)) / (1 << spec[1]) <= -65
+    name: spec for name, spec in _ALL_MODES.items() if -(1 << (spec[0] - 1)) / (1 << spec[1]) <= -65
 }
 # Expected: Q8.8, Q9.9, Q12.12, Q16.16, Q8.24, Q18.18
 
@@ -529,10 +540,7 @@ class TestMultiPrecision:
         gap_pct = abs(py - vl) / max(py, 1) * 100
         print(f"\n  {mode_name} {model_name}: Py={py}, Vl={vl}, gap={gap_pct:.1f}%")
 
-        assert gap_pct < 1.0, (
-            f"{mode_name} {model_name}: gap={gap_pct:.1f}% "
-            f"(Py={py}, Vl={vl})"
-        )
+        assert gap_pct < 1.0, f"{mode_name} {model_name}: gap={gap_pct:.1f}% (Py={py}, Vl={vl})"
 
     # ── Angle 3: Zero-current Silence ────────────────────────────────
     @pytest.mark.parametrize("mode_name", list(_MV_RANGE_MODES.keys()))
@@ -566,27 +574,31 @@ class TestMultiPrecision:
             assert vl == py, f"{name} diverges: {vl} vs Python={py}"
 
     # ── Angle 5: DSP-Native Modes ────────────────────────────────────
-    @pytest.mark.parametrize("mode_name,dw,frac", [
-        ("Q9.9", 18, 9),
-        ("Q12.12", 24, 12),
-        ("Q14.13", 27, 13),
-        ("Q20.12", 32, 12),
-        ("Q18.18", 36, 18),
-    ])
+    @pytest.mark.parametrize(
+        "mode_name,dw,frac",
+        [
+            ("Q9.9", 18, 9),
+            ("Q12.12", 24, 12),
+            ("Q14.13", 27, 13),
+            ("Q20.12", 32, 12),
+            ("Q18.18", 36, 18),
+        ],
+    )
     def test_dsp_native_lif(self, mode_name: str, dw: int, frac: int) -> None:
         """DSP-native modes must achieve exact Python parity for LIF."""
         py = _python_spike_count("lif", _N_STEPS, _INPUT_CURRENT)
         vl = _verilog_spike_count_generic("lif", _N_STEPS, _INPUT_CURRENT, dw, frac)
-        assert vl == py, (
-            f"{mode_name} ({dw}-bit) diverges: Verilog={vl}, Python={py}"
-        )
+        assert vl == py, f"{mode_name} ({dw}-bit) diverges: Verilog={vl}, Python={py}"
 
     # ── Angle 6: Narrow-Range Modes Compilation ──────────────────────
-    @pytest.mark.parametrize("mode_name,dw,frac", [
-        ("Q1.7", 8, 7),
-        ("Q1.15", 16, 15),
-        ("Q4.12", 16, 12),
-    ])
+    @pytest.mark.parametrize(
+        "mode_name,dw,frac",
+        [
+            ("Q1.7", 8, 7),
+            ("Q1.15", 16, 15),
+            ("Q4.12", 16, 12),
+        ],
+    )
     def test_narrow_range_compile_smoke(self, mode_name: str, dw: int, frac: int) -> None:
         """Narrow-range modes must compile without errors for any model.
 
@@ -595,7 +607,11 @@ class TestMultiPrecision:
         """
         # Use resonate_fire: its initial state is closer to zero
         spikes = _verilog_spike_count_generic(
-            "resonate_fire", 50, 10.0, dw, frac,
+            "resonate_fire",
+            50,
+            10.0,
+            dw,
+            frac,
         )
         assert spikes >= 0
 

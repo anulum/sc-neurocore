@@ -161,9 +161,7 @@ class VerilogGenerator:
         )
         return emitter.generate()
 
-    def emit_halton16_source(
-        self, module_name: str = "sc_halton16_source"
-    ) -> str:
+    def emit_halton16_source(self, module_name: str = "sc_halton16_source") -> str:
         """Emit a standalone Halton-16 stochastic source module."""
         return Halton16Emitter(module_name=module_name).generate()
 
@@ -185,7 +183,9 @@ class VerilogGenerator:
             Seed for Sobol (ignored for Halton).
         """
         return QuasiRandomEmitter(
-            method=method, module_name=module_name, seed=seed  # type: ignore[arg-type]
+            method=method,
+            module_name=module_name,
+            seed=seed,  # type: ignore[arg-type]
         ).generate()
 
     def emit_decorrelator(
@@ -247,9 +247,7 @@ class VerilogGenerator:
         """Generate a TMR wrapper for the given module."""
         from .tmr_wrapper import generate_tmr_wrapper
 
-        return generate_tmr_wrapper(
-            module_name=module_name, inputs=inputs, outputs=outputs
-        )
+        return generate_tmr_wrapper(module_name=module_name, inputs=inputs, outputs=outputs)
 
     def save_to_file(self, path: str) -> None:
         """Write generated Verilog to a file."""

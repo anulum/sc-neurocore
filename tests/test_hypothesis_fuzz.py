@@ -24,7 +24,7 @@ import math
 import string
 
 import pytest
-from hypothesis import given, settings, assume, HealthCheck
+from hypothesis import given, settings, HealthCheck
 from hypothesis import strategies as st
 
 from sc_neurocore.hdl_gen._ident import sanitize_ident
@@ -45,33 +45,39 @@ _SAFE_FUNCS = st.sampled_from(["sin", "cos", "exp", "tanh", "sqrt", "abs"])
 # Build a simple arithmetic expression: "v + 3.14 * sin(w)"
 _SIMPLE_EXPR = st.builds(
     lambda var, op, num: f"{var} {op} {num}",
-    _SAFE_VARS, _OPERATORS, _NUMBERS,
+    _SAFE_VARS,
+    _OPERATORS,
+    _NUMBERS,
 )
 
 # Build a function call expression: "sin(v + 1.5)"
 _FUNC_EXPR = st.builds(
     lambda fn, var, num: f"{fn}({var} + {num})",
-    _SAFE_FUNCS, _SAFE_VARS, _NUMBERS,
+    _SAFE_FUNCS,
+    _SAFE_VARS,
+    _NUMBERS,
 )
 
 # Combined expression strategies
 _EXPR = st.one_of(_SIMPLE_EXPR, _FUNC_EXPR)
 
 # Hostile strings that should NEVER pass through the sandbox
-_HOSTILE_STRINGS = st.sampled_from([
-    "__import__('os').system('id')",
-    "eval('1+1')",
-    "exec('print(1)')",
-    "globals()['__builtins__']",
-    "().__class__.__bases__[0].__subclasses__()",
-    "__import__('subprocess').call('ls')",
-    "open('/etc/passwd').read()",
-    "type.__subclasses__(type)",
-    "compile('x','','exec')",
-    "vars()['__builtins__'].__import__('os')",
-    "getattr(getattr('', '__class__'), '__bases__')[0]",
-    "lambda: None",
-])
+_HOSTILE_STRINGS = st.sampled_from(
+    [
+        "__import__('os').system('id')",
+        "eval('1+1')",
+        "exec('print(1)')",
+        "globals()['__builtins__']",
+        "().__class__.__bases__[0].__subclasses__()",
+        "__import__('subprocess').call('ls')",
+        "open('/etc/passwd').read()",
+        "type.__subclasses__(type)",
+        "compile('x','','exec')",
+        "vars()['__builtins__'].__import__('os')",
+        "getattr(getattr('', '__class__'), '__bases__')[0]",
+        "lambda: None",
+    ]
+)
 
 # Random identifier strings (some clean, some with injection attempts)
 _IDENT_STRINGS = st.text(
@@ -218,9 +224,7 @@ class TestUniversalDSLFuzz:
     @settings(max_examples=50)
     def test_fitzhugh_nagumo_dt_sweep(self, dt: float) -> None:
         """FHN with swept dt should not crash (may diverge but not NaN)."""
-        neuron = UniversalNeuron.from_schema(
-            "fitzhugh_nagumo", dt_override=dt
-        )
+        neuron = UniversalNeuron.from_schema("fitzhugh_nagumo", dt_override=dt)
         try:
             for _ in range(100):
                 neuron.step(I=0.5)

@@ -10,7 +10,6 @@ from __future__ import annotations
 import pytest
 
 from sc_neurocore.compiler.deployment import (
-    ResourceEstimate,
     estimate_resources,
     generate_cocotb_testbench,
     generate_constraints,
@@ -41,6 +40,7 @@ LIF_PARAMS = {"P_V_REST": 16, "P_V_THRESH": 16, "P_TAU_M": 16}
 # ═══════════════════════════════════════════════════════════════════════
 # Resource Estimation
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestResourceEstimation:
     """Test FPGA resource estimation."""
@@ -78,6 +78,7 @@ class TestResourceEstimation:
 # ═══════════════════════════════════════════════════════════════════════
 # Constraint File Generation
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestConstraintGen:
     """Test SDC/XDC constraint generation."""
@@ -117,6 +118,7 @@ class TestConstraintGen:
 # ═══════════════════════════════════════════════════════════════════════
 # Host Driver Generation
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestHostDriverGen:
     """Test Python and C driver generation."""
@@ -173,7 +175,10 @@ class TestHostDriverGen:
     def test_custom_base_address(self) -> None:
         """Base address should be configurable."""
         drv = generate_host_driver(
-            "sc_lif", LIF_PARAMS, language="python", base_address=0x8000_0000,
+            "sc_lif",
+            LIF_PARAMS,
+            language="python",
+            base_address=0x8000_0000,
         )
         assert "80000000" in drv
 
@@ -186,6 +191,7 @@ class TestHostDriverGen:
 # ═══════════════════════════════════════════════════════════════════════
 # Cocotb Testbench Generation
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestCocotbGen:
     """Test Cocotb testbench generation."""

@@ -36,6 +36,7 @@ STATE_VARS_IZH = ["v", "u"]
 # E2E 1: ODE → Verilog → Resource Estimate → Constraints → Driver
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @pytest.mark.e2e
 class TestODEToDriverPipeline:
     """Full pipeline: compile → estimate → constrain → driver."""
@@ -44,8 +45,10 @@ class TestODEToDriverPipeline:
         """LIF on Artix-7: every artefact is internally consistent."""
         from sc_neurocore.compiler.hardware_profiles import get_profile
         from sc_neurocore.compiler.deployment import (
-            estimate_resources, generate_constraints,
-            generate_host_driver, generate_cocotb_testbench,
+            estimate_resources,
+            generate_constraints,
+            generate_host_driver,
+            generate_cocotb_testbench,
         )
 
         profile = get_profile("artix7")
@@ -55,11 +58,11 @@ class TestODEToDriverPipeline:
         # 1. Resource estimate
         verilog_stub = (
             "module sc_lif_e2e(\n"
-            f"  input wire signed [{dw-1}:0] I_t,\n"
-            f"  output wire signed [{dw-1}:0] v_next\n"
+            f"  input wire signed [{dw - 1}:0] I_t,\n"
+            f"  output wire signed [{dw - 1}:0] v_next\n"
             ");\n"
-            f"  wire signed [{2*dw-1}:0] _mul0 = I_t * {dw}'sd10;\n"
-            f"  wire signed [{dw-1}:0] _t0 = _mul0[{dw-1}:0];\n"
+            f"  wire signed [{2 * dw - 1}:0] _mul0 = I_t * {dw}'sd10;\n"
+            f"  wire signed [{dw - 1}:0] _t0 = _mul0[{dw - 1}:0];\n"
             "endmodule\n"
         )
         res = estimate_resources(verilog_stub, has_dsp=bool(profile.dsp_block))
@@ -96,7 +99,8 @@ class TestODEToDriverPipeline:
         """Data widths match across constraints and drivers."""
         from sc_neurocore.compiler.hardware_profiles import get_profile
         from sc_neurocore.compiler.deployment import (
-            generate_constraints, generate_host_driver,
+            generate_constraints,
+            generate_host_driver,
         )
 
         for target_name in ["artix7", "loihi2", "ecp5"]:
@@ -106,12 +110,15 @@ class TestODEToDriverPipeline:
             freq = profile.max_freq_mhz or 100
 
             xdc = generate_constraints(
-                module_name=module, data_width=dw,
+                module_name=module,
+                data_width=dw,
                 target_freq_mhz=float(freq),
             )
             driver = generate_host_driver(
-                module_name=module, data_width=dw,
-                params={"v": dw}, language="c",
+                module_name=module,
+                data_width=dw,
+                params={"v": dw},
+                language="c",
             )
             # Both should reference something meaningful
             assert "create_clock" in xdc
@@ -121,6 +128,7 @@ class TestODEToDriverPipeline:
 # ═══════════════════════════════════════════════════════════════════════
 # E2E 2: ODE → SVA → SymbiYosys → Certification
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @pytest.mark.e2e
 class TestFormalToCertification:
@@ -132,7 +140,8 @@ class TestFormalToCertification:
 
         sva = generate_sva(
             STATE_VARS_LIF,
-            data_width=16, fraction=8,
+            data_width=16,
+            fraction=8,
             module_name="sc_lif_formal",
         )
         assert "v_reg" in sva
@@ -156,24 +165,31 @@ class TestFormalToCertification:
     def test_certification_with_items(self):
         """Certification evidence XML includes all items."""
         from sc_neurocore.compiler.deployment import (
-            generate_certification_evidence, CertificationItem,
+            generate_certification_evidence,
+            CertificationItem,
         )
 
         items = [
             CertificationItem(
-                req_id="REQ-001", description="No overflow",
-                design_ref="sc_lif.v", verification_ref="sc_lif_sva.sv",
+                req_id="REQ-001",
+                description="No overflow",
+                design_ref="sc_lif.v",
+                verification_ref="sc_lif_sva.sv",
                 status="PASS",
             ),
             CertificationItem(
-                req_id="REQ-002", description="Spike reachable",
-                design_ref="sc_lif.v", verification_ref="tb_lif.py",
+                req_id="REQ-002",
+                description="Spike reachable",
+                design_ref="sc_lif.v",
+                verification_ref="tb_lif.py",
                 status="PASS",
             ),
         ]
         xml = generate_certification_evidence(
-            "sc_lif_cert", items,
-            standard="do254", dal_level="DAL-A",
+            "sc_lif_cert",
+            items,
+            standard="do254",
+            dal_level="DAL-A",
         )
         assert "sc_lif_cert" in xml
         assert "DO-254" in xml
@@ -185,22 +201,29 @@ class TestFormalToCertification:
         """SVA → .sby → certification: all module names consistent."""
         from sc_neurocore.compiler.static_analysis import generate_sva
         from sc_neurocore.compiler.deployment import (
-            generate_sby_script, generate_certification_evidence,
+            generate_sby_script,
+            generate_certification_evidence,
             CertificationItem,
         )
 
         module = "sc_hh_formal"
 
-        sva = generate_sva(["v", "n", "m", "h"], data_width=32, fraction=16,
-                           module_name=module)
+        sva = generate_sva(["v", "n", "m", "h"], data_width=32, fraction=16, module_name=module)
         sby = generate_sby_script(module)
-        items = [CertificationItem(
-            req_id="REQ-100", description="Bounded membrane",
-            design_ref=f"{module}.v", verification_ref=f"{module}_sva.sv",
-            status="PASS",
-        )]
+        items = [
+            CertificationItem(
+                req_id="REQ-100",
+                description="Bounded membrane",
+                design_ref=f"{module}.v",
+                verification_ref=f"{module}_sva.sv",
+                status="PASS",
+            )
+        ]
         xml = generate_certification_evidence(
-            module, items, standard="iec61508", dal_level="SIL-3",
+            module,
+            items,
+            standard="iec61508",
+            dal_level="SIL-3",
         )
 
         # All three reference the same module
@@ -212,6 +235,7 @@ class TestFormalToCertification:
 # ═══════════════════════════════════════════════════════════════════════
 # E2E 3: Multi-Target Comparison Consistency
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @pytest.mark.e2e
 class TestMultiTargetConsistency:
@@ -243,7 +267,8 @@ class TestMultiTargetConsistency:
     def test_table_includes_all_targets(self):
         """Comparison table mentions every target."""
         from sc_neurocore.compiler.deployment import (
-            compile_multi_target, format_comparison_table,
+            compile_multi_target,
+            format_comparison_table,
         )
 
         targets = ["artix7", "loihi2", "ecp5", "asic_16"]
@@ -257,6 +282,7 @@ class TestMultiTargetConsistency:
 # E2E 4: Network-Level Pipeline
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @pytest.mark.e2e
 class TestNetworkPipeline:
     """BRAM array → weight ROM → constraints → testbench."""
@@ -264,7 +290,8 @@ class TestNetworkPipeline:
     def test_bram_array_is_synthesisable(self):
         """BRAM array Verilog is structurally valid."""
         from sc_neurocore.compiler.advanced_features import (
-            storage_recommendation, generate_bram_array,
+            storage_recommendation,
+            generate_bram_array,
         )
 
         rec = storage_recommendation(512, 16)
@@ -315,6 +342,7 @@ class TestNetworkPipeline:
 # E2E 5: DVS → AER → Neuron → Spike → Driver
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @pytest.mark.e2e
 class TestDVSToDriverPipeline:
     """DVS event camera → AER bridge → RISC-V driver chain."""
@@ -350,6 +378,7 @@ class TestDVSToDriverPipeline:
 # E2E 6: Thermal-Aware Full Flow
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @pytest.mark.e2e
 class TestThermalFullFlow:
     """Power estimation → thermal analysis → derated constraints."""
@@ -358,7 +387,8 @@ class TestThermalFullFlow:
         """Power → thermal → XDC: derated frequency propagates."""
         from sc_neurocore.compiler.static_analysis import estimate_power
         from sc_neurocore.compiler.advanced_features import (
-            thermal_analysis, generate_thermal_constraints,
+            thermal_analysis,
+            generate_thermal_constraints,
         )
 
         verilog = (
@@ -369,7 +399,8 @@ class TestThermalFullFlow:
         )
         power = estimate_power(verilog, freq_mhz=500.0, process_nm=16)
         therm = thermal_analysis(
-            power.total_mw, 500.0,
+            power.total_mw,
+            500.0,
             process_nm=16,
             mul_count=2,
         )
@@ -381,7 +412,8 @@ class TestThermalFullFlow:
     def test_high_power_triggers_warning(self):
         """Very high power → thermal unsafe → warning in XDC."""
         from sc_neurocore.compiler.advanced_features import (
-            thermal_analysis, generate_thermal_constraints,
+            thermal_analysis,
+            generate_thermal_constraints,
         )
 
         therm = thermal_analysis(50000.0, 500.0)
@@ -394,6 +426,7 @@ class TestThermalFullFlow:
 # ═══════════════════════════════════════════════════════════════════════
 # E2E 7: Cross-Format Weight Consistency
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @pytest.mark.e2e
 class TestWeightFormatConsistency:
@@ -424,6 +457,7 @@ class TestWeightFormatConsistency:
 # E2E 8: MXFP Round-Trip Accuracy
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @pytest.mark.e2e
 class TestMXFPRoundTrip:
     """Block-FP encode → decode preserves values within precision bounds."""
@@ -431,7 +465,9 @@ class TestMXFPRoundTrip:
     def test_mxfp8_e4m3_round_trip(self):
         """MXFP8 E4M3: encode → decode → sign preservation."""
         from sc_neurocore.compiler.advanced_features import (
-            MXFP8_E4M3, mxfp_encode_block, mxfp_decode_block,
+            MXFP8_E4M3,
+            mxfp_encode_block,
+            mxfp_decode_block,
         )
 
         # Block size is 32, so we need exactly 32 values
@@ -447,7 +483,9 @@ class TestMXFPRoundTrip:
     def test_zero_stability(self):
         """Zero encodes and decodes as zero."""
         from sc_neurocore.compiler.advanced_features import (
-            MXFP8_E5M2, mxfp_encode_block, mxfp_decode_block,
+            MXFP8_E5M2,
+            mxfp_encode_block,
+            mxfp_decode_block,
         )
 
         values = [0.0] * 32  # Block size = 32
@@ -458,18 +496,24 @@ class TestMXFPRoundTrip:
     def test_all_configs_round_trip(self):
         """Every block-FP config can encode/decode without crashing."""
         from sc_neurocore.compiler.advanced_features import (
-            MXFP4, MXFP6, MXFP8_E4M3, MXFP8_E5M2,
-            mxfp_encode_block, mxfp_decode_block,
+            MXFP4,
+            MXFP6,
+            MXFP8_E4M3,
+            MXFP8_E5M2,
+            mxfp_encode_block,
+            mxfp_decode_block,
         )
 
         # Only test block-FP configs (shared_exp_bits > 0)
         # FP8 standalone (block_size=1) uses per-element exponent
         configs = {
-            "MXFP4": MXFP4, "MXFP6": MXFP6,
-            "MXFP8_E4M3": MXFP8_E4M3, "MXFP8_E5M2": MXFP8_E5M2,
+            "MXFP4": MXFP4,
+            "MXFP6": MXFP6,
+            "MXFP8_E4M3": MXFP8_E4M3,
+            "MXFP8_E5M2": MXFP8_E5M2,
         }
         for name, config in configs.items():
-            values = ([1.0, -1.0, 0.5, 0.0] * max(1, config.block_size // 4))[:config.block_size]
+            values = ([1.0, -1.0, 0.5, 0.0] * max(1, config.block_size // 4))[: config.block_size]
             shared_exp, elements = mxfp_encode_block(values, config)
             decoded = mxfp_decode_block(shared_exp, elements, config)
             assert len(decoded) == len(values), f"{name}: length mismatch"
@@ -479,6 +523,7 @@ class TestMXFPRoundTrip:
 # E2E 9: Pipeline Analysis → Thermal → Multi-Target
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @pytest.mark.e2e
 class TestAnalysisChain:
     """Pipeline depth → power → thermal → multi-target: all consistent."""
@@ -486,10 +531,10 @@ class TestAnalysisChain:
     def test_complex_ode_analysis_chain(self):
         """HH-class ODE: pipeline → power → thermal → compare."""
         from sc_neurocore.compiler.static_analysis import (
-            critical_path_depth, pipeline_stages_needed,
-            compute_guard_bits, estimate_power,
+            critical_path_depth,
+            pipeline_stages_needed,
+            compute_guard_bits,
         )
-        from sc_neurocore.compiler.advanced_features import thermal_analysis
         from sc_neurocore.compiler.deployment import compile_multi_target
 
         hh_expr = "gNa * m * m * m * h * (v - ENa)"
@@ -512,7 +557,8 @@ class TestAnalysisChain:
     def test_slr_placement_valid(self):
         """SLR placement constraints are structurally valid."""
         from sc_neurocore.compiler.deployment import (
-            generate_slr_constraints, SLRPlacement,
+            generate_slr_constraints,
+            SLRPlacement,
         )
 
         placements = [

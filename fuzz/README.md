@@ -24,4 +24,3 @@ bitwise-AND, and hamming-distance invariants over bounded bitstreams.
 
 Keep generated corpora and crash artifacts out of release packages unless they
 are intentionally minimized and documented.
-

@@ -80,16 +80,20 @@ def validate_schema_dict(data: dict[str, Any], name: str = "") -> list[SchemaErr
 
     version = meta.get("schema_version")
     if version not in _SUPPORTED_VERSIONS:
-        errors.append(SchemaError(
-            "error",
-            f"Unsupported schema version {version} (supported: {_SUPPORTED_VERSIONS})",
-            "metadata",
-        ))
+        errors.append(
+            SchemaError(
+                "error",
+                f"Unsupported schema version {version} (supported: {_SUPPORTED_VERSIONS})",
+                "metadata",
+            )
+        )
 
     # Optional but recommended metadata
     for field in ("author", "year", "doi", "description"):
         if field not in meta:
-            errors.append(SchemaError("warning", f"Missing recommended field '{field}'", "metadata"))
+            errors.append(
+                SchemaError("warning", f"Missing recommended field '{field}'", "metadata")
+            )
 
     # State validation
     state = data["state"]
@@ -98,13 +102,19 @@ def validate_schema_dict(data: dict[str, Any], name: str = "") -> list[SchemaErr
 
     for var, val in state.items():
         if not isinstance(val, (int, float)):
-            errors.append(SchemaError("error", f"State variable '{var}' has non-numeric initial value", "state"))
+            errors.append(
+                SchemaError(
+                    "error", f"State variable '{var}' has non-numeric initial value", "state"
+                )
+            )
 
     # Integration validation
     integration = data["integration"]
     for field in _REQUIRED_INTEGRATION:
         if field not in integration:
-            errors.append(SchemaError("error", f"Missing integration field '{field}'", "integration"))
+            errors.append(
+                SchemaError("error", f"Missing integration field '{field}'", "integration")
+            )
 
     dt = integration.get("dt")
     if isinstance(dt, (int, float)) and dt <= 0:
@@ -121,46 +131,67 @@ def validate_schema_dict(data: dict[str, Any], name: str = "") -> list[SchemaErr
 
     for var, equation in dynamics.items():
         if var not in state_vars:
-            errors.append(SchemaError(
-                "warning",
-                f"Dynamics variable '{var}' not in state declaration",
-                "dynamics",
-            ))
+            errors.append(
+                SchemaError(
+                    "warning",
+                    f"Dynamics variable '{var}' not in state declaration",
+                    "dynamics",
+                )
+            )
 
         # Extract identifiers from equation (simple regex — not a full parser)
-        idents = set(re.findall(r'\b([a-zA-Z_]\w*)\b', equation))
+        idents = set(re.findall(r"\b([a-zA-Z_]\w*)\b", equation))
         # Remove known math functions
         math_funcs = {
-            "sin", "cos", "tan", "exp", "log", "sqrt", "abs",
-            "tanh", "cosh", "sinh", "atan", "asin", "acos",
-            "min", "max", "pow",
+            "sin",
+            "cos",
+            "tan",
+            "exp",
+            "log",
+            "sqrt",
+            "abs",
+            "tanh",
+            "cosh",
+            "sinh",
+            "atan",
+            "asin",
+            "acos",
+            "min",
+            "max",
+            "pow",
         }
         unknown = idents - known_names - math_funcs
         if unknown:
-            errors.append(SchemaError(
-                "warning",
-                f"Equation for '{var}' references unknown names: {sorted(unknown)}",
-                "dynamics",
-            ))
+            errors.append(
+                SchemaError(
+                    "warning",
+                    f"Equation for '{var}' references unknown names: {sorted(unknown)}",
+                    "dynamics",
+                )
+            )
 
     # Check state coverage
     for var in state_vars:
         if var not in dynamics:
-            errors.append(SchemaError(
-                "warning",
-                f"State variable '{var}' has no dynamics equation",
-                "dynamics",
-            ))
+            errors.append(
+                SchemaError(
+                    "warning",
+                    f"State variable '{var}' has no dynamics equation",
+                    "dynamics",
+                )
+            )
 
     # Unknown sections
     known_sections = _REQUIRED_SECTIONS | _OPTIONAL_SECTIONS
     for section in data:
         if section not in known_sections:
-            errors.append(SchemaError(
-                "warning",
-                f"Unknown section '{section}'",
-                ctx,
-            ))
+            errors.append(
+                SchemaError(
+                    "warning",
+                    f"Unknown section '{section}'",
+                    ctx,
+                )
+            )
 
     return errors
 
@@ -206,13 +237,15 @@ def validate_schema(name: str) -> list[SchemaError]:
             toml_section = toml_data.get(section, {})
             json_section = json_data.get(section, {})
             if set(toml_section.keys()) != set(json_section.keys()):
-                errors.append(SchemaError(
-                    "error",
-                    f"TOML/JSON key mismatch in '{section}': "
-                    f"TOML={sorted(toml_section.keys())}, "
-                    f"JSON={sorted(json_section.keys())}",
-                    f"{name} parity",
-                ))
+                errors.append(
+                    SchemaError(
+                        "error",
+                        f"TOML/JSON key mismatch in '{section}': "
+                        f"TOML={sorted(toml_section.keys())}, "
+                        f"JSON={sorted(json_section.keys())}",
+                        f"{name} parity",
+                    )
+                )
     elif has_toml and not has_json:
         errors.append(SchemaError("warning", f"Missing JSON version for '{name}'"))
     elif has_json and not has_toml:

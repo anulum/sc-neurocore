@@ -29,7 +29,6 @@ import pytest
 
 from sc_neurocore.compiler.equation_compiler import Q88, compile_to_verilog
 from sc_neurocore.compiler.hardware_profiles import (
-    HardwareProfile,
     get_profile,
     list_profiles,
     list_profile_names,
@@ -42,6 +41,7 @@ HAS_IVERILOG = shutil.which("iverilog") is not None
 # ═══════════════════════════════════════════════════════════════════════
 # Hardware Profile Registry Tests
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestHardwareProfileRegistry:
     """Test that the profile registry is complete and consistent."""
@@ -109,6 +109,7 @@ class TestHardwareProfileRegistry:
 # Q88 Dataclass Extension Tests
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestQ88Extensions:
     """Test the signed/unsigned, overflow, and rounding fields on Q88."""
 
@@ -150,14 +151,10 @@ class TestQ88Extensions:
 # ═══════════════════════════════════════════════════════════════════════
 
 # Profiles where LIF params fit (v_rest=-65 needs integer range >= 65)
-_WIDE_RANGE_PROFILES = [
-    name for name in list_profile_names()
-    if get_profile(name).min_value <= -65
-]
+_WIDE_RANGE_PROFILES = [name for name in list_profile_names() if get_profile(name).min_value <= -65]
 
 _NARROW_RANGE_PROFILES = [
-    name for name in list_profile_names()
-    if get_profile(name).min_value > -65
+    name for name in list_profile_names() if get_profile(name).min_value > -65
 ]
 
 
@@ -171,9 +168,12 @@ class TestCompilationAllProfiles:
         neuron = UniversalNeuron.from_schema("lif")
         eq = neuron.to_equation_neuron()
         verilog = compile_to_verilog(
-            eq, module_name=f"sc_lif_{profile_name}",
-            data_width=p.data_width, fraction=p.fraction,
-            overflow=p.overflow, rounding=p.rounding,
+            eq,
+            module_name=f"sc_lif_{profile_name}",
+            data_width=p.data_width,
+            fraction=p.fraction,
+            overflow=p.overflow,
+            rounding=p.rounding,
         )
         assert "module sc_lif_" in verilog
         assert f"{p.data_width}-bit" in verilog or f"[{p.data_width - 1}:0]" in verilog
@@ -185,9 +185,12 @@ class TestCompilationAllProfiles:
         neuron = UniversalNeuron.from_schema("resonate_fire")
         eq = neuron.to_equation_neuron()
         verilog = compile_to_verilog(
-            eq, module_name=f"sc_rf_{profile_name}",
-            data_width=p.data_width, fraction=p.fraction,
-            overflow=p.overflow, rounding=p.rounding,
+            eq,
+            module_name=f"sc_rf_{profile_name}",
+            data_width=p.data_width,
+            fraction=p.fraction,
+            overflow=p.overflow,
+            rounding=p.rounding,
         )
         assert "module sc_rf_" in verilog
 
@@ -195,6 +198,7 @@ class TestCompilationAllProfiles:
 # ═══════════════════════════════════════════════════════════════════════
 # Overflow Mode Tests
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestOverflowModes:
     """Verify Verilog output contains correct overflow handling logic."""
@@ -204,8 +208,10 @@ class TestOverflowModes:
         neuron = UniversalNeuron.from_schema("lif")
         eq = neuron.to_equation_neuron()
         return compile_to_verilog(
-            eq, module_name="sc_lif_ovf",
-            data_width=16, fraction=8,
+            eq,
+            module_name="sc_lif_ovf",
+            data_width=16,
+            fraction=8,
             overflow=overflow,
         )
 
@@ -236,6 +242,7 @@ class TestOverflowModes:
 # Rounding Mode Tests
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestRoundingModes:
     """Verify Verilog output contains correct rounding logic."""
 
@@ -244,8 +251,10 @@ class TestRoundingModes:
         neuron = UniversalNeuron.from_schema("lif")
         eq = neuron.to_equation_neuron()
         return compile_to_verilog(
-            eq, module_name="sc_lif_rnd",
-            data_width=16, fraction=8,
+            eq,
+            module_name="sc_lif_rnd",
+            data_width=16,
+            fraction=8,
             rounding=rounding,
         )
 
@@ -279,13 +288,20 @@ class TestRoundingModes:
 # Co-Simulation Tests: Overflow & Rounding (iverilog required)
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
 class TestCoSimOverflowRounding:
     """Verify overflow and rounding modes in actual Verilog simulation."""
 
     def _run_cosim(
-        self, model: str, dw: int, frac: int,
-        overflow: str, rounding: str, n_steps: int = 100, current: float = 50.0,
+        self,
+        model: str,
+        dw: int,
+        frac: int,
+        overflow: str,
+        rounding: str,
+        n_steps: int = 100,
+        current: float = 50.0,
     ) -> int:
         """Compile + simulate, return spike count."""
         from sc_neurocore.compiler.equation_compiler import generate_testbench
@@ -295,29 +311,38 @@ class TestCoSimOverflowRounding:
         mod = f"sc_{model}_ovf"
 
         verilog = compile_to_verilog(
-            eq, module_name=mod,
-            data_width=dw, fraction=frac,
-            overflow=overflow, rounding=rounding,
+            eq,
+            module_name=mod,
+            data_width=dw,
+            fraction=frac,
+            overflow=overflow,
+            rounding=rounding,
         )
         tb = generate_testbench(
-            eq, module_name=mod,
-            n_steps=n_steps, input_current=current,
-            data_width=dw, fraction=frac,
+            eq,
+            module_name=mod,
+            n_steps=n_steps,
+            input_current=current,
+            data_width=dw,
+            fraction=frac,
         )
 
         with tempfile.TemporaryDirectory() as d:
             Path(f"{d}/{mod}.v").write_text(verilog)
             Path(f"{d}/tb.v").write_text(tb)
             r = subprocess.run(
-                ["iverilog", "-g2012", "-o", f"{d}/tb",
-                 f"{d}/{mod}.v", f"{d}/tb.v"],
-                capture_output=True, text=True, timeout=30,
+                ["iverilog", "-g2012", "-o", f"{d}/tb", f"{d}/{mod}.v", f"{d}/tb.v"],
+                capture_output=True,
+                text=True,
+                timeout=30,
             )
             if r.returncode != 0:
                 raise RuntimeError(f"iverilog failed:\n{r.stderr}")
             r = subprocess.run(
                 ["vvp", f"{d}/tb"],
-                capture_output=True, text=True, timeout=30,
+                capture_output=True,
+                text=True,
+                timeout=30,
             )
             m = re.search(r"(\d+) spikes", r.stdout)
             return int(m.group(1)) if m else -1
@@ -335,16 +360,26 @@ class TestCoSimOverflowRounding:
         spikes = self._run_cosim("lif", 16, 8, "saturate", "nearest")
         assert spikes > 0
 
-    @pytest.mark.parametrize("profile_name", [
-        "artix7", "ecp5", "loihi2", "versal", "ice40",
-    ])
+    @pytest.mark.parametrize(
+        "profile_name",
+        [
+            "artix7",
+            "ecp5",
+            "loihi2",
+            "versal",
+            "ice40",
+        ],
+    )
     def test_profile_cosim(self, profile_name: str) -> None:
         """Key profiles should compile and simulate successfully."""
         p = get_profile(profile_name)
         if p.min_value > -65:
             pytest.skip(f"{profile_name}: LIF params overflow range")
         spikes = self._run_cosim(
-            "lif", p.data_width, p.fraction,
-            p.overflow, p.rounding,
+            "lif",
+            p.data_width,
+            p.fraction,
+            p.overflow,
+            p.rounding,
         )
         assert spikes > 0, f"{profile_name}: no spikes in co-simulation"

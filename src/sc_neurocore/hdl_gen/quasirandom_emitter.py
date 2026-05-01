@@ -70,23 +70,25 @@ class Halton16Emitter:
         for i in range(16):
             lines.append(f"    assign reversed[{i}] = counter[{15 - i}];")
 
-        lines.extend([
-            "",
-            "    always @(posedge clk or negedge rst_n) begin",
-            "        if (!rst_n) begin",
-            "            counter      <= 16'd0;",
-            "            quasi_random <= 16'd0;",
-            "            valid        <= 1'b0;",
-            "        end else if (enable) begin",
-            "            quasi_random <= reversed;",
-            "            valid        <= 1'b1;",
-            "            counter      <= counter + 16'd1;",
-            "        end else begin",
-            "            valid <= 1'b0;",
-            "        end",
-            "    end",
-            "endmodule",
-        ])
+        lines.extend(
+            [
+                "",
+                "    always @(posedge clk or negedge rst_n) begin",
+                "        if (!rst_n) begin",
+                "            counter      <= 16'd0;",
+                "            quasi_random <= 16'd0;",
+                "            valid        <= 1'b0;",
+                "        end else if (enable) begin",
+                "            quasi_random <= reversed;",
+                "            valid        <= 1'b1;",
+                "            counter      <= counter + 16'd1;",
+                "        end else begin",
+                "            valid <= 1'b0;",
+                "        end",
+                "    end",
+                "endmodule",
+            ]
+        )
         return "\n".join(lines)
 
 
@@ -113,8 +115,7 @@ class QuasiRandomEmitter:
     ) -> None:
         if method not in self.METHODS:
             raise ValueError(
-                f"Unknown quasi-random method {method!r}. "
-                f"Supported: {sorted(self.METHODS)}"
+                f"Unknown quasi-random method {method!r}. Supported: {sorted(self.METHODS)}"
             )
         self.method = method
         self._seed = seed
@@ -126,9 +127,7 @@ class QuasiRandomEmitter:
             name = module_name or "sc_halton16_source"
             self._emitter = Halton16Emitter(module_name=name)
 
-        logger.debug(
-            "QuasiRandomEmitter: method=%s, module=%s", method, name
-        )
+        logger.debug("QuasiRandomEmitter: method=%s, module=%s", method, name)
 
     def generate(self) -> str:
         """Generate the Verilog source for the selected method."""

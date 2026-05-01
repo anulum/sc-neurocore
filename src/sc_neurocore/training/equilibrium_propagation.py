@@ -85,9 +85,7 @@ class EPNetwork:
             fan_in = layer_sizes[i]
             fan_out = layer_sizes[i + 1]
             scale = np.sqrt(2.0 / (fan_in + fan_out))
-            self.weights.append(
-                self.rng.normal(0, scale, (fan_in, fan_out)).astype(np.float64)
-            )
+            self.weights.append(self.rng.normal(0, scale, (fan_in, fan_out)).astype(np.float64))
             self.biases.append(np.zeros(fan_out, dtype=np.float64))
 
         logger.info(
@@ -100,9 +98,7 @@ class EPNetwork:
         """Compute the Hopfield energy of the network."""
         E = 0.0
         for i in range(self.n_layers - 1):
-            E -= float(np.sum(
-                _rho(states[i]) @ self.weights[i] * _rho(states[i + 1])
-            ))
+            E -= float(np.sum(_rho(states[i]) @ self.weights[i] * _rho(states[i + 1])))
             E -= float(np.sum(self.biases[i] * _rho(states[i + 1])))
         return E
 
@@ -197,9 +193,7 @@ class EPNetwork:
             s_free = self._settle(x, n_steps=n_settle, epsilon=epsilon, beta=0.0)
 
             # Nudged phase
-            s_nudge = self._settle(
-                x, n_steps=n_settle, epsilon=epsilon, beta=beta, target=y
-            )
+            s_nudge = self._settle(x, n_steps=n_settle, epsilon=epsilon, beta=beta, target=y)
 
             # Contrastive Hebbian update: ΔW ∝ (nudge - free) / β
             for i in range(self.n_layers - 1):

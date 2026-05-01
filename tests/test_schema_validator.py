@@ -5,10 +5,8 @@
 
 from __future__ import annotations
 
-import pytest
 
 from sc_neurocore.neurons.schema_validator import (
-    SchemaError,
     validate_all_bundled,
     validate_schema,
     validate_schema_dict,
@@ -94,21 +92,19 @@ class TestValidateBundledSchemas:
 
         for name, errors in results.items():
             real_errors = [e for e in errors if e.level == "error"]
-            assert len(real_errors) == 0, (
-                f"Schema '{name}' has errors: {real_errors}"
-            )
+            assert len(real_errors) == 0, f"Schema '{name}' has errors: {real_errors}"
 
     def test_all_bundled_schemas_have_both_formats(self) -> None:
         results = validate_all_bundled()
         for name, errors in results.items():
             missing_format = [
-                e for e in errors
-                if e.level == "warning" and "Missing" in e.message
+                e
+                for e in errors
+                if e.level == "warning"
+                and "Missing" in e.message
                 and ("JSON version" in e.message or "TOML version" in e.message)
             ]
-            assert len(missing_format) == 0, (
-                f"Schema '{name}' missing a format: {missing_format}"
-            )
+            assert len(missing_format) == 0, f"Schema '{name}' missing a format: {missing_format}"
 
     def test_lif_validates_clean(self) -> None:
         errors = validate_schema("lif")

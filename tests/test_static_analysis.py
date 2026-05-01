@@ -10,11 +10,9 @@
 
 from __future__ import annotations
 
-import pytest
 
 from sc_neurocore.compiler.static_analysis import (
     Interval,
-    OverflowProofResult,
     compute_guard_bits,
     compute_guard_bits_multi,
     generate_sva,
@@ -25,6 +23,7 @@ from sc_neurocore.compiler.static_analysis import (
 # ═══════════════════════════════════════════════════════════════════════
 # Guard-Bit Tests
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestGuardBits:
     """Test guard-bit auto-computation from AST analysis."""
@@ -75,6 +74,7 @@ class TestGuardBits:
 # Interval Arithmetic Tests
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestIntervalArithmetic:
     """Test the Interval class used in overflow proofs."""
 
@@ -118,6 +118,7 @@ class TestIntervalArithmetic:
 # Overflow Proof Tests
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestOverflowProof:
     """Test formal overflow proofs via interval arithmetic."""
 
@@ -126,11 +127,15 @@ class TestOverflowProof:
         result = prove_no_overflow(
             "-(v - v_rest) / tau_m + R * I / C",
             bounds={
-                "v": (-128, 127), "v_rest": (-65, -65),
-                "tau_m": (10, 10), "R": (1, 1),
-                "I": (0, 100), "C": (1, 1),
+                "v": (-128, 127),
+                "v_rest": (-65, -65),
+                "tau_m": (10, 10),
+                "R": (1, 1),
+                "I": (0, 100),
+                "C": (1, 1),
             },
-            data_width=16, fraction=8,
+            data_width=16,
+            fraction=8,
         )
         assert result.proven_safe, (
             f"LIF should be safe at Q8.8: "
@@ -142,7 +147,8 @@ class TestOverflowProof:
         result = prove_no_overflow(
             "v + I",
             bounds={"v": (-65, 30), "I": (0, 100)},
-            data_width=8, fraction=7,
+            data_width=8,
+            fraction=7,
         )
         assert not result.proven_safe
 
@@ -151,9 +157,13 @@ class TestOverflowProof:
         result = prove_no_overflow(
             "a * (v - v * v * v) - w + I",
             bounds={
-                "a": (0.5, 0.5), "v": (-1.5, 1.5), "w": (-1.5, 1.5), "I": (0, 0.5),
+                "a": (0.5, 0.5),
+                "v": (-1.5, 1.5),
+                "w": (-1.5, 1.5),
+                "I": (0, 0.5),
             },
-            data_width=16, fraction=12,
+            data_width=16,
+            fraction=12,
         )
         assert result.proven_safe
 
@@ -162,7 +172,8 @@ class TestOverflowProof:
         safe = prove_no_overflow(
             "a + b",
             bounds={"a": (0, 10), "b": (0, 10)},
-            data_width=16, fraction=8,
+            data_width=16,
+            fraction=8,
         )
         assert safe.margin_lo > 0
         assert safe.margin_hi > 0
@@ -172,7 +183,9 @@ class TestOverflowProof:
         result = prove_no_overflow(
             "a + b",
             bounds={"a": (0, 100), "b": (0, 100)},
-            data_width=16, fraction=8, signed=False,
+            data_width=16,
+            fraction=8,
+            signed=False,
         )
         assert result.q_min == 0.0
         assert result.proven_safe
@@ -181,6 +194,7 @@ class TestOverflowProof:
 # ═══════════════════════════════════════════════════════════════════════
 # SVA Generation Tests
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestSVAGeneration:
     """Test SystemVerilog Assertion generation."""
@@ -204,7 +218,9 @@ class TestSVAGeneration:
     def test_input_bounds(self) -> None:
         """Input assumptions should be generated when bounds are provided."""
         sva = generate_sva(
-            ["v"], data_width=16, fraction=8,
+            ["v"],
+            data_width=16,
+            fraction=8,
             input_bounds={"I_t": (-1000, 25600)},
         )
         assert "m_I_t_bound" in sva
@@ -219,8 +235,10 @@ class TestSVAGeneration:
     def test_custom_module_name(self) -> None:
         """Custom module name should be used."""
         sva = generate_sva(
-            ["v"], module_name="sc_lif_loihi",
-            data_width=24, fraction=12,
+            ["v"],
+            module_name="sc_lif_loihi",
+            data_width=24,
+            fraction=12,
         )
         assert "sc_lif_loihi_sva" in sva
 

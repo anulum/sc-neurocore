@@ -31,8 +31,6 @@ from sc_neurocore.neurons.universal_dsl import (
     UniversalNeuron,
     list_bundled_schemas,
     load_schema,
-    schema_to_json,
-    schema_to_toml,
 )
 
 
@@ -84,6 +82,7 @@ class TestSchemaLoading:
     def test_unsupported_format_raises(self) -> None:
         # Create a temp file with unsupported extension
         import tempfile
+
         with tempfile.NamedTemporaryFile(suffix=".yaml", delete=False) as f:
             f.write(b"test: true")
             path = f.name
@@ -155,9 +154,7 @@ class TestParameterOverrides:
     def test_override_tau(self) -> None:
         # Faster membrane time constant → more spikes
         slow = UniversalNeuron.from_schema("lif")
-        fast = UniversalNeuron.from_schema(
-            "lif", parameter_overrides={"tau_m": 2.0}
-        )
+        fast = UniversalNeuron.from_schema("lif", parameter_overrides={"tau_m": 2.0})
         slow_spikes = sum(slow.step(I=20.0) for _ in range(200))
         fast_spikes = sum(fast.step(I=20.0) for _ in range(200))
         assert fast_spikes >= slow_spikes
@@ -300,6 +297,7 @@ class TestIntrospection:
 
     def test_to_equation_neuron(self) -> None:
         from sc_neurocore.neurons.equation_builder import EquationNeuron
+
         neuron = UniversalNeuron.from_schema("lif")
         eq_neuron = neuron.to_equation_neuron()
         assert isinstance(eq_neuron, EquationNeuron)
@@ -315,23 +313,24 @@ class TestErrorHandling:
 
     def test_empty_dynamics_raises(self) -> None:
         with pytest.raises(ValueError, match="at least one ODE"):
-            UniversalNeuron.from_dict({
-                "metadata": {"schema_version": 1, "name": "Empty"},
-                "state": {"v": 0.0},
-                "dynamics": {},
-            })
+            UniversalNeuron.from_dict(
+                {
+                    "metadata": {"schema_version": 1, "name": "Empty"},
+                    "state": {"v": 0.0},
+                    "dynamics": {},
+                }
+            )
 
     def test_unsupported_version_in_file(self) -> None:
         """Version gate fires when loading a schema with unsupported version."""
         import tempfile
+
         bad_schema = {
             "metadata": {"schema_version": 999, "name": "Future"},
             "state": {"v": 0.0},
             "dynamics": {"v": "I"},
         }
-        with tempfile.NamedTemporaryFile(
-            suffix=".json", mode="w", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(suffix=".json", mode="w", delete=False) as f:
             json.dump(bad_schema, f)
             path = f.name
         with pytest.raises(ValueError, match="Schema version.*not supported"):
@@ -339,12 +338,14 @@ class TestErrorHandling:
         Path(path).unlink()
 
     def test_from_dict_works(self) -> None:
-        neuron = UniversalNeuron.from_dict({
-            "metadata": {"schema_version": 1, "name": "TestModel"},
-            "state": {"v": 0.0},
-            "parameters": {},
-            "dynamics": {"v": "I"},
-            "integration": {"dt": 0.1, "method": "euler"},
-        })
+        neuron = UniversalNeuron.from_dict(
+            {
+                "metadata": {"schema_version": 1, "name": "TestModel"},
+                "state": {"v": 0.0},
+                "parameters": {},
+                "dynamics": {"v": "I"},
+                "integration": {"dt": 0.1, "method": "euler"},
+            }
+        )
         neuron.step(I=1.0)
         assert neuron.state["v"] != 0.0
