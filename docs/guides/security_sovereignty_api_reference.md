@@ -2,11 +2,10 @@
 <!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
 <!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
 
-# Wave 10 API Reference — Security, Sovereignty & Endgame
+# Security, Sovereignty, and Compliance API Reference
 
-Complete API reference for Wave 10: 10 hardware profiles across 3 platform
-classes, 8 compiler features (§60–§67), and the `from_constraints()` universal
-profile constructor.
+Complete API reference for security-oriented hardware profiles, compiler
+features (§60–§67), and the `from_constraints()` universal profile constructor.
 
 ---
 
@@ -32,7 +31,7 @@ def from_constraints(
 **Side effect**: Auto-registers in global `_PROFILES` registry.
 
 ```python
-from sc_neurocore.compiler.hardware_profiles import HardwareProfile, get_profile
+from sc_neurocore.compiler.platforms import HardwareProfile, get_profile
 
 p = HardwareProfile.from_constraints("my_chip", vendor="Lab", max_power_budget_mw=5)
 assert p.data_width == 8
@@ -89,7 +88,7 @@ Detect suspicious combinational paths (dormant triggers, payload injection).
 | `total_checks` | `int` | Number of checks performed |
 
 ```python
-from sc_neurocore.compiler.advanced_features import lint_hardware_trojans
+from sc_neurocore.compiler.intelligence import lint_hardware_trojans
 r = lint_hardware_trojans({"v": "-(v)/tau + I"})
 assert r.risk_level == "LOW"
 ```
@@ -107,7 +106,7 @@ Generate CycloneDX/SPDX Bill of Materials. **Required by EU CRA (2026).**
 | `total_components` | `int` | Total count |
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_sbom
+from sc_neurocore.compiler.intelligence import generate_sbom
 s = generate_sbom("sc_lif", "artix7", dependencies={"numpy": "1.26.0"})
 assert s.total_components >= 4
 ```
@@ -125,7 +124,7 @@ Generate hardware-in-the-loop calibration protocol for drift compensation.
 | `sweep_ranges` | `dict[str, tuple]` | Parameter → (min, max) |
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_hil_calibration
+from sc_neurocore.compiler.intelligence import generate_hil_calibration
 cal = generate_hil_calibration("sc_lif", {"v": "expr"}, parameters={"tau": (5.0, 50.0)})
 assert cal.num_parameters == 1
 ```
@@ -138,7 +137,7 @@ Generate Python class that mirrors deployed hardware state in real-time.
 Contains `__init__()`, `step(inputs)`, and `compare(hw_state)` methods.
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_digital_twin
+from sc_neurocore.compiler.intelligence import generate_digital_twin
 code = generate_digital_twin("sc_lif", {"v": "-(v)/tau"}, "artix7")
 assert "class ScLifTwin:" in code
 assert "def step" in code
@@ -158,7 +157,7 @@ Map neuron blocks to UCIe die-to-die protocol lanes for chiplet architectures.
 | `total_bandwidth_gbps` | `float` | Aggregate bandwidth |
 
 ```python
-from sc_neurocore.compiler.advanced_features import map_ucie_protocol
+from sc_neurocore.compiler.intelligence import map_ucie_protocol
 m = map_ucie_protocol({"cortex": 256, "motor": 128})
 assert m.total_bandwidth_gbps > 0
 ```
@@ -178,7 +177,7 @@ orbital altitude and shielding to estimate SEU rate.
 | `expected_seu_rate` | `float` | Expected upsets/day |
 
 ```python
-from sc_neurocore.compiler.advanced_features import schedule_seu_scrubbing
+from sc_neurocore.compiler.intelligence import schedule_seu_scrubbing
 s = schedule_seu_scrubbing(1_000_000, orbit_altitude_km=800)
 assert s.interval_ms > 0
 ```
@@ -197,7 +196,7 @@ Apply logic locking + structural transformation for IP protection.
 | `obfuscated_signals` | `int` | Post-obfuscation signal count |
 
 ```python
-from sc_neurocore.compiler.advanced_features import obfuscate_ip
+from sc_neurocore.compiler.intelligence import obfuscate_ip
 r = obfuscate_ip("sc_lif", {"v": "a + b"}, key_length=128)
 assert r.obfuscated_signals > r.original_signals
 ```
@@ -216,14 +215,14 @@ Embed verifiable watermark into compiled netlist. Survives synthesis optimisatio
 | `verifiable` | `bool` | Always `True` |
 
 ```python
-from sc_neurocore.compiler.advanced_features import embed_watermark
+from sc_neurocore.compiler.intelligence import embed_watermark
 wm = embed_watermark("sc_lif", {"v": "a"}, owner_id="MyLab")
 assert wm.verifiable and len(wm.watermark_hash) == 16
 ```
 
 ---
 
-## 4. Test Suite — test_wave10_features.py (281 lines, 32 tests)
+## 4. Test Suite — Refactored Intelligence and Platform Tests
 
 | Test Class | Tests | Coverage |
 |------------|------:|----------|
@@ -240,18 +239,23 @@ assert wm.verifiable and len(wm.watermark_hash) == 16
 | `TestSEUScrubber` | 2 | LEO + higher orbit comparison |
 | `TestIPObfuscation` | 2 | Default + custom key |
 | `TestWatermark` | 3 | Basic, deterministic, owner diff |
-| `TestWave10Integration` | 2 | E2E pipeline + space pipeline |
+| `TestSecuritySovereigntyIntegration` | 2 | E2E pipeline + space pipeline |
 | **Total** | **32** | |
 
 ```bash
-python -m pytest tests/test_wave10_features.py -v
+python -m pytest \
+  tests/test_platforms.py \
+  tests/test_intelligence_security_and_compliance.py \
+  tests/test_intelligence_digital_twin.py \
+  tests/test_intelligence_soc_and_chiplet.py \
+  -v
 ```
 
 ---
 
 ## Further Reading
 
-- [Wave 9 API Reference](wave9_api_reference.md) — §52–§59 + 4 platform classes
+- [Universal Coverage API Reference](universal_coverage_api_reference.md) — §52–§59 + 4 platform classes
 - [Compiler Intelligence Guide](compiler_intelligence.md) — all 67 features
 - [Frontier Platforms Guide](frontier_platforms.md) — 31 platform classes
 - [Platform Extensibility Guide](platform_extensibility.md) — 3 extensibility mechanisms

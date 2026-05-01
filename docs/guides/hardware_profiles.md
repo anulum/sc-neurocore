@@ -35,7 +35,7 @@ python -m sc_neurocore.neurons compile lif --target asic_custom -o sc_lif_safe.v
 ## Python API
 
 ```python
-from sc_neurocore.compiler.hardware_profiles import get_profile, list_profiles
+from sc_neurocore.compiler.platforms import get_profile, list_profiles
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron
 
 # Look up a hardware profile
@@ -423,7 +423,7 @@ sva = generate_sva(["v", "u"], data_width=16, fraction=8,
                    module_name="sc_izh")
 ```
 
-## Wave 6 Platform Classes
+## Cryogenic and Non-Volatile Platform Classes
 
 ### Superconducting / Cryogenic
 
@@ -481,7 +481,7 @@ sva = generate_sva(["v", "u"], data_width=16, fraction=8,
 | `qualcomm_ventana` | Qualcomm/Ventana | Veyron-V2 | 16-bit | 3 GHz |
 | `ainekko_rv` | Ainekko | ET-Mirai | 8-bit | 1 GHz |
 
-## Wave 7 Platform Classes
+## Biological, Electrochemical, and Wafer-Scale Platform Classes
 
 ### Biological / Wetware
 
@@ -513,7 +513,7 @@ sva = generate_sva(["v", "u"], data_width=16, fraction=8,
 | `aspinity_aml100` | Aspinity | AML100 | 8-bit |
 | `renesas_analog_ai` | Renesas | AnalogAI | 8-bit |
 
-## Wave 8 Platform Classes
+## Memory-Centric and Quantum-Inspired Platform Classes
 
 ### RRAM / Memristive Crossbar
 

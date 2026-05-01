@@ -15,7 +15,7 @@ for multi-target, multi-die, chiplet, and heterogeneous deployment.
 When you don't know which chip to use, the compiler recommends the best match:
 
 ```python
-from sc_neurocore.compiler.advanced_features import recommend_target
+from sc_neurocore.compiler.intelligence import recommend_target
 
 recs = recommend_target(
     constraints={
@@ -34,7 +34,7 @@ for r in recs:
 Before targeting multiple platforms, check how portable your model is:
 
 ```python
-from sc_neurocore.compiler.advanced_features import score_portability
+from sc_neurocore.compiler.intelligence import score_portability
 
 # Simple LIF — runs on almost everything
 s = score_portability({"v": "-(v - v_rest) / tau + I"})
@@ -54,7 +54,7 @@ if s.blockers:
 Deploy different neuron populations on different hardware:
 
 ```python
-from sc_neurocore.compiler.advanced_features import plan_heterogeneous_dispatch
+from sc_neurocore.compiler.intelligence import plan_heterogeneous_dispatch
 
 plan = plan_heterogeneous_dispatch(
     populations={
@@ -76,7 +76,7 @@ plan = plan_heterogeneous_dispatch(
 For chiplet and 3D-stacked architectures, assign neuron blocks to dies:
 
 ```python
-from sc_neurocore.compiler.advanced_features import plan_multi_die_floorplan
+from sc_neurocore.compiler.intelligence import plan_multi_die_floorplan
 
 result = plan_multi_die_floorplan(
     blocks={
@@ -102,7 +102,7 @@ for die, util in result.die_utilization.items():
 Minimise inter-chip spike bandwidth using graph partitioning:
 
 ```python
-from sc_neurocore.compiler.advanced_features import optimize_network_topology
+from sc_neurocore.compiler.intelligence import optimize_network_topology
 
 result = optimize_network_topology(
     adjacency={
@@ -123,7 +123,7 @@ print(f"Bandwidth reduction: {result.bandwidth_reduction:.1%}")
 Time-multiplex SNN layers on the same FPGA fabric:
 
 ```python
-from sc_neurocore.compiler.advanced_features import plan_partial_reconfiguration
+from sc_neurocore.compiler.intelligence import plan_partial_reconfiguration
 
 plan = plan_partial_reconfiguration(
     regions={
@@ -141,7 +141,7 @@ print(f"Schedule: {plan.schedule}")
 Generate SoC address decoders for multi-neuron arrays:
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_memory_map
+from sc_neurocore.compiler.intelligence import generate_memory_map
 
 mmap = generate_memory_map(
     "sc_cortex",
@@ -161,7 +161,7 @@ for e in mmap.entries[:5]:
 Avoid redundant compilations when targeting multiple platforms:
 
 ```python
-from sc_neurocore.compiler.advanced_features import CompilationCache
+from sc_neurocore.compiler.intelligence import CompilationCache
 
 cache = CompilationCache()
 
@@ -179,7 +179,7 @@ assert cached is not None
 Evaluate geopolitical risk before committing to a hardware platform:
 
 ```python
-from sc_neurocore.compiler.advanced_features import score_supply_chain_risk
+from sc_neurocore.compiler.intelligence import score_supply_chain_risk
 
 for target in ["artix7", "loihi2", "bae_rad750_sq", "tsmc_cim_n7"]:
     risk = score_supply_chain_risk(target)
@@ -192,7 +192,7 @@ Map neuron array blocks to UCIe die-to-die protocol lanes for
 chiplet-based multi-die architectures:
 
 ```python
-from sc_neurocore.compiler.advanced_features import map_ucie_protocol
+from sc_neurocore.compiler.intelligence import map_ucie_protocol
 
 mapping = map_ucie_protocol(
     {"visual_cortex": 256, "motor_cortex": 128, "prefrontal": 64},
@@ -210,7 +210,7 @@ Generate a software shadow that mirrors deployed hardware for runtime
 monitoring and anomaly detection:
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_digital_twin
+from sc_neurocore.compiler.intelligence import generate_digital_twin
 
 twin = generate_digital_twin("sc_cortex", equations, "artix7")
 # Deploy twin alongside hardware — compare on every cycle
@@ -221,7 +221,7 @@ twin = generate_digital_twin("sc_cortex", equations, "artix7")
 Generate Bill of Materials for every deployed target (EU CRA mandatory):
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_sbom
+from sc_neurocore.compiler.intelligence import generate_sbom
 
 for target in ["artix7", "loihi2", "sifive_x280_ai"]:
     sbom = generate_sbom("sc_cortex", target)

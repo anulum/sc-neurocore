@@ -182,10 +182,19 @@ class VerilogGenerator:
         seed : int
             Seed for Sobol (ignored for Halton).
         """
+        if method not in {"sobol", "halton"}:
+            raise ValueError("method must be 'sobol' or 'halton'")
+
+        if method == "sobol":
+            return QuasiRandomEmitter(
+                method="sobol",
+                module_name=module_name,
+                seed=seed,
+            ).generate()
         return QuasiRandomEmitter(
-            method=method,
+            method="halton",
             module_name=module_name,
-            seed=seed,  # type: ignore[arg-type]
+            seed=seed,
         ).generate()
 
     def emit_decorrelator(

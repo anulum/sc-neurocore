@@ -308,7 +308,7 @@ def test_emit_sources_from_ir_rejects_unknown_explicit_source_kind():
                 "nodes": [
                     {
                         "type": "StochasticSource",
-                        "params": {"source_type": "Halton"},
+                        "params": {"source_type": "NonexistentSource"},
                     }
                 ]
             }

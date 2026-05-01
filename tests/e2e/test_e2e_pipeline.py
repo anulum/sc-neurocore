@@ -43,7 +43,7 @@ class TestODEToDriverPipeline:
 
     def test_lif_full_pipeline_artix7(self):
         """LIF on Artix-7: every artefact is internally consistent."""
-        from sc_neurocore.compiler.hardware_profiles import get_profile
+        from sc_neurocore.compiler.platforms import get_profile
         from sc_neurocore.compiler.deployment import (
             estimate_resources,
             generate_constraints,
@@ -97,7 +97,7 @@ class TestODEToDriverPipeline:
 
     def test_pipeline_data_width_consistency(self):
         """Data widths match across constraints and drivers."""
-        from sc_neurocore.compiler.hardware_profiles import get_profile
+        from sc_neurocore.compiler.platforms import get_profile
         from sc_neurocore.compiler.deployment import (
             generate_constraints,
             generate_host_driver,
@@ -289,7 +289,7 @@ class TestNetworkPipeline:
 
     def test_bram_array_is_synthesisable(self):
         """BRAM array Verilog is structurally valid."""
-        from sc_neurocore.compiler.advanced_features import (
+        from sc_neurocore.compiler.intelligence import (
             storage_recommendation,
             generate_bram_array,
         )
@@ -307,7 +307,7 @@ class TestNetworkPipeline:
 
     def test_weight_rom_matches_dimensions(self):
         """Weight ROM entries match weight matrix dimensions."""
-        from sc_neurocore.compiler.advanced_features import generate_weight_rom
+        from sc_neurocore.compiler.intelligence import generate_weight_rom
 
         weights = [[i * 10 + j for j in range(4)] for i in range(8)]
         mif = generate_weight_rom(weights, output_format="mif")
@@ -317,8 +317,8 @@ class TestNetworkPipeline:
 
     def test_bram_array_plus_constraints(self):
         """BRAM array → constraints: valid artefacts from same data width."""
-        from sc_neurocore.compiler.advanced_features import generate_bram_array
-        from sc_neurocore.compiler.hardware_profiles import get_profile
+        from sc_neurocore.compiler.intelligence import generate_bram_array
+        from sc_neurocore.compiler.platforms import get_profile
         from sc_neurocore.compiler.deployment import generate_constraints
 
         profile = get_profile("artix7")
@@ -349,7 +349,7 @@ class TestDVSToDriverPipeline:
 
     def test_dvs_aer_bridge_valid(self):
         """DVS bridge Verilog is structurally valid."""
-        from sc_neurocore.compiler.advanced_features import generate_dvs_aer_bridge
+        from sc_neurocore.compiler.intelligence import generate_dvs_aer_bridge
 
         bridge = generate_dvs_aer_bridge(
             module_name="sc_dvs_bridge",
@@ -360,7 +360,7 @@ class TestDVSToDriverPipeline:
 
     def test_dvs_bridge_plus_riscv_driver(self):
         """DVS bridge + RISC-V driver: both produce valid artefacts."""
-        from sc_neurocore.compiler.advanced_features import generate_dvs_aer_bridge
+        from sc_neurocore.compiler.intelligence import generate_dvs_aer_bridge
         from sc_neurocore.compiler.deployment import generate_riscv_driver
 
         bridge = generate_dvs_aer_bridge()
@@ -386,7 +386,7 @@ class TestThermalFullFlow:
     def test_power_to_thermal_to_constraints(self):
         """Power → thermal → XDC: derated frequency propagates."""
         from sc_neurocore.compiler.static_analysis import estimate_power
-        from sc_neurocore.compiler.advanced_features import (
+        from sc_neurocore.compiler.intelligence import (
             thermal_analysis,
             generate_thermal_constraints,
         )
@@ -411,7 +411,7 @@ class TestThermalFullFlow:
 
     def test_high_power_triggers_warning(self):
         """Very high power → thermal unsafe → warning in XDC."""
-        from sc_neurocore.compiler.advanced_features import (
+        from sc_neurocore.compiler.intelligence import (
             thermal_analysis,
             generate_thermal_constraints,
         )
@@ -434,7 +434,7 @@ class TestWeightFormatConsistency:
 
     def test_all_formats_same_values(self):
         """Verilog, .coe, .mif all encode the same weights."""
-        from sc_neurocore.compiler.advanced_features import generate_weight_rom
+        from sc_neurocore.compiler.intelligence import generate_weight_rom
 
         weights = [[100, 50, 0], [25, 75, 127]]
 
@@ -464,7 +464,7 @@ class TestMXFPRoundTrip:
 
     def test_mxfp8_e4m3_round_trip(self):
         """MXFP8 E4M3: encode → decode → sign preservation."""
-        from sc_neurocore.compiler.advanced_features import (
+        from sc_neurocore.compiler.intelligence import (
             MXFP8_E4M3,
             mxfp_encode_block,
             mxfp_decode_block,
@@ -482,7 +482,7 @@ class TestMXFPRoundTrip:
 
     def test_zero_stability(self):
         """Zero encodes and decodes as zero."""
-        from sc_neurocore.compiler.advanced_features import (
+        from sc_neurocore.compiler.intelligence import (
             MXFP8_E5M2,
             mxfp_encode_block,
             mxfp_decode_block,
@@ -495,7 +495,7 @@ class TestMXFPRoundTrip:
 
     def test_all_configs_round_trip(self):
         """Every block-FP config can encode/decode without crashing."""
-        from sc_neurocore.compiler.advanced_features import (
+        from sc_neurocore.compiler.intelligence import (
             MXFP4,
             MXFP6,
             MXFP8_E4M3,

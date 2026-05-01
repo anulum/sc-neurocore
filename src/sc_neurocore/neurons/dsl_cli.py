@@ -148,7 +148,7 @@ PRECISION_MODES: dict[str, tuple[int, int, str, str]] = {
 
 def cmd_compile(args: argparse.Namespace) -> None:
     """Compile model to Verilog with optional hardware target profile."""
-    from sc_neurocore.compiler.hardware_profiles import get_profile
+    from sc_neurocore.compiler.platforms import get_profile
 
     n = UniversalNeuron.from_schema(args.model)
 
@@ -262,12 +262,12 @@ def cmd_precision(args: argparse.Namespace) -> None:
 
 def cmd_platforms(args: argparse.Namespace) -> None:
     """List all available hardware target profiles."""
-    from sc_neurocore.compiler.hardware_profiles import list_profiles
+    from sc_neurocore.compiler.platforms import HardwareProfile, list_profiles
 
     profiles = list_profiles()
 
     # Group by platform_class
-    classes = {
+    classes: dict[str, list[HardwareProfile]] = {
         "fpga": [],
         "neuromorphic": [],
         "accelerator": [],

@@ -4,12 +4,11 @@
 <!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
 <!-- ORCID: 0009-0009-3560-0851 -->
 
-# Wave 9 API Reference — Universal Coverage & Extensibility
+# Universal Coverage and Extensibility API Reference
 
 This document is the **complete API reference** for all modules, classes,
-functions, and hardware profiles delivered in Wave 9 of the SC-NeuroCore
-compiler industrialisation. Wave 9 added 10 hardware profiles across 4
-new platform classes and 8 compiler features (§52–§59).
+functions, and hardware profiles that provide universal coverage and compiler
+extensibility across 4 platform classes and compiler features (§52–§59).
 
 ---
 
@@ -29,13 +28,13 @@ new platform classes and 8 compiler features (§52–§59).
    - [§57 Power State Machine](#57-power-state-machine--generate_power_state_machine)
    - [§58 Platform Discovery Hook](#58-platform-discovery-hook--register_platform_hook)
    - [§59 Compilation Report](#59-compilation-report--generate_compilation_report)
-3. [Test Suite — test_wave9_features.py](#test-suite--test_wave9_featurespy)
+3. [Test Suite — Refactored Intelligence and Platform Tests](#test-suite--refactored-intelligence-and-platform-tests)
 
 ---
 
 ## Hardware Profiles — 4 New Platform Classes
 
-**Source**: `src/sc_neurocore/compiler/hardware_profiles.py`
+**Source**: `src/sc_neurocore/compiler/platforms`
 
 All profiles use the frozen `HardwareProfile` dataclass and are auto-
 registered in the global `_PROFILES` registry on module import.
@@ -57,7 +56,7 @@ transceivers onto the package substrate adjacent to the compute die.
 Ayar Labs TeraPHY delivers 8 Tbps bidirectional, UCIe-compatible.
 
 ```python
-from sc_neurocore.compiler.hardware_profiles import get_profile
+from sc_neurocore.compiler.platforms import get_profile
 
 p = get_profile("ayar_teraphy")
 assert p.platform_class == "optical_io"
@@ -138,8 +137,8 @@ and Single Event Effects (SEE) tolerance. Deployed on ISS, Mars rovers.
 - Combine with `score_supply_chain_risk()` (§36) for ITAR compliance
 
 ```python
-from sc_neurocore.compiler.hardware_profiles import get_profile
-from sc_neurocore.compiler.advanced_features import (
+from sc_neurocore.compiler.platforms import get_profile
+from sc_neurocore.compiler.intelligence import (
     score_supply_chain_risk, generate_fault_tree,
     schedule_seu_scrubbing,
 )
@@ -159,7 +158,7 @@ print(f"Scrub interval: {scrub.interval_ms:.0f} ms")
 
 ## Compiler Features §52–§59
 
-**Source**: `src/sc_neurocore/compiler/advanced_features.py`
+**Source**: `src/sc_neurocore/compiler/intelligence`
 
 All features are implemented as pure functions returning dataclass results,
 following the SC-NeuroCore design pattern of zero side-effects (except for
@@ -196,7 +195,7 @@ are in different clock domains.
 | `safe` | `bool` | True if all crossings have synchronisers |
 
 ```python
-from sc_neurocore.compiler.advanced_features import analyze_cdc
+from sc_neurocore.compiler.intelligence import analyze_cdc
 
 report = analyze_cdc(
     {"v": "u + I", "u": "v - threshold", "w": "slow_adaptation"},
@@ -243,8 +242,8 @@ notes = "Custom ASIC chip."
 ```
 
 ```python
-from sc_neurocore.compiler.advanced_features import load_profiles_from_toml
-from sc_neurocore.compiler.hardware_profiles import get_profile
+from sc_neurocore.compiler.intelligence import load_profiles_from_toml
+from sc_neurocore.compiler.platforms import get_profile
 
 loaded = load_profiles_from_toml("my_profiles.toml")
 p = get_profile(loaded[0])
@@ -282,7 +281,7 @@ using a bin-packing algorithm.
 | `overflow_blocks` | `list[str]` | Blocks that didn't fit |
 
 ```python
-from sc_neurocore.compiler.advanced_features import plan_multi_die_floorplan
+from sc_neurocore.compiler.intelligence import plan_multi_die_floorplan
 
 result = plan_multi_die_floorplan(
     blocks={"visual": 800, "auditory": 600, "motor": 400},
@@ -326,7 +325,7 @@ def check_regression(
 | `regression` | `bool` | True if regression detected |
 
 ```python
-from sc_neurocore.compiler.advanced_features import check_regression
+from sc_neurocore.compiler.intelligence import check_regression
 
 checks = check_regression(
     {"area_luts": 1200, "fmax_mhz": 250},
@@ -368,7 +367,7 @@ def check_license_compliance(
 | `notes` | `str` | Compatibility notes |
 
 ```python
-from sc_neurocore.compiler.advanced_features import check_license_compliance
+from sc_neurocore.compiler.intelligence import check_license_compliance
 
 checks = check_license_compliance("artix7", required_license="AGPL-3.0")
 for c in checks:
@@ -402,7 +401,7 @@ for dynamic power management.
 **Returns**: `str` — Synthesisable Verilog source code.
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_power_state_machine
+from sc_neurocore.compiler.intelligence import generate_power_state_machine
 
 verilog = generate_power_state_machine(
     "sc_lif", {"v": "-(v)/tau + I"},
@@ -435,10 +434,10 @@ returned profiles.
 **Side effects**: Registers profiles in global `_PROFILES` registry.
 
 ```python
-from sc_neurocore.compiler.advanced_features import (
+from sc_neurocore.compiler.intelligence import (
     register_platform_hook, discover_platforms,
 )
-from sc_neurocore.compiler.hardware_profiles import HardwareProfile
+from sc_neurocore.compiler.platforms import HardwareProfile
 
 def my_hw_scan():
     return [HardwareProfile(
@@ -481,7 +480,7 @@ def generate_compilation_report(
 **Returns**: `str` — Markdown-formatted report.
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_compilation_report
+from sc_neurocore.compiler.intelligence import generate_compilation_report
 
 report = generate_compilation_report(
     "sc_lif", {"v": "-(v)/tau + I"}, "artix7",
@@ -493,9 +492,14 @@ with open("compilation_report.md", "w") as f:
 
 ---
 
-## Test Suite — test_wave9_features.py
+## Test Suite — Refactored Intelligence and Platform Tests
 
-**Source**: `tests/test_wave9_features.py` (260 lines)
+**Source**:
+
+- `tests/test_platforms.py`
+- `tests/test_intelligence_verification_and_safety.py`
+- `tests/test_intelligence_reporting.py`
+- `tests/test_intelligence_power_and_thermal.py`
 
 | Test Class | Tests | Coverage |
 |------------|------:|----------|
@@ -511,12 +515,17 @@ with open("compilation_report.md", "w") as f:
 | `TestPowerStateMachine` | 2 | Default + custom FSM states |
 | `TestPlatformDiscovery` | 2 | Register + discover |
 | `TestCompilationReport` | 2 | Basic + with carbon/reliability |
-| `TestWave9Integration` | 2 | Full-pipeline end-to-end |
+| `TestExtensibilityIntegration` | 2 | Full-pipeline end-to-end |
 | **Total** | **28** | |
 
 ```bash
-# Run all Wave 9 tests
-python -m pytest tests/test_wave9_features.py -v
+# Run all refactored extensibility tests
+python -m pytest \
+  tests/test_platforms.py \
+  tests/test_intelligence_verification_and_safety.py \
+  tests/test_intelligence_reporting.py \
+  tests/test_intelligence_power_and_thermal.py \
+  -v
 ```
 
 ---
@@ -525,17 +534,17 @@ python -m pytest tests/test_wave9_features.py -v
 
 ```mermaid
 graph TD
-    A[hardware_profiles.py] --> B[HardwareProfile dataclass]
+    A[compiler/platforms] --> B[HardwareProfile dataclass]
     A --> C[_PROFILES registry]
     A --> D[get_profile / list_profile_names]
-    E[advanced_features.py §52-§59] --> A
+    E[compiler/intelligence §52-§59] --> A
     E --> F[CDCReport]
     E --> G[FloorplanResult]
     E --> H[RegressionCheck]
     E --> I[LicenseCheck]
     E --> J[load_profiles_from_toml]
     E --> K[register_platform_hook]
-    L[test_wave9_features.py] --> A
+    L[refactored intelligence/platform tests] --> A
     L --> E
 ```
 
@@ -548,4 +557,4 @@ graph TD
 - [Frontier Platforms Guide](frontier_platforms.md) — 31 platform classes
 - [Platform Extensibility Guide](platform_extensibility.md) — TOML + hook + from_constraints
 - [Verification & Debug Guide](verification_debug.md) — 14 V&V features
-- [Wave 10 API Reference](wave10_api_reference.md) — §60–§67 + 3 platform classes
+- [Security and Sovereignty API Reference](security_sovereignty_api_reference.md) — §60–§67 + 3 platform classes

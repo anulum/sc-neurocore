@@ -27,9 +27,11 @@ Usage::
 
 from __future__ import annotations
 
+import importlib
 from typing import Literal
-from xml.etree.ElementTree import Element, SubElement, tostring
-from xml.dom.minidom import parseString
+from xml.etree.ElementTree import Element, SubElement, tostring  # nosec B405
+
+parseString = importlib.import_module("defusedxml.minidom").parseString
 
 
 def generate_ip_xact(

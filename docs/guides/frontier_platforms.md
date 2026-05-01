@@ -10,22 +10,23 @@ SC-NeuroCore supports **31 platform classes** spanning every known and
 speculative compute paradigm — from traditional FPGAs to living organoid
 co-processors, DNA-perovskite synapses, and trapped-ion quantum neurons.
 
-This guide covers the **16 frontier platform classes** added in Waves 6–10,
-their physical principles, compilation considerations, and code examples.
+This guide covers the frontier platform classes, their physical principles,
+compilation considerations, and code examples.
 
 ## Table of Contents
 
-1. [Wave 6 Platforms](#wave-6-platforms)
-2. [Wave 7 Platforms](#wave-7-platforms)
-3. [Wave 8 Platforms](#wave-8-platforms)
-4. [Wave 9 Platforms](#wave-9-platforms)
-5. [Wave 10 Platforms](#wave-10-platforms)
-6. [Custom Profile Registration](#custom-profile-registration)
-7. [Platform Class Reference](#platform-class-reference)
+1. [Cryogenic and Non-Volatile Platforms](#cryogenic-and-non-volatile-platforms)
+2. [Biological, Electrochemical, and Wafer-Scale Platforms](#biological-electrochemical-and-wafer-scale-platforms)
+3. [Memory-Centric and Quantum-Inspired Platforms](#memory-centric-and-quantum-inspired-platforms)
+4. [Interconnect, Acoustic, Fluidic, and Space Platforms](#interconnect-acoustic-fluidic-and-space-platforms)
+5. [Sovereign, Organic, and Magnonic Platforms](#sovereign-organic-and-magnonic-platforms)
+6. [Adaptive Reliability Platforms](#adaptive-reliability-platforms)
+7. [Custom Profile Registration](#custom-profile-registration)
+8. [Platform Class Reference](#platform-class-reference)
 
 ---
 
-## Wave 6 Platforms
+## Cryogenic and Non-Volatile Platforms
 
 ### Superconducting / Cryogenic (3 profiles)
 
@@ -45,7 +46,7 @@ reach 100+ GHz with near-zero switching energy (~10⁻¹⁹ J per gate).
 - SFQ pulse timing requires careful pipeline depth
 
 ```python
-from sc_neurocore.compiler.hardware_profiles import get_profile
+from sc_neurocore.compiler.platforms import get_profile
 
 p = get_profile("nist_sfq")
 print(f"Class: {p.platform_class}")  # superconducting
@@ -125,7 +126,7 @@ hardware neural accelerators. Target: <1mW inference at the sensor edge.
 | `max78000` | Maxim/ADI | MAX78000 | 8-bit | 100 MHz |
 
 ```python
-from sc_neurocore.compiler.hardware_profiles import get_profile
+from sc_neurocore.compiler.platforms import get_profile
 
 p = get_profile("max78000")
 print(f"Built-in CNN accelerator: {p.notes}")
@@ -133,7 +134,7 @@ print(f"Built-in CNN accelerator: {p.notes}")
 
 ---
 
-## Wave 7 Platforms
+## Biological, Electrochemical, and Wafer-Scale Platforms
 
 ### Biological / Wetware (2 profiles)
 
@@ -194,7 +195,7 @@ Renesas AnalogAI integrates analog MAC arrays.
 
 ---
 
-## Wave 8 Platforms
+## Memory-Centric and Quantum-Inspired Platforms
 
 ### RRAM / Memristive Crossbar (3 profiles)
 
@@ -267,7 +268,7 @@ connectivity (IonQ).
 
 ---
 
-## Wave 9 Platforms
+## Interconnect, Acoustic, Fluidic, and Space Platforms
 
 ### Optical Interconnect / CPO (2 profiles)
 
@@ -327,8 +328,8 @@ ISS, Mars rovers, and deep-space missions.
 - Use supply chain risk scorer (§36) for ITAR compliance
 
 ```python
-from sc_neurocore.compiler.hardware_profiles import get_profile
-from sc_neurocore.compiler.advanced_features import (
+from sc_neurocore.compiler.platforms import get_profile
+from sc_neurocore.compiler.intelligence import (
     score_supply_chain_risk, generate_fault_tree,
 )
 
@@ -341,7 +342,7 @@ print(f"Fault tree events: {len(ft.basic_events)}")
 
 ---
 
-## Wave 10 Platforms
+## Sovereign, Organic, and Magnonic Platforms
 
 ### Magnonic / Skyrmion (3 profiles)
 
@@ -363,7 +364,7 @@ provides natural nonlinear activation without transistors.
 - Ideal for temporal signal processing (EEG, vibration)
 
 ```python
-from sc_neurocore.compiler.hardware_profiles import get_profile
+from sc_neurocore.compiler.platforms import get_profile
 
 p = get_profile("tum_skyrmion")
 print(f"Class: {p.platform_class}")  # magnonic
@@ -412,8 +413,8 @@ deployment for government, defence, and critical infrastructure.
 - Supply chain risk score (§36) will be LOW for all RISC-V
 
 ```python
-from sc_neurocore.compiler.hardware_profiles import get_profile
-from sc_neurocore.compiler.advanced_features import score_supply_chain_risk
+from sc_neurocore.compiler.platforms import get_profile
+from sc_neurocore.compiler.intelligence import score_supply_chain_risk
 
 p = get_profile("sifive_x280_ai")
 risk = score_supply_chain_risk("sifive_x280_ai")
@@ -459,7 +460,7 @@ notes = "Custom FPGA board with Xilinx UltraScale+."
 ```
 
 ```python
-from sc_neurocore.compiler.advanced_features import load_profiles_from_toml
+from sc_neurocore.compiler.intelligence import load_profiles_from_toml
 
 loaded = load_profiles_from_toml("my_lab_profiles.toml")
 print(f"Loaded: {loaded}")  # ['my_custom_asic', 'my_fpga_board']
@@ -468,10 +469,10 @@ print(f"Loaded: {loaded}")  # ['my_custom_asic', 'my_fpga_board']
 ### Method 2: Runtime Discovery Hook (Vendor SDK)
 
 ```python
-from sc_neurocore.compiler.advanced_features import (
+from sc_neurocore.compiler.intelligence import (
     register_platform_hook, discover_platforms,
 )
-from sc_neurocore.compiler.hardware_profiles import HardwareProfile
+from sc_neurocore.compiler.platforms import HardwareProfile
 
 def vendor_discovery():
     """Auto-detect connected hardware and return profiles."""
@@ -486,10 +487,10 @@ register_platform_hook(vendor_discovery)
 discovered = discover_platforms()
 ```
 
-### Method 3: Auto-Construct from Spec Sheet (Wave 10)
+### Method 3: Auto-Construct from Spec Sheet
 
 ```python
-from sc_neurocore.compiler.hardware_profiles import HardwareProfile
+from sc_neurocore.compiler.platforms import HardwareProfile
 
 # Any future chip — one function call:
 p = HardwareProfile.from_constraints(
@@ -504,47 +505,91 @@ p = HardwareProfile.from_constraints(
 
 ---
 
-## Platform Class Reference
+## Frontier Paradigm Platforms
 
-| # | Class | Count | Paradigm | Maturity |
-|---|-------|------:|----------|----------|
-| 1 | `fpga` | 30+ | Programmable logic | Production |
-| 2 | `asic` | 3 | Custom silicon | Production |
-| 3 | `dsp` | 3 | Signal processing | Production |
-| 4 | `neuromorphic` | 15+ | Spike-based | Production |
-| 5 | `photonic` | 5 | Optical compute | Commercial |
-| 6 | `in_memory` | 6 | PIM/CXL | Commercial |
-| 7 | `accelerator` | 20+ | AI silicon | Production |
-| 8 | `simulation` | 2 | Golden reference | N/A |
+### Wetware / Biological (2 profiles)
+
+**Physics**: Living organoid co-processors interfaced via high-density Multi-Electrode Arrays (MEAs). FinalSpark uses living spherical brain organoids for closed-loop biocomputing. Cortical Labs (DishBrain) demonstrates embodied intelligence via active biological neural cultures.
+
+| Profile | Vendor | Family | Width |
+|---------|--------|--------|------:|
+| `finalspark_neuroplatform` | FinalSpark | Neuroplatform | 8-bit |
+| `cortical_labs_dishbrain` | Cortical Labs | DishBrain | 8-bit |
+
+**Compilation notes**:
+- Uses the `map_wetware_mea` (§79) intelligence feature to translate SNN topology into spatio-temporal stimulations.
+
+---
+
+### Molecular / Chemical (2 profiles)
+
+**Physics**: Computation and storage within synthetic DNA base pairs and enzymatic reactions. Biomemory maps ultra-high-density data (such as billion-parameter network weights) into physical DNA storage at near-zero static energy. Catalog utilizes parallel search within DNA liquid solutions.
+
+| Profile | Vendor | Family | Width |
+|---------|--------|--------|------:|
+| `biomemory_dna` | Biomemory | DNA-Storage | 8-bit |
+| `catalog_dna_compute` | Catalog | Shannon | 8-bit |
+
+---
+
+### Reversible / Adiabatic (2 profiles)
+
+**Physics**: Operating at the Landauer limit of energy dissipation. Logic gates (like Toffoli and Fredkin) preserve information perfectly, allowing energy to be recovered rather than dissipated as heat. Requires multi-phase trapezoidal resonant clocking (§82).
+
+| Profile | Vendor | Family | Width |
+|---------|--------|--------|------:|
+| `superconducting_aqfp` | Yokohama Univ | AQFP | 16-bit |
+| `scrl_logic` | Generic | SCRL | 16-bit |
+
+---
+
+### Microfluidic / Mechanical (2 profiles)
+
+**Physics**: Fluid dynamics and nonlinear mechanical oscillators acting as physical computational substrates. Nanofluidic 2D ionic channels physically emulate biological ion exchange using water/ion flow.
+
+| Profile | Vendor | Family | Width |
+|---------|--------|--------|------:|
+| `nanofluidic_logic` | EPFL | Ion-Channel | 8-bit |
+| `mems_neuromorphic` | Generic | MEMS-Resonator | 8-bit |
+
+---
+
+Summary of the 39 platform classes supported by SC-NeuroCore:
+
+| ID | Class Name | Profiles | Description | Target |
+|---|---|---|---|---|
+| 1 | `fpga` | 27 | Traditional FPGAs (Xilinx/Intel) | Production |
+| 2 | `asic` | 13 | Custom silicon | Production |
+| 3 | `neuromorphic` | 11 | SNN chips (Loihi, TrueNorth) | Production |
+| 4 | `pim` | 8 | Processing-in-memory | Production |
+| 5 | `quantum` | 6 | Superconducting/Ion/Optical | Research |
+| 6 | `optical` | 6 | Silicon photonics | Pre-production |
+| 7 | `analog` | 6 | Continuous-time analog | Research |
+| 8 | `memristive` | 6 | Crossbar arrays | Research |
 | 9 | `emerging` | 3 | Hybrid/novel | Research |
 | 10 | `superconducting` | 3 | SFQ/AQFP at 4K | Research |
 | 11 | `spintronic` | 2 | STT/SOT-MRAM | Pre-production |
 | 12 | `ferroelectric` | 2 | FeFET/FeRAM | Pre-production |
 | 13 | `cgra` | 3 | Reconfigurable array | Production |
-| 14 | `3d_stacked` | 3 | TSV/hybrid bonding | Production |
-| 15 | `edge_mcu` | 5 | TinyML MCU | Production |
-| 16 | `biological` | 2 | Living neurons | Research |
-| 17 | `electrochemical` | 3 | ECRAM/PCRAM | Pre-production |
-| 18 | `wafer_scale` | 3 | Full-wafer chips | Production |
-| 19 | `analog_mixed` | 2 | In-sensor compute | Commercial |
-| 20 | `rram` | 3 | ReRAM crossbar | Commercial |
-| 21 | `sram_cim` | 2 | SRAM CIM macro | Production |
-| 22 | `cryo_cmos` | 2 | CMOS at 4K | Pre-production |
-| 23 | `dna_molecular` | 2 | Bio-hybrid logic | Research |
-| 24 | `quantum_neuro` | 2 | Quantum SNN | Research |
-| 25 | `optical_io` | 2 | Photonic chiplet | Commercial |
-| 26 | `acoustic` | 2 | Phononic/MEMS | Research |
 | 27 | `fluidic` | 2 | Microfluidic logic | Research |
 | 28 | `space_qualified` | 4 | Rad-hard processors | Deployed |
 | 29 | `magnonic` | 3 | Skyrmion/spin-wave | Research |
 | 30 | `organic_bioelectronic` | 2 | OECT wet computing | Research |
 | 31 | `risc_v_sovereign` | 5 | Open ISA AI cores | Production |
-| | **Total** | **175** | | |
+| 32 | `thermodynamic` | 2 | EBM thermal equilibration | Research |
+| 33 | `probabilistic` | 2 | p-Bit sMTJ | Research |
+| 34 | `polariton` | 2 | Bose-Einstein condensate | Research |
+| 35 | `metamaterial` | 2 | Passive wave propagation | Research |
+| 36 | `wetware` | 2 | Living organoids (MEA) | Research |
+| 37 | `molecular` | 2 | DNA / Enzymatic compute | Research |
+| 38 | `reversible` | 2 | Adiabatic / Landauer limit | Research |
+| 39 | `microfluidic` | 2 | Nanofluidic / MEMS | Research |
+| | **Total** | **191** | | |
 
 ## Further Reading
 
 - [Hardware Profiles Guide](hardware_profiles.md) — full profile tables
-- [Compiler Intelligence Guide](compiler_intelligence.md) — all 67 features
+- [Compiler Intelligence Guide](compiler_intelligence.md) — all 76 features
 - [Platform Extensibility Guide](platform_extensibility.md) — TOML + hook + from_constraints
 - [Precision Modes Guide](precision_modes.md) — Q-format modes
 - [Deployment Guide](deployment_guide.md) — constraints, TCL, bitstream

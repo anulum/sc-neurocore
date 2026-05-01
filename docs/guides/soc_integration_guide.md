@@ -219,7 +219,7 @@ The generated XML includes:
 For DO-254 / IEC 61508 compliance where VHDL is required:
 
 ```python
-from sc_neurocore.compiler.advanced_features import verilog_to_vhdl_wrapper
+from sc_neurocore.compiler.intelligence import verilog_to_vhdl_wrapper
 
 vhdl = verilog_to_vhdl_wrapper("sc_lif", data_width=16, signed=True)
 with open("sc_lif_vhdl.vhd", "w") as f:

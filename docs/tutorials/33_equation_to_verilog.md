@@ -430,7 +430,7 @@ python -m sc_neurocore.neurons platforms
 ### Python API
 
 ```python
-from sc_neurocore.compiler.hardware_profiles import get_profile
+from sc_neurocore.compiler.platforms import get_profile
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron
 
 profile = get_profile("loihi2")

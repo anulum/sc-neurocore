@@ -119,6 +119,7 @@ class QuasiRandomEmitter:
             )
         self.method = method
         self._seed = seed
+        self._emitter: Sobol16Emitter | Halton16Emitter
 
         if method == "sobol":
             name = module_name or "sc_sobol16_source"

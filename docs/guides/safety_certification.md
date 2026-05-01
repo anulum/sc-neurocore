@@ -31,7 +31,7 @@ certification.
 ### Step 1: Generate Compliance Matrix
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_compliance_matrix
+from sc_neurocore.compiler.intelligence import generate_compliance_matrix
 
 matrix = generate_compliance_matrix(
     standard="DO-254",
@@ -46,7 +46,7 @@ for req in matrix.requirements:
 ### Step 2: Verify ODE Stability
 
 ```python
-from sc_neurocore.compiler.advanced_features import verify_ode_stability
+from sc_neurocore.compiler.intelligence import verify_ode_stability
 
 result = verify_ode_stability(
     equations={"v": "-(v - v_rest) / tau + I"},
@@ -59,7 +59,7 @@ assert result.stable, f"UNSTABLE: critical dt = {result.critical_dt}"
 ### Step 3: Generate Fault Tree
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_fault_tree
+from sc_neurocore.compiler.intelligence import generate_fault_tree
 
 ft = generate_fault_tree("sc_lif", {"v": "-(v)/tau + I"})
 print(f"Top event: {ft.top_event}")
@@ -74,7 +74,7 @@ for e in ft.basic_events:
 ### Step 4: Predict Reliability
 
 ```python
-from sc_neurocore.compiler.advanced_features import predict_reliability
+from sc_neurocore.compiler.intelligence import predict_reliability
 
 r = predict_reliability(
     voltage_v=0.9,
@@ -88,7 +88,7 @@ print(f"Dominant failure: {r.failure_mode}")
 ### Step 5: Generate Provenance Chain
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_provenance_chain
+from sc_neurocore.compiler.intelligence import generate_provenance_chain
 
 chain = generate_provenance_chain(
     equations={"v": "-(v)/tau + I"},
@@ -102,7 +102,7 @@ print(f"Chain hash: {chain.chain_hash}")
 ### Step 6: CDC Analysis
 
 ```python
-from sc_neurocore.compiler.advanced_features import analyze_cdc
+from sc_neurocore.compiler.intelligence import analyze_cdc
 
 report = analyze_cdc(
     {"v": "-(v)/tau + I", "w": "a*(b*v - w)"},
@@ -114,7 +114,7 @@ assert report.safe, f"CDC violations: {report.violations}"
 ### Step 7: Generate Testbench
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_testbench
+from sc_neurocore.compiler.intelligence import generate_testbench
 
 tb = generate_testbench(
     "sc_lif", {"v": "-(v)/tau + I"},
@@ -127,7 +127,7 @@ with open("test_sc_lif_cert.py", "w") as f:
 ### Step 8: Formal Equivalence
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_equivalence_sketch
+from sc_neurocore.compiler.intelligence import generate_equivalence_sketch
 
 sketch = generate_equivalence_sketch(
     equations={"v": "-(v - v_rest) / tau + I"},
@@ -140,7 +140,7 @@ with open("sc_lif_equiv.sv", "w") as f:
 ### Step 9: Generate Full Report
 
 ```python
-from sc_neurocore.compiler.advanced_features import generate_compilation_report
+from sc_neurocore.compiler.intelligence import generate_compilation_report
 
 report = generate_compilation_report(
     "sc_lif", {"v": "-(v)/tau + I"}, "bae_rad750_sq",
@@ -160,7 +160,7 @@ For space-grade deployments, combine the certification pipeline with:
 4. **License compliance** (§56) — export control verification
 
 ```python
-from sc_neurocore.compiler.advanced_features import (
+from sc_neurocore.compiler.intelligence import (
     score_supply_chain_risk, estimate_thermal_envelope,
     check_license_compliance,
 )
