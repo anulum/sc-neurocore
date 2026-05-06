@@ -1,0 +1,31 @@
+{
+  "dcls_version": "max",
+  "reference": "Hammouamri 2024 arxiv 2306.00817",
+  "neuron_module": "standard_lif",
+  "sigma_schedule": "cosine",
+  "sigma_init": 15.0,
+  "sigma_final": 0.0,
+  "seed": 4,
+  "round_each_epoch": false,
+  "lambda_delay": 0.0,
+  "best_val_acc": 83.43221374920437,
+  "best_fpga_deployable_epoch": 128,
+  "best_fpga_deployable_before_round": 78.74871426158481,
+  "best_fpga_deployable_after_round": 78.74871426158481,
+  "best_native_sigma": 0.7232528750554273,
+  "best_test_at_native_sigma": 77.57201658354865,
+  "last_epoch": 149,
+  "last_test_at_sig_final_before_round": 76.46283441119724,
+  "last_test_at_sig_final_after_round": 76.46283441119724,
+  "rounding_drop": 0.0,
+  "fpga_deployable_test_acc": 78.74871426158481,
+  "comparison": {
+    "vgauss_original": 80.4,
+    "vgauss_rounded": 58.6,
+    "v1_test": 72.5,
+    "max_best_at_native_sigma": 77.57201658354865,
+    "max_best_after_rounding": 78.74871426158481,
+    "max_last_before_rounding": 76.46283441119724,
+    "max_last_after_rounding": 76.46283441119724
+  }
+}
