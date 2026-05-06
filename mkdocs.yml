@@ -354,6 +354,7 @@ nav:
               - Overview: api/world_model.md
               - Predictive Model (LGSSM): api/world_model/predictive_model.md
       - Industrial:
+          - Industrial Applications: api/industrial_applications.md
           - Safety Certification: api/safety_cert.md
           - ASIC Flow: api/asic_flow.md
           - Fault Injection: api/fault_injection.md
